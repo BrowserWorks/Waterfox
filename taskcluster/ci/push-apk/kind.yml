@@ -46,6 +46,8 @@ jobs:
                     # See https://github.com/mozilla-releng/pushapkscript#aurora-beta-release-vs-alpha-beta-production
                     production: beta
                     staging: alpha
+            # XXX Bug 1608882 - Temporary test to see if we can use the rollout percentage on the "beta" track
+            rollout-percentage: 99
         treeherder:
             symbol: pub(gp-n)
 
