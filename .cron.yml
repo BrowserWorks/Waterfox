@@ -82,22 +82,6 @@ jobs:
           - mozilla-central
       when: []  # never (hook only)
 
-    - name: nightly-android
-      job:
-          type: decision-task
-          treeherder-symbol: Na
-          target-tasks-method: nightly_fennec
-          include-push-tasks: true
-          android-release-type: nightly
-      run-on-projects:
-          - mozilla-esr68
-      when:
-          by-project:
-              # Fennec Nightly builds ship from ESR68
-              # Other branches ship only GeckoView
-              mozilla-esr68: [{hour: 10, minute: 0}]
-              # No default
-
     - name: ship-geckoview
       job:
           type: decision-task
