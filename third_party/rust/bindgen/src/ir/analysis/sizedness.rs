@@ -22,13 +22,14 @@ use {HashMap, Entry};
 ///
 /// We initially assume that all types are `ZeroSized` and then update our
 /// understanding as we learn more about each type.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Ord)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum SizednessResult {
-    /// Has some size that is known to be greater than zero. That doesn't mean
-    /// it has a static size, but it is not zero sized for sure. In other words,
-    /// it might contain an incomplete array or some other dynamically sized
-    /// type.
-    NonZeroSized,
+    /// The type is zero-sized.
+    ///
+    /// This means that if it is a C++ type, and is not being used as a base
+    /// member, then we must add an `_address` byte to enforce the
+    /// unique-address-per-distinct-object-instance rule.
+    ZeroSized,
 
     /// Whether this type is zero-sized or not depends on whether a type
     /// parameter is zero-sized or not.
@@ -49,35 +50,19 @@ pub enum SizednessResult {
     /// have an `_address` byte inserted.
     ///
     /// We don't properly handle this situation correctly right now:
-    /// https://github.com/rust-lang-nursery/rust-bindgen/issues/586
+    /// https://github.com/rust-lang/rust-bindgen/issues/586
     DependsOnTypeParam,
 
-    /// The type is zero-sized.
-    ///
-    /// This means that if it is a C++ type, and is not being used as a base
-    /// member, then we must add an `_address` byte to enforce the
-    /// unique-address-per-distinct-object-instance rule.
-    ZeroSized,
+    /// Has some size that is known to be greater than zero. That doesn't mean
+    /// it has a static size, but it is not zero sized for sure. In other words,
+    /// it might contain an incomplete array or some other dynamically sized
+    /// type.
+    NonZeroSized,
 }
 
 impl Default for SizednessResult {
     fn default() -> Self {
         SizednessResult::ZeroSized
-    }
-}
-
-impl cmp::PartialOrd for SizednessResult {
-    fn partial_cmp(&self, rhs: &Self) -> Option<cmp::Ordering> {
-        use self::SizednessResult::*;
-
-        match (*self, *rhs) {
-            (x, y) if x == y => Some(cmp::Ordering::Equal),
-            (NonZeroSized, _) => Some(cmp::Ordering::Greater),
-            (_, NonZeroSized) => Some(cmp::Ordering::Less),
-            (DependsOnTypeParam, _) => Some(cmp::Ordering::Greater),
-            (_, DependsOnTypeParam) => Some(cmp::Ordering::Less),
-            _ => unreachable!(),
-        }
     }
 }
 
