@@ -119,6 +119,7 @@ class NetErrorChild extends ActorChild {
     return {
       cssClass: searchParams.get("s"),
       error: searchParams.get("e"),
+      captive: searchParams.get("captive"),
     };
   }
 
@@ -384,6 +385,9 @@ class NetErrorChild extends ActorChild {
     }
     technicalInfo.append("\n");
 
+    let certText = doc.getElementById("certificateErrorText");
+    certText.textContent = input.data.info;
+
     // Add link to certificate and error message.
     let linkPrefix = gPipNSSBundle.GetStringFromName("certErrorCodePrefix3");
     let detailLink = doc.createElement("a");
@@ -445,9 +449,6 @@ class NetErrorChild extends ActorChild {
       this.mm.sendAsyncMessage("Browser:PrimeMitm");
     }
 
-    let div = doc.getElementById("certificateErrorText");
-    div.textContent = msg.data.info;
-    this._setTechDetails(msg, doc);
     let learnMoreLink = doc.getElementById("learnMoreLink");
     let baseURL = Services.urlFormatter.formatURLPref("app.support.baseURL");
     learnMoreLink.setAttribute("href", baseURL + "connection-not-secure");
@@ -478,8 +479,6 @@ class NetErrorChild extends ActorChild {
 
     // This is set to true later if the user's system clock is at fault for this error.
     let clockSkew = false;
-
-    doc.body.setAttribute("code", msg.data.codeString);
 
     // Need to do this here (which is not exactly at load but a few ticks later),
     // because this is the first time we have access to the error code.
@@ -752,6 +751,16 @@ class NetErrorChild extends ActorChild {
       // We need nsIWebNavigation to access docShell.document.
       frameDocShell && frameDocShell.QueryInterface(Ci.nsIWebNavigation);
       if (!frameDocShell || !this.isAboutCertError(frameDocShell.document)) {
+        return;
+      }
+
+      frameDocShell.document.body.setAttribute("code", msg.data.codeString);
+      this._setTechDetails(msg, frameDocShell.document);
+
+      // If captive, return early so we don't set strings outside the
+      // advanced panel on the certificate error page.
+      let { captive } = this.getParams(frameDocShell.document);
+      if (captive) {
         return;
       }
 
