@@ -635,7 +635,7 @@ nsCORSListenerProxy::OnStopRequest(nsIRequest* aRequest, nsresult aStatusCode) {
     listener = mOuterListener.forget();
   }
 
-#if defined(FENNEC_NIGHTLY) || defined(FENNEC_BETA)
+#if defined(MOZ_FENNEC)
   // To workaround bug 1546191 (which is likely harmless) we want to add a
   // non-null check.  As it's just an Android/Fennec crash, we also don't want
   // to mask other platforms from possible regressions of this code.
