@@ -86,8 +86,6 @@ GetObject(const MDefinition* ins)
       case MDefinition::Op_SetInitializedLength:
       case MDefinition::Op_ArrayLength:
       case MDefinition::Op_SetArrayLength:
-      case MDefinition::Op_StoreElementHole:
-      case MDefinition::Op_FallibleStoreElement:
       case MDefinition::Op_TypedObjectDescr:
       case MDefinition::Op_Slots:
       case MDefinition::Op_Elements:
@@ -152,6 +150,8 @@ GetObject(const MDefinition* ins)
       case MDefinition::Op_WasmStoreGlobalVar:
       case MDefinition::Op_ArrayJoin:
       case MDefinition::Op_ArraySlice:
+      case MDefinition::Op_StoreElementHole:
+      case MDefinition::Op_FallibleStoreElement:
         return nullptr;
       default:
 #ifdef DEBUG
