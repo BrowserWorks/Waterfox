@@ -845,6 +845,12 @@
         },
         "widget.content.gtk-theme-override": {
           "type": "string"
+        },
+        "dom.xmldocument.load.enabled": {
+          "type": "boolean"
+        },
+        "dom.xmldocument.async.enabled": {
+          "type": "boolean"
         }
       }
     },
