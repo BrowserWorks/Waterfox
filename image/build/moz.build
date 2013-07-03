@@ -19,4 +19,5 @@ LOCAL_INCLUDES += [
     '/image/encoders/ico',
     '/image/encoders/jpeg',
     '/image/encoders/png',
+    '/image/encoders/webp',
 ]
