@@ -1,0 +1,1433 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/**
+ * Using Places services after quit-application is not reliable, so make
+ * sure to do any shutdown work on quit-application, or history
+ * synchronization could fail, losing latest changes.
+ */
+
+#include "nsISupports.idl"
+
+interface nsIArray;
+interface nsIURI;
+interface nsIVariant;
+interface nsIFile;
+
+interface nsINavHistoryContainerResultNode;
+interface nsINavHistoryQueryResultNode;
+interface nsINavHistoryQuery;
+interface nsINavHistoryQueryOptions;
+interface nsINavHistoryResult;
+interface nsINavHistoryBatchCallback;
+
+[scriptable, uuid(91d104bb-17ef-404b-9f9a-d9ed8de6824c)]
+interface nsINavHistoryResultNode : nsISupports
+{
+  /**
+   * Indentifies the parent result node in the result set. This is null for
+   * top level nodes.
+   */
+  readonly attribute nsINavHistoryContainerResultNode parent;
+
+  /**
+   * The history-result to which this node belongs.
+   */
+  readonly attribute nsINavHistoryResult parentResult;
+
+  /**
+   * URI of the resource in question. For visits and URLs, this is the URL of
+   * the page. For folders and queries, this is the place: URI of the
+   * corresponding folder or query. This may be empty for other types of
+   * objects like host containers.
+   */
+  readonly attribute AUTF8String uri;
+
+  /**
+   * Identifies the type of this node. This node can then be QI-ed to the
+   * corresponding specialized result node interface.
+   */
+  const unsigned long RESULT_TYPE_URI = 0;               // nsINavHistoryResultNode
+
+  // Visit nodes are deprecated and unsupported.
+  // This line exists just to avoid reusing the value:
+  // const unsigned long RESULT_TYPE_VISIT = 1;
+
+  // Full visit nodes are deprecated and unsupported.
+  // This line exists just to avoid reusing the value:
+  // const unsigned long RESULT_TYPE_FULL_VISIT = 2;
+
+  // Dynamic containers are deprecated and unsupported.
+  // This const exists just to avoid reusing the value:
+  // const unsigned long RESULT_TYPE_DYNAMIC_CONTAINER = 4; // nsINavHistoryContainerResultNode
+
+  const unsigned long RESULT_TYPE_QUERY = 5;             // nsINavHistoryQueryResultNode
+  const unsigned long RESULT_TYPE_FOLDER = 6;            // nsINavHistoryQueryResultNode
+  const unsigned long RESULT_TYPE_SEPARATOR = 7;         // nsINavHistoryResultNode
+  const unsigned long RESULT_TYPE_FOLDER_SHORTCUT = 9;   // nsINavHistoryQueryResultNode
+  readonly attribute unsigned long type;
+
+  /**
+   * Title of the web page, or of the node's query (day, host, folder, etc)
+   */
+  readonly attribute AUTF8String title;
+
+  /**
+   * Total number of times the URI has ever been accessed. For hosts, this
+   * is the total of the children under it, NOT the total times the host has
+   * been accessed (this would require an additional query, so is not given
+   * by default when most of the time it is never needed).
+   */
+  readonly attribute unsigned long accessCount;
+
+  /**
+   * This is the time the user accessed the page.
+   *
+   * If this is a visit, it is the exact time that the page visit occurred.
+   *
+   * If this is a URI, it is the most recent time that the URI was visited.
+   * Even if you ask for all URIs for a given date range long ago, this might
+   * contain today's date if the URI was visited today.
+   *
+   * For hosts, or other node types with children, this is the most recent
+   * access time for any of the children.
+   *
+   * For days queries this is the respective endTime - a maximum possible
+   * visit time to fit in the day range.
+   */
+  readonly attribute PRTime time;
+
+  /**
+   * This URI can be used as an image source URI and will give you the favicon
+   * for the page. It is *not* the URI of the favicon, but rather something
+   * that will resolve to the actual image.
+   *
+   * In most cases, this is an annotation URI that will query the favicon
+   * service. If the entry has no favicon, this is the chrome URI of the
+   * default favicon. If the favicon originally lived in chrome, this will
+   * be the original chrome URI of the icon.
+   */
+  readonly attribute AUTF8String icon;
+
+  /**
+   * This is the number of levels between this node and the top of the
+   * hierarchy. The members of result.children have indentLevel = 0, their
+   * children have indentLevel = 1, etc. The indent level of the root node is
+   * set to -1.
+   */
+  readonly attribute long indentLevel;
+
+  /**
+   * When this item is in a bookmark folder (parent is of type folder), this is
+   * the index into that folder of this node. These indices start at 0 and
+   * increase in the order that they appear in the bookmark folder. For items
+   * that are not in a bookmark folder, this value is -1.
+   */
+  readonly attribute long bookmarkIndex;
+
+  /**
+   * If the node is an item (bookmark, folder or a separator) this value is the
+   * row ID of that bookmark in the database. For other nodes, this value is
+   * set to -1.
+   */
+  readonly attribute long long itemId;
+
+  /**
+   * If the node is an item (bookmark, folder or a separator) this value is the 
+   * time that the item was created. For other nodes, this value is 0.
+   */
+  readonly attribute PRTime dateAdded;
+
+  /**
+   * If the node is an item (bookmark, folder or a separator) this value is the 
+   * time that the item was last modified. For other nodes, this value is 0.
+   *
+   *  @note When an item is added lastModified is set to the same value as
+   *        dateAdded.
+   */
+  readonly attribute PRTime lastModified;
+
+  /**
+   * For uri nodes, this is a sorted list of the tags, delimited with commans,
+   * for the uri represented by this node. Otherwise this is an empty string.
+   */
+  readonly attribute AString tags;
+
+  /**
+   * The unique ID associated with the page. It my return an empty string
+   * if the result node is a non-URI node.
+   */
+  readonly attribute ACString pageGuid;
+
+  /**
+   * The unique ID associated with the bookmark. It returns an empty string
+   * if the result node is not associated with a bookmark, a folder or a
+   * separator.
+   */
+  readonly attribute ACString bookmarkGuid;
+};
+
+
+/**
+ * Base class for container results. This includes all types of groupings.
+ * Bookmark folders and places queries will be QueryResultNodes which extends
+ * these items.
+ */
+[scriptable, uuid(5bac9734-c0ff-44eb-8d19-da88462ff6da)]
+interface nsINavHistoryContainerResultNode : nsINavHistoryResultNode
+{
+
+  /**
+   * Set this to allow descent into the container. When closed, attempting
+   * to call getChildren or childCount will result in an error. You should
+   * set this to false when you are done reading.
+   *
+   * For HOST and DAY groupings, doing this is free since the children have
+   * been precomputed. For queries and bookmark folders, being open means they
+   * will keep themselves up-to-date by listening for updates and re-querying
+   * as needed.
+   */
+  attribute boolean containerOpen;
+
+  /**
+   * Indicates whether the container is closed, loading, or opened.  Loading
+   * implies that the container has been opened asynchronously and has not yet
+   * fully opened.
+   */
+  readonly attribute unsigned short state;
+  const unsigned short STATE_CLOSED = 0;
+  const unsigned short STATE_LOADING = 1;
+  const unsigned short STATE_OPENED = 2;
+
+  /**
+   * This indicates whether this node "may" have children, and can be used
+   * when the container is open or closed. When the container is closed, it
+   * will give you an exact answer if the node can easily be populated (for
+   * example, a bookmark folder). If not (for example, a complex history query),
+   * it will return true. When the container is open, it will always be
+   * accurate. It is intended to be used to see if we should draw the "+" next
+   * to a tree item.
+   */
+  readonly attribute boolean hasChildren;
+
+  /**
+   * This gives you the children of the nodes. It is preferrable to use this
+   * interface over the array one, since it avoids creating an nsIArray object
+   * and the interface is already the correct type.
+   *
+   * @throws NS_ERROR_NOT_AVAILABLE if containerOpen is false.
+   */
+  readonly attribute unsigned long childCount;
+  nsINavHistoryResultNode getChild(in unsigned long aIndex);
+
+  /**
+   * Get the index of a direct child in this container.
+   *
+   * @param aNode
+   *        a result node.
+   *
+   * @return aNode's index in this container.
+   * @throws NS_ERROR_NOT_AVAILABLE if containerOpen is false.
+   * @throws NS_ERROR_INVALID_ARG if aNode isn't a direct child of this
+   * container.
+   */
+  unsigned long getChildIndex(in nsINavHistoryResultNode aNode);
+
+  /**
+   * Look for a node in the container by some of its details.  Does not search
+   * closed containers.
+   *
+   * @param aURI
+   *        the node's uri attribute value
+   * @param aTime
+   *        the node's time attribute value.
+   * @param aItemId
+   *        the node's itemId attribute value.
+   * @param aRecursive
+   *        whether or not to search recursively.
+   *
+   * @throws NS_ERROR_NOT_AVAILABLE if this container is closed.
+   * @return a result node that matches the given details if any, null
+   *         otherwise.
+   */
+  nsINavHistoryResultNode findNodeByDetails(in AUTF8String aURIString,
+                                            in PRTime aTime,
+                                            in long long aItemId,
+                                            in boolean aRecursive);
+
+  /**
+   * Returns false if this node's list of children can be modified
+   * (adding or removing children, or reordering children), or true if
+   * the UI should not allow the list of children to be modified.
+   * This is false for bookmark folder nodes unless setFolderReadOnly() has
+   * been called to override it, and true for non-folder nodes.
+   */
+  readonly attribute boolean childrenReadOnly;
+};
+
+
+/**
+ * Used for places queries and as a base for bookmark folders.
+ *
+ * Note that if you request places to *not* be expanded in the options that
+ * generated this node, this item will report it has no children and never try
+ * to populate itself.
+ */
+[scriptable, uuid(a4144c3e-8125-46d5-a719-831bec8095f4)]
+interface nsINavHistoryQueryResultNode : nsINavHistoryContainerResultNode
+{
+  /**
+   * Get the queries which build this node's children.
+   * Only valid for RESULT_TYPE_QUERY nodes.
+   */
+  void getQueries([optional] out unsigned long queryCount,
+                  [retval,array,size_is(queryCount)] out nsINavHistoryQuery queries);
+
+  /**
+   * Get the options which group this node's children.
+   * Only valid for RESULT_TYPE_QUERY nodes.
+   */
+  readonly attribute nsINavHistoryQueryOptions queryOptions;
+
+  /**
+   * For both simple folder nodes and simple-folder-query nodes, this is set
+   * to the concrete itemId of the folder. Otherwise, this is set to -1.
+   */
+  readonly attribute long long folderItemId;
+};
+
+
+/**
+ * Allows clients to observe what is happening to a result as it updates itself
+ * according to history and bookmark system events. Register this observer on a
+ * result using nsINavHistoryResult::addObserver.
+ */
+[scriptable, uuid(f62d8b6b-3c4e-4a9f-a897-db605d0b7a0f)]
+interface nsINavHistoryResultObserver : nsISupports
+{
+  /**
+   * Called when 'aItem' is inserted into 'aParent' at index 'aNewIndex'.
+   * The item previously at index (if any) and everything below it will have
+   * been shifted down by one. The item may be a container or a leaf.
+   */
+  void nodeInserted(in nsINavHistoryContainerResultNode aParent,
+                    in nsINavHistoryResultNode aNode,
+                    in unsigned long aNewIndex);
+
+  /**
+   * Called whan 'aItem' is removed from 'aParent' at 'aOldIndex'. The item
+   * may be a container or a leaf. This function will be called after the item
+   * has been removed from its parent list, but before anything else (including
+   * NULLing out the item's parent) has happened.
+   */
+  void nodeRemoved(in nsINavHistoryContainerResultNode aParent,
+                   in nsINavHistoryResultNode aItem,
+                   in unsigned long aOldIndex);
+
+  /**
+   * Called whan 'aItem' is moved from 'aOldParent' at 'aOldIndex' to
+   * aNewParent at aNewIndex. The item may be a container or a leaf.
+   *
+   * XXX: at the moment, this method is called only when an item is moved
+   * within the same container. When an item is moved between containers,
+   * a new node is created for the item, and the itemRemoved/itemAdded methods
+   * are used.
+   */
+  void nodeMoved(in nsINavHistoryResultNode aNode,
+                 in nsINavHistoryContainerResultNode aOldParent,
+                 in unsigned long aOldIndex,
+                 in nsINavHistoryContainerResultNode aNewParent,
+                 in unsigned long aNewIndex);
+
+  /**
+   * Called right after aNode's title has changed.
+   * 
+   * @param aNode
+   *        a result node
+   * @param aNewTitle
+   *        the new title
+   */
+  void nodeTitleChanged(in nsINavHistoryResultNode aNode,
+                        in AUTF8String aNewTitle);
+
+  /**
+   * Called right after aNode's uri property has changed.
+   * 
+   * @param aNode
+   *        a result node
+   * @param aNewURI
+   *        the new uri
+   */
+  void nodeURIChanged(in nsINavHistoryResultNode aNode,
+                      in AUTF8String aNewURI);
+
+  /**
+   * Called right after aNode's icon property has changed.
+   *
+   * @param aNode
+   *        a result node
+   *
+   * @note: The new icon is accessible through aNode.icon.
+   */
+  void nodeIconChanged(in nsINavHistoryResultNode aNode);
+
+  /**
+   * Called right after aNode's time property or accessCount property, or both,
+   * have changed.
+   *
+   * @param aNode
+   *        a uri result node
+   * @param aNewVisitDate
+   *        the new visit date
+   * @param aNewAccessCount
+   *        the new access-count
+   */
+  void nodeHistoryDetailsChanged(in nsINavHistoryResultNode aNode,
+                                 in PRTime aNewVisitDate,
+                                 in unsigned long aNewAccessCount);
+
+  /**
+   * Called when the tags set on the uri represented by aNode have changed.
+   *
+   * @param aNode
+   *        a uri result node
+   *
+   * @note: The new tags list is accessible through aNode.tags.
+   */
+  void nodeTagsChanged(in nsINavHistoryResultNode aNode);
+
+  /**
+   * Called right after the aNode's keyword property has changed.
+   * 
+   * @param aNode
+   *        a uri result node
+   * @param aNewKeyword
+   *        the new keyword
+   */
+  void nodeKeywordChanged(in nsINavHistoryResultNode aNode,
+                          in AUTF8String aNewKeyword);
+
+  /**
+   * Called right after an annotation of aNode's has changed (set, altered, or
+   * unset).
+   * 
+   * @param aNode
+   *        a result node
+   * @param aAnnoName
+   *        the name of the annotation that changed
+   */
+  void nodeAnnotationChanged(in nsINavHistoryResultNode aNode,
+                             in AUTF8String aAnnoName);
+
+  /**
+   * Called right after aNode's dateAdded property has changed.
+   *
+   * @param aNode
+   *        a result node
+   * @param aNewValue
+   *        the new value of the dateAdded property
+   */
+  void nodeDateAddedChanged(in nsINavHistoryResultNode aNode,
+                            in PRTime aNewValue);
+
+  /**
+   * Called right after aNode's dateModified property has changed.
+   *
+   * @param aNode
+   *        a result node
+   * @param aNewValue
+   *        the new value of the dateModified property
+   */
+  void nodeLastModifiedChanged(in nsINavHistoryResultNode aNode,
+                               in PRTime aNewValue);
+
+  /**
+   * Called after a container changes state.
+   *
+   * @param aContainerNode
+   *        The container that has changed state.
+   * @param aOldState
+   *        The state that aContainerNode has transitioned out of.
+   * @param aNewState
+   *        The state that aContainerNode has transitioned into.
+   */
+  void containerStateChanged(in nsINavHistoryContainerResultNode aContainerNode,
+                             in unsigned long aOldState,
+                             in unsigned long aNewState);
+
+  /**
+   * Called when something significant has happened within the container. The
+   * contents of the container should be re-built.
+   *
+   * @param aContainerNode
+   *        the container node to invalidate
+   */
+  void invalidateContainer(in nsINavHistoryContainerResultNode aContainerNode);
+
+  /**
+   * This is called to indicate to the UI that the sort has changed to the
+   * given mode. For trees, for example, this would update the column headers
+   * to reflect the sorting. For many other types of views, this won't be
+   * applicable.
+   *
+   * @param sortingMode  One of nsINavHistoryQueryOptions.SORT_BY_* that
+   *                     indicates the new sorting mode.
+   *
+   * This only is expected to update the sorting UI. invalidateAll() will also
+   * get called if the sorting changes to update everything.
+   */
+  void sortingChanged(in unsigned short sortingMode);
+
+  /**
+   * This is called to indicate that a batch operation is about to start or end.
+   * The observer could want to disable some events or updates during batches,
+   * since multiple operations are packed in a short time.
+   * For example treeviews could temporarily suppress select notifications.
+   *
+   * @param aToggleMode
+   *        true if a batch is starting, false if it's ending.
+   */
+  void batching(in boolean aToggleMode);
+
+  /**
+   * Called by the result when this observer is added.
+   */
+  attribute nsINavHistoryResult result;
+};
+
+
+/**
+ * TODO: Bug 517719.
+ *
+ * A predefined view adaptor for interfacing results with an nsITree. This
+ * object will remove itself from its associated result when the tree has been
+ * detached. This prevents circular references. Users should be aware of this,
+ * if you want to re-use the same viewer, you will need to keep your own
+ * reference to it and re-initialize it when the tree changes. If you use this
+ * object, attach it to a result, never attach it to a tree, and forget about
+ * it, it will leak!
+ */
+[scriptable, uuid(f8b518c0-1faf-11df-8a39-0800200c9a66)]
+interface nsINavHistoryResultTreeViewer : nsINavHistoryResultObserver
+{
+  /**
+   * This allows you to get at the real node for a given row index. This is
+   * only valid when a tree is attached.
+   */
+  nsINavHistoryResultNode nodeForTreeIndex(in unsigned long aIndex);
+
+  /**
+   * Reverse of nodeForFlatIndex, returns the row index for a given result node.
+   * Returns INDEX_INVISIBLE if the item is not visible (for example, its
+   * parent is collapsed). This is only valid when a tree is attached. The
+   * the result will always be INDEX_INVISIBLE if not.
+   * 
+   * Note: This sounds sort of obvious, but it got me: aNode must be a node
+   *       retrieved from the same result that this viewer is for. If you 
+   *       execute another query and get a node from a _different_ result, this 
+   *       function will always return the index of that node in the tree that
+   *       is attached to that result.
+   */
+  const unsigned long INDEX_INVISIBLE = 0xffffffff;
+  unsigned long treeIndexForNode(in nsINavHistoryResultNode aNode);
+};
+
+
+/**
+ * The result of a history/bookmark query.
+ */
+[scriptable, uuid(c2229ce3-2159-4001-859c-7013c52f7619)]
+interface nsINavHistoryResult : nsISupports
+{
+  /**
+   * Sorts all nodes recursively by the given parameter, one of
+   * nsINavHistoryQueryOptions.SORT_BY_*  This will update the corresponding
+   * options for this result, so that re-using the current options/queries will
+   * always give you the current view.
+   */
+  attribute unsigned short sortingMode;
+
+  /**
+   * The annotation to use in SORT_BY_ANNOTATION_* sorting modes, set this
+   * before setting the sortingMode attribute.
+   */
+  attribute AUTF8String sortingAnnotation;
+
+  /**
+   * Whether or not notifications on result changes are suppressed.
+   * Initially set to false.
+   *
+   * Use this to avoid flickering and to improve performance when you
+   * do temporary changes to the result structure (e.g. when searching for a
+   * node recursively).
+   */
+  attribute boolean suppressNotifications;
+
+  /**
+   * Adds an observer for changes done in the result.
+   *
+   * @param aObserver
+   *        a result observer.
+   * @param aOwnsWeak
+   *        If false, the result will keep an owning reference to the observer,
+   *        which must be removed using removeObserver.
+   *        If true, the result will keep a weak reference to the observer, which
+   *        must implement nsISupportsWeakReference.
+   *
+   * @see nsINavHistoryResultObserver
+   */
+  void addObserver(in nsINavHistoryResultObserver aObserver, in boolean aOwnsWeak);
+
+  /**
+   * Removes an observer that was added by addObserver.
+   *
+   * @param aObserver
+   *        a result observer that was added by addObserver.
+   */
+  void removeObserver(in nsINavHistoryResultObserver aObserver);
+
+  /**
+   * This is the root of the results. Remember that you need to open all
+   * containers for their contents to be valid.
+   *
+   * When a result goes out of scope it will continue to observe changes till
+   * it is cycle collected.  While the result waits to be collected it will stay
+   * in memory, and continue to update itself, potentially causing unwanted
+   * additional work.  When you close the root node the result will stop
+   * observing changes, so it is good practice to close the root node when you
+   * are done with a result, since that will avoid unwanted performance hits.
+   */
+  readonly attribute nsINavHistoryContainerResultNode root;
+};
+
+
+/**
+ * Similar to nsIRDFObserver for history. Note that we don't pass the data
+ * source since that is always the global history.
+ *
+ * DANGER! If you are in the middle of a batch transaction, there may be a
+ * database transaction active. You can still access the DB, but be careful.
+ */
+[scriptable, uuid(0f0f45b0-13a1-44ae-a0ab-c6046ec6d4da)]
+interface nsINavHistoryObserver : nsISupports
+{
+  /**
+   * Notifies you that a bunch of things are about to change, don't do any
+   * heavy-duty processing until onEndUpdateBatch is called.
+   */
+  void onBeginUpdateBatch();
+
+  /**
+   * Notifies you that we are done doing a bunch of things and you should go
+   * ahead and update UI, etc.
+   */
+  void onEndUpdateBatch();
+
+  /**
+   * Called when a resource is visited. This is called the first time a
+   * resource (page, image, etc.) is seen as well as every subsequent time.
+   *
+   * Normally, transition types of TRANSITION_EMBED (corresponding to images in
+   * a page, for example) are not displayed in history results (unless
+   * includeHidden is set). Many observers can ignore _EMBED notifications
+   * (which will comprise the majority of visit notifications) to save work.
+   *
+   * @param aVisitID        ID of the visit that was just created.
+   * @param aTime           Time of the visit
+   * @param aSessionID      No longer supported (always set to 0).
+   * @param aReferringID    The ID of the visit the user came from. 0 if empty.
+   * @param aTransitionType One of nsINavHistory.TRANSITION_*
+   * @param aGUID           The unique ID associated with the page.
+   * @param aHidden         Whether the visited page is marked as hidden.
+   */
+  void onVisit(in nsIURI aURI,
+               in long long aVisitID,
+               in PRTime aTime,
+               in long long aSessionID,
+               in long long aReferringID,
+               in unsigned long aTransitionType,
+               in ACString aGUID,
+               in boolean aHidden);
+
+  /**
+   * Called whenever either the "real" title or the custom title of the page
+   * changed. BOTH TITLES ARE ALWAYS INCLUDED in this notification, even though
+   * only one will change at a time. Often, consumers will want to display the
+   * user title if it is available, and fall back to the page title (the one
+   * specified in the <title> tag of the page).
+   *
+   * Note that there is a difference between an empty title and a NULL title.
+   * An empty string means that somebody specifically set the title to be
+   * nothing. NULL means nobody set it. From C++: use IsVoid() and SetIsVoid()
+   * to see whether an empty string is "null" or not (it will always be an
+   * empty string in either case).
+   *
+   * @param aURI
+   *        The URI of the page.
+   * @param aPageTitle
+   *        The new title of the page.
+   * @param aGUID
+   *        The unique ID associated with the page.
+   */
+  void onTitleChanged(in nsIURI aURI,
+                      in AString aPageTitle,
+                      in ACString aGUID);
+
+  /**
+   * Called when an individual page's frecency has changed.
+   *
+   * This is not called for pages whose frecencies change as the result of some
+   * large operation where some large or unknown number of frecencies change at
+   * once.  Use onManyFrecenciesChanged to detect such changes.
+   *
+   * @param aURI
+   *        The page's URI.
+   * @param aNewFrecency
+   *        The page's new frecency.
+   * @param aGUID
+   *        The page's GUID.
+   * @param aHidden
+   *        True if the page is marked as hidden.
+   * @param aVisitDate
+   *        The page's last visit date.
+   */
+  void onFrecencyChanged(in nsIURI aURI,
+                         in long aNewFrecency,
+                         in ACString aGUID,
+                         in boolean aHidden,
+                         in PRTime aVisitDate);
+
+  /**
+   * Called when the frecencies of many pages have changed at once.
+   *
+   * onFrecencyChanged is not called for each of those pages.
+   */
+  void onManyFrecenciesChanged();
+
+  /**
+   * Removed by the user.
+   */
+  const unsigned short REASON_DELETED = 0;
+  /**
+   * Removed by automatic expiration.
+   */
+  const unsigned short REASON_EXPIRED = 1;
+
+  /**
+   * This page and all of its visits are being deleted. Note: the page may not
+   * necessarily have actually existed for this function to be called.
+   *
+   * Delete notifications are only 99.99% accurate. Batch delete operations
+   * must be done in two steps, so first come notifications, then a bulk
+   * delete. If there is some error in the middle (for example, out of memory)
+   * then you'll get a notification and it won't get deleted. There's no easy
+   * way around this.
+   *
+   * @param aURI
+   *        The URI that was deleted.
+   * @param aGUID
+   *        The unique ID associated with the page.
+   * @param aReason
+   *        Indicates the reason for the removal.  see REASON_* constants.
+   */
+  void onDeleteURI(in nsIURI aURI,
+                   in ACString aGUID,
+                   in unsigned short aReason);
+
+  /**
+   * Notification that all of history is being deleted.
+   */
+  void onClearHistory();
+
+  /**
+   * onPageChanged attribute indicating that favicon has been updated.
+   * aNewValue parameter will be set to the new favicon URI string.
+   */
+  const unsigned long ATTRIBUTE_FAVICON = 3;
+
+  /**
+   * An attribute of this page changed.
+   *
+   * @param aURI
+   *        The URI of the page on which an attribute changed.
+   * @param aChangedAttribute
+   *        The attribute whose value changed.  See ATTRIBUTE_* constants.
+   * @param aNewValue
+   *        The attribute's new value.
+   * @param aGUID
+   *        The unique ID associated with the page.
+   */
+  void onPageChanged(in nsIURI aURI,
+                     in unsigned long aChangedAttribute,
+                     in AString aNewValue,
+                     in ACString aGUID);
+
+  /**
+   * Called when some visits of an history entry are expired.
+   *
+   * @param aURI
+   *        The page whose visits have been expired.
+   * @param aVisitTime
+   *        The largest visit time in microseconds that has been expired.  We
+   *        guarantee that we don't have any visit older than this date.
+   * @param aGUID
+   *        The unique ID associated with the page.
+   *
+   * @note: when all visits for a page are expired and also the full page entry
+   *        is expired, you will only get an onDeleteURI notification.  If a
+   *        page entry is removed, then you can be sure that we don't have
+   *        anymore visits for it.
+   * @param aReason
+   *        Indicates the reason for the removal.  see REASON_* constants.
+   * @param aTransitionType
+   *        If it's a valid TRANSITION_* value, all visits of the specified type
+   *        have been removed.
+   */
+  void onDeleteVisits(in nsIURI aURI,
+                      in PRTime aVisitTime,
+                      in ACString aGUID,
+                      in unsigned short aReason,
+                      in unsigned long aTransitionType);
+};
+
+
+/**
+ * This object encapsulates all the query parameters you're likely to need
+ * when building up history UI. All parameters are ANDed together.
+ *
+ * This is not intended to be a super-general query mechanism. This was designed
+ * so that most queries can be done in only one SQL query. This is important
+ * because, if the user has their profile on a networked drive, query latency
+ * can be non-negligible.
+ */
+
+[scriptable, uuid(dc87ae79-22f1-4dcf-975b-852b01d210cb)]
+interface nsINavHistoryQuery : nsISupports
+{
+  /**
+   * Time range for results (INCLUSIVE). The *TimeReference is one of the
+   * constants TIME_RELATIVE_* which indicates how to interpret the
+   * corresponding time value.
+   *   TIME_RELATIVE_EPOCH (default):
+   *     The time is relative to Jan 1 1970 GMT, (this is a normal PRTime)
+   *   TIME_RELATIVE_TODAY:
+   *     The time is relative to this morning at midnight. Normally used for
+   *     queries relative to today. For example, a "past week" query would be
+   *     today-6 days -> today+1 day
+   *   TIME_RELATIVE_NOW:
+   *     The time is relative to right now.
+   *
+   * Note: PRTime is in MICROseconds since 1 Jan 1970. Javascript date objects
+   * are expressed in MILLIseconds since 1 Jan 1970.
+   *
+   * As a special case, a 0 time relative to TIME_RELATIVE_EPOCH indicates that
+   * the time is not part of the query. This is the default, so an empty query
+   * will match any time. The has* functions return whether the corresponding
+   * time is considered.
+   *
+   * You can read absolute*Time to get the time value that the currently loaded
+   * reference points + offset resolve to.
+   */
+  const unsigned long TIME_RELATIVE_EPOCH = 0;
+  const unsigned long TIME_RELATIVE_TODAY = 1;
+  const unsigned long TIME_RELATIVE_NOW = 2;
+
+  attribute PRTime beginTime;
+  attribute unsigned long beginTimeReference;
+  readonly attribute boolean hasBeginTime;
+  readonly attribute PRTime absoluteBeginTime;
+
+  attribute PRTime endTime;
+  attribute unsigned long endTimeReference;
+  readonly attribute boolean hasEndTime;
+  readonly attribute PRTime absoluteEndTime;
+
+  /**
+   * Text search terms.
+   */
+  attribute AString searchTerms;
+  readonly attribute boolean hasSearchTerms;
+
+  /**
+   * Set lower or upper limits for how many times an item has been
+   * visited.  The default is -1, and in that case all items are
+   * matched regardless of their visit count.
+   */
+  attribute long minVisits;
+  attribute long maxVisits;
+
+  /**
+   * When the set of transitions is nonempty, results are limited to pages which
+   * have at least one visit for each of the transition types.
+   * @note: For searching on more than one transition this can be very slow.
+   *
+   * Limit results to the specified list of transition types.
+   */
+  void setTransitions([const,array, size_is(count)] in unsigned long transitions,
+                      in unsigned long count);
+
+  /**
+   * Get the transitions set for this query.
+   */
+  void getTransitions([optional] out unsigned long count,
+                      [retval,array,size_is(count)] out unsigned long transitions);
+
+  /**
+   * Get the count of the set query transitions.
+   */
+  readonly attribute unsigned long transitionCount;
+
+  /**
+   * When set, returns only bookmarked items, when unset, returns anything. Setting this
+   * is equivalent to listing all bookmark folders in the 'folders' parameter.
+   */
+  attribute boolean onlyBookmarked;
+
+  /**
+   * This controls the meaning of 'domain', and whether it is an exact match
+   * 'domainIsHost' = true, or hierarchical (= false).
+   */
+  attribute boolean domainIsHost;
+
+  /**
+   * This is the host or domain name (controlled by domainIsHost). When
+   * domainIsHost, domain only does exact matching on host names. Otherwise,
+   * it will return anything whose host name ends in 'domain'.
+   *
+   * This one is a little different than most. Setting it to an empty string
+   * is a real query and will match any URI that has no host name (local files
+   * and such). Set this to NULL (in C++ use SetIsVoid) if you don't want
+   * domain matching.
+   */
+  attribute AUTF8String domain;
+  readonly attribute boolean hasDomain;
+
+  /**
+   * Controls the interpretation of 'uri'. When unset (default), the URI will
+   * request an exact match of the specified URI. When set, any history entry
+   * beginning in 'uri' will match. For example "http://bar.com/foo" will match
+   * "http://bar.com/foo" as well as "http://bar.com/foo/baz.gif".
+   */
+  attribute boolean uriIsPrefix;
+
+  /**
+   * This is a URI to match, to, for example, find out every time you visited
+   * a given URI. Use uriIsPrefix to control whether this is an exact match.
+   */
+  attribute nsIURI uri;
+  readonly attribute boolean hasUri;
+
+  /**
+   * Test for existence or non-existence of a given annotation. We don't
+   * currently support >1 annotation name per query. If 'annotationIsNot' is
+   * true, we test for the non-existence of the specified annotation.
+   *
+   * Testing for not annotation will do the same thing as a normal query and
+   * remove everything that doesn't have that annotation. Asking for things
+   * that DO have a given annotation is a little different. It also includes
+   * things that have never been visited. This allows place queries to be
+   * returned as well as anything else that may have been tagged with an
+   * annotation. This will only work for RESULTS_AS_URI since there will be
+   * no visits for these items.
+   */
+  attribute boolean annotationIsNot;
+  attribute AUTF8String annotation;
+  readonly attribute boolean hasAnnotation;
+
+  /**
+   * Limit results to items that are tagged with all of the given tags.  This
+   * attribute must be set to an array of strings.  When called as a getter it
+   * will return an array of strings sorted ascending in lexicographical order.
+   * The array may be empty in either case.  Duplicate tags may be specified
+   * when setting the attribute, but the getter returns only unique tags.
+   *
+   * To search for items that are tagged with any given tags rather than all,
+   * multiple queries may be passed to nsINavHistoryService.executeQueries().
+   */
+  attribute nsIVariant tags;
+
+  /**
+   * If 'tagsAreNot' is true, the results are instead limited to items that
+   * are not tagged with any of the given tags.  This attribute is used in
+   * conjunction with the 'tags' attribute.
+   */
+  attribute boolean tagsAreNot;
+
+  /**
+   * Limit results to items that are in all of the given folders.
+   */
+  void getFolders([optional] out unsigned long count,
+                  [retval,array,size_is(count)] out long long folders);
+  readonly attribute unsigned long folderCount;
+
+  /**
+   * For the special result type RESULTS_AS_TAG_CONTENTS we can define only
+   * one folder that must be a tag folder. This is not recursive so results
+   * will be returned from the first level of that folder.
+   */
+  void setFolders([const,array, size_is(folderCount)] in long long folders,
+                  in unsigned long folderCount);
+
+  /**
+   * Creates a new query item with the same parameters of this one.
+   */
+  nsINavHistoryQuery clone();
+};
+
+/**
+ * This object represents the global options for executing a query.
+ */
+[scriptable, uuid(8198dfa7-8061-4766-95cb-fa86b3c00a47)]
+interface nsINavHistoryQueryOptions : nsISupports
+{
+  /**
+   * You can ask for the results to be pre-sorted. Since the DB has indices
+   * of many items, it can produce sorted results almost for free. These should
+   * be self-explanatory.
+   *
+   * Note: re-sorting is slower, as is sorting by title or when you have a
+   * host name.
+   *
+   * For bookmark items, SORT_BY_NONE means sort by the natural bookmark order.
+   */
+  const unsigned short SORT_BY_NONE = 0;
+  const unsigned short SORT_BY_TITLE_ASCENDING = 1;
+  const unsigned short SORT_BY_TITLE_DESCENDING = 2;
+  const unsigned short SORT_BY_DATE_ASCENDING = 3;
+  const unsigned short SORT_BY_DATE_DESCENDING = 4;
+  const unsigned short SORT_BY_URI_ASCENDING = 5;
+  const unsigned short SORT_BY_URI_DESCENDING = 6;
+  const unsigned short SORT_BY_VISITCOUNT_ASCENDING = 7;
+  const unsigned short SORT_BY_VISITCOUNT_DESCENDING = 8;
+  const unsigned short SORT_BY_KEYWORD_ASCENDING = 9;
+  const unsigned short SORT_BY_KEYWORD_DESCENDING = 10;
+  const unsigned short SORT_BY_DATEADDED_ASCENDING = 11;
+  const unsigned short SORT_BY_DATEADDED_DESCENDING = 12;
+  const unsigned short SORT_BY_LASTMODIFIED_ASCENDING = 13;
+  const unsigned short SORT_BY_LASTMODIFIED_DESCENDING = 14;
+  const unsigned short SORT_BY_TAGS_ASCENDING = 17;
+  const unsigned short SORT_BY_TAGS_DESCENDING = 18;
+  const unsigned short SORT_BY_ANNOTATION_ASCENDING = 19;
+  const unsigned short SORT_BY_ANNOTATION_DESCENDING = 20;
+  const unsigned short SORT_BY_FRECENCY_ASCENDING = 21;
+  const unsigned short SORT_BY_FRECENCY_DESCENDING = 22;
+
+  /**
+   * "URI" results, one for each URI visited in the range. Individual result
+   * nodes will be of type "URI".
+   */
+  const unsigned short RESULTS_AS_URI = 0;
+
+  /**
+   * "Visit" results, with one for each time a page was visited (this will
+   * often give you multiple results for one URI). Individual result nodes will
+   * have type "Visit"
+   *
+   * @note This result type is only supported by QUERY_TYPE_HISTORY.
+   */
+  const unsigned short RESULTS_AS_VISIT = 1;
+
+  /**
+   * This is identical to RESULT_TYPE_VISIT except that individual result nodes
+   * will have type "FullVisit".  This is used for the attributes that are not
+   * commonly accessed to save space in the common case (the lists can be very
+   * long).
+   *
+   * @note Not yet implemented. See bug 409662.
+   * @note This result type is only supported by QUERY_TYPE_HISTORY.
+   */
+  const unsigned short RESULTS_AS_FULL_VISIT = 2;
+
+  /**
+   * This returns query nodes for each predefined date range where we 
+   * had visits. The node contains information how to load its content:
+   * - visits for the given date range will be loaded.
+   *
+   * @note This result type is only supported by QUERY_TYPE_HISTORY.
+   */
+  const unsigned short RESULTS_AS_DATE_QUERY = 3;
+
+  /**
+   * This returns nsINavHistoryQueryResultNode nodes for each site where we 
+   * have visits. The node contains information how to load its content:
+   * - last visit for each url in the given host will be loaded.
+   *
+   * @note This result type is only supported by QUERY_TYPE_HISTORY.
+   */
+  const unsigned short RESULTS_AS_SITE_QUERY = 4;
+
+  /**
+   * This returns nsINavHistoryQueryResultNode nodes for each day where we 
+   * have visits. The node contains information how to load its content:
+   * - list of hosts visited in the given period will be loaded.
+   *
+   * @note This result type is only supported by QUERY_TYPE_HISTORY.
+   */
+  const unsigned short RESULTS_AS_DATE_SITE_QUERY = 5;
+
+  /**
+   * This returns nsINavHistoryQueryResultNode nodes for each tag.
+   * The node contains information how to load its content:
+   * - list of bookmarks with the given tag will be loaded.
+   *
+   * @note Setting this resultType will force queryType to QUERY_TYPE_BOOKMARKS.
+   */
+  const unsigned short RESULTS_AS_TAG_QUERY = 6;
+
+  /**
+   * This is a container with an URI result type that contains the last
+   * modified bookmarks for the given tag.
+   * Tag folder id must be defined in the query.
+   *
+   * @note Setting this resultType will force queryType to QUERY_TYPE_BOOKMARKS.
+   */
+  const unsigned short RESULTS_AS_TAG_CONTENTS = 7;
+
+  /**
+   * The sorting mode to be used for this query.
+   * mode is one of SORT_BY_*
+   */
+  attribute unsigned short sortingMode;
+
+  /**
+   * The annotation to use in SORT_BY_ANNOTATION_* sorting modes.
+   */
+  attribute AUTF8String sortingAnnotation;
+
+  /**
+   * Sets the result type. One of RESULT_TYPE_* which includes how URIs are
+   * represented.
+   */
+  attribute unsigned short resultType;
+
+  /**
+   * This option excludes all URIs and separators from a bookmarks query.
+   * This would be used if you just wanted a list of bookmark folders and
+   * queries (such as the left pane of the places page).
+   * Defaults to false.
+   */
+  attribute boolean excludeItems;
+
+  /**
+   * Set to true to exclude queries ("place:" URIs) from the query results.
+   * Simple folder queries (bookmark folder symlinks) will still be included.
+   * Defaults to false.
+   */
+  attribute boolean excludeQueries;
+
+  /**
+   * Set to true to exclude read-only folders from the query results. This is
+   * designed for cases where you want to give the user the option of filing
+   * something into a list of folders. It only affects cases where the actual
+   * folder result node would appear in its parent folder and filters it out.
+   * It doesn't affect the query at all, and doesn't affect more complex
+   * queries (such as "folders with annotation X").
+   */
+  attribute boolean excludeReadOnlyFolders;
+
+  /**
+   * When set, allows items with "place:" URIs to appear as containers,
+   * with the container's contents filled in from the stored query.
+   * If not set, these will appear as normal items. Doesn't do anything if
+   * excludeQueries is set. Defaults to false.
+   *
+   * Note that this has no effect on folder links, which are place: URIs
+   * returned by nsINavBookmarkService.GetFolderURI. These are always expanded
+   * and will appear as bookmark folders.
+   */
+  attribute boolean expandQueries;
+
+  /**
+   * Some pages in history are marked "hidden" and thus don't appear by default
+   * in queries.  These include automatic framed visits and redirects.  Setting
+   * this attribute will return all pages, even hidden ones.  Does nothing for
+   * bookmark queries. Defaults to false.
+   */
+  attribute boolean includeHidden;
+
+  /**
+   * This is the maximum number of results that you want. The query is exeucted,
+   * the results are sorted, and then the top 'maxResults' results are taken
+   * and returned. Set to 0 (the default) to get all results.
+   *
+   * THIS DOES NOT WORK IN CONJUNCTION WITH SORTING BY TITLE. This is because
+   * sorting by title requires us to sort after using locale-sensetive sorting
+   * (as opposed to letting the database do it for us).
+   *
+   * Instead, we get the result ordered by date, pick the maxResult most recent
+   * ones, and THEN sort by title.
+   */
+  attribute unsigned long maxResults;
+
+  const unsigned short QUERY_TYPE_HISTORY = 0;
+  const unsigned short QUERY_TYPE_BOOKMARKS = 1;
+  /* Unified queries are not yet implemented. See bug 378798 */
+  const unsigned short QUERY_TYPE_UNIFIED = 2;
+
+  /**
+   * The type of search to use when querying the DB; This attribute is only
+   * honored by query nodes. It is silently ignored for simple folder queries.
+   */
+  attribute unsigned short queryType;
+
+  /**
+   * When this is true, the root container node generated by these options and
+   * its descendant containers will be opened asynchronously if they support it.
+   * This is false by default.
+   *
+   * @note Currently only bookmark folder containers support being opened
+   *       asynchronously.
+   */
+  attribute boolean asyncEnabled;
+
+  /**
+   * Creates a new options item with the same parameters of this one.
+   */
+  nsINavHistoryQueryOptions clone();
+};
+
+[scriptable, uuid(baebc597-9daf-4103-a325-e41ef9e7608a)]
+interface nsINavHistoryService : nsISupports
+{
+  /**
+   * System Notifications:
+   *
+   * places-init-complete - Sent once the History service is completely
+   *                        initialized successfully.
+   * places-database-locked - Sent if initialization of the History service
+   *                          failed due to the inability to open the places.sqlite
+   *                          for access reasons.
+   */
+
+  /**
+   * This transition type means the user followed a link and got a new toplevel
+   * window.
+   */
+  const unsigned long TRANSITION_LINK = 1;
+
+  /**
+   * This transition type means that the user typed the page's URL in the
+   * URL bar or selected it from URL bar autocomplete results, clicked on
+   * it from a history query (from the History sidebar, History menu, 
+   * or history query in the personal toolbar or Places organizer.
+   */
+  const unsigned long TRANSITION_TYPED = 2;
+
+  /**
+   * This transition is set when the user followed a bookmark to get to the
+   * page.
+   */
+  const unsigned long TRANSITION_BOOKMARK = 3;
+
+  /**
+   * This transition type is set when some inner content is loaded. This is
+   * true of all images on a page, and the contents of the iframe. It is also
+   * true of any content in a frame if the user did not explicitly follow
+   * a link to get there.
+   */
+  const unsigned long TRANSITION_EMBED = 4;
+
+  /**
+   * Set when the transition was a permanent redirect.
+   */
+  const unsigned long TRANSITION_REDIRECT_PERMANENT = 5;
+
+  /**
+   * Set when the transition was a temporary redirect.
+   */
+  const unsigned long TRANSITION_REDIRECT_TEMPORARY = 6;
+
+  /**
+   * Set when the transition is a download.
+   */
+  const unsigned long TRANSITION_DOWNLOAD = 7;
+
+  /**
+   * This transition type means the user followed a link and got a visit in
+   * a frame.
+   */
+  const unsigned long TRANSITION_FRAMED_LINK = 8;
+
+  /**
+   * Set when database is coherent
+   */
+  const unsigned short DATABASE_STATUS_OK = 0;
+
+  /**
+   * Set when database did not exist and we created a new one
+   */
+  const unsigned short DATABASE_STATUS_CREATE = 1;
+
+  /**
+   * Set when database was corrupt and we replaced it
+   */
+  const unsigned short DATABASE_STATUS_CORRUPT = 2;
+
+  /**
+   * Set when database schema has been upgraded
+   */
+  const unsigned short DATABASE_STATUS_UPGRADED = 3;
+
+  /**
+   * Returns the current database status
+   */
+  readonly attribute unsigned short databaseStatus;
+
+  /**
+   * True if there is any history. This can be used in UI to determine whether
+   * the "clear history" button should be enabled or not. This is much better
+   * than using BrowserHistory.count since that can be very slow if there is
+   * a lot of history (it must enumerate each item). This is pretty fast.
+   */
+  readonly attribute boolean hasHistoryEntries;
+
+  /**
+   * Gets the original title of the page.
+   * @deprecated use mozIAsyncHistory.getPlacesInfo instead.
+   */
+  AString getPageTitle(in nsIURI aURI);
+
+  /**
+   * This is just like markPageAsTyped (in nsIBrowserHistory, also implemented
+   * by the history service), but for bookmarks. It declares that the given URI
+   * is being opened as a result of following a bookmark. If this URI is loaded
+   * soon after this message has been received, that transition will be marked
+   * as following a bookmark.
+   */
+  void markPageAsFollowedBookmark(in nsIURI aURI);
+
+  /**
+   * Designates the url as having been explicitly typed in by the user.
+   *
+   * @param aURI
+   *        URI of the page to be marked.
+   */
+  void markPageAsTyped(in nsIURI aURI);
+
+  /**
+   * Designates the url as coming from a link explicitly followed by
+   * the user (for example by clicking on it).
+   *
+   * @param aURI
+   *        URI of the page to be marked.
+   */
+  void markPageAsFollowedLink(in nsIURI aURI);
+
+  /**
+   * Gets the stored character-set for an URI.
+   *
+   * @param aURI
+   *        URI to retrieve character-set for
+   * @return character-set, empty string if not found
+   */
+  AString getCharsetForURI(in nsIURI aURI);
+
+  /**
+   * Sets the character-set for an URI.
+   *
+   * @param aURI
+   *        URI to set the character-set for
+   * @param aCharset
+   *        character-set to be set
+   */
+  void setCharsetForURI(in nsIURI aURI, in AString aCharset);
+
+  /**
+   * Returns true if this URI would be added to the history. You don't have to
+   * worry about calling this, adding a visit will always check before
+   * actually adding the page. This function is public because some components
+   * may want to check if this page would go in the history (i.e. for
+   * annotations).
+   */
+  boolean canAddURI(in nsIURI aURI);
+
+  /**
+   * This returns a new query object that you can pass to executeQuer[y/ies].
+   * It will be initialized to all empty (so using it will give you all history).
+   */
+  nsINavHistoryQuery getNewQuery();
+
+  /**
+   * This returns a new options object that you can pass to executeQuer[y/ies]
+   * after setting the desired options.
+   */
+  nsINavHistoryQueryOptions getNewQueryOptions();
+
+  /**
+   * Executes a single query.
+   */
+  nsINavHistoryResult executeQuery(in nsINavHistoryQuery aQuery,
+                                   in nsINavHistoryQueryOptions options);
+
+  /**
+   * Executes an array of queries. All of the query objects are ORed
+   * together. Within a query, all the terms are ANDed together as in
+   * executeQuery. See executeQuery()
+   */
+  nsINavHistoryResult executeQueries(
+    [array,size_is(aQueryCount)] in nsINavHistoryQuery aQueries,
+    in unsigned long aQueryCount,
+    in nsINavHistoryQueryOptions options);
+
+  /**
+   * Converts a query URI-like string to an array of actual query objects for
+   * use to executeQueries(). The output query array may be empty if there is
+   * no information. However, there will always be an options structure returned
+   * (if nothing is defined, it will just have the default values).
+   */
+  void queryStringToQueries(in AUTF8String aQueryString,
+    [array, size_is(aResultCount)] out nsINavHistoryQuery aQueries,
+    out unsigned long aResultCount,
+    out nsINavHistoryQueryOptions options);
+
+  /**
+   * Converts a query into an equivalent string that can be persisted. Inverse
+   * of queryStringToQueries()
+   */
+  AUTF8String queriesToQueryString(
+    [array, size_is(aQueryCount)] in nsINavHistoryQuery aQueries,
+    in unsigned long aQueryCount,
+    in nsINavHistoryQueryOptions options);
+
+  /**
+   * Adds a history observer. If ownsWeak is false, the history service will
+   * keep an owning reference to the observer.  If ownsWeak is true, then
+   * aObserver must implement nsISupportsWeakReference, and the history service
+   * will keep a weak reference to the observer.
+   */
+  void addObserver(in nsINavHistoryObserver observer, in boolean ownsWeak);
+
+  /**
+   * Removes a history observer.
+   */
+  void removeObserver(in nsINavHistoryObserver observer);
+
+  /**
+   * Runs the passed callback in batch mode. Use this when a lot of things
+   * are about to change. Calls can be nested, observers will only be
+   * notified when all batches begin/end.
+   *
+   * @param aCallback
+   *        nsINavHistoryBatchCallback interface to call.
+   * @param aUserData
+   *        Opaque parameter passed to nsINavBookmarksBatchCallback
+   */
+  void runInBatchMode(in nsINavHistoryBatchCallback aCallback,
+                      in nsISupports aClosure);
+
+  /** 
+   * True if history is disabled. currently, 
+   * history is disabled if the places.history.enabled pref is false.
+   */
+  readonly attribute boolean historyDisabled;
+};
+
+/**
+ * @see runInBatchMode of nsINavHistoryService/nsINavBookmarksService
+ */
+[scriptable, uuid(5143f2bb-be0a-4faf-9acb-b0ed3f82952c)]
+interface nsINavHistoryBatchCallback : nsISupports {
+  void runBatched(in nsISupports aUserData);
+};

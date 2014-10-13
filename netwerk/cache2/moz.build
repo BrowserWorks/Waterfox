@@ -1,0 +1,61 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+XPIDL_SOURCES += [
+    'nsICacheEntry.idl',
+    'nsICacheEntryDoomCallback.idl',
+    'nsICacheEntryOpenCallback.idl',
+    'nsICacheStorage.idl',
+    'nsICacheStorageService.idl',
+    'nsICacheStorageVisitor.idl',
+]
+
+XPIDL_MODULE = 'necko_cache2'
+
+EXPORTS += [
+    'CacheObserver.h',
+    'CacheStorageService.h',
+]
+
+UNIFIED_SOURCES += [
+    'CacheHashUtils.cpp',
+    'CacheIOThread.cpp',
+    'CacheObserver.cpp',
+]
+
+# AppCacheStorage.cpp cannot be built in unified mode because it uses plarena.h.
+# The rest of these files cannot be built in unified mode because they rely oni
+# including prlog.h after nsCache.h.
+SOURCES += [
+    'AppCacheStorage.cpp',
+    'CacheEntry.cpp',
+    'CacheFile.cpp',
+    'CacheFileChunk.cpp',
+    'CacheFileContextEvictor.cpp',
+    'CacheFileInputStream.cpp',
+    'CacheFileIOManager.cpp',
+    'CacheFileMetadata.cpp',
+    'CacheFileOutputStream.cpp',
+    'CacheFileUtils.cpp',
+    'CacheIndex.cpp',
+    'CacheIndexContextIterator.cpp',
+    'CacheIndexIterator.cpp',
+    'CacheLog.cpp',
+    'CacheStorage.cpp',
+    'CacheStorageService.cpp',
+    'OldWrappers.cpp',
+]
+
+LOCAL_INCLUDES += [
+    '../base/src',
+    '../cache',
+]
+
+FAIL_ON_WARNINGS = True
+
+MSVC_ENABLE_PGO = True
+
+FINAL_LIBRARY = 'necko'

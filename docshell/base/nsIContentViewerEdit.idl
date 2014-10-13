@@ -1,0 +1,30 @@
+/* -*- Mode: IDL; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+[scriptable, uuid(AF13EA3A-D488-4308-B843-526E055AB943)]
+interface nsIContentViewerEdit : nsISupports
+{
+	void clearSelection();
+	void selectAll();
+
+	void copySelection();
+	readonly attribute boolean copyable;
+
+	void copyLinkLocation();
+	readonly attribute boolean inLink;
+
+	const long COPY_IMAGE_TEXT = 0x0001;
+	const long COPY_IMAGE_HTML = 0x0002;
+	const long COPY_IMAGE_DATA = 0x0004;
+	const long COPY_IMAGE_ALL = -1;
+	void copyImage(in long aCopyFlags);
+	readonly attribute boolean inImage;
+
+	AString getContents(in string aMimeType, in boolean aSelectionOnly);
+	readonly attribute boolean canGetContents;
+};

@@ -1,0 +1,67 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Test OfflineAudioContext</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript" src="webaudio.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+</head>
+<body>
+<pre id="test">
+<script class="testbody" type="text/javascript">
+
+SimpleTest.waitForExplicitFinish();
+addLoadEvent(function() {
+  var ctx = new OfflineAudioContext(2, 100, 22050);
+  ok(ctx instanceof EventTarget, "OfflineAudioContexts must be EventTargets");
+
+  var buf = ctx.createBuffer(2, 100, ctx.sampleRate);
+  for (var i = 0; i < 2; ++i) {
+    for (var j = 0; j < 100; ++j) {
+      buf.getChannelData(i)[j] = Math.sin(2 * Math.PI * 200 * j / ctx.sampleRate);
+    }
+  }
+
+  expectException(function() {
+    ctx.createMediaStreamDestination();
+  }, DOMException.NOT_SUPPORTED_ERR);
+
+  expectException(function() {
+    new OfflineAudioContext(2, 100, 0);
+  }, DOMException.NOT_SUPPORTED_ERR);
+  expectException(function() {
+    new OfflineAudioContext(2, 100, -1);
+  }, DOMException.NOT_SUPPORTED_ERR);
+  expectException(function() {
+    new OfflineAudioContext(0, 100, 44100);
+  }, DOMException.NOT_SUPPORTED_ERR);
+  new OfflineAudioContext(32, 100, 44100);
+  expectException(function() {
+    new OfflineAudioContext(33, 100, 44100);
+  }, DOMException.NOT_SUPPORTED_ERR);
+  expectException(function() {
+    new OfflineAudioContext(2, 0, 44100);
+  }, DOMException.NOT_SUPPORTED_ERR);
+
+  var src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.start(0);
+  src.connect(ctx.destination);
+  ctx.startRendering();
+  ctx.addEventListener("complete", function(e) {
+    ok(e instanceof OfflineAudioCompletionEvent, "Correct event received");
+    is(e.renderedBuffer.numberOfChannels, 2, "Correct expected number of buffers");
+    compareBuffers(e.renderedBuffer, buf);
+
+    expectException(function() {
+      ctx.startRendering();
+    }, DOMException.INVALID_STATE_ERR);
+
+    SimpleTest.finish();
+  }, false);
+});
+
+</script>
+</pre>
+</body>
+</html>

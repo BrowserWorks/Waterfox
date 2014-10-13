@@ -1,0 +1,130 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+XPIDL_SOURCES += [
+    'nsPIWidgetCocoa.idl',
+]
+
+XPIDL_MODULE = 'widget_cocoa'
+
+EXPORTS += [
+    'mozView.h',
+    'nsChangeObserver.h',
+    'nsCocoaFeatures.h',
+    'nsCocoaUtils.h',
+]
+
+LIBRARY_NAME = 'widget_mac'
+
+UNIFIED_SOURCES += [
+    'GfxInfo.mm',
+    'NativeKeyBindings.mm',
+    'nsAppShell.mm',
+    'nsBidiKeyboard.mm',
+    'nsCocoaFeatures.mm',
+    'nsCocoaUtils.mm',
+    'nsCocoaWindow.mm',
+    'nsColorPicker.mm',
+    'nsCursorManager.mm',
+    'nsDeviceContextSpecX.mm',
+    'nsFilePicker.mm',
+    'nsIdleServiceX.mm',
+    'nsLookAndFeel.mm',
+    'nsMacCursor.mm',
+    'nsMacDockSupport.mm',
+    'nsMacWebAppUtils.mm',
+    'nsMenuBarX.mm',
+    'nsMenuGroupOwnerX.mm',
+    'nsMenuItemIconX.mm',
+    'nsMenuItemX.mm',
+    'nsMenuUtilsX.mm',
+    'nsMenuX.mm',
+    'nsNativeThemeCocoa.mm',
+    'nsPrintDialogX.mm',
+    'nsPrintOptionsX.mm',
+    'nsPrintSettingsX.mm',
+    'nsScreenCocoa.mm',
+    'nsScreenManagerCocoa.mm',
+    'nsSound.mm',
+    'nsStandaloneNativeMenu.mm',
+    'nsToolkit.mm',
+    'nsWidgetFactory.mm',
+    'nsWindowMap.mm',
+    'OSXNotificationCenter.mm',
+    'WidgetTraceEvent.mm',
+]
+
+# These files cannot be built in unified mode because they force NSPR logging.
+SOURCES += [
+    'nsChildView.mm',
+    'nsClipboard.mm',
+    'nsDragService.mm',
+    'TextInputHandler.mm',
+]
+
+if CONFIG['TARGET_CPU'] == 'x86_64':
+    UNIFIED_SOURCES += [
+        'ComplexTextInputPanel.mm',
+    ]
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+FINAL_LIBRARY = 'xul'
+LOCAL_INCLUDES += [
+    '../shared',
+    '../xpwidgets',
+    '/layout/forms',
+    '/layout/generic',
+    '/layout/xul',
+]
+
+RESOURCE_FILES.cursors += [
+    'cursors/arrowN.png',
+    'cursors/arrowN@2x.png',
+    'cursors/arrowS.png',
+    'cursors/arrowS@2x.png',
+    'cursors/cell.png',
+    'cursors/cell@2x.png',
+    'cursors/colResize.png',
+    'cursors/colResize@2x.png',
+    'cursors/help.png',
+    'cursors/help@2x.png',
+    'cursors/move.png',
+    'cursors/move@2x.png',
+    'cursors/rowResize.png',
+    'cursors/rowResize@2x.png',
+    'cursors/sizeNE.png',
+    'cursors/sizeNE@2x.png',
+    'cursors/sizeNESW.png',
+    'cursors/sizeNESW@2x.png',
+    'cursors/sizeNS.png',
+    'cursors/sizeNS@2x.png',
+    'cursors/sizeNW.png',
+    'cursors/sizeNW@2x.png',
+    'cursors/sizeNWSE.png',
+    'cursors/sizeNWSE@2x.png',
+    'cursors/sizeSE.png',
+    'cursors/sizeSE@2x.png',
+    'cursors/sizeSW.png',
+    'cursors/sizeSW@2x.png',
+    'cursors/vtIBeam.png',
+    'cursors/vtIBeam@2x.png',
+    'cursors/zoomIn.png',
+    'cursors/zoomIn@2x.png',
+    'cursors/zoomOut.png',
+    'cursors/zoomOut@2x.png',
+]
+
+# These resources go in $(DIST)/bin/res/MainMenu.nib, but we can't use a magic
+# RESOURCE_FILES.MainMenu.nib attribute, since that would put the files in
+# $(DIST)/bin/res/MainMenu/nib. Instead, we call __setattr__ directly to create
+# an attribute with the correct name.
+RESOURCE_FILES.__setattr__('MainMenu.nib', [
+    'resources/MainMenu.nib/classes.nib',
+    'resources/MainMenu.nib/info.nib',
+    'resources/MainMenu.nib/keyedobjects.nib',
+])
+

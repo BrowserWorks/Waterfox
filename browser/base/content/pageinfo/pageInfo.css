@@ -1,0 +1,26 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+
+#viewGroup > radio {
+  -moz-binding: url("chrome://browser/content/pageinfo/pageInfo.xml#viewbutton");
+}
+
+richlistitem[feed] {
+  -moz-binding: url("chrome://browser/content/pageinfo/feeds.xml#feed");
+}
+
+richlistitem[feed]:not([selected="true"]) .feed-subscribe {
+  display: none;
+}
+
+groupbox[closed="true"] > .groupbox-body { 
+  visibility: collapse;
+}
+
+#thepreviewimage {
+  display: block;
+/* This following entry can be removed when Bug 522850 is fixed. */
+  min-width: 1px;
+}

@@ -1,0 +1,99 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* ===== checkbox.css ===================================================
+  == Styles used by the XUL checkbox element.
+  ======================================================================= */
+
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+
+/* ::::: checkbox ::::: */
+
+checkbox {
+  -moz-appearance: checkbox-container;
+  margin: 2px 4px;
+  border-left: 2px transparent;
+  border-right: 2px transparent;
+}
+
+/* With native theming on, the spacer-box paints the check mark and includes
+   the spacing to the right, so that oversized checkbox images can slop over
+   into the space.
+
+   If we need to disable checkbox theming, the spacer box no longer paints
+   the check mark, but its fallback CSS border supplies the padding between
+   the mark and the label.  The xul:image then takes over painting the check
+   mark. */
+
+.checkbox-spacer-box {
+  -moz-appearance: checkbox;
+  -moz-box-align: center;
+  margin: 2px;
+  border-right: 2px solid transparent;
+}
+
+.checkbox-label-center-box {
+  -moz-box-align: center;
+}
+
+.checkbox-label-box {
+  -moz-appearance: checkbox-label;
+}
+
+.checkbox-icon[src] {
+  -moz-margin-end: 2px;
+}
+
+.checkbox-label {
+  margin: 0 !important;
+}
+
+/* ..... focused state ..... */
+
+checkbox:focus > .checkbox-label-center-box > .checkbox-label-box {
+  border: 1px dotted ThreeDDarkShadow;
+}
+
+/* ..... disabled state ..... */
+
+checkbox[disabled="true"] > .checkbox-spacer-box > .checkbox-check {
+  background-color: -moz-Dialog;
+}
+
+checkbox[disabled="true"] {
+  color: GrayText;
+}
+
+/* ::::: checkmark image ::::: */
+
+.checkbox-check {
+  border: 2px solid;
+  -moz-border-top-colors: ThreeDShadow ThreeDDarkShadow;
+  -moz-border-right-colors: ThreeDHighlight ThreeDLightShadow;
+  -moz-border-bottom-colors: ThreeDHighlight ThreeDLightShadow;
+  -moz-border-left-colors: ThreeDShadow ThreeDDarkShadow;
+  min-width: 13px;
+  min-height: 13px;
+  background: -moz-Field no-repeat 50% 50%;
+}
+
+checkbox:not([disabled="true"]):hover {
+  color: -moz-buttonhovertext;
+  text-shadow: none;
+}
+
+checkbox:hover:active > .checkbox-spacer-box > .checkbox-check {
+  background-color: -moz-Dialog;
+}
+
+/* ..... checked state ..... */
+
+checkbox[checked="true"] > .checkbox-spacer-box > .checkbox-check {
+  background-image: url("chrome://global/skin/checkbox/cbox-check.gif");
+}
+
+checkbox[checked="true"][disabled="true"] > .checkbox-spacer-box > .checkbox-check {
+  background-image: url("chrome://global/skin/checkbox/cbox-check-dis.gif") !important
+}
+

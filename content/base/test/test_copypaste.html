@@ -1,0 +1,92 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+-->
+<head>
+  <title>Test for copy/paste</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript" src="copypaste.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+</head>
+<body>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=524975">Mozilla Bug </a>
+<p id="display"></p>
+<div id="content" style="display: none">
+</div>
+<pre id="test">
+<script class="testbody" type="text/javascript">
+
+SimpleTest.waitForExplicitFinish();
+addLoadEvent(function () testCopyPaste(false));
+
+</script>
+</pre>
+<div>
+
+  <div id="draggable" title="title to have a long HTML line">This is a <em>draggable</em> bit of text.</div>
+  <textarea id="input" cols="40" rows="10"></textarea>
+
+  <div id="alist">
+    bla
+    <ul>
+      <li>foo</li>
+      <li style="display: none;">baz</li>
+      <li>bar</li>
+    </ul>
+  </div>
+
+  <div id="blist">
+    mozilla
+    <ol>
+      <li>foo</li>
+      <li style="display: none;">baz</li>
+      <li>bar</li>
+    </ol>
+  </div>
+
+  <div id="clist">
+    mzla
+    <ul>
+      <li>foo<ul>
+        <li>bazzinga!</li>
+      </ul></li>
+      <li style="display: none;">baz</li>
+      <li>bar</li>
+    </ul>
+  </div>
+
+<div id="div4">
+  T<textarea>t t t</textarea>
+</div>
+
+<div id="div5">
+  T<textarea>     </textarea>
+</div>
+
+<div id="div6" style="display:none"></div>
+<script>
+var x = $("div6")
+x.appendChild(document.createTextNode('di'))
+x.appendChild(document.createTextNode('v6'))
+</script>
+
+<div id="div7" style="display:none">div7</div>
+<div id="div8" style="visibility:hidden">div8</div>
+<div style="visibility:hidden"><div id="div9" style="visibility:visible">div9</div></div>
+<div style="visibility:hidden"><div><div><div id="div10"></div></div></div></div>
+<script>
+var x = $("div10")
+x.appendChild(document.createTextNode('div'))
+x.appendChild(document.createTextNode('10'))
+</script>
+
+<div id="div11" oncopy="modifySelection('X')"><span>div</span>11</div>
+<div id="div12" oncopy="modifySelection('X<b style=\'display:none\'>Y</b>')"><span>div</span>12</div>
+
+<div id="div13">_<noscript>FAIL</noscript>_</div>
+
+<table><tr id=tr1><td>foo</td><td>bar</td></tr></table>
+
+</div>
+</body>
+</html>

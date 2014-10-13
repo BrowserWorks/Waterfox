@@ -1,0 +1,51 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Test for Login Manager</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>  
+  <script type="text/javascript" src="pwmgr_common.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+</head>
+<body>
+Login Manager test: form with JS submit action
+<script>
+SimpleTest.waitForExplicitFinish();
+var pwmgr = SpecialPowers.Cc["@mozilla.org/login-manager;1"]
+                         .getService(SpecialPowers.Ci.nsILoginManager);
+var jslogin = SpecialPowers.Cc["@mozilla.org/login-manager/loginInfo;1"]
+                           .createInstance(SpecialPowers.Ci.nsILoginInfo);
+jslogin.init("http://mochi.test:8888", "javascript:", null,
+              "jsuser", "jspass123", "uname", "pword");
+pwmgr.addLogin(jslogin);
+
+/** Test for Login Manager: JS action URL **/
+
+function startTest() {
+    checkForm(1, "jsuser", "jspass123");
+
+    pwmgr.removeLogin(jslogin);
+    SimpleTest.finish();
+}
+
+window.onload = startTest;
+</script>
+
+<p id="display"></p>
+
+<div id="content" style="display: none">
+
+
+<form id='form1' action='javascript:alert("never shows")'> 1
+    <input name="uname">
+    <input name="pword" type="password">
+
+    <button type='submit'>Submit</button>
+    <button type='reset'> Reset </button>
+</form>
+
+</div>
+
+<pre id="test"></pre>
+</body>
+</html>
+

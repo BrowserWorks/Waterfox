@@ -1,0 +1,830 @@
+%if 0
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+%endif
+%filter substitution
+%define smallSeparatorDark linear-gradient(transparent 15%, #5a6169 15%, #5a6169 85%, transparent 85%)
+%define smallSeparatorLight linear-gradient(transparent 15%, #aaa 15%, #aaa 85%, transparent 85%)
+%define solidSeparatorDark linear-gradient(#2d5b7d, #2d5b7d)
+%define solidSeparatorLight linear-gradient(#aaa, #aaa)
+
+
+.devtools-toolbar {
+  -moz-appearance: none;
+  padding: 4px 3px;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+}
+
+.devtools-menulist,
+.devtools-toolbarbutton {
+  -moz-appearance: none;
+  -moz-box-align: center;
+  min-width: 78px;
+  min-height: 22px;
+  text-shadow: none;
+  border: 1px solid hsla(210,8%,5%,.45);
+  border-radius: 3px;
+  margin: 0 3px;
+}
+
+.devtools-menulist:-moz-focusring,
+.devtools-toolbarbutton:-moz-focusring {
+  outline: 1px dotted hsla(210,30%,85%,0.7);
+  outline-offset: -4px;
+}
+
+.devtools-toolbarbutton > .toolbarbutton-icon {
+  margin: 0;
+}
+
+.devtools-toolbarbutton:not([label]) {
+  min-width: 32px;
+}
+
+.devtools-toolbarbutton:not([label]) > .toolbarbutton-text {
+  display: none;
+}
+
+.devtools-toolbarbutton > .toolbarbutton-menubutton-button {
+  -moz-box-orient: horizontal;
+}
+
+.theme-dark .devtools-menulist,
+.theme-dark .devtools-toolbarbutton {
+  background: linear-gradient(hsla(212,7%,57%,.35), hsla(212,7%,57%,.1)) padding-box;
+  color: inherit;
+  box-shadow: 0 1px 0 hsla(210,16%,76%,.15) inset, 0 0 0 1px hsla(210,16%,76%,.15) inset, 0 1px 0 hsla(210,16%,76%,.15);
+}
+
+.theme-light .devtools-menulist,
+.theme-light .devtools-toolbarbutton {
+  background: #f7f7f7;
+  color: #18191a;
+  border-color: #bbb;
+}
+
+.theme-light .devtools-menulist[open=true],
+.theme-light .devtools-toolbarbutton[open=true],
+.theme-light .devtools-toolbarbutton[open=true]:hover,
+.theme-light .devtools-toolbarbutton[open=true]:hover:active,
+.theme-light .devtools-toolbarbutton[checked=true],
+.theme-light .devtools-toolbarbutton[checked=true]:hover  {
+  background: #ddd;
+}
+
+.theme-light .devtools-toolbarbutton:hover {
+  background: #eee;
+}
+
+.theme-light .devtools-toolbarbutton:hover:active,
+.theme-light .devtools-toolbarbutton[checked=true]:hover:active {
+  background: #e8e8e8;
+}
+
+.theme-light .devtools-toolbarbutton[type=menu-button] > .toolbarbutton-menubutton-button {
+  color: #667380;
+}
+
+.theme-light .devtools-toolbarbutton[type=menu-button][checked=true] > .toolbarbutton-menubutton-button {
+  color: #18191a;
+}
+
+.theme-dark .devtools-toolbarbutton:not([checked]):hover:active {
+  border-color: hsla(210,8%,5%,.6);
+  background: linear-gradient(hsla(220,6%,10%,.3), hsla(212,7%,57%,.15) 65%, hsla(212,7%,57%,.3));
+  box-shadow: 0 0 3px hsla(210,8%,5%,.25) inset, 0 1px 3px hsla(210,8%,5%,.25) inset, 0 1px 0 hsla(210,16%,76%,.15);
+}
+
+.theme-dark .devtools-menulist[open=true],
+.theme-dark .devtools-toolbarbutton[open=true],
+.theme-dark .devtools-toolbarbutton[checked=true] {
+  border-color: hsla(210,8%,5%,.6) !important;
+  background: linear-gradient(hsla(220,6%,10%,.6), hsla(210,11%,18%,.45) 75%, hsla(210,11%,30%,.4));
+  box-shadow: 0 1px 3px hsla(210,8%,5%,.25) inset, 0 1px 3px hsla(210,8%,5%,.25) inset, 0 1px 0 hsla(210,16%,76%,.15);
+}
+
+.theme-dark .devtools-toolbarbutton[checked=true] {
+  color: hsl(208,100%,60%);
+}
+
+.theme-dark .devtools-toolbarbutton[checked=true]:hover {
+  background-color: transparent !important;
+}
+
+.theme-dark .devtools-toolbarbutton[checked=true]:hover:active {
+  background-color: hsla(210,8%,5%,.2) !important;
+}
+
+.devtools-option-toolbarbutton {
+  -moz-appearance: none;
+  list-style-image: url("chrome://browser/skin/devtools/tool-options.svg");
+  background: none;
+  opacity: .8;
+  border: none;
+}
+
+.devtools-option-toolbarbutton[open=true] {
+  opacity: 1;
+}
+
+.devtools-menulist > .menulist-label-box {
+  text-align: center;
+}
+
+.devtools-menulist > .menulist-dropmarker {
+  -moz-appearance: none;
+  display: -moz-box;
+  list-style-image: url("chrome://browser/skin/devtools/dropmarker.svg");
+  -moz-box-align: center;
+  min-width: 16px;
+}
+
+.devtools-toolbarbutton[type=menu-button] > .toolbarbutton-menubutton-button {
+  -moz-appearance: none;
+  color: inherit;
+  border-width: 0;
+}
+
+.theme-dark .devtools-toolbarbutton[type=menu-button] > .toolbarbutton-menubutton-button {
+  -moz-border-end: 1px solid hsla(210,8%,5%,.45);
+  box-shadow: -1px 0 0 hsla(210,16%,76%,.15) inset, 1px 0 0 hsla(210,16%,76%,.15);
+}
+
+.theme-dark .devtools-toolbarbutton[type=menu-button]:-moz-locale-dir(rtl) > .toolbarbutton-menubutton-button {
+  box-shadow: 1px 0 0 hsla(210,16%,76%,.15) inset, -1px 0 0 hsla(210,16%,76%,.15);
+}
+
+.theme-light .devtools-toolbarbutton[type=menu-button] > .toolbarbutton-menubutton-button {
+  -moz-border-end: 1px solid #bbb;
+}
+
+.devtools-toolbarbutton[type=menu-button] {
+  padding: 0 1px;
+  -moz-box-align: stretch;
+}
+
+.devtools-toolbarbutton[type=menu] > .toolbarbutton-menu-dropmarker,
+.devtools-toolbarbutton[type=menu-button] > .toolbarbutton-menubutton-dropmarker {
+  -moz-appearance: none !important;
+  list-style-image: url("chrome://browser/skin/devtools/dropmarker.svg");
+  -moz-box-align: center;
+  padding: 0 3px;
+}
+
+/* Toolbar button groups */
+.theme-light .devtools-toolbarbutton-group > .devtools-toolbarbutton,
+.theme-dark .devtools-toolbarbutton-group > .devtools-toolbarbutton {
+  margin: 0;
+  box-shadow: none;
+  border-radius: 0;
+  border-width: 0;
+  -moz-border-end-width: 1px;
+  outline-offset: -3px;
+}
+
+.devtools-toolbarbutton-group > .devtools-toolbarbutton:last-of-type {
+  -moz-border-end-width: 0;
+}
+
+.devtools-toolbarbutton-group {
+  border-radius: 3px;
+  margin: 0 3px;
+}
+
+.theme-dark .devtools-toolbarbutton-group {
+  box-shadow: 0 1px 0 hsla(210,16%,76%,.15) inset,
+              0 0 0 1px hsla(210,16%,76%,.15) inset,
+              0 1px 0 hsla(210,16%,76%,.15);
+  border: 1px solid hsla(210,8%,5%,.45);
+}
+
+.theme-light .devtools-toolbarbutton-group {
+  border: 1px solid #bbb;
+}
+
+/* Text input */
+
+.devtools-textinput,
+.devtools-searchinput {
+  -moz-appearance: none;
+  margin: 0 3px;
+  border: 1px solid;
+%ifdef XP_MACOSX
+  border-radius: 20px;
+%else
+  border-radius: 2px;
+%endif
+  padding: 4px 6px;
+}
+
+.theme-dark .devtools-textinput,
+.theme-dark .devtools-searchinput {
+  border-color: rgb(88, 94, 101);
+}
+
+.theme-light .devtools-textinput,
+.theme-light .devtools-searchinput {
+  border-color: #aaa; /* Match the splitter color */
+}
+
+.devtools-searchinput {
+  padding-top: 3px;
+  padding-bottom: 3px;
+  -moz-padding-start: 22px;
+  -moz-padding-end: 12px;
+  background-position: 8px center;
+  background-size: 11px 11px;
+  background-repeat: no-repeat;
+  font-size: inherit;
+}
+
+.theme-dark .devtools-searchinput {
+  background-image: url(magnifying-glass.png);
+}
+
+.theme-light .devtools-searchinput {
+  background-image: url(magnifying-glass-light.png);
+}
+
+@media (min-resolution: 2dppx) {
+  .theme-dark .devtools-searchinput {
+    background-image: url(magnifying-glass@2x.png);
+  }
+
+  .theme-light .devtools-searchinput {
+    background-image: url(magnifying-glass-light@2x.png);
+  }
+}
+
+.devtools-searchinput:-moz-locale-dir(rtl) {
+  background-position: calc(100% - 8px) center;
+}
+
+.devtools-searchinput > .textbox-input-box > .textbox-search-icons {
+  display: none;
+}
+
+.devtools-no-search-result {
+  border-color: #eb5368 !important;
+}
+
+/* Close button */
+
+.devtools-closebutton {
+  -moz-appearance: none;
+  border: none;
+  margin: 0 4px;
+  min-width: 16px;
+  width: 16px;
+  opacity: 0.8;
+}
+
+.devtools-closebutton > image {
+  width: 16px;
+  height: 16px;
+  -moz-appearance: none;
+  background-size: 16px 16px;
+  background-image: url("chrome://browser/skin/devtools/close@2x.png");
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+.devtools-closebutton > .toolbarbutton-icon {
+  /* XXX Buttons have padding in widget/ that we don't want here but can't override with good CSS, so we must
+     use evil CSS to give the impression of smaller content */
+  margin: -4px;
+}
+
+.devtools-closebutton > .toolbarbutton-text {
+  display: none;
+}
+
+.devtools-closebutton:hover {
+  opacity: 1;
+}
+
+/* In-tools sidebar */
+
+.devtools-sidebar-tabs {
+  -moz-appearance: none;
+  margin: 0;
+}
+
+.devtools-sidebar-tabs > tabpanels {
+  -moz-appearance: none;
+  background: transparent;
+  padding: 0;
+  border: 0;
+}
+
+.theme-light .devtools-sidebar-tabs > tabpanels {
+  background: #f7f7f7;
+  color: #18191a;
+}
+
+.devtools-sidebar-tabs > tabs {
+  -moz-appearance: none;
+  position: static;
+  font: inherit;
+  margin-bottom: 0;
+  padding: 0;
+  border-width: 0 0 1px 0;
+  border-style: solid;
+  overflow: hidden;
+}
+
+.devtools-sidebar-tabs > tabs > .tabs-right,
+.devtools-sidebar-tabs > tabs > .tabs-left {
+  display: none;
+}
+
+.devtools-sidebar-tabs > tabs > tab {
+  -moz-appearance: none;
+  /* We want to match the height of a toolbar with a toolbarbutton
+   * First, we need to replicated the padding of toolbar (4px),
+   * then we need to take the border of the buttons into account (1px).
+   */
+  padding: 5px 3px;
+  -moz-padding-start: 6px;
+  margin: 0;
+  min-width: 78px;
+  /* toolbar's min-height is button min-height (25px) + padding (2 * 4px): 33px.
+   * -1px because the parent element (<tabs>) comes with a 1px bottom border.
+   */
+  min-height: 32px;
+  text-align: center;
+  color: inherit;
+  -moz-box-flex: 1;
+  border-width: 0;
+  border-radius: 0;
+  position: static;
+  -moz-margin-start: -1px;
+  text-shadow: none;
+}
+
+.devtools-sidebar-tabs > tabs > tab:first-of-type {
+  -moz-margin-start: -3px;
+}
+
+.devtools-sidebar-tabs > tabs > tab {
+  background-size: calc(100% - 1px) 100%, 1px 100%;
+  background-repeat: no-repeat;
+  background-position: 1px, 0;
+}
+
+.devtools-sidebar-tabs > tabs > tab:not(:last-of-type) {
+  background-size: calc(100% - 2px) 100%, 1px 100%;
+}
+
+.devtools-sidebar-tabs:-moz-locale-dir(rtl) > tabs > tab {
+  background-position: calc(100% - 1px), 100%;
+}
+
+.devtools-sidebar-tabs > tabs > tab {
+  background-color: transparent;
+}
+
+.theme-dark .devtools-sidebar-tabs > tabs > tab {
+  background-image: linear-gradient(transparent, transparent), @smallSeparatorDark@;
+}
+
+.theme-dark .devtools-sidebar-tabs > tabs > tab:hover {
+  background-image: linear-gradient(hsla(206,37%,4%,.2), hsla(206,37%,4%,.2)), @smallSeparatorDark@;
+}
+
+.theme-dark .devtools-sidebar-tabs > tabs > tab:hover:active {
+  background-image: linear-gradient(hsla(206,37%,4%,.4), hsla(206,37%,4%,.4)), @smallSeparatorDark@;
+}
+
+.theme-dark .devtools-sidebar-tabs > tabs > tab[selected] + tab {
+  background-image: linear-gradient(transparent, transparent), @solidSeparatorDark@;
+}
+
+.theme-dark .devtools-sidebar-tabs > tabs > tab[selected] + tab:hover {
+  background-image: linear-gradient(hsla(206,37%,4%,.2), hsla(206,37%,4%,.2)), @solidSeparatorDark@;
+}
+
+.theme-dark .devtools-sidebar-tabs > tabs > tab[selected] + tab:hover:active {
+  background-image: linear-gradient(hsla(206,37%,4%,.4), hsla(206,37%,4%,.4)), @solidSeparatorDark@;
+}
+
+.theme-dark .devtools-sidebar-tabs > tabs > tab[selected] {
+  color: #f5f7fa;
+  background-image: linear-gradient(#1d4f73, #1d4f73), @solidSeparatorDark@;
+}
+
+.theme-dark .devtools-sidebar-tabs > tabs > tab[selected]:hover {
+  background-image: linear-gradient(#274f64, #274f64), @solidSeparatorDark@;
+}
+
+.theme-dark .devtools-sidebar-tabs > tabs > tab[selected]:hover:active {
+  background-image: linear-gradient(#1f3e4f, #1f3e4f), @solidSeparatorDark@;
+}
+
+.theme-light .devtools-sidebar-tabs > tabs > tab {
+  background-image: linear-gradient(transparent, transparent), @smallSeparatorLight@;
+}
+
+.theme-light .devtools-sidebar-tabs > tabs > tab:hover {
+  background-image: linear-gradient(#ddd, #ddd), @smallSeparatorLight@;
+}
+
+.theme-light .devtools-sidebar-tabs > tabs > tab:hover:active {
+  background-image: linear-gradient(#ddd, #ddd), @smallSeparatorLight@;
+}
+
+.theme-light .devtools-sidebar-tabs > tabs > tab[selected] + tab {
+  background-image: linear-gradient(transparent, transparent), @solidSeparatorLight@;
+}
+
+.theme-light .devtools-sidebar-tabs > tabs > tab[selected] + tab:hover {
+  background-image: linear-gradient(#ddd, #ddd), @solidSeparatorLight@;
+}
+
+.theme-light .devtools-sidebar-tabs > tabs > tab[selected],
+.theme-light .devtools-sidebar-tabs > tabs > tab[selected]:hover:active {
+  color: #f5f7fa;
+  background-image: linear-gradient(#4c9ed9, #4c9ed9), @solidSeparatorLight@;
+}
+
+/* Toolbox - moved from toolbox.css.
+ * Rules that apply to the global toolbox like command buttons,
+ * devtools tabs, docking buttons, etc. */
+
+#toolbox-controls > toolbarbutton,
+#toolbox-dock-buttons > toolbarbutton {
+  -moz-appearance: none;
+  border: none;
+  margin: 0 4px;
+  min-width: 16px;
+  width: 16px;
+}
+
+#toolbox-controls > toolbarbutton > .toolbarbutton-text,
+#toolbox-dock-buttons > toolbarbutton > .toolbarbutton-text,
+.command-button > .toolbarbutton-text {
+  display: none;
+}
+
+#toolbox-dock-buttons > toolbarbutton > image {
+  -moz-appearance: none;
+  width: 16px;
+  height: 16px;
+  background-size: 16px 16px;
+  background-position: 0 center;
+  background-repeat: no-repeat;
+}
+
+#toolbox-dock-bottom > image {
+  background-image: url("chrome://browser/skin/devtools/dock-bottom@2x.png");
+}
+
+#toolbox-dock-side  > image {
+  background-image: url("chrome://browser/skin/devtools/dock-side@2x.png");
+}
+
+#toolbox-dock-window > image {
+  background-image: url("chrome://browser/skin/devtools/undock@2x.png");
+}
+
+#toolbox-dock-window,
+#toolbox-dock-bottom,
+#toolbox-dock-side {
+  opacity: 0.8;
+}
+
+#toolbox-dock-window:hover,
+#toolbox-dock-bottom:hover,
+#toolbox-dock-side:hover {
+  opacity: 1;
+}
+
+#toolbox-controls-separator {
+  width: 2px;
+  background-image: linear-gradient(hsla(204,45%,98%,0), hsla(204,45%,98%,.1), hsla(204,45%,98%,0)),
+                    linear-gradient(hsla(206,37%,4%,0), hsla(206,37%,4%,.6), hsla(206,37%,4%,0)),
+                    linear-gradient(hsla(204,45%,98%,0), hsla(204,45%,98%,.1), hsla(204,45%,98%,0));
+  background-size: 1px 100%;
+  background-repeat: no-repeat;
+  background-position: 0, 1px, 2px;
+}
+
+#toolbox-buttons:empty + #toolbox-controls-separator,
+#toolbox-controls-separator[invisible] {
+  visibility: hidden;
+}
+
+/* Command buttons */
+
+.command-button {
+  -moz-appearance: none;
+  border: none;
+  padding: 0 8px;
+  margin: 0;
+  width: 32px;
+  position: relative;
+}
+
+.command-button:hover {
+  background-color: hsla(206,37%,4%,.2);
+}
+.command-button:hover:active, .command-button[checked=true]:not(:hover) {
+  background-color: hsla(206,37%,4%,.4);
+}
+
+.command-button > image {
+  -moz-appearance: none;
+  width: 16px;
+  height: 16px;
+  background-size: 64px 16px;
+  background-position: 0 center;
+  background-repeat: no-repeat;
+}
+.command-button:hover > image {
+  background-position: -16px center;
+}
+.command-button:hover:active > image {
+  background-position: -32px center;
+}
+.command-button[checked=true] > image {
+  background-position: -48px center;
+}
+
+#command-button-paintflashing > image {
+  background-image: url("chrome://browser/skin/devtools/command-paintflashing.png");
+}
+
+#command-button-screenshot > image {
+  background-image: url("chrome://browser/skin/devtools/command-screenshot.png");
+}
+
+#command-button-responsive > image {
+  background-image: url("chrome://browser/skin/devtools/command-responsivemode.png");
+}
+
+#command-button-tilt > image {
+  background-image: url("chrome://browser/skin/devtools/command-tilt.png");
+}
+
+#command-button-scratchpad > image {
+  background-image: url("chrome://browser/skin/devtools/command-scratchpad.png");
+  background-size: 48px 16px;
+}
+
+#command-button-pick > image {
+  background-image: url("chrome://browser/skin/devtools/command-pick.png");
+}
+
+#command-button-splitconsole > image {
+  background-image: url("chrome://browser/skin/devtools/command-console.png");
+}
+
+#command-button-eyedropper > image {
+  background-image: url("chrome://browser/skin/devtools/command-eyedropper.png");
+}
+
+@media (min-resolution: 2dppx) {
+  #command-button-paintflashing > image {
+    background-image: url("chrome://browser/skin/devtools/command-paintflashing@2x.png");
+  }
+
+  #command-button-screenshot > image {
+    background-image: url("chrome://browser/skin/devtools/command-screenshot@2x.png");
+  }
+
+  #command-button-responsive > image {
+    background-image: url("chrome://browser/skin/devtools/command-responsivemode@2x.png");
+  }
+
+  #command-button-tilt > image {
+    background-image: url("chrome://browser/skin/devtools/command-tilt@2x.png");
+  }
+
+  #command-button-scratchpad > image {
+    background-image: url("chrome://browser/skin/devtools/command-scratchpad@2x.png");
+  }
+
+  #command-button-pick > image {
+    background-image: url("chrome://browser/skin/devtools/command-pick@2x.png");
+  }
+
+  #command-button-splitconsole > image {
+    background-image: url("chrome://browser/skin/devtools/command-console@2x.png");
+  }
+
+  #command-button-eyedropper > image {
+    background-image: url("chrome://browser/skin/devtools/command-eyedropper@2x.png");
+  }
+}
+
+/* Tabs */
+
+.devtools-tabbar {
+  -moz-appearance: none;
+  min-height: 28px;
+  border: 0px solid;
+  border-bottom-width: 1px;
+  padding: 0;
+}
+
+.theme-light .devtools-tabbar {
+  box-shadow: 0 -2px 0 rgba(170,170,170,.1) inset;
+  background: #ebeced;
+  border-bottom-color: #aaa;
+}
+
+.theme-dark .devtools-tabbar {
+  box-shadow: 0 -2px 0 rgba(0,0,0,.1) inset;
+  background: #252c33;
+  border-bottom-color: #000;
+}
+
+#toolbox-tabs {
+  margin: 0;
+}
+
+.devtools-tab {
+  -moz-appearance: none;
+  -moz-binding: url("chrome://global/content/bindings/general.xml#control-item");
+  -moz-box-align: center;
+  min-width: 32px;
+  min-height: 28px;
+  max-width: 127px;
+  margin: 0;
+  padding: 0;
+  border-style: solid;
+  border-width: 0;
+  -moz-border-start-width: 1px;
+  -moz-box-align: center;
+}
+
+.theme-dark .devtools-tab {
+  color: #b6babf;
+  border-color: #42484f;
+}
+
+.theme-light .devtools-tab {
+  color: #18191a;
+  border-color: #aaa;
+}
+
+.theme-dark .devtools-tab:hover {
+  background-color: hsla(206,37%,4%,.2);
+  color: #ced3d9;
+}
+
+.theme-light .devtools-tab:hover {
+  background-color: rgba(170,170,170,.2);
+}
+
+.theme-dark .devtools-tab:hover:active {
+  background-color: hsla(206,37%,4%,.4);
+  color: #f5f7fa;
+}
+
+.theme-light .devtools-tab:hover:active {
+  background-color: rgba(170,170,170,.4);
+}
+
+.theme-dark .devtools-tab:not([selected])[highlighted] {
+  background-color: hsla(99,100%,14%,.2);
+  box-shadow: 0 2px 0 #7bc107 inset;
+}
+
+.theme-light .devtools-tab:not([selected])[highlighted] {
+  background-color: rgba(44, 187, 15, .2);
+}
+
+.devtools-tab > image {
+  border: none;
+  -moz-margin-end: 0;
+  -moz-margin-start: 4px;
+  opacity: 0.6;
+  max-height: 16px;
+  width: 16px; /* Prevents collapse during theme switching */
+}
+
+.devtools-tab > label {
+  white-space: nowrap;
+}
+
+.devtools-tab:hover > image {
+  opacity: 0.8;
+}
+
+.devtools-tab:active > image,
+.devtools-tab[selected] > image {
+  opacity: 1;
+}
+
+.theme-dark .devtools-tabbar .devtools-tab[selected] {
+  color: #f5f7fa;
+  background-color: #1a4666;
+  box-shadow: 0 2px 0 #d7f1ff inset,
+              0 8px 3px -5px #2b82bf inset,
+              0 -2px 0 rgba(0,0,0,.2) inset;
+}
+
+.theme-light .devtools-tabbar .devtools-tab[selected] {
+  color: #f5f7fa;
+  background-color: #4c9ed9;
+  box-shadow: 0 2px 0 #d7f1ff inset,
+              0 8px 3px -5px #2b82bf inset,
+              0 -2px 0 rgba(0,0,0,.06) inset;
+}
+
+#toolbox-tabs .devtools-tab[selected]:not(:first-child),
+#toolbox-tabs .devtools-tab[highlighted]:not(:first-child) {
+  border-width: 0;
+  -moz-padding-start: 1px;
+}
+
+#toolbox-tabs .devtools-tab[selected]:last-child,
+#toolbox-tabs .devtools-tab[highlighted]:last-child {
+  -moz-padding-end: 1px;
+}
+
+#toolbox-tabs .devtools-tab[selected] + .devtools-tab,
+#toolbox-tabs .devtools-tab[highlighted] + .devtools-tab {
+  -moz-border-start-width: 0;
+  -moz-padding-start: 1px;
+}
+
+#toolbox-tabs .devtools-tab:first-child[selected] {
+  -moz-border-start-width: 0;
+}
+
+#toolbox-tabs .devtools-tab:last-child {
+  -moz-border-end-width: 1px;
+}
+
+.devtools-tab:not([highlighted]) > .highlighted-icon,
+.devtools-tab[selected] > .highlighted-icon,
+.devtools-tab:not([selected])[highlighted] > .default-icon {
+  visibility: collapse;
+}
+
+/* The options tab is special - it doesn't have the same parent
+   as the other tabs (toolbox-option-container vs toolbox-tabs) */
+#toolbox-option-container .devtools-tab:not([selected]) {
+  background-color: transparent;
+}
+#toolbox-option-container .devtools-tab {
+  border-color: transparent;
+  border-width: 0;
+  -moz-padding-start: 1px;
+}
+#toolbox-tab-options > image {
+  margin: 0 8px;
+}
+
+/* Invert the colors of certain dark theme images for displaying
+ * inside of the light theme.
+ */
+.theme-light .devtools-tab[icon-invertable] > image,
+.theme-light #toolbox-dock-buttons > toolbarbutton > image,
+.theme-light .command-button-invertable > image,
+.theme-light .command-button-invertable:active > image,
+.theme-light .devtools-closebutton > image,
+.theme-light .devtools-toolbarbutton > image,
+.theme-light .devtools-option-toolbarbutton > image,
+.theme-light #breadcrumb-separator-normal,
+.theme-light .scrollbutton-up > .toolbarbutton-icon,
+.theme-light .scrollbutton-down > .toolbarbutton-icon,
+.theme-light #black-boxed-message-button .button-icon,
+.theme-light #canvas-debugging-empty-notice-button .button-icon,
+.theme-light #requests-menu-perf-notice-button .button-icon,
+.theme-light #requests-menu-network-summary-button .button-icon {
+  filter: url(filters.svg#invert);
+}
+
+/* Since selected backgrounds are blue, we want to use the normal
+ * (light) icons. */
+.theme-light .command-button-invertable[checked=true]:not(:active) > image,
+.theme-light .devtools-tab[icon-invertable][selected] > image,
+.theme-light .devtools-tab[icon-invertable][highlighted] > image,
+.theme-light #resume[checked] > image,
+.theme-light #record-snapshot[checked] > image,
+.theme-light #profiler-start[checked] > image {
+  filter: none !important;
+}
+
+.theme-light .command-button:hover {
+  background-color: inherit;
+}
+
+.theme-light .command-button:hover:active,
+.theme-light .command-button[checked=true]:not(:hover) {
+  background-color: inherit;
+}
+
+.hidden-labels-box:not(.visible) > label,
+.hidden-labels-box.visible ~ .hidden-labels-box > label:last-child {
+  display: none;
+}
+
+.devtools-invisible-splitter {
+  border-color: transparent;
+}

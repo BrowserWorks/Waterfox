@@ -1,0 +1,29 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+
+#include "nsISupports.idl"
+
+interface nsIDOMHTMLFormElement;
+interface nsIDOMWindow;
+interface nsIURI;
+interface nsIArray;
+
+[scriptable, uuid(534ab795-6a99-4195-bfab-cfdd7836657d)]
+interface nsIFormSubmitObserver: nsISupports
+{
+  void notify(in nsIDOMHTMLFormElement formNode, in nsIDOMWindow window, in nsIURI actionURL, out boolean cancelSubmit);
+
+  void notifyInvalidSubmit(in nsIDOMHTMLFormElement formNode,
+                           in nsIArray invalidElements);
+};
+
+%{C++
+#define NS_FORMSUBMIT_SUBJECT "formsubmit"
+#define NS_EARLYFORMSUBMIT_SUBJECT "earlyformsubmit"
+#define NS_FIRST_FORMSUBMIT_CATEGORY "firstformsubmit"
+#define NS_PASSWORDMANAGER_CATEGORY "passwordmanager"
+#define NS_INVALIDFORMSUBMIT_SUBJECT "invalidformsubmit"
+%}

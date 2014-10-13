@@ -1,0 +1,30 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIDOMEvent.idl"
+#include "nsIVariant.idl"
+
+[builtinclass, uuid(dc6b39da-87ff-4b6f-b065-b52602602e06)]
+interface nsIDOMDataContainerEvent : nsIDOMEvent
+{
+  /**
+   * Return the data associated with the given key.
+   *
+   * @param  key  the key
+   * @return      the data associated with the key
+   */
+  nsIVariant getData(in DOMString key);
+
+  /**
+   * Set the data for the given key.
+   *
+   * @param  key   the data key
+   * @param  data  the data
+   * @throws       NS_ERROR_UNEXPECTED if the method is called during event
+   *               dispatch
+   */
+  void setData(in DOMString key, in nsIVariant data);
+};
+

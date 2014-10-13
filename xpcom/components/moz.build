@@ -1,0 +1,55 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+XPIDL_SOURCES += [
+    'nsICategoryManager.idl',
+    'nsIClassInfo.idl',
+    'nsIComponentManager.idl',
+    'nsIComponentRegistrar.idl',
+    'nsIFactory.idl',
+    'nsIModule.idl',
+    'nsIServiceManager.idl',
+]
+
+XPIDL_MODULE = 'xpcom_components'
+
+EXPORTS += [
+    'nsCategoryManagerUtils.h',
+]
+
+EXPORTS.mozilla += [
+    'Module.h',
+    'ModuleLoader.h',
+    'ModuleUtils.h',
+]
+
+# nsCategoryManager.cpp and nsComponentManager.cpp cannot be built in
+# unified mode because they use thea PL_ARENA_CONST_ALIGN_MASK macro
+# with plarena.h.
+# nsNativeComponentLoader.cpp cannot be built in unified mode because it
+# forces NSPR logging.
+SOURCES += [
+    'ManifestParser.cpp',
+    'nsCategoryManager.cpp',
+    'nsComponentManager.cpp',
+    'nsNativeComponentLoader.cpp',
+]
+
+FAIL_ON_WARNINGS = True
+
+MSVC_ENABLE_PGO = True
+
+FINAL_LIBRARY = 'xpcom_core'
+
+GENERATED_INCLUDES += ['..']
+LOCAL_INCLUDES += [
+    '../base',
+    '../build',
+    '../ds',
+    '../reflect/xptinfo/src',
+    '/chrome/src',
+    '/modules/libjar',
+]

@@ -1,0 +1,75 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+[scriptable, uuid(D6F13AF4-8ACA-4A10-8687-3F99C3692AC0)]
+interface nsIScreen : nsISupports
+{
+  /**
+   * Levels of brightness for the screen, from off to full brightness.
+   */
+  const unsigned long BRIGHTNESS_DIM = 0;
+  const unsigned long BRIGHTNESS_FULL = 1;
+
+  /* The number of different brightness levels */
+  const unsigned long BRIGHTNESS_LEVELS = 2;
+
+  /**
+   * Allowable screen rotations, when the underlying widget toolkit
+   * supports rotating the screen.
+   *
+   * ROTATION_0_DEG is the default, unrotated configuration.
+   */
+  const unsigned long   ROTATION_0_DEG = 0;
+  const unsigned long  ROTATION_90_DEG = 1;
+  const unsigned long ROTATION_180_DEG = 2;
+  const unsigned long ROTATION_270_DEG = 3;
+
+  /**
+   * These report screen dimensions in (screen-specific) device pixels
+   */
+  void GetRect(out long left, out long top, out long width, out long height);
+  void GetAvailRect(out long left, out long top, out long width, out long height);
+
+  /**
+   * And these report in global display pixels
+   */
+  void GetRectDisplayPix(out long left, out long top, out long width, out long height);
+  void GetAvailRectDisplayPix(out long left, out long top, out long width, out long height);
+
+  /**
+   * Locks the minimum brightness of the screen, forcing it to be at
+   * least as bright as a certain brightness level. Each call to this
+   * function must eventually be followed by a corresponding call to
+   * unlockMinimumBrightness, with the same brightness level.
+   *
+   * @param brightness A brightness level, one of the above constants.
+   */
+  void lockMinimumBrightness(in unsigned long brightness);
+
+  /**
+   * Releases a lock on the screen brightness. This must be called
+   * (eventually) after a corresponding call to lockMinimumBrightness.
+   *
+   * @param brightness A brightness level, one of the above constants.
+   */
+  void unlockMinimumBrightness(in unsigned long brightness);
+  
+  readonly attribute long pixelDepth;
+  readonly attribute long colorDepth;
+  /**
+   * Get/set the screen rotation, on platforms that support changing
+   * screen rotation.
+   */
+  attribute unsigned long rotation;
+
+  /**
+   * The number of device pixels per screen point in HiDPI mode.
+   * Returns 1.0 if HiDPI mode is disabled or unsupported.
+   */
+  readonly attribute double contentsScaleFactor;
+};

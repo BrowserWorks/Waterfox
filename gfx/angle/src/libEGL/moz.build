@@ -1,0 +1,50 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Target: 'libEGL'
+#   Requires: 'libGLESv2'
+# src/common:
+SOURCES += ['../common/' + src for src in [
+    'debug.cpp',
+    'RefCountObject.cpp',
+]]
+
+# src/libEGL
+SOURCES += [
+    'Config.cpp',
+    'Display.cpp',
+    'libEGL.cpp',
+    'main.cpp',
+    'Surface.cpp',
+]
+
+# On Windows, we don't automatically get "lib" prepended, but we need it.
+LIBRARY_NAME = 'libEGL'
+
+FORCE_SHARED_LIB = True
+
+LOCAL_INCLUDES += [
+    '..',
+    '../../include',
+    '../../include/KHR',
+    '../libGLESv2',
+]
+
+
+for var in ('LIBEGL_EXPORTS', 'ANGLE_BUILD', 'NOMINMAX',
+            '_CRT_SECURE_NO_DEPRECATE', 'ANGLE_DISABLE_TRACE'):
+    DEFINES[var] = True
+
+if not CONFIG['MOZ_DEBUG']:
+    DEFINES['_SECURE_SCL'] = 0
+
+DEFINES['ANGLE_COMPILE_OPTIMIZATION_LEVEL'] = 'D3DCOMPILE_OPTIMIZATION_LEVEL1'
+
+RCFILE = SRCDIR + '/libEGL.rc'
+DEFFILE = SRCDIR + '/libEGL.def'
+
+# ANGLE uses the STL, so we can't use our derpy STL wrappers.
+DISABLE_STL_WRAPPING = True

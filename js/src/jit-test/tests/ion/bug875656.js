@@ -1,0 +1,2 @@
+enableSPSProfiling();
+Object.getOwnPropertyNames(this);

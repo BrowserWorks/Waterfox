@@ -1,0 +1,48 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+DEFINES.update({
+    'IMPL_LIBXUL': True,
+    'MOZILLA_INTERNAL_API': True,
+})
+
+# Do NOT export this library.  We don't actually want our test code
+# being added to libxul or anything.
+
+LIBRARY_NAME = 'dombindings_test_s'
+
+EXTRA_COMPONENTS += [
+    'TestInterfaceJS.js',
+    'TestInterfaceJS.manifest',
+]
+
+MOCHITEST_MANIFESTS += ['mochitest.ini']
+
+MOCHITEST_CHROME_MANIFESTS += ['chrome.ini']
+
+TEST_WEBIDL_FILES += [
+    'TestDictionary.webidl',
+    'TestJSImplInheritanceGen.webidl',
+    'TestTypedef.webidl',
+]
+
+PREPROCESSED_TEST_WEBIDL_FILES += [
+    'TestCodeGen.webidl',
+    'TestExampleGen.webidl',
+    'TestJSImplGen.webidl',
+]
+
+WEBIDL_EXAMPLE_INTERFACES += [
+    'TestExampleInterface',
+    'TestExampleProxyInterface',
+]
+
+GENERATED_INCLUDES += ['..']
+LOCAL_INCLUDES += [
+    '/dom/bindings',
+    '/js/xpconnect/src',
+    '/js/xpconnect/wrappers',
+]

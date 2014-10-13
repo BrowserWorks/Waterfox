@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<!--
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/
+ */
+
+/**
+ * Removes files and preferences for previous application update tests in case
+ * any of them had a fatal error. The test name ensures that it will run after
+ * all other tests as long as the test naming uses the same format as the
+ * existing tests.
+ */
+-->
+
+<?xml-stylesheet href="chrome://global/skin" type="text/css"?>
+<?xml-stylesheet href="chrome://mochikit/content/tests/SimpleTest/test.css" type="text/css"?>
+
+<window title="Application Update test cleanup"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        onload="runTest();">
+<script type="application/javascript"
+        src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"/>
+<script type="application/javascript"
+        src="utils.js"/>
+
+<script type="application/javascript">
+<![CDATA[
+
+/**
+ * If the application update tests left behind any of the files it uses it could
+ * be a very bad thing. The purpose of this test is to prevent that from
+ * happening.
+ */
+function runTest() {
+  debugDump("entering");
+
+  SimpleTest.waitForExplicitFinish();
+
+  closeUpdateWindow();
+
+  resetPrefs();
+  resetFiles();
+  removeUpdateDirsAndFiles();
+  reloadUpdateManagerData();
+
+  let file = getUpdatesXMLFile(true);
+  ok(!file.exists(), file.path + " should not exist");
+
+  file = getUpdatesXMLFile(false);
+  ok(!file.exists(), file.path + " should not exist");
+
+  let dir = getUpdatesDir();
+
+  file = dir.clone();
+  file.append(FILE_UPDATE_STATUS);
+  ok(!file.exists(), file.path + " should not exist");
+
+  file = dir.clone();
+  file.append(FILE_UPDATE_ARCHIVE);
+  ok(!file.exists(), file.path + " should not exist");
+
+  let addonPrepDir = Services.dirsvc.get(NS_APP_USER_PROFILE_50_DIR,
+                                         AUS_Ci.nsILocalFile);
+  addonPrepDir.append(ADDON_PREP_DIR);
+  // Not being able to remove the directory used to create the test add-ons
+  // will not adversely affect subsequent tests so wrap it in a try lock and
+  // don't test whether its removal was successful.
+  try {
+    removeDirRecursive(addonPrepDir);
+  }
+  catch (e) {
+    dump("Unable to remove directory\n" +
+         "path: " + addonPrepDir.path + "\n" +
+         "Exception: " + e + "\n");
+  }
+
+  resetAddons(SimpleTest.finish);
+}
+
+]]>
+</script>
+
+<body xmlns="http://www.w3.org/1999/xhtml">
+  <p id="display"></p>
+  <div id="content" style="display: none"></div>
+  <pre id="test"></pre>
+</body>
+</window>

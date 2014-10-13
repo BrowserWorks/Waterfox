@@ -1,0 +1,8 @@
+The source from this directory was copied from the libogg subversion
+repository using the update.sh script.
+
+The svn revision number used was r17287.
+
+The int-types.patch address a bug that config_types.h generated from
+Linux platform can't be used on OpenSolaris directly see Mozilla bug
+449754

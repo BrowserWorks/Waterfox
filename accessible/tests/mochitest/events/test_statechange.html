@@ -1,0 +1,287 @@
+<html>
+
+<head>
+  <title>Accessible state change event testing</title>
+
+  <link rel="stylesheet" type="text/css"
+        href="chrome://mochikit/content/tests/SimpleTest/test.css" />
+
+  <script type="application/javascript"
+          src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
+
+  <script type="application/javascript"
+          src="../common.js"></script>
+  <script type="application/javascript"
+          src="../events.js"></script>
+  <script type="application/javascript"
+          src="../role.js"></script>
+  <script type="application/javascript"
+          src="../states.js"></script>
+
+  <script type="application/javascript">
+    ////////////////////////////////////////////////////////////////////////////
+    // Invokers
+
+    function makeEditableDoc(aDocNode, aIsEnabled)
+    {
+      this.DOMNode = aDocNode;
+
+      this.invoke = function editabledoc_invoke() {
+        // Note: this should fire an EVENT_STATE_CHANGE
+        this.DOMNode.designMode = 'on';
+      };
+
+      this.check = function editabledoc_check(aEvent) {
+
+        testStates(aDocNode, 0, EXT_STATE_EDITABLE);
+
+        var event = null;
+        try {
+          var event = aEvent.QueryInterface(nsIAccessibleStateChangeEvent);
+        } catch (e) {
+          ok(false, "State change event was expected");
+        }
+
+        if (!event) { return; }
+
+        ok(event.isExtraState, "Extra state change was expected");
+        is(event.state, EXT_STATE_EDITABLE, "Wrong state of statechange event");
+        ok(event.isEnabled, "Expected editable state to be enabled");
+      }
+
+      this.getID = function editabledoc_getID() {
+        return prettyName(aDocNode) + " editable state changed";
+      };
+    }
+
+    function invalidInput(aNodeOrID)
+    {
+      this.DOMNode = getNode(aNodeOrID);
+
+      this.invoke = function invalidInput_invoke() {
+        // Note: this should fire an EVENT_STATE_CHANGE
+        this.DOMNode.value = "I am not an email";
+      };
+
+      this.check = function invalidInput_check() {
+        testStates(aNodeOrID, STATE_INVALID);
+      };
+
+      this.getID = function invalidInput_getID() {
+        return prettyName(aNodeOrID) + " became invalid";
+      };
+    }
+
+    function changeCheckInput(aID, aIsChecked)
+    {
+      this.DOMNode = getNode(aID);
+
+      this.eventSeq = [
+        new stateChangeChecker(STATE_CHECKED, false, aIsChecked, this.DOMNode)
+      ];
+
+      this.invoke = function changeCheckInput_invoke()
+      {
+        this.DOMNode.checked = aIsChecked;
+      }
+
+      this.getID = function changeCheckInput_getID()
+      {
+        return "change checked state to '" + aIsChecked + "' for " +
+          prettyName(aID);
+      }
+    }
+
+    function stateChangeOnFileInput(aID, aAttr, aValue,
+                                    aState, aIsExtraState, aIsEnabled)
+    {
+      this.fileControlNode = getNode(aID);
+      this.fileControl = getAccessible(this.fileControlNode);
+      this.browseButton = this.fileControl.firstChild;
+      // No state change events on the label.
+
+      this.invoke = function stateChangeOnFileInput_invoke()
+      {
+        this.fileControlNode.setAttribute(aAttr, aValue);
+      }
+
+      this.eventSeq = [
+        new stateChangeChecker(aState, aIsExtraState, aIsEnabled, this.fileControl),
+        new stateChangeChecker(aState, aIsExtraState, aIsEnabled, this.browseButton)
+      ];
+
+      this.getID = function stateChangeOnFileInput_getID()
+      {
+        return "inherited state change on file input on attribute '" + aAttr + "' change";
+      }
+    }
+
+    function dupeStateChange(aID, aAttr, aValue,
+                             aState, aIsExtraState, aIsEnabled)
+    {
+      this.eventSeq = [
+        new stateChangeChecker(aState, aIsExtraState, aIsEnabled, getNode(aID))
+      ];
+
+      this.invoke = function dupeStateChange_invoke()
+      {
+        getNode(aID).setAttribute(aAttr, aValue);
+        getNode(aID).setAttribute(aAttr, aValue);
+      }
+
+      this.getID = function dupeStateChange_getID()
+      {
+        return "duped state change events";
+      }
+    }
+
+    function oppositeStateChange(aID, aAttr, aState, aIsExtraState)
+    {
+      this.eventSeq = [ ];
+      this.unexpectedEventSeq = [
+        new stateChangeChecker(aState, aIsExtraState, false, getNode(aID)),
+        new stateChangeChecker(aState, aIsExtraState, true, getNode(aID))
+      ];
+
+      this.invoke = function oppositeStateChange_invoke()
+      {
+        getNode(aID).setAttribute(aAttr, "false");
+        getNode(aID).setAttribute(aAttr, "true");
+      }
+
+      this.getID = function oppositeStateChange_getID()
+      {
+        return "opposite state change events";
+      }
+    }
+
+    /**
+     * Change concomitant ARIA and native attribute at once.
+     */
+    function echoingStateChange(aID, aARIAAttr, aAttr, aValue,
+                               aState, aIsExtraState, aIsEnabled)
+    {
+      this.eventSeq = [
+        new stateChangeChecker(aState, aIsExtraState, aIsEnabled, getNode(aID))
+      ];
+
+      this.invoke = function echoingStateChange_invoke()
+      {
+        if (aValue == null) {
+          getNode(aID).removeAttribute(aARIAAttr);
+          getNode(aID).removeAttribute(aAttr);
+
+        } else {
+          getNode(aID).setAttribute(aARIAAttr, aValue);
+          getNode(aID).setAttribute(aAttr, aValue);
+        }
+      }
+
+      this.getID = function echoingStateChange_getID()
+      {
+        return "enchoing ARIA and native attributes change";
+      }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Do tests
+
+    var gQueue = null;
+
+    // var gA11yEventDumpID = "eventdump"; // debug stuff
+    //gA11yEventDumpToConsole = true; // debug stuff
+
+    function doTests()
+    {
+      gQueue = new eventQueue(nsIAccessibleEvent.EVENT_STATE_CHANGE);
+
+      // Test delayed editable state change
+      var doc = document.getElementById("iframe").contentDocument;
+      gQueue.push(new makeEditableDoc(doc));
+
+      // invalid state change
+      gQueue.push(new invalidInput("email"));
+
+      // checked state change
+      gQueue.push(new changeCheckInput("checkbox", true));
+      gQueue.push(new changeCheckInput("checkbox", false));
+      gQueue.push(new changeCheckInput("radio", true));
+      gQueue.push(new changeCheckInput("radio", false));
+
+      // file input inherited state changes
+      gQueue.push(new stateChangeOnFileInput("file", "aria-busy", "true",
+                                             STATE_BUSY, false, true));
+      gQueue.push(new stateChangeOnFileInput("file", "aria-required", "true",
+                                             STATE_REQUIRED, false, true));
+      gQueue.push(new stateChangeOnFileInput("file", "aria-invalid", "true",
+                                             STATE_INVALID, false, true));
+
+      gQueue.push(new dupeStateChange("div", "aria-busy", "true",
+                                      STATE_BUSY, false, true));
+      gQueue.push(new oppositeStateChange("div", "aria-busy",
+                                          STATE_BUSY, false));
+
+      gQueue.push(new echoingStateChange("text1", "aria-disabled", "disabled", "true",
+                                         EXT_STATE_ENABLED, true, false));
+      gQueue.push(new echoingStateChange("text1", "aria-disabled", "disabled", null,
+                                         EXT_STATE_ENABLED, true, true));
+
+      gQueue.invoke(); // Will call SimpleTest.finish();
+    }
+
+    SimpleTest.waitForExplicitFinish();
+    addA11yLoadEvent(doTests);
+  </script>
+</head>
+
+<body>
+
+  <a target="_blank"
+     href="https://bugzilla.mozilla.org/show_bug.cgi?id=564471"
+     title="Make state change events async">
+    Bug 564471
+  </a>
+  <a target="_blank"
+     href="https://bugzilla.mozilla.org/show_bug.cgi?id=555728"
+     title="Fire a11y event based on HTML5 constraint validation">
+    Bug 555728
+  </a>
+  <a target="_blank"
+     href="https://bugzilla.mozilla.org/show_bug.cgi?id=699017"
+     title="File input control should be propogate states to descendants">
+    Bug 699017
+  </a>
+  <a target="_blank"
+     href="https://bugzilla.mozilla.org/show_bug.cgi?id=788389"
+     title="Fire statechange event whenever checked state is changed not depending on focused state">
+    Bug 788389
+  </a>
+  <a target="_blank"
+     href="https://bugzilla.mozilla.org/show_bug.cgi?id=926812"
+     title="State change event not fired when both disabled and aria-disabled are toggled">
+    Bug 926812
+  </a>
+
+  <p id="display"></p>
+  <div id="content" style="display: none"></div>
+  <pre id="test">
+  </pre>
+
+  <div id="testContainer">
+    <iframe id="iframe"></iframe>
+  </div>
+
+  <input id="email" type='email'>
+
+  <input id="checkbox" type="checkbox">
+  <input id="radio" type="radio">
+
+  <input id="file" type="file">
+
+  <div id="div"></div>
+
+  <input id="text1">
+
+  <div id="eventdump"></div>
+</body>
+</html>

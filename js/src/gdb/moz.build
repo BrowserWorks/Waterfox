@@ -1,0 +1,26 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+PROGRAM = 'gdb-tests'
+
+UNIFIED_SOURCES += [
+    'gdb-tests.cpp',
+    'tests/test-jsid.cpp',
+    'tests/test-JSObject.cpp',
+    'tests/test-JSString.cpp',
+    'tests/test-jsval.cpp',
+    'tests/test-prettyprinters.cpp',
+    'tests/test-Root.cpp',
+    'tests/typedef-printers.cpp',
+]
+
+# Building against js_static requires that we declare mfbt sybols "exported"
+# on its behalf.
+for var in ('EXPORT_JS_API', 'IMPL_MFBT'):
+    DEFINES[var] = True
+
+LOCAL_INCLUDES += ['..']
+GENERATED_INCLUDES += ['..']

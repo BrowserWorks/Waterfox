@@ -1,0 +1,272 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin" type="text/css"?>
+<?xml-stylesheet href="chrome://mochikit/content/tests/SimpleTest/test.css" type="text/css"?>
+<!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=378028
+-->
+<window title="Mozilla Bug 378028"
+  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <script type="application/javascript" src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"/>
+  <script type="application/javascript" src="chrome://mochikit/content/tests/SimpleTest/EventUtils.js"/>
+
+  <!-- test results are displayed in the html:body -->
+  <body xmlns="http://www.w3.org/1999/xhtml">
+  <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=378028"
+     target="_blank">Mozilla Bug 378028</a>
+  </body>
+
+  <!-- richlistbox currently has no way of giving us a defined number of
+       rows, so we just choose an arbitrary height limit that should give
+       us plenty of vertical scrollability -->
+  <richlistbox id="richlistbox" style="height:50px;">
+    <richlistitem id="richlistbox_item0" hidden="true"><label value="Item 0"/></richlistitem>
+    <richlistitem id="richlistbox_item1"><label value="Item 1"/></richlistitem>
+    <richlistitem id="richlistbox_item2"><label value="Item 2"/></richlistitem>
+    <richlistitem id="richlistbox_item3"><label value="Item 3"/></richlistitem>
+    <richlistitem id="richlistbox_item4"><label value="Item 4"/></richlistitem>
+    <richlistitem id="richlistbox_item5"><label value="Item 5"/></richlistitem>
+    <richlistitem id="richlistbox_item6"><label value="Item 6"/></richlistitem>
+    <richlistitem id="richlistbox_item7"><label value="Item 7"/></richlistitem>
+    <richlistitem id="richlistbox_item8"><label value="Item 8"/></richlistitem>
+  </richlistbox>
+
+  <listbox id="listbox" rows="2">
+    <listitem id="listbox_item0" label="Item 0" hidden="true"/>
+    <listitem id="listbox_item1" label="Item 1"/>
+    <listitem id="listbox_item2" label="Item 2"/>
+    <listitem id="listbox_item3" label="Item 3"/>
+    <listitem id="listbox_item4" label="Item 4"/>
+    <listitem id="listbox_item5" label="Item 5"/>
+    <listitem id="listbox_item6" label="Item 6"/>
+    <listitem id="listbox_item7" label="Item 7"/>
+    <listitem id="listbox_item8" label="Item 8"/>
+  </listbox>
+
+  <box orient="horizontal">
+    <arrowscrollbox id="hscrollbox" clicktoscroll="true" orient="horizontal"
+     smoothscroll="false" style="max-width:80px;" flex="1">
+      <hbox style="width:40px; height:20px; background:black;" hidden="true"/>
+      <hbox style="width:40px; height:20px; background:white;"/>
+      <hbox style="width:40px; height:20px; background:black;"/>
+      <hbox style="width:40px; height:20px; background:white;"/>
+      <hbox style="width:40px; height:20px; background:black;"/>
+      <hbox style="width:40px; height:20px; background:white;"/>
+      <hbox style="width:40px; height:20px; background:black;"/>
+      <hbox style="width:40px; height:20px; background:white;"/>
+      <hbox style="width:40px; height:20px; background:black;"/>
+    </arrowscrollbox>
+  </box>
+
+  <arrowscrollbox id="vscrollbox" clicktoscroll="true" orient="vertical"
+   smoothscroll="false" style="max-height:80px;" flex="1">
+      <vbox style="width:100px; height:40px; background:black;" hidden="true"/>
+      <vbox style="width:100px; height:40px; background:white;"/>
+      <vbox style="width:100px; height:40px; background:black;"/>
+      <vbox style="width:100px; height:40px; background:white;"/>
+      <vbox style="width:100px; height:40px; background:black;"/>
+      <vbox style="width:100px; height:40px; background:white;"/>
+      <vbox style="width:100px; height:40px; background:black;"/>
+      <vbox style="width:100px; height:40px; background:white;"/>
+      <vbox style="width:100px; height:40px; background:black;"/>
+      <vbox style="width:100px; height:40px; background:white;"/>
+      <vbox style="width:100px; height:40px; background:black;"/>
+  </arrowscrollbox>
+
+  <!-- test code goes here -->
+  <script type="application/javascript"><![CDATA[
+
+/** Test for Bug 378028 **/
+/*   and for Bug 350471 **/
+var smoothScrollPref = "general.smoothScroll";
+SpecialPowers.setBoolPref(smoothScrollPref, false);
+SimpleTest.waitForExplicitFinish();
+
+const deltaModes = [
+  WheelEvent.DOM_DELTA_PIXEL,  // 0
+  WheelEvent.DOM_DELTA_LINE,   // 1
+  WheelEvent.DOM_DELTA_PAGE    // 2
+];
+
+function testListbox(id)
+{
+  var listbox = document.getElementById(id);
+
+  function helper(aStart, aDelta, aIntDelta, aDeltaMode)
+  {
+    listbox.scrollToIndex(aStart);
+    synthesizeWheel(listbox, 10, 10,
+                    { deltaMode: aDeltaMode, deltaY: aDelta,
+                      lineOrPageDeltaY: aIntDelta });
+    var expectedPos = aStart;
+    if (aIntDelta) {
+      if (aDeltaMode == WheelEvent.DOM_DELTA_PAGE) {
+        expectedPos += aIntDelta > 0 ? listbox.getNumberOfVisibleRows() :
+                                       -listbox.getNumberOfVisibleRows();
+      } else {
+        expectedPos += aIntDelta;
+      }
+    }
+    is(listbox.getIndexOfFirstVisibleRow(), expectedPos,
+       "testListbox(" + id +  "): vertical, starting " + aStart +
+         " delta " + aDelta + " lineOrPageDelta " + aIntDelta +
+         " aDeltaMode " + aDeltaMode);
+
+    // Check that horizontal scrolling has no effect
+    listbox.scrollToIndex(aStart);
+    synthesizeWheel(listbox, 10, 10,
+                    { deltaMode: aDeltaMode, deltaX: aDelta,
+                      lineOrPageDeltaX: aIntDelta });
+    is(listbox.getIndexOfFirstVisibleRow(), aStart,
+       "testListbox(" + id +  "): horizontal, starting " + aStart +
+         " delta " + aDelta + " lineOrPageDelta " + aIntDelta +
+         " aDeltaMode " + aDeltaMode);
+  }
+  deltaModes.forEach(function(aDeltaMode) {
+    let delta = (aDeltaMode == WheelEvent.DOM_DELTA_PIXEL) ? 5.0 : 0.3;
+    helper(5, -delta,  0, aDeltaMode);
+    helper(5, -delta, -1, aDeltaMode);
+    helper(5,  delta,  1, aDeltaMode);
+    helper(5,  delta,  0, aDeltaMode);
+  });
+}
+
+function testRichListbox(id, andThen)
+{
+  var listbox = document.getElementById(id);
+  var tests = [];
+
+  var winUtils = SpecialPowers.getDOMWindowUtils(window);
+  winUtils.advanceTimeAndRefresh(100);
+
+  function helper()
+  {
+    var [aStart, aDelta, aIntDelta, aDeltaMode] = tests[0];
+    tests.shift();
+    listbox.scrollToIndex(aStart);
+    synthesizeWheel(listbox, 10, 10,
+                    { deltaMode: aDeltaMode, deltaY: aDelta,
+                      lineOrPageDeltaY: aIntDelta });
+
+    winUtils.advanceTimeAndRefresh(100);
+
+    var change = listbox.getIndexOfFirstVisibleRow() - aStart;
+    var direction = (change > 0) - (change < 0);
+    var expected = (aDelta > 0) - (aDelta < 0);
+    is(direction, expected,
+     "testRichListbox(" + id +  "): vertical, starting " + aStart +
+       " delta " + aDelta + " lineOrPageDelta " + aIntDelta +
+       " aDeltaMode " + aDeltaMode);
+
+    // Check that horizontal scrolling has no effect
+    listbox.scrollToIndex(aStart);
+    synthesizeWheel(listbox, 10, 10,
+                    { deltaMode: aDeltaMode, deltaX: aDelta,
+                      lineOrPageDeltaX: aIntDelta });
+
+    winUtils.advanceTimeAndRefresh(100);
+
+    is(listbox.getIndexOfFirstVisibleRow(), aStart,
+       "testRichListbox(" + id +  "): horizontal, starting " + aStart +
+         " delta " + aDelta + " lineOrPageDelta " + aIntDelta +
+         " aDeltaMode " + aDeltaMode);
+
+    if (tests.length) {
+      winUtils.advanceTimeAndRefresh(100);
+      helper();
+    } else {
+      winUtils.restoreNormalRefresh();
+      andThen();
+    }
+  }
+
+  // richlistbox currently uses native XUL scrolling, so the "line"
+  // amounts don't necessarily correspond 1-to-1 with listbox items. So
+  // we just check that scrolling up/down scrolls in the right direction.
+  deltaModes.forEach(function(aDeltaMode) {
+    let delta = (aDeltaMode == WheelEvent.DOM_DELTA_PIXEL) ? 32.0 : 2.0;
+    tests.push([5, -delta, -1, aDeltaMode]);
+    tests.push([5, -delta,  0, aDeltaMode]);
+    tests.push([5,  delta,  1, aDeltaMode]);
+    tests.push([5,  delta,  0, aDeltaMode]);
+  });
+  helper();
+}
+
+function testArrowScrollbox(id)
+{
+  var scrollbox = document.getElementById(id);
+  var scrollBoxObject = scrollbox.scrollBoxObject;
+  var orient = scrollbox.getAttribute("orient");
+
+  function helper(aStart, aDelta, aIntDelta, aDeltaMode, aExpected)
+  {
+    var xpos = {};
+    var ypos = {};
+    var orientIsHorizontal = (orient == "horizontal");
+    var pos = orientIsHorizontal ? xpos : ypos;
+
+    scrollBoxObject.scrollTo(aStart, aStart);
+
+    for (var i = orientIsHorizontal ? 2 : 0; i >= 0; i--) {
+      synthesizeWheel(scrollbox, 5, 5,
+                      { deltaMode: aDeltaMode, deltaY: aDelta,
+                        lineOrPageDeltaY: aIntDelta });
+      scrollBoxObject.getPosition(xpos, ypos);
+      // Note, vertical mouse scrolling is allowed to scroll horizontal
+      // arrowscrollboxes, because many users have no horizontal mouse scroll
+      // capability
+      let expected = !i ? aExpected : aStart;
+      is(pos.value, expected,
+         "testArrowScrollbox(" + id +  "): vertical, starting " + aStart +
+           " delta " + aDelta + " lineOrPageDelta " + aIntDelta +
+           " aDeltaMode " + aDeltaMode);
+    }
+
+    scrollBoxObject.scrollTo(aStart, aStart);
+    for (var i = orientIsHorizontal ? 2 : 0; i >= 0; i--) {
+      synthesizeWheel(scrollbox, 5, 5,
+                      { deltaMode: aDeltaMode, deltaX: aDelta,
+                        lineOrPageDeltaX: aIntDelta });
+      // horizontal mouse scrolling is never allowed to scroll vertical
+      // arrowscrollboxes
+      scrollBoxObject.getPosition(xpos, ypos);
+      let expected = (!i && orientIsHorizontal) ? aExpected : aStart;
+      is(pos.value, expected,
+         "testArrowScrollbox(" + id +  "): horizontal, starting " + aStart +
+           " delta " + aDelta + " lineOrPageDelta " + aIntDelta +
+           " aDeltaMode " + aDeltaMode);
+    }
+  }
+
+  var scrolledWidth = {};
+  var scrolledHeight = {};
+  scrollBoxObject.getScrolledSize(scrolledWidth, scrolledHeight);
+  var scrollMaxX = scrolledWidth.value - scrollBoxObject.width;
+  var scrollMaxY = scrolledHeight.value - scrollBoxObject.height;
+  var scrollMax = orient == "horizontal" ? scrollMaxX : scrollMaxY;
+
+  deltaModes.forEach(function(aDeltaMode) {
+    // These lineOrPageDelta values are not realistic.  However, it's enough to
+    // test if it's scrolled by the lineOrPageDelta value.
+    let delta = (aDeltaMode == WheelEvent.DOM_DELTA_PIXEL) ? 5.0 : 0.3;
+    helper(50, -delta, -100, aDeltaMode, 0);
+    helper(50,  delta,  100, aDeltaMode, scrollMax);
+    helper(50, -delta,    0, aDeltaMode, 50);
+    helper(50,  delta,    0, aDeltaMode, 50);
+  });
+}
+
+function runTests()
+{
+  testRichListbox("richlistbox", function() {
+    testListbox("listbox");
+    testArrowScrollbox("hscrollbox");
+    testArrowScrollbox("vscrollbox");
+    SpecialPowers.clearUserPref(smoothScrollPref);
+    SimpleTest.finish();
+  });
+}
+
+window.onload = function() { setTimeout(runTests, 0); };
+  ]]></script>
+</window>

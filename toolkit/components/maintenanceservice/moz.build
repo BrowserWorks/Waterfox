@@ -1,0 +1,38 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+PROGRAM = 'maintenanceservice'
+
+SOURCES += [
+    'certificatecheck.cpp',
+    'maintenanceservice.cpp',
+    'registrycertificates.cpp',
+    'servicebase.cpp',
+    'serviceinstall.cpp',
+    'workmonitor.cpp',
+]
+
+# For debugging purposes only
+#DEFINES['DISABLE_UPDATER_AUTHENTICODE_CHECK'] = True
+
+DEFINES['UNICODE'] = True
+DEFINES['_UNICODE'] = True
+DEFINES['NS_NO_XPCOM'] = True
+
+# Pick up nsWindowsRestart.cpp
+LOCAL_INCLUDES += [
+    '/toolkit/mozapps/update/common',
+    '/toolkit/xre',
+]
+
+USE_STATIC_LIBS = True
+
+if CONFIG['_MSC_VER']:
+    WIN32_EXE_LDFLAGS += ['-ENTRY:wmainCRTStartup']
+
+RCINCLUDE = 'maintenanceservice.rc'
+
+DISABLE_STL_WRAPPING = True

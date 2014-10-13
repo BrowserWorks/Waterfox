@@ -1,0 +1,117 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# Copyright 2013 Mozilla Foundation and Mozilla contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+XPIDL_SOURCES += [
+    'nsIAudioManager.idl',
+    'nsINetworkInterfaceListService.idl',
+    'nsINetworkManager.idl',
+    'nsINetworkService.idl',
+    'nsINetworkWorker.idl',
+    'nsISystemWorkerManager.idl',
+    'nsIVolume.idl',
+    'nsIVolumeMountLock.idl',
+    'nsIVolumeService.idl',
+    'nsIVolumeStat.idl',
+    'nsIWorkerHolder.idl',
+]
+
+XPIDL_MODULE = 'dom_system_gonk'
+
+EXPORTS += [
+    'GonkGPSGeolocationProvider.h',
+    'nsVolume.h',
+    'nsVolumeService.h',
+]
+SOURCES += [
+    'AudioChannelManager.cpp',
+    'AudioManager.cpp',
+    'AutoMounter.cpp',
+    'AutoMounterSetting.cpp',
+    'GonkGPSGeolocationProvider.cpp',
+    'NetworkUtils.cpp',
+    'NetworkWorker.cpp',
+    'nsVolume.cpp',
+    'nsVolumeMountLock.cpp',
+    'nsVolumeService.cpp',
+    'nsVolumeStat.cpp',
+    'OpenFileFinder.cpp',
+    'SystemWorkerManager.cpp',
+    'TimeZoneSettingObserver.cpp',
+    'Volume.cpp',
+    'VolumeCommand.cpp',
+    'VolumeManager.cpp',
+    'VolumeServiceIOThread.cpp',
+    'VolumeServiceTest.cpp',
+]
+
+if CONFIG['ENABLE_TESTS']:
+    XPCSHELL_TESTS_MANIFESTS += ['tests/xpcshell.ini']
+
+EXTRA_COMPONENTS += [
+    'NetworkInterfaceListService.js',
+    'NetworkInterfaceListService.manifest',
+    'NetworkManager.manifest',
+    'NetworkService.js',
+    'NetworkService.manifest',
+]
+EXTRA_PP_COMPONENTS += [
+    'NetworkManager.js',
+]
+EXTRA_JS_MODULES += [
+    'systemlibs.js',
+]
+
+if CONFIG['MOZ_B2G_RIL']:
+    XPIDL_SOURCES += [
+        'nsIRadioInterfaceLayer.idl',
+    ]
+    EXTRA_COMPONENTS += [
+        'RadioInterfaceLayer.js',
+        'RadioInterfaceLayer.manifest',
+        'RILContentHelper.js',
+    ]
+    EXTRA_JS_MODULES += [
+        'ril_consts.js',
+        'ril_worker.js',
+    ]
+
+if CONFIG['MOZ_NFC']:
+    XPIDL_SOURCES += [
+        'nsINfcContentHelper.idl',
+    ]
+    EXTRA_COMPONENTS += [
+        'Nfc.js',
+        'Nfc.manifest',
+        'NfcContentHelper.js',
+    ]
+    EXTRA_JS_MODULES += [
+    'nfc_consts.js',
+    'nfc_worker.js',
+    ]
+
+FAIL_ON_WARNINGS = True
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+LOCAL_INCLUDES += [
+    '/dom/base',
+    '/dom/bluetooth',
+    '/dom/nfc',
+    '/dom/src/geolocation',
+    '/dom/wifi',
+]
+
+FINAL_LIBRARY = 'gklayout'

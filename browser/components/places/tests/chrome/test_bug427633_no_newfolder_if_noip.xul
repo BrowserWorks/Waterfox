@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<?xml-stylesheet href="chrome://global/skin" type="text/css"?>
+<?xml-stylesheet href="chrome://mochikit/content/tests/SimpleTest/test.css"
+                 type="text/css"?>
+
+<?xml-stylesheet href="chrome://browser/skin/places/editBookmarkOverlay.css"?>
+<?xml-stylesheet href="chrome://browser/content/places/places.css"?>
+<?xml-stylesheet href="chrome://browser/skin/places/places.css"?>
+
+<?xul-overlay href="chrome://browser/content/places/placesOverlay.xul"?>
+<?xul-overlay href="chrome://browser/content/places/editBookmarkOverlay.xul"?>
+
+<!DOCTYPE window [
+  <!ENTITY % editBookmarkOverlayDTD SYSTEM "chrome://browser/locale/places/editBookmarkOverlay.dtd">
+  %editBookmarkOverlayDTD;
+]>
+
+<window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        title="Bug 427633 - Disable creating a New Folder in the bookmarks dialogs if insertionPoint is invalid"
+        onload="runTest();">
+
+  <script type="application/javascript"
+          src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js" />
+  <script type="application/javascript"
+          src="chrome://browser/content/places/editBookmarkOverlay.js"/>
+
+  <body xmlns="http://www.w3.org/1999/xhtml" />
+
+  <vbox id="editBookmarkPanelContent"/>
+
+  <script type="application/javascript">
+  <![CDATA[
+
+     /**
+      * Bug 427633 - Disable creating a New Folder in the bookmarks dialogs if
+      * insertionPoint is invalid.
+      */
+
+    function runTest() {
+      var bs = Cc["@mozilla.org/browser/nav-bookmarks-service;1"].
+               getService(Ci.nsINavBookmarksService);
+      var ios = Cc["@mozilla.org/network/io-service;1"].
+                getService(Ci.nsIIOService);
+      function uri(spec) {
+        return ios.newURI(spec, null, null);
+      }
+
+      // Add a bookmark.
+      var itemId = bs.insertBookmark(PlacesUtils.toolbarFolderId,
+                                     uri("http://www.example.com/"),
+                                     bs.DEFAULT_INDEX,
+                                     "mozilla");
+
+      // Init panel.
+      ok(gEditItemOverlay, "gEditItemOverlay is in context");
+      gEditItemOverlay.initPanel(itemId);
+      ok(gEditItemOverlay._initialized, "gEditItemOverlay is initialized");
+      // We must be sure tree is initialized, so we wait for place to be set.
+      SimpleTest.waitForExplicitFinish();
+      var tree = gEditItemOverlay._element("folderTree");
+      tree.addEventListener("DOMAttrModified", function(event) {
+          if (event.attrName != "place")
+            return;
+          tree.removeEventListener("DOMAttrModified", arguments.callee, false);
+          SimpleTest.executeSoon(function() {
+            tree.view.selection.clearSelection();
+            ok(document.getElementById("editBMPanel_newFolderButton").disabled,
+               "New folder button is disabled if there's no selection");
+
+            // Cleanup.
+            bs.removeItem(itemId);
+            SimpleTest.finish();
+            });
+        }, false);
+      // Open the folder tree.
+      document.getElementById("editBMPanel_foldersExpander").doCommand();
+    }
+  ]]>
+  </script>
+
+</window>

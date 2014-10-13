@@ -1,0 +1,319 @@
+/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+
+%{ C++
+#include "nsMargin.h"
+#include "nsTArray.h"
+%}
+
+/**
+ * Native types
+ */
+  [ref] native nsNativeIntMarginRef(nsIntMargin);
+  [ref] native IntegerArray(nsTArray<int32_t>);
+  
+interface nsIPrintSession;
+
+/**
+ * Simplified graphics interface for JS rendering.
+ */
+[scriptable, uuid(1bcfc611-8941-4c39-9e06-7116e564a1ce)]
+
+interface nsIPrintSettings : nsISupports
+{
+  /**
+   * PrintSettings to be Saved Navigation Constants
+   */
+  const unsigned long kInitSaveOddEvenPages   = 0x00000001;
+  const unsigned long kInitSaveHeaderLeft     = 0x00000002;
+  const unsigned long kInitSaveHeaderCenter   = 0x00000004;
+  const unsigned long kInitSaveHeaderRight    = 0x00000008;
+  const unsigned long kInitSaveFooterLeft     = 0x00000010;
+  const unsigned long kInitSaveFooterCenter   = 0x00000020;
+  const unsigned long kInitSaveFooterRight    = 0x00000040;
+  const unsigned long kInitSaveBGColors       = 0x00000080;
+  const unsigned long kInitSaveBGImages       = 0x00000100;
+  const unsigned long kInitSavePaperSize      = 0x00000200;
+  const unsigned long kInitSaveResolution     = 0x00000400;
+  const unsigned long kInitSaveDuplex         = 0x00000800;
+  /* Flag 0x00001000 is unused */
+  const unsigned long kInitSavePaperData      = 0x00002000;
+  const unsigned long kInitSaveUnwriteableMargins = 0x00004000;
+  const unsigned long kInitSaveEdges          = 0x00008000;
+
+  const unsigned long kInitSaveReversed       = 0x00010000;
+  const unsigned long kInitSaveInColor        = 0x00020000;
+  const unsigned long kInitSaveOrientation    = 0x00040000;
+  const unsigned long kInitSavePrintCommand   = 0x00080000;
+  const unsigned long kInitSavePrinterName    = 0x00100000;
+  const unsigned long kInitSavePrintToFile    = 0x00200000;
+  const unsigned long kInitSaveToFileName     = 0x00400000;
+  const unsigned long kInitSavePageDelay      = 0x00800000;
+  const unsigned long kInitSaveMargins        = 0x01000000;
+  const unsigned long kInitSaveNativeData     = 0x02000000;
+  const unsigned long kInitSavePlexName       = 0x04000000;
+  const unsigned long kInitSaveShrinkToFit    = 0x08000000;
+  const unsigned long kInitSaveScaling        = 0x10000000;
+  const unsigned long kInitSaveColorspace     = 0x20000000;
+  const unsigned long kInitSaveResolutionName = 0x40000000;
+  const unsigned long kInitSaveDownloadFonts  = 0x80000000;
+  const unsigned long kInitSaveAll            = 0xFFFFFFFF;
+
+  /* Print Option Flags for Bit Field*/
+  const long kPrintOddPages     = 0x00000001;
+  const long kPrintEvenPages    = 0x00000002;
+  const long kEnableSelectionRB = 0x00000004;
+
+  /* Print Range Enums */
+  const long kRangeAllPages           = 0;
+  const long kRangeSpecifiedPageRange = 1;
+  const long kRangeSelection          = 2;
+  const long kRangeFocusFrame         = 3;
+
+  /* Justification Enums */
+  const long kJustLeft   = 0;
+  const long kJustCenter = 1;
+  const long kJustRight  = 2;
+
+  /**
+   * FrameSet Default Type Constants
+   */
+  const short kUseInternalDefault    = 0;
+  const short kUseSettingWhenPossible = 1;
+
+  /**
+   * Page Size Type Constants
+   */
+  const short kPaperSizeNativeData  = 0;
+  const short kPaperSizeDefined     = 1;
+
+  /**
+   * Page Size Unit Constants
+   */
+  const short kPaperSizeInches      = 0;
+  const short kPaperSizeMillimeters = 1;
+
+  /**
+   * Orientation Constants
+   */
+  const short kPortraitOrientation  = 0;
+  const short kLandscapeOrientation = 1;
+
+  /**
+   * Print Frame Constants
+   */
+  const short kNoFrames      = 0;
+  const short kFramesAsIs    = 1;
+  const short kSelectedFrame = 2;
+  const short kEachFrameSep  = 3;
+
+  /**
+   * How to Enable Frame Set Printing Constants
+   */
+  const short kFrameEnableNone        = 0;
+  const short kFrameEnableAll         = 1;
+  const short kFrameEnableAsIsAndEach = 2;
+
+  /**
+   * Output file format
+   */
+  const short kOutputFormatNative = 0;
+  const short kOutputFormatPS     = 1;
+  const short kOutputFormatPDF    = 2;
+
+  /**
+   * Set PrintOptions 
+   */
+  void SetPrintOptions(in int32_t aType, in boolean aTurnOnOff);
+
+  /**
+   * Get PrintOptions 
+   */
+  boolean GetPrintOptions(in int32_t aType);
+
+  /**
+   * Set PrintOptions Bit field
+   */
+  int32_t GetPrintOptionsBits();
+
+  /**
+   * Get the page size in twips, considering the
+   * orientation (portrait or landscape).
+   */
+  void GetEffectivePageSize(out double aWidth, out double aHeight);
+
+  /**
+   * Makes a new copy
+   */
+    nsIPrintSettings clone();
+
+  /**
+   * Assigns the internal values from the "in" arg to the current object
+   */
+    void assign(in nsIPrintSettings aPS);
+
+  /**
+   * Data Members
+   */
+  [noscript] attribute nsIPrintSession printSession; /* We hold a weak reference */
+
+  attribute long    startPageRange;    
+  attribute long    endPageRange;    
+
+  /**
+   * The edge measurements define the positioning of the headers
+   * and footers on the page. They're measured as an offset from
+   * the "unwriteable margin" (described below).
+   */
+  attribute double  edgeTop;     /*  these are in inches */
+  attribute double  edgeLeft;
+  attribute double  edgeBottom;
+  attribute double  edgeRight;
+
+  /**
+   * The margins define the positioning of the content on the page.
+   * They're treated as an offset from the "unwriteable margin"
+   * (described below).
+   */
+  attribute double  marginTop;     /*  these are in inches */
+  attribute double  marginLeft;
+  attribute double  marginBottom;
+  attribute double  marginRight;
+  /**
+   * The unwriteable margin defines the printable region of the paper, creating
+   * an invisible border from which the edge and margin attributes are measured.
+   */
+  attribute double  unwriteableMarginTop;     /*  these are in inches */
+  attribute double  unwriteableMarginLeft;
+  attribute double  unwriteableMarginBottom;
+  attribute double  unwriteableMarginRight;
+
+  attribute double  scaling;      /* values 0.0 - 1.0 */
+  attribute boolean printBGColors; /* Print Background Colors */
+  attribute boolean printBGImages; /* Print Background Images */
+
+  attribute short   printRange; 
+
+  attribute wstring title;
+  attribute wstring docURL;
+
+  attribute wstring headerStrLeft;
+  attribute wstring headerStrCenter;
+  attribute wstring headerStrRight;
+
+  attribute wstring footerStrLeft;
+  attribute wstring footerStrCenter;
+  attribute wstring footerStrRight;
+
+  attribute short   howToEnableFrameUI;  /* indicates how to enable the frameset UI            */
+  attribute boolean isCancelled;         /* indicates whether the print job has been cancelled */
+  attribute short   printFrameTypeUsage; /* indicates whether to use the interal value or not  */
+  attribute short   printFrameType;
+  attribute boolean printSilent;	     /* print without putting up the dialog */
+  attribute boolean shrinkToFit;	     /* shrinks content to fit on page      */
+  attribute boolean showPrintProgress;   /* indicates whether the progress dialog should be shown */
+
+  /* Additional XP Related */
+  attribute wstring paperName;     /* name of paper */
+  attribute short   paperSizeType; /* use native data or is defined here */
+  attribute short   paperData;     /* native data value */
+  attribute double  paperWidth;    /* width of the paper in inches or mm */
+  attribute double  paperHeight;   /* height of the paper in inches or mm */
+  attribute short   paperSizeUnit; /* paper is in inches or mm */
+
+  attribute wstring plexName;      /* name of plex mode (like "simplex", "duplex",
+                                    * "tumble" and various custom values) */
+
+  attribute wstring colorspace;    /* device-specific name of colorspace, overrides |printInColor| */
+  attribute wstring resolutionName;/* device-specific identifer of resolution or quality
+                                    * (like "600", "600x300", "600x300x12", "high-res",
+                                    * "med-res". "low-res", etc.) */
+  attribute boolean downloadFonts; /* enable font download to printer? */
+
+  attribute boolean printReversed;
+  attribute boolean printInColor;  /* a false means grayscale */
+  attribute long    orientation;   /*  see orientation consts */
+  attribute wstring printCommand;
+  attribute long    numCopies;
+
+  attribute wstring printerName;   /* name of destination printer */
+
+  attribute boolean printToFile;
+  attribute wstring toFileName;
+  attribute short   outputFormat;
+
+  attribute long    printPageDelay; /* in milliseconds */
+
+  attribute long    resolution;     /* print resolution (dpi) */
+
+  attribute long    duplex;         /* duplex mode */
+
+  /* initialize helpers */
+  /**
+   * This attribute tracks whether the PS has been initialized 
+   * from a printer specified by the "printerName" attr. 
+   * If a different name is set into the "printerName" 
+   * attribute than the one it was initialized with the PS
+   * will then get intialized from that printer.
+   */
+  attribute boolean isInitializedFromPrinter;
+
+  /**
+   * This attribute tracks whether the PS has been initialized 
+   * from prefs. If a different name is set into the "printerName" 
+   * attribute than the one it was initialized with the PS
+   * will then get intialized from prefs again.
+   */
+  attribute boolean isInitializedFromPrefs;
+
+  /**
+   * This attribute tracks if the settings made on the margin box is
+   * stored in the prefs or not.
+   */
+  attribute boolean persistMarginBoxSettings;
+
+  /* C++ Helper Functions */
+  [noscript] void SetMarginInTwips(in nsNativeIntMarginRef aMargin);
+  [noscript] void SetEdgeInTwips(in nsNativeIntMarginRef aEdge);
+  /* Purposely made this an "in" arg */
+  [noscript] void GetMarginInTwips(in nsNativeIntMarginRef aMargin);
+  [noscript] void GetEdgeInTwips(in nsNativeIntMarginRef aEdge);
+
+  /**
+   * We call this function so that anything that requires a run of the event loop
+   * can do so safely. The print dialog runs the event loop but in silent printing
+   * that doesn't happen.
+   *
+   * Either this or ShowPrintDialog (but not both) MUST be called by the print engine
+   * before printing, otherwise printing can fail on some platforms.
+   */
+  [noscript] void SetupSilentPrinting();
+
+  /**
+   * Sets/Gets the "unwriteable margin" for the page format.  This defines
+   * the boundary from which we'll measure the EdgeInTwips and MarginInTwips 
+   * attributes, to place the headers and content, respectively.
+   *
+   * Note: Implementations of SetUnwriteableMarginInTwips should handle
+   * negative margin values by falling back on the system default for
+   * that margin.
+   */
+  [noscript] void SetUnwriteableMarginInTwips(in nsNativeIntMarginRef aEdge);
+  [noscript] void GetUnwriteableMarginInTwips(in nsNativeIntMarginRef aEdge);
+  
+  /**
+   * Get more accurate print ranges from the superior interval 
+   * (startPageRange, endPageRange). The aPages array is populated with a 
+   * list of pairs (start, end), where the endpoints are included. The print 
+   * ranges (start, end), must not overlap and must be in the 
+   * (startPageRange, endPageRange) scope.
+   *
+   * If there are no print ranges the aPages array is cleared.
+   */
+  [noscript] void GetPageRanges(in IntegerArray aPages);
+};

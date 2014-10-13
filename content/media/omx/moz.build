@@ -1,0 +1,77 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+EXPORTS += [
+    'AudioOffloadPlayerBase.h',
+    'MediaOmxDecoder.h',
+    'MediaOmxReader.h',
+]
+
+SOURCES += [
+    'MediaOmxDecoder.cpp',
+    'MediaOmxReader.cpp',
+    'OMXCodecProxy.cpp',
+    'OmxDecoder.cpp',
+]
+
+if CONFIG['MOZ_AUDIO_OFFLOAD']:
+    EXPORTS += [
+        'AudioOffloadPlayer.h',
+        'AudioOutput.h',
+        'AudioSink.h',
+    ]
+    SOURCES += [
+        'AudioOffloadPlayer.cpp',
+        'AudioOutput.cpp',
+    ]
+
+if CONFIG['MOZ_OMX_ENCODER']:
+    EXPORTS += [
+        'OMXCodecWrapper.h',
+    ]
+    SOURCES += [
+        'OMXCodecDescriptorUtil.cpp',
+        'OMXCodecWrapper.cpp',
+    ]
+
+if 'rtsp' in CONFIG['NECKO_PROTOCOLS']:
+    EXPORTS += [
+        'RtspOmxDecoder.h',
+        'RtspOmxReader.h',
+    ]
+    SOURCES += [
+        'RtspOmxDecoder.cpp',
+        'RtspOmxReader.cpp',
+    ]
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+FINAL_LIBRARY = 'gklayout'
+LOCAL_INCLUDES += [
+    '/content/base/src',
+    '/content/html/content/src',
+    '/ipc/chromium/src',
+    'mediaresourcemanager',
+]
+
+CXXFLAGS += [
+    '-I%s/%s' % (CONFIG['ANDROID_SOURCE'], d) for d in [
+        'dalvik/libnativehelper/include/nativehelper',
+        'frameworks/av/include/media',
+        'frameworks/base/include',
+        'frameworks/base/include/binder',
+        'frameworks/base/include/utils',
+        'frameworks/base/include/media',
+        'frameworks/base/include/media/stagefright/openmax',
+        'frameworks/base/media/libstagefright/include',
+        'frameworks/native/opengl/include',
+        'frameworks/native/include',
+        'hardware/libhardware/include/',
+    ]
+]
+
+if CONFIG['ANDROID_VERSION'] > '15':
+    DEFINES['MOZ_OMX_WEBM_DECODER'] = True

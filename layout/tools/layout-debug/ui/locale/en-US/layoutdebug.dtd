@@ -1,0 +1,76 @@
+<!--
+   -
+   - This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY app.name.short "layoutdebug">
+<!ENTITY app.name.long "Layout Debugger">
+<!ENTITY app.version "prototype_a">
+<!ENTITY app.author "mozilla.org">
+
+<!ENTITY ldb.MainWindow.title "Layout Debugger">
+
+<!ENTITY ldb.Open.label "Open File…">
+<!ENTITY ldb.Open.accesskey "o">
+<!ENTITY ldb.Open.commandkey "o">
+
+<!ENTITY ldb.BackButton.label "Back">
+<!ENTITY ldb.ForwardButton.label "Forward">
+<!ENTITY ldb.ReloadButton.label "Reload">
+<!ENTITY ldb.StopButton.label "Stop">
+
+
+<!ENTITY ldb.RegressionTestMenu.label "Regression-Test">
+<!ENTITY ldb.RegressionTestMenu.accesskey "R">
+<!ENTITY ldb.RunBaselineMenu.label "Run Baseline">
+<!ENTITY ldb.RunBaselineMenu.accesskey "B">
+<!ENTITY ldb.RunVerifyMenu.label "Run Verify">
+<!ENTITY ldb.RunVerifyMenu.accesskey "V">
+<!ENTITY ldb.RegressionPrintMode.label "Print Mode">
+<!ENTITY ldb.RegressionPrintMode.accesskey "P">
+<!ENTITY ldb.AddNewList.label "Add New List…">
+<!ENTITY ldb.AddNewList.accesskey "A">
+<!ENTITY ldb.RemoveListMenu.label "Remove List">
+<!ENTITY ldb.RemoveListMenu.accesskey "R">
+
+
+<!ENTITY ldb.ToggleMenu.label "Toggle">
+<!ENTITY ldb.ToggleMenu.accesskey "T">
+
+<!ENTITY ldb.visualDebugging.label "Visual Debugging">
+<!ENTITY ldb.visualDebugging.accesskey "V">
+<!ENTITY ldb.visualEventDebugging.label "Visual Event Debugging">
+<!ENTITY ldb.visualEventDebugging.accesskey "E">
+<!ENTITY ldb.paintFlashing.label "Paint Flashing">
+<!ENTITY ldb.paintFlashing.accesskey "F">
+<!ENTITY ldb.paintDumping.label "Paint Dumping">
+<!ENTITY ldb.paintDumping.accesskey "P">
+<!ENTITY ldb.invalidateDumping.label "Invalidate Dumping">
+<!ENTITY ldb.invalidateDumping.accesskey "I">
+<!ENTITY ldb.eventDumping.label "Event Dumping">
+<!ENTITY ldb.eventDumping.accesskey "E">
+<!ENTITY ldb.motionEventDumping.label "Motion Event Dumping">
+<!ENTITY ldb.motionEventDumping.accesskey "M">
+<!ENTITY ldb.crossingEventDumping.label "Crossing Event Dumping">
+<!ENTITY ldb.crossingEventDumping.accesskey "C">
+<!ENTITY ldb.reflowCounts.label "Reflow Counts">
+<!ENTITY ldb.reflowCounts.accesskey "R">
+
+<!ENTITY ldb.DumpMenu.label "Dump">
+<!ENTITY ldb.DumpMenu.accesskey "D">
+
+<!ENTITY ldb.dumpWebShells.label "Web Shells">
+<!ENTITY ldb.dumpWebShells.accesskey "W">
+<!ENTITY ldb.dumpContent.label "Content">
+<!ENTITY ldb.dumpContent.accesskey "C">
+<!ENTITY ldb.dumpFrames.label "Frames">
+<!ENTITY ldb.dumpFrames.accesskey "F">
+<!ENTITY ldb.dumpViews.label "Views and Widgets">
+<!ENTITY ldb.dumpViews.accesskey "V">
+<!ENTITY ldb.dumpStyleSheets.label "Style Sheets">
+<!ENTITY ldb.dumpStyleSheets.accesskey "S">
+<!ENTITY ldb.dumpStyleContexts.label "Style Contexts">
+<!ENTITY ldb.dumpStyleContexts.accesskey "x">
+<!ENTITY ldb.dumpReflowStats.label "Reflow Statistics">
+<!ENTITY ldb.dumpReflowStats.accesskey "R">

@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+<?xml-stylesheet href="chrome://global/skin/"?>
+<?xml-stylesheet href="chrome://browser/content/downloads/contentAreaDownloadsView.css"?>
+<?xml-stylesheet href="chrome://browser/skin/downloads/contentAreaDownloadsView.css"?>
+
+<?xul-overlay href="chrome://browser/content/downloads/allDownloadsViewOverlay.xul"?>
+
+<?xul-overlay href="chrome://global/content/editMenuOverlay.xul"?>
+
+<!DOCTYPE window [
+<!ENTITY % downloadsDTD SYSTEM "chrome://browser/locale/downloads/downloads.dtd">
+%downloadsDTD;
+]>
+
+<window id="contentAreaDownloadsView"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        title="&downloads.title;"
+        onload="ContentAreaDownloadsView.init();">
+
+  <script type="application/javascript"
+          src="chrome://global/content/globalOverlay.js"/>
+  <script type="application/javascript"
+          src="chrome://browser/content/downloads/contentAreaDownloadsView.js"/>
+
+  <commandset id="editMenuCommands"/>
+
+  <keyset id="editMenuKeys">
+#ifdef XP_MACOSX
+    <key id="key_delete2" keycode="VK_BACK" command="cmd_delete"/>
+#endif
+  </keyset>
+
+  <stack flex="1">
+    <richlistbox id="downloadsRichListBox"/>
+    <description id="downloadsListEmptyDescription"
+                 value="&downloadsListEmpty.label;"
+                 mousethrough="always"/>
+  </stack>
+  <commandset id="downloadCommands"/>
+  <menupopup id="downloadsContextMenu"/>
+</window>

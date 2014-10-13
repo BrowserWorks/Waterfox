@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<?xml-stylesheet href="chrome://global/skin/"?>
+<?xml-stylesheet href="chrome://mozapps/skin/extensions/blocklist.css"?>
+<?xml-stylesheet href="chrome://mozapps/content/extensions/blocklist.css"?>
+
+<!DOCTYPE dialog [
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+<!ENTITY % extensionsDTD SYSTEM "chrome://mozapps/locale/extensions/blocklist.dtd">
+%extensionsDTD;
+]>
+
+<dialog windowtype="Addons:Blocklist" title="&blocklist.title;" align="stretch"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        onload="init();" ondialogaccept="return finish(true)"
+                         ondialogcancel="return finish(false)"
+        buttons="accept,cancel" style="&blocklist.style;"
+        buttonlabelaccept="&blocklist.accept.label;"
+        buttonaccesskeyaccept="&blocklist.accept.accesskey;">
+
+  <script type="application/javascript" src="chrome://global/content/globalOverlay.js"/>
+  <script type="application/javascript" src="chrome://mozapps/content/extensions/blocklist.js"/>
+
+  <hbox align="stretch" flex="1">
+    <vbox pack="start">
+      <image class="error-icon"/>
+    </vbox>
+    <vbox flex="1">
+      <label>&blocklist.summary;</label>
+      <separator class="thin"/>
+      <richlistbox id="addonList" flex="1"/>
+      <separator class="thin"/>
+      <description id="bothMessage" hidden="true" class="bold">&blocklist.softandhard;</description>
+      <description id="hardBlockMessage" hidden="true" class="bold">&blocklist.hardblocked;</description>
+      <description id="softBlockMessage" hidden="true" class="bold">&blocklist.softblocked;</description>
+      <hbox pack="start">
+        <label id="moreInfo" class="text-link" value="&blocklist.moreinfo;"/>
+      </hbox>
+    </vbox>
+  </hbox>
+</dialog>

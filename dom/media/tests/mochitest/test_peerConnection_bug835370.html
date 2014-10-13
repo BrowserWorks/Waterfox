@@ -1,0 +1,62 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="application/javascript" src="head.js"></script>
+  <script type="application/javascript" src="pc.js"></script>
+</head>
+<body>
+<pre id="test">
+<script type="application/javascript">
+  createHTML({
+    bug: "825703",
+    title: "PeerConnection.createOffer valid/invalid constraints permutations"
+  });
+
+  runNetworkTest(function () {
+    var pconnect  = new mozRTCPeerConnection();
+    var pconnects = new mozRTCPeerConnection();
+
+    function step1(offer) {}
+    function failed(code) {}
+
+    var exception = null;
+    try { pconnects.createOffer(step1, failed); } catch (e) { exception = e; }
+    ok(!exception, "createOffer(step1, failed) succeeds");
+    exception = null;
+    try { pconnect.createOffer(step1, failed, 1); } catch (e) { exception = e; }
+    ok(exception, "createOffer(step1, failed, 1) throws");
+    exception = null;
+    try { pconnects.createOffer(step1, failed, {}); } catch (e) { exception = e; }
+    ok(!exception, "createOffer(step1, failed, {}) succeeds");
+    exception = null;
+    try {
+        pconnect.createOffer(step1, failed, { mandatory: { FooBar: true } });
+    } catch (e) {
+        ok(e.message.indexOf("FooBar") > 0, "createOffer has readable exceptions");
+        exception = e;
+    }
+    ok(exception, "createOffer(step1, failed, { mandatory: { FooBar: true } }) throws");
+    exception = null;
+    try { pconnects.createOffer(step1, failed, { optional: [] }); } catch (e) { exception = e; }
+    ok(!exception, "createOffer(step1, failed, { optional: [] }) succeeds");
+    exception = null;
+    try { pconnect.createOffer(step1, failed, { optional: [1] }); } catch (e) { exception = e; }
+    ok(exception, "createOffer(step1, failed, { optional: [1] }) throws");
+    exception = null;
+    try { pconnect.createOffer(step1, failed, { optional: [{ OfferToReceiveVideo: false, OfferToReceiveAudio: true, }] }); } catch (e) { exception = e; }
+    ok(exception, "createOffer(step1, failed, { optional: [{ OfferToReceiveVideo: false, OfferToReceiveAudio: true, }] }) throws");
+    exception = null;
+    try { pconnects.createOffer(step1, failed, { mandatory: { OfferToReceiveVideo: false, OfferToReceiveAudio: true, MozDontOfferDataChannel: true}, optional: [{ VoiceActivityDetection: true }, { FooBar: "42"  }] }); } catch (e) { exception = e; }
+    ok(!exception, "createOffer(step1, failed, { mandatory: { OfferToReceiveVideo: false, OfferToReceiveAudio: true, MozDontOfferDataChannel: true}, optional: [{ VoiceActivityDetection: true }, { FooBar: \"42\"  }] }) succeeds");
+    pconnect.close();
+    pconnects.close();
+    pconnect = null;
+    pconnects = null;
+    networkTestFinished();
+  });
+</script>
+</pre>
+</body>
+</html>

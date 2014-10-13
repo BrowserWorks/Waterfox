@@ -1,0 +1,35 @@
+/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIChannel;
+
+/**
+ * An interface to access the the base channel 
+ * associated with a MultiPartChannel.
+ */
+
+[scriptable, uuid(4b04e835-d131-42af-8bf0-74289f99374f)]
+interface nsIMultiPartChannel : nsISupports
+{
+    /**
+     * readonly attribute to access the underlying channel
+     */
+    readonly attribute nsIChannel baseChannel;
+
+    /**
+     * Attribute guaranteed to be different for different parts of
+     * the same multipart document.
+     */
+    readonly attribute uint32_t partID;
+
+    /**
+     * Set to true when onStopRequest is received from the base channel.
+     * The listener can check this from its onStopRequest to determine
+     * whether more data can be expected.
+     */
+    readonly attribute boolean isLastPart;
+};

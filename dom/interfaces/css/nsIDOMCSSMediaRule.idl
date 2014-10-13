@@ -1,0 +1,15 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIDOMCSSConditionRule.idl"
+
+/**
+ * Interface for @media rules in the CSS OM.
+ */
+[scriptable, uuid(1f491b05-932b-4aa1-a1f1-466505d70898)]
+interface nsIDOMCSSMediaRule : nsIDOMCSSConditionRule
+{
+  readonly attribute nsIDOMMediaList   media;
+};

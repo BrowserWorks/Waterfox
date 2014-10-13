@@ -1,0 +1,149 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+MOCHITEST_MANIFESTS += ['test/mochitest.ini']
+MOCHITEST_CHROME_MANIFESTS += ['test/chrome.ini']
+
+XPIDL_SOURCES += [
+    'nsIEventListenerService.idl',
+]
+
+XPIDL_MODULE = 'content_events'
+
+EXPORTS.mozilla += [
+    'AsyncEventDispatcher.h',
+    'DOMEventTargetHelper.h',
+    'EventDispatcher.h',
+    'EventListenerManager.h',
+    'EventNameList.h',
+    'EventStateManager.h',
+    'EventStates.h',
+    'IMEStateManager.h',
+    'InternalMutationEvent.h',
+    'JSEventHandler.h',
+    'KeyNameList.h',
+    'PhysicalKeyCodeNameList.h',
+    'TextComposition.h',
+    'VirtualKeyCodeList.h',
+]
+
+EXPORTS.mozilla.dom += [
+    'AnimationEvent.h',
+    'BeforeUnloadEvent.h',
+    'ClipboardEvent.h',
+    'CommandEvent.h',
+    'CompositionEvent.h',
+    'DataContainerEvent.h',
+    'DataTransfer.h',
+    'DeviceMotionEvent.h',
+    'DragEvent.h',
+    'Event.h',
+    'EventTarget.h',
+    'FocusEvent.h',
+    'InputEvent.h',
+    'KeyboardEvent.h',
+    'MessageEvent.h',
+    'MouseEvent.h',
+    'MouseScrollEvent.h',
+    'MutationEvent.h',
+    'NotifyPaintEvent.h',
+    'PaintRequest.h',
+    'PointerEvent.h',
+    'ScrollAreaEvent.h',
+    'SimpleGestureEvent.h',
+    'StorageEvent.h',
+    'Touch.h',
+    'TouchEvent.h',
+    'TransitionEvent.h',
+    'UIEvent.h',
+    'WheelEvent.h',
+    'XULCommandEvent.h',
+]
+
+if CONFIG['MOZ_WEBSPEECH']:
+    EXPORTS.mozilla.dom += ['SpeechRecognitionError.h']
+
+UNIFIED_SOURCES += [
+    'AnimationEvent.cpp',
+    'AsyncEventDispatcher.cpp',
+    'BeforeUnloadEvent.cpp',
+    'ClipboardEvent.cpp',
+    'CommandEvent.cpp',
+    'CompositionEvent.cpp',
+    'ContentEventHandler.cpp',
+    'DataContainerEvent.cpp',
+    'DataTransfer.cpp',
+    'DeviceMotionEvent.cpp',
+    'DOMEventTargetHelper.cpp',
+    'DragEvent.cpp',
+    'Event.cpp',
+    'EventDispatcher.cpp',
+    'EventListenerManager.cpp',
+    'EventListenerService.cpp',
+    'EventTarget.cpp',
+    'FocusEvent.cpp',
+    'IMEContentObserver.cpp',
+    'IMEStateManager.cpp',
+    'InputEvent.cpp',
+    'JSEventHandler.cpp',
+    'KeyboardEvent.cpp',
+    'MessageEvent.cpp',
+    'MouseEvent.cpp',
+    'MouseScrollEvent.cpp',
+    'MutationEvent.cpp',
+    'NotifyPaintEvent.cpp',
+    'PaintRequest.cpp',
+    'PointerEvent.cpp',
+    'ScrollAreaEvent.cpp',
+    'SimpleGestureEvent.cpp',
+    'StorageEvent.cpp',
+    'TextComposition.cpp',
+    'Touch.cpp',
+    'TouchEvent.cpp',
+    'TransitionEvent.cpp',
+    'UIEvent.cpp',
+    'WheelEvent.cpp',
+    'WheelHandlingHelper.cpp',
+    'XULCommandEvent.cpp',
+]
+
+# nsEventStateManager.cpp should be built separately because of Mac OS X headers.
+SOURCES += [
+    'EventStateManager.cpp',
+]
+
+if CONFIG['MOZ_WEBSPEECH']:
+    UNIFIED_SOURCES += ['SpeechRecognitionError.cpp']
+
+FAIL_ON_WARNINGS = True
+
+MSVC_ENABLE_PGO = True
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+FINAL_LIBRARY = 'gklayout'
+LOCAL_INCLUDES += [
+    '/content/base/src',
+    '/content/html/content/src',
+    '/content/xml/content/src',
+    '/content/xul/content/src',
+    '/dom/base',
+    '/dom/settings',
+    '/dom/src/storage',
+    '/dom/workers',
+    '/js/xpconnect/wrappers',
+    '/layout/generic',
+    '/layout/xul',
+    '/layout/xul/tree/',
+]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
+    LOCAL_INCLUDES += [
+        '/dom/wifi',
+    ]
+
+if CONFIG['MOZ_JSDEBUGGER']:
+    DEFINES['MOZ_JSDEBUGGER'] = True

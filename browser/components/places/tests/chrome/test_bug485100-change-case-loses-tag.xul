@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<?xml-stylesheet href="chrome://global/skin" type="text/css"?>
+<?xml-stylesheet href="chrome://mochikit/content/tests/SimpleTest/test.css"
+                 type="text/css"?>
+
+<?xml-stylesheet href="chrome://browser/skin/places/editBookmarkOverlay.css"?>
+<?xml-stylesheet href="chrome://browser/content/places/places.css"?>
+<?xml-stylesheet href="chrome://browser/skin/places/places.css"?>
+
+<?xul-overlay href="chrome://browser/content/places/placesOverlay.xul"?>
+<?xul-overlay href="chrome://browser/content/places/editBookmarkOverlay.xul"?>
+
+<!DOCTYPE window [
+  <!ENTITY % editBookmarkOverlayDTD SYSTEM "chrome://browser/locale/places/editBookmarkOverlay.dtd">
+  %editBookmarkOverlayDTD;
+]>
+
+<window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        title="485100: Exchanging a letter of a tag name with its big/small equivalent removes tag from bookmark"
+        onload="runTest();">
+
+  <script type="application/javascript"
+          src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js" />
+  <script type="application/javascript"
+          src="chrome://browser/content/places/editBookmarkOverlay.js"/>
+
+  <body xmlns="http://www.w3.org/1999/xhtml" />
+
+  <vbox id="editBookmarkPanelContent"/>
+
+  <script type="application/javascript">
+  <![CDATA[
+
+    function runTest() {
+      var bs = Cc["@mozilla.org/browser/nav-bookmarks-service;1"].
+               getService(Ci.nsINavBookmarksService);
+      var ts = Cc["@mozilla.org/browser/tagging-service;1"].
+               getService(Ci.nsITaggingService);
+      var ios = Cc["@mozilla.org/network/io-service;1"].
+                getService(Ci.nsIIOService);
+      function uri(spec) {
+        return ios.newURI(spec, null, null);
+      }
+
+      var testURI = uri("http://www.example.com/");
+      var testTag = "foo";
+      var testTagUpper = "Foo";
+
+      // Add a bookmark
+      var itemId = bs.insertBookmark(bs.toolbarFolder,
+                                     testURI,
+                                     bs.DEFAULT_INDEX,
+                                     "mozilla");
+
+      // Init panel
+      ok(gEditItemOverlay, "gEditItemOverlay is in context");
+      gEditItemOverlay.initPanel(itemId);
+
+      // add a tag
+      document.getElementById("editBMPanel_tagsField").value = testTag;
+      gEditItemOverlay.onTagsFieldBlur();
+
+      // test that the tag has been added in the backend
+      is(ts.getTagsForURI(testURI)[0], testTag, "tags match");
+
+      // change the tag
+      document.getElementById("editBMPanel_tagsField").value = testTagUpper;
+      gEditItemOverlay.onTagsFieldBlur();
+
+      // test that the tag has been added in the backend
+      is(ts.getTagsForURI(testURI)[0], testTagUpper, "tags match");
+
+      // Cleanup.
+      ts.untagURI(testURI, [testTag]);
+      bs.removeItem(itemId);
+    }
+  ]]>
+  </script>
+
+</window>

@@ -1,0 +1,10 @@
+This is the Sanitiser for OpenType project, from http://code.google.com/p/ots/.
+
+Our reference repository is https://github.com/khaledhosny/ots/.
+
+Current revision: d7d831edd171054c7974f5e0dec2fc19bf869574
+
+Applied local patches:
+    ots-visibility.patch - make Process function externally visible for Windows DLL (bug 711079)
+
+    ots-woff2 - disable WOFF2 support (bug 941019)

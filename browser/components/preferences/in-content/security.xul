@@ -1,0 +1,108 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+<!-- Security panel -->
+
+<script type="application/javascript" 
+        src="chrome://browser/content/preferences/in-content/security.js"/>  
+
+<preferences id="securityPreferences">
+  <!-- XXX buttons -->
+  <preference id="pref.privacy.disable_button.view_passwords"
+              name="pref.privacy.disable_button.view_passwords"
+              type="bool"/>
+  <preference id="pref.privacy.disable_button.view_passwords_exceptions"
+              name="pref.privacy.disable_button.view_passwords_exceptions"
+              type="bool"/>
+
+  <!-- Add-ons, malware, phishing -->
+  <preference id="xpinstall.whitelist.required"
+              name="xpinstall.whitelist.required"
+              type="bool"/>
+  <preference id="browser.safebrowsing.malware.enabled"
+              name="browser.safebrowsing.malware.enabled"
+              type="bool"/>
+  <preference id="browser.safebrowsing.enabled"
+              name="browser.safebrowsing.enabled"
+              type="bool"/>
+
+  <!-- Passwords -->
+  <preference id="signon.rememberSignons" name="signon.rememberSignons" type="bool"/>
+
+</preferences>
+
+<hbox id="header-security"
+      class="header"
+      hidden="true"
+      data-category="paneSecurity">
+  <image class="header-icon"/>
+  <label class="header-name">&paneSecurity.title;</label>
+</hbox>
+
+<!-- addons, forgery (phishing) UI -->
+<groupbox id="addonsPhishingGroup" data-category="paneSecurity" hidden="true">
+  <caption><label>&general.label;</label></caption>
+
+  <hbox id="addonInstallBox">
+    <checkbox id="warnAddonInstall"
+              label="&warnAddonInstall.label;"
+              accesskey="&warnAddonInstall.accesskey;"
+              preference="xpinstall.whitelist.required"
+              onsyncfrompreference="return gSecurityPane.readWarnAddonInstall();"/>
+    <spacer flex="1"/>
+    <button id="addonExceptions"
+            label="&addonExceptions.label;"
+            accesskey="&addonExceptions.accesskey;"
+            oncommand="gSecurityPane.showAddonExceptions();"/>
+  </hbox>
+
+  <separator class="thin"/>
+  <vbox align="start">
+    <checkbox id="blockAttackSites"
+              label="&blockAttackSites.label;"
+              accesskey="&blockAttackSites.accesskey;"
+              preference="browser.safebrowsing.malware.enabled" />
+    <checkbox id="blockWebForgeries"
+              label="&blockWebForgeries.label;"
+              accesskey="&blockWebForgeries.accesskey;"
+              preference="browser.safebrowsing.enabled" />
+  </vbox>
+</groupbox>
+
+<!-- Passwords -->
+<groupbox id="passwordsGroup" orient="vertical" data-category="paneSecurity" hidden="true">
+  <caption><label>&passwords.label;</label></caption>
+
+  <hbox id="savePasswordsBox">
+    <checkbox id="savePasswords"
+              label="&rememberPasswords.label;" accesskey="&rememberPasswords.accesskey;"
+              preference="signon.rememberSignons"
+              onsyncfrompreference="return gSecurityPane.readSavePasswords();"/>
+    <spacer flex="1"/>
+    <button id="passwordExceptions"
+            label="&passwordExceptions.label;"
+            accesskey="&passwordExceptions.accesskey;"
+            oncommand="gSecurityPane.showPasswordExceptions();"
+            preference="pref.privacy.disable_button.view_passwords_exceptions"/>
+  </hbox>
+  <hbox id="masterPasswordBox">
+    <checkbox id="useMasterPassword"
+              oncommand="gSecurityPane.updateMasterPasswordButton();"
+              label="&useMasterPassword.label;"
+              accesskey="&useMasterPassword.accesskey;"/>
+    <spacer flex="1"/>
+    <button id="changeMasterPassword"
+            label="&changeMasterPassword.label;"
+            accesskey="&changeMasterPassword.accesskey;"
+            oncommand="gSecurityPane.changeMasterPassword();"/>
+  </hbox>
+
+  <hbox id="showPasswordsBox">
+    <spacer flex="1"/>
+    <button id="showPasswords"
+            label="&savedPasswords.label;" accesskey="&savedPasswords.accesskey;"
+            oncommand="gSecurityPane.showPasswords();"
+            preference="pref.privacy.disable_button.view_passwords"/>
+  </hbox>
+</groupbox>

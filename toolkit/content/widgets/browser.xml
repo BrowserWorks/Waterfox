@@ -1,0 +1,1227 @@
+<?xml version="1.0"?>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE bindings [
+  <!ENTITY % findBarDTD SYSTEM "chrome://global/locale/findbar.dtd" >
+  %findBarDTD;
+]>
+
+<bindings id="browserBindings"
+          xmlns="http://www.mozilla.org/xbl"
+          xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+  <binding id="browser" extends="xul:browser" role="outerdoc">
+    <content clickthrough="never">
+      <children/>
+    </content>
+    <implementation type="application/javascript" implements="nsIObserver, nsIDOMEventListener, nsIFrameRequestCallback, nsIMessageListener">
+      <property name="autoscrollEnabled">
+        <getter>
+          <![CDATA[
+            if (this.getAttribute("autoscroll") == "false")
+              return false;
+
+            var enabled = true;
+            try {
+              enabled = this.mPrefs.getBoolPref("general.autoScroll");
+            }
+            catch(ex) {
+            }
+
+            return enabled;
+          ]]>
+        </getter>
+      </property>
+
+      <property name="canGoBack"
+                onget="return this.webNavigation.canGoBack;"
+                readonly="true"/>
+
+      <property name="canGoForward"
+                onget="return this.webNavigation.canGoForward;"
+                readonly="true"/>
+
+      <method name="goBack">
+        <body>
+          <![CDATA[
+            var webNavigation = this.webNavigation;
+            if (webNavigation.canGoBack) {
+              try {
+                this.userTypedClear++;
+                webNavigation.goBack();
+              } finally {
+                if (this.userTypedClear)
+                  this.userTypedClear--;
+              }
+            }
+          ]]>
+        </body>
+      </method>
+
+      <method name="goForward">
+        <body>
+          <![CDATA[
+            var webNavigation = this.webNavigation;
+            if (webNavigation.canGoForward) {
+              try {
+                this.userTypedClear++;
+                webNavigation.goForward();
+              } finally {
+                if (this.userTypedClear)
+                  this.userTypedClear--;
+              }
+            }
+          ]]>
+        </body>
+      </method>
+
+      <method name="reload">
+        <body>
+          <![CDATA[
+            const nsIWebNavigation = Components.interfaces.nsIWebNavigation;
+            const flags = nsIWebNavigation.LOAD_FLAGS_NONE;
+            this.reloadWithFlags(flags);
+          ]]>
+        </body>
+      </method>
+
+      <method name="reloadWithFlags">
+        <parameter name="aFlags"/>
+        <body>
+          <![CDATA[
+            this.webNavigation.reload(aFlags);
+          ]]>
+        </body>
+      </method>
+
+      <method name="stop">
+        <body>
+          <![CDATA[
+            const nsIWebNavigation = Components.interfaces.nsIWebNavigation;
+            const flags = nsIWebNavigation.STOP_ALL;
+            this.webNavigation.stop(flags);
+          ]]>
+        </body>
+      </method>
+
+      <!-- throws exception for unknown schemes -->
+      <method name="loadURI">
+        <parameter name="aURI"/>
+        <parameter name="aReferrerURI"/>
+        <parameter name="aCharset"/>
+        <body>
+          <![CDATA[
+            const nsIWebNavigation = Components.interfaces.nsIWebNavigation;
+            const flags = nsIWebNavigation.LOAD_FLAGS_NONE;
+            this.loadURIWithFlags(aURI, flags, aReferrerURI, aCharset);
+          ]]>
+        </body>
+      </method>
+
+      <!-- throws exception for unknown schemes -->
+      <method name="loadURIWithFlags">
+        <parameter name="aURI"/>
+        <parameter name="aFlags"/>
+        <parameter name="aReferrerURI"/>
+        <parameter name="aCharset"/>
+        <parameter name="aPostData"/>
+        <body>
+          <![CDATA[
+            if (!aURI)
+              aURI = "about:blank";
+
+            if (aCharset) {
+              try {
+                this.docShell.parentCharset = aCharset;
+              }
+              catch (e) {
+              }
+            }
+
+            if (!(aFlags & this.webNavigation.LOAD_FLAGS_FROM_EXTERNAL))
+              this.userTypedClear++;
+
+            try {
+              this.webNavigation.loadURI(aURI, aFlags, aReferrerURI, aPostData, null);
+            } finally {
+              if (this.userTypedClear)
+                this.userTypedClear--;
+            }
+          ]]>
+        </body>
+      </method>
+
+      <method name="goHome">
+        <body>
+          <![CDATA[
+            try {
+              this.loadURI(this.homePage);
+            }
+            catch (e) {
+            }
+          ]]>
+        </body>
+      </method>
+
+      <property name="homePage">
+        <getter>
+          <![CDATA[
+            var uri;
+
+            if (this.hasAttribute("homepage"))
+              uri = this.getAttribute("homepage");
+            else
+              uri = "http://www.mozilla.org/"; // widget pride
+
+            return uri;
+          ]]>
+        </getter>
+        <setter>
+          <![CDATA[
+            this.setAttribute("homepage", val);
+            return val;
+          ]]>
+        </setter>
+      </property>
+
+      <method name="gotoIndex">
+        <parameter name="aIndex"/>
+        <body>
+          <![CDATA[
+            try {
+              this.userTypedClear++;
+              this.webNavigation.gotoIndex(aIndex);
+            } finally {
+              if (this.userTypedClear)
+                this.userTypedClear--;
+            }
+          ]]>
+        </body>
+      </method>
+
+      <property name="currentURI"
+                onget="return this.webNavigation.currentURI;"
+                readonly="true"/>
+
+      <!--
+        Used by session restore to ensure that currentURI is set so
+        that switch-to-tab works before the tab is fully
+        restored. This function also invokes onLocationChanged
+        listeners in tabbrowser.xml.
+      -->
+      <method name="_setCurrentURI">
+        <parameter name="aURI"/>
+        <body><![CDATA[
+          this.docShell.setCurrentURI(aURI);
+        ]]></body>
+      </method>
+
+      <property name="documentURI"
+                onget="return this.contentDocument.documentURIObject;"
+                readonly="true"/>
+
+      <property name="documentContentType"
+                onget="return this.contentDocument ? this.contentDocument.contentType : null;"
+                readonly="true"/>
+
+      <property name="preferences"
+                onget="return this.mPrefs.QueryInterface(Components.interfaces.nsIPrefService);"
+                readonly="true"/>
+
+      <field name="_docShell">null</field>
+
+      <property name="docShell" readonly="true">
+        <getter><![CDATA[
+          if (this._docShell)
+            return this._docShell;
+
+          let frameLoader = this.QueryInterface(Components.interfaces.nsIFrameLoaderOwner).frameLoader;
+          if (!frameLoader)
+            return null;
+          this._docShell = frameLoader.docShell;
+          return this._docShell;
+        ]]></getter>
+      </property>
+
+      <field name="_loadContext">null</field>
+
+      <property name="loadContext" readonly="true">
+        <getter><![CDATA[
+          if (this._loadContext)
+            return this._loadContext;
+
+          let frameLoader = this.QueryInterface(Components.interfaces.nsIFrameLoaderOwner).frameLoader;
+          if (!frameLoader)
+            return null;
+          this._loadContext = frameLoader.loadContext;
+          return this._loadContext;
+        ]]></getter>
+      </property>
+
+      <property name="docShellIsActive">
+        <getter>
+          <![CDATA[
+            return this.docShell && this.docShell.isActive;
+          ]]>
+        </getter>
+        <setter>
+          <![CDATA[
+            if (this.docShell)
+              return this.docShell.isActive = val;
+            return false;
+          ]]>
+        </setter>
+      </property>
+
+      <property name="imageDocument"
+                readonly="true">
+        <getter>
+          <![CDATA[
+            var document = this.contentDocument;
+            if (!document || !(document instanceof Ci.nsIImageDocument))
+              return null;
+
+            try {
+                return {width: document.imageRequest.image.width, height: document.imageRequest.image.height };
+            } catch (e) {}
+            return null;
+          ]]>
+        </getter>
+      </property>
+
+      <property name="isRemoteBrowser"
+                onget="return (this.getAttribute('remote') == 'true');"
+                readonly="true"/>
+
+      <property name="messageManager"
+                onget="return this.QueryInterface(Components.interfaces.nsIFrameLoaderOwner).frameLoader.messageManager;"
+                readonly="true"/>
+
+      <field name="_webNavigation">null</field>
+
+      <property name="webNavigation"
+                readonly="true">
+        <getter>
+        <![CDATA[
+          if (!this._webNavigation)
+            this._webNavigation = this.docShell.QueryInterface(Components.interfaces.nsIWebNavigation);
+          return this._webNavigation;
+        ]]>
+        </getter>
+      </property>
+
+      <field name="_webBrowserFind">null</field>
+
+      <property name="webBrowserFind"
+                readonly="true">
+        <getter>
+        <![CDATA[
+          if (!this._webBrowserFind)
+            this._webBrowserFind = this.docShell.QueryInterface(Components.interfaces.nsIInterfaceRequestor).getInterface(Components.interfaces.nsIWebBrowserFind);
+          return this._webBrowserFind;
+        ]]>
+        </getter>
+      </property>
+
+      <method name="getTabBrowser">
+        <body>
+          <![CDATA[
+            var tabBrowser = this.parentNode;
+            while (tabBrowser && tabBrowser.localName != "tabbrowser")
+              tabBrowser = tabBrowser.parentNode;
+            return tabBrowser;
+          ]]>
+        </body>
+      </method>
+
+      <field name="_finder">null</field>
+
+      <property name="finder" readonly="true">
+        <getter><![CDATA[
+          if (!this._finder) {
+            if (!this.docShell)
+              return null;
+
+            let Finder = Components.utils.import("resource://gre/modules/Finder.jsm", {}).Finder;
+            this._finder = new Finder(this.docShell);
+          }
+          return this._finder;
+        ]]></getter>
+      </property>
+
+      <field name="_fastFind">null</field>
+      <property name="fastFind" readonly="true">
+        <getter><![CDATA[
+          if (!this._fastFind) {
+            if (!("@mozilla.org/typeaheadfind;1" in Components.classes))
+              return null;
+
+            var tabBrowser = this.getTabBrowser();
+            if (tabBrowser && "fastFind" in tabBrowser)
+              return this._fastFind = tabBrowser.fastFind;
+
+            if (!this.docShell)
+              return null;
+
+            this._fastFind = Components.classes["@mozilla.org/typeaheadfind;1"]
+                                       .createInstance(Components.interfaces.nsITypeAheadFind);
+            this._fastFind.init(this.docShell);
+          }
+          return this._fastFind;
+        ]]></getter>
+      </property>
+
+      <field name="_permanentKey">({})</field>
+
+      <property name="permanentKey" readonly="true"
+                onget="return this._permanentKey;"/>
+
+      <field name="_lastSearchString">null</field>
+      <field name="_lastSearchHighlight">false</field>
+
+      <property name="webProgress"
+                readonly="true"
+                onget="return this.docShell.QueryInterface(Components.interfaces.nsIInterfaceRequestor).getInterface(Components.interfaces.nsIWebProgress);"/>
+
+      <field name="_contentWindow">null</field>
+
+      <property name="contentWindow"
+                readonly="true"
+                onget="return this._contentWindow || (this._contentWindow = this.docShell.QueryInterface(Components.interfaces.nsIInterfaceRequestor).getInterface(Components.interfaces.nsIDOMWindow));"/>
+
+      <property name="sessionHistory"
+                onget="return this.webNavigation.sessionHistory;"
+                readonly="true"/>
+
+      <property name="markupDocumentViewer"
+                onget="return this.docShell.contentViewer.QueryInterface(Components.interfaces.nsIMarkupDocumentViewer);"
+                readonly="true"/>
+
+      <property name="contentViewerEdit"
+                onget="return this.docShell.contentViewer.QueryInterface(Components.interfaces.nsIContentViewerEdit);"
+                readonly="true"/>
+
+      <property name="contentViewerFile"
+                onget="return this.docShell.contentViewer.QueryInterface(Components.interfaces.nsIContentViewerFile);"
+                readonly="true"/>
+
+      <property name="contentDocument"
+                onget="return this.webNavigation.document;"
+                readonly="true"/>
+
+      <property name="contentTitle"
+                onget="return this.contentDocument.title;"
+                readonly="true"/>
+
+      <property name="characterSet"
+                onget="return this.contentDocument.characterSet;"
+                readonly="true"/>
+
+      <property name="contentPrincipal"
+                onget="return this.contentDocument.nodePrincipal;"
+                readonly="true"/>
+
+      <property name="showWindowResizer"
+                onset="if (val) this.setAttribute('showresizer', 'true');
+                       else this.removeAttribute('showresizer');
+                       return val;"
+                onget="return this.getAttribute('showresizer') == 'true';"/>
+
+
+      <property name="fullZoom">
+        <getter><![CDATA[
+          return this.markupDocumentViewer.fullZoom;
+        ]]></getter>
+        <setter><![CDATA[
+          this.markupDocumentViewer.fullZoom = val;
+        ]]></setter>
+      </property>
+
+      <property name="textZoom">
+        <getter><![CDATA[
+          return this.markupDocumentViewer.textZoom;
+        ]]></getter>
+        <setter><![CDATA[
+          this.markupDocumentViewer.textZoom = val;
+        ]]></setter>
+      </property>
+
+      <property name="isSyntheticDocument">
+        <getter><![CDATA[
+          return this.contentDocument.mozSyntheticDocument;
+        ]]></getter>
+      </property>
+
+      <field name="mPrefs" readonly="true">
+        Components.classes['@mozilla.org/preferences-service;1']
+                  .getService(Components.interfaces.nsIPrefBranch);
+      </field>
+
+      <field name="mAtomService" readonly="true">
+        Components.classes['@mozilla.org/atom-service;1']
+                  .getService(Components.interfaces.nsIAtomService);
+      </field>
+
+      <field name="_mStrBundle">null</field>
+
+      <property name="mStrBundle">
+        <getter>
+        <![CDATA[
+          if (!this._mStrBundle) {
+            // need to create string bundle manually instead of using <xul:stringbundle/>
+            // see bug 63370 for details
+            this._mStrBundle = Components.classes["@mozilla.org/intl/stringbundle;1"]
+                                         .getService(Components.interfaces.nsIStringBundleService)
+                                         .createBundle("chrome://global/locale/browser.properties");
+          }
+          return this._mStrBundle;
+        ]]></getter>
+      </property>
+
+      <method name="addProgressListener">
+        <parameter name="aListener"/>
+        <parameter name="aNotifyMask"/>
+        <body>
+          <![CDATA[
+            if (!aNotifyMask) {
+              aNotifyMask = Components.interfaces.nsIWebProgress.NOTIFY_ALL;
+            }
+            this.webProgress.addProgressListener(aListener, aNotifyMask);
+          ]]>
+        </body>
+      </method>
+
+      <method name="removeProgressListener">
+        <parameter name="aListener"/>
+        <body>
+          <![CDATA[
+            this.webProgress.removeProgressListener(aListener);
+         ]]>
+        </body>
+      </method>
+
+      <method name="attachFormFill">
+        <body>
+          <![CDATA[
+          if (!this.mFormFillAttached && this.hasAttribute("autocompletepopup")) {
+            // hoop up the form fill autocomplete controller
+            var controller = Components.classes["@mozilla.org/satchel/form-fill-controller;1"].
+                               getService(Components.interfaces.nsIFormFillController);
+
+            var popup = document.getElementById(this.getAttribute("autocompletepopup"));
+            if (popup) {
+              controller.attachToBrowser(this.docShell, popup.QueryInterface(Components.interfaces.nsIAutoCompletePopup));
+              this.mFormFillAttached = true;
+            }
+          }
+          ]]>
+        </body>
+      </method>
+
+      <method name="detachFormFill">
+        <body>
+          <![CDATA[
+          if (this.mFormFillAttached) {
+            // hoop up the form fill autocomplete controller
+            var controller = Components.classes["@mozilla.org/satchel/form-fill-controller;1"].
+                               getService(Components.interfaces.nsIFormFillController);
+            controller.detachFromBrowser(this.docShell);
+
+            this.mFormFillAttached = false;
+          }
+          ]]>
+        </body>
+      </method>
+
+      <method name="findChildShell">
+        <parameter name="aDocShell"/>
+        <parameter name="aSoughtURI"/>
+        <body>
+          <![CDATA[
+            if (aDocShell.QueryInterface(Components.interfaces.nsIWebNavigation)
+                         .currentURI.spec == aSoughtURI.spec)
+              return aDocShell;
+            var node = aDocShell.QueryInterface(
+                                   Components.interfaces.nsIDocShellTreeItem);
+            for (var i = 0; i < node.childCount; ++i) {
+              var docShell = node.getChildAt(i);
+              docShell = this.findChildShell(docShell, aSoughtURI);
+              if (docShell)
+                return docShell;
+            }
+            return null;
+          ]]>
+        </body>
+      </method>
+
+      <method name="onPageShow">
+        <parameter name="aEvent"/>
+        <body>
+          <![CDATA[
+            this.attachFormFill();
+            if (this.pageReport) {
+              var i = 0;
+              while (i < this.pageReport.length) {
+                // Filter out irrelevant reports.
+                if (this.pageReport[i].requestingWindow &&
+                    (this.pageReport[i].requestingWindow.document ==
+                     this.pageReport[i].requestingDocument))
+                  i++;
+                else
+                  this.pageReport.splice(i, 1);
+              }
+              if (this.pageReport.length == 0) {
+                this.pageReport = null;
+                this.updatePageReport();
+              }
+            }
+         ]]>
+        </body>
+      </method>
+
+      <method name="onPageHide">
+        <parameter name="aEvent"/>
+        <body>
+          <![CDATA[
+            if (this.pageReport) {
+              this.pageReport = null;
+              this.updatePageReport();
+            }
+            // Delete the feeds cache if we're hiding the topmost page
+            // (as opposed to one of its iframes).
+            if (this.feeds && aEvent.target == this.contentDocument)
+              this.feeds = null;
+            if (!this.docShell || !this.fastFind)
+              return;
+            var tabBrowser = this.getTabBrowser();
+            if (!tabBrowser || !("fastFind" in tabBrowser) ||
+                tabBrowser.selectedBrowser == this)
+              this.fastFind.setDocShell(this.docShell);
+         ]]>
+        </body>
+      </method>
+
+      <method name="updatePageReport">
+        <body>
+          <![CDATA[
+            var event = document.createEvent("Events");
+            event.initEvent("DOMUpdatePageReport", true, true);
+            this.dispatchEvent(event);
+          ]]>
+        </body>
+      </method>
+
+      <method name="onPopupBlocked">
+        <parameter name="evt"/>
+        <body>
+          <![CDATA[
+            if (!this.pageReport) {
+              this.pageReport = new Array();
+            }
+
+            var obj = { requestingWindow: evt.requestingWindow,
+                        // Record the current document in the requesting window
+                        // before it can change.
+                        requestingDocument: evt.requestingWindow.document,
+                        popupWindowURI: evt.popupWindowURI,
+                        popupWindowFeatures: evt.popupWindowFeatures,
+                        popupWindowName: evt.popupWindowName };
+
+            this.pageReport.push(obj);
+            this.pageReport.reported = false;
+            this.updatePageReport();
+          ]]>
+        </body>
+      </method>
+
+      <field name="pageReport">null</field>
+
+      <property name="securityUI">
+        <getter>
+          <![CDATA[
+            // Bug 666809 - SecurityUI support for e10s
+            if (!this.docShell)
+              return null;
+
+            if (!this.docShell.securityUI) {
+              const SECUREBROWSERUI_CONTRACTID = "@mozilla.org/secure_browser_ui;1";
+              if (!this.hasAttribute("disablesecurity") &&
+                  SECUREBROWSERUI_CONTRACTID in Components.classes) {
+                var securityUI = Components.classes[SECUREBROWSERUI_CONTRACTID]
+                                           .createInstance(Components.interfaces.nsISecureBrowserUI);
+                securityUI.init(this.contentWindow);
+              }
+            }
+
+            return this.docShell.securityUI;
+          ]]>
+        </getter>
+        <setter>
+          <![CDATA[
+            this.docShell.securityUI = val;
+          ]]>
+        </setter>
+      </property>
+
+      <method name="adjustPriority">
+        <parameter name="adjustment"/>
+        <body><![CDATA[
+          let loadGroup = this.webNavigation.QueryInterface(Ci.nsIDocumentLoader)
+                              .loadGroup.QueryInterface(Ci.nsISupportsPriority);
+          loadGroup.adjustPriority(adjustment);
+        ]]></body>
+      </method>
+
+      <!--
+        This field tracks the location bar state. The value that the user typed
+        in to the location bar may not be changed while this field is zero.
+        However invoking a load will temporarily increase this field to allow
+        the location bar to be updated to the new URL.
+
+        Case 1: Anchor scroll
+          The user appends the anchor to the URL. This sets the location bar
+          into typed state, and disables changes to the location bar. The user
+          then requests the scroll. loadURIWithFlags temporarily increases the
+          flag by 1 so that the anchor scroll's location change resets the
+          location bar state.
+
+        Case 2: Interrupted load
+          The user types in and submits the URL. This triggers an asynchronous
+          network load which increases the flag by 2. (The temporary increase
+          from loadURIWithFlags is not noticeable in this case.) When the load
+          is interrupted the flag returns to zero, and the location bar stays
+          in typed state.
+
+        Case 3: New load
+          This works like case 2, but as the load is not interrupted the
+          location changes while the flag is still 2 thus resetting the
+          location bar state.
+
+        Case 4: Corrected load
+          This is a combination of case 2 and case 3, except that the original
+          load is interrupted by the new load. Normally cancelling and starting
+          a new load would reset the flag to 0 and then increase it to 2 again.
+          However both actions occur as a consequence of the loadURIWithFlags
+          invocation, which adds its temporary increase in to the mix. Since
+          the new URL would have been typed in the flag would have been reset
+          before loadURIWithFlags incremented it. The interruption resets the
+          flag to 0 and increases it to 2. Although loadURIWithFlags will
+          decrement the flag it remains at 1 thus allowing the location bar
+          state to be reset when the new load changes the location.
+          This case also applies when loading into a new browser, as this
+          interrupts the default load of about:blank.
+      -->
+      <field name="userTypedClear">
+        1
+      </field>
+
+      <field name="_userTypedValue">
+        null
+      </field>
+
+      <property name="userTypedValue"
+                onget="return this._userTypedValue;">
+        <setter><![CDATA[
+          this.userTypedClear = 0;
+          this._userTypedValue = val;
+          return val;
+        ]]></setter>
+      </property>
+
+      <field name="mFormFillAttached">
+        false
+      </field>
+
+      <field name="isShowingMessage">
+        false
+      </field>
+
+      <field name="droppedLinkHandler">
+        null
+      </field>
+
+      <field name="mIconURL">null</field>
+
+      <!-- This is managed by the tabbrowser -->
+      <field name="lastURI">null</field>
+
+      <field name="mDestroyed">false</field>
+
+      <constructor>
+        <![CDATA[
+          try {
+            // |webNavigation.sessionHistory| will have been set by the frame
+            // loader when creating the docShell as long as this xul:browser
+            // doesn't have the 'disablehistory' attribute set.
+            if (this.docShell && this.webNavigation.sessionHistory) {
+              var os = Components.classes["@mozilla.org/observer-service;1"]
+                                 .getService(Components.interfaces.nsIObserverService);
+              os.addObserver(this, "browser:purge-session-history", false);
+
+              // enable global history if we weren't told otherwise
+              if (!this.hasAttribute("disableglobalhistory") && !this.isRemoteBrowser) {
+                try {
+                  this.docShell.useGlobalHistory = true;
+                } catch(ex) {
+                  // This can occur if the Places database is locked
+                  Components.utils.reportError("Error enabling browser global history: " + ex);
+                }
+              }
+            }
+          }
+          catch (e) {
+            Components.utils.reportError(e);
+          }
+          try {
+            var securityUI = this.securityUI;
+          }
+          catch (e) {
+          }
+
+          // Listen for first load for lazy attachment to form fill controller
+          // (But we don't want to do this for remote browsers - the test infra
+          // might fire these events when they normally wouldn't.)
+          if (!this.isRemoteBrowser) {
+            this.addEventListener("pageshow", this.onPageShow, true);
+            this.addEventListener("pagehide", this.onPageHide, true);
+            this.addEventListener("DOMPopupBlocked", this.onPopupBlocked, true);
+          }
+
+          if (this.messageManager) {
+            this.messageManager.addMessageListener("Autoscroll:Start", this);
+            this.messageManager.addMessageListener("Autoscroll:Cancel", this);
+            this.messageManager.loadFrameScript("chrome://global/content/browser-content.js", true);
+          }
+        ]]>
+      </constructor>
+
+      <destructor>
+        <![CDATA[
+          this.destroy();
+        ]]>
+      </destructor>
+
+      <!-- This is necessary because the destructor doesn't always get called when
+           we are removed from a tabbrowser. This will be explicitly called by tabbrowser -->
+      <method name="destroy">
+        <body>
+          <![CDATA[
+          if (this.mDestroyed)
+            return;
+          this.mDestroyed = true;
+
+          if (this.docShell && this.webNavigation.sessionHistory) {
+            var os = Components.classes["@mozilla.org/observer-service;1"]
+                               .getService(Components.interfaces.nsIObserverService);
+            try {
+              os.removeObserver(this, "browser:purge-session-history");
+            } catch (ex) {
+              // It's not clear why this sometimes throws an exception.
+            }
+          }
+
+          this.detachFormFill();
+
+          this._fastFind = null;
+          this._webBrowserFind = null;
+
+          // The feeds cache can keep the document inside this browser alive.
+          this.feeds = null;
+
+          this.lastURI = null;
+
+          if (!this.isRemoteBrowser) {
+            this.removeEventListener("pageshow", this.onPageShow, true);
+            this.removeEventListener("pagehide", this.onPageHide, true);
+            this.removeEventListener("DOMPopupBlocked", this.onPopupBlocked, true);
+          }
+
+          if (this._autoScrollNeedsCleanup) {
+            // we polluted the global scope, so clean it up
+            this._autoScrollPopup.parentNode.removeChild(this._autoScrollPopup);
+          }
+          ]]>
+        </body>
+      </method>
+
+      <!--
+        We call this _receiveMessage (and alias receiveMessage to it) so that
+        bindings that inherit from this one can delegate to it.
+      -->
+      <method name="_receiveMessage">
+        <parameter name="aMessage"/>
+        <body><![CDATA[
+          let data = aMessage.data;
+          switch (aMessage.name) {
+            case "Autoscroll:Start": {
+              if (!this.autoscrollEnabled) {
+                return false;
+              }
+              let pos = this.mapScreenCoordinatesFromContent(data.screenX, data.screenY);
+              this.startScroll(data.scrolldir, pos.x, pos.y);
+              return true;
+            }
+            case "Autoscroll:Cancel":
+              this._autoScrollPopup.hidePopup();
+              break;
+          }
+        ]]></body>
+      </method>
+
+      <method name="receiveMessage">
+        <parameter name="aMessage"/>
+        <body><![CDATA[
+          return this._receiveMessage(aMessage);
+        ]]></body>
+      </method>
+
+      <method name="observe">
+        <parameter name="aSubject"/>
+        <parameter name="aTopic"/>
+        <parameter name="aState"/>
+        <body>
+          <![CDATA[
+            if (aTopic != "browser:purge-session-history" || !this.sessionHistory)
+              return;
+
+            // place the entry at current index at the end of the history list, so it won't get removed
+            if (this.sessionHistory.index < this.sessionHistory.count - 1) {
+              var indexEntry = this.sessionHistory.getEntryAtIndex(this.sessionHistory.index, false);
+              this.sessionHistory.QueryInterface(Components.interfaces.nsISHistoryInternal);
+              indexEntry.QueryInterface(Components.interfaces.nsISHEntry);
+              this.sessionHistory.addEntry(indexEntry, true);
+            }
+
+            var purge = this.sessionHistory.count;
+            if (this.currentURI != "about:blank")
+              --purge; // Don't remove the page the user's staring at from shistory
+
+            if (purge > 0)
+              this.sessionHistory.PurgeHistory(purge);
+          ]]>
+        </body>
+      </method>
+
+      <field name="_AUTOSCROLL_SNAP">10</field>
+      <field name="_scrolling">false</field>
+      <field name="_startX">null</field>
+      <field name="_startY">null</field>
+      <field name="_autoScrollPopup">null</field>
+      <field name="_autoScrollNeedsCleanup">false</field>
+
+      <method name="stopScroll">
+        <body>
+          <![CDATA[
+            if (this._scrolling) {
+              this._scrolling = false;
+              window.removeEventListener("mousemove", this, true);
+              window.removeEventListener("mousedown", this, true);
+              window.removeEventListener("mouseup", this, true);
+              window.removeEventListener("contextmenu", this, true);
+              window.removeEventListener("keydown", this, true);
+              window.removeEventListener("keypress", this, true);
+              window.removeEventListener("keyup", this, true);
+              this.messageManager.sendAsyncMessage("Autoscroll:Stop");
+            }
+         ]]>
+       </body>
+     </method>
+
+      <method name="_createAutoScrollPopup">
+        <body>
+          <![CDATA[
+            const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+            var popup = document.createElementNS(XUL_NS, "panel");
+            popup.className = "autoscroller";
+            // We set this attribute on the element so that mousemove
+            // events can be handled by browser-content.js.
+            popup.setAttribute("mousethrough", "always");
+            return popup;
+          ]]>
+        </body>
+      </method>
+
+      <method name="startScroll">
+        <parameter name="scrolldir"/>
+        <parameter name="screenX"/>
+        <parameter name="screenY"/>
+        <body><![CDATA[
+            if (!this._autoScrollPopup) {
+              if (this.hasAttribute("autoscrollpopup")) {
+                // our creator provided a popup to share
+                this._autoScrollPopup = document.getElementById(this.getAttribute("autoscrollpopup"));
+              }
+              else {
+                // we weren't provided a popup; we have to use the global scope
+                this._autoScrollPopup = this._createAutoScrollPopup();
+                document.documentElement.appendChild(this._autoScrollPopup);
+                this._autoScrollNeedsCleanup = true;
+              }
+            }
+
+            // we need these attributes so themers don't need to create per-platform packages
+            if (screen.colorDepth > 8) { // need high color for transparency
+              // Exclude second-rate platforms
+              this._autoScrollPopup.setAttribute("transparent", !/BeOS|OS\/2/.test(navigator.appVersion));
+              // Enable translucency on Windows and Mac
+              this._autoScrollPopup.setAttribute("translucent", /Win|Mac/.test(navigator.platform));
+            }
+
+            this._autoScrollPopup.setAttribute("scrolldir", scrolldir);
+            this._autoScrollPopup.addEventListener("popuphidden", this, true);
+            this._autoScrollPopup.showPopup(document.documentElement,
+                                            screenX,
+                                            screenY,
+                                            "popup", null, null);
+            this._ignoreMouseEvents = true;
+            this._scrolling = true;
+            this._startX = screenX;
+            this._startY = screenY;
+
+            window.addEventListener("mousemove", this, true);
+            window.addEventListener("mousedown", this, true);
+            window.addEventListener("mouseup", this, true);
+            window.addEventListener("contextmenu", this, true);
+            window.addEventListener("keydown", this, true);
+            window.addEventListener("keypress", this, true);
+            window.addEventListener("keyup", this, true);
+         ]]>
+       </body>
+     </method>
+
+      <method name="handleEvent">
+        <parameter name="aEvent"/>
+        <body>
+        <![CDATA[
+          if (this._scrolling) {
+            switch(aEvent.type) {
+              case "mousemove": {
+                var x = aEvent.screenX - this._startX;
+                var y = aEvent.screenY - this._startY;
+
+                if ((x > this._AUTOSCROLL_SNAP || x < -this._AUTOSCROLL_SNAP) ||
+                    (y > this._AUTOSCROLL_SNAP || y < -this._AUTOSCROLL_SNAP))
+                  this._ignoreMouseEvents = false;
+                break;
+              }
+              case "mouseup":
+              case "mousedown":
+              case "contextmenu": {
+                if (!this._ignoreMouseEvents)
+                  this._autoScrollPopup.hidePopup();
+                this._ignoreMouseEvents = false;
+                break;
+              }
+              case "popuphidden": {
+                this._autoScrollPopup.removeEventListener("popuphidden", this, true);
+                this.stopScroll();
+                break;
+              }
+              case "keydown": {
+                if (aEvent.keyCode == aEvent.DOM_VK_ESCAPE) {
+                  // the escape key will be processed by
+                  // nsXULPopupManager::KeyDown and the panel will be closed.
+                  // So, don't consume the key event here.
+                  break;
+                }
+                // don't break here. we need to eat keydown events.
+              }
+              case "keypress":
+              case "keyup": {
+                // All keyevents should be eaten here during autoscrolling.
+                aEvent.stopPropagation();
+                aEvent.preventDefault();
+                break;
+              }
+            }
+          }
+        ]]>
+        </body>
+      </method>
+
+      <!--
+        For out-of-process code, event.screen[XY] is relative to the
+        left/top of the content view. For in-process code,
+        event.screen[XY] is relative to the left/top of the screen. We
+        use this method to map screen coordinates received from a
+        (possibly out-of-process) <browser> element to coordinates
+        that are relative to the screen. This code handles the
+        in-process case, where we return the coordinates unchanged.
+      -->
+      <method name="mapScreenCoordinatesFromContent">
+        <parameter name="aScreenX"/>
+        <parameter name="aScreenY"/>
+        <body>
+        <![CDATA[
+          return { x: aScreenX, y: aScreenY };
+        ]]>
+        </body>
+      </method>
+
+      <method name="swapDocShells">
+        <parameter name="aOtherBrowser"/>
+        <body>
+        <![CDATA[
+          // We need to swap fields that are tied to our docshell or related to
+          // the loaded page
+          // Fields which are built as a result of notifactions (pageshow/hide,
+          // DOMLinkAdded/Removed, onStateChange) should not be swapped here,
+          // because these notifications are dispatched again once the docshells
+          // are swapped.
+          var fieldsToSwap = [
+            "_docShell",
+            "_webBrowserFind",
+            "_contentWindow",
+            "_webNavigation",
+            "_permanentKey"
+          ];
+
+          var ourFieldValues = {};
+          var otherFieldValues = {};
+          for each (var field in fieldsToSwap) {
+            ourFieldValues[field] = this[field];
+            otherFieldValues[field] = aOtherBrowser[field];
+          }
+
+          if (window.PopupNotifications)
+            PopupNotifications._swapBrowserNotifications(aOtherBrowser, this);
+
+          this.QueryInterface(Components.interfaces.nsIFrameLoaderOwner)
+              .swapFrameLoaders(aOtherBrowser);
+
+          // Before we swap the actual docShell property we need to detach the
+          // form fill controller from those docShells.
+          this.detachFormFill();
+          aOtherBrowser.detachFormFill();
+
+          for each (var field in fieldsToSwap) {
+            this[field] = otherFieldValues[field];
+            aOtherBrowser[field] = ourFieldValues[field];
+          }
+
+          // Re-attach the docShells to the form fill controller.
+          this.attachFormFill();
+          aOtherBrowser.attachFormFill();
+
+          // Null the current nsITypeAheadFind instances so that they're
+          // lazily re-created on access. We need to do this because they
+          // might have attached the wrong docShell.
+          this._fastFind = aOtherBrowser._fastFind = null;
+        ]]>
+        </body>
+      </method>
+    </implementation>
+
+    <handlers>
+      <handler event="keypress" keycode="VK_F7" group="system">
+        <![CDATA[
+          if (event.defaultPrevented || !event.isTrusted)
+            return;
+
+          const kPrefShortcutEnabled = "accessibility.browsewithcaret_shortcut.enabled";
+          const kPrefWarnOnEnable    = "accessibility.warn_on_browsewithcaret";
+          const kPrefCaretBrowsingOn = "accessibility.browsewithcaret";
+
+          var isEnabled = this.mPrefs.getBoolPref(kPrefShortcutEnabled);
+          if (!isEnabled)
+            return;
+
+          // Toggle browse with caret mode
+          var browseWithCaretOn = false;
+          var warn = true;
+
+          try {
+            warn = this.mPrefs.getBoolPref(kPrefWarnOnEnable);
+          } catch (ex) {
+          }
+
+          try {
+            browseWithCaretOn = this.mPrefs.getBoolPref(kPrefCaretBrowsingOn);
+          } catch (ex) {
+          }
+          if (warn && !browseWithCaretOn) {
+            var checkValue = {value:false};
+            var promptService = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
+                                          .getService(Components.interfaces.nsIPromptService);
+
+            var buttonPressed = promptService.confirmEx(window,
+              this.mStrBundle.GetStringFromName('browsewithcaret.checkWindowTitle'),
+              this.mStrBundle.GetStringFromName('browsewithcaret.checkLabel'),
+              // Make "No" the default:
+              promptService.STD_YES_NO_BUTTONS | promptService.BUTTON_POS_1_DEFAULT,
+              null, null, null, this.mStrBundle.GetStringFromName('browsewithcaret.checkMsg'),
+              checkValue);
+            if (buttonPressed != 0) {
+              if (checkValue.value) {
+                try {
+                  this.mPrefs.setBoolPref(kPrefShortcutEnabled, false);
+                } catch (ex) {
+                }
+              }
+              return;
+            }
+            if (checkValue.value) {
+              try {
+                this.mPrefs.setBoolPref(kPrefWarnOnEnable, false);
+              }
+              catch (ex) {
+              }
+            }
+          }
+
+          // Toggle the pref
+          try {
+            this.mPrefs.setBoolPref(kPrefCaretBrowsingOn, !browseWithCaretOn);
+          } catch (ex) {
+          }
+        ]]>
+      </handler>
+      <handler event="dragover" group="system">
+      <![CDATA[
+        if (!this.droppedLinkHandler || event.defaultPrevented)
+          return;
+
+        // For drags that appear to be internal text (for example, tab drags),
+        // set the dropEffect to 'none'. This prevents the drop even if some
+        // other listener cancelled the event.
+        var types = event.dataTransfer.types;
+        if (types.contains("text/x-moz-text-internal") && !types.contains("text/plain")) {
+          event.dataTransfer.dropEffect = "none";
+          event.stopPropagation();
+          event.preventDefault();
+        }
+
+        let linkHandler = Components.classes["@mozilla.org/content/dropped-link-handler;1"].
+                            getService(Components.interfaces.nsIDroppedLinkHandler);
+        if (linkHandler.canDropLink(event, false))
+          event.preventDefault();
+      ]]>
+      </handler>
+      <handler event="drop" group="system">
+      <![CDATA[
+        if (!this.droppedLinkHandler || event.defaultPrevented)
+          return;
+
+        let name = { };
+        let linkHandler = Components.classes["@mozilla.org/content/dropped-link-handler;1"].
+                            getService(Components.interfaces.nsIDroppedLinkHandler);
+        try {
+          // Pass true to prevent the dropping of javascript:/data: URIs
+          var uri = linkHandler.dropLink(event, name, true);
+        } catch (ex) {
+          return;
+        }
+
+        if (uri) {
+          this.droppedLinkHandler(event, uri, name.value);
+        }
+      ]]>
+      </handler>
+    </handlers>
+
+  </binding>
+
+</bindings>

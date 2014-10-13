@@ -1,0 +1,70 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+.searchbar-textbox {
+  min-height: 22px;
+  background-color: -moz-field;
+}
+
+.autocomplete-textbox-container {
+  -moz-box-align: stretch;
+}
+
+.textbox-input-box {
+  margin: 0;
+}
+
+.searchbar-engine-menuitem[selected="true"] > .menu-iconic-text {
+  font-weight: bold;
+}
+
+/* Engine button */
+.searchbar-engine-image {
+  height: 16px;
+  width: 16px;
+  list-style-image: url("chrome://mozapps/skin/places/defaultFavicon.png");
+  -moz-margin-start: 2px;
+}
+
+.searchbar-engine-button {
+  -moz-appearance: none;
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  -moz-box-align: center;
+  background-color: transparent;
+}
+
+.searchbar-engine-button > .button-box {
+  -moz-appearance: none;
+  padding: 2px 0;
+  -moz-padding-end: 2px;
+  border: 0;
+}
+
+.searchbar-dropmarker-image {
+  -moz-appearance: toolbarbutton-dropdown !important;
+  width: 12px;
+  height: 12px;
+}
+
+/* Search go button */
+.search-go-container {
+  -moz-box-align: center;
+}
+
+.search-go-button {
+  padding: 1px;
+  list-style-image: url(moz-icon://stock/gtk-find?size=menu);
+  cursor: pointer;
+}
+
+menuitem[cmd="cmd_clearhistory"] {
+  list-style-image: url("moz-icon://stock/gtk-clear?size=menu");
+}
+
+menuitem[cmd="cmd_clearhistory"][disabled] {
+  list-style-image: url("moz-icon://stock/gtk-clear?size=menu&state=disabled");
+}
+

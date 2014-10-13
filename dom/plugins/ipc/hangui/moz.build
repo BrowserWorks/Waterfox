@@ -1,0 +1,25 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+FAIL_ON_WARNINGS = True
+
+PROGRAM = 'plugin-hang-ui'
+
+UNIFIED_SOURCES += [
+    'MiniShmChild.cpp',
+    'PluginHangUIChild.cpp',
+]
+include('/ipc/chromium/chromium-config.mozbuild')
+
+DEFINES['NS_NO_XPCOM'] = True
+DEFINES['_HAS_EXCEPTIONS'] = 0
+
+DISABLE_STL_WRAPPING = True
+
+if CONFIG['GNU_CC']:
+    WIN32_EXE_LDFLAGS += ['-municode']
+
+RCINCLUDE = 'HangUIDlg.rc'

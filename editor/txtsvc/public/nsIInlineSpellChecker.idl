@@ -1,0 +1,50 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+#include "domstubs.idl"
+
+interface nsISelection;
+interface nsIEditor;
+interface nsIEditorSpellCheck;
+
+[scriptable, uuid(b7b7a77c-40c4-4196-b0b7-b0338243b3fe)]
+interface nsIInlineSpellChecker : nsISupports
+{
+  readonly attribute nsIEditorSpellCheck spellChecker;
+
+  void init(in nsIEditor aEditor);
+  void cleanup(in boolean aDestroyingFrames);
+
+  attribute boolean enableRealTimeSpell;
+
+  void spellCheckAfterEditorChange(in long aAction,
+                                   in nsISelection aSelection,
+                                   in nsIDOMNode aPreviousSelectedNode,
+                                   in long aPreviousSelectedOffset,
+                                   in nsIDOMNode aStartNode,
+                                   in long aStartOffset,
+                                   in nsIDOMNode aEndNode,
+                                   in long aEndOffset);
+
+  void spellCheckRange(in nsIDOMRange aSelection);
+
+  nsIDOMRange getMisspelledWord(in nsIDOMNode aNode, in long aOffset);
+  void replaceWord(in nsIDOMNode aNode, in long aOffset, in AString aNewword);
+  void addWordToDictionary(in AString aWord);
+  void removeWordFromDictionary(in AString aWord);
+  
+  void ignoreWord(in AString aWord);
+  void ignoreWords([array, size_is(aCount)] in wstring aWordsToIgnore, in unsigned long aCount);
+  void updateCurrentDictionary();
+
+  readonly attribute boolean spellCheckPending;
+};
+
+%{C++
+
+#define MOZ_INLINESPELLCHECKER_CONTRACTID "@mozilla.org/spellchecker-inline;1"
+
+%}

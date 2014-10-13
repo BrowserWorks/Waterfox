@@ -1,0 +1,136 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIDOMHTMLElement.idl"
+#include "nsIDOMMediaError.idl"
+#include "nsIDOMTimeRanges.idl"
+
+interface nsIDOMMediaStream;
+
+/**
+ * The nsIDOMHTMLMediaElement interface is an interface to be implemented by the HTML
+ * <audio> and <video> elements.
+ *
+ * For more information on this interface, please see
+ * http://www.whatwg.org/specs/web-apps/current-work/#htmlmediaelement
+ *
+ * @status UNDER_DEVELOPMENT
+ */
+
+// undef the GetCurrentTime macro defined in WinBase.h from the MS Platform SDK
+%{C++
+#ifdef GetCurrentTime
+#undef GetCurrentTime
+#endif
+%}
+
+[uuid(1f9393e8-2df0-4072-87b9-c26999b09acc)]
+interface nsIDOMHTMLMediaElement : nsISupports
+{
+  // error state
+  readonly attribute nsIDOMMediaError error;
+
+  // network state
+           attribute DOMString src;
+           attribute nsIDOMMediaStream mozSrcObject;
+  readonly attribute DOMString currentSrc;
+           attribute DOMString crossOrigin;
+  const unsigned short NETWORK_EMPTY = 0;
+  const unsigned short NETWORK_IDLE = 1;
+  const unsigned short NETWORK_LOADING = 2;
+  const unsigned short NETWORK_NO_SOURCE = 3;
+  readonly attribute unsigned short networkState;
+           attribute DOMString preload;
+  readonly attribute nsIDOMTimeRanges buffered;
+  void load();
+  DOMString canPlayType(in DOMString type);
+
+  // ready state
+  const unsigned short HAVE_NOTHING = 0;
+  const unsigned short HAVE_METADATA = 1;
+  const unsigned short HAVE_CURRENT_DATA = 2;
+  const unsigned short HAVE_FUTURE_DATA = 3;
+  const unsigned short HAVE_ENOUGH_DATA = 4;
+  readonly attribute unsigned short readyState;
+  readonly attribute boolean seeking;
+
+  // playback state
+           attribute double currentTime;
+  readonly attribute double duration;
+  readonly attribute boolean paused;
+           attribute double defaultPlaybackRate;
+           attribute double playbackRate;
+           attribute boolean mozPreservesPitch;
+  readonly attribute nsIDOMTimeRanges played;
+  readonly attribute nsIDOMTimeRanges seekable;
+  readonly attribute boolean ended;
+  readonly attribute boolean mozAutoplayEnabled;
+           attribute boolean autoplay;
+           attribute boolean loop;
+  void play();
+  void pause();
+
+  // controls
+           attribute boolean controls;
+           attribute double volume;
+           attribute boolean muted;
+           attribute boolean defaultMuted;
+
+  // Mozilla extension: stream capture
+  nsIDOMMediaStream mozCaptureStream();
+  nsIDOMMediaStream mozCaptureStreamUntilEnded();
+  readonly attribute boolean mozAudioCaptured;
+
+  // Mozilla extension: return embedded metadata from the stream as a
+  // JSObject with key:value pairs for each tag. This can be used by
+  // player interfaces to display the song title, artist, etc.
+  [implicit_jscontext]
+  jsval mozGetMetadata();
+
+  // Mozilla extension: provides access to the fragment end time if
+  // the media element has a fragment URI for the currentSrc, otherwise
+  // it is equal to the media duration.
+  readonly attribute double mozFragmentEnd;
+
+   // Mozilla extension: an audio channel type for media elements.
+   // An exception is thrown if the app tries to change the audio channel type
+   // without the permission (manifest file for B2G apps).
+   // The supported values are:
+   // * normal (default value)
+   //   Automatically paused if "notification" or higher priority channel
+   //   is played
+   //   Use case: normal applications
+   // * content
+   //   Automatically paused if "notification" or higher priority channel
+   //   is played. Also paused if another app starts using "content"
+   //   channel. Using this channel never affects applications using
+   //   the "normal" channel.
+   //   Use case: video/audio players
+   // * notification
+   //   Automatically paused if "alarm" or higher priority channel is played.
+   //   Use case: New email, incoming SMS
+   // * alarm
+   //   Automatically paused if "telephony" or higher priority channel is
+   //   played.
+   //   User case: Alarm clock, calendar alarms
+   // * telephony
+   //   Automatically paused if "ringer" or higher priority
+   //   channel is played.
+   //   Use case: dialer, voip
+   // * ringer
+   //   Automatically paused if "publicnotification" or higher priority
+   //   channel is played.
+   //   Use case: dialer, voip
+   // * publicnotification
+   //   Always plays in speaker, even when headphones are plugged in.
+   //   Use case: Camera shutter sound.
+   attribute DOMString mozAudioChannelType;
+
+  // In addition the media element has this new events:
+  // * onmozinterruptbegin - called when the media element is interrupted
+  //   because of the audiochannel manager.
+  // * onmozinterruptend - called when the interruption is concluded
+};

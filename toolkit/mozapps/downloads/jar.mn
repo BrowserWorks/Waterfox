@@ -1,0 +1,13 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+toolkit.jar:
+% content mozapps %content/mozapps/
+  content/mozapps/downloads/helperApps.js                       (content/helperApps.js)
+* content/mozapps/downloads/unknownContentType.xul              (content/unknownContentType.xul)
+* content/mozapps/downloads/downloads.xul                       (content/downloads.xul)
+* content/mozapps/downloads/downloads.js                        (content/downloads.js)
+  content/mozapps/downloads/DownloadProgressListener.js         (content/DownloadProgressListener.js)
+  content/mozapps/downloads/downloads.css                       (content/downloads.css)
+  content/mozapps/downloads/download.xml                        (content/download.xml)

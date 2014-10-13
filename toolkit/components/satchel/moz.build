@@ -1,0 +1,50 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+MOCHITEST_MANIFESTS += ['test/mochitest.ini']
+XPCSHELL_TESTS_MANIFESTS += ['test/unit/xpcshell.ini']
+BROWSER_CHROME_MANIFESTS += ['test/browser/browser.ini']
+
+XPIDL_SOURCES += [
+    'nsIFormAutoComplete.idl',
+    'nsIFormFillController.idl',
+    'nsIFormHistory.idl',
+    'nsIInputListAutoComplete.idl',
+]
+
+XPIDL_MODULE = 'satchel'
+
+SOURCES += [
+    'nsFormFillController.cpp',
+]
+
+LOCAL_INCLUDES += [
+    '../build',
+]
+
+EXTRA_COMPONENTS += [
+    'FormHistoryStartup.js',
+    'nsFormAutoComplete.js',
+    'nsInputListAutoComplete.js',
+    'satchel.manifest',
+]
+
+EXTRA_PP_COMPONENTS += [
+    'nsFormHistory.js',
+]
+
+EXTRA_JS_MODULES += [
+    'AutoCompleteE10S.jsm',
+    'nsFormAutoCompleteResult.jsm',
+]
+
+EXTRA_PP_JS_MODULES += [
+    'FormHistory.jsm',
+]
+
+FINAL_LIBRARY = 'xul'
+
+JAR_MANIFESTS += ['jar.mn']

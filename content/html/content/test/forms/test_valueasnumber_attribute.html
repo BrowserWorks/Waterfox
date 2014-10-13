@@ -1,0 +1,509 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=636737
+-->
+<head>
+  <title>Test for Bug input.valueAsNumber</title>
+  <script type="application/javascript" src="/MochiKit/packed.js"></script>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=636737">Mozilla Bug 636737</a>
+<p id="display"></p>
+<pre id="test">
+<script type="application/javascript">
+
+/** Test for Bug 636737 **/
+
+/**
+ * This test is checking .valueAsNumber.
+ */
+
+function checkAvailability()
+{
+  var testData =
+  [
+    ["text", false],
+    ["password", false],
+    ["search", false],
+    ["tel", false],
+    ["email", false],
+    ["url", false],
+    ["hidden", false],
+    ["checkbox", false],
+    ["radio", false],
+    ["file", false],
+    ["submit", false],
+    ["image", false],
+    ["reset", false],
+    ["button", false],
+    ["number", true],
+    ["range", true],
+    ["date", true],
+    ["time", true],
+    ["color", false],
+  ];
+
+  var todoList =
+  [
+    ["datetime", true],
+    ["month", true],
+    ["week", true],
+    ["datetime-local", true],
+  ];
+
+  var element = document.createElement('input');
+
+  for (data of testData) {
+    var exceptionCatched = false;
+    element.type = data[0];
+    try {
+      element.valueAsNumber;
+    } catch (e) {
+      exceptionCatched = true;
+    }
+    is(exceptionCatched, false,
+       "valueAsNumber shouldn't throw exception on getting");
+
+    exceptionCatched = false;
+    try {
+      element.valueAsNumber = 42;
+    } catch (e) {
+      exceptionCatched = true;
+    }
+    is(exceptionCatched, !data[1], "valueAsNumber for " + data[0] +
+                                   " availability is not correct");
+  }
+
+  for (data of todoList) {
+    var exceptionCatched = false;
+    element.type = data[0];
+    try {
+      element.valueAsNumber;
+    } catch (e) {
+      exceptionCatched = true;
+    }
+    is(exceptionCatched, false,
+       "valueAsNumber shouldn't throw exception on getting");
+
+    exceptionCatched = false;
+    try {
+      element.valueAsNumber = 42;
+    } catch (e) {
+      exceptionCatched = true;
+    }
+    todo_is(exceptionCatched, !data[1],
+            "valueAsNumber for " + data[0] + " availability is not correct");
+  }
+}
+
+function checkNumberGet()
+{
+  var testData =
+  [
+    ["42", 42],
+    ["-42", -42], // should work for negative values
+    ["42.1234", 42.1234],
+    ["123.123456789123", 123.123456789123], // double precision
+    ["1e2", 100], // e should be usable
+    ["2e1", 20],
+    ["1e-1", 0.1], // value after e can be negative
+    ["1E2", 100], // E can be used instead of e
+    ["e", null],
+    ["e2", null],
+    ["1e0.1", null],
+    ["", null], // the empty string is not a number
+    ["foo", null],
+    ["42,13", null], // comma can't be used as a decimal separator
+  ];
+
+  var element = document.createElement('input');
+  element.type = "number";
+  for (data of testData) {
+    element.value = data[0];
+
+    // Given that NaN != NaN, we have to use null when the expected value is NaN.
+    if (data[1] != null) {
+      is(element.valueAsNumber, data[1], "valueAsNumber should return the " +
+         "floating point representation of the value");
+    } else {
+      ok(isNaN(element.valueAsNumber), "valueAsNumber should return NaN "  +
+         "when the element value is not a number");
+    }
+  }
+}
+
+function checkNumberSet()
+{
+  var testData =
+  [
+    [42, "42"],
+    [-42, "-42"], // should work for negative values
+    [42.1234, "42.1234"],
+    [123.123456789123, "123.123456789123"], // double precision
+    [1e2, "100"], // e should be usable
+    [2e1, "20"],
+    [1e-1, "0.1"], // value after e can be negative
+    [1E2, "100"], // E can be used instead of e
+    // Setting a string will set NaN.
+    ["foo", ""],
+    // "" is converted to 0.
+    ["", 0],
+    [42, "42"], // Keep this here, it is used by the next test.
+    // Setting Infinity should throw and not change the current value.
+    [Infinity, 42, true],
+    [-Infinity, 42, true],
+    // Setting NaN should change the value to the empty string.
+    [NaN, ""],
+  ];
+
+  var element = document.createElement('input');
+  element.type = "number";
+  for (data of testData) {
+    var caught = false;
+    try {
+      element.valueAsNumber = data[0];
+      is(element.value, data[1],
+         "valueAsNumber should be able to set the value");
+    } catch (e) {
+      caught = true;
+    }
+
+    if (data[2]) {
+      ok(caught, "valueAsNumber should have thrown");
+      is(element.value, data[1], "value should not have changed");
+    } else {
+      ok(!caught, "valueAsNumber should not have thrown");
+    }
+  }
+}
+
+function checkRangeGet()
+{
+  // For type=range we should never get NaN since the user agent is required
+  // to fix up the input's value to be something sensible.
+
+  var min = -200;
+  var max = 200;
+  var defaultValue = min + (max - min)/2;
+
+  var testData =
+  [
+    ["42", 42],
+    ["-42", -42], // should work for negative values
+    ["42.1234", 42.1234],
+    ["123.123456789123", 123.123456789123], // double precision
+    ["1e2", 100], // e should be usable
+    ["2e1", 20],
+    ["1e-1", 0.1], // value after e can be negative
+    ["1E2", 100], // E can be used instead of e
+    ["e", defaultValue],
+    ["e2", defaultValue],
+    ["1e0.1", defaultValue],
+    ["", defaultValue],
+    ["foo", defaultValue],
+    ["42,13", defaultValue],
+  ];
+
+  var element = document.createElement('input');
+  element.type = "range";
+  element.setAttribute("min", min); // avoids out of range sanitization
+  element.setAttribute("max", max);
+  element.setAttribute("step", "any"); // avoids step mismatch sanitization
+  for (data of testData) {
+    element.value = data[0];
+
+    // Given that NaN != NaN, we have to use null when the expected value is NaN.
+    is(element.valueAsNumber, data[1], "valueAsNumber should return the " +
+       "floating point representation of the value");
+  }
+}
+
+function checkRangeSet()
+{
+  var min = -200;
+  var max = 200;
+  var defaultValue = min + (max - min)/2;
+
+  var testData =
+  [
+    [42, "42"],
+    [-42, "-42"], // should work for negative values
+    [42.1234, "42.1234"],
+    [123.123456789123, "123.123456789123"], // double precision
+    [1e2, "100"], // e should be usable
+    [2e1, "20"],
+    [1e-1, "0.1"], // value after e can be negative
+    [1E2, "100"], // E can be used instead of e
+    ["foo", defaultValue],
+    ["", defaultValue],
+    [42, "42"], // Keep this here, it is used by the next test.
+    // Setting Infinity should throw and not change the current value.
+    [Infinity, "42", true],
+    [-Infinity, "42", true],
+    // Setting NaN should change the value to the empty string.
+    [NaN, defaultValue],
+  ];
+
+  var element = document.createElement('input');
+  element.type = "range";
+  element.setAttribute("min", min); // avoids out of range sanitization
+  element.setAttribute("max", max);
+  element.setAttribute("step", "any"); // avoids step mismatch sanitization
+  for (data of testData) {
+    var caught = false;
+    try {
+      element.valueAsNumber = data[0];
+      is(element.value, data[1],
+         "valueAsNumber should be able to set the value");
+    } catch (e) {
+      caught = true;
+    }
+
+    if (data[2]) {
+      ok(caught, "valueAsNumber should have thrown");
+      is(element.value, data[1], "value should not have changed");
+    } else {
+      ok(!caught, "valueAsNumber should not have thrown");
+    }
+  }
+}
+
+function checkDateGet()
+{
+  var validData =
+  [
+    [ "2012-07-12", 1342051200000 ],
+    [ "1970-01-01", 0 ],
+    // We are supposed to support at least until this date.
+    // (corresponding to the date object maximal value)
+    [ "275760-09-13", 8640000000000000 ],
+    // Minimum valid date (limited by the input element minimum valid value)
+    [ "0001-01-01", -62135596800000 ],
+    [ "2012-02-29", 1330473600000 ],
+    [ "2011-02-28", 1298851200000 ],
+  ];
+
+  var invalidData =
+  [
+    "invaliddate",
+    "",
+    "275760-09-14",
+    "999-12-31",
+    "-001-12-31",
+    "0000-01-01",
+    "2011-02-29",
+    "1901-13-31",
+    "1901-12-32",
+    "1901-00-12",
+    "1901-01-00",
+    "1900-02-29",
+  ];
+
+  var element = document.createElement('input');
+  element.type = "date";
+  for (data of validData) {
+    element.value = data[0];
+    is(element.valueAsNumber, data[1], "valueAsNumber should return the " +
+       "timestamp representing this date");
+  }
+
+  for (data of invalidData) {
+    element.value = data;
+    ok(isNaN(element.valueAsNumber), "valueAsNumber should return NaN "  +
+       "when the element value is not a valid date");
+  }
+}
+
+function checkDateSet()
+{
+  var testData =
+  [
+    [ 1342051200000,     "2012-07-12" ],
+    [ 0,                 "1970-01-01" ],
+    // Maximum valid date (limited by the ecma date object range).
+    [ 8640000000000000,  "275760-09-13" ],
+    // Minimum valid date (limited by the input element minimum valid value)
+    [ -62135596800000,   "0001-01-01" ],
+    [ 1330473600000,     "2012-02-29" ],
+    [ 1298851200000,     "2011-02-28" ],
+    // "Values must be truncated to valid dates"
+    [ 42.1234,           "1970-01-01" ],
+    [ 123.123456789123,  "1970-01-01" ],
+    [ 1e2,               "1970-01-01" ],
+    [ 1E9,               "1970-01-12" ],
+    [ 1e-1,              "1970-01-01" ],
+    [ 2e10,              "1970-08-20" ],
+    [ 1298851200010,     "2011-02-28" ],
+    [ -1,                "1969-12-31" ],
+    [ -86400000,         "1969-12-31" ],
+    [ 86400000,          "1970-01-02" ],
+    // Invalid numbers.
+    // Those are implicitly converted to numbers
+    [ "",                "1970-01-01" ],
+    [ true,              "1970-01-01" ],
+    [ false,             "1970-01-01" ],
+    [ null,              "1970-01-01" ],
+    // Those are converted to NaN, the corresponding date string is the empty string
+    [ "invaliddatenumber", "" ],
+    [ NaN,               "" ],
+    [ undefined,         "" ],
+    // Out of range, the corresponding date string is the empty string
+    [ -62135596800001,   "" ],
+    // Infinity will keep the current value and throw (so we need to set a current value).
+    [ 1298851200010, "2011-02-28" ],
+    [ Infinity, "2011-02-28", true ],
+    [ -Infinity, "2011-02-28", true ],
+  ];
+
+  var element = document.createElement('input');
+  element.type = "date";
+  for (data of testData) {
+    var caught = false;
+
+    try {
+      element.valueAsNumber = data[0];
+      is(element.value, data[1], "valueAsNumber should set the value to " + data[1]);
+    } catch(e) {
+      caught = true;
+    }
+
+    if (data[2]) {
+      ok(caught, "valueAsNumber should have trhown"); 
+      is(element.value, data[1], "the value should not have changed");
+    } else {
+      ok(!caught, "valueAsNumber should not have thrown");
+    }
+  }
+
+}
+
+function checkTimeGet()
+{
+  var tests = [
+    // Some invalid values to begin.
+    { value: "", result: NaN },
+    { value: "foobar", result: NaN },
+    { value: "00:", result: NaN },
+    { value: "24:00", result: NaN },
+    { value: "00:99", result: NaN },
+    { value: "00:00:", result: NaN },
+    { value: "00:00:99", result: NaN },
+    { value: "00:00:00:", result: NaN },
+    { value: "00:00:00.", result: NaN },
+    { value: "00:00:00.0000", result: NaN },
+    // Some simple valid values.
+    { value: "00:00", result: 0 },
+    { value: "00:01", result: 60000 },
+    { value: "01:00", result: 3600000 },
+    { value: "01:01", result: 3660000 },
+    { value: "13:37", result: 49020000 },
+    // Valid values including seconds.
+    { value: "00:00:01", result: 1000 },
+    { value: "13:37:42", result: 49062000 },
+    // Valid values including seconds fractions.
+    { value: "00:00:00.001", result: 1 },
+    { value: "00:00:00.123", result: 123 },
+    { value: "00:00:00.100", result: 100 },
+    { value: "00:00:00.000", result: 0 },
+    { value: "20:17:31.142", result: 73051142 },
+    // Highest possible value.
+    { value: "23:59:59.999", result: 86399999 },
+    // Some values with one or two digits for the fraction of seconds.
+    { value: "00:00:00.1", result: 100 },
+    { value: "00:00:00.14", result: 140 },
+    { value: "13:37:42.7", result: 49062700 },
+    { value: "23:31:12.23", result: 84672230 },
+  ];
+
+  var element = document.createElement('input');
+  element.type = 'time';
+
+  for (test of tests) {
+    element.value = test.value;
+    if (isNaN(test.result)) {
+      ok(isNaN(element.valueAsNumber),
+         "invalid value should have .valueAsNumber return NaN");
+    } else {
+      is(element.valueAsNumber, test.result,
+         ".valueAsNumber should return " + test.result);
+    }
+  }
+}
+
+function checkTimeSet()
+{
+  var tests = [
+    // Some NaN values (should set to empty string).
+    { value: NaN, result: "" },
+    { value: "foobar", result: "" },
+    { value: function() {}, result: "" },
+    // Inifinity (should throw).
+    { value: Infinity, throw: true },
+    { value: -Infinity, throw: true },
+    // "" converts to 0... JS is fun :)
+    { value: "", result: "00:00" },
+    // Simple tests.
+    { value: 0, result: "00:00" },
+    { value: 1, result: "00:00:00.001" },
+    { value: 100, result: "00:00:00.100" },
+    { value: 1000, result: "00:00:01" },
+    { value: 60000, result: "00:01" },
+    { value: 3600000, result: "01:00" },
+    { value: 83622234, result: "23:13:42.234" },
+    // Some edge cases.
+    { value: 86400000, result: "00:00" },
+    { value: 86400001, result: "00:00:00.001" },
+    { value: 170022234, result: "23:13:42.234" },
+    { value: 432000000, result: "00:00" },
+    { value: -1, result: "23:59:59.999" },
+    { value: -86400000, result: "00:00" },
+    { value: -86400001, result: "23:59:59.999" },
+    { value: -56789, result: "23:59:03.211" },
+    { value: 0.9, result: "00:00" },
+  ];
+
+  var element = document.createElement('input');
+  element.type = 'time';
+
+  for (test of tests) {
+    try {
+      var caught = false;
+      element.valueAsNumber = test.value;
+      is(element.value, test.result, "value should return " + test.result);
+    } catch(e) {
+      caught = true;
+    }
+
+    if (!test.throw) {
+      test.throw = false;
+    }
+
+    is(caught, test.throw, "the test throwing status should be " + test.throw);
+  }
+}
+
+checkAvailability();
+
+// <input type='number'> test
+checkNumberGet();
+checkNumberSet();
+
+// <input type='range'> test
+checkRangeGet();
+checkRangeSet();
+
+// <input type='date'> test
+checkDateGet();
+checkDateSet();
+
+// <input type='time'> test
+checkTimeGet();
+checkTimeSet();
+
+</script>
+</pre>
+</body>
+</html>

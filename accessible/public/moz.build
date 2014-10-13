@@ -1,0 +1,44 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
+    DIRS += ['msaa', 'ia2']
+
+XPIDL_SOURCES += [
+    'nsIAccessible.idl',
+    'nsIAccessibleApplication.idl',
+    'nsIAccessibleCaretMoveEvent.idl',
+    'nsIAccessibleDocument.idl',
+    'nsIAccessibleEditableText.idl',
+    'nsIAccessibleEvent.idl',
+    'nsIAccessibleHideEvent.idl',
+    'nsIAccessibleHyperLink.idl',
+    'nsIAccessibleHyperText.idl',
+    'nsIAccessibleImage.idl',
+    'nsIAccessiblePivot.idl',
+    'nsIAccessibleRelation.idl',
+    'nsIAccessibleRetrieval.idl',
+    'nsIAccessibleRole.idl',
+    'nsIAccessibleSelectable.idl',
+    'nsIAccessibleStateChangeEvent.idl',
+    'nsIAccessibleStates.idl',
+    'nsIAccessibleTable.idl',
+    'nsIAccessibleTableChangeEvent.idl',
+    'nsIAccessibleText.idl',
+    'nsIAccessibleTextChangeEvent.idl',
+    'nsIAccessibleTextRange.idl',
+    'nsIAccessibleTypes.idl',
+    'nsIAccessibleValue.idl',
+    'nsIAccessibleVirtualCursorChangeEvent.idl',
+    'nsIXBLAccessible.idl',
+]
+
+XPIDL_MODULE = 'accessibility'
+
+EXPORTS += [
+    'nsIAccessibilityService.h',
+]
+

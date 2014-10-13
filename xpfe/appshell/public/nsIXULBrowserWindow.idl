@@ -1,0 +1,47 @@
+/* -*- Mode: IDL; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+#include "nsIURI.idl"
+#include "nsIDOMNode.idl"
+
+interface nsIRequest;
+interface nsIDOMElement;
+
+/**
+ * The nsIXULBrowserWindow supplies the methods that may be called from the
+ * internals of the browser area to tell the containing xul window to update
+ * its ui. 
+ */
+[scriptable, uuid(e4ee85a0-645d-11e3-949a-0800200c9a66)]
+interface nsIXULBrowserWindow : nsISupports
+{
+  /**
+   * Sets the status according to JS' version of status.
+   */
+  void setJSStatus(in AString status);
+
+  /**
+   * Tells the object implementing this function what link we are currently
+   * over.
+   */
+  void setOverLink(in AString link, in nsIDOMElement element);
+
+  /**
+   * Determines the appropriate target for a link.
+   */
+  AString onBeforeLinkTraversal(in AString originalTarget,
+                                in nsIURI linkURI,
+                                in nsIDOMNode linkNode,
+                                in boolean isAppTab);
+
+  /**
+   * Show/hide a tooltip (when the user mouses over a link, say).
+   */
+  void showTooltip(in long x, in long y, in AString tooltip);
+  void hideTooltip();
+};
+

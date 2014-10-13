@@ -1,0 +1,28 @@
+# -*- Mode: makefile; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- #
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+LIBS = \
+  $(XPCOM_LIBS) \
+  $(NSPR_LIBS) \
+  $(NSS_LIBS) \
+  $(DEPTH)/media/mtransport/standalone/$(LIB_PREFIX)mtransport_s.$(LIB_SUFFIX) \
+  $(DEPTH)/media/mtransport/third_party/nICEr/nicer_nicer/$(LIB_PREFIX)nicer.$(LIB_SUFFIX) \
+  $(DEPTH)/media/mtransport/third_party/nrappkit/nrappkit_nrappkit/$(LIB_PREFIX)nrappkit.$(LIB_SUFFIX) \
+  $(DEPTH)/media/webrtc/trunk/testing/gtest_gtest/$(LIB_PREFIX)gtest.$(LIB_SUFFIX) \
+  $(NULL)
+
+ifdef MOZ_SCTP
+LIBS += $(DEPTH)/netwerk/sctp/src/$(LIB_PREFIX)nksctp_s.$(LIB_SUFFIX)
+endif
+
+ifeq ($(OS_TARGET), Android)
+LIBS += \
+  $(STLPORT_LDFLAGS) \
+  $(STLPORT_LIBS) \
+  $(NULL)
+CPPFLAGS += \
+  $(STLPORT_CPPFLAGS) \
+  $(NULL)
+endif

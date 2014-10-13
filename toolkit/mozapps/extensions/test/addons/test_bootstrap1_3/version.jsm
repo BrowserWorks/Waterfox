@@ -1,0 +1,3 @@
+this.EXPORTED_SYMBOLS = ["VERSION"];
+
+this.VERSION = 3;

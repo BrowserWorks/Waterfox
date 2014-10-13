@@ -1,0 +1,49 @@
+/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+/**
+ * nsIErrorService: This is an interim service that allows nsresult codes to be mapped to 
+ * string bundles that can be used to look up error messages. String bundle keys can also
+ * be mapped. 
+ *
+ * This service will eventually get replaced by extending xpidl to allow errors to be defined.
+ * (http://bugzilla.mozilla.org/show_bug.cgi?id=13423).
+ */
+[scriptable, uuid(afe1f190-a3c2-11e3-a5e2-0800200c9a66)]
+interface nsIErrorService : nsISupports 
+{
+    /**
+     * Registers a string bundle URL for an error module. Error modules are obtained from
+     * nsresult code with NS_ERROR_GET_MODULE.
+     */
+    void registerErrorStringBundle(in short errorModule, in string stringBundleURL);
+
+    /**
+     * Unregisters a string bundle URL for an error module.
+     */
+    void unregisterErrorStringBundle(in short errorModule);
+
+    /**
+     * Retrieves a string bundle URL for an error module.
+     */
+    string getErrorStringBundle(in short errorModule);
+};
+
+%{C++
+
+// The global nsIErrorService:
+#define NS_ERRORSERVICE_NAME   "Error Service" 
+#define NS_ERRORSERVICE_CONTRACTID "@mozilla.org/xpcom/error-service;1"
+#define NS_ERRORSERVICE_CID                          \
+{ /* 744afd5e-5f8c-11d4-9877-00c04fa0cf4a */         \
+    0x744afd5e,                                      \
+    0x5f8c,                                          \
+    0x11d4,                                          \
+    {0x98, 0x77, 0x00, 0xc0, 0x4f, 0xa0, 0xcf, 0x4a} \
+}
+
+%}

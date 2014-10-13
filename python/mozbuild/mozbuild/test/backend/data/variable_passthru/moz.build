@@ -1,0 +1,50 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# Any copyright is dedicated to the Public Domain.
+# http://creativecommons.org/publicdomain/zero/1.0/
+
+SOURCES += ['bar.s', 'foo.asm']
+
+EXTRA_COMPONENTS = ['bar.js', 'foo.js']
+EXTRA_PP_COMPONENTS = ['bar.pp.js', 'foo.pp.js']
+
+EXTRA_JS_MODULES = ['bar.jsm', 'foo.jsm']
+EXTRA_PP_JS_MODULES = ['bar.pp.jsm', 'foo.pp.jsm']
+
+CPP_UNIT_TESTS = ['foo.cpp']
+
+HOST_SOURCES += ['bar.cpp', 'foo.cpp']
+HOST_SOURCES += ['bar.c', 'foo.c']
+
+HOST_LIBRARY_NAME = 'host_bar'
+
+LIBS = ['bar.lib', 'foo.lib']
+
+OS_LIBS = ['foo.so', '-l123', 'bar.a']
+
+SDK_LIBRARY = ['bar.sdk', 'foo.sdk']
+
+SOURCES += ['bar.c', 'foo.c']
+
+SOURCES += ['bar.mm', 'foo.mm']
+
+SOURCES += ['baz.S', 'foo.S']
+
+FAIL_ON_WARNINGS = True
+MSVC_ENABLE_PGO = True
+NO_VISIBILITY_FLAGS = True
+
+DELAYLOAD_DLLS = ['foo.dll', 'bar.dll']
+
+RCFILE = 'foo.rc'
+RESFILE = 'bar.res'
+RCINCLUDE = 'bar.rc'
+DEFFILE = 'baz.def'
+
+USE_STATIC_LIBS = True
+
+CFLAGS += ['-fno-exceptions', '-w']
+CXXFLAGS += ['-fcxx-exceptions', '-include foo.h']
+LDFLAGS += ['-framework Foo', '-x']
+WIN32_EXE_LDFLAGS += ['-subsystem:console']
+
+DISABLE_STL_WRAPPING = True

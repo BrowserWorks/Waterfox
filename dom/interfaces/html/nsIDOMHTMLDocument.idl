@@ -1,0 +1,100 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIDOMDocument.idl"
+
+/**
+ * The nsIDOMHTMLDocument interface is the interface to a [X]HTML
+ * document object.
+ *
+ * @see <http://www.whatwg.org/html/>
+ */
+interface nsISelection;
+
+[uuid(b73be9dd-bcc8-44df-8b01-3389e277427f)]
+interface nsIDOMHTMLDocument : nsIDOMDocument
+{
+           attribute DOMString            domain;
+           attribute DOMString            cookie;
+
+  readonly attribute nsIDOMHTMLHeadElement head;
+           attribute nsIDOMHTMLElement    body;
+
+  readonly attribute nsIDOMHTMLCollection images;
+  readonly attribute nsIDOMHTMLCollection embeds;
+  // mapped to attribute embeds for NS4 compat
+  readonly attribute nsIDOMHTMLCollection plugins;
+  readonly attribute nsIDOMHTMLCollection links;
+  readonly attribute nsIDOMHTMLCollection forms;
+  readonly attribute nsIDOMHTMLCollection scripts;
+  nsIDOMNodeList            getElementsByName(in DOMString elementName);
+  nsIDOMNodeList  getItems([optional] in DOMString types);
+
+  // If aContentType is not something supported by nsHTMLDocument and
+  // the HTML content sink, trying to write to the document will
+  // probably throw.
+  // Pass aReplace = true to trigger a replacement of the previous
+  // document in session history; pass false for normal history handling.
+  [implicit_jscontext, optional_argc]
+  nsISupports               open([optional] in DOMString aContentTypeOrUrl,
+                                 [optional] in DOMString aReplaceOrName,
+                                 [optional] in DOMString aFeatures);
+  void                      close();
+
+  [implicit_jscontext]
+  void                      write([optional, Null(Stringify)] in DOMString text);
+  [implicit_jscontext]
+  void                      writeln([optional, Null(Stringify)] in DOMString text);
+
+  /**
+   * Midas additions
+   */
+  attribute DOMString       designMode;
+
+  boolean                   execCommand(in DOMString commandID,
+                                        [optional] in boolean doShowUI,
+                                        [optional] in DOMString value);
+
+  // returns true if the command is enabled (false otherwise)
+  boolean                   queryCommandEnabled(in DOMString commandID);
+  
+  // returns true if the command is in a indeterminate state (false otherwise)
+  boolean                   queryCommandIndeterm(in DOMString commandID);
+
+  // returns true if the command has been executed (false otherwise)
+  boolean                   queryCommandState(in DOMString commandID);
+
+  // returns true if the command is supported on the current range
+  boolean                   queryCommandSupported(in DOMString commandID);
+
+  // returns the current value of the document or current selection for command
+  DOMString                 queryCommandValue(in DOMString commandID);
+
+
+  // Obsolete APIs
+           attribute DOMString            fgColor;
+           attribute DOMString            bgColor;
+           attribute DOMString            linkColor;
+           attribute DOMString            vlinkColor;
+           attribute DOMString            alinkColor;
+
+  readonly attribute nsIDOMHTMLCollection anchors;
+  readonly attribute nsIDOMHTMLCollection applets;
+
+  void                      clear();
+
+
+  // DOM Range
+  nsISelection                getSelection();
+
+
+  // More obsolete APIs
+  /**
+   * @deprecated These are old Netscape 4 methods. Do not use,
+   *             the implementation is no-op.
+   */
+  void                      captureEvents();
+  void                      releaseEvents();
+};

@@ -1,0 +1,54 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+.theme-sidebar {
+  box-sizing: border-box;
+}
+
+#main {
+  background-color: white;
+  border-color: hsla(210,100%,85%,0.7);
+  border-style: dotted;
+  color: hsl(210,53%,45%);
+}
+
+#content {
+  background-color: #80d4ff;
+  border-color: hsl(210,100%,85%);
+  border-style: dotted;
+}
+
+#padding,
+#margins {
+  border-color: hsla(210,100%,85%,0.2);
+  outline: dotted 1px hsl(210,100%,85%);
+}
+
+#padding {
+  background-color: #66cc52;
+}
+
+#borders {
+  background-color: #ffe431;
+  border-style: dotted;
+  border-color: hsl(210,100%,85%);
+}
+
+#margins {
+  background-color: #d89b28;
+  opacity: 0.6;
+}
+
+.editable {
+  border-bottom: 1px dashed transparent;
+}
+
+.editable:hover {
+  border-bottom-color: hsl(0,0%,50%);
+}
+
+.styleinspector-propertyeditor {
+  border: 1px solid #CCC;
+  padding: 0;
+}

@@ -1,0 +1,34 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsISimpleEnumerator;
+interface nsIX509Cert;
+
+[scriptable, uuid(a539759b-e22d-462f-94ea-2915b11b33e8)]
+interface nsIX509CertList : nsISupports {
+   void addCert(in nsIX509Cert cert);
+   void deleteCert(in nsIX509Cert cert);
+   nsISimpleEnumerator getEnumerator();
+
+   /* getRawCertList MUST be called only from functions where
+    * the nssShutdownPreventionLock has been adquired.
+    */
+   [notxpcom, noscript] voidPtr getRawCertList();
+
+};
+
+%{C++
+
+#define NS_X509CERTLIST_CID { /* 959fb165-6517-487f-ab9b-d8913be53197 */  \
+    0x959fb165,                                                           \
+    0x6517,                                                               \
+    0x487f,                                                               \
+    {0xab, 0x9b, 0xd8, 0x91, 0x3b, 0xe5, 0x31, 0x97}                      \
+  }
+
+#define NS_X509CERTLIST_CONTRACTID "@mozilla.org/security/x509certlist;1"
+
+%}

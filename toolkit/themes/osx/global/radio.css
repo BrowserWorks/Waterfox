@@ -1,0 +1,43 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+
+radiogroup {
+  margin: 1px 0px 1px 0px;
+}
+
+radio {
+  -moz-appearance: radio-container;
+  -moz-box-align: center;
+  margin: 4px 2px;
+  -moz-user-focus: ignore;
+}
+
+.radio-label-box {
+  -moz-margin-start: 0px;
+  padding: 0px;
+}
+
+.radio-icon {
+  -moz-margin-end: 2px;
+}
+
+.radio-label {
+  margin: 1px 0 !important;
+}
+
+radio[disabled="true"] {
+  color: GrayText !important;
+}
+
+.radio-check, .radio-check-box1 {
+  -moz-appearance: radio;
+  margin: 0 1px 1px;
+  /* vertical-align tells native theming where to snap to. However, this doesn't
+   * always work reliably because of bug 503833. */
+  vertical-align: bottom;
+  width: 1.3em;
+  height: 1.3em;
+}

@@ -1,0 +1,3471 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin" type="text/css"?>
+<?xml-stylesheet href="chrome://mochikit/content/tests/SimpleTest/test.css"
+                 type="text/css"?>
+<window title="Testing composition, text and query content events"
+  xmlns:html="http://www.w3.org/1999/xhtml"
+  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+  onunload="onunload();">
+
+  <script type="application/javascript"
+          src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js" />
+  <script type="application/javascript"
+          src="chrome://mochikit/content/tests/SimpleTest/EventUtils.js" />
+  <script type="text/javascript" src="chrome://mochikit/content/tests/SimpleTest/ChromeUtils.js"></script>
+
+  <panel id="panel" hidden="true"
+         orient="vertical"
+         onpopupshown="onPanelShown(event);"
+         onpopuphidden="onPanelHidden(event);">
+    <vbox id="vbox">
+      <textbox id="textbox" onfocus="onFocusPanelTextbox(event);"
+               multiline="true" cols="20" rows="4"/>
+    </vbox>
+  </panel>
+
+<body  xmlns="http://www.w3.org/1999/xhtml">
+<p id="display">
+<div id="div" style="margin: 0; padding: 0; font-size: 24px;">Here is a text frame.</div>
+<textarea style="margin: 0;" id="textarea" cols="20" rows="4"></textarea><br/>
+<iframe id="iframe" width="300" height="150"
+        src="data:text/html,&lt;textarea id='textarea' cols='20' rows='4'&gt;&lt;/textarea&gt;"></iframe><br/>
+<iframe id="iframe2" width="300" height="150"
+        src="data:text/html,&lt;body onload='document.designMode=%22on%22'&gt;body content&lt;/body&gt;"></iframe><br/>
+<iframe id="iframe3" width="300" height="150"
+        src="data:text/html,&lt;body onload='document.designMode=%22on%22'&gt;body content&lt;/body&gt;"></iframe><br/>
+<input id="input" type="text"/><br/>
+</p>
+<div id="content" style="display: none">
+  
+</div>
+<pre id="test">
+</pre>
+</body>
+
+<script class="testbody" type="application/javascript">
+<![CDATA[
+
+window.opener.wrappedJSObject.SimpleTest.waitForFocus(runTest, window);
+
+function ok(aCondition, aMessage)
+{
+  window.opener.wrappedJSObject.SimpleTest.ok(aCondition, aMessage);
+}
+
+function is(aLeft, aRight, aMessage)
+{
+  window.opener.wrappedJSObject.SimpleTest.is(aLeft, aRight, aMessage);
+}
+
+function isnot(aLeft, aRight, aMessage)
+{
+  window.opener.wrappedJSObject.SimpleTest.isnot(aLeft, aRight, aMessage);
+}
+
+function finish()
+{
+  window.close();
+}
+
+function onunload()
+{
+  window.opener.wrappedJSObject.SimpleTest.finish();
+}
+
+var div = document.getElementById("div");
+var textarea = document.getElementById("textarea");
+var panel = document.getElementById("panel");
+var textbox = document.getElementById("textbox");
+var iframe = document.getElementById("iframe");
+var iframe2 = document.getElementById("iframe2");
+var iframe3 = document.getElementById("iframe3");
+var input = document.getElementById("input");
+var textareaInFrame;
+
+const nsIDOMNSEditableElement = Components.interfaces.nsIDOMNSEditableElement;
+const nsIEditorIMESupport = Components.interfaces.nsIEditorIMESupport;
+const nsIInterfaceRequestor = Components.interfaces.nsIInterfaceRequestor;
+const nsIWebNavigation = Components.interfaces.nsIWebNavigation;
+const nsIDocShell = Components.interfaces.nsIDocShell;
+
+function hitEventLoop(aFunc, aTimes)
+{
+  if (--aTimes) {
+    setTimeout(hitEventLoop, 0, aFunc, aTimes);
+  } else {
+    setTimeout(aFunc, 20);
+  }
+}
+
+function getEditorIMESupport(aNode)
+{
+  return aNode.QueryInterface(nsIDOMNSEditableElement).
+               editor.
+               QueryInterface(nsIEditorIMESupport);
+}
+
+function getHTMLEditorIMESupport(aWindow)
+{
+  return aWindow.QueryInterface(nsIInterfaceRequestor).
+                 getInterface(nsIWebNavigation).
+                 QueryInterface(nsIDocShell).
+                 editor;
+}
+
+const kIsWin = (navigator.platform.indexOf("Win") == 0);
+const kIsMac = (navigator.platform.indexOf("Mac") == 0);
+
+const kLFLen = kIsWin ? 2 : 1;
+
+function checkQueryContentResult(aResult, aMessage)
+{
+  ok(aResult, aMessage + ": the result is null");
+  if (!aResult) {
+    return false;
+  }
+  ok(aResult.succeeded, aMessage + ": the query content failed");
+  return aResult.succeeded;
+}
+
+function checkContent(aExpectedText, aMessage, aID)
+{
+  var textContent = synthesizeQueryTextContent(0, 100);
+  if (!checkQueryContentResult(textContent, aMessage +
+                               ": synthesizeQueryTextContent " + aID)) {
+    return false;
+  }
+  is(textContent.text, aExpectedText,
+     aMessage + ": composition string is wrong" + aID);
+  return textContent.text == aExpectedText;
+}
+
+function checkSelection(aExpectedOffset, aExpectedText, aMessage, aID)
+{
+  var selectedText = synthesizeQuerySelectedText();
+  if (!checkQueryContentResult(selectedText, aMessage +
+                               ": synthesizeQuerySelectedText " + aID)) {
+    return false;
+  }
+  is(selectedText.offset, aExpectedOffset,
+     aMessage + ": selection offset is wrong" + aID);
+  is(selectedText.text, aExpectedText,
+     aMessage + ": selected text is wrong" + aID);
+  return selectedText.offset == aExpectedOffset &&
+         selectedText.text == aExpectedText;
+}
+
+function checkRect(aRect, aExpectedRect, aMessage)
+{
+  is(aRect.left, aExpectedRect.left, aMessage + ": left is wrong");
+  is(aRect.top, aExpectedRect.top, aMessage + " top is wrong");
+  is(aRect.width, aExpectedRect.width, aMessage + ": width is wrong");
+  is(aRect.height, aExpectedRect.height, aMessage + ": height is wrong");
+  return aRect.left == aExpectedRect.left &&
+         aRect.top == aExpectedRect.top &&
+         aRect.width == aExpectedRect.width &&
+         aRect.height == aExpectedRect.height;
+}
+
+function checkRectContainsRect(aRect, aContainer, aMessage)
+{
+  var container = { left: Math.ceil(aContainer.left),
+                    top:  Math.ceil(aContainer.top),
+                    width: Math.floor(aContainer.width),
+                    height: Math.floor(aContainer.height) };
+
+  var ret = container.left <= aRect.left &&
+            container.top <= aRect.top &&
+            container.left + container.width >= aRect.left + aRect.width &&
+            container.top + container.height >= aRect.top + aRect.height;
+  ret = ret && aMessage;
+  ok(ret, aMessage + " container={ left=" + container.left + ", top=" +
+     container.top + ", width=" + container.width + ", height=" +
+     container.height + " } rect={ left=" + aRect.left + ", top=" + aRect.top +
+     ", width=" + aRect.width + ", height=" + aRect.height + " }");
+  return ret;
+}
+
+function runUndoRedoTest()
+{
+  textarea.value = "";
+  textarea.focus();
+
+  // start composition
+  synthesizeComposition({ type: "compositionstart" });
+
+  // input raw characters
+  synthesizeComposition({ type: "compositionupdate", data: "\u306D" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u306D",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u306D\u3053" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u306D\u3053",
+        "clauses":
+        [
+          { "length": 2, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 2, "length": 0 }
+    });
+
+  // convert
+  synthesizeComposition({ type: "compositionupdate", data: "\u732B" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u732B",
+        "clauses":
+        [
+          { "length": 1,
+            "attr": COMPOSITION_ATTR_SELECTEDCONVERTEDTEXT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  // commit
+  synthesizeText(
+    { "composition":
+      { "string": "\u732B",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  // end composition
+  synthesizeComposition({ type: "compositionend", data: "\u732B" });
+
+  // start composition
+  synthesizeComposition({ type: "compositionstart" });
+
+  // input raw characters
+  synthesizeComposition({ type: "compositionupdate", data: "\u307E" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u307E",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  // cancel the composition
+  synthesizeComposition({ type: "compositionupdate", data: "" });
+  synthesizeText(
+    { "composition":
+      { "string": "",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 0, "length": 0 }
+    });
+
+  // end composition
+  synthesizeComposition({ type: "compositionend", data: "" });
+
+  // start composition
+  synthesizeComposition({ type: "compositionstart" });
+
+  // input raw characters
+  synthesizeComposition({ type: "compositionupdate", data: "\u3080" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3080",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u3080\u3059" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3080\u3059",
+        "clauses":
+        [
+          { "length": 2, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 2, "length": 0 }
+    });
+
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u3080\u3059\u3081" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3080\u3059\u3081",
+        "clauses":
+        [
+          { "length": 3, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 3, "length": 0 }
+    });
+
+  // convert
+  synthesizeComposition({ type: "compositionupdate", data: "\u5A18" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u5A18",
+        "clauses":
+        [
+          { "length": 1,
+            "attr": COMPOSITION_ATTR_SELECTEDCONVERTEDTEXT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  // commit
+  synthesizeText(
+    { "composition":
+      { "string": "\u5A18",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  // end composition
+  synthesizeComposition({ type: "compositionend", data: "\u5A18" });
+
+  synthesizeKey(" ", {});
+  synthesizeKey("m", {});
+  synthesizeKey("e", {});
+  synthesizeKey("a", {});
+  synthesizeKey("n", {});
+  synthesizeKey("t", {});
+  synthesizeKey("VK_BACK_SPACE", {});
+  synthesizeKey("s", {});
+  synthesizeKey(" ", {});
+  synthesizeKey("\"", {});
+  synthesizeKey("c", {});
+  synthesizeKey("a", {});
+  synthesizeKey("t", {});
+  synthesizeKey("-", {});
+  synthesizeKey("g", {});
+  synthesizeKey("i", {});
+  synthesizeKey("r", {});
+  synthesizeKey("l", {});
+  synthesizeKey("\"", {});
+  synthesizeKey(".", {});
+  synthesizeKey(" ", {});
+  synthesizeKey("VK_SHIFT", { type: "keydown" });
+  synthesizeKey("S", { shiftKey: true });
+  synthesizeKey("VK_SHIFT", { type: "keyup" });
+  synthesizeKey("h", {});
+  synthesizeKey("e", {});
+  synthesizeKey(" ", {});
+  synthesizeKey("i", {});
+  synthesizeKey("s", {});
+  synthesizeKey(" ", {});
+  synthesizeKey("a", {});
+  synthesizeKey(" ", {});
+
+  // start composition
+  synthesizeComposition({ type: "compositionstart" });
+
+  // input raw characters
+  synthesizeComposition({ type: "compositionupdate", data: "\u3088" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3088",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u3088\u3046" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3088\u3046",
+        "clauses":
+        [
+          { "length": 2, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 2, "length": 0 }
+    });
+
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u3088\u3046\u304b" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3088\u3046\u304b",
+        "clauses":
+        [
+          { "length": 3, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 3, "length": 0 }
+    });
+
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u3088\u3046\u304b\u3044" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3088\u3046\u304b\u3044",
+        "clauses":
+        [
+          { "length": 4, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 4, "length": 0 }
+    });
+
+  // convert
+  synthesizeComposition({ type: "compositionupdate", data: "\u5996\u602a" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u5996\u602a",
+        "clauses":
+        [
+          { "length": 2, "attr": COMPOSITION_ATTR_SELECTEDCONVERTEDTEXT }
+        ]
+      },
+      "caret": { "start": 2, "length": 0 }
+    });
+
+  // commit
+  synthesizeText(
+    { "composition":
+      { "string": "\u5996\u602a",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 2, "length": 0 }
+    });
+
+  // end composition
+  synthesizeComposition({ type: "compositionend", data: "\u5996\u602a" });
+
+  synthesizeKey("VK_BACK_SPACE", {});
+  synthesizeKey("VK_BACK_SPACE", {});
+  synthesizeKey("VK_BACK_SPACE", {});
+  synthesizeKey("VK_BACK_SPACE", {});
+  synthesizeKey("VK_BACK_SPACE", {});
+  synthesizeKey("VK_BACK_SPACE", {});
+  synthesizeKey("VK_BACK_SPACE", {});
+  synthesizeKey("VK_BACK_SPACE", {});
+  synthesizeKey("VK_BACK_SPACE", {});
+  synthesizeKey("VK_BACK_SPACE", {});
+  synthesizeKey("VK_BACK_SPACE", {});
+  synthesizeKey("VK_BACK_SPACE", {});
+
+  var i = 0;
+  if (!checkContent("\u732B\u5A18 means \"cat-girl\".",
+                    "runUndoRedoTest", "#" + ++i) ||
+      !checkSelection(20, "", "runUndoRedoTest", "#" + i)) {
+    return;
+  }
+
+  synthesizeKey("Z", {accelKey: true});
+
+  if (!checkContent("\u732B\u5A18 means \"cat-girl\". She is a \u5996\u602A",
+                    "runUndoRedoTest", "#" + ++i) ||
+      !checkSelection(32, "", "runUndoRedoTest", "#" + i)) {
+    return;
+  }
+
+  synthesizeKey("Z", {accelKey: true});
+
+  if (!checkContent("\u732B\u5A18 means \"cat-girl\". She is a ",
+                    "runUndoRedoTest", "#" + ++i) ||
+      !checkSelection(30, "", "runUndoRedoTest", "#" + i)) {
+    return;
+  }
+
+  synthesizeKey("Z", {accelKey: true});
+
+  if (!checkContent("\u732B\u5A18 mean",
+                    "runUndoRedoTest", "#" + ++i) ||
+      !checkSelection(7, "", "runUndoRedoTest", "#" + i)) {
+    return;
+  }
+
+  synthesizeKey("Z", {accelKey: true});
+
+  if (!checkContent("\u732B\u5A18 meant",
+                    "runUndoRedoTest", "#" + ++i) ||
+      !checkSelection(8, "", "runUndoRedoTest", "#" + i)) {
+    return;
+  }
+
+  synthesizeKey("Z", {accelKey: true});
+
+  if (!checkContent("\u732B\u5A18",
+                    "runUndoRedoTest", "#" + ++i) ||
+      !checkSelection(2, "", "runUndoRedoTest", "#" + i)) {
+    return;
+  }
+
+  synthesizeKey("Z", {accelKey: true});
+
+  if (!checkContent("\u732B",
+                    "runUndoRedoTest", "#" + ++i) ||
+      !checkSelection(1, "", "runUndoRedoTest", "#" + i)) {
+    return;
+  }
+
+  synthesizeKey("Z", {accelKey: true});
+
+  // XXX this is unexpected behavior, see bug 258291
+  if (!checkContent("\u732B",
+                    "runUndoRedoTest", "#" + ++i) ||
+      !checkSelection(1, "", "runUndoRedoTest", "#" + i)) {
+    return;
+  }
+
+  synthesizeKey("Z", {accelKey: true});
+
+  if (!checkContent("",
+                    "runUndoRedoTest", "#" + ++i) ||
+      !checkSelection(0, "", "runUndoRedoTest", "#" + i)) {
+    return;
+  }
+
+  synthesizeKey("Z", {accelKey: true});
+
+  if (!checkContent("",
+                    "runUndoRedoTest", "#" + ++i) ||
+      !checkSelection(0, "", "runUndoRedoTest", "#" + i)) {
+    return;
+  }
+
+  synthesizeKey("Z", {accelKey: true, shiftKey: true});
+
+  if (!checkContent("\u732B",
+                    "runUndoRedoTest", "#" + ++i) ||
+      !checkSelection(1, "", "runUndoRedoTest", "#" + i)) {
+    return;
+  }
+
+  synthesizeKey("Z", {accelKey: true, shiftKey: true});
+
+  // XXX this is unexpected behavior, see bug 258291
+  if (!checkContent("\u732B",
+                    "runUndoRedoTest", "#" + ++i) ||
+      !checkSelection(1, "", "runUndoRedoTest", "#" + i)) {
+    return;
+  }
+
+  synthesizeKey("Z", {accelKey: true, shiftKey: true});
+
+  if (!checkContent("\u732B\u5A18",
+                    "runUndoRedoTest", "#" + ++i) ||
+      !checkSelection(2, "", "runUndoRedoTest", "#" + i)) {
+    return;
+  }
+
+  synthesizeKey("Z", {accelKey: true, shiftKey: true});
+
+  if (!checkContent("\u732B\u5A18 meant",
+                    "runUndoRedoTest", "#" + ++i) ||
+      !checkSelection(8, "", "runUndoRedoTest", "#" + i)) {
+    return;
+  }
+
+  synthesizeKey("Z", {accelKey: true, shiftKey: true});
+
+  if (!checkContent("\u732B\u5A18 mean",
+                    "runUndoRedoTest", "#" + ++i) ||
+      !checkSelection(7, "", "runUndoRedoTest", "#" + i)) {
+    return;
+  }
+
+  synthesizeKey("Z", {accelKey: true, shiftKey: true});
+
+  if (!checkContent("\u732B\u5A18 means \"cat-girl\". She is a ",
+                    "runUndoRedoTest", "#" + ++i) ||
+      !checkSelection(30, "", "runUndoRedoTest", "#" + i)) {
+    return;
+  }
+
+  synthesizeKey("Z", {accelKey: true, shiftKey: true});
+
+  if (!checkContent("\u732B\u5A18 means \"cat-girl\". She is a \u5996\u602A",
+                    "runUndoRedoTest", "#" + ++i) ||
+      !checkSelection(32, "", "runUndoRedoTest", "#" + i)) {
+    return;
+  }
+
+  synthesizeKey("Z", {accelKey: true, shiftKey: true});
+
+  if (!checkContent("\u732B\u5A18 means \"cat-girl\".",
+                    "runUndoRedoTest", "#" + ++i) ||
+      !checkSelection(20, "", "runUndoRedoTest", "#" + i)) {
+    return;
+  }
+
+  synthesizeKey("Z", {accelKey: true, shiftKey: true});
+
+  if (!checkContent("\u732B\u5A18 means \"cat-girl\".",
+                    "runUndoRedoTest", "#" + ++i) ||
+      !checkSelection(20, "", "runUndoRedoTest", "#" + i)) {
+    return;
+  }
+}
+
+function runCompositionTest()
+{
+  textarea.value = "";
+  textarea.focus();
+  var caretRects = [];
+
+  var caretRect = synthesizeQueryCaretRect(0);
+  if (!checkQueryContentResult(caretRect,
+        "runCompositionTest: synthesizeQueryCaretRect #0")) {
+    return false;
+  }
+  caretRects[0] = caretRect;
+
+  // start composition
+  synthesizeComposition({ type: "compositionstart" });
+
+  // input first character
+  synthesizeComposition({ type: "compositionupdate", data: "\u3089" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  if (!checkContent("\u3089", "runCompositionTest", "#1-1") ||
+      !checkSelection(1, "", "runCompositionTest", "#1-1")) {
+    return;
+  }
+
+  caretRect = synthesizeQueryCaretRect(1);
+  if (!checkQueryContentResult(caretRect,
+        "runCompositionTest: synthesizeQueryCaretRect #1-1")) {
+    return false;
+  }
+  caretRects[1] = caretRect;
+
+  // input second character
+  synthesizeComposition({ type: "compositionupdate", data: "\u3089\u30FC" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089\u30FC",
+        "clauses":
+        [
+          { "length": 2, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 2, "length": 0 }
+    });
+
+  if (!checkContent("\u3089\u30FC", "runCompositionTest", "#1-2") ||
+      !checkSelection(2, "", "runCompositionTest", "#1-2")) {
+    return;
+  }
+
+  caretRect = synthesizeQueryCaretRect(2);
+  if (!checkQueryContentResult(caretRect,
+        "runCompositionTest: synthesizeQueryCaretRect #1-2")) {
+    return false;
+  }
+  caretRects[2] = caretRect;
+
+  isnot(caretRects[2].left, caretRects[1].left,
+        "runCompositionTest: caret isn't moved (#1-2)");
+  is(caretRects[2].top, caretRects[1].top,
+     "runCompositionTest: caret is moved to another line (#1-2)");
+  is(caretRects[2].width, caretRects[1].width,
+     "runCompositionTest: caret width is wrong (#1-2)");
+  is(caretRects[2].height, caretRects[1].height,
+     "runCompositionTest: caret width is wrong (#1-2)");
+
+  // input third character
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u3089\u30FC\u3081" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089\u30FC\u3081",
+        "clauses":
+        [
+          { "length": 3, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 3, "length": 0 }
+    });
+
+  if (!checkContent("\u3089\u30FC\u3081", "runCompositionTest", "#1-3") ||
+      !checkSelection(3, "", "runCompositionTest", "#1-3")) {
+    return;
+  }
+
+  caretRect = synthesizeQueryCaretRect(3);
+  if (!checkQueryContentResult(caretRect,
+        "runCompositionTest: synthesizeQueryCaretRect #1-3")) {
+    return false;
+  }
+  caretRects[3] = caretRect;
+
+  isnot(caretRects[3].left, caretRects[2].left,
+        "runCompositionTest: caret isn't moved (#1-3)");
+  is(caretRects[3].top, caretRects[2].top,
+     "runCompositionTest: caret is moved to another line (#1-3)");
+  is(caretRects[3].width, caretRects[2].width,
+     "runCompositionTest: caret width is wrong (#1-3)");
+  is(caretRects[3].height, caretRects[2].height,
+     "runCompositionTest: caret height is wrong (#1-3)");
+
+  // moves the caret left
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089\u30FC\u3081",
+        "clauses":
+        [
+          { "length": 3, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 2, "length": 0 }
+    });
+
+  if (!checkContent("\u3089\u30FC\u3081", "runCompositionTest", "#1-3-1") ||
+      !checkSelection(2, "", "runCompositionTest", "#1-3-1")) {
+    return;
+  }
+
+
+  caretRect = synthesizeQueryCaretRect(2);
+  if (!checkQueryContentResult(caretRect,
+        "runCompositionTest: synthesizeQueryCaretRect #1-3-1")) {
+    return false;
+  }
+
+  is(caretRect.left, caretRects[2].left,
+     "runCompositionTest: caret rects are different (#1-3-1, left)");
+  is(caretRect.top, caretRects[2].top,
+     "runCompositionTest: caret rects are different (#1-3-1, top)");
+  // by bug 335359, the caret width depends on the right side's character.
+  is(caretRect.width, caretRects[2].width + 1,
+     "runCompositionTest: caret rects are different (#1-3-1, width)");
+  is(caretRect.height, caretRects[2].height,
+     "runCompositionTest: caret rects are different (#1-3-1, height)");
+
+  // moves the caret left
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089\u30FC\u3081",
+        "clauses":
+        [
+          { "length": 3, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  if (!checkContent("\u3089\u30FC\u3081", "runCompositionTest", "#1-3-2") ||
+      !checkSelection(1, "", "runCompositionTest", "#1-3-2")) {
+    return;
+  }
+
+
+  caretRect = synthesizeQueryCaretRect(1);
+  if (!checkQueryContentResult(caretRect,
+        "runCompositionTest: synthesizeQueryCaretRect #1-3-2")) {
+    return false;
+  }
+
+  is(caretRect.left, caretRects[1].left,
+     "runCompositionTest: caret rects are different (#1-3-2, left)");
+  is(caretRect.top, caretRects[1].top,
+     "runCompositionTest: caret rects are different (#1-3-2, top)");
+  // by bug 335359, the caret width depends on the right side's character.
+  is(caretRect.width, caretRects[1].width + 1,
+     "runCompositionTest: caret rects are different (#1-3-2, width)");
+  is(caretRect.height, caretRects[1].height,
+     "runCompositionTest: caret rects are different (#1-3-2, height)");
+
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u3089\u30FC\u3081\u3093" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089\u30FC\u3081\u3093",
+        "clauses":
+        [
+          { "length": 4, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 4, "length": 0 }
+    });
+
+  if (!checkContent("\u3089\u30FC\u3081\u3093", "runCompositionTest", "#1-4") ||
+      !checkSelection(4, "", "runCompositionTest", "#1-4")) {
+    return;
+  }
+
+
+  // backspace
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u3089\u30FC\u3081" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089\u30FC\u3081",
+        "clauses":
+        [
+          { "length": 3, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 3, "length": 0 }
+    });
+
+  if (!checkContent("\u3089\u30FC\u3081", "runCompositionTest", "#1-5") ||
+      !checkSelection(3, "", "runCompositionTest", "#1-5")) {
+    return;
+  }
+
+  // re-input
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u3089\u30FC\u3081\u3093" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089\u30FC\u3081\u3093",
+        "clauses":
+        [
+          { "length": 4, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 4, "length": 0 }
+    });
+
+  if (!checkContent("\u3089\u30FC\u3081\u3093", "runCompositionTest", "#1-6") ||
+      !checkSelection(4, "", "runCompositionTest", "#1-6")) {
+    return;
+  }
+
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u3089\u30FC\u3081\u3093\u3055" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089\u30FC\u3081\u3093\u3055",
+        "clauses":
+        [
+          { "length": 5, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 5, "length": 0 }
+    });
+
+  if (!checkContent("\u3089\u30FC\u3081\u3093\u3055", "runCompositionTest", "#1-7") ||
+      !checkSelection(5, "", "runCompositionTest", "#1-7")) {
+    return;
+  }
+
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u3089\u30FC\u3081\u3093\u3055\u3044" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089\u30FC\u3081\u3093\u3055\u3044",
+        "clauses":
+        [
+          { "length": 6, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 6, "length": 0 }
+    });
+
+  if (!checkContent("\u3089\u30FC\u3081\u3093\u3055\u3044", "runCompositionTest", "#1-8") ||
+      !checkSelection(6, "", "runCompositionTest", "#1-8")) {
+    return;
+  }
+
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u3089\u30FC\u3081\u3093\u3055\u3044\u3053" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089\u30FC\u3081\u3093\u3055\u3044\u3053",
+        "clauses":
+        [
+          { "length": 7, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 7, "length": 0 }
+    });
+
+  if (!checkContent("\u3089\u30FC\u3081\u3093\u3055\u3044\u3053", "runCompositionTest", "#1-8") ||
+      !checkSelection(7, "", "runCompositionTest", "#1-8")) {
+    return;
+  }
+
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u3089\u30FC\u3081\u3093\u3055\u3044\u3053\u3046" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089\u30FC\u3081\u3093\u3055\u3044\u3053\u3046",
+        "clauses":
+        [
+          { "length": 8, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 8, "length": 0 }
+    });
+
+  if (!checkContent("\u3089\u30FC\u3081\u3093\u3055\u3044\u3053\u3046",
+                    "runCompositionTest", "#1-9") ||
+      !checkSelection(8, "", "runCompositionTest", "#1-9")) {
+    return;
+  }
+
+  // convert
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u30E9\u30FC\u30E1\u30F3\u6700\u9AD8" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u30E9\u30FC\u30E1\u30F3\u6700\u9AD8",
+        "clauses":
+        [
+          { "length": 4,
+            "attr": COMPOSITION_ATTR_SELECTEDCONVERTEDTEXT },
+          { "length": 2,
+            "attr": COMPOSITION_ATTR_CONVERTEDTEXT }
+        ]
+      },
+      "caret": { "start": 4, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3\u6700\u9AD8",
+                    "runCompositionTest", "#1-10") ||
+      !checkSelection(4, "", "runCompositionTest", "#1-10")) {
+    return;
+  }
+
+  // change the selected clause
+  synthesizeText(
+    { "composition":
+      { "string": "\u30E9\u30FC\u30E1\u30F3\u6700\u9AD8",
+        "clauses":
+        [
+          { "length": 4,
+            "attr": COMPOSITION_ATTR_CONVERTEDTEXT },
+          { "length": 2,
+            "attr": COMPOSITION_ATTR_SELECTEDCONVERTEDTEXT }
+        ]
+      },
+      "caret": { "start": 6, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3\u6700\u9AD8",
+                    "runCompositionTest", "#1-11") ||
+      !checkSelection(6, "", "runCompositionTest", "#1-11")) {
+    return;
+  }
+
+  // reset clauses
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u30E9\u30FC\u30E1\u30F3\u3055\u884C\u3053\u3046" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u30E9\u30FC\u30E1\u30F3\u3055\u884C\u3053\u3046",
+        "clauses":
+        [
+          { "length": 5,
+            "attr": COMPOSITION_ATTR_SELECTEDCONVERTEDTEXT },
+          { "length": 3,
+            "attr": COMPOSITION_ATTR_CONVERTEDTEXT }
+        ]
+      },
+      "caret": { "start": 5, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3\u3055\u884C\u3053\u3046",
+                    "runCompositionTest", "#1-12") ||
+      !checkSelection(5, "", "runCompositionTest", "#1-12")) {
+    return;
+  }
+
+
+  var textRect1 = synthesizeQueryTextRect(0, 1);
+  var textRect2 = synthesizeQueryTextRect(1, 1);
+  if (!checkQueryContentResult(textRect1,
+        "runCompositionTest: synthesizeQueryTextRect #1-12-1") ||
+      !checkQueryContentResult(textRect2,
+        "runCompositionTest: synthesizeQueryTextRect #1-12-2")) {
+    return false;
+  }
+
+  // commit the composition string
+  synthesizeText(
+    { "composition":
+      { "string": "\u30E9\u30FC\u30E1\u30F3\u3055\u884C\u3053\u3046",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 8, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3\u3055\u884C\u3053\u3046",
+                    "runCompositionTest", "#1-13") ||
+      !checkSelection(8, "", "runCompositionTest", "#1-13")) {
+    return;
+  }
+
+  synthesizeComposition({ type: "compositionend",
+                          data: "\u30E9\u30FC\u30E1\u30F3\u3055\u884C\u3053\u3046" });
+
+  var textRect3 = synthesizeQueryTextRect(0, 1);
+  var textRect4 = synthesizeQueryTextRect(1, 1);
+
+  if (!checkQueryContentResult(textRect3,
+        "runCompositionTest: synthesizeQueryTextRect #1-13-1") ||
+      !checkQueryContentResult(textRect4,
+        "runCompositionTest: synthesizeQueryTextRect #1-13-2")) {
+    return false;
+  }
+
+  checkRect(textRect3, textRect1, "runCompositionTest: textRect #1-13-1");
+  checkRect(textRect4, textRect2, "runCompositionTest: textRect #1-13-2");
+
+  // restart composition
+  synthesizeComposition({ type: "compositionstart" });
+
+  // input characters
+  synthesizeComposition({ type: "compositionupdate", data: "\u3057" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3057",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3\u3055\u884C\u3053\u3046\u3057",
+                    "runCompositionTest", "#2-1") ||
+      !checkSelection(8 + 1, "", "runCompositionTest", "#2-1")) {
+    return;
+  }
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u3058" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3058",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3\u3055\u884C\u3053\u3046\u3058",
+                    "runCompositionTest", "#2-2") ||
+      !checkSelection(8 + 1, "", "runCompositionTest", "#2-2")) {
+    return;
+  }
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u3058\u3087" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3058\u3087",
+        "clauses":
+        [
+          { "length": 2, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 2, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3\u3055\u884C\u3053\u3046\u3058\u3087",
+                    "runCompositionTest", "#2-3") ||
+      !checkSelection(8 + 2, "", "runCompositionTest", "#2-3")) {
+    return;
+  }
+
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u3058\u3087\u3046" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3058\u3087\u3046",
+        "clauses":
+        [
+          { "length": 3, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 3, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3\u3055\u884C\u3053\u3046\u3058\u3087\u3046",
+                    "runCompositionTest", "#2-4") ||
+      !checkSelection(8 + 3, "", "runCompositionTest", "#2-4")) {
+    return;
+  }
+
+  // commit the composition string
+  synthesizeText(
+    { "composition":
+      { "string": "\u3058\u3087\u3046",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 3, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3\u3055\u884C\u3053\u3046\u3058\u3087\u3046",
+                    "runCompositionTest", "#2-4") ||
+      !checkSelection(8 + 3, "", "runCompositionTest", "#2-4")) {
+    return;
+  }
+
+  synthesizeComposition({ type: "compositionend", data: "\u3058\u3087\u3046" });
+
+  // set selection
+  var selectionSetTest = synthesizeSelectionSet(4, 7, false);
+  ok(selectionSetTest, "runCompositionTest: selectionSetTest failed");
+
+  if (!checkSelection(4, "\u3055\u884C\u3053\u3046\u3058\u3087\u3046", "runCompositionTest", "#3-1")) {
+    return;
+  }
+
+  // start composition with selection
+  synthesizeComposition({ type: "compositionstart" });
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u304A" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u304A",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3\u304A",
+                    "runCompositionTest", "#3-2") ||
+      !checkSelection(4 + 1, "", "runCompositionTest", "#3-2")) {
+    return;
+  }
+
+  // remove the composition string
+  synthesizeComposition({ type: "compositionupdate", data: "" });
+  synthesizeText(
+    { "composition":
+      { "string": "",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 0, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3",
+                    "runCompositionTest", "#3-3") ||
+      !checkSelection(4, "", "runCompositionTest", "#3-3")) {
+    return;
+  }
+
+  // re-input the composition string
+  synthesizeComposition({ type: "compositionupdate", data: "\u3046" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3046",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3\u3046",
+                    "runCompositionTest", "#3-4") ||
+      !checkSelection(4 + 1, "", "runCompositionTest", "#3-4")) {
+    return;
+  }
+
+  // cancel the composition
+  synthesizeComposition({ type: "compositionupdate", data: "" });
+  synthesizeText(
+    { "composition":
+      { "string": "",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 0, "length": 0 }
+    });
+
+  synthesizeComposition({ type: "compositionend", data: "" });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3",
+                    "runCompositionTest", "#3-5") ||
+      !checkSelection(4, "", "runCompositionTest", "#3-5")) {
+    return;
+  }
+
+  // bug 271815, some Chinese IMEs for Linux make empty composition string
+  // and compty clause information when it lists up Chinese characters on
+  // its candidate window.
+  synthesizeComposition({ type: "compositionstart" });
+
+  synthesizeText(
+    { "composition":
+      { "string": "",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 0, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3",
+                    "runCompositionTest", "#4-1") ||
+      !checkSelection(4, "", "runCompositionTest", "#4-1")) {
+    return;
+  }
+
+  synthesizeText(
+    { "composition":
+      { "string": "",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 0, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3",
+                    "runCompositionTest", "#4-2") ||
+      !checkSelection(4, "", "runCompositionTest", "#4-2")) {
+    return;
+  }
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u6700" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u6700",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3\u6700",
+                    "runCompositionTest", "#4-3") ||
+      !checkSelection(5, "", "runCompositionTest", "#4-3")) {
+    return;
+  }
+
+  synthesizeComposition({ type: "compositionend", data: "\u6700" });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3\u6700",
+                    "runCompositionTest", "#4-4") ||
+      !checkSelection(5, "", "runCompositionTest", "#4-4")) {
+    return;
+  }
+
+  // testing the canceling case
+  synthesizeComposition({ type: "compositionstart" });
+
+  synthesizeText(
+    { "composition":
+      { "string": "",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 0, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3\u6700",
+                    "runCompositionTest", "#4-5") ||
+      !checkSelection(5, "", "runCompositionTest", "#4-5")) {
+    return;
+  }
+
+  synthesizeText(
+    { "composition":
+      { "string": "",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 0, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3\u6700",
+                    "runCompositionTest", "#4-6") ||
+      !checkSelection(5, "", "runCompositionTest", "#4-6")) {
+    return;
+  }
+
+  synthesizeComposition({ type: "compositionend", data: "\u6700" });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3\u6700",
+                    "runCompositionTest", "#4-7") ||
+      !checkSelection(5, "", "runCompositionTest", "#4-7")) {
+    return;
+  }
+
+  // testing whether the empty composition string deletes selected string.
+  synthesizeKey("VK_LEFT", { shiftKey: true });
+
+  synthesizeComposition({ type: "compositionstart" });
+
+  synthesizeText(
+    { "composition":
+      { "string": "",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 0, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3",
+                    "runCompositionTest", "#4-8") ||
+      !checkSelection(4, "", "runCompositionTest", "#4-8")) {
+    return;
+  }
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u9AD8" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u9AD8",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3\u9AD8",
+                    "runCompositionTest", "#4-9") ||
+      !checkSelection(5, "", "runCompositionTest", "#4-9")) {
+    return;
+  }
+
+  synthesizeComposition({ type: "compositionend", data: "\u9AD8" });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3\u9AD8",
+                    "runCompositionTest", "#4-10") ||
+      !checkSelection(5, "", "runCompositionTest", "#4-10")) {
+    return;
+  }
+
+  synthesizeKey("VK_BACK_SPACE", {});
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3",
+                    "runCompositionTest", "#4-11") ||
+      !checkSelection(4, "", "runCompositionTest", "#4-11")) {
+    return;
+  }
+
+  // bug 23558, ancient Japanese IMEs on Window may send empty text event
+  // twice at canceling composition.
+  synthesizeComposition({ type: "compositionstart" });
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u6700" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u6700",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3\u6700",
+                    "runCompositionTest", "#5-1") ||
+      !checkSelection(4 + 1, "", "runCompositionTest", "#5-1")) {
+    return;
+  }
+
+  synthesizeComposition({ type: "compositionupdate", data: "" });
+  synthesizeText(
+    { "composition":
+      { "string": "",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 0, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3",
+                    "runCompositionTest", "#5-2") ||
+      !checkSelection(4, "", "runCompositionTest", "#5-2")) {
+    return;
+  }
+
+  synthesizeText(
+    { "composition":
+      { "string": "",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 0, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3",
+                    "runCompositionTest", "#5-3") ||
+      !checkSelection(4, "", "runCompositionTest", "#5-3")) {
+    return;
+  }
+
+  synthesizeComposition({ type: "compositionend", data: "\u9AD8" });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3",
+                    "runCompositionTest", "#5-4") ||
+      !checkSelection(4, "", "runCompositionTest", "#5-4")) {
+    return;
+  }
+
+  // Undo tests for the testcases for bug 23558 and bug 271815
+  synthesizeKey("Z", { accelKey: true });
+
+  // XXX this is unexpected behavior, see bug 258291
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3",
+                    "runCompositionTest", "#6-1") ||
+      !checkSelection(4, "", "runCompositionTest", "#6-1")) {
+    return;
+  }
+
+  synthesizeKey("Z", { accelKey: true });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3\u9AD8",
+                    "runCompositionTest", "#6-2") ||
+      !checkSelection(5, "", "runCompositionTest", "#6-2")) {
+    return;
+  }
+
+  synthesizeKey("Z", { accelKey: true });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3\u6700",
+                    "runCompositionTest", "#6-3") ||
+      !checkSelection(4, "\u6700", "runCompositionTest", "#6-3")) {
+    return;
+  }
+
+  synthesizeKey("Z", { accelKey: true });
+
+  // XXX this is unexpected behavior, see bug 258291
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3\u6700",
+                    "runCompositionTest", "#6-4") ||
+      !checkSelection(5, "", "runCompositionTest", "#6-4")) {
+    return;
+  }
+
+  synthesizeKey("Z", { accelKey: true });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3",
+                    "runCompositionTest", "#6-5") ||
+      !checkSelection(4, "", "runCompositionTest", "#6-5")) {
+    return;
+  }
+}
+
+function runCompositionEventTest()
+{
+  const kDescription = "runCompositionEventTest: ";
+  const kEvents = ["compositionstart", "compositionupdate", "compositionend",
+                   "input"];
+
+  input.value = "";
+  input.focus();
+
+  var windowEventCounts = [], windowEventData = [], windowEventLocale = [];
+  var inputEventCounts = [], inputEventData = [], inputEventLocale = [];
+  var preventDefault = false;
+  var stopPropagation = false;
+
+  function initResults()
+  {
+    for (var i = 0; i < kEvents.length; i++) {
+      windowEventCounts[kEvents[i]] = 0;
+      windowEventData[kEvents[i]] = "";
+      windowEventLocale[kEvents[i]] = "";
+      inputEventCounts[kEvents[i]] = 0;
+      inputEventData[kEvents[i]] = "";
+      inputEventLocale[kEvents[i]] = "";
+    }
+  }
+
+  function compositionEventHandlerForWindow(aEvent)
+  {
+    windowEventCounts[aEvent.type]++;
+    windowEventData[aEvent.type] = aEvent.data;
+    windowEventLocale[aEvent.type] = aEvent.locale;
+    if (preventDefault) {
+      aEvent.preventDefault();
+    }
+    if (stopPropagation) {
+      aEvent.stopPropagation();
+    }
+  }
+
+  function formEventHandlerForWindow(aEvent)
+  {
+    ok(aEvent.isTrusted, "input events must be trusted events");
+    windowEventCounts[aEvent.type]++;
+    windowEventData[aEvent.type] = input.value;
+  }
+
+  function compositionEventHandlerForInput(aEvent)
+  {
+    inputEventCounts[aEvent.type]++;
+    inputEventData[aEvent.type] = aEvent.data;
+    inputEventLocale[aEvent.type] = aEvent.locale;
+    if (preventDefault) {
+      aEvent.preventDefault();
+    }
+    if (stopPropagation) {
+      aEvent.stopPropagation();
+    }
+  }
+
+  function formEventHandlerForInput(aEvent)
+  {
+    inputEventCounts[aEvent.type]++;
+    inputEventData[aEvent.type] = input.value;
+  }
+
+  window.addEventListener("compositionstart", compositionEventHandlerForWindow,
+                          true, true);
+  window.addEventListener("compositionend", compositionEventHandlerForWindow,
+                          true, true);
+  window.addEventListener("compositionupdate", compositionEventHandlerForWindow,
+                          true, true);
+  window.addEventListener("input", formEventHandlerForWindow,
+                          true, true);
+
+  input.addEventListener("compositionstart", compositionEventHandlerForInput,
+                         true, true);
+  input.addEventListener("compositionend", compositionEventHandlerForInput,
+                         true, true);
+  input.addEventListener("compositionupdate", compositionEventHandlerForInput,
+                         true, true);
+  input.addEventListener("input", formEventHandlerForInput,
+                         true, true);
+
+  // test for normal case
+  initResults();
+
+  synthesizeComposition({ type: "compositionstart" });
+  synthesizeComposition({ type: "compositionupdate", data: "\u3089" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  is(windowEventCounts["compositionstart"], 1,
+     kDescription + "compositionstart hasn't been handled by window #1");
+  is(windowEventData["compositionstart"], "",
+     kDescription + "data of compositionstart isn't empty (window) #1");
+  is(windowEventLocale["compositionstart"], "",
+     kDescription + "locale of compositionstart isn't empty (window) #1");
+  is(inputEventCounts["compositionstart"], 1,
+     kDescription + "compositionstart hasn't been handled by input #1");
+  is(inputEventData["compositionstart"], "",
+     kDescription + "data of compositionstart isn't empty (input) #1");
+  is(inputEventLocale["compositionstart"], "",
+     kDescription + "locale of compositionstart isn't empty (input) #1");
+
+  is(windowEventCounts["compositionupdate"], 1,
+     kDescription + "compositionupdate hasn't been handled by window #1");
+  is(windowEventData["compositionupdate"], "\u3089",
+     kDescription + "data of compositionupdate doesn't match (window) #1");
+  is(windowEventLocale["compositionupdate"], "",
+     kDescription + "locale of compositionupdate isn't empty (window) #1");
+  is(inputEventCounts["compositionupdate"], 1,
+     kDescription + "compositionupdate hasn't been handled by input #1");
+  is(inputEventData["compositionupdate"], "\u3089",
+     kDescription + "data of compositionupdate doesn't match (input) #1");
+  is(inputEventLocale["compositionupdate"], "",
+     kDescription + "locale of compositionupdate isn't empty (input) #1");
+
+  is(windowEventCounts["compositionend"], 0,
+     kDescription + "compositionend has been handled by window #1");
+  is(inputEventCounts["compositionend"], 0,
+     kDescription + "compositionend has been handled by input #1");
+
+  is(windowEventCounts["input"], 1,
+     kDescription + "input hasn't been handled by window #1");
+  is(windowEventData["input"], "\u3089",
+     kDescription + "value of input element wasn't modified (window) #1");
+  is(inputEventCounts["input"], 1,
+     kDescription + "input hasn't been handled by input #1");
+  is(inputEventData["input"], "\u3089",
+     kDescription + "value of input element wasn't modified (input) #1");
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u3089\u30FC" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089\u30FC",
+        "clauses":
+        [
+          { "length": 2, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 2, "length": 0 }
+    });
+
+  is(windowEventCounts["compositionstart"], 1,
+     kDescription + "compositionstart has been handled more than once by window #2");
+  is(inputEventCounts["compositionstart"], 1,
+     kDescription + "compositionstart has been handled more than once by input #2");
+
+  is(windowEventCounts["compositionupdate"], 2,
+     kDescription + "compositionupdate hasn't been handled by window #2");
+  is(windowEventData["compositionupdate"], "\u3089\u30FC",
+     kDescription + "data of compositionupdate doesn't match (window) #2");
+  is(windowEventLocale["compositionupdate"], "",
+     kDescription + "locale of compositionupdate isn't empty (window) #2");
+  is(inputEventCounts["compositionupdate"], 2,
+     kDescription + "compositionupdate hasn't been handled by input #2");
+  is(inputEventData["compositionupdate"], "\u3089\u30FC",
+     kDescription + "data of compositionupdate doesn't match (input) #2");
+  is(inputEventLocale["compositionupdate"], "",
+     kDescription + "locale of compositionupdate isn't empty (input) #2");
+
+  is(windowEventCounts["compositionend"], 0,
+     kDescription + "compositionend has been handled during composition by window #2");
+  is(inputEventCounts["compositionend"], 0,
+     kDescription + "compositionend has been handled during composition by input #2");
+
+  is(windowEventCounts["input"], 2,
+     kDescription + "input hasn't been handled by window #2");
+  is(windowEventData["input"], "\u3089\u30FC",
+     kDescription + "value of input element wasn't modified (window) #2");
+  is(inputEventCounts["input"], 2,
+     kDescription + "input hasn't been handled by input #2");
+  is(inputEventData["input"], "\u3089\u30FC",
+     kDescription + "value of input element wasn't modified (input) #2");
+
+  // text event shouldn't cause composition update, e.g., at committing.
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089\u30FC",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 2, "length": 0 }
+    });
+
+  synthesizeComposition({ type: "compositionend", data: "\u3089\u30FC" });
+
+  is(windowEventCounts["compositionstart"], 1,
+     kDescription + "compositionstart has been handled more than once by window #3");
+  is(inputEventCounts["compositionstart"], 1,
+     kDescription + "compositionstart has been handled more than once by input #3");
+
+  is(windowEventCounts["compositionupdate"], 2,
+     kDescription + "compositionupdate has been fired unexpectedly on window #3");
+  is(inputEventCounts["compositionupdate"], 2,
+     kDescription + "compositionupdate has been fired unexpectedly on input #3");
+
+  is(windowEventCounts["compositionend"], 1,
+     kDescription + "compositionend hasn't been handled by window #3");
+  is(windowEventData["compositionend"], "\u3089\u30FC",
+     kDescription + "data of compositionend doesn't match (window) #3");
+  is(windowEventLocale["compositionend"], "",
+     kDescription + "locale of compositionend isn't empty (window) #3");
+  is(inputEventCounts["compositionend"], 1,
+     kDescription + "compositionend hasn't been handled by input #3");
+  is(inputEventData["compositionend"], "\u3089\u30FC",
+     kDescription + "data of compositionend doesn't match (input) #3");
+  is(inputEventLocale["compositionend"], "",
+     kDescription + "locale of compositionend isn't empty (input) #3");
+
+  is(windowEventCounts["input"], 3,
+     kDescription + "input hasn't been handled by window #3");
+  is(windowEventData["input"], "\u3089\u30FC",
+     kDescription + "value of input element wasn't modified (window) #3");
+  is(inputEventCounts["input"], 3,
+     kDescription + "input hasn't been handled by input #3");
+  is(inputEventData["input"], "\u3089\u30FC",
+     kDescription + "value of input element wasn't modified (input) #3");
+
+  // select the second character, then, data of composition start should be
+  // the selected character.
+  initResults();
+  synthesizeKey("VK_LEFT", { shiftKey: true });
+
+  synthesizeComposition({ type: "compositionstart" });
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u3089" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  synthesizeComposition({ type: "compositionend", data: "\u3089" });
+
+  is(windowEventCounts["compositionstart"], 1,
+     kDescription + "compositionstart hasn't been handled by window #4");
+  is(windowEventData["compositionstart"], "\u30FC",
+     kDescription + "data of compositionstart is empty (window) #4");
+  is(windowEventLocale["compositionstart"], "",
+     kDescription + "locale of compositionstart isn't empty (window) #4");
+  is(inputEventCounts["compositionstart"], 1,
+     kDescription + "compositionstart hasn't been handled by input #4");
+  is(inputEventData["compositionstart"], "\u30FC",
+     kDescription + "data of compositionstart is empty (input) #4");
+  is(inputEventLocale["compositionstart"], "",
+     kDescription + "locale of compositionstart isn't empty (input) #4");
+
+  is(windowEventCounts["compositionupdate"], 1,
+     kDescription + "compositionupdate hasn't been handled by window #4");
+  is(windowEventData["compositionupdate"], "\u3089",
+     kDescription + "data of compositionupdate doesn't match (window) #4");
+  is(windowEventLocale["compositionupdate"], "",
+     kDescription + "locale of compositionupdate isn't empty (window) #4");
+  is(inputEventCounts["compositionupdate"], 1,
+     kDescription + "compositionupdate hasn't been handled by input #4");
+  is(inputEventData["compositionupdate"], "\u3089",
+     kDescription + "data of compositionupdate doesn't match (input) #4");
+  is(inputEventLocale["compositionupdate"], "",
+     kDescription + "locale of compositionupdate isn't empty (input) #4");
+
+  is(windowEventCounts["compositionend"], 1,
+     kDescription + "compositionend hasn't been handled by window #4");
+  is(windowEventData["compositionend"], "\u3089",
+     kDescription + "data of compositionend doesn't match (window) #4");
+  is(windowEventLocale["compositionend"], "",
+     kDescription + "locale of compositionend isn't empty (window) #4");
+  is(inputEventCounts["compositionend"], 1,
+     kDescription + "compositionend hasn't been handled by input #4");
+  is(inputEventData["compositionend"], "\u3089",
+     kDescription + "data of compositionend doesn't match (input) #4");
+  is(inputEventLocale["compositionend"], "",
+     kDescription + "locale of compositionend isn't empty (input) #4");
+
+  is(windowEventCounts["input"], 2,
+     kDescription + "input hasn't been handled by window #4");
+  is(windowEventData["input"], "\u3089\u3089",
+     kDescription + "value of input element wasn't modified (window) #4");
+  is(inputEventCounts["input"], 2,
+     kDescription + "input hasn't been handled by input #4");
+  is(inputEventData["input"], "\u3089\u3089",
+     kDescription + "value of input element wasn't modified (input) #4");
+
+  // preventDefault() should effect nothing.
+  preventDefault = true;
+
+  initResults();
+  synthesizeKey("A", { accelKey: true }); // Select All
+
+  synthesizeComposition({ type: "compositionstart" });
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u306D" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u306D",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  synthesizeText(
+    { "composition":
+      { "string": "\u306D",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  synthesizeComposition({ type: "compositionend", data: "\u306D" });
+
+  is(windowEventCounts["compositionstart"], 1,
+     kDescription + "compositionstart hasn't been handled by window #5");
+  is(windowEventData["compositionstart"], "\u3089\u3089",
+     kDescription + "data of compositionstart is empty (window) #5");
+  is(windowEventLocale["compositionstart"], "",
+     kDescription + "locale of compositionstart isn't empty (window) #5");
+  is(inputEventCounts["compositionstart"], 1,
+     kDescription + "compositionstart hasn't been handled by input #5");
+  is(inputEventData["compositionstart"], "\u3089\u3089",
+     kDescription + "data of compositionstart is empty (input) #5");
+  is(inputEventLocale["compositionstart"], "",
+     kDescription + "locale of compositionstart isn't empty (input) #5");
+
+  is(windowEventCounts["compositionupdate"], 1,
+     kDescription + "compositionupdate hasn't been handled by window #5");
+  is(windowEventData["compositionupdate"], "\u306D",
+     kDescription + "data of compositionupdate doesn't match (window) #5");
+  is(windowEventLocale["compositionupdate"], "",
+     kDescription + "locale of compositionupdate isn't empty (window) #5");
+  is(inputEventCounts["compositionupdate"], 1,
+     kDescription + "compositionupdate hasn't been handled by input #5");
+  is(inputEventData["compositionupdate"], "\u306D",
+     kDescription + "data of compositionupdate doesn't match (input) #5");
+  is(inputEventLocale["compositionupdate"], "",
+     kDescription + "locale of compositionupdate isn't empty (input) #5");
+
+  is(windowEventCounts["compositionend"], 1,
+     kDescription + "compositionend hasn't been handled by window #5");
+  is(windowEventData["compositionend"], "\u306D",
+     kDescription + "data of compositionend doesn't match (window) #5");
+  is(windowEventLocale["compositionend"], "",
+     kDescription + "locale of compositionend isn't empty (window) #5");
+  is(inputEventCounts["compositionend"], 1,
+     kDescription + "compositionend hasn't been handled by input #5");
+  is(inputEventData["compositionend"], "\u306D",
+     kDescription + "data of compositionend doesn't match (input) #5");
+  is(inputEventLocale["compositionend"], "",
+     kDescription + "locale of compositionend isn't empty (input) #5");
+
+  is(windowEventCounts["input"], 2,
+     kDescription + "input hasn't been handled by window #5");
+  is(windowEventData["input"], "\u306D",
+     kDescription + "value of input element wasn't modified (window) #5");
+  is(inputEventCounts["input"], 2,
+     kDescription + "input hasn't been handled by input #5");
+  is(inputEventData["input"], "\u306D",
+     kDescription + "value of input element wasn't modified (input) #5");
+
+  prevnetDefault = false;
+
+  // stopPropagation() should effect nothing (except event count)
+  stopPropagation = true;
+
+  initResults();
+  synthesizeKey("A", { accelKey: true }); // Select All
+
+  synthesizeComposition({ type: "compositionstart" });
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u306E" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u306E",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  synthesizeText(
+    { "composition":
+      { "string": "\u306E",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  synthesizeComposition({ type: "compositionend", data: "\u306E" });
+
+  is(windowEventCounts["compositionstart"], 1,
+     kDescription + "compositionstart hasn't been handled by window #6");
+  is(windowEventData["compositionstart"], "\u306D",
+     kDescription + "data of compositionstart is empty #6");
+  is(windowEventLocale["compositionstart"], "",
+     kDescription + "locale of compositionstart isn't empty #6");
+  is(inputEventCounts["compositionstart"], 0,
+     kDescription + "compositionstart has been handled by input #6");
+
+  is(windowEventCounts["compositionupdate"], 1,
+     kDescription + "compositionupdate hasn't been handled by window #6");
+  is(windowEventData["compositionupdate"], "\u306E",
+     kDescription + "data of compositionupdate doesn't match #6");
+  is(windowEventLocale["compositionupdate"], "",
+     kDescription + "locale of compositionupdate isn't empty #6");
+  is(inputEventCounts["compositionupdate"], 0,
+     kDescription + "compositionupdate has been handled by input #6");
+
+  is(windowEventCounts["compositionend"], 1,
+     kDescription + "compositionend hasn't been handled by window #6");
+  is(windowEventData["compositionend"], "\u306E",
+     kDescription + "data of compositionend doesn't match #6");
+  is(windowEventLocale["compositionend"], "",
+     kDescription + "locale of compositionend isn't empty #6");
+  is(inputEventCounts["compositionend"], 0,
+     kDescription + "compositionend has been handled by input #6");
+
+  is(windowEventCounts["input"], 2,
+     kDescription + "input hasn't been handled by window #6");
+  is(windowEventData["input"], "\u306E",
+     kDescription + "value of input element wasn't modified (window) #6");
+  is(inputEventCounts["input"], 2,
+     kDescription + "input hasn't been handled by input #6");
+  is(inputEventData["input"], "\u306E",
+     kDescription + "value of input element wasn't modified (input) #6");
+
+  stopPropagation = false;
+
+  // create event and dispatch it.
+  initResults();
+
+  input.value = "value of input";
+  synthesizeKey("A", { accelKey: true }); // Select All
+
+  var compositionstart = document.createEvent("CompositionEvent");
+  compositionstart.initCompositionEvent("compositionstart",
+                                        true, true, document.defaultView,
+                                        "start data", "start locale");
+  is(compositionstart.type, "compositionstart",
+     kDescription + "type doesn't match #7");
+  is(compositionstart.data, "start data",
+     kDescription + "data doesn't match #7");
+  is(compositionstart.locale, "start locale",
+     kDescription + "locale doesn't match #7");
+  is(compositionstart.detail, 0,
+     kDescription + "detail isn't 0 #7");
+
+  input.dispatchEvent(compositionstart);
+
+  is(windowEventCounts["compositionstart"], 1,
+     kDescription + "compositionstart hasn't been handled by window #7");
+  is(windowEventData["compositionstart"], "start data",
+     kDescription + "data of compositionstart was changed (window) #7");
+  is(windowEventLocale["compositionstart"], "start locale",
+     kDescription + "locale of compositionstart was changed (window) #7");
+  is(inputEventCounts["compositionstart"], 1,
+     kDescription + "compositionstart hasn't been handled by input #7");
+  is(inputEventData["compositionstart"], "start data",
+     kDescription + "data of compositionstart was changed (input) #7");
+  is(inputEventLocale["compositionstart"], "start locale",
+     kDescription + "locale of compositionstart was changed (input) #7");
+
+  is(input.value, "value of input",
+     kDescription + "input value was changed #7");
+
+  var compositionupdate1 = document.createEvent("compositionevent");
+  compositionupdate1.initCompositionEvent("compositionupdate",
+                                          true, false, document.defaultView,
+                                          "composing string", "composing locale");
+  is(compositionupdate1.type, "compositionupdate",
+     kDescription + "type doesn't match #8");
+  is(compositionupdate1.data, "composing string",
+     kDescription + "data doesn't match #8");
+  is(compositionupdate1.locale, "composing locale",
+     kDescription + "locale doesn't match #8");
+  is(compositionupdate1.detail, 0,
+     kDescription + "detail isn't 0 #8");
+
+  input.dispatchEvent(compositionupdate1);
+
+  is(windowEventCounts["compositionupdate"], 1,
+     kDescription + "compositionupdate hasn't been handled by window #8");
+  is(windowEventData["compositionupdate"], "composing string",
+     kDescription + "data of compositionupdate was changed (window) #8");
+  is(windowEventLocale["compositionupdate"], "composing locale",
+     kDescription + "locale of compositionupdate was changed (window) #8");
+  is(inputEventCounts["compositionupdate"], 1,
+     kDescription + "compositionupdate hasn't been handled by input #8");
+  is(inputEventData["compositionupdate"], "composing string",
+     kDescription + "data of compositionupdate was changed (input) #8");
+  is(inputEventLocale["compositionupdate"], "composing locale",
+     kDescription + "locale of compositionupdate was changed (input) #8");
+
+  is(input.value, "value of input",
+     kDescription + "input value was changed #8");
+
+  var compositionupdate2 = document.createEvent("compositionEvent");
+  compositionupdate2.initCompositionEvent("compositionupdate",
+                                          true, false, document.defaultView,
+                                          "commit string", "commit locale");
+  is(compositionupdate2.type, "compositionupdate",
+     kDescription + "type doesn't match #9");
+  is(compositionupdate2.data, "commit string",
+     kDescription + "data doesn't match #9");
+  is(compositionupdate2.locale, "commit locale",
+     kDescription + "locale doesn't match #9");
+  is(compositionupdate2.detail, 0,
+     kDescription + "detail isn't 0 #9");
+
+  input.dispatchEvent(compositionupdate2);
+
+  is(windowEventCounts["compositionupdate"], 2,
+     kDescription + "compositionupdate hasn't been handled by window #9");
+  is(windowEventData["compositionupdate"], "commit string",
+     kDescription + "data of compositionupdate was changed (window) #9");
+  is(windowEventLocale["compositionupdate"], "commit locale",
+     kDescription + "locale of compositionupdate was changed (window) #9");
+  is(inputEventCounts["compositionupdate"], 2,
+     kDescription + "compositionupdate hasn't been handled by input #9");
+  is(inputEventData["compositionupdate"], "commit string",
+     kDescription + "data of compositionupdate was changed (input) #9");
+  is(inputEventLocale["compositionupdate"], "commit locale",
+     kDescription + "locale of compositionupdate was changed (input) #9");
+
+  is(input.value, "value of input",
+     kDescription + "input value was changed #9");
+
+  var compositionend = document.createEvent("Compositionevent");
+  compositionend.initCompositionEvent("compositionend",
+                                      true, false, document.defaultView,
+                                      "end data", "end locale");
+  is(compositionend.type, "compositionend",
+     kDescription + "type doesn't match #10");
+  is(compositionend.data, "end data",
+     kDescription + "data doesn't match #10");
+  is(compositionend.locale, "end locale",
+     kDescription + "locale doesn't match #10");
+  is(compositionend.detail, 0,
+     kDescription + "detail isn't 0 #10");
+
+  input.dispatchEvent(compositionend);
+
+  is(windowEventCounts["compositionend"], 1,
+     kDescription + "compositionend hasn't been handled by window #10");
+  is(windowEventData["compositionend"], "end data",
+     kDescription + "data of compositionend was changed (window) #10");
+  is(windowEventLocale["compositionend"], "end locale",
+     kDescription + "locale of compositionend was changed (window) #10");
+  is(inputEventCounts["compositionend"], 1,
+     kDescription + "compositionend hasn't been handled by input #10");
+  is(inputEventData["compositionend"], "end data",
+     kDescription + "data of compositionend was changed (input) #10");
+  is(inputEventLocale["compositionend"], "end locale",
+     kDescription + "locale of compositionend was changed (input) #10");
+
+  is(input.value, "value of input",
+     kDescription + "input value was changed #10");
+
+  window.removeEventListener("compositionstart",
+                             compositionEventHandlerForWindow, true);
+  window.removeEventListener("compositionend",
+                             compositionEventHandlerForWindow, true);
+  window.removeEventListener("compositionupdate",
+                             compositionEventHandlerForWindow, true);
+  window.removeEventListener("input",
+                             formEventHandlerForWindow, true);
+
+  input.removeEventListener("compositionstart",
+                            compositionEventHandlerForInput, true);
+  input.removeEventListener("compositionend",
+                            compositionEventHandlerForInput, true);
+  input.removeEventListener("compositionupdate",
+                            compositionEventHandlerForInput, true);
+  input.removeEventListener("input",
+                            formEventHandlerForInput, true);
+}
+
+function runCharAtPointTest(aFocusedEditor, aTargetName)
+{
+  aFocusedEditor.value = "This is a test of the\nContent Events";
+                       // 012345678901234567890  12345678901234
+                       // 0         1         2           3    
+
+  aFocusedEditor.focus();
+
+  const kNone = -1;
+  const kTestingOffset   = [     0, 10,    20, 21 + kLFLen, 34 + kLFLen];
+  const kLeftSideOffset  = [ kNone,  9,    19,       kNone, 33 + kLFLen];
+  const kRightSideOffset = [     1, 11, kNone, 22 + kLFLen,       kNone];
+
+  var editorRect = synthesizeQueryEditorRect();
+  if (!checkQueryContentResult(editorRect,
+        "runCharAtPointTest (" + aTargetName + "): editorRect")) {
+    return;
+  }
+
+  for (var i = 0; i < kTestingOffset.length; i++) {
+    var textRect = synthesizeQueryTextRect(kTestingOffset[i], 1);
+    if (!checkQueryContentResult(textRect,
+          "runCharAtPointTest (" + aTargetName + "): textRect: i=" + i)) {
+      continue;
+    }
+
+    checkRectContainsRect(textRect, editorRect,
+      "runCharAtPointTest (" + aTargetName +
+      "): the text rect isn't in the editor");
+
+    // Test #1, getting same character rect by the point near the top-left.
+    var charAtPt1 = synthesizeCharAtPoint(textRect.left + 1,
+                                          textRect.top + 1);
+    if (checkQueryContentResult(charAtPt1,
+          "runCharAtPointTest (" + aTargetName + "): charAtPt1: i=" + i)) {
+      ok(!charAtPt1.notFound,
+         "runCharAtPointTest (" + aTargetName + "): charAtPt1 isn't found: i=" + i);
+      if (!charAtPt1.notFound) {
+        is(charAtPt1.offset, kTestingOffset[i],
+           "runCharAtPointTest (" + aTargetName + "): charAtPt1 offset is wrong: i=" + i);
+        checkRect(charAtPt1, textRect, "runCharAtPointTest (" + aTargetName +
+                  "): charAtPt1 left is wrong: i=" + i);
+      }
+    }
+
+    // Test #2, getting same character rect by the point near the bottom-right.
+    var charAtPt2 = synthesizeCharAtPoint(textRect.left + textRect.width - 2,
+                                          textRect.top + textRect.height - 2);
+    if (checkQueryContentResult(charAtPt2,
+          "runCharAtPointTest (" + aTargetName + "): charAtPt2: i=" + i)) {
+      ok(!charAtPt2.notFound,
+         "runCharAtPointTest (" + aTargetName + "): charAtPt2 isn't found: i=" + i);
+      if (!charAtPt2.notFound) {
+        is(charAtPt2.offset, kTestingOffset[i],
+           "runCharAtPointTest (" + aTargetName + "): charAtPt2 offset is wrong: i=" + i);
+        checkRect(charAtPt2, textRect, "runCharAtPointTest (" + aTargetName +
+                  "): charAtPt1 left is wrong: i=" + i);
+      }
+    }
+
+    // Test #3, getting left character offset.
+    var charAtPt3 = synthesizeCharAtPoint(textRect.left - 2,
+                                          textRect.top + 1);
+    if (checkQueryContentResult(charAtPt3,
+          "runCharAtPointTest (" + aTargetName + "): charAtPt3: i=" + i)) {
+      is(charAtPt3.notFound, kLeftSideOffset[i] == kNone,
+         kLeftSideOffset[i] == kNone ?
+           "runCharAtPointTest (" + aTargetName + "): charAtPt3 is found: i=" + i :
+           "runCharAtPointTest (" + aTargetName + "): charAtPt3 isn't found: i=" + i);
+      if (!charAtPt3.notFound) {
+        is(charAtPt3.offset, kLeftSideOffset[i],
+           "runCharAtPointTest (" + aTargetName + "): charAtPt3 offset is wrong: i=" + i);
+      }
+    }
+
+    // Test #4, getting right character offset.
+    var charAtPt4 = synthesizeCharAtPoint(textRect.left + textRect.width + 1,
+                                          textRect.top + textRect.height - 2);
+    if (checkQueryContentResult(charAtPt4,
+          "runCharAtPointTest (" + aTargetName + "): charAtPt4: i=" + i)) {
+      is(charAtPt4.notFound, kRightSideOffset[i] == kNone,
+         kRightSideOffset[i] == kNone ?
+           "runCharAtPointTest (" + aTargetName + "): charAtPt4 is found: i=" + i :
+           "runCharAtPointTest (" + aTargetName + "): charAtPt4 isn't found: i=" + i);
+      if (!charAtPt4.notFound) {
+        is(charAtPt4.offset, kRightSideOffset[i],
+           "runCharAtPointTest (" + aTargetName + "): charAtPt4 offset is wrong: i=" + i);
+      }
+    }
+  }
+}
+
+function runCharAtPointAtOutsideTest()
+{
+  textarea.focus();
+  textarea.value = "some text";
+  var editorRect = synthesizeQueryEditorRect();
+  if (!checkQueryContentResult(editorRect,
+        "runCharAtPointAtOutsideTest: editorRect")) {
+    return;
+  }
+  // Check on a text node which is at the outside of editor.
+  var charAtPt = synthesizeCharAtPoint(editorRect.left + 20,
+                                       editorRect.top - 10);
+  if (checkQueryContentResult(charAtPt,
+        "runCharAtPointAtOutsideTest: charAtPt")) {
+    ok(charAtPt.notFound,
+       "runCharAtPointAtOutsideTest: charAtPt is found on outside of editor");
+  }
+}
+
+function runBug722639Test()
+{
+  textarea.focus();
+  textarea.value = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
+  textarea.value += textarea.value;
+  textarea.value += textarea.value; // 80 characters
+
+  var firstLine = synthesizeQueryTextRect(0, 1);
+  if (!checkQueryContentResult(firstLine,
+        "runBug722639Test: firstLine")) {
+    return;
+  }
+  var secondLine = synthesizeQueryTextRect(kLFLen, 1);
+  if (!checkQueryContentResult(secondLine,
+        "runBug722639Test: secondLine")) {
+    return;
+  }
+  var lineHeight = secondLine.top -  firstLine.top;
+  ok(lineHeight > 0,
+     "runBug722639Test: lineHeight must be positive");
+  is(secondLine.left, firstLine.left,
+     "runBug722639Test: the left value must be always same value");
+  var previousTop = secondLine.top;
+  for (var i = 2; i < textarea.value.length; i++) {
+    var currentLine = synthesizeQueryTextRect(kLFLen * i, 1);
+    if (!checkQueryContentResult(currentLine,
+           "runBug722639Test: " + i + "th currentLine")) {
+      return;
+    }
+    // NOTE: the top position may be 1px larger or smaller than other lines
+    //       due to sub pixel positioning.
+    if (Math.abs(currentLine.top - (previousTop + lineHeight)) <= 1) {
+      ok(true, "runBug722639Test: " + i + "th line's top is expected");
+    } else {
+      is(currentLine.top, previousTop + lineHeight,
+         "runBug722639Test: " + i + "th line's top is unexpected");
+    }
+    is(currentLine.left, firstLine.left,
+       "runBug722639Test: " + i + "th line's left is unexpected");
+    previousTop = currentLine.top;
+  }
+}
+
+function runForceCommitTest()
+{
+  var events;
+  function eventHandler(aEvent)
+  {
+    events.push(aEvent);
+  }
+  window.addEventListener("compositionstart", eventHandler, true);
+  window.addEventListener("compositionupdate", eventHandler, true);
+  window.addEventListener("compositionend", eventHandler, true);
+  window.addEventListener("input", eventHandler, true);
+  window.addEventListener("text", eventHandler, true);
+
+  // Make the composition in textarea commit by click in the textarea
+  textarea.focus();
+  textarea.value = "";
+
+  events = [];
+  synthesizeComposition({ type: "compositionstart" });
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u306E" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u306E",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  is(events.length, 4,
+     "runForceCommitTest: wrong event count #1");
+  is(events[0].type, "compositionstart",
+     "runForceCommitTest: the 1st event must be compositionstart #1");
+  is(events[1].type, "compositionupdate",
+     "runForceCommitTest: the 2nd event must be compositionupdate #1");
+  is(events[2].type, "text",
+     "runForceCommitTest: the 3rd event must be text #1");
+  is(events[3].type, "input",
+     "runForceCommitTest: the 4th event must be input #1");
+
+  events = [];
+  synthesizeMouseAtCenter(textarea, {});
+
+  is(events.length, 3,
+     "runForceCommitTest: wrong event count #2");
+  is(events[0].type, "text",
+     "runForceCommitTest: the 1st event must be text #2");
+  is(events[1].type, "compositionend",
+     "runForceCommitTest: the 2nd event must be compositionend #2");
+  is(events[2].type, "input",
+     "runForceCommitTest: the 3rd event must be input #2");
+  is(events[1].data, "\u306E",
+     "runForceCommitTest: compositionend has wrong data #2");
+  is(events[0].target, textarea,
+     "runForceCommitTest: The 1st event was fired on wrong event target #2");
+  is(events[1].target, textarea,
+     "runForceCommitTest: The 2nd event was fired on wrong event target #2");
+  is(events[2].target, textarea,
+     "runForceCommitTest: The 3rd event was fired on wrong event target #2");
+  ok(!getEditorIMESupport(textarea).isComposing,
+     "runForceCommitTest: the textarea still has composition #2");
+  is(textarea.value, "\u306E",
+     "runForceCommitTest: the textarea doesn't have the committed text #2");
+
+  // Make the composition in textarea commit by click in another editor (input)
+  textarea.focus();
+  textarea.value = "";
+  input.value = "";
+
+  synthesizeComposition({ type: "compositionstart" });
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u306E" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u306E",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  events = [];
+  synthesizeMouseAtCenter(input, {});
+
+  is(events.length, 3,
+     "runForceCommitTest: wrong event count #3");
+  is(events[0].type, "text",
+     "runForceCommitTest: the 1st event must be text #3");
+  is(events[1].type, "compositionend",
+     "runForceCommitTest: the 2nd event must be compositionend #3");
+  is(events[2].type, "input",
+     "runForceCommitTest: the 3rd event must be input #3");
+  is(events[1].data, "\u306E",
+     "runForceCommitTest: compositionend has wrong data #3");
+  is(events[0].target, textarea,
+     "runForceCommitTest: The 1st event was fired on wrong event target #3");
+  is(events[1].target, textarea,
+     "runForceCommitTest: The 2nd event was fired on wrong event target #3");
+  is(events[2].target, textarea,
+     "runForceCommitTest: The 3rd event was fired on wrong event target #3");
+  ok(!getEditorIMESupport(textarea).isComposing,
+     "runForceCommitTest: the textarea still has composition #3");
+  ok(!getEditorIMESupport(input).isComposing,
+     "runForceCommitTest: the input has composition #3");
+  is(textarea.value, "\u306E",
+     "runForceCommitTest: the textarea doesn't have the committed text #3");
+  is(input.value, "",
+     "runForceCommitTest: the input has the committed text? #3");
+
+  // Make the composition in textarea commit by blur()
+  textarea.focus();
+  textarea.value = "";
+
+  synthesizeComposition({ type: "compositionstart" });
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u306E" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u306E",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  events = [];
+  textarea.blur();
+
+  is(events.length, 3,
+     "runForceCommitTest: wrong event count #4");
+  is(events[0].type, "text",
+     "runForceCommitTest: the 1st event must be text #4");
+  is(events[1].type, "compositionend",
+     "runForceCommitTest: the 2nd event must be compositionend #4");
+  is(events[2].type, "input",
+     "runForceCommitTest: the 3rd event must be input #4");
+  is(events[1].data, "\u306E",
+     "runForceCommitTest: compositionend has wrong data #4");
+  is(events[0].target, textarea,
+     "runForceCommitTest: The 1st event was fired on wrong event target #4");
+  is(events[1].target, textarea,
+     "runForceCommitTest: The 2nd event was fired on wrong event target #4");
+  is(events[2].target, textarea,
+     "runForceCommitTest: The 3rd event was fired on wrong event target #4");
+  ok(!getEditorIMESupport(textarea).isComposing,
+     "runForceCommitTest: the textarea still has composition #4");
+  is(textarea.value, "\u306E",
+     "runForceCommitTest: the textarea doesn't have the committed text #4");
+
+  // Make the composition in textarea commit by input.focus()
+  textarea.focus();
+  textarea.value = "";
+  input.value = "";
+
+  synthesizeComposition({ type: "compositionstart" });
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u306E" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u306E",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  events = [];
+  input.focus();
+
+  is(events.length, 3,
+     "runForceCommitTest: wrong event count #5");
+  is(events[0].type, "text",
+     "runForceCommitTest: the 1st event must be text #5");
+  is(events[1].type, "compositionend",
+     "runForceCommitTest: the 2nd event must be compositionend #5");
+  is(events[2].type, "input",
+     "runForceCommitTest: the 3rd event must be input #5");
+  is(events[1].data, "\u306E",
+     "runForceCommitTest: compositionend has wrong data #5");
+  is(events[0].target, textarea,
+     "runForceCommitTest: The 1st event was fired on wrong event target #5");
+  is(events[1].target, textarea,
+     "runForceCommitTest: The 2nd event was fired on wrong event target #5");
+  is(events[2].target, textarea,
+     "runForceCommitTest: The 3rd event was fired on wrong event target #5");
+  ok(!getEditorIMESupport(textarea).isComposing,
+     "runForceCommitTest: the textarea still has composition #5");
+  ok(!getEditorIMESupport(input).isComposing,
+     "runForceCommitTest: the input has composition #5");
+  is(textarea.value, "\u306E",
+     "runForceCommitTest: the textarea doesn't have the committed text #5");
+  is(input.value, "",
+     "runForceCommitTest: the input has the committed text? #5");
+
+  // Make the composition in textarea commit by click in another document's editor
+  textarea.focus();
+  textarea.value = "";
+  textareaInFrame.value = "";
+
+  synthesizeComposition({ type: "compositionstart" });
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u306E" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u306E",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  events = [];
+  synthesizeMouseAtCenter(textareaInFrame, {}, iframe.contentWindow);
+
+  is(events.length, 3,
+     "runForceCommitTest: wrong event count #6");
+  is(events[0].type, "text",
+     "runForceCommitTest: the 1st event must be text #6");
+  is(events[1].type, "compositionend",
+     "runForceCommitTest: the 2nd event must be compositionend #6");
+  is(events[2].type, "input",
+     "runForceCommitTest: the 3rd event must be input #6");
+  is(events[1].data, "\u306E",
+     "runForceCommitTest: compositionend has wrong data #6");
+  is(events[0].target, textarea,
+     "runForceCommitTest: The 1st event was fired on wrong event target #6");
+  is(events[1].target, textarea,
+     "runForceCommitTest: The 2nd event was fired on wrong event target #6");
+  is(events[2].target, textarea,
+     "runForceCommitTest: The 3rd event was fired on wrong event target #6");
+  ok(!getEditorIMESupport(textarea).isComposing,
+     "runForceCommitTest: the textarea still has composition #6");
+  ok(!getEditorIMESupport(textareaInFrame).isComposing,
+     "runForceCommitTest: the textarea in frame has composition #6");
+  is(textarea.value, "\u306E",
+     "runForceCommitTest: the textarea doesn't have the committed text #6");
+  is(textareaInFrame.value, "",
+     "runForceCommitTest: the textarea in frame has the committed text? #6");
+
+  // Make the composition in textarea commit by another document's editor's focus()
+  textarea.focus();
+  textarea.value = "";
+  textareaInFrame.value = "";
+
+  synthesizeComposition({ type: "compositionstart" });
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u306E" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u306E",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  events = [];
+  textareaInFrame.focus();
+
+  is(events.length, 3,
+     "runForceCommitTest: wrong event count #7");
+  is(events[0].type, "text",
+     "runForceCommitTest: the 1st event must be text #7");
+  is(events[1].type, "compositionend",
+     "runForceCommitTest: the 2nd event must be compositionend #7");
+  is(events[2].type, "input",
+     "runForceCommitTest: the 3rd event must be input #7");
+  is(events[1].data, "\u306E",
+     "runForceCommitTest: compositionend has wrong data #7");
+  is(events[0].target, textarea,
+     "runForceCommitTest: The 1st event was fired on wrong event target #7");
+  is(events[1].target, textarea,
+     "runForceCommitTest: The 2nd event was fired on wrong event target #7");
+  is(events[2].target, textarea,
+     "runForceCommitTest: The 3rd event was fired on wrong event target #7");
+  ok(!getEditorIMESupport(textarea).isComposing,
+     "runForceCommitTest: the textarea still has composition #7");
+  ok(!getEditorIMESupport(textareaInFrame).isComposing,
+     "runForceCommitTest: the textarea in frame has composition #7");
+  is(textarea.value, "\u306E",
+     "runForceCommitTest: the textarea doesn't have the committed text #7");
+  is(textareaInFrame.value, "",
+     "runForceCommitTest: the textarea in frame has the committed text? #7");
+
+  // Make the composition in a textarea commit by click in another editable document
+  textarea.focus();
+  textarea.value = "";
+  iframe2.contentDocument.body.innerHTML = "Text in the Body";
+  var iframe2BodyInnerHTML = iframe2.contentDocument.body.innerHTML;
+
+  synthesizeComposition({ type: "compositionstart" });
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u306E" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u306E",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  events = [];
+  synthesizeMouseAtCenter(iframe2.contentDocument.body, {}, iframe2.contentWindow);
+
+  is(events.length, 3,
+     "runForceCommitTest: wrong event count #8");
+  is(events[0].type, "text",
+     "runForceCommitTest: the 1st event must be text #8");
+  is(events[1].type, "compositionend",
+     "runForceCommitTest: the 2nd event must be compositionend #8");
+  is(events[2].type, "input",
+     "runForceCommitTest: the 3rd event must be input #8");
+  is(events[1].data, "\u306E",
+     "runForceCommitTest: compositionend has wrong data #8");
+  is(events[0].target, textarea,
+     "runForceCommitTest: The 1st event was fired on wrong event target #8");
+  is(events[1].target, textarea,
+     "runForceCommitTest: The 2nd event was fired on wrong event target #8");
+  is(events[2].target, textarea,
+     "runForceCommitTest: The 3rd event was fired on wrong event target #8");
+  ok(!getEditorIMESupport(textarea).isComposing,
+     "runForceCommitTest: the textarea still has composition #8");
+  ok(!getHTMLEditorIMESupport(iframe2.contentWindow).isComposing,
+     "runForceCommitTest: the editable document has composition #8");
+  is(textarea.value, "\u306E",
+     "runForceCommitTest: the textarea doesn't have the committed text #8");
+  is(iframe2.contentDocument.body.innerHTML, iframe2BodyInnerHTML,
+     "runForceCommitTest: the editable document has the committed text? #8");
+
+  // Make the composition in an editable document commit by click in it
+  iframe2.contentWindow.focus();
+  iframe2.contentDocument.body.innerHTML = "Text in the Body";
+  iframe2BodyInnerHTML = iframe2.contentDocument.body.innerHTML;
+
+  synthesizeComposition({ type: "compositionstart" }, iframe2.contentWindow);
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u306E" }, iframe2.contentWindow);
+  synthesizeText(
+    { "composition":
+      { "string": "\u306E",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    }, iframe2.contentWindow);
+
+  events = [];
+  synthesizeMouseAtCenter(iframe2.contentDocument.body, {}, iframe2.contentWindow);
+
+  is(events.length, 3,
+     "runForceCommitTest: wrong event count #9");
+  is(events[0].type, "text",
+     "runForceCommitTest: the 1st event must be text #9");
+  is(events[1].type, "compositionend",
+     "runForceCommitTest: the 2nd event must be compositionend #9");
+  is(events[2].type, "input",
+     "runForceCommitTest: the 3rd event must be input #9");
+  is(events[1].data, "\u306E",
+     "runForceCommitTest: compositionend has wrong data #9");
+  is(events[0].target, iframe2.contentDocument.body,
+     "runForceCommitTest: The 1st event was fired on wrong event target #9");
+  is(events[1].target, iframe2.contentDocument.body,
+     "runForceCommitTest: The 2nd event was fired on wrong event target #9");
+  is(events[2].target, iframe2.contentDocument.body,
+     "runForceCommitTest: The 3rd event was fired on wrong event target #9");
+  ok(!getHTMLEditorIMESupport(iframe2.contentWindow).isComposing,
+     "runForceCommitTest: the editable document still has composition #9");
+  ok(iframe2.contentDocument.body.innerHTML != iframe2BodyInnerHTML &&
+     iframe2.contentDocument.body.innerHTML.indexOf("\u306E") >= 0,
+     "runForceCommitTest: the editable document doesn't have the committed text #9");
+
+  // Make the composition in an editable document commit by click in another document's editor
+  textarea.value = "";
+  iframe2.contentWindow.focus();
+  iframe2.contentDocument.body.innerHTML = "Text in the Body";
+  iframe2BodyInnerHTML = iframe2.contentDocument.body.innerHTML;
+
+  synthesizeComposition({ type: "compositionstart" }, iframe2.contentWindow);
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u306E" }, iframe2.contentWindow);
+  synthesizeText(
+    { "composition":
+      { "string": "\u306E",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    }, iframe2.contentWindow);
+
+  events = [];
+  synthesizeMouseAtCenter(textarea, {});
+
+  is(events.length, 3,
+     "runForceCommitTest: wrong event count #10");
+  is(events[0].type, "text",
+     "runForceCommitTest: the 1st event must be text #10");
+  is(events[1].type, "compositionend",
+     "runForceCommitTest: the 2nd event must be compositionend #10");
+  is(events[2].type, "input",
+     "runForceCommitTest: the 3rd event must be input #10");
+  is(events[1].data, "\u306E",
+     "runForceCommitTest: compositionend has wrong data #10");
+  is(events[0].target, iframe2.contentDocument.body,
+     "runForceCommitTest: The 1st event was fired on wrong event target #10");
+  is(events[1].target, iframe2.contentDocument.body,
+     "runForceCommitTest: The 2nd event was fired on wrong event target #10");
+  is(events[2].target, iframe2.contentDocument.body,
+     "runForceCommitTest: The 3rd event was fired on wrong event target #10");
+  ok(!getHTMLEditorIMESupport(iframe2.contentWindow).isComposing,
+     "runForceCommitTest: the editable document still has composition #10");
+  ok(!getEditorIMESupport(textarea).isComposing,
+     "runForceCommitTest: the textarea has composition #10");
+  ok(iframe2.contentDocument.body.innerHTML != iframe2BodyInnerHTML &&
+     iframe2.contentDocument.body.innerHTML.indexOf("\u306E") >= 0,
+     "runForceCommitTest: the editable document doesn't have the committed text #10");
+  is(textarea.value, "",
+     "runForceCommitTest: the textarea has the committed text? #10");
+
+  // Make the composition in an editable document commit by click in the another editable document
+  iframe2.contentWindow.focus();
+  iframe2.contentDocument.body.innerHTML = "Text in the Body";
+  iframe2BodyInnerHTML = iframe2.contentDocument.body.innerHTML;
+  iframe3.contentDocument.body.innerHTML = "Text in the Body";
+  iframe3BodyInnerHTML = iframe2.contentDocument.body.innerHTML;
+
+  synthesizeComposition({ type: "compositionstart" }, iframe2.contentWindow);
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u306E" }, iframe2.contentWindow);
+  synthesizeText(
+    { "composition":
+      { "string": "\u306E",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    }, iframe2.contentWindow);
+
+  events = [];
+  synthesizeMouseAtCenter(iframe3.contentDocument.body, {}, iframe3.contentWindow);
+
+  is(events.length, 3,
+     "runForceCommitTest: wrong event count #11");
+  is(events[0].type, "text",
+     "runForceCommitTest: the 1st event must be text #11");
+  is(events[1].type, "compositionend",
+     "runForceCommitTest: the 2nd event must be compositionend #11");
+  is(events[2].type, "input",
+     "runForceCommitTest: the 3rd event must be input #11");
+  is(events[1].data, "\u306E",
+     "runForceCommitTest: compositionend has wrong data #11");
+  is(events[0].target, iframe2.contentDocument.body,
+     "runForceCommitTest: The 1st event was fired on wrong event target #11");
+  is(events[1].target, iframe2.contentDocument.body,
+     "runForceCommitTest: The 2nd event was fired on wrong event target #11");
+  is(events[2].target, iframe2.contentDocument.body,
+     "runForceCommitTest: The 3rd event was fired on wrong event target #11");
+  ok(!getHTMLEditorIMESupport(iframe2.contentWindow).isComposing,
+     "runForceCommitTest: the editable document still has composition #11");
+  ok(!getHTMLEditorIMESupport(iframe3.contentWindow).isComposing,
+     "runForceCommitTest: the other editable document has composition #11");
+  ok(iframe2.contentDocument.body.innerHTML != iframe2BodyInnerHTML &&
+     iframe2.contentDocument.body.innerHTML.indexOf("\u306E") >= 0,
+     "runForceCommitTest: the editable document doesn't have the committed text #11");
+  is(iframe3.contentDocument.body.innerHTML, iframe3BodyInnerHTML,
+     "runForceCommitTest: the other editable document has the committed text? #11");
+
+  window.removeEventListener("compositionstart", eventHandler, true);
+  window.removeEventListener("compositionupdate", eventHandler, true);
+  window.removeEventListener("compositionend", eventHandler, true);
+  window.removeEventListener("input", eventHandler, true);
+  window.removeEventListener("text", eventHandler, true);
+}
+
+function runBug811755Test()
+{
+  iframe2.contentDocument.body.innerHTML = "<div>content<br/></div>";
+  iframe2.contentWindow.focus();
+  // Query everything
+  var textContent = synthesizeQueryTextContent(0, 10);
+  if (!checkQueryContentResult(textContent, "runBug811755Test: synthesizeQueryTextContent #1")) {
+    return false;
+  }
+  // Query everything but specify exact end offset, which should be immediately after the <br> node
+  // If PreContentIterator is used, the next node after <br> is the node after </div>.
+  // If ContentIterator is used, the next node is the <div> node itself. In this case, the end
+  // node ends up being before the start node, and an empty string is returned.
+  var queryContent = synthesizeQueryTextContent(0, textContent.text.length);
+  if (!checkQueryContentResult(queryContent, "runBug811755Test: synthesizeQueryTextContent #2")) {
+    return false;
+  }
+  is(queryContent.text, textContent.text, "runBug811755Test: two queried texts don't match");
+  return queryContent.text == textContent.text;
+}
+
+function runIsComposingTest()
+{
+  var expectedIsComposing = false;
+  var descriptionBase = "runIsComposingTest: ";
+  var description = "";
+
+  function eventHandler(aEvent)
+  {
+    if (aEvent.type == "keydown" || aEvent.type == "keyup") {
+      is(aEvent.isComposing, expectedIsComposing,
+         "runIsComposingTest: " + description + " (type=" + aEvent.type + ", key=" + aEvent.key + ")");
+    } else {
+      is(aEvent.isComposing, expectedIsComposing,
+         "runIsComposingTest: " + description + " (type=" + aEvent.type + ")");
+    }
+  }
+
+  textarea.addEventListener("keydown", eventHandler, true);
+  textarea.addEventListener("keypress", eventHandler, true);
+  textarea.addEventListener("keyup", eventHandler, true);
+  textarea.addEventListener("input", eventHandler, true);
+
+  textarea.focus();
+  textarea.value = "";
+
+  // XXX These cases shouldn't occur in actual native key events because we
+  //     don't dispatch key events while composition (bug 354358).
+  expectedIsComposing = false;
+  description = "events before dispatching compositionstart";
+  synthesizeKey("VK_LEFT", {});
+
+  synthesizeKey("a", { type: "keydown" });
+  synthesizeComposition({ type: "compositionstart" });
+  expectedIsComposing = true;
+  description = "events after dispatching compositionstart";
+  synthesizeComposition({ type: "compositionupdate", data: "\u3042" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3042",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+  synthesizeKey("a", { type: "keyup" });
+
+  // Although, firing keypress event during composition is a bug.
+  synthesizeKey("VK_INSERT", {});
+
+  description = "events for committing composition string";
+  synthesizeKey("VK_RETURN", { type: "keydown" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3042",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  // input event will be fired by synthesizing compositionend event.
+  // Then, its isComposing should be false.
+  expectedIsComposing = false;
+  description = "events after dispatching compositionend";
+  synthesizeComposition({ type: "compositionend" });
+  synthesizeKey("VK_RETURN", { type: "keyup" });
+
+  textarea.removeEventListener("keydown", eventHandler, true);
+  textarea.removeEventListener("keypress", eventHandler, true);
+  textarea.removeEventListener("keyup", eventHandler, true);
+  textarea.removeEventListener("input", eventHandler, true);
+
+  textarea.value = "";
+}
+
+function runRemoveContentTest(aCallback)
+{
+  var events = [];
+  function eventHandler(aEvent)
+  {
+    events.push(aEvent);
+  }
+  textarea.addEventListener("compositionstart", eventHandler, true);
+  textarea.addEventListener("compositionupdate", eventHandler, true);
+  textarea.addEventListener("compositionend", eventHandler, true);
+  textarea.addEventListener("input", eventHandler, true);
+  textarea.addEventListener("text", eventHandler, true);
+
+  textarea.focus();
+  textarea.value = "";
+
+  synthesizeComposition({ type: "compositionstart" });
+
+  synthesizeComposition({ type: "compositionupdate", data: "\u306E" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u306E",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  var nextSibling = textarea.nextSibling;
+  var parent = textarea.parentElement;
+
+  events = [];
+  parent.removeChild(textarea);
+
+  hitEventLoop(function () {
+    // XXX Currently, "input" event isn't fired on removed content.
+    is(events.length, 3,
+       "runRemoveContentTest: wrong event count #1");
+    is(events[0].type, "compositionupdate",
+       "runRemoveContentTest: the 1st event must be compositionupdate #1");
+    is(events[1].type, "text",
+       "runRemoveContentTest: the 2nd event must be text #1");
+    is(events[2].type, "compositionend",
+       "runRemoveContentTest: the 3rd event must be compositionend #1");
+    is(events[0].data, "",
+       "runRemoveContentTest: compositionupdate has wrong data #1");
+    is(events[2].data, "",
+       "runRemoveContentTest: compositionend has wrong data #1");
+    is(events[0].target, textarea,
+       "runRemoveContentTest: The 1st event was fired on wrong event target #1");
+    is(events[1].target, textarea,
+       "runRemoveContentTest: The 2nd event was fired on wrong event target #1");
+    is(events[2].target, textarea,
+       "runRemoveContentTest: The 3rd event was fired on wrong event target #1");
+    ok(!getEditorIMESupport(textarea).isComposing,
+       "runRemoveContentTest: the textarea still has composition #1");
+    todo_is(textarea.value, "",
+       "runRemoveContentTest: the textarea has the committed text? #1");
+
+    parent.insertBefore(textarea, nextSibling);
+
+    textarea.focus();
+    textarea.value = "";
+
+    synthesizeComposition({ type: "compositionstart" });
+
+    events = [];
+    parent.removeChild(textarea);
+
+    hitEventLoop(function () {
+      // XXX Currently, "input" event isn't fired on removed content.
+      is(events.length, 1,
+         "runRemoveContentTest: wrong event count #2");
+      is(events[0].type, "compositionend",
+         "runRemoveContentTest: the 1st event must be compositionend #2");
+      is(events[0].data, "",
+         "runRemoveContentTest: compositionupdate has wrong data #2");
+      is(events[0].target, textarea,
+         "runRemoveContentTest: The 1st event was fired on wrong event target #2");
+      ok(!getEditorIMESupport(textarea).isComposing,
+         "runRemoveContentTest: the textarea still has composition #2");
+      is(textarea.value, "",
+         "runRemoveContentTest: the textarea has the committed text? #2");
+
+      parent.insertBefore(textarea, nextSibling);
+
+      textarea.removeEventListener("compositionstart", eventHandler, true);
+      textarea.removeEventListener("compositionupdate", eventHandler, true);
+      textarea.removeEventListener("compositionend", eventHandler, true);
+      textarea.removeEventListener("input", eventHandler, true);
+      textarea.removeEventListener("text", eventHandler, true);
+
+      SimpleTest.executeSoon(aCallback);
+    }, 50);
+  }, 50);
+}
+
+function runTestOnAnotherContext(aPanelOrFrame, aFocusedEditor, aTestName)
+{
+  aFocusedEditor.value = "";
+
+  var editorRect = synthesizeQueryEditorRect();
+  if (!checkQueryContentResult(editorRect, aTestName + ": editorRect")) {
+    return;
+  }
+
+  var r = aPanelOrFrame.getBoundingClientRect();
+  var parentRect = { "left": r.left, "top": r.top, "width": r.right - r.left,
+                     "height": r.bottom - r.top };
+  checkRectContainsRect(editorRect, parentRect, aTestName +
+                        ": the editor rect coordinates are wrong");
+
+  // start composition
+  synthesizeComposition({ type: "compositionstart" });
+
+  // input characters
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u3078\u3093\u3057\u3093" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3078\u3093\u3057\u3093",
+        "clauses":
+        [
+          { "length": 4, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 4, "length": 0 }
+    });
+
+  if (!checkContent("\u3078\u3093\u3057\u3093", aTestName, "#1-1") ||
+      !checkSelection(4, "", aTestName, "#1-1")) {
+    return;
+  }
+
+  // convert them #1
+  synthesizeComposition({ type: "compositionupdate", data: "\u8FD4\u4FE1" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u8FD4\u4FE1",
+        "clauses":
+        [
+          { "length": 2,
+            "attr": COMPOSITION_ATTR_SELECTEDCONVERTEDTEXT }
+        ]
+      },
+      "caret": { "start": 2, "length": 0 }
+    });
+
+  if (!checkContent("\u8FD4\u4FE1", aTestName, "#1-2") ||
+      !checkSelection(2, "", aTestName, "#1-2")) {
+    return;
+  }
+
+  // convert them #2
+  synthesizeComposition({ type: "compositionupdate", data: "\u5909\u8EAB" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u5909\u8EAB",
+        "clauses":
+        [
+          { "length": 2,
+            "attr": COMPOSITION_ATTR_SELECTEDCONVERTEDTEXT }
+        ]
+      },
+      "caret": { "start": 2, "length": 0 }
+    });
+
+  if (!checkContent("\u5909\u8EAB", aTestName, "#1-3") ||
+      !checkSelection(2, "", aTestName, "#1-3")) {
+    return;
+  }
+
+  // commit them
+  synthesizeText(
+    { "composition":
+      { "string": "\u5909\u8EAB",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 2, "length": 0 }
+    });
+
+  if (!checkContent("\u5909\u8EAB", aTestName, "#1-4") ||
+      !checkSelection(2, "", aTestName, "#1-4")) {
+    return;
+  }
+
+  synthesizeComposition({ type: "compositionend", data: "\u5909\u8EAB" });
+
+  is(aFocusedEditor.value, "\u5909\u8EAB",
+     aTestName + ": composition isn't in the focused editor");
+  if (aFocusedEditor.value != "\u5909\u8EAB") {
+    return;
+  }
+
+  var textRect = synthesizeQueryTextRect(0, 1);
+  var caretRect = synthesizeQueryCaretRect(2);
+  if (!checkQueryContentResult(textRect,
+                               aTestName + ": synthesizeQueryTextRect") ||
+      !checkQueryContentResult(caretRect,
+                               aTestName + ": synthesizeQueryCaretRect")) {
+    return;
+  }
+  checkRectContainsRect(textRect, editorRect, aTestName + ":testRect");
+  checkRectContainsRect(caretRect, editorRect, aTestName + ":caretRect");
+}
+
+function runFrameTest()
+{
+  textareaInFrame.focus();
+  runTestOnAnotherContext(iframe, textareaInFrame, "runFrameTest");
+  runCharAtPointTest(textareaInFrame, "textarea in the iframe");
+}
+
+var gPanelShown = false;
+var gPanelFocused = false;
+function onPanelShown(aEvent)
+{
+  gPanelShown = true;
+  textbox.focus();
+  setTimeout(doPanelTest, 0);
+}
+
+function onFocusPanelTextbox(aEvent)
+{
+  gPanelFocused = true;
+  setTimeout(doPanelTest, 0);
+}
+
+var gIsPanelHiding = false;
+var gIsRunPanelTestInternal = false;
+function doPanelTest()
+{
+  if (!gPanelFocused || !gPanelShown) {
+    return;
+  }
+  if (gIsRunPanelTestInternal) {
+    return;
+  }
+  gIsRunPanelTestInternal = true;
+  runTestOnAnotherContext(panel, textbox, "runPanelTest");
+  runCharAtPointTest(textbox, "textbox in the panel");
+  gIsPanelHiding = true;
+  panel.hidePopup();
+}
+
+function onPanelHidden(aEvent)
+{
+  panel.hidden = true;
+  ok(gIsPanelHiding, "runPanelTest: the panel is hidden unexpectedly");
+  finish();
+}
+
+function runPanelTest()
+{
+  panel.hidden = false;
+  panel.openPopupAtScreen(window.screenX + window.outerWidth, 0, false);
+}
+
+function runMaxLengthTest()
+{
+  input.maxLength = 1;
+  input.value = "";
+  input.focus();
+
+  var kDesc ="runMaxLengthTest";
+
+  // start composition
+  synthesizeComposition({ type: "compositionstart" });
+
+  // input first character
+  synthesizeComposition({ type: "compositionupdate", data: "\u3089" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  if (!checkContent("\u3089", kDesc, "#1-1") ||
+      !checkSelection(1, "", kDesc, "#1-1")) {
+    return;
+  }
+
+  // input second character
+  synthesizeComposition({ type: "compositionupdate", data: "\u3089\u30FC" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089\u30FC",
+        "clauses":
+        [
+          { "length": 2, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 2, "length": 0 }
+    });
+
+  if (!checkContent("\u3089\u30FC", kDesc, "#1-2") ||
+      !checkSelection(2, "", kDesc, "#1-2")) {
+    return;
+  }
+
+  // input third character
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u3089\u30FC\u3081" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089\u30FC\u3081",
+        "clauses":
+        [
+          { "length": 3, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 3, "length": 0 }
+    });
+
+  if (!checkContent("\u3089\u30FC\u3081", kDesc, "#1-3") ||
+      !checkSelection(3, "", kDesc, "#1-3")) {
+    return;
+  }
+
+  // input fourth character
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u3089\u30FC\u3081\u3093" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089\u30FC\u3081\u3093",
+        "clauses":
+        [
+          { "length": 4, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 4, "length": 0 }
+    });
+
+  if (!checkContent("\u3089\u30FC\u3081\u3093", kDesc, "#1-4") ||
+      !checkSelection(4, "", kDesc, "#1-4")) {
+    return;
+  }
+
+
+  // backspace
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u3089\u30FC\u3081" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089\u30FC\u3081",
+        "clauses":
+        [
+          { "length": 3, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 3, "length": 0 }
+    });
+
+  if (!checkContent("\u3089\u30FC\u3081", kDesc, "#1-5") ||
+      !checkSelection(3, "", kDesc, "#1-5")) {
+    return;
+  }
+
+  // re-input
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u3089\u30FC\u3081\u3093" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089\u30FC\u3081\u3093",
+        "clauses":
+        [
+          { "length": 4, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 4, "length": 0 }
+    });
+
+  if (!checkContent("\u3089\u30FC\u3081\u3093", kDesc, "#1-6") ||
+      !checkSelection(4, "", kDesc, "#1-6")) {
+    return;
+  }
+
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u3089\u30FC\u3081\u3093\u3055" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089\u30FC\u3081\u3093\u3055",
+        "clauses":
+        [
+          { "length": 5, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 5, "length": 0 }
+    });
+
+  if (!checkContent("\u3089\u30FC\u3081\u3093\u3055", kDesc, "#1-7") ||
+      !checkSelection(5, "", kDesc, "#1-7")) {
+    return;
+  }
+
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u3089\u30FC\u3081\u3093\u3055\u3044" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089\u30FC\u3081\u3093\u3055\u3044",
+        "clauses":
+        [
+          { "length": 6, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 6, "length": 0 }
+    });
+
+  if (!checkContent("\u3089\u30FC\u3081\u3093\u3055\u3044", kDesc, "#1-8") ||
+      !checkSelection(6, "", kDesc, "#1-8")) {
+    return;
+  }
+
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u3089\u30FC\u3081\u3093\u3055\u3044\u3053" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089\u30FC\u3081\u3093\u3055\u3044\u3053",
+        "clauses":
+        [
+          { "length": 7, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 7, "length": 0 }
+    });
+
+  if (!checkContent("\u3089\u30FC\u3081\u3093\u3055\u3044\u3053",
+                    kDesc, "#1-8") ||
+      !checkSelection(7, "", kDesc, "#1-8")) {
+    return;
+  }
+
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u3089\u30FC\u3081\u3093\u3055\u3044\u3053\u3046" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3089\u30FC\u3081\u3093\u3055\u3044\u3053\u3046",
+        "clauses":
+        [
+          { "length": 8, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 8, "length": 0 }
+    });
+
+  if (!checkContent("\u3089\u30FC\u3081\u3093\u3055\u3044\u3053\u3046",
+                    kDesc, "#1-9") ||
+      !checkSelection(8, "", kDesc, "#1-9")) {
+    return;
+  }
+
+  // convert
+  synthesizeComposition({ type: "compositionupdate",
+                          data: "\u30E9\u30FC\u30E1\u30F3\u6700\u9AD8" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u30E9\u30FC\u30E1\u30F3\u6700\u9AD8",
+        "clauses":
+        [
+          { "length": 4,
+            "attr": COMPOSITION_ATTR_SELECTEDCONVERTEDTEXT },
+          { "length": 2,
+            "attr": COMPOSITION_ATTR_CONVERTEDTEXT }
+        ]
+      },
+      "caret": { "start": 4, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u30FC\u30E1\u30F3\u6700\u9AD8", kDesc, "#1-10") ||
+      !checkSelection(4, "", kDesc, "#1-10")) {
+    return;
+  }
+
+  // commit the composition string
+  synthesizeText(
+    { "composition":
+      { "string": "\u30E9\u30FC\u30E1\u30F3\u6700\u9AD8",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 6, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9", kDesc, "#1-11") ||
+      !checkSelection(1, "", kDesc, "#1-11")) {
+    return;
+  }
+
+  synthesizeComposition({ type: "compositionend",
+                          data: "\u30E9\u30FC\u30E1\u30F3\u6700\u9AD8" });
+
+  // restart composition
+  synthesizeComposition({ type: "compositionstart" });
+
+  // input characters
+  synthesizeComposition({ type: "compositionupdate", data: "\u3057" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3057",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9\u3057", kDesc, "#2-1") ||
+      !checkSelection(1 + 1, "", kDesc, "#2-1")) {
+    return;
+  }
+
+  // commit the composition string
+  synthesizeComposition({ type: "compositionupdate", data: "\u3058" });
+  synthesizeText(
+    { "composition":
+      { "string": "\u3058",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  if (!checkContent("\u30E9", kDesc, "#2-2") ||
+      !checkSelection(1 + 0, "", kDesc, "#2-2")) {
+    return;
+  }
+
+  synthesizeComposition({ type: "compositionend", data: "\u3058" });
+
+  // Undo
+  synthesizeKey("Z", {accelKey: true});
+
+  // XXX this is unexpected behavior, see bug 258291
+  if (!checkContent("\u30E9", kDesc, "#3-1") ||
+      !checkSelection(1 + 0, "", kDesc, "#3-1")) {
+    return;
+  }
+
+  // Undo
+  synthesizeKey("Z", {accelKey: true});
+  if (!checkContent("", kDesc, "#3-2") ||
+      !checkSelection(0, "", kDesc, "#3-2")) {
+    return;
+  }
+
+  // Redo
+  synthesizeKey("Z", {accelKey: true, shiftKey: true});
+  if (!checkContent("\u30E9", kDesc, "#3-3") ||
+      !checkSelection(1, "", kDesc, "#3-3")) {
+    return;
+  }
+
+  // Redo
+  synthesizeKey("Z", {accelKey: true, shiftKey: true});
+  if (!checkContent("\u30E9", kDesc, "#3-4") ||
+      !checkSelection(1 + 0, "", kDesc, "#3-4")) {
+    return;
+  }
+}
+
+function runTest()
+{
+  textareaInFrame = iframe.contentDocument.getElementById("textarea");
+
+  runUndoRedoTest();
+  runCompositionTest();
+  runCompositionEventTest();
+  runCharAtPointTest(textarea, "textarea in the document");
+  runCharAtPointAtOutsideTest();
+  runBug722639Test();
+  runForceCommitTest();
+  runBug811755Test();
+  runIsComposingTest();
+  runRemoveContentTest(function () {
+    runFrameTest();
+    runPanelTest();
+    runMaxLengthTest();
+  });
+}
+
+]]>
+</script>
+
+</window>

@@ -1,0 +1,254 @@
+/*
+# -*- Mode: Java; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+
+%include ../../../../toolkit/themes/osx/global/shared.inc
+
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+@namespace html url("http://www.w3.org/1999/xhtml");
+
+.windowDialog {
+  padding: 12px;
+  font: -moz-dialog;
+}
+
+.paneSelector {
+  list-style-image: url("chrome://browser/skin/preferences/Options.png");
+}
+
+/* ----- GENERAL BUTTON ----- */
+
+radio[pane=paneGeneral],
+radio[pane=paneMain] {
+  -moz-image-region: rect(0px, 32px, 32px, 0px);
+} 
+
+/* ----- TABS BUTTON ----- */
+
+radio[pane=paneTabs] {
+  -moz-image-region: rect(0px, 64px, 32px, 32px);
+}
+
+/* ----- CONTENT BUTTON ----- */
+
+radio[pane=paneContent] {
+  -moz-image-region: rect(0px, 96px, 32px, 64px);
+}
+
+/* ----- APPLICATIONS BUTTON ----- */
+
+radio[pane=paneApplications] {
+  -moz-image-region: rect(0px, 128px, 32px, 96px);
+}
+
+/* ----- PRIVACY BUTTON ----- */
+
+radio[pane=panePrivacy] {
+  -moz-image-region: rect(0px, 160px, 32px, 128px);
+}
+
+/* ----- SECURITY BUTTON ----- */
+
+radio[pane=paneSecurity] {
+  -moz-image-region: rect(0px, 192px, 32px, 160px);
+}
+
+/* ----- ADVANCED BUTTON ----- */
+
+radio[pane=paneAdvanced] {
+  -moz-image-region: rect(0px, 224px, 32px, 192px);
+}
+
+%ifdef MOZ_SERVICES_SYNC
+/* ----- SYNC BUTTON ----- */
+
+radio[pane=paneSync] {
+  list-style-image: url("chrome://browser/skin/preferences/Options-sync.png");
+}
+%endif
+
+label.small {
+  font-size: smaller;
+}
+
+/* ----- APPLICATIONS PREFPANE ----- */
+#BrowserPreferences[animated="true"] #handlersView {
+  height: 25em;
+}
+
+#BrowserPreferences[animated="false"] #handlersView {
+  -moz-box-flex: 1;
+}
+
+description {
+  font: small-caption;
+  font-weight: normal;
+  line-height: 1.3em;
+  margin-bottom: 4px !important;
+}
+
+prefpane .groupbox-body {
+  -moz-appearance: none;
+  padding: 8px 4px 4px 4px;
+}
+
+#paneTabs > groupbox {
+  margin: 0;
+}
+
+#tabPrefsBox {
+  margin: 12px 4px;
+}
+
+prefpane .groupbox-title {
+  background: url("chrome://global/skin/50pct_transparent_grey.png") repeat-x bottom left;
+  margin-bottom: 4px;
+}
+
+tabpanels {
+  padding: 20px 7px 7px;
+}
+
+caption {
+  -moz-padding-start: 5px;
+  padding-top: 4px;
+  padding-bottom: 2px;
+}
+
+#paneMain description,
+#paneContent description,
+#paneAdvanced description,
+#paneSecurity description {
+  font: -moz-dialog;
+}
+
+#paneContent {
+  padding-top: 8px;
+}
+
+#paneContent row {
+  padding: 2px 4px;
+  -moz-box-align: center;
+}
+
+#popupPolicyRow,
+#enableSoftwareInstallRow,
+#enableImagesRow {
+  margin-bottom: 4px !important;
+  padding-bottom: 4px !important;
+  border-bottom: 1px solid #ccc;
+}
+
+#translationAttributionImage {
+  width: 70px;
+  cursor: pointer;
+}
+
+#browserUseCurrent,
+#browserUseBookmark,
+#browserUseBlank {
+  margin-top: 10px;
+}
+
+#advancedPrefs {
+  margin: 0 8px;
+}
+
+#privacyPrefs {
+  padding: 0 4px;
+}
+
+#privacyPrefs > tabpanels {
+  padding: 18px 10px 10px;
+}
+
+#OCSPDialogPane {
+  font: message-box !important;
+}
+
+/**
+ * Privacy Pane
+ */
+
+html|a.inline-link {
+  color: -moz-nativehyperlinktext;
+  text-decoration: none;
+}
+
+html|a.inline-link:hover {
+  text-decoration: underline;
+}
+
+html|a.inline-link:-moz-focusring {
+  outline-width: 0;
+  box-shadow: @focusRingShadow@;
+}
+
+/**
+ * Update Preferences
+ */
+#autoInstallOptions {
+  -moz-margin-start: 20px;
+}
+
+.updateControls {
+  -moz-margin-start: 10px;
+}
+
+/**
+ * Clear Private Data
+ */
+#SanitizeDialogPane > groupbox {
+  margin-top: 0;
+}
+
+
+%ifdef MOZ_SERVICES_SYNC
+/* ----- SYNC PANE ----- */
+
+#syncDesc {
+  padding: 0 8em;
+}
+
+#accountCaptionImage {
+  list-style-image: url("chrome://mozapps/skin/profile/profileicon.png");
+}
+
+#syncAddDeviceLabel {
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+#fxaUnlinkButton {
+  margin: 0;
+}
+
+#noFxaAccount {
+  margin: 12px 4px;
+  line-height: 1.2em;
+}
+
+#noFxaAccount > label:first-child {
+  margin-bottom: 0.6em;
+}
+
+#fxa-pweng-help-link > label {
+  margin: 0;
+}
+
+#fxa-pweng-help-link > image {
+  width: 16px;
+  height: 16px;
+  list-style-image: url("chrome://global/skin/icons/question-16.png");
+}
+
+@media (min-resolution: 2dppx) {
+  #fxa-pweng-help-link > image {
+    list-style-image: url("chrome://global/skin/icons/question-32.png");
+  }
+}
+
+%endif

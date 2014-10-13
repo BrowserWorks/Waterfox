@@ -1,0 +1,51 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+ * vim: set ts=4 sw=4 et tw=80:
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+include protocol PContent;
+include DOMTypes;
+include JavaScriptTypes;
+
+using struct mozilla::void_t from "ipc/IPCMessageUtils.h";
+
+namespace mozilla {
+namespace jsipc {
+
+intr protocol PJavaScript
+{
+    manager PContent;
+
+both:
+    // Sent when a CPOW has been finalized and table entries can be freed up.
+    async DropObject(uint64_t objId);
+
+    // These roughly map to the ProxyHandler hooks that CPOWs need.
+    rpc PreventExtensions(uint64_t objId) returns (ReturnStatus rs);
+    rpc GetPropertyDescriptor(uint64_t objId, nsString id) returns (ReturnStatus rs, PPropertyDescriptor result);
+    rpc GetOwnPropertyDescriptor(uint64_t objId, nsString id) returns (ReturnStatus rs, PPropertyDescriptor result);
+    rpc DefineProperty(uint64_t objId, nsString id, PPropertyDescriptor descriptor) returns (ReturnStatus rs);
+    rpc Delete(uint64_t objId, nsString id) returns (ReturnStatus rs, bool successful);
+
+    rpc Has(uint64_t objId, nsString id) returns (ReturnStatus rs, bool has);
+    rpc HasOwn(uint64_t objId, nsString id) returns (ReturnStatus rs, bool has);
+    rpc Get(uint64_t objId, uint64_t receiverId, nsString id) returns (ReturnStatus rs, JSVariant result);
+    rpc Set(uint64_t objId, uint64_t receiverId, nsString id, bool strict, JSVariant value) returns (ReturnStatus rs, JSVariant result);
+
+    rpc IsExtensible(uint64_t objId) returns (ReturnStatus rs, bool result);
+    rpc Call(uint64_t objId, JSParam[] argv) returns (ReturnStatus rs, JSVariant result, JSParam[] outparams);
+    rpc ObjectClassIs(uint64_t objId, uint32_t classValue) returns (bool result);
+    rpc ClassName(uint64_t objId) returns (nsString name);
+
+    rpc GetPropertyNames(uint64_t objId, uint32_t flags) returns (ReturnStatus rs, nsString[] names);
+    rpc InstanceOf(uint64_t objId, JSIID iid) returns (ReturnStatus rs, bool instanceof);
+    rpc DOMInstanceOf(uint64_t objId, int prototypeID, int depth) returns (ReturnStatus rs, bool instanceof);
+
+parent:
+    async __delete__();
+};
+
+}
+}

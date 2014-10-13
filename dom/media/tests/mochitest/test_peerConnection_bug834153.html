@@ -1,0 +1,49 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="application/javascript" src="head.js"></script>
+  <script type="application/javascript" src="pc.js"></script>
+</head>
+<body>
+<pre id="test">
+<script type="application/javascript">
+  createHTML({
+    bug: "834153",
+    title: "Queue CreateAnswer in PeerConnection.js"
+  });
+
+  function croak(msg) {
+    ok(0, msg);
+    pc1.close();
+    pc2.close();
+    networkTestFinished();
+  }
+
+  runNetworkTest(function () {
+    var pc1 = new mozRTCPeerConnection();
+
+    pc1.createOffer(function (d) {
+      var pc2 = new mozRTCPeerConnection();
+
+      // The whole point of this test is not to wait for the
+      // setRemoteDescription call to succesfully complete, so we
+      // don't do anything in its callbacks.
+      pc2.setRemoteDescription(d, function (x) {}, function (x) {});
+      pc2.createAnswer(function (d) {
+        is(d.type,"answer","CreateAnswer created an answer");
+        pc1.close();
+        pc2.close();
+        networkTestFinished();
+      }, function (err) {
+        croak("createAnswer failed: " + err);
+      });
+    }, function (err) {
+        croak("createOffer failed: " + err);
+    },  { mandatory: { OfferToReceiveAudio: true} });
+  });
+</script>
+</pre>
+</body>
+</html>

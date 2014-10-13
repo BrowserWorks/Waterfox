@@ -1,0 +1,49 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIInputStream.idl"
+#include "nsISupports.idl"
+#include "nsIObserver.idl"
+#include "nsIObjectOutputStream.idl"
+
+[uuid(25957820-90a1-428c-8739-b0845d3cc534)]
+interface nsIStartupCache : nsISupports
+{
+
+  /** This interface is provided for testing purposes only, basically
+   *  just to solve link vagaries. See docs in StartupCache.h
+   *  GetBuffer, PutBuffer, and InvalidateCache act as described 
+   *  in that file. */
+
+  uint32_t getBuffer(in string aID, out charPtr aBuffer);
+  void putBuffer(in string aID, in string aBuffer, 
+                            in uint32_t aLength);
+ 
+  void invalidateCache();
+  
+  void ignoreDiskCache();
+
+  /** In debug builds, wraps this object output stream with a stream that will 
+   *  detect and prevent the write of a multiply-referenced non-singleton object 
+   *  during serialization. In non-debug, returns an add-ref'd pointer to
+   *  original stream, unwrapped. */
+  nsIObjectOutputStream getDebugObjectOutputStream(in nsIObjectOutputStream aStream);
+
+  /* Allows clients to check whether the one-time writeout after startup 
+   * has finished yet, and also to set this variable as needed (so test
+   * code can fire mulitple startup writes if needed).
+   */
+  boolean startupWriteComplete();
+  void resetStartupWriteTimer();
+
+  /* Instruct clients to always post cache ages to Telemetry, even in
+     cases where it would not normally make sense.  */
+  void recordAgesAlways();
+
+  /* Allows clients to simulate the behavior of ObserverService. */
+  readonly attribute nsIObserver observer;
+};
+

@@ -1,0 +1,12 @@
+intr protocol trans_WrongDirection4 {
+
+child:
+    intr Msg();
+    __delete__();
+
+state S1:
+    answer Msg goto S1;
+
+start state _:
+    send __delete__;
+};

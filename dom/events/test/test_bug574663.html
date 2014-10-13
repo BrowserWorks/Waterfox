@@ -1,0 +1,130 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=574663
+-->
+<head>
+  <title>Test for Bug 574663</title>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript" src="/tests/SimpleTest/EventUtils.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=574663">Mozilla Bug 574663</a>
+<p id="display"></p>
+<div id="content" style="display: none">
+
+</div>
+<pre id="test">
+<script type="application/javascript;version=1.7">
+
+/** Test for Bug 574663 **/
+
+function sendTouchpadScrollMotion(scrollbox, direction, ctrl, momentum) {
+  var win = scrollbox.ownerDocument.defaultView;
+  let event = {
+    deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+    deltaY: direction * 3,
+    lineOrPageDeltaY: direction,
+    ctrlKey: ctrl,
+    isMomentum: momentum
+  };
+  synthesizeWheel(scrollbox, 10, 10, event, win);
+  // then 5 additional pixel scrolls
+  event.lineOrPageDeltaY = 0;
+  for (let i = 0; i < 5; ++i) {
+    synthesizeWheel(scrollbox, 10, 10, event, win);
+  }
+}
+
+function runTest() {
+  var win = open('data:text/html,<!DOCTYPE html>\n' +
+    '<div id="scrollbox" style="height: 100px; overflow: auto;">' +
+    '  <div style="height: 1000px;"></div>' +
+    '</div>', '_blank', 'width=300,height=300');
+  SimpleTest.waitForFocus(function () {
+    var scrollbox = win.document.getElementById("scrollbox");
+    let winUtils = SpecialPowers.getDOMWindowUtils(win);
+    let outstandingTests = [
+      [false, false],
+      [false, true],
+      [true, false],
+      [true, true],
+    ];
+
+    // grab the refresh driver, since we want to make sure
+    // async scrolls happen in deterministic time
+    winUtils.advanceTimeAndRefresh(1000);
+
+    function nextTest() {
+      if (!outstandingTests.length) {
+        winUtils.restoreNormalRefresh();
+        win.close();
+        clearPrefs();
+        SimpleTest.finish();
+        return;
+      }
+
+      let [ctrlKey, isMomentum] = outstandingTests.shift();
+      let scrollTopBefore = scrollbox.scrollTop;
+      let zoomFactorBefore = winUtils.fullZoom;
+
+      sendTouchpadScrollMotion(scrollbox, 1, ctrlKey, isMomentum);
+      winUtils.advanceTimeAndRefresh(1000); // force scrolling to happen
+
+      setTimeout(function () {
+        if (!ctrlKey) {
+          let postfix = isMomentum ? ", even after releasing the touchpad" : "";
+          // Normal scroll: scroll
+          is(winUtils.fullZoom, zoomFactorBefore, "Normal scrolling shouldn't change zoom" + postfix);
+          isnot(scrollbox.scrollTop, scrollTopBefore, "Normal scrolling should scroll" + postfix);
+        } else {
+          if (!isMomentum) {
+            isnot(winUtils.fullZoom, zoomFactorBefore, "Ctrl-scrolling should zoom while the user is touching the touchpad");
+            is(scrollbox.scrollTop, scrollTopBefore, "Ctrl-scrolling shouldn't scroll while the user is touching the touchpad");
+          } else {
+            is(winUtils.fullZoom, zoomFactorBefore, "Momentum scrolling shouldn't zoom, even when pressing Ctrl");
+            isnot(scrollbox.scrollTop, scrollTopBefore, "Momentum scrolling should scroll, even when pressing Ctrl");
+          }
+        }
+        // Revert the effect.
+        sendTouchpadScrollMotion(scrollbox, -1, ctrlKey, isMomentum);
+        winUtils.advanceTimeAndRefresh(1000); // force scrolling to happen
+
+        setTimeout(nextTest, 20);
+      }, 20);
+    }
+    nextTest();
+  }, win);
+}
+
+function initPrefs()
+{
+  SpecialPowers.setBoolPref("general.smoothScroll", false);
+  // Disables the app level scroll acceleration
+  SpecialPowers.setIntPref("mousewheel.acceleration.start", -1);
+  SpecialPowers.setBoolPref("mousewheel.system_scroll_override_on_root_content.enabled", false);
+  // Enable zooming for ctrl-scrolling
+  SpecialPowers.setIntPref("mousewheel.with_control.action", 3);
+}
+
+function clearPrefs()
+{
+  SpecialPowers.clearUserPref("general.smoothScroll");
+  SpecialPowers.clearUserPref("mousewheel.acceleration.start");
+  SpecialPowers.clearUserPref("mousewheel.system_scroll_override_on_root_content.enabled");
+  SpecialPowers.clearUserPref("mousewheel.with_control.action");
+}
+
+window.onload = function () {
+  initPrefs();
+  SimpleTest.executeSoon(runTest);
+}
+
+SimpleTest.waitForExplicitFinish();
+
+</script>
+</pre>
+
+</body>
+</html>

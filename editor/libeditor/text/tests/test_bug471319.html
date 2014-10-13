@@ -1,0 +1,81 @@
+<!DOCTYPE HTML>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<html>
+<!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=471319
+-->
+
+<head>
+  <title>Test for Bug 471319</title>
+  <script type="application/javascript"
+          src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="chrome://mochikit/content/tests/SimpleTest/test.css">
+</head>
+
+<body onload="doTest();">
+  <a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=471319">Mozilla Bug 471319</a>
+  <p id="display"></p>
+  <div id="content" style="display: none">
+  </div>
+
+  <pre id="test">
+    <script type="application/javascript;version=1.7">
+
+      /** Test for Bug 471319 **/
+    
+      SimpleTest.waitForExplicitFinish();
+
+      function doTest() {
+        let t1 = $("t1");
+        let editor = null;
+
+        // Test 1: Undo on an empty editor - the editor should not forget about
+        // the bogus node
+        t1.QueryInterface(Components.interfaces.nsIDOMNSEditableElement);
+        t1Editor = t1.editor;
+
+        // Did the editor recognize the new bogus node?
+        t1Editor.undo(1);
+        ok(!t1.value, "<br> still recognized as bogus node on undo");
+
+
+        // Test 2: Redo on an empty editor - the editor should not forget about
+        // the bogus node
+        let t2 = $("t2");
+        t2.QueryInterface(Components.interfaces.nsIDOMNSEditableElement);
+        t2Editor = t2.editor;
+
+        // Did the editor recognize the new bogus node?
+        t2Editor.redo(1);
+        ok(!t2.value, "<br> still recognized as bogus node on redo");
+
+
+        // Test 3: Undoing a batched transaction where both end points of the
+        // transaction are the bogus node - the bogus node should still be
+        // recognized as bogus
+        t1Editor.transactionManager.beginBatch(null);
+        t1.value = "mozilla";
+        t1.value = "";
+        t1Editor.transactionManager.endBatch(false);
+        t1Editor.undo(1);
+        ok(!t1.value,
+           "recreated <br> from undo transaction recognized as bogus");
+
+
+        // Test 4: Redoing a batched transaction where both end points of the
+        // transaction are the bogus node - the bogus node should still be
+        // recognized as bogus
+        t1Editor.redo(1);
+        ok(!t1.value,
+           "recreated <br> from redo transaction recognized as bogus");
+        SimpleTest.finish();
+     }
+   </script>
+  </pre>
+
+  <input type="text" id="t1" />
+  <input type="text" id="t2" />
+</body>
+</html>

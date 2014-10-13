@@ -1,0 +1,33 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+@namespace html url("http://www.w3.org/1999/xhtml");
+
+textbox[type="number"] {
+  -moz-appearance: none;
+  -moz-box-align: center;
+  padding: 0 !important;
+  border: none;
+  background-color: transparent;
+  cursor: default;
+}
+
+html|*.numberbox-input {
+  text-align: right;
+  padding: 0 1px !important;
+}
+
+.numberbox-input-box {
+  -moz-appearance: textfield;
+  margin-right: 4px;
+  border: 3px solid;
+  -moz-border-top-colors: transparent #888888 #000000;
+  -moz-border-right-colors: transparent #FFFFFF #000000;
+  -moz-border-bottom-colors: transparent #FFFFFF #000000;
+  -moz-border-left-colors: transparent #888888 #000000;
+  border-top-right-radius: 2px;
+  border-bottom-left-radius: 2px;
+  background-color: -moz-Field;
+}

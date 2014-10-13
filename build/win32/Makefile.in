@@ -1,0 +1,47 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+MOZ_GLUE_LDFLAGS =
+
+include $(topsrcdir)/config/rules.mk
+
+ifdef WIN32_REDIST_DIR
+
+ifeq (1600,$(_MSC_VER))
+REDIST_FILES = \
+  msvcp100.dll \
+  msvcr100.dll \
+  $(NULL)
+endif
+
+ifeq (1700,$(_MSC_VER))
+REDIST_FILES = \
+  msvcp110.dll \
+  msvcr110.dll \
+  $(NULL)
+endif
+
+ifeq (1800,$(_MSC_VER))
+REDIST_FILES = \
+  msvcp120.dll \
+  msvcr120.dll \
+  $(NULL)
+endif
+
+ifdef REDIST_FILES
+libs-preqs = \
+  $(call mkdir_deps,$(FINAL_TARGET)) \
+  $(NULL)
+
+libs:: $(libs-preqs)
+	install --preserve-timestamps $(foreach f,$(REDIST_FILES),'$(WIN32_REDIST_DIR)'/$(f)) $(FINAL_TARGET)
+endif
+
+endif # WIN32_REDIST_DIR
+
+# run the binscope tool to make sure the binary and all libraries
+# are using all available Windows OS-level security mechanisms
+check::
+	$(PYTHON) $(srcdir)/autobinscope.py $(DIST)/bin/$(MOZ_APP_NAME)$(BIN_SUFFIX) $(DIST)/crashreporter-symbols/
+	$(PYTHON) $(srcdir)/autobinscope.py $(DIST)/bin/plugin-container.exe $(DIST)/crashreporter-symbols/

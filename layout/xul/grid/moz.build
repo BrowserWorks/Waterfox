@@ -1,0 +1,40 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+EXPORTS += [
+    'nsGrid.h',
+    'nsGridCell.h',
+    'nsGridLayout2.h',
+    'nsGridRow.h',
+    'nsGridRowGroupLayout.h',
+    'nsGridRowLayout.h',
+    'nsGridRowLeafFrame.h',
+    'nsGridRowLeafLayout.h',
+    'nsIGridPart.h',
+]
+
+UNIFIED_SOURCES += [
+    'nsGrid.cpp',
+    'nsGridCell.cpp',
+    'nsGridLayout2.cpp',
+    'nsGridRow.cpp',
+    'nsGridRowGroupFrame.cpp',
+    'nsGridRowGroupLayout.cpp',
+    'nsGridRowLayout.cpp',
+    'nsGridRowLeafFrame.cpp',
+    'nsGridRowLeafLayout.cpp',
+]
+
+FAIL_ON_WARNINGS = True
+
+FINAL_LIBRARY = 'gklayout'
+LOCAL_INCLUDES += [
+    '..',
+    '../../forms',
+    '../../generic',
+    '../../style',
+]
+

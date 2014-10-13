@@ -1,0 +1,378 @@
+#filter substitution
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+      package="@ANDROID_PACKAGE_NAME@"
+      android:installLocation="auto"
+      android:versionCode="@ANDROID_VERSION_CODE@"
+      android:versionName="@MOZ_APP_VERSION@"
+#ifdef MOZ_ANDROID_SHARED_ID
+      android:sharedUserId="@MOZ_ANDROID_SHARED_ID@"
+#endif
+      >
+    <uses-sdk android:minSdkVersion="9"
+              android:targetSdkVersion="@ANDROID_TARGET_SDK@"/>
+
+#include ../services/manifests/AnnouncementsAndroidManifest_permissions.xml.in
+#include ../services/manifests/FxAccountAndroidManifest_permissions.xml.in
+#include ../services/manifests/HealthReportAndroidManifest_permissions.xml.in
+#include ../services/manifests/SyncAndroidManifest_permissions.xml.in
+
+#ifndef RELEASE_BUILD
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+#endif
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT"/>
+    <uses-permission android:name="com.android.launcher.permission.UNINSTALL_SHORTCUT"/>
+    <uses-permission android:name="com.android.browser.permission.READ_HISTORY_BOOKMARKS"/>
+
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="@ANDROID_PACKAGE_NAME@.permissions.PASSWORD_PROVIDER"/>
+    <uses-permission android:name="@ANDROID_PACKAGE_NAME@.permissions.BROWSER_PROVIDER"/>
+    <uses-permission android:name="@ANDROID_PACKAGE_NAME@.permissions.FORMHISTORY_PROVIDER"/>
+
+#ifdef MOZ_WEBSMS_BACKEND
+    <!-- WebSMS -->
+    <uses-permission android:name="android.permission.SEND_SMS"/>
+    <uses-permission android:name="android.permission.RECEIVE_SMS"/>
+    <uses-permission android:name="android.permission.WRITE_SMS"/>
+    <uses-permission android:name="android.permission.READ_SMS"/>
+#endif
+
+    <uses-feature android:name="android.hardware.location" android:required="false"/>
+    <uses-feature android:name="android.hardware.location.gps" android:required="false"/>
+    <uses-feature android:name="android.hardware.touchscreen"/>
+
+#ifdef NIGHTLY_BUILD
+    <!-- Contacts API -->
+    <uses-permission android:name="android.permission.READ_CONTACTS"/>
+    <uses-permission android:name="android.permission.WRITE_CONTACTS"/>
+    <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
+#endif
+
+#ifdef MOZ_ANDROID_BEAM
+    <!-- Android Beam support -->
+    <uses-permission android:name="android.permission.NFC"/>
+    <uses-feature android:name="android.hardware.nfc" android:required="false"/>
+#endif
+
+#ifdef MOZ_WEBRTC
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-feature android:name="android.hardware.audio.low_latency" android:required="false"/>
+    <uses-feature android:name="android.hardware.camera.any" android:required="false"/>
+    <uses-feature android:name="android.hardware.microphone" android:required="false"/>
+#endif
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
+
+    <!-- App requires OpenGL ES 2.0 -->
+    <uses-feature android:glEsVersion="0x00020000" android:required="true" />
+
+    <application android:label="@string/moz_app_displayname"
+                 android:icon="@drawable/icon"
+                 android:name="org.mozilla.gecko.GeckoApplication"
+                 android:hardwareAccelerated="true"
+#if !defined(MOZILLA_OFFICIAL) || defined(NIGHTLY_BUILD) && defined(MOZ_DEBUG)
+                 android:debuggable="true">
+#else
+                 android:debuggable="false">
+#endif
+
+        <meta-data android:name="com.sec.android.support.multiwindow" android:value="true"/>
+
+        <!-- If the windowSoftInputMode adjust* flag changes below, the
+             setSoftInputMode call in BrowserSearch#onStop must also be updated. -->
+        <activity android:name=".App"
+                  android:label="@string/moz_app_displayname"
+                  android:taskAffinity="@ANDROID_PACKAGE_NAME@.BROWSER"
+                  android:alwaysRetainTaskState="true"
+                  android:configChanges="keyboard|keyboardHidden|mcc|mnc|orientation|screenSize|locale|layoutDirection"
+                  android:windowSoftInputMode="stateUnspecified|adjustResize"
+                  android:launchMode="singleTask"
+                  android:theme="@style/Gecko.App">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER"/>
+            </intent-filter>
+
+            <meta-data android:name="com.sec.minimode.icon.portrait.normal"
+                       android:resource="@drawable/icon"/>
+
+            <meta-data android:name="com.sec.minimode.icon.landscape.normal"
+                       android:resource="@drawable/icon" />
+
+            <intent-filter>
+                <action android:name="org.mozilla.gecko.ACTION_ALERT_CALLBACK" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="org.mozilla.gecko.UPDATE"/>
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+
+            <!-- Default browser intents -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:scheme="about" />
+                <data android:scheme="javascript" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="file" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:mimeType="text/html"/>
+                <data android:mimeType="text/plain"/>
+                <data android:mimeType="application/xhtml+xml"/>
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.WEB_SEARCH" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEARCH" />
+            </intent-filter>
+
+            <!-- For XPI installs from websites and the download manager. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="file" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:mimeType="application/x-xpinstall" />
+            </intent-filter>
+
+            <!-- For XPI installs from file: URLs. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:host="" />
+                <data android:scheme="file" />
+                <data android:pathPattern=".*\\.xpi" />
+            </intent-filter>
+
+#ifdef MOZ_ANDROID_BEAM
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED"/>
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+            </intent-filter>
+#endif
+
+            <meta-data android:name="android.app.searchable"
+                       android:resource="@xml/searchable" />
+
+            <!-- For debugging -->
+            <intent-filter>
+                <action android:name="org.mozilla.gecko.DEBUG" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+#ifdef MOZ_ANDROID_SYNTHAPKS
+        <activity android:name="org.mozilla.gecko.webapp.Dispatcher"
+            android:noHistory="true" >
+            <intent-filter>
+                <!-- catch links from synthetic apks -->
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/webapp" />
+            </intent-filter>
+        </activity>
+
+        <receiver android:name="org.mozilla.gecko.webapp.UninstallListener" >
+          <intent-filter>
+             <action android:name="android.intent.action.PACKAGE_REMOVED" />
+             <data android:scheme="package" />
+          </intent-filter>
+        </receiver>
+
+        <receiver android:name="org.mozilla.gecko.webapp.TaskKiller">
+          <intent-filter>
+             <action android:name="org.mozilla.webapp.TASK_REMOVED" />
+             <category android:name="android.intent.category.DEFAULT" />
+          </intent-filter>
+        </receiver>
+#endif
+
+        <activity android:name=".Webapp"
+                  android:label="@string/webapp_generic_name"
+                  android:configChanges="keyboard|keyboardHidden|mcc|mnc|orientation|screenSize"
+                  android:windowSoftInputMode="stateUnspecified|adjustResize"
+                  android:launchMode="singleTask"
+                  android:taskAffinity="org.mozilla.gecko.WEBAPP"
+                  android:process=":@ANDROID_PACKAGE_NAME@.Webapp"
+                  android:excludeFromRecents="true"
+                  android:theme="@style/Gecko.App">
+            <intent-filter>
+                <action android:name="org.mozilla.gecko.WEBAPP" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="org.mozilla.gecko.ACTION_ALERT_CALLBACK" />
+            </intent-filter>
+        </activity>
+
+        <!-- Declare a predefined number of Webapp<num> activities. These are
+             used so that each web app can launch in its own process. Keep
+             this number in sync with the total number of web apps handled in
+             WebappAllocator. -->
+
+#define FRAGMENT WebappManifestFragment.xml.frag.in
+#include WebappFragmentRepeater.inc
+
+        <!-- Masquerade as the Resolver so that we can be opened from the Marketplace. -->
+        <activity-alias
+            android:name="com.android.internal.app.ResolverActivity"
+            android:targetActivity=".App"
+            android:exported="true" />
+
+        <receiver android:name="org.mozilla.gecko.GeckoUpdateReceiver">
+            <intent-filter>
+                <action android:name="@ANDROID_PACKAGE_NAME@.CHECK_UPDATE_RESULT" />
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name="org.mozilla.gecko.GeckoMessageReceiver"
+                  android:permission="@ANDROID_PACKAGE_NAME@.permissions.PASSWORD_PROVIDER">
+            <intent-filter>
+                  <action android:name="org.mozilla.gecko.INIT_PW"></action>
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name="org.mozilla.gecko.ReferrerReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="com.android.vending.INSTALL_REFERRER" />
+            </intent-filter>
+        </receiver>
+
+        <activity android:name="org.mozilla.gecko.Restarter"
+                  android:process="@ANDROID_PACKAGE_NAME@Restarter"
+                  android:noHistory="true"
+                  android:theme="@style/Gecko">
+          <intent-filter>
+            <action android:name="org.mozilla.gecko.restart"/>
+            <action android:name="org.mozilla.gecko.restart_update"/>
+          </intent-filter>
+        </activity>
+
+#include ../services/manifests/AnnouncementsAndroidManifest_activities.xml.in
+#include ../services/manifests/FxAccountAndroidManifest_activities.xml.in
+#include ../services/manifests/HealthReportAndroidManifest_activities.xml.in
+#include ../services/manifests/SyncAndroidManifest_activities.xml.in
+
+#if MOZ_CRASHREPORTER
+  <activity android:name="org.mozilla.gecko.CrashReporter"
+            android:label="@string/crash_reporter_title"
+            android:icon="@drawable/crash_reporter"
+            android:theme="@style/Gecko"
+            android:exported="false"
+            android:excludeFromRecents="true">
+          <intent-filter>
+            <action android:name="org.mozilla.gecko.reportCrash" />
+          </intent-filter>
+  </activity>
+#endif
+
+        <activity android:name="org.mozilla.gecko.preferences.GeckoPreferences"
+                  android:theme="@style/Gecko.Preferences"
+                  android:configChanges="orientation|screenSize|locale|layoutDirection"
+                  android:excludeFromRecents="true"/>
+
+        <activity android:name="org.mozilla.gecko.home.HomePanelPicker"
+                  android:theme="@style/Gecko.TitleDialog"
+                  android:label="@string/home_add_panel_title"
+                  android:excludeFromRecents="true" />
+
+        <provider android:name="org.mozilla.gecko.db.BrowserProvider"
+                  android:authorities="@ANDROID_PACKAGE_NAME@.db.browser"
+                  android:permission="@ANDROID_PACKAGE_NAME@.permissions.BROWSER_PROVIDER">
+
+            <path-permission android:pathPrefix="/search_suggest_query"
+                             android:readPermission="android.permission.GLOBAL_SEARCH" />
+
+        </provider>
+
+        <!--
+          Ensure that passwords provider runs in its own process. (Bug 718760.)
+          Process name is per-application to avoid loading CPs from multiple
+          Fennec versions into the same process. (Bug 749727.)
+          Process name is a mangled version to avoid a Talos bug. (Bug 750548.)
+          -->
+        <provider android:name="org.mozilla.gecko.db.PasswordsProvider"
+                  android:label="@string/sync_configure_engines_title_passwords"
+                  android:authorities="@ANDROID_PACKAGE_NAME@.db.passwords"
+                  android:permission="@ANDROID_PACKAGE_NAME@.permissions.PASSWORD_PROVIDER"
+                  android:process="@MANGLED_ANDROID_PACKAGE_NAME@.PasswordsProvider"/>
+
+        <provider android:name="org.mozilla.gecko.db.FormHistoryProvider"
+                  android:label="@string/sync_configure_engines_title_history"
+                  android:authorities="@ANDROID_PACKAGE_NAME@.db.formhistory"
+                  android:permission="@ANDROID_PACKAGE_NAME@.permissions.FORMHISTORY_PROVIDER"
+                  android:protectionLevel="signature"/>
+
+        <provider android:name="org.mozilla.gecko.GeckoProfilesProvider"
+                  android:authorities="@ANDROID_PACKAGE_NAME@.profiles"/>
+
+        <provider android:name="org.mozilla.gecko.db.TabsProvider"
+                  android:label="@string/sync_configure_engines_title_tabs"
+                  android:authorities="@ANDROID_PACKAGE_NAME@.db.tabs"
+                  android:permission="@ANDROID_PACKAGE_NAME@.permissions.BROWSER_PROVIDER"/>
+
+        <provider android:name="org.mozilla.gecko.db.HomeProvider"
+                  android:authorities="@ANDROID_PACKAGE_NAME@.db.home"
+                  android:permission="@ANDROID_PACKAGE_NAME@.permissions.BROWSER_PROVIDER"/>
+
+        <provider android:name="org.mozilla.gecko.db.ReadingListProvider"
+                  android:authorities="@ANDROID_PACKAGE_NAME@.db.readinglist"
+                  android:permission="@ANDROID_PACKAGE_NAME@.permissions.BROWSER_PROVIDER"/>
+
+        <service
+            android:exported="false"
+            android:name="org.mozilla.gecko.updater.UpdateService"
+            android:process="@MANGLED_ANDROID_PACKAGE_NAME@.UpdateService">
+        </service>
+
+        <service
+            android:exported="false"
+            android:name="org.mozilla.gecko.NotificationService">
+        </service>
+
+
+#include ../services/manifests/AnnouncementsAndroidManifest_services.xml.in
+#include ../services/manifests/FxAccountAndroidManifest_services.xml.in
+#include ../services/manifests/HealthReportAndroidManifest_services.xml.in
+#include ../services/manifests/SyncAndroidManifest_services.xml.in
+
+    </application>
+
+    <permission android:name="@ANDROID_PACKAGE_NAME@.permissions.BROWSER_PROVIDER"
+                android:protectionLevel="signature"/>
+
+    <permission android:name="@ANDROID_PACKAGE_NAME@.permissions.PASSWORD_PROVIDER"
+                android:protectionLevel="signature"/>
+
+    <permission android:name="@ANDROID_PACKAGE_NAME@.permissions.FORMHISTORY_PROVIDER"
+                android:protectionLevel="signature"/>
+
+</manifest>

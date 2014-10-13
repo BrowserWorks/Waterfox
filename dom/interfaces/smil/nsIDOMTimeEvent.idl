@@ -1,0 +1,25 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIDOMEvent.idl"
+
+/**
+ * The SMIL TimeEvent interface.
+ *
+ * For more information please refer to:
+ * http://www.w3.org/TR/SMIL/smil-timing.html#Events-TimeEvent
+ * http://www.w3.org/TR/SVG/animate.html#InterfaceTimeEvent
+ */
+
+[builtinclass, uuid(4a5a5fa6-2783-4171-b8bb-cae4ab06e6ff)]
+interface nsIDOMTimeEvent : nsIDOMEvent
+{
+  readonly attribute long detail;
+  readonly attribute nsIDOMWindow view;
+  
+  void initTimeEvent(in DOMString typeArg,
+                     in nsIDOMWindow viewArg,
+                     in long detailArg);
+};

@@ -1,0 +1,204 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* ===== menu.css =======================================================
+  == Styles used by XUL menu-related elements.
+  ======================================================================= */
+
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+
+/* ::::: menu/menuitem ::::: */
+
+menu,
+menuitem,
+.splitmenu-menuitem {
+  -moz-appearance: menuitem;
+  -moz-box-align: center;
+  max-width: 42em;
+  color: MenuText;
+  font: menu;
+  list-style-image: none;
+  -moz-image-region: auto;
+}
+
+menuitem[default="true"] {
+  font-weight: bold;
+}
+
+menu[_moz-menuactive="true"],
+menuitem[_moz-menuactive="true"],
+.splitmenu-menuitem[_moz-menuactive="true"] {
+  color: -moz-menuhovertext;
+  background-color: -moz-menuhover;
+}
+
+menu[disabled="true"],
+menuitem[disabled="true"],
+.splitmenu-menuitem[disabled="true"] {
+  color: GrayText;
+}
+
+menubar > menu {
+  padding: 0px 4px;
+  color: -moz-menubartext;
+}
+
+menubar:-moz-lwtheme > menu {
+  text-shadow: none;
+}
+
+menubar:-moz-lwtheme > menu:not([open="true"]) {
+  color: inherit;
+  text-shadow: inherit;
+}
+
+menubar > menu[_moz-menuactive="true"]:not([open]):not([disabled="true"]):not(:-moz-lwtheme) {
+  color: -moz-menubartext;
+}
+
+menubar > menu[open] {
+  color: -moz-menubarhovertext;
+  background-color: -moz-menuhover;
+}
+menuitem.spell-suggestion {
+  font-weight:bold;
+}
+
+/* ::::: menu/menuitems in menulist popups ::::: */
+
+.menulist-menupopup > menuitem,
+menulist > menupopup > menuitem,
+.menulist-menupopup > menu,
+menulist > menupopup > menu {
+  padding: 1px 5px;
+  max-width: none;
+  font: message-box;
+}
+
+/* ..... internal content .... */
+
+.menu-text,
+.menu-iconic-left,
+.menu-iconic-text {
+  margin-top: 0px !important;
+  margin-bottom: 0px !important;
+  -moz-margin-start: 0px !important;
+  -moz-margin-end: 2px !important;
+  color: inherit;
+}
+
+.menu-text {
+  /* This is (18 + the size of end-padding on .menu-iconic-left)px */
+  -moz-margin-start: 21px !important;
+  font-weight: inherit;
+}
+
+.menu-description {
+  font-style: italic;
+  color: GrayText;
+  -moz-margin-start: 1ex !important;
+}
+
+.menu-accel,
+.menu-iconic-accel {
+  margin-top: 0px !important;
+  margin-bottom: 0px !important;
+  -moz-margin-start: 7px !important;
+  color: inherit;
+}
+
+.menu-accel-container {
+  -moz-box-pack: end;
+}
+
+.menu-iconic-left {
+  width: 16px;
+  /* We can only hardcode this, to make the default GTK icon<->label spacing */
+  -moz-padding-end: 3px !important;
+}
+
+.menu-iconic-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.menu-right {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  -moz-margin-start: 6px;
+  -moz-margin-end: 0px;
+  width: 1ex;
+  height: 1ex;
+  /* These next two rules are needed to prevent inheritance and thus ugliness */
+  list-style-image: none;
+  -moz-image-region: auto;
+  -moz-appearance: menuarrow;
+}
+
+.menubar-left {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  -moz-margin-start: 0px;
+  -moz-margin-end: 2px;
+  color: inherit;
+}
+
+.menubar-text {
+  margin: 0 1px !important;
+  color: inherit;
+}
+
+
+.menulist-menupopup > menuitem > .menu-iconic-left,
+menulist > menupopup > menuitem > .menu-iconic-left,
+.menulist-menupopup > menu > .menu-iconic-left,
+menulist > menupopup > menu > .menu-iconic-left {
+  display: none;
+}
+
+/* ::::: checkbox menuitem ::::: */
+
+menuitem[checked="true"] {
+  -moz-appearance: checkmenuitem !important;
+}
+
+menuitem[type="checkbox"] {
+  -moz-appearance: checkmenuitem !important;
+}
+
+/* ::::: radio menuitem ::::: */
+
+menuitem[type="radio"] {
+  -moz-appearance: radiomenuitem !important;
+}
+
+/* ::::: menuseparator ::::: */
+
+menuseparator {
+  -moz-appearance: menuseparator !important;
+  margin: 2px 0;
+  border-top: 1px solid ThreeDShadow;
+  border-bottom: 1px solid ThreeDHighlight;
+}
+
+menulist > menupopup > menuseparator,
+.menulist-menupopup > menuseparator {
+  border-top: 1px solid #000000;
+  border-bottom: none;
+}
+
+/* ::::: autocomplete ::::: */
+
+.autocomplete-history-popup > menuitem {
+  max-width: none !important;
+  font: message-box;
+}
+
+/* ::::: tree column picker ::::: */
+
+.treecell-popupcell-menu {
+  -moz-margin-start: -2px;
+  list-style-image: url("chrome://global/skin/columnselect.gif");
+  -moz-image-region: auto;
+}

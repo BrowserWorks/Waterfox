@@ -1,0 +1,27 @@
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+unittestlocation = xpcom/tests/unit
+
+MANIFEST = testcomponent.manifest
+MANIFEST_PATH = $(testxpcobjdir)/$(unittestlocation)
+PP_TARGETS += MANIFEST
+
+EXTRA_DSO_LDOPTS = \
+		$(DIST)/lib/$(LIB_PREFIX)xpcomglue_s.$(LIB_SUFFIX) \
+		$(XPCOM_FROZEN_LDOPTS) \
+		$(NSPR_LIBS) \
+		$(NULL)
+
+# Need to link with CoreFoundation on Mac
+ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
+EXTRA_DSO_LDOPTS += \
+		$(TK_LIBS) \
+		$(NULL)
+endif
+
+LIB_FILES = $(SHARED_LIBRARY)
+LIB_DEST = $(testxpcobjdir)/$(unittestlocation)
+INSTALL_TARGETS += LIB

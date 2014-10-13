@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:orientation="horizontal"
+              android:padding="@dimen/doorhanger_padding">
+
+    <ImageView android:id="@+id/larry"
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
+               android:src="@drawable/larry"
+               android:paddingRight="@dimen/doorhanger_padding"/>
+
+    <LinearLayout android:layout_width="0dip"
+                  android:layout_height="wrap_content"
+                  android:layout_weight="1.0"
+                  android:orientation="vertical">
+
+        <TextView android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:textSize="14sp"
+                  android:textColor="@color/doorhanger_text"
+                  android:text="@string/identity_connected_to"/>
+
+        <TextView android:id="@+id/host"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:textSize="20sp"
+                  android:textColor="@color/doorhanger_text"
+                  android:textStyle="bold"/>
+
+        <TextView android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:textSize="14sp"
+                  android:textColor="@color/doorhanger_text"
+                  android:text="@string/identity_run_by"
+                  android:paddingTop="12dip"/>
+
+        <TextView android:id="@+id/owner"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:textColor="@color/doorhanger_text"
+                  android:textSize="16sp"
+                  android:textStyle="bold"/>
+
+        <TextView android:id="@+id/verifier"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:textSize="14sp"
+                  android:textColor="@color/doorhanger_text"
+                  android:paddingTop="12dip"/>
+
+    </LinearLayout>
+
+</LinearLayout>

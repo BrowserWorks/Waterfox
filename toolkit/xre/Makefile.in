@@ -1,0 +1,55 @@
+# -*- makefile -*-
+# vim:set ts=8 sw=8 sts=8 noet:
+
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+USE_RCS_MK=1
+include $(topsrcdir)/config/makefiles/makeutils.mk
+
+milestone_txt = $(topsrcdir)/config/milestone.txt
+
+include $(topsrcdir)/config/rules.mk
+
+CXXFLAGS += $(TK_CFLAGS) $(MOZ_DBUS_CFLAGS) $(MOZ_DBUS_GLIB_CFLAGS)
+
+ifdef MOZ_WIDGET_GTK
+CXXFLAGS += $(MOZ_PANGO_CFLAGS)
+endif
+
+# Should version be optional or required ?
+TOOLKIT_EM_VERSION=$(shell $(PERL) $(topsrcdir)/config/milestone.pl --topsrcdir=$(topsrcdir))
+$(call warnIfEmpty,TOOLKIT_EM_VERSION)
+
+# Valid if null: {warn,error}IfEmpty
+DEFINES += -DTOOLKIT_EM_VERSION='"$(TOOLKIT_EM_VERSION)"'
+
+MOZ_SOURCE_STAMP ?= $(firstword $(shell hg -R $(topsrcdir) parent --template='{node|short}\n' 2>/dev/null))
+ifdef MOZ_SOURCE_STAMP
+
+  INIARGS = --sourcestamp=$(MOZ_SOURCE_STAMP)
+
+  source_repo := $(call getSourceRepo)
+
+  # extra sanity check for old versions of hg, no showconfig support
+  ifneq (,$(filter http%,$(source_repo)))
+    INIARGS += --sourcerepo=$(source_repo)
+  endif
+
+endif # MOZ_SOURCE_STAMP
+
+GRE_BUILDID   := $(strip $(firstword $(shell cat $(DEPTH)/config/buildid 2>/dev/null)))
+$(call errorIfEmpty,GRE_MILESTONE GRE_BUILDID)
+
+DEFINES += -DGRE_BUILDID=$(GRE_BUILDID)
+
+$(srcdir)/nsAppRunner.cpp: $(DEPTH)/config/buildid $(milestone_txt)
+
+platform.ini: FORCE
+	$(PYTHON) $(srcdir)/make-platformini.py --buildid=$(GRE_BUILDID) $(INIARGS) $(milestone_txt) > $@
+
+GARBAGE += platform.ini
+
+libs:: platform.ini
+	$(INSTALL) $^ $(DIST)/bin

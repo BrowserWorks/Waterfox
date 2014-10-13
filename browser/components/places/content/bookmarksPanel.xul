@@ -1,0 +1,54 @@
+<?xml version="1.0"?> <!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- --> 
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://browser/content/places/places.css"?>
+<?xml-stylesheet href="chrome://browser/skin/places/places.css"?>
+<?xul-overlay href="chrome://global/content/editMenuOverlay.xul"?>
+<?xul-overlay href="chrome://browser/content/places/placesOverlay.xul"?>
+
+<!DOCTYPE page SYSTEM "chrome://browser/locale/places/places.dtd">
+
+<page id="bookmarksPanel"
+      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+      xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+      onload="init();"
+      onunload="SidebarUtils.setMouseoverURL('');">
+
+  <script type="application/javascript" 
+          src="chrome://browser/content/bookmarks/sidebarUtils.js"/>
+  <script type="application/javascript" 
+          src="chrome://browser/content/bookmarks/bookmarksPanel.js"/>
+
+  <commandset id="placesCommands"/>
+  <commandset id="editMenuCommands"/>
+  <menupopup id="placesContext"/>
+
+  <!-- Bookmarks and history tooltip -->
+  <tooltip id="bhTooltip"/>
+
+  <hbox id="sidebar-search-container" align="center">
+    <label id="sidebar-search-label"
+           value="&search.label;" accesskey="&search.accesskey;" control="search-box"/>
+    <textbox id="search-box" flex="1" type="search" class="compact"
+             aria-controls="bookmarks-view"
+             oncommand="searchBookmarks(this.value);"/>
+  </hbox>
+
+  <tree id="bookmarks-view" class="sidebar-placesTree" type="places"
+        flex="1"
+        hidecolumnpicker="true"
+        context="placesContext"
+        onkeypress="SidebarUtils.handleTreeKeyPress(event);"
+        onclick="SidebarUtils.handleTreeClick(this, event, true);"
+        onmousemove="SidebarUtils.handleTreeMouseMove(event);"
+        onmouseout="SidebarUtils.setMouseoverURL('');">
+    <treecols>
+      <treecol id="title" flex="1" primary="true" hideheader="true"/>
+    </treecols>
+    <treechildren id="bookmarks-view-children" view="bookmarks-view"
+                  class="sidebar-placesTreechildren" flex="1" tooltip="bhTooltip"/>
+  </tree>
+</page>

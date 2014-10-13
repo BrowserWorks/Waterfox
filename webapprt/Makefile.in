@@ -1,0 +1,25 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Include config.mk explicitly so we can override FINAL_TARGET.
+include $(topsrcdir)/config/config.mk
+
+PREF_JS_EXPORTS = $(srcdir)/prefs.js \
+                  $(NULL)
+
+include $(topsrcdir)/config/rules.mk
+
+libs:: $(call mkdir_deps,$(FINAL_TARGET))
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'resource webapprt ./')
+
+GRE_BUILDID := $(shell cat $(DEPTH)/config/buildid)
+DEFINES += -DGRE_BUILDID=$(GRE_BUILDID)
+
+webapprt.ini: application.ini.in $(DEPTH)/config/buildid $(topsrcdir)/config/milestone.txt
+	$(call py_action,preprocessor,$(DEFINES) $< -o $@)
+
+libs:: webapprt.ini
+	$(INSTALL) webapprt.ini $(FINAL_TARGET)
+
+GARBAGE += webapprt.ini

@@ -1,0 +1,18 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+SOURCES += [
+    'nsGnomeVFSProtocolHandler.cpp',
+]
+
+LIBRARY_NAME = 'nkgnomevfs'
+
+IS_COMPONENT = True
+
+# make sure this component is never statically linked into the main
+# application.  this is necessary since we don't want to force users
+# to install gnome-vfs2 in order to use the rest of mozilla ;-)
+FORCE_SHARED_LIB = True

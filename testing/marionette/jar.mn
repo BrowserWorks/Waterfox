@@ -1,0 +1,34 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+marionette.jar:
+% content marionette %content/
+  content/marionette-server.js      (marionette-server.js)
+  content/marionette-listener.js    (marionette-listener.js)
+  content/marionette-elements.js    (marionette-elements.js)
+  content/marionette-sendkeys.js    (marionette-sendkeys.js)
+  content/marionette-common.js      (marionette-common.js)
+  content/marionette-simpletest.js  (marionette-simpletest.js)
+  content/marionette-frame-manager.js  (marionette-frame-manager.js)
+  content/EventUtils.js  (EventUtils.js)
+  content/ChromeUtils.js  (ChromeUtils.js)
+#ifdef ENABLE_TESTS
+  content/test.xul  (client/marionette/chrome/test.xul)
+  content/test2.xul  (client/marionette/chrome/test2.xul)
+  content/test_nested_iframe.xul  (client/marionette/chrome/test_nested_iframe.xul)
+#endif
+
+% content specialpowers %content/
+  content/specialpowers.js (../specialpowers/content/specialpowers.js)
+  content/SpecialPowersObserver.js (../specialpowers/components/SpecialPowersObserver.js)
+  content/specialpowersAPI.js (../specialpowers/content/specialpowersAPI.js)
+  content/SpecialPowersObserverAPI.js (../specialpowers/content/SpecialPowersObserverAPI.js)
+  content/ChromePowers.js (../mochitest/tests/SimpleTest/ChromePowers.js)
+  content/MozillaLogger.js (../specialpowers/content/MozillaLogger.js)
+
+% resource specialpowers %modules/
+  modules/MockFilePicker.jsm (../specialpowers/content/MockFilePicker.jsm)
+  modules/MockColorPicker.jsm (../specialpowers/content/MockColorPicker.jsm)
+  modules/MockPermissionPrompt.jsm (../specialpowers/content/MockPermissionPrompt.jsm)
+  modules/Assert.jsm (../modules/Assert.jsm)

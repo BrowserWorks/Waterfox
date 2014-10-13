@@ -1,0 +1,139 @@
+/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIURI;
+
+[scriptable, uuid(e81e0b0c-b9f1-4c2e-8f3c-b809933cf73c)]
+interface nsIFaviconService : nsISupports
+{
+  // The favicon is being loaded from a private browsing window
+  const unsigned long FAVICON_LOAD_PRIVATE = 1;
+  // The favicon is being loaded from a non-private browsing window
+  const unsigned long FAVICON_LOAD_NON_PRIVATE = 2;
+
+  /**
+   * For a given icon URI, this will return a URI that will result in the image.
+   * In most cases, this is an annotation URI.  For chrome URIs, this will do
+   * nothing but returning the input URI.
+   *
+   * No validity checking is done. If you pass an icon URI that we've never
+   * seen, you'll get back a URI that references an invalid icon. The moz-anno
+   * protocol handler's special case for "favicon" annotations will resolve
+   * invalid icons to the default icon, although without caching.
+   * For invalid chrome URIs, you'll get a broken image.
+   *
+   * @param aFaviconURI
+   *        The URI of an icon in the favicon service.
+   * @return A URI that will give you the icon image.  This is NOT the URI of
+   *         the icon as set on the page, but a URI that will give you the
+   *         data out of the favicon service.  For a normal page with a
+   *         favicon we've stored, this will be an annotation URI which will
+   *         then cause the corresponding favicon data to be loaded async from
+   *         this service.  For pages where we don't have a favicon, this will
+   *         be a chrome URI of the default icon. For chrome URIs, the
+   *         output will be the same as the input.
+   */
+  nsIURI getFaviconLinkForIcon(in nsIURI aFaviconURI);
+
+  /**
+   * Expire all known favicons from the database.
+   *
+   * @note This is an async method.
+   *       On successful completion a "places-favicons-expired" notification is
+   *       dispatched through observer's service.
+   */
+  void expireAllFavicons();
+
+  /**
+   * Adds a given favicon's URI to the failed favicon cache.
+   *
+   * The lifespan of the favicon cache is up to the caching system.  This cache
+   * will also be written when setAndLoadFaviconForPage hits an error while
+   * fetching an icon.
+   *
+   * @param aFaviconURI
+   *        The URI of an icon in the favicon service.
+   */
+  void addFailedFavicon(in nsIURI aFaviconURI);
+
+  /**
+   * Removes the given favicon from the failed favicon cache.  If the icon is
+   * not in the cache, it will silently succeed.
+   *
+   * @param aFaviconURI
+   *        The URI of an icon in the favicon service.
+   */
+  void removeFailedFavicon(in nsIURI aFaviconURI);
+
+  /**
+   * Checks to see if a favicon is in the failed favicon cache.
+   * A positive return value means the icon is in the failed cache and you
+   * probably shouldn't try to load it.  A false return value means that it's
+   * worth trying to load it.
+   * This allows you to avoid trying to load "foo.com/favicon.ico" for every
+   * page on a site that doesn't have a favicon.
+   *
+   * @param aFaviconURI
+   *        The URI of an icon in the favicon service.
+   */
+  boolean isFailedFavicon(in nsIURI aFaviconURI);
+
+  /**
+   * The default favicon URI
+   */
+  readonly attribute nsIURI defaultFavicon;
+};
+
+[scriptable, function, uuid(c85e5c82-b70f-4621-9528-beb2aa47fb44)]
+interface nsIFaviconDataCallback : nsISupports
+{
+  /**
+   * Called when the required favicon's information is available.
+   *
+   * It's up to the invoking method to state if the callback is always invoked,
+   * or called on success only.  Check the method documentation to ensure that.
+   *
+   * The caller will receive the most information we can gather on the icon,
+   * but it's not guaranteed that all of them will be set.  For some method
+   * we could not know the favicon's data (it could just be too expensive to
+   * get it, or the method does not require we actually have any data).
+   * It's up to the caller to check aDataLen > 0 before using any data-related
+   * information like mime-type or data itself.
+   *
+   * @param aFaviconURI
+   *        Receives the "favicon URI" (not the "favicon link URI") associated
+   *        to the requested page.  This can be null if there is no associated
+   *        favicon URI, or the callback is notifying a failure.
+   * @param aDataLen
+   *        Size of the icon data in bytes.  Notice that a value of 0 does not
+   *        necessarily mean that we don't have an icon.
+   * @param aData
+   *        Icon data, or an empty array if aDataLen is 0.
+   * @param aMimeType
+   *        Mime type of the icon, or an empty string if aDataLen is 0.
+   *
+   * @note If you want to open a network channel to access the favicon, it's
+   *       recommended that you call the getFaviconLinkForIcon method to convert
+   *       the "favicon URI" into a "favicon link URI".
+   */
+  void onComplete(in nsIURI aFaviconURI,
+                  in unsigned long aDataLen,
+                  [const,array,size_is(aDataLen)] in octet aData,
+                  in AUTF8String aMimeType);
+};
+
+%{C++
+
+/**
+ * Notification sent when all favicons are expired.
+ */
+#define NS_PLACES_FAVICONS_EXPIRED_TOPIC_ID "places-favicons-expired"
+
+#define FAVICON_DEFAULT_URL "chrome://mozapps/skin/places/defaultFavicon.png"
+#define FAVICON_ERRORPAGE_URL "chrome://global/skin/icons/warning-16.png"
+
+%}

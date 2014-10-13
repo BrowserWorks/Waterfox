@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE html [
+  <!ENTITY % htmlDTD
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "DTD/xhtml1-strict.dtd">
+  %htmlDTD;
+  <!ENTITY % netErrorDTD SYSTEM "chrome://global/locale/netError.dtd">
+  %netErrorDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>&loadError.label;</title>
+    <link rel="stylesheet" type="text/css" media="all"
+          href="chrome://browser/skin/aboutSocialError.css"/>
+  </head>
+
+  <body>
+    <div id="error-box">
+      <p id="main-error-msg"></p>
+      <p id="helper-error-msg"></p>
+    </div>
+    <div id="button-box">
+      <button id="btnTryAgain" onclick="tryAgainButton()"/>
+      <button id="btnCloseSidebar" onclick="closeSidebarButton()"/>
+    </div>
+  </body>
+
+  <script type="text/javascript;version=1.8"><![CDATA[
+    const Cu = Components.utils;
+
+    Cu.import("resource://gre/modules/Services.jsm");
+    Cu.import("resource:///modules/Social.jsm");
+
+    let config = {
+      tryAgainCallback: reloadProvider
+    }
+
+    function parseQueryString() {
+      let url = document.documentURI;
+      let queryString = url.replace(/^about:socialerror\??/, "");
+
+      let modeMatch = queryString.match(/mode=([^&]+)/);
+      let mode = modeMatch && modeMatch[1] ? modeMatch[1] : "";
+      let originMatch = queryString.match(/origin=([^&]+)/);
+      config.origin = originMatch && originMatch[1] ? decodeURIComponent(originMatch[1]) : "";
+
+      switch (mode) {
+        case "compactInfo":
+          document.getElementById("btnTryAgain").style.display = 'none';
+          document.getElementById("btnCloseSidebar").style.display = 'none';
+          break;
+        case "tryAgainOnly":
+          document.getElementById("btnCloseSidebar").style.display = 'none';
+          //intentional fall-through
+        case "tryAgain":
+          let urlMatch = queryString.match(/url=([^&]+)/);
+          let encodedURL = urlMatch && urlMatch[1] ? urlMatch[1] : "";
+          let url = decodeURIComponent(encodedURL);
+
+          config.tryAgainCallback = loadQueryURL;
+          config.queryURL = url;
+          break;
+        case "workerFailure":
+          config.tryAgainCallback = reloadProvider;
+          break;
+        default:
+          break;
+      }
+    }
+
+    function setUpStrings() {
+      let brandBundle = Services.strings.createBundle("chrome://branding/locale/brand.properties");
+      let browserBundle = Services.strings.createBundle("chrome://browser/locale/browser.properties");
+
+      let productName = brandBundle.GetStringFromName("brandShortName");
+      let provider = Social._getProviderFromOrigin(config.origin);
+      let providerName = provider && provider.name;
+
+      // Sets up the error message
+      let msg = browserBundle.formatStringFromName("social.error.message", [productName, providerName], 2);
+      document.getElementById("main-error-msg").textContent = msg;
+
+      // Sets up the buttons' labels and accesskeys
+      let btnTryAgain = document.getElementById("btnTryAgain");
+      btnTryAgain.textContent = browserBundle.GetStringFromName("social.error.tryAgain.label");
+      btnTryAgain.accessKey = browserBundle.GetStringFromName("social.error.tryAgain.accesskey");
+
+      let btnCloseSidebar = document.getElementById("btnCloseSidebar");
+      btnCloseSidebar.textContent = browserBundle.GetStringFromName("social.error.closeSidebar.label");
+      btnCloseSidebar.accessKey = browserBundle.GetStringFromName("social.error.closeSidebar.accesskey");
+    }
+
+    function closeSidebarButton() {
+      SocialSidebar.toggleSidebar();
+    }
+
+    function tryAgainButton() {
+      config.tryAgainCallback();
+    }
+
+    function loadQueryURL() {
+      window.location.href = config.queryURL;
+    }
+
+    function reloadProvider() {
+      // Just incase the current provider *isn't* in a frameworker-error
+      // state, reload the current one.
+      let provider = Social._getProviderFromOrigin(config.origin);
+      provider.reload();
+      // If the problem is a frameworker-error, it may be that the child
+      // process crashed - and if that happened, then *all* providers in that
+      // process will have crashed.  However, only the current provider is
+      // likely to have the error surfaced in the UI - so we reload *all*
+      // providers that are in a frameworker-error state.
+      for (let provider of Social.providers) {
+        if (provider.enabled && provider.errorState == "frameworker-error") {
+          provider.reload();
+        }
+      }
+    }
+
+    parseQueryString();
+    setUpStrings();
+  ]]></script>
+</html>

@@ -1,0 +1,28 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+SOURCES += [
+    'CustomElf.cpp',
+    'ElfLoader.cpp',
+    'Mappable.cpp',
+    'SeekableZStream.cpp',
+    'Zip.cpp',
+]
+
+LIBRARY_NAME = 'linker'
+
+HOST_SOURCES += [
+    'SeekableZStream.cpp',
+    'szip.cpp',
+]
+
+HOST_PROGRAM = 'szip'
+
+FINAL_LIBRARY = 'mozglue'
+
+DEFINES['IMPL_MFBT'] = True
+
+DISABLE_STL_WRAPPING = True

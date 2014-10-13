@@ -1,0 +1,86 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+IA2DIR        = $(topsrcdir)/other-licenses/ia2
+
+GARBAGE       += $(MIDL_GENERATED_FILES)
+
+# Please keep this list in sync with the moz.build file until the rest of this
+# Makefile is ported over.
+MIDL_INTERFACES = \
+  Accessible2.idl \
+  Accessible2_2.idl \
+  AccessibleAction.idl \
+  AccessibleApplication.idl \
+  AccessibleComponent.idl \
+  AccessibleDocument.idl \
+  AccessibleEditableText.idl \
+  AccessibleHyperlink.idl \
+  AccessibleHypertext.idl \
+  AccessibleHypertext2.idl \
+  AccessibleImage.idl \
+  AccessibleRelation.idl \
+  AccessibleTable.idl \
+  AccessibleTable2.idl \
+  AccessibleTableCell.idl \
+  AccessibleText.idl \
+  AccessibleText2.idl \
+  AccessibleValue.idl \
+  $(NULL)
+
+# Please keep this list in sync with the moz.build file until the rest of this
+# Makefile is ported over.
+MIDL_ENUMS = \
+  AccessibleEventId.idl \
+  AccessibleRole.idl \
+  AccessibleStates.idl \
+  IA2CommonTypes.idl \
+  $(NULL)
+
+CSRCS	= \
+  dlldata.c \
+  $(MIDL_INTERFACES:%.idl=%_p.c) \
+  $(MIDL_INTERFACES:%.idl=%_i.c) \
+  $(NULL)
+
+MIDL_GENERATED_FILES = \
+  dlldata.c \
+  $(MIDL_INTERFACES:%.idl=%_p.c) \
+  $(MIDL_INTERFACES:%.idl=%_i.c) \
+  $(MIDL_INTERFACES:%.idl=%.h) \
+  $(MIDL_ENUMS:%.idl=%.h) \
+  $(NULL)
+
+EMBED_MANIFEST_AT = 2
+
+INSTALL_TARGETS += midl
+midl_FILES := $(filter %.h %_i.c,$(MIDL_GENERATED_FILES))
+midl_DEST = $(DIST)/include
+midl_TARGET := export
+
+include $(topsrcdir)/config/rules.mk
+
+OS_LIBS = $(call EXPAND_LIBNAME,uuid kernel32 rpcns4 rpcrt4 ole32 oleaut32)
+
+# generate list of to-be-generated files that are missing
+# but ignore special file dlldata.c
+missing:=$(strip $(foreach onefile,$(strip $(subst dlldata.c,,$(MIDL_GENERATED_FILES))),$(if $(wildcard $(onefile)),,$(onefile))))
+
+missing_base:=$(sort $(basename $(subst _p.c,,$(subst _i.c,,$(missing)))))
+
+$(MIDL_GENERATED_FILES) : midl_done
+
+ifneq ("$(missing)","")
+midl_done : FORCE
+endif
+
+midl_done : $(addprefix $(IA2DIR)/,$(MIDL_INTERFACES) $(MIDL_ENUMS))
+	for idl in $(sort $(subst FORCE,,$?) $(addsuffix .idl,$(addprefix $(IA2DIR)/,$(missing_base)))); do \
+	  $(MIDL) $(MIDL_FLAGS) -app_config -I $(IA2DIR) -Oicf $$idl; \
+	done
+	touch $@
+
+# This marshall dll is also registered in the installer
+register::
+	regsvr32 -s $(DIST)/bin/$(SHARED_LIBRARY)

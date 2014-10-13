@@ -1,0 +1,56 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+#include "nsIDOMSmsSegmentInfo.idl"
+
+[scriptable, uuid(0e6f8ace-cc59-11e3-aad5-e32847abfda1)]
+interface nsIMobileMessageCallback : nsISupports
+{
+  /**
+   * All SMS related errors.
+   * Make sure to keep this list in sync with the list in:
+   * embedding/android/GeckoSmsManager.java
+   */
+  const unsigned short SUCCESS_NO_ERROR          = 0;
+  const unsigned short NO_SIGNAL_ERROR           = 1;
+  const unsigned short NOT_FOUND_ERROR           = 2;
+  const unsigned short UNKNOWN_ERROR             = 3;
+  const unsigned short INTERNAL_ERROR            = 4;
+  const unsigned short NO_SIM_CARD_ERROR         = 5;
+  const unsigned short RADIO_DISABLED_ERROR      = 6;
+  const unsigned short INVALID_ADDRESS_ERROR     = 7;
+  const unsigned short FDN_CHECK_ERROR           = 8;
+  const unsigned short NON_ACTIVE_SIM_CARD_ERROR = 9;
+  const unsigned short STORAGE_FULL_ERROR        = 10;
+  const unsigned short SIM_NOT_MATCHED_ERROR     = 11;
+
+  /**
+   * |message| can be nsIDOMMoz{Mms,Sms}Message.
+   */
+  void notifyMessageSent(in nsISupports message);
+  void notifySendMessageFailed(in long error, in nsISupports message);
+
+  /**
+   * |message| can be nsIDOMMoz{Mms,Sms}Message.
+   */
+  void notifyMessageGot(in nsISupports message);
+  void notifyGetMessageFailed(in long error);
+
+  void notifyMessageDeleted([array, size_is(count)] in boolean deleted,
+                            in uint32_t count);
+  void notifyDeleteMessageFailed(in long error);
+
+  void notifyMessageMarkedRead(in boolean read);
+  void notifyMarkMessageReadFailed(in long error);
+
+  void notifySegmentInfoForTextGot(in nsIDOMMozSmsSegmentInfo info);
+  void notifyGetSegmentInfoForTextFailed(in long error);
+
+  /**
+   *  SMSC Address get/set result
+   */
+  void notifyGetSmscAddress(in DOMString aSmscAddress);
+  void notifyGetSmscAddressFailed(in long error);
+};

@@ -1,0 +1,73 @@
+/* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "gfxRect.h"
+
+#include "nsMathUtils.h"
+
+static bool
+WithinEpsilonOfInteger(gfxFloat aX, gfxFloat aEpsilon)
+{
+    return fabs(NS_round(aX) - aX) <= fabs(aEpsilon);
+}
+
+bool
+gfxRect::WithinEpsilonOfIntegerPixels(gfxFloat aEpsilon) const
+{
+    NS_ASSERTION(-0.5 < aEpsilon && aEpsilon < 0.5, "Nonsense epsilon value");
+    return (WithinEpsilonOfInteger(x, aEpsilon) &&
+            WithinEpsilonOfInteger(y, aEpsilon) &&
+            WithinEpsilonOfInteger(width, aEpsilon) &&
+            WithinEpsilonOfInteger(height, aEpsilon));
+}
+
+/* Clamp r to CAIRO_COORD_MIN .. CAIRO_COORD_MAX
+ * these are to be device coordinates.
+ *
+ * Cairo is currently using 24.8 fixed point,
+ * so -2^24 .. 2^24-1 is our valid
+ */
+
+#define CAIRO_COORD_MAX (16777215.0)
+#define CAIRO_COORD_MIN (-16777216.0)
+
+void
+gfxRect::Condition()
+{
+    // if either x or y is way out of bounds;
+    // note that we don't handle negative w/h here
+    if (x > CAIRO_COORD_MAX) {
+        x = CAIRO_COORD_MAX;
+        width = 0.0;
+    } 
+
+    if (y > CAIRO_COORD_MAX) {
+        y = CAIRO_COORD_MAX;
+        height = 0.0;
+    }
+
+    if (x < CAIRO_COORD_MIN) {
+        width += x - CAIRO_COORD_MIN;
+        if (width < 0.0)
+            width = 0.0;
+        x = CAIRO_COORD_MIN;
+    }
+
+    if (y < CAIRO_COORD_MIN) {
+        height += y - CAIRO_COORD_MIN;
+        if (height < 0.0)
+            height = 0.0;
+        y = CAIRO_COORD_MIN;
+    }
+
+    if (x + width > CAIRO_COORD_MAX) {
+        width = CAIRO_COORD_MAX - x;
+    }
+
+    if (y + height > CAIRO_COORD_MAX) {
+        height = CAIRO_COORD_MAX - y;
+    }
+}
+

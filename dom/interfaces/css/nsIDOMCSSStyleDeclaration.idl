@@ -1,0 +1,34 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "domstubs.idl"
+
+/**
+ * The nsIDOMCSSStyleDeclaration interface is a datatype for a CSS
+ * style declaration in the Document Object Model.
+ *
+ * For more information on this interface please see
+ * http://www.w3.org/TR/DOM-Level-2-Style
+ */
+
+[uuid(a6cf90be-15b3-11d2-932e-00805f8add32)]
+interface nsIDOMCSSStyleDeclaration : nsISupports
+{
+           attribute DOMString        cssText;
+                                        // raises(DOMException) on setting
+
+  DOMString          getPropertyValue(in DOMString propertyName);
+  nsIDOMCSSValue     getPropertyCSSValue(in DOMString propertyName);
+  DOMString          removeProperty(in DOMString propertyName)
+                                        raises(DOMException);
+  DOMString          getPropertyPriority(in DOMString propertyName);
+  void               setProperty(in DOMString propertyName, 
+                                 in DOMString value, 
+                                 [optional] in DOMString priority)
+                                        raises(DOMException);
+  readonly attribute unsigned long    length;
+  DOMString          item(in unsigned long index);
+  readonly attribute nsIDOMCSSRule    parentRule;
+};

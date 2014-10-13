@@ -1,0 +1,133 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+interfaces = [
+    'base',
+    'canvas',
+    'core',
+    'html',
+    'events',
+    'devicestorage',
+    'settings',
+    'stylesheets',
+    'sidebar',
+    'css',
+    'traversal',
+    'range',
+    'xbl',
+    'xpath',
+    'xul',
+    'storage',
+    'json',
+    'offline',
+    'geolocation',
+    'notification',
+    'permission',
+    'svg',
+    'smil',
+    'apps',
+    'gamepad',
+]
+
+PARALLEL_DIRS += ['interfaces/' + i for i in interfaces]
+
+PARALLEL_DIRS += [
+    'animation',
+    'apps',
+    'base',
+    'activities',
+    'archivereader',
+    'bindings',
+    'battery',
+    'browser-element',
+    'contacts',
+    'crypto',
+    'phonenumberutils',
+    'alarm',
+    'datastore',
+    'devicestorage',
+    'encoding',
+    'events',
+    'filehandle',
+    'filesystem',
+    'fmradio',
+    'asmjscache',
+    'media',
+    'messages',
+    'power',
+    'push',
+    'quota',
+    'settings',
+    'mobilemessage',
+    'src',
+    'time',
+    'locales',
+    'network',
+    'permission',
+    'plugins/base',
+    'plugins/ipc',
+    'indexedDB',
+    'system',
+    'ipc',
+    'identity',
+    'workers',
+    'camera',
+    'audiochannel',
+    'promise',
+    'smil',
+    'telephony',
+    'inputmethod',
+    'webidl',
+    'xbl',
+    'xslt',
+]
+
+if CONFIG['OS_ARCH'] == 'WINNT':
+    PARALLEL_DIRS += ['plugins/ipc/hangui']
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
+    PARALLEL_DIRS += [
+        'speakermanager',
+        'wifi',
+    ]
+
+if CONFIG['MOZ_B2G_RIL']:
+    PARALLEL_DIRS += [
+        'icc',
+        'cellbroadcast',
+        'mobileconnection',
+        'voicemail',
+        'wappush',
+    ]
+
+if CONFIG['MOZ_PAY']:
+    PARALLEL_DIRS += ['payment']
+
+if CONFIG['MOZ_GAMEPAD']:
+    PARALLEL_DIRS += ['gamepad']
+
+if CONFIG['MOZ_NFC']:
+    PARALLEL_DIRS += ['nfc']
+
+if CONFIG['MOZ_B2G']:
+    PARALLEL_DIRS += [
+        'downloads',
+        'mobileid'
+    ]
+
+if CONFIG['MOZ_B2G_BT_API_V2']:
+    PARALLEL_DIRS += ['bluetooth2']
+else:
+    PARALLEL_DIRS += ['bluetooth']
+
+TEST_DIRS += [
+    'tests',
+    'imptests',
+]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('gtk2', 'cocoa', 'windows', 'android', 'qt'):
+    TEST_DIRS += ['plugins/test']
+

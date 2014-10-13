@@ -1,0 +1,33 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Don't create a dependency on mozglue
+MOZ_GLUE_LDFLAGS =
+
+LIBS = \
+  $(XPCOM_STANDALONE_STATICRUNTIME_GLUE_LDOPTS) \
+  $(NULL)
+
+# Need to link with CoreFoundation on Mac
+ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
+LIBS            += \
+		$(TK_LIBS) \
+		$(NULL)
+endif
+
+ifndef MOZ_WINCONSOLE
+ifdef MOZ_DEBUG
+MOZ_WINCONSOLE = 1
+else
+MOZ_WINCONSOLE = 0
+endif
+endif
+
+include $(topsrcdir)/config/config.mk
+
+include $(topsrcdir)/config/rules.mk
+
+ifeq ($(OS_ARCH),WINNT)
+OS_LIBS += $(call EXPAND_LIBNAME,shell32)
+endif

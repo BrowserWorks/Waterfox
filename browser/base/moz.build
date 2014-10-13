@@ -1,0 +1,37 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+MOCHITEST_MANIFESTS += [
+    'content/test/general/mochitest.ini',
+]
+
+MOCHITEST_CHROME_MANIFESTS += [
+    'content/test/chrome/chrome.ini',
+]
+
+BROWSER_CHROME_MANIFESTS += [
+    'content/test/chat/browser.ini',
+    'content/test/general/browser.ini',
+    'content/test/newtab/browser.ini',
+    'content/test/plugins/browser.ini',
+    'content/test/social/browser.ini',
+]
+
+DEFINES['MOZ_APP_VERSION'] = CONFIG['MOZ_APP_VERSION']
+DEFINES['E10S_TESTING_ONLY'] = CONFIG['E10S_TESTING_ONLY']
+DEFINES['APP_LICENSE_BLOCK'] = '%s/content/overrides/app-license.html' % SRCDIR
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('windows', 'gtk2', 'gtk3', 'cocoa'):
+    DEFINES['HAVE_SHELL_SERVICE'] = 1
+    DEFINES['CONTEXT_COPY_IMAGE_CONTENTS'] = 1
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('windows', 'cocoa'):
+    DEFINES['CAN_DRAW_IN_TITLEBAR'] = 1
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('windows', 'gtk2', 'gtk3'):
+    DEFINES['MENUBAR_CAN_AUTOHIDE'] = 1
+
+JAR_MANIFESTS += ['jar.mn']

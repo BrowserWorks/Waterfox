@@ -1,0 +1,92 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+EXPORTS.mozilla.net += [
+    'usrsctp.h',
+]
+
+SOURCES += [
+    'netinet/sctp_asconf.c',
+    'netinet/sctp_auth.c',
+    'netinet/sctp_bsd_addr.c',
+    'netinet/sctp_callout.c',
+    'netinet/sctp_cc_functions.c',
+    'netinet/sctp_crc32.c',
+    'netinet/sctp_indata.c',
+    'netinet/sctp_input.c',
+    'netinet/sctp_output.c',
+    'netinet/sctp_pcb.c',
+    'netinet/sctp_peeloff.c',
+    'netinet/sctp_sha1.c',
+    'netinet/sctp_ss_functions.c',
+    'netinet/sctp_sysctl.c',
+    'netinet/sctp_timer.c',
+    'netinet/sctp_userspace.c',
+    'netinet/sctp_usrreq.c',
+    'netinet/sctputil.c',
+    'netinet6/sctp6_usrreq.c',
+    'user_environment.c',
+    'user_mbuf.c',
+    'user_recv_thread.c',
+    'user_sctp_timer_iterate.c',
+    'user_socket.c',
+]
+
+if CONFIG['OS_TARGET'] == 'Android':
+    SOURCES += [
+        'ifaddrs_android.cpp',
+    ]
+
+LIBRARY_NAME = 'nksctp_s'
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+FINAL_LIBRARY = 'necko'
+
+LOCAL_INCLUDES += [
+    '../../base/src',
+    '/content/base/src',
+]
+
+for var in ('SCTP_SIMPLE_ALLOCATOR',
+            'SCTP_PROCESS_LEVEL_LOCKS', '__Userspace__', 'INET',
+            'CALLBACK_API', 'SCTP_DEBUG'):
+    DEFINES[var] = 1
+
+# Android NDK r5c, used on the builders at the time of this writing, doesn't
+# have the headers we need for IPv6
+if CONFIG['OS_TARGET'] != 'Android':
+    DEFINES['INET6'] = 1
+
+if CONFIG['OS_TARGET'] == 'WINNT':
+    DEFINES['__Userspace_os_Windows'] = 1
+    DEFINES['_LIB'] = 1
+elif CONFIG['OS_TARGET'] == 'Android':
+    DEFINES['__Userspace_os_Linux'] = 1
+else:
+    DEFINES['__Userspace_os_%s' % CONFIG['OS_TARGET']] = 1
+
+if CONFIG['OS_TARGET'] == 'Darwin':
+    DEFINES['__APPLE_USE_RFC_2292'] = 1
+    DEFINES['__APPLE__'] = False
+
+if CONFIG['OS_TARGET'] in ('Linux', 'Android'):
+    # to make sure that in6_pktinfo gets defined on all distros
+    DEFINES['_GNU_SOURCE'] = True
+
+if CONFIG['OS_TARGET'] == 'FreeBSD':
+    DEFINES['__FreeBSD__'] = False
+
+if CONFIG['OS_TARGET'] == 'NetBSD':
+    DEFINES['__NetBSD__'] = False
+
+if CONFIG['OS_TARGET'] == 'OpenBSD':
+    DEFINES['__OpenBSD__'] = False
+
+if CONFIG['OS_TARGET'] == 'DragonFly':
+    DEFINES['__DragonFly__'] = False
+
+NO_PGO = True # Don't PGO

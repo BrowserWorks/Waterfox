@@ -1,0 +1,68 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+STANDALONE_MAKEFILE := 1
+
+# overwrite mobile-l10n.js with a matchOS=true one for multi-locale builds
+ifeq ($(AB_CD),multi)
+PREF_JS_EXPORTS = $(srcdir)/mobile-l10n.js
+endif
+
+include $(topsrcdir)/config/rules.mk
+
+MOZ_PKG_REMOVALS = $(srcdir)/removed-files.in
+
+MOZ_PKG_MANIFEST_P = $(srcdir)/package-manifest.in
+
+DEFINES += \
+	-DAB_CD=$(AB_CD) \
+	-DMOZ_APP_NAME=$(MOZ_APP_NAME) \
+	-DPREF_DIR=$(PREF_DIR) \
+	$(NULL)
+
+DEFINES += -DJAREXT=
+DEFINES += -DMOZ_CHILD_PROCESS_NAME=$(MOZ_CHILD_PROCESS_NAME)
+
+ifdef MOZ_PKG_MANIFEST_P
+MOZ_PKG_MANIFEST = package-manifest
+endif
+
+MOZ_PACKAGER_MINIFY=1
+
+include $(topsrcdir)/toolkit/mozapps/installer/packager.mk
+
+ifeq (bundle, $(MOZ_FS_LAYOUT))
+BINPATH = $(_BINPATH)
+DEFINES += -DAPPNAME=$(_APPNAME)
+else
+# Every other platform just winds up in dist/bin
+BINPATH = bin
+endif
+DEFINES += -DBINPATH=$(BINPATH)
+
+ifdef ENABLE_MARIONETTE
+DEFINES += -DENABLE_MARIONETTE=1
+endif
+
+ifdef MOZ_PKG_MANIFEST_P
+# When MOZ_CHROME_MULTILOCALE is defined, we write multilocale.json like:
+# {"locales": ["en-US", "de", "ar", ...]}
+
+$(MOZ_PKG_MANIFEST): $(MOZ_PKG_MANIFEST_P) $(GLOBAL_DEPS) FORCE
+	$(call py_action,preprocessor,$(DEFINES) $(ACDEFINES) $< -o $@)
+ifdef MOZ_CHROME_MULTILOCALE
+	printf '\n[multilocale]\n' >> $@
+	printf '@BINPATH@/res/multilocale.json\n' >> $@
+	for LOCALE in en-US $(MOZ_CHROME_MULTILOCALE) ;\
+	do \
+	  printf '$(BINPATH)/chrome/'"$$LOCALE"'$(JAREXT)\n' >> $@; \
+	  printf '$(BINPATH)/chrome/'"$$LOCALE"'.manifest\n' >> $@; \
+	done
+	COMMA=,
+	echo '{"locales": [$(foreach l,$(MOZ_CHROME_MULTILOCALE),"$(l)"$(COMMA)) "en-US"]}' \
+	  > $(FINAL_TARGET)/res/multilocale.json
+endif
+
+GARBAGE += $(MOZ_PKG_MANIFEST)
+endif

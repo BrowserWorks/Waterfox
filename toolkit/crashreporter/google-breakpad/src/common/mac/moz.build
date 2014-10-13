@@ -1,0 +1,41 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+UNIFIED_SOURCES += [
+    'arch_utilities.cc',
+    'bootstrap_compat.cc',
+    'file_id.cc',
+    'macho_id.cc',
+    'macho_reader.cc',
+    'macho_utilities.cc',
+    'macho_walker.cc',
+    'string_utilities.cc',
+]
+
+# This is a little weird, but we're building a host and a target lib here.
+# The host lib is used for dump_syms, and the target lib for the
+# crash reporter client.  Therefore, we don't need all the srcs in both.
+if CONFIG['MOZ_CRASHREPORTER']:
+    HOST_SOURCES += UNIFIED_SOURCES
+    HOST_SOURCES += [
+        'dump_syms.mm',
+    ]
+    HOST_LIBRARY_NAME = 'host_breakpad_mac_common_s'
+
+SOURCES += [
+    'HTTPMultipartUpload.m',
+    'MachIPC.mm',
+]
+
+LIBRARY_NAME = 'breakpad_mac_common_s'
+
+FINAL_LIBRARY = 'xulapp_s'
+
+LOCAL_INCLUDES += [
+    '../..',
+]
+
+CMFLAGS += ['-std=c99']

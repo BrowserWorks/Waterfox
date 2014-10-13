@@ -1,0 +1,64 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIArray;
+interface nsIProfileStartup;
+
+[scriptable, uuid(30e5a7ec-f71e-4f41-9dbd-7429c02132ec)]
+interface nsIBrowserProfileMigrator : nsISupports
+{
+  /**
+   * profile items to migrate. use with migrate().
+   */
+  const unsigned short ALL         = 0x0000;
+  const unsigned short SETTINGS    = 0x0001;
+  const unsigned short COOKIES     = 0x0002;
+  const unsigned short HISTORY     = 0x0004;
+  const unsigned short FORMDATA    = 0x0008;
+  const unsigned short PASSWORDS   = 0x0010;
+  const unsigned short BOOKMARKS   = 0x0020;
+  const unsigned short OTHERDATA   = 0x0040;
+  const unsigned short SESSION     = 0x0080;
+
+  /**
+   * Copy user profile information to the current active profile.
+   * @param aItems   list of data items to migrate. see above for values.
+   * @param aStartup helper interface which is non-null if called during startup. 
+   * @param aProfile profile to migrate from, if there is more than one.
+   */
+  void migrate(in unsigned short aItems, in nsIProfileStartup aStartup, in jsval aProfile);
+
+  /**
+   * A bit field containing profile items that this migrator
+   * offers for import. 
+   * @param   aProfile the profile that we are looking for available data
+   *          to import
+   * @param   aDoingStartup "true" if the profile is not currently being used.
+   * @return  bit field containing profile items (see above)
+   * @note    a return value of 0 represents no items rather than ALL.
+   */
+  unsigned short getMigrateData(in jsval aProfile, in boolean aDoingStartup);
+
+  /** 
+   * Whether or not there is any data that can be imported from this 
+   * browser (i.e. whether or not it is installed, and there exists
+   * a user profile)
+   */
+  readonly attribute boolean          sourceExists;
+
+
+  /** 
+   * An enumeration of available profiles. If the import source does 
+   * not support profiles, this attribute is null.
+   */
+  readonly attribute jsval            sourceProfiles;
+
+  /**
+   * The import source homepage.  Returns null if not present/available
+   */
+  readonly attribute AUTF8String      sourceHomePageURL;
+};

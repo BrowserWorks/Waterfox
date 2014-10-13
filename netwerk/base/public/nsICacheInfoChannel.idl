@@ -1,0 +1,29 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+[scriptable, uuid (299d69b4-ee86-4541-802d-7642671ebf97)]
+interface nsICacheInfoChannel : nsISupports
+{
+  /**
+   * Get expiration time from cache token. This attribute is equivalent to
+   * nsICachingChannel.cacheToken.expirationTime.
+   */
+  readonly attribute uint32_t cacheTokenExpirationTime;
+
+  /**
+   * Set/get charset of cache entry. Accessing this attribute is equivalent to
+   * calling nsICachingChannel.cacheToken.getMetaDataElement("charset") and
+   * nsICachingChannel.cacheToken.setMetaDataElement("charset").
+   */
+  attribute ACString cacheTokenCachedCharset;
+
+  /**
+   * TRUE if this channel's data is being loaded from the cache.  This value
+   * is undefined before the channel fires its OnStartRequest notification
+   * and after the channel fires its OnStopRequest notification.
+   */
+  boolean isFromCache();
+};

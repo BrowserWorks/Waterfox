@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizePrefs2.title          "Settings for Clearing History">
+<!ENTITY sanitizeDialog2.title         "Clear Recent History">
+
+<!ENTITY clearDataSettings2.label     "When I quit &brandShortName;, it should automatically clear all:">
+
+<!-- XXX rearrange entities to match physical layout when l10n isn't an issue -->
+<!-- LOCALIZATION NOTE (clearTimeDuration.*): "Time range to clear" dropdown.
+     See UI mockup at bug 480169 -->
+<!ENTITY clearTimeDuration.label          "Time range to clear: ">
+<!ENTITY clearTimeDuration.accesskey      "T">
+<!ENTITY clearTimeDuration.lastHour       "Last Hour">
+<!ENTITY clearTimeDuration.last2Hours     "Last Two Hours">
+<!ENTITY clearTimeDuration.last4Hours     "Last Four Hours">
+<!ENTITY clearTimeDuration.today          "Today">
+<!ENTITY clearTimeDuration.everything     "Everything">
+<!-- Localization note (clearTimeDuration.suffix) - trailing entity for languages
+that require it.  -->
+<!ENTITY clearTimeDuration.suffix         "">
+<!ENTITY clearTimeDuration.dateColumn     "Visit Date">
+<!ENTITY clearTimeDuration.nameColumn     "Name">
+
+<!-- LOCALIZATION NOTE (detailsProgressiveDisclosure.*): Labels and accesskeys
+     of the "Details" progressive disclosure button.  See UI mockup at bug
+     480169 -->
+<!ENTITY detailsProgressiveDisclosure.label     "Details">
+<!ENTITY detailsProgressiveDisclosure.accesskey "e">
+
+<!ENTITY historySection.label         "History">
+<!ENTITY dataSection.label            "Data">
+
+<!ENTITY itemHistoryAndDownloads.label     "Browsing &amp; Download History">
+<!ENTITY itemHistoryAndDownloads.accesskey "B">
+<!ENTITY itemFormSearchHistory.label       "Form &amp; Search History">
+<!ENTITY itemFormSearchHistory.accesskey   "F">
+<!ENTITY itemPasswords.label               "Saved Passwords">
+<!ENTITY itemPasswords.accesskey           "P">
+<!ENTITY itemCookies.label                 "Cookies">
+<!ENTITY itemCookies.accesskey             "C">
+<!ENTITY itemCache.label                   "Cache">
+<!ENTITY itemCache.accesskey               "A">
+<!ENTITY itemOfflineApps.label             "Offline Website Data">
+<!ENTITY itemOfflineApps.accesskey         "O">
+<!ENTITY itemActiveLogins.label            "Active Logins">
+<!ENTITY itemActiveLogins.accesskey        "L">
+<!ENTITY itemSitePreferences.label         "Site Preferences">
+<!ENTITY itemSitePreferences.accesskey     "S">
+
+<!-- LOCALIZATION NOTE (sanitizeEverythingUndoWarning): Second warning paragraph
+     that appears when "Time range to clear" is set to "Everything".  See UI
+     mockup at bug 480169 -->
+<!ENTITY sanitizeEverythingUndoWarning     "This action cannot be undone.">
+
+<!-- LOCALIZATION NOTE (dialog.width2): width of the Clear Recent History and
+     Clear History on Shutdown dialogs.  Should be large enough to contain
+     the item* strings above on a single line.  The column width should be set
+     at half of the dialog width. -->
+<!ENTITY dialog.width2                 "34em">
+<!ENTITY column.width2                 "17em">

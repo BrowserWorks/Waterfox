@@ -1,0 +1,439 @@
+%if 0
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+%endif
+
+html {
+  font: message-box;
+  font-size: 100%;
+  background-color: hsl(0,0%,95%);
+  color: #000;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  display: -moz-box;
+  -moz-box-orient: vertical;
+  width: 100%;
+  height: 100%;
+}
+
+input,
+button {
+  font-size: inherit;
+  font-family: inherit;
+}
+
+a {
+  color: -moz-nativehyperlinktext;
+  text-decoration: none;
+}
+
+.spacer {
+  -moz-box-flex: 1;
+}
+
+#topSection {
+  text-align: center;
+}
+
+#brandLogo {
+  height: 192px;
+  width: 192px;
+  margin: 22px auto 31px;
+  background-image: url("chrome://branding/content/about-logo.png");
+  background-size: 192px auto;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+#searchForm,
+#snippets {
+  width: 470px;
+}
+
+#searchForm {
+  display: -moz-box;
+}
+
+#searchLogoContainer {
+  display: -moz-box;
+  -moz-box-align: center;
+  padding-top: 2px;
+  -moz-padding-end: 8px;
+}
+
+#searchLogoContainer[hidden] {
+  display: none;
+}
+
+#searchEngineLogo {
+  display: inline-block;
+  height: 28px;
+  width: 70px;
+  min-width: 70px;
+}
+
+#searchText {
+  -moz-box-flex: 1;
+  padding: 6px 8px;
+  background: hsla(0,0%,100%,.9) padding-box;
+  border: 1px solid;
+  border-color: hsla(210,54%,20%,.15) hsla(210,54%,20%,.17) hsla(210,54%,20%,.2);
+  box-shadow: 0 1px 0 hsla(210,65%,9%,.02) inset,
+              0 0 2px hsla(210,65%,9%,.1) inset,
+              0 1px 0 hsla(0,0%,100%,.2);
+  border-radius: 2.5px 0 0 2.5px;
+}
+
+#searchText:-moz-dir(rtl) {
+  border-radius: 0 2.5px 2.5px 0;
+}
+
+#searchText:focus,
+#searchText[autofocus] {
+  border-color: hsla(206,100%,60%,.6) hsla(206,76%,52%,.6) hsla(204,100%,40%,.6);
+}
+
+#searchSubmit {
+  -moz-margin-start: -1px;
+  background: linear-gradient(hsla(0,0%,100%,.8), hsla(0,0%,100%,.1)) padding-box;
+  padding: 0 9px;
+  border: 1px solid;
+  border-color: hsla(210,54%,20%,.15) hsla(210,54%,20%,.17) hsla(210,54%,20%,.2);
+  -moz-border-start: 1px solid transparent;
+  border-radius: 0 2.5px 2.5px 0;
+  box-shadow: 0 0 2px hsla(0,0%,100%,.5) inset,
+              0 1px 0 hsla(0,0%,100%,.2);
+  cursor: pointer;
+  transition-property: background-color, border-color, box-shadow;
+  transition-duration: 150ms;
+}
+
+#searchSubmit:-moz-dir(rtl) {
+  border-radius: 2.5px 0 0 2.5px;
+}
+
+#searchText:focus + #searchSubmit,
+#searchText + #searchSubmit:hover,
+#searchText[autofocus] + #searchSubmit {
+  border-color: #59b5fc #45a3e7 #3294d5;
+  color: white;
+}
+
+#searchText:focus + #searchSubmit,
+#searchText[autofocus] + #searchSubmit {
+  background-image: linear-gradient(#4cb1ff, #1793e5);
+  box-shadow: 0 1px 0 hsla(0,0%,100%,.2) inset,
+              0 0 0 1px hsla(0,0%,100%,.1) inset,
+              0 1px 0 hsla(210,54%,20%,.03);
+}
+
+#searchText + #searchSubmit:hover {
+  background-image: linear-gradient(#66bdff, #0d9eff);
+  box-shadow: 0 1px 0 hsla(0,0%,100%,.2) inset,
+              0 0 0 1px hsla(0,0%,100%,.1) inset,
+              0 1px 0 hsla(210,54%,20%,.03),
+              0 0 4px hsla(206,100%,20%,.2);
+}
+
+#searchText + #searchSubmit:hover:active {
+  box-shadow: 0 1px 1px hsla(211,79%,6%,.1) inset,
+              0 0 1px hsla(211,79%,6%,.2) inset;
+  transition-duration: 0ms;
+}
+
+#defaultSnippet1,
+#defaultSnippet2,
+#rightsSnippet {
+  display: block;
+  min-height: 38px;
+  background: 30px center no-repeat;
+  padding: 6px 0;
+  -moz-padding-start: 79px;
+}
+
+#rightsSnippet[hidden] {
+  display: none;
+}
+
+#defaultSnippet1:-moz-dir(rtl),
+#defaultSnippet2:-moz-dir(rtl),
+#rightsSnippet:-moz-dir(rtl) {
+  background-position: right 30px center;
+}
+
+#defaultSnippet1 {
+  background-image: url("chrome://browser/content/abouthome/snippet1.png");
+}
+
+#defaultSnippet2 {
+  background-image: url("chrome://browser/content/abouthome/snippet2.png");
+}
+
+#snippets {
+  display: inline-block;
+  text-align: start;
+  margin: 12px 0;
+  color: #3c3c3c;
+  font-size: 75%;
+  /* 12px is the computed font size, 15px the computed line height of the snippets
+     with Segoe UI on a default Windows 7 setup. The 15/12 multiplier approximately
+     converts em from units of font-size to units of line-height. The goal is to
+     preset the height of a three-line snippet to avoid visual moving/flickering as
+     the snippets load. */
+  min-height: calc(15/12 * 3em);
+}
+
+#launcher {
+  display: -moz-box;
+  -moz-box-align: center;
+  -moz-box-pack: center;
+  width: 100%;
+  background-color: hsla(0,0%,0%,.03);
+  border-top: 1px solid hsla(0,0%,0%,.03);
+  box-shadow: 0 1px 2px hsla(0,0%,0%,.02) inset,
+              0 -1px 0 hsla(0,0%,100%,.25);
+}
+
+#launcher:not([session]),
+body[narrow] #launcher[session] {
+  display: block; /* display separator and restore button on separate lines */
+  text-align: center;
+  white-space: nowrap; /* prevent navigational buttons from wrapping */
+}
+
+.launchButton {
+  display: -moz-box;
+  -moz-box-orient: vertical;
+  margin: 16px 1px;
+  padding: 14px 6px;
+  min-width: 88px;
+  max-width: 176px;
+  max-height: 85px;
+  vertical-align: top;
+  white-space: normal;
+  background: transparent padding-box;
+  border: 1px solid transparent;
+  border-radius: 2.5px;
+  color: #525c66;
+  font-size: 75%;
+  cursor: pointer;
+  transition-property: background-color, border-color, box-shadow;
+  transition-duration: 150ms;
+}
+
+body[narrow] #launcher[session] > .launchButton {
+  margin: 4px 1px;
+}
+
+.launchButton:hover {
+  background-color: hsla(211,79%,6%,.03);
+  border-color: hsla(210,54%,20%,.15) hsla(210,54%,20%,.17) hsla(210,54%,20%,.2);
+}
+
+.launchButton:hover:active {
+  background-image: linear-gradient(hsla(211,79%,6%,.02), hsla(211,79%,6%,.05));
+  border-color: hsla(210,54%,20%,.2) hsla(210,54%,20%,.23) hsla(210,54%,20%,.25);
+  box-shadow: 0 1px 1px hsla(211,79%,6%,.05) inset,
+              0 0 1px hsla(211,79%,6%,.1) inset;
+  transition-duration: 0ms;
+}
+
+.launchButton[hidden],
+#launcher:not([session]) > #restorePreviousSessionSeparator,
+#launcher:not([session]) > #restorePreviousSession {
+  display: none;
+}
+
+#restorePreviousSessionSeparator {
+  width: 3px;
+  height: 116px;
+  margin: 0 10px;
+  background-image: linear-gradient(hsla(0,0%,100%,0), hsla(0,0%,100%,.35), hsla(0,0%,100%,0)),
+                    linear-gradient(hsla(211,79%,6%,0), hsla(211,79%,6%,.2), hsla(211,79%,6%,0)),
+                    linear-gradient(hsla(0,0%,100%,0), hsla(0,0%,100%,.35), hsla(0,0%,100%,0));
+  background-position: left top, center, right bottom;
+  background-size: 1px auto;
+  background-repeat: no-repeat;
+}
+
+body[narrow] #restorePreviousSessionSeparator {
+  margin: 0 auto;
+  width: 512px;
+  height: 3px;
+  background-image: linear-gradient(to right, hsla(0,0%,100%,0), hsla(0,0%,100%,.35), hsla(0,0%,100%,0)),
+                    linear-gradient(to right, hsla(211,79%,6%,0), hsla(211,79%,6%,.2), hsla(211,79%,6%,0)),
+                    linear-gradient(to right, hsla(0,0%,100%,0), hsla(0,0%,100%,.35), hsla(0,0%,100%,0));
+  background-size: auto 1px;
+}
+
+#restorePreviousSession {
+  max-width: none;
+  font-size: 90%;
+}
+
+body[narrow] #restorePreviousSession {
+  font-size: 80%;
+}
+
+.launchButton::before {
+  display: block;
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 6px;
+  line-height: 0; /* remove extra vertical space due to non-zero font-size */
+}
+
+#downloads::before {
+  content: url("chrome://browser/content/abouthome/downloads.png");
+}
+
+#bookmarks::before {
+  content: url("chrome://browser/content/abouthome/bookmarks.png");
+}
+
+#history::before {
+  content: url("chrome://browser/content/abouthome/history.png");
+}
+
+#apps::before {
+  content: url("chrome://browser/content/abouthome/apps.png");
+}
+
+#addons::before {
+  content: url("chrome://browser/content/abouthome/addons.png");
+}
+
+#sync::before {
+  content: url("chrome://browser/content/abouthome/sync.png");
+}
+
+#settings::before {
+  content: url("chrome://browser/content/abouthome/settings.png");
+}
+
+#restorePreviousSession::before {
+  content: url("chrome://browser/content/abouthome/restore-large.png");
+  height: 48px;
+  width: 48px;
+  display: inline-block; /* display on same line as text label */
+  vertical-align: middle;
+  margin-bottom: 0;
+  -moz-margin-end: 8px;
+}
+
+#restorePreviousSession:-moz-dir(rtl)::before {
+  transform: scaleX(-1);
+}
+
+body[narrow] #restorePreviousSession::before {
+  content: url("chrome://browser/content/abouthome/restore.png");
+  height: 32px;
+  width: 32px;
+}
+
+#aboutMozilla {
+  display: block;
+  position: relative; /* pin wordmark to edge of document, not of viewport */
+  -moz-box-ordinal-group: 0;
+  opacity: .5;
+  transition: opacity 150ms;
+}
+
+#aboutMozilla:hover {
+  opacity: 1;
+}
+
+#aboutMozilla::before {
+  content: url("chrome://browser/content/abouthome/mozilla.png");
+  display: block;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 69px;
+  height: 19px;
+}
+
+/* [HiDPI]
+ * At resolutions above 1dppx, prefer downscaling the 2x Retina graphics
+ * rather than upscaling the original-size ones (bug 818940).
+ */
+@media not all and (max-resolution: 1dppx) {
+  #brandLogo {
+    background-image: url("chrome://branding/content/about-logo@2x.png");
+  }
+
+  #defaultSnippet1,
+  #defaultSnippet2,
+  #rightsSnippet {
+    background-size: 40px;
+  }
+
+  #defaultSnippet1 {
+    background-image: url("chrome://browser/content/abouthome/snippet1@2x.png");
+  }
+
+  #defaultSnippet2 {
+    background-image: url("chrome://browser/content/abouthome/snippet2@2x.png");
+  }
+
+  .launchButton::before,
+  #aboutMozilla::before {
+    transform: scale(.5);
+    transform-origin: 0 0;
+  }
+
+  .launchButton:-moz-dir(rtl)::before,
+  #aboutMozilla:-moz-dir(rtl)::before {
+    transform: scale(.5) translateX(32px);
+  }
+
+  #downloads::before {
+    content: url("chrome://browser/content/abouthome/downloads@2x.png");
+  }
+
+  #bookmarks::before {
+    content: url("chrome://browser/content/abouthome/bookmarks@2x.png");
+  }
+
+  #history::before {
+    content: url("chrome://browser/content/abouthome/history@2x.png");
+  }
+
+  #apps::before {
+    content: url("chrome://browser/content/abouthome/apps@2x.png");
+  }
+
+  #addons::before {
+    content: url("chrome://browser/content/abouthome/addons@2x.png");
+  }
+
+  #sync::before {
+    content: url("chrome://browser/content/abouthome/sync@2x.png");
+  }
+
+  #settings::before {
+    content: url("chrome://browser/content/abouthome/settings@2x.png");
+  }
+
+  #restorePreviousSession::before {
+    content: url("chrome://browser/content/abouthome/restore-large@2x.png");
+  }
+
+  body[narrow] #restorePreviousSession::before {
+    content: url("chrome://browser/content/abouthome/restore@2x.png");
+  }
+
+  #restorePreviousSession:-moz-dir(rtl)::before {
+    transform: scale(-0.5, 0.5) translateX(24px);
+    transform-origin: top center;
+  }
+
+  #aboutMozilla::before {
+    content: url("chrome://browser/content/abouthome/mozilla@2x.png");
+  }
+}
+

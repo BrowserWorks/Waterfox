@@ -1,0 +1,19 @@
+/* vim: set shiftwidth=2 tabstop=8 autoindent cindent expandtab: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIDOMEvent.idl"
+
+/**
+ * Transition events are defined in:
+ * http://www.w3.org/TR/css3-transitions/#transition-events-
+ * http://dev.w3.org/csswg/css3-transitions/#transition-events-
+ */
+
+[builtinclass, uuid(a37171e0-9f43-41ea-a25c-0b78a3329683)]
+interface nsIDOMTransitionEvent : nsIDOMEvent {
+  readonly attribute DOMString           propertyName;
+  readonly attribute float               elapsedTime;
+  readonly attribute DOMString           pseudoElement;
+};

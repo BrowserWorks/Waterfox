@@ -1,0 +1,75 @@
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+DEPTH	= ..
+# MODULE	= seccmd
+
+REQUIRES = nss nspr libdbm
+
+DIRS = lib  \
+ addbuiltin \
+ atob  \
+ $(BLTEST_SRCDIR) \
+ btoa  \
+ certcgi \
+ certutil  \
+ checkcert  \
+ chktest  \
+ crlutil  \
+ crmftest \
+ dbtest \
+ derdump  \
+ digest  \
+ httpserv  \
+ $(FIPSTEST_SRCDIR)  \
+ $(LOWHASHTEST_SRCDIR)  \
+ listsuites \
+ makepqg  \
+ multinit \
+ ocspclnt  \
+ ocspresp \
+ oidcalc  \
+ p7content  \
+ p7env  \
+ p7sign  \
+ p7verify  \
+ pk12util \
+ pk11gcmtest \
+ pk11mode \
+ pk1sign  \
+ pkix-errcodes \
+ pp  \
+ pwdecrypt \
+ rsaperf \
+ sdrtest \
+ selfserv  \
+ signtool \
+ signver \
+ $(SHLIBSIGN_SRCDIR) \
+ smimetools  \
+ ssltap  \
+ strsclnt \
+ symkeyutil \
+ tests \
+ tstclnt  \
+ vfychain \
+ vfyserv \
+ modutil \
+ $(NULL)
+
+TEMPORARILY_DONT_BUILD = \
+ $(NULL)
+
+# rsaperf  \
+#
+#       needs to look at what needs to happen to make jar build in
+# the binary release environment.
+#
+# perror requires lib/strerror.c which requires the client code installed 
+# to build (requires allxpstr.h)
+#
+DONT_BULD = jar \
+ perror \
+$(NULL)

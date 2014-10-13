@@ -1,0 +1,104 @@
+<?xml version="1.0"?>
+
+<!-- -*- Mode: Java; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- -->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<?xml-stylesheet href="chrome://global/skin/"?>
+<?xml-stylesheet href="chrome://browser/skin/preferences/preferences.css" type="text/css"?> 
+
+<!DOCTYPE dialog [
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+  <!ENTITY % sanitizeDTD SYSTEM "chrome://browser/locale/sanitize.dtd">
+  %brandDTD;
+  %sanitizeDTD;
+]>
+
+<prefwindow id="SanitizeDialog" type="child"
+            xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+            dlgbuttons="accept,cancel,help"
+            ondialoghelp="openPrefsHelp()"
+            style="width: &dialog.width2;;"
+            title="&sanitizePrefs2.title;"
+            onload="gSanitizeDialog.onClearHistoryChanged();">
+
+  <script type="application/javascript" src="chrome://browser/content/utilityOverlay.js"/>
+  <script type="application/javascript" src="chrome://browser/content/preferences/sanitize.js"/>
+
+  <prefpane id="SanitizeDialogPane"
+            helpTopic="prefs-clear-private-data">
+
+    <preferences>
+      <preference id="privacy.clearOnShutdown.history"               name="privacy.clearOnShutdown.history"               type="bool"
+                  onchange="return gSanitizeDialog.onClearHistoryChanged();"/>
+      <preference id="privacy.clearOnShutdown.formdata"              name="privacy.clearOnShutdown.formdata"              type="bool"/>
+      <preference id="privacy.clearOnShutdown.passwords"             name="privacy.clearOnShutdown.passwords"             type="bool"/>
+      <preference id="privacy.clearOnShutdown.downloads"             name="privacy.clearOnShutdown.downloads"             type="bool"/>
+      <preference id="privacy.clearOnShutdown.cookies"               name="privacy.clearOnShutdown.cookies"               type="bool"/>
+      <preference id="privacy.clearOnShutdown.cache"                 name="privacy.clearOnShutdown.cache"                 type="bool"/>
+      <preference id="privacy.clearOnShutdown.offlineApps"           name="privacy.clearOnShutdown.offlineApps"           type="bool"/>
+      <preference id="privacy.clearOnShutdown.sessions"              name="privacy.clearOnShutdown.sessions"              type="bool"/>
+      <preference id="privacy.clearOnShutdown.siteSettings"          name="privacy.clearOnShutdown.siteSettings"          type="bool"/>
+    </preferences>
+
+    <description>&clearDataSettings2.label;</description>
+
+    <groupbox orient="horizontal">
+      <caption label="&historySection.label;"/>
+      <grid flex="1">
+        <columns>
+          <column style="width: &column.width2;"/>
+          <column flex="1"/>
+        </columns>
+        <rows>
+          <row>
+            <checkbox label="&itemHistoryAndDownloads.label;"
+                      accesskey="&itemHistoryAndDownloads.accesskey;"
+                      preference="privacy.clearOnShutdown.history"/>
+            <checkbox label="&itemCookies.label;"
+                      accesskey="&itemCookies.accesskey;"
+                      preference="privacy.clearOnShutdown.cookies"/>
+          </row>
+          <row>
+            <checkbox label="&itemActiveLogins.label;"
+                      accesskey="&itemActiveLogins.accesskey;"
+                      preference="privacy.clearOnShutdown.sessions"/>
+            <checkbox label="&itemCache.label;"
+                      accesskey="&itemCache.accesskey;"
+                      preference="privacy.clearOnShutdown.cache"/>
+          </row>
+          <row>
+            <checkbox label="&itemFormSearchHistory.label;"
+                      accesskey="&itemFormSearchHistory.accesskey;"
+                      preference="privacy.clearOnShutdown.formdata"/>
+          </row>
+        </rows>
+      </grid>
+    </groupbox>
+    <groupbox orient="horizontal">
+      <caption label="&dataSection.label;"/>
+      <grid flex="1">
+        <columns>
+          <column style="width: &column.width2;"/>
+          <column flex="1"/>
+        </columns>
+        <rows>
+          <row>
+            <checkbox label="&itemPasswords.label;"
+                      accesskey="&itemPasswords.accesskey;"
+                      preference="privacy.clearOnShutdown.passwords"/>
+            <checkbox label="&itemOfflineApps.label;"
+                      accesskey="&itemOfflineApps.accesskey;"
+                      preference="privacy.clearOnShutdown.offlineApps"/>
+          </row>
+          <row>
+            <checkbox label="&itemSitePreferences.label;"
+                      accesskey="&itemSitePreferences.accesskey;"
+                      preference="privacy.clearOnShutdown.siteSettings"/>
+          </row>
+        </rows>
+      </grid>
+    </groupbox>
+  </prefpane>
+</prefwindow>

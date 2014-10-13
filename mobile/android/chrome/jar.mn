@@ -1,0 +1,69 @@
+#filter substitution
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+
+chrome.jar:
+% content browser %content/ contentaccessible=yes
+
+* content/about.xhtml                  (content/about.xhtml)
+  content/config.xhtml                 (content/config.xhtml)
+  content/config.js                    (content/config.js)
+  content/aboutAddons.xhtml            (content/aboutAddons.xhtml)
+  content/aboutAddons.js               (content/aboutAddons.js)
+  content/aboutCertError.xhtml         (content/aboutCertError.xhtml)
+  content/aboutDownloads.xhtml         (content/aboutDownloads.xhtml)
+  content/aboutDownloads.js            (content/aboutDownloads.js)
+  content/aboutFeedback.xhtml          (content/aboutFeedback.xhtml)
+  content/aboutFeedback.js             (content/aboutFeedback.js)
+  content/aboutPrivateBrowsing.xhtml   (content/aboutPrivateBrowsing.xhtml)
+  content/aboutPrivateBrowsing.js      (content/aboutPrivateBrowsing.js)
+  content/aboutReader.html             (content/aboutReader.html)
+  content/aboutReader.js               (content/aboutReader.js)
+  content/Readability.js               (content/Readability.js)
+  content/JSDOMParser.js               (content/JSDOMParser.js)
+  content/readerWorker.js              (content/readerWorker.js)
+  content/aboutHome.xhtml              (content/aboutHome.xhtml)
+  content/aboutRights.xhtml            (content/aboutRights.xhtml)
+* content/aboutApps.xhtml              (content/aboutApps.xhtml)
+* content/aboutApps.js                 (content/aboutApps.js)
+  content/blockedSite.xhtml            (content/blockedSite.xhtml)
+  content/languages.properties         (content/languages.properties)
+  content/browser.xul                  (content/browser.xul)
+* content/browser.js                   (content/browser.js)
+  content/bindings/checkbox.xml        (content/bindings/checkbox.xml)
+  content/bindings/settings.xml        (content/bindings/settings.xml)
+  content/downloads.js                 (content/downloads.js)
+  content/netError.xhtml               (content/netError.xhtml)
+  content/SelectHelper.js              (content/SelectHelper.js)
+  content/SelectionHandler.js          (content/SelectionHandler.js)
+* content/WebappRT.js                  (content/WebappRT.js)
+  content/InputWidgetHelper.js         (content/InputWidgetHelper.js)
+  content/WebrtcUI.js                  (content/WebrtcUI.js)
+  content/MemoryObserver.js            (content/MemoryObserver.js)
+  content/ConsoleAPI.js                (content/ConsoleAPI.js)
+  content/PluginHelper.js              (content/PluginHelper.js)
+  content/OfflineApps.js               (content/OfflineApps.js)
+  content/MasterPassword.js            (content/MasterPassword.js)
+  content/FindHelper.js                (content/FindHelper.js)
+  content/PermissionsHelper.js         (content/PermissionsHelper.js)
+  content/FeedHandler.js               (content/FeedHandler.js)
+  content/Feedback.js                  (content/Feedback.js)
+  content/Linkify.js                   (content/Linkify.js)
+  content/ZoomHelper.js                (content/ZoomHelper.js)
+  content/CastingApps.js               (content/CastingApps.js)
+#ifdef MOZ_SERVICES_HEALTHREPORT
+  content/aboutHealthReport.xhtml      (content/aboutHealthReport.xhtml)
+* content/aboutHealthReport.js         (content/aboutHealthReport.js)
+#endif
+#ifdef MOZ_DEVICES
+  content/aboutDevices.xhtml           (content/aboutDevices.xhtml)
+  content/aboutDevices.js              (content/aboutDevices.js)
+#endif
+
+% content branding %content/branding/
+
+% override chrome://global/content/config.xul chrome://browser/content/config.xhtml
+% override chrome://global/content/netError.xhtml chrome://browser/content/netError.xhtml
+% override chrome://mozapps/content/extensions/extensions.xul chrome://browser/content/aboutAddons.xhtml

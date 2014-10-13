@@ -1,0 +1,15 @@
+This is sqlite 3.8.4.2
+
+-- Ryan VanderMeulen <ryanvm@gmail.com>, 03/2014
+
+See http://www.sqlite.org/ for more info.
+
+We have a mozilla-specific Makefile.in in src/ (normally no
+Makefile.in there) that we use to build.
+
+To move to a new version:
+
+Copy the sqlite3.h and sqlite3.c files from the amalgamation of sqlite.
+
+Be sure to update SQLITE_VERSION accordingly in $(topsrcdir)/configure.in as
+well as the version number at the top of this file.

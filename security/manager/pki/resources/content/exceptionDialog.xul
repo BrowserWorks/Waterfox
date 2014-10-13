@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<!DOCTYPE dialog SYSTEM "chrome://pippki/locale/certManager.dtd">
+
+<dialog id="exceptiondialog"
+        windowtype="mozilla:exceptiondialog"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" 
+        title="&exceptionMgr.title;"
+        buttons="cancel,extra1,extra2"
+        buttonlabelextra1="&exceptionMgr.exceptionButton.label;"
+        buttonaccesskeyextra1="&exceptionMgr.exceptionButton.accesskey;"
+        style="width: 500px; height: 480px;"
+        onload="initExceptionDialog();"
+        ondialogextra1="addException();"
+        ondialogextra2="checkCert();"
+        persist="screenX screenY width height"
+        defaultButton="extra2">
+
+  <stringbundleset id="stringbundleset">
+    <stringbundle id="pippki_bundle" src="chrome://pippki/locale/pippki.properties"/>
+    <stringbundle id="brand_bundle" src="chrome://branding/locale/brand.properties"/>
+  </stringbundleset>
+
+  <script type="application/javascript" src="chrome://pippki/content/pippki.js"/>
+  <script type="application/javascript" src="chrome://pippki/content/exceptionDialog.js"/>
+  
+  <hbox>
+    <vbox>
+#ifdef MOZ_WIDGET_GTK
+      <image src="moz-icon://stock/gtk-dialog-warning?size=dialog"/>
+#else
+      <image src="chrome://global/skin/icons/warning-large.png"/>
+#endif
+      <spacer flex="1"/>
+    </vbox>
+    <vbox flex="1">
+      <!-- Note that because of the styling, there must be no whitespace within
+      the description tags -->
+      <description id="warningText"
+                   style="white-space: pre-wrap"/>
+      <description id="warningSupplemental"
+                   style="font-weight: bold; white-space: pre-wrap;"
+                   >&exceptionMgr.supplementalWarning;</description>
+    </vbox>
+  </hbox>
+
+  <groupbox id="locationGroupBox">
+    <caption label="&exceptionMgr.certlocation.caption2;"/>
+    <hbox align="center">
+      <label control="locationTextBox" value="&exceptionMgr.certlocation.url;"/>
+      <textbox id="locationTextBox" flex="1" oninput="handleTextChange();"
+               value="https://" class="uri-element"/>
+      <button id="checkCertButton" disabled="true" dlgtype="extra2"
+              accesskey="&exceptionMgr.certlocation.accesskey;"
+              label="&exceptionMgr.certlocation.download;"/>
+    </hbox>
+  </groupbox>
+
+  <groupbox id="certStatusGroupBox" flex="1">
+    <caption label="&exceptionMgr.certstatus.caption;"/>
+    <vbox  style="overflow: auto;" flex="1">
+      <hbox>
+        <description id="headerDescription" style="white-space: pre-wrap;"
+                     flex="1"/>
+        <vbox>
+          <button id="viewCertButton" label="&exceptionMgr.certstatus.viewCert;"
+                  accesskey="&exceptionMgr.certstatus.accesskey;"
+                  disabled="true" oncommand="viewCertButtonClick();"/>
+        </vbox>
+      </hbox>      
+      <description id="statusDescription"
+                   style="font-weight: bold; padding-bottom: 1em;"/>
+      <description id="statusLongDescription" style="white-space: pre-wrap;"/>
+      <description id="status2Description"
+                   style="font-weight: bold; padding-bottom: 1em;"/>
+      <description id="status2LongDescription" style="white-space: pre-wrap;"/>
+      <description id="status3Description" 
+                   style="font-weight: bold; padding-bottom: 1em;"/>
+      <description id="status3LongDescription" style="white-space: pre-wrap;"/>
+      <spacer flex="1"/>
+    </vbox>
+    <checkbox id="permanent" disabled="true"
+              label="&exceptionMgr.permanent.label;"
+              accesskey="&exceptionMgr.permanent.accesskey;"/>
+  </groupbox>
+</dialog>

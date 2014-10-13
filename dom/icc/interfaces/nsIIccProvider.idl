@@ -1,0 +1,114 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIDOMDOMRequest;
+interface nsIDOMMozIccInfo;
+interface nsIDOMWindow;
+
+[scriptable, uuid(7c0ada3d-d8d4-493e-9243-fa3df39855e4)]
+interface nsIIccListener : nsISupports
+{
+  void notifyStkCommand(in DOMString aMessage);
+  void notifyStkSessionEnd();
+  void notifyCardStateChanged();
+  void notifyIccInfoChanged();
+};
+
+/**
+ * XPCOM component (in the content process) that provides the ICC information.
+ */
+[scriptable, uuid(7c67ab92-52a3-4e11-995c-c0ad2f66c4cb)]
+interface nsIIccProvider : nsISupports
+{
+  /**
+   * Called when a content process registers receiving unsolicited messages from
+   * RadioInterfaceLayer in the chrome process. Only a content process that has
+   * the 'mobileconnection' permission is allowed to register.
+   */
+  void registerIccMsg(in unsigned long clientId, in nsIIccListener listener);
+  void unregisterIccMsg(in unsigned long clientId, in nsIIccListener listener);
+
+  /**
+   * UICC Information
+   */
+  nsIDOMMozIccInfo getIccInfo(in unsigned long clientId);
+
+  /**
+   * Card State
+   */
+  DOMString getCardState(in unsigned long clientId);
+
+  /**
+   * STK interfaces.
+   */
+  void sendStkResponse(in unsigned long clientId,
+                       in nsIDOMWindow window,
+                       in jsval command,
+                       in jsval response);
+  void sendStkMenuSelection(in unsigned long clientId,
+                            in nsIDOMWindow window,
+                            in unsigned short itemIdentifier,
+                            in boolean helpRequested);
+  void sendStkTimerExpiration(in unsigned long clientId,
+                              in nsIDOMWindow window,
+                              in jsval timer);
+  void sendStkEventDownload(in unsigned long clientId,
+                            in nsIDOMWindow window,
+                            in jsval event);
+
+  /**
+   * Card lock interfaces.
+   */
+  nsIDOMDOMRequest getCardLockState(in unsigned long clientId,
+                                    in nsIDOMWindow window,
+                                    in DOMString lockType);
+  nsIDOMDOMRequest unlockCardLock(in unsigned long clientId,
+                                  in nsIDOMWindow window,
+                                  in jsval info);
+  nsIDOMDOMRequest setCardLock(in unsigned long clientId,
+                               in nsIDOMWindow window,
+                               in jsval info);
+  nsIDOMDOMRequest getCardLockRetryCount(in unsigned long clientId,
+                                         in nsIDOMWindow window,
+                                         in DOMString lockType);
+
+  /**
+   * Phonebook interfaces.
+   */
+  nsIDOMDOMRequest readContacts(in unsigned long clientId,
+                                in nsIDOMWindow window,
+                                in DOMString contactType);
+
+  nsIDOMDOMRequest updateContact(in unsigned long clientId,
+                                 in nsIDOMWindow window,
+                                 in DOMString contactType,
+                                 in jsval contact,
+                                 in DOMString pin2);
+
+  /**
+   * Secure Card Icc communication channel
+   */
+  nsIDOMDOMRequest iccOpenChannel(in unsigned long clientId,
+                                  in nsIDOMWindow window,
+                                  in DOMString aid);
+
+  nsIDOMDOMRequest iccExchangeAPDU(in unsigned long clientId,
+                                   in nsIDOMWindow window,
+                                   in long channel,
+                                   in jsval apdu);
+
+  nsIDOMDOMRequest iccCloseChannel(in unsigned long clientId,
+                                   in nsIDOMWindow window,
+                                   in long channel);
+
+  /**
+   * Helpers
+   */
+  nsIDOMDOMRequest matchMvno(in unsigned long clientId,
+                             in nsIDOMWindow window,
+                             in DOMString mvnoType,
+                             in DOMString mvnoData);
+};

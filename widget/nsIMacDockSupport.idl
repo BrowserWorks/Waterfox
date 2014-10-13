@@ -1,0 +1,39 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIStandaloneNativeMenu;
+
+/**
+ * Allow applications to interface with the Mac OS X Dock.
+ *
+ * Applications may indicate progress on their Dock icon. Only one such
+ * progress indicator is available to the entire application.
+ */
+
+[scriptable, uuid(8BE66B0C-5F71-4B74-98CF-6C2551B999B1)]
+interface nsIMacDockSupport : nsISupports
+{
+  /**
+   * Menu to use for application-specific dock menu items.
+   */
+  attribute nsIStandaloneNativeMenu dockMenu;
+
+  /**
+   * Activate the application. This should be used by an application to
+   * activate itself when a dock menu is selected as selection of a dock menu
+   * item does not automatically activate the application.
+   *
+   * @param aIgnoreOtherApplications If false, the application is activated
+   *        only if no other application is currently active. If true, the
+   *        application activates regardless. 
+   */
+  void activateApplication(in boolean aIgnoreOtherApplications);
+
+  /**
+   * Text used to badge the dock tile.
+   */
+  attribute AString badgeText;
+};

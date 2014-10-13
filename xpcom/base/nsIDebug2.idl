@@ -1,0 +1,30 @@
+/* vim: set shiftwidth=4 tabstop=8 autoindent cindent expandtab: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* interface to expose information about calls to NS_DebugBreak */
+
+#include "nsIDebug.idl"
+
+[scriptable, uuid(6cb17fec-cdf7-4f7c-b267-37a0acaa9cf1)]
+interface nsIDebug2 : nsIDebug
+{
+    /**
+     * Whether XPCOM was compiled with DEBUG defined.  This often
+     * correlates to whether other code (e.g., Firefox, XULRunner) was
+     * compiled with DEBUG defined.
+     */
+    readonly attribute boolean isDebugBuild;
+
+    /**
+     * The number of assertions since process start.
+     */
+    readonly attribute long assertionCount;
+
+    /**
+     * Whether a debugger is currently attached.
+     * Supports Windows + Mac
+     */
+    readonly attribute bool isDebuggerAttached;
+};

@@ -1,0 +1,55 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* interface for managing user and user-agent style sheets */
+
+#include "nsISupports.idl"
+
+interface nsIURI;
+
+/*
+ * nsIStyleSheetService allows extensions or embeddors to add to the
+ * built-in list of user or agent style sheets.
+ */
+
+[scriptable, uuid(1f42a6a2-ab0a-45d4-8a96-396f58ea6c6d)]
+interface nsIStyleSheetService : nsISupports
+{
+  const unsigned long AGENT_SHEET = 0;
+  const unsigned long USER_SHEET = 1;
+  const unsigned long AUTHOR_SHEET = 2;
+
+  /**
+   * Synchronously loads a style sheet from |sheetURI| and adds it to the list
+   * of user or agent style sheets.
+   *
+   * A user sheet loaded via this API will come before userContent.css and
+   * userChrome.css in the cascade (so the rules in it will have lower
+   * precedence than rules in those sheets).
+   *
+   * An agent sheet loaded via this API will come after ua.css in the cascade
+   * (so the rules in it will have higher precedence than rules in ua.css).
+   *
+   * The relative ordering of two user or two agent sheets loaded via
+   * this API is undefined.
+   *
+   * Sheets added via this API take effect on all documents, including
+   * already-loaded ones, immediately.
+   */
+  void loadAndRegisterSheet(in nsIURI sheetURI, in unsigned long type);
+
+  /**
+   * Returns true if a style sheet at |sheetURI| has previously been
+   * added to the list of style sheets specified by |type|.
+   */
+  boolean sheetRegistered(in nsIURI sheetURI, in unsigned long type);
+
+  /**
+   * Remove the style sheet at |sheetURI| from the list of style sheets
+   * specified by |type|.  The removal takes effect immediately, even for
+   * already-loaded documents.
+   */
+  void unregisterSheet(in nsIURI sheetURI, in unsigned long type);
+};

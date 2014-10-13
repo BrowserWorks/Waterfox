@@ -1,0 +1,31 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+EXPORTS.mozilla += [
+    'GfxMessageUtils.h'
+]
+
+EXPORTS.mozilla.gfx += [
+    'SharedDIB.h',
+]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
+    EXPORTS.mozilla.gfx += [
+        'SharedDIBSurface.h',
+        'SharedDIBWin.h',
+    ]
+    SOURCES += [
+        'SharedDIBSurface.cpp',
+        'SharedDIBWin.cpp',
+    ]
+
+SOURCES += [
+    'SharedDIB.cpp',
+]
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+FINAL_LIBRARY = 'xul'

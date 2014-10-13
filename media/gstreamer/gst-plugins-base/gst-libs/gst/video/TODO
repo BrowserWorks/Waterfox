@@ -1,0 +1,51 @@
+Base Video Classes TODO
+
+Main goal:
+
+ Make the video encoder/decoder base classes more consistent with the
+other GStreamer API, especially with the audio encoder/decoder base
+classes.
+
+API:
+
+ The API should be named similar, the base classes should be used
+similar by the sub-classes, the behaviour of the base classes should
+be similar.
+ Currently there are many, mostly small, differences between the audio
+and video base classes API. Things like GstVideoState should be merged
+with the stuff we have in 0.11 to make the API the same in 0.11 and
+0.10 as far as possible, things like GstVideoInfo might make sense to
+be backported (at least partially).
+
+
+Specifics:
+ * Use a GInstancePrivate for extensability.
+
+ * Try to move more common video objects to video.[ch]
+
+Known bugs:
+ https://bugzilla.gnome.org/show_bug.cgi?id=664127
+  [basevideodecoder] Add separate drain vfunc and differentiate
+    between hard/soft reset in reset vfunc
+
+ https://bugzilla.gnome.org/show_bug.cgi?id=660770
+  Doesn't support handling of "partial" frames
+
+ https://bugzilla.gnome.org/show_bug.cgi?id=654294
+  Impossible to flush pending frames in ::set_format
+
+ https://bugzilla.gnome.org/show_bug.cgi?id=658241
+  add API to handle QoS events and dropping logic
+
+ https://bugzilla.gnome.org/show_bug.cgi?id=667653
+  Autodetect multicore/multithread processors
+
+ https://bugzilla.gnome.org/show_bug.cgi?id=617021
+  Add support for QoS messages to -bad decoders and other elements
+
+
+Peripheral issues
+ https://bugzilla.gnome.org/show_bug.cgi?id=663262
+  theoraenc: spurious encoder resets due to unstable upstream
+  timestamps cause quality issues
+  => Investigate how to specify/handle variable framerates.

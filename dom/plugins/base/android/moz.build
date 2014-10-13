@@ -1,0 +1,39 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+EXPORTS += [
+    'android_npapi.h',
+    'ANPKeyCodes.h',
+]
+
+SOURCES += [
+    'ANPAudio.cpp',
+    'ANPBitmap.cpp',
+    'ANPEvent.cpp',
+    'ANPLog.cpp',
+    'ANPMatrix.cpp',
+    'ANPNativeWindow.cpp',
+    'ANPOpenGL.cpp',
+    'ANPSurface.cpp',
+    'ANPSystem.cpp',
+    'ANPVideo.cpp',
+    'ANPWindow.cpp',
+]
+
+FAIL_ON_WARNINGS = True
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+FINAL_LIBRARY = 'gklayout'
+LOCAL_INCLUDES += [
+    '/dom/plugins/base',
+    '/dom/plugins/base/android/include',
+    '/gfx/gl',
+    '/widget/android',
+    '/widget/xpwidgets',
+]
+
+DEFINES['MOZ_APP_NAME'] = '"%s"' % CONFIG['MOZ_APP_NAME']

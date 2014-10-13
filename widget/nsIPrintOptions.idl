@@ -1,0 +1,94 @@
+/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+#include "nsIPrintSettings.idl"
+
+%{ C++
+struct nsFont;
+%}
+
+interface nsIStringEnumerator;
+
+/**
+ * Native types
+ */
+[ref] native nsNativeFontRef(nsFont);
+
+/**
+ * Print options interface
+ *
+ * Do not attempt to freeze this API - it still needs lots of work. Consult
+ * John Keiser <jkeiser@netscape.com> and Roland Mainz
+ * <roland.mainz@informatik.med.uni-giessen.de> for futher details.
+ */
+[scriptable, uuid(92597c2b-109b-40bb-8f93-9b9acfa31de8)]
+
+interface nsIPrintOptions : nsISupports
+{
+  /**
+   * Show Native Print Options dialog, this may not be supported on all platforms
+   */
+  void ShowPrintSetupDialog(in nsIPrintSettings aThePrintSettings);
+
+  /**
+   * Creates a new PrintSettnigs Object
+   * and initializes it from prefs
+   */
+  nsIPrintSettings CreatePrintSettings();
+
+  /**
+   * Get a prefixed integer pref 
+   */
+  int32_t getPrinterPrefInt(in nsIPrintSettings aPrintSettings, in wstring
+                            aPrefName);
+
+  /**
+   * display Printer Job Properties dialog
+   */
+  void displayJobProperties (in wstring aPrinter, in nsIPrintSettings
+                             aPrintSettings, out boolean aDisplayed);
+
+  /**
+   * Native data constants
+   */
+  const short kNativeDataPrintRecord        = 0;
+
+  [noscript] voidPtr GetNativeData(in short aDataType);
+};
+
+[scriptable, uuid(5e738fff-404c-4c94-9189-e8f2cce93e94)]
+
+interface nsIPrinterEnumerator : nsISupports
+{
+  /**
+   * The name of the system default printer. This name should also be
+   * present in printerNameList below. This is not necessarily gecko's
+   * default printer; see nsIPrintSettingsService.defaultPrinterName
+   * for that.
+   */
+  readonly attribute wstring defaultPrinterName;
+
+  /**
+   * Initializes certain settings from the native printer into the PrintSettings
+   * These settings include, but are not limited to:
+   *   Page Orientation
+   *   Page Size
+   *   Number of Copies
+   */
+  void initPrintSettingsFromPrinter(in wstring aPrinterName, in nsIPrintSettings aPrintSettings);
+
+  /**
+   * The list of printer names
+   */
+  readonly attribute nsIStringEnumerator printerNameList;
+
+  /*  takes printer selected and will display job properties dlg for that printer
+   *  returns true if dialog displays
+   */
+  void displayPropertiesDlg(in wstring aPrinter, in nsIPrintSettings aPrintSettings);
+
+};
+

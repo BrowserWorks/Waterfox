@@ -1,0 +1,105 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+@namespace html url("http://www.w3.org/1999/xhtml");
+
+/**** folder menulist ****/
+.folder-icon > .menulist-label-box > .menulist-icon,
+.folder-icon > .menu-iconic-left > .menu-iconic-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.folder-icon > .menu-iconic-left {
+  display: -moz-box;
+}
+
+.folder-icon {
+  list-style-image: url("chrome://global/skin/tree/folder.png") !important;
+}
+
+@media (min-resolution: 2dppx) {
+  .folder-icon {
+    list-style-image: url("chrome://global/skin/tree/folder@2x.png") !important;
+  }
+}
+
+.menulist-icon {
+  margin: 0 !important;
+}
+
+/**** expanders ****/
+
+.expander-up,
+.expander-down {
+  -moz-appearance: none;
+  margin: 0;
+  margin-left: 8px;
+  padding: 0;
+  min-width: 0;
+}
+
+.expander-up {
+  list-style-image: url("chrome://browser/skin/places/expander-open.png");
+}
+
+.expander-down {
+  list-style-image: url("chrome://browser/skin/places/expander-closed.png");
+}
+
+.expander-down:hover:active {
+  list-style-image: url("chrome://browser/skin/places/expander-closed-active.png");
+}
+
+.expander-up:hover:active {
+  list-style-image: url("chrome://browser/skin/places/expander-open-active.png");
+}
+
+#editBookmarkPanelContent {
+  min-width: 23em;
+}
+
+#editBMPanel_folderTree {
+  margin: 6px 4px 0 4px;
+}
+
+/* Hide the value column of the tag autocomplete popup
+ * leaving only the comment column visible. This is
+ * so that only the tag being edited is shown in the
+ * popup.
+ */
+#editBMPanel_tagsField #treecolAutoCompleteValue {
+  visibility: collapse;
+}
+
+
+/* ----- BOOKMARK PANEL DROPDOWN MENU ITEMS ----- */
+
+#editBMPanel_folderMenuList[selectedIndex="0"],
+#editBMPanel_toolbarFolderItem {
+  list-style-image: url("chrome://browser/skin/places/bookmarksToolbar.png") !important;  
+}
+
+#editBMPanel_folderMenuList[selectedIndex="1"],
+#editBMPanel_bmRootItem {
+  list-style-image: url("chrome://browser/skin/places/bookmarksMenu.png") !important;  
+}
+
+#editBMPanel_folderMenuList[selectedIndex="2"],
+#editBMPanel_unfiledRootItem {
+  list-style-image: url("chrome://browser/skin/places/unfiledBookmarks.png") !important;  
+}
+
+@media (min-resolution: 2dppx) {
+  #editBMPanel_folderMenuList[selectedIndex="0"],
+  #editBMPanel_toolbarFolderItem {
+    list-style-image: url("chrome://browser/skin/places/bookmarksToolbar@2x.png") !important;
+  }
+
+  #editBMPanel_folderMenuList[selectedIndex="2"],
+  #editBMPanel_unfiledRootItem {
+    list-style-image: url("chrome://browser/skin/places/unfiledBookmarks@2x.png") !important;
+  }
+}

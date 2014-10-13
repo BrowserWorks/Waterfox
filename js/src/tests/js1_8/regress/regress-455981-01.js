@@ -1,0 +1,36 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+//-----------------------------------------------------------------------------
+var BUGNUMBER = 455981;
+var summary = 'Do not assert: entry->localKind == JSLOCAL_ARG';
+var actual = '';
+var expect = '';
+
+
+//-----------------------------------------------------------------------------
+test();
+//-----------------------------------------------------------------------------
+
+function test()
+{
+  enterFunc ('test');
+  printBugNumber(BUGNUMBER);
+  printStatus (summary);
+
+  expect = 'SyntaxError: duplicate argument names not allowed in this context';
+
+  try
+  {
+    eval('(function ({a, b, c, d, e, f, g, h, q}, q) { })');
+  }
+  catch(ex)
+  {
+    actual = ex + '';
+  }
+  reportCompare(expect, actual, summary);
+
+  exitFunc ('test');
+}

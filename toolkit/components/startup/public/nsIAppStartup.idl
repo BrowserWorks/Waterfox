@@ -1,0 +1,192 @@
+/* -*- Mode: IDL; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsICmdLineService;
+
+[scriptable, uuid(bc0cb41f-4924-4c69-a65b-e35225a8650f)]
+
+interface nsIAppStartup : nsISupports
+{
+    /**
+     * Create the hidden window.
+     */
+    void createHiddenWindow();
+
+    /**
+     * Destroys the hidden window. This will have no effect if the hidden window
+     * has not yet been created.
+     */
+    void destroyHiddenWindow();
+
+    /**
+     * Runs an application event loop: normally the main event pump which
+     * defines the lifetime of the application. If there are no windows open
+     * and no outstanding calls to enterLastWindowClosingSurvivalArea this
+     * method will exit immediately.
+     *
+     * @returnCode NS_SUCCESS_RESTART_APP
+     *             This return code indicates that the application should be
+     *             restarted because quit was called with the eRestart flag.
+
+     * @returnCode NS_SUCCESS_RESTART_METRO_APP
+     *             This return code indicates that the application should be
+     *             restarted in metro because quit was called with the
+     *             eRestartTouchEnviroment flag.
+     */
+    void run();
+
+    /**
+     * There are situations where all application windows will be
+     * closed but we don't want to take this as a signal to quit the
+     * app. Bracket the code where the last window could close with
+     * these.
+     */
+    void enterLastWindowClosingSurvivalArea();
+    void exitLastWindowClosingSurvivalArea();
+
+    /**
+     * Startup Crash Detection
+     *
+     * Keeps track of application startup begining and success using flags to
+     * determine whether the application is crashing on startup.
+     * When the number of crashes crosses the acceptable threshold, safe mode
+     * or other repair procedures are performed.
+     */
+
+    /**
+     * Whether automatic safe mode is necessary at this time.  This gets set
+     * in trackStartupCrashBegin.
+     *
+     * @see trackStartupCrashBegin
+     */
+    readonly attribute boolean automaticSafeModeNecessary;
+
+    /**
+     * Restart the application in safe mode
+     * @param aQuitMode
+     *        This parameter modifies how the app is shutdown.
+     * @see nsIAppStartup::quit
+     */
+    void restartInSafeMode(in uint32_t aQuitMode);
+
+    /**
+     * If the last startup crashed then increment a counter.
+     * Set a flag so on next startup we can detect whether TrackStartupCrashEnd
+     * was called (and therefore the application crashed).
+     * @return whether safe mode is necessary
+     */
+    bool trackStartupCrashBegin();
+
+    /**
+     * We have succesfully started without crashing. Clear flags that were
+     * tracking past crashes.
+     */
+    void trackStartupCrashEnd();
+
+    /**
+     * The following flags may be passed as the aMode parameter to the quit
+     * method.  One and only one of the "Quit" flags must be specified.  The
+     * eRestart flag may be bit-wise combined with one of the "Quit" flags to
+     * cause the application to restart after it quits.
+     */
+
+    /**
+     * Attempt to quit if all windows are closed.
+     */
+    const uint32_t eConsiderQuit = 0x01;
+
+    /**
+     * Try to close all windows, then quit if successful.
+     */
+    const uint32_t eAttemptQuit = 0x02;
+
+    /**
+     * Quit, damnit!
+     */
+    const uint32_t eForceQuit = 0x03;
+
+    /**
+     * Restart the application after quitting.  The application will be
+     * restarted with the same profile and an empty command line.
+     */
+    const uint32_t eRestart = 0x10; 
+
+    /**
+     * When restarting attempt to start in the i386 architecture. Only supported
+     * on OSX.
+     */
+    const uint32_t eRestarti386 = 0x20;
+
+    /**
+     * When restarting attempt to start in the x86_64 architecture. Only
+     * supported on OSX.
+     */
+    const uint32_t eRestartx86_64 = 0x40;
+
+    /**
+     * Restart the application in a touch-optimized environment (such as Metro)
+     * after quitting. The application will be restarted with the same profile
+     * and an empty command line.
+     */
+    const uint32_t eRestartTouchEnvironment = 0x80;
+
+    /**
+     * Exit the event loop, and shut down the app.
+     *
+     * @param aMode
+     *        This parameter modifies how the app is shutdown, and it is
+     *        constructed from the constants defined above.
+     */
+    void quit(in uint32_t aMode);
+
+    /**
+     * True if the application is in the process of shutting down.
+     */
+    readonly attribute boolean shuttingDown;
+
+    /**
+     * True if the application is in the process of starting up.
+     *
+     * Startup is complete once all observers of final-ui-startup have returned.
+     */
+    readonly attribute boolean startingUp;
+
+    /**
+     * Mark the startup as completed.
+     *
+     * Called at the end of startup by nsAppRunner.
+     */
+    [noscript] void doneStartingUp();
+
+    /**
+     * True if the application is being restarted
+     */
+    readonly attribute boolean restarting;
+
+    /**
+     * True if this is the startup following restart, i.e. if the application
+     * was restarted using quit(eRestart*).
+     */
+    readonly attribute boolean wasRestarted;
+
+    /**
+     * True if the application is being restarted in a touch-optimized
+     * environment (such as Metro).
+     */
+    readonly attribute boolean restartingTouchEnvironment;
+
+    /** 
+     * Returns an object with main, process, firstPaint, sessionRestored properties.
+     * Properties may not be available depending on platform or application
+     */
+    [implicit_jscontext] jsval getStartupInfo();
+
+    /**
+     * True if startup was interrupted by an interactive prompt.
+     */
+    attribute boolean interrupted;
+};

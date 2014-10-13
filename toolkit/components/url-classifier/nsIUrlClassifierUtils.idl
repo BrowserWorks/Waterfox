@@ -1,0 +1,24 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+/**
+ * Some utility methods used by the url classifier.
+ */
+
+interface nsIURI;
+
+[scriptable, uuid(e4f0e59c-b922-48b0-a7b6-1735c1f96fed)]
+interface nsIUrlClassifierUtils : nsISupports
+{
+  /**
+   * Get the lookup string for a given URI.  This normalizes the hostname,
+   * url-decodes the string, and strips off the protocol.
+   *
+   * @param uri URI to get the lookup key for.
+   *
+   * @returns String containing the canonicalized URI.
+   */
+  ACString getKeyForURI(in nsIURI uri);
+};

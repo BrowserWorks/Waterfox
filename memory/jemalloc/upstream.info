@@ -1,0 +1,2 @@
+UPSTREAM_REPO=https://github.com/jemalloc/jemalloc
+UPSTREAM_COMMIT=3.6.0

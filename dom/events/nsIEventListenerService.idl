@@ -1,0 +1,106 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIDOMEventListener;
+interface nsIDOMEventTarget;
+
+/**
+ * An instance of this interface describes how an event listener
+ * was added to an event target.
+ */
+[scriptable, uuid(c4776eb7-05bc-49ce-a0ca-6213a346d53a)]
+interface nsIEventListenerInfo : nsISupports
+{
+  /**
+   * The type of the event for which the listener was added.
+   * Null if the listener is for all the events.
+   */
+  readonly attribute AString type;
+  readonly attribute boolean capturing;
+  readonly attribute boolean allowsUntrusted;
+  readonly attribute boolean inSystemEventGroup;
+
+  /**
+   * The underlying JS object of the event listener, if this listener
+   * has one.  Null otherwise.
+   */
+  [implicit_jscontext]
+  readonly attribute jsval listenerObject;
+
+  /**
+   * Tries to serialize event listener to a string.
+   * Returns null if serialization isn't possible
+   * (for example with C++ listeners).
+   */
+  AString toSource();
+
+  /**
+   * If jsdIDebuggerService is active and the listener is implemented in JS,
+   * this returns the listener as a jsdIValue. Otherwise null.
+   */
+  nsISupports getDebugObject();
+};
+
+[scriptable, uuid(f6964bfb-dabe-4cab-9733-be0ee2bf8171)]
+interface nsIEventListenerService : nsISupports
+{
+  /**
+   * Returns an array of nsIEventListenerInfo objects.
+   * If aEventTarget doesn't have any listeners, this returns null.
+   */
+  void getListenerInfoFor(in nsIDOMEventTarget aEventTarget,
+                          [optional] out unsigned long aCount,
+                          [retval, array, size_is(aCount)] out
+                            nsIEventListenerInfo aOutArray);
+
+  /**
+   * Returns an array of event targets.
+   * aEventTarget will be at index 0.
+   * The objects are the ones that would be used as DOMEvent.currentTarget while
+   * dispatching an event to aEventTarget
+   * @note Some events, especially 'load', may actually have a shorter
+   *       event target chain than what this methods returns.
+   */
+  void getEventTargetChainFor(in nsIDOMEventTarget aEventTarget,
+                              [optional] out unsigned long aCount,
+                              [retval, array, size_is(aCount)] out
+                                nsIDOMEventTarget aOutArray);
+
+  /**
+   * Returns true if a event target has any listener for the given type.
+   */
+  boolean hasListenersFor(in nsIDOMEventTarget aEventTarget,
+                          in DOMString aType);
+
+  /**
+   * Add a system-group eventlistener to a event target.
+   */
+  void addSystemEventListener(in nsIDOMEventTarget target,
+                              in DOMString type,
+                              in nsIDOMEventListener listener,
+                              in boolean useCapture);
+
+  /**
+   * Remove a system-group eventlistener from a event target.
+   */
+  void removeSystemEventListener(in nsIDOMEventTarget target,
+                                 in DOMString type,
+                                 in nsIDOMEventListener listener,
+                                 in boolean useCapture);
+
+  void addListenerForAllEvents(in nsIDOMEventTarget target,
+                               in nsIDOMEventListener listener,
+                               [optional] in boolean aUseCapture,
+                               [optional] in boolean aWantsUntrusted,
+                               [optional] in boolean aSystemEventGroup);
+
+  void removeListenerForAllEvents(in nsIDOMEventTarget target,
+                                  in nsIDOMEventListener listener,
+                                  [optional] in boolean aUseCapture,
+                                  [optional] in boolean aSystemEventGroup);
+};
+

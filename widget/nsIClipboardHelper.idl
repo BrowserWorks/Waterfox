@@ -1,0 +1,42 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+#include "nsIClipboard.idl"
+
+%{ C++
+#include "nsString.h" // needed for AString -> nsAString, unfortunately
+%}
+
+interface nsIDOMDocument;
+
+/**
+ * helper service for common uses of nsIClipboard.
+ */
+
+[scriptable, uuid(c9d5a750-c3a8-11e1-9b21-0800200c9a66)]
+interface nsIClipboardHelper : nsISupports
+{
+
+  /**
+   * copy string to given clipboard
+   *
+   * @param aString, the string to copy to the clipboard
+   * @param aDoc, the source document for the string, if available
+   * @param aClipboardID, the ID of the clipboard to copy to
+   *        (eg. kSelectionClipboard -- see nsIClipboard.idl)
+   */
+  void copyStringToClipboard(in AString aString, in long aClipboardID, [optional] in nsIDOMDocument aDoc);
+
+  /**
+   * copy string to (default) clipboard
+   *
+   * @param aString, the string to copy to the clipboard
+   * @param aDoc, the source document for the string, if available
+   */
+  void copyString(in AString aString, [optional] in nsIDOMDocument aDoc);
+
+};

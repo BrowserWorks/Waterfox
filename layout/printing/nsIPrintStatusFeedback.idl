@@ -1,0 +1,21 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ 
+#include "nsISupports.idl"
+
+interface nsIDocShell;
+interface nsIDOMWindow;
+
+[scriptable, uuid(e439d3eb-b1ed-449c-aaf7-c693e399b16f)]
+interface nsIPrintStatusFeedback : nsISupports {
+
+	void showStatusString(in wstring status);
+	void startMeteors();
+	void stopMeteors();
+	void showProgress(in long percent);
+	[noscript] void setDocShell(in nsIDocShell shell, in nsIDOMWindow window);
+	void closeWindow();
+};
+

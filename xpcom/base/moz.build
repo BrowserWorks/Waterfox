@@ -1,0 +1,158 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+XPIDL_SOURCES += [
+    'nsIConsoleListener.idl',
+    'nsIConsoleMessage.idl',
+    'nsIConsoleService.idl',
+    'nsICycleCollectorListener.idl',
+    'nsIDebug.idl',
+    'nsIDebug2.idl',
+    'nsIErrorService.idl',
+    'nsIException.idl',
+    'nsIGZFileWriter.idl',
+    'nsIInterfaceRequestor.idl',
+    'nsIMemory.idl',
+    'nsIMemoryInfoDumper.idl',
+    'nsIMemoryReporter.idl',
+    'nsIMessageLoop.idl',
+    'nsIMutable.idl',
+    'nsIProgrammingLanguage.idl',
+    'nsISecurityConsoleMessage.idl',
+    'nsIStatusReporter.idl',
+    'nsISupports.idl',
+    'nsIUUIDGenerator.idl',
+    'nsIVersionComparator.idl',
+    'nsIVisualEventTracer.idl',
+    'nsIWeakReference.idl',
+    'nsrootidl.idl',
+]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+    XPIDL_SOURCES += [
+        'nsIMacUtils.idl',
+    ]
+
+XPIDL_MODULE = 'xpcom_base'
+
+EXPORTS += [
+    'ErrorList.h',
+    'nsAgg.h',
+    'nsAutoPtr.h',
+    'nsAutoRef.h',
+    'nsCom.h',
+    'nscore.h',
+    'nsCycleCollector.h',
+    'nsDebugImpl.h',
+    'nsError.h',
+    'nsGZFileWriter.h',
+    'nsIID.h',
+    'nsInterfaceRequestorAgg.h',
+    'nsISizeOf.h',
+    'nsISupportsBase.h',
+    'nsISupportsObsolete.h',
+    'nsObjCExceptions.h',
+    'nsStackWalk.h',
+    'nsTraceRefcnt.h',
+    'nsWeakPtr.h',
+]
+
+if CONFIG['OS_ARCH'] == 'WINNT':
+    EXPORTS += [
+        'nsWindowsHelpers.h',
+    ]
+    if CONFIG['MOZ_DEBUG']:
+        EXPORTS += ['pure.h']
+        SOURCES += ['pure_api.c']
+
+EXPORTS.mozilla += [
+    'AvailableMemoryTracker.h',
+    'ClearOnShutdown.h',
+    'CycleCollectedJSRuntime.h',
+    'Debug.h',
+    'nsMemoryInfoDumper.h',
+    'StackWalk.h',
+    'StaticMutex.h',
+    'StaticPtr.h',
+    'SystemMemoryReporter.h',
+    'VisualEventTracer.h',
+]
+
+# nsDebugImpl isn't unified because we disable PGO so that NS_ABORT_OOM isn't
+# optimized away oddly.
+SOURCES += [
+    'nsDebugImpl.cpp',
+]
+SOURCES['nsDebugImpl.cpp'].no_pgo = True
+
+UNIFIED_SOURCES += [
+    'AvailableMemoryTracker.cpp',
+    'ClearOnShutdown.cpp',
+    'CycleCollectedJSRuntime.cpp',
+    'Debug.cpp',
+    'nsConsoleMessage.cpp',
+    'nsConsoleService.cpp',
+    'nsCycleCollector.cpp',
+    'nsDumpUtils.cpp',
+    'nsErrorService.cpp',
+    'nsGZFileWriter.cpp',
+    'nsInterfaceRequestorAgg.cpp',
+    'nsMemoryImpl.cpp',
+    'nsMemoryInfoDumper.cpp',
+    'nsMemoryReporterManager.cpp',
+    'nsMessageLoop.cpp',
+    'nsSecurityConsoleMessage.cpp',
+    'nsStatusReporterManager.cpp',
+    'nsSystemInfo.cpp',
+    'nsTraceRefcnt.cpp',
+    'nsUUIDGenerator.cpp',
+    'nsVersionComparatorImpl.cpp',
+    'VisualEventTracer.cpp',
+]
+
+# On Windows, NS_StackWalk will only work correctly if we have frame pointers available.
+# That will only be true for non-optimized builds, and for optimized builds with
+# --enable-profiling in the .mozconfig (which is turned on in Nightly by default.)
+# We exclude this file from other build configurations so that if somebody adds a
+# new usage of NS_StackWalk it will cause a link error, which is better than having
+# NS_StackWalk silently return garbage at runtime.
+if CONFIG['OS_TARGET'] != 'WINNT' or \
+   (not CONFIG['MOZ_OPTIMIZE'] or CONFIG['MOZ_PROFILING'] or CONFIG['MOZ_DEBUG']):
+    UNIFIED_SOURCES += [
+        'nsStackWalk.cpp',
+    ]
+
+if CONFIG['OS_ARCH'] == 'Linux':
+    SOURCES += [
+        'SystemMemoryReporter.cpp',
+    ]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+    SOURCES += [
+        'nsMacUtilsImpl.cpp',
+    ]
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
+    SOURCES += [
+        'nsCrashOnException.cpp',
+    ]
+
+UNIFIED_SOURCES += [
+    'nsErrorAssertsC.c',
+]
+
+MSVC_ENABLE_PGO = True
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+FINAL_LIBRARY = 'xpcom_core'
+
+LOCAL_INCLUDES += [
+    '../build',
+    '/xpcom/ds',
+]
+
+if CONFIG['MOZ_OPTIMIZE']:
+    DEFINES['MOZ_OPTIMIZE'] = True

@@ -1,0 +1,42 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+UNIFIED_SOURCES += [
+    'mozHunspell.cpp',
+    'mozHunspellDirProvider.cpp',
+]
+
+if not CONFIG['MOZ_NATIVE_HUNSPELL']:
+    SOURCES += [
+        'affentry.cpp',
+        'affixmgr.cpp',
+        'csutil.cpp',
+        'dictmgr.cpp',
+        'filemgr.cpp',
+        'hashmgr.cpp',
+        'hunspell.cpp',
+        'hunzip.cpp',
+        'phonet.cpp',
+        'replist.cpp',
+        'suggestmgr.cpp',
+    ]
+    # This variable is referenced in configure.in.  Make sure to change that file
+    # too if you need to change this variable.
+    DEFINES['HUNSPELL_STATIC'] = True
+
+FINAL_LIBRARY = 'spellchecker'
+
+LOCAL_INCLUDES += [
+    '/extensions/spellcheck/src',
+]
+
+LOCAL_INCLUDES += [
+    '/editor/libeditor/base',
+]
+
+# Suppress warnings in third-party code.
+if CONFIG['CLANG_CXX']:
+    CXXFLAGS += ['-Wno-unused-private-field']

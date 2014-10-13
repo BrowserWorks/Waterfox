@@ -1,0 +1,21 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+if CONFIG['MOZ_LIBSTDCXX_TARGET_VERSION']:
+    LIBRARY_NAME = 'stdc++compat'
+    SOURCES += ['stdc++compat.cpp']
+
+if CONFIG['MOZ_LIBSTDCXX_HOST_VERSION']:
+    HOST_LIBRARY_NAME = 'host_stdc++compat'
+    HOST_SOURCES += [
+        'stdc++compat.cpp',
+    ]
+
+FORCE_STATIC_LIB = True
+
+NO_PGO = True
+
+DISABLE_STL_WRAPPING = True

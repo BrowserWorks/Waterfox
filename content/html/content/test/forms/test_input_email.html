@@ -1,0 +1,227 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=555559
+https://bugzilla.mozilla.org/show_bug.cgi?id=668817
+https://bugzilla.mozilla.org/show_bug.cgi?id=854812
+-->
+<head>
+  <title>Test for &lt;input type='email'&gt; validity</title>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=555559">Mozilla Bug 555559</a>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=668817">Mozilla Bug 668817</a>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=854812">Mozilla Bug 854812</a>
+<p id="display"></p>
+<div id="content" style="display: none">
+  <form>
+    <input type='email' name='email' id='i' oninvalid="invalidEventHandler(event);">
+  <form>
+</div>
+<pre id="test">
+<script type="application/javascript">
+
+/** Test for <input type='email'> validity **/
+
+var gInvalid = false;
+
+function invalidEventHandler(e)
+{
+  is(e.type, "invalid", "Invalid event type should be invalid");
+  gInvalid = true;
+}
+
+function checkValidEmailAddress(element)
+{
+  gInvalid = false;
+  ok(!element.validity.typeMismatch,
+     "Element should not suffer from type mismatch (with value='"+element.value+"')");
+  ok(element.validity.valid, "Element should be valid");
+  ok(element.checkValidity(), "Element should be valid");
+  ok(!gInvalid, "The invalid event should not have been thrown");
+  is(element.validationMessage, '',
+     "Validation message should be the empty string");
+  ok(element.mozMatchesSelector(":valid"), ":valid pseudo-class should apply");
+}
+
+function checkInvalidEmailAddress(element)
+{
+  gInvalid = false;
+  ok(element.validity.typeMismatch,
+     "Element should suffer from type mismatch (with value='"+element.value+"')");
+  ok(!element.validity.valid, "Element should not be valid");
+  ok(!element.checkValidity(), "Element should not be valid");
+  ok(gInvalid, "The invalid event should have been thrown");
+  is(element.validationMessage, "Please enter an email address.",
+     "Validation message is not valid");
+  ok(element.mozMatchesSelector(":invalid"), ":invalid pseudo-class should apply");
+}
+
+function testEmailAddress(aElement, aValue, aMultiple, aValidity)
+{
+  aElement.multiple = aMultiple;
+  aElement.value = aValue;
+
+  if (aValidity) {
+    checkValidEmailAddress(aElement);
+  } else {
+    checkInvalidEmailAddress(aElement);
+  }
+}
+
+var email = document.forms[0].elements[0];
+
+// Simple values, checking the e-mail syntax validity.
+var values = [
+  [ '', true ], // The empty string shouldn't be considered as invalid.
+  [ 'foo@bar.com', true ],
+  [ ' foo@bar.com', true ],
+  [ 'foo@bar.com ', true ],
+  [ '\r\n foo@bar.com', true ],
+  [ 'foo@bar.com \n\r', true ],
+  [ '\n\n \r\rfoo@bar.com\n\n   \r\r', true ],
+  [ '\n\r \n\rfoo@bar.com\n\r   \n\r', true ],
+  [ 'tulip', false ],
+  // Some checks on the user part of the address.
+  [ '@bar.com', false ],
+  [ 'f\noo@bar.com', true ],
+  [ 'f\roo@bar.com', true ],
+  [ 'f\r\noo@bar.com', true ],
+  [ 'fü@foo.com', true ],
+  // Some checks for the domain part.
+  [ 'foo@bar', true ],
+  [ 'foo@b', true ],
+  [ 'foo@', false ],
+  [ 'foo@bar.', false ],
+  [ 'foo@foo.bar', true ],
+  [ 'foo@foo..bar', false ],
+  [ 'foo@.bar', false ],
+  [ 'foo@tulip.foo.bar', true ],
+  [ 'foo@tulip.foo-bar', true ],
+  [ 'foo@1.2', true ],
+  [ 'foo@127.0.0.1', true ],
+  [ 'foo@1.2.3', true ],
+  [ 'foo@b\nar.com', true ],
+  [ 'foo@b\rar.com', true ],
+  [ 'foo@b\r\nar.com', true ],
+  [ 'foo@.', false ],
+  [ 'foo@fü.com', true ],
+  [ 'foo@fu.cüm', true ],
+  // Long strings with UTF-8.
+  [ 'this.is.email.should.be.longer.than.sixty.four.characters.föö@mözillä.tld', true ],
+  [ 'this-is-email-should-be-longer-than-sixty-four-characters-föö@mözillä.tld', true, true ],
+  // Long labels.
+  [ 'foo@thislabelisexactly63characterssssssssssssssssssssssssssssssssss', true ],
+  [ 'foo@thislabelisexactly63characterssssssssssssssssssssssssssssssssss.com', true ],
+  [ 'foo@foo.thislabelisexactly63characterssssssssssssssssssssssssssssssssss.com', true ],
+  [ 'foo@foo.thislabelisexactly63characterssssssssssssssssssssssssssssssssss', true ],
+  [ 'foo@thislabelisexactly64charactersssssssssssssssssssssssssssssssssss', false ],
+  [ 'foo@thislabelisexactly64charactersssssssssssssssssssssssssssssssssss.com', false ],
+  [ 'foo@foo.thislabelisexactly64charactersssssssssssssssssssssssssssssssssss.com', false ],
+  [ 'foo@foo.thislabelisexactly64charactersssssssssssssssssssssssssssssssssss', false ],
+  // Long labels with UTF-8.
+  [ 'foo@thisläbelisexäctly63charäcterssssssssssssssssssssssssssssssssss', false ],
+  [ 'foo@thisläbelisexäctly63charäcterssssssssssssssssssssssssssssssssss.com', false ],
+  [ 'foo@foo.thisläbelisexäctly63charäcterssssssssssssssssssssssssssssssssss.com', false ],
+  [ 'foo@foo.thisläbelisexäctly63charäcterssssssssssssssssssssssssssssssssss', false ],
+  // The domains labels (sub-domains or tld) can't start or finish with a '-'
+  [ 'foo@foo-bar', true ],
+  [ 'foo@-foo', false ],
+  [ 'foo@foo-.bar', false ],
+  [ 'foo@-.-', false ],
+  [ 'foo@fo-o.bar', true ],
+  [ 'foo@fo-o.-bar', false ],
+  [ 'foo@fo-o.bar-', false ],
+  [ 'foo@fo-o.-', false ],
+  [ 'foo@fo--o', true ],
+];
+
+// Multiple values, we don't check e-mail validity, only multiple stuff.
+var multipleValues = [
+  [ 'foo@bar.com, foo@bar.com', true ],
+  [ 'foo@bar.com,foo@bar.com', true ],
+  [ 'foo@bar.com,foo@bar.com,foo@bar.com', true ],
+  [ '     foo@bar.com     ,     foo@bar.com    ', true ],
+  [ '\tfoo@bar.com\t,\tfoo@bar.com\t', true ],
+  [ '\rfoo@bar.com\r,\rfoo@bar.com\r', true ],
+  [ '\nfoo@bar.com\n,\nfoo@bar.com\n', true ],
+  [ '\ffoo@bar.com\f,\ffoo@bar.com\f', true ],
+  [ '\t foo@bar.com\r,\nfoo@bar.com\f', true ],
+  [ 'foo@b,ar.com,foo@bar.com', false ],
+  [ 'foo@bar.com,foo@bar.com,', false ],
+  [ '   foo@bar.com   ,   foo@bar.com   ,   ', false ],
+  [ ',foo@bar.com,foo@bar.com', false ],
+  [ ',foo@bar.com,foo@bar.com', false ],
+  [ 'foo@bar.com,,,foo@bar.com', false ],
+  [ 'foo@bar.com;foo@bar.com', false ],
+  [ '<foo@bar.com>, <foo@bar.com>', false ],
+  [ 'foo@bar, foo@bar.com', true ],
+  [ 'foo@bar.com, foo', false ],
+  [ 'foo, foo@bar.com', false ],
+];
+
+/* Additional username checks. */
+
+var legalCharacters = "abcdefghijklmnopqrstuvwxyz";
+legalCharacters += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+legalCharacters += "0123456789";
+legalCharacters += "!#$%&'*+-/=?^_`{|}~.";
+
+// Add all username legal characters individually to the list.
+for (c of legalCharacters) {
+  values.push([c + "@bar.com", true]);
+}
+// Add the concatenation of all legal characters too.
+values.push([legalCharacters + "@bar.com", true]);
+
+// Add username illegal characters, the same way.
+var illegalCharacters = "()<>[]:;@\\, \t";
+for (c of illegalCharacters) {
+  values.push([illegalCharacters + "@bar.com", false]);
+}
+
+/* Additional domain checks. */
+
+legalCharacters = "abcdefghijklmnopqrstuvwxyz";
+legalCharacters += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+legalCharacters += "0123456789";
+
+// Add domain legal characters (except '.' and '-' because they are special).
+for (c of legalCharacters) {
+  values.push(["foo@foo.bar" + c, true]);
+}
+// Add the concatenation of all legal characters too.
+values.push(["foo@bar." + legalCharacters, true]);
+
+// Add domain illegal characters.
+illegalCharacters = "()<>[]:;@\\,!#$%&'*+/=?^_`{|}~ \t";
+for (c of illegalCharacters) {
+  values.push(['foo@foo.ba' + c + 'r', false]);
+}
+
+values.forEach(function([value, valid, todo]) {
+  if (todo === true) {
+    email.value = value;
+    todo_is(email.validity.valid, true, "value should be valid");
+  } else {
+    testEmailAddress(email, value, false, valid);
+  }
+});
+
+multipleValues.forEach(function([value, valid]) {
+  testEmailAddress(email, value, true, valid);
+});
+
+// Make sure setting multiple changes the value.
+email.multiple = false;
+email.value = "foo@bar.com, foo@bar.com";
+checkInvalidEmailAddress(email);
+email.multiple = true;
+checkValidEmailAddress(email);
+
+</script>
+</pre>
+</body>
+</html>

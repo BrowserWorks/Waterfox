@@ -1,0 +1,148 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* ===== toolbarbutton.css =====================================================
+  == Styles used by the XUL button element.
+  ======================================================================= */
+
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+
+/* ::::: toolbarbutton ::::: */
+
+toolbarbutton {
+  -moz-appearance: toolbarbutton;
+  -moz-box-align: center;
+  -moz-box-pack: center;
+  margin: 0;
+  border: 1px solid transparent;
+  padding: 3px;
+  background-color: transparent;
+  color: -moz-DialogText;
+}
+
+.toolbarbutton-icon[label]:not([label=""]),
+.toolbarbutton-icon[type="menu"] {
+  -moz-margin-end: 5px;
+}
+
+.toolbarbutton-text {
+  margin: 0 !important;
+  text-align: center;
+}
+
+toolbarbutton.tabbable {
+  -moz-user-focus: normal !important;
+}
+
+toolbarbutton:-moz-focusring {
+  /* -moz-appearance looks redundant here but is necessary.
+      Without it, the outline won't appear. */
+  -moz-appearance: toolbarbutton;
+  outline: 1px dotted -moz-DialogText;
+  outline-offset: -2px;
+}
+
+toolbarbutton:hover:not([disabled="true"]) {
+  border-color: ThreeDHighlight ThreeDShadow ThreeDShadow ThreeDHighlight;
+}
+
+toolbarbutton:hover:active:not([disabled="true"]),
+toolbarbutton[open="true"]:hover,
+toolbarbutton[open="true"] {
+  border-color: ThreeDShadow ThreeDHighlight ThreeDHighlight ThreeDShadow;
+  padding-top: 4px;
+  padding-bottom: 2px;
+  -moz-padding-start: 4px;
+  -moz-padding-end: 2px;
+}
+
+toolbarbutton[disabled="true"] {
+  color: GrayText;
+  text-shadow: none;
+}
+
+@media (-moz-windows-classic) {
+  toolbarbutton[disabled="true"] {
+    color: ThreeDShadow;
+    text-shadow: 1px 1px ThreeDHighlight;
+  }
+}
+
+toolbarbutton[checked="true"]:not([disabled="true"]) {
+  border-color: ThreeDShadow ThreeDHighlight ThreeDHighlight ThreeDShadow;
+  padding-top: 4px;
+  padding-bottom: 2px;
+  -moz-padding-start: 4px;
+  -moz-padding-end: 2px;
+  background-color: rgba(255,255,255,0.5);
+  color: ButtonText;
+}
+
+@media (-moz-windows-default-theme) {
+  toolbarbutton:-moz-lwtheme {
+    text-shadow: none;
+  }
+
+  toolbarbutton:-moz-lwtheme:not(:hover):not([checked="true"]):not([open="true"]):not([disabled="true"]) {
+    color: inherit;
+    text-shadow: inherit;
+  }
+}
+
+@media not all and (-moz-windows-default-theme) {
+  toolbarbutton:-moz-lwtheme {
+    -moz-appearance: none;
+  }
+
+  toolbarbutton:-moz-lwtheme:not([disabled="true"]) {
+    color: inherit;
+    text-shadow: inherit;
+  }
+}
+
+/* ::::: toolbarbutton menu ::::: */
+
+.toolbarbutton-menu-dropmarker {
+  -moz-appearance: none !important;
+  border: none !important;
+  background-color: transparent !important;
+  padding: 0;
+  width: auto;
+  height: auto;
+  margin-top: 1px;
+}
+
+/* ::::: toolbarbutton menu-button ::::: */
+
+toolbarbutton[type="menu-button"] {
+  -moz-box-align: stretch;
+  -moz-box-orient: horizontal !important;
+}
+
+toolbarbutton[type="menu-button"],
+toolbarbutton[type="menu-button"]:hover,
+toolbarbutton[type="menu-button"]:hover:active,
+toolbarbutton[type="menu-button"][open="true"],
+toolbarbutton[type="menu-button"][disabled="true"],
+toolbarbutton[type="menu-button"][disabled="true"]:hover,
+toolbarbutton[type="menu-button"][disabled="true"]:hover:active {
+  border-style: none;
+  padding: 0 !important;
+}
+
+.toolbarbutton-menubutton-button {
+  -moz-box-align: center;
+  -moz-box-pack: center;
+  -moz-box-orient: vertical;
+}
+
+/* .......... dropmarker .......... */
+
+.toolbarbutton-menubutton-dropmarker {
+  -moz-appearance: none;
+  padding: 3px 7px;
+  border: none;
+  background-color: transparent;
+  width: auto;
+}

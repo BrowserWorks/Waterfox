@@ -1,0 +1,103 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIDOMWindow;
+interface nsIURI;
+interface nsIFrameLoaderOwner;
+
+[scriptable, uuid(e420bd32-b8c4-4b47-8cca-09e0bddbb0c3)]
+
+/**
+ * The C++ source has access to the browser script source through
+ * nsIBrowserDOMWindow. It is intended to be attached to the chrome DOMWindow
+ * of a toplevel browser window (a XUL window). A DOMWindow that does not
+ * happen to be a browser chrome window will simply have no access to any such
+ * interface.
+ */
+interface nsIBrowserDOMWindow : nsISupports
+{
+  /**
+   * Values for openURI's aWhere parameter.
+   */
+  /**
+   * Do whatever the default is based on application state, user preferences,
+   * and the value of the aContext parameter to openURI.
+   */
+  const short OPEN_DEFAULTWINDOW = 0;
+  /**
+   * Open in the "current window".  If aOpener is provided, this should be the
+   * top window in aOpener's window hierarchy, but exact behavior is
+   * application-dependent.  If aOpener is not provided, it's up to the
+   * application to decide what constitutes a "current window".
+   */
+  const short OPEN_CURRENTWINDOW = 1;
+  /**
+   * Open in a new window.
+   */
+  const short OPEN_NEWWINDOW     = 2;
+  /**
+   * Open in a new content tab in the toplevel browser window corresponding to
+   * this nsIBrowserDOMWindow.
+   */
+  const short OPEN_NEWTAB        = 3;
+  /**
+   * Open in an existing content tab based on the URI. If a match can't be
+   * found, revert to OPEN_NEWTAB behavior.
+   */
+  const short OPEN_SWITCHTAB     = 4;
+
+  /**
+   * Values for openURI's aContext parameter.  These affect the behavior of
+   * OPEN_DEFAULTWINDOW.
+   */
+  /**
+   * external link (load request from another application, xremote, etc).
+   */
+  const short OPEN_EXTERNAL      = 1;
+  /**
+   * internal open new window
+   */
+  const short OPEN_NEW           = 2; 
+
+  /**
+   * Load a URI
+
+   * @param aURI the URI to open. null is allowed.  If null is passed in, no
+   *             load will be done, though the window the load would have
+   *             happened in will be returned.
+   * @param aWhere see possible values described above.
+   * @param aOpener window requesting the open (can be null).
+   * @param aContext the context in which the URI is being opened. This
+   *                 is used only when aWhere == OPEN_DEFAULTWINDOW.
+   * @return the window into which the URI was opened.
+  */
+  nsIDOMWindow openURI(in nsIURI aURI, in nsIDOMWindow aOpener,
+                       in short aWhere, in short aContext);
+
+  /**
+   * As above, but return the nsIFrameLoaderOwner for the new window.
+   // XXXbz is this the right API? Do we really need the opener here?
+   // See bug 537428
+   */
+  nsIFrameLoaderOwner openURIInFrame(in nsIURI aURI, in nsIDOMWindow aOpener,
+                                     in short aWhere, in short aContext);
+
+  /**
+   * @param  aWindow the window to test.
+   * @return whether the window is the main content window for any
+   *         currently open tab in this toplevel browser window.
+   */
+  boolean      isTabContentWindow(in nsIDOMWindow aWindow);
+
+  /**
+  * The contentWindow property of the currently selected browser.
+  * This is used to implement .content in remote-Firefox.
+  */
+
+  readonly attribute jsval contentWindow;
+};
+

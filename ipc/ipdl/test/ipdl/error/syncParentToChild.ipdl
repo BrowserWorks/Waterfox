@@ -1,0 +1,6 @@
+intr protocol syncParentToChild {
+
+    // can't declare sync parent-to-child messages
+child: sync Msg();
+
+};

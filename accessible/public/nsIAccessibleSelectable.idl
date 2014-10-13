@@ -1,0 +1,64 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIAccessible;
+interface nsIArray;
+
+/**
+ * An accessibility interface for selectable widgets.
+ */
+[scriptable, uuid(3e507fc4-4fcc-4223-a674-a095f591eba1)]
+interface nsIAccessibleSelectable : nsISupports
+{
+  /**
+   * Return an nsIArray of selected items within the widget.
+   */
+  readonly attribute nsIArray selectedItems;
+
+  /**
+   * Return the number of currently selected items.
+   */
+  readonly attribute unsigned long selectedItemCount;
+
+  /**
+   * Return a nth selected item within the widget.
+   */
+  nsIAccessible getSelectedItemAt(in unsigned long index);
+
+  /**
+   * Return true if the given item is selected.
+   */
+  [binaryname(ScriptableIsItemSelected)]
+  boolean isItemSelected(in unsigned long index);
+
+  /**
+   * Adds the specified item to the widget's selection.
+   */
+  [binaryname(ScriptableAddItemToSelection)]
+  void addItemToSelection(in unsigned long index);
+
+  /**
+   * Removes the specified item from the widget's selection.
+   */
+  [binaryname(ScriptableRemoveItemFromSelection)]
+  void removeItemFromSelection(in unsigned long index);
+
+  /**
+   * Select all items.
+   *
+   * @return false if the object does not accept multiple selection,
+   *         otherwise true.
+   */
+  [binaryname(ScriptableSelectAll)]
+  boolean selectAll();
+
+  /**
+   * Unselect all items.
+   */
+  [binaryname(ScriptableUnselectAll)]
+  void unselectAll();
+};

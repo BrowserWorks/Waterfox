@@ -1,0 +1,33 @@
+FINAL_LIBRARY = 'gkmedias'
+DEFINES["HAVE_CONFIG_H"] = 1
+LOCAL_INCLUDES += ['/media/gstreamer/gst-plugins-base']
+LOCAL_INCLUDES += ['/media/gstreamer/gst-plugins-base/gst-libs/gst/fft']
+LOCAL_INCLUDES += ['/media/gstreamer/glib',
+ '/media/gstreamer/glib/gio',
+ '/media/gstreamer/glib/glib',
+ '/media/gstreamer/glib/gmodule',
+ '/media/gstreamer/gst-plugins-bad',
+ '/media/gstreamer/gst-plugins-bad/gst-libs',
+ '/media/gstreamer/gst-plugins-base',
+ '/media/gstreamer/gst-plugins-base/gst-libs',
+ '/media/gstreamer/gst-plugins-good',
+ '/media/gstreamer/gst-plugins-good/gst-libs',
+ '/media/gstreamer/gstreamer',
+ '/media/gstreamer/gstreamer/gst-libs',
+ '/media/gstreamer/gstreamer/libs',
+ '/media/gstreamer/gstreamer/libs/gst-libs',
+ '/media/gstreamer/orc']
+# libgstfft_1.0
+SOURCES += ['../../../../../gst-plugins-base/gst-libs/gst/fft/gstfft.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/fft/gstfftf32.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/fft/gstfftf64.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/fft/gstffts16.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/fft/gstffts32.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/fft/kiss_fft_f32.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/fft/kiss_fft_f64.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/fft/kiss_fft_s16.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/fft/kiss_fft_s32.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/fft/kiss_fftr_f32.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/fft/kiss_fftr_f64.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/fft/kiss_fftr_s16.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/fft/kiss_fftr_s32.c']

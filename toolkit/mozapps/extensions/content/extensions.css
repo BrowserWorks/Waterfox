@@ -1,0 +1,257 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+@namespace xhtml "http://www.w3.org/1999/xhtml";
+
+/* HTML link elements do weird things to the layout if they are not hidden */
+xhtml|link {
+  display: none;
+}
+
+#categories {
+  -moz-binding: url("chrome://mozapps/content/extensions/extensions.xml#categories-list");
+}
+
+.category {
+  -moz-binding: url("chrome://mozapps/content/extensions/extensions.xml#category");
+}
+
+.sort-controls {
+  -moz-binding: url("chrome://mozapps/content/extensions/extensions.xml#sorters");
+}
+
+.addon[status="installed"] {
+  -moz-box-orient: vertical;
+  -moz-binding: url("chrome://mozapps/content/extensions/extensions.xml#addon-generic");
+}
+
+.addon[status="installing"] {
+  -moz-box-orient: vertical;
+  -moz-binding: url("chrome://mozapps/content/extensions/extensions.xml#addon-installing");
+}
+
+.addon[pending="uninstall"] {
+  -moz-binding: url("chrome://mozapps/content/extensions/extensions.xml#addon-uninstalled");
+}
+
+.creator {
+  -moz-binding: url("chrome://mozapps/content/extensions/extensions.xml#creator-link");
+}
+
+.meta-rating {
+  -moz-binding: url("chrome://mozapps/content/extensions/extensions.xml#rating");
+}
+
+.download-progress, .download-progress[mode="undetermined"] {
+  -moz-binding: url("chrome://mozapps/content/extensions/extensions.xml#download-progress");
+}
+
+.install-status {
+  -moz-binding: url("chrome://mozapps/content/extensions/extensions.xml#install-status");
+}
+
+.detail-row {
+  -moz-binding: url("chrome://mozapps/content/extensions/extensions.xml#detail-row");
+}
+
+.text-list {
+  white-space: pre-line;
+  -moz-user-select: element;
+}
+
+setting, row[unsupported="true"] {
+  display: none;
+}
+
+setting[type="bool"] {
+  display: -moz-grid-line;
+  -moz-binding: url("chrome://mozapps/content/extensions/setting.xml#setting-bool");
+}
+
+setting[type="bool"][localized="true"] {
+  display: -moz-grid-line;
+  -moz-binding: url("chrome://mozapps/content/extensions/setting.xml#setting-localized-bool");
+}
+
+setting[type="boolint"] {
+  display: -moz-grid-line;
+  -moz-binding: url("chrome://mozapps/content/extensions/setting.xml#setting-boolint");
+}
+
+setting[type="integer"] {
+  display: -moz-grid-line;
+  -moz-binding: url("chrome://mozapps/content/extensions/setting.xml#setting-integer");
+}
+
+setting[type="integer"]:not([size]) textbox {
+  -moz-box-flex: 1;
+}
+
+setting[type="control"] {
+  display: -moz-grid-line;
+  -moz-binding: url("chrome://mozapps/content/extensions/setting.xml#setting-control");
+}
+
+setting[type="string"] {
+  display: -moz-grid-line;
+  -moz-binding: url("chrome://mozapps/content/extensions/setting.xml#setting-string");
+}
+
+setting[type="color"] {
+  display: -moz-grid-line;
+  -moz-binding: url("chrome://mozapps/content/extensions/setting.xml#setting-color");
+}
+
+setting[type="file"],
+setting[type="directory"] {
+  display: -moz-grid-line;
+  -moz-binding: url("chrome://mozapps/content/extensions/setting.xml#setting-path");
+}
+
+setting[type="radio"],
+setting[type="menulist"] {
+  display: -moz-grid-line;
+  -moz-binding: url("chrome://mozapps/content/extensions/setting.xml#setting-multi");
+}
+
+#addonitem-popup > menuitem[disabled="true"] {
+  display: none;
+}
+
+#addonitem-popup[addontype="theme"] > #menuitem_enableItem,
+#addonitem-popup[addontype="theme"] > #menuitem_disableItem,
+#addonitem-popup:not([addontype="theme"]) > #menuitem_enableTheme,
+#addonitem-popup:not([addontype="theme"]) > #menuitem_disableTheme {
+  display: none;
+}
+
+#header-searching:not([active]) {
+  visibility: hidden;
+}
+
+#search-list[local="false"]  > .addon[remote="false"],
+#search-list[remote="false"] > .addon[remote="true"] {
+  visibility: collapse;
+}
+
+#detail-view {
+  overflow: auto;
+}
+
+.addon:not([notification="warning"]) .warning,
+.addon:not([notification="error"]) .error,
+.addon:not([notification="info"]) .info,
+.addon:not([pending]) .pending,
+.addon:not([upgrade="true"]) .update-postfix,
+.addon[active="true"] .disabled-postfix,
+.addon[pending="install"] .update-postfix,
+.addon[pending="install"] .disabled-postfix,
+#detail-view:not([notification="warning"]) .warning,
+#detail-view:not([notification="error"]) .error,
+#detail-view:not([notification="info"]) .info,
+#detail-view:not([pending]) .pending,
+#detail-view:not([upgrade="true"]) .update-postfix,
+#detail-view[active="true"] .disabled-postfix,
+#detail-view[loading] .detail-view-container,
+#detail-view:not([loading]) .alert-container,
+.detail-row:not([value]),
+#search-list[remote="false"] #search-allresults-link {
+  display: none;
+}
+
+#addons-page:not([warning]) #list-view > .global-warning-container {
+  display: none;
+}
+#addon-list .date-updated {
+  display: none;
+}
+
+.view-pane:not(#updates-view) .addon .relnotes-toggle,
+.view-pane:not(#updates-view) .addon .include-update,
+#updates-view:not([updatetype="available"]) .addon .include-update,
+#updates-view[updatetype="available"] .addon .update-available-notice {
+  display: none;
+}
+
+#addons-page:not([warning]) .global-warning,
+#addons-page:not([warning="safemode"]) .global-warning-safemode,
+#addons-page:not([warning="checkcompatibility"]) .global-warning-checkcompatibility,
+#addons-page:not([warning="updatesecurity"]) .global-warning-updatesecurity {
+  display: none;
+}
+
+/* Plugins aren't yet disabled by safemode (bug 342333),
+   so don't show that warning when viewing plugins. */
+#addons-page[warning="safemode"] .view-pane[type="plugin"] .global-warning-container,
+#addons-page[warning="safemode"] #detail-view[loading="true"] .global-warning {
+  display: none;
+}
+
+#addons-page .view-pane:not([type="plugin"]) .plugin-info-container {
+  display: none;
+}
+
+#addons-page .view-pane:not([type="experiment"]) .experiment-info-container {
+  display: none;
+}
+
+.addon .relnotes {
+  -moz-user-select: text;
+}
+#detail-name, #detail-desc, #detail-fulldesc {
+  -moz-user-select: text;
+}
+
+/* Make sure we're not animating hidden images. See bug 623739. */
+#view-port:not([selectedIndex="0"]) #discover-view .loading,
+#discover-view:not([selectedIndex="0"]) .loading {
+  display: none;
+}
+
+/* Elements in unselected richlistitems cannot be focused */
+richlistitem:not([selected]) * {
+  -moz-user-focus: ignore;
+}
+
+#header-search {
+  width: 22em;
+}
+
+#header-utils-btn {
+  -moz-user-focus: normal;
+}
+
+.discover-button[disabled="true"] {
+  display: none;
+}
+
+#experiments-learn-more[disabled="true"] {
+  display: none;
+}
+
+#experiments-change-telemetry[disabled="true"] {
+  display: none;
+}
+
+.view-pane[type="experiment"] .error,
+.view-pane[type="experiment"] .warning,
+.view-pane[type="experiment"] .addon:not([pending="uninstall"]) .pending,
+.view-pane[type="experiment"] .disabled-postfix,
+.view-pane[type="experiment"] .update-postfix,
+.view-pane[type="experiment"] .version,
+#detail-view[type="experiment"] .alert-container,
+#detail-view[type="experiment"] #detail-version,
+#detail-view[type="experiment"] #detail-creator {
+  display: none;
+}
+
+.view-pane:not([type="experiment"]) .experiment-container,
+.view-pane:not([type="experiment"]) #detail-experiment-container {
+  display: none;
+}
+
+.addon[type="experiment"][status="installing"] .experiment-time,
+.addon[type="experiment"][status="installing"] .experiment-state {
+  display: none;
+}

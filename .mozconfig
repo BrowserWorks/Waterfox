@@ -1,0 +1,41 @@
+# If ccache was installed via Homebrew:
+export PATH="`brew --prefix ccache`/libexec:$PATH"
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_20.jdk/Contents/Home
+mk_add_options AUTOCONF=/usr/local/Cellar/autoconf213/2.13/bin/autoconf213
+mk_add_options MOZ_CO_MODULE="mozilla/tools/update-packaging"
+
+# Import the stock config for building the browser (Firefox)
+. $topsrcdir/browser/config/mozconfig
+
+. $topsrcdir/build/macosx/mozconfig.common
+
+ac_add_options --with-app-name=waterfox
+ac_add_options --with-branding=browser/branding/waterfox
+
+ac_add_options --with-system-gstreamer
+ac_add_options --enable-optimize="-O4 -w"
+
+ac_add_options --disable-auto-deps
+ac_add_options --disable-tests
+ac_add_options --disable-ipdl-tests
+
+# enable updater
+ac_add_options --enable-update-channel=release
+ac_add_options --enable-updater
+ac_add_options --enable-update-packaging
+
+# diasble crashreporter
+ac_add_options --disable-crashreporter
+ac_add_options --disable-debug-symbols
+ac_add_options --disable-debug
+ac_add_options --disable-mochitest
+ac_add_options --disable-mochitests
+
+# Define where build files should go. This places them in the directory
+# "obj-ff-dbg" under the current source directory
+mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-ff-dbg
+
+# -s makes builds quieter by default
+# -j4 allows 4 tasks to run in parallel. Set the number to be the amount of
+# cores in your machine. 4 is a good number.
+mk_add_options MOZ_MAKE_FLAGS="-s -j8"

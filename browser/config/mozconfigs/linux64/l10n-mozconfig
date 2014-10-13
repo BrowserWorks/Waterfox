@@ -1,0 +1,12 @@
+no_tooltool=1
+no_sccache=1
+
+ac_add_options --with-l10n-base=../../l10n
+ac_add_options --enable-update-channel=${MOZ_UPDATE_CHANNEL}
+ac_add_options --enable-update-packaging
+
+. $topsrcdir/build/unix/mozconfig.linux
+
+export MOZILLA_OFFICIAL=1
+
+. "$topsrcdir/build/mozconfig.common.override"

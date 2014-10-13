@@ -1,0 +1,431 @@
+# -*- Mode: makefile -*-
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+ifndef .PYMAKE
+ifeq (,$(MAKE_VERSION))
+$(error GNU Make is required)
+endif
+make_min_ver := 3.81
+ifneq ($(make_min_ver),$(firstword $(sort $(make_min_ver) $(MAKE_VERSION))))
+$(error GNU Make $(make_min_ver) or higher is required)
+endif
+endif
+
+TOPLEVEL_BUILD := 1
+
+run_for_side_effects := $(shell echo 'MAKE: $(MAKE)')
+STATIC_LIBRARY_NAME = js_static
+LIBS		= $(NSPR_LIBS)
+
+DIST_INSTALL = 1
+
+ifdef JS_STANDALONE
+SHARED_LIBRARY_LIBS += $(call EXPAND_LIBNAME_PATH,mfbt,$(DEPTH)/mfbt)
+endif
+
+ifdef JS_HAS_CTYPES
+ifdef MOZ_NATIVE_FFI
+LOCAL_INCLUDES = $(MOZ_FFI_CFLAGS)
+endif
+
+ifdef MOZ_NATIVE_FFI
+EXTRA_DSO_LDOPTS += $(MOZ_FFI_LIBS)
+else
+SHARED_LIBRARY_LIBS += \
+    ctypes/libffi/.libs/libffi.$(LIB_SUFFIX) \
+    $(NULL)
+endif
+
+# Windows needs this to be linked with a static library.
+ifndef MOZ_NATIVE_FFI
+DEFINES += -DFFI_BUILDING
+endif
+
+endif # JS_HAS_CTYPES
+
+DASH_R		= -r
+
+ifneq (,$(filter WINNT,$(OS_ARCH)))
+SDK_LIBRARY = $(IMPORT_LIBRARY)
+else
+SDK_LIBRARY = $(SHARED_LIBRARY)
+endif
+
+EXTRA_DSO_LDOPTS += $(NSPR_LIBS)
+
+# Define keyword generator before rules.mk, see bug 323979 comment 50
+
+GARBAGE += jsautokw.h host_jskwgen$(HOST_BIN_SUFFIX)
+
+GARBAGE += selfhosted.out.h
+
+USE_HOST_CXX = 1
+
+ifdef HAVE_DTRACE
+ifneq ($(OS_ARCH),Darwin)
+DTRACE_PROBE_OBJ = $(LIBRARY_NAME)-dtrace.$(OBJ_SUFFIX)
+endif
+MOZILLA_DTRACE_SRC = $(srcdir)/devtools/javascript-trace.d
+endif
+
+# Ensure symbol versions of shared library on Linux do not conflict
+# with those in libxul.
+ifeq (Linux,$(OS_TARGET))
+EXTRA_DSO_LDOPTS += -Wl,-version-script,symverscript
+
+symverscript: symverscript.in
+	$(call py_action,preprocessor, \
+		-DVERSION='$(subst -,_,$(LIBRARY_NAME))' $< -o $@)
+
+EXTRA_DEPS += symverscript
+endif
+
+export_files = js-config.h
+ifdef HAVE_DTRACE
+export_files += $(CURDIR)/javascript-trace.h
+endif
+
+INSTALL_TARGETS += jsconfig
+jsconfig_FILES = $(export_files)
+jsconfig_DEST = $(DIST)/include
+jsconfig_TARGET := export
+
+include $(topsrcdir)/config/rules.mk
+
+#############################################
+# BEGIN ECMAScript Internationalization API
+#
+
+# ICU headers need to be available whether we build with the complete
+# Internationalization API or not - ICU stubs rely on them.
+
+LOCAL_INCLUDES += $(MOZ_ICU_CFLAGS)
+
+ifdef ENABLE_INTL_API
+ifndef MOZ_NATIVE_ICU
+
+endif
+endif
+
+#
+# END ECMAScript Internationalization API
+#############################################
+
+
+# check_vanilla_allocations.py is tailored to Linux, so only run it there.
+# That should be enough to catch any problems.
+check-vanilla-allocations:
+	$(PYTHON) $(topsrcdir)/config/check_vanilla_allocations.py $(REAL_LIBRARY)
+
+# The "aggressive" variant will likely fail on some compiler/platform
+# combinations, but is worth running by hand every once in a while.
+check-vanilla-allocations-aggressive:
+	$(PYTHON) $(topsrcdir)/config/check_vanilla_allocations.py --aggressive $(REAL_LIBRARY)
+
+ifeq ($(OS_ARCH),Linux)
+check:: check-vanilla-allocations
+endif
+
+# Help ensure that the number of OOM errors in SpiderMonkey doesn't increase.
+# If the number of OOM errors changes, update the number below. We intend this
+# number to go down over time, by fixing OOMs.
+check-ooms:
+	$(wildcard $(RUN_TEST_PROGRAM)) $(PYTHON) -u $(topsrcdir)/config/find_OOM_errors.py --regression 125
+
+ifeq ($(MOZ_DEBUG),1)
+#check:: check-ooms
+endif
+
+ifdef MOZ_VALGRIND
+ifndef MOZ_ASAN
+JITTEST_VALGRIND_FLAG = --valgrind
+endif
+endif
+
+ifdef MOZ_ASAN
+ifneq ($(LLVM_SYMBOLIZER),)
+# Use the LLVM symbolizer when running jit-tests under ASan, if available
+JITTEST_ASAN_ENV=ASAN_SYMBOLIZER_PATH='$(LLVM_SYMBOLIZER)'
+endif
+endif
+
+check-style::
+	(cd $(srcdir) && $(PYTHON) $(topsrcdir)/config/check_spidermonkey_style.py);
+
+check-jit-test::
+	$(JITTEST_ASAN_ENV) $(wildcard $(RUN_TEST_PROGRAM)) $(PYTHON) -u $(srcdir)/jit-test/jit_test.py \
+	        --no-slow --no-progress --tinderbox --tbpl $(JITTEST_VALGRIND_FLAG) \
+	        $(DIST)/bin/$(JS_SHELL_NAME)$(BIN_SUFFIX)
+
+check:: check-style
+
+# jstests doesn't have a --jitflags option, so we need to loop, updating the
+# exit code (RC) after each invocation.
+# FIXME: MethodJIT doesn't work for 1 test case (bug 644393), so
+# --no-extensions is set to skip that test. Remove as soon as possible.
+check-jstests:
+	RC=0; \
+	for f in `echo '$(JITFLAGS)' | tr ',' '\n'`; \
+		do \
+			$(wildcard $(RUN_TEST_PROGRAM)) $(PYTHON) -u $(srcdir)/tests/jstests.py \
+				--tinderbox --no-progress \
+				--no-extensions \
+				--timeout 300 \
+				--args="`echo $$f | sed 's/\(.\)/ -\1/g'`" \
+				$(DIST)/bin/$(JS_SHELL_NAME)$(BIN_SUFFIX); \
+			RC=$$(( $$RC || $$?)); \
+		done; \
+	exit $$RC
+
+# FIXME:
+# We want to run check-jstests as part of |make check| on all platforms, on
+# tinderbox. However, some configurations don't work quite right just yet.
+# Rather than risking regressions in major configurations while fixing these
+# secondary configuration, we work around them and fix the bugs later.
+#
+#   Bug 652154: On Windows, SM(!m !t) don't work because of path problems with
+#				their unusual directory layout
+#
+#   Bug 652155: On Mac, SM(d) doesn't work for unknown reasons
+
+ifneq ($(OS_ARCH),WINNT)
+ifndef HAVE_DTRACE
+#check:: check-jstests
+endif
+endif
+
+DIST_GARBAGE = config.cache config.log config.status* \
+   config/autoconf.mk config/emptyvars.mk \
+   js-config.h js-confdefs.h \
+   backend.mk config/backend.mk devtools/backend.mk editline/backend.mk \
+   gdb/backend.mk jsapi-tests/backend.mk shell/backend.mk tests/backend.mk \
+   backend.RecursiveMakeBackend backend.RecursiveMakeBackend.pp \
+   devtools/rootAnalysis/Makefile
+
+distclean::
+	$(RM) $(DIST_GARBAGE)
+
+ifneq ($(findstring -L,$(NSPR_LIBS)),)
+NSPR_STATIC_PATH = $(subst -L,,$(findstring -L,$(NSPR_LIBS)))
+else
+NSPR_STATIC_PATH = $(DIST)/lib
+endif
+
+# HP-UX does not require the extra linking of "-lm"
+ifeq (,$(filter HP-UX WINNT,$(OS_ARCH)))
+EXTRA_LIBS	+= -lm
+endif
+
+CFLAGS += $(MOZ_ZLIB_CFLAGS)
+EXTRA_LIBS += $(MOZ_ZLIB_LIBS)
+# Enable zlib usage if zlib has been located. When building the browser on
+# Windows, MOZ_ZLIB_LIBS is empty because zlib is part of libmozglue. We thus
+# also enable zlib if mozglue is present.
+ifneq (,$(MOZ_ZLIB_LIBS)$(MOZ_GLUE_LDFLAGS))
+DEFINES += -DUSE_ZLIB
+endif
+
+ifdef MOZ_SHARED_ICU
+EXTRA_DSO_LDOPTS += $(MOZ_ICU_LIBS)
+else
+SHARED_LIBRARY_LIBS += $(MOZ_ICU_LIBS)
+endif
+
+# Prevent floating point errors caused by VC++ optimizations
+ifdef _MSC_VER
+# XXX We should add this to CXXFLAGS, too?
+CFLAGS += -fp:precise
+endif # _MSC_VER
+
+ifeq ($(OS_ARCH),FreeBSD)
+EXTRA_LIBS	+= -pthread
+endif
+ifeq ($(OS_ARCH),Linux)
+EXTRA_LIBS	+= -ldl
+endif
+# Silence warnings on AIX/HP-UX from non-GNU compilers
+ifndef GNU_CC
+ifeq ($(OS_ARCH),AIX)
+# Suppress warnings from xlC
+# 1540-1281: offsetof() on null non-POD types
+# 1540-1608: anonymous unions using static data members
+CFLAGS		+= -qsuppress=1540-1281 -qsuppress=1540-1608
+CXXFLAGS	+= -qsuppress=1540-1281 -qsuppress=1540-1608
+endif
+ifeq ($(OS_ARCH),HP-UX)
+# Suppress warnings from aCC
+# 3055: anonymous unions declaring types
+# 4189: offsetof() on non-POD types
+CFLAGS		+= +W3055,4189
+CXXFLAGS	+= +W3055,4189
+endif
+endif
+ifeq ($(OS_ARCH),SunOS)
+ifeq ($(TARGET_CPU),sparc)
+
+ifdef GNU_CC
+CFLAGS   += -mcpu=v9
+CXXFLAGS += -mcpu=v9
+endif # GNU_CC
+
+endif
+EXTRA_LIBS	+= -lposix4 -ldl -lnsl -lsocket
+endif
+
+SCRIPTS = $(JS_CONFIG_NAME)
+SDK_BINARY = $(JS_CONFIG_NAME)
+
+$(LIBRARY_NAME).pc: js.pc
+	cp $^ $@
+
+install:: $(LIBRARY_NAME).pc
+	$(SYSINSTALL) $^ $(DESTDIR)$(libdir)/pkgconfig
+
+######################################################
+# BEGIN SpiderMonkey header installation
+#
+# Mozilla/Gecko/Firefox mostly doesn't concern itself with defining a sensible
+# install target, because it's shipping primarily packaged builds.  And even if
+# it did, those builds wouldn't really have reason to include header files.  So
+# we have to install public headers ourselves, rather than using something from
+# config/rules.mk or similar.
+#
+# The overall directory structure of the installed headers looks like so:
+#
+#   $(includedir)/
+#      $(LIBRARY_NAME)/
+#        jsapi.h, jspubtd.h, etc. (all of EXPORTS)
+#        js/
+#          js/public/* headers (all are public)
+#        ds/
+#          js/src/ds/* public headers
+#        gc/
+#          js/src/gc/* public headers
+#        mozilla/
+#          mfbt headers
+#
+
+install::
+	$(call py_action,process_install_manifest,--no-remove $(DESTDIR)$(includedir) $(DEPTH)/_build_manifests/install/dist_include)
+
+#
+# END SpiderMonkey header installation
+#############################################
+
+install:: $(SCRIPTS)
+	$(SYSINSTALL) $^ $(DESTDIR)$(bindir)
+
+install:: $(REAL_LIBRARY) $(SHARED_LIBRARY) $(IMPORT_LIBRARY)
+ifneq (,$(REAL_LIBRARY))
+	$(SYSINSTALL) $(REAL_LIBRARY) $(DESTDIR)$(libdir)
+	mv -f $(DESTDIR)$(libdir)/$(REAL_LIBRARY) $(subst $(STATIC_LIBRARY_NAME),$(LIBRARY_NAME),$(DESTDIR)$(libdir)/$(REAL_LIBRARY))
+endif
+ifneq (,$(SHARED_LIBRARY))
+	$(SYSINSTALL) $(SHARED_LIBRARY) $(DESTDIR)$(libdir)
+endif
+ifneq (,$(IMPORT_LIBRARY))
+	$(SYSINSTALL) $(IMPORT_LIBRARY) $(DESTDIR)$(libdir)
+endif
+	$(MAKE) -C shell install
+
+# Use CURDIR to avoid finding a jsautokw.h in the source tree (from a
+# previous build?) via VPATH when we're building in a separate tree.
+$(CURDIR)/jsautokw.h: host_jskwgen$(HOST_BIN_SUFFIX)
+	./host_jskwgen$(HOST_BIN_SUFFIX) $@
+
+# Force auto-header generation before compiling any source that may use them
+$(OBJS): $(CURDIR)/jsautokw.h
+
+ifdef MOZ_ETW
+ETWProvider.h ETWProvider.rc ETWProvider.mof: ETWProvider.man
+	$(MC) -um -mof $^
+
+ETWProvider.res: ETWProvider.rc
+	$(RC) -r -i '$(SDKDIR)Include' $^
+
+export:: ETWProvider.res
+
+install:: ETWProvider.mof ETWProvider.man
+	$(SYSINSTALL) $^ $(DESTDIR)$(bindir)
+
+endif
+
+ifdef HAVE_DTRACE
+$(CURDIR)/javascript-trace.h: $(srcdir)/devtools/javascript-trace.d
+	dtrace -h -s $(srcdir)/devtools/javascript-trace.d -o javascript-trace.h.in
+	sed -e 's/if _DTRACE_VERSION/ifdef INCLUDE_MOZILLA_DTRACE/' \
+	    -e '/const/!s/char \*/const char */g' \
+	    javascript-trace.h.in > javascript-trace.h
+
+# We can't automatically generate dependencies on auto-generated headers;
+# we have to list them explicitly.
+$(addsuffix .$(OBJ_SUFFIX),Probes jsinterp jsobj): $(CURDIR)/javascript-trace.h
+endif
+
+# Prepare self-hosted JS code for embedding
+export:: selfhosting
+selfhosting:: selfhosted.out.h
+
+selfhosting_srcs := \
+  $(srcdir)/builtin/Utilities.js \
+  $(srcdir)/builtin/ParallelUtilities.js \
+  $(srcdir)/builtin/Array.js \
+  $(srcdir)/builtin/Date.js \
+  $(srcdir)/builtin/Intl.js \
+  $(srcdir)/builtin/IntlData.js \
+  $(srcdir)/builtin/Iterator.js \
+  $(srcdir)/builtin/Map.js \
+  $(srcdir)/builtin/Number.js \
+  $(srcdir)/builtin/String.js \
+  $(srcdir)/builtin/Set.js \
+  $(srcdir)/builtin/TypedObject.js \
+  $(NULL)
+
+selfhosted_out_h_deps := \
+  $(selfhosting_srcs) \
+  $(srcdir)/js.msg \
+  $(srcdir)/builtin/embedjs.py \
+  $(srcdir)/builtin/TypedObjectConstants.h \
+  $(srcdir)/builtin/SelfHostingDefines.h \
+  $(NULL)
+
+SELFHOSTED_DEFINES += $(DEFINES) $(ACDEFINES)
+ifdef MOZ_DEBUG
+SELFHOSTED_DEFINES += $(MOZ_DEBUG_ENABLE_DEFS)
+else
+SELFHOSTED_DEFINES += $(MOZ_DEBUG_DISABLE_DEFS)
+endif
+
+selfhosted.out.h: $(selfhosted_out_h_deps)
+	$(PYTHON) $(srcdir)/builtin/embedjs.py $(SELFHOSTED_DEFINES) \
+	  -p '$(CPP)' -m $(srcdir)/js.msg -o $@ $(selfhosting_srcs)
+
+###############################################
+# Generating source package tarballs
+# (only possible when tar is found)
+ifneq (,$(TAR))
+
+source-package:
+	SRCDIR=$(srcdir) \
+	DIST=$(DIST) \
+	MAKE=$(MAKE) \
+	MKDIR=$(MKDIR) \
+	TAR=$(TAR) \
+	MOZJS_MAJOR_VERSION=$(MOZJS_MAJOR_VERSION) \
+	MOZJS_MINOR_VERSION=$(MOZJS_MINOR_VERSION) \
+	MOZJS_PATCH_VERSION=$(MOZJS_PATCH_VERSION) \
+	MOZJS_ALPHA=$(MOZJS_ALPHA) \
+	$(srcdir)/make-source-package.sh
+
+clean::
+	DIST=$(DIST) \
+	MOZJS_MAJOR_VERSION=$(MOZJS_MAJOR_VERSION) \
+	MOZJS_MINOR_VERSION=$(MOZJS_MINOR_VERSION) \
+	MOZJS_PATCH_VERSION=$(MOZJS_PATCH_VERSION) \
+	MOZJS_ALPHA=$(MOZJS_ALPHA) \
+	$(srcdir)/make-source-package.sh clean
+
+endif

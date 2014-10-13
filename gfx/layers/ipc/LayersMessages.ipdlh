@@ -1,0 +1,487 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+ * vim: sw=2 ts=8 et :
+ */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+include LayersSurfaces;
+include protocol PCompositable;
+include protocol PCompositor;
+include protocol PLayer;
+include protocol PRenderFrame;
+include protocol PTexture;
+
+include "gfxipc/ShadowLayerUtils.h";
+include "mozilla/GfxMessageUtils.h";
+include "ImageLayers.h";
+
+using mozilla::GraphicsFilterType from "mozilla/GfxMessageUtils.h";
+using struct gfxRGBA from "gfxColor.h";
+using struct gfxPoint3D from "gfxPoint3D.h";
+using class mozilla::gfx::Matrix4x4 from "mozilla/gfx/Matrix.h";
+using class gfx3DMatrix from "gfx3DMatrix.h";
+using nscoord from "nsCoord.h";
+using struct nsIntPoint from "nsPoint.h";
+using struct nsRect from "nsRect.h";
+using struct nsPoint from "nsPoint.h";
+using class mozilla::TimeDuration from "mozilla/TimeStamp.h";
+using class mozilla::TimeStamp from "mozilla/TimeStamp.h";
+using mozilla::ScreenRotation from "mozilla/WidgetUtils.h";
+using nsCSSProperty from "nsCSSProperty.h";
+using mozilla::dom::ScreenOrientation from "mozilla/dom/ScreenOrientation.h";
+using struct mozilla::layers::TextureInfo from "mozilla/layers/CompositorTypes.h";
+using mozilla::LayerMargin from "Units.h";
+using mozilla::LayerPoint from "Units.h";
+using mozilla::LayerRect from "Units.h";
+using mozilla::layers::ScaleMode from "mozilla/layers/LayersTypes.h";
+using mozilla::layers::EventRegions from "mozilla/layers/LayersTypes.h";
+using mozilla::layers::DiagnosticTypes from "mozilla/layers/CompositorTypes.h";
+using struct mozilla::layers::FrameMetrics from "FrameMetrics.h";
+using mozilla::layers::FrameMetrics::ViewID from "FrameMetrics.h";
+using struct mozilla::layers::FenceHandle from "mozilla/layers/FenceUtils.h";
+using struct mozilla::layers::FenceHandleFromChild from "mozilla/layers/FenceUtils.h";
+using mozilla::layers::TextureIdentifier from "mozilla/layers/CompositorTypes.h";
+
+namespace mozilla {
+namespace layers {
+
+struct TargetConfig {
+  nsIntRect naturalBounds;
+  ScreenRotation rotation;
+  nsIntRect clientBounds;
+  ScreenOrientation orientation;
+  nsIntRegion clearRegion;
+};
+
+// Create a shadow layer for |layer|
+struct OpCreateThebesLayer     { PLayer layer; };
+struct OpCreateContainerLayer  { PLayer layer; };
+struct OpCreateImageLayer      { PLayer layer; };
+struct OpCreateColorLayer      { PLayer layer; };
+struct OpCreateCanvasLayer     { PLayer layer; };
+struct OpCreateRefLayer        { PLayer layer; };
+
+struct OpAttachCompositable {
+  PLayer layer;
+  PCompositable compositable;
+};
+
+struct OpAttachAsyncCompositable {
+  PLayer layer;
+  uint64_t containerID;
+};
+
+struct ThebesBufferData {
+  nsIntRect rect;
+  nsIntPoint rotation;
+};
+
+struct CubicBezierFunction {
+  float x1;
+  float y1;
+  float x2;
+  float y2;
+};
+
+struct StepFunction {
+  int steps;
+  // 1 = nsTimingFunction::StepStart, 2 = nsTimingFunction::StepEnd
+  int type;
+};
+
+union TimingFunction {
+  CubicBezierFunction;
+  StepFunction;
+};
+
+struct LayerColor { gfxRGBA value; };
+struct Perspective { float value; };
+struct RotationX { float radians; };
+struct RotationY { float radians; };
+struct RotationZ { float radians; };
+struct Rotation { float radians; };
+struct Rotation3D {
+  float x;
+  float y;
+  float z;
+  float radians;
+};
+struct Scale {
+  float x;
+  float y;
+  float z;
+};
+struct Skew { float x; float y; };
+struct SkewX { float x; };
+struct SkewY { float y; };
+struct TransformMatrix { Matrix4x4 value; };
+struct Translation {
+  float x;
+  float y;
+  float z;
+};
+
+union TransformFunction {
+  Perspective;
+  RotationX;
+  RotationY;
+  RotationZ;
+  Rotation;
+  Rotation3D;
+  Scale;
+  Skew;
+  SkewX;
+  SkewY;
+  Translation;
+  TransformMatrix;
+};
+
+union Animatable {
+  float;
+  TransformFunction[];
+};
+
+struct AnimationSegment {
+  Animatable startState;
+  Animatable endState;
+  float startPortion;
+  float endPortion;
+  TimingFunction sampleFn;
+};
+
+// Transforms need extra information to correctly convert the list of transform
+// functions to a gfx3DMatrix that can be applied directly to the layer.
+struct TransformData {
+  // the origin of the frame being transformed in app units
+  nsPoint origin;
+  // the transform-origin property for the transform in css pixels
+  gfxPoint3D transformOrigin;
+  // the perspective-origin property for the transform in css pixels
+  gfxPoint3D perspectiveOrigin;
+  nsRect bounds;
+  nscoord perspective;
+  int32_t appUnitsPerDevPixel;
+};
+
+union AnimationData {
+  null_t;
+  TransformData;
+};
+
+struct Animation {
+  // Unlike in nsAnimationManager, this start time is at the end of the
+  // delay.  If the delay is changed dynamically, the layer's data will
+  // be updated.
+  TimeStamp startTime;
+  TimeDuration duration;
+  // For each frame, the interpolation point is computed based on the
+  // startTime, the direction, the duration, and the current time.
+  // The segments must uniquely cover the portion from 0.0 to 1.0
+  AnimationSegment[] segments;
+  // Number of times to repeat the animation, including positive infinity.
+  // Values <= 0 mean the animation will not play (although events are still
+  // dispatched on the main thread).
+  float iterationCount;
+  // This uses the NS_STYLE_ANIMATION_DIRECTION_* constants.
+  int32_t direction;
+  nsCSSProperty property;
+  AnimationData data;
+};
+
+// Change a layer's attributes
+struct CommonLayerAttributes {
+  nsIntRegion visibleRegion;
+  EventRegions eventRegions;
+  TransformMatrix transform;
+  float postXScale;
+  float postYScale;
+  uint32_t contentFlags;
+  float opacity;
+  bool useClipRect;
+  nsIntRect clipRect;
+  bool isFixedPosition;
+  LayerPoint fixedPositionAnchor;
+  LayerMargin fixedPositionMargin;
+  bool isStickyPosition;
+  uint64_t stickyScrollContainerId;
+  LayerRect stickyScrollRangeOuter;
+  LayerRect stickyScrollRangeInner;
+  uint64_t scrollbarTargetContainerId;
+  uint32_t scrollbarDirection;
+  int8_t mixBlendMode;
+  bool forceIsolatedGroup;
+  nullable PLayer maskLayer;
+  // Animated colors will only honored for ColorLayers.
+  Animation[] animations;
+  nsIntRegion invalidRegion;
+};
+
+struct ThebesLayerAttributes {
+  nsIntRegion validRegion;
+};
+struct ContainerLayerAttributes {
+  FrameMetrics metrics;
+  ViewID scrollParentId;
+  float preXScale;
+  float preYScale;
+  float inheritedXScale;
+  float inheritedYScale;
+  LayerColor backgroundColor;
+};
+struct ColorLayerAttributes     { LayerColor color; nsIntRect bounds; };
+struct CanvasLayerAttributes    { GraphicsFilterType filter; nsIntRect bounds; };
+struct RefLayerAttributes       { int64_t id; };
+struct ImageLayerAttributes     { GraphicsFilterType filter; IntSize scaleToSize; ScaleMode scaleMode; };
+
+union SpecificLayerAttributes {
+  null_t;
+  ThebesLayerAttributes;
+  ContainerLayerAttributes;
+  ColorLayerAttributes;
+  CanvasLayerAttributes;
+  RefLayerAttributes;
+  ImageLayerAttributes;
+};
+
+struct LayerAttributes {
+  CommonLayerAttributes common;
+  SpecificLayerAttributes specific;
+};
+
+struct OpSetLayerAttributes {
+  PLayer layer;
+  LayerAttributes attrs;
+};
+
+// Monkey with the tree structure
+struct OpSetRoot          { PLayer root; };
+struct OpInsertAfter      { PLayer container; PLayer childLayer; PLayer after; };
+struct OpPrependChild     { PLayer container; PLayer childLayer; };
+struct OpRemoveChild      { PLayer container; PLayer childLayer; };
+struct OpRepositionChild  { PLayer container; PLayer childLayer; PLayer after; };
+struct OpRaiseToTopChild  { PLayer container; PLayer childLayer; };
+
+struct OpSetDiagnosticTypes { DiagnosticTypes diagnostics; };
+
+struct ShmemSection {
+  Shmem shmem;
+  uint32_t offset;
+  size_t size;
+};
+
+union TileLock {
+  ShmemSection;
+  uintptr_t;
+};
+
+struct TexturedTileDescriptor {
+  PTexture texture;
+  TileLock sharedLock;
+};
+
+struct PlaceholderTileDescriptor {
+};
+
+union TileDescriptor {
+  TexturedTileDescriptor;
+  PlaceholderTileDescriptor;
+};
+
+struct SurfaceDescriptorTiles {
+  nsIntRegion validRegion;
+  nsIntRegion paintedRegion;
+  TileDescriptor[] tiles;
+  int         retainedWidth;
+  int         retainedHeight;
+  float       resolution;
+  float       frameResolution;
+};
+
+struct OpUseTiledLayerBuffer {
+  PCompositable compositable;
+  SurfaceDescriptorTiles tileLayerDescriptor;
+};
+
+struct OpCreatedIncrementalTexture {
+  PCompositable compositable;
+  TextureInfo textureInfo;
+  nsIntRect bufferRect;
+};
+
+struct OpPaintTextureRegion {
+  PCompositable compositable;
+  ThebesBufferData bufferData;
+  nsIntRegion updatedRegion;
+};
+
+struct OpPaintTextureIncremental {
+  PCompositable compositable;
+  TextureIdentifier textureId;
+  SurfaceDescriptor image;
+  nsIntRegion updatedRegion;
+  nsIntRect bufferRect;
+  nsIntPoint bufferRotation;
+};
+
+struct OpUpdatePictureRect {
+  PCompositable compositable;
+  nsIntRect picture;
+};
+
+/**
+ * Tells the CompositableHost to remove the corresponding TextureHost
+ */
+struct OpRemoveTexture {
+  PCompositable compositable;
+  PTexture texture;
+};
+
+struct OpRemoveTextureAsync {
+  uint64_t holderId;
+  uint64_t transactionId;
+  PCompositable compositable;
+  PTexture texture;
+};
+
+struct OpReplyRemoveTexture {
+  bool isMain;
+  uint64_t holderId;
+  uint64_t transactionId;
+};
+
+/**
+ * Tells the compositor-side which texture to use (for example, as front buffer
+ * if there is several textures for double buffering)
+ */
+struct OpUseTexture {
+  PCompositable compositable;
+  PTexture texture;
+};
+
+struct OpUseComponentAlphaTextures {
+  PCompositable compositable;
+  PTexture textureOnBlack;
+  PTexture textureOnWhite;
+};
+
+union MaybeRegion {
+  nsIntRegion;
+  null_t;
+};
+
+struct OpUpdateTexture {
+  PCompositable compositable;
+  PTexture texture;
+  MaybeRegion region;
+};
+
+struct OpDeliverFence {
+  uint64_t transactionId;
+  PTexture texture;
+  FenceHandle fence;
+};
+
+struct OpDeliverFenceToTracker {
+  uint64_t transactionId;
+  uint64_t destHolderId;
+  uint64_t destTransactionId;
+  FenceHandle fence;
+};
+
+struct OpDeliverFenceFromChild {
+  uint64_t transactionId;
+  PTexture texture;
+  FenceHandleFromChild fence;
+};
+
+struct OpReplyDeliverFence {
+  uint64_t transactionId;
+};
+
+union CompositableOperation {
+  OpUpdatePictureRect;
+
+  OpCreatedIncrementalTexture;
+
+  OpPaintTextureRegion;
+  OpPaintTextureIncremental;
+
+  OpUseTiledLayerBuffer;
+
+  OpRemoveTexture;
+  OpRemoveTextureAsync;
+
+  OpUpdateTexture;
+  OpUseTexture;
+  OpUseComponentAlphaTextures;
+};
+
+// A unit of a changeset; a set of these comprise a changeset
+union Edit {
+  OpCreateThebesLayer;
+  OpCreateContainerLayer;
+  OpCreateImageLayer;
+  OpCreateColorLayer;
+  OpCreateCanvasLayer;
+  OpCreateRefLayer;
+
+  OpSetLayerAttributes;
+  OpSetDiagnosticTypes;
+
+  OpSetRoot;
+  OpInsertAfter;
+  OpPrependChild;
+  OpRemoveChild;
+  OpRepositionChild;
+  OpRaiseToTopChild;
+
+  OpAttachCompositable;
+  OpAttachAsyncCompositable;
+
+  CompositableOperation;
+};
+
+
+// Replies to operations
+
+struct OpContentBufferSwap {
+  PCompositable compositable;
+  nsIntRegion frontUpdatedRegion;
+};
+
+struct OpTextureSwap {
+  PCompositable compositable;
+  TextureIdentifier textureId;
+  SurfaceDescriptor image;
+};
+
+struct ReturnReleaseFence {
+  PCompositable compositable;
+  PTexture texture;
+  FenceHandle fence;
+};
+
+// Unit of a "changeset reply".  This is a weird abstraction, probably
+// only to be used for buffer swapping.
+union EditReply {
+  OpContentBufferSwap;
+  OpTextureSwap;
+
+  ReturnReleaseFence;
+};
+
+union AsyncParentMessageData {
+  OpDeliverFence;
+  OpDeliverFenceToTracker;
+  OpReplyDeliverFence;
+  OpReplyRemoveTexture;
+};
+
+union AsyncChildMessageData {
+  OpDeliverFenceFromChild;
+  OpReplyDeliverFence;
+};
+
+} // namespace
+} // namespace

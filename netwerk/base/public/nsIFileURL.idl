@@ -1,0 +1,29 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIURL.idl"
+
+interface nsIFile;
+
+/**
+ * nsIFileURL provides access to the underlying nsIFile object corresponding to
+ * an URL.  The URL scheme need not be file:, since other local protocols may
+ * map URLs to files (e.g., resource:).
+ */
+[scriptable, uuid(7750029c-1b0a-414e-8359-a77f24a2a0a6)]
+interface nsIFileURL : nsIURL
+{
+    /**
+     * Get/Set nsIFile corresponding to this URL.
+     *
+     *  - Getter returns a reference to an immutable object.  Callers must clone
+     *    before attempting to modify the returned nsIFile object.  NOTE: this
+     *    constraint might not be enforced at runtime, so beware!!
+     *
+     *  - Setter clones the nsIFile object (allowing the caller to safely modify
+     *    the nsIFile object after setting it on this interface).
+     */
+    attribute nsIFile file;
+};

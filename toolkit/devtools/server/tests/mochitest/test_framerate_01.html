@@ -1,0 +1,105 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+Bug 1007200 - Create a framerate actor
+-->
+<head>
+  <meta charset="utf-8">
+  <title>Framerate actor test</title>
+  <script type="application/javascript" src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="chrome://mochikit/content/tests/SimpleTest/test.css">
+</head>
+<body>
+<pre id="test">
+<script>
+
+window.onload = function() {
+  var Cu = Components.utils;
+  var Cc = Components.classes;
+  var Ci = Components.interfaces;
+
+  Cu.import("resource://gre/modules/Services.jsm");
+
+  // Always log packets when running tests.
+  Services.prefs.setBoolPref("devtools.debugger.log", true);
+  SimpleTest.registerCleanupFunction(function() {
+    Services.prefs.clearUserPref("devtools.debugger.log");
+  });
+
+  Cu.import("resource://gre/modules/devtools/Loader.jsm");
+  Cu.import("resource://gre/modules/devtools/dbg-client.jsm");
+  Cu.import("resource://gre/modules/devtools/dbg-server.jsm");
+
+  SimpleTest.waitForExplicitFinish();
+
+  var {FramerateFront} = devtools.require("devtools/server/actors/framerate");
+
+  DebuggerServer.init(function () { return true; });
+  DebuggerServer.addBrowserActors();
+
+  var client = new DebuggerClient(DebuggerServer.connectPipe());
+  client.connect(function onConnect() {
+    client.listTabs(function onListTabs(aResponse) {
+      var form = aResponse.tabs[aResponse.selected];
+      var front = FramerateFront(client, form);
+
+      window.setTimeout(() => {
+        front.startRecording().then(() => {
+          window.setTimeout(() => {
+            front.stopRecording().then(rawData => {
+              onRecordingStopped(front, rawData);
+            });
+          }, 1000);
+        });
+      }, 1000);
+    });
+  });
+
+  function onRecordingStopped(front, rawData) {
+    ok(rawData, "There should be a recording available.");
+
+    var timeline = front.plotFPS(rawData);
+    ok(timeline.length >= 2,
+      "There should be at least one measurement available, with two entries.");
+
+    var prevTimeStart = timeline[0].delta;
+
+    for (var i = 0; i < timeline.length; i += 2) {
+      var currTimeStart = timeline[i].delta;
+      var currTimeEnd = timeline[i + 1].delta;
+      info("Testing delta: " + currTimeStart + " vs. " + currTimeEnd);
+
+      ok(currTimeStart < currTimeEnd,
+        "The start and end time deltas should be consecutive.");
+      is(currTimeStart, prevTimeStart,
+        "There should be two time deltas for each framerate value.");
+
+      prevTimeStart = currTimeEnd;
+    }
+
+    var prevFramerateValue = -1;
+
+    for (var i = 0; i < timeline.length; i += 2) {
+      var currFramerateStart = timeline[i].value;
+      var currFramerateEnd = timeline[i + 1].value;
+      info("Testing framerate: " + currFramerateStart);
+
+      is(currFramerateStart, currFramerateEnd,
+        "The start and end framerate values should be equal.");
+      isnot(currFramerateStart, prevFramerateValue,
+        "There should be different framerate values for each bucket.");
+
+      is(typeof currFramerateStart, "number", "All values should be numbers.");
+      prevFramerateValue = currFramerateStart;
+    }
+
+    client.close(() => {
+      DebuggerServer.destroy();
+      SimpleTest.finish()
+    });
+  }
+}
+</script>
+</pre>
+</body>
+</html>

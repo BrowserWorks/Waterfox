@@ -1,0 +1,94 @@
+/* -*- Mode: IDL; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+/**
+ * The nsIDocShellTreeOwner
+ */
+
+interface nsIDocShellTreeItem;
+
+[scriptable, uuid(6cd89e60-1060-491e-8c31-ce969435ec56)]
+interface nsIDocShellTreeOwner : nsISupports
+{
+	/*
+	Return the child DocShellTreeItem with the specified name.
+	name - This is the name of the item that is trying to be found.
+	aRequestor - This is the docshellTreeItem that is requesting the find.  This
+	parameter is used to identify when the child is asking its parent to find
+	a child with the specific name.  The parent uses this parameter to ensure
+	a resursive state does not occur by not again asking the requestor for find
+	a shell by the specified name.  Inversely the child uses it to ensure it
+	does not ask its parent to do the search if its parent is the one that
+	asked it to search.
+	aOriginalRequestor - The original treeitem that made the request, if any.
+	This is used to ensure that we don't run into cross-site issues.
+
+	*/
+	nsIDocShellTreeItem findItemWithName(in wstring name, 
+		in nsIDocShellTreeItem aRequestor,
+		in nsIDocShellTreeItem aOriginalRequestor);
+
+	/**
+	 * Called when a content shell is added to the docshell tree.  This is
+	 * _only_ called for "root" content shells (that is, ones whose parent is a
+	 * chrome shell).
+	 *
+	 * @param aContentShell the shell being added.
+	 * @param aPrimary whether the shell is primary.
+	 * @param aTargetable whether the shell can be a target for named window
+	 *					targeting.
+	 * @param aID the "id" of the shell.  What this actually means is
+	 *			undefined. Don't rely on this for anything.
+	 */
+	void contentShellAdded(in nsIDocShellTreeItem aContentShell,
+						   in boolean aPrimary, in boolean aTargetable,
+						   in AString aID);
+
+	/**
+	 * Called when a content shell is removed from the docshell tree.  This is
+	 * _only_ called for "root" content shells (that is, ones whose parent is a
+	 * chrome shell).  Note that if aContentShell was never added,
+	 * contentShellRemoved should just do nothing.
+	 *
+	 * @param aContentShell the shell being removed.
+	 */
+	void contentShellRemoved(in nsIDocShellTreeItem aContentShell);
+
+	/*
+	Returns the Primary Content Shell
+	*/
+	readonly attribute nsIDocShellTreeItem primaryContentShell;
+
+	[implicit_jscontext]
+	readonly attribute jsval contentWindow;
+
+	/*
+	Tells the tree owner to size its window or parent window in such a way
+	that the shell passed along will be the size specified.
+	*/
+	void sizeShellTo(in nsIDocShellTreeItem shell, in long cx, in long cy);
+
+	/*
+	Sets the persistence of different attributes of the window.
+	*/
+	void setPersistence(in boolean aPersistPosition,
+                            in boolean aPersistSize,
+                            in boolean aPersistSizeMode);
+
+	/*
+	Gets the current persistence states of the window.
+	*/
+	void getPersistence(out boolean aPersistPosition,
+                            out boolean aPersistSize,
+                            out boolean aPersistSizeMode);
+
+	/*
+	Gets the number of targettable docshells.
+	*/
+	readonly attribute unsigned long targetableShellCount;
+};

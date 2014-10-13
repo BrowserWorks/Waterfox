@@ -1,0 +1,30 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "domstubs.idl"
+
+interface nsIDOMGeoPositionCallback;
+interface nsIDOMGeoPositionErrorCallback;
+
+%{C++
+namespace mozilla {
+namespace dom {
+class PositionOptions;
+}
+}
+%}
+
+[ptr] native NamespacedPositionOptions(mozilla::dom::PositionOptions);
+
+[builtinclass, uuid(9142ab45-0ab5-418c-9bab-338a6d271d4f)]
+interface nsIDOMGeoGeolocation : nsISupports
+{
+  int32_t watchPosition(in nsIDOMGeoPositionCallback callback,
+                        in nsIDOMGeoPositionErrorCallback errorCallback,
+                        in NamespacedPositionOptions options);
+  void getCurrentPosition(in nsIDOMGeoPositionCallback callback,
+                          in nsIDOMGeoPositionErrorCallback errorCallback,
+                          in NamespacedPositionOptions options);
+  void clearWatch(in long watchId);
+};

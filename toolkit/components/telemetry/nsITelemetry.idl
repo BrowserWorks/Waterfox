@@ -1,0 +1,261 @@
+/* -*- Mode: C++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 8 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+#include "nsIFile.idl"
+
+[scriptable,function, uuid(3d3b9075-5549-4244-9c08-b64fefa1dd60)]
+interface nsIFetchTelemetryDataCallback : nsISupports
+{
+  void complete();
+};
+
+[scriptable, uuid(4e4bfc35-dac6-4b28-ade4-7e45760051d5)]
+interface nsITelemetry : nsISupports
+{
+  /**
+   * Histogram types:
+   * HISTOGRAM_EXPONENTIAL - buckets increase exponentially
+   * HISTOGRAM_LINEAR - buckets increase linearly
+   * HISTOGRAM_BOOLEAN - For storing 0/1 values
+   * HISTOGRAM_FLAG - For storing a single value; its count is always == 1.
+   */
+  const unsigned long HISTOGRAM_EXPONENTIAL = 0;
+  const unsigned long HISTOGRAM_LINEAR = 1;
+  const unsigned long HISTOGRAM_BOOLEAN = 2;
+  const unsigned long HISTOGRAM_FLAG = 3;
+
+  /*
+   * An object containing a snapshot from all of the currently registered histograms.
+   * { name1: {data1}, name2:{data2}...}
+   * where data is consists of the following properties:
+   *   min - Minimal bucket size
+   *   max - Maximum bucket size
+   *   histogram_type - HISTOGRAM_EXPONENTIAL, HISTOGRAM_LINEAR, or HISTOGRAM_BOOLEAN
+   *   counts - array representing contents of the buckets in the histogram
+   *   ranges -  an array with calculated bucket sizes
+   *   sum - sum of the bucket contents
+   *   static - true for histograms defined in TelemetryHistograms.h, false for ones defined with newHistogram
+   */
+  [implicit_jscontext]
+  readonly attribute jsval histogramSnapshots;
+
+  /**
+   * The amount of time, in milliseconds, that the last session took
+   * to shutdown.  Reads as 0 to indicate failure.
+   */
+  readonly attribute uint32_t lastShutdownDuration;
+
+  /**
+   * The number of failed profile lock attempts that have occurred prior to 
+   * successfully locking the profile
+   */
+  readonly attribute uint32_t failedProfileLockCount;
+
+  /*
+   * An object containing information about slow SQL statements.
+   *
+   * {
+   *   mainThread: { "sqlString1": [<hit count>, <total time>], "sqlString2": [...], ... },
+   *   otherThreads: { "sqlString3": [<hit count>, <total time>], "sqlString4": [...], ... }
+   * }
+   *
+   * where:
+   *   mainThread: Slow statements that executed on the main thread
+   *   otherThreads: Slow statements that executed on a non-main thread
+   *   sqlString - String of the offending statement (see note)
+   *   hit count - The number of times this statement required longer than the threshold time to execute
+   *   total time - The sum of all execution times above the threshold time for this statement
+   *
+   * Note that dynamic SQL strings and SQL strings executed against addon DBs could contain private information.
+   * This property represents such SQL as aggregate database-level stats and the sqlString contains the database
+   * filename instead.
+   */
+  [implicit_jscontext]
+  readonly attribute jsval slowSQL;
+
+  /*
+   * See slowSQL above.
+   *
+   * An object containing full strings of every slow SQL statement if toolkit.telemetry.debugSlowSql = true
+   * The returned SQL strings may contain private information and should not be reported to Telemetry.
+   */
+  [implicit_jscontext]
+  readonly attribute jsval debugSlowSQL;
+
+  /**
+   * A number representing the highest number of concurrent threads
+   * reached during this session.
+   */
+  readonly attribute uint32_t maximalNumberOfConcurrentThreads;
+
+  /*
+   * An array of chrome hang reports. Each element is a hang report represented
+   * as an object containing the hang duration, call stack PCs and information
+   * about modules in memory.
+   */
+  [implicit_jscontext]
+  readonly attribute jsval chromeHangs;
+
+  /*
+   * An array of thread hang stats,
+   *   [<thread>, <thread>, ...]
+   * <thread> represents a single thread,
+   *   {"name": "<name>",
+   *    "activity": <time>,
+   *    "hangs": [<hang>, <hang>, ...]}
+   * <time> represents a histogram of time intervals in milliseconds,
+   *   with the same format as histogramSnapshots
+   * <hang> represents a particular hang,
+   *   {"stack": <stack>, "histogram": <time>}
+   * <stack> represents the hang's stack,
+   *   ["<frame_0>", "<frame_1>", ...]
+   */
+  [implicit_jscontext]
+  readonly attribute jsval threadHangStats;
+
+  /*
+   * An object with two fields: memoryMap and stacks.
+   * * memoryMap is a list of loaded libraries.
+   * * stacks is a list of stacks. Each stack is a list of pairs of the form
+   *   [moduleIndex, offset]. The moduleIndex is an index into the memoryMap and
+   *   offset is an offset in the library at memoryMap[moduleIndex].
+   * This format is used to make it easier to send the stacks to the
+   * symbolication server.
+   */
+  [implicit_jscontext]
+  readonly attribute jsval lateWrites;
+
+  /**
+   * Returns an array whose values are the names of histograms defined
+   * in Histograms.json.
+   */
+  void registeredHistograms(out uint32_t count,
+                            [retval, array, size_is(count)] out string histograms);
+
+  /** 
+   * Create and return a histogram.  Parameters:
+   *
+   * @param name Unique histogram name
+   * @param expiration Expiration version
+   * @param min - Minimal bucket size
+   * @param max - Maximum bucket size
+   * @param bucket_count - number of buckets in the histogram.
+   * @param type - HISTOGRAM_EXPONENTIAL, HISTOGRAM_LINEAR or HISTOGRAM_BOOLEAN
+   * The returned object has the following functions:
+   *   add(int) - Adds an int value to the appropriate bucket
+   *   snapshot() - Returns a snapshot of the histogram with the same data fields as in histogramSnapshots()
+   *   clear() - Zeros out the histogram's buckets and sum
+   */
+  [implicit_jscontext]
+  jsval newHistogram(in ACString name, in ACString expiration, in uint32_t min, in uint32_t max, in uint32_t bucket_count, in unsigned long histogram_type);
+
+  /**
+   * Create a histogram using the current state of an existing histogram.  The
+   * existing histogram must be registered in TelemetryHistograms.h.
+   *
+   * @param name Unique histogram name
+   * @param existing_name Existing histogram name
+   * The returned object has the same functions as a histogram returned from newHistogram.
+   */
+  [implicit_jscontext]
+  jsval histogramFrom(in ACString name, in ACString existing_name);
+
+  /**
+   * Same as newHistogram above, but for histograms registered in TelemetryHistograms.h.
+   *
+   * @param id - unique identifier from TelemetryHistograms.h
+   */
+  [implicit_jscontext]
+  jsval getHistogramById(in ACString id);
+
+  /**
+   * Set this to false to disable gathering of telemetry statistics.
+   */
+  attribute boolean canRecord;
+
+  /**
+   * A flag indicating whether Telemetry can submit official results.
+   */
+  readonly attribute boolean canSend;
+
+  /** Addon telemetry hooks */
+
+  /**
+   * Register a histogram for an addon.  Throws an error if the
+   * histogram name has been registered previously.
+   *
+   * @param addon_id - Unique ID of the addon
+   * @param name - Unique histogram name
+   * @param min - Minimal bucket size
+   * @param max - Maximum bucket size
+   * @param bucket_count - number of buckets in the histogram
+   * @param histogram_type - HISTOGRAM_EXPONENTIAL, HISTOGRAM_LINEAR, or
+   *        HISTOGRAM_BOOLEAN
+   */
+  void registerAddonHistogram(in ACString addon_id, in ACString name,
+                              in uint32_t min, in uint32_t max,
+                              in uint32_t bucket_count,
+                              in unsigned long histogram_type);
+
+  /**
+   * Return a histogram previously registered via
+   * registerAddonHistogram.  Throws an error if the id/name combo has
+   * not been registered via registerAddonHistogram.
+   *
+   * @param addon_id - Unique ID of the addon
+   * @param name - Registered histogram name
+   *
+   * The returned object has the same functions as a histogram returned
+   * from newHistogram.
+   */
+  [implicit_jscontext]
+  jsval getAddonHistogram(in ACString addon_id, in ACString name);
+
+  /**
+   * Delete all histograms associated with the given addon id.
+   *
+   * @param addon_id - Unique ID of the addon
+   */
+  void unregisterAddonHistograms(in ACString addon_id);
+
+  /**
+   * An object containing a snapshot from all of the currently
+   * registered addon histograms.
+   * { addon-id1 : data1, ... }
+   *
+   * where data is an object whose properties are the names of the
+   * addon's histograms and whose corresponding values are as in
+   * histogramSnapshots.
+   */
+  [implicit_jscontext]
+  readonly attribute jsval addonHistogramSnapshots;
+
+  /**
+   * Read data from the previous run. After the callback is called, the last
+   * shutdown time is available in lastShutdownDuration and any late
+   * writes in lateWrites.
+   */
+  void asyncFetchTelemetryData(in nsIFetchTelemetryDataCallback aCallback);
+
+  /**
+   * Get statistics of file IO reports, null, if not recorded.
+   *
+   * The statistics are returned as an object whose propoerties are the names
+   * of the files that have been accessed and whose corresponding values are
+   * arrays of size three, representing startup, normal, and shutdown stages.
+   * Each stage's entry is either null or an array with the layout
+   * [total_time, #creates, #reads, #writes, #fsyncs, #stats]
+   */
+  [implicit_jscontext]
+  readonly attribute jsval fileIOReports;
+
+  /**
+   * Return the number of seconds since process start using monotonic
+   * timestamps (unaffected by system clock changes).
+   * @throws NS_ERROR_NOT_AVAILABLE if TimeStamp doesn't have the data.
+   */
+  double msSinceProcessStart();
+};

@@ -1,0 +1,35 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#ifndef nsXPTCUtils_h__
+#define nsXPTCUtils_h__
+
+#include "xptcall.h"
+
+/**
+ * A helper class that initializes an xptcall helper at construction
+ * and releases it at destruction.
+ */
+class nsAutoXPTCStub : protected nsIXPTCProxy
+{
+public:
+  nsISomeInterface* mXPTCStub;
+
+protected:
+  nsAutoXPTCStub() : mXPTCStub(nullptr) { }
+
+  nsresult
+  InitStub(const nsIID& aIID)
+  {
+    return NS_GetXPTCallStub(aIID, this, &mXPTCStub);
+  }
+
+  ~nsAutoXPTCStub()
+  {
+    if (mXPTCStub)
+      NS_DestroyXPTCallStub(mXPTCStub);
+  }
+};
+
+#endif // nsXPTCUtils_h__

@@ -1,0 +1,30 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+UNIFIED_SOURCES += [
+    'basic_code_modules.cc',
+    'basic_source_line_resolver.cc',
+    'call_stack.cc',
+    'cfi_frame_info.cc',
+    'minidump.cc',
+    'source_line_resolver_base.cc',
+    'stack_frame_symbolizer.cc',
+    'stackwalker.cc',
+    'stackwalker_amd64.cc',
+    'stackwalker_arm.cc',
+    'stackwalker_ppc.cc',
+    'stackwalker_sparc.cc',
+    'stackwalker_x86.cc',
+    'tokenize.cc',
+]
+
+FINAL_LIBRARY = 'xulapp_s'
+
+LOCAL_INCLUDES += [
+    '..',
+    '../..',
+]
+

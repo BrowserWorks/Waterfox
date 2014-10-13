@@ -1,0 +1,76 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#aboutDialog {
+  width: 620px;
+}
+
+#rightBox {
+  background-image: url("chrome://branding/content/about-wordmark.png");
+  background-repeat: no-repeat;
+  /* padding-top creates room for the wordmark */
+  padding-top: 38px;
+  margin-top:20px;
+}
+
+#rightBox:-moz-locale-dir(rtl) {
+  background-position: 100% 0;
+}
+
+#bottomBox {
+  padding: 15px 10px 0;
+}
+
+#version {
+  margin-top: 10px;
+  -moz-margin-start: 0;
+  -moz-user-select: text;
+  -moz-user-focus: normal;
+  cursor: text;
+}
+
+#distribution,
+#distributionId {
+  font-weight: bold;
+  display: none;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.text-blurb {
+  margin-bottom: 10px;
+  -moz-margin-start: 0;
+  -moz-padding-start: 0;
+}
+
+#updateButton,
+#updateDeck > hbox > label {
+  -moz-margin-start: 0;
+  -moz-padding-start: 0;
+}
+
+.update-throbber {
+  width: 16px;
+  min-height: 16px;
+  -moz-margin-end: 3px;
+  list-style-image: url("chrome://global/skin/icons/loading_16.png");
+}
+
+.text-link,
+.text-link:focus {
+  margin: 0px;
+  padding: 0px;
+}
+
+.bottom-link,
+.bottom-link:focus {
+  text-align: center;
+  margin: 0 40px;
+}
+
+#currentChannel {
+  margin: 0;
+  padding: 0;
+  font-weight: bold;
+}

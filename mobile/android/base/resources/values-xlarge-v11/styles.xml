@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<resources>
+
+    <!--
+        Only overriden styles for Honeycomb/Ice cream sandwich XLARGE tablets are specified here.
+        Please refer to values/styles.xml for default styles.
+    -->
+
+    <!-- TabWidget --> 
+    <style name="TabWidget">
+        <item name="android:layout_width">300dip</item>
+        <item name="android:layout_height">48dip</item>
+    </style>
+
+    <style name="Widget.Home.HistoryListView">
+        <item name="android:paddingLeft">32dp</item>
+        <item name="android:paddingRight">32dp</item>
+        <item name="android:paddingTop">30dp</item>
+        <item name="android:scrollbarStyle">outsideOverlay</item>
+        <item name="topDivider">true</item>
+    </style>
+
+    <style name="Widget.Home.HistoryTabWidget">
+        <item name="android:showDividers">beginning|middle|end</item>
+        <item name="android:dividerPadding">0dp</item>
+        <item name="android:paddingTop">30dp</item>
+    </style>
+
+    <!-- Tabs panel -->
+    <style name="RemoteTabsPanelChild" parent="RemoteTabsPanelChildBase">
+        <item name="android:paddingLeft">212dp</item>
+        <item name="android:paddingRight">212dp</item>
+    </style>
+
+</resources>

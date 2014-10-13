@@ -1,0 +1,467 @@
+/* created by mklicensestables.c */
+static const struct {
+  /* jurisdictions in addition to the generic version, bitfield */
+  const guint64             jurisdictions;
+  const GstTagLicenseFlags  flags;
+  /* the bit after http://creativecommons.org/licenses/ */
+  const gchar               ref[18];
+  gint16                    title_idx;  /* index in string table */
+  gint16                    desc_idx;   /* index in string table */
+} licenses[] = {
+  /*  0 http://creativecommons.org/licenses/GPL/2.0/ */
+  { 0x8000000000000000, 0x02000d07, "GPL/2.0/", 0, -1 },
+  /*  1 http://creativecommons.org/licenses/LGPL/2.1/ */
+  { 0x8000000000000000, 0x02000d07, "LGPL/2.1/", 4, -1 },
+  /*  2 http://creativecommons.org/licenses/by-nc-nd/2.0/
+   *  2 http://creativecommons.org/licenses/by-nc-nd/2.0/at/
+   *  2 http://creativecommons.org/licenses/by-nc-nd/2.0/au/
+   *  2 http://creativecommons.org/licenses/by-nc-nd/2.0/be/
+   *  2 http://creativecommons.org/licenses/by-nc-nd/2.0/br/
+   *  2 http://creativecommons.org/licenses/by-nc-nd/2.0/ca/
+   *  2 http://creativecommons.org/licenses/by-nc-nd/2.0/cl/
+   *  2 http://creativecommons.org/licenses/by-nc-nd/2.0/de/
+   *  2 http://creativecommons.org/licenses/by-nc-nd/2.0/es/
+   *  2 http://creativecommons.org/licenses/by-nc-nd/2.0/fr/
+   *  2 http://creativecommons.org/licenses/by-nc-nd/2.0/hr/
+   *  2 http://creativecommons.org/licenses/by-nc-nd/2.0/it/
+   *  2 http://creativecommons.org/licenses/by-nc-nd/2.0/kr/
+   *  2 http://creativecommons.org/licenses/by-nc-nd/2.0/nl/
+   *  2 http://creativecommons.org/licenses/by-nc-nd/2.0/pl/
+   *  2 http://creativecommons.org/licenses/by-nc-nd/2.0/tw/
+   *  2 http://creativecommons.org/licenses/by-nc-nd/2.0/uk/
+   *  2 http://creativecommons.org/licenses/by-nc-nd/2.0/za/
+   *  2 http://creativecommons.org/licenses/by-nd-nc/2.0/jp/ */
+  { 0x8000002c2871a96e, 0x01010303, "by-nc-nd/2.0/", 9, -1 },
+  /*  3 http://creativecommons.org/licenses/by-nc-nd/2.1/au/ */
+  { 0x0000000000000004, 0x01010303, "by-nc-nd/2.1/", 9, -1 },
+  /*  4 http://creativecommons.org/licenses/by-nc-nd/2.1/es/ */
+  { 0x0000000000002000, 0x01010303, "by-nc-nd/2.1/", 9, -1 },
+  /*  5 http://creativecommons.org/licenses/by-nc-nd/2.1/jp/ */
+  { 0x0000000000200000, 0x01010303, "by-nc-nd/2.1/", 9, -1 },
+  /*  6 http://creativecommons.org/licenses/by-nc-nd/2.5/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/ar/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/au/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/bg/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/br/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/ca/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/ch/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/cn/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/co/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/dk/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/es/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/hr/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/hu/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/il/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/in/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/it/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/mk/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/mt/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/mx/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/my/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/nl/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/pe/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/pl/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/pt/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/scotland/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/se/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/si/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/tw/
+   *  6 http://creativecommons.org/licenses/by-nc-nd/2.5/za/ */
+  { 0x80000027ff9f36f5, 0x01010303, "by-nc-nd/2.5/", 9, -1 },
+  /*  7 http://creativecommons.org/licenses/by-nc-nd/3.0/
+   *  7 http://creativecommons.org/licenses/by-nc-nd/3.0/us/ */
+  { 0x8000001000000000, 0x01010303, "by-nc-nd/3.0/", 9, -1 },
+  /*  8 http://creativecommons.org/licenses/by-nc-sa/1.0/
+   *  8 http://creativecommons.org/licenses/by-nc-sa/1.0/fi/
+   *  8 http://creativecommons.org/licenses/by-nc-sa/1.0/il/
+   *  8 http://creativecommons.org/licenses/by-nc-sa/1.0/nl/ */
+  { 0x8000000008044000, 0x01010707, "by-nc-sa/1.0/", 44, -1 },
+  /*  9 http://creativecommons.org/licenses/by-nc-sa/2.0/
+   *  9 http://creativecommons.org/licenses/by-nc-sa/2.0/at/
+   *  9 http://creativecommons.org/licenses/by-nc-sa/2.0/au/
+   *  9 http://creativecommons.org/licenses/by-nc-sa/2.0/be/
+   *  9 http://creativecommons.org/licenses/by-nc-sa/2.0/br/
+   *  9 http://creativecommons.org/licenses/by-nc-sa/2.0/ca/
+   *  9 http://creativecommons.org/licenses/by-nc-sa/2.0/cl/
+   *  9 http://creativecommons.org/licenses/by-nc-sa/2.0/de/
+   *  9 http://creativecommons.org/licenses/by-nc-sa/2.0/es/
+   *  9 http://creativecommons.org/licenses/by-nc-sa/2.0/fr/
+   *  9 http://creativecommons.org/licenses/by-nc-sa/2.0/hr/
+   *  9 http://creativecommons.org/licenses/by-nc-sa/2.0/it/
+   *  9 http://creativecommons.org/licenses/by-nc-sa/2.0/jp/
+   *  9 http://creativecommons.org/licenses/by-nc-sa/2.0/kr/
+   *  9 http://creativecommons.org/licenses/by-nc-sa/2.0/nl/
+   *  9 http://creativecommons.org/licenses/by-nc-sa/2.0/pl/
+   *  9 http://creativecommons.org/licenses/by-nc-sa/2.0/tw/
+   *  9 http://creativecommons.org/licenses/by-nc-sa/2.0/uk/
+   *  9 http://creativecommons.org/licenses/by-nc-sa/2.0/za/ */
+  { 0x8000002c2871a96e, 0x01010707, "by-nc-sa/2.0/", 44, -1 },
+  /* 10 http://creativecommons.org/licenses/by-nc-sa/2.1/au/ */
+  { 0x0000000000000004, 0x01010707, "by-nc-sa/2.1/", 44, -1 },
+  /* 11 http://creativecommons.org/licenses/by-nc-sa/2.1/es/ */
+  { 0x0000000000002000, 0x01010707, "by-nc-sa/2.1/", 44, -1 },
+  /* 12 http://creativecommons.org/licenses/by-nc-sa/2.1/jp/ */
+  { 0x0000000000200000, 0x01010707, "by-nc-sa/2.1/", 44, -1 },
+  /* 13 http://creativecommons.org/licenses/by-nc-sa/2.5/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/ar/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/au/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/bg/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/br/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/ca/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/ch/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/cn/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/co/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/dk/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/es/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/hr/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/hu/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/il/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/in/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/it/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/mk/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/mt/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/mx/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/my/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/nl/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/pe/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/pl/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/pt/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/se/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/si/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/tw/
+   * 13 http://creativecommons.org/licenses/by-nc-sa/2.5/za/ */
+  { 0x800000277f9f36f5, 0x01010707, "by-nc-sa/2.5/", 44, -1 },
+  /* 14 http://creativecommons.org/licenses/by-nc-sa/2.5/scotland/ */
+  { 0x0000000080000000, 0x01010703, "by-nc-sa/2.5/", 44, -1 },
+  /* 15 http://creativecommons.org/licenses/by-nc-sa/3.0/
+   * 15 http://creativecommons.org/licenses/by-nc-sa/3.0/us/ */
+  { 0x8000001000000000, 0x01010707, "by-nc-sa/3.0/", 44, -1 },
+  /* 16 http://creativecommons.org/licenses/by-nc/1.0/
+   * 16 http://creativecommons.org/licenses/by-nc/1.0/fi/
+   * 16 http://creativecommons.org/licenses/by-nc/1.0/il/
+   * 16 http://creativecommons.org/licenses/by-nc/1.0/nl/ */
+  { 0x8000000008044000, 0x01010307, "by-nc/1.0/", 81, -1 },
+  /* 17 http://creativecommons.org/licenses/by-nc/2.0/
+   * 17 http://creativecommons.org/licenses/by-nc/2.0/at/
+   * 17 http://creativecommons.org/licenses/by-nc/2.0/au/
+   * 17 http://creativecommons.org/licenses/by-nc/2.0/be/
+   * 17 http://creativecommons.org/licenses/by-nc/2.0/br/
+   * 17 http://creativecommons.org/licenses/by-nc/2.0/ca/
+   * 17 http://creativecommons.org/licenses/by-nc/2.0/cl/
+   * 17 http://creativecommons.org/licenses/by-nc/2.0/de/
+   * 17 http://creativecommons.org/licenses/by-nc/2.0/es/
+   * 17 http://creativecommons.org/licenses/by-nc/2.0/fr/
+   * 17 http://creativecommons.org/licenses/by-nc/2.0/hr/
+   * 17 http://creativecommons.org/licenses/by-nc/2.0/it/
+   * 17 http://creativecommons.org/licenses/by-nc/2.0/jp/
+   * 17 http://creativecommons.org/licenses/by-nc/2.0/kr/
+   * 17 http://creativecommons.org/licenses/by-nc/2.0/nl/
+   * 17 http://creativecommons.org/licenses/by-nc/2.0/pl/
+   * 17 http://creativecommons.org/licenses/by-nc/2.0/tw/
+   * 17 http://creativecommons.org/licenses/by-nc/2.0/uk/
+   * 17 http://creativecommons.org/licenses/by-nc/2.0/za/ */
+  { 0x8000002c2871a96e, 0x01010307, "by-nc/2.0/", 81, -1 },
+  /* 18 http://creativecommons.org/licenses/by-nc/2.1/au/ */
+  { 0x0000000000000004, 0x01010307, "by-nc/2.1/", 81, -1 },
+  /* 19 http://creativecommons.org/licenses/by-nc/2.1/es/ */
+  { 0x0000000000002000, 0x01010307, "by-nc/2.1/", 81, -1 },
+  /* 20 http://creativecommons.org/licenses/by-nc/2.1/jp/ */
+  { 0x0000000000200000, 0x01010307, "by-nc/2.1/", 81, -1 },
+  /* 21 http://creativecommons.org/licenses/by-nc/2.5/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/ar/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/au/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/bg/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/br/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/ca/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/ch/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/cn/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/co/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/dk/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/es/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/hr/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/hu/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/il/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/in/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/it/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/mk/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/mt/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/mx/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/my/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/nl/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/pe/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/pl/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/pt/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/se/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/si/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/tw/
+   * 21 http://creativecommons.org/licenses/by-nc/2.5/za/ */
+  { 0x800000277f9f36f5, 0x01010307, "by-nc/2.5/", 81, -1 },
+  /* 22 http://creativecommons.org/licenses/by-nc/2.5/scotland/ */
+  { 0x0000000080000000, 0x01010303, "by-nc/2.5/", 81, -1 },
+  /* 23 http://creativecommons.org/licenses/by-nc/3.0/
+   * 23 http://creativecommons.org/licenses/by-nc/3.0/us/ */
+  { 0x8000001000000000, 0x01010307, "by-nc/3.0/", 81, -1 },
+  /* 24 http://creativecommons.org/licenses/by-nd-nc/1.0/
+   * 24 http://creativecommons.org/licenses/by-nd-nc/1.0/fi/
+   * 24 http://creativecommons.org/licenses/by-nd-nc/1.0/il/
+   * 24 http://creativecommons.org/licenses/by-nd-nc/1.0/nl/ */
+  { 0x8000000008044000, 0x01010303, "by-nd-nc/1.0/", 107, -1 },
+  /* 25 http://creativecommons.org/licenses/by-nd-nc/2.0/jp/ */
+  { 0x0000000000200000, 0x01010303, "by-nd-nc/2.0/", 107, -1 },
+  /* 26 http://creativecommons.org/licenses/by-nd/1.0/
+   * 26 http://creativecommons.org/licenses/by-nd/1.0/fi/
+   * 26 http://creativecommons.org/licenses/by-nd/1.0/il/
+   * 26 http://creativecommons.org/licenses/by-nd/1.0/nl/ */
+  { 0x8000000008044000, 0x01000303, "by-nd/1.0/", 142, -1 },
+  /* 27 http://creativecommons.org/licenses/by-nd/2.0/
+   * 27 http://creativecommons.org/licenses/by-nd/2.0/at/
+   * 27 http://creativecommons.org/licenses/by-nd/2.0/au/
+   * 27 http://creativecommons.org/licenses/by-nd/2.0/be/
+   * 27 http://creativecommons.org/licenses/by-nd/2.0/br/
+   * 27 http://creativecommons.org/licenses/by-nd/2.0/ca/
+   * 27 http://creativecommons.org/licenses/by-nd/2.0/cl/
+   * 27 http://creativecommons.org/licenses/by-nd/2.0/de/
+   * 27 http://creativecommons.org/licenses/by-nd/2.0/es/
+   * 27 http://creativecommons.org/licenses/by-nd/2.0/fr/
+   * 27 http://creativecommons.org/licenses/by-nd/2.0/hr/
+   * 27 http://creativecommons.org/licenses/by-nd/2.0/it/
+   * 27 http://creativecommons.org/licenses/by-nd/2.0/jp/
+   * 27 http://creativecommons.org/licenses/by-nd/2.0/kr/
+   * 27 http://creativecommons.org/licenses/by-nd/2.0/nl/
+   * 27 http://creativecommons.org/licenses/by-nd/2.0/pl/
+   * 27 http://creativecommons.org/licenses/by-nd/2.0/tw/
+   * 27 http://creativecommons.org/licenses/by-nd/2.0/uk/
+   * 27 http://creativecommons.org/licenses/by-nd/2.0/za/ */
+  { 0x8000002c2871a96e, 0x01000303, "by-nd/2.0/", 142, -1 },
+  /* 28 http://creativecommons.org/licenses/by-nd/2.1/au/ */
+  { 0x0000000000000004, 0x01000303, "by-nd/2.1/", 142, -1 },
+  /* 29 http://creativecommons.org/licenses/by-nd/2.1/es/ */
+  { 0x0000000000002000, 0x01000303, "by-nd/2.1/", 142, -1 },
+  /* 30 http://creativecommons.org/licenses/by-nd/2.1/jp/ */
+  { 0x0000000000200000, 0x01000303, "by-nd/2.1/", 142, -1 },
+  /* 31 http://creativecommons.org/licenses/by-nd/2.5/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/ar/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/au/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/bg/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/br/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/ca/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/ch/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/cn/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/co/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/dk/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/es/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/hr/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/hu/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/il/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/in/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/it/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/mk/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/mt/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/mx/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/my/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/nl/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/pe/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/pl/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/pt/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/scotland/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/se/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/si/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/tw/
+   * 31 http://creativecommons.org/licenses/by-nd/2.5/za/ */
+  { 0x80000027ff9f36f5, 0x01000303, "by-nd/2.5/", 142, -1 },
+  /* 32 http://creativecommons.org/licenses/by-nd/3.0/
+   * 32 http://creativecommons.org/licenses/by-nd/3.0/us/ */
+  { 0x8000001000000000, 0x01000303, "by-nd/3.0/", 142, -1 },
+  /* 33 http://creativecommons.org/licenses/by-sa/1.0/
+   * 33 http://creativecommons.org/licenses/by-sa/1.0/fi/
+   * 33 http://creativecommons.org/licenses/by-sa/1.0/il/
+   * 33 http://creativecommons.org/licenses/by-sa/1.0/nl/ */
+  { 0x8000000008044000, 0x01000707, "by-sa/1.0/", 163, -1 },
+  /* 34 http://creativecommons.org/licenses/by-sa/2.0/
+   * 34 http://creativecommons.org/licenses/by-sa/2.0/at/
+   * 34 http://creativecommons.org/licenses/by-sa/2.0/au/
+   * 34 http://creativecommons.org/licenses/by-sa/2.0/be/
+   * 34 http://creativecommons.org/licenses/by-sa/2.0/br/
+   * 34 http://creativecommons.org/licenses/by-sa/2.0/ca/
+   * 34 http://creativecommons.org/licenses/by-sa/2.0/cl/
+   * 34 http://creativecommons.org/licenses/by-sa/2.0/de/
+   * 34 http://creativecommons.org/licenses/by-sa/2.0/es/
+   * 34 http://creativecommons.org/licenses/by-sa/2.0/fr/
+   * 34 http://creativecommons.org/licenses/by-sa/2.0/hr/
+   * 34 http://creativecommons.org/licenses/by-sa/2.0/it/
+   * 34 http://creativecommons.org/licenses/by-sa/2.0/jp/
+   * 34 http://creativecommons.org/licenses/by-sa/2.0/kr/
+   * 34 http://creativecommons.org/licenses/by-sa/2.0/nl/
+   * 34 http://creativecommons.org/licenses/by-sa/2.0/pl/
+   * 34 http://creativecommons.org/licenses/by-sa/2.0/tw/
+   * 34 http://creativecommons.org/licenses/by-sa/2.0/uk/
+   * 34 http://creativecommons.org/licenses/by-sa/2.0/za/ */
+  { 0x8000002c2871a96e, 0x01000707, "by-sa/2.0/", 163, -1 },
+  /* 35 http://creativecommons.org/licenses/by-sa/2.1/au/ */
+  { 0x0000000000000004, 0x01000707, "by-sa/2.1/", 163, -1 },
+  /* 36 http://creativecommons.org/licenses/by-sa/2.1/es/ */
+  { 0x0000000000002000, 0x01000707, "by-sa/2.1/", 163, -1 },
+  /* 37 http://creativecommons.org/licenses/by-sa/2.1/jp/ */
+  { 0x0000000000200000, 0x01000707, "by-sa/2.1/", 163, -1 },
+  /* 38 http://creativecommons.org/licenses/by-sa/2.5/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/ar/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/au/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/bg/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/br/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/ca/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/ch/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/cn/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/co/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/dk/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/es/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/hr/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/hu/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/il/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/in/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/it/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/mk/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/mt/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/mx/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/my/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/nl/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/pe/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/pl/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/pt/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/se/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/si/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/tw/
+   * 38 http://creativecommons.org/licenses/by-sa/2.5/za/ */
+  { 0x800000277f9f36f5, 0x01000707, "by-sa/2.5/", 163, -1 },
+  /* 39 http://creativecommons.org/licenses/by-sa/2.5/scotland/ */
+  { 0x0000000080000000, 0x01000703, "by-sa/2.5/", 163, -1 },
+  /* 40 http://creativecommons.org/licenses/by-sa/3.0/
+   * 40 http://creativecommons.org/licenses/by-sa/3.0/us/ */
+  { 0x8000001000000000, 0x01000707, "by-sa/3.0/", 163, -1 },
+  /* 41 http://creativecommons.org/licenses/by/1.0/
+   * 41 http://creativecommons.org/licenses/by/1.0/fi/
+   * 41 http://creativecommons.org/licenses/by/1.0/il/
+   * 41 http://creativecommons.org/licenses/by/1.0/nl/ */
+  { 0x8000000008044000, 0x01000307, "by/1.0/", 186, 198 },
+  /* 42 http://creativecommons.org/licenses/by/2.0/
+   * 42 http://creativecommons.org/licenses/by/2.0/at/
+   * 42 http://creativecommons.org/licenses/by/2.0/au/
+   * 42 http://creativecommons.org/licenses/by/2.0/be/
+   * 42 http://creativecommons.org/licenses/by/2.0/br/
+   * 42 http://creativecommons.org/licenses/by/2.0/ca/
+   * 42 http://creativecommons.org/licenses/by/2.0/cl/
+   * 42 http://creativecommons.org/licenses/by/2.0/de/
+   * 42 http://creativecommons.org/licenses/by/2.0/es/
+   * 42 http://creativecommons.org/licenses/by/2.0/fr/
+   * 42 http://creativecommons.org/licenses/by/2.0/hr/
+   * 42 http://creativecommons.org/licenses/by/2.0/it/
+   * 42 http://creativecommons.org/licenses/by/2.0/jp/
+   * 42 http://creativecommons.org/licenses/by/2.0/kr/
+   * 42 http://creativecommons.org/licenses/by/2.0/nl/
+   * 42 http://creativecommons.org/licenses/by/2.0/pl/
+   * 42 http://creativecommons.org/licenses/by/2.0/tw/
+   * 42 http://creativecommons.org/licenses/by/2.0/uk/
+   * 42 http://creativecommons.org/licenses/by/2.0/za/ */
+  { 0x8000002c2871a96e, 0x01000307, "by/2.0/", 186, 198 },
+  /* 43 http://creativecommons.org/licenses/by/2.1/au/ */
+  { 0x0000000000000004, 0x01000307, "by/2.1/", 186, 198 },
+  /* 44 http://creativecommons.org/licenses/by/2.1/es/ */
+  { 0x0000000000002000, 0x01000307, "by/2.1/", 186, 198 },
+  /* 45 http://creativecommons.org/licenses/by/2.1/jp/ */
+  { 0x0000000000200000, 0x01000307, "by/2.1/", 186, 198 },
+  /* 46 http://creativecommons.org/licenses/by/2.5/
+   * 46 http://creativecommons.org/licenses/by/2.5/ar/
+   * 46 http://creativecommons.org/licenses/by/2.5/au/
+   * 46 http://creativecommons.org/licenses/by/2.5/bg/
+   * 46 http://creativecommons.org/licenses/by/2.5/br/
+   * 46 http://creativecommons.org/licenses/by/2.5/ca/
+   * 46 http://creativecommons.org/licenses/by/2.5/ch/
+   * 46 http://creativecommons.org/licenses/by/2.5/cn/
+   * 46 http://creativecommons.org/licenses/by/2.5/co/
+   * 46 http://creativecommons.org/licenses/by/2.5/dk/
+   * 46 http://creativecommons.org/licenses/by/2.5/es/
+   * 46 http://creativecommons.org/licenses/by/2.5/hr/
+   * 46 http://creativecommons.org/licenses/by/2.5/hu/
+   * 46 http://creativecommons.org/licenses/by/2.5/il/
+   * 46 http://creativecommons.org/licenses/by/2.5/in/
+   * 46 http://creativecommons.org/licenses/by/2.5/it/
+   * 46 http://creativecommons.org/licenses/by/2.5/mk/
+   * 46 http://creativecommons.org/licenses/by/2.5/mt/
+   * 46 http://creativecommons.org/licenses/by/2.5/mx/
+   * 46 http://creativecommons.org/licenses/by/2.5/my/
+   * 46 http://creativecommons.org/licenses/by/2.5/nl/
+   * 46 http://creativecommons.org/licenses/by/2.5/pe/
+   * 46 http://creativecommons.org/licenses/by/2.5/pl/
+   * 46 http://creativecommons.org/licenses/by/2.5/pt/
+   * 46 http://creativecommons.org/licenses/by/2.5/se/
+   * 46 http://creativecommons.org/licenses/by/2.5/si/
+   * 46 http://creativecommons.org/licenses/by/2.5/tw/
+   * 46 http://creativecommons.org/licenses/by/2.5/za/ */
+  { 0x800000277f9f36f5, 0x01000307, "by/2.5/", 186, 198 },
+  /* 47 http://creativecommons.org/licenses/by/2.5/scotland/ */
+  { 0x0000000080000000, 0x01000303, "by/2.5/", 186, 198 },
+  /* 48 http://creativecommons.org/licenses/by/3.0/
+   * 48 http://creativecommons.org/licenses/by/3.0/us/ */
+  { 0x8000001000000000, 0x01000307, "by/3.0/", 186, 198 },
+  /* 49 http://creativecommons.org/licenses/devnations/2.0/ */
+  { 0x8000000000000000, 0x01020107, "devnations/2.0/", 277, -1 },
+  /* 50 http://creativecommons.org/licenses/nc-sa/1.0/
+   * 50 http://creativecommons.org/licenses/nc-sa/1.0/fi/
+   * 50 http://creativecommons.org/licenses/nc-sa/1.0/nl/ */
+  { 0x8000000008004000, 0x01010507, "nc-sa/1.0/", 296, -1 },
+  /* 51 http://creativecommons.org/licenses/nc-sa/2.0/jp/ */
+  { 0x0000000000200000, 0x01010507, "nc-sa/2.0/", 296, -1 },
+  /* 52 http://creativecommons.org/licenses/nc-sampling+/1.0/
+   * 52 http://creativecommons.org/licenses/nc-sampling+/1.0/tw/ */
+  { 0x8000000400000000, 0x01010307, "nc-sampling+/1.0/", 321, -1 },
+  /* 53 http://creativecommons.org/licenses/nc/1.0/
+   * 53 http://creativecommons.org/licenses/nc/1.0/fi/
+   * 53 http://creativecommons.org/licenses/nc/1.0/nl/ */
+  { 0x8000000008004000, 0x01010107, "nc/1.0/", 349, 363 },
+  /* 54 http://creativecommons.org/licenses/nc/2.0/jp/ */
+  { 0x0000000000200000, 0x01010107, "nc/2.0/", 349, 363 },
+  /* 55 http://creativecommons.org/licenses/nd-nc/1.0/
+   * 55 http://creativecommons.org/licenses/nd-nc/1.0/fi/
+   * 55 http://creativecommons.org/licenses/nd-nc/1.0/nl/ */
+  { 0x8000000008004000, 0x01010103, "nd-nc/1.0/", 547, -1 },
+  /* 56 http://creativecommons.org/licenses/nd-nc/2.0/jp/ */
+  { 0x0000000000200000, 0x01010103, "nd-nc/2.0/", 547, -1 },
+  /* 57 http://creativecommons.org/licenses/nd/1.0/
+   * 57 http://creativecommons.org/licenses/nd/1.0/fi/
+   * 57 http://creativecommons.org/licenses/nd/1.0/nl/ */
+  { 0x8000000008004000, 0x01000103, "nd/1.0/", 570, 579 },
+  /* 58 http://creativecommons.org/licenses/nd/2.0/jp/ */
+  { 0x0000000000200000, 0x01000103, "nd/2.0/", 570, 579 },
+  /* 59 http://creativecommons.org/licenses/publicdomain/ */
+  { 0x8000000000000000, 0x00000007, "publicdomain/", 712, -1 },
+  /* 60 http://creativecommons.org/licenses/sa/1.0/
+   * 60 http://creativecommons.org/licenses/sa/1.0/fi/
+   * 60 http://creativecommons.org/licenses/sa/1.0/nl/ */
+  { 0x8000000008004000, 0x01000507, "sa/1.0/", 726, 737 },
+  /* 61 http://creativecommons.org/licenses/sa/2.0/jp/ */
+  { 0x0000000000200000, 0x01000507, "sa/2.0/", 726, 737 },
+  /* 62 http://creativecommons.org/licenses/sampling+/1.0/
+   * 62 http://creativecommons.org/licenses/sampling+/1.0/br/
+   * 62 http://creativecommons.org/licenses/sampling+/1.0/de/
+   * 62 http://creativecommons.org/licenses/sampling+/1.0/tw/ */
+  { 0x8000000400000820, 0x0100030d, "sampling+/1.0/", 889, -1 },
+  /* 63 http://creativecommons.org/licenses/sampling/1.0/
+   * 63 http://creativecommons.org/licenses/sampling/1.0/br/
+   * 63 http://creativecommons.org/licenses/sampling/1.0/tw/ */
+  { 0x8000000400000020, 0x01000305, "sampling/1.0/", 903, -1 },
+};
+
+static const gchar license_strings[] =
+  "GPL\000LGPL\000Attribution-NonCommercial-NoDerivs\000Attribution-NonComme"
+  "rcial-ShareAlike\000Attribution-NonCommercial\000Attribution-NoDerivs-Non"
+  "Commercial\000Attribution-NoDerivs\000Attribution-ShareAlike\000Attributi"
+  "on\000You must attribute the work in the manner specified by the author o"
+  "r licensor.\000Developing Nations\000NonCommercial-ShareAlike\000NonComme"
+  "rcial Sampling Plus\000NonCommercial\000The licensor permits others to co"
+  "py, distribute and transmit the work. In return, licensees may not use th"
+  "e work for commercial purposes \342\200\224 unless they get the licensor'"
+  "s permission.\000NoDerivs-NonCommercial\000NoDerivs\000The licensor permi"
+  "ts others to copy, distribute and transmit only unaltered copies of the w"
+  "ork \342\200\224 not derivative works based on it.\000Public Domain\000Sh"
+  "areAlike\000The licensor permits others to distribute derivative works on"
+  "ly under the same license or one compatible with the one that governs the"
+  " licensor's work.\000Sampling Plus\000Sampling";

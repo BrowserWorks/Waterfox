@@ -1,0 +1,50 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=505915
+-->
+<head>
+  <title>Test for Bug 505915</title>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=505915">Mozilla Bug 505915</a>
+<p id="display"></p>
+<div id="content" style="display: none">
+  
+</div>
+<pre id="test">
+<script type="application/javascript;version=1.7">
+
+/** Test for Bug 505915 **/
+window.addEventListener("message", function () { gen.next() }, false);
+
+function go() {
+    var ifr = $('ifr');
+    try {
+        // NB: the contentDocument getter now returns null for cross-origin
+        // frames, so use SpecialPowers to get a security wrapper to the document.
+        var xdoc = SpecialPowers.unwrap(SpecialPowers.wrap(ifr).contentDocument)
+        document.createTreeWalker(xdoc, 0, null);
+        ok(false, "should have thrown a security exception");
+    } catch (e) {
+        ok(/NS_ERROR_XPC_SECURITY_MANAGER_VETO/.test(e) ||
+           /TypeError: Argument 1 of Document.createTreeWalker does not implement interface Node/.test(e),
+           "threw a security exception or binding exception instead of an " +
+           "invalid child exception");
+    }
+
+    SimpleTest.finish();
+    yield;
+}
+
+SimpleTest.waitForExplicitFinish();
+
+</script>
+</pre>
+
+<iframe id="ifr" onload="gen = go(); gen.next();" src="http://example.org/"></iframe>
+
+</body>
+</html>

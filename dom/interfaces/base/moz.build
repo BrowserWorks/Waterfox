@@ -1,0 +1,60 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+XPIDL_SOURCES += [
+    'domstubs.idl',
+    'nsIBrowserDOMWindow.idl',
+    'nsICompositionStringSynthesizer.idl',
+    'nsIContentPermissionPrompt.idl',
+    'nsIContentPrefService.idl',
+    'nsIContentPrefService2.idl',
+    'nsIContentURIGrouper.idl',
+    'nsIDOMChromeWindow.idl',
+    'nsIDOMClientRect.idl',
+    'nsIDOMClientRectList.idl',
+    'nsIDOMConstructor.idl',
+    'nsIDOMGlobalObjectConstructor.idl',
+    'nsIDOMGlobalPropertyInitializer.idl',
+    'nsIDOMHistory.idl',
+    'nsIDOMJSWindow.idl',
+    'nsIDOMLocation.idl',
+    'nsIDOMModalContentWindow.idl',
+    'nsIDOMNavigator.idl',
+    'nsIDOMScreen.idl',
+    'nsIDOMWindow.idl',
+    'nsIDOMWindowCollection.idl',
+    'nsIDOMWindowUtils.idl',
+    'nsIFocusManager.idl',
+    'nsIFrameRequestCallback.idl',
+    'nsIIdleObserver.idl',
+    'nsIQueryContentEventResult.idl',
+    'nsIServiceWorkerManager.idl',
+    'nsIStructuredCloneContainer.idl',
+    'nsITabChild.idl',
+    'nsITabParent.idl',
+]
+
+if CONFIG['MOZ_DISABLE_CRYPTOLEGACY']:
+    XPIDL_SOURCES += [
+        'nsIDOMCrypto.idl',
+    ]
+else:
+    XPIDL_SOURCES += [
+        'nsIDOMCryptoLegacy.idl',
+    ]
+
+if CONFIG['MOZ_B2G']:
+    XPIDL_SOURCES += [
+        'nsIDOMWindowB2G.idl',
+    ]
+
+if CONFIG['MOZ_WEBSPEECH']:
+    XPIDL_SOURCES += [
+        'nsISpeechSynthesisGetter.idl'
+    ]
+
+XPIDL_MODULE = 'dom_base'
+

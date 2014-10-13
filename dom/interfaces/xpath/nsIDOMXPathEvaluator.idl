@@ -1,0 +1,32 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/**
+ * Corresponds to http://www.w3.org/TR/2002/WD-DOM-Level-3-XPath-20020208
+ */
+
+#include "domstubs.idl"
+
+interface nsIDOMXPathNSResolver;
+interface nsIDOMXPathResult;
+interface nsIDOMXPathExpression;
+interface XPathException;
+
+[uuid(75506f8a-b504-11d5-a7f2-ca108ab8b6fc)]
+interface nsIDOMXPathEvaluator : nsISupports
+{
+  nsIDOMXPathExpression    createExpression(in DOMString expression, 
+                                            in nsIDOMXPathNSResolver resolver)
+                                      raises(XPathException,
+                                             DOMException);
+  nsIDOMXPathNSResolver    createNSResolver(in nsIDOMNode nodeResolver);
+  nsISupports              evaluate(in DOMString expression, 
+                                    in nsIDOMNode contextNode, 
+                                    in nsIDOMXPathNSResolver resolver, 
+                                    in unsigned short type, 
+                                    in nsISupports result)
+                                      raises(XPathException,
+                                             DOMException);
+};

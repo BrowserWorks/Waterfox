@@ -1,0 +1,38 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+#include "domstubs.idl"
+
+/*
+	The nsPICommandUpdater interface is used by modules that implement
+	commands, to tell the command manager that commands need updating.
+	This is a private interface; embedders should not use it.
+	
+	Command-implementing modules should get one of these by a QI
+	from an nsICommandManager.
+*/
+
+[scriptable, uuid(B135F602-0BFE-11D5-A73C-F0E420E8293C)]
+interface nsPICommandUpdater : nsISupports
+{
+
+  /*
+   * Init the command updater, passing an nsIDOMWindow which 
+   * is the window that the command updater lives on.
+   * 
+   */
+  void    init(in nsIDOMWindow aWindow);
+   
+  /*
+   * Notify the command manager that the status of a command
+   * changed. It may have changed from enabled to disabled,
+   * or vice versa, or become toggled etc.
+   */
+	void		commandStatusChanged(in string aCommandName);
+	
+};
+
+

@@ -1,0 +1,90 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+@namespace html url("http://www.w3.org/1999/xhtml");
+
+scrollbar {
+  -moz-appearance: scrollbar;
+  -moz-binding: url(chrome://global/content/bindings/scrollbar.xml#scrollbar);
+  cursor: default;
+  background-color: white;
+  pointer-events: auto;
+}
+
+scrollbar[root="true"] {
+  position: relative;
+  z-index: 2147483647; /* largest positive value of a signed 32-bit integer */
+}
+
+html|select[size]:not([size="0"]):not([size="1"]) > scrollbar,
+html|select[multiple] > scrollbar {
+  -moz-appearance: scrollbar-small;
+}
+
+@media all and (-moz-overlay-scrollbars) {
+  scrollbar:not([active="true"]),
+  scrollbar[disabled="true"] {
+    visibility: hidden;
+  }
+}
+
+/* ..... track ..... */
+
+slider {
+  -moz-appearance: scrollbartrack-horizontal;
+}
+
+slider[orient="vertical"] {
+  -moz-appearance: scrollbartrack-vertical;
+}
+
+/* ..... thumb ..... */
+
+thumb {
+  -moz-appearance: scrollbarthumb-horizontal;
+}
+
+thumb[orient="vertical"] {
+  -moz-appearance: scrollbarthumb-vertical;
+}
+
+/* ..... increment ..... */
+
+scrollbarbutton[type="increment"] {
+  -moz-appearance: scrollbarbutton-right;
+}
+
+scrollbar[orient="vertical"] > scrollbarbutton[type="increment"] {
+  -moz-appearance: scrollbarbutton-down;
+}
+
+/* ..... decrement ..... */
+
+scrollbarbutton[type="decrement"] {
+  -moz-appearance: scrollbarbutton-left;
+}
+
+scrollbar[orient="vertical"] > scrollbarbutton[type="decrement"] {
+  -moz-appearance: scrollbarbutton-up;
+}
+
+/* ::::: square at the corner of two scrollbars ::::: */
+
+scrollcorner {
+  /* XXX -moz-appearance: scrollcorner; */
+  -moz-binding: url(chrome://global/content/bindings/scrollbar.xml#scrollbar-base);
+  width: 16px;
+  cursor: default;
+  background-color: white;
+}
+
+/* ::::::::::::::::::::: MEDIA PRINT :::::::::::::::::::::: */
+@media print {
+  html|div scrollbar {
+    -moz-appearance: scrollbar;
+    -moz-binding: url(chrome://global/content/bindings/scrollbar.xml#scrollbar);
+    cursor: default;
+  }
+}

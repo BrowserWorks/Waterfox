@@ -1,0 +1,132 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+@import url("chrome://global/skin/inContentUI.css");
+
+
+/* sites box */
+
+#sites-box {
+  padding: 10px;
+  width: 25em;
+}
+
+#sites-filter {
+  margin: 0;
+}
+
+#sites-list {
+  -moz-appearance: none;
+  border: 1px solid rgba(60,73,97,0.5);
+  box-shadow: inset 0 1px 1px rgba(0,0,0,0.15), 0 1px rgba(255,255,255,0.25);
+  background: linear-gradient(rgba(255,255,255,0.2), rgba(255,255,255,0.3));
+  margin: 5px 0 0 0;
+}
+
+.site {
+  padding: 4px;
+  border-bottom: 1px solid ThreeDLightShadow;
+}
+
+.site-favicon {
+  height: 16px;
+  width: 16px;
+  -moz-margin-end: 4px;
+  list-style-image: url("chrome://mozapps/skin/places/defaultFavicon.png");
+}
+
+@media (min-resolution: 2dppx) {
+  .site-favicon {
+    list-style-image: url("chrome://mozapps/skin/places/defaultFavicon@2x.png");
+  }
+}
+
+#all-sites-item > .site-container > .site-favicon {
+  list-style-image: none;
+}
+
+/* permissions box */
+
+#permissions-box {
+  padding: 10px;
+  overflow-y: auto;
+}
+
+#site-description {
+  font-size: 125%;
+  -moz-margin-start: 6px; /* to match button margin */
+}
+
+#site-label {
+  font-weight: bold;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+#defaults-description {
+  font-size: 125%;
+  font-weight: bold;
+  -moz-margin-start: 6px;
+}
+
+.pref-item {
+  margin-bottom: 10px;
+}
+
+.pref-icon {
+  width: 36px;
+  height: 36px;
+  -moz-margin-end: 10px;
+}
+
+.pref-icon[type="password"] {
+  list-style-image: url(chrome://mozapps/skin/passwordmgr/key-64.png);
+}
+.pref-icon[type="cookie"] {
+  list-style-image: url(chrome://global/skin/icons/question-64.png);
+}
+.pref-icon[type="geo"] {
+  list-style-image: url(chrome://browser/skin/Geolocation-64.png);
+}
+.pref-icon[type="indexedDB"] {
+  list-style-image: url(chrome://global/skin/icons/question-64.png);
+}
+.pref-icon[type="install"] {
+  list-style-image: url(chrome://mozapps/skin/extensions/extensionGeneric.png);
+}
+.pref-icon[type="popup"] {
+  list-style-image: url(chrome://global/skin/icons/question-64.png);
+}
+.pref-icon[type="image"] {
+  list-style-image: url(chrome://global/skin/icons/question-64.png);
+}
+.pref-icon[type="plugins"] {
+  list-style-image: url(chrome://mozapps/skin/plugins/pluginGeneric.png);
+}
+.pref-icon[type="fullscreen"] {
+  list-style-image: url(chrome://global/skin/icons/question-64.png);
+}
+.pref-icon[type="camera"] {
+  list-style-image: url(chrome://global/skin/icons/question-64.png);
+}
+.pref-icon[type="microphone"] {
+  list-style-image: url(chrome://global/skin/icons/question-64.png);
+}
+
+@media (min-resolution: 2dppx) {
+  .pref-icon[type="geo"] {
+    list-style-image: url(chrome://browser/skin/Geolocation-64@2x.png);
+  }
+}
+
+.pref-title {
+  font-size: 125%;
+  margin-bottom: 0;
+  font-weight: bold;
+}
+
+.pref-menulist {
+  margin-left: 6px;
+  margin-right: 6px;
+}

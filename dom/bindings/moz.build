@@ -1,0 +1,98 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+TEST_DIRS += ['test']
+
+EXPORTS.mozilla += [
+    'ErrorResult.h',
+]
+
+EXPORTS.mozilla.dom += [
+    'AtomList.h',
+    'BindingDeclarations.h',
+    'BindingUtils.h',
+    'CallbackFunction.h',
+    'CallbackInterface.h',
+    'CallbackObject.h',
+    'Date.h',
+    'DOMJSClass.h',
+    'DOMJSProxyHandler.h',
+    'DOMString.h',
+    'Errors.msg',
+    'Exceptions.h',
+    'JSSlots.h',
+    'MozMap.h',
+    'NonRefcountedDOMObject.h',
+    'Nullable.h',
+    'OwningNonNull.h',
+    'PrimitiveConversions.h',
+    'RootedDictionary.h',
+    'ToJSValue.h',
+    'TypedArray.h',
+    'UnionMember.h',
+]
+
+FAIL_ON_WARNINGS = True
+
+MSVC_ENABLE_PGO = True
+
+LOCAL_INCLUDES += [
+    '/content/base/src',
+    '/content/canvas/src',
+    '/content/html/content/src',
+    '/content/html/document/src',
+    '/content/media/webaudio',
+    '/content/media/webspeech/recognition',
+    '/content/svg/content/src',
+    '/content/xml/content/src',
+    '/content/xul/content/src',
+    '/content/xul/document/src',
+    '/dom/base',
+    '/dom/battery',
+    '/dom/bluetooth',
+    '/dom/camera',
+    '/dom/file',
+    '/dom/indexedDB',
+    '/dom/src/geolocation',
+    '/dom/workers',
+    '/dom/xbl',
+    '/dom/xslt/base',
+    '/dom/xslt/xpath',
+    '/js/ipc',
+    '/js/xpconnect/src',
+    '/js/xpconnect/wrappers',
+    '/layout/style',
+    '/layout/xul/tree',
+    '/media/mtransport',
+    '/media/webrtc/signaling/src/common/time_profiling',
+    '/media/webrtc/signaling/src/peerconnection',
+]
+
+UNIFIED_SOURCES += [
+    'BindingUtils.cpp',
+    'CallbackInterface.cpp',
+    'CallbackObject.cpp',
+    'Date.cpp',
+    'DOMJSProxyHandler.cpp',
+    'Exceptions.cpp',
+    'ToJSValue.cpp',
+]
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+if CONFIG['MOZ_AUDIO_CHANNEL_MANAGER']:
+    LOCAL_INCLUDES += [
+        '/dom/system/gonk',
+    ]
+
+FINAL_LIBRARY = 'xul'
+
+SPHINX_TREES['webidl'] = 'docs'
+SPHINX_PYTHON_PACKAGE_DIRS += ['mozwebidlcodegen']
+
+if CONFIG['MOZ_BUILD_APP'] in ['browser', 'mobile/android', 'xulrunner']:
+    # This is needed for Window.webidl
+    DEFINES['HAVE_SIDEBAR'] = True

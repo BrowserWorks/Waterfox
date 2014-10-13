@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Line boundary getText* functions tests</title>
+  <link rel="stylesheet" type="text/css" href="chrome://mochikit/content/tests/SimpleTest/test.css" />
+
+  <script type="application/javascript"
+          src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="application/javascript"
+          src="../common.js"></script>
+  <script type="application/javascript"
+          src="../text.js"></script>
+  <script type="application/javascript">
+    function doTest()
+    {
+      //////////////////////////////////////////////////////////////////////////
+      // __h__e__l__l__o__ __m__y__ __f__r__i__e__n__d__
+      //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
+
+      var IDs = [ "input", "div", "editable", "textarea",
+                  getNode("ta", getNode("ta_cntr").contentDocument) ];
+
+      testTextBeforeOffset(IDs, BOUNDARY_LINE_START,
+                           [ [ 0, 15, "", 0, 0 ] ]);
+      testTextBeforeOffset(IDs, BOUNDARY_LINE_END,
+                           [ [ 0, 15, "", 0, 0 ] ]);
+
+      testTextAtOffset(IDs, BOUNDARY_LINE_START,
+                       [ [ 0, 15, "hello my friend", 0, 15 ] ]);
+      testTextAtOffset(IDs, BOUNDARY_LINE_END,
+                       [ [ 0, 15, "hello my friend", 0, 15 ] ]);
+
+      testTextAfterOffset(IDs, BOUNDARY_LINE_START,
+                          [ [ 0, 15, "", 15, 15 ] ]);
+      testTextAfterOffset(IDs, BOUNDARY_LINE_END,
+                          [ [ 0, 15, "", 15, 15 ] ]);
+
+      //////////////////////////////////////////////////////////////////////////
+      // __o__n__e__w__o__r__d__\n
+      //  0  1  2  3  4  5  6  7
+      // __\n
+      //  8
+      // __t__w__o__ __w__o__r__d__s__\n
+      //  9 10 11 12 13 14 15 16 17 18
+
+      IDs = [ "ml_div", "ml_divbr", "ml_editable", "ml_editablebr", "ml_textarea"];
+
+      testTextBeforeOffset(IDs, BOUNDARY_LINE_START,
+                           [ [ 0, 7, "", 0, 0 ],
+                             [ 8, 8, "oneword\n", 0, 8 ],
+                             [ 9, 18, "\n", 8, 9 ],
+                             [ 19, 19, "two words\n", 9, 19 ]]);
+
+      testTextBeforeOffset(IDs, BOUNDARY_LINE_END,
+                          [ [ 0, 7, "", 0, 0 ],
+                            [ 8, 8, "oneword", 0, 7 ],
+                            [ 9, 18, "\n", 7, 8 ],
+                            [ 19, 19, "\ntwo words", 8, 18 ]]);
+
+      testTextAtOffset(IDs, BOUNDARY_LINE_START,
+                       [ [ 0, 7, "oneword\n", 0, 8 ],
+                         [ 8, 8, "\n", 8, 9 ],
+                         [ 9, 18, "two words\n", 9, 19 ],
+                         [ 19, 19, "", 19, 19 ]]);
+      testTextAtOffset(IDs, BOUNDARY_LINE_END,
+                       [ [ 0, 7, "oneword", 0, 7 ],
+                         [ 8, 8, "\n", 7, 8 ],
+                         [ 9, 18, "\ntwo words", 8, 18 ],
+                         [ 19, 19, "\n", 18, 19 ]]);
+
+      testTextAfterOffset(IDs, BOUNDARY_LINE_START,
+                          [ [ 0, 7, "\n", 8, 9 ],
+                            [ 8, 8, "two words\n", 9, 19 ],
+                            [ 9, 19, "", 19, 19 ]]);
+      testTextAfterOffset(IDs, BOUNDARY_LINE_END,
+                          [ [ 0, 7, "\n", 7, 8 ],
+                            [ 8, 8, "\ntwo words", 8, 18 ],
+                            [ 9, 18, "\n", 18, 19 ],
+                            [ 19, 19, "", 19, 19 ]]);
+
+      //////////////////////////////////////////////////////////////////////////
+      // a * b (* is embedded char for link)
+      testTextBeforeOffset([ getAccessible("ht_1").firstChild ], BOUNDARY_LINE_START,
+                           [ [ 0, 5, "", 0, 0 ] ]);
+
+      testTextBeforeOffset([ getAccessible("ht_1").firstChild ], BOUNDARY_LINE_END,
+                           [ [ 0, 5, "", 0, 0 ] ]);
+
+      testTextAtOffset([ getAccessible("ht_1").firstChild ], BOUNDARY_LINE_START,
+                       [ [ 0, 5, "a " + kEmbedChar + " c", 0, 5 ] ]);
+
+      testTextAtOffset([ getAccessible("ht_1").firstChild ], BOUNDARY_LINE_END,
+                       [ [ 0, 5, "a " + kEmbedChar + " c", 0, 5 ] ]);
+
+      testTextAfterOffset([ getAccessible("ht_1").firstChild ], BOUNDARY_LINE_START,
+                          [ [ 0, 5, "", 5, 5 ] ]);
+
+      testTextAfterOffset([ getAccessible("ht_1").firstChild ], BOUNDARY_LINE_END,
+                          [ [ 0, 5, "", 5, 5 ] ]);
+
+      //////////////////////////////////////////////////////////////////////////
+      // foo<br> and foo<br><br>
+
+      testTextAtOffset([ getAccessible("ht_2").firstChild.firstChild ],
+                       BOUNDARY_LINE_START,
+                       [ [ 0, 3, "foo", 0, 3 ] ]);
+      testTextAtOffset([ getAccessible("ht_3").firstChild.firstChild ],
+                       BOUNDARY_LINE_START,
+                       [ [ 0, 3, "foo\n", 0, 4 ], [ 4, 4, "", 4, 4 ] ]);
+
+      //////////////////////////////////////////////////////////////////////////
+      // 'Hello world ' (\n is rendered as space)
+
+      testTextAtOffset([ "ht_4" ], BOUNDARY_LINE_START,
+                       [ [ 0, 12, "Hello world ", 0, 12 ] ]);
+
+      //////////////////////////////////////////////////////////////////////////
+      // list items
+
+      testTextAtOffset([ "li1" ], BOUNDARY_LINE_START,
+                       [ [ 0, 6, kDiscBulletText + "Item", 0, 6 ] ]);
+      testTextAtOffset([ "li2" ], BOUNDARY_LINE_START,
+                       [ [ 0, 2, kDiscBulletText, 0, 2 ] ]);
+      testTextAtOffset([ "li3" ], BOUNDARY_LINE_START,
+                       [ [ 0, 8, kDiscBulletText + "a long ", 0, 9 ],
+                         [ 9, 12, "and ", 9, 13 ] ]);
+      testTextAtOffset([ "li4" ], BOUNDARY_LINE_START,
+                       [ [ 0, 7, kDiscBulletText + "a " + kEmbedChar + " c", 0, 7 ] ]);
+      testTextAtOffset([ "li5" ], BOUNDARY_LINE_START,
+                       [ [ 0, 2, kDiscBulletText + "\n", 0, 3 ],
+                         [ 3, 7, "hello", 3, 8 ] ]);
+      testTextAtOffset([ "ul1" ], BOUNDARY_LINE_START,
+                       [ [ 0, 0, kEmbedChar, 0, 1 ],
+                         [ 1, 1, kEmbedChar, 1, 2 ],
+                         [ 2, 2, kEmbedChar, 2, 3 ],
+                         [ 3, 3, kEmbedChar, 3, 4 ],
+                         [ 4, 5, kEmbedChar, 4, 5 ] ]);
+
+      testTextAtOffset([ "li6" ], BOUNDARY_LINE_START,
+                       [ [ 0, 7, "1. Item", 0, 7 ] ]);
+      testTextAtOffset([ "li7" ], BOUNDARY_LINE_START,
+                       [ [ 0, 3, "2. ", 0, 3 ] ]);
+      testTextAtOffset([ "li8" ], BOUNDARY_LINE_START,
+                       [ [ 0, 9, "3. a long ", 0, 10 ],
+                         [ 10, 13, "and ", 10, 14 ] ]);
+      testTextAtOffset([ "li9" ], BOUNDARY_LINE_START,
+                       [ [ 0, 8, "4. a " + kEmbedChar + " c", 0, 8 ] ]);
+      testTextAtOffset([ "li10" ], BOUNDARY_LINE_START,
+                       [ [ 0, 3, "5. \n", 0, 4 ],
+                         [ 4, 8, "hello", 4, 9 ] ]);
+      testTextAtOffset([ "ol1" ], BOUNDARY_LINE_START,
+                       [ [ 0, 0, kEmbedChar, 0, 1 ],
+                         [ 1, 1, kEmbedChar, 1, 2 ],
+                         [ 2, 2, kEmbedChar, 2, 3 ],
+                         [ 3, 3, kEmbedChar, 3, 4 ],
+                         [ 4, 5, kEmbedChar, 4, 5 ] ]);
+
+      //////////////////////////////////////////////////////////////////////////
+      // Nested hypertexts
+
+      testTextAtOffset(["ht_5" ], BOUNDARY_LINE_START,
+                       [ [ 0, 0, kEmbedChar, 0, 1 ] ]);
+
+      SimpleTest.finish();
+    }
+
+    SimpleTest.waitForExplicitFinish();
+    addA11yLoadEvent(doTest);
+  </script>
+</head>
+<body>
+
+  <a target="_blank"
+     title="getTextAtOffset for word boundaries: beginning of a new life"
+     href="https://bugzilla.mozilla.org/show_bug.cgi?id=853340">
+    Bug 853340
+  </a>
+  <a target="_blank"
+     title="getTextBeforeOffset for word boundaries: evolving"
+     href="https://bugzilla.mozilla.org/show_bug.cgi?id=855732">
+    Bug 855732
+  </a>
+  <a target="_blank"
+     title=" getTextAfterOffset for line boundary on new rails"
+     href="https://bugzilla.mozilla.org/show_bug.cgi?id=882292">
+    Bug 882292
+  </a>
+  <a target="_blank"
+     title="getTextAtOffset broken for last object when closing tag is preceded by newline char"
+     href="https://bugzilla.mozilla.org/show_bug.cgi?id=947170">
+    Bug 947170
+  </a>
+
+  <p id="display"></p>
+  <div id="content" style="display: none"></div>
+  <pre id="test">
+  </pre>
+
+  <input id="input" value="hello my friend"/>
+  <div id="div">hello my friend</div>
+  <div id="editable" contenteditable="true">hello my friend</div>
+  <textarea id="textarea">hello my friend</textarea>
+  <iframe id="ta_cntr"
+          src="data:text/html,<html><body><textarea id='ta'>hello my friend</textarea></body></html>"></iframe>
+
+  <pre>
+    <div id="ml_div" style="border-style:outset;">oneword
+
+two words
+</div>
+  <div id="ml_divbr" style="border-style:outset;">oneword<br/><br/>two words<br/><br/></div>
+  <div id="ml_editable" style="border-style:outset;" contenteditable="true">oneword
+
+two words
+</div>
+  <div id="ml_editablebr" contenteditable="true" style="border-style:outset;">oneword<br/><br/>two words<br/><br/></div>
+  <textarea id="ml_textarea" cols="300">oneword
+
+two words
+</textarea>
+  </pre>
+
+  <iframe id="ht_1" src="data:text/html,<html><body>a <a href=''>b</a> c</body></html>"></iframe>
+
+  <iframe id="ht_2" src="data:text/html,<div contentEditable='true'>foo<br/></div>"></iframe>
+  <iframe id="ht_3" src="data:text/html,<div contentEditable='true'>foo<br/><br/></div>"></iframe>
+
+  <p id="ht_4">Hello world
+</p>
+
+  <ul id="ul1">
+    <li id="li1">Item</li>
+    <li id="li2"></li>
+    <li id="li3" style="width:10ex; font-family:monospace; font-size:10pt;">a long and winding road that lead me to your door</li>
+    <li id="li4">a <a href=''>b</a> c</li>
+    <li id="li5"><br>hello</li>
+  </ul>
+
+  <ol id="ol1">
+    <li id="li6">Item</li>
+    <li id="li7"></li>
+    <li id="li8" style="width:10ex; font-family:monospace; font-size:10pt;">a long and winding road that lead me to your door</li>
+    <li id="li9">a <a href=''>b</a> c</li>
+    <li id="li10"><br>hello</li>
+  </ol>
+
+  <div id="ht_5">
+    <div>
+      <p>sectiounus</p>
+      <p>seciofarus</p>
+    </div>
+  </div>
+
+</body>
+</html>

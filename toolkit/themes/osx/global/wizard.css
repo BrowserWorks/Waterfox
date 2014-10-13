@@ -1,0 +1,62 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+
+wizard {
+  padding: 14px;
+}
+
+#header { 
+  display: inline !important;
+}
+
+.wizard-header {
+  -moz-appearance: dialog;
+}
+
+.wizard-header-box-1 {
+  color: #000;
+}
+
+.wizard-header-box-text {
+  padding: 6px 10px;
+  font: menu;
+  font-weight: bold;
+}
+
+.wizard-header-label {
+  margin-left: 23px;
+  font-weight: bold;
+}
+
+.wizard-header-box-icon {
+  margin-top: 3px;
+  -moz-margin-end: 20px;
+  margin-bottom: 0;
+  -moz-margin-start: 3px;
+}
+
+wizard[branded="true"] .wizard-header-icon {
+  list-style-image: url("chrome://branding/content/icon48.png");
+}
+
+.wizard-page-box {
+  padding: 15px 23px;
+  -moz-appearance: dialog;
+}
+
+.wizard-buttons-separator {
+  margin: 0 !important;
+  border-bottom: 1px solid #fff !important;
+}
+
+.wizard-buttons-btm {
+  padding: 3px 6px 6px;
+}
+
+.wizard-button {
+  font: menu !important;
+}
+

@@ -1,0 +1,89 @@
+<?xml version="1.0"?>
+
+# -*- Mode: Java; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+#ifdef XP_MACOSX
+<?xml-stylesheet href="chrome://browser/skin/preferences/preferences.css"?>
+#endif
+
+<!DOCTYPE prefwindow SYSTEM "chrome://browser/locale/preferences/colors.dtd" >
+
+<prefwindow id="ColorsDialog" type="child"
+            xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+            title="&colorsDialog.title;"
+            dlgbuttons="accept,cancel,help"
+            ondialoghelp="openPrefsHelp()"
+#ifdef XP_MACOSX
+            style="width: &window.macWidth; !important;">
+#else
+            style="width: &window.width; !important;">
+#endif
+
+  <script type="application/javascript" src="chrome://browser/content/utilityOverlay.js"/>
+  <prefpane id="ColorsDialogPane"
+            helpTopic="prefs-fonts-and-colors">
+  
+    <preferences>
+      <preference id="browser.display.use_document_colors"  name="browser.display.use_document_colors"  type="bool"/>
+      <preference id="browser.anchor_color"                 name="browser.anchor_color"                 type="string"/>
+      <preference id="browser.visited_color"                name="browser.visited_color"                type="string"/>
+      <preference id="browser.underline_anchors"            name="browser.underline_anchors"            type="bool"/>
+      <preference id="browser.display.foreground_color"     name="browser.display.foreground_color"     type="string"/>
+      <preference id="browser.display.background_color"     name="browser.display.background_color"     type="string"/>
+      <preference id="browser.display.use_system_colors"    name="browser.display.use_system_colors"    type="bool"/>
+    </preferences>
+    
+    <hbox>
+      <groupbox flex="1">
+        <caption label="&color;"/>
+        <hbox align="center">
+          <label value="&textColor.label;" accesskey="&textColor.accesskey;" control="foregroundtextmenu"/>
+          <spacer flex="1"/>
+          <colorpicker type="button" id="foregroundtextmenu" palettename="standard"
+                       preference="browser.display.foreground_color"/>
+        </hbox>
+        <hbox align="center" style="margin-top: 5px">
+          <label value="&backgroundColor.label;" accesskey="&backgroundColor.accesskey;" control="backgroundmenu"/>
+          <spacer flex="1"/>
+          <colorpicker type="button" id="backgroundmenu" palettename="standard"
+                       preference="browser.display.background_color"/>
+        </hbox>
+        <separator class="thin"/>
+        <hbox align="center">
+          <checkbox id="browserUseSystemColors" label="&useSystemColors.label;" accesskey="&useSystemColors.accesskey;"
+                    preference="browser.display.use_system_colors"/>
+        </hbox>
+      </groupbox>
+        
+      <groupbox flex="1">
+        <caption label="&links;"/>
+        <hbox align="center">
+          <label value="&linkColor.label;" accesskey="&linkColor.accesskey;" control="unvisitedlinkmenu"/>
+          <spacer flex="1"/>
+          <colorpicker type="button" id="unvisitedlinkmenu" palettename="standard"
+                       preference="browser.anchor_color"/>
+        </hbox>
+        <hbox align="center" style="margin-top: 5px">
+          <label value="&visitedLinkColor.label;" accesskey="&visitedLinkColor.accesskey;" control="visitedlinkmenu"/>
+          <spacer flex="1"/>
+          <colorpicker type="button" id="visitedlinkmenu" palettename="standard"
+                       preference="browser.visited_color"/>
+        </hbox>
+        <separator class="thin"/>
+        <hbox align="center">
+          <checkbox id="browserUnderlineAnchors" label="&underlineLinks.label;" accesskey="&underlineLinks.accesskey;"
+                    preference="browser.underline_anchors"/>
+        </hbox>
+      </groupbox>
+    </hbox>
+    <hbox>
+      <checkbox id="useDocumentColors" 
+                label="&allowPagesToUse.label;" accesskey="&allowPagesToUse.accesskey;"
+                preference="browser.display.use_document_colors" flex="1"/>
+    </hbox>
+  </prefpane>
+</prefwindow>

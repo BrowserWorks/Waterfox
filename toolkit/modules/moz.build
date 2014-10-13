@@ -1,0 +1,87 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+XPCSHELL_TESTS_MANIFESTS += ['tests/xpcshell/xpcshell.ini']
+BROWSER_CHROME_MANIFESTS += ['tests/browser/browser.ini']
+MOCHITEST_MANIFESTS += ['tests/mochitest/mochitest.ini']
+MOCHITEST_CHROME_MANIFESTS += ['tests/chrome/chrome.ini']
+
+SPHINX_TREES['toolkit_modules'] = 'docs'
+
+EXTRA_JS_MODULES += [
+    'AsyncShutdown.jsm',
+    'BinarySearch.jsm',
+    'BrowserUtils.jsm',
+    'CharsetMenu.jsm',
+    'debug.js',
+    'DeferredTask.jsm',
+    'Deprecated.jsm',
+    'Dict.jsm',
+    'DirectoryLinksProvider.jsm',
+    'FileUtils.jsm',
+    'Finder.jsm',
+    'Geometry.jsm',
+    'Http.jsm',
+    'InlineSpellChecker.jsm',
+    'LoadContextInfo.jsm',
+    'Log.jsm',
+    'NewTabUtils.jsm',
+    'PageMenu.jsm',
+    'PermissionsUtils.jsm',
+    'PopupNotifications.jsm',
+    'Preferences.jsm',
+    'PrivateBrowsingUtils.jsm',
+    'Promise-backend.js',
+    'Promise.jsm',
+    'PropertyListUtils.jsm',
+    'RemoteAddonsChild.jsm',
+    'RemoteAddonsParent.jsm',
+    'RemoteController.jsm',
+    'RemoteFinder.jsm',
+    'RemoteSecurityUI.jsm',
+    'RemoteWebNavigation.jsm',
+    'RemoteWebProgress.jsm',
+    'SelectContentHelper.jsm',
+    'SelectParentHelper.jsm',
+    'sessionstore/FormData.jsm',
+    'sessionstore/ScrollPosition.jsm',
+    'sessionstore/XPathGenerator.jsm',
+    'ShortcutUtils.jsm',
+    'Sntp.jsm',
+    'SpatialNavigation.jsm',
+    'Sqlite.jsm',
+    'Task.jsm',
+    'TelemetryTimestamps.jsm',
+    'Timer.jsm',
+    'ZipUtils.jsm',
+]
+
+EXTRA_PP_JS_MODULES += [
+    'CertUtils.jsm',
+    'ResetProfile.jsm',
+    'Services.jsm',
+    'Troubleshoot.jsm',
+    'UpdateChannel.jsm',
+    'WindowDraggingUtils.jsm',
+    'WindowsPrefSync.jsm',
+]
+
+if 'Android' != CONFIG['OS_TARGET']:
+    EXTRA_PP_JS_MODULES += [
+        'LightweightThemeConsumer.jsm',
+    ]
+
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
+    EXTRA_JS_MODULES += [
+        'WindowsRegistry.jsm',
+    ]
+
+DEFINES['MOZ_APP_NAME'] = CONFIG['MOZ_APP_NAME']
+DEFINES['MOZ_BUILD_APP'] = CONFIG['MOZ_BUILD_APP']
+
+if CONFIG['MOZ_TOOLKIT_SEARCH']:
+    DEFINES['MOZ_TOOLKIT_SEARCH'] = True

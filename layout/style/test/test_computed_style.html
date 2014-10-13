@@ -1,0 +1,248 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Test for miscellaneous computed style issues</title>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=">Mozilla Bug </a>
+<p id="display"></p>
+<div id="content" style="display: none">
+  
+</div>
+<pre id="test">
+<script type="application/javascript">
+
+/** Test for miscellaneous computed style issues **/
+
+var frame_container = document.getElementById("display");
+var noframe_container = document.getElementById("content");
+
+(function test_bug_595650() {
+  // Test handling of horizontal and vertical percentages for border-radius
+  // and -moz-outline-radius.
+  var p = document.createElement("p");
+  p.setAttribute("style", "width: 256px; height: 128px");
+  p.style.borderTopLeftRadius = "1.5625%"; /* 1/64 == 4px 2px */
+  p.style.borderTopRightRadius = "5px";
+  p.style.borderBottomRightRadius = "5px 3px";
+  p.style.borderBottomLeftRadius = "1.5625% 3.125%" /* 1/64 1/32 == 4px 4px */
+  p.style.MozOutlineRadiusTopleft = "1.5625%"; /* 1/64 == 4px 2px */
+  p.style.MozOutlineRadiusTopright = "5px";
+  p.style.MozOutlineRadiusBottomright = "5px 3px";
+  p.style.MozOutlineRadiusBottomleft = "1.5625% 3.125%" /* 1/64 1/32 == 4px 4px */
+  var cs = getComputedStyle(p, "");
+
+  frame_container.appendChild(p);
+  is(cs.borderTopLeftRadius, "4px 2px",
+     "computed value of % border-radius, with frame");
+  is(cs.borderTopRightRadius, "5px",
+     "computed value of px border-radius, with frame");
+  is(cs.borderBottomRightRadius, "5px 3px",
+     "computed value of px border-radius, with frame");
+  is(cs.borderBottomLeftRadius, "4px",
+     "computed value of % border-radius, with frame");
+  is(cs.MozOutlineRadiusTopleft, "4px 2px",
+     "computed value of % outline-radius, with frame");
+  is(cs.MozOutlineRadiusTopright, "5px",
+     "computed value of px outline-radius, with frame");
+  is(cs.MozOutlineRadiusBottomright, "5px 3px",
+     "computed value of px outline-radius, with frame");
+  is(cs.MozOutlineRadiusBottomleft, "4px",
+     "computed value of % outline-radius, with frame");
+
+  noframe_container.appendChild(p);
+  is(cs.borderTopLeftRadius, "1.5625%",
+     "computed value of % border-radius, without frame");
+  is(cs.borderTopRightRadius, "5px",
+     "computed value of px border-radius, without frame");
+  is(cs.borderBottomRightRadius, "5px 3px",
+     "computed value of px border-radius, without frame");
+  is(cs.borderBottomLeftRadius, "1.5625% 3.125%",
+     "computed value of % border-radius, without frame");
+  is(cs.MozOutlineRadiusTopleft, "1.5625%",
+     "computed value of % outline-radius, without frame");
+  is(cs.MozOutlineRadiusTopright, "5px",
+     "computed value of px outline-radius, without frame");
+  is(cs.MozOutlineRadiusBottomright, "5px 3px",
+     "computed value of px outline-radius, without frame");
+  is(cs.MozOutlineRadiusBottomleft, "1.5625% 3.125%",
+     "computed value of % outline-radius, without frame");
+
+  p.parentNode.removeChild(p);
+})();
+
+(function test_bug_595651() {
+  // Test that clamping of border-radius is reflected in computed style.
+  var p = document.createElement("p");
+  p.setAttribute("style", "width: 190px; height: 90px; border: 5px solid;");
+  p.style.borderRadius = "1000px";
+  var cs = getComputedStyle(p, "");
+
+  frame_container.appendChild(p);
+  is(cs.borderTopLeftRadius, "50px",
+     "computed value of clamped border radius (top left)");
+  is(cs.borderTopRightRadius, "50px",
+     "computed value of clamped border radius (top right)");
+  is(cs.borderBottomRightRadius, "50px",
+     "computed value of clamped border radius (bottom right)");
+  is(cs.borderBottomLeftRadius, "50px",
+     "computed value of clamped border radius (bottom left)");
+
+  p.style.overflowY = "scroll";
+  is(cs.borderTopLeftRadius, "50px",
+     "computed value of clamped border radius (top left, overflow-y)");
+  // Fennec doesn't have scrollbars for overflow:scroll content
+  if (p.clientWidth == p.offsetWidth - 10) {
+    is(cs.borderTopRightRadius, "50px",
+       "computed value of border radius (top right, overflow-y)");
+    is(cs.borderBottomRightRadius, "50px",
+       "computed value of border radius (bottom right, overflow-y)");
+  } else {
+    is(cs.borderTopRightRadius, "5px",
+       "computed value of clamped border radius (top right, overflow-y)");
+    is(cs.borderBottomRightRadius, "5px",
+       "computed value of clamped border radius (bottom right, overflow-y)");
+  }
+  is(cs.borderBottomLeftRadius, "50px",
+     "computed value of clamped border radius (bottom left, overflow-y)");
+
+  p.style.overflowY = "hidden";
+  p.style.overflowX = "scroll";
+  is(cs.borderTopLeftRadius, "50px",
+     "computed value of clamped border radius (top left, overflow-x)");
+  is(cs.borderTopRightRadius, "50px",
+     "computed value of clamped border radius (top right, overflow-x)");
+  // Fennec doesn't have scrollbars for overflow:scroll content
+  if (p.clientHeight == p.offsetHeight - 10) {
+    is(cs.borderBottomRightRadius, "50px",
+       "computed value of border radius (bottom right, overflow-x)");
+    is(cs.borderBottomLeftRadius, "50px",
+       "computed value of  border radius (bottom left, overflow-x)");
+  } else {
+    is(cs.borderBottomRightRadius, "5px",
+       "computed value of clamped border radius (bottom right, overflow-x)");
+    is(cs.borderBottomLeftRadius, "5px",
+       "computed value of clamped border radius (bottom left, overflow-x)");
+  }
+
+  p.parentNode.removeChild(p);
+})();
+
+(function test_bug_647885_1() {
+  // Test that various background-position styles round-trip correctly
+  var backgroundPositions = [
+    [ "0 0", "0px 0px", "unitless 0" ],
+    [ "0px 0px", "0px 0px", "0 with units" ],
+    [ "0% 0%", "0% 0%", "0%" ],
+    [ "calc(0px) 0", "0px 0px", "0 calc with units x" ],
+    [ "0 calc(0px)", "0px 0px", "0 calc with units y" ],
+    [ "calc(3px - 3px) 0", "0px 0px", "computed 0 calc with units x" ],
+    [ "0 calc(3px - 3px)", "0px 0px", "computed 0 calc with units y" ],
+    [ "calc(0%) 0", "0% 0px", "0% calc x"],
+    [ "0 calc(0%)", "0px 0%", "0% calc y"],
+    [ "calc(3px + 2% - 2%) 0", "calc(3px + 0%) 0px",
+      "computed 0% calc x"],
+    [ "0 calc(3px + 2% - 2%)", "0px calc(3px + 0%)",
+      "computed 0% calc y"],
+    [ "calc(3px - 5px) calc(6px - 7px)", "-2px -1px",
+      "negative pixel width"],
+    [ "", "0% 0%", "initial value" ],
+  ];
+
+  var p = document.createElement("p");
+  var cs = getComputedStyle(p, "");
+  frame_container.appendChild(p);
+
+  for (var i = 0; i < backgroundPositions.length; ++i) {
+    var test = backgroundPositions[i];
+    p.style.backgroundPosition = test[0];
+    is(cs.backgroundPosition, test[1], "computed value of " + test[2] + " background-position");
+  }
+
+  p.parentNode.removeChild(p);
+})();
+
+(function test_bug_647885_2() {
+  // Test that various background-size styles round-trip correctly
+  var backgroundSizes = [
+    [ "0 0", "0px 0px", "unitless 0" ],
+    [ "0px 0px", "0px 0px", "0 with units" ],
+    [ "0% 0%", "0% 0%", "0%" ],
+    [ "calc(0px) 0", "0px 0px", "0 calc with units horizontal" ],
+    [ "0 calc(0px)", "0px 0px", "0 calc with units vertical" ],
+    [ "calc(3px - 3px) 0", "0px 0px", "computed 0 calc with units horizontal" ],
+    [ "0 calc(3px - 3px)", "0px 0px", "computed 0 calc with units vertical" ],
+    [ "calc(0%) 0", "0% 0px", "0% calc horizontal"],
+    [ "0 calc(0%)", "0px 0%", "0% calc vertical"],
+    [ "calc(3px + 2% - 2%) 0", "calc(3px + 0%) 0px",
+                      "computed 0% calc horizontal"],
+    [ "0 calc(3px + 2% - 2%)", "0px calc(3px + 0%)",
+                      "computed 0% calc vertical"],
+    [ "calc(3px - 5px) calc(6px - 9px)",
+      "calc(-2px) calc(-3px)", "negative pixel width" ],
+    [ "", "auto auto", "initial value" ],
+  ];
+
+  var p = document.createElement("p");
+  var cs = getComputedStyle(p, "");
+  frame_container.appendChild(p);
+
+  for (var i = 0; i < backgroundSizes.length; ++i) {
+    var test = backgroundSizes[i];
+    p.style.backgroundSize = test[0];
+    is(cs.backgroundSize, test[1], "computed value of " + test[2] + " background-size");
+  }
+
+  p.parentNode.removeChild(p);
+})();
+
+(function test_bug_716628() {
+  // Test that various gradient styles round-trip correctly
+  var backgroundImages = [
+    [ "-moz-radial-gradient(10% bottom, #ffffff, black)",
+      "radial-gradient(at 10% 100%, rgb(255, 255, 255), rgb(0, 0, 0))",
+      "radial gradient 1" ],
+    [ "-moz-radial-gradient(#ffffff, black)",
+      "radial-gradient(rgb(255, 255, 255), rgb(0, 0, 0))",
+      "radial gradient 2" ],
+    [ "-moz-radial-gradient(cover, #ffffff, black)",
+      "radial-gradient(rgb(255, 255, 255), rgb(0, 0, 0))",
+      "radial gradient 3" ],
+    [ "-moz-radial-gradient(top left -45deg, #ffffff, black)",
+      "-moz-radial-gradient(0% 0% -45deg, rgb(255, 255, 255), rgb(0, 0, 0))",
+      "radial gradient with angle in degrees" ],
+    [ "-moz-linear-gradient(red, blue)",
+      "linear-gradient(rgb(255, 0, 0), rgb(0, 0, 255))",
+      "linear gradient 1" ],
+    [ "-moz-linear-gradient(to bottom, red, blue)",
+      "linear-gradient(rgb(255, 0, 0), rgb(0, 0, 255))",
+      "linear gradient 2" ],
+    [ "-moz-linear-gradient(to right, red, blue)",
+      "linear-gradient(to right, rgb(255, 0, 0), rgb(0, 0, 255))",
+      "linear gradient 3" ],
+    [ "-moz-linear-gradient(10px 10px -45deg, red, blue)",
+      "-moz-linear-gradient(10px 10px -45deg, rgb(255, 0, 0), rgb(0, 0, 255))",
+      "linear gradient with angle in degrees" ],
+    [ "-moz-linear-gradient(10px 10px -0.125turn, red, blue)",
+      "-moz-linear-gradient(10px 10px -0.125turn, rgb(255, 0, 0), rgb(0, 0, 255))",
+      "linear gradient with angle in turns" ],
+  ];
+
+  var p = document.createElement("p");
+  var cs = getComputedStyle(p, "");
+  frame_container.appendChild(p);
+
+  for (var i = 0; i < backgroundImages.length; ++i) {
+    var test = backgroundImages[i];
+    p.style.backgroundImage = test[0];
+    is(cs.backgroundImage, test[1], "computed value of " + test[2] + " background-image");
+  }
+
+  p.parentNode.removeChild(p);
+})();
+</script>
+</pre>
+</body>
+</html>

@@ -1,0 +1,135 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* ===== menulist.css ===================================================
+   == Styles used by the XUL menulist element.
+   ====================================================================== */
+
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+@namespace html url("http://www.w3.org/1999/xhtml");
+
+/* :::::::::: menulist :::::::::: */
+
+menulist {
+  -moz-appearance: menulist;
+  margin: 2px 4px;
+  color: -moz-DialogText;
+  font: menu;
+  text-shadow: none;
+}
+
+.menulist-label-box {
+  -moz-appearance: menulist-text;
+  -moz-box-align: center;
+  -moz-box-pack: center;
+  color: inherit;
+}
+
+.menulist-label {
+  margin: 1px 3px !important;
+}
+
+.menulist-dropmarker {
+  display: none;
+}
+
+menulist:hover {
+  color: -moz-buttonhovertext;
+}
+
+menulist:hover:active,
+menulist[open="true"] {
+  color: ButtonText;
+}
+
+menulist[disabled="true"],
+menulist[disabled="true"]:hover,
+menulist[disabled="true"]:hover:active {
+  color: GrayText;
+}
+
+.menulist-description {
+  font-style: italic;
+  color: GrayText;
+  -moz-margin-start: 1ex !important;
+}
+
+/* ::::: editable menulists ::::: */
+
+menulist[editable="true"] {
+  -moz-appearance: none;
+  color: -moz-FieldText;
+}
+
+.menulist-editable-box {
+  -moz-appearance: menulist-textfield;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  -moz-padding-start: 2px;
+  -moz-padding-end: 0px;
+}
+
+menulist[editable="true"] > .menulist-dropmarker {
+  display: -moz-box;
+  -moz-appearance: menulist-button;
+}
+
+html|*.menulist-editable-input {
+  margin: 0px !important;
+  border: none !important;
+  padding: 0px !important;
+  font: inherit;
+}
+
+
+/* ::::: compact menulists ::::: */
+
+.menulist-compact {
+  -moz-appearance: none;
+  -moz-box-align: center;
+  -moz-box-pack: center;
+  margin: 0;
+  border: 2px solid;
+  -moz-border-top-colors: ThreeDHighlight ThreeDLightShadow;
+  -moz-border-right-colors: ThreeDDarkShadow ThreeDShadow;
+  -moz-border-bottom-colors: ThreeDDarkShadow ThreeDShadow;
+  -moz-border-left-colors: ThreeDHighlight ThreeDLightShadow;
+  background-color: ThreeDFace;
+  color: ButtonText;
+  list-style-image: url("chrome://global/skin/arrow/arrow-dn.gif");
+}
+
+.menulist-compact:hover {
+  color: ButtonText;
+}
+
+.menulist-compact > .menulist-label-box > .menulist-label {
+  margin: 0 3px !important;
+  text-align: end;
+}  
+
+.menulist-compact > .menulist-label-box > .menulist-icon {
+  -moz-margin-start: 2px;
+}
+
+.menulist-compact[open="true"] {
+  -moz-border-top-colors: ThreeDDarkShadow ThreeDShadow;
+  -moz-border-right-colors: ThreeDDarkShadow ThreeDHighlight;
+  -moz-border-bottom-colors: ThreeDDarkShadow ThreeDHighlight;
+  -moz-border-left-colors: ThreeDDarkShadow ThreeDShadow;
+}
+
+.menulist-compact[disabled="true"] {
+  list-style-image: url("chrome://global/skin/arrow/arrow-dn-dis.gif");
+}
+
+.menulist-compact > .menulist-label-box,
+.menulist-compact[open="true"]:focus > .menulist-label-box {
+  border: 1px solid transparent;
+  -moz-appearance: none;
+}
+
+.menulist-compact:focus > .menulist-label-box {
+  border: 1px dotted;
+}

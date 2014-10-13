@@ -1,0 +1,49 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+// An opaque key object.
+[scriptable, uuid(4b31f4ed-9424-4710-b946-79b7e33cf3a8)]
+interface nsIKeyObject : nsISupports
+{
+  // Key types
+  const short SYM_KEY = 1;
+  const short PRIVATE_KEY = 2;
+  const short PUBLIC_KEY = 3;
+
+  // Algorithm types
+  const short RC4 = 1;
+  const short AES_CBC = 2;
+  const short HMAC = 257;
+
+  // aAlgorithm is an algorithm type
+  // aKey is either a PK11SymKey, SECKEYPublicKey, or a SECKEYPrivateKey.
+  // The nsIKeyObject will take ownership of the key and be responsible
+  // for freeing the key memory when destroyed.
+  [noscript] void initKey(in short aAlgorithm, in voidPtr aKey);
+
+  // Return a pointer to the underlying key object
+  [noscript] voidPtr getKeyObj();
+
+  // Will return NS_ERROR_NOT_INITIALIZED if initKey hasn't been run
+  short getType();
+};
+
+[scriptable, uuid(264eb54d-e20d-49a0-890c-1a5986ea81c4)]
+interface nsIKeyObjectFactory : nsISupports
+{
+  nsIKeyObject lookupKeyByName(in ACString aName);
+
+  nsIKeyObject unwrapKey(in short aAlgorithm,
+                         [const, array, size_is(aWrappedKeyLen)] in octet aWrappedKey,
+                         in unsigned long aWrappedKeyLen);
+
+  // TODO: deriveKeyFrom*
+
+
+  // DO NOT USE
+  // This is not FIPS compliant and should not be used.
+  nsIKeyObject keyFromString(in short aAlgorithm, in ACString aKey);
+};

@@ -1,0 +1,62 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+XPIDL_SOURCES += [
+    'nsIAndroidBridge.idl',
+]
+
+XPIDL_MODULE = 'widget_android'
+
+EXPORTS += [
+    'AndroidBridge.h',
+    'AndroidJavaWrappers.h',
+    'AndroidJNIWrapper.h',
+    'GeneratedJNIWrappers.h',
+]
+
+SOURCES += [
+    'AndroidBridge.cpp',
+    'AndroidDirectTexture.cpp',
+    'AndroidGraphicBuffer.cpp',
+    'AndroidJavaWrappers.cpp',
+    'AndroidJNI.cpp',
+    'AndroidJNIWrapper.cpp',
+    'GeneratedJNIWrappers.cpp',
+    'GfxInfo.cpp',
+    'NativeJSContainer.cpp',
+    'nsAndroidProtocolHandler.cpp',
+    'nsAppShell.cpp',
+    'nsClipboard.cpp',
+    'nsDeviceContextAndroid.cpp',
+    'nsIdleServiceAndroid.cpp',
+    'nsIMEPicker.cpp',
+    'nsLookAndFeel.cpp',
+    'nsPrintOptionsAndroid.cpp',
+    'nsScreenManagerAndroid.cpp',
+    'nsWidgetFactory.cpp',
+    'nsWindow.cpp',
+]
+
+FAIL_ON_WARNINGS = True
+
+LIBRARY_NAME = 'widget_android'
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+FINAL_LIBRARY = 'xul'
+
+LOCAL_INCLUDES += [
+    '/docshell/base',
+    '/dom/base',
+    '/dom/system/android',
+    '/netwerk/base/src',
+    '/netwerk/cache',
+    '/widget/android/android',
+    '/widget/shared',
+    '/widget/xpwidgets',
+]
+
+#DEFINES['DEBUG_WIDGETS'] = True

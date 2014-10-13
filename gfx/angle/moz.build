@@ -1,0 +1,143 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# libEGL depends on (links against!) libGLESv2!
+if CONFIG['MOZ_ANGLE_RENDERER']:
+    DIRS += ['src/libGLESv2', 'src/libEGL']
+
+EXPORTS.angle += [
+    'include/GLSLANG/ShaderLang.h',
+    'include/KHR/khrplatform.h',
+]
+
+# WARNING: CPP_SOURCES seems very dependent on ordering. Grouping all of these
+# CPP_SOURCES lines into one list may break webgl tests.
+
+# Target: 'preprocessor'
+# src/compiler/preprocessor:
+UNIFIED_SOURCES += ['src/compiler/preprocessor/' + src for src in [
+    'DiagnosticsBase.cpp',
+    'DirectiveHandlerBase.cpp',
+    'DirectiveParser.cpp',
+    'ExpressionParser.cpp',
+    'Input.cpp',
+    'Lexer.cpp',
+    'Macro.cpp',
+    'MacroExpander.cpp',
+    'Preprocessor.cpp',
+    'Token.cpp',
+    'Tokenizer.cpp',
+]]
+
+# Target: 'translator_common'
+#   Requires: 'preprocessor'
+# src/compiler:
+UNIFIED_SOURCES += ['src/compiler/' + src for src in [
+    'BuiltInFunctionEmulator.cpp',
+    'Compiler.cpp',
+    'compiler_debug.cpp',
+    'CompilerUniform.cpp',
+    'DetectCallDepth.cpp',
+    'Diagnostics.cpp',
+    'DirectiveHandler.cpp',
+    'ForLoopUnroll.cpp',
+    'InfoSink.cpp',
+    'Initialize.cpp',
+    'InitializeDll.cpp',
+    'InitializeParseContext.cpp',
+    'Intermediate.cpp',
+    'intermOut.cpp',
+    'IntermTraverse.cpp',
+    'MapLongVariableNames.cpp',
+    'parseConst.cpp',
+    'ParseHelper.cpp',
+    'PoolAlloc.cpp',
+    'QualifierAlive.cpp',
+    'RemoveTree.cpp',
+    'SymbolTable.cpp',
+    'util.cpp',
+    'ValidateLimitations.cpp',
+    'VariableInfo.cpp',
+    'VariablePacker.cpp',
+]]
+# The yacc source files need to be built separately.
+SOURCES += ['src/compiler/' + src for src in [
+    'glslang_lex.cpp',
+    'glslang_tab.cpp',
+]]
+
+# src/compiler/depgraph:
+UNIFIED_SOURCES += ['src/compiler/depgraph/' + src for src in [
+    'DependencyGraph.cpp',
+    'DependencyGraphBuilder.cpp',
+    'DependencyGraphOutput.cpp',
+    'DependencyGraphTraverse.cpp',
+]]
+
+# src/compiler/timing:
+UNIFIED_SOURCES += ['src/compiler/timing/' + src for src in [
+    'RestrictFragmentShaderTiming.cpp',
+    'RestrictVertexShaderTiming.cpp',
+]]
+
+# src/third_party/compiler:
+UNIFIED_SOURCES += ['src/third_party/compiler/' + src for src in [
+    'ArrayBoundsClamper.cpp',
+]]
+
+# src/third_party/murmurhash:
+UNIFIED_SOURCES += ['src/third_party/murmurhash/' + src for src in [
+    'MurmurHash3.cpp',
+]]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
+    UNIFIED_SOURCES += [
+        'src/compiler/ossource_win.cpp',
+    ]
+else:
+    UNIFIED_SOURCES += [
+        'src/compiler/ossource_posix.cpp',
+    ]
+
+# Target: 'translator_glsl'
+#   Requires: 'translator_common'
+# src/compiler:
+UNIFIED_SOURCES += ['src/compiler/' + src for src in [
+    'CodeGenGLSL.cpp',
+    'OutputESSL.cpp',
+    'OutputGLSL.cpp',
+    'OutputGLSLBase.cpp',
+    'ShaderLang.cpp',
+    'TranslatorESSL.cpp',
+    'TranslatorGLSL.cpp',
+    'VersionGLSL.cpp',
+]]
+MSVC_ENABLE_PGO = True
+
+LOCAL_INCLUDES += [
+    'include',
+    'include/KHR',
+    'src',
+]
+
+if CONFIG['GKMEDIAS_SHARED_LIBRARY']:
+    NO_VISIBILITY_FLAGS = True
+
+FINAL_LIBRARY = 'gkmedias'
+
+DEFINES['ANGLE_DISABLE_TRACE'] = True
+DEFINES['ANGLE_COMPILE_OPTIMIZATION_LEVEL'] = 'D3DCOMPILE_OPTIMIZATION_LEVEL1'
+DEFINES['COMPILER_IMPLEMENTATION'] = True
+
+# Suppress warnings in third-party code.
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += [
+        '-Wno-attributes',
+        '-Wno-sign-compare',
+        '-Wno-unknown-pragmas',
+    ]
+    if CONFIG['CLANG_CXX']:
+        CXXFLAGS += ['-Wno-unused-private-field']

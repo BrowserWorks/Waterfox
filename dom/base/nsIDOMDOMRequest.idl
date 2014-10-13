@@ -1,0 +1,45 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIDOMEventTarget.idl"
+
+interface nsIDOMWindow;
+interface nsIDOMDOMCursor;
+interface nsICursorContinueCallback;
+
+[builtinclass, uuid(d4c7372a-661c-4798-9a13-af48128609e9)]
+interface nsIDOMDOMRequest : nsIDOMEventTarget
+{
+  readonly attribute DOMString readyState; // "pending" or "done"
+
+  readonly attribute jsval result;
+
+  // DOMError
+  readonly attribute nsISupports error;
+
+  [implicit_jscontext] attribute jsval onsuccess;
+  [implicit_jscontext] attribute jsval onerror;
+};
+
+[scriptable, builtinclass, uuid(df58d5d6-4b02-4e4c-9b29-adbff06c6206)]
+interface nsIDOMRequestService : nsISupports
+{
+  nsIDOMDOMRequest createRequest(in nsIDOMWindow window);
+  /*
+   * @param aCallback
+   *        Called when `continue()' is called in the cursor, should be used to
+   *        notify the data provider that content wants the next result.
+   */
+  nsIDOMDOMCursor createCursor(in nsIDOMWindow window,
+                               in nsICursorContinueCallback aCallback);
+
+  void fireSuccess(in nsIDOMDOMRequest request, in jsval result);
+  void fireError(in nsIDOMDOMRequest request, in DOMString error);
+  void fireDetailedError(in nsIDOMDOMRequest request, in nsISupports error);
+  void fireSuccessAsync(in nsIDOMDOMRequest request, in jsval result);
+  void fireErrorAsync(in nsIDOMDOMRequest request, in DOMString error);
+  void fireDone(in nsIDOMDOMCursor cursor);
+};

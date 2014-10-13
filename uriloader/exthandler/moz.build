@@ -1,0 +1,138 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+TEST_DIRS += ['tests']
+
+XPIDL_SOURCES += [
+    'nsCExternalHandlerService.idl',
+    'nsIContentDispatchChooser.idl',
+    'nsIExternalHelperAppService.idl',
+    'nsIExternalProtocolService.idl',
+    'nsIExternalSharingAppService.idl',
+    'nsIExternalURLHandlerService.idl',
+    'nsIHandlerService.idl',
+    'nsIHelperAppLauncherDialog.idl',
+]
+
+XPIDL_MODULE = 'exthandler'
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
+    osdir = 'win'
+    LOCAL_INCLUDES += ['win']
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+    osdir = 'win'
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
+    osdir = 'android'
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
+    osdir = 'gonk'
+else:
+    osdir = 'unix'
+
+EXPORTS += [
+    osdir + '/nsOSHelperAppService.h'
+]
+
+EXPORTS += [
+    'nsExternalHelperAppService.h',
+]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
+    EXPORTS += [ '%s/%s' % (osdir, f) for f in [
+        'nsExternalSharingAppService.h',
+        'nsExternalURLHandlerService.h',
+    ]]
+
+EXPORTS.mozilla.dom += [
+    'ExternalHelperAppChild.h',
+    'ExternalHelperAppParent.h',
+]
+
+UNIFIED_SOURCES += [
+    'ExternalHelperAppParent.cpp',
+    'nsLocalHandlerApp.cpp',
+    'nsMIMEInfoImpl.cpp',
+]
+
+# These files can't be built in unified mode because they force NSPR logging.
+SOURCES += [
+    'ExternalHelperAppChild.cpp',
+    'nsExternalHelperAppService.cpp',
+    'nsExternalProtocolHandler.cpp',
+]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+    UNIFIED_SOURCES += [
+        'mac/nsLocalHandlerAppMac.mm',
+        'mac/nsMIMEInfoMac.mm',
+    ]
+    # These files can't be built in unified mode because they force NSPR logging.
+    SOURCES += [
+        'mac/nsOSHelperAppService.mm',
+    ]
+else:
+    # These files can't be built in unified mode because they force NSPR logging.
+    SOURCES += [
+        osdir + '/nsOSHelperAppService.cpp',
+    ]
+
+if CONFIG['MOZ_ENABLE_GTK']:
+    UNIFIED_SOURCES += [
+        'unix/nsGNOMERegistry.cpp',
+        'unix/nsMIMEInfoUnix.cpp',
+    ]
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
+    UNIFIED_SOURCES += [
+        'android/nsAndroidHandlerApp.cpp',
+        'android/nsExternalSharingAppService.cpp',
+        'android/nsExternalURLHandlerService.cpp',
+        'android/nsMIMEInfoAndroid.cpp',
+    ]
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'qt':
+    UNIFIED_SOURCES += [
+        'unix/nsGNOMERegistry.cpp',
+        'unix/nsMIMEInfoUnix.cpp',
+    ]
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
+    # These files can't be built in unified mode because they force NSPR logging.
+    SOURCES += [
+        'win/nsMIMEInfoWin.cpp',
+    ]
+
+if CONFIG['MOZ_ENABLE_DBUS']:
+    UNIFIED_SOURCES += [
+        'nsDBusHandlerApp.cpp',
+    ]
+
+if CONFIG['MOZ_ENABLE_CONTENTACTION']:
+    UNIFIED_SOURCES += [
+        'nsContentHandlerApp.cpp',
+    ]
+
+EXTRA_COMPONENTS += [
+    'nsHandlerService.js',
+    'nsHandlerService.manifest',
+    'nsWebHandlerApp.js',
+    'nsWebHandlerApp.manifest',
+]
+
+IPDL_SOURCES += [
+    'PExternalHelperApp.ipdl',
+]
+
+FAIL_ON_WARNINGS = True
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+FINAL_LIBRARY = 'xul'
+
+LOCAL_INCLUDES += [
+    '/content/base/src',
+    '/dom/base',
+    '/dom/ipc',
+    '/netwerk/base/src',
+    '/netwerk/protocol/http',
+]
+

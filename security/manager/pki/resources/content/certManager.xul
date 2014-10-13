@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<?xul-overlay href="chrome://pippki/content/MineOverlay.xul"?>
+<?xul-overlay href="chrome://pippki/content/OthersOverlay.xul"?>
+<?xul-overlay href="chrome://pippki/content/WebSitesOverlay.xul"?>
+<?xul-overlay href="chrome://pippki/content/CAOverlay.xul"?>
+<?xul-overlay href="chrome://pippki/content/OrphanOverlay.xul"?>
+
+<!DOCTYPE dialog SYSTEM "chrome://pippki/locale/certManager.dtd">
+
+<dialog id="certmanager" 
+	windowtype="mozilla:certmanager"
+	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" 
+        title="&certmgr.title;"
+        onload="LoadCerts();"
+        buttons="accept"
+        style="width: 48em; height: 32em;"
+        persist="screenX screenY width height">
+
+  <stringbundle id="pippki_bundle" src="chrome://pippki/locale/pippki.properties"/>
+
+  <script type="application/javascript" src="chrome://pippki/content/pippki.js"/>
+  <script type="application/javascript" src="chrome://pippki/content/certManager.js"/>
+
+  <vbox flex="1">
+    <tabbox id="certmanagertabs" flex="1" style="margin:5px" persist="selectedIndex">
+      <tabs id="certMgrTabbox">
+        <tab id="mine_tab" label="&certmgr.tab.mine;"/>
+        <tab id="others_tab" label="&certmgr.tab.others2;"/>
+        <tab id="websites_tab" label="&certmgr.tab.websites3;"/>
+        <tab id="ca_tab" label="&certmgr.tab.ca;" selected="true"/>
+        <tab id="orphan_tab" label="&certmgr.tab.orphan2;"/>
+      </tabs>
+      <tabpanels flex="1">
+        <vbox id="myCerts" flex="1"/>
+        <vbox id="othersCerts" flex="1"/>
+        <vbox id="webCerts" flex="1"/>
+        <vbox id="CACerts" flex="1"/>
+        <vbox id="OrphanCerts" flex="1"/>
+      </tabpanels>
+    </tabbox>
+
+  </vbox>
+
+</dialog>

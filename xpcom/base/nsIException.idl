@@ -1,0 +1,64 @@
+/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/*
+ * Interfaces for representing cross-language exceptions and stack traces.
+ */
+
+
+#include "nsISupports.idl"
+
+[scriptable, uuid(3bc4793f-e6be-44d6-b839-d6b9e85e5346)]
+interface nsIStackFrame : nsISupports
+{
+    // see nsIProgrammingLanguage for list of language consts
+    readonly attribute uint32_t                language;
+    readonly attribute AUTF8String             languageName;
+    readonly attribute AString                 filename;
+    readonly attribute AString                 name;
+    // Valid line numbers begin at '1'. '0' indicates unknown.
+    readonly attribute int32_t                 lineNumber;
+    readonly attribute AUTF8String             sourceLine;
+    readonly attribute nsIStackFrame           caller;
+
+    AUTF8String toString();
+};
+
+[scriptable, uuid(1caf1461-be1d-4b79-a552-5292b6bf3c35)]
+interface nsIException : nsISupports
+{
+    // A custom message set by the thrower.
+    [binaryname(MessageMoz)] readonly attribute AUTF8String message;
+    // The nsresult associated with this exception.
+    readonly attribute nsresult                result;
+    // The name of the error code (ie, a string repr of |result|)
+    readonly attribute AUTF8String             name;
+
+    // Filename location.  This is the location that caused the
+    // error, which may or may not be a source file location.
+    // For example, standard language errors would generally have
+    // the same location as their top stack entry.  File
+    // parsers may put the location of the file they were parsing,
+    // etc.
+
+    // null indicates "no data"
+    readonly attribute AString                 filename;
+    // Valid line numbers begin at '1'. '0' indicates unknown.
+    readonly attribute uint32_t                lineNumber;
+    // Valid column numbers begin at 0. 
+    // We don't have an unambiguous indicator for unknown.
+    readonly attribute uint32_t                columnNumber;
+
+    // A stack trace, if available.
+    readonly attribute nsIStackFrame           location;
+    // An inner exception that triggered this, if available.
+    readonly attribute nsIException            inner;
+
+    // Arbitary data for the implementation.
+    readonly attribute nsISupports             data;
+
+    // A generic formatter - make it suitable to print, etc.
+    AUTF8String toString();
+};

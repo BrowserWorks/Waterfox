@@ -1,0 +1,62 @@
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+EXTRACSRCS = tmreader.c
+EXTRACPPSRCS = adreader.cpp
+
+ifndef MOZ_PROFILE_GENERATE
+
+PROGCSRCS = \
+  spacetrace.c \
+  spacecategory.c \
+  formdata.c \
+  $(NULL)
+
+PROGOBJS = $(PROGCSRCS:.c=.$(OBJ_SUFFIX))
+endif
+
+CPPSRCS += $(EXTRACPPSRCS)
+
+include $(topsrcdir)/config/config.mk
+
+LIBS		+= \
+		$(LIBS_DIR) \
+		tmreader.$(OBJ_SUFFIX) \
+		adreader.$(OBJ_SUFFIX) \
+		$(XPCOM_GLUE_LDOPTS) \
+		$(NSPR_LIBS) \
+		$(NULL)
+
+ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
+LIBS += $(DIST)/bin/XUL
+endif
+
+ifdef HAVE_BOUTELL_GD
+ifeq ($(OS_ARCH),WINNT)
+LOCAL_INCLUDES	+= \
+		-I'$(HAVE_BOUTELL_GD)' \
+		$(NULL)
+LIBS		+= \
+		-lmozz_s \
+		'$(HAVE_BOUTELL_GD)/gd.lib' \
+		$(NULL)
+else
+LIBS		+= \
+		-lgd \
+		$(NULL)
+endif
+
+DEFINES		+= \
+		-DHAVE_BOUTELL_GD \
+		$(NULL)
+endif
+
+EXTRA_DEPS = $(EXTRACSRCS:.c=.$(OBJ_SUFFIX)) $(EXTRACPPSRCS:.cpp=.$(OBJ_SUFFIX))
+
+include $(topsrcdir)/config/rules.mk
+
+# install rules.txt along with spacetrace executable
+libs:: rules.txt
+	$(INSTALL) $< $(DIST)/bin

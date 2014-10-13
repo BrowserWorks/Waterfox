@@ -1,0 +1,111 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+TEST_DIRS += ['tests']
+
+LIBRARY_NAME = 'mfbt'
+
+EXPORTS.mozilla = [
+    'Alignment.h',
+    'AllocPolicy.h',
+    'Array.h',
+    'ArrayUtils.h',
+    'Assertions.h',
+    'Atomics.h',
+    'Attributes.h',
+    'BinarySearch.h',
+    'BloomFilter.h',
+    'Casting.h',
+    'ChaosMode.h',
+    'Char16.h',
+    'CheckedInt.h',
+    'Compiler.h',
+    'Compression.h',
+    'Constants.h',
+    'DebugOnly.h',
+    'decimal/Decimal.h',
+    'Endian.h',
+    'EnumeratedArray.h',
+    'EnumSet.h',
+    'FloatingPoint.h',
+    'GuardObjects.h',
+    'HashFunctions.h',
+    'IntegerPrintfMacros.h',
+    'IntegerTypeTraits.h',
+    'Likely.h',
+    'LinkedList.h',
+    'MacroArgs.h',
+    'MacroForEach.h',
+    'MathAlgorithms.h',
+    'Maybe.h',
+    'MemoryChecking.h',
+    'MemoryReporting.h',
+    'Move.h',
+    'MSIntTypes.h',
+    'NullPtr.h',
+    'NumericLimits.h',
+    'PodOperations.h',
+    'Poison.h',
+    'Range.h',
+    'RangedPtr.h',
+    'RefCountType.h',
+    'ReentrancyGuard.h',
+    'RefPtr.h',
+    'RollingMean.h',
+    'Scoped.h',
+    'SHA1.h',
+    'SplayTree.h',
+    'TemplateLib.h',
+    'ThreadLocal.h',
+    'ToString.h',
+    'TypedEnum.h',
+    'TypedEnumBits.h',
+    'TypedEnumInternal.h',
+    'Types.h',
+    'TypeTraits.h',
+    'Vector.h',
+    'WeakPtr.h',
+]
+
+if CONFIG['OS_ARCH'] == 'WINNT':
+    EXPORTS.mozilla += [
+        'WindowsVersion.h',
+    ]
+elif CONFIG['OS_ARCH'] == 'Linux':
+    EXPORTS.mozilla += [
+        'LinuxSignal.h',
+    ]
+
+UNIFIED_SOURCES = [
+    'double-conversion/bignum-dtoa.cc',
+    'double-conversion/bignum.cc',
+    'double-conversion/cached-powers.cc',
+    'double-conversion/diy-fp.cc',
+    'double-conversion/double-conversion.cc',
+    'double-conversion/fast-dtoa.cc',
+    'double-conversion/fixed-dtoa.cc',
+    'double-conversion/strtod.cc',
+    'FloatingPoint.cpp',
+    'HashFunctions.cpp',
+    'Poison.cpp',
+    'SHA1.cpp',
+]
+
+DEFINES['IMPL_MFBT'] = True
+
+# Compression.cpp cannot be built in unified mode because it pulls in Windows system headers.
+# Decimal.cpp doesn't build in unified mode with gcc.
+SOURCES += [
+    'Compression.cpp',
+    'decimal/Decimal.cpp',
+]
+
+DISABLE_STL_WRAPPING = True
+
+# Suppress warnings in third-party code.
+if CONFIG['GNU_CXX']:
+    # TODO: Remove this LZ4 warning suppression after bug 993267 is fixed.
+    SOURCES['Compression.cpp'].flags += ['-Wno-unused-function']

@@ -1,0 +1,84 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+@namespace url(http://www.w3.org/2000/svg);
+@namespace xml url(http://www.w3.org/XML/1998/namespace);
+
+style, script, symbol {
+ display: none;
+}
+
+switch {
+ -moz-binding: none !important;
+}
+
+svg:not(:root), symbol, image, marker, pattern, foreignObject {
+ overflow: hidden;
+}
+
+@media all and (-moz-is-glyph) {
+ :root {
+   fill: context-fill;
+   fill-opacity: context-fill-opacity;
+   stroke: context-stroke;
+   stroke-opacity: context-stroke-opacity;
+   stroke-width: context-value;
+   stroke-dasharray: context-value;
+   stroke-dashoffset: context-value;
+ }
+}
+
+foreignObject {
+  margin: 0 ! important;
+  padding: 0 ! important;
+  border-width: 0 ! important;
+  white-space: normal;
+}
+
+@media all and (-moz-is-resource-document) {
+ foreignObject *|* {
+   -moz-appearance: none !important;
+ }
+}
+
+*|*::-moz-svg-foreign-content {
+  display: block !important;
+  /* We need to be an absolute and fixed container */
+  transform: translate(0) !important;
+  text-indent: 0;
+}
+
+/* Set |transform-origin:0% 0%;| for all SVG elements except outer-<svg>,
+   noting that 'svg' as a child of 'foreignObject' counts as outer-<svg>.
+*/
+*:not(svg),
+*:not(foreignObject) > svg {
+  transform-origin:0 0;
+}
+
+*|*::-moz-svg-text {
+  unicode-bidi: inherit;
+  vector-effect: inherit;
+}
+
+*[xml|space=preserve] {
+  white-space: -moz-pre-space;
+}
+
+*|*::-moz-svg-marker-anon-child {
+  clip-path: inherit;
+  filter: inherit;
+  mask: inherit;
+  opacity: inherit;
+}
+
+/* nsDocumentViewer::CreateStyleSet doesn't load ua.css for SVG-as-an-image,
+ * but SVG-as-an-image needs this rule from that file.
+ */
+*|*::-moz-viewport, *|*::-moz-viewport-scroll, *|*::-moz-canvas, *|*::-moz-scrolled-canvas {
+  display: block !important;
+  background-color: inherit;
+}

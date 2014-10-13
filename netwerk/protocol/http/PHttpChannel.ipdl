@@ -1,0 +1,145 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set sw=2 ts=8 et tw=80 ft=cpp : */
+
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+include protocol PNecko;
+include InputStreamParams;
+include URIParams;
+
+include protocol PBlob; //FIXME: bug #792908
+
+include "mozilla/net/NeckoMessageUtils.h";
+
+using RequestHeaderTuples from "mozilla/net/PHttpChannelParams.h";
+using class nsHttpHeaderArray from "nsHttpHeaderArray.h";
+using class nsHttpResponseHead from "nsHttpResponseHead.h";
+using struct nsHttpAtom from "nsHttp.h";
+using mozilla::net::NetAddr from "mozilla/net/DNS.h";
+
+namespace mozilla {
+namespace net {
+
+//-------------------------------------------------------------------
+protocol PHttpChannel
+{
+  manager PNecko;
+
+parent:
+  // Note: channels are opened during construction, so no open method here:
+  // see PNecko.ipdl
+
+  SetPriority(uint16_t priority);
+
+  SetCacheTokenCachedCharset(nsCString charset);
+
+  UpdateAssociatedContentSecurity(int32_t broken,
+                                  int32_t no);
+  Suspend();
+  Resume();
+
+  Cancel(nsresult status);
+
+  // Reports approval/veto of redirect by child process redirect observers
+  Redirect2Verify(nsresult result, RequestHeaderTuples changedHeaders,
+                  OptionalURIParams apiRedirectTo);
+
+  // For document loads we keep this protocol open after child's
+  // OnStopRequest, and send this msg (instead of __delete__) to allow
+  // partial cleanup on parent.
+  DocumentChannelCleanup();
+
+  // This might have to be sync. If this fails we must fail the document load
+  // to avoid endless loop.
+  //
+  // Explanation: the document loaded was loaded from the offline cache. But
+  // the cache group id (the manifest URL) of the cache group it was loaded
+  // from is different then the manifest the document refers to in the html
+  // tag. If we detect this during the cache selection algorithm, we must not
+  // load this document from the offline cache group it was just loaded from.
+  // Marking the cache entry as foreign in its cache group will prevent
+  // the document to load from the bad offline cache group. After it is marked,
+  // we reload the document to take the effect. If we fail to mark the entry
+  // as foreign, we will end up in the same situation and reload again and
+  // again, indefinitely.
+  MarkOfflineCacheEntryAsForeign();
+
+  // Divert OnDataAvailable to the parent.
+  DivertOnDataAvailable(nsCString data,
+                        uint64_t  offset,
+                        uint32_t  count);
+
+  // Divert OnStopRequest to the parent.
+  DivertOnStopRequest(nsresult statusCode);
+
+  // Child has no more events/messages to divert to the parent.
+  DivertComplete();
+
+  __delete__();
+
+child:
+  OnStartRequest(nsresult            channelStatus,
+                 nsHttpResponseHead  responseHead,
+                 bool                useResponseHead,
+                 nsHttpHeaderArray   requestHeaders,
+                 bool                isFromCache,
+                 bool                cacheEntryAvailable,
+                 uint32_t            cacheExpirationTime,
+                 nsCString           cachedCharset,
+                 nsCString           securityInfoSerialization,
+                 NetAddr             selfAddr,
+                 NetAddr             peerAddr,
+                 int16_t             redirectCount);
+
+  // Combines a single OnDataAvailable and its associated OnProgress &
+  // OnStatus calls into one IPDL message
+  OnTransportAndData(nsresult  channelStatus,
+                     nsresult  transportStatus,
+                     uint64_t  progress,
+                     uint64_t  progressMax,
+                     nsCString data,
+                     uint64_t  offset,
+                     uint32_t  count);
+
+  OnStopRequest(nsresult channelStatus);
+
+  OnProgress(uint64_t progress, uint64_t progressMax);
+
+  OnStatus(nsresult status);
+
+  // Used to cancel child channel if we hit errors during creating and
+  // AsyncOpen of nsHttpChannel on the parent.
+  FailedAsyncOpen(nsresult status);
+
+  // Called to initiate content channel redirect, starts talking to sinks
+  // on the content process and reports result via Redirect2Verify above
+  Redirect1Begin(uint32_t           newChannelId,
+                 URIParams          newUri,
+                 uint32_t           redirectFlags,
+                 nsHttpResponseHead responseHead);
+
+  // Called if redirect successful so that child can complete setup.
+  Redirect3Complete();
+
+  // Associte the child with an application ids
+  AssociateApplicationCache(nsCString groupID,
+                            nsCString clientID);
+
+  // Parent has been suspended for diversion; no more events to be enqueued.
+  FlushedForDiversion();
+
+  // Child should resume processing the ChannelEventQueue, i.e. diverting any
+  // OnDataAvailable and OnStopRequest messages in the queue back to the parent.
+  DivertMessages();
+
+  // Tell child to delete channel (all IPDL deletes must be done from child to
+  // avoid races: see bug 591708).
+  DeleteSelf();
+};
+
+
+} // namespace net
+} // namespace mozilla
+

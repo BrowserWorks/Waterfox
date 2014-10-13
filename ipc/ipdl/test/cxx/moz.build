@@ -1,0 +1,125 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+TOOL_DIRS += ['app']
+
+EXPORTS.mozilla._ipdltest += [
+    'IPDLUnitTestProcessChild.h',
+    'IPDLUnitTests.h',
+    'IPDLUnitTestTypes.h',
+    'IPDLUnitTestUtils.h',
+]
+
+SOURCES += [
+    'TestActorPunning.cpp',
+    'TestBadActor.cpp',
+    'TestBridgeMain.cpp',
+    'TestCrashCleanup.cpp',
+    'TestDataStructures.cpp',
+    'TestDesc.cpp',
+    'TestFailedCtor.cpp',
+    'TestHangs.cpp',
+    'TestInterruptErrorCleanup.cpp',
+    'TestInterruptRaces.cpp',
+    'TestInterruptShutdownRace.cpp',
+    'TestJSON.cpp',
+    'TestLatency.cpp',
+    'TestManyChildAllocs.cpp',
+    'TestMultiMgrs.cpp',
+    'TestNestedLoops.cpp',
+    'TestOpens.cpp',
+    'TestRaceDeferral.cpp',
+    'TestRacyInterruptReplies.cpp',
+    'TestRacyReentry.cpp',
+    'TestRacyUndefer.cpp',
+    'TestRPC.cpp',
+    'TestSanity.cpp',
+    'TestSelfManageRoot.cpp',
+    'TestShmem.cpp',
+    'TestShutdown.cpp',
+    'TestStackHooks.cpp',
+    'TestSyncError.cpp',
+    'TestSyncHang.cpp',
+    'TestSyncWakeup.cpp',
+    'TestUrgency.cpp',
+]
+
+if CONFIG['OS_ARCH'] == 'Linux':
+    SOURCES += [
+        'TestSysVShmem.cpp',
+    ]
+
+SOURCES += [
+    'IPDLUnitTestProcessChild.cpp',
+    'IPDLUnitTestSubprocess.cpp',
+]
+
+GENERATED_SOURCES += [
+    'IPDLUnitTests.cpp',
+]
+
+IPDL_SOURCES += [
+    'PTestActorPunning.ipdl',
+    'PTestActorPunningPunned.ipdl',
+    'PTestActorPunningSub.ipdl',
+    'PTestBadActor.ipdl',
+    'PTestBadActorSub.ipdl',
+    'PTestBridgeMain.ipdl',
+    'PTestBridgeMainSub.ipdl',
+    'PTestBridgeSub.ipdl',
+    'PTestCrashCleanup.ipdl',
+    'PTestDataStructures.ipdl',
+    'PTestDataStructuresCommon.ipdlh',
+    'PTestDataStructuresSub.ipdl',
+    'PTestDesc.ipdl',
+    'PTestDescSub.ipdl',
+    'PTestDescSubsub.ipdl',
+    'PTestFailedCtor.ipdl',
+    'PTestFailedCtorSub.ipdl',
+    'PTestFailedCtorSubsub.ipdl',
+    'PTestHandle.ipdl',
+    'PTestHangs.ipdl',
+    'PTestIndirectProtocolParam.ipdlh',
+    'PTestIndirectProtocolParamFirst.ipdl',
+    'PTestIndirectProtocolParamManage.ipdl',
+    'PTestIndirectProtocolParamSecond.ipdl',
+    'PTestInterruptErrorCleanup.ipdl',
+    'PTestInterruptRaces.ipdl',
+    'PTestInterruptShutdownRace.ipdl',
+    'PTestJSON.ipdl',
+    'PTestLatency.ipdl',
+    'PTestManyChildAllocs.ipdl',
+    'PTestManyChildAllocsSub.ipdl',
+    'PTestMultiMgrs.ipdl',
+    'PTestMultiMgrsBottom.ipdl',
+    'PTestMultiMgrsLeft.ipdl',
+    'PTestMultiMgrsRight.ipdl',
+    'PTestNestedLoops.ipdl',
+    'PTestOpens.ipdl',
+    'PTestOpensOpened.ipdl',
+    'PTestRaceDeferral.ipdl',
+    'PTestRacyInterruptReplies.ipdl',
+    'PTestRacyReentry.ipdl',
+    'PTestRacyUndefer.ipdl',
+    'PTestRPC.ipdl',
+    'PTestSanity.ipdl',
+    'PTestSelfManage.ipdl',
+    'PTestSelfManageRoot.ipdl',
+    'PTestShmem.ipdl',
+    'PTestShutdown.ipdl',
+    'PTestShutdownSub.ipdl',
+    'PTestShutdownSubsub.ipdl',
+    'PTestStackHooks.ipdl',
+    'PTestSyncError.ipdl',
+    'PTestSyncHang.ipdl',
+    'PTestSyncWakeup.ipdl',
+    'PTestSysVShmem.ipdl',
+    'PTestUrgency.ipdl',
+]
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+FINAL_LIBRARY = 'xul'

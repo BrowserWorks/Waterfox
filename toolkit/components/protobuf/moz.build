@@ -1,0 +1,55 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+EXPORTS.protobuf.google.protobuf += [
+    'google/protobuf/extension_set.h',
+    'google/protobuf/generated_message_util.h',
+    'google/protobuf/message_lite.h',
+    'google/protobuf/repeated_field.h',
+    'google/protobuf/wire_format_lite.h',
+    'google/protobuf/wire_format_lite_inl.h',
+]
+
+EXPORTS.protobuf.google.protobuf.stubs += [
+    'google/protobuf/stubs/common.h',
+    'google/protobuf/stubs/hash.h',
+    'google/protobuf/stubs/map-util.h',
+    'google/protobuf/stubs/once.h',
+    'google/protobuf/stubs/stl_util-inl.h',
+]
+
+EXPORTS.protobuf.google.protobuf.io += [
+    'google/protobuf/io/coded_stream.h',
+    'google/protobuf/io/coded_stream_inl.h',
+    'google/protobuf/io/zero_copy_stream.h',
+    'google/protobuf/io/zero_copy_stream_impl.h',
+    'google/protobuf/io/zero_copy_stream_impl_lite.h',
+    'google/protobuf/package_info.h',
+]
+
+UNIFIED_SOURCES += [
+    'google/protobuf/extension_set.cc',
+    'google/protobuf/generated_message_util.cc',
+    'google/protobuf/io/coded_stream.cc',
+    'google/protobuf/io/zero_copy_stream.cc',
+    'google/protobuf/io/zero_copy_stream_impl_lite.cc',
+    'google/protobuf/message_lite.cc',
+    'google/protobuf/repeated_field.cc',
+    'google/protobuf/stubs/common.cc',
+    'google/protobuf/stubs/once.cc',
+    'google/protobuf/wire_format_lite.cc',
+]
+
+FINAL_LIBRARY = 'toolkitcomps'
+
+DEFINES['GOOGLE_PROTOBUF_NO_RTTI'] = True
+
+# Suppress warnings in third-party code.
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += [
+        '-Wno-null-conversion',
+        '-Wno-sign-compare',
+    ]

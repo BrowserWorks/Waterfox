@@ -1,0 +1,73 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/**
+ * Line up the actions menu with action labels above and below it.
+ * Equalize the distance from the left side of the action box to the left side
+ * of the icon for both the menu and the non-menu versions of the action box.
+ * Also make sure the labels are the same distance away from the icons.
+ */
+.actionsMenu {
+  -moz-margin-start: -2px;
+  margin-top: 0;
+  margin-bottom: -1px;
+}
+
+#handlersView > richlistitem label {
+  -moz-margin-start: 3px;
+  margin-top: 2px;
+}
+
+#handlersView > richlistitem {
+  min-height: 22px;
+}
+
+.typeIcon,
+.actionIcon {
+  -moz-margin-start: 3px;
+}
+
+.typeIcon,
+.actionIcon,
+.actionsMenu .menulist-icon {
+  -moz-margin-end: 2px;
+}
+
+.actionsMenu > menupopup > menuitem > .menu-iconic-left {
+  /* Undo content/browser/preferences/handlers.css - we don't
+   * want icon-less labels to line up with the other labels.
+   */
+  min-width: 0;
+}
+
+richlistitem[appHandlerIcon="ask"],
+menuitem[appHandlerIcon="ask"] {
+  list-style-image: url("chrome://browser/skin/preferences/alwaysAsk.png");
+}
+
+richlistitem[appHandlerIcon="save"],
+menuitem[appHandlerIcon="save"] {
+  list-style-image: url("chrome://browser/skin/preferences/saveFile.png");
+}
+
+richlistitem[appHandlerIcon="feed"],
+menuitem[appHandlerIcon="feed"] {
+  list-style-image: url("chrome://browser/skin/page-livemarks.png");
+}
+
+richlistitem[appHandlerIcon="plugin"],
+menuitem[appHandlerIcon="plugin"] {
+  list-style-image: url("chrome://mozapps/skin/plugins/pluginGeneric-16.png");
+}
+
+/* Repeat what menu.css does for .menuitem-iconic */
+menuitem[appHandlerIcon] {
+  padding-top: 1px;
+  padding-bottom: 3px;
+}
+
+menuitem[appHandlerIcon] > .menu-iconic-left > .menu-iconic-icon {
+  -moz-margin-start: 0;
+  width: 16px;
+}

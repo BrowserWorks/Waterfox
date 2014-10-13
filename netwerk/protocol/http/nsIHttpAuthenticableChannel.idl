@@ -1,0 +1,108 @@
+/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIProxiedChannel.idl"
+
+interface nsILoadGroup;
+interface nsIURI;
+interface nsIInterfaceRequestor;
+typedef unsigned long nsLoadFlags;
+
+[scriptable, uuid(701093ac-5c7f-429c-99e3-423b041fccb4)]
+interface nsIHttpAuthenticableChannel : nsIProxiedChannel
+{
+    /**
+     * If the channel being authenticated is using SSL.
+     */
+    readonly attribute boolean isSSL;
+
+    /**
+     * Returns if the proxy HTTP method used is CONNECT. If no proxy is being
+     * used it must return PR_FALSE.
+     */
+    readonly attribute boolean proxyMethodIsConnect;
+
+    /**
+     * Cancels the current request. See nsIRequest.
+     */
+    void cancel(in nsresult aStatus);
+
+    /**
+     * The load flags of this request. See nsIRequest.
+     */
+    readonly attribute nsLoadFlags loadFlags;
+
+    /**
+     * The URI corresponding to the channel. See nsIChannel.
+     */
+    readonly attribute nsIURI URI;
+
+    /**
+     * The load group of this request. It is here for querying its
+     * notificationCallbacks. See nsIRequest.
+     */
+    readonly attribute nsILoadGroup loadGroup;
+
+    /**
+     * The notification callbacks for the channel. See nsIChannel.
+     */
+    readonly attribute nsIInterfaceRequestor notificationCallbacks;
+
+    /**
+     * The HTTP request method. See nsIHttpChannel.
+     */
+    readonly attribute ACString requestMethod;
+
+    /**
+     * The "Server" response header.
+     * Return NS_ERROR_NOT_AVAILABLE if not available.
+     */
+    readonly attribute ACString serverResponseHeader;
+
+    /**
+     * The Proxy-Authenticate response header.
+     */
+    readonly attribute ACString proxyChallenges;
+
+    /**
+     * The WWW-Authenticate response header.
+     */
+    readonly attribute ACString WWWChallenges;
+
+    /**
+     * Sets the Proxy-Authorization request header. An empty string
+     * will clear it.
+     */
+    void setProxyCredentials(in ACString credentials);
+
+    /**
+     * Sets the Authorization request header. An empty string
+     * will clear it.
+     */
+    void setWWWCredentials(in ACString credentials);
+
+    /**
+     * Called when authentication information is ready and has been set on this
+     * object using setWWWCredentials/setProxyCredentials. Implementations can
+     * continue with the request and send the given information to the server.
+     *
+     * It is called asynchronously from
+     * nsIHttpChannelAuthProvider::processAuthentication if that method returns
+     * NS_ERROR_IN_PROGRESS.
+     *
+     * @note  Any exceptions thrown from this method should be ignored.
+     */
+    void onAuthAvailable();
+
+    /**
+     * Notifies that the prompt was cancelled. It is called asynchronously
+     * from nsIHttpChannelAuthProvider::processAuthentication if that method
+     * returns NS_ERROR_IN_PROGRESS.
+     *
+     * @param userCancel
+     *        If the user was cancelled has cancelled the authentication prompt.
+     */
+    void onAuthCancelled(in boolean userCancel);
+};

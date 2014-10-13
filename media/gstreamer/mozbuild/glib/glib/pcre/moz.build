@@ -1,0 +1,37 @@
+FINAL_LIBRARY = 'gkmedias'
+DEFINES["HAVE_CONFIG_H"] = 1
+LOCAL_INCLUDES += ['/media/gstreamer/glib']
+LOCAL_INCLUDES += ['/media/gstreamer/glib/glib/pcre']
+LOCAL_INCLUDES += ['/media/gstreamer/glib',
+ '/media/gstreamer/glib/gio',
+ '/media/gstreamer/glib/glib',
+ '/media/gstreamer/glib/gmodule',
+ '/media/gstreamer/gst-plugins-bad',
+ '/media/gstreamer/gst-plugins-bad/gst-libs',
+ '/media/gstreamer/gst-plugins-base',
+ '/media/gstreamer/gst-plugins-base/gst-libs',
+ '/media/gstreamer/gst-plugins-good',
+ '/media/gstreamer/gst-plugins-good/gst-libs',
+ '/media/gstreamer/gstreamer',
+ '/media/gstreamer/gstreamer/gst-libs',
+ '/media/gstreamer/gstreamer/libs',
+ '/media/gstreamer/gstreamer/libs/gst-libs',
+ '/media/gstreamer/orc']
+# libpcre
+SOURCES += ['../../../../glib/glib/pcre/pcre_byte_order.c',
+ '../../../../glib/glib/pcre/pcre_chartables.c',
+ '../../../../glib/glib/pcre/pcre_compile.c',
+ '../../../../glib/glib/pcre/pcre_config.c',
+ '../../../../glib/glib/pcre/pcre_dfa_exec.c',
+ '../../../../glib/glib/pcre/pcre_exec.c',
+ '../../../../glib/glib/pcre/pcre_fullinfo.c',
+ '../../../../glib/glib/pcre/pcre_get.c',
+ '../../../../glib/glib/pcre/pcre_globals.c',
+ '../../../../glib/glib/pcre/pcre_jit_compile.c',
+ '../../../../glib/glib/pcre/pcre_newline.c',
+ '../../../../glib/glib/pcre/pcre_ord2utf8.c',
+ '../../../../glib/glib/pcre/pcre_string_utils.c',
+ '../../../../glib/glib/pcre/pcre_study.c',
+ '../../../../glib/glib/pcre/pcre_tables.c',
+ '../../../../glib/glib/pcre/pcre_valid_utf8.c',
+ '../../../../glib/glib/pcre/pcre_xclass.c']

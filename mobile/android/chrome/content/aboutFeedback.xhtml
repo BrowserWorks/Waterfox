@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd" [
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+%brandDTD;
+<!ENTITY % globalDTD SYSTEM "chrome://global/locale/global.dtd">
+%globalDTD;
+<!ENTITY % aboutFeedbackDTD SYSTEM "chrome://browser/locale/aboutFeedback.dtd" >
+%aboutFeedbackDTD;
+]>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>&pageTitle;</title>
+  <meta name="viewport" content="width=device-width; user-scalable=0" />
+  <link rel="stylesheet" href="chrome://browser/skin/aboutFeedback.css" type="text/css"/>
+  <link rel="icon" type="image/png" sizes="64x64" href="chrome://branding/content/favicon64.png" />
+</head>
+
+<body dir="&locale.dir;">
+
+  <section id="intro" active="true">
+    <h1 class="header">&intro.header;</h1>
+    <div class="message">&intro.message;</div>
+    <div id="happy-link" class="link-box">
+      <a>&intro.happyLink;</a>
+    </div>
+    <div id="sad-link" class="link-box-bottom">
+      <a>&intro.sadLink;</a>
+    </div>
+    <div class="bottom-links">
+      <a class="maybe-later">&intro.maybeLater;</a>
+      <a class="no-thanks">&happy.noThanks;</a>
+    </div>
+  </section>
+
+  <section id="happy">
+    <h1 class="header">&happy.header;</h1>
+    <div class="message-box">
+      <div class="message">&happy.message;</div>
+      <div class="fine-print">&happy.finePrint;</div>
+    </div>
+    <div id="open-play-store" class="link-box-bottom">
+      <div class="stars"/>
+      <a>&happy.ratingLink;</a>
+    </div>
+    <div class="bottom-links">
+      <a class="maybe-later">&happy.maybeLater2;</a>
+      <a class="no-thanks">&happy.noThanks;</a>
+    </div>
+  </section>
+
+  <section id="sad">
+    <form>
+      <div class="message">&sad.message;</div>
+      <textarea class="description" placeholder="&sad.placeholder;" rows="8" required="true"/>
+      <div class="message">&sad.lastSite;</div>
+      <input id="last-url" type="url" placeholder="&sad.urlPlaceholder;"/>
+      <div class="fine-print">&feedback.privacy;</div>
+      <input class="send-feedback" type="submit" value="&feedback.send;"/>
+    </form>
+    <div id="sumo-message" class="fine-print">&support.pre2;<a id="sumo-link">&support.link;</a>&support.post2;</div>
+  </section>
+
+  <section id="thanks-sad">
+    <h1 class="header">&sad.thanksHeader;</h1>
+    <div class="message-box-bottom">
+      <div class="message">&sad.thanksMessageTop;</div>
+      <div class="message">&sad.thanksMessageBottom;</div>
+    </div>
+  </section>
+
+  <script type="application/javascript;version=1.8" src="chrome://browser/content/aboutFeedback.js"></script>
+</body>
+</html>

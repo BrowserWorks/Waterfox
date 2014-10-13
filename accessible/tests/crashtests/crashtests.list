@@ -1,0 +1,2 @@
+# Disabled because it causes assertions/crashes in later crashtests, see bug 918246
+skip load 471493.xul

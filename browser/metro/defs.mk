@@ -1,0 +1,1 @@
+XPI_ROOT_APPID={99bceaaa-e3c6-48c1-b981-ef9b46b67d60}

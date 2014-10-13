@@ -1,0 +1,198 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+#include "nsISupportsArray.idl"
+#include "nsIFormatConverter.idl"
+
+
+%{ C++
+
+// these probably shouldn't live here, but in some central repository shared
+// by the entire app.
+#define kTextMime                   "text/plain"
+#define kUnicodeMime                "text/unicode"
+#define kMozTextInternal          "text/x-moz-text-internal"  // text data which isn't suppoed to be parsed by other apps.
+#define kHTMLMime                   "text/html"
+#define kAOLMailMime                "AOLMAIL"
+#define kPNGImageMime               "image/png"
+#define kJPEGImageMime              "image/jpeg"
+#define kJPGImageMime               "image/jpg"
+#define kGIFImageMime               "image/gif"
+#define kFileMime                   "application/x-moz-file"
+
+#define kURLMime                    "text/x-moz-url"        // data contains url\ntitle
+#define kURLDataMime                "text/x-moz-url-data"   // data contains url only
+#define kURLDescriptionMime         "text/x-moz-url-desc"   // data contains description
+#define kURLPrivateMime             "text/x-moz-url-priv"   // same as kURLDataMime but for private uses
+#define kNativeImageMime            "application/x-moz-nativeimage"
+#define kNativeHTMLMime             "application/x-moz-nativehtml"
+
+// These are used to indicate the context for a fragment of HTML source, such
+// that some parent structure and style can be preserved. kHTMLContext
+// contains the serialized ancestor elements, whereas kHTMLInfo are numbers
+// identifying where in the context the fragment was from.
+#define kHTMLContext   "text/_moz_htmlcontext"
+#define kHTMLInfo      "text/_moz_htmlinfo"
+
+// the source URL for a file promise
+#define kFilePromiseURLMime         "application/x-moz-file-promise-url"
+// the destination filename for a file promise
+#define kFilePromiseDestFilename    "application/x-moz-file-promise-dest-filename"
+// a dataless flavor used to interact with the OS during file drags
+#define kFilePromiseMime            "application/x-moz-file-promise"
+// a synthetic flavor, put into the transferable once we know the destination directory of a file drag
+#define kFilePromiseDirectoryMime   "application/x-moz-file-promise-dir"
+
+%}
+
+
+/**
+  * nsIFlavorDataProvider allows a flavor to 'promise' data later,
+  * supplying the data lazily.
+  * 
+  * To use it, call setTransferData, passing the flavor string,
+  * a nsIFlavorDataProvider QI'd to nsISupports, and a data size of 0.
+  *
+  * When someone calls getTransferData later, if the data size is
+  * stored as 0, the nsISupports will be QI'd to nsIFlavorDataProvider,
+  * and its getFlavorData called.
+  *
+  */
+interface nsITransferable;
+interface nsILoadContext;
+
+[scriptable, uuid(7E225E5F-711C-11D7-9FAE-000393636592)]
+interface nsIFlavorDataProvider : nsISupports
+{
+
+  /**
+    * Retrieve the data from this data provider.
+    *
+    * @param  aTransferable (in parameter) the transferable we're being called for.
+    * @param  aFlavor (in parameter) the flavor of data to retrieve
+    * @param  aData the data. Some variant of class in nsISupportsPrimitives.idl
+    * @param  aDataLen the length of the data
+    */
+  void getFlavorData(in nsITransferable aTransferable, in string aFlavor, out nsISupports aData, out unsigned long aDataLen);
+};
+
+
+[scriptable, uuid(5a611a60-e5b5-11e1-aff1-0800200c9a66)]
+interface nsITransferable : nsISupports
+{
+  const long kFlavorHasDataProvider = 0;
+
+  /**
+   * Initializes a transferable object.  This should be called on all
+   * transferable objects.  Failure to do so will result in fatal assertions in
+   * debug builds.
+   *
+   * The load context is used to track whether the transferable is storing privacy-
+   * sensitive information.  For example, we try to delete data that you copy
+   * to the clipboard when you close a Private Browsing window.
+   *
+   * To get the appropriate load context in Javascript callers, one needs to get
+   * to the document that the transferable corresponds to, and then get the load
+   * context from the document like this:
+   *
+   * var loadContext = doc.defaultView.QueryInterface(Ci.nsIInterfaceRequestor)
+   *                                  .getInterface(Ci.nsIWebNavigation)
+   *                                  .QueryInterface(Ci.nsILoadContext);
+   *
+   * In C++ callers, if you have the corresponding document, you can just call
+   * nsIDocument::GetLoadContext to get to the load context object.
+   *
+   * @param aContext the load context associated with the transferable object.
+   *        This can be set to null if a load context is not available.
+   */
+  void init(in nsILoadContext aContext);
+
+  /**
+    * Computes a list of flavors (mime types as nsISupportsCString) that the transferable 
+    * can export, either through intrinsic knowledge or output data converters.
+    *
+    * @param  aDataFlavorList fills list with supported flavors. This is a copy of
+    *          the internal list, so it may be edited w/out affecting the transferable.
+    */
+  nsISupportsArray flavorsTransferableCanExport ( ) ;
+
+  /**
+    * Given a flavor retrieve the data. 
+    *
+    * @param  aFlavor (in parameter) the flavor of data to retrieve
+    * @param  aData the data. Some variant of class in nsISupportsPrimitives.idl
+    * @param  aDataLen the length of the data
+    */
+  void getTransferData ( in string aFlavor, out nsISupports aData, out unsigned long aDataLen ) ;
+
+  /**
+    * Returns the best flavor in the transferable, given those that have
+    * been added to it with |AddFlavor()|
+    *
+    * @param  aFlavor (out parameter) the flavor of data that was retrieved
+    * @param  aData the data. Some variant of class in nsISupportsPrimitives.idl
+    * @param  aDataLen the length of the data
+    */
+  void getAnyTransferData ( out string aFlavor, out nsISupports aData, out unsigned long aDataLen ) ;
+
+  /**
+    * Returns true if the data is large.
+    */
+  boolean isLargeDataSet ( ) ;
+  
+
+    ///////////////////////////////
+    // Setter part of interface 
+    ///////////////////////////////
+
+  /**
+    * Computes a list of flavors (mime types as nsISupportsCString) that the transferable can
+    * accept into it, either through intrinsic knowledge or input data converters.
+    *
+    * @param  outFlavorList fills list with supported flavors. This is a copy of
+    *          the internal list, so it may be edited w/out affecting the transferable.
+    */
+  nsISupportsArray flavorsTransferableCanImport ( ) ;
+
+  /**
+    * Sets the data in the transferable with the specified flavor. The transferable
+    * will maintain its own copy the data, so it is not necessary to do that beforehand.
+    *
+    * @param  aFlavor the flavor of data that is being set
+    * @param  aData the data, either some variant of class in nsISupportsPrimitives.idl,
+    *         an nsIFile, or an nsIFlavorDataProvider (see above)
+    * @param  aDataLen the length of the data, or 0 if passing a nsIFlavorDataProvider
+    */
+  void setTransferData ( in string aFlavor, in nsISupports aData, in unsigned long aDataLen ) ;
+
+  /**
+    * Add the data flavor, indicating that this transferable 
+    * can receive this type of flavor
+    *
+    * @param  aDataFlavor a new data flavor to handle
+    */
+  void addDataFlavor ( in string aDataFlavor ) ;
+
+  /**
+    * Removes the data flavor matching the given one (string compare) and the data
+    * that goes along with it.
+    *
+    * @param  aDataFlavor a data flavor to remove
+    */
+  void removeDataFlavor ( in string aDataFlavor ) ;
+
+  attribute nsIFormatConverter converter;
+
+  /**
+   * Use of the SetIsPrivateData() method generated by isPrivateData attribute should 
+   * be avoided as much as possible because the value set may not reflect the status 
+   * of the context in which the transferable was created.
+   */
+  [noscript] attribute boolean isPrivateData;
+
+};
+

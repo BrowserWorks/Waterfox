@@ -1,0 +1,342 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/css" href="chrome://global/skin"?>
+<?xml-stylesheet type="text/css" href="chrome://mochikit/content/tests/SimpleTest/test.css"?>
+<window title="Memory reporters"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <script type="application/javascript"
+          src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"/>
+
+  <!-- This file tests (in a rough fashion) whether the memory reporters are
+       producing sensible results.  test_aboutmemory.xul tests the
+       presentation of memory reports in about:memory. -->
+
+  <!-- test results are displayed in the html:body -->
+  <body xmlns="http://www.w3.org/1999/xhtml">
+  <!-- In bug 773533, <marquee> elements crashed the JS memory reporter -->
+  <marquee>Marquee</marquee>
+  </body>
+
+  <!-- test code goes here -->
+  <script type="application/javascript">
+  <![CDATA[
+
+  // Nb: this test is all JS and so should be done with an xpcshell test,
+  // but bug 671753 is preventing the memory-reporter-manager from being
+  // accessed from xpcshell.
+
+  "use strict";
+
+  const Cc = Components.classes;
+  const Ci = Components.interfaces;
+  const Cr = Components.results;
+
+  const NONHEAP = Ci.nsIMemoryReporter.KIND_NONHEAP;
+  const HEAP    = Ci.nsIMemoryReporter.KIND_HEAP;
+  const OTHER   = Ci.nsIMemoryReporter.KIND_OTHER;
+
+  const BYTES = Ci.nsIMemoryReporter.UNITS_BYTES;
+  const COUNT = Ci.nsIMemoryReporter.UNITS_COUNT;
+  const COUNT_CUMULATIVE = Ci.nsIMemoryReporter.UNITS_COUNT_CUMULATIVE;
+  const PERCENTAGE = Ci.nsIMemoryReporter.UNITS_PERCENTAGE;
+
+  let vsizeAmounts = [];
+  let residentAmounts = [];
+  let jsGcHeapAmounts = [];
+  let heapAllocatedAmounts = [];
+  let storageSqliteAmounts = [];
+
+  let present = {}
+
+  // Generate a long, random string.  We'll check that this string is
+  // reported in at least one of the memory reporters.
+  let bigString = "";
+  while (bigString.length < 10000) {
+    bigString += Math.random();
+  }
+  let bigStringPrefix = bigString.substring(0, 100);
+
+  // Generate many copies of two distinctive short strings, "!)(*&" and
+  // "@)(*&".  We'll check that these strings are reported in at least
+  // one of the memory reporters.
+  let shortStrings = [];
+  for (let i = 0; i < 10000; i++) {
+    let str = (Math.random() > 0.5 ? "!" : "@") + ")(*&";
+    shortStrings.push(str);
+  }
+
+  let mySandbox = Components.utils.Sandbox(document.nodePrincipal,
+                    { sandboxName: "this-is-a-sandbox-name" });
+
+  function handleReport(aProcess, aPath, aKind, aUnits, aAmount, aDescription)
+  {
+    // Record the values of some notable reporters.
+    if (aPath === "vsize") {
+      vsizeAmounts.push(aAmount);
+    } else if (aPath === "resident") {
+      residentAmounts.push(aAmount);
+    } else if (aPath === "js-main-runtime-gc-heap-committed/used/gc-things") {
+      jsGcHeapAmounts.push(aAmount); 
+    } else if (aPath === "heap-allocated") {
+      heapAllocatedAmounts.push(aAmount);
+    } else if (aPath === "storage-sqlite") {
+      storageSqliteAmounts.push(aAmount);
+
+    // Check the presence of some other notable reporters.
+    } else if (aPath.search(/^explicit\/js-non-window\/.*compartment\(/) >= 0) {
+      present.jsNonWindowCompartments = true;
+    } else if (aPath.search(/^explicit\/window-objects\/top\(.*\/js-compartment\(/) >= 0) {
+      present.windowObjectsJsCompartments = true;
+    } else if (aPath.search(/^explicit\/storage\/sqlite\/places.sqlite/) >= 0) {
+      present.places = true;
+    } else if (aPath.search(/^explicit\/images/) >= 0) {
+      present.images = true;
+    } else if (aPath.search(/^explicit\/xpti-working-set$/) >= 0) {
+      present.xptiWorkingSet = true;
+    } else if (aPath.search(/^explicit\/atom-tables$/) >= 0) {
+      present.atomTable = true;
+    } else if (/\[System Principal\].*this-is-a-sandbox-name/.test(aPath)) {
+      // A system compartment with a location (such as a sandbox) should
+      // show that location.
+      present.sandboxLocation = true;
+    } else if (aPath.contains(bigStringPrefix)) {
+      present.bigString = true;
+    } else if (aPath.contains("!)(*&")) {
+      present.smallString1 = true;
+    } else if (aPath.contains("@)(*&")) {
+      present.smallString2 = true;
+    }
+  }
+
+  let mgr = Cc["@mozilla.org/memory-reporter-manager;1"].
+            getService(Ci.nsIMemoryReporterManager);
+
+  // Access the distinguished amounts (mgr.explicit et al.) just to make sure
+  // they don't crash.  We can't check their actual values because they're
+  // non-deterministic.
+  //
+  // Nb: mgr.explicit will throw NS_ERROR_NOT_AVAILABLE if this is a
+  // --enable-trace-malloc build.  Allow for that exception, but *only* that
+  // exception.
+  let dummy;
+  let haveExplicit = true;
+  try {
+    dummy = mgr.explicit;
+  } catch (ex) {
+    is(ex.result, Cr.NS_ERROR_NOT_AVAILABLE, "mgr.explicit exception");
+    haveExplicit = false;
+  }
+  let amounts = [
+    "vsize",
+    "vsizeMaxContiguous",
+    "resident",
+    "residentFast",
+    "heapAllocated",
+    "heapOverheadRatio",
+    "JSMainRuntimeGCHeap",
+    "JSMainRuntimeTemporaryPeak",
+    "JSMainRuntimeCompartmentsSystem",
+    "JSMainRuntimeCompartmentsUser",
+    "imagesContentUsedUncompressed",
+    "storageSQLite",
+    "lowMemoryEventsVirtual",
+    "lowMemoryEventsPhysical",
+    "ghostWindows",
+    "pageFaultsHard",
+  ];
+  for (let i = 0; i < amounts.length; i++) {
+    try {
+      // If mgr[amounts[i]] throws an exception, just move on -- some amounts
+      // aren't available on all platforms.  But if the attribute simply
+      // isn't present, that indicates the distinguished amounts have changed
+      // and this file hasn't been updated appropriately.
+      dummy = mgr[amounts[i]];
+      ok(dummy !== undefined,
+         "accessed an unknown distinguished amount: " + amounts[i]);
+    } catch (ex) {
+    }
+  }
+
+  // Run sizeOfTab() to make sure it doesn't crash.  We can't check the result
+  // values because they're non-deterministic.
+  let jsObjectsSize = {};
+  let jsStringsSize = {};
+  let jsOtherSize = {};
+  let domSize = {};
+  let styleSize = {};
+  let otherSize = {};
+  let totalSize = {};
+  let jsMilliseconds = {};
+  let nonJSMilliseconds = {};
+  mgr.sizeOfTab(window, jsObjectsSize, jsStringsSize, jsOtherSize,
+                domSize, styleSize, otherSize, totalSize,
+                jsMilliseconds, nonJSMilliseconds);
+
+  mgr.getReportsForThisProcess(handleReport, null);
+
+  function checkSpecialReport(aName, aAmounts, aCanBeUnreasonable)
+  {
+    ok(aAmounts.length == 1, aName + " has " + aAmounts.length + " report");
+    let n = aAmounts[0];
+    // Check the size is reasonable -- i.e. not ridiculously large or small.
+    ok((100 * 1000 <= n && n <= 10 * 1000 * 1000 * 1000) || aCanBeUnreasonable,
+       aName + "'s size is reasonable");
+  }
+
+  // If mgr.explicit failed, we won't have "heap-allocated" either.
+  if (haveExplicit) {
+    checkSpecialReport("heap-allocated", heapAllocatedAmounts);
+  }
+  // vsize may be unreasonable if ASAN is enabled
+  checkSpecialReport("vsize",          vsizeAmounts, /*canBeUnreasonable*/true);
+  checkSpecialReport("resident",       residentAmounts);
+  checkSpecialReport("js-main-runtime-gc-heap-committed/used/gc-things", jsGcHeapAmounts);
+
+  ok(present.jsNonWindowCompartments,     "js-non-window compartments are present");
+  ok(present.windowObjectsJsCompartments, "window-objects/.../js compartments are present");
+  ok(present.places,                      "places is present");
+  ok(present.images,                      "images is present");
+  ok(present.xptiWorkingSet,              "xpti-working-set is present");
+  ok(present.atomTable,                   "atom-table is present");
+  ok(present.sandboxLocation,             "sandbox locations are present");
+  ok(present.bigString,                   "large string is present");
+  ok(present.smallString1,                "small string 1 is present");
+  ok(present.smallString2,                "small string 2 is present");
+
+
+  // Reporter registration tests
+
+  // collectReports() calls to the test reporter.
+  let called = 0;
+
+  // The test memory reporter, testing the various report units.
+  // Also acts as a report collector, verifying the reported values match the
+  // expected ones after passing through XPConnect / nsMemoryReporterManager
+  // and back.
+  function MemoryReporterAndCallback() {
+    this.seen = 0;
+  }
+  MemoryReporterAndCallback.prototype = {
+    // The test reports.
+    // Each test key corresponds to the path of the report.  |amount| is a
+    // function called when generating the report.  |expected| is a function
+    // to be tested when receiving a report during collection.  If |expected| is
+    // omitted the |amount| will be checked instead.
+    tests: {
+      "test-memory-reporter-bytes1": {
+        units: BYTES,
+        amount: () => 0
+      },
+      "test-memory-reporter-bytes2": {
+        units: BYTES,
+        amount: () => (1<<30) * 8 // awkward way to say 8G in JS
+      },
+      "test-memory-reporter-counter": {
+        units: COUNT,
+        amount: () => 2
+      },
+      "test-memory-reporter-ccounter": {
+        units: COUNT_CUMULATIVE,
+        amount: () => ++called,
+        expected: () => called
+      },
+      "test-memory-reporter-percentage": {
+        units: PERCENTAGE,
+        amount: () => 9999
+      }
+    },
+    // nsIMemoryReporter
+    collectReports: function(callback, data) {
+      for (let path of Object.keys(this.tests)) {
+        try {
+          let test = this.tests[path];
+          callback.callback(
+            "", // Process. Should be "" initially.
+            path,
+            OTHER,
+            test.units,
+            test.amount(),
+            "Test " + path + ".",
+            data);
+        }
+        catch (ex) {
+          ok(false, ex);
+        }
+      }
+    },
+    // nsIMemoryReporterCallback
+    callback: function(process, path, kind, units, amount, data) {
+      if (path in this.tests) {
+        this.seen++;
+        let test = this.tests[path];
+        ok(units === test.units, "Test reporter units match");
+        ok(amount === (test.expected || test.amount)(),
+           "Test reporter values match: " + amount);
+      }
+    },
+    // Checks that the callback has seen the expected number of reports, and
+    // resets the callback counter.
+    // @param expected  Optional.  Expected number of reports the callback
+    //                  should have processed.
+    finish: function(expected) {
+      if (expected === undefined) {
+        expected = Object.keys(this.tests).length;
+      }
+      is(expected, this.seen,
+         "Test reporter called the correct number of times: " + expected);
+      this.seen = 0;
+    }
+  };
+
+  // General memory reporter + registerStrongReporter tests.
+  function test_register_strong() {
+    let reporterAndCallback = new MemoryReporterAndCallback();
+    // Registration works.
+    mgr.registerStrongReporter(reporterAndCallback);
+
+    // Check the generated reports.
+    mgr.getReportsForThisProcess(reporterAndCallback, null);
+    reporterAndCallback.finish();
+
+    // Unregistration works.
+    mgr.unregisterStrongReporter(reporterAndCallback);
+
+    // The reporter was unregistered, hence there shouldn't be any reports from
+    // the test reporter.
+    mgr.getReportsForThisProcess(reporterAndCallback, null);
+    reporterAndCallback.finish(0);
+  }
+
+  test_register_strong();
+
+  // Check strong reporters a second time, to make sure a reporter can be
+  // re-registered.
+  test_register_strong();
+
+
+  // Check that you cannot register JS components as weak reporters.
+  function test_register_weak() {
+    let reporterAndCallback = new MemoryReporterAndCallback();
+    try {
+      // Should fail! nsMemoryReporterManager will only hold a raw pointer to
+      // "weak" reporters.  When registering a weak reporter, XPConnect will
+      // create a WrappedJS for JS components.  This WrappedJS would be
+      // successfully registered with the manager, only to be destroyed
+      // immediately after, which would eventually lead to a crash when
+      // collecting the reports.  Therefore nsMemoryReporterManager should
+      // reject WrappedJS reporters, which is what is tested here.
+      // See bug 950391 comment #0.
+      mgr.registerWeakReporter(reporterAndCallback);
+      ok(false, "Shouldn't be allowed to register a JS component (WrappedJS)");
+    }
+    catch (ex) {
+      ok(ex.message.indexOf("NS_ERROR_") >= 0,
+         "WrappedJS reporter got rejected: " + ex);
+    }
+  }
+
+  test_register_weak();
+
+  ]]>
+  </script>
+</window>
+

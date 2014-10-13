@@ -1,0 +1,11 @@
+recursive-include bin *
+recursive-include docs *
+recursive-include scripts *
+recursive-include virtualenv_support *.whl
+recursive-include virtualenv_embedded *
+recursive-exclude docs/_templates *
+recursive-exclude docs/_build *
+include virtualenv_support/__init__.py
+include *.py
+include AUTHORS.txt
+include LICENSE.txt

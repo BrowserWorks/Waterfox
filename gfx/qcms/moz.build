@@ -1,0 +1,65 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+EXPORTS += [
+    'qcms.h',
+    'qcmstypes.h',
+]
+
+SOURCES += [
+    'chain.c',
+    'iccread.c',
+    'matrix.c',
+    'transform.c',
+    'transform_util.c',
+]
+
+MSVC_ENABLE_PGO = True
+
+FINAL_LIBRARY = 'gkmedias'
+
+if CONFIG['GNU_CC']:
+    CFLAGS += ['-Wno-missing-field-initializers']
+
+use_sse1 = False
+use_sse2 = False
+use_altivec = False
+if '86' in CONFIG['OS_TEST']:
+    use_sse2 = True
+    if CONFIG['_MSC_VER']:
+        if CONFIG['OS_ARCH'] != 'WINNT' or CONFIG['OS_TEST'] != 'x86_64':
+            use_sse1 = True
+    else:
+        use_sse1 = True
+elif 'ppc' in CONFIG['CPU_ARCH']:
+    if CONFIG['GNU_CC']:
+        use_altivec = True
+
+if use_sse1:
+    SOURCES += ['transform-sse1.c']
+    SOURCES['transform-sse1.c'].flags += CONFIG['SSE_FLAGS']
+    if CONFIG['SOLARIS_SUNPRO_CC']:
+        if '64' in CONFIG['OS_TEST']:
+            # Sun Studio doesn't work correctly for x86 intristics
+            # with -m64 and without optimization.
+            SOURCES['transform-sse1.c'].flags += ['-xO4']
+        else:
+            SOURCES['transform-sse1.c'].flags += ['-xarch=sse']
+
+if use_sse2:
+    SOURCES += ['transform-sse2.c']
+    SOURCES['transform-sse2.c'].flags += CONFIG['SSE2_FLAGS']
+    if CONFIG['SOLARIS_SUNPRO_CC']:
+        if '64' in CONFIG['OS_TEST']:
+            # Sun Studio doesn't work correctly for x86 intristics
+            # with -m64 and without optimization.
+            SOURCES['transform-sse2.c'].flags += ['-xO4']
+        else:
+            SOURCES['transform-sse2.c'].flags += ['-xarch=sse2']
+
+if use_altivec:
+    SOURCES += ['transform-altivec.c']
+    SOURCES['transform-altivec.c'].flags += ['-maltivec']

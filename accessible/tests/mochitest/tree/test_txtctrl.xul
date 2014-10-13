@@ -1,0 +1,205 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin" type="text/css"?>
+<?xml-stylesheet href="chrome://mochikit/content/tests/SimpleTest/test.css"
+                 type="text/css"?>
+
+<window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        title="Accessible XUL textbox and textarea hierarchy tests">
+
+  <script type="application/javascript"
+          src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js" />
+
+  <script type="application/javascript"
+          src="../common.js" />
+  <script type="application/javascript"
+          src="../role.js" />
+  <script type="application/javascript"
+          src="../events.js" />
+
+  <script type="application/javascript">
+  <![CDATA[
+    ////////////////////////////////////////////////////////////////////////////
+    // Test
+
+    function doTest()
+    {
+      //////////////////////////////////////////////////////////////////////////
+      // textboxes
+
+      var accTree =
+        { SECTION: [
+          { ENTRY: [ { TEXT_LEAF: [] } ] },
+          { MENUPOPUP: [] }
+        ] };
+
+      // default textbox
+      testAccessibleTree("txc", accTree);
+
+      // multiline
+      testAccessibleTree("txc_multiline", accTree);
+
+      //////////////////////////////////////////////////////////////////////////
+      // search textbox
+
+      if (MAC) {
+        accTree =
+          { SECTION: [
+            { ENTRY: [ { TEXT_LEAF: [] } ] },
+            { MENUPOPUP: [] }
+          ] };
+      } else {
+        accTree =
+          { SECTION: [
+            { ENTRY: [ { TEXT_LEAF: [] } ] },
+            { PUSHBUTTON: [] },
+            { MENUPOPUP: [] }
+          ] };
+      }
+
+      testAccessibleTree("txc_search", accTree);
+
+      //////////////////////////////////////////////////////////////////////////
+      // number textbox
+
+      accTree =
+        { SECTION: [
+          { ENTRY: [ { TEXT_LEAF: [] } ] },
+          { MENUPOPUP: [] },
+          { PUSHBUTTON: [] },
+          { PUSHBUTTON: [] }
+        ] };
+
+      testAccessibleTree("txc_number", accTree);
+
+      //////////////////////////////////////////////////////////////////////////
+      // password textbox
+
+      accTree =
+        { SECTION: [
+          { PASSWORD_TEXT: [ { TEXT_LEAF: [] } ] },
+          { MENUPOPUP: [] }
+        ] };
+
+      testAccessibleTree("txc_password", accTree);
+
+      //////////////////////////////////////////////////////////////////////////
+      // autocomplete textbox
+
+      accTree = {
+        // textbox
+        role: ROLE_AUTOCOMPLETE,
+        children: [
+          {
+            // html:input
+            role: ROLE_ENTRY,
+            children: [
+              {
+                // #text
+                role: ROLE_TEXT_LEAF,
+                children: []
+              }
+            ]
+          },
+          {
+            // xul:menupopup
+            role: ROLE_COMBOBOX_LIST,
+            children: []
+          }
+        ]
+      };
+
+      function test_AutocompleteControl() {
+        testAccessibleTree("txc_autocomplete", accTree);
+        SimpleTest.finish();
+      }
+
+      // XPFE and Toolkit autocomplete widgets differ.
+      var txc = document.getElementById("txc_autocomplete");
+      if ("clearResults" in txc) {
+        SimpleTest.ok(true, "Testing (Old) XPFE autocomplete widget.");
+
+        // Popup is always created. (See code below.)
+
+        accTree.children.push(
+          {
+            // xul:panel
+            role: ROLE_COMBOBOX_LIST,
+            children: [
+              {
+                // xul:tree
+                role: ROLE_TABLE,
+                children: [
+                  {
+                    // xul:treecols
+                    role: ROLE_LIST,
+                    children: [
+                      {
+                        // xul:treecol
+                        role: ROLE_COLUMNHEADER,
+                        children: []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        );
+        test_AutocompleteControl();
+
+      } else {
+        SimpleTest.ok(true, "Testing (New) Toolkit autocomplete widget.");
+
+        // Dumb access to trigger popup lazy creation.
+        waitForEvent(EVENT_REORDER, txc, test_AutocompleteControl);
+        txc.popup;
+
+        accTree.children.push(
+          {
+            role: ROLE_LIST,
+            children: [
+              {
+                role: ROLE_LIST,
+                children: [
+                  {
+                    role: ROLE_COLUMNHEADER,
+                    children: []
+                  }
+                ]
+              }
+            ]
+          }
+        );
+      }
+    }
+
+    SimpleTest.waitForExplicitFinish();
+    addA11yLoadEvent(doTest);
+  ]]>
+  </script>
+
+  <hbox flex="1" style="overflow: auto;">
+    <body xmlns="http://www.w3.org/1999/xhtml">
+      <a target="_blank"
+         href="https://bugzilla.mozilla.org/show_bug.cgi?id=542824"
+         title="Create child accessibles for text controls from native anonymous content">
+        Mozilla Bug 542824
+      </a><br/>
+      <p id="display"></p>
+      <div id="content" style="display: none">
+      </div>
+      <pre id="test">
+      </pre>
+    </body>
+
+    <vbox flex="1">
+      <textbox id="txc" value="hello"/>
+      <textbox id="txc_search" type="search" value="hello"/>
+      <textbox id="txc_number" type="number" value="44"/>
+      <textbox id="txc_password" type="password" value="hello"/>
+      <textbox id="txc_multiline" multiline="true" value="hello"/>
+      <textbox id="txc_autocomplete" type="autocomplete" value="hello"/>
+    </vbox>
+  </hbox>
+
+</window>

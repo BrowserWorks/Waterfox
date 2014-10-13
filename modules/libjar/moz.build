@@ -1,0 +1,48 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+if CONFIG['MOZ_ZIPWRITER']:
+    DIRS += ['zipwriter']
+
+TEST_TOOL_DIRS += ['test']
+
+XPIDL_SOURCES += [
+    'nsIJARChannel.idl',
+    'nsIJARProtocolHandler.idl',
+    'nsIJARURI.idl',
+    'nsIZipReader.idl',
+]
+
+XPIDL_MODULE = 'jar'
+LIBRARY_NAME	= 'jar'
+
+EXPORTS += [
+    'nsJARURI.h',
+    'nsZipArchive.h',
+    'zipstruct.h',
+]
+
+UNIFIED_SOURCES += [
+    'nsJARProtocolHandler.cpp',
+    'nsJARURI.cpp',
+]
+
+# These files cannot be built in unified mode because they rely on plarena.h.
+SOURCES += [
+    'nsJAR.cpp',
+    'nsJARChannel.cpp',
+    'nsJARFactory.cpp',
+    'nsJARInputStream.cpp',
+    'nsZipArchive.cpp',
+]
+
+FAIL_ON_WARNINGS = True
+
+MSVC_ENABLE_PGO = True
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+FINAL_LIBRARY = 'xul'

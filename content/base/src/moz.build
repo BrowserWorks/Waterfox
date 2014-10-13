@@ -1,0 +1,245 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+EXPORTS += [
+    'mozAutoDocUpdate.h',
+    'nsAtomListUtils.h',
+    'nsAttrAndChildArray.h',
+    'nsAttrName.h',
+    'nsAttrValue.h',
+    'nsAttrValueInlines.h',
+    'nsContentList.h',
+    'nsContentListDeclarations.h',
+    'nsContentSink.h',
+    'nsCrossSiteListenerProxy.h',
+    'nsDOMAttributeMap.h',
+    'nsElementFrameLoaderOwner.h',
+    'nsFrameMessageManager.h',
+    'nsGenericDOMDataNode.h',
+    'nsGkAtomList.h',
+    'nsGkAtoms.h',
+    'nsImageLoadingContent.h',
+    'nsMappedAttributeElement.h',
+    'nsNodeInfoManager.h',
+    'nsNodeUtils.h',
+    'nsPropertyTable.h',
+    'nsRange.h',
+    'nsSandboxFlags.h',
+    'nsScriptLoader.h',
+    'nsStubDocumentObserver.h',
+    'nsStubMutationObserver.h',
+    'nsStyledElement.h',
+    'nsTextFragment.h',
+    'nsTraversal.h',
+]
+
+if CONFIG['MOZ_WEBRTC']:
+    EXPORTS += [
+        'nsDOMDataChannel.h',
+        'nsDOMDataChannelDeclarations.h',
+    ]
+    SOURCES += [
+        'nsDOMDataChannel.cpp',
+    ]
+    LOCAL_INCLUDES += [
+        '/netwerk/sctp/datachannel',
+    ]
+
+# Are we targeting x86-32 or x86-64?  If so, we want to include SSE2 code for
+# nsTextFragment.cpp
+if CONFIG['INTEL_ARCHITECTURE']:
+    SOURCES += ['nsTextFragmentSSE2.cpp']
+    SOURCES['nsTextFragmentSSE2.cpp'].flags += CONFIG['SSE2_FLAGS']
+
+EXPORTS.mozilla += [
+    'FeedWriterEnabled.h',
+]
+
+EXPORTS.mozilla.dom += [
+    'Attr.h',
+    'Comment.h',
+    'DocumentFragment.h',
+    'DocumentType.h',
+    'DOMImplementation.h',
+    'DOMParser.h',
+    'DOMPoint.h',
+    'DOMQuad.h',
+    'DOMRect.h',
+    'DOMStringList.h',
+    'EventSource.h',
+    'ImportManager.h',
+    'Link.h',
+    'NodeIterator.h',
+    'ResponsiveImageSelector.h',
+    'ShadowRoot.h',
+    'StyleSheetList.h',
+    'Text.h',
+    'TreeWalker.h',
+]
+
+UNIFIED_SOURCES += [
+    'Attr.cpp',
+    'ChildIterator.cpp',
+    'Comment.cpp',
+    'DirectionalityUtils.cpp',
+    'DocumentFragment.cpp',
+    'DocumentType.cpp',
+    'DOMImplementation.cpp',
+    'DOMParser.cpp',
+    'DOMPoint.cpp',
+    'DOMQuad.cpp',
+    'DOMRect.cpp',
+    'DOMStringList.cpp',
+    'Element.cpp',
+    'EventSource.cpp',
+    'FileIOObject.cpp',
+    'FragmentOrElement.cpp',
+    'ImportManager.cpp',
+    'Link.cpp',
+    'NodeIterator.cpp',
+    'nsAtomListUtils.cpp',
+    'nsAttrAndChildArray.cpp',
+    'nsAttrValue.cpp',
+    'nsAttrValueOrString.cpp',
+    'nsCCUncollectableMarker.cpp',
+    'nsChannelPolicy.cpp',
+    'nsContentAreaDragDrop.cpp',
+    'nsContentIterator.cpp',
+    'nsContentList.cpp',
+    'nsContentPolicy.cpp',
+    'nsContentSink.cpp',
+    'nsCopySupport.cpp',
+    'nsCrossSiteListenerProxy.cpp',
+    'nsCSPContext.cpp',
+    'nsCSPParser.cpp',
+    'nsCSPService.cpp',
+    'nsCSPUtils.cpp',
+    'nsDataDocumentContentPolicy.cpp',
+    'nsDocumentEncoder.cpp',
+    'nsDOMAttributeMap.cpp',
+    'nsDOMBlobBuilder.cpp',
+    'nsDOMCaretPosition.cpp',
+    'nsDOMFile.cpp',
+    'nsDOMFileReader.cpp',
+    'nsDOMMutationObserver.cpp',
+    'nsDOMSerializer.cpp',
+    'nsDOMSettableTokenList.cpp',
+    'nsDOMTokenList.cpp',
+    'nsElementFrameLoaderOwner.cpp',
+    'nsFormData.cpp',
+    'nsFrameLoader.cpp',
+    'nsFrameMessageManager.cpp',
+    'nsGenConImageContent.cpp',
+    'nsGenericDOMDataNode.cpp',
+    'nsGkAtoms.cpp',
+    'nsHostObjectProtocolHandler.cpp',
+    'nsHostObjectURI.cpp',
+    'nsHTMLContentSerializer.cpp',
+    'nsINode.cpp',
+    'nsInProcessTabChildGlobal.cpp',
+    'nsLineBreaker.cpp',
+    'nsMappedAttributeElement.cpp',
+    'nsMappedAttributes.cpp',
+    'nsMixedContentBlocker.cpp',
+    'nsNameSpaceManager.cpp',
+    'nsNoDataProtocolContentPolicy.cpp',
+    'nsNodeInfo.cpp',
+    'nsNodeUtils.cpp',
+    'nsPlainTextSerializer.cpp',
+    'nsPropertyTable.cpp',
+    'nsRange.cpp',
+    'nsReferencedElement.cpp',
+    'nsScriptElement.cpp',
+    'nsScriptLoader.cpp',
+    'nsStubDocumentObserver.cpp',
+    'nsStubMutationObserver.cpp',
+    'nsStyledElement.cpp',
+    'nsStyleLinkElement.cpp',
+    'nsSyncLoadService.cpp',
+    'nsTextFragment.cpp',
+    'nsTextNode.cpp',
+    'nsTraversal.cpp',
+    'nsTreeSanitizer.cpp',
+    'nsViewportInfo.cpp',
+    'nsXHTMLContentSerializer.cpp',
+    'nsXMLContentSerializer.cpp',
+    'nsXMLHttpRequest.cpp',
+    'nsXMLNameSpaceMap.cpp',
+    'ResponsiveImageSelector.cpp',
+    'ShadowRoot.cpp',
+    'StyleSheetList.cpp',
+    'Text.cpp',
+    'ThirdPartyUtil.cpp',
+    'TreeWalker.cpp',
+    'WebSocket.cpp',
+]
+
+SOURCES += [
+    'nsImageLoadingContent.cpp',
+]
+
+# These files cannot be built in unified mode because they use FORCE_PR_LOG
+SOURCES += [
+    'nsDocument.cpp',
+    'nsNodeInfoManager.cpp',
+]
+
+# These files cannot be built in unified mode because of OS X headers.
+SOURCES += [
+    'nsContentUtils.cpp',
+    'nsObjectLoadingContent.cpp',
+]
+
+EXTRA_COMPONENTS += [
+    'contentAreaDropListener.js',
+    'contentAreaDropListener.manifest',
+    'contentSecurityPolicy.manifest',
+    'messageWakeupService.js',
+    'messageWakeupService.manifest',
+]
+
+EXTRA_PP_COMPONENTS += [
+    'contentSecurityPolicy.js',
+]
+
+EXTRA_JS_MODULES += [
+    'CSPUtils.jsm',
+]
+
+FAIL_ON_WARNINGS = True
+
+MSVC_ENABLE_PGO = True
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+FINAL_LIBRARY = 'gklayout'
+LOCAL_INCLUDES += [
+    '/caps/include',
+    '/content/html/content/src',
+    '/content/html/document/src',
+    '/content/svg/content/src',
+    '/content/xml/content/src',
+    '/content/xml/document/src',
+    '/content/xul/content/src',
+    '/content/xul/document/src',
+    '/docshell/base',
+    '/dom/base',
+    '/dom/ipc',
+    '/dom/workers',
+    '/dom/xbl',
+    '/dom/xslt/xpath',
+    '/image/src',
+    '/js/ipc',
+    '/js/xpconnect/src',
+    '/js/xpconnect/wrappers',
+    '/layout/base',
+    '/layout/generic',
+    '/layout/style',
+    '/layout/svg',
+    '/layout/xul',
+    '/netwerk/base/src',
+    '/xpcom/ds',
+]

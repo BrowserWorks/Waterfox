@@ -1,0 +1,77 @@
+/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIStringEnumerator;
+
+[scriptable, uuid(7EF52EAF-B7E1-462B-87E2-5D1DBACA9048)]
+
+/**
+ * This interface represents a Personal Dictionary.
+ */
+
+interface mozIPersonalDictionary : nsISupports {
+
+  /**
+   * Load the dictionary
+   */
+  void load();
+
+  /**
+   * Save the dictionary
+   */
+  void save();
+
+  /**
+   * Get the (lexicographically sorted) list of words
+   */
+  readonly attribute nsIStringEnumerator wordList;
+
+  /**
+   * Check a unicode string
+   */
+  boolean check(in wstring word, in wstring lang);
+
+  /**
+   * Add a word to the personal dictionary
+   */
+  void addWord(in wstring word, in wstring lang);
+
+  /**
+   * Remove a word from the personal dictionary
+   */
+  void removeWord(in wstring word, in wstring lang);
+
+  /**
+   * Add a word to the ignore all list
+   */
+  void ignoreWord(in wstring word);
+
+  /**
+   * Clear the ignore list
+   */
+  void endSession();
+
+  /** 
+   * These three functions are here in case we want to store previous 
+   * misspellings and return them at the head of the misspell list.
+   */
+ 
+  /**
+   * Add a misspelling to the list of corrections
+   */
+  void addCorrection(in wstring word,in wstring correction, in wstring lang);
+
+  /**
+   * Remove a misspelling from the list of corrections
+   */
+  void removeCorrection(in wstring word,in wstring correction, in wstring lang);
+
+  /**
+   * Get a list of previous corrections for the word
+   */
+  void getCorrection(in wstring word, [array, size_is(count)] out wstring words, out uint32_t count);
+};

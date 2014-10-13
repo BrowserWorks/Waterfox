@@ -1,0 +1,33 @@
+# 
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# NOTE: This directory is part of tier 50, and is linked directly into
+# the application binaries. The fact that it's under mozilla/widget is a fluke
+# of tree history.
+
+LIBCPPSRCS = XRemoteClient.cpp
+
+OBJS = $(LIBCPPSRCS:.cpp=.$(OBJ_SUFFIX))
+
+EXTRA_DSO_LDOPTS = \
+		$(XLIBS) $(XLDFLAGS)  \
+		$(MOZ_COMPONENT_LIBS) \
+		$(NULL)
+
+PROGCPPSRCS = \
+  mozilla-xremote-client.cpp \
+  XRemoteClient.cpp \
+  $(NULL)
+
+PROGOBJS = $(PROGCPPSRCS:.cpp=.$(OBJ_SUFFIX))
+
+CPPSRCS += \
+  $(filter-out $(LIBCPPSRCS),$(PROGCPPSRCS)) \
+  $(LIBCPPSRCS) \
+  $(NULL)
+
+LIBS            = \
+		$(NSPR_LIBS) \
+		$(XLDFLAGS) $(XLIBS)

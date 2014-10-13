@@ -1,0 +1,30 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsICancelable;
+interface nsIDNSRecord;
+
+/**
+ * nsIDNSListener
+ */
+[scriptable, uuid(41466a9f-f027-487d-a96c-af39e629b8d2)]
+interface nsIDNSListener : nsISupports
+{
+    /**
+     * called when an asynchronous host lookup completes.
+     *
+     * @param aRequest
+     *        the value returned from asyncResolve.
+     * @param aRecord
+     *        the DNS record corresponding to the hostname that was resolved.
+     *        this parameter is null if there was an error.
+     * @param aStatus
+     *        if the lookup failed, this parameter gives the reason.
+     */
+    void onLookupComplete(in nsICancelable aRequest,
+                          in nsIDNSRecord  aRecord,
+                          in nsresult      aStatus);
+};

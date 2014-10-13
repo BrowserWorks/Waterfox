@@ -1,0 +1,151 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* Reload and waiting notices */
+
+.notice-container {
+  margin-top: -50vh;
+}
+
+.theme-dark .notice-container {
+  background-color: #343c45; /* Toolbars */
+  color: #f5f7fa; /* Light foreground text */
+}
+
+.theme-light .notice-container {
+  background-color: #f0f1f2; /* Toolbars */
+  color: #585959; /* Grey foreground text */
+}
+
+#reload-notice {
+  font-size: 120%;
+}
+
+#waiting-notice {
+  font-size: 110%;
+}
+
+#waiting-notice::before {
+  display: inline-block;
+  content: "";
+  background: url("chrome://global/skin/icons/loading_16.png") center no-repeat;
+  width: 16px;
+  height: 16px;
+  -moz-margin-end: 6px;
+}
+
+#requests-menu-reload-notice-button {
+  min-height: 2em;
+}
+
+/* Shaders pane */
+
+#shaders-pane {
+  min-width: 150px;
+}
+
+#shaders-pane + .devtools-side-splitter {
+  border-color: transparent;
+}
+
+.program-item {
+  padding: 2px 0px;
+}
+
+.side-menu-widget-item-checkbox {
+  -moz-appearance: none;
+  opacity: 0;
+  transition: opacity .15s ease-out 0s;
+}
+
+/* Only show the checkbox when the source is hovered over, is selected, or if it
+ * is not checked. */
+.side-menu-widget-item:hover > .side-menu-widget-item-checkbox,
+.side-menu-widget-item.selected > .side-menu-widget-item-checkbox,
+.side-menu-widget-item-checkbox:not([checked]) {
+  opacity: 1;
+  transition: opacity .15s ease-out 0s;
+}
+
+.side-menu-widget-item-checkbox .checkbox-check {
+  -moz-appearance: none;
+  background-image: url(itemToggle.png);
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-clip: content-box;
+  background-size: 32px 16px;
+  background-position: -16px 0;
+  width: 16px;
+  height: 16px;
+  border: 0;
+}
+
+@media (min-resolution: 2dppx) {
+  .side-menu-widget-item-checkbox .checkbox-check {
+    background-image: url(itemToggle@2x.png);
+  }
+}
+
+.side-menu-widget-item-checkbox[checked] .checkbox-check {
+  background-position: 0 0;
+}
+
+/* Invert all toggle icons but the one in the active row for light theme */
+.theme-light .side-menu-widget-item:not(.selected) .checkbox-check {
+  filter: url(filters.svg#invert);
+}
+
+/* Shader source editors */
+
+.editor-label {
+  padding: 1px 12px;
+  border-top: 1px solid;
+}
+
+.theme-dark .editor-label {
+  background: #343c45; /* Dark toolbars */
+  border-color: #000; /* Match the splitter color. */
+  color: #f5f7fa; /* Light foreground text */
+}
+
+.theme-light .editor-label {
+  background: #f0f1f2; /* Light toolbars */
+  border-color: #aaa; /* Match the splitter color. */
+  color: #585959; /* Grey foreground text */
+}
+
+.theme-dark .editor-label[selected] {
+  background-color: #1d4f73; /* Select Highlight Blue */
+  color: #f5f7fa; /* Light foreground text */
+}
+
+.theme-light .editor-label[selected] {
+  background-color: #4c9ed9; /* Select Highlight Blue */
+  color: #f5f7fa; /* Light foreground text */
+}
+
+/* Responsive sidebar */
+
+@media (max-width: 700px) {
+  #shaders-pane {
+    max-height: 60vh;
+  }
+
+  #editors-splitter {
+    border-color: transparent;
+  }
+
+  .side-menu-widget-container {
+    box-shadow: none !important;
+  }
+
+  .side-menu-widget-item-arrow {
+    background-image: none !important;
+  }
+
+  .editor-label {
+    -moz-box-ordinal-group: 0;
+    border-bottom: 1px solid;
+  }
+}

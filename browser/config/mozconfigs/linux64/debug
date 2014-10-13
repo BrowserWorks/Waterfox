@@ -1,0 +1,19 @@
+ac_add_options --enable-debug
+ac_add_options --enable-dmd
+ac_add_options --enable-signmar
+
+. $topsrcdir/build/unix/mozconfig.linux
+
+# Needed to enable breakpad in application.ini
+export MOZILLA_OFFICIAL=1
+
+# Use ccache
+. "$topsrcdir/build/mozconfig.cache"
+
+# Treat warnings as errors in directories with FAIL_ON_WARNINGS.
+ac_add_options --enable-warnings-as-errors
+
+# Package js shell.
+export MOZ_PACKAGE_JSSHELL=1
+
+. "$topsrcdir/build/mozconfig.common.override"

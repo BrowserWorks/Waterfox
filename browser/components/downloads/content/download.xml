@@ -1,0 +1,121 @@
+<?xml version="1.0"?>
+<!-- -*- Mode: HTML; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- -->
+<!-- vim: set ts=2 et sw=2 tw=80: -->
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE bindings SYSTEM "chrome://browser/locale/downloads/downloads.dtd">
+
+<bindings id="downloadBindings"
+          xmlns="http://www.mozilla.org/xbl"
+          xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+          xmlns:xbl="http://www.mozilla.org/xbl">
+
+  <binding id="download"
+           extends="chrome://global/content/bindings/richlistbox.xml#richlistitem">
+    <content orient="horizontal"
+             align="center"
+             onclick="DownloadsView.onDownloadClick(event);">
+      <xul:image class="downloadTypeIcon"
+                 validate="always"
+                 xbl:inherits="src=image"/>
+      <xul:image class="downloadTypeIcon blockedIcon"/>
+      <xul:vbox pack="center"
+                flex="1"
+                class="downloadContainer"
+                style="width: &downloadDetails.width;">
+        <!-- We're letting localizers put a min-width in here primarily
+             because of the downloads summary at the bottom of the list of
+             download items. An element in the summary has the same min-width
+             on a description, and we don't want the panel to change size if the
+             summary isn't being displayed, so we ensure that items share the
+             same minimum width.
+             -->
+        <xul:description class="downloadTarget"
+                         crop="center"
+                         style="min-width: &downloadsSummary.minWidth2;"
+                         xbl:inherits="value=target,tooltiptext=target"/>
+        <xul:progressmeter anonid="progressmeter"
+                           class="downloadProgress"
+                           min="0"
+                           max="100"
+                           xbl:inherits="mode=progressmode,value=progress"/>
+        <xul:description class="downloadDetails"
+                         crop="end"
+                         xbl:inherits="value=status,tooltiptext=statusTip"/>
+      </xul:vbox>
+      <xul:stack>
+        <xul:button class="downloadButton downloadCancel"
+                    tooltiptext="&cmd.cancel.label;"
+                    oncommand="DownloadsView.onDownloadCommand(event, 'downloadsCmd_cancel');"/>
+        <xul:button class="downloadButton downloadRetry"
+                    tooltiptext="&cmd.retry.label;"
+                    oncommand="DownloadsView.onDownloadCommand(event, 'downloadsCmd_retry');"/>
+        <xul:button class="downloadButton downloadShow"
+#ifdef XP_MACOSX
+                    tooltiptext="&cmd.showMac.label;"
+#else
+                    tooltiptext="&cmd.show.label;"
+#endif
+                    oncommand="DownloadsView.onDownloadCommand(event, 'downloadsCmd_show');"/>
+      </xul:stack>
+    </content>
+  </binding>
+
+  <binding id="download-full-ui"
+           extends="chrome://global/content/bindings/richlistbox.xml#richlistitem">
+    <resources>
+      <stylesheet src="chrome://browser/content/downloads/download.css"/>
+    </resources>
+
+    <content orient="horizontal" align="center">
+      <xul:image class="downloadTypeIcon"
+                 validate="always"
+                 xbl:inherits="src=image"/>
+      <xul:image class="downloadTypeIcon blockedIcon"/>
+      <xul:vbox pack="center" flex="1">
+        <xul:description class="downloadTarget"
+                         crop="center"
+                         xbl:inherits="value=displayName,tooltiptext=displayName"/>
+        <xul:progressmeter anonid="progressmeter"
+                           class="downloadProgress"
+                           min="0"
+                           max="100"
+                           xbl:inherits="mode=progressmode,value=progress"/>
+        <xul:description class="downloadDetails"
+                         style="width: &downloadDetails.width;"
+                         crop="end"
+                         xbl:inherits="value=status,tooltiptext=statusTip"/>
+      </xul:vbox>
+
+      <xul:button class="downloadButton downloadCancel"
+                  tooltiptext="&cmd.cancel.label;"
+                  oncommand="goDoCommand('downloadsCmd_cancel')"/>
+      <xul:button class="downloadButton downloadRetry"
+                  tooltiptext="&cmd.retry.label;"
+                  oncommand="goDoCommand('downloadsCmd_retry')"/>
+      <xul:button class="downloadButton downloadShow"
+#ifdef XP_MACOSX
+                  tooltiptext="&cmd.showMac.label;"
+#else
+                  tooltiptext="&cmd.show.label;"
+#endif
+                  oncommand="goDoCommand('downloadsCmd_show')"/>
+
+    </content>
+  </binding>
+
+  <binding id="download-toolbarbutton"
+           extends="chrome://global/content/bindings/toolbarbutton.xml#toolbarbutton">
+    <content>
+      <children />
+      <xul:image class="toolbarbutton-icon" xbl:inherits="validate,src=image,label"/>
+      <xul:label class="toolbarbutton-text" crop="right" flex="1"
+                 xbl:inherits="value=label,accesskey,crop,wrap"/>
+      <xul:label class="toolbarbutton-multiline-text" flex="1"
+                 xbl:inherits="xbl:text=label,accesskey,wrap"/>
+    </content>
+  </binding>
+</bindings>

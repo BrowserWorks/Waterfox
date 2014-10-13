@@ -1,0 +1,14 @@
+/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+#include "nsISupports.idl"
+
+[scriptable, uuid(CA89B55B-6FAF-4051-9645-1C03EF5108F8)]
+interface nsIPrintProgressParams: nsISupports {
+
+  /* message subject */
+  attribute wstring docTitle;
+  attribute wstring docURL;
+  
+};

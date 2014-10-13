@@ -1,0 +1,25 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+FAIL_ON_WARNINGS = True
+
+MOCHITEST_MANIFESTS += ['mochitest/mochitest.ini']
+XPCSHELL_TESTS_MANIFESTS += ['unit/xpcshell.ini']
+
+#FIXME/bug 575918: out-of-process xpcshell is broken on OS X
+if CONFIG['OS_ARCH'] != 'Darwin':
+    # The encoding test is already implemented in the Downloads API by a set of
+    # test cases with the string "content_encoding" in their names.
+    if not CONFIG['MOZ_JSDOWNLOADS']:
+        XPCSHELL_TESTS_MANIFESTS += ['unit_ipc/xpcshell.ini']
+
+SIMPLE_PROGRAMS = [
+    'WriteArgument',
+]
+
+SOURCES += [
+    '%s.cpp' % s for s in SIMPLE_PROGRAMS
+]

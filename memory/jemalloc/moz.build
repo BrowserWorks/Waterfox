@@ -1,0 +1,56 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+SOURCES += [
+    'src/src/arena.c',
+    'src/src/atomic.c',
+    'src/src/base.c',
+    'src/src/bitmap.c',
+    'src/src/chunk.c',
+    'src/src/chunk_dss.c',
+    'src/src/chunk_mmap.c',
+    'src/src/ckh.c',
+    'src/src/ctl.c',
+    'src/src/extent.c',
+    'src/src/hash.c',
+    'src/src/huge.c',
+    'src/src/jemalloc.c',
+    'src/src/mb.c',
+    'src/src/mutex.c',
+    'src/src/prof.c',
+    'src/src/quarantine.c',
+    'src/src/rtree.c',
+    'src/src/stats.c',
+    'src/src/tcache.c',
+    'src/src/tsd.c',
+    'src/src/util.c',
+]
+
+# Only OSX needs the zone allocation implementation,
+# but only if replace-malloc is not enabled.
+if CONFIG['OS_TARGET'] == 'Darwin' and not CONFIG['MOZ_REPLACE_MALLOC']:
+    SOURCES += [
+        'src/src/zone.c',
+    ]
+
+LIBRARY_NAME = 'jemalloc'
+
+FORCE_STATIC_LIB = True
+
+if CONFIG['_MSC_VER']:
+    DEFINES['DLLEXPORT'] = True
+    LOCAL_INCLUDES += ['src/include/msvc_compat']
+    if not CONFIG['HAVE_INTTYPES_H']:
+        LOCAL_INCLUDES += ['src/include/msvc_compat/C99']
+
+if CONFIG['OS_TARGET'] == 'Linux':
+    # For mremap
+    DEFINES['_GNU_SOURCE'] = True
+
+DEFINES['abort'] = 'moz_abort'
+
+GENERATED_INCLUDES += ['src/include']
+LOCAL_INCLUDES += ['src/include']

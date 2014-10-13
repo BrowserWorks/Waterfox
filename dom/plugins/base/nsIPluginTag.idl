@@ -1,0 +1,42 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+[scriptable, uuid(0e56f04d-cda4-4a55-ab83-e5e29ddd370e)]
+interface nsIPluginTag : nsISupports
+{
+  // enabledState is stored as one of the following as an integer in prefs,
+  // so if new states are added, they must not renumber the existing states.
+  const unsigned long STATE_DISABLED = 0;
+  const unsigned long STATE_CLICKTOPLAY = 1;
+  const unsigned long STATE_ENABLED = 2;
+
+  readonly attribute AUTF8String description;
+  readonly attribute AUTF8String filename;
+  readonly attribute AUTF8String fullpath;
+  readonly attribute AUTF8String version;
+  readonly attribute AUTF8String name;
+
+  /**
+   * true only if this plugin is "hardblocked" and cannot be enabled.
+   */
+  readonly attribute boolean blocklisted;
+
+  readonly attribute boolean disabled;
+  readonly attribute boolean clicktoplay;
+           attribute unsigned long enabledState;
+
+  readonly attribute PRTime lastModifiedTime;
+
+  void getMimeTypes([optional] out unsigned long aCount,
+                    [retval, array, size_is(aCount)] out wstring aResults);
+  void getMimeDescriptions([optional] out unsigned long aCount,
+                           [retval, array, size_is(aCount)]
+                           out wstring aResults);
+  void getExtensions([optional] out unsigned long aCount,
+                     [retval, array, size_is(aCount)]
+                     out wstring aResults);
+};

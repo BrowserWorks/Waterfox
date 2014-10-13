@@ -1,0 +1,201 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+#include "nsIRequest.idl"
+
+interface imgIContainer;
+interface imgINotificationObserver;
+interface nsIURI;
+interface nsIPrincipal;
+
+/**
+ * imgIRequest interface
+ *
+ * @author Stuart Parmenter <stuart@mozilla.com>
+ * @version 0.1
+ * @see imagelib2
+ */
+[scriptable, builtinclass, uuid(9c709b50-bd1a-476d-b313-d64db874f80a)]
+interface imgIRequest : nsIRequest
+{
+  /**
+   * the image container...
+   * @return the image object associated with the request.
+   * @attention NEED DOCS
+   */
+  readonly attribute imgIContainer image;
+
+  /**
+   * Bits set in the return value from imageStatus
+   * @name statusflags
+   *
+   * Meanings:
+   *
+   * STATUS_NONE: Nothing to report.
+   *
+   * STATUS_SIZE_AVAILABLE: We received enough image data
+   * from the network or filesystem that we know the width
+   * and height of the image, and have thus called SetSize()
+   * on the container.
+   *
+   * STATUS_LOAD_PARTIAL: Used internally by imgRequest to
+   * flag that a request is being cancelled as a result of
+   * a failure of a proxy holder and not an internal failure.
+   * At least I think that's what it does. Regardless, there's
+   * no reason for this flag to be public, and it should either
+   * go away or become a private state flag within imgRequest.
+   * Don't rely on it.
+   *
+   * STATUS_LOAD_COMPLETE: The data has been fully loaded
+   * to memory, but not necessarily fully decoded.
+   *
+   * STATUS_ERROR: An error occurred loading the image.
+   *
+   * STATUS_DECODE_STARTED: The decoding process has begun, but not yet
+   * finished.
+   *
+   * STATUS_FRAME_COMPLETE: The first frame has been
+   * completely decoded.
+   *
+   * STATUS_DECODE_COMPLETE: The whole image has been decoded.
+   */
+  //@{
+  const long STATUS_NONE             = 0x0;
+  const long STATUS_SIZE_AVAILABLE   = 0x1;
+  const long STATUS_LOAD_PARTIAL     = 0x2;
+  const long STATUS_LOAD_COMPLETE    = 0x4;
+  const long STATUS_ERROR            = 0x8;
+  const long STATUS_DECODE_STARTED   = 0x10;
+  const long STATUS_FRAME_COMPLETE   = 0x20;
+  const long STATUS_DECODE_COMPLETE  = 0x40;
+  //@}
+
+  /**
+   * Status flags of the STATUS_* variety.
+   */
+  readonly attribute unsigned long imageStatus;
+
+  /**
+   * The URI the image load was started with.  Note that this might not be the
+   * actual URI for the image (e.g. if HTTP redirects happened during the
+   * load).
+   */
+  readonly attribute nsIURI URI;
+
+  readonly attribute imgINotificationObserver notificationObserver;
+
+  readonly attribute string mimeType;
+
+  /**
+   * Clone this request; the returned request will have aObserver as the
+   * observer.  aObserver will be notified synchronously (before the clone()
+   * call returns) with all the notifications that have already been dispatched
+   * for this image load.
+   */
+  imgIRequest clone(in imgINotificationObserver aObserver);
+
+  /**
+   * The principal gotten from the channel the image was loaded from.
+   */
+  readonly attribute nsIPrincipal imagePrincipal;
+
+  /**
+   * Whether the request is multipart (ie, multipart/x-mixed-replace)
+   */
+  readonly attribute bool multipart;
+
+  /**
+   * CORS modes images can be loaded with.
+   *
+   * By default, all images are loaded with CORS_NONE and cannot be used
+   * cross-origin in context like WebGL.
+   *
+   * If an HTML img element has the crossorigin attribute set, the imgIRequest
+   * will be validated for cross-origin usage with CORS, and, if successful,
+   * will have its CORS mode set to the relevant type.
+   */
+  //@{
+  const long CORS_NONE = 1;
+  const long CORS_ANONYMOUS = 2;
+  const long CORS_USE_CREDENTIALS = 3;
+  //@}
+
+  /**
+   * The CORS mode that this image was loaded with. 
+   */
+  readonly attribute long CORSMode;
+
+  /**
+   * Cancels this request as in nsIRequest::Cancel(); further, also nulls out
+   * decoderObserver so it gets no further notifications from us.
+   *
+   * NOTE: You should not use this in any new code; instead, use cancel(). Note
+   * that cancel() is asynchronous, which means that some time after you call
+   * it, the listener/observer will get an OnStopRequest(). This means that, if
+   * you're the observer, you can't call cancel() from your destructor.
+   */
+  void cancelAndForgetObserver(in nsresult aStatus);
+
+  /**
+   * Requests a decode for the image.
+   *
+   * imgIContainer has a requestDecode() method, but callers may want to request
+   * a decode before the container has necessarily been instantiated. Calling
+   * requestDecode() on the imgIRequest simply forwards along the request if the
+   * container already exists, or calls it once it gets OnStartContainer if the
+   * container does not yet exist.
+   */
+  void requestDecode();
+  void startDecoding();
+
+  /**
+   * Locks an image. If the image does not exist yet, locks it once it becomes
+   * available. The lock persists for the lifetime of the imgIRequest (until
+   * unlockImage is called) even if the underlying image changes.
+   *
+   * If you don't call unlockImage() by the time this imgIRequest goes away, it
+   * will be called for you automatically.
+   *
+   * @see imgIContainer::lockImage for documentation of the underlying call.
+   */
+  void lockImage();
+
+  /**
+   * Unlocks an image.
+   *
+   * @see imgIContainer::unlockImage for documentation of the underlying call.
+   */
+  void unlockImage();
+
+  /**
+   * If this image is unlocked, discard the image's decoded data.  If the image
+   * is locked or is already discarded, do nothing.
+   */
+  void requestDiscard();
+
+  /**
+   * If this request is for an animated image, the method creates a new
+   * request which contains the current frame of the image.
+   * Otherwise returns the same request.
+   */
+  imgIRequest getStaticRequest();
+
+  /**
+   * Requests that the image animate (if it has an animation).
+   *
+   * @see Image::IncrementAnimationConsumers for documentation of the underlying call.
+   */
+  void incrementAnimationConsumers();
+
+  /**
+   * Tell the image it can forget about a request that the image animate.
+   *
+   * @see Image::DecrementAnimationConsumers for documentation of the underlying call.
+   */
+  void decrementAnimationConsumers();
+};
+

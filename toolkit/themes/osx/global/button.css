@@ -1,0 +1,69 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+
+button {
+  -moz-appearance: button;
+  /* The horizontal margin used here come from the Aqua Human Interface
+     Guidelines, there should be 12 pixels between two buttons. */
+  margin: 5px 6px 3px;
+  min-width: 79px;
+  color: ButtonText;
+  text-shadow: none;
+}
+
+.button-text {
+  margin: 1px 0 !important;
+  -moz-margin-start: 3px !important;
+  -moz-margin-end: 2px !important;
+  text-align: center;
+}
+
+.button-icon {
+  -moz-margin-start: 1px;
+}
+
+button[type="default"] {
+  font: menu;
+}
+
+/* .......... disabled state .......... */
+
+button[disabled="true"] {
+  color: GrayText;
+}
+
+/* ::::: menu/menu-button buttons ::::: */
+
+button[type="menu-button"] {
+  margin: 0;
+  border: none;
+}
+
+.button-menu-dropmarker,
+.button-menubutton-dropmarker {
+  -moz-appearance: none !important;
+  border: none;
+  background-color: transparent !important;
+  margin: 1px;
+}
+
+.button-menu-dropmarker {
+  display: none;
+}
+
+/* ::::: plain buttons ::::: */
+
+button.plain {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* ::::: help button ::::: */
+
+button[dlgtype="help"] {
+  -moz-appearance: -moz-mac-help-button;
+  width: 20px;
+}

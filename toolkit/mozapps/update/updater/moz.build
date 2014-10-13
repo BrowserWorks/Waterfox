@@ -1,0 +1,80 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+PROGRAM = 'updater'
+
+SOURCES += [
+    'archivereader.cpp',
+    'bspatch.cpp',
+    'updater.cpp',
+]
+
+have_progressui = 0
+if CONFIG['OS_ARCH'] == 'WINNT':
+    have_progressui = 1
+    SOURCES += [
+        'loaddlls.cpp',
+        'progressui_win.cpp',
+        'win_dirent.cpp',
+    ]
+    RCINCLUDE = 'updater.rc'
+    DEFINES['UNICODE'] = True
+    DEFINES['_UNICODE'] = True
+    USE_STATIC_LIBS = True
+
+    # Pick up nsWindowsRestart.cpp
+    LOCAL_INCLUDES += [
+        '/toolkit/xre',
+    ]
+
+if CONFIG['MOZ_ENABLE_GTK']:
+    have_progressui = 1
+    SOURCES += [
+        'progressui_gtk.cpp',
+    ]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+    have_progressui = 1
+    SOURCES += [
+        'launchchild_osx.mm',
+        'progressui_osx.mm',
+    ]
+    LDFLAGS += ['-framework Cocoa']
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
+    have_progressui = 1
+    SOURCES += [
+        'automounter_gonk.cpp',
+        'progressui_gonk.cpp',
+    ]
+    DISABLE_STL_WRAPPING = True
+
+if have_progressui == 0:
+    SOURCES += [
+        'progressui_null.cpp',
+    ]
+
+DEFINES['NS_NO_XPCOM'] = True
+for var in ('MAR_CHANNEL_ID', 'MOZ_APP_VERSION'):
+    DEFINES[var] = '"%s"' % CONFIG[var]
+
+LOCAL_INCLUDES += [
+    '../common',
+    '/xpcom/glue',
+]
+
+DELAYLOAD_DLLS += [
+    'crypt32.dll',
+    'userenv.dll',
+    'wsock32.dll',
+]
+
+if CONFIG['_MSC_VER']:
+    WIN32_EXE_LDFLAGS += ['-ENTRY:wmainCRTStartup']
+
+if CONFIG['MOZ_UPDATE_CHANNEL'] in ('beta', 'release', 'esr'):
+    DEFINES['MAR_SIGNING_RELEASE_BETA'] = '1'
+elif CONFIG['MOZ_UPDATE_CHANNEL'] in ('nightly', 'aurora', 'nightly-elm', 'nightly-profiling', 'nightly-oak', 'nightly-ux'):
+    DEFINES['MAR_SIGNING_AURORA_NIGHTLY'] = '1'

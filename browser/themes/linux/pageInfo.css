@@ -1,0 +1,276 @@
+%if 0
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+%endif
+
+@import url("chrome://global/skin/");
+
+/* View buttons */
+#viewGroup > radio {
+  list-style-image: url("chrome://browser/skin/pageInfo.png");
+  -moz-box-orient: vertical;
+  -moz-box-align: center;
+  -moz-appearance: none;
+  min-width: 4.5em;
+  margin: 0;
+  padding: 3px;
+  color: -moz-FieldText;
+}
+
+#viewGroup > radio[selected="true"] {
+  background-color: Highlight;
+  color: HighlightText; 
+}
+
+#topBar {
+  -moz-appearance: listbox;
+  margin: 8px 8px 0;
+}
+
+#generalTab {
+  -moz-image-region: rect(0px, 32px, 32px, 0px)
+}
+
+#mediaTab {
+  -moz-image-region: rect(0px, 64px, 32px, 32px)
+}
+
+#feedTab {
+  -moz-image-region: rect(0px, 96px, 32px, 64px)
+}
+
+#permTab {
+  -moz-image-region: rect(0px, 128px, 32px, 96px)
+}
+
+#securityTab {
+  -moz-image-region: rect(0px, 160px, 32px, 128px)
+}
+
+#mainDeck {
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
+deck {
+  padding: 10px 10px 10px 10px;
+}
+
+/* Misc */
+tree {
+  margin: .5em;
+}
+
+.gridSeparator {
+  width: .5em;
+}
+
+textbox {
+  background: transparent !important;
+  border: none;
+  padding: 0px;
+  margin-top: 1px;
+  -moz-appearance: none;
+}
+
+textbox.header {
+  -moz-margin-start: 0;
+}
+
+.iframe {
+  margin: .5em;
+  background: white;
+  overflow: auto;
+}
+
+.fixedsize {
+  height: 8.5em;
+}
+
+textbox[disabled] {
+  font-style: italic;
+}
+
+/* General Tab */
+#generalPanel > #titletext {
+  -moz-margin-start: 5px;
+}
+
+groupbox.collapsable caption .caption-icon { 
+  width: 9px;
+  height: 9px;
+  background-repeat: no-repeat;
+  background-position: center;
+  -moz-margin-start: 1px;
+  -moz-margin-end: 3px;
+  background-image: url("chrome://global/skin/tree/twisty-open.png");
+}
+
+groupbox.collapsable[closed="true"] {
+  border: none;
+}
+
+groupbox.collapsable[closed="true"] caption .caption-icon { 
+  background-image: url("chrome://global/skin/tree/twisty-clsd.png");
+}
+
+groupbox tree { 
+  margin: 0;
+  border: none;
+}
+
+groupbox.treebox .groupbox-body { 
+  -moz-margin-start: 5px;
+  -moz-margin-end: 1px;
+  padding-top: 0;
+}
+
+#securityBox description { 
+  -moz-margin-start: 10px;
+}
+
+#general-security-identity {
+  white-space: pre-wrap;
+  line-height: 2em;
+}
+
+/* Media Tab */
+#imagetree {
+  min-height: 10em;
+  margin-top: 2px;
+  margin-bottom: 0;
+}
+
+#mediaSplitter {
+  -moz-appearance: none;
+  height: .8em;
+}
+
+#mediaGrid {
+  min-height: 9em;
+}
+
+#mediaLabelColumn {
+  min-width: 10em;
+}
+
+#thepreviewimage {
+  margin: 1em;
+}
+
+treechildren::-moz-tree-cell-text(broken) {
+  font-style: italic;
+  color: graytext;
+}
+
+#mediaPreviewBox .inset {
+  -moz-appearance: listbox;
+  margin-bottom: 0;  
+}
+
+/* Feeds Tab */
+#feedPanel {
+  margin-left: 2px;
+  margin-right: 2px;
+}
+
+#feedtree {
+  margin-bottom: 0px;
+}
+
+#feedListbox richlistitem {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  -moz-padding-start: 7px;
+  -moz-padding-end: 7px;
+  min-height: 25px;
+  border-bottom: 1px dotted #C0C0C0;
+  color: -moz-FieldText;
+}
+
+#feedListbox richlistitem[selected="true"] {
+  background-color: -moz-Dialog;
+  color: -moz-DialogText;
+}
+
+#feedListbox {
+  margin-bottom: 0;
+  border: 2px solid;
+  -moz-border-top-colors: ThreeDShadow ThreeDDarkShadow;
+  -moz-border-right-colors: ThreeDHighlight ThreeDLightShadow;
+  -moz-border-bottom-colors: ThreeDHighlight ThreeDLightShadow;
+  -moz-border-left-colors: ThreeDShadow ThreeDDarkShadow;
+}
+
+.feedTitle { 
+  font-weight: bold;
+}
+
+/* Permissions Tab */
+#permPanel {
+  margin-left: 6px;
+  margin-right: 6px;
+}
+
+#permList {
+  -moz-appearance: listbox;
+  margin-top: .5em;
+  overflow: auto;
+  border: 2px solid;
+  -moz-border-top-colors: ThreeDShadow ThreeDDarkShadow;
+  -moz-border-right-colors: ThreeDHighlight ThreeDLightShadow;
+  -moz-border-bottom-colors: ThreeDHighlight ThreeDLightShadow;
+  -moz-border-left-colors: ThreeDShadow ThreeDDarkShadow;
+  background-color: -moz-field;
+  color: -moz-FieldText;
+}
+
+.permission {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  -moz-padding-start: 7px;
+  -moz-padding-end: 7px;
+  min-height: 25px;
+  border-bottom: 1px dotted #C0C0C0;
+}
+
+.permissionLabel {
+  font-weight: bold;
+}
+
+.permission:hover {
+  background-color: -moz-dialog;
+  color: -moz-DialogText;
+}
+
+/* Security Tab */
+#securityPanel .caption-icon {
+  display: none;
+}
+
+#securityPanel .header {
+  font-size: 120%;
+}
+ 
+#securityPanel .fieldLabel {
+  margin: 2px 10px 3px 10px;
+}
+
+#securityPanel .fieldValue {
+  font-weight: bold;
+  margin: 2px 10px 0px 10px;
+}
+
+/* Icons for context menus */
+menuitem:not([type]) {
+  -moz-binding: url("chrome://global/content/bindings/menu.xml#menuitem-iconic");
+}
+
+#menu_selectall {
+  list-style-image: url("moz-icon://stock/gtk-select-all?size=menu");
+}
+
+#menu_copy {
+  list-style-image: url("moz-icon://stock/gtk-copy?size=menu");
+}

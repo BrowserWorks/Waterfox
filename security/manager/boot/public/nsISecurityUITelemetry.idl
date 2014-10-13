@@ -1,0 +1,146 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+[scriptable, uuid(f7259bf4-1f2b-4e9e-8983-1978cc076fa1)]
+
+interface nsISecurityUITelemetry : nsISupports {
+
+/*
+ * Addon installation warnings
+ */
+
+// Firefox prevented this site from asking you to install addon
+const uint32_t WARNING_ADDON_ASKING_PREVENTED = 1;
+// User clicks through and allows site to ask to install addons
+const uint32_t WARNING_ADDON_ASKING_PREVENTED_CLICK_THROUGH = 2;
+// Are you sure you want to install this addon? Only install addons you trust
+const uint32_t WARNING_CONFIRM_ADDON_INSTALL = 3;
+// User clicked she is sure after waiting 3secs
+const uint32_t WARNING_CONFIRM_ADDON_INSTALL_CLICK_THROUGH  = 4;
+
+
+/*
+ * modal dialogs/warnings 
+ */
+
+//     removed WARNING_ENTERING_SECURE_SITE = 5;
+//     removed WARNING_ENTERING_WEAK_SITE = 6;
+//     removed WARNING_LEAVING_SECURE_SITE = 7;
+//     removed WARNING_MIXED_CONTENT  = 8;
+
+// For confirmation dialogs, the clickthrough constant needs to be 1
+// more than the dialog constant so that
+// WARNING_CONFIRM_<X> + 1 == WARNING_CONFIRM_<X>_CLICK_THROUGH
+const uint32_t WARNING_CONFIRM_POST_TO_INSECURE_FROM_SECURE = 9;
+const uint32_t WARNING_CONFIRM_POST_TO_INSECURE_FROM_SECURE_CLICK_THROUGH = 10;
+//     removed WARNING_CONFIRM_POST_TO_INSECURE_FROM_INSECURE = 11;
+//     removed WARNING_CONFIRM_POST_TO_INSECURE_FROM_INSECURE_CLICK_THROUGH = 12;
+
+/*
+ * Phishing / Malware page warnings
+ * deprecated: we use the _TOP and _FRAME versions below
+ */
+
+const uint32_t WARNING_MALWARE_PAGE = 13;
+const uint32_t WARNING_MALWARE_PAGE_WHY_BLOCKED = 14;
+const uint32_t WARNING_MALWARE_PAGE_GET_ME_OUT_OF_HERE = 15;
+const uint32_t WARNING_MALWARE_PAGE_IGNORE_WARNING = 16;
+
+const uint32_t WARNING_PHISHING_PAGE = 17;
+const uint32_t WARNING_PHISHING_PAGE_WHY_BLOCKED = 18;
+const uint32_t WARNING_PHISHING_PAGE_GET_ME_OUT_OF_HERE = 19;
+const uint32_t WARNING_PHISHING_PAGE_IGNORE_WARNING = 20;
+
+/* 
+ * SSL Error dialogs
+ * deprecated: we use the _TOP versions below
+ */
+
+const uint32_t WARNING_BAD_CERT = 21;
+const uint32_t WARNING_BAD_CERT_STS = 22;
+const uint32_t WARNING_BAD_CERT_CLICK_ADD_EXCEPTION = 23;
+const uint32_t WARNING_BAD_CERT_CLICK_VIEW_CERT = 24;
+const uint32_t WARNING_BAD_CERT_DONT_REMEMBER_EXCEPTION = 25;
+const uint32_t WARNING_BAD_CERT_GET_ME_OUT_OF_HERE = 27;
+const uint32_t WARNING_BAD_CERT_UNDERSTAND_RISKS = 28;
+const uint32_t WARNING_BAD_CERT_TECHINICAL_DETAILS = 29;
+
+/*
+ * Note that if we add more possibilities in the warning dialogs,
+ * it is a new experiment and we shouldn't reuse these buckets.
+ */
+const uint32_t WARNING_BAD_CERT_ADD_EXCEPTION_BASE = 30;
+const uint32_t WARNING_BAD_CERT_ADD_EXCEPTION_FLAG_UNTRUSTED = 1;
+const uint32_t WARNING_BAD_CERT_ADD_EXCEPTION_FLAG_DOMAIN = 2;
+const uint32_t WARNING_BAD_CERT_ADD_EXCEPTION_FLAG_TIME = 4;
+
+const uint32_t WARNING_BAD_CERT_CONFIRM_ADD_EXCEPTION_BASE = 38;
+const uint32_t WARNING_BAD_CERT_CONFIRM_ADD_EXCEPTION_FLAG_UNTRUSTED = 1;
+const uint32_t WARNING_BAD_CERT_CONFIRM_ADD_EXCEPTION_FLAG_DOMAIN = 2;
+const uint32_t WARNING_BAD_CERT_CONFIRM_ADD_EXCEPTION_FLAG_TIME = 4;
+// This uses up buckets till 45
+
+/*
+ * Geolocation Popup Telemetry
+ */
+
+const uint32_t WARNING_GEOLOCATION_REQUEST = 46;
+const uint32_t WARNING_GEOLOCATION_REQUEST_SHARE_LOCATION = 47;
+const uint32_t WARNING_GEOLOCATION_REQUEST_ALWAYS_SHARE = 48;
+const uint32_t WARNING_GEOLOCATION_REQUEST_NEVER_SHARE = 49;
+// It would be nice to measure the two cases of user clicking
+// "not now", and user closing the popup. This is currently not implemented.
+
+/*
+ * Firefox Update Errors: UI is only thrown after 
+ * repeated errors. We only measure when the UI is shown.
+ */
+const uint32_t WARNING_INSECURE_UPDATE = 50;
+const uint32_t WARNING_NO_SECURE_UPDATE = 51;
+
+const uint32_t WARNING_MALWARE_PAGE_TOP = 52;
+const uint32_t WARNING_MALWARE_PAGE_TOP_WHY_BLOCKED = 53;
+const uint32_t WARNING_MALWARE_PAGE_TOP_GET_ME_OUT_OF_HERE = 54;
+const uint32_t WARNING_MALWARE_PAGE_TOP_IGNORE_WARNING = 55;
+
+const uint32_t WARNING_PHISHING_PAGE_TOP = 56;
+const uint32_t WARNING_PHISHING_PAGE_TOP_WHY_BLOCKED = 57;
+const uint32_t WARNING_PHISHING_PAGE_TOP_GET_ME_OUT_OF_HERE = 58;
+const uint32_t WARNING_PHISHING_PAGE_TOP_IGNORE_WARNING = 59;
+
+const uint32_t WARNING_MALWARE_PAGE_FRAME = 60;
+const uint32_t WARNING_MALWARE_PAGE_FRAME_WHY_BLOCKED = 61;
+const uint32_t WARNING_MALWARE_PAGE_FRAME_GET_ME_OUT_OF_HERE = 62;
+const uint32_t WARNING_MALWARE_PAGE_FRAME_IGNORE_WARNING = 63;
+
+const uint32_t WARNING_PHISHING_PAGE_FRAME = 64;
+const uint32_t WARNING_PHISHING_PAGE_FRAME_WHY_BLOCKED = 65;
+const uint32_t WARNING_PHISHING_PAGE_FRAME_GET_ME_OUT_OF_HERE = 66;
+const uint32_t WARNING_PHISHING_PAGE_FRAME_IGNORE_WARNING = 67;
+
+const uint32_t WARNING_BAD_CERT_TOP = 68;
+const uint32_t WARNING_BAD_CERT_TOP_STS = 69;
+const uint32_t WARNING_BAD_CERT_TOP_CLICK_ADD_EXCEPTION = 70;
+const uint32_t WARNING_BAD_CERT_TOP_CLICK_VIEW_CERT = 71;
+const uint32_t WARNING_BAD_CERT_TOP_DONT_REMEMBER_EXCEPTION = 72;
+const uint32_t WARNING_BAD_CERT_TOP_GET_ME_OUT_OF_HERE = 73;
+const uint32_t WARNING_BAD_CERT_TOP_UNDERSTAND_RISKS = 74;
+const uint32_t WARNING_BAD_CERT_TOP_TECHNICAL_DETAILS = 75;
+
+const uint32_t WARNING_BAD_CERT_TOP_ADD_EXCEPTION_BASE = 76;
+const uint32_t WARNING_BAD_CERT_TOP_ADD_EXCEPTION_FLAG_UNTRUSTED = 1;
+const uint32_t WARNING_BAD_CERT_TOP_ADD_EXCEPTION_FLAG_DOMAIN = 2;
+const uint32_t WARNING_BAD_CERT_TOP_ADD_EXCEPTION_FLAG_TIME = 4;
+
+const uint32_t WARNING_BAD_CERT_TOP_CONFIRM_ADD_EXCEPTION_BASE = 84;
+const uint32_t WARNING_BAD_CERT_TOP_CONFIRM_ADD_EXCEPTION_FLAG_UNTRUSTED = 1;
+const uint32_t WARNING_BAD_CERT_TOP_CONFIRM_ADD_EXCEPTION_FLAG_DOMAIN = 2;
+const uint32_t WARNING_BAD_CERT_TOP_CONFIRM_ADD_EXCEPTION_FLAG_TIME = 4;
+// This uses up buckets till 91 (including)
+// We only have buckets up to 100.
+};

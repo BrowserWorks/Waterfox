@@ -1,0 +1,39 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIInterfaceRequestor;
+
+/**
+ * nsIClientAuthDialog
+ * Provides UI for SSL client-auth dialogs.
+ */
+[scriptable, uuid(fa4c7520-1433-11d5-ba24-00108303b117)]
+interface nsIClientAuthDialogs : nsISupports
+{
+  /**
+   * display
+   *   UI shown when a user is asked to do SSL client auth.
+   */
+  void ChooseCertificate(in nsIInterfaceRequestor ctx, 
+                        in wstring cn,
+                        in wstring organization,
+                        in wstring issuer,
+                        [array, size_is(count)] in wstring certNickList,
+                        [array, size_is(count)] in wstring certDetailsList,
+                        in unsigned long count,
+                        out long selectedIndex,
+                        out boolean canceled);
+};
+
+[scriptable, uuid(95c4373e-bdd4-4a63-b431-f5b000367721)]
+interface nsIClientAuthUserDecision : nsISupports
+{
+  attribute boolean rememberClientAuthCertificate;
+};
+
+%{C++
+#define NS_CLIENTAUTHDIALOGS_CONTRACTID "@mozilla.org/nsClientAuthDialogs;1"
+%}

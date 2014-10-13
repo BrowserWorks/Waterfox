@@ -1,0 +1,33 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "domstubs.idl"
+
+[scriptable, uuid(79de76e5-994e-4f6b-81aa-42d9adb6e67e)]
+interface nsIDOMLocation : nsISupports
+{
+           /**
+            * These properties refer to the current location of the document.
+            * This will correspond to the URI shown in the location bar, which
+            * can be different from the documentURI of the document.
+            */
+           attribute DOMString        hash;
+           attribute DOMString        host;
+           attribute DOMString        hostname;
+           attribute DOMString        href;
+           attribute DOMString        pathname;
+           attribute DOMString        port;
+           attribute DOMString        protocol;
+           attribute DOMString        search;
+
+  readonly attribute DOMString        origin;
+
+  void                      reload([optional] in boolean forceget);
+  void                      replace(in DOMString url);
+  void                      assign(in DOMString url);
+
+  DOMString                 toString();
+  nsIDOMLocation            valueOf();
+};

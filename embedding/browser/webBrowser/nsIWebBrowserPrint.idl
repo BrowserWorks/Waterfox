@@ -1,0 +1,152 @@
+/* -*- Mode: IDL; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIDOMWindow;
+interface nsIPrintSettings;
+interface nsIWebProgressListener;
+
+/**
+ * nsIWebBrowserPrint corresponds to the main interface
+ * for printing an embedded Gecko web browser window/document
+ */
+[scriptable, uuid(9A7CA4B0-FBBA-11d4-A869-00105A183419)]
+interface nsIWebBrowserPrint : nsISupports
+{
+  /**
+   * PrintPreview Navigation Constants
+   */
+  const short PRINTPREVIEW_GOTO_PAGENUM = 0;
+  const short PRINTPREVIEW_PREV_PAGE    = 1;
+  const short PRINTPREVIEW_NEXT_PAGE    = 2;
+  const short PRINTPREVIEW_HOME         = 3;
+  const short PRINTPREVIEW_END          = 4;
+
+  /**
+   * Returns a "global" PrintSettings object 
+   * Creates a new the first time, if one doesn't exist.
+   *
+   * Then returns the same object each time after that.
+   *
+   * Initializes the globalPrintSettings from the default printer
+   */
+  readonly attribute nsIPrintSettings globalPrintSettings;
+
+  /**
+   * Returns a pointer to the PrintSettings object that
+   * that was passed into either "print" or "print preview"
+   *
+   * This enables any consumers of the interface to have access
+   * to the "current" PrintSetting at later points in the execution
+   */
+  readonly attribute nsIPrintSettings currentPrintSettings;
+
+  /**
+   * Returns a pointer to the current child DOMWindow
+   * that is being print previewed. (FrameSet Frames)
+   *
+   * Returns null if parent document is not a frameset or the entire FrameSet 
+   * document is being print previewed
+   *
+   * This enables any consumers of the interface to have access
+   * to the "current" child DOMWindow at later points in the execution
+   */
+  readonly attribute nsIDOMWindow currentChildDOMWindow;
+
+  /**
+   * Returns whether it is in Print mode
+   */
+  readonly attribute boolean doingPrint;
+
+  /**
+   * Returns whether it is in Print Preview mode
+   */
+  readonly attribute boolean doingPrintPreview;
+
+  /**
+   * This returns whether the current document is a frameset document
+   */
+  readonly attribute boolean isFramesetDocument;
+
+  /**
+   * This returns whether the current document is a frameset document
+   */
+  readonly attribute boolean isFramesetFrameSelected;
+
+  /**
+   * This returns whether there is an IFrame selected
+   */
+  readonly attribute boolean isIFrameSelected;
+
+  /**
+   * This returns whether there is a "range" selection
+   */
+  readonly attribute boolean isRangeSelection;
+
+  /**
+   * This returns the total number of pages for the Print Preview
+   */
+  readonly attribute long printPreviewNumPages;
+
+  /**
+   * Print the specified DOM window
+   *
+   * @param aThePrintSettings - Printer Settings for the print job, if aThePrintSettings is null
+   *                            then the global PS will be used.
+   * @param aWPListener - is updated during the print
+   * @return void
+   */
+  void print(in nsIPrintSettings aThePrintSettings,
+             in nsIWebProgressListener aWPListener);
+
+  /**
+   * Print Preview the specified DOM window
+   *
+   * @param aThePrintSettings - Printer Settings for the print preview, if aThePrintSettings is null
+   *                            then the global PS will be used.
+   * @param aChildDOMWin - DOM Window to be print previewed.
+   * @param aWPListener - is updated during the printpreview
+   * @return void
+   */
+  void printPreview(in nsIPrintSettings aThePrintSettings,
+                    in nsIDOMWindow aChildDOMWin,
+                    in nsIWebProgressListener aWPListener);
+
+  /**
+   * Print Preview - Navigates within the window
+   *
+   * @param aNavType - navigation enum
+   * @param aPageNum - page num to navigate to when aNavType = ePrintPreviewGoToPageNum
+   * @return void
+   */
+  void printPreviewNavigate(in short aNavType, in long aPageNum);
+
+  /**
+   * Cancels the current print 
+   * @return void
+   */
+  void cancel();
+
+  /**
+   * Returns an array of the names of all documents names (Title or URL)
+   * and sub-documents. This will return a single item if the attr "isFramesetDocument" is false
+   * and may return any number of items is "isFramesetDocument" is true
+   *
+   * @param  aCount - returns number of printers returned
+   * @param  aResult - returns array of names
+   * @return void
+   */
+  void enumerateDocumentNames(out uint32_t aCount,[retval, array, size_is(aCount)] out wstring aResult);
+
+  /**
+   * This exists PrintPreview mode and returns browser window to galley mode
+   * @return void
+   */
+  void exitPrintPreview();
+
+};
+

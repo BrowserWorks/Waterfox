@@ -1,0 +1,10 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+toolkit.jar:
+% content mozapps %content/mozapps/
+  content/mozapps/handling/handler.css                          (content/handler.css)
+  content/mozapps/handling/handler.xml                          (content/handler.xml)
+  content/mozapps/handling/dialog.xul                           (content/dialog.xul)
+  content/mozapps/handling/dialog.js                            (content/dialog.js)

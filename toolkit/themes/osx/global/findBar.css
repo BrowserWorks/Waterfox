@@ -1,0 +1,225 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+%include shared.inc
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+
+findbar {
+  background: @scopeBarBackground@;
+  border-top: @scopeBarSeparatorBorder@;
+  min-width: 1px;
+  transition-property: margin-bottom, opacity, visibility;
+  transition-duration: 150ms, 150ms, 0s;
+  transition-timing-function: ease-in-out, ease-in-out, linear;
+}
+
+findbar[hidden] {
+  /* Override display:none to make the transition work. */
+  display: -moz-box;
+  visibility: collapse;
+  margin-bottom: -1em;
+  opacity: 0;
+  transition-delay: 0s, 0s, 150ms;
+}
+
+findbar:-moz-lwtheme {
+  -moz-appearance: none;
+  background: none;
+  border-style: none;
+}
+
+.findbar-container {
+  -moz-padding-start: 2px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+label.findbar-find-fast {
+  color: @scopeBarTitleColor@;
+  margin: 0;
+  -moz-margin-start: 12px;
+  text-shadow: @loweredShadow@;
+}
+
+label.findbar-find-fast:-moz-lwtheme,
+.findbar-find-status:-moz-lwtheme {
+  color: inherit;
+  text-shadow: inherit;
+}
+
+.findbar-closebutton {
+  -moz-margin-start: 4px;
+  -moz-padding-start: 0;
+  -moz-padding-end: 8px;
+  border: none;
+  /* make sure the closebutton is displayed as the first element in the bar: */
+  -moz-box-ordinal-group: 0;
+}
+
+@media (min-resolution: 2dppx) {
+  .findbar-closebutton > .toolbarbutton-icon {
+    width: 16px;
+  }
+}
+
+.findbar-find-next,
+.findbar-find-previous,
+.findbar-highlight,
+.findbar-case-sensitive {
+  -moz-appearance: none;
+  border-radius: 10000px;
+  border: @roundButtonBorder@;
+  background: @roundButtonBackground@;
+  box-shadow: @roundButtonShadow@;
+  color: buttontext;
+  margin: 0;
+}
+
+.findbar-highlight,
+.findbar-case-sensitive {
+  -moz-margin-end: 5px;
+  padding: 0 3px;
+}
+
+.findbar-container > toolbarbutton:-moz-focusring,
+.findbar-find-next:-moz-focusring,
+.findbar-find-previous:-moz-focusring {
+  position: relative;
+  box-shadow: @focusRingShadow@, @roundButtonShadow@;
+}
+
+.findbar-container > toolbarbutton[disabled] {
+  color: GrayText !important;
+}
+
+.findbar-find-next:not([disabled]):hover:active,
+.findbar-find-previous:not([disabled]):hover:active,
+.findbar-highlight:not([disabled]):hover:active,
+.findbar-case-sensitive:not([disabled]):hover:active,
+.findbar-highlight:not([disabled])[checked="true"],
+.findbar-case-sensitive:not([disabled])[checked="true"] {
+  text-shadow: @loweredShadow@;
+  background: @roundButtonPressedBackground@;
+  box-shadow: @roundButtonPressedShadow@;
+}
+
+.findbar-find-next:hover:active:-moz-focusring,
+.findbar-find-previous:hover:active:-moz-focusring {
+  text-shadow: @loweredShadow@;
+  background: @roundButtonPressedBackground@;
+  box-shadow: @focusRingShadow@, @roundButtonPressedShadow@;
+}
+
+.findbar-closebutton > .toolbarbutton-text {
+  display: none;
+}
+
+/* Search field */
+
+.findbar-textbox {
+  position: relative;
+  -moz-appearance: none;
+  border: @roundButtonBorder@;
+  border-radius: 10000px 0 0 10000px;
+  box-shadow: @roundButtonShadow@;
+  background: url("chrome://global/skin/icons/search-textbox.png") -moz-Field no-repeat 5px center;
+  margin: 0;
+  padding: 2px 8px;
+  -moz-padding-start: 19px;
+}
+
+.findbar-textbox:-moz-locale-dir(rtl) {
+  border-radius: 0 10000px 10000px 0;
+}
+
+.findbar-textbox:not([focused="true"]):-moz-lwtheme {
+  opacity: 0.9;
+}
+
+.findbar-textbox[focused="true"] {
+  box-shadow: @focusRingShadow@;
+}
+
+.findbar-textbox[flash="true"] {
+  background-color: #F7E379;
+}
+
+.findbar-textbox[status="notfound"] {
+  background-color: #FD919B;
+  color: #FFF;
+}
+
+.findbar-textbox.minimal {
+  border-radius: 10000px;
+  -moz-margin-start: 5px;
+}
+
+/* Find previous/next buttons */
+
+.findbar-find-previous,
+.findbar-find-next {
+  -moz-margin-start: 0;
+  list-style-image: url(chrome://global/skin/icons/find-arrows.png);
+  padding: 2px 6px;
+}
+
+.findbar-find-previous > .toolbarbutton-text,
+.findbar-find-next > .toolbarbutton-text {
+  margin: 0 !important;
+  padding: 0;
+  width: 0;
+}
+
+.findbar-find-previous > .toolbarbutton-icon,
+.findbar-find-next > .toolbarbutton-icon {
+  margin: 0;
+}
+
+.findbar-find-previous {
+  border-left: none;
+  border-right: none;
+  -moz-margin-end: 0;
+  -moz-image-region: rect(0, 10px, 9px, 0);
+  border-radius: 0;
+}
+
+.findbar-find-next {
+  -moz-image-region: rect(0, 20px, 9px, 10px);
+  -moz-padding-end: 7px;
+}
+
+.findbar-find-next:-moz-locale-dir(ltr) {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.findbar-find-next:-moz-locale-dir(rtl) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* Status description */
+
+.find-status-icon {
+  display: none;
+}
+
+.find-status-icon[status="pending"] {
+  display: block;
+  list-style-image: url("chrome://global/skin/icons/loading_16.png");
+}
+
+.findbar-find-status,
+.found-matches {
+  color: rgba(0,0,0,.5);
+  margin: 0 !important;
+  -moz-margin-start: 12px !important;
+  text-shadow: 0 1px rgba(255,255,255,.4);
+}
+
+/* Highlight and Case Sensitive toggles */
+
+.findbar-highlight {
+  -moz-margin-start: 8px;
+}

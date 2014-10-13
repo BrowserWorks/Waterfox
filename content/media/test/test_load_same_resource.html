@@ -1,0 +1,86 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Test loading of the same resource in multiple elements</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+  <script type="text/javascript" src="manifest.js"></script>
+</head>
+<body>
+
+<pre id="test">
+<script class="testbody" type="text/javascript">
+
+var manager = new MediaTestManager;
+
+function cloneLoaded(event) {
+  ok(true, "Clone loaded OK");
+  var e = event.target;
+
+  if (e._expectedDuration) {
+    ok(Math.abs(e.duration - e._expectedDuration) < 0.1,
+       "Clone " + e.currentSrc + " duration: " + e.duration + " expected: " + e._expectedDuration);
+  }
+
+  e.removeEventListener("loadeddata", cloneLoaded, false);
+  removeNodeAndSource(e);
+  manager.finished(e.token);
+}
+
+function tryClone(event) {
+  var e = event.target;
+  var clone = e.cloneNode(false);
+  clone.token = e.token;
+
+  if (e._expectedDuration) {
+    ok(Math.abs(e.duration - e._expectedDuration) < 0.1,
+       e.currentSrc + " duration: " + e.duration + " expected: " + e._expectedDuration);
+    clone._expectedDuration = e._expectedDuration;
+  }
+
+  clone.addEventListener("loadeddata", cloneLoaded, false);
+  clone.onloadstart = function(evt) {
+    info("cloned " + evt.target.token + " start loading.");
+    evt.target.onloadstart = null;
+    // Since there is only one H264 decoder instance, we have to delete the
+    // decoder of the original element for the cloned element to load. However,
+    // we can't delete the decoder too early otherwise cloning decoder will
+    // fail to kick in. We wait for 'loadstart' event of the cloned element to
+    // know when the decoder is already cloned and we can delete the decoder of
+    // the original element.
+    removeNodeAndSource(e);
+  }
+
+  e.removeEventListener("loadeddata", tryClone, false);
+}
+
+// This test checks that loading the same URI twice in different elements at the same time
+// uses the same resource without doing another network fetch. One of the gCloneTests
+// uses dynamic_resource.sjs to return one resource on the first fetch and a different resource
+// on the second fetch. These resources have different lengths, so if the cloned element
+// does a network fetch it will get a resource with the wrong length and we get a test
+// failure.
+
+function initTest(test, token) {
+  var elemType = /^audio/.test(test.type) ? "audio" : "video";
+  var e = document.createElement(elemType);
+  e.preload = "auto";
+  if (e.canPlayType(test.type)) {
+    e.src = test.name;
+    if (test.duration) {
+      e._expectedDuration = test.duration;
+    }
+    ok(true, "Trying to load " + test.name);
+    e.addEventListener("loadeddata", tryClone, false);
+    e.load();
+    e.token = token;
+    manager.started(token);
+  }
+}
+
+manager.runTests(gCloneTests, initTest);
+
+</script>
+</pre>
+</body>
+</html>

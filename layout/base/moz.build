@@ -1,0 +1,138 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+XPIDL_SOURCES += [
+    'nsIStyleSheetService.idl',
+]
+
+if CONFIG['MOZ_DEBUG']:
+    UNIFIED_SOURCES += [
+        'nsAutoLayoutPhase.cpp',
+    ]
+
+XPIDL_MODULE = 'layout_base'
+
+EXPORTS += [
+    'ActiveLayerTracker.h',
+    'DisplayItemClip.h',
+    'DisplayListClipState.h',
+    'FrameLayerBuilder.h',
+    'FramePropertyTable.h',
+    'nsArenaMemoryStats.h',
+    'nsBidi.h',
+    'nsBidiPresUtils.h',
+    'nsCaret.h',
+    'nsChangeHint.h',
+    'nsCompatibility.h',
+    'nsCSSFrameConstructor.h',
+    'nsDisplayItemTypes.h',
+    'nsDisplayItemTypesList.h',
+    'nsDisplayList.h',
+    'nsDisplayListInvalidation.h',
+    'nsFrameManager.h',
+    'nsFrameManagerBase.h',
+    'nsFrameTraversal.h',
+    'nsIFrameTraversal.h',
+    'nsILayoutDebugger.h',
+    'nsILayoutHistoryState.h',
+    'nsIPercentHeightObserver.h',
+    'nsIPresShell.h',
+    'nsIReflowCallback.h',
+    'nsLayoutUtils.h',
+    'nsPresArena.h',
+    'nsPresContext.h',
+    'nsPresState.h',
+    'nsRefreshDriver.h',
+    'nsStyleChangeList.h',
+    'ScrollbarStyles.h',
+    'StackArena.h',
+    'Units.h',
+    'UnitTransforms.h',
+]
+
+EXPORTS.mozilla += [
+    'GeometryUtils.h',
+    'PaintTracker.h',
+]
+
+UNIFIED_SOURCES += [
+    'ActiveLayerTracker.cpp',
+    'DisplayItemClip.cpp',
+    'DisplayListClipState.cpp',
+    'FrameLayerBuilder.cpp',
+    'FramePropertyTable.cpp',
+    'GeometryUtils.cpp',
+    'MaskLayerImageCache.cpp',
+    'nsBidi.cpp',
+    'nsBidiPresUtils.cpp',
+    'nsCaret.cpp',
+    'nsCounterManager.cpp',
+    'nsCSSColorUtils.cpp',
+    'nsCSSFrameConstructor.cpp',
+    'nsCSSRendering.cpp',
+    'nsCSSRenderingBorders.cpp',
+    'nsDisplayList.cpp',
+    'nsDisplayListInvalidation.cpp',
+    'nsFrameManager.cpp',
+    'nsFrameTraversal.cpp',
+    'nsGenConList.cpp',
+    'nsLayoutDebugger.cpp',
+    'nsLayoutHistoryState.cpp',
+    'nsLayoutUtils.cpp',
+    'nsPresContext.cpp',
+    'nsQuoteList.cpp',
+    'nsStyleChangeList.cpp',
+    'nsStyleSheetService.cpp',
+    'PaintTracker.cpp',
+    'PositionedEventTargeting.cpp',
+    'RestyleManager.cpp',
+    'RestyleTracker.cpp',
+    'SelectionCarets.cpp',
+    'StackArena.cpp',
+    'TouchCaret.cpp',
+]
+
+# nsDocumentViewer.cpp and nsPresShell.cpp need to be built separately
+# because they force NSPR logging.
+# nsPresArena.cpp needs to be built separately because it uses plarena.h.
+# nsRefreshDriver.cpp needs to be built separately because of name clashes in the OS X headers
+SOURCES += [
+    'nsDocumentViewer.cpp',
+    'nsPresArena.cpp',
+    'nsPresShell.cpp',
+    'nsRefreshDriver.cpp',
+]
+
+FAIL_ON_WARNINGS = True
+
+MSVC_ENABLE_PGO = True
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+LOCAL_INCLUDES += [
+    '../../content/base/src',
+    '../../content/html/content/src',
+    '../../content/svg/content/src',
+    '../../view/src',
+    '../forms',
+    '../generic',
+    '../mathml',
+    '../printing',
+    '../style',
+    '../svg',
+    '../tables',
+    '../xul',
+    '../xul/tree/',
+    '/docshell/base',
+    '/dom/base',
+    '/dom/xbl',
+]
+
+FINAL_LIBRARY = 'gklayout'
+
+MOCHITEST_MANIFESTS += ['tests/mochitest.ini']
+MOCHITEST_CHROME_MANIFESTS += ['tests/chrome/chrome.ini']
+BROWSER_CHROME_MANIFESTS += ['tests/browser.ini']

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<resources>
+
+    <style name="TabsList" parent="TabsListBase">
+         <item name="android:orientation">horizontal</item>
+         <item name="android:scrollbars">horizontal</item>
+    </style>
+
+    <style name="TabsItem">
+         <item name="android:nextFocusDown">@+id/close</item>
+    </style>
+
+    <style name="TabsItemClose">
+         <item name="android:nextFocusUp">@+id/info</item>
+    </style>
+
+    <!-- Remote tabs panel -->
+    <style name="RemoteTabsPanelChild" parent="RemoteTabsPanelChildBase">
+        <item name="android:orientation">horizontal</item>
+        <item name="android:paddingTop">24dp</item>
+    </style>
+
+    <style name="RemoteTabsSection" parent="RemoteTabsSectionBase">
+        <item name="android:layout_weight">1</item>
+    </style>
+
+    <style name="RemoteTabsItem">
+        <item name="android:layout_marginBottom">20dp</item>
+        <item name="android:layout_gravity">left</item>
+        <item name="android:gravity">left</item>
+    </style>
+
+    <style name="RemoteTabsItem.Button" parent="RemoteTabsItem.ButtonBase">
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:paddingBottom">12dp</item>
+        <item name="android:paddingLeft">6dp</item>
+        <item name="android:paddingRight">6dp</item>
+        <item name="android:layout_marginLeft">24dp</item>
+        <item name="android:layout_marginRight">24dp</item>
+    </style>
+
+    <style name="RemoteTabsItem.TextAppearance.Header.FXAccounts">
+        <item name="android:visibility">gone</item>
+    </style>
+
+    <style name="RemoteTabsItem.TextAppearance.Linkified.Resend">
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:gravity">center</item>
+        <item name="android:layout_gravity">center</item>
+    </style>
+
+</resources>

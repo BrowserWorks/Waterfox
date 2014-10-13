@@ -1,0 +1,169 @@
+<?xml version="1.0"?>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<?xml-stylesheet href="chrome://global/skin" type="text/css"?>
+
+<window id="396519Test"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        width="600"
+        height="600"
+        onload="onLoad();"
+        title="396519 test">
+
+  <script type="application/javascript"><![CDATA[
+
+    const LISTEN_EVENTS = ["pageshow"];
+
+    const Cc = Components.classes;
+    const Ci = Components.interfaces;
+
+    var gBrowser;
+    var gTestCount = 0;
+    var gTestsIterator;
+    var gExpected = [];
+
+    function ok(condition, message) {
+      window.opener.wrappedJSObject.SimpleTest.ok(condition, message);
+    }
+    function is(a, b, message) {
+      window.opener.wrappedJSObject.SimpleTest.is(a, b, message);
+    }
+    function finish() {
+      for each (let eventType in LISTEN_EVENTS) {
+        gBrowser.removeEventListener(eventType, eventListener, true);
+      }
+    
+      window.close();
+      window.opener.wrappedJSObject.SimpleTest.finish();
+    }
+
+    function onLoad() {
+      gBrowser = document.getElementById("content");
+
+      for each (let eventType in LISTEN_EVENTS) {
+        gBrowser.addEventListener(eventType, eventListener, true);
+      }
+      
+      gTestsIterator = testsIterator();
+      nextTest();
+    }
+
+    function eventListener(event) {
+      // we're in pageshow, but we need to let that finish
+      // content eviction and saving happen during pageshow, so when doTest
+      // runs, we should should be in a testable state
+      setTimeout(doTest, 0);
+    }
+
+    function doTest() {
+      var history = gBrowser.webNavigation.sessionHistory;
+      if (history.count == gExpected.length) {
+        for (var i=0; i<history.count; i++) {
+          var shEntry = history.getEntryAtIndex(i,false).
+                          QueryInterface(Components.interfaces.nsISHEntry);
+          is(!!shEntry.contentViewer, gExpected[i], "content viewer "+i+", test "+gTestCount);
+        }
+
+        // Make sure none of the SHEntries share bfcache entries with one
+        // another.
+        for (var i = 0; i < history.count; i++) {
+          for (var j = 0; j < history.count; j++) {
+            if (j == i)
+              continue;
+
+            let shentry1 = history.getEntryAtIndex(i, false)
+                                  .QueryInterface(Ci.nsISHEntry);
+            let shentry2 = history.getEntryAtIndex(j, false)
+                                  .QueryInterface(Ci.nsISHEntry);
+            ok(!shentry1.sharesDocumentWith(shentry2),
+               'Test ' + gTestCount + ': shentry[' + i + "] shouldn't " +
+               "share document with shentry[" + j + ']');
+          }
+        }
+      }
+      else {
+        is(history.count, gExpected.length, "Wrong history length in test "+gTestCount);
+      }
+
+      setTimeout(nextTest, 0);
+    }
+
+    function nextTest() {
+      try {
+        gTestsIterator.next();
+      } catch (err if err instanceof StopIteration) {
+        finish();
+      }
+    }
+
+    function testsIterator() {
+
+      // Tests 1 + 2:
+      //  Back/forward between two simple documents. Bfcache will be used.
+
+      var test1Doc = "data:text/html,<html><head><title>test1</title></head>" +
+                     "<body>test1</body></html>";
+
+      gTestCount++;
+      gExpected = [false];
+      gBrowser.loadURI(test1Doc);
+      yield undefined;
+
+      gTestCount++;
+      gExpected = [true, false];
+      var test2Doc = test1Doc.replace(/1/,"2");
+      gBrowser.loadURI(test2Doc);
+      yield undefined;
+
+      gTestCount++;
+      gExpected = [true, true, false];
+      gBrowser.loadURI(test1Doc);
+      yield undefined;
+
+      gTestCount++;
+      gExpected = [true, true, true, false];
+      gBrowser.loadURI(test2Doc);
+      yield undefined;
+
+      gTestCount++;
+      gExpected = [false, true, true, true, false];
+      gBrowser.loadURI(test1Doc);
+      yield undefined;
+
+      gTestCount++;
+      gExpected = [false, false, true, true, true, false];
+      gBrowser.loadURI(test2Doc);
+      yield undefined;
+
+      gTestCount++;
+      gExpected = [false, false, true, true, false, true];
+      gBrowser.goBack();
+      yield undefined;
+
+      gTestCount++;
+      gExpected = [false, false, true, true, true, false];
+      gBrowser.goForward();
+      yield undefined;
+
+      gTestCount++;
+      gExpected = [false, false, true, true, true, false];
+      gBrowser.gotoIndex(1);
+      yield undefined;
+
+      gTestCount++;
+      gExpected = [false, true, true, true, false, false];
+      gBrowser.goBack();
+      yield undefined;
+
+      gTestCount++;
+      gExpected = [false, false, true, true, false, false];
+      gBrowser.gotoIndex(5);
+      yield undefined;
+    }
+  ]]></script>
+
+  <browser type="content-primary" flex="1" id="content" src="about:blank"/>
+</window>

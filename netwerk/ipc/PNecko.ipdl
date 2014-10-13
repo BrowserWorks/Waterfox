@@ -1,0 +1,87 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set sw=2 ts=8 et tw=80 ft=cpp : */
+
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+include protocol PContent;
+include protocol PHttpChannel;
+include protocol PCookieService;
+include protocol PBrowser;
+include protocol PWyciwygChannel;
+include protocol PFTPChannel;
+include protocol PWebSocket;
+include protocol PTCPSocket;
+include protocol PTCPServerSocket;
+include protocol PUDPSocket;
+include protocol PRemoteOpenFile;
+include protocol PDNSRequest;
+include protocol PChannelDiverter;
+include protocol PBlob; //FIXME: bug #792908
+include protocol PFileDescriptorSet;
+
+include protocol PRtspController;
+include protocol PRtspChannel;
+include URIParams;
+include InputStreamParams;
+include NeckoChannelParams;
+
+
+using class IPC::SerializedLoadContext from "SerializedLoadContext.h";
+
+namespace mozilla {
+namespace net {
+
+//-------------------------------------------------------------------
+sync protocol PNecko
+{
+  manager PContent;
+  manages PHttpChannel;
+  manages PCookieService;
+  manages PWyciwygChannel;
+  manages PFTPChannel;
+  manages PWebSocket;
+  manages PTCPSocket;
+  manages PTCPServerSocket;
+  manages PUDPSocket;
+  manages PDNSRequest;
+  manages PRemoteOpenFile;
+  manages PRtspController;
+  manages PRtspChannel;
+  manages PChannelDiverter;
+
+parent:
+  __delete__();
+
+  PCookieService();
+  PHttpChannel(nullable PBrowser browser,
+               SerializedLoadContext loadContext,
+               HttpChannelCreationArgs args);
+  PWyciwygChannel();
+  PFTPChannel(PBrowser browser, SerializedLoadContext loadContext,
+              FTPChannelCreationArgs args);
+
+  PWebSocket(PBrowser browser, SerializedLoadContext loadContext);
+  PTCPServerSocket(uint16_t localPort, uint16_t backlog, nsString binaryType);
+  PUDPSocket(nsCString host, uint16_t port, nsCString filter);
+
+  PDNSRequest(nsCString hostName, uint32_t flags);
+
+  PRemoteOpenFile(SerializedLoadContext loadContext,
+                  URIParams fileuri,
+                  OptionalURIParams appuri);
+
+  HTMLDNSPrefetch(nsString hostname, uint16_t flags);
+  CancelHTMLDNSPrefetch(nsString hostname, uint16_t flags, nsresult reason);
+  PRtspController();
+  PRtspChannel(RtspChannelConnectArgs args);
+  PChannelDiverter(ChannelDiverterArgs channel);
+
+both:
+  PTCPSocket();
+};
+
+
+} // namespace net
+} // namespace mozilla

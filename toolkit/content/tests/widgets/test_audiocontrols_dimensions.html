@@ -1,0 +1,38 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Audio controls test</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>  
+  <script type="text/javascript" src="/tests/SimpleTest/EventUtils.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+</head>
+<body>
+<p id="display"></p>
+
+<div id="content">
+  <audio id="audio" controls preload="auto"></audio>
+</div>
+
+<pre id="test">
+<script class="testbody" type="text/javascript">
+  function loadedmetadata(event) {
+    is(event.type, "loadedmetadata", "checking event type");
+    is(audio.clientHeight, "28", "checking height of audio element");
+
+    SimpleTest.finish();
+  }
+
+  var audio = document.getElementById("audio");
+
+  SpecialPowers.pushPrefEnv({"set": [["media.cache_size", 40000]]}, startTest);
+  function startTest() {
+    // Kick off test once audio has loaded.
+    audio.addEventListener("loadedmetadata", loadedmetadata, false);
+    audio.src = "audio.wav";
+  }
+
+  SimpleTest.waitForExplicitFinish();
+</script>
+</pre>
+</body>
+</html>

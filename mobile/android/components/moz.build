@@ -1,0 +1,43 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+XPIDL_SOURCES += [
+    'SessionStore.idl',
+]
+
+XPIDL_MODULE = 'MobileComponents'
+
+EXTRA_COMPONENTS += [
+    'ActivitiesGlue.js',
+    'AddonUpdateService.js',
+    'BlocklistPrompt.js',
+    'ColorPicker.js',
+    'ContentDispatchChooser.js',
+    'ContentPermissionPrompt.js',
+    'DownloadManagerUI.js',
+    'FilePicker.js',
+    'LoginManagerPrompter.js',
+    'NSSDialogService.js',
+    'PaymentsUI.js',
+    'PromptService.js',
+    'SiteSpecificUserAgent.js',
+    'Snippets.js',
+    'TabSource.js',
+    'WebappsUpdateTimer.js',
+    'XPIDialogService.js',
+]
+
+EXTRA_PP_COMPONENTS += [
+    'AboutRedirector.js',
+    'BrowserCLH.js',
+    'DirectoryProvider.js',
+    'HelperAppDialog.js',
+    'MobileComponents.manifest',
+    'SessionStore.js',
+    'Sidebar.js',
+]
+
+DEFINES['ANDROID_PACKAGE_NAME'] = CONFIG['ANDROID_PACKAGE_NAME']

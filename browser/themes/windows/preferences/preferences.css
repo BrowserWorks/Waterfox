@@ -1,0 +1,172 @@
+/*
+# -*- Mode: Java; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+
+/* Global Styles */
+#BrowserPreferences radio[pane] {
+  list-style-image: url("chrome://browser/skin/preferences/Options.png"); 
+  padding: 5px 3px 1px;
+}
+
+radio[pane=paneMain] {
+  -moz-image-region: rect(0, 32px,  32px, 0);
+}
+
+radio[pane=paneTabs] {
+  -moz-image-region: rect(0, 64px, 32px, 32px);
+}
+
+radio[pane=paneContent] {
+  -moz-image-region: rect(0, 96px,  32px, 64px);
+}
+
+radio[pane=paneApplications] {
+  -moz-image-region: rect(0, 128px,  32px, 96px);
+}
+
+radio[pane=panePrivacy] {
+  -moz-image-region: rect(0, 160px,  32px, 128px);
+}
+
+radio[pane=paneSecurity] {
+  -moz-image-region: rect(0, 192px,  32px, 160px);
+}
+
+radio[pane=paneAdvanced] {
+  -moz-image-region: rect(0, 224px, 32px, 192px);
+}
+
+%ifdef MOZ_SERVICES_SYNC
+radio[pane=paneSync] {
+  list-style-image: url("chrome://browser/skin/preferences/Options-sync.png") !important;
+}
+%endif
+
+label.small {
+  font-size: smaller;
+}
+
+#tabPrefsBox {
+  margin: 6px;
+}
+
+/* Content Pane */
+#translationAttributionImage {
+  width: 70px;
+  cursor: pointer;
+}
+
+/* Applications Pane */
+#BrowserPreferences[animated="true"] #handlersView {
+  height: 25em;
+}
+
+#BrowserPreferences[animated="false"] #handlersView {
+  -moz-box-flex: 1;
+}
+
+/* Privacy Pane */
+
+/* styles for the link elements copied from .text-link in global.css */
+.inline-link {
+  color: -moz-nativehyperlinktext;
+  text-decoration: none;
+}
+
+.inline-link:hover {
+  text-decoration: underline;
+}
+
+/* Modeless Window Dialogs */
+.windowDialog,
+.windowDialog prefpane {
+  padding: 0;
+}
+
+.contentPane {
+  margin: 9px 8px 5px;
+}
+
+.actionButtons {
+  margin: 0 3px 6px !important;
+}
+
+/* Cookies Manager */
+#cookiesChildren::-moz-tree-image(domainCol) {
+  width: 16px;
+  height: 16px;
+  margin: 0 2px;
+  list-style-image: url("chrome://mozapps/skin/places/defaultFavicon.png") !important;
+}
+
+#cookiesChildren::-moz-tree-image(domainCol, container) {
+  list-style-image: url("chrome://global/skin/icons/folder-item.png") !important;
+  -moz-image-region: rect(0, 32px, 16px, 16px);
+}
+
+#cookiesChildren::-moz-tree-image(domainCol, container, open) {
+  -moz-image-region: rect(16px, 32px, 32px, 16px);
+}
+
+#cookieInfoBox {
+  border: 1px solid ThreeDShadow;
+  border-radius: 0;
+  margin: 4px;
+  padding: 0;
+}
+
+/* Advanced Pane */
+
+/* Adding padding-bottom prevents the bottom of the tabpanel from being cutoff
+   when browser.preferences.animateFadeIn = true */
+#advancedPrefs {
+  padding-bottom: 8px;
+}
+
+/* bottom-most box containing a groupbox in a prefpane. Prevents the bottom
+   of the groupbox from being cutoff */
+.bottomBox {
+  padding-bottom: 4px;
+}
+
+%ifdef MOZ_SERVICES_SYNC
+/* Sync Pane */
+
+#syncDesc {
+  padding: 0 8em;
+}
+
+.syncGroupBox {
+  padding: 10px;
+}
+
+#accountCaptionImage {
+  list-style-image: url("chrome://mozapps/skin/profile/profileicon.png");
+}
+
+#syncAddDeviceLabel {
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+#noFxaAccount {
+  margin: 6px;
+  line-height: 1.2em;
+}
+
+#noFxaAccount > label:first-child {
+  margin-bottom: 0.6em;
+}
+
+#fxa-pweng-help-link > label {
+  margin: 0;
+}
+
+#fxa-pweng-help-link > image {
+  list-style-image: url("chrome://global/skin/icons/question-16.png");
+}
+
+%endif

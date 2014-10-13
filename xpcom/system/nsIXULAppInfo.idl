@@ -1,0 +1,63 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+/**
+ * A scriptable interface to the nsXULAppAPI structure. See nsXULAppAPI.h for
+ * a detailed description of each attribute.
+ */
+
+[scriptable, uuid(1518e7d2-022a-4dae-b02e-bbe7ffcf2145)]
+interface nsIXULAppInfo : nsISupports
+{
+  /**
+   * @see nsXREAppData.vendor
+   * @returns an empty string if nsXREAppData.vendor is not set.
+   */
+  readonly attribute ACString vendor;
+
+  /**
+   * @see nsXREAppData.name
+   */
+  readonly attribute ACString name;
+
+  /**
+   * @see nsXREAppData.ID
+   * @returns an empty string if nsXREAppData.ID is not set.
+   */
+  readonly attribute ACString ID;
+
+  /**
+   * The version of the XUL application. It is different than the
+   * version of the XULRunner platform. Be careful about which one you want.
+   *
+   * @see nsXREAppData.version
+   * @returns an empty string if nsXREAppData.version is not set.
+   */
+  readonly attribute ACString version;
+
+  /**
+   * The build ID/date of the application. For xulrunner applications,
+   * this will be different than the build ID of the platform. Be careful
+   * about which one you want.
+   */
+  readonly attribute ACString appBuildID;
+
+  /**
+   * The version of the XULRunner platform.
+   */
+  readonly attribute ACString platformVersion;
+
+  /**
+   * The build ID/date of gecko and the XULRunner platform.
+   */
+  readonly attribute ACString platformBuildID;
+  
+  /**
+   * @see nsXREAppData.UAName
+   * @returns an empty string if nsXREAppData.UAName is not set.
+   */
+  readonly attribute ACString UAName;
+};

@@ -1,0 +1,56 @@
+/* -*- Mode: IDL; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsISHEntry;
+
+/**
+ * The nsISHTransaction.
+ */
+
+
+[scriptable, uuid(2EDF705F-D252-4971-9F09-71DD0F760DC6)]
+interface nsISHTransaction : nsISupports
+{
+	/**
+     * The nsISHEntry for the current transaction
+     */
+	attribute nsISHEntry sHEntry;
+
+	/**
+	 * The parent of this transaction
+	 */
+	attribute nsISHTransaction prev;
+
+	/**
+	 * The legitimate child of this transaction 
+	 */
+	attribute nsISHTransaction next;
+
+	/**
+	 *	Specifies if this transaction should persist.  If not it will be replaced
+	 * by new additions to the list.
+	 */
+	attribute boolean persist;
+
+	/**
+	 * Create a transaction with parent and History Entry 
+	 */
+	 void create(in nsISHEntry aSHEntry, in nsISHTransaction aPrev);
+};
+
+%{ C++
+// {BFD1A792-AD9F-11d3-BDC7-0050040A9B44}
+
+
+#define NS_SHTRANSACTION_CID \
+{0xbfd1a792, 0xad9f, 0x11d3, {0xbd, 0xc7, 0x0, 0x50, 0x4, 0xa, 0x9b, 0x44}}
+
+#define NS_SHTRANSACTION_CONTRACTID \
+    "@mozilla.org/browser/session-history-transaction;1"
+
+%}

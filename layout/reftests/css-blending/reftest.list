@@ -1,0 +1,81 @@
+pref(layout.css.mix-blend-mode.enabled,true) == blend-canvas.html blend-canvas-ref.html
+pref(layout.css.mix-blend-mode.enabled,true) == blend-constant-background-color.html blend-constant-background-color-ref.html
+pref(layout.css.mix-blend-mode.enabled,true) == blend-gradient-background-color.html blend-gradient-background-color-ref.html
+pref(layout.css.mix-blend-mode.enabled,true) == blend-image.html blend-image-ref.html
+pref(layout.css.mix-blend-mode.enabled,true) == blend-difference-stacking.html blend-difference-stacking-ref.html
+
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-alpha.html background-blending-alpha-ref.html
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-gradient-color.html background-blending-gradient-color-ref.html
+fuzzy-if(azureSkiaGL,3,7597) fuzzy-if(azureQuartz,3,7597) fuzzy-if(d2d,1,3800) pref(layout.css.background-blend-mode.enabled,true) == background-blending-gradient-gradient.html background-blending-gradient-gradient-ref.html
+fuzzy-if(azureSkiaGL,2,7174) fuzzy-if(azureQuartz,2,7174) pref(layout.css.background-blend-mode.enabled,true) == background-blending-gradient-image.html background-blending-gradient-color-ref.html
+fuzzy-if(azureQuartz,2,10000) fuzzy-if(azureSkia||d2d||gtk2Widget,1,10000) pref(layout.css.background-blend-mode.enabled,true) == background-blending-image-color-jpg.html background-blending-image-color-ref.html
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-image-color-png.html background-blending-image-color-ref.html
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-image-color-svg.html background-blending-image-color-ref.html
+fuzzy-if(azureSkiaGL,2,7174) fuzzy-if(azureQuartz,2,7174) pref(layout.css.background-blend-mode.enabled,true) == background-blending-image-gradient.html background-blending-gradient-color-ref.html
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-image-image.html background-blending-image-color-ref.html
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-isolation.html background-blending-isolation-ref.html
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-list-repeat.html background-blending-list-repeat-ref.html
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-multiple-images.html background-blending-multiple-images-ref.html
+
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-color-burn.html background-blending-color-burn-ref.svg
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-color-dodge.html background-blending-color-dodge-ref.svg
+# need to investigate why these tests are fuzzy - first suspect is a possible color space conversion on some platforms; same for mix-blend-mode tests
+fuzzy-if(azureQuartz,2,8000) fuzzy-if(azureSkia||gtk2Widget,2,9600) fuzzy-if(d2d,1,8000) pref(layout.css.background-blend-mode.enabled,true) == background-blending-color.html background-blending-color-ref.svg
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-darken.html background-blending-darken-ref.svg
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-difference.html background-blending-difference-ref.svg
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-exclusion.html background-blending-exclusion-ref.svg
+fuzzy-if(azureQuartz||d2d,1,1600) pref(layout.css.background-blend-mode.enabled,true) == background-blending-hard-light.html background-blending-hard-light-ref.svg
+fuzzy-if(azureQuartz,2,8000) fuzzy-if(d2d,1,9600) fuzzy-if(azureSkia||gtk2Widget,2,9600) pref(layout.css.background-blend-mode.enabled,true) == background-blending-hue.html background-blending-hue-ref.svg
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-lighten.html background-blending-lighten-ref.svg
+fuzzy-if(azureQuartz,2,8000) fuzzy-if(d2d,1,8000) fuzzy-if(azureSkia||gtk2Widget,2,9600) pref(layout.css.background-blend-mode.enabled,true) == background-blending-luminosity.html background-blending-luminosity-ref.svg
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-multiply.html background-blending-multiply-ref.svg
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-normal.html background-blending-normal-ref.svg
+fuzzy-if(azureSkia||gtk2Widget,1,1600) pref(layout.css.background-blend-mode.enabled,true) == background-blending-overlay.html background-blending-overlay-ref.svg
+fuzzy-if(d2d,1,1600) fuzzy-if(azureSkia||gtk2Widget,2,12800) fuzzy-if(OSX==10.6,1,1600) pref(layout.css.background-blend-mode.enabled,true) == background-blending-saturation.html background-blending-saturation-ref.svg
+fuzzy-if(d2d||azureSkia||gtk2Widget,1,1600) pref(layout.css.background-blend-mode.enabled,true) == background-blending-screen.html background-blending-screen-ref.svg
+fuzzy-if(azureQuartz,1,1600) fuzzy-if(d2d||azureSkia||gtk2Widget,10,4800) pref(layout.css.background-blend-mode.enabled,true) == background-blending-soft-light.html background-blending-soft-light-ref.svg
+
+fuzzy-if(azureQuartz,2,40000) fuzzy-if(azureSkia||d2d||gtk2Widget,1,40000) pref(layout.css.background-blend-mode.enabled,true) == background-blending-image-color-959674.html background-blending-image-color-959674-ref.html
+
+#fuzzy due to inconsistencies in rounded rect cliping between parent and child; may be related to antialiasing. Between platforms, the max difference is the same, and the number of different pixels is either 36 or 37. (Win, Mac and Lin)
+fuzzy(64,37) pref(layout.css.mix-blend-mode.enabled,true) == mix-blend-mode-952051.html mix-blend-mode-952051-ref.html
+
+pref(layout.css.mix-blend-mode.enabled,true) == mix-blend-mode-child-of-blended-has-opacity.html mix-blend-mode-child-of-blended-has-opacity-ref.html
+
+pref(layout.css.mix-blend-mode.enabled,true) == mix-blend-mode-nested-976533.html mix-blend-mode-nested-976533-ref.html
+
+# Test plan 5.3.1 Blending between the background layers and the background color for an element with background-blend-mode
+# Test 9
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-image-color-svg-as-data-uri.html background-blending-image-color-ref.html
+# Test 10
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-image-color-gif.html background-blending-image-color-gif-ref.html
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-image-color-transform3d.html background-blending-image-color-ref.html
+
+# Test plan 5.3.2 Background layers do not blend with content outside the background (or behind the element) - tests 2 and 3
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-isolation-parent-child-color.html background-blending-isolation-parent-child-ref.html
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-isolation-parent-child-image.html background-blending-isolation-parent-child-ref.html
+
+# Test plan 5.3.6 background-blend-mode for an element with background-position
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-background-position-percentage.html background-blending-background-position-percentage-ref.html
+
+# Test plan 5.3.7 background-blend-mode for an element with background-size
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-background-size-contain.html background-blending-background-size-ref.html
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-background-size-cover.html background-blending-background-size-ref.html
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-background-size-percentage.html background-blending-background-size-ref.html
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-background-size-pixels.html background-blending-background-size-ref.html
+
+# Test plan 5.3.8 background-blend-mode for an element with background-repeat
+# Tests 2 and 3 are not added because space and round are not currently supported
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-background-repeat-no-repeat.html background-blending-background-repeat-no-repeat-ref.html
+
+# Test plan 5.3.9 background-blend-mode for an element with background-clip
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-background-clip-content-box.html background-blending-background-clip-content-box-ref.html
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-background-clip-padding-box.html background-blending-background-clip-padding-box-ref.html
+
+# Test plan 5.3.10 background-blend-mode for an element with background-origin
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-background-origin-border-box.html background-blending-background-origin-ref.html
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-background-origin-content-box.html background-blending-background-origin-ref.html
+
+# Test plan 5.3.11 background-blend-mode for an element with background-attachement
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-background-attachement-fixed.html background-blending-background-attachement-fixed-ref.html
+pref(layout.css.background-blend-mode.enabled,true) == background-blending-background-attachement-fixed-scroll.html background-blending-background-attachement-fixed-scroll-ref.html

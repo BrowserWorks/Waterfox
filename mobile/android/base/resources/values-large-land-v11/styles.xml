@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<resources>
+
+    <style name="TabsList" parent="TabsListBase">
+         <item name="android:orientation">vertical</item>
+         <item name="android:scrollbars">vertical</item>
+    </style>
+
+    <style name="Widget.BookmarkFolderView" parent="Widget.TwoLinePageRow.Title">
+        <item name="android:paddingLeft">60dip</item>
+        <item name="android:drawablePadding">10dip</item>
+        <item name="android:drawableLeft">@drawable/bookmark_folder</item>
+    </style>
+
+    <style name="Widget.BookmarkItemView" parent="Widget.TwoLinePageRow">
+        <item name="android:paddingLeft">50dp</item>
+        <item name="android:paddingRight">50dp</item>
+    </style>
+
+    <style name="Widget.BookmarksListView" parent="Widget.HomeListView">
+        <item name="android:paddingTop">30dp</item>
+        <item name="android:paddingLeft">120dp</item>
+        <item name="android:paddingRight">120dp</item>
+        <item name="android:scrollbarStyle">outsideOverlay</item>
+        <item name="topDivider">true</item>
+    </style>
+
+    <style name="Widget.TopSitesGridView" parent="Widget.GridView">
+        <item name="android:paddingLeft">55dp</item>
+        <item name="android:paddingRight">55dp</item>
+        <item name="android:paddingBottom">30dp</item>
+        <item name="android:horizontalSpacing">20dp</item>
+        <item name="android:verticalSpacing">20dp</item>
+    </style>
+
+    <style name="Widget.Home.HistoryListView">
+        <item name="android:paddingLeft">50dp</item>
+        <item name="android:paddingRight">100dp</item>
+        <item name="android:paddingTop">30dp</item>
+        <item name="android:scrollbarStyle">outsideOverlay</item>
+        <item name="topDivider">true</item>
+    </style>
+
+    <style name="Widget.Home.HistoryTabWidget">
+        <item name="android:showDividers">beginning|middle|end</item>
+        <item name="android:dividerPadding">0dp</item>
+        <item name="android:paddingLeft">100dp</item>
+        <item name="android:paddingTop">30dp</item>
+    </style>
+
+    <!-- Remote tabs panel -->
+    <style name="RemoteTabsPanelChild" parent="RemoteTabsPanelChildBase">
+        <item name="android:paddingTop">32dp</item>
+        <!-- Additional spacing set via margins on RemoteTabsSection. -->
+        <item name="android:paddingLeft">0dp</item>
+        <item name="android:paddingRight">0dp</item>
+    </style>
+
+    <style name="RemoteTabsSection" parent="RemoteTabsSectionBase">
+        <item name="android:layout_marginLeft">20dp</item>
+        <item name="android:layout_marginRight">20dp</item>
+    </style>
+
+    <style name="RemoteTabsItem" parent="RemoteTabsItemBase">
+        <!-- To override the values-land style. -->
+    </style>
+
+    <style name="RemoteTabsItem.Button" parent="RemoteTabsItem.ButtonBase">
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:paddingBottom">12dp</item>
+        <item name="android:paddingLeft">6dp</item>
+        <item name="android:paddingRight">6dp</item>
+        <item name="android:layout_marginLeft">12dp</item>
+        <item name="android:layout_marginRight">12dp</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
+    <style name="RemoteTabsItem.TextAppearance.Header.FXAccounts">
+        <item name="android:visibility">gone</item>
+    </style>
+
+    <style name="RemoteTabsItem.TextAppearance.Linkified.Resend">
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+</resources>

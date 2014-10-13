@@ -1,0 +1,295 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+%include ../shared.inc
+
+/* Places Organizer Sidebars */
+
+#placesList > treechildren::-moz-tree-row {
+  background-color: transparent;
+  border-color: transparent;
+}
+
+#placesList > treechildren::-moz-tree-row(selected) {  
+  background: @sidebarItemBackground@;
+  border-top: @sidebarItemBorderTop@;
+}
+
+#placesList > treechildren::-moz-tree-row(selected,focus) {  
+  background: @sidebarItemFocusedBackground@;
+  border-top: @sidebarItemFocusedBorderTop@;
+}
+
+#placesList:-moz-system-metric(mac-graphite-theme) > treechildren::-moz-tree-row(selected) {
+  background: @sidebarItemGraphiteBackground@;
+  border-top: @sidebarItemGraphiteBorderTop@;
+}
+
+#placesList:-moz-system-metric(mac-graphite-theme) > treechildren::-moz-tree-row(selected,focus) {
+  background: @sidebarItemGraphiteFocusedBackground@;
+  border-top: @sidebarItemGraphiteFocusedBorderTop@;
+}
+
+#placesList > treechildren:-moz-window-inactive::-moz-tree-row(selected) {
+  background: @sidebarItemInactiveBackground@;
+  border-top: @sidebarItemInactiveBorderTop@;
+}
+
+#placesList > treechildren::-moz-tree-row(History),
+#placesList > treechildren::-moz-tree-row(history)  {
+  background-color: blue;
+}
+
+#placesList > treechildren::-moz-tree-cell(separator) {
+  cursor: default;
+}
+
+#placesList > treechildren::-moz-tree-separator {
+  border-top: 1px solid #505d6d;
+  margin: 0 10px;
+}
+
+#placesList > treechildren::-moz-tree-cell-text(selected) {  
+  font-weight: bold !important;
+  color: #ffffff !important;
+}
+
+#placesToolbar {
+  padding: 0 4px 3px;
+}
+
+#placesView {
+  border-top: none !important;
+}
+
+#placesView > splitter {
+  -moz-border-start: none !important;
+  -moz-border-end: 1px solid #bdbdbd;
+  min-width: 1px;
+  width: 1px;
+  background-image: none !important;       
+}
+
+#placesToolbar > toolbarbutton {
+  list-style-image: url("chrome://browser/skin/places/toolbar.png");
+  margin: 4px 4px 5px;
+  padding: 0;
+  height: 22px;
+  -moz-appearance: toolbarbutton;
+}
+
+#placesToolbar > toolbarbutton[disabled="true"] > .toolbarbutton-icon {
+  opacity: 0.5;
+}
+
+#placesToolbar > toolbarbutton > .toolbarbutton-icon {
+  margin: 1px 4px;
+}
+
+#placesToolbar > toolbarbutton > .toolbarbutton-text {
+  display: none;
+}
+
+#placesToolbar > toolbarbutton[type="menu"] > .toolbarbutton-menu-dropmarker {
+  list-style-image: url(chrome://browser/skin/toolbarbutton-dropmarker.png);
+  padding: 0;
+  margin-top: 1px;
+  -moz-margin-end: 2px;
+}
+
+@media (min-resolution: 2dppx) {
+  #placesToolbar > toolbarbutton[type="menu"] > .toolbarbutton-menu-dropmarker {
+    list-style-image: url(chrome://browser/skin/toolbarbutton-dropmarker@2x.png);
+  }
+
+  #placesToolbar > toolbarbutton[type="menu"] > .toolbarbutton-menu-dropmarker > .dropmarker-icon {
+    width: 7px;
+  }
+}
+
+@media (-moz-mac-lion-theme) {
+  #placesToolbar > toolbarbutton[disabled="true"] > .toolbarbutton-icon,
+  #placesToolbar > toolbarbutton:not(:hover):-moz-window-inactive > .toolbarbutton-icon,
+  #placesToolbar > toolbarbutton[type="menu"][disabled="true"] > .toolbarbutton-menu-dropmarker,
+  #placesToolbar > toolbarbutton:not(:hover):-moz-window-inactive[type="menu"] > .toolbarbutton-menu-dropmarker {
+    opacity: .5;
+  }
+
+  #placesToolbar > toolbarbutton:-moz-window-inactive[disabled="true"] > .toolbarbutton-icon,
+  #placesToolbar > toolbarbutton:-moz-window-inactive[type="menu"][disabled="true"] > .toolbarbutton-menu-dropmarker {
+    opacity: .25;
+  }
+}
+
+#placesToolbar > toolbarbutton > menupopup {
+  margin-top: 1px;
+}
+
+/* back and forward button */
+#back-button:-moz-locale-dir(ltr),
+#forward-button:-moz-locale-dir(rtl) {
+  -moz-image-region: rect(0px, 16px, 16px, 0px);
+  margin-right: 0;
+}
+
+#forward-button:-moz-locale-dir(ltr),
+#back-button:-moz-locale-dir(rtl) {
+  -moz-image-region: rect(0px, 32px, 16px, 16px);
+  margin-left: 0;
+}
+
+#back-button > .toolbarbutton-icon {
+  -moz-margin-start: 3px !important;
+  -moz-margin-end: 2px !important;
+}
+
+#forward-button > .toolbarbutton-icon {
+  -moz-margin-start: 2px !important;
+  -moz-margin-end: 3px !important;
+}
+
+/* organize button */
+#organizeButton {
+  -moz-image-region: rect(0px, 48px, 16px, 32px);
+}
+
+/* view button */
+#viewMenu {
+  -moz-image-region: rect(0px, 64px, 16px, 48px);
+}
+
+/* maintenance button */
+#maintenanceButton {
+  -moz-image-region: rect(0px, 80px, 16px, 64px);
+}
+
+/* Root View */
+#placesView {
+  border-top: 1px solid ThreeDDarkShadow;
+  -moz-user-focus: ignore;
+}
+
+/* Place List, Place Content */
+#placesList {
+  background-color: #e2e7ed;
+  width: 160px;
+}
+
+#placesList:-moz-window-inactive {
+  background-color: #e8e8e8;
+}
+
+/* Info box */
+#detailsDeck {
+  border-top: 1px solid #919191;
+  background-color: #f0f0f0;
+  padding: 10px;
+}
+
+#placeContent {
+  -moz-appearance: none;
+  border: 0px;
+}
+
+#placeContent > treechildren::-moz-tree-row {
+  border-top: none !important;
+  padding-top: 1px;
+}
+
+#placeContent > treechildren::-moz-tree-row(odd) {
+  background-color: #edf3fe;
+}
+
+#placeContent > treechildren::-moz-tree-row(selected),
+#placeContent > treechildren::-moz-tree-row(odd, selected) {
+  background-color: -moz-mac-secondaryhighlight;
+}
+
+#placeContent > treechildren::-moz-tree-row(selected, focus), 
+#placeContent > treechildren::-moz-tree-row(odd, selected, focus) {
+  background-color: Highlight;
+  color: HighlightText !important;
+}
+
+#placeContent > treechildren::-moz-tree-cell,
+#placeContent > treechildren::-moz-tree-column {
+  border-right: 1px solid #d7dad7;
+}
+
+#placeContent > treechildren::-moz-tree-cell(separator) {
+  border-color: transparent;
+}
+
+/**** expanders ****/
+
+.expander-up,
+.expander-down {
+  -moz-appearance: none;
+  margin-left: 8px;
+  padding: 0;
+  min-width: 0;
+}
+
+.expander-up {
+  list-style-image: url("chrome://browser/skin/places/expander-open.png") !important;
+}
+
+.expander-down {
+  list-style-image: url("chrome://browser/skin/places/expander-closed.png") !important;
+}
+
+.expander-down:hover:active {
+  list-style-image: url("chrome://browser/skin/places/expander-closed-active.png") !important;
+}
+
+.expander-up:hover:active {
+  list-style-image: url("chrome://browser/skin/places/expander-open-active.png") !important;
+}
+
+/**
+ * info pane
+ */
+
+/* More/Less button */
+
+#infoBoxExpander {
+  list-style-image: url("chrome://browser/skin/places/twisty-open.gif");
+  -moz-appearance: none;
+  margin: 0;
+  padding: 0;
+  max-width: 0;
+}
+
+#infoBoxExpanderLabel {
+  display: none;
+}
+
+#infoBox[minimal="true"] #infoBoxExpander {
+  list-style-image: url("chrome://browser/skin/places/twisty-closed.gif");
+}
+
+#itemsCountText,
+#selectItemDescription {
+  color: GrayText;
+}
+
+.editBMPanel_rowLabel {
+  text-align: end;
+}
+
+/**
+ * Downloads pane
+ */
+
+#clearDownloadsButton {
+  list-style-image: none !important;
+}
+
+#clearDownloadsButton > .toolbarbutton-icon {
+  display: none;
+}
+
+#clearDownloadsButton > .toolbarbutton-text {
+  display: inline !important;
+}

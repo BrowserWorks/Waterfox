@@ -1,0 +1,108 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+EXPORTS += [
+    'CryptoTask.h',
+    'nsCrypto.h',
+    'nsNSSShutDown.h',
+    'nsRandomGenerator.h',
+    'NSSErrorsService.h',
+    'ScopedNSSTypes.h',
+]
+
+EXPORTS.mozilla += [
+    'PublicSSL.h',
+]
+
+UNIFIED_SOURCES += [
+    'CryptoTask.cpp',
+    'nsCertificatePrincipal.cpp',
+    'nsCertOverrideService.cpp',
+    'nsCertPicker.cpp',
+    'nsCertVerificationThread.cpp',
+    'nsClientAuthRemember.cpp',
+    'nsCMS.cpp',
+    'nsCMSSecureMessage.cpp',
+    'nsCrypto.cpp',
+    'nsDataSignatureVerifier.cpp',
+    'nsKeygenHandler.cpp',
+    'nsKeygenThread.cpp',
+    'nsKeyModule.cpp',
+    'nsNSSASN1Object.cpp',
+    'nsNSSCallbacks.cpp',
+    'nsNSSCertCache.cpp',
+    'nsNSSCertHelper.cpp',
+    'nsNSSCertificate.cpp',
+    'nsNSSCertificateFakeTransport.cpp',
+    'nsNSSCertTrust.cpp',
+    'nsNSSCertValidity.cpp',
+    'nsNSSCleaner.cpp',
+    'nsNSSErrors.cpp',
+    'nsNSSIOLayer.cpp',
+    'nsNSSModule.cpp',
+    'nsNSSShutDown.cpp',
+    'nsNTLMAuthModule.cpp',
+    'nsPK11TokenDB.cpp',
+    'nsPKCS11Slot.cpp',
+    'nsPKCS12Blob.cpp',
+    'nsProtectedAuthThread.cpp',
+    'nsPSMBackgroundThread.cpp',
+    'nsRandomGenerator.cpp',
+    'nsRecentBadCerts.cpp',
+    'nsSDR.cpp',
+    'NSSErrorsService.cpp',
+    'nsSSLSocketProvider.cpp',
+    'nsSSLStatus.cpp',
+    'nsStreamCipher.cpp',
+    'nsTLSSocketProvider.cpp',
+    'nsUsageArrayHelper.cpp',
+    'PSMRunnable.cpp',
+    'SharedSSLState.cpp',
+    'SSLServerCertVerification.cpp',
+    'TransportSecurityInfo.cpp',
+]
+
+# nsNSSCertificateDB.cpp needs to include nscert.h before everything else.
+# The rest cannot be built in unified mode because they want to force NSPR
+# logging.
+SOURCES += [
+    'nsCryptoHash.cpp',
+    'nsNSSCertificateDB.cpp',
+    'nsNSSComponent.cpp',
+    'nsNSSVersion.cpp',
+    'PSMContentListener.cpp',
+]
+
+if not CONFIG['MOZ_DISABLE_CRYPTOLEGACY']:
+    UNIFIED_SOURCES += [
+        'nsSmartCardMonitor.cpp',
+    ]
+
+if CONFIG['MOZ_XUL']:
+    UNIFIED_SOURCES += [
+        'nsCertTree.cpp',
+    ]
+
+UNIFIED_SOURCES += [
+    'md4.c',
+]
+
+FAIL_ON_WARNINGS = True
+
+FINAL_LIBRARY = 'xul'
+
+LOCAL_INCLUDES += [
+    '../../../certverifier',
+    '../../../pkix/include',
+]
+
+if CONFIG['NSS_DISABLE_DBM']:
+    DEFINES['NSS_DISABLE_DBM'] = '1'
+
+DEFINES['SSL_DISABLE_DEPRECATED_CIPHER_SUITE_NAMES'] = 'True'
+DEFINES['NSS_ENABLE_ECC'] = 'True'
+for var in ('DLL_PREFIX', 'DLL_SUFFIX'):
+    DEFINES[var] = '"%s"' % CONFIG[var]

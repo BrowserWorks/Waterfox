@@ -1,0 +1,290 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+%include shared.inc
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+
+tree {
+  margin: 0px 4px;
+  color: -moz-DialogText;
+  background-color: #FFFFFF;
+  -moz-appearance: listbox;
+}
+
+/* ::::: tree focusring ::::: */
+
+.focusring > .tree-stack > .tree-rows > .tree-bodybox {
+  border: 1px solid transparent;  
+}
+
+.focusring:focus > .tree-stack > .tree-rows > .tree-bodybox {
+  border: 1px solid -moz-mac-focusring;
+}
+
+
+/* ::::: tree rows ::::: */
+
+treechildren::-moz-tree-row {
+  border-top: 1px solid transparent;
+  height: 18px;
+  background-color: -moz-field;
+}
+
+treechildren:not(.autocomplete-treebody)::-moz-tree-row(multicol, odd) {
+  background-color: -moz-oddtreerow;
+}
+
+treechildren:not(.autocomplete-treebody)::-moz-tree-row(selected) {
+  background-color: -moz-mac-secondaryhighlight;
+}
+
+treechildren:not(.autocomplete-treebody)::-moz-tree-row(selected, focus) {
+  background-color: Highlight;
+  color: HighlightText;
+}
+
+tree[seltype="cell"] > treechildren::-moz-tree-row,
+tree[seltype="text"] > treechildren::-moz-tree-row {
+  border-top: none;
+  background-color: transparent;
+}
+
+/* ::::: tree cells ::::: */
+
+treechildren::-moz-tree-cell {
+  padding: 0px 2px 0px 2px;
+}
+
+tree[seltype="cell"] > treechildren::-moz-tree-cell-text,
+tree[seltype="text"] > treechildren::-moz-tree-cell-text,
+treechildren::-moz-tree-cell-text {
+  color: inherit;
+}
+
+tree[seltype="cell"] > treechildren::-moz-tree-cell {
+  padding: 0px 1px 0px 1px;
+}
+
+tree[seltype="text"] > treechildren::-moz-tree-cell-text {
+  padding: 0px 1px 1px 1px;
+}
+
+treechildren::-moz-tree-cell-text(selected) {
+  color: -moz-DialogText;
+}
+
+tree[seltype="cell"] > treechildren::-moz-tree-cell(active, selected) {
+  background-color: -moz-mac-secondaryhighlight;
+
+}
+tree[seltype="cell"] > treechildren::-moz-tree-cell-text(active, selected) {
+  color: -moz-DialogText;
+}
+
+tree[seltype="text"] > treechildren::-moz-tree-cell-text(active, selected) {
+  background-color: -moz-mac-secondaryhighlight;
+  color: -moz-DialogText;
+}
+
+treechildren::-moz-tree-cell-text(selected, focus) {
+  color: HighlightText;
+}
+
+tree[seltype="cell"] > treechildren::-moz-tree-cell(active, selected, focus) {
+  background-color: Highlight;
+}
+tree[seltype="cell"] > treechildren::-moz-tree-cell-text(active, selected, focus) {
+  color: HighlightText;
+}
+
+tree[seltype="text"] > treechildren::-moz-tree-cell-text(active, selected, focus) {
+  background-color: Highlight;
+  color: HighlightText;
+}
+
+/* ::::: lines connecting cells ::::: */
+
+treechildren::-moz-tree-line {
+  /* XXX there should be no border on Mac, but trees currently
+         paint the line black by default, so I'll just leave this
+         for now. */
+  visibility: hidden;
+  border: 1px dotted grey;
+}
+
+
+/* ::::: tree separator ::::: */
+
+treechildren::-moz-tree-separator {
+  border-top: 1px dashed #C7C7C7;
+  margin: 0 2px;
+}
+
+
+/* ::::: drop feedback ::::: */
+
+tree[seltype="cell"] > treechildren::-moz-tree-cell(primary, dropOn),
+tree[seltype="text"] > treechildren::-moz-tree-cell(primary, dropOn),
+treechildren::-moz-tree-cell(primary, dropOn) {
+  background-color: #A1A1A1 !important;
+  color: #FFF !important;
+  background-image: none;
+}
+tree[seltype="cell"] > treechildren::-moz-tree-cell-text(primary, dropOn),
+tree[seltype="text"] > treechildren::-moz-tree-cell-text(primary, dropOn),
+treechildren::-moz-tree-cell-text(primary, dropOn) {
+  color: #FFF !important;
+}
+
+treechildren::-moz-tree-drop-feedback {
+  background-color: #A1A1A1;
+  width: 50px;
+  height: 2px;
+  -moz-margin-start: 5px;
+}
+
+/* ::::: tree progress meter ::::: */
+
+treechildren::-moz-tree-progressmeter {
+  margin: 2px 4px;
+  border: 2px solid;
+  -moz-border-top-colors: #AAAAAA #000000;
+  -moz-border-right-colors: #FFFFFF #000000;
+  -moz-border-bottom-colors: #FFFFFF #000000;
+  -moz-border-left-colors: #AAAAAA #000000;
+}
+
+/*
+treechildren::-moz-tree-progressmeter(progressUndetermined) {
+}
+*/
+
+treechildren::-moz-tree-cell-text(progressmeter) {
+  margin: 2px 4px;
+  -moz-appearance: progressbar;
+}
+
+/* ::::: tree columns ::::: */
+
+treecol,
+treecolpicker { 
+  -moz-appearance: treeheadercell;
+  -moz-box-align: center;
+  -moz-box-pack: center;
+  border: 2px solid;
+  -moz-border-top-colors: ThreeDHighlight ThreeDLightShadow;
+  -moz-border-right-colors: ThreeDDarkShadow ThreeDShadow;
+  -moz-border-bottom-colors: ThreeDDarkShadow ThreeDShadow;
+  -moz-border-left-colors: ThreeDHighlight ThreeDLightShadow;
+  background-color: -moz-Dialog;
+  color: -moz-DialogText;
+  padding: 0px 4px;
+}
+
+.treecol-image {
+  padding: 0px 1px;
+}
+
+.treecol-text {
+  margin: 0px !important;
+}
+
+treecol[hideheader="true"] {
+  -moz-appearance: none;
+  border: none;
+  padding: 0;
+  max-height: 0px;
+}
+
+/* ..... internal box ..... */
+
+treecol:hover:active,
+treecolpicker:hover:active {
+  border-top: 2px solid;
+  border-bottom: 1px solid;
+  -moz-border-start: 2px solid;
+  -moz-border-end: 1px solid;
+  -moz-border-top-colors: ThreeDDarkShadow ThreeDShadow;
+  -moz-border-right-colors: ThreeDDarkShadow;
+  -moz-border-bottom-colors: ThreeDDarkShadow;
+  -moz-border-left-colors: ThreeDDarkShadow ThreeDShadow;
+  background-color: #666666;
+}
+
+/* ::::: column drag and drop styles ::::: */
+
+treecol[dragging="true"] {
+  -moz-border-top-colors: ThreeDDarkShadow ThreeDShadow !important;
+  -moz-border-right-colors: ThreeDDarkShadow ThreeDShadow!important;
+  -moz-border-bottom-colors: ThreeDDarkShadow ThreeDShadow !important;
+  -moz-border-left-colors: ThreeDDarkShadow ThreeDShadow !important;
+  padding: 0px 4px !important;
+  background-color: ThreeDShadow !important;
+  color: ThreeDHighlight !important;
+}
+
+treecol[insertafter="true"]:-moz-locale-dir(ltr),
+treecol[insertbefore="true"]:-moz-locale-dir(rtl) {
+  -moz-border-right-colors: ThreeDDarkShadow ThreeDShadow;
+}
+
+treecol[insertafter="true"]:-moz-locale-dir(rtl),
+treecol[insertbefore="true"]:-moz-locale-dir(ltr) {
+  -moz-border-left-colors: ThreeDDarkShadow ThreeDShadow;
+}
+
+treechildren::-moz-tree-column(insertbefore) {
+  -moz-border-start: 1px solid ThreeDShadow;
+}
+
+treechildren::-moz-tree-column(insertafter) {
+  -moz-border-end: 1px solid ThreeDShadow;
+}
+
+/* ::::: column picker :::::  */
+
+.tree-columnpicker-icon {
+  list-style-image: url("chrome://global/skin/tree/columnpicker.gif");
+}
+
+/* ::::: twisty :::::  */
+
+treechildren::-moz-tree-twisty {
+  -moz-appearance: treetwisty;
+  -moz-padding-end: 2px;
+}
+
+treechildren::-moz-tree-twisty(open) {
+  -moz-appearance: treetwistyopen;
+}
+
+treechildren::-moz-tree-twisty(Name, separator) {
+  -moz-appearance: none;
+}
+
+treechildren::-moz-tree-indentation {
+  width: 16px;
+}
+
+/* ::::: gridline style ::::: */
+
+treechildren.gridlines::-moz-tree-cell {
+  -moz-border-end: 1px solid GrayText;
+  border-bottom: 1px solid GrayText;
+}
+
+treechildren.gridlines::-moz-tree-row {
+  border: none;
+}
+
+/* ::::: editable tree ::::: */
+
+.tree-input {
+  -moz-appearance: none;
+  border-width: 0;
+  box-shadow: @focusRingShadow@;
+  margin: 0;
+  -moz-margin-start: -2px;
+  padding: 2px 1px 1px;
+}

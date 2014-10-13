@@ -1,0 +1,7 @@
+{
+   global:
+		NSModule;
+		NSGetModule;
+		__RLD_MAP;
+   local: *;
+};

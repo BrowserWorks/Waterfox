@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+
+# -*- Mode: Java; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?> 
+<?xml-stylesheet href="chrome://browser/skin/preferences/preferences.css" type="text/css"?> 
+
+<!DOCTYPE dialog SYSTEM "chrome://browser/locale/preferences/permissions.dtd" >
+
+<window id="PermissionsDialog" class="windowDialog"
+        windowtype="Browser:Permissions"
+        title="&window.title;"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        style="width: &window.width;;"
+        onload="gPermissionManager.onLoad();"
+        onunload="gPermissionManager.uninit();"
+        persist="screenX screenY width height"
+        onkeypress="gPermissionManager.onWindowKeyPress(event);">
+
+  <script src="chrome://global/content/treeUtils.js"/>
+  <script src="chrome://browser/content/preferences/permissions.js"/>
+
+  <stringbundle id="bundlePreferences"
+                src="chrome://browser/locale/preferences/preferences.properties"/>
+
+  <keyset>
+    <key key="&windowClose.key;" modifiers="accel" oncommand="window.close();"/>
+  </keyset>
+  
+  <vbox class="contentPane" flex="1">
+    <description id="permissionsText" control="url"/>
+    <separator class="thin"/>
+    <label id="urlLabel" control="url" value="&address.label;" accesskey="&address.accesskey;"/>
+    <hbox align="start">
+      <textbox id="url" flex="1" 
+               oninput="gPermissionManager.onHostInput(event.target);"
+               onkeypress="gPermissionManager.onHostKeyPress(event);"/>
+    </hbox>
+    <hbox pack="end">
+      <button id="btnBlock" disabled="true" label="&block.label;" accesskey="&block.accesskey;"
+              oncommand="gPermissionManager.addPermission(nsIPermissionManager.DENY_ACTION);"/>
+      <button id="btnSession" disabled="true" label="&session.label;" accesskey="&session.accesskey;"
+              oncommand="gPermissionManager.addPermission(nsICookiePermission.ACCESS_SESSION);"/>
+      <button id="btnAllow" disabled="true" label="&allow.label;" default="true" accesskey="&allow.accesskey;"
+              oncommand="gPermissionManager.addPermission(nsIPermissionManager.ALLOW_ACTION);"/>
+    </hbox>
+    <separator class="thin"/>
+    <tree id="permissionsTree" flex="1" style="height: 18em;"
+          hidecolumnpicker="true"
+          onkeypress="gPermissionManager.onPermissionKeyPress(event)"
+          onselect="gPermissionManager.onPermissionSelected();">
+      <treecols>
+        <treecol id="siteCol" label="&treehead.sitename.label;" flex="3"
+                onclick="gPermissionManager.onPermissionSort('rawHost');" persist="width"/>
+        <splitter class="tree-splitter"/>
+        <treecol id="statusCol" label="&treehead.status.label;" flex="1"
+                onclick="gPermissionManager.onPermissionSort('capability');" persist="width"/>
+      </treecols>
+      <treechildren/>
+    </tree>
+  </vbox>
+  <hbox align="end">
+    <hbox class="actionButtons" flex="1">
+      <button id="removePermission" disabled="true"
+              accesskey="&removepermission.accesskey;"
+              icon="remove" label="&removepermission.label;"
+              oncommand="gPermissionManager.onPermissionDeleted();"/>
+      <button id="removeAllPermissions"
+              icon="clear" label="&removeallpermissions.label;"
+              accesskey="&removeallpermissions.accesskey;" 
+              oncommand="gPermissionManager.onAllPermissionsDeleted();"/>
+      <spacer flex="1"/>
+#ifndef XP_MACOSX
+      <button oncommand="close();" icon="close"
+              label="&button.close.label;" accesskey="&button.close.accesskey;"/>
+#endif
+    </hbox>
+    <resizer type="window" dir="bottomend"/>
+  </hbox>
+</window>

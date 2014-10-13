@@ -1,0 +1,28 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIEditor;
+
+/**
+ * This interface is implemented by elements which have inner editable content,
+ * such as HTML input and textarea.
+ *
+ * Please make sure to update the HTMLTextAreaElement and HTMLInputElement
+ * Web IDL interfaces to mirror this interface when changing it.
+ *
+ */
+
+[scriptable, uuid(b33eb56c-3120-418c-892b-774b00c7dde8)]
+interface nsIDOMNSEditableElement : nsISupports
+{
+  readonly attribute nsIEditor editor;
+  // This is similar to set .value on nsIDOMInput/TextAreaElements, but
+  // handling of the value change is closer to the normal user input, so 
+  // 'change' event for example will be dispatched when focusing out the
+  // element.
+  void setUserInput(in DOMString input);
+};

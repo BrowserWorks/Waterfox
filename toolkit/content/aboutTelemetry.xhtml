@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE html [
+  <!ENTITY % htmlDTD PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd"> %htmlDTD;
+  <!ENTITY % globalDTD SYSTEM "chrome://global/locale/global.dtd"> %globalDTD;
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd"> %brandDTD;
+  <!ENTITY % aboutTelemetryDTD SYSTEM "chrome://global/locale/aboutTelemetry.dtd"> %aboutTelemetryDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>&aboutTelemetry.pageTitle;</title>
+
+    <link rel="stylesheet" href="chrome://global/content/aboutTelemetry.css"
+          type="text/css"/>
+
+    <script type="application/javascript;version=1.7"
+            src="chrome://global/content/aboutTelemetry.js"/>
+  </head>
+
+  <body dir="&locale.dir;">
+
+    <header id="page-description">
+      <h1>&aboutTelemetry.pageTitle;</h1>
+
+      <h2 id="page-subtitle"></h2>
+
+      <p id="description-enabled">&aboutTelemetry.telemetryEnabled;</p>
+      <p id="description-disabled">&aboutTelemetry.telemetryDisabled;</p>
+
+      <button id="toggle-telemetry" type="button"/>
+    </header>
+
+    <section id="slow-sql-section" class="data-section">
+      <input type="checkbox" class="statebox"/>
+      <h1 class="section-name">&aboutTelemetry.slowSqlSection;</h1>
+      <span class="toggle-caption">&aboutTelemetry.toggle;</span>
+      <span class="empty-caption">&aboutTelemetry.emptySection;</span>
+      <div id="slow-sql-tables" class="data">
+        <p id="sql-warning" class="hidden">&aboutTelemetry.fullSqlWarning;</p>
+      </div>
+    </section>
+
+    <section id="chrome-hangs-section" class="data-section">
+      <input type="checkbox" class="statebox"/>
+      <h1 class="section-name">&aboutTelemetry.chromeHangsSection;</h1>
+      <span class="toggle-caption">&aboutTelemetry.toggle;</span>
+      <span class="empty-caption">&aboutTelemetry.emptySection;</span>
+      <div id="chrome-hangs" class="data">
+        <a id="chrome-hangs-fetch-symbols" href="#">&aboutTelemetry.fetchSymbols;</a>
+        <a id="chrome-hangs-hide-symbols" class="hidden" href="#">&aboutTelemetry.hideSymbols;</a>
+        <br/>
+        <br/>
+        <div id="chrome-hangs-data">
+        </div>
+      </div>
+    </section>
+
+    <section id="thread-hang-stats-section" class="data-section">
+      <input type="checkbox" class="statebox"/>
+      <h1 class="section-name">&aboutTelemetry.threadHangStatsSection;</h1>
+      <span class="toggle-caption">&aboutTelemetry.toggle;</span>
+      <span class="empty-caption">&aboutTelemetry.emptySection;</span>
+      <div id="thread-hang-stats" class="data">
+      </div>
+    </section>
+
+    <section id="histograms-section" class="data-section">
+      <input type="checkbox" class="statebox"/>
+      <h1 class="section-name">&aboutTelemetry.histogramsSection;</h1>
+      <span class="toggle-caption">&aboutTelemetry.toggle;</span>
+      <span class="empty-caption">&aboutTelemetry.emptySection;</span>
+      <span class="filter-ui">
+        &aboutTelemetry.filterText; <input type="text" class="filter" id="histograms-filter" target_id="histograms"/>
+      </span>
+      <div id="histograms" class="data">
+      </div>
+    </section>
+
+    <section id="simple-measurements-section" class="data-section">
+      <input type="checkbox" class="statebox"/>
+      <h1 class="section-name">&aboutTelemetry.simpleMeasurementsSection;</h1>
+      <span class="toggle-caption">&aboutTelemetry.toggle;</span>
+      <span class="empty-caption">&aboutTelemetry.emptySection;</span>
+      <div id="simple-measurements" class="data">
+      </div>
+    </section>
+
+    <section id="late-writes-section" class="data-section">
+      <input type="checkbox" class="statebox"/>
+      <h1 class="section-name">&aboutTelemetry.lateWritesSection;</h1>
+      <span class="toggle-caption">&aboutTelemetry.toggle;</span>
+      <span class="empty-caption">&aboutTelemetry.emptySection;</span>
+      <div id="late-writes" class="data">
+        <a id="late-writes-fetch-symbols" href="#">&aboutTelemetry.fetchSymbols;</a>
+        <a id="late-writes-hide-symbols" class="hidden" href="#">&aboutTelemetry.hideSymbols;</a>
+        <br/>
+        <br/>
+        <div id="late-writes-data">
+        </div>
+      </div>
+    </section>
+
+    <section id="system-info-section" class="data-section">
+      <input type="checkbox" class="statebox"/>
+      <h1 class="section-name">&aboutTelemetry.systemInfoSection;</h1>
+      <span class="toggle-caption">&aboutTelemetry.toggle;</span>
+      <span class="empty-caption">&aboutTelemetry.emptySection;</span>
+      <div id="system-info" class="data">
+      </div>
+    </section>
+
+    <section id="addon-details-section" class="data-section">
+      <input type="checkbox" class="statebox"/>
+      <h1 class="section-name">&aboutTelemetry.addonDetailsSection;</h1>
+      <span class="toggle-caption">&aboutTelemetry.toggle;</span>
+      <span class="empty-caption">&aboutTelemetry.emptySection;</span>
+      <div id="addon-details" class="data">
+      </div>
+    </section>
+
+    <section id="addon-histograms-section" class="data-section">
+      <input type="checkbox" class="statebox"/>
+      <h1 class="section-name">&aboutTelemetry.addonHistogramsSection;</h1>
+      <span class="toggle-caption">&aboutTelemetry.toggle;</span>
+      <span class="empty-caption">&aboutTelemetry.emptySection;</span>
+      <div id="addon-histograms" class="data">
+      </div>
+    </section>
+
+  </body>
+
+</html>

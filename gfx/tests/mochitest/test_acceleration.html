@@ -1,0 +1,107 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=627498
+-->
+<head>
+  <title>Test hardware acceleration</title>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=627498">Mozilla Bug 627498</a>
+<p id="display"></p>
+<div id="content" style="display: none">
+  
+</div>
+<pre id="test">
+<script type="application/javascript">
+
+// Make sure that acceleration is enabled/disabled the way we expect it to be
+// based on platform.
+
+var importObj = {};
+
+var Cc = SpecialPowers.Cc;
+var Ci = SpecialPowers.Ci;
+
+var sysInfo = Cc["@mozilla.org/system-info;1"].getService(Ci.nsIPropertyBag2);
+var xr = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime);
+
+var windows = SpecialPowers.Services.ww.getWindowEnumerator();
+var windowutils;
+var acceleratedWindows = 0;
+while (windows.hasMoreElements()) {
+  windowutils = windows.getNext().QueryInterface(Ci.nsIInterfaceRequestor)
+                                 .getInterface(Ci.nsIDOMWindowUtils);
+  try {
+    if (windowutils.layerManagerType != "Basic") {
+      acceleratedWindows++;
+    }
+  } catch (e) {
+    // The window may not have a layer manager, in which case we get an error.
+    // Don't count it as an accelerated window.
+  }
+}
+
+var osName = sysInfo.getProperty("name");
+switch(osName)
+{
+  case "Darwin": // Mac OS X.
+    // We only enable OpenGL layers on machines that don't support QuickDraw
+    // plugins. x86-64 architecture is a good proxy for this plugin support.
+    if (sysInfo.getProperty("arch") != "x86-64") {
+      is(acceleratedWindows, 0, "Acceleration not supported on x86 OS X");
+    } else {
+      // Workaround for SeaMonkey tinderboxes which don't support acceleration.
+      if (navigator.userAgent.match(/ SeaMonkey\//)) {
+        if (acceleratedWindows == 0) {
+          todo(false, "Acceleration not supported on x86-64 OS X" +
+                      " (This is expected on SeaMonkey (tinderboxes).)");
+          break;
+        }
+      }
+
+      isnot(acceleratedWindows, 0, "Acceleration enabled on x86-64 OS X");
+    }
+    break;
+
+  case "Windows_NT": // Windows.
+    var version = parseFloat(sysInfo.getProperty("version"));
+    if (version == 5.0) {
+      is(acceleratedWindows, 0, "Acceleration not supported on Windows 2000");
+    } else {
+      // Workaround for SeaMonkey tinderboxes which don't support acceleration.
+      if (navigator.userAgent.match(/ SeaMonkey\//)) {
+        if (acceleratedWindows == 0) {
+          todo(false, "Acceleration not supported on Windows XP or newer" +
+                      " (This is expected on SeaMonkey (tinderboxes).)");
+          break;
+        }
+      }
+
+      isnot(acceleratedWindows, 0, "Acceleration enabled on Windows XP or newer");
+    }
+
+    var gfxInfo = Cc["@mozilla.org/gfx/info;1"].getService(Ci.nsIGfxInfo);
+    if (version < 6.0) {
+      ok(!gfxInfo.D2DEnabled, "Direct2D not supported on Windows 2003 or older");
+      ok(!gfxInfo.DWriteEnabled, "DirectWrite not supported on Windows 2003 or older");
+    } else {
+      ok(gfxInfo.D2DEnabled, "Direct2D enabled on Windows Vista or newer");
+      ok(gfxInfo.DWriteEnabled, "DirectWrite enabled on Windows Vista or newer");
+    }
+    break;
+
+  default: // Linux and others.
+    if (xr.OS == "Android" && xr.widgetToolkit != "gonk") {
+      isnot(acceleratedWindows, 0, "Acceleration enabled on Android");
+    } else {
+      is(acceleratedWindows, 0, "Acceleration not supported on '" + osName + "'");
+    }
+}
+
+</script>
+</pre>
+</body>
+</html>

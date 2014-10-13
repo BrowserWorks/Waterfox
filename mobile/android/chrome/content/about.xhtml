@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE html [
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+%brandDTD;
+<!ENTITY % globalDTD SYSTEM "chrome://global/locale/global.dtd">
+%globalDTD;
+<!ENTITY % fennecDTD SYSTEM "chrome://browser/locale/about.dtd">
+%fennecDTD;
+]>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta name="viewport" content="width=480; initial-scale=.6667; user-scalable=no"/>
+  <title>&aboutPage.title;</title>
+  <link rel="stylesheet" href="chrome://browser/skin/aboutPage.css" type="text/css"/>
+  <link rel="icon" type="image/png" sizes="64x64" href="chrome://branding/content/favicon64.png" />
+</head>
+
+<body dir="&locale.dir;">
+  <div id="header">
+    <div id="wordmark"></div>
+#expand <p id="version">__MOZ_APP_VERSION__</p>
+  </div>
+
+  <div id="banner">
+    <div id="logo"/>
+#ifdef MOZ_UPDATER
+    <div id="updateBox">
+      <a id="updateLink" href="" onclick="checkForUpdates();">&aboutPage.checkForUpdates.link;</a>
+      <span id="update-message-checking">&aboutPage.checkForUpdates.checking;</span>
+      <span id="update-message-none">&aboutPage.checkForUpdates.none;</span>
+      <span id="update-message-found" onclick="downloadUpdate()">&aboutPage.checkForUpdates.available2;</span>
+      <span id="update-message-downloading">&aboutPage.checkForUpdates.downloading;</span>
+      <span id="update-message-downloaded" onclick="installUpdate()">&aboutPage.checkForUpdates.downloaded2;</span>
+    </div>
+#endif
+
+    <div id="messages">
+      <p id="distributionAbout" hidden="true"/>
+      <p id="distributionID" hidden="true"/>
+      <p id="telemetry" hidden="true">
+        &aboutPage.warningVersion;
+#ifdef MOZ_TELEMETRY_ON_BY_DEFAULT
+        &aboutPage.telemetryStart;<a href="http://www.mozilla.org/">&aboutPage.telemetryMozillaLink;</a>&aboutPage.telemetryEnd;
+#endif
+      </p>
+    </div>
+
+  </div>
+
+    <ul id="aboutLinks">
+      <div class="top-border"></div>
+      <li><a id="faqURL">&aboutPage.faq.label;</a></li>
+      <li><a id="supportURL">&aboutPage.support.label;</a></li>
+      <li><a id="privacyURL">&aboutPage.privacyPolicy.label;</a></li>
+      <li><a href="about:rights">&aboutPage.rights.label;</a></li>
+      <li><a id="releaseNotesURL">&aboutPage.relNotes.label;</a></li>
+      <li><a id="creditsURL">&aboutPage.credits.label;</a></li>
+      <li><a href="about:license">&aboutPage.license.label;</a></li>
+      <div class="bottom-border"></div>
+    </ul>
+
+    <div id="aboutDetails">
+      <p>&logoTrademark;</p>
+    </div>
+
+    <script type="application/javascript;version=1.8"><![CDATA[
+      let Ci = Components.interfaces, Cc = Components.classes, Cu = Components.utils, Cr = Components.results;
+      Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+      Cu.import("resource://gre/modules/Services.jsm");
+
+      // Include the build date and a warning about Telemetry
+      // if this is an "a#" (nightly or aurora) build
+#expand const version = "__MOZ_APP_VERSION__";
+      if (/a\d+$/.test(version)) {
+        let buildID = Services.appinfo.appBuildID;
+        let buildDate = buildID.slice(0,4) + "-" + buildID.slice(4,6) + "-" + buildID.slice(6,8);
+        let br = document.createElement("br");
+        let versionPara = document.getElementById("version");
+        versionPara.appendChild(br);
+        let date = document.createTextNode("(" + buildDate + ")");
+        versionPara.appendChild(date);
+        document.getElementById("telemetry").hidden = false;
+      }
+
+      // Include the Distribution information if available
+      try {
+        let distroId = Services.prefs.getCharPref("distribution.id");
+        if (distroId) {
+          let distroVersion = Services.prefs.getCharPref("distribution.version");
+          let distroIdField = document.getElementById("distributionID");
+          distroIdField.textContent = distroId + " - " + distroVersion;
+          distroIdField.hidden = false;
+
+          let distroAbout = Services.prefs.getComplexValue("distribution.about", Ci.nsISupportsString);
+          let distroField = document.getElementById("distributionAbout");
+          distroField.textContent = distroAbout;
+          distroField.hidden = false;
+        }
+      } catch (e) {
+        // Pref is unset
+      }
+
+      // get URLs from prefs
+      try {
+        let formatter = Cc["@mozilla.org/toolkit/URLFormatterService;1"].getService(Ci.nsIURLFormatter);
+
+        let links = [
+          {id: "releaseNotesURL", pref: "app.releaseNotesURL"},
+          {id: "supportURL",      pref: "app.support.baseURL"},
+          {id: "faqURL",          pref: "app.faqURL"},
+          {id: "privacyURL",      pref: "app.privacyURL"},
+          {id: "creditsURL",      pref: "app.creditsURL"},
+        ];
+
+        links.forEach(function (link) {
+          let url = formatter.formatURLPref(link.pref);
+          let element = document.getElementById(link.id);
+          element.setAttribute("href", url);
+        });
+      } catch (ex) {}
+
+#ifdef MOZ_UPDATER
+      let Updater = {
+        update: null,
+
+        init: function() {
+          Services.obs.addObserver(this, "Update:CheckResult", false);
+        },
+
+        observe: function(aSubject, aTopic, aData) {
+          if (aTopic == "Update:CheckResult") {
+            showUpdateMessage(aData);
+          }
+        },
+      };
+
+      Updater.init();
+
+      function checkForUpdates() {
+        showCheckingMessage();
+
+        Services.androidBridge.handleGeckoMessage({ type: "Update:Check" });
+      }
+
+      function downloadUpdate() {
+        Services.androidBridge.handleGeckoMessage({ type: "Update:Download" });
+      }
+
+      function installUpdate() {
+        showCheckAction();
+
+        Services.androidBridge.handleGeckoMessage({ type: "Update:Install" });
+      }
+
+      let updateLink = document.getElementById("updateLink");
+      let checkingSpan = document.getElementById("update-message-checking");
+      let noneSpan = document.getElementById("update-message-none");
+      let foundSpan = document.getElementById("update-message-found");
+      let downloadingSpan = document.getElementById("update-message-downloading");
+      let downloadedSpan = document.getElementById("update-message-downloaded");
+
+      function showCheckAction() {
+        checkingSpan.style.display = "none";
+        noneSpan.style.display = "none";
+        foundSpan.style.display = "none";
+        downloadingSpan.style.display = "none";
+        downloadedSpan.style.display = "none";
+        updateLink.style.display = "block";
+      }
+
+      function showCheckingMessage() {
+        updateLink.style.display = "none";
+        noneSpan.style.display = "none";
+        foundSpan.style.display = "none";
+        downloadingSpan.style.display = "none";
+        downloadedSpan.style.display = "none";
+        checkingSpan.style.display = "block";
+      }
+
+      function showUpdateMessage(aResult) {
+        updateLink.style.display = "none";
+        checkingSpan.style.display = "none";
+        noneSpan.style.display = "none";
+        foundSpan.style.display = "none";
+        downloadingSpan.style.display = "none";
+        downloadedSpan.style.display = "none";
+
+        // the aResult values come from mobile/android/base/UpdateServiceHelper.java
+        switch (aResult) {
+        case "NOT_AVAILABLE":
+          noneSpan.style.display = "block";
+          setTimeout(showCheckAction, 2000);
+          break;
+        case "AVAILABLE":
+          foundSpan.style.display = "block";
+          break;
+        case "DOWNLOADING":
+          downloadingSpan.style.display = "block";
+          break;
+        case "DOWNLOADED":
+          downloadedSpan.style.display = "block";
+          break;
+        }
+      }
+#endif
+    ]]></script>
+</body>
+</html>

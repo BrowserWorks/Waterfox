@@ -1,0 +1,41 @@
+@charset "UTF-8";
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+@import url("resource://gre-resources/viewsource.css");
+
+#header {
+  background-color: #ccc;
+  border-bottom: 3px solid black;
+  padding: 0.5em;
+  margin-bottom: 1em;
+}
+
+.expander-content {
+  padding-left: 1em;
+}
+
+.expander {
+  cursor: pointer;
+  -moz-user-select: none;
+  text-align: center;
+  vertical-align: top;
+  width: 1em;
+  display: inline-block;
+  margin-left: -1em;
+}
+
+#top > .expander-open, #top > .expander-closed {
+  margin-left: 1em;
+}
+
+.expander-closed > .expander-content {
+  display: none;
+}
+
+.comment {
+  font-family: monospace;
+  white-space: pre;
+}
+

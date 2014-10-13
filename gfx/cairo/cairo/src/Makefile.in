@@ -1,0 +1,38 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+ifdef GNU_CC
+ifeq ($(OS_TARGET),Android)
+MODULE_OPTIMIZE_FLAGS = -O2
+endif
+endif
+
+
+ifeq ($(MOZ_WIDGET_TOOLKIT),qt)
+OS_INCLUDES += $(MOZ_QT_CFLAGS)
+endif
+
+ifdef MOZ_X11
+OS_INCLUDES += $(XCFLAGS)
+endif
+
+ifdef MOZ_ENABLE_CAIRO_FT
+OS_INCLUDES += $(CAIRO_FT_CFLAGS)
+endif
+
+INSTALL_TARGETS += cairo_features
+cairo_features_FILES := cairo-features.h
+cairo_features_DEST = $(DIST)/include/cairo
+cairo_features_TARGET := export
+
+include $(topsrcdir)/config/rules.mk
+
+ifdef GNU_CC
+# Disable spammy "missing initializer" GCC warning
+CFLAGS += -Wno-missing-field-initializers
+
+# Disable spammy "implicit conversion from enumeration type 'cairo_" warnings.
+CFLAGS += -Wno-conversion
+endif # GNU_CC
+

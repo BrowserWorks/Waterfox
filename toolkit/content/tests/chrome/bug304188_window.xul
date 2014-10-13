@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<?xml-stylesheet href="chrome://global/skin" type="text/css"?>
+
+<window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        width="600"
+        height="600"
+        onload="onLoad();"
+        title="FindbarTest for bug 304188 - 
+find-menu appears in editor element which has had makeEditable() called but designMode not set">
+
+  <script type="application/javascript"><![CDATA[
+    var gFindBar = null;
+    var gBrowser;
+
+    function ok(condition, message) {
+      window.opener.wrappedJSObject.SimpleTest.ok(condition, message);
+    }
+    function finish() {
+      window.close();
+      window.opener.wrappedJSObject.SimpleTest.finish();
+    }
+
+    function onLoad() {
+      gFindBar = document.getElementById("FindToolbar");
+      gBrowser = document.getElementById("content");
+      var webnav = gBrowser.webNavigation;
+      var edsession = webnav.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+                            .getInterface(Components.interfaces.nsIEditingSession);
+      edsession.makeWindowEditable(gBrowser.contentWindow, "html", false, true, false);
+      gBrowser.contentWindow.focus();
+      enterStringIntoEditor("'");
+      enterStringIntoEditor("/");
+      ok(gFindBar.hidden,
+         "Findfield should have stayed hidden after entering editor test");
+      finish();
+    }
+
+    function enterStringIntoEditor(aString) {
+      for (var i=0; i < aString.length; i++) {
+        var event = gBrowser.contentDocument.createEvent("KeyEvents");
+        event.initKeyEvent("keypress", true, true, null, false, false,
+                           false, false, 0, aString.charCodeAt(i));
+        gBrowser.contentDocument.body.dispatchEvent(event);
+      }
+    }
+  ]]></script>
+
+  <browser id="content" flex="1" src="data:text/html;charset=utf-8,some%20random%20text" type="content-primary"/>
+  <findbar id="FindToolbar" browserid="content"/>
+</window>

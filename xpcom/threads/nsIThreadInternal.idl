@@ -1,0 +1,150 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIThread.idl"
+
+interface nsIRunnable;
+interface nsIThreadObserver;
+
+/**
+ * The XPCOM thread object implements this interface, which allows a consumer
+ * to observe dispatch activity on the thread.
+ */
+[scriptable, uuid(b24c5af3-43c2-4d17-be14-94d6648a305f)]
+interface nsIThreadInternal : nsIThread
+{
+  /**
+   * Get/set the current thread observer (may be null).  This attribute may be
+   * read from any thread, but must only be set on the thread corresponding to
+   * this thread object.  The observer will be released on the thread
+   * corresponding to this thread object after all other events have been
+   * processed during a call to Shutdown.
+   */
+  attribute nsIThreadObserver observer;
+
+  /**
+   * The current recursion depth, 0 when no events are running, 1 when a single
+   * event is running, and higher when nested events are running. Must only be
+   * called on the target thread.
+   */
+  readonly attribute unsigned long recursionDepth;
+
+  /**
+   * Add an observer that will *only* receive onProcessNextEvent,
+   * beforeProcessNextEvent. and afterProcessNextEvent callbacks. Always called
+   * on the target thread, and the implementation does not have to be
+   * threadsafe. Order of callbacks is not guaranteed (i.e.
+   * afterProcessNextEvent may be called first depending on whether or not the
+   * observer is added in a nested loop). Holds a strong ref.
+   */
+  void addObserver(in nsIThreadObserver observer);
+
+  /**
+   * Remove an observer added via the addObserver call. Once removed the
+   * observer will never be called again by the thread.
+   */
+  void removeObserver(in nsIThreadObserver observer);
+
+  /**
+   * This method causes any events currently enqueued on the thread to be
+   * suppressed until PopEventQueue is called, and any event dispatched to this
+   * thread's nsIEventTarget will queue as well. Calls to PushEventQueue may be
+   * nested and must each be paired with a call to PopEventQueue in order to
+   * restore the original state of the thread. The returned nsIEventTarget may
+   * be used to push events onto the nested queue. Dispatching will be disabled
+   * once the event queue is popped. The thread will only ever process pending
+   * events for the innermost event queue. Must only be called on the target
+   * thread.
+   */
+  [noscript] nsIEventTarget pushEventQueue();
+
+  /**
+   * Revert a call to PushEventQueue. When an event queue is popped, any events
+   * remaining in the queue are appended to the elder queue. This also causes
+   * the nsIEventTarget returned from PushEventQueue to stop dispatching events.
+   * Must only be called on the target thread, and with the innermost event
+   * queue.
+   */
+  [noscript] void popEventQueue(in nsIEventTarget aInnermostTarget);
+};
+
+/**
+ * This interface provides the observer with hooks to implement a layered
+ * event queue.  For example, it is possible to overlay processing events
+ * for a GUI toolkit on top of the events for a thread:
+ *
+ *   var NativeQueue;
+ *   Observer = {
+ *     onDispatchedEvent(thread) {
+ *       NativeQueue.signal();
+ *     }
+ *     onProcessNextEvent(thread, mayWait, recursionDepth) {
+ *       if (NativeQueue.hasNextEvent())
+ *         NativeQueue.processNextEvent();
+ *       while (mayWait && !thread.hasPendingEvent()) {
+ *         NativeQueue.wait();
+ *         NativeQueue.processNextEvent();
+ *       }
+ *     }
+ *   };
+ *
+ * NOTE: The implementation of this interface must be threadsafe.
+ * 
+ * NOTE: It is valid to change the thread's observer during a call to an
+ *       observer method.
+ *
+ * NOTE: Will be split into two interfaces soon: one for onProcessNextEvent and
+ *       afterProcessNextEvent, then another that inherits the first and adds
+ *       onDispatchedEvent.
+ */
+[scriptable, uuid(09b424c3-26b0-4128-9039-d66f85b02c63)]
+interface nsIThreadObserver : nsISupports
+{
+  /**
+   * This method is called after an event has been dispatched to the thread.
+   * This method may be called from any thread. 
+   *
+   * @param thread
+   *   The thread where the event is being dispatched.
+   */
+  void onDispatchedEvent(in nsIThreadInternal thread);
+
+  /**
+   * This method is called when nsIThread::ProcessNextEvent is called.  It does
+   * not guarantee that an event is actually going to be processed.  This method
+   * is only called on the target thread.
+   *
+   * @param thread
+   *   The thread being asked to process another event.
+   * @param mayWait
+   *   Indicates whether or not the method is allowed to block the calling
+   *   thread.  For example, this parameter is false during thread shutdown.
+   * @param recursionDepth
+   *   Indicates the number of calls to ProcessNextEvent on the call stack in
+   *   addition to the current call.
+   */
+  void onProcessNextEvent(in nsIThreadInternal thread, in boolean mayWait,
+                          in unsigned long recursionDepth);
+
+  /**
+   * This method is called (from nsIThread::ProcessNextEvent) after an event
+   * is processed.  It does not guarantee that an event was actually processed
+   * (depends on the value of |eventWasProcessed|.  This method is only called
+   * on the target thread.
+   *
+   * @param thread
+   *   The thread that processed another event.
+   * @param recursionDepth
+   *   Indicates the number of calls to ProcessNextEvent on the call stack in
+   *   addition to the current call.
+   * @param eventWasProcessed
+   *   Indicates whether an event was actually processed. May be false if the
+   *   |mayWait| flag was false when calling nsIThread::ProcessNextEvent().
+   */
+  void afterProcessNextEvent(in nsIThreadInternal thread,
+                             in unsigned long recursionDepth,
+                             in bool eventWasProcessed);
+};

@@ -1,0 +1,171 @@
+<?xml version="1.0"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<bindings id="editorBindings"
+   xmlns="http://www.mozilla.org/xbl"
+   xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+   xmlns:xbl="http://www.mozilla.org/xbl">
+  
+  <binding id="editor" role="outerdoc">
+    <implementation type="application/javascript">
+      <constructor>
+        <![CDATA[
+          // Make window editable immediately only
+          //   if the "editortype" attribute is supplied
+          // This allows using same contentWindow for different editortypes,
+          //   where the type is determined during the apps's window.onload handler.
+          if (this.editortype)
+            this.makeEditable(this.editortype, true);
+        ]]>
+      </constructor>
+      <destructor/>
+
+      <field name="_editorContentListener">
+        <![CDATA[
+          ({
+            QueryInterface: function(iid)
+            {
+              if (iid.equals(Components.interfaces.nsIURIContentListener) ||
+                  iid.equals(Components.interfaces.nsISupportsWeakReference) ||
+                  iid.equals(Components.interfaces.nsISupports))
+              return this;
+
+              throw Components.results.NS_ERROR_NO_INTERFACE;
+            },
+            onStartURIOpen: function(uri)
+            {
+              return false;
+            },
+            doContent: function(contentType, isContentPreferred, request, contentHandler)
+            {
+              return false;
+            },
+            isPreferred: function(contentType, desiredContentType)
+            {
+              return false;
+            },
+            canHandleContent: function(contentType, isContentPreferred, desiredContentType)
+            {
+              return false;
+            },
+            loadCookie: null,
+            parentContentListener: null
+          })
+        ]]>
+      </field>
+      <method name="makeEditable">
+        <parameter name="editortype"/>
+        <parameter name="waitForUrlLoad"/>
+        <body>
+        <![CDATA[
+          this.editingSession.makeWindowEditable(this.contentWindow, editortype, waitForUrlLoad, true, false);
+          this.setAttribute("editortype", editortype);
+
+          this.docShell.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+              .getInterface(Components.interfaces.nsIURIContentListener)
+              .parentContentListener = this._editorContentListener;
+        ]]>
+        </body>
+      </method>
+      <method name="getEditor">
+        <parameter name="containingWindow"/>
+        <body>
+        <![CDATA[
+          return this.editingSession.getEditorForWindow(containingWindow);
+        ]]>
+        </body>
+      </method>
+      <method name="getHTMLEditor">
+        <parameter name="containingWindow"/>
+        <body>
+        <![CDATA[
+          var editor = this.editingSession.getEditorForWindow(containingWindow);
+          return editor.QueryInterface(Components.interfaces.nsIHTMLEditor);
+        ]]>
+        </body>
+      </method>
+
+      <field name="_finder">null</field>
+      <property name="finder" readonly="true">
+        <getter><![CDATA[
+          if (!this._finder) {
+            if (!this.docShell)
+              return null;
+
+            let Finder = Components.utils.import("resource://gre/modules/Finder.jsm", {}).Finder;
+            this._finder = new Finder(this.docShell);
+          }
+          return this._finder;
+        ]]></getter>
+      </property>
+
+      <field name="_fastFind">null</field>
+      <property name="fastFind"
+                readonly="true">
+        <getter>
+        <![CDATA[
+          if (!this._fastFind) {
+            if (!("@mozilla.org/typeaheadfind;1" in Components.classes))
+              return null;
+
+            if (!this.docShell)
+              return null;
+
+            this._fastFind = Components.classes["@mozilla.org/typeaheadfind;1"]
+                                       .createInstance(Components.interfaces.nsITypeAheadFind);
+            this._fastFind.init(this.docShell);
+          }
+          return this._fastFind;
+        ]]>
+        </getter>
+      </property>
+
+      <field name="_lastSearchString">null</field>
+      <field name="_lastSearchHighlight">false</field>
+
+      <property name="editortype"
+                onget="return this.getAttribute('editortype');"
+                onset="this.setAttribute('editortype', val); return val;"/>
+      <property name="webNavigation"
+                onget="return this.docShell.QueryInterface(Components.interfaces.nsIWebNavigation);"
+                readonly="true"/>
+      <property name="contentDocument" readonly="true"
+                onget="return this.webNavigation.document;"/>
+      <property name="docShell"
+                onget="return this.boxObject.QueryInterface(Components.interfaces.nsIContainerBoxObject).docShell;"
+                readonly="true"/>
+      <property name="currentURI"
+                readonly="true"
+                onget="return this.webNavigation.currentURI;"/>
+      <property name="contentWindow"
+                readonly="true"
+                onget="return this.docShell.QueryInterface(Components.interfaces.nsIInterfaceRequestor).getInterface(Components.interfaces.nsIDOMWindow);"/>
+      <property name="webBrowserFind"
+                readonly="true"
+                onget="return this.docShell.QueryInterface(Components.interfaces.nsIInterfaceRequestor).getInterface(Components.interfaces.nsIWebBrowserFind);"/>
+      <property name="markupDocumentViewer"
+                readonly="true"
+                onget="return this.docShell.contentViewer.QueryInterface(Components.interfaces.nsIMarkupDocumentViewer);"/>
+      <property name="editingSession"
+                readonly="true"
+                onget="return this.webNavigation.QueryInterface(Components.interfaces.nsIInterfaceRequestor).getInterface(Components.interfaces.nsIEditingSession);"/>
+      <property name="commandManager"
+                readonly="true"
+                onget="return this.webNavigation.QueryInterface(Components.interfaces.nsIInterfaceRequestor).getInterface(Components.interfaces.nsICommandManager);"/>
+      <property name="fullZoom"
+                onget="return this.markupDocumentViewer.fullZoom;"
+                onset="this.markupDocumentViewer.fullZoom = val;"/>
+      <property name="textZoom"
+                onget="return this.markupDocumentViewer.textZoom;"
+                onset="this.markupDocumentViewer.textZoom = val;"/>
+      <property name="isSyntheticDocument"
+                onget="return this.contentDocument.isSyntheticDocument;"
+                readonly="true"/>
+    </implementation>
+  </binding>
+
+</bindings>
+

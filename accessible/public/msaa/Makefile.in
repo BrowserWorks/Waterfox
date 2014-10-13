@@ -1,0 +1,52 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+GARBAGE += $(MIDL_GENERATED_FILES) done_gen dlldata.c
+
+MIDL_GENERATED_FILES = \
+	ISimpleDOMNode.h \
+	ISimpleDOMNode_p.c \
+	ISimpleDOMNode_i.c \
+	ISimpleDOMDocument.h \
+	ISimpleDOMDocument_p.c \
+	ISimpleDOMDocument_i.c \
+	ISimpleDOMText.h \
+	ISimpleDOMText_p.c \
+	ISimpleDOMText_i.c \
+	$(NULL)
+
+OS_LIBS = $(call EXPAND_LIBNAME,kernel32 rpcns4 rpcrt4 oleaut32)
+
+$(MIDL_GENERATED_FILES): done_gen
+
+done_gen: ISimpleDOMNode.idl \
+          ISimpleDOMDocument.idl \
+          ISimpleDOMText.idl
+
+	$(MIDL) $(MIDL_FLAGS) -I $(srcdir) -Oicf $(srcdir)/ISimpleDOMNode.idl
+	$(MIDL) $(MIDL_FLAGS) -Oicf $(srcdir)/ISimpleDOMDocument.idl
+	$(MIDL) $(MIDL_FLAGS) -Oicf $(srcdir)/ISimpleDOMText.idl
+	touch $@
+
+export:: done_gen
+
+# This marshall dll is also registered in the installer
+register::
+	regsvr32 -s $(DIST)/bin/$(SHARED_LIBRARY)
+
+EMBED_MANIFEST_AT = 2
+
+midl_exports := \
+    ISimpleDOMDocument.h \
+    ISimpleDOMDocument_i.c \
+    ISimpleDOMNode.h \
+    ISimpleDOMNode_i.c \
+    ISimpleDOMText.h \
+    ISimpleDOMText_i.c \
+    $(NULL)
+
+INSTALL_TARGETS += midl_exports
+midl_exports_FILES := $(midl_exports)
+midl_exports_DEST = $(DIST)/include
+midl_exports_TARGET := export

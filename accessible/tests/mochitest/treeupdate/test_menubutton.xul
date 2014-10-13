@@ -1,0 +1,198 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin" type="text/css"?>
+<?xml-stylesheet href="chrome://mochikit/content/tests/SimpleTest/test.css"
+                 type="text/css"?>
+
+<window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        title="Accessible XUL button hierarchy tests">
+
+  <script type="application/javascript"
+          src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js" />
+  <script type="application/javascript"
+          src="chrome://mochikit/content/tests/SimpleTest/EventUtils.js" />
+
+  <script type="application/javascript"
+          src="../common.js" />
+  <script type="application/javascript"
+          src="../role.js" />
+  <script type="application/javascript"
+          src="../events.js" />
+
+  <script type="application/javascript">
+  <![CDATA[
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Invokers
+
+    function openMenu(aButtonID, aMenuItemRole)
+    {
+      var menuItemRole = aMenuItemRole || ROLE_MENUITEM;
+      this.button = getAccessible(aButtonID);
+      this.menupopup = this.button.firstChild;
+
+      var checker = new invokerChecker(EVENT_REORDER, this.menupopup);
+      this.__proto__ = new synthClick(aButtonID, checker);
+
+      this.invoke = function openMenu_invoke()
+      {
+        var tree =
+          { PUSHBUTTON: [
+            { MENUPOPUP: [ ] }
+          ] };
+        testAccessibleTree(this.button, tree);
+
+        this.__proto__.invoke();
+      }
+
+      this.finalCheck = function openMenu_finalCheck()
+      {
+        var tree =
+          { PUSHBUTTON: [
+            { MENUPOPUP: [
+              { role: menuItemRole, children: [ ] },
+              { role: menuItemRole, children: [ ] }
+            ] }
+          ] };
+        testAccessibleTree(this.button, tree);
+
+        synthesizeKey("VK_ESCAPE", { });
+      }
+
+      this.getID = function openMenu_getID()
+      {
+        return "open menu of the button " + prettyName(aButtonID);
+      }
+    }
+
+    function openMenuButton(aButtonID)
+    {
+      this.buttonNode = getNode(aButtonID);
+      this.menupoupNode = this.buttonNode.firstChild;
+
+      this.eventSeq = [
+        new invokerChecker(EVENT_REORDER, this.menupoupNode)
+      ];
+
+      this.invoke = function openMenu_invoke()
+      {
+        var tree =
+          { PUSHBUTTON: [
+            { MENUPOPUP: [ ] },
+            { PUSHBUTTON: [ ] }
+          ] };
+        testAccessibleTree(this.buttonNode, tree);
+
+        this.buttonNode.open = true;
+      }
+
+      this.finalCheck = function openMenu_finalCheck()
+      {
+        var tree =
+          { PUSHBUTTON: [
+            { MENUPOPUP: [
+              { MENUITEM: [ ] },
+              { MENUITEM: [ ] }
+            ] },
+            { PUSHBUTTON: [ ] }
+          ] };
+        testAccessibleTree(this.buttonNode, tree);
+
+        this.buttonNode.open = false;
+      }
+
+      this.getID = function openMenu_getID()
+      {
+        return "open menu for menu button " + prettyName(aButtonID);
+      }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Do test
+
+    gA11yEventDumpToConsole = true; // debug stuff
+
+    var gQueue = null;
+
+    function doTest()
+    {
+      gQueue = new eventQueue();
+
+      gQueue.push(new openMenu("button1"));
+      gQueue.push(new openMenuButton("button2"));
+      gQueue.push(new openMenu("button3"));
+      gQueue.push(new openMenuButton("button4"));
+
+      var columnPickerBtn = getAccessible("tree").firstChild.lastChild;
+      gQueue.push(new openMenu(columnPickerBtn, ROLE_CHECK_MENU_ITEM));
+      gQueue.invoke(); // SimpleTest.finish()
+    }
+
+    SimpleTest.waitForExplicitFinish();
+    addA11yLoadEvent(doTest);
+  ]]>
+  </script>
+
+  <hbox flex="1" style="overflow: auto;">
+    <body xmlns="http://www.w3.org/1999/xhtml">
+      <a target="_blank"
+         href="https://bugzilla.mozilla.org/show_bug.cgi?id=249292"
+         title="Ensure accessible children for toolbarbutton types 'menu' and 'menu-button'">
+        Bug 249292
+      </a>
+      <a target="_blank"
+         href="https://bugzilla.mozilla.org/show_bug.cgi?id=630486"
+         title="Don't force accessible creation for popup children">
+        Bug 630486
+      </a>
+      <a target="_blank"
+         href="https://bugzilla.mozilla.org/show_bug.cgi?id=722265"
+         title="Column header selection popup no longer exposed to accessibility APIs">
+        Bug 722265
+      </a>
+      <br/>
+      <p id="display"></p>
+      <div id="content" style="display: none">
+      </div>
+      <pre id="test">
+      </pre>
+    </body>
+
+    <vbox flex="1">
+      <button id="button1" type="menu" label="button">
+        <menupopup>
+          <menuitem label="menuitem"/>
+          <menuitem label="menuitem"/>
+        </menupopup>
+      </button>
+      <button id="button2" type="menu-button" label="menu button">
+        <menupopup>
+          <menuitem label="menuitem"/>
+          <menuitem label="menuitem"/>
+        </menupopup>
+      </button>
+
+      <toolbarbutton id="button3" type="menu" label="toolbarbutton">
+        <menupopup>
+          <menuitem label="menuitem"/>
+          <menuitem label="menuitem"/>
+        </menupopup>
+      </toolbarbutton>
+      <toolbarbutton id="button4" type="menu-button" label="menu toolbarbutton">
+        <menupopup>
+          <menuitem label="menuitem"/>
+          <menuitem label="menuitem"/>
+        </menupopup>
+      </toolbarbutton>
+
+      <tree id="tree" flex="1">
+        <treecols>
+          <treecol id="col" flex="1" primary="true" label="column"/>
+          <treecol id="col2" flex="1" label="another column"/>
+        </treecols>
+        <treechildren/>
+      </tree>
+    </vbox>
+  </hbox>
+
+</window>
+

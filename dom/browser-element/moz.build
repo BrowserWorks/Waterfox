@@ -1,0 +1,47 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+EXPORTS.mozilla += [
+    'BrowserElementParent.h',
+]
+
+SOURCES += [
+    'BrowserElementParent.cpp',
+]
+
+EXTRA_COMPONENTS += [
+    'BrowserElementParent.js',
+    'BrowserElementParent.manifest',
+]
+
+EXTRA_JS_MODULES += [
+    'BrowserElementParent.jsm',
+    'BrowserElementPromptService.jsm',
+]
+
+FAIL_ON_WARNINGS = True
+
+LOCAL_INCLUDES += [
+    '../bluetooth',
+    '/content/html/content/src',
+]
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+FINAL_LIBRARY = 'gklayout'
+
+LOCAL_INCLUDES += [
+    '/content/base/src',
+    '/dom/',
+    '/dom/base',
+    '/dom/ipc',
+]
+
+MOCHITEST_MANIFESTS += [
+    'mochitest/mochitest-oop.ini',
+    'mochitest/mochitest.ini',
+    'mochitest/priority/mochitest.ini',
+]

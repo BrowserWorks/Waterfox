@@ -1,0 +1,13 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Branding Makefile
+#  - jars chrome artwork
+
+# resources needed for the metro tile interface
+ifeq ($(MOZ_WIDGET_TOOLKIT) $(DIST_SUBDIR),windows metro)
+TILE_FILES := $(wildcard $(srcdir)/VisualElements*)
+TILE_DEST := $(DIST)/bin/tileresources
+INSTALL_TARGETS += TILE
+endif

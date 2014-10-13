@@ -1,0 +1,112 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIDOMElement;
+interface nsIFile;
+
+[scriptable, uuid(99d2e9f1-3c86-40f7-81fd-3060c18489f0)]
+interface nsIShellService : nsISupports
+{
+  /**
+   * Determines whether or not Firefox is the "Default Browser."
+   * This is simply whether or not Firefox is registered to handle
+   * http links.
+   *
+   * @param aStartupCheck true if this is the check being performed
+   *                      by the first browser window at startup,
+   *                      false otherwise.
+   * @param aForAllTypes  true if the check should be made for HTTP and HTML.
+   *                      false if the check should be made for HTTP only.
+   *                      This parameter may be ignored on some platforms.
+   */
+  boolean isDefaultBrowser(in boolean aStartupCheck,
+                           [optional] in boolean aForAllTypes);
+
+  /**
+   * Registers Firefox as the "Default Browser."
+   *
+   * @param aClaimAllTypes Register Firefox as the handler for 
+   *                       additional protocols (ftp, chrome etc)
+   *                       and web documents (.html, .xhtml etc).
+   * @param aForAllUsers   Whether or not Firefox should attempt
+   *                       to become the default browser for all
+   *                       users on a multi-user system. 
+   */
+  void setDefaultBrowser(in boolean aClaimAllTypes, in boolean aForAllUsers);
+
+  /** 
+   * Used to determine whether or not to show a "Set Default Browser"
+   * query dialog. This attribute is true if the application is starting
+   * up and "browser.shell.checkDefaultBrowser" is true, otherwise it
+   * is false.
+   */
+  attribute boolean shouldCheckDefaultBrowser;
+
+  /**
+   * Used to determine whether or not to offer "Set as desktop background"
+   * functionality. Even if shell service is available it is not
+   * guaranteed that it is able to set the background for every desktop
+   * which is especially true for Linux with its many different desktop
+   * environments.
+   */
+  readonly attribute boolean canSetDesktopBackground;
+
+  /** 
+   * Flags for positioning/sizing of the Desktop Background image.
+   */
+  const long BACKGROUND_TILE      = 1;
+  const long BACKGROUND_STRETCH   = 2;
+  const long BACKGROUND_CENTER    = 3;
+  const long BACKGROUND_FILL      = 4;
+  const long BACKGROUND_FIT       = 5;
+
+    /**
+     * Sets the desktop background image using either the HTML <IMG> 
+     * element supplied or the background image of the element supplied.
+     *
+     * @param aImageElement Either a HTML <IMG> element or an element with
+     *                      a background image from which to source the
+     *                      background image. 
+     * @param aPosition     How to place the image on the desktop
+     */
+  void setDesktopBackground(in nsIDOMElement aElement, in long aPosition);
+
+  /**
+   * Constants identifying applications that can be opened with
+   * openApplication.
+   */
+  const long APPLICATION_MAIL        = 0;
+  const long APPLICATION_NEWS        = 1;
+
+  /**
+   * Opens the application specified. If more than one application of the
+   * given type is available on the system, the default or "preferred"
+   * application is used. 
+   */
+  void openApplication(in long aApplication);
+
+  /** 
+   * The desktop background color, visible when no background image is 
+   * used, or if the background image is centered and does not fill the 
+   * entire screen. A rgb value, where (r << 16 | g << 8 | b)
+   */
+  attribute unsigned long desktopBackgroundColor;
+
+  /**
+   * Opens an application with a specific URI to load.
+   * @param   application
+   *          The application file (or bundle directory, on OS X)
+   * @param   uri
+   *          The uri to be loaded by the application
+   */
+  void openApplicationWithURI(in nsIFile aApplication, in ACString aURI);
+
+  /**
+   * The default system handler for web feeds
+   */
+  readonly attribute nsIFile defaultFeedReader;
+};

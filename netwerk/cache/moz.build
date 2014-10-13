@@ -1,0 +1,53 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+XPIDL_SOURCES += [
+    'nsICache.idl',
+    'nsICacheEntryDescriptor.idl',
+    'nsICacheListener.idl',
+    'nsICacheService.idl',
+    'nsICacheSession.idl',
+    'nsICacheVisitor.idl',
+]
+
+XPIDL_MODULE = 'necko_cache'
+
+EXPORTS += [
+    'nsApplicationCacheService.h',
+    'nsCacheService.h',
+    'nsDeleteDir.h'
+]
+
+# These files cannot be built in unified mode because they force NSPR logging.
+SOURCES += [
+    'nsApplicationCacheService.cpp',
+    'nsCache.cpp',
+    'nsCacheEntry.cpp',
+    'nsCacheEntryDescriptor.cpp',
+    'nsCacheMetaData.cpp',
+    'nsCacheService.cpp',
+    'nsCacheSession.cpp',
+    'nsCacheUtils.cpp',
+    'nsDeleteDir.cpp',
+    'nsDiskCacheBinding.cpp',
+    'nsDiskCacheBlockFile.cpp',
+    'nsDiskCacheDevice.cpp',
+    'nsDiskCacheDeviceSQL.cpp',
+    'nsDiskCacheEntry.cpp',
+    'nsDiskCacheMap.cpp',
+    'nsDiskCacheStreams.cpp',
+    'nsMemoryCacheDevice.cpp',
+]
+
+FAIL_ON_WARNINGS = True
+
+MSVC_ENABLE_PGO = True
+
+FINAL_LIBRARY = 'necko'
+
+LOCAL_INCLUDES += [
+    '../base/src',
+]

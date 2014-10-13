@@ -1,0 +1,107 @@
+/* -*- Mode: IDL; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+/**
+ * The nsIDocShellLoadInfo interface defines an interface for specifying
+ * setup information used in a nsIDocShell::loadURI call.
+ */
+ 
+interface nsIURI;
+interface nsIInputStream;
+interface nsISHEntry;
+interface nsIDocShell;
+
+typedef long nsDocShellInfoLoadType;
+
+[scriptable, uuid(c8d3b1e1-565a-427e-9d68-b109910ce9b7)]
+interface nsIDocShellLoadInfo : nsISupports
+{
+    /** This is the referrer for the load. */
+    attribute nsIURI referrer;
+
+    /** The owner of the load, that is, the entity responsible for 
+     *  causing the load to occur. This should be a nsIPrincipal typically.
+     */
+    attribute nsISupports owner;
+
+    /** If this attribute is true and no owner is specified, copy
+     *  the owner from the referring document.
+     */
+    attribute boolean inheritOwner;
+
+    /** If this attribute is true only ever use the owner specify by
+     *  the owner and inheritOwner attributes.
+     *  If there are security reasons for why this is unsafe, such
+     *  as trying to use a systemprincipal owner for a content docshell
+     *  the load fails.
+     */
+    attribute boolean ownerIsExplicit;
+
+    /* these are load type enums... */
+    const long loadNormal = 0;                     // Normal Load
+    const long loadNormalReplace = 1;              // Normal Load but replaces current history slot
+    const long loadHistory = 2;                    // Load from history
+    const long loadReloadNormal = 3;               // Reload
+    const long loadReloadBypassCache = 4;
+    const long loadReloadBypassProxy = 5;
+    const long loadReloadBypassProxyAndCache = 6;
+    const long loadLink = 7;
+    const long loadRefresh = 8;
+    const long loadReloadCharsetChange = 9;
+    const long loadBypassHistory = 10;
+    const long loadStopContent = 11;
+    const long loadStopContentAndReplace = 12;
+    const long loadNormalExternal = 13;
+    const long loadNormalBypassCache = 14;
+    const long loadNormalBypassProxy = 15;
+    const long loadNormalBypassProxyAndCache = 16;
+    const long loadPushState = 17;                 // history.pushState or replaceState
+    const long loadReplaceBypassCache = 18;
+    const long loadReloadMixedContent = 19;
+    const long loadNormalAllowMixedContent = 20;
+
+    /** Contains a load type as specified by the load* constants */
+    attribute nsDocShellInfoLoadType loadType;
+
+    /** SHEntry for this page */
+    attribute nsISHEntry SHEntry;
+
+    /** Target for load, like _content, _blank etc. */
+    attribute wstring target;
+
+    /** Post data */
+    attribute nsIInputStream postDataStream;
+
+    /** Additional headers */
+    attribute nsIInputStream headersStream;
+
+    /** True if the referrer should be sent, false if it shouldn't be
+     *  sent, even if it's available. This attribute defaults to true.
+     */
+    attribute boolean sendReferrer;
+
+    /** True if the docshell has been created to load an iframe where the
+     * srcdoc attribute has been set.  Set when srcdocData is specified.
+     */
+    readonly attribute boolean isSrcdocLoad;
+
+    /** When set, the load will be interpreted as a srcdoc load, where contents
+     * of this string will be loaded instead of the URI.  Setting srcdocData
+     * sets isSrcdocLoad to true
+     */
+    attribute AString srcdocData;
+
+    /** When set, this is the Source Browsing Context for the navigation. */
+    attribute nsIDocShell sourceDocShell;
+
+    /**
+     * Used for srcdoc loads to give view-source knowledge of the load's base
+     * URI as this information isn't embedded in the load's URI.
+     */
+    attribute nsIURI baseURI;
+};

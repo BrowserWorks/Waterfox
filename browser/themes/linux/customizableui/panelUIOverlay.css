@@ -1,0 +1,97 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+%include ../../shared/customizableui/panelUIOverlay.inc.css
+
+.panel-subviews {
+  background-color: -moz-dialog;
+}
+
+#BMB_bookmarksPopup > menuitem[type="checkbox"] {
+  -moz-appearance: none !important; /* important, to override toolkit rule */
+}
+
+#BMB_bookmarksPopup menupopup[placespopup=true] {
+  margin-top: -6px;
+  padding-top: 2px;
+}
+
+/* Add some space at the top because there are no headers: */
+#BMB_bookmarksPopup menupopup[placespopup=true] > hbox > .popup-internal-box > .arrowscrollbox-scrollbox > .scrollbox-innerbox  {
+  padding-top: 4px;
+}
+
+.subviewbutton > .toolbarbutton-text {
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+.widget-overflow-list .toolbarbutton-1 > .toolbarbutton-menubutton-button {
+  -moz-appearance: none;
+  border: 0;
+  -moz-margin-start: 3px;
+}
+
+.widget-overflow-list .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker {
+  -moz-margin-start: 0;
+}
+
+.subviewbutton > .toolbarbutton-text {
+  -moz-padding-start: 16px;
+}
+
+.subviewbutton:-moz-any([image],[targetURI],.cui-withicon, .restoreallitem, .bookmark-item) > .toolbarbutton-text {
+  -moz-padding-start: 0;
+}
+
+.subviewbutton.bookmark-item > .toolbarbutton-icon {
+  -moz-margin-start: 3px;
+}
+
+/* subviewbutton entries for social sidebars have images that come from external
+/* sources, and are not guaranteed to be the size we want, so force the size on
+/* those icons. */
+toolbarbutton.social-provider-menuitem > .toolbarbutton-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.subviewbutton:-moz-any([image],[targetURI],.cui-withicon, .restoreallitem, .bookmark-item)[checked="true"] > .toolbarbutton-icon {
+  visibility: hidden;
+}
+
+menuitem.subviewbutton {
+  -moz-appearance: none !important;
+}
+
+menu.subviewbutton > .menu-right {
+  -moz-appearance: none;
+  list-style-image: url(chrome://browser/skin/places/bookmarks-menu-arrow.png);
+  -moz-image-region: rect(0, 16px, 16px, 0);
+  width: 16px;
+  height: 16px;
+}
+
+menu[disabled="true"].subviewbutton > .menu-right {
+  -moz-image-region: rect(0, 32px, 16px, 16px);
+}
+
+.subviewbutton > .toolbarbutton-icon {
+  -moz-margin-end: 5px !important;
+}
+
+.subviewbutton > .menu-right,
+.subviewbutton > .menu-iconic-left {
+  padding-top: 1px;
+  /* These need !important to override menu.css */
+  margin-top: 1px !important;
+  margin-bottom: 2px !important;
+}
+
+.PanelUI-subView toolbarseparator,
+.PanelUI-subView menuseparator,
+.cui-widget-panelview menuseparator,
+#PanelUI-footer-inner > toolbarseparator {
+  -moz-appearance: none !important;
+}

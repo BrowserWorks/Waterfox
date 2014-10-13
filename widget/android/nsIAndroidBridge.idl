@@ -1,0 +1,74 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+#include "nsIDOMWindow.idl"
+
+[scriptable, uuid(0843f3c1-043e-4c64-9d8c-091370548c05)]
+interface nsIBrowserTab : nsISupports {
+  readonly attribute nsIDOMWindow window;
+  readonly attribute float scale;
+};
+
+[scriptable, uuid(08426a73-e70b-4680-9282-630932e2b2bb)]
+interface nsIUITelemetryObserver : nsISupports {
+  void startSession(in wstring name,
+                    in unsigned long timestamp);
+  void stopSession(in wstring name,
+                   in wstring reason,
+                   in unsigned long timestamp);
+  void addEvent(in wstring action,
+                in wstring method,
+                in unsigned long timestamp,
+                in wstring extras);
+};
+
+[scriptable, uuid(c31331d2-afad-460f-9c66-728b8c838cec)]
+interface nsIAndroidBrowserApp : nsISupports {
+  nsIBrowserTab getBrowserTab(in int32_t tabId);
+  void getPreferences(in int32_t requestId,
+                      [array, size_is(count)] in wstring prefNames,
+                      in unsigned long count);
+  void observePreferences(in int32_t requestId,
+                          [array, size_is(count)] in wstring prefNames,
+                          in unsigned long count);
+  void removePreferenceObservers(in int32_t requestId);
+  nsIUITelemetryObserver getUITelemetryObserver();
+};
+
+[scriptable, uuid(59cfcb35-69b7-47b2-8155-32b193272666)]
+interface nsIAndroidViewport : nsISupports {
+  readonly attribute float x;
+  readonly attribute float y;
+  readonly attribute float width;
+  readonly attribute float height;
+  readonly attribute float pageLeft;
+  readonly attribute float pageTop;
+  readonly attribute float pageRight;
+  readonly attribute float pageBottom;
+  readonly attribute float cssPageLeft;
+  readonly attribute float cssPageTop;
+  readonly attribute float cssPageRight;
+  readonly attribute float cssPageBottom;
+  readonly attribute float zoom;
+};
+
+[scriptable, uuid(e1bfbc07-dbae-409d-a5b5-ef57522c1f15)]
+interface nsIAndroidDisplayport : nsISupports {
+  attribute float left;
+  attribute float top;
+  attribute float right;
+  attribute float bottom;
+  attribute float resolution;
+};
+
+[scriptable, uuid(1beb70d3-70f3-4742-98cc-a3d301b26c0c)]
+interface nsIAndroidBridge : nsISupports
+{
+  [implicit_jscontext] void handleGeckoMessage(in jsval message);
+  attribute nsIAndroidBrowserApp browserApp;
+  nsIAndroidDisplayport getDisplayPort(in boolean aPageSizeUpdate, in boolean isBrowserContentDisplayed, in int32_t tabId, in nsIAndroidViewport metrics);
+  void contentDocumentChanged();
+  boolean isContentDocumentDisplayed();
+};

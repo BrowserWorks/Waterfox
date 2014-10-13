@@ -1,0 +1,33 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+SOURCES += [
+    'tremor_block.c',
+    'tremor_codebook.c',
+    'tremor_floor0.c',
+    'tremor_floor1.c',
+    'tremor_info.c',
+    'tremor_mapping0.c',
+    'tremor_mdct.c',
+    'tremor_registry.c',
+    'tremor_res012.c',
+    'tremor_sharedbook.c',
+    'tremor_synthesis.c',
+    'tremor_window.c',
+]
+
+FINAL_LIBRARY = 'gkmedias'
+
+if CONFIG['OS_ARCH'] == 'AIX':
+    DEFINES['alloca'] = '__alloca'
+
+if CONFIG['TARGET_CPU'] == 'arm' and CONFIG['GNU_CC'] and not CONFIG['MOZ_THUMB2']:
+    DEFINES['_ARM_ASSEM_'] = True
+
+LOCAL_INCLUDES += [
+    '/media/libtremor/include/tremor',
+]
+

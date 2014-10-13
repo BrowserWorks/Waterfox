@@ -1,0 +1,50 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=403852
+-->
+  <title>Test for Bug 403852</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+</head>
+
+<body>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=403852">Mozilla Bug 403852</a>
+<p id="display">
+  <input id="fileList" type="file"></input>
+  <canvas id="canvas"></canvas>
+</p>
+<div id="content" style="display: none">
+</div>
+
+<pre id="test">
+<script class="testbody" type="text/javascript">
+
+var testFile = SpecialPowers.Services.dirsvc.get("ProfD", SpecialPowers.Ci.nsIFile);
+testFile.append("prefs.js");
+
+var fileList = document.getElementById('fileList');
+SpecialPowers.wrap(fileList).value = testFile.path;
+
+// Make sure the file is accessible with indexed notation
+var domFile = fileList.files[0];
+
+is(domFile.name, "prefs.js", "fileName should be prefs.js");
+
+ok("lastModifiedDate" in domFile, "lastModifiedDate must be present");
+
+var d = new Date(testFile.lastModifiedTime);
+ok(d.getTime() == domFile.lastModifiedDate.getTime(), "lastModifiedDate should be the same.");
+
+var cf = document.getElementById("canvas").mozGetAsFile("canvFile");
+
+var x = new Date();
+var y = cf.lastModifiedDate;
+var z = new Date();
+
+ok((x.getTime() <= y.getTime()) && (y.getTime() <= z.getTime()), "lastModifiedDate of file which does not have last modified date should be current time");
+
+</script>
+</pre>
+</body> </html>

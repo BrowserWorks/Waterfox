@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY pluginWizard.title                                  "Plugin Finder Service">
+<!ENTITY pluginWizard.firstPage.title                        "Welcome to the &pluginWizard.title;">
+
+<!ENTITY pluginWizard.checkingForPlugins.description.label   "&brandShortName; is now checking for available plugins…">
+
+<!ENTITY pluginWizard.availablePluginsPage.title             "Available Plugin Downloads">
+<!ENTITY pluginWizard.availablePluginsPage.description.label "The following plugins are available:">
+<!ENTITY pluginWizard.availablePluginsPage.continueMsg.label "Press Next to install these plugins.">
+<!ENTITY pluginWizard.availablePluginsPage.installerUI       "Some plugins may require additional information from you during installation.">
+
+<!ENTITY pluginWizard.licensePage.title                      "Plugin Licenses">
+<!ENTITY pluginWizard.licensePage.accept.label               "I agree.">
+<!ENTITY pluginWizard.licensePage.deny.label                 "I do not agree (plugin will not be installed).">
+
+<!ENTITY pluginWizard.installPluginsPage.title               "Installing Plugins">
+<!ENTITY pluginWizard.installPluginsPage.description.label   "&brandShortName; is installing plugins…">
+
+<!ENTITY pluginWizard.finalPage.description.label            "&brandShortName; finished installing the missing plugins:">
+
+<!ENTITY pluginWizard.finalPage.moreInfo.label               "Find out more about Plugins or manually find missing plugins.">
+<!ENTITY pluginWizard.finalPage.restart.label                "&brandShortName; needs to be restarted for the plugin(s) to work.">
+
+<!-- LOCALIZATION NOTE (unsupportedPlatform.pre): Mobile only. Flash (the only plugin available on mobile)
+     is not supported on some devices. Include a trailing space as needed. -->
+<!ENTITY unsupportedPlatform.pre                             "We're very sorry, but &brandShortName; can't play Flash on this device. ">
+<!-- LOCALIZATION NOTE (unsupportedPlatform.learnMore): Mobile only. This text is used to link to a SUMO page explaining why Flash is not
+     supported on this device. Use the unicode ellipsis char, \u2026, or use "..." if \u2026 doesn't suit traditions in your locale. -->
+<!ENTITY unsupportedPlatform.learnMore                       "Learn More…">
+<!-- LOCALIZATION NOTE (unsupportedPlatform.post): Mobile only. Include text here if needed for your locale. -->
+<!ENTITY unsupportedPlatform.post                            "">
+
+<!ENTITY missingPlugin                                       "A plugin is needed to display this content.">
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "Tap here to activate plugin.">
+<!ENTITY clickToActivatePlugin                               "Activate plugin.">
+<!ENTITY checkForUpdates                                     "Check for updates…">
+<!ENTITY disabledPlugin                                      "This plugin is disabled.">
+<!ENTITY blockedPlugin.label                                 "This plugin has been blocked for your protection.">
+<!ENTITY hidePluginBtn.label                                 "Hide plugin">
+<!ENTITY installPlugin                                       "Install plugin…">
+<!ENTITY managePlugins                                       "Manage plugins…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Reload the page">
+<!ENTITY reloadPlugin.post                                   " to try again.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Send crash report">
+<!ENTITY report.submitting                                   "Sending report…">
+<!ENTITY report.submitted                                    "Crash report sent.">
+<!ENTITY report.disabled                                     "Crash reporting disabled.">
+<!ENTITY report.failed                                       "Submission failed.">
+<!ENTITY report.unavailable                                  "No report available.">
+<!ENTITY report.comment                                      "Add a comment (comments are publicly visible)">
+<!ENTITY report.pageURL                                      "Include the page's URL">
+
+<!ENTITY plugin.file                                         "File">
+<!ENTITY plugin.mimeTypes                                    "MIME Types">

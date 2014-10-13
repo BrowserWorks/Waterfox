@@ -1,0 +1,28 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+/**
+ * The result of query content events.  succeeded propery can be used always.
+ * Whether other properties can be used or not depends on the event.
+ * See nsIDOMWindowUtils.idl, which properites can be used was documented.
+ */
+
+[scriptable, uuid(4b4ba266-b51e-4f0f-8d0e-9f13cb2a0056)]
+interface nsIQueryContentEventResult : nsISupports
+{
+  readonly attribute unsigned long offset;
+  readonly attribute boolean reversed;
+
+  readonly attribute long left;
+  readonly attribute long top;
+  readonly attribute long width;
+  readonly attribute long height;
+  readonly attribute AString text;
+
+  readonly attribute boolean succeeded;
+  readonly attribute boolean notFound;
+};

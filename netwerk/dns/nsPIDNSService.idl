@@ -1,0 +1,39 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIDNSService.idl"
+
+/**
+ * This is a private interface used by the internals of the networking library.
+ * It will never be frozen.  Do not use it in external code.
+ */
+[scriptable, uuid(6b16fb1f-5709-4c94-a89f-a22be873c54d)]
+interface nsPIDNSService : nsIDNSService
+{
+    /**
+     * called to initialize the DNS service.
+     */
+    void init();
+
+    /**
+     * called to shutdown the DNS service.  any pending asynchronous
+     * requests will be canceled, and the local cache of DNS records
+     * will be cleared.  NOTE: the operating system may still have
+     * its own cache of DNS records, which would be unaffected by
+     * this method.
+     */
+    void shutdown();
+
+    /**
+     * Whether or not DNS prefetching (aka RESOLVE_SPECULATE) is enabled
+     */
+    attribute boolean prefetchEnabled;
+
+    /**
+     * @return whether the DNS service is offline.
+     */
+    attribute boolean offline;
+};

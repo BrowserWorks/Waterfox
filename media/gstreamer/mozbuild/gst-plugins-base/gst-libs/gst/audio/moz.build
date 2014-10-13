@@ -1,0 +1,39 @@
+FINAL_LIBRARY = 'gkmedias'
+DEFINES["HAVE_CONFIG_H"] = 1
+LOCAL_INCLUDES += ['/media/gstreamer/gst-plugins-base']
+LOCAL_INCLUDES += ['/media/gstreamer/gst-plugins-base/gst-libs/gst/audio']
+LOCAL_INCLUDES += ['/media/gstreamer/glib',
+ '/media/gstreamer/glib/gio',
+ '/media/gstreamer/glib/glib',
+ '/media/gstreamer/glib/gmodule',
+ '/media/gstreamer/gst-plugins-bad',
+ '/media/gstreamer/gst-plugins-bad/gst-libs',
+ '/media/gstreamer/gst-plugins-base',
+ '/media/gstreamer/gst-plugins-base/gst-libs',
+ '/media/gstreamer/gst-plugins-good',
+ '/media/gstreamer/gst-plugins-good/gst-libs',
+ '/media/gstreamer/gstreamer',
+ '/media/gstreamer/gstreamer/gst-libs',
+ '/media/gstreamer/gstreamer/libs',
+ '/media/gstreamer/gstreamer/libs/gst-libs',
+ '/media/gstreamer/orc']
+# libgstaudio_1.0
+SOURCES += ['../../../../../gst-plugins-base/gst-libs/gst/audio/audio-channels.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/audio/audio-enumtypes.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/audio/audio-format.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/audio/audio-info.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/audio/audio.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/audio/gstaudiobasesink.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/audio/gstaudiobasesrc.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/audio/gstaudiocdsrc.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/audio/gstaudioclock.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/audio/gstaudiodecoder.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/audio/gstaudioencoder.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/audio/gstaudiofilter.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/audio/gstaudioiec61937.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/audio/gstaudiometa.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/audio/gstaudioringbuffer.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/audio/gstaudiosink.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/audio/gstaudiosrc.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/audio/streamvolume.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/audio/tmp-orc.c']

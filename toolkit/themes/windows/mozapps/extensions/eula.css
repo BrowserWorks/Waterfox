@@ -1,0 +1,47 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#icon {
+  list-style-image: url("chrome://mozapps/skin/extensions/extensionGeneric.png");
+  max-width: 48px;
+  max-height: 48px;
+  -moz-margin-end: 6px;
+}
+
+#eula-dialog[addontype="theme"] #icon {
+  list-style-image: url("chrome://mozapps/skin/extensions/themeGeneric.png");
+}
+
+#eula-dialog[addontype="locale"] #icon {
+  list-style-image: url("chrome://mozapps/skin/extensions/localeGeneric.png");
+}
+
+#eula-dialog[addontype="plugin"] #icon {
+  list-style-image: url("chrome://mozapps/skin/plugins/pluginGeneric.png");
+}
+
+#eula-dialog[addontype="dictionary"] #icon {
+  list-style-image: url("chrome://mozapps/skin/extensions/dictionaryGeneric.png");
+}
+
+#heading-container {
+  -moz-box-align: center;
+}
+
+#heading {
+  font-size: 120%;
+}
+
+#eula {
+  -moz-appearance: none;
+  color: -moz-FieldText;
+  background-color: -moz-Field;
+  margin: 1em;
+  border: 1px solid;
+  -moz-border-top-colors: ActiveBorder;
+  -moz-border-right-colors: ActiveBorder;
+  -moz-border-bottom-colors: ActiveBorder;
+  -moz-border-left-colors: ActiveBorder;
+}
+

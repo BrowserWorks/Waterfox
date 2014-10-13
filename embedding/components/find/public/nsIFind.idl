@@ -1,0 +1,39 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ 
+#include "nsISupports.idl"
+
+interface nsIDOMRange;
+interface nsIWordBreaker;
+
+[scriptable, uuid(75125d55-37ee-4575-b9b5-f33bfa68c2a1)]
+interface nsIFind : nsISupports
+{
+  attribute boolean findBackwards;
+  attribute boolean caseSensitive;
+
+  /**
+   * Use "find entire words" mode by setting to a word breaker
+   * or null, to disable "entire words" mode.
+   */
+  [noscript] attribute nsIWordBreaker wordBreaker;
+
+  /**
+   * Find some text in the current context. The implementation is
+   * responsible for performing the find and highlighting the text.
+   *
+   * @param aPatText     The text to search for.
+   * @param aSearchRange A Range specifying domain of search.
+   * @param aStartPoint  A Range specifying search start point.
+   *                     If not collapsed, we'll start from
+   *                     end (forward) or start (backward).
+   * @param aEndPoint    A Range specifying search end point.
+   *                     If not collapsed, we'll end at
+   *                     end (forward) or start (backward).
+   * @retval             A range spanning the match that was found (or null).
+   */
+  nsIDOMRange Find(in wstring aPatText, in nsIDOMRange aSearchRange,
+                   in nsIDOMRange aStartPoint, in nsIDOMRange aEndPoint);
+};

@@ -1,0 +1,74 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim:set tw=80 expandtab softtabstop=2 ts=2 sw=2: */
+
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIDOMMozBrowserFrame.idl"
+
+interface nsITabParent;
+
+[scriptable, builtinclass, uuid(929AED00-3E15-49B7-8CA2-75003715B7E7)]
+interface nsIMozBrowserFrame : nsIDOMMozBrowserFrame
+{
+  /**
+   * Gets whether this frame really is a browser or app frame.
+   *
+   * In order to really be a browser frame, this frame's
+   * nsIDOMMozBrowserFrame::mozbrowser attribute must be true, and the frame
+   * may have to pass various security checks.
+   */
+  [infallible] readonly attribute boolean reallyIsBrowserOrApp;
+
+  /**
+   * Gets whether this frame really is an app frame.
+   *
+   * In order to really be an app frame, this frame must really be a browser
+   * frame (this requirement will go away eventually), and the frame's mozapp
+   * attribute must point to the manifest of a valid app.
+   */
+  [infallible] readonly attribute boolean reallyIsApp;
+
+  /**
+   * This corresponds to the expecting-system-message attribute, which tells us
+   * whether we should expect that this frame will receive a system message once
+   * it starts up.
+   *
+   * It's the embedder's job to set this attribute on a frame.  Its presence
+   * might cause us to increase the priority of the frame's process.
+   */
+  [infallible] readonly attribute boolean isExpectingSystemMessage;
+
+  /**
+   * Gets this frame's app manifest URL, if the frame really is an app frame.
+   * Otherwise, returns the empty string.
+   *
+   * This method is guaranteed not to fail.
+   */
+  readonly attribute AString appManifestURL;
+
+  /**
+   * Normally, a frame tries to create its frame loader when its src is
+   * modified, or its contentWindow is accessed.
+   *
+   * disallowCreateFrameLoader prevents the frame element from creating its
+   * frame loader (in the same way that not being inside a document prevents the
+   * creation of a frame loader).  allowCreateFrameLoader lifts this restriction.
+   *
+   * These methods are not re-entrant -- it is an error to call
+   * disallowCreateFrameLoader twice without first calling allowFrameLoader.
+   *
+   * It's also an error to call either method if we already have a frame loader.
+   */
+  void disallowCreateFrameLoader();
+  void allowCreateFrameLoader();
+
+  /**
+   * Create a remote (i.e., out-of-process) frame loader attached to the given
+   * tab parent.
+   *
+   * It is an error to call this method if we already have a frame loader.
+   */
+  void createRemoteFrameLoader(in nsITabParent aTabParent);
+};

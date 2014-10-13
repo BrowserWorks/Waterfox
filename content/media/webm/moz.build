@@ -1,0 +1,26 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+EXPORTS += [
+    'WebMDecoder.h',
+    'WebMReader.h',
+]
+
+UNIFIED_SOURCES += [
+    'WebMBufferedParser.cpp',
+    'WebMDecoder.cpp',
+    'WebMReader.cpp',
+]
+
+if CONFIG['MOZ_WEBM_ENCODER']:
+    EXPORTS += ['WebMWriter.h']
+    UNIFIED_SOURCES += ['EbmlComposer.cpp',
+                        'WebMWriter.cpp',
+    ]
+
+FAIL_ON_WARNINGS = True
+
+FINAL_LIBRARY = 'gklayout'

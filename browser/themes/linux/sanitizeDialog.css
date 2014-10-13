@@ -1,0 +1,107 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#sanitizeDurationChoice {
+  -moz-margin-end: 0;
+}
+
+/* Align the duration label with the warning box and item list */
+#sanitizeDurationLabel {
+  -moz-margin-start: 3px;
+}
+
+
+/* Hide the duration dropdown suffix label if it's empty.  Otherwise it
+   takes up a little space, causing the end of the dropdown to not be aligned
+   with the warning box. */
+#sanitizeDurationSuffixLabel[value=""] {
+  display: none;
+}
+
+
+/* Places tree */
+#placesTreechildren::-moz-tree-row(selected),
+#placesTreechildren::-moz-tree-row(grippyRow) {
+  background: #999;
+}
+
+#placesTreechildren::-moz-tree-cell-text(selected) {
+  color: #111;
+}
+
+
+/* Sanitize everything warning box */
+#sanitizeEverythingWarningBox {
+  background-color: Window;
+  border: 1px solid ThreeDDarkShadow;
+  border-radius: 5px;
+  padding: 16px;
+}
+
+#sanitizeEverythingWarningIcon {
+  list-style-image: url("moz-icon://stock/gtk-dialog-warning?size=dialog");
+  padding: 0;
+  margin: 0;
+}
+
+#sanitizeEverythingWarningDescBox {
+  padding: 0 16px;
+  margin: 0;
+}
+
+
+/* Progressive disclosure button */
+#detailsExpanderWrapper {
+  padding: 0;
+  margin-top: 6px;
+  margin-bottom: 6px;
+  -moz-margin-start: -6px;
+  -moz-margin-end: 0;
+}
+
+.expander-up,
+.expander-down {
+  min-width: 0;
+  padding: 2px 0;
+  -moz-padding-start: 2px;
+}
+
+.expander-up {
+  list-style-image: url("chrome://global/skin/arrow/arrow-up.gif");
+}
+
+.expander-down {
+  list-style-image: url("chrome://global/skin/arrow/arrow-dn.gif");
+}
+
+.expander-down:hover:active {
+  list-style-image: url("chrome://global/skin/arrow/arrow-dn-hov.gif");
+}
+
+.expander-up:hover:active {
+  list-style-image: url("chrome://global/skin/arrow/arrow-up-hov.gif");
+}
+
+
+/* Make the item list the same width as the warning box */
+#itemList {
+  -moz-margin-start: 0;
+  -moz-margin-end: 0;
+}
+
+/* Without this a useless scrollbar appears in the listbox when its rows
+   attribute is set to the total number of listitems, as it is currently.  See
+   bug 489958 comment 14 and bug 491788. */
+#itemList > listitem {
+  padding: 1px 0;
+}
+
+
+/* Align the last dialog button with the end of the warning box */
+.prefWindow-dlgbuttons {
+  -moz-margin-end: 0;
+}
+.dialog-button[dlgtype="accept"] {
+  -moz-margin-end: 0;
+}

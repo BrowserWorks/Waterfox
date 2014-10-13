@@ -1,0 +1,54 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+include protocol PNecko;
+include protocol PBrowser;
+include URIParams;
+
+
+using class IPC::SerializedLoadContext from "SerializedLoadContext.h";
+
+namespace mozilla {
+namespace net {
+
+//-------------------------------------------------------------------
+protocol PWyciwygChannel
+{
+  manager PNecko;
+
+parent:
+  __delete__();
+
+  Init(URIParams uri);
+  AsyncOpen(URIParams             originalURI,
+            uint32_t              loadFlags,
+            SerializedLoadContext loadContext,
+            PBrowser browser);
+  AppData(SerializedLoadContext loadContext, PBrowser browser);
+
+  // methods corresponding to those of nsIWyciwygChannel
+  WriteToCacheEntry(nsString data);
+  CloseCacheEntry(nsresult reason);
+  SetCharsetAndSource(int32_t source, nsCString charset);
+  SetSecurityInfo(nsCString securityInfo);
+  Cancel(nsresult status);
+
+child:
+  OnStartRequest(nsresult  statusCode,
+                 int64_t   contentLength,
+                 int32_t   source,
+                 nsCString charset,
+                 nsCString securityInfo);
+
+  OnDataAvailable(nsCString data,
+                  uint64_t  offset);
+
+  OnStopRequest(nsresult statusCode);
+
+  CancelEarly(nsresult statusCode);
+};
+
+
+} // namespace net
+} // namespace mozilla

@@ -1,0 +1,135 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=868943
+-->
+<head>
+  <title>Test for Bug 868943</title>
+  <script type="application/javascript" src="/MochiKit/packed.js"></script>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="application/javascript" src="/tests/SimpleTest/EventUtils.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=868943">Mozilla Bug 868943</a>
+<p id="display"></p>
+<div id="content">
+</div>
+<pre id="test">
+<script type="application/javascript">
+
+/** Test for Bug 868943 **/
+
+function testVideoPlayPause() {
+  var lockState_cpu = true;
+  var lockState_screen = true;
+  var count_cpu = 0;
+  var count_screen = 0;
+
+  var content = document.getElementById('content');
+
+  var video = document.createElement('video');
+  video.src = "wakelock.ogv";
+  content.appendChild(video);
+
+  var startDate;
+  video.addEventListener('playing', function() {
+    startDate = new Date();
+
+    // The next step is to unlock the resource.
+    lockState_cpu = false;
+    lockState_screen = false;
+    video.pause();
+  });
+
+  navigator.mozPower.addWakeLockListener(function testVideoPlayPauseListener(topic, state) {
+    var locked = state == "locked-foreground" ||
+                 state == "locked-background";
+
+    if (topic == "cpu") {
+      is(locked, lockState_cpu, "Video element locked the cpu - paused");
+      count_cpu++;
+    } else if (topic == "screen") {
+      is(locked, lockState_screen, "Video element locked the screen - paused");
+      count_screen++;
+    }
+
+    if (count_cpu == 2 && count_screen == 2) {
+      var diffDate = (new Date() - startDate);
+      ok(diffDate > 200, "There was at least 200 milliseconds between the stop and the wakelock release");
+
+      content.removeChild(video);
+      navigator.mozPower.removeWakeLockListener(testVideoPlayPauseListener);
+      runTests();
+    }
+  });
+
+  video.play();
+}
+
+function testVideoPlay() {
+  var lockState_cpu = true;
+  var lockState_screen = true;
+  var count_cpu = 0;
+  var count_screen = 0;
+
+  var content = document.getElementById('content');
+
+  var video = document.createElement('video');
+  video.src = "wakelock.ogv";
+  content.appendChild(video);
+
+  var startDate;
+  video.addEventListener('progress', function() {
+    startDate = new Date();
+  });
+
+  navigator.mozPower.addWakeLockListener(function testVideoPlayListener(topic, state) {
+    var locked = state == "locked-foreground" ||
+                 state == "locked-background";
+
+    if (topic == "cpu") {
+      is(locked, lockState_cpu, "Video element locked the cpu - paused");
+      count_cpu++;
+    } else if (topic == "screen") {
+      is(locked, lockState_screen, "Video element locked the screen - paused");
+      count_screen++;
+    }
+
+    if (count_cpu == 1 && count_screen == 1) {
+      // The next step is to unlock the resource.
+      lockState_cpu = false;
+      lockState_screen = false;
+    } else if (count_cpu == 2 && count_screen == 2) {
+      var diffDate = (new Date() - startDate);
+      ok(diffDate > 200, "There was at least milliseconds between the stop and the wakelock release");
+
+      content.removeChild(video);
+      navigator.mozPower.removeWakeLockListener(testVideoPlayListener);
+      runTests();
+    }
+  });
+
+  video.play();
+}
+
+var tests = [ testVideoPlayPause, testVideoPlay ];
+function runTests() {
+  if (!tests.length) {
+    SimpleTest.finish();
+    return;
+  }
+
+  var test =  tests.pop();
+  test();
+};
+
+SpecialPowers.addPermission("power", true, document);
+SpecialPowers.pushPrefEnv({"set": [["media.wakelock_timeout", 500]]}, runTests);
+
+SimpleTest.waitForExplicitFinish();
+
+</script>
+</pre>
+</body>
+</html>

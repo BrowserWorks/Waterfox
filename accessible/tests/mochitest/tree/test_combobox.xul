@@ -1,0 +1,286 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin" type="text/css"?>
+<?xml-stylesheet href="chrome://mochikit/content/tests/SimpleTest/test.css"
+                 type="text/css"?>
+
+<window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        title="Accessible XUL menulist and textbox @autocomplete hierarchy tests">
+
+  <script type="application/javascript"
+          src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js" />
+
+  <script type="application/javascript"
+          src="../common.js" />
+  <script type="application/javascript"
+          src="../role.js" />
+
+  <script type="application/javascript">
+  <![CDATA[
+    ////////////////////////////////////////////////////////////////////////////
+    // Test
+
+    function doTest()
+    {
+      //////////////////////////////////////////////////////////////////////////
+      // menulist
+
+      var accTree = {
+        role: ROLE_COMBOBOX,
+        children: [
+          {
+            role: ROLE_COMBOBOX_LIST,
+            children: [
+              {
+                role: ROLE_COMBOBOX_OPTION,
+                children: []
+              },
+              {
+                role: ROLE_COMBOBOX_OPTION,
+                children: []
+              }
+            ]
+          }
+        ]
+      };
+
+      if (!MAC) {
+        testAccessibleTree("menulist", accTree);
+      } else {
+        todo(false, "Make this test pass on OSX (bug 650366)");
+      }
+
+      //////////////////////////////////////////////////////////////////////////
+      // editable menulist
+
+      accTree = {
+        role: ROLE_COMBOBOX,
+        children: [
+          {
+            role: ROLE_ENTRY,
+            children: [
+              // no text leaf accessible for text node
+            ]
+          },
+          {
+            role: ROLE_COMBOBOX_LIST, // context menu
+            children: []
+          },
+          {
+            role: ROLE_PUSHBUTTON, // dropmarker
+            children: []
+          },
+          {
+            role: ROLE_COMBOBOX_LIST, // option list
+            children: [
+              {
+                role: ROLE_COMBOBOX_OPTION,
+                children: []
+              },
+              {
+                role: ROLE_COMBOBOX_OPTION,
+                children: []
+              }
+            ]
+          }
+        ]
+      };
+
+      if (!MAC) {
+        testAccessibleTree("menulist2", accTree);
+      } else {
+        todo(false, "Make this test pass on OSX (bug 551957)");
+      }
+
+      //////////////////////////////////////////////////////////////////////////
+      // textbox@type=autocomplete #1 (history)
+
+      accTree = {
+        // textbox
+        role: ROLE_AUTOCOMPLETE,
+        children: [
+          {
+            // html:input
+            role: ROLE_ENTRY,
+            children: [
+              {
+                // #text
+                role: ROLE_TEXT_LEAF,
+                name: "http://mochi.test:8888/redirect-a11y.html",
+                children: []
+              }
+            ]
+          },
+          {
+            // xul:menupopup
+            role: ROLE_COMBOBOX_LIST, // context menu popup
+            children: []
+          }
+        ]
+      };
+
+      // XPFE and Toolkit autocomplete widgets differ.
+      var ac1h = document.getElementById("autocomplete");
+      if ("clearResults" in ac1h) {
+        SimpleTest.ok(true, "Testing (Old) XPFE autocomplete widget. (ac1h)");
+
+        // Popup is always created.
+        accTree.children.push(
+          {
+            // xul:panel
+            role: ROLE_COMBOBOX_LIST,
+            children: [
+              {
+                // xul:tree
+                role: ROLE_TABLE,
+                children: [
+                  {
+                    // xul:treecols
+                    role: ROLE_LIST,
+                    children: [
+                      {
+                        // xul:treecol
+                        role: ROLE_COLUMNHEADER,
+                        children: []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+          );
+      } else {
+        SimpleTest.ok(true, "Testing (New) Toolkit autocomplete widget. (ac1h)");
+
+        // Popup is lazily created, so not present in this case.
+      }
+
+      testAccessibleTree("autocomplete", accTree);
+
+      //////////////////////////////////////////////////////////////////////////
+      // textbox@type=autocomplete #2 (child menupoup)
+
+      accTree = {
+        // textbox
+        role: ROLE_AUTOCOMPLETE,
+        children: [
+          {
+            // menupopup
+            role: ROLE_COMBOBOX_LIST, // autocomplete menu popup
+            children: [
+              {
+                // menuitem
+                role: ROLE_COMBOBOX_OPTION,
+                children: []
+              }
+            ]
+          },
+          {
+            // html:input
+            role: ROLE_ENTRY,
+            children: [
+              // no text leaf accessible for text node
+            ]
+          },
+          {
+            // xul:menupopup
+            role: ROLE_COMBOBOX_LIST, // context menu popup
+            children: []
+          }
+        ]
+      };
+
+      // XPFE and Toolkit autocomplete widgets differ.
+      var ac2cmp = document.getElementById("autocomplete2");
+      if ("clearResults" in ac2cmp) {
+        SimpleTest.ok(true, "Testing (Old) XPFE autocomplete widget. (ac2mp)");
+
+        // Popup is always created.
+        accTree.children.push(
+          {
+            // xul:panel
+            role: ROLE_COMBOBOX_LIST,
+            children: [
+              {
+                // xul:tree
+                role: ROLE_TABLE,
+                children: [
+                  {
+                    // xul:treecols
+                    role: ROLE_LIST,
+                    children: [
+                      {
+                        // xul:treecol
+                        role: ROLE_COLUMNHEADER,
+                        children: []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+          );
+      } else {
+        SimpleTest.ok(true, "Testing (New) Toolkit autocomplete widget. (ac2mp)");
+
+        // Popup is lazily created, so not present in this case.
+      }
+
+      testAccessibleTree("autocomplete2", accTree);
+
+      SimpleTest.finish()
+    }
+
+    SimpleTest.waitForExplicitFinish();
+    addA11yLoadEvent(doTest);
+  ]]>
+  </script>
+
+  <hbox flex="1" style="overflow: auto;">
+    <body xmlns="http://www.w3.org/1999/xhtml">
+      <a target="_blank"
+         href="https://bugzilla.mozilla.org/show_bug.cgi?id=249292"
+         title="Ensure accessible children for toolbarbutton types 'menu' and 'menu-button'">
+        Mozilla Bug 249292
+      </a>
+      <a target="_blank"
+         href="https://bugzilla.mozilla.org/show_bug.cgi?id=626660"
+         title="Cache rendered text on a11y side">
+        Mozilla Bug 626660
+      </a><br/>
+      <p id="display"></p>
+      <div id="content" style="display: none">
+      </div>
+      <pre id="test">
+      </pre>
+    </body>
+
+    <vbox flex="1">
+      <menulist id="menulist">
+        <menupopup>
+          <menuitem label="item"/>
+          <menuitem label="item"/>
+        </menupopup>
+      </menulist>
+
+      <menulist id="menulist2" editable="true">
+        <menupopup>
+          <menuitem label="item"/>
+          <menuitem label="item"/>
+        </menupopup>
+      </menulist>
+
+      <textbox id="autocomplete" type="autocomplete"
+               autocompletesearch="history"
+               value="http://mochi.test:8888/redirect-a11y.html"/>
+
+      <textbox id="autocomplete2" type="autocomplete">
+        <menupopup>
+          <menuitem label="item1"/>
+        </menupopup>
+      </textbox>
+    </vbox>
+  </hbox>
+
+</window>

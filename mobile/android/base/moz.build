@@ -1,0 +1,608 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+DIRS += ['locales']
+SPHINX_TREES['fennec'] = 'docs'
+
+include('android-services.mozbuild')
+
+thirdparty_source_dir = TOPSRCDIR + '/mobile/android/thirdparty/'
+
+resjar = add_java_jar('gecko-R')
+resjar.sources = []
+resjar.generated_sources += [
+    'org/mozilla/gecko/R.java',
+]
+resjar.javac_flags += ['-Xlint:all']
+
+mgjar = add_java_jar('gecko-mozglue')
+mgjar.sources += [
+    'mozglue/ByteBufferInputStream.java',
+    'mozglue/DirectBufferAllocator.java',
+    'mozglue/generatorannotations/GeneratorOptions.java',
+    'mozglue/generatorannotations/OptionalGeneratedParameter.java',
+    'mozglue/generatorannotations/WrapElementForJNI.java',
+    'mozglue/generatorannotations/WrapEntireClassForJNI.java',
+    'mozglue/JNITarget.java',
+    'mozglue/NativeReference.java',
+    'mozglue/NativeZip.java',
+    'mozglue/RobocopTarget.java',
+    'mozglue/WebRTCJNITarget.java',
+]
+mgjar.generated_sources += [
+    'org/mozilla/gecko/mozglue/GeckoLoader.java',
+]
+mgjar.javac_flags += ['-Xlint:all']
+
+wsjar = add_java_jar('websockets')
+wsjar.sources += [ thirdparty_source_dir + f for f in [
+    'com/codebutler/android_websockets/HybiParser.java',
+    'com/codebutler/android_websockets/WebSocketClient.java',
+] ]
+wsjar.javac_flags += ['-Xlint:all,-serial']
+
+gujar = add_java_jar('gecko-util')
+gujar.sources += [
+    'util/ActivityResultHandler.java',
+    'util/ActivityResultHandlerMap.java',
+    'util/Clipboard.java',
+    'util/EventCallback.java',
+    'util/FileUtils.java',
+    'util/FloatUtils.java',
+    'util/GamepadUtils.java',
+    'util/GeckoBackgroundThread.java',
+    'util/GeckoEventListener.java',
+    'util/GeckoJarReader.java',
+    'util/HardwareUtils.java',
+    'util/INIParser.java',
+    'util/INISection.java',
+    'util/JSONUtils.java',
+    'util/MenuUtils.java',
+    'util/NativeEventListener.java',
+    'util/NativeJSContainer.java',
+    'util/NativeJSObject.java',
+    'util/NonEvictingLruCache.java',
+    'util/ProxySelector.java',
+    'util/RawResource.java',
+    'util/StringUtils.java',
+    'util/ThreadUtils.java',
+    'util/UiAsyncTask.java',
+    'util/WebActivityMapper.java',
+]
+gujar.extra_jars = [
+    'gecko-mozglue.jar'
+]
+gujar.javac_flags += ['-Xlint:all,-deprecation']
+
+stjar = add_java_jar('sync-thirdparty')
+stjar.sources += [ thirdparty_source_dir + f for f in sync_thirdparty_java_files ]
+stjar.javac_flags = ['-Xlint:none']
+
+if CONFIG['MOZ_WEBRTC']:
+    video_root = TOPSRCDIR + '/media/webrtc/trunk/webrtc/modules/video_capture/android/java/src/org/webrtc/videoengine/'
+    video_render_root = TOPSRCDIR + '/media/webrtc/trunk/webrtc/modules/video_render/android/java/src/org/webrtc/videoengine/'
+    audio_root = TOPSRCDIR + '/media/webrtc/trunk/webrtc/modules/audio_device/android/java/src/org/webrtc/voiceengine/'
+    wrjar = add_java_jar('webrtc')
+    wrjar.sources += [
+        video_root + 'CaptureCapabilityAndroid.java',
+        video_root + 'VideoCaptureAndroid.java',
+        video_root + 'VideoCaptureDeviceInfoAndroid.java',
+        video_render_root + 'ViEAndroidGLES20.java',
+        video_render_root + 'ViERenderer.java',
+    ]
+    wrjar.sources += [
+        audio_root + 'AudioManagerAndroid.java',
+        audio_root + 'WebRtcAudioRecord.java',
+        audio_root + 'WebRtcAudioTrack.java',
+    ]
+    wrjar.extra_jars = [
+        'gecko-R.jar',
+        'gecko-browser.jar',
+        'gecko-util.jar',
+        'gecko-mozglue.jar',
+    ]
+    wrjar.javac_flags += ['-Xlint:all,-deprecation,-cast']
+
+gbjar = add_java_jar('gecko-browser')
+gbjar.sources += [
+    'AboutPages.java',
+    'ActionModeCompat.java',
+    'ActionModeCompatView.java',
+    'ActivityHandlerHelper.java',
+    'AlertNotification.java',
+    'AndroidGamepadManager.java',
+    'animation/AnimationUtils.java',
+    'animation/AnimatorProxy.java',
+    'animation/HeightChangeAnimation.java',
+    'animation/PropertyAnimator.java',
+    'animation/Rotate3DAnimation.java',
+    'animation/ViewHelper.java',
+    'ANRReporter.java',
+    'AppNotificationClient.java',
+    'Assert.java',
+    'BaseGeckoInterface.java',
+    'BrowserApp.java',
+    'BrowserLocaleManager.java',
+    'ContactService.java',
+    'ContextGetter.java',
+    'CustomEditText.java',
+    'DataReportingNotification.java',
+    'db/AbstractPerProfileDatabaseProvider.java',
+    'db/AbstractTransactionalProvider.java',
+    'db/BrowserContract.java',
+    'db/BrowserDatabaseHelper.java',
+    'db/BrowserDB.java',
+    'db/BrowserProvider.java',
+    'db/DBUtils.java',
+    'db/FormHistoryProvider.java',
+    'db/HomeProvider.java',
+    'db/LocalBrowserDB.java',
+    'db/PasswordsProvider.java',
+    'db/PerProfileDatabaseProvider.java',
+    'db/PerProfileDatabases.java',
+    'db/ReadingListProvider.java',
+    'db/SharedBrowserDatabaseProvider.java',
+    'db/SQLiteBridgeContentProvider.java',
+    'db/SuggestedSites.java',
+    'db/TabsProvider.java',
+    'db/TopSitesCursorWrapper.java',
+    'distribution/Distribution.java',
+    'DoorHangerPopup.java',
+    'DynamicToolbar.java',
+    'EditBookmarkDialog.java',
+    'EventDispatcher.java',
+    'favicons/cache/FaviconCache.java',
+    'favicons/cache/FaviconCacheElement.java',
+    'favicons/cache/FaviconsForURL.java',
+    'favicons/decoders/FaviconDecoder.java',
+    'favicons/decoders/ICODecoder.java',
+    'favicons/decoders/IconDirectoryEntry.java',
+    'favicons/decoders/LoadFaviconResult.java',
+    'favicons/Favicons.java',
+    'favicons/LoadFaviconTask.java',
+    'favicons/OnFaviconLoadedListener.java',
+    'FilePicker.java',
+    'FilePickerResultHandler.java',
+    'FindInPageBar.java',
+    'FormAssistPopup.java',
+    'GeckoAccessibility.java',
+    'GeckoActivity.java',
+    'GeckoActivityStatus.java',
+    'GeckoApp.java',
+    'GeckoApplication.java',
+    'GeckoAppShell.java',
+    'GeckoBatteryManager.java',
+    'GeckoConnectivityReceiver.java',
+    'GeckoEditable.java',
+    'GeckoEvent.java',
+    'GeckoHalDefines.java',
+    'GeckoInputConnection.java',
+    'GeckoJavaSampler.java',
+    'GeckoMessageReceiver.java',
+    'GeckoNetworkManager.java',
+    'GeckoProfile.java',
+    'GeckoProfileDirectories.java',
+    'GeckoProfilesProvider.java',
+    'GeckoScreenOrientation.java',
+    'GeckoSharedPrefs.java',
+    'GeckoSmsManager.java',
+    'GeckoThread.java',
+    'GeckoUpdateReceiver.java',
+    'GeckoView.java',
+    'GeckoViewChrome.java',
+    'GeckoViewContent.java',
+    'gfx/Axis.java',
+    'gfx/BitmapUtils.java',
+    'gfx/BufferedCairoImage.java',
+    'gfx/CairoGLInfo.java',
+    'gfx/CairoImage.java',
+    'gfx/CairoUtils.java',
+    'gfx/DisplayPortCalculator.java',
+    'gfx/DisplayPortMetrics.java',
+    'gfx/DrawTimingQueue.java',
+    'gfx/FloatSize.java',
+    'gfx/FullScreenState.java',
+    'gfx/GeckoLayerClient.java',
+    'gfx/GLController.java',
+    'gfx/ImmutableViewportMetrics.java',
+    'gfx/InputConnectionHandler.java',
+    'gfx/IntSize.java',
+    'gfx/JavaPanZoomController.java',
+    'gfx/Layer.java',
+    'gfx/LayerMarginsAnimator.java',
+    'gfx/LayerRenderer.java',
+    'gfx/LayerView.java',
+    'gfx/NativePanZoomController.java',
+    'gfx/NinePatchTileLayer.java',
+    'gfx/Overscroll.java',
+    'gfx/OverscrollEdgeEffect.java',
+    'gfx/PanningPerfAPI.java',
+    'gfx/PanZoomController.java',
+    'gfx/PanZoomTarget.java',
+    'gfx/PluginLayer.java',
+    'gfx/PointUtils.java',
+    'gfx/ProgressiveUpdateData.java',
+    'gfx/RectUtils.java',
+    'gfx/RenderTask.java',
+    'gfx/ScrollbarLayer.java',
+    'gfx/SimpleScaleGestureDetector.java',
+    'gfx/SingleTileLayer.java',
+    'gfx/SubdocumentScrollHelper.java',
+    'gfx/TextLayer.java',
+    'gfx/TextureGenerator.java',
+    'gfx/TextureReaper.java',
+    'gfx/TileLayer.java',
+    'gfx/TouchEventHandler.java',
+    'gfx/ViewTransform.java',
+    'gfx/VirtualLayer.java',
+    'GlobalHistory.java',
+    'health/BrowserHealthRecorder.java',
+    'health/BrowserHealthReporter.java',
+    'health/HealthRecorder.java',
+    'health/SessionInformation.java',
+    'health/StubbedHealthRecorder.java',
+    'home/BookmarkFolderView.java',
+    'home/BookmarksListAdapter.java',
+    'home/BookmarksListView.java',
+    'home/BookmarksPanel.java',
+    'home/BrowserSearch.java',
+    'home/DynamicPanel.java',
+    'home/FadedTextView.java',
+    'home/FramePanelLayout.java',
+    'home/HistoryPanel.java',
+    'home/HomeAdapter.java',
+    'home/HomeBanner.java',
+    'home/HomeConfig.java',
+    'home/HomeConfigLoader.java',
+    'home/HomeConfigPrefsBackend.java',
+    'home/HomeContextMenuInfo.java',
+    'home/HomeFragment.java',
+    'home/HomeListView.java',
+    'home/HomePager.java',
+    'home/HomePagerTabStrip.java',
+    'home/HomePanelPicker.java',
+    'home/HomePanelsManager.java',
+    'home/LastTabsPanel.java',
+    'home/MostRecentPanel.java',
+    'home/MultiTypeCursorAdapter.java',
+    'home/PanelAuthCache.java',
+    'home/PanelAuthLayout.java',
+    'home/PanelBackItemView.java',
+    'home/PanelGridView.java',
+    'home/PanelInfoManager.java',
+    'home/PanelItemView.java',
+    'home/PanelLayout.java',
+    'home/PanelListView.java',
+    'home/PanelRefreshLayout.java',
+    'home/PanelViewAdapter.java',
+    'home/PanelViewItemHandler.java',
+    'home/PinSiteDialog.java',
+    'home/ReadingListPanel.java',
+    'home/ReadingListRow.java',
+    'home/SearchEngine.java',
+    'home/SearchEngineRow.java',
+    'home/SearchLoader.java',
+    'home/SimpleCursorLoader.java',
+    'home/SuggestClient.java',
+    'home/TabMenuStrip.java',
+    'home/TabMenuStripLayout.java',
+    'home/TopSitesGridItemView.java',
+    'home/TopSitesGridView.java',
+    'home/TopSitesPanel.java',
+    'home/TopSitesThumbnailView.java',
+    'home/TwoLinePageRow.java',
+    'InputMethods.java',
+    'IntentHelper.java',
+    'JavaAddonManager.java',
+    'LightweightTheme.java',
+    'LightweightThemeDrawable.java',
+    'LocaleManager.java',
+    'MediaCastingBar.java',
+    'MemoryMonitor.java',
+    'menu/GeckoMenu.java',
+    'menu/GeckoMenuInflater.java',
+    'menu/GeckoMenuItem.java',
+    'menu/GeckoSubMenu.java',
+    'menu/MenuItemActionBar.java',
+    'menu/MenuItemActionView.java',
+    'menu/MenuItemDefault.java',
+    'menu/MenuPanel.java',
+    'menu/MenuPopup.java',
+    'MotionEventInterceptor.java',
+    'NotificationClient.java',
+    'NotificationHandler.java',
+    'NotificationHelper.java',
+    'NotificationService.java',
+    'NSSBridge.java',
+    'OrderedBroadcastHelper.java',
+    'preferences/AlignRightLinkPreference.java',
+    'preferences/AndroidImport.java',
+    'preferences/AndroidImportPreference.java',
+    'preferences/CustomListCategory.java',
+    'preferences/CustomListPreference.java',
+    'preferences/FontSizePreference.java',
+    'preferences/GeckoPreferenceFragment.java',
+    'preferences/GeckoPreferences.java',
+    'preferences/LinkPreference.java',
+    'preferences/LocaleListPreference.java',
+    'preferences/ModifiableHintPreference.java',
+    'preferences/MultiChoicePreference.java',
+    'preferences/PanelsPreference.java',
+    'preferences/PanelsPreferenceCategory.java',
+    'preferences/PrivateDataPreference.java',
+    'preferences/SearchEnginePreference.java',
+    'preferences/SearchPreferenceCategory.java',
+    'preferences/SyncPreference.java',
+    'PrefsHelper.java',
+    'PrivateTab.java',
+    'prompts/ColorPickerInput.java',
+    'prompts/IconGridInput.java',
+    'prompts/IntentChooserPrompt.java',
+    'prompts/IntentHandler.java',
+    'prompts/Prompt.java',
+    'prompts/PromptInput.java',
+    'prompts/PromptListAdapter.java',
+    'prompts/PromptListItem.java',
+    'prompts/PromptService.java',
+    'prompts/TabInput.java',
+    'ReaderModeUtils.java',
+    'ReferrerReceiver.java',
+    'Restarter.java',
+    'ScrollAnimator.java',
+    'ServiceNotificationClient.java',
+    'SessionParser.java',
+    'SharedPreferencesHelper.java',
+    'SiteIdentity.java',
+    'SmsManager.java',
+    'sqlite/ByteBufferInputStream.java',
+    'sqlite/MatrixBlobCursor.java',
+    'sqlite/SQLiteBridge.java',
+    'sqlite/SQLiteBridgeException.java',
+    'SurfaceBits.java',
+    'Tab.java',
+    'Tabs.java',
+    'TabsAccessor.java',
+    'tabspanel/RemoteTabsContainerPanel.java',
+    'tabspanel/RemoteTabsList.java',
+    'tabspanel/RemoteTabsPanel.java',
+    'tabspanel/RemoteTabsSetupPanel.java',
+    'tabspanel/RemoteTabsVerificationPanel.java',
+    'tabspanel/TabsPanel.java',
+    'tabspanel/TabsTray.java',
+    'Telemetry.java',
+    'TelemetryContract.java',
+    'TextSelection.java',
+    'TextSelectionHandle.java',
+    'ThumbnailHelper.java',
+    'toolbar/AutocompleteHandler.java',
+    'toolbar/BackButton.java',
+    'toolbar/BrowserToolbar.java',
+    'toolbar/CanvasDelegate.java',
+    'toolbar/ForwardButton.java',
+    'toolbar/PageActionLayout.java',
+    'toolbar/ShapedButton.java',
+    'toolbar/SiteIdentityPopup.java',
+    'toolbar/TabCounter.java',
+    'toolbar/ToolbarDisplayLayout.java',
+    'toolbar/ToolbarEditLayout.java',
+    'toolbar/ToolbarEditText.java',
+    'toolbar/ToolbarProgressView.java',
+    'toolbar/ToolbarTitlePrefs.java',
+    'TouchEventInterceptor.java',
+    'updater/UpdateService.java',
+    'updater/UpdateServiceHelper.java',
+    'webapp/Allocator.java',
+    'webapp/ApkResources.java',
+    'webapp/Dispatcher.java',
+    'webapp/EventListener.java',
+    'webapp/InstallHelper.java',
+    'webapp/InstallListener.java',
+    'webapp/TaskKiller.java',
+    'webapp/UninstallListener.java',
+    'webapp/WebappImpl.java',
+    'WebappAllocator.java',
+    'WebappImpl.java',
+    'widget/ActivityChooserModel.java',
+    'widget/AllCapsTextView.java',
+    'widget/AnimatedHeightLayout.java',
+    'widget/ArrowPopup.java',
+    'widget/BasicColorPicker.java',
+    'widget/ButtonToast.java',
+    'widget/CheckableLinearLayout.java',
+    'widget/ClickableWhenDisabledEditText.java',
+    'widget/DateTimePicker.java',
+    'widget/Divider.java',
+    'widget/DoorHanger.java',
+    'widget/EllipsisTextView.java',
+    'widget/FaviconView.java',
+    'widget/FloatingHintEditText.java',
+    'widget/FlowLayout.java',
+    'widget/GeckoActionProvider.java',
+    'widget/GeckoPopupMenu.java',
+    'widget/GeckoSwipeRefreshLayout.java',
+    'widget/GeckoViewFlipper.java',
+    'widget/IconTabWidget.java',
+    'widget/SquaredImageView.java',
+    'widget/TabRow.java',
+    'widget/TabThumbnailWrapper.java',
+    'widget/ThumbnailView.java',
+    'widget/TwoWayView.java',
+    'ZoomConstraints.java',
+]
+gbjar.sources += [ thirdparty_source_dir + f for f in [
+    'com/googlecode/eyesfree/braille/selfbraille/ISelfBrailleService.java',
+    'com/googlecode/eyesfree/braille/selfbraille/SelfBrailleClient.java',
+    'com/googlecode/eyesfree/braille/selfbraille/WriteData.java',
+] ]
+android_package_dir = CONFIG['ANDROID_PACKAGE_NAME'].replace('.', '/')
+# All generated sources are handled specially in Makefile.in.  And
+# R.java is handled even more specially than the others!
+gbjar.generated_sources += [ android_package_dir + f for f in [
+    '/App.java',
+    '/Webapp.java',
+    '/WebApps.java',
+] ]
+gbjar.generated_sources += [
+    'org/mozilla/gecko/AppConstants.java',
+    'org/mozilla/gecko/SysInfo.java',
+    'org/mozilla/gecko/widget/ThemedEditText.java',
+    'org/mozilla/gecko/widget/ThemedImageButton.java',
+    'org/mozilla/gecko/widget/ThemedImageView.java',
+    'org/mozilla/gecko/widget/ThemedLinearLayout.java',
+    'org/mozilla/gecko/widget/ThemedRelativeLayout.java',
+    'org/mozilla/gecko/widget/ThemedTextSwitcher.java',
+    'org/mozilla/gecko/widget/ThemedTextView.java',
+    'org/mozilla/gecko/widget/ThemedView.java',
+]
+if CONFIG['MOZ_CRASHREPORTER']:
+    gbjar.sources += [ 'CrashReporter.java' ]
+    ANDROID_RES_DIRS += [ SRCDIR + '/crashreporter/res' ]
+
+gbjar.sources += sync_java_files
+gbjar.generated_sources += sync_generated_java_files
+gbjar.extra_jars = [
+    'gecko-R.jar',
+    'gecko-mozglue.jar',
+    'gecko-util.jar',
+    'squareup-picasso.jar',
+    'sync-thirdparty.jar',
+    'websockets.jar',
+]
+gbjar.javac_flags += ['-Xlint:all,-deprecation,-fallthrough']
+
+spjar = add_java_jar('squareup-picasso')
+spjar.sources += [ thirdparty_source_dir + f for f in [
+    'com/squareup/picasso/Action.java',
+    'com/squareup/picasso/AssetBitmapHunter.java',
+    'com/squareup/picasso/BitmapHunter.java',
+    'com/squareup/picasso/Cache.java',
+    'com/squareup/picasso/Callback.java',
+    'com/squareup/picasso/ContactsPhotoBitmapHunter.java',
+    'com/squareup/picasso/ContentStreamBitmapHunter.java',
+    'com/squareup/picasso/DeferredRequestCreator.java',
+    'com/squareup/picasso/Dispatcher.java',
+    'com/squareup/picasso/Downloader.java',
+    'com/squareup/picasso/FetchAction.java',
+    'com/squareup/picasso/FileBitmapHunter.java',
+    'com/squareup/picasso/GetAction.java',
+    'com/squareup/picasso/ImageViewAction.java',
+    'com/squareup/picasso/LruCache.java',
+    'com/squareup/picasso/MarkableInputStream.java',
+    'com/squareup/picasso/MediaStoreBitmapHunter.java',
+    'com/squareup/picasso/NetworkBitmapHunter.java',
+    'com/squareup/picasso/Picasso.java',
+    'com/squareup/picasso/PicassoDrawable.java',
+    'com/squareup/picasso/PicassoExecutorService.java',
+    'com/squareup/picasso/Request.java',
+    'com/squareup/picasso/RequestCreator.java',
+    'com/squareup/picasso/ResourceBitmapHunter.java',
+    'com/squareup/picasso/Stats.java',
+    'com/squareup/picasso/StatsSnapshot.java',
+    'com/squareup/picasso/Target.java',
+    'com/squareup/picasso/TargetAction.java',
+    'com/squareup/picasso/Transformation.java',
+    'com/squareup/picasso/UrlConnectionDownloader.java',
+    'com/squareup/picasso/Utils.java',
+] ]
+#spjar.javac_flags += ['-Xlint:all']
+
+ANDROID_RES_DIRS += [
+    SRCDIR + '/resources',
+    TOPSRCDIR + '/' + CONFIG['MOZ_BRANDING_DIRECTORY'] + '/res',
+    OBJDIR + '/res',
+]
+
+ANDROID_GENERATED_RESFILES += [
+    'res/raw/suggestedsites.json',
+    'res/values/strings.xml',
+]
+
+for var in ('MOZ_ANDROID_ANR_REPORTER', 'MOZ_LINKER_EXTRACT', 'MOZILLA_OFFICIAL', 'MOZ_DEBUG'):
+    if CONFIG[var]:
+        DEFINES[var] = 1
+
+for var in ('MOZ_UPDATER', 'MOZ_PKG_SPECIAL'):
+    if CONFIG[var]:
+        DEFINES[var] = CONFIG[var]
+
+for var in ('ANDROID_PACKAGE_NAME', 'ANDROID_CPU_ARCH', 'CPU_ARCH',
+            'GRE_MILESTONE', 'MOZ_APP_BASENAME',
+            'MOZ_APP_DISPLAYNAME', 'MOZ_APP_ID', 'MOZ_APP_NAME',
+            'MOZ_APP_VENDOR', 'MOZ_APP_VERSION', 'MOZ_CHILD_PROCESS_NAME',
+            'MOZ_CRASHREPORTER', 'MOZ_UPDATE_CHANNEL', 'OMNIJAR_NAME',
+            'OS_TARGET', 'TARGET_XPCOM_ABI'):
+    DEFINES[var] = CONFIG[var]
+
+# Mangle our package name to avoid Bug 750548.
+DEFINES['MANGLED_ANDROID_PACKAGE_NAME'] = CONFIG['ANDROID_PACKAGE_NAME'].replace('fennec', 'f3nn3c')
+DEFINES['MOZ_APP_ABI'] = CONFIG['TARGET_XPCOM_ABI']
+
+if '-march=armv7' in CONFIG['OS_CFLAGS']:
+    DEFINES['MOZ_MIN_CPU_VERSION'] = 7
+else:
+    DEFINES['MOZ_MIN_CPU_VERSION'] = 5
+
+generated_recursive_make_targets = ['.aapt.deps', '.locales.deps'] # Captures dependencies on Android manifest and all resources.
+
+generated = add_android_eclipse_library_project('FennecResourcesGenerated')
+generated.package_name = 'org.mozilla.fennec.resources.generated'
+generated.res = OBJDIR + '/res'
+generated.recursive_make_targets += generated_recursive_make_targets
+
+branding = add_android_eclipse_library_project('FennecResourcesBranding')
+branding.package_name = 'org.mozilla.fennec.resources.branding'
+branding.res = TOPSRCDIR + '/' + CONFIG['MOZ_BRANDING_DIRECTORY'] + '/res'
+branding.recursive_make_targets += generated_recursive_make_targets
+
+main = add_android_eclipse_project('Fennec', OBJDIR + '/AndroidManifest.xml')
+main.package_name = 'org.mozilla.gecko'
+
+# These values were extracted from an existing Eclipse project.  Use
+# Project > Resource > Resource Filters and inspect the resulting
+# .project file to modify this list.
+main.filtered_resources += [
+    '1.0-projectRelativePath-matches-false-false-*org/mozilla/gecko/resources/**',
+    '1.0-projectRelativePath-matches-false-false-*org/mozilla/gecko/tests/**',
+]
+
+main.recursive_make_targets += generated_recursive_make_targets
+main.recursive_make_targets += [OBJDIR + '/generated/' + f for f in mgjar.generated_sources]
+main.recursive_make_targets += [OBJDIR + '/generated/' + f for f in gbjar.generated_sources]
+
+main.included_projects += ['../' + generated.name, '../' + branding.name]
+main.extra_jars += [CONFIG['ANDROID_COMPAT_LIB']]
+main.assets = TOPOBJDIR + '/dist/' + CONFIG['MOZ_APP_NAME'] + '/assets'
+main.libs = TOPOBJDIR + '/dist/' + CONFIG['MOZ_APP_NAME'] + '/lib'
+main.res = None
+
+cpe = main.add_classpathentry('src', SRCDIR,
+    dstdir='src/org/mozilla/gecko',
+    exclude_patterns=['org/mozilla/gecko/tests/**',
+        'org/mozilla/gecko/resources/**'])
+if not CONFIG['MOZ_CRASHREPORTER']:
+    cpe.exclude_patterns += ['org/mozilla/gecko/CrashReporter.java']
+main.add_classpathentry('generated', OBJDIR + '/generated',
+    dstdir='generated')
+main.add_classpathentry('thirdparty', TOPSRCDIR + '/mobile/android/thirdparty',
+    dstdir='thirdparty',
+    ignore_warnings=True)
+
+resources = add_android_eclipse_library_project('FennecResources')
+resources.package_name = 'org.mozilla.fennec.resources'
+resources.res = SRCDIR + '/resources'
+resources.included_projects += ['../' + generated.name, '../' + branding.name]
+resources.recursive_make_targets += generated_recursive_make_targets
+
+main.included_projects += ['../' + resources.name]
+main.referenced_projects += [resources.name]
+
+if CONFIG['MOZ_CRASHREPORTER']:
+    crashreporter = add_android_eclipse_library_project('FennecResourcesCrashReporter')
+    crashreporter.package_name = 'org.mozilla.fennec.resources.crashreporter'
+    crashreporter.res = SRCDIR + '/crashreporter/res'
+    crashreporter.included_projects += ['../' + resources.name]
+
+    main.included_projects += ['../' + crashreporter.name]

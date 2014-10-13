@@ -1,0 +1,116 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+SPHINX_TREES['crashreporter'] = 'docs'
+
+if CONFIG['OS_ARCH'] == 'WINNT':
+    DIRS += [
+    'google-breakpad/src/common',
+    'google-breakpad/src/processor',
+    'breakpad-windows-libxul'
+    ]
+
+    if CONFIG['MOZ_CRASHREPORTER_INJECTOR']:
+        DIRS += ['breakpad-windows-standalone']
+
+elif CONFIG['OS_ARCH'] == 'Darwin':
+    DIRS += [
+        'google-breakpad/src/common',
+        'google-breakpad/src/common/mac',
+        'google-breakpad/src/client',
+        'google-breakpad/src/client/mac/crash_generation',
+        'google-breakpad/src/client/mac/handler',
+        'google-breakpad/src/processor',
+        'google-breakpad/src/tools/mac/dump_syms',
+    ]
+
+elif CONFIG['OS_ARCH'] == 'Linux':
+    DIRS += [
+        'google-breakpad/src/common',
+        'google-breakpad/src/common/linux',
+        'google-breakpad/src/client',
+        'google-breakpad/src/client/linux/crash_generation',
+        'google-breakpad/src/client/linux/handler',
+        'google-breakpad/src/client/linux/minidump_writer',
+        'google-breakpad/src/processor',
+        'google-breakpad/src/tools/linux/dump_syms',
+    ]
+
+elif CONFIG['OS_ARCH'] == 'SunOS':
+    DIRS += [
+        'google-breakpad/src/common',
+        'google-breakpad/src/common/solaris',
+        'google-breakpad/src/client',
+        'google-breakpad/src/client/solaris/handler',
+        'google-breakpad/src/tools/solaris/dump_syms',
+    ]
+
+DIRS += ['client']
+
+if CONFIG['MOZ_CRASHREPORTER_INJECTOR']:
+    DIRS += ['injector']
+    UNIFIED_SOURCES += [
+        'InjectCrashReporter.cpp',
+        'LoadLibraryRemote.cpp',
+    ]
+
+TEST_TOOL_DIRS += ['test']
+
+EXPORTS += [
+    'nsExceptionHandler.h',
+]
+
+UNIFIED_SOURCES += [
+    'nsExceptionHandler.cpp',
+]
+
+if CONFIG['OS_ARCH'] == 'Darwin':
+    UNIFIED_SOURCES += [
+        'mac_utils.mm',
+    ]
+
+EXTRA_JS_MODULES += [
+    'CrashReports.jsm',
+    'CrashSubmit.jsm',
+    'KeyValueParser.jsm',
+]
+
+MSVC_ENABLE_PGO = True
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+FINAL_LIBRARY = 'xulapp_s'
+
+if CONFIG['OS_TARGET'] == 'Android':
+    DEFINES['ANDROID_PACKAGE_NAME'] = '"%s"' % CONFIG['ANDROID_PACKAGE_NAME']
+    # NDK5 workarounds
+    DEFINES['_STLP_CONST_CONSTRUCTOR_BUG'] = True
+    DEFINES['_STLP_NO_MEMBER_TEMPLATES'] = True
+
+if CONFIG['OS_ARCH'] == 'SunOS':
+    # there's no define for this normally
+    DEFINES['XP_SOLARIS'] = True
+
+DEFINES['UNICODE'] = True
+DEFINES['_UNICODE'] = True
+
+JAR_MANIFESTS += ['jar.mn']
+
+LOCAL_INCLUDES += [
+    'google-breakpad/src',
+]
+
+# Suppress warnings in third-party code.
+if CONFIG['_MSC_VER']:
+    CXXFLAGS += [
+        '-wd4005', # macro redefinition
+    ]
+elif CONFIG['GNU_CXX']:
+    CXXFLAGS += [
+        '-Wno-unused-local-typedefs',
+    ]
+
+FAIL_ON_WARNINGS = True

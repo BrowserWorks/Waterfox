@@ -1,0 +1,70 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="application/javascript" src="head.js"></script>
+  <script type="application/javascript" src="pc.js"></script>
+</head>
+<body>
+<pre id="test">
+<script type="application/javascript">
+  createHTML({
+    bug: "834270",
+    title: "Align PeerConnection error handling with WebRTC specification"
+  });
+
+  function errorCallback(nextStep) {
+    return function (err) {
+      ok(err, "Error is set");
+      ok(err.name && err.name.length, "Error name = " + err.name);
+      ok(err.message && err.message.length, "Error message = " + err.message);
+      nextStep();
+    }
+  };
+
+  function testCreateAnswerError() {
+    var pc = new mozRTCPeerConnection();
+    info ("Testing createAnswer error callback");
+    pc.createAnswer(generateErrorCallback("createAnswer before offer should fail"),
+                    errorCallback(testSetLocalDescriptionError));
+  };
+
+  function testSetLocalDescriptionError() {
+    var pc = new mozRTCPeerConnection();
+    info ("Testing setLocalDescription error callback");
+    pc.setLocalDescription(new mozRTCSessionDescription({ sdp: "Picklechips!",
+                                                          type: "offer" }),
+      generateErrorCallback("setLocalDescription with nonsense SDP should fail"),
+      errorCallback(testSetRemoteDescriptionError));
+  };
+
+  function testSetRemoteDescriptionError() {
+    var pc = new mozRTCPeerConnection();
+    info ("Testing setRemoteDescription error callback");
+    pc.setRemoteDescription(new mozRTCSessionDescription({ sdp: "Who?",
+                                                           type: "offer" }),
+      generateErrorCallback("setRemoteDescription with nonsense SDP should fail"),
+      errorCallback(testAddIceCandidateError));
+  };
+
+  function testAddIceCandidateError() {
+    var pc = new mozRTCPeerConnection();
+    info ("Testing addIceCandidate error callback");
+    pc.addIceCandidate(new mozRTCIceCandidate({ candidate: "Pony Lords, jump!",
+                                                sdpMid: "whee",
+                                                sdpMLineIndex: 1 }),
+      generateErrorCallback("addIceCandidate with nonsense candidate should fail"),
+      errorCallback(networkTestFinished));
+  };
+
+  // No test for createOffer errors -- there's nothing we can do at this
+  // level to evoke an error in createOffer.
+
+  runNetworkTest(function () {
+    testCreateAnswerError();
+  });
+</script>
+</pre>
+</body>
+</html>

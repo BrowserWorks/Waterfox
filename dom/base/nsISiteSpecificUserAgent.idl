@@ -1,0 +1,28 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIURI;
+interface nsIDOMWindow;
+
+/**
+ * nsISiteSpecificUserAgent provides you with site/window-specific User Agent strings.
+ */
+
+[scriptable, uuid(a509469a-ef3d-4ad1-8dba-c92a96b0bc64)]
+interface nsISiteSpecificUserAgent : nsISupports
+{
+  /**
+   * Get the User Agent string for a given URI.
+   *
+   * @param aURI is the URI of the page the UA string is used for.
+   *
+   * @param aWindow is the window this UA is being requested for
+   *
+   * @returns the User Agent string for the given URI. If no override applies,
+   * the default User Agent string is used.
+   */
+  AString getUserAgentForURIAndWindow(in nsIURI aURI, in nsIDOMWindow aWindow);
+};

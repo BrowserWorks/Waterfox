@@ -1,0 +1,160 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin" type="text/css"?>
+
+<window id="293235Test"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        width="600"
+        height="600"
+        onload="setTimeout(nextTest,0);"
+        title="bug 293235 test">
+
+  <script type="text/javascript"
+          src="chrome://mochikit/content/tests/SimpleTest/specialpowersAPI.js"/>
+  <script type="text/javascript"
+          src="chrome://mochikit/content/tests/SimpleTest/SpecialPowersObserverAPI.js"/>
+  <script type="text/javascript"
+          src="chrome://mochikit/content/tests/SimpleTest/ChromePowers.js"/>
+  <script type="application/javascript" src= "chrome://mochikit/content/chrome-harness.js" />
+  <script type="application/javascript" src="docshell_helpers.js" />
+  <script type="text/javascript" src="chrome://mochikit/content/tests/SimpleTest/WindowSnapshot.js"></script>
+
+  <script type="application/javascript"><![CDATA[
+    var Ci = Components.interfaces;
+    var Cc = Components.classes;
+    Components.utils.import("resource://gre/modules/NetUtil.jsm");
+
+    // Define the generator-iterator for the tests.
+    var tests = testIterator();
+
+    ////
+    // Execute the next test in the generator function.
+    //
+    function nextTest() {
+      tests.next();
+    }
+
+    // Return the Element object for the specified element id
+    function $(id) { return TestWindow.getDocument().getElementById(id); }
+
+    ////
+    // Generator function for test steps for bug 293235:
+    // A visited link should have the :visited style applied
+    // to it when displayed on a page which was fetched from
+    // the bfcache.
+    //
+    function testIterator()
+    {
+      // Register our observer to know when the link lookup is complete.
+      let testURI = NetUtil.newURI(getHttpUrl("bug293235_p2.html"));
+      let os = Cc["@mozilla.org/observer-service;1"].
+               getService(Ci.nsIObserverService);
+      const URI_VISITED_RESOLUTION_TOPIC = "visited-status-resolution";
+      let observer = {
+        notified: false,
+        observe: function(aSubject, aTopic, aData)
+        {
+          if (!testURI.equals(aSubject.QueryInterface(Ci.nsIURI))) {
+            return;
+          }
+          is(aTopic, URI_VISITED_RESOLUTION_TOPIC, "Unexpected topic");
+          this.notified = true;
+
+          // Cleanup after ourselves...
+          os.removeObserver(this, URI_VISITED_RESOLUTION_TOPIC);
+        },
+      };
+      os.addObserver(observer, URI_VISITED_RESOLUTION_TOPIC, false);
+      function notified() observer.notified;
+
+      // Load a test page containing a link that should be initially
+      // blue, per the :link style.
+      doPageNavigation({
+        uri: getHttpUrl("bug293235.html"),
+        onNavComplete: nextTest
+      });
+      yield undefined;
+
+      // Before we go any further, make sure our link has been notified.
+      waitForTrue(notified, nextTest);
+      yield undefined;
+
+      // Now that we've been notified, we can check our link color.
+      // Since we can't use getComputedStyle() for this because
+      // getComputedStyle lies about styles that result from :visited,
+      // we have to take snapshots.
+      // First, take two reference snapshots.
+      var link1 = $("link1");
+      link1.className = "forcelink";
+      var refLink = snapshotWindow(TestWindow.getWindow());
+      link1.className = "forcevisited";
+      var refVisited = snapshotWindow(TestWindow.getWindow());
+      link1.className = "";
+      function snapshotsEqual(snap1, snap2) {
+        return compareSnapshots(snap1, snap2, true)[0];
+      }
+      ok(!snapshotsEqual(refLink, refVisited), "references should not match");
+      ok(snapshotsEqual(refLink, snapshotWindow(TestWindow.getWindow())),
+         "link should initially be blue");
+
+      let observedVisit = false, observedPageShow = false;
+      function maybeRunNextTest() {
+        ok(true, "maybe run next test? visited: " + observedVisit + " pageShow: " + observedPageShow);
+        if (observedVisit && observedPageShow)
+          nextTest();
+      }
+
+      // Because adding visits is async, we will not be notified imemdiately.
+      let visitObserver = {
+        observe: function(aSubject, aTopic, aData)
+        {
+          if (!testURI.equals(aSubject.QueryInterface(Ci.nsIURI))) {
+            return;
+          }
+          os.removeObserver(this, aTopic);
+          observedVisit = true;
+          maybeRunNextTest();
+        },
+      };
+      os.addObserver(visitObserver, "uri-visit-saved", false);
+      // Load the page that the link on the previous page points to.
+      doPageNavigation({
+        uri: getHttpUrl("bug293235_p2.html"),
+        onNavComplete: function() {
+          observedPageShow = true;
+          maybeRunNextTest();
+        }
+      });
+      yield undefined;
+
+      // And the nodes get notified after the "link-visited" topic, so
+      // we need to execute soon...
+      SimpleTest.executeSoon(nextTest);
+      yield undefined;
+
+      // Go back, verify the original page was loaded from the bfcache,
+      // and verify that the link is now purple, per the
+      // :visited style.
+      doPageNavigation({
+        back: true,
+        eventsToListenFor: ["pageshow"],
+        expectedEvents: [ { type: "pageshow",
+                            persisted: true,
+                            title: "Bug 293235 page1" } ],
+        onNavComplete: nextTest
+      });
+      yield undefined;
+
+      // Now we can test the link color.
+      ok(snapshotsEqual(refVisited, snapshotWindow(TestWindow.getWindow())),
+         "visited link should be purple");
+
+      // Tell the framework the test is finished.  Include the final 'yield'
+      // statement to prevent a StopIteration exception from being thrown.
+      finish();
+      yield undefined;
+    }
+
+  ]]></script>
+
+  <browser type="content-primary" flex="1" id="content" src="about:blank"/>
+</window>

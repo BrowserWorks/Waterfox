@@ -1,0 +1,62 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+EXPORTS += [
+    '../include/opentype-sanitiser.h',
+    '../include/ots-memory-stream.h',
+]
+
+SOURCES += [
+    # don't unify sources that use a (file-specific) DROP_THIS_TABLE macro
+    'gasp.cc',
+    'gdef.cc',
+    'gpos.cc',
+    'gsub.cc',
+    'hdmx.cc',
+    'kern.cc',
+    'ltsh.cc',
+    'math.cc',
+    'vdmx.cc',
+    'vorg.cc',
+]
+
+UNIFIED_SOURCES += [
+    'cff.cc',
+    'cff_type2_charstring.cc',
+    'cmap.cc',
+    'cvt.cc',
+    'fpgm.cc',
+    'glyf.cc',
+    'head.cc',
+    'hhea.cc',
+    'hmtx.cc',
+    'layout.cc',
+    'loca.cc',
+    'maxp.cc',
+    'metrics.cc',
+    'name.cc',
+    'os2.cc',
+    'ots.cc',
+    'post.cc',
+    'prep.cc',
+    'vhea.cc',
+    'vmtx.cc',
+]
+
+MSVC_ENABLE_PGO = True
+
+if CONFIG['GKMEDIAS_SHARED_LIBRARY']:
+    NO_VISIBILITY_FLAGS = True
+
+FINAL_LIBRARY = 'gkmedias'
+
+DEFINES['PACKAGE_VERSION'] = '"moz"'
+DEFINES['PACKAGE_BUGREPORT'] = '"http://bugzilla.mozilla.org/"'
+DEFINES['NOMINMAX'] = True
+
+if CONFIG['OS_TARGET'] == 'WINNT':
+    DEFINES['OTS_DLL'] = True
+    DEFINES['OTS_DLL_EXPORTS'] = True

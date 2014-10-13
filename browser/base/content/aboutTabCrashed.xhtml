@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE html [
+  <!ENTITY % htmlDTD
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "DTD/xhtml1-strict.dtd">
+  %htmlDTD;
+  <!ENTITY % globalDTD
+    SYSTEM "chrome://global/locale/global.dtd">
+  %globalDTD;
+  <!ENTITY % browserDTD
+    SYSTEM "chrome://browser/locale/browser.dtd">
+  %browserDTD;
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <link rel="stylesheet" type="text/css" media="all"
+          href="chrome://browser/skin/aboutTabCrashed.css"/>
+  </head>
+
+  <body dir="&locale.dir;">
+    <div id="error-box">
+      <p id="main-error-msg">&tabCrashed.header;</p>
+      <p id="helper-error-msg">&tabCrashed.message;</p>
+    </div>
+
+    <div id="report-box">
+      <input type="checkbox" id="checkSendReport" checked="checked"/>
+      <label for="checkSendReport">&tabCrashed.checkSendReport;</label>
+    </div>
+
+    <div id="button-box">
+      <button id="tryAgain">&tabCrashed.tryAgain;</button>
+    </div>
+  </body>
+
+  <script type="text/javascript;version=1.8" src="chrome://browser/content/aboutTabCrashed.js"/>
+</html>

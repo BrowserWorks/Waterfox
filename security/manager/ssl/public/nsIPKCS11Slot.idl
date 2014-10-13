@@ -1,0 +1,38 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIPK11Token;
+
+[scriptable, uuid(c2d4f296-ee60-11d4-998b-00b0d02354a0)]
+interface nsIPKCS11Slot : nsISupports {
+
+  readonly attribute wstring name;
+  readonly attribute wstring desc;
+  readonly attribute wstring manID;
+  readonly attribute wstring HWVersion;
+  readonly attribute wstring FWVersion;
+
+  const unsigned long SLOT_DISABLED      = 0;
+  const unsigned long SLOT_NOT_PRESENT   = 1;
+  const unsigned long SLOT_UNINITIALIZED = 2;
+  const unsigned long SLOT_NOT_LOGGED_IN = 3;
+  const unsigned long SLOT_LOGGED_IN     = 4;
+  const unsigned long SLOT_READY         = 5;
+  readonly attribute unsigned long status;
+
+  /* This is really a workaround for now.  All of the "slot" functions
+   * (isTokenPresent(), etc.) are in nsIPK11Token.  For now, return the
+   * token and handle those things there.
+   */
+  nsIPK11Token getToken();
+
+  /* more fun with workarounds - we're referring to everything by token name */
+  readonly attribute wstring tokenName;
+
+};
+

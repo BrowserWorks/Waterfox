@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=483573
+-->
+<head>
+  <title>HTML5 audio/video tests</title>
+  <link rel="stylesheet" type="text/css" href="chrome://mochikit/content/tests/SimpleTest/test.css" />
+
+  <script type="application/javascript"
+          src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
+
+  <script type="application/javascript"
+          src="../common.js"></script>
+  <script type="application/javascript"
+          src="../role.js"></script>
+  <script type="application/javascript"
+          src="../states.js"></script>
+
+  <script type="application/javascript">
+
+    function doTest()
+    {
+      //////////////////////////////////////////////////////////////////////////
+      // test the accessible tree
+
+      var accTree = {
+        role: ROLE_GROUPING,
+        children: [
+          { // start/stop button
+            role: ROLE_PUSHBUTTON,
+            name: "Play",
+            children: []
+          },
+          { // buffer bar
+            role: ROLE_PROGRESSBAR,
+            children: []
+          },
+          { // progress bar
+            role: ROLE_PROGRESSBAR,
+            children: []
+          },
+          { // slider of progress bar
+            role: ROLE_SLIDER,
+            //name: "0:00 of 0:02 elapsed",
+            children: []
+          },
+          { // mute button
+            role: ROLE_PUSHBUTTON,
+            name: "Mute",
+            children: []
+          },
+          { // slider of volume bar
+            role: ROLE_SLIDER,
+            children: []
+          },
+        ]
+      };
+      testAccessibleTree("audio", accTree);
+
+      todo(false, "Enable name test for slider. Fail on Linux.");
+      SimpleTest.finish();
+    }
+
+    SimpleTest.waitForExplicitFinish();
+    addA11yLoadEvent(doTest);
+  </script>
+</head>
+<body>
+
+  <a target="_blank"
+     title="Expose HTML5 video and audio elements' embedded controls through accessibility APIs"
+     href="https://bugzilla.mozilla.org/show_bug.cgi?id=483573">Mozilla Bug 483573</a>
+  <p id="display"></p>
+  <div id="content" style="display: none"></div>
+  <pre id="test">
+  </pre>
+
+  <audio id="audio" src="../bug461281.ogg"
+         controls="true"></audio>
+
+  <div id="eventDump"></div>
+</body>
+</html>

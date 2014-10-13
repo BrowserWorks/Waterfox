@@ -1,0 +1,95 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="application/javascript" src="head.js"></script>
+  <script type="application/javascript" src="pc.js"></script>
+</head>
+<body>
+<pre id="test">
+<script type="application/javascript">
+  createHTML({
+    bug: "825703",
+    title: "RTCConfiguration valid/invalid permutations"
+  });
+
+  makePC = function (config, expect_success) {
+      var exception = null;
+      var pc = null;
+
+      try {
+          pc = new mozRTCPeerConnection(config);
+      } catch (e) {
+          exception = e;
+      }
+      if (pc !== null) {
+        pc.close();
+      }
+      pc = null
+
+      if (expect_success) {
+          ok(!exception, "mozRTCPeerConnection(" +
+             JSON.stringify(config) + ") succeeds");
+      } else {
+          ok(exception, "mozRTCPeerConnection(" +
+             JSON.stringify(config) + ") throws");
+      }
+  }
+
+  // This is a test of the iceServers parsing code + readable errors
+
+  runNetworkTest(function () {
+    var pcs = null;
+    var exception = null;
+    var config;
+
+    try {
+      pcs = new mozRTCPeerConnection();
+    } catch (e) {
+      exception = e;
+    }
+    ok(!exception, "mozRTCPeerConnection() succeeds");
+    if (pcs !== null) {
+      pcs.close();
+    }
+    pcs = null;
+    exception = null;
+
+    makePC(1, false);
+
+    makePC({}, true);
+
+    makePC({ iceServers: [] }, true);
+
+    makePC({ iceServers: [{ url:"" }] }, false);
+
+    makePC({ iceServers: [
+                { url:"stun:127.0.0.1" },
+                { url:"stuns:localhost", foo:"" },
+                { url:"turn:[::1]:3478", username:"p", credential:"p" },
+                { url:"turns:localhost:3478?transport=udp", username:"p", credential:"p" }
+                ]}, true);
+
+    makePC({ iceServers: [{ url:"turns:localhost:3478", username:"p" }] }, false);
+
+    makePC({ iceServers: [{ url:"turns:localhost:3478", credential:"p" }] }, false);
+
+    makePC({ iceServers: [{ url:"http:0.0.0.0" }] }, false);
+    try {
+        pcs = new mozRTCPeerConnection({ iceServers: [{ url:"http:0.0.0.0" }] });
+    } catch (e) {
+        ok(e.message.indexOf("http") > 0,
+           "mozRTCPeerConnection() constructor has readable exceptions");
+    }
+    if (pcs !== null) {
+      pcs.close();
+    }
+    pcs = null;
+
+    networkTestFinished();
+  });
+</script>
+</pre>
+</body>
+</html>

@@ -1,0 +1,46 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIDocShell;
+interface nsIAutoCompletePopup;
+interface nsIDOMHTMLInputElement;
+
+/*
+ * nsIFormFillController is an interface for controlling form fill behavior
+ * on HTML documents.  Any number of docShells can be controller concurrently.
+ * While a docShell is attached, all HTML documents that are loaded within it
+ * will have a focus listener attached that will listen for when a text input
+ * is focused.  When this happens, the input will be bound to the
+ * global nsIAutoCompleteController service.
+ */
+
+[scriptable, uuid(07f0a0dc-f6e9-4cdd-a55f-56d770523a4c)]
+interface nsIFormFillController : nsISupports
+{
+  /*
+   * Start controlling form fill behavior for the given browser
+   *
+   * @param docShell - The docShell to attach to
+   * @param popup - The popup to show when autocomplete results are available
+   */
+  void attachToBrowser(in nsIDocShell docShell, in nsIAutoCompletePopup popup);
+
+  /*
+   * Stop controlling form fill behavior for the given browser
+   *
+   * @param docShell - The docShell to detach from
+   */
+  void detachFromBrowser(in nsIDocShell docShell);
+
+  /*
+   * Mark the specified <input> element as being managed by password manager.
+   * Autocomplete requests will be handed off to the password manager, and will
+   * not be stored in form history.
+   *
+   * @param aInput - The HTML <input> element to tag
+   */
+  void markAsLoginManagerField(in nsIDOMHTMLInputElement aInput);
+};

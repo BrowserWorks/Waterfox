@@ -1,0 +1,79 @@
+# vim:set ts=8 sw=8 sts=8 noet:
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+STANDALONE_MAKEFILE := 1
+
+# input location for the build, usually $(DIST)
+# set this to $(DIST)/l10n-stage per override for L10n builds
+PACKAGE_BASE_DIR	= $(DIST)
+
+# Default output location for update archive
+STAGE_DIR	= $(DIST)/$(PKG_UPDATE_PATH)
+
+ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
+ifdef UNIVERSAL_BINARY
+ifneq (,$(filter %/l10n-stage,$(PACKAGE_BASE_DIR)))
+PACKAGE_DIR	= $(PACKAGE_BASE_DIR)/$(MOZ_PKG_DIR)/$(MOZ_MACBUNDLE_NAME)
+else
+PACKAGE_DIR	= $(PACKAGE_BASE_DIR)/universal/$(MOZ_PKG_DIR)/$(MOZ_MACBUNDLE_NAME)
+endif
+else
+PACKAGE_DIR	= $(PACKAGE_BASE_DIR)/$(MOZ_PKG_DIR)/$(MOZ_MACBUNDLE_NAME)
+endif
+else
+PACKAGE_DIR	= $(PACKAGE_BASE_DIR)/$(MOZ_PKG_DIR)
+endif
+
+MAR_BIN	= $(LIBXUL_DIST)/host/bin/mar$(HOST_BIN_SUFFIX)
+MBSDIFF_BIN	= $(LIBXUL_DIST)/host/bin/mbsdiff$(HOST_BIN_SUFFIX)
+
+OVERRIDE_DEFAULT_GOAL := full-update
+full-update:: complete-patch
+
+ifeq ($(OS_TARGET), WINNT)
+MOZ_PKG_FORMAT	:= SFX7Z
+UNPACKAGE	= '$(subst $(DIST),$(_ABS_DIST),$(INSTALLER_PACKAGE))'
+ifdef AB_CD
+UNPACKAGE	= '$(PACKAGE_BASE_DIR)/$(PACKAGE)'
+endif
+endif
+
+include $(topsrcdir)/config/rules.mk
+include $(topsrcdir)/toolkit/mozapps/installer/signing.mk
+include $(topsrcdir)/toolkit/mozapps/installer/packager.mk
+
+ifdef MOZ_EXTERNAL_SIGNING_FORMAT
+# We can't use signcode on mar files
+MOZ_EXTERNAL_SIGNING_FORMAT := $(filter-out signcode,$(MOZ_EXTERNAL_SIGNING_FORMAT))
+MOZ_EXTERNAL_SIGNING_FORMAT := mar $(MOZ_EXTERNAL_SIGNING_FORMAT)
+endif
+
+dir-stage := $(call mkdir_deps,$(STAGE_DIR))
+
+complete-patch:: $(dir-stage)
+ifeq ($(OS_TARGET), WINNT)
+	test -f $(UNPACKAGE)
+	$(RM) -rf '$(PACKAGE_DIR)'
+	cd $(PACKAGE_BASE_DIR) && $(INNER_UNMAKE_PACKAGE)
+endif
+	MAR=$(MAR_BIN) \
+	  $(srcdir)/make_full_update.sh \
+	  '$(STAGE_DIR)/$(PKG_UPDATE_BASENAME).complete.mar' \
+	  '$(PACKAGE_DIR)'
+ifdef MOZ_SIGN_CMD
+	$(MOZ_SIGN_CMD) -f mar '$(STAGE_DIR)/$(PKG_UPDATE_BASENAME).complete.mar'
+endif
+
+partial-patch:: $(dir-stage)
+	MAR=$(MAR_BIN) \
+	MBSDIFF=$(MBSDIFF_BIN) \
+	  $(srcdir)/make_incremental_update.sh \
+	  '$(STAGE_DIR)/$(PKG_UPDATE_BASENAME).partial.$(SRC_BUILD_ID)-$(DST_BUILD_ID).mar' \
+	  '$(SRC_BUILD)' \
+	  '$(DST_BUILD)'
+ifdef MOZ_SIGN_CMD
+	$(MOZ_SIGN_CMD) -f mar '$(STAGE_DIR)/$(PKG_UPDATE_BASENAME).partial.$(SRC_BUILD_ID)-$(DST_BUILD_ID).mar'
+endif

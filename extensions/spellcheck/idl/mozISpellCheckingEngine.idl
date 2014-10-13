@@ -1,0 +1,107 @@
+/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIFile;
+interface mozIPersonalDictionary;
+
+[scriptable, uuid(8ba643a4-7ddc-4662-b976-7ec123843f10)]
+
+/**
+ * This interface represents a SpellChecker.
+ */
+
+interface mozISpellCheckingEngine : nsISupports {
+  /**
+   * The name of the current dictionary. Is either a value from
+   * getDictionaryList or the empty string if no dictionary is selected.
+   * Setting this attribute to a value not in getDictionaryList will throw
+   * NS_ERROR_FILE_NOT_FOUND.
+   *
+   * The spellcheck engine will send a notification with
+   * "spellcheck-dictionary-update" as topic when this changes.
+   * If the dictionary is changed to no dictionary (the empty string), an
+   * observer is allowed to set another dictionary before it returns.
+   */
+  attribute wstring dictionary;
+
+  /**
+   * The language this spellchecker is using when checking
+   *
+   * The spellcheck engine will send a notification with
+   * "spellcheck-dictionary-update" as topic when this changes.
+   */
+  readonly attribute wstring language;
+
+  /**
+   * Does the engine provide its own personal dictionary?
+   */
+  readonly attribute boolean providesPersonalDictionary;
+
+  /**
+   * Does the engine provide its own word utils?
+   */
+  readonly attribute boolean providesWordUtils;
+
+  /**
+   * The name of the engine
+   */
+  readonly attribute wstring name;
+
+  /** 
+   * a string indicating the copyright of the engine
+   */
+  readonly attribute wstring copyright;
+
+  /**
+   * the personal dictionary
+   */
+  attribute mozIPersonalDictionary personalDictionary;
+
+  /**
+   * Get the list of dictionaries
+   */
+  void getDictionaryList([array, size_is(count)] out wstring dictionaries, out uint32_t count);
+
+  /**
+   * check a word
+   *
+   * The spellcheck engine will send a notification with
+   * "spellcheck-dictionary-update" as topic when this changes.
+   */
+  boolean check(in wstring word);
+
+  /**
+   * get a list of suggestions for a misspelled word
+   *
+   * The spellcheck engine will send a notification with
+   * "spellcheck-dictionary-update" as topic when this changes.
+   */
+  void suggest(in wstring word,[array, size_is(count)] out wstring suggestions, out uint32_t count);
+
+  /**
+   * Load dictionaries from the specified dir
+   */
+  void loadDictionariesFromDir(in nsIFile dir);
+
+  /**
+   * Add dictionaries from a directory to the spell checker
+   */
+  void addDirectory(in nsIFile dir);
+
+  /**
+   * Remove dictionaries from a directory from the spell checker
+   */
+  void removeDirectory(in nsIFile dir);
+};
+
+%{C++
+#define DICTIONARY_SEARCH_DIRECTORY "DictD"
+#define DICTIONARY_SEARCH_DIRECTORY_LIST "DictDL"
+
+#define SPELLCHECK_DICTIONARY_UPDATE_NOTIFICATION \
+  "spellcheck-dictionary-update"
+%}

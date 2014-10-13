@@ -1,0 +1,38 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsINetworkManager.idl"
+#include "nsISupports.idl"
+
+[scriptable, uuid(b44d74db-c9d6-41dd-98ae-a56918d6e6ad)]
+interface nsINetworkInterfaceList : nsISupports
+{
+  /**
+   * Number of the network interfaces that is available.
+   */
+  long getNumberOfInterface();
+
+  /**
+   * Get the i-th interface from the list.
+   * @param interfaceIndex index of interface, from 0 to number of interface - 1.
+   */
+  nsINetworkInterface getInterface(in long interfaceIndex);
+};
+
+[scriptable, uuid(ee0e7cd7-1baa-44fd-86cb-f70acb549163)]
+interface nsINetworkInterfaceListService : nsISupports
+{
+  const long LIST_NOT_INCLUDE_MMS_INTERFACES  = (1 << 0);
+  const long LIST_NOT_INCLUDE_SUPL_INTERFACES = (1 << 1);
+  const long LIST_NOT_INCLUDE_IMS_INTERFACES  = (1 << 2);
+  const long LIST_NOT_INCLUDE_DUN_INTERFACES  = (1 << 3);
+
+  /**
+   * Obtain a list of network interfaces that satisfy the specified condition.
+   * @param condition flags that specify the interfaces to be returned. This
+   *        can be OR combination of LIST_* flags, or zero to make all available
+   *        interfaces returned.
+   */
+  nsINetworkInterfaceList getDataInterfaceList(in long condition);
+};

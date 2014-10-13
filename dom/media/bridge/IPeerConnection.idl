@@ -1,0 +1,73 @@
+#include "nsIThread.idl"
+#include "nsIDOMWindow.idl"
+#include "nsIPropertyBag2.idl"
+
+interface nsIDOMMediaStream;
+interface nsIDOMDataChannel;
+
+/*
+ * Manager interface to PeerConnection.js so it is accessible from C++.
+ */
+[scriptable, uuid(c2218bd2-2648-4701-8fa6-305d3379e9f8)]
+interface IPeerConnectionManager : nsISupports
+{
+  boolean hasActivePeerConnection(in unsigned long innerWindowID);
+};
+
+%{C++
+#define IPEERCONNECTION_MANAGER_CONTRACTID "@mozilla.org/dom/peerconnectionmanager;1"
+%}
+
+/* Do not confuse with nsIDOMRTCPeerConnection. This interface is purely for
+ * communication between the PeerConnection JS DOM binding and the C++
+ * implementation in SIPCC.
+ *
+ * See media/webrtc/signaling/include/PeerConnectionImpl.h
+ */
+[scriptable, uuid(d7dfe148-0416-446b-a128-66a7c71ae8d3)]
+interface IPeerConnectionObserver : nsISupports
+{
+};
+
+[scriptable, uuid(c9c31639-1a49-4533-8429-f6a348c4d8c3)]
+interface IPeerConnection : nsISupports
+{
+  const unsigned long kHintAudio = 0x00000001;
+  const unsigned long kHintVideo = 0x00000002;
+
+  const long kActionNone = -1;
+  const long kActionOffer = 0;
+  const long kActionAnswer = 1;
+  const long kActionPRAnswer = 2;
+
+  const long kIceGathering = 0;
+  const long kIceWaiting = 1;
+  const long kIceChecking = 2;
+  const long kIceConnected = 3;
+  const long kIceFailed = 4;
+
+  /* for readyState on Peer Connection */
+  const long kNew = 0;
+  const long kNegotiating = 1;
+  const long kActive = 2;
+  const long kClosing = 3;
+  const long kClosed = 4;
+
+  /* for 'type' in DataChannelInit dictionary */
+  const unsigned short kDataChannelReliable = 0;
+  const unsigned short kDataChannelPartialReliableRexmit = 1;
+  const unsigned short kDataChannelPartialReliableTimed = 2;
+
+  /* Constants for 'name' in error callbacks */
+  const unsigned long kNoError                          = 0; // Test driver only
+  const unsigned long kInvalidConstraintsType           = 1;
+  const unsigned long kInvalidCandidateType             = 2;
+  const unsigned long kInvalidMediastreamTrack          = 3;
+  const unsigned long kInvalidState                     = 4;
+  const unsigned long kInvalidSessionDescription        = 5;
+  const unsigned long kIncompatibleSessionDescription   = 6;
+  const unsigned long kIncompatibleConstraints          = 7;
+  const unsigned long kIncompatibleMediaStreamTrack     = 8;
+  const unsigned long kInternalError                    = 9;
+  const unsigned long kMaxErrorType                     = 9; // Same as final error
+};

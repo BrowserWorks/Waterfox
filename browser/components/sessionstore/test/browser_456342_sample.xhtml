@@ -1,0 +1,28 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head><title>Test for bug 456342</title></head>
+
+<body>
+<form>
+<h3>Non-standard &lt;input&gt;s</h3>
+<p>Search        <input type="search"       id="searchTerm"/></p>
+<p>Image Search: <input type="image search" /></p>
+<p>Autocomplete: <input type="autocomplete" name="fill-in"/></p>
+<p>Mistyped:     <input type="txet"         name="mistyped"/></p>
+
+<h3>Ignored types</h3>
+<input type="hidden" name="hideme"/>
+<input type="HIDDEN" name="hideme2"/>
+<input type="submit" name="submit"/>
+<input type="reset"  name="reset"/>
+<input type="image"  name="image"/>
+<input type="button" name="button"/>
+<input type="password" name="password"/>
+<input type="PassWord" name="password2"/>
+<input type="PASSWORD" name="password3"/>
+</form>
+
+</body>
+</html>

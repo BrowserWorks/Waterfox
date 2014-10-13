@@ -1,0 +1,26 @@
+FINAL_LIBRARY = 'gkmedias'
+DEFINES["HAVE_CONFIG_H"] = 1
+LOCAL_INCLUDES += ['/media/gstreamer/gst-plugins-bad']
+LOCAL_INCLUDES += ['/media/gstreamer/gst-plugins-bad/sys/applemedia']
+LOCAL_INCLUDES += ['/media/gstreamer/glib',
+ '/media/gstreamer/glib/gio',
+ '/media/gstreamer/glib/glib',
+ '/media/gstreamer/glib/gmodule',
+ '/media/gstreamer/gst-plugins-bad',
+ '/media/gstreamer/gst-plugins-bad/gst-libs',
+ '/media/gstreamer/gst-plugins-base',
+ '/media/gstreamer/gst-plugins-base/gst-libs',
+ '/media/gstreamer/gst-plugins-good',
+ '/media/gstreamer/gst-plugins-good/gst-libs',
+ '/media/gstreamer/gstreamer',
+ '/media/gstreamer/gstreamer/gst-libs',
+ '/media/gstreamer/gstreamer/libs',
+ '/media/gstreamer/gstreamer/libs/gst-libs',
+ '/media/gstreamer/orc']
+# libgstapplemedia
+SOURCES += ['../../../../gst-plugins-bad/sys/applemedia/atdec.c',
+ '../../../../gst-plugins-bad/sys/applemedia/cmapi.c',
+ '../../../../gst-plugins-bad/sys/applemedia/corevideobuffer.c',
+ '../../../../gst-plugins-bad/sys/applemedia/plugin.m',
+ '../../../../gst-plugins-bad/sys/applemedia/vtdec.c',
+ '../../../../gst-plugins-bad/sys/applemedia/vtutil.c']

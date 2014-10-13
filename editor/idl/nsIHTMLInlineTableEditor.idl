@@ -1,0 +1,44 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+#include "domstubs.idl"
+
+[scriptable, uuid(eda2e65c-a758-451f-9b05-77cb8de74ed2)]
+
+interface nsIHTMLInlineTableEditor : nsISupports
+{
+  /**
+   * boolean indicating if inline table editing is enabled in the editor.
+   * When inline table editing is enabled, and when the selection is
+   * contained in a table cell, special buttons allowing to add/remove
+   * a line/column are available on the cell's border.
+   */
+  attribute boolean inlineTableEditingEnabled;
+
+  /**
+   * Shows inline table editing UI around a table cell
+   * @param aCell [IN] a DOM Element being a table cell, td or th
+   */
+  void showInlineTableEditingUI(in nsIDOMElement aCell);
+
+  /**
+   * Hide all inline table editing UI
+   */
+  void hideInlineTableEditingUI();
+
+  /**
+   * Modifies the table containing the selection according to the
+   * activation of an inline table editing UI element
+   * @param aUIAnonymousElement [IN] the inline table editing UI element
+   */
+  void doInlineTableEditingAction(in nsIDOMElement aUIAnonymousElement);
+
+  /**
+   * Refresh already visible inline table editing UI
+   */
+  void refreshInlineTableEditingUI();
+};
+

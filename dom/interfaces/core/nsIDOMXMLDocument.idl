@@ -1,0 +1,26 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIDOMDocument.idl"
+
+[uuid(ebf9f390-7cd2-4456-bc53-4869019370ea)]
+interface nsIDOMXMLDocument : nsIDOMDocument
+{
+  // DOM Level 3 Load & Save, DocumentLS
+  // http://www.w3.org/TR/DOM-Level-3-LS/load-save.html#LS-DocumentLS
+  /**
+   * Whether to load synchronously or asynchronously.
+   * The default is async==true.
+   */
+  attribute boolean            async;
+ 
+  /**
+   * Load an XML document.
+   *
+   * @param  url URL to an XML document.
+   * @return     True if load successfull.
+   */
+  boolean                      load(in DOMString url);
+};

@@ -1,0 +1,123 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+XPIDL_SOURCES += [
+    'nsIArray.idl',
+    'nsIAtom.idl',
+    'nsIAtomService.idl',
+    'nsICollection.idl',
+    'nsIEnumerator.idl',
+    'nsIHashable.idl',
+    'nsIINIParser.idl',
+    'nsIMutableArray.idl',
+    'nsIObserver.idl',
+    'nsIObserverService.idl',
+    'nsIPersistentProperties2.idl',
+    'nsIProperties.idl',
+    'nsIProperty.idl',
+    'nsIPropertyBag.idl',
+    'nsIPropertyBag2.idl',
+    'nsISerializable.idl',
+    'nsISimpleEnumerator.idl',
+    'nsIStringEnumerator.idl',
+    'nsISupportsArray.idl',
+    'nsISupportsIterators.idl',
+    'nsISupportsPrimitives.idl',
+    'nsIVariant.idl',
+    'nsIWritablePropertyBag.idl',
+    'nsIWritablePropertyBag2.idl',
+]
+
+if CONFIG['OS_ARCH'] == 'WINNT':
+    XPIDL_SOURCES += [
+        'nsIWindowsRegKey.idl',
+    ]
+    EXPORTS += ['nsWindowsRegKey.h']
+    EXPORTS.mozilla += ['TimeStamp_windows.h']
+    SOURCES += [
+        'nsWindowsRegKey.cpp'
+    ]
+
+XPIDL_MODULE = 'xpcom_ds'
+
+EXPORTS += [
+    'nsArray.h',
+    'nsAtomService.h',
+    'nsCharSeparatedTokenizer.h',
+    'nsCheapSets.h',
+    'nsCRT.h',
+    'nsExpirationTracker.h',
+    'nsHashPropertyBag.h',
+    'nsMathUtils.h',
+    'nsStaticAtom.h',
+    'nsStaticNameTable.h',
+    'nsStringEnumerator.h',
+    'nsSupportsArray.h',
+    'nsSupportsPrimitives.h',
+    'nsVariant.h',
+    'nsWhitespaceTokenizer.h',
+]
+
+EXPORTS.mozilla += [
+    'CharTokenizer.h',
+    'StringBuilder.h',
+    'TimeStamp.h',
+]
+
+UNIFIED_SOURCES += [
+    'nsArray.cpp',
+    'nsAtomService.cpp',
+    'nsAtomTable.cpp',
+    'nsCRT.cpp',
+    'nsHashPropertyBag.cpp',
+    'nsINIParserImpl.cpp',
+    'nsObserverList.cpp',
+    'nsObserverService.cpp',
+    'nsProperties.cpp',
+    'nsStringEnumerator.cpp',
+    'nsSupportsArray.cpp',
+    'nsSupportsArrayEnumerator.cpp',
+    'nsSupportsPrimitives.cpp',
+    'nsVariant.cpp',
+    'TimeStamp.cpp',
+]
+
+# These two files cannot be built in unified mode because they use the
+# PL_ARENA_CONST_ALIGN_MASK macro with plarena.h.
+SOURCES += [
+    'nsPersistentProperties.cpp',
+    'nsStaticNameTable.cpp',
+]
+
+if CONFIG['OS_ARCH'] == 'WINNT':
+    SOURCES += [
+        'TimeStamp_windows.cpp',
+    ]
+elif CONFIG['HAVE_CLOCK_MONOTONIC']:
+    SOURCES += [
+        'TimeStamp_posix.cpp',
+    ]
+elif CONFIG['OS_ARCH'] == 'Darwin':
+    SOURCES += [
+        'TimeStamp_darwin.cpp',
+    ]
+elif CONFIG['COMPILE_ENVIRONMENT']:
+    error('No TimeStamp implementation on this platform.  Build will not succeed')
+
+EXTRA_COMPONENTS += [
+    'nsINIProcessor.js',
+    'nsINIProcessor.manifest',
+]
+
+FAIL_ON_WARNINGS = True
+
+MSVC_ENABLE_PGO = True
+
+LOCAL_INCLUDES += [
+    '../io',
+]
+
+FINAL_LIBRARY = 'xpcom_core'

@@ -1,0 +1,30 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+#include "nsISupports.idl"
+
+/**
+ * The nsIWebPageDescriptor interface allows content being displayed in one
+ * window to be loaded into another window without refetching it from the
+ * network.
+ */
+
+[scriptable, uuid(6f30b676-3710-4c2c-80b1-0395fb26516e)]
+interface nsIWebPageDescriptor : nsISupports
+{
+  const unsigned long DISPLAY_AS_SOURCE = 0x0001;
+  const unsigned long DISPLAY_NORMAL    = 0x0002;
+
+ /**
+  * Tells the object to load the page specified by the page descriptor
+  *
+  * @throws NS_ERROR_FAILURE - 
+  */
+  void loadPage(in nsISupports aPageDescriptor, in unsigned long aDisplayType);
+
+
+ /**
+  * Retrieves the page descriptor for the curent document.
+  */
+  readonly attribute nsISupports currentDescriptor;
+};

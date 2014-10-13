@@ -1,0 +1,486 @@
+/* -*- Mode: Java; c-basic-offset: 4; tab-width: 20; indent-tabs-mode: nil; -*-
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.mozilla.gecko.tabspanel;
+
+import org.mozilla.gecko.GeckoApp;
+import org.mozilla.gecko.GeckoAppShell;
+import org.mozilla.gecko.GeckoAppShell.AppStateListener;
+import org.mozilla.gecko.GeckoApplication;
+import org.mozilla.gecko.GeckoProfile;
+import org.mozilla.gecko.LightweightTheme;
+import org.mozilla.gecko.LightweightThemeDrawable;
+import org.mozilla.gecko.R;
+import org.mozilla.gecko.Telemetry;
+import org.mozilla.gecko.TelemetryContract;
+import org.mozilla.gecko.animation.PropertyAnimator;
+import org.mozilla.gecko.animation.ViewHelper;
+import org.mozilla.gecko.widget.IconTabWidget;
+
+import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
+import android.os.Build;
+import android.util.AttributeSet;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+
+public class TabsPanel extends LinearLayout
+                       implements LightweightTheme.OnChangeListener,
+                                  IconTabWidget.OnTabChangedListener {
+    @SuppressWarnings("unused")
+    private static final String LOGTAG = "Gecko" + TabsPanel.class.getSimpleName();
+
+    public static enum Panel {
+        NORMAL_TABS,
+        PRIVATE_TABS,
+        REMOTE_TABS
+    }
+
+    public static interface PanelView {
+        public void setTabsPanel(TabsPanel panel);
+        public void show();
+        public void hide();
+        public boolean shouldExpand();
+    }
+
+    public static interface TabsLayoutChangeListener {
+        public void onTabsLayoutChange(int width, int height);
+    }
+
+    private Context mContext;
+    private final GeckoApp mActivity;
+    private final LightweightTheme mTheme;
+    private RelativeLayout mHeader;
+    private TabsListContainer mTabsContainer;
+    private PanelView mPanel;
+    private PanelView mPanelNormal;
+    private PanelView mPanelPrivate;
+    private PanelView mPanelRemote;
+    private RelativeLayout mFooter;
+    private TabsLayoutChangeListener mLayoutChangeListener;
+    private AppStateListener mAppStateListener;
+
+    private IconTabWidget mTabWidget;
+    private static ImageButton mAddTab;
+
+    private Panel mCurrentPanel;
+    private boolean mIsSideBar;
+    private boolean mVisible;
+    private boolean mHeaderVisible;
+
+    public TabsPanel(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        mContext = context;
+        mActivity = (GeckoApp) context;
+        mTheme = ((GeckoApplication) context.getApplicationContext()).getLightweightTheme();
+
+        setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                                                      LinearLayout.LayoutParams.MATCH_PARENT));
+        setOrientation(LinearLayout.VERTICAL);
+
+        mCurrentPanel = Panel.NORMAL_TABS;
+        mVisible = false;
+        mHeaderVisible = false;
+
+        mIsSideBar = false;
+
+        LayoutInflater.from(context).inflate(R.layout.tabs_panel, this);
+        initialize();
+
+        mAppStateListener = new AppStateListener() {
+            @Override
+            public void onResume() {
+                if (mPanel == mPanelRemote) {
+                    // Refresh the remote panel.
+                    mPanelRemote.show();
+                }
+            }
+
+            @Override
+            public void onOrientationChanged() {
+                // Remote panel is already refreshed by chrome refresh.
+            }
+
+            @Override
+            public void onPause() {}
+        };
+    }
+
+    private void initialize() {
+        mHeader = (RelativeLayout) findViewById(R.id.tabs_panel_header);
+        mTabsContainer = (TabsListContainer) findViewById(R.id.tabs_container);
+
+        mPanelNormal = (PanelView) findViewById(R.id.normal_tabs);
+        mPanelNormal.setTabsPanel(this);
+
+        mPanelPrivate = (PanelView) findViewById(R.id.private_tabs);
+        mPanelPrivate.setTabsPanel(this);
+
+        mPanelRemote = (PanelView) findViewById(R.id.remote_tabs);
+        mPanelRemote.setTabsPanel(this);
+
+        mFooter = (RelativeLayout) findViewById(R.id.tabs_panel_footer);
+
+        mAddTab = (ImageButton) findViewById(R.id.add_tab);
+        mAddTab.setOnClickListener(new Button.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                TabsPanel.this.addTab();
+            }
+        });
+
+        mTabWidget = (IconTabWidget) findViewById(R.id.tab_widget);
+
+        mTabWidget.addTab(R.drawable.tabs_normal, R.string.tabs_normal);
+        mTabWidget.addTab(R.drawable.tabs_private, R.string.tabs_private);
+
+        if (!GeckoProfile.get(mContext).inGuestMode()) {
+            // The initial icon is not the animated icon, because on Android
+            // 4.4.2, the animation starts immediately (and can start at other
+            // unpredictable times). See Bug 1015974.
+            mTabWidget.addTab(R.drawable.tabs_synced, R.string.tabs_synced);
+        }
+
+        mTabWidget.setTabSelectionListener(this);
+    }
+
+    private void addTab() {
+        if (mCurrentPanel == Panel.NORMAL_TABS) {
+            Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.ACTIONBAR, "new_tab");
+            mActivity.addTab();
+        } else {
+            Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.ACTIONBAR, "new_private_tab");
+            mActivity.addPrivateTab();
+        }
+
+        mActivity.autoHideTabs();
+    }
+
+    @Override
+    public void onTabChanged(int index) {
+        if (index == 0) {
+            show(Panel.NORMAL_TABS);
+        } else if (index == 1) {
+            show(Panel.PRIVATE_TABS);
+        } else {
+            show(Panel.REMOTE_TABS);
+        }
+    }
+
+    private static int getTabContainerHeight(TabsListContainer listContainer) {
+        Resources resources = listContainer.getContext().getResources();
+
+        PanelView panelView = listContainer.getCurrentPanelView();
+        if (panelView != null && !panelView.shouldExpand()) {
+            return resources.getDimensionPixelSize(R.dimen.tabs_tray_horizontal_height);
+        }
+
+        int actionBarHeight = resources.getDimensionPixelSize(R.dimen.browser_toolbar_height);
+        int screenHeight = resources.getDisplayMetrics().heightPixels;
+
+        Rect windowRect = new Rect();
+        listContainer.getWindowVisibleDisplayFrame(windowRect);
+        int windowHeight = windowRect.bottom - windowRect.top;
+
+        // The web content area should have at least 1.5x the height of the action bar.
+        // The tabs panel shouldn't take less than 50% of the screen height and can take
+        // up to 80% of the window height.
+        return (int) Math.max(screenHeight * 0.5f,
+                              Math.min(windowHeight - 2.5f * actionBarHeight, windowHeight * 0.8f) - actionBarHeight);
+    }
+
+    @Override
+    public void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        mTheme.addListener(this);
+        mActivity.addAppStateListener(mAppStateListener);
+    }
+
+    @Override
+    public void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        mTheme.removeListener(this);
+        mActivity.removeAppStateListener(mAppStateListener);
+    }
+
+    @Override
+    @SuppressWarnings("deprecation") // setBackgroundDrawable deprecated by API level 16
+    public void onLightweightThemeChanged() {
+        final int background = getResources().getColor(R.color.background_tabs);
+        final LightweightThemeDrawable drawable = mTheme.getColorDrawable(this, background, true);
+        if (drawable == null)
+            return;
+
+        drawable.setAlpha(34, 0);
+        setBackgroundDrawable(drawable);
+    }
+
+    @Override
+    public void onLightweightThemeReset() {
+        setBackgroundColor(getContext().getResources().getColor(R.color.background_tabs));
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        onLightweightThemeChanged();
+    }
+
+    // Tabs List Container holds the ListView
+    static class TabsListContainer extends FrameLayout {
+        public TabsListContainer(Context context, AttributeSet attrs) {
+            super(context, attrs);
+        }
+
+        public PanelView getCurrentPanelView() {
+            final int childCount = getChildCount();
+            for (int i = 0; i < childCount; i++) {
+                View child = getChildAt(i);
+                if (!(child instanceof PanelView))
+                    continue;
+
+                if (child.getVisibility() == View.VISIBLE)
+                    return (PanelView) child;
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+            if (!GeckoAppShell.getGeckoInterface().hasTabsSideBar()) {
+                int heightSpec = MeasureSpec.makeMeasureSpec(getTabContainerHeight(TabsListContainer.this), MeasureSpec.EXACTLY);
+                super.onMeasure(widthMeasureSpec, heightSpec);
+            } else {
+                super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+            }
+        }
+    }
+
+    // Tabs Panel Toolbar contains the Buttons
+    static class TabsPanelToolbar extends LinearLayout
+                                  implements LightweightTheme.OnChangeListener {
+        private final LightweightTheme mTheme;
+
+        public TabsPanelToolbar(Context context, AttributeSet attrs) {
+            super(context, attrs);
+            mTheme = ((GeckoApplication) context.getApplicationContext()).getLightweightTheme();
+
+            setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                                                          (int) context.getResources().getDimension(R.dimen.browser_toolbar_height)));
+
+            setOrientation(LinearLayout.HORIZONTAL);
+        }
+
+        @Override
+        public void onAttachedToWindow() {
+            super.onAttachedToWindow();
+            mTheme.addListener(this);
+        }
+
+        @Override
+        public void onDetachedFromWindow() {
+            super.onDetachedFromWindow();
+            mTheme.removeListener(this);
+        }
+
+        @Override
+        @SuppressWarnings("deprecation") // setBackgroundDrawable deprecated by API level 16
+        public void onLightweightThemeChanged() {
+            final int background = getResources().getColor(R.color.background_tabs);
+            final LightweightThemeDrawable drawable = mTheme.getColorDrawable(this, background);
+            if (drawable == null)
+                return;
+
+            drawable.setAlpha(34, 34);
+            setBackgroundDrawable(drawable);
+        }
+
+        @Override
+        public void onLightweightThemeReset() {
+            setBackgroundColor(getContext().getResources().getColor(R.color.background_tabs));
+        }
+
+        @Override
+        protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+            super.onLayout(changed, left, top, right, bottom);
+            onLightweightThemeChanged();
+        }
+    }
+
+    public void show(Panel panelToShow) {
+        if (!isShown())
+            setVisibility(View.VISIBLE);
+
+        if (mPanel != null) {
+            // Hide the old panel.
+            mPanel.hide();
+        }
+
+        final boolean showAnimation = !mVisible;
+        mVisible = true;
+        mCurrentPanel = panelToShow;
+
+        int index = panelToShow.ordinal();
+        mTabWidget.setCurrentTab(index);
+
+        switch (panelToShow) {
+            case NORMAL_TABS:
+                mPanel = mPanelNormal;
+                break;
+            case PRIVATE_TABS:
+                mPanel = mPanelPrivate;
+                break;
+            case REMOTE_TABS:
+                mPanel = mPanelRemote;
+                break;
+
+            default:
+                throw new IllegalArgumentException("Unknown panel type " + panelToShow);
+        }
+        mPanel.show();
+
+        if (mCurrentPanel == Panel.REMOTE_TABS) {
+            if (mFooter != null)
+                mFooter.setVisibility(View.GONE);
+
+            mAddTab.setVisibility(View.INVISIBLE);
+        } else {
+            if (mFooter != null)
+                mFooter.setVisibility(View.VISIBLE);
+
+            mAddTab.setVisibility(View.VISIBLE);
+            mAddTab.setImageLevel(index);
+        }
+
+        if (isSideBar()) {
+            if (showAnimation)
+                dispatchLayoutChange(getWidth(), getHeight());
+        } else {
+            int actionBarHeight = mContext.getResources().getDimensionPixelSize(R.dimen.browser_toolbar_height);
+            int height = actionBarHeight + getTabContainerHeight(mTabsContainer);
+            dispatchLayoutChange(getWidth(), height);
+        }
+        mHeaderVisible = true;
+    }
+
+    public void hide() {
+        mHeaderVisible = false;
+
+        if (mVisible) {
+            mVisible = false;
+            dispatchLayoutChange(0, 0);
+        }
+    }
+
+    public void refresh() {
+        removeAllViews();
+
+        LayoutInflater.from(mContext).inflate(R.layout.tabs_panel, this);
+        initialize();
+
+        if (mVisible)
+            show(mCurrentPanel);
+    }
+
+    public void autoHidePanel() {
+        mActivity.autoHideTabs();
+    }
+
+    @Override
+    public boolean isShown() {
+        return mVisible;
+    }
+
+    public boolean isSideBar() {
+        return mIsSideBar;
+    }
+
+    public void setIsSideBar(boolean isSideBar) {
+        mIsSideBar = isSideBar;
+    }
+
+    public Panel getCurrentPanel() {
+        return mCurrentPanel;
+    }
+
+    public void prepareTabsAnimation(PropertyAnimator animator) {
+        // Not worth doing this on pre-Honeycomb without proper
+        // hardware accelerated animations.
+        if (Build.VERSION.SDK_INT < 11) {
+            return;
+        }
+
+        if (mIsSideBar) {
+            final int tabsPanelWidth = getWidth();
+            if (mVisible) {
+                ViewHelper.setTranslationX(mHeader, -tabsPanelWidth);
+                ViewHelper.setTranslationX(mTabsContainer, -tabsPanelWidth);
+                // The footer view is only present on the sidebar
+                ViewHelper.setTranslationX(mFooter, -tabsPanelWidth);
+            }
+            final int translationX = (mVisible ? 0 : -tabsPanelWidth);
+            animator.attach(mTabsContainer, PropertyAnimator.Property.TRANSLATION_X, translationX);
+            animator.attach(mHeader, PropertyAnimator.Property.TRANSLATION_X, translationX);
+            animator.attach(mFooter, PropertyAnimator.Property.TRANSLATION_X, translationX);
+
+        } else if (!mHeaderVisible) {
+            final Resources resources = getContext().getResources();
+            final int toolbarHeight = resources.getDimensionPixelSize(R.dimen.browser_toolbar_height);
+            final int translationY = (mVisible ? 0 : -toolbarHeight);
+            animator.attach(mTabsContainer, PropertyAnimator.Property.ALPHA, 1.0f);
+            animator.attach(mTabsContainer, PropertyAnimator.Property.TRANSLATION_Y, translationY);
+            animator.attach(mHeader, PropertyAnimator.Property.TRANSLATION_Y, translationY);
+        }
+
+        mHeader.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        mTabsContainer.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+    }
+
+    public void finishTabsAnimation() {
+        if (Build.VERSION.SDK_INT < 11) {
+            return;
+        }
+
+        mHeader.setLayerType(View.LAYER_TYPE_NONE, null);
+        mTabsContainer.setLayerType(View.LAYER_TYPE_NONE, null);
+
+        // If the tray is now hidden, call hide() on current panel and unset it as the current panel
+        // to avoid hide() being called again when the tray is opened next.
+        if (!mVisible && mPanel != null) {
+            mPanel.hide();
+            mPanel = null;
+        }
+    }
+
+    public void setTabsLayoutChangeListener(TabsLayoutChangeListener listener) {
+        mLayoutChangeListener = listener;
+    }
+
+    private void dispatchLayoutChange(int width, int height) {
+        if (mLayoutChangeListener != null)
+            mLayoutChangeListener.onTabsLayoutChange(width, height);
+    }
+
+    /**
+     * Fetch the Drawable icon corresponding to the given panel.
+     * @param panel to fetch icon for.
+     * @return Drawable instance, or null if no icon is being displayed, or the icon does not exist.
+     */
+    public Drawable getIconDrawable(Panel panel) {
+        return mTabWidget.getIconDrawable(panel.ordinal());
+    }
+
+    public void setIconDrawable(Panel panel, int resource) {
+        mTabWidget.setIconDrawable(panel.ordinal(), resource);
+    }
+}

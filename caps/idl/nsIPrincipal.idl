@@ -1,0 +1,259 @@
+/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* Defines the abstract interface for a principal. */
+
+#include "nsISerializable.idl"
+
+%{C++
+struct JSPrincipals;
+#include "nsCOMPtr.h"
+#include "nsTArray.h"
+%}
+
+interface nsIURI;
+interface nsIContentSecurityPolicy;
+
+[ptr] native JSContext(JSContext);
+[ptr] native JSPrincipals(JSPrincipals);
+[ptr] native PrincipalArray(nsTArray<nsCOMPtr<nsIPrincipal> >);
+
+[scriptable, builtinclass, uuid(204555e7-04ad-4cc8-9f0e-840615cc43e8)]
+interface nsIPrincipal : nsISerializable
+{
+    /**
+     * Returns whether the other principal is equivalent to this principal.
+     * Principals are considered equal if they are the same principal, or
+     * they have the same origin.
+     */
+    boolean equals(in nsIPrincipal other);
+
+    /**
+     * Like equals, but takes document.domain changes into account.
+     */
+    boolean equalsConsideringDomain(in nsIPrincipal other);
+
+    %{C++
+    inline bool Equals(nsIPrincipal* aOther) {
+      bool equal = false;
+      return NS_SUCCEEDED(Equals(aOther, &equal)) && equal;
+    }
+
+    inline bool EqualsConsideringDomain(nsIPrincipal* aOther) {
+      bool equal = false;
+      return NS_SUCCEEDED(EqualsConsideringDomain(aOther, &equal)) && equal;
+    }
+    %}
+
+    /**
+     * Returns a hash value for the principal.
+     */
+    [noscript] readonly attribute unsigned long hashValue;
+
+    /**
+     * The codebase URI to which this principal pertains.  This is
+     * generally the document URI.
+     */
+    readonly attribute nsIURI URI;
+
+    /**
+     * The domain URI to which this principal pertains.
+     * This is congruent with HTMLDocument.domain, and may be null.
+     * Setting this has no effect on the URI.
+     */
+    [noscript] attribute nsIURI domain;
+
+    /**
+     * The origin of this principal's codebase URI.
+     * An origin is defined as: scheme + host + port.
+     */
+    // XXXcaa this should probably be turned into an nsIURI.
+    // The system principal's origin should be some caps namespace
+    // with a chrome URI.  All of chrome should probably be the same.
+    readonly attribute string origin;
+
+    /**
+     * Returns whether the other principal is equal to or weaker than this
+     * principal. Principals are equal if they are the same object or they
+     * have the same origin.
+     *
+     * Thus a principal always subsumes itself.
+     *
+     * The system principal subsumes itself and all other principals.
+     *
+     * A null principal (corresponding to an unknown, hence assumed minimally
+     * privileged, security context) is not equal to any other principal
+     * (including other null principals), and therefore does not subsume
+     * anything but itself.
+     */
+    boolean subsumes(in nsIPrincipal other);
+
+    /**
+     * Same as the previous method, subsumes(), but takes document.domain into
+     * account.
+     */
+    boolean subsumesConsideringDomain(in nsIPrincipal other);
+
+    %{C++
+    inline bool Subsumes(nsIPrincipal* aOther) {
+      bool subsumes = false;
+      return NS_SUCCEEDED(Subsumes(aOther, &subsumes)) && subsumes;
+    }
+
+    inline bool SubsumesConsideringDomain(nsIPrincipal* aOther) {
+      bool subsumes = false;
+      return NS_SUCCEEDED(SubsumesConsideringDomain(aOther, &subsumes)) && subsumes;
+    }
+    %}
+
+    /**
+     * Checks whether this principal is allowed to load the network resource
+     * located at the given URI under the same-origin policy. This means that
+     * codebase principals are only allowed to load resources from the same
+     * domain, the system principal is allowed to load anything, and null
+     * principals are not allowed to load anything. This is changed slightly
+     * by the optional flag allowIfInheritsPrincipal (which defaults to false)
+     * which allows the load of a data: URI (which inherits the principal of
+     * its loader) or a URI with the same principal as its loader (eg. a
+     * Blob URI).
+     * In these cases, with allowIfInheritsPrincipal set to true, the URI can
+     * be loaded by a null principal.
+     *
+     * If the load is allowed this function does nothing. If the load is not
+     * allowed the function throws NS_ERROR_DOM_BAD_URI.
+     *
+     * NOTE: Other policies might override this, such as the Access-Control
+     *       specification.
+     * NOTE: The 'domain' attribute has no effect on the behaviour of this
+     *       function.
+     *
+     *
+     * @param uri    The URI about to be loaded.
+     * @param report If true, will report a warning to the console service
+     *               if the load is not allowed.
+     * @param allowIfInheritsPrincipal   If true, the load is allowed if the
+     *                                   loadee inherits the principal of the
+     *                                   loader.
+     * @throws NS_ERROR_DOM_BAD_URI if the load is not allowed.
+     */
+    void checkMayLoad(in nsIURI uri, in boolean report,
+                      in boolean allowIfInheritsPrincipal);
+
+    /**
+     * A Content Security Policy associated with this principal.
+     */
+    [noscript] attribute nsIContentSecurityPolicy csp;
+
+    /**
+     * Returns the jar prefix of the principal.
+     * The jar prefix is a string that can be used to isolate data or
+     * permissions between different principals while taking into account
+     * parameters like the app id or the fact that the principal is embedded in
+     * a mozbrowser.
+     * Some principals will return an empty string.
+     * Some principals will assert if you try to access the jarPrefix.
+     *
+     * The jarPrefix is intended to be an opaque identifier. It is currently
+     * "human-readable" but no callers should assume it will stay as is and
+     * it might be crypto-hashed at some point.
+     */
+    readonly attribute AUTF8String jarPrefix;
+
+    /**
+     * The base domain of the codebase URI to which this principal pertains
+     * (generally the document URI), handling null principals and
+     * non-hierarchical schemes correctly.
+     */
+    readonly attribute ACString baseDomain;
+
+    const short APP_STATUS_NOT_INSTALLED = 0;
+    const short APP_STATUS_INSTALLED     = 1;
+    const short APP_STATUS_PRIVILEGED    = 2;
+    const short APP_STATUS_CERTIFIED     = 3;
+
+    /**
+     * Gets the principal's app status, which indicates whether the principal
+     * corresponds to "app code", and if it does, how privileged that code is.
+     * This method returns one of the APP_STATUS constants above.
+     *
+     * Note that a principal may have
+     *
+     *   appId != nsIScriptSecurityManager::NO_APP_ID &&
+     *   appId != nsIScriptSecurityManager::UNKNOWN_APP_ID
+     *
+     * and still have appStatus == APP_STATUS_NOT_INSTALLED.  That's because
+     * appId identifies the app that contains this principal, but a window
+     * might be contained in an app and not be running code that the app has
+     * vouched for.  For example, the window might be inside an <iframe
+     * mozbrowser>, or the window's origin might not match the app's origin.
+     *
+     * If you're doing a check to determine "does this principal correspond to
+     * app code?", you must check appStatus; checking appId != NO_APP_ID is not
+     * sufficient.
+     */
+    [infallible] readonly attribute unsigned short appStatus;
+
+    /**
+     * Gets the id of the app this principal is inside.  If this principal is
+     * not inside an app, returns nsIScriptSecurityManager::NO_APP_ID.
+     *
+     * Note that this principal does not necessarily have the permissions of
+     * the app identified by appId.  For example, this principal might
+     * correspond to an iframe whose origin differs from that of the app frame
+     * containing it.  In this case, the iframe will have the appId of its
+     * containing app frame, but the iframe must not run with the app's
+     * permissions.
+     *
+     * Similarly, this principal might correspond to an <iframe mozbrowser>
+     * inside an app frame; in this case, the content inside the iframe should
+     * not have any of the app's permissions, even if the iframe is at the same
+     * origin as the app.
+     *
+     * If you're doing a security check based on appId, you must check
+     * appStatus as well.
+     */
+    [infallible] readonly attribute unsigned long appId;
+
+    /**
+     * Returns true iff the principal is inside a browser element.  (<iframe
+     * mozbrowser mozapp> does not count as a browser element.)
+     */
+    [infallible] readonly attribute boolean isInBrowserElement;
+
+    /**
+     * Returns true if this principal has an unknown appId. This shouldn't
+     * generally be used. We only expose it due to not providing the correct
+     * appId everywhere where we construct principals.
+     */
+    [infallible] readonly attribute boolean unknownAppId;
+
+    /**
+     * Returns true iff this principal is a null principal (corresponding to an
+     * unknown, hence assumed minimally privileged, security context).
+     */
+    [infallible] readonly attribute boolean isNullPrincipal;
+};
+
+/**
+ * If nsSystemPrincipal is too risky to use, but we want a principal to access
+ * more than one origin, nsExpandedPrincipals letting us define an array of
+ * principals it subsumes. So script with an nsExpandedPrincipals will gain
+ * same origin access when at least one of its principals it contains gained
+ * sameorigin acccess. An nsExpandedPrincipal will be subsumed by the system
+ * principal, and by another nsExpandedPrincipal that has all its principals.
+ * It is added for jetpack content-scripts to let them interact with the
+ * content and a well defined set of other domains, without the risk of
+ * leaking out a system principal to the content. See: Bug 734891
+ */
+[uuid(f3e177Df-6a5e-489f-80a7-2dd1481471d8)]
+interface nsIExpandedPrincipal : nsISupports
+{
+  /**
+   * An array of principals that the expanded principal subsumes.
+   * Note: this list is not reference counted, it is shared, so
+   * should not be changed and should only be used ephemerally.
+   */
+  [noscript] readonly attribute PrincipalArray whiteList;
+};

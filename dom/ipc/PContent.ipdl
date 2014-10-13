@@ -1,0 +1,634 @@
+/* -*- Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 8 -*- */
+/* vim: set sw=4 ts=8 et tw=80 ft=cpp : */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+include protocol PAsmJSCacheEntry;
+include protocol PBackground;
+include protocol PBlob;
+include protocol PBluetooth;
+include protocol PBrowser;
+include protocol PCompositor;
+include protocol PCycleCollectWithLogs;
+include protocol PCrashReporter;
+include protocol PExternalHelperApp;
+include protocol PDeviceStorageRequest;
+include protocol PFileDescriptorSet;
+include protocol PFMRadio;
+include protocol PFileSystemRequest;
+include protocol PHal;
+include protocol PImageBridge;
+include protocol PIndexedDB;
+include protocol PMemoryReportRequest;
+include protocol PNecko;
+include protocol PSharedBufferManager;
+include protocol PSms;
+include protocol PSpeechSynthesis;
+include protocol PStorage;
+include protocol PTelephony;
+include protocol PTestShell;
+include protocol PJavaScript;
+include DOMTypes;
+include JavaScriptTypes;
+include InputStreamParams;
+include PTabContext;
+include URIParams;
+include ProtocolTypes;
+
+using GeoPosition from "nsGeoPositionIPCSerialiser.h";
+
+using struct ChromePackage from "mozilla/chrome/RegistryMessageUtils.h";
+using struct ResourceMapping from "mozilla/chrome/RegistryMessageUtils.h";
+using struct OverrideMapping from "mozilla/chrome/RegistryMessageUtils.h";
+using base::ChildPrivileges from "base/process_util.h";
+using struct IPC::Permission from "mozilla/net/NeckoMessageUtils.h";
+using class IPC::Principal from "mozilla/dom/PermissionMessageUtils.h";
+using struct mozilla::null_t from "ipc/IPCMessageUtils.h";
+using struct mozilla::void_t from "ipc/IPCMessageUtils.h";
+using mozilla::dom::asmjscache::OpenMode from "mozilla/dom/asmjscache/AsmJSCache.h";
+using mozilla::dom::asmjscache::WriteParams from "mozilla/dom/asmjscache/AsmJSCache.h";
+using mozilla::dom::AudioChannel from "mozilla/dom/AudioChannelBinding.h";
+using mozilla::dom::AudioChannelState from "AudioChannelCommon.h";
+using mozilla::dom::NativeThreadId from "mozilla/dom/TabMessageUtils.h";
+using mozilla::hal::ProcessPriority from "mozilla/HalTypes.h";
+using gfxIntSize from "nsSize.h";
+
+namespace mozilla {
+namespace dom {
+
+struct FontListEntry {
+    nsString  familyName;
+    nsString  faceName;
+    nsCString filepath;
+    uint16_t  weight;
+    int16_t   stretch;
+    uint8_t   italic;
+    uint8_t   index;
+};
+
+struct DeviceStorageFreeSpaceParams
+{
+  nsString type;
+  nsString storageName;
+};
+
+struct DeviceStorageUsedSpaceParams
+{
+  nsString type;
+  nsString storageName;
+};
+
+struct DeviceStorageAvailableParams
+{
+  nsString type;
+  nsString storageName;
+};
+
+struct DeviceStorageStatusParams
+{
+  nsString type;
+  nsString storageName;
+};
+
+struct DeviceStorageFormatParams
+{
+  nsString type;
+  nsString storageName;
+};
+
+struct DeviceStorageMountParams
+{
+  nsString type;
+  nsString storageName;
+};
+
+struct DeviceStorageUnmountParams
+{
+  nsString type;
+  nsString storageName;
+};
+
+struct DeviceStorageAddParams
+{
+  nsString type;
+  nsString storageName;
+  nsString relpath;
+  PBlob blob;
+};
+
+struct DeviceStorageCreateFdParams
+{
+  nsString type;
+  nsString storageName;
+  nsString relpath;
+};
+
+struct DeviceStorageGetParams
+{
+  nsString type;
+  nsString storageName;
+  nsString rootDir;
+  nsString relpath;
+};
+
+struct DeviceStorageDeleteParams
+{
+  nsString type;
+  nsString storageName;
+  nsString relpath;
+};
+
+struct DeviceStorageEnumerationParams
+{
+  nsString type;
+  nsString storageName;
+  nsString rootdir;
+  uint64_t since;
+};
+
+union DeviceStorageParams
+{
+  DeviceStorageAddParams;
+  DeviceStorageCreateFdParams;
+  DeviceStorageGetParams;
+  DeviceStorageDeleteParams;
+  DeviceStorageEnumerationParams;
+  DeviceStorageFreeSpaceParams;
+  DeviceStorageUsedSpaceParams;
+  DeviceStorageAvailableParams;
+  DeviceStorageStatusParams;
+  DeviceStorageFormatParams;
+  DeviceStorageMountParams;
+  DeviceStorageUnmountParams;
+};
+
+struct FMRadioRequestEnableParams
+{
+  double frequency;
+};
+
+struct FMRadioRequestDisableParams
+{
+
+};
+
+struct FMRadioRequestSetFrequencyParams
+{
+  double frequency;
+};
+
+struct FMRadioRequestSeekParams
+{
+  bool upward;
+};
+
+struct FMRadioRequestCancelSeekParams
+{
+
+};
+
+union FMRadioRequestParams
+{
+  FMRadioRequestEnableParams;
+  FMRadioRequestDisableParams;
+  FMRadioRequestSetFrequencyParams;
+  FMRadioRequestSeekParams;
+  FMRadioRequestCancelSeekParams;
+};
+
+struct FileSystemCreateDirectoryParams
+{
+  nsString filesystem;
+  nsString realPath;
+};
+
+union FileSystemFileDataValue
+{
+  uint8_t[];
+  PBlob;
+};
+
+struct FileSystemCreateFileParams
+{
+  nsString filesystem;
+  nsString realPath;
+  FileSystemFileDataValue data;
+  bool replace;
+};
+
+struct FileSystemGetFileOrDirectoryParams
+{
+  nsString filesystem;
+  nsString realPath;
+};
+
+union FileSystemPathOrFileValue
+{
+  nsString;
+  PBlob;
+};
+
+struct FileSystemRemoveParams
+{
+  nsString filesystem;
+  nsString directory;
+  FileSystemPathOrFileValue target;
+  bool recursive;
+};
+
+union FileSystemParams
+{
+  FileSystemCreateDirectoryParams;
+  FileSystemCreateFileParams;
+  FileSystemGetFileOrDirectoryParams;
+  FileSystemRemoveParams;
+};
+
+union PrefValue {
+  nsCString;
+  int32_t;
+  bool;
+};
+
+union MaybePrefValue {
+  PrefValue;
+  null_t;
+};
+
+struct PrefSetting {
+  nsCString name;
+  MaybePrefValue defaultValue;
+  MaybePrefValue userValue;
+};
+
+struct DataStoreSetting {
+  nsString name;
+  nsString originURL;
+  nsString manifestURL;
+  bool readOnly;
+  bool enabled;
+};
+
+intr protocol PContent
+{
+    parent opens PCompositor;
+    parent opens PSharedBufferManager;
+    parent opens PImageBridge;
+    child opens PBackground;
+
+    manages PAsmJSCacheEntry;
+    manages PBlob;
+    manages PBluetooth;
+    manages PBrowser;
+    manages PCrashReporter;
+    manages PCycleCollectWithLogs;
+    manages PDeviceStorageRequest;
+    manages PFileSystemRequest;
+    manages PExternalHelperApp;
+    manages PFileDescriptorSet;
+    manages PFMRadio;
+    manages PHal;
+    manages PIndexedDB;
+    manages PMemoryReportRequest;
+    manages PNecko;
+    manages PSms;
+    manages PSpeechSynthesis;
+    manages PStorage;
+    manages PTelephony;
+    manages PTestShell;
+    manages PJavaScript;
+
+both:
+    // Depending on exactly how the new browser is being created, it might be
+    // created from either the child or parent process!
+    //
+    // The child creates the PBrowser as part of
+    // TabChild::BrowserFrameProvideWindow (which happens when the child's
+    // content calls window.open()), and the parent creates the PBrowser as part
+    // of ContentParent::CreateBrowserOrApp.
+    //
+    // When the parent constructs a PBrowser, the child trusts the app token it
+    // receives from the parent.  In that case, context can be any of the
+    // IPCTabContext subtypes.
+    //
+    // When the child constructs a PBrowser, the parent doesn't trust the app
+    // token it receives from the child.  In this case, context must have type
+    // PopupIPCTabContext.  The browser created using a PopupIPCTabContext has
+    // the opener PBrowser's app-id and containing-app-id.  The parent checks
+    // that if the opener is a browser element, the context is also for a
+    // browser element.
+    //
+    // This allows the parent to prevent a malicious child from escalating its
+    // privileges by requesting a PBrowser corresponding to a highly-privileged
+    // app; the child can only request privileges for an app which the child has
+    // access to (in the form of a TabChild).
+    //
+    // Keep the last 3 attributes in sync with GetProcessAttributes!
+    async PBrowser(IPCTabContext context, uint32_t chromeFlags,
+                   uint64_t id, bool isForApp, bool isForBrowser);
+
+    async PBlob(BlobConstructorParams params);
+
+    PFileDescriptorSet(FileDescriptor fd);
+
+child:
+    /**
+     * Enable system-level sandboxing features, if available.  Can
+     * usually only be performed zero or one times.  The child may
+     * abnormally exit if this fails; the details are OS-specific.
+     */
+    async SetProcessSandbox();
+
+    PMemoryReportRequest(uint32_t generation, bool minimizeMemoryUsage, nsString DMDDumpIdent);
+
+    /**
+     * Notify the AudioChannelService in the child processes.
+     */
+    async AudioChannelNotify();
+
+    async SpeakerManagerNotify();
+
+    async DataStoreNotify(uint32_t aAppId, nsString aName,
+                          nsString aManifestURL);
+
+    /**
+     * Dump this process's GC and CC logs to the provided files.
+     *
+     * For documentation on the other args, see dumpGCAndCCLogsToFile in
+     * nsIMemoryInfoDumper.idl
+     */
+    PCycleCollectWithLogs(bool dumpAllTraces,
+                          FileDescriptor gcLog,
+                          FileDescriptor ccLog);
+
+    PTestShell();
+
+    RegisterChrome(ChromePackage[] packages, ResourceMapping[] resources,
+                   OverrideMapping[] overrides, nsCString locale);
+
+    async SetOffline(bool offline);
+
+    async NotifyVisited(URIParams uri);
+
+    async SystemMemoryAvailable(uint64_t getterId, uint32_t memoryAvailable);
+
+    PreferenceUpdate(PrefSetting pref);
+
+    NotifyAlertsObserver(nsCString topic, nsString data);
+
+    GeolocationUpdate(GeoPosition somewhere);
+
+    // nsIPermissionManager messages
+    AddPermission(Permission permission);
+
+    ScreenSizeChanged(gfxIntSize size);
+
+    FlushMemory(nsString reason);
+
+    GarbageCollect();
+    CycleCollect();
+    
+    /**
+     * Start accessibility engine in content process.
+     */
+    ActivateA11y();
+
+    AppInfo(nsCString version, nsCString buildID, nsCString name, nsCString UAName);
+
+    // Notify child that last-pb-context-exited notification was observed
+    LastPrivateDocShellDestroyed();
+
+    FilePathUpdate(nsString storageType, nsString storageName, nsString filepath,
+                   nsCString reasons);
+
+    FileSystemUpdate(nsString fsName, nsString mountPoint, int32_t fsState,
+                     int32_t mountGeneration, bool isMediaPresent,
+                     bool isSharing, bool isFormatting, bool isFake);
+
+    // Ask the Nuwa process to create a new child process.
+    NuwaFork();
+
+    NotifyProcessPriorityChanged(ProcessPriority priority);
+    MinimizeMemoryUsage();
+
+    /**
+     * Used to manage nsIStyleSheetService across processes.
+     */
+    async LoadAndRegisterSheet(URIParams uri, uint32_t type);
+    async UnregisterSheet(URIParams uri, uint32_t type);
+
+    NotifyPhoneStateChange(nsString newState);
+
+    /**
+     * Notify idle observers in the child
+     */
+    NotifyIdleObserver(uint64_t observerId, nsCString topic, nsString str);
+parent:
+    /**
+     * Tell the content process some attributes of itself.  This is
+     * among the first information queried by content processes after
+     * startup.  (The message is sync to allow the content process to
+     * control when it receives the information.)
+     *
+     * |id| is a unique ID among all subprocesses.  When |isForApp &&
+     * isForBrowser|, we're loading <browser> for an app.  When
+     * |isForBrowser|, we're loading <browser>.  When |!isForApp &&
+     * !isForBrowser|, we're probably loading <xul:browser remote>.
+     *
+     * Keep the return values in sync with PBrowser()!
+     */
+    sync GetProcessAttributes()
+        returns (uint64_t id, bool isForApp, bool isForBrowser);
+    sync GetXPCOMProcessAttributes()
+        returns (bool isOffline);
+
+    async PJavaScript();
+
+    PDeviceStorageRequest(DeviceStorageParams params);
+
+    PFileSystemRequest(FileSystemParams params);
+
+    sync PCrashReporter(NativeThreadId tid, uint32_t processType);
+
+    sync GetRandomValues(uint32_t length)
+        returns (uint8_t[] randomValues);
+
+    async GetSystemMemory(uint64_t getterId);
+
+    PHal();
+
+    PIndexedDB();
+
+    PNecko();
+
+    PSms();
+
+    PSpeechSynthesis();
+
+    PStorage();
+
+    PTelephony();
+
+    PBluetooth();
+
+    PFMRadio();
+
+    PAsmJSCacheEntry(OpenMode openMode, WriteParams write, Principal principal);
+
+    // Services remoting
+
+    async StartVisitedQuery(URIParams uri);
+    async VisitURI(URIParams uri, OptionalURIParams referrer, uint32_t flags);
+    async SetURITitle(URIParams uri, nsString title);
+
+    async LoadURIExternal(URIParams uri);
+
+    // PrefService message
+    sync ReadPrefsArray() returns (PrefSetting[] prefs);
+
+    sync ReadFontList() returns (FontListEntry[] retValue);
+
+    sync SyncMessage(nsString aMessage, ClonedMessageData aData,
+                     CpowEntry[] aCpows, Principal aPrincipal)
+      returns (nsString[] retval);
+
+    rpc RpcMessage(nsString aMessage, ClonedMessageData aData,
+                   CpowEntry[] aCpows, Principal aPrincipal)
+      returns (nsString[] retval);
+
+    ShowAlertNotification(nsString imageUrl,
+                          nsString title,
+                          nsString text,
+                          bool textClickable,
+                          nsString cookie,
+                          nsString name,
+                          nsString bidi,
+                          nsString lang,
+                          Principal principal);
+
+    CloseAlert(nsString name, Principal principal);
+
+    PExternalHelperApp(OptionalURIParams uri, 
+                       nsCString aMimeContentType,
+                       nsCString aContentDisposition, 
+                       uint32_t aContentDispositionHint, 
+                       nsString aContentDispositionFilename, 
+                       bool aForceSave,
+                       int64_t aContentLength,
+                       OptionalURIParams aReferrer,
+                       nullable PBrowser aBrowser);
+
+    AddGeolocationListener(Principal principal, bool highAccuracy);
+    RemoveGeolocationListener();
+    SetGeolocationHigherAccuracy(bool enable);
+
+    ConsoleMessage(nsString message);
+    ScriptError(nsString message, nsString sourceName, nsString sourceLine,
+                uint32_t lineNumber, uint32_t colNumber, uint32_t flags,
+                nsCString category); 
+
+    // nsIPermissionManager messages
+    sync ReadPermissions() returns (Permission[] permissions);
+
+    SetClipboardText(nsString text, bool isPrivateData, int32_t whichClipboard);
+    sync GetClipboardText(int32_t whichClipboard)
+        returns (nsString text);
+    EmptyClipboard(int32_t whichClipboard);
+    sync ClipboardHasText(int32_t whichClipboard)
+        returns (bool hasText);
+
+    sync GetSystemColors(uint32_t colorsCount)
+        returns (uint32_t[] colors);
+
+    sync GetIconForExtension(nsCString aFileExt, uint32_t aIconSize)
+        returns (uint8_t[] bits);
+
+    sync GetShowPasswordSetting()
+        returns (bool showPassword);
+
+    // Notify the parent of the presence or absence of private docshells
+    PrivateDocShellsExist(bool aExist);
+
+    // Tell the parent that the child has gone idle for the first time
+    async FirstIdle();
+
+    // Get Muted from the main AudioChannelService.
+    sync AudioChannelGetState(AudioChannel aChannel, bool aElementHidden,
+                              bool aElementWasHidden)
+        returns (AudioChannelState value);
+
+    sync AudioChannelRegisterType(AudioChannel aChannel, bool aWithVideo);
+    sync AudioChannelUnregisterType(AudioChannel aChannel,
+                                    bool aElementHidden,
+                                    bool aWithVideo);
+
+    async AudioChannelChangedNotification();
+    async AudioChannelChangeDefVolChannel(int32_t aChannel, bool aHidden);
+
+    sync DataStoreGetStores(nsString aName, Principal aPrincipal)
+        returns (DataStoreSetting[] dataStores);
+
+    async FilePathUpdateNotify(nsString aType,
+                               nsString aStorageName,
+                               nsString aFilepath,
+                               nsCString aReason);
+    // get nsIVolumeService to broadcast volume information
+    async BroadcastVolume(nsString volumeName);
+
+    // Notify the parent that the child has finished handling a system message.
+    async SystemMessageHandled();
+
+    NuwaReady();
+
+    sync AddNewProcess(uint32_t pid, ProtocolFdMapping[] aFds);
+
+    // called by the child (test code only) to propagate volume changes to the parent
+    async CreateFakeVolume(nsString fsName, nsString mountPoint);
+    async SetFakeVolumeState(nsString fsName, int32_t fsState);
+
+    sync KeywordToURI(nsCString keyword)
+        returns (OptionalInputStreamParams postData, OptionalURIParams uri);
+
+    sync SpeakerManagerForceSpeaker(bool aEnable);
+
+    sync SpeakerManagerGetSpeakerStatus()
+        returns (bool value);
+
+    /**
+     * Notifies the parent about a recording device is starting or shutdown.
+     * @param recordingStatus starting or shutdown
+     * @param pageURL URL that request that changing the recording status
+     * @param isAudio recording start with microphone
+     * @param isVideo recording start with camera
+     */
+    async RecordingDeviceEvents(nsString recordingStatus,
+                                nsString pageURL,
+                                bool isAudio,
+                                bool isVideo);
+
+    sync GetGraphicsFeatureStatus(int32_t aFeature) returns (int32_t aStatus, bool aSuccess);
+
+    AddIdleObserver(uint64_t observerId, uint32_t idleTimeInS);
+    RemoveIdleObserver(uint64_t observerId, uint32_t idleTimeInS);
+
+    /**
+     * This message is only used on X11 platforms.
+     *
+     * Send a dup of the plugin process's X socket to the parent
+     * process.  In theory, this scheme keeps the plugin's X resources
+     * around until after both the plugin process shuts down *and* the
+     * parent process closes the dup fd.  This is used to prevent the
+     * parent process from crashing on X errors if, e.g., the plugin
+     * crashes *just before* a repaint and the parent process tries to
+     * use the newly-invalid surface.
+     */
+    BackUpXResources(FileDescriptor aXSocketFd);
+
+both:
+     AsyncMessage(nsString aMessage, ClonedMessageData aData,
+                  CpowEntry[] aCpows, Principal aPrincipal);
+};
+
+}
+}

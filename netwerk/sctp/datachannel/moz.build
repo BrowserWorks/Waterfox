@@ -1,0 +1,40 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+EXPORTS.mozilla.net += [
+    'DataChannel.h',
+    'DataChannelListener.h',
+    'DataChannelProtocol.h'
+]
+
+SOURCES += [
+    'DataChannel.cpp',
+]
+
+FAIL_ON_WARNINGS = True
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+FINAL_LIBRARY = 'necko'
+
+LOCAL_INCLUDES += [
+    '../src',
+    '/media/mtransport',
+    '/media/webrtc/trunk/third_party/libjingle/source',
+]
+
+DEFINES['INET'] = 1
+DEFINES['SCTP_DEBUG'] = 1
+
+if CONFIG['OS_TARGET'] != 'Android':
+    DEFINES['INET6'] = 1
+
+if CONFIG['OS_TARGET'] == 'WINNT':
+    DEFINES['__Userspace_os_Windows'] = 1
+else:
+    DEFINES['__Userspace_os_%s' % CONFIG['OS_TARGET']] = 1
+
+NO_PGO = True # Don't PGO

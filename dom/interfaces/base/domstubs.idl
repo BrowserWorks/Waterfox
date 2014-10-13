@@ -1,0 +1,82 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+%{C++
+class nsWrapperCache;
+%}
+
+[ptr] native nsWrapperCachePtr(nsWrapperCache);
+
+typedef unsigned long long DOMTimeStamp;
+typedef double DOMHighResTimeStamp;
+
+// Core
+interface nsIDOMAttr;
+interface nsIDOMCDATASection;
+interface nsIDOMCharacterData;
+interface nsIDOMComment;
+interface nsIDOMDOMImplementation;
+interface nsIDOMDocument;
+interface nsIDOMDocumentFragment;
+interface nsIDOMDocumentType;
+interface nsIDOMElement;
+interface nsIDOMNode;
+interface nsIDOMNodeList;
+interface nsIDOMProcessingInstruction;
+interface nsIDOMText;
+interface nsIDOMClientRect;
+interface nsIDOMClientRectList;
+
+// Needed for raises() in our IDL
+interface DOMException;
+
+// Style Sheets
+interface nsIDOMStyleSheetList;
+interface nsIDOMStyleSheet;
+interface nsIDOMMediaList;
+
+// Base
+interface nsIDOMWindow;
+interface nsIDOMWindowCollection;
+interface nsIDOMNavigator;
+interface nsIDOMScreen;
+
+// Events
+interface nsIDOMEvent;
+interface nsIDOMEventTarget;
+interface nsIDOMEventListener;
+
+// HTML
+interface nsIDOMHTMLElement;
+interface nsIDOMHTMLFormElement;
+interface nsIDOMHTMLCollection;
+interface nsIDOMHTMLHeadElement;
+
+// CSS
+interface nsIDOMCSSValue;
+interface nsIDOMCSSPrimitiveValue;
+interface nsIDOMCSSRule;
+interface nsIDOMCSSRuleList;
+interface nsIDOMMozCSSKeyframeRule;
+interface nsIDOMCSSFontFeatureValuesRule;
+interface nsIDOMCSSStyleSheet;
+interface nsIDOMCSSStyleDeclaration;
+interface nsIDOMCounter;
+interface nsIDOMRect;
+interface nsIDOMCSSStyleRule;
+interface nsIDOMCSSStyleRuleCollection;
+interface nsIDOMHTMLTableCaptionElement;
+
+// Range
+interface nsIDOMRange;
+
+// Crypto
+interface nsIDOMCrypto;
+
+// Used font face (for inspector)
+interface nsIDOMFontFace;
+interface nsIDOMFontFaceList;

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Preferences screen for pre-v11 Android devices that do not support
+     PreferenceFragment or ActionBar. Preference changes here should be mirrored
+     to xml-v11/preferences.xml. -->
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+                  xmlns:gecko="http://schemas.android.com/apk/res-auto"
+                  android:enabled="false">
+
+    <org.mozilla.gecko.preferences.SyncPreference android:key="android.not_a_preference.sync"
+                                                  android:title="@string/pref_sync"
+                                                  android:persistent="false" />
+
+    <PreferenceScreen android:title="@string/pref_category_customize" >
+        <intent android:action="android.intent.action.VIEW"
+                android:targetPackage="@string/android_package_name"
+                android:targetClass="org.mozilla.gecko.preferences.GeckoPreferences" >
+            <extra
+                android:name="resource"
+                android:value="preferences_customize" />
+        </intent>
+    </PreferenceScreen>
+
+    <PreferenceScreen android:title="@string/pref_category_display" >
+        <intent android:action="android.intent.action.VIEW"
+                android:targetPackage="@string/android_package_name"
+                android:targetClass="org.mozilla.gecko.preferences.GeckoPreferences" >
+            <extra
+                android:name="resource"
+                android:value="preferences_display" />
+        </intent>
+    </PreferenceScreen>
+
+    <PreferenceScreen android:title="@string/pref_category_privacy_short" >
+        <intent android:action="android.intent.action.VIEW"
+                android:targetPackage="@string/android_package_name"
+                android:targetClass="org.mozilla.gecko.preferences.GeckoPreferences" >
+            <extra
+                android:name="resource"
+                android:value="preferences_privacy" />
+        </intent>
+    </PreferenceScreen>
+
+    <PreferenceScreen android:title="@string/pref_category_language" >
+        <intent android:action="android.intent.action.VIEW"
+                android:targetPackage="@string/android_package_name"
+                android:targetClass="org.mozilla.gecko.preferences.GeckoPreferences" >
+            <extra
+                android:name="resource"
+                android:value="preferences_locale" />
+        </intent>
+    </PreferenceScreen>
+
+    <PreferenceScreen android:title="@string/pref_category_vendor">
+        <intent android:action="android.intent.action.VIEW"
+                android:targetPackage="@string/android_package_name"
+                android:targetClass="org.mozilla.gecko.preferences.GeckoPreferences" >
+            <extra
+                android:name="resource"
+                android:value="preferences_vendor" />
+        </intent>
+    </PreferenceScreen>
+    <PreferenceScreen android:title="@string/pref_category_devtools">
+        <intent android:action="android.intent.action.VIEW"
+                android:targetPackage="@string/android_package_name"
+                android:targetClass="org.mozilla.gecko.preferences.GeckoPreferences" >
+            <extra
+                android:name="resource"
+                android:value="preferences_devtools" />
+        </intent>
+    </PreferenceScreen>
+
+</PreferenceScreen>

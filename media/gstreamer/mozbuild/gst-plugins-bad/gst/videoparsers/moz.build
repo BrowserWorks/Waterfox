@@ -1,0 +1,31 @@
+FINAL_LIBRARY = 'gkmedias'
+DEFINES["HAVE_CONFIG_H"] = 1
+LOCAL_INCLUDES += ['/media/gstreamer/gst-plugins-bad']
+LOCAL_INCLUDES += ['/media/gstreamer/gst-plugins-bad/gst/videoparsers']
+LOCAL_INCLUDES += ['/media/gstreamer/glib',
+ '/media/gstreamer/glib/gio',
+ '/media/gstreamer/glib/glib',
+ '/media/gstreamer/glib/gmodule',
+ '/media/gstreamer/gst-plugins-bad',
+ '/media/gstreamer/gst-plugins-bad/gst-libs',
+ '/media/gstreamer/gst-plugins-base',
+ '/media/gstreamer/gst-plugins-base/gst-libs',
+ '/media/gstreamer/gst-plugins-good',
+ '/media/gstreamer/gst-plugins-good/gst-libs',
+ '/media/gstreamer/gstreamer',
+ '/media/gstreamer/gstreamer/gst-libs',
+ '/media/gstreamer/gstreamer/libs',
+ '/media/gstreamer/gstreamer/libs/gst-libs',
+ '/media/gstreamer/orc']
+# libgstvideoparsersbad
+SOURCES += ['../../../../gst-plugins-bad/gst/videoparsers/dirac_parse.c',
+ '../../../../gst-plugins-bad/gst/videoparsers/gstdiracparse.c',
+ '../../../../gst-plugins-bad/gst/videoparsers/gsth263parse.c',
+ '../../../../gst-plugins-bad/gst/videoparsers/gsth264parse.c',
+ '../../../../gst-plugins-bad/gst/videoparsers/gsth265parse.c',
+ '../../../../gst-plugins-bad/gst/videoparsers/gstmpeg4videoparse.c',
+ '../../../../gst-plugins-bad/gst/videoparsers/gstmpegvideoparse.c',
+ '../../../../gst-plugins-bad/gst/videoparsers/gstpngparse.c',
+ '../../../../gst-plugins-bad/gst/videoparsers/gstvc1parse.c',
+ '../../../../gst-plugins-bad/gst/videoparsers/h263parse.c',
+ '../../../../gst-plugins-bad/gst/videoparsers/plugin.c']

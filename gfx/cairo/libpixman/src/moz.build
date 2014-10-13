@@ -1,0 +1,154 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+EXPORTS += [
+    'pixman-version.h',
+    'pixman.h',
+]
+
+# Apple's arm assembler doesn't support the same syntax as
+# the standard GNU assembler, so use the C fallback paths for now.
+# This may be fixable if clang's ARM/iOS assembler improves into a
+# viable solution in the future.
+if CONFIG['OS_ARCH'] != 'Darwin' and CONFIG['GNU_CC']:
+    if CONFIG['HAVE_ARM_NEON']:
+        SOURCES += [
+            'pixman-arm-neon-asm-bilinear.S',
+            'pixman-arm-neon-asm.S',
+        ]
+    if CONFIG['HAVE_ARM_SIMD']:
+        SOURCES += [
+            'pixman-arm-simd-asm-scaled.S',
+            'pixman-arm-simd-asm.S',
+        ]
+
+SOURCES += [
+    'pixman-access-accessors.c',
+    'pixman-access.c',
+    'pixman-arm.c',
+    'pixman-bits-image.c',
+    'pixman-combine-float.c',
+    'pixman-combine16.c',
+    'pixman-combine32.c',
+    'pixman-conical-gradient.c',
+    'pixman-edge-accessors.c',
+    'pixman-edge.c',
+    'pixman-fast-path.c',
+    'pixman-filter.c',
+    'pixman-general.c',
+    'pixman-glyph.c',
+    'pixman-gradient-walker.c',
+    'pixman-image.c',
+    'pixman-implementation.c',
+    'pixman-linear-gradient.c',
+    'pixman-matrix.c',
+    'pixman-mips.c',
+    'pixman-noop.c',
+    'pixman-ppc.c',
+    'pixman-radial-gradient.c',
+    'pixman-region16.c',
+    'pixman-region32.c',
+    'pixman-solid-fill.c',
+    'pixman-trap.c',
+    'pixman-utils.c',
+    'pixman-x86.c',
+    'pixman.c',
+]
+
+MSVC_ENABLE_PGO = True
+
+FINAL_LIBRARY = 'gkmedias'
+LOCAL_INCLUDES += [
+    '../../cairo/src',
+]
+
+if CONFIG['MOZ_USE_PTHREADS']:
+    DEFINES['HAVE_PTHREAD_SETSPECIFIC'] = True
+
+if CONFIG['_MSC_VER']:
+    DEFINES['PIXMAN_USE_XP_DLL_TLS_WORKAROUND'] = True
+
+DEFINES['PACKAGE'] = 'mozpixman'
+
+DEFINES['_USE_MATH_DEFINES'] = True
+
+use_mmx = False
+use_sse2 = False
+use_vmx = False
+use_arm_simd_gcc = False
+use_arm_neon_gcc = False
+if '86' in CONFIG['OS_TEST']:
+    if '64' in CONFIG['OS_TEST']:
+        if CONFIG['GNU_CC']:
+            use_sse2 = True
+    else:
+        if CONFIG['_MSC_VER']:
+            use_mmx = True
+        if CONFIG['HAVE_GCC_ALIGN_ARG_POINTER']:
+            use_sse2 = True
+    if CONFIG['GNU_CC']:
+        use_mmx = True
+    if CONFIG['_MSC_VER']:
+        use_sse2 = True
+elif 'ppc' in CONFIG['OS_TEST']:
+    if CONFIG['GNU_CC']:
+        use_vmx = True
+# Apple's arm assembler doesn't support the same syntax as
+# the standard GNU assembler, so use the C fallback paths for now.
+# This may be fixable if clang's ARM/iOS assembler improves into a
+# viable solution in the future.
+elif 'arm' in CONFIG['OS_TEST']:
+    if CONFIG['OS_ARCH'] != 'Darwin':
+        if CONFIG['HAVE_ARM_SIMD']:
+            use_arm_simd_gcc = True
+        if CONFIG['HAVE_ARM_NEON']:
+            use_arm_neon_gcc = True
+
+if use_mmx:
+    DEFINES['USE_MMX'] = True
+    SOURCES += ['pixman-mmx.c']
+    SOURCES['pixman-mmx.c'].flags += CONFIG['MMX_FLAGS']
+    if CONFIG['GNU_CC']:
+        SOURCES['pixman-mmx.c'].flags += [
+            '-Winline',
+            '--param inline-unit-growth=10000',
+            '--param large-function-growth=10000',
+        ]
+
+if use_sse2:
+    DEFINES['USE_SSE'] = True
+    DEFINES['USE_SSE2'] = True
+    SOURCES += ['pixman-sse2.c']
+    SOURCES['pixman-sse2.c'].flags += CONFIG['SSE_FLAGS'] + CONFIG['SSE2_FLAGS']
+    if CONFIG['GNU_CC']:
+        SOURCES['pixman-sse2.c'].flags += ['-Winline']
+
+if use_vmx:
+    DEFINES['USE_VMX'] = True
+    SOURCES += ['pixman-vmx.c']
+    SOURCES['pixman-vmx.c'].flags += ['-maltivec']
+
+if use_arm_simd_gcc:
+    DEFINES['USE_ARM_SIMD'] = True
+    SOURCES += ['pixman-arm-simd.c']
+
+if use_arm_neon_gcc:
+    DEFINES['USE_ARM_NEON'] = True
+    SOURCES += ['pixman-arm-neon.c']
+    SOURCES['pixman-arm-neon.c'].flags += ['-mfpu=neon']
+
+# Suppress warnings in third-party code.
+if CONFIG['GNU_CC']:
+    CFLAGS += [
+        '-Wno-address',
+        '-Wno-sign-compare'
+    ]
+    if CONFIG['CLANG_CXX']:
+        CFLAGS += [
+            '-Wno-incompatible-pointer-types',
+            '-Wno-tautological-compare',
+            '-Wno-tautological-constant-out-of-range-compare',
+        ]

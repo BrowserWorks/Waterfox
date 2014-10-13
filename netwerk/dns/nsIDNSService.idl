@@ -1,0 +1,141 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsICancelable;
+interface nsIEventTarget;
+interface nsIDNSRecord;
+interface nsIDNSListener;
+
+%{C++
+template<class T> class nsTArray;
+namespace mozilla { namespace net {
+    struct DNSCacheEntries;
+} }
+%}
+
+[ptr] native EntriesArray(nsTArray<mozilla::net::DNSCacheEntries>);
+
+/**
+ * nsIDNSService
+ */
+[scriptable, uuid(f1971942-19db-44bf-81e8-d15df220a39f)]
+interface nsIDNSService : nsISupports
+{
+    /**
+     * kicks off an asynchronous host lookup.
+     *
+     * @param aHostName
+     *        the hostname or IP-address-literal to resolve.
+     * @param aFlags
+     *        a bitwise OR of the RESOLVE_ prefixed constants defined below.
+     * @param aListener
+     *        the listener to be notified when the result is available.
+     * @param aListenerTarget
+     *        optional parameter (may be null).  if non-null, this parameter
+     *        specifies the nsIEventTarget of the thread on which the
+     *        listener's onLookupComplete should be called.  however, if this
+     *        parameter is null, then onLookupComplete will be called on an
+     *        unspecified thread (possibly recursively).
+     *
+     * @return An object that can be used to cancel the host lookup.
+     */
+    nsICancelable asyncResolve(in AUTF8String       aHostName,
+                               in unsigned long     aFlags,
+                               in nsIDNSListener    aListener,
+                               in nsIEventTarget    aListenerTarget);
+
+    /**
+     * Attempts to cancel a previously requested async DNS lookup
+     *
+     * @param aHostName
+     *        the hostname or IP-address-literal to resolve.
+     * @param aFlags
+     *        a bitwise OR of the RESOLVE_ prefixed constants defined below.
+     * @param aListener
+     *        the original listener which was to be notified about the host lookup
+     *        result - used to match request information to requestor.
+     * @param aReason
+     *        nsresult reason for the cancellation
+     *
+     * @return An object that can be used to cancel the host lookup.
+     */
+    void cancelAsyncResolve(in AUTF8String       aHostName,
+                            in unsigned long     aFlags,
+                            in nsIDNSListener    aListener,
+                            in nsresult          aReason);
+    
+    /**
+     * called to synchronously resolve a hostname.  warning this method may
+     * block the calling thread for a long period of time.  it is extremely
+     * unwise to call this function on the UI thread of an application.
+     *
+     * @param aHostName
+     *        the hostname or IP-address-literal to resolve.
+     * @param aFlags
+     *        a bitwise OR of the RESOLVE_ prefixed constants defined below.
+     *
+     * @return DNS record corresponding to the given hostname.
+     * @throws NS_ERROR_UNKNOWN_HOST if host could not be resolved.
+     */
+    nsIDNSRecord resolve(in AUTF8String   aHostName,
+                         in unsigned long aFlags);
+
+    /**
+     * The method takes a pointer to an nsTArray
+     * and fills it with cache entry data
+     * Called by the networking dashboard
+     */
+    [noscript] void getDNSCacheEntries(in EntriesArray args);
+
+    /**
+     * @return the hostname of the operating system.
+     */
+    readonly attribute AUTF8String myHostName;
+
+    /*************************************************************************
+     * Listed below are the various flags that may be OR'd together to form
+     * the aFlags parameter passed to asyncResolve() and resolve().
+     */
+
+    /**
+     * if set, this flag suppresses the internal DNS lookup cache.
+     */
+    const unsigned long RESOLVE_BYPASS_CACHE = (1 << 0);
+
+    /**
+     * if set, the canonical name of the specified host will be queried.
+     */
+    const unsigned long RESOLVE_CANONICAL_NAME = (1 << 1);
+
+    /**
+     * if set, the query is given lower priority. Medium takes precedence
+     * if both are used.
+     */
+    const unsigned long RESOLVE_PRIORITY_MEDIUM = (1 << 2);
+    const unsigned long RESOLVE_PRIORITY_LOW    = (1 << 3);
+
+    /**
+     * if set, indicates request is speculative. Speculative requests 
+     * return errors if prefetching is disabled by configuration.
+     */
+    const unsigned long RESOLVE_SPECULATE = (1 << 4);
+
+    /**
+     * If set, only IPv4 addresses will be returned from resolve/asyncResolve.
+     */
+    const unsigned long RESOLVE_DISABLE_IPV6 = (1 << 5);
+
+    /**
+     * If set, only literals and cached entries will be returned from resolve/
+     * asyncResolve.
+     */
+    const unsigned long RESOLVE_OFFLINE = (1 << 6);
+
+    /**
+     * If set, only IPv6 addresses will be returned from resolve/asyncResolve.
+     */
+    const unsigned long RESOLVE_DISABLE_IPV4 = (1 << 7);
+};

@@ -1,0 +1,14 @@
+. "$topsrcdir/browser/config/mozconfigs/macosx-universal/common-opt"
+
+ac_add_options --disable-install-strip
+ac_add_options --enable-signmar
+
+ac_add_options --enable-instruments
+ac_add_options --enable-dtrace
+
+# Nightlies only since this has a cost in performance
+ac_add_options --enable-js-diagnostics
+
+ac_add_options --with-macbundlename-prefix=Firefox
+
+. "$topsrcdir/build/mozconfig.common.override"

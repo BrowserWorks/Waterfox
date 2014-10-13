@@ -1,0 +1,69 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+UNIFIED_SOURCES += [
+    'nsMathMLChar.cpp',
+    'nsMathMLContainerFrame.cpp',
+    'nsMathMLFrame.cpp',
+    'nsMathMLmactionFrame.cpp',
+    'nsMathMLmencloseFrame.cpp',
+    'nsMathMLmfencedFrame.cpp',
+    'nsMathMLmfracFrame.cpp',
+    'nsMathMLmmultiscriptsFrame.cpp',
+    'nsMathMLmoFrame.cpp',
+    'nsMathMLmpaddedFrame.cpp',
+    'nsMathMLmphantomFrame.cpp',
+    'nsMathMLmrootFrame.cpp',
+    'nsMathMLmrowFrame.cpp',
+    'nsMathMLmspaceFrame.cpp',
+    'nsMathMLmsqrtFrame.cpp',
+    'nsMathMLmtableFrame.cpp',
+    'nsMathMLmunderoverFrame.cpp',
+    'nsMathMLOperators.cpp',
+    'nsMathMLSelectedFrame.cpp',
+    'nsMathMLsemanticsFrame.cpp',
+    'nsMathMLTokenFrame.cpp',
+]
+
+EXPORTS += [
+    'nsIMathMLFrame.h',
+    'nsMathMLOperators.h'
+]
+
+FAIL_ON_WARNINGS = True
+
+FINAL_LIBRARY = 'gklayout'
+LOCAL_INCLUDES += [
+    '../base',
+    '../generic',
+    '../style',
+    '../tables',
+    '../xul',
+    '/content/base/src',
+    '/content/mathml/content/src',
+]
+
+if CONFIG['ENABLE_TESTS']:
+    PARALLEL_DIRS += [
+        'tests',
+    ]
+
+JAR_MANIFESTS += ['jar.mn']
+
+RESOURCE_FILES.fonts += [
+    'mathfont.properties',
+    'mathfontMathJax_Main.properties',
+    'mathfontStandardSymbolsL.properties',
+    'mathfontSTIXGeneral.properties',
+    'mathfontUnicode.properties',
+]
+
+RESOURCE_FILES.fonts['mathfont.properties'].preprocess = True
+
+if CONFIG['TARGET_MD_ARCH'] == 'win32':
+    RESOURCE_FILES.fonts += [
+        'mathfontSymbol.properties',
+    ]

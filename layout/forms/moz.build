@@ -1,0 +1,63 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+TEST_DIRS += ['test']
+
+EXPORTS += [
+    'nsIComboboxControlFrame.h',
+    'nsIFormControlFrame.h',
+    'nsIListControlFrame.h',
+    'nsISelectControlFrame.h',
+    'nsITextControlFrame.h',
+]
+
+UNIFIED_SOURCES += [
+    'nsButtonFrameRenderer.cpp',
+    'nsColorControlFrame.cpp',
+    'nsComboboxControlFrame.cpp',
+    'nsFieldSetFrame.cpp',
+    'nsFileControlFrame.cpp',
+    'nsFormControlFrame.cpp',
+    'nsGfxButtonControlFrame.cpp',
+    'nsGfxCheckboxControlFrame.cpp',
+    'nsGfxRadioControlFrame.cpp',
+    'nsHTMLButtonControlFrame.cpp',
+    'nsImageControlFrame.cpp',
+    'nsLegendFrame.cpp',
+    'nsListControlFrame.cpp',
+    'nsMeterFrame.cpp',
+    'nsNumberControlFrame.cpp',
+    'nsProgressFrame.cpp',
+    'nsRangeFrame.cpp',
+    'nsSelectsAreaFrame.cpp',
+    'nsTextControlFrame.cpp',
+]
+
+FAIL_ON_WARNINGS = True
+
+MSVC_ENABLE_PGO = True
+
+FINAL_LIBRARY = 'gklayout'
+
+LOCAL_INCLUDES += [
+    '../../content/base/src',
+    '../../content/html/content/src',
+    '../../editor/libeditor/base',
+    '../../editor/libeditor/text',
+    '../../editor/txmgr/src',
+    '../base',
+    '../generic',
+    '../xul',
+]
+
+if CONFIG['ENABLE_INTL_API']:
+    # nsNumberControlFrame.cpp requires ICUUtils.h which in turn requires
+    # i18n/unum.h
+    LOCAL_INCLUDES += [
+        '../../intl/icu/source/common',
+        '../../intl/icu/source/i18n',
+    ]
+

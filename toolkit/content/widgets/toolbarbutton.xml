@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<bindings id="toolbarbuttonBindings"
+   xmlns="http://www.mozilla.org/xbl"
+   xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+   xmlns:xbl="http://www.mozilla.org/xbl">
+
+  <binding id="toolbarbutton" display="xul:button" role="xul:toolbarbutton"
+           extends="chrome://global/content/bindings/button.xml#button-base">
+    <resources>
+      <stylesheet src="chrome://global/skin/toolbarbutton.css"/>
+    </resources>
+    
+    <content>
+      <children includes="observes|template|menupopup|panel|tooltip"/>
+      <xul:image class="toolbarbutton-icon" xbl:inherits="validate,src=image,label"/>
+      <xul:label class="toolbarbutton-text" crop="right" flex="1"
+                 xbl:inherits="value=label,accesskey,crop,wrap"/>
+      <xul:label class="toolbarbutton-multiline-text" flex="1"
+                 xbl:inherits="xbl:text=label,accesskey,wrap"/>
+    </content>
+  </binding>
+
+  <binding id="menu" display="xul:menu" 
+           extends="chrome://global/content/bindings/toolbarbutton.xml#toolbarbutton">
+    <content>
+      <children includes="observes|template|menupopup|panel|tooltip"/>
+      <xul:image class="toolbarbutton-icon" xbl:inherits="validate,src=image,label,type"/>
+      <xul:label class="toolbarbutton-text" crop="right" flex="1"
+                 xbl:inherits="value=label,accesskey,crop,dragover-top,wrap"/>
+      <xul:label class="toolbarbutton-multiline-text" flex="1"
+                 xbl:inherits="xbl:text=label,accesskey,wrap"/>
+      <xul:dropmarker anonid="dropmarker" type="menu"
+                      class="toolbarbutton-menu-dropmarker" xbl:inherits="disabled,label"/>
+    </content>
+  </binding>
+  
+  <binding id="menu-vertical" display="xul:menu"
+           extends="chrome://global/content/bindings/toolbarbutton.xml#toolbarbutton">
+    <content>
+      <children includes="observes|template|menupopup|panel|tooltip"/>
+      <xul:hbox flex="1" align="center">
+        <xul:vbox flex="1" align="center">
+          <xul:image class="toolbarbutton-icon" xbl:inherits="validate,src=image,label"/>
+          <xul:label class="toolbarbutton-text" crop="right" flex="1"
+                     xbl:inherits="value=label,accesskey,crop,dragover-top,wrap"/>
+          <xul:label class="toolbarbutton-multiline-text" flex="1"
+                     xbl:inherits="xbl:text=label,accesskey,wrap"/>
+        </xul:vbox>
+        <xul:dropmarker anonid="dropmarker" type="menu"
+                        class="toolbarbutton-menu-dropmarker" xbl:inherits="disabled,label"/>
+      </xul:hbox>
+    </content>
+  </binding>
+  
+  <binding id="menu-button" display="xul:menu" 
+           extends="chrome://global/content/bindings/button.xml#menu-button-base">
+    <resources>
+      <stylesheet src="chrome://global/skin/toolbarbutton.css"/>
+    </resources>
+
+    <content>
+      <children includes="observes|template|menupopup|panel|tooltip"/>
+      <xul:toolbarbutton class="box-inherit toolbarbutton-menubutton-button"
+                         anonid="button" flex="1" allowevents="true"
+                         xbl:inherits="disabled,crop,image,label,accesskey,command,wrap,
+                                       align,dir,pack,orient,tooltiptext=buttontooltiptext"/>
+      <xul:dropmarker type="menu-button" class="toolbarbutton-menubutton-dropmarker"
+                      anonid="dropmarker" xbl:inherits="align,dir,pack,orient,disabled,label,open"/>
+    </content>
+  </binding>
+
+  <binding id="toolbarbutton-image"
+           extends="chrome://global/content/bindings/toolbarbutton.xml#toolbarbutton">
+    <content>
+      <xul:image class="toolbarbutton-icon" xbl:inherits="src=image"/>
+    </content>
+  </binding>
+</bindings>

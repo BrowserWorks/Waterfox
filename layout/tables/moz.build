@@ -1,0 +1,44 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+TEST_DIRS += ['test']
+
+EXPORTS += [
+    'nsITableCellLayout.h',
+]
+
+UNIFIED_SOURCES += [
+    'BasicTableLayoutStrategy.cpp',
+    'FixedTableLayoutStrategy.cpp',
+    'nsCellMap.cpp',
+    'nsTableCellFrame.cpp',
+    'nsTableColFrame.cpp',
+    'nsTableColGroupFrame.cpp',
+    'nsTableFrame.cpp',
+    'nsTableOuterFrame.cpp',
+    'nsTablePainter.cpp',
+    'nsTableRowFrame.cpp',
+    'nsTableRowGroupFrame.cpp',
+    'SpanningCellSorter.cpp',
+]
+
+FAIL_ON_WARNINGS = True
+
+MSVC_ENABLE_PGO = True
+
+FINAL_LIBRARY = 'gklayout'
+
+LOCAL_INCLUDES += [
+    '../../content/base/src',
+    '../../content/html/content/src',
+    '../../intl/unicharutil/util',
+    '../base',
+    '../generic',
+    '../style',
+    '../xul',
+]
+
+DEFINES['DEBUG_TABLE_STRATEGY_off'] = True

@@ -1,0 +1,31 @@
+ /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+#include "nsIException.idl"
+
+[scriptable, uuid(dd250248-2586-4ec1-a68f-8d14ef452517)]
+interface nsIXPCException : nsIException
+{
+    // inherits methods from nsIException
+
+    void initialize(in AUTF8String      aMessage,
+                    in nsresult         aResult,
+                    in AUTF8String      aName,
+                    in nsIStackFrame    aLocation,
+                    in nsISupports      aData,
+                    in nsIException     aInner);
+};
+
+/* this goes into the C++ header verbatim. */
+%{ C++
+/********************************************************/
+// {5632BF70-51EC-11d3-9896-006008962422}
+#define NS_XPCEXCEPTION_CID  \
+{ 0x5632bf70, 0x51ec, 0x11d3, \
+    { 0x98, 0x96, 0x0, 0x60, 0x8, 0x96, 0x24, 0x22 } }
+%}
+

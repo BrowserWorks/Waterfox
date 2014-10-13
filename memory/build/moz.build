@@ -1,0 +1,48 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+EXPORTS += [
+    'mozmemory.h',
+    'mozmemory_wrap.h',
+]
+
+DEFINES['MOZ_MEMORY_IMPL'] = True
+
+if CONFIG['MOZ_REPLACE_MALLOC']:
+    EXPORTS += [
+        'malloc_decls.h',
+        'replace_malloc.h',
+    ]
+    DEFINES['MOZ_REPLACE_MALLOC'] = True
+
+SOURCES += [
+    'jemalloc_config.c',
+    'mozmemory_wrap.c',
+]
+
+if CONFIG['MOZ_JEMALLOC3']:
+    SOURCES += [
+        'mozjemalloc_compat.c',
+    ]
+    GENERATED_INCLUDES += ['../jemalloc/src/include']
+    if CONFIG['_MSC_VER']:
+        LOCAL_INCLUDES += ['/memory/jemalloc/src/include/msvc_compat']
+
+if CONFIG['MOZ_REPLACE_MALLOC']:
+    SOURCES += [
+        'replace_malloc.c',
+    ]
+
+LIBRARY_NAME = 'memory'
+
+# Keep jemalloc separated when mozglue is statically linked
+if CONFIG['MOZ_MEMORY'] and (CONFIG['OS_TARGET'] in ('WINNT', 'Darwin', 'Android') or
+                             CONFIG['MOZ_NATIVE_JEMALLOC']):
+    FINAL_LIBRARY = 'mozglue'
+
+if CONFIG['MOZ_REPLACE_MALLOC'] and CONFIG['OS_TARGET'] == 'Darwin':
+    # The zone allocator for OSX needs some jemalloc internal functions
+    LOCAL_INCLUDES += ['/memory/jemalloc/src/include']

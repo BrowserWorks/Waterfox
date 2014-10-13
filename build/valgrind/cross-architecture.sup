@@ -1,0 +1,111 @@
+# Full list is tracked through meta bug 793882
+
+####################
+#  Intended leaks  #
+####################
+
+{
+   PR_SetEnv requires its argument to be leaked, but does not appear on stacks. (See bug 793534.)
+   Memcheck:Leak
+   ...
+   fun:_ZL9SaveToEnvPKc
+   ...
+}
+{
+   PR_SetEnv requires its argument to be leaked, but does not appear on stacks. (See bug 793549.)
+   Memcheck:Leak
+   ...
+   fun:_ZL13SaveWordToEnvPKcRK19nsACString_internal
+   ...
+}
+{
+   PR_SetEnv requires its argument to be leaked, but does not appear on stacks. (See bug 944133.)
+   Memcheck:Leak
+   ...
+   fun:_ZN13CrashReporter14SetRestartArgsEiPPc
+   ...
+}
+{
+   PR_SetEnv requires its argument to be leaked, but does not appear on stacks. (See bug 793548.)
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:_Z12ToNewCStringRK19nsACString_internal
+   fun:_ZN13CrashReporter14SetupExtraDataEP7nsIFileRK19nsACString_internal
+   ...
+}
+
+####################################
+#  Leaks in third party libraries  #
+####################################
+
+{
+   See bug 793535
+   Memcheck:Leak
+   fun:calloc
+   fun:_dlerror_run
+   fun:dlsym
+   ...
+}
+{
+   See bug 793611
+   Memcheck:Leak
+   fun:memalign
+   fun:tls_get_addr_tail
+   fun:__tls_get_addr
+   ...
+}
+{
+   See bug 793611
+   Memcheck:Leak
+   fun:memalign
+   fun:tls_get_addr_tail
+   fun:___tls_get_addr
+   ...
+}
+
+#################
+#  Other leaks  #
+#################
+
+{
+   Bug 794369
+   Memcheck:Leak
+   fun:malloc
+   fun:moz_xmalloc
+   fun:_ZN20mozJSComponentLoader10LoadModuleERN7mozilla12FileLocationE
+   ...
+}
+{
+   Bug 794370
+   Memcheck:Leak
+   fun:malloc
+   fun:moz_xmalloc
+   fun:_ZN22nsComponentManagerImpl15RegisterFactoryERK4nsIDPKcS4_P10nsIFactory
+   ...
+}
+{
+   Bug 794372
+   Memcheck:Leak
+   fun:malloc
+   fun:moz_xmalloc
+   fun:_ZN22nsComponentManagerImpl22RegisterCIDEntryLockedEPKN7mozilla6Module8CIDEntryEPNS_11KnownModuleE
+   ...
+}
+{
+   Bug 794374
+   Memcheck:Leak
+   fun:malloc
+   fun:moz_xmalloc
+   fun:_ZN22nsComponentManagerImpl17ManifestComponentERNS_25ManifestProcessingContextEiPKPc
+   ...
+}
+{
+   Bug 1017112
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:PK11_InitPin
+   fun:_ZN11nsPK11Token12InitPasswordEPKDs
+   ...
+}

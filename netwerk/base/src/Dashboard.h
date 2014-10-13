@@ -1,0 +1,105 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#ifndef nsDashboard_h__
+#define nsDashboard_h__
+
+#include "mozilla/Mutex.h"
+#include "mozilla/net/DashboardTypes.h"
+#include "nsIDashboard.h"
+#include "nsIDashboardEventNotifier.h"
+#include "nsIDNSListener.h"
+#include "nsIServiceManager.h"
+#include "nsITimer.h"
+#include "nsITransport.h"
+
+class nsIDNSService;
+class nsISocketTransport;
+class nsIThread;
+
+namespace mozilla {
+namespace net {
+
+class SocketData;
+class HttpData;
+class DnsData;
+class WebSocketRequest;
+class ConnectionData;
+
+class Dashboard
+    : public nsIDashboard
+    , public nsIDashboardEventNotifier
+{
+public:
+    NS_DECL_THREADSAFE_ISUPPORTS
+    NS_DECL_NSIDASHBOARD
+    NS_DECL_NSIDASHBOARDEVENTNOTIFIER
+
+    Dashboard();
+    static const char *GetErrorString(nsresult rv);
+    nsresult GetConnectionStatus(ConnectionData *aConnectionData);
+
+private:
+
+    struct LogData
+    {
+        LogData(nsCString host, uint32_t serial, bool encryption):
+            mHost(host),
+            mSerial(serial),
+            mMsgSent(0),
+            mMsgReceived(0),
+            mSizeSent(0),
+            mSizeReceived(0),
+            mEncrypted(encryption)
+        { }
+        nsCString mHost;
+        uint32_t  mSerial;
+        uint32_t  mMsgSent;
+        uint32_t  mMsgReceived;
+        uint64_t  mSizeSent;
+        uint64_t  mSizeReceived;
+        bool      mEncrypted;
+        bool operator==(const LogData& a) const
+        {
+            return mHost.Equals(a.mHost) && (mSerial == a.mSerial);
+        }
+    };
+
+    struct WebSocketData
+    {
+        WebSocketData():lock("Dashboard.webSocketData")
+        {
+        }
+        uint32_t IndexOf(nsCString hostname, uint32_t mSerial)
+        {
+            LogData temp(hostname, mSerial, false);
+            return data.IndexOf(temp);
+        }
+        nsTArray<LogData> data;
+        mozilla::Mutex lock;
+    };
+
+
+    bool mEnableLogging;
+    WebSocketData mWs;
+
+private:
+    virtual ~Dashboard();
+
+    nsresult GetSocketsDispatch(SocketData *);
+    nsresult GetHttpDispatch(HttpData *);
+    nsresult GetDnsInfoDispatch(DnsData *);
+    nsresult TestNewConnection(ConnectionData *);
+
+    /* Helper methods that pass the JSON to the callback function. */
+    nsresult GetSockets(SocketData *);
+    nsresult GetHttpConnections(HttpData *);
+    nsresult GetDNSCacheEntries(DnsData *);
+    nsresult GetWebSocketConnections(WebSocketRequest *);
+
+    nsCOMPtr<nsIDNSService> mDnsService;
+};
+
+} } // namespace mozilla::net
+#endif // nsDashboard_h__

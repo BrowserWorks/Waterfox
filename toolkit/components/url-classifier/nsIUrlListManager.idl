@@ -1,0 +1,62 @@
+/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIPrincipal;
+
+/**
+ * Interface for a class that manages updates of the url classifier database.
+ */
+
+// Interface for JS function callbacks
+[scriptable, function, uuid(fa4caf12-d057-4e7e-81e9-ce066ceee90b)]
+interface nsIUrlListManagerCallback : nsISupports {
+  void handleEvent(in ACString value);
+};
+
+
+[scriptable, uuid(62484bb5-bf7e-4988-9055-8803b16b48a1)]
+interface nsIUrlListManager : nsISupports
+{
+    /**
+     * Set the URL we check for updates.
+     */
+    void setUpdateUrl(in ACString url);
+
+    /**
+     * Set the URL that we will query for complete hashes after a partial
+     * hash match.
+     */
+    void setGethashUrl(in ACString url);
+
+    /**
+     * Add a table to the list of tables we are managing.  The name is a
+     * string of the format provider_name-semantic_type-table_type.  For
+     * example, goog-white-enchash or goog-black-url.
+     */
+    boolean registerTable(in ACString tableName);
+
+    /**
+     * Turn on update checking for a table.  I.e., during the next server
+     * check, download updates for this table.
+     */
+    void enableUpdate(in ACString tableName);
+
+    /**
+     * Turn off update checking for a table.
+     */
+    void disableUpdate(in ACString tableName);
+
+    /**
+     * Lookup a key.  Should not raise exceptions.  Calls the callback
+     * function with a comma-separated list of tables to which the key
+     * belongs.
+     */
+    void safeLookup(in nsIPrincipal key,
+                    in nsIUrlListManagerCallback cb);
+
+    void checkForUpdates();
+};

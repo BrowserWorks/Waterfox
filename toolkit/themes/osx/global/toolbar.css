@@ -1,0 +1,120 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+
+toolbar {
+  min-width: 1px;
+  min-height: 20px;
+  -moz-appearance: toolbar;
+}
+
+menubar:-moz-lwtheme,
+toolbar:-moz-lwtheme {
+  -moz-appearance: none;
+  background: none;
+  border-style: none;
+}
+
+menubar {
+  -moz-appearance: dialog; /* For content menubars, "toolbar" is too dark, so we use "dialog". */
+  min-width: 1px;
+}
+
+.toolbar-holder {
+  min-width: 1px;
+}
+
+.toolbar-primary {
+  min-height: 24px;
+}
+
+toolbarseparator {
+  -moz-appearance: none;
+  margin: 3px 4px;
+  background: url("chrome://global/skin/toolbar/toolbar-separator.png") transparent repeat-y;
+  padding: 0;
+  width: 1px !important;
+}
+
+/* ::::: toolbarpaletteitem ::::: */
+
+toolbarpaletteitem {
+  cursor: grab;
+}
+
+toolbar[iconsize="small"] toolbarpaletteitem[type="spacer"] {
+  min-width: 24px !important;
+}
+
+toolbarpaletteitem[type="spacer"] {
+  min-width: 32px !important;
+}
+
+.toolbarpaletteitem-box[type="spacer"] {
+  border: 1px solid #A3A3A3;
+  background: url("chrome://global/skin/10pct_transparent_grey.png") repeat;
+  width: 32px;
+  margin-top: 18px;
+}
+
+.toolbarpaletteitem-box[type="spring"] {
+  border: 1px solid #A3A3A3;
+  background: url("chrome://global/skin/toolbar/spring.png") #FFFFFF no-repeat;
+  width: 32px;
+  margin-top: 18px;
+}
+
+.toolbarpaletteitem-box[type="spring"][place="toolbar"] {
+  background: url("chrome://global/skin/10pct_transparent_grey.png") repeat;
+}
+
+.toolbarpaletteitem-box[type="spacer"][place="toolbar"],
+.toolbarpaletteitem-box[type="spring"][place="toolbar"] {
+  margin: 2px;
+}
+
+.toolbarpaletteitem-box[type="separator"][place="palette"] {
+  width: 2px;
+  height: 50px;
+}
+
+.toolbarpaletteitem-box[type="spacer"][place="palette"],
+.toolbarpaletteitem-box[type="spring"][place="palette"] {
+  margin-top: 0;
+  margin-bottom: 2px;
+  height: 32px;
+}
+
+.toolbarpaletteitem-box[type="spring"][place="palette"] {
+  background-position: center;
+  margin-left: 8px;
+  margin-right: 8px;
+}
+
+/* ..... drag and drop feedback ..... */
+
+toolbarpaletteitem[place="toolbar"] {
+  margin-left: -2px;
+  margin-right: -2px;
+  border-left: 2px solid transparent;
+  border-right: 2px solid transparent;
+}
+
+toolbarpaletteitem[dragover="left"] {
+  border-left-color: #000000;
+}
+
+toolbarpaletteitem[dragover="right"] {
+  border-right-color: #000000;
+}
+
+toolbar[iconsize="small"] toolbarspacer {
+  min-width: 24px !important;
+}
+
+toolbarspacer {
+  min-width: 32px !important;
+}
+

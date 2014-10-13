@@ -1,0 +1,61 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+EXPORTS += [
+    'MP4Decoder.h',
+    'MP4Reader.h',
+    'PlatformDecoderModule.h',
+]
+
+UNIFIED_SOURCES += [
+    'BlankDecoderModule.cpp',
+    'PlatformDecoderModule.cpp',
+]
+
+SOURCES += [
+    'MP4Decoder.cpp',
+    'MP4Reader.cpp',
+]
+
+if CONFIG['MOZ_WMF']:
+  EXPORTS += [
+      'wmf/MFTDecoder.h',
+      'wmf/WMFAudioOutputSource.h',
+      'wmf/WMFDecoderModule.h',
+      'wmf/WMFMediaDataDecoder.h',
+      'wmf/WMFVideoOutputSource.h',
+  ]
+  UNIFIED_SOURCES += [
+      'wmf/MFTDecoder.cpp',
+      'wmf/WMFAudioOutputSource.cpp',
+      'wmf/WMFDecoderModule.cpp',
+      'wmf/WMFMediaDataDecoder.cpp',
+      'wmf/WMFVideoOutputSource.cpp',
+  ]
+
+if CONFIG['MOZ_FFMPEG']:
+  EXPORTS += [
+      'ffmpeg/FFmpegAACDecoder.h',
+      'ffmpeg/FFmpegDataDecoder.h',
+      'ffmpeg/FFmpegDecoderModule.h',
+      'ffmpeg/FFmpegFunctionList.h',
+      'ffmpeg/FFmpegH264Decoder.h',
+      'ffmpeg/FFmpegRuntimeLinker.h',
+  ]
+  UNIFIED_SOURCES += [
+      'ffmpeg/FFmpegAACDecoder.cpp',
+      'ffmpeg/FFmpegDataDecoder.cpp',
+      'ffmpeg/FFmpegDecoderModule.cpp',
+      'ffmpeg/FFmpegH264Decoder.cpp',
+      'ffmpeg/FFmpegRuntimeLinker.cpp',
+  ]
+  LOCAL_INCLUDES += [
+      'ffmpeg/include',
+  ]
+
+FINAL_LIBRARY = 'gklayout'
+
+FAIL_ON_WARNINGS = True

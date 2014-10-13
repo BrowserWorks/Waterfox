@@ -1,0 +1,180 @@
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+NO_JS_MANIFEST = 1
+MOZ_CHROME_FILE_FORMAT = jar
+DIST_FILES = install.rdf
+
+# Used in install.rdf
+USE_EXTENSION_MANIFEST = 1
+
+# files that get copied into $objdir/_tests/
+SERV_FILES = 	\
+		runtests.py \
+		automation.py \
+		runtestsb2g.py \
+		runtestsremote.py \
+		runtestsvmware.py \
+		mochitest_options.py \
+		manifest.webapp \
+		$(topsrcdir)/testing/mozbase/mozdevice/mozdevice/devicemanager.py \
+		$(topsrcdir)/testing/mozbase/mozdevice/mozdevice/devicemanagerADB.py \
+		$(topsrcdir)/testing/mozbase/mozdevice/mozdevice/devicemanagerSUT.py \
+		$(topsrcdir)/testing/mozbase/manifestdestiny/manifestparser/manifestparser.py \
+		$(topsrcdir)/testing/mozbase/mozdevice/mozdevice/droid.py \
+		$(topsrcdir)/testing/mozbase/mozdevice/mozdevice/Zeroconf.py \
+		$(topsrcdir)/testing/mozbase/moznetwork/moznetwork/moznetwork.py \
+		$(topsrcdir)/build/automationutils.py \
+		$(topsrcdir)/build/mobile/remoteautomation.py \
+		gen_template.pl \
+		server.js \
+		chunkifyTests.js \
+		manifestLibrary.js \
+		harness.xul \
+		browser-test-overlay.xul \
+		browser-test.js \
+		cc-analyzer.js \
+		chrome-harness.js \
+		browser-harness.xul \
+		redirect.html \
+		$(topsrcdir)/build/pgo/server-locations.txt \
+		$(topsrcdir)/netwerk/test/httpserver/httpd.js \
+		pywebsocket_wrapper.py \
+		android.json \
+		androidx86.json \
+		android23.json \
+		gl.json \
+		b2g_start_script.js \
+		$(NULL)	
+
+ifeq ($(MOZ_BUILD_APP),mobile/android)
+SERV_FILES += \
+  $(topsrcdir)/mobile/android/base/tests/robocop.ini \
+  $(topsrcdir)/mobile/android/base/tests/robocop_autophone.ini \
+  $(NULL)
+endif
+
+_DEST_DIR = $(DEPTH)/_tests/$(relativesrcdir)
+SERV_DEST = $(_DEST_DIR)
+INSTALL_TARGETS += SERV
+
+PYWEBSOCKET_FILES = \
+		pywebsocket/standalone.py \
+		$(NULL)
+PYWEBSOCKET_DEST = $(_DEST_DIR)/pywebsocket
+INSTALL_TARGETS += PYWEBSOCKET
+
+MOD_PYWEBSOCKET_FILES = \
+		pywebsocket/mod_pywebsocket/__init__.py \
+		pywebsocket/mod_pywebsocket/common.py \
+		pywebsocket/mod_pywebsocket/dispatch.py \
+		pywebsocket/mod_pywebsocket/extensions.py \
+		pywebsocket/mod_pywebsocket/headerparserhandler.py \
+		pywebsocket/mod_pywebsocket/http_header_util.py \
+		pywebsocket/mod_pywebsocket/memorizingfile.py \
+		pywebsocket/mod_pywebsocket/util.py \
+		pywebsocket/mod_pywebsocket/stream.py \
+		pywebsocket/mod_pywebsocket/_stream_hixie75.py \
+		pywebsocket/mod_pywebsocket/msgutil.py \
+		pywebsocket/mod_pywebsocket/_stream_hybi.py \
+		pywebsocket/mod_pywebsocket/_stream_base.py \
+		$(NULL)
+MOD_PYWEBSOCKET_DEST = $(_DEST_DIR)/pywebsocket/mod_pywebsocket
+INSTALL_TARGETS += MOD_PYWEBSOCKET
+
+HANDSHAKE_FILES = \
+		pywebsocket/mod_pywebsocket/handshake/__init__.py \
+		pywebsocket/mod_pywebsocket/handshake/hybi00.py \
+		pywebsocket/mod_pywebsocket/handshake/_base.py \
+		pywebsocket/mod_pywebsocket/handshake/draft75.py \
+		pywebsocket/mod_pywebsocket/handshake/hybi.py \
+		$(NULL)
+HANDSHAKE_DEST = $(_DEST_DIR)/pywebsocket/mod_pywebsocket/handshake
+INSTALL_TARGETS += HANDSHAKE
+
+include $(topsrcdir)/config/rules.mk
+# We're installing to _tests/testing/mochitest, so this is the depth
+# necessary for relative objdir paths.
+TARGET_DEPTH = ../../..
+include $(topsrcdir)/build/automation-build.mk
+
+libs:: 
+	(cd $(DIST)/xpi-stage && tar $(TAR_CREATE_FLAGS) - mochijar) | (cd $(_DEST_DIR) && tar -xf -)
+
+# Binaries and scripts that don't get packaged with the build,
+# but that we need for the test harness
+TEST_HARNESS_BINS := \
+  xpcshell$(BIN_SUFFIX) \
+  ssltunnel$(BIN_SUFFIX) \
+  certutil$(BIN_SUFFIX) \
+  pk12util$(BIN_SUFFIX) \
+  BadCertServer$(BIN_SUFFIX) \
+  OCSPStaplingServer$(BIN_SUFFIX) \
+  GenerateOCSPResponse$(BIN_SUFFIX) \
+  fix_stack_using_bpsyms.py \
+  $(NULL)
+
+ifeq ($(OS_ARCH),WINNT)
+TEST_HARNESS_BINS += \
+  crashinject$(BIN_SUFFIX) \
+  crashinjectdll$(DLL_SUFFIX) \
+  vmwarerecordinghelper$(DLL_SUFFIX) \
+  $(NULL)
+endif
+
+ifeq ($(OS_ARCH),Darwin)
+TEST_HARNESS_BINS += fix_macosx_stack.py
+endif
+
+ifeq ($(OS_ARCH),Linux)
+TEST_HARNESS_BINS += fix-linux-stack.pl
+endif
+
+ifeq (gtk2_1,$(MOZ_WIDGET_TOOLKIT)_$(MOZ_X11))
+TEST_HARNESS_BINS += screentopng
+endif
+
+ifeq (windows,$(MOZ_WIDGET_TOOLKIT))
+TEST_HARNESS_BINS += screenshot$(BIN_SUFFIX)
+ifdef MOZ_METRO
+TEST_HARNESS_BINS += metrotestharness$(BIN_SUFFIX)
+endif
+endif
+
+# Components / typelibs that don't get packaged with
+# the build, but that we need for the test harness.
+TEST_HARNESS_COMPONENTS := \
+  test_necko.xpt \
+  $(NULL)
+
+# We need the test plugin as some tests rely on it
+ifeq (Darwin,$(OS_TARGET))
+TEST_HARNESS_PLUGINS := \
+  Test.plugin/ \
+  SecondTest.plugin/ \
+  JavaTest.plugin/
+else
+TEST_HARNESS_PLUGINS := \
+  $(DLL_PREFIX)nptest$(DLL_SUFFIX) \
+  $(DLL_PREFIX)npsecondtest$(DLL_SUFFIX) \
+  $(DLL_PREFIX)nptestjava$(DLL_SUFFIX)
+endif
+
+# Rules for staging the necessary harness bits for a test package
+PKG_STAGE = $(DIST)/test-stage
+DIST_BIN = $(DIST)/bin
+
+$(_DEST_DIR):
+	$(NSINSTALL) -D $@
+
+stage-package:
+	$(NSINSTALL) -D $(PKG_STAGE)/mochitest && $(NSINSTALL) -D $(PKG_STAGE)/bin/plugins && $(NSINSTALL) -D $(DIST)/plugins
+	cp $(DEPTH)/mozinfo.json $(PKG_STAGE)/mochitest
+	(cd $(DEPTH)/_tests/testing && tar $(TAR_CREATE_FLAGS) - mochitest) | (cd $(PKG_STAGE) && tar -xf -)
+	@cp $(DEPTH)/mozinfo.json $(PKG_STAGE)/mochitest
+	@(cd $(DIST_BIN) && tar $(TAR_CREATE_FLAGS) - $(TEST_HARNESS_BINS)) | (cd $(PKG_STAGE)/bin && tar -xf -)
+	@(cd $(DIST_BIN)/components && tar $(TAR_CREATE_FLAGS) - $(TEST_HARNESS_COMPONENTS)) | (cd $(PKG_STAGE)/bin/components && tar -xf -)
+	(cd $(topsrcdir)/build/pgo && tar $(TAR_CREATE_FLAGS) - certs) | (cd $(PKG_STAGE) && tar -xf -)
+	@(cd $(DIST)/plugins && tar $(TAR_CREATE_FLAGS) - $(TEST_HARNESS_PLUGINS)) | (cd $(PKG_STAGE)/bin/plugins && tar -xf -)

@@ -1,0 +1,17 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIDOMCSSRule.idl"
+
+[scriptable, uuid(aa4ea11f-791b-4671-b192-b931e6539669)]
+interface nsIDOMMozCSSKeyframesRule : nsIDOMCSSRule
+{
+           attribute DOMString         name;
+  readonly attribute nsIDOMCSSRuleList cssRules;
+
+  void                     appendRule(in DOMString rule);
+  void                     deleteRule(in DOMString key);
+  nsIDOMMozCSSKeyframeRule findRule(in DOMString key);
+};

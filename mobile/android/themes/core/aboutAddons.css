@@ -1,0 +1,266 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+%filter substitution
+%include defines.inc
+
+.details {
+  width: 100%;
+}
+
+.details > div {
+  display: inline;
+}
+
+.version {
+  /* title is not localized, so keep the margin on the left side */
+  margin-left: .67em;
+}
+
+#header-button {
+  background-image: url("chrome://browser/skin/images/amo-logo.png"), url("chrome://browser/skin/images/chevron.png");
+  background-size: 20px 20px, 8px 20px;
+  background-position: left, right 3px center;
+}
+
+.description {
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.status {
+  background-color: @color_about_item_inner@;
+  border-top: 2px solid;
+  -moz-border-top-colors: #bac2ac #ffffff;
+  font-weight: bold;
+  padding: 0.5em;
+  width: 100%;
+}
+
+.options-header {
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-top: 1em;
+}
+
+.addon-item[isDisabled="true"] .options-header,
+.addon-item:not([optionsURL]) .options-header,
+.addon-item[optionsURL=""] .options-header,
+.addon-item[isDisabled="true"] .options-box,
+.addon-item:not([optionsURL]) .options-box,
+.addon-item[optionsURL=""] .options-box {
+  display: none;
+}
+
+/* Settings */
+
+setting {
+  padding-bottom: 1em;
+  -moz-box-align: center;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+setting[type="integer"],
+setting[type="string"],
+setting[type="menulist"],
+setting[type="control"] {
+  -moz-box-orient: vertical;
+  -moz-box-align: start;
+}
+
+setting > vbox {
+  -moz-box-flex: 1;
+}
+
+.preferences-description {
+  margin-top: 4px;
+  color: #666;
+}
+
+.preferences-description:empty {
+  display: none;
+}
+
+/* Checkbox */
+
+checkbox {
+  -moz-binding: url("chrome://global/content/bindings/checkbox.xml#checkbox-with-spacing") !important;
+  margin: 0;
+}
+
+checkbox[label=""] > .checkbox-label-box,
+checkbox:not([label]) > .checkbox-label-box {
+  display: none;
+}
+
+.checkbox-check {
+  background-color: transparent;
+  background-image: url("chrome://browser/skin/images/checkbox_unchecked.png");
+  border: none;
+  height: 48px;
+  width: 48px;
+}
+
+setting:active checkbox > .checkbox-spacer-box > .checkbox-check {
+  background-image: url("chrome://browser/skin/images/checkbox_unchecked_pressed.png");
+}
+
+checkbox[disabled="true"] > .checkbox-spacer-box > .checkbox-check {
+  background-image: url("chrome://browser/skin/images/checkbox_unchecked_disabled.png");
+}
+
+checkbox[checked="true"] > .checkbox-spacer-box > .checkbox-check {
+  background-image: url("chrome://browser/skin/images/checkbox_checked.png");
+}
+
+setting:active checkbox[checked="true"] > .checkbox-spacer-box > .checkbox-check {
+  background-image: url("chrome://browser/skin/images/checkbox_checked_pressed.png");
+}
+
+checkbox[checked="true"][disabled="true"] > .checkbox-spacer-box > .checkbox-check {
+  background-image: url("chrome://browser/skin/images/checkbox_checked_disabled.png");
+}
+
+/* Textbox */
+
+textbox[type="number"] > spinbuttons {
+  visibility: collapse;
+}
+
+textbox {
+  min-width: 200px;
+  margin: 2px 0;
+  padding: 0.5em !important;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #333;
+}
+
+/* Button */
+
+button {
+  margin: 2px 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 0.5em;
+}
+
+/* Menulist */
+
+menulist {
+  -moz-appearance: none !important;
+  -moz-user-focus: ignore;
+  min-width: 200px;
+  margin: 2px 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0.5em;
+}
+
+menulist > dropmarker {
+  height: 1.8em;
+  width: 1.8em;
+  margin-left: @margin_snormal@;
+  background-color: transparent;
+  border: none;
+  -moz-box-align: center;
+  -moz-box-pack: center;
+  list-style-image: url("chrome://browser/skin/images/dropmarker.svg") !important;
+  -moz-image-region: auto;
+  display: block;
+}
+
+/* Select */
+
+select {
+  min-width: 200px;
+  margin: 2px 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 1em;
+}
+
+/* XBL bindings */
+
+settings {
+  -moz-binding: url("chrome://mozapps/content/extensions/setting.xml#settings");
+}
+
+setting {
+  display: none;
+}
+
+setting[type="bool"] {
+  display: -moz-box;
+  -moz-binding: url("chrome://browser/content/bindings/settings.xml#setting-fulltoggle-bool");
+}
+
+setting[type="bool"][localized="true"] {
+  display: -moz-box;
+  -moz-binding: url("chrome://browser/content/bindings/settings.xml#setting-fulltoggle-localized-bool");
+}
+
+setting[type="boolint"] {
+  display: -moz-box;
+  -moz-binding: url("chrome://browser/content/bindings/settings.xml#setting-fulltoggle-boolint");
+}
+
+setting[type="integer"] {
+  display: -moz-box;
+  -moz-binding: url("chrome://mozapps/content/extensions/setting.xml#setting-integer");
+}
+
+setting[type="control"] {
+  display: -moz-box;
+  -moz-binding: url("chrome://mozapps/content/extensions/setting.xml#setting-control");
+}
+
+setting[type="string"] {
+  display: -moz-box;
+  -moz-binding: url("chrome://mozapps/content/extensions/setting.xml#setting-string");
+}
+
+setting[type="radio"],
+setting[type="menulist"] {
+  display: -moz-box;
+  -moz-binding: url("chrome://mozapps/content/extensions/setting.xml#setting-multi");
+}
+
+.hide-on-enable,
+.show-on-error,
+.show-on-uninstall,
+.show-on-install,
+.show-on-restart,
+div[isDisabled="true"] .hide-on-disable {
+  display: none;
+}
+
+div[error] .show-on-error,
+div[opType="needs-restart"] .show-on-restart,
+div[opType="needs-uninstall"] .show-on-uninstall,
+div[opType="needs-install"] .show-on-install,
+div[opType="needs-enable"] .show-on-enable,
+div[opType="needs-disable"] .show-on-disable,
+div[isDisabled="true"] .show-on-disable {
+  display: -moz-box;
+}
+
+div[opType="needs-restart"] .hide-on-restart,
+div[opType="needs-uninstall"] .hide-on-uninstall,
+div[isDisabled="true"][opType="needs-uninstall"],
+div[opType="needs-install"] .hide-on-install,
+div[opType="needs-enable"] .hide-on-enable,
+div[opType="needs-disable"] .hide-on-disable {
+  display: none;
+}
+
+#addons-list, #addons-details {
+  display: none;
+}

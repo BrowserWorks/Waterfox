@@ -1,0 +1,30 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+EXPORTS += [
+    'DMD.h',
+]
+
+SOURCES += [
+    '../../../mfbt/HashFunctions.cpp',
+    '../../../xpcom/base/nsStackWalk.cpp',
+    'DMD.cpp',
+]
+
+SOURCES += [
+    '../../../nsprpub/lib/libc/src/strcpy.c',
+]
+
+LIBRARY_NAME = 'dmd'
+
+FORCE_SHARED_LIB = True
+
+DEFINES['MOZ_NO_MOZALLOC'] = True
+
+if CONFIG['MOZ_OPTIMIZE']:
+    DEFINES['MOZ_OPTIMIZE'] = True
+
+DISABLE_STL_WRAPPING = True

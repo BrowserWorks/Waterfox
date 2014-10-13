@@ -1,0 +1,96 @@
+/* -*- Mode: IDL; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsISimpleEnumerator;
+interface nsIFile;
+interface nsIToolkitProfile;
+interface nsIProfileLock;
+
+[scriptable, uuid(b81c33a6-1ce8-4695-856b-02b7f15cc114)]
+interface nsIToolkitProfileService : nsISupports
+{
+    attribute boolean startWithLastProfile;
+    attribute boolean startOffline;
+
+    readonly attribute nsISimpleEnumerator /*nsIToolkitProfile*/ profiles;
+
+    attribute nsIToolkitProfile selectedProfile;
+
+    /**
+     * Get a profile by name. This is mainly for use by the -P
+     * commandline flag.
+     *
+     * @param aName The profile name to find.
+     */
+    nsIToolkitProfile getProfileByName(in AUTF8String aName);
+
+    /**
+     * Lock an arbitrary path as a profile. If the path does not exist, it
+     * will be created and the defaults copied from the application directory.
+     */
+    nsIProfileLock lockProfilePath(in nsIFile aDirectory,
+                                   in nsIFile aTempDirectory);
+
+    /**
+     * Create a new profile.
+     *
+     * The profile temporary directory will be chosen based on where the
+     * profile directory is located.
+     * 
+     * @param aRootDir
+     *        The profile directory. May be null, in which case a suitable
+     *        default will be chosen based on the profile name.
+     * @param aName
+     *        The profile name.
+     */
+    nsIToolkitProfile createProfile(in nsIFile aRootDir,
+                                    in AUTF8String aName);
+
+    /**
+     * Create the default profile for an application.
+     *
+     * The profile will be typically in
+     * {Application Data}/.profilename/{salt}.default or
+     * {Application Data}/.appname/{salt}.default
+     * or if aVendorName is provided
+     * {Application Data}/.vendor/appname/{salt}.default
+     *
+     * @note Either aProfileName or aAppName must be non-empty
+     *
+     * The contents of aProfileDefaultsDir will be copied to the
+     * new profile directory.
+     * 
+     * @param  aProfileName
+     *         The name of the profile
+     * @param  aAppName
+     *         The name of the application
+     * @param  aVendorName
+     *         The name of the vendor
+     * @param  aProfileDefaultsDir
+     *         The location where the profile defaults are.
+     * @return The created profile.
+     */                                    
+    nsIToolkitProfile createDefaultProfileForApp(in AUTF8String aProfileName,
+                                                 in AUTF8String aAppName,
+                                                 in AUTF8String aVendorName,
+                                                 [optional] in nsIFile aProfileDefaultsDir);
+
+    /**
+     * Returns the number of profiles.
+     * @return 0, 1, or 2. More than 2 profiles will always return 2.
+     */
+    readonly attribute unsigned long profileCount;
+
+    /**
+     * Flush the profiles list file.
+     */
+    void flush();
+};
+
+%{C++
+#define NS_PROFILESERVICE_CONTRACTID "@mozilla.org/toolkit/profile-service;1"
+%}

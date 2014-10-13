@@ -1,0 +1,93 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+PROGRAM = 'jsapi-tests'
+
+UNIFIED_SOURCES += [
+    'selfTest.cpp',
+    'testAddPropertyPropcache.cpp',
+    'testArgumentsObject.cpp',
+    'testArrayBuffer.cpp',
+    'testBindCallable.cpp',
+    'testBug604087.cpp',
+    'testCallNonGenericMethodOnProxy.cpp',
+    'testChromeBuffer.cpp',
+    'testClassGetter.cpp',
+    'testCloneScript.cpp',
+    'testConservativeGC.cpp',
+    'testContexts.cpp',
+    'testCustomIterator.cpp',
+    'testDebugger.cpp',
+    'testDeepFreeze.cpp',
+    'testDefineGetterSetterNonEnumerable.cpp',
+    'testDefineProperty.cpp',
+    'testEnclosingFunction.cpp',
+    'testErrorCopying.cpp',
+    'testException.cpp',
+    'testExternalStrings.cpp',
+    'testFindSCCs.cpp',
+    'testFreshGlobalEvalRedefinition.cpp',
+    'testFuncCallback.cpp',
+    'testFunctionProperties.cpp',
+    'testGCAllocator.cpp',
+    'testGCExactRooting.cpp',
+    'testGCFinalizeCallback.cpp',
+    'testGCHeapPostBarriers.cpp',
+    'testGCOutOfMemory.cpp',
+    'testGCStoreBufferRemoval.cpp',
+    'testHashTable.cpp',
+    'testHashTableInit.cpp',
+    'testIndexToString.cpp',
+    'testIntern.cpp',
+    'testIntString.cpp',
+    'testIntTypesABI.cpp',
+    'testIsInsideNursery.cpp',
+    'testJSEvaluateScript.cpp',
+    'testLookup.cpp',
+    'testLooselyEqual.cpp',
+    'testMappedArrayBuffer.cpp',
+    'testNewObject.cpp',
+    'testNullRoot.cpp',
+    'testObjectEmulatingUndefined.cpp',
+    'testOOM.cpp',
+    'testOps.cpp',
+    'testOriginPrincipals.cpp',
+    'testParseJSON.cpp',
+    'testPersistentRooted.cpp',
+    'testProfileStrings.cpp',
+    'testPropCache.cpp',
+    'testRegExp.cpp',
+    'testResolveRecursion.cpp',
+    'tests.cpp',
+    'testSameValue.cpp',
+    'testScriptInfo.cpp',
+    'testScriptObject.cpp',
+    'testSetProperty.cpp',
+    'testSetPropertyIgnoringNamedGetter.cpp',
+    'testSourcePolicy.cpp',
+    'testStringBuffer.cpp',
+    'testStructuredClone.cpp',
+    'testToIntWidth.cpp',
+    'testTrap.cpp',
+    'testTypedArrays.cpp',
+    'testUncaughtError.cpp',
+    'testUTF8.cpp',
+    'testWeakMap.cpp',
+    'testXDR.cpp',
+]
+
+if CONFIG['ENABLE_ION']:
+    UNIFIED_SOURCES += [
+        'testJitRValueAlloc.cpp',
+    ]
+
+DEFINES['EXPORT_JS_API'] = True
+# Building against js_static requires that we declare mfbt sybols "exported"
+# on its behalf.
+DEFINES['IMPL_MFBT'] = True
+
+LOCAL_INCLUDES += ['..']
+GENERATED_INCLUDES += ['..']

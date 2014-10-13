@@ -1,0 +1,345 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+DIST_FILES := \
+  package-name.txt.in \
+  $(NULL)
+
+ifneq (,$(findstring -march=armv7,$(OS_CFLAGS)))
+MIN_CPU_VERSION=7
+else
+MIN_CPU_VERSION=5
+endif
+
+MOZ_APP_BUILDID=$(shell cat $(DEPTH)/config/buildid)
+
+ifeq (,$(ANDROID_VERSION_CODE))
+ifeq ($(CPU_ARCH),arm)
+ifeq ($(MIN_CPU_VERSION),7)
+ANDROID_VERSION_CODE=$(shell cat $(DEPTH)/config/buildid | cut -c1-10)
+else
+# decrement the version code by 1 for armv6 builds so armv7 builds will win any compatability ties
+ANDROID_VERSION_CODE=$(shell echo $$((`cat $(DEPTH)/config/buildid | cut -c1-10` - 1)))
+endif
+else #not arm, so x86
+# increment the version code by 1 for x86 builds so they are offered to x86 phones that have arm emulators
+ANDROID_VERSION_CODE=$(shell echo $$((`cat $(DEPTH)/config/buildid | cut -c1-10` + 1)))
+endif
+endif
+
+UA_BUILDID=$(shell echo $(ANDROID_VERSION_CODE) | cut -c1-8)
+
+MOZ_BUILD_TIMESTAMP=$(shell echo `$(PYTHON) $(topsrcdir)/toolkit/xre/make-platformini.py --print-timestamp`)
+
+DEFINES += \
+  -DANDROID_VERSION_CODE=$(ANDROID_VERSION_CODE) \
+  -DMOZ_ANDROID_SHARED_ID="$(MOZ_ANDROID_SHARED_ID)" \
+  -DMOZ_ANDROID_SHARED_ACCOUNT_TYPE="$(MOZ_ANDROID_SHARED_ACCOUNT_TYPE)" \
+  -DMOZ_ANDROID_SHARED_FXACCOUNT_TYPE="$(MOZ_ANDROID_SHARED_FXACCOUNT_TYPE)" \
+  -DMOZ_APP_BUILDID=$(MOZ_APP_BUILDID) \
+  -DMOZ_BUILD_TIMESTAMP=$(MOZ_BUILD_TIMESTAMP) \
+  -DUA_BUILDID=$(UA_BUILDID) \
+  $(NULL)
+
+GARBAGE += \
+  AndroidManifest.xml  \
+  WebappManifestFragment.xml.frag \
+  classes.dex  \
+  gecko.ap_  \
+  res/values/strings.xml \
+  res/raw/suggestedsites.json \
+  .aapt.deps \
+  fennec_ids.txt \
+  javah.out \
+  jni-stubs.inc \
+  GeneratedJNIWrappers.cpp \
+  GeneratedJNIWrappers.h \
+  $(NULL)
+
+GARBAGE_DIRS += classes db jars res sync services generated
+
+JAVA_CLASSPATH = $(ANDROID_SDK)/android.jar
+
+ALL_JARS = \
+  gecko-R.jar \
+  gecko-browser.jar \
+  gecko-mozglue.jar \
+  gecko-util.jar \
+  squareup-picasso.jar \
+  sync-thirdparty.jar \
+  websockets.jar \
+  $(NULL)
+
+ifdef MOZ_WEBRTC
+ALL_JARS += webrtc.jar
+endif
+
+include $(topsrcdir)/config/config.mk
+
+# Note that we're going to set up a dependency directly between embed_android.dex and the java files
+# Instead of on the .class files, since more than one .class file might be produced per .java file
+# Sync dependencies are provided in a single jar. Sync classes themselves are delivered as source,
+# because Android resource classes must be compiled together in order to avoid overlapping resource
+# indices.
+
+classes.dex: .proguard.deps
+	$(REPORT_BUILD)
+	$(DX) --dex --output=classes.dex jars-proguarded $(ANDROID_COMPAT_LIB)
+
+ifdef MOZ_DISABLE_PROGUARD
+  PROGUARD_PASSES=0
+else
+  ifdef MOZ_DEBUG
+    PROGUARD_PASSES=1
+  else
+    ifndef MOZILLA_OFFICIAL
+      PROGUARD_PASSES=1
+    else
+      PROGUARD_PASSES=6
+    endif
+  endif
+endif
+
+# We touch the target file before invoking Proguard so that Proguard's
+# outputs are fresher than the target, preventing a subsequent
+# invocation from thinking Proguard's outputs are stale.  This is safe
+# because Make removes the target file if any recipe command fails.
+.proguard.deps: $(ALL_JARS)
+	$(REPORT_BUILD)
+	@$(TOUCH) $@
+	java -jar $(ANDROID_SDK_ROOT)/tools/proguard/lib/proguard.jar \
+		@$(topsrcdir)/mobile/android/config/proguard.cfg \
+		-optimizationpasses $(PROGUARD_PASSES) \
+		-injars $(subst ::,:,$(subst $(NULL) ,:,$(strip $(ALL_JARS)))) \
+		-outjars jars-proguarded \
+		-libraryjars $(ANDROID_SDK)/android.jar:$(ANDROID_COMPAT_LIB)
+
+CLASSES_WITH_JNI= \
+    org.mozilla.gecko.ANRReporter \
+    org.mozilla.gecko.GeckoAppShell \
+    org.mozilla.gecko.GeckoJavaSampler \
+    org.mozilla.gecko.gfx.NativePanZoomController \
+    org.mozilla.gecko.util.NativeJSContainer \
+    org.mozilla.gecko.util.NativeJSObject \
+    $(NULL)
+
+ifdef MOZ_WEBSMS_BACKEND
+# Note: if you are building with MOZ_WEBSMS_BACKEND turned on, then
+# you will get a build error because the generated jni-stubs.inc will
+# be different than the one checked in (i.e. it will have the sms-related
+# JNI stubs as well). Just copy the generated file to mozglue/android/
+# like the error message says and rebuild. All should be well after that.
+CLASSES_WITH_JNI += org.mozilla.gecko.GeckoSmsManager
+endif
+
+jni-stubs.inc: gecko-browser.jar gecko-mozglue.jar gecko-util.jar sync-thirdparty.jar
+	$(JAVAH) -o javah.out -bootclasspath $(JAVA_BOOTCLASSPATH) -classpath $(subst $(NULL) $(NULL),:,$^) $(CLASSES_WITH_JNI)
+	$(PYTHON) $(topsrcdir)/mobile/android/base/jni-generator.py javah.out $@
+
+ANNOTATION_PROCESSOR_JAR_FILES := $(DEPTH)/build/annotationProcessors/annotationProcessors.jar
+
+GeneratedJNIWrappers.cpp: $(ANNOTATION_PROCESSOR_JAR_FILES)
+GeneratedJNIWrappers.cpp: $(ALL_JARS)
+	$(JAVA) -classpath gecko-mozglue.jar:$(JAVA_BOOTCLASSPATH):$(ANNOTATION_PROCESSOR_JAR_FILES) org.mozilla.gecko.annotationProcessors.AnnotationProcessor $(ALL_JARS)
+
+gecko_package_dir = generated/org/mozilla/gecko
+# Like generated/org/mozilla/fennec_$USERID.
+android_package_dir = $(addprefix generated/,$(subst .,/,$(ANDROID_PACKAGE_NAME)))
+
+# These _PP_JAVAFILES are specified in moz.build and defined in
+# backend.mk, which is included by config.mk.  Therefore this needs to
+# be defined after config.mk is included.
+PP_JAVAFILES := $(filter-out $(gecko_package_dir)/R.java,$(gecko-mozglue_PP_JAVAFILES) $(gecko-browser_PP_JAVAFILES))
+
+manifest := \
+  AndroidManifest.xml.in \
+  WebappManifestFragment.xml.frag.in \
+  $(NULL)
+
+PP_TARGETS += manifest
+
+# Certain source files need to be preprocessed.  This special rule
+# generates these files into generated/org/mozilla/gecko for
+# consumption by the build system and IDEs.
+
+preprocessed := $(addsuffix .in,$(subst $(gecko_package_dir)/,,$(filter $(gecko_package_dir)/%,$(PP_JAVAFILES))))
+
+preprocessed_PATH := $(gecko_package_dir)
+preprocessed_KEEP_PATH := 1
+
+PP_TARGETS += preprocessed
+
+# Certain source files have Java package name @ANDROID_PACKAGE_NAME@.
+# We hate these files but they are necessary for backwards
+# compatibility.  These special rules generate these files into
+# generated/org/mozilla/{firefox,firefox_beta,fennec,fennec_$USER} for
+# consumption by the build system and IDEs.
+
+preprocessed_package := $(addsuffix .in,$(subst $(android_package_dir)/,,$(filter $(android_package_dir)/%,$(PP_JAVAFILES))))
+
+preprocessed_package_PATH := $(android_package_dir)
+preprocessed_package_KEEP_PATH := 1
+
+PP_TARGETS += preprocessed_package
+
+include $(topsrcdir)/config/rules.mk
+
+not_android_res_files := \
+  *.mkdir.done* \
+  *.DS_Store* \
+  *\#* \
+  *.rej \
+  *.orig \
+  $(NULL)
+
+# This uses the fact that Android resource directories list all
+# resource files one subdirectory below the parent resource directory.
+android_res_files := $(filter-out $(not_android_res_files),$(wildcard $(addsuffix /*,$(wildcard $(addsuffix /*,$(ANDROID_RES_DIRS))))))
+
+$(ANDROID_GENERATED_RESFILES): $(call mkdir_deps,$(sort $(dir $(ANDROID_GENERATED_RESFILES))))
+
+# [Comment 1/3] We don't have correct dependencies for strings.xml at
+# this point, so we always recursively invoke the submake to check the
+# dependencies.  Sigh.  And, with multilocale builds, there will be
+# multiple strings.xml files, and we need to rebuild gecko.ap_ if any
+# of them change.  But!  mobile/android/base/locales does not have
+# enough information to actually build res/values/strings.xml during a
+# language repack.  So rather than adding rules into the main
+# makefile, and trying to work around the lack of information, we
+# force a rebuild of gecko.ap_ during packaging.  See below.
+
+# Since the sub-Make is forced, it doesn't matter that we touch the
+# target file before the command.  If in the future we stop forcing
+# the sub-Make, touching the target file first is better, because the
+# sub-Make outputs will be fresher than the target, and not require
+# rebuilding.  This is all safe because Make removes the target file
+# if any recipe command fails. It is crucial that the sub-Make touch
+# the target files (those depending on .locales.deps) only when there
+# contents have changed; otherwise, this will force rebuild them as
+# part of every build.
+.locales.deps: FORCE
+	$(TOUCH) $@
+	$(MAKE) -C locales
+
+# This .deps pattern saves an invocation of the sub-Make: the single
+# invocation generates both strings.xml and suggestedsites.json. The
+# trailing semi-colon defines an empty recipe: defining no recipe at
+# all causes Make to treat the target differently, in a way that
+# defeats our dependencies.
+res/values/strings.xml: .locales.deps ;
+res/raw/suggestedsites.json: .locales.deps ;
+
+all_resources = \
+  $(CURDIR)/AndroidManifest.xml \
+  $(CURDIR)/WebappManifestFragment.xml.frag \
+  $(android_res_files) \
+  $(ANDROID_GENERATED_RESFILES) \
+  $(NULL)
+
+# For GeckoView, we want a zip of an Android res/ directory that
+# merges the contents of all the ANDROID_RES_DIRS.  The inner res/
+# directory must have the Android resource two-layer hierarchy.
+
+# The following helper zips files in a directory into a zip file while
+# maintaining the directory structure rooted below the directory.
+# (adding or creating said file as appropriate).  For example, if the
+# dir contains dir/subdir/file, calling with directory dir would
+# create a zip containing subdir/file.  Note: the trailing newline is
+# necessary.
+
+# $(1): zip file to add to (or create).
+# $(2): directory to zip contents of.
+define zip_directory_with_relative_paths
+cd $(2) && zip -q $(1) -r * -x $(not_android_res_files)
+
+endef
+
+# We delete the archive before updating so that resources removed from
+# the filesystem are removed from the archive.
+geckoview_resources.zip: $(all_resources) $(GLOBAL_DEPS)
+	$(REPORT_BUILD)
+	$(RM) -rf $@
+	$(foreach dir,$(ANDROID_RES_DIRS),$(call zip_directory_with_relative_paths,$(CURDIR)/$@,$(dir)))
+
+# All of generated/org/mozilla/gecko/R.java, gecko.ap_, and R.txt are
+# produced by aapt; this saves aapt invocations.  The trailing
+# semi-colon defines an empty recipe; defining no recipe at all causes
+# Make to treat the target differently, in a way that defeats our
+# dependencies.
+
+$(gecko_package_dir)/R.java: .aapt.deps ;
+gecko.ap_: .aapt.deps ;
+R.txt: .aapt.deps ;
+
+# [Comment 2/3] This tom-foolery provides a target that forces a
+# rebuild of gecko.ap_.  This is used during packaging to ensure that
+# resources are fresh.  The alternative would be complicated; see
+# [Comment 1/3].
+
+gecko-nodeps/R.java: .aapt.nodeps ;
+gecko-nodeps.ap_: .aapt.nodeps ;
+gecko-nodeps/R.txt: .aapt.nodeps ;
+
+# This ignores the default set of resources ignored by aapt, plus
+# files starting with '#'.  (Emacs produces temp files named #temp#.)
+# This doesn't actually set the environment variable; it's used as a
+# parameter in the aapt invocation below.  Consider updating
+# not_android_res_files as well.
+
+ANDROID_AAPT_IGNORE := !.svn:!.git:.*:<dir>_*:!CVS:!thumbs.db:!picasa.ini:!*.scc:*~:\#*:*.rej:*.orig
+
+# 1: target file.
+# 2: dependencies.
+# 3: name of ap_ file to write.
+# 4: directory to write R.java into.
+# 5: directory to write R.txt into.
+# We touch the target file before invoking aapt so that aapt's outputs
+# are fresher than the target, preventing a subsequent invocation from
+# thinking aapt's outputs are stale.  This is safe because Make
+# removes the target file if any recipe command fails.
+define aapt_command
+$(1): $$(call mkdir_deps,$(filter-out ./,$(dir $(3) $(4) $(5)))) $(2)
+	@$$(TOUCH) $$@
+	$$(AAPT) package -f -M AndroidManifest.xml -I $$(ANDROID_SDK)/android.jar \
+		--auto-add-overlay \
+		$$(addprefix -S ,$$(ANDROID_RES_DIRS)) \
+		--custom-package org.mozilla.gecko --non-constant-id \
+		-F $(3) \
+		-J $(4) \
+		--output-text-symbols $(5) \
+		--ignore-assets "$$(ANDROID_AAPT_IGNORE)"
+endef
+
+# [Comment 3/3] The first of these rules is used during regular
+# builds.  The second writes an ap_ file that is only used during
+# packaging.  It doesn't write the normal ap_, or R.java, since we
+# don't want the packaging step to write anything that would make a
+# further no-op build do work.  See also
+# toolkit/mozapps/installer/packager.mk.
+
+# .aapt.deps: $(all_resources)
+$(eval $(call aapt_command,.aapt.deps,$(all_resources),gecko.ap_,$(gecko_package_dir)/,./))
+
+# .aapt.nodeps: $(CURDIR)/AndroidManifest.xml FORCE
+$(eval $(call aapt_command,.aapt.nodeps,$(CURDIR)/AndroidManifest.xml FORCE,gecko-nodeps.ap_,gecko-nodeps/,gecko-nodeps/))
+
+fennec_ids.txt: $(gecko_package_dir)/R.java fennec-ids-generator.py
+	$(PYTHON) $(topsrcdir)/mobile/android/base/fennec-ids-generator.py -i $< -o $@
+
+# Override the Java settings with some specific android settings
+include $(topsrcdir)/config/android-common.mk
+
+libs:: geckoview_resources.zip classes.dex jni-stubs.inc GeneratedJNIWrappers.cpp fennec_ids.txt
+	$(INSTALL) geckoview_resources.zip $(FINAL_TARGET)
+	$(INSTALL) classes.dex $(FINAL_TARGET)
+	@(diff jni-stubs.inc $(topsrcdir)/mozglue/android/jni-stubs.inc >/dev/null && diff GeneratedJNIWrappers.cpp $(topsrcdir)/widget/android/GeneratedJNIWrappers.cpp >/dev/null) || \
+	 (echo '*****************************************************' && \
+	  echo '***   Error: The generated JNI code has changed   ***' && \
+	  echo '* To update generated code in the tree, please run  *' && \
+	  echo && \
+	  echo '  cp $(CURDIR)/jni-stubs.inc $(topsrcdir)/mozglue/android && cp $(CURDIR)/GeneratedJNIWrappers.* $(topsrcdir)/widget/android' && \
+	  echo && \
+	  echo '* Repeat the build, and check in any changes.       *' && \
+	  echo '*****************************************************' && \
+	  exit 1)

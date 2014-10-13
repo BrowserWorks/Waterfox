@@ -1,0 +1,99 @@
+<html>
+
+<head>
+  <title>Accessible ARIA object attribute changes</title>
+
+  <link rel="stylesheet" type="text/css"
+        href="chrome://mochikit/content/tests/SimpleTest/test.css" />
+
+  <script type="application/javascript"
+          src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
+
+  <script type="application/javascript"
+          src="../common.js"></script>
+  <script type="application/javascript"
+          src="../events.js"></script>
+
+  <script type="application/javascript">
+
+    /**
+     * Do tests.
+     */
+    var gQueue = null;
+
+    function updateAttribute(aID, aAttr, aValue)
+    {
+      this.node = getNode(aID);
+      this.accessible = getAccessible(this.node);
+
+      this.eventSeq = [
+        new invokerChecker(EVENT_OBJECT_ATTRIBUTE_CHANGED, this.accessible),
+      ];
+
+      this.invoke = function updateAttribute_invoke()
+      {
+        this.node.setAttribute(aAttr, aValue);
+      }
+
+      this.getID = function updateAttribute_getID()
+      {
+        return aAttr + " for " + aID + " " + aValue;
+      }
+    }
+
+    // Debug stuff.
+    // gA11yEventDumpID = "eventdump";
+    //gA11yEventDumpToConsole = true;
+
+    function doTests()
+    {
+      gQueue = new eventQueue();
+
+      gQueue.push(new updateAttribute("hideable", "aria-hidden", "true"));
+
+      gQueue.push(new updateAttribute("sortable", "aria-sort", "ascending"));
+
+      // For experimental ARIA extensions
+      gQueue.push(new updateAttribute("custom", "aria-blah", "true"));
+
+      gQueue.invoke(); // Will call SimpleTest.finish();
+    }
+
+    SimpleTest.waitForExplicitFinish();
+    addA11yLoadEvent(doTests);
+  </script>
+</head>
+
+<body>
+
+  <a target="_blank"
+     href="https://bugzilla.mozilla.org/show_bug.cgi?id=581096"
+     title="Add support for aria-hidden">
+    Mozilla Bug 581096
+  </a>
+
+  <a target="_blank"
+     href="https://bugzilla.mozilla.org/show_bug.cgi?id=640707"
+     title="Add event support for aria-sort">
+    Mozilla Bug 640707
+  </a>
+
+  <a target="_blank"
+     href="https://bugzilla.mozilla.org/show_bug.cgi?id=640707"
+     title="Expand support for aria attribute change events">
+    Mozilla Bug 563862
+  </a>
+
+  <p id="display"></p>
+  <div id="content" style="display: none"></div>
+  <pre id="test">
+  </pre>
+  <div id="eventdump"></div>
+
+  <div id="hideable"><div>Hi</div><div>there</div></div>
+
+  <div id="sortable" role="columnheader" aria-sort="none">aria-sort</div>
+
+  <div id="custom" role="custom" aria-blah="false">Fat free cheese</div>
+</body>
+</html>

@@ -1,0 +1,67 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+DIRS += ['test']
+
+EXTRA_COMPONENTS += [
+    'ActivitiesGlue.js',
+    'AlertsService.js',
+    'B2GAboutRedirector.js',
+    'ContentPermissionPrompt.js',
+    'FilePicker.js',
+    'HelperAppDialog.js',
+    'InterAppCommUIGlue.js',
+    'MailtoProtocolHandler.js',
+    'MobileIdentityUIGlue.js',
+    'OMAContentHandler.js',
+    'PaymentGlue.js',
+    'ProcessGlobal.js',
+    'SmsProtocolHandler.js',
+    'SystemMessageGlue.js',
+    'TelProtocolHandler.js',
+    'WebappsUpdateTimer.js',
+    'YoutubeProtocolHandler.js',
+]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'gonk':
+    EXTRA_COMPONENTS += [
+      'OopCommandLine.js',
+      'SimulatorScreen.js'
+    ]
+
+EXTRA_PP_COMPONENTS += [
+    'B2GComponents.manifest',
+    'DirectoryProvider.js',
+    'RecoveryService.js',
+]
+
+if CONFIG['MOZ_UPDATER']:
+    EXTRA_PP_COMPONENTS += [
+        'UpdatePrompt.js',
+    ]
+
+EXTRA_JS_MODULES += [
+    'AlertsHelper.jsm',
+    'ContentRequestHelper.jsm',
+    'ErrorPage.jsm',
+    'SignInToWebsite.jsm',
+    'SystemAppProxy.jsm',
+    'TelURIParser.jsm',
+    'WebappsUpdater.jsm',
+]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'gonk':
+    EXTRA_JS_MODULES += [
+      'GlobalSimulatorScreen.jsm'
+    ]
+
+if CONFIG['MOZ_SERVICES_FXACCOUNTS']:
+    EXTRA_COMPONENTS += [
+        'FxAccountsUIGlue.js'
+    ]
+    EXTRA_JS_MODULES += [
+        'FxAccountsMgmtService.jsm'
+    ]

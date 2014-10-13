@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<resources>
+
+    <!--
+        Base application theme. This could be overridden by GeckoBaseTheme
+        in other res/values-XXX/themes.xml.
+    -->
+    <style name="GeckoBase" parent="@android:style/Theme.Light">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="arrowPopupWidth">fill_parent</item>
+    </style>
+
+    <style name="GeckoDialogBase" parent="@android:style/Theme.Dialog">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+
+    <style name="GeckoTitleDialogBase" parent="@android:style/Theme.Dialog" />
+
+    <style name="GeckoPreferencesBase" parent="GeckoBase">
+        <item name="android:windowNoTitle">false</item>
+    </style>
+
+    <!--
+        Application Theme. All customizations that are not specific
+        to a particular API level can go here.
+    -->
+    <style name="Gecko" parent="GeckoBase">
+        <!-- Default colors -->
+        <item name="android:textColorPrimary">@color/primary_text</item>
+        <item name="android:textColorSecondary">@color/secondary_text</item>
+        <item name="android:textColorTertiary">@color/tertiary_text</item>
+
+        <!-- Default inverse colors -->
+        <item name="android:textColorPrimaryInverse">@color/primary_text</item>
+        <item name="android:textColorSecondaryInverse">@color/secondary_text</item>
+        <item name="android:textColorTertiaryInverse">@color/tertiary_text</item>
+
+        <!-- Disabled colors -->
+        <item name="android:textColorPrimaryDisableOnly">@color/text_color_primary_disable_only</item>
+
+        <!-- Hint colors -->
+        <item name="android:textColorHint">@color/text_color_hint</item>
+        <item name="android:textColorHintInverse">@color/text_color_hint_inverse</item>
+
+        <!-- Highlight colors -->
+        <item name="android:textColorHighlight">@color/text_color_highlight</item>
+        <item name="android:textColorHighlightInverse">@color/text_color_highlight_inverse</item>
+
+        <!-- Link colors -->
+        <item name="android:textColorLink">@color/text_color_link</item>
+
+        <!-- TextAppearances -->
+        <item name="android:textAppearance">@style/TextAppearance</item>
+        <item name="android:textAppearanceInverse">@style/TextAppearance.Inverse</item>
+        <item name="android:textAppearanceLarge">@style/TextAppearance.Large</item>
+        <item name="android:textAppearanceMedium">@style/TextAppearance.Medium</item>
+        <item name="android:textAppearanceSmall">@style/TextAppearance.Small</item>
+        <item name="android:textAppearanceLargeInverse">@style/TextAppearance.Large.Inverse</item>
+        <item name="android:textAppearanceMediumInverse">@style/TextAppearance.Medium.Inverse</item>
+        <item name="android:textAppearanceSmallInverse">@style/TextAppearance.Small.Inverse</item>
+    </style>
+
+    <style name="Gecko.Dialog" parent="GeckoDialogBase"/>
+
+    <style name="Gecko.TitleDialog" parent="GeckoTitleDialogBase"/>
+
+    <!--
+        Activity based themes.
+    -->
+    <style name="Gecko.App">
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:buttonStyle">@style/Widget.Button</item>
+        <item name="android:dropDownItemStyle">@style/Widget.DropDownItem</item>
+        <item name="android:editTextStyle">@style/Widget.EditText</item>
+        <item name="android:gridViewStyle">@style/Widget.GridView</item>
+        <item name="android:textViewStyle">@style/Widget.TextView</item>
+        <item name="android:spinnerStyle">@style/Widget.Spinner</item>
+        <item name="bookmarksListViewStyle">@style/Widget.BookmarksListView</item>
+        <item name="topSitesGridItemViewStyle">@style/Widget.TopSitesGridItemView</item>
+        <item name="topSitesGridViewStyle">@style/Widget.TopSitesGridView</item>
+        <item name="panelGridViewStyle">@style/Widget.PanelGridView</item>
+        <item name="topSitesThumbnailViewStyle">@style/Widget.TopSitesThumbnailView</item>
+        <item name="homeListViewStyle">@style/Widget.HomeListView</item>
+        <item name="geckoMenuListViewStyle">@style/Widget.GeckoMenuListView</item>
+        <item name="menuItemDefaultStyle">@style/Widget.MenuItemDefault</item>
+        <item name="menuItemActionBarStyle">@style/Widget.MenuItemActionBar</item>
+        <item name="menuItemActionModeStyle">@style/GeckoActionBar.Button</item>
+        <item name="menuItemShareActionButtonStyle">@style/Widget.MenuItemSecondaryActionBar</item>
+        <item name="floatingHintEditTextStyle">@style/FloatingHintEditText</item>
+    </style>
+
+    <style name="Gecko.Preferences" parent="GeckoPreferencesBase">
+        <item name="floatingHintEditTextStyle">@style/FloatingHintEditText</item>
+    </style>
+
+</resources>

@@ -1,0 +1,18 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIDOMElement.idl"
+#include "nsIDOMXULLabeledControlEl.idl"
+
+[scriptable, uuid(745518ad-3163-41f0-b358-c81fb5a587bc)]
+interface nsIDOMXULCheckboxElement : nsIDOMXULLabeledControlElement {
+  const short CHECKSTATE_UNCHECKED = 0;
+  const short CHECKSTATE_CHECKED = 1;
+  const short CHECKSTATE_MIXED = 2;
+
+  attribute boolean checked;
+  attribute long checkState;
+  attribute boolean autoCheck;
+};

@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<hbox id="customization-container" flex="1" hidden="true">
+  <vbox flex="1" id="customization-palette-container">
+    <label id="customization-header">
+      &customizeMode.menuAndToolbars.header2;
+    </label>
+    <hbox id="customization-empty" hidden="true">
+      <label>&customizeMode.menuAndToolbars.empty;</label>
+      <label onclick="BrowserOpenAddonsMgr('addons://discovery/');"
+             onkeypress="BrowserOpenAddonsMgr('addons://discovery/');"
+             id="customization-more-tools"
+             class="text-link">
+        &customizeMode.menuAndToolbars.emptyLink;
+      </label>
+    </hbox>
+    <vbox id="customization-palette" class="customization-palette"/>
+    <spacer id="customization-spacer"/>
+    <hbox id="customization-footer">
+#ifdef CAN_DRAW_IN_TITLEBAR
+      <button id="customization-titlebar-visibility-button" class="customizationmode-button"
+              label="&customizeMode.titlebar;" type="checkbox"
+#NB: because oncommand fires after click, by the time we've fired, the checkbox binding
+#    will already have switched the button's state, so this is correct:
+              oncommand="gCustomizeMode.toggleTitlebar(this.hasAttribute('checked'))"/>
+#endif
+      <button id="customization-toolbar-visibility-button" label="&customizeMode.toolbars;" class="customizationmode-button" type="menu">
+        <menupopup id="customization-toolbar-menu" onpopupshowing="onViewToolbarsPopupShowing(event)"/>
+      </button>
+      <spacer id="customization-footer-spacer"/>
+      <button id="customization-undo-reset-button"
+              class="customizationmode-button"
+              hidden="true"
+              oncommand="gCustomizeMode.undoReset();"
+              label="&undoCmd.label;"/>
+      <button id="customization-reset-button"
+              oncommand="gCustomizeMode.reset();"
+              label="&customizeMode.restoreDefaults;"
+              class="customizationmode-button"/>
+    </hbox>
+  </vbox>
+  <vbox id="customization-panel-container">
+    <vbox id="customization-panelWrapper">
+      <html:style html:type="text/html" scoped="scoped">
+        @import url(chrome://global/skin/popup.css);
+      </html:style>
+      <box class="panel-arrowbox">
+        <box flex="1"/>
+        <image class="panel-arrow" side="top"/>
+      </box>
+      <box class="panel-arrowcontent" side="top" flex="1">
+        <hbox id="customization-panelHolder"/>
+        <box class="panel-inner-arrowcontentfooter" hidden="true"/>
+      </box>
+    </vbox>
+  </vbox>
+</hbox>

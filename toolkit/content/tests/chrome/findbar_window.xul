@@ -1,0 +1,507 @@
+<?xml version="1.0"?>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<?xml-stylesheet href="chrome://global/skin" type="text/css"?>
+
+<window id="FindbarTest"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        width="600"
+        height="600"
+        onload="onLoad();"
+        title="findbar test">
+
+  <script type="application/javascript"
+          src="chrome://mochikit/content/tests/SimpleTest/EventUtils.js"/>
+  <script type="application/javascript"
+          src="chrome://mochikit/content/tests/SimpleTest/ChromeUtils.js"/>
+
+  <script type="application/javascript"><![CDATA[
+    const Ci = Components.interfaces;
+    const Cc = Components.classes;
+    const Cr = Components.results;
+
+    const SAMPLE_URL = "http://www.mozilla.org/";
+    const SAMPLE_TEXT = "Some text in a text field.";
+    const SEARCH_TEXT = "Text Test";
+
+    var gFindBar = null;
+    var gBrowser;
+
+    var gClipboard = Cc["@mozilla.org/widget/clipboard;1"].getService(Ci.nsIClipboard);
+    var gHasFindClipboard = gClipboard.supportsFindClipboard();
+
+    var gStatusText;
+    var gXULBrowserWindow = {
+      QueryInterface: function(aIID) {
+        if (aIID.Equals(Ci.nsIXULBrowserWindow) ||
+            aIID.Equals(Ci.nsISupports))
+         return this;
+
+        throw Cr.NS_NOINTERFACE;
+      },
+
+      setJSStatus: function() { },
+
+      setOverLink: function(aStatusText, aLink) {
+        gStatusText = aStatusText;
+      },
+
+      onBeforeLinkTraversal: function() { }
+    };
+
+    function ok(condition, message) {
+      window.opener.wrappedJSObject.SimpleTest.ok(condition, message);
+    }
+    function finish() {
+      window.close();
+      window.opener.wrappedJSObject.SimpleTest.finish();
+    }
+
+    function onLoad() {
+      window.QueryInterface(Ci.nsIInterfaceRequestor)
+            .getInterface(Ci.nsIWebNavigation)
+            .QueryInterface(Ci.nsIDocShellTreeItem)
+            .treeOwner
+            .QueryInterface(Ci.nsIInterfaceRequestor)
+            .getInterface(Ci.nsIXULWindow)
+            .XULBrowserWindow = gXULBrowserWindow;
+
+      var _delayedOnLoad = function() {
+        gFindBar = document.getElementById("FindToolbar");
+        gBrowser = document.getElementById("content");
+        gBrowser.addEventListener("pageshow", _delayedOnPageShow, false);
+        gBrowser.loadURI("data:text/html,<h2 id='h2'>" + SEARCH_TEXT + "</h2><h2><a href='" + SAMPLE_URL + "'>Link Test</a></h2><input id='text' type='text' value='" + SAMPLE_TEXT + "'></input><input id='button' type='button'></input><img id='img' width='50' height='50'/>");
+      }
+      setTimeout(_delayedOnLoad, 1000);
+    }
+
+    function _delayedOnPageShow() {
+      // setTimeout to the test runs after painting suppression ends
+      setTimeout(onPageShow, 0);
+    }
+
+    function onPageShow() {
+      testNormalFind();
+      gFindBar.close();
+      ok(gFindBar.hidden, "Failed to close findbar after testNormalFind");
+      testNormalFindWithComposition();
+      gFindBar.close();
+      ok(gFindBar.hidden, "findbar should be hidden after testNormalFindWithComposition");
+      testAutoCaseSensitivityUI();
+      testQuickFindText();
+      gFindBar.close();
+      ok(gFindBar.hidden, "Failed to close findbar after testQuickFindText");
+      testFindWithHighlight();
+      gFindBar.close();
+      ok(gFindBar.hidden, "Failed to close findbar after testFindWithHighlight");
+      testFindbarSelection();
+      testDrop();
+      testQuickFindLink();
+      if (gHasFindClipboard)
+        testStatusText(afterStatusText);
+      else
+        afterStatusText();
+
+      function afterStatusText() {
+        testFindCountUI(function() {
+          gFindBar.close();
+          ok(gFindBar.hidden, "Failed to close findbar after testFindCountUI");
+          testQuickFindClose();
+        });
+      }
+    }
+
+    function testFindbarSelection() {
+      function checkFindbarState(aTestName, aExpSelection) {
+        document.getElementById("cmd_find").doCommand();
+        ok(!gFindBar.hidden, "testFindbarSelection: failed to open findbar: " + aTestName);
+        ok(document.commandDispatcher.focusedElement == gFindBar._findField.inputField,
+           "testFindbarSelection: find field is not focused: " + aTestName);
+        if (!gHasFindClipboard) {
+          ok(gFindBar._findField.value == aExpSelection,
+             "Incorrect selection in testFindbarSelection: "  + aTestName +
+             ". Selection: " + gFindBar._findField.value);
+        }
+
+        // Clear the value, close the findbar
+        gFindBar._findField.value = "";
+        gFindBar.close();
+      }
+
+      // test normal selected text
+      var cH2 = gBrowser.contentDocument.getElementById("h2");
+      var cSelection = gBrowser.contentDocument.defaultView.getSelection();
+      var cRange = gBrowser.contentDocument.createRange();
+      cRange.setStart(cH2, 0);
+      cRange.setEnd(cH2, 1);
+      cSelection.removeAllRanges();
+      cSelection.addRange(cRange);
+      checkFindbarState("plain text", SEARCH_TEXT);
+
+      // test nsIDOMNSEditableElement with selection
+      var textInput = gBrowser.contentDocument.getElementById("text");
+      textInput.focus();
+      textInput.select();
+      checkFindbarState("text input", SAMPLE_TEXT);
+
+      // test non-editable nsIDOMNSEditableElement (button)
+      gBrowser.contentDocument.getElementById("button").focus();
+      checkFindbarState("button", "");
+    }
+
+    function testDrop()
+    {
+      gFindBar.open();
+      // use an dummy image to start the drag so it doesn't get interrupted by a selection
+      var img = gBrowser.contentDocument.getElementById("img");
+      synthesizeDrop(img, gFindBar._findField, [[ {type: "text/plain", data: "Rabbits" } ]], "copy", window);
+      window.opener.wrappedJSObject.SimpleTest.is(gFindBar._findField.inputField.value, "Rabbits", "drop on findbar");
+      gFindBar.close();
+    }
+
+    function testQuickFindClose() {
+      var _isClosedCallback = function() {
+        ok(gFindBar.hidden,
+           "_isClosedCallback: Failed to auto-close quick find bar after " +
+           gFindBar._quickFindTimeoutLength + "ms");
+        finish();
+      };
+      setTimeout(_isClosedCallback, gFindBar._quickFindTimeoutLength + 100);
+    }
+
+    function testStatusText(aCallback) {
+      var _delayedCheckStatusText = function() {
+        ok(gStatusText == SAMPLE_URL, "testStatusText: Failed to set status text of found link");
+        aCallback();
+      };
+      setTimeout(_delayedCheckStatusText, 100);
+    }
+
+    function enterStringIntoFindField(aString) {
+      for (var i=0; i < aString.length; i++) {
+        var event = document.createEvent("KeyEvents");
+        event.initKeyEvent("keypress", true, true, null, false, false,
+                           false, false, 0, aString.charCodeAt(i));
+        gFindBar._findField.inputField.dispatchEvent(event);
+      }
+    }
+
+    // also test match-case
+    function testNormalFind() {
+      document.getElementById("cmd_find").doCommand();
+
+      ok(!gFindBar.hidden, "testNormalFind: failed to open findbar");
+      ok(document.commandDispatcher.focusedElement == gFindBar._findField.inputField,
+         "testNormalFind: find field is not focused");
+
+      var matchCaseCheckbox = gFindBar.getElement("find-case-sensitive");
+      if (!matchCaseCheckbox.hidden & matchCaseCheckbox.checked)
+        matchCaseCheckbox.click();
+
+      var searchStr = "text tes";
+      enterStringIntoFindField(searchStr);
+      ok(gBrowser.contentWindow.getSelection().toString().toLowerCase() == searchStr,
+         "testNormalFind: failed to find '" + searchStr + "'");
+      testClipboardSearchString(gBrowser.contentWindow.getSelection().toString());
+
+      if (!matchCaseCheckbox.hidden) {
+        matchCaseCheckbox.click();
+        enterStringIntoFindField("t");
+        ok(gBrowser.contentWindow.getSelection() != searchStr,
+           "testNormalFind: Case-sensitivy is broken '" + searchStr + "'");
+        matchCaseCheckbox.click();
+      }
+    }
+
+    function testNormalFindWithComposition() {
+      document.getElementById("cmd_find").doCommand();
+
+      ok(!gFindBar.hidden, "testNormalFindWithComposition: findbar should be open");
+      ok(document.commandDispatcher.focusedElement == gFindBar._findField.inputField,
+         "testNormalFindWithComposition: find field should be focused");
+
+      var matchCaseCheckbox = gFindBar.getElement("find-case-sensitive");
+      var clicked = false;
+      if (!matchCaseCheckbox.hidden & matchCaseCheckbox.checked) {
+        matchCaseCheckbox.click();
+        clicked = true;
+      }
+
+      gFindBar._findField.inputField.focus();
+
+      var searchStr = "text";
+
+      synthesizeComposition({ type: "compositionstart" });
+      synthesizeComposition({ type: "compositionupdate", data: searchStr });
+      synthesizeText(
+        { "composition":
+          { "string": searchStr,
+            "clauses":
+            [
+              { "length": searchStr.length, "attr": COMPOSITION_ATTR_RAWINPUT }
+            ]
+          },
+          "caret": { "start": searchStr.length, "length": 0 }
+        });
+
+      ok(gBrowser.contentWindow.getSelection().toString().toLowerCase() != searchStr,
+         "testNormalFindWithComposition: text shouldn't be found during composition");
+
+      synthesizeText(
+        { "composition":
+          { "string": searchStr,
+            "clauses":
+            [
+              { "length": 0, "attr": 0 }
+            ]
+          },
+          "caret": { "start": searchStr.length, "length": 0 }
+        });
+      synthesizeComposition({ type: "compositionend", data: searchStr });
+
+      ok(gBrowser.contentWindow.getSelection().toString().toLowerCase() == searchStr,
+         "testNormalFindWithComposition: text should be found after committing composition");
+      testClipboardSearchString(gBrowser.contentWindow.getSelection().toString());
+
+      if (clicked) {
+        matchCaseCheckbox.click();
+      }
+    }
+
+    function testAutoCaseSensitivityUI() {
+      var matchCaseCheckbox = gFindBar.getElement("find-case-sensitive");
+      var matchCaseLabel = gFindBar.getElement("match-case-status");
+      document.getElementById("cmd_find").doCommand();
+      ok(!matchCaseCheckbox.hidden, "match case box is hidden in manual mode");
+      ok(matchCaseLabel.hidden, "match case label is visible in manual mode");
+
+      var prefsvc = Cc["@mozilla.org/preferences-service;1"].
+                    getService(Components.interfaces.nsIPrefBranch);
+      prefsvc.setIntPref("accessibility.typeaheadfind.casesensitive", 2);
+
+      ok(matchCaseCheckbox.hidden,
+         "match case box is visible in automatic mode");
+      ok(!matchCaseLabel.hidden,
+         "match case label is hidden in automatic mode");
+
+      enterStringIntoFindField("a");
+      var insensitiveLabel = matchCaseLabel.value;
+      enterStringIntoFindField("A");
+      var sensitiveLabel = matchCaseLabel.value;
+      ok(insensitiveLabel != sensitiveLabel,
+         "Case Sensitive label was not correctly updated");
+
+      // bug 365551
+      gFindBar.onFindAgainCommand();
+      ok(matchCaseCheckbox.hidden && !matchCaseLabel.hidden,
+         "bug 365551: case sensitivity UI is broken after find-again");
+      prefsvc.setIntPref("accessibility.typeaheadfind.casesensitive", 0);
+      gFindBar.close();
+    }
+
+    function clearFocus() {
+      document.commandDispatcher.focusedElement = null;
+      document.commandDispatcher.focusedWindow = null;
+      gBrowser.contentWindow.focus();
+    }
+
+    function testQuickFindLink() {
+      clearFocus();
+
+      var event = document.createEvent("KeyEvents");
+      event.initKeyEvent("keypress", true, true, null, false, false,
+                         false, false, 0, "'".charCodeAt(0));
+      gBrowser.contentDocument.documentElement.dispatchEvent(event);
+
+      ok(!gFindBar.hidden, "testQuickFindLink: failed to open findbar");
+      ok(document.commandDispatcher.focusedElement == gFindBar._findField.inputField,
+         "testQuickFindLink: find field is not focused");
+
+      var searchStr = "Link Test";
+      enterStringIntoFindField(searchStr);
+      ok(gBrowser.contentWindow.getSelection() == searchStr,
+          "testQuickFindLink: failed to find sample link");
+      testClipboardSearchString(searchStr);
+    }
+
+    // See bug 963925 for more details on this test.
+    function testFindWithHighlight() {
+      //clearFocus();
+      gFindBar._findField.value = "";
+
+      let findCommand = document.getElementById("cmd_find");
+      findCommand.doCommand();
+
+      let searchStr = "e";
+      enterStringIntoFindField(searchStr);
+
+      let a = gFindBar._findField.value;
+      let b = gFindBar._browser.finder._fastFind.searchString;
+      let c = gFindBar._browser.finder.searchString;
+      ok(a == b && b == c, "testFindWithHighlight 1: " + a + ", " + b + ", " + c + ".");
+
+      let oldGetInitialSelection = gFindBar._getInitialSelection;
+      let searchStr = "t";
+      gFindBar._getInitialSelection = () => searchStr;
+      findCommand.doCommand();
+      gFindBar._getInitialSelection = oldGetInitialSelection;
+
+      a = gFindBar._findField.value;
+      b = gFindBar._browser.finder._fastFind.searchString;
+      c = gFindBar._browser.finder.searchString;
+      ok(a == searchStr && b == c, "testFindWithHighlight 2: " + searchStr +
+         ", " + a + ", " + b + ", " + c + ".");
+
+      let highlightButton = gFindBar.getElement("highlight");
+      highlightButton.click();
+      ok(highlightButton.checked, "testFindWithHighlight 3: Highlight All should be checked.");
+
+      a = gFindBar._findField.value;
+      b = gFindBar._browser.finder._fastFind.searchString;
+      c = gFindBar._browser.finder.searchString;
+      ok(a == searchStr && b == c, "testFindWithHighlight 4: " + a + ", " + b + ", " + c + ".");
+
+      gFindBar.onFindAgainCommand();
+      a = gFindBar._findField.value;
+      b = gFindBar._browser.finder._fastFind.searchString;
+      c = gFindBar._browser.finder.searchString;
+      ok(a == b && b == c, "testFindWithHighlight 5: " + a + ", " + b + ", " + c + ".");
+
+      highlightButton.click();
+      ok(!highlightButton.checked, "testFindWithHighlight: Highlight All should be unchecked.");
+    }
+
+    function testQuickFindText() {
+      clearFocus();
+
+      var event = document.createEvent("KeyEvents");
+      event.initKeyEvent("keypress", true, true, null, false, false,
+                         false, false, 0, "/".charCodeAt(0));
+      gBrowser.contentDocument.documentElement.dispatchEvent(event);
+
+      ok(!gFindBar.hidden, "testQuickFindText: failed to open findbar");
+      ok(document.commandDispatcher.focusedElement == gFindBar._findField.inputField,
+         "testQuickFindText: find field is not focused");
+
+      enterStringIntoFindField(SEARCH_TEXT);
+      ok(gBrowser.contentWindow.getSelection() == SEARCH_TEXT,
+         "testQuickFindText: failed to find '" + SEARCH_TEXT + "'");
+      testClipboardSearchString(SEARCH_TEXT);
+    }
+
+    // Perform an async function in serial on each of the list items.
+    function asyncForEach(list, async, callback) {
+      let i = 0;
+      let len = list.length;
+
+      if (!len)
+        return callback();
+
+      async(list[i], function handler() {
+          i++;
+          if (i < len) {
+            async(list[i], handler, i);
+          } else {
+            callback();
+          }
+      }, i);
+    }
+
+    function testFindCountUI(callback) {
+      clearFocus();
+      document.getElementById("cmd_find").doCommand();
+
+      ok(!gFindBar.hidden, "testFindCountUI: failed to open findbar");
+      ok(document.commandDispatcher.focusedElement == gFindBar._findField.inputField,
+         "testFindCountUI: find field is not focused");
+
+      let matchCase = gFindBar.getElement("find-case-sensitive");
+      if (matchCase.checked)
+        matchCase.click();
+
+      let foundMatches = gFindBar._foundMatches;
+      let tests = [{
+        text: "t",
+        current: 5,
+        total: 10,
+      }, {
+        text: "te",
+        current: 3,
+        total: 5,
+      }, {
+        text: "tes",
+        current: 1,
+        total: 2,
+      }, {
+        text: "texxx",
+        current: 0,
+        total: 0
+      }];
+      let regex = /([\d]*)\sof\s([\d]*)/;
+      let timeout = gFindBar._matchesCountTimeoutLength + 20;
+
+      function assertMatches(aTest, aMatches) {
+        window.opener.wrappedJSObject.SimpleTest.is(aTest.current, aMatches[1],
+          "Currently highlighted match should be at " + aTest.current);
+        window.opener.wrappedJSObject.SimpleTest.is(aTest.total, aMatches[2],
+          "Total amount of matches should be " + aTest.total);
+      }
+
+      function testString(aTest, aNext) {
+        gFindBar.clear();
+        enterStringIntoFindField(aTest.text);
+
+        setTimeout(function() {
+          let matches = foundMatches.value.match(regex);
+          if (!aTest.total) {
+            ok(!matches, "No message should be shown when 0 matches are expected");
+            aNext();
+          } else {
+            assertMatches(aTest, matches);
+            let cycleTests = [];
+            let cycles = aTest.total;
+            while (--cycles) {
+              aTest.current++;
+              if (aTest.current > aTest.total)
+                aTest.current = 1;
+              cycleTests.push({
+                current: aTest.current,
+                total: aTest.total
+              });
+            }
+            asyncForEach(cycleTests, function(aCycleTest, aNextCycle) {
+              gFindBar.onFindAgainCommand();
+              setTimeout(function() {
+                assertMatches(aCycleTest, foundMatches.value.match(regex));
+                aNextCycle();
+              }, timeout);
+            }, aNext);
+          }
+        }, timeout);
+      }
+
+      asyncForEach(tests, testString, callback);
+    }
+
+    function testClipboardSearchString(aExpected) {
+      if (!gHasFindClipboard)
+        return;
+
+      if (!aExpected)
+        aExpected = "";
+      var searchStr = gFindBar.browser.finder.clipboardSearchString;
+      ok(searchStr.toLowerCase() == aExpected.toLowerCase(),
+        "testClipboardSearchString: search string not set to '" + aExpected +
+        "', instead found '" + searchStr + "'");
+    }
+  ]]></script>
+
+  <commandset>
+    <command id="cmd_find" oncommand="document.getElementById('FindToolbar').onFindCommand();"/>
+  </commandset>
+  <browser type="content-primary" flex="1" id="content" src="about:blank"/>
+  <findbar id="FindToolbar" browserid="content"/>
+</window>

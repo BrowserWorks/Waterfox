@@ -1,0 +1,27 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIProxyInfo;
+
+/**
+ * An interface for accessing the proxy info that a channel was
+ * constructed with.
+ *
+ * @see nsIProxiedProtocolHandler
+ */
+[scriptable, uuid(6238f134-8c3f-4354-958f-dfd9d54a4446)]
+interface nsIProxiedChannel : nsISupports
+{
+  /**
+   * Gets the proxy info the channel was constructed with. null or a
+   * proxyInfo with type "direct" mean no proxy.
+   *
+   * The returned proxy info must not be modified.
+   */
+  readonly attribute nsIProxyInfo proxyInfo;
+};
+
+

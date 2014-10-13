@@ -1,0 +1,6 @@
+PARALLEL_DIRS = ['orc',
+ 'glib',
+ 'gstreamer',
+ 'gst-plugins-base',
+ 'gst-plugins-good',
+ 'gst-plugins-bad']

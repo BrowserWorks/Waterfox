@@ -1,0 +1,104 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+ * vim: sw=2 ts=8 et :
+ */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+include LayersSurfaces;
+include protocol PLayerTransaction;
+include "mozilla/GfxMessageUtils.h";
+include "nsRegion.h";
+
+using struct mozilla::null_t from "ipc/IPCMessageUtils.h";
+using struct mozilla::layers::TextureFactoryIdentifier from "mozilla/layers/CompositorTypes.h";
+using struct mozilla::layers::FrameMetrics from "FrameMetrics.h";
+using mozilla::layers::FrameMetrics::ViewID from "FrameMetrics.h";
+using mozilla::layers::LayersBackend from "mozilla/layers/LayersTypes.h";
+using mozilla::CrossProcessMutexHandle from "mozilla/ipc/CrossProcessMutex.h";
+using mozilla::ipc::SharedMemoryBasic::Handle from "mozilla/ipc/SharedMemoryBasic.h";
+using class mozilla::TimeStamp from "mozilla/TimeStamp.h";
+
+namespace mozilla {
+namespace layers {
+
+
+/**
+ * The PCompositor protocol is used to manage communication between
+ * the main thread and the compositor thread context. It's primary
+ * purpose is to manage the PLayerTransaction sub protocol.
+ */
+// This should really be 'sync', but we're using 'rpc' as a workaround
+// for Bug 716631.
+intr protocol PCompositor
+{
+  // A Compositor manages a single Layer Manager (PLayerTransaction)
+  manages PLayerTransaction;
+
+child:
+  // The child should invalidate everything so that the whole window is redrawn.
+  async InvalidateAll();
+
+  // The compositor completed a layers transaction. id is the layers id
+  // of the child layer tree that was composited (or 0 when notifying
+  // the root layer tree).
+  async DidComposite(uint64_t id, uint64_t transactionId);
+
+  // The parent sends the child the requested fill ratio numbers.
+  async Overfill(uint32_t aOverfill);
+
+parent:
+
+  // Child sends the parent a request for fill ratio numbers.
+  async RequestOverfill();
+
+  // The child is about to be destroyed, so perform any necessary cleanup.
+  sync WillStop();
+
+  // Clean up in preparation for own destruction.
+  sync Stop();
+
+  // Pause/resume the compositor. These are intended to be used on mobile, when
+  // the compositor needs to pause/resume in lockstep with the application.
+  sync Pause();
+  sync Resume();
+
+  async NotifyChildCreated(uint64_t id);
+
+  // Make a snapshot of the content that would have been drawn to our
+  // render target at the time this message is received.  If the size
+  // or format of |inSnapshot| doesn't match our render target,
+  // results are undefined.
+  //
+  // NB: this message will result in animations, transforms, effects,
+  // and so forth being interpolated.  That's what we want to happen.
+  sync MakeSnapshot(SurfaceDescriptor inSnapshot, nsIntRect dirtyRect);
+
+  // Make sure any pending composites are started immediately and
+  // block until they are completed.
+  sync FlushRendering();
+
+  sync StartFrameTimeRecording(int32_t bufferSize)
+    returns (uint32_t startIndex);
+
+  sync StopFrameTimeRecording(uint32_t startIndex)
+    returns (float[] intervals);
+
+  // layersBackendHints is an ordered list of preffered backends where
+  // layersBackendHints[0] is the best backend. If any hints are LayersBackend::LAYERS_NONE
+  // that hint is ignored.
+  sync PLayerTransaction(LayersBackend[] layersBackendHints, uint64_t id)
+    returns (TextureFactoryIdentifier textureFactoryIdentifier, bool success);
+
+  // Notify the compositor that a region of the screen has been invalidated.
+  async NotifyRegionInvalidated(nsIntRegion region);
+
+child:
+  // Send back Compositor Frame Metrics from APZCs so tiled layers can
+  // update progressively.
+  async SharedCompositorFrameMetrics(Handle metrics, CrossProcessMutexHandle mutex, uint32_t aAPZCId);
+  async ReleaseSharedCompositorFrameMetrics(ViewID aId, uint32_t aAPZCId);
+};
+
+} // layers
+} // mozilla

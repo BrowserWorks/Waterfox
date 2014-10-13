@@ -1,0 +1,64 @@
+<script>
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+ var list = 
+     [
+  "blueprint/sample.html",
+  "blueprint/forms.html",
+  "blueprint/grid.html",
+  "blueprint/elements.html",
+  "js-input/3d-cube.html",
+  "js-input/3d-morph.html",
+  "js-input/3d-raytrace.html",
+  "js-input/3d-thingy.html",
+  "js-input/access-binary-trees.html",
+  "js-input/access-fannkuch.html",
+  "js-input/access-nbody.html",
+  "js-input/access-nsieve.html",
+  "js-input/bitops-3bit-bits-in-byte.html",
+  "js-input/bitops-bits-in-byte.html",
+  "js-input/bitops-bitwise-and.html",
+  "js-input/bitops-nsieve-bits.html",
+  "js-input/controlflow-recursive.html",
+  "js-input/crypto-aes.html",
+  "js-input/crypto-md5.html",
+  "js-input/crypto-sha1.html",
+  "js-input/crypto-otp.html",
+  "js-input/date-format-tofte.html",
+  "js-input/date-format-xparb.html",
+  "js-input/math-cordic.html",
+  "js-input/math-partial-sums.html",
+  "js-input/math-spectral-norm.html",
+  "js-input/regexp-dna.html",
+  "js-input/string-base64.html",
+  "js-input/string-fasta.html",
+  "js-input/string-tagcloud.html",
+  "js-input/string-unpack-code.html",
+  "js-input/string-validate-input.html"
+     ];
+ var interval = 3000; // 15000
+ var idx = 0;
+ var w;
+ 
+ window.onload = function () {
+     w = window.open("about:blank");
+     window.setTimeout(loadURL, interval); 
+ };
+ function loadURL () {
+     w.close();
+     w = window.open(list[idx++]);
+     if (idx < list.length) {
+     window.setTimeout(loadURL, interval);
+     } else {
+         window.setTimeout(Quitter.quit, interval);
+     }
+ }
+ var i;
+ 
+ for(i=0; i < list.length;i++) {
+     document.write(list[i]);
+     document.write("<br>");
+ }
+  </script>

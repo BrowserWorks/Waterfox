@@ -1,0 +1,154 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* Reload and waiting notices */
+.notice-container {
+  margin-top: -50vh;
+}
+
+.theme-dark .notice-container {
+  background-color: #343c45; /* Toolbars */
+  color: #f5f7fa; /* Light foreground text */
+}
+
+.theme-light .notice-container {
+  background-color: #f0f1f2; /* Toolbars */
+  color: #585959; /* Grey foreground text */
+}
+
+#reload-notice {
+  font-size: 120%;
+}
+
+#waiting-notice {
+  font-size: 110%;
+}
+
+#waiting-notice::before {
+  display: inline-block;
+  content: "";
+  background: url("chrome://global/skin/icons/loading_16.png") center no-repeat;
+  width: 16px;
+  height: 16px;
+  -moz-margin-end: 6px;
+}
+
+#requests-menu-reload-notice-button {
+  min-height: 2em;
+}
+
+/* Context Graph */
+svg {
+  position: fixed;
+  overflow: hidden;
+}
+
+/* Edges in graph */
+.edgePath path {
+  stroke-width: 1px;
+  fill: none;
+}
+
+.theme-dark .edgePath path {
+  stroke: #b6babf; /* Grey foreground text */
+}
+.theme-light .edgePath path {
+  stroke: #aaaaaa; /* Splitters */
+}
+
+/* Audio Nodes */
+.nodes rect {
+  stroke-width: 1px;
+  cursor: pointer;
+}
+
+.theme-dark .nodes rect {
+  stroke: #252c33; /* Tab toolbar */
+  fill: #343c45; /* Toolbars */
+}
+
+.theme-light .nodes rect {
+  stroke: #ebeced; /* Tab toolbar */
+  fill: #f0f1f2; /* Toolbar */
+}
+
+.theme-dark .nodes g.selected rect {
+  fill: #1d4f73; /* Select Highlight Blue */
+}
+
+.theme-light .nodes g.selected rect {
+  fill: #4c9ed9; /* Select Highlight Blue */
+}
+
+/* Text in nodes */
+text {
+  cursor: pointer;
+  font-weight: 300;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+  font-size: 14px;
+}
+
+.theme-dark text {
+  fill: #b6babf; /* Grey foreground text */
+}
+.theme-light text {
+  fill: #585959; /* Grey foreground text */
+}
+.theme-light g.selected text {
+  fill: #f0f1f2; /* Toolbars */
+}
+
+/**
+ * Inspector Styles
+ */
+
+.web-audio-inspector .error {
+  background-image: url(alerticon-warning.png);
+  background-size: 13px 12px;
+  -moz-appearance: none;
+  opacity: 0;
+  transition: opacity .5s ease-out 0s;
+}
+
+@media (min-resolution: 2dppx) {
+  .web-audio-inspector .error {
+    background-image: url(alerticon-warning@2x.png);
+  }
+}
+
+#inspector-pane-toggle {
+  background: none;
+  box-shadow: none;
+  border: none;
+  list-style-image: url(debugger-collapse.png);
+  -moz-image-region: rect(0px,16px,16px,0px);
+}
+
+#inspector-pane-toggle > .toolbarbutton-icon {
+  width: 16px;
+  height: 16px;
+}
+
+#inspector-pane-toggle[pane-collapsed] {
+  list-style-image: url(debugger-expand.png);
+}
+
+#inspector-pane-toggle:active {
+  -moz-image-region: rect(0px,32px,16px,16px);
+}
+
+@media (min-resolution: 2dppx) {
+  #inspector-pane-toggle {
+    list-style-image: url(debugger-collapse@2x.png);
+    -moz-image-region: rect(0px,32px,32px,0px);
+  }
+
+  #inspector-pane-toggle[pane-collapsed] {
+    list-style-image: url(debugger-expand@2x.png);
+  }
+
+  #inspector-pane-toggle:active {
+    -moz-image-region: rect(0px,64px,32px,32px);
+  }
+}

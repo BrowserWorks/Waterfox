@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<?xml-stylesheet href="chrome://global/skin" type="text/css"?>
+
+<window id="360437Test"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        width="600"
+        height="600"
+        onload="onLoad();"
+        title="360437 test">
+
+  <script type="application/javascript"><![CDATA[
+    const Ci = Components.interfaces;
+    const Cc = Components.classes;
+    const Cr = Components.results;
+
+    var gFindBar = null;
+    var gBrowser;
+
+    function ok(condition, message) {
+      window.opener.wrappedJSObject.SimpleTest.ok(condition, message);
+    }
+    function finish() {
+      window.close();
+      window.opener.wrappedJSObject.SimpleTest.finish();
+    }
+
+    function onLoad() {
+      var _delayedOnLoad = function() {
+        gFindBar = document.getElementById("FindToolbar");
+        gBrowser = document.getElementById("content");
+        gBrowser.addEventListener("pageshow", onPageShow, false);
+        gBrowser.loadURI("data:text/html,<form><input id='input' type='text' value='text inside an input element'></form>");
+      }
+      setTimeout(_delayedOnLoad, 1000);
+    }
+
+    function onPageShow() {
+      testNormalFind();
+    }
+
+    function enterStringIntoFindField(aString) {
+      for (var i=0; i < aString.length; i++) {
+        var event = document.createEvent("KeyEvents");
+        event.initKeyEvent("keypress", true, true, null, false, false,
+                           false, false, 0, aString.charCodeAt(i));
+        gFindBar._findField.inputField.dispatchEvent(event);
+      }
+    }
+
+    function testNormalFind() {
+      gFindBar.onFindCommand();
+
+      // Make sure the findfield is correctly focused on open
+      var searchStr = "text inside an input element";
+      enterStringIntoFindField(searchStr);
+      ok(document.commandDispatcher.focusedElement ==
+         gFindBar._findField.inputField, "Find field isn't focused");
+
+      // Make sure "find again" correctly transfers focus to the content element
+      // when the find bar is closed.
+      gFindBar.close();
+      gFindBar.onFindAgainCommand(false);
+      ok(document.commandDispatcher.focusedElement ==
+         gBrowser.contentDocument.getElementById("input"),
+             "Input Element isn't focused");
+
+      // Make sure "find again" doesn't focus the content element if focus
+      // isn't in the content document.
+      var textbox = document.getElementById("textbox");
+      textbox.focus();
+      gFindBar.close();
+      gFindBar.onFindAgainCommand(false);
+      ok(textbox.hasAttribute("focused"),
+         "Focus was stolen from a chrome element");
+      finish();
+    }
+  ]]></script>
+  <textbox id="textbox"/>
+  <browser type="content-primary" flex="1" id="content" src="about:blank"/>
+  <findbar id="FindToolbar" browserid="content"/>
+</window>

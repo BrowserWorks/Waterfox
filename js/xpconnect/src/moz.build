@@ -1,0 +1,101 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+EXPORTS += [
+    'BackstagePass.h',
+    'nsCxPusher.h',
+    'qsObjectHelper.h',
+    'XPCJSMemoryReporter.h',
+    'xpcObjectHelper.h',
+    'xpcpublic.h',
+]
+
+UNIFIED_SOURCES += [
+    'nsCxPusher.cpp',
+    'nsScriptError.cpp',
+    'nsXPConnect.cpp',
+    'Sandbox.cpp',
+    'XPCCallContext.cpp',
+    'XPCContext.cpp',
+    'XPCConvert.cpp',
+    'XPCDebug.cpp',
+    'XPCException.cpp',
+    'XPCJSContextStack.cpp',
+    'XPCJSID.cpp',
+    'XPCJSRuntime.cpp',
+    'XPCJSWeakReference.cpp',
+    'XPCLocale.cpp',
+    'XPCLog.cpp',
+    'XPCMaps.cpp',
+    'XPCModule.cpp',
+    'XPCQuickStubs.cpp',
+    'XPCRuntimeService.cpp',
+    'XPCShellImpl.cpp',
+    'XPCString.cpp',
+    'XPCThrower.cpp',
+    'XPCVariant.cpp',
+    'XPCWrappedJS.cpp',
+    'XPCWrappedJSClass.cpp',
+    'XPCWrappedNative.cpp',
+    'XPCWrappedNativeInfo.cpp',
+    'XPCWrappedNativeJSOps.cpp',
+    'XPCWrappedNativeProto.cpp',
+    'XPCWrappedNativeScope.cpp',
+    'XPCWrapper.cpp',
+]
+
+# XPCComponents.cpp cannot be built in unified mode because it uses plarena.h.
+SOURCES += [
+    'XPCComponents.cpp',
+]
+
+GENERATED_SOURCES += [
+    'dom_quickstubs.cpp',
+    'GeneratedEvents.cpp',
+]
+
+FAIL_ON_WARNINGS = True
+
+MSVC_ENABLE_PGO = True
+
+LIBRARY_NAME = 'xpconnect_s'
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+FINAL_LIBRARY = 'gklayout'
+
+GENERATED_FILES = [
+    'dom_quickstubs.h',
+    'GeneratedEventClasses.h',
+    'GeneratedEvents.h',
+]
+
+DEFINES['JS_THREADSAFE'] = True
+
+if CONFIG['MOZ_JSDEBUGGER']:
+    DEFINES['MOZ_JSDEBUGGER'] = True
+
+LOCAL_INCLUDES += [
+    '../loader',
+    '../wrappers',
+    '/caps/include',
+    '/content/base/public',
+    '/content/base/src',
+    '/content/html/content/src',
+    '/content/html/document/src',
+    '/content/svg/content/src',
+    '/dom/base',
+    '/dom/workers',
+    '/js/ipc',
+    '/layout/base',
+    '/layout/style',
+    '/xpcom/reflect/xptinfo/src',
+]
+
+if CONFIG['MOZ_B2G_BT']:
+    LOCAL_INCLUDES += [
+        '/dom/bluetooth',
+    ]

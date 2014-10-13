@@ -1,0 +1,35 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+LIBRARY_NAME = 'mozillapkix_gtest'
+
+SOURCES += [
+    'nssgtest.cpp',
+    'pkix_cert_chain_length_tests.cpp',
+    'pkix_ocsp_request_tests.cpp',
+    'pkixcheck_CheckKeyUsage_tests.cpp',
+    'pkixder_input_tests.cpp',
+    'pkixder_pki_types_tests.cpp',
+    'pkixder_universal_types_tests.cpp',
+    'pkixgtest.cpp',
+]
+
+LOCAL_INCLUDES += [
+    '../../include',
+    '../../lib',
+    '../lib',
+]
+
+FINAL_LIBRARY = 'xul-gtest'
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+if CONFIG['_MSC_VER']:
+  CXXFLAGS += [
+    '-wd4275', # non dll-interface class used as base for dll-interface class
+  ]
+
+FAIL_ON_WARNINGS = True

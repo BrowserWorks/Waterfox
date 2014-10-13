@@ -1,0 +1,35 @@
+. "$topsrcdir/b2g/config/mozconfigs/common"
+
+# Use sccache
+no_sccache=
+
+. $topsrcdir/build/macosx/mozconfig.common
+
+ac_add_options --enable-update-channel=${MOZ_UPDATE_CHANNEL}
+ac_add_options --enable-update-packaging
+ac_add_options --enable-signmar
+
+# Nightlies only since this has a cost in performance
+ac_add_options --enable-js-diagnostics
+
+# Needed to enable breakpad in application.ini
+export MOZILLA_OFFICIAL=1
+
+export MOZ_TELEMETRY_REPORTING=1
+
+#ac_add_options --with-macbundlename-prefix=Firefox
+
+# Treat warnings as errors in directories with FAIL_ON_WARNINGS.
+ac_add_options --enable-warnings-as-errors
+
+# B2G Stuff
+ac_add_options --enable-application=b2g
+ac_add_options --enable-debug-symbols
+export CXXFLAGS=-DMOZ_ENABLE_JS_DUMP
+
+GAIADIR=$topsrcdir/gaia
+
+# Build simulator xpi and phone tweaks for b2g-desktop
+FXOS_SIMULATOR=1
+
+. "$topsrcdir/b2g/config/mozconfigs/common.override"

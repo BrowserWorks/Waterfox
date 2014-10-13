@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<?xml-stylesheet href="chrome://global/skin" type="text/css"?>
+
+<window id="331215test"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        width="600"
+        height="600"
+        onload="SimpleTest.executeSoon(startTest);"
+        title="331215 test">
+
+  <script type="application/javascript"><![CDATA[
+    const Ci = Components.interfaces;
+    const Cc = Components.classes;
+    const Cr = Components.results;
+
+    var gFindBar = null;
+    var gBrowser;
+
+    var imports = ["SimpleTest", "ok"];
+    for each (var name in imports) {
+      window[name] = window.opener.wrappedJSObject[name];
+    }
+
+    function finish() {
+      window.close();
+      SimpleTest.finish();
+    }
+
+    function startTest() {
+      gFindBar = document.getElementById("FindToolbar");
+      gBrowser = document.getElementById("content");
+      gBrowser.addEventListener("pageshow", onPageShow, false);
+      gBrowser.loadURI("data:text/plain,latest");
+    }
+
+    function onPageShow() {
+      document.getElementById("cmd_find").doCommand();
+      enterStringIntoFindField("test");
+      document.commandDispatcher
+              .getControllerForCommand("cmd_moveTop")
+              .doCommand("cmd_moveTop");
+      enterStringIntoFindField("l");
+      ok(gFindBar._findField.getAttribute("status") == "notfound",
+         "Findfield status attribute should have been 'notfound'" +
+         " after entering ltest");              
+      enterStringIntoFindField("a");
+      ok(gFindBar._findField.getAttribute("status") != "notfound",
+         "Findfield status attribute should not have been 'notfound'" +
+         " after entering latest");
+      finish();
+    }
+
+    function enterStringIntoFindField(aString) {
+      for (var i=0; i < aString.length; i++) {
+        var event = document.createEvent("KeyEvents");
+        event.initKeyEvent("keypress", true, true, null, false, false,
+                           false, false, 0, aString.charCodeAt(i));
+        gFindBar._findField.inputField.dispatchEvent(event);
+      }
+    }
+  ]]></script>
+
+  <commandset>
+    <command id="cmd_find" oncommand="document.getElementById('FindToolbar').onFindCommand();"/>
+  </commandset>
+  <browser type="content-primary" flex="1" id="content" src="about:blank"/>
+  <findbar id="FindToolbar" browserid="content"/>
+</window>

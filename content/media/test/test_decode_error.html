@@ -1,0 +1,54 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Media test: unknown/invalid formats raise decode error</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+  <script type="text/javascript" src="manifest.js"></script>
+</head>
+<body>
+<pre id="test">
+<script class="testbody" type="text/javascript">
+var manager = new MediaTestManager;
+
+function startTest(test, token) {
+  var v = document.createElement("video");
+  manager.started(token);
+  v.addEventListener("error", function (event) {
+    var el = event.currentTarget;
+    is(event.type, "error", "Expected event of type 'error'");
+    ok(el.error, "Element 'error' attr expected to have a value");
+    ok(el.error instanceof MediaError, "Element 'error' attr expected to be MediaError");
+    is(el.error.code, MediaError.MEDIA_ERR_DECODE, "Expected a decode error");
+    is(el.networkState, HTMLMediaElement.NETWORK_EMPTY, "networkState should be EMPTY");
+    el._sawError = true;
+  }, false);
+
+  v.addEventListener("emptied", function (event) {
+    var el = event.currentTarget;
+    is(el.networkState, HTMLMediaElement.NETWORK_EMPTY, "networkState should be EMPTY");
+    ok(el._sawError, "Expected error event");
+    manager.finished(token);
+  }, false);
+
+  v.addEventListener("loadedmetadata", function () {
+    ok(false, "Unexpected loadedmetadata event");
+  }, false);
+
+  v.autoplay = true;
+  v.addEventListener("ended", function () {
+    ok(false, "Unexpected ended event");
+  }, false);
+
+  v.src = test.name; // implicitly starts a load.
+}
+
+SimpleTest.waitForExplicitFinish();
+SpecialPowers.pushPrefEnv({"set": [["media.cache_size", 40000]]}, beginTest);
+function beginTest() {
+  manager.runTests(gDecodeErrorTests, startTest);
+}
+</script>
+</pre>
+</body>
+</html>

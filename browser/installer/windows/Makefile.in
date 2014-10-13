@@ -1,0 +1,109 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+include $(topsrcdir)/toolkit/mozapps/installer/package-name.mk
+
+CONFIG_DIR = instgen
+SFX_MODULE = $(topsrcdir)/other-licenses/7zstub/firefox/7zSD.sfx
+APP_VERSION := $(shell cat $(srcdir)/../../config/version.txt)
+DEFINES += -DAPP_VERSION=$(APP_VERSION)
+
+INSTALLER_FILES = \
+	app.tag \
+	nsis/installer.nsi \
+	nsis/uninstaller.nsi \
+	nsis/stub.nsi \
+	nsis/shared.nsh \
+	stub.tag \
+	$(NULL)
+
+ifdef MOZ_MAINTENANCE_SERVICE
+INSTALLER_FILES += \
+	nsis/maintenanceservice_installer.nsi \
+	$(NULL)
+endif
+
+BRANDING_FILES = \
+	branding.nsi \
+	appname.bmp \
+	bgintro.bmp \
+	clock.bmp \
+	particles.bmp \
+	pencil.bmp \
+	pencil-rtl.bmp \
+	wizHeader.bmp \
+	wizHeaderRTL.bmp \
+	wizWatermark.bmp \
+	$(NULL)
+
+DEFINES += \
+	-DAB_CD=$(AB_CD) \
+	-DMOZ_APP_NAME=$(MOZ_APP_NAME) \
+	-DMOZ_APP_DISPLAYNAME='${MOZ_APP_DISPLAYNAME}' \
+	-DMOZILLA_VERSION=${MOZILLA_VERSION} \
+	$(NULL)
+
+include $(topsrcdir)/config/config.mk
+
+ifdef LOCALE_MERGEDIR
+PPL_LOCALE_ARGS = \
+  --l10n-dir=$(LOCALE_MERGEDIR)/browser/installer \
+  --l10n-dir=$(call EXPAND_LOCALE_SRCDIR,browser/locales)/installer \
+  --l10n-dir=$(topsrcdir)/browser/locales/en-US/installer \
+  $(NULL)
+else
+PPL_LOCALE_ARGS=$(call EXPAND_LOCALE_SRCDIR,browser/locales)/installer
+endif
+
+OVERRIDE_DEFAULT_GOAL := installer
+installer::
+	$(MAKE) -C .. installer-stage
+	$(MAKE) $(CONFIG_DIR)/setup.exe
+
+# For building the uninstaller during the application build so it can be
+# included for mar file generation.
+uninstaller::
+	$(RM) -r $(CONFIG_DIR)
+	$(MKDIR) $(CONFIG_DIR)
+	$(INSTALL) $(addprefix $(srcdir)/,$(INSTALLER_FILES)) $(CONFIG_DIR)
+	$(INSTALL) $(addprefix $(DIST)/branding/,$(BRANDING_FILES)) $(CONFIG_DIR)
+	$(call py_action,preprocessor,-Fsubstitution $(DEFINES) $(ACDEFINES) \
+	  $(srcdir)/nsis/defines.nsi.in -o $(CONFIG_DIR)/defines.nsi)
+	$(PYTHON) $(topsrcdir)/toolkit/mozapps/installer/windows/nsis/preprocess-locale.py \
+	  --preprocess-locale $(topsrcdir) \
+	  $(PPL_LOCALE_ARGS) $(AB_CD) $(CONFIG_DIR)
+
+# For building the maintenanceservice installer
+ifdef MOZ_MAINTENANCE_SERVICE
+maintenanceservice_installer::
+	$(INSTALL) $(addprefix $(srcdir)/,$(INSTALLER_FILES)) $(CONFIG_DIR)
+	$(call py_action,preprocessor,-Fsubstitution $(DEFINES) $(ACDEFINES) \
+	  $(srcdir)/nsis/defines.nsi.in -o $(CONFIG_DIR)/defines.nsi)
+	$(PYTHON) $(topsrcdir)/toolkit/mozapps/installer/windows/nsis/preprocess-locale.py \
+	  --preprocess-locale $(topsrcdir) \
+	  $(PPL_LOCALE_ARGS) $(AB_CD) $(CONFIG_DIR)
+endif
+
+$(CONFIG_DIR)/setup.exe::
+	$(RM) -r $(CONFIG_DIR)
+	$(MKDIR) $(CONFIG_DIR)
+	$(INSTALL) $(addprefix $(srcdir)/,$(INSTALLER_FILES)) $(CONFIG_DIR)
+	$(INSTALL) $(addprefix $(DIST)/branding/,$(BRANDING_FILES)) $(CONFIG_DIR)
+	$(call py_action,preprocessor,-Fsubstitution $(DEFINES) $(ACDEFINES) \
+	  $(srcdir)/nsis/defines.nsi.in -o $(CONFIG_DIR)/defines.nsi)
+	$(PYTHON) $(topsrcdir)/toolkit/mozapps/installer/windows/nsis/preprocess-locale.py \
+	  --preprocess-locale $(topsrcdir) \
+	  $(PPL_LOCALE_ARGS) $(AB_CD) $(CONFIG_DIR)
+	$(PYTHON) $(topsrcdir)/toolkit/mozapps/installer/windows/nsis/preprocess-locale.py \
+	  --preprocess-single-file $(topsrcdir) \
+	  $(PPL_LOCALE_ARGS) $(CONFIG_DIR) \
+	  nsisstrings.properties nsisstrings.nlf
+	$(PYTHON) $(topsrcdir)/toolkit/mozapps/installer/windows/nsis/preprocess-locale.py \
+	  --convert-utf8-utf16le \
+	  $(srcdir)/nsis/oneoff_en-US.nsh $(CONFIG_DIR)/oneoff_en-US.nsh
+
+GARBARGE_DIRS += instgen
+
+include $(topsrcdir)/config/rules.mk
+include $(topsrcdir)/toolkit/mozapps/installer/windows/nsis/makensis.mk

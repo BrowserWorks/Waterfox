@@ -1,0 +1,120 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+if CONFIG['MOZ_ENABLE_PROFILER_SPS']:
+    FAIL_ON_WARNINGS = True
+
+    XPIDL_MODULE = 'profiler'
+    XPIDL_SOURCES += [
+        'nsIProfiler.idl',
+        'nsIProfileSaveEvent.idl',
+    ]
+    EXPORTS += [
+        'GeckoProfilerFunc.h',
+        'GeckoProfilerImpl.h',
+        'ProfilerMarkers.h',
+        'PseudoStack.h',
+        'shared-libraries.h',
+    ]
+    EXTRA_JS_MODULES = [
+        'Profiler.jsm',
+    ]
+    UNIFIED_SOURCES += [
+        'BreakpadSampler.cpp',
+        'JSStreamWriter.cpp',
+        'nsProfiler.cpp',
+        'nsProfilerFactory.cpp',
+        'platform.cpp',
+        'ProfileEntry.cpp',
+        'ProfilerBacktrace.cpp',
+        'ProfilerIOInterposeObserver.cpp',
+        'ProfilerMarkers.cpp',
+        'SaveProfileTask.cpp',
+        'SyncProfile.cpp',
+        'TableTicker.cpp',
+        'UnwinderThread2.cpp',
+    ]
+
+    # This file cannot be built in unified mode because of name clashes with mozglue headers on Android.
+    SOURCES += [
+        'local_debug_info_symbolizer.cc',
+    ]
+
+    if CONFIG['OS_TARGET'] in ('Android', 'Linux'):
+        UNIFIED_SOURCES += [
+            'AutoObjectMapper.cpp',
+            'LulCommon.cpp',
+            'LulDwarf.cpp',
+            'LulDwarfSummariser.cpp',
+            'LulElf.cpp',
+            'LulMain.cpp',
+            'LulRWLock.cpp',
+        ]
+        # These files cannot be built in unified mode because of name clashes with mozglue headers on Android.
+        SOURCES += [
+            'platform-linux.cc',
+            'shared-libraries-linux.cc',
+        ]
+        if CONFIG['CPU_ARCH'] == 'arm':
+            UNIFIED_SOURCES += [
+                'LulExidx.cpp',
+            ]
+            SOURCES += [
+                'EHABIStackWalk.cpp',
+            ]
+    elif CONFIG['OS_TARGET'] == 'Darwin':
+        UNIFIED_SOURCES += [
+            'platform-macos.cc',
+            'shared-libraries-macos.cc',
+            'shim_mac_dump_syms.mm',
+        ]
+    elif CONFIG['OS_TARGET'] == 'WINNT':
+        SOURCES += [
+            'IntelPowerGadget.cpp',
+            'platform-win32.cc',
+            'shared-libraries-win32.cc',
+        ]
+
+    LOCAL_INCLUDES += [
+        '/ipc/chromium/src',
+        '/mozglue/linker',
+        '/toolkit/crashreporter/google-breakpad/src',
+        '/xpcom/base',
+    ]
+
+    # We need access to Breakpad's getcontext(3) which is suitable for Android
+    if CONFIG['OS_TARGET'] == 'Android':
+        LOCAL_INCLUDES += [
+            '/toolkit/crashreporter/google-breakpad/src/common/android/include',
+        ]
+
+    if CONFIG['ANDROID_CPU_ARCH'] == 'armeabi':
+        DEFINES['ARCH_ARMV6'] = True
+
+    if CONFIG['ENABLE_TESTS']:
+        DIRS += ['tests/gtest']
+
+    if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk' and CONFIG['ANDROID_VERSION'] <= '17':
+        DEFINES['ELFSIZE'] = 32
+
+    FINAL_LIBRARY = 'xul'
+
+EXPORTS += [
+    'GeckoProfiler.h',
+]
+
+if CONFIG['MOZ_TASK_TRACER']:
+    EXPORTS += [
+        'GeckoTaskTracer.h',
+        'GeckoTaskTracerImpl.h',
+        'TracedTaskCommon.h',
+    ]
+    UNIFIED_SOURCES += [
+        'GeckoTaskTracer.cpp',
+        'TracedTaskCommon.cpp',
+    ]
+
+XPCSHELL_TESTS_MANIFESTS += ['tests/xpcshell.ini']

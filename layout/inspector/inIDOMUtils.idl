@@ -1,0 +1,117 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIArray;
+interface nsISupportsArray;
+interface nsIDOMCharacterData;
+interface nsIDOMElement;
+interface nsIDOMDocument;
+interface nsIDOMCSSStyleRule;
+interface nsIDOMNode;
+interface nsIDOMNodeList;
+interface nsIDOMFontFaceList;
+interface nsIDOMRange;
+interface nsIDOMCSSStyleSheet;
+
+[scriptable, uuid(948792a7-b786-4a2c-910d-f55b0773c2ca)]
+interface inIDOMUtils : nsISupports
+{
+  // CSS utilities
+  void getAllStyleSheets (in nsIDOMDocument aDoc,
+                          [optional] out unsigned long aLength,
+                          [array, size_is (aLength), retval] out nsISupports aSheets);
+  nsISupportsArray getCSSStyleRules(in nsIDOMElement aElement, [optional] in DOMString aPseudo);
+  unsigned long getRuleLine(in nsIDOMCSSStyleRule aRule);
+  unsigned long getRuleColumn(in nsIDOMCSSStyleRule aRule);
+
+  // Utilities for working with selectors.  We don't have a JS OM representation
+  // of a single selector or a selector list yet, but given a rule we can index
+  // into the selector list.
+  //
+  // This is a somewhat backwards API; once we move StyleRule to WebIDL we
+  // should consider using [ChromeOnly] APIs on that.
+  unsigned long getSelectorCount(in nsIDOMCSSStyleRule aRule);
+  // For all three functions below, aSelectorIndex is 0-based
+  AString getSelectorText(in nsIDOMCSSStyleRule aRule,
+                          in unsigned long aSelectorIndex);
+  unsigned long long getSpecificity(in nsIDOMCSSStyleRule aRule,
+                                    in unsigned long aSelectorIndex);
+  // Note: This does not handle scoped selectors correctly, because it has no
+  // idea what the right scope is.
+  bool selectorMatchesElement(in nsIDOMElement aElement,
+                              in nsIDOMCSSStyleRule aRule,
+                              in unsigned long aSelectorIndex);
+
+  // Utilities for working with CSS properties
+  //
+  // Returns true if the string names a property that is inherited by default.
+  bool isInheritedProperty(in AString aPropertyName);
+
+  // Get a list of all our supported property names.  Optionally
+  // shorthands can be excluded or property aliases included.
+  const unsigned long EXCLUDE_SHORTHANDS = (1<<0);
+  const unsigned long INCLUDE_ALIASES = (1<<1);
+  void getCSSPropertyNames([optional] in unsigned long aFlags,
+			   [optional] out unsigned long aCount,
+			   [retval, array, size_is(aCount)] out wstring aProps);
+
+  // Get a list of all valid keywords and colors for aProperty.
+  void getCSSValuesForProperty(in AString aProperty,
+                               [optional] out unsigned long aLength,
+                               [array, size_is(aLength), retval] out wstring aValues);
+
+  // Utilities for working with CSS colors
+  [implicit_jscontext]
+  jsval colorNameToRGB(in DOMString aColorName);
+  AString rgbToColorName(in octet aR, in octet aG, in octet aB);
+
+  // DOM Node utilities
+  boolean isIgnorableWhitespace(in nsIDOMCharacterData aDataNode);
+  // Returns the "parent" of a node.  The parent of a document node is the
+  // frame/iframe containing that document.  aShowingAnonymousContent says
+  // whether we are showing anonymous content.
+  nsIDOMNode getParentForNode(in nsIDOMNode aNode,
+                              in boolean aShowingAnonymousContent);
+  nsIDOMNodeList getChildrenForNode(in nsIDOMNode aNode,
+                                    in boolean aShowingAnonymousContent);
+  
+  // XBL utilities
+  nsIArray getBindingURLs(in nsIDOMElement aElement);
+
+  // content state utilities
+  unsigned long long getContentState(in nsIDOMElement aElement);
+  void setContentState(in nsIDOMElement aElement, in unsigned long long aState);
+
+  nsIDOMFontFaceList getUsedFontFaces(in nsIDOMRange aRange);
+
+  // pseudo-class style locking methods. aPseudoClass must be a valid pseudo-class
+  // selector string, e.g. ":hover". ":-moz-any-link" and non-event-state
+  // pseudo-classes are ignored.
+  void addPseudoClassLock(in nsIDOMElement aElement, in DOMString aPseudoClass);
+  void removePseudoClassLock(in nsIDOMElement aElement, in DOMString aPseudoClass);
+  bool hasPseudoClassLock(in nsIDOMElement aElement, in DOMString aPseudoClass);
+  void clearPseudoClassLocks(in nsIDOMElement aElement);
+
+  /**
+   * Parse CSS and update the style sheet in place.
+   *
+   * @param DOMCSSStyleSheet aSheet
+   * @param DOMString aInput
+   *        The new source string for the style sheet.
+   */
+  void parseStyleSheet(in nsIDOMCSSStyleSheet aSheet, in DOMString aInput);
+  /**
+   * Scroll an element completely into view, if possible.
+   * This is similar to ensureElementIsVisible but for all ancestors.
+   *
+   * @param DOMElement aElement
+   */
+  void scrollElementIntoView(in nsIDOMElement aElement);
+};
+
+%{ C++
+#define IN_DOMUTILS_CONTRACTID "@mozilla.org/inspector/dom-utils;1"
+%}

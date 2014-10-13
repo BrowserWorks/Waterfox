@@ -1,0 +1,46 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# On win we build two glue libs - glue linked to crt dlls here and in staticruntime we build
+# a statically linked glue lib.
+if CONFIG['OS_ARCH'] == 'WINNT':
+    DIRS += ['staticruntime']
+
+include('../objs.mozbuild')
+
+SOURCES += xpcom_glue_src_cppsrcs
+
+SOURCES += [
+    '../nsStringAPI.cpp',
+    'nsXPCOMGlue.cpp',
+]
+
+LIBRARY_NAME = 'xpcomglue'
+
+EXPORTS += [
+    'nsXPCOMGlue.h',
+]
+
+SDK_LIBRARY = [
+    "%s%s.%s" % (CONFIG['LIB_PREFIX'], 'xpcomglue', CONFIG['LIB_SUFFIX']),
+]
+
+FORCE_STATIC_LIB = True
+
+if CONFIG['_MSC_VER']:
+    DEFINES['_USE_ANSI_CPP'] = True
+
+DEFINES['XPCOM_GLUE'] = True
+
+if CONFIG['TARGET_XPCOM_ABI']:
+    DEFINES['TARGET_XPCOM_ABI'] = '"%s"' % CONFIG['TARGET_XPCOM_ABI']
+
+LOCAL_INCLUDES += [
+    '../../build',
+]
+
+# Don't use STL wrappers here (i.e. wrapped <new>); they require mozalloc
+DISABLE_STL_WRAPPING = True

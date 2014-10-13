@@ -1,0 +1,39 @@
+# 
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+CORE_DEPTH = ..
+DEPTH      = ..
+
+#
+# organized by DLL
+#
+#  softoken and prereqs.
+#  stan (not a separate dll yet)
+#  libpkix (not a separate dll)
+#  nss base (traditional)
+#  ssl
+#  smime
+#  ckfw (builtins module)
+#  crmf jar (not dll's)
+DIRS = \
+	$(UTIL_SRCDIR) \
+	$(FREEBL_SRCDIR) \
+	$(SQLITE_SRCDIR) \
+	$(DBM_SRCDIR) \
+	$(SOFTOKEN_SRCDIR) \
+	base dev pki \
+	libpkix \
+	certdb certhigh pk11wrap cryptohi nss \
+	$(ZLIB_SRCDIR) ssl \
+	pkcs12 pkcs7 smime \
+	crmf jar \
+	ckfw $(SYSINIT_SRCDIR) \
+	$(NULL)
+
+#  fortcrypt  is no longer built
+
+#
+# these dirs are not built at the moment
+#
+#NOBUILD_DIRS = jar

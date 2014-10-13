@@ -1,0 +1,4 @@
+Based on Kiss FFT version 1.2.6. http://kissfft.sourceforge.net
+
+Only changes are limitation to one data type for each version in
+kiss_fft.h and _kiss_fft_guts.h.

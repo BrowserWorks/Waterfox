@@ -1,0 +1,104 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ 
+#include "nsISupports.idl"
+
+interface nsIBFCacheEntry;
+interface nsISHEntry;
+interface nsISHistoryListener;
+interface nsISHTransaction;
+interface nsIDocShell;
+interface nsIURI;
+
+%{C++
+#define NS_SHISTORY_INTERNAL_CID \
+{ 0x9c47c121, 0x1c6e, 0x4d8f, \
+  { 0xb9, 0x04, 0x3a, 0xc9, 0x68, 0x11, 0x6e, 0x88 } }
+
+#define NS_SHISTORY_INTERNAL_CONTRACTID "@mozilla.org/browser/shistory-internal;1"
+
+#include "nsTArrayForwardDeclare.h"
+%}
+
+[ref] native nsDocshellIDArray(nsTArray<uint64_t>);
+
+[scriptable, uuid(f9348014-0239-11e2-b029-3d38e719eb2d)]
+interface nsISHistoryInternal: nsISupports
+{
+  /**
+   * Add a new Entry to the History List
+   * @param aEntry - The entry to add
+   * @param aPersist - If true this specifies that the entry should persist
+   * in the list.  If false, this means that when new entries are added
+   * this element will not appear in the session history list.
+   */
+   void  addEntry(in nsISHEntry aEntry, in boolean aPersist);
+
+  /**
+   * Get the root transaction
+   */
+   readonly attribute nsISHTransaction rootTransaction;
+
+  /**
+   * The toplevel docshell object to which this SHistory object belongs to.
+   */
+   attribute nsIDocShell rootDocShell;
+
+  /** 
+   * Update the index maintained by sessionHistory
+   */
+   void updateIndex();
+
+  /**
+   * Replace the nsISHEntry at a particular index
+   * @param aIndex - The index at which the entry should be replaced
+   * @param aReplaceEntry - The replacement entry for the index.
+   */
+   void replaceEntry(in long aIndex, in nsISHEntry aReplaceEntry);
+
+  /**
+   * Notifies all registered session history listeners about an impending
+   * reload.
+   *
+   * @param aReloadURI    The URI of the document to be reloaded.
+   * @param aReloadFlags  Flags that indicate how the document is to be
+   *                      refreshed. See constants on the nsIWebNavigation
+   *                      interface.
+   * @return              Whether the operation can proceed.
+   */
+   boolean notifyOnHistoryReload(in nsIURI aReloadURI, in unsigned long aReloadFlags);
+
+   /**
+    * Evict content viewers which don't lie in the "safe" range around aIndex.
+    * In practice, this should leave us with no more than gHistoryMaxViewers
+    * viewers associated with this SHistory object.
+    *
+    * Also make sure that the total number of content viewers in all windows is
+    * not greater than our global max; if it is, evict viewers as appropriate.
+    *
+    * @param aIndex - The index around which the "safe" range is centered.  In
+    *   general, if you just navigated the history, aIndex should be the index
+    *   history was navigated to.
+    */
+   void evictOutOfRangeContentViewers(in long aIndex);
+   
+   /**
+    * Evict the content viewer associated with a bfcache entry
+    * that has timed out.
+    */
+   void evictExpiredContentViewerForEntry(in nsIBFCacheEntry aEntry);
+
+   /**
+    * Evict all the content viewers in this session history
+    */
+   void evictAllContentViewers();
+
+   /**
+    * Removes entries from the history if their docshellID is in
+    * aIDs array.
+    */
+  [noscript, notxpcom] void RemoveEntries(in nsDocshellIDArray aIDs,
+                                          in long aStartIndex);
+};

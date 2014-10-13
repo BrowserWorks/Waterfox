@@ -1,0 +1,48 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Test playback of media files that should have errors</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+  <script type="text/javascript" src="manifest.js"></script>
+</head>
+<body>
+<pre id="test">
+<script class="testbody" type="text/javascript">
+
+var manager = new MediaTestManager;
+
+function startTest(test, token) {
+  var v = document.createElement('video');
+  manager.started(token);
+  v._errorCount = 0;
+  v._ignore = false;
+  function endedTest(v) {
+    if (v._ignore)
+      return;
+    v._ignore = true;
+    v.parentNode.removeChild(v);
+    manager.finished(token);
+  }
+  var checkError = function(test, v) { return function(evt) {
+    v._errorCount++;
+    is(v._errorCount, 1, test.name + " only one error fired");
+    endedTest(v);
+  }}(test, v);
+  var checkEnded = function(test, v) { return function() {
+    ok(false, test.name + " successfully played");
+    endedTest(v);
+  }}(test, v);
+  v.addEventListener("error", checkError, false);
+  v.addEventListener("ended", checkEnded, false);
+  v.src = test.name;
+  document.body.appendChild(v);
+  v.play();
+}
+
+manager.runTests(gErrorTests, startTest);
+
+</script>
+</pre>
+</body>
+</html>

@@ -1,0 +1,1675 @@
+<?xml version="1.0"?>
+
+# -*- Mode: HTML -*-
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+<!DOCTYPE bindings [
+<!ENTITY % actionsDTD SYSTEM "chrome://global/locale/actions.dtd">
+%actionsDTD;
+]>
+
+<bindings id="autocompleteBindings"
+          xmlns="http://www.mozilla.org/xbl"
+          xmlns:html="http://www.w3.org/1999/xhtml"
+          xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+          xmlns:xbl="http://www.mozilla.org/xbl">
+
+  <binding id="autocomplete" role="xul:combobox"
+           extends="chrome://global/content/bindings/textbox.xml#textbox">
+    <resources>
+      <stylesheet src="chrome://global/skin/autocomplete.css"/>
+    </resources>
+
+    <content sizetopopup="pref">
+      <xul:hbox class="autocomplete-textbox-container" flex="1" xbl:inherits="focused">
+        <children includes="image|deck|stack|box">
+          <xul:image class="autocomplete-icon" allowevents="true"/>
+        </children>
+
+        <xul:hbox anonid="textbox-input-box" class="textbox-input-box" flex="1" xbl:inherits="tooltiptext=inputtooltiptext">
+          <children/>
+          <html:input anonid="input" class="autocomplete-textbox textbox-input"
+                      allowevents="true"
+                      xbl:inherits="tooltiptext=inputtooltiptext,value,type,maxlength,disabled,size,readonly,placeholder,tabindex,accesskey,mozactionhint"/>
+        </xul:hbox>
+        <children includes="hbox"/>
+      </xul:hbox>
+
+      <xul:dropmarker anonid="historydropmarker" class="autocomplete-history-dropmarker"
+                      allowevents="true"
+                      xbl:inherits="open,enablehistory,parentfocused=focused"/>
+
+      <xul:popupset anonid="popupset" class="autocomplete-result-popupset"/>
+
+      <children includes="toolbarbutton"/>
+    </content>
+
+    <implementation implements="nsIAutoCompleteInput, nsIDOMXULMenuListElement">
+      <field name="mController">null</field>
+      <field name="mSearchNames">null</field>
+      <field name="mIgnoreInput">false</field>
+      <field name="mEnterEvent">null</field>
+
+      <field name="_searchBeginHandler">null</field>
+      <field name="_searchCompleteHandler">null</field>
+      <field name="_textEnteredHandler">null</field>
+      <field name="_textRevertedHandler">null</field>
+
+      <constructor><![CDATA[
+        this.mController = Components.classes["@mozilla.org/autocomplete/controller;1"].
+          getService(Components.interfaces.nsIAutoCompleteController);
+
+        this._searchBeginHandler = this.initEventHandler("searchbegin");
+        this._searchCompleteHandler = this.initEventHandler("searchcomplete");
+        this._textEnteredHandler = this.initEventHandler("textentered");
+        this._textRevertedHandler = this.initEventHandler("textreverted");
+
+        // For security reasons delay searches on pasted values.
+        this.inputField.controllers.insertControllerAt(0, this._pasteController);
+      ]]></constructor>
+
+      <destructor><![CDATA[
+        this.inputField.controllers.removeController(this._pasteController);
+      ]]></destructor>
+
+      <!-- =================== nsIAutoCompleteInput =================== -->
+
+      <field name="popup"><![CDATA[
+        // Wrap in a block so that the let statements don't
+        // create properties on 'this' (bug 635252).
+        {
+          let popup = null;
+          let popupId = this.getAttribute("autocompletepopup");
+          if (popupId)
+            popup = document.getElementById(popupId);
+          if (!popup) {
+            popup = document.createElement("panel");
+            popup.setAttribute("type", "autocomplete");
+            popup.setAttribute("noautofocus", "true");
+
+            let popupset = document.getAnonymousElementByAttribute(this, "anonid", "popupset");
+            popupset.appendChild(popup);
+          }
+          popup.mInput = this;
+          popup;
+        }
+      ]]></field>
+
+      <property name="controller" onget="return this.mController;" readonly="true"/>
+
+      <property name="popupOpen"
+                onget="return this.popup.popupOpen;"
+                onset="if (val) this.openPopup(); else this.closePopup();"/>
+
+      <property name="disableAutoComplete"
+                onset="this.setAttribute('disableautocomplete', val); return val;"
+                onget="return this.getAttribute('disableautocomplete') == 'true';"/>
+
+      <property name="completeDefaultIndex"
+                onset="this.setAttribute('completedefaultindex', val); return val;"
+                onget="return this.getAttribute('completedefaultindex') == 'true';"/>
+
+      <property name="completeSelectedIndex"
+                onset="this.setAttribute('completeselectedindex', val); return val;"
+                onget="return this.getAttribute('completeselectedindex') == 'true';"/>
+
+      <property name="forceComplete"
+                onset="this.setAttribute('forcecomplete', val); return val;"
+                onget="return this.getAttribute('forcecomplete') == 'true';"/>
+
+      <property name="minResultsForPopup"
+                onset="this.setAttribute('minresultsforpopup', val); return val;"
+                onget="var m = parseInt(this.getAttribute('minresultsforpopup')); return isNaN(m) ? 1 : m;"/>
+
+      <property name="showCommentColumn"
+                onset="this.setAttribute('showcommentcolumn', val); return val;"
+                onget="return this.getAttribute('showcommentcolumn') == 'true';"/>
+
+      <property name="showImageColumn"
+                onset="this.setAttribute('showimagecolumn', val); return val;"
+                onget="return this.getAttribute('showimagecolumn') == 'true';"/>
+
+      <property name="timeout"
+                onset="this.setAttribute('timeout', val); return val;">
+        <getter><![CDATA[
+          // For security reasons delay searches on pasted values. 
+          if (this._valueIsPasted) {
+            let t = parseInt(this.getAttribute('pastetimeout'));
+            return isNaN(t) ? 1000 : t;
+          }
+
+          let t = parseInt(this.getAttribute('timeout'));
+          return isNaN(t) ? 50 : t;
+        ]]></getter>
+      </property>
+
+      <property name="searchParam"
+                onget="return this.getAttribute('autocompletesearchparam') || '';"
+                onset="this.setAttribute('autocompletesearchparam', val); return val;"/>
+
+      <property name="searchCount" readonly="true"
+                onget="this.initSearchNames(); return this.mSearchNames.length;"/>
+
+      <field name="PrivateBrowsingUtils" readonly="true">
+        let utils = {};
+        Components.utils.import("resource://gre/modules/PrivateBrowsingUtils.jsm", utils);
+        utils.PrivateBrowsingUtils
+      </field>
+
+      <property name="inPrivateContext" readonly="true"
+                onget="return this.PrivateBrowsingUtils.isWindowPrivate(window);"/>
+
+      <!-- This is the maximum number of drop-down rows we get when we
+            hit the drop marker beside fields that have it (like the URLbar).-->
+      <field name="maxDropMarkerRows" readonly="true">14</field>
+
+      <method name="getSearchAt">
+        <parameter name="aIndex"/>
+        <body><![CDATA[
+          this.initSearchNames();
+          return this.mSearchNames[aIndex];
+        ]]></body>
+      </method>
+
+      <property name="textValue"
+                onget="return this.value;">
+        <setter><![CDATA[
+          // Completing a result should simulate the user typing the result,
+          // so fire an input event.
+          // Trim popup selected values, but never trim results coming from
+          // autofill.
+          if (this.popup.selectedIndex == -1)
+            this._disableTrim = true;
+          this.value = val;
+          this._disableTrim = false;
+
+          var evt = document.createEvent("UIEvents");
+          evt.initUIEvent("input", true, false, window, 0);
+          this.mIgnoreInput = true;
+          this.dispatchEvent(evt);
+          this.mIgnoreInput = false;
+          return this.value;
+        ]]></setter>
+      </property>
+
+      <method name="selectTextRange">
+        <parameter name="aStartIndex"/>
+        <parameter name="aEndIndex"/>
+        <body><![CDATA[
+          this.inputField.setSelectionRange(aStartIndex, aEndIndex);
+        ]]></body>
+      </method>
+
+      <method name="onSearchBegin">
+        <body><![CDATA[
+          if (this._searchBeginHandler)
+            this._searchBeginHandler();
+        ]]></body>
+      </method>
+
+      <method name="onSearchComplete">
+        <body><![CDATA[
+          if (this.mController.matchCount == 0)
+            this.setAttribute("nomatch", "true");
+          else
+            this.removeAttribute("nomatch");
+
+          if (this._searchCompleteHandler)
+            this._searchCompleteHandler();
+        ]]></body>
+      </method>
+
+      <method name="onTextEntered">
+        <body><![CDATA[
+          let rv = false;
+          if (this._textEnteredHandler)
+            rv = this._textEnteredHandler(this.mEnterEvent);
+          this.mEnterEvent = null;
+          return rv;
+        ]]></body>
+      </method>
+
+      <method name="onTextReverted">
+        <body><![CDATA[
+          if (this._textRevertedHandler)
+            return this._textRevertedHandler();
+          return false;
+        ]]></body>
+      </method>
+
+      <!-- =================== nsIDOMXULMenuListElement =================== -->
+
+      <property name="editable" readonly="true"
+                onget="return true;" />
+
+      <property name="crop"
+                onset="this.setAttribute('crop',val); return val;"
+                onget="return this.getAttribute('crop');"/>
+
+      <property name="open"
+                onget="return this.getAttribute('open') == 'true';">
+        <setter><![CDATA[
+          if (val)
+            this.showHistoryPopup();
+          else
+            this.closePopup();
+        ]]></setter>
+      </property>
+
+      <!-- =================== PUBLIC MEMBERS =================== -->
+
+      <field name="valueIsTyped">false</field>
+      <field name="_disableTrim">false</field>
+      <property name="value">
+        <getter><![CDATA[
+          if (typeof this.onBeforeValueGet == "function") {
+            var result = this.onBeforeValueGet();
+            if (result)
+              return result.value;
+          }
+          return this.inputField.value;
+        ]]></getter>
+        <setter><![CDATA[
+          this.mIgnoreInput = true;
+
+          if (typeof this.onBeforeValueSet == "function")
+            val = this.onBeforeValueSet(val);
+
+          if (typeof this.trimValue == "function" && !this._disableTrim)
+            val = this.trimValue(val);
+
+          this.valueIsTyped = false;
+          this.inputField.value = val;
+
+          if (typeof this.formatValue == "function")
+            this.formatValue();
+
+          this.mIgnoreInput = false;
+          var event = document.createEvent('Events');
+          event.initEvent('ValueChange', true, true);
+          this.inputField.dispatchEvent(event);
+          return val;
+        ]]></setter>
+      </property>
+
+      <property name="focused" readonly="true"
+                onget="return this.getAttribute('focused') == 'true';"/>
+
+      <!-- maximum number of rows to display at a time -->
+      <property name="maxRows"
+                onset="this.setAttribute('maxrows', val); return val;"
+                onget="return parseInt(this.getAttribute('maxrows')) || 0;"/>
+
+      <!-- option to allow scrolling through the list via the tab key, rather than
+           tab moving focus out of the textbox -->
+      <property name="tabScrolling"
+                onset="return this.setAttribute('tabscrolling', val); return val;"
+                onget="return this.getAttribute('tabscrolling') == 'true';"/>
+
+      <!-- disable key navigation handling in the popup results -->
+      <property name="disableKeyNavigation"
+                onset="this.setAttribute('disablekeynavigation', val); return val;"
+                onget="return this.getAttribute('disablekeynavigation') == 'true';"/>
+
+      <!-- option to completely ignore any blur events while
+           searches are still going on.  This is useful so that nothing
+           gets autopicked if the window is required to lose focus for
+           some reason (eg in LDAP autocomplete, another window may be
+           brought up so that the user can enter a password to authenticate
+           to an LDAP server).  -->
+      <property name="ignoreBlurWhileSearching"
+                onset="this.setAttribute('ignoreblurwhilesearching', val); return val;"
+                onget="return this.getAttribute('ignoreblurwhilesearching') == 'true';"/>
+
+      <!-- option to highlight entries that don't have any matches -->
+      <property name="highlightNonMatches"
+                onset="this.setAttribute('highlightnonmatches', val); return val;"
+                onget="return this.getAttribute('highlightnonmatches') == 'true';"/>
+
+      <!-- =================== PRIVATE MEMBERS =================== -->
+
+      <!-- ::::::::::::: autocomplete controller ::::::::::::: -->
+
+      <method name="attachController">
+        <body><![CDATA[
+          this.mController.input = this;
+        ]]></body>
+      </method>
+
+      <method name="detachController">
+        <body><![CDATA[
+          try {
+            if  (this.mController.input == this)
+            this.mController.input = null;
+          } catch (ex) {
+            // nothing really to do.
+          }
+        ]]></body>
+      </method>
+
+      <!-- ::::::::::::: popup opening ::::::::::::: -->
+
+      <method name="openPopup">
+        <body><![CDATA[
+          this.popup.openAutocompletePopup(this, this);
+        ]]></body>
+      </method>
+
+      <method name="closePopup">
+        <body><![CDATA[
+          this.popup.setAttribute("consumeoutsideclicks", "false");
+          this.popup.closePopup();
+        ]]></body>
+      </method>
+
+      <method name="showHistoryPopup">
+        <body><![CDATA[
+          // history dropmarker pushed state
+          function cleanup(popup) {
+            popup.removeEventListener("popupshowing", onShow, false);
+          }
+          function onShow(event) {
+            var popup = event.target, input = popup.input;
+            cleanup(popup);
+            input.setAttribute("open", "true");
+            function onHide() {
+              input.removeAttribute("open");
+              popup.setAttribute("consumeoutsideclicks", "false");
+              popup.removeEventListener("popuphiding", onHide, false);
+            }
+            popup.addEventListener("popuphiding", onHide, false);
+          }
+          this.popup.addEventListener("popupshowing", onShow, false);
+          setTimeout(cleanup, 1000, this.popup);
+
+          // Store our "normal" maxRows on the popup, so that it can reset the
+          // value when the popup is hidden.
+          this.popup._normalMaxRows = this.maxRows;
+
+          // Increase our maxRows temporarily, since we want the dropdown to
+          // be bigger in this case. The popup's popupshowing/popuphiding
+          // handlers will take care of resetting this.
+          this.maxRows = this.maxDropMarkerRows;
+
+          // Ensure that we have focus.
+          if (!this.focused)
+            this.focus();
+          this.popup.setAttribute("consumeoutsideclicks", "true");
+          this.attachController();
+          this.mController.startSearch("");
+        ]]></body>
+      </method>
+
+      <method name="toggleHistoryPopup">
+        <body><![CDATA[
+          if (!this.popup.popupOpen)
+            this.showHistoryPopup();
+          else
+            this.closePopup();
+        ]]></body>
+      </method>
+
+      <!-- ::::::::::::: event dispatching ::::::::::::: -->
+
+      <method name="initEventHandler">
+        <parameter name="aEventType"/>
+        <body><![CDATA[
+          let handlerString = this.getAttribute("on" + aEventType);
+          if (handlerString) {
+            return (new Function("eventType", "param", handlerString)).bind(this, aEventType);
+          }
+          return null;
+        ]]></body>
+      </method>
+
+      <!-- ::::::::::::: key handling ::::::::::::: -->
+
+      <method name="onKeyPress">
+        <parameter name="aEvent"/>
+        <body><![CDATA[
+          if (aEvent.target.localName != "textbox")
+            return true; // Let child buttons of autocomplete take input
+
+          //XXXpch this is so bogus...
+          if (aEvent.defaultPrevented)
+            return false;
+
+          var cancel = false;
+
+          // Catch any keys that could potentially move the caret. Ctrl can be
+          // used in combination with these keys on Windows and Linux; and Alt
+          // can be used on OS X, so make sure the unused one isn't used.
+          if (!this.disableKeyNavigation &&
+#ifdef XP_MACOSX
+              !aEvent.ctrlKey) {
+#else
+              !aEvent.altKey) {
+#endif
+            switch (aEvent.keyCode) {
+              case KeyEvent.DOM_VK_LEFT:
+              case KeyEvent.DOM_VK_RIGHT:
+              case KeyEvent.DOM_VK_HOME:
+                cancel = this.mController.handleKeyNavigation(aEvent.keyCode);
+                break;
+            }
+          }
+
+          // Handle keys that are not part of a keyboard shortcut (no Ctrl or Alt)
+          if (!this.disableKeyNavigation && !aEvent.ctrlKey && !aEvent.altKey) {
+            switch (aEvent.keyCode) {
+              case KeyEvent.DOM_VK_TAB:
+                if (this.tabScrolling && this.popup.popupOpen)
+                  cancel = this.mController.handleKeyNavigation(aEvent.shiftKey ?
+                                                                KeyEvent.DOM_VK_UP :
+                                                                KeyEvent.DOM_VK_DOWN);
+                else if (this.forceComplete && this.mController.matchCount >= 1)
+                  this.mController.handleTab();
+                break;
+              case KeyEvent.DOM_VK_UP:
+              case KeyEvent.DOM_VK_DOWN:
+              case KeyEvent.DOM_VK_PAGE_UP:
+              case KeyEvent.DOM_VK_PAGE_DOWN:
+                cancel = this.mController.handleKeyNavigation(aEvent.keyCode);
+                break;
+            }
+          }
+
+          // Handle keys we know aren't part of a shortcut, even with Alt or
+          // Ctrl.
+          switch (aEvent.keyCode) {
+            case KeyEvent.DOM_VK_ESCAPE:
+              cancel = this.mController.handleEscape();
+              break;
+            case KeyEvent.DOM_VK_RETURN:
+#ifdef XP_MACOSX
+              // Prevent the default action, since it will beep on Mac
+              if (aEvent.metaKey)
+                aEvent.preventDefault();
+#endif
+              this.mEnterEvent = aEvent;
+              cancel = this.mController.handleEnter(false);
+              break;
+            case KeyEvent.DOM_VK_DELETE:
+#ifdef XP_MACOSX
+            case KeyEvent.DOM_VK_BACK_SPACE:
+              if (aEvent.shiftKey)
+#endif
+              cancel = this.mController.handleDelete();
+              break;
+            case KeyEvent.DOM_VK_DOWN:
+            case KeyEvent.DOM_VK_UP:
+              if (aEvent.altKey)
+                this.toggleHistoryPopup();
+              break;
+#ifndef XP_MACOSX
+            case KeyEvent.DOM_VK_F4:
+              this.toggleHistoryPopup();
+              break;
+#endif
+          }
+
+          if (cancel) {
+            aEvent.stopPropagation();
+            aEvent.preventDefault();
+          }
+
+          return true;
+        ]]></body>
+      </method>
+
+      <!-- ::::::::::::: miscellaneous ::::::::::::: -->
+
+      <method name="initSearchNames">
+        <body><![CDATA[
+          if (!this.mSearchNames) {
+            var names = this.getAttribute("autocompletesearch");
+            if (!names)
+              this.mSearchNames = [];
+            else
+              this.mSearchNames = names.split(" ");
+          }
+        ]]></body>
+      </method>
+
+      <method name="_focus">
+        <!-- doesn't reset this.mController -->
+        <body><![CDATA[
+          this._dontBlur = true;
+          this.focus();
+          this._dontBlur = false;
+        ]]></body>
+      </method>
+
+      <method name="resetActionType">
+        <body><![CDATA[
+          if (this.mIgnoreInput)
+            return;
+          this.removeAttribute("actiontype");
+        ]]></body>
+      </method>
+
+      <field name="_valueIsPasted">false</field>
+      <field name="_pasteController"><![CDATA[
+        ({
+          _autocomplete: this,
+          _kGlobalClipboard: Components.interfaces.nsIClipboard.kGlobalClipboard,
+          supportsCommand: function(aCommand) aCommand == "cmd_paste",
+          doCommand: function(aCommand) {
+            this._autocomplete._valueIsPasted = true;
+            this._autocomplete.editor.paste(this._kGlobalClipboard);
+            this._autocomplete._valueIsPasted = false;
+          },
+          isCommandEnabled: function(aCommand) {
+            return this._autocomplete.editor.isSelectionEditable &&
+                   this._autocomplete.editor.canPaste(this._kGlobalClipboard);
+          },
+          onEvent: function() {}
+        })
+      ]]></field>
+    </implementation>
+
+    <handlers>
+      <handler event="input"><![CDATA[
+        if (!this.mIgnoreInput && this.mController.input == this) {
+          this.valueIsTyped = true;
+          this.mController.handleText();
+        }
+        this.resetActionType();
+      ]]></handler>
+
+      <handler event="keypress" phase="capturing"
+               action="return this.onKeyPress(event);"/>
+
+      <handler event="compositionstart" phase="capturing"
+               action="if (this.mController.input == this) this.mController.handleStartComposition();"/>
+
+      <handler event="compositionend" phase="capturing"
+               action="if (this.mController.input == this) this.mController.handleEndComposition();"/>
+
+      <handler event="focus" phase="capturing"
+               action="this.attachController();"/>
+
+      <handler event="blur" phase="capturing"
+               action="if (!this._dontBlur) this.detachController();"/>
+    </handlers>
+  </binding>
+
+  <binding id="autocomplete-result-popup" extends="chrome://global/content/bindings/autocomplete.xml#autocomplete-base-popup">
+    <resources>
+      <stylesheet src="chrome://global/skin/tree.css"/>
+      <stylesheet src="chrome://global/skin/autocomplete.css"/>
+    </resources>
+
+    <content ignorekeys="true" level="top" consumeoutsideclicks="false">
+      <xul:tree anonid="tree" class="autocomplete-tree plain" hidecolumnpicker="true" flex="1" seltype="single">
+        <xul:treecols anonid="treecols">
+          <xul:treecol id="treecolAutoCompleteValue" class="autocomplete-treecol" flex="1" overflow="true"/>
+        </xul:treecols>
+        <xul:treechildren class="autocomplete-treebody"/>
+      </xul:tree>
+    </content>
+
+    <implementation>
+      <field name="mShowCommentColumn">false</field>
+      <field name="mShowImageColumn">false</field>
+
+      <property name="showCommentColumn"
+                   onget="return this.mShowCommentColumn;">
+        <setter>
+          <![CDATA[
+          if (!val && this.mShowCommentColumn) {
+            // reset the flex on the value column and remove the comment column
+            document.getElementById("treecolAutoCompleteValue").setAttribute("flex", 1);
+            this.removeColumn("treecolAutoCompleteComment");
+          } else if (val && !this.mShowCommentColumn) {
+            // reset the flex on the value column and add the comment column
+            document.getElementById("treecolAutoCompleteValue").setAttribute("flex", 2);
+            this.addColumn({id: "treecolAutoCompleteComment", flex: 1});
+          }
+          this.mShowCommentColumn = val;
+          return val;
+        ]]>
+        </setter>
+      </property>
+
+      <property name="showImageColumn"
+                onget="return this.mShowImageColumn;">
+        <setter>
+          <![CDATA[
+          if (!val && this.mShowImageColumn) {
+            // remove the image column
+            this.removeColumn("treecolAutoCompleteImage");
+          } else if (val && !this.mShowImageColumn) {
+            // add the image column
+            this.addColumn({id: "treecolAutoCompleteImage", flex: 1});
+          }
+          this.mShowImageColumn = val;
+          return val;
+        ]]>
+        </setter>
+      </property>
+
+
+      <method name="addColumn">
+        <parameter name="aAttrs"/>
+        <body>
+          <![CDATA[
+          var col = document.createElement("treecol");
+          col.setAttribute("class", "autocomplete-treecol");
+          for (var name in aAttrs)
+            col.setAttribute(name, aAttrs[name]);
+          this.treecols.appendChild(col);
+          return col;
+        ]]>
+        </body>
+      </method>
+
+      <method name="removeColumn">
+        <parameter name="aColId"/>
+        <body>
+          <![CDATA[
+          return this.treecols.removeChild(document.getElementById(aColId));
+        ]]>
+        </body>
+      </method>
+
+      <property name="selectedIndex"
+                onget="return this.tree.currentIndex;">
+        <setter>
+          <![CDATA[
+          this.tree.view.selection.select(val);
+          if (this.tree.treeBoxObject.height > 0)
+            this.tree.treeBoxObject.ensureRowIsVisible(val < 0 ? 0 : val);
+          // Fire select event on xul:tree so that accessibility API
+          // support layer can fire appropriate accessibility events.
+          var event = document.createEvent('Events');
+          event.initEvent("select", true, true);
+          this.tree.dispatchEvent(event);
+          return val;
+        ]]></setter>
+      </property>
+
+      <method name="adjustHeight">
+        <body>
+          <![CDATA[
+          // detect the desired height of the tree
+          var bx = this.tree.treeBoxObject;
+          var view = this.tree.view;
+          if (!view)
+            return;
+          var rows = this.maxRows;
+          if (!view.rowCount || (rows && view.rowCount < rows))
+            rows = view.rowCount;
+
+          var height = rows * bx.rowHeight;
+
+          if (height == 0)
+            this.tree.setAttribute("collapsed", "true");
+          else {
+            if (this.tree.hasAttribute("collapsed"))
+              this.tree.removeAttribute("collapsed");
+
+            this.tree.setAttribute("height", height);
+          }
+          this.tree.setAttribute("hidescrollbar", view.rowCount <= rows);
+        ]]>
+        </body>
+      </method>
+
+      <method name="openAutocompletePopup">
+        <parameter name="aInput"/>
+        <parameter name="aElement"/>
+        <body><![CDATA[
+          // until we have "baseBinding", (see bug #373652) this allows
+          // us to override openAutocompletePopup(), but still call
+          // the method on the base class
+          this._openAutocompletePopup(aInput, aElement);
+        ]]></body>
+      </method>
+
+      <method name="_openAutocompletePopup">
+        <parameter name="aInput"/>
+        <parameter name="aElement"/>
+        <body><![CDATA[
+          if (!this.mPopupOpen) {
+            this.mInput = aInput;
+            this.view = aInput.controller.QueryInterface(Components.interfaces.nsITreeView);
+            this.invalidate();
+
+            this.showCommentColumn = this.mInput.showCommentColumn;
+            this.showImageColumn = this.mInput.showImageColumn;
+
+            var rect = aElement.getBoundingClientRect();
+            var nav = aElement.ownerDocument.defaultView.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+                              .getInterface(Components.interfaces.nsIWebNavigation);
+            var docShell = nav.QueryInterface(Components.interfaces.nsIDocShell);
+            var docViewer = docShell.contentViewer.QueryInterface(Components.interfaces.nsIMarkupDocumentViewer);
+            var width = (rect.right - rect.left) * docViewer.fullZoom;
+            this.setAttribute("width", width > 100 ? width : 100);
+
+            // Adjust the direction of the autocomplete popup list based on the textbox direction, bug 649840
+            var popupDirection = aElement.ownerDocument.defaultView.getComputedStyle(aElement).direction;
+            this.style.direction = popupDirection;
+
+            this.openPopup(aElement, "after_start", 0, 0, false, false);
+          }
+        ]]></body>
+      </method>
+
+      <method name="invalidate">
+        <body><![CDATA[
+          this.adjustHeight();
+          this.tree.treeBoxObject.invalidate();
+        ]]></body>
+      </method>
+
+      <method name="selectBy">
+        <parameter name="aReverse"/>
+        <parameter name="aPage"/>
+        <body><![CDATA[
+          try {
+            var amount = aPage ? 5 : 1;
+            this.selectedIndex = this.getNextIndex(aReverse, amount, this.selectedIndex, this.tree.view.rowCount-1);
+            if (this.selectedIndex == -1) {
+              this.input._focus();
+            }
+          } catch (ex) {
+            // do nothing - occasionally timer-related js errors happen here
+            // e.g. "this.selectedIndex has no properties", when you type fast and hit a
+            // navigation key before this popup has opened
+          }
+        ]]></body>
+      </method>
+
+      <!-- =================== PUBLIC MEMBERS =================== -->
+
+      <field name="tree">
+        document.getAnonymousElementByAttribute(this, "anonid", "tree");
+      </field>
+
+      <field name="treecols">
+        document.getAnonymousElementByAttribute(this, "anonid", "treecols");
+      </field>
+
+      <property name="view"
+                onget="return this.mView;">
+        <setter><![CDATA[
+          // We must do this by hand because the tree binding may not be ready yet
+          this.mView = val;
+          var bx = this.tree.boxObject;
+          bx = bx.QueryInterface(Components.interfaces.nsITreeBoxObject);
+          bx.view = val;
+        ]]></setter>
+      </property>
+
+    </implementation>
+  </binding>
+
+  <binding id="autocomplete-base-popup" role="none"
+extends="chrome://global/content/bindings/popup.xml#popup">
+    <implementation implements="nsIAutoCompletePopup">
+      <field name="mInput">null</field>
+      <field name="mPopupOpen">false</field>
+
+      <!-- =================== nsIAutoCompletePopup =================== -->
+
+      <property name="input" readonly="true"
+                onget="return this.mInput"/>
+
+      <property name="overrideValue" readonly="true"
+                onget="return null;"/>
+
+      <property name="popupOpen" readonly="true"
+                onget="return this.mPopupOpen;"/>
+
+      <method name="closePopup">
+        <body>
+          <![CDATA[
+          if (this.mPopupOpen) {
+            this.hidePopup();
+            this.removeAttribute("width");
+          }
+        ]]>
+        </body>
+      </method>
+
+      <!-- This is the default number of rows that we give the autocomplete
+           popup when the textbox doesn't have a "maxrows" attribute
+           for us to use. -->
+      <field name="defaultMaxRows" readonly="true">6</field>
+
+      <!-- In some cases (e.g. when the input's dropmarker button is clicked),
+           the input wants to display a popup with more rows. In that case, it
+           should increase its maxRows property and store the "normal" maxRows
+           in this field. When the popup is hidden, we restore the input's
+           maxRows to the value stored in this field.
+
+           This field is set to -1 between uses so that we can tell when it's
+           been set by the input and when we need to set it in the popupshowing
+           handler. -->
+      <field name="_normalMaxRows">-1</field>
+
+      <property name="maxRows" readonly="true">
+        <getter>
+          <![CDATA[
+          return (this.mInput && this.mInput.maxRows) || this.defaultMaxRows;
+        ]]>
+        </getter>
+      </property>
+
+      <method name="getNextIndex">
+        <parameter name="aReverse"/>
+        <parameter name="aAmount"/>
+        <parameter name="aIndex"/>
+        <parameter name="aMaxRow"/>
+        <body><![CDATA[
+          if (aMaxRow < 0)
+            return -1;
+
+          var newIdx = aIndex + (aReverse?-1:1)*aAmount;
+          if (aReverse && aIndex == -1 || newIdx > aMaxRow && aIndex != aMaxRow)
+            newIdx = aMaxRow;
+          else if (!aReverse && aIndex == -1 || newIdx < 0 && aIndex != 0)
+            newIdx = 0;
+
+          if (newIdx < 0 && aIndex == 0 || newIdx > aMaxRow && aIndex == aMaxRow)
+            aIndex = -1;
+          else
+            aIndex = newIdx;
+
+          return aIndex;
+        ]]></body>
+      </method>
+
+      <method name="onPopupClick">
+        <parameter name="aEvent"/>
+        <body><![CDATA[
+          var controller = this.view.QueryInterface(Components.interfaces.nsIAutoCompleteController);
+          controller.handleEnter(true);
+        ]]></body>
+      </method>
+    </implementation>
+
+    <handlers>
+      <handler event="popupshowing"><![CDATA[
+        // If normalMaxRows wasn't already set by the input, then set it here
+        // so that we restore the correct number when the popup is hidden.
+        if (this._normalMaxRows < 0)
+          this._normalMaxRows = this.mInput.maxRows;
+
+        this.mPopupOpen = true;
+      ]]></handler>
+
+      <handler event="popuphiding"><![CDATA[
+        var isListActive = true;
+        if (this.selectedIndex == -1)
+          isListActive = false;
+        var controller = this.view.QueryInterface(Components.interfaces.nsIAutoCompleteController);
+        controller.stopSearch();
+
+        this.mPopupOpen = false;
+
+        // Reset the maxRows property to the cached "normal" value, and reset
+        // _normalMaxRows so that we can detect whether it was set by the input
+        // when the popupshowing handler runs.
+        this.mInput.maxRows = this._normalMaxRows;
+        this._normalMaxRows = -1;
+        // If the list was being navigated and then closed, make sure
+        // we fire accessible focus event back to textbox
+        if (isListActive) {
+          this.mInput.mIgnoreFocus = true;
+          this.mInput._focus();
+          this.mInput.mIgnoreFocus = false;
+        }
+      ]]></handler>
+    </handlers>
+  </binding>
+
+  <binding id="autocomplete-rich-result-popup" extends="chrome://global/content/bindings/autocomplete.xml#autocomplete-base-popup">
+    <resources>
+      <stylesheet src="chrome://global/skin/autocomplete.css"/>
+    </resources>
+
+    <content ignorekeys="true" level="top" consumeoutsideclicks="false">
+      <xul:richlistbox anonid="richlistbox" class="autocomplete-richlistbox" flex="1"/>
+      <xul:hbox>
+        <children/>
+      </xul:hbox>
+    </content>
+
+    <implementation implements="nsIAutoCompletePopup">
+      <field name="_currentIndex">0</field>
+      <field name="_rowHeight">0</field>
+
+      <!-- =================== nsIAutoCompletePopup =================== -->
+
+      <property name="selectedIndex"
+                onget="return this.richlistbox.selectedIndex;">
+        <setter>
+          <![CDATA[
+          this.richlistbox.selectedIndex = val;
+
+          // when clearing the selection (val == -1, so selectedItem will be
+          // null), we want to scroll back to the top.  see bug #406194
+          this.richlistbox.ensureElementIsVisible(
+            this.richlistbox.selectedItem || this.richlistbox.firstChild);
+
+          return val;
+        ]]>
+        </setter>
+      </property>
+
+      <method name="openAutocompletePopup">
+        <parameter name="aInput"/>
+        <parameter name="aElement"/>
+        <body>
+          <![CDATA[
+          // until we have "baseBinding", (see bug #373652) this allows
+          // us to override openAutocompletePopup(), but still call
+          // the method on the base class
+          this._openAutocompletePopup(aInput, aElement);
+        ]]>
+        </body>
+      </method>
+
+      <method name="_openAutocompletePopup">
+        <parameter name="aInput"/>
+        <parameter name="aElement"/>
+        <body>
+          <![CDATA[
+          if (!this.mPopupOpen) {
+            this.mInput = aInput;
+            // clear any previous selection, see bugs 400671 and 488357
+            this.selectedIndex = -1;
+
+            var width = aElement.getBoundingClientRect().width;
+            this.setAttribute("width", width > 100 ? width : 100);
+            // invalidate() depends on the width attribute
+            this._invalidate();
+
+            this.openPopup(aElement, "after_start", 0, 0, false, false);
+          }
+        ]]>
+        </body>
+      </method>
+
+      <method name="invalidate">
+        <body>
+          <![CDATA[
+          // Don't bother doing work if we're not even showing
+          if (!this.mPopupOpen)
+            return;
+
+          this._invalidate();
+          ]]>
+        </body>
+      </method>
+
+      <method name="_invalidate">
+        <body>
+          <![CDATA[
+          if (!this.hasAttribute("height")) {
+            // collapsed if no matches
+            this.richlistbox.collapsed = (this._matchCount == 0);
+
+            // Dynamically update height until richlistbox.rows works (bug 401939)
+            // Adjust the height immediately and after the row contents update
+            this.adjustHeight();
+            setTimeout(function(self) self.adjustHeight(), 0, this);
+          }
+
+          // make sure to collapse any existing richlistitems
+          // that aren't going to be used
+          var existingItemsCount = this.richlistbox.childNodes.length;
+          for (var i = this._matchCount; i < existingItemsCount; i++)
+            this.richlistbox.childNodes[i].collapsed = true;
+
+          this._currentIndex = 0;
+          this._appendCurrentResult();
+        ]]>
+        </body>
+      </method>
+
+      <property name="maxResults" readonly="true">
+        <getter>
+          <![CDATA[
+            // this is how many richlistitems will be kept around
+            // (note, this getter may be overridden)
+            return 20;
+          ]]>
+        </getter>
+      </property>
+
+      <property name="_matchCount" readonly="true">
+        <getter>
+          <![CDATA[
+          return Math.min(this.mInput.controller.matchCount, this.maxResults);
+          ]]>
+        </getter>
+      </property>
+
+      <method name="adjustHeight">
+        <body>
+          <![CDATA[
+          // Figure out how many rows to show
+          let rows = this.richlistbox.childNodes;
+          let numRows = Math.min(this._matchCount, this.maxRows, rows.length);
+
+          // Default the height to 0 if we have no rows to show
+          let height = 0;
+          if (numRows) {
+            if (!this._rowHeight) {
+              let firstRowRect = rows[0].getBoundingClientRect();
+              this._rowHeight = firstRowRect.height;
+            }
+
+            // Calculate the height to have the first row to last row shown
+            height = this._rowHeight * numRows;
+          }
+
+          // Only update the height if we have a non-zero height and if it
+          // changed (the richlistbox is collapsed if there are no results)
+          if (height && height != this.richlistbox.height)
+            this.richlistbox.height = height;
+          ]]>
+        </body>
+      </method>
+
+      <method name="_appendCurrentResult">
+        <body>
+          <![CDATA[
+          var controller = this.mInput.controller;
+          var matchCount = this._matchCount;
+          var existingItemsCount = this.richlistbox.childNodes.length;
+
+          // Process maxRows per chunk to improve performance and user experience
+          for (let i = 0; i < this.maxRows; i++) {
+            if (this._currentIndex >= matchCount)
+              return;
+
+            var item;
+
+            // trim the leading/trailing whitespace
+            var trimmedSearchString = controller.searchString.replace(/^\s+/, "").replace(/\s+$/, "");
+
+            // Unescape the URI spec for showing as an entry in the popup
+            let url = Components.classes["@mozilla.org/intl/texttosuburi;1"].
+              getService(Components.interfaces.nsITextToSubURI).
+              unEscapeURIForUI("UTF-8", controller.getValueAt(this._currentIndex));
+
+            if (typeof this.input.trimValue == "function")
+              url = this.input.trimValue(url);
+
+            if (this._currentIndex < existingItemsCount) {
+              // re-use the existing item
+              item = this.richlistbox.childNodes[this._currentIndex];
+
+              // Completely re-use the existing richlistitem if it's the same
+              if (item.getAttribute("text") == trimmedSearchString &&
+                  item.getAttribute("url") == url) {
+                item.collapsed = false;
+                this._currentIndex++;
+                continue;
+              }
+            }
+            else {
+              // need to create a new item
+              item = document.createElementNS("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "richlistitem");
+            }
+
+            // set these attributes before we set the class
+            // so that we can use them from the constructor
+            item.setAttribute("image", controller.getImageAt(this._currentIndex));
+            item.setAttribute("url", url);
+            item.setAttribute("title", controller.getCommentAt(this._currentIndex));
+            item.setAttribute("type", controller.getStyleAt(this._currentIndex));
+            item.setAttribute("text", trimmedSearchString);
+
+            if (this._currentIndex < existingItemsCount) {
+              // re-use the existing item
+              item._adjustAcItem();
+              item.collapsed = false;
+            }
+            else {
+              // set the class at the end so we can use the attributes
+              // in the xbl constructor
+              item.className = "autocomplete-richlistitem";
+              this.richlistbox.appendChild(item);
+            }
+
+            this._currentIndex++;
+          }
+
+          // yield after each batch of items so that typing the url bar is responsive
+          setTimeout(function (self) { self._appendCurrentResult(); }, 0, this);
+        ]]>
+        </body>
+      </method>
+
+      <method name="selectBy">
+        <parameter name="aReverse"/>
+        <parameter name="aPage"/>
+        <body>
+          <![CDATA[
+          try {
+            var amount = aPage ? 5 : 1;
+
+            // because we collapsed unused items, we can't use this.richlistbox.getRowCount(), we need to use the matchCount
+            this.selectedIndex = this.getNextIndex(aReverse, amount, this.selectedIndex, this._matchCount - 1);
+            if (this.selectedIndex == -1) {
+              this.input._focus();
+            }
+          } catch (ex) {
+            // do nothing - occasionally timer-related js errors happen here
+            // e.g. "this.selectedIndex has no properties", when you type fast and hit a
+            // navigation key before this popup has opened
+          }
+            ]]>
+        </body>
+      </method>
+
+      <field name="richlistbox">
+        document.getAnonymousElementByAttribute(this, "anonid", "richlistbox");
+      </field>
+
+      <property name="view"
+                onget="return this.mInput.controller;"
+                onset="return val;"/>
+
+    </implementation>
+  </binding>
+
+  <binding id="autocomplete-richlistitem" extends="chrome://global/content/bindings/richlistbox.xml#richlistitem">
+    <content>
+      <xul:hbox align="center" class="ac-title-box">
+        <xul:image xbl:inherits="src=image" class="ac-site-icon"/>
+        <xul:hbox anonid="title-box" class="ac-title" flex="1"
+                  onunderflow="_doUnderflow('_title');"
+                  onoverflow="_doOverflow('_title');">
+          <xul:description anonid="title" class="ac-normal-text ac-comment" xbl:inherits="selected"/>
+        </xul:hbox>
+        <xul:label anonid="title-overflow-ellipsis" xbl:inherits="selected"
+                   class="ac-ellipsis-after ac-comment"/>
+        <xul:hbox anonid="extra-box" class="ac-extra" align="center" hidden="true">
+          <xul:image class="ac-result-type-tag"/>
+          <xul:label class="ac-normal-text ac-comment" xbl:inherits="selected" value=":"/>
+          <xul:description anonid="extra" class="ac-normal-text ac-comment" xbl:inherits="selected"/>
+        </xul:hbox>
+        <xul:image anonid="type-image" class="ac-type-icon"/>
+      </xul:hbox>
+      <xul:hbox align="center" class="ac-url-box">
+        <xul:spacer class="ac-site-icon"/>
+        <xul:image class="ac-action-icon"/>
+        <xul:hbox anonid="url-box" class="ac-url" flex="1"
+                  onunderflow="_doUnderflow('_url');"
+                  onoverflow="_doOverflow('_url');">
+          <xul:description anonid="url" class="ac-normal-text ac-url-text"
+                           xbl:inherits="selected type"/>
+          <xul:description anonid="action" class="ac-normal-text ac-action-text"
+                           xbl:inherits="selected type"/>
+        </xul:hbox>
+        <xul:label anonid="url-overflow-ellipsis" xbl:inherits="selected"
+                   class="ac-ellipsis-after ac-url-text"/>
+        <xul:spacer class="ac-type-icon"/>
+      </xul:hbox>
+    </content>
+    <implementation implements="nsIDOMXULSelectControlItemElement">
+      <constructor>
+        <![CDATA[
+            let ellipsis = "\u2026";
+            try {
+              ellipsis = Components.classes["@mozilla.org/preferences-service;1"].
+                getService(Components.interfaces.nsIPrefBranch).
+                getComplexValue("intl.ellipsis",
+                  Components.interfaces.nsIPrefLocalizedString).data;
+            } catch (ex) {
+              // Do nothing.. we already have a default
+            }
+
+            this._urlOverflowEllipsis = document.getAnonymousElementByAttribute(this, "anonid", "url-overflow-ellipsis");
+            this._titleOverflowEllipsis = document.getAnonymousElementByAttribute(this, "anonid", "title-overflow-ellipsis");
+
+            this._urlOverflowEllipsis.value = ellipsis;
+            this._titleOverflowEllipsis.value = ellipsis;
+
+            this._typeImage = document.getAnonymousElementByAttribute(this, "anonid", "type-image");
+
+            this._urlBox = document.getAnonymousElementByAttribute(this, "anonid", "url-box");
+            this._url = document.getAnonymousElementByAttribute(this, "anonid", "url");
+            this._action = document.getAnonymousElementByAttribute(this, "anonid", "action");
+
+            this._titleBox = document.getAnonymousElementByAttribute(this, "anonid", "title-box");
+            this._title = document.getAnonymousElementByAttribute(this, "anonid", "title");
+
+            this._extraBox = document.getAnonymousElementByAttribute(this, "anonid", "extra-box");
+            this._extra = document.getAnonymousElementByAttribute(this, "anonid", "extra");
+
+            this._adjustAcItem();
+          ]]>
+      </constructor>
+
+      <property name="label" readonly="true">
+        <getter>
+          <![CDATA[
+            var title = this.getAttribute("title");
+            var url = this.getAttribute("url");
+            var panel = this.parentNode.parentNode;
+
+            // allow consumers that have extended popups to override
+            // the label values for the richlistitems
+            if (panel.createResultLabel)
+              return panel.createResultLabel(title, url, this.getAttribute("type"));
+
+            // aType (ex: "ac-result-type-<aType>") is related to the class of the image,
+            // and is not "visible" text so don't use it for the label (for accessibility).
+            return title + " " + url;
+          ]]>
+        </getter>
+      </property>
+
+      <field name="_boundaryCutoff">null</field>
+
+      <property name="boundaryCutoff" readonly="true">
+        <getter>
+          <![CDATA[
+          if (!this._boundaryCutoff) {
+            this._boundaryCutoff =
+              Components.classes["@mozilla.org/preferences-service;1"].
+              getService(Components.interfaces.nsIPrefBranch).
+              getIntPref("toolkit.autocomplete.richBoundaryCutoff");
+          }
+          return this._boundaryCutoff;
+          ]]>
+        </getter>
+      </property>
+
+      <method name="_getBoundaryIndices">
+        <parameter name="aText"/>
+        <parameter name="aSearchTokens"/>
+        <body>
+          <![CDATA[
+          // Short circuit for empty search ([""] == "")
+          if (aSearchTokens == "")
+            return [0, aText.length];
+
+          // Find which regions of text match the search terms
+          let regions = [];
+          for each (let search in aSearchTokens) {
+            let matchIndex;
+            let startIndex = 0;
+            let searchLen = search.length;
+
+            // Find all matches of the search terms, but stop early for perf
+            let lowerText = aText.toLowerCase().substr(0, this.boundaryCutoff);
+            while ((matchIndex = lowerText.indexOf(search, startIndex)) >= 0) {
+              // Start the next search from where this one finished
+              startIndex = matchIndex + searchLen;
+              regions.push([matchIndex, startIndex]);
+            }
+          }
+
+          // Sort the regions by start position then end position
+          regions = regions.sort(function(a, b) let (start = a[0] - b[0])
+            start == 0 ? a[1] - b[1] : start);
+
+          // Generate the boundary indices from each region
+          let start = 0;
+          let end = 0;
+          let boundaries = [];
+          let len = regions.length;
+          for (let i = 0; i < len; i++) {
+            // We have a new boundary if the start of the next is past the end
+            let region = regions[i];
+            if (region[0] > end) {
+              // First index is the beginning of match
+              boundaries.push(start);
+              // Second index is the beginning of non-match
+              boundaries.push(end);
+
+              // Track the new region now that we've stored the previous one
+              start = region[0];
+            }
+
+            // Push back the end index for the current or new region
+            end = Math.max(end, region[1]);
+          }
+
+          // Add the last region
+          boundaries.push(start);
+          boundaries.push(end);
+
+          // Put on the end boundary if necessary
+          if (end < aText.length)
+            boundaries.push(aText.length);
+
+          // Skip the first item because it's always 0
+          return boundaries.slice(1);
+          ]]>
+        </body>
+      </method>
+
+      <method name="_getSearchTokens">
+        <parameter name="aSearch"/>
+        <body>
+          <![CDATA[
+          let search = aSearch.toLowerCase();
+          return search.split(/\s+/);
+          ]]>
+        </body>
+      </method>
+
+      <method name="_setUpDescription">
+        <parameter name="aDescriptionElement"/>
+        <parameter name="aText"/>
+        <parameter name="aNoEmphasis"/>
+        <body>
+          <![CDATA[
+          // Get rid of all previous text
+          while (aDescriptionElement.hasChildNodes())
+            aDescriptionElement.removeChild(aDescriptionElement.firstChild);
+
+          // If aNoEmphasis is specified, don't add any emphasis
+          if (aNoEmphasis) {
+            aDescriptionElement.appendChild(document.createTextNode(aText));
+            return;
+          }
+
+          // Get the indices that separate match and non-match text
+          let search = this.getAttribute("text");
+          let tokens = this._getSearchTokens(search);
+          let indices = this._getBoundaryIndices(aText, tokens);
+
+          let next;
+          let start = 0;
+          let len = indices.length;
+          // Even indexed boundaries are matches, so skip the 0th if it's empty
+          for (let i = indices[0] == 0 ? 1 : 0; i < len; i++) {
+            next = indices[i];
+            let text = aText.substr(start, next - start);
+            start = next;
+
+            if (i % 2 == 0) {
+              // Emphasize the text for even indices
+              let span = aDescriptionElement.appendChild(
+                document.createElementNS("http://www.w3.org/1999/xhtml", "span"));
+              span.className = "ac-emphasize-text";
+              span.textContent = text;
+            } else {
+              // Otherwise, it's plain text
+              aDescriptionElement.appendChild(document.createTextNode(text));
+            }
+          }
+          ]]>
+        </body>
+      </method>
+
+      <method name="_adjustAcItem">
+        <body>
+          <![CDATA[
+          var url = this.getAttribute("url");
+          var title = this.getAttribute("title");
+          var type = this.getAttribute("type");
+
+          this.removeAttribute("actiontype");
+
+          // The ellipses are hidden via their visibility so that they always
+          // take up space and don't pop in on top of text when shown.  For
+          // keyword searches, however, the title ellipsis should not take up
+          // space when hidden.  Setting the hidden property accomplishes that.
+          this._titleOverflowEllipsis.hidden = false;
+
+          // If the type includes an action, set up the item appropriately.
+          var types = type.split(/\s+/);
+          var actionIndex = types.indexOf("action");
+          if (actionIndex >= 0) {
+            let [,action, param] = url.match(/^moz-action:([^,]+),(.*)$/);
+            this.setAttribute("actiontype", action);
+            url = param;
+            let desc = "]]>&action.switchToTab.label;<![CDATA[";
+            this._setUpDescription(this._action, desc, true);
+
+            // Remove the "action" substring so that the correct style, if any,
+            // is applied below.
+            types.splice(actionIndex, 1);
+            type = types.join(" ");
+          }
+
+          // If we have a tag match, show the tags and icon
+          if (type == "tag") {
+            // Configure the extra box for tags display
+            this._extraBox.hidden = false;
+            this._extraBox.childNodes[0].hidden = false;
+            this._extraBox.childNodes[1].hidden = true;
+            this._extraBox.pack = "end";
+            this._titleBox.flex = 1;
+
+            // The title is separated from the tags by an endash
+            let tags;
+            [, title, tags] = title.match(/^(.+) \u2013 (.+)$/);
+
+            // Each tag is split by a comma in an undefined order, so sort it
+            let sortedTags = tags.split(",").sort().join(", ");
+
+            // Emphasize the matching text in the tags
+            this._setUpDescription(this._extra, sortedTags);
+
+            // Treat tagged matches as bookmarks for the star
+            type = "bookmark";
+          } else if (type == "keyword") {
+            // Configure the extra box for keyword display
+            this._extraBox.hidden = false;
+            this._extraBox.childNodes[0].hidden = true;
+            this._extraBox.childNodes[1].hidden = false;
+            this._extraBox.pack = "start";
+            this._titleBox.flex = 0;
+
+            // Hide the ellipsis so it doesn't take up space.
+            this._titleOverflowEllipsis.hidden = true;
+
+            // Put the parameters next to the title if we have any
+            let search = this.getAttribute("text");
+            let params = "";
+            let paramsIndex = search.indexOf(' ');
+            if (paramsIndex != -1)
+              params = search.substr(paramsIndex + 1);
+
+            // Emphasize the keyword parameters
+            this._setUpDescription(this._extra, params);
+
+            // Don't emphasize keyword searches in the title or url
+            this.setAttribute("text", "");
+          } else {
+            // Hide the title's extra box if we don't need extra stuff
+            this._extraBox.hidden = true;
+            this._titleBox.flex = 1;
+          }
+
+          // Give the image the icon style and a special one for the type
+          this._typeImage.className = "ac-type-icon" +
+            (type ? " ac-result-type-" + type : "");
+
+          // Show the url as the title if we don't have a title
+          if (title == "")
+            title = url;
+
+          // Emphasize the matching search terms for the description
+          this._setUpDescription(this._title, title);
+          this._setUpDescription(this._url, url);
+
+          // Set up overflow on a timeout because the contents of the box
+          // might not have a width yet even though we just changed them
+          setTimeout(this._setUpOverflow, 0, this._titleBox, this._titleOverflowEllipsis);
+          setTimeout(this._setUpOverflow, 0, this._urlBox, this._urlOverflowEllipsis);
+          ]]>
+        </body>
+      </method>
+
+      <method name="_setUpOverflow">
+        <parameter name="aParentBox"/>
+        <parameter name="aEllipsis"/>
+        <body>
+          <![CDATA[
+          // Hide the ellipsis incase there's just enough to not underflow
+          aEllipsis.style.visibility = "hidden";
+
+          // Start with the parent's width and subtract off its children
+          let tooltip = [];
+          let children = aParentBox.childNodes;
+          let widthDiff = aParentBox.boxObject.width;
+
+          for (let i = 0; i < children.length; i++) {
+            // Only consider a child if it actually takes up space
+            let childWidth = children[i].boxObject.width;
+            if (childWidth > 0) {
+              // Subtract a little less to account for subpixel rounding
+              widthDiff -= childWidth - .5;
+
+              // Add to the tooltip if it's not hidden and has text
+              let childText = children[i].textContent;
+              if (childText)
+                tooltip.push(childText);
+            }
+          }
+
+          // If the children take up more space than the parent.. overflow!
+          if (widthDiff < 0) {
+            // Re-show the ellipsis now that we know it's needed
+            aEllipsis.style.visibility = "visible";
+
+            // Separate text components with a ndash --
+            aParentBox.tooltipText = tooltip.join(" \u2013 ");
+          }
+          ]]>
+        </body>
+      </method>
+
+      <method name="_doUnderflow">
+        <parameter name="aName"/>
+        <body>
+          <![CDATA[
+          // Hide the ellipsis right when we know we're underflowing instead of
+          // waiting for the timeout to trigger the _setUpOverflow calculations
+          this[aName + "Box"].tooltipText = "";
+          this[aName + "OverflowEllipsis"].style.visibility = "hidden";
+          ]]>
+        </body>
+      </method>
+
+      <method name="_doOverflow">
+        <parameter name="aName"/>
+        <body>
+          <![CDATA[
+          this._setUpOverflow(this[aName + "Box"],
+                              this[aName + "OverflowEllipsis"]);
+          ]]>
+        </body>
+      </method>
+
+    </implementation>
+  </binding>
+
+  <binding id="autocomplete-tree" extends="chrome://global/content/bindings/tree.xml#tree">
+    <content>
+      <children includes="treecols"/>
+      <xul:treerows class="autocomplete-treerows tree-rows" xbl:inherits="hidescrollbar" flex="1">
+        <children/>
+      </xul:treerows>
+    </content>
+  </binding>
+
+  <binding id="autocomplete-richlistbox" extends="chrome://global/content/bindings/richlistbox.xml#richlistbox">
+    <implementation>
+      <field name="mLastMoveTime">Date.now()</field>
+    </implementation>
+    <handlers>
+      <handler event="mouseup">
+        <![CDATA[
+        // don't call onPopupClick for the scrollbar buttons, thumb, slider, etc.
+        var item = event.originalTarget;
+
+        while (item && item.localName != "richlistitem")
+          item = item.parentNode;
+
+        if (!item)
+          return;
+
+        this.parentNode.onPopupClick(event);
+      ]]>
+      </handler>
+
+      <handler event="mousemove">
+        <![CDATA[
+        if (Date.now() - this.mLastMoveTime > 30) {
+         var item = event.target;
+
+         while (item && item.localName != "richlistitem")
+           item = item.parentNode;
+
+         if (!item)
+           return;
+
+         var rc = this.getIndexOfItem(item);
+         if (rc != this.selectedIndex)
+            this.selectedIndex = rc;
+
+         this.mLastMoveTime = Date.now();
+        }
+      ]]>
+      </handler>
+    </handlers>
+  </binding>
+
+  <binding id="autocomplete-treebody">
+    <implementation>
+      <field name="mLastMoveTime">Date.now()</field>
+    </implementation>
+
+    <handlers>
+      <handler event="mouseup" action="this.parentNode.parentNode.onPopupClick(event);"/>
+
+      <handler event="mousedown"><![CDATA[
+         var rc = this.parentNode.treeBoxObject.getRowAt(event.clientX, event.clientY);
+         if (rc != this.parentNode.currentIndex)
+            this.parentNode.view.selection.select(rc);
+      ]]></handler>
+
+      <handler event="mousemove"><![CDATA[
+        if (Date.now() - this.mLastMoveTime > 30) {
+         var rc = this.parentNode.treeBoxObject.getRowAt(event.clientX, event.clientY);
+         if (rc != this.parentNode.currentIndex)
+            this.parentNode.view.selection.select(rc);
+         this.mLastMoveTime = Date.now();
+        }
+      ]]></handler>
+    </handlers>
+  </binding>
+
+  <binding id="autocomplete-treerows">
+    <content>
+      <xul:hbox flex="1" class="tree-bodybox">
+        <children/>
+      </xul:hbox>
+      <xul:scrollbar xbl:inherits="collapsed=hidescrollbar" orient="vertical" class="tree-scrollbar"/>
+    </content>
+  </binding>
+
+  <binding id="history-dropmarker" extends="chrome://global/content/bindings/general.xml#dropmarker">
+    <implementation>
+      <method name="showPopup">
+        <body><![CDATA[
+          var textbox = document.getBindingParent(this);
+          textbox.showHistoryPopup();
+        ]]></body>
+      </method>
+    </implementation>
+
+    <handlers>
+      <handler event="mousedown" button="0"><![CDATA[
+        this.showPopup();
+      ]]></handler>
+    </handlers>
+  </binding>
+
+</bindings>

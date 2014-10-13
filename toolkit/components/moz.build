@@ -1,0 +1,87 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# These component dirs are built for all apps (including suite)
+if CONFIG['MOZ_ENABLE_XREMOTE']:
+    PARALLEL_DIRS += ['remote']
+
+PARALLEL_DIRS += [
+    'aboutcache',
+    'aboutmemory',
+    'alerts',
+    'apppicker',
+    'commandlines',
+    'console',
+    'contentprefs',
+    'cookie',
+    'crashmonitor',
+    'diskspacewatcher',
+    'downloads',
+    'exthelper',
+    'filepicker',
+    'finalizationwitness',
+    'formautofill',
+    'find',
+    'jsdownloads',
+    'mediasniffer',
+    'microformats',
+    'osfile',
+    'parentalcontrols',
+    'passwordmgr',
+    'perf',
+    'places',
+    'prompts',
+    'protobuf',
+    'reflect',
+    'sqlite',
+    'startup',
+    'statusfilter',
+    'telemetry',
+    'thumbnails',
+    'typeaheadfind',
+    'urlformatter',
+    'viewconfig',
+    'viewsource',
+    'workerloader',
+    'workerlz4',
+]
+
+if CONFIG['MOZ_CRASHREPORTER']:
+    PARALLEL_DIRS += ['crashes']
+
+if CONFIG['MOZ_SOCIAL']:
+    PARALLEL_DIRS += ['social']
+
+if CONFIG['BUILD_CTYPES']:
+    PARALLEL_DIRS += ['ctypes']
+
+if CONFIG['MOZ_FEEDS']:
+    PARALLEL_DIRS += ['feeds']
+
+if CONFIG['MOZ_HELP_VIEWER']:
+    PARALLEL_DIRS += ['help']
+
+if CONFIG['NS_PRINTING']:
+    PARALLEL_DIRS += ['printing']
+
+if CONFIG['MOZ_XUL']:
+    PARALLEL_DIRS += ['autocomplete', 'satchel']
+
+if CONFIG['MOZ_TOOLKIT_SEARCH']:
+    PARALLEL_DIRS += ['search']
+
+if CONFIG['MOZ_URL_CLASSIFIER']:
+    PARALLEL_DIRS += ['url-classifier']
+
+if CONFIG['MOZ_CAPTIVEDETECT']:
+    PARALLEL_DIRS += ['captivedetect']
+
+DIRS += ['build']
+
+EXTRA_COMPONENTS += [
+    'nsDefaultCLH.js',
+    'nsDefaultCLH.manifest',
+]

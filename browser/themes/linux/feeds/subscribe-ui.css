@@ -1,0 +1,29 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+.alwaysUse {
+  padding: 5px;
+}
+
+.handlersMenuPopup > menuitem {
+  -moz-padding-start: 23px;
+}
+
+.handlersMenuPopup > menuitem.menuitem-iconic {
+  -moz-padding-start: 2px;
+}
+
+.handlersMenuPopup > .menuitem-iconic  > .menu-iconic-left {
+  display: -moz-box;
+  min-width: 16px;
+  -moz-padding-end: 2px;
+}
+
+.chooseApplicationMenuItem {
+  list-style-image: url("moz-icon://dummy.exe?size=16");
+}
+
+#feedHeader[dir="rtl"] .handlersMenuList > menupopup {
+  direction: rtl;
+}

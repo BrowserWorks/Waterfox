@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!DOCTYPE html [
+  <!ENTITY % htmlDTD PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
+  %htmlDTD;
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+  %brandDTD;
+  <!ENTITY % aboutAccountsDTD SYSTEM "chrome://browser/locale/aboutAccounts.dtd">
+  %aboutAccountsDTD;
+  <!ENTITY % syncBrandDTD SYSTEM "chrome://browser/locale/syncBrand.dtd">
+  %syncBrandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+   <title>&syncBrand.fullName.label;</title>
+   <meta name="viewport" content="width=device-width"/>
+
+
+   <link rel="icon" type="image/png" id="favicon"
+         href="chrome://branding/content/icon32.png"/>
+   <link rel="stylesheet"
+     href="chrome://browser/content/aboutaccounts/normalize.css"
+     type="text/css" />
+   <link rel="stylesheet"
+     href="chrome://browser/content/aboutaccounts/main.css"
+     type="text/css" />
+   <link rel="stylesheet"
+     href="chrome://browser/content/aboutaccounts/aboutaccounts.css"
+     type="text/css" />
+  </head>
+  <body>
+    <div id="stage">
+
+      <div id="manage">
+        <header>
+          <h1>&aboutAccounts.welcome;</h1>
+        </header>
+
+        <section>
+            <div class="graphic graphic-sync-intro"> </div>
+
+            <div class="button-row">
+              <a id="buttonOpenPrefs" class="button" href="#">&aboutAccountsConfig.manage.label;</a>
+            </div>
+        </section>
+      </div>
+
+      <div id="intro">
+        <header>
+          <h1>&aboutAccounts.welcome;</h1>
+        </header>
+
+        <section>
+            <div class="graphic graphic-sync-intro"> </div>
+
+            <div class="description">&aboutAccountsConfig.description;</div>
+
+            <div class="button-row">
+              <a id="buttonGetStarted" class="button" href="#">&aboutAccountsConfig.startButton.label;</a>
+            </div>
+
+            <div class="links">
+              <a id="oldsync" class="no-underline" href="#">&aboutAccountsConfig.useOldSync.label;</a>
+            </div>
+        </section>
+      </div>
+
+    </div>
+
+    <iframe mozframetype="content" id="remote" />
+
+    <script type="application/javascript;version=1.8"
+      src="chrome://browser/content/utilityOverlay.js"/>
+    <script type="text/javascript;version=1.8"
+      src="chrome://browser/content/aboutaccounts/aboutaccounts.js" />
+  </body>
+</html>

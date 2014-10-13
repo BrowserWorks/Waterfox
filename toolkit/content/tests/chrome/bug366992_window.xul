@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<?xml-stylesheet href="chrome://global/skin" type="text/css"?>
+<?xul-overlay href="chrome://global/content/editMenuOverlay.xul"?>
+
+<window id="366992 test"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        onload="onLoad();"
+        width="600"
+        height="600"
+        title="366992 test">
+
+  <commandset id="editMenuCommands"/>
+
+  <script type="application/javascript"
+          src="chrome://global/content/globalOverlay.js"/>
+  <script type="application/javascript"><![CDATA[
+    // Without the fix for bug 366992, the copy command would be enabled
+    // for the textbox even though the textbox's controller for this command
+    // disables it.
+    var gShouldNotBeReachedController = {
+      supportsCommand: function(aCommand) {
+        return aCommand == "cmd_copy";
+      },
+      isCommandEnabled: function(aCommand) {
+        return aCommand == "cmd_copy";
+      },
+      doCommand: function(aCommand) { }
+    }
+
+    function ok(condition, message) {
+      window.opener.wrappedJSObject.SimpleTest.ok(condition, message);
+    }
+    function finish() {
+      window.controllers.removeController(gShouldNotBeReachedController);
+      window.close();
+      window.opener.wrappedJSObject.SimpleTest.finish();
+    }
+
+    function onLoad() {
+      document.getElementById("textbox").focus();
+      var copyDisabled = document.getElementById("cmd_copy")
+                                 .getAttribute("disabled") == "true";
+      ok(copyDisabled,
+         "cmd_copy should be disabled when the empty textbox is focused");
+      finish();
+    }
+    
+    window.controllers.appendController(gShouldNotBeReachedController);
+  ]]></script>
+
+  <textbox id="textbox"/>
+</window>

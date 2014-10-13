@@ -1,0 +1,861 @@
+<?xml version="1.0"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<bindings id="tabBindings"
+          xmlns="http://www.mozilla.org/xbl"
+          xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+          xmlns:xbl="http://www.mozilla.org/xbl">
+
+  <binding id="tab-base">
+    <resources>
+      <stylesheet src="chrome://global/skin/tabbox.css"/>
+    </resources>
+  </binding>
+
+  <binding id="tabbox"
+           extends="chrome://global/content/bindings/tabbox.xml#tab-base">
+    <implementation implements="nsIDOMEventListener">
+      <property name="handleCtrlTab">
+        <setter>
+        <![CDATA[
+          this.setAttribute("handleCtrlTab", val);
+          return val;
+        ]]>
+        </setter>
+        <getter>
+        <![CDATA[
+          return (this.getAttribute("handleCtrlTab") != "false");
+        ]]>
+        </getter>
+      </property>
+      
+      <property name="handleCtrlPageUpDown">
+        <setter>
+        <![CDATA[
+          this.setAttribute("handleCtrlPageUpDown", val);
+          return val;
+        ]]>
+        </setter>
+        <getter>
+        <![CDATA[
+          return (this.getAttribute("handleCtrlPageUpDown") != "false");
+        ]]>
+        </getter>
+      </property>
+
+      <field name="_handleMetaAltArrows" readonly="true">
+#ifdef XP_MACOSX
+        true
+#else
+        false
+#endif
+      </field>
+
+      <!-- _tabs and _tabpanels are deprecated, they exist only for
+           backwards compatibility. -->
+      <property name="_tabs" readonly="true" onget="return this.tabs;"/>
+      <property name="_tabpanels" readonly="true" onget="return this.tabpanels;"/>
+
+      <property name="tabs" readonly="true">
+        <getter>
+        <![CDATA[
+          return this.getElementsByTagNameNS(
+              "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul",
+              "tabs").item(0);
+        ]]>
+        </getter>
+      </property>
+
+      <property name="tabpanels" readonly="true">
+        <getter>
+        <![CDATA[
+          return this.getElementsByTagNameNS(
+              "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul",
+              "tabpanels").item(0);
+        ]]>
+        </getter>
+      </property>
+      
+      <property name="selectedIndex">
+        <getter>
+        <![CDATA[
+          var tabs = this.tabs;
+          return tabs ? tabs.selectedIndex : -1;
+        ]]>
+        </getter>
+
+        <setter>
+        <![CDATA[
+          var tabs = this.tabs;
+          if (tabs)
+            tabs.selectedIndex = val;
+          this.setAttribute("selectedIndex", val);
+          return val;
+        ]]>
+        </setter>
+      </property>
+
+      <property name="selectedTab">
+        <getter>
+        <![CDATA[
+          var tabs = this.tabs;
+          return tabs && tabs.selectedItem;
+        ]]>
+        </getter>
+
+        <setter>
+        <![CDATA[
+          if (val) {
+            var tabs = this.tabs;
+            if (tabs)
+              tabs.selectedItem = val;
+          }
+          return val;
+        ]]>
+        </setter>
+      </property>
+
+      <property name="selectedPanel">
+        <getter>
+        <![CDATA[
+          var tabpanels = this.tabpanels;
+          return tabpanels && tabpanels.selectedPanel;
+        ]]>
+        </getter>
+
+        <setter>
+        <![CDATA[
+          if (val) {
+            var tabpanels = this.tabpanels;
+            if (tabpanels)
+              tabpanels.selectedPanel = val;
+          }
+          return val;
+        ]]>
+        </setter>
+      </property>
+
+      <method name="handleEvent">
+        <parameter name="event"/>
+        <body>
+        <![CDATA[
+          if (!event.isTrusted) {
+            // Don't let untrusted events mess with tabs.
+            return;
+          }
+
+          // Don't check if the event was already consumed because tab
+          // navigation should always work for better user experience.
+
+          switch (event.keyCode) {
+            case event.DOM_VK_TAB:
+              if (event.ctrlKey && !event.altKey && !event.metaKey)
+                if (this.tabs && this.handleCtrlTab) {
+                  this.tabs.advanceSelectedTab(event.shiftKey ? -1 : 1, true);
+                  event.preventDefault();
+                }
+              break;
+            case event.DOM_VK_PAGE_UP:
+              if (event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey)
+                if (this.tabs && this.handleCtrlPageUpDown) {
+                  this.tabs.advanceSelectedTab(-1, true);
+                  event.preventDefault();
+                }
+              break;
+            case event.DOM_VK_PAGE_DOWN:
+              if (event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey)
+                if (this.tabs && this.handleCtrlPageUpDown) {
+                  this.tabs.advanceSelectedTab(1, true);
+                  event.preventDefault();
+                }
+              break;
+            case event.DOM_VK_LEFT:
+              if (event.metaKey && event.altKey && !event.shiftKey && !event.ctrlKey)
+                if (this.tabs && this._handleMetaAltArrows) {
+                  var offset = window.getComputedStyle(this, "")
+                                     .direction == "ltr" ? -1 : 1;
+                  this.tabs.advanceSelectedTab(offset, true);
+                  event.preventDefault();
+                }
+              break;
+            case event.DOM_VK_RIGHT:
+              if (event.metaKey && event.altKey && !event.shiftKey && !event.ctrlKey)
+                if (this.tabs && this._handleMetaAltArrows) {
+                  var offset = window.getComputedStyle(this, "")
+                                     .direction == "ltr" ? 1 : -1;
+                  this.tabs.advanceSelectedTab(offset, true);
+                  event.preventDefault();
+                }
+              break;
+          }
+        ]]>
+        </body>
+      </method>
+
+      <field name="_eventNode">this</field>
+
+      <property name="eventNode" onget="return this._eventNode;">
+        <setter>
+          <![CDATA[
+            if (val != this._eventNode) {
+              const nsIEventListenerService =
+                Components.interfaces.nsIEventListenerService;
+              let els = Components.classes["@mozilla.org/eventlistenerservice;1"]
+                                  .getService(nsIEventListenerService);
+              els.addSystemEventListener(val, "keydown", this, false);
+              els.removeSystemEventListener(this._eventNode, "keydown", this, false);
+              this._eventNode = val;
+            }
+            return val;
+          ]]>
+        </setter>
+      </property>
+
+      <constructor>
+        switch (this.getAttribute("eventnode")) {
+          case "parent": this._eventNode = this.parentNode; break;
+          case "window": this._eventNode = window; break;
+          case "document": this._eventNode = document; break;
+        }
+        const nsIEventListenerService =
+          Components.interfaces.nsIEventListenerService;
+        let els = Components.classes["@mozilla.org/eventlistenerservice;1"]
+                            .getService(nsIEventListenerService);
+        els.addSystemEventListener(this._eventNode, "keydown", this, false);
+      </constructor>
+
+      <destructor>
+        const nsIEventListenerService =
+          Components.interfaces.nsIEventListenerService;
+        let els = Components.classes["@mozilla.org/eventlistenerservice;1"]
+                            .getService(nsIEventListenerService);
+        els.removeSystemEventListener(this._eventNode, "keydown", this, false);
+      </destructor>
+    </implementation>
+  </binding>
+
+  <binding id="tabs" role="xul:tabs"
+           extends="chrome://global/content/bindings/general.xml#basecontrol">
+    <resources>
+      <stylesheet src="chrome://global/skin/tabbox.css"/>
+    </resources>
+
+    <content>
+      <xul:spacer class="tabs-left"/>
+      <children/>
+      <xul:spacer class="tabs-right" flex="1"/>
+    </content>
+    
+    <implementation implements="nsIDOMXULSelectControlElement, nsIDOMXULRelatedElement">
+      <constructor>
+      <![CDATA[
+        // first and last tabs need to be able to have unique styles
+        // and also need to select first tab on startup.
+        if (this.firstChild)
+          this.firstChild.setAttribute("first-tab", "true");
+        if (this.lastChild)
+          this.lastChild.setAttribute("last-tab", "true");
+
+        if (!this.hasAttribute("orient"))
+          this.setAttribute("orient", "horizontal");
+
+        if (this.tabbox && this.tabbox.hasAttribute("selectedIndex")) {
+          let selectedIndex = parseInt(this.tabbox.getAttribute("selectedIndex"));
+          this.selectedIndex = selectedIndex > 0 ? selectedIndex : 0;
+          return;
+        }
+
+        var children = this.childNodes;
+        var length = children.length;
+        for (var i = 0; i < length; i++) {
+          if (children[i].getAttribute("selected") == "true") {
+            this.selectedIndex = i;
+            return;
+          }
+        }
+
+        var value = this.value;
+        if (value)
+          this.value = value;
+        else
+          this.selectedIndex = 0;
+      ]]>
+      </constructor>
+
+      <!-- nsIDOMXULRelatedElement -->
+      <method name="getRelatedElement">
+        <parameter name="aTabElm"/>
+        <body>
+        <![CDATA[
+          if (!aTabElm)
+            return null;
+
+          let tabboxElm = this.tabbox;
+          if (!tabboxElm)
+            return null;
+
+          let tabpanelsElm = tabboxElm.tabpanels;
+          if (!tabpanelsElm)
+            return null;
+
+          // Get linked tab panel by 'linkedpanel' attribute on the given tab
+          // element.
+          let linkedPanelElm = null;
+
+          let linkedPanelId = aTabElm.linkedPanel;
+          if (linkedPanelId) {
+            let ownerDoc = this.ownerDocument;
+
+            // XXX bug 565858: if XUL tab element is anonymous element then
+            // suppose linked tab panel is hosted within the same XBL binding
+            // and search it by ID attribute inside an anonymous content of
+            // the binding. This is not robust assumption since tab elements may
+            // live outside a tabbox element so that for example tab elements
+            // can be explicit content but tab panels can be anonymous.
+
+            let bindingParent = ownerDoc.getBindingParent(aTabElm);
+            if (bindingParent)
+              return ownerDoc.getAnonymousElementByAttribute(bindingParent,
+                                                             "id",
+                                                             linkedPanelId);
+
+            return ownerDoc.getElementById(linkedPanelId);
+          }
+
+          // otherwise linked tabpanel element has the same index as the given
+          // tab element.
+          let tabElmIdx = this.getIndexOfItem(aTabElm);
+          return tabpanelsElm.childNodes[tabElmIdx];
+        ]]>
+        </body>
+      </method>
+
+      <!-- nsIDOMXULSelectControlElement -->
+      <property name="itemCount" readonly="true"
+                onget="return this.childNodes.length"/>
+
+      <property name="value" onget="return this.getAttribute('value');">
+        <setter>
+          <![CDATA[
+            this.setAttribute("value", val);
+            var children = this.childNodes;
+            for (var c = children.length - 1; c >= 0; c--) {
+              if (children[c].value == val) {
+                this.selectedIndex = c;
+                break;
+              }
+            }
+            return val;
+          ]]>
+        </setter>
+      </property>
+
+      <field name="tabbox" readonly="true"><![CDATA[
+        var parent = this.parentNode;
+        while (parent) {
+          if (parent.localName == "tabbox")
+            break;
+          parent = parent.parentNode;
+        }
+        parent;
+      ]]></field>
+
+      <!-- _tabbox is deprecated, it exists only for backwards compatibility. -->
+      <field name="_tabbox" readonly="true"><![CDATA[
+        this.tabbox;
+      ]]></field>
+
+      <property name="selectedIndex">
+        <getter>
+        <![CDATA[
+          const tabs = this.childNodes;
+          for (var i = 0; i < tabs.length; i++) {
+            if (tabs[i].selected)
+              return i;
+          }
+          return -1;
+        ]]>
+        </getter>
+        
+        <setter>
+        <![CDATA[
+          var tab = this.getItemAtIndex(val);
+          if (tab) {
+            var alreadySelected = tab.selected;
+
+            Array.forEach(this.childNodes, function (aTab) {
+              if (aTab.selected && aTab != tab)
+                aTab._selected = false;
+            });
+            tab._selected = true;
+
+            this.setAttribute("value", tab.value);
+
+            let linkedPanel = this.getRelatedElement(tab);
+            if (linkedPanel) {
+              this.tabbox.setAttribute("selectedIndex", val);
+
+              // This will cause an onselect event to fire for the tabpanel
+              // element.
+              this.tabbox.tabpanels.selectedPanel = linkedPanel;
+            }
+
+            if (!alreadySelected) {
+              // Fire an onselect event for the tabs element.
+              var event = document.createEvent('Events');
+              event.initEvent('select', true, true);
+              this.dispatchEvent(event);
+            }
+          }
+          return val;
+        ]]>
+        </setter>
+      </property>
+
+      <property name="selectedItem">
+        <getter>
+        <![CDATA[
+          const tabs = this.childNodes;
+          for (var i = 0; i < tabs.length; i++) {
+            if (tabs[i].selected)
+              return tabs[i];
+          }
+          return null;
+        ]]>
+        </getter>
+
+        <setter>
+        <![CDATA[
+          if (val && !val.selected)
+            // The selectedIndex setter ignores invalid values
+            // such as -1 if |val| isn't one of our child nodes.
+            this.selectedIndex = this.getIndexOfItem(val);
+          return val;
+        ]]>
+        </setter>
+      </property>
+
+      <method name="getIndexOfItem">
+        <parameter name="item"/>
+        <body>
+        <![CDATA[
+          return Array.indexOf(this.childNodes, item);
+        ]]>
+        </body>
+      </method>
+
+      <method name="getItemAtIndex">
+        <parameter name="index"/>
+        <body>
+        <![CDATA[
+          return this.childNodes.item(index);
+        ]]>
+        </body>
+      </method>
+
+      <method name="_selectNewTab">
+        <parameter name="aNewTab"/>
+        <parameter name="aFallbackDir"/>
+        <parameter name="aWrap"/>
+        <body>
+        <![CDATA[
+          var requestedTab = aNewTab;
+          while (aNewTab.hidden || aNewTab.disabled || !this._canAdvanceToTab(aNewTab)) {
+            aNewTab = aFallbackDir == -1 ? aNewTab.previousSibling : aNewTab.nextSibling;
+            if (!aNewTab && aWrap)
+              aNewTab = aFallbackDir == -1 ? this.childNodes[this.childNodes.length - 1] :
+                                             this.childNodes[0];
+            if (!aNewTab || aNewTab == requestedTab)
+              return;
+          }
+
+          var isTabFocused = false;
+          try {
+            isTabFocused =
+              (document.commandDispatcher.focusedElement == this.selectedItem);
+          } catch (e) {}
+          this.selectedItem = aNewTab;
+          if (isTabFocused) {
+            aNewTab.focus();
+          }
+          else if (this.getAttribute("setfocus") != "false") {
+            let selectedPanel = this.tabbox.selectedPanel;
+            document.commandDispatcher.advanceFocusIntoSubtree(selectedPanel);
+
+            // Make sure that the focus doesn't move outside the tabbox
+            if (this.tabbox) {
+              try {
+                let el = document.commandDispatcher.focusedElement;
+                while (el && el != this.tabbox.tabpanels) {
+                  if (el == this.tabbox || el == selectedPanel)
+                    return;
+                  el = el.parentNode;
+                }
+                aNewTab.focus();
+              } catch(e) {
+              }
+            }
+          }
+        ]]>
+        </body>
+      </method>
+
+      <method name="_canAdvanceToTab">
+        <parameter name="aTab"/>
+        <body>
+        <![CDATA[
+          return true;
+        ]]>
+        </body>
+      </method>
+
+      <method name="advanceSelectedTab">
+        <parameter name="aDir"/>
+        <parameter name="aWrap"/>
+        <body>
+        <![CDATA[
+          var startTab = this.selectedItem;
+          var next = startTab[aDir == -1 ? "previousSibling" : "nextSibling"];
+          if (!next && aWrap) {
+            next = aDir == -1 ? this.childNodes[this.childNodes.length - 1] :
+                                this.childNodes[0];
+          }
+          if (next && next != startTab) {
+            this._selectNewTab(next, aDir, aWrap);
+          }
+        ]]>
+        </body>
+      </method>
+
+      <method name="appendItem">
+        <parameter name="label"/>
+        <parameter name="value"/>
+        <body>
+        <![CDATA[
+          var XULNS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+          var tab = document.createElementNS(XULNS, "tab");
+          tab.setAttribute("label", label);
+          tab.setAttribute("value", value);
+          this.appendChild(tab);
+          return tab;
+        ]]>
+        </body>
+      </method>
+      
+      <method name="insertItemAt">
+        <parameter name="index"/>
+        <parameter name="label"/>
+        <parameter name="value"/>
+        <body>
+        <![CDATA[
+          var XULNS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+          var tab = document.createElementNS(XULNS, "tab");
+          tab.setAttribute("label", label);
+          tab.setAttribute("value", value);
+          var before = this.getItemAtIndex(index);
+          if (before)
+            this.insertBefore(tab, before);
+          else
+            this.appendChild(tab);
+          return tab;
+        ]]>
+        </body>
+      </method>
+
+      <method name="removeItemAt">
+        <parameter name="index"/>
+        <body>
+        <![CDATA[
+          var remove = this.getItemAtIndex(index);
+          if (remove)
+            this.removeChild(remove);
+          return remove;
+        ]]>
+        </body>
+      </method>
+    </implementation>
+
+#ifdef MOZ_WIDGET_GTK
+    <handlers>
+      <handler event="DOMMouseScroll">
+      <![CDATA[
+        if (event.detail > 0)
+          this.advanceSelectedTab(1, false);
+        else
+          this.advanceSelectedTab(-1, false);
+
+        event.stopPropagation();
+      ]]>
+      </handler>
+    </handlers>
+#endif
+  </binding>
+
+  <binding id="tabpanels" role="xul:tabpanels"
+           extends="chrome://global/content/bindings/tabbox.xml#tab-base">
+    <implementation implements="nsIDOMXULRelatedElement">
+      <!-- nsIDOMXULRelatedElement -->
+      <method name="getRelatedElement">
+        <parameter name="aTabPanelElm"/>
+        <body>
+        <![CDATA[
+          if (!aTabPanelElm)
+            return null;
+
+          let tabboxElm = this.tabbox;
+          if (!tabboxElm)
+            return null;
+
+          let tabsElm = tabboxElm.tabs;
+          if (!tabsElm)
+            return null;
+
+          // Return tab element having 'linkedpanel' attribute equal to the id
+          // of the tab panel or the same index as the tab panel element.
+          let tabpanelIdx = Array.indexOf(this.childNodes, aTabPanelElm);
+          if (tabpanelIdx == -1)
+            return null;
+
+          let tabElms = tabsElm.childNodes;
+          let tabElmFromIndex = tabElms[tabpanelIdx];
+
+          let tabpanelId = aTabPanelElm.id;
+          if (tabpanelId) {
+            for (let idx = 0; idx < tabElms.length; idx++) {
+              var tabElm = tabElms[idx];
+              if (tabElm.linkedPanel == tabpanelId)
+                return tabElm;
+            }
+          }
+
+          return tabElmFromIndex;
+        ]]>
+        </body>
+      </method>
+
+      <!-- public -->
+      <field name="tabbox" readonly="true"><![CDATA[
+        var parent = this.parentNode;
+        while (parent) {
+          if (parent.localName == "tabbox")
+            break;
+          parent = parent.parentNode;
+        }
+        parent;
+      ]]></field>
+
+      <field name="_selectedPanel">this.childNodes.item(this.selectedIndex)</field>
+
+      <property name="selectedIndex">
+        <getter>
+        <![CDATA[
+          var indexStr = this.getAttribute("selectedIndex");
+          return indexStr ? parseInt(indexStr) : -1;
+        ]]>
+        </getter>
+
+        <setter>
+        <![CDATA[
+          if (val < 0 || val >= this.childNodes.length)
+            return val;
+          var panel = this._selectedPanel;
+          this._selectedPanel = this.childNodes[val];
+          this.setAttribute("selectedIndex", val);
+          if (this._selectedPanel != panel) {
+            var event = document.createEvent("Events");
+            event.initEvent("select", true, true);
+            this.dispatchEvent(event);
+          }
+          return val;
+        ]]>
+        </setter>
+      </property>
+
+      <property name="selectedPanel">
+        <getter>
+          <![CDATA[
+            return this._selectedPanel;
+          ]]>
+        </getter>
+
+        <setter>
+          <![CDATA[
+            var selectedIndex = -1;
+            for (var panel = val; panel != null; panel = panel.previousSibling)
+              ++selectedIndex;
+            this.selectedIndex = selectedIndex;
+            return val;
+          ]]>
+        </setter>
+      </property>
+    </implementation>
+  </binding>
+
+  <binding id="tab" display="xul:button" role="xul:tab"
+           extends="chrome://global/content/bindings/general.xml#control-item">
+    <resources>
+      <stylesheet src="chrome://global/skin/tabbox.css"/>
+    </resources>
+
+    <content>
+      <xul:hbox class="tab-middle box-inherit" xbl:inherits="align,dir,pack,orient,selected" flex="1">
+        <xul:image class="tab-icon"
+                   xbl:inherits="validate,src=image"
+                   role="presentation"/>
+        <xul:label class="tab-text"
+                   xbl:inherits="value=label,accesskey,crop,disabled"
+                   flex="1"
+                   role="presentation"/>
+      </xul:hbox>
+    </content>
+
+    <implementation implements="nsIDOMXULSelectControlItemElement">
+      <property name="control" readonly="true">
+        <getter>
+          <![CDATA[
+            var parent = this.parentNode;
+            if (parent instanceof Components.interfaces.nsIDOMXULSelectControlElement)
+              return parent;
+            return null;
+          ]]>
+        </getter>
+      </property>
+
+      <property name="selected" readonly="true"
+                onget="return this.getAttribute('selected') == 'true';"/>
+
+      <property name="_selected">
+        <setter>
+          <![CDATA[
+          if (val)
+            this.setAttribute("selected", "true");
+          else
+            this.removeAttribute("selected");
+
+          if (this.previousSibling && this.previousSibling.localName == "tab") {
+            if (val)
+              this.previousSibling.setAttribute("beforeselected", "true");
+            else
+              this.previousSibling.removeAttribute("beforeselected");
+            this.removeAttribute("first-tab");
+          }
+          else
+            this.setAttribute("first-tab", "true");
+
+          if (this.nextSibling && this.nextSibling.localName == "tab") {
+            if (val)
+              this.nextSibling.setAttribute("afterselected", "true");
+            else
+              this.nextSibling.removeAttribute("afterselected");
+            this.removeAttribute("last-tab");
+          }
+          else
+            this.setAttribute("last-tab", "true");
+          return val;
+        ]]>
+        </setter>
+      </property>
+
+      <property name="linkedPanel" onget="return this.getAttribute('linkedpanel')"
+                                   onset="this.setAttribute('linkedpanel', val); return val;"/>
+
+      <field name="arrowKeysShouldWrap" readonly="true">
+#ifdef XP_MACOSX
+        true
+#else
+        false
+#endif
+      </field>
+      <field name="TelemetryStopwatch" readonly="true">
+        let tmp = {};
+        Cu.import("resource://gre/modules/TelemetryStopwatch.jsm", tmp);
+        tmp.TelemetryStopwatch;
+      </field>
+    </implementation>
+
+    <handlers>
+      <handler event="mousedown" button="0">
+      <![CDATA[
+        if (this.disabled)
+          return;
+
+        if (this != this.parentNode.selectedItem) { // Not selected yet
+          let stopwatchid = this.parentNode.getAttribute("stopwatchid");
+          if (stopwatchid) {
+            this.TelemetryStopwatch.start(stopwatchid);
+          }
+
+          // Call this before setting the 'ignorefocus' attribute because this
+          // will pass on focus if the formerly selected tab was focused as well.
+          this.parentNode._selectNewTab(this);
+
+          var isTabFocused = false;
+          try {
+            isTabFocused = (document.commandDispatcher.focusedElement == this);
+          } catch (e) {}
+
+          // Set '-moz-user-focus' to 'ignore' so that PostHandleEvent() can't
+          // focus the tab; we only want tabs to be focusable by the mouse if
+          // they are already focused. After a short timeout we'll reset
+          // '-moz-user-focus' so that tabs can be focused by keyboard again.
+          if (!isTabFocused) {
+            this.setAttribute("ignorefocus", "true");
+            setTimeout(function (tab) tab.removeAttribute("ignorefocus"), 0, this);
+          }
+
+          if (stopwatchid) {
+            this.TelemetryStopwatch.finish(stopwatchid);
+          }
+        }
+        // Otherwise this tab is already selected and we will fall
+        // through to mousedown behavior which sets focus on the current tab,
+        // Only a click on an already selected tab should focus the tab itself.
+      ]]>
+      </handler>
+
+      <handler event="keydown" keycode="VK_LEFT" group="system" preventdefault="true">
+      <![CDATA[
+        var direction = window.getComputedStyle(this.parentNode, null).direction;
+        this.parentNode.advanceSelectedTab(direction == 'ltr' ? -1 : 1, this.arrowKeysShouldWrap);
+      ]]>
+      </handler>
+
+      <handler event="keydown" keycode="VK_RIGHT" group="system" preventdefault="true">
+      <![CDATA[
+        var direction = window.getComputedStyle(this.parentNode, null).direction;
+        this.parentNode.advanceSelectedTab(direction == 'ltr' ? 1 : -1, this.arrowKeysShouldWrap);
+      ]]>
+      </handler>
+
+      <handler event="keydown" keycode="VK_UP" group="system" preventdefault="true">
+      <![CDATA[
+        this.parentNode.advanceSelectedTab(-1, this.arrowKeysShouldWrap);
+      ]]>
+      </handler>
+
+      <handler event="keydown" keycode="VK_DOWN" group="system" preventdefault="true">
+      <![CDATA[
+        this.parentNode.advanceSelectedTab(1, this.arrowKeysShouldWrap);
+      ]]>
+      </handler>
+
+      <handler event="keydown" keycode="VK_HOME" group="system" preventdefault="true">
+      <![CDATA[
+        this.parentNode._selectNewTab(this.parentNode.childNodes[0]);
+      ]]>
+      </handler>
+
+      <handler event="keydown" keycode="VK_END" group="system" preventdefault="true">
+      <![CDATA[
+        var tabs = this.parentNode.childNodes;
+        this.parentNode._selectNewTab(tabs[tabs.length - 1], -1);
+      ]]>
+      </handler>
+    </handlers>
+  </binding>
+
+</bindings>
+

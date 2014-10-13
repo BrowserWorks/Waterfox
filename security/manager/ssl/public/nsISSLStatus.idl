@@ -1,0 +1,35 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIX509Cert;
+
+[scriptable, uuid(3f1fcd83-c5a9-4cd1-a250-7676ca7c7e34)]
+interface nsISSLStatus : nsISupports {
+  readonly attribute nsIX509Cert serverCert;
+
+  readonly attribute string cipherName;
+  readonly attribute unsigned long keyLength;
+  readonly attribute unsigned long secretKeyLength;
+
+  readonly attribute boolean isDomainMismatch;
+  readonly attribute boolean isNotValidAtThisTime;
+
+  /* Note: To distinguish between 
+   *         "unstrusted because missing or untrusted issuer"
+   *       and 
+   *         "untrusted because self signed"
+   *       query nsIX509Cert3::isSelfSigned 
+   */
+  readonly attribute boolean isUntrusted;
+
+  /**
+   * True only if (and after) serverCert was successfully validated as
+   * Extended Validation (EV).
+   */
+  readonly attribute boolean isExtendedValidation;
+};

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<resources>
+
+    <!--
+        Base application theme. This could be overridden by GeckoBaseTheme
+        in other res/values-XXX/themes.xml.
+    -->
+    <style name="GeckoBase" parent="@android:style/Theme.Holo.Light">
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="arrowPopupWidth">fill_parent</item>
+    </style>
+
+    <style name="GeckoDialogBase" parent="@android:style/Theme.Holo.Light.Dialog">
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+
+    <style name="GeckoTitleDialogBase" parent="@android:style/Theme.Holo.Light.Dialog" />
+
+    <style name="GeckoPreferencesBase" parent="GeckoBase">
+        <item name="android:windowActionBar">true</item>
+        <item name="android:windowNoTitle">false</item>
+        <item name="android:actionBarStyle">@style/ActionBar.GeckoPreferences</item>
+    </style>
+
+    <!--
+        Activity based themes.
+    -->
+    <style name="Gecko.App">
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:panelBackground">@drawable/menu_panel_bg</item>
+        <item name="android:listViewStyle">@style/Widget.ListView</item>
+        <item name="android:gridViewStyle">@style/Widget.GridView</item>
+        <item name="android:spinnerStyle">@style/Widget.Spinner</item>
+        <item name="android:spinnerItemStyle">@style/Widget.TextView.SpinnerItem</item>
+        <item name="android:spinnerDropDownItemStyle">@style/Widget.DropDownItem.Spinner</item>
+        <item name="menuItemActionBarStyle">@style/Widget.MenuItemActionBar</item>
+        <item name="menuItemActionViewStyle">@style/Widget.MenuItemActionView</item>
+        <item name="menuItemDefaultStyle">@style/Widget.MenuItemDefault</item>
+        <item name="menuItemSecondaryActionBarStyle">@style/Widget.MenuItemSecondaryActionBar</item>
+        <item name="menuItemShareActionButtonStyle">@style/Widget.MenuItemSecondaryActionBar</item>
+        <item name="bookmarksListViewStyle">@style/Widget.BookmarksListView</item>
+        <item name="topSitesGridItemViewStyle">@style/Widget.TopSitesGridItemView</item>
+        <item name="topSitesGridViewStyle">@style/Widget.TopSitesGridView</item>
+        <item name="panelGridViewStyle">@style/Widget.PanelGridView</item>
+        <item name="topSitesThumbnailViewStyle">@style/Widget.TopSitesThumbnailView</item>
+        <item name="homeListViewStyle">@style/Widget.HomeListView</item>
+        <item name="geckoMenuListViewStyle">@style/Widget.GeckoMenuListView</item>
+        <item name="menuItemActionModeStyle">@style/GeckoActionBar.Button</item>
+        <item name="android:actionModeStyle">@style/GeckoActionBar</item>
+        <item name="android:actionButtonStyle">@style/GeckoActionBar.Button</item>
+        <item name="android:actionModeCutDrawable">@drawable/ab_cut</item>
+        <item name="android:actionModeCopyDrawable">@drawable/ab_copy</item>
+        <item name="android:actionModePasteDrawable">@drawable/ab_paste</item>
+        <item name="android:actionModeSelectAllDrawable">@drawable/ab_select_all</item>
+        <item name="floatingHintEditTextStyle">@style/FloatingHintEditText</item>
+    </style>
+
+</resources>

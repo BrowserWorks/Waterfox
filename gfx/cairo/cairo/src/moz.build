@@ -1,0 +1,219 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+CONFIGURE_SUBST_FILES += ['cairo-features.h']
+
+EXPORTS.cairo += [
+    'cairo-deprecated.h',
+    'cairo-platform.h',
+    'cairo-rename.h',
+    'cairo-tee.h',
+    'cairo-version.h',
+    'cairo.h',
+    'pixman-rename.h',
+]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] not in ('cocoa', 'uikit'):
+    EXPORTS.cairo += [
+        'cairo-pdf.h',
+    ]
+    SOURCES += [
+        'cairo-base85-stream.c',
+        'cairo-cff-subset.c',
+        'cairo-deflate-stream.c',
+        'cairo-pdf-operators.c',
+        'cairo-pdf-surface.c',
+        'cairo-truetype-subset.c',
+        # cairo-type1-subset.c should be here, but it's only supported on freetype platforms
+        'cairo-type1-fallback.c',
+        'cairo-type3-glyph-surface.c',
+    ]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
+    EXPORTS.cairo += [
+        'cairo-win32.h',
+    ]
+    if CONFIG['MOZ_ENABLE_DWRITE_FONT']:
+        SOURCES += [
+            'cairo-dwrite-font.cpp',
+        ]
+    if CONFIG['MOZ_ENABLE_D2D_SURFACE']:
+        SOURCES += [
+            'cairo-d2d-surface.cpp',
+        ]
+    SOURCES += [
+        'cairo-win32-font.c',
+        'cairo-win32-surface.c',
+    ]
+    DEFINES['DISABLE_SOME_FLOATING_POINT'] = True
+    DEFINES['CAIRO_WIN32_STATIC_BUILD'] = True
+    if CONFIG['NS_PRINTING']:
+        SOURCES += [
+            'cairo-win32-printing-surface.c',
+        ]
+    else:
+        DEFINES['CAIRO_OMIT_WIN32_PRINTING'] = True
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+    EXPORTS.cairo += [
+        'cairo-quartz-image.h',
+        'cairo-quartz.h',
+    ]
+    SOURCES += [
+        'cairo-quartz-font.c',
+        'cairo-quartz-image-surface.c',
+        'cairo-quartz-surface.c',
+    ]
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'beos':
+    EXPORTS.cairo += [
+        'cairo-beos.h',
+    ]
+    SOURCES += [
+        'cairo-beos-surface.cpp',
+    ]
+elif CONFIG['MOZ_WIDGET_GTK']:
+    EXPORTS.cairo += [
+        'cairo-ps.h',
+    ]
+    SOURCES += [
+        'cairo-ps-surface.c',
+    ]
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'qt':
+    EXPORTS.cairo += [
+        'cairo-qt.h',
+    ]
+    SOURCES += [
+        'cairo-qt-surface.cpp',
+    ]
+
+if CONFIG['MOZ_X11']:
+    EXPORTS.cairo += [
+        'cairo-xlib-xrender.h',
+        'cairo-xlib.h',
+    ]
+    SOURCES += [
+        'cairo-xlib-display.c',
+        'cairo-xlib-screen.c',
+        'cairo-xlib-surface.c',
+        'cairo-xlib-visual.c',
+    ]
+
+if CONFIG['MOZ_ENABLE_CAIRO_FT']:
+    EXPORTS.cairo += [
+        'cairo-ft.h',
+    ]
+    SOURCES += [
+        'cairo-ft-font.c',
+        'cairo-type1-subset.c',
+    ]
+
+SOURCES += [
+    'cairo-bentley-ottmann-rectangular.c', # redefinition of '_cairo_bo_trap'
+    'cairo-bentley-ottmann-rectilinear.c', # redefinition of '_cairo_bo_trap'
+    'cairo-bentley-ottmann.c', # redefinition of '_cairo_bo_trap'
+    'cairo-surface-wrapper.c', #  redefinition of '_copy_transformed_pattern'
+]
+
+UNIFIED_SOURCES += [
+    'cairo-analysis-surface.c',
+    'cairo-arc.c',
+    'cairo-array.c',
+    'cairo-atomic.c',
+    'cairo-base64-stream.c',
+    'cairo-botor-scan-converter.c',
+    'cairo-boxes.c',
+    'cairo-cache.c',
+    'cairo-clip.c',
+    'cairo-color.c',
+    'cairo-composite-rectangles.c',
+    'cairo-debug.c',
+    'cairo-device.c',
+    'cairo-fixed.c',
+    'cairo-font-face-twin-data.c',
+    'cairo-font-face-twin.c',
+    'cairo-font-face.c',
+    'cairo-font-options.c',
+    'cairo-freed-pool.c',
+    'cairo-freelist.c',
+    'cairo-gstate.c',
+    'cairo-hash.c',
+    'cairo-hull.c',
+    'cairo-image-info.c',
+    'cairo-image-surface.c',
+    'cairo-lzw.c',
+    'cairo-matrix.c',
+    'cairo-misc.c',
+    'cairo-mutex.c',
+    'cairo-observer.c',
+    'cairo-output-stream.c',
+    'cairo-paginated-surface.c',
+    'cairo-path-bounds.c',
+    'cairo-path-fill.c',
+    'cairo-path-fixed.c',
+    'cairo-path-in-fill.c',
+    'cairo-path-stroke.c',
+    'cairo-path.c',
+    'cairo-pattern.c',
+    'cairo-pen.c',
+    'cairo-polygon.c',
+    'cairo-recording-surface.c',
+    'cairo-rectangle.c',
+    'cairo-rectangular-scan-converter.c',
+    'cairo-region.c',
+    'cairo-scaled-font-subsets.c',
+    'cairo-scaled-font.c',
+    'cairo-slope.c',
+    'cairo-spans.c',
+    'cairo-spline.c',
+    'cairo-stroke-style.c',
+    'cairo-surface-clipper.c',
+    'cairo-surface-fallback.c',
+    'cairo-surface-offset.c',
+    'cairo-surface-snapshot.c',
+    'cairo-surface-subsurface.c',
+    'cairo-surface.c',
+    'cairo-tee-surface.c',
+    'cairo-tor-scan-converter.c',
+    'cairo-toy-font-face.c',
+    'cairo-traps.c',
+    'cairo-unicode.c',
+    'cairo-user-font.c',
+    'cairo-version.c',
+    'cairo-wideint.c',
+    'cairo.c',
+]
+
+MSVC_ENABLE_PGO = True
+
+FINAL_LIBRARY = 'gkmedias'
+
+DEFINES['PACKAGE_VERSION'] = '"moz"'
+DEFINES['PACKAGE_BUGREPORT'] = '"http://bugzilla.mozilla.org/"'
+
+for var in ('CAIRO_HAS_PTHREAD', '_GNU_SOURCE'):
+    DEFINES[var] = True
+
+for var in ('MOZ_TREE_CAIRO', 'MOZ_TREE_PIXMAN'):
+    if CONFIG[var]:
+        DEFINES[var] = True
+
+if CONFIG['MOZ_TREE_FREETYPE']:
+    DEFINES['HAVE_FT_LIBRARY_SETLCDFILTER'] = True
+    DEFINES['FT_LCD_FILTER_H'] = '%s/modules/freetype2/include/freetype/ftlcdfil.h' % TOPSRCDIR
+
+# Suppress warnings in third-party code.
+if CONFIG['GNU_CC']:
+    CFLAGS += [
+        '-Wno-enum-compare',
+        '-Wno-int-to-pointer-cast',
+        '-Wno-sign-compare',
+        '-Wno-type-limits',
+    ]
+    if CONFIG['CLANG_CXX']:
+        CFLAGS += [
+            '-Wno-incompatible-pointer-types',
+            '-Wno-tautological-compare',
+            '-Wno-tautological-constant-out-of-range-compare',
+        ]

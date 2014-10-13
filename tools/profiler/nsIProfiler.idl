@@ -1,0 +1,40 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ 
+#include "nsISupports.idl"
+
+[scriptable, uuid(d64e01e1-603f-4478-bb9e-47d502f23f7b)]
+interface nsIProfiler : nsISupports
+{
+  void StartProfiler(in uint32_t aEntries, in double aInterval,
+                      [array, size_is(aFeatureCount)] in string aFeatures,
+                      in uint32_t aFeatureCount,
+                      [array, size_is(aFilterCount), optional] in string aThreadNameFilters,
+                      [optional] in uint32_t aFilterCount);
+  void StopProfiler();
+  boolean IsPaused();
+  void PauseSampling();
+  void ResumeSampling();
+  void AddMarker(in string aMarker);
+  string GetProfile();
+  [implicit_jscontext]
+  jsval getProfileData();
+  boolean IsActive();
+  void GetResponsivenessTimes(out uint32_t aCount, [retval, array, size_is(aCount)] out double aResult);
+  void GetFeatures(out uint32_t aCount, [retval, array, size_is(aCount)] out string aFeatures);
+
+  /**
+   * Returns a JSON string of an array of shared library objects.
+   * Every object has three properties: start, end, and name.
+   * start and end are integers describing the address range that the library
+   * occupies in memory. name is the path of the library as a string.
+   *
+   * On Windows profiling builds, the shared library objects will have
+   * additional pdbSignature and pdbAge properties for uniquely identifying
+   * shared library versions for stack symbolication.
+   */
+  AString getSharedLibraryInformation();
+};
+

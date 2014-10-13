@@ -1,0 +1,259 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/**
+ * This file contains an interface to the Permission Manager,
+ * used to persistenly store permissions for different object types (cookies, 
+ * images etc) on a site-by-site basis.
+ *
+ * This service broadcasts the following notification when the permission list
+ * is changed:
+ *
+ * topic  : "perm-changed" (PERM_CHANGE_NOTIFICATION)
+ *          broadcast whenever the permission list changes in some way. there
+ *          are four possible data strings for this notification; one
+ *          notification will be broadcast for each change, and will involve
+ *          a single permission.
+ * subject: an nsIPermission interface pointer representing the permission object
+ *          that changed.
+ * data   : "deleted"
+ *          a permission was deleted. the subject is the deleted permission.
+ *          "added"
+ *          a permission was added. the subject is the added permission.
+ *          "changed"
+ *          a permission was changed. the subject is the new permission.
+ *          "cleared"
+ *          the entire permission list was cleared. the subject is null.
+ */
+
+#include "nsISupports.idl"
+
+interface nsIURI;
+interface nsIObserver;
+interface nsIPrincipal;
+interface nsIDOMWindow;
+interface nsIPermission;
+interface nsISimpleEnumerator;
+
+[scriptable, uuid(c9fec678-f194-43c9-96b0-7bd9dbdd6bb0)]
+interface nsIPermissionManager : nsISupports
+{
+  /**
+   * Predefined return values for the testPermission method and for
+   * the permission param of the add method
+   * NOTE: UNKNOWN_ACTION (0) is reserved to represent the
+   * default permission when no entry is found for a host, and
+   * should not be used by consumers to indicate otherwise.
+   */
+  const uint32_t UNKNOWN_ACTION = 0;
+  const uint32_t ALLOW_ACTION = 1;
+  const uint32_t DENY_ACTION = 2;
+  const uint32_t PROMPT_ACTION = 3;
+
+  /**
+   * Predefined expiration types for permissions.  Permissions can be permanent
+   * (never expire), expire at the end of the session, or expire at a specified
+   * time. Permissions that expire at the end of a session may also have a
+   * specified expiration time.
+   */
+  const uint32_t EXPIRE_NEVER = 0;
+  const uint32_t EXPIRE_SESSION = 1;
+  const uint32_t EXPIRE_TIME = 2;
+
+  /**
+   * Add permission information for a given URI and permission type. This
+   * operation will cause the type string to be registered if it does not
+   * currently exist. If a permission already exists for a given type, it
+   * will be modified.
+   *
+   * @param uri         the uri to add the permission for
+   * @param type        a case-sensitive ASCII string, identifying the consumer.
+   *                    Consumers should choose this string to be unique, with
+   *                    respect to other consumers.
+   * @param permission  an integer representing the desired action (e.g. allow
+   *                    or deny). The interpretation of this number is up to the
+   *                    consumer, and may represent different actions for different
+   *                    types. Consumers may use one of the enumerated permission
+   *                    actions defined above, for convenience.
+   *                    NOTE: UNKNOWN_ACTION (0) is reserved to represent the
+   *                    default permission when no entry is found for a host, and
+   *                    should not be used by consumers to indicate otherwise.
+   * @param expiretype  a constant defining whether this permission should
+   *                    never expire (EXPIRE_NEVER), expire at the end of the
+   *                    session (EXPIRE_SESSION), or expire at a specified time
+   *                    (EXPIRE_TIME).
+   * @param expiretime  an integer representation of when this permission
+   *                    should be forgotten (milliseconds since Jan 1 1970 0:00:00). 
+   */
+  void add(in nsIURI uri,
+           in string type,
+           in uint32_t permission,
+           [optional] in uint32_t expireType,
+           [optional] in int64_t expireTime);
+
+  /**
+   * Add permission information for a given principal.
+   * It is internally calling the other add() method using the nsIURI from the
+   * principal.
+   * Passing a system principal will be a no-op because they will always be
+   * granted permissions.
+   */
+  void addFromPrincipal(in nsIPrincipal principal, in string typed,
+                        in uint32_t permission,
+                        [optional] in uint32_t expireType,
+                        [optional] in int64_t expireTime);
+
+  /**
+   * Remove permission information for a given host string and permission type.
+   * The host string represents the exact entry in the permission list (such as
+   * obtained from the enumerator), not a URI which that permission might apply
+   * to.
+   *
+   * @param host   the host to remove the permission for
+   * @param type   a case-sensitive ASCII string, identifying the consumer. 
+   *               The type must have been previously registered using the
+   *               add() method.
+   */
+  void remove(in AUTF8String host,
+              in string type);
+
+  /**
+   * Remove permission information for a given principal.
+   * This is internally calling remove() with the host from the principal's URI.
+   * Passing system principal will be a no-op because we never add them to the
+   * database.
+   */
+  void removeFromPrincipal(in nsIPrincipal principal, in string type);
+
+  /**
+   * Clear permission information for all websites.
+   */
+  void removeAll();
+
+  /**
+   * Test whether a website has permission to perform the given action.
+   * @param uri     the uri to be tested
+   * @param type    a case-sensitive ASCII string, identifying the consumer
+   * @param return  see add(), param permission. returns UNKNOWN_ACTION when
+   *                there is no stored permission for this uri and / or type.
+   */
+  uint32_t testPermission(in nsIURI uri,
+                          in string type);
+
+  /**
+   * Test whether the principal has the permission to perform a given action.
+   * System principals will always have permissions granted.
+   */
+  uint32_t testPermissionFromPrincipal(in nsIPrincipal principal,
+                                       in string type);
+
+  /**
+   * Test whether the principal associated with the window's document has the
+   * permission to perform a given action.  System principals will always
+   * have permissions granted.
+   */
+  uint32_t testPermissionFromWindow(in nsIDOMWindow window,
+                                    in string type);
+
+  /**
+   * Test whether a website has permission to perform the given action.
+   * This requires an exact hostname match, subdomains are not a match.
+   * @param uri     the uri to be tested
+   * @param type    a case-sensitive ASCII string, identifying the consumer
+   * @param return  see add(), param permission. returns UNKNOWN_ACTION when
+   *                there is no stored permission for this uri and / or type.
+   */
+  uint32_t testExactPermission(in nsIURI uri,
+                               in string type);
+
+  /**
+   * See testExactPermission() above.
+   * System principals will always have permissions granted.
+   */
+  uint32_t testExactPermissionFromPrincipal(in nsIPrincipal principal,
+                                            in string type);
+
+  /**
+   * Test whether a website has permission to perform the given action
+   * ignoring active sessions.
+   * System principals will always have permissions granted.
+   *
+   * @param principal the principal
+   * @param type      a case-sensitive ASCII string, identifying the consumer
+   * @param return    see add(), param permission. returns UNKNOWN_ACTION when
+   *                  there is no stored permission for this uri and / or type.
+   */
+  uint32_t testExactPermanentPermission(in nsIPrincipal principal,
+                                        in string type);
+
+  /**
+   * Get the permission object associated with the given principal and action.
+   * @param principal The principal
+   * @param type      A case-sensitive ASCII string identifying the consumer
+   * @param exactHost If true, only the specific host will be matched,
+   *                  @see testExactPermission. If false, subdomains will
+   *                  also be searched, @see testPermission.
+   * @returns The matching permission object, or null if no matching object
+   *          was found. No matching object is equivalent to UNKNOWN_ACTION.
+   * @note Clients in general should prefer the test* methods unless they
+   *       need to know the specific stored details.
+   * @note This method will always return null for the system principal.
+   */
+  nsIPermission getPermissionObject(in nsIPrincipal principal,
+                                    in string type,
+                                    in boolean exactHost);
+
+   /**
+    * Increment or decrement our "refcount" of an app id.
+    *
+    * We use this refcount to determine an app's lifetime.  When an app's
+    * refcount goes to 0, we clear the permissions given to the app which are
+    * set to expire at the end of its session.
+    */
+   void addrefAppId(in unsigned long appId);
+   void releaseAppId(in unsigned long appId);
+
+  /**
+   * Allows enumeration of all stored permissions
+   * @return an nsISimpleEnumerator interface that allows access to
+   *         nsIPermission objects
+   */
+  readonly attribute nsISimpleEnumerator enumerator;
+
+  /**
+   * Remove all permissions associated with a given app id.
+   * @param aAppId       The appId of the app
+   * @param aBrowserOnly Whether we should remove permissions associated with
+   *                     a browser element (true) or all permissions (false).
+   */
+  void removePermissionsForApp(in unsigned long appId,
+                               in boolean browserOnly);
+
+  /**
+   * If the current permission is set to expire, reset the expiration time. If
+   * there is no permission or the current permission does not expire, this
+   * method will silently return.
+   *
+   * @param sessionExpiretime  an integer representation of when this permission
+   *                           should be forgotten (milliseconds since
+   *                           Jan 1 1970 0:00:00), if it is currently
+   *                           EXPIRE_SESSION.
+   * @param sessionExpiretime  an integer representation of when this permission
+   *                           should be forgotten (milliseconds since
+   *                           Jan 1 1970 0:00:00), if it is currently
+   *                           EXPIRE_TIME.
+   */
+  void updateExpireTime(in nsIPrincipal principal,
+                        in string type,
+                        in boolean exactHost,
+                        in uint64_t sessionExpireTime,
+                        in uint64_t persistentExpireTime);
+};
+
+%{ C++
+#define NS_PERMISSIONMANAGER_CONTRACTID "@mozilla.org/permissionmanager;1"
+
+#define PERM_CHANGE_NOTIFICATION "perm-changed"
+%}

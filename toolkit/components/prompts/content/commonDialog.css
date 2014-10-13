@@ -1,0 +1,22 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"); /* set default namespace to XUL */
+
+#infoContainer {
+  max-width: 45em;
+}
+
+#info\.body {
+  -moz-user-focus: normal;
+  -moz-user-select: text;
+  cursor: text !important;
+  white-space: pre-wrap;
+  unicode-bidi: -moz-plaintext;
+}
+
+#loginLabel, #password1Label {
+  text-align: right;
+}
+

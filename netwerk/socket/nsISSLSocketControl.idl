@@ -1,0 +1,86 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIInterfaceRequestor;
+
+%{C++
+template<class T> class nsTArray;
+class nsCString;
+%}
+[ref] native nsCStringTArrayRef(nsTArray<nsCString>);
+
+[scriptable, builtinclass, uuid(ec72446c-8241-457f-ba75-83d214392289)]
+interface nsISSLSocketControl : nsISupports {
+    attribute nsIInterfaceRequestor     notificationCallbacks;
+
+    void proxyStartSSL();
+    void StartTLS();
+
+    /* NPN (Next Protocol Negotiation) is a mechanism for
+       negotiating the protocol to be spoken inside the SSL
+       tunnel during the SSL handshake. The NPNList is the list
+       of offered client side protocols. setNPNList() needs to
+       be called before any data is read or written (including the
+       handshake to be setup correctly. The server determines the
+       priority when multiple matches occur, but if there is no overlap
+       the first protocol in the list is used. */
+
+    [noscript] void setNPNList(in nsCStringTArrayRef aNPNList);
+
+    /* negotiatedNPN is '' if no NPN list was provided by the client,
+     * or if the server did not select any protocol choice from that
+     * list. That also includes the case where the server does not
+     * implement NPN.
+     *
+     * If negotiatedNPN is read before NPN has progressed to the point
+     * where this information is available NS_ERROR_NOT_CONNECTED is
+     * raised.
+     */
+    readonly attribute ACString negotiatedNPN;
+
+    /* Determine if a potential SSL connection to hostname:port with
+     * a desired NPN negotiated protocol of npnProtocol can use the socket
+     * associated with this object instead of making a new one.
+     */
+    boolean joinConnection(
+      in ACString npnProtocol, /* e.g. "spdy/2" */
+      in ACString hostname,
+      in long port);
+
+    /* The Key Exchange Algorithm is used when determining whether or
+       not to do false start and whether or not HTTP/2 can be used.
+
+       After a handshake is complete it can be read from KEAUsed,
+       before a handshake is started it may be set through KEAExpected.
+       The values correspond to the SSLKEAType enum in NSS or the
+       KEY_EXCHANGE_UNKNOWN constant defined below.
+
+       KEAKeyBits is the size/security-level used for the KEA.
+    */
+
+    [infallible] readonly attribute short KEAUsed;
+    [infallible] attribute short KEAExpected;
+    [infallible] readonly attribute unsigned long KEAKeyBits;
+
+    const short KEY_EXCHANGE_UNKNOWN = -1;
+
+    /*
+     * The original flags from the socket provider.
+     */
+    readonly attribute uint32_t providerFlags;
+
+    /* These values are defined by TLS. */
+    const short SSL_VERSION_3   = 0x0300;
+    const short TLS_VERSION_1   = 0x0301;
+    const short TLS_VERSION_1_1 = 0x0302;
+    const short TLS_VERSION_1_2 = 0x0303;
+    const short SSL_VERSION_UNKNOWN = -1;
+
+    [infallible] readonly attribute short SSLVersionUsed;
+};
+

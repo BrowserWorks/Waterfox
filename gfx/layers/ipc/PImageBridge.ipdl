@@ -1,0 +1,60 @@
+/* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+include LayersSurfaces;
+include LayersMessages;
+include protocol PCompositable;
+include protocol PLayer;
+include protocol PTexture;
+include ProtocolTypes;
+
+include "mozilla/GfxMessageUtils.h";
+
+using struct mozilla::layers::TextureInfo from "mozilla/layers/CompositorTypes.h";
+using mozilla::layers::TextureFlags from "mozilla/layers/CompositorTypes.h";
+
+namespace mozilla {
+namespace layers {
+
+/**
+ * The PImageBridge protocol is used to allow isolated threads or processes to push
+ * frames directly to the compositor thread/process without relying on the main thread
+ * which might be too busy dealing with content script.
+ */
+intr protocol PImageBridge
+{
+  manages PCompositable;
+  manages PTexture;
+
+child:
+  async ParentAsyncMessages(AsyncParentMessageData[] aMessages);
+
+parent:
+
+  sync Update(CompositableOperation[] ops) returns (EditReply[] reply);
+  async UpdateNoSwap(CompositableOperation[] ops);
+
+  // First step of the destruction sequence. This puts ImageBridge
+  // in a state in which it can't send asynchronous messages
+  // so as to not race with the upcomming Stop message and destruction.
+  // In the child side, the Stop message is not sent right after WillStop,
+  // it is scheduled in the ImageBridgeChild's message queue in order to ensure
+  // that all of the messages from the parent side have been received and processed
+  // before sending Stop, and that after Stop returns, there is no message in
+  // flight on any side and we can safely destroy the channel and threads.
+  sync WillStop();
+  // Second step
+  sync Stop();
+
+  sync PCompositable(TextureInfo aInfo) returns (uint64_t id);
+  async PTexture(SurfaceDescriptor aSharedData, TextureFlags aTextureFlags);
+
+  async ChildAsyncMessages(AsyncChildMessageData[] aMessages);
+};
+
+
+} // namespace
+} // namespace
+

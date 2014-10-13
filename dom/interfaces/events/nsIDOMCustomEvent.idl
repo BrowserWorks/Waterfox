@@ -1,0 +1,19 @@
+/* vim: set shiftwidth=2 tabstop=8 autoindent cindent expandtab: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIDOMEvent.idl"
+interface nsIVariant;
+
+[builtinclass, uuid(b56ae6ca-c822-489e-be71-2a9f3c56082e)]
+interface nsIDOMCustomEvent : nsIDOMEvent
+{
+
+  readonly attribute nsIVariant detail;
+
+  void initCustomEvent(in DOMString  typeArg, 
+                       in boolean    canBubbleArg, 
+                       in boolean    cancelableArg, 
+                       in nsIVariant detailArg);
+};

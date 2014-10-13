@@ -1,0 +1,33 @@
+FINAL_LIBRARY = 'gkmedias'
+DEFINES["HAVE_CONFIG_H"] = 1
+LOCAL_INCLUDES += ['/media/gstreamer/gst-plugins-base']
+LOCAL_INCLUDES += ['/media/gstreamer/gst-plugins-base/gst-libs/gst/tag']
+LOCAL_INCLUDES += ['/media/gstreamer/glib',
+ '/media/gstreamer/glib/gio',
+ '/media/gstreamer/glib/glib',
+ '/media/gstreamer/glib/gmodule',
+ '/media/gstreamer/gst-plugins-bad',
+ '/media/gstreamer/gst-plugins-bad/gst-libs',
+ '/media/gstreamer/gst-plugins-base',
+ '/media/gstreamer/gst-plugins-base/gst-libs',
+ '/media/gstreamer/gst-plugins-good',
+ '/media/gstreamer/gst-plugins-good/gst-libs',
+ '/media/gstreamer/gstreamer',
+ '/media/gstreamer/gstreamer/gst-libs',
+ '/media/gstreamer/gstreamer/libs',
+ '/media/gstreamer/gstreamer/libs/gst-libs',
+ '/media/gstreamer/orc']
+# libgsttag_1.0
+SOURCES += ['../../../../../gst-plugins-base/gst-libs/gst/tag/gstexiftag.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/tag/gstid3tag.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/tag/gsttagdemux.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/tag/gsttageditingprivate.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/tag/gsttagmux.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/tag/gstvorbistag.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/tag/gstxmptag.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/tag/id3v2.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/tag/id3v2frames.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/tag/lang.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/tag/licenses.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/tag/tags.c',
+ '../../../../../gst-plugins-base/gst-libs/gst/tag/xmpwriter.c']

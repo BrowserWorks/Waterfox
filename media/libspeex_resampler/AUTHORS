@@ -1,0 +1,5 @@
+Gregory Maxwell (greg@xiph.org)
+Jean-Marc Valin - Original opusdec implementation / Resampler
+Thorvald Natvig - Resampler
+Michael Smith   - Ogginfo (basis of opusinfo)
+John Edwards    - Windows audio output

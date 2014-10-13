@@ -1,0 +1,60 @@
+/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIURI;
+interface nsIInterfaceRequestor;
+
+[scriptable, uuid(fa580a8d-f4a4-47c5-8ade-4f9786e8d1de)]
+interface nsISpeculativeConnect : nsISupports
+{
+    /**
+     * Called as a hint to indicate a new transaction for the URI is likely coming
+     * soon. The implementer may use this information to start a TCP
+     * and/or SSL level handshake for that resource immediately so that it is
+     * ready and/or progressed when the transaction is actually submitted.
+     *
+     * No obligation is taken on by the implementer, nor is the submitter obligated
+     * to actually open the new channel. 
+     *
+     * @param aURI the URI of the hinted transaction
+     * @param aCallbacks any security callbacks for use with SSL for interfaces
+     *        such as nsIBadCertListener. May be null.
+     *
+     */
+    void speculativeConnect(in nsIURI aURI,
+                            in nsIInterfaceRequestor aCallbacks);
+
+};
+
+/**
+ * This is used to override the default values for various values (documented
+ * inline) to determine whether or not to actually make a speculative
+ * connection.
+ */
+[builtinclass, uuid(2b6d6fb6-ab28-4f4c-af84-bfdbb7866d72)]
+interface nsISpeculativeConnectionOverrider : nsISupports
+{
+    /**
+     * Used to determine the maximum number of unused speculative connections
+     * we will have open for a host at any one time
+     */
+    [infallible] readonly attribute unsigned long parallelSpeculativeConnectLimit;
+
+    /**
+     * Used to loosen the restrictions nsHttpConnectionMgr::RestrictConnections
+     * to allow more speculative connections when we're unsure if a host will
+     * connect via SPDY or not.
+     */
+    [infallible] readonly attribute boolean ignorePossibleSpdyConnections;
+
+    /**
+     * Used to determine if we will ignore the existence of any currently idle
+     * connections when we decide whether or not to make a speculative
+     * connection.
+     */
+    [infallible] readonly attribute boolean ignoreIdle;
+};

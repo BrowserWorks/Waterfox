@@ -1,0 +1,83 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Definitions used by constants.js.
+weave_version := 1.34.0
+weave_id      := {340c2bbc-ce74-4362-90b5-7c26312808ef}
+
+# Preprocess files.
+SYNC_PP := modules/constants.js
+SYNC_PP_FLAGS := \
+ -Dweave_version=$(weave_version) \
+ -Dweave_id='$(weave_id)'
+SYNC_PP_PATH = $(FINAL_TARGET)/modules/services-sync
+PP_TARGETS += SYNC_PP
+
+# The set of core JavaScript modules for Sync. These are copied as-is.
+sync_modules := \
+  addonsreconciler.js \
+  addonutils.js \
+  browserid_identity.js \
+  engines.js \
+  healthreport.jsm \
+  identity.js \
+  jpakeclient.js \
+  keys.js \
+  main.js \
+  notifications.js \
+  policies.js \
+  record.js \
+  resource.js \
+  rest.js \
+  service.js \
+  status.js \
+  userapi.js \
+  util.js \
+  $(NULL)
+
+# The set of JavaScript modules provide engines for Sync. These are
+# copied as-is.
+sync_engine_modules := \
+  addons.js \
+  bookmarks.js \
+  clients.js \
+  forms.js \
+  history.js \
+  passwords.js \
+  prefs.js \
+  tabs.js \
+  $(NULL)
+
+sync_stage_modules := \
+  cluster.js \
+  declined.js \
+  enginesync.js \
+  $(NULL)
+
+sync_testing_modules := \
+  fakeservices.js \
+  rotaryengine.js \
+  utils.js \
+  fxa_utils.js \
+  $(NULL)
+
+JS_EXPORTS_FILES := $(srcdir)/services-sync.js
+JS_EXPORTS_DEST = $(FINAL_TARGET)/$(PREF_DIR)
+INSTALL_TARGETS += JS_EXPORTS
+
+# Install JS module files.
+SYNC_MAIN_FILES := $(addprefix modules/,$(sync_modules))
+SYNC_MAIN_DEST = $(FINAL_TARGET)/modules/services-sync
+INSTALL_TARGETS += SYNC_MAIN
+
+SYNC_ENGINES_FILES := $(addprefix modules/engines/,$(sync_engine_modules))
+SYNC_ENGINES_DEST = $(FINAL_TARGET)/modules/services-sync/engines
+INSTALL_TARGETS += SYNC_ENGINES
+
+SYNC_STAGES_FILES := $(addprefix modules/stages/,$(sync_stage_modules))
+SYNC_STAGES_DEST = $(FINAL_TARGET)/modules/services-sync/stages
+INSTALL_TARGETS += SYNC_STAGES
+
+TESTING_JS_MODULES := $(addprefix modules-testing/,$(sync_testing_modules))
+TESTING_JS_MODULE_DIR := services/sync

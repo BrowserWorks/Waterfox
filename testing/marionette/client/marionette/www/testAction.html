@@ -1,0 +1,94 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE html>
+
+<html>
+<meta charset="UTF-8">
+<head>
+<title>Marionette Test</title>
+</head>
+<body>
+  <h1 id="testh1">Test Page</h1>
+  <button id="button1" style="position:absolute;left:0px;top:55px;" type="button" allowevents=true>button1</button>
+  <button id="button2" style="position:absolute;left:0px;top:355px;" type="button" allowevents=true>button2</button>
+  <button id="button3" style="position:absolute;left:0px;top:455px;" type="button" allowevents=true>button3</button>
+  <button id="button4" style="position:absolute;left:100px;top:455px;" type="button" allowevents=true>button4</button>
+  <button id="buttonScroll" style="position:absolute;left:100px;top:855px;" type="button" allowevents=true>buttonScroll</button>
+  <h2 id="hidden" style="visibility: hidden" class="linkClass">Hidden</h2>
+  <button id="buttonFlick" style="position:absolute;left:0px;top:255px;" type="button" allowevents=true>buttonFlick</button>
+  <script type="text/javascript">
+    var button3Timer = null;
+    var button4Timer = null;
+    //appends passed in text to the innerHTML of the event's target
+    function appendText(text) {
+      return function(evt) {
+         var element;
+         if (evt.type.indexOf("touch") !== -1) {
+           if (evt.type == "touchstart") {
+             element = evt.target;
+           }
+           else {
+             //since the target of touchstart is the target of all subsequent events, then
+             //changedTouches holds the current coordinates of this touch event, so we 
+             //use these coordinates to find the element under the touch event
+             var touches = evt.changedTouches;
+             var x = touches[0].clientX;
+             var y = touches[0].clientY;
+             element = document.elementFromPoint(x,y);
+           }
+         }
+         //handle mouse events or contextmenu
+         else {
+          element = evt.target;
+         }
+         element.innerHTML += text;
+      };
+    };
+    //use this function outside of attachListeners when you want to test sendMouseOnlyEvents on a target
+    function attachMouseListeners(element) {
+      element.addEventListener("contextmenu", appendText("-contextmenu"), false);
+      element.addEventListener("mousedown", appendText("-mousedown"), false);
+      element.addEventListener("mousemove", appendText("-mousemove"), false);
+      element.addEventListener("mouseup", appendText("-mouseup"), false);
+      element.addEventListener("click", appendText("-click"), false);
+    };
+    function attachListeners(id) {
+      var element = document.getElementById(id);
+      element.addEventListener("touchstart", appendText("-touchstart"), false);
+      element.addEventListener("touchmove", appendText("-touchmove"), false);
+      element.addEventListener("touchend", appendText("-touchend"), false);
+      element.addEventListener("touchcancel", appendText("-touchcancel"), false);
+      attachMouseListeners(element);
+    };
+    //for tracking time on an element
+    function addTimers(id, timer) {
+      var element = document.getElementById(id);
+      element.addEventListener("touchstart", function(evt) { timer = (new Date()).getTime();}, false);
+      element.addEventListener("touchend", function(evt) { timer = (new Date()).getTime() - timer; evt.target.innerHTML += "-" + timer;}, false);
+    }
+    attachListeners("button1");
+    attachListeners("button2");
+    attachListeners("button3");
+    attachListeners("button4");
+    attachListeners("buttonScroll");
+    addTimers("button3");
+    addTimers("button4");
+    var buttonFlick = document.getElementById("buttonFlick");
+    attachMouseListeners(buttonFlick);
+    function createDelayed() {
+      var newButton = document.createElement("button");
+      newButton.id = "delayed";
+      newButton.setAttribute("style", "position:absolute;left:220px;top:455px;");
+      var content = document.createTextNode("delayed");
+      newButton.appendChild(content);
+      document.body.appendChild(newButton);
+      newButton.addEventListener("mousemove", appendText("-mousemove"), false);
+      newButton.addEventListener("mouseup", appendText("-mouseup"), false);
+      newButton.addEventListener("click", appendText("-click"), false);
+    };
+    window.setTimeout(createDelayed, 5000);
+  </script>
+</body>
+</html>

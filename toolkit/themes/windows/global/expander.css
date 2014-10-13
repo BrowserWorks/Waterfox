@@ -1,0 +1,14 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ 
+.expanderButton {
+  cursor: pointer !important;
+}
+
+.settingsContainer {
+  padding-top: 3px;
+  padding-bottom: 5px;
+  -moz-padding-start: 20px;
+  -moz-padding-end: 5px;
+}

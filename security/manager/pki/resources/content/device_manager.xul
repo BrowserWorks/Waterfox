@@ -1,0 +1,89 @@
+<?xml version="1.0"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<!DOCTYPE dialog [
+<!ENTITY % deviceManangerDTD SYSTEM "chrome://pippki/locale/deviceManager.dtd">
+%deviceManangerDTD;
+<!ENTITY % pippkiDTD SYSTEM "chrome://pippki/locale/pippki.dtd" >
+%pippkiDTD;
+]>
+
+<dialog id="devicemanager"
+	windowtype="mozilla:devicemanager"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" 
+        title="&devmgr.title;"
+        style="&devmgr.style;"
+        persist="screenX screenY width height"
+        onload="LoadModules();"
+        buttons="accept">
+
+<stringbundleset id="stringbundleset">
+  <stringbundle id="pippki_bundle" src="chrome://pippki/locale/pippki.properties"/>
+  <stringbundle id="pipnss_bundle" src="chrome://pipnss/locale/pipnss.properties"/>
+</stringbundleset>
+
+<script type="application/javascript" src="chrome://pippki/content/device_manager.js"/>
+
+<grid flex="1" style="margin:5px">
+  <columns>
+    <column flex="1"/> 
+    <column flex="3"/> 
+    <column/>
+  </columns>
+  <rows>
+    <row flex="1">
+      <vbox> <!-- List of devices -->
+        <tree id="device_tree" seltype="single"
+              onselect="enableButtons();" hidecolumnpicker="true"
+              flex="1" style="min-width: 15em">
+          <treecols> 
+            <treecol id="deviceCol" flex="1" primary="true" label="&devmgr.devlist.label;"/>
+          </treecols>
+          <treechildren id="device_list"/>
+        </tree>
+      </vbox> <!-- / List of devices -->
+      <vbox> <!-- Device status -->
+        <tree id="info_tree" seltype="single" hidecolumnpicker="true"
+              flex="1" style="min-width: 10em">
+          <treecols> 
+            <treecol id="title1Col" flex="5" primary="true" label="&devmgr.details.title;"/> 
+            <treecol id="title2Col" flex="7" label="&devmgr.details.title2;"/> 
+          </treecols>
+          <treechildren id="info_list"/>
+        </tree>
+      </vbox> <!-- / Device status -->
+      <vbox> <!-- Buttons for manipulating devices -->
+        <button id="login_button" 
+                label="&devmgr.button.login.label;"
+                accesskey="&devmgr.button.login.accesskey;"
+                oncommand="doLogin();" disabled="true"/> 
+        <button id="logout_button" 
+                label="&devmgr.button.logout.label;"
+                accesskey="&devmgr.button.logout.accesskey;"
+                oncommand="doLogout();" disabled="true"/> 
+        <button id="change_pw_button" 
+                label="&devmgr.button.changepw.label;"
+                accesskey="&devmgr.button.changepw.accesskey;"
+                oncommand="changePassword();" disabled="true"/> 
+        <button id="load_button" 
+                label="&devmgr.button.load.label;"
+                accesskey="&devmgr.button.load.accesskey;"
+                oncommand="doLoad();"/> 
+        <button id="unload_button" 
+                label="&devmgr.button.unload.label;"
+                accesskey="&devmgr.button.unload.accesskey;"
+                oncommand="doUnload();" disabled="true"/> 
+        <button id="fipsbutton" 
+                label=""
+                accesskey="&devmgr.button.fips.accesskey;"
+                oncommand="toggleFIPS();"/>
+      </vbox> <!-- / Buttons for manipulating devices -->
+    </row>
+  </rows>
+</grid>
+
+</dialog>

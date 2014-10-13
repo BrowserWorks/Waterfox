@@ -1,0 +1,52 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIDOMHTMLElement.idl"
+
+/**
+ * The nsIDOMHTMLCanvasElement interface is the interface to a HTML
+ * <canvas> element.
+ *
+ * For more information on this interface, please see
+ * http://www.whatwg.org/specs/web-apps/current-work/#graphics
+ *
+ * @status UNDER_DEVELOPMENT
+ */
+
+interface nsIDOMBlob;
+interface nsIDOMFile;
+interface nsIVariant;
+interface nsIInputStreamCallback;
+
+[uuid(8978d1c5-2981-4678-a1c3-b0b7bae04fbc)]
+interface nsIDOMHTMLCanvasElement : nsISupports
+{
+  attribute unsigned long width;
+  attribute unsigned long height;
+  attribute boolean mozOpaque;
+
+  // Valid calls are:
+  //  toDataURL();              -- defaults to image/png
+  //  toDataURL(type);          -- uses given type
+  //  toDataURL(type, params);  -- uses given type, and any valid parameters
+  [implicit_jscontext]
+  DOMString toDataURL([optional] in DOMString type,
+                      [optional] in jsval params);
+
+  // Valid calls are
+  // mozGetAsFile(name);              -- defaults to image/png
+  // mozGetAsFile(name, type);        -- uses given type
+  nsIDOMFile mozGetAsFile(in DOMString name, [optional] in DOMString type);
+
+  // A Mozilla-only extension to get a canvas context backed by double-buffered
+  // shared memory. Only privileged callers can call this.
+  nsISupports MozGetIPCContext(in DOMString contextId);
+
+  // A Mozilla-only extension that returns the canvas' image data as a data
+  // stream in the desired image format.
+  void mozFetchAsStream(in nsIInputStreamCallback callback,
+                                        [optional] in DOMString type);
+};
+

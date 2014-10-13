@@ -1,0 +1,89 @@
+== CSS21-t1502-no-inherited-font-family.xhtml CSS21-t1502-no-inherited-font-family-ref.xhtml
+
+# basic tests for bug 538730
+!= synthetic-bold-1.html synthetic-bold-1-ref.html
+!= synthetic-bold-2.html synthetic-bold-2-ref.html
+
+# synthetic bold/italic tests
+!= defaultfont-bold.html defaultfont.html
+!= defaultfont-italic.html defaultfont.html 
+!= defaultfont-oblique.html defaultfont.html 
+!= defaultfont-bolditalic.html defaultfont.html 
+!= defaultfont-bolditalic.html defaultfont-bold.html
+
+!= defaultjapanese-bold.html defaultjapanese.html
+!= defaultjapanese-italic.html defaultjapanese.html
+!= defaultjapanese-oblique.html defaultjapanese.html
+!= defaultjapanese-bolditalic.html defaultjapanese.html
+!= defaultjapanese-bolditalic.html defaultjapanese-bold.html
+
+random-if(cocoaWidget) != impact-bold.html impact.html # bug 539418
+!= impact-italic.html impact.html
+!= impact-oblique.html impact.html
+!= impact-bolditalic.html impact.html
+!= impact-bolditalic.html impact-bold.html
+
+!= arialunicode-bold.html arialunicode.html
+!= arialunicode-italic.html arialunicode.html
+!= arialunicode-oblique.html arialunicode.html
+!= arialunicode-bolditalic.html arialunicode.html
+!= arialunicode-bolditalic.html arialunicode-bold.html
+
+!= lucidaconsole-bold.html lucidaconsole.html
+!= lucidaconsole-italic.html lucidaconsole.html
+!= lucidaconsole-oblique.html lucidaconsole.html
+!= lucidaconsole-bolditalic.html lucidaconsole.html
+!= lucidaconsole-bolditalic.html lucidaconsole-bold.html
+
+# checking that we don't match fullnames, psnames (see bug 538103)
+== arial-variations-1.html arial-variations-1-ref.html
+== arial-variations-2.html arial-variations-2-ref.html
+== arial-variations-3.html arial-variations-3-ref.html
+== arial-variations-4.html arial-variations-4-ref.html
+== arial-variations-5.html arial-variations-5-ref.html
+== arial-variations-6.html arial-variations-6-ref.html
+
+# localized font family names should always match just as English names do
+== localized-family-names-001.html localized-family-names-001-ref.html
+== localized-family-names-002.html localized-family-names-002-ref.html
+== localized-family-names-003.html localized-family-names-003-ref.html
+== localized-family-names-004.html localized-family-names-004-ref.html
+
+# weight mapping tests
+skip-if(B2G) HTTP(..) == normalmedium.html normalmedium-ref.html # bug 773482
+skip-if(B2G) HTTP(..) != normalmedium.html normalmedium-notref.html # bug 773482
+
+# Linux fails due to bug 604815
+HTTP(..) == weightmapping-12.html weightmapping-12-ref.html
+HTTP(..) == weightmapping-25.html weightmapping-25-ref.html
+HTTP(..) == weightmapping-45.html weightmapping-45-ref.html
+HTTP(..) == weightmapping-458.html weightmapping-458-ref.html
+HTTP(..) == weightmapping-478.html weightmapping-478-ref.html
+HTTP(..) == weightmapping-7.html weightmapping-7-ref.html
+HTTP(..) == weightmapping-12579.html weightmapping-12579-ref.html
+
+skip-if(B2G) HTTP(..) == stretchmapping-all.html stretchmapping-all-ref.html # bug 773482
+skip-if(B2G) HTTP(..) == stretchmapping-reverse.html stretchmapping-reverse-ref.html
+HTTP(..) == stretchmapping-35.html stretchmapping-35-ref.html
+HTTP(..) == stretchmapping-137.html stretchmapping-137-ref.html
+
+# test for font-stretch using @font-face
+skip-if(B2G) skip-if(Android&&AndroidVersion>15) HTTP(..) == font-stretch-1.html font-stretch-1-ref.html # bugs 773482, 927602
+
+# bug 724231 - applying synthetic styles to a single @font-face font
+# should apply artificial obliquing, not switch to a true styled face
+!= synthetic-style-1.html synthetic-style-1-notref.html
+!= synthetic-style-2.html synthetic-style-2-notref.html
+
+# Bug 765906 - synthetic bold should be used if necessary together with system fallback.
+# **NOTE** we skip these on Linux because of bug 769659.
+# test 1 uses Cherokee; expected to pass on OS X and Win7
+random-if(!(cocoaWidget||/^Windows\x20NT\x206\.1/.test(http.oscpu))) skip-if(gtk2Widget) != bold-system-fallback-1.html bold-system-fallback-1-notref.html
+# test 2 uses Chess symbols; expected to pass on Android
+random-if(!Android) skip-if(gtk2Widget) != bold-system-fallback-2.html bold-system-fallback-2-notref.html
+
+# Bug 769475 - applying 'italic' to Arabic text in Arial should NOT change family or metrics.
+# Expected to pass on MacOSX and Windows; other platforms unknown, depending on font availability.
+random-if(!(cocoaWidget||winWidget)) == arial-arabic.html arial-arabic-ref.html
+
+!= syntheticbold-rotated.html syntheticbold-rotated-ref.html

@@ -1,0 +1,133 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Bug 383369 test</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript" src="mixedContentTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+
+  <script class="testbody" type="text/javascript">
+
+  // We want to start this test from an insecure context
+  loadAsInsecure = true;
+  // We don't want to go through the navigation back/forward test
+  bypassNavigationTest = true;
+
+  function runTest()
+  {
+    // Force download to be w/o user assistance for our testing mime type
+    const mimeSvc = SpecialPowers.Cc["@mozilla.org/mime;1"]
+      .getService(SpecialPowers.Ci.nsIMIMEService);
+    var handlerInfo = mimeSvc.getFromTypeAndExtension("application/x-auto-download", "auto");
+    handlerInfo.preferredAction = SpecialPowers.Ci.nsIHandlerInfo.saveToDisk;
+    handlerInfo.alwaysAskBeforeHandling = false;
+    handlerInfo.preferredApplicationHandler = null;
+    
+    const handlerSvc = SpecialPowers.Cc["@mozilla.org/uriloader/handler-service;1"]
+      .getService(SpecialPowers.Ci.nsIHandlerService);
+    handlerSvc.store(handlerInfo);
+    
+    var dirProvider = SpecialPowers.Cc["@mozilla.org/file/directory_service;1"]
+      .getService(SpecialPowers.Ci.nsIProperties);
+    var profileDir = dirProvider.get("ProfDS", SpecialPowers.Ci.nsIFile);
+    profileDir.append("downloads");
+    
+    var prefs = SpecialPowers.Cc["@mozilla.org/preferences-service;1"]
+      .getService(SpecialPowers.Ci.nsIPrefService);
+    prefs = prefs.getBranch("browser.download.");
+        
+    prefs.setCharPref("dir", profileDir.path);
+    prefs.setBoolPref("useDownloadDir", true);
+    prefs.setIntPref("folderList", 2);
+    prefs.setBoolPref("manager.closeWhenDone", true);
+    prefs.setBoolPref("manager.showWhenStarting", false);
+  
+    var theWindow = window;
+
+    var useJSTransfer = false;
+    try {
+      // This method throws an exception if the old Download Manager is disabled.
+      Services.downloads.activeDownloadCount;
+    } catch (ex) {
+      useJSTransfer = true;
+    }
+
+    if (useJSTransfer) {
+      var Downloads = SpecialPowers.Cu.import("resource://gre/modules/Downloads.jsm").Downloads;
+      Downloads.getList(Downloads.PUBLIC).then(list => {
+        list = SpecialPowers.wrap(list);
+        list.addView({
+          onDownloadAdded: function (aDownload) {
+            list.removeView(this);
+            SpecialPowers.wrap(aDownload).whenSucceeded().then(() => {
+              list.removeFinished();
+              theWindow.location = "bug383369step2.html";
+            });
+          },
+        });
+        window.location = "download.auto";
+      }).then(null, SpecialPowers.Cu.reportError);
+
+      return;
+    }
+
+    var downloadManager = SpecialPowers.Cc["@mozilla.org/download-manager;1"]
+      .getService(SpecialPowers.Ci.nsIDownloadManager);
+    var observer = {
+      observe: function(subject, topic, data) {
+        switch (topic) {
+        case "dl-done":
+        case "dl-failed":
+        case "dl-blocked":
+        case "dl-dirty":
+          downloadManager.cleanUp();
+          theWindow.location = "bug383369step2.html";
+          observerService.removeObserver(this, "dl-done");
+          observerService.removeObserver(this, "dl-failed");
+          observerService.removeObserver(this, "dl-blocked");
+          observerService.removeObserver(this, "dl-dirty");
+          break;
+        }
+      }
+    };
+    var observerService = SpecialPowers.Cc["@mozilla.org/observer-service;1"]
+      .getService(SpecialPowers.Ci.nsIObserverService);
+    observerService.addObserver(observer, "dl-done", false);
+    observerService.addObserver(observer, "dl-failed", false);
+    observerService.addObserver(observer, "dl-blocked", false);
+    observerService.addObserver(observer, "dl-dirty", false);
+
+    window.location = "download.auto";
+  }
+
+  function afterNavigationTest()
+  {
+  }
+  
+  testCleanUp = function cleanup()
+  {
+    const mimeSvc = SpecialPowers.Cc["@mozilla.org/mime;1"]
+      .getService(SpecialPowers.Ci.nsIMIMEService);
+    var handlerInfo = mimeSvc.getFromTypeAndExtension("application/x-auto-download", "auto");
+    
+    const handlerSvc = SpecialPowers.Cc["@mozilla.org/uriloader/handler-service;1"]
+      .getService(SpecialPowers.Ci.nsIHandlerService);
+    handlerSvc.remove(handlerInfo);
+    
+    var prefs = SpecialPowers.Cc["@mozilla.org/preferences-service;1"]
+      .getService(SpecialPowers.Ci.nsIPrefService);
+    prefs = prefs.getBranch("browser.download.");
+
+    var prefKeys = ["dir", "useDownloadDir", "folderList", 
+                    "manager.closeWhenDone", "manager.showWhenStarting"];
+    for (var i = 0; i < prefKeys.length; i++)
+      if (prefs.prefHasUserValue(prefKeys[i]))
+        prefs.clearUserPref(prefKeys[i]);
+  }
+  
+  </script>
+</head>
+
+<body>
+</body>
+</html>

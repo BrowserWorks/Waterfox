@@ -1,0 +1,135 @@
+/* -*- Mode: C++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 8 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+include protocol PPluginIdentifier;
+include protocol PPluginInstance;
+include protocol PPluginScriptableObject;
+include protocol PCrashReporter;
+
+
+using NPError from "npapi.h";
+using NPNVariable from "npapi.h";
+using mozilla::dom::NativeThreadId from "mozilla/dom/TabMessageUtils.h";
+using class mac_plugin_interposing::NSCursorInfo from "mozilla/plugins/PluginMessageUtils.h";
+using struct nsID from "nsID.h";
+
+namespace mozilla {
+namespace plugins {
+
+intr protocol PPluginModule
+{
+  manages PPluginInstance;
+  manages PPluginIdentifier;
+  manages PCrashReporter;
+
+both:
+  /**
+   * Sending a void string to this constructor creates an int identifier whereas
+   * sending a non-void string will create a string identifier. This constructor
+   * may be called by either child or parent. If a race occurs by calling the
+   * constructor with the same string or int argument then we create two actors
+   * and detect the second instance in the child. We prevent the parent's actor
+   * from leaking out to plugin code and only allow the child's to be used.
+   *
+   * When calling into the plugin, the parent may create a "temporary"
+   * identifier which is only valid for the lifetime of the current inerrupt frame.
+   */
+  async PPluginIdentifier(nsCString aString,
+                          int32_t aInt,
+                          bool temporary);
+
+  // Window-specific message which instructs the interrupt mechanism to enter
+  // a nested event loop for the current interrupt call.
+  async ProcessNativeEventsInInterruptCall();
+
+child:
+  // Forces the child process to update its plugin function table.
+  intr NP_GetEntryPoints()
+    returns (NPError rv);
+
+  intr NP_Initialize(uint32_t aFlags)
+    returns (NPError rv);
+
+  intr PPluginInstance(nsCString aMimeType,
+                      uint16_t aMode,
+                      nsCString[] aNames,
+                      nsCString[] aValues)
+    returns (NPError rv);
+
+  intr NP_Shutdown()
+    returns (NPError rv);
+
+  intr OptionalFunctionsSupported()
+    returns (bool aURLRedirectNotify, bool aClearSiteData,
+             bool aGetSitesWithData);
+
+  intr NPP_ClearSiteData(nsCString site, uint64_t flags, uint64_t maxAge)
+    returns (NPError rv);
+
+  intr NPP_GetSitesWithData()
+    returns (nsCString[] sites);
+
+  // Windows specific message to set up an audio session in the plugin process
+  async SetAudioSessionData(nsID aID,
+                            nsString aDisplayName,
+                            nsString aIconPath);
+
+  async SetParentHangTimeout(uint32_t seconds);
+
+  intr PCrashReporter()
+    returns (NativeThreadId tid, uint32_t processType);
+
+  intr GeckoGetProfile()
+    returns (nsCString aProfile);
+
+parent:
+  /**
+   * This message is only used on X11 platforms.
+   *
+   * Send a dup of the plugin process's X socket to the parent
+   * process.  In theory, this scheme keeps the plugin's X resources
+   * around until after both the plugin process shuts down *and* the
+   * parent process closes the dup fd.  This is used to prevent the
+   * parent process from crashing on X errors if, e.g., the plugin
+   * crashes *just before* a repaint and the parent process tries to
+   * use the newly-invalid surface.
+   */
+  async BackUpXResources(FileDescriptor aXSocketFd);
+
+  intr NPN_UserAgent()
+    returns (nsCString userAgent);
+
+  intr NPN_GetValue_WithBoolReturn(NPNVariable aVariable)
+    returns (NPError aError,
+             bool aBoolVal);
+
+  // Wake up and process a few native events.  Periodically called by
+  // Gtk-specific code upon detecting that the plugin process has
+  // entered a nested event loop.  If the browser doesn't process
+  // native events, then "livelock" and some other glitches can occur.
+  intr ProcessSomeEvents();
+
+  // OS X Specific calls to manage the plugin's window
+  // when interposing system calls.
+  async PluginShowWindow(uint32_t aWindowId, bool aModal,
+                         int32_t aX, int32_t aY,
+                         size_t aWidth, size_t aHeight);
+  async PluginHideWindow(uint32_t aWindowId);
+
+  // OS X Specific calls to allow the plugin to manage the cursor.
+  async SetCursor(NSCursorInfo cursorInfo);
+  async ShowCursor(bool show);
+  async PushCursor(NSCursorInfo cursorInfo);
+  async PopCursor();
+  sync GetNativeCursorsSupported() returns (bool supported);
+
+  sync NPN_SetException(nullable PPluginScriptableObject actor,
+                        nsCString message);
+
+  async NPN_ReloadPlugins(bool aReloadPages);
+};
+
+} // namespace plugins
+} // namespace mozilla

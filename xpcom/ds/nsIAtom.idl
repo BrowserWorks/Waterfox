@@ -1,0 +1,174 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+#include "nsISupports.idl"
+
+%{C++
+#include "nsStringGlue.h"
+#include "nsCOMPtr.h"
+#include "nsStringBuffer.h"
+%}
+
+/*
+ * Should this really be scriptable?  Using atoms from script or proxies
+ * could be dangerous since double-wrapping could lead to loss of
+ * pointer identity.
+ */
+ 
+[scriptable, builtinclass, uuid(1f341018-521a-49de-b806-1bef5c9a00b0)]
+interface nsIAtom : nsISupports
+{
+  /**
+   * Get the Unicode or UTF8 value for the string
+   */
+  [binaryname(ScriptableToString)] AString toString(); 
+  [noscript] AUTF8String toUTF8String();
+  
+  /**
+   * Compare the atom to a specific string value
+   * Note that this will NEVER return/throw an error condition.
+   */
+  [binaryname(ScriptableEquals)] boolean equals(in AString aString);
+  
+  [noscript, notxpcom] boolean equalsUTF8(in AUTF8String aString);
+
+  /**
+   * Returns true if the atom is static and false otherwise.
+   */
+  [noscript, notxpcom] boolean isStaticAtom();
+
+%{C++
+  // note this is NOT virtual so this won't muck with the vtable!
+  inline bool Equals(const nsAString& aString) const {
+    return aString.Equals(nsDependentString(mString, mLength));
+  }
+
+  inline char16ptr_t GetUTF16String() const {
+    return mString;
+  }
+
+  inline const uint32_t GetLength() const {
+    return mLength;
+  }
+
+  inline void ToString(nsAString& aBuf) {
+    nsStringBuffer::FromData(mString)->ToString(mLength, aBuf);
+  }
+
+  inline nsStringBuffer* GetStringBuffer() const {
+    return nsStringBuffer::FromData(mString);
+  }
+
+  /**
+   * A hashcode that is better distributed than the actual atom
+   * pointer, for use in situations that need a well-distributed
+   * hashcode.
+   */
+  inline uint32_t hash() const {
+    return mHash;
+  }
+
+protected:
+  uint32_t mLength;
+  uint32_t mHash;
+  char16_t* mString;
+%}
+};
+
+
+%{C++
+/*
+ * The three forms of NS_NewAtom and do_GetAtom (for use with
+ * |nsCOMPtr<nsIAtom>|) return the atom for the string given.  At any
+ * given time there will always be one atom representing a given string.
+ * Atoms are intended to make string comparison cheaper by simplifying
+ * it to pointer equality.  A pointer to the atom that does not own a
+ * reference is not guaranteed to be valid.
+ *
+ * The three forms of NS_NewPermanentAtom and do_GetPermanentAtom return
+ * the atom for the given string and ensure that the atom is permanent.
+ * An atom that is permanent will exist (occupy space at a specific
+ * location in memory) until XPCOM is shut down.  The advantage of
+ * permanent atoms is that they do not need to maintain a reference
+ * count, which requires locking and hurts performance.
+ */
+
+
+/**
+ * Find an atom that matches the given UTF-8 string.
+ * The string is assumed to be zero terminated.  Never returns null.
+ */
+extern already_AddRefed<nsIAtom> NS_NewAtom(const char* aUTF8String);
+
+inline already_AddRefed<nsIAtom> do_GetAtom(const char* aUTF8String)
+    { return NS_NewAtom(aUTF8String); }
+ 
+/**
+ * Find an atom that matches the given UTF-8 string.  Never returns null.
+ */
+extern already_AddRefed<nsIAtom> NS_NewAtom(const nsACString& aUTF8String);
+inline already_AddRefed<nsIAtom> do_GetAtom(const nsACString& aUTF8String)
+    { return NS_NewAtom(aUTF8String); }
+
+/**
+ * Find an atom that matches the given UTF-16 string.
+ * The string is assumed to be zero terminated.  Never returns null.
+ */
+extern already_AddRefed<nsIAtom> NS_NewAtom(const char16_t* aUTF16String);
+inline already_AddRefed<nsIAtom> do_GetAtom(const char16_t* aUTF16String)
+    { return NS_NewAtom(aUTF16String); }
+
+/**
+ * Find an atom that matches the given UTF-16 string.  Never returns null.
+ */
+extern already_AddRefed<nsIAtom> NS_NewAtom(const nsAString& aUTF16String);
+extern nsIAtom* NS_NewPermanentAtom(const nsAString& aUTF16String);
+inline already_AddRefed<nsIAtom> do_GetAtom(const nsAString& aUTF16String)
+    { return NS_NewAtom(aUTF16String); }
+
+/**
+ * Return a count of the total number of atoms currently
+ * alive in the system.
+ */
+extern nsrefcnt NS_GetNumberOfAtoms(void);
+
+/**
+ * Return a pointer for a static atom for the string or null if there's 
+ * no static atom for this string.
+ */
+extern nsIAtom* NS_GetStaticAtom(const nsAString& aUTF16String);
+
+/**
+ * Seal the static atom table
+ */
+extern void NS_SealStaticAtomTable();
+
+class nsAtomString : public nsString
+{
+public:
+  explicit nsAtomString(nsIAtom* aAtom)
+  {
+    aAtom->ToString(*this);
+  }
+};
+
+class nsAtomCString : public nsCString
+{
+public:
+  explicit nsAtomCString(nsIAtom* aAtom)
+  {
+    aAtom->ToUTF8String(*this);
+  }
+};
+
+class nsDependentAtomString : public nsDependentString
+{
+public:
+  explicit nsDependentAtomString(nsIAtom* aAtom)
+    : nsDependentString(aAtom->GetUTF16String(), aAtom->GetLength())
+  {
+  }
+};
+
+%}

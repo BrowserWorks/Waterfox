@@ -1,0 +1,68 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=569520
+-->
+<head>
+  <title>Test for Bug 569520</title>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=569520">Mozilla Bug 569520</a>
+<p id="display"></p>
+<div id="content" style="display: none">
+  
+</div>
+<pre id="test">
+<script type="application/javascript">
+
+/** Test for Bug 569520 **/
+SimpleTest.waitForExplicitFinish();
+
+var startNow = Date.now();
+var start = window.mozAnimationStartTime;
+var firstListenerArg;
+var secondListenerArg;
+var thirdListenerTime;
+
+// callback arg is wallclock from mozRequestAnimationFrame
+function thirdListener(t) {
+  thirdListenerTime = t;
+
+  // They really shouldn't be more than 100ms apart, but we can get weird
+  // effects on slow machines.  5 minutes is our test timeout, though.
+  ok(Math.abs(startNow - start) <= 5 * 60 * 1000, "Bogus animation start time");
+
+  ok(secondListenerArg >= firstListenerArg, // callback args from consecutive unprefixed requestAnimationFrame
+     "Second listener should fire after first listener");
+
+  ok(thirdListenerTime >= start, "Third listener should fire after start");
+
+  SimpleTest.finish();
+}
+
+// callback arg is from requestAnimationFrame and comparable to performance.now()
+function secondListener(t) {
+  secondListenerArg = t;
+  mozRequestAnimationFrame(thirdListener);
+}
+
+function firstListener(t) {
+  firstListenerArg = t;
+  requestAnimationFrame(secondListener);
+}
+
+addLoadEvent(function() {
+    setTimeout(function() {
+      requestAnimationFrame(firstListener);
+    }, 100);
+  });
+
+
+
+
+</script>
+</pre>
+</body>
+</html>

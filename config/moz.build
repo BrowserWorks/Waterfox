@@ -1,0 +1,30 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+NO_DIST_INSTALL = True
+# For sanity's sake, we compile nsinstall without the wrapped system
+# headers, so that we can use it to set up the wrapped system headers.
+NO_VISIBILITY_FLAGS = True
+
+CONFIGURE_SUBST_FILES += [
+    'doxygen.cfg',
+    'makefiles/test/Makefile',
+    'tests/makefiles/autodeps/Makefile',
+    'tests/src-simple/Makefile',
+]
+
+if CONFIG['HOST_OS_ARCH'] != 'WINNT':
+    HOST_SOURCES += [
+        'nsinstall.c',
+        'pathsub.c',
+    ]
+    HOST_PROGRAM = 'nsinstall_real'
+
+if CONFIG['GKMEDIAS_SHARED_LIBRARY']:
+    DEFINES['GKMEDIAS_SHARED_LIBRARY'] = True
+
+if CONFIG['MOZ_SHARED_ICU']:
+    DEFINES['MOZ_SHARED_ICU'] = True

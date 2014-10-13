@@ -1,0 +1,139 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+%{C++
+
+namespace mozilla {
+// Simple C++ getter for nsIXULRuntime::browserTabsRemote
+bool BrowserTabsRemote();
+}
+
+%}
+
+/**
+ * Provides information about the XUL runtime.
+ * @status UNSTABLE - This interface is not frozen and will probably change in
+ *                    future releases. If you need this functionality to be
+ *                    stable/frozen, please contact Benjamin Smedberg.
+ */
+
+[scriptable, uuid(e080b1f6-8452-4bde-9368-c795808b86d1)]
+interface nsIXULRuntime : nsISupports
+{
+  /**
+   * Whether the application was launched in safe mode.
+   */
+  readonly attribute boolean inSafeMode;
+
+  /**
+   * Whether to write console errors to a log file. If a component
+   * encounters startup errors that might prevent the app from showing
+   * proper UI, it should set this flag to "true".
+   */
+  attribute boolean logConsoleErrors;
+
+  /**
+   * A string tag identifying the current operating system. This is taken
+   * from the OS_TARGET configure variable. It will always be available.
+   */
+  readonly attribute AUTF8String OS;
+
+  /**
+   * A string tag identifying the binary ABI of the current processor and
+   * compiler vtable. This is taken from the TARGET_XPCOM_ABI configure
+   * variable. It may not be available on all platforms, especially
+   * unusual processor or compiler combinations.
+   *
+   * The result takes the form <processor>-<compilerABI>, for example:
+   *   x86-msvc
+   *   ppc-gcc3
+   *
+   * This value should almost always be used in combination with "OS".
+   *
+   * @throw NS_ERROR_NOT_AVAILABLE if not available.
+   */
+  readonly attribute AUTF8String XPCOMABI;
+
+  /**
+   * A string tag identifying the target widget toolkit in use.
+   * This is taken from the MOZ_WIDGET_TOOLKIT configure variable.
+   */
+  readonly attribute AUTF8String widgetToolkit;
+
+  /**
+   * The legal values of processType.
+   */
+  const unsigned long PROCESS_TYPE_DEFAULT = 0;
+  const unsigned long PROCESS_TYPE_PLUGIN = 1;
+  const unsigned long PROCESS_TYPE_CONTENT = 2;
+  const unsigned long PROCESS_TYPE_IPDLUNITTEST = 3;
+  const unsigned long PROCESS_TYPE_GMPLUGIN = 4;
+
+  /**
+   * The type of the caller's process.  Returns one of the values above.
+   */
+  readonly attribute unsigned long processType;
+
+  /**
+   * The system process ID of the caller's process.
+   */
+  readonly attribute unsigned long processID;
+
+  /**
+   * If true, browser tabs may be opened in a different process from the main
+   * browser UI.
+   */
+  readonly attribute boolean browserTabsRemote;
+
+  /**
+   * Signal the apprunner to invalidate caches on the next restart.
+   * This will cause components to be autoregistered and all
+   * fastload data to be re-created.
+   */
+  void invalidateCachesOnRestart();
+
+  /**
+   * Starts a child process. This method is intented to pre-start a
+   * content child process so that when it is actually needed, it is
+   * ready to go.
+   *
+   * @throw NS_ERROR_NOT_AVAILABLE if not available.
+   */
+  void ensureContentProcess();
+
+  /**
+   * Modification time of the profile lock before the profile was locked on
+   * this startup. Used to know the last time the profile was used and not
+   * closed cleanly. This is set to 0 if there was no existing profile lock.
+   */
+  readonly attribute PRTime replacedLockTime;
+
+  /**
+   * Local ID of the minidump generated when the process crashed
+   * on the previous run. Can be passed directly to CrashSubmit.submit.
+   */
+  readonly attribute DOMString lastRunCrashID;
+
+  /**
+   * True if this is a RELEASE_BUILD.
+   */
+  readonly attribute boolean isReleaseBuild;
+
+  /**
+   * True if this build uses official branding (MOZ_OFFICIAL_BRANDING).
+   */
+  readonly attribute boolean isOfficialBranding;
+
+  /**
+   * The default update channel (MOZ_UPDATE_CHANNEL).
+   */
+  readonly attribute AUTF8String defaultUpdateChannel;
+
+  /**
+   * The distribution ID for this build (MOZ_DISTRIBUTION_ID).
+   */
+  readonly attribute AUTF8String distributionID;
+};

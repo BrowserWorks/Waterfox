@@ -1,0 +1,102 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# The removed-files.in file specifies files and directories to be removed during
+# an application update that are not automatically removed by the application
+# update process. The application update process handles the vast majority of
+# file and directory removals automatically so this file should not be used in
+# the vast majority of cases.
+
+# When to use removed-files.in file to remove files and directories:
+# * Files and directories located in the installation's "distribution/" and
+#   "extensions/" directories that were added before Firefox 27. Files and
+#   directories located in these directories were not included in the
+#   application update file removals for a complete update prior to Firefox 27.
+# * Empty directories that were accidentally added to the installation
+#   directory.
+# * Third party files and directories that were added to the installation
+#   directory. Under normal circumstances this should only be done after release
+#   drivers have approved the removal of these third party files.
+
+# If you are not sure whether a file or directory should be removed using the
+# removed-files.in file please contact one of the developers that work on
+# application update.
+
+# Note: the "distribution/" and "browser/extensions/" directories should never
+# be removed recursively since these directories are used by Partner builds and
+# custom installations.
+
+# To specify a file to be removed add the path to the file.
+# * If the file doesn't exist the update will succeed.
+# * If the file exists and can't be removed (e.g. the file is locked) the
+#   update will fail.
+#
+# Example: path/to/file
+
+# To specify a directory to be removed only if it is empty add the path to the
+# directory with a trailing forward slash.
+# * If the directory doesn't exist the update will succeed.
+# * If the directory can't be removed (e.g. the directory is locked, contains
+#   files, etc.) the update will succeed.
+#
+# Example: path/to/dir/
+
+# To specify a directory that should be recursively removed add the path to the
+# directory with a trailing forward slash and "*".
+# * If the directory doesn't exist the update will succeed.
+# * If all of the files the directory contains can be removed but the directory
+#   or a subdirectory can't be removed (e.g. the directory is locked) the update
+#   will succeed.
+# * If a file within the directory can't be removed the update will fail.
+#
+# Example: path/to/dir/*
+
+# File Removals
+# This is located under the "distribution/" directory and it was added before
+# Firefox 27
+distribution/extensions/testpilot@labs.mozilla.com.xpi
+
+# Some users are ending up with unpacked chrome instead of omni.ja. This
+# causes updates to break badly, see bug 1063052. Removing the toplevel
+# chrome.manifest causes us to use the updated omni.ja.
+#ifndef MOZ_GTK
+chrome.manifest
+#endif
+
+# Directory removals
+chrome/
+#ifdef XP_UNIX
+  #ifndef XP_MACOSX
+    chrome/icons/
+    chrome/icons/default/
+  #endif
+#endif
+chrome/overlayinfo/
+components/
+defaults/autoconfig/
+defaults/profile/
+defaults/profile/chrome/
+defaults/profile/US/*
+defaults/profile/extensions/
+defaults/profile/extensions/{972ce4c6-7e08-4474-a285-3208198ce6fd}/*
+distribution/
+distribution/extensions/
+extensions/
+extensions/inspector@mozilla.org/*
+extensions/reporter@mozilla.org/*
+extensions/talkback@mozilla.org/*
+extensions/testpilot@labs.mozilla.com/*
+extensions/{641d8d09-7dda-4850-8228-ac0ab65e2ac9}/*
+extensions/{972ce4c6-7e08-4474-a285-3208198ce6fd}/*
+greprefs/
+jssubloader/
+modules/
+#ifdef XP_MACOSX
+  plugins/Default Plugin.plugin/*
+  plugins/JavaEmbeddingPlugin.bundle/*
+  plugins/MRJPlugin.plugin/*
+  ../Plug-Ins/PrintPDE.plugin/*
+#endif
+searchplugins/*
+webapprt/components/

@@ -1,0 +1,428 @@
+<?xml version="1.0"?>
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+<?xml-stylesheet href="chrome://browser/content/pageinfo/pageInfo.css" type="text/css"?>
+<?xml-stylesheet href="chrome://browser/skin/pageInfo.css" type="text/css"?>
+
+<!DOCTYPE window [
+  <!ENTITY % pageInfoDTD SYSTEM "chrome://browser/locale/pageInfo.dtd">
+  %pageInfoDTD;
+]>
+
+#ifdef XP_MACOSX
+<?xul-overlay href="chrome://browser/content/macBrowserOverlay.xul"?>
+#endif
+
+<window id="main-window"
+  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+  windowtype="Browser:page-info"
+  onload="onLoadPageInfo()"
+  onunload="onUnloadPageInfo()"
+  align="stretch"
+  screenX="10" screenY="10"
+  width="&pageInfoWindow.width;" height="&pageInfoWindow.height;"
+  persist="screenX screenY width height sizemode">
+
+  <script type="application/javascript" src="chrome://global/content/globalOverlay.js"/>
+  <script type="application/javascript" src="chrome://global/content/contentAreaUtils.js"/>
+  <script type="application/javascript" src="chrome://global/content/treeUtils.js"/>
+  <script type="application/javascript" src="chrome://browser/content/pageinfo/pageInfo.js"/>
+  <script type="application/javascript" src="chrome://browser/content/pageinfo/feeds.js"/>
+  <script type="application/javascript" src="chrome://browser/content/pageinfo/permissions.js"/>
+  <script type="application/javascript" src="chrome://browser/content/pageinfo/security.js"/>
+  <script type="application/javascript" src="chrome://browser/content/utilityOverlay.js"/>
+
+  <stringbundleset id="pageinfobundleset">
+    <stringbundle id="pageinfobundle" src="chrome://browser/locale/pageInfo.properties"/>
+    <stringbundle id="pkiBundle" src="chrome://pippki/locale/pippki.properties"/>
+    <stringbundle id="browserBundle" src="chrome://browser/locale/browser.properties"/>
+  </stringbundleset>
+
+  <commandset id="pageInfoCommandSet">
+    <command id="cmd_close"     oncommand="window.close();"/>
+    <command id="cmd_help"      oncommand="doHelpButton();"/>
+    <command id="cmd_copy"      oncommand="doCopy();"/>
+    <command id="cmd_selectall" oncommand="doSelectAll();"/>
+
+    <!-- permissions tab -->
+    <command id="cmd_pluginsDef"    oncommand="onCheckboxClick('plugins');"/>
+    <command id="cmd_pluginsToggle" oncommand="onPluginRadioClick(event);"/>
+  </commandset>
+
+  <keyset id="pageInfoKeySet">
+    <key key="&closeWindow.key;" modifiers="accel" command="cmd_close"/>
+    <key keycode="VK_ESCAPE"                       command="cmd_close"/>
+#ifdef XP_MACOSX
+    <key key="."                 modifiers="meta"  command="cmd_close"/>
+#else
+    <key keycode="VK_F1"                           command="cmd_help"/>
+#endif
+    <key key="&copy.key;"        modifiers="accel" command="cmd_copy"/>
+    <key key="&selectall.key;"   modifiers="accel" command="cmd_selectall"/>
+    <key key="&selectall.key;"   modifiers="alt"   command="cmd_selectall"/>
+  </keyset>
+
+  <menupopup id="picontext">
+    <menuitem id="menu_selectall" label="&selectall.label;" command="cmd_selectall" accesskey="&selectall.accesskey;"/>
+    <menuitem id="menu_copy"      label="&copy.label;"      command="cmd_copy"      accesskey="&copy.accesskey;"/>
+  </menupopup>
+
+  <windowdragbox id="topBar" class="viewGroupWrapper">
+    <radiogroup id="viewGroup" class="chromeclass-toolbar" orient="horizontal">
+      <radio id="generalTab"  label="&generalTab;"  accesskey="&generalTab.accesskey;"
+           oncommand="showTab('general');"/>
+      <radio id="mediaTab"    label="&mediaTab;"    accesskey="&mediaTab.accesskey;"
+           oncommand="showTab('media');" hidden="true"/>
+      <radio id="feedTab"     label="&feedTab;"     accesskey="&feedTab.accesskey;"
+           oncommand="showTab('feed');" hidden="true"/>
+      <radio id="permTab"     label="&permTab;"     accesskey="&permTab.accesskey;"
+           oncommand="showTab('perm');"/>
+      <radio id="securityTab" label="&securityTab;" accesskey="&securityTab.accesskey;"
+           oncommand="showTab('security');"/>
+      <!-- Others added by overlay -->
+    </radiogroup>
+  </windowdragbox>
+
+  <deck id="mainDeck" flex="1">
+    <!-- General page information -->
+    <vbox id="generalPanel">
+      <textbox class="header" readonly="true" id="titletext"/>
+      <grid id="generalGrid">
+        <columns>
+          <column/>
+          <column class="gridSeparator"/>
+          <column flex="1"/>
+        </columns>
+        <rows id="generalRows">
+          <row id="generalURLRow">
+            <label control="urltext" value="&generalURL;"/>
+            <separator/>
+            <textbox readonly="true" id="urltext"/>
+          </row>
+          <row id="generalSeparatorRow1">
+            <separator class="thin"/>
+          </row>
+          <row id="generalTypeRow">
+            <label control="typetext" value="&generalType;"/>
+            <separator/>
+            <textbox readonly="true" id="typetext"/>
+          </row>
+          <row id="generalModeRow">
+            <label control="modetext" value="&generalMode;"/>
+            <separator/>
+            <textbox readonly="true" crop="end" id="modetext"/>
+          </row>
+          <row id="generalEncodingRow">
+            <label control="encodingtext" value="&generalEncoding;"/>
+            <separator/>
+            <textbox readonly="true" id="encodingtext"/>
+          </row>
+          <row id="generalSizeRow">
+            <label control="sizetext" value="&generalSize;"/>
+            <separator/>
+            <textbox readonly="true" id="sizetext"/>
+          </row>
+          <row id="generalReferrerRow">
+            <label control="refertext" value="&generalReferrer;"/>
+            <separator/>
+            <textbox readonly="true" id="refertext"/>
+          </row>
+          <row id="generalSeparatorRow2">
+            <separator class="thin"/>
+          </row>
+          <row id="generalModifiedRow">
+            <label control="modifiedtext" value="&generalModified;"/>
+            <separator/>
+            <textbox readonly="true" id="modifiedtext"/>
+          </row>
+        </rows>
+      </grid>
+      <separator class="thin"/>
+      <groupbox id="metaTags" flex="1" class="collapsable treebox">
+        <caption id="metaTagsCaption" onclick="toggleGroupbox('metaTags');"/>
+        <tree id="metatree" flex="1" hidecolumnpicker="true" contextmenu="picontext">
+          <treecols>
+            <treecol id="meta-name"    label="&generalMetaName;"
+                     persist="width" flex="1"
+                     onclick="gMetaView.onPageMediaSort('meta-name');"/>
+            <splitter class="tree-splitter"/>
+            <treecol id="meta-content" label="&generalMetaContent;"
+                     persist="width" flex="4"
+                     onclick="gMetaView.onPageMediaSort('meta-content');"/>
+          </treecols>
+          <treechildren id="metatreechildren" flex="1"/>
+        </tree>        
+      </groupbox>
+      <groupbox id="securityBox">
+        <caption id="securityBoxCaption" label="&securityHeader;"/>
+        <description id="general-security-identity" class="header"/>
+        <description id="general-security-privacy"  class="header"/>
+        <hbox id="securityDetailsButtonBox" align="right">
+          <button id="security-view-details" label="&generalSecurityDetails;"
+                  accesskey="&generalSecurityDetails.accesskey;"
+                  oncommand="onClickMore();"/>
+        </hbox>
+      </groupbox>
+    </vbox>
+
+    <!-- Media information -->
+    <vbox id="mediaPanel">
+      <tree id="imagetree" onselect="onImageSelect();" contextmenu="picontext"
+            ondragstart="onBeginLinkDrag(event,'image-address','image-alt')">
+        <treecols>
+          <treecol sortSeparators="true" primary="true" persist="width" flex="10"
+                        width="10" id="image-address" label="&mediaAddress;"
+                        onclick="gImageView.onPageMediaSort('image-address');"/>
+          <splitter class="tree-splitter"/>
+          <treecol sortSeparators="true" persist="hidden width" flex="2"
+                        width="2"  id="image-type"    label="&mediaType;"
+                        onclick="gImageView.onPageMediaSort('image-type');"/>
+          <splitter class="tree-splitter"/>
+          <treecol sortSeparators="true" hidden="true" persist="hidden width" flex="2"
+                        width="2"  id="image-size"  label="&mediaSize;" value="size"
+                        onclick="gImageView.onPageMediaSort('image-size');"/>
+          <splitter class="tree-splitter"/>
+          <treecol sortSeparators="true" hidden="true" persist="hidden width" flex="4"
+                        width="4"  id="image-alt"    label="&mediaAltHeader;"
+                        onclick="gImageView.onPageMediaSort('image-alt');"/>
+          <splitter class="tree-splitter"/>
+          <treecol sortSeparators="true" hidden="true" persist="hidden width" flex="1"
+                        width="1"  id="image-count"    label="&mediaCount;"
+                        onclick="gImageView.onPageMediaSort('image-count');"/>
+        </treecols>
+        <treechildren id="imagetreechildren" flex="1"/>
+      </tree>
+      <splitter orient="vertical" id="mediaSplitter"/>
+      <vbox flex="1" id="mediaPreviewBox" collapsed="true">
+        <grid id="mediaGrid">
+          <columns>
+            <column id="mediaLabelColumn"/>
+            <column class="gridSeparator"/>
+            <column flex="1"/>
+          </columns>
+          <rows id="mediaRows">
+            <row id="mediaLocationRow">
+              <label control="imageurltext" value="&mediaLocation;"/>
+              <separator/>
+              <textbox readonly="true" id="imageurltext"/>
+            </row>
+            <row id="mediaTypeRow">
+              <label control="imagetypetext" value="&generalType;"/>
+              <separator/>
+              <textbox readonly="true" id="imagetypetext"/>
+            </row>
+            <row id="mediaSizeRow">
+              <label control="imagesizetext" value="&generalSize;"/>
+              <separator/>
+              <textbox readonly="true" id="imagesizetext"/>
+            </row>
+            <row id="mediaDimensionRow">
+              <label control="imagedimensiontext" value="&mediaDimension;"/>
+              <separator/>
+              <textbox readonly="true" id="imagedimensiontext"/>
+            </row>
+            <row id="mediaTextRow">
+              <label control="imagetext" value="&mediaText;"/>
+              <separator/>
+              <textbox readonly="true" id="imagetext"/>
+            </row>
+            <row id="mediaLongdescRow">
+              <label control="imagelongdesctext" value="&mediaLongdesc;"/>
+              <separator/>
+              <textbox readonly="true" id="imagelongdesctext"/>
+            </row>
+          </rows>
+        </grid>
+        <hbox id="imageSaveBox" align="end">
+          <vbox id="blockImageBox">
+            <checkbox id="blockImage" hidden="true" oncommand="onBlockImage()"
+                      accesskey="&mediaBlockImage.accesskey;"/>
+            <label control="thepreviewimage" value="&mediaPreview;" class="header"/>
+          </vbox>
+          <spacer id="imageSaveBoxSpacer" flex="1"/>
+          <button label="&mediaSaveAs;" accesskey="&mediaSaveAs.accesskey;"
+                  icon="save" id="imagesaveasbutton"
+                  oncommand="saveMedia();"/>
+        </hbox>
+        <vbox id="imagecontainerbox" class="inset iframe" flex="1" pack="center">
+          <hbox id="theimagecontainer" pack="center">
+            <image id="thepreviewimage"/>
+          </hbox>
+          <hbox id="brokenimagecontainer" pack="center" collapsed="true">
+            <image id="brokenimage" src="resource://gre-resources/broken-image.png"/>
+          </hbox>
+        </vbox>
+      </vbox>
+      <hbox id="mediaSaveBox" collapsed="true">
+        <spacer id="mediaSaveBoxSpacer" flex="1"/>
+        <button label="&mediaSaveAs;" accesskey="&mediaSaveAs2.accesskey;"
+                icon="save" id="mediasaveasbutton"
+                oncommand="saveMedia();"/>
+      </hbox>
+    </vbox>
+
+    <!-- Feeds -->
+    <vbox id="feedPanel">
+      <richlistbox id="feedListbox" flex="1"/>
+    </vbox>
+
+    <!-- Permissions -->
+    <vbox id="permPanel">
+      <hbox id="permHostBox">
+        <label value="&permissionsFor;" control="hostText" />
+        <textbox id="hostText" class="header" readonly="true"
+                 crop="end" flex="1"/>
+      </hbox>
+
+      <vbox id="permList" flex="1">
+        <hbox id="perm-indexedDB-extras">
+          <spacer flex="1"/>
+          <vbox id="permIndexedDBStatusBox" pack="center">
+            <label id="indexedDBStatus" control="indexedDBClear" hidden="true"/>
+          </vbox>
+          <button id="indexedDBClear" label="&permClearStorage;" hidden="true"
+                  accesskey="&permClearStorage.accesskey;" onclick="onIndexedDBClear();"/>
+        </hbox>
+        <vbox class="permission" id="perm-plugins-row">
+          <label class="permissionLabel" id="permPluginsLabel"
+                 value="&permPlugins;" control="pluginsRadioGroup"/>
+          <hbox id="permPluginTemplate" role="group" aria-labelledby="permPluginsLabel" align="baseline">
+            <label class="permPluginTemplateLabel"/>
+            <spacer flex="1"/>
+            <radiogroup class="permPluginTemplateRadioGroup" orient="horizontal" command="cmd_pluginsToggle">
+              <radio class="permPluginTemplateRadioDefault" label="&permUseDefault;"/>
+              <radio class="permPluginTemplateRadioAsk" label="&permAskAlways;"/>
+              <radio class="permPluginTemplateRadioAllow" label="&permAllow;"/>
+              <radio class="permPluginTemplateRadioBlock" label="&permBlock;"/>
+            </radiogroup>
+          </hbox>
+        </vbox>
+      </vbox>
+    </vbox>
+
+    <!-- Security & Privacy -->
+    <vbox id="securityPanel">
+      <!-- Identity Section -->
+      <groupbox id="security-identity-groupbox" flex="1">
+        <caption id="security-identity" label="&securityView.identity.header;"/>
+        <grid id="security-identity-grid" flex="1">
+          <columns>
+            <column/>
+            <column flex="1"/>
+          </columns>
+          <rows id="security-identity-rows">
+            <!-- Domain -->
+            <row id="security-identity-domain-row">
+              <label id="security-identity-domain-label"
+                     class="fieldLabel"
+                     value="&securityView.identity.domain;"
+                     control="security-identity-domain-value"/>
+              <textbox id="security-identity-domain-value"
+                       class="fieldValue" readonly="true"/>
+            </row>
+            <!-- Owner -->
+            <row id="security-identity-owner-row">
+              <label id="security-identity-owner-label"
+                     class="fieldLabel"
+                     value="&securityView.identity.owner;"
+                     control="security-identity-owner-value"/>
+              <textbox id="security-identity-owner-value"
+                       class="fieldValue" readonly="true"/>
+            </row>
+            <!-- Verifier -->
+            <row id="security-identity-verifier-row">
+              <label id="security-identity-verifier-label"
+                     class="fieldLabel"
+                     value="&securityView.identity.verifier;"
+                     control="security-identity-verifier-value"/>
+              <textbox id="security-identity-verifier-value"
+                       class="fieldValue" readonly="true" />
+            </row>
+          </rows>
+        </grid>
+        <spacer flex="1"/>
+        <!-- Cert button -->
+        <hbox id="security-view-cert-box" pack="end">
+          <button id="security-view-cert" label="&securityView.certView;"
+                  accesskey="&securityView.accesskey;"
+                  oncommand="security.viewCert();"/>
+        </hbox>
+      </groupbox>
+      
+      <!-- Privacy & History section -->
+      <groupbox id="security-privacy-groupbox" flex="1">
+        <caption id="security-privacy" label="&securityView.privacy.header;" />
+        <grid id="security-privacy-grid">
+          <columns>
+            <column flex="1"/>
+            <column flex="1"/>
+          </columns>
+          <rows id="security-privacy-rows">
+            <!-- History -->
+            <row id="security-privacy-history-row">
+              <label id="security-privacy-history-label"
+                           control="security-privacy-history-value"
+                           class="fieldLabel">&securityView.privacy.history;</label>
+              <textbox id="security-privacy-history-value"
+                       class="fieldValue"
+                       value="&securityView.unknown;"
+                       readonly="true"/>
+            </row>
+            <!-- Cookies -->
+            <row id="security-privacy-cookies-row">
+              <label id="security-privacy-cookies-label"
+                           control="security-privacy-cookies-value"
+                           class="fieldLabel">&securityView.privacy.cookies;</label>
+              <hbox id="security-privacy-cookies-box" align="center">
+                <textbox id="security-privacy-cookies-value"
+                         class="fieldValue"
+                         value="&securityView.unknown;"
+                         flex="1"
+                         readonly="true"/>
+                <button id="security-view-cookies"
+                        label="&securityView.privacy.viewCookies;"
+                        accesskey="&securityView.privacy.viewCookies.accessKey;"
+                        oncommand="security.viewCookies();"/>
+              </hbox>
+            </row>
+            <!-- Passwords -->
+            <row id="security-privacy-passwords-row">
+              <label id="security-privacy-passwords-label"
+                            control="security-privacy-passwords-value"
+                            class="fieldLabel">&securityView.privacy.passwords;</label>
+              <hbox id="security-privacy-passwords-box" align="center">
+                <textbox id="security-privacy-passwords-value"
+                         class="fieldValue"
+                         value="&securityView.unknown;"
+                         flex="1"
+                         readonly="true"/>
+                <button id="security-view-password"
+                        label="&securityView.privacy.viewPasswords;"
+                        accesskey="&securityView.privacy.viewPasswords.accessKey;"
+                        oncommand="security.viewPasswords();"/>
+              </hbox>
+            </row>
+          </rows>
+        </grid>
+      </groupbox>
+      
+      <!-- Technical Details section -->
+      <groupbox id="security-technical-groupbox" flex="1">
+        <caption id="security-technical" label="&securityView.technical.header;" />
+        <vbox id="security-technical-box" flex="1">
+          <label id="security-technical-shortform" class="fieldValue"/>
+          <description id="security-technical-longform1" class="fieldLabel"/>
+          <description id="security-technical-longform2" class="fieldLabel"/>
+        </vbox>
+      </groupbox>
+    </vbox>
+    <!-- Others added by overlay -->
+  </deck>
+
+#ifdef XP_MACOSX
+#include ../browserMountPoints.inc
+#endif
+
+</window>

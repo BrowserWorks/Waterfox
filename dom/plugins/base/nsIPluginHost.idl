@@ -1,0 +1,120 @@
+/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nspluginroot.idl"
+#include "nsISupports.idl"
+#include "nsIPluginTag.idl"
+
+%{C++
+#define MOZ_PLUGIN_HOST_CONTRACTID \
+  "@mozilla.org/plugin/host;1"
+%}
+
+[scriptable, uuid(f89e7679-0adf-4a30-bda9-1afe1ee270d6)]
+interface nsIPluginPlayPreviewInfo : nsISupports
+{
+  readonly attribute AUTF8String mimeType;
+  readonly attribute boolean     ignoreCTP;
+  readonly attribute AUTF8String redirectURL;
+};
+
+[scriptable, uuid(e8fe94f0-b877-46d0-931a-090967fb1e83)]
+interface nsIPluginHost : nsISupports
+{
+  /**
+   * Causes the plugins directory to be searched again for new plugin 
+   * libraries.
+   */
+  void reloadPlugins();
+
+  void getPluginTags([optional] out unsigned long aPluginCount,
+    [retval, array, size_is(aPluginCount)] out nsIPluginTag aResults);
+
+  /*
+   * Flags for use with clearSiteData.
+   *
+   * FLAG_CLEAR_ALL: clear all data associated with a site.
+   * FLAG_CLEAR_CACHE: clear cached data that can be retrieved again without
+   *                   loss of functionality. To be used out of concern for
+   *                   space and not necessarily privacy.
+   */
+  const uint32_t FLAG_CLEAR_ALL = 0;
+  const uint32_t FLAG_CLEAR_CACHE = 1;
+
+  /*
+   * Clear site data for a given plugin.
+   *
+   * @param plugin: the plugin to clear data for, such as one returned by
+   *                nsIPluginHost.getPluginTags.
+   * @param domain: the domain to clear data for. If this argument is null,
+   *                clear data for all domains. Otherwise, it must be a domain
+   *                only (not a complete URI or IRI). The base domain for the
+   *                given site will be determined; any data for the base domain
+   *                or its subdomains will be cleared.
+   * @param flags: a flag value defined above.
+   * @param maxAge: the maximum age in seconds of data to clear, inclusive. If
+   *                maxAge is 0, no data is cleared; if it is -1, all data is
+   *                cleared.
+   *
+   * @throws NS_ERROR_INVALID_ARG if the domain argument is malformed.
+   * @throws NS_ERROR_PLUGIN_TIME_RANGE_NOT_SUPPORTED if maxAge is a value other
+   *         than -1 and the plugin does not support clearing by timerange in
+   *         general or for that particular site and/or flag combination.
+   */
+  void clearSiteData(in nsIPluginTag plugin, in AUTF8String domain,
+                     in uint64_t flags, in int64_t maxAge);
+
+  /*
+   * Determine if a plugin has stored data for a given site.
+   *
+   * @param plugin: the plugin to query, such as one returned by
+   *                nsIPluginHost.getPluginTags.
+   * @param domain: the domain to test. If this argument is null, test if data
+   *                is stored for any site. The base domain for the given domain
+   *                will be determined; if any data for the base domain or its
+   *                subdomains is found, return true.
+   */
+  boolean siteHasData(in nsIPluginTag plugin, in AUTF8String domain);
+
+  /**
+   * Registers the play preview plugin mode for specific mime type
+   *
+   * @param mimeType: specifies plugin mime type.
+   * @param ignoreCTP: if true, the play preview ignores CTP rules, e.g.
+                       whitelisted websites, will not notify about plugin
+                       presence in the address bar.
+   * @param redirectURL: specifies url for the overlay iframe
+   */
+  void registerPlayPreviewMimeType(in AUTF8String mimeType,
+                                   [optional] in boolean ignoreCTP,
+                                   [optional] in AUTF8String redirectURL);
+
+  void unregisterPlayPreviewMimeType(in AUTF8String mimeType);
+
+  nsIPluginPlayPreviewInfo getPlayPreviewInfo(in AUTF8String mimeType);
+
+  ACString getPermissionStringForType(in AUTF8String mimeType);
+
+  /**
+   * Get the nsIPluginTag for this MIME type. This method works with both
+   * enabled and disabled/blocklisted plugins, but an enabled plugin will
+   * always be returned if available.
+   *
+   * @throws NS_ERROR_NOT_AVAILABLE if no plugin is available for this MIME
+   *         type.
+   */
+  nsIPluginTag getPluginTagForType(in AUTF8String mimeType);
+
+  /**
+   * Get the nsIPluginTag state for this MIME type.
+   */
+  unsigned long getStateForType(in AUTF8String mimeType);
+
+  /**
+   * Get the blocklist state for a MIME type.
+   */
+  uint32_t getBlocklistStateForType(in string aMimeType);
+};
+

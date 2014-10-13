@@ -1,0 +1,334 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+<!-- Synch panel -->
+
+<preferences>
+  <preference id="engine.addons"
+              name="services.sync.engine.addons"
+              type="bool"/>
+  <preference id="engine.bookmarks"
+              name="services.sync.engine.bookmarks"
+              type="bool"/>
+  <preference id="engine.history"
+              name="services.sync.engine.history"
+              type="bool"/>
+  <preference id="engine.tabs"
+              name="services.sync.engine.tabs"
+              type="bool"/>
+  <preference id="engine.prefs"
+              name="services.sync.engine.prefs"
+              type="bool"/>
+  <preference id="engine.passwords"
+              name="services.sync.engine.passwords"
+              type="bool"/>
+</preferences>
+
+<script type="application/javascript"
+        src="chrome://browser/content/preferences/in-content/sync.js"/>
+<script type="application/javascript"
+        src="chrome://browser/content/sync/utils.js"/>
+
+<hbox id="header-sync"
+      class="header"
+      hidden="true"
+      data-category="paneSync">
+  <image class="header-icon"/>
+  <label class="header-name">&paneSync.title;</label>
+</hbox>
+
+<deck id="weavePrefsDeck" data-category="paneSync" hidden="true">
+  <!-- These panels are for the "legacy" sync provider -->
+  <vbox id="noAccount" align="center">
+    <spacer flex="1"/>
+    <description id="syncDesc">
+      &weaveDesc.label;
+    </description>
+    <separator/>
+    <label class="text-link"
+           onclick="event.stopPropagation(); gSyncPane.openSetup(null);">
+      &setupButton.label;
+    </label>
+    <vbox id="pairDevice">
+      <separator/>
+      <label class="text-link"
+             onclick="event.stopPropagation(); gSyncPane.openSetup('pair');">
+        &pairDevice.label;
+      </label>
+    </vbox>
+    <spacer flex="3"/>
+  </vbox>
+
+  <vbox id="hasAccount">
+    <groupbox class="syncGroupBox">
+      <!-- label is set to account name -->
+      <caption id="accountCaption" align="center">
+        <image id="accountCaptionImage"/>
+        <label id="accountName"/>
+      </caption>
+
+      <hbox>
+        <button type="menu"
+                label="&manageAccount.label;"
+                accesskey="&manageAccount.accesskey;">
+          <menupopup>
+            <menuitem label="&viewQuota.label;"
+                      oncommand="gSyncPane.openQuotaDialog();"/>
+            <menuseparator/>
+            <menuitem label="&changePassword2.label;"
+                      oncommand="gSyncUtils.changePassword();"/>
+            <menuitem label="&myRecoveryKey.label;"
+                      oncommand="gSyncUtils.resetPassphrase();"/>
+            <menuseparator/>
+            <menuitem label="&resetSync2.label;"
+                      oncommand="gSyncPane.resetSync();"/>
+          </menupopup>
+        </button>
+      </hbox>
+
+      <hbox>
+        <label id="syncAddDeviceLabel"
+               class="text-link"
+               onclick="gSyncPane.openAddDevice(); return false;">
+          &pairDevice.label;
+        </label>
+      </hbox>
+
+      <vbox>
+        <label>&syncMy.label;</label>
+        <richlistbox id="syncEnginesList"
+                     orient="vertical"
+                     onselect="if (this.selectedCount) this.clearSelection();">
+          <richlistitem>
+            <checkbox label="&engine.addons.label;"
+                      accesskey="&engine.addons.accesskey;"
+                      preference="engine.addons"/>
+          </richlistitem>
+          <richlistitem>
+            <checkbox label="&engine.bookmarks.label;"
+                      accesskey="&engine.bookmarks.accesskey;"
+                      preference="engine.bookmarks"/>
+          </richlistitem>
+          <richlistitem>
+            <checkbox label="&engine.passwords.label;"
+                      accesskey="&engine.passwords.accesskey;"
+                      preference="engine.passwords"/>
+          </richlistitem>
+          <richlistitem>
+            <checkbox label="&engine.prefs.label;"
+                      accesskey="&engine.prefs.accesskey;"
+                      preference="engine.prefs"/>
+          </richlistitem>
+          <richlistitem>
+            <checkbox label="&engine.history.label;"
+                      accesskey="&engine.history.accesskey;"
+                      preference="engine.history"/>
+          </richlistitem>
+          <richlistitem>
+            <checkbox label="&engine.tabs.label;"
+                      accesskey="&engine.tabs.accesskey;"
+                      preference="engine.tabs"/>
+          </richlistitem>
+        </richlistbox>
+      </vbox>
+    </groupbox>
+
+    <groupbox class="syncGroupBox">
+      <grid>
+        <columns>
+          <column/>
+          <column flex="1"/>
+        </columns>
+        <rows>
+          <row align="center">
+            <label accesskey="&syncDeviceName.accesskey;"
+                   control="syncComputerName">
+              &syncDeviceName.label;
+            </label>
+            <textbox id="syncComputerName"
+                     onchange="gSyncUtils.changeName(this)"/>
+          </row>
+        </rows>
+      </grid>
+      <hbox>
+        <label class="text-link"
+               onclick="gSyncPane.startOver(true); return false;">
+          &unlinkDevice.label;
+        </label>
+      </hbox>
+    </groupbox>
+    <hbox id="tosPP" pack="center">
+      <label class="text-link"
+             onclick="event.stopPropagation();gSyncUtils.openToS();">
+        &prefs.tosLink.label;
+      </label>
+      <label class="text-link"
+             onclick="event.stopPropagation();gSyncUtils.openPrivacyPolicy();">
+        &prefs.ppLink.label;
+      </label>
+    </hbox>
+  </vbox>
+
+  <vbox id="needsUpdate" align="center" pack="center">
+    <hbox>
+      <label id="loginError"/>
+      <label class="text-link"
+             onclick="gSyncPane.updatePass(); return false;">
+        &updatePass.label;
+      </label>
+      <label class="text-link"
+             onclick="gSyncPane.resetPass(); return false;">
+        &resetPass.label;
+      </label>
+    </hbox>
+    <label class="text-link"
+           onclick="gSyncPane.startOver(true); return false;">
+      &unlinkDevice.label;
+    </label>
+  </vbox>
+
+  <!-- These panels are for the Firefox Accounts identity provider -->
+  <vbox id="fxaDeterminingStatus" align="center">
+    <spacer flex="1"/>
+    <label>&determiningAcctStatus.label;</label>
+    <spacer flex="1"/>
+  </vbox>
+
+  <vbox id="noFxaAccount" align="start">
+    <label>&welcome.description;</label>
+    <label class="text-link"
+           onclick="gSyncPane.signUp(); return false;">
+      &welcome.createAccount.label;
+    </label>
+    <label class="text-link"
+           onclick="gSyncPane.signIn(); return false;">
+      &welcome.signIn.label;
+    </label>
+    <separator/>
+    <label class="text-link"
+           onclick="gSyncPane.openOldSyncSupportPage(); return false;">
+      &welcome.useOldSync.label;
+    </label>
+  </vbox>
+
+  <vbox id="hasFxaAccount">
+    <groupbox id="fxaGroup">
+      <caption><label>&syncBrand.fxAccount.label;</label></caption>
+
+      <deck id="fxaLoginStatus">
+
+        <!-- logged in and verified and all is good -->
+        <hbox>
+          <label id="fxaEmailAddress1"/>
+          <vbox>
+            <label class="text-link"
+                   onclick="gSyncPane.manageFirefoxAccount();">
+              &manage.label;
+            </label>
+          </vbox>
+          <spacer flex="1"/>
+          <vbox>
+            <button id="fxaUnlinkButton"
+                    oncommand="gSyncPane.unlinkFirefoxAccount(true);"
+                    label="&disconnect.label;"/>
+          </vbox>
+        </hbox>
+
+        <!-- logged in to an unverified account -->
+        <hbox flex="1">
+          <description>
+            &signedInUnverified.beforename.label;
+            <label id="fxaEmailAddress2"/>
+            &signedInUnverified.aftername.label;
+          </description>
+          <spacer flex="1"/>
+          <vbox align="end">
+            <button oncommand="gSyncPane.verifyFirefoxAccount();"
+                    label="&verify.label;"/>
+            <label class="text-link"
+                   onclick="/* no warning as account can't have previously synced */ gSyncPane.unlinkFirefoxAccount(false);">
+              &forget.label;
+            </label>
+          </vbox>
+        </hbox>
+
+        <!-- logged in locally but server rejected credentials -->
+        <hbox flex="1">
+          <description>
+            &signedInLoginFailure.beforename.label;
+            <label id="fxaEmailAddress3"/>
+            &signedInLoginFailure.aftername.label;
+          </description>
+          <spacer flex="1"/>
+          <vbox align="end">
+            <button oncommand="gSyncPane.reSignIn();"
+                    label="&signIn.label;"/>
+            <label class="text-link"
+                    onclick="gSyncPane.unlinkFirefoxAccount(true);">
+              &forget.label;
+            </label>
+          </vbox>
+        </hbox>
+      </deck>
+    </groupbox>
+
+    <groupbox id="syncOptions">
+      <caption><label>&syncBrand.shortName.label;</label></caption>
+      <hbox id="fxaSyncEngines">
+        <vbox>
+          <checkbox label="&engine.tabs.label;"
+                    accesskey="&engine.tabs.accesskey;"
+                    preference="engine.tabs"/>
+          <checkbox label="&engine.bookmarks.label;"
+                    accesskey="&engine.bookmarks.accesskey;"
+                    preference="engine.bookmarks"/>
+          <hbox>
+            <checkbox id="fxa-pweng-chk"
+                      label="&engine.passwords.label;"
+                      accesskey="&engine.passwords.accesskey;"
+                      preference="engine.passwords"/>
+
+            <vbox id="fxa-pweng-help">
+              <spacer flex="1"/>
+              <hbox id="fxa-pweng-help-link">
+                <image onclick="gSyncUtils.openMPInfoPage(event);" />
+              </hbox>
+              <spacer flex="1"/>
+            </vbox>
+          </hbox>
+          <checkbox label="&engine.history.label;"
+                    accesskey="&engine.history.accesskey;"
+                    preference="engine.history"/>
+          <checkbox label="&engine.addons.label;"
+                    accesskey="&engine.addons.accesskey;"
+                    preference="engine.addons"/>
+          <checkbox label="&engine.prefs.label;"
+                    accesskey="&engine.prefs.accesskey;"
+                    preference="engine.prefs"/>
+        </vbox>
+        <spacer/>
+      </hbox>
+    </groupbox>
+    <hbox align="center">
+      <label accesskey="&syncDeviceName.accesskey;"
+             control="syncComputerName">
+        &syncDeviceName.label;
+      </label>
+      <textbox id="fxaSyncComputerName"
+                flex="1"
+                onchange="gSyncUtils.changeName(this)"/>
+    </hbox>
+    <spacer flex="1"/>
+    <hbox id="tosPP" pack="center">
+      <label class="text-link small"
+             onclick="event.stopPropagation();gSyncUtils.openToS();">
+        &prefs.tosLink.label;
+      </label>
+      <label class="text-link small"
+              onclick="event.stopPropagation();gSyncUtils.openPrivacyPolicy();">
+        &fxaPrivacyNotice.link.label;
+      </label>
+    </hbox>
+  </vbox>
+</deck>

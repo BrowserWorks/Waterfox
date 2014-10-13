@@ -1,0 +1,127 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+DIRS += ['shared', 'xpwidgets']
+
+toolkit = CONFIG['MOZ_WIDGET_TOOLKIT']
+
+if toolkit in ('cocoa', 'qt', 'android', 'gonk'):
+    DIRS += [toolkit]
+if toolkit in ('qt', 'android', 'gonk', 'gtk2', 'gtk3'):
+    EXPORTS += ['nsIPrintDialogService.h']
+
+if toolkit == 'windows':
+    DIRS += ['windows']
+
+    XPIDL_SOURCES += [
+        'nsIJumpListBuilder.idl',
+        'nsIJumpListItem.idl',
+        'nsIPrintSettingsWin.idl',
+        'nsITaskbarOverlayIconController.idl',
+        'nsITaskbarPreview.idl',
+        'nsITaskbarPreviewButton.idl',
+        'nsITaskbarPreviewController.idl',
+        'nsITaskbarProgress.idl',
+        'nsITaskbarTabPreview.idl',
+        'nsITaskbarWindowPreview.idl',
+        'nsIWinTaskbar.idl',
+    ]
+elif toolkit == 'cocoa':
+    XPIDL_SOURCES += [
+        'nsIMacDockSupport.idl',
+        'nsIMacWebAppUtils.idl',
+        'nsIStandaloneNativeMenu.idl',
+        'nsITaskbarProgress.idl',
+    ]
+    EXPORTS += [
+        'nsINativeMenuService.h',
+        'nsIPrintDialogService.h',
+    ]
+
+TEST_TOOL_DIRS += ['tests']
+
+# Don't build the DSO under the 'build' directory as windows does.
+#
+# The DSOs get built in the toolkit dir itself.  Do this so that
+# multiple implementations of widget can be built on the same
+# source tree.
+#
+if CONFIG['MOZ_ENABLE_GTK']:
+    DIRS += ['gtk']
+
+    if CONFIG['MOZ_X11']:
+        DIRS += ['gtkxtbin']
+
+XPIDL_SOURCES += [
+    'nsIAppShell.idl',
+    'nsIBaseWindow.idl',
+    'nsIBidiKeyboard.idl',
+    'nsIClipboard.idl',
+    'nsIClipboardDragDropHookList.idl',
+    'nsIClipboardDragDropHooks.idl',
+    'nsIClipboardHelper.idl',
+    'nsIClipboardOwner.idl',
+    'nsIColorPicker.idl',
+    'nsIDragService.idl',
+    'nsIDragSession.idl',
+    'nsIFilePicker.idl',
+    'nsIFormatConverter.idl',
+    'nsIGfxInfo.idl',
+    'nsIGfxInfoDebug.idl',
+    'nsIIdleService.idl',
+    'nsIIdleServiceInternal.idl',
+    'nsIIMEPicker.idl',
+    'nsIPrintOptions.idl',
+    'nsIPrintSession.idl',
+    'nsIPrintSettings.idl',
+    'nsIPrintSettingsService.idl',
+    'nsIScreen.idl',
+    'nsIScreenManager.idl',
+    'nsISound.idl',
+    'nsITransferable.idl',
+]
+
+if CONFIG['MOZ_METRO']:
+    XPIDL_SOURCES += [
+        'MetroUIUtils.idl',
+        'nsIWinMetroUtils.idl',
+    ]
+
+XPIDL_MODULE = 'widget'
+
+EXPORTS += [
+    'InputData.h',
+    'nsIDeviceContextSpec.h',
+    'nsIPluginWidget.h',
+    'nsIRollupListener.h',
+    'nsIWidget.h',
+    'nsIWidgetListener.h',
+    'nsWidgetInitData.h',
+    'nsWidgetsCID.h',
+]
+
+EXPORTS.mozilla += [
+    'BasicEvents.h',
+    'CommandList.h',
+    'ContentEvents.h',
+    'EventClassList.h',
+    'EventForwards.h',
+    'LookAndFeel.h',
+    'MiscEvents.h',
+    'MouseEvents.h',
+    'TextEvents.h',
+    'TextRange.h',
+    'TouchEvents.h',
+    'WidgetUtils.h',
+]
+
+if CONFIG['MOZ_INSTRUMENT_EVENT_LOOP']:
+    EXPORTS.mozilla += [
+        'WidgetTraceEvent.h',
+    ]
+
+EXPORTS.ipc = ['nsGUIEventIPC.h']
+

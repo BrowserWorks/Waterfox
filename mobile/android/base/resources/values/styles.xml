@@ -1,0 +1,712 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        Base application styles. This could be overridden in other res/values-XXX/themes.xml.
+    -->
+    <style name="Widget"/>
+
+    <style name="Widget.BaseButton" parent="android:style/Widget.Button"/>
+
+    <style name="Widget.BaseDropDownItem" parent="android:style/Widget.DropDownItem"/>
+
+    <style name="Widget.BaseEditText" parent="android:style/Widget.EditText"/>
+
+    <style name="Widget.BaseListView" parent="android:style/Widget.ListView"/>
+
+    <style name="Widget.BaseGridView" parent="android:style/Widget.GridView"/>
+
+    <style name="Widget.BaseTextView" parent="android:style/Widget.TextView"/>
+
+    <style name="Widget.ProgressBar.Horizontal" parent="android:style/Widget.ProgressBar.Horizontal"/>
+
+    <!--
+        Application styles. All customizations that are not specific
+        to a particular API level can go here.
+    -->
+    <style name="Widget.Button" parent="Widget.BaseButton">
+        <item name="android:textAppearance">@style/TextAppearance.Widget.Button</item>
+    </style>
+
+    <style name="Widget.DropDownItem" parent="Widget.BaseDropDownItem">
+        <item name="android:textAppearance">@style/TextAppearance.Widget.DropDownItem</item>
+    </style>
+
+    <style name="Widget.EditText" parent="Widget.BaseEditText">
+        <item name="android:textAppearance">@style/TextAppearance.Widget.EditText</item>
+    </style>
+
+    <style name="Widget.TextView" parent="Widget.BaseTextView">
+        <item name="android:textAppearance">@style/TextAppearance.Widget.TextView</item>
+    </style>
+
+    <style name="Widget.ListView" parent="Widget.BaseListView">
+        <item name="android:divider">#D1D5DA</item>
+        <item name="android:dividerHeight">1dp</item>
+        <item name="android:cacheColorHint">@android:color/transparent</item>
+        <item name="android:listSelector">@drawable/action_bar_button</item>
+    </style>
+
+    <style name="Widget.ExpandableListView" parent="Widget.ListView">
+        <item name="android:groupIndicator">@android:color/transparent</item>
+    </style>
+
+    <style name="Widget.GridView" parent="Widget.BaseGridView">
+        <item name="android:verticalSpacing">0dip</item>
+        <item name="android:horizontalSpacing">0dip</item>
+        <item name="android:cacheColorHint">@android:color/transparent</item>
+        <item name="android:listSelector">@drawable/action_bar_button</item>
+    </style>
+
+    <style name="Widget.ListItem">
+        <item name="android:minHeight">?android:attr/listPreferredItemHeight</item>
+        <item name="android:textAppearance">?android:attr/textAppearanceLargeInverse</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingLeft">12dip</item>
+        <item name="android:paddingRight">7dip</item>
+        <item name="android:checkMark">?android:attr/listChoiceIndicatorMultiple</item>
+        <item name="android:ellipsize">marquee</item>
+    </style>
+
+    <style name="Widget.Spinner" parent="android:style/Widget.Spinner">
+        <item name="android:minWidth">@dimen/doorhanger_input_width</item>
+    </style>
+
+    <style name="Widget.GeckoMenuListView" parent="Widget.ListView">
+        <item name="android:divider">#FFC9D3DC</item>
+    </style>
+
+    <style name="Widget.MenuItemActionBar">
+        <item name="android:padding">8dip</item>
+        <item name="android:background">@drawable/action_bar_button</item>
+        <item name="android:scaleType">fitCenter</item>
+    </style>
+
+    <style name="Widget.MenuItemSecondaryActionBar">
+        <item name="android:padding">8dip</item>
+        <item name="android:background">@drawable/action_bar_button</item>
+        <item name="android:scaleType">centerInside</item>
+    </style>
+
+    <style name="Widget.MenuItemActionView">
+        <item name="android:divider">@drawable/divider_vertical</item>
+        <item name="android:showDividers">middle</item>
+        <item name="android:dividerPadding">0dip</item>
+        <item name="android:gravity">left</item>
+    </style>
+
+    <style name="Widget.MenuItemDefault">
+        <item name="android:paddingLeft">10dip</item>
+        <item name="android:paddingRight">10dip</item>
+        <item name="android:drawablePadding">6dip</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:textAppearance">@style/TextAppearance</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:ellipsize">middle</item>
+        <item name="android:textSize">@dimen/menu_item_textsize</item>
+    </style>
+
+    <style name="Widget.TwoLinePageRow" />
+
+    <style name="Widget.TwoLinePageRow.Title">
+        <item name="android:textAppearance">@style/TextAppearance.Widget.Home.ItemTitle</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:ellipsize">none</item>
+    </style>
+
+    <style name="Widget.TwoLinePageRow.Url">
+        <item name="android:textAppearance">@style/TextAppearance.Widget.Home.ItemDescription</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:ellipsize">middle</item>
+    </style>
+
+    <style name="Widget.BookmarkFolderView" parent="Widget.TwoLinePageRow.Title">
+        <item name="android:paddingLeft">10dip</item>
+        <item name="android:drawablePadding">10dip</item>
+        <item name="android:drawableLeft">@drawable/bookmark_folder</item>
+    </style>
+
+    <style name="Widget.PanelItemView" />
+
+    <style name="Widget.PanelItemView.Title">
+        <item name="android:textAppearance">@style/TextAppearance.Widget.Home.ItemTitle</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <style name="Widget.PanelItemView.Description">
+        <item name="android:textAppearance">@style/TextAppearance.Widget.Home.ItemDescription</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <style name="Widget.TopSitesGridView" parent="Widget.GridView">
+        <item name="android:padding">7dp</item>
+        <item name="android:horizontalSpacing">0dp</item>
+        <item name="android:verticalSpacing">7dp</item>
+    </style>
+
+    <style name="Widget.TopSitesGridItemView">
+      <item name="android:layout_width">fill_parent</item>
+      <item name="android:layout_height">fill_parent</item>
+      <item name="android:padding">5dip</item>
+      <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="Widget.PanelGridView" parent="Widget.GridView">
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">fill_parent</item>
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:stretchMode">columnWidth</item>
+        <item name="android:numColumns">auto_fit</item>
+        <item name="android:columnWidth">@dimen/panel_grid_view_column_width</item>
+        <item name="android:horizontalSpacing">2dp</item>
+        <item name="android:verticalSpacing">2dp</item>
+        <item name="android:drawSelectorOnTop">true</item>
+    </style>
+
+    <style name="Widget.BookmarkItemView" parent="Widget.TwoLinePageRow"/>
+
+    <style name="Widget.BookmarksListView" parent="Widget.HomeListView"/>
+
+    <style name="Widget.TopSitesThumbnailView">
+      <item name="android:padding">0dip</item>
+      <item name="android:scaleType">centerCrop</item>
+    </style>
+
+    <style name="Widget.TopSitesGridItemPin">
+      <item name="android:minWidth">30dip</item>
+      <item name="android:minHeight">30dip</item>
+      <item name="android:padding">0dip</item>
+    </style>
+
+    <style name="Widget.TopSitesGridItemTitle">
+      <item name="android:textColor">@color/top_sites_grid_item_title</item>
+      <item name="android:textSize">12sp</item>
+      <item name="android:singleLine">true</item>
+      <item name="android:ellipsize">none</item>
+      <item name="android:paddingTop">5dip</item>
+      <item name="android:gravity">left</item>
+    </style>
+
+    <style name="Widget.HomeListView" parent="Widget.ListView">
+        <item name="android:divider">#E7ECF0</item>
+    </style>
+
+    <style name="Widget.TopSitesListView" parent="Widget.BookmarksListView"/>
+
+    <style name="Widget.ReadingListView" parent="Widget.BookmarksListView"/>
+
+    <style name="Widget.HomeBanner"/>
+
+    <style name="Widget.Home" />
+
+    <style name="Widget.Home.HeaderItem">
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">32dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.Widget.Home.Header</item>
+        <item name="android:background">#fff5f7f9</item>
+        <item name="android:focusable">false</item>
+        <item name="android:gravity">center|left</item>
+        <item name="android:paddingLeft">10dip</item>
+        <item name="android:paddingRight">10dip</item>
+    </style>
+
+    <style name="Widget.Home.PageButton">
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">40dip</item>
+        <item name="android:textAppearance">@style/TextAppearance.Widget.Home.PageTitle</item>
+        <item name="android:background">@drawable/action_bar_button</item>
+        <item name="android:focusable">true</item>
+        <item name="android:gravity">center|left</item>
+        <item name="android:paddingLeft">10dip</item>
+        <item name="android:paddingRight">10dip</item>
+    </style>
+
+    <style name="Widget.Home.ActionButton" parent="Widget.Home.PageButton">
+        <item name="android:textAppearance">@style/TextAppearance.Widget.Home.PageAction</item>
+    </style>
+
+    <style name="Widget.Home.HistoryTabIndicator">
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">32dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.Widget.Home.PageTitle</item>
+        <item name="android:background">@drawable/home_panel_title_background</item>
+        <item name="android:focusable">false</item>
+        <item name="android:gravity">center|left</item>
+        <item name="android:paddingLeft">10dip</item>
+        <item name="android:paddingRight">10dip</item>
+    </style>
+
+    <style name="Widget.Home.HistoryPanelTitle" parent="Widget.Home.HistoryTabIndicator"/>
+
+    <!--
+        TextAppearance
+        Note: Gecko uses light theme as default, while Android uses dark.
+        If Android convention has to be followd, the list of colors specified 
+        in themes.xml would be inverse, and things would get confusing.
+        Hence, Gecko's TextAppearance is based on text over light theme and
+        TextAppearance.Inverse is based on text over dark theme.
+    -->
+    <style name="TextAppearance">
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
+        <item name="android:textColorHighlight">@color/text_color_highlight</item>
+        <item name="android:textColorHint">?android:attr/textColorHint</item>
+        <item name="android:textColorLink">?android:attr/textColorLink</item>
+        <item name="android:textSize">@dimen/menu_item_textsize</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="TextAppearance.Inverse">
+        <item name="android:textColor">?android:attr/textColorPrimaryInverse</item>
+        <item name="android:textColorHint">?android:attr/textColorHintInverse</item>
+        <item name="android:textColorHighlight">@color/text_color_highlight_inverse</item>
+        <item name="android:textColorLink">?android:attr/textColorLink</item>
+    </style>
+
+    <style name="TextAppearance.Large">
+        <item name="android:textSize">22sp</item>
+    </style>
+
+    <style name="TextAppearance.Large.Inverse">
+        <item name="android:textColor">?android:attr/textColorPrimaryInverse</item>
+        <item name="android:textColorHint">?android:attr/textColorHintInverse</item>
+        <item name="android:textColorHighlight">@color/text_color_highlight_inverse</item>
+        <item name="android:textColorLink">?android:attr/textColorLink</item>
+    </style>
+
+    <style name="TextAppearance.Medium">
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <style name="TextAppearance.Medium.Inverse">
+        <item name="android:textColor">?android:attr/textColorPrimaryInverse</item>
+        <item name="android:textColorHint">?android:attr/textColorHintInverse</item>
+        <item name="android:textColorHighlight">@color/text_color_highlight_inverse</item>
+        <item name="android:textColorLink">?android:attr/textColorLink</item>
+    </style>
+
+    <style name="TextAppearance.Small">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">?android:attr/textColorSecondary</item>
+    </style>
+
+    <style name="TextAppearance.Small.Inverse">
+        <item name="android:textColor">?android:attr/textColorSecondaryInverse</item>
+        <item name="android:textColorHint">?android:attr/textColorHintInverse</item>
+        <item name="android:textColorHighlight">@color/text_color_highlight_inverse</item>
+        <item name="android:textColorLink">?android:attr/textColorLink</item>
+    </style>
+
+    <style name="TextAppearance.EmptyMessage" parent="TextAppearance.Large"/>
+
+    <style name="TextAppearance.Micro">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">?android:attr/textColorTertiary</item>
+    </style>
+
+    <style name="TextAppearance.Micro.Inverse">
+        <item name="android:textColor">?android:attr/textColorTertiaryInverse</item>
+        <item name="android:textColorHint">?android:attr/textColorHintInverse</item>
+        <item name="android:textColorHighlight">@color/text_color_highlight_inverse</item>
+        <item name="android:textColorLink">?android:attr/textColorLink</item>
+    </style>
+
+    <style name="TextAppearance.Widget" />
+
+    <style name="TextAppearance.Widget.Button" parent="TextAppearance.Small">
+        <item name="android:textColor">@color/primary_text</item>
+    </style>
+
+    <style name="TextAppearance.Widget.DropDownItem">
+        <item name="android:textColor">@color/primary_text</item>
+    </style>
+
+    <style name="TextAppearance.Widget.EditText">
+        <item name="android:textColor">@color/primary_text</item>
+    </style>
+
+    <style name="TextAppearance.Widget.TextView">
+        <item name="android:textColor">@color/primary_text</item>
+    </style>
+
+    <style name="TextAppearance.Widget.HomePagerTabStrip" parent="TextAppearance.Small">
+        <item name="android:textColor">?android:attr/textColorHint</item>
+    </style>
+
+    <style name="TextAppearance.Widget.HomePagerTabMenuStrip" parent="TextAppearance.Small">
+        <item name="android:textColor">?android:attr/textColorHint</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="TextAppearance.Widget.SuggestionsPrompt" parent="TextAppearance.Small">
+        <item name="android:textColor">@color/url_bar_title</item>
+    </style>
+
+    <style name="TextAppearance.Widget.Home" />
+
+    <style name="TextAppearance.Widget.Home.Header" parent="TextAppearance.Small">
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
+    </style>
+
+    <style name="TextAppearance.Widget.Home.PageTitle" parent="TextAppearance.Medium" />
+
+    <style name="TextAppearance.Widget.Home.PageAction" parent="TextAppearance.Small">
+        <item name="android:textColor">#00ACFF</item>
+    </style>
+
+    <style name="TextAppearance.Widget.Home.ItemTitle" parent="TextAppearance.Medium"/>
+
+    <style name="TextAppearance.Widget.Home.ItemDescription" parent="TextAppearance.Micro">
+        <item name="android:textColor">#AFB1B3</item>
+    </style>
+
+    <style name="TextAppearance.Widget.HomeBanner" parent="TextAppearance.Small">
+        <item name="android:textColor">?android:attr/textColorHint</item>
+    </style>
+
+    <!-- BrowserToolbar -->
+    <style name="BrowserToolbar">
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">@dimen/browser_toolbar_height</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
+
+    <style name="UrlBar.ImageButton.TabCount">
+        <item name="android:background">@drawable/tabs_count</item>
+        <item name="android:gravity">center_horizontal</item>
+        <item name="android:clipChildren">false</item>
+        <item name="android:clipToPadding">false</item>
+    </style>
+
+    <!-- URL bar -->
+    <style name="UrlBar">
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">fill_parent</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
+
+    <!-- URL bar - Button -->
+    <style name="UrlBar.Button">
+        <item name="android:layout_height">fill_parent</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+
+    <!-- URL bar - Image Button -->
+    <style name="UrlBar.ImageButton" parent="UrlBar.Button">
+        <item name="android:scaleType">center</item>
+        <item name="android:layout_gravity">center_vertical</item>
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+
+    <!-- URL bar - Image Button - Unused -->
+    <style name="UrlBar.ImageButton.Unused">
+        <item name="android:layout_width">0dip</item>
+        <item name="android:layout_height">0dip</item>
+        <item name="android:visibility">gone</item>
+    </style>
+
+    <!-- URL bar - Image Button - Icon -->
+    <style name="UrlBar.ImageButton.Icon">
+         <item name="android:layout_width">@dimen/browser_toolbar_icon_width</item>
+         <item name="android:layout_height">@dimen/browser_toolbar_height</item>
+         <item name="android:layout_weight">0.0</item>
+    </style>
+
+    <!-- TabsTray List -->
+    <style name="TabsListBase">
+         <item name="android:background">@android:color/transparent</item>
+         <item name="android:listSelector">@android:color/transparent</item>
+    </style>
+
+    <style name="TabsList" parent="TabsListBase">
+         <item name="android:orientation">vertical</item>
+         <item name="android:scrollbars">vertical</item>
+    </style>
+
+    <style name="TabsItem">
+         <item name="android:nextFocusRight">@+id/close</item>
+    </style>
+
+    <style name="TabsItemClose">
+         <item name="android:nextFocusLeft">@+id/info</item>
+    </style>
+
+    <!-- RemoteTabsList -->
+    <style name="RemoteTabsList" parent="android:style/Widget.ListView">
+         <item name="android:listSelector">@android:color/transparent</item>
+         <item name="android:cacheColorHint">@android:color/transparent</item>
+         <item name="android:divider">@android:color/transparent</item>
+         <item name="android:dividerHeight">1dip</item>
+         <item name="android:childDivider">@drawable/remote_tabs_child_divider</item>
+         <item name="android:groupIndicator">@android:color/transparent</item>
+    </style>
+
+    <!-- Remote tabs panel -->
+    <style name="RemoteTabsPanelChildBase">
+        <item name="android:paddingLeft">16dp</item>
+        <item name="android:paddingRight">16dp</item>
+        <item name="android:paddingTop">32dp</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="RemoteTabsPanelChild" parent="RemoteTabsPanelChildBase">
+        <!-- We set values in landscape. -->
+    </style>
+
+    <style name="RemoteTabsSectionBase">
+        <item name="android:orientation">vertical</item>
+        <item name="android:layout_marginLeft">40dp</item>
+        <item name="android:layout_marginRight">40dp</item>
+    </style>
+
+    <style name="RemoteTabsSection" parent="RemoteTabsSectionBase">
+        <!-- We set values in landscape. -->
+    </style>
+
+    <style name="RemoteTabsItemBase">
+        <item name="android:layout_marginBottom">28dp</item>
+        <item name="android:layout_gravity">center</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <style name="RemoteTabsItem" parent="RemoteTabsItemBase">
+        <!-- We set values in landscape. -->
+    </style>
+
+    <style name="RemoteTabsItem.ButtonBase">
+        <item name="android:background">@drawable/remote_tabs_setup_button_background</item>
+        <item name="android:textColor">#FFFEFF</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <style name="RemoteTabsItem.Button" parent="RemoteTabsItem.ButtonBase">
+        <item name="android:paddingTop">18dp</item>
+        <item name="android:paddingBottom">18dp</item>
+        <item name="android:paddingLeft">9dp</item>
+        <item name="android:paddingRight">9dp</item>
+    </style>
+
+    <style name="RemoteTabsItem.TextAppearance">
+        <item name="android:textColor">#C0C9D0</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:lineSpacingMultiplier">1.35</item>
+    </style>
+
+    <style name="RemoteTabsItem.TextAppearance.Header">
+        <item name="android:textSize">18sp</item>
+        <item name="android:layout_marginBottom">16dp</item>
+    </style>
+
+    <style name="RemoteTabsItem.TextAppearance.Header.FXAccounts">
+        <!-- We change these values on landscape. -->
+    </style>
+
+    <style name="RemoteTabsItem.TextAppearance.Linkified">
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:textColor">#0292D6</item>
+    </style>
+
+    <style name="RemoteTabsItem.TextAppearance.Linkified.Resend">
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <!-- TabsTray Row -->
+    <style name="TabRowTextAppearance">
+        <item name="android:textColor">#FFFFFFFF</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:ellipsize">middle</item>
+    </style>
+
+    <!-- TabsTray RemoteTabs Row Url -->
+    <style name="TabRowTextAppearance.Url">
+        <item name="android:textColor">#FFA4A7A9</item>
+    </style>
+
+    <!-- TabWidget --> 
+    <style name="TabWidget">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">40dip</item>
+        <item name="android:layout_weight">1.0</item>
+    </style>
+
+    <!-- Find bar -->
+    <style name="FindBar">
+        <item name="android:background">@color/background_tabs</item>
+        <item name="android:paddingLeft">3dip</item>
+        <item name="android:paddingRight">3dip</item>
+        <item name="android:paddingTop">6dip</item>
+        <item name="android:paddingBottom">6dip</item>
+    </style>
+
+    <!-- Find bar - Image Button -->
+    <style name="FindBar.ImageButton">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginLeft">5dip</item>
+        <item name="android:layout_marginRight">5dip</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:layout_centerVertical">true</item>
+        <item name="android:background">@drawable/action_bar_button_inverse</item>
+    </style>
+
+    <style name="WebView">
+    </style>
+
+    <style name="WebView.Titlebar">
+        <item name="android:background">@drawable/webapp_titlebar_bg</item>
+        <item name="android:padding">2dp</item>
+    </style>
+
+    <style name="WebView.Titlebar.Title">
+        <item name="android:textColor">#ff222222</item>
+    </style>
+
+    <style name="GeckoDialogTitle">
+        <item name="android:textAppearance">@android:style/TextAppearance.DialogWindowTitle</item>
+    </style>
+
+    <style name="GeckoDialogTitle.SubTitle" />
+
+    <style name="CrashReporter" />
+
+    <style name="CrashReporter.EditText">
+        <item name="android:background">@drawable/textbox_bg</item>
+        <item name="android:padding">10dp</item>
+        <item name="android:textAppearance">@style/TextAppearance</item>
+    </style>
+
+    <style name="PopupAnimation">
+        <item name="@android:windowEnterAnimation">@anim/popup_show</item>
+        <item name="@android:windowExitAnimation">@anim/popup_hide</item>
+    </style>
+
+    <style name="ToastBase">
+        <item name="android:background">@drawable/toast_background</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_alignParentBottom">true</item>
+        <item name="android:layout_centerHorizontal">true</item>
+        <item name="android:layout_gravity">bottom|center_horizontal</item>
+        <item name="android:layout_marginBottom">64dp</item>
+        <item name="android:layout_marginTop">0dp</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:clickable">true</item>
+    </style>
+
+    <style name="Toast" parent="ToastBase">
+        <item name="android:layout_marginLeft">16dp</item>
+        <item name="android:layout_marginRight">16dp</item>
+    </style>
+
+    <style name="ToastElementBase">
+        <item name="android:background">@null</item>
+        <item name="android:paddingLeft">12dp</item>
+        <item name="android:paddingRight">12dp</item>
+        <item name="android:paddingTop">20dp</item>
+        <item name="android:paddingBottom">20dp</item>
+    </style>
+
+    <style name="ToastDividerBase">
+        <item name="android:background">@color/toast_button_divider</item>
+        <item name="android:layout_width">1dp</item>
+        <item name="android:layout_height">match_parent</item>
+    </style>
+
+    <style name="ToastMessageBase" parent="ToastElementBase">
+        <item name="android:textColor">@color/toast_button_text</item>
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_gravity">center_vertical</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:clickable">false</item>
+        <item name="android:focusable">false</item>
+    </style>
+
+    <style name="ToastButtonBase" parent="ToastElementBase">
+        <item name="android:background">@drawable/toast_button_background</item>
+        <item name="android:textColor">@color/toast_button_text</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_gravity">center_vertical</item>
+        <item name="android:drawablePadding">12dp</item>
+        <item name="android:maxWidth">160dp</item>
+    </style>
+
+    <style name="ToastDivider" parent="ToastDividerBase">
+        <item name="android:layout_marginTop">14dp</item>
+        <item name="android:layout_marginBottom">14dp</item>
+    </style>
+
+    <style name="ToastMessage" parent="ToastMessageBase">
+        <item name="android:textAppearance">?android:textAppearanceSmall</item>
+    </style>
+
+    <style name="ToastButton" parent="ToastButtonBase">
+        <item name="android:textAppearance">?android:textAppearanceSmall</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="GeckoActionBar">
+        <item name="android:background">@drawable/ab_stacked_transparent_light_holo</item>
+    </style>
+
+    <style name="GeckoActionBar.Title">
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:textAppearance">@style/TextAppearance.Medium</item>
+        <item name="android:drawableLeft">@drawable/ab_done</item>
+        <item name="android:paddingLeft">15dp</item>
+        <item name="android:paddingRight">15dp</item>
+        <item name="android:contentDescription">@string/actionbar_done</item>
+    </style>
+
+    <style name="GeckoActionBar.Button" parent="Widget.MenuItemActionBar">
+        <item name="android:padding">8dp</item>
+    </style>
+
+    <style name="GeckoActionBar.Button.MenuButton">
+        <item name="android:scaleType">center</item>
+        <item name="android:src">@drawable/menu_light</item>
+        <item name="android:contentDescription">@string/actionbar_menu</item>
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+
+    <style name="GeckoActionBar.Buttons">
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:textColor">@color/text_color_primary</item>
+        <item name="android:gravity">right</item>
+    </style>
+
+    <style name="TabInput"></style>
+
+    <style name="TabInput.TabWidget">
+        <item name="android:divider">@drawable/divider_vertical</item>
+        <item name="android:background">@drawable/tab_indicator_background</item>
+    </style>
+
+    <style name="TabInput.Tab">
+        <item name="android:background">@drawable/tabs_panel_indicator</item>
+        <item name="android:gravity">center</item>
+        <item name="android:minHeight">@dimen/menu_item_row_height</item>
+    </style>
+
+    <style name="FloatingHintEditText" parent="android:style/Widget.EditText">
+        <item name="android:paddingTop">0dp</item>
+    </style>
+
+</resources>

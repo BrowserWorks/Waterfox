@@ -1,0 +1,350 @@
+/** -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+%{C++
+#include "gfxImageSurface.h"
+#include "gfxContext.h"
+#include "gfxMatrix.h"
+#include "gfxRect.h"
+#include "GraphicsFilter.h"
+#include "gfxASurface.h"
+#include "mozilla/gfx/2D.h"
+#include "mozilla/RefPtr.h"
+#include "nsRect.h"
+#include "nsSize.h"
+#include "limits.h"
+
+namespace mozilla {
+namespace layers {
+class LayerManager;
+class ImageContainer;
+}
+}
+
+class nsIFrame;
+
+namespace mozilla {
+class TimeStamp;
+class SVGImageContext;
+}
+
+namespace mozilla {
+namespace image {
+class Orientation;
+}
+}
+
+%}
+
+[ptr] native gfxImageSurface(gfxImageSurface);
+[ptr] native gfxASurface(gfxASurface);
+native gfxImageFormat(gfxASurface::gfxImageFormat);
+[ptr] native gfxContext(gfxContext);
+[ref] native gfxMatrix(gfxMatrix);
+[ref] native gfxRect(gfxRect);
+native gfxGraphicsFilter(GraphicsFilter);
+[ref] native nsIntRect(nsIntRect);
+[ref] native nsIntSize(nsIntSize);
+native nsSize(nsSize);
+[ptr] native nsIFrame(nsIFrame);
+[ptr] native ImageContainer(mozilla::layers::ImageContainer);
+[ptr] native LayerManager(mozilla::layers::LayerManager);
+native Orientation(mozilla::image::Orientation);
+[ref] native TimeStamp(mozilla::TimeStamp);
+[ptr] native SVGImageContext(mozilla::SVGImageContext);
+native TempRefSourceSurface(mozilla::TemporaryRef<mozilla::gfx::SourceSurface>);
+
+
+/**
+ * imgIContainer is the interface that represents an image. It allows
+ * access to frames as Thebes surfaces. It also allows drawing of images
+ * onto Thebes contexts.
+ *
+ * Internally, imgIContainer also manages animation of images.
+ */
+[scriptable, builtinclass, uuid(503a830c-734d-4362-91f6-73f83ac59646)]
+interface imgIContainer : nsISupports
+{
+  /**
+   * The width of the container rectangle.  In the case of any error,
+   * zero is returned, and an exception will be thrown.
+   */
+  readonly attribute int32_t width;
+
+  /**
+   * The height of the container rectangle.  In the case of any error,
+   * zero is returned, and an exception will be thrown.
+   */
+  readonly attribute int32_t height;
+
+  /**
+   * The intrinsic size of this image in appunits. If the image has no intrinsic
+   * size in a dimension, -1 will be returned for that dimension. In the case of
+   * any error, an exception will be thrown.
+   */
+  [noscript] readonly attribute nsSize intrinsicSize;
+
+  /**
+   * The (dimensionless) intrinsic ratio of this image. In the case of any error,
+   * an exception will be thrown.
+   */
+  [noscript] readonly attribute nsSize intrinsicRatio;
+
+  /**
+    * Enumerated values for the 'type' attribute (below).
+    */
+  const unsigned short TYPE_RASTER = 0;
+  const unsigned short TYPE_VECTOR = 1;
+
+  /**
+   * The type of this image (one of the TYPE_* values above).
+   */
+  readonly attribute unsigned short type;
+
+  /**
+   * Direct C++ accessor for 'type' attribute, for convenience.
+   */
+  [noscript, notxpcom] uint16_t GetType();
+
+  /**
+   * Whether this image is animated. You can only be guaranteed that querying
+   * this will not throw if STATUS_DECODE_COMPLETE is set on the imgIRequest.
+   *
+   * @throws NS_ERROR_NOT_AVAILABLE if the animated state cannot be determined.
+   */
+  readonly attribute boolean animated;
+
+  /**
+   * Flags for imgIContainer operations.
+   *
+   * Meanings:
+   *
+   * FLAG_NONE: Lack of flags
+   *
+   * FLAG_SYNC_DECODE: Forces synchronous/non-progressive decode of all
+   * available data before the call returns. It is an error to pass this flag
+   * from a call stack that originates in a decoder (ie, from a decoder
+   * observer event).
+   *
+   * FLAG_DECODE_NO_PREMULTIPLY_ALPHA: Do not premultiply alpha if
+   * it's not already premultiplied in the image data.
+   *
+   * FLAG_DECODE_NO_COLORSPACE_CONVERSION: Do not do any colorspace conversion;
+   * ignore any embedded profiles, and don't convert to any particular destination
+   * space.
+   *
+   * FLAG_CLAMP: Extend the image to the fill area by clamping image sample
+   * coordinates instead of by tiling. This only affects 'draw'.
+   *
+   * FLAG_HIGH_QUALITY_SCALING: A hint as to whether this image should be
+   * scaled using the high quality scaler. Do not set this if not drawing to
+   * a window or not listening to invalidations.
+   */
+
+  const long FLAG_NONE            = 0x0;
+  const long FLAG_SYNC_DECODE     = 0x1;
+  const long FLAG_DECODE_NO_PREMULTIPLY_ALPHA = 0x2;
+  const long FLAG_DECODE_NO_COLORSPACE_CONVERSION = 0x4;
+  const long FLAG_CLAMP           = 0x8;
+  const long FLAG_HIGH_QUALITY_SCALING = 0x10;
+  /**
+   * Can be passed to GetFrame when the caller wants a DataSourceSurface
+   * instead of a hardware accelerated surface. This can be important for
+   * performance (by avoiding an upload to/readback from the GPU) when the
+   * caller knows they want a SourceSurface of type DATA.
+   */
+  const long FLAG_WANT_DATA_SURFACE = 0x20;
+
+  /**
+    * Constants for specifying various "special" frames.
+    *
+    * FRAME_FIRST: The first frame
+    * FRAME_CURRENT: The current frame
+    *
+    * FRAME_MAX_VALUE should be set to the value of the maximum constant above,
+    * as it is used for ensuring that a valid value was passed in.
+    */
+  const unsigned long FRAME_FIRST = 0;
+  const unsigned long FRAME_CURRENT = 1;
+  const unsigned long FRAME_MAX_VALUE = 1;
+
+  /**
+   * Get a surface for the given frame. This may be a platform-native,
+   * optimized surface, so you cannot inspect its pixel data. If you
+   * need that, use gfxASurface::GetAsReadableARGB32ImageSurface or
+   * gfxASurface::CopyToARGB32ImageSurface.
+   *
+   * @param aWhichFrame Frame specifier of the FRAME_* variety.
+   * @param aFlags Flags of the FLAG_* variety
+   */
+  [noscript, notxpcom] TempRefSourceSurface getFrame(in uint32_t aWhichFrame,
+                                                     in uint32_t aFlags);
+
+  /**
+   * Whether the given frame is opaque; that is, needs the background painted
+   * behind it.
+   *
+   * @param aWhichFrame Frame specifier of the FRAME_* variety.
+   */
+  [notxpcom] boolean frameIsOpaque(in uint32_t aWhichFrame);
+
+  /**
+   * Attempts to create an ImageContainer (and Image) containing the current
+   * frame. Only valid for RASTER type images.
+   */
+  [noscript] ImageContainer getImageContainer(in LayerManager aManager);
+
+  /**
+   * Draw a frame onto the context specified.
+   *
+   * @param aContext The Thebes context to draw the image to.
+   * @param aFilter The filter to be used if we're scaling the image.
+   * @param aUserSpaceToImageSpace The transformation from user space (e.g.,
+   *                               appunits) to image space.
+   * @param aFill The area in the context to draw pixels to. When aFlags includes
+   *              FLAG_CLAMP, the image will be extended to this area by clampling
+   *              image sample coordinates. Otherwise, the image will be
+   *              automatically tiled as necessary.
+   * @param aSubimage The area of the image, in pixels, that we are allowed to
+   *                  sample from.
+   * @param aViewportSize
+   *          The size (in CSS pixels) of the viewport that would be available
+   *          for the full image to occupy, if we were drawing the full image.
+   *          (Note that we might not actually be drawing the full image -- we
+   *          might be restricted by aSubimage -- but we still need the full
+   *          image's viewport-size in order for SVG images with the "viewBox"
+   *          attribute to position their content correctly.)
+   * @param aSVGContext If non-null, SVG-related rendering context such as
+   *                    overridden attributes on the image document's root <svg>
+   *                    node. Ignored for raster images.
+   * @param aWhichFrame Frame specifier of the FRAME_* variety.
+   * @param aFlags Flags of the FLAG_* variety
+   */
+  [noscript] void draw(in gfxContext aContext,
+                       in gfxGraphicsFilter aFilter,
+                       [const] in gfxMatrix aUserSpaceToImageSpace,
+                       [const] in gfxRect aFill,
+                       [const] in nsIntRect aSubimage,
+                       [const] in nsIntSize aViewportSize,
+                       [const] in SVGImageContext aSVGContext,
+                       in uint32_t aWhichFrame,
+                       in uint32_t aFlags);
+
+  /*
+   * Ensures that an image is decoding. Calling this function guarantees that
+   * the image will at some point fire off decode notifications. Calling draw()
+   * or getFrame() triggers the same mechanism internally. Thus, if you want to
+   * be sure that the image will be decoded but don't want to access it until
+   * then, you must call requestDecode().
+   */
+  void requestDecode();
+
+  /*
+   * This is equivalent to requestDecode() but it also decodes some of the image.
+   */
+  [noscript] void startDecoding();
+
+  /*
+   * Returns true if no more decoding can be performed on this image. Images
+   * with errors return true since they cannot be decoded any further. Note that
+   * because decoded images may be discarded, isDecoded() may return false even
+   * if it has returned true in the past.
+   */
+  [noscript, notxpcom, nostdcall] bool isDecoded();
+
+  /**
+    * Increments the lock count on the image. An image will not be discarded
+    * as long as the lock count is nonzero. Note that it is still possible for
+    * the image to be undecoded if decode-on-draw is enabled and the image
+    * was never drawn.
+    *
+    * Upon instantiation images have a lock count of zero.
+    */
+  void lockImage();
+
+  /**
+    * Decreases the lock count on the image. If the lock count drops to zero,
+    * the image is allowed to discard its frame data to save memory.
+    *
+    * Upon instantiation images have a lock count of zero. It is an error to
+    * call this method without first having made a matching lockImage() call.
+    * In other words, the lock count is not allowed to be negative.
+    */
+  void unlockImage();
+
+  /**
+   * If this image is unlocked, discard its decoded data.  If the image is
+   * locked or has already been discarded, do nothing.
+   */
+  void requestDiscard();
+
+  /**
+    * Indicates that this imgIContainer has been triggered to update
+    * its internal animation state. Likely this should only be called
+    * from within nsImageFrame or objects of similar type.
+    */
+  [notxpcom] void requestRefresh([const] in TimeStamp aTime);
+
+  /**
+   * Animation mode Constants
+   *   0 = normal
+   *   1 = don't animate
+   *   2 = loop once
+   */
+  const short kNormalAnimMode   = 0;
+  const short kDontAnimMode     = 1;
+  const short kLoopOnceAnimMode = 2;
+
+  attribute unsigned short animationMode;
+
+  /* Methods to control animation */
+  void resetAnimation();
+
+  /*
+   * Returns an index for the requested animation frame (either FRAME_FIRST or
+   * FRAME_CURRENT).
+   *
+   * The units of the index aren't specified, and may vary between different
+   * types of images. What you can rely on is that on all occasions when
+   * getFrameIndex(FRAME_CURRENT) returns a certain value,
+   * draw(..FRAME_CURRENT..) will draw the same frame. The same holds for
+   * FRAME_FIRST as well.
+   *
+   * @param aWhichFrame Frame specifier of the FRAME_* variety.
+   */
+  [notxpcom] float getFrameIndex(in uint32_t aWhichFrame);
+
+  /*
+   * Returns the inherent orientation of the image, as described in the image's
+   * metadata (e.g. EXIF).
+   */
+  [notxpcom] Orientation getOrientation();
+
+  /*
+   * Returns the delay, in ms, between the first and second frame. If this
+   * returns 0, there is no delay between first and second frame (i.e., this
+   * image could render differently whenever it draws).
+   *
+   * If this image is not animated, or not known to be animated (see attribute
+   * animated), returns -1.
+   */
+  [notxpcom] int32_t getFirstFrameDelay();
+
+  /*
+   * If this is an animated image that hasn't started animating already, this
+   * sets the animation's start time to the indicated time.
+   *
+   * This has no effect if the image isn't animated or it has started animating
+   * already; it also has no effect if the image format doesn't care about
+   * animation start time.
+   *
+   * In all cases, animation does not actually begin until startAnimation(),
+   * resetAnimation(), or requestRefresh() is called for the first time.
+   */
+  [notxpcom] void setAnimationStartTime([const] in TimeStamp aTime);
+};

@@ -1,0 +1,390 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+%define WINDOWS_AERO
+%include browser.css
+%undef WINDOWS_AERO
+
+%define glassActiveBorderColor rgb(37, 44, 51)
+%define glassInactiveBorderColor rgb(102, 102, 102)
+
+%include downloads/indicator-aero.css
+
+@media not all and (-moz-windows-classic) {
+  #main-window[sizemode="normal"] > #tab-view-deck > #browser-panel > #navigator-toolbox > #toolbar-menubar {
+    margin-top: 1px;
+  }
+
+  .panel-promo-message {
+    font-style: italic;
+  }
+}
+
+@media (-moz-windows-default-theme) {
+  .sidebar-header,
+  #sidebar-header {
+    -moz-appearance: none;
+    color: black;
+    background-color: #EEF3FA;
+    border-bottom: none;
+    text-shadow: none;
+  }
+
+  .sidebar-title,
+  #sidebar-title {
+    font-weight: bold;
+  }
+
+  .sidebar-splitter {
+    border: 0;
+    -moz-border-end: 1px solid #A9B7C9;
+    min-width: 0;
+    width: 3px;
+    background-color: transparent;
+    -moz-margin-start: -3px;
+    position: relative;
+  }
+
+  #appcontent ~ .sidebar-splitter {
+    -moz-border-start: 1px solid #A9B7C9;
+    -moz-border-end: none;
+    -moz-margin-start: 0;
+    -moz-margin-end: -3px;
+  }
+
+  #urlbar:not(:-moz-lwtheme),
+  .searchbar-textbox:not(:-moz-lwtheme) {
+    border-color: hsla(210,54%,20%,.25) hsla(210,54%,20%,.27) hsla(210,54%,20%,.3);
+    box-shadow: 0 1px 0 hsla(0,0%,0%,.01) inset,
+                0 1px 0 hsla(0,0%,100%,.1);
+  }
+
+  #urlbar:not(:-moz-lwtheme)[focused],
+  .searchbar-textbox:not(:-moz-lwtheme)[focused] {
+    border-color: Highlight;
+  }
+
+  .menu-accel,
+  .menu-iconic-accel {
+    color: graytext;
+  }
+
+  .chatbar-button,
+  chatbar > chatbox {
+    border-color: #A9B7C9;
+  }
+
+  @media (-moz-os-version: windows-vista),
+         (-moz-os-version: windows-win7) {
+    #navigator-toolbox > toolbar:not(#toolbar-menubar):not(#TabsToolbar):not(:-moz-lwtheme),
+    #browser-bottombox:not(:-moz-lwtheme),
+    .browserContainer > findbar {
+      background-color: @customToolbarColor@;
+    }
+
+    .tab-background-middle[selected=true]:not(:-moz-lwtheme) {
+      background-color: @customToolbarColor@;
+    }
+
+    #navigator-toolbox:not(:-moz-lwtheme)::after {
+      background-color: #aabccf;
+    }
+
+    #urlbar:not(:-moz-lwtheme):not([focused]):hover,
+    .searchbar-textbox:not(:-moz-lwtheme):not([focused]):hover {
+      border-color: hsla(210,54%,20%,.35) hsla(210,54%,20%,.37) hsla(210,54%,20%,.4);
+    }
+
+    #urlbar:not(:-moz-lwtheme)[focused],
+    .searchbar-textbox:not(:-moz-lwtheme)[focused] {
+      border-color: hsla(206,100%,60%,.65) hsla(206,100%,55%,.65) hsla(206,100%,50%,.65);
+    }
+  }
+}
+
+@media (-moz-windows-compositor) {
+  /* These should be hidden w/ glass enabled. Windows draws its own buttons. */
+  .titlebar-button {
+    display: none;
+  }
+
+  #main-window[sizemode="maximized"] #titlebar-buttonbox {
+    -moz-margin-end: 3px;
+  }
+
+  #main-window {
+    -moz-appearance: -moz-win-borderless-glass;
+    background: transparent;
+  }
+
+  #appcontent {
+    -moz-appearance: -moz-win-exclude-glass;
+  }
+
+  /* Artificially draw window borders that are covered by lwtheme, see bug 591930. */
+  #main-window[sizemode="normal"] > #tab-view-deck > #browser-panel:-moz-lwtheme {
+    border-top: 2px solid;
+    -moz-border-top-colors: @glassActiveBorderColor@ rgba(255,255,255,.6);
+  }
+
+  #main-window[sizemode="normal"] > #tab-view-deck > #browser-panel:-moz-lwtheme:-moz-window-inactive {
+    -moz-border-top-colors: @glassInactiveBorderColor@ rgba(255,255,255,.6);
+  }
+
+  @media (-moz-windows-default-theme) {
+    #toolbar-menubar:not(:-moz-lwtheme),
+    #TabsToolbar:not(:-moz-lwtheme) {
+      color: black;
+    }
+
+    #main-menubar > menu:not(:-moz-lwtheme) {
+      color: inherit;
+    }
+
+    /* Use a different color only on Windows 8 and higher for inactive windows.
+     * On aero, the menubar fog disappears for inactive windows, and renders gray
+     * illegible.
+     */
+    @media not all and (-moz-os-version: windows-vista) {
+      @media not all and (-moz-os-version: windows-win7) {
+        #toolbar-menubar:not(:-moz-lwtheme):-moz-window-inactive {
+          color: ThreeDShadow;
+        }
+      }
+    }
+  }
+
+  #main-window[darkwindowframe="true"] #toolbar-menubar:not(:-moz-lwtheme):not(:-moz-window-inactive),
+  #main-window[darkwindowframe="true"] #TabsToolbar:not(:-moz-lwtheme):not(:-moz-window-inactive) {
+    color: white;
+  }
+
+  #toolbar-menubar:not(:-moz-lwtheme) {
+    text-shadow: 0 0 .5em white, 0 0 .5em white, 0 1px 0 rgba(255,255,255,.4);
+  }
+
+  /* Vertical toolbar border */
+  #main-window[sizemode=normal] #navigator-toolbox::after,
+  #main-window[sizemode=normal] #navigator-toolbox > toolbar:not(#toolbar-menubar):not(#TabsToolbar) {
+    border-left: 1px solid @toolbarShadowColor@;
+    border-right: 1px solid @toolbarShadowColor@;
+    background-clip: padding-box;
+  }
+  #main-window[sizemode=normal] #browser-border-start,
+  #main-window[sizemode=normal] #browser-border-end {
+    display: -moz-box;
+    background-color: @toolbarShadowColor@;
+    width: 1px;
+  }
+  #main-window[sizemode=normal] #browser-bottombox {
+    border: 1px solid @toolbarShadowColor@;
+    border-top-style: none;
+    background-clip: padding-box;
+  }
+
+  #main-window[sizemode=normal] #TabsToolbar {
+    padding-left: 1px;
+    padding-right: 1px;
+  }
+
+  /* Make the window draggable by glassed toolbars (bug 555081) */
+  #toolbar-menubar:not([autohide="true"]),
+  #TabsToolbar,
+  #navigator-toolbox > toolbar:not(#toolbar-menubar):not(#addon-bar):-moz-lwtheme {
+    -moz-binding: url("chrome://browser/content/customizableui/toolbar.xml#toolbar-drag");
+  }
+
+  #appcontent:not(:-moz-lwtheme) {
+    background-color: -moz-dialog;
+  }
+
+  #main-menubar:not(:-moz-lwtheme):not(:-moz-window-inactive) {
+    background-color: rgba(255,255,255,.5);
+    color: black;
+  }
+
+  @media (-moz-os-version: windows-vista),
+         (-moz-os-version: windows-win7) {
+    #main-menubar:not(:-moz-lwtheme):not(:-moz-window-inactive) {
+      border-radius: 4px;
+    }
+  }
+
+  #ctrlTab-panel {
+    background: transparent;
+    -moz-appearance: -moz-win-glass;
+    border-radius: 0;
+    border: none;
+    font: normal 1.2em "Segoe UI";
+    color: black;
+    text-shadow: white -1px -1px .35em, white -1px 1px .35em, white 1px 1px .35em, white 1px -1px .35em;
+  }
+
+  #tab-view:-moz-lwtheme {
+    background-image: url("chrome://browser/skin/tabview/grain.png"),
+                      linear-gradient(rgba(255,255,255,0), #CCD9EA 200px, #C7D5E7);
+    background-attachment: fixed;
+  }
+}
+
+@media (-moz-windows-glass) {
+  #main-window[sizemode=normal] #nav-bar {
+    border-top-left-radius: 2.5px;
+    border-top-right-radius: 2.5px;
+  }
+
+  #main-window[sizemode=fullscreen]:not(:-moz-lwtheme) {
+    -moz-appearance: none;
+    background-color: #556;
+  }
+
+  /* Glass Fog */
+
+  #TabsToolbar:not(:-moz-lwtheme) {
+    position: relative;
+  }
+
+  #TabsToolbar:not(:-moz-lwtheme)::after {
+    /* Because we use placeholders for window controls etc. in the tabstrip,
+     * and position those with ordinal attributes, and because our layout code
+     * expects :before/:after nodes to come first/last in the frame list,
+     * we have to reorder this element to come last, hence the
+     * ordinal group value (see bug 853415). */
+    -moz-box-ordinal-group: 1001;
+    box-shadow: 0 0 30px 30px rgba(174,189,204,0.85);
+    content: "";
+    display: -moz-box;
+    height: 0;
+    margin: 0 60px; /* (30px + 30px) from box-shadow */
+    position: absolute;
+    pointer-events: none;
+    top: 50%;
+    width: -moz-available;
+    z-index: -1;
+  }
+
+  /* Need to constrain the glass fog to avoid overlapping layers, see bug 886281. */
+  #navigator-toolbox:not(:-moz-lwtheme) {
+    overflow: -moz-hidden-unscrollable;
+  }
+
+  #main-window[sizemode=normal] .tabbrowser-arrowscrollbox > .arrowscrollbox-scrollbox > .scrollbox-innerbox:not(:-moz-lwtheme) {
+    position: relative;
+  }
+
+  /* End Glass Fog */
+}
+
+/* Aero Basic */
+@media not all and (-moz-windows-compositor) {
+  @media (-moz-windows-default-theme) {
+    #main-window {
+      background-color: rgb(185,209,234);
+    }
+    #main-window:-moz-window-inactive {
+      background-color: rgb(215,228,242);
+    }
+
+    #toolbar-menubar:not([autohide=true]):not(:-moz-lwtheme),
+    #TabsToolbar:not(:-moz-lwtheme) {
+      -moz-binding: url("chrome://browser/content/customizableui/toolbar.xml#toolbar-drag");
+    }
+
+    /* Render a window top border for lwthemes: */
+    #main-window[tabsintitlebar][sizemode="normal"] > #tab-view-deck > #browser-panel:-moz-lwtheme {
+      background-image: linear-gradient(to bottom,
+            @glassActiveBorderColor@ 0, @glassActiveBorderColor@ 1px,
+            rgba(255,255,255,.6) 1px, rgba(255,255,255,.6) 2px, transparent 2px);
+    }
+
+    #main-window[tabsintitlebar][sizemode="normal"] > #tab-view-deck > #browser-panel:-moz-lwtheme:-moz-window-inactive {
+      background-image: linear-gradient(to bottom,
+            @glassInactiveBorderColor@ 0, @glassInactiveBorderColor@ 1px,
+            rgba(255,255,255,.6) 1px, rgba(255,255,255,.6) 2px, transparent 2px);
+    }
+  }
+
+  #print-preview-toolbar:not(:-moz-lwtheme) {
+    -moz-appearance: -moz-win-browsertabbar-toolbox;
+  }
+}
+
+/* Win8 and beyond. */
+@media not all and (-moz-os-version: windows-vista) {
+  @media not all and (-moz-os-version: windows-win7) {
+    /* Introducing an additional hover state for the Bookmark button */
+    #nav-bar .toolbarbutton-1[buttonover] > .toolbarbutton-menubutton-button:hover > .toolbarbutton-icon {
+      background-color: hsla(210,4%,10%,.08);
+      border-color: hsla(210,4%,10%,.1);
+    }
+  }
+}
+
+/* ::::: fullscreen window controls ::::: */
+
+#window-controls {
+  -moz-box-align: start;
+}
+
+#minimize-button,
+#restore-button,
+#close-button {
+  -moz-appearance: none;
+  border-style: none;
+  margin: 0;
+}
+#close-button {
+  -moz-image-region: rect(0, 49px, 16px, 32px);
+}
+#close-button:hover {
+  -moz-image-region: rect(16px, 49px, 32px, 32px);
+}
+#close-button:hover:active {
+  -moz-image-region: rect(32px, 49px, 48px, 32px);
+}
+
+#minimize-button:-moz-locale-dir(rtl),
+#restore-button:-moz-locale-dir(rtl),
+#close-button:-moz-locale-dir(rtl) {
+  transform: scaleX(-1);
+}
+
+/* ::::: private browsing indicator ::::: */
+
+@media (-moz-os-version: windows-vista),
+       (-moz-os-version: windows-win7) {
+  #TabsToolbar > .private-browsing-indicator {
+    background-image: url("chrome://browser/skin/privatebrowsing-mask-tabstrip-XPVista7.png");
+  }
+
+  /* We're intentionally using the titlebar asset here for fullscreen mode.
+   * See bug 1008183.
+   */
+  #private-browsing-indicator-titlebar > .private-browsing-indicator,
+  #main-window[inFullscreen] #TabsToolbar > .private-browsing-indicator {
+    background-image: url("chrome://browser/skin/privatebrowsing-mask-titlebar-XPVista7.png");
+  }
+}
+
+@media (-moz-windows-glass) {
+  #main-window[sizemode="normal"] > #titlebar > #titlebar-content > #titlebar-buttonbox-container > #private-browsing-indicator-titlebar > .private-browsing-indicator {
+    top: 1px;
+  }
+  #main-window[sizemode="maximized"] > #titlebar > #titlebar-content > #titlebar-buttonbox-container > #private-browsing-indicator-titlebar > .private-browsing-indicator {
+    top: -1px;
+  }
+}
+
+/**
+ * This next block targets Aero Basic, which has different positioning for the
+ * window caption buttons, and therefore needs to be special-cased.
+ */
+@media (-moz-windows-default-theme) {
+  @media not all and (-moz-windows-compositor) {
+    #main-window[sizemode="normal"] > #titlebar > #titlebar-content > #titlebar-buttonbox-container > #private-browsing-indicator-titlebar > .private-browsing-indicator {
+      background-image: url("chrome://browser/skin/privatebrowsing-mask-titlebar-XPVista7-tall.png");
+      height: 28px;
+    }
+  }
+}

@@ -1,0 +1,38 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+SOURCES += [
+    'nsCollationUnix.cpp',
+    'nsDateTimeFormatUnix.cpp',
+    'nsPosixLocale.cpp',
+]
+
+if CONFIG['OS_TARGET'] == 'Android':
+    SOURCES += [
+        'nsAndroidCharset.cpp',
+    ]
+else:
+    SOURCES += [
+        'nsUNIXCharset.cpp',
+    ]
+
+FINAL_LIBRARY = 'i18n'
+
+GENERATED_FILES = [
+    'unixcharset.properties.h',
+]
+LOCAL_INCLUDES += [
+    '..',
+]
+
+
+# CODESET is not automatically defined on some older versions of Redhat.
+# Define _XOPEN_SOURCE so CODESET will get defined and thus allow
+# nl_langinfo(CODESET) to compile on these systems.
+if CONFIG['OS_ARCH'] == 'Linux':
+    DEFINES['_XOPEN_SOURCE'] = 500
+
+DEFINES['OSTYPE'] = '"%s"' % CONFIG['OS_CONFIG']

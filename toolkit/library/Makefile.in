@@ -1,0 +1,36 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+
+ifdef MOZ_CONTENT_SANDBOX
+ifeq ($(OS_ARCH),WINNT)
+  SHARED_LIBRARY_LIBS += ../../security/sandbox/win/src/sandboxbroker/$(LIB_PREFIX)sandboxbroker.$(LIB_SUFFIX)
+endif
+endif
+
+# COMPONENT_LIBS is mosly useless since bug 935881, but is kept for
+# MOZ_APP_COMPONENT_LIBS, used by comm-central, and gtest linking.
+SHARED_LIBRARY_LIBS += \
+  $(foreach component,$(COMPONENT_LIBS),$(DEPTH)/staticlib/$(LIB_PREFIX)$(component).$(LIB_SUFFIX)) \
+  $(NULL)
+
+ifdef MOZ_APP_COMPONENT_LIBS
+COMPONENT_LIBS += $(MOZ_APP_COMPONENT_LIBS)
+endif
+
+ifeq ($(MOZ_WIDGET_TOOLKIT),cocoa)
+OS_LIBS += -framework OpenGL -lcups -framework CoreVideo -framework VideoToolbox -framework AudioToolbox
+CXXFLAGS += $(TK_CFLAGS)
+endif
+
+ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
+ifdef MOZ_GSTREAMER
+EXTRA_DSO_LDOPTS += -F/Library/Frameworks -framework GStreamer -liconv
+endif
+endif
+
+include $(topsrcdir)/config/rules.mk
+
+.PHONY: gtestxul
+gtestxul:
+	$(MAKE) -C gtest libs LINK_GTEST=1

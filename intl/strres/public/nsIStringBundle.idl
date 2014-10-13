@@ -1,0 +1,78 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+#include "nsISimpleEnumerator.idl"
+
+%{C++
+
+// Define Contractid and CID
+// {D85A17C1-AA7C-11d2-9B8C-00805F8A16D9}
+#define NS_STRINGBUNDLESERVICE_CID \
+{ 0xd85a17c1, 0xaa7c, 0x11d2, \
+  { 0x9b, 0x8c, 0x0, 0x80, 0x5f, 0x8a, 0x16, 0xd9 } }
+
+#define NS_STRINGBUNDLE_CONTRACTID "@mozilla.org/intl/stringbundle;1"
+
+/** 
+ * observer needs to check if the bundle handle matches
+ */
+#define NS_STRBUNDLE_LOADED_TOPIC "strbundle-loaded"
+
+%}
+
+native nsStrBundleLoadedFunc(nsStrBundleLoadedFunc);
+
+[scriptable, uuid(D85A17C2-AA7C-11d2-9B8C-00805F8A16D9)]
+interface nsIStringBundle : nsISupports
+{
+  wstring GetStringFromID(in long aID);
+  wstring GetStringFromName(in wstring aName);
+
+  // this is kind of like smprintf - except that you can
+  // only pass it unicode strings, using the %S formatting character.
+  // the id or name should refer to a string in the bundle that
+  // uses %S.. do NOT try to use any other types.
+  // this uses nsTextFormatter::smprintf to do the dirty work.
+  wstring formatStringFromID(in long aID,
+                             [array, size_is(length)] in wstring params,
+                             in unsigned long length);
+  wstring formatStringFromName(in wstring aName,
+                               [array, size_is(length)] in wstring params,
+                               in unsigned long length);
+  /*
+  Implements nsISimpleEnumerator, replaces nsIEnumerator 
+  */
+  nsISimpleEnumerator getSimpleEnumeration();
+
+};
+
+[scriptable, uuid(D85A17C0-AA7C-11d2-9B8C-00805F8A16D9)]
+interface nsIStringBundleService : nsISupports
+{
+  nsIStringBundle createBundle(in string aURLSpec);
+  nsIStringBundle createExtensibleBundle(in string aRegistryKey);
+
+  /**
+   * Formats a message string from a status code and status arguments.
+   * @param aStatus - The status code. This is mapped into a string ID and
+   *            and used in the string lookup process (see nsIErrorService).
+   * @param aStatusArg - The status message argument(s). Multiple arguments
+   *            can be separated by newline ('\n') characters.
+   * @return the formatted message
+   */
+  wstring formatStatusMessage(in nsresult aStatus, in wstring aStatusArg);
+
+  /**
+   * flushes the string bundle cache - useful when the locale changes or
+   * when we need to get some extra memory back
+   * 
+   * at some point, we might want to make this flush all the bundles,
+   * because any bundles that are floating around when the locale changes
+   * will suddenly contain bad data
+   *
+   */
+  void flushBundles();
+};

@@ -1,0 +1,72 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+XPIDL_SOURCES += [
+    'nsIFontEnumerator.idl',
+    'nsIScriptableRegion.idl',
+]
+
+XPIDL_MODULE = 'gfx'
+
+EXPORTS += [
+    'FilterSupport.h',
+    'gfxCore.h',
+    'gfxCrashReporterUtils.h',
+    'nsBoundingMetrics.h',
+    'nsColor.h',
+    'nsColorNameList.h',
+    'nsColorNames.h',
+    'nsCoord.h',
+    'nsDeviceContext.h',
+    'nsFont.h',
+    'nsFontMetrics.h',
+    'nsGfxCIID.h',
+    'nsITheme.h',
+    'nsMargin.h',
+    'nsPoint.h',
+    'nsRect.h',
+    'nsRegion.h',
+    'nsRenderingContext.h',
+    'nsSize.h',
+    'nsThemeConstants.h',
+    'nsTransform2D.h',
+]
+
+EXPORTS.mozilla += [
+    'AppUnits.h',
+]
+
+if CONFIG['MOZ_X11']:
+    EXPORTS.mozilla += ['X11Util.h']
+    SOURCES += [
+        'X11Util.cpp',
+    ]
+
+UNIFIED_SOURCES += [
+    'FilterSupport.cpp',
+    'gfxCrashReporterUtils.cpp',
+    'nsColor.cpp',
+    'nsFont.cpp',
+    'nsFontMetrics.cpp',
+    'nsRect.cpp',
+    'nsRegion.cpp',
+    'nsRenderingContext.cpp',
+    'nsScriptableRegion.cpp',
+    'nsThebesFontEnumerator.cpp',
+    'nsThebesGfxFactory.cpp',
+    'nsTransform2D.cpp',
+]
+
+# nsDeviceContext.cpp cannot be built in unified mode because it pulls in OS X system headers.
+SOURCES += [
+    'nsDeviceContext.cpp',
+]
+
+FAIL_ON_WARNINGS = True
+
+MSVC_ENABLE_PGO = True
+
+FINAL_LIBRARY = 'xul'

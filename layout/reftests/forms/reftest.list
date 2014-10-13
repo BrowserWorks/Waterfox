@@ -1,0 +1,34 @@
+skip-if(B2G) fails-if(Android) HTTP(..) == text-control-baseline-1.html text-control-baseline-1-ref.html
+
+# button element
+include button/reftest.list
+
+# legend element
+include legend/reftest.list
+
+# fieldset element
+include fieldset/reftest.list
+
+# placeholder
+include placeholder/reftest.list
+
+# input
+include input/reftest.list
+
+# meter element
+include meter/reftest.list
+
+# output element
+include output/reftest.list
+
+# progress element
+include progress/reftest.list
+
+# select element
+include select/reftest.list
+
+# textarea element
+include textarea/reftest.list
+
+# textbox element
+include textbox/reftest.list

@@ -1,0 +1,113 @@
+/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
+/* vim: set ts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+include protocol PSms;
+include protocol PBlob;
+include SmsTypes;
+
+using struct mozilla::void_t from "ipc/IPCMessageUtils.h";
+
+namespace mozilla {
+namespace dom {
+namespace mobilemessage {
+
+protocol PSmsRequest
+{
+  manager PSms;
+
+child:
+  /**
+   * Sent when the asynchronous request has completed.
+   */
+  __delete__(MessageReply response);
+};
+
+struct ReplyMessageSend
+{
+  MobileMessageData messageData;
+};
+
+union OptionalMobileMessageData
+{
+  void_t;
+  MobileMessageData;
+};
+
+struct ReplyMessageSendFail
+{
+  int32_t error;
+  OptionalMobileMessageData messageData;
+};
+
+struct ReplyGetMessage
+{
+  MobileMessageData messageData;
+};
+
+struct ReplyGetMessageFail
+{
+  int32_t error;
+};
+
+struct ReplyMessageDelete
+{
+  bool[] deleted;
+};
+
+struct ReplyMessageDeleteFail
+{
+  int32_t error;
+};
+
+struct ReplyMarkeMessageRead
+{
+  bool read;
+};
+
+struct ReplyMarkeMessageReadFail
+{
+  int32_t error;
+};
+
+struct ReplyGetSegmentInfoForText
+{
+  SmsSegmentInfoData infoData;
+};
+
+struct ReplyGetSegmentInfoForTextFail
+{
+  int32_t error;
+};
+
+struct ReplyGetSmscAddress
+{
+  nsString smscAddress;
+};
+
+struct ReplyGetSmscAddressFail
+{
+  int32_t error;
+};
+
+union MessageReply
+{
+  ReplyMessageSend;
+  ReplyMessageSendFail;
+  ReplyGetMessage;
+  ReplyGetMessageFail;
+  ReplyMessageDelete;
+  ReplyMessageDeleteFail;
+  ReplyMarkeMessageRead;
+  ReplyMarkeMessageReadFail;
+  ReplyGetSegmentInfoForText;
+  ReplyGetSegmentInfoForTextFail;
+  ReplyGetSmscAddress;
+  ReplyGetSmscAddressFail;
+};
+
+} // namespace mobilemessage
+} // namespace dom
+} // namespace mozilla

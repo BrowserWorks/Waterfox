@@ -1,0 +1,30 @@
+/* -*- Mode: IDL; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIChannel.idl"
+
+interface nsIFile;
+
+[scriptable, builtinclass, uuid(063e9698-ec67-4fe2-aa19-d21505beaa61)]
+interface nsIJARChannel : nsIChannel
+{
+    /**
+     * Returns TRUE if the JAR file is not safe (if the content type reported
+     * by the server for a remote JAR is not of an expected type).  Scripting,
+     * redirects, and plugins should be disabled when loading from this
+     * channel.
+     */
+    [infallible] readonly attribute boolean isUnsafe;
+
+    /**
+     * Forces the uri to be a app:// uri.
+     */
+    void setAppURI(in nsIURI uri);
+
+    /**
+     * Returns the JAR file.
+     */
+    readonly attribute nsIFile jarFile;
+};

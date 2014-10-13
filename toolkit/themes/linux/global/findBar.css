@@ -1,0 +1,162 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+
+findbar {
+  border-top: 2px solid;
+  -moz-border-top-colors: ThreeDShadow ThreeDHighlight;
+  min-width: 1px;
+  transition-property: margin-bottom, opacity, visibility;
+  transition-duration: 150ms, 150ms, 0s;
+  transition-timing-function: ease-in-out, ease-in-out, linear;
+}
+
+findbar[hidden] {
+  /* Override display:none to make the transition work. */
+  display: -moz-box;
+  visibility: collapse;
+  margin-bottom: -1em;
+  opacity: 0;
+  transition-delay: 0s, 0s, 150ms;
+}
+
+.findbar-container {
+  -moz-padding-start: 8px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.findbar-closebutton {
+  -moz-appearance: none;
+  width: 16px;
+  height: 16px;
+  margin: 0 8px;
+}
+
+/* Search field */
+
+.findbar-textbox {
+  -moz-appearance: none;
+  border: 1px solid ThreeDShadow;
+  box-shadow: 0 0 1px 0 ThreeDShadow inset;
+  margin: 0;
+  padding: 5px;
+  width: 14em;
+}
+
+.findbar-textbox:-moz-locale-dir(ltr) {
+  border-radius: 3px 0 0 3px;
+  border-right-width: 0;
+}
+
+.findbar-textbox:-moz-locale-dir(rtl) {
+  border-radius: 0 3px 3px 0;
+  border-left-width: 0;
+}
+
+.findbar-textbox[focused="true"] {
+  border-color: Highlight;
+  box-shadow: 0 0 1px 0 Highlight inset;
+}
+
+.findbar-textbox[status="notfound"] {
+  background-color: #f66;
+  color: white;
+}
+
+.findbar-textbox[flash="true"] {
+  background-color: yellow;
+  color: black;
+}
+
+.findbar-textbox.minimal {
+  border-width: 1px;
+  border-radius: 3px;
+}
+
+.findbar-find-previous,
+.findbar-find-next {
+  -moz-margin-start: 0;
+  -moz-appearance: none;
+  background: linear-gradient(rgba(255,255,255,.9), rgba(255,255,255,.2));
+  border: 1px solid ThreeDShadow;
+  box-shadow: 0 1px #fff inset;
+  list-style-image: url("chrome://global/skin/icons/find-arrows.png");
+  padding: 5px 9px;
+  line-height: 1em;
+}
+
+.findbar-find-previous:focus,
+.findbar-find-next:focus {
+  border-color: Highlight;
+  box-shadow: 0 0 1px 0 Highlight inset;
+}
+
+.findbar-find-previous:not([disabled]):active,
+.findbar-find-next:not([disabled]):active {
+  background: rgba(23,50,76,.2);
+  border: 1px solid ThreeDShadow;
+  box-shadow: 0 1px 2px rgba(10,31,51,.2) inset;
+}
+
+.findbar-find-previous {
+  -moz-image-region: rect(0, 12px, 9px, 0);
+  -moz-border-end-width: 0;
+}
+
+.findbar-find-next {
+  -moz-image-region: rect(0, 24px, 9px, 12px);
+}
+
+.findbar-find-previous > .toolbarbutton-icon,
+.findbar-find-next > .toolbarbutton-icon {
+  margin: 0;
+}
+
+.findbar-find-previous > .toolbarbutton-text,
+.findbar-find-next > .toolbarbutton-text {
+  margin: 0;
+  padding: 0;
+  width: 0;
+}
+
+.findbar-find-previous[disabled="true"] > .toolbarbutton-icon,
+.findbar-find-next[disabled="true"] > .toolbarbutton-icon {
+  opacity: .5;
+}
+
+.findbar-find-next:-moz-locale-dir(ltr) {
+  border-top-right-radius: 2px;
+  border-bottom-right-radius: 2px;
+}
+
+.findbar-find-next:-moz-locale-dir(rtl) {
+  border-top-left-radius: 2px;
+  border-bottom-left-radius: 2px;
+}
+
+.findbar-find-previous:focus + .findbar-find-next {
+  -moz-border-start-width: 0;
+}
+
+.findbar-find-previous:focus {
+  -moz-border-end-width: 1px;
+}
+
+.findbar-highlight,
+.findbar-case-sensitive {
+  -moz-margin-start: 5px;
+}
+
+.findbar-find-status,
+.findbar-matches {
+  color: GrayText;
+  margin: 0 !important;
+  -moz-margin-start: 12px !important;
+}
+
+.find-status-icon[status="pending"] {
+  list-style-image: url("chrome://global/skin/icons/loading_16.png");
+}

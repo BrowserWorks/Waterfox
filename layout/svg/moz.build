@@ -1,0 +1,66 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+EXPORTS += [
+    'nsFilterInstance.h',
+    'nsSVGEffects.h',
+    'nsSVGFilterInstance.h',
+    'nsSVGForeignObjectFrame.h',
+    'nsSVGIntegrationUtils.h',
+    'nsSVGUtils.h',
+    'SVGImageContext.h',
+]
+
+UNIFIED_SOURCES += [
+    'nsFilterInstance.cpp',
+    'nsSVGAFrame.cpp',
+    'nsSVGClipPathFrame.cpp',
+    'nsSVGContainerFrame.cpp',
+    'nsSVGEffects.cpp',
+    'nsSVGFilterFrame.cpp',
+    'nsSVGFilterInstance.cpp',
+    'nsSVGForeignObjectFrame.cpp',
+    'nsSVGGenericContainerFrame.cpp',
+    'nsSVGGFrame.cpp',
+    'nsSVGGradientFrame.cpp',
+    'nsSVGImageFrame.cpp',
+    'nsSVGInnerSVGFrame.cpp',
+    'nsSVGIntegrationUtils.cpp',
+    'nsSVGMarkerFrame.cpp',
+    'nsSVGMaskFrame.cpp',
+    'nsSVGOuterSVGFrame.cpp',
+    'nsSVGPaintServerFrame.cpp',
+    'nsSVGPathGeometryFrame.cpp',
+    'nsSVGPatternFrame.cpp',
+    'nsSVGStopFrame.cpp',
+    'nsSVGSwitchFrame.cpp',
+    'nsSVGUseFrame.cpp',
+    'nsSVGUtils.cpp',
+    'SVGFEContainerFrame.cpp',
+    'SVGFEImageFrame.cpp',
+    'SVGFELeafFrame.cpp',
+    'SVGFEUnstyledLeafFrame.cpp',
+    'SVGTextFrame.cpp',
+    'SVGViewFrame.cpp',
+]
+
+FAIL_ON_WARNINGS = True
+
+FINAL_LIBRARY = 'gklayout'
+LOCAL_INCLUDES += [
+    '../../content/base/src',
+    '../../content/svg/content/src',
+    '../../widget',
+    '../base',
+    '../generic',
+    '../style',
+    '../xul',
+]
+
+RESOURCE_FILES += [
+    'svg.css',
+]
+

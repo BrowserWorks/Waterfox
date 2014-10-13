@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<!DOCTYPE dialog SYSTEM "chrome://pippki/locale/certManager.dtd">
+
+<dialog id="editCaCert" 
+        title="&certmgr.editcacert.title;"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        buttons="accept,cancel"
+        ondialogaccept="return doOK();"
+        onload="setWindowName();"
+>
+
+  <stringbundle id="pippki_bundle" src="chrome://pippki/locale/pippki.properties"/>
+
+  <script type="application/javascript" src="chrome://pippki/content/pippki.js"/>
+  <script type="application/javascript" src="chrome://pippki/content/editcerts.js"/>
+
+  <description id="certmsg"/>
+  <separator/>
+  <description>&certmgr.editcert.edittrust;</description>
+  <vbox align="start">
+    <checkbox label="&certmgr.editcert.trustssl;"
+              id="trustSSL"/>
+    <checkbox label="&certmgr.editcert.trustemail;"
+              id="trustEmail"/>
+    <checkbox label="&certmgr.editcert.trustobjsign;"
+              id="trustObjSign"/>
+  </vbox>
+
+</dialog>

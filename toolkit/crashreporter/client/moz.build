@@ -1,0 +1,51 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+if CONFIG['OS_TARGET'] != 'Android':
+    PROGRAM = 'crashreporter'
+# The xpcshell test case here verifies that the CA certificate list
+
+UNIFIED_SOURCES += [
+    'crashreporter.cpp',
+]
+
+LOCAL_INCLUDES += [
+    '../google-breakpad/src',
+]
+
+if CONFIG['OS_ARCH'] == 'WINNT':
+    UNIFIED_SOURCES += [
+        'crashreporter_win.cpp',
+    ]
+    DEFINES['UNICODE'] = True
+    DEFINES['_UNICODE'] = True
+elif CONFIG['OS_ARCH'] == 'Darwin':
+    UNIFIED_SOURCES += [
+        'crashreporter_osx.mm',
+        'crashreporter_unix_common.cpp',
+    ]
+    LOCAL_INCLUDES += [
+        '../google-breakpad/src/common/mac',
+    ]
+    LDFLAGS += ['-framework Cocoa']
+elif CONFIG['OS_ARCH'] == 'SunOS':
+    SOURCES += [
+        'crashreporter_linux.cpp',
+        'crashreporter_unix.cpp',
+    ]
+
+if CONFIG['MOZ_ENABLE_GTK']:
+    UNIFIED_SOURCES += [
+        'crashreporter_gtk_common.cpp',
+        'crashreporter_linux.cpp',
+        'crashreporter_unix_common.cpp'
+    ]
+
+RCINCLUDE = 'crashreporter.rc'
+
+# Don't use the STL wrappers in the crashreporter clients; they don't
+# link with -lmozalloc, and it really doesn't matter here anyway.
+DISABLE_STL_WRAPPING = True

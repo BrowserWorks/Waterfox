@@ -1,0 +1,230 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+  <meta charset="utf8">
+  <title>Test for cached messages</title>
+  <script type="text/javascript" src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript;version=1.8" src="common.js"></script>
+  <!-- Any copyright is dedicated to the Public Domain.
+     - http://creativecommons.org/publicdomain/zero/1.0/ -->
+</head>
+<body>
+<p>Test for cached messages</p>
+
+<script class="testbody" type="application/javascript;version=1.8">
+let expectedConsoleCalls = [];
+let expectedPageErrors = [];
+
+function doPageErrors()
+{
+  Services.console.reset();
+
+  expectedPageErrors = [
+    {
+      _type: "PageError",
+      errorMessage: /fooColor/,
+      sourceName: /.+/,
+      category: "CSS Parser",
+      timeStamp: /^\d+$/,
+      error: false,
+      warning: true,
+      exception: false,
+      strict: false,
+    },
+    {
+      _type: "PageError",
+      errorMessage: /doTheImpossible/,
+      sourceName: /.+/,
+      category: "chrome javascript",
+      timeStamp: /^\d+$/,
+      error: false,
+      warning: false,
+      exception: true,
+      strict: false,
+    },
+  ];
+
+  let container = document.createElement("script");
+  document.body.appendChild(container);
+  container.textContent = "document.body.style.color = 'fooColor';";
+  document.body.removeChild(container);
+
+  SimpleTest.expectUncaughtException();
+
+  container = document.createElement("script");
+  document.body.appendChild(container);
+  container.textContent = "document.doTheImpossible();";
+  document.body.removeChild(container);
+}
+
+function doConsoleCalls()
+{
+  ConsoleAPIStorage.clearEvents();
+
+  top.console.log("foobarBaz-log", undefined);
+  top.console.info("foobarBaz-info", null);
+  top.console.warn("foobarBaz-warn", document.body);
+
+  expectedConsoleCalls = [
+    {
+      _type: "ConsoleAPI",
+      level: "log",
+      filename: /test_cached_messages/,
+      functionName: "doConsoleCalls",
+      timeStamp: /^\d+$/,
+      arguments: ["foobarBaz-log", { type: "undefined" }],
+    },
+    {
+      _type: "ConsoleAPI",
+      level: "info",
+      filename: /test_cached_messages/,
+      functionName: "doConsoleCalls",
+      timeStamp: /^\d+$/,
+      arguments: ["foobarBaz-info", { type: "null" }],
+    },
+    {
+      _type: "ConsoleAPI",
+      level: "warn",
+      filename: /test_cached_messages/,
+      functionName: "doConsoleCalls",
+      timeStamp: /^\d+$/,
+      arguments: ["foobarBaz-warn", { type: "object", actor: /[a-z]/ }],
+    },
+  ];
+}
+</script>
+
+<script class="testbody" type="text/javascript;version=1.8">
+SimpleTest.waitForExplicitFinish();
+
+let consoleAPIListener, consoleServiceListener;
+let consoleAPICalls = 0;
+let pageErrors = 0;
+
+let handlers = {
+  onConsoleAPICall: function onConsoleAPICall(aMessage)
+  {
+    for (let msg of expectedConsoleCalls) {
+      if (msg.functionName == aMessage.functionName &&
+          msg.filename.test(aMessage.filename)) {
+        consoleAPICalls++;
+        break;
+      }
+    }
+    if (consoleAPICalls == expectedConsoleCalls.length) {
+      checkConsoleAPICache();
+    }
+  },
+
+  onConsoleServiceMessage: function onConsoleServiceMessage(aMessage)
+  {
+    if (!(aMessage instanceof Ci.nsIScriptError)) {
+      return;
+    }
+    for (let msg of expectedPageErrors) {
+      if (msg.category == aMessage.category &&
+          msg.errorMessage.test(aMessage.errorMessage)) {
+        pageErrors++;
+        break;
+      }
+    }
+    if (pageErrors == expectedPageErrors.length) {
+      testPageErrors();
+    }
+  },
+};
+
+function startTest()
+{
+  removeEventListener("load", startTest);
+
+  consoleAPIListener = new ConsoleAPIListener(top, handlers);
+  consoleAPIListener.init();
+
+  doConsoleCalls();
+}
+
+function checkConsoleAPICache()
+{
+  consoleAPIListener.destroy();
+  consoleAPIListener = null;
+  attachConsole(["ConsoleAPI"], onAttach1);
+}
+
+function onAttach1(aState, aResponse)
+{
+  aState.client.getCachedMessages(["ConsoleAPI"],
+                                  onCachedConsoleAPI.bind(null, aState));
+}
+
+function onCachedConsoleAPI(aState, aResponse)
+{
+  let msgs = aResponse.messages;
+  info("cached console messages: " + msgs.length);
+
+  ok(msgs.length >= expectedConsoleCalls.length,
+     "number of cached console messages");
+
+  for (let msg of msgs) {
+    for (let expected of expectedConsoleCalls) {
+      if (expected.functionName == msg.functionName &&
+          expected.filename.test(msg.filename)) {
+        expectedConsoleCalls.splice(expectedConsoleCalls.indexOf(expected));
+        checkConsoleAPICall(msg, expected);
+        break;
+      }
+    }
+  }
+
+  is(expectedConsoleCalls.length, 0, "all expected messages have been found");
+
+  closeDebugger(aState, function() {
+    consoleServiceListener = new ConsoleServiceListener(null, handlers);
+    consoleServiceListener.init();
+    doPageErrors();
+  });
+}
+
+function testPageErrors()
+{
+  consoleServiceListener.destroy();
+  consoleServiceListener = null;
+  attachConsole(["PageError"], onAttach2);
+}
+
+function onAttach2(aState, aResponse)
+{
+  aState.client.getCachedMessages(["PageError"],
+                                  onCachedPageErrors.bind(null, aState));
+}
+
+function onCachedPageErrors(aState, aResponse)
+{
+  let msgs = aResponse.messages;
+  info("cached page errors: " + msgs.length);
+
+  ok(msgs.length >= expectedPageErrors.length,
+     "number of cached page errors");
+
+  for (let msg of msgs) {
+    for (let expected of expectedPageErrors) {
+      if (expected.category == msg.category &&
+          expected.errorMessage.test(msg.errorMessage)) {
+        expectedPageErrors.splice(expectedPageErrors.indexOf(expected));
+        checkObject(msg, expected);
+        break;
+      }
+    }
+  }
+
+  is(expectedPageErrors.length, 0, "all expected messages have been found");
+
+  closeDebugger(aState, function() {
+    SimpleTest.finish();
+  });
+}
+
+addEventListener("load", startTest);
+</script>
+</body>
+</html>

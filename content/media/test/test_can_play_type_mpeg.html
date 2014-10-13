@@ -1,0 +1,59 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=799315
+-->
+<head>
+  <title>Test for MP4 and MP3 support</title>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+  <script type="text/javascript" src="manifest.js"></script>
+</head>
+<body>
+<p id="display"></p>
+<div id="content" style="display: none">
+</div>
+
+<video id="v"></video>
+
+<pre id="test">
+<script src="can_play_type_mpeg.js"></script>
+<script>
+
+function IsWindowsVistaOrLater() {
+  var re = /Windows NT (\d.\d)/;
+  var winver = navigator.userAgent.match(re);
+  return winver && winver.length == 2 && parseFloat(winver[1]) >= 6.0;
+}
+
+function IsWindows() {
+  return navigator.userAgent.match(/Windows/) != null;
+}
+
+function getPref(name) {
+  var pref = false;
+  try {
+    pref = SpecialPowers.getBoolPref(name);
+  } catch(ex) { }
+  return pref;
+}
+
+var haveMp4 = (getPref("media.windows-media-foundation.enabled") && IsWindowsVistaOrLater()) ||
+               getPref("media.omx.enabled") ||
+               getPref("media.gstreamer.enabled");
+// TODO:  Add "getPref("media.plugins.enabled")" once MP4 works on Gingerbread.
+             
+check_mp4(document.getElementById('v'), haveMp4);
+
+var haveMp3 = getPref("media.directshow.enabled") ||
+              (getPref("media.windows-media-foundation.enabled") && IsWindowsVistaOrLater()) ||
+               getPref("media.omx.enabled") ||
+               getPref("media.gstreamer.enabled") ||
+               getPref("media.apple.mp3.enabled");
+check_mp3(document.getElementById('v'), haveMp3);
+
+mediaTestCleanup();
+</script>
+</pre>
+</body>
+</html>

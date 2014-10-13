@@ -1,0 +1,17 @@
+. "$topsrcdir/build/mozconfig.common"
+
+ac_add_options --enable-debug
+
+ac_add_options --disable-unified-compilation
+
+# Use Clang as specified in manifest
+export CC="$topsrcdir/clang/bin/clang"
+export CXX="$topsrcdir/clang/bin/clang++"
+
+# Add the static checker
+ac_add_options --enable-clang-plugin
+
+# Avoid dependency on libstdc++ 4.7
+ac_add_options --enable-stdcxx-compat
+
+. "$topsrcdir/build/mozconfig.common.override"

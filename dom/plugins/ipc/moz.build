@@ -1,0 +1,128 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+    DIRS += ['interpose']
+
+EXPORTS.mozilla += [
+    'PluginLibrary.h',
+]
+
+EXPORTS.mozilla.plugins += [
+    'AStream.h',
+    'BrowserStreamChild.h',
+    'BrowserStreamParent.h',
+    'ChildAsyncCall.h',
+    'ChildTimer.h',
+    'NPEventAndroid.h',
+    'NPEventOSX.h',
+    'NPEventUnix.h',
+    'NPEventWindows.h',
+    'PluginIdentifierChild.h',
+    'PluginIdentifierParent.h',
+    'PluginInstanceChild.h',
+    'PluginInstanceParent.h',
+    'PluginMessageUtils.h',
+    'PluginModuleChild.h',
+    'PluginModuleParent.h',
+    'PluginProcessChild.h',
+    'PluginProcessParent.h',
+    'PluginScriptableObjectChild.h',
+    'PluginScriptableObjectParent.h',
+    'PluginScriptableObjectUtils-inl.h',
+    'PluginScriptableObjectUtils.h',
+    'PluginStreamChild.h',
+    'PluginStreamParent.h',
+    'PluginUtilsOSX.h',
+    'ScopedMethodFactory.h',
+    'StreamNotifyChild.h',
+    'StreamNotifyParent.h',
+]
+
+if CONFIG['OS_ARCH'] == 'WINNT':
+    EXPORTS.mozilla.plugins += [
+        'PluginSurfaceParent.h',
+    ]
+    # These files cannot be built in unified mode because they force NSPR logging.
+    SOURCES += [
+        'COMMessageFilter.cpp',
+        'MiniShmParent.cpp',
+        'PluginHangUIParent.cpp',
+        'PluginSurfaceParent.cpp',
+    ]
+    DEFINES['MOZ_HANGUI_PROCESS_NAME'] = '"plugin-hang-ui%s"' % CONFIG['BIN_SUFFIX']
+    LOCAL_INCLUDES += [
+        '/widget/shared',
+        'hangui',
+    ]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+    EXPORTS.mozilla.plugins += [
+        'PluginInterposeOSX.h',
+    ]
+
+if CONFIG['MOZ_ENABLE_QT']:
+    GENERATED_SOURCES += [
+        'moc_NestedLoopTimer.cpp',
+    ]
+    # These files cannot be built in unified mode because they force NSPR logging.
+    SOURCES += [
+        'NestedLoopTimer.cpp',
+    ]
+
+# These files cannot be built in unified mode because they force NSPR logging.
+SOURCES += [
+    'BrowserStreamChild.cpp',
+    'BrowserStreamParent.cpp',
+    'ChildAsyncCall.cpp',
+    'ChildTimer.cpp',
+    'PluginBackgroundDestroyer.cpp',
+    'PluginIdentifierChild.cpp',
+    'PluginIdentifierParent.cpp',
+    'PluginInstanceChild.cpp',
+    'PluginInstanceParent.cpp',
+    'PluginMessageUtils.cpp',
+    'PluginModuleChild.cpp',
+    'PluginModuleParent.cpp',
+    'PluginProcessChild.cpp',
+    'PluginProcessParent.cpp',
+    'PluginScriptableObjectChild.cpp',
+    'PluginScriptableObjectParent.cpp',
+    'PluginStreamChild.cpp',
+    'PluginStreamParent.cpp',
+]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+    # These files cannot be built in unified mode because they force NSPR logging.
+    SOURCES += [
+        'PluginInterposeOSX.mm',
+        'PluginUtilsOSX.mm',
+    ]
+
+IPDL_SOURCES += [
+    'PBrowserStream.ipdl',
+    'PPluginBackgroundDestroyer.ipdl',
+    'PPluginIdentifier.ipdl',
+    'PPluginInstance.ipdl',
+    'PPluginModule.ipdl',
+    'PPluginScriptableObject.ipdl',
+    'PPluginStream.ipdl',
+    'PPluginSurface.ipdl',
+    'PStreamNotify.ipdl',
+]
+
+FAIL_ON_WARNINGS = True
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+FINAL_LIBRARY = 'xul'
+LOCAL_INCLUDES += [
+    '../base',
+    '/xpcom/base/',
+]
+
+DEFINES['FORCE_PR_LOG'] = True
+

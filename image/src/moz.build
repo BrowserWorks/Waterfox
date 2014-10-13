@@ -1,0 +1,63 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+EXPORTS += [
+    'ImageOps.h',
+    'imgLoader.h',
+    'imgRequest.h',
+    'imgRequestProxy.h',
+    'Orientation.h',
+    'SurfaceCache.h'
+]
+
+UNIFIED_SOURCES += [
+    'ClippedImage.cpp',
+    'Decoder.cpp',
+    'DiscardTracker.cpp',
+    'FrameAnimator.cpp',
+    'FrameBlender.cpp',
+    'FrameSequence.cpp',
+    'FrozenImage.cpp',
+    'Image.cpp',
+    'ImageFactory.cpp',
+    'ImageMetadata.cpp',
+    'ImageOps.cpp',
+    'ImageWrapper.cpp',
+    'imgFrame.cpp',
+    'imgTools.cpp',
+    'OrientedImage.cpp',
+    'ScriptedNotificationObserver.cpp',
+    'SurfaceCache.cpp',
+    'SVGDocumentWrapper.cpp',
+    'VectorImage.cpp',
+]
+
+# These files can't be unified because of ImageLogging.h #include order issues.
+SOURCES += [
+    'imgLoader.cpp',
+    'imgRequest.cpp',
+    'imgRequestProxy.cpp',
+    'imgStatusTracker.cpp',
+    'RasterImage.cpp',
+]
+
+FAIL_ON_WARNINGS = True
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+FINAL_LIBRARY = 'imglib2'
+
+LOCAL_INCLUDES += [
+    # Because SVGDocumentWrapper.cpp includes "mozilla/dom/SVGSVGElement.h"
+    '/content/base/src',
+    '/content/svg/content/src',
+    # We need to instantiate the decoders
+    '/image/decoders',
+    # Because VectorImage.cpp includes nsSVGUtils.h and nsSVGEffects.h
+    '/layout/svg',
+    # For URI-related functionality
+    '/netwerk/base/src',
+]

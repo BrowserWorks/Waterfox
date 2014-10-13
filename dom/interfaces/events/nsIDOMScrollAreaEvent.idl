@@ -1,0 +1,26 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIDOMUIEvent.idl"
+
+[builtinclass, uuid(49ab3d1d-f549-4cdb-904c-f6b6d3a0ec9e)]
+interface nsIDOMScrollAreaEvent : nsIDOMUIEvent
+{
+  // Scroll area client rect
+  readonly attribute float x;
+  readonly attribute float y;
+  readonly attribute float width;
+  readonly attribute float height;
+
+  void initScrollAreaEvent(in DOMString aEventType,
+                           in boolean aCanBubble,
+                           in boolean aCancelable,
+                           in nsIDOMWindow aView,
+                           in long aDetail,
+                           in float x,
+                           in float y,
+                           in float width,
+                           in float height);
+};

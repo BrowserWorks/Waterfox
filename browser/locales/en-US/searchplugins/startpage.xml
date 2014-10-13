@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/">
+<ShortName>StartPage</ShortName>
+<Description>Startpage Web Search</Description>
+<InputEncoding>UTF-8</InputEncoding>
+<Image width="16" height="16">data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2jkj+9YtD/vWLQ/71i0P+9otD/vaLRP72i0T+9YtE/vWLRP72i0T+9otD/vaNRP72jUT+9otF/vaLRf73kkv+9Yc///WJP//1iT//9Yk///rAmf/94Mz/+sCa//aRTv/1iUH/9ok///aJP//2i0H/9otB//aJQv/2iUL/9otC//aNRP/2jUT/9o1E//aNRP/6wpv////////////96dr/95dQ//aNRP/2kET/9pBG//aQRv/2kEb/9pBG//aRR//3lEz/95BH//mueP/7xJ3/959g//efYf/4p23//vDm//3p2//3kEr/95FJ//aRSf/niFH/95FK//aRSv/2mE//95hS/vq4iP/////////////////81bj/95xZ//q4iP//////+bF+//eZT//njFT/PSqi/2xGjv/2mVD/951V/vedVv783cX///////vQrf/++PP///////748//+8uj///////m3gf/olFr/PSuj/w8Pt/9sSJD/951V//eeWf73oVv++8ul///////5sXf/+KRi//vRsf////////////3r3v/olF//Piyk/w8Pt/9sSJH/+J5Z//ieWv/3oV/++KZf/vihXP/97N7//vn0//zTs//6wJP/+bBy//q6iP/onW//Piyl/w8Pt/8fGbH/m2iB/+icY//4pGD/96hl/viqZf74pmD/+Kxr//3iy/////////n1//ivbP/onGj/Pi2m/w8Pt/8uJKz/fFeQ/x8Zsf8+Lqb/6J9r//ivbP74rm3++Klm//mpZv/5q2f/+bR9//m0e//poW7/Pi6n/w8Pt/9sTZj/+Ktp//ira/+rd4P/Dw+3/4xijv/5snH++LN1/vmvbf/5r23/+a5t//mvb//4r2//TTuk/w8Pt/8fGrL/6ah1//ivcP/4r3P/q3yI/w8Pt/+MZpP/+bN5/vm4ev75t3X/+bV1//m1df/5t3X/+Ld3/8qUhP98XZn/Hxqz/+mse//5t3f/2p+B/x8as/8PD7f/u4qK//m7fv76u4D++bl7//m3fP/5uXz/+bl8//m5fP/5t3z/+bl//x8as/9NPKf/fWCb/x8as/8PD7f/bVOh//q5f//6v4X++sGI/vm9g//5voX/+b6F//m9hf/6vYX/+r6F//nCh/+bepr/Hxu0/w8Pt/8PD7f/fWOh//q+hf/6wof/+saN/vrGjf75xIv/+ceL//nEi//5xIv/+sSL//rHi//6x43/+ceN/+m7kP+7lpj/6ruQ//rHkP/6x43/+seQ//rLlf76ypT++seR//rJkf/6yZH/+seR//rJkf/6yZH/+8mR//vJlP/7yZT/+smU//rJlP/6yZT/+8yV//rJlf/6zpn+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==</Image>
+<Url type="application/x-suggestions+json" method="GET"
+     template="https://startpage.com/do/search?query={searchTerms}" />
+<Url type="text/html" method="GET" template="https://startpage.com/do/search">
+  <Param name="c" value="web"/>
+  <Param name="q" value="{searchTerms}"/>
+</Url>
+<SearchForm>https://startpage.com/</SearchForm>
+</SearchPlugin>

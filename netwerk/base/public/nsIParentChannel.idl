@@ -1,0 +1,35 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIStreamListener.idl"
+
+interface nsITabParent;
+
+%{C++
+namespace mozilla {
+namespace net {
+class HttpChannelParentListener;
+}
+}
+%}
+
+[ptr] native HttpChannelParentListener(mozilla::net::HttpChannelParentListener);
+
+/**
+ * Implemented by chrome side of IPC protocols.
+ */
+
+[scriptable, uuid(8bf3aa90-ec5d-4977-bd03-197274befc78)]
+interface nsIParentChannel : nsIStreamListener
+{
+  /**
+   * Called to set the HttpChannelParentListener object (optional).
+   */
+  [noscript] void setParentListener(in HttpChannelParentListener listener);
+
+  /**
+   * Called to invoke deletion of the IPC protocol.
+   */
+  void delete();
+};

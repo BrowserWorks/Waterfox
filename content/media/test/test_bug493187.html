@@ -1,0 +1,72 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=493187
+-->
+
+<head>
+  <title>Bug 493187 - enter HAVE_FUTURE_DATA when seeking within buffered data even if new data isn't arriving</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+  <script type="text/javascript" src="manifest.js"></script>
+</head>
+<body>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=493187">Mozilla Bug 493187</a>
+<pre id="test">
+<script class="testbody" type="text/javascript">
+
+SimpleTest.expectAssertions(0, 2);
+
+var manager = new MediaTestManager;
+
+function start(e) {
+  e.target.currentTime = e.target.duration / 4;
+}
+
+function startSeeking(e) {
+  e.target._seeked = true;
+}
+
+function canPlayThrough(e) {
+  var v = e.target;
+  if (v._seeked && !v._finished) {
+    ok(true, "Got canplaythrough after seek for " + v._name);
+    v._finished = true;
+    v.parentNode.removeChild(v);
+    v.src = "";
+    manager.finished(v.token);
+  }
+}
+
+function startTest(test, token) {
+  // TODO: Bug 568402, there's a bug in the WAV backend where we sometimes
+  // don't send canplaythrough events after seeking. Once that is fixed,
+  // we should remove this guard below so that we run this test for audio.
+  var type = getMajorMimeType(test.type);
+  if (type != "video")
+    return;
+
+  var v = document.createElement('video');
+  v.token = token;
+  manager.started(token);
+
+  v.src = test.name;
+  v._name = test.name;
+  v._seeked = false;
+  v._finished = false;
+  v.preload = "auto";
+  v.addEventListener("loadedmetadata", start, false);
+  v.addEventListener("canplaythrough", canPlayThrough, false);
+  v.addEventListener("seeking", startSeeking, false);
+  document.body.appendChild(v);
+}
+
+SimpleTest.waitForExplicitFinish();
+SpecialPowers.pushPrefEnv({"set": [["media.cache_size", 40000]]}, beginTest);
+function beginTest() {
+  manager.runTests(gSeekTests, startTest);
+}
+</script>
+</pre>
+</body>
+</html>

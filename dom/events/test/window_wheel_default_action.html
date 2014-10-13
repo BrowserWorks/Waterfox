@@ -1,0 +1,1826 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Test for default action of WheelEvent</title>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="application/javascript" src="/tests/SimpleTest/EventUtils.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+<p id="display"></p>
+<div id="scrollable" style="overflow: auto; width: 200px; height: 200px;">
+  <div id="clipper" style="margin: 0; padding: 0; overflow: hidden; width: 3000px; height: 3000px;">
+    <div id="scrolled" style="width: 5000px; height: 5000px;">
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+      Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text. Tere is a lot of text.<br>
+    </div>
+  </div>
+</div>
+<div id="spacerForBody"></div>
+<div id="content" style="display: none">
+  
+</div>
+<pre id="test">
+<script type="application/javascript">
+
+SimpleTest.waitForFocus(runTests, window);
+
+var winUtils = SpecialPowers.getDOMWindowUtils(window);
+// grab refresh driver
+winUtils.advanceTimeAndRefresh(100);
+
+var gScrollableElement = document.getElementById("scrollable");
+var gScrolledElement = document.getElementById("scrolled");
+var gSpacerForBodyElement = document.getElementById("spacerForBody");
+
+function is()
+{
+  window.opener.is.apply(window.opener, arguments);
+}
+
+function ok()
+{
+  window.opener.ok.apply(window.opener, arguments);
+}
+
+function hitEventLoop(aFunc, aTimes)
+{
+  winUtils.advanceTimeAndRefresh(100);
+
+  if (--aTimes) {
+    setTimeout(hitEventLoop, 0, aFunc, aTimes);
+  } else {
+    setTimeout(aFunc, 20);
+  }
+}
+
+function onZoomReset(aCallback) {
+  var topic = "browser-fullZoom:zoomReset";
+  SpecialPowers.addObserver(function observe() {
+    SpecialPowers.removeObserver(observe, topic);
+    SimpleTest.executeSoon(aCallback);
+  }, topic, false);
+}
+
+function setDeltaMultiplierSettings(aSettings)
+{
+  SpecialPowers.setIntPref("mousewheel.default.delta_multiplier_x", aSettings.deltaMultiplierX * 100);
+  SpecialPowers.setIntPref("mousewheel.default.delta_multiplier_y", aSettings.deltaMultiplierY * 100);
+  SpecialPowers.setIntPref("mousewheel.default.delta_multiplier_z", aSettings.deltaMultiplierZ * 100);
+  SpecialPowers.setIntPref("mousewheel.with_alt.delta_multiplier_x", aSettings.deltaMultiplierX * 100);
+  SpecialPowers.setIntPref("mousewheel.with_alt.delta_multiplier_y", aSettings.deltaMultiplierY * 100);
+  SpecialPowers.setIntPref("mousewheel.with_alt.delta_multiplier_z", aSettings.deltaMultiplierZ * 100);
+  SpecialPowers.setIntPref("mousewheel.with_control.delta_multiplier_x", aSettings.deltaMultiplierX * 100);
+  SpecialPowers.setIntPref("mousewheel.with_control.delta_multiplier_y", aSettings.deltaMultiplierY * 100);
+  SpecialPowers.setIntPref("mousewheel.with_control.delta_multiplier_z", aSettings.deltaMultiplierZ * 100);
+  SpecialPowers.setIntPref("mousewheel.with_meta.delta_multiplier_x", aSettings.deltaMultiplierX * 100);
+  SpecialPowers.setIntPref("mousewheel.with_meta.delta_multiplier_y", aSettings.deltaMultiplierY * 100);
+  SpecialPowers.setIntPref("mousewheel.with_meta.delta_multiplier_z", aSettings.deltaMultiplierZ * 100);
+  SpecialPowers.setIntPref("mousewheel.with_shift.delta_multiplier_x", aSettings.deltaMultiplierX * 100);
+  SpecialPowers.setIntPref("mousewheel.with_shift.delta_multiplier_y", aSettings.deltaMultiplierY * 100);
+  SpecialPowers.setIntPref("mousewheel.with_shift.delta_multiplier_z", aSettings.deltaMultiplierZ * 100);
+  SpecialPowers.setIntPref("mousewheel.with_win.delta_multiplier_x", aSettings.deltaMultiplierX * 100);
+  SpecialPowers.setIntPref("mousewheel.with_win.delta_multiplier_y", aSettings.deltaMultiplierY * 100);
+  SpecialPowers.setIntPref("mousewheel.with_win.delta_multiplier_z", aSettings.deltaMultiplierZ * 100);
+}
+
+function doTestScroll(aSettings, aCallback)
+{
+  const kNoScroll    = 0x00;
+  const kScrollUp    = 0x01;
+  const kScrollDown  = 0x02;
+  const kScrollLeft  = 0x04;
+  const kScrollRight = 0x08;
+
+  const kTests = [
+    { description: "Scroll to bottom by pixel scroll even if lineOrPageDelta is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: 8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown },
+    { description: "Scroll to bottom by pixel scroll when lineOrPageDelta is 1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: 8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 1, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown },
+    { description: "Scroll to top by pixel scroll even if lineOrPageDelta is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: -8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp },
+    { description: "Scroll to top by pixel scroll when lineOrPageDelta is -1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: -8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: -1, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp },
+    { description: "Scroll to right by pixel scroll even if lineOrPageDelta is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 8.0, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollRight },
+    { description: "Scroll to right by pixel scroll when lineOrPageDelta is 1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 8.0, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollRight },
+    { description: "Scroll to left by pixel scroll even if lineOrPageDelta is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: -8.0, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollLeft },
+    { description: "Scroll to left by pixel scroll when lineOrPageDelta is -1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: -8.0, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollLeft },
+    { description: "Scroll to bottom-right by pixel scroll",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 8.0, deltaY: 8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown | kScrollRight },
+    { description: "Scroll to bottom-left by pixel scroll",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: -8.0, deltaY: 8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown | kScrollLeft },
+    { description: "Scroll to top-left by pixel scroll",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: -8.0, deltaY: -8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp | kScrollLeft },
+    { description: "Scroll to top-right by pixel scroll",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 8.0, deltaY: -8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp | kScrollRight },
+    { description: "Not Scroll by pixel scroll for z",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: 0.0, deltaZ: 1.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kNoScroll },
+
+    { description: "Scroll to bottom by line scroll even if lineOrPageDelta is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.0, deltaY: 0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 1, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown },
+    { description: "Scroll to bottom by line scroll when lineOrPageDelta is 1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.0, deltaY: 0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 1, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown },
+    { description: "Scroll to top by line scroll even if lineOrPageDelta is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.0, deltaY: -0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp },
+    { description: "Scroll to top by line scroll when lineOrPageDelta is -1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.0, deltaY: -0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: -1, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp },
+    { description: "Scroll to right by line scroll even if lineOrPageDelta is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.5, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollRight },
+    { description: "Scroll to right by line scroll when lineOrPageDelta is 1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.5, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollRight },
+    { description: "Scroll to left by line scroll even if lineOrPageDelta is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: -0.5, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollLeft },
+    { description: "Scroll to left by line scroll when lineOrPageDelta is -1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: -0.5, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollLeft },
+    { description: "Scroll to bottom-right by line scroll",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.5, deltaY: 0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown | kScrollRight },
+    { description: "Scroll to bottom-left by line scroll",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: -0.5, deltaY: 0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown | kScrollLeft },
+    { description: "Scroll to top-left by line scroll",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: -0.5, deltaY: -0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp | kScrollLeft },
+    { description: "Scroll to top-right by line scroll",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.5, deltaY: -0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp | kScrollRight },
+    { description: "Not Scroll by line scroll for z",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.0, deltaY: 0.0, deltaZ: 1.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kNoScroll },
+
+    { description: "Scroll to bottom by page scroll even if lineOrPageDelta is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 0.0, deltaY: 0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 1, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown },
+    { description: "Scroll to bottom by page scroll when lineOrPageDelta is 1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 0.0, deltaY: 0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 1, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown },
+    { description: "Scroll to top by page scroll even if lineOrPageDelta is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.0, deltaY: -0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp },
+    { description: "Scroll to top by page scroll when lineOrPageDelta is -1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 0.0, deltaY: -0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: -1, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp },
+    { description: "Scroll to right by page scroll even if lineOrPageDelta is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 0.5, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollRight },
+    { description: "Scroll to right by page scroll when lineOrPageDelta is 1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 0.5, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollRight },
+    { description: "Scroll to left by page scroll even if lineOrPageDelta is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: -0.5, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollLeft },
+    { description: "Scroll to left by page scroll when lineOrPageDelta is -1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: -0.5, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollLeft },
+    { description: "Scroll to bottom-right by page scroll",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 0.5, deltaY: 0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown | kScrollRight },
+    { description: "Scroll to bottom-left by page scroll",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: -0.5, deltaY: 0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown | kScrollLeft },
+    { description: "Scroll to top-left by page scroll",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: -0.5, deltaY: -0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp | kScrollLeft },
+    { description: "Scroll to top-right by page scroll",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 0.5, deltaY: -0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp | kScrollRight },
+    { description: "Not Scroll by page scroll for z",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 0.0, deltaY: 0.0, deltaZ: 1.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: false,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kNoScroll },
+
+    // special cases.
+
+    // momentum scroll should cause scroll even if the action is zoom, but if the default action is none,
+    // shouldn't do it.
+    { description: "Scroll to bottom by momentum pixel scroll when lineOrPageDelta is 0, even if the action is zoom",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: 8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: true, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown },
+    { description: "Scroll to bottom by momentum pixel scroll when lineOrPageDelta is 1, even if the action is zoom",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: 8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 1, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: true, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown },
+    { description: "Scroll to top by momentum pixel scroll when lineOrPageDelta is 0, even if the action is zoom",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: -8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: true, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp },
+    { description: "Scroll to top by momentum pixel scroll when lineOrPageDelta is -1, even if the action is zoom",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: -8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: -1, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: true, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp },
+    { description: "Scroll to right by momentum pixel scroll when lineOrPageDelta is 0, even if the action is zoom",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 8.0, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: true, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollRight },
+    { description: "Scroll to right by momentum pixel scroll when lineOrPageDelta is 1, even if the action is zoom",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 8.0, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: true, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollRight },
+    { description: "Scroll to left by momentum pixel scroll when lineOrPageDelta is 0, even if the action is zoom",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: -8.0, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: true, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollLeft },
+    { description: "Scroll to left by momentum pixel scroll when lineOrPageDelta is -1, even if the action is zoom",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: -8.0, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: true, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollLeft },
+    { description: "Scroll to bottom-right by momentum pixel scroll even if the action is zoom",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 8.0, deltaY: 8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: true, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown | kScrollRight },
+    { description: "Scroll to bottom-left by momentum pixel scroll even if the action is zoom",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: -8.0, deltaY: 8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: true, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown | kScrollLeft },
+    { description: "Scroll to top-left by momentum pixel scroll even if the action is zoom",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: -8.0, deltaY: -8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: true, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp | kScrollLeft },
+    { description: "Scroll to top-right by momentum pixel scroll even if the action is zoom",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 8.0, deltaY: -8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: true, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp | kScrollRight },
+    { description: "Not Scroll by momentum pixel scroll for z (action is zoom)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: 0.0, deltaZ: 1.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: true, altKey: false, metaKey: false, osKey: false },
+      expected: kNoScroll },
+    { description: "Not Scroll by momentum pixel scroll if default action is none (action is zoom)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: 0.0, deltaZ: 1.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: true, altKey: false, metaKey: false, osKey: false },
+      expected: kNoScroll,
+      prepare: function () { SpecialPowers.setIntPref("mousewheel.default.action", 0); },
+      cleanup: function () { SpecialPowers.setIntPref("mousewheel.default.action", 1); } },
+
+    // momentum scroll should cause scroll even if the action is history, but if the default action is none,
+    // shouldn't do it.
+    { description: "Scroll to bottom by momentum pixel scroll when lineOrPageDelta is 0, even if the action is history",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: 8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: true, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown },
+    { description: "Scroll to bottom by momentum pixel scroll when lineOrPageDelta is 1, even if the action is history",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: 8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 1, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: true, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown },
+    { description: "Scroll to top by momentum pixel scroll when lineOrPageDelta is 0, even if the action is history",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: -8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: true, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp },
+    { description: "Scroll to top by momentum pixel scroll when lineOrPageDelta is -1, even if the action is history",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: -8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: -1, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: true, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp },
+    { description: "Scroll to right by momentum pixel scroll when lineOrPageDelta is 0, even if the action is history",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 8.0, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: true, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollRight },
+    { description: "Scroll to right by momentum pixel scroll when lineOrPageDelta is 1, even if the action is history",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 8.0, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: true, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollRight },
+    { description: "Scroll to left by momentum pixel scroll when lineOrPageDelta is 0, even if the action is history",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: -8.0, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: true, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollLeft },
+    { description: "Scroll to left by momentum pixel scroll when lineOrPageDelta is -1, even if the action is history",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: -8.0, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: true, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollLeft },
+    { description: "Scroll to bottom-right by momentum pixel scroll even if the action is history",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 8.0, deltaY: 8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: true, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown | kScrollRight },
+    { description: "Scroll to bottom-left by momentum pixel scroll even if the action is history",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: -8.0, deltaY: 8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: true, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown | kScrollLeft },
+    { description: "Scroll to top-left by momentum pixel scroll even if the action is history",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: -8.0, deltaY: -8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: true, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp | kScrollLeft },
+    { description: "Scroll to top-right by momentum pixel scroll even if the action is history",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 8.0, deltaY: -8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: true, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp | kScrollRight },
+    { description: "Not Scroll by momentum pixel scroll for z (action is history)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: 0.0, deltaZ: 1.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: true, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kNoScroll },
+    { description: "Not Scroll by momentum pixel scroll if default action is none (action is history)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: 0.0, deltaZ: 1.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0, isMomentum: true,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: true, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kNoScroll,
+      prepare: function () { SpecialPowers.setIntPref("mousewheel.default.action", 0); },
+      cleanup: function () { SpecialPowers.setIntPref("mousewheel.default.action", 1); } },
+
+    // Don't scroll along axis whose overflow style is hidden.
+    { description: "Scroll to only bottom by oblique pixel wheel event with overflow-x: hidden",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 16.0, deltaY: 16.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1,
+               expectedOverflowDeltaX: 1, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown,
+      prepare: function() { gScrollableElement.style.overflowX = "hidden"; } },
+    { description: "Scroll to only bottom by oblique line wheel event with overflow-x: hidden",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 1.0, deltaY: 1.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1,
+               expectedOverflowDeltaX: 1, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown },
+    { description: "Scroll to only bottom by oblique page wheel event with overflow-x: hidden",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 1.0, deltaY: 1.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1,
+               expectedOverflowDeltaX: 1, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown },
+    { description: "Scroll to only top by oblique pixel wheel event with overflow-x: hidden",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: -16.0, deltaY: -16.0, deltaZ: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: -1,
+               expectedOverflowDeltaX: -1, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp },
+    { description: "Scroll to only top by oblique line wheel event with overflow-x: hidden",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: -1.0, deltaY: -1.0, deltaZ: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: -1,
+               expectedOverflowDeltaX: -1, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp },
+    { description: "Scroll to only top by oblique page wheel event with overflow-x: hidden",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: -1.0, deltaY: -1.0, deltaZ: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: -1,
+               expectedOverflowDeltaX: -1, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp,
+      cleanup: function () { gScrollableElement.style.overflowX = "auto"; } },
+    { description: "Scroll to only right by oblique pixel wheel event with overflow-y: hidden",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 16.0, deltaY: 16.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 1,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollRight,
+      prepare: function() { gScrollableElement.style.overflowY = "hidden"; } },
+    { description: "Scroll to only right by oblique line wheel event with overflow-y: hidden",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 1.0, deltaY: 1.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 1,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollRight },
+    { description: "Scroll to only right by oblique page wheel event with overflow-y: hidden",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 1.0, deltaY: 1.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 1,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollRight },
+    { description: "Scroll to only left by oblique pixel wheel event with overflow-y: hidden",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: -16.0, deltaY: -16.0, deltaZ: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: -1,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: -1,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollLeft },
+    { description: "Scroll to only top by oblique line wheel event with overflow-y: hidden",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: -1.0, deltaY: -1.0, deltaZ: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: -1,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: -1,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollLeft },
+    { description: "Scroll to only top by oblique page wheel event with overflow-y: hidden",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: -1.0, deltaY: -1.0, deltaZ: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: -1,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: -1,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollLeft,
+      cleanup: function () { gScrollableElement.style.overflowY = "auto"; } },
+    { description: "Don't be scrolled by oblique pixel wheel event with overflow: hidden",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 16.0, deltaY: 16.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1,
+               expectedOverflowDeltaX: 1, expectedOverflowDeltaY: 1,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kNoScroll,
+      prepare: function() { gScrollableElement.style.overflow = "hidden"; } },
+    { description: "Don't be scrolled by oblique line wheel event with overflow: hidden",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 1.0, deltaY: 1.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1,
+               expectedOverflowDeltaX: 1, expectedOverflowDeltaY: 1,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kNoScroll },
+    { description: "Don't be scrolled by oblique page wheel event with overflow: hidden",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 1.0, deltaY: 1.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1,
+               expectedOverflowDeltaX: 1, expectedOverflowDeltaY: 1,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kNoScroll },
+    { description: "Don't be scrolled by oblique pixel wheel event with overflow: hidden",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: -16.0, deltaY: -16.0, deltaZ: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: -1,
+               expectedOverflowDeltaX: -1, expectedOverflowDeltaY: -1,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kNoScroll },
+    { description: "Don't be scrolled by oblique line wheel event with overflow: hidden",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: -1.0, deltaY: -1.0, deltaZ: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: -1,
+               expectedOverflowDeltaX: -1, expectedOverflowDeltaY: -1,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kNoScroll },
+    { description: "Don't be scrolled by oblique page wheel event with overflow: hidden",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: -1.0, deltaY: -1.0, deltaZ: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: -1,
+               expectedOverflowDeltaX: -1, expectedOverflowDeltaY: -1,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kNoScroll,
+      cleanup: function () { gScrollableElement.style.overflow = "auto"; } },
+
+    // Don't scroll along axis whose overflow style is hidden and overflow delta values should
+    // be zero if there is ancestor scrollable element.
+    { description: "Scroll to only bottom by oblique pixel wheel event with overflow-x: hidden (body is scrollable)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 16.0, deltaY: 16.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown,
+      prepare: function() {
+        gScrollableElement.style.overflowX = "hidden";
+        gScrollableElement.style.position = "fixed";
+        gScrollableElement.style.top = "30px";
+        gScrollableElement.style.left = "30px";
+        // Make body element scrollable.
+        gSpacerForBodyElement.style.width = "5000px";
+        gSpacerForBodyElement.style.height = "5000px";
+        document.documentElement.scrollTop = 500;
+        document.documentElement.scrollLeft = 500;
+      } },
+    { description: "Scroll to only bottom by oblique line wheel event with overflow-x: hidden (body is scrollable)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 1.0, deltaY: 1.0, deltaZ: 0.0,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown },
+    { description: "Scroll to only bottom by oblique page wheel event with overflow-x: hidden (body is scrollable)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 1.0, deltaY: 1.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollDown },
+    { description: "Scroll to only top by oblique pixel wheel event with overflow-x: hidden (body is scrollable)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: -16.0, deltaY: -16.0, deltaZ: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: -1,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp },
+    { description: "Scroll to only top by oblique line wheel event with overflow-x: hidden (body is scrollable)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: -1.0, deltaY: -1.0, deltaZ: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: -1,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp },
+    { description: "Scroll to only top by oblique page wheel event with overflow-x: hidden (body is scrollable)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: -1.0, deltaY: -1.0, deltaZ: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: -1,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollUp,
+      cleanup: function () { gScrollableElement.style.overflowX = "auto"; } },
+    { description: "Scroll to only right by oblique pixel wheel event with overflow-y: hidden (body is scrollable)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 16.0, deltaY: 16.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollRight,
+      prepare: function() { gScrollableElement.style.overflowY = "hidden"; } },
+    { description: "Scroll to only right by oblique line wheel event with overflow-y: hidden (body is scrollable)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 1.0, deltaY: 1.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollRight },
+    { description: "Scroll to only right by oblique page wheel event with overflow-y: hidden (body is scrollable)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 1.0, deltaY: 1.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollRight },
+    { description: "Scroll to only left by oblique pixel wheel event with overflow-y: hidden (body is scrollable)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: -16.0, deltaY: -16.0, deltaZ: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: -1,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollLeft },
+    { description: "Scroll to only top by oblique line wheel event with overflow-y: hidden (body is scrollable)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: -1.0, deltaY: -1.0, deltaZ: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: -1,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollLeft },
+    { description: "Scroll to only top by oblique page wheel event with overflow-y: hidden (body is scrollable)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: -1.0, deltaY: -1.0, deltaZ: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: -1,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0,
+               shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, osKey: false },
+      expected: kScrollLeft,
+      cleanup: function () {
+        gScrollableElement.style.overflowY = "auto";
+        gScrollableElement.style.position = "static";
+        gSpacerForBodyElement.style.width = "";
+        gSpacerForBodyElement.style.height = "";
+      } },
+  ];
+
+  var description;
+
+  var currentTestIndex = -1;
+  var isXReverted = (aSettings.deltaMultiplierX < 0);
+  var isYReverted = (aSettings.deltaMultiplierY < 0);
+
+  function doNextTest()
+  {
+    if (++currentTestIndex >= kTests.length) {
+      SimpleTest.executeSoon(aCallback);
+      return;
+    }
+
+    gScrollableElement.scrollTop = 1000;
+    gScrollableElement.scrollLeft = 1000;
+
+    var currentTest = kTests[currentTestIndex];
+    description = "doTestScroll(aSettings=" + aSettings.description + "), " + currentTest.description + ": ";
+    if (currentTest.prepare) {
+      currentTest.prepare();
+    }
+
+    synthesizeWheel(gScrollableElement, 10, 10, currentTest.event);
+
+    hitEventLoop(function () {
+      if (currentTest.expected == kNoScroll) {
+        is(gScrollableElement.scrollTop, 1000, description + "scrolled vertical");
+        is(gScrollableElement.scrollLeft, 1000, description + "scrolled horizontal");
+      } else {
+        var scrollUp = !isYReverted ? (currentTest.expected & kScrollUp) :
+                                      (currentTest.expected & kScrollDown);
+        var scrollDown = !isYReverted ? (currentTest.expected & kScrollDown) :
+                                        (currentTest.expected & kScrollUp);
+        if (scrollUp) {
+          ok(gScrollableElement.scrollTop < 1000, description + "not scrolled up, got " + gScrollableElement.scrollTop);
+        } else if (scrollDown) {
+          ok(gScrollableElement.scrollTop > 1000, description + "not scrolled down, got " + gScrollableElement.scrollTop);
+        } else {
+          is(gScrollableElement.scrollTop, 1000, description + "scrolled vertical");
+        }
+        var scrollLeft = !isXReverted ? (currentTest.expected & kScrollLeft) :
+                                        (currentTest.expected & kScrollRight);
+        var scrollRight = !isXReverted ? (currentTest.expected & kScrollRight) :
+                                         (currentTest.expected & kScrollLeft);
+        if (scrollLeft) {
+          ok(gScrollableElement.scrollLeft < 1000, description + "not scrolled to left, got " + gScrollableElement.scrollLeft);
+        } else if (scrollRight) {
+          ok(gScrollableElement.scrollLeft > 1000, description + "not scrolled to right, got " + gScrollableElement.scrollLeft);
+        } else {
+          is(gScrollableElement.scrollLeft, 1000, description + "scrolled horizontal");
+        }
+      }
+      if (currentTest.cleanup) {
+        currentTest.cleanup();
+      }
+      winUtils.advanceTimeAndRefresh(100);
+      doNextTest();
+    }, 10);
+  }
+  doNextTest();
+}
+
+function doTestZoom(aSettings, aCallback)
+{
+  if ((aSettings.deltaMultiplierX != 1.0  && aSettings.deltaMultiplierX != -1.0) ||
+      (aSettings.deltaMultiplierY != 1.0  && aSettings.deltaMultiplierY != -1.0)) {
+    todo(false, "doTestZoom doesn't support to test with aSettings=" + aSettings.description);
+    SimpleTest.executeSoon(aCallback);
+    return;
+  }
+
+  const kNone     = 0x00;
+  const kPositive = 0x01;
+  const kNegative = 0x02;
+  const kUseX     = 0x10;
+  const kUseY     = 0x20;
+  const kTests = [
+    { description: "by vertical/positive pixel event when its lineOrPageDeltaY is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: 8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kNone },
+    { description: "by vertical/positive pixel event when its lineOrPageDeltaY is 1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: 8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 1,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kPositive | kUseY },
+    { description: "by vertical/negative pixel event when its lineOrPageDeltaY is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: -8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kNone },
+    { description: "by vertical/negative pixel event when its lineOrPageDeltaY is -1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: -8.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: -1,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kNegative | kUseY },
+    { description: "by horizotal/positive pixel event when its lineOrPageDeltaX is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 8.0, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kNone },
+    { description: "by horizotal/positive pixel event when its lineOrPageDeltaX is 1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 8.0, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 0,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kPositive | kUseX },
+    { description: "by horizotal/negative pixel event when its lineOrPageDeltaX is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: -8.0, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kNone },
+    { description: "by horizotal/negative pixel event when its lineOrPageDeltaX is -1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: -8.0, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: 0,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kNegative | kUseX },
+    { description: "by z pixel event",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: 0.0, deltaZ: 16.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kNone },
+
+    { description: "by vertical/positive line event when its lineOrPageDeltaY is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.0, deltaY: 0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kNone },
+    { description: "by vertical/positive line event when its lineOrPageDeltaY is 1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.0, deltaY: 0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 1,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kPositive | kUseY },
+    { description: "by vertical/negative line event when its lineOrPageDeltaY is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.0, deltaY: -0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kNone },
+    { description: "by vertical/negative line event when its lineOrPageDeltaY is -1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.0, deltaY: -0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: -1,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kNegative | kUseY },
+    { description: "by horizotal/positive line event when its lineOrPageDeltaX is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.5, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kNone },
+    { description: "by horizotal/positive line event when its lineOrPageDeltaX is 1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.5, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 0,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kPositive | kUseX },
+    { description: "by horizotal/negative line event when its lineOrPageDeltaX is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: -0.5, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kNone },
+    { description: "by horizotal/negative line event when its lineOrPageDeltaX is -1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: -0.5, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: 0,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kNegative | kUseX },
+    { description: "by z line event",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.0, deltaY: 0.0, deltaZ: 1.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kNone },
+
+    { description: "by vertical/positive page event when its lineOrPageDeltaY is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 0.0, deltaY: 0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kNone },
+    { description: "by vertical/positive page event when its lineOrPageDeltaY is 1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 0.0, deltaY: 0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 1,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kPositive | kUseY },
+    { description: "by vertical/negative page event when its lineOrPageDeltaY is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 0.0, deltaY: -0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kNone },
+    { description: "by vertical/negative page event when its lineOrPageDeltaY is -1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 0.0, deltaY: -0.5, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: -1,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kNegative | kUseY },
+    { description: "by horizotal/positive page event when its lineOrPageDeltaX is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 0.5, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kNone },
+    { description: "by horizotal/positive page event when its lineOrPageDeltaX is 1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 0.5, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 0,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kPositive | kUseX },
+    { description: "by horizotal/negative page event when its lineOrPageDeltaX is 0",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: -0.5, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kNone },
+    { description: "by horizotal/negative page event when its lineOrPageDeltaX is -1",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: -0.5, deltaY: 0.0, deltaZ: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: 0,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kNegative | kUseX },
+    { description: "by z page event",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 0.0, deltaY: 0.0, deltaZ: 1.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0,
+               expectedOverflowDeltaX: 0, expectedOverflowDeltaY: 0 },
+      expected: kNone },
+  ];
+
+  var description, currentTest;
+  var currentTestIndex = -1;
+  var isXReverted = (aSettings.deltaMultiplierX < 0);
+  var isYReverted = (aSettings.deltaMultiplierY < 0);
+
+  function doNextTest()
+  {
+    if (++currentTestIndex >= kTests.length) {
+      SimpleTest.executeSoon(aCallback);
+      return;
+    }
+
+    gScrollableElement.scrollTop = 1000;
+    gScrollableElement.scrollLeft = 1000;
+
+    currentTest = kTests[currentTestIndex];
+    description = "doTestZoom(aSettings=" + aSettings.description + "), ";
+    if (currentTest.expected == kNone) {
+      description += "Shouldn't ";
+    } else {
+      description += "Should ";
+    }
+    description += "zoom " + currentTest.description + ": ";
+
+    var event = currentTest.event;
+    event.ctrlKey  = true;
+    synthesizeWheel(gScrollableElement, 10, 10, event);
+
+    // NOTE: Zooming might change scrollTop and scrollLeft by rounding fraction.
+    //       This test assume that zoom happens synchronously and scrolling
+    //       happens asynchronously.
+    var scrollTop = gScrollableElement.scrollTop;
+    var scrollLeft = gScrollableElement.scrollLeft;
+
+    hitEventLoop(function () {
+      is(gScrollableElement.scrollTop, scrollTop, description + "scrolled vertical");
+      is(gScrollableElement.scrollLeft, scrollLeft, description + "scrolled horizontal");
+      if (!(currentTest.expected & (kNegative | kPositive))) {
+        is(SpecialPowers.getFullZoom(window), 1.0, description + "zoomed");
+      } else {
+        var isReverted = (currentTest.expected & kUseX) ? isXReverted :
+                         (currentTest.expected & kUseY) ? isYReverted : false;
+        if ((!isReverted && (currentTest.expected & kNegative)) ||
+            (isReverted && (currentTest.expected & kPositive))) {
+          ok(SpecialPowers.getFullZoom(window) > 1.0,
+             description + "not zoomed in, got " + SpecialPowers.getFullZoom(window));
+        } else {
+          ok(SpecialPowers.getFullZoom(window) < 1.0,
+             description + "not zoomed out, got " + SpecialPowers.getFullZoom(window));
+        }
+      }
+
+      synthesizeKey("0", { accelKey: true });
+      onZoomReset(function () {
+        hitEventLoop(doNextTest, 20);
+      });
+    }, 20);
+  }
+  doNextTest();
+}
+
+function doTestZoomedScroll(aCallback)
+{
+  var zoom = 1.0;
+  function setFullZoom(aWindow, aZoom)
+  {
+    zoom = aZoom;
+    SpecialPowers.setFullZoom(aWindow, aZoom);
+  }
+
+  function prepareTestZoomedPixelScroll()
+  {
+    // Reset zoom and store the scroll amount into the data.
+    synthesizeKey("0", { accelKey: true });
+    zoom = 1.0;
+    onZoomReset(testZoomedPixelScroll);
+  }
+
+  function testZoomedPixelScroll()
+  {
+    gScrollableElement.scrollTop = 1000;
+    gScrollableElement.scrollLeft = 1000;
+    // Ensure not to be in reflow.
+    hitEventLoop(function () {
+      function mousePixelScrollHandler(aEvent)
+      {
+        if (aEvent.axis == MouseScrollEvent.HORIZONTAL_AXIS) {
+          is(aEvent.detail, 16,
+             "doTestZoomedScroll: The detail of horizontal MozMousePixelScroll for pixel wheel event is wrong");
+        } else if (aEvent.axis == MouseScrollEvent.VERTICAL_AXIS) {
+          is(aEvent.detail, 16,
+             "doTestZoomedScroll: The detail of vertical MozMousePixelScroll for pixel wheel event is wrong");
+        } else {
+          ok(false, "doTestZoomedScroll: The axis of MozMousePixelScroll for pixel wheel event is invalid, got " + aEvent.axis);
+        }
+      }
+      function wheelHandler(aEvent)
+      {
+        is(aEvent.deltaX, 16.0 / zoom,
+           "doTestZoomedScroll: The deltaX of wheel for pixel is wrong");
+        is(aEvent.deltaY, 16.0 / zoom,
+           "doTestZoomedScroll: The deltaY of wheel for pixel is wrong");
+      }
+      window.addEventListener("MozMousePixelScroll", mousePixelScrollHandler, true);
+      window.addEventListener("wheel", wheelHandler, true);
+      synthesizeWheel(gScrollableElement, 10, 10,
+        { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+          deltaX: 16.0, deltaY: 16.0, lineOrPageDeltaX: 0, lineOrPageDeltaY: 0 });
+      // wait scrolled actually.
+      hitEventLoop(function () {
+        var scrolledX = gScrollableElement.scrollLeft;
+        var scrolledY = gScrollableElement.scrollTop;
+        ok(scrolledX > 1000,
+           "doTestZoomedScroll: scrolledX must be larger than 1000 for pixel wheel event, got " + scrolledX);
+        ok(scrolledY > 1000,
+           "doTestZoomedScroll: scrolledY must be larger than 1000 for pixel wheel event, got " + scrolledY);
+
+        // Zoom
+        setFullZoom(window, 2.0);
+        // Ensure not to be in reflow.
+        hitEventLoop(function () {
+          gScrollableElement.scrollTop = 1000;
+          gScrollableElement.scrollLeft = 1000;
+          synthesizeWheel(gScrollableElement, 10, 10,
+            { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+              deltaX: 16.0, deltaY: 16.0, lineOrPageDeltaX: 0, lineOrPageDeltaY: 0 });
+          // wait scrolled actually.
+          hitEventLoop(function () {
+            ok(Math.abs(gScrollableElement.scrollLeft - (1000 + (scrolledX - 1000) / 2)) <= 1,
+               "doTestZoomedScroll: zoomed horizontal scroll amount by pixel wheel event is different from normal, scrollLeft=" +
+                 gScrollableElement.scrollLeft + ", scrolledX=" + scrolledX);
+            ok(Math.abs(gScrollableElement.scrollTop - (1000 + (scrolledY - 1000) / 2)) <= 1,
+               "doTestZoomedScroll: zoomed vertical scroll amount by pixel wheel event is different from normal, scrollTop=" +
+                 gScrollableElement.scrollTop + ", scrolledY=" + scrolledY);
+            window.removeEventListener("MozMousePixelScroll", mousePixelScrollHandler, true);
+            window.removeEventListener("wheel", wheelHandler, true);
+
+            synthesizeKey("0", { accelKey: true });
+            onZoomReset(prepareTestZoomedLineScroll);
+          }, 20);
+        }, 20);
+      }, 20);
+    }, 20);
+  }
+
+  function prepareTestZoomedLineScroll()
+  {
+    // Reset zoom and store the scroll amount into the data.
+    synthesizeKey("0", { accelKey: true });
+    zoom = 1.0;
+    onZoomReset(testZoomedLineScroll);
+  }
+  function testZoomedLineScroll()
+  {
+    gScrollableElement.scrollTop = 1000;
+    gScrollableElement.scrollLeft = 1000;
+    // Ensure not to be in reflow.
+    hitEventLoop(function () {
+      var lineHeightX, lineHeightY;
+      function handler(aEvent)
+      {
+        if (aEvent.axis == MouseScrollEvent.HORIZONTAL_AXIS) {
+          if (lineHeightX == undefined) {
+            lineHeightX = aEvent.detail;
+          } else {
+            ok(Math.abs(aEvent.detail - lineHeightX) <= 1,
+               "doTestZoomedScroll: The detail of horizontal MozMousePixelScroll for line wheel event is wrong, aEvent.detail=" +
+                 aEvent.detail + ", lineHeightX=" + lineHeightX);
+          }
+        } else if (aEvent.axis == MouseScrollEvent.VERTICAL_AXIS) {
+          if (lineHeightY == undefined) {
+            lineHeightY = aEvent.detail;
+          } else {
+            ok(Math.abs(aEvent.detail - lineHeightY) <= 1,
+               "doTestZoomedScroll: The detail of vertical MozMousePixelScroll for line wheel event is wrong, aEvent.detail=" +
+                 aEvent.detail + ", lineHeightY=" + lineHeightY);
+          }
+        } else {
+          ok(false, "doTestZoomedScroll: The axis of MozMousePixelScroll for line wheel event is invalid, got " + aEvent.axis);
+        }
+      }
+      window.addEventListener("MozMousePixelScroll", handler, true);
+      synthesizeWheel(gScrollableElement, 10, 10,
+        { deltaMode: WheelEvent.DOM_DELTA_LINE,
+          deltaX: 1.0, deltaY: 1.0, lineOrPageDeltaX: 1, lineOrPageDeltaY: 1 });
+      // wait scrolled actually.
+      hitEventLoop(function () {
+        var scrolledX = gScrollableElement.scrollLeft;
+        var scrolledY = gScrollableElement.scrollTop;
+        ok(scrolledX > 1000,
+           "doTestZoomedScroll: scrolledX must be larger than 1000 for line wheel event, got " + scrolledX);
+        ok(scrolledY > 1000,
+           "doTestZoomedScroll: scrolledY must be larger than 1000 for line wheel event, got " + scrolledY);
+
+        // Zoom
+        setFullZoom(window, 2.0);
+        // Ensure not to be in reflow.
+        hitEventLoop(function () {
+          gScrollableElement.scrollTop = 1000;
+          gScrollableElement.scrollLeft = 1000;
+          synthesizeWheel(gScrollableElement, 10, 10,
+            { deltaMode: WheelEvent.DOM_DELTA_LINE,
+              deltaX: 1.0, deltaY: 1.0, lineOrPageDeltaX: 1, lineOrPageDeltaY: 1 });
+          // wait scrolled actually.
+          hitEventLoop(function () {
+            ok(Math.abs(gScrollableElement.scrollLeft - scrolledX) <= 1,
+               "doTestZoomedScroll: zoomed horizontal scroll amount by line wheel event is different from normal, scrollLeft=" +
+                 gScrollableElement.scrollLeft + ", scrolledX=" + scrolledX);
+            ok(Math.abs(gScrollableElement.scrollTop - scrolledY) <= 1,
+               "doTestZoomedScroll: zoomed vertical scroll amount by line wheel event is different from normal, scrollTop=" +
+                 gScrollableElement.scrollTop + ", scrolledY=" + scrolledY);
+
+            window.removeEventListener("MozMousePixelScroll", handler, true);
+
+            synthesizeKey("0", { accelKey: true });
+            onZoomReset(aCallback);
+          }, 20);
+        }, 20);
+      }, 20);
+    }, 20);
+  }
+
+  // XXX It's too difficult to test page scroll because the page scroll amount
+  //     is computed by complex logic.
+
+  prepareTestZoomedPixelScroll();
+}
+
+function doTestWholeScroll(aCallback)
+{
+  SpecialPowers.setIntPref("mousewheel.default.delta_multiplier_x", 99999999);
+  SpecialPowers.setIntPref("mousewheel.default.delta_multiplier_y", 99999999);
+
+  const kTests = [
+    { description: "try whole-scroll to top (line)",
+      prepare: function () {
+        gScrollableElement.scrollTop = 1000;
+        gScrollableElement.scrollLeft = 1000;
+      },
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.0, deltaY: -1.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: -1 },
+      expectedScrollTop: 0,
+      expectedScrollLeft: 1000
+    },
+    { description: "try whole-scroll to top when scrollTop is already top-most (line)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.0, deltaY: -1.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: -1 },
+      expectedScrollTop: 0,
+      expectedScrollLeft: 1000
+    },
+    { description: "try whole-scroll to bottom (line)",
+      prepare: function () {
+        gScrollableElement.scrollTop = 1000;
+        gScrollableElement.scrollLeft = 1000;
+      },
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.0, deltaY: 1.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 1 },
+      expectedScrollTop: gScrollableElement.scrollTopMax,
+      expectedScrollLeft: 1000
+    },
+    { description: "try whole-scroll to bottom when scrollTop is already bottom-most (line)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0, deltaY: 1.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 1 },
+      expectedScrollTop: gScrollableElement.scrollTopMax,
+      expectedScrollLeft: 1000
+    },
+    { description: "try whole-scroll to left (line)",
+      prepare: function () {
+        gScrollableElement.scrollTop = 1000;
+        gScrollableElement.scrollLeft = 1000;
+      },
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: -1.0, deltaY: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: 0 },
+      expectedScrollTop: 1000,
+      expectedScrollLeft: 0
+    },
+    { description: "try whole-scroll to left when scrollLeft is already left-most (line)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: -1.0, deltaY: 0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: 0 },
+      expectedScrollTop: 1000,
+      expectedScrollLeft: 0
+    },
+    { description: "try whole-scroll to right (line)",
+      prepare: function () {
+        gScrollableElement.scrollTop = 1000;
+        gScrollableElement.scrollLeft = 1000;
+      },
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 1.0, deltaY: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 0 },
+      expectedScrollTop: 1000,
+      expectedScrollLeft: gScrollableElement.scrollLeftMax
+    },
+    { description: "try whole-scroll to right when scrollLeft is already right-most (line)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 1.0, deltaY: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 0 },
+      expectedScrollTop: 1000,
+      expectedScrollLeft: gScrollableElement.scrollLeftMax
+    },
+
+
+    { description: "try whole-scroll to top (pixel)",
+      prepare: function () {
+        gScrollableElement.scrollTop = 1000;
+        gScrollableElement.scrollLeft = 1000;
+      },
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: -1.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0 },
+      expectedScrollTop: 0,
+      expectedScrollLeft: 1000
+    },
+    { description: "try whole-scroll to top when scrollTop is already top-most (pixel)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: -1.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0 },
+      expectedScrollTop: 0,
+      expectedScrollLeft: 1000
+    },
+    { description: "try whole-scroll to bottom (pixel)",
+      prepare: function () {
+        gScrollableElement.scrollTop = 1000;
+        gScrollableElement.scrollLeft = 1000;
+      },
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0.0, deltaY: 1.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0 },
+      expectedScrollTop: gScrollableElement.scrollTopMax,
+      expectedScrollLeft: 1000
+    },
+    { description: "try whole-scroll to bottom when scrollTop is already bottom-most (pixel)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 0, deltaY: 1.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0 },
+      expectedScrollTop: gScrollableElement.scrollTopMax,
+      expectedScrollLeft: 1000
+    },
+    { description: "try whole-scroll to left (pixel)",
+      prepare: function () {
+        gScrollableElement.scrollTop = 1000;
+        gScrollableElement.scrollLeft = 1000;
+      },
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: -1.0, deltaY: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0 },
+      expectedScrollTop: 1000,
+      expectedScrollLeft: 0
+    },
+    { description: "try whole-scroll to left when scrollLeft is already left-most (pixel)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: -1.0, deltaY: 0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0 },
+      expectedScrollTop: 1000,
+      expectedScrollLeft: 0
+    },
+    { description: "try whole-scroll to right (pixel)",
+      prepare: function () {
+        gScrollableElement.scrollTop = 1000;
+        gScrollableElement.scrollLeft = 1000;
+      },
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 1.0, deltaY: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0 },
+      expectedScrollTop: 1000,
+      expectedScrollLeft: gScrollableElement.scrollLeftMax
+    },
+    { description: "try whole-scroll to right when scrollLeft is already right-most (pixel)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+               deltaX: 1.0, deltaY: 0.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 0 },
+      expectedScrollTop: 1000,
+      expectedScrollLeft: gScrollableElement.scrollLeftMax
+    },
+
+
+    { description: "try whole-scroll to top (page)",
+      prepare: function () {
+        gScrollableElement.scrollTop = 1000;
+        gScrollableElement.scrollLeft = 1000;
+      },
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 0.0, deltaY: -1.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: -1 },
+      expectedScrollTop: 0,
+      expectedScrollLeft: 1000
+    },
+    { description: "try whole-scroll to top when scrollTop is already top-most (page)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 0.0, deltaY: -1.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: -1 },
+      expectedScrollTop: 0,
+      expectedScrollLeft: 1000
+    },
+    { description: "try whole-scroll to bottom (page)",
+      prepare: function () {
+        gScrollableElement.scrollTop = 1000;
+        gScrollableElement.scrollLeft = 1000;
+      },
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 0.0, deltaY: 1.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 1 },
+      expectedScrollTop: gScrollableElement.scrollTopMax,
+      expectedScrollLeft: 1000
+    },
+    { description: "try whole-scroll to bottom when scrollTop is already bottom-most (page)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 0, deltaY: 1.0,
+               lineOrPageDeltaX: 0, lineOrPageDeltaY: 1 },
+      expectedScrollTop: gScrollableElement.scrollTopMax,
+      expectedScrollLeft: 1000
+    },
+    { description: "try whole-scroll to left (page)",
+      prepare: function () {
+        gScrollableElement.scrollTop = 1000;
+        gScrollableElement.scrollLeft = 1000;
+      },
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: -1.0, deltaY: 0.0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: 0 },
+      expectedScrollTop: 1000,
+      expectedScrollLeft: 0
+    },
+    { description: "try whole-scroll to left when scrollLeft is already left-most (page)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: -1.0, deltaY: 0,
+               lineOrPageDeltaX: -1, lineOrPageDeltaY: 0 },
+      expectedScrollTop: 1000,
+      expectedScrollLeft: 0
+    },
+    { description: "try whole-scroll to right (page)",
+      prepare: function () {
+        gScrollableElement.scrollTop = 1000;
+        gScrollableElement.scrollLeft = 1000;
+      },
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 1.0, deltaY: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 0 },
+      expectedScrollTop: 1000,
+      expectedScrollLeft: gScrollableElement.scrollLeftMax
+    },
+    { description: "try whole-scroll to right when scrollLeft is already right-most (page)",
+      event: { deltaMode: WheelEvent.DOM_DELTA_PAGE,
+               deltaX: 1.0, deltaY: 0.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 0 },
+      expectedScrollTop: 1000,
+      expectedScrollLeft: gScrollableElement.scrollLeftMax
+    },
+  ];
+
+  var index = 0;
+
+  function doIt()
+  {
+    const kTest = kTests[index];
+    if (kTest.prepare) {
+      kTest.prepare();
+    }
+    synthesizeWheel(gScrollableElement, 10, 10, kTest.event);
+    hitEventLoop(function () {
+      is(gScrollableElement.scrollTop, kTest.expectedScrollTop,
+         "doTestWholeScroll, " + kTest.description + ": unexpected scrollTop");
+      is(gScrollableElement.scrollLeft, kTest.expectedScrollLeft,
+         "doTestWholeScroll, " + kTest.description + ": unexpected scrollLeft");
+      if (++index == kTests.length) {
+        SpecialPowers.clearUserPref("mousewheel.default.delta_multiplier_x");
+        SpecialPowers.clearUserPref("mousewheel.default.delta_multiplier_y");
+        SpecialPowers.clearUserPref("mousewheel.default.delta_multiplier_z");
+        SimpleTest.executeSoon(aCallback);
+      } else {
+        doIt();
+      }
+    }, 20);
+  }
+  doIt();
+}
+
+function doTestActionOverride(aCallback)
+{
+  const kNoScroll    = 0x00;
+  const kScrollUp    = 0x01;
+  const kScrollDown  = 0x02;
+  const kScrollLeft  = 0x04;
+  const kScrollRight = 0x08;
+
+  const kTests = [
+    { action: 1, override_x: -1,
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 1.0, deltaY: 1.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1 },
+      expected: kScrollDown | kScrollRight
+    },
+    { action: 1, override_x: 0,
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 1.0, deltaY: 1.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1 },
+      expected: kScrollDown | kScrollRight
+    },
+    { action: 1, override_x: 1,
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 1.0, deltaY: 1.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1 },
+      expected: kScrollDown | kScrollRight
+    },
+    { action: 0, override_x: -1,
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 1.0, deltaY: 1.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1 },
+      expected: kNoScroll
+    },
+    { action: 0, override_x: 0,
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 1.0, deltaY: 1.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1 },
+      expected: kNoScroll
+    },
+    { action: 0, override_x: 1,
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 1.0, deltaY: 1.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1 },
+      expected: kNoScroll
+    },
+    { action: 1, override_x: -1,
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 1.0, deltaY: 0.5,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1 },
+      expected: kScrollDown | kScrollRight
+    },
+    { action: 1, override_x: 0,
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 1.0, deltaY: 0.5,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1 },
+      expected: kNoScroll
+    },
+    { action: 1, override_x: 1,
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 1.0, deltaY: 0.5,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1 },
+      expected: kScrollDown | kScrollRight
+    },
+    { action: 0, override_x: -1,
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 1.0, deltaY: 0.5,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1 },
+      expected: kNoScroll
+    },
+    { action: 0, override_x: 0,
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 1.0, deltaY: 0.5,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1 },
+      expected: kNoScroll
+    },
+    { action: 0, override_x: 1,
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 1.0, deltaY: 0.5,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1 },
+      expected: kScrollDown | kScrollRight
+    },
+    { action: 1, override_x: -1,
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.5, deltaY: 1.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1 },
+      expected: kScrollDown | kScrollRight
+    },
+    { action: 1, override_x: 0,
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.5, deltaY: 1.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1 },
+      expected: kScrollDown | kScrollRight
+    },
+    { action: 1, override_x: 1,
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.5, deltaY: 1.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1 },
+      expected: kScrollDown | kScrollRight
+    },
+    { action: 0, override_x: -1,
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.5, deltaY: 1.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1 },
+      expected: kNoScroll
+    },
+    { action: 0, override_x: 0,
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.5, deltaY: 1.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1 },
+      expected: kNoScroll
+    },
+    { action: 0, override_x: 1,
+      event: { deltaMode: WheelEvent.DOM_DELTA_LINE,
+               deltaX: 0.5, deltaY: 1.0,
+               lineOrPageDeltaX: 1, lineOrPageDeltaY: 1 },
+      expected: kNoScroll
+    },
+  ];
+
+  var index = 0;
+
+  function doIt()
+  {
+    const kTest = kTests[index];
+    description = "doTestActionOverride(action=" + kTest.action + ", " +
+                  "override_x=" + kTest.override_x + ", " +
+                  "deltaX=" + kTest.event.deltaX + ", " +
+                  "deltaY=" + kTest.event.deltaY + "): ";
+    SpecialPowers.setIntPref("mousewheel.default.action", kTest.action);
+    SpecialPowers.setIntPref("mousewheel.default.action.override_x", kTest.override_x);
+    gScrollableElement.scrollTop = 1000;
+    gScrollableElement.scrollLeft = 1000;
+    synthesizeWheel(gScrollableElement, 10, 10, kTest.event);
+    hitEventLoop(function () {
+      if (kTest.expected & kScrollUp) {
+        ok(gScrollableElement.scrollTop < 1000, description + "not scrolled up, got " + gScrollableElement.scrollTop);
+      } else if (kTest.expected & kScrollDown) {
+        ok(gScrollableElement.scrollTop > 1000, description + "not scrolled down, got " + gScrollableElement.scrollTop);
+      } else {
+        is(gScrollableElement.scrollTop, 1000, description + "scrolled vertical");
+      }
+      if (kTest.expected & kScrollLeft) {
+        ok(gScrollableElement.scrollLeft < 1000, description + "not scrolled to left, got " + gScrollableElement.scrollLeft);
+      } else if (kTest.expected & kScrollRight) {
+        ok(gScrollableElement.scrollLeft > 1000, description + "not scrolled to right, got " + gScrollableElement.scrollLeft);
+      } else {
+        is(gScrollableElement.scrollLeft, 1000, description + "scrolled horizontal");
+      }
+      if (++index == kTests.length) {
+        SpecialPowers.setIntPref("mousewheel.default.action", 1);
+        SpecialPowers.setIntPref("mousewheel.default.action.override_x", -1);
+        SimpleTest.executeSoon(aCallback);
+      } else {
+        doIt();
+      }
+    }, 20);
+  }
+  doIt();
+}
+
+function runTests()
+{
+  SpecialPowers.setBoolPref("general.smoothScroll", false);
+
+  SpecialPowers.setIntPref("mousewheel.default.action", 1);      // scroll
+  SpecialPowers.setIntPref("mousewheel.default.action.override_x", -1);
+  SpecialPowers.setIntPref("mousewheel.with_shift.action", 2);   // history
+  SpecialPowers.setIntPref("mousewheel.with_shift.action.override_x", -1);
+  SpecialPowers.setIntPref("mousewheel.with_control.action", 3); // zoom
+  SpecialPowers.setIntPref("mousewheel.with_control.action.override_x", -1);
+
+  const kSettings = [
+    { description: "all delta values are not customized",
+      deltaMultiplierX:  1.0, deltaMultiplierY:  1.0, deltaMultiplierZ:  1.0 },
+    { description: "deltaX is reverted",
+      deltaMultiplierX: -1.0, deltaMultiplierY:  1.0, deltaMultiplierZ:  1.0 },
+    { description: "deltaY is reverted",
+      deltaMultiplierX:  1.0, deltaMultiplierY: -1.0, deltaMultiplierZ:  1.0 },
+    { description: "deltaZ is reverted",
+      deltaMultiplierX:  1.0, deltaMultiplierY:  1.0, deltaMultiplierZ: -1.0 },
+    { description: "deltaX is 2.0",
+      deltaMultiplierX:  2.0, deltaMultiplierY:  1.0, deltaMultiplierZ:  1.0 },
+    { description: "deltaY is 2.0",
+      deltaMultiplierX:  1.0, deltaMultiplierY:  2.0, deltaMultiplierZ:  1.0 },
+    { description: "deltaZ is 2.0",
+      deltaMultiplierX:  1.0, deltaMultiplierY:  1.0, deltaMultiplierZ:  2.0 },
+    { description: "deltaX is -2.0",
+      deltaMultiplierX: -2.0, deltaMultiplierY:  1.0, deltaMultiplierZ:  1.0 },
+    { description: "deltaY is -2.0",
+      deltaMultiplierX:  1.0, deltaMultiplierY: -2.0, deltaMultiplierZ:  1.0 },
+    { description: "deltaZ is -2.0",
+      deltaMultiplierX:  1.0, deltaMultiplierY:  1.0, deltaMultiplierZ: -2.0 },
+  ];
+
+  var index = 0;
+
+  function doTest() {
+    setDeltaMultiplierSettings(kSettings[index]);
+    doTestScroll(kSettings[index], function () {
+      doTestZoom(kSettings[index], function() {
+        if (++index == kSettings.length) {
+          setDeltaMultiplierSettings(kSettings[0]);
+          doTestZoomedScroll(function() {
+            doTestWholeScroll(function() {
+              doTestActionOverride(function() {
+                finishTests();
+              });
+            });
+          });
+        } else {
+          doTest();
+        }
+      });
+    });
+  }
+  doTest();
+}
+
+function finishTests()
+{
+  SpecialPowers.clearUserPref("general.smoothScroll");
+
+  SpecialPowers.clearUserPref("mousewheel.default.action");
+  SpecialPowers.clearUserPref("mousewheel.default.action.override_x");
+  SpecialPowers.clearUserPref("mousewheel.with_shift.action");
+  SpecialPowers.clearUserPref("mousewheel.with_shift.action.override_x");
+  SpecialPowers.clearUserPref("mousewheel.with_control.action");
+  SpecialPowers.clearUserPref("mousewheel.with_control.action.override_x");
+
+  SpecialPowers.clearUserPref("mousewheel.default.delta_multiplier_x");
+  SpecialPowers.clearUserPref("mousewheel.default.delta_multiplier_y");
+  SpecialPowers.clearUserPref("mousewheel.default.delta_multiplier_z");
+  SpecialPowers.clearUserPref("mousewheel.with_alt.delta_multiplier_x");
+  SpecialPowers.clearUserPref("mousewheel.with_alt.delta_multiplier_y");
+  SpecialPowers.clearUserPref("mousewheel.with_alt.delta_multiplier_z");
+  SpecialPowers.clearUserPref("mousewheel.with_control.delta_multiplier_x");
+  SpecialPowers.clearUserPref("mousewheel.with_control.delta_multiplier_y");
+  SpecialPowers.clearUserPref("mousewheel.with_control.delta_multiplier_z");
+  SpecialPowers.clearUserPref("mousewheel.with_meta.delta_multiplier_x");
+  SpecialPowers.clearUserPref("mousewheel.with_meta.delta_multiplier_y");
+  SpecialPowers.clearUserPref("mousewheel.with_meta.delta_multiplier_z");
+  SpecialPowers.clearUserPref("mousewheel.with_shift.delta_multiplier_x");
+  SpecialPowers.clearUserPref("mousewheel.with_shift.delta_multiplier_y");
+  SpecialPowers.clearUserPref("mousewheel.with_shift.delta_multiplier_z");
+  SpecialPowers.clearUserPref("mousewheel.with_win.delta_multiplier_x");
+  SpecialPowers.clearUserPref("mousewheel.with_win.delta_multiplier_y");
+  SpecialPowers.clearUserPref("mousewheel.with_win.delta_multiplier_z");
+
+  winUtils.restoreNormalRefresh();
+
+  window.opener.finish();
+}
+
+</script>
+</pre>
+</body>
+</html>

@@ -1,0 +1,105 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+using struct gfxPoint from "gfxPoint.h";
+using struct nsIntRect from "nsRect.h";
+using nsIntRegion from "nsRegion.h";
+using struct nsIntSize from "nsSize.h";
+using struct mozilla::layers::MagicGrallocBufferHandle from "gfxipc/ShadowLayerUtils.h";
+using struct mozilla::layers::GrallocBufferRef from "gfxipc/ShadowLayerUtils.h";
+using struct mozilla::layers::SurfaceDescriptorX11 from "gfxipc/ShadowLayerUtils.h";
+using struct mozilla::null_t from "ipc/IPCMessageUtils.h";
+using mozilla::WindowsHandle from "ipc/IPCMessageUtils.h";
+using mozilla::gl::SharedTextureHandle from "GLContextTypes.h";
+using mozilla::gl::SharedTextureShareType from "GLContextTypes.h";
+using mozilla::gfx::SurfaceStreamHandle from "SurfaceTypes.h";
+using mozilla::gfx::SurfaceFormat from "mozilla/gfx/Types.h";
+using mozilla::gfx::IntSize from "mozilla/gfx/Point.h";
+using gfxImageFormat from "gfxTypes.h";
+
+namespace mozilla {
+namespace layers {
+
+union MaybeMagicGrallocBufferHandle {
+  MagicGrallocBufferHandle;
+  GrallocBufferRef;
+  null_t;
+};
+
+struct SurfaceDescriptorD3D9 {
+  // IDirect3DTexture9*
+  uintptr_t texture;
+};
+
+struct SurfaceDescriptorDIB {
+  // gfxWindowsSurface*
+  uintptr_t surface;
+};
+
+struct SurfaceDescriptorD3D10 {
+  WindowsHandle handle;
+  SurfaceFormat format;
+  IntSize size;
+};
+
+struct SurfaceDescriptorMacIOSurface {
+  uint32_t surface;
+  double scaleFactor;
+  bool hasAlpha;
+};
+
+struct SharedTextureDescriptor {
+  SharedTextureShareType shareType;
+  SharedTextureHandle handle;
+  IntSize size;
+  bool inverted;
+};
+
+struct NewSurfaceDescriptorGralloc {
+  MaybeMagicGrallocBufferHandle buffer;
+  /**
+   * android::GraphicBuffer has a size information. But there are cases
+   * that GraphicBuffer's size and actual video's size are different.
+   * Extra size member is necessary. See Bug 850566.
+   */
+  IntSize size;
+};
+
+struct SurfaceStreamDescriptor {
+  SurfaceStreamHandle handle;
+  bool yflip;
+};
+
+/**
+ * Used for shmem-backed YCbCr and (flavors of) RGBA textures
+ */
+struct SurfaceDescriptorShmem {
+  Shmem data;
+  SurfaceFormat format;
+};
+
+/**
+ * Used for "raw memory"-backed YCbCr and (flavors of) RGBA textures
+ */
+ struct SurfaceDescriptorMemory {
+  uintptr_t data;
+  SurfaceFormat format;
+};
+
+union SurfaceDescriptor {
+  SurfaceDescriptorShmem;
+  SurfaceDescriptorMemory;
+  SurfaceDescriptorD3D9;
+  SurfaceDescriptorDIB;
+  SurfaceDescriptorD3D10;
+  SurfaceDescriptorX11;
+  SharedTextureDescriptor;
+  SurfaceStreamDescriptor;
+  SurfaceDescriptorMacIOSurface;
+  NewSurfaceDescriptorGralloc;
+  null_t;
+};
+
+} // namespace
+} // namespace

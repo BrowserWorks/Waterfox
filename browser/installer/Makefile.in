@@ -1,0 +1,178 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+STANDALONE_MAKEFILE := 1
+DIST_SUBDIR := browser
+
+include $(topsrcdir)/config/rules.mk
+
+MOZ_PKG_REMOVALS = $(srcdir)/removed-files.in
+
+MOZ_PKG_MANIFEST_P = $(srcdir)/package-manifest.in
+
+ifdef MOZ_MULET
+MOZ_PKG_MANIFEST_P += $(topsrcdir)/b2g/installer/package-manifest.in
+endif
+
+# Some files have been already bundled with xulrunner
+ifndef SYSTEM_LIBXUL
+ifndef MOZ_MULET
+MOZ_PKG_FATAL_WARNINGS = 1
+endif
+endif
+
+DEFINES += -DAB_CD=$(AB_CD) -DMOZ_APP_NAME=$(MOZ_APP_NAME) -DPREF_DIR=$(PREF_DIR)
+
+ifdef LIBXUL_SDK
+DEFINES += -DLIBXUL_SDK=1
+endif
+
+ifdef MOZ_DEBUG
+DEFINES += -DMOZ_DEBUG=1
+endif
+
+ifdef MOZ_ENABLE_GNOME_COMPONENT
+DEFINES += -DMOZ_ENABLE_GNOME_COMPONENT=1
+endif
+
+ifdef MOZ_WIDGET_GTK
+DEFINES += -DMOZ_GTK=1
+ifdef MOZ_ENABLE_GTK3
+DEFINES += -DMOZ_GTK3=1
+endif
+endif
+
+ifdef MOZ_NATIVE_NSPR
+DEFINES += -DMOZ_NATIVE_NSPR=1
+endif
+
+ifdef MOZ_NATIVE_NSS
+DEFINES += -DMOZ_NATIVE_NSS=1
+endif
+
+ifdef NSS_DISABLE_DBM
+DEFINES += -DNSS_DISABLE_DBM=1
+endif
+
+ifdef _MSC_VER
+DEFINES += -D_MSC_VER=$(_MSC_VER)
+endif
+
+DEFINES += -DJAREXT=
+
+ifdef MOZ_ANGLE_RENDERER
+DEFINES += -DMOZ_ANGLE_RENDERER=$(MOZ_ANGLE_RENDERER)
+ifdef MOZ_D3DCOMPILER_VISTA_DLL
+DEFINES += -DMOZ_D3DCOMPILER_VISTA_DLL=$(MOZ_D3DCOMPILER_VISTA_DLL)
+endif
+ifdef MOZ_D3DCOMPILER_XP_DLL
+DEFINES += -DMOZ_D3DCOMPILER_XP_DLL=$(MOZ_D3DCOMPILER_XP_DLL)
+endif
+endif
+
+DEFINES += -DMOZ_CHILD_PROCESS_NAME=$(MOZ_CHILD_PROCESS_NAME)
+
+# Set MSVC dlls version to package, if any.
+ifdef WIN32_REDIST_DIR
+ifdef MOZ_NO_DEBUG_RTL
+DEFINES += -DMOZ_MSVC_REDIST=$(_MSC_VER)
+endif
+endif
+
+ifneq (,$(filter WINNT Darwin Android,$(OS_TARGET)))
+DEFINES += -DMOZ_SHARED_MOZGLUE=1
+endif
+
+ifdef MOZ_JSDEBUGGER
+DEFINES += -DMOZ_JSDEBUGGER
+endif
+
+ifdef NECKO_WIFI
+DEFINES += -DNECKO_WIFI
+endif
+
+ifdef GKMEDIAS_SHARED_LIBRARY
+DEFINES += -DGKMEDIAS_SHARED_LIBRARY
+endif
+
+ifdef MOZ_PKG_MANIFEST_P
+MOZ_PKG_MANIFEST = package-manifest
+
+$(MOZ_PKG_MANIFEST): $(MOZ_PKG_MANIFEST_P) $(GLOBAL_DEPS)
+	$(call py_action,preprocessor,$(DEFINES) $(ACDEFINES) $(MOZ_PKG_MANIFEST_P) -o $@)
+
+GARBAGE += $(MOZ_PKG_MANIFEST)
+endif
+
+ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
+MOZ_PKG_MAC_DSSTORE=branding/dsstore
+MOZ_PKG_MAC_BACKGROUND=branding/background.png
+MOZ_PKG_MAC_ICON=branding/disk.icns
+MOZ_PKG_MAC_EXTRA=--symlink '/Applications:/ '
+endif
+
+ifndef LIBXUL_SDK
+INSTALL_SDK = 1
+endif
+
+include $(topsrcdir)/toolkit/mozapps/installer/signing.mk
+include $(topsrcdir)/toolkit/mozapps/installer/packager.mk
+
+ifeq (bundle, $(MOZ_FS_LAYOUT))
+BINPATH = $(_BINPATH)
+DEFINES += -DAPPNAME=$(_APPNAME)
+else
+# Every other platform just winds up in dist/bin
+BINPATH = bin
+endif
+DEFINES += -DBINPATH=$(BINPATH)
+
+DEFINES += -DMOZ_ICU_VERSION=$(MOZ_ICU_VERSION)
+ifdef MOZ_NATIVE_ICU
+DEFINES += -DMOZ_NATIVE_ICU
+endif
+ifdef MOZ_SHARED_ICU
+DEFINES += -DMOZ_SHARED_ICU
+endif
+ifdef MOZ_REPLACE_MALLOC
+DEFINES += -DMOZ_REPLACE_MALLOC
+endif
+ifdef MOZ_JEMALLOC3
+DEFINES += -DMOZ_JEMALLOC3
+endif
+DEFINES += -DMOZ_ICU_DBG_SUFFIX=$(MOZ_ICU_DBG_SUFFIX)
+ifdef CLANG_CXX
+DEFINES += -DCLANG_CXX
+endif
+
+libs::
+	$(MAKE) -C $(DEPTH)/browser/locales langpack
+
+ifeq (WINNT,$(OS_ARCH))
+PKGCOMP_FIND_OPTS =
+else
+PKGCOMP_FIND_OPTS = -L
+endif
+ifeq (Darwin, $(OS_ARCH))
+FINDPATH = $(_APPNAME)/Contents/MacOS
+else
+FINDPATH=bin
+endif
+
+package-compare:: $(MOZ_PKG_MANIFEST)
+ifdef MOZ_PKG_MANIFEST_P
+	cd $(DIST); find $(PKGCOMP_FIND_OPTS) $(FINDPATH) -type f | sort > bin-list.txt
+	grep '^$(BINPATH)' $(MOZ_PKG_MANIFEST) | sed -e 's/^\///' | sort > $(DIST)/pack-list.txt
+	-diff -u $(DIST)/pack-list.txt $(DIST)/bin-list.txt
+	rm -f $(DIST)/pack-list.txt $(DIST)/bin-list.txt
+endif
+
+installer::
+ifdef INSTALLER_DIR
+	$(MAKE) -C $(INSTALLER_DIR)
+endif
+
+ifdef ENABLE_MARIONETTE
+DEFINES += -DENABLE_MARIONETTE=1
+endif

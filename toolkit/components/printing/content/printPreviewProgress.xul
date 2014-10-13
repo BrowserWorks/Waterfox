@@ -1,0 +1,42 @@
+<?xml version="1.0"?> 
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xul-overlay href="chrome://global/content/dialogOverlay.xul"?>
+
+<!DOCTYPE window SYSTEM "chrome://global/locale/printPreviewProgress.dtd">
+
+<window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        class="dialog"
+        title="&printWindow.title;"
+        style="width: 36em;"
+        onload="onLoad()"
+        onunload="onUnload()">
+
+  <script type="application/javascript" src="chrome://global/content/printPreviewProgress.js"/>
+
+    <grid flex="1">
+      <columns>
+        <column/>
+        <column/>
+      </columns>
+      
+      <rows>
+        <row>
+          <hbox pack="end">
+            <label id="dialog.titleLabel" value="&title;"/>
+          </hbox>
+          <label id="dialog.title"/>
+        </row>
+        <row class="thin-separator">             
+          <hbox pack="end">
+            <label id="dialog.progressSpaces" value="&progress;"/>
+          </hbox>
+            <label id="dialog.progressLabel" value="&preparing;"/>
+        </row>
+      </rows>
+    </grid>
+</window>

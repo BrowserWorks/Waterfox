@@ -1,0 +1,446 @@
+<html>
+
+<head>
+  <title>Group attributes tests</title>
+  <link rel="stylesheet" type="text/css"
+        href="chrome://mochikit/content/tests/SimpleTest/test.css" />
+
+  <script type="application/javascript"
+          src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
+
+  <script type="application/javascript"
+          src="../common.js"></script>
+  <script type="application/javascript"
+          src="../attributes.js"></script>
+  <script type="application/javascript"
+          src="../events.js"></script>
+
+  <script type="application/javascript">
+    function doTest()
+    {
+      //////////////////////////////////////////////////////////////////////////
+      // HTML select with no size attribute.
+      testGroupAttrs("opt1-nosize", 1, 4);
+      testGroupAttrs("opt2-nosize", 2, 4);
+      testGroupAttrs("opt3-nosize", 3, 4);
+      testGroupAttrs("opt4-nosize", 4, 4);
+
+      //////////////////////////////////////////////////////////////////////////
+      // HTML select
+      testGroupAttrs("opt1", 1, 2);
+      testGroupAttrs("opt2", 2, 2);
+
+      //////////////////////////////////////////////////////////////////////////
+      // HTML select with options
+      // XXX bug 469123
+      //testGroupAttrs("select2_optgroup", 1, 3, 1);
+      //testGroupAttrs("select2_opt3", 2, 3, 1);
+      //testGroupAttrs("select2_opt4", 3, 3, 1);
+      //testGroupAttrs("select2_opt1", 1, 2, 2);
+      //testGroupAttrs("select2_opt2", 2, 2, 2);
+
+      //////////////////////////////////////////////////////////////////////////
+      // HTML input@type="radio" within form
+      testGroupAttrs("radio1", 1, 2);
+      testGroupAttrs("radio2", 2, 2);
+
+      //////////////////////////////////////////////////////////////////////////
+      // HTML input@type="radio" within document
+      testGroupAttrs("radio3", 1, 2);
+      testGroupAttrs("radio4", 2, 2);
+
+      //////////////////////////////////////////////////////////////////////////
+      // Hidden HTML input@type="radio"
+      testGroupAttrs("radio5", 1, 1);
+
+      //////////////////////////////////////////////////////////////////////////
+      // HTML ul/ol
+      testGroupAttrs("li1", 1, 3);
+      testGroupAttrs("li2", 2, 3);
+      testGroupAttrs("li3", 3, 3);
+
+      //////////////////////////////////////////////////////////////////////////
+      // HTML ul/ol (nested lists)
+
+      testGroupAttrs("li4", 1, 3, 1);
+      testGroupAttrs("li5", 2, 3, 1);
+      testGroupAttrs("li6", 3, 3, 1);
+
+      testGroupAttrs("n_li4", 1, 3, 2);
+      testGroupAttrs("n_li5", 2, 3, 2);
+      testGroupAttrs("n_li6", 3, 3, 2);
+
+      //////////////////////////////////////////////////////////////////////////
+      // ARIA list
+      testGroupAttrs("li7", 1, 3);
+      testGroupAttrs("li8", 2, 3);
+      testGroupAttrs("li9", 3, 3);
+
+      //////////////////////////////////////////////////////////////////////////
+      // ARIA list (nested lists: list -> listitem -> list -> listitem)
+      testGroupAttrs("li10", 1, 3, 1);
+      testGroupAttrs("li11", 2, 3, 1);
+      testGroupAttrs("li12", 3, 3, 1);
+
+      testGroupAttrs("n_li10", 1, 3, 2);
+      testGroupAttrs("n_li11", 2, 3, 2);
+      testGroupAttrs("n_li12", 3, 3, 2);
+
+      //////////////////////////////////////////////////////////////////////////
+      // ARIA list (nested lists: list -> listitem -> group -> listitem)
+      testGroupAttrs("lgt_li1", 1, 2, 1);
+      testGroupAttrs("lgt_li1_nli1", 1, 2, 2);
+      testGroupAttrs("lgt_li1_nli2", 2, 2, 2);
+      testGroupAttrs("lgt_li2", 2, 2, 1);
+      testGroupAttrs("lgt_li2_nli1", 1, 2, 2);
+      testGroupAttrs("lgt_li2_nli2", 2, 2, 2);
+
+      //////////////////////////////////////////////////////////////////////////
+      // ARIA menu (menuitem, separator, menuitemradio and menuitemcheckbox)
+      testGroupAttrs("menu_item1", 1, 2);
+      testGroupAttrs("menu_item2", 2, 2);
+      testGroupAttrs("menu_item1.1", 1, 2);
+      testGroupAttrs("menu_item1.2", 2, 2);
+      testGroupAttrs("menu_item1.3", 1, 3);
+      testGroupAttrs("menu_item1.4", 2, 3);
+      testGroupAttrs("menu_item1.5", 3, 3);
+
+      //////////////////////////////////////////////////////////////////////////
+      // ARIA tab
+      testGroupAttrs("tab_1", 1, 3);
+      testGroupAttrs("tab_2", 2, 3);
+      testGroupAttrs("tab_3", 3, 3);
+
+      //////////////////////////////////////////////////////////////////////////
+      // ARIA radio
+      testGroupAttrs("r1", 1, 3);
+      testGroupAttrs("r2", 2, 3);
+      testGroupAttrs("r3", 3, 3);
+
+      //////////////////////////////////////////////////////////////////////////
+      // ARIA tree
+      testGroupAttrs("ti1", 1, 3, 1);
+      testGroupAttrs("ti2", 1, 2, 2);
+      testGroupAttrs("ti3", 2, 2, 2);
+      testGroupAttrs("ti4", 2, 3, 1);
+      testGroupAttrs("ti5", 1, 3, 2);
+      testGroupAttrs("ti6", 2, 3, 2);
+      testGroupAttrs("ti7", 3, 3, 2);
+      testGroupAttrs("ti8", 3, 3, 1);
+
+      //////////////////////////////////////////////////////////////////////////
+      // ARIA tree (tree -> treeitem -> group -> treeitem)
+      testGroupAttrs("tree2_ti1", 1, 2, 1);
+      testGroupAttrs("tree2_ti1a", 1, 2, 2);
+      testGroupAttrs("tree2_ti1b", 2, 2, 2);
+      testGroupAttrs("tree2_ti2", 2, 2, 1);
+      testGroupAttrs("tree2_ti2a", 1, 2, 2);
+      testGroupAttrs("tree2_ti2b", 2, 2, 2);
+
+      //////////////////////////////////////////////////////////////////////////
+      // ARIA tree (tree -> treeitem, group -> treeitem)
+      testGroupAttrs("tree3_ti1", 1, 2, 1);
+      testGroupAttrs("tree3_ti1a", 1, 2, 2);
+      testGroupAttrs("tree3_ti1b", 2, 2, 2);
+      testGroupAttrs("tree3_ti2", 2, 2, 1);
+      testGroupAttrs("tree3_ti2a", 1, 2, 2);
+      testGroupAttrs("tree3_ti2b", 2, 2, 2);
+
+      //////////////////////////////////////////////////////////////////////////
+      // ARIA grid
+      testGroupAttrs("grid_row1", 1, 2);
+      testAbsentAttrs("grid_cell1", {"posinset":"", "setsize":""});
+      testAbsentAttrs("grid_cell2", {"posinset":"", "setsize":""});
+
+      testGroupAttrs("grid_row2", 2, 2);
+      testAbsentAttrs("grid_cell3", {"posinset":"", "setsize":""});
+      testAbsentAttrs("grid_cell4", {"posinset":"", "setsize":""});
+
+      //////////////////////////////////////////////////////////////////////////
+      // ARIA treegrid
+      testGroupAttrs("treegrid_row1", 1, 2, 1);
+      testAbsentAttrs("treegrid_cell1", {"posinset":"", "setsize":""});
+      testAbsentAttrs("treegrid_cell2", {"posinset":"", "setsize":""});
+
+      testGroupAttrs("treegrid_row2", 1, 1, 2);
+      testAbsentAttrs("treegrid_cell3", {"posinset":"", "setsize":""});
+      testAbsentAttrs("treegrid_cell4", {"posinset":"", "setsize":""});
+
+      testGroupAttrs("treegrid_row3", 2, 2, 1);
+      testAbsentAttrs("treegrid_cell5", {"posinset":"", "setsize":""});
+      testAbsentAttrs("treegrid_cell6", {"posinset":"", "setsize":""});
+
+      //////////////////////////////////////////////////////////////////////////
+      // HTML headings
+      testGroupAttrs("h1", 0, 0, 1);
+      testGroupAttrs("h2", 0, 0, 2);
+      testGroupAttrs("h3", 0, 0, 3);
+      testGroupAttrs("h4", 0, 0, 4);
+      testGroupAttrs("h5", 0, 0, 5);
+      testGroupAttrs("h6", 0, 0, 6);
+
+      //////////////////////////////////////////////////////////////////////////
+      // ARIA combobox
+      testGroupAttrs("combo1_opt1", 1, 4);
+      testGroupAttrs("combo1_opt2", 2, 4);
+      testGroupAttrs("combo1_opt3", 3, 4);
+      testGroupAttrs("combo1_opt4", 4, 4);
+
+      // Test that group position information updates after deleting node.
+      testGroupAttrs("tree4_ti1", 1, 2, 1);
+      testGroupAttrs("tree4_ti2", 2, 2, 1);
+      var tree4element = document.getElementById("tree4_ti1");
+      var tree4acc = getAccessible("tree4");
+      tree4element.parentNode.removeChild(tree4element);
+      waitForEvent(EVENT_REORDER, tree4acc, function() {
+        testGroupAttrs("tree4_ti2", 1, 1, 1); });
+
+      SimpleTest.finish();
+    }
+
+    SimpleTest.waitForExplicitFinish();
+    addA11yLoadEvent(doTest);
+  </script>
+</head>
+<body>
+
+  <a target="_blank"
+     href="https://bugzilla.mozilla.org/show_bug.cgi?id=468418"
+     title="Expose level for nested lists in HTML">
+    Mozilla Bug 468418
+  </a>
+  <a target="_blank"
+     href="https://bugzilla.mozilla.org/show_bug.cgi?id=844023"
+     title="group info might not be properly updated when flat trees mutate">
+    Bug 844023
+  </a>
+  <a target="_blank"
+     href="https://bugzilla.mozilla.org/show_bug.cgi?id=864224"
+     title="Support nested ARIA listitems structured by role='group'">
+    Bug 864224
+  </a>
+  <a target="_blank"
+     href="https://bugzilla.mozilla.org/show_bug.cgi?id=907682"
+     title=" HTML:option group position is not correct when select is collapsed">
+    Mozilla Bug 907682
+  </a>
+
+  <p id="display"></p>
+  <div id="content" style="display: none"></div>
+  <pre id="test">
+  </pre>
+
+  <select>
+    <option id="opt1-nosize">option1</option>
+    <option id="opt2-nosize">option2</option>
+    <option id="opt3-nosize">option3</option>
+    <option id="opt4-nosize">option4</option>
+  </select>
+
+  <select size="4">
+    <option id="opt1">option1</option>
+    <option id="opt2">option2</option>
+  </select>
+
+  <select size="4">
+    <optgroup id="select2_optgroup" label="group">
+      <option id="select2_opt1">option1</option>
+      <option id="select2_opt2">option2</option>
+    </optgroup>
+    <option id="select2_opt3">option3</option>
+    <option id="select2_opt4">option4</option>
+  </select>
+
+  <form>
+    <input type="radio" id="radio1" name="group1"/>
+    <input type="radio" id="radio2" name="group1"/>
+  </form>
+
+  <input type="radio" id="radio3" name="group2"/>
+  <input type="radio" id="radio4" name="group2"/>
+
+  <ul>
+    <li id="li1">Oranges</li>
+    <li id="li2">Apples</li>
+    <li id="li3">Bananas</li>
+  </ul>
+
+  <ol>
+    <li id="li4">Oranges</li>
+    <li id="li5">Apples</li>
+    <li id="li6">Bananas
+      <ul>
+        <li id="n_li4">Oranges</li>
+        <li id="n_li5">Apples</li>
+        <li id="n_li6">Bananas</li>
+      </ul>
+    </li>
+  </ol>
+
+  <span role="list">
+    <span role="listitem" id="li7">Oranges</span>
+    <span role="listitem" id="li8">Apples</span>
+    <span role="listitem" id="li9">Bananas</span>
+  </span>
+
+  <span role="list">
+    <span role="listitem" id="li10">Oranges</span>
+    <span role="listitem" id="li11">Apples</span>
+    <span role="listitem" id="li12">Bananas
+      <span role="list">
+        <span role="listitem" id="n_li10">Oranges</span>
+        <span role="listitem" id="n_li11">Apples</span>
+        <span role="listitem" id="n_li12">Bananas</span>
+      </span>
+    </span>
+  </span>
+
+  <div role="list">
+    <div role="listitem" id="lgt_li1">Item 1
+      <div role="group">
+        <div role="listitem" id="lgt_li1_nli1">Item 1A</div>
+        <div role="listitem" id="lgt_li1_nli2">Item 1B</div>
+      </div>
+    </div>
+    <div role="listitem" id="lgt_li2">Item 2
+      <div role="group">
+        <div role="listitem" id="lgt_li2_nli1">Item 2A</div>
+        <div role="listitem" id="lgt_li2_nli2">Item 2B</div>
+      </div>
+    </div>
+  </div>
+
+  <ul role="menubar">
+    <li role="menuitem" aria-haspopup="true" id="menu_item1">File
+      <ul role="menu">
+        <li role="menuitem" id="menu_item1.1">New</li>
+        <li role="menuitem" id="menu_item1.2">Open…</li>
+        <li role="separator">-----</li>
+        <li role="menuitem" id="menu_item1.3">Item</li>
+        <li role="menuitemradio" id="menu_item1.4">Radio</li>
+        <li role="menuitemcheckbox" id="menu_item1.5">Checkbox</li>
+      </ul>
+    </li>
+    <li role="menuitem" aria-haspopup="false" id="menu_item2">Help</li>
+  </ul>
+
+  <ul id="tablist_1" role="tablist">
+    <li id="tab_1" role="tab">Crust</li>
+    <li id="tab_2" role="tab">Veges</li>
+    <li id="tab_3" role="tab">Carnivore</li>
+  </ul>
+
+  <ul id="rg1" role="radiogroup">
+    <li id="r1" role="radio" aria-checked="false">Thai</li>
+    <li id="r2" role="radio" aria-checked="false">Subway</li>
+    <li id="r3" role="radio" aria-checked="false">Jimmy Johns</li>
+  </ul>
+
+  <table role="tree">
+    <tr role="presentation">
+      <td role="treeitem" aria-expanded="true" aria-level="1"
+          id="ti1">vegetables</td>
+    </tr>
+    <tr role="presentation">
+      <td role="treeitem" aria-level="2" id="ti2">cucumber</td>
+    </tr>
+    <tr role="presentation">
+      <td role="treeitem" aria-level="2" id="ti3">carrot</td>
+    </tr>
+    <tr role="presentation">
+      <td role="treeitem" aria-expanded="false" aria-level="1"
+          id="ti4">cars</td>
+    </tr>
+    <tr role="presentation">
+      <td role="treeitem" aria-level="2" id="ti5">mercedes</td>
+    </tr>
+    <tr role="presentation">
+      <td role="treeitem" aria-level="2" id="ti6">BMW</td>
+    </tr>
+    <tr role="presentation">
+      <td role="treeitem" aria-level="2" id="ti7">Audi</td>
+    </tr>
+    <tr role="presentation">
+      <td role="treeitem" aria-level="1" id="ti8">people</td>
+    </tr>
+  </table>
+
+  <ul role="tree">
+    <li role="treeitem" id="tree2_ti1">Item 1
+      <ul role="group">
+        <li role="treeitem" id="tree2_ti1a">Item 1A</li>
+        <li role="treeitem" id="tree2_ti1b">Item 1B</li>
+      </ul>
+    </li>
+    <li role="treeitem" id="tree2_ti2">Item 2
+      <ul role="group">
+        <li role="treeitem" id="tree2_ti2a">Item 2A</li>
+        <li role="treeitem" id="tree2_ti2b">Item 2B</li>
+      </ul>
+    </li>
+  </div>
+
+  <div role="tree">
+    <div role="treeitem" id="tree3_ti1">Item 1</div>
+    <div role="group">
+      <li role="treeitem" id="tree3_ti1a">Item 1A</li>
+      <li role="treeitem" id="tree3_ti1b">Item 1B</li>
+    </div>
+    <div role="treeitem" id="tree3_ti2">Item 2</div>
+    <div role="group">
+      <div role="treeitem" id="tree3_ti2a">Item 2A</div>
+      <div role="treeitem" id="tree3_ti2b">Item 2B</div>
+    </div>
+  </div>
+
+  <!-- IMPORTANT: Need to have no whitespace between elements in this tree. -->
+  <div role="tree" id="tree4"><div role="treeitem"
+    id="tree4_ti1">Item 1</div><div role="treeitem"
+    id="tree4_ti2">Item 2</div></div>
+
+  <table role="grid">
+    <tr role="row" id="grid_row1">
+      <td role="gridcell" id="grid_cell1">cell1</td>
+      <td role="gridcell" id="grid_cell2">cell2</td>
+    </tr>
+    <tr role="row" id="grid_row2">
+      <td role="gridcell" id="grid_cell3">cell3</td>
+      <td role="gridcell" id="grid_cell4">cell4</td>
+    </tr>
+  </table>
+
+  <div role="treegrid">
+    <div role="row" aria-level="1" id="treegrid_row1">
+      <div role="gridcell" id="treegrid_cell1">cell1</div>
+      <div role="gridcell" id="treegrid_cell2">cell2</div>
+    </div>
+    <div role="row" aria-level="2" id="treegrid_row2">
+      <div role="gridcell" id="treegrid_cell3">cell1</div>
+      <div role="gridcell" id="treegrid_cell4">cell2</div>
+    </div>
+    <div role="row" id="treegrid_row3">
+      <div role="gridcell" id="treegrid_cell5">cell1</div>
+      <div role="gridcell" id="treegrid_cell6">cell2</div>
+    </div>
+  </div>
+
+  <h1 id="h1">heading1</h1>
+  <h2 id="h2">heading2</h2>
+  <h3 id="h3">heading3</h3>
+  <h4 id="h4">heading4</h4>
+  <h5 id="h5">heading5</h5>
+  <h6 id="h6">heading6</h6>
+
+  <ul id="combo1" role="combobox">Password
+    <li id="combo1_opt1" role="option">Xyzzy</li>
+    <li id="combo1_opt2" role="option">Plughs</li>
+    <li id="combo1_opt3" role="option">Shazaam</li>
+    <li id="combo1_opt4" role="option">JoeSentMe</li>
+  </ul>
+
+  <form>
+    <input type="radio" style="display: none;" name="group3">
+    <input type="radio" id="radio5" name="group3">
+  </form>
+</body>
+</html>

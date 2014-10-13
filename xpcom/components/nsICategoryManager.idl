@@ -1,0 +1,69 @@
+/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsISimpleEnumerator;
+
+/*
+ * nsICategoryManager
+ */
+
+[scriptable, uuid(3275b2cd-af6d-429a-80d7-f0c5120342ac)]
+interface nsICategoryManager : nsISupports
+{
+    /**
+     * Get the value for the given category's entry.
+     * @param aCategory The name of the category ("protocol")
+     * @param aEntry The entry you're looking for ("http")
+     * @return The value.
+     */
+    string getCategoryEntry(in string aCategory, in string aEntry);
+    
+    /**
+     * Add an entry to a category.
+     * @param aCategory The name of the category ("protocol")
+     * @param aEntry The entry to be added ("http")
+     * @param aValue The value for the entry ("moz.httprulez.1")
+     * @param aPersist Should this data persist between invocations?
+     * @param aReplace Should we replace an existing entry?
+     * @return Previous entry, if any
+     */
+    string addCategoryEntry(in string aCategory, in string aEntry,
+			    in string aValue, in boolean aPersist,
+			    in boolean aReplace);
+
+    /**
+     * Delete an entry from the category.
+     * @param aCategory The name of the category ("protocol")
+     * @param aEntry The entry to be added ("http")
+     * @param aPersist Delete persistent data from registry, if present?
+     */
+    void deleteCategoryEntry(in string aCategory, in string aEntry,
+                               in boolean aPersist);
+
+    /**
+     * Delete a category and all entries.
+     * @param aCategory The category to be deleted.
+     */
+    void deleteCategory(in string aCategory);
+
+    /**
+     * Enumerate the entries in a category.
+     * @param aCategory The category to be enumerated.
+     * @return a simple enumerator, each result QIs to
+     *         nsISupportsCString.
+     */
+    nsISimpleEnumerator enumerateCategory(in string aCategory);
+
+    /**
+     * Enumerate all existing categories
+     * @param aCategory The category to be enumerated.
+     * @return a simple enumerator, each result QIs to
+     *         nsISupportsCString.
+     */
+    nsISimpleEnumerator enumerateCategories();
+};
+

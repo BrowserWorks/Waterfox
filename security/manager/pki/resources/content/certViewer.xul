@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<!DOCTYPE dialog SYSTEM "chrome://pippki/locale/certManager.dtd">
+
+<?xul-overlay href="chrome://pippki/content/viewCertDetails.xul"?>
+<?xul-overlay href="chrome://pippki/content/certDump.xul"?>
+
+<dialog id="certDetails"
+  title="&certmgr.certdetail.title;"
+  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+  buttons="accept"
+  buttonlabelaccept="&certmgr.close.label;"
+  buttonaccesskeyaccept="&certmgr.close.accesskey;"
+  onload="setWindowName();">
+
+<stringbundle id="pippki_bundle" src="chrome://pippki/locale/pippki.properties"/>
+
+<script type="application/javascript" src="chrome://pippki/content/viewCertDetails.js"/>
+<script type="application/javascript" src="chrome://pippki/content/pippki.js"/>
+
+  <tabbox flex="1">
+    <tabs>
+      <tab id="general_tab" label="&certmgr.detail.general_tab.title;"
+           accesskey="&certmgr.detail.general_tab.accesskey;"/>
+      <tab id="prettyprint_tab" label="&certmgr.detail.prettyprint_tab.title;"
+           accesskey="&certmgr.detail.prettyprint_tab.accesskey;"/>
+    </tabs>
+    <tabpanels flex="1">
+      <vbox id="general_info"/>
+      <vbox id="certPrettyPrint"/>
+    </tabpanels>
+  </tabbox>
+
+</dialog>

@@ -1,0 +1,88 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIAccessible;
+interface nsIAccessiblePivot;
+interface nsIDOMDocument;
+interface nsIDOMNode;
+interface nsIDOMWindow;
+
+/**
+ * An interface for in-process accessibility clients
+ * that wish to retrieve information about a document.
+ * When accessibility is turned on in Gecko,
+ * there is an nsIAccessibleDocument for each document
+ * whether it is XUL, HTML or whatever.
+ * You can QueryInterface to nsIAccessibleDocument from the nsIAccessible for
+ * the root node of a document. You can also get one from 
+ * nsIAccessible::GetAccessibleDocument() or 
+ * nsIAccessibleEvent::GetAccessibleDocument()
+ */
+[scriptable, uuid(fe5b3886-2b6a-491a-80cd-a3e6342c451d)]
+interface nsIAccessibleDocument : nsISupports
+{
+  /**
+   * The URL of the document
+   */
+  readonly attribute AString URL;
+
+  /**
+   * The title of the document, as specified in the document.
+   */
+  readonly attribute AString title;
+
+  /**
+   * The mime type of the document
+   */
+  readonly attribute AString mimeType;
+
+  /**
+   * The doc type of the document, as specified in the document.
+   */
+  readonly attribute AString docType;
+
+  /**
+   * The nsIDOMDocument interface associated with this document.
+   */
+  readonly attribute nsIDOMDocument DOMDocument;
+
+  /**
+   * The nsIDOMWindow that the document resides in.
+   */
+  readonly attribute nsIDOMWindow window;
+
+  /**
+   * The namespace for each ID that is handed back.
+   */
+  AString getNameSpaceURIForID(in short nameSpaceID);
+
+  /**
+   * The window handle for the OS window the document is being displayed in.
+   * For example, in Windows you can static cast it to an HWND.
+   */
+  [noscript] readonly attribute voidPtr windowHandle;
+
+  /**
+   * Return the parent document accessible.
+   */
+  readonly attribute nsIAccessibleDocument parentDocument;
+
+  /**
+   * Return the count of child document accessibles.
+   */
+  readonly attribute unsigned long childDocumentCount;
+
+  /**
+   * The virtual cursor pivot this document manages.
+   */
+  readonly attribute nsIAccessiblePivot virtualCursor;
+
+  /**
+   * Return the child document accessible at the given index.
+   */
+  nsIAccessibleDocument getChildDocumentAt(in unsigned long index);
+};

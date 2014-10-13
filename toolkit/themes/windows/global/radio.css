@@ -1,0 +1,100 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* ===== radio.css ===================================================
+  == Styles used by the XUL radio element.
+  ======================================================================= */
+
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+
+/* ::::: radio ::::: */
+
+radio {
+  -moz-appearance: radio-container;
+  -moz-box-align: center;
+  margin: 2px 4px;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  -moz-padding-start: 4px;
+  -moz-padding-end: 2px;
+}
+
+.radio-label-box {
+  -moz-margin-start: 2px;
+  border: 1px solid transparent;
+  padding-top: 0px;
+  padding-bottom: 1px;
+  -moz-padding-start: 1px;
+  -moz-padding-end: 0px;
+}
+
+.radio-icon {
+  -moz-margin-end: 2px;
+}
+
+.radio-label {
+  margin: 0 !important;
+}
+
+/* ..... focused state ..... */
+
+radio[focused="true"] > .radio-label-box {
+  border: 1px dotted ThreeDDarkShadow;
+}
+
+/* ..... disabled state ..... */
+
+radio[disabled="true"] > .radio-check-box1 {
+  background-color: -moz-Dialog;
+}
+
+radio[disabled="true"] {
+  color: GrayText;
+}
+
+radio[disabled="true"]:-moz-system-metric(windows-classic) {
+  color: ThreeDShadow;
+  text-shadow: 1px 1px ThreeDHighlight;
+}
+
+/* ::::: checkmark image ::::: */
+
+.radio-check-box1 {
+  -moz-appearance: radio;
+  margin: 1px 0px;
+  border-top: 1px solid ThreeDShadow;
+  border-right: 1px solid ThreeDHighlight;
+  border-bottom: 1px solid ThreeDHighlight;
+  border-left: 1px solid ThreeDShadow;
+  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  background-color: -moz-Field;
+}
+
+.radio-check-box2 {
+  border-top: 1px solid ThreeDDarkShadow;
+  border-right: 1px solid ThreeDLightShadow;
+  border-bottom: 1px solid ThreeDLightShadow;
+  border-left: 1px solid ThreeDDarkShadow;
+  border-radius: 50%;
+  padding: 2px;
+  width: 4px;
+  height: 4px;
+  list-style-image: none;
+}
+
+radio:hover:active > .radio-check-box1 {
+  background-color: -moz-Dialog;
+}
+
+/* ..... selected state ..... */
+
+radio[selected="true"] > .radio-check-box1 > .radio-check-box2 {
+  list-style-image: url("chrome://global/skin/radio/radio-check.gif");
+}
+
+radio[selected="true"][disabled="true"] > .radio-check-box1 > .radio-check-box2 {
+  list-style-image: url("chrome://global/skin/radio/radio-check-dis.gif") !important
+}

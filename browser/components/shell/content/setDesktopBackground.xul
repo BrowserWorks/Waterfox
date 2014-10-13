@@ -1,0 +1,84 @@
+<?xml version="1.0"?> <!-- -*- Mode: HTML -*- --> 
+
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?> 
+<?xml-stylesheet href="chrome://browser/skin/setDesktopBackground.css" type="text/css"?>
+
+<!DOCTYPE dialog SYSTEM "chrome://browser/locale/setDesktopBackground.dtd">
+
+#ifdef XP_MACOSX
+<?xul-overlay href="chrome://browser/content/macBrowserOverlay.xul"?>
+#endif
+
+<dialog xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        xmlns:html="http://www.w3.org/1999/xhtml"
+        windowtype="Shell:SetDesktopBackground"
+#ifndef XP_MACOSX
+        buttons="accept,cancel"
+#else
+        buttons="accept"
+#endif
+        buttonlabelaccept="&setDesktopBackground.title;"
+        onload="gSetBackground.load();"
+        ondialogaccept="gSetBackground.setDesktopBackground();"
+        title="&setDesktopBackground.title;"
+        style="width: 30em;">
+
+    <stringbundle id="backgroundBundle"
+                  src="chrome://browser/locale/shellservice.properties"/>
+    <script type="application/javascript" src="chrome://browser/content/utilityOverlay.js"/>
+    <script type="application/javascript" src="chrome://browser/content/setDesktopBackground.js"/>
+    <script type="application/javascript" src="chrome://global/content/contentAreaUtils.js"/>
+
+#ifndef XP_MACOSX
+    <hbox align="center">
+      <label value="&position.label;"/>
+      <menulist id="menuPosition"
+                label="&position.label;" 
+                oncommand="gSetBackground.updatePosition();">
+        <menupopup>
+          <menuitem label="&center.label;"  value="CENTER"/>
+          <menuitem label="&tile.label;"    value="TILE"/>
+          <menuitem label="&stretch.label;" value="STRETCH"/>
+          <menuitem label="&fill.label;"    value="FILL" id="fillPosition"/>
+          <menuitem label="&fit.label;"     value="FIT"  id="fitPosition"/>
+        </menupopup>
+      </menulist>
+      <spacer flex="1"/>
+      <label value="&color.label;"/>
+      <colorpicker id="desktopColor"
+                   type="button" 
+                   onchange="gSetBackground.updateColor(this.color);"/> 
+    </hbox>
+#endif
+    <groupbox align="center">
+      <caption label="&preview.label;"/>
+      <stack>
+        <!-- if width and height are not present, they default to 300x150 and stretch the stack -->
+        <html:canvas id="screen" width="1" height="1"/>
+        <image id="monitor"/>
+      </stack>
+    </groupbox>
+    
+#ifdef XP_MACOSX
+    <separator/>
+    
+    <hbox align="right">
+      <button id="setDesktopBackground"
+              label="&setDesktopBackground.title;" 
+              oncommand="gSetBackground.setDesktopBackground();"/>
+      <button id="showDesktopPreferences"
+              label="&openDesktopPrefs.label;"
+              oncommand="gSetBackground.showDesktopPrefs();"
+              hidden="true"/>
+    </hbox>
+#endif
+
+#ifdef XP_MACOSX
+#include ../../../base/content/browserMountPoints.inc
+#endif
+
+</dialog>

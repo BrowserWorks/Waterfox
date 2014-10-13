@@ -1,0 +1,37 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIDOMEvent.idl"
+
+interface nsIDOMPaintRequestList;
+
+/**
+ * The nsIDOMNotifyPaintEvent interface is used for the MozDOMAfterPaint
+ * event, which fires at a window when painting has happened in
+ * that window.
+ */
+[builtinclass, uuid(ef68f0d5-5b55-4198-9e59-a5e2c57d3adc)]
+interface nsIDOMNotifyPaintEvent : nsIDOMEvent
+{
+  /**
+   * Get a list of rectangles which are affected. The rectangles are in CSS pixels
+   * relative to the viewport origin.
+   * If the caller is not trusted (e.g., regular Web content) then only painting
+   * caused by the current document is reported; in particular, painting in subdocuments
+   * is not reported.
+   */
+  readonly attribute nsIDOMClientRectList clientRects;
+  /**
+   * Get the bounding box of the rectangles which are affected. The rectangle
+   * is in CSS pixels relative to the viewport origin.
+   * If the caller is not trusted (e.g., regular Web content) then only painting
+   * caused by the current document is reported; in particular, painting in subdocuments
+   * is not reported.
+   */
+  readonly attribute nsIDOMClientRect boundingClientRect;
+
+  readonly attribute nsISupports /* PaintRequestList */ paintRequests;
+};
+

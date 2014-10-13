@@ -1,0 +1,1 @@
+OS_CFLAGS += -g -O2 -Wall -Werror -D_GNU_SOURCE -DORC_ENABLE_UNSTABLE_API -Wno-error=sign-compare -Wno-error=return-type

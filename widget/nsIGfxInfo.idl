@@ -1,0 +1,134 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+/* NOTE: this interface is completely undesigned, not stable and likely to change */
+
+[scriptable, uuid(27212e99-ed25-449b-b79f-32ecb88d251e)]
+interface nsIGfxInfo : nsISupports
+{
+  /*
+   * These are win32-specific
+   */
+  readonly attribute boolean D2DEnabled;
+  readonly attribute boolean DWriteEnabled;
+  readonly attribute DOMString DWriteVersion;
+  readonly attribute DOMString cleartypeParameters;
+
+  // XXX: Switch to a list of devices, rather than explicitly numbering them. 
+
+  /**
+   * The name of the display adapter.
+   */
+  readonly attribute DOMString adapterDescription;
+  readonly attribute DOMString adapterDescription2;
+
+  readonly attribute DOMString adapterDriver;
+  readonly attribute DOMString adapterDriver2;
+  
+  /* These types are inspired by DXGI_ADAPTER_DESC */
+  readonly attribute DOMString adapterVendorID;
+  readonly attribute DOMString adapterVendorID2;
+  
+  readonly attribute DOMString adapterDeviceID;
+  readonly attribute DOMString adapterDeviceID2;
+
+  readonly attribute DOMString adapterSubsysID;
+  readonly attribute DOMString adapterSubsysID2;
+
+  /**
+   * The amount of RAM in MB in the display adapter.
+   */
+  readonly attribute DOMString adapterRAM;
+  readonly attribute DOMString adapterRAM2;
+  
+  readonly attribute DOMString adapterDriverVersion;
+  readonly attribute DOMString adapterDriverVersion2;
+  
+  readonly attribute DOMString adapterDriverDate;
+  readonly attribute DOMString adapterDriverDate2;
+
+  readonly attribute boolean isGPU2Active;
+
+  void getFailures(
+               [optional] out unsigned long failureCount,
+               [retval, array, size_is(failureCount)] out string failures);
+
+  [noscript, notxpcom] void logFailure(in ACString failure);
+  /*
+   * A set of constants for features that we can ask this GfxInfo object
+   * about via GetFeatureStatus
+   */
+  /* Don't assign 0 or -1 */
+  /* Whether Direct2D is supported for content rendering. */
+  const long FEATURE_DIRECT2D = 1;
+  /* Whether Direct3D 9 is supported for layers. */
+  const long FEATURE_DIRECT3D_9_LAYERS = 2;
+  /* Whether Direct3D 10.0 is supported for layers. */
+  const long FEATURE_DIRECT3D_10_LAYERS = 3;
+  /* Whether Direct3D 10.1 is supported for layers. */
+  const long FEATURE_DIRECT3D_10_1_LAYERS = 4;
+  /* Whether OpenGL is supported for layers */
+  const long FEATURE_OPENGL_LAYERS = 5;
+  /* Whether WebGL is supported via OpenGL. */
+  const long FEATURE_WEBGL_OPENGL = 6;
+  /* Whether WebGL is supported via ANGLE (D3D9 -- does not check for the presence of ANGLE libs). */
+  const long FEATURE_WEBGL_ANGLE = 7;
+  /* Whether WebGL antialiasing is supported. */
+  const long FEATURE_WEBGL_MSAA = 8;
+  /* Whether Stagefright is supported */
+  const long FEATURE_STAGEFRIGHT = 9;
+  /* Whether Webrtc Hardware acceleration is supported */
+  const long FEATURE_WEBRTC_HW_ACCELERATION = 10;
+  /* Whether Direct3D 11 is supported for layers. */
+  const long FEATURE_DIRECT3D_11_LAYERS = 11;
+
+  /*
+   * A set of return values from GetFeatureStatus
+   */
+
+  /* We don't explicitly block or discourage the feature. Which means we'll try getting it from the
+   * hardware, and see what happens. */
+  const long FEATURE_NO_INFO = 1;
+  /* We don't know the status of the feature yet. The analysis probably hasn't finished yet. */
+  const long FEATURE_STATUS_UNKNOWN = 2;
+  /* This feature is blocked on this driver version. Updating driver will typically unblock it. */
+  const long FEATURE_BLOCKED_DRIVER_VERSION = 3;
+  /* This feature is blocked on this device, regardless of driver version.
+   * Typically means we hit too many driver crashes without a good reason to hope for them to
+   * get fixed soon. */
+  const long FEATURE_BLOCKED_DEVICE = 4;
+  /* This feature is available and can be used, but is not suggested (e.g. shouldn't be used by default */
+  const long FEATURE_DISCOURAGED = 5;
+  /* This feature is blocked on this OS version. */
+  const long FEATURE_BLOCKED_OS_VERSION = 6;
+
+  /**
+   * Ask about a feature, and return the status of that feature
+   */
+  long getFeatureStatus(in long aFeature);
+
+  /*
+   * Ask about a feature, return the minimum driver version required for it if its status is
+   * FEATURE_BLOCKED_DRIVER_VERSION, otherwise return an empty string. 
+   */
+  DOMString getFeatureSuggestedDriverVersion(in long aFeature);
+
+  /**
+   * WebGL info; valid params are "full-renderer", "vendor", "renderer", "version",
+   * "shading_language_version", "extensions".  These return info from
+   * underlying GL impl that's used to implement WebGL.
+   */
+  DOMString getWebGLParameter(in DOMString aParam);
+
+  // only useful on X11
+  [noscript, notxpcom] void GetData();
+
+  [implicit_jscontext]
+  jsval getInfo();
+};
+

@@ -1,0 +1,59 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+CXX      := @CXX@
+CXXFLAGS := @CXXFLAGS@
+LDFLAGS  := @LDFLAGS@
+VPATH		 := @srcdir@
+DSO_LDOPTS := @DSO_LDOPTS@
+DLL_SUFFIX := @DLL_SUFFIX@
+
+# Helper for end
+NULL :=
+
+CPPSRCS := \
+	clang-plugin.cpp \
+	$(NULL)
+
+TESTSRCS := \
+	TestCustomHeap.cpp \
+	TestMustOverride.cpp \
+	TestNonHeapClass.cpp \
+	TestStackClass.cpp \
+	$(NULL)
+
+OBJS := $(patsubst %.cpp,%.o,$(CPPSRCS))
+TESTS := $(patsubst %.cpp,test-%,$(TESTSRCS))
+
+PLUGIN := libclang-plugin.$(DLL_SUFFIX)
+
+all: $(PLUGIN) $(TESTS)
+
+$(OBJS): %.o: %.cpp Makefile
+	$(CXX) -o $@ -c $(CXXFLAGS) $<
+
+$(PLUGIN): $(OBJS)
+	rm -f $@
+	$(CXX) $(DSO_LDOPTS) -o $@ $(CXXFLAGS) $(OBJS) $(LDFLAGS)
+
+TESTFLAGS := -fsyntax-only -Xclang -verify \
+	-Xclang -load -Xclang $(CURDIR)/$(PLUGIN) \
+	-Xclang -add-plugin -Xclang moz-check
+
+$(TESTS): test-%: tests/%.cpp $(PLUGIN)
+	$(CXX) $(TESTFLAGS) $<
+
+compile libs export tools: all
+
+distclean clean:
+	rm -f $(OBJS) $(TESTS) $(PLUGIN)
+
+check:
+
+libs: binaries
+
+binaries: all
+	@touch $@
+
+.PHONY: compile libs export tools distclean clean check

@@ -1,0 +1,32 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "domstubs.idl"
+#include "nsIDOMMouseEvent.idl"
+
+interface nsIDOMDataTransfer;
+
+[builtinclass, uuid(4d0fe952-7ca7-4730-a163-4454e39ed187)]
+interface nsIDOMDragEvent : nsIDOMMouseEvent
+{
+  readonly attribute nsIDOMDataTransfer dataTransfer;
+
+  void initDragEvent(in DOMString typeArg,
+                     in boolean canBubbleArg,
+                     in boolean cancelableArg,
+                     in nsIDOMWindow aView,
+                     in long aDetail,
+                     in long aScreenX,
+                     in long aScreenY,
+                     in long aClientX,
+                     in long aClientY,
+                     in boolean aCtrlKey,
+                     in boolean aAltKey,
+                     in boolean aShiftKey,
+                     in boolean aMetaKey,
+                     in unsigned short aButton,
+                     in nsIDOMEventTarget aRelatedTarget,
+                     in nsIDOMDataTransfer aDataTransfer);
+};

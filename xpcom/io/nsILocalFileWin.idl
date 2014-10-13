@@ -1,0 +1,98 @@
+/* -*- Mode: Java; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
+#include "nsILocalFile.idl"
+
+[scriptable, builtinclass, uuid(c7b3fd13-30f2-46e5-a0d9-7a79a9b73c5b)]
+interface nsILocalFileWin : nsILocalFile
+{
+   /**
+    * getVersionInfoValue
+    *
+    * Retrieve a metadata field from the file's VERSIONINFO block.
+    * Throws NS_ERROR_FAILURE if no value is found, or the value is empty.
+    *
+    * @param   aField         The field to look up.
+    *
+    */
+    AString getVersionInfoField(in string aField);
+
+    /**
+     * The canonical path of the file, which avoids short/long
+     * pathname inconsistencies. The nsIFile persistent
+     * descriptor is not guaranteed to be canonicalized (it may
+     * persist either the long or the short path name). The format of
+     * the canonical path will vary with the underlying file system:
+     * it will typically be the short pathname on filesystems that
+     * support both short and long path forms.
+     */
+    readonly attribute AString canonicalPath;
+    [noscript] readonly attribute ACString nativeCanonicalPath;
+
+    /**
+     * Windows specific file attributes.
+     */
+
+    /*
+     * WFA_SEARCH_INDEXED: Generally the default on files in Windows except
+     * those created in temp locations. Valid on XP and up. When set the
+     * file or directory is marked to be indexed by desktop search services.
+     */
+    const unsigned long WFA_SEARCH_INDEXED = 1;
+
+    /*
+     * WFA_READONLY: Whether the file is readonly or not.
+     */
+    const unsigned long WFA_READONLY = 2;
+
+    /*
+     * WFA_READWRITE: Used to clear the readonly attribute.
+     */
+    const unsigned long WFA_READWRITE = 4;
+
+    /**
+     * fileAttributesWin
+     *
+     * Set or get windows specific file attributes.
+     * 
+     * Throws NS_ERROR_FILE_INVALID_PATH for an invalid file.
+     * Throws NS_ERROR_FAILURE if the set or get fails.
+     */
+    attribute unsigned long fileAttributesWin;
+
+    /**
+     * setShortcut
+     *
+     * Creates the specified shortcut, or updates it if it already exists.
+     *
+     * If the shortcut is being updated (i.e. the shortcut already exists),
+     * any excluded parameters will remain unchanged in the shortcut file.
+     * For example, if you want to change the description of a specific
+     * shortcut but keep the target, working dir, args, and icon the same,
+     * pass null for those parameters and only pass in a value for the
+     * description.
+     *
+     * If the shortcut does not already exist and targetFile is not specified,
+     * setShortcut will throw NS_ERROR_FILE_TARGET_DOES_NOT_EXIST.
+     *
+     * @param targetFile      the path that the shortcut should target
+     * @param workingDir      the working dir that should be set for the shortcut
+     * @param args            the args string that should be set for the shortcut
+     * @param description     the description that should be set for the shortcut
+     * @param iconFile        the file containing an icon to be used for this
+                              shortcut
+     * @param iconIndex       this value selects a specific icon from within
+                              iconFile.  If iconFile contains only one icon, this
+                              value should be 0.
+     */
+     void setShortcut([optional] in nsIFile targetFile,
+                      [optional] in nsIFile workingDir,
+                      [optional] in wstring args,
+                      [optional] in wstring description,
+                      [optional] in nsIFile iconFile,
+                      [optional] in long iconIndex);
+};
+

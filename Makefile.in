@@ -1,0 +1,301 @@
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+ifndef .PYMAKE
+ifeq (,$(MAKE_VERSION))
+$(error GNU Make is required)
+endif
+make_min_ver := 3.81
+ifneq ($(make_min_ver),$(firstword $(sort $(make_min_ver) $(MAKE_VERSION))))
+$(error GNU Make $(make_min_ver) or higher is required)
+endif
+endif
+
+export TOPLEVEL_BUILD := 1
+
+default::
+
+ifdef MOZ_BUILD_APP
+include $(topsrcdir)/$(MOZ_BUILD_APP)/build.mk
+endif
+
+include $(topsrcdir)/config/config.mk
+
+GARBAGE_DIRS += dist _javagen _profile staticlib
+DIST_GARBAGE = config.cache config.log config.status* config-defs.h \
+   config/autoconf.mk \
+   mozilla-config.h \
+   netwerk/necko-config.h xpcom/xpcom-config.h xpcom/xpcom-private.h \
+   .mozconfig.mk
+
+ifdef JS_STANDALONE
+configure_dir = $(topsrcdir)/js/src
+else
+configure_dir = $(topsrcdir)
+endif
+
+ifndef MOZ_PROFILE_USE
+# We need to explicitly put backend.RecursiveMakeBackend here
+# otherwise the rule in rules.mk doesn't run early enough.
+libs binaries export tools:: CLOBBER $(configure_dir)/configure config.status backend.RecursiveMakeBackend
+ifndef JS_STANDALONE
+ifndef LIBXUL_SDK
+libs binaries export tools:: $(topsrcdir)/js/src/configure js/src/config.status
+endif
+endif
+endif
+
+ifdef JS_STANDALONE
+.PHONY: CLOBBER
+CLOBBER:
+else
+CLOBBER: $(topsrcdir)/CLOBBER
+	@echo 'STOP!  The CLOBBER file has changed.'
+	@echo 'Please run the build through a sanctioned build wrapper, such as'
+	@echo '"mach build" or client.mk.'
+	@exit 1
+endif
+
+$(topsrcdir)/configure: $(topsrcdir)/configure.in
+$(topsrcdir)/js/src/configure: $(topsrcdir)/js/src/configure.in
+$(topsrcdir)/configure $(topsrcdir)/js/src/configure:
+	@echo 'STOP!  $^ has changed, and your configure is out of date.'
+	@echo 'Please rerun autoconf and re-configure your build directory.'
+	@echo 'To ignore this message, touch "$@",'
+	@echo 'but your build might not succeed.'
+	@exit 1
+
+config.status: $(configure_dir)/configure
+js/src/config.status: $(topsrcdir)/js/src/configure
+config.status js/src/config.status:
+	@echo 'STOP!  $^ has changed and needs to be run again.'
+	@echo 'Please rerun it.'
+	@echo 'To ignore this message, touch "$(CURDIR)/$@",'
+	@echo 'but your build might not succeed.'
+	@exit 1
+
+# Regenerate the build backend if it is out of date. We only have this rule in
+# this main make file because having it in rules.mk and applied to partial tree
+# builds resulted in a world of hurt. Gory details are in bug 877308.
+#
+# The mach build driver will ensure the backend is up to date for partial tree
+# builds. This cleanly avoids most of the pain.
+
+backend.RecursiveMakeBackend:
+	@echo 'Build configuration changed. Regenerating backend.'
+	$(PYTHON) config.status
+
+Makefile: backend.RecursiveMakeBackend
+	@$(TOUCH) $@
+
+include backend.RecursiveMakeBackend.pp
+
+default:: backend.RecursiveMakeBackend
+
+install_manifests := bin idl include public private sdk
+install_manifest_depends = \
+  CLOBBER \
+  $(configure_dir)/configure \
+  config.status \
+  backend.RecursiveMakeBackend \
+  $(NULL)
+
+ifndef JS_STANDALONE
+ifndef LIBXUL_SDK
+install_manifest_depends += \
+  $(topsrcdir)/js/src/configure \
+  js/src/config.status \
+  $(NULL)
+endif
+endif
+
+.PHONY: install-manifests
+install-manifests: $(addprefix install-dist-,$(install_manifests))
+
+# process_install_manifest needs to be invoked with --no-remove when building
+# js as standalone because automated builds are building nspr separately and
+# that would remove the resulting files.
+# Eventually, a standalone js build would just be able to build nspr itself,
+# removing the need for the former.
+ifdef JS_STANDALONE
+NO_REMOVE=1
+endif
+
+.PHONY: $(addprefix install-dist-,$(install_manifests))
+$(addprefix install-dist-,$(install_manifests)): install-dist-%: $(install_manifest_depends)
+	$(call py_action,process_install_manifest,$(if $(NO_REMOVE),--no-remove )$(DIST)/$* _build_manifests/install/dist_$*)
+
+.PHONY: install-tests
+install-manifests: install-tests
+install-tests: $(install_manifest_depends)
+	$(call py_action,process_install_manifest,$(if $(NO_REMOVE),--no-remove )_tests _build_manifests/install/tests)
+
+
+# _tests should be purged during cleaning. However, we don't want it purged
+# during PGO builds because it contains some auto-generated files.
+ifneq ($(filter-out maybe_clobber_profiledbuild,$(MAKECMDGOALS)),)
+GARBAGE_DIRS += _tests
+endif
+
+# Windows PGO builds don't perform a clean before the 2nd pass. So, we want
+# to preserve content for the 2nd pass on Windows. Everywhere else, we always
+# process the install manifests as part of export.
+ifdef MOZ_PROFILE_USE
+ifndef NO_PROFILE_GUIDED_OPTIMIZE
+ifneq ($(OS_ARCH)_$(GNU_CC), WINNT_)
+export:: install-manifests
+binaries::
+	@$(MAKE) install-manifests NO_REMOVE=1
+endif
+endif
+else # !MOZ_PROFILE_USE (normal build)
+export:: install-manifests
+binaries::
+	@$(MAKE) install-manifests NO_REMOVE=1
+endif
+
+# For historical reasons that are unknown, $(DIST)/sdk is always blown away
+# with no regard for PGO passes. This decision could probably be revisited.
+export:: install-dist-sdk
+
+ifndef JS_STANDALONE
+ifdef ENABLE_TESTS
+# Additional makefile targets to call automated test suites
+include $(topsrcdir)/testing/testsuite-targets.mk
+endif
+endif
+
+default all::
+	$(call BUILDSTATUS,TIERS export $(if $(COMPILE_ENVIRONMENT),$(if $(MOZ_PSEUDO_DERECURSE),compile ))libs tools)
+
+include $(topsrcdir)/config/rules.mk
+
+distclean::
+	$(RM) $(DIST_GARBAGE)
+
+ifeq ($(OS_ARCH),WINNT)
+# we want to copy PDB files on Windows
+MAKE_SYM_STORE_ARGS := -c --vcs-info
+ifdef PDBSTR_PATH
+MAKE_SYM_STORE_ARGS += -i
+endif
+DUMP_SYMS_BIN ?= $(topsrcdir)/toolkit/crashreporter/tools/win32/dump_syms_vc$(_MSC_VER).exe
+# PDB files don't get moved to dist, so we need to scan the whole objdir
+MAKE_SYM_STORE_PATH := .
+endif
+ifeq ($(OS_ARCH),Darwin)
+# need to pass arch flags for universal builds
+ifdef UNIVERSAL_BINARY
+MAKE_SYM_STORE_ARGS := -c -a 'i386 x86_64' --vcs-info
+MAKE_SYM_STORE_PATH := $(DIST)/universal
+else
+MAKE_SYM_STORE_ARGS := -c -a $(OS_TEST) --vcs-info
+MAKE_SYM_STORE_PATH := $(DIST)/bin
+endif
+DUMP_SYMS_BIN ?= $(DIST)/host/bin/dump_syms
+endif
+ifeq (,$(filter-out Linux SunOS,$(OS_ARCH)))
+MAKE_SYM_STORE_ARGS := -c --vcs-info
+DUMP_SYMS_BIN ?= $(DIST)/host/bin/dump_syms
+MAKE_SYM_STORE_PATH := $(DIST)/bin
+endif
+
+SYM_STORE_SOURCE_DIRS := $(topsrcdir)
+
+ifndef JS_STANDALONE
+include $(topsrcdir)/toolkit/mozapps/installer/package-name.mk
+
+ifdef MOZ_SYMBOLS_EXTRA_BUILDID
+EXTRA_BUILDID := -$(MOZ_SYMBOLS_EXTRA_BUILDID)
+endif
+
+SYMBOL_INDEX_NAME = \
+  $(MOZ_APP_NAME)-$(MOZ_APP_VERSION)-$(OS_TARGET)-$(BUILDID)-$(CPU_ARCH)$(EXTRA_BUILDID)-symbols.txt
+
+buildsymbols:
+ifdef MOZ_CRASHREPORTER
+	echo building symbol store
+	$(RM) -r $(DIST)/crashreporter-symbols
+	$(RM) '$(DIST)/$(SYMBOL_ARCHIVE_BASENAME).zip'
+	$(RM) '$(DIST)/$(SYMBOL_FULL_ARCHIVE_BASENAME).zip'
+	$(NSINSTALL) -D $(DIST)/crashreporter-symbols
+	OBJCOPY='$(OBJCOPY)' \
+	$(PYTHON) $(topsrcdir)/toolkit/crashreporter/tools/symbolstore.py \
+	  $(MAKE_SYM_STORE_ARGS)                                          \
+	  $(foreach dir,$(SYM_STORE_SOURCE_DIRS),-s $(dir))               \
+	  $(DUMP_SYMS_BIN)                                                \
+	  $(DIST)/crashreporter-symbols                                   \
+	  $(MAKE_SYM_STORE_PATH) | grep -iv test >                        \
+	  $(DIST)/crashreporter-symbols/$(SYMBOL_INDEX_NAME)
+	echo packing symbols
+	$(NSINSTALL) -D $(DIST)/$(PKG_PATH)
+	cd $(DIST)/crashreporter-symbols && \
+          zip -r9D '../$(PKG_PATH)$(SYMBOL_FULL_ARCHIVE_BASENAME).zip' . -x '*test*' -x '*Test*'
+	cd $(DIST)/crashreporter-symbols && \
+	grep 'sym' $(SYMBOL_INDEX_NAME) > $(SYMBOL_INDEX_NAME).tmp && \
+	  mv $(SYMBOL_INDEX_NAME).tmp $(SYMBOL_INDEX_NAME)
+	cd $(DIST)/crashreporter-symbols && \
+          zip -r9D '../$(PKG_PATH)$(SYMBOL_ARCHIVE_BASENAME).zip' . -i '*.sym' -i '*.txt'  -x '*test*' -x '*Test*'
+endif # MOZ_CRASHREPORTER
+
+uploadsymbols:
+ifdef MOZ_CRASHREPORTER
+	$(SHELL) $(topsrcdir)/toolkit/crashreporter/tools/upload_symbols.sh $(SYMBOL_INDEX_NAME) '$(DIST)/$(PKG_PATH)$(SYMBOL_FULL_ARCHIVE_BASENAME).zip'
+endif
+
+# MOZ_SOURCE_STAMP is defined in package-name.mk with a deferred assignment.
+# exporting it makes make run its $(shell) command for each invoked submake,
+# so transform it to an immediate assignment.
+MOZ_SOURCE_STAMP := $(MOZ_SOURCE_STAMP)
+export MOZ_SOURCE_STAMP
+endif
+
+#XXX: this is a hack, since we don't want to clobber for MSVC
+# PGO support, but we can't do this test in client.mk
+ifneq ($(OS_ARCH)_$(GNU_CC), WINNT_)
+# No point in clobbering if PGO has been explicitly disabled.
+ifndef NO_PROFILE_GUIDED_OPTIMIZE
+maybe_clobber_profiledbuild: clean
+else
+maybe_clobber_profiledbuild:
+endif
+else
+maybe_clobber_profiledbuild:
+	$(RM) $(DIST)/bin/*.pgc
+	find $(DIST)/$(MOZ_APP_NAME) -name '*.pgc' -exec mv {} $(DIST)/bin \;
+endif
+
+.PHONY: maybe_clobber_profiledbuild
+
+# Look for R_386_PC32 relocations in shared libs, these
+# break x86_64 builds and SELinux users.
+ifeq ($(OS_TARGET)_$(TARGET_XPCOM_ABI),Linux_x86-gcc3)
+check::
+	@relcount=`find $(DIST)/bin -name '*.so' | xargs objdump -R | grep R_386_PC32 | wc -l` && if test $$relcount -gt 0; then echo 'FAILED: R_386_PC32 relocations detected in a shared library.  Did you use a system header without adding it to config/system-headers?'; exit 1; else echo 'PASSED'; fi
+endif
+
+ifdef JS_STANDALONE
+# Delegate js-specific rules to js
+check-%:
+	$(MAKE) -C js/src $@
+
+source-package install:
+	$(MAKE) -C js/src $@
+
+# Every export rule depends on config/export, but the rule for config/export
+# doesn't exist when building js non-standalone.
+.PHONY: config/export
+config/export:
+
+endif
+
+ifdef MOZ_PSEUDO_DERECURSE
+# Interdependencies for parallel export.
+js/xpconnect/src/export: dom/bindings/export xpcom/xpidl/export
+accessible/src/xpcom/export: xpcom/xpidl/export
+ifdef ENABLE_CLANG_PLUGIN
+js/src/export config/export: build/clang-plugin/export
+endif
+endif

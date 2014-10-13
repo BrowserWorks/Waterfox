@@ -1,0 +1,45 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+XPCSHELL_TESTS_MANIFESTS += ['unit_aus_update/xpcshell.ini']
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'android':
+    MOCHITEST_CHROME_MANIFESTS += ['chrome/chrome.ini']
+    XPCSHELL_TESTS_MANIFESTS += ['unit_base_updater/xpcshell.ini']
+
+    if CONFIG['MOZ_MAINTENANCE_SERVICE']:
+        XPCSHELL_TESTS_MANIFESTS += ['unit_service_updater/xpcshell.ini']
+
+    SIMPLE_PROGRAMS = [
+        'TestAUSHelper',
+        'TestAUSReadStrings',
+    ]
+
+    SOURCES += [
+        '%s.cpp' % s for s in SIMPLE_PROGRAMS
+    ]
+
+    LOCAL_INCLUDES += [
+        '/toolkit/mozapps/update',
+        '/toolkit/mozapps/update/common',
+    ]
+
+for var in ('MOZ_APP_NAME', 'MOZ_APP_BASENAME', 'MOZ_APP_DISPLAYNAME',
+            'MOZ_APP_VENDOR', 'BIN_SUFFIX', 'MOZ_DEBUG'):
+    DEFINES[var] = CONFIG[var]
+
+DEFINES['NS_NO_XPCOM'] = True
+
+if CONFIG['MOZ_MAINTENANCE_SERVICE']:
+    DEFINES['MOZ_MAINTENANCE_SERVICE'] = CONFIG['MOZ_MAINTENANCE_SERVICE']
+
+# For debugging purposes only
+#DEFINES['DISABLE_UPDATER_AUTHENTICODE_CHECK'] = True
+
+if CONFIG['OS_ARCH'] == 'WINNT':
+    DEFINES['UNICODE'] = True
+    DEFINES['_UNICODE'] = True
+    USE_STATIC_LIBS = True

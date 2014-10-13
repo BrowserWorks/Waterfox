@@ -1,0 +1,287 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+os_win = 0
+os_posix = 0
+os_macosx = 0
+os_dragonfly = 0
+os_freebsd = 0
+os_netbsd = 0
+os_openbsd = 0
+os_bsd = 0
+os_linux = 0
+
+if CONFIG['OS_ARCH'] == 'WINNT':
+    os_win = 1
+else:
+    os_posix = 1
+    if CONFIG['OS_ARCH'] == 'Darwin':
+        os_macosx = 1
+    elif CONFIG['OS_ARCH'] == 'DragonFly':
+        os_dragonfly = 1
+        os_bsd = 1
+    elif CONFIG['OS_ARCH'] in ['FreeBSD', 'GNU_kFreeBSD']:
+        os_freebsd = 1
+        os_bsd = 1
+    elif CONFIG['OS_ARCH'] == 'NetBSD':
+        os_netbsd = 1
+        os_bsd = 1
+    elif CONFIG['OS_ARCH'] == 'OpenBSD':
+        os_openbsd = 1
+        os_bsd = 1
+    else:
+        os_linux = 1
+
+UNIFIED_SOURCES += [
+    'src/base/at_exit.cc',
+    'src/base/base_paths.cc',
+    'src/base/base_switches.cc',
+    'src/base/command_line.cc',
+    'src/base/debug_util.cc',
+    'src/base/file_path.cc',
+    'src/base/file_util.cc',
+    'src/base/histogram.cc',
+    'src/base/lazy_instance.cc',
+    'src/base/lock.cc',
+    'src/base/logging.cc',
+    'src/base/memory_debug.cc',
+    'src/base/message_loop.cc',
+    'src/base/message_pump_default.cc',
+    'src/base/non_thread_safe.cc',
+    'src/base/path_service.cc',
+    'src/base/pickle.cc',
+    'src/base/rand_util.cc',
+    'src/base/ref_counted.cc',
+    'src/base/revocable_store.cc',
+    'src/base/scoped_temp_dir.cc',
+    'src/base/simple_thread.cc',
+    'src/base/stats_table.cc',
+    'src/base/string_piece.cc',
+    'src/base/string_util.cc',
+    'src/base/system_monitor.cc',
+    'src/base/thread.cc',
+    'src/base/thread_collision_warner.cc',
+    'src/base/time.cc',
+    'src/base/timer.cc',
+    'src/base/trace_event.cc',
+    'src/base/tracked.cc',
+    'src/base/tracked_objects.cc',
+    'src/chrome/common/child_process.cc',
+    'src/chrome/common/child_process_host.cc',
+    'src/chrome/common/child_process_info.cc',
+    'src/chrome/common/child_thread.cc',
+    'src/chrome/common/chrome_switches.cc',
+    'src/chrome/common/debug_flags.cc',
+    'src/chrome/common/env_vars.cc',
+    'src/chrome/common/ipc_channel_proxy.cc',
+    'src/chrome/common/ipc_logging.cc',
+    'src/chrome/common/ipc_message.cc',
+    'src/chrome/common/ipc_sync_channel.cc',
+    'src/chrome/common/ipc_sync_message.cc',
+    'src/chrome/common/message_router.cc',
+    'src/chrome/common/notification_service.cc',
+    'src/chrome/common/task_queue.cc',
+]
+
+if os_win:
+    SOURCES += [
+        'src/base/base_paths_win.cc',
+        'src/base/condition_variable_win.cc',
+        'src/base/cpu.cc',
+        'src/base/debug_util_win.cc',
+        'src/base/event_recorder.cc',
+        'src/base/file_util_win.cc',
+        'src/base/idle_timer.cc',
+        'src/base/lock_impl_win.cc',
+        'src/base/message_pump_win.cc',
+        'src/base/object_watcher.cc',
+        'src/base/platform_file_win.cc',
+        'src/base/platform_thread_win.cc',
+        'src/base/process_util_win.cc',
+        'src/base/process_win.cc',
+        'src/base/rand_util_win.cc',
+        'src/base/registry.cc',
+        'src/base/shared_memory_win.cc',
+        'src/base/sys_info_win.cc',
+        'src/base/sys_string_conversions_win.cc',
+        'src/base/system_monitor_win.cc',
+        'src/base/thread_local_storage_win.cc',
+        'src/base/thread_local_win.cc',
+        'src/base/time_win.cc',
+        'src/base/waitable_event_watcher_win.cc',
+        'src/base/waitable_event_win.cc',
+        'src/base/win_util.cc',
+        'src/chrome/common/ipc_channel_win.cc',
+        'src/chrome/common/process_watcher_win.cc',
+        'src/chrome/common/transport_dib_win.cc',
+    ]
+elif not CONFIG['MOZ_NATIVE_LIBEVENT']:
+    SOURCES += [
+        'src/third_party/libevent/buffer.c',
+        'src/third_party/libevent/bufferevent.c',
+        'src/third_party/libevent/bufferevent_ratelim.c',
+        'src/third_party/libevent/bufferevent_sock.c',
+        'src/third_party/libevent/evdns.c',
+        'src/third_party/libevent/event.c',
+        'src/third_party/libevent/event_tagging.c',
+        'src/third_party/libevent/evmap.c',
+        'src/third_party/libevent/evrpc.c',
+        'src/third_party/libevent/evthread.c',
+        'src/third_party/libevent/evthread_pthread.c',
+        'src/third_party/libevent/evutil.c',
+        'src/third_party/libevent/evutil_rand.c',
+        'src/third_party/libevent/http.c',
+        'src/third_party/libevent/listener.c',
+        'src/third_party/libevent/log.c',
+        'src/third_party/libevent/poll.c',
+        'src/third_party/libevent/select.c',
+        'src/third_party/libevent/signal.c',
+        'src/third_party/libevent/strlcpy.c',
+    ]
+    DEFINES['HAVE_CONFIG_H'] = True
+    LOCAL_INCLUDES += [
+        'src/third_party/libevent',
+        'src/third_party/libevent/include',
+    ]
+
+if os_posix:
+    SOURCES += [
+        'src/base/condition_variable_posix.cc',
+        'src/base/debug_util_posix.cc',
+        'src/base/event_recorder_stubs.cc',
+        'src/base/file_descriptor_shuffle.cc',
+        'src/base/file_util_posix.cc',
+        'src/base/lock_impl_posix.cc',
+        'src/base/message_pump_libevent.cc',
+        'src/base/platform_file_posix.cc',
+        'src/base/platform_thread_posix.cc',
+        'src/base/process_posix.cc',
+        'src/base/process_util_posix.cc',
+        'src/base/rand_util_posix.cc',
+        'src/base/shared_memory_posix.cc',
+        'src/base/string16.cc',
+        'src/base/sys_info_posix.cc',
+        'src/base/system_monitor_posix.cc',
+        'src/base/thread_local_posix.cc',
+        'src/base/thread_local_storage_posix.cc',
+        'src/base/waitable_event_posix.cc',
+        'src/base/waitable_event_watcher_posix.cc',
+        'src/chrome/common/file_descriptor_set_posix.cc',
+        'src/chrome/common/ipc_channel_posix.cc',
+        'src/chrome/common/process_watcher_posix_sigchld.cc',
+    ]
+    if CONFIG['OS_TARGET'] == 'Android':
+        SOURCES += [
+            'src/base/message_pump_android.cc',
+        ]
+        DEFINES['ANDROID'] = True
+        DEFINES['_POSIX_MONOTONIC_CLOCK'] = 0
+
+if os_macosx:
+    UNIFIED_SOURCES += [
+        'src/base/debug_util_mac.cc',
+        'src/base/hmac_mac.cc',
+        'src/base/idle_timer.cc',
+        'src/base/sys_info_mac.cc',
+        'src/base/time_mac.cc',
+        'src/chrome/common/mach_message_source_mac.cc',
+        'src/chrome/common/transport_dib_mac.cc',
+    ]
+    SOURCES += [
+        'src/base/base_paths_mac.mm',
+        'src/base/chrome_application_mac.mm',
+        'src/base/file_util_mac.mm',
+        'src/base/mac_util.mm',
+        'src/base/message_pump_mac.mm',
+        'src/base/platform_thread_mac.mm',
+        'src/base/process_util_mac.mm',
+        'src/base/scoped_nsautorelease_pool.mm',
+        'src/base/sys_string_conversions_mac.mm',
+        'src/base/worker_pool_mac.mm',
+        'src/chrome/common/mach_ipc_mac.mm',
+    ]
+    if not CONFIG['MOZ_NATIVE_LIBEVENT']:
+        UNIFIED_SOURCES += [
+            'src/third_party/libevent/kqueue.c',
+        ]
+        LOCAL_INCLUDES += ['src/third_party/libevent/mac']
+
+if os_linux:
+    SOURCES += [
+        'src/base/atomicops_internals_x86_gcc.cc',
+        'src/base/base_paths_linux.cc',
+        'src/base/idle_timer_none.cc',
+        'src/base/process_util_linux.cc',
+        'src/base/time_posix.cc',
+    ]
+    if CONFIG['MOZ_WIDGET_GTK']:
+        SOURCES += [
+            'src/base/message_pump_glib.cc',
+        ]
+    if CONFIG['MOZ_ENABLE_QT']:
+        SOURCES += [
+            'src/base/message_pump_qt.cc',
+        ]
+        GENERATED_SOURCES += [
+            'moc_message_pump_qt.cc',
+        ]
+    if not CONFIG['MOZ_NATIVE_LIBEVENT']:
+        if CONFIG['OS_TARGET'] != 'Android':
+            SOURCES += [
+                'src/third_party/libevent/epoll_sub.c',
+            ]
+        SOURCES += [
+            'src/third_party/libevent/epoll.c',
+        ]
+        if CONFIG['OS_TARGET'] == 'Android':
+            LOCAL_INCLUDES += ['src/third_party/libevent/android']
+        else:
+            LOCAL_INCLUDES += ['src/third_party/libevent/linux']
+
+if os_bsd:
+    SOURCES += [
+        'src/base/atomicops_internals_x86_gcc.cc',
+        'src/base/time_posix.cc',
+    ]
+    if CONFIG['OS_ARCH'] == 'GNU_kFreeBSD':
+        SOURCES += [
+            'src/base/process_util_linux.cc'
+        ]
+    else:
+        SOURCES += [
+            'src/base/process_util_bsd.cc'
+        ]
+    if CONFIG['MOZ_WIDGET_GTK']:
+        SOURCES += [
+            'src/base/message_pump_glib.cc',
+        ]
+    if CONFIG['MOZ_ENABLE_QT']:
+        SOURCES += [
+            'src/base/message_pump_qt.cc',
+        ]
+        GENERATED_SOURCES += [
+            'moc_message_pump_qt.cc',
+        ]
+    if not CONFIG['MOZ_NATIVE_LIBEVENT']:
+        SOURCES += [
+            'src/third_party/libevent/kqueue.c',
+        ]
+        LOCAL_INCLUDES += ['src/third_party/libevent/bsd']
+
+if CONFIG['_MSC_VER']:
+    SOURCES += [
+        'src/base/debug_on_start.cc',
+    ]
+
+ost = CONFIG['OS_TEST']
+if ost.find('86') == -1 and ost.find('arm') == -1 and ost.find('mips') == -1:
+    SOURCES += [
+        'src/base/atomicops_internals_mutex.cc',
+    ]
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+FINAL_LIBRARY = 'xul'

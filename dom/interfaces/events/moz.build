@@ -1,0 +1,51 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+XPIDL_SOURCES += [
+    'nsIDOMAnimationEvent.idl',
+    'nsIDOMBeforeUnloadEvent.idl',
+    'nsIDOMClipboardEvent.idl',
+    'nsIDOMCloseEvent.idl',
+    'nsIDOMCommandEvent.idl',
+    'nsIDOMCompositionEvent.idl',
+    'nsIDOMCustomEvent.idl',
+    'nsIDOMDataContainerEvent.idl',
+    'nsIDOMDataTransfer.idl',
+    'nsIDOMDeviceOrientationEvent.idl',
+    'nsIDOMDOMTransactionEvent.idl',
+    'nsIDOMDragEvent.idl',
+    'nsIDOMElementReplaceEvent.idl',
+    'nsIDOMEvent.idl',
+    'nsIDOMEventListener.idl',
+    'nsIDOMEventTarget.idl',
+    'nsIDOMFocusEvent.idl',
+    'nsIDOMHashChangeEvent.idl',
+    'nsIDOMKeyEvent.idl',
+    'nsIDOMMessageEvent.idl',
+    'nsIDOMMouseEvent.idl',
+    'nsIDOMMouseScrollEvent.idl',
+    'nsIDOMMutationEvent.idl',
+    'nsIDOMNotifyPaintEvent.idl',
+    'nsIDOMNSEvent.idl',
+    'nsIDOMPageTransitionEvent.idl',
+    'nsIDOMPaintRequest.idl',
+    'nsIDOMPopStateEvent.idl',
+    'nsIDOMPopupBlockedEvent.idl',
+    'nsIDOMRecordErrorEvent.idl',
+    'nsIDOMScrollAreaEvent.idl',
+    'nsIDOMSimpleGestureEvent.idl',
+    'nsIDOMSmartCardEvent.idl',
+    'nsIDOMStyleRuleChangeEvent.idl',
+    'nsIDOMStyleSheetApplicableStateChangeEvent.idl',
+    'nsIDOMStyleSheetChangeEvent.idl',
+    'nsIDOMTouchEvent.idl',
+    'nsIDOMTransitionEvent.idl',
+    'nsIDOMUIEvent.idl',
+    'nsIDOMWheelEvent.idl',
+]
+
+XPIDL_MODULE = 'dom_events'
+

@@ -1,0 +1,28 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIDOMEvent.idl"
+
+[builtinclass, uuid(982d9800-1402-46e5-8ad2-56fb0f4905ef)]
+interface nsIDOMMutationEvent : nsIDOMEvent
+{
+  const unsigned short      MODIFICATION       = 1;
+  const unsigned short      ADDITION           = 2;
+  const unsigned short      REMOVAL            = 3;
+
+  readonly attribute nsIDOMNode       relatedNode;
+  readonly attribute DOMString        prevValue;
+  readonly attribute DOMString        newValue;
+  readonly attribute DOMString        attrName;
+  readonly attribute unsigned short   attrChange;
+  void                      initMutationEvent(in DOMString typeArg,
+                                              in boolean canBubbleArg,
+                                              in boolean cancelableArg,
+                                              in nsIDOMNode relatedNodeArg,
+                                              in DOMString prevValueArg,
+                                              in DOMString newValueArg,
+                                              in DOMString attrNameArg,
+											  in unsigned short attrChangeArg);
+};

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+    "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"
+[
+  <!ENTITY % globalDTD SYSTEM "chrome://global/locale/global.dtd">
+  <!ENTITY % crashesDTD SYSTEM "chrome://global/locale/crashes.dtd">
+  %globalDTD;
+  %crashesDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<style type="text/css">
+:root {
+  font-family: sans-serif;
+}
+table {
+  padding-bottom: 2em;
+}
+th {
+  text-align: left;
+  white-space: nowrap;
+}
+th[chromedir="rtl"] {
+  text-align: right;
+}
+/* name */
+th:first-child {
+  -moz-padding-end: 2em;
+}
+:link, :visited {
+  display: block;
+  min-height: 17px;
+}
+/* date */
+td:first-child + td {
+  -moz-padding-start: 1em;
+  -moz-padding-end: .5em;
+  white-space: nowrap;
+}
+/* time */
+td:last-child {
+  -moz-padding-start: .5em;
+  white-space: nowrap;
+}
+
+#clear-reports {
+  float: right;
+}
+#clear-reports[chromedir="rtl"] {
+  float: left;
+}
+
+.submitting {
+  background-image: url(chrome://global/skin/icons/loading_16.png);
+  background-repeat: no-repeat;
+  background-position: right;
+}
+</style>
+<link rel="stylesheet" media="screen, projection" type="text/css"
+      href="chrome://global/skin/dirListing/dirListing.css"/>
+<script type="application/javascript;version=1.8" src="chrome://global/content/crashes.js"/>
+
+<title>&crashes.title;</title>
+</head><body onload="populateReportList()" dir="&locale.dir;">
+<button chromedir="&locale.dir;" id="clear-reports"
+        onclick="clearReports().then(null, Cu.reportError)">&clearAllReports.label;</button>
+<h1>&crashes.title;</h1>
+<div id="reportList">
+  <table>
+    <thead>
+      <tr>
+        <th chromedir="&locale.dir;">&id.heading;</th>
+        <th chromedir="&locale.dir;" colspan="2">&date.heading;</th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+    </tbody>
+  </table>
+</div>
+<p id="noReports" style="display: none">&noReports.label;</p>
+<p id="noConfig" style="display: none">&noConfig.label;</p>
+</body>
+</html>

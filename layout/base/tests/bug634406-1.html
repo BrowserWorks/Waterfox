@@ -1,0 +1,16 @@
+<!DOCTYPE HTML><html><head>
+  <script type="text/javascript" src="/tests/SimpleTest/EventUtils.js"></script>
+</head>
+<body>
+<textarea spellcheck="false" style="-moz-appearance: none"></textarea>
+<script>
+  var t = document.querySelector("textarea");
+  t.focus();
+
+  synthesizeKey("a", {});
+  synthesizeKey("A", {accelKey: true});
+  synthesizeKey("VK_RIGHT", {});
+  synthesizeKey("b", {});
+</script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/**** folder menulist ****/
+.folder-icon > .menulist-label-box > .menulist-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.folder-icon > .menu-iconic-left {
+  display: -moz-box;
+}
+
+.folder-icon {
+  list-style-image: url("chrome://global/skin/icons/folder-item.png") !important;
+  -moz-image-region: rect(0px, 32px, 16px, 16px) !important;
+}
+
+
+/**** expanders ****/
+
+.expander-up,
+.expander-down {
+  min-width: 0;
+  margin: 0;
+  -moz-margin-end: 4px;
+}
+
+.expander-up > .button-box,
+.expander-down > .button-box {
+  padding: 0;
+}
+
+.expander-up {
+  list-style-image: url("chrome://global/skin/icons/collapse.png");
+}
+
+.expander-down {
+  list-style-image: url("chrome://global/skin/icons/expand.png");
+}
+
+#editBookmarkPanelContent {
+  min-width: 23em;
+}
+
+#editBMPanel_folderTree {
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
+/* Hide the value column of the tag autocomplete popup
+ * leaving only the comment column visible. This is
+ * so that only the tag being edited is shown in the
+ * popup.
+ */
+#editBMPanel_tagsField #treecolAutoCompleteValue {
+  visibility: collapse;
+}
+
+
+/* ::::: bookmark panel dropdown icons ::::: */
+
+#editBMPanel_folderMenuList[selectedIndex="0"],
+#editBMPanel_toolbarFolderItem {
+  list-style-image: url("chrome://browser/skin/places/bookmarksToolbar.png") !important;
+  -moz-image-region: auto !important;
+}
+
+#editBMPanel_folderMenuList[selectedIndex="1"],
+#editBMPanel_bmRootItem {
+  list-style-image: url("chrome://browser/skin/places/bookmarksMenu.png") !important;
+  -moz-image-region: auto !important;
+}
+
+#editBMPanel_folderMenuList[selectedIndex="2"],
+#editBMPanel_unfiledRootItem {
+  list-style-image: url("chrome://browser/skin/places/unsortedBookmarks.png") !important;
+  -moz-image-region: auto !important;
+}

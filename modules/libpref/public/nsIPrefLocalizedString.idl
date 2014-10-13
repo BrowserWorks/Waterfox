@@ -1,0 +1,64 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+/**
+ * The nsIPrefLocalizedString interface is simply a wrapper interface for
+ * nsISupportsString so the preferences service can have a unique identifier
+ * to distinguish between requests for normal wide strings (nsISupportsString)
+ * and "localized" wide strings, which get their default values from properites
+ * files.
+ *
+ * @see nsIPrefBranch
+ * @see nsISupportsString
+ */
+
+[scriptable, uuid(ae419e24-1dd1-11b2-b39a-d3e5e7073802)]
+interface nsIPrefLocalizedString : nsISupports
+{
+  /**
+   * Provides access to string data stored in this property.
+   *
+   * @throws Error An error occurred.
+   */
+  attribute wstring data;
+
+  /**
+   * Used to retrieve the contents of this object into a wide string.
+   *
+   * @return wstring The string containing the data stored within this object.
+   */
+  wstring toString();
+
+  /**
+   * Used to set the contents of this object.
+   *
+   * @param length The length of the string. This value should not include
+   *               space for the null terminator, nor should it account for the
+   *               size of a character. It should  only be the number of
+   *               characters for which there is space in the string.
+   * @param data   The string data to be stored.
+   *
+   * @note
+   * This makes a copy of the string argument passed in.
+   */
+  void setDataWithLength(in unsigned long length,
+                         [size_is(length)] in wstring data);
+};
+
+%{C++
+
+#define NS_PREFLOCALIZEDSTRING_CID                     \
+  { /* {064d9cee-1dd2-11b2-83e3-d25ab0193c26} */       \
+    0x064d9cee,                                        \
+    0x1dd2,                                            \
+    0x11b2,                                            \
+    { 0x83, 0xe3, 0xd2, 0x5a, 0xb0, 0x19, 0x3c, 0x26 } \
+  }
+
+#define NS_PREFLOCALIZEDSTRING_CONTRACTID "@mozilla.org/pref-localizedstring;1"
+
+%}

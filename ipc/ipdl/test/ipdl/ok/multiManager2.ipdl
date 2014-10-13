@@ -1,0 +1,8 @@
+include protocol multiManaged;
+
+protocol multiManager2 {
+    manages multiManaged;
+
+child:
+    multiManaged();
+};

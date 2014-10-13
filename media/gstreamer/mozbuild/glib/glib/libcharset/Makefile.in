@@ -1,0 +1,2 @@
+OS_CFLAGS += -Wno-error=sign-compare -Wno-error=return-type
+OS_CPPFLAGS += -D_REENTRANT -DLIBDIR=\"/usr/local/lib\"

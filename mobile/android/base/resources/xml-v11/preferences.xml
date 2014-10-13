@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Phone v11+ only: Sync is a top-level menu item.
+     See xml-v11/preference_headers.xml for tablet layout.
+     Preference changes here should be mirrored to xml/preferences.xml.in. -->
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+                  xmlns:gecko="http://schemas.android.com/apk/res-auto"
+                  android:enabled="false">
+
+    <org.mozilla.gecko.preferences.SyncPreference android:key="android.not_a_preference.sync"
+                                                  android:title="@string/pref_sync"
+                                                  android:persistent="false" />
+
+    <PreferenceScreen android:title="@string/pref_category_customize"
+                      android:fragment="org.mozilla.gecko.preferences.GeckoPreferenceFragment" >
+        <extra android:name="resource"
+               android:value="preferences_customize"/>
+    </PreferenceScreen>
+
+    <PreferenceScreen android:title="@string/pref_category_display"
+                      android:fragment="org.mozilla.gecko.preferences.GeckoPreferenceFragment" >
+        <extra android:name="resource"
+               android:value="preferences_display" />
+    </PreferenceScreen>
+
+
+    <PreferenceScreen android:title="@string/pref_category_privacy_short"
+                      android:fragment="org.mozilla.gecko.preferences.GeckoPreferenceFragment" >
+        <extra android:name="resource"
+               android:value="preferences_privacy" />
+    </PreferenceScreen>
+
+    <PreferenceScreen android:title="@string/pref_category_language"
+                      android:fragment="org.mozilla.gecko.preferences.GeckoPreferenceFragment" >
+        <extra android:name="resource"
+               android:value="preferences_locale" />
+    </PreferenceScreen>
+
+    <PreferenceScreen android:title="@string/pref_category_vendor"
+                      android:fragment="org.mozilla.gecko.preferences.GeckoPreferenceFragment" >
+        <extra android:name="resource"
+               android:value="preferences_vendor"/>
+    </PreferenceScreen>
+
+    <PreferenceScreen android:title="@string/pref_category_devtools"
+                      android:fragment="org.mozilla.gecko.preferences.GeckoPreferenceFragment" >
+        <extra android:name="resource"
+               android:value="preferences_devtools"/>
+    </PreferenceScreen>
+
+</PreferenceScreen>

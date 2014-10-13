@@ -1,0 +1,32 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Media test: X-Content-Duration</title>
+  <script type="text/javascript" src="/MochiKit/Base.js"></script>
+  <script type="text/javascript" src="/MochiKit/DOM.js"></script>
+  <script type="text/javascript" src="/MochiKit/Style.js"></script>
+  <script type="text/javascript" src="/MochiKit/Signal.js"></script>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+  <script type="text/javascript" src="manifest.js"></script>
+</head>
+<body onunload="mediaTestCleanup();">
+<pre id="test">
+<script class="testbody" type="text/javascript">
+
+function on_metadataloaded() {
+  var v = document.getElementById('v');
+  var d = Math.round(v.duration*1000);
+  ok(d == 233, "Checking duration: " + d);
+  SimpleTest.finish();
+}
+
+SimpleTest.waitForExplicitFinish();
+</script>
+</pre>
+<video id='v'
+       preload="metadata"
+       src='contentDuration7.sjs'
+       onloadedmetadata='on_metadataloaded();'></video>
+</body>
+</html>

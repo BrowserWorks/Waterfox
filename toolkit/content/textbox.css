@@ -1,0 +1,35 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"); /* set default namespace to XUL */
+@namespace html url("http://www.w3.org/1999/xhtml"); /* namespace for HTML elements */
+
+html|*.textbox-input {
+  -moz-appearance: none !important;
+  text-align: inherit;
+  text-shadow: inherit;
+  box-sizing: border-box;
+  -moz-box-flex: 1;
+}
+
+html|*.textbox-textarea {
+  -moz-appearance: none !important;
+  text-shadow: inherit;
+  box-sizing: border-box;
+  -moz-box-flex: 1;
+}
+
+/*
+html|*.textbox-input::-moz-placeholder,
+html|*.textbox-textarea::-moz-placeholder {
+  text-align: left;
+  direction: ltr;
+}
+
+html|*.textbox-input::-moz-placeholder:-moz-locale-dir(rtl),
+html|*.textbox-textarea::-moz-placeholder:-moz-locale-dir(rtl) {
+  text-align: right;
+  direction: rtl;
+}
+*/

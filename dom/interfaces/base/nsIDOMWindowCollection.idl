@@ -1,0 +1,30 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "domstubs.idl"
+
+/**
+ * The nsIDOMWindowCollection interface is an interface for a
+ * collection of DOM window objects.
+ */
+
+[uuid(a6cf906f-15b3-11d2-932e-00805f8add32)]
+interface nsIDOMWindowCollection : nsISupports
+{
+  /**
+   * Accessor for the number of windows in this collection.
+   */
+  readonly attribute unsigned long    length;
+
+  /**
+   * Method for accessing an item in this collection by index.
+   */
+  nsIDOMWindow              item(in unsigned long index);
+
+  /**
+   * Method for accessing an item in this collection by window name.
+   */
+  nsIDOMWindow              namedItem(in DOMString name);
+};

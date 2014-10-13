@@ -1,0 +1,2 @@
+OS_CFLAGS += -Wno-error=sign-compare -Wno-error=return-type
+OS_CPPFLAGS += -D_REENTRANT -DSTATIC=G_GNUC_INTERNAL -Wall -Wdeclaration-after-statement -Wvla -Wpointer-arith -Wmissing-declarations -Wmissing-prototypes -Wredundant-decls -Wundef -Wwrite-strings -Wformat-nonliteral -Wformat-security -Wold-style-definition -Winit-self -Wmissing-include-dirs -Waddress -Waggregate-return -Wno-multichar -Wnested-externs -Wno-format-nonliteral -UHAVE_LONG_DOUBLE -UHAVE_LONG_LONG_FORMAT -UHAVE_WCHAR_T -UHAVE_WCSLEN -UHAVE_WINT_T

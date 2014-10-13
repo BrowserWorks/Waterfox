@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<resources>
+
+    <!-- Theme level attributes -->
+    <declare-styleable name="GeckoTheme">
+
+        <!-- Style for GeckoMenu ListView -->
+        <attr name="geckoMenuListViewStyle" format="reference"/>
+
+        <!-- Style for MenuItemActionBar -->
+        <attr name="menuItemActionBarStyle" format="reference"/>
+
+        <!-- Style for MenuItemActionBar -->
+        <attr name="menuItemActionModeStyle" format="reference"/>
+
+        <!-- Style for MenuItemActionView -->
+        <attr name="menuItemActionViewStyle" format="reference"/>
+
+        <!-- Style for MenuItemDefault -->
+        <attr name="menuItemDefaultStyle" format="reference"/>
+
+        <!-- Style for MenuItemActionBar when shown in SecondaryActionBar -->
+        <attr name="menuItemSecondaryActionBarStyle" format="reference"/>
+
+        <!-- Style for MenuItemActionView's ShareActionButton -->
+        <attr name="menuItemShareActionButtonStyle" format="reference"/>
+
+        <!-- Default style for the BookmarksListView -->
+        <attr name="bookmarksListViewStyle" format="reference" />
+
+        <!-- Default style for the TopSitesGridItemView -->
+        <attr name="topSitesGridItemViewStyle" format="reference" />
+
+        <!-- Style for the PanelGridView -->
+        <attr name="panelGridViewStyle" format="reference" />
+
+        <!-- Default style for the TopSitesGridView -->
+        <attr name="topSitesGridViewStyle" format="reference" />
+
+        <!-- Default style for the TopSitesThumbnailView -->
+        <attr name="topSitesThumbnailViewStyle" format="reference" />
+
+        <!-- Default style for the HomeListView -->
+        <attr name="homeListViewStyle" format="reference" />
+
+    </declare-styleable>
+
+    <!-- DoorHangers -->
+    <declare-styleable name="DoorHanger">
+        <attr name="arrowPopupWidth" format="dimension">
+             <enum name="fill_parent" value="-1" />
+             <enum name="match_parent" value="-1" />
+             <enum name="wrap_content" value="-2" />
+        </attr>
+    </declare-styleable>
+
+    <declare-styleable name="MenuItem">
+        <attr name="android:id"/>
+        <attr name="android:orderInCategory"/>
+        <attr name="android:title"/>
+        <attr name="android:icon"/>
+        <attr name="android:checkable"/>
+        <attr name="android:checked"/>
+        <attr name="android:visible"/>
+        <attr name="android:enabled"/>
+        <attr name="android:showAsAction"/>
+    </declare-styleable>
+
+    <declare-styleable name="MenuItemDefault">
+        <attr name="state_more" format="boolean"/>
+    </declare-styleable>
+
+    <declare-styleable name="TabThumbnailWrapper">
+        <attr name="state_recording" format="boolean"/>
+    </declare-styleable>
+
+    <declare-styleable name="FlowLayout">
+        <attr name="spacing" format="dimension"/>
+    </declare-styleable>
+
+    <declare-styleable name="MultiChoicePreference">
+        <attr name="entries" format="string"/>
+        <attr name="entryKeys" format="string"/>
+        <attr name="initialValues" format="string"/>
+    </declare-styleable>
+
+    <declare-styleable name="BrowserToolbarCurve">
+        <attr name="curveTowards">
+            <flag name="none" value="0x00" />
+            <flag name="left" value="0x01" />
+            <flag name="right" value ="0x02" />
+        </attr>
+    </declare-styleable>
+
+    <declare-styleable name="TabsTray">
+        <attr name="tabs">
+            <flag name="tabs_normal" value="0x00" />
+            <flag name="tabs_private" value ="0x01" />
+        </attr>
+    </declare-styleable>
+
+    <declare-styleable name="TextSelectionHandle">
+        <attr name="handleType">
+            <flag name="start" value="0x01" />
+            <flag name="middle" value="0x02" />
+            <flag name="end" value="0x03" />
+        </attr>
+    </declare-styleable>
+
+    <declare-styleable name="PrivateBrowsing">
+        <attr name="state_private" format="boolean"/>
+    </declare-styleable>
+
+    <declare-styleable name="LightweightTheme">
+        <attr name="state_light" format="boolean"/>
+        <attr name="state_dark" format="boolean"/>
+        <attr name="autoUpdateTheme" format="boolean"/>
+    </declare-styleable>
+
+    <declare-styleable name="TwoWayView">
+        <attr name="android:orientation"/>
+        <attr name="android:choiceMode"/>
+        <attr name="android:listSelector"/>
+        <attr name="android:drawSelectorOnTop"/>
+    </declare-styleable>
+
+    <declare-styleable name="HomeListView">
+        <!-- Draws a divider on top of the list, if true. Defaults to false. -->
+        <attr name="topDivider" format="boolean"/>
+    </declare-styleable>
+
+    <declare-styleable name="HomePagerTabStrip">
+        <attr name="tabIndicatorColor" format="color"/>
+    </declare-styleable>
+
+    <declare-styleable name="FadedTextView">
+        <attr name="fadeWidth" format="dimension"/>
+    </declare-styleable>
+
+    <declare-styleable name="BookmarkFolderView">
+        <attr name="state_open" format="boolean"/>
+    </declare-styleable>
+
+    <declare-styleable name="GeckoView">
+        <attr name="url" format="string"/>
+        <attr name="doinit" format="boolean"/>
+    </declare-styleable>
+
+    <declare-styleable name="IconTabWidget">
+        <attr name="android:layout"/>
+
+        <!-- Sets the tab's content type. Defaults to icon. -->
+        <attr name="display">
+            <enum name="icon" value="0x00" />
+            <enum name="text" value="0x01" />
+        </attr>
+    </declare-styleable>
+
+    <declare-styleable name="TopSitesGridView">
+        <attr name="android:horizontalSpacing"/>
+        <attr name="android:verticalSpacing"/>
+    </declare-styleable>
+
+    <declare-styleable name="TabMenuStrip">
+        <attr name="strip" format="reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="EllipsisTextView">
+        <attr name="ellipsizeAtLine" format="integer"/>
+    </declare-styleable>
+
+    <declare-styleable name="FloatingHintEditText">
+        <attr name="floatingHintEditTextStyle" format="reference" />
+    </declare-styleable>
+
+</resources>
+

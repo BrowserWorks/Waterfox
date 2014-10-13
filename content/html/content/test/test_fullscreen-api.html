@@ -1,0 +1,114 @@
+ <!DOCTYPE HTML>
+<html>
+<head>
+  <title>Test for Bug 545812</title>
+  <script type="application/javascript" src="/MochiKit/packed.js"></script>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+  <script type="application/javascript" src="/tests/SimpleTest/EventUtils.js"></script>
+  <style>
+  body {
+    background-color: black;
+  }
+  </style>
+</head>
+<body>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=545812">Mozilla Bug 545812</a>
+<p id="display"></p>
+<div id="content" style="display: none">
+
+</div>
+<pre id="test">
+<script type="application/javascript">
+
+/** Tests for Bug 545812 **/
+
+// Ensure the full-screen api is enabled, and will be disabled on test exit.
+SpecialPowers.setBoolPref("full-screen-api.enabled", true);
+
+// Disable the requirement for trusted contexts only, so the tests are easier
+// to write.
+SpecialPowers.setBoolPref("full-screen-api.allow-trusted-requests-only", false);
+
+// Run the tests which go full-screen in new windows, as mochitests normally
+// run in an iframe, which by default will not have the allowfullscreen
+// attribute set, so full-screen won't work.
+var gTestWindows = [
+  "file_fullscreen-multiple.html",
+  "file_fullscreen-rollback.html",
+  "file_fullscreen-esc-exit.html",
+  "file_fullscreen-denied.html",
+  "file_fullscreen-api.html",
+  "file_fullscreen-api-keys.html",
+  "file_fullscreen-plugins.html",
+  "file_fullscreen-hidden.html",
+  "file_fullscreen-svg-element.html",
+  "file_fullscreen-navigation.html"
+];
+
+var testWindow = null;
+var gTestIndex = 0;
+
+// TODO: if ever we remove these checks for XP and Lion, we should do the same
+// in dom/tests/mochitest/pointerlock/test_pointerlock-api.html, which uses the same pattern.
+const isWinXP = navigator.userAgent.indexOf("Windows NT 5.1") != -1;
+const isOSXLion = navigator.userAgent.indexOf("Mac OS X 10.7") != -1;
+const isOSXMtnLion = navigator.userAgent.indexOf("Mac OS X 10.8") != -1;
+
+function nextTest() {
+  if (isWinXP) {
+    todo(false, "Can't reliably run full-screen tests on Windows XP due to bug 704010");
+    SimpleTest.finish();
+    return;
+  }
+  if (testWindow) {
+    testWindow.close();
+    if (isOSXLion || isOSXMtnLion) {
+      // On OS X Lion, tests cause problems. Timeouts are a bad way to get around
+      // the problem and may lead to future [orange], but they are the only option
+      // at this point.
+      SimpleTest.waitForFocus(function() { setTimeout(runNextTest, 3000); });
+      return;
+    }
+  }
+  runNextTest();
+}
+
+function runNextTest() {
+  if (gTestIndex < gTestWindows.length) {
+    testWindow = window.open(gTestWindows[gTestIndex], "", "width=500,height=500");
+    // We'll wait for the window to load, then make sure our window is refocused
+    // before starting the test, which will get kicked off on "focus".
+    // This ensures that we're essentially back on the primary "desktop" on
+    // OS X Lion before we run the test.
+    testWindow.addEventListener("load", function onload() {
+      testWindow.removeEventListener("load", onload, false);
+      SimpleTest.waitForFocus(function() {
+        SimpleTest.waitForFocus(testWindow.begin, testWindow);
+      });
+    }, false);
+    gTestIndex++;
+  } else {
+    SpecialPowers.clearUserPref("full-screen-api.enabled");
+    SpecialPowers.clearUserPref("full-screen-api.allow-trusted-requests-only");
+    SimpleTest.finish();
+  }
+}
+
+if (isOSXLion || isOSXMtnLion) {
+  todo(false, "Can't reliably run full-screen tests on OS X (bug 900453 comment 18 & bug 802504)");
+} else {
+  try {
+    window.fullScreen = true;
+  } catch (e) {
+  }
+  is(window.fullScreen, false, "Shouldn't be able to set window fullscreen from content");
+
+  addLoadEvent(nextTest);
+  SimpleTest.waitForExplicitFinish();
+}
+
+</script>
+</pre>
+</body>
+</html>
