@@ -1,5 +1,5 @@
 /*************************************************************************
-* Copyright (c) 1997-2013, International Business Machines Corporation
+* Copyright (c) 1997-2014, International Business Machines Corporation
 * and others. All Rights Reserved.
 **************************************************************************
 *
@@ -330,7 +330,7 @@ public:
      * @param id            The input time zone ID to be canonicalized.
      * @param canonicalID   Receives the canonical system time zone ID
      *                      or the custom time zone ID in normalized format.
-     * @param status        Recevies the status.  When the given time zone ID
+     * @param status        Receives the status.  When the given time zone ID
      *                      is neither a known system time zone ID nor a
      *                      valid custom time zone ID, U_ILLEGAL_ARGUMENT_ERROR
      *                      is set.
@@ -348,7 +348,7 @@ public:
      *                      or the custom time zone ID in normalized format.
      * @param isSystemID    Receives if the given ID is a known system
      *                      time zone ID.
-     * @param status        Recevies the status.  When the given time zone ID
+     * @param status        Receives the status.  When the given time zone ID
      *                      is neither a known system time zone ID nor a
      *                      valid custom time zone ID, U_ILLEGAL_ARGUMENT_ERROR
      *                      is set.
@@ -358,7 +358,6 @@ public:
     static UnicodeString& U_EXPORT2 getCanonicalID(const UnicodeString& id,
         UnicodeString& canonicalID, UBool& isSystemID, UErrorCode& status);
 
-#ifndef U_HIDE_DRAFT_API
     /**
     * Converts a system time zone ID to an equivalent Windows time zone ID. For example,
     * Windows time zone ID "Pacific Standard Time" is returned for input "America/Los_Angeles".
@@ -379,7 +378,7 @@ public:
     * @return          A reference to the result (<code>winid</code>).
     * @see getIDForWindowsID
     *
-    * @draft ICU 52
+    * @stable ICU 52
     */
     static UnicodeString& U_EXPORT2 getWindowsID(const UnicodeString& id,
         UnicodeString& winid, UErrorCode& status);
@@ -408,12 +407,10 @@ public:
     * @return          A reference to the result (<code>id</code>).
     * @see getWindowsID
     *
-    * @draft ICU 52
+    * @stable ICU 52
     */
     static UnicodeString& U_EXPORT2 getIDForWindowsID(const UnicodeString& winid, const char* region,
         UnicodeString& id, UErrorCode& status);
-
-#endif /* U_HIDE_DRAFT_API */
 
     /**
      * Returns true if the two TimeZones are equal.  (The TimeZone version only compares
@@ -612,8 +609,8 @@ public:
      * in the default locale.
      * This method returns the long name, not including daylight savings.
      * If the display name is not available for the locale,
-     * then this method returns a string in the format
-     * <code>GMT[+-]hh:mm</code>.
+     * then this method returns a string in the localized GMT offset format
+     * such as <code>GMT[+-]HH:mm</code>.
      * @param result the human-readable name of this time zone in the default locale.
      * @return       A reference to 'result'.
      * @stable ICU 2.0
@@ -625,8 +622,8 @@ public:
      * in the specified locale.
      * This method returns the long name, not including daylight savings.
      * If the display name is not available for the locale,
-     * then this method returns a string in the format
-     * <code>GMT[+-]hh:mm</code>.
+     * then this method returns a string in the localized GMT offset format
+     * such as <code>GMT[+-]HH:mm</code>.
      * @param locale the locale in which to supply the display name.
      * @param result the human-readable name of this time zone in the given locale
      *               or in the default locale if the given locale is not recognized.
@@ -639,8 +636,8 @@ public:
      * Returns a name of this time zone suitable for presentation to the user
      * in the default locale.
      * If the display name is not available for the locale,
-     * then this method returns a string in the format
-     * <code>GMT[+-]hh:mm</code>.
+     * then this method returns a string in the localized GMT offset format
+     * such as <code>GMT[+-]HH:mm</code>.
      * @param daylight if true, return the daylight savings name.
      * @param style
      * @param result the human-readable name of this time zone in the default locale.
@@ -653,8 +650,8 @@ public:
      * Returns a name of this time zone suitable for presentation to the user
      * in the specified locale.
      * If the display name is not available for the locale,
-     * then this method returns a string in the format
-     * <code>GMT[+-]hh:mm</code>.
+     * then this method returns a string in the localized GMT offset format
+     * such as <code>GMT[+-]HH:mm</code>.
      * @param daylight if true, return the daylight savings name.
      * @param style
      * @param locale the locale in which to supply the display name.

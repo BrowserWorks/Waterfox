@@ -22,6 +22,7 @@
 #include "xpcprivate.h"
 
 #include "mozilla/dom/DOMExceptionBinding.h"
+#include "mozilla/ErrorResult.h"
 
 using namespace mozilla;
 
@@ -69,7 +70,7 @@ enum DOM4ErrorTypeCodeMap {
   NotReadableError         = 0,
 
   /* FileHandle API errors */
-  LockedFileInactiveError = 0,
+  FileHandleInactiveError = 0,
 
   /* WebCrypto errors https://dvcs.w3.org/hg/webcrypto-api/raw-file/tip/spec/Overview.html#dfn-DataError */
   OperationError           = 0,
@@ -551,6 +552,14 @@ Exception::GetData() const
 {
   nsCOMPtr<nsISupports> data = mData;
   return data.forget();
+}
+
+void
+Exception::GetStack(nsAString& aStack, ErrorResult& aRv) const
+{
+  if (mLocation) {
+    aRv = mLocation->GetFormattedStack(aStack);
+  }
 }
 
 void

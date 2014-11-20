@@ -140,6 +140,9 @@ include ../../content/test/reftest/reftest.list
 # counters/
 include counters/reftest.list
 
+# counter-style/
+include counter-style/reftest.list
+
 # datalist
 include datalist/reftest.list
 
@@ -295,6 +298,8 @@ include table-overflow/reftest.list
 
 # table-width/
 include table-width/reftest.list
+
+include ../tables/reftests/reftest.list
 
 # text/
 include text/reftest.list

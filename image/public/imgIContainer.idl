@@ -7,12 +7,10 @@
 #include "nsISupports.idl"
 
 %{C++
-#include "gfxImageSurface.h"
 #include "gfxContext.h"
 #include "gfxMatrix.h"
 #include "gfxRect.h"
 #include "GraphicsFilter.h"
-#include "gfxASurface.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/RefPtr.h"
 #include "nsRect.h"
@@ -35,20 +33,18 @@ class SVGImageContext;
 
 namespace mozilla {
 namespace image {
-class Orientation;
+struct Orientation;
 }
 }
 
 %}
 
-[ptr] native gfxImageSurface(gfxImageSurface);
-[ptr] native gfxASurface(gfxASurface);
-native gfxImageFormat(gfxASurface::gfxImageFormat);
 [ptr] native gfxContext(gfxContext);
 [ref] native gfxMatrix(gfxMatrix);
 [ref] native gfxRect(gfxRect);
 native gfxGraphicsFilter(GraphicsFilter);
 [ref] native nsIntRect(nsIntRect);
+native nsIntRectByVal(nsIntRect);
 [ref] native nsIntSize(nsIntSize);
 native nsSize(nsSize);
 [ptr] native nsIFrame(nsIFrame);
@@ -58,6 +54,7 @@ native Orientation(mozilla::image::Orientation);
 [ref] native TimeStamp(mozilla::TimeStamp);
 [ptr] native SVGImageContext(mozilla::SVGImageContext);
 native TempRefSourceSurface(mozilla::TemporaryRef<mozilla::gfx::SourceSurface>);
+native TempRefImgIContainer(already_AddRefed<imgIContainer>);
 
 
 /**
@@ -67,7 +64,7 @@ native TempRefSourceSurface(mozilla::TemporaryRef<mozilla::gfx::SourceSurface>);
  *
  * Internally, imgIContainer also manages animation of images.
  */
-[scriptable, builtinclass, uuid(503a830c-734d-4362-91f6-73f83ac59646)]
+[scriptable, builtinclass, uuid(c9bd1257-45fb-4ea6-a669-6da212479191)]
 interface imgIContainer : nsISupports
 {
   /**
@@ -159,6 +156,13 @@ interface imgIContainer : nsISupports
    * caller knows they want a SourceSurface of type DATA.
    */
   const long FLAG_WANT_DATA_SURFACE = 0x20;
+  /**
+   * Forces drawing to happen rather than taking cached rendering from the
+   * surface cache. This is used when we are printing, for example, where we
+   * want the vector commands from VectorImages to end up in the PDF output
+   * rather than a cached rendering at screen resolution.
+   */
+  const long FLAG_BYPASS_SURFACE_CACHE = 0x40;
 
   /**
     * Constants for specifying various "special" frames.
@@ -176,8 +180,7 @@ interface imgIContainer : nsISupports
   /**
    * Get a surface for the given frame. This may be a platform-native,
    * optimized surface, so you cannot inspect its pixel data. If you
-   * need that, use gfxASurface::GetAsReadableARGB32ImageSurface or
-   * gfxASurface::CopyToARGB32ImageSurface.
+   * need that, use SourceSurface::GetDataSurface.
    *
    * @param aWhichFrame Frame specifier of the FRAME_* variety.
    * @param aFlags Flags of the FLAG_* variety
@@ -347,4 +350,19 @@ interface imgIContainer : nsISupports
    * resetAnimation(), or requestRefresh() is called for the first time.
    */
   [notxpcom] void setAnimationStartTime([const] in TimeStamp aTime);
+
+  /*
+   * Given an invalidation rect in the coordinate system used by the decoder,
+   * returns an invalidation rect in image space.
+   *
+   * This is the identity transformation in most cases, but the result can
+   * differ if the image is wrapped by an ImageWrapper that changes its size
+   * or orientation.
+   */
+  [notxpcom] nsIntRectByVal getImageSpaceInvalidationRect([const] in nsIntRect aRect);
+
+  /*
+   * Removes any ImageWrappers and returns the unwrapped base image.
+   */
+  [notxpcom, nostdcall] TempRefImgIContainer unwrap();
 };

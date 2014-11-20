@@ -24,8 +24,9 @@ loader.lazyGetter(this, "CssLogic", () => require("devtools/styleinspector/css-l
 let TRANSITION_CLASS = "moz-styleeditor-transitioning";
 let TRANSITION_DURATION_MS = 500;
 let TRANSITION_BUFFER_MS = 1000;
-let TRANSITION_RULE = "\
-:root.moz-styleeditor-transitioning, :root.moz-styleeditor-transitioning * {\
+let TRANSITION_RULE_SELECTOR =
+".moz-styleeditor-transitioning:root, .moz-styleeditor-transitioning:root *";
+let TRANSITION_RULE = TRANSITION_RULE_SELECTOR + " {\
 transition-duration: " + TRANSITION_DURATION_MS + "ms !important; \
 transition-delay: 0ms !important;\
 transition-timing-function: ease-out !important;\
@@ -73,9 +74,6 @@ let StyleSheetsActor = protocol.ActorClass({
     protocol.Actor.prototype.initialize.call(this, null);
 
     this.parentActor = tabActor;
-
-    // so we can get events when stylesheets and rules are added
-    this.document.styleSheetChangeEventsEnabled = true;
 
     // keep a map of sheets-to-actors so we don't create two actors for one sheet
     this._sheets = new Map();
@@ -272,8 +270,6 @@ let StyleSheetsFront = protocol.FrontClass(StyleSheetsActor, {
   initialize: function(client, tabForm) {
     protocol.Front.prototype.initialize.call(this, client);
     this.actorID = tabForm.styleSheetsActor;
-
-    client.addActorPool(this);
     this.manage(this);
   }
 });
@@ -309,16 +305,8 @@ let MediaRuleActor = protocol.ActorClass({
 
     this._matchesChange = this._matchesChange.bind(this);
 
-    this.line = 0;
-    this.column = 0;
-
-    // We can't get the line of the @media rule itself, so get the line of
-    // the first rule in the media block. See bug 591303.
-    let firstRule = this.rawRule.cssRules[0];
-    if (firstRule && firstRule instanceof Ci.nsIDOMCSSStyleRule) {
-      this.line = DOMUtils.getRuleLine(firstRule);
-      this.column = DOMUtils.getRuleColumn(firstRule);
-    }
+    this.line = DOMUtils.getRuleLine(aMediaRule);
+    this.column = DOMUtils.getRuleColumn(aMediaRule);
 
     try {
       this.mql = this.window.matchMedia(aMediaRule.media.mediaText);
@@ -479,24 +467,6 @@ let StyleSheetActor = protocol.ActorClass({
     this._styleSheetIndex = -1;
 
     this._transitionRefCount = 0;
-
-    this._onRuleAddedOrRemoved = this._onRuleAddedOrRemoved.bind(this);
-
-    if (this.browser) {
-      this.browser.addEventListener("StyleRuleAdded", this._onRuleAddedOrRemoved, true);
-      this.browser.addEventListener("StyleRuleRemoved", this._onRuleAddedOrRemoved, true);
-    }
-  },
-
-  _onRuleAddedOrRemoved: function(event) {
-    if (event.target != this.document || event.stylesheet != this.rawSheet) {
-      return;
-    }
-    if (event.rule && event.rule.type == Ci.nsIDOMCSSRule.MEDIA_RULE) {
-      this._getMediaRules().then((rules) => {
-        events.emit(this, "media-rules-changed", rules);
-      });
-    }
   },
 
   /**
@@ -529,11 +499,11 @@ let StyleSheetActor = protocol.ActorClass({
 
     let deferred = promise.defer();
 
-    let onSheetLoaded = function(event) {
+    let onSheetLoaded = (event) => {
       ownerNode.removeEventListener("load", onSheetLoaded, false);
 
       deferred.resolve(this.rawSheet.cssRules);
-    }.bind(this);
+    };
 
     ownerNode.addEventListener("load", onSheetLoaded, false);
 
@@ -921,6 +891,10 @@ let StyleSheetActor = protocol.ActorClass({
     else {
       this._notifyStyleApplied();
     }
+
+    this._getMediaRules().then((rules) => {
+      events.emit(this, "media-rules-changed", rules);
+    });
   }, {
     request: {
       text: Arg(0, "string"),
@@ -933,20 +907,16 @@ let StyleSheetActor = protocol.ActorClass({
    * to remove the rule after a certain time.
    */
   _insertTransistionRule: function() {
-    // Insert the global transition rule
-    // Use a ref count to make sure we do not add it multiple times.. and remove
-    // it only when all pending StyleSheets-generated transitions ended.
-    if (this._transitionRefCount == 0) {
-      this.rawSheet.insertRule(TRANSITION_RULE, this.rawSheet.cssRules.length);
-      this.document.documentElement.classList.add(TRANSITION_CLASS);
-    }
+    this.document.documentElement.classList.add(TRANSITION_CLASS);
 
-    this._transitionRefCount++;
+    // We always add the rule since we've just reset all the rules
+    this.rawSheet.insertRule(TRANSITION_RULE, this.rawSheet.cssRules.length);
 
     // Set up clean up and commit after transition duration (+buffer)
     // @see _onTransitionEnd
-    this.window.setTimeout(this._onTransitionEnd.bind(this),
-                           TRANSITION_DURATION_MS + TRANSITION_BUFFER_MS);
+    this.window.clearTimeout(this._transitionTimeout);
+    this._transitionTimeout = this.window.setTimeout(this._onTransitionEnd.bind(this),
+                              TRANSITION_DURATION_MS + TRANSITION_BUFFER_MS);
   },
 
   /**
@@ -955,9 +925,12 @@ let StyleSheetActor = protocol.ActorClass({
    */
   _onTransitionEnd: function()
   {
-    if (--this._transitionRefCount == 0) {
-      this.document.documentElement.classList.remove(TRANSITION_CLASS);
-      this.rawSheet.deleteRule(this.rawSheet.cssRules.length - 1);
+    this.document.documentElement.classList.remove(TRANSITION_CLASS);
+
+    let index = this.rawSheet.cssRules.length - 1;
+    let rule = this.rawSheet.cssRules[index];
+    if (rule.selectorText == TRANSITION_RULE_SELECTOR) {
+      this.rawSheet.deleteRule(index);
     }
 
     events.emit(this, "style-applied");

@@ -21,39 +21,23 @@ SOURCES += [
 ]
 
 if CONFIG['MOZ_WMF']:
-  EXPORTS += [
-      'wmf/MFTDecoder.h',
-      'wmf/WMFAudioOutputSource.h',
-      'wmf/WMFDecoderModule.h',
-      'wmf/WMFMediaDataDecoder.h',
-      'wmf/WMFVideoOutputSource.h',
-  ]
-  UNIFIED_SOURCES += [
-      'wmf/MFTDecoder.cpp',
-      'wmf/WMFAudioOutputSource.cpp',
-      'wmf/WMFDecoderModule.cpp',
-      'wmf/WMFMediaDataDecoder.cpp',
-      'wmf/WMFVideoOutputSource.cpp',
-  ]
+  PARALLEL_DIRS += [ 'wmf' ];
 
 if CONFIG['MOZ_FFMPEG']:
   EXPORTS += [
-      'ffmpeg/FFmpegAACDecoder.h',
-      'ffmpeg/FFmpegDataDecoder.h',
-      'ffmpeg/FFmpegDecoderModule.h',
-      'ffmpeg/FFmpegFunctionList.h',
-      'ffmpeg/FFmpegH264Decoder.h',
       'ffmpeg/FFmpegRuntimeLinker.h',
   ]
   UNIFIED_SOURCES += [
-      'ffmpeg/FFmpegAACDecoder.cpp',
-      'ffmpeg/FFmpegDataDecoder.cpp',
-      'ffmpeg/FFmpegDecoderModule.cpp',
-      'ffmpeg/FFmpegH264Decoder.cpp',
+      'ffmpeg/FFmpegLog.cpp',
       'ffmpeg/FFmpegRuntimeLinker.cpp',
   ]
+  PARALLEL_DIRS += [
+      'ffmpeg/libav53',
+      'ffmpeg/libav54',
+      'ffmpeg/libav55',
+  ]
   LOCAL_INCLUDES += [
-      'ffmpeg/include',
+      'ffmpeg',
   ]
 
 FINAL_LIBRARY = 'gklayout'

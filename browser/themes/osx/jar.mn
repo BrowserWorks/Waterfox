@@ -5,6 +5,7 @@
 browser.jar:
 % skin browser classic/1.0 %skin/classic/browser/
   skin/classic/browser/sanitizeDialog.css                   (sanitizeDialog.css)
+  skin/classic/browser/aboutNetError.css                    (../shared/aboutNetError.css)
 * skin/classic/browser/aboutPrivateBrowsing.css             (aboutPrivateBrowsing.css)
 * skin/classic/browser/aboutSessionRestore.css              (aboutSessionRestore.css)
   skin/classic/browser/aboutSessionRestore-window-icon.png
@@ -105,6 +106,8 @@ browser.jar:
   skin/classic/browser/Toolbar-inverted.png
   skin/classic/browser/Toolbar-inverted@2x.png
   skin/classic/browser/toolbarbutton-dropmarker.png
+  skin/classic/browser/undoCloseTab.png                        (../shared/undoCloseTab.png)
+  skin/classic/browser/undoCloseTab@2x.png                     (../shared/undoCloseTab@2x.png)
   skin/classic/browser/urlbar-history-dropmarker.png
   skin/classic/browser/urlbar-history-dropmarker@2x.png
   skin/classic/browser/urlbar-arrow.png
@@ -115,14 +118,27 @@ browser.jar:
   skin/classic/browser/webRTC-shareDevice-16@2x.png
   skin/classic/browser/webRTC-shareDevice-64.png
   skin/classic/browser/webRTC-shareDevice-64@2x.png
-  skin/classic/browser/webRTC-sharingDevice-16.png
-  skin/classic/browser/webRTC-sharingDevice-16@2x.png
+  skin/classic/browser/webRTC-sharingDevice-16.png    (../shared/webrtc/webRTC-sharingDevice-16.png)
+  skin/classic/browser/webRTC-sharingDevice-16@2x.png (../shared/webrtc/webRTC-sharingDevice-16@2x.png)
   skin/classic/browser/webRTC-shareMicrophone-16.png
   skin/classic/browser/webRTC-shareMicrophone-16@2x.png
   skin/classic/browser/webRTC-shareMicrophone-64.png
   skin/classic/browser/webRTC-shareMicrophone-64@2x.png
-  skin/classic/browser/webRTC-sharingMicrophone-16.png
-  skin/classic/browser/webRTC-sharingMicrophone-16@2x.png
+  skin/classic/browser/webRTC-sharingMicrophone-16.png (../shared/webrtc/webRTC-sharingMicrophone-16.png)
+  skin/classic/browser/webRTC-sharingMicrophone-16@2x.png (../shared/webrtc/webRTC-sharingMicrophone-16@2x.png)
+  skin/classic/browser/webRTC-shareScreen-16.png      (../shared/webrtc/webRTC-shareScreen-16.png)
+  skin/classic/browser/webRTC-shareScreen-16@2x.png   (../shared/webrtc/webRTC-shareScreen-16@2x.png)
+  skin/classic/browser/webRTC-shareScreen-64.png      (../shared/webrtc/webRTC-shareScreen-64.png)
+  skin/classic/browser/webRTC-shareScreen-64@2x.png   (../shared/webrtc/webRTC-shareScreen-64@2x.png)
+  skin/classic/browser/webRTC-sharingScreen-16.png    (../shared/webrtc/webRTC-sharingScreen-16.png)
+  skin/classic/browser/webRTC-sharingScreen-16@2x.png (../shared/webrtc/webRTC-sharingScreen-16@2x.png)
+  skin/classic/browser/webRTC-sharingDevice-menubar.png
+  skin/classic/browser/webRTC-sharingDevice-menubar@2x.png
+  skin/classic/browser/webRTC-sharingMicrophone-menubar.png
+  skin/classic/browser/webRTC-sharingMicrophone-menubar@2x.png
+  skin/classic/browser/webRTC-sharingScreen-menubar.png
+  skin/classic/browser/webRTC-sharingScreen-menubar@2x.png
+  skin/classic/browser/webRTC-indicator.css
   skin/classic/browser/customizableui/background-noise-toolbar.png  (customizableui/background-noise-toolbar.png)
   skin/classic/browser/customizableui/customize-titleBar-toggle.png  (customizableui/customize-titleBar-toggle.png)
   skin/classic/browser/customizableui/customize-titleBar-toggle@2x.png  (customizableui/customize-titleBar-toggle@2x.png)
@@ -171,9 +187,8 @@ browser.jar:
   skin/classic/browser/feeds/videoFeedIcon16.png            (feeds/feedIcon16.png)
   skin/classic/browser/feeds/audioFeedIcon.png              (feeds/feedIcon.png)
   skin/classic/browser/feeds/audioFeedIcon16.png            (feeds/feedIcon16.png)
-  skin/classic/browser/newtab/newTab.css                    (newtab/newTab.css)
-  skin/classic/browser/newtab/controls.png                  (../shared/newtab/controls.png)
-  skin/classic/browser/newtab/controls@2x.png               (newtab/controls@2x.png)
+* skin/classic/browser/newtab/newTab.css                    (newtab/newTab.css)
+  skin/classic/browser/newtab/controls.svg                  (../shared/newtab/controls.svg)
   skin/classic/browser/setDesktopBackground.css
   skin/classic/browser/monitor.png
   skin/classic/browser/monitor_16-10.png
@@ -433,6 +448,8 @@ browser.jar:
   skin/classic/browser/devtools/vview-lock@2x.png           (../shared/devtools/images/vview-lock@2x.png)
   skin/classic/browser/devtools/vview-open-inspector.png    (../shared/devtools/images/vview-open-inspector.png)
   skin/classic/browser/devtools/vview-open-inspector@2x.png (../shared/devtools/images/vview-open-inspector@2x.png)
+  skin/classic/browser/devtools/cubic-bezier-swatch.png     (../shared/devtools/images/cubic-bezier-swatch.png)
+  skin/classic/browser/devtools/cubic-bezier-swatch@2x.png  (../shared/devtools/images/cubic-bezier-swatch@2x.png)
   skin/classic/browser/devtools/undock@2x.png               (../shared/devtools/images/undock@2x.png)
   skin/classic/browser/devtools/font-inspector.css          (../shared/devtools/font-inspector.css)
   skin/classic/browser/devtools/computedview.css            (../shared/devtools/computedview.css)

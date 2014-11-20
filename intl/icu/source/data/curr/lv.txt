@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2013 International Business Machines
+// * Copyright (C) 2014 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/lv.xml
@@ -113,7 +113,7 @@ lv{
         }
         BWP{
             "BWP",
-            "Botsvānas pula",
+            "Botsvanas pula",
         }
         BYR{
             "BYR",
@@ -229,7 +229,7 @@ lv{
         }
         FKP{
             "FKP",
-            "Folklenda salu mārciņa",
+            "Folklenda Salu mārciņa",
         }
         FRF{
             "FRF",
@@ -657,11 +657,11 @@ lv{
         }
         TMM{
             "TMM",
-            "Turkmenistānas manats",
+            "Turkmenistānas manats (1993–2009)",
         }
         TMT{
             "TMT",
-            "Turkmenistānas jaunais manats",
+            "Turkmenistānas manats",
         }
         TND{
             "TND",
@@ -673,11 +673,11 @@ lv{
         }
         TRL{
             "TRL",
-            "Turcijas lira",
+            "Turcijas lira (1922–2005)",
         }
         TRY{
             "TRY",
-            "Turcijas jaunā lira",
+            "Turcijas lira",
         }
         TTD{
             "TTD",
@@ -809,7 +809,7 @@ lv{
         }
         ZAR{
             "ZAR",
-            "Dienvidāfrikas rands",
+            "Dienvidāfrikas rends",
         }
         ZMK{
             "ZMK",
@@ -828,11 +828,64 @@ lv{
             "Zimbabves dolārs (2009)",
         }
     }
+    Currencies%narrow{
+        ARS{"$"}
+        AUD{"$"}
+        BBD{"$"}
+        BDT{"৳"}
+        BMD{"$"}
+        BND{"$"}
+        BRL{"R$"}
+        BSD{"$"}
+        BYR{"р."}
+        BZD{"$"}
+        CAD{"$"}
+        CLP{"$"}
+        CNY{"¥"}
+        COP{"$"}
+        CRC{"₡"}
+        CUP{"$"}
+        DOP{"$"}
+        EUR{"€"}
+        FJD{"$"}
+        GBP{"£"}
+        GIP{"£"}
+        GYD{"$"}
+        HKD{"$"}
+        ILS{"₪"}
+        INR{"₹"}
+        JMD{"$"}
+        JPY{"¥"}
+        KHR{"៛"}
+        KRW{"₩"}
+        KYD{"$"}
+        KZT{"₸"}
+        LAK{"₭"}
+        LRD{"$"}
+        MNT{"₮"}
+        MXN{"$"}
+        NAD{"$"}
+        NGN{"₦"}
+        NZD{"$"}
+        PHP{"₱"}
+        PYG{"₲"}
+        SBD{"$"}
+        SGD{"$"}
+        SRD{"$"}
+        SSP{"£"}
+        TRY{"₺"}
+        TTD{"$"}
+        TWD{"NT$"}
+        UAH{"₴"}
+        USD{"$"}
+        UYU{"$"}
+        VND{"₫"}
+    }
     CurrencyPlurals{
         AED{
-            one{"Apvienoto Arābu Emirātu dirhēms"}
-            other{"Apvienoto Arābu Emirātu dirhēmi"}
-            zero{"Apvienoto Arābu Emirātu dirhēmi"}
+            one{"AAE dirhēms"}
+            other{"AAE dirhēmi"}
+            zero{"AAE dirhēmi"}
         }
         AFN{
             one{"Afganistānas afgāns"}
@@ -950,9 +1003,9 @@ lv{
             zero{"Butānas ngultrumi"}
         }
         BWP{
-            one{"Botsvānas pula"}
-            other{"Botsvānas pulas"}
-            zero{"Botsvānas pulas"}
+            one{"Botsvanas pula"}
+            other{"Botsvanas pulas"}
+            zero{"Botsvanas pulas"}
         }
         BYR{
             one{"Baltkrievijas rubelis"}
@@ -1065,9 +1118,9 @@ lv{
             zero{"Fidži dolāri"}
         }
         FKP{
-            one{"Folklenda salu mārciņa"}
-            other{"Folklenda salu mārciņas"}
-            zero{"Folklenda salu mārciņas"}
+            one{"Folklenda Salu mārciņa"}
+            other{"Folklenda Salu mārciņas"}
+            zero{"Folklenda Salu mārciņas"}
         }
         GBP{
             one{"Lielbritānijas sterliņu mārciņa"}
@@ -1514,8 +1567,13 @@ lv{
             other{"Tadžikistānas somoni"}
             zero{"Tadžikistānas somoni"}
         }
+        TMM{
+            one{"Turkmenistānas manats (1993–2009)"}
+            other{"Turkmenistānas manati (1993–2009)"}
+            zero{"Turkmenistānas manati (1993–2009)"}
+        }
         TMT{
-            one{"Turkmenistānas jaunais manats"}
+            one{"Turkmenistānas manats"}
             other{"Turkmenistānas manati"}
             zero{"Turkmenistānas manati"}
         }
@@ -1529,8 +1587,13 @@ lv{
             other{"Tongas paangas"}
             zero{"Tongas paangas"}
         }
+        TRL{
+            one{"Turcijas lira (1922–2005)"}
+            other{"Turcijas liras (1922–2005)"}
+            zero{"Turcijas liras (1922–2005)"}
+        }
         TRY{
-            one{"Turcijas jaunā lira"}
+            one{"Turcijas lira"}
             other{"Turcijas liras"}
             zero{"Turcijas liras"}
         }
@@ -1650,9 +1713,9 @@ lv{
             zero{"Jemenas riāli"}
         }
         ZAR{
-            one{"Dienvidāfrikas rands"}
-            other{"Dienvidāfrikas randi"}
-            zero{"Dienvidāfrikas randi"}
+            one{"Dienvidāfrikas rends"}
+            other{"Dienvidāfrikas rendi"}
+            zero{"Dienvidāfrikas rendi"}
         }
         ZMK{
             one{"Zambijas kvača (1968–2012)"}
@@ -1675,5 +1738,5 @@ lv{
         other{"{0} {1}"}
         zero{"{0} {1}"}
     }
-    Version{"2.0.92.87"}
+    Version{"2.1.8.9"}
 }

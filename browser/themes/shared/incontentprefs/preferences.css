@@ -5,13 +5,24 @@
 %endif
 @namespace html "http://www.w3.org/1999/xhtml";
 
+#dialogBox,
+dialog,
+window,
+prefwindow,
+.windowDialog,
 page {
   -moz-appearance: none;
   background-color: white;
+  color: #424E5A;
 }
 
 * {
   -moz-user-select: text;
+}
+
+treecol {
+  /* override the * rule to let the treecol be sortable */
+  -moz-user-select: none;
 }
 
 caption {
@@ -37,7 +48,6 @@ prefpane {
   font: message-box;
   font-size: 1.25rem;
   line-height: 22px;
-  color: #424E5A;
 }
 
 prefpane > .content-box {
@@ -70,7 +80,6 @@ tabpanels {
   -moz-appearance: none;
   font-size: 1.25rem;
   line-height: 22px;
-  color: #424E5A;
   border: none;
   padding: 0;
   background-color: transparent;
@@ -184,6 +193,7 @@ button[type="menu"] > .button-box > .button-menu-dropmarker {
   background-image: none;
 }
 
+.close-icon > .button-box,
 .help-button > .button-box {
   padding-top: 0;
   padding-bottom: 0;
@@ -480,6 +490,11 @@ radio[disabled="true"] > .radio-check {
   box-shadow: inset 4px 0 0 0 #FF9500;
 }
 
+#categories[keyboard-navigation="true"]:-moz-focusring > .category[current] {
+  border-top: 1px #ffffff dotted;
+  border-bottom: 1px #ffffff dotted;
+}
+
 .category-name {
   line-height: 22px;
   font-size: 1.25rem;
@@ -682,6 +697,7 @@ filefield {
   border-radius: 2px;
   background-color: #FBFBFB;
   overflow-y: auto;
+  height: 500px;
 }
 
 #typeColumn,
@@ -786,6 +802,26 @@ description > html|a {
   background-color: #FBFBFB;
 }
 
+#weavePrefsDeck {
+  -moz-margin-start: 60px;
+}
+
+#noFxaAccount {
+  /* Overriding the margins from the base preferences.css theme file.
+     These overrides can be simplified by fixing bug 1027174 */
+  margin: 0;
+}
+
+#weavePrefsDeck > vbox > label,
+#weavePrefsDeck > vbox > groupbox,
+#weavePrefsDeck > vbox > description,
+#weavePrefsDeck > vbox > #pairDevice > label,
+#weavePrefsDeck > #needsUpdate > hbox > #loginError,
+#weavePrefsDeck > #hasFxaAccount > hbox:not(#tosPP) > label {
+  /* no margin-start for elements at the begin of a line */
+  -moz-margin-start: 0;
+}
+
 #advancedPrefs {
   padding-bottom: 0; /* no padding needed in inContent prefs */
 }
@@ -806,3 +842,57 @@ description > html|a {
 .indent {
   -moz-margin-start: 33px;
 }
+
+/**
+ * Sub-dialog
+ */
+
+#dialogOverlay {
+  background-color: rgba(0,0,0,0.5);
+  visibility: hidden;
+}
+
+#dialogBox {
+  border: 1px solid #666;
+  display: -moz-box;
+  margin: 0;
+  padding-right: 6px;
+  padding-left: 6px;
+}
+
+#dialogTitle {
+  -moz-margin-start: 5px !important;
+}
+
+.close-icon {
+  background-color: transparent !important;
+  border: none;
+  box-shadow: none;
+  height: 18px;
+  padding: 0;
+  min-width: 18px;
+}
+
+#dialogBox > .groupbox-body {
+  -moz-appearance: none;
+  padding: 0;
+}
+
+#dialogFrame {
+  /* Default dialog dimensions */
+  height: 20em;
+  width: 66ch;
+}
+
+/* needs to be removed with bug 1035625 */
+:-moz-any(dialog, window, prefwindow) resizer {
+  display: none;
+}
+
+tree:not(#rejectsTree) {
+  min-height: 15em;
+}
+
+/**
+ * End sub-dialog
+ */

@@ -254,8 +254,6 @@ let StyleEditorFront = protocol.FrontClass(StyleEditorActor, {
   initialize: function(client, tabForm) {
     protocol.Front.prototype.initialize.call(this, client);
     this.actorID = tabForm.styleEditorActor;
-
-    client.addActorPool(this);
     this.manage(this);
   },
 
@@ -351,10 +349,10 @@ let OldStyleSheetActor = protocol.ActorClass({
     // if this sheet has an @import, then it's rules are loaded async
     let ownerNode = this.rawSheet.ownerNode;
     if (ownerNode) {
-      let onSheetLoaded = function(event) {
+      let onSheetLoaded = (event) => {
         ownerNode.removeEventListener("load", onSheetLoaded, false);
         this._notifyPropertyChanged("ruleCount");
-      }.bind(this);
+      };
 
       ownerNode.addEventListener("load", onSheetLoaded, false);
     }

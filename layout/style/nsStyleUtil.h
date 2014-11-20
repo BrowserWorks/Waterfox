@@ -19,7 +19,7 @@ class nsIPrincipal;
 class nsIURI;
 struct gfxFontFeature;
 struct gfxAlternateValue;
-class nsCSSValueList;
+struct nsCSSValueList;
 
 // Style utility functions
 class nsStyleUtil {
@@ -63,6 +63,8 @@ public:
 
   static void AppendFontFeatureSettings(const nsCSSValue& src,
                                         nsAString& aResult);
+
+  static void AppendUnicodeRange(const nsCSSValue& aValue, nsAString& aResult);
 
   static void AppendCSSNumber(float aNumber, nsAString& aResult)
   {

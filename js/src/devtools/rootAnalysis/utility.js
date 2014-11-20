@@ -1,6 +1,10 @@
-/* -*- Mode: Javascript; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 4 -*- */
 
 "use strict";
+
+// gcc appends this to mangled function names for "not in charge"
+// constructors/destructors.
+var internalMarker = " *INTERNAL* ";
 
 function assert(x, msg)
 {

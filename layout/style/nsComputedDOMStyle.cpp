@@ -58,30 +58,14 @@ using namespace mozilla::dom;
  * returned by the getComputedStyle() function.
  */
 
-static nsComputedDOMStyle *sCachedComputedDOMStyle;
-
 already_AddRefed<nsComputedDOMStyle>
 NS_NewComputedDOMStyle(dom::Element* aElement, const nsAString& aPseudoElt,
                        nsIPresShell* aPresShell,
                        nsComputedDOMStyle::StyleType aStyleType)
 {
   nsRefPtr<nsComputedDOMStyle> computedStyle;
-  if (sCachedComputedDOMStyle) {
-    // There's an unused nsComputedDOMStyle cached, use it.
-    // But before we use it, re-initialize the object.
-
-    // Oh yeah baby, placement new!
-    computedStyle = new (sCachedComputedDOMStyle)
-      nsComputedDOMStyle(aElement, aPseudoElt, aPresShell, aStyleType);
-
-    sCachedComputedDOMStyle = nullptr;
-  } else {
-    // No nsComputedDOMStyle cached, create a new one.
-
-    computedStyle = new nsComputedDOMStyle(aElement, aPseudoElt, aPresShell,
-                                           aStyleType);
-  }
-
+  computedStyle = new nsComputedDOMStyle(aElement, aPseudoElt, aPresShell,
+                                         aStyleType);
   return computedStyle.forget();
 }
 
@@ -277,18 +261,6 @@ nsComputedDOMStyle::~nsComputedDOMStyle()
 {
 }
 
-void
-nsComputedDOMStyle::Shutdown()
-{
-  // We want to de-allocate without calling the dtor since we
-  // already did that manually in doDestroyComputedDOMStyle(),
-  // so cast our cached object to something that doesn't know
-  // about our dtor.
-  delete reinterpret_cast<char*>(sCachedComputedDOMStyle);
-  sCachedComputedDOMStyle = nullptr;
-}
-
-
 NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(nsComputedDOMStyle, mContent)
 
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_BEGIN(nsComputedDOMStyle)
@@ -309,24 +281,8 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(nsComputedDOMStyle)
 NS_INTERFACE_MAP_END_INHERITING(nsDOMCSSDeclaration)
 
 
-static void doDestroyComputedDOMStyle(nsComputedDOMStyle *aComputedStyle)
-{
-  if (!sCachedComputedDOMStyle) {
-    // The cache is empty, store aComputedStyle in the cache.
-
-    sCachedComputedDOMStyle = aComputedStyle;
-    sCachedComputedDOMStyle->~nsComputedDOMStyle();
-  } else {
-    // The cache is full, delete aComputedStyle
-
-    delete aComputedStyle;
-  }
-}
-
 NS_IMPL_CYCLE_COLLECTING_ADDREF(nsComputedDOMStyle)
-NS_IMPL_CYCLE_COLLECTING_RELEASE_WITH_DESTROY(nsComputedDOMStyle,
-                                              doDestroyComputedDOMStyle(this))
-
+NS_IMPL_CYCLE_COLLECTING_RELEASE(nsComputedDOMStyle)
 
 NS_IMETHODIMP
 nsComputedDOMStyle::GetPropertyValue(const nsCSSProperty aPropID,
@@ -1098,13 +1054,12 @@ nsComputedDOMStyle::DoGetContent()
               nsDependentString(a->Item(1).GetStringBufferValue()), str);
           }
           NS_ABORT_IF_FALSE(eCSSUnit_None != a->Item(typeItem).GetUnit(),
-                            "'none' should be handled  as enumerated value");
-          int32_t type = a->Item(typeItem).GetIntValue();
-          if (type != NS_STYLE_LIST_STYLE_DECIMAL) {
+                            "'none' should be handled as identifier value");
+          nsString type;
+          a->Item(typeItem).GetStringValue(type);
+          if (!type.LowerCaseEqualsLiteral("decimal")) {
             str.AppendLiteral(", ");
-            AppendASCIItoUTF16(
-              nsCSSProps::ValueToKeyword(type, nsCSSProps::kListStyleKTable),
-              str);
+            nsStyleUtil::AppendEscapedCSSIdent(type, str);
           }
 
           str.Append(char16_t(')'));
@@ -1757,7 +1712,7 @@ nsComputedDOMStyle::DoGetBackgroundColor()
 
 
 static void
-SetValueToCalc(const nsStyleCoord::Calc *aCalc, nsROCSSPrimitiveValue *aValue)
+SetValueToCalc(const nsStyleCoord::CalcValue *aCalc, nsROCSSPrimitiveValue *aValue)
 {
   nsRefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   nsAutoString tmp, result;
@@ -1853,7 +1808,7 @@ nsComputedDOMStyle::GetCSSGradientString(const nsStyleGradient* aGradient,
 
   bool needSep = false;
   nsAutoString tokenString;
-  nsROCSSPrimitiveValue *tmpVal = new nsROCSSPrimitiveValue;
+  nsRefPtr<nsROCSSPrimitiveValue> tmpVal = new nsROCSSPrimitiveValue;
 
   if (isRadial && !aGradient->mLegacySyntax) {
     if (aGradient->mSize != NS_STYLE_GRADIENT_SIZE_EXPLICIT_SIZE) {
@@ -1953,7 +1908,6 @@ nsComputedDOMStyle::GetCSSGradientString(const nsStyleGradient* aGradient,
     needSep = true;
   }
 
-  delete tmpVal;
   aString.Append(')');
 }
 
@@ -1963,7 +1917,7 @@ nsComputedDOMStyle::GetImageRectString(nsIURI* aURI,
                                        const nsStyleSides& aCropRect,
                                        nsString& aString)
 {
-  nsDOMCSSValueList* valueList = GetROCSSValueList(true);
+  nsRefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(true);
 
   // <uri>
   nsROCSSPrimitiveValue *valURI = new nsROCSSPrimitiveValue;
@@ -1979,7 +1933,6 @@ nsComputedDOMStyle::GetImageRectString(nsIURI* aURI,
 
   nsAutoString argumentString;
   valueList->GetCssText(argumentString);
-  delete valueList;
 
   aString = NS_LITERAL_STRING("-moz-image-rect(") +
             argumentString +
@@ -2992,9 +2945,12 @@ CSSValue*
 nsComputedDOMStyle::DoGetListStyleType()
 {
   nsROCSSPrimitiveValue *val = new nsROCSSPrimitiveValue;
-  val->SetIdent(
-    nsCSSProps::ValueToKeywordEnum(StyleList()->mListStyleType,
-                                   nsCSSProps::kListStyleKTable));
+  // want SetIdent
+  nsString type;
+  StyleList()->GetListStyleType(type);
+  nsString value;
+  nsStyleUtil::AppendEscapedCSSIdent(type, value);
+  val->SetString(value);
   return val;
 }
 
@@ -4192,10 +4148,7 @@ nsComputedDOMStyle::DoGetTop()
 nsDOMCSSValueList*
 nsComputedDOMStyle::GetROCSSValueList(bool aCommaDelimited)
 {
-  nsDOMCSSValueList *valueList = new nsDOMCSSValueList(aCommaDelimited, true);
-  NS_ASSERTION(valueList != 0, "ran out of memory");
-
-  return valueList;
+  return new nsDOMCSSValueList(aCommaDelimited, true);
 }
 
 CSSValue*
@@ -5123,11 +5076,10 @@ void
 nsComputedDOMStyle::SetCssTextToCoord(nsAString& aCssText,
                                       const nsStyleCoord& aCoord)
 {
-  nsROCSSPrimitiveValue* value = new nsROCSSPrimitiveValue;
+  nsRefPtr<nsROCSSPrimitiveValue> value = new nsROCSSPrimitiveValue;
   bool clampNegativeCalc = true;
   SetValueToCoord(value, aCoord, clampNegativeCalc);
   value->GetCssText(aCssText);
-  delete value;
 }
 
 CSSValue*
@@ -5237,7 +5189,7 @@ nsComputedDOMStyle::DoGetTransitionDelay()
                     "first item must be explicit");
   uint32_t i = 0;
   do {
-    const nsTransition *transition = &display->mTransitions[i];
+    const StyleTransition *transition = &display->mTransitions[i];
     nsROCSSPrimitiveValue* delay = new nsROCSSPrimitiveValue;
     valueList->AppendCSSValue(delay);
     delay->SetTime((float)transition->GetDelay() / (float)PR_MSEC_PER_SEC);
@@ -5257,7 +5209,7 @@ nsComputedDOMStyle::DoGetTransitionDuration()
                     "first item must be explicit");
   uint32_t i = 0;
   do {
-    const nsTransition *transition = &display->mTransitions[i];
+    const StyleTransition *transition = &display->mTransitions[i];
     nsROCSSPrimitiveValue* duration = new nsROCSSPrimitiveValue;
     valueList->AppendCSSValue(duration);
 
@@ -5278,7 +5230,7 @@ nsComputedDOMStyle::DoGetTransitionProperty()
                     "first item must be explicit");
   uint32_t i = 0;
   do {
-    const nsTransition *transition = &display->mTransitions[i];
+    const StyleTransition *transition = &display->mTransitions[i];
     nsROCSSPrimitiveValue* property = new nsROCSSPrimitiveValue;
     valueList->AppendCSSValue(property);
     nsCSSProperty cssprop = transition->GetProperty();
@@ -5362,7 +5314,7 @@ nsComputedDOMStyle::DoGetAnimationName()
                     "first item must be explicit");
   uint32_t i = 0;
   do {
-    const nsAnimation *animation = &display->mAnimations[i];
+    const StyleAnimation *animation = &display->mAnimations[i];
     nsROCSSPrimitiveValue* property = new nsROCSSPrimitiveValue;
     valueList->AppendCSSValue(property);
 
@@ -5390,7 +5342,7 @@ nsComputedDOMStyle::DoGetAnimationDelay()
                     "first item must be explicit");
   uint32_t i = 0;
   do {
-    const nsAnimation *animation = &display->mAnimations[i];
+    const StyleAnimation *animation = &display->mAnimations[i];
     nsROCSSPrimitiveValue* delay = new nsROCSSPrimitiveValue;
     valueList->AppendCSSValue(delay);
     delay->SetTime((float)animation->GetDelay() / (float)PR_MSEC_PER_SEC);
@@ -5410,7 +5362,7 @@ nsComputedDOMStyle::DoGetAnimationDuration()
                     "first item must be explicit");
   uint32_t i = 0;
   do {
-    const nsAnimation *animation = &display->mAnimations[i];
+    const StyleAnimation *animation = &display->mAnimations[i];
     nsROCSSPrimitiveValue* duration = new nsROCSSPrimitiveValue;
     valueList->AppendCSSValue(duration);
 
@@ -5449,7 +5401,7 @@ nsComputedDOMStyle::DoGetAnimationDirection()
                     "first item must be explicit");
   uint32_t i = 0;
   do {
-    const nsAnimation *animation = &display->mAnimations[i];
+    const StyleAnimation *animation = &display->mAnimations[i];
     nsROCSSPrimitiveValue* direction = new nsROCSSPrimitiveValue;
     valueList->AppendCSSValue(direction);
     direction->SetIdent(
@@ -5471,7 +5423,7 @@ nsComputedDOMStyle::DoGetAnimationFillMode()
                     "first item must be explicit");
   uint32_t i = 0;
   do {
-    const nsAnimation *animation = &display->mAnimations[i];
+    const StyleAnimation *animation = &display->mAnimations[i];
     nsROCSSPrimitiveValue* fillMode = new nsROCSSPrimitiveValue;
     valueList->AppendCSSValue(fillMode);
     fillMode->SetIdent(
@@ -5493,7 +5445,7 @@ nsComputedDOMStyle::DoGetAnimationIterationCount()
                     "first item must be explicit");
   uint32_t i = 0;
   do {
-    const nsAnimation *animation = &display->mAnimations[i];
+    const StyleAnimation *animation = &display->mAnimations[i];
     nsROCSSPrimitiveValue* iterationCount = new nsROCSSPrimitiveValue;
     valueList->AppendCSSValue(iterationCount);
 
@@ -5527,7 +5479,7 @@ nsComputedDOMStyle::DoGetAnimationPlayState()
                     "first item must be explicit");
   uint32_t i = 0;
   do {
-    const nsAnimation *animation = &display->mAnimations[i];
+    const StyleAnimation *animation = &display->mAnimations[i];
     nsROCSSPrimitiveValue* playState = new nsROCSSPrimitiveValue;
     valueList->AppendCSSValue(playState);
     playState->SetIdent(

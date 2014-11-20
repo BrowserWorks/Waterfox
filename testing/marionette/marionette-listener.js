@@ -1,4 +1,4 @@
-/* -*- Mode: javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -168,6 +168,7 @@ function startListeners() {
   addMessageListenerId("Marionette:getElementValueOfCssProperty", getElementValueOfCssProperty);
   addMessageListenerId("Marionette:submitElement", submitElement);
   addMessageListenerId("Marionette:getElementSize", getElementSize);
+  addMessageListenerId("Marionette:getElementRect", getElementRect);
   addMessageListenerId("Marionette:isElementEnabled", isElementEnabled);
   addMessageListenerId("Marionette:isElementSelected", isElementSelected);
   addMessageListenerId("Marionette:sendKeysToElement", sendKeysToElement);
@@ -268,6 +269,7 @@ function deleteSession(msg) {
   removeMessageListenerId("Marionette:getElementValueOfCssProperty", getElementValueOfCssProperty);
   removeMessageListenerId("Marionette:submitElement", submitElement);
   removeMessageListenerId("Marionette:getElementSize", getElementSize);
+  removeMessageListenerId("Marionette:getElementRect", getElementRect);
   removeMessageListenerId("Marionette:isElementEnabled", isElementEnabled);
   removeMessageListenerId("Marionette:isElementSelected", isElementSelected);
   removeMessageListenerId("Marionette:sendKeysToElement", sendKeysToElement);
@@ -495,6 +497,7 @@ function executeScript(msg, directInject) {
                       createInstance(Components.interfaces.nsIFileInputStream);
         stream.init(importedScripts, -1, 0, 0);
         let data = NetUtil.readInputStreamToString(stream, stream.available());
+        stream.close();
         script = data + script;
       }
       let res = Cu.evalInSandbox(script, sandbox, "1.8", "dummy file" ,0);
@@ -511,8 +514,8 @@ function executeScript(msg, directInject) {
     }
     else {
       try {
-        sandbox.__marionetteParams = elementManager.convertWrappedArguments(
-          msg.json.args, curFrame);
+        sandbox.__marionetteParams = Cu.cloneInto(elementManager.convertWrappedArguments(
+          msg.json.args, curFrame), sandbox, { wrapReflectors: true });
       }
       catch(e) {
         sendError(e.message, e.code, e.stack, asyncTestCommandId);
@@ -526,6 +529,7 @@ function executeScript(msg, directInject) {
                       createInstance(Components.interfaces.nsIFileInputStream);
         stream.init(importedScripts, -1, 0, 0);
         let data = NetUtil.readInputStreamToString(stream, stream.available());
+        stream.close();
         script = data + script;
       }
       let res = Cu.evalInSandbox(script, sandbox, "1.8", "dummy file", 0);
@@ -642,8 +646,8 @@ function executeWithCallback(msg, useFinish) {
   }
   else {
     try {
-      sandbox.__marionetteParams = elementManager.convertWrappedArguments(
-        msg.json.args, curFrame);
+      sandbox.__marionetteParams = Cu.cloneInto(elementManager.convertWrappedArguments(
+        msg.json.args, curFrame), sandbox, { wrapReflectors: true });
     }
     catch(e) {
       sendError(e.message, e.code, e.stack, asyncTestCommandId);
@@ -662,6 +666,7 @@ function executeWithCallback(msg, useFinish) {
                       createInstance(Ci.nsIFileInputStream);
       stream.init(importedScripts, -1, 0, 0);
       let data = NetUtil.readInputStreamToString(stream, stream.available());
+      stream.close();
       scriptSrc = data + scriptSrc;
     }
     Cu.evalInSandbox(scriptSrc, sandbox, "1.8", "dummy file", 0);
@@ -1517,6 +1522,25 @@ function getElementSize(msg){
     let el = elementManager.getKnownElement(msg.json.id, curFrame);
     let clientRect = el.getBoundingClientRect();
     sendResponse({value: {width: clientRect.width, height: clientRect.height}},
+                 command_id);
+  }
+  catch (e) {
+    sendError(e.message, e.code, e.stack, command_id);
+  }
+}
+
+/**
+ * Get the size of the element and return it
+ */
+function getElementRect(msg){
+  let command_id = msg.json.command_id;
+  try {
+    let el = elementManager.getKnownElement(msg.json.id, curFrame);
+    let clientRect = el.getBoundingClientRect();
+    sendResponse({value: {x: clientRect.x + curFrame.pageXOffset,
+                          y: clientRect.y  + curFrame.pageYOffset,
+                          width: clientRect.width,
+                          height: clientRect.height}},
                  command_id);
   }
   catch (e) {

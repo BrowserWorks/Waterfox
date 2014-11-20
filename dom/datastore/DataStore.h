@@ -83,6 +83,8 @@ public:
   void SetDataStoreImpl(DataStoreImpl& aStore, ErrorResult& aRv);
 
 private:
+  ~DataStore();
+
   nsRefPtr<DataStoreImpl> mStore;
 };
 

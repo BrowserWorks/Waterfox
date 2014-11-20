@@ -1,4 +1,4 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- /
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- /
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
@@ -472,13 +472,6 @@ SettingsListener.observe('debugger.remote-mode', false, function(value) {
 #endif
 });
 
-// If debug access to certified apps is allowed, we need to preserve system
-// sources so that they are visible in the debugger.
-let forbidCertified =
-  Services.prefs.getBoolPref('devtools.debugger.forbid-certified-apps');
-Services.prefs.setBoolPref('javascript.options.discardSystemSource',
-                           forbidCertified);
-
 // =================== Device Storage ====================
 SettingsListener.observe('device.storage.writable.name', 'sdcard', function(value) {
   if (Services.prefs.getPrefType('device.storage.writable.name') != Ci.nsIPrefBranch.PREF_STRING) {
@@ -664,13 +657,13 @@ let settingsToObserve = {
     defaultValue: false
   },
   'devtools.eventlooplag.threshold': 100,
+  'dom.mozApps.use_reviewer_certs': false,
   'layers.draw-borders': false,
   'layers.draw-tile-borders': false,
   'layers.dump': false,
   'layers.enable-tiles': true,
   'layers.simple-tiles': false,
   'privacy.donottrackheader.enabled': false,
-  'ril.cellbroadcast.disabled': false,
   'ril.radio.disabled': false,
   'ril.mms.requestReadReport.enabled': {
     prefName: 'dom.mms.requestReadReport',

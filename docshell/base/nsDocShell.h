@@ -210,6 +210,7 @@ public:
     NS_IMETHOD GetAssociatedWindow(nsIDOMWindow**);
     NS_IMETHOD GetTopWindow(nsIDOMWindow**);
     NS_IMETHOD GetTopFrameElement(nsIDOMElement**);
+    NS_IMETHOD GetNestedFrameId(uint64_t*);
     NS_IMETHOD IsAppOfType(uint32_t, bool*);
     NS_IMETHOD GetIsContent(bool*);
     NS_IMETHOD GetUsePrivateBrowsing(bool*);
@@ -922,11 +923,11 @@ public:
     class InterfaceRequestorProxy : public nsIInterfaceRequestor {
     public:
         InterfaceRequestorProxy(nsIInterfaceRequestor* p);
-        virtual ~InterfaceRequestorProxy();
         NS_DECL_THREADSAFE_ISUPPORTS
         NS_DECL_NSIINTERFACEREQUESTOR
  
     protected:
+        virtual ~InterfaceRequestorProxy();
         InterfaceRequestorProxy() {}
         nsWeakPtr mWeakPtr;
     };

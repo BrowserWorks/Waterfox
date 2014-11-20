@@ -10,7 +10,7 @@
 #include "nsCOMPtr.h"               // for member, local
 #include "nsGkAtoms.h"              // for nsGkAtoms::baseURIProperty
 #include "nsIDOMNode.h"
-#include "nsINodeInfo.h"            // member (in nsCOMPtr)
+#include "mozilla/dom/NodeInfo.h"            // member (in nsCOMPtr)
 #include "nsIVariant.h"             // for use in GetUserData()
 #include "nsNodeInfoManager.h"      // for use in NodePrincipal()
 #include "nsPropertyTable.h"        // for typedefs
@@ -31,7 +31,7 @@
 
 class nsAttrAndChildArray;
 class nsChildContentList;
-class nsCSSSelectorList;
+struct nsCSSSelectorList;
 class nsDOMAttributeMap;
 class nsIContent;
 class nsIDocument;
@@ -79,7 +79,8 @@ struct DOMPointInit;
 } // namespace dom
 } // namespace mozilla
 
-#define NODE_FLAG_BIT(n_) (1U << (WRAPPER_CACHE_FLAGS_BITS_USED + (n_)))
+#define NODE_FLAG_BIT(n_) \
+  (nsWrapperCache::FlagsType(1U) << (WRAPPER_CACHE_FLAGS_BITS_USED + (n_)))
 
 enum {
   // This bit will be set if the node has a listener manager.
@@ -183,7 +184,8 @@ enum {
 
 // Make sure we have space for our bits
 #define ASSERT_NODE_FLAGS_SPACE(n) \
-  static_assert(WRAPPER_CACHE_FLAGS_BITS_USED + (n) <= 32, \
+  static_assert(WRAPPER_CACHE_FLAGS_BITS_USED + (n) <=                          \
+                  sizeof(nsWrapperCache::FlagsType) * 8,                        \
                 "Not enough space for our bits")
 ASSERT_NODE_FLAGS_SPACE(NODE_TYPE_SPECIFIC_BITS_OFFSET);
 
@@ -275,8 +277,8 @@ private:
 
 // IID for the nsINode interface
 #define NS_INODE_IID \
-{ 0x77a62cd0, 0xb34f, 0x42cb, \
-  { 0x94, 0x52, 0xae, 0xb2, 0x4d, 0x93, 0x2c, 0xb4 } }
+{ 0x3a60353e, 0x04e5, 0x49ca, \
+  { 0x84, 0x1c, 0x59, 0xc6, 0xde, 0xe6, 0x36, 0xcc } }
 
 /**
  * An internal interface that abstracts some DOMNode-related parts that both
@@ -337,7 +339,7 @@ public:
   friend class nsAttrAndChildArray;
 
 #ifdef MOZILLA_INTERNAL_API
-  nsINode(already_AddRefed<nsINodeInfo>& aNodeInfo)
+  nsINode(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
   : mNodeInfo(aNodeInfo),
     mParent(nullptr),
     mBoolFlags(0),
@@ -515,9 +517,17 @@ public:
    *
    * @return whether this content is in a document tree
    */
-  bool IsInDoc() const
+  bool IsInUncomposedDoc() const
   {
     return GetBoolFlag(IsInDocument);
+  }
+
+  /**
+   * @deprecated
+   */
+  bool IsInDoc() const
+  {
+    return IsInUncomposedDoc();
   }
 
   /**
@@ -526,9 +536,18 @@ public:
    *
    * @return the current document
    */
+
+  nsIDocument* GetUncomposedDoc() const
+  {
+    return IsInUncomposedDoc() ? OwnerDoc() : nullptr;
+  }
+
+  /**
+   * @deprecated
+   */
   nsIDocument *GetCurrentDoc() const
   {
-    return IsInDoc() ? OwnerDoc() : nullptr;
+    return GetUncomposedDoc();
   }
 
   /**
@@ -538,10 +557,26 @@ public:
    * that is located in the root of the "tree of trees" (see Shadow DOM
    * spec) and returns the current doc for that host.
    */
+  nsIDocument* GetComposedDoc() const
+  {
+    return IsInShadowTree() ?
+      GetComposedDocInternal() : GetUncomposedDoc();
+  }
+
+  /**
+   * @deprecated
+   */
   nsIDocument* GetCrossShadowCurrentDoc() const
   {
-    return HasFlag(NODE_IS_IN_SHADOW_TREE) ?
-      GetCrossShadowCurrentDocInternal() : GetCurrentDoc();
+    return GetComposedDoc();
+  }
+
+  /**
+   * Returns true if GetComposedDoc() would return a non-null value.
+   */
+  bool IsInComposedDoc() const
+  {
+    return IsInUncomposedDoc() || (IsInShadowTree() && GetComposedDocInternal());
   }
 
   /**
@@ -823,6 +858,12 @@ public:
   }
 
   /**
+   * Get the parent Element of this node, traversing over a ShadowRoot
+   * to its host if necessary.
+   */
+  mozilla::dom::Element* GetParentElementCrossingShadowRoot() const;
+
+  /**
    * Get the root of the subtree this node belongs to.  This never returns
    * null.  It may return 'this' (e.g. for document nodes, and nodes that
    * are the roots of disconnected subtrees).
@@ -898,7 +939,7 @@ public:
    * @param aNodeInfo the nodeinfo to use for the clone
    * @param aResult the clone
    */
-  virtual nsresult Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const = 0;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const = 0;
 
   // This class can be extended by subclasses that wish to store more
   // information in the slots.
@@ -948,7 +989,7 @@ public:
   }
 #endif
 
-  void SetFlags(uint32_t aFlagsToSet)
+  void SetFlags(FlagsType aFlagsToSet)
   {
     NS_ASSERTION(!(aFlagsToSet & (NODE_IS_ANONYMOUS_ROOT |
                                   NODE_IS_NATIVE_ANONYMOUS_ROOT |
@@ -962,7 +1003,7 @@ public:
     nsWrapperCache::SetFlags(aFlagsToSet);
   }
 
-  void UnsetFlags(uint32_t aFlagsToUnset)
+  void UnsetFlags(FlagsType aFlagsToUnset)
   {
     NS_ASSERTION(!(aFlagsToUnset &
                    (NODE_IS_ANONYMOUS_ROOT |
@@ -1017,6 +1058,11 @@ public:
   bool ChromeOnlyAccess() const
   {
     return HasFlag(NODE_IS_IN_NATIVE_ANONYMOUS_SUBTREE | NODE_CHROME_ONLY_ACCESS);
+  }
+
+  bool IsInShadowTree() const
+  {
+    return HasFlag(NODE_IS_IN_SHADOW_TREE);
   }
 
   /**
@@ -1203,7 +1249,7 @@ public:
 
 private:
 
-  nsIDocument* GetCrossShadowCurrentDocInternal() const;
+  nsIDocument* GetComposedDocInternal() const;
 
   nsIContent* GetNextNodeImpl(const nsINode* aRoot,
                               const bool aSkipChildren) const
@@ -1351,6 +1397,8 @@ private:
     // Set if the element has a parser insertion mode other than "in body",
     // per the HTML5 "Parse state" section.
     ElementHasWeirdParserInsertionMode,
+    // Parser sets this flag if it has notified about the node.
+    ParserHasNotified,
     // Guard value
     BooleanFlagCount
   };
@@ -1491,6 +1539,8 @@ public:
   bool IsScopedStyleRoot() { return GetBoolFlag(ElementIsScopedStyleRoot); }
   bool HasRelevantHoverRules() const { return GetBoolFlag(NodeHasRelevantHoverRules); }
   void SetHasRelevantHoverRules() { SetBoolFlag(NodeHasRelevantHoverRules); }
+  void SetParserHasNotified() { SetBoolFlag(ParserHasNotified); };
+  bool HasParserNotified() { return GetBoolFlag(ParserHasNotified); }
 protected:
   void SetParentIsContent(bool aValue) { SetBoolFlag(ParentIsContent, aValue); }
   void SetInDocument() { SetBoolFlag(IsInDocument); }
@@ -1521,7 +1571,7 @@ protected:
   {
     NS_ASSERTION(aSubtreeRoot, "aSubtreeRoot can never be null!");
     NS_ASSERTION(!(IsNodeOfType(eCONTENT) && IsInDoc()) &&
-                 !HasFlag(NODE_IS_IN_SHADOW_TREE), "Shouldn't be here!");
+                 !IsInShadowTree(), "Shouldn't be here!");
     mSubtreeRoot = aSubtreeRoot;
   }
 
@@ -1805,7 +1855,7 @@ protected:
   static bool Traverse(nsINode *tmp, nsCycleCollectionTraversalCallback &cb);
   static void Unlink(nsINode *tmp);
 
-  nsCOMPtr<nsINodeInfo> mNodeInfo;
+  nsRefPtr<mozilla::dom::NodeInfo> mNodeInfo;
 
   nsINode* mParent;
 

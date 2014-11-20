@@ -36,11 +36,3 @@ LOCAL_INCLUDES += [
     '/content/html/content/src',
 ]
 
-if not CONFIG['SYSTEM_GSTREAMER']:
- LOCAL_INCLUDES += [
- '/media/gstreamer/glib',
- '/media/gstreamer/glib/glib',
- '/media/gstreamer/gst-plugins-base/gst-libs',
- '/media/gstreamer/gstreamer',
- '/media/gstreamer/gstreamer/libs'
- ]

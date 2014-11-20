@@ -942,6 +942,11 @@ NotifyQueuedTrackChanges(MediaStreamGraph* graph, TrackID tid,
   }
 }
 
+// I420 buffer size macros
+#define YSIZE(x,y) ((x)*(y))
+#define CRSIZE(x,y) ((((x)+1) >> 1) * (((y)+1) >> 1))
+#define I420SIZE(x,y) (YSIZE((x),(y)) + 2 * CRSIZE((x),(y)))
+
 void MediaPipelineTransmit::PipelineListener::
 NewData(MediaStreamGraph* graph, TrackID tid,
         TrackRate rate,
@@ -1103,15 +1108,10 @@ void MediaPipelineTransmit::PipelineListener::ProcessVideoChunk(
     return;
   }
 
-  gfx::IntSize size = img->GetSize();
-  if ((size.width & 1) != 0 || (size.height & 1) != 0) {
-    MOZ_ASSERT(false, "Can't handle odd-sized images");
-    return;
-  }
-
   if (!enabled_ || chunk.mFrame.GetForceBlack()) {
-    uint32_t yPlaneLen = size.width*size.height;
-    uint32_t cbcrPlaneLen = yPlaneLen/2;
+    gfx::IntSize size = img->GetSize();
+    uint32_t yPlaneLen = YSIZE(size.width, size.height);
+    uint32_t cbcrPlaneLen = 2 * CRSIZE(size.width, size.height);
     uint32_t length = yPlaneLen + cbcrPlaneLen;
 
     // Send a black image.
@@ -1119,6 +1119,7 @@ void MediaPipelineTransmit::PipelineListener::ProcessVideoChunk(
     static const fallible_t fallible = fallible_t();
     pixelData = new (fallible) uint8_t[length];
     if (pixelData) {
+      // YCrCb black = 0x10 0x80 0x80
       memset(pixelData, 0x10, yPlaneLen);
       // Fill Cb/Cr planes
       memset(pixelData + yPlaneLen, 0x80, cbcrPlaneLen);
@@ -1144,10 +1145,12 @@ void MediaPipelineTransmit::PipelineListener::ProcessVideoChunk(
     android::sp<android::GraphicBuffer> graphicBuffer = nativeImage->GetGraphicBuffer();
     void *basePtr;
     graphicBuffer->lock(android::GraphicBuffer::USAGE_SW_READ_MASK, &basePtr);
+    uint32_t width = graphicBuffer->getWidth();
+    uint32_t height = graphicBuffer->getHeight();
     conduit->SendVideoFrame(static_cast<unsigned char*>(basePtr),
-                            (graphicBuffer->getWidth() * graphicBuffer->getHeight() * 3) / 2,
-                            graphicBuffer->getWidth(),
-                            graphicBuffer->getHeight(),
+                            I420SIZE(width, height),
+                            width,
+                            height,
                             mozilla::kVideoNV21, 0);
     graphicBuffer->unlock();
   } else
@@ -1172,8 +1175,9 @@ void MediaPipelineTransmit::PipelineListener::ProcessVideoChunk(
 
     // SendVideoFrame only supports contiguous YCrCb 4:2:0 buffers
     // Verify it's contiguous and in the right order
-    MOZ_ASSERT(cb == (y + width*height) &&
-               cr == (cb + width*height/4));
+    MOZ_ASSERT(cb == (y + YSIZE(width, height)) &&
+               cr == (cb + CRSIZE(width, height)) &&
+               length == I420SIZE(width, height));
     // XXX Consider making this a non-debug-only check if we ever implement
     // any subclasses of PlanarYCbCrImage that allow disjoint buffers such
     // that y+3(width*height)/2 might go outside the allocation.
@@ -1194,12 +1198,12 @@ void MediaPipelineTransmit::PipelineListener::ProcessVideoChunk(
     int half_width = (size.width + 1) >> 1;
     int half_height = (size.height + 1) >> 1;
     int c_size = half_width * half_height;
-    int buffer_size = size.width * size.height + 2 * c_size;
-    uint8* yuv = (uint8*) malloc(buffer_size);
+    int buffer_size = YSIZE(size.width, size.height) + 2 * c_size;
+    uint8* yuv = (uint8*) malloc(buffer_size); // fallible
     if (!yuv)
       return;
 
-    int cb_offset = size.width * size.height;
+    int cb_offset = YSIZE(size.width, size.height);
     int cr_offset = cb_offset + c_size;
     RefPtr<gfx::SourceSurface> tempSurf = rgb->GetAsSourceSurface();
     RefPtr<gfx::DataSourceSurface> surf = tempSurf->GetDataSurface();
@@ -1272,7 +1276,8 @@ static void AddTrackAndListener(MediaStream* source,
 
     virtual void Run() MOZ_OVERRIDE {
       StreamTime current_end = mStream->GetBufferEnd();
-      TrackTicks current_ticks = TimeToTicksRoundUp(track_rate_, current_end);
+      TrackTicks current_ticks =
+        mStream->TimeToTicksRoundUp(track_rate_, current_end);
 
       mStream->AddListenerImpl(listener_.forget());
 
@@ -1281,7 +1286,7 @@ static void AddTrackAndListener(MediaStream* source,
 
       if (current_end != 0L) {
         MOZ_MTLOG(ML_DEBUG, "added track @ " << current_end <<
-                  " -> " << MediaTimeToSeconds(current_end));
+                  " -> " << mStream->StreamTimeToSeconds(current_end));
       }
 
       // To avoid assertions, we need to insert a dummy segment that covers up
@@ -1340,7 +1345,8 @@ NotifyPull(MediaStreamGraph* graph, StreamTime desired_time) {
   }
 
   // This comparison is done in total time to avoid accumulated roundoff errors.
-  while (TicksToTimeRoundDown(track_rate_, played_ticks_) < desired_time) {
+  while (source_->TicksToTimeRoundDown(track_rate_, played_ticks_) <
+         desired_time) {
     // TODO(ekr@rtfm.com): Is there a way to avoid mallocating here?  Or reduce the size?
     // Max size given mono is 480*2*1 = 960 (48KHz)
 #define AUDIO_SAMPLE_BUFFER_MAX 1000
@@ -1364,7 +1370,7 @@ NotifyPull(MediaStreamGraph* graph, StreamTime desired_time) {
       MOZ_MTLOG(ML_ERROR, "Audio conduit failed (" << err
                 << ") to return data @ " << played_ticks_
                 << " (desired " << desired_time << " -> "
-                << MediaTimeToSeconds(desired_time) << ")");
+                << source_->StreamTimeToSeconds(desired_time) << ")");
       MOZ_ASSERT(err == kMediaConduitNoError);
       samples_length = (track_rate_/100)*sizeof(uint16_t); // if this is not enough we'll loop and provide more
       memset(samples_data, '\0', samples_length);
@@ -1483,7 +1489,7 @@ NotifyPull(MediaStreamGraph* graph, StreamTime desired_time) {
 
 #ifdef MOZILLA_INTERNAL_API
   nsRefPtr<layers::Image> image = image_;
-  TrackTicks target = TimeToTicksRoundUp(USECS_PER_S, desired_time);
+  TrackTicks target = source_->TimeToTicksRoundUp(USECS_PER_S, desired_time);
   TrackTicks delta = target - played_ticks_;
 
   // Don't append if we've already provided a frame that supposedly

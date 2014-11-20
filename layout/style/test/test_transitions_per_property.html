@@ -7,6 +7,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=435441
   <title>Test for Bug 435441</title>
   <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <script type="text/javascript" src="property_database.js"></script>
+  <script type="text/javascript" src="animation_utils.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
   <style type="text/css">
 
@@ -217,8 +218,8 @@ var supported_properties = {
     "stroke-dasharray": [ test_dasharray_transition ],
     // NOTE: when calc() is supported on 'stroke-dashoffset', we should
     // add test_length_percent_calc_transition.
-    "stroke-dashoffset": [ test_length_transition, test_percent_transition,
-                           test_length_unclamped, test_percent_unclamped ],
+    "stroke-dashoffset": [ test_length_transition_svg, test_percent_transition,
+                           test_length_unclamped_svg, test_percent_unclamped ],
     "stroke-miterlimit": [ test_float_aboveOne_transition,
                            test_float_aboveOne_clamped ],
     "stroke-opacity" : [ test_float_zeroToOne_transition,
@@ -227,8 +228,8 @@ var supported_properties = {
                          test_float_zeroToOne_clamped ],
     // NOTE: when calc() is supported on 'stroke-width', we should add
     // test_length_percent_calc_transition.
-    "stroke-width": [ test_length_transition, test_percent_transition,
-                      test_length_clamped, test_percent_clamped ],
+    "stroke-width": [ test_length_transition_svg, test_percent_transition,
+                      test_length_clamped_svg, test_percent_clamped ],
     "text-indent": [ test_length_transition, test_percent_transition,
                      test_length_percent_calc_transition,
                      test_length_unclamped, test_percent_unclamped ],
@@ -268,7 +269,6 @@ is(c_rot_15.substring(0,6), "matrix", "should compute to matrix value");
 var c_rot_60 = computeMatrix("rotate(60deg)");
 is(c_rot_60.substring(0,6), "matrix", "should compute to matrix value");
 
-var transformTestIndex = 0;
 var transformTests = [
   // rotate
   { start: 'none', end: 'rotate(60deg)',
@@ -353,8 +353,7 @@ var transformTests = [
   { start: 'translateY(-40%)', end: 'none',
     expected_uncomputed: 'translateY(-30%)',
     expected: 'matrix(1, 0, 0, 1, 0, -15)',
-    round_error_ok: true,
-    big_omta_round_error: true },
+    round_error_ok: true },
   { start: 'none', end: 'rotate(90deg) translate(20%, 20%) rotate(-90deg)',
     expected_uncomputed: 'rotate(22.5deg) translate(5%, 5%) rotate(-22.5deg)',
     round_error_ok: true },
@@ -377,12 +376,10 @@ var transformTests = [
   { start: 'translateX(20%)', /* 60px */
     end: 'translateX(calc(10% + 1em))', /* 30px + 20px = 50px */
     expected_uncomputed: 'translateX(calc(17.5% + 0.25em))',
-    expected: 'matrix(1, 0, 0, 1, 57.5, 0)',
-    big_omta_round_error: true },
+    expected: 'matrix(1, 0, 0, 1, 57.5, 0)' },
   { start: 'translate(calc(0.75 * 3em + 1.5 * 10%), calc(0.5 * 5em + 0.5 * 8%))', /* 90px, 52px */
     end: 'rotate(90deg) translateY(20%) rotate(90deg) translateY(calc(10% + 0.5em)) rotate(180deg)', /* -10px, -15px */
-    expected: 'matrix(1, 0, 0, 1, 65, 35.25)',
-    big_omta_round_error: true },
+    expected: 'matrix(1, 0, 0, 1, 65, 35.25)' },
 
   // scale
   { start: 'scale(2)', end: 'none',
@@ -875,27 +872,43 @@ function check_distance(prop, start, quarter, end)
   ok(Math.abs((qe * 4 - se * 3) / se) < 0.0001, "property '" + prop + "': distance " + qe + " from quarter '" + quarter + "' to end '" + end + "' should be three quarters distance " + se + " from start '" + start + "' to end '" + end + "'");
 }
 
-function test_length_transition(prop) {
+function test_length_transition_svg_or_units(prop, numbers_are_pixels) {
   div.style.setProperty("transition-property", "none", "");
   div.style.setProperty(prop, "4px", "");
   is(cs.getPropertyValue(prop), "4px",
      "length-valued property " + prop + ": computed value before transition");
   div.style.setProperty("transition-property", prop, "");
   div.style.setProperty(prop, "12px", "");
-  is(cs.getPropertyValue(prop), "6px",
+  is(cs.getPropertyValue(prop), numbers_are_pixels ? "6" : "6px",
      "length-valued property " + prop + ": interpolation of lengths");
   check_distance(prop, "4px", "6px", "12px");
 }
 
+function test_length_transition(prop) {
+  test_length_transition_svg_or_units(prop, false);
+}
+
+function test_length_transition_svg(prop) {
+  test_length_transition_svg_or_units(prop, true);
+}
+
 function test_length_clamped(prop) {
-  test_length_clamped_or_unclamped(prop, true);
+  test_length_clamped_or_unclamped(prop, true, false);
 }
 
 function test_length_unclamped(prop) {
-  test_length_clamped_or_unclamped(prop, false);
+  test_length_clamped_or_unclamped(prop, false, false);
 }
 
-function test_length_clamped_or_unclamped(prop, is_clamped) {
+function test_length_clamped_svg(prop) {
+  test_length_clamped_or_unclamped(prop, true, true);
+}
+
+function test_length_unclamped_svg(prop) {
+  test_length_clamped_or_unclamped(prop, false, true);
+}
+
+function test_length_clamped_or_unclamped(prop, is_clamped, numbers_are_pixels) {
   div.style.setProperty("transition-timing-function", FUNC_NEGATIVE, "");
   div.style.setProperty("transition-property", "none", "");
   div.style.setProperty(prop, "0px", "");
@@ -903,7 +916,8 @@ function test_length_clamped_or_unclamped(prop, is_clamped) {
      "length-valued property " + prop + ": flush before clamping test");
   div.style.setProperty("transition-property", prop, "");
   div.style.setProperty(prop, "100px", "");
-  (is_clamped ? is : isnot)(cs.getPropertyValue(prop), "0px",
+  (is_clamped ? is : isnot)(cs.getPropertyValue(prop),
+     numbers_are_pixels ? "0" : "0px",
      "length-valued property " + prop + ": clamping of negatives");
   div.style.setProperty("transition-timing-function", "linear", "");
 }
@@ -1934,78 +1948,116 @@ function test_transform_transition(prop) {
 
   // FIXME: should perhaps test that no clamping occurs
 
-  // These tests check the computed value 2/3 of the way through the transition
-  OMTAdiv.style.setProperty("transition-duration", "300s", "");
-  OMTAdiv.style.setProperty("transition-timing-function", "linear", "");
-  window.requestAnimationFrame(nextAsyncTransformTest);
+  runOMTATest(runAsyncTests, SimpleTest.finish);
 }
 
-function nextAsyncTransformTest()
-{
-  var test = transformTests[transformTestIndex];
+function runAsyncTests() {
+  // These tests check the value on the compositor 2/3rds of the way through
+  // the transition.
+  // For the transform tests we simply compare the value on the compositor
+  // with the computed value, but for the opacity test we check the absolute
+  // value as well.
+  OMTAdiv.style.setProperty("transition-duration", "300s", "");
+  OMTAdiv.style.setProperty("transition-timing-function", "linear", "");
+  addAsyncTransformTests();
+  addAsyncOpacityTest();
+  addAsyncDelayTest();
 
-  if (transformTestIndex >= transformTests.length) {
-    window.requestAnimationFrame(asyncOpacityTest);
-    return;
-  }
+  runAllAsyncAnimTests().then(function() {
+    OMTAdiv.style.removeProperty("transition");
+    SimpleTest.finish();
+  });
+}
 
+function addAsyncTransformTests() {
+  transformTests.forEach(function(test) {
+    addAsyncAnimTest(function () { return runTransformTest(test); } );
+  });
+}
+
+function *runTransformTest(test) {
   OMTAdiv.style.setProperty("transition-property", "none", "");
   OMTAdiv.style.setProperty("transform", test.start, "");
   OMTACs.getPropertyValue("transform");
   OMTAdiv.style.setProperty("transition-property", "transform", "");
   OMTAdiv.style.setProperty("transform", test.end, "");
   OMTACs.getPropertyValue("transform");
+  yield waitForPaints();
 
-  window.requestAnimationFrame(checkAsyncTransformTest);
-}
-
-function checkAsyncTransformTest() {
-  function s(matrix) {
-    return matrix.replace(/^\w*\(/, '').replace(')','').split(/\s*,\s*/);
+  // If the start value produced a non-invertible matrix the layer won't be
+  // created yet so we need to force an extra sample.
+  if (!isTransformInvertible(test.start)) {
+    winUtils.advanceTimeAndRefresh(100000);
+    yield waitForPaints();
+    winUtils.advanceTimeAndRefresh(100000);
+    yield waitForPaints();
+  } else {
+    winUtils.advanceTimeAndRefresh(200000);
+    yield waitForPaints();
   }
-  winUtils.advanceTimeAndRefresh(200000);
-  var test = transformTests[transformTestIndex];
-  var async_transform = winUtils.getOMTAOrComputedStyle(OMTAdiv, "transform");
-  var computed_transform = OMTACs.getPropertyValue("transform");
-  var async_split = s(async_transform);
-  var cs_split = s(computed_transform);
-  var pass = true;
-  for (var j = 0; j < 16; ++j) {
-    var epsilon = test.big_omta_round_error ? 0.1 : 0.0001;
-    if (Math.abs(Number(async_split[j]) - Number(cs_split[j])) > epsilon) {
-      pass = false;
-    }
-  }
-  ok(pass,
-     "interpolation of transitions: " + test.start + " to " + test.end +
-     ": OMTA - " + async_transform + ", computed style - " + computed_transform);
-  transformTestIndex++;
-  winUtils.restoreNormalRefresh();
-  window.requestAnimationFrame(nextAsyncTransformTest);
+
+  omta_is_approx(OMTAdiv, "transform", OMTACs.getPropertyValue("transform"),
+                 0.0001, RunningOn.Compositor,
+                 "compositor transform transition " +
+                 "from '" + test.start + "' " +
+                 "to '" + test.end + "' " +
+                 "at 2/3rds duration matches computed style");
 }
 
-function asyncOpacityTest() {
-  OMTAdiv.style.setProperty("transition-property", "none", "");
-  OMTAdiv.style.setProperty("opacity", 0, "");
-  OMTACs.getPropertyValue("opacity");
-  OMTAdiv.style.setProperty("transition-property", "opacity", "");
-  OMTAdiv.style.setProperty("opacity", 1, "");
-  OMTACs.getPropertyValue("opacity");
+function addAsyncOpacityTest() {
+  addAsyncAnimTest(function *() {
+    OMTAdiv.style.setProperty("transition-property", "none", "");
+    OMTAdiv.style.setProperty("opacity", 0, "");
+    OMTACs.getPropertyValue("opacity");
+    OMTAdiv.style.setProperty("transition-property", "opacity", "");
+    OMTAdiv.style.setProperty("opacity", 1, "");
+    OMTACs.getPropertyValue("opacity");
 
-  window.requestAnimationFrame(checkAsyncOpacityTest);
+    yield waitForPaints();
+
+    winUtils.advanceTimeAndRefresh(200000);
+
+    omta_is_approx(OMTAdiv, "opacity", 2/3, 0.00001, RunningOn.Compositor,
+                   "compositor opacity transition at 2/3rds duration");
+  });
 }
 
-function checkAsyncOpacityTest() {
-  winUtils.advanceTimeAndRefresh(200000);
-  var async_opacity = winUtils.getOMTAOrComputedStyle(OMTAdiv, "opacity");
-  var computed_opacity = OMTACs.getPropertyValue("opacity");
-  is(async_opacity, computed_opacity,
-     "Async animated opacity should match computed opacity");
-  winUtils.restoreNormalRefresh();
-  OMTAdiv.style.removeProperty("transition");
-  SimpleTest.finish();
+function addAsyncDelayTest() {
+  addAsyncAnimTest(function *() {
+    OMTAdiv.style.setProperty("transition-property", "none", "");
+    OMTAdiv.style.setProperty("transition-delay", "100s", "");
+    OMTAdiv.style.setProperty("transition-duration", "200s", "");
+    OMTAdiv.style.setProperty("transform", "", "");
+    OMTACs.getPropertyValue("transform");
+    OMTAdiv.style.setProperty("transition-property", "transform", "");
+    OMTAdiv.style.setProperty("transform", "translate(100px)", "");
+    OMTACs.getPropertyValue("transform");
+
+    winUtils.advanceTimeAndRefresh(200000);
+    yield waitForPaints();
+
+    omta_is_approx(OMTAdiv, "transform", { tx: 50 }, 0.0001,
+                   RunningOn.Compositor,
+                   "compositor transform transition with delay at 1/2"
+                   + " duration");
+  });
 }
 
+function isTransformInvertible(transformStr) {
+  var computedStr = transformStrToComputedStr(transformStr);
+  if (!transformStr)
+    return false;
+  var matrix = convertTo3dMatrix(computedStr);
+  if (matrix === null)
+    return false;
+  return isInvertible(matrix);
+}
+
+function transformStrToComputedStr(transformStr) {
+  var div = document.createElement("div");
+  div.style.transform = transformStr;
+  return window.getComputedStyle(div).transform;
+}
 </script>
 </pre>
 </body>

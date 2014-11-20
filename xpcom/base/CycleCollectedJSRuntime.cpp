@@ -66,6 +66,7 @@
 #include "nsCycleCollectionParticipant.h"
 #include "nsCycleCollector.h"
 #include "nsDOMJSUtils.h"
+#include "nsJSUtils.h"
 
 #ifdef MOZ_CRASHREPORTER
 #include "nsExceptionHandler.h"
@@ -493,6 +494,11 @@ CycleCollectedJSRuntime::CycleCollectedJSRuntime(JSRuntime* aParentRuntime,
   JS_SetDestroyZoneCallback(mJSRuntime, XPCStringConvert::FreeZoneCache);
   JS_SetSweepZoneCallback(mJSRuntime, XPCStringConvert::ClearZoneCache);
 
+  static js::DOMCallbacks DOMcallbacks = {
+    InstanceClassHasProtoAtDepth
+  };
+  SetDOMCallbacks(mJSRuntime, &DOMcallbacks);
+
   nsCycleCollector_registerJSRuntime(this);
 }
 
@@ -561,7 +567,10 @@ CycleCollectedJSRuntime::DescribeGCThing(bool aIsMarked, void* aThing,
       JSFunction* fun = JS_GetObjectFunction(obj);
       JSString* str = JS_GetFunctionDisplayId(fun);
       if (str) {
-        NS_ConvertUTF16toUTF8 fname(JS_GetInternedStringChars(str));
+        JSFlatString* flat = JS_ASSERT_STRING_IS_FLAT(str);
+        nsAutoString chars;
+        AssignJSFlatString(chars, flat);
+        NS_ConvertUTF16toUTF8 fname(chars);
         JS_snprintf(name, sizeof(name),
                     "JS Object (Function - %s)", fname.get());
       } else {
@@ -575,6 +584,7 @@ CycleCollectedJSRuntime::DescribeGCThing(bool aIsMarked, void* aThing,
     static const char trace_types[][11] = {
       "Object",
       "String",
+      "Symbol",
       "Script",
       "LazyScript",
       "IonCode",
@@ -619,7 +629,7 @@ CycleCollectedJSRuntime::NoteGCThingXPCOMChildren(const js::Class* aClasp, JSObj
     NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(aCb, "js::GetObjectPrivate(obj)");
     aCb.NoteXPCOMChild(static_cast<nsISupports*>(js::GetObjectPrivate(aObj)));
   } else {
-    const DOMClass* domClass = GetDOMClass(aObj);
+    const DOMJSClass* domClass = GetDOMClass(aObj);
     if (domClass) {
       NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(aCb, "UnwrapDOMObject(obj)");
       if (domClass->mDOMObjectIsISupports) {

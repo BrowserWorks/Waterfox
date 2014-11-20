@@ -27,10 +27,15 @@ class nsIWidget;
 // state changes as follows:
 //   ePopupClosed - initial state
 //   ePopupShowing - during the period when the popupshowing event fires
-//   ePopupOpen - between the popupshowing event and being visible. Creation
-//                of the child frames, layout and reflow occurs in this state.
-//   ePopupOpenAndVisible - layout is done and the popup's view and widget are
-//                          made visible. The popupshown event fires.
+//   ePopupOpening - between the popupshowing event and being visible. Creation
+//                   of the child frames, layout and reflow occurs in this
+//                   state. The popup is stored in the popup manager's list of
+//                   open popups during this state.
+//   ePopupVisible - layout is done and the popup's view and widget are made
+//                   visible. The popup is visible on screen but may be
+//                   transitioning. The popupshown event has not yet fired.
+//   ePopupShown - the popup has been shown and is fully ready. This state is
+//                 assigned just before the popupshown event fires.
 // When closing a popup:
 //   ePopupHidden - during the period when the popuphiding event fires and
 //                  the popup is removed.
@@ -42,9 +47,11 @@ enum nsPopupState {
   // popupshowing event has been fired.
   ePopupShowing,
   // state while a popup is open but the widget is not yet visible
-  ePopupOpen,
+  ePopupOpening,
+  // state while a popup is visible and waiting for the popupshown event
+  ePopupVisible,
   // state while a popup is open and visible on screen
-  ePopupOpenAndVisible,
+  ePopupShown,
   // state from when a popup is requested to be hidden to when it is closed.
   ePopupHiding,
   // state which indicates that the popup was hidden without firing the
@@ -117,6 +124,29 @@ nsIFrame* NS_NewMenuPopupFrame(nsIPresShell* aPresShell, nsStyleContext* aContex
 class nsViewManager;
 class nsView;
 class nsMenuPopupFrame;
+
+// this class is used for dispatching popupshown events asynchronously.
+class nsXULPopupShownEvent : public nsRunnable, public nsIDOMEventListener
+{
+public:
+  nsXULPopupShownEvent(nsIContent *aPopup, nsPresContext* aPresContext)
+    : mPopup(aPopup), mPresContext(aPresContext)
+  {
+  }
+
+  NS_DECL_ISUPPORTS_INHERITED
+  NS_DECL_NSIRUNNABLE
+  NS_DECL_NSIDOMEVENTLISTENER
+
+  void CancelListener();
+
+protected:
+  virtual ~nsXULPopupShownEvent() { }
+
+private:
+  nsCOMPtr<nsIContent> mPopup;
+  nsRefPtr<nsPresContext> mPresContext;
+};
 
 class nsMenuPopupFrame : public nsBoxFrame, public nsMenuParent
 {
@@ -228,7 +258,11 @@ public:
 
   nsPopupType PopupType() const { return mPopupType; }
   bool IsMenu() MOZ_OVERRIDE { return mPopupType == ePopupTypeMenu; }
-  bool IsOpen() MOZ_OVERRIDE { return mPopupState == ePopupOpen || mPopupState == ePopupOpenAndVisible; }
+  bool IsOpen() MOZ_OVERRIDE { return mPopupState == ePopupOpening ||
+                                      mPopupState == ePopupVisible ||
+                                      mPopupState == ePopupShown; }
+  bool IsVisible() { return mPopupState == ePopupVisible ||
+                            mPopupState == ePopupShown; }
 
   bool IsMouseTransparent() { return mMouseTransparent; }
 
@@ -345,6 +379,20 @@ public:
 
   // Return the offset applied to the alignment of the popup
   nscoord GetAlignmentOffset() const { return mAlignmentOffset; }
+
+  // Clear the mPopupShownDispatcher, remove the listener and return true if
+  // mPopupShownDispatcher was non-null.
+  bool ClearPopupShownDispatcher()
+  {
+    if (mPopupShownDispatcher) {
+      mPopupShownDispatcher->CancelListener();
+      mPopupShownDispatcher = nullptr;
+      return true;
+    }
+
+    return false;
+  }
+
 protected:
 
   // returns the popup's level.
@@ -433,6 +481,8 @@ protected:
   nsCOMPtr<nsIContent> mTriggerContent;
 
   nsMenuFrame* mCurrentMenu; // The current menu that is active.
+
+  nsRefPtr<nsXULPopupShownEvent> mPopupShownDispatcher;
 
   // A popup's preferred size may be different than its actual size stored in
   // mRect in the case where the popup was resized because it was too large

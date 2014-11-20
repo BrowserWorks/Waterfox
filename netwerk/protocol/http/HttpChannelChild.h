@@ -45,6 +45,7 @@ class HttpChannelChild : public PHttpChannelChild
                        , public nsIHttpChannelChild
                        , public nsIDivertableChannel
 {
+  virtual ~HttpChannelChild();
 public:
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSICACHEINFOCHANNEL
@@ -58,7 +59,6 @@ public:
   NS_DECL_NSIDIVERTABLECHANNEL
 
   HttpChannelChild();
-  virtual ~HttpChannelChild();
 
   // Methods HttpBaseChannel didn't implement for us or that we override.
   //

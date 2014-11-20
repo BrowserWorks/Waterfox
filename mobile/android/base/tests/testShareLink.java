@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.mozilla.gecko.Actions;
+import org.mozilla.gecko.home.HomePager;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -68,7 +69,7 @@ public class testShareLink extends AboutHomeTest {
         // Test the share popup in the Bookmarks page
         openAboutHomeTab(AboutHomeTabs.BOOKMARKS);
 
-        final ListView bookmarksList = findListViewWithTag("bookmarks");
+        final ListView bookmarksList = findListViewWithTag(HomePager.LIST_TAG_BOOKMARKS);
         mAsserter.is(waitForNonEmptyListToLoad(bookmarksList), true, "list is properly loaded");
 
         int headerViewsCount = bookmarksList.getHeaderViewsCount();
@@ -113,16 +114,16 @@ public class testShareLink extends AboutHomeTest {
         int height = mDriver.getGeckoHeight();
         mActions.drag(width / 2, width / 2, height - 10, height / 2);
 
-        ListView topSitesList = findListViewWithTag("top_sites");
+        ListView topSitesList = findListViewWithTag(HomePager.LIST_TAG_TOP_SITES);
         mAsserter.is(waitForNonEmptyListToLoad(topSitesList), true, "list is properly loaded");
         View mostVisitedItem = topSitesList.getChildAt(topSitesList.getHeaderViewsCount());
         mSolo.clickLongOnView(mostVisitedItem);
         verifySharePopup(shareOptions,"top_sites");
 
-        // Test the share popup in the Most Recent tab
-        openAboutHomeTab(AboutHomeTabs.MOST_RECENT);
+        // Test the share popup in the history tab
+        openAboutHomeTab(AboutHomeTabs.HISTORY);
 
-        ListView mostRecentList = findListViewWithTag("most_recent");
+        ListView mostRecentList = findListViewWithTag(HomePager.LIST_TAG_HISTORY);
         mAsserter.is(waitForNonEmptyListToLoad(mostRecentList), true, "list is properly loaded");
 
         // Getting second child after header views because the first is the "Today" label

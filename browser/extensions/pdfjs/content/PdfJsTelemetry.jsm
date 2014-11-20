@@ -1,4 +1,4 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /* Copyright 2013 Mozilla Foundation
  *
@@ -44,9 +44,21 @@ this.PdfJsTelemetry = {
     let histogram = Services.telemetry.getHistogramById("PDF_VIEWER_DOCUMENT_GENERATOR");
     histogram.add(generatorId);
   },
+  onEmbed: function (isObject) {
+    let histogram = Services.telemetry.getHistogramById("PDF_VIEWER_EMBED");
+    histogram.add(isObject);
+  },
+  onFontType: function (fontTypeId) {
+    let histogram = Services.telemetry.getHistogramById("PDF_VIEWER_FONT_TYPES");
+    histogram.add(fontTypeId);
+  },
   onForm: function (isAcroform) {
     let histogram = Services.telemetry.getHistogramById("PDF_VIEWER_FORM");
     histogram.add(isAcroform);
+  },
+  onPrint: function () {
+    let histogram = Services.telemetry.getHistogramById("PDF_VIEWER_PRINT");
+    histogram.add(true);
   },
   onStreamType: function (streamTypeId) {
     let histogram = Services.telemetry.getHistogramById("PDF_VIEWER_STREAM_TYPES");

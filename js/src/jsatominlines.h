@@ -49,6 +49,11 @@ ValueToIdPure(const Value &v, jsid *id)
         return true;
     }
 
+    if (v.isSymbol()) {
+        *id = SYMBOL_TO_JSID(v.toSymbol());
+        return true;
+    }
+
     if (!v.isString() || !v.toString()->isAtom())
         return false;
 
@@ -64,6 +69,11 @@ ValueToId(JSContext* cx, typename MaybeRooted<Value, allowGC>::HandleType v,
     int32_t i;
     if (ValueFitsInInt32(v, &i) && INT_FITS_IN_JSID(i)) {
         idp.set(INT_TO_JSID(i));
+        return true;
+    }
+
+    if (v.isSymbol()) {
+        idp.set(SYMBOL_TO_JSID(v.toSymbol()));
         return true;
     }
 
@@ -137,9 +147,15 @@ IdToString(JSContext *cx, jsid id)
 
 inline
 AtomHasher::Lookup::Lookup(const JSAtom *atom)
-  : chars(atom->chars()), length(atom->length()), atom(atom)
+  : isLatin1(atom->hasLatin1Chars()), length(atom->length()), atom(atom)
 {
-    hash = mozilla::HashString(chars, length);
+    if (isLatin1) {
+        latin1Chars = atom->latin1Chars(nogc);
+        hash = mozilla::HashString(latin1Chars, length);
+    } else {
+        twoByteChars = atom->twoByteChars(nogc);
+        hash = mozilla::HashString(twoByteChars, length);
+    }
 }
 
 inline bool
@@ -150,7 +166,18 @@ AtomHasher::match(const AtomStateEntry &entry, const Lookup &lookup)
         return lookup.atom == key;
     if (key->length() != lookup.length)
         return false;
-    return mozilla::PodEqual(key->chars(), lookup.chars, lookup.length);
+
+    if (key->hasLatin1Chars()) {
+        const Latin1Char *keyChars = key->latin1Chars(lookup.nogc);
+        if (lookup.isLatin1)
+            return mozilla::PodEqual(keyChars, lookup.latin1Chars, lookup.length);
+        return EqualChars(keyChars, lookup.twoByteChars, lookup.length);
+    }
+
+    const jschar *keyChars = key->twoByteChars(lookup.nogc);
+    if (lookup.isLatin1)
+        return EqualChars(lookup.latin1Chars, keyChars, lookup.length);
+    return mozilla::PodEqual(keyChars, lookup.twoByteChars, lookup.length);
 }
 
 inline Handle<PropertyName*>

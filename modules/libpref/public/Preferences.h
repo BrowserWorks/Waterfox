@@ -50,7 +50,6 @@ public:
   NS_DECL_NSIOBSERVER
 
   Preferences();
-  virtual ~Preferences();
 
   nsresult Init();
 
@@ -202,6 +201,7 @@ public:
   {
     return SetInt(aPref, static_cast<int32_t>(aValue));
   }
+  static nsresult SetFloat(const char* aPref, float aValue);
   static nsresult SetCString(const char* aPref, const char* aValue);
   static nsresult SetCString(const char* aPref, const nsACString &aValue);
   static nsresult SetString(const char* aPref, const char16_t* aValue);
@@ -350,9 +350,10 @@ public:
   static void SetPreference(const PrefSetting& aPref);
 
   static int64_t SizeOfIncludingThisAndOtherStuff(mozilla::MallocSizeOf aMallocSizeOf);
-  static nsresult SetFloat(const char* aPref, float aValue);
 
 protected:
+  virtual ~Preferences();
+
   nsresult NotifyServiceObservers(const char *aSubject);
   /**
    * Reads the default pref file or, if that failed, try to save a new one.

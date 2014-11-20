@@ -95,12 +95,15 @@ NS_EXPORT void JNICALL
 Java_org_mozilla_gecko_GeckoAppShell_reportJavaCrash(JNIEnv *jenv, jclass, jstring jStackTrace)
 {
 #ifdef MOZ_CRASHREPORTER
-    const nsJNIString stackTrace16(jStackTrace, jenv);
-    const NS_ConvertUTF16toUTF8 stackTrace8(stackTrace16);
-    CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("JavaStackTrace"), stackTrace8);
+    const nsJNICString stackTrace(jStackTrace, jenv);
+    if (NS_WARN_IF(NS_FAILED(CrashReporter::AnnotateCrashReport(
+            NS_LITERAL_CSTRING("JavaStackTrace"), stackTrace)))) {
+        // Only crash below if crash reporter is initialized and annotation succeeded.
+        // Otherwise try other means of reporting the crash in Java.
+        return;
+    }
 #endif // MOZ_CRASHREPORTER
-
-    abort();
+    MOZ_CRASH("Uncaught Java exception");
 }
 
 NS_EXPORT void JNICALL
@@ -876,7 +879,7 @@ Java_org_mozilla_gecko_gfx_NativePanZoomController_handleTouchEvent(JNIEnv* env,
     APZCTreeManager *controller = nsWindow::GetAPZCTreeManager();
     if (controller) {
         AndroidGeckoEvent* wrapper = AndroidGeckoEvent::MakeFromJavaObject(env, event);
-        const MultiTouchInput& input = wrapper->MakeMultiTouchInput(nsWindow::TopWindow());
+        MultiTouchInput input = wrapper->MakeMultiTouchInput(nsWindow::TopWindow());
         delete wrapper;
         if (input.mType >= 0) {
             controller->ReceiveInputEvent(input, nullptr);

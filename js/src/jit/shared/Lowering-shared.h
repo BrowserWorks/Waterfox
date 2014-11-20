@@ -66,6 +66,20 @@ class LIRGeneratorShared : public MInstructionVisitorWithDefaults
 
     // These all create a use of a virtual register, with an optional
     // allocation policy.
+    //
+    // Some of these use functions have atStart variants.
+    // - non-atStart variants will tell the register allocator that the input
+    // allocation must be different from any Temp or Definition also needed for
+    // this LInstruction.
+    // - atStart variants relax that restriction and allow the input to be in
+    // the same register as any Temp or output Definition used by the
+    // LInstruction. Note that it doesn't *imply* this will actually happen,
+    // but gives a hint to the register allocator that it can do it.
+    //
+    // TL;DR: Use non-atStart variants only if you need the input value after
+    // writing to any temp or definitions, during code generation of this
+    // LInstruction. Otherwise, use atStart variants, which will lower register
+    // pressure.
     inline LUse use(MDefinition *mir, LUse policy);
     inline LUse use(MDefinition *mir);
     inline LUse useAtStart(MDefinition *mir);
@@ -77,13 +91,13 @@ class LIRGeneratorShared : public MInstructionVisitorWithDefaults
     inline LUse useFixedAtStart(MDefinition *mir, Register reg);
     inline LAllocation useOrConstant(MDefinition *mir);
     inline LAllocation useOrConstantAtStart(MDefinition *mir);
-    // "Any" is architecture dependent, and will include registers and stack slots on X86,
-    // and only registers on ARM.
+    // "Any" is architecture dependent, and will include registers and stack
+    // slots on X86, and only registers on ARM.
     inline LAllocation useAny(MDefinition *mir);
     inline LAllocation useAnyOrConstant(MDefinition *mir);
-    // "Storable" is architecture dependend, and will include registers and constants on X86
-    // and only registers on ARM.
-    // this is a generic "things we can expect to write into memory in 1 instruction"
+    // "Storable" is architecture dependend, and will include registers and
+    // constants on X86 and only registers on ARM.  This is a generic "things
+    // we can expect to write into memory in 1 instruction".
     inline LAllocation useStorable(MDefinition *mir);
     inline LAllocation useStorableAtStart(MDefinition *mir);
     inline LAllocation useKeepaliveOrConstant(MDefinition *mir);
@@ -106,7 +120,7 @@ class LIRGeneratorShared : public MInstructionVisitorWithDefaults
 
     // These create temporary register requests.
     inline LDefinition temp(LDefinition::Type type = LDefinition::GENERAL,
-                            LDefinition::Policy policy = LDefinition::DEFAULT);
+                            LDefinition::Policy policy = LDefinition::REGISTER);
     inline LDefinition tempFloat32();
     inline LDefinition tempDouble();
     inline LDefinition tempCopy(MDefinition *input, uint32_t reusedInput);
@@ -120,7 +134,7 @@ class LIRGeneratorShared : public MInstructionVisitorWithDefaults
 
     template <size_t Ops, size_t Temps>
     inline bool defineBox(LInstructionHelper<BOX_PIECES, Ops, Temps> *lir, MDefinition *mir,
-                          LDefinition::Policy policy = LDefinition::DEFAULT);
+                          LDefinition::Policy policy = LDefinition::REGISTER);
 
     inline bool defineReturn(LInstruction *lir, MDefinition *mir);
 
@@ -130,7 +144,7 @@ class LIRGeneratorShared : public MInstructionVisitorWithDefaults
 
     template <size_t Ops, size_t Temps>
     inline bool define(LInstructionHelper<1, Ops, Temps> *lir, MDefinition *mir,
-                       LDefinition::Policy policy = LDefinition::DEFAULT);
+                       LDefinition::Policy policy = LDefinition::REGISTER);
 
     template <size_t Ops, size_t Temps>
     inline bool defineReuseInput(LInstructionHelper<1, Ops, Temps> *lir, MDefinition *mir, uint32_t operand);
@@ -171,12 +185,13 @@ class LIRGeneratorShared : public MInstructionVisitorWithDefaults
     // effects (if any), it may check pre-conditions and bailout if they do not
     // hold. This function informs the register allocator that it will need to
     // capture appropriate state.
-    bool assignSnapshot(LInstruction *ins, BailoutKind kind = Bailout_Normal);
+    bool assignSnapshot(LInstruction *ins, BailoutKind kind);
 
     // Marks this instruction as needing to call into either the VM or GC. This
     // function may build a snapshot that captures the result of its own
     // instruction, and as such, should generally be called after define*().
-    bool assignSafepoint(LInstruction *ins, MInstruction *mir);
+    bool assignSafepoint(LInstruction *ins, MInstruction *mir,
+                         BailoutKind kind = Bailout_DuringVMCall);
 
   public:
     bool visitConstant(MConstant *ins);
@@ -191,15 +206,11 @@ class LIRGeneratorShared : public MInstructionVisitorWithDefaults
         return false;
     }
 
-     // Whether we can emit Float32 specific optimizations.
-    static bool allowFloat32Optimizations() {
-       return false;
-    }
-
     // Whether we can inline ForkJoinGetSlice.
     static bool allowInlineForkJoinGetSlice() {
         return false;
     }
+
 };
 
 } // namespace jit

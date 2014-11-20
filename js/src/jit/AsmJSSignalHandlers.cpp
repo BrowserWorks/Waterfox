@@ -6,16 +6,17 @@
 
 #include "jit/AsmJSSignalHandlers.h"
 
-#include "mozilla/BinarySearch.h"
+#include "mozilla/DebugOnly.h"
 
 #include "assembler/assembler/MacroAssembler.h"
 #include "jit/AsmJSModule.h"
+#include "vm/Runtime.h"
 
 using namespace js;
 using namespace js::jit;
-using namespace mozilla;
 
 using JS::GenericNaN;
+using mozilla::DebugOnly;
 
 #if defined(XP_WIN)
 # define XMM_sig(p,i) ((p)->Xmm##i)
@@ -213,31 +214,6 @@ SetXMMRegToNaN(bool isFloat32, T *xmm_reg)
         dbls[1] = 0;
     }
 }
-
-struct GetHeapAccessOffset
-{
-    const AsmJSModule &module;
-    explicit GetHeapAccessOffset(const AsmJSModule &module) : module(module) {}
-    uintptr_t operator[](size_t index) const {
-        return module.heapAccess(index).offset();
-    }
-};
-
-// Perform a binary search on the projected offsets of the known heap accesses
-// in the module.
-static const AsmJSHeapAccess *
-LookupHeapAccess(const AsmJSModule &module, uint8_t *pc)
-{
-    JS_ASSERT(module.containsPC(pc));
-
-    uintptr_t pcOff = pc - module.codeBase();
-
-    size_t match;
-    if (!BinarySearch(GetHeapAccessOffset(module), 0, module.numHeapAccesses(), pcOff, &match))
-        return nullptr;
-
-    return &module.heapAccess(match);
-}
 #endif
 
 #if defined(XP_WIN)
@@ -380,7 +356,7 @@ HandleSimulatorInterrupt(JSRuntime *rt, AsmJSActivation *activation, void *fault
     if (module.containsPC((void *)rt->mainThread.simulator()->get_pc()) &&
         module.containsPC(faultingAddress))
     {
-        activation->setInterrupted(nullptr);
+        activation->setResumePC(nullptr);
         int32_t nextpc = int32_t(module.interruptExit());
         rt->mainThread.simulator()->set_resume_pc(nextpc);
         return true;
@@ -489,7 +465,7 @@ HandleException(PEXCEPTION_POINTERS exception)
     // The trampoline will jump to activation->resumePC if execution isn't
     // interrupted.
     if (module.containsPC(faultingAddress)) {
-        activation->setInterrupted(pc);
+        activation->setResumePC(pc);
         *ppc = module.interruptExit();
 
         JSRuntime::AutoLockForInterrupt lock(rt);
@@ -507,7 +483,7 @@ HandleException(PEXCEPTION_POINTERS exception)
         return false;
     }
 
-    const AsmJSHeapAccess *heapAccess = LookupHeapAccess(module, pc);
+    const AsmJSHeapAccess *heapAccess = module.lookupHeapAccess(pc);
     if (!heapAccess)
         return false;
 
@@ -692,7 +668,7 @@ HandleMachException(JSRuntime *rt, const ExceptionRequest &request)
     // The trampoline will jump to activation->resumePC if execution isn't
     // interrupted.
     if (module.containsPC(faultingAddress)) {
-        activation->setInterrupted(pc);
+        activation->setResumePC(pc);
         *ppc = module.interruptExit();
 
         JSRuntime::AutoLockForInterrupt lock(rt);
@@ -713,7 +689,7 @@ HandleMachException(JSRuntime *rt, const ExceptionRequest &request)
         return false;
     }
 
-    const AsmJSHeapAccess *heapAccess = LookupHeapAccess(module, pc);
+    const AsmJSHeapAccess *heapAccess = module.lookupHeapAccess(pc);
     if (!heapAccess)
         return false;
 
@@ -942,7 +918,7 @@ HandleSignal(int signum, siginfo_t *info, void *ctx)
     // The trampoline will jump to activation->resumePC if execution isn't
     // interrupted.
     if (module.containsPC(faultingAddress)) {
-        activation->setInterrupted(pc);
+        activation->setResumePC(pc);
         *ppc = module.interruptExit();
 
         JSRuntime::AutoLockForInterrupt lock(rt);
@@ -960,7 +936,7 @@ HandleSignal(int signum, siginfo_t *info, void *ctx)
         return false;
     }
 
-    const AsmJSHeapAccess *heapAccess = LookupHeapAccess(module, pc);
+    const AsmJSHeapAccess *heapAccess = module.lookupHeapAccess(pc);
     if (!heapAccess)
         return false;
 
@@ -1058,18 +1034,30 @@ js::EnsureAsmJSSignalHandlersInstalled(JSRuntime *rt)
 // js::HandleExecutionInterrupt. The memory is un-protected from the signal
 // handler after control flow is redirected.
 void
-js::RequestInterruptForAsmJSCode(JSRuntime *rt)
+js::RequestInterruptForAsmJSCode(JSRuntime *rt, int interruptModeRaw)
 {
-    JS_ASSERT(rt->currentThreadOwnsInterruptLock());
+    switch (JSRuntime::InterruptMode(interruptModeRaw)) {
+      case JSRuntime::RequestInterruptMainThread:
+      case JSRuntime::RequestInterruptAnyThread:
+        break;
+      case JSRuntime::RequestInterruptAnyThreadDontStopIon:
+      case JSRuntime::RequestInterruptAnyThreadForkJoin:
+        // It is ok to wait for asm.js execution to complete; we aren't trying
+        // to break an iloop or anything. Avoid the overhead of protecting all
+        // the code and taking a fault.
+        return;
+    }
 
     AsmJSActivation *activation = rt->mainThread.asmJSActivationStackFromAnyThread();
     if (!activation)
         return;
 
+    JS_ASSERT(rt->currentThreadOwnsInterruptLock());
     activation->module().protectCode(rt);
 }
 
-#if defined(MOZ_ASAN) && defined(JS_STANDALONE)
+// This is not supported by clang-cl yet.
+#if defined(MOZ_ASAN) && defined(JS_STANDALONE) && !defined(_MSC_VER)
 // Usually, this definition is found in mozglue (see mozglue/build/AsanOptions.cpp).
 // However, when doing standalone JS builds, mozglue is not used and we must ensure
 // that we still allow custom SIGSEGV handlers for asm.js and ion to work correctly.

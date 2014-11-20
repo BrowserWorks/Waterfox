@@ -14,14 +14,13 @@ namespace dom {
 class IccManager;
 class Icc;
 
-class IccListener : public nsIIccListener
+class IccListener MOZ_FINAL : public nsIIccListener
 {
 public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIICCLISTENER
 
   IccListener(IccManager* aIccManager, uint32_t aClientId);
-  ~IccListener();
 
   void
   Shutdown();
@@ -31,6 +30,9 @@ public:
   {
     return mIcc;
   }
+
+private:
+  ~IccListener();
 
 private:
   uint32_t mClientId;

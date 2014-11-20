@@ -474,7 +474,7 @@ class Automation(object):
     os.unlink(pwfilePath)
     return 0
 
-  def environment(self, env=None, xrePath=None, crashreporter=True, debugger=False, dmdPath=None):
+  def environment(self, env=None, xrePath=None, crashreporter=True, debugger=False, dmdPath=None, lsanPath=None):
     if xrePath == None:
       xrePath = self.DIST_BIN
     if env == None:
@@ -518,8 +518,8 @@ class Automation(object):
     env['NS_TRACE_MALLOC_DISABLE_STACKS'] = '1'
 
     # Set WebRTC logging in case it is not set yet
-    env.setdefault('NSPR_LOG_MODULES', 'signaling:5,mtransport:3')
-    env.setdefault('R_LOG_LEVEL', '5')
+    env.setdefault('NSPR_LOG_MODULES', 'signaling:5,mtransport:5,datachannel:5')
+    env.setdefault('R_LOG_LEVEL', '6')
     env.setdefault('R_LOG_DESTINATION', 'stderr')
     env.setdefault('R_LOG_VERBOSE', '1')
 
@@ -530,6 +530,8 @@ class Automation(object):
       if os.path.isfile(llvmsym):
         env["ASAN_SYMBOLIZER_PATH"] = llvmsym
         self.log.info("INFO | automation.py | ASan using symbolizer at %s", llvmsym)
+      else:
+        self.log.info("TEST-UNEXPECTED-FAIL | automation.py | Failed to find ASan symbolizer at %s", llvmsym)
 
       try:
         totalMemory = int(os.popen("free").readlines()[1].split()[1])
@@ -817,7 +819,7 @@ class Automation(object):
              xrePath = None, certPath = None,
              debuggerInfo = None, symbolsPath = None,
              timeout = -1, maxTime = None, onLaunch = None,
-             webapprtChrome = False, screenshotOnFail=False, testPath=None):
+             detectShutdownLeaks = False, screenshotOnFail=False, testPath=None, bisectChunk=None):
     """
     Run the app, log the duration it took to execute, return the status code.
     Kills the app if it runs for longer than |maxTime| seconds, or outputs nothing for |timeout| seconds.

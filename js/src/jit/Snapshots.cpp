@@ -286,11 +286,11 @@ RValueAllocation::readPayload(CompactBufferReader &reader, PayloadType type,
         p->gpr = Register::FromCode(reader.readByte());
         break;
       case PAYLOAD_FPU:
-        p->fpu = FloatRegister::FromCode(reader.readByte());
+        p->fpu.data = reader.readByte();
         break;
       case PAYLOAD_PACKED_TAG:
-        p->type = JSValueType(*mode & 0x07);
-        *mode = *mode & ~0x07;
+        p->type = JSValueType(*mode & PACKED_TAG_MASK);
+        *mode = *mode & ~PACKED_TAG_MASK;
         break;
     }
 }
@@ -335,7 +335,7 @@ RValueAllocation::writePayload(CompactBufferWriter &writer, PayloadType type,
         // writeByte of the mode.
         MOZ_ASSERT(writer.length());
         uint8_t *mode = writer.buffer() + (writer.length() - 1);
-        MOZ_ASSERT((*mode & 0x07) == 0 && (p.type & ~0x07) == 0);
+        MOZ_ASSERT((*mode & PACKED_TAG_MASK) == 0 && (p.type & ~PACKED_TAG_MASK) == 0);
         *mode = *mode | p.type;
         break;
       }
@@ -392,6 +392,8 @@ ValTypeToString(JSValueType type)
         return "double";
       case JSVAL_TYPE_STRING:
         return "string";
+      case JSVAL_TYPE_SYMBOL:
+        return "symbol";
       case JSVAL_TYPE_BOOLEAN:
         return "boolean";
       case JSVAL_TYPE_OBJECT:
@@ -482,7 +484,7 @@ SnapshotReader::SnapshotReader(const uint8_t *snapshots, uint32_t offset,
 
 // Details of snapshot header packing.
 static const uint32_t SNAPSHOT_BAILOUTKIND_SHIFT = 0;
-static const uint32_t SNAPSHOT_BAILOUTKIND_BITS = 3;
+static const uint32_t SNAPSHOT_BAILOUTKIND_BITS = 5;
 static const uint32_t SNAPSHOT_BAILOUTKIND_MASK = COMPUTE_MASK_(SNAPSHOT_BAILOUTKIND);
 
 static const uint32_t SNAPSHOT_ROFFSET_SHIFT = COMPUTE_SHIFT_AFTER_(SNAPSHOT_BAILOUTKIND);

@@ -9,10 +9,11 @@
 #include "nsIDOMStyleSheetList.h"
 #include "nsWrapperCache.h"
 
-class nsCSSStyleSheet;
 class nsINode;
 
 namespace mozilla {
+class CSSStyleSheet;
+
 namespace dom {
 
 class StyleSheetList : public nsIDOMStyleSheetList
@@ -23,7 +24,6 @@ public:
   {
     SetIsDOMBinding();
   }
-  virtual ~StyleSheetList() {}
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(StyleSheetList)
@@ -34,12 +34,15 @@ public:
   virtual nsINode* GetParentObject() const = 0;
 
   virtual uint32_t Length() = 0;
-  virtual nsCSSStyleSheet* IndexedGetter(uint32_t aIndex, bool& aFound) = 0;
-  nsCSSStyleSheet* Item(uint32_t aIndex)
+  virtual CSSStyleSheet* IndexedGetter(uint32_t aIndex, bool& aFound) = 0;
+  CSSStyleSheet* Item(uint32_t aIndex)
   {
     bool dummy = false;
     return IndexedGetter(aIndex, dummy);
   }
+
+protected:
+  virtual ~StyleSheetList() {}
 };
 
 } // namespace dom

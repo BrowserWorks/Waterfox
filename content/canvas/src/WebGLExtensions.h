@@ -24,7 +24,6 @@ class WebGLExtensionBase
 {
 public:
     WebGLExtensionBase(WebGLContext*);
-    virtual ~WebGLExtensionBase();
 
     WebGLContext *GetParentObject() const {
         return Context();
@@ -36,6 +35,8 @@ public:
     NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(WebGLExtensionBase)
 
 protected:
+    virtual ~WebGLExtensionBase();
+
     bool mIsLost;
 };
 
@@ -305,6 +306,18 @@ public:
     void VertexAttribDivisorANGLE(GLuint index, GLuint divisor);
 
     static bool IsSupported(const WebGLContext* context);
+
+    DECL_WEBGL_EXTENSION_GOOP
+};
+
+class WebGLExtensionBlendMinMax
+    : public WebGLExtensionBase
+{
+public:
+    WebGLExtensionBlendMinMax(WebGLContext*);
+    virtual ~WebGLExtensionBlendMinMax();
+
+    static bool IsSupported(const WebGLContext*);
 
     DECL_WEBGL_EXTENSION_GOOP
 };

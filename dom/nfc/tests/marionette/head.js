@@ -1,10 +1,11 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+const Cu = SpecialPowers.Cu;
+
 let pendingEmulatorCmdCount = 0;
 
-let Promise =
-  SpecialPowers.Cu.import("resource://gre/modules/Promise.jsm").Promise;
+let Promise = Cu.import("resource://gre/modules/Promise.jsm").Promise;
 let nfc = window.navigator.mozNfc;
 
 SpecialPowers.addPermission("nfc-manager", true, document);
@@ -22,6 +23,7 @@ let emulator = (function() {
   };
 
   function run(cmd, callback) {
+    log("Executing emulator command '" + cmd + "'");
     pendingCmdCount++;
     originalRunEmulatorCmd(cmd, function(result) {
       pendingCmdCount--;
@@ -29,10 +31,115 @@ let emulator = (function() {
         callback(result);
       }
     });
+  };
+
+  return {
+    run: run,
+    P2P_RE_INDEX_0 : 0,
+    P2P_RE_INDEX_1 : 1,
+    T1T_RE_INDEX   : 2,
+    T2T_RE_INDEX   : 3,
+    T3T_RE_INDEX   : 4,
+    T4T_RE_INDEX   : 5
+  };
+}());
+
+let NCI = (function() {
+  function activateRE(re) {
+    let deferred = Promise.defer();
+    let cmd = 'nfc nci rf_intf_activated_ntf ' + re;
+
+    emulator.run(cmd, function(result) {
+      is(result.pop(), 'OK', 'check activation of RE' + re);
+      deferred.resolve();
+    });
+
+    return deferred.promise;
+  };
+
+ function deactivate() {
+    let deferred = Promise.defer();
+    let cmd = 'nfc nci rf_intf_deactivate_ntf';
+
+    emulator.run(cmd, function(result) {
+      is(result.pop(), 'OK', 'check deactivate');
+      deferred.resolve();
+    });
+
+    return deferred.promise;
+  };
+
+  function notifyDiscoverRE(re, type) {
+    let deferred = Promise.defer();
+    let cmd = 'nfc nci rf_discover_ntf ' + re + ' ' + type;
+
+    emulator.run(cmd, function(result) {
+      is(result.pop(), 'OK', 'check discovery of RE' + re);
+      deferred.resolve();
+    });
+
+    return deferred.promise;
+  };
+
+  return {
+    activateRE: activateRE,
+    deactivate: deactivate,
+    notifyDiscoverRE: notifyDiscoverRE,
+    LAST_NOTIFICATION: 0,
+    LIMIT_NOTIFICATION: 1,
+    MORE_NOTIFICATIONS: 2
+  };
+}());
+
+let TAG = (function() {
+  function setData(re, flag, tnf, type, payload) {
+    let deferred = Promise.defer();
+    let cmd = "nfc tag set " + re +
+              " [" + flag + "," + tnf + "," + type + ",," + payload + "]";
+
+    emulator.run(cmd, function(result) {
+      is(result.pop(), "OK", "set NDEF data of tag" + re);
+      deferred.resolve();
+    });
+
+    return deferred.promise;
+  };
+
+  function clearData(re) {
+    let deferred = Promise.defer();
+    let cmd = "nfc tag clear " + re;
+
+    emulator.run(cmd, function(result) {
+      is(result.pop(), "OK", "clear tag" + re);
+      deferred.resolve();
+    });
   }
 
   return {
-    run: run
+    setData: setData,
+    clearData: clearData
+  };
+}());
+
+let SNEP = (function() {
+  function put(dsap, ssap, flags, tnf, type, id, payload) {
+    let deferred = Promise.defer();
+    let cmd = "nfc snep put " + dsap + " " + ssap + " [" + flags + "," +
+                                                           tnf + "," +
+                                                           type + "," +
+                                                           id + "," +
+                                                           payload + "]";
+    emulator.run(cmd, function(result) {
+      is(result.pop(), "OK", "send SNEP PUT");
+      deferred.resolve();
+    });
+
+    return deferred.promise;
+  };
+
+  return {
+    put: put,
+    SAP_NDEF: 4
   };
 }());
 
@@ -59,16 +166,15 @@ function toggleNFC(enabled) {
   return deferred.promise;
 }
 
-function enableRE0() {
-  let deferred = Promise.defer();
-  let cmd = 'nfc nci rf_intf_activated_ntf 0';
+function clearPendingMessages(type) {
+  if (!window.navigator.mozHasPendingMessage(type)) {
+    return;
+  }
 
-  emulator.run(cmd, function(result) {
-    is(result.pop(), 'OK', 'check activation of RE0');
-    deferred.resolve();
+  // setting a handler removes all messages from queue
+  window.navigator.mozSetMessageHandler(type, function() {
+    window.navigator.mozSetMessageHandler(type, null);
   });
-
-  return deferred.promise;
 }
 
 function cleanUp() {
@@ -83,6 +189,9 @@ function cleanUp() {
 }
 
 function runNextTest() {
+  clearPendingMessages('nfc-manager-tech-discovered');
+  clearPendingMessages('nfc-manager-tech-lost');
+
   let test = tests.shift();
   if (!test) {
     cleanUp();
@@ -117,8 +226,8 @@ const NDEF = {
       is(record1.tnf, record2.tnf, "test for equal TNF fields");
       let fields = ["type", "id", "payload"];
       fields.forEach(function(value) {
-        let field1 = record1[value];
-        let field2 = record2[value];
+        let field1 = Cu.waiveXrays(record1)[value];
+        let field2 = Cu.waiveXrays(record2)[value];
         is(field1.length, field2.length,
            value + " fields have the same length");
         let eq = true;

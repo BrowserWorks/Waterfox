@@ -49,7 +49,7 @@ exports.items = [
     existing: 'maybe',  // Should be one of 'yes', 'no', 'maybe'
     matches: undefined, // RegExp to match the file part of the path
 
-    isSelection: true,  // It's not really a selection, but acts like one
+    hasPredictions: true,
 
     constructor: function() {
       if (this.filetype !== 'any' && this.filetype !== 'file' &&
@@ -89,7 +89,7 @@ exports.items = [
         existing: this.existing,
         matches: this.matches
       };
-      var promise = fileparser.parse(arg.text, options);
+      var promise = fileparser.parse(context, arg.text, options);
 
       return promise.then(function(reply) {
         return new Conversion(reply.value, arg, reply.status,

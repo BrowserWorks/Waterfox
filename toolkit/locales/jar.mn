@@ -104,7 +104,6 @@
   locale/@AB_CD@/mozapps/handling/handling.properties             (%chrome/mozapps/handling/handling.properties)
   locale/@AB_CD@/mozapps/plugins/plugins.dtd                      (%chrome/mozapps/plugins/plugins.dtd)
   locale/@AB_CD@/mozapps/plugins/plugins.properties               (%chrome/mozapps/plugins/plugins.properties)
-  locale/@AB_CD@/mozapps/preferences/ocsp.dtd                     (%chrome/mozapps/preferences/ocsp.dtd)
   locale/@AB_CD@/mozapps/preferences/changemp.dtd                 (%chrome/mozapps/preferences/changemp.dtd)
   locale/@AB_CD@/mozapps/preferences/removemp.dtd                 (%chrome/mozapps/preferences/removemp.dtd)
   locale/@AB_CD@/mozapps/preferences/preferences.properties       (%chrome/mozapps/preferences/preferences.properties)
@@ -122,6 +121,8 @@
 % locale cookie @AB_CD@ %locale/@AB_CD@/cookie/
   locale/@AB_CD@/cookie/cookieAcceptDialog.dtd           (%chrome/cookie/cookieAcceptDialog.dtd)
   locale/@AB_CD@/cookie/cookieAcceptDialog.properties    (%chrome/cookie/cookieAcceptDialog.properties)
+% locale formautofill @AB_CD@ %locale/@AB_CD@/formautofill/
+  locale/@AB_CD@/formautofill/requestAutocomplete.dtd (%chrome/formautofill/requestAutocomplete.dtd)
 % locale passwordmgr @AB_CD@ %locale/@AB_CD@/passwordmgr/
   locale/@AB_CD@/passwordmgr/passwordmgr.properties (%chrome/passwordmgr/passwordmgr.properties)
   locale/@AB_CD@/passwordmgr/passwordManager.dtd    (%chrome/passwordmgr/passwordManager.dtd)

@@ -11,7 +11,7 @@ import threading
 import time
 import traceback
 from Queue import Queue
-from datetime import datetime, timedelta
+from datetime import datetime
 __all__ = ['ProcessHandlerMixin', 'ProcessHandler']
 
 # Set the MOZPROCESS_DEBUG environment variable to 1 to see some debugging output
@@ -23,7 +23,7 @@ isPosix = os.name == "posix" # includes MacOS X
 
 if isWin:
     import ctypes, ctypes.wintypes, msvcrt
-    from ctypes import sizeof, addressof, c_ulong, byref, POINTER, WinError, c_longlong
+    from ctypes import sizeof, addressof, c_ulong, byref, WinError, c_longlong
     import winprocess
     from qijo import JobObjectAssociateCompletionPortInformation,\
     JOBOBJECT_ASSOCIATE_COMPLETION_PORT, JobObjectExtendedLimitInformation,\
@@ -94,7 +94,7 @@ class ProcessHandlerMixin(object):
                                           preexec_fn, close_fds,
                                           shell, cwd, env,
                                           universal_newlines, startupinfo, creationflags)
-            except OSError, e:
+            except OSError:
                 print >> sys.stderr, args
                 raise
 
@@ -693,7 +693,7 @@ falling back to not using job objects for managing child processes"""
             return self.wait()
         except AttributeError:
             # Try to print a relevant error message.
-            if not self.proc:
+            if not hasattr(self, 'proc'):
                 print >> sys.stderr, "Unable to kill Process because call to ProcessHandler constructor failed."
             else:
                 raise
@@ -821,7 +821,8 @@ falling back to not using job objects for managing child processes"""
                 if timeout and count > timeout:
                     return None
 
-        return self.proc.wait()
+        self.returncode = self.proc.wait()
+        return self.returncode
 
     # TODO Remove this method when consumers have been fixed
     def waitForFinish(self, timeout=None):
@@ -913,7 +914,12 @@ class StreamOutput(object):
         self.stream = stream
 
     def __call__(self, line):
-        self.stream.write(line + '\n')
+        try:
+            self.stream.write(line + '\n')
+        except UnicodeDecodeError:
+            # TODO: Workaround for bug #991866 to make sure we can display when
+            # when normal UTF-8 display is failing
+            self.stream.write(line.decode('iso8859-1') + '\n')
         self.stream.flush()
 
 class LogOutput(StreamOutput):
@@ -946,7 +952,7 @@ class ProcessHandler(ProcessHandlerMixin):
     appended to the given file.
     """
 
-    def __init__(self, cmd, logfile=None, stream=None,  storeOutput=True, **kwargs):
+    def __init__(self, cmd, logfile=None, stream=None, storeOutput=True, **kwargs):
         kwargs.setdefault('processOutputLine', [])
         if callable(kwargs['processOutputLine']):
             kwargs['processOutputLine'] = [kwargs['processOutputLine']]

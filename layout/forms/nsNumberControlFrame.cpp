@@ -13,7 +13,6 @@
 #include "nsFontMetrics.h"
 #include "nsFormControlFrame.h"
 #include "nsGkAtoms.h"
-#include "nsINodeInfo.h"
 #include "nsNameSpaceManager.h"
 #include "nsThemeConstants.h"
 #include "mozilla/BasicEvents.h"
@@ -182,8 +181,10 @@ nsNumberControlFrame::Reflow(nsPresContext* aPresContext,
     FinishReflowChild(outerWrapperFrame, aPresContext, wrappersDesiredSize,
                       &wrapperReflowState, xoffset, yoffset, 0);
 
-    aDesiredSize.SetTopAscent(wrappersDesiredSize.TopAscent() +
-                              outerWrapperFrame->GetPosition().y);
+    aDesiredSize.SetBlockStartAscent(
+       wrappersDesiredSize.BlockStartAscent() +
+       outerWrapperFrame->BStart(aReflowState.GetWritingMode(),
+                                 contentBoxWidth));
   }
 
   aDesiredSize.Width() = contentBoxWidth +

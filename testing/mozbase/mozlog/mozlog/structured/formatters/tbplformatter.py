@@ -17,6 +17,9 @@ class TbplFormatter(BaseMachFormatter):
         return getattr(self, data["action"])(data)
 
     def log(self, data):
+        if data.get('component'):
+            return "%s %s\n" % (data["component"], data["message"])
+
         return "%s\n" % (data["message"])
 
     def process_output(self, data):
@@ -32,25 +35,36 @@ class TbplFormatter(BaseMachFormatter):
         return "TEST-START | %s\n" % self.id_str(data["test"])
 
     def test_status(self, data):
+        message = "- " + data["message"] if "message" in data else ""
         if "expected" in data:
-            return "TEST-UNEXPECTED-%s | %s | %s | expected %s | %s\n" % (
-                data["status"], self.id_str(data["test"]), data["subtest"], data["expected"],
-                data.get("message", ""))
-        else:
-            return "TEST-%s | %s | %s | %s\n" % (
-                data["status"], self.id_str(data["test"]), data["subtest"], data.get("message", ""))
+            failure_line = "TEST-UNEXPECTED-%s | %s | %s %s" % (
+                data["status"], self.id_str(data["test"]), data["subtest"],
+                message)
+            info_line = "TEST-INFO | expected %s\n" % data["expected"]
+            return "\n".join([failure_line, info_line])
+
+        return "TEST-%s | %s | %s %s\n" % (
+            data["status"], self.id_str(data["test"]), data["subtest"],
+            message)
 
     def test_end(self, data):
-        start_time = self.test_start_times.pop(self.test_id(data["test"]))
-        time = data["time"] - start_time
+        test_id = self.test_id(data["test"])
+        time_msg = ""
+
+        if test_id in self.test_start_times:
+            start_time = self.test_start_times.pop(test_id)
+            time = data["time"] - start_time
+            time_msg = " | took %ims" % time
 
         if "expected" in data:
-            return "TEST-END UNEXPECTED-%s | %s | expected %s | %s | took %ims\n" % (
-                data["status"], self.id_str(data["test"]), data["expected"],
-                data.get("message", ""), time)
-        else:
-            return "TEST-END %s | %s | took %ims\n" % (
-                data["status"], self.id_str(data["test"]), time)
+            failure_line = "TEST-UNEXPECTED-%s | %s | %s" % (
+                data["status"], test_id, data.get("message", ""))
+
+            info_line = "TEST-INFO expected %s%s\n" % (data["expected"], time_msg)
+            return "\n".join([failure_line, info_line])
+
+        return "TEST-%s | %s%s\n" % (
+            data["status"], test_id, time_msg)
 
     def suite_end(self, data):
         start_time = self.suite_start_time

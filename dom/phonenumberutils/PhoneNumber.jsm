@@ -1,4 +1,4 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
 // Don't modify this code. Please use:
@@ -8,9 +8,13 @@
 
 this.EXPORTED_SYMBOLS = ["PhoneNumber"];
 
-Components.utils.import("resource://gre/modules/PhoneNumberMetaData.jsm");
-Components.utils.import("resource://gre/modules/PhoneNumberNormalizer.jsm");
+const Cu = Components.utils;
 
+Cu.import('resource://gre/modules/XPCOMUtils.jsm');
+XPCOMUtils.defineLazyModuleGetter(this, "PHONE_NUMBER_META_DATA",
+                                  "resource://gre/modules/PhoneNumberMetaData.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PhoneNumberNormalizer",
+                                  "resource://gre/modules/PhoneNumberNormalizer.jsm");
 this.PhoneNumber = (function (dataBase) {
   // Use strict in our context only - users might not want it
   'use strict';

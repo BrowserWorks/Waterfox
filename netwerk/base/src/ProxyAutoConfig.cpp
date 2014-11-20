@@ -287,6 +287,9 @@ public:
   nsCOMPtr<nsICancelable> mRequest;
   nsCOMPtr<nsIDNSRecord>  mResponse;
   nsCOMPtr<nsITimer>      mTimer;
+
+private:
+  ~PACResolver() {}
 };
 NS_IMPL_ISUPPORTS(PACResolver, nsIDNSListener, nsITimerCallback)
 
@@ -406,7 +409,7 @@ bool PACDnsResolve(JSContext *cx, unsigned int argc, JS::Value *vp)
   if (!JS_ConvertArguments(cx, args, "S", arg1.address()))
     return false;
 
-  nsDependentJSString hostName;
+  nsAutoJSString hostName;
   nsAutoCString dottedDecimal;
 
   if (!hostName.init(cx, arg1))
@@ -455,11 +458,11 @@ bool PACProxyAlert(JSContext *cx, unsigned int argc, JS::Value *vp)
   if (!JS_ConvertArguments(cx, args, "S", arg1.address()))
     return false;
 
-  nsDependentJSString message;
+  nsAutoJSString message;
   if (!message.init(cx, arg1))
     return false;
 
-  nsString alertMessage;
+  nsAutoString alertMessage;
   alertMessage.SetCapacity(32 + message.Length());
   alertMessage += NS_LITERAL_STRING("PAC-alert: ");
   alertMessage += message;
@@ -634,9 +637,11 @@ ProxyAutoConfig::SetupJS()
   JS::Rooted<JSObject*> global(cx, mJSRuntime->Global());
   JS::CompileOptions options(cx);
   options.setFileAndLine(mPACURI.get(), 1);
-  JS::Rooted<JSScript*> script(cx, JS_CompileScript(cx, global, mPACScript.get(),
-                                                    mPACScript.Length(), options));
-  if (!script || !JS_ExecuteScript(cx, global, script)) {
+  JS::Rooted<JSScript*> script(cx);
+  if (!JS_CompileScript(cx, global, mPACScript.get(),
+                        mPACScript.Length(), options, &script) ||
+      !JS_ExecuteScript(cx, global, script))
+  {
     nsString alertMessage(NS_LITERAL_STRING("PAC file failed to install from "));
     if (isDataURI) {
       alertMessage += NS_LITERAL_STRING("data: URI");
@@ -701,7 +706,7 @@ ProxyAutoConfig::GetProxyForURI(const nsCString &aTestURI,
     bool ok = JS_CallFunctionName(cx, global, "FindProxyForURL", args, &rval);
 
     if (ok && rval.isString()) {
-      nsDependentJSString pacString;
+      nsAutoJSString pacString;
       if (pacString.init(cx, rval.toString())) {
         CopyUTF16toUTF8(pacString, result);
         rv = NS_OK;

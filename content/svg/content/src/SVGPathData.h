@@ -23,7 +23,6 @@
 class gfxContext;
 class nsSVGPathDataParser; // IWYU pragma: keep
 
-struct gfxMatrix;
 struct nsSVGMark;
 
 namespace mozilla {
@@ -85,6 +84,7 @@ class SVGPathData
 
   typedef gfx::DrawTarget DrawTarget;
   typedef gfx::Path Path;
+  typedef gfx::PathBuilder PathBuilder;
   typedef gfx::FillRule FillRule;
   typedef gfx::Float Float;
   typedef gfx::CapStyle CapStyle;
@@ -167,7 +167,7 @@ public:
   TemporaryRef<Path> ToPathForLengthOrPositionMeasuring() const;
 
   void ConstructPath(gfxContext *aCtx) const;
-  TemporaryRef<Path> BuildPath(FillRule aFillRule,
+  TemporaryRef<Path> BuildPath(PathBuilder* aBuilder,
                                uint8_t aCapStyle,
                                Float aStrokeWidth) const;
 

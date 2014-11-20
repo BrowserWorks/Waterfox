@@ -16,6 +16,7 @@
 #ifdef JS_ION_PERF
 # include "jit/PerfSpewer.h"
 #endif
+#include "jit/ParallelFunctions.h"
 #include "jit/VMFunctions.h"
 
 #include "jit/ExecutionMode-inl.h"
@@ -24,14 +25,14 @@ using namespace js;
 using namespace js::jit;
 
 static const FloatRegisterSet NonVolatileFloatRegs =
-    FloatRegisterSet((1 << FloatRegisters::d8) |
-                     (1 << FloatRegisters::d9) |
-                     (1 << FloatRegisters::d10) |
-                     (1 << FloatRegisters::d11) |
-                     (1 << FloatRegisters::d12) |
-                     (1 << FloatRegisters::d13) |
-                     (1 << FloatRegisters::d14) |
-                     (1 << FloatRegisters::d15));
+    FloatRegisterSet((1ULL << FloatRegisters::d8) |
+                     (1ULL << FloatRegisters::d9) |
+                     (1ULL << FloatRegisters::d10) |
+                     (1ULL << FloatRegisters::d11) |
+                     (1ULL << FloatRegisters::d12) |
+                     (1ULL << FloatRegisters::d13) |
+                     (1ULL << FloatRegisters::d14) |
+                     (1ULL << FloatRegisters::d15));
 
 static void
 GenerateReturn(MacroAssembler &masm, int returnCode, SPSProfiler *prof)
@@ -349,7 +350,6 @@ JitRuntime::generateInvalidator(JSContext *cx)
 {
     // See large comment in x86's JitRuntime::generateInvalidator.
     MacroAssembler masm(cx);
-    //masm.as_bkpt();
     // At this point, one of two things has happened:
     // 1) Execution has just returned from C code, which left the stack aligned
     // 2) Execution has just returned from Ion code, which left the stack unaligned.
@@ -364,9 +364,17 @@ JitRuntime::generateInvalidator(JSContext *cx)
         masm.transferReg(Register::FromCode(i));
     masm.finishDataTransfer();
 
+    // Since our datastructures for stack inspection are compile-time fixed,
+    // if there are only 16 double registers, then we need to reserve
+    // space on the stack for the missing 16.
+    if (FloatRegisters::ActualTotalPhys() != FloatRegisters::TotalPhys) {
+        int missingRegs = FloatRegisters::TotalPhys - FloatRegisters::ActualTotalPhys();
+        masm.ma_sub(Imm32(missingRegs * sizeof(double)), sp);
+    }
+
     masm.startFloatTransferM(IsStore, sp, DB, WriteBack);
-    for (uint32_t i = 0; i < FloatRegisters::Total; i++)
-        masm.transferFloatReg(FloatRegister::FromCode(i));
+    for (uint32_t i = 0; i < FloatRegisters::ActualTotalPhys(); i++)
+        masm.transferFloatReg(FloatRegister(i, FloatRegister::Double));
     masm.finishFloatTransfer();
 
     masm.ma_mov(sp, r0);
@@ -516,7 +524,7 @@ JitRuntime::generateArgumentsRectifier(JSContext *cx, ExecutionMode mode, void *
 }
 
 static void
-GenerateBailoutThunk(JSContext *cx, MacroAssembler &masm, uint32_t frameClass)
+PushBailoutFrame(MacroAssembler &masm, uint32_t frameClass, Register spArg)
 {
     // the stack should look like:
     // [IonFrame]
@@ -528,6 +536,7 @@ GenerateBailoutThunk(JSContext *cx, MacroAssembler &masm, uint32_t frameClass)
     // STEP 1a: Save our register sets to the stack so Bailout() can read
     // everything.
     // sp % 8 == 0
+
     masm.startDataTransferM(IsStore, sp, DB, WriteBack);
     // We don't have to push everything, but this is likely easier.
     // Setting regs_.
@@ -535,9 +544,16 @@ GenerateBailoutThunk(JSContext *cx, MacroAssembler &masm, uint32_t frameClass)
         masm.transferReg(Register::FromCode(i));
     masm.finishDataTransfer();
 
+    // Since our datastructures for stack inspection are compile-time fixed,
+    // if there are only 16 double registers, then we need to reserve
+    // space on the stack for the missing 16.
+    if (FloatRegisters::ActualTotalPhys() != FloatRegisters::TotalPhys) {
+        int missingRegs = FloatRegisters::TotalPhys - FloatRegisters::ActualTotalPhys();
+        masm.ma_sub(Imm32(missingRegs * sizeof(double)), sp);
+    }
     masm.startFloatTransferM(IsStore, sp, DB, WriteBack);
-    for (uint32_t i = 0; i < FloatRegisters::Total; i++)
-        masm.transferFloatReg(FloatRegister::FromCode(i));
+    for (uint32_t i = 0; i < FloatRegisters::ActualTotalPhys(); i++)
+        masm.transferFloatReg(FloatRegister(i, FloatRegister::Double));
     masm.finishFloatTransfer();
 
     // STEP 1b: Push both the "return address" of the function call (the address
@@ -561,10 +577,17 @@ GenerateBailoutThunk(JSContext *cx, MacroAssembler &masm, uint32_t frameClass)
     masm.transferReg(lr);
     masm.finishDataTransfer();
 
+    masm.ma_mov(sp, spArg);
+}
+
+static void
+GenerateBailoutThunk(JSContext *cx, MacroAssembler &masm, uint32_t frameClass)
+{
+    PushBailoutFrame(masm, frameClass, r0);
+
     // SP % 8 == 4
     // STEP 1c: Call the bailout function, giving a pointer to the
     //          structure we just blitted onto the stack.
-    masm.ma_mov(sp, r0);
     const int sizeOfBailoutInfo = sizeof(void *)*2;
     masm.reserveStack(sizeOfBailoutInfo);
     masm.mov(sp, r1);
@@ -583,7 +606,7 @@ GenerateBailoutThunk(JSContext *cx, MacroAssembler &masm, uint32_t frameClass)
     masm.ma_add(sp, Imm32(sizeOfBailoutInfo), sp);
     // Common size of a bailout frame.
     uint32_t bailoutFrameSize = sizeof(void *) + // frameClass
-                              sizeof(double) * FloatRegisters::Total +
+                              sizeof(double) * FloatRegisters::TotalPhys +
                               sizeof(void *) * Registers::Total;
 
     if (frameClass == NO_FRAME_SIZE_CLASS_ID) {
@@ -616,6 +639,33 @@ GenerateBailoutThunk(JSContext *cx, MacroAssembler &masm, uint32_t frameClass)
     masm.branch(bailoutTail);
 }
 
+static void
+GenerateParallelBailoutThunk(MacroAssembler &masm, uint32_t frameClass)
+{
+    // As GenerateBailoutThunk, except we return an error immediately. We do the
+    // bailout dance so that we can walk the stack and have accurate reporting
+    // of frame information.
+
+    PushBailoutFrame(masm, frameClass, r0);
+
+    // Parallel bailout is like parallel failure in that we unwind all the way
+    // to the entry frame. Reserve space for the frame pointer of the entry
+    // frame.
+    const int sizeOfEntryFramePointer = sizeof(uint8_t *) * 2;
+    masm.reserveStack(sizeOfEntryFramePointer);
+    masm.mov(sp, r1);
+
+    masm.setupAlignedABICall(2);
+    masm.passABIArg(r0);
+    masm.passABIArg(r1);
+    masm.callWithABI(JS_FUNC_TO_DATA_PTR(void *, BailoutPar));
+
+    // Get the frame pointer of the entry frame and return.
+    masm.moveValue(MagicValue(JS_ION_ERROR), JSReturnOperand);
+    masm.ma_ldr(Address(sp, 0), sp);
+    masm.as_dtr(IsLoad, 32, PostIndex, pc, DTRAddr(sp, DtrOffImm(4)));
+}
+
 JitCode *
 JitRuntime::generateBailoutTable(JSContext *cx, uint32_t frameClass)
 {
@@ -644,10 +694,20 @@ JitRuntime::generateBailoutTable(JSContext *cx, uint32_t frameClass)
 }
 
 JitCode *
-JitRuntime::generateBailoutHandler(JSContext *cx)
+JitRuntime::generateBailoutHandler(JSContext *cx, ExecutionMode mode)
 {
     MacroAssembler masm(cx);
-    GenerateBailoutThunk(cx, masm, NO_FRAME_SIZE_CLASS_ID);
+
+    switch (mode) {
+      case SequentialExecution:
+        GenerateBailoutThunk(cx, masm, NO_FRAME_SIZE_CLASS_ID);
+        break;
+      case ParallelExecution:
+        GenerateParallelBailoutThunk(masm, NO_FRAME_SIZE_CLASS_ID);
+        break;
+      default:
+        MOZ_ASSUME_UNREACHABLE("No such execution mode");
+    }
 
     Linker linker(masm);
     AutoFlushICache afc("BailoutHandler");
@@ -807,7 +867,7 @@ JitRuntime::generateVMWrapper(JSContext *cx, const VMFunction &f)
 
       case Type_Double:
         if (cx->runtime()->jitSupportsFloatingPoint)
-            masm.loadDouble(Address(sp, 0), ReturnFloatReg);
+            masm.loadDouble(Address(sp, 0), ReturnDoubleReg);
         else
             masm.assumeUnreachable("Unable to load into float reg, with no FP support.");
         masm.freeStack(sizeof(double));
@@ -848,7 +908,7 @@ JitRuntime::generatePreBarrier(JSContext *cx, MIRType type)
     RegisterSet save;
     if (cx->runtime()->jitSupportsFloatingPoint) {
         save = RegisterSet(GeneralRegisterSet(Registers::VolatileMask),
-                           FloatRegisterSet(FloatRegisters::VolatileMask));
+                           FloatRegisterSet(FloatRegisters::VolatileDoubleMask));
     } else {
         save = RegisterSet(GeneralRegisterSet(Registers::VolatileMask),
                            FloatRegisterSet());

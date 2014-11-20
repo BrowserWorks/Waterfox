@@ -16,7 +16,7 @@ dnl = Defaults
 dnl ========================================================
 MOD_MAJOR_VERSION=4
 MOD_MINOR_VERSION=10
-MOD_PATCH_VERSION=6
+MOD_PATCH_VERSION=7
 NSPR_MODNAME=nspr20
 _HAVE_PTHREADS=
 USE_PTHREADS=
@@ -72,17 +72,19 @@ case "$target" in
     # Check to see if we are really running in a msvc environemnt
     _WIN32_MSVC=
     AC_CHECK_PROGS(CC, cl)
-    if test "$CC" = "cl"; then
-        echo 'main() { return 0; }' > dummy.c
-        ${CC} -o dummy dummy.c >/dev/null 2>&1
-        if test $? = 0; then
-            _WIN32_MSVC=1
-            CXX=$CC
-        else
-            AC_MSG_WARN([$(CC) test failed.  Using normal feature tests])
-        fi
-        rm -f dummy dummy.o dummy.obj dummy.exe dummy.c
+    cat > conftest.c <<EOF
+#ifdef _MSC_VER
+COMPILER IS MSVC
+#endif
+EOF
+    read dummy <<EOF
+$($CC -E conftest.c 2>/dev/null | grep COMPILER)
+EOF
+    if test -n "$dummy"; then
+        _WIN32_MSVC=1
+        CXX=$CC
     fi
+    rm -f conftest.c
     ;;
 *-mks*)
     _WIN32_MSVC=1
@@ -386,6 +388,12 @@ AC_ARG_ENABLE(debug-rtl,
 	    USE_DEBUG_RTL=1
       else
 	    USE_DEBUG_RTL=0
+      fi ])
+
+AC_ARG_ENABLE(static-rtl,
+    [  --enable-static-rtl     Use the MSVC static runtime library],
+    [ if test "$enableval" = "yes"; then
+	    USE_STATIC_RTL=1
       fi ])
 
 AC_ARG_ENABLE(n32,
@@ -1913,8 +1921,6 @@ tools are selected during the Xcode/Developer Tools installation.])
         # Use temp file for windres (bug 213281)
         RCFLAGS='-O coff --use-temp-file'
     else
-        CC=cl
-        CXX=cl
         LD=link
         AR='lib -NOLOGO -OUT:"$@"'
         AR_FLAGS=
@@ -2004,9 +2010,17 @@ tools are selected during the Xcode/Developer Tools installation.])
         fi
 
         if test "$USE_DEBUG_RTL" = 1; then
-            CFLAGS="$CFLAGS -MDd"
+            if test -n "$USE_STATIC_RTL"; then
+                CFLAGS="$CFLAGS -MTd"
+            else
+                CFLAGS="$CFLAGS -MDd"
+            fi
         else
-            CFLAGS="$CFLAGS -MD"
+            if test -n "$USE_STATIC_RTL"; then
+                CFLAGS="$CFLAGS -MT"
+            else
+                CFLAGS="$CFLAGS -MD"
+            fi
         fi
 
         if test -n "$MOZ_DEBUG"; then
@@ -2081,6 +2095,11 @@ tools are selected during the Xcode/Developer Tools installation.])
 	    AC_DEFINE(_AMD64_)
 	else		
 	    AC_DEFINE(_X86_)
+            if test -z "$GNU_CC" -a "$MSC_VER" -ge "1700"; then
+                dnl Visual C++ 2012 defaults to -arch:SSE2. Use -arch:IA32
+                dnl to avoid requiring SSE2.
+                CFLAGS="$CFLAGS -arch:IA32"
+            fi
 	fi
         ;;
     x86_64)
@@ -2643,50 +2662,18 @@ fi
 ;;
 esac
 
-dnl
-dnl Apparently, some systems cannot properly check for the pthread
-dnl library unless <pthread.h> is included so we need to test
-dnl using it
-dnl
-dnl MOZ_CHECK_PTHREADS(lib, success, failure)
-AC_DEFUN(MOZ_CHECK_PTHREADS,
-[
-AC_MSG_CHECKING([for pthread_create in -l$1])
-echo "
-    #include <pthread.h> 
-    void *foo(void *v) { return v; } 
-    int main() { 
-        pthread_t t;
-        if (!pthread_create(&t, 0, &foo, 0)) {
-            pthread_join(t, 0);
-        }
-        return 0;
-    }" > dummy.c ;
-    echo "${CC-cc} -o dummy${ac_exeext} dummy.c $CFLAGS $CPPFLAGS -l[$1] $LDFLAGS $LIBS" 1>&5;
-    ${CC-cc} -o dummy${ac_exeext} dummy.c $CFLAGS $CPPFLAGS -l[$1] $LDFLAGS $LIBS 2>&5;
-    _res=$? ;
-    rm -f dummy.c dummy${ac_exeext} ;
-    if test "$_res" = "0"; then
-        AC_MSG_RESULT([yes])
-        [$2]
-    else
-        AC_MSG_RESULT([no])
-        [$3]
-    fi
-])
-
 case "$target_os" in
 darwin*)
     _HAVE_PTHREADS=1
     ;;
 *)
-    MOZ_CHECK_PTHREADS(pthreads,
+    AC_CHECK_LIB(pthreads, pthread_create,
         _HAVE_PTHREADS=1 _PTHREAD_LDFLAGS="-lpthreads",
-        MOZ_CHECK_PTHREADS(pthread,
+        AC_CHECK_LIB(pthread, pthread_create,
             _HAVE_PTHREADS=1 _PTHREAD_LDFLAGS="-lpthread",
-            MOZ_CHECK_PTHREADS(c_r,
+            AC_CHECK_LIB(c_r, pthread_create,
                 _HAVE_PTHREADS=1 _PTHREAD_LDFLAGS="-lc_r",
-                MOZ_CHECK_PTHREADS(c,
+                AC_CHECK_LIB(c, pthread_create,
                     _HAVE_PTHREADS=1
                 )
             )

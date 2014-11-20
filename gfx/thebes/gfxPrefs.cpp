@@ -11,6 +11,7 @@
 using namespace mozilla;
 
 gfxPrefs* gfxPrefs::sInstance = nullptr;
+bool gfxPrefs::sInstanceHasBeenDestroyed = false;
 
 void
 gfxPrefs::DestroySingleton()
@@ -18,7 +19,9 @@ gfxPrefs::DestroySingleton()
   if (sInstance) {
     delete sInstance;
     sInstance = nullptr;
+    sInstanceHasBeenDestroyed = true;
   }
+  MOZ_ASSERT(!SingletonExists());
 }
 
 bool
@@ -29,13 +32,17 @@ gfxPrefs::SingletonExists()
 
 gfxPrefs::gfxPrefs()
 {
-  // Needs to be created on the main thread.
-  MOZ_ASSERT(NS_IsMainThread(), "must be constructed on the main thread");
+  gfxPrefs::AssertMainThread();
 }
 
 gfxPrefs::~gfxPrefs()
 {
-  MOZ_ASSERT(NS_IsMainThread(), "must be destructed on the main thread");
+  gfxPrefs::AssertMainThread();
+}
+
+void gfxPrefs::AssertMainThread()
+{
+  MOZ_ASSERT(NS_IsMainThread(), "this code must be run on the main thread");
 }
 
 void gfxPrefs::PrefAddVarCache(bool* aVariable,
@@ -86,3 +93,22 @@ float gfxPrefs::PrefGet(const char* aPref, float aDefault)
   return Preferences::GetFloat(aPref, aDefault);
 }
 
+void gfxPrefs::PrefSet(const char* aPref, bool aValue)
+{
+  Preferences::SetBool(aPref, aValue);
+}
+
+void gfxPrefs::PrefSet(const char* aPref, int32_t aValue)
+{
+  Preferences::SetInt(aPref, aValue);
+}
+
+void gfxPrefs::PrefSet(const char* aPref, uint32_t aValue)
+{
+  Preferences::SetUint(aPref, aValue);
+}
+
+void gfxPrefs::PrefSet(const char* aPref, float aValue)
+{
+  Preferences::SetFloat(aPref, aValue);
+}

@@ -79,13 +79,13 @@ TemporaryRef<Path>
 ScaledFontBase::GetPathForGlyphs(const GlyphBuffer &aBuffer, const DrawTarget *aTarget)
 {
 #ifdef USE_SKIA
-  if (aTarget->GetType() == BackendType::SKIA) {
+  if (aTarget->GetBackendType() == BackendType::SKIA) {
     SkPath path = GetSkiaPathForGlyphs(aBuffer);
     return new PathSkia(path, FillRule::FILL_WINDING);
   }
 #endif
 #ifdef USE_CAIRO
-  if (aTarget->GetType() == BackendType::CAIRO) {
+  if (aTarget->GetBackendType() == BackendType::CAIRO) {
     MOZ_ASSERT(mScaledFont);
 
     DrawTarget *dt = const_cast<DrawTarget*>(aTarget);
@@ -118,7 +118,7 @@ ScaledFontBase::GetPathForGlyphs(const GlyphBuffer &aBuffer, const DrawTarget *a
       cairo_destroy(ctx);
     }
 
-    return newPath;
+    return newPath.forget();
   }
 #endif
   return nullptr;

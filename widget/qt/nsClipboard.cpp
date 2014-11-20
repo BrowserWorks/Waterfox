@@ -25,7 +25,6 @@
 #include "nsComponentManagerUtils.h"
 
 #include "imgIContainer.h"
-#include "gfxImageSurface.h"
 
 using namespace mozilla;
 using namespace mozilla::gfx;
@@ -468,14 +467,6 @@ nsClipboard::SetData(nsITransferable *aTransferable,
     {
         return NS_OK;
     }
-
-    nsresult rv;
-    if (!mPrivacyHandler) {
-      rv = NS_NewClipboardPrivacyHandler(getter_AddRefs(mPrivacyHandler));
-      NS_ENSURE_SUCCESS(rv, rv);
-    }
-    rv = mPrivacyHandler->PrepareDataForClipboard(aTransferable);
-    NS_ENSURE_SUCCESS(rv, rv);
 
     EmptyClipboard(aWhichClipboard);
 

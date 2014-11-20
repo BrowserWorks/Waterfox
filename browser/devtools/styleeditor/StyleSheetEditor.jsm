@@ -15,7 +15,6 @@ const require = Cu.import("resource://gre/modules/devtools/Loader.jsm", {}).devt
 const Editor  = require("devtools/sourceeditor/editor");
 const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
 const {CssLogic} = require("devtools/styleinspector/css-logic");
-const AutoCompleter = require("devtools/sourceeditor/autocomplete");
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
@@ -95,6 +94,8 @@ function StyleSheetEditor(styleSheet, win, file, isNew, walker) {
   this._onMediaRulesChanged = this._onMediaRulesChanged.bind(this)
   this.checkLinkedFileForChanges = this.checkLinkedFileForChanges.bind(this);
   this.markLinkedFileBroken = this.markLinkedFileBroken.bind(this);
+  this.saveToFile = this.saveToFile.bind(this);
+  this.updateStyleSheet = this.updateStyleSheet.bind(this);
 
   this._focusOnSourceEditorReady = false;
   this.cssSheet.on("property-change", this._onPropertyChange);
@@ -348,23 +349,18 @@ StyleSheetEditor.prototype = {
       autoCloseBrackets: "{}()[]",
       extraKeys: this._getKeyBindings(),
       contextMenu: "sourceEditorContextMenu",
-      autocomplete: Services.prefs.getBoolPref(AUTOCOMPLETION_PREF)
+      autocomplete: Services.prefs.getBoolPref(AUTOCOMPLETION_PREF),
+      autocompleteOpts: { walker: this.walker }
     };
-    let sourceEditor = new Editor(config);
+    let sourceEditor = this._sourceEditor = new Editor(config);
 
     sourceEditor.on("dirty-change", this._onPropertyChange);
 
     return sourceEditor.appendTo(inputElement).then(() => {
-      sourceEditor.setupAutoCompletion({ walker: this.walker });
-
-      sourceEditor.on("save", () => {
-        this.saveToFile();
-      });
+      sourceEditor.on("save", this.saveToFile);
 
       if (this.styleSheet.update) {
-        sourceEditor.on("change", () => {
-          this.updateStyleSheet();
-        });
+        sourceEditor.on("change", this.updateStyleSheet);
       }
 
       this.sourceEditor = sourceEditor;
@@ -502,7 +498,7 @@ StyleSheetEditor.prototype = {
       converter.charset = "UTF-8";
       let istream = converter.convertToInputStream(this._state.text);
 
-      NetUtil.asyncCopy(istream, ostream, function onStreamCopied(status) {
+      NetUtil.asyncCopy(istream, ostream, (status) => {
         if (!Components.isSuccessCode(status)) {
           if (callback) {
             callback(null);
@@ -517,7 +513,7 @@ StyleSheetEditor.prototype = {
         if (callback) {
           callback(returnFile);
         }
-      }.bind(this));
+      });
     };
 
     let defaultName;
@@ -632,8 +628,11 @@ StyleSheetEditor.prototype = {
    * Clean up for this editor.
    */
   destroy: function() {
-    if (this.sourceEditor) {
-      this.sourceEditor.destroy();
+    if (this._sourceEditor) {
+      this._sourceEditor.off("dirty-change", this._onPropertyChange);
+      this._sourceEditor.off("save", this.saveToFile);
+      this._sourceEditor.off("change", this.updateStyleSheet);
+      this._sourceEditor.destroy();
     }
     this.cssSheet.off("property-change", this._onPropertyChange);
     this.cssSheet.off("media-rules-changed", this._onMediaRulesChanged);

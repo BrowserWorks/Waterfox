@@ -20,8 +20,6 @@
 #include "gfxFT2Utils.h"
 #include "harfbuzz/hb.h"
 #include "harfbuzz/hb-ot.h"
-#include "gfxHarfBuzzShaper.h"
-#include "gfxGraphiteShaper.h"
 #include "nsUnicodeProperties.h"
 #include "nsUnicodeScriptCodes.h"
 #include "gfxFontconfigUtils.h"
@@ -663,14 +661,6 @@ public:
 protected:
     virtual already_AddRefed<gfxFont> GetSmallCapsFont();
 
-    virtual bool ShapeText(gfxContext      *aContext,
-                           const char16_t *aText,
-                           uint32_t         aOffset,
-                           uint32_t         aLength,
-                           int32_t          aScript,
-                           gfxShapedText   *aShapedText,
-                           bool             aPreferPlatformShaping);
-
 private:
     gfxFcFont(cairo_scaled_font_t *aCairoFont, gfxFcFontEntry *aFontEntry,
               const gfxFontStyle *aFontStyle);
@@ -804,7 +794,7 @@ FindFontPatterns(gfxUserFontSet *mUserFontSet,
     style.stretch = aStretch;
 
     gfxUserFcFontEntry *fontEntry = nullptr;
-    gfxFontFamily *family = mUserFontSet->GetFamily(utf16Family);
+    gfxFontFamily *family = mUserFontSet->LookupFamily(utf16Family);
     if (family) {
         fontEntry = static_cast<gfxUserFcFontEntry*>
             (mUserFontSet->FindFontEntry(family, style, needsBold,
@@ -1534,7 +1524,7 @@ gfxFcFont::GetSmallCapsFont()
 {
     gfxFontStyle style(*GetStyle());
     style.size *= SMALL_CAPS_SCALE_FACTOR;
-    style.smallCaps = false;
+    style.variantCaps = NS_FONT_VARIANT_CAPS_NORMAL;
     gfxFcFontEntry* fe = static_cast<gfxFcFontEntry*>(GetFontEntry());
     nsRefPtr<gfxFont> font = gfxFontCache::GetCache()->Lookup(fe, &style);
     if (font) {
@@ -1562,42 +1552,6 @@ gfxFcFont::GetSmallCapsFont()
     cairo_scaled_font_destroy(smallFont);
 
     return font.forget();
-}
-
-bool
-gfxFcFont::ShapeText(gfxContext      *aContext,
-                     const char16_t *aText,
-                     uint32_t         aOffset,
-                     uint32_t         aLength,
-                     int32_t          aScript,
-                     gfxShapedText   *aShapedText,
-                     bool             aPreferPlatformShaping)
-{
-    bool ok = false;
-
-    if (FontCanSupportGraphite()) {
-        if (gfxPlatform::GetPlatform()->UseGraphiteShaping()) {
-            if (!mGraphiteShaper) {
-                mGraphiteShaper = new gfxGraphiteShaper(this);
-            }
-            ok = mGraphiteShaper->ShapeText(aContext, aText, aOffset, aLength,
-                                            aScript, aShapedText);
-        }
-    }
-
-    if (!ok) {
-        if (!mHarfBuzzShaper) {
-            mHarfBuzzShaper = new gfxHarfBuzzShaper(this);
-        }
-        ok = mHarfBuzzShaper->ShapeText(aContext, aText, aOffset, aLength,
-                                        aScript, aShapedText);
-    }
-
-    NS_WARN_IF_FALSE(ok, "shaper failed, expect scrambled or missing text");
-
-    PostShapingFixup(aContext, aText, aOffset, aLength, aShapedText);
-
-    return ok;
 }
 
 /* static */ void
@@ -1740,6 +1694,26 @@ gfxFcFont::GetOrMakeFont(FcPattern *aRequestedPattern, FcPattern *aFontPattern,
 {
     nsAutoRef<FcPattern> renderPattern
         (FcFontRenderPrepare(nullptr, aRequestedPattern, aFontPattern));
+
+    // If synthetic bold/italic is not allowed by the style, adjust the
+    // resulting pattern to match the actual properties of the font.
+    if (!aFontStyle->allowSyntheticWeight) {
+        int weight;
+        if (FcPatternGetInteger(aFontPattern, FC_WEIGHT, 0,
+                                &weight) == FcResultMatch) {
+            FcPatternDel(renderPattern, FC_WEIGHT);
+            FcPatternAddInteger(renderPattern, FC_WEIGHT, weight);
+        }
+    }
+    if (!aFontStyle->allowSyntheticStyle) {
+        int slant;
+        if (FcPatternGetInteger(aFontPattern, FC_SLANT, 0,
+                                &slant) == FcResultMatch) {
+            FcPatternDel(renderPattern, FC_SLANT);
+            FcPatternAddInteger(renderPattern, FC_SLANT, slant);
+        }
+    }
+
     cairo_font_face_t *face =
         cairo_ft_font_face_create_for_pattern(renderPattern);
 

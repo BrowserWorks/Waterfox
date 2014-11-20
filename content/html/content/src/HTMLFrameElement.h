@@ -22,9 +22,8 @@ class HTMLFrameElement MOZ_FINAL : public nsGenericHTMLFrameElement,
 public:
   using nsGenericHTMLFrameElement::SwapFrameLoaders;
 
-  HTMLFrameElement(already_AddRefed<nsINodeInfo>& aNodeInfo,
+  HTMLFrameElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo,
                    FromParser aFromParser = NOT_FROM_PARSER);
-  virtual ~HTMLFrameElement();
 
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
@@ -37,7 +36,7 @@ public:
                               nsIAtom* aAttribute,
                               const nsAString& aValue,
                               nsAttrValue& aResult) MOZ_OVERRIDE;
-  virtual nsresult Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
 
   // WebIDL API
   // The XPCOM GetFrameBorder is OK for us
@@ -95,6 +94,8 @@ public:
   using nsGenericHTMLFrameElement::GetContentWindow;
 
 protected:
+  virtual ~HTMLFrameElement();
+
   virtual JSObject* WrapNode(JSContext* aCx) MOZ_OVERRIDE;
 
 private:

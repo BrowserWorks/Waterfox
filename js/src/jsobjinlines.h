@@ -9,6 +9,7 @@
 
 #include "jsobj.h"
 
+#include "builtin/TypedObject.h"
 #include "vm/ArrayObject.h"
 #include "vm/DateObject.h"
 #include "vm/NumberObject.h"
@@ -21,6 +22,7 @@
 #include "jsgcinlines.h"
 #include "jsinferinlines.h"
 
+#include "gc/ForkJoinNursery-inl.h"
 #include "vm/ObjectImpl-inl.h"
 
 /* static */ inline bool
@@ -349,6 +351,28 @@ JSObject::getDenseOrTypedArrayElement(uint32_t idx)
     return getDenseElement(idx);
 }
 
+inline void
+JSObject::initDenseElementsUnbarriered(uint32_t dstStart, const js::Value *src, uint32_t count) {
+    /*
+     * For use by parallel threads, which since they cannot see nursery
+     * things do not require a barrier.
+     */
+    JS_ASSERT(dstStart + count <= getDenseCapacity());
+#if defined(DEBUG) && defined(JSGC_GENERATIONAL)
+    /*
+     * This asserts a global invariant: parallel code does not
+     * observe objects inside the generational GC's nursery.
+     */
+    JS_ASSERT(!js::gc::IsInsideGGCNursery(this));
+    for (uint32_t index = 0; index < count; ++index) {
+        const JS::Value& value = src[index];
+        if (value.isMarkable())
+            JS_ASSERT(!js::gc::IsInsideGGCNursery(static_cast<js::gc::Cell *>(value.toGCThing())));
+    }
+#endif
+    memcpy(&elements[dstStart], src, count * sizeof(js::HeapSlot));
+}
+
 /* static */ inline bool
 JSObject::setSingletonType(js::ExclusiveContext *cx, js::HandleObject obj)
 {
@@ -474,11 +498,19 @@ JSObject::setProto(JSContext *cx, JS::HandleObject obj, JS::HandleObject proto, 
 }
 
 inline bool
-JSObject::isVarObj()
+JSObject::isQualifiedVarObj()
 {
     if (is<js::DebugScopeObject>())
-        return as<js::DebugScopeObject>().scope().isVarObj();
-    return lastProperty()->hasObjectFlag(js::BaseShape::VAROBJ);
+        return as<js::DebugScopeObject>().scope().isQualifiedVarObj();
+    return lastProperty()->hasObjectFlag(js::BaseShape::QUALIFIED_VAROBJ);
+}
+
+inline bool
+JSObject::isUnqualifiedVarObj()
+{
+    if (is<js::DebugScopeObject>())
+        return as<js::DebugScopeObject>().scope().isUnqualifiedVarObj();
+    return lastProperty()->hasObjectFlag(js::BaseShape::UNQUALIFIED_VAROBJ);
 }
 
 /* static */ inline JSObject *
@@ -511,6 +543,12 @@ JSObject::create(js::ExclusiveContext *cx, js::gc::AllocKind kind, js::gc::Initi
     size_t span = shape->slotSpan();
     if (span)
         obj->initializeSlotRange(0, span);
+
+    // JSFunction's fixed slots expect POD-style initialization.
+    if (type->clasp()->isJSFunction())
+        memset(obj->fixedSlots(), 0, sizeof(js::HeapSlot) * GetGCKindSlots(kind));
+
+    js::gc::TraceCreateObject(obj);
 
     return obj;
 }
@@ -546,6 +584,8 @@ JSObject::createArray(js::ExclusiveContext *cx, js::gc::AllocKind kind, js::gc::
     size_t span = shape->slotSpan();
     if (span)
         obj->initializeSlotRange(0, span);
+
+    js::gc::TraceCreateObject(obj);
 
     return &obj->as<js::ArrayObject>();
 }
@@ -641,8 +681,7 @@ namespace js {
 
 PropDesc::PropDesc(const Value &getter, const Value &setter,
                    Enumerability enumerable, Configurability configurable)
-  : descObj_(nullptr),
-    value_(UndefinedValue()),
+  : value_(UndefinedValue()),
     get_(getter), set_(setter),
     attrs(JSPROP_GETTER | JSPROP_SETTER | JSPROP_SHARED |
           (enumerable ? JSPROP_ENUMERATE : 0) |
@@ -803,17 +842,6 @@ NewObjectWithGivenProto(ExclusiveContext *cx, const js::Class *clasp, JSObject *
                         NewObjectKind newKind = GenericObject)
 {
     return NewObjectWithGivenProto(cx, clasp, TaggedProto(proto), parent, newKind);
-}
-
-inline JSProtoKey
-GetClassProtoKey(const js::Class *clasp)
-{
-    JSProtoKey key = JSCLASS_CACHED_PROTO_KEY(clasp);
-    if (key != JSProto_Null)
-        return key;
-    if (clasp->flags & JSCLASS_IS_ANONYMOUS)
-        return JSProto_Object;
-    return JSProto_Null;
 }
 
 inline bool
@@ -1004,7 +1032,7 @@ ObjectClassIs(HandleObject obj, ESClassValue classValue, JSContext *cx)
         return obj->is<ArrayBufferObject>() || obj->is<SharedArrayBufferObject>();
       case ESClass_Date: return obj->is<DateObject>();
     }
-    MOZ_ASSUME_UNREACHABLE("bad classValue");
+    MOZ_CRASH("bad classValue");
 }
 
 inline bool

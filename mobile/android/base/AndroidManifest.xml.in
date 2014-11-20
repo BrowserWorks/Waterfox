@@ -12,10 +12,13 @@
     <uses-sdk android:minSdkVersion="9"
               android:targetSdkVersion="@ANDROID_TARGET_SDK@"/>
 
-#include ../services/manifests/AnnouncementsAndroidManifest_permissions.xml.in
 #include ../services/manifests/FxAccountAndroidManifest_permissions.xml.in
 #include ../services/manifests/HealthReportAndroidManifest_permissions.xml.in
 #include ../services/manifests/SyncAndroidManifest_permissions.xml.in
+
+#ifdef MOZ_ANDROID_SEARCH_ACTIVITY
+#include ../search/manifests/SearchAndroidManifest_permissions.xml.in
+#endif
 
 #ifndef RELEASE_BUILD
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
@@ -77,6 +80,9 @@
                  android:icon="@drawable/icon"
                  android:name="org.mozilla.gecko.GeckoApplication"
                  android:hardwareAccelerated="true"
+# The preprocessor does not yet support arbitrary parentheses, so this cannot
+# be parenthesized thus to clarify that the logical AND operator has precedence:
+#   !defined(MOZILLA_OFFICIAL) || (defined(NIGHTLY_BUILD) && defined(MOZ_DEBUG))
 #if !defined(MOZILLA_OFFICIAL) || defined(NIGHTLY_BUILD) && defined(MOZ_DEBUG)
                  android:debuggable="true">
 #else
@@ -85,17 +91,41 @@
 
         <meta-data android:name="com.sec.android.support.multiwindow" android:value="true"/>
 
+#ifdef MOZ_NATIVE_DEVICES
+        <!-- This resources comes from Google Play Services. Required for casting support. -->
+        <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
+#endif
+
         <!-- If the windowSoftInputMode adjust* flag changes below, the
              setSoftInputMode call in BrowserSearch#onStop must also be updated. -->
-        <activity android:name=".App"
+        <activity android:name="org.mozilla.gecko.BrowserApp"
                   android:label="@string/moz_app_displayname"
                   android:taskAffinity="@ANDROID_PACKAGE_NAME@.BROWSER"
                   android:alwaysRetainTaskState="true"
                   android:configChanges="keyboard|keyboardHidden|mcc|mnc|orientation|screenSize|locale|layoutDirection"
                   android:windowSoftInputMode="stateUnspecified|adjustResize"
                   android:launchMode="singleTask"
+                  android:exported="true"
                   android:theme="@style/Gecko.App">
+          <!-- We export this activity so that it can be launched by explicit
+               intents, in particular homescreen shortcuts.  See Bug 1032217.
+               In future we would prefer to move all intent filters off the .App
+               alias and onto BrowserApp so that we can deprecate activities
+               that refer to pre-processed class names. -->
+        </activity>
 
+        <!-- Fennec is shipped as the Android package named
+             org.mozilla.{fennec,firefox,firefox_beta}.  The internal Java package
+             hierarchy inside the Android package has both an
+             org.mozilla.{fennec,firefox,firefox_beta} subtree *and* an
+             org.mozilla.gecko subtree.  The non-org.mozilla.gecko is deprecated
+             and we would like to get rid of it entirely.  Until that happens, we
+             have external consumers (such as intents and bookmarks) of
+             non-org.mozilla.gecko Activity classes, so we define activity aliases
+             for backwards compatibility. -->
+        <activity-alias android:name=".App"
+                        android:label="@MOZ_APP_DISPLAYNAME@"
+                        android:targetActivity="org.mozilla.gecko.BrowserApp">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -110,6 +140,13 @@
 
             <intent-filter>
                 <action android:name="org.mozilla.gecko.ACTION_ALERT_CALLBACK" />
+            </intent-filter>
+
+            <!-- Notification API V2 -->
+            <intent-filter>
+                <action android:name="@ANDROID_PACKAGE_NAME@.helperBroadcastAction" />
+                <data android:scheme="moz-notification" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
             <intent-filter>
@@ -188,9 +225,8 @@
                 <action android:name="org.mozilla.gecko.DEBUG" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-        </activity>
+        </activity-alias>
 
-#ifdef MOZ_ANDROID_SYNTHAPKS
         <activity android:name="org.mozilla.gecko.webapp.Dispatcher"
             android:noHistory="true" >
             <intent-filter>
@@ -214,9 +250,9 @@
              <category android:name="android.intent.category.DEFAULT" />
           </intent-filter>
         </receiver>
-#endif
 
-        <activity android:name=".Webapp"
+        <!-- Activity used for launching non-privileged WebApps via a URL -->
+        <activity android:name="org.mozilla.gecko.Webapp"
                   android:label="@string/webapp_generic_name"
                   android:configChanges="keyboard|keyboardHidden|mcc|mnc|orientation|screenSize"
                   android:windowSoftInputMode="stateUnspecified|adjustResize"
@@ -224,14 +260,26 @@
                   android:taskAffinity="org.mozilla.gecko.WEBAPP"
                   android:process=":@ANDROID_PACKAGE_NAME@.Webapp"
                   android:excludeFromRecents="true"
+                  android:exported="true"
                   android:theme="@style/Gecko.App">
+          <!-- We export this activity so that it can be launched by explicit
+               intents, in particular old-style WebApp launching homescreen
+               shortcuts. Such shortcuts were made before the new "synthetic
+               APK" WebApps were deployed. See Bug 1032217. -->
+        </activity>
+
+        <!-- Alias Webapp so we can launch it from the package namespace. Prefer
+             to launch with the fully qualified name "org.mozilla.gecko.Webapp". -->
+        <activity-alias android:name=".Webapp"
+                        android:label="@string/webapp_generic_name"
+                        android:targetActivity="org.mozilla.gecko.Webapp">
             <intent-filter>
                 <action android:name="org.mozilla.gecko.WEBAPP" />
             </intent-filter>
             <intent-filter>
                 <action android:name="org.mozilla.gecko.ACTION_ALERT_CALLBACK" />
             </intent-filter>
-        </activity>
+        </activity-alias>
 
         <!-- Declare a predefined number of Webapp<num> activities. These are
              used so that each web app can launch in its own process. Keep
@@ -244,7 +292,7 @@
         <!-- Masquerade as the Resolver so that we can be opened from the Marketplace. -->
         <activity-alias
             android:name="com.android.internal.app.ResolverActivity"
-            android:targetActivity=".App"
+            android:targetActivity="org.mozilla.gecko.BrowserApp"
             android:exported="true" />
 
         <receiver android:name="org.mozilla.gecko.GeckoUpdateReceiver">
@@ -260,7 +308,9 @@
             </intent-filter>
         </receiver>
 
-        <receiver android:name="org.mozilla.gecko.ReferrerReceiver" android:exported="true">
+        <!-- Catch install referrer so we can do post-install work. -->
+        <receiver android:name="org.mozilla.gecko.distribution.ReferrerReceiver"
+                  android:exported="true">
             <intent-filter>
                 <action android:name="com.android.vending.INSTALL_REFERRER" />
             </intent-filter>
@@ -276,10 +326,12 @@
           </intent-filter>
         </activity>
 
-#include ../services/manifests/AnnouncementsAndroidManifest_activities.xml.in
 #include ../services/manifests/FxAccountAndroidManifest_activities.xml.in
 #include ../services/manifests/HealthReportAndroidManifest_activities.xml.in
 #include ../services/manifests/SyncAndroidManifest_activities.xml.in
+#ifdef MOZ_ANDROID_SEARCH_ACTIVITY
+#include ../search/manifests/SearchAndroidManifest_activities.xml.in
+#endif
 
 #if MOZ_CRASHREPORTER
   <activity android:name="org.mozilla.gecko.CrashReporter"
@@ -347,6 +399,10 @@
                   android:authorities="@ANDROID_PACKAGE_NAME@.db.readinglist"
                   android:permission="@ANDROID_PACKAGE_NAME@.permissions.BROWSER_PROVIDER"/>
 
+        <provider android:name="org.mozilla.gecko.db.SearchHistoryProvider"
+                  android:authorities="@ANDROID_PACKAGE_NAME@.db.searchhistory"
+                  android:permission="@ANDROID_PACKAGE_NAME@.permissions.BROWSER_PROVIDER"/>
+
         <service
             android:exported="false"
             android:name="org.mozilla.gecko.updater.UpdateService"
@@ -359,10 +415,15 @@
         </service>
 
 
-#include ../services/manifests/AnnouncementsAndroidManifest_services.xml.in
 #include ../services/manifests/FxAccountAndroidManifest_services.xml.in
 #include ../services/manifests/HealthReportAndroidManifest_services.xml.in
 #include ../services/manifests/SyncAndroidManifest_services.xml.in
+#ifdef MOZ_ANDROID_SEARCH_ACTIVITY
+#include ../search/manifests/SearchAndroidManifest_services.xml.in
+#endif
+#ifdef MOZ_ANDROID_MLS_STUMBLER
+#include ../stumbler/manifests/StumblerManifest_services.xml.in
+#endif
 
     </application>
 

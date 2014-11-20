@@ -12,12 +12,11 @@ let SocialUI,
 
 (function() {
 
-// The minimum sizes for the auto-resize panel code.
-const PANEL_MIN_HEIGHT = 100;
-const PANEL_MIN_WIDTH = 330;
-
 XPCOMUtils.defineLazyModuleGetter(this, "SharedFrame",
   "resource:///modules/SharedFrame.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "PanelFrame",
+  "resource:///modules/PanelFrame.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "OpenGraphBuilder", function() {
   let tmp = {};
@@ -624,7 +623,7 @@ SocialShare = {
     sizeSocialPanelToContent(this.panel, iframe);
   },
 
-  sharePage: function(providerOrigin, graphData) {
+  sharePage: function(providerOrigin, graphData, target) {
     // if providerOrigin is undefined, we use the last-used provider, or the
     // current/default provider.  The provider selection in the share panel
     // will call sharePage with an origin for us to switch to.
@@ -643,7 +642,8 @@ SocialShare = {
     // in mozSocial API, or via nsContentMenu calls. If it is present, it MUST
     // define at least url. If it is undefined, we're sharing the current url in
     // the browser tab.
-    let sharedURI = graphData ? Services.io.newURI(graphData.url, null, null) :
+    let pageData = graphData ? graphData : this.currentShare;
+    let sharedURI = pageData ? Services.io.newURI(pageData.url, null, null) :
                                 gBrowser.currentURI;
     if (!this.canSharePage(sharedURI))
       return;
@@ -652,7 +652,6 @@ SocialShare = {
     // endpoints (e.g. oexchange) that do not support additional
     // socialapi functionality.  One tweak is that we shoot an event
     // containing the open graph data.
-    let pageData = graphData ? graphData : this.currentShare;
     if (!pageData || sharedURI == gBrowser.currentURI) {
       pageData = OpenGraphBuilder.getData(gBrowser);
       if (graphData) {
@@ -661,6 +660,10 @@ SocialShare = {
           pageData[p] = graphData[p];
         }
       }
+    }
+    // if this is a share of a selected item, get any microdata
+    if (!pageData.microdata && target) {
+      pageData.microdata = OpenGraphBuilder.getMicrodata(gBrowser, target);
     }
     this.currentShare = pageData;
 
@@ -1225,66 +1228,6 @@ SocialStatus = {
     return this._toolbarHelper;
   },
 
-  get _dynamicResizer() {
-    delete this._dynamicResizer;
-    this._dynamicResizer = new DynamicResizeWatcher();
-    return this._dynamicResizer;
-  },
-
-  // status panels are one-per button per-process, we swap the docshells between
-  // windows when necessary
-  _attachNotificatonPanel: function(aParent, aButton, provider) {
-    aParent.hidden = !SocialUI.enabled;
-    let notificationFrameId = "social-status-" + provider.origin;
-    let frame = document.getElementById(notificationFrameId);
-
-    // If the button was customized to a new location, we we'll destroy the
-    // iframe and start fresh.
-    if (frame && frame.parentNode != aParent) {
-      SharedFrame.forgetGroup(frame.id);
-      frame.parentNode.removeChild(frame);
-      frame = null;
-    }
-
-    if (!frame) {
-      let size = provider.getPageSize("status");
-      let {width, height} = size ? size : {width: PANEL_MIN_WIDTH, height: PANEL_MIN_HEIGHT};
-
-      frame = SharedFrame.createFrame(
-        notificationFrameId, /* frame name */
-        aParent, /* parent */
-        {
-          "type": "content",
-          "mozbrowser": "true",
-          "class": "social-panel-frame",
-          "id": notificationFrameId,
-          "tooltip": "aHTMLTooltip",
-          "context": "contentAreaContextMenu",
-          "flex": "1",
-
-          // work around bug 793057 - by making the panel roughly the final size
-          // we are more likely to have the anchor in the correct position.
-          "style": "width: " + width + "px; height: " + height + "px;",
-          "dynamicresizer": !size,
-
-          "origin": provider.origin,
-          "src": provider.statusURL
-        }
-      );
-
-      if (frame.socialErrorListener)
-        frame.socialErrorListener.remove();
-      if (frame.docShell) {
-        frame.docShell.isActive = false;
-        Social.setErrorListener(frame, this.setPanelErrorMessage.bind(this));
-      }
-    } else {
-      frame.setAttribute("origin", provider.origin);
-      SharedFrame.updateURL(notificationFrameId, provider.statusURL);
-    }
-    aButton.setAttribute("notificationFrameId", notificationFrameId);
-  },
-
   updateButton: function(origin) {
     let id = this._toolbarHelper.idFromOrigin(origin);
     let widget = CustomizableUI.getWidget(id);
@@ -1293,7 +1236,6 @@ SocialStatus = {
     let button = widget.forWindow(window).node;
     if (button) {
       // we only grab the first notification, ignore all others
-      let place = CustomizableUI.getPlaceForItem(button);
       let provider = Social._getProviderFromOrigin(origin);
       let icons = provider.ambientNotificationIcons;
       let iconNames = Object.keys(icons);
@@ -1303,7 +1245,7 @@ SocialStatus = {
       // ambient notification and profile changes.
       let iconURL = provider.icon32URL || provider.iconURL;
       let tooltiptext;
-      if (!notif || place == "palette") {
+      if (!notif || !widget.areaType) {
         button.style.listStyleImage = "url(" + iconURL + ")";
         button.setAttribute("badge", "");
         button.setAttribute("aria-label", "");
@@ -1324,107 +1266,29 @@ SocialStatus = {
     }
   },
 
+  _onclose: function() {
+    let notificationFrameId = "social-status-" + origin;
+    let frame = document.getElementById(notificationFrameId);
+    frame.removeEventListener("close", this._onclose, true);
+    frame.removeEventListener("click", this._onclick, true);
+  },
+
+  _onclick: function() {
+    Services.telemetry.getHistogramById("SOCIAL_PANEL_CLICKS").add(1);
+  },
+
   showPopup: function(aToolbarButton) {
     // attach our notification panel if necessary
     let origin = aToolbarButton.getAttribute("origin");
     let provider = Social._getProviderFromOrigin(origin);
 
-    // if we're a slice in the hamburger, use that panel instead
-    let widgetGroup = CustomizableUI.getWidget(aToolbarButton.getAttribute("id"));
-    let widget = widgetGroup.forWindow(window);
-    let panel, showingEvent, hidingEvent;
-    let inMenuPanel = widgetGroup.areaType == CustomizableUI.TYPE_MENU_PANEL;
-    if (inMenuPanel) {
-      panel = document.getElementById("PanelUI-socialapi");
-      this._attachNotificatonPanel(panel, aToolbarButton, provider);
-      widget.node.setAttribute("closemenu", "none");
-      showingEvent = "ViewShowing";
-      hidingEvent = "ViewHiding";
-    } else {
-      panel = document.getElementById("social-notification-panel");
-      this._attachNotificatonPanel(panel, aToolbarButton, provider);
-      showingEvent = "popupshown";
-      hidingEvent = "popuphidden";
-    }
-    let notificationFrameId = aToolbarButton.getAttribute("notificationFrameId");
-    let notificationFrame = document.getElementById(notificationFrameId);
-
-    let wasAlive = SharedFrame.isGroupAlive(notificationFrameId);
-    SharedFrame.setOwner(notificationFrameId, notificationFrame);
-
-    // Clear dimensions on all browsers so the panel size will
-    // only use the selected browser.
-    let frameIter = panel.firstElementChild;
-    while (frameIter) {
-      frameIter.collapsed = (frameIter != notificationFrame);
-      frameIter = frameIter.nextElementSibling;
-    }
-
-    function dispatchPanelEvent(name) {
-      let evt = notificationFrame.contentDocument.createEvent("CustomEvent");
-      evt.initCustomEvent(name, true, true, {});
-      notificationFrame.contentDocument.documentElement.dispatchEvent(evt);
-    }
-
-    function _onclick() {
-      Services.telemetry.getHistogramById("SOCIAL_PANEL_CLICKS").add(1);
-    }
-
-    // we only use a dynamic resizer when we're located the toolbar.
-    let dynamicResizer;
-    if (!inMenuPanel && notificationFrame.getAttribute("dynamicresizer") == "true") {
-      dynamicResizer = this._dynamicResizer;
-    }
-    panel.addEventListener(hidingEvent, function onpopuphiding() {
-      panel.removeEventListener(hidingEvent, onpopuphiding);
-      aToolbarButton.removeAttribute("open");
-      if (dynamicResizer)
-        dynamicResizer.stop();
-      notificationFrame.docShell.isActive = false;
-      dispatchPanelEvent("socialFrameHide");
-      notificationFrame.removeEventListener("click", _onclick, true);
-    });
-
-    panel.addEventListener(showingEvent, function onpopupshown() {
-      panel.removeEventListener(showingEvent, onpopupshown);
-      // This attribute is needed on both the button and the
-      // containing toolbaritem since the buttons on OS X have
-      // moz-appearance:none, while their container gets
-      // moz-appearance:toolbarbutton due to the way that toolbar buttons
-      // get combined on OS X.
-      let initFrameShow = () => {
-        notificationFrame.docShell.isActive = true;
-        notificationFrame.docShell.isAppTab = true;
-        if (dynamicResizer)
-          dynamicResizer.start(panel, notificationFrame);
-        dispatchPanelEvent("socialFrameShow");
-        notificationFrame.addEventListener("click", _onclick, true);
-      };
-      if (!inMenuPanel)
-        aToolbarButton.setAttribute("open", "true");
-      if (notificationFrame.contentDocument &&
-          notificationFrame.contentDocument.readyState == "complete" && wasAlive) {
-        initFrameShow();
-      } else {
-        // first time load, wait for load and dispatch after load
-        notificationFrame.addEventListener("load", function panelBrowserOnload(e) {
-          notificationFrame.removeEventListener("load", panelBrowserOnload, true);
-          initFrameShow();
-        }, true);
-      }
-    });
-
-    if (inMenuPanel) {
-      PanelUI.showSubView("PanelUI-socialapi", widget.node,
-                          CustomizableUI.AREA_PANEL);
-    } else {
-      let anchor = document.getAnonymousElementByAttribute(aToolbarButton, "class", "toolbarbutton-badge-container");
-      // Bug 849216 - open the popup in a setTimeout so we avoid the auto-rollup
-      // handling from preventing it being opened in some cases.
-      setTimeout(function() {
-        panel.openPopup(anchor, "bottomcenter topright", 0, 0, false, false);
-      }, 0);
-    }
+    PanelFrame.showPopup(window, aToolbarButton, "social", origin,
+                         provider.statusURL, provider.getPageSize("status"),
+                         (frame) => {
+                          frame.addEventListener("close", this._onclose, true);
+                          frame.addEventListener("click", this._onclick, true);
+                        });
+    Services.telemetry.getHistogramById("SOCIAL_TOOLBAR_BUTTONS").add(1);
   },
 
   setPanelErrorMessage: function(aNotificationFrame) {
@@ -1461,7 +1325,9 @@ SocialMarks = {
       if (!widget)
         continue;
       let node = widget.forWindow(window).node;
-      if (node)
+      // xbl binding is not complete on startup when buttons are not in toolbar,
+      // verify update is available
+      if (node && node.update)
         node.update();
     }
   },
@@ -1543,10 +1409,10 @@ SocialMarks = {
     return this._toolbarHelper;
   },
 
-  markLink: function(aOrigin, aUrl) {
+  markLink: function(aOrigin, aUrl, aTarget) {
     // find the button for this provider, and open it
     let id = this._toolbarHelper.idFromOrigin(aOrigin);
-    document.getElementById(id).markLink(aUrl);
+    document.getElementById(id).markLink(aUrl, aTarget);
   }
 };
 

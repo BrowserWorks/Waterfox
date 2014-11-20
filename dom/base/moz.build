@@ -58,7 +58,10 @@ EXPORTS.mozilla.dom += [
     'MessageChannel.h',
     'MessagePort.h',
     'MessagePortList.h',
+    'NameSpaceConstants.h',
     'Navigator.h',
+    'NodeInfo.h',
+    'NodeInfoInlines.h',
     'PerformanceEntry.h',
     'PerformanceResourceTiming.h',
     'ScreenOrientation.h',
@@ -81,6 +84,7 @@ UNIFIED_SOURCES += [
     'MessageChannel.cpp',
     'MessagePortList.cpp',
     'Navigator.cpp',
+    'NodeInfo.cpp',
     'nsContentPermissionHelper.cpp',
     'nsDOMClassInfo.cpp',
     'nsDOMNavigationTiming.cpp',
@@ -137,7 +141,6 @@ EXTRA_COMPONENTS += [
 EXTRA_JS_MODULES += [
     'DOMRequestHelper.jsm',
     'IndexedDBHelper.jsm',
-    'ObjectWrapper.jsm',
 ]
 
 FAIL_ON_WARNINGS = True
@@ -158,6 +161,7 @@ LOCAL_INCLUDES += [
     '/content/base/src',
     '/content/html/document/src',
     '/content/xul/document/src',
+    '/layout/base',
     '/layout/generic',
     '/layout/style',
     '/layout/xul',
@@ -179,7 +183,7 @@ LOCAL_INCLUDES += [
     '/js/xpconnect/wrappers',
 ]
 
-for var in ('MOZ_JSDEBUGGER', 'MOZ_B2G_RIL', 'MOZ_B2G_FM'):
+for var in ('MOZ_B2G_RIL', 'MOZ_B2G_FM'):
     if CONFIG[var]:
         DEFINES[var] = True
 

@@ -1,4 +1,4 @@
-/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
@@ -781,6 +781,17 @@ add_task(function test_common_initialize()
       let bos =  new BinaryOutputStream(aResponse.bodyOutputStream);
       bos.writeByteArray(TEST_DATA_SHORT_GZIP_ENCODED_SECOND,
                          TEST_DATA_SHORT_GZIP_ENCODED_SECOND.length);
+    });
+
+  gHttpServer.registerPathHandler("/shorter-than-content-length-http-1-1.txt",
+    function (aRequest, aResponse) {
+      aResponse.processAsync();
+      aResponse.setStatusLine("1.1", 200, "OK");
+      aResponse.setHeader("Content-Type", "text/plain", false);
+      aResponse.setHeader("Content-Length", "" + (TEST_DATA_SHORT.length * 2),
+                          false);
+      aResponse.write(TEST_DATA_SHORT);
+      aResponse.finish();
     });
 
   // This URL will emulate being blocked by Windows Parental controls

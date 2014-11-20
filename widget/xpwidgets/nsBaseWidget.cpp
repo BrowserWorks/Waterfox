@@ -172,7 +172,7 @@ static void DeferredDestroyCompositor(CompositorParent* aCompositorParent,
 
 void nsBaseWidget::DestroyCompositor()
 {
-  LayerScope::DestroyServerSocket();
+  LayerScope::DeInit();
 
   if (mCompositorChild) {
     mCompositorChild->SendWillStop();
@@ -817,7 +817,7 @@ nsBaseWidget::ComputeShouldAccelerate(bool aDefault)
 
     int32_t status;
     if (NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_OPENGL_LAYERS, &status))) {
-      if (status == nsIGfxInfo::FEATURE_NO_INFO) {
+      if (status == nsIGfxInfo::FEATURE_STATUS_OK) {
         whitelisted = true;
       }
     }
@@ -888,6 +888,9 @@ CheckForBasicBackends(nsTArray<LayersBackend>& aHints)
 
 void nsBaseWidget::CreateCompositor(int aWidth, int aHeight)
 {
+  MOZ_ASSERT(gfxPlatform::UsesOffMainThreadCompositing(),
+             "This function assumes OMTC");
+
   // Recreating this is tricky, as we may still have an old and we need
   // to make sure it's properly destroyed by calling DestroyCompositor!
 
@@ -897,12 +900,12 @@ void nsBaseWidget::CreateCompositor(int aWidth, int aHeight)
     return;
   }
 
-  // The server socket has to be created on the main thread.
-  LayerScope::CreateServerSocket();
+  // Initialize LayerScope on the main thread.
+  LayerScope::Init();
 
   mCompositorParent = NewCompositorParent(aWidth, aHeight);
   MessageChannel *parentChannel = mCompositorParent->GetIPCChannel();
-  ClientLayerManager* lm = new ClientLayerManager(this);
+  nsRefPtr<ClientLayerManager> lm = new ClientLayerManager(this);
   MessageLoop *childMessageLoop = CompositorParent::CompositorLoop();
   mCompositorChild = new CompositorChild(lm);
   mCompositorChild->Open(parentChannel, childMessageLoop, ipc::ChildSide);
@@ -925,7 +928,7 @@ void nsBaseWidget::CreateCompositor(int aWidth, int aHeight)
   if (success) {
     ShadowLayerForwarder* lf = lm->AsShadowForwarder();
     if (!lf) {
-      delete lm;
+      lm = nullptr;
       mCompositorChild = nullptr;
       return;
     }
@@ -934,7 +937,7 @@ void nsBaseWidget::CreateCompositor(int aWidth, int aHeight)
     ImageBridgeChild::IdentifyCompositorTextureHost(textureFactoryIdentifier);
     WindowUsesOMTC();
 
-    mLayerManager = lm;
+    mLayerManager = lm.forget();
     return;
   }
 
@@ -946,7 +949,7 @@ void nsBaseWidget::CreateCompositor(int aWidth, int aHeight)
 
 bool nsBaseWidget::ShouldUseOffMainThreadCompositing()
 {
-  return CompositorParent::CompositorLoop();
+  return gfxPlatform::UsesOffMainThreadCompositing();
 }
 
 LayerManager* nsBaseWidget::GetLayerManager(PLayerTransactionChild* aShadowManager,
@@ -1009,19 +1012,6 @@ nsDeviceContext* nsBaseWidget::GetDeviceContext()
   }
   return mContext;
 }
-
-//-------------------------------------------------------------------------
-//
-// Get the thebes surface
-//
-//-------------------------------------------------------------------------
-gfxASurface *nsBaseWidget::GetThebesSurface()
-{
-  // in theory we should get our parent's surface,
-  // clone it, and set a device offset before returning
-  return nullptr;
-}
-
 
 //-------------------------------------------------------------------------
 //
@@ -1724,6 +1714,8 @@ static void debug_SetCachedBoolPref(const char * aPrefName,bool aValue)
 
 //////////////////////////////////////////////////////////////
 class Debug_PrefObserver MOZ_FINAL : public nsIObserver {
+    ~Debug_PrefObserver() {}
+
   public:
     NS_DECL_ISUPPORTS
     NS_DECL_NSIOBSERVER

@@ -328,8 +328,7 @@ bool WebGLContext::ValidateBlendEquationEnum(GLenum mode, const char *info)
             return true;
         case LOCAL_GL_MIN:
         case LOCAL_GL_MAX:
-            if (IsWebGL2()) {
-                // http://www.opengl.org/registry/specs/EXT/blend_minmax.txt
+            if (IsExtensionEnabled(WebGLExtensionID::EXT_blend_minmax)) {
                 return true;
             }
             break;
@@ -1203,29 +1202,25 @@ WebGLContext::ValidateTexInputData(GLenum type, int jsArrayType, WebGLTexImageFu
     // First, we check for packed types
     switch (type) {
     case LOCAL_GL_UNSIGNED_BYTE:
-        validInput = (jsArrayType == -1 || jsArrayType == js::ArrayBufferView::TYPE_UINT8);
+        validInput = (jsArrayType == -1 || jsArrayType == js::Scalar::Uint8);
         break;
 
-        // TODO: WebGL spec doesn't allow half floats to specified as UInt16.
     case LOCAL_GL_HALF_FLOAT:
     case LOCAL_GL_HALF_FLOAT_OES:
-        validInput = (jsArrayType == -1);
-        break;
-
     case LOCAL_GL_UNSIGNED_SHORT:
     case LOCAL_GL_UNSIGNED_SHORT_4_4_4_4:
     case LOCAL_GL_UNSIGNED_SHORT_5_5_5_1:
     case LOCAL_GL_UNSIGNED_SHORT_5_6_5:
-        validInput = (jsArrayType == -1 || jsArrayType == js::ArrayBufferView::TYPE_UINT16);
+        validInput = (jsArrayType == -1 || jsArrayType == js::Scalar::Uint16);
         break;
 
     case LOCAL_GL_UNSIGNED_INT:
     case LOCAL_GL_UNSIGNED_INT_24_8:
-        validInput = (jsArrayType == -1 || jsArrayType == js::ArrayBufferView::TYPE_UINT32);
+        validInput = (jsArrayType == -1 || jsArrayType == js::Scalar::Uint32);
         break;
 
     case LOCAL_GL_FLOAT:
-        validInput = (jsArrayType == -1 || jsArrayType == js::ArrayBufferView::TYPE_FLOAT32);
+        validInput = (jsArrayType == -1 || jsArrayType == js::Scalar::Float32);
         break;
 
     default:
@@ -1558,8 +1553,9 @@ WebGLContext::InitAndValidateGL()
 
     mMinCapability = Preferences::GetBool("webgl.min_capability_mode", false);
     mDisableExtensions = Preferences::GetBool("webgl.disable-extensions", false);
-    mLoseContextOnHeapMinimize = Preferences::GetBool("webgl.lose-context-on-heap-minimize", false);
+    mLoseContextOnMemoryPressure = Preferences::GetBool("webgl.lose-context-on-memory-preasure", false);
     mCanLoseContextInForeground = Preferences::GetBool("webgl.can-lose-context-in-foreground", true);
+    mRestoreWhenVisible = Preferences::GetBool("webgl.restore-context-when-visible", true);
 
     if (MinCapabilityMode()) {
       mDisableFragHighP = true;
@@ -1778,19 +1774,18 @@ WebGLContext::InitAndValidateGL()
         return false;
     }
 
-    mMemoryPressureObserver
-        = new WebGLMemoryPressureObserver(this);
-    nsCOMPtr<nsIObserverService> observerService
-        = mozilla::services::GetObserverService();
-    if (observerService) {
-        observerService->AddObserver(mMemoryPressureObserver,
-                                     "memory-pressure",
-                                     false);
+    // Default value for all disabled vertex attributes is [0, 0, 0, 1]
+    for (int32_t index = 0; index < mGLMaxVertexAttribs; ++index) {
+        VertexAttrib4f(index, 0, 0, 0, 1);
     }
 
     mDefaultVertexArray = WebGLVertexArray::Create(this);
     mDefaultVertexArray->mAttribs.SetLength(mGLMaxVertexAttribs);
     mBoundVertexArray = mDefaultVertexArray;
+
+    if (mLoseContextOnMemoryPressure) {
+        mContextObserver->RegisterMemoryPressureEvent();
+    }
 
     return true;
 }

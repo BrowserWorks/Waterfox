@@ -9,6 +9,7 @@
 
 #include "pkix/pkixtypes.h"
 #include "OCSPCache.h"
+#include "ScopedNSSTypes.h"
 
 namespace mozilla { namespace psm {
 
@@ -26,15 +27,14 @@ public:
   // *evOidPolicy == SEC_OID_UNKNOWN means the cert is NOT EV
   // Only one usage per verification is supported.
   SECStatus VerifyCert(CERTCertificate* cert,
-                       const SECCertificateUsage usage,
-                       const PRTime time,
+                       SECCertificateUsage usage,
+                       PRTime time,
                        void* pinArg,
                        const char* hostname,
-                       const Flags flags = 0,
+                       Flags flags = 0,
        /*optional in*/ const SECItem* stapledOCSPResponse = nullptr,
-      /*optional out*/ mozilla::pkix::ScopedCERTCertList* validationChain = nullptr,
-      /*optional out*/ SECOidTag* evOidPolicy = nullptr ,
-      /*optional out*/ CERTVerifyLog* verifyLog = nullptr);
+      /*optional out*/ ScopedCERTCertList* builtChain = nullptr,
+      /*optional out*/ SECOidTag* evOidPolicy = nullptr);
 
   SECStatus VerifySSLServerCert(
                     CERTCertificate* peerCert,
@@ -43,17 +43,9 @@ public:
        /*optional*/ void* pinarg,
                     const char* hostname,
                     bool saveIntermediatesInPermanentDatabase = false,
-   /*optional out*/ mozilla::pkix::ScopedCERTCertList* certChainOut = nullptr,
+                    Flags flags = 0,
+   /*optional out*/ ScopedCERTCertList* builtChain = nullptr,
    /*optional out*/ SECOidTag* evOidPolicy = nullptr);
-
-
-  enum implementation_config {
-    classic = 0,
-#ifndef NSS_NO_LIBPKIX
-    libpkix = 1,
-#endif
-    mozillapkix = 2
-  };
 
   enum pinning_enforcement_config {
     pinningDisabled = 0,
@@ -70,38 +62,19 @@ public:
 
   bool IsOCSPDownloadEnabled() const { return mOCSPDownloadEnabled; }
 
-  CertVerifier(implementation_config ic,
-#ifndef NSS_NO_LIBPKIX
-               missing_cert_download_config ac, crl_download_config cdc,
-#endif
-               ocsp_download_config odc, ocsp_strict_config osc,
+  CertVerifier(ocsp_download_config odc, ocsp_strict_config osc,
                ocsp_get_config ogc,
                pinning_enforcement_config pinningEnforcementLevel);
   ~CertVerifier();
 
   void ClearOCSPCache() { mOCSPCache.Clear(); }
 
-  const implementation_config mImplementation;
-#ifndef NSS_NO_LIBPKIX
-  const bool mMissingCertDownloadEnabled;
-  const bool mCRLDownloadEnabled;
-#endif
   const bool mOCSPDownloadEnabled;
   const bool mOCSPStrict;
   const bool mOCSPGETEnabled;
   const pinning_enforcement_config mPinningEnforcementLevel;
 
 private:
-  SECStatus MozillaPKIXVerifyCert(CERTCertificate* cert,
-      const SECCertificateUsage usage,
-      const PRTime time,
-      void* pinArg,
-      const Flags flags,
-      ChainValidationCallbackState* callbackState,
-      /*optional*/ const SECItem* stapledOCSPResponse,
-      /*optional out*/ mozilla::pkix::ScopedCERTCertList* validationChain,
-      /*optional out*/ SECOidTag* evOidPolicy);
-
   OCSPCache mOCSPCache;
 };
 

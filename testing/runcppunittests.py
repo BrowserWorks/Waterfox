@@ -93,7 +93,10 @@ class CPPUnitTests(object):
         # Use llvm-symbolizer for ASan if available/required
         llvmsym = os.path.join(self.xre_path, "llvm-symbolizer")
         if os.path.isfile(llvmsym):
-          env["ASAN_SYMBOLIZER_PATH"] = llvmsym
+            env["ASAN_SYMBOLIZER_PATH"] = llvmsym
+            log.info("ASan using symbolizer at %s", llvmsym)
+        else:
+            log.info("Failed to find ASan symbolizer at %s", llvmsym)
 
         return env
 

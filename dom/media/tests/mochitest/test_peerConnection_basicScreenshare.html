@@ -1,0 +1,42 @@
+﻿<!DOCTYPE HTML>
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="application/javascript" src="head.js"></script>
+  <script type="application/javascript" src="mediaStreamPlayback.js"></script>
+  <script type="application/javascript" src="pc.js"></script>
+  <script type="application/javascript" src="templates.js"></script>
+  <script type="application/javascript" src="turnConfig.js"></script>
+</head>
+<body>
+<pre id="test">
+<script type="application/javascript">
+  createHTML({
+    bug: "1039666",
+    title: "Basic screenshare-only peer connection"
+  });
+
+  var test;
+  runNetworkTest(function (options) {
+    const isWinXP = navigator.userAgent.indexOf("Windows NT 5.1") != -1;
+    if (IsMacOSX10_6orOlder() || isWinXP) {
+        ok(true, "Screensharing disabled for OSX10.6 and WinXP");
+        SimpleTest.finish();
+        return;
+    }
+    test = new PeerConnectionTest(options);
+    var constraints = {
+      video: {
+         mozMediaSource: "screen",
+         mediaSource: "screen"
+      },
+      fake: false
+    };
+    test.setMediaConstraints([constraints], [constraints]);
+    test.run();
+  });
+</script>
+</pre>
+</body>
+</html>

@@ -1,4 +1,4 @@
-/* -*- Mode: Javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,29 +15,33 @@ var SavePlugin = Class({
 
   init: function(host) {
 
-    this.host.addCommand({
-      id: "cmd-saveas",
-      key: getLocalizedString("projecteditor.save.commandkey"),
-      modifiers: "accel shift"
-    });
-    this.host.addCommand({
+    this.host.addCommand(this, {
       id: "cmd-save",
       key: getLocalizedString("projecteditor.save.commandkey"),
       modifiers: "accel"
     });
+    this.host.addCommand(this, {
+      id: "cmd-saveas",
+      key: getLocalizedString("projecteditor.save.commandkey"),
+      modifiers: "accel shift"
+    });
+    this.host.createMenuItem({
+      parent: this.host.fileMenuPopup,
+      label: getLocalizedString("projecteditor.saveLabel"),
+      command: "cmd-save",
+      key: "key_cmd-save"
+    });
+    this.host.createMenuItem({
+      parent: this.host.fileMenuPopup,
+      label: getLocalizedString("projecteditor.saveAsLabel"),
+      command: "cmd-saveas",
+      key: "key_cmd-saveas"
+    });
+  },
 
-    // Wait until we can add things into the app manager menu
-    // this.host.createMenuItem({
-    //   parent: "#file-menu-popup",
-    //   label: "Save",
-    //   command: "cmd-save",
-    //   key: "key-save"
-    // });
-    // this.host.createMenuItem({
-    //   parent: "#file-menu-popup",
-    //   label: "Save As",
-    //   command: "cmd-saveas",
-    // });
+  isCommandEnabled: function(cmd) {
+    let currentEditor = this.host.currentEditor;
+    return currentEditor.isEditable;
   },
 
   onCommand: function(cmd) {

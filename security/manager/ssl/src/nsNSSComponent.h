@@ -10,7 +10,6 @@
 #include "mozilla/Mutex.h"
 #include "mozilla/RefPtr.h"
 #include "nsCOMPtr.h"
-#include "nsISignatureVerifier.h"
 #include "nsIEntropyCollector.h"
 #include "nsIStringBundle.h"
 #include "nsIObserver.h"
@@ -19,7 +18,6 @@
 #endif
 #include "nsINSSErrorsService.h"
 #include "nsNSSCallbacks.h"
-#include "ScopedNSSTypes.h"
 #include "SharedCertVerifier.h"
 #include "nsNSSHelper.h"
 #include "nsClientAuthRemember.h"
@@ -113,8 +111,7 @@ class nsNSSShutDownList;
 class nsCertVerificationThread;
 
 // Implementation of the PSM component interface.
-class nsNSSComponent : public nsISignatureVerifier,
-                       public nsIEntropyCollector,
+class nsNSSComponent : public nsIEntropyCollector,
                        public nsINSSComponent,
                        public nsIObserver,
                        public nsSupportsWeakReference
@@ -125,10 +122,8 @@ public:
   NS_DEFINE_STATIC_CID_ACCESSOR( NS_NSSCOMPONENT_CID )
 
   nsNSSComponent();
-  virtual ~nsNSSComponent();
 
   NS_DECL_THREADSAFE_ISUPPORTS
-  NS_DECL_NSISIGNATUREVERIFIER
   NS_DECL_NSIENTROPYCOLLECTOR
   NS_DECL_NSIOBSERVER
 
@@ -167,6 +162,9 @@ public:
 
   ::mozilla::TemporaryRef<mozilla::psm::SharedCertVerifier>
     GetDefaultCertVerifier() MOZ_OVERRIDE;
+
+protected:
+  virtual ~nsNSSComponent();
 
 private:
   nsresult InitializeNSS();

@@ -1,4 +1,4 @@
-/* -*- Mode: Javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -106,7 +106,7 @@ var ResourceContainer = Class({
    */
   openContextMenu: function(ev) {
     ev.preventDefault();
-    let popup = this.tree.doc.getElementById("directory-menu-popup");
+    let popup = this.tree.options.contextMenuPopup;
     popup.openPopupAtScreen(ev.screenX, ev.screenY, true);
   },
 
@@ -208,13 +208,14 @@ var TreeView = Class({
   /**
    * @param Document document
    * @param Object options
+   *               - contextMenuPopup: a <menupopup> element
    *               - resourceFormatter: a function(Resource, DOMNode)
    *                 that renders the resource into the view
    *               - resourceVisible: a function(Resource) -> Boolean
    *                 that determines if the resource should show up.
    */
-  initialize: function(document, options) {
-    this.doc = document;
+  initialize: function(doc, options) {
+    this.doc = doc;
     this.options = merge({
       resourceFormatter: function(resource, elt) {
         elt.textContent = resource.toString();
@@ -223,17 +224,18 @@ var TreeView = Class({
     this.models = new Set();
     this.roots = new Set();
     this._containers = new Map();
-    this.elt = document.createElementNS(HTML_NS, "div");
+    this.elt = this.doc.createElementNS(HTML_NS, "div");
     this.elt.tree = this;
     this.elt.className = "sources-tree";
     this.elt.setAttribute("with-arrows", "true");
     this.elt.setAttribute("theme", "dark");
     this.elt.setAttribute("flex", "1");
 
-    this.children = document.createElementNS(HTML_NS, "ul");
+    this.children = this.doc.createElementNS(HTML_NS, "ul");
     this.elt.appendChild(this.children);
 
     this.resourceChildrenChanged = this.resourceChildrenChanged.bind(this);
+    this.removeResource = this.removeResource.bind(this);
     this.updateResource = this.updateResource.bind(this);
   },
 
@@ -399,22 +401,9 @@ var TreeView = Class({
 
     on(this, resource, "children-changed", this.resourceChildrenChanged);
     on(this, resource, "label-change", this.updateResource);
+    on(this, resource, "deleted", this.removeResource);
 
     return container;
-  },
-
-  /**
-   * Delete a Resource from the FileSystem.  XXX: This should
-   * definitely be moved away from here, maybe to the store?
-   *
-   * @param Resource resource
-   */
-  deleteResource: function(resource) {
-    if (resource.isDir) {
-      return OS.File.removeDir(resource.path);
-    } else {
-      return OS.File.remove(resource.path);
-    }
   },
 
   /**
@@ -436,12 +425,12 @@ var TreeView = Class({
    * @param Resource resource
    */
   _removeResource: function(resource) {
-    resource.off("children-changed", this.resourceChildrenChanged);
-    resource.off("label-change", this.updateResource);
+    forget(this, resource);
     if (this._containers.get(resource)) {
       this._containers.get(resource).destroy();
       this._containers.delete(resource);
     }
+    emit(this, "resource-removed", resource);
   },
 
   /**

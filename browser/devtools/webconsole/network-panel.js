@@ -1,4 +1,4 @@
-/* -*- js2-basic-offset: 2; indent-tabs-mode: nil; -*- */
+/* -*- js-indent-level: 2; indent-tabs-mode: nil -*- */
 /* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
@@ -286,7 +286,7 @@ NetworkPanel.prototype =
       return a.name.toLowerCase() < b.name.toLowerCase();
     });
 
-    aList.forEach(function(aItem) {
+    aList.forEach((aItem) => {
       let name = aItem.name;
       if (aIgnoreCookie && (name == "Cookie" || name == "Set-Cookie")) {
         return;
@@ -332,7 +332,7 @@ NetworkPanel.prototype =
       row.appendChild(td);
 
       parent.appendChild(row);
-    }.bind(this));
+    });
   },
 
   /**
@@ -612,7 +612,7 @@ NetworkPanel.prototype =
     let content = this.httpActivity.response.content;
     let longString = this.webconsole.webConsoleClient.longString(content.text);
     longString.substring(longString.initial.length, longString.length,
-      function NP__onLongStringSubstring(aResponse)
+      (aResponse) =>
       {
         if (aResponse.error) {
           Cu.reportError("NP__onLongStringSubstring error: " + aResponse.error);
@@ -632,7 +632,7 @@ NetworkPanel.prototype =
           this._appendTextNode("responseBody" + cached + "Content",
                                aResponse.substring);
         }
-      }.bind(this));
+      });
   },
 
   /**
@@ -779,7 +779,7 @@ NetworkPanel.prototype =
     let postData = this.httpActivity.request.postData;
     let longString = this.webconsole.webConsoleClient.longString(postData.text);
     longString.substring(longString.initial.length, longString.length,
-      function NP__onLongStringSubstring(aResponse)
+       (aResponse) =>
       {
         if (aResponse.error) {
           Cu.reportError("NP__onLongStringSubstring error: " + aResponse.error);
@@ -788,7 +788,7 @@ NetworkPanel.prototype =
 
         postData.text = postData.text.initial + aResponse.substring;
         this._updateRequestBody();
-      }.bind(this));
+      });
   },
 };
 

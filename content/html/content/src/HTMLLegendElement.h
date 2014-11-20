@@ -16,11 +16,10 @@ namespace dom {
 class HTMLLegendElement MOZ_FINAL : public nsGenericHTMLElement
 {
 public:
-  HTMLLegendElement(already_AddRefed<nsINodeInfo>& aNodeInfo)
+  HTMLLegendElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
     : nsGenericHTMLElement(aNodeInfo)
   {
   }
-  virtual ~HTMLLegendElement();
 
   NS_IMPL_FROMCONTENT_HTML_WITH_TAG(HTMLLegendElement, legend)
 
@@ -53,7 +52,7 @@ public:
   virtual nsresult UnsetAttr(int32_t aNameSpaceID, nsIAtom* aAttribute,
                              bool aNotify) MOZ_OVERRIDE;
 
-  virtual nsresult Clone(nsINodeInfo* aNodeInfo, nsINode** aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult) const MOZ_OVERRIDE;
 
   Element* GetFormElement()
   {
@@ -85,6 +84,8 @@ public:
   }
 
 protected:
+  virtual ~HTMLLegendElement();
+
   virtual JSObject* WrapNode(JSContext* aCx) MOZ_OVERRIDE;
 
   /**

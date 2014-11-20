@@ -10,8 +10,8 @@
 #include "mozilla/dom/UIEvent.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/EventForwards.h"
+#include "mozilla/TouchEvents.h"
 #include "nsJSEnvironment.h"
-#include "nsTArray.h"
 #include "nsWrapperCache.h"
 
 class nsAString;
@@ -33,7 +33,7 @@ public:
     nsJSContext::LikelyShortLivingObjectCreated();
   }
   TouchList(nsISupports* aParent,
-            const nsTArray<nsRefPtr<Touch> >& aTouches)
+            const WidgetTouchEvent::TouchArray& aTouches)
     : mParent(aParent)
     , mPoints(aTouches)
   {
@@ -75,8 +75,10 @@ public:
   Touch* IdentifiedTouch(int32_t aIdentifier) const;
 
 protected:
+  ~TouchList() {}
+
   nsCOMPtr<nsISupports> mParent;
-  nsTArray<nsRefPtr<Touch> > mPoints;
+  WidgetTouchEvent::TouchArray mPoints;
 };
 
 class TouchEvent : public UIEvent
@@ -119,7 +121,10 @@ public:
 
   static bool PrefEnabled(JSContext* aCx = nullptr,
                           JSObject* aGlobal = nullptr);
+
 protected:
+  ~TouchEvent() {}
+
   nsRefPtr<TouchList> mTouches;
   nsRefPtr<TouchList> mTargetTouches;
   nsRefPtr<TouchList> mChangedTouches;

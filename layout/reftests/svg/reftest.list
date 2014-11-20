@@ -119,7 +119,7 @@ skip-if(B2G) == dynamic-textPath-01.svg dynamic-textPath-01-ref.svg
 == dynamic-textPath-02.svg dynamic-textPath-02-ref.svg
 == dynamic-textPath-03.svg dynamic-textPath-03-ref.svg
 == dynamic-use-01.svg pass.svg
-skip-if(B2G) == dynamic-use-02.svg pass.svg
+== dynamic-use-02.svg pass.svg
 skip-if(B2G) == dynamic-use-03.svg pass.svg
 skip-if(B2G) == dynamic-use-04.svg pass.svg
 skip-if(B2G) == dynamic-use-05.svg pass.svg

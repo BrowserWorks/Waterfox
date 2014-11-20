@@ -15,7 +15,6 @@
 #include "gfx2DGlue.h"                  // for ThebesFilter
 #include "gfx3DMatrix.h"                // for gfx3DMatrix
 #include "gfxCrashReporterUtils.h"      // for ScopedGfxFeatureReporter
-#include "gfxImageSurface.h"            // for gfxImageSurface
 #include "gfxMatrix.h"                  // for gfxMatrix
 #include "GraphicsFilter.h"             // for GraphicsFilter
 #include "gfxPlatform.h"                // for gfxPlatform
@@ -60,8 +59,6 @@
 #include <ui/Fence.h>
 #endif
 
-#define BUFFER_OFFSET(i) ((char *)nullptr + (i))
-
 namespace mozilla {
 
 using namespace std;
@@ -70,10 +67,6 @@ using namespace gfx;
 namespace layers {
 
 using namespace mozilla::gl;
-
-static inline IntSize ns2gfxSize(const nsIntSize& s) {
-  return IntSize(s.width, s.height);
-}
 
 static void
 BindMaskForProgram(ShaderProgramOGL* aProgram, TextureSourceOGL* aSourceMask,
@@ -188,7 +181,9 @@ CompositorOGL::CleanupResources()
 bool
 CompositorOGL::Initialize()
 {
-  ScopedGfxFeatureReporter reporter("GL Layers", true);
+  bool force = gfxPrefs::LayersAccelerationForceEnabled();
+
+  ScopedGfxFeatureReporter reporter("GL Layers", force);
 
   // Do not allow double initialization
   NS_ABORT_IF_FALSE(mGLContext == nullptr, "Don't reinitialize CompositorOGL");
@@ -409,11 +404,13 @@ SetRects(int n,
   aTextureRects[n] = Rect(tx0, ty0, tx1 - tx0, ty1 - ty0);
 }
 
+#ifdef DEBUG
 static inline bool
 FuzzyEqual(float a, float b)
 {
   return fabs(a - b) < 0.0001f;
 }
+#endif
 
 static int
 DecomposeIntoNoRepeatRects(const Rect& aRect,
@@ -712,8 +709,6 @@ CompositorOGL::BeginFrame(const nsIntRegion& aInvalidRegion,
     js::ProfileEntry::Category::GRAPHICS);
 
   MOZ_ASSERT(!mFrameInProgress, "frame still in progress (should have called EndFrame or AbortFrame");
-
-  LayerScope::BeginFrame(mGLContext, PR_Now());
 
   mFrameInProgress = true;
   gfx::Rect rect;
@@ -1322,8 +1317,6 @@ CompositorOGL::EndFrame()
 
   mFrameInProgress = false;
 
-  LayerScope::EndFrame(mGLContext);
-
   if (mTarget) {
     CopyToTarget(mTarget, mTargetBounds.TopLeft(), mCurrentRenderTarget->GetTransform());
     mGLContext->fBindBuffer(LOCAL_GL_ARRAY_BUFFER, 0);
@@ -1478,6 +1471,10 @@ CompositorOGL::CopyToTarget(DrawTarget* aTarget, const nsIntPoint& aTopLeft, con
 
   RefPtr<DataSourceSurface> source =
         Factory::CreateDataSourceSurface(rect.Size(), gfx::SurfaceFormat::B8G8R8A8);
+  if (!source) {
+    NS_WARNING("Failed to create SourceSurface.");
+    return;
+  }
 
   ReadPixelsIntoDataSurface(mGLContext, source);
 

@@ -768,7 +768,7 @@ function ArrayMapPar(func, mode) {
       break parallel;
 
     var slicesInfo = ComputeSlicesInfo(length);
-    ForkJoin(mapThread, 0, slicesInfo.count, ForkJoinMode(mode));
+    ForkJoin(mapThread, 0, slicesInfo.count, ForkJoinMode(mode), buffer);
     return buffer;
   }
 
@@ -817,7 +817,7 @@ function ArrayReducePar(func, mode) {
     var numSlices = slicesInfo.count;
     var subreductions = NewDenseArray(numSlices);
 
-    ForkJoin(reduceThread, 0, numSlices, ForkJoinMode(mode));
+    ForkJoin(reduceThread, 0, numSlices, ForkJoinMode(mode), subreductions);
 
     var accumulator = subreductions[0];
     for (var i = 1; i < numSlices; i++)
@@ -864,7 +864,12 @@ function ArrayScanPar(func, mode) {
   if (length === 0)
     ThrowError(JSMSG_EMPTY_ARRAY_REDUCE);
 
+  // We need two buffers because phase2() will read an intermediate result and
+  // write a final result; that is safe against bailout-and-restart only if
+  // the intermediate and final buffers are distinct.  (Bug 1023755)
+  // Obviously paying for a second buffer is undesirable.
   var buffer = NewDenseArray(length);
+  var buffer2 = NewDenseArray(length);
 
   parallel: for (;;) { // see ArrayMapPar() to explain why for(;;) etc
     if (ShouldForceSequential())
@@ -876,7 +881,7 @@ function ArrayScanPar(func, mode) {
     var numSlices = slicesInfo.count;
 
     // Scan slices individually (see comment on phase1()).
-    ForkJoin(phase1, 0, numSlices, ForkJoinMode(mode));
+    ForkJoin(phase1, 0, numSlices, ForkJoinMode(mode), buffer);
 
     // Compute intermediates array (see comment on phase2()).
     var intermediates = [];
@@ -889,11 +894,12 @@ function ArrayScanPar(func, mode) {
 
     // Complete each slice using intermediates array (see comment on phase2()).
     //
-    // We start from slice 1 instead of 0 since there is no work to be done
-    // for slice 0.
-    if (numSlices > 1)
-      ForkJoin(phase2, 1, numSlices, ForkJoinMode(mode));
-    return buffer;
+    // Slice 0 must be handled specially - it's just a copy - since we don't
+    // have an identity value for the operation.
+    for ( var k=0, limit=finalElement(0) ; k <= limit ; k++ )
+      buffer2[k] = buffer[k];
+    ForkJoin(phase2, 1, numSlices, ForkJoinMode(mode), buffer2);
+    return buffer2;
   }
 
   // Sequential fallback:
@@ -986,7 +992,7 @@ function ArrayScanPar(func, mode) {
       var indexEnd = SLICE_END_INDEX(sliceShift, indexPos, length);
       var intermediate = intermediates[sliceId - 1];
       for (; indexPos < indexEnd; indexPos++)
-        UnsafePutElements(buffer, indexPos, func(intermediate, buffer[indexPos]));
+        UnsafePutElements(buffer2, indexPos, func(intermediate, buffer[indexPos]));
     }
     return sliceId;
   }
@@ -1106,7 +1112,7 @@ function ArrayFilterPar(func, mode) {
       UnsafePutElements(counts, i, 0);
 
     var survivors = new Uint8Array(length);
-    ForkJoin(findSurvivorsThread, 0, numSlices, ForkJoinMode(mode));
+    ForkJoin(findSurvivorsThread, 0, numSlices, ForkJoinMode(mode), survivors);
 
     // Step 2. Compress the slices into one contiguous set.
     var count = 0;
@@ -1114,7 +1120,7 @@ function ArrayFilterPar(func, mode) {
       count += counts[i];
     var buffer = NewDenseArray(count);
     if (count > 0)
-      ForkJoin(copySurvivorsThread, 0, numSlices, ForkJoinMode(mode));
+      ForkJoin(copySurvivorsThread, 0, numSlices, ForkJoinMode(mode), buffer);
 
     return buffer;
   }
@@ -1224,7 +1230,7 @@ function ArrayStaticBuildPar(length, func, mode) {
       break parallel;
 
     var slicesInfo = ComputeSlicesInfo(length);
-    ForkJoin(constructThread, 0, slicesInfo.count, ForkJoinMode(mode));
+    ForkJoin(constructThread, 0, slicesInfo.count, ForkJoinMode(mode), buffer);
     return buffer;
   }
 

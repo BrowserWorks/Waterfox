@@ -25,6 +25,7 @@
 #include "mozilla/dom/XMLDocument.h"
 #include "nsIStreamListener.h"
 #include "ChildIterator.h"
+#include "nsITimer.h"
 
 #include "nsXBLBinding.h"
 #include "nsXBLPrototypeBinding.h"
@@ -45,10 +46,10 @@
 #include "nsIScriptContext.h"
 #include "xpcpublic.h"
 #include "jswrapper.h"
-#include "nsCxPusher.h"
 
 #include "nsThreadUtils.h"
 #include "mozilla/dom/NodeListBinding.h"
+#include "mozilla/dom/ScriptSettings.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -370,6 +371,16 @@ nsBindingManager::PostProcessAttachedQueueEvent()
   }
 }
 
+// static
+void
+nsBindingManager::PostPAQEventCallback(nsITimer* aTimer, void* aClosure)
+{
+  nsRefPtr<nsBindingManager> mgr = 
+    already_AddRefed<nsBindingManager>(static_cast<nsBindingManager*>(aClosure));
+  mgr->PostProcessAttachedQueueEvent();
+  NS_RELEASE(aTimer);
+}
+
 void
 nsBindingManager::DoProcessAttachedQueue()
 {
@@ -384,7 +395,19 @@ nsBindingManager::DoProcessAttachedQueue()
     // Someone's doing event processing from inside a constructor.
     // They're evil, but we'll fight back!  Just poll on them being
     // done and repost the attached queue event.
-    PostProcessAttachedQueueEvent();
+    //
+    // But don't poll in a tight loop -- otherwise we keep the Gecko
+    // event loop non-empty and trigger bug 1021240 on OS X.
+    nsresult rv = NS_ERROR_FAILURE;
+    nsCOMPtr<nsITimer> timer = do_CreateInstance(NS_TIMER_CONTRACTID);
+    if (timer) {
+      rv = timer->InitWithFuncCallback(PostPAQEventCallback, this,
+                                       100, nsITimer::TYPE_ONE_SHOT);
+    }
+    if (NS_SUCCEEDED(rv)) {
+      NS_ADDREF_THIS();
+      NS_ADDREF(timer);
+    }
   }
 
   // No matter what, unblock onload for the event that's fired.
@@ -615,21 +638,9 @@ nsBindingManager::GetBindingImplementation(nsIContent* aContent, REFNSIID aIID,
 
       // We have never made a wrapper for this implementation.
       // Create an XPC wrapper for the script object and hand it back.
-
-      nsIDocument* doc = aContent->OwnerDoc();
-
-      nsCOMPtr<nsIScriptGlobalObject> global =
-        do_QueryInterface(doc->GetWindow());
-      if (!global)
-        return NS_NOINTERFACE;
-
-      nsIScriptContext *context = global->GetContext();
-      if (!context)
-        return NS_NOINTERFACE;
-
-      AutoPushJSContext cx(context->GetNativeContext());
-      if (!cx)
-        return NS_NOINTERFACE;
+      AutoJSAPI jsapi;
+      jsapi.Init();
+      JSContext* cx = jsapi.cx();
 
       nsIXPConnect *xpConnect = nsContentUtils::XPConnect();
 
@@ -639,11 +650,11 @@ nsBindingManager::GetBindingImplementation(nsIContent* aContent, REFNSIID aIID,
       // If we're using an XBL scope, we need to use the Xray view to the bound
       // content in order to view the full array of methods defined in the
       // binding, some of which may not be exposed on the prototype of
-      // untrusted content.
+      // untrusted content. We don't need to consider add-on scopes here
+      // because they're chrome-only and no Xrays are involved.
       //
       // If there's no separate XBL scope, or if the reflector itself lives in
-      // the XBL scope, we'll end up with the global of the reflector, and this
-      // will all be a no-op.
+      // the XBL scope, we'll end up with the global of the reflector.
       JS::Rooted<JSObject*> xblScope(cx, xpc::GetXBLScopeOrGlobal(cx, jsobj));
       NS_ENSURE_TRUE(xblScope, NS_ERROR_UNEXPECTED);
       JSAutoCompartment ac(cx, xblScope);
@@ -814,8 +825,8 @@ static PLDHashOperator
 EnumAppendAllSheets(nsRefPtrHashKey<nsIContent> *aKey, void* aClosure)
 {
   nsIContent *boundContent = aKey->GetKey();
-  nsTArray<nsCSSStyleSheet*>* array =
-    static_cast<nsTArray<nsCSSStyleSheet*>*>(aClosure);
+  nsTArray<CSSStyleSheet*>* array =
+    static_cast<nsTArray<CSSStyleSheet*>*>(aClosure);
   for (nsXBLBinding *binding = boundContent->GetXBLBinding(); binding;
        binding = binding->GetBaseBinding()) {
     binding->PrototypeBinding()->AppendStyleSheetsTo(*array);
@@ -824,7 +835,7 @@ EnumAppendAllSheets(nsRefPtrHashKey<nsIContent> *aKey, void* aClosure)
 }
 
 void
-nsBindingManager::AppendAllSheets(nsTArray<nsCSSStyleSheet*>& aArray)
+nsBindingManager::AppendAllSheets(nsTArray<CSSStyleSheet*>& aArray)
 {
   if (mBoundContentSet) {
     mBoundContentSet->EnumerateEntries(EnumAppendAllSheets, &aArray);
@@ -835,12 +846,12 @@ static void
 InsertAppendedContent(XBLChildrenElement* aPoint,
                       nsIContent* aFirstNewContent)
 {
-  size_t insertionIndex;
+  int32_t insertionIndex;
   if (nsIContent* prevSibling = aFirstNewContent->GetPreviousSibling()) {
     // If we have a previous sibling, then it must already be in aPoint. Find
     // it and insert after it.
     insertionIndex = aPoint->IndexOfInsertedChild(prevSibling);
-    MOZ_ASSERT(insertionIndex != aPoint->NoIndex);
+    MOZ_ASSERT(insertionIndex != -1);
 
     // Our insertion index is one after our previous sibling's index.
     ++insertionIndex;
@@ -848,7 +859,7 @@ InsertAppendedContent(XBLChildrenElement* aPoint,
     // Otherwise, we append.
     // TODO This is wrong for nested insertion points. In that case, we need to
     // keep track of the right index to insert into.
-    insertionIndex = aPoint->mInsertedChildren.Length();
+    insertionIndex = aPoint->InsertedChildrenLength();
   }
 
   // Do the inserting.
@@ -1078,15 +1089,15 @@ nsBindingManager::HandleChildInsertion(nsIContent* aContainer,
     // TODO If there were multiple insertion points, this approximation can be
     // wrong. We need to re-run the distribution algorithm. In the meantime,
     // this should work well enough.
-    size_t index = aAppend ? point->mInsertedChildren.Length() : 0;
+    uint32_t index = aAppend ? point->InsertedChildrenLength() : 0;
     for (nsIContent* currentSibling = aChild->GetPreviousSibling();
          currentSibling;
          currentSibling = currentSibling->GetPreviousSibling()) {
       // If we find one of our previous siblings in the insertion point, the
       // index following it is the correct insertion point. Otherwise, we guess
       // based on whether we're appending or inserting.
-      size_t pointIndex = point->IndexOfInsertedChild(currentSibling);
-      if (pointIndex != point->NoIndex) {
+      int32_t pointIndex = point->IndexOfInsertedChild(currentSibling);
+      if (pointIndex != -1) {
         index = pointIndex + 1;
         break;
       }

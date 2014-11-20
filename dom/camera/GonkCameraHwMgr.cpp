@@ -23,7 +23,7 @@
 #include "base/basictypes.h"
 #include "nsDebug.h"
 #include "mozilla/layers/TextureClient.h"
-#include "mozilla/Preferences.h"
+#include "CameraPreferences.h"
 #include "mozilla/RefPtr.h"
 #include "GonkCameraControl.h"
 #include "GonkNativeWindow.h"
@@ -138,7 +138,10 @@ GonkCameraHardware::postDataTimestamp(nsecs_t aTimestamp, int32_t aMsgType, cons
 
   if (mListener.get()) {
     DOM_CAMERA_LOGI("Listener registered, posting recording frame!");
-    mListener->postDataTimestamp(aTimestamp, aMsgType, aDataPtr);
+    if (!mListener->postDataTimestamp(aTimestamp, aMsgType, aDataPtr)) {
+      DOM_CAMERA_LOGW("Listener unable to process. Drop a recording frame.");
+      mCamera->releaseRecordingFrame(aDataPtr);
+    }
   } else {
     DOM_CAMERA_LOGW("No listener was set. Drop a recording frame.");
     mCamera->releaseRecordingFrame(aDataPtr);
@@ -218,8 +221,8 @@ GonkCameraHardware::Connect(mozilla::nsGonkCameraControl* aTarget, uint32_t aCam
     return nullptr;
   }
 
-  const nsAdoptingCString& test =
-    mozilla::Preferences::GetCString("camera.control.test.enabled");
+  nsCString test;
+  CameraPreferences::GetPref("camera.control.test.enabled", test);
   sp<GonkCameraHardware> cameraHardware;
   if (test.EqualsASCII("hardware")) {
     NS_WARNING("Using test Gonk hardware layer");

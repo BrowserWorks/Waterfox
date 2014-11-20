@@ -42,9 +42,11 @@
 #include "nsFilePickerProxy.h"
 #include "mozilla/dom/Element.h"
 #include "nsIBaseWindow.h"
+#include "nsIBrowserDOMWindow.h"
 #include "nsICachedFileDescriptorListener.h"
 #include "nsIDocumentInlines.h"
 #include "nsIDocShellTreeOwner.h"
+#include "nsIDOMChromeWindow.h"
 #include "nsIDOMEvent.h"
 #include "nsIDOMWindow.h"
 #include "nsIDOMWindowUtils.h"
@@ -64,6 +66,7 @@
 #include "nsPrintfCString.h"
 #include "nsThreadUtils.h"
 #include "nsWeakReference.h"
+#include "nsWindowWatcher.h"
 #include "PermissionMessageUtils.h"
 #include "PCOMContentPermissionRequestChild.h"
 #include "PuppetWidget.h"
@@ -115,15 +118,41 @@ TabChildBase::TabChildBase()
   , mTabChildGlobal(nullptr)
   , mInnerSize(0, 0)
 {
+  mozilla::HoldJSObjects(this);
 }
 
-NS_IMPL_CYCLE_COLLECTING_ADDREF(TabChildBase)
-NS_IMPL_CYCLE_COLLECTING_RELEASE(TabChildBase)
+TabChildBase::~TabChildBase()
+{
+  mAnonymousGlobalScopes.Clear();
+  mozilla::DropJSObjects(this);
+}
+
+NS_IMPL_CYCLE_COLLECTION_CLASS(TabChildBase)
+
+NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(TabChildBase)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mTabChildGlobal)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mGlobal)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mAnonymousGlobalScopes)
+NS_IMPL_CYCLE_COLLECTION_UNLINK_END
+
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(TabChildBase)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mTabChildGlobal)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mGlobal)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
+
+NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(TabChildBase)
+  for (uint32_t i = 0; i < tmp->mAnonymousGlobalScopes.Length(); ++i) {
+    NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mAnonymousGlobalScopes[i])
+  }
+NS_IMPL_CYCLE_COLLECTION_TRACE_END
+
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(TabChildBase)
   NS_INTERFACE_MAP_ENTRY(nsISupports)
 NS_INTERFACE_MAP_END
 
-NS_IMPL_CYCLE_COLLECTION(TabChildBase, mTabChildGlobal, mGlobal)
+NS_IMPL_CYCLE_COLLECTING_ADDREF(TabChildBase)
+NS_IMPL_CYCLE_COLLECTING_RELEASE(TabChildBase)
 
 void
 TabChildBase::InitializeRootMetrics()
@@ -617,6 +646,15 @@ private:
 
 StaticRefPtr<TabChild> sPreallocatedTab;
 
+/*static*/
+std::map<uint64_t, nsRefPtr<TabChild> >&
+TabChild::NestedTabChildMap()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  static std::map<uint64_t, nsRefPtr<TabChild> > sNestedTabChildMap;
+  return sNestedTabChildMap;
+}
+
 /*static*/ void
 TabChild::PreloadSlowThings()
 {
@@ -652,7 +690,7 @@ TabChild::PreloadSlowThings()
 }
 
 /*static*/ already_AddRefed<TabChild>
-TabChild::Create(ContentChild* aManager, const TabContext &aContext, uint32_t aChromeFlags)
+TabChild::Create(nsIContentChild* aManager, const TabContext &aContext, uint32_t aChromeFlags)
 {
     if (sPreallocatedTab &&
         sPreallocatedTab->mChromeFlags == aChromeFlags &&
@@ -674,7 +712,7 @@ TabChild::Create(ContentChild* aManager, const TabContext &aContext, uint32_t aC
 }
 
 
-TabChild::TabChild(ContentChild* aManager, const TabContext& aContext, uint32_t aChromeFlags)
+TabChild::TabChild(nsIContentChild* aManager, const TabContext& aContext, uint32_t aChromeFlags)
   : TabContext(aContext)
   , mRemoteFrame(nullptr)
   , mManager(aManager)
@@ -690,12 +728,11 @@ TabChild::TabChild(ContentChild* aManager, const TabContext& aContext, uint32_t 
   , mTriedBrowserInit(false)
   , mOrientation(eScreenOrientation_PortraitPrimary)
   , mUpdateHitRegion(false)
-  , mContextMenuHandled(false)
-  , mLongTapEventHandled(false)
-  , mWaitingTouchListeners(false)
+  , mPendingTouchPreventedResponse(false)
   , mIgnoreKeyPressEvent(false)
   , mActiveElementManager(new ActiveElementManager())
   , mHasValidInnerSize(false)
+  , mUniqueId(0)
 {
   if (!sActiveDurationMsSet) {
     Preferences::AddIntVarCache(&sActiveDurationMs,
@@ -1220,13 +1257,68 @@ TabChild::ProvideWindow(nsIDOMWindow* aParent, uint32_t aChromeFlags,
                                        aWindowIsNew, aReturn);
     }
 
-    // Otherwise, create a new top-level window.
+    int32_t openLocation =
+      nsWindowWatcher::GetWindowOpenLocation(aParent, aChromeFlags, aCalledFromJS,
+                                             aPositionSpecified, aSizeSpecified);
+
+    // If it turns out we're opening in the current browser, just hand over the
+    // current browser's docshell.
+    if (openLocation == nsIBrowserDOMWindow::OPEN_CURRENTWINDOW) {
+      nsCOMPtr<nsIWebBrowser> browser = do_GetInterface(WebNavigation());
+      *aWindowIsNew = false;
+      return browser->GetContentDOMWindow(aReturn);
+    }
+
+    // Otherwise, we're opening a new tab or a new window. We have to contact
+    // TabParent in order to do either.
+
     PBrowserChild* newChild;
-    if (!CallCreateWindow(&newChild)) {
+
+    nsAutoCString uriString;
+    if (aURI) {
+      aURI->GetSpec(uriString);
+    }
+
+    nsCOMPtr<nsIDOMDocument> domDoc;
+    aParent->GetDocument(getter_AddRefs(domDoc));
+    if (!domDoc) {
+      NS_ERROR("Could retrieve document from nsIBaseWindow");
+      return NS_ERROR_FAILURE;
+    }
+
+    nsCOMPtr<nsIDocument> doc;
+    doc = do_QueryInterface(domDoc);
+    if (!doc) {
+      NS_ERROR("Document from nsIBaseWindow didn't QI to nsIDocument");
+      return NS_ERROR_FAILURE;
+    }
+
+    nsCOMPtr<nsIURI> baseURI = doc->GetDocBaseURI();
+    if (!baseURI) {
+      NS_ERROR("nsIDocument didn't return a base URI");
+      return NS_ERROR_FAILURE;
+    }
+
+    nsAutoCString baseURIString;
+    baseURI->GetSpec(baseURIString);
+
+    nsAutoString nameString;
+    nameString.Assign(aName);
+    nsAutoCString features;
+
+    // We can assume that if content is requesting to open a window from a remote
+    // tab, then we want to enforce that the new window is also a remote tab.
+    features.Assign(aFeatures);
+    features.Append(",remote");
+
+    if (!CallCreateWindow(aChromeFlags, aCalledFromJS, aPositionSpecified,
+                          aSizeSpecified, NS_ConvertUTF8toUTF16(uriString),
+                          nameString, NS_ConvertUTF8toUTF16(features),
+                          NS_ConvertUTF8toUTF16(baseURIString),
+                          aWindowIsNew, &newChild)) {
         return NS_ERROR_NOT_AVAILABLE;
     }
 
-    *aWindowIsNew = true;
     nsCOMPtr<nsIDOMWindow> win =
         do_GetInterface(static_cast<TabChild*>(newChild)->WebNavigation());
     win.forget(aReturn);
@@ -1371,6 +1463,9 @@ TabChild::ActorDestroy(ActorDestroyReason why)
     static_cast<nsFrameMessageManager*>
       (mTabChildGlobal->mMessageManager.get())->Disconnect();
     mTabChildGlobal->mMessageManager = nullptr;
+  }
+  if (Id() != 0) {
+    NestedTabChildMap().erase(Id());
   }
 }
 
@@ -1734,23 +1829,23 @@ TabChild::RecvHandleLongTap(const CSSPoint& aPoint, const ScrollableLayerGuid& a
     return true;
   }
 
-  mContextMenuHandled =
+  bool eventHandled =
       DispatchMouseEvent(NS_LITERAL_STRING("contextmenu"),
                          APZCCallbackHelper::ApplyCallbackTransform(aPoint, aGuid),
                          2, 1, 0, false,
                          nsIDOMMouseEvent::MOZ_SOURCE_TOUCH);
 
   // If no one handle context menu, fire MOZLONGTAP event
-  if (!mContextMenuHandled) {
+  if (!eventHandled) {
     LayoutDevicePoint currentPoint =
       APZCCallbackHelper::ApplyCallbackTransform(aPoint, aGuid) * mWidget->GetDefaultScale();
     int time = 0;
     nsEventStatus status =
       DispatchSynthesizedMouseEvent(NS_MOUSE_MOZLONGTAP, time, currentPoint, mWidget);
-    mLongTapEventHandled = (status == nsEventStatus_eConsumeNoDefault);
+    eventHandled = (status == nsEventStatus_eConsumeNoDefault);
   }
 
-  SendContentReceivedTouch(aGuid, mContextMenuHandled || mLongTapEventHandled);
+  SendContentReceivedTouch(aGuid, eventHandled);
 
   return true;
 }
@@ -1758,16 +1853,6 @@ TabChild::RecvHandleLongTap(const CSSPoint& aPoint, const ScrollableLayerGuid& a
 bool
 TabChild::RecvHandleLongTapUp(const CSSPoint& aPoint, const ScrollableLayerGuid& aGuid)
 {
-  if (mContextMenuHandled) {
-    mContextMenuHandled = false;
-    return true;
-  }
-
-  if (mLongTapEventHandled) {
-    mLongTapEventHandled = false;
-    return true;
-  }
-
   RecvHandleSingleTap(aPoint, aGuid);
   return true;
 }
@@ -2024,23 +2109,21 @@ TabChild::RecvRealTouchEvent(const WidgetTouchEvent& aEvent,
     mActiveElementManager->SetTargetElement(localEvent.touches[0]->GetTarget());
   }
 
-  nsCOMPtr<nsPIDOMWindow> outerWindow = do_GetInterface(WebNavigation());
-  nsCOMPtr<nsPIDOMWindow> innerWindow = outerWindow ? outerWindow->GetCurrentInnerWindow() : nullptr;
-
-  if (!innerWindow || (!innerWindow->HasTouchEventListeners() &&
-                       !innerWindow->MayHaveTouchCaret())) {
-    SendContentReceivedTouch(aGuid, false);
-    return true;
-  }
-
   bool isTouchPrevented = nsIPresShell::gPreventMouseEvents ||
                           localEvent.mFlags.mMultipleActionsPrevented;
   switch (aEvent.message) {
   case NS_TOUCH_START: {
+    if (mPendingTouchPreventedResponse) {
+      // We can enter here if we get two TOUCH_STARTs in a row and didn't
+      // respond to the first one. Respond to it now.
+      SendContentReceivedTouch(mPendingTouchPreventedGuid, false);
+      mPendingTouchPreventedResponse = false;
+    }
     if (isTouchPrevented) {
       SendContentReceivedTouch(aGuid, isTouchPrevented);
     } else {
-      mWaitingTouchListeners = true;
+      mPendingTouchPreventedResponse = true;
+      mPendingTouchPreventedGuid = aGuid;
     }
     break;
   }
@@ -2048,9 +2131,10 @@ TabChild::RecvRealTouchEvent(const WidgetTouchEvent& aEvent,
   case NS_TOUCH_MOVE:
   case NS_TOUCH_END:
   case NS_TOUCH_CANCEL: {
-    if (mWaitingTouchListeners) {
-      SendContentReceivedTouch(aGuid, isTouchPrevented);
-      mWaitingTouchListeners = false;
+    if (mPendingTouchPreventedResponse) {
+      MOZ_ASSERT(aGuid == mPendingTouchPreventedGuid);
+      SendContentReceivedTouch(mPendingTouchPreventedGuid, isTouchPrevented);
+      mPendingTouchPreventedResponse = false;
     }
     break;
   }
@@ -2322,7 +2406,7 @@ TabChild::RecvAsyncMessage(const nsString& aMessage,
     StructuredCloneData cloneData = UnpackClonedMessageDataForChild(aData);
     nsRefPtr<nsFrameMessageManager> mm =
       static_cast<nsFrameMessageManager*>(mTabChildGlobal->mMessageManager.get());
-    CpowIdHolder cpows(static_cast<ContentChild*>(Manager())->GetCPOWManager(), aCpows);
+    CpowIdHolder cpows(Manager()->GetCPOWManager(), aCpows);
     mm->ReceiveMessage(static_cast<EventTarget*>(mTabChildGlobal),
                        aMessage, false, &cloneData, &cpows, aPrincipal, nullptr);
   }
@@ -2668,14 +2752,13 @@ TabChild::DoSendBlockingMessage(JSContext* aCx,
                                 InfallibleTArray<nsString>* aJSONRetVal,
                                 bool aIsSync)
 {
-  ContentChild* cc = Manager();
   ClonedMessageData data;
-  if (!BuildClonedMessageDataForChild(cc, aData, data)) {
+  if (!BuildClonedMessageDataForChild(Manager(), aData, data)) {
     return false;
   }
   InfallibleTArray<CpowEntry> cpows;
   if (sCpowsEnabled) {
-    if (!cc->GetCPOWManager()->Wrap(aCx, aCpows, &cpows)) {
+    if (!Manager()->GetCPOWManager()->Wrap(aCx, aCpows, &cpows)) {
       return false;
     }
   }
@@ -2695,14 +2778,13 @@ TabChild::DoSendAsyncMessage(JSContext* aCx,
                              JS::Handle<JSObject *> aCpows,
                              nsIPrincipal* aPrincipal)
 {
-  ContentChild* cc = Manager();
   ClonedMessageData data;
-  if (!BuildClonedMessageDataForChild(cc, aData, data)) {
+  if (!BuildClonedMessageDataForChild(Manager(), aData, data)) {
     return false;
   }
   InfallibleTArray<CpowEntry> cpows;
   if (sCpowsEnabled) {
-    if (!cc->GetCPOWManager()->Wrap(aCx, aCpows, &cpows)) {
+    if (!Manager()->GetCPOWManager()->Wrap(aCx, aCpows, &cpows)) {
       return false;
     }
   }
@@ -2769,6 +2851,10 @@ TabChild::RecvUIResolutionChanged()
 
 TabChildGlobal::TabChildGlobal(TabChildBase* aTabChild)
 : mTabChild(aTabChild)
+{
+}
+
+TabChildGlobal::~TabChildGlobal()
 {
 }
 

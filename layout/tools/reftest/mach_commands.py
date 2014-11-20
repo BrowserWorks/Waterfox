@@ -84,10 +84,11 @@ class ReftestRunner(MozbuildObject):
     def _manifest_file(self, suite):
         """Returns the manifest file used for a given test suite."""
         files = {
-          'reftest': 'reftest.list',
-          'reftest-ipc': 'reftest.list',
-          'crashtest': 'crashtests.list',
-          'crashtest-ipc': 'crashtests.list',
+            'reftest': 'reftest.list',
+            'reftest-ipc': 'reftest.list',
+            'crashtest': 'crashtests.list',
+            'crashtest-ipc': 'crashtests.list',
+            'jstestbrowser': 'jstests.list'
         }
         assert suite in files
         return files[suite]
@@ -201,7 +202,7 @@ class ReftestRunner(MozbuildObject):
             raise Exception(ADB_NOT_FOUND % ('%s-remote' % suite, b2g_home))
 
         options.b2gPath = b2g_home
-        options.logcat_dir = self.reftest_dir
+        options.logdir = self.reftest_dir
         options.httpdPath = os.path.join(self.topsrcdir, 'netwerk', 'test', 'httpserver')
         options.xrePath = xre_path
         options.ignoreWindowSize = True
@@ -213,8 +214,8 @@ class ReftestRunner(MozbuildObject):
         return reftest.run_remote_reftests(parser, options, args)
 
     def run_desktop_test(self, test_file=None, filter=None, suite=None,
-            debugger=None, parallel=False, shuffle=False,
-            e10s=False, this_chunk=None, total_chunks=None):
+            debugger=None, debugger_args=None, parallel=False, shuffle=False,
+            e10s=False, extraPrefs=None, this_chunk=None, total_chunks=None):
         """Runs a reftest.
 
         test_file is a path to a test file. It can be a relative path from the
@@ -225,17 +226,19 @@ class ReftestRunner(MozbuildObject):
         RegExp constructor) to select which reftests to run from the manifest.
 
         suite is the type of reftest to run. It can be one of ('reftest',
-        'crashtest').
+        'crashtest', 'jstestbrowser').
 
         debugger is the program name (in $PATH) or the full path of the
         debugger to run.
+
+        debugger_args are the arguments passed to the debugger.
 
         parallel indicates whether tests should be run in parallel or not.
 
         shuffle indicates whether to run tests in random order.
         """
 
-        if suite not in ('reftest', 'reftest-ipc', 'crashtest', 'crashtest-ipc'):
+        if suite not in ('reftest', 'reftest-ipc', 'crashtest', 'crashtest-ipc', 'jstestbrowser'):
             raise Exception('None or unrecognized reftest suite type.')
 
         env = {}
@@ -254,6 +257,14 @@ class ReftestRunner(MozbuildObject):
         if debugger:
             extra_args.append('--debugger=%s' % debugger)
             pass_thru = True
+            if debugger_args:
+                # Use _make_shell_string (which quotes) so that we
+                # handle multiple args being passed to the debugger.
+                extra_args.extend(['--debugger-args', self._make_shell_string(debugger_args)])
+        else:
+            if debugger_args:
+                print("--debugger-args passed, but no debugger specified.")
+                return 1
 
         if parallel:
             extra_args.append('--run-tests-in-parallel')
@@ -263,6 +274,10 @@ class ReftestRunner(MozbuildObject):
 
         if e10s:
             extra_args.append('--e10s')
+
+        if extraPrefs:
+            for pref in extraPrefs:
+                extra_args.extend(['--setpref', pref])
 
         if this_chunk:
             extra_args.append('--this-chunk=%s' % this_chunk)
@@ -287,6 +302,10 @@ def ReftestCommand(func):
         help=DEBUGGER_HELP)
     func = debugger(func)
 
+    debugger_args = CommandArgument('--debugger-args', metavar='DEBUGGER_ARGS',
+        help='Arguments to pass to the debugger.')
+    func = debugger_args(func)
+
     flter = CommandArgument('--filter', metavar='REGEX',
         help='A JS regular expression to match test URLs against, to select '
              'a subset of tests to run.')
@@ -309,6 +328,11 @@ def ReftestCommand(func):
         help='Use content processes.')
     func = e10s(func)
 
+    extraPrefs = CommandArgument('--setpref', action='append',
+        default=[], dest='extraPrefs', metavar='PREF=VALUE',
+        help='Set prefs in the reftest profile.')
+    func = extraPrefs(func)
+
     totalChunks = CommandArgument('--total-chunks',
         help = 'How many chunks to split the tests up into.')
     func = totalChunks(func)
@@ -326,9 +350,9 @@ def B2GCommand(func):
         help='Path to busybox binary to install on device')
     func = busybox(func)
 
-    logcatdir = CommandArgument('--logcat-dir', default=None,
-        help='directory to store logcat dump files')
-    func = logcatdir(func)
+    logdir = CommandArgument('--logdir', default=None,
+        help='directory to store log files')
+    func = logdir(func)
 
     sdcard = CommandArgument('--sdcard', default="10MB",
         help='Define size of sdcard: 1MB, 50MB...etc')
@@ -370,6 +394,12 @@ class MachCommands(MachCommandBase):
     @ReftestCommand
     def run_reftest(self, test_file, **kwargs):
         return self._run_reftest(test_file, suite='reftest', **kwargs)
+
+    @Command('jstestbrowser', category='testing',
+        description='Run js/src/tests in the browser.')
+    @ReftestCommand
+    def run_jstestbrowser(self, test_file, **kwargs):
+        return self._run_reftest(test_file, suite='jstestbrowser', **kwargs)
 
     @Command('reftest-ipc', category='testing',
         description='Run IPC reftests.')

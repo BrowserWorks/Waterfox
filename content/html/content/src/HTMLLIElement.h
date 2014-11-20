@@ -18,11 +18,10 @@ class HTMLLIElement MOZ_FINAL : public nsGenericHTMLElement,
                                 public nsIDOMHTMLLIElement
 {
 public:
-  HTMLLIElement(already_AddRefed<nsINodeInfo>& aNodeInfo)
+  HTMLLIElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
     : nsGenericHTMLElement(aNodeInfo)
   {
   }
-  virtual ~HTMLLIElement();
 
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
@@ -36,7 +35,7 @@ public:
                                 nsAttrValue& aResult) MOZ_OVERRIDE;
   NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const MOZ_OVERRIDE;
   virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const MOZ_OVERRIDE;
-  virtual nsresult Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
 
   // WebIDL API
   void GetType(nsString& aType)
@@ -57,6 +56,8 @@ public:
   }
 
 protected:
+  virtual ~HTMLLIElement();
+
   virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;
 
 private:

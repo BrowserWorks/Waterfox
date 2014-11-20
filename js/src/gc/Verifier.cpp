@@ -22,7 +22,6 @@
 
 using namespace js;
 using namespace js::gc;
-using namespace mozilla;
 
 #ifdef JS_GC_ZEAL
 
@@ -103,7 +102,7 @@ struct VerifyPreTracer : JSTracer
     NodeMap nodemap;
 
     VerifyPreTracer(JSRuntime *rt, JSTraceCallback callback)
-      : JSTracer(rt, callback), noggc(rt), number(rt->gc.number), count(0), root(nullptr)
+      : JSTracer(rt, callback), noggc(rt), number(rt->gc.gcNumber()), count(0), root(nullptr)
     {}
 
     ~VerifyPreTracer() {
@@ -252,7 +251,7 @@ gc::GCRuntime::startVerifyPreBarriers()
     rt->setNeedsBarrier(true);
     for (ZonesIter zone(rt, WithAtoms); !zone.done(); zone.next()) {
         PurgeJITCaches(zone);
-        zone->setNeedsBarrier(true, Zone::UpdateIon);
+        zone->setNeedsBarrier(true, Zone::UpdateJit);
         zone->allocator.arenas.purge();
     }
 
@@ -304,8 +303,10 @@ AssertMarkedOrAllocated(const EdgeValue &edge)
     if (!edge.thing || IsMarkedOrAllocated(static_cast<Cell *>(edge.thing)))
         return;
 
-    // Permanent atoms aren't marked during graph traversal.
+    // Permanent atoms and well-known symbols aren't marked during graph traversal.
     if (edge.kind == JSTRACE_STRING && static_cast<JSString *>(edge.thing)->isPermanentAtom())
+        return;
+    if (edge.kind == JSTRACE_SYMBOL && static_cast<JS::Symbol *>(edge.thing)->isWellKnownSymbol())
         return;
 
     char msgbuf[1024];
@@ -335,7 +336,7 @@ gc::GCRuntime::endVerifyPreBarriers()
         if (!zone->needsBarrier())
             compartmentCreated = true;
 
-        zone->setNeedsBarrier(false, Zone::UpdateIon);
+        zone->setNeedsBarrier(false, Zone::UpdateJit);
         PurgeJITCaches(zone);
     }
     rt->setNeedsBarrier(false);
@@ -390,7 +391,7 @@ struct VerifyPostTracer : JSTracer
     EdgeSet *edges;
 
     VerifyPostTracer(JSRuntime *rt, JSTraceCallback callback)
-      : JSTracer(rt, callback), number(rt->gc.number), count(0)
+      : JSTracer(rt, callback), number(rt->gc.gcNumber()), count(0)
     {}
 };
 

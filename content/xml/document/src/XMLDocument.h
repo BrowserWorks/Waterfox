@@ -23,7 +23,6 @@ class XMLDocument : public nsDocument
 {
 public:
   XMLDocument(const char* aContentType = "application/xml");
-  virtual ~XMLDocument();
 
   NS_DECL_ISUPPORTS_INHERITED
 
@@ -45,7 +44,7 @@ public:
 
   virtual nsresult Init() MOZ_OVERRIDE;
 
-  virtual nsresult Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
 
   virtual void DocAddSizeOfExcludingThis(nsWindowSizes* aWindowSizes) const MOZ_OVERRIDE;
   // DocAddSizeOfIncludingThis is inherited from nsIDocument.
@@ -68,6 +67,8 @@ public:
   using nsDocument::GetLocation;
 
 protected:
+  virtual ~XMLDocument();
+
   virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;
 
   friend nsresult (::NS_NewXMLDocument)(nsIDocument**, bool, bool);

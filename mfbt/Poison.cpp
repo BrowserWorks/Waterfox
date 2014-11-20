@@ -41,25 +41,25 @@ uintptr_t gMozillaPoisonSize;
 // file.
 
 #ifdef _WIN32
-static void *
-ReserveRegion(uintptr_t region, uintptr_t size)
+static void*
+ReserveRegion(uintptr_t aRegion, uintptr_t aSize)
 {
-  return VirtualAlloc((void *)region, size, MEM_RESERVE, PAGE_NOACCESS);
+  return VirtualAlloc((void*)aRegion, aSize, MEM_RESERVE, PAGE_NOACCESS);
 }
 
 static void
-ReleaseRegion(void *region, uintptr_t size)
+ReleaseRegion(void* aRegion, uintptr_t aSize)
 {
-  VirtualFree(region, size, MEM_RELEASE);
+  VirtualFree(aRegion, aSize, MEM_RELEASE);
 }
 
 static bool
-ProbeRegion(uintptr_t region, uintptr_t size)
+ProbeRegion(uintptr_t aRegion, uintptr_t aSize)
 {
   SYSTEM_INFO sinfo;
   GetSystemInfo(&sinfo);
-  if (region >= (uintptr_t)sinfo.lpMaximumApplicationAddress &&
-      region + size >= (uintptr_t)sinfo.lpMaximumApplicationAddress) {
+  if (aRegion >= (uintptr_t)sinfo.lpMaximumApplicationAddress &&
+      aRegion + aSize >= (uintptr_t)sinfo.lpMaximumApplicationAddress) {
     return true;
   } else {
     return false;
@@ -77,8 +77,8 @@ GetDesiredRegionSize()
 #define RESERVE_FAILED 0
 
 #elif defined(__OS2__)
-static void *
-ReserveRegion(uintptr_t region, uintptr_t size)
+static void*
+ReserveRegion(uintptr_t aRegion, uintptr_t aSize)
 {
   // OS/2 doesn't support allocation at an arbitrary address,
   // so return an address that is known to be invalid.
@@ -86,13 +86,13 @@ ReserveRegion(uintptr_t region, uintptr_t size)
 }
 
 static void
-ReleaseRegion(void *region, uintptr_t size)
+ReleaseRegion(void* aRegion, uintptr_t aSize)
 {
   return;
 }
 
 static bool
-ProbeRegion(uintptr_t region, uintptr_t size)
+ProbeRegion(uintptr_t aRegion, uintptr_t aSize)
 {
   // There's no reliable way to probe an address in the system
   // arena other than by touching it and seeing if a trap occurs.
@@ -110,22 +110,26 @@ GetDesiredRegionSize()
 
 #else // Unix
 
-static void *
-ReserveRegion(uintptr_t region, uintptr_t size)
+#include "mozilla/TaggedAnonymousMemory.h"
+
+static void*
+ReserveRegion(uintptr_t aRegion, uintptr_t aSize)
 {
-  return mmap(reinterpret_cast<void*>(region), size, PROT_NONE, MAP_PRIVATE|MAP_ANON, -1, 0);
+  return MozTaggedAnonymousMmap(reinterpret_cast<void*>(aRegion), aSize,
+                                PROT_NONE, MAP_PRIVATE|MAP_ANON, -1, 0,
+                                "poison");
 }
 
 static void
-ReleaseRegion(void *region, uintptr_t size)
+ReleaseRegion(void* aRegion, uintptr_t aSize)
 {
-  munmap(region, size);
+  munmap(aRegion, aSize);
 }
 
 static bool
-ProbeRegion(uintptr_t region, uintptr_t size)
+ProbeRegion(uintptr_t aRegion, uintptr_t aSize)
 {
-  if (madvise(reinterpret_cast<void*>(region), size, MADV_NORMAL)) {
+  if (madvise(reinterpret_cast<void*>(aRegion), aSize, MADV_NORMAL)) {
     return true;
   } else {
     return false;
@@ -143,7 +147,7 @@ GetDesiredRegionSize()
 #endif // system dependencies
 
 static_assert(sizeof(uintptr_t) == 4 || sizeof(uintptr_t) == 8, "");
-static_assert(sizeof(uintptr_t) == sizeof(void *), "");
+static_assert(sizeof(uintptr_t) == sizeof(void*), "");
 
 static uintptr_t
 ReservePoisonArea(uintptr_t rgnsize)
@@ -155,42 +159,42 @@ ReservePoisonArea(uintptr_t rgnsize)
     return
       (((uintptr_t(0x7FFFFFFFu) << 31) << 1 | uintptr_t(0xF0DEAFFFu))
        & ~(rgnsize-1));
-
-  } else {
-    // First see if we can allocate the preferred poison address from the OS.
-    uintptr_t candidate = (0xF0DEAFFF & ~(rgnsize-1));
-    void *result = ReserveRegion(candidate, rgnsize);
-    if (result == (void *)candidate) {
-      // success - inaccessible page allocated
-      return candidate;
-    }
-
-    // That didn't work, so see if the preferred address is within a range
-    // of permanently inacessible memory.
-    if (ProbeRegion(candidate, rgnsize)) {
-      // success - selected page cannot be usable memory
-      if (result != RESERVE_FAILED)
-        ReleaseRegion(result, rgnsize);
-      return candidate;
-    }
-
-    // The preferred address is already in use.  Did the OS give us a
-    // consolation prize?
-    if (result != RESERVE_FAILED) {
-      return uintptr_t(result);
-    }
-
-    // It didn't, so try to allocate again, without any constraint on
-    // the address.
-    result = ReserveRegion(0, rgnsize);
-    if (result != RESERVE_FAILED) {
-      return uintptr_t(result);
-    }
-
-    // no usable poison region identified
-    MOZ_CRASH();
-    return 0;
   }
+
+  // First see if we can allocate the preferred poison address from the OS.
+  uintptr_t candidate = (0xF0DEAFFF & ~(rgnsize-1));
+  void* result = ReserveRegion(candidate, rgnsize);
+  if (result == (void*)candidate) {
+    // success - inaccessible page allocated
+    return candidate;
+  }
+
+  // That didn't work, so see if the preferred address is within a range
+  // of permanently inacessible memory.
+  if (ProbeRegion(candidate, rgnsize)) {
+    // success - selected page cannot be usable memory
+    if (result != RESERVE_FAILED) {
+      ReleaseRegion(result, rgnsize);
+    }
+    return candidate;
+  }
+
+  // The preferred address is already in use.  Did the OS give us a
+  // consolation prize?
+  if (result != RESERVE_FAILED) {
+    return uintptr_t(result);
+  }
+
+  // It didn't, so try to allocate again, without any constraint on
+  // the address.
+  result = ReserveRegion(0, rgnsize);
+  if (result != RESERVE_FAILED) {
+    return uintptr_t(result);
+  }
+
+  // no usable poison region identified
+  MOZ_CRASH();
+  return 0;
 }
 
 void
@@ -199,8 +203,8 @@ mozPoisonValueInit()
   gMozillaPoisonSize = GetDesiredRegionSize();
   gMozillaPoisonBase = ReservePoisonArea(gMozillaPoisonSize);
 
-  if (gMozillaPoisonSize == 0) // can't happen
+  if (gMozillaPoisonSize == 0) { // can't happen
     return;
-
-  gMozillaPoisonValue = gMozillaPoisonBase + gMozillaPoisonSize/2 - 1;
+  }
+  gMozillaPoisonValue = gMozillaPoisonBase + gMozillaPoisonSize / 2 - 1;
 }

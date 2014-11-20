@@ -72,8 +72,10 @@ static MOZ_CONSTEXPR_VAR Register JSReturnReg_Data = JSReturnReg;
 static MOZ_CONSTEXPR_VAR Register ReturnReg = rax;
 static MOZ_CONSTEXPR_VAR Register ScratchReg = r11;
 static MOZ_CONSTEXPR_VAR Register HeapReg = r15;
-static MOZ_CONSTEXPR_VAR FloatRegister ReturnFloatReg = xmm0;
-static MOZ_CONSTEXPR_VAR FloatRegister ScratchFloatReg = xmm15;
+static MOZ_CONSTEXPR_VAR FloatRegister ReturnFloat32Reg = xmm0;
+static MOZ_CONSTEXPR_VAR FloatRegister ScratchFloat32Reg = xmm15;
+static MOZ_CONSTEXPR_VAR FloatRegister ReturnDoubleReg = xmm0;
+static MOZ_CONSTEXPR_VAR FloatRegister ScratchDoubleReg = xmm15;
 
 // Avoid rbp, which is the FramePointer, which is unavailable in some modes.
 static MOZ_CONSTEXPR_VAR Register ArgumentsRectifierReg = r8;
@@ -182,8 +184,6 @@ static MOZ_CONSTEXPR_VAR Register PreBarrierReg = rdx;
 static const uint32_t StackAlignment = 16;
 static const bool StackKeptAligned = false;
 static const uint32_t CodeAlignment = 8;
-static const uint32_t NativeFrameSize = sizeof(void*);
-static const uint32_t AlignmentAtAsmJSPrologue = sizeof(void*);
 
 static const Scale ScalePointer = TimesEight;
 
@@ -545,7 +545,7 @@ class Assembler : public AssemblerX86Shared
     }
     void mov(AsmJSImmPtr imm, Register dest) {
         masm.movq_i64r(-1, dest.code());
-        enoughMemory_ &= append(AsmJSAbsoluteLink(CodeOffsetLabel(masm.currentOffset()), imm.kind()));
+        append(AsmJSAbsoluteLink(CodeOffsetLabel(masm.currentOffset()), imm.kind()));
     }
     void mov(const Operand &src, Register dest) {
         movq(src, dest);

@@ -13,6 +13,7 @@
 # include "LayerManagerD3D9.h"
 #endif //MOZ_ENABLE_D3D9_LAYER
 #include "mozilla/BrowserElementParent.h"
+#include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/TabParent.h"
 #include "mozilla/layers/APZCTreeManager.h"
 #include "mozilla/layers/CompositorParent.h"
@@ -737,18 +738,24 @@ RenderFrameParent::RenderFrameParent(nsFrameLoader* aFrameLoader,
     }
   }
 
-  if (CompositorParent::CompositorLoop()) {
+  if (gfxPlatform::UsesOffMainThreadCompositing() &&
+      XRE_GetProcessType() == GeckoProcessType_Default) {
     // Our remote frame will push layers updates to the compositor,
     // and we'll keep an indirect reference to that tree.
     *aId = mLayersId = CompositorParent::AllocateLayerTreeId();
     if (lm && lm->GetBackendType() == LayersBackend::LAYERS_CLIENT) {
-      ClientLayerManager *clientManager = static_cast<ClientLayerManager*>(lm.get());
+      ClientLayerManager *clientManager =
+        static_cast<ClientLayerManager*>(lm.get());
       clientManager->GetRemoteRenderer()->SendNotifyChildCreated(mLayersId);
     }
     if (aScrollingBehavior == ASYNC_PAN_ZOOM) {
       mContentController = new RemoteContentController(this);
       CompositorParent::SetControllerForLayerTree(mLayersId, mContentController);
     }
+  } else if (XRE_GetProcessType() == GeckoProcessType_Content) {
+    ContentChild::GetSingleton()->SendAllocateLayerTreeId(aId);
+    mLayersId = *aId;
+    CompositorChild::Get()->SendNotifyChildCreated(mLayersId);
   }
   // Set a default RenderFrameParent
   mFrameLoader->SetCurrentRemoteFrame(this);
@@ -946,7 +953,11 @@ void
 RenderFrameParent::ActorDestroy(ActorDestroyReason why)
 {
   if (mLayersId != 0) {
-    CompositorParent::DeallocateLayerTreeId(mLayersId);
+    if (XRE_GetProcessType() == GeckoProcessType_Content) {
+      ContentChild::GetSingleton()->SendDeallocateLayerTreeId(mLayersId);
+    } else {
+      CompositorParent::DeallocateLayerTreeId(mLayersId);
+    }
     if (mContentController) {
       // Stop our content controller from requesting repaints of our
       // content.

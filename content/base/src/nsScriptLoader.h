@@ -25,6 +25,12 @@ namespace JS {
   class SourceBufferHolder;
 }
 
+namespace mozilla {
+namespace dom {
+class AutoJSAPI;
+}
+}
+
 //////////////////////////////////////////////////////////////
 // Script loader implementation
 //////////////////////////////////////////////////////////////
@@ -55,7 +61,6 @@ class nsScriptLoader : public nsIStreamLoaderObserver
 
 public:
   nsScriptLoader(nsIDocument* aDocument);
-  virtual ~nsScriptLoader();
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSISTREAMLOADEROBSERVER
@@ -245,6 +250,8 @@ public:
                                    void **aOffThreadToken);
 
 private:
+  virtual ~nsScriptLoader();
+
   /**
    * Unblocks the creator parser of the parser-blocking scripts.
    */
@@ -311,7 +318,8 @@ private:
                           void **aOffThreadToken);
 
   already_AddRefed<nsIScriptGlobalObject> GetScriptGlobalObject();
-  void FillCompileOptionsForRequest(nsScriptLoadRequest *aRequest,
+  void FillCompileOptionsForRequest(const mozilla::dom::AutoJSAPI &jsapi,
+                                    nsScriptLoadRequest *aRequest,
                                     JS::Handle<JSObject *> aScopeChain,
                                     JS::CompileOptions *aOptions);
 

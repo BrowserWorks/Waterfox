@@ -26,7 +26,7 @@ class Requirement
         NONE,
         REGISTER,
         FIXED,
-        SAME_AS_OTHER
+        MUST_REUSE_INPUT
     };
 
     Requirement()
@@ -37,7 +37,7 @@ class Requirement
       : kind_(kind)
     {
         // These have dedicated constructors.
-        JS_ASSERT(kind != FIXED && kind != SAME_AS_OTHER);
+        JS_ASSERT(kind != FIXED && kind != MUST_REUSE_INPUT);
     }
 
     Requirement(Kind kind, CodePosition at)
@@ -45,7 +45,7 @@ class Requirement
         position_(at)
     {
         // These have dedicated constructors.
-        JS_ASSERT(kind != FIXED && kind != SAME_AS_OTHER);
+        JS_ASSERT(kind != FIXED && kind != MUST_REUSE_INPUT);
     }
 
     explicit Requirement(LAllocation fixed)
@@ -66,7 +66,7 @@ class Requirement
     }
 
     Requirement(uint32_t vreg, CodePosition at)
-      : kind_(SAME_AS_OTHER),
+      : kind_(MUST_REUSE_INPUT),
         allocation_(LUse(vreg, LUse::ANY)),
         position_(at)
     { }
@@ -82,7 +82,7 @@ class Requirement
 
     uint32_t virtualRegister() const {
         JS_ASSERT(allocation_.isUse());
-        JS_ASSERT(kind() == SAME_AS_OTHER);
+        JS_ASSERT(kind() == MUST_REUSE_INPUT);
         return allocation_.toUse()->virtualRegister();
     }
 
@@ -91,6 +91,31 @@ class Requirement
     }
 
     int priority() const;
+
+    bool mergeRequirement(const Requirement &newRequirement) {
+        // Merge newRequirement with any existing requirement, returning false
+        // if the new and old requirements conflict.
+        JS_ASSERT(newRequirement.kind() != Requirement::MUST_REUSE_INPUT);
+
+        if (newRequirement.kind() == Requirement::FIXED) {
+            if (kind() == Requirement::FIXED)
+                return newRequirement.allocation() == allocation();
+            *this = newRequirement;
+            return true;
+        }
+
+        JS_ASSERT(newRequirement.kind() == Requirement::REGISTER);
+        if (kind() == Requirement::FIXED)
+            return allocation().isRegister();
+
+        *this = newRequirement;
+        return true;
+    }
+
+    // Return a string describing this requirement. This is not re-entrant!
+    const char *toString() const;
+
+    void dump() const;
 
   private:
     Kind kind_;
@@ -107,7 +132,15 @@ struct UsePosition : public TempObject,
     UsePosition(LUse *use, CodePosition pos) :
         use(use),
         pos(pos)
-    { }
+    {
+        // Verify that the usedAtStart() flag is consistent with the
+        // subposition. For now ignore fixed registers, because they
+        // are handled specially around calls.
+        JS_ASSERT_IF(!use->isFixedRegister(),
+                     pos.subpos() == (use->usedAtStart()
+                                      ? CodePosition::INPUT
+                                      : CodePosition::OUTPUT));
+    }
 };
 
 typedef InlineForwardListIterator<UsePosition> UsePositionIterator;
@@ -142,11 +175,11 @@ DefinitionCompatibleWith(LInstruction *ins, const LDefinition *def, LAllocation 
     }
 
     switch (def->policy()) {
-      case LDefinition::DEFAULT:
+      case LDefinition::REGISTER:
         if (!alloc.isRegister())
             return false;
         return alloc.isFloatReg() == def->isFloatReg();
-      case LDefinition::PRESET:
+      case LDefinition::FIXED:
         return alloc == *def->output();
       case LDefinition::MUST_REUSE_INPUT:
         if (!alloc.isRegister() || !ins->numOperands())
@@ -204,6 +237,8 @@ class LiveInterval
         {
             JS_ASSERT(from < to);
         }
+
+        // The beginning of this range, inclusive.
         CodePosition from;
 
         // The end of this range, exclusive.
@@ -219,6 +254,11 @@ class LiveInterval
         // Intersect this range with other, returning the subranges of this
         // that are before, inside, or after other.
         void intersect(const Range *other, Range *pre, Range *inside, Range *post) const;
+
+        // Return a string describing this range. This is not re-entrant!
+        const char *toString() const;
+
+        void dump() const;
     };
 
   private:
@@ -320,29 +360,18 @@ class LiveInterval
         return &requirement_;
     }
     void setRequirement(const Requirement &requirement) {
-        // A SAME_AS_OTHER requirement complicates regalloc too much; it
+        // A MUST_REUSE_INPUT requirement complicates regalloc too much; it
         // should only be used as hint.
-        JS_ASSERT(requirement.kind() != Requirement::SAME_AS_OTHER);
+        JS_ASSERT(requirement.kind() != Requirement::MUST_REUSE_INPUT);
         requirement_ = requirement;
     }
     bool addRequirement(const Requirement &newRequirement) {
-        // Merge newRequirement with any existing requirement, returning false
-        // if the new and old requirements conflict.
-        JS_ASSERT(newRequirement.kind() != Requirement::SAME_AS_OTHER);
-
-        if (newRequirement.kind() == Requirement::FIXED) {
-            if (requirement_.kind() == Requirement::FIXED)
-                return newRequirement.allocation() == requirement_.allocation();
-            requirement_ = newRequirement;
-            return true;
-        }
-
-        JS_ASSERT(newRequirement.kind() == Requirement::REGISTER);
-        if (requirement_.kind() == Requirement::FIXED)
-            return requirement_.allocation().isRegister();
-
-        requirement_ = newRequirement;
-        return true;
+        return requirement_.mergeRequirement(newRequirement);
+    }
+    void addHint(const Requirement &newHint) {
+        // Unlike addRequirement, here in addHint we ignore merge failures,
+        // because these are just hints.
+        hint_.mergeRequirement(newHint);
     }
     const Requirement *hint() const {
         return &hint_;
@@ -357,6 +386,7 @@ class LiveInterval
 
     void addUse(UsePosition *use);
     void addUseAtEnd(UsePosition *use);
+    UsePosition *popUse();
     UsePosition *nextUseAfter(CodePosition pos);
     CodePosition nextUsePosAfter(CodePosition pos);
     CodePosition firstIncompatibleUse(LAllocation alloc);
@@ -385,7 +415,10 @@ class LiveInterval
     // not re-entrant!
     const char *rangesToString() const;
 
-    void dump();
+    // Return a string describing this LiveInterval. This is not re-entrant!
+    const char *toString() const;
+
+    void dump() const;
 };
 
 /*
@@ -472,8 +505,20 @@ class VirtualRegister
         interval->setIndex(found - intervals_.begin());
         return intervals_.insert(found, interval);
     }
+    void removeInterval(LiveInterval *interval) {
+        intervals_.erase(intervals_.begin() + interval->index());
+        for (size_t i = interval->index(), e = intervals_.length(); i < e; ++i)
+            intervals_[i]->setIndex(i);
+        interval->setIndex(-1);
+    }
     bool isFloatReg() const {
         return def_->isFloatReg();
+    }
+    bool isCompatibleReg(const AnyRegister &r) const {
+        return def_->isCompatibleReg(r);
+    }
+    bool isCompatibleVReg(const VirtualRegister &vr) const {
+        return def_->isCompatibleDef(*vr.def_);
     }
 
     LiveInterval *intervalFor(CodePosition pos);
@@ -486,44 +531,37 @@ template <typename VREG>
 class VirtualRegisterMap
 {
   private:
-    VREG *vregs_;
-    uint32_t numVregs_;
+    FixedList<VREG> vregs_;
 
     void operator=(const VirtualRegisterMap &) MOZ_DELETE;
     VirtualRegisterMap(const VirtualRegisterMap &) MOZ_DELETE;
 
   public:
     VirtualRegisterMap()
-      : vregs_(nullptr),
-        numVregs_(0)
+      : vregs_()
     { }
 
     bool init(MIRGenerator *gen, uint32_t numVregs) {
-        vregs_ = gen->allocate<VREG>(numVregs);
-        numVregs_ = numVregs;
-        if (!vregs_)
+        if (!vregs_.init(gen->alloc(), numVregs))
             return false;
-        memset(vregs_, 0, sizeof(VREG) * numVregs);
+        memset(&vregs_[0], 0, sizeof(VREG) * numVregs);
         TempAllocator &alloc = gen->alloc();
         for (uint32_t i = 0; i < numVregs; i++)
             new(&vregs_[i]) VREG(alloc);
         return true;
     }
     VREG &operator[](unsigned int index) {
-        JS_ASSERT(index < numVregs_);
         return vregs_[index];
     }
     VREG &operator[](const LAllocation *alloc) {
         JS_ASSERT(alloc->isUse());
-        JS_ASSERT(alloc->toUse()->virtualRegister() < numVregs_);
         return vregs_[alloc->toUse()->virtualRegister()];
     }
     VREG &operator[](const LDefinition *def) {
-        JS_ASSERT(def->virtualRegister() < numVregs_);
         return vregs_[def->virtualRegister()];
     }
     uint32_t numVirtualRegisters() const {
-        return numVregs_;
+        return vregs_.length();
     }
 };
 
@@ -731,6 +769,8 @@ class LiveRangeAllocator : protected RegisterAllocator
         }
         return i;
     }
+
+    void dumpVregs();
 };
 
 } // namespace jit

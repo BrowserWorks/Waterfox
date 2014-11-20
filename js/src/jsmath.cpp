@@ -89,6 +89,19 @@ const Class js::MathClass = {
 };
 
 bool
+js_math_abs_handle(JSContext *cx, js::HandleValue v, js::MutableHandleValue r)
+{
+    double x;
+    if (!ToNumber(cx, v, &x))
+        return false;
+
+    double z = Abs(x);
+    r.setNumber(z);
+
+    return true;
+}
+
+bool
 js_math_abs(JSContext *cx, unsigned argc, Value *vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
@@ -98,13 +111,7 @@ js_math_abs(JSContext *cx, unsigned argc, Value *vp)
         return true;
     }
 
-    double x;
-    if (!ToNumber(cx, args[0], &x))
-        return false;
-
-    double z = Abs(x);
-    args.rval().setNumber(z);
-    return true;
+    return js_math_abs_handle(cx, args[0], args.rval());
 }
 
 #if defined(SOLARIS) && defined(__GNUC__)
@@ -263,21 +270,27 @@ js::ecmaAtan2(double y, double x)
 }
 
 bool
+js::math_atan2_handle(JSContext *cx, HandleValue y, HandleValue x, MutableHandleValue res)
+{
+    double dy;
+    if (!ToNumber(cx, y, &dy))
+        return false;
+
+    double dx;
+    if (!ToNumber(cx, x, &dx))
+        return false;
+
+    double z = ecmaAtan2(dy, dx);
+    res.setDouble(z);
+    return true;
+}
+
+bool
 js::math_atan2(JSContext *cx, unsigned argc, Value *vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
-    double y;
-    if (!ToNumber(cx, args.get(0), &y))
-        return false;
-
-    double x;
-    if (!ToNumber(cx, args.get(1), &x))
-        return false;
-
-    double z = ecmaAtan2(y, x);
-    args.rval().setDouble(z);
-    return true;
+    return math_atan2_handle(cx, args.get(0), args.get(1), args.rval());
 }
 
 double
@@ -425,6 +438,19 @@ js::math_floor_impl(double x)
 }
 
 bool
+js::math_floor_handle(JSContext *cx, HandleValue v, MutableHandleValue r)
+{
+    double d;
+    if(!ToNumber(cx, v, &d))
+        return false;
+
+    double z = math_floor_impl(d);
+    r.setNumber(z);
+
+    return true;
+}
+
+bool
 js::math_floor(JSContext *cx, unsigned argc, Value *vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
@@ -434,13 +460,7 @@ js::math_floor(JSContext *cx, unsigned argc, Value *vp)
         return true;
     }
 
-    double x;
-    if (!ToNumber(cx, args[0], &x))
-        return false;
-
-    double z = math_floor_impl(x);
-    args.rval().setNumber(z);
-    return true;
+    return math_floor_handle(cx, args[0], args.rval());
 }
 
 bool
@@ -545,6 +565,15 @@ js::math_log(JSContext *cx, unsigned argc, Value *vp)
     return true;
 }
 
+static double
+max_double(double x, double y)
+{
+    // Math.max(num, NaN) => NaN, Math.max(-0, +0) => +0
+    if (x > y || IsNaN(x) || (x == y && IsNegative(y)))
+        return x;
+    return y;
+}
+
 bool
 js_math_max(JSContext *cx, unsigned argc, Value *vp)
 {
@@ -555,12 +584,19 @@ js_math_max(JSContext *cx, unsigned argc, Value *vp)
         double x;
         if (!ToNumber(cx, args[i], &x))
             return false;
-        // Math.max(num, NaN) => NaN, Math.max(-0, +0) => +0
-        if (x > maxval || IsNaN(x) || (x == maxval && IsNegative(maxval)))
-            maxval = x;
+        maxval = max_double(x, maxval);
     }
     args.rval().setNumber(maxval);
     return true;
+}
+
+static double
+min_double(double x, double y)
+{
+    // Math.min(num, NaN) => NaN, Math.min(-0, +0) => -0
+    if (x < y || IsNaN(x) || (x == y && IsNegativeZero(x)))
+        return x;
+    return y;
 }
 
 bool
@@ -573,11 +609,27 @@ js_math_min(JSContext *cx, unsigned argc, Value *vp)
         double x;
         if (!ToNumber(cx, args[i], &x))
             return false;
-        // Math.min(num, NaN) => NaN, Math.min(-0, +0) => -0
-        if (x < minval || IsNaN(x) || (x == minval && IsNegativeZero(x)))
-            minval = x;
+        minval = min_double(x, minval);
     }
     args.rval().setNumber(minval);
+    return true;
+}
+
+bool
+js_minmax_impl(JSContext *cx, bool max, HandleValue a, HandleValue b, MutableHandleValue res)
+{
+    double x, y;
+
+    if (!ToNumber(cx, a, &x))
+        return false;
+    if (!ToNumber(cx, b, &y))
+        return false;
+
+    if (max)
+        res.setNumber(max_double(x, y));
+    else
+        res.setNumber(min_double(x, y));
+
     return true;
 }
 
@@ -663,21 +715,27 @@ js::ecmaPow(double x, double y)
 # pragma optimize("g", off)
 #endif
 bool
+js_math_pow_handle(JSContext *cx, HandleValue base, HandleValue power, MutableHandleValue result)
+{
+    double x;
+    if (!ToNumber(cx, base, &x))
+        return false;
+
+    double y;
+    if (!ToNumber(cx, power, &y))
+        return false;
+
+    double z = ecmaPow(x, y);
+    result.setNumber(z);
+    return true;
+}
+
+bool
 js_math_pow(JSContext *cx, unsigned argc, Value *vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
-    double x;
-    if (!ToNumber(cx, args.get(0), &x))
-        return false;
-
-    double y;
-    if (!ToNumber(cx, args.get(1), &y))
-        return false;
-
-    double z = ecmaPow(x, y);
-    args.rval().setNumber(z);
-    return true;
+    return js_math_pow_handle(cx, args.get(0), args.get(1), args.rval());
 }
 #if defined(_MSC_VER)
 # pragma optimize("", on)
@@ -776,6 +834,18 @@ js_math_random(JSContext *cx, unsigned argc, Value *vp)
     return true;
 }
 
+bool
+js::math_round_handle(JSContext *cx, HandleValue arg, MutableHandleValue res)
+{
+    double d;
+    if (!ToNumber(cx, arg, &d))
+        return false;
+
+    d = math_round_impl(d);
+    res.setNumber(d);
+    return true;
+}
+
 double
 js::math_round_impl(double x)
 {
@@ -784,7 +854,7 @@ js::math_round_impl(double x)
         return x;
 
     /* Some numbers are so big that adding 0.5 would give the wrong number. */
-    if (ExponentComponent(x) >= int_fast16_t(FloatingPoint<double>::ExponentShift))
+    if (ExponentComponent(x) >= int_fast16_t(FloatingPoint<double>::kExponentShift))
         return x;
 
     return js_copysign(floor(x + 0.5), x);
@@ -798,7 +868,7 @@ js::math_roundf_impl(float x)
         return x;
 
     /* Some numbers are so big that adding 0.5 would give the wrong number. */
-    if (ExponentComponent(x) >= int_fast16_t(FloatingPoint<float>::ExponentShift))
+    if (ExponentComponent(x) >= int_fast16_t(FloatingPoint<float>::kExponentShift))
         return x;
 
     return js_copysign(floorf(x + 0.5f), x);
@@ -814,13 +884,7 @@ js::math_round(JSContext *cx, unsigned argc, Value *vp)
         return true;
     }
 
-    double x;
-    if (!ToNumber(cx, args[0], &x))
-        return false;
-
-    double z = math_round_impl(x);
-    args.rval().setNumber(z);
-    return true;
+    return js::math_round_handle(cx, args[0], args.rval());
 }
 
 double
@@ -859,6 +923,22 @@ js::math_sin(JSContext *cx, unsigned argc, Value *vp)
 }
 
 bool
+js::math_sqrt_handle(JSContext *cx, HandleValue number, MutableHandleValue result)
+{
+    double x;
+    if (!ToNumber(cx, number, &x))
+        return false;
+
+    MathCache *mathCache = cx->runtime()->getMathCache(cx);
+    if (!mathCache)
+        return false;
+
+    double z = mathCache->lookup(sqrt, x, MathCache::Sqrt);
+    result.setDouble(z);
+    return true;
+}
+
+bool
 js_math_sqrt(JSContext *cx, unsigned argc, Value *vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
@@ -868,17 +948,7 @@ js_math_sqrt(JSContext *cx, unsigned argc, Value *vp)
         return true;
     }
 
-    double x;
-    if (!ToNumber(cx, args[0], &x))
-        return false;
-
-    MathCache *mathCache = cx->runtime()->getMathCache(cx);
-    if (!mathCache)
-        return false;
-
-    double z = mathCache->lookup(sqrt, x, MathCache::Sqrt);
-    args.rval().setDouble(z);
-    return true;
+    return math_sqrt_handle(cx, args[0], args.rval());
 }
 
 double

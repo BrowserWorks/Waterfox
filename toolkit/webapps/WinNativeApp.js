@@ -72,17 +72,17 @@ NativeApp.prototype = {
    * @param aZipPath {String} path to the zip file for packaged apps (undefined
    *                          for hosted apps)
    */
-  install: Task.async(function*(aManifest, aZipPath) {
+  install: Task.async(function*(aApp, aManifest, aZipPath) {
     if (this._dryRun) {
       return;
     }
 
     // If the application is already installed, this is a reinstallation.
-    if (WebappOSUtils.getInstallPath(this.app)) {
-      return yield this.prepareUpdate(aManifest, aZipPath);
+    if (WebappOSUtils.getInstallPath(aApp)) {
+      return yield this.prepareUpdate(aApp, aManifest, aZipPath);
     }
 
-    this._setData(aManifest);
+    this._setData(aApp, aManifest);
 
     let installDir = OS.Path.join(APP_DATA_DIR, this.uniqueName);
 
@@ -128,14 +128,14 @@ NativeApp.prototype = {
    * @param aZipPath {String} path to the zip file for packaged apps (undefined
    *                          for hosted apps)
    */
-  prepareUpdate: Task.async(function*(aManifest, aZipPath) {
+  prepareUpdate: Task.async(function*(aApp, aManifest, aZipPath) {
     if (this._dryRun) {
       return;
     }
 
-    this._setData(aManifest);
+    this._setData(aApp, aManifest);
 
-    let installDir = WebappOSUtils.getInstallPath(this.app);
+    let installDir = WebappOSUtils.getInstallPath(aApp);
     if (!installDir) {
       throw ERR_NOT_INSTALLED;
     }
@@ -171,12 +171,12 @@ NativeApp.prototype = {
   /**
    * Applies an update.
    */
-  applyUpdate: Task.async(function*() {
+  applyUpdate: Task.async(function*(aApp) {
     if (this._dryRun) {
       return;
     }
 
-    let installDir = WebappOSUtils.getInstallPath(this.app);
+    let installDir = WebappOSUtils.getInstallPath(aApp);
     let updateDir = OS.Path.join(installDir, "update");
 
     yield this._getShortcutName(installDir);
@@ -317,7 +317,7 @@ NativeApp.prototype = {
 
     let writer = factory.createINIParser(webappINIfile)
                         .QueryInterface(Ci.nsIINIParserWriter);
-    writer.setString("Webapp", "Name", this.appName);
+    writer.setString("Webapp", "Name", this.appLocalizedName);
     writer.setString("Webapp", "Profile", this.uniqueName);
     writer.setString("Webapp", "Executable", this.appNameAsFilename);
     writer.setString("WebappRT", "InstallDir", this.runtimeFolder);
@@ -365,7 +365,7 @@ NativeApp.prototype = {
       subKey = uninstallKey.createChild(this.uninstallSubkeyStr,
                                         uninstallKey.ACCESS_WRITE);
 
-      subKey.writeStringValue("DisplayName", this.appName);
+      subKey.writeStringValue("DisplayName", this.appLocalizedName);
 
       let uninstallerPath = OS.Path.join(aInstallDir, this.uninstallerFile);
 

@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "mozilla/LinkedList.h"
+#include "mozilla/TaggedAnonymousMemory.h"
 #include "Nuwa.h"
 
 using namespace mozilla;
@@ -90,52 +91,7 @@ static bool sNuwaForking = false;
 static NuwaProtoFdInfo sProtoFdInfos[NUWA_TOPLEVEL_MAX];
 static int sProtoFdInfosSize = 0;
 
-template <typename T>
-struct LibcAllocator: public std::allocator<T>
-{
-  LibcAllocator()
-  {
-    void* libcHandle = dlopen("libc.so", RTLD_LAZY);
-    mMallocImpl = reinterpret_cast<void*(*)(size_t)>(dlsym(libcHandle, "malloc"));
-    mFreeImpl = reinterpret_cast<void(*)(void*)>(dlsym(libcHandle, "free"));
-
-    if (!(mMallocImpl && mFreeImpl)) {
-      // libc should be available, or we'll deadlock in using TLSInfoList.
-      abort();
-    }
-  }
-
-  inline typename std::allocator<T>::pointer
-  allocate(typename std::allocator<T>::size_type n,
-           const void * = 0)
-  {
-    return reinterpret_cast<T *>(mMallocImpl(sizeof(T) * n));
-  }
-
-  inline void
-  deallocate(typename std::allocator<T>::pointer p,
-             typename std::allocator<T>::size_type n)
-  {
-    mFreeImpl(p);
-  }
-
-  template<typename U>
-  struct rebind
-  {
-    typedef LibcAllocator<U> other;
-  };
-private:
-  void* (*mMallocImpl)(size_t);
-  void (*mFreeImpl)(void*);
-};
-
-/**
- * TLSInfoList should use malloc() and free() in libc to avoid the deadlock that
- * jemalloc calls into __wrap_pthread_mutex_lock() and then deadlocks while
- * the same thread already acquired sThreadCountLock.
- */
-typedef std::vector<std::pair<pthread_key_t, void *>,
-                    LibcAllocator<std::pair<pthread_key_t, void *> > >
+typedef std::vector<std::pair<pthread_key_t, void *> >
 TLSInfoList;
 
 /**
@@ -152,15 +108,6 @@ static size_t getPageSize(void) {
   #warning "Hard-coding page size to 4096 bytes"
   return 4096
 #endif
-}
-
-/**
- * Align the pointer to the next page boundary unless it's already aligned
- */
-static uintptr_t ceilToPage(uintptr_t aPtr) {
-  size_t pageSize = getPageSize();
-
-  return ((aPtr + pageSize - 1) / pageSize) * pageSize;
 }
 
 /**
@@ -555,13 +502,18 @@ thread_info_new(void) {
   tinfo->recreatedThreadID = 0;
   tinfo->recreatedNativeThreadID = 0;
   tinfo->reacquireMutex = nullptr;
-  tinfo->stk = malloc(NUWA_STACK_SIZE + getPageSize());
+  tinfo->stk = MozTaggedAnonymousMmap(nullptr,
+                                      NUWA_STACK_SIZE + getPageSize(),
+                                      PROT_READ | PROT_WRITE,
+                                      MAP_PRIVATE | MAP_ANONYMOUS,
+                                      /* fd */ -1,
+                                      /* offset */ 0,
+                                      "nuwa-thread-stack");
 
   // We use a smaller stack size. Add protection to stack overflow: mprotect()
   // stack top (the page at the lowest address) so we crash instead of corrupt
   // other content that is malloc()'d.
-  uintptr_t pageGuard = ceilToPage((uintptr_t)tinfo->stk);
-  mprotect((void*)pageGuard, getPageSize(), PROT_READ);
+  mprotect(tinfo->stk, getPageSize(), PROT_NONE);
 
   pthread_attr_init(&tinfo->threadAttr);
 
@@ -586,16 +538,43 @@ thread_info_cleanup(void *arg) {
   thread_info_t *tinfo = (thread_info_t *)arg;
   pthread_attr_destroy(&tinfo->threadAttr);
 
+  munmap(tinfo->stk, NUWA_STACK_SIZE + getPageSize());
+
   REAL(pthread_mutex_lock)(&sThreadCountLock);
   /* unlink tinfo from sAllThreads */
   tinfo->remove();
+  pthread_mutex_unlock(&sThreadCountLock);
 
+  // while sThreadCountLock is held, since delete calls wrapped functions
+  // which try to lock sThreadCountLock. This results in deadlock. And we
+  // need to delete |tinfo| before decreasing sThreadCount, so Nuwa won't
+  // get ready before tinfo is cleaned.
+  delete tinfo;
+
+  REAL(pthread_mutex_lock)(&sThreadCountLock);
   sThreadCount--;
   pthread_cond_signal(&sThreadChangeCond);
   pthread_mutex_unlock(&sThreadCountLock);
+}
 
-  free(tinfo->stk);
-  delete tinfo;
+static void*
+cleaner_thread(void *arg) {
+  thread_info_t *tinfo = (thread_info_t *)arg;
+  pthread_t *thread = sIsNuwaProcess ? &tinfo->origThreadID
+                                     : &tinfo->recreatedThreadID;
+  // Wait until target thread end.
+  while (!pthread_kill(*thread, 0)) {
+    sched_yield();
+  }
+  thread_info_cleanup(tinfo);
+  return nullptr;
+}
+
+static void
+thread_cleanup(void *arg) {
+  pthread_t thread;
+  REAL(pthread_create)(&thread, nullptr, &cleaner_thread, arg);
+  pthread_detach(thread);
 }
 
 static void *
@@ -611,7 +590,7 @@ _thread_create_startup(void *arg) {
   tinfo->origThreadID = REAL(pthread_self)();
   tinfo->origNativeThreadID = gettid();
 
-  pthread_cleanup_push(thread_info_cleanup, tinfo);
+  pthread_cleanup_push(thread_cleanup, tinfo);
 
   r = tinfo->startupFunc(tinfo->startupArg);
 
@@ -674,7 +653,9 @@ __wrap_pthread_create(pthread_t *thread,
   thread_info_t *tinfo = thread_info_new();
   tinfo->startupFunc = start_routine;
   tinfo->startupArg = arg;
-  pthread_attr_setstack(&tinfo->threadAttr, tinfo->stk, NUWA_STACK_SIZE);
+  pthread_attr_setstack(&tinfo->threadAttr,
+                        (char*)tinfo->stk + getPageSize(),
+                        NUWA_STACK_SIZE);
 
   int rv = REAL(pthread_create)(thread,
                                 &tinfo->threadAttr,

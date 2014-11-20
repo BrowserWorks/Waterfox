@@ -33,16 +33,17 @@ namespace mozilla { namespace pkix {
 
 Result CheckIssuerIndependentProperties(
           TrustDomain& trustDomain,
-          BackCert& cert,
+          const BackCert& cert,
           PRTime time,
-          EndEntityOrCA endEntityOrCA,
           KeyUsage requiredKeyUsageIfPresent,
           KeyPurposeId requiredEKUIfPresent,
           const CertPolicyId& requiredPolicy,
           unsigned int subCACount,
           /*optional out*/ TrustLevel* trustLevel = nullptr);
 
-Result CheckNameConstraints(BackCert& cert);
+Result CheckNameConstraints(const SECItem& encodedNameConstraints,
+                            const BackCert& firstChild,
+                            KeyPurposeId requiredEKUIfPresent);
 
 } } // namespace mozilla::pkix
 

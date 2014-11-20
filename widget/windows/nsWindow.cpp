@@ -54,6 +54,8 @@
  **************************************************************
  **************************************************************/
 
+#include "gfx2DGlue.h"
+#include "gfxPlatform.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/MiscEvents.h"
 #include "mozilla/MouseEvents.h"
@@ -178,12 +180,15 @@
 
 #include "npapi.h"
 
+#include <d3d11.h>
+
 #if !defined(SM_CONVERTIBLESLATEMODE)
 #define SM_CONVERTIBLESLATEMODE 0x2003
 #endif
 
 using namespace mozilla;
 using namespace mozilla::dom;
+using namespace mozilla::gfx;
 using namespace mozilla::layers;
 using namespace mozilla::widget;
 
@@ -3389,26 +3394,6 @@ nsWindow::GetLayerManager(PLayerTransactionChild* aShadowManager,
 
 /**************************************************************
  *
- * SECTION: nsIWidget::GetThebesSurface
- *
- * Get the Thebes surface associated with this widget.
- *
- **************************************************************/
-
-gfxASurface *nsWindow::GetThebesSurface()
-{
-  if (mPaintDC)
-    return (new gfxWindowsSurface(mPaintDC));
-
-  uint32_t flags = gfxWindowsSurface::FLAG_TAKE_DC;
-  if (mTransparencyMode != eTransparencyOpaque) {
-      flags |= gfxWindowsSurface::FLAG_IS_TRANSPARENT;
-  }
-  return (new gfxWindowsSurface(mWnd, flags));
-}
-
-/**************************************************************
- *
  * SECTION: nsIWidget::OnDefaultButtonLoaded
  *
  * Called after the dialog is loaded and it has a default button.
@@ -4358,6 +4343,8 @@ inline static mozilla::HangMonitor::ActivityType ActivityTypeForMessage(UINT msg
 // and http://msdn.microsoft.com/en-us/library/ms633573%28VS.85%29.aspx
 LRESULT CALLBACK nsWindow::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+  MOZ_RELEASE_ASSERT(!ipc::ProcessingUrgentMessages());
+
   HangMonitor::NotifyActivity(ActivityTypeForMessage(msg));
 
   return mozilla::CallWindowProcCrashProtected(WindowProcInternal, hWnd, msg, wParam, lParam);
@@ -5745,9 +5732,9 @@ nsWindow::GetMessageTimeStamp(LONG aEventTime)
     cyclesToAdd++;
   }
 
-  if (timesWrapped > 0) {
+  if (cyclesToAdd > 0) {
     eventTimeStamp +=
-      TimeDuration::FromMilliseconds(kEventTimeRange * timesWrapped);
+      TimeDuration::FromMilliseconds(kEventTimeRange * cyclesToAdd);
   }
 
   return eventTimeStamp;
@@ -6755,10 +6742,23 @@ nsWindow::GetPreferredCompositorBackends(nsTArray<LayersBackend>& aHints)
     if (prefs.mPreferOpenGL) {
       aHints.AppendElement(LayersBackend::LAYERS_OPENGL);
     }
-    if (!prefs.mPreferD3D9) {
-      aHints.AppendElement(LayersBackend::LAYERS_D3D11);
+
+    ID3D11Device* device = gfxWindowsPlatform::GetPlatform()->GetD3D11Device();
+    if (device &&
+        device->GetFeatureLevel() >= D3D_FEATURE_LEVEL_10_0 &&
+        !DoesD3D11DeviceSupportResourceSharing(device)) {
+      // bug 1083071 - bad things - fall back to basic layers
+      // This should not happen aside from driver bugs, and in particular
+      // should not happen on our test machines, so let's NS_ERROR to ensure
+      // that we would catch it as a test failure.
+      NS_ERROR("Can't use Direct3D 11 because of a driver bug "
+        "causing resource sharing to fail");
+    } else {
+      if (!prefs.mPreferD3D9) {
+        aHints.AppendElement(LayersBackend::LAYERS_D3D11);
+      }
+      aHints.AppendElement(LayersBackend::LAYERS_D3D9);
     }
-    aHints.AppendElement(LayersBackend::LAYERS_D3D9);
   }
   aHints.AppendElement(LayersBackend::LAYERS_BASIC);
 }
@@ -6794,7 +6794,7 @@ nsWindow::HasBogusPopupsDropShadowOnMultiMonitor() {
         if (gfxInfo) {
           int32_t status;
           if (NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_DIRECT3D_9_LAYERS, &status))) {
-            if (status == nsIGfxInfo::FEATURE_NO_INFO || prefs.mForceAcceleration)
+            if (status == nsIGfxInfo::FEATURE_STATUS_OK || prefs.mForceAcceleration)
             {
               sHasBogusPopupsDropShadowOnMultiMonitor = TRI_TRUE;
             }
@@ -7022,9 +7022,10 @@ void nsWindow::SetupTranslucentWindowMemoryBitmap(nsTransparencyMode aMode)
 void nsWindow::ClearTranslucentWindow()
 {
   if (mTransparentSurface) {
-    nsRefPtr<gfxContext> thebesContext = new gfxContext(mTransparentSurface);
-    thebesContext->SetOperator(gfxContext::OPERATOR_CLEAR);
-    thebesContext->Paint();
+    IntSize size = ToIntSize(mTransparentSurface->GetSize());
+    RefPtr<DrawTarget> drawTarget = gfxPlatform::GetPlatform()->
+      CreateDrawTargetForSurface(mTransparentSurface, size);
+    drawTarget->ClearRect(Rect(0, 0, size.width, size.height));
     UpdateTranslucentWindow();
  }
 }

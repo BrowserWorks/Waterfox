@@ -30,7 +30,7 @@ class nsGlobalWindow;
 class nsXULElement;
 
 namespace mozilla {
-namespace gfx {
+namespace gl {
 class SourceSurface;
 class SurfaceStream;
 }
@@ -85,14 +85,17 @@ public:
                 const gfx::Point& aCP2,
                 const gfx::Point& aCP3);
 
-  mozilla::RefPtr<mozilla::gfx::Path> GetPath(const CanvasWindingRule& winding,
-                                              const mozilla::RefPtr<mozilla::gfx::DrawTarget>& mTarget) const;
+  TemporaryRef<gfx::Path> GetPath(const CanvasWindingRule& aWinding,
+                                  const gfx::DrawTarget* aTarget) const;
 
   explicit CanvasPath(nsISupports* aParent);
-  CanvasPath(nsISupports* aParent, RefPtr<gfx::PathBuilder> mPathBuilder);
-  virtual ~CanvasPath() {}
+  // TemporaryRef arg because the return value from Path::CopyToBuilder() is
+  // passed directly and we can't drop the only ref to have a raw pointer.
+  CanvasPath(nsISupports* aParent,
+             TemporaryRef<gfx::PathBuilder> aPathBuilder);
 
 private:
+  virtual ~CanvasPath() {}
 
   nsCOMPtr<nsISupports> mParent;
   static gfx::Float ToFloat(double aValue) { return gfx::Float(aValue); }
@@ -116,9 +119,10 @@ class CanvasRenderingContext2D :
 typedef HTMLImageElementOrHTMLCanvasElementOrHTMLVideoElement
   HTMLImageOrCanvasOrVideoElement;
 
+  virtual ~CanvasRenderingContext2D();
+
 public:
   CanvasRenderingContext2D();
-  virtual ~CanvasRenderingContext2D();
 
   virtual JSObject* WrapObject(JSContext *cx) MOZ_OVERRIDE;
 
@@ -389,21 +393,21 @@ public:
            double endAngle, bool anticlockwise, mozilla::ErrorResult& error);
 
   void GetMozCurrentTransform(JSContext* cx,
-			      JS::MutableHandle<JSObject*> result,
-			      mozilla::ErrorResult& error) const;
+                              JS::MutableHandle<JSObject*> result,
+                              mozilla::ErrorResult& error) const;
   void SetMozCurrentTransform(JSContext* cx,
                               JS::Handle<JSObject*> currentTransform,
                               mozilla::ErrorResult& error);
   void GetMozCurrentTransformInverse(JSContext* cx,
-				     JS::MutableHandle<JSObject*> result,
-				     mozilla::ErrorResult& error) const;
+                                     JS::MutableHandle<JSObject*> result,
+                                     mozilla::ErrorResult& error) const;
   void SetMozCurrentTransformInverse(JSContext* cx,
                                      JS::Handle<JSObject*> currentTransform,
                                      mozilla::ErrorResult& error);
   void GetFillRule(nsAString& fillRule);
   void SetFillRule(const nsAString& fillRule);
   void GetMozDash(JSContext* cx, JS::MutableHandle<JS::Value> retval,
-		  mozilla::ErrorResult& error);
+                  mozilla::ErrorResult& error);
   void SetMozDash(JSContext* cx, const JS::Value& mozDash,
                   mozilla::ErrorResult& error);
 
@@ -657,7 +661,7 @@ protected:
 
   void DrawImage(const HTMLImageOrCanvasOrVideoElement &imgElt,
                  double sx, double sy, double sw, double sh,
-                 double dx, double dy, double dw, double dh, 
+                 double dx, double dy, double dw, double dh,
                  uint8_t optional_argc, mozilla::ErrorResult& error);
 
   void DrawDirectlyToCanvas(const nsLayoutUtils::DirectDrawInfo& image,
@@ -707,7 +711,7 @@ protected:
   // sErrorTarget.
   mozilla::RefPtr<mozilla::gfx::DrawTarget> mTarget;
 
-  RefPtr<gfx::SurfaceStream> mStream;
+  RefPtr<gl::SurfaceStream> mStream;
 
   /**
     * Flag to avoid duplicate calls to InvalidateFrame. Set to true whenever
@@ -785,7 +789,7 @@ protected:
 
     // The spec says we should not draw shadows if the operator is OVER.
     // If it's over and the alpha value is zero, nothing needs to be drawn.
-    return NS_GET_A(state.shadowColor) != 0 && 
+    return NS_GET_A(state.shadowColor) != 0 &&
       (state.shadowBlur != 0 || state.shadowOffset.x != 0 || state.shadowOffset.y != 0);
   }
 

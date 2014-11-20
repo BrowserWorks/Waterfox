@@ -18,6 +18,7 @@ const system = require("../system");
 const memory = require('../deprecated/memory');
 const { gc: gcPromise } = require('./memory');
 const { defer } = require('../core/promise');
+const { extend } = require('../core/heritage');
 
 // Trick manifest builder to make it think we need these modules ?
 const unit = require("../deprecated/unit-test");
@@ -30,8 +31,7 @@ function emptyPromise() {
   return promise;
 }
 
-var cService = Cc['@mozilla.org/consoleservice;1'].getService()
-               .QueryInterface(Ci.nsIConsoleService);
+var cService = Cc['@mozilla.org/consoleservice;1'].getService(Ci.nsIConsoleService);
 
 // The console used to log messages
 var testConsole;
@@ -161,7 +161,7 @@ function reportMemoryUsage() {
     function logReporter(process, path, kind, units, amount, description) {
       print(((++count == 1) ? "\n" : "") + description + ": " + amount + "\n");
     }
-    mgr.getReportsForThisProcess(logReporter, null);
+    mgr.getReportsForThisProcess(logReporter, null, /* anonymize = */ false);
 
     var weakrefs = [info.weakref.get()
                     for each (info in memory.getObjects())];
@@ -380,7 +380,7 @@ function getPotentialLeaks() {
 
   Cc["@mozilla.org/memory-reporter-manager;1"]
     .getService(Ci.nsIMemoryReporterManager)
-    .getReportsForThisProcess(logReporter, null);
+    .getReportsForThisProcess(logReporter, null, /* anonymize = */ false);
 
   return { compartments: compartments, windows: windows };
 }
@@ -454,7 +454,7 @@ var consoleListener = {
 };
 
 function TestRunnerConsole(base, options) {
-  this.__proto__ = {
+  let proto = extend(base, {
     errorsLogged: 0,
     warn: function warn() {
       this.errorsLogged++;
@@ -471,8 +471,8 @@ function TestRunnerConsole(base, options) {
         if (first == "pass:")
           print(".");
     },
-    __proto__: base
-  };
+  });
+  return Object.create(proto);
 }
 
 function stringify(arg) {
@@ -621,7 +621,4 @@ var runTests = exports.runTests = function runTests(options) {
   }
 };
 
-unload(function() {
-  cService.unregisterListener(consoleListener);
-});
-
+unload(_ => cService.unregisterListener(consoleListener));

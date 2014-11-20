@@ -137,6 +137,8 @@ public:
   nsFrameLoader* mFrameLoader;  // WEAK
 
 private:
+  ~nsContentView() {}
+
   nsresult Update(const ViewConfig& aConfig);
 
   ViewID mScrollId;
@@ -158,9 +160,9 @@ class nsFrameLoader MOZ_FINAL : public nsIFrameLoader,
 protected:
   nsFrameLoader(mozilla::dom::Element* aOwner, bool aNetworkCreated);
 
-public:
   ~nsFrameLoader();
 
+public:
   bool AsyncScrollEnabled() const
   {
     return !!(mRenderMode & RENDER_MODE_ASYNC_SCROLL);
@@ -445,7 +447,7 @@ private:
 
   // The ContentParent associated with mRemoteBrowser.  This was added as a
   // strong ref in bug 545237, and we're not sure if we can get rid of it.
-  nsRefPtr<mozilla::dom::ContentParent> mContentParent;
+  nsRefPtr<mozilla::dom::nsIContentParent> mContentParent;
   RenderFrameParent* mCurrentRemoteFrame;
   TabParent* mRemoteBrowser;
   uint64_t mChildID;

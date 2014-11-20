@@ -160,7 +160,7 @@ CharacterRange::AddClassEscape(LifoAlloc *alloc, jschar type,
         AddClass(kLineTerminatorRanges, kLineTerminatorRangeCount, ranges);
         break;
       default:
-        MOZ_ASSUME_UNREACHABLE("Bad character class escape");
+        MOZ_CRASH("Bad character class escape");
     }
 }
 
@@ -192,10 +192,13 @@ GetCaseIndependentLetters(jschar character,
                           bool ascii_subject,
                           jschar *letters)
 {
-    JS_ASSERT(!ascii_subject);
-
     jschar lower = unicode::ToLowerCase(character);
     jschar upper = unicode::ToUpperCase(character);
+
+    // The standard requires that non-ASCII characters cannot have ASCII
+    // character codes in their equivalence class.
+    if (ascii_subject && character > kMaxOneByteCharCode)
+        return 0;
 
     letters[0] = character;
 
@@ -212,6 +215,23 @@ GetCaseIndependentLetters(jschar character,
         return 2;
     }
     return 1;
+}
+
+static jschar
+ConvertNonLatin1ToLatin1(jschar c)
+{
+    JS_ASSERT(c > kMaxOneByteCharCode);
+    switch (c) {
+      // This are equivalent characters in unicode.
+      case 0x39c:
+      case 0x3bc:
+        return 0xb5;
+      // This is an uppercase of a Latin-1 character
+      // outside of Latin-1.
+      case 0x178:
+        return 0xff;
+    }
+    return 0;
 }
 
 void
@@ -692,17 +712,14 @@ TextNode::FilterASCII(int depth, bool ignore_case)
 
                 // Here, we need to check for characters whose upper and lower cases
                 // are outside the Latin-1 range.
-                jschar chars[kEcma262UnCanonicalizeMaxWidth];
-                size_t length = GetCaseIndependentLetters(c, true, chars);
-                JS_ASSERT(length <= 1);
-
-                if (length == 0) {
+                jschar converted = ConvertNonLatin1ToLatin1(c);
+                if (converted == 0) {
                     // Character is outside Latin-1 completely
                     return set_replacement(nullptr);
                 }
 
                 // Convert quark to Latin-1 in place.
-                quarks[j] = chars[0];
+                quarks[j] = converted;
             }
         } else {
             JS_ASSERT(elm.text_type() == TextElement::CHAR_CLASS);
@@ -1409,8 +1426,7 @@ TextElement::length() const
       case CHAR_CLASS:
         return 1;
     }
-    MOZ_ASSUME_UNREACHABLE("Bad text type");
-    return 0;
+    MOZ_CRASH("Bad text type");
 }
 
 class FrequencyCollator
@@ -1514,7 +1530,7 @@ class irregexp::RegExpCompiler
   private:
     EndNode* accept_;
     int next_register_;
-    js::Vector<RegExpNode *, 4, SystemAllocPolicy> work_list_;
+    Vector<RegExpNode *, 4, SystemAllocPolicy> work_list_;
     int recursion_depth_;
     RegExpMacroAssembler* macro_assembler_;
     bool ignore_case_;
@@ -1587,10 +1603,27 @@ RegExpCompiler::Assemble(JSContext *cx,
     return code;
 }
 
+template <typename CharT>
+static void
+SampleChars(FrequencyCollator *collator, const CharT *chars, size_t length)
+{
+    // Sample some characters from the middle of the string.
+    static const int kSampleSize = 128;
+
+    int chars_sampled = 0;
+    int half_way = (int(length) - kSampleSize) / 2;
+    for (size_t i = Max(0, half_way);
+         i < length && chars_sampled < kSampleSize;
+         i++, chars_sampled++)
+    {
+        collator->CountCharacter(chars[i]);
+    }
+}
+
 RegExpCode
 irregexp::CompilePattern(JSContext *cx, RegExpShared *shared, RegExpCompileData *data,
-                         const jschar *sampleChars, size_t sampleLength,
-                         bool is_global, bool ignore_case, bool is_ascii)
+                         HandleLinearString sample, bool is_global, bool ignore_case,
+                         bool is_ascii)
 {
     if ((data->capture_count + 1) * 2 - 1 > RegExpMacroAssembler::kMaxRegister) {
         JS_ReportError(cx, "regexp too big");
@@ -1601,15 +1634,12 @@ irregexp::CompilePattern(JSContext *cx, RegExpShared *shared, RegExpCompileData 
     RegExpCompiler compiler(cx, &alloc, data->capture_count, ignore_case, is_ascii);
 
     // Sample some characters from the middle of the string.
-    static const int kSampleSize = 128;
-
-    int chars_sampled = 0;
-    int half_way = (sampleLength - kSampleSize) / 2;
-    for (size_t i = Max(0, half_way);
-         i < sampleLength && chars_sampled < kSampleSize;
-         i++, chars_sampled++)
-    {
-        compiler.frequency_collator()->CountCharacter(sampleChars[i]);
+    if (sample->hasLatin1Chars()) {
+        JS::AutoCheckCannotGC nogc;
+        SampleChars(compiler.frequency_collator(), sample->latin1Chars(nogc), sample->length());
+    } else {
+        JS::AutoCheckCannotGC nogc;
+        SampleChars(compiler.frequency_collator(), sample->twoByteChars(nogc), sample->length());
     }
 
     // Wrap the body of the regexp in capture #0.
@@ -1706,9 +1736,10 @@ irregexp::CompilePattern(JSContext *cx, RegExpShared *shared, RegExpCompileData 
     return compiler.Assemble(cx, assembler, node, data->capture_count);
 }
 
+template <typename CharT>
 RegExpRunStatus
-irregexp::ExecuteCode(JSContext *cx, jit::JitCode *codeBlock,
-                      const jschar *chars, size_t start, size_t length, MatchPairs *matches)
+irregexp::ExecuteCode(JSContext *cx, jit::JitCode *codeBlock, const CharT *chars, size_t start,
+                      size_t length, MatchPairs *matches)
 {
 #ifdef JS_ION
     typedef void (*RegExpCodeSignature)(InputOutputData *);
@@ -1716,13 +1747,25 @@ irregexp::ExecuteCode(JSContext *cx, jit::JitCode *codeBlock,
     InputOutputData data(chars, chars + length, start, matches);
 
     RegExpCodeSignature function = reinterpret_cast<RegExpCodeSignature>(codeBlock->raw());
-    CALL_GENERATED_REGEXP(function, &data);
+
+    {
+        JS::AutoSuppressGCAnalysis nogc;
+        CALL_GENERATED_REGEXP(function, &data);
+    }
 
     return (RegExpRunStatus) data.result;
 #else
     MOZ_CRASH();
 #endif
 }
+
+template RegExpRunStatus
+irregexp::ExecuteCode(JSContext *cx, jit::JitCode *codeBlock, const Latin1Char *chars, size_t start,
+                      size_t length, MatchPairs *matches);
+
+template RegExpRunStatus
+irregexp::ExecuteCode(JSContext *cx, jit::JitCode *codeBlock, const jschar *chars, size_t start,
+                      size_t length, MatchPairs *matches);
 
 // -------------------------------------------------------------------
 // Tree to graph conversion
@@ -1993,7 +2036,7 @@ RegExpAssertion::ToNode(RegExpCompiler* compiler,
         return result;
       }
       default:
-        MOZ_ASSUME_UNREACHABLE("Bad assertion type");
+        MOZ_CRASH("Bad assertion type");
     }
     return on_success;
 }
@@ -2531,8 +2574,7 @@ Trace::PerformDeferredActions(LifoAlloc *alloc,
                     break;
                   }
                   default:
-                    MOZ_ASSUME_UNREACHABLE("Bad action");
-                    break;
+                    MOZ_CRASH("Bad action");
                 }
             }
         }
@@ -2737,9 +2779,9 @@ EndNode::Emit(RegExpCompiler* compiler, Trace* trace)
         return;
     case NEGATIVE_SUBMATCH_SUCCESS:
         // This case is handled in a different virtual method.
-        MOZ_ASSUME_UNREACHABLE("Bad action");
+        MOZ_CRASH("Bad action: NEGATIVE_SUBMATCH_SUCCESS");
     }
-    MOZ_ASSUME_UNREACHABLE("Bad action");
+    MOZ_CRASH("Bad action");
 }
 
 // Emit the code to check for a ^ in multiline mode (1-character lookbehind
@@ -2989,7 +3031,7 @@ EmitDoubleBoundaryTest(RegExpMacroAssembler* masm,
     }
 }
 
-typedef js::Vector<int, 4, LifoAllocPolicy<Infallible> > RangeBoundaryVector;
+typedef Vector<int, 4, LifoAllocPolicy<Infallible> > RangeBoundaryVector;
 
 // even_label is for ranges[i] to ranges[i + 1] where i - start_index is even.
 // odd_label is for ranges[i] to ranges[i + 1] where i - start_index is odd.
@@ -3561,8 +3603,7 @@ EmitAtomLetter(RegExpCompiler* compiler,
         macro_assembler->Bind(&ok);
         break;
       default:
-        MOZ_ASSUME_UNREACHABLE("Bad length");
-        break;
+        MOZ_CRASH("Bad length");
     }
     return true;
 }
@@ -3991,7 +4032,7 @@ class AlternativeGenerationList
 
   private:
     static const size_t kAFew = 10;
-    js::Vector<AlternativeGeneration *, 1, LifoAllocPolicy<Infallible> > alt_gens_;
+    Vector<AlternativeGeneration *, 1, LifoAllocPolicy<Infallible> > alt_gens_;
     AlternativeGeneration a_few_alt_gens_[kAFew];
 };
 
@@ -4373,7 +4414,7 @@ ActionNode::Emit(RegExpCompiler* compiler, Trace* trace)
         return;
       }
       default:
-        MOZ_ASSUME_UNREACHABLE("Bad action");
+        MOZ_CRASH("Bad action");
     }
 }
 

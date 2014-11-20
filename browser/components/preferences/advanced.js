@@ -1,4 +1,4 @@
-# -*- Mode: Java; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+# -*- indent-tabs-mode: nil; js-indent-level: 4 -*-
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -155,6 +155,29 @@ var gAdvancedPane = {
   {
     var checkbox = document.getElementById("checkSpelling");
     return checkbox.checked ? (this._storedSpellCheck == 2 ? 2 : 1) : 0;
+  },
+
+  /**
+   * security.OCSP.enabled is an integer value for legacy reasons.
+   * A value of 1 means OCSP is enabled. Any other value means it is disabled.
+   */
+  readEnableOCSP: function ()
+  {
+    var preference = document.getElementById("security.OCSP.enabled");
+    // This is the case if the preference is the default value.
+    if (preference.value === undefined) {
+      return true;
+    }
+    return preference.value == 1;
+  },
+
+  /**
+   * See documentation for readEnableOCSP.
+   */
+  writeEnableOCSP: function ()
+  {
+    var checkbox = document.getElementById("enableOCSP");
+    return checkbox.checked ? 1 : 0;
   },
 
   /**
@@ -820,15 +843,6 @@ var gAdvancedPane = {
     document.documentElement.openWindow("mozilla:certmanager",
                                         "chrome://pippki/content/certManager.xul",
                                         "", null);
-  },
-
-  /**
-   * Displays a dialog in which OCSP preferences can be configured.
-   */
-  showOCSP: function ()
-  {
-    document.documentElement.openSubDialog("chrome://mozapps/content/preferences/ocsp.xul",
-                                           "", null);
   },
 
   /**

@@ -5,10 +5,9 @@
 
 #include "CellBroadcast.h"
 #include "mozilla/dom/MozCellBroadcastBinding.h"
-#include "nsIDOMMozCellBroadcastEvent.h"
+#include "mozilla/dom/MozCellBroadcastEvent.h"
 #include "nsIDOMMozCellBroadcastMessage.h"
 #include "nsServiceManagerUtils.h"
-#include "GeneratedEvents.h"
 
 #define NS_RILCONTENTHELPER_CONTRACTID "@mozilla.org/ril/content-helper;1"
 
@@ -18,7 +17,7 @@ using namespace mozilla::dom;
  * CellBroadcast::Listener Implementation.
  */
 
-class CellBroadcast::Listener : public nsICellBroadcastListener
+class CellBroadcast::Listener MOZ_FINAL : public nsICellBroadcastListener
 {
 private:
   CellBroadcast* mCellBroadcast;
@@ -37,6 +36,12 @@ public:
   {
     MOZ_ASSERT(mCellBroadcast);
     mCellBroadcast = nullptr;
+  }
+
+private:
+  ~Listener()
+  {
+    MOZ_ASSERT(!mCellBroadcast);
   }
 };
 
@@ -94,13 +99,12 @@ CellBroadcast::WrapObject(JSContext* aCx)
 NS_IMETHODIMP
 CellBroadcast::NotifyMessageReceived(nsIDOMMozCellBroadcastMessage* aMessage)
 {
-  nsCOMPtr<nsIDOMEvent> event;
-  NS_NewDOMMozCellBroadcastEvent(getter_AddRefs(event), this, nullptr, nullptr);
+  MozCellBroadcastEventInit init;
+  init.mBubbles = true;
+  init.mCancelable = false;
+  init.mMessage = aMessage;
 
-  nsCOMPtr<nsIDOMMozCellBroadcastEvent> ce = do_QueryInterface(event);
-  nsresult rv = ce->InitMozCellBroadcastEvent(NS_LITERAL_STRING("received"),
-                                              true, false, aMessage);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  return DispatchTrustedEvent(ce);
+  nsRefPtr<MozCellBroadcastEvent> event =
+    MozCellBroadcastEvent::Constructor(this, NS_LITERAL_STRING("received"), init);
+  return DispatchTrustedEvent(event);
 }

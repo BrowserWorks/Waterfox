@@ -1,0 +1,53 @@
+﻿// ***************************************************************************
+// *
+// * Copyright (C) 2014 International Business Machines
+// * Corporation and others. All Rights Reserved.
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/bn_IN.xml
+// *
+// ***************************************************************************
+bn_IN{
+    Version{"2.1.8.19"}
+    unitsNarrow{
+        angle{
+            arc-second{
+                one{"{0}″"}
+                other{"{0}″"}
+            }
+        }
+        area{
+            square-kilometer{
+                one{"{0} km²"}
+                other{"{0} km²"}
+            }
+            square-mile{
+                one{"{0} mi²"}
+                other{"{0} mi²"}
+            }
+        }
+        speed{
+            kilometer-per-hour{
+                one{"{0} kph"}
+                other{"{0} kph"}
+            }
+            meter-per-second{
+                one{"{0} m/s"}
+                other{"{0} m/s"}
+            }
+            mile-per-hour{
+                one{"{0} mph"}
+                other{"{0} mph"}
+            }
+        }
+        volume{
+            cubic-kilometer{
+                one{"{0} km³"}
+                other{"{0} km³"}
+            }
+            cubic-mile{
+                one{"{0}mi³"}
+                other{"{0} mi³"}
+            }
+        }
+    }
+}

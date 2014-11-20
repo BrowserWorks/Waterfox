@@ -166,14 +166,14 @@ private:
 
 class nsGenericHTMLElementTearoff : public nsIDOMElementCSSInlineStyle
 {
+  virtual ~nsGenericHTMLElementTearoff()
+  {
+  }
+
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
 
   nsGenericHTMLElementTearoff(nsGenericHTMLElement *aElement)
     : mElement(aElement)
-  {
-  }
-
-  virtual ~nsGenericHTMLElementTearoff()
   {
   }
 
@@ -1905,7 +1905,7 @@ nsGenericHTMLElement::TouchEventsEnabled(JSContext* /* unused */, JSObject* /* u
 
 //----------------------------------------------------------------------
 
-nsGenericHTMLFormElement::nsGenericHTMLFormElement(already_AddRefed<nsINodeInfo>& aNodeInfo)
+nsGenericHTMLFormElement::nsGenericHTMLFormElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
   : nsGenericHTMLElement(aNodeInfo)
   , mForm(nullptr)
   , mFieldSet(nullptr)
@@ -2574,9 +2574,8 @@ bool
 nsGenericHTMLFormElement::IsLabelable() const
 {
   // TODO: keygen should be in that list, see bug 101019.
-  // TODO: NS_FORM_INPUT_HIDDEN should be removed, see bug 597650.
   uint32_t type = GetType();
-  return type & NS_FORM_INPUT_ELEMENT ||
+  return (type & NS_FORM_INPUT_ELEMENT && type != NS_FORM_INPUT_HIDDEN) ||
          type & NS_FORM_BUTTON_ELEMENT ||
          // type == NS_FORM_KEYGEN ||
          type == NS_FORM_OUTPUT ||
@@ -2927,7 +2926,7 @@ nsGenericHTMLElement::ChangeEditableState(int32_t aChange)
 //----------------------------------------------------------------------
 
 nsGenericHTMLFormElementWithState::nsGenericHTMLFormElementWithState(
-    already_AddRefed<nsINodeInfo>& aNodeInfo
+    already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo
   )
   : nsGenericHTMLFormElement(aNodeInfo)
 {
@@ -3036,7 +3035,7 @@ nsGenericHTMLFormElementWithState::RestoreFormControlState()
 }
 
 void
-nsGenericHTMLFormElementWithState::NodeInfoChanged(nsINodeInfo* aOldNodeInfo)
+nsGenericHTMLFormElementWithState::NodeInfoChanged(mozilla::dom::NodeInfo* aOldNodeInfo)
 {
   mStateKey.SetIsVoid(true);
 }
@@ -3101,9 +3100,9 @@ nsGenericHTMLElement::SetItemValue(JSContext* aCx, JS::Value aValue,
     return;
   }
 
-  binding_detail::FakeDependentString string;
+  nsAutoString string;
   JS::Rooted<JS::Value> value(aCx, aValue);
-  if (!ConvertJSValueToString(aCx, value, &value, eStringify, eStringify, string)) {
+  if (!ConvertJSValueToString(aCx, value, eStringify, eStringify, string)) {
     aError.Throw(NS_ERROR_UNEXPECTED);
     return;
   }

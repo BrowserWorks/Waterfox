@@ -25,11 +25,12 @@
 
 class DeviceStorageFile;
 class nsIInputStream;
+class nsIOutputStream;
 
 namespace mozilla {
 class EventListenerManager;
 namespace dom {
-class DeviceStorageEnumerationParameters;
+struct DeviceStorageEnumerationParameters;
 class DOMCursor;
 class DOMRequest;
 class Promise;
@@ -38,6 +39,13 @@ class DeviceStorageFileSystem;
 namespace ipc {
 class FileDescriptor;
 }
+
+template<>
+struct HasDangerousPublicDestructor<DeviceStorageFile>
+{
+  static const bool value = true;
+};
+
 } // namespace mozilla
 
 class DeviceStorageFile MOZ_FINAL
@@ -92,6 +100,9 @@ public:
   nsresult Remove();
   nsresult Write(nsIInputStream* aInputStream);
   nsresult Write(InfallibleTArray<uint8_t>& bits);
+  nsresult Append(nsIInputStream* aInputStream);
+  nsresult Append(nsIInputStream* aInputStream,
+                  nsIOutputStream* aOutputStream);
   void CollectFiles(nsTArray<nsRefPtr<DeviceStorageFile> >& aFiles,
                     PRTime aSince = 0);
   void collectFilesInternal(nsTArray<nsRefPtr<DeviceStorageFile> >& aFiles,
@@ -141,6 +152,8 @@ private:
 class FileUpdateDispatcher MOZ_FINAL
   : public nsIObserver
 {
+  ~FileUpdateDispatcher() {}
+
  public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIOBSERVER
@@ -219,6 +232,13 @@ public:
   AddNamed(nsIDOMBlob* aBlob, const nsAString& aPath, ErrorResult& aRv);
 
   already_AddRefed<DOMRequest>
+  AppendNamed(nsIDOMBlob* aBlob, const nsAString& aPath, ErrorResult& aRv);
+
+  already_AddRefed<DOMRequest>
+  AddOrAppendNamed(nsIDOMBlob* aBlob, const nsAString& aPath,
+                   const int32_t aRequestType, ErrorResult& aRv);
+
+  already_AddRefed<DOMRequest>
   Get(const nsAString& aPath, ErrorResult& aRv)
   {
     return GetInternal(aPath, false, aRv);
@@ -264,7 +284,7 @@ public:
   // Uses XPCOM GetStorageName
 
   already_AddRefed<Promise>
-  GetRoot();
+  GetRoot(ErrorResult& aRv);
 
   static void
   CreateDeviceStorageFor(nsPIDOMWindow* aWin,
@@ -329,7 +349,8 @@ private:
 
 #ifdef MOZ_WIDGET_GONK
   nsString mLastStatus;
-  void DispatchMountChangeEvent(nsAString& aVolumeStatus);
+  void DispatchStatusChangeEvent(nsAString& aStatus);
+  void DispatchStorageStatusChangeEvent(nsAString& aVolumeStatus);
 #endif
 
   // nsIDOMDeviceStorage.type

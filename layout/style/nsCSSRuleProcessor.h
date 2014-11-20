@@ -28,7 +28,11 @@ struct TreeMatchContext;
 class nsCSSKeyframesRule;
 class nsCSSPageRule;
 class nsCSSFontFeatureValuesRule;
-class nsCSSStyleSheet;
+class nsCSSCounterStyleRule;
+
+namespace mozilla {
+class CSSStyleSheet;
+} // namespace mozilla
 
 /**
  * The CSS style rule processor provides a mechanism for sibling style
@@ -43,14 +47,13 @@ class nsCSSStyleSheet;
 
 class nsCSSRuleProcessor: public nsIStyleRuleProcessor {
 public:
-  typedef nsTArray<nsRefPtr<nsCSSStyleSheet> > sheet_array_type;
+  typedef nsTArray<nsRefPtr<mozilla::CSSStyleSheet>> sheet_array_type;
 
   // aScopeElement must be non-null iff aSheetType is
   // nsStyleSet::eScopedDocSheet.
   nsCSSRuleProcessor(const sheet_array_type& aSheets,
                      uint8_t aSheetType,
                      mozilla::dom::Element* aScopeElement);
-  virtual ~nsCSSRuleProcessor();
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_CLASS(nsCSSRuleProcessor)
@@ -130,6 +133,9 @@ public:
   nsCSSKeyframesRule* KeyframesRuleForName(nsPresContext* aPresContext,
                                            const nsString& aName);
 
+  nsCSSCounterStyleRule* CounterStyleRuleForName(nsPresContext* aPresContext,
+                                                 const nsAString& aName);
+
   bool AppendPageRules(nsPresContext* aPresContext,
                        nsTArray<nsCSSPageRule*>& aArray);
 
@@ -168,8 +174,12 @@ public:
     nsCSSSelector* mSelector;
   };
 
+protected:
+  virtual ~nsCSSRuleProcessor();
+
 private:
-  static bool CascadeSheet(nsCSSStyleSheet* aSheet, CascadeEnumData* aData);
+  static bool CascadeSheet(mozilla::CSSStyleSheet* aSheet,
+                           CascadeEnumData* aData);
 
   RuleCascadeData* GetRuleCascade(nsPresContext* aPresContext);
   void RefreshRuleCascade(nsPresContext* aPresContext);

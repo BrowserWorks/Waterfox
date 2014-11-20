@@ -139,6 +139,9 @@ public:
 
   nsCOMPtr<nsIContentFrameMessageManager> mMessageManager;
   nsRefPtr<TabChildBase> mTabChild;
+
+protected:
+  ~TabChildGlobal();
 };
 
 class ContentListener MOZ_FINAL : public nsIDOMEventListener
@@ -148,6 +151,7 @@ public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIDOMEVENTLISTENER
 protected:
+  ~ContentListener() {}
   TabChild* mTabChild;
 };
 
@@ -161,8 +165,9 @@ class TabChildBase : public nsISupports,
 {
 public:
     TabChildBase();
+
     NS_DECL_CYCLE_COLLECTING_ISUPPORTS
-    NS_DECL_CYCLE_COLLECTION_CLASS(TabChildBase)
+    NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(TabChildBase)
 
     virtual nsIWebNavigation* WebNavigation() = 0;
     virtual nsIWidget* WebWidget() = 0;
@@ -184,6 +189,7 @@ public:
                                                 nsIWidget* aWidget);
 
 protected:
+    virtual ~TabChildBase();
     CSSSize GetPageSize(nsCOMPtr<nsIDocument> aDocument, const CSSSize& aViewport);
 
     // Get the DOMWindowUtils for the top-level window in this tab.
@@ -241,6 +247,9 @@ class TabChild : public TabChildBase,
     typedef mozilla::layers::ActiveElementManager ActiveElementManager;
 
 public:
+    static std::map<uint64_t, nsRefPtr<TabChild> >& NestedTabChildMap();
+
+public:
     /** 
      * This is expected to be called off the critical path to content
      * startup.  This is an opportunity to load things that are slow
@@ -250,11 +259,27 @@ public:
 
     /** Return a TabChild with the given attributes. */
     static already_AddRefed<TabChild>
-    Create(ContentChild* aManager, const TabContext& aContext, uint32_t aChromeFlags);
-
-    virtual ~TabChild();
+    Create(nsIContentChild* aManager, const TabContext& aContext, uint32_t aChromeFlags);
 
     bool IsRootContentDocument();
+
+    const uint64_t Id() const {
+        return mUniqueId;
+    }
+
+    static uint64_t
+    GetTabChildId(TabChild* aTabChild)
+    {
+        MOZ_ASSERT(NS_IsMainThread());
+        if (aTabChild->Id() != 0) {
+            return aTabChild->Id();
+        }
+        static uint64_t sId = 0;
+        sId++;
+        aTabChild->mUniqueId = sId;
+        NestedTabChildMap()[sId] = aTabChild;
+        return sId;
+    }
 
     NS_DECL_ISUPPORTS_INHERITED
     NS_DECL_NSIWEBBROWSERCHROME
@@ -430,7 +455,7 @@ public:
                                     const nsAString& aPath,
                                     nsICachedFileDescriptorListener* aCallback);
 
-    ContentChild* Manager() { return mManager; }
+    nsIContentChild* Manager() { return mManager; }
 
     bool GetUpdateHitRegion() { return mUpdateHitRegion; }
 
@@ -459,6 +484,8 @@ public:
     virtual bool RecvUIResolutionChanged() MOZ_OVERRIDE;
 
 protected:
+    virtual ~TabChild();
+
     virtual PRenderFrameChild* AllocPRenderFrameChild(ScrollingBehavior* aScrolling,
                                                       TextureFactoryIdentifier* aTextureFactoryIdentifier,
                                                       uint64_t* aLayersId,
@@ -483,7 +510,7 @@ private:
      *
      * |aIsBrowserElement| indicates whether we're a browser (but not an app).
      */
-    TabChild(ContentChild* aManager, const TabContext& aContext, uint32_t aChromeFlags);
+    TabChild(nsIContentChild* aManager, const TabContext& aContext, uint32_t aChromeFlags);
 
     nsresult Init();
 
@@ -536,7 +563,7 @@ private:
     nsCOMPtr<nsIWidget> mWidget;
     nsCOMPtr<nsIURI> mLastURI;
     RenderFrameChild* mRemoteFrame;
-    nsRefPtr<ContentChild> mManager;
+    nsRefPtr<nsIContentChild> mManager;
     uint32_t mChromeFlags;
     uint64_t mLayersId;
     nsIntRect mOuterRect;
@@ -560,14 +587,14 @@ private:
     bool mTriedBrowserInit;
     ScreenOrientation mOrientation;
     bool mUpdateHitRegion;
-    bool mContextMenuHandled;
-    bool mLongTapEventHandled;
-    bool mWaitingTouchListeners;
+    bool mPendingTouchPreventedResponse;
+    ScrollableLayerGuid mPendingTouchPreventedGuid;
     void FireSingleTapEvent(LayoutDevicePoint aPoint);
 
     bool mIgnoreKeyPressEvent;
     nsRefPtr<ActiveElementManager> mActiveElementManager;
     bool mHasValidInnerSize;
+    uint64_t mUniqueId;
 
     DISALLOW_EVIL_CONSTRUCTORS(TabChild);
 };

@@ -27,7 +27,7 @@ class EventChainPostVisitor;
 class EventChainPreVisitor;
 namespace dom {
 class OwningIDBObjectStoreOrIDBIndexOrIDBCursor;
-class ErrorEventInit;
+struct ErrorEventInit;
 }
 }
 
@@ -85,8 +85,6 @@ public:
 #endif
 
   DOMError* GetError(ErrorResult& aRv);
-
-  JSContext* GetJSContext();
 
   void
   SetActor(IndexedDBRequestParentBase* aActorParent)

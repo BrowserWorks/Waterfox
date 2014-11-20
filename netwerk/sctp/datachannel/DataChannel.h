@@ -98,6 +98,8 @@ class DataChannelConnection: public nsITimerCallback
                              , public sigslot::has_slots<>
 #endif
 {
+  virtual ~DataChannelConnection();
+
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSITIMERCALLBACK
@@ -113,7 +115,6 @@ public:
   };
 
   DataChannelConnection(DataConnectionListener *listener);
-  virtual ~DataChannelConnection();
 
   bool Init(unsigned short aPort, uint16_t aNumStreams, bool aUsingDtls);
   void Destroy(); // So we can spawn refs tied to runnables in shutdown
@@ -199,7 +200,7 @@ private:
 
 #ifdef SCTP_DTLS_SUPPORTED
   static void DTLSConnectThread(void *data);
-  int SendPacket(const unsigned char* data, size_t len, bool release);
+  int SendPacket(unsigned char data[], size_t len, bool release);
   void SctpDtlsInput(TransportFlow *flow, const unsigned char *data, size_t len);
   static int SctpDtlsOutput(void *addr, void *buffer, size_t length, uint8_t tos, uint8_t set_df);
 #endif
@@ -331,7 +332,10 @@ public:
       NS_ASSERTION(mConnection,"NULL connection");
     }
 
+private:
   ~DataChannel();
+
+public:
   void Destroy(); // when we disconnect from the connection after stream RESET
 
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(DataChannel)

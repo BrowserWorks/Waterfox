@@ -29,7 +29,7 @@
 #include "nsIPrompt.h"
 #include "nsIStringBundle.h"
 #include "nsIConsoleService.h"
-#include "nsIDOMCloseEvent.h"
+#include "mozilla/dom/CloseEvent.h"
 #include "nsICryptoHash.h"
 #include "nsJSUtils.h"
 #include "nsIScriptError.h"
@@ -42,7 +42,6 @@
 #include "nsWrapperCacheInlines.h"
 #include "nsIObserverService.h"
 #include "nsIWebSocketChannel.h"
-#include "GeneratedEvents.h"
 
 namespace mozilla {
 namespace dom {
@@ -559,7 +558,7 @@ WebSocket::Constructor(const GlobalObject& aGlobal,
   }
 
   nsRefPtr<WebSocket> webSocket = new WebSocket(ownerWindow);
-  nsresult rv = webSocket->Init(aGlobal.GetContext(), principal,
+  nsresult rv = webSocket->Init(aGlobal.Context(), principal,
                                 aUrl, protocolArray);
   if (NS_FAILED(rv)) {
     aRv.Throw(rv);
@@ -680,17 +679,28 @@ WebSocket::Init(JSContext* aCx,
   nsIScriptContext* sc = GetContextForEventHandlers(&rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsCOMPtr<nsIDocument> originDoc = nsContentUtils::GetDocumentFromScriptContext(sc);
-
   // Don't allow https:// to open ws://
   if (!mSecure &&
       !Preferences::GetBool("network.websocket.allowInsecureFromHTTPS",
                             false)) {
     // Confirmed we are opening plain ws:// and want to prevent this from a
-    // secure context (e.g. https). Check the security context of the document
-    // associated with this script, which is the same as associated with mOwner.
-    if (originDoc && originDoc->GetSecurityInfo()) {
-      return NS_ERROR_DOM_SECURITY_ERR;
+    // secure context (e.g. https). Check the principal's uri to determine if
+    // we were loaded from https.
+    nsCOMPtr<nsIGlobalObject> globalObject(BrokenGetEntryGlobal());
+    if (globalObject) {
+      nsCOMPtr<nsIPrincipal> principal(globalObject->PrincipalOrNull());
+      if (principal) {
+        nsCOMPtr<nsIURI> uri;
+        principal->GetURI(getter_AddRefs(uri));
+        if (uri) {
+          bool originIsHttps = false;
+          rv = uri->SchemeIs("https", &originIsHttps);
+          NS_ENSURE_SUCCESS(rv,rv);
+          if (originIsHttps) {
+            return NS_ERROR_DOM_SECURITY_ERR;
+          }
+        }
+      }
     }
   }
 
@@ -711,6 +721,7 @@ WebSocket::Init(JSContext* aCx,
 
   // Check content policy.
   int16_t shouldLoad = nsIContentPolicy::ACCEPT;
+  nsCOMPtr<nsIDocument> originDoc = nsContentUtils::GetDocumentFromScriptContext(sc);
   rv = NS_CheckContentLoadPolicy(nsIContentPolicy::TYPE_WEBSOCKET,
                                  mURI,
                                  mPrincipal,
@@ -865,14 +876,11 @@ WebSocket::CreateAndDispatchMessageEvent(const nsACString& aData,
   if (NS_FAILED(rv))
     return NS_OK;
 
-  nsCOMPtr<nsIGlobalObject> globalObject = do_QueryInterface(GetOwner());
-  if (NS_WARN_IF(!globalObject)) {
+  AutoJSAPI jsapi;
+  if (NS_WARN_IF(!jsapi.Init(GetOwner()))) {
     return NS_ERROR_FAILURE;
   }
-
-  AutoJSAPI jsapi;
   JSContext* cx = jsapi.cx();
-  JSAutoCompartment ac(cx, globalObject->GetGlobalJSObject());
 
   // Create appropriate JS object for message
   JS::Rooted<JS::Value> jsData(cx);
@@ -931,19 +939,15 @@ WebSocket::CreateAndDispatchCloseEvent(bool aWasClean,
     return NS_OK;
   }
 
-  // create an event that uses the CloseEvent interface,
-  // which does not bubble, is not cancelable, and has no default action
+  CloseEventInit init;
+  init.mBubbles = false;
+  init.mCancelable = false;
+  init.mWasClean = aWasClean;
+  init.mCode = aCode;
+  init.mReason = aReason;
 
-  nsCOMPtr<nsIDOMEvent> event;
-  rv = NS_NewDOMCloseEvent(getter_AddRefs(event), this, nullptr, nullptr);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  nsCOMPtr<nsIDOMCloseEvent> closeEvent = do_QueryInterface(event);
-  rv = closeEvent->InitCloseEvent(NS_LITERAL_STRING("close"),
-                                  false, false,
-                                  aWasClean, aCode, aReason);
-  NS_ENSURE_SUCCESS(rv, rv);
-
+  nsRefPtr<CloseEvent> event =
+    CloseEvent::Constructor(this, NS_LITERAL_STRING("close"), init);
   event->SetTrusted(true);
 
   return DispatchDOMEvent(nullptr, event, nullptr, nullptr);

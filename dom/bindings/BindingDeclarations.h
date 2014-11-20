@@ -35,6 +35,15 @@ struct DictionaryBase
 protected:
   bool ParseJSON(JSContext* aCx, const nsAString& aJSON,
                  JS::MutableHandle<JS::Value> aVal);
+
+  bool StringifyToJSON(JSContext* aCx,
+                       JS::MutableHandle<JS::Value> aValue,
+                       nsAString& aJSON);
+private:
+  // aString is expected to actually be an nsAString*.  Should only be
+  // called from StringifyToJSON.
+  static bool AppendJSONToString(const jschar* aJSONData, uint32_t aDataLength,
+                                 void* aString);
 };
 
 // Struct that serves as a base class for all typed arrays and array buffers and
@@ -70,7 +79,7 @@ public:
   // The context that this returns is not guaranteed to be in the compartment of
   // the object returned from Get(), in fact it's generally in the caller's
   // compartment.
-  JSContext* GetContext() const
+  JSContext* Context() const
   {
     return mCx;
   }
@@ -302,12 +311,12 @@ public:
 };
 
 // Specialization for strings.
-// XXXbz we can't pull in FakeDependentString here, because it depends on
-// internal strings.  So we just have to forward-declare it and reimplement its
+// XXXbz we can't pull in FakeString here, because it depends on internal
+// strings.  So we just have to forward-declare it and reimplement its
 // ToAStringPtr.
 
 namespace binding_detail {
-struct FakeDependentString;
+struct FakeString;
 } // namespace binding_detail
 
 template<>
@@ -329,11 +338,11 @@ public:
   }
 
   // If this code ever goes away, remove the comment pointing to it in the
-  // FakeDependentString class in BindingUtils.h.
-  void operator=(const binding_detail::FakeDependentString* str)
+  // FakeString class in BindingUtils.h.
+  void operator=(const binding_detail::FakeString* str)
   {
     MOZ_ASSERT(str);
-    mStr = reinterpret_cast<const nsDependentString*>(str);
+    mStr = reinterpret_cast<const nsString*>(str);
     mPassed = true;
   }
 
@@ -362,19 +371,14 @@ public:
 #endif
   {}
 
-  operator T&() {
+  // This is no worse than get() in terms of const handling.
+  operator T&() const {
     MOZ_ASSERT(inited);
     MOZ_ASSERT(ptr, "NonNull<T> was set to null");
     return *ptr;
   }
 
-  operator const T&() const {
-    MOZ_ASSERT(inited);
-    MOZ_ASSERT(ptr, "NonNull<T> was set to null");
-    return *ptr;
-  }
-
-  operator T*() {
+  operator T*() const {
     MOZ_ASSERT(inited);
     MOZ_ASSERT(ptr, "NonNull<T> was set to null");
     return ptr;

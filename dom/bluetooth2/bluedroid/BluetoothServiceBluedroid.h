@@ -36,6 +36,10 @@ public:
   GetPairedDevicePropertiesInternal(const nsTArray<nsString>& aDeviceAddress,
                                     BluetoothReplyRunnable* aRunnable);
 
+  virtual nsresult
+  FetchUuidsInternal(const nsAString& aDeviceAddress,
+                     BluetoothReplyRunnable* aRunnable) MOZ_OVERRIDE;
+
   virtual nsresult StartDiscoveryInternal(BluetoothReplyRunnable* aRunnable);
   virtual nsresult StopDiscoveryInternal(BluetoothReplyRunnable* aRunnable);
 
@@ -73,13 +77,6 @@ public:
   virtual bool
   SetPairingConfirmationInternal(const nsAString& aDeviceAddress, bool aConfirm,
                                  BluetoothReplyRunnable* aRunnable);
-
-  virtual bool
-  SetAuthorizationInternal(const nsAString& aDeviceAddress, bool aAllow,
-                           BluetoothReplyRunnable* aRunnable);
-
-  virtual nsresult
-  PrepareAdapterInternal();
 
   virtual void
   Connect(const nsAString& aDeviceAddress,

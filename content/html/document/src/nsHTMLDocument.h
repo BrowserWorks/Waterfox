@@ -45,7 +45,6 @@ public:
   using nsDocument::GetPlugins;
 
   nsHTMLDocument();
-  ~nsHTMLDocument();
   virtual nsresult Init() MOZ_OVERRIDE;
 
   NS_DECL_ISUPPORTS_INHERITED
@@ -153,7 +152,7 @@ public:
 
   virtual nsresult SetEditingState(EditingState aState) MOZ_OVERRIDE;
 
-  virtual nsresult Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
 
   virtual void RemovedFromDocShell() MOZ_OVERRIDE;
 
@@ -241,13 +240,15 @@ public:
   // The XPCOM CaptureEvents works fine for us.
   // The XPCOM ReleaseEvents works fine for us.
   // We're picking up GetLocation from Document
-  already_AddRefed<nsIDOMLocation> GetLocation() const {
+  already_AddRefed<nsLocation> GetLocation() const {
     return nsIDocument::GetLocation();
   }
 
   virtual nsHTMLDocument* AsHTMLDocument() MOZ_OVERRIDE { return this; }
 
 protected:
+  ~nsHTMLDocument();
+
   nsresult GetBodySize(int32_t* aWidth,
                        int32_t* aHeight);
 

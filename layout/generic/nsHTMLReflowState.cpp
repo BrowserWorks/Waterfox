@@ -27,6 +27,7 @@
 #include "nsFontInflationData.h"
 #include "StickyScrollContainer.h"
 #include "nsIFrameInlines.h"
+#include "CounterStyleManager.h"
 #include <algorithm>
 #include "mozilla/dom/HTMLInputElement.h"
 
@@ -107,23 +108,28 @@ FontSizeInflationListMarginAdjustment(const nsIFrame* aFrame)
   float inflation = nsLayoutUtils::FontSizeInflationFor(aFrame);
   if (aFrame->IsFrameOfType(nsIFrame::eBlockFrame)) {
     const nsBlockFrame* blockFrame = static_cast<const nsBlockFrame*>(aFrame);
-    const nsStyleList* styleList = aFrame->StyleList();
 
     // We only want to adjust the margins if we're dealing with an ordered
     // list.
     if (inflation > 1.0f &&
         blockFrame->HasBullet() &&
-        styleList->mListStyleType != NS_STYLE_LIST_STYLE_NONE &&
-        styleList->mListStyleType != NS_STYLE_LIST_STYLE_DISC &&
-        styleList->mListStyleType != NS_STYLE_LIST_STYLE_CIRCLE &&
-        styleList->mListStyleType != NS_STYLE_LIST_STYLE_SQUARE &&
         inflation > 1.0f) {
 
-      // The HTML spec states that the default padding for ordered lists begins
-      // at 40px, indicating that we have 40px of space to place a bullet. When
-      // performing font inflation calculations, we add space equivalent to this,
-      // but simply inflated at the same amount as the text, in app units.
-      return nsPresContext::CSSPixelsToAppUnits(40) * (inflation - 1);
+      auto listStyleType = aFrame->StyleList()->GetCounterStyle()->GetStyle();
+      if (listStyleType != NS_STYLE_LIST_STYLE_NONE &&
+          listStyleType != NS_STYLE_LIST_STYLE_DISC &&
+          listStyleType != NS_STYLE_LIST_STYLE_CIRCLE &&
+          listStyleType != NS_STYLE_LIST_STYLE_SQUARE &&
+          listStyleType != NS_STYLE_LIST_STYLE_DISCLOSURE_CLOSED &&
+          listStyleType != NS_STYLE_LIST_STYLE_DISCLOSURE_OPEN) {
+        // The HTML spec states that the default padding for ordered lists
+        // begins at 40px, indicating that we have 40px of space to place a
+        // bullet. When performing font inflation calculations, we add space
+        // equivalent to this, but simply inflated at the same amount as the
+        // text, in app units.
+        return nsPresContext::CSSPixelsToAppUnits(40) * (inflation - 1);
+      }
+
     }
   }
 
@@ -206,7 +212,9 @@ nsHTMLReflowState::nsHTMLReflowState(nsPresContext*           aPresContext,
                             aParentReflowState.mPercentHeightObserver->NeedsToObserve(*this))
                            ? aParentReflowState.mPercentHeightObserver : nullptr;
 
-  if (aFlags & DUMMY_PARENT_REFLOW_STATE) {
+  if ((aFlags & DUMMY_PARENT_REFLOW_STATE) ||
+      (parentReflowState->mFlags.mDummyParentReflowState &&
+       frame->GetType() == nsGkAtoms::tableFrame)) {
     mFlags.mDummyParentReflowState = true;
   }
 
@@ -321,9 +329,9 @@ nsHTMLReflowState::Init(nsPresContext* aPresContext,
                         const nsMargin* aBorder,
                         const nsMargin* aPadding)
 {
-  NS_WARN_IF_FALSE(AvailableWidth() != NS_UNCONSTRAINEDSIZE,
-                   "have unconstrained width; this should only result from "
-                   "very large sizes, not attempts at intrinsic width "
+  NS_WARN_IF_FALSE(AvailableISize() != NS_UNCONSTRAINEDSIZE,
+                   "have unconstrained inline-size; this should only result from "
+                   "very large sizes, not attempts at intrinsic inline-size "
                    "calculation");
 
   mStylePosition = frame->StylePosition();
@@ -397,9 +405,9 @@ nsHTMLReflowState::Init(nsPresContext* aPresContext,
   NS_WARN_IF_FALSE((mFrameType == NS_CSS_FRAME_TYPE_INLINE &&
                     !frame->IsFrameOfType(nsIFrame::eReplaced)) ||
                    type == nsGkAtoms::textFrame ||
-                   ComputedWidth() != NS_UNCONSTRAINEDSIZE,
-                   "have unconstrained width; this should only result from "
-                   "very large sizes, not attempts at intrinsic width "
+                   ComputedISize() != NS_UNCONSTRAINEDSIZE,
+                   "have unconstrained inline-size; this should only result from "
+                   "very large sizes, not attempts at intrinsic inline-size "
                    "calculation");
 }
 

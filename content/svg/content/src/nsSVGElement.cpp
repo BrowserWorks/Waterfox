@@ -63,7 +63,7 @@ static_assert(sizeof(void*) == sizeof(nullptr),
               "nullptr should be the correct size");
 
 nsresult
-NS_NewSVGElement(Element **aResult, already_AddRefed<nsINodeInfo>&& aNodeInfo)
+NS_NewSVGElement(Element **aResult, already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo)
 {
   nsRefPtr<nsSVGElement> it = new nsSVGElement(aNodeInfo);
   nsresult rv = it->Init();
@@ -84,7 +84,7 @@ nsSVGEnumMapping nsSVGElement::sSVGUnitTypesMap[] = {
   {nullptr, 0}
 };
 
-nsSVGElement::nsSVGElement(already_AddRefed<nsINodeInfo>& aNodeInfo)
+nsSVGElement::nsSVGElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
   : nsSVGElementBase(aNodeInfo)
 {
 }
@@ -1213,7 +1213,7 @@ MappedAttrParser::CreateStyleRule()
     return nullptr; // No mapped attributes were parsed
   }
 
-  nsRefPtr<css::StyleRule> rule = new css::StyleRule(nullptr, mDecl);
+  nsRefPtr<css::StyleRule> rule = new css::StyleRule(nullptr, mDecl, 0, 0);
   mDecl = nullptr; // We no longer own the declaration -- drop our pointer to it
   return rule.forget();
 }

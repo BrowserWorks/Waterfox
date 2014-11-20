@@ -3,8 +3,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-import sys
-import json
 import datetime
 import os
 
@@ -67,12 +65,9 @@ class HTMLFormatter(base.BaseFormatter):
         expected = data.get("expected", status)
 
         if status != expected:
-            if status == "PASS":
-                status_name = "UNEXPECTED_" + status
-            else:
-                status_name = "EXPECTED_" + status
-        else:
-            status_name = status
+            status_name = "UNEXPECTED_" + status
+        elif status != "PASS":
+            status_name = "EXPECTED_" + status
 
         self.test_count[status_name] += 1
 
@@ -141,8 +136,8 @@ class HTMLFormatter(base.BaseFormatter):
                            html.br(),
                            html.span('%i passed' % self.test_count["PASS"], class_='pass'), ', ',
                            html.span('%i skipped' % self.test_count["SKIP"], class_='skip'), ', ',
-                           html.span('%i failed' % self.test_count["FAIL"], class_='fail'), ', ',
-                           html.span('%i errors' % self.test_count["ERROR"], class_='error'), '.',
+                           html.span('%i failed' % self.test_count["UNEXPECTED_FAIL"], class_='fail'), ', ',
+                           html.span('%i errors' % self.test_count["UNEXPECTED_ERROR"], class_='error'), '.',
                            html.br(),
                            html.span('%i expected failures' % self.test_count["EXPECTED_FAIL"],
                                      class_='expected_fail'), ', ',
@@ -158,10 +153,4 @@ class HTMLFormatter(base.BaseFormatter):
                             html.th('Links')]), id='results-table-head'),
                         html.tbody(self.result_rows, id='results-table-body')], id='results-table'))))
 
-        return doc.unicode(indent=2)
-
-
-if __name__ == "__main__":
-    base.format_file(sys.stdin,
-                     handlers.StreamHandler(stream=sys.stdout,
-                                            formatter=HTMLFormatter()))
+        return u"<!DOCTYPE html>\n" + doc.unicode(indent=2)

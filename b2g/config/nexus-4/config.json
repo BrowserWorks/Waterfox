@@ -28,12 +28,12 @@
         "VARIANT": "user",
         "MOZILLA_OFFICIAL": "1",
         "MOZ_TELEMETRY_REPORTING": "1",
-        "B2G_UPDATE_CHANNEL": "aurora"
+        "B2G_UPDATE_CHANNEL": "nightly"
     },
     "b2g_manifest": "nexus-4.xml",
     "b2g_manifest_intree": true,
     "additional_source_tarballs": [],
-    "gecko_l10n_root": "https://hg.mozilla.org/releases/l10n/mozilla-aurora",
+    "gecko_l10n_root": "https://hg.mozilla.org/l10n-central",
     "gaia": {
         "l10n": {
             "vcs": "hgtool",

@@ -5,19 +5,15 @@
 
 package org.mozilla.gecko;
 
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -31,7 +27,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mozilla.gecko.GeckoProfileDirectories.NoMozillaDirectoryException;
-import org.mozilla.gecko.background.announcements.AnnouncementsBroadcastService;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.favicons.Favicons;
 import org.mozilla.gecko.gfx.BitmapUtils;
@@ -46,6 +41,7 @@ import org.mozilla.gecko.menu.GeckoMenu;
 import org.mozilla.gecko.menu.GeckoMenuInflater;
 import org.mozilla.gecko.menu.MenuPanel;
 import org.mozilla.gecko.mozglue.GeckoLoader;
+import org.mozilla.gecko.preferences.ClearOnShutdownPref;
 import org.mozilla.gecko.preferences.GeckoPreferences;
 import org.mozilla.gecko.prompts.PromptService;
 import org.mozilla.gecko.updater.UpdateService;
@@ -57,8 +53,9 @@ import org.mozilla.gecko.util.GeckoEventListener;
 import org.mozilla.gecko.util.HardwareUtils;
 import org.mozilla.gecko.util.NativeEventListener;
 import org.mozilla.gecko.util.NativeJSObject;
+import org.mozilla.gecko.util.PrefUtils;
+import org.mozilla.gecko.util.StringUtils;
 import org.mozilla.gecko.util.ThreadUtils;
-import org.mozilla.gecko.util.UiAsyncTask;
 import org.mozilla.gecko.webapp.EventListener;
 import org.mozilla.gecko.webapp.UninstallListener;
 import org.mozilla.gecko.widget.ButtonToast;
@@ -82,8 +79,6 @@ import android.hardware.SensorEventListener;
 import android.location.Location;
 import android.location.LocationListener;
 import android.net.Uri;
-import android.net.wifi.ScanResult;
-import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -91,12 +86,6 @@ import android.os.PowerManager;
 import android.os.StrictMode;
 import android.provider.ContactsContract;
 import android.provider.MediaStore.Images.Media;
-import android.telephony.CellLocation;
-import android.telephony.NeighboringCellInfo;
-import android.telephony.PhoneStateListener;
-import android.telephony.SignalStrength;
-import android.telephony.TelephonyManager;
-import android.telephony.gsm.GsmCellLocation;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Base64;
@@ -111,7 +100,6 @@ import android.view.MotionEvent;
 import android.view.OrientationEventListener;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewStub;
@@ -148,7 +136,7 @@ public abstract class GeckoApp
     }
 
     public static final String ACTION_ALERT_CALLBACK       = "org.mozilla.gecko.ACTION_ALERT_CALLBACK";
-    public static final String ACTION_BOOKMARK             = "org.mozilla.gecko.BOOKMARK";
+    public static final String ACTION_HOMESCREEN_SHORTCUT  = "org.mozilla.gecko.BOOKMARK";
     public static final String ACTION_DEBUG                = "org.mozilla.gecko.DEBUG";
     public static final String ACTION_LAUNCH_SETTINGS      = "org.mozilla.gecko.SETTINGS";
     public static final String ACTION_LOAD                 = "org.mozilla.gecko.LOAD";
@@ -167,18 +155,15 @@ public abstract class GeckoApp
     public static final String SAVED_STATE_IN_BACKGROUND   = "inBackground";
     public static final String SAVED_STATE_PRIVATE_SESSION = "privateSession";
 
-    static private final String LOCATION_URL = "https://location.services.mozilla.com/v1/submit";
-
     // Delay before running one-time "cleanup" tasks that may be needed
     // after a version upgrade.
     private static final int CLEANUP_DEFERRAL_SECONDS = 15;
 
     protected RelativeLayout mMainLayout;
     protected RelativeLayout mGeckoLayout;
-    public View getView() { return mGeckoLayout; }
     private View mCameraView;
     private OrientationEventListener mCameraOrientationEventListener;
-    public List<GeckoAppShell.AppStateListener> mAppStateListeners;
+    public List<GeckoAppShell.AppStateListener> mAppStateListeners = new LinkedList<GeckoAppShell.AppStateListener>();
     protected MenuPanel mMenuPanel;
     protected Menu mMenu;
     protected GeckoProfile mProfile;
@@ -210,9 +195,6 @@ public abstract class GeckoApp
     private volatile HealthRecorder mHealthRecorder = null;
     private volatile Locale mLastLocale = null;
 
-    private int mSignalStrenth;
-    private PhoneStateListener mPhoneStateListener = null;
-    private boolean mShouldReportGeoData;
     private EventListener mWebappEventListener;
 
     abstract public int getLayout();
@@ -252,15 +234,6 @@ public abstract class GeckoApp
     }
 
     public LocationListener getLocationListener() {
-        if (mShouldReportGeoData && mPhoneStateListener == null) {
-            mPhoneStateListener = new PhoneStateListener() {
-                public void onSignalStrengthsChanged(SignalStrength signalStrength) {
-                    setCurrentSignalStrenth(signalStrength);
-                }
-            };
-            TelephonyManager tm = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
-            tm.listen(mPhoneStateListener, PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
-        }
         return this;
     }
 
@@ -466,10 +439,41 @@ public abstract class GeckoApp
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.quit) {
             if (GeckoThread.checkAndSetLaunchState(GeckoThread.LaunchState.GeckoRunning, GeckoThread.LaunchState.GeckoExiting)) {
-                GeckoAppShell.notifyGeckoOfEvent(GeckoEvent.createBroadcastEvent("Browser:Quit", null));
+                final SharedPreferences prefs = GeckoSharedPrefs.forProfile(this);
+                final Set<String> clearSet = PrefUtils.getStringSet(prefs, ClearOnShutdownPref.PREF, new HashSet<String>());
+
+                final JSONObject clearObj = new JSONObject();
+                for (String clear : clearSet) {
+                    try {
+                        clearObj.put(clear, true);
+                    } catch(JSONException ex) {
+                        Log.e(LOGTAG, "Error adding clear object " + clear, ex);
+                    }
+                }
+
+                final JSONObject res = new JSONObject();
+                try {
+                    res.put("sanitize", clearObj);
+                } catch(JSONException ex) {
+                    Log.e(LOGTAG, "Error adding sanitize object", ex);
+                }
+
+                // If the user has opted out of session restore, and does want to clear history
+                // we also want to prevent the current session info from being saved.
+                if (clearObj.has("private.data.history")) {
+                    final String sessionRestore = getSessionRestorePreference();
+                    try {
+                        res.put("dontSaveSession", "quit".equals(sessionRestore));
+                    } catch(JSONException ex) {
+                        Log.e(LOGTAG, "Error adding session restore data", ex);
+                    }
+                }
+
+                GeckoAppShell.notifyGeckoOfEvent(GeckoEvent.createBroadcastEvent("Browser:Quit", res.toString()));
             } else {
                 GeckoAppShell.systemExit();
             }
+
             return true;
         }
 
@@ -599,6 +603,7 @@ public abstract class GeckoApp
 
         } else if ("Sanitize:ClearHistory".equals(event)) {
             handleClearHistory();
+            callback.sendSuccess(true);
 
         } else if ("Session:StatePurged".equals(event)) {
             onStatePurged();
@@ -843,8 +848,8 @@ public abstract class GeckoApp
         mFullScreenPluginContainer = new FullScreenHolder(this);
 
         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.FILL_PARENT,
-                            ViewGroup.LayoutParams.FILL_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT,
                             Gravity.CENTER);
         mFullScreenPluginContainer.addView(view, layoutParams);
 
@@ -961,6 +966,9 @@ public abstract class GeckoApp
             }
             if (image != null) {
                 String path = Media.insertImage(getContentResolver(),image, null, null);
+                if (path == null) {
+                    return;
+                }
                 final Intent intent = new Intent(Intent.ACTION_ATTACH_DATA);
                 intent.addCategory(Intent.CATEGORY_DEFAULT);
                 intent.setData(Uri.parse(path));
@@ -1077,11 +1085,10 @@ public abstract class GeckoApp
     }
 
     /**
-     * Check and start the Java profiler if MOZ_PROFILER_STARTUP env var is specified
+     * Check and start the Java profiler if MOZ_PROFILER_STARTUP env var is specified.
      **/
-    protected void earlyStartJavaSampler(Intent intent)
-    {
-        String env = intent.getStringExtra("env0");
+    protected static void earlyStartJavaSampler(Intent intent) {
+        String env = StringUtils.getStringExtra(intent, "env0");
         for (int i = 1; env != null; i++) {
             if (env.startsWith("MOZ_PROFILER_STARTUP=")) {
                 if (!env.endsWith("=")) {
@@ -1090,7 +1097,7 @@ public abstract class GeckoApp
                 }
                 break;
             }
-            env = intent.getStringExtra("env" + i);
+            env = StringUtils.getStringExtra(intent, "env" + i);
         }
     }
 
@@ -1115,7 +1122,7 @@ public abstract class GeckoApp
         mGeckoReadyStartupTimer = new Telemetry.UptimeTimer("FENNEC_STARTUP_TIME_GECKOREADY");
 
         final Intent intent = getIntent();
-        final String args = intent.getStringExtra("args");
+        final String args = StringUtils.getStringExtra(intent, "args");
 
         earlyStartJavaSampler(intent);
 
@@ -1208,21 +1215,6 @@ public abstract class GeckoApp
             // without killing the entire application (see Bug 769269).
             mIsRestoringActivity = true;
             Telemetry.HistogramAdd("FENNEC_RESTORING_ACTIVITY", 1);
-        }
-
-        // Fix for Bug 830557 on Tegra boards running Froyo.
-        // This fix must be done before doing layout.
-        // Assume the bug is fixed in Gingerbread and up.
-        if (Build.VERSION.SDK_INT < 9) {
-            try {
-                Class<?> inputBindResultClass =
-                    Class.forName("com.android.internal.view.InputBindResult");
-                java.lang.reflect.Field creatorField =
-                    inputBindResultClass.getField("CREATOR");
-                Log.i(LOGTAG, "froyo startup fix: " + String.valueOf(creatorField.get(null)));
-            } catch (Exception e) {
-                Log.w(LOGTAG, "froyo startup fix failed", e);
-            }
         }
 
         Bundle stateBundle = getIntent().getBundleExtra(EXTRA_STATE_BUNDLE);
@@ -1325,7 +1317,6 @@ public abstract class GeckoApp
         });
 
         GeckoAppShell.setNotificationClient(makeNotificationClient());
-        NotificationHelper.init(getApplicationContext());
         IntentHelper.init(this);
     }
 
@@ -1495,7 +1486,7 @@ public abstract class GeckoApp
         Telemetry.HistogramAdd("FENNEC_STARTUP_GECKOAPP_ACTION", startupAction.ordinal());
 
         if (!mIsRestoringActivity) {
-            GeckoThread.setArgs(intent.getStringExtra("args"));
+            GeckoThread.setArgs(StringUtils.getStringExtra(intent, "args"));
             GeckoThread.setAction(intent.getAction());
             GeckoThread.setUri(passedUri);
         }
@@ -1582,10 +1573,7 @@ public abstract class GeckoApp
 
         PrefsHelper.getPref("app.geo.reportdata", new PrefsHelper.PrefHandlerBase() {
             @Override public void prefValue(String pref, int value) {
-                if (value == 1)
-                    mShouldReportGeoData = true;
-                else
-                    mShouldReportGeoData = false;
+                // Acting on this pref is Bug 1036508; for now, do nothing.
             }
         });
 
@@ -1602,16 +1590,10 @@ public abstract class GeckoApp
                     rec.recordJavaStartupTime(javaDuration);
                 }
 
-                // Record our launch time for the announcements service
-                // to use in assessing inactivity.
-                final Context context = GeckoApp.this;
-                AnnouncementsBroadcastService.recordLastLaunch(context);
-
                 // Kick off our background services. We do this by invoking the broadcast
                 // receiver, which uses the system alarm infrastructure to perform tasks at
                 // intervals.
-                GeckoPreferences.broadcastAnnouncementsPref(context);
-                GeckoPreferences.broadcastHealthReportUploadPref(context);
+                GeckoPreferences.broadcastHealthReportUploadPref(GeckoApp.this);
                 if (!GeckoThread.checkLaunchState(GeckoThread.LaunchState.Launched)) {
                     return;
                 }
@@ -1630,6 +1612,8 @@ public abstract class GeckoApp
 
         if (ACTION_ALERT_CALLBACK.equals(action)) {
             processAlertCallback(intent);
+        } else if (NotificationHelper.HELPER_BROADCAST_ACTION.equals(action)) {
+            NotificationHelper.getInstance(getApplicationContext()).handleNotificationIntent(intent);
         }
     }
 
@@ -1753,10 +1737,6 @@ public abstract class GeckoApp
      * http://developer.android.com/reference/android/os/StrictMode.html
      */
     private void enableStrictMode() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
-            return;
-        }
-
         Log.d(LOGTAG, "Enabling Android StrictMode");
 
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
@@ -1896,7 +1876,7 @@ public abstract class GeckoApp
             // application registry.
             String uri = getURIFromIntent(intent);
             GeckoAppShell.sendEventToGecko(GeckoEvent.createWebappLoadEvent(uri));
-        } else if (ACTION_BOOKMARK.equals(action)) {
+        } else if (ACTION_HOMESCREEN_SHORTCUT.equals(action)) {
             String uri = getURIFromIntent(intent);
             GeckoAppShell.sendEventToGecko(GeckoEvent.createBookmarkLoadEvent(uri));
         } else if (Intent.ACTION_SEARCH.equals(action)) {
@@ -1904,6 +1884,8 @@ public abstract class GeckoApp
             GeckoAppShell.sendEventToGecko(GeckoEvent.createURILoadEvent(uri));
         } else if (ACTION_ALERT_CALLBACK.equals(action)) {
             processAlertCallback(intent);
+        } else if (NotificationHelper.HELPER_BROADCAST_ACTION.equals(action)) {
+            NotificationHelper.getInstance(getApplicationContext()).handleNotificationIntent(intent);
         } else if (ACTION_LAUNCH_SETTINGS.equals(action)) {
             // Check if launched from data reporting notification.
             Intent settingsIntent = new Intent(GeckoApp.this, GeckoPreferences.class);
@@ -1914,20 +1896,22 @@ public abstract class GeckoApp
     }
 
     /*
-     * Handles getting a uri from and intent in a way that is backwards
-     * compatable with our previous implementations
+     * Handles getting a URI from an intent in a way that is backwards-
+     * compatible with our previous implementations.
      */
     protected String getURIFromIntent(Intent intent) {
         final String action = intent.getAction();
-        if (ACTION_ALERT_CALLBACK.equals(action))
+        if (ACTION_ALERT_CALLBACK.equals(action) || NotificationHelper.HELPER_BROADCAST_ACTION.equals(action)) {
             return null;
+        }
 
         String uri = intent.getDataString();
-        if (uri != null)
+        if (uri != null) {
             return uri;
+        }
 
-        if ((action != null && action.startsWith(ACTION_WEBAPP_PREFIX)) || ACTION_BOOKMARK.equals(action)) {
-            uri = intent.getStringExtra("args");
+        if ((action != null && action.startsWith(ACTION_WEBAPP_PREFIX)) || ACTION_HOMESCREEN_SHORTCUT.equals(action)) {
+            uri = StringUtils.getStringExtra(intent, "args");
             if (uri != null && uri.startsWith("--url=")) {
                 uri.replace("--url=", "");
             }
@@ -2373,197 +2357,6 @@ public abstract class GeckoApp
     public void onLocationChanged(Location location) {
         // No logging here: user-identifying information.
         GeckoAppShell.sendEventToGecko(GeckoEvent.createLocationEvent(location));
-        if (mShouldReportGeoData)
-            collectAndReportLocInfo(location);
-    }
-
-    public void setCurrentSignalStrenth(SignalStrength ss) {
-        if (ss.isGsm())
-            mSignalStrenth = ss.getGsmSignalStrength();
-    }
-
-    private int getCellInfo(JSONArray cellInfo) {
-        TelephonyManager tm = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
-        if (tm == null)
-            return TelephonyManager.PHONE_TYPE_NONE;
-        List<NeighboringCellInfo> cells = tm.getNeighboringCellInfo();
-        CellLocation cl = tm.getCellLocation();
-        String mcc = "", mnc = "";
-        if (cl instanceof GsmCellLocation) {
-            JSONObject obj = new JSONObject();
-            GsmCellLocation gcl = (GsmCellLocation)cl;
-            try {
-                obj.put("lac", gcl.getLac());
-                obj.put("cid", gcl.getCid());
-
-                int psc = (Build.VERSION.SDK_INT >= 9) ? gcl.getPsc() : -1;
-                obj.put("psc", psc);
-
-                switch(tm.getNetworkType()) {
-                case TelephonyManager.NETWORK_TYPE_GPRS:
-                case TelephonyManager.NETWORK_TYPE_EDGE:
-                    obj.put("radio", "gsm");
-                    break;
-                case TelephonyManager.NETWORK_TYPE_UMTS:
-                case TelephonyManager.NETWORK_TYPE_HSDPA:
-                case TelephonyManager.NETWORK_TYPE_HSUPA:
-                case TelephonyManager.NETWORK_TYPE_HSPA:
-                case TelephonyManager.NETWORK_TYPE_HSPAP:
-                    obj.put("radio", "umts");
-                    break;
-                }
-                String mcc_mnc = tm.getNetworkOperator();
-                if (mcc_mnc.length() > 3) {
-                    mcc = mcc_mnc.substring(0, 3);
-                    mnc = mcc_mnc.substring(3);
-                    obj.put("mcc", mcc);
-                    obj.put("mnc", mnc);
-                }
-                obj.put("asu", mSignalStrenth);
-            } catch(JSONException jsonex) {}
-            cellInfo.put(obj);
-        }
-        if (cells != null) {
-            for (NeighboringCellInfo nci : cells) {
-                try {
-                    JSONObject obj = new JSONObject();
-                    obj.put("lac", nci.getLac());
-                    obj.put("cid", nci.getCid());
-                    obj.put("psc", nci.getPsc());
-                    obj.put("mcc", mcc);
-                    obj.put("mnc", mnc);
-
-                    int dbm;
-                    switch(nci.getNetworkType()) {
-                    case TelephonyManager.NETWORK_TYPE_GPRS:
-                    case TelephonyManager.NETWORK_TYPE_EDGE:
-                        obj.put("radio", "gsm");
-                        break;
-                    case TelephonyManager.NETWORK_TYPE_UMTS:
-                    case TelephonyManager.NETWORK_TYPE_HSDPA:
-                    case TelephonyManager.NETWORK_TYPE_HSUPA:
-                    case TelephonyManager.NETWORK_TYPE_HSPA:
-                    case TelephonyManager.NETWORK_TYPE_HSPAP:
-                        obj.put("radio", "umts");
-                        break;
-                    }
-
-                    obj.put("asu", nci.getRssi());
-                    cellInfo.put(obj);
-                } catch(JSONException jsonex) {}
-            }
-        }
-        return tm.getPhoneType();
-    }
-
-    private static boolean shouldLog(final ScanResult sr) {
-        return sr.SSID == null || !sr.SSID.endsWith("_nomap");
-    }
-
-    private void collectAndReportLocInfo(Location location) {
-        final JSONObject locInfo = new JSONObject();
-        WifiManager wm = (WifiManager)getSystemService(Context.WIFI_SERVICE);
-        wm.startScan();
-        try {
-            JSONArray cellInfo = new JSONArray();
-
-            String radioType = getRadioTypeName(getCellInfo(cellInfo));
-            if (radioType != null) {
-                locInfo.put("radio", radioType);
-            }
-
-            locInfo.put("lon", location.getLongitude());
-            locInfo.put("lat", location.getLatitude());
-
-            // If we have an accuracy, round it up to the next meter.
-            if (location.hasAccuracy()) {
-                locInfo.put("accuracy", (int) Math.ceil(location.getAccuracy()));
-            }
-
-            // If we have an altitude, round it to the nearest meter.
-            if (location.hasAltitude()) {
-                locInfo.put("altitude", Math.round(location.getAltitude()));
-            }
-
-            // Reduce timestamp precision so as to expose less PII.
-            DateFormat df = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-            locInfo.put("time", df.format(new Date(location.getTime())));
-            locInfo.put("cell", cellInfo);
-
-            JSONArray wifiInfo = new JSONArray();
-            List<ScanResult> aps = wm.getScanResults();
-            if (aps != null) {
-                for (ScanResult ap : aps) {
-                    if (!shouldLog(ap))
-                        continue;
-
-                    JSONObject obj = new JSONObject();
-                    obj.put("key", ap.BSSID);
-                    obj.put("frequency", ap.frequency);
-                    obj.put("signal", ap.level);
-                    wifiInfo.put(obj);
-                }
-            }
-            locInfo.put("wifi", wifiInfo);
-        } catch (JSONException jsonex) {
-            Log.w(LOGTAG, "json exception", jsonex);
-            return;
-        }
-
-        ThreadUtils.postToBackgroundThread(new Runnable() {
-            public void run() {
-                try {
-                    URL url = new URL(LOCATION_URL);
-                    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                    try {
-                        urlConnection.setDoOutput(true);
-
-                        // Workaround for a bug in Android HttpURLConnection. When the library
-                        // reuses a stale connection, the connection may fail with an EOFException.
-                        if (Build.VERSION.SDK_INT >= 14 && Build.VERSION.SDK_INT <= 18) {
-                            urlConnection.setRequestProperty("Connection", "Close");
-                        }
-
-                        JSONArray batch = new JSONArray();
-                        batch.put(locInfo);
-                        JSONObject wrapper = new JSONObject();
-                        wrapper.put("items", batch);
-                        byte[] bytes = wrapper.toString().getBytes();
-                        urlConnection.setFixedLengthStreamingMode(bytes.length);
-                        OutputStream out = new BufferedOutputStream(urlConnection.getOutputStream());
-                        out.write(bytes);
-                        out.flush();
-                    } catch (JSONException jsonex) {
-                        Log.e(LOGTAG, "error wrapping data as a batch", jsonex);
-                    } catch (IOException ioex) {
-                        Log.e(LOGTAG, "error submitting data", ioex);
-                    } finally {
-                        urlConnection.disconnect();
-                    }
-                } catch (IOException ioex) {
-                    Log.e(LOGTAG, "error submitting data", ioex);
-                }
-            }
-        });
-    }
-
-    private static String getRadioTypeName(int phoneType) {
-        switch (phoneType) {
-            case TelephonyManager.PHONE_TYPE_CDMA:
-                return "cdma";
-
-            case TelephonyManager.PHONE_TYPE_GSM:
-                return "gsm";
-
-            case TelephonyManager.PHONE_TYPE_NONE:
-            case TelephonyManager.PHONE_TYPE_SIP:
-                // These devices have no radio.
-                return null;
-
-            default:
-                Log.e(LOGTAG, "", new IllegalArgumentException("Unexpected PHONE_TYPE: " + phoneType));
-                return null;
-        }
     }
 
     @Override

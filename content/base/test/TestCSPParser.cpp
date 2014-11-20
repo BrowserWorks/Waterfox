@@ -117,7 +117,7 @@ nsresult runTest(uint32_t aExpectedPolicyCount, // this should be 0 for policies
   policyStr.AssignASCII(aPolicy);
   // Second argument in AppendPolicy needs to be a nullptr,
   // because we are using the selfURI set in SetRequestingContext
-  rv = csp->AppendPolicy(policyStr, nullptr, false, true);
+  rv = csp->AppendPolicy(policyStr, nullptr, false);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // when executing fuzzy tests we do not care about the actual output
@@ -395,6 +395,14 @@ nsresult TestSimplePolicies() {
       "script-src http://www.example.com" },
     { "script-src http://www.example.com/path-1//path_2",
       "script-src http://www.example.com" },
+    { "default-src 127.0.0.1",
+      "default-src http://127.0.0.1" },
+    { "default-src 127.0.0.1:*",
+      "default-src http://127.0.0.1:*" },
+    { "default-src -; ",
+      "default-src http://-" },
+    { "script-src 1",
+      "script-src http://1" }
   };
 
   uint32_t policyCount = sizeof(policies) / sizeof(PolicyTest);
@@ -432,8 +440,6 @@ nsresult TestBadPolicies() {
     { "", "" },
     { "; ; ; ; ; ; ;", "" },
     { "defaut-src asdf", "" },
-    { "default-src -; ", "" },
-    { "script-src 1", "" },
     { "default-src: aaa", "" },
     { "default-src 'unsafe-inlin' ", "" },
     { "default-src :88", "" },

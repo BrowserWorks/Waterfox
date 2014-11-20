@@ -33,7 +33,7 @@
   const BYTES = Ci.nsIMemoryReporter.UNITS_BYTES;
 
   let fakeReporters = [
-    { collectReports: function(aCbObj, aClosure) {
+    { collectReports: function(aCbObj, aClosure, aAnonymize) {
         function f(aP, aK, aA, aD) {
           aCbObj.callback("", aP, aK, BYTES, aA, aD, aClosure);
         }
@@ -140,7 +140,8 @@
       if (aDumpFirst) {
         let dumper = Cc["@mozilla.org/memory-info-dumper;1"].
                         getService(Ci.nsIMemoryInfoDumper);
-        dumper.dumpMemoryReportsToNamedFile(filePath, loadAndCheck, null);
+        dumper.dumpMemoryReportsToNamedFile(filePath, loadAndCheck, null,
+                                            /* anonymize = */ false);
       } else {
         loadAndCheck();
       }
@@ -193,6 +194,18 @@ Explicit Allocations\n\
 Other Measurements\n\
 \n\
 End of Explicit-only process\n\
+Heap-unclassified process\n\
+Explicit Allocations\n\
+\n\
+262,144,000 B (100.0%) -- explicit\n\
+├──209,715,200 B (80.00%) ── heap-unclassified\n\
+└───52,428,800 B (20.00%) ── a/b\n\
+\n\
+Other Measurements\n\
+\n\
+262,144,000 B ── heap-allocated\n\
+\n\
+End of Heap-unclassified process\n\
 Main Process (pid NNN)\n\
 Explicit Allocations\n\
 \n\

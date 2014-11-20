@@ -22,7 +22,6 @@ class nsBulletListener : public imgINotificationObserver
 {
 public:
   nsBulletListener();
-  virtual ~nsBulletListener();
 
   NS_DECL_ISUPPORTS
   NS_DECL_IMGINOTIFICATIONOBSERVER
@@ -30,6 +29,8 @@ public:
   void SetFrame(nsBulletFrame *frame) { mFrame = frame; }
 
 private:
+  virtual ~nsBulletListener();
+
   nsBulletFrame *mFrame;
 };
 
@@ -76,26 +77,17 @@ public:
   int32_t SetListItemOrdinal(int32_t aNextOrdinal, bool* aChanged,
                              int32_t aIncrement);
 
+  /* get list item text, with prefix & suffix */
+  void GetListItemText(nsAString& aResult);
 
-  /* get list item text, without '.' */
-  static void AppendCounterText(int32_t aListStyleType,
-                                int32_t aOrdinal,
-                                nsString& aResult,
-                                bool& aIsRTL);
-
-  /* get suffix of list item */
-  static void GetListItemSuffix(int32_t aListStyleType,
-                                nsString& aResult);
-
-  /* get list item text, with '.' */
-  void GetListItemText(const nsStyleList& aStyleList, nsString& aResult);
+  void GetSpokenText(nsAString& aText);
                          
   void PaintBullet(nsRenderingContext& aRenderingContext, nsPoint aPt,
                    const nsRect& aDirtyRect, uint32_t aFlags);
   
   virtual bool IsEmpty() MOZ_OVERRIDE;
   virtual bool IsSelfEmpty() MOZ_OVERRIDE;
-  virtual nscoord GetBaseline() const MOZ_OVERRIDE;
+  virtual nscoord GetLogicalBaseline(mozilla::WritingMode aWritingMode) const MOZ_OVERRIDE;
 
   float GetFontSizeInflation() const;
   bool HasFontSizeInflation() const {
@@ -110,6 +102,7 @@ public:
 protected:
   nsresult OnStartContainer(imgIRequest *aRequest, imgIContainer *aImage);
 
+  void AppendSpacingToPadding(nsFontMetrics* aFontMetrics);
   void GetDesiredSize(nsPresContext* aPresContext,
                       nsRenderingContext *aRenderingContext,
                       nsHTMLReflowMetrics& aMetrics,

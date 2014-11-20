@@ -75,7 +75,6 @@ class nsWindow : public nsBaseWidget, public nsSupportsWeakReference
 {
 public:
     nsWindow();
-    virtual ~nsWindow();
 
     static void ReleaseGlobals();
 
@@ -282,7 +281,7 @@ public:
    virtual nsresult    ConfigureChildren(const nsTArray<Configuration>& aConfigurations);
    nsresult            UpdateTranslucentWindowAlphaInternal(const nsIntRect& aRect,
                                                             uint8_t* aAlphas, int32_t aStride);
-    virtual gfxASurface *GetThebesSurface() MOZ_OVERRIDE;
+    virtual gfxASurface *GetThebesSurface();
 
 #if (MOZ_WIDGET_GTK == 2)
     static already_AddRefed<gfxASurface> GetSurfaceForGdkDrawable(GdkDrawable* aDrawable,
@@ -298,6 +297,8 @@ public:
     { return SynthesizeNativeMouseEvent(aPoint, GDK_MOTION_NOTIFY, 0); }
 
 protected:
+    virtual ~nsWindow();
+
     // event handling code
     void DispatchActivateEvent(void);
     void DispatchDeactivateEvent(void);
@@ -362,6 +363,11 @@ private:
 
     int32_t             mTransparencyBitmapWidth;
     int32_t             mTransparencyBitmapHeight;
+
+#if GTK_CHECK_VERSION(3,4,0)
+    // This field omits duplicate scroll events caused by GNOME bug 726878.
+    guint32             mLastScrollEventTime;
+#endif
 
 #ifdef MOZ_HAVE_SHMIMAGE
     // If we're using xshm rendering, mThebesSurface wraps mShmImage

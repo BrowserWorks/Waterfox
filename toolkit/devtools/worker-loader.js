@@ -94,18 +94,6 @@ function createModule(id) {
   });
 };
 
-// A whitelist of modules from which the built-in chrome module may be
-// required. The idea is add all modules that depend on chrome to the whitelist
-// initially, and then remove them one by one, fixing any errors as we go along.
-// Once the whitelist is empty, we can remove the built-in chrome module from
-// the loader entirely.
-//
-// TODO: Remove this when the whitelist becomes empty
-let chromeWhitelist = [
-  "devtools/toolkit/DevToolsUtils",
-  "devtools/toolkit/event-emitter",
-];
-
 // Create a CommonJS loader with the following options:
 // - createSandbox:
 //     A function that will be used to create sandboxes. It takes the name and
@@ -186,17 +174,6 @@ function WorkerDebuggerLoader(options) {
       // Make sure an id was passed.
       if (id === undefined) {
         throw new Error("can't require module without id!");
-      }
-
-      // If the module to be required is the built-in chrome module, and the
-      // requirer is not in the whitelist, return a vacuous object as if the
-      // module was unavailable.
-      //
-      // TODO: Remove this when the whitelist becomes empty
-      if (id === "chrome" && chromeWhitelist.indexOf(requirer.id) < 0) {
-        return { CC: undefined, Cc: undefined,
-                 ChromeWorker: undefined, Cm: undefined, Ci: undefined, Cu: undefined,
-                 Cr: undefined, components: undefined };
       }
 
       // Built-in modules are cached by id rather than URL, so try to find the
@@ -285,81 +262,73 @@ function WorkerDebuggerLoader(options) {
 
 this.WorkerDebuggerLoader = WorkerDebuggerLoader;
 
+const chrome = { CC: undefined, Cc: undefined, ChromeWorker: undefined,
+                 Cm: undefined, Ci: undefined, Cu: undefined,
+                 Cr: undefined, components: undefined };
+
 // The default instance of the worker debugger loader is defined differently
 // depending on whether it is loaded from the main thread or a worker thread.
 if (typeof Components === "object") {
-  (function () {
-    const { Constructor: CC, classes: Cc, manager: Cm, interfaces: Ci,
-            results: Cr, utils: Cu } = Components;
+  const { Constructor: CC, classes: Cc, manager: Cm, interfaces: Ci,
+          results: Cr, utils: Cu } = Components;
 
-    const principal = CC('@mozilla.org/systemprincipal;1', 'nsIPrincipal')();
+  const principal = CC('@mozilla.org/systemprincipal;1', 'nsIPrincipal')();
 
-    // Create a sandbox with the given name and prototype.
-    const createSandbox = function (name, prototype) {
-      return Cu.Sandbox(principal, {
-        invisibleToDebugger: true,
-        sandboxName: name,
-        sandboxPrototype: prototype,
-        wantComponents: false,
-        wantXrays: false
-      });
-    };
-
-    const loadSubScript = Cc['@mozilla.org/moz/jssubscript-loader;1'].
-                          getService(Ci.mozIJSSubScriptLoader).loadSubScript;
-
-    // Load a script from the given URL in the given sandbox.
-    const loadInSandbox = function (url, sandbox) {
-      loadSubScript(url, sandbox, "UTF-8");
-    };
-
-    // Define the Debugger object in a sandbox to ensure that the this passed to
-    // addDebuggerToGlobal is a global.
-    const Debugger = (function () {
-      let sandbox = Cu.Sandbox(principal, {});
-      Cu.evalInSandbox(
-        "Components.utils.import('resource://gre/modules/jsdebugger.jsm');" +
-        "addDebuggerToGlobal(this);",
-        sandbox
-      );
-      return sandbox.Debugger;
-    })();
-
-    // TODO: Either replace these built-in modules with vacuous objects, or
-    // provide them in a way that does not depend on the use of Components.
-    const { Promise } = Cu.import("resource://gre/modules/Promise.jsm", {});;
-    const { Services } = Cu.import("resource://gre/modules/Services.jsm", {});;
-    let SourceMap = {};
-    Cu.import("resource://gre/modules/devtools/SourceMap.jsm", SourceMap);
-    const Timer = Cu.import("resource://gre/modules/Timer.jsm", {});
-    const chrome = { CC: Function.bind.call(CC, Components), Cc: Cc,
-                     ChromeWorker: ChromeWorker, Cm: Cm, Ci: Ci, Cu: Cu,
-                     Cr: Cr, components: Components };
-    const xpcInspector = Cc["@mozilla.org/jsinspector;1"].
-                         getService(Ci.nsIJSInspector);
-
-    this.worker = new WorkerDebuggerLoader({
-      createSandbox: createSandbox,
-      globals: {
-        "promise": Promise,
-        "reportError": Cu.reportError,
-      },
-      loadInSandbox: loadInSandbox,
-      modules: {
-        "Debugger": Debugger,
-        "Services": Object.create(Services),
-        "Timer": Object.create(Timer),
-        "chrome": chrome,
-        "source-map": SourceMap,
-        "xpcInspector": xpcInspector,
-      },
-      paths: {
-        "": "resource://gre/modules/commonjs/",
-        "devtools": "resource:///modules/devtools",
-        "devtools/server": "resource://gre/modules/devtools/server",
-        "devtools/toolkit": "resource://gre/modules/devtools",
-        "xpcshell-test": "resource://test",
-      }
+  // Create a sandbox with the given name and prototype.
+  const createSandbox = function (name, prototype) {
+    return Cu.Sandbox(principal, {
+      invisibleToDebugger: true,
+      sandboxName: name,
+      sandboxPrototype: prototype,
+      wantComponents: false,
+      wantXrays: false
     });
-  }).call(this);
+  };
+
+  const loadSubScript = Cc['@mozilla.org/moz/jssubscript-loader;1'].
+                        getService(Ci.mozIJSSubScriptLoader).loadSubScript;
+
+  // Load a script from the given URL in the given sandbox.
+  const loadInSandbox = function (url, sandbox) {
+    loadSubScript(url, sandbox, "UTF-8");
+  };
+
+  // Define the Debugger object in a sandbox to ensure that the this passed to
+  // addDebuggerToGlobal is a global.
+  let sandbox = Cu.Sandbox(principal, {});
+  Cu.evalInSandbox(
+    "Components.utils.import('resource://gre/modules/jsdebugger.jsm');" +
+    "addDebuggerToGlobal(this);",
+    sandbox
+  );
+  const Debugger = sandbox.Debugger;
+
+  const Timer = Cu.import("resource://gre/modules/Timer.jsm", {});
+  const xpcInspector = Cc["@mozilla.org/jsinspector;1"].
+                       getService(Ci.nsIJSInspector);
+
+  this.worker = new WorkerDebuggerLoader({
+    createSandbox: createSandbox,
+    globals: {
+      "isWorker": true,
+      "reportError": Cu.reportError,
+    },
+    loadInSandbox: loadInSandbox,
+    modules: {
+      "Services": {},
+      "chrome": chrome,
+      "promise": Promise,
+      "Debugger": Debugger,
+      "xpcInspector": xpcInspector,
+      "Timer": Object.create(Timer)
+    },
+    paths: {
+      "": "resource://gre/modules/commonjs/",
+      "devtools": "resource:///modules/devtools",
+      "devtools/server": "resource://gre/modules/devtools/server",
+      "devtools/toolkit": "resource://gre/modules/devtools",
+      "source-map": "resource://gre/modules/devtools/source-map",
+      "xpcshell-test": "resource://test",
+    }
+  });
 }

@@ -24,6 +24,7 @@ class FTPChannelParent : public PFTPChannelParent
                        , public nsIParentChannel
                        , public nsIInterfaceRequestor
                        , public ADivertableParentChannel
+                       , public nsIChannelEventSink
 {
 public:
   NS_DECL_ISUPPORTS
@@ -31,9 +32,9 @@ public:
   NS_DECL_NSISTREAMLISTENER
   NS_DECL_NSIPARENTCHANNEL
   NS_DECL_NSIINTERFACEREQUESTOR
+  NS_DECL_NSICHANNELEVENTSINK
 
   FTPChannelParent(nsILoadContext* aLoadContext, PBOverrideStatus aOverrideStatus);
-  virtual ~FTPChannelParent();
 
   bool Init(const FTPChannelCreationArgs& aOpenArgs);
 
@@ -51,6 +52,8 @@ public:
   void NotifyDiversionFailed(nsresult aErrorCode, bool aSkipResume = true);
 
 protected:
+  virtual ~FTPChannelParent();
+
   // private, supporting function for ADivertableParentChannel.
   nsresult ResumeForDiversion();
 
@@ -76,7 +79,8 @@ protected:
 
   virtual void ActorDestroy(ActorDestroyReason why) MOZ_OVERRIDE;
 
-  nsRefPtr<nsFtpChannel> mChannel;
+  // if configured to use HTTP proxy for FTP, this can an an HTTP channel.
+  nsCOMPtr<nsIChannel> mChannel;
 
   bool mIPCClosed;
 

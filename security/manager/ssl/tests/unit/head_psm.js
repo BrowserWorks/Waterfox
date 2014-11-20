@@ -20,7 +20,7 @@ const isDebugBuild = Cc["@mozilla.org/xpcom/debug;1"]
 
 const SEC_ERROR_BASE = Ci.nsINSSErrorsService.NSS_SEC_ERROR_BASE;
 const SSL_ERROR_BASE = Ci.nsINSSErrorsService.NSS_SSL_ERROR_BASE;
-const PSM_ERROR_BASE = Ci.nsINSSErrorsService.PSM_ERROR_BASE;
+const MOZILLA_PKIX_ERROR_BASE = Ci.nsINSSErrorsService.PSM_ERROR_BASE;
 
 // Sort in numerical order
 const SEC_ERROR_INVALID_ARGS                            = SEC_ERROR_BASE +   5; // -8187
@@ -35,6 +35,7 @@ const SEC_ERROR_EXPIRED_ISSUER_CERTIFICATE              = SEC_ERROR_BASE +  30; 
 const SEC_ERROR_EXTENSION_VALUE_INVALID                 = SEC_ERROR_BASE +  34; // -8158
 const SEC_ERROR_EXTENSION_NOT_FOUND                     = SEC_ERROR_BASE +  35; // -8157
 const SEC_ERROR_CA_CERT_INVALID                         = SEC_ERROR_BASE +  36;
+const SEC_ERROR_INVALID_KEY                             = SEC_ERROR_BASE +  40; // -8152
 const SEC_ERROR_UNKNOWN_CRITICAL_EXTENSION              = SEC_ERROR_BASE +  41;
 const SEC_ERROR_INADEQUATE_KEY_USAGE                    = SEC_ERROR_BASE +  90; // -8102
 const SEC_ERROR_INADEQUATE_CERT_TYPE                    = SEC_ERROR_BASE +  91; // -8101
@@ -57,7 +58,8 @@ const SEC_ERROR_APPLICATION_CALLBACK_ERROR              = SEC_ERROR_BASE + 178;
 
 const SSL_ERROR_BAD_CERT_DOMAIN                         = SSL_ERROR_BASE +  12;
 
-const PSM_ERROR_KEY_PINNING_FAILURE                     = PSM_ERROR_BASE +   0;
+const MOZILLA_PKIX_ERROR_KEY_PINNING_FAILURE            = MOZILLA_PKIX_ERROR_BASE +   0;
+const MOZILLA_PKIX_ERROR_CA_CERT_USED_AS_END_ENTITY     = MOZILLA_PKIX_ERROR_BASE +   1;
 
 // Supported Certificate Usages
 const certificateUsageSSLClient              = 0x0001;

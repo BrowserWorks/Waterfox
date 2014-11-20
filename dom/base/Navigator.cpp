@@ -106,6 +106,8 @@
 #endif
 #include "mozilla/dom/ContentChild.h"
 
+#include "mozilla/dom/FeatureList.h"
+
 namespace mozilla {
 namespace dom {
 
@@ -311,30 +313,19 @@ Navigator::Invalidate()
 NS_IMETHODIMP
 Navigator::GetUserAgent(nsAString& aUserAgent)
 {
-  nsresult rv = NS_GetNavigatorUserAgent(aUserAgent);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  if (!mWindow || !mWindow->GetDocShell()) {
-    return NS_OK;
-  }
-
-  nsIDocument* doc = mWindow->GetExtantDoc();
-  if (!doc) {
-    return NS_OK;
-  }
-
   nsCOMPtr<nsIURI> codebaseURI;
-  doc->NodePrincipal()->GetURI(getter_AddRefs(codebaseURI));
-  if (!codebaseURI) {
-    return NS_OK;
+  nsCOMPtr<nsPIDOMWindow> window;
+
+  if (mWindow && mWindow->GetDocShell()) {
+    window = mWindow;
+    nsIDocument* doc = mWindow->GetExtantDoc();
+    if (doc) {
+      doc->NodePrincipal()->GetURI(getter_AddRefs(codebaseURI));
+    }
   }
 
-  nsCOMPtr<nsISiteSpecificUserAgent> siteSpecificUA =
-    do_GetService("@mozilla.org/dom/site-specific-user-agent;1");
-  NS_ENSURE_TRUE(siteSpecificUA, NS_OK);
-
-  return siteSpecificUA->GetUserAgentForURIAndWindow(codebaseURI, mWindow,
-                                                     aUserAgent);
+  return GetUserAgent(window, codebaseURI, nsContentUtils::IsCallerChrome(),
+                      aUserAgent);
 }
 
 NS_IMETHODIMP
@@ -356,13 +347,13 @@ Navigator::GetAppCodeName(nsAString& aAppCodeName)
 NS_IMETHODIMP
 Navigator::GetAppVersion(nsAString& aAppVersion)
 {
-  return NS_GetNavigatorAppVersion(aAppVersion);
+  return GetAppVersion(aAppVersion, /* aUsePrefOverriddenValue */ true);
 }
 
 NS_IMETHODIMP
 Navigator::GetAppName(nsAString& aAppName)
 {
-  NS_GetNavigatorAppName(aAppName);
+  AppName(aAppName, /* aUsePrefOverriddenValue */ true);
   return NS_OK;
 }
 
@@ -453,7 +444,7 @@ Navigator::GetLanguages(nsTArray<nsString>& aLanguages)
 NS_IMETHODIMP
 Navigator::GetPlatform(nsAString& aPlatform)
 {
-  return NS_GetNavigatorPlatform(aPlatform);
+  return GetPlatform(aPlatform, /* aUsePrefOverriddenValue */ true);
 }
 
 NS_IMETHODIMP
@@ -689,16 +680,16 @@ public:
                                       false /* wants untrusted */);
   }
 
-  virtual ~VibrateWindowListener()
-  {
-  }
-
   void RemoveListener();
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSIDOMEVENTLISTENER
 
 private:
+  virtual ~VibrateWindowListener()
+  {
+  }
+
   nsWeakPtr mWindow;
   nsWeakPtr mDocument;
 };
@@ -809,7 +800,7 @@ Navigator::Vibrate(const nsTArray<uint32_t>& aPattern)
 
   // The spec says we check sVibratorEnabled after we've done the sanity
   // checking on the pattern.
-  if (pattern.IsEmpty() || !sVibratorEnabled) {
+  if (!sVibratorEnabled) {
     return true;
   }
 
@@ -1056,6 +1047,8 @@ Navigator::GetGeolocation(ErrorResult& aRv)
 
 class BeaconStreamListener MOZ_FINAL : public nsIStreamListener
 {
+    ~BeaconStreamListener() {}
+
   public:
     BeaconStreamListener() {}
 
@@ -1250,7 +1243,7 @@ Navigator::SendBeacon(const nsAString& aUrl,
         return false;
       }
 
-      ArrayBufferView& view = aData.Value().GetAsArrayBufferView();
+      const ArrayBufferView& view = aData.Value().GetAsArrayBufferView();
       view.ComputeLengthAndData();
       rv = strStream->SetData(reinterpret_cast<char*>(view.Data()),
                               view.Length());
@@ -1489,10 +1482,13 @@ Navigator::GetDataStores(const nsAString& aName, ErrorResult& aRv)
 }
 
 already_AddRefed<Promise>
-Navigator::GetFeature(const nsAString& aName)
+Navigator::GetFeature(const nsAString& aName, ErrorResult& aRv)
 {
   nsCOMPtr<nsIGlobalObject> go = do_QueryInterface(mWindow);
-  nsRefPtr<Promise> p = new Promise(go);
+  nsRefPtr<Promise> p = Promise::Create(go, aRv);
+  if (aRv.Failed()) {
+    return nullptr;
+  }
 
 #if defined(XP_LINUX)
   if (aName.EqualsLiteral("hardware.memory")) {
@@ -1530,6 +1526,17 @@ Navigator::GetFeature(const nsAString& aName)
       p->MaybeResolve(true);
       return p.forget();
     }
+  }
+
+  NS_NAMED_LITERAL_STRING(apiWindowPrefix, "api.window.");
+  if (StringBeginsWith(aName, apiWindowPrefix)) {
+    const nsAString& featureName = Substring(aName, apiWindowPrefix.Length());
+    if (IsFeatureDetectible(featureName)) {
+      p->MaybeResolve(true);
+    } else {
+      p->MaybeResolve(JS::UndefinedHandleValue);
+    }
+    return p.forget();
   }
 
   // resolve with <undefined> because the feature name is not supported
@@ -1577,7 +1584,7 @@ Navigator::RequestWakeLock(const nsAString &aTopic, ErrorResult& aRv)
   return pmService->NewWakeLock(aTopic, mWindow, aRv);
 }
 
-nsIDOMMozMobileMessageManager*
+MobileMessageManager*
 Navigator::GetMozMobileMessage()
 {
   if (!mMobileMessageManager) {
@@ -1585,8 +1592,8 @@ Navigator::GetMozMobileMessage()
     NS_ENSURE_TRUE(mWindow, nullptr);
     NS_ENSURE_TRUE(mWindow->GetDocShell(), nullptr);
 
-    mMobileMessageManager = new MobileMessageManager();
-    mMobileMessageManager->Init(mWindow);
+    mMobileMessageManager = new MobileMessageManager(mWindow);
+    mMobileMessageManager->Init();
   }
 
   return mMobileMessageManager;
@@ -1970,7 +1977,6 @@ Navigator::DoNewResolve(JSContext* aCx, JS::Handle<JSObject*> aObject,
                         JS::Handle<jsid> aId,
                         JS::MutableHandle<JSPropertyDescriptor> aDesc)
 {
-  // Note: The infallibleInit call below depends on this check.
   if (!JSID_IS_STRING(aId)) {
     return true;
   }
@@ -1980,8 +1986,10 @@ Navigator::DoNewResolve(JSContext* aCx, JS::Handle<JSObject*> aObject,
     return Throw(aCx, NS_ERROR_NOT_INITIALIZED);
   }
 
-  nsDependentJSString name;
-  name.infallibleInit(aId);
+  nsAutoJSString name;
+  if (!name.init(aCx, JSID_TO_STRING(aId))) {
+    return false;
+  }
 
   const nsGlobalNameStruct* name_struct =
     nameSpaceManager->LookupNavigatorName(name);
@@ -2182,33 +2190,6 @@ Navigator::HasWakeLockSupport(JSContext* /* unused*/, JSObject* /*unused */)
 
 /* static */
 bool
-Navigator::HasMobileMessageSupport(JSContext* /* unused */, JSObject* aGlobal)
-{
-  nsCOMPtr<nsPIDOMWindow> win = GetWindowFromGlobal(aGlobal);
-
-#ifndef MOZ_WEBSMS_BACKEND
-  return false;
-#endif
-
-  // First of all, the general pref has to be turned on.
-  bool enabled = false;
-  Preferences::GetBool("dom.sms.enabled", &enabled);
-  if (!enabled) {
-    return false;
-  }
-
-  NS_ENSURE_TRUE(win, false);
-  NS_ENSURE_TRUE(win->GetDocShell(), false);
-
-  if (!CheckPermission(win, "sms")) {
-    return false;
-  }
-
-  return true;
-}
-
-/* static */
-bool
 Navigator::HasCameraSupport(JSContext* /* unused */, JSObject* aGlobal)
 {
   nsCOMPtr<nsPIDOMWindow> win = GetWindowFromGlobal(aGlobal);
@@ -2253,16 +2234,6 @@ Navigator::HasNFCSupport(JSContext* /* unused */, JSObject* aGlobal)
 }
 #endif // MOZ_NFC
 
-#ifdef MOZ_TIME_MANAGER
-/* static */
-bool
-Navigator::HasTimeSupport(JSContext* /* unused */, JSObject* aGlobal)
-{
-  nsCOMPtr<nsPIDOMWindow> win = GetWindowFromGlobal(aGlobal);
-  return win && CheckPermission(win, "time");
-}
-#endif // MOZ_TIME_MANAGER
-
 #ifdef MOZ_MEDIA_NAVIGATOR
 /* static */
 bool
@@ -2299,25 +2270,7 @@ Navigator::HasDataStoreSupport(nsIPrincipal* aPrincipal)
 {
   workers::AssertIsOnMainThread();
 
-  // First of all, the general pref has to be turned on.
-  bool enabled = false;
-  Preferences::GetBool("dom.datastore.enabled", &enabled);
-  if (!enabled) {
-    return false;
-  }
-
-  // Just for testing, we can enable DataStore for any kind of app.
-  if (Preferences::GetBool("dom.testing.datastore_enabled_for_hosted_apps", false)) {
-    return true;
-  }
-
-  uint16_t status;
-  if (NS_FAILED(aPrincipal->GetAppStatus(&status))) {
-    return false;
-  }
-
-  // Only support DataStore API for certified apps for now.
-  return status == nsIPrincipal::APP_STATUS_CERTIFIED;
+  return DataStoreService::CheckPermission(aPrincipal);
 }
 
 // A WorkerMainThreadRunnable to synchronously dispatch the call of
@@ -2382,22 +2335,6 @@ Navigator::HasDataStoreSupport(JSContext* aCx, JSObject* aGlobal)
   return HasDataStoreSupport(doc->NodePrincipal());
 }
 
-/* static */
-bool
-Navigator::HasNetworkStatsSupport(JSContext* /* unused */, JSObject* aGlobal)
-{
-  nsCOMPtr<nsPIDOMWindow> win = GetWindowFromGlobal(aGlobal);
-  return CheckPermission(win, "networkstats-manage");
-}
-
-/* static */
-bool
-Navigator::HasFeatureDetectionSupport(JSContext* /* unused */, JSObject* aGlobal)
-{
-  nsCOMPtr<nsPIDOMWindow> win = GetWindowFromGlobal(aGlobal);
-  return CheckPermission(win, "feature-detection");
-}
-
 #ifdef MOZ_B2G
 /* static */
 bool
@@ -2434,29 +2371,12 @@ Navigator::GetWindowFromGlobal(JSObject* aGlobal)
   return win.forget();
 }
 
-} // namespace dom
-} // namespace mozilla
-
 nsresult
-NS_GetNavigatorUserAgent(nsAString& aUserAgent)
+Navigator::GetPlatform(nsAString& aPlatform, bool aUsePrefOverriddenValue)
 {
-  nsresult rv;
+  MOZ_ASSERT(NS_IsMainThread());
 
-  nsCOMPtr<nsIHttpProtocolHandler>
-    service(do_GetService(NS_NETWORK_PROTOCOL_CONTRACTID_PREFIX "http", &rv));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  nsAutoCString ua;
-  rv = service->GetUserAgent(ua);
-  CopyASCIItoUTF16(ua, aUserAgent);
-
-  return rv;
-}
-
-nsresult
-NS_GetNavigatorPlatform(nsAString& aPlatform)
-{
-  if (!nsContentUtils::IsCallerChrome()) {
+  if (aUsePrefOverriddenValue && !nsContentUtils::IsCallerChrome()) {
     const nsAdoptingString& override =
       mozilla::Preferences::GetString("general.platform.override");
 
@@ -2495,10 +2415,13 @@ NS_GetNavigatorPlatform(nsAString& aPlatform)
 
   return rv;
 }
-nsresult
-NS_GetNavigatorAppVersion(nsAString& aAppVersion)
+
+/* static */ nsresult
+Navigator::GetAppVersion(nsAString& aAppVersion, bool aUsePrefOverriddenValue)
 {
-  if (!nsContentUtils::IsCallerChrome()) {
+  MOZ_ASSERT(NS_IsMainThread());
+
+  if (aUsePrefOverriddenValue && !nsContentUtils::IsCallerChrome()) {
     const nsAdoptingString& override =
       mozilla::Preferences::GetString("general.appversion.override");
 
@@ -2530,10 +2453,12 @@ NS_GetNavigatorAppVersion(nsAString& aAppVersion)
   return rv;
 }
 
-void
-NS_GetNavigatorAppName(nsAString& aAppName)
+/* static */ void
+Navigator::AppName(nsAString& aAppName, bool aUsePrefOverriddenValue)
 {
-  if (!nsContentUtils::IsCallerChrome()) {
+  MOZ_ASSERT(NS_IsMainThread());
+
+  if (aUsePrefOverriddenValue && !nsContentUtils::IsCallerChrome()) {
     const nsAdoptingString& override =
       mozilla::Preferences::GetString("general.appname.override");
 
@@ -2545,3 +2470,53 @@ NS_GetNavigatorAppName(nsAString& aAppName)
 
   aAppName.AssignLiteral("Netscape");
 }
+
+nsresult
+Navigator::GetUserAgent(nsPIDOMWindow* aWindow, nsIURI* aURI,
+                        bool aIsCallerChrome,
+                        nsAString& aUserAgent)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  if (!aIsCallerChrome) {
+    const nsAdoptingString& override =
+      mozilla::Preferences::GetString("general.useragent.override");
+
+    if (override) {
+      aUserAgent = override;
+      return NS_OK;
+    }
+  }
+
+  nsresult rv;
+  nsCOMPtr<nsIHttpProtocolHandler>
+    service(do_GetService(NS_NETWORK_PROTOCOL_CONTRACTID_PREFIX "http", &rv));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  nsAutoCString ua;
+  rv = service->GetUserAgent(ua);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  CopyASCIItoUTF16(ua, aUserAgent);
+
+  if (!aWindow || !aURI) {
+    return NS_OK;
+  }
+
+  MOZ_ASSERT(aWindow->GetDocShell());
+
+  nsCOMPtr<nsISiteSpecificUserAgent> siteSpecificUA =
+    do_GetService("@mozilla.org/dom/site-specific-user-agent;1");
+  if (!siteSpecificUA) {
+    return NS_OK;
+  }
+
+  return siteSpecificUA->GetUserAgentForURIAndWindow(aURI, aWindow, aUserAgent);
+}
+
+} // namespace dom
+} // namespace mozilla

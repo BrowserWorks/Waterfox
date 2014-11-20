@@ -376,8 +376,6 @@ class MacroAssemblerARM : public Assembler
     void ma_vcvt_I32_F32(FloatRegister src, FloatRegister dest, Condition cc = Always);
     void ma_vcvt_U32_F32(FloatRegister src, FloatRegister dest, Condition cc = Always);
 
-    void ma_vxfer(FloatRegister src, Register dest, Condition cc = Always);
-    void ma_vxfer(FloatRegister src, Register dest1, Register dest2, Condition cc = Always);
 
     void ma_vxfer(VFPRegister src, Register dest, Condition cc = Always);
     void ma_vxfer(VFPRegister src, Register dest1, Register dest2, Condition cc = Always);
@@ -405,9 +403,6 @@ class MacroAssemblerARM : public Assembler
     void ma_callIonHalfPush(const Register reg);
 
     void ma_call(ImmPtr dest);
-
-    // calls reg, storing the return address into sp[0]
-    void ma_callAndStoreRet(const Register reg, uint32_t stackArgBytes);
 
     // Float registers can only be loaded/stored in continuous runs when using
     // vstm/vldm. This function breaks set into continuous runs and loads/stores
@@ -438,20 +433,25 @@ private:
     {
         JS_ASSERT(sign == 1 || sign == -1);
 
-        int32_t delta = sign * sizeof(double);
+        int32_t delta = sign * sizeof(float);
         int32_t offset = 0;
-        RegisterIterator iter(set);
+        // Build up a new set, which is the sum of all of the single and double
+        // registers. This set can have up to 48 registers in it total
+        // s0-s31 and d16-d31
+        FloatRegisterSet mod = set.reduceSetForPush();
+
+        RegisterIterator iter(mod);
         while (iter.more()) {
             startFloatTransferM(ls, rm, mode, WriteBack);
-            int32_t reg = (*iter).code_;
+            int32_t reg = (*iter).code();
             do {
                 offset += delta;
+                if ((*iter).isDouble())
+                    offset += delta;
                 transferFloatReg(*iter);
-            } while ((++iter).more() && (*iter).code_ == (reg += sign));
+            } while ((++iter).more() && (*iter).code() == (reg += sign));
             finishFloatTransfer();
         }
-
-        JS_ASSERT(offset == static_cast<int32_t>(set.size() * sizeof(double)) * sign);
         return offset;
     }
 };
@@ -483,8 +483,8 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
 
     // Used to work around the move resolver's lack of support for moving into
     // register pairs, which the softfp ABI needs.
-    mozilla::Array<MoveOperand, 2> floatArgsInGPR;
-    mozilla::Array<bool, 2> floatArgsInGPRValid;
+    mozilla::Array<MoveOperand, 4> floatArgsInGPR;
+    mozilla::Array<bool, 4> floatArgsInGPRValid;
 
     // Compute space needed for the function call and set the properties of the
     // callee. It returns the space which has to be allocated for calling the
@@ -572,38 +572,13 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
         ma_movPatchable(ImmPtr(c->raw()), ScratchRegister, Always, rs);
         ma_callIonHalfPush(ScratchRegister);
     }
-
-    void appendCallSite(const CallSiteDesc &desc) {
-        // Add an extra sizeof(void*) to include the return address that was
-        // pushed by the call instruction (see CallSite::stackDepth).
-        enoughMemory_ &= append(CallSite(desc, currentOffset(), framePushed_ + sizeof(void*)));
-    }
-
     void call(const CallSiteDesc &desc, const Register reg) {
         call(reg);
-        appendCallSite(desc);
+        append(desc, currentOffset(), framePushed_);
     }
     void call(const CallSiteDesc &desc, Label *label) {
         call(label);
-        appendCallSite(desc);
-    }
-    void call(const CallSiteDesc &desc, AsmJSImmPtr imm) {
-        call(imm);
-        appendCallSite(desc);
-    }
-    void callExit(AsmJSImmPtr imm, uint32_t stackArgBytes) {
-        movePtr(imm, CallReg);
-        ma_callAndStoreRet(CallReg, stackArgBytes);
-        appendCallSite(CallSiteDesc::Exit());
-    }
-    void callIonFromAsmJS(const Register reg) {
-        ma_callIonNoPush(reg);
-        appendCallSite(CallSiteDesc::Exit());
-
-        // The Ion ABI has the callee pop the return address off the stack.
-        // The asm.js caller assumes that the call leaves sp unchanged, so bump
-        // the stack.
-        subPtr(Imm32(sizeof(void*)), sp);
+        append(desc, currentOffset(), framePushed_);
     }
 
     void branch(JitCode *c) {
@@ -740,6 +715,7 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     Condition testNull(Condition cond, const ValueOperand &value);
     Condition testUndefined(Condition cond, const ValueOperand &value);
     Condition testString(Condition cond, const ValueOperand &value);
+    Condition testSymbol(Condition cond, const ValueOperand &value);
     Condition testObject(Condition cond, const ValueOperand &value);
     Condition testNumber(Condition cond, const ValueOperand &value);
     Condition testMagic(Condition cond, const ValueOperand &value);
@@ -752,6 +728,7 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     Condition testNull(Condition cond, Register tag);
     Condition testUndefined(Condition cond, Register tag);
     Condition testString(Condition cond, Register tag);
+    Condition testSymbol(Condition cond, Register tag);
     Condition testObject(Condition cond, Register tag);
     Condition testDouble(Condition cond, Register tag);
     Condition testNumber(Condition cond, Register tag);
@@ -766,6 +743,7 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     Condition testNull(Condition cond, const Address &address);
     Condition testUndefined(Condition cond, const Address &address);
     Condition testString(Condition cond, const Address &address);
+    Condition testSymbol(Condition cond, const Address &address);
     Condition testObject(Condition cond, const Address &address);
     Condition testNumber(Condition cond, const Address &address);
 
@@ -773,6 +751,7 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     Condition testNull(Condition cond, const BaseIndex &src);
     Condition testBoolean(Condition cond, const BaseIndex &src);
     Condition testString(Condition cond, const BaseIndex &src);
+    Condition testSymbol(Condition cond, const BaseIndex &src);
     Condition testInt32(Condition cond, const BaseIndex &src);
     Condition testObject(Condition cond, const BaseIndex &src);
     Condition testDouble(Condition cond, const BaseIndex &src);
@@ -795,16 +774,20 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
                          Label *label);
 
     // Unboxing code.
-    void unboxInt32(const ValueOperand &operand, Register dest);
-    void unboxInt32(const Address &src, Register dest);
-    void unboxBoolean(const ValueOperand &operand, Register dest);
-    void unboxBoolean(const Address &src, Register dest);
-    void unboxDouble(const ValueOperand &operand, FloatRegister dest);
+    void unboxNonDouble(const ValueOperand &operand, Register dest);
+    void unboxNonDouble(const Address &src, Register dest);
+    void unboxInt32(const ValueOperand &src, Register dest) { unboxNonDouble(src, dest); }
+    void unboxInt32(const Address &src, Register dest) { unboxNonDouble(src, dest); }
+    void unboxBoolean(const ValueOperand &src, Register dest) { unboxNonDouble(src, dest); }
+    void unboxBoolean(const Address &src, Register dest) { unboxNonDouble(src, dest); }
+    void unboxString(const ValueOperand &src, Register dest) { unboxNonDouble(src, dest); }
+    void unboxString(const Address &src, Register dest) { unboxNonDouble(src, dest); }
+    void unboxSymbol(const ValueOperand &src, Register dest) { unboxNonDouble(src, dest); }
+    void unboxSymbol(const Address &src, Register dest) { unboxNonDouble(src, dest); }
+    void unboxObject(const ValueOperand &src, Register dest) { unboxNonDouble(src, dest); }
+    void unboxObject(const Address &src, Register dest) { unboxNonDouble(src, dest); }
+    void unboxDouble(const ValueOperand &src, FloatRegister dest);
     void unboxDouble(const Address &src, FloatRegister dest);
-    void unboxString(const ValueOperand &operand, Register dest);
-    void unboxString(const Address &src, Register dest);
-    void unboxObject(const ValueOperand &src, Register dest);
-    void unboxObject(const Address &src, Register dest);
     void unboxValue(const ValueOperand &src, AnyRegister dest);
     void unboxPrivate(const ValueOperand &src, Register dest);
 
@@ -929,6 +912,11 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     template<typename T>
     void branchTestString(Condition cond, const T & t, Label *label) {
         Condition c = testString(cond, t);
+        ma_b(label, c);
+    }
+    template<typename T>
+    void branchTestSymbol(Condition cond, const T & t, Label *label) {
+        Condition c = testSymbol(cond, t);
         ma_b(label, c);
     }
     template<typename T>
@@ -1270,6 +1258,7 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     // Makes an Ion call using the only two methods that it is sane for
     // independent code to make a call.
     void callIon(Register callee);
+    void callIonFromAsmJS(Register callee);
 
     void reserveStack(uint32_t amount);
     void freeStack(uint32_t amount);
@@ -1296,6 +1285,7 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void and32(Imm32 imm, Register dest);
     void and32(Imm32 imm, const Address &dest);
     void and32(const Address &src, Register dest);
+    void or32(Imm32 imm, Register dest);
     void or32(Imm32 imm, const Address &dest);
     void xorPtr(Imm32 imm, Register dest);
     void xorPtr(Register src, Register dest);
@@ -1490,6 +1480,12 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
         cond = testNull(cond, value);
         emitSet(cond, dest);
     }
+
+    void testObjectSet(Condition cond, const ValueOperand &value, Register dest) {
+        cond = testObject(cond, value);
+        emitSet(cond, dest);
+    }
+
     void testUndefinedSet(Condition cond, const ValueOperand &value, Register dest) {
         cond = testUndefined(cond, value);
         emitSet(cond, dest);

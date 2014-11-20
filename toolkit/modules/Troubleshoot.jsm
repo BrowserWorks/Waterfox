@@ -83,6 +83,7 @@ const PREFS_WHITELIST = [
 const PREFS_BLACKLIST = [
   /^network[.]proxy[.]/,
   /[.]print_to_filename$/,
+  /^print[.]macosx[.]pagesetup/,
 ];
 
 this.Troubleshoot = {
@@ -144,6 +145,22 @@ let dataProviders = {
       data.supportURL = urlFormatter.formatURLPref("app.support.baseURL");
     }
     catch (e) {}
+
+    data.numTotalWindows = 0;
+    data.numRemoteWindows = 0;
+    let winEnumer = Services.ww.getWindowEnumerator("navigator:browser");
+    while (winEnumer.hasMoreElements()) {
+      data.numTotalWindows++;
+      let remote = winEnumer.getNext().
+                   QueryInterface(Ci.nsIInterfaceRequestor).
+                   getInterface(Ci.nsIWebNavigation).
+                   QueryInterface(Ci.nsILoadContext).
+                   useRemoteTabs;
+      if (remote) {
+        data.numRemoteWindows++;
+      }
+    }
+
     done(data);
   },
 
@@ -207,6 +224,27 @@ let dataProviders = {
     done(PREFS_WHITELIST.reduce(function (prefs, branch) {
       Services.prefs.getChildList(branch).forEach(function (name) {
         if (Services.prefs.prefHasUserValue(name) &&
+            !PREFS_BLACKLIST.some(function (re) re.test(name)))
+          prefs[name] = getPref(name);
+      });
+      return prefs;
+    }, {}));
+  },
+
+  lockedPreferences: function lockedPreferences(done) {
+    function getPref(name) {
+      let table = {};
+      table[Ci.nsIPrefBranch.PREF_STRING] = "getCharPref";
+      table[Ci.nsIPrefBranch.PREF_INT] = "getIntPref";
+      table[Ci.nsIPrefBranch.PREF_BOOL] = "getBoolPref";
+      let type = Services.prefs.getPrefType(name);
+      if (!(type in table))
+        throw new Error("Unknown preference type " + type + " for " + name);
+      return Services.prefs[table[type]](name);
+    }
+    done(PREFS_WHITELIST.reduce(function (prefs, branch) {
+      Services.prefs.getChildList(branch).forEach(function (name) {
+        if (Services.prefs.prefIsLocked(name) &&
             !PREFS_BLACKLIST.some(function (re) re.test(name)))
           prefs[name] = getPref(name);
       });
@@ -355,9 +393,9 @@ let dataProviders = {
         // OpenGL feature, because that's what's going to get used.  In all
         // other cases we want to report on the ANGLE feature.
         gfxInfo.getFeatureStatus(Ci.nsIGfxInfo.FEATURE_WEBGL_ANGLE) !=
-          Ci.nsIGfxInfo.FEATURE_NO_INFO &&
+          Ci.nsIGfxInfo.FEATURE_STATUS_OK &&
         gfxInfo.getFeatureStatus(Ci.nsIGfxInfo.FEATURE_WEBGL_OPENGL) ==
-          Ci.nsIGfxInfo.FEATURE_NO_INFO ?
+          Ci.nsIGfxInfo.FEATURE_STATUS_OK ?
         Ci.nsIGfxInfo.FEATURE_WEBGL_OPENGL :
         Ci.nsIGfxInfo.FEATURE_WEBGL_ANGLE;
 #else

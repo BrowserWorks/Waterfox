@@ -12,8 +12,15 @@ function peerReadyCb(evt) {
   let peer = nfc.getNFCPeer(evt.detail);
   ok(peer instanceof MozNFCPeer, "Should get a NFCPeer object.");
 
-  // reset callback and NFC Hardware.
+  // reset callback.
   nfc.onpeerready = null;
+  NCI.deactivate();
+}
+
+function peerLostCb() {
+  log("peerLostCb called");
+  ok(true);
+  nfc.onpeerlost = null;
   toggleNFC(false).then(runNextTest);
 }
 
@@ -23,6 +30,7 @@ function handleTechnologyDiscoveredRE0(msg) {
   is(msg.techList[0], "P2P", "check for correct tech type");
 
   nfc.onpeerready = peerReadyCb;
+  nfc.onpeerlost = peerLostCb;
 
   let request = nfc.checkP2PRegistration(MANIFEST_URL);
   request.onsuccess = function (evt) {
@@ -59,30 +67,18 @@ function handleTechnologyDiscoveredRE0ForP2PRegFailure(msg) {
   }
 }
 
-function activateRE(re) {
-  let deferred = Promise.defer();
-  let cmd = "nfc nci rf_intf_activated_ntf " + re;
-
-  emulator.run(cmd, function(result) {
-    is(result.pop(), "OK", "check activation of RE" + re);
-    deferred.resolve();
-  });
-
-  return deferred.promise;
-}
-
 function testPeerReady() {
   window.navigator.mozSetMessageHandler(
     "nfc-manager-tech-discovered", handleTechnologyDiscoveredRE0);
 
-  toggleNFC(true).then(() => activateRE(0));
+  toggleNFC(true).then(() => NCI.activateRE(emulator.P2P_RE_INDEX_0));
 }
 
 function testCheckP2PRegFailure() {
   window.navigator.mozSetMessageHandler(
     "nfc-manager-tech-discovered", handleTechnologyDiscoveredRE0ForP2PRegFailure);
 
-  toggleNFC(true).then(() => activateRE(0));
+  toggleNFC(true).then(() => NCI.activateRE(emulator.P2P_RE_INDEX_0));
 }
 
 function testCheckNfcPeerObjForInvalidToken() {

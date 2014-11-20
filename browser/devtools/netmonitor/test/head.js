@@ -59,6 +59,9 @@ const gEnableLogging = Services.prefs.getBoolPref("devtools.debugger.log");
 // To enable logging for try runs, just set the pref to true.
 Services.prefs.setBoolPref("devtools.debugger.log", false);
 
+// Uncomment this pref to dump all devtools emitted events to the console.
+// Services.prefs.setBoolPref("devtools.dump.emit", true);
+
 // Always reset some prefs to their original values after the test finishes.
 const gDefaultFilters = Services.prefs.getCharPref("devtools.netmonitor.filters");
 
@@ -67,6 +70,8 @@ registerCleanupFunction(() => {
 
   Services.prefs.setBoolPref("devtools.debugger.log", gEnableLogging);
   Services.prefs.setCharPref("devtools.netmonitor.filters", gDefaultFilters);
+  Services.prefs.clearUserPref("devtools.cache.disabled");
+  Services.prefs.clearUserPref("devtools.dump.emit");
 });
 
 function addTab(aUrl, aWindow) {
@@ -113,9 +118,13 @@ function reconfigureTab(aTarget, aOptions) {
   return deferred.promise;
 };
 
-function toggleCache(aTarget, aEnabled) {
-  let options = { cacheEnabled: aEnabled, performReload: true };
+function toggleCache(aTarget, aDisabled) {
+  let options = { cacheDisabled: aDisabled, performReload: true };
   let navigationFinished = waitForNavigation(aTarget);
+
+  // Disable the cache for any toolbox that it is opened from this point on.
+  Services.prefs.setBoolPref("devtools.cache.disabled", aDisabled);
+
   return reconfigureTab(aTarget, options).then(() => navigationFinished);
 }
 
@@ -132,8 +141,8 @@ function initNetMonitor(aUrl, aWindow) {
     yield target.makeRemote();
     info("Target remoted.");
 
-    yield toggleCache(target, false);
-    info("Network cache disabled");
+    yield toggleCache(target, true);
+    info("Cache disabled when the current and all future toolboxes are open.");
 
     let toolbox = yield gDevTools.showToolbox(target, "netmonitor");
     info("Netork monitor pane shown successfully.");
@@ -172,65 +181,74 @@ function waitForNetworkEvents(aMonitor, aGetRequests, aPostRequests = 0) {
   let deferred = promise.defer();
 
   let panel = aMonitor.panelWin;
+  let events = panel.EVENTS;
+  let menu = panel.NetMonitorView.RequestsMenu;
+
+  let progress = {};
   let genericEvents = 0;
   let postEvents = 0;
 
-  function onGenericEvent() {
+  let awaitedEventsToListeners = [
+    ["UPDATING_REQUEST_HEADERS", onGenericEvent],
+    ["RECEIVED_REQUEST_HEADERS", onGenericEvent],
+    ["UPDATING_REQUEST_COOKIES", onGenericEvent],
+    ["RECEIVED_REQUEST_COOKIES", onGenericEvent],
+    ["UPDATING_REQUEST_POST_DATA", onPostEvent],
+    ["RECEIVED_REQUEST_POST_DATA", onPostEvent],
+    ["UPDATING_RESPONSE_HEADERS", onGenericEvent],
+    ["RECEIVED_RESPONSE_HEADERS", onGenericEvent],
+    ["UPDATING_RESPONSE_COOKIES", onGenericEvent],
+    ["RECEIVED_RESPONSE_COOKIES", onGenericEvent],
+    ["STARTED_RECEIVING_RESPONSE", onGenericEvent],
+    ["UPDATING_RESPONSE_CONTENT", onGenericEvent],
+    ["RECEIVED_RESPONSE_CONTENT", onGenericEvent],
+    ["UPDATING_EVENT_TIMINGS", onGenericEvent],
+    ["RECEIVED_EVENT_TIMINGS", onGenericEvent]
+  ];
+
+  function initProgressForURL(url) {
+    if (progress[url]) return;
+    progress[url] = {};
+    awaitedEventsToListeners.forEach(([e]) => progress[url][e] = 0);
+  }
+
+  function updateProgressForURL(url, event) {
+    initProgressForURL(url);
+    progress[url][Object.keys(events).find(e => events[e] == event)] = 1;
+  }
+
+  function onGenericEvent(event, actor) {
     genericEvents++;
-    maybeResolve();
+    maybeResolve(event, actor);
   }
 
-  function onPostEvent() {
+  function onPostEvent(event, actor) {
     postEvents++;
-    maybeResolve();
+    maybeResolve(event, actor);
   }
 
-  function maybeResolve() {
+  function maybeResolve(event, actor) {
     info("> Network events progress: " +
       genericEvents + "/" + ((aGetRequests + aPostRequests) * 13) + ", " +
-      postEvents + "/" + (aPostRequests * 2));
+      postEvents + "/" + (aPostRequests * 2) + ", " +
+      "got " + event + " for " + actor);
+
+    let url = menu.getItemByValue(actor).attachment.url;
+    updateProgressForURL(url, event);
+    info("> Current state: " + JSON.stringify(progress, null, 2));
 
     // There are 15 updates which need to be fired for a request to be
-    // considered finished. RequestPostData isn't fired for non-POST requests.
+    // considered finished. The "requestPostData" packet isn't fired for
+    // non-POST requests.
     if (genericEvents == (aGetRequests + aPostRequests) * 13 &&
         postEvents == aPostRequests * 2) {
 
-      panel.off(panel.EVENTS.UPDATING_REQUEST_HEADERS, onGenericEvent);
-      panel.off(panel.EVENTS.RECEIVED_REQUEST_HEADERS, onGenericEvent);
-      panel.off(panel.EVENTS.UPDATING_REQUEST_COOKIES, onGenericEvent);
-      panel.off(panel.EVENTS.RECEIVED_REQUEST_COOKIES, onGenericEvent);
-      panel.off(panel.EVENTS.UPDATING_REQUEST_POST_DATA, onPostEvent);
-      panel.off(panel.EVENTS.RECEIVED_REQUEST_POST_DATA, onPostEvent);
-      panel.off(panel.EVENTS.UPDATING_RESPONSE_HEADERS, onGenericEvent);
-      panel.off(panel.EVENTS.RECEIVED_RESPONSE_HEADERS, onGenericEvent);
-      panel.off(panel.EVENTS.UPDATING_RESPONSE_COOKIES, onGenericEvent);
-      panel.off(panel.EVENTS.RECEIVED_RESPONSE_COOKIES, onGenericEvent);
-      panel.off(panel.EVENTS.STARTED_RECEIVING_RESPONSE, onGenericEvent);
-      panel.off(panel.EVENTS.UPDATING_RESPONSE_CONTENT, onGenericEvent);
-      panel.off(panel.EVENTS.RECEIVED_RESPONSE_CONTENT, onGenericEvent);
-      panel.off(panel.EVENTS.UPDATING_EVENT_TIMINGS, onGenericEvent);
-      panel.off(panel.EVENTS.RECEIVED_EVENT_TIMINGS, onGenericEvent);
-
+      awaitedEventsToListeners.forEach(([e, l]) => panel.off(events[e], l));
       executeSoon(deferred.resolve);
     }
   }
 
-  panel.on(panel.EVENTS.UPDATING_REQUEST_HEADERS, onGenericEvent);
-  panel.on(panel.EVENTS.RECEIVED_REQUEST_HEADERS, onGenericEvent);
-  panel.on(panel.EVENTS.UPDATING_REQUEST_COOKIES, onGenericEvent);
-  panel.on(panel.EVENTS.RECEIVED_REQUEST_COOKIES, onGenericEvent);
-  panel.on(panel.EVENTS.UPDATING_REQUEST_POST_DATA, onPostEvent);
-  panel.on(panel.EVENTS.RECEIVED_REQUEST_POST_DATA, onPostEvent);
-  panel.on(panel.EVENTS.UPDATING_RESPONSE_HEADERS, onGenericEvent);
-  panel.on(panel.EVENTS.RECEIVED_RESPONSE_HEADERS, onGenericEvent);
-  panel.on(panel.EVENTS.UPDATING_RESPONSE_COOKIES, onGenericEvent);
-  panel.on(panel.EVENTS.RECEIVED_RESPONSE_COOKIES, onGenericEvent);
-  panel.on(panel.EVENTS.STARTED_RECEIVING_RESPONSE, onGenericEvent);
-  panel.on(panel.EVENTS.UPDATING_RESPONSE_CONTENT, onGenericEvent);
-  panel.on(panel.EVENTS.RECEIVED_RESPONSE_CONTENT, onGenericEvent);
-  panel.on(panel.EVENTS.UPDATING_EVENT_TIMINGS, onGenericEvent);
-  panel.on(panel.EVENTS.RECEIVED_EVENT_TIMINGS, onGenericEvent);
-
+  awaitedEventsToListeners.forEach(([e, l]) => panel.on(events[e], l));
   return deferred.promise;
 }
 

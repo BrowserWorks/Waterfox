@@ -33,17 +33,17 @@ Navigator implements NavigatorFeatures;
 [NoInterfaceObject]
 interface NavigatorID {
   // WebKit/Blink/Trident/Presto support this (hardcoded "Mozilla").
-  [Constant]
+  [Constant, Cached]
   readonly attribute DOMString appCodeName; // constant "Mozilla"
-  [Constant]
+  [Constant, Cached]
   readonly attribute DOMString appName;
-  [Constant]
+  [Constant, Cached]
   readonly attribute DOMString appVersion;
-  [Constant]
+  [Constant, Cached]
   readonly attribute DOMString platform;
-  [Constant]
+  [Constant, Cached]
   readonly attribute DOMString userAgent;
-  [Constant]
+  [Constant, Cached]
   readonly attribute DOMString product; // constant "Gecko"
 
   // Everyone but WebKit/Blink supports this.  See bug 679971.
@@ -52,6 +52,11 @@ interface NavigatorID {
 
 [NoInterfaceObject]
 interface NavigatorLanguage {
+
+  // These 2 values are cached. They are updated when pref
+  // intl.accept_languages is changed.
+
+  [Pure, Cached]
   readonly attribute DOMString? language;
   [Pure, Cached, Frozen] readonly attribute sequence<DOMString> languages;
 };
@@ -83,7 +88,7 @@ interface NavigatorStorageUtils {
 
 [NoInterfaceObject]
 interface NavigatorFeatures {
-  [Func="Navigator::HasFeatureDetectionSupport"]
+  [CheckPermissions="feature-detection", Throws]
   Promise getFeature(DOMString name);
 };
 
@@ -252,12 +257,12 @@ partial interface Navigator {
   boolean mozIsLocallyAvailable(DOMString uri, boolean whenOffline);
 };
 
-// nsIDOMMozNavigatorMobileMessage
-interface MozMobileMessageManager;
+#ifdef MOZ_WEBSMS_BACKEND
 partial interface Navigator {
-  [Func="Navigator::HasMobileMessageSupport"]
+  [CheckPermissions="sms", Pref="dom.sms.enabled"]
   readonly attribute MozMobileMessageManager? mozMobileMessage;
 };
+#endif
 
 // NetworkInformation
 partial interface Navigator {
@@ -333,7 +338,7 @@ partial interface Navigator {
 #ifdef MOZ_TIME_MANAGER
 // nsIDOMMozNavigatorTime
 partial interface Navigator {
-  [Throws, Func="Navigator::HasTimeSupport"]
+  [Throws, CheckPermissions="time"]
   readonly attribute MozTimeManager mozTime;
 };
 #endif // MOZ_TIME_MANAGER

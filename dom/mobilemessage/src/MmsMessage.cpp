@@ -250,8 +250,11 @@ MmsMessage::Create(int32_t aId,
       return NS_ERROR_INVALID_ARG;
     }
 
-    nsDependentJSString receiverStr;
-    receiverStr.init(aCx, receiverJsVal.toString());
+    nsAutoJSString receiverStr;
+    if (!receiverStr.init(aCx, receiverJsVal.toString())) {
+      return NS_ERROR_FAILURE;
+    }
+
     receivers.AppendElement(receiverStr);
   }
 
@@ -382,7 +385,7 @@ MmsMessage::GetData(ContentParent* aParent,
     // doesn't have a valid last modified date, making the ContentParent
     // send a "Mystery Blob" to the ContentChild. Attempting to get the
     // last modified date of blob can force that value to be initialized.
-    nsDOMFileBase* file = static_cast<nsDOMFileBase*>(element.content.get());
+    DOMFile* file = static_cast<DOMFile*>(element.content.get());
     if (file->IsDateUnknown()) {
       uint64_t date;
       if (NS_FAILED(file->GetMozLastModifiedDate(&date))) {

@@ -10,9 +10,9 @@ import subprocess
 import runxpcshelltests as xpcshell
 import tempfile
 from automationutils import replaceBackSlashes
-from mozdevice import devicemanagerADB, devicemanagerSUT, devicemanager
 from zipfile import ZipFile
 import shutil
+import mozdevice
 import mozfile
 import mozinfo
 
@@ -126,14 +126,14 @@ class RemoteXPCShellTestThread(xpcshell.XPCShellTestThread):
             self.log.error("TEST-UNEXPECTED-FAIL | %s | Test timed out" % test_file)
         self.kill(proc)
 
-    def launchProcess(self, cmd, stdout, stderr, env, cwd):
+    def launchProcess(self, cmd, stdout, stderr, env, cwd, timeout=None):
         self.timedout = False
         cmd.insert(1, self.remoteHere)
         outputFile = "xpcshelloutput"
         with open(outputFile, 'w+') as f:
             try:
-                self.shellReturnCode = self.device.shell(cmd, f)
-            except devicemanager.DMError as e:
+                self.shellReturnCode = self.device.shell(cmd, f, timeout=timeout+10)
+            except mozdevice.DMError as e:
                 if self.timedout:
                     # If the test timed out, there is a good chance the SUTagent also
                     # timed out and failed to return a return code, generating a
@@ -224,7 +224,7 @@ class XPCShellRemote(xpcshell.XPCShellTests, object):
         self.options = options
         self.device = devmgr
         self.pathMapping = []
-        self.remoteTestRoot = self.device.getTestRoot("xpcshell")
+        self.remoteTestRoot = "%s/xpcshell" % self.device.deviceRoot
         # remoteBinDir contains xpcshell and its wrapper script, both of which must
         # be executable. Since +x permissions cannot usually be set on /mnt/sdcard,
         # and the test root may be on /mnt/sdcard, remoteBinDir is set to be on
@@ -343,7 +343,7 @@ class XPCShellRemote(xpcshell.XPCShellTests, object):
             # device.mkDir may fail here where shellCheckOutput may succeed -- see bug 817235
             try:
                 self.device.shellCheckOutput(["mkdir", self.remoteBinDir]);
-            except devicemanager.DMError:
+            except mozdevice.DMError:
                 # Might get a permission error; try again as root, if available
                 self.device.shellCheckOutput(["mkdir", self.remoteBinDir], root=True);
                 self.device.shellCheckOutput(["chmod", "777", self.remoteBinDir], root=True);
@@ -593,16 +593,16 @@ def main():
              or: %s --manifest=test.manifest """ % (sys.argv[0], sys.argv[0])
         sys.exit(1)
 
-    if (options.dm_trans == "adb"):
-        if (options.deviceIP):
-            dm = devicemanagerADB.DeviceManagerADB(options.deviceIP, options.devicePort, packageName=None, deviceRoot=options.remoteTestRoot)
+    if options.dm_trans == "adb":
+        if options.deviceIP:
+            dm = mozdevice.DroidADB(options.deviceIP, options.devicePort, packageName=None, deviceRoot=options.remoteTestRoot)
         else:
-            dm = devicemanagerADB.DeviceManagerADB(packageName=None, deviceRoot=options.remoteTestRoot)
+            dm = mozdevice.DroidADB(packageName=None, deviceRoot=options.remoteTestRoot)
     else:
-        dm = devicemanagerSUT.DeviceManagerSUT(options.deviceIP, options.devicePort, deviceRoot=options.remoteTestRoot)
-        if (options.deviceIP == None):
+        if not options.deviceIP:
             print "Error: you must provide a device IP to connect to via the --device option"
             sys.exit(1)
+        dm = mozdevice.DroidSUT(options.deviceIP, options.devicePort, deviceRoot=options.remoteTestRoot)
 
     if options.interactive and not options.testPath:
         print >>sys.stderr, "Error: You must specify a test filename in interactive mode!"

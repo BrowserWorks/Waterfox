@@ -32,7 +32,7 @@ nsSVGElement::LengthInfo SVGCircleElement::sLengthInfo[3] =
 //----------------------------------------------------------------------
 // Implementation
 
-SVGCircleElement::SVGCircleElement(already_AddRefed<nsINodeInfo>& aNodeInfo)
+SVGCircleElement::SVGCircleElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
   : SVGCircleElementBase(aNodeInfo)
 {
 }
@@ -94,7 +94,7 @@ SVGCircleElement::ConstructPath(gfxContext *aCtx)
 }
 
 TemporaryRef<Path>
-SVGCircleElement::BuildPath()
+SVGCircleElement::BuildPath(PathBuilder* aBuilder)
 {
   float x, y, r;
   GetAnimatedLengthValues(&x, &y, &r, nullptr);
@@ -103,7 +103,7 @@ SVGCircleElement::BuildPath()
     return nullptr;
   }
 
-  RefPtr<PathBuilder> pathBuilder = CreatePathBuilder();
+  RefPtr<PathBuilder> pathBuilder = aBuilder ? aBuilder : CreatePathBuilder();
 
   pathBuilder->Arc(Point(x, y), r, 0, Float(2*M_PI));
 

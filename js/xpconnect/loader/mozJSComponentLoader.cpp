@@ -38,12 +38,14 @@
 #include "nsDOMBlobBuilder.h"
 #include "jsprf.h"
 #include "nsJSPrincipals.h"
+#include "nsJSUtils.h"
 #include "xpcprivate.h"
 #include "xpcpublic.h"
 #include "nsContentUtils.h"
 #include "nsCxPusher.h"
 #include "WrapperFactory.h"
 
+#include "mozilla/AddonPathService.h"
 #include "mozilla/scache/StartupCache.h"
 #include "mozilla/scache/StartupCacheUtils.h"
 #include "mozilla/MacroForEach.h"
@@ -110,26 +112,26 @@ Dump(JSContext *cx, unsigned argc, Value *vp)
     if (args.length() == 0)
         return true;
 
-    JSString *str = JS::ToString(cx, args[0]);
+    RootedString str(cx, JS::ToString(cx, args[0]));
     if (!str)
         return false;
 
-    size_t length;
-    const jschar *chars = JS_GetStringCharsAndLength(cx, str, &length);
-    if (!chars)
+    JSAutoByteString utf8str;
+    if (!utf8str.encodeUtf8(cx, str))
         return false;
 
-    NS_ConvertUTF16toUTF8 utf8str(reinterpret_cast<const char16_t*>(chars),
-                                  length);
 #ifdef ANDROID
-    __android_log_print(ANDROID_LOG_INFO, "Gecko", "%s", utf8str.get());
+    __android_log_print(ANDROID_LOG_INFO, "Gecko", "%s", utf8str.ptr());
 #endif
 #ifdef XP_WIN
     if (IsDebuggerPresent()) {
-      OutputDebugStringW(reinterpret_cast<const wchar_t*>(chars));
+        nsAutoJSString wstr;
+        if (!wstr.init(cx, str))
+            return false;
+        OutputDebugStringW(wstr.get());
     }
 #endif
-    fputs(utf8str.get(), stdout);
+    fputs(utf8str.ptr(), stdout);
     fflush(stdout);
     return true;
 }
@@ -155,7 +157,7 @@ File(JSContext *cx, unsigned argc, Value *vp)
     }
 
     nsCOMPtr<nsISupports> native;
-    nsresult rv = nsDOMMultipartFile::NewFile(getter_AddRefs(native));
+    nsresult rv = DOMMultipartFileImpl::NewFile(getter_AddRefs(native));
     if (NS_FAILED(rv)) {
         XPCThrower::Throw(rv, cx);
         return false;
@@ -190,7 +192,7 @@ Blob(JSContext *cx, unsigned argc, Value *vp)
     CallArgs args = CallArgsFromVp(argc, vp);
 
     nsCOMPtr<nsISupports> native;
-    nsresult rv = nsDOMMultipartFile::NewBlob(getter_AddRefs(native));
+    nsresult rv = DOMMultipartFileImpl::NewBlob(getter_AddRefs(native));
     if (NS_FAILED(rv)) {
         XPCThrower::Throw(rv, cx);
         return false;
@@ -682,7 +684,9 @@ mozJSComponentLoader::PrepareObjectForLocation(JSCLContextHelper& aCx,
 
         CompartmentOptions options;
         options.setZone(SystemZone)
-               .setVersion(JSVERSION_LATEST);
+               .setVersion(JSVERSION_LATEST)
+               .setAddonId(aReuseLoaderGlobal ? nullptr : MapURIToAddonID(aURI));
+
         // Defer firing OnNewGlobalObject until after the __URI__ property has
         // been defined so the JS debugger can tell what module the global is
         // for
@@ -898,12 +902,11 @@ mozJSComponentLoader::ObjectForLocation(ComponentLoaderInfo &aInfo,
             }
 
             if (!mReuseLoaderGlobal) {
-                script = Compile(cx, obj, options, buf,
-                                     fileSize32);
+                Compile(cx, obj, options, buf, fileSize32, &script);
             } else {
-                function = CompileFunction(cx, obj, options,
-                                               nullptr, 0, nullptr,
-                                               buf, fileSize32);
+                CompileFunction(cx, obj, options,
+                                nullptr, 0, nullptr,
+                                buf, fileSize32, &function);
             }
 
             PR_MemUnmap(buf, fileSize32);
@@ -985,11 +988,11 @@ mozJSComponentLoader::ObjectForLocation(ComponentLoaderInfo &aInfo,
             buf[len] = '\0';
 
             if (!mReuseLoaderGlobal) {
-                script = Compile(cx, obj, options, buf, bytesRead);
+                Compile(cx, obj, options, buf, bytesRead, &script);
             } else {
-                function = CompileFunction(cx, obj, options,
-                                               nullptr, 0, nullptr,
-                                               buf, bytesRead);
+                CompileFunction(cx, obj, options,
+                                nullptr, 0, nullptr,
+                                buf, bytesRead, &function);
             }
         }
         // Propagate the exception, if one exists. Also, don't leave the stale

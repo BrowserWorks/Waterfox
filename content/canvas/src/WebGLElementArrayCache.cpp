@@ -7,6 +7,7 @@
 
 #include "mozilla/Assertions.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/MathAlgorithms.h"
 
 #include <cstdlib>
 #include <cstring>
@@ -16,20 +17,9 @@
 namespace mozilla {
 
 static void
-SetUpperBound(uint32_t* out_upperBound, uint32_t newBound)
-{
-  if (!out_upperBound)
-      return;
-
-  *out_upperBound = newBound;
-}
-
-static void
 UpdateUpperBound(uint32_t* out_upperBound, uint32_t newBound)
 {
-  if (!out_upperBound)
-      return;
-
+  MOZ_ASSERT(out_upperBound);
   *out_upperBound = std::max(*out_upperBound, newBound);
 }
 
@@ -293,16 +283,6 @@ public:
     }
   }
 
-  template<typename U>
-  static U NextPowerOfTwo(U x) {
-    U result = 1;
-    while (result < x)
-      result <<= 1;
-    MOZ_ASSERT(result >= x);
-    MOZ_ASSERT((result & (result - 1)) == 0);
-    return result;
-  }
-
   // Updates the tree from the parent's buffer contents. Fallible, as it
   // may have to resize the tree storage.
   bool Update(size_t firstByte, size_t lastByte);
@@ -365,7 +345,7 @@ bool WebGLElementArrayCacheTree<T>::Update(size_t firstByte, size_t lastByte)
     // is as follows:
     size_t numLeavesNonPOT = (numberOfElements + sElementsPerLeaf - 1) / sElementsPerLeaf;
     // It only remains to round that up to the next power of two:
-    requiredNumLeaves = NextPowerOfTwo(numLeavesNonPOT);
+    requiredNumLeaves = RoundUpPow2(numLeavesNonPOT);
   }
 
   // Step #0: if needed, resize our tree data storage.
@@ -498,12 +478,12 @@ bool
 WebGLElementArrayCache::Validate(uint32_t maxAllowed, size_t firstElement,
                                  size_t countElements, uint32_t* out_upperBound)
 {
-  SetUpperBound(out_upperBound, 0);
+  *out_upperBound = 0;
 
   // if maxAllowed is >= the max T value, then there is no way that a T index could be invalid
   uint32_t maxTSize = std::numeric_limits<T>::max();
   if (maxAllowed >= maxTSize) {
-    SetUpperBound(out_upperBound, maxTSize);
+    UpdateUpperBound(out_upperBound, maxTSize);
     return true;
   }
 
@@ -537,7 +517,7 @@ WebGLElementArrayCache::Validate(uint32_t maxAllowed, size_t firstElement,
   T globalMax = tree->GlobalMaximum();
   if (globalMax <= maxAllowedT)
   {
-    SetUpperBound(out_upperBound, globalMax);
+    UpdateUpperBound(out_upperBound, globalMax);
     return true;
   }
 

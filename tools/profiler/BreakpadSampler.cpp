@@ -73,7 +73,7 @@ void genProfileEntry(/*MODIFIED*/UnwinderThreadBuffer* utb,
   // Add a pseudostack-entry start label
   utb__addEntry( utb, ProfileEntry('h', 'P') );
   // And the SP value, if it is non-zero
-  if (entry.stackAddress() != 0) {
+  if (entry.isCpp() && entry.stackAddress() != 0) {
     utb__addEntry( utb, ProfileEntry('S', entry.stackAddress()) );
   }
 
@@ -117,7 +117,9 @@ void genProfileEntry(/*MODIFIED*/UnwinderThreadBuffer* utb,
     }
   } else {
     utb__addEntry( utb, ProfileEntry('c', sampleLabel) );
-    lineno = entry.line();
+    if (entry.isCpp()) {
+      lineno = entry.line();
+    }
   }
   if (lineno != -1) {
     utb__addEntry( utb, ProfileEntry('n', lineno) );
@@ -157,6 +159,7 @@ void populateBuffer(UnwinderThreadBuffer* utb, TickSample* sample,
 {
   ThreadProfile& sampledThreadProfile = *sample->threadProfile;
   PseudoStack* stack = sampledThreadProfile.GetPseudoStack();
+  stack->updateGeneration(sampledThreadProfile.GetGenerationID());
 
   /* Manufacture the ProfileEntries that we will give to the unwinder
      thread, and park them in |utb|. */
@@ -178,7 +181,6 @@ void populateBuffer(UnwinderThreadBuffer* utb, TickSample* sample,
       stack->addStoredMarker(marker);
       utb__addEntry( utb, ProfileEntry('m', marker) );
     }
-    stack->updateGeneration(sampledThreadProfile.GetGenerationID());
     if (jankOnly) {
       // if we are on a different event we can discard any temporary samples
       // we've kept around
@@ -194,7 +196,7 @@ void populateBuffer(UnwinderThreadBuffer* utb, TickSample* sample,
       // only record the events when we have a we haven't seen a tracer
       // event for 100ms
       if (!sLastTracerEvent.IsNull()) {
-        TimeDuration delta = sample->timestamp - sLastTracerEvent;
+        mozilla::TimeDuration delta = sample->timestamp - sLastTracerEvent;
         if (delta.ToMilliseconds() > 100.0) {
             recordSample = true;
         }
@@ -234,12 +236,12 @@ void populateBuffer(UnwinderThreadBuffer* utb, TickSample* sample,
 
   // Add any extras
   if (!sLastTracerEvent.IsNull() && sample) {
-    TimeDuration delta = sample->timestamp - sLastTracerEvent;
+    mozilla::TimeDuration delta = sample->timestamp - sLastTracerEvent;
     utb__addEntry( utb, ProfileEntry('r', static_cast<float>(delta.ToMilliseconds())) );
   }
 
   if (sample) {
-    TimeDuration delta = sample->timestamp - sStartTime;
+    mozilla::TimeDuration delta = sample->timestamp - sStartTime;
     utb__addEntry( utb, ProfileEntry('t', static_cast<float>(delta.ToMilliseconds())) );
   }
 

@@ -91,7 +91,6 @@ public:
     NS_IMETHOD GetRequestMethod(nsACString& aMethod);
 
     nsHttpChannel();
-    virtual ~nsHttpChannel();
 
     virtual nsresult Init(nsIURI *aURI, uint32_t aCaps, nsProxyInfo *aProxyInfo,
                           uint32_t aProxyResolveFlags,
@@ -103,7 +102,6 @@ public:
     NS_IMETHOD Cancel(nsresult status);
     NS_IMETHOD Suspend();
     NS_IMETHOD Resume();
-    NS_IMETHOD IsPending(bool *aIsPending);
     // nsIChannel
     NS_IMETHOD GetSecurityInfo(nsISupports **aSecurityInfo);
     NS_IMETHOD AsyncOpen(nsIStreamListener *listener, nsISupports *aContext);
@@ -189,7 +187,8 @@ public: /* internal necko use only */
       uint32_t mKeep : 2;
     };
 
-    void ForcePending(bool aForcePending);
+protected:
+    virtual ~nsHttpChannel();
 
 private:
     typedef nsresult (nsHttpChannel::*nsContinueRedirectionFunc)(nsresult result);
@@ -327,9 +326,11 @@ private:
     bool MustValidateBasedOnQueryUrl() const;
     bool IsResumable(int64_t partialLen, int64_t contentLength,
                      bool ignoreMissingPartialLen = false) const;
-    nsresult MaybeSetupByteRangeRequest(int64_t partialLen, int64_t contentLength);
+    nsresult MaybeSetupByteRangeRequest(int64_t partialLen, int64_t contentLength,
+                                        bool ignoreMissingPartialLen = false);
     nsresult SetupByteRangeRequest(int64_t partialLen);
-    nsresult OpenCacheInputStream(nsICacheEntry* cacheEntry, bool startBuffering);
+    nsresult OpenCacheInputStream(nsICacheEntry* cacheEntry, bool startBuffering,
+                                  bool checkingAppCacheEntry);
 
 private:
     nsCOMPtr<nsISupports>             mSecurityInfo;
@@ -422,9 +423,6 @@ protected:
 
 private: // cache telemetry
     bool mDidReval;
-
-private:
-    bool mForcePending;
 };
 
 } } // namespace mozilla::net

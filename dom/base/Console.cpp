@@ -15,6 +15,7 @@
 #include "nsGlobalWindow.h"
 #include "nsJSUtils.h"
 #include "nsPerformance.h"
+#include "ScriptSettings.h"
 #include "WorkerPrivate.h"
 #include "WorkerRunnable.h"
 #include "xpcprivate.h"
@@ -106,7 +107,7 @@ ConsoleStructuredCloneCallbacksWrite(JSContext* aCx,
     return false;
   }
 
-  nsDependentJSString string;
+  nsAutoJSString string;
   if (!string.init(aCx, jsString)) {
     return false;
   }
@@ -323,14 +324,18 @@ private:
       wp = wp->GetParent();
     }
 
-    AutoPushJSContext cx(wp->ParentJSContext());
-    ClearException ce(cx);
-
     nsPIDOMWindow* window = wp->GetWindow();
     NS_ENSURE_TRUE_VOID(window);
 
     nsRefPtr<nsGlobalWindow> win = static_cast<nsGlobalWindow*>(window);
     NS_ENSURE_TRUE_VOID(win);
+
+    AutoJSAPI jsapi;
+    if (NS_WARN_IF(!jsapi.Init(win))) {
+      return;
+    }
+    JSContext* cx = jsapi.cx();
+    ClearException ce(cx);
 
     ErrorResult error;
     nsRefPtr<Console> console = win->GetConsole(error);
@@ -432,18 +437,18 @@ private:
       wp = wp->GetParent();
     }
 
-    AutoPushJSContext cx(wp->ParentJSContext());
-    ClearException ce(cx);
-
-    JS::Rooted<JSObject*> global(cx, JS::CurrentGlobalOrNull(cx));
-    NS_ENSURE_TRUE_VOID(global);
-    JSAutoCompartment ac(cx, global);
-
     nsPIDOMWindow* window = wp->GetWindow();
     NS_ENSURE_TRUE_VOID(window);
 
     nsRefPtr<nsGlobalWindow> win = static_cast<nsGlobalWindow*>(window);
     NS_ENSURE_TRUE_VOID(win);
+
+    AutoJSAPI jsapi;
+    if (NS_WARN_IF(!jsapi.Init(win))) {
+      return;
+    }
+    JSContext* cx = jsapi.cx();
+    ClearException ce(cx);
 
     ErrorResult error;
     nsRefPtr<Console> console = win->GetConsole(error);
@@ -697,7 +702,7 @@ Console::ProfileMethod(JSContext* aCx, const nsAString& aAction,
   }
 
   JS::Rooted<JS::Value> eventValue(aCx);
-  if (!event.ToObject(aCx, &eventValue)) {
+  if (!ToJSValue(aCx, event, &eventValue)) {
     return;
   }
 
@@ -907,7 +912,7 @@ Console::Method(JSContext* aCx, MethodName aMethodName,
 
       ErrorResult rv;
       nsRefPtr<nsPerformance> performance = win->GetPerformance(rv);
-      if (rv.Failed()) {
+      if (rv.Failed() || !performance) {
         return;
       }
 
@@ -1111,7 +1116,7 @@ Console::ProcessCallData(ConsoleCallData* aData)
   JSAutoCompartment ac2(cx, xpc::GetJunkScope());
 
   JS::Rooted<JS::Value> eventValue(cx);
-  if (!event.ToObject(cx, &eventValue)) {
+  if (!ToJSValue(cx, event, &eventValue)) {
     return;
   }
 
@@ -1222,7 +1227,7 @@ Console::ProcessArguments(JSContext* aCx,
     return;
   }
 
-  nsDependentJSString string;
+  nsAutoJSString string;
   if (!string.init(aCx, jsString)) {
     return;
   }
@@ -1373,7 +1378,7 @@ Console::ProcessArguments(JSContext* aCx,
             return;
           }
 
-          nsDependentJSString v;
+          nsAutoJSString v;
           if (!v.init(aCx, jsString)) {
             return;
           }
@@ -1468,7 +1473,7 @@ Console::ComposeGroupName(JSContext* aCx,
       return;
     }
 
-    nsDependentJSString string;
+    nsAutoJSString string;
     if (!string.init(aCx, jsString)) {
       return;
     }
@@ -1485,7 +1490,7 @@ Console::StartTimer(JSContext* aCx, const JS::Value& aName,
     RootedDictionary<ConsoleTimerError> error(aCx);
 
     JS::Rooted<JS::Value> value(aCx);
-    if (!error.ToObject(aCx, &value)) {
+    if (!ToJSValue(aCx, error, &value)) {
       return JS::UndefinedValue();
     }
 
@@ -1500,7 +1505,7 @@ Console::StartTimer(JSContext* aCx, const JS::Value& aName,
     return JS::UndefinedValue();
   }
 
-  nsDependentJSString key;
+  nsAutoJSString key;
   if (!key.init(aCx, jsString)) {
     return JS::UndefinedValue();
   }
@@ -1517,7 +1522,7 @@ Console::StartTimer(JSContext* aCx, const JS::Value& aName,
   timer.mStarted = aTimestamp;
 
   JS::Rooted<JS::Value> value(aCx);
-  if (!timer.ToObject(aCx, &value)) {
+  if (!ToJSValue(aCx, timer, &value)) {
     return JS::UndefinedValue();
   }
 
@@ -1534,7 +1539,7 @@ Console::StopTimer(JSContext* aCx, const JS::Value& aName,
     return JS::UndefinedValue();
   }
 
-  nsDependentJSString key;
+  nsAutoJSString key;
   if (!key.init(aCx, jsString)) {
     return JS::UndefinedValue();
   }
@@ -1551,7 +1556,7 @@ Console::StopTimer(JSContext* aCx, const JS::Value& aName,
   timer.mDuration = aTimestamp - entry;
 
   JS::Rooted<JS::Value> value(aCx);
-  if (!timer.ToObject(aCx, &value)) {
+  if (!ToJSValue(aCx, timer, &value)) {
     return JS::UndefinedValue();
   }
 
@@ -1580,7 +1585,7 @@ Console::IncreaseCounter(JSContext* aCx, const ConsoleStackEntry& aFrame,
     JS::Rooted<JS::Value> labelValue(aCx, aArguments[0]);
     JS::Rooted<JSString*> jsString(aCx, JS::ToString(aCx, labelValue));
 
-    nsDependentJSString string;
+    nsAutoJSString string;
     if (jsString && string.init(aCx, jsString)) {
       label = string;
       key = string;
@@ -1599,7 +1604,7 @@ Console::IncreaseCounter(JSContext* aCx, const ConsoleStackEntry& aFrame,
       RootedDictionary<ConsoleCounterError> error(aCx);
 
       JS::Rooted<JS::Value> value(aCx);
-      if (!error.ToObject(aCx, &value)) {
+      if (!ToJSValue(aCx, error, &value)) {
         return JS::UndefinedValue();
       }
 
@@ -1615,7 +1620,7 @@ Console::IncreaseCounter(JSContext* aCx, const ConsoleStackEntry& aFrame,
   data.mCount = count;
 
   JS::Rooted<JS::Value> value(aCx);
-  if (!data.ToObject(aCx, &value)) {
+  if (!ToJSValue(aCx, data, &value)) {
     return JS::UndefinedValue();
   }
 

@@ -23,6 +23,7 @@
 #include "mozilla/DebugOnly.h"          // for DebugOnly
 #include "mozilla/EventForwards.h"      // for nsPaintEvent
 #include "mozilla/RefPtr.h"             // for TemporaryRef
+#include "mozilla/StyleAnimationValue.h" // for StyleAnimationValue, etc
 #include "mozilla/TimeStamp.h"          // for TimeStamp, TimeDuration
 #include "mozilla/gfx/BaseMargin.h"     // for BaseMargin
 #include "mozilla/gfx/BasePoint.h"      // for BasePoint
@@ -40,7 +41,6 @@
 #include "nsRegion.h"                   // for nsIntRegion
 #include "nsSize.h"                     // for nsIntSize
 #include "nsString.h"                   // for nsCString
-#include "nsStyleAnimation.h"           // for nsStyleAnimation::Value, etc
 #include "nsTArray.h"                   // for nsTArray
 #include "nsTArrayForwardDeclare.h"     // for InfallibleTArray
 #include "nscore.h"                     // for nsACString, nsAString
@@ -54,15 +54,16 @@ extern uint8_t gLayerManagerLayerBuilder;
 namespace mozilla {
 
 class FrameLayerBuilder;
+class StyleAnimationValue;
 class WebGLContext;
 
 namespace gl {
 class GLContext;
+class SurfaceStream;
 }
 
 namespace gfx {
 class DrawTarget;
-class SurfaceStream;
 }
 
 namespace css {
@@ -78,6 +79,7 @@ namespace layers {
 class Animation;
 class AnimationData;
 class AsyncPanZoomController;
+class ClientLayerManager;
 class CommonLayerAttributes;
 class Layer;
 class ThebesLayer;
@@ -203,11 +205,15 @@ public:
   virtual LayerManagerComposite* AsLayerManagerComposite()
   { return nullptr; }
 
+  virtual ClientLayerManager* AsClientLayerManager()
+  { return nullptr; }
+
   /**
    * Returns true if this LayerManager is owned by an nsIWidget,
    * and is used for drawing into the widget.
    */
   virtual bool IsWidgetLayerManager() { return true; }
+  virtual bool IsInactiveLayerManager() { return false; }
 
   /**
    * Start a new transaction. Nested transactions are not allowed so
@@ -302,12 +308,20 @@ public:
 
   bool IsSnappingEffectiveTransforms() { return mSnapEffectiveTransforms; }
 
+
+  /**
+   * Returns true if the layer manager can't render component alpha
+   * layers, and layer building should do it's best to avoid
+   * creating them.
+   */
+  virtual bool ShouldAvoidComponentAlphaLayers() { return false; }
+
   /**
    * Returns true if this LayerManager can properly support layers with
-   * SurfaceMode::SURFACE_COMPONENT_ALPHA. This can include disabling component
-   * alpha if required.
+   * SurfaceMode::SURFACE_COMPONENT_ALPHA. LayerManagers that can't will use
+   * transparent surfaces (and lose subpixel-AA for text).
    */
-  virtual bool AreComponentAlphaLayersEnabled() { return true; }
+  virtual bool AreComponentAlphaLayersEnabled();
 
   /**
    * CONSTRUCTION PHASE ONLY
@@ -553,14 +567,29 @@ public:
 
   /**
    * Dump information about this layer manager and its managed tree to
-   * aFile, which defaults to stderr.
+   * aStream.
    */
-  void Dump(FILE* aFile=nullptr, const char* aPrefix="", bool aDumpHtml=false);
+  void Dump(std::stringstream& aStream, const char* aPrefix="", bool aDumpHtml=false);
   /**
-   * Dump information about just this layer manager itself to aFile,
-   * which defaults to stderr.
+   * Dump information about just this layer manager itself to aStream
    */
-  void DumpSelf(FILE* aFile=nullptr, const char* aPrefix="");
+  void DumpSelf(std::stringstream& aStream, const char* aPrefix="");
+  void Dump() {
+    std::stringstream ss;
+    Dump(ss);
+    char line[1024];
+    while (!ss.eof()) {
+      ss.getline(line, sizeof(line));
+      if (!ss.eof() || strlen(line) > 0) {
+        printf_stderr("%s\n", line);
+      }
+      if (ss.fail()) {
+        // line was too long, skip to next newline
+        ss.clear();
+        ss.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+      }
+    }
+  }
 
   /**
    * Log information about this layer manager and its managed tree to
@@ -646,9 +675,9 @@ protected:
   // Protected destructor, to discourage deletion outside of Release():
   virtual ~LayerManager() {}
 
-  // Print interesting information about this into aTo.  Internally
+  // Print interesting information about this into aStreamo.  Internally
   // used to implement Dump*() and Log*().
-  virtual nsACString& PrintInfo(nsACString& aTo, const char* aPrefix);
+  virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix);
 
   static void InitLog();
   static PRLogModuleInfo* sLog;
@@ -678,8 +707,8 @@ private:
 typedef InfallibleTArray<Animation> AnimationArray;
 
 struct AnimData {
-  InfallibleTArray<nsStyleAnimation::Value> mStartValues;
-  InfallibleTArray<nsStyleAnimation::Value> mEndValues;
+  InfallibleTArray<mozilla::StyleAnimationValue> mStartValues;
+  InfallibleTArray<mozilla::StyleAnimationValue> mEndValues;
   InfallibleTArray<nsAutoPtr<mozilla::css::ComputedTimingFunction> > mFunctions;
 };
 
@@ -727,22 +756,28 @@ public:
     CONTENT_COMPONENT_ALPHA = 0x02,
 
     /**
+     * If this is set then one of the descendant layers of this one has
+     * CONTENT_COMPONENT_ALPHA set.
+     */
+    CONTENT_COMPONENT_ALPHA_DESCENDANT = 0x04,
+
+    /**
      * If this is set then this layer is part of a preserve-3d group, and should
      * be sorted with sibling layers that are also part of the same group.
      */
-    CONTENT_PRESERVE_3D = 0x04,
+    CONTENT_PRESERVE_3D = 0x08,
     /**
      * This indicates that the transform may be changed on during an empty
      * transaction where there is no possibility of redrawing the content, so the
      * implementation should be ready for that.
      */
-    CONTENT_MAY_CHANGE_TRANSFORM = 0x08,
+    CONTENT_MAY_CHANGE_TRANSFORM = 0x10,
 
     /**
      * Disable subpixel AA for this layer. This is used if the display isn't suited
      * for subpixel AA like hidpi or rotated content.
      */
-    CONTENT_DISABLE_SUBPIXEL_AA = 0x10
+    CONTENT_DISABLE_SUBPIXEL_AA = 0x20
   };
   /**
    * CONSTRUCTION PHASE ONLY
@@ -838,7 +873,7 @@ public:
       Mutated();
     }
   }
-  
+
   void DeprecatedSetMixBlendMode(gfxContext::GraphicsOperator aMixBlendMode)
   {
     SetMixBlendMode(gfx::CompositionOpForOp(aMixBlendMode));
@@ -852,7 +887,7 @@ public:
       Mutated();
     }
   }
-  
+
   bool GetForceIsolatedGroup() const
   {
     return mForceIsolatedGroup;
@@ -1256,13 +1291,13 @@ public:
    * to and excluding the nearest ancestor that has UseIntermediateSurface() set.
    */
   float GetEffectiveOpacity();
-  
+
   /**
    * Returns the blendmode of this layer.
    */
   gfx::CompositionOp GetEffectiveMixBlendMode();
   gfxContext::GraphicsOperator DeprecatedGetEffectiveMixBlendMode();
-  
+
   /**
    * This returns the effective transform computed by
    * ComputeEffectiveTransforms. Typically this is a transform that transforms
@@ -1323,14 +1358,13 @@ public:
 
   /**
    * Dump information about this layer manager and its managed tree to
-   * aFile, which defaults to stderr.
+   * aStream.
    */
-  void Dump(FILE* aFile=nullptr, const char* aPrefix="", bool aDumpHtml=false);
+  void Dump(std::stringstream& aStream, const char* aPrefix="", bool aDumpHtml=false);
   /**
-   * Dump information about just this layer manager itself to aFile,
-   * which defaults to stderr.
+   * Dump information about just this layer manager itself to aStream.
    */
-  void DumpSelf(FILE* aFile=nullptr, const char* aPrefix="");
+  void DumpSelf(std::stringstream& aStream, const char* aPrefix="");
 
   /**
    * Log information about this layer manager and its managed tree to
@@ -1343,12 +1377,12 @@ public:
    */
   void LogSelf(const char* aPrefix="");
 
-  // Print interesting information about this into aTo.  Internally
-  // used to implement Dump*() and Log*().  If subclasses have
+  // Print interesting information about this into aStream. Internally
+  // used to implement Dump*() and Log*(). If subclasses have
   // additional interesting properties, they should override this with
   // an implementation that first calls the base implementation then
   // appends additional info to aTo.
-  virtual nsACString& PrintInfo(nsACString& aTo, const char* aPrefix);
+  virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix);
 
   static bool IsLogEnabled() { return LayerManager::IsLogEnabled(); }
 
@@ -1389,6 +1423,8 @@ public:
   {
     mManager->Mutated(this);
   }
+
+  virtual int32_t GetMaxLayerSize() { return Manager()->GetMaxTextureSize(); }
 
 protected:
   Layer(LayerManager* aManager, void* aImplData);
@@ -1582,7 +1618,7 @@ protected:
     mContentFlags = 0; // Clear NO_TEXT, NO_TEXT_OVER_TRANSPARENT
   }
 
-  virtual nsACString& PrintInfo(nsACString& aTo, const char* aPrefix);
+  virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix);
 
   /**
    * ComputeEffectiveTransforms snaps the ideal transform to get mEffectiveTransform.
@@ -1726,7 +1762,7 @@ public:
   float GetPreYScale() const { return mPreYScale; }
   float GetInheritedXScale() const { return mInheritedXScale; }
   float GetInheritedYScale() const { return mInheritedYScale; }
-  
+
   gfxRGBA GetBackgroundColor() const { return mBackgroundColor; }
 
   MOZ_LAYER_DECL_NAME("ContainerLayer", TYPE_CONTAINER)
@@ -1801,7 +1837,7 @@ protected:
    */
   void ComputeEffectiveTransformsForChildren(const gfx::Matrix4x4& aTransformToSurface);
 
-  virtual nsACString& PrintInfo(nsACString& aTo, const char* aPrefix);
+  virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix);
 
   Layer* mFirstChild;
   Layer* mLastChild;
@@ -1876,7 +1912,7 @@ protected:
       mColor(0.0, 0.0, 0.0, 0.0)
   {}
 
-  virtual nsACString& PrintInfo(nsACString& aTo, const char* aPrefix);
+  virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix);
 
   nsIntRect mBounds;
   gfxRGBA mColor;
@@ -1902,15 +1938,15 @@ public:
       , mTexID(0)
       , mSize(0,0)
       , mHasAlpha(false)
-      , mIsGLAlphaPremult(false)
+      , mIsGLAlphaPremult(true)
     { }
 
     // One of these two must be specified for Canvas2D, but never both
-    mozilla::gfx::DrawTarget *mDrawTarget; // a DrawTarget for the canvas contents
+    mozilla::gfx::DrawTarget* mDrawTarget; // a DrawTarget for the canvas contents
     mozilla::gl::GLContext* mGLContext; // or this, for GL.
 
     // Canvas/SkiaGL uses this
-    mozilla::gfx::SurfaceStream* mStream;
+    mozilla::gl::SurfaceStream* mStream;
 
     // ID of the texture backing the canvas layer (defaults to 0)
     uint32_t mTexID;
@@ -2035,7 +2071,7 @@ protected:
     , mDirty(false)
   {}
 
-  virtual nsACString& PrintInfo(nsACString& aTo, const char* aPrefix);
+  virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix);
 
   void FireDidTransactionCallback()
   {
@@ -2152,14 +2188,13 @@ protected:
     : ContainerLayer(aManager, aImplData) , mId(0)
   {}
 
-  virtual nsACString& PrintInfo(nsACString& aTo, const char* aPrefix);
+  virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix);
 
   Layer* mTempReferent;
   // 0 is a special value that means "no ID".
   uint64_t mId;
 };
 
-void SetAntialiasingFlags(Layer* aLayer, gfxContext* aTarget);
 void SetAntialiasingFlags(Layer* aLayer, gfx::DrawTarget* aTarget);
 
 #ifdef MOZ_DUMP_PAINTING

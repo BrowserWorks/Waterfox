@@ -52,6 +52,7 @@ CodeGeneratorMIPS::generateAsmJSPrologue(Label *stackOverflowLabel)
 {
     JS_ASSERT(gen->compilingAsmJS());
 
+    // See comment in Assembler-shared.h about AsmJSFrameSize.
     masm.push(ra);
 
     // The asm.js over-recursed handler wants to be able to assume that SP
@@ -196,7 +197,7 @@ CodeGeneratorMIPS::generateOutOfLineCode()
         // the same.
         masm.move32(Imm32(frameSize()), ra);
 
-        JitCode *handler = gen->jitRuntime()->getGenericBailoutHandler();
+        JitCode *handler = gen->jitRuntime()->getGenericBailoutHandler(gen->info().executionMode());
 
         masm.branch(handler);
     }
@@ -211,22 +212,6 @@ CodeGeneratorMIPS::bailoutFrom(Label *label, LSnapshot *snapshot)
         return false;
     MOZ_ASSERT(label->used());
     MOZ_ASSERT(!label->bound());
-
-    CompileInfo &info = snapshot->mir()->block()->info();
-    switch (info.executionMode()) {
-      case ParallelExecution: {
-        // in parallel mode, make no attempt to recover, just signal an error.
-        OutOfLineAbortPar *ool = oolAbortPar(ParallelBailoutUnsupported,
-                                             snapshot->mir()->block(),
-                                             snapshot->mir()->pc());
-        masm.retarget(label, ool->entry());
-        return true;
-      }
-      case SequentialExecution:
-        break;
-      default:
-        MOZ_ASSUME_UNREACHABLE("No such execution mode");
-    }
 
     if (!encode(snapshot))
         return false;
@@ -808,18 +793,19 @@ CodeGeneratorMIPS::visitModMaskI(LModMaskI *ins)
 {
     Register src = ToRegister(ins->getOperand(0));
     Register dest = ToRegister(ins->getDef(0));
-    Register tmp = ToRegister(ins->getTemp(0));
+    Register tmp0 = ToRegister(ins->getTemp(0));
+    Register tmp1 = ToRegister(ins->getTemp(1));
     MMod *mir = ins->mir();
 
     if (!mir->isTruncated() && mir->canBeNegativeDividend()) {
         MOZ_ASSERT(mir->fallible());
 
         Label bail;
-        masm.ma_mod_mask(src, dest, tmp, ins->shift(), &bail);
+        masm.ma_mod_mask(src, dest, tmp0, tmp1, ins->shift(), &bail);
         if (!bailoutFrom(&bail, ins->snapshot()))
             return false;
     } else {
-        masm.ma_mod_mask(src, dest, tmp, ins->shift(), nullptr);
+        masm.ma_mod_mask(src, dest, tmp0, tmp1, ins->shift(), nullptr);
     }
     return true;
 }
@@ -1999,7 +1985,8 @@ CodeGeneratorMIPS::visitAsmJSLoadHeap(LAsmJSLoadHeap *ins)
     }
     masm.bind(&done);
 
-    return masm.append(AsmJSHeapAccess(bo.getOffset()));
+    masm.append(AsmJSHeapAccess(bo.getOffset()));
+    return true;
 }
 
 bool
@@ -2075,7 +2062,8 @@ CodeGeneratorMIPS::visitAsmJSStoreHeap(LAsmJSStoreHeap *ins)
     }
     masm.bind(&rejoin);
 
-    return masm.append(AsmJSHeapAccess(bo.getOffset()));
+    masm.append(AsmJSHeapAccess(bo.getOffset()));
+    return true;
 }
 
 bool

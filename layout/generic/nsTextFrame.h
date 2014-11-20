@@ -171,7 +171,7 @@ public:
   
   virtual bool IsEmpty() MOZ_OVERRIDE;
   virtual bool IsSelfEmpty() MOZ_OVERRIDE { return IsEmpty(); }
-  virtual nscoord GetBaseline() const MOZ_OVERRIDE;
+  virtual nscoord GetLogicalBaseline(mozilla::WritingMode aWritingMode) const MOZ_OVERRIDE;
   
   virtual bool HasSignificantTerminalNewline() const MOZ_OVERRIDE;
 
@@ -519,6 +519,8 @@ public:
 
   bool IsFloatingFirstLetterChild() const;
 
+  virtual bool UpdateOverflow() MOZ_OVERRIDE;
+
 protected:
   virtual ~nsTextFrame();
 
@@ -552,7 +554,7 @@ protected:
   SelectionDetails* GetSelectionDetails();
 
   void UnionAdditionalOverflow(nsPresContext* aPresContext,
-                               const nsHTMLReflowState& aBlockReflowState,
+                               nsIFrame* aBlock,
                                PropertyProvider& aProvider,
                                nsRect* aVisualOverflowRect,
                                bool aIncludeTextDecorations);

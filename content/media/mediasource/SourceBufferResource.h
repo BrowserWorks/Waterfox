@@ -72,11 +72,6 @@ private:
   };
 
   class ResourceQueue : private nsDeque {
-  private:
-    // Logical offset into the resource of the first element
-    // in the queue.
-    uint64_t mOffset;
-
   public:
     ResourceQueue() :
       nsDeque(new ResourceQueueDeallocator()),
@@ -84,23 +79,9 @@ private:
     {
     }
 
-    // Clears all items from the queue
-    inline void Clear() {
-      return nsDeque::Erase();
-    }
-
-    // Returns the number of items in the queue
-    inline uint32_t GetSize() {
-      return nsDeque::GetSize();
-    }
-
     // Returns the logical byte offset of the start of the data.
     inline uint64_t GetOffset() {
       return mOffset;
-    }
-
-    inline ResourceItem* ResourceAt(uint32_t aIndex) {
-      return static_cast<ResourceItem*>(nsDeque::ObjectAt(aIndex));
     }
 
     // Returns the length of all items in the queue plus the offset.
@@ -112,29 +93,6 @@ private:
         s += item->mData.Length();
       }
       return s;
-    }
-
-    // Returns the index of the resource that contains the given
-    // logical offset. aResourceOffset will contain the offset into
-    // the resource at the given index returned if it is not null.  If
-    // no such resource exists, returns GetSize() and aOffset is
-    // untouched.
-    inline uint32_t GetAtOffset(uint64_t aOffset, uint32_t *aResourceOffset) {
-      MOZ_ASSERT(aOffset >= mOffset);
-      uint64_t offset = mOffset;
-      for (uint32_t i = 0; i < GetSize(); ++i) {
-        ResourceItem* item = ResourceAt(i);
-        // If the item contains the start of the offset we want to
-        // break out of the loop.
-        if (item->mData.Length() + offset > aOffset) {
-          if (aResourceOffset) {
-            *aResourceOffset = aOffset - offset;
-          }
-          return i;
-        }
-        offset += item->mData.Length();
-      }
-      return GetSize();
     }
 
     // Copies aCount bytes from aOffset in the queue into aDest.
@@ -156,18 +114,6 @@ private:
 
     inline void PushBack(ResourceItem* aItem) {
       nsDeque::Push(aItem);
-    }
-
-    inline void PushFront(ResourceItem* aItem) {
-      nsDeque::PushFront(aItem);
-    }
-
-    inline ResourceItem* PopBack() {
-      return static_cast<ResourceItem*>(nsDeque::Pop());
-    }
-
-    inline ResourceItem* PopFront() {
-      return static_cast<ResourceItem*>(nsDeque::PopFront());
     }
 
     // Evict data in queue if the total queue size is greater than
@@ -200,13 +146,56 @@ private:
 
       return size;
     }
+
+  private:
+    // Returns the number of items in the queue
+    inline uint32_t GetSize() {
+      return nsDeque::GetSize();
+    }
+
+    inline ResourceItem* ResourceAt(uint32_t aIndex) {
+      return static_cast<ResourceItem*>(nsDeque::ObjectAt(aIndex));
+    }
+
+    // Returns the index of the resource that contains the given
+    // logical offset. aResourceOffset will contain the offset into
+    // the resource at the given index returned if it is not null.  If
+    // no such resource exists, returns GetSize() and aOffset is
+    // untouched.
+    inline uint32_t GetAtOffset(uint64_t aOffset, uint32_t *aResourceOffset) {
+      MOZ_ASSERT(aOffset >= mOffset);
+      uint64_t offset = mOffset;
+      for (uint32_t i = 0; i < GetSize(); ++i) {
+        ResourceItem* item = ResourceAt(i);
+        // If the item contains the start of the offset we want to
+        // break out of the loop.
+        if (item->mData.Length() + offset > aOffset) {
+          if (aResourceOffset) {
+            *aResourceOffset = aOffset - offset;
+          }
+          return i;
+        }
+        offset += item->mData.Length();
+      }
+      return GetSize();
+    }
+
+    inline ResourceItem* PopFront() {
+      return static_cast<ResourceItem*>(nsDeque::PopFront());
+    }
+
+    // Logical offset into the resource of the first element
+    // in the queue.
+    uint64_t mOffset;
   };
 
 public:
   SourceBufferResource(nsIPrincipal* aPrincipal,
                        const nsACString& aType);
+protected:
   ~SourceBufferResource();
 
+public:
   virtual nsresult Close() MOZ_OVERRIDE;
   virtual void Suspend(bool aCloseImmediately) MOZ_OVERRIDE {}
   virtual void Resume() MOZ_OVERRIDE {}
@@ -233,7 +222,7 @@ public:
   virtual void Unpin() MOZ_OVERRIDE {}
   virtual double GetDownloadRate(bool* aIsReliable) MOZ_OVERRIDE { return 0; }
   virtual int64_t GetLength() MOZ_OVERRIDE { return mInputBuffer.GetLength(); }
-  virtual int64_t GetNextCachedData(int64_t aOffset) MOZ_OVERRIDE { return aOffset; }
+  virtual int64_t GetNextCachedData(int64_t aOffset) MOZ_OVERRIDE { return GetLength() == aOffset ? -1 : aOffset; }
   virtual int64_t GetCachedDataEnd(int64_t aOffset) MOZ_OVERRIDE { return GetLength(); }
   virtual bool IsDataCachedToEndOfResource(int64_t aOffset) MOZ_OVERRIDE { return false; }
   virtual bool IsSuspendedByCache() MOZ_OVERRIDE { return false; }
@@ -244,8 +233,10 @@ public:
 
   virtual nsresult GetCachedRanges(nsTArray<MediaByteRange>& aRanges) MOZ_OVERRIDE
   {
-    aRanges.AppendElement(MediaByteRange(mInputBuffer.GetOffset(),
-                                         mInputBuffer.GetLength()));
+    if (mInputBuffer.GetLength()) {
+      aRanges.AppendElement(MediaByteRange(mInputBuffer.GetOffset(),
+                                           mInputBuffer.GetLength()));
+    }
     return NS_OK;
   }
 

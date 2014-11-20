@@ -427,10 +427,10 @@ public:
     return !IsBlock() ? mFlags.mBreakType : NS_STYLE_CLEAR_NONE;
   }
 
-  // mCarriedOutBottomMargin value
-  nsCollapsingMargin GetCarriedOutBottomMargin() const;
+  // mCarriedOutBEndMargin value
+  nsCollapsingMargin GetCarriedOutBEndMargin() const;
   // Returns true if the margin changed
-  bool SetCarriedOutBottomMargin(nsCollapsingMargin aValue);
+  bool SetCarriedOutBEndMargin(nsCollapsingMargin aValue);
 
   // mFloats
   bool HasFloats() const {
@@ -488,15 +488,15 @@ public:
   }
 
   /**
-   * The ascent (distance from top to baseline) of the linebox is the
-   * ascent of the anonymous inline box (for which we don't actually
-   * create a frame) that wraps all the consecutive inline children of a
-   * block.
+   * The logical ascent (distance from block-start to baseline) of the
+   * linebox is the logical ascent of the anonymous inline box (for
+   * which we don't actually create a frame) that wraps all the
+   * consecutive inline children of a block.
    *
    * This is currently unused for block lines.
    */
-  nscoord GetAscent() const { return mAscent; }
-  void SetAscent(nscoord aAscent) { mAscent = aAscent; }
+  nscoord GetLogicalAscent() const { return mAscent; }
+  void SetLogicalAscent(nscoord aAscent) { mAscent = aAscent; }
 
   nscoord BStart() const {
     return mBounds.BStart(mWritingMode);
@@ -647,10 +647,10 @@ public:
   struct ExtraBlockData : public ExtraData {
     ExtraBlockData(const nsRect& aBounds)
       : ExtraData(aBounds),
-        mCarriedOutBottomMargin()
+        mCarriedOutBEndMargin()
     {
     }
-    nsCollapsingMargin mCarriedOutBottomMargin;
+    nsCollapsingMargin mCarriedOutBEndMargin;
   };
 
   struct ExtraInlineData : public ExtraData {

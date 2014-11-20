@@ -105,9 +105,9 @@ CompileRuntime::spsProfiler()
 }
 
 bool
-CompileRuntime::signalHandlersInstalled()
+CompileRuntime::canUseSignalHandlers()
 {
-    return runtime()->signalHandlersInstalled();
+    return runtime()->canUseSignalHandlers();
 }
 
 bool
@@ -280,7 +280,7 @@ JitCompileOptions::JitCompileOptions()
 JitCompileOptions::JitCompileOptions(JSContext *cx)
 {
     JS::CompartmentOptions &options = cx->compartment()->options();
-    cloneSingletons_ = options.cloneSingletons(cx);
+    cloneSingletons_ = options.cloneSingletons();
     spsSlowAssertionsEnabled_ = cx->runtime()->spsProfiler.enabled() &&
                                 cx->runtime()->spsProfiler.slowAssertionsEnabled();
 }

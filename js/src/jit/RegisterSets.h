@@ -66,6 +66,41 @@ struct AnyRegister {
     bool volatile_() const {
         return isFloat() ? fpu().volatile_() : gpr().volatile_();
     }
+    AnyRegister aliased(uint32_t aliasIdx) const {
+        AnyRegister ret;
+        if (isFloat()) {
+            FloatRegister fret;
+            fpu().aliased(aliasIdx, &fret);
+            ret = AnyRegister(fret);
+        } else {
+            Register gret;
+            gpr().aliased(aliasIdx, &gret);
+            ret = AnyRegister(gret);
+        }
+        JS_ASSERT_IF(aliasIdx == 0, ret == *this);
+        return ret;
+    }
+    uint32_t numAliased() const {
+        if (isFloat())
+            return fpu().numAliased();
+        return gpr().numAliased();
+    }
+    bool aliases(const AnyRegister &other) const {
+        if (isFloat() && other.isFloat())
+            return fpu().aliases(other.fpu());
+        if (!isFloat() && !other.isFloat())
+            return gpr().aliases(other.gpr());
+        return false;
+    }
+    // do the two registers hold the same type of data (e.g. both float32, both gpr)
+    bool isCompatibleReg (const AnyRegister other) const {
+        if (isFloat() && other.isFloat())
+            return fpu().equiv(other.fpu());
+        if (!isFloat() && !other.isFloat())
+            return true;
+        return false;
+    }
+
 };
 
 // Registers to hold a boxed value. Uses one register on 64 bit
@@ -288,10 +323,12 @@ struct Int32Key {
 template <typename T>
 class TypedRegisterSet
 {
-    uint32_t bits_;
+    typedef typename T::SetType SetType;
+    SetType bits_;
+
 
   public:
-    explicit MOZ_CONSTEXPR TypedRegisterSet(uint32_t bits)
+    explicit MOZ_CONSTEXPR TypedRegisterSet(SetType bits)
       : bits_(bits)
     { }
 
@@ -315,7 +352,7 @@ class TypedRegisterSet
         return TypedRegisterSet(~in.bits_ & T::Codes::AllocatableMask);
     }
     static inline TypedRegisterSet VolatileNot(const TypedRegisterSet &in) {
-        const uint32_t allocatableVolatile =
+        const SetType allocatableVolatile =
             T::Codes::AllocatableMask & T::Codes::VolatileMask;
         return TypedRegisterSet(~in.bits_ & allocatableVolatile);
     }
@@ -326,15 +363,33 @@ class TypedRegisterSet
         return TypedRegisterSet(T::Codes::AllocatableMask & T::Codes::NonVolatileMask);
     }
     bool has(T reg) const {
-        return !!(bits_ & (1 << reg.code()));
+        // When checking to see if a set has a register, we only want that exact
+        // register, not worrying about aliasing.
+        return !!(bits_ & (SetType(1) << reg.code()));
     }
     void addUnchecked(T reg) {
-        bits_ |= (1 << reg.code());
+        bits_ |= (SetType(1) << reg.code());
     }
+    void addAllAliasedUnchecked(T reg) {
+        for (uint32_t a = 0; a < reg.numAliased(); a++) {
+            T tmp;
+            reg.aliased(a, &tmp);
+            bits_ |= (SetType(1) << tmp.code());
+        }
+    }
+
     void add(T reg) {
-        JS_ASSERT(!has(reg));
+        // Make sure we don't add two overlapping registers.
+#ifdef DEBUG
+        for (uint32_t a = 0; a < reg.numAliased(); a++) {
+            T tmp;
+            reg.aliased(a, &tmp);
+            JS_ASSERT(!has(tmp));
+        }
+#endif
         addUnchecked(reg);
     }
+
     void add(ValueOperand value) {
 #if defined(JS_NUNBOX32)
         add(value.payloadReg());
@@ -359,7 +414,14 @@ class TypedRegisterSet
         takeUnchecked(reg);
     }
     void takeUnchecked(T reg) {
-        bits_ &= ~(1 << reg.code());
+        bits_ &= ~(SetType(1) << reg.code());
+    }
+    void takeAllAliasedUnchecked(T reg) {
+        for (uint32_t a = 0; a < reg.numAliased(); a++) {
+            T tmp;
+            reg.aliased(a, &tmp);
+            bits_ &= ~(SetType(1) << tmp.code());
+        }
     }
     void take(ValueOperand value) {
 #if defined(JS_NUNBOX32)
@@ -411,11 +473,11 @@ class TypedRegisterSet
     }
     T getFirst() const {
         JS_ASSERT(!empty());
-        return T::FromCode(mozilla::CountTrailingZeroes32(bits_));
+        return T::FromCode(T::FirstBit(bits_));
     }
     T getLast() const {
         JS_ASSERT(!empty());
-        int ireg = 31 - mozilla::CountLeadingZeroes32(bits_);
+        int ireg = T::LastBit(bits_);
         return T::FromCode(ireg);
     }
     T takeAny() {
@@ -456,7 +518,7 @@ class TypedRegisterSet
     void clear() {
         bits_ = 0;
     }
-    uint32_t bits() const {
+    SetType bits() const {
         return bits_;
     }
     uint32_t size() const {
@@ -464,6 +526,15 @@ class TypedRegisterSet
     }
     bool operator ==(const TypedRegisterSet<T> &other) const {
         return other.bits_ == bits_;
+    }
+    TypedRegisterSet<T> reduceSetForPush() const {
+        return T::ReduceSetForPush(*this);
+    }
+    uint32_t getSizeInBytes() const {
+        return T::GetSizeInBytes(*this);
+    }
+    uint32_t getPushSizeInBytes() const {
+        return T::GetPushSizeInBytes(*this);
     }
 };
 
@@ -556,6 +627,14 @@ class RegisterSet {
         else
             addUnchecked(any.gpr());
     }
+    void addAllAliasedUnchecked(const AnyRegister &reg) {
+        if (reg.isFloat())
+            fpu_.addAllAliasedUnchecked(reg.fpu());
+        else
+            gpr_.addAllAliasedUnchecked(reg.gpr());
+    }
+
+
     bool empty(bool floats) const {
         return floats ? fpu_.empty() : gpr_.empty();
     }
@@ -579,6 +658,12 @@ class RegisterSet {
             fpu_.take(reg.fpu());
         else
             gpr_.take(reg.gpr());
+    }
+    void takeAllAliasedUnchecked(AnyRegister reg) {
+        if (reg.isFloat())
+            fpu_.takeAllAliasedUnchecked(reg.fpu());
+        else
+            gpr_.takeAllAliasedUnchecked(reg.gpr());
     }
     AnyRegister takeAny(bool isFloat) {
         if (isFloat)

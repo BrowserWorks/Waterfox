@@ -14,10 +14,12 @@ class nsSemanticUnitScanner : public nsISemanticUnitScanner
                             , public nsSampleWordBreaker
 {
 public:
-  NS_DECL_ISUPPORTS
+  NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSISEMANTICUNITSCANNER
 
   nsSemanticUnitScanner();
+
+private:
   virtual ~nsSemanticUnitScanner();
   /* additional members */
 };

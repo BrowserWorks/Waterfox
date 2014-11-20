@@ -23,14 +23,51 @@
 #include "nsIDownloader.h"
 #include "nsIURI.h"
 #include "nsIWidget.h"
+#include "nsIThread.h"
 
 #include "mozilla/Attributes.h"
+
+/**
+ * NS_INLINE_DECL_IUNKNOWN_REFCOUNTING should be used for defining and
+ * implementing AddRef() and Release() of IUnknown interface.
+ * This depends on xpcom/glue/nsISupportsImpl.h.
+ */
+
+#define NS_INLINE_DECL_IUNKNOWN_REFCOUNTING(_class)                           \
+public:                                                                       \
+  STDMETHODIMP_(ULONG) AddRef()                                               \
+  {                                                                           \
+    MOZ_ASSERT_TYPE_OK_FOR_REFCOUNTING(_class)                                \
+    MOZ_ASSERT(int32_t(mRefCnt) >= 0, "illegal refcnt");                      \
+    NS_ASSERT_OWNINGTHREAD(_class);                                           \
+    ++mRefCnt;                                                                \
+    NS_LOG_ADDREF(this, mRefCnt, #_class, sizeof(*this));                     \
+    return static_cast<ULONG>(mRefCnt.get());                                 \
+  }                                                                           \
+  STDMETHODIMP_(ULONG) Release()                                              \
+  {                                                                           \
+    MOZ_ASSERT(int32_t(mRefCnt) > 0,                                          \
+      "Release called on object that has already been released!");            \
+    NS_ASSERT_OWNINGTHREAD(_class);                                           \
+    --mRefCnt;                                                                \
+    NS_LOG_RELEASE(this, mRefCnt, #_class);                                   \
+    if (mRefCnt == 0) {                                                       \
+      NS_ASSERT_OWNINGTHREAD(_class);                                         \
+      mRefCnt = 1; /* stabilize */                                            \
+      delete this;                                                            \
+      return 0;                                                               \
+    }                                                                         \
+    return static_cast<ULONG>(mRefCnt.get());                                 \
+  }                                                                           \
+protected:                                                                    \
+  nsAutoRefCnt mRefCnt;                                                       \
+  NS_DECL_OWNINGTHREAD                                                        \
+public:
 
 class nsWindow;
 class nsWindowBase;
 struct KeyPair;
 struct nsIntRect;
-class nsIThread;
 
 namespace mozilla {
 namespace widget {
@@ -60,12 +97,16 @@ namespace widget {
 #define LogException(e) mozilla::widget::WinUtils::Log("%s Exception:%s", __FUNCTION__, e->ToString()->Data())
 #define LogHRESULT(hr) mozilla::widget::WinUtils::Log("%s hr=%X", __FUNCTION__, hr)
 
+#ifdef MOZ_PLACES
 class myDownloadObserver MOZ_FINAL : public nsIDownloadObserver
 {
+  ~myDownloadObserver() {}
+
 public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIDOWNLOADOBSERVER
 };
+#endif
 
 class WinUtils {
 public:
@@ -95,6 +136,20 @@ public:
                           UINT aLastMessage, UINT aOption);
   static bool GetMessage(LPMSG aMsg, HWND aWnd, UINT aFirstMessage,
                          UINT aLastMessage);
+
+  /**
+   * Wait until a message is ready to be processed.
+   * Prefer using this method to directly calling ::WaitMessage since
+   * ::WaitMessage will wait if there is an unread message in the queue.
+   * That can cause freezes until another message enters the queue if the
+   * message is marked read by a call to PeekMessage which the caller is
+   * not aware of (e.g., from a different thread).
+   * Note that this method may cause sync dispatch of sent (as opposed to
+   * posted) messages.
+   * @param aTimeoutMs Timeout for waiting in ms, defaults to INFINITE
+   */
+  static void WaitForMessage(DWORD aTimeoutMs = INFINITE);
+
   /**
    * Gets the value of a string-typed registry value.
    *
@@ -344,6 +399,8 @@ public:
                         const bool aURLShortcut);
   nsresult OnFaviconDataNotAvailable(void);
 private:
+  ~AsyncFaviconDataReady() {}
+
   nsCOMPtr<nsIURI> mNewURI;
   nsCOMPtr<nsIThread> mIOThread;
   const bool mURLShortcut;
@@ -365,11 +422,11 @@ public:
                           uint8_t *aData, uint32_t aDataLen, uint32_t aStride,
                           uint32_t aWidth, uint32_t aHeight,
                           const bool aURLShortcut);
-  virtual ~AsyncEncodeAndWriteIcon();
 
 private:
+  virtual ~AsyncEncodeAndWriteIcon();
+
   nsAutoString mIconPath;
-  nsAutoCString mMimeTypeOfInputData;
   nsAutoArrayPtr<uint8_t> mBuffer;
   HMODULE sDwmDLL;
   uint32_t mBufferLength;
@@ -386,9 +443,10 @@ public:
   NS_DECL_NSIRUNNABLE
 
   AsyncDeleteIconFromDisk(const nsAString &aIconPath);
-  virtual ~AsyncDeleteIconFromDisk();
 
 private:
+  virtual ~AsyncDeleteIconFromDisk();
+
   nsAutoString mIconPath;
 };
 
@@ -399,8 +457,11 @@ public:
   NS_DECL_NSIRUNNABLE
 
   AsyncDeleteAllFaviconsFromDisk(bool aIgnoreRecent = false);
-  virtual ~AsyncDeleteAllFaviconsFromDisk();
+
 private:
+  virtual ~AsyncDeleteAllFaviconsFromDisk();
+
+  int32_t mIcoNoDeleteSeconds;
   bool mIgnoreRecent;
 };
 

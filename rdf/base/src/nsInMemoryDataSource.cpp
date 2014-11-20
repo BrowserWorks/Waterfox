@@ -89,8 +89,10 @@ public:
               bool aTruthValue);
     Assertion(nsIRDFResource* aSource);     // PLDHashTable assertion variant
 
+private:
     ~Assertion();
 
+public:
     void AddRef() {
         if (mRefCnt == UINT16_MAX) {
             NS_WARNING("refcount overflow, leaking Assertion");
@@ -391,14 +393,14 @@ private:
     Assertion*      mNextAssertion;
     nsCOMPtr<nsISupportsArray> mHashArcs;
 
+    virtual ~InMemoryAssertionEnumeratorImpl();
+
 public:
     InMemoryAssertionEnumeratorImpl(InMemoryDataSource* aDataSource,
                                     nsIRDFResource* aSource,
                                     nsIRDFResource* aProperty,
                                     nsIRDFNode* aTarget,
                                     bool aTruthValue);
-
-    virtual ~InMemoryAssertionEnumeratorImpl();
 
     // nsISupports interface
     NS_DECL_ISUPPORTS
@@ -563,12 +565,12 @@ private:
     ArcEnumerator(PLDHashTable* aTable, PLDHashEntryHdr* aHdr,
                        uint32_t aNumber, void* aArg);
 
+    virtual ~InMemoryArcsEnumeratorImpl();
+
 public:
     InMemoryArcsEnumeratorImpl(InMemoryDataSource* aDataSource,
                                nsIRDFResource* aSource,
                                nsIRDFNode* aTarget);
-
-    virtual ~InMemoryArcsEnumeratorImpl();
 
     // nsISupports interface
     NS_DECL_ISUPPORTS
@@ -1317,7 +1319,7 @@ InMemoryDataSource::LockedUnassert(nsIRDFResource* aSource,
             else {
                 // If this second-level hash empties out, clean it up.
                 if (!root->u.hash.mPropertyHash->entryCount) {
-                    delete root;
+                    root->Release();
                     SetForwardArcs(aSource, nullptr);
                 }
             }
@@ -1921,7 +1923,7 @@ InMemoryDataSource::SweepForwardArcsEntries(PLDHashTable* aTable,
 
         // If the sub-hash is now empty, clean it up.
         if (!as->u.hash.mPropertyHash->entryCount) {
-            delete as;
+            as->Release();
             result = PL_DHASH_REMOVE;
         }
 

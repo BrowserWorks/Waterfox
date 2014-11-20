@@ -464,39 +464,8 @@ let SessionStoreInternal = {
         this._prefBranch.getBoolPref("sessionstore.resume_session_once"))
       this._prefBranch.setBoolPref("sessionstore.resume_session_once", false);
 
-    this._performUpgradeBackup();
-
     TelemetryStopwatch.finish("FX_SESSION_RESTORE_STARTUP_INIT_SESSION_MS");
     return state;
-  },
-
-  /**
-   * If this is the first time we launc this build of Firefox,
-   * backup sessionstore.js.
-   */
-  _performUpgradeBackup: function ssi_performUpgradeBackup() {
-    // Perform upgrade backup, if necessary
-    const PREF_UPGRADE = "sessionstore.upgradeBackup.latestBuildID";
-
-    let buildID = Services.appinfo.platformBuildID;
-    let latestBackup = this._prefBranch.getCharPref(PREF_UPGRADE);
-    if (latestBackup == buildID) {
-      return Promise.resolve();
-    }
-    return Task.spawn(function task() {
-      try {
-        // Perform background backup
-        yield SessionFile.createBackupCopy("-" + buildID);
-
-        this._prefBranch.setCharPref(PREF_UPGRADE, buildID);
-
-        // In case of success, remove previous backup.
-        yield SessionFile.removeBackupCopy("-" + latestBackup);
-      } catch (ex) {
-        debug("Could not perform upgrade backup " + ex);
-        debug(ex.stack);
-      }
-    }.bind(this));
   },
 
   _initPrefs : function() {
@@ -2240,15 +2209,23 @@ let SessionStoreInternal = {
     if (aWindow && (!aWindow.__SSi || !this._windows[aWindow.__SSi]))
       this.onLoad(aWindow);
 
+    let root;
     try {
-      var root = typeof aState == "string" ? JSON.parse(aState) : aState;
-      if (!root.windows[0]) {
-        this._sendRestoreCompletedNotifications();
-        return; // nothing to restore
-      }
+      root = (typeof aState == "string") ? JSON.parse(aState) : aState;
     }
     catch (ex) { // invalid state object - don't restore anything
       debug(ex);
+      this._sendRestoreCompletedNotifications();
+      return;
+    }
+
+    // Restore closed windows if any.
+    if (root._closedWindows) {
+      this._closedWindows = root._closedWindows;
+    }
+
+    // We're done here if there are no windows.
+    if (!root.windows || !root.windows.length) {
       this._sendRestoreCompletedNotifications();
       return;
     }
@@ -2258,9 +2235,6 @@ let SessionStoreInternal = {
     // We're not returning from this before we end up calling restoreTabs
     // for this window, so make sure we send the SSWindowStateBusy event.
     this._setWindowStateBusy(aWindow);
-
-    if (root._closedWindows)
-      this._closedWindows = root._closedWindows;
 
     var winData;
     if (!root.selectedWindow || root.selectedWindow > root.windows.length) {
@@ -2534,7 +2508,7 @@ let SessionStoreInternal = {
       // attribute so that it runs in a content process.
       let activePageData = tabData.entries[activeIndex] || null;
       let uri = activePageData ? activePageData.url || null : null;
-      tabbrowser.updateBrowserRemoteness(browser, uri);
+      tabbrowser.updateBrowserRemotenessByURL(browser, uri);
 
       // Start a new epoch and include the epoch in the restoreHistory
       // message. If a message is received that relates to a previous epoch, we
@@ -3078,7 +3052,8 @@ let SessionStoreInternal = {
     return aTabState.entries.length &&
            !(aTabState.entries.length == 1 &&
                 (aTabState.entries[0].url == "about:blank" ||
-                 aTabState.entries[0].url == "about:newtab") &&
+                 aTabState.entries[0].url == "about:newtab" ||
+                 aTabState.entries[0].url == "about:privatebrowsing") &&
                  !aTabState.userTypedValue);
   },
 

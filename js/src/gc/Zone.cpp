@@ -42,13 +42,13 @@ JS::Zone::Zone(JSRuntime *rt)
     gcState_(NoGC),
     gcScheduled_(false),
     gcPreserveCode_(false),
-    ionUsingBarriers_(false)
+    jitUsingBarriers_(false)
 {
     /* Ensure that there are no vtables to mess us up here. */
     JS_ASSERT(reinterpret_cast<JS::shadow::Zone *>(this) ==
               static_cast<JS::shadow::Zone *>(this));
 
-    setGCMaxMallocBytes(rt->gc.maxMallocBytes * 0.9);
+    setGCMaxMallocBytes(rt->gc.maxMallocBytesAllocated() * 0.9);
 }
 
 Zone::~Zone()
@@ -68,12 +68,12 @@ bool Zone::init()
 }
 
 void
-Zone::setNeedsBarrier(bool needs, ShouldUpdateIon updateIon)
+Zone::setNeedsBarrier(bool needs, ShouldUpdateJit updateJit)
 {
 #ifdef JS_ION
-    if (updateIon == UpdateIon && needs != ionUsingBarriers_) {
+    if (updateJit == UpdateJit && needs != jitUsingBarriers_) {
         jit::ToggleBarriers(this, needs);
-        ionUsingBarriers_ = needs;
+        jitUsingBarriers_ = needs;
     }
 #endif
 
@@ -197,18 +197,7 @@ Zone::discardJitCode(FreeOp *fop)
         for (ZoneCellIterUnderGC i(this, FINALIZE_SCRIPT); !i.done(); i.next()) {
             JSScript *script = i.get<JSScript>();
             jit::FinishInvalidation<SequentialExecution>(fop, script);
-
-            // Preserve JIT code that have been recently used in
-            // parallel. Note that we mark their baseline scripts as active as
-            // well to preserve them.
-            if (script->hasParallelIonScript()) {
-                if (jit::ShouldPreserveParallelJITCode(runtimeFromMainThread(), script)) {
-                    script->parallelIonScript()->purgeCaches();
-                    script->baselineScript()->setActive();
-                } else {
-                    jit::FinishInvalidation<ParallelExecution>(fop, script);
-                }
-            }
+            jit::FinishInvalidation<ParallelExecution>(fop, script);
 
             /*
              * Discard baseline script if it's not marked as active. Note that
@@ -234,7 +223,7 @@ Zone::gcNumber()
 {
     // Zones in use by exclusive threads are not collected, and threads using
     // them cannot access the main runtime's gcNumber without racing.
-    return usedByExclusiveThread ? 0 : runtimeFromMainThread()->gc.number;
+    return usedByExclusiveThread ? 0 : runtimeFromMainThread()->gc.gcNumber();
 }
 
 #ifdef JS_ION

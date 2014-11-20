@@ -152,6 +152,16 @@ public:
                                        BluetoothReplyRunnable* aRunnable) = 0;
 
   /**
+   * Returns up-to-date uuids of given device address,
+   * implemented via a platform specific methood.
+   *
+   * @return NS_OK on success, NS_ERROR_FAILURE otherwise
+   */
+  virtual nsresult
+  FetchUuidsInternal(const nsAString& aDeviceAddress,
+                     BluetoothReplyRunnable* aRunnable) = 0;
+
+  /**
    * Stop device discovery (platform specific implementation)
    *
    * @return NS_OK if discovery stopped correctly, false otherwise
@@ -308,13 +318,6 @@ public:
   bool
   IsToggling() const;
 
-  /**
-   * Below 2 function/variable are used for ensuring event 'AdapterAdded' will
-   * be fired after event 'Enabled'.
-   */
-  void TryFiringAdapterAdded();
-  void AdapterAddedReceived();
-
   void FireAdapterStateChanged(bool aEnable);
   nsresult EnableDisable(bool aEnable,
                          BluetoothReplyRunnable* aRunnable);
@@ -339,9 +342,7 @@ public:
 
 protected:
   BluetoothService() : mEnabled(false)
-                     , mAdapterAddedReceived(false)
-  {
-  }
+  { }
 
   virtual ~BluetoothService();
 
@@ -400,9 +401,6 @@ protected:
   BluetoothSignalObserverTable mBluetoothSignalObserverTable;
 
   bool mEnabled;
-
-private:
-  bool mAdapterAddedReceived;
 };
 
 END_BLUETOOTH_NAMESPACE

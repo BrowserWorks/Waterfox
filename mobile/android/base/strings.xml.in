@@ -8,6 +8,9 @@
 #includesubst @BRANDPATH@
 #includesubst @STRINGSPATH@
 #includesubst @SYNCSTRINGSPATH@
+#ifdef MOZ_ANDROID_SEARCH_ACTIVITY
+#includesubst @SEARCHSTRINGSPATH@
+#endif
 
 <!-- C-style format strings. -->
 <!ENTITY formatI "&#037;I">
@@ -29,6 +32,11 @@
   <string name="moz_android_shared_account_type">@MOZ_ANDROID_SHARED_ACCOUNT_TYPE@</string>
   <string name="moz_android_shared_fxaccount_type">@MOZ_ANDROID_SHARED_FXACCOUNT_TYPE@</string>
   <string name="android_package_name_for_ui">@ANDROID_PACKAGE_NAME@</string>
+
+#ifdef MOZ_ANDROID_SEARCH_ACTIVITY
+#include ../search/strings/search_strings.xml.in
+#endif
+
 #include ../services/strings.xml.in
   <string name="no_space_to_start_error">&no_space_to_start_error;</string>
   <string name="error_loading_file">&error_loading_file;</string>
@@ -36,6 +44,7 @@
   <string name="bookmarks_title">&bookmarks_title;</string>
   <string name="history_title">&history_title;</string>
   <string name="reading_list_title">&reading_list_title;</string>
+  <string name="recent_tabs_title">&recent_tabs_title;</string>
 
   <string name="switch_to_tab">&switch_to_tab;</string>
 
@@ -73,8 +82,8 @@
 
   <string name="history_today_section">&history_today_section;</string>
   <string name="history_yesterday_section">&history_yesterday_section;</string>
-  <string name="history_week_section">&history_week_section;</string>
-  <string name="history_older_section">&history_older_section;</string>
+  <string name="history_week_section">&history_week_section2;</string>
+  <string name="history_older_section">&history_older_section2;</string>
 
   <string name="share">&share;</string>
   <string name="share_title">&share_title;</string>
@@ -117,12 +126,12 @@
   <string name="locale_system_default">&locale_system_default;</string>
 
   <string name="pref_category_devtools">&pref_category_devtools;</string>
+  <string name="pref_developer_paint_flashing">&pref_developer_paint_flashing;</string>
   <string name="pref_developer_remotedebugging">&pref_developer_remotedebugging;</string>
 
   <string name="pref_category_home">&pref_category_home;</string>
   <string name="pref_category_home_summary">&pref_category_home_summary;</string>
   <string name="pref_category_home_panels">&pref_category_home_panels;</string>
-  <string name="pref_home_add_panel">&pref_home_add_panel;</string>
   <string name="home_add_panel_title">&home_add_panel_title;</string>
   <string name="home_add_panel_empty">&home_add_panel_empty;</string>
   <string name="home_add_panel_installed">&home_add_panel_installed;</string>
@@ -157,7 +166,11 @@
   <string name="pref_char_encoding">&pref_char_encoding;</string>
   <string name="pref_char_encoding_on">&pref_char_encoding_on;</string>
   <string name="pref_char_encoding_off">&pref_char_encoding_off;</string>
-  <string name="pref_clear_private_data">&pref_clear_private_data;</string>
+  <string name="pref_clear_private_data">&pref_clear_private_data2;</string>
+  <string name="pref_clear_private_data_category">&pref_clear_private_data_category;</string>
+  <string name="pref_clear_on_exit_title">&pref_clear_on_exit_title;</string>
+  <string name="pref_clear_on_exit_summary">&pref_clear_on_exit_summary;</string>
+  <string name="pref_clear_on_exit_dialog_title">&pref_clear_on_exit_dialog_title;</string>
   <string name="pref_plugins">&pref_plugins;</string>
   <string name="pref_plugins_enabled">&pref_plugins_enabled;</string>
   <string name="pref_plugins_tap_to_play">&pref_plugins_tap_to_play;</string>
@@ -247,6 +260,7 @@
   <string name="new_tab">&new_tab;</string>
   <string name="new_private_tab">&new_private_tab;</string>
   <string name="close_all_tabs">&close_all_tabs;</string>
+  <string name="close_private_tabs">&close_private_tabs;</string>
   <string name="tabs_normal">&tabs_normal;</string>
   <string name="tabs_private">&tabs_private;</string>
   <string name="tabs_synced">&tabs_synced;</string>
@@ -265,7 +279,6 @@
 
   <string name="contextmenu_open_new_tab">&contextmenu_open_new_tab;</string>
   <string name="contextmenu_open_private_tab">&contextmenu_open_private_tab;</string>
-  <string name="contextmenu_open_in_reader">&contextmenu_open_in_reader;</string>
   <string name="contextmenu_remove">&contextmenu_remove;</string>
   <string name="contextmenu_add_to_launcher">&contextmenu_add_to_launcher;</string>
   <string name="contextmenu_share">&contextmenu_share;</string>
@@ -313,16 +326,21 @@
   <string name="home_clear_history_button">&home_clear_history_button;</string>
   <string name="home_clear_history_confirm">&home_clear_history_confirm;</string>
   <string name="home_bookmarks_empty">&home_bookmarks_empty;</string>
+  <string name="home_closed_tabs_title">&home_closed_tabs_title;</string>
   <string name="home_last_tabs_title">&home_last_tabs_title;</string>
-  <string name="home_last_tabs_open">&home_last_tabs_open;</string>
   <string name="home_last_tabs_empty">&home_last_tabs_empty;</string>
-  <string name="home_most_recent_title">&home_most_recent_title;</string>
+  <string name="home_open_all">&home_open_all;</string>
   <string name="home_most_recent_empty">&home_most_recent_empty;</string>
   <string name="home_reading_list_empty">&home_reading_list_empty;</string>
   <string name="home_reading_list_hint">&home_reading_list_hint2;</string>
   <string name="home_reading_list_hint_accessible">&home_reading_list_hint_accessible;</string>
   <string name="home_default_empty">&home_default_empty;</string>
   <string name="home_move_up_to_filter">&home_move_up_to_filter;</string>
+  <string name="private_browsing_title">&private_browsing_title;</string>
+  <string name="private_tabs_panel_empty_desc">&private_tabs_panel_empty_desc;</string>
+  <string name="private_tabs_panel_learn_more">&private_tabs_panel_learn_more;</string>
+  <!-- https://support.mozilla.org/%LOCALE%/kb/mobile-private-browsing-browse-web-without-saving-syncing-info -->
+  <string name="private_tabs_panel_learn_more_link">https://support.mozilla.org/&formatS1;/kb/mobile-private-browsing-browse-web-without-saving-syncing-info</string>
   <string name="pin_site_dialog_hint">&pin_site_dialog_hint;</string>
 
   <string name="filepicker_title">&filepicker_title;</string>

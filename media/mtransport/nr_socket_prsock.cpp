@@ -517,7 +517,7 @@ int NrSocket::sendto(const void *msg, size_t len,
     // Global rate limiting for stun requests, to mitigate the ice hammer DoS
     // (see http://tools.ietf.org/html/draft-thomson-mmusic-ice-webrtc)
 
-    // Tolerate rate of 16k/sec, for one second.
+    // Tolerate rate of 8k/sec, for one second.
     static SimpleTokenBucket burst(16384*1, 16384);
     // Tolerate rate of 3.6k/sec over twenty seconds.
     static SimpleTokenBucket sustained(3686*20, 3686);

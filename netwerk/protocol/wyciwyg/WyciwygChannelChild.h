@@ -8,6 +8,7 @@
 #include "mozilla/net/PWyciwygChannelChild.h"
 #include "nsIWyciwygChannel.h"
 #include "nsIChannel.h"
+#include "nsILoadInfo.h"
 #include "PrivateBrowsingChannel.h"
 
 class nsIProgressEventSink;
@@ -46,7 +47,6 @@ public:
   NS_DECL_NSIWYCIWYGCHANNEL
 
   WyciwygChannelChild();
-  virtual ~WyciwygChannelChild();
 
   void AddIPDLReference();
   void ReleaseIPDLReference();
@@ -56,6 +56,8 @@ public:
   bool IsSuspended();
 
 protected:
+  virtual ~WyciwygChannelChild();
+
   bool RecvOnStartRequest(const nsresult& statusCode,
                           const int64_t& contentLength,
                           const int32_t& source,
@@ -89,6 +91,7 @@ private:
   nsCOMPtr<nsIURI>                  mURI;
   nsCOMPtr<nsIURI>                  mOriginalURI;
   nsCOMPtr<nsISupports>             mOwner;
+  nsCOMPtr<nsILoadInfo>             mLoadInfo;
   nsCOMPtr<nsIInterfaceRequestor>   mCallbacks;
   nsCOMPtr<nsIProgressEventSink>    mProgressSink;
   nsCOMPtr<nsILoadGroup>            mLoadGroup;

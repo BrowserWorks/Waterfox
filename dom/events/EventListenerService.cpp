@@ -4,9 +4,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "EventListenerService.h"
-#ifdef MOZ_JSDEBUGGER
-#include "jsdIDebuggerService.h"
-#endif
 #include "mozilla/BasicEvents.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/EventListenerManager.h"
@@ -122,41 +119,12 @@ EventListenerInfo::ToSource(nsAString& aResult)
   if (GetJSVal(cx, ac, &v)) {
     JSString* str = JS_ValueToSource(cx, v);
     if (str) {
-      nsDependentJSString depStr;
-      if (depStr.init(cx, str)) {
-        aResult.Assign(depStr);
+      nsAutoJSString autoStr;
+      if (autoStr.init(cx, str)) {
+        aResult.Assign(autoStr);
       }
     }
   }
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-EventListenerInfo::GetDebugObject(nsISupports** aRetVal)
-{
-  *aRetVal = nullptr;
-
-#ifdef MOZ_JSDEBUGGER
-  nsresult rv = NS_OK;
-  nsCOMPtr<jsdIDebuggerService> jsd =
-    do_GetService("@mozilla.org/js/jsd/debugger-service;1", &rv);
-  NS_ENSURE_SUCCESS(rv, NS_OK);
-
-  bool isOn = false;
-  jsd->GetIsOn(&isOn);
-  NS_ENSURE_TRUE(isOn, NS_OK);
-
-  AutoSafeJSContext cx;
-  Maybe<JSAutoCompartment> ac;
-  JS::Rooted<JS::Value> v(cx);
-  if (GetJSVal(cx, ac, &v)) {
-    nsCOMPtr<jsdIValue> jsdValue;
-    rv = jsd->WrapValue(v, getter_AddRefs(jsdValue));
-    NS_ENSURE_SUCCESS(rv, rv);
-    jsdValue.forget(aRetVal);
-  }
-#endif
-
   return NS_OK;
 }
 

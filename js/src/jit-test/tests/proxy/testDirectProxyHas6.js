@@ -4,9 +4,11 @@
  */
 var target = {};
 Object.preventExtensions(target);
-assertEq(
-    'foo' in new Proxy(target, {
-        has: function (target, name) {
-            return false;
-        }
-    }), false);
+var p = new Proxy(target, {
+    has: function (target, name) {
+        return false;
+    }
+});
+assertEq('foo' in p, false);
+if (typeof Symbol === "function")
+    assertEq(Symbol.iterator in p, false);

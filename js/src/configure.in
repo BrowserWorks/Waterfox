@@ -112,7 +112,7 @@ if test "$_conflict_files"; then
   exit 1
   break
 fi
-MOZ_BUILD_ROOT=`pwd`
+MOZ_BUILD_ROOT=`pwd -W 2>/dev/null || pwd`
 
 dnl Choose where to put the 'dist' directory.
 dnl ==============================================================
@@ -171,6 +171,7 @@ if test "$JS_STANDALONE" = no; then
   JS_STANDALONE=
 else
   JS_STANDALONE=1
+  LIBXUL_DIST="$MOZ_BUILD_ROOT/dist"
   AC_DEFINE(JS_STANDALONE)
 fi
 AC_SUBST(JS_STANDALONE)
@@ -389,7 +390,7 @@ esac
 
 case "$target" in
 *-mingw*)
-    if test "$GCC" != "yes" -a -z "$CLANG_CC"; then
+    if test "$GCC" != "yes"; then
         # Check to see if we are really running in a msvc environemnt
         _WIN32_MSVC=1
 
@@ -473,7 +474,12 @@ case "$target" in
         INCREMENTAL_LINKER=1
 
         unset _MSVC_VER_FILTER
-    elif test -z "$CLANG_CC"; then
+
+        CFLAGS="$CFLAGS -D_HAS_EXCEPTIONS=0"
+        CXXFLAGS="$CXXFLAGS -D_HAS_EXCEPTIONS=0"
+
+        MOZ_FIND_WINSDK_VERSION
+    else
         # Check w32api version
         _W32API_MAJOR_VERSION=`echo $W32API_VERSION | $AWK -F\. '{ print $1 }'`
         _W32API_MINOR_VERSION=`echo $W32API_VERSION | $AWK -F\. '{ print $2 }'`
@@ -511,11 +517,6 @@ case "$target" in
 
         MOZ_WINSDK_MAXVER=0x06010000
     fi # !GNU_CC
-
-    # If MSVC or clang
-    if test "$GCC" != "yes" -o -n "$CLANG_CC" ; then
-        MOZ_FIND_WINSDK_VERSION
-    fi
 
     AC_DEFINE_UNQUOTED(WINVER,0x$WINVER)
     AC_DEFINE_UNQUOTED(_WIN32_WINNT,0x$WINVER)
@@ -1099,8 +1100,8 @@ if test "$GNU_CC"; then
     if test "${OS_ARCH}" != Darwin; then
         CFLAGS="$CFLAGS -fgnu89-inline"
     fi
-    MKSHLIB='$(CXX) $(CXXFLAGS) $(DSO_PIC_CFLAGS) $(DSO_LDOPTS) -Wl,-h,$(notdir $@) -o $@'
-    MKCSHLIB='$(CC) $(CFLAGS) $(DSO_PIC_CFLAGS) $(DSO_LDOPTS) -Wl,-h,$(notdir $@) -o $@'
+    MKSHLIB='$(CXX) $(CXXFLAGS) $(DSO_PIC_CFLAGS) $(DSO_LDOPTS) -Wl,-h,$(DSO_SONAME) -o $@'
+    MKCSHLIB='$(CC) $(CFLAGS) $(DSO_PIC_CFLAGS) $(DSO_LDOPTS) -Wl,-h,$(DSO_SONAME) -o $@'
     DSO_LDOPTS='-shared'
     if test "$GCC_USE_GNU_LD"; then
         # Some tools like ASan use a runtime library that is only
@@ -1192,8 +1193,8 @@ elif test "$SOLARIS_SUNPRO_CC"; then
     fi
     _DEFINES_CFLAGS='$(ACDEFINES) -D_JS_CONFDEFS_H_ -DMOZILLA_CLIENT'
 else
-    MKSHLIB='$(LD) $(DSO_LDOPTS) -h $(notdir $@) -o $@'
-    MKCSHLIB='$(LD) $(DSO_LDOPTS) -h $(notdir $@) -o $@'
+    MKSHLIB='$(LD) $(DSO_LDOPTS) -h $(DSO_SONAME) -o $@'
+    MKCSHLIB='$(LD) $(DSO_LDOPTS) -h $(DSO_SONAME) -o $@'
 
     DSO_LDOPTS='-shared'
     if test "$GNU_LD"; then
@@ -1313,10 +1314,10 @@ AC_TRY_COMPILE([$configure_static_assert_macros],
                result="yes", result="no")
 AC_MSG_RESULT("$result")
 if test "$result" = "yes"; then
-    AC_DEFINE(HAVE_64BIT_OS)
-    HAVE_64BIT_OS=1
+    AC_DEFINE(HAVE_64BIT_BUILD)
+    HAVE_64BIT_BUILD=1
 fi
-AC_SUBST(HAVE_64BIT_OS)
+AC_SUBST(HAVE_64BIT_BUILD)
 AC_LANG_RESTORE
 fi # COMPILE_ENVIRONMENT
 
@@ -1404,7 +1405,7 @@ case "$target" in
 *-aix*)
     AC_DEFINE(AIX)
     if test ! "$GNU_CC"; then
-        if test ! "$HAVE_64BIT_OS"; then
+        if test ! "$HAVE_64BIT_BUILD"; then
             # Compiling with Visual Age C++ object model compat is the
             # default. To compile with object model ibm, add
             # AIX_OBJMODEL=ibm to .mozconfig.
@@ -1649,6 +1650,11 @@ ia64*-hpux*)
         _DEFINES_CXXFLAGS='-FI $(DEPTH)/js/src/js-confdefs.h -DMOZILLA_CLIENT'
         CFLAGS="$CFLAGS -W3 -Gy"
         CXXFLAGS="$CXXFLAGS -W3 -Gy"
+        if test "$_CC_SUITE" -ge "11"; then
+            dnl VS2012+ defaults to -arch:SSE2.
+            CFLAGS="$CFLAGS -arch:IA32"
+            CXXFLAGS="$CXXFLAGS -arch:IA32"
+        fi
         if test "$_CC_SUITE" -ge "12"; then
             dnl VS2013+ requires -FS when parallel building by make -jN.
             dnl If nothing, compiler sometimes causes C1041 error.
@@ -1678,9 +1684,9 @@ ia64*-hpux*)
         # autoconf insists on passing $LDFLAGS to the compiler.
         if test -z "$CLANG_CL"; then
             LDFLAGS="$LDFLAGS -LARGEADDRESSAWARE -NXCOMPAT"
-        fi
-        if test -z "$DEVELOPER_OPTIONS"; then
-            LDFLAGS="$LDFLAGS -RELEASE"
+            if test -z "$DEVELOPER_OPTIONS"; then
+                LDFLAGS="$LDFLAGS -RELEASE"
+            fi
         fi
         dnl For profile-guided optimization
         PROFILE_GEN_CFLAGS="-GL"
@@ -1720,12 +1726,6 @@ ia64*-hpux*)
 
     case "$host" in
     *-mingw*)
-        MOZ_BUILD_ROOT=`cd $MOZ_BUILD_ROOT && pwd -W`
-        ;;
-    esac
-
-    case "$host" in
-    *-mingw*)
         if test -z "$MOZ_TOOLS"; then
             AC_MSG_ERROR([MOZ_TOOLS is not set])
         fi
@@ -1748,7 +1748,7 @@ ia64*-hpux*)
 
     case "$target" in
     i*86-*)
-        if test "$HAVE_64BIT_OS"; then
+        if test "$HAVE_64BIT_BUILD"; then
             AC_MSG_ERROR([You are targeting i386 but using the 64-bit compiler.])
         fi
 
@@ -1799,8 +1799,8 @@ ia64*-hpux*)
     if test "$LIBRUNPATH"; then
 	DSO_LDOPTS="-Wl,-R$LIBRUNPATH $DSO_LDOPTS"
     fi
-    MKSHLIB='$(CXX) $(CXXFLAGS) $(DSO_PIC_CFLAGS) $(DSO_LDOPTS) -Wl,-soname,$(notdir $@) -o $@'
-    MKCSHLIB='$(CC) $(CFLAGS) $(DSO_PIC_CFLAGS) $(DSO_LDOPTS) -Wl,-soname,$(notdir $@) -o $@'
+    MKSHLIB='$(CXX) $(CXXFLAGS) $(DSO_PIC_CFLAGS) $(DSO_LDOPTS) -Wl,-soname,$(DSO_SONAME) -o $@'
+    MKCSHLIB='$(CC) $(CFLAGS) $(DSO_PIC_CFLAGS) $(DSO_LDOPTS) -Wl,-soname,$(DSO_SONAME) -o $@'
     ;;
 
 *-openbsd*)
@@ -1840,8 +1840,8 @@ ia64*-hpux*)
                        [LDFLAGS=$_SAVE_LDFLAGS])
        fi
        MOZ_OPTIMIZE_FLAGS="-xO4"
-       MKSHLIB='$(CXX) $(CXXFLAGS) $(DSO_PIC_FLAGS) $(DSO_LDOPTS) -h $(notdir $@) -o $@'
-       MKCSHLIB='$(CC) $(CFLAGS) $(DSO_PIC_FLAGS) $(DSO_LDOPTS) -h $(notdir $@) -o $@'
+       MKSHLIB='$(CXX) $(CXXFLAGS) $(DSO_PIC_FLAGS) $(DSO_LDOPTS) -h $(DSO_SONAME) -o $@'
+       MKCSHLIB='$(CC) $(CFLAGS) $(DSO_PIC_FLAGS) $(DSO_LDOPTS) -h $(DSO_SONAME) -o $@'
        MKSHLIB_FORCE_ALL='-z allextract'
        MKSHLIB_UNFORCE_ALL='-z defaultextract'
        DSO_LDOPTS='-G'
@@ -1983,39 +1983,34 @@ case "$target" in
 i?86-*)
     ENABLE_ION=1
     AC_DEFINE(JS_CPU_X86)
-    AC_DEFINE(JS_NUNBOX32)
     ;;
 x86_64*-*)
     ENABLE_ION=1
     AC_DEFINE(JS_CPU_X64)
-    AC_DEFINE(JS_PUNBOX64)
     ;;
 arm*-*)
     ENABLE_ION=1
     AC_DEFINE(JS_CPU_ARM)
-    AC_DEFINE(JS_NUNBOX32)
     ;;
-sparc*-*)
-    if test ! "$HAVE_64BIT_OS" ; then
+sparc-*)
 dnl ENABLE_ION=0
     AC_DEFINE(JS_CPU_SPARC)
-    AC_DEFINE(JS_NUNBOX32)
-    else
-    AC_DEFINE(JS_CPU_SPARC64)
-    AC_DEFINE(JS_PUNBOX64)
-    fi
-    ;;
-powerpc64-*)
-    AC_DEFINE(JS_CPU_PPC64)
-    AC_DEFINE(JS_PUNBOX64)
-    ;;
-powerpc-*)
-    AC_DEFINE(JS_CPU_PPC)
-    AC_DEFINE(JS_NUNBOX32)
     ;;
 mips*-*)
     AC_DEFINE(JS_CPU_MIPS)
-    AC_DEFINE(JS_NUNBOX32)
+    ;;
+esac
+
+case "$target" in
+mips*-*)
+     AC_DEFINE(JS_NUNBOX32)
+     ;;
+*)
+    if test "$HAVE_64BIT_BUILD" ; then
+        AC_DEFINE(JS_PUNBOX64)
+    else
+        AC_DEFINE(JS_NUNBOX32)
+    fi
     ;;
 esac
 
@@ -2232,13 +2227,13 @@ darwin*)
     USE_PTHREADS=1
     ;;
 *)
-    MOZ_CHECK_PTHREADS(pthreads,
+    AC_CHECK_LIB(pthreads, pthread_create,
         USE_PTHREADS=1 _PTHREAD_LDFLAGS="-lpthreads",
-        MOZ_CHECK_PTHREADS(pthread,
+        AC_CHECK_LIB(pthread, pthread_create,
             USE_PTHREADS=1 _PTHREAD_LDFLAGS="-lpthread",
-            MOZ_CHECK_PTHREADS(c_r,
+            AC_CHECK_LIB(c_r, pthread_create,
                 USE_PTHREADS=1 _PTHREAD_LDFLAGS="-lc_r",
-                MOZ_CHECK_PTHREADS(c,
+                AC_CHECK_LIB(c, pthread_create,
                     USE_PTHREADS=1
                 )
             )
@@ -2755,34 +2750,6 @@ dnl =
 dnl ========================================================
 MOZ_ARG_HEADER(External Packages)
 
-dnl ========================================================
-dnl = Find the right NSPR to use.
-dnl ========================================================
-MOZ_ARG_WITH_BOOL(system-nspr,
-[  --with-system-nspr      Use an NSPR that is already built and installed.
-                          Use the 'nspr-config' script in the current path,
-                          or look for the script in the directories given with
-                          --with-nspr-exec-prefix or --with-nspr-prefix.
-                          (Those flags are only checked if you specify
-                          --with-system-nspr.)],
-    _USE_SYSTEM_NSPR=1 )
-
-MOZ_ARG_WITH_STRING(nspr-cflags,
-[  --with-nspr-cflags=FLAGS
-                          Pass FLAGS to CC when building code that uses NSPR.
-                          Use this when there's no accurate nspr-config
-                          script available.  This is the case when building
-                          SpiderMonkey as part of the Mozilla tree: the
-                          top-level configure script computes NSPR flags
-                          that accomodate the quirks of that environment.],
-    NSPR_CFLAGS=$withval)
-MOZ_ARG_WITH_STRING(nspr-libs,
-[  --with-nspr-libs=LIBS   Pass LIBS to LD when linking code that uses NSPR.
-                          See --with-nspr-cflags for more details.],
-    NSPR_LIBS=$withval)
-AC_SUBST(NSPR_CFLAGS)
-AC_SUBST(NSPR_LIBS)
-
 JS_THREADSAFE=1
 MOZ_ARG_DISABLE_BOOL(threadsafe,
 [  --disable-threadsafe    Disable support for multiple threads.],
@@ -2791,65 +2758,10 @@ MOZ_ARG_DISABLE_BOOL(threadsafe,
 if test -n "$JS_THREADSAFE"; then
     AC_DEFINE(JS_THREADSAFE)
 fi
+JS_THREADSAFE_CONFIGURED=$JS_THREADSAFE
+AC_SUBST(JS_THREADSAFE_CONFIGURED)
 
-if test "$_USE_SYSTEM_NSPR" || (test "$NSPR_CFLAGS" -o "$NSPR_LIBS"); then
-  _HAS_NSPR=1
-fi
-
-case "$target" in
-  *linux*|*darwin*|*dragonfly*|*freebsd*|*netbsd*|*openbsd*)
-    if test -z "$_HAS_NSPR" && test "$JS_THREADSAFE"; then
-      JS_POSIX_NSPR_DEFAULT=1
-    fi
-    ;;
-esac
-
-MOZ_ARG_ENABLE_BOOL(posix-nspr-emulation,
-[  --enable-posix-nspr-emulation
-                          Enable emulation of NSPR for POSIX systems],
-    JS_POSIX_NSPR=1,
-    JS_POSIX_NSPR=,
-    JS_POSIX_NSPR="$JS_POSIX_NSPR_DEFAULT" )
-if test -n "$JS_POSIX_NSPR"; then
-    AC_DEFINE(JS_POSIX_NSPR)
-fi
-
-AC_SUBST(JS_POSIX_NSPR)
-
-dnl Pass either --with-system-nspr or (--with-nspr-cflags and
-dnl --with-nspr-libs), but not both.
-if test "$_USE_SYSTEM_NSPR" && (test "$NSPR_CFLAGS" -o "$NSPR_LIBS"); then
-    AC_MSG_ERROR([--with-system-nspr and --with-nspr-libs/cflags are mutually exclusive.
-See 'configure --help'.])
-fi
-
-dnl Can't use --enable-posix-nspr-emulation if compiling with NSPR.
-if test "$_HAS_NSPR" && test "$JS_POSIX_NSPR"; then
-    AC_MSG_ERROR([--enable-posix-nspr-emulation is mututally exclusive with --with-system-nspr
-and --with-nspr-libs/cflags. See 'configure --help'.])
-fi
-
-if test -n "$_USE_SYSTEM_NSPR"; then
-    MOZ_NATIVE_NSPR=
-    AM_PATH_NSPR($NSPR_MINVER, [MOZ_NATIVE_NSPR=1], [AC_MSG_ERROR([your don't have NSPR installed or your version is too old])])
-fi
-
-NSPR_PKGCONF_CHECK="nspr"
-if test -n "$MOZ_NATIVE_NSPR"; then
-    # piggy back on $MOZ_NATIVE_NSPR to set a variable for the nspr check for js.pc
-    NSPR_PKGCONF_CHECK="nspr >= $NSPR_MINVER"
-
-    _SAVE_CFLAGS=$CFLAGS
-    CFLAGS="$CFLAGS $NSPR_CFLAGS"
-    AC_TRY_COMPILE([#include "prlog.h"],
-                [#ifndef PR_STATIC_ASSERT
-                 #error PR_STATIC_ASSERT not defined
-                 #endif],
-                [MOZ_NATIVE_NSPR=1],
-                AC_MSG_ERROR([system NSPR does not support PR_STATIC_ASSERT]))
-    CFLAGS=$_SAVE_CFLAGS
-fi
-AC_SUBST(NSPR_PKGCONF_CHECK)
+MOZ_CONFIG_NSPR(js)
 
 dnl ========================================================
 dnl system zlib Support
@@ -3000,20 +2912,6 @@ if test "$ENABLE_TRACE_LOGGING"; then
 fi
 
 dnl ========================================================
-dnl = Enable yarr regexp engine
-dnl ========================================================
-MOZ_ARG_ENABLE_BOOL(yarr,
-[  --enable-yarr   Enable yarr regexp engine],
-    ENABLE_YARR=1,
-    ENABLE_YARR= )
-
-AC_SUBST(ENABLE_YARR)
-
-if test "$ENABLE_YARR"; then
-    AC_DEFINE(JS_YARR)
-fi
-
-dnl ========================================================
 dnl = Enable any treating of compile warnings as errors
 dnl ========================================================
 MOZ_ARG_DISABLE_BOOL(warnings-as-errors,
@@ -3035,6 +2933,11 @@ elif test "$GNU_CC"; then
     MOZ_CXX_SUPPORTS_WARNING(-W, no-error=maybe-uninitialized, ac_cxx_has_noerror_maybe_uninitialized)
     MOZ_C_SUPPORTS_WARNING(-W, no-error=deprecated-declarations, ac_c_has_noerror_deprecated_declarations)
     MOZ_CXX_SUPPORTS_WARNING(-W, no-error=deprecated-declarations, ac_cxx_has_noerror_deprecated_declarations)
+
+    if test -n "$MOZ_PGO"; then
+        MOZ_C_SUPPORTS_WARNING(-W, no-error=coverage-mismatch, ac_c_has_noerror_coverage_mismatch)
+        MOZ_CXX_SUPPORTS_WARNING(-W, no-error=coverage-mismatch, ac_cxx_has_noerror_coverage_mismatch)
+    fi
 fi
 
 dnl ========================================================
@@ -3203,6 +3106,8 @@ MOZ_ARG_DISABLE_BOOL(gcgenerational,
 if test -n "$JSGC_GENERATIONAL"; then
     AC_DEFINE(JSGC_GENERATIONAL)
 fi
+JSGC_GENERATIONAL_CONFIGURED=$JSGC_GENERATIONAL
+AC_SUBST(JSGC_GENERATIONAL_CONFIGURED)
 
 dnl ========================================================
 dnl = Use exact stack rooting for GC
@@ -3217,6 +3122,30 @@ MOZ_ARG_DISABLE_BOOL(exact-rooting,
     JSGC_USE_EXACT_ROOTING=1 )
 if test -n "$JSGC_USE_EXACT_ROOTING"; then
     AC_DEFINE(JSGC_USE_EXACT_ROOTING)
+fi
+
+dnl ========================================================
+dnl = Use a smaller chunk size for GC chunks
+dnl ========================================================
+dnl Use large (1MB) chunks by default.  For B2G this option is used to give
+dnl smaller (currently 256K) chunks.
+MOZ_ARG_ENABLE_BOOL(small-chunk-size,
+[  --enable-small-chunk-size  Allocate memory for JS GC things in smaller chunks],
+    JS_GC_SMALL_CHUNK_SIZE=1,
+    JS_GC_SMALL_CHUNK_SIZE= )
+if test -n "$JS_GC_SMALL_CHUNK_SIZE"; then
+    AC_DEFINE(JS_GC_SMALL_CHUNK_SIZE)
+fi
+
+dnl ========================================================
+dnl = Use GC tracing
+dnl ========================================================
+MOZ_ARG_ENABLE_BOOL(gc-trace,
+[  --enable-gc-trace  Enable tracing of allocation and finalization],
+    JS_GC_TRACE=1,
+    JS_GC_TRACE= )
+if test -n "$JS_GC_TRACE"; then
+    AC_DEFINE(JS_GC_TRACE)
 fi
 
 dnl ========================================================
@@ -3600,48 +3529,6 @@ AC_SUBST(PROFILE_USE_LDFLAGS)
 AC_LANG_CPLUSPLUS
 
 dnl ========================================================
-dnl Autoconf test for gcc 2.7.2.x (and maybe others?) so that we don't
-dnl provide non-const forms of the operator== for comparing nsCOMPtrs to
-dnl raw pointers in nsCOMPtr.h.  (VC++ has the same bug.)
-dnl ========================================================
-_SAVE_CXXFLAGS=$CXXFLAGS
-CXXFLAGS="$CXXFLAGS ${_WARNINGS_CXXFLAGS}"
-AC_CACHE_CHECK(for correct overload resolution with const and templates,
-    ac_nscap_nonconst_opeq_bug,
-    [AC_TRY_COMPILE([
-                      template <class T>
-                      class Pointer
-                        {
-                        public:
-                          T* myPtr;
-                        };
-
-                      template <class T, class U>
-                      int operator==(const Pointer<T>& rhs, U* lhs)
-                        {
-                          return rhs.myPtr == lhs;
-                        }
-
-                      template <class T, class U>
-                      int operator==(const Pointer<T>& rhs, const U* lhs)
-                        {
-                          return rhs.myPtr == lhs;
-                        }
-                    ],
-                    [
-                      Pointer<int> foo;
-                      const int* bar;
-                      return foo == bar;
-                    ],
-                    ac_nscap_nonconst_opeq_bug="no",
-                    ac_nscap_nonconst_opeq_bug="yes")])
-CXXFLAGS="$_SAVE_CXXFLAGS"
-
-if test "$ac_nscap_nonconst_opeq_bug" = "yes" ; then
-    AC_DEFINE(NSCAP_DONT_PROVIDE_NONCONST_OPEQ)
-fi
-
-dnl ========================================================
 dnl Check for tm_zone, tm_gmtoff in struct tm
 dnl ========================================================
 AC_CACHE_CHECK(for tm_zone tm_gmtoff in struct tm,
@@ -3682,7 +3569,7 @@ else
     echo '#include <stdio.h>' > dummy-hello.c
     changequote(,)
     dnl This output is localized, split at the first double space or colon and space.
-    _CL_PREFIX_REGEX="^\([^:]*:.*[ :] \)\(.*stdio.h\)$"
+    _CL_PREFIX_REGEX="^\([^:]*:.*[ :] \)\(.*\\\stdio.h\)$"
     CL_INCLUDES_PREFIX=`${CC} -showIncludes -c -Fonul dummy-hello.c 2>&1 | sed -ne 's/'"$_CL_PREFIX_REGEX"'/\1/p'`
     _CL_STDIO_PATH=`${CC} -showIncludes -c -Fonul dummy-hello.c 2>&1 | sed -ne 's/'"$_CL_PREFIX_REGEX"'/\2/p'`
     changequote([,])
@@ -4048,7 +3935,6 @@ AC_SUBST(ac_configure_args)
 
 AC_SUBST(TOOLCHAIN_PREFIX)
 
-
 if test -n "$JS_STANDALONE"; then
 MOZ_APP_NAME="mozjs"
 MOZ_APP_VERSION="$MOZILLA_SYMBOLVERSION"
@@ -4066,6 +3952,9 @@ AC_SUBST(JS_LIBRARY_NAME)
 AC_SUBST(JS_CONFIG_MOZ_JS_LIBS)
 AC_SUBST(JS_CONFIG_LIBS)
 
+if test -n "$MOZ_BUILD_NSPR"; then
+    MOZ_SUBCONFIGURE_NSPR()
+fi
 MOZ_SUBCONFIGURE_FFI()
 
 dnl Spit out some output

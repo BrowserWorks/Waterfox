@@ -13,6 +13,7 @@
 #include "nsXPIDLString.h"
 #include "nsIChannel.h"
 #include "nsILoadGroup.h"
+#include "nsILoadInfo.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsIInputStreamPump.h"
@@ -31,17 +32,19 @@ public:
   NS_DECL_NSISTREAMLISTENER
 
   nsIconChannel();
-  virtual ~nsIconChannel();
 
   nsresult Init(nsIURI* uri);
 
 protected:
+  virtual ~nsIconChannel();
+
   nsCOMPtr<nsIURI> mUrl;
   nsCOMPtr<nsIURI> mOriginalURI;
   int64_t          mContentLength;
   nsCOMPtr<nsILoadGroup> mLoadGroup;
   nsCOMPtr<nsIInterfaceRequestor> mCallbacks;
-  nsCOMPtr<nsISupports>  mOwner; 
+  nsCOMPtr<nsISupports>  mOwner;
+  nsCOMPtr<nsILoadInfo>  mLoadInfo;
   
   nsCOMPtr<nsIInputStreamPump> mPump;
   nsCOMPtr<nsIStreamListener>  mListener;

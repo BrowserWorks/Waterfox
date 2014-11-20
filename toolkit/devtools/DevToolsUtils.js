@@ -6,10 +6,9 @@
 
 /* General utilities used throughout devtools. */
 
-// hasChrome is provided as a global by the loader. It is true if we are running
-// on the main thread, and false if we are running on a worker thread.
 var { Ci, Cu } = require("chrome");
 var Services = require("Services");
+var promise = require("promise");
 var { setTimeout } = require("Timer");
 
 /**
@@ -122,9 +121,13 @@ exports.zip = function zip(a, b) {
  * Waits for the next tick in the event loop to execute a callback.
  */
 exports.executeSoon = function executeSoon(aFn) {
-  Services.tm.mainThread.dispatch({
-    run: exports.makeInfallible(aFn)
-  }, Ci.nsIThread.DISPATCH_NORMAL);
+  if (isWorker) {
+    setTimeout(aFn, 0);
+  } else {
+    Services.tm.mainThread.dispatch({
+      run: exports.makeInfallible(aFn)
+    }, Ci.nsIThread.DISPATCH_NORMAL);
+  }
 };
 
 /**
@@ -290,6 +293,12 @@ exports.hasSafeGetter = function hasSafeGetter(aDesc) {
  *         True if it is safe to read properties from aObj, or false otherwise.
  */
 exports.isSafeJSObject = function isSafeJSObject(aObj) {
+  // If we are running on a worker thread, Cu is not available. In this case,
+  // we always return false, just to be on the safe side.
+  if (isWorker) {
+    return false;
+  }
+
   if (Cu.getGlobalForObject(aObj) ==
       Cu.getGlobalForObject(exports.isSafeJSObject)) {
     return true; // aObj is not a cross-compartment wrapper.

@@ -3,7 +3,7 @@
    - You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 "use strict";
- 
+
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
@@ -12,6 +12,8 @@ const Cr = Components.results;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
+let gLastHash = "";
+
 addEventListener("DOMContentLoaded", function onLoad() {
   removeEventListener("DOMContentLoaded", onLoad);
   init_all();
@@ -19,6 +21,8 @@ addEventListener("DOMContentLoaded", function onLoad() {
 
 function init_all() {
   document.documentElement.instantApply = true;
+
+  gSubDialog.init();
   gMainPane.init();
   gPrivacyPane.init();
   gAdvancedPane.init();
@@ -26,26 +30,68 @@ function init_all() {
   gContentPane.init();
   gSyncPane.init();
   gSecurityPane.init();
-  var initFinished = document.createEvent("Event");
-  initFinished.initEvent("Initialized", true, true);
+
+  var initFinished = new CustomEvent("Initialized", {
+  'bubbles': true,
+  'cancelable': true
+  });
   document.dispatchEvent(initFinished);
 
   let categories = document.getElementById("categories");
   categories.addEventListener("select", event => gotoPref(event.target.value));
 
-  gotoPref("paneGeneral");
+  document.documentElement.addEventListener("keydown", function(event) {
+    if (event.keyCode == KeyEvent.DOM_VK_TAB) {
+      categories.setAttribute("keyboard-navigation", "true");
+    }
+  });
+  categories.addEventListener("mousedown", function() {
+    this.removeAttribute("keyboard-navigation");
+  });
+
+  window.addEventListener("hashchange", onHashChange);
+  gotoPref();
+
+  // Wait until initialization of all preferences are complete before
+  // notifying observers that the UI is now ready.
+  Services.obs.notifyObservers(window, "advanced-pane-loaded", null);
 }
 
-function selectCategory(name) {
+window.addEventListener("unload", function onUnload() {
+  gSubDialog.uninit();
+});
+
+function onHashChange() {
+  gotoPref();
+}
+
+function gotoPref(aCategory) {
   let categories = document.getElementById("categories");
-  let item = categories.querySelector(".category[value=" + name + "]");
-  categories.selectedItem = item;
-  gotoPref(name);
-}
+  const kDefaultCategoryInternalName = categories.firstElementChild.value;
+  let hash = document.location.hash;
+  let category = aCategory || hash.substr(1) || kDefaultCategoryInternalName;
+  category = friendlyPrefCategoryNameToInternalName(category);
 
-function gotoPref(page) {
-  window.history.replaceState(page, document.title);
-  search(page, "data-category");
+  // Updating the hash (below) or changing the selected category
+  // will re-enter gotoPref.
+  if (gLastHash == category)
+    return;
+  let item = categories.querySelector(".category[value=" + category + "]");
+  if (!item) {
+    category = kDefaultCategoryInternalName;
+    item = categories.querySelector(".category[value=" + category + "]");
+  }
+
+  let newHash = internalPrefCategoryNameToFriendlyName(category);
+  if (gLastHash || category != kDefaultCategoryInternalName) {
+    document.location.hash = newHash;
+  }
+  // Need to set the gLastHash before setting categories.selectedItem since
+  // the categories 'select' event will re-enter the gotoPref codepath.
+  gLastHash = category;
+  categories.selectedItem = item;
+  window.history.replaceState(category, document.title);
+  search(category, "data-category");
 }
 
 function search(aQuery, aAttribute) {
@@ -62,4 +108,15 @@ function helpButtonCommand() {
   let helpTopic = categories.querySelector(".category[value=" + pane + "]")
                             .getAttribute("helpTopic");
   openHelpLink(helpTopic);
+}
+
+function friendlyPrefCategoryNameToInternalName(aName) {
+  if (aName.startsWith("pane"))
+    return aName;
+  return "pane" + aName.substring(0,1).toUpperCase() + aName.substr(1);
+}
+
+// This function is duplicated inside of utilityOverlay.js's openPreferences.
+function internalPrefCategoryNameToFriendlyName(aName) {
+  return (aName || "").replace(/^pane./, function(toReplace) { return toReplace[4].toLowerCase(); });
 }

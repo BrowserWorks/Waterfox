@@ -33,6 +33,7 @@
 #include "nsLayoutUtils.h"
 #include "nsViewManager.h"
 #include "RestyleManager.h"
+#include "SurfaceCache.h"
 #include "nsCSSRuleProcessor.h"
 #include "nsRuleNode.h"
 #include "gfxPlatform.h"
@@ -43,6 +44,7 @@
 #include "nsObjectFrame.h"
 #include "nsTransitionManager.h"
 #include "nsAnimationManager.h"
+#include "CounterStyleManager.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/dom/Element.h"
 #include "nsIMessageManager.h"
@@ -238,6 +240,8 @@ nsPresContext::nsPresContext(nsIDocument* aDocument, nsPresContextType aType)
   NS_ASSERTION(mDocument, "Null document");
   mUserFontSet = nullptr;
   mUserFontSetDirty = true;
+
+  mCounterStylesDirty = true;
 
   // if text perf logging enabled, init stats struct
   PRLogModuleInfo *log = gfxPlatform::GetLog(eGfxLog_textperf);
@@ -964,8 +968,11 @@ nsPresContext::Init(nsDeviceContext* aDeviceContext)
 
   mAnimationManager = new nsAnimationManager(this);
 
-  // FIXME: Why is mozilla:: needed?
+  // Since there are methods in nsPresContext have the same name as the
+  // classes, it is necessary to prefix them with the namespace here.
   mRestyleManager = new mozilla::RestyleManager(this);
+
+  mCounterStyleManager = new mozilla::CounterStyleManager(this);
 
   if (mDocument->GetDisplayDocument()) {
     NS_ASSERTION(mDocument->GetDisplayDocument()->GetShell() &&
@@ -1141,6 +1148,10 @@ nsPresContext::SetShell(nsIPresShell* aShell)
     if (mRestyleManager) {
       mRestyleManager->Disconnect();
       mRestyleManager = nullptr;
+    }
+    if (mCounterStyleManager) {
+      mCounterStyleManager->Disconnect();
+      mCounterStyleManager = nullptr;
     }
 
     if (IsRoot()) {
@@ -1700,10 +1711,15 @@ nsPresContext::ThemeChangedInternal()
     sThemeChanged = false;
   }
 
-  // Clear all cached LookAndFeel colors.
   if (sLookAndFeelChanged) {
+    // Clear all cached LookAndFeel colors.
     LookAndFeel::Refresh();
     sLookAndFeelChanged = false;
+
+    // Vector images (SVG) may be using theme colors so we discard all cached
+    // surfaces. (We could add a vector image only version of DiscardAll, but
+    // in bug 940625 we decided theme changes are rare enough not to bother.)
+    mozilla::image::SurfaceCache::DiscardAll();
   }
 
   // This will force the system metrics to be generated the next time they're used
@@ -1867,6 +1883,7 @@ nsPresContext::RebuildAllStyleData(nsChangeHint aExtraHint)
   mUsesRootEMUnits = false;
   mUsesViewportUnits = false;
   RebuildUserFontSet();
+  RebuildCounterStyles();
 
   RestyleManager()->RebuildAllStyleData(aExtraHint);
 }
@@ -2202,16 +2219,56 @@ nsPresContext::UserFontSetUpdated()
 }
 
 void
+nsPresContext::FlushCounterStyles()
+{
+  if (!mShell) {
+    return; // we've been torn down
+  }
+  if (mCounterStyleManager->IsInitial()) {
+    // Still in its initial state, no need to clean.
+    return;
+  }
+
+  if (mCounterStylesDirty) {
+    bool changed = mCounterStyleManager->NotifyRuleChanged();
+    if (changed) {
+      PresShell()->NotifyCounterStylesAreDirty();
+      PostRebuildAllStyleDataEvent(NS_STYLE_HINT_REFLOW);
+    }
+    mCounterStylesDirty = false;
+  }
+}
+
+void
+nsPresContext::RebuildCounterStyles()
+{
+  if (mCounterStyleManager->IsInitial()) {
+    // Still in its initial state, no need to reset.
+    return;
+  }
+
+  mCounterStylesDirty = true;
+  mDocument->SetNeedStyleFlush();
+  if (!mPostedFlushCounterStyles) {
+    nsCOMPtr<nsIRunnable> ev =
+      NS_NewRunnableMethod(this, &nsPresContext::HandleRebuildCounterStyles);
+    if (NS_SUCCEEDED(NS_DispatchToCurrentThread(ev))) {
+      mPostedFlushCounterStyles = true;
+    }
+  }
+}
+
+void
 nsPresContext::EnsureSafeToHandOutCSSRules()
 {
-  nsCSSStyleSheet::EnsureUniqueInnerResult res =
+  CSSStyleSheet::EnsureUniqueInnerResult res =
     mShell->StyleSet()->EnsureUniqueInnerOnCSSSheets();
-  if (res == nsCSSStyleSheet::eUniqueInner_AlreadyUnique) {
+  if (res == CSSStyleSheet::eUniqueInner_AlreadyUnique) {
     // Nothing to do.
     return;
   }
 
-  MOZ_ASSERT(res == nsCSSStyleSheet::eUniqueInner_ClonedInner);
+  MOZ_ASSERT(res == CSSStyleSheet::eUniqueInner_ClonedInner);
   RebuildAllStyleData(nsChangeHint(0));
 }
 

@@ -71,17 +71,34 @@ function getL10nStrings() {
   }
 }
 
-function getPendingDir() {
+function getDir(name) {
   let directoryService = Cc["@mozilla.org/file/directory_service;1"].
                          getService(Ci.nsIProperties);
-  let pendingDir = directoryService.get("UAppData", Ci.nsIFile);
-  pendingDir.append("Crash Reports");
-  pendingDir.append("pending");
-  return pendingDir;
+  let dir = directoryService.get("UAppData", Ci.nsIFile);
+  dir.append("Crash Reports");
+  dir.append(name);
+  return dir;
+}
+
+function writeFile(dirName, fileName, data) {
+  let path = getDir(dirName);
+  if (!path.exists())
+    path.create(Ci.nsIFile.DIRECTORY_TYPE, 0700);
+  path.append(fileName);
+  var fs = Cc["@mozilla.org/network/file-output-stream;1"].
+           createInstance(Ci.nsIFileOutputStream);
+  // open, write, truncate
+  fs.init(path, -1, -1, 0);
+  var os = Cc["@mozilla.org/intl/converter-output-stream;1"].
+           createInstance(Ci.nsIConverterOutputStream);
+  os.init(fs, "UTF-8", 0, 0x0000);
+  os.writeString(data);
+  os.close();
+  fs.close();
 }
 
 function getPendingMinidump(id) {
-  let pendingDir = getPendingDir();
+  let pendingDir = getDir("pending");
   let dump = pendingDir.clone();
   let extra = pendingDir.clone();
   dump.append(id + ".dmp");
@@ -91,7 +108,7 @@ function getPendingMinidump(id) {
 
 function getAllPendingMinidumpsIDs() {
   let minidumps = [];
-  let pendingDir = getPendingDir();
+  let pendingDir = getDir("pending");
 
   if (!(pendingDir.exists() && pendingDir.isDirectory()))
     return [];
@@ -112,7 +129,7 @@ function getAllPendingMinidumpsIDs() {
 function pruneSavedDumps() {
   const KEEP = 10;
 
-  let pendingDir = getPendingDir();
+  let pendingDir = getDir("pending");
   if (!(pendingDir.exists() && pendingDir.isDirectory()))
     return;
   let entries = pendingDir.directoryEntries;
@@ -123,7 +140,7 @@ function pruneSavedDumps() {
     if (entry.isFile()) {
       let matches = entry.leafName.match(/(.+)\.extra$/);
       if (matches)
-	entriesArray.push(entry);
+        entriesArray.push(entry);
     }
   }
 
@@ -160,35 +177,18 @@ function addFormEntry(doc, form, name, value) {
 }
 
 function writeSubmittedReport(crashID, viewURL) {
-  let directoryService = Cc["@mozilla.org/file/directory_service;1"].
-                           getService(Ci.nsIProperties);
-  let reportFile = directoryService.get("UAppData", Ci.nsIFile);
-  reportFile.append("Crash Reports");
-  reportFile.append("submitted");
-  if (!reportFile.exists())
-    reportFile.create(Ci.nsIFile.DIRECTORY_TYPE, 0700);
-  reportFile.append(crashID + ".txt");
-  var fstream = Cc["@mozilla.org/network/file-output-stream;1"].
-                createInstance(Ci.nsIFileOutputStream);
-  // open, write, truncate
-  fstream.init(reportFile, -1, -1, 0);
-  var os = Cc["@mozilla.org/intl/converter-output-stream;1"].
-           createInstance(Ci.nsIConverterOutputStream);
-  os.init(fstream, "UTF-8", 0, 0x0000);
-
   var data = strings.crashid.replace("%s", crashID);
   if (viewURL)
      data += "\n" + strings.reporturl.replace("%s", viewURL);
 
-  os.writeString(data);
-  os.close();
-  fstream.close();
+  writeFile("submitted", crashID + ".txt", data);
 }
 
 // the Submitter class represents an individual submission.
-function Submitter(id, submitSuccess, submitError, noThrottle,
+function Submitter(id, processType, submitSuccess, submitError, noThrottle,
                    extraExtraKeyVals) {
   this.id = id;
+  this.processType = processType;
   this.successCallback = submitSuccess;
   this.errorCallback = submitError;
   this.noThrottle = noThrottle;
@@ -199,12 +199,6 @@ function Submitter(id, submitSuccess, submitError, noThrottle,
 Submitter.prototype = {
   submitSuccess: function Submitter_submitSuccess(ret)
   {
-    if (!ret.CrashID) {
-      this.notifyStatus(FAILED);
-      this.cleanup();
-      return;
-    }
-
     // Write out the details file to submitted/
     writeSubmittedReport(ret.CrashID, ret.ViewURL);
 
@@ -289,12 +283,24 @@ Submitter.prototype = {
     let self = this;
     xhr.addEventListener("readystatechange", function (aEvt) {
       if (xhr.readyState == 4) {
-        if (xhr.status != 200) {
-          self.notifyStatus(FAILED);
-          self.cleanup();
-        } else {
-          let ret = parseKeyValuePairs(xhr.responseText);
+        let ret =
+          xhr.status == 200 ? parseKeyValuePairs(xhr.responseText) : {};
+        let submitted = !!ret.CrashID;
+
+        if (self.processType) {
+          // TODO: Use exact crash time?
+          let crashTime = new Date();
+          let manager = Services.crashmanager;
+          manager.addSubmission(self.processType, manager.CRASH_TYPE_CRASH,
+                                submitted, self.id, crashTime);
+        }
+
+        if (submitted) {
           self.submitSuccess(ret);
+        }
+        else {
+           self.notifyStatus(FAILED);
+           self.cleanup();
         }
       }
     }, false);
@@ -390,6 +396,9 @@ this.CrashSubmit = {
    *        Filename (minus .dmp extension) of the minidump to submit.
    * @param params
    *        An object containing any of the following optional parameters:
+   *        - processType
+   *          One of the CrashManager.PROCESS_TYPE constants. If set, a
+   *          submission event is recorded in CrashManager.
    *        - submitSuccess
    *          A function that will be called if the report is submitted
    *          successfully with two parameters: the id that was passed
@@ -418,11 +427,14 @@ this.CrashSubmit = {
   submit: function CrashSubmit_submit(id, params)
   {
     params = params || {};
+    let processType = null;
     let submitSuccess = null;
     let submitError = null;
     let noThrottle = false;
     let extraExtraKeyVals = null;
 
+    if ('processType' in params)
+      processType = params.processType;
     if ('submitSuccess' in params)
       submitSuccess = params.submitSuccess;
     if ('submitError' in params)
@@ -432,11 +444,8 @@ this.CrashSubmit = {
     if ('extraExtraKeyVals' in params)
       extraExtraKeyVals = params.extraExtraKeyVals;
 
-    let submitter = new Submitter(id,
-                                  submitSuccess,
-                                  submitError,
-                                  noThrottle,
-                                  extraExtraKeyVals);
+    let submitter = new Submitter(id, processType, submitSuccess, submitError,
+                                  noThrottle, extraExtraKeyVals);
     CrashSubmit._activeSubmissions.push(submitter);
     return submitter.submit();
   },

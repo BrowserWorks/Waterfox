@@ -10,9 +10,6 @@
 #include "nspr.h"
 
 #include "nsIX509Cert.h"
-#include "nsIX509Cert3.h"
-#include "nsICMSMessage.h"
-#include "nsICMSMessage2.h"
 #include "nsProxyRelease.h"
 
 class nsBaseVerificationJob
@@ -35,10 +32,12 @@ class nsCertVerificationResult : public nsICertVerificationResult
 {
 public:
   nsCertVerificationResult();
-  virtual ~nsCertVerificationResult();
 
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSICERTVERIFICATIONRESULT
+
+protected:
+  virtual ~nsCertVerificationResult();
 
 private:
   nsresult mRV;
@@ -48,22 +47,5 @@ private:
 
 friend class nsCertVerificationJob;
 };
-
-class nsSMimeVerificationJob : public nsBaseVerificationJob
-{
-public:
-  nsSMimeVerificationJob() { digest_data = nullptr; digest_len = 0; }
-  ~nsSMimeVerificationJob() { delete [] digest_data; }
-
-  nsCOMPtr<nsICMSMessage> mMessage;
-  nsCOMPtr<nsISMimeVerificationListener> mListener;
-
-  unsigned char *digest_data;
-  uint32_t digest_len;
-
-  void Run();
-};
-
-
 
 #endif

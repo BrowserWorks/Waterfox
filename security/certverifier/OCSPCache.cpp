@@ -28,23 +28,17 @@
 
 #include "NSSCertDBTrustDomain.h"
 #include "pk11pub.h"
+#include "pkix/pkixnss.h"
+#include "ScopedNSSTypes.h"
 #include "secerr.h"
 
 #ifdef PR_LOGGING
 extern PRLogModuleInfo* gCertVerifierLog;
 #endif
 
+using namespace mozilla::pkix;
+
 namespace mozilla { namespace psm {
-
-void
-MozillaPKIX_PK11_DestroyContext_true(PK11Context* context)
-{
-  PK11_DestroyContext(context, true);
-}
-
-typedef mozilla::pkix::ScopedPtr<PK11Context,
-                                 MozillaPKIX_PK11_DestroyContext_true>
-                                 ScopedPK11Context;
 
 // Let derIssuer be the DER encoding of the issuer of aCert.
 // Let derPublicKey be the DER encoding of the public key of aIssuerCert.
@@ -58,8 +52,7 @@ typedef mozilla::pkix::ScopedPtr<PK11Context,
 // is computationally infeasible to find collisions that would subvert this
 // cache (given that SHA384 is a cryptographically-secure hash function).
 static SECStatus
-CertIDHash(SHA384Buffer& buf, const CERTCertificate* aCert,
-       const CERTCertificate* aIssuerCert)
+CertIDHash(SHA384Buffer& buf, const CertID& certID)
 {
   ScopedPK11Context context(PK11_CreateDigestContext(SEC_OID_SHA384));
   if (!context) {
@@ -69,18 +62,17 @@ CertIDHash(SHA384Buffer& buf, const CERTCertificate* aCert,
   if (rv != SECSuccess) {
     return rv;
   }
-  rv = PK11_DigestOp(context.get(), aCert->derIssuer.data,
-                     aCert->derIssuer.len);
+  rv = PK11_DigestOp(context.get(), certID.issuer.data, certID.issuer.len);
   if (rv != SECSuccess) {
     return rv;
   }
-  rv = PK11_DigestOp(context.get(), aIssuerCert->derPublicKey.data,
-                     aIssuerCert->derPublicKey.len);
+  rv = PK11_DigestOp(context.get(), certID.issuerSubjectPublicKeyInfo.data,
+                     certID.issuerSubjectPublicKeyInfo.len);
   if (rv != SECSuccess) {
     return rv;
   }
-  rv = PK11_DigestOp(context.get(), aCert->serialNumber.data,
-                     aCert->serialNumber.len);
+  rv = PK11_DigestOp(context.get(), certID.serialNumber.data,
+                     certID.serialNumber.len);
   if (rv != SECSuccess) {
     return rv;
   }
@@ -92,17 +84,18 @@ CertIDHash(SHA384Buffer& buf, const CERTCertificate* aCert,
   return rv;
 }
 
-SECStatus
-OCSPCache::Entry::Init(const CERTCertificate* aCert,
-                       const CERTCertificate* aIssuerCert,
-                       PRErrorCode aErrorCode,
-                       PRTime aThisUpdate,
-                       PRTime aValidThrough)
+Result
+OCSPCache::Entry::Init(const CertID& aCertID, Result aResult,
+                       PRTime aThisUpdate, PRTime aValidThrough)
 {
-  mErrorCode = aErrorCode;
+  mResult = aResult;
   mThisUpdate = aThisUpdate;
   mValidThrough = aValidThrough;
-  return CertIDHash(mIDHash, aCert, aIssuerCert);
+  SECStatus srv = CertIDHash(mIDHash, aCertID);
+  if (srv != SECSuccess) {
+    return MapPRErrorCodeToResult(PR_GetError());
+  }
+  return Success;
 }
 
 OCSPCache::OCSPCache()
@@ -118,9 +111,7 @@ OCSPCache::~OCSPCache()
 // Returns false with index in an undefined state if no matching entry was
 // found.
 bool
-OCSPCache::FindInternal(const CERTCertificate* aCert,
-                        const CERTCertificate* aIssuerCert,
-                        /*out*/ size_t& index,
+OCSPCache::FindInternal(const CertID& aCertID, /*out*/ size_t& index,
                         const MutexAutoLock& /* aProofOfLock */)
 {
   if (mEntries.length() == 0) {
@@ -128,7 +119,7 @@ OCSPCache::FindInternal(const CERTCertificate* aCert,
   }
 
   SHA384Buffer idHash;
-  SECStatus rv = CertIDHash(idHash, aCert, aIssuerCert);
+  SECStatus rv = CertIDHash(idHash, aCertID);
   if (rv != SECSuccess) {
     return false;
   }
@@ -145,19 +136,10 @@ OCSPCache::FindInternal(const CERTCertificate* aCert,
   return false;
 }
 
-void
-OCSPCache::LogWithCerts(const char* aMessage, const CERTCertificate* aCert,
-                        const CERTCertificate* aIssuerCert)
+static inline void
+LogWithCertID(const char* aMessage, const CertID& aCertID)
 {
-#ifdef PR_LOGGING
-  if (PR_LOG_TEST(gCertVerifierLog, PR_LOG_DEBUG)) {
-    mozilla::pkix::ScopedPtr<char, mozilla::psm::PORT_Free_string>
-      cn(CERT_GetCommonName(&aCert->subject));
-    mozilla::pkix::ScopedPtr<char, mozilla::psm::PORT_Free_string>
-      cnIssuer(CERT_GetCommonName(&aIssuerCert->subject));
-    PR_LOG(gCertVerifierLog, PR_LOG_DEBUG, (aMessage, cn.get(), cnIssuer.get()));
-  }
-#endif
+  PR_LOG(gCertVerifierLog, PR_LOG_DEBUG, (aMessage, &aCertID));
 }
 
 void
@@ -172,88 +154,75 @@ OCSPCache::MakeMostRecentlyUsed(size_t aIndex,
 }
 
 bool
-OCSPCache::Get(const CERTCertificate* aCert,
-               const CERTCertificate* aIssuerCert,
-               PRErrorCode& aErrorCode,
-               PRTime& aValidThrough)
+OCSPCache::Get(const CertID& aCertID, Result& aResult, PRTime& aValidThrough)
 {
-  PR_ASSERT(aCert);
-  PR_ASSERT(aIssuerCert);
-
   MutexAutoLock lock(mMutex);
 
   size_t index;
-  if (!FindInternal(aCert, aIssuerCert, index, lock)) {
-    LogWithCerts("OCSPCache::Get(%s, %s) not in cache", aCert, aIssuerCert);
+  if (!FindInternal(aCertID, index, lock)) {
+    LogWithCertID("OCSPCache::Get(%p) not in cache", aCertID);
     return false;
   }
-  LogWithCerts("OCSPCache::Get(%s, %s) in cache", aCert, aIssuerCert);
-  aErrorCode = mEntries[index]->mErrorCode;
+  LogWithCertID("OCSPCache::Get(%p) in cache", aCertID);
+  aResult = mEntries[index]->mResult;
   aValidThrough = mEntries[index]->mValidThrough;
   MakeMostRecentlyUsed(index, lock);
   return true;
 }
 
-SECStatus
-OCSPCache::Put(const CERTCertificate* aCert,
-               const CERTCertificate* aIssuerCert,
-               PRErrorCode aErrorCode,
-               PRTime aThisUpdate,
-               PRTime aValidThrough)
+Result
+OCSPCache::Put(const CertID& aCertID, Result aResult,
+               PRTime aThisUpdate, PRTime aValidThrough)
 {
-  PR_ASSERT(aCert);
-  PR_ASSERT(aIssuerCert);
-
   MutexAutoLock lock(mMutex);
 
   size_t index;
-  if (FindInternal(aCert, aIssuerCert, index, lock)) {
+  if (FindInternal(aCertID, index, lock)) {
     // Never replace an entry indicating a revoked certificate.
-    if (mEntries[index]->mErrorCode == SEC_ERROR_REVOKED_CERTIFICATE) {
-      LogWithCerts("OCSPCache::Put(%s, %s) already in cache as revoked - "
-                   "not replacing", aCert, aIssuerCert);
+    if (mEntries[index]->mResult == Result::ERROR_REVOKED_CERTIFICATE) {
+      LogWithCertID("OCSPCache::Put(%p) already in cache as revoked - "
+                    "not replacing", aCertID);
       MakeMostRecentlyUsed(index, lock);
-      return SECSuccess;
+      return Success;
     }
 
     // Never replace a newer entry with an older one unless the older entry
     // indicates a revoked certificate, which we want to remember.
     if (mEntries[index]->mThisUpdate > aThisUpdate &&
-        aErrorCode != SEC_ERROR_REVOKED_CERTIFICATE) {
-      LogWithCerts("OCSPCache::Put(%s, %s) already in cache with more recent "
-                   "validity - not replacing", aCert, aIssuerCert);
+        aResult != Result::ERROR_REVOKED_CERTIFICATE) {
+      LogWithCertID("OCSPCache::Put(%p) already in cache with more recent "
+                    "validity - not replacing", aCertID);
       MakeMostRecentlyUsed(index, lock);
-      return SECSuccess;
+      return Success;
     }
 
     // Only known good responses or responses indicating an unknown
     // or revoked certificate should replace previously known responses.
-    if (aErrorCode != 0 && aErrorCode != SEC_ERROR_OCSP_UNKNOWN_CERT &&
-        aErrorCode != SEC_ERROR_REVOKED_CERTIFICATE) {
-      LogWithCerts("OCSPCache::Put(%s, %s) already in cache - not replacing "
-                   "with less important status", aCert, aIssuerCert);
+    if (aResult != Success &&
+        aResult != Result::ERROR_OCSP_UNKNOWN_CERT &&
+        aResult != Result::ERROR_REVOKED_CERTIFICATE) {
+      LogWithCertID("OCSPCache::Put(%p) already in cache - not replacing "
+                    "with less important status", aCertID);
       MakeMostRecentlyUsed(index, lock);
-      return SECSuccess;
+      return Success;
     }
 
-    LogWithCerts("OCSPCache::Put(%s, %s) already in cache - replacing",
-                 aCert, aIssuerCert);
-    mEntries[index]->mErrorCode = aErrorCode;
+    LogWithCertID("OCSPCache::Put(%p) already in cache - replacing", aCertID);
+    mEntries[index]->mResult = aResult;
     mEntries[index]->mThisUpdate = aThisUpdate;
     mEntries[index]->mValidThrough = aValidThrough;
     MakeMostRecentlyUsed(index, lock);
-    return SECSuccess;
+    return Success;
   }
 
   if (mEntries.length() == MaxEntries) {
-    LogWithCerts("OCSPCache::Put(%s, %s) too full - evicting an entry", aCert,
-                 aIssuerCert);
+    LogWithCertID("OCSPCache::Put(%p) too full - evicting an entry", aCertID);
     for (Entry** toEvict = mEntries.begin(); toEvict != mEntries.end();
          toEvict++) {
       // Never evict an entry that indicates a revoked or unknokwn certificate,
       // because revoked responses are more security-critical to remember.
-      if ((*toEvict)->mErrorCode != SEC_ERROR_REVOKED_CERTIFICATE &&
-          (*toEvict)->mErrorCode != SEC_ERROR_OCSP_UNKNOWN_CERT) {
+      if ((*toEvict)->mResult != Result::ERROR_REVOKED_CERTIFICATE &&
+          (*toEvict)->mResult != Result::ERROR_OCSP_UNKNOWN_CERT) {
         delete *toEvict;
         mEntries.erase(toEvict);
         break;
@@ -267,30 +236,25 @@ OCSPCache::Put(const CERTCertificate* aCert,
     // we can't. We should return with an error that causes the current
     // verification to fail.
     if (mEntries.length() == MaxEntries) {
-      if (aErrorCode != 0) {
-        PR_SetError(aErrorCode, 0);
-        return SECFailure;
-      }
-      return SECSuccess;
+      return aResult;
     }
   }
 
-  Entry* newEntry = new Entry();
+  Entry* newEntry = new (std::nothrow) Entry();
   // Normally we don't have to do this in Gecko, because OOM is fatal.
   // However, if we want to embed this in another project, OOM might not
   // be fatal, so handle this case.
   if (!newEntry) {
-    PR_SetError(SEC_ERROR_NO_MEMORY, 0);
-    return SECFailure;
+    return Result::FATAL_ERROR_NO_MEMORY;
   }
-  SECStatus rv = newEntry->Init(aCert, aIssuerCert, aErrorCode, aThisUpdate,
-                                aValidThrough);
-  if (rv != SECSuccess) {
+  Result rv = newEntry->Init(aCertID, aResult, aThisUpdate, aValidThrough);
+  if (rv != Success) {
+    delete newEntry;
     return rv;
   }
   mEntries.append(newEntry);
-  LogWithCerts("OCSPCache::Put(%s, %s) added to cache", aCert, aIssuerCert);
-  return SECSuccess;
+  LogWithCertID("OCSPCache::Put(%p) added to cache", aCertID);
+  return Success;
 }
 
 void

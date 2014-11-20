@@ -3,11 +3,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-import sys
-
 import base
-from .. import handlers
-
 
 class UnittestFormatter(base.BaseFormatter):
     """Formatter designed to produce output in a format like that used by
@@ -60,8 +56,3 @@ class UnittestFormatter(base.BaseFormatter):
     def output_summary(self):
         return ("Ran %i tests in %.1fs" % (self.tests_run,
                                            (self.end_time - self.start_time) / 1000))
-
-if __name__ == "__main__":
-    base.format_file(sys.stdin,
-                     handlers.StreamHandler(stream=sys.stdout,
-                                            formatter=UnittestFormatter()))

@@ -1,4 +1,4 @@
-/* -*- Mode: Javascript; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 4 -*- */
 
 "use strict";
 
@@ -11,13 +11,7 @@ var ignoreIndirectCalls = {
     "__conv" : true,
     "__convf" : true,
     "prerrortable.c:callback_newtable" : true,
-    "mozalloc_oom.cpp:void (* gAbortHandler)(size_t)" : true,
-
-    // I don't know why these are getting truncated
-    "nsTraceRefcnt.cpp:void (* leakyLogAddRef)(void*": true,
-    "nsTraceRefcnt.cpp:void (* leakyLogAddRef)(void*, int, int)": true,
-    "nsTraceRefcnt.cpp:void (* leakyLogRelease)(void*": true,
-    "nsTraceRefcnt.cpp:void (* leakyLogRelease)(void*, int, int)": true,
+    "mozalloc_oom.cpp:void (* gAbortHandler)(size_t)" : true
 };
 
 function indirectCallCannotGC(fullCaller, fullVariable)
@@ -196,7 +190,8 @@ function isRootedTypeName(name)
         name == "WrappableJSErrorResult" ||
         name == "js::frontend::TokenStream" ||
         name == "js::frontend::TokenStream::Position" ||
-        name == "ModuleCompiler")
+        name == "ModuleCompiler" ||
+        name == "JSAddonId")
     {
         return true;
     }
@@ -253,6 +248,12 @@ function isOverridableField(initialCSU, csu, field)
         return false;
     if (initialCSU == 'nsIXPConnectJSObjectHolder' && field == 'GetJSObject')
         return false;
+    if (initialCSU == 'nsIXPConnect' && field == 'GetSafeJSContext')
+        return false;
+    if (initialCSU == 'nsIScriptContext') {
+        if (field == 'GetWindowProxy' || field == 'GetWindowProxyPreserveColor')
+            return false;
+    }
 
     return true;
 }

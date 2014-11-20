@@ -141,7 +141,7 @@ struct ParamTraits<mozilla::WidgetWheelEvent>
     WriteParam(aMsg, aParam.deltaMode);
     WriteParam(aMsg, aParam.customizedByUserPrefs);
     WriteParam(aMsg, aParam.isMomentum);
-    WriteParam(aMsg, aParam.isPixelOnlyDevice);
+    WriteParam(aMsg, aParam.mIsNoLineOrPageDelta);
     WriteParam(aMsg, aParam.lineOrPageDeltaX);
     WriteParam(aMsg, aParam.lineOrPageDeltaY);
     WriteParam(aMsg, static_cast<int32_t>(aParam.scrollType));
@@ -161,7 +161,7 @@ struct ParamTraits<mozilla::WidgetWheelEvent>
       ReadParam(aMsg, aIter, &aResult->deltaMode) &&
       ReadParam(aMsg, aIter, &aResult->customizedByUserPrefs) &&
       ReadParam(aMsg, aIter, &aResult->isMomentum) &&
-      ReadParam(aMsg, aIter, &aResult->isPixelOnlyDevice) &&
+      ReadParam(aMsg, aIter, &aResult->mIsNoLineOrPageDelta) &&
       ReadParam(aMsg, aIter, &aResult->lineOrPageDeltaX) &&
       ReadParam(aMsg, aIter, &aResult->lineOrPageDeltaY) &&
       ReadParam(aMsg, aIter, &scrollType) &&
@@ -248,7 +248,7 @@ struct ParamTraits<mozilla::WidgetTouchEvent>
     WriteParam(aMsg, static_cast<const mozilla::WidgetInputEvent&>(aParam));
     // Sigh, Touch bites us again!  We want to be able to do
     //   WriteParam(aMsg, aParam.touches);
-    const nsTArray< nsRefPtr<mozilla::dom::Touch> >& touches = aParam.touches;
+    const paramType::TouchArray& touches = aParam.touches;
     WriteParam(aMsg, touches.Length());
     for (uint32_t i = 0; i < touches.Length(); ++i) {
       mozilla::dom::Touch* touch = touches[i];
@@ -262,7 +262,7 @@ struct ParamTraits<mozilla::WidgetTouchEvent>
 
   static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
   {
-    size_t numTouches;
+    paramType::TouchArray::size_type numTouches;
     if (!ReadParam(aMsg, aIter,
                    static_cast<mozilla::WidgetInputEvent*>(aResult)) ||
         !ReadParam(aMsg, aIter, &numTouches)) {
@@ -401,7 +401,7 @@ struct ParamTraits<mozilla::TextRangeArray>
 
   static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
   {
-    uint32_t length;
+    paramType::size_type length;
     if (!ReadParam(aMsg, aIter, &length)) {
       return false;
     }

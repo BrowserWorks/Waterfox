@@ -1,4 +1,4 @@
-/* -*- Mode: Javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,6 +24,14 @@ const gEncoder = new TextEncoder();
  * A Project keeps track of the opened folders using LocalStore
  * objects.  Resources are generally requested from the project,
  * even though the Store is actually keeping track of them.
+ *
+ *
+ * This object emits the following events:
+ *   - "refresh-complete": After all stores have been refreshed from disk.
+ *   - "store-added": When a store has been added to the project.
+ *   - "store-removed": When a store has been removed from the project.
+ *   - "resource-added": When a resource has been added to one of the stores.
+ *   - "resource-removed": When a resource has been removed from one of the stores.
  */
 var Project = Class({
   extends: EventTarget,
@@ -88,6 +96,7 @@ var Project = Class({
       for (let [path, store] of this.localStores) {
         yield store.refresh();
       }
+      emit(this, "refresh-complete");
     }.bind(this));
   },
 

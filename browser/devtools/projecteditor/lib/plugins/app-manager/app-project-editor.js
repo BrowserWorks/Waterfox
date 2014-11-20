@@ -1,4 +1,4 @@
-/* -*- Mode: Javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,7 +14,7 @@ var AppProjectEditor = Class({
 
   hidesToolbar: true,
 
-  initialize: function(document, host) {
+  initialize: function(host) {
     ItchEditor.prototype.initialize.apply(this, arguments);
     this.appended = promise.resolve();
     this.host = host;
@@ -27,15 +27,27 @@ var AppProjectEditor = Class({
   },
 
   load: function(resource) {
-    this.elt.textContent = "";
     let {appManagerOpts} = this.host.project;
-    let iframe = this.iframe = this.elt.ownerDocument.createElement("iframe");
-    iframe.setAttribute("flex", "1");
-    iframe.setAttribute("src", appManagerOpts.projectOverviewURL);
-    this.elt.appendChild(iframe);
 
-    // Wait for other `appended` listeners before emitting load.
-    this.appended.then(() => {
+    // Only load the frame the first time it is selected
+    if (!this.iframe || this.iframe.getAttribute("src") !== appManagerOpts.projectOverviewURL) {
+
+      this.elt.textContent = "";
+      let iframe = this.iframe = this.elt.ownerDocument.createElement("iframe");
+      let iframeLoaded = this.iframeLoaded = promise.defer();
+
+      iframe.addEventListener("load", function onLoad() {
+        iframe.removeEventListener("load", onLoad);
+        iframeLoaded.resolve();
+      });
+
+      iframe.setAttribute("flex", "1");
+      iframe.setAttribute("src", appManagerOpts.projectOverviewURL);
+      this.elt.appendChild(iframe);
+
+    }
+
+    promise.all([this.iframeLoaded.promise, this.appended]).then(() => {
       this.emit("load");
     });
   }

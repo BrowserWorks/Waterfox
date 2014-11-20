@@ -17,7 +17,6 @@
 #include "jit/MIR.h"
 #include "jit/MIRGenerator.h"
 #include "jit/MIRGraph.h"
-#include "jit/TypeDescrSet.h"
 
 namespace js {
 namespace jit {
@@ -382,7 +381,7 @@ class IonBuilder : public MIRGenerator
     MInstruction *addShapeGuard(MDefinition *obj, Shape *const shape, BailoutKind bailoutKind);
 
     MDefinition *convertShiftToMaskForStaticTypedArray(MDefinition *id,
-                                                       ArrayBufferView::ViewType viewType);
+                                                       Scalar::Type viewType);
 
     bool invalidatedIdempotentCache();
 
@@ -400,7 +399,9 @@ class IonBuilder : public MIRGenerator
     MDefinition *tryInnerizeWindow(MDefinition *obj);
 
     // jsop_getprop() helpers.
+    bool checkIsDefinitelyOptimizedArguments(MDefinition *obj, bool *isOptimizedArgs);
     bool getPropTryArgumentsLength(bool *emitted, MDefinition *obj);
+    bool getPropTryArgumentsCallee(bool *emitted, MDefinition *obj, PropertyName *name);
     bool getPropTryConstant(bool *emitted, MDefinition *obj, PropertyName *name,
                             types::TemporaryTypeSet *types);
     bool getPropTryDefiniteSlot(bool *emitted, MDefinition *obj, PropertyName *name,
@@ -413,11 +414,11 @@ class IonBuilder : public MIRGenerator
                                types::TemporaryTypeSet *resultTypes);
     bool getPropTryScalarPropOfTypedObject(bool *emitted, MDefinition *typedObj,
                                            int32_t fieldOffset,
-                                           TypeDescrSet fieldTypeReprs,
+                                           TypedObjectPrediction fieldTypeReprs,
                                            types::TemporaryTypeSet *resultTypes);
     bool getPropTryComplexPropOfTypedObject(bool *emitted, MDefinition *typedObj,
                                             int32_t fieldOffset,
-                                            TypeDescrSet fieldTypeReprs,
+                                            TypedObjectPrediction fieldTypeReprs,
                                             size_t fieldIndex,
                                             types::TemporaryTypeSet *resultTypes);
     bool getPropTryInnerize(bool *emitted, MDefinition *obj, PropertyName *name,
@@ -444,21 +445,19 @@ class IonBuilder : public MIRGenerator
                                            MDefinition *obj,
                                            int32_t fieldOffset,
                                            MDefinition *value,
-                                           TypeDescrSet fieldTypeReprs);
+                                           TypedObjectPrediction fieldTypeReprs);
     bool setPropTryCache(bool *emitted, MDefinition *obj,
                          PropertyName *name, MDefinition *value,
                          bool barrier, types::TemporaryTypeSet *objTypes);
 
     // binary data lookup helpers.
-    bool lookupTypeDescrSet(MDefinition *typedObj,
-                                     TypeDescrSet *out);
-    bool typeSetToTypeDescrSet(types::TemporaryTypeSet *types,
-                                        TypeDescrSet *out);
-    bool lookupTypedObjectField(MDefinition *typedObj,
-                                PropertyName *name,
-                                int32_t *fieldOffset,
-                                TypeDescrSet *fieldTypeReprs,
-                                size_t *fieldIndex);
+    TypedObjectPrediction typedObjectPrediction(MDefinition *typedObj);
+    TypedObjectPrediction typedObjectPrediction(types::TemporaryTypeSet *types);
+    bool typedObjectHasField(MDefinition *typedObj,
+                             PropertyName *name,
+                             size_t *fieldOffset,
+                             TypedObjectPrediction *fieldTypeReprs,
+                             size_t *fieldIndex);
     MDefinition *loadTypedObjectType(MDefinition *value);
     void loadTypedObjectData(MDefinition *typedObj,
                              MDefinition *offset,
@@ -483,13 +482,13 @@ class IonBuilder : public MIRGenerator
     bool checkTypedObjectIndexInBounds(int32_t elemSize,
                                        MDefinition *obj,
                                        MDefinition *index,
-                                       TypeDescrSet objTypeDescrs,
+                                       TypedObjectPrediction objTypeDescrs,
                                        MDefinition **indexAsByteOffset,
                                        bool *canBeNeutered);
     bool pushDerivedTypedObject(bool *emitted,
                                 MDefinition *obj,
                                 MDefinition *offset,
-                                TypeDescrSet derivedTypeDescrs,
+                                TypedObjectPrediction derivedTypeDescrs,
                                 MDefinition *derivedTypeObj,
                                 bool canBeNeutered);
     bool pushScalarLoadFromTypedObject(bool *emitted,
@@ -515,9 +514,9 @@ class IonBuilder : public MIRGenerator
     bool setElemTryScalarElemOfTypedObject(bool *emitted,
                                            MDefinition *obj,
                                            MDefinition *index,
-                                           TypeDescrSet objTypeReprs,
+                                           TypedObjectPrediction objTypeReprs,
                                            MDefinition *value,
-                                           TypeDescrSet elemTypeReprs,
+                                           TypedObjectPrediction elemTypeReprs,
                                            int32_t elemSize);
 
     // jsop_getelem() helpers.
@@ -532,14 +531,14 @@ class IonBuilder : public MIRGenerator
     bool getElemTryScalarElemOfTypedObject(bool *emitted,
                                            MDefinition *obj,
                                            MDefinition *index,
-                                           TypeDescrSet objTypeReprs,
-                                           TypeDescrSet elemTypeReprs,
+                                           TypedObjectPrediction objTypeReprs,
+                                           TypedObjectPrediction elemTypeReprs,
                                            int32_t elemSize);
     bool getElemTryComplexElemOfTypedObject(bool *emitted,
                                             MDefinition *obj,
                                             MDefinition *index,
-                                            TypeDescrSet objTypeReprs,
-                                            TypeDescrSet elemTypeReprs,
+                                            TypedObjectPrediction objTypeReprs,
+                                            TypedObjectPrediction elemTypeReprs,
                                             int32_t elemSize);
 
     enum BoundsChecking { DoBoundsCheck, SkipBoundsCheck };
@@ -733,6 +732,7 @@ class IonBuilder : public MIRGenerator
 
     // Utility intrinsics.
     InliningStatus inlineIsCallable(CallInfo &callInfo);
+    InliningStatus inlineIsObject(CallInfo &callInfo);
     InliningStatus inlineHaveSameClass(CallInfo &callInfo);
     InliningStatus inlineToObject(CallInfo &callInfo);
     InliningStatus inlineToInteger(CallInfo &callInfo);
@@ -839,8 +839,6 @@ class IonBuilder : public MIRGenerator
     CodeGenerator *backgroundCodegen() const { return backgroundCodegen_; }
     void setBackgroundCodegen(CodeGenerator *codegen) { backgroundCodegen_ = codegen; }
 
-    TypeDescrSetHash *getOrCreateDescrSetHash(); // fallible
-
     types::CompilerConstraintList *constraints() {
         return constraints_;
     }
@@ -856,7 +854,6 @@ class IonBuilder : public MIRGenerator
 
     JSContext *analysisContext;
     BaselineFrameInspector *baselineFrame_;
-    TypeDescrSetHash *descrSetHash_;
 
     // Constraints for recording dependencies on type information.
     types::CompilerConstraintList *constraints_;

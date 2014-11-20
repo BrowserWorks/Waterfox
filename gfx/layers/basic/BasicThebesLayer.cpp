@@ -90,10 +90,10 @@ BasicThebesLayer::PaintThebes(gfxContext* aContext,
       } else {
         groupContext = aContext;
       }
-      SetAntialiasingFlags(this, groupContext);
+      SetAntialiasingFlags(this, groupContext->GetDrawTarget());
       aCallback(this, groupContext, toDraw, DrawRegionClip::CLIP_NONE, nsIntRegion(), aCallbackData);
       if (needsGroup) {
-        BasicManager()->PopGroupToSourceWithCachedSurface(aContext, groupContext);
+        aContext->PopGroupToSource();
         if (needsClipToVisibleRegion) {
           gfxUtils::ClipToRegion(aContext, toDraw);
         }

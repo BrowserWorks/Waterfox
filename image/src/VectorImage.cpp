@@ -126,6 +126,7 @@ public:
     mDocument->AddObserver(this);
   }
 
+private:
   ~SVGParseCompleteListener()
   {
     if (mDocument) {
@@ -136,6 +137,7 @@ public:
     }
   }
 
+public:
   void EndLoad(nsIDocument* aDocument) MOZ_OVERRIDE
   {
     MOZ_ASSERT(aDocument == mDocument, "Got EndLoad for wrong document?");
@@ -180,6 +182,7 @@ public:
     mDocument->AddEventListener(NS_LITERAL_STRING("SVGError"), this, true, false);
   }
 
+private:
   ~SVGLoadEventListener()
   {
     if (mDocument) {
@@ -190,6 +193,7 @@ public:
     }
   }
 
+public:
   NS_IMETHOD HandleEvent(nsIDOMEvent* aEvent) MOZ_OVERRIDE
   {
     MOZ_ASSERT(mDocument, "Need an SVG document. Received multiple events?");
@@ -280,7 +284,11 @@ SVGDrawingCallback::operator()(gfxContext* aContext,
   aContext->Clip();
 
   gfxContextMatrixAutoSaveRestore contextMatrixRestorer(aContext);
-  aContext->Multiply(gfxMatrix(aTransform).Invert());
+  gfxMatrix matrix = aTransform;
+  if (!matrix.Invert()) {
+    return false;
+  }
+  aContext->Multiply(matrix);
   aContext->Scale(1.0 / mScale.width, 1.0 / mScale.height);
 
   nsPresContext* presContext = presShell->GetPresContext();
@@ -356,7 +364,7 @@ VectorImage::FrameRect(uint32_t aWhichFrame)
 }
 
 size_t
-VectorImage::HeapSizeOfSourceWithComputedFallback(mozilla::MallocSizeOf aMallocSizeOf) const
+VectorImage::HeapSizeOfSourceWithComputedFallback(MallocSizeOf aMallocSizeOf) const
 {
   // We're not storing the source data -- we just feed that directly to
   // our helper SVG document as we receive it, for it to parse.
@@ -368,7 +376,7 @@ VectorImage::HeapSizeOfSourceWithComputedFallback(mozilla::MallocSizeOf aMallocS
 }
 
 size_t
-VectorImage::HeapSizeOfDecodedWithComputedFallback(mozilla::MallocSizeOf aMallocSizeOf) const
+VectorImage::HeapSizeOfDecodedWithComputedFallback(MallocSizeOf aMallocSizeOf) const
 {
   // If implementing this, we'll need to restructure our callers to make sure
   // any amount we return is attributed to the vector images measure (i.e.
@@ -495,7 +503,7 @@ VectorImage::ShouldAnimate()
 }
 
 NS_IMETHODIMP_(void)
-VectorImage::SetAnimationStartTime(const mozilla::TimeStamp& aTime)
+VectorImage::SetAnimationStartTime(const TimeStamp& aTime)
 {
   // We don't care about animation start time.
 }
@@ -525,15 +533,14 @@ VectorImage::GetWidth(int32_t* aWidth)
 //******************************************************************************
 /* [notxpcom] void requestRefresh ([const] in TimeStamp aTime); */
 NS_IMETHODIMP_(void)
-VectorImage::RequestRefresh(const mozilla::TimeStamp& aTime)
+VectorImage::RequestRefresh(const TimeStamp& aTime)
 {
   if (HadRecentRefresh(aTime)) {
     return;
   }
 
+  // TODO: Implement for b666446.
   EvaluateAnimation();
-
-  mSVGDocumentWrapper->TickRefreshDriver();
 
   if (mHasPendingInvalidation) {
     SendInvalidationNotifications();
@@ -564,6 +571,12 @@ VectorImage::SendInvalidationNotifications()
     mStatusTracker->FrameChanged(&nsIntRect::GetMaxSizedIntRect());
     mStatusTracker->OnStopFrame();
   }
+}
+
+NS_IMETHODIMP_(nsIntRect)
+VectorImage::GetImageSpaceInvalidationRect(const nsIntRect& aRect)
+{
+  return aRect;
 }
 
 //******************************************************************************
@@ -741,7 +754,7 @@ VectorImage::GetFrame(uint32_t aWhichFrame,
 /* [noscript] ImageContainer getImageContainer(); */
 NS_IMETHODIMP
 VectorImage::GetImageContainer(LayerManager* aManager,
-                               mozilla::layers::ImageContainer** _retval)
+                               layers::ImageContainer** _retval)
 {
   *_retval = nullptr;
   return NS_OK;
@@ -855,11 +868,16 @@ VectorImage::Draw(gfxContext* aContext,
   SVGDrawingParameters params(aContext, aFilter, aUserSpaceToImageSpace, aFill,
                               aSubimage, aViewportSize, aSVGContext, animTime, aFlags);
 
-  // Check the cache.
-  nsRefPtr<gfxDrawable> drawable =
-    SurfaceCache::Lookup(ImageKey(this),
-                         SurfaceKey(params.imageRect.Size(), params.scale,
-                                    aSVGContext, animTime, aFlags));
+  // Check the cache. (The FLAG_BYPASS_SURFACE_CACHE check here is just an
+  // optimization since the flags are part of the cache key and we never put
+  // surfaces in the cache if the flags contain FLAG_BYPASS_SURFACE_CACHE.)
+  nsRefPtr<gfxDrawable> drawable;
+  if (!(aFlags & FLAG_BYPASS_SURFACE_CACHE)) {
+    drawable =
+      SurfaceCache::Lookup(ImageKey(this),
+                           SurfaceKey(params.imageRect.Size(), params.scale,
+                                      aSVGContext, animTime, aFlags));
+  }
 
   // Draw.
   if (drawable) {
@@ -886,17 +904,17 @@ VectorImage::CreateDrawableAndShow(const SVGDrawingParameters& aParams)
   nsRefPtr<gfxDrawable> svgDrawable =
     new gfxCallbackDrawable(cb, ThebesIntSize(aParams.imageRect.Size()));
 
-  // Refuse to cache animated images.
-  // XXX(seth): We may remove this restriction in bug 922893.
-  if (mHaveAnimations)
-    return Show(svgDrawable, aParams);
-
-  // If the image is too big to fit in the cache, don't go any further.
-  if (!SurfaceCache::CanHold(aParams.imageRect.Size()))
+  bool bypassCache = bool(aParams.flags & FLAG_BYPASS_SURFACE_CACHE) ||
+                     // Refuse to cache animated images:
+                     // XXX(seth): We may remove this restriction in bug 922893.
+                     mHaveAnimations ||
+                     // The image is too big to fit in the cache:
+                     !SurfaceCache::CanHold(aParams.imageRect.Size());
+  if (bypassCache)
     return Show(svgDrawable, aParams);
 
   // Try to create an offscreen surface.
-  mozilla::RefPtr<mozilla::gfx::DrawTarget> target =
+  RefPtr<gfx::DrawTarget> target =
    gfxPlatform::GetPlatform()->CreateOffscreenContentDrawTarget(aParams.imageRect.Size(), gfx::SurfaceFormat::B8G8R8A8);
 
   // If we couldn't create the draw target, it was probably because it would end
@@ -1197,6 +1215,13 @@ VectorImage::InvalidateObserversOnNextRefreshDriverTick()
   } else {
     SendInvalidationNotifications();
   }
+}
+
+already_AddRefed<imgIContainer>
+VectorImage::Unwrap()
+{
+  nsCOMPtr<imgIContainer> self(this);
+  return self.forget();
 }
 
 } // namespace image

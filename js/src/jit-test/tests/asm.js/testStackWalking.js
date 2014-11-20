@@ -17,12 +17,15 @@ function dumpStack()
     stack = new Error().stack
 }
 
+setJitCompilerOption("ion.usecount.trigger", 10);
+setJitCompilerOption("baseline.usecount.trigger", 0);
+setJitCompilerOption("offthread-compilation.enable", 0);
 setCachingEnabled(true);
 
 var callFFI = asmCompile('global', 'ffis', USE_ASM + "var ffi=ffis.ffi; function f() { return ffi()|0 } return f");
 
 var f = asmLink(callFFI, null, {ffi:dumpStack});
-for (var i = 0; i < 5000; i++) {
+for (var i = 0; i < 15; i++) {
     stack = null;
     f();
     matchStack(stack, ['dumpStack', 'f']);
@@ -44,7 +47,7 @@ matchStack(stack, ["dumpStack", "f", "middle", "f"]);
 
 function returnStackDumper() { return { valueOf:function() { stack = new Error().stack } } }
 var f = asmLink(callFFI, null, {ffi:returnStackDumper});
-for (var i = 0; i < 5000; i++) {
+for (var i = 0; i < 15; i++) {
     stack = null;
     f();
     matchStack(stack, ['valueOf', 'f']);

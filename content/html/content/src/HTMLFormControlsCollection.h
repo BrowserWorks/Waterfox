@@ -20,15 +20,14 @@ namespace mozilla {
 namespace dom {
 class HTMLFormElement;
 class HTMLImageElement;
-class OwningNodeListOrElement;
-template<typename> class Nullable;
+class OwningRadioNodeListOrElement;
+template<typename> struct Nullable;
 
 class HTMLFormControlsCollection : public nsIHTMLCollection
                                  , public nsWrapperCache
 {
 public:
   HTMLFormControlsCollection(HTMLFormElement* aForm);
-  virtual ~HTMLFormControlsCollection();
 
   void DropFormReference();
 
@@ -46,10 +45,10 @@ public:
   void
   NamedGetter(const nsAString& aName,
               bool& aFound,
-              Nullable<OwningNodeListOrElement>& aResult);
+              Nullable<OwningRadioNodeListOrElement>& aResult);
   void
   NamedItem(const nsAString& aName,
-            Nullable<OwningNodeListOrElement>& aResult)
+            Nullable<OwningRadioNodeListOrElement>& aResult)
   {
     bool dummy;
     NamedGetter(aName, dummy, aResult);
@@ -83,6 +82,7 @@ public:
   using nsWrapperCache::GetWrapperPreserveColor;
   virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
 protected:
+  virtual ~HTMLFormControlsCollection();
   virtual JSObject* GetWrapperPreserveColorInternal() MOZ_OVERRIDE
   {
     return nsWrapperCache::GetWrapperPreserveColor();

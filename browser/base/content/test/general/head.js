@@ -151,6 +151,37 @@ function whenNewWindowLoaded(aOptions, aCallback) {
   }, false);
 }
 
+function promiseWindowClosed(win) {
+  let deferred = Promise.defer();
+  win.addEventListener("unload", function onunload() {
+    win.removeEventListener("unload", onunload);
+    deferred.resolve();
+  });
+  win.close();
+  return deferred.promise;
+}
+
+function promiseOpenAndLoadWindow(aOptions, aWaitForDelayedStartup=false) {
+  let deferred = Promise.defer();
+  let win = OpenBrowserWindow(aOptions);
+  if (aWaitForDelayedStartup) {
+    Services.obs.addObserver(function onDS(aSubject, aTopic, aData) {
+      if (aSubject != win) {
+        return;
+      }
+      Services.obs.removeObserver(onDS, "browser-delayed-startup-finished");
+      deferred.resolve(win);
+    }, "browser-delayed-startup-finished", false);
+
+  } else {
+    win.addEventListener("load", function onLoad() {
+      win.removeEventListener("load", onLoad);
+      deferred.resolve(win);
+    });
+  }
+  return deferred.promise;
+}
+
 /**
  * Waits for all pending async statements on the default connection, before
  * proceeding with aCallback.
@@ -219,11 +250,13 @@ function whenNewTabLoaded(aWindow, aCallback) {
 }
 
 function whenTabLoaded(aTab, aCallback) {
-  let browser = aTab.linkedBrowser;
-  browser.addEventListener("load", function onLoad() {
-    browser.removeEventListener("load", onLoad, true);
-    executeSoon(aCallback);
-  }, true);
+  promiseTabLoadEvent(aTab).then(aCallback);
+}
+
+function promiseTabLoaded(aTab) {
+  let deferred = Promise.defer();
+  whenTabLoaded(aTab, deferred.resolve);
+  return deferred.promise;
 }
 
 function addVisits(aPlaceInfo, aCallback) {
@@ -305,6 +338,7 @@ function promiseHistoryClearedState(aURIs, aShouldBeCleared) {
 function promiseTopicObserved(topic)
 {
   let deferred = Promise.defer();
+  info("Waiting for observer topic " + topic);
   Services.obs.addObserver(function PTO_observe(subject, topic, data) {
     Services.obs.removeObserver(PTO_observe, topic);
     deferred.resolve([subject, data]);
@@ -334,7 +368,7 @@ function promiseClearHistory() {
  *        The URL of the document that is expected to load.
  * @return promise
  */
-function waitForDocLoadAndStopIt(aExpectedURL) {
+function waitForDocLoadAndStopIt(aExpectedURL, aBrowser=gBrowser) {
   let deferred = Promise.defer();
   let progressListener = {
     onStateChange: function (webProgress, req, flags, status) {
@@ -347,12 +381,12 @@ function waitForDocLoadAndStopIt(aExpectedURL) {
         is(req.originalURI.spec, aExpectedURL,
            "waitForDocLoadAndStopIt: The expected URL was loaded");
         req.cancel(Components.results.NS_ERROR_FAILURE);
-        gBrowser.removeProgressListener(progressListener);
+        aBrowser.removeProgressListener(progressListener);
         deferred.resolve();
       }
     },
   };
-  gBrowser.addProgressListener(progressListener);
+  aBrowser.addProgressListener(progressListener);
   info("waitForDocLoadAndStopIt: Waiting for URL: " + aExpectedURL);
   return deferred.promise;
 }
@@ -391,8 +425,7 @@ let FullZoomHelper = {
     let didLoad = false;
     let didZoom = false;
 
-    tab.linkedBrowser.addEventListener("load", function (event) {
-      event.currentTarget.removeEventListener("load", arguments.callee, true);
+    promiseTabLoadEvent(tab).then(event => {
       didLoad = true;
       if (didZoom)
         deferred.resolve();
@@ -465,3 +498,82 @@ let FullZoomHelper = {
     };
   },
 };
+
+/**
+ * Waits for a load (or custom) event to finish in a given tab. If provided
+ * load an uri into the tab.
+ *
+ * @param tab
+ *        The tab to load into.
+ * @param [optional] url
+ *        The url to load, or the current url.
+ * @param [optional] event
+ *        The load event type to wait for.  Defaults to "load".
+ * @return {Promise} resolved when the event is handled.
+ * @resolves to the received event
+ * @rejects if a valid load event is not received within a meaningful interval
+ */
+function promiseTabLoadEvent(tab, url, eventType="load")
+{
+  let deferred = Promise.defer();
+  info("Wait tab event: " + eventType);
+
+  function handle(event) {
+    if (event.originalTarget != tab.linkedBrowser.contentDocument ||
+        event.target.location.href == "about:blank" ||
+        (url && event.target.location.href != url)) {
+      info("Skipping spurious '" + eventType + "'' event" +
+           " for " + event.target.location.href);
+      return;
+    }
+    clearTimeout(timeout);
+    tab.linkedBrowser.removeEventListener(eventType, handle, true);
+    info("Tab event received: " + eventType);
+    deferred.resolve(event);
+  }
+
+  let timeout = setTimeout(() => {
+    tab.linkedBrowser.removeEventListener(eventType, handle, true);
+    deferred.reject(new Error("Timed out while waiting for a '" + eventType + "'' event"));
+  }, 30000);
+
+  tab.linkedBrowser.addEventListener(eventType, handle, true, true);
+  if (url)
+    tab.linkedBrowser.loadURI(url);
+  return deferred.promise;
+}
+
+function assertWebRTCIndicatorStatus(expected) {
+  let ui = Cu.import("resource:///modules/webrtcUI.jsm", {}).webrtcUI;
+  let msg = "WebRTC indicator " + (expected ? "visible" : "hidden");
+  is(ui.showGlobalIndicator, !!expected, msg);
+
+  let expectVideo = false, expectAudio = false, expectScreen = false;
+  if (expected) {
+    if (expected.video)
+      expectVideo = true;
+    if (expected.audio)
+      expectAudio = true;
+    if (expected.screen)
+      expectScreen = true;
+  }
+  is(ui.showCameraIndicator, expectVideo, "camera global indicator as expected");
+  is(ui.showMicrophoneIndicator, expectAudio, "microphone global indicator as expected");
+  is(ui.showScreenSharingIndicator, expectScreen, "screen global indicator as expected");
+
+  if (!("nsISystemStatusBar" in Ci)) {
+    let indicator = Services.wm.getEnumerator("Browser:WebRTCGlobalIndicator");
+    let hasWindow = indicator.hasMoreElements();
+    is(hasWindow, !!expected, "popup " + msg);
+    if (hasWindow) {
+      let docElt = indicator.getNext().document.documentElement;
+      for (let item of ["video", "audio", "screen"]) {
+        let expectedValue = (expected && expected[item]) ? "true" : "";
+        is(docElt.getAttribute("sharing" + item), expectedValue,
+           item + " global indicator attribute as expected");
+      }
+
+      ok(!indicator.hasMoreElements(), "only one global indicator window");
+    }
+  }
+}

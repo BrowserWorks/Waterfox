@@ -18,8 +18,7 @@ class HTMLOptGroupElement MOZ_FINAL : public nsGenericHTMLElement,
                                       public nsIDOMHTMLOptGroupElement
 {
 public:
-  HTMLOptGroupElement(already_AddRefed<nsINodeInfo>& aNodeInfo);
-  virtual ~HTMLOptGroupElement();
+  HTMLOptGroupElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
 
   NS_IMPL_FROMCONTENT_HTML_WITH_TAG(HTMLOptGroupElement, optgroup)
 
@@ -39,7 +38,7 @@ public:
 
   virtual EventStates IntrinsicState() const MOZ_OVERRIDE;
  
-  virtual nsresult Clone(nsINodeInfo* aNodeInfo, nsINode** aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult) const MOZ_OVERRIDE;
 
   virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue, bool aNotify) MOZ_OVERRIDE;
@@ -66,6 +65,8 @@ public:
   }
 
 protected:
+  virtual ~HTMLOptGroupElement();
+
   virtual JSObject* WrapNode(JSContext* aCx) MOZ_OVERRIDE;
 
 protected:

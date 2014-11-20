@@ -26,13 +26,16 @@
 #include "gfxFontFamilyList.h"
 
 class imgRequestProxy;
-class nsCSSStyleSheet;
 class nsIDocument;
 class nsIPrincipal;
 class nsIURI;
 class nsPresContext;
 template <class T>
 class nsPtrHashKey;
+
+namespace mozilla {
+class CSSStyleSheet;
+} // namespace mozilla
 
 // Deletes a linked list iteratively to avoid blowing up the stack (bug 456196).
 #define NS_CSS_DELETE_LIST_MEMBER(type_, ptr_, member_)                        \
@@ -83,8 +86,10 @@ struct URLValue {
   URLValue(nsIURI* aURI, nsStringBuffer* aString, nsIURI* aReferrer,
            nsIPrincipal* aOriginPrincipal);
 
+protected:
   ~URLValue();
 
+public:
   bool operator==(const URLValue& aOther) const;
 
   // URIEquals only compares URIs and principals (unlike operator==, which
@@ -124,8 +129,10 @@ struct ImageValue : public URLValue {
   // aString must not be null.
   ImageValue(nsIURI* aURI, nsStringBuffer* aString, nsIURI* aReferrer,
              nsIPrincipal* aOriginPrincipal, nsIDocument* aDocument);
+private:
   ~ImageValue();
 
+public:
   // Inherit operator== from URLValue
 
   nsRefPtrHashtable<nsPtrHashKey<nsISupports>, imgRequestProxy> mRequests; 
@@ -1452,7 +1459,7 @@ public:
   nsCOMPtr<nsIURI> mBaseURI;
   nsCOMPtr<nsIURI> mSheetURI;
   nsCOMPtr<nsIPrincipal> mSheetPrincipal;
-  nsCSSStyleSheet* mSheet;
+  mozilla::CSSStyleSheet* mSheet;
   uint32_t mLineNumber;
   uint32_t mLineOffset;
 

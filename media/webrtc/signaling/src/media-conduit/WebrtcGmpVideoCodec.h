@@ -30,35 +30,38 @@
 #include "webrtc/modules/video_coding/codecs/interface/video_codec_interface.h"
 
 #include "gmp-video-host.h"
-#include "gmp-video-encode.h"
-#include "gmp-video-decode.h"
-#include "gmp-video-frame-i420.h"
-#include "gmp-video-frame-encoded.h"
-
-#include "WebrtcGmpVideoCodec.h"
+#include "GMPVideoDecoderProxy.h"
+#include "GMPVideoEncoderProxy.h"
 
 namespace mozilla {
 
 class WebrtcGmpVideoEncoder : public WebrtcVideoEncoder,
-                              public GMPEncoderCallback
+                              public GMPVideoEncoderCallbackProxy
 {
 public:
   WebrtcGmpVideoEncoder();
-  virtual ~WebrtcGmpVideoEncoder() {}
+  virtual ~WebrtcGmpVideoEncoder();
 
   // Implement VideoEncoder interface.
+  virtual const uint64_t PluginID() MOZ_OVERRIDE
+  {
+    return mGMP ? mGMP->ParentID() : mCachedPluginId;
+  }
+
+  virtual void Terminated() MOZ_OVERRIDE;
+
   virtual int32_t InitEncode(const webrtc::VideoCodec* aCodecSettings,
                              int32_t aNumberOfCores,
-                             uint32_t aMaxPayloadSize);
+                             uint32_t aMaxPayloadSize) MOZ_OVERRIDE;
 
   virtual int32_t Encode(const webrtc::I420VideoFrame& aInputImage,
                          const webrtc::CodecSpecificInfo* aCodecSpecificInfo,
-                         const std::vector<webrtc::VideoFrameType>* aFrameTypes);
+                         const std::vector<webrtc::VideoFrameType>* aFrameTypes) MOZ_OVERRIDE;
 
   virtual int32_t RegisterEncodeCompleteCallback(
     webrtc::EncodedImageCallback* aCallback) MOZ_OVERRIDE;
 
-  virtual int32_t Release();
+  virtual int32_t Release() MOZ_OVERRIDE;
 
   virtual int32_t SetChannelParameters(uint32_t aPacketLoss,
                                        int aRTT) MOZ_OVERRIDE;
@@ -66,9 +69,9 @@ public:
   virtual int32_t SetRates(uint32_t aNewBitRate,
                            uint32_t aFrameRate) MOZ_OVERRIDE;
 
-  // GMPEncoderCallback virtual functions.
+  // GMPVideoEncoderCallback virtual functions.
   virtual void Encoded(GMPVideoEncodedFrame* aEncodedFrame,
-                       const GMPCodecSpecificInfo& aCodecSpecificInfo) MOZ_OVERRIDE;
+                       const nsTArray<uint8_t>& aCodecSpecificInfo) MOZ_OVERRIDE;
 
 
 private:
@@ -84,21 +87,31 @@ private:
                              uint32_t aFrameRate);
 
   nsCOMPtr<mozIGeckoMediaPluginService> mMPS;
-  nsIThread* mGMPThread;
-  GMPVideoEncoder* mGMP;
+  nsCOMPtr<nsIThread> mGMPThread;
+  GMPVideoEncoderProxy* mGMP;
   GMPVideoHost* mHost;
+  GMPVideoCodec mCodecParams;
+  uint32_t mMaxPayloadSize;
   webrtc::EncodedImageCallback* mCallback;
+  uint64_t mCachedPluginId;
 };
 
 
 class WebrtcGmpVideoDecoder : public WebrtcVideoDecoder,
-                              public GMPDecoderCallback
+                              public GMPVideoDecoderCallbackProxy
 {
 public:
   WebrtcGmpVideoDecoder();
-  virtual ~WebrtcGmpVideoDecoder() {}
+  virtual ~WebrtcGmpVideoDecoder();
 
   // Implement VideoDecoder interface.
+  virtual const uint64_t PluginID() MOZ_OVERRIDE
+  {
+    return mGMP ? mGMP->ParentID() : mCachedPluginId;
+  }
+
+  virtual void Terminated();
+
   virtual int32_t InitDecode(const webrtc::VideoCodec* aCodecSettings,
                              int32_t aNumberOfCores);
   virtual int32_t Decode(const webrtc::EncodedImage& aInputImage,
@@ -126,6 +139,14 @@ public:
     MOZ_CRASH();
   }
 
+  virtual void DrainComplete() MOZ_OVERRIDE {
+    MOZ_CRASH();
+  }
+
+  virtual void ResetComplete() MOZ_OVERRIDE {
+    MOZ_CRASH();
+  }
+
 private:
   virtual int32_t InitDecode_g(const webrtc::VideoCodec* aCodecSettings,
                                int32_t aNumberOfCores);
@@ -137,10 +158,11 @@ private:
                            int64_t aRenderTimeMs);
 
   nsCOMPtr<mozIGeckoMediaPluginService> mMPS;
-  nsIThread* mGMPThread;
-  GMPVideoDecoder* mGMP;
+  nsCOMPtr<nsIThread> mGMPThread;
+  GMPVideoDecoderProxy* mGMP; // Addref is held for us
   GMPVideoHost* mHost;
   webrtc::DecodedImageCallback* mCallback;
+  uint64_t mCachedPluginId;
 };
 
 }

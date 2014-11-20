@@ -100,6 +100,10 @@ static const uint32_t BAILOUT_RETURN_OK = 0;
 static const uint32_t BAILOUT_RETURN_FATAL_ERROR = 1;
 static const uint32_t BAILOUT_RETURN_OVERRECURSED = 2;
 
+// This address is a magic number made to cause crashes while indicating that we
+// are making an attempt to mark the stack during a bailout.
+static uint8_t * const FAKE_JIT_TOP_FOR_BAILOUT = reinterpret_cast<uint8_t *>(0xba1);
+
 class JitCompartment;
 
 // BailoutStack is an architecture specific pointer to the stack, given by the
@@ -125,11 +129,14 @@ class IonBailoutIterator : public JitFrameIterator
     IonBailoutIterator(const JitActivationIterator &activations, const JitFrameIterator &frame);
 
     SnapshotOffset snapshotOffset() const {
-        JS_ASSERT(topIonScript_);
-        return snapshotOffset_;
+        if (topIonScript_)
+            return snapshotOffset_;
+        return osiIndex()->snapshotOffset();
     }
-    const MachineState &machineState() const {
-        return machine_;
+    const MachineState machineState() const {
+        if (topIonScript_)
+            return machine_;
+        return JitFrameIterator::machineState();
     }
     size_t topFrameSize() const {
         JS_ASSERT(topIonScript_);
@@ -139,6 +146,14 @@ class IonBailoutIterator : public JitFrameIterator
         if (topIonScript_)
             return topIonScript_;
         return JitFrameIterator::ionScript();
+    }
+
+    IonBailoutIterator &operator++() {
+        JitFrameIterator::operator++();
+        // Clear topIonScript_ now that we've advanced past it, so that
+        // snapshotOffset() and machineState() reflect the current script.
+        topIonScript_ = nullptr;
+        return *this;
     }
 
     void dump() const;

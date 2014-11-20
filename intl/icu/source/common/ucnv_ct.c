@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-*   Copyright (C) 2010-2012, International Business Machines
+*   Copyright (C) 2010-2014, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *   file name:  ucnv_ct.c
@@ -27,8 +27,6 @@
 #include "ucnvmbcs.h"
 #include "cstring.h"
 #include "cmemory.h"
-
-#define LENGTHOF(array) (int32_t)(sizeof(array)/sizeof((array)[0]))
 
 typedef enum {
     INVALID = -2,

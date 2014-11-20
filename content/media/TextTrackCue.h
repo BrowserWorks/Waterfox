@@ -334,6 +334,8 @@ public:
   void SetTrackElement(HTMLTrackElement* aTrackElement);
 
 private:
+  ~TextTrackCue();
+
   void SetDefaultCueSettings();
   nsresult StashDocument();
 

@@ -76,9 +76,10 @@ namespace {
         (loadFlags & (nsIRequest::LOAD_BYPASS_CACHE | \
                       nsICachingChannel::LOAD_BYPASS_LOCAL_CACHE))
 
-#define CACHE_FILE_GONE(result) \
+#define RECOVER_FROM_CACHE_FILE_ERROR(result) \
         ((result) == NS_ERROR_FILE_NOT_FOUND || \
-         (result) == NS_ERROR_FILE_CORRUPTED)
+         (result) == NS_ERROR_FILE_CORRUPTED || \
+         (result) == NS_ERROR_OUT_OF_MEMORY)
 
 static NS_DEFINE_CID(kStreamListenerTeeCID, NS_STREAMLISTENERTEE_CID);
 static NS_DEFINE_CID(kStreamTransportServiceCID,
@@ -226,7 +227,6 @@ nsHttpChannel::nsHttpChannel()
     , mIsPartialRequest(0)
     , mHasAutoRedirectVetoNotifier(0)
     , mDidReval(false)
-    , mForcePending(false)
 {
     LOG(("Creating nsHttpChannel [this=%p]\n", this));
     mChannelCreationTime = PR_Now();
@@ -903,13 +903,13 @@ nsHttpChannel::CallOnStartRequest()
         mResponseHead->SetContentCharset(mContentCharsetHint);
 
     if (mResponseHead && mCacheEntry) {
-        // If we have a cache entry, set its predicted size to ContentLength to
+        // If we have a cache entry, set its predicted size to TotalEntitySize to
         // avoid caching an entry that will exceed the max size limit.
         rv = mCacheEntry->SetPredictedDataSize(
-            mResponseHead->ContentLength());
+            mResponseHead->TotalEntitySize());
         if (NS_ERROR_FILE_TOO_BIG == rv) {
-          mCacheEntry = nullptr;
-          LOG(("  entry too big, throwing away"));
+          // Don't throw the entry away, we will need it later.
+          LOG(("  entry too big"));
         } else {
           NS_ENSURE_SUCCESS(rv, rv);
         }
@@ -1368,6 +1368,8 @@ nsHttpChannel::ProcessResponse()
         cacheDisposition = kCacheMissedViaReval;
 
     AccumulateCacheHitTelemetry(cacheDisposition);
+    Telemetry::Accumulate(Telemetry::HTTP_RESPONSE_VERSION,
+                          mResponseHead->Version());
 
     return rv;
 }
@@ -2057,12 +2059,13 @@ nsHttpChannel::IsResumable(int64_t partialLen, int64_t contentLength,
 }
 
 nsresult
-nsHttpChannel::MaybeSetupByteRangeRequest(int64_t partialLen, int64_t contentLength)
+nsHttpChannel::MaybeSetupByteRangeRequest(int64_t partialLen, int64_t contentLength,
+                                          bool ignoreMissingPartialLen)
 {
     // Be pesimistic
     mIsPartialRequest = false;
 
-    if (!IsResumable(partialLen, contentLength))
+    if (!IsResumable(partialLen, contentLength, ignoreMissingPartialLen))
       return NS_ERROR_NOT_RESUMABLE;
 
     // looks like a partial entry we can reuse; add If-Range
@@ -2164,56 +2167,39 @@ nsHttpChannel::ProcessPartialContent()
             rv = InstallOfflineCacheListener(mLogicalOffset);
             if (NS_FAILED(rv)) return rv;
         }
-
-        // merge any new headers with the cached response headers
-        rv = mCachedResponseHead->UpdateHeaders(mResponseHead->Headers());
-        if (NS_FAILED(rv)) return rv;
-
-        // update the cached response head
-        nsAutoCString head;
-        mCachedResponseHead->Flatten(head, true);
-        rv = mCacheEntry->SetMetaDataElement("response-head", head.get());
-        if (NS_FAILED(rv)) return rv;
-
-        UpdateInhibitPersistentCachingFlag();
-
-        rv = UpdateExpirationTime();
-        if (NS_FAILED(rv)) return rv;
-
-        mCachedContentIsPartial = false;
-        mConcurentCacheAccess = 0;
-
-        // notify observers interested in looking at a response that has been
-        // merged with any cached headers (http-on-examine-merged-response).
-        gHttpHandler->OnExamineMergedResponse(this);
-    }
-    else {
+    } else {
         // suspend the current transaction
         rv = mTransactionPump->Suspend();
         if (NS_FAILED(rv)) return rv;
+    }
 
-        // merge any new headers with the cached response headers
-        rv = mCachedResponseHead->UpdateHeaders(mResponseHead->Headers());
-        if (NS_FAILED(rv)) return rv;
+    // merge any new headers with the cached response headers
+    rv = mCachedResponseHead->UpdateHeaders(mResponseHead->Headers());
+    if (NS_FAILED(rv)) return rv;
 
-        // update the cached response head
-        nsAutoCString head;
-        mCachedResponseHead->Flatten(head, true);
-        rv = mCacheEntry->SetMetaDataElement("response-head", head.get());
-        if (NS_FAILED(rv)) return rv;
+    // update the cached response head
+    nsAutoCString head;
+    mCachedResponseHead->Flatten(head, true);
+    rv = mCacheEntry->SetMetaDataElement("response-head", head.get());
+    if (NS_FAILED(rv)) return rv;
 
-        // make the cached response be the current response
-        mResponseHead = Move(mCachedResponseHead);
+    // make the cached response be the current response
+    mResponseHead = Move(mCachedResponseHead);
 
-        UpdateInhibitPersistentCachingFlag();
+    UpdateInhibitPersistentCachingFlag();
 
-        rv = UpdateExpirationTime();
-        if (NS_FAILED(rv)) return rv;
+    rv = UpdateExpirationTime();
+    if (NS_FAILED(rv)) return rv;
 
-        // notify observers interested in looking at a response that has been
-        // merged with any cached headers (http-on-examine-merged-response).
-        gHttpHandler->OnExamineMergedResponse(this);
+    // notify observers interested in looking at a response that has been
+    // merged with any cached headers (http-on-examine-merged-response).
+    gHttpHandler->OnExamineMergedResponse(this);
 
+    if (mConcurentCacheAccess) {
+        mCachedContentIsPartial = false;
+        mConcurentCacheAccess = 0;
+        // Now we continue reading the network response.
+    } else {
         // the cached content is valid, although incomplete.
         mCachedContentIsValid = true;
         rv = ReadFromCache(false);
@@ -2585,7 +2571,7 @@ nsHttpChannel::OpenCacheEntry(bool usingSSL)
                             | nsICacheStorage::CHECK_MULTITHREADED;
     }
 
-    if (mApplicationCache) {
+    if (!mPostID && mApplicationCache) {
         rv = cacheStorageService->AppCacheStorage(info, 
             mApplicationCache,
             getter_AddRefs(cacheStorage));
@@ -2596,7 +2582,7 @@ nsHttpChannel::OpenCacheEntry(bool usingSSL)
     }
     else {
         rv = cacheStorageService->DiskCacheStorage(info,
-            mChooseApplicationCache || (mLoadFlags & LOAD_CHECK_OFFLINE_CACHE),
+            !mPostID && (mChooseApplicationCache || (mLoadFlags & LOAD_CHECK_OFFLINE_CACHE)),
             getter_AddRefs(cacheStorage));
     }
     NS_ENSURE_SUCCESS(rv, rv);
@@ -2757,7 +2743,7 @@ nsHttpChannel::OnCacheEntryCheck(nsICacheEntry* entry, nsIApplicationCache* appC
         (appCache ||
          (mCacheEntryIsReadOnly && !(mLoadFlags & nsIRequest::INHIBIT_CACHING)) ||
          mFallbackChannel)) {
-        rv = OpenCacheInputStream(entry, true);
+        rv = OpenCacheInputStream(entry, true, !!appCache);
         if (NS_SUCCEEDED(rv)) {
             mCachedContentIsValid = true;
             entry->MaybeMarkValid();
@@ -2808,7 +2794,7 @@ nsHttpChannel::OnCacheEntryCheck(nsICacheEntry* entry, nsIApplicationCache* appC
             rv = MaybeSetupByteRangeRequest(size, contentLength);
             mCachedContentIsPartial = NS_SUCCEEDED(rv) && mIsPartialRequest;
             if (mCachedContentIsPartial) {
-                rv = OpenCacheInputStream(entry, false);
+                rv = OpenCacheInputStream(entry, false, !!appCache);
                 *aResult = ENTRY_NEEDS_REVALIDATION;
             }
             return rv;
@@ -3004,7 +2990,7 @@ nsHttpChannel::OnCacheEntryCheck(nsICacheEntry* entry, nsIApplicationCache* appC
     }
 
     if (mCachedContentIsValid || mDidReval) {
-        rv = OpenCacheInputStream(entry, mCachedContentIsValid);
+        rv = OpenCacheInputStream(entry, mCachedContentIsValid, !!appCache);
         if (NS_FAILED(rv)) {
             // If we can't get the entity then we have to act as though we
             // don't have the cache entry.
@@ -3396,7 +3382,8 @@ nsHttpChannel::ShouldUpdateOfflineCacheEntry()
 }
 
 nsresult
-nsHttpChannel::OpenCacheInputStream(nsICacheEntry* cacheEntry, bool startBuffering)
+nsHttpChannel::OpenCacheInputStream(nsICacheEntry* cacheEntry, bool startBuffering,
+                                    bool checkingAppCacheEntry)
 {
     nsresult rv;
 
@@ -3416,8 +3403,9 @@ nsHttpChannel::OpenCacheInputStream(nsICacheEntry* cacheEntry, bool startBufferi
 
         // XXX: We should not be skilling this check in the offline cache
         // case, but we have to do so now to work around bug 794507.
-        MOZ_ASSERT(mCachedSecurityInfo || mLoadedFromApplicationCache);
-        if (!mCachedSecurityInfo && !mLoadedFromApplicationCache) {
+        bool mustHaveSecurityInfo = !mLoadedFromApplicationCache && !checkingAppCacheEntry;
+        MOZ_ASSERT(mCachedSecurityInfo || !mustHaveSecurityInfo);
+        if (!mCachedSecurityInfo && mustHaveSecurityInfo) {
             LOG(("mCacheEntry->GetSecurityInfo returned success but did not "
                  "return the security info [channel=%p, entry=%p]",
                  this, cacheEntry));
@@ -4950,9 +4938,10 @@ nsHttpChannel::OnStartRequest(nsIRequest *request, nsISupports *ctxt)
         NS_WARNING("No response head in OnStartRequest");
     }
 
-    // cache file could be deleted on our behalf, reload from network here.
-    if (mCacheEntry && mCachePump && CACHE_FILE_GONE(mStatus)) {
-        LOG(("  cache file gone, reloading from server"));
+    // cache file could be deleted on our behalf, it could contain errors or
+    // it failed to allocate memory, reload from network here.
+    if (mCacheEntry && mCachePump && RECOVER_FROM_CACHE_FILE_ERROR(mStatus)) {
+        LOG(("  cache file error, reloading from server"));
         mCacheEntry->AsyncDoom(nullptr);
         nsresult rv = StartRedirectChannelToURI(mURI, nsIChannelEventSink::REDIRECT_INTERNAL);
         if (NS_SUCCEEDED(rv))
@@ -5075,7 +5064,7 @@ nsHttpChannel::OnStopRequest(nsIRequest *request, nsISupports *ctxt, nsresult st
         //
         nsRefPtr<nsAHttpConnection> conn;
         if (authRetry && (mCaps & NS_HTTP_STICKY_CONNECTION)) {
-            conn = mTransaction->Connection();
+            conn = mTransaction->GetConnectionReference();
             // This is so far a workaround to fix leak when reusing unpersistent
             // connection for authentication retry. See bug 459620 comment 4
             // for details.
@@ -5085,7 +5074,7 @@ nsHttpChannel::OnStopRequest(nsIRequest *request, nsISupports *ctxt, nsresult st
 
         nsRefPtr<nsAHttpConnection> stickyConn;
         if (mCaps & NS_HTTP_STICKY_CONNECTION)
-            stickyConn = mTransaction->Connection();
+            stickyConn = mTransaction->GetConnectionReference();
 
         // at this point, we're done with the transaction
         mTransactionTimings = mTransaction->Timings();
@@ -5148,7 +5137,9 @@ nsHttpChannel::OnStopRequest(nsIRequest *request, nsISupports *ctxt, nsresult st
             else if (contentLength != int64_t(-1) && contentLength != size) {
                 LOG(("  concurrent cache entry write has been interrupted"));
                 mCachedResponseHead = Move(mResponseHead);
-                rv = MaybeSetupByteRangeRequest(size, contentLength);
+                // Ignore zero partial length because we also want to resume when
+                // no data at all has been read from the cache.
+                rv = MaybeSetupByteRangeRequest(size, contentLength, true);
                 if (NS_SUCCEEDED(rv) && mIsPartialRequest) {
                     // Prevent read from cache again
                     mCachedContentIsValid = 0;
@@ -5586,6 +5577,8 @@ public:
     nsresult SetData(uint32_t aPostID, const nsACString& aKey);
 
 protected:
+    ~nsHttpChannelCacheKey() {}
+
     nsCOMPtr<nsISupportsPRUint32> mSupportsPRUint32;
     nsCOMPtr<nsISupportsCString> mSupportsCString;
 };
@@ -6206,24 +6199,6 @@ nsHttpChannel::GetPerformance()
       return docPerformance->GetParentPerformance();
     }
     return docPerformance;
-}
-
-void
-nsHttpChannel::ForcePending(bool aForcePending)
-{
-    // Set true here so IsPending will return true.
-    // Required for callback diversion from child back to parent. In such cases
-    // OnStopRequest can be called in the parent before callbacks are diverted
-    // back from the child to the listener in the parent.
-    mForcePending = aForcePending;
-}
-
-NS_IMETHODIMP
-nsHttpChannel::IsPending(bool *aIsPending)
-{
-    NS_ENSURE_ARG_POINTER(aIsPending);
-    *aIsPending = mIsPending || mForcePending;
-    return NS_OK;
 }
 
 } } // namespace mozilla::net

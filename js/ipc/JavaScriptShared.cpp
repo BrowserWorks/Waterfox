@@ -201,12 +201,7 @@ JavaScriptShared::convertIdToGeckoString(JSContext *cx, JS::HandleId id, nsStrin
     if (!str)
         return false;
 
-    const jschar *chars = JS_GetStringCharsZ(cx, str);
-    if (!chars)
-        return false;
-
-    *to = chars;
-    return true;
+    return AssignJSString(cx, *to, str);
 }
 
 bool
@@ -254,10 +249,10 @@ JavaScriptShared::toVariant(JSContext *cx, JS::HandleValue from, JSVariant *to)
 
       case JSTYPE_STRING:
       {
-        nsDependentJSString dep;
-        if (!dep.init(cx, from))
+        nsAutoJSString autoStr;
+        if (!autoStr.init(cx, from))
             return false;
-        *to = dep;
+        *to = autoStr;
         return true;
       }
 

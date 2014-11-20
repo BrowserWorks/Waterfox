@@ -15,6 +15,7 @@
 
 #include "jspubtd.h"
 
+#include "js/GCAPI.h"
 #include "js/HeapAPI.h"
 #include "js/TypeDecls.h"
 #include "js/Utility.h"
@@ -1017,12 +1018,12 @@ template <typename T> class MaybeRooted<T, NoGC>
     typedef FakeRooted<T> RootType;
     typedef FakeMutableHandle<T> MutableHandleType;
 
-    static inline JS::Handle<T> toHandle(HandleType v) {
-        MOZ_ASSUME_UNREACHABLE("Bad conversion");
+    static JS::Handle<T> toHandle(HandleType v) {
+        MOZ_CRASH("Bad conversion");
     }
 
-    static inline JS::MutableHandle<T> toMutableHandle(MutableHandleType v) {
-        MOZ_ASSUME_UNREACHABLE("Bad conversion");
+    static JS::MutableHandle<T> toMutableHandle(MutableHandleType v) {
+        MOZ_CRASH("Bad conversion");
     }
 };
 
@@ -1109,7 +1110,7 @@ class PersistentRooted : private mozilla::LinkedListElement<PersistentRooted<T> 
     friend class mozilla::LinkedList<PersistentRooted>;
     friend class mozilla::LinkedListElement<PersistentRooted>;
 
-    friend class js::gc::PersistentRootedMarker<T>;
+    friend struct js::gc::PersistentRootedMarker<T>;
 
     void registerWithRuntime(JSRuntime *rt) {
         JS::shadow::Runtime *srt = JS::shadow::Runtime::asShadowRuntime(rt);
@@ -1137,7 +1138,7 @@ class PersistentRooted : private mozilla::LinkedListElement<PersistentRooted<T> 
         registerWithRuntime(rt);
     }
 
-    PersistentRooted(PersistentRooted &rhs)
+    PersistentRooted(const PersistentRooted &rhs)
       : mozilla::LinkedListElement<PersistentRooted<T> >(),
         ptr(rhs.ptr)
     {
@@ -1145,8 +1146,11 @@ class PersistentRooted : private mozilla::LinkedListElement<PersistentRooted<T> 
          * Copy construction takes advantage of the fact that the original
          * is already inserted, and simply adds itself to whatever list the
          * original was on - no JSRuntime pointer needed.
+         *
+         * This requires mutating rhs's links, but those should be 'mutable'
+         * anyway. C++ doesn't let us declare mutable base classes.
          */
-        rhs.setNext(this);
+        const_cast<PersistentRooted &>(rhs).setNext(this);
     }
 
     /*
@@ -1181,6 +1185,47 @@ class PersistentRooted : private mozilla::LinkedListElement<PersistentRooted<T> 
 
   private:
     T ptr;
+};
+
+class JS_PUBLIC_API(ObjectPtr)
+{
+    Heap<JSObject *> value;
+
+  public:
+    ObjectPtr() : value(nullptr) {}
+
+    explicit ObjectPtr(JSObject *obj) : value(obj) {}
+
+    /* Always call finalize before the destructor. */
+    ~ObjectPtr() { MOZ_ASSERT(!value); }
+
+    void finalize(JSRuntime *rt) {
+        if (IsIncrementalBarrierNeeded(rt))
+            IncrementalObjectBarrier(value);
+        value = nullptr;
+    }
+
+    void init(JSObject *obj) { value = obj; }
+
+    JSObject *get() const { return value; }
+
+    void writeBarrierPre(JSRuntime *rt) {
+        IncrementalObjectBarrier(value);
+    }
+
+    bool isAboutToBeFinalized();
+
+    ObjectPtr &operator=(JSObject *obj) {
+        IncrementalObjectBarrier(value);
+        value = obj;
+        return *this;
+    }
+
+    void trace(JSTracer *trc, const char *name);
+
+    JSObject &operator*() const { return *value; }
+    JSObject *operator->() const { return value; }
+    operator JSObject *() const { return value; }
 };
 
 } /* namespace JS */

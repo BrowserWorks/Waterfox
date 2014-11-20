@@ -105,6 +105,46 @@ obj_toSource(JSContext *cx, unsigned argc, Value *vp)
     return true;
 }
 
+/*
+ * Given a function source string, return the offset and length of the part
+ * between '(function $name' and ')'.
+ */
+template <typename CharT>
+static bool
+ArgsAndBodySubstring(mozilla::Range<const CharT> chars, size_t *outOffset, size_t *outLen)
+{
+    const CharT *const start = chars.start().get();
+    const CharT *const end = chars.end().get();
+    const CharT *s = start;
+
+    uint8_t parenChomp = 0;
+    if (s[0] == '(') {
+        s++;
+        parenChomp = 1;
+    }
+
+    /* Try to jump "function" keyword. */
+    s = js_strchr_limit(s, ' ', end);
+    if (!s)
+        return false;
+
+    /*
+     * Jump over the function's name: it can't be encoded as part
+     * of an ECMA getter or setter.
+     */
+    s = js_strchr_limit(s, '(', end);
+    if (!s)
+        return false;
+
+    if (*s == ' ')
+        s++;
+
+    *outOffset = s - start;
+    *outLen = end - s - parenChomp;
+    MOZ_ASSERT(*outOffset + *outLen <= chars.length());
+    return true;
+}
+
 JSString *
 js::ObjectToSource(JSContext *cx, HandleObject obj)
 {
@@ -115,7 +155,7 @@ js::ObjectToSource(JSContext *cx, HandleObject obj)
     if (!detector.init())
         return nullptr;
     if (detector.foundCycle())
-        return js_NewStringCopyZ<CanGC>(cx, "{}");
+        return NewStringCopyZ<CanGC>(cx, "{}");
 
     StringBuffer buf(cx);
     if (outermost && !buf.append('('))
@@ -130,7 +170,7 @@ js::ObjectToSource(JSContext *cx, HandleObject obj)
     MutableHandleString gsop[2] = {&str0, &str1};
 
     AutoIdVector idv(cx);
-    if (!GetPropertyNames(cx, obj, JSITER_OWNONLY, &idv))
+    if (!GetPropertyNames(cx, obj, JSITER_OWNONLY | JSITER_SYMBOLS, &idv))
         return nullptr;
 
     bool comma = false;
@@ -168,26 +208,31 @@ js::ObjectToSource(JSContext *cx, HandleObject obj)
             }
         }
 
-        /* Convert id to a linear string. */
-        RootedValue idv(cx, IdToValue(id));
-        JSString *s = ToString<CanGC>(cx, idv);
-        if (!s)
-            return nullptr;
-        Rooted<JSLinearString*> idstr(cx, s->ensureLinear(cx));
-        if (!idstr)
-            return nullptr;
-
-        /*
-         * If id is a string that's not an identifier, or if it's a negative
-         * integer, then it must be quoted.
-         */
-        if (JSID_IS_ATOM(id)
-            ? !IsIdentifier(idstr)
-            : (!JSID_IS_INT(id) || JSID_TO_INT(id) < 0))
-        {
-            s = js_QuoteString(cx, idstr, jschar('\''));
-            if (!s || !(idstr = s->ensureLinear(cx)))
+        /* Convert id to a string. */
+        RootedString idstr(cx);
+        if (JSID_IS_SYMBOL(id)) {
+            RootedValue v(cx, SymbolValue(JSID_TO_SYMBOL(id)));
+            idstr = ValueToSource(cx, v);
+            if (!idstr)
                 return nullptr;
+        } else {
+            RootedValue idv(cx, IdToValue(id));
+            idstr = ToString<CanGC>(cx, idv);
+            if (!idstr)
+                return nullptr;
+
+            /*
+             * If id is a string that's not an identifier, or if it's a negative
+             * integer, then it must be quoted.
+             */
+            if (JSID_IS_ATOM(id)
+                ? !IsIdentifier(JSID_TO_ATOM(id))
+                : JSID_TO_INT(id) < 0)
+            {
+                idstr = js_QuoteString(cx, idstr, jschar('\''));
+                if (!idstr)
+                    return nullptr;
+            }
         }
 
         for (int j = 0; j < valcnt; j++) {
@@ -199,12 +244,15 @@ js::ObjectToSource(JSContext *cx, HandleObject obj)
                 continue;
 
             /* Convert val[j] to its canonical source form. */
-            RootedString valstr(cx, ValueToSource(cx, val[j]));
+            JSString *valsource = ValueToSource(cx, val[j]);
+            if (!valsource)
+                return nullptr;
+
+            RootedLinearString valstr(cx, valsource->ensureLinear(cx));
             if (!valstr)
                 return nullptr;
-            const jschar *vchars = valstr->getChars(cx);
-            if (!vchars)
-                return nullptr;
+
+            size_t voffset = 0;
             size_t vlength = valstr->length();
 
             /*
@@ -212,50 +260,34 @@ js::ObjectToSource(JSContext *cx, HandleObject obj)
              * end so that we can put "get" in front of the function definition.
              */
             if (gsop[j] && IsFunctionObject(val[j])) {
-                const jschar *start = vchars;
-                const jschar *end = vchars + vlength;
-
-                uint8_t parenChomp = 0;
-                if (vchars[0] == '(') {
-                    vchars++;
-                    parenChomp = 1;
-                }
-
-                /* Try to jump "function" keyword. */
-                if (vchars)
-                    vchars = js_strchr_limit(vchars, ' ', end);
-
-                /*
-                 * Jump over the function's name: it can't be encoded as part
-                 * of an ECMA getter or setter.
-                 */
-                if (vchars)
-                    vchars = js_strchr_limit(vchars, '(', end);
-
-                if (vchars) {
-                    if (*vchars == ' ')
-                        vchars++;
-                    vlength = end - vchars - parenChomp;
-                } else {
+                bool success;
+                JS::AutoCheckCannotGC nogc;
+                if (valstr->hasLatin1Chars())
+                    success = ArgsAndBodySubstring(valstr->latin1Range(nogc), &voffset, &vlength);
+                else
+                    success = ArgsAndBodySubstring(valstr->twoByteRange(nogc), &voffset, &vlength);
+                if (!success)
                     gsop[j].set(nullptr);
-                    vchars = start;
-                }
             }
 
             if (comma && !buf.append(", "))
                 return nullptr;
             comma = true;
 
-            if (gsop[j])
+            if (gsop[j]) {
                 if (!buf.append(gsop[j]) || !buf.append(' '))
                     return nullptr;
-
+            }
+            if (JSID_IS_SYMBOL(id) && !buf.append('['))
+                return nullptr;
             if (!buf.append(idstr))
+                return nullptr;
+            if (JSID_IS_SYMBOL(id) && !buf.append(']'))
                 return nullptr;
             if (!buf.append(gsop[j] ? ' ' : ':'))
                 return nullptr;
 
-            if (!buf.append(vchars, vlength))
+            if (!buf.appendSubstring(valstr, voffset, vlength))
                 return nullptr;
         }
     }
@@ -291,7 +323,7 @@ JS_BasicObjectToString(JSContext *cx, HandleObject obj)
         return cx->names().objectWindow;
 
     StringBuffer sb(cx);
-    if (!sb.append("[object ") || !sb.appendInflated(className, strlen(className)) ||
+    if (!sb.append("[object ") || !sb.append(className, strlen(className)) ||
         !sb.append("]"))
     {
         return nullptr;
@@ -807,37 +839,43 @@ obj_getOwnPropertyDescriptor(JSContext *cx, unsigned argc, Value *vp)
     return GetOwnPropertyDescriptor(cx, obj, id, args.rval());
 }
 
+// ES6 draft rev25 (2014/05/22) 19.1.2.14 Object.keys(O)
 static bool
 obj_keys(JSContext *cx, unsigned argc, Value *vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
+
+    // steps 1-2
     RootedObject obj(cx);
     if (!GetFirstArgumentAsObject(cx, args, "Object.keys", &obj))
         return false;
 
+    // Steps 3-10. Since JSITER_SYMBOLS and JSITER_HIDDEN are not passed,
+    // GetPropertyNames performs the type check in step 10.c. and the
+    // [[Enumerable]] check specified in step 10.c.iii.
     AutoIdVector props(cx);
     if (!GetPropertyNames(cx, obj, JSITER_OWNONLY, &props))
         return false;
 
-    AutoValueVector vals(cx);
-    if (!vals.reserve(props.length()))
+    AutoValueVector namelist(cx);
+    if (!namelist.reserve(props.length()))
         return false;
     for (size_t i = 0, len = props.length(); i < len; i++) {
         jsid id = props[i];
+        JSString *str;
         if (JSID_IS_STRING(id)) {
-            vals.infallibleAppend(StringValue(JSID_TO_STRING(id)));
-        } else if (JSID_IS_INT(id)) {
-            JSString *str = Int32ToString<CanGC>(cx, JSID_TO_INT(id));
+            str = JSID_TO_STRING(id);
+        } else {
+            str = Int32ToString<CanGC>(cx, JSID_TO_INT(id));
             if (!str)
                 return false;
-            vals.infallibleAppend(StringValue(str));
-        } else {
-            JS_ASSERT(JSID_IS_OBJECT(id));
         }
+        namelist.infallibleAppend(StringValue(str));
     }
 
+    // step 11
     JS_ASSERT(props.length() <= UINT32_MAX);
-    JSObject *aobj = NewDenseCopiedArray(cx, uint32_t(vals.length()), vals.begin());
+    JSObject *aobj = NewDenseCopiedArray(cx, uint32_t(namelist.length()), namelist.begin());
     if (!aobj)
         return false;
 
@@ -859,34 +897,46 @@ obj_is(JSContext *cx, unsigned argc, Value *vp)
     return true;
 }
 
-static bool
-obj_getOwnPropertyNames(JSContext *cx, unsigned argc, Value *vp)
+bool
+js::IdToStringOrSymbol(JSContext *cx, HandleId id, MutableHandleValue result)
 {
-    CallArgs args = CallArgsFromVp(argc, vp);
-    RootedObject obj(cx);
-    if (!GetFirstArgumentAsObject(cx, args, "Object.getOwnPropertyNames", &obj))
+    if (JSID_IS_INT(id)) {
+        JSString *str = Int32ToString<CanGC>(cx, JSID_TO_INT(id));
+        if (!str)
+            return false;
+        result.setString(str);
+    } else if (JSID_IS_ATOM(id)) {
+        result.setString(JSID_TO_STRING(id));
+    } else {
+        result.setSymbol(JSID_TO_SYMBOL(id));
+    }
+    return true;
+}
+
+/* ES6 draft rev 25 (2014 May 22) 19.1.2.8.1 */
+static bool
+GetOwnPropertyKeys(JSContext *cx, const CallArgs &args, unsigned flags, const char *fnname)
+{
+    // steps 1-2
+    RootedObject obj(cx, ToObject(cx, args.get(0)));
+    if (!obj)
         return false;
 
+    // steps 3-10
     AutoIdVector keys(cx);
-    if (!GetPropertyNames(cx, obj, JSITER_OWNONLY | JSITER_HIDDEN, &keys))
+    if (!GetPropertyNames(cx, obj, flags, &keys))
         return false;
 
+    // step 11
     AutoValueVector vals(cx);
     if (!vals.resize(keys.length()))
         return false;
 
     for (size_t i = 0, len = keys.length(); i < len; i++) {
-         jsid id = keys[i];
-         if (JSID_IS_INT(id)) {
-             JSString *str = Int32ToString<CanGC>(cx, JSID_TO_INT(id));
-             if (!str)
-                 return false;
-             vals[i].setString(str);
-         } else if (JSID_IS_ATOM(id)) {
-             vals[i].setString(JSID_TO_STRING(id));
-         } else {
-             vals[i].setObject(*JSID_TO_OBJECT(id));
-         }
+        MOZ_ASSERT_IF(JSID_IS_SYMBOL(keys[i]), flags & JSITER_SYMBOLS);
+        MOZ_ASSERT_IF(!JSID_IS_SYMBOL(keys[i]), !(flags & JSITER_SYMBOLSONLY));
+        if (!IdToStringOrSymbol(cx, keys[i], vals[i]))
+            return false;
     }
 
     JSObject *aobj = NewDenseCopiedArray(cx, vals.length(), vals.begin());
@@ -895,6 +945,24 @@ obj_getOwnPropertyNames(JSContext *cx, unsigned argc, Value *vp)
 
     args.rval().setObject(*aobj);
     return true;
+}
+
+static bool
+obj_getOwnPropertyNames(JSContext *cx, unsigned argc, Value *vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+    return GetOwnPropertyKeys(cx, args, JSITER_OWNONLY | JSITER_HIDDEN,
+                              "Object.getOwnPropertyNames");
+}
+
+/* ES6 draft rev 25 (2014 May 22) 19.1.2.8 */
+static bool
+obj_getOwnPropertySymbols(JSContext *cx, unsigned argc, Value *vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+    return GetOwnPropertyKeys(cx, args,
+                              JSITER_OWNONLY | JSITER_HIDDEN | JSITER_SYMBOLS | JSITER_SYMBOLSONLY,
+                              "Object.getOwnPropertySymbols");
 }
 
 /* ES5 15.2.3.6: Object.defineProperty(O, P, Attributes) */
@@ -1149,6 +1217,7 @@ const JSFunctionSpec js::object_static_methods[] = {
     JS_FN("defineProperties",          obj_defineProperties,        2,0),
     JS_FN("create",                    obj_create,                  2,0),
     JS_FN("getOwnPropertyNames",       obj_getOwnPropertyNames,     1,0),
+    JS_FN("getOwnPropertySymbols",     obj_getOwnPropertySymbols,   1,0),
     JS_FN("isExtensible",              obj_isExtensible,            1,0),
     JS_FN("preventExtensions",         obj_preventExtensions,       1,0),
     JS_FN("freeze",                    obj_freeze,                  1,0),
@@ -1157,3 +1226,13 @@ const JSFunctionSpec js::object_static_methods[] = {
     JS_FN("isSealed",                  obj_isSealed,                1,0),
     JS_FS_END
 };
+
+/*
+ * For Object, self-hosted functions have to be done at a different
+ * time, after the intrinsic holder has been set, so we put them
+ * in a different array.
+ */
+const JSFunctionSpec js::object_static_selfhosted_methods[] = {
+    JS_FS_END
+};
+

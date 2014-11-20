@@ -8,6 +8,7 @@ PARALLEL_DIRS += [
     'server',
     'client',
     'gcli',
+    'jsbeautify',
     'sourcemap',
     'webconsole',
     'apps',
@@ -17,6 +18,7 @@ PARALLEL_DIRS += [
     'qrcode',
     'transport',
     'tern',
+    'discovery'
 ]
 
 MOCHITEST_CHROME_MANIFESTS += ['tests/mochitest/chrome.ini']

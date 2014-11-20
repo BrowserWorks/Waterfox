@@ -25,7 +25,6 @@
 #include "mozilla/unused.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/bluetooth/BluetoothTypes.h"
-#include "mozilla/ipc/UnixSocket.h"
 #include "nsContentUtils.h"
 #include "nsCxPusher.h"
 #include "nsIObserverService.h"
@@ -163,13 +162,12 @@ BluetoothService::ToggleBtAck::Run()
   sBluetoothService->SetEnabled(mEnabled);
   sToggleInProgress = false;
 
-  sBluetoothService->TryFiringAdapterAdded();
   sBluetoothService->FireAdapterStateChanged(mEnabled);
 
   return NS_OK;
 }
 
-class BluetoothService::StartupTask : public nsISettingsServiceCallback
+class BluetoothService::StartupTask MOZ_FINAL : public nsISettingsServiceCallback
 {
 public:
   NS_DECL_ISUPPORTS
@@ -376,8 +374,6 @@ BluetoothService::StartBluetooth(bool aIsStartup,
     return NS_ERROR_FAILURE;
   }
 
-  mAdapterAddedReceived = false;
-
   /* When IsEnabled() is true, we don't switch on Bluetooth but we still
    * send ToggleBtAck task. One special case happens at startup stage. At
    * startup, the initialization of BluetoothService still has to be done
@@ -385,10 +381,12 @@ BluetoothService::StartBluetooth(bool aIsStartup,
    *
    * Please see bug 892392 for more information.
    */
-  if (aIsStartup || !sBluetoothService->IsEnabled()) {
+  if (aIsStartup || !IsEnabled()) {
     // Switch Bluetooth on
-    if (NS_FAILED(sBluetoothService->StartInternal(aRunnable))) {
+    nsresult rv = StartInternal(aRunnable);
+    if (NS_FAILED(rv)) {
       BT_WARNING("Bluetooth service failed to start!");
+      return rv;
     }
   } else {
     BT_WARNING("Bluetooth has already been enabled before.");
@@ -438,8 +436,6 @@ BluetoothService::StopBluetooth(bool aIsStartup,
     profile->Reset();
   }
 
-  mAdapterAddedReceived = false;
-
   /* When IsEnabled() is false, we don't switch off Bluetooth but we still
    * send ToggleBtAck task. One special case happens at startup stage. At
    * startup, the initialization of BluetoothService still has to be done
@@ -447,10 +443,12 @@ BluetoothService::StopBluetooth(bool aIsStartup,
    *
    * Please see bug 892392 for more information.
    */
-  if (aIsStartup || sBluetoothService->IsEnabled()) {
+  if (aIsStartup || IsEnabled()) {
     // Switch Bluetooth off
-    if (NS_FAILED(sBluetoothService->StopInternal(aRunnable))) {
+    nsresult rv = StopInternal(aRunnable);
+    if (NS_FAILED(rv)) {
       BT_WARNING("Bluetooth service failed to stop!");
+      return rv;
     }
   } else {
     BT_WARNING("Bluetooth has already been enabled/disabled before.");
@@ -494,8 +492,8 @@ BluetoothService::SetEnabled(bool aEnabled)
    * aEnabled: expected status of bluetooth
    */
   if (mEnabled == aEnabled) {
-    BT_WARNING("Bluetooth has already been enabled/disabled before "
-               "or the toggling is failed.");
+    BT_WARNING("Bluetooth is already %s, or the toggling failed.",
+               mEnabled ? "enabled" : "disabled");
   }
 
   mEnabled = aEnabled;
@@ -564,7 +562,7 @@ BluetoothService::HandleSettingsChanged(const nsAString& aData)
     return NS_OK;
   }
 
-  // First, check if the string equals to BLUETOOTH_DEBUGGING_SETTING
+  // Check whether the string is BLUETOOTH_DEBUGGING_SETTING
   bool match;
   if (!JS_StringEqualsAscii(cx, key.toString(), BLUETOOTH_DEBUGGING_SETTING, &match)) {
     MOZ_ASSERT(!JS_IsExceptionPending(cx));
@@ -706,28 +704,6 @@ BluetoothService::Observe(nsISupports* aSubject, const char* aTopic,
   return NS_ERROR_UNEXPECTED;
 }
 
-void
-BluetoothService::TryFiringAdapterAdded()
-{
-  MOZ_ASSERT(NS_IsMainThread());
-
-  if (IsToggling() || !mAdapterAddedReceived) {
-    return;
-  }
-
-  BluetoothSignal signal(NS_LITERAL_STRING("AdapterAdded"),
-                         NS_LITERAL_STRING(KEY_MANAGER), true);
-  DistributeSignal(signal);
-}
-
-void
-BluetoothService::AdapterAddedReceived()
-{
-  MOZ_ASSERT(NS_IsMainThread());
-
-  mAdapterAddedReceived = true;
-}
-
 /**
  * Enable/Disable the local adapter.
  *
@@ -795,10 +771,8 @@ BluetoothService::Notify(const BluetoothSignal& aData)
       "pairedstatuschanged: Wrong length of parameters");
     type.AssignLiteral("bluetooth-pairedstatuschanged");
   } else {
-    nsCString warningMsg;
-    warningMsg.AssignLiteral("Not handling service signal: ");
-    warningMsg.Append(NS_ConvertUTF16toUTF8(aData.name()));
-    BT_WARNING(warningMsg.get());
+    BT_WARNING("Not handling service signal: %s",
+               NS_ConvertUTF16toUTF8(aData.name()).get());
     return;
   }
 

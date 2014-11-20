@@ -16,6 +16,7 @@ browser.jar:
         skin/classic/browser/aboutCertError_sectionCollapsed.png
         skin/classic/browser/aboutCertError_sectionCollapsed-rtl.png
         skin/classic/browser/aboutCertError_sectionExpanded.png
+        skin/classic/browser/aboutNetError.css                       (../shared/aboutNetError.css)
         skin/classic/browser/aboutSocialError.css
 #ifdef MOZ_SERVICES_SYNC
         skin/classic/browser/aboutSyncTabs.css
@@ -81,6 +82,8 @@ browser.jar:
         skin/classic/browser/Toolbar-lunaSilver.png
         skin/classic/browser/toolbarbutton-dropdown-arrow.png
         skin/classic/browser/toolbarbutton-dropdown-arrow-inverted.png
+        skin/classic/browser/undoCloseTab.png                        (../shared/undoCloseTab.png)
+        skin/classic/browser/undoCloseTab@2x.png                     (../shared/undoCloseTab@2x.png)
         skin/classic/browser/urlbar-arrow.png
         skin/classic/browser/urlbar-popup-blocked.png
         skin/classic/browser/urlbar-history-dropmarker.png
@@ -89,10 +92,17 @@ browser.jar:
         skin/classic/browser/notification-pluginBlocked.png          (../shared/plugins/notification-pluginBlocked.png)
         skin/classic/browser/webRTC-shareDevice-16.png
         skin/classic/browser/webRTC-shareDevice-64.png
-        skin/classic/browser/webRTC-sharingDevice-16.png
+        skin/classic/browser/webRTC-sharingDevice-16.png             (../shared/webrtc/webRTC-sharingDevice-16.png)
         skin/classic/browser/webRTC-shareMicrophone-16.png
         skin/classic/browser/webRTC-shareMicrophone-64.png
-        skin/classic/browser/webRTC-sharingMicrophone-16.png
+        skin/classic/browser/webRTC-sharingMicrophone-16.png         (../shared/webrtc/webRTC-sharingMicrophone-16.png)
+        skin/classic/browser/webRTC-shareScreen-16.png               (../shared/webrtc/webRTC-shareScreen-16.png)
+        skin/classic/browser/webRTC-shareScreen-64.png               (../shared/webrtc/webRTC-shareScreen-64.png)
+        skin/classic/browser/webRTC-sharingScreen-16.png             (../shared/webrtc/webRTC-sharingScreen-16.png)
+        skin/classic/browser/webRTC-indicator.css                    (../shared/webrtc/indicator.css)
+        skin/classic/browser/webRTC-camera-white-16.png              (../shared/webrtc/camera-white-16.png)
+        skin/classic/browser/webRTC-microphone-white-16.png          (../shared/webrtc/microphone-white-16.png)
+        skin/classic/browser/webRTC-screen-white-16.png              (../shared/webrtc/screen-white-16.png)
         skin/classic/browser/customizableui/background-noise-toolbar.png  (customizableui/background-noise-toolbar.png)
         skin/classic/browser/customizableui/customizeFavicon.ico  (../shared/customizableui/customizeFavicon.ico)
         skin/classic/browser/customizableui/customize-illustration.png  (../shared/customizableui/customize-illustration.png)
@@ -128,8 +138,8 @@ browser.jar:
         skin/classic/browser/feeds/videoFeedIcon16.png               (feeds/feedIcon16.png)
         skin/classic/browser/feeds/subscribe.css                     (feeds/subscribe.css)
         skin/classic/browser/feeds/subscribe-ui.css                  (feeds/subscribe-ui.css)
-        skin/classic/browser/newtab/newTab.css                       (newtab/newTab.css)
-        skin/classic/browser/newtab/controls.png                     (../shared/newtab/controls.png)
+*       skin/classic/browser/newtab/newTab.css                       (newtab/newTab.css)
+        skin/classic/browser/newtab/controls.svg                     (../shared/newtab/controls.svg)
         skin/classic/browser/places/places.css                       (places/places.css)
 *       skin/classic/browser/places/organizer.css                    (places/organizer.css)
         skin/classic/browser/places/bookmark.png                     (places/bookmark.png)
@@ -352,6 +362,8 @@ browser.jar:
         skin/classic/browser/devtools/vview-lock@2x.png             (../shared/devtools/images/vview-lock@2x.png)
         skin/classic/browser/devtools/vview-open-inspector.png      (../shared/devtools/images/vview-open-inspector.png)
         skin/classic/browser/devtools/vview-open-inspector@2x.png   (../shared/devtools/images/vview-open-inspector@2x.png)
+        skin/classic/browser/devtools/cubic-bezier-swatch.png       (../shared/devtools/images/cubic-bezier-swatch.png)
+        skin/classic/browser/devtools/cubic-bezier-swatch@2x.png    (../shared/devtools/images/cubic-bezier-swatch@2x.png)
         skin/classic/browser/devtools/undock@2x.png                 (../shared/devtools/images/undock@2x.png)
         skin/classic/browser/devtools/font-inspector.css            (../shared/devtools/font-inspector.css)
         skin/classic/browser/devtools/computedview.css              (../shared/devtools/computedview.css)
@@ -415,6 +427,7 @@ browser.jar:
         skin/classic/aero/browser/aboutCertError_sectionCollapsed.png
         skin/classic/aero/browser/aboutCertError_sectionCollapsed-rtl.png
         skin/classic/aero/browser/aboutCertError_sectionExpanded.png
+        skin/classic/aero/browser/aboutNetError.css                   (../shared/aboutNetError.css)
         skin/classic/aero/browser/aboutSocialError.css
 #ifdef MOZ_SERVICES_SYNC
         skin/classic/aero/browser/aboutSyncTabs.css
@@ -485,6 +498,8 @@ browser.jar:
         skin/classic/aero/browser/Toolbar-aero.png
         skin/classic/aero/browser/toolbarbutton-dropdown-arrow.png
         skin/classic/aero/browser/toolbarbutton-dropdown-arrow-inverted.png
+        skin/classic/aero/browser/undoCloseTab.png                        (../shared/undoCloseTab.png)
+        skin/classic/aero/browser/undoCloseTab@2x.png                     (../shared/undoCloseTab@2x.png)
         skin/classic/aero/browser/urlbar-arrow.png
         skin/classic/aero/browser/urlbar-popup-blocked.png
         skin/classic/aero/browser/urlbar-history-dropmarker.png
@@ -493,10 +508,17 @@ browser.jar:
         skin/classic/aero/browser/notification-pluginBlocked.png    (../shared/plugins/notification-pluginBlocked.png)
         skin/classic/aero/browser/webRTC-shareDevice-16.png
         skin/classic/aero/browser/webRTC-shareDevice-64.png
-        skin/classic/aero/browser/webRTC-sharingDevice-16.png
+        skin/classic/aero/browser/webRTC-sharingDevice-16.png             (../shared/webrtc/webRTC-sharingDevice-16.png)
         skin/classic/aero/browser/webRTC-shareMicrophone-16.png
         skin/classic/aero/browser/webRTC-shareMicrophone-64.png
-        skin/classic/aero/browser/webRTC-sharingMicrophone-16.png
+        skin/classic/aero/browser/webRTC-sharingMicrophone-16.png         (../shared/webrtc/webRTC-sharingMicrophone-16.png)
+        skin/classic/aero/browser/webRTC-shareScreen-16.png               (../shared/webrtc/webRTC-shareScreen-16.png)
+        skin/classic/aero/browser/webRTC-shareScreen-64.png               (../shared/webrtc/webRTC-shareScreen-64.png)
+        skin/classic/aero/browser/webRTC-sharingScreen-16.png             (../shared/webrtc/webRTC-sharingScreen-16.png)
+        skin/classic/aero/browser/webRTC-indicator.css                    (../shared/webrtc/indicator.css)
+        skin/classic/aero/browser/webRTC-camera-white-16.png              (../shared/webrtc/camera-white-16.png)
+        skin/classic/aero/browser/webRTC-microphone-white-16.png          (../shared/webrtc/microphone-white-16.png)
+        skin/classic/aero/browser/webRTC-screen-white-16.png              (../shared/webrtc/screen-white-16.png)
         skin/classic/aero/browser/customizableui/background-noise-toolbar.png  (customizableui/background-noise-toolbar.png)
         skin/classic/aero/browser/customizableui/customize-illustration.png  (../shared/customizableui/customize-illustration.png)
         skin/classic/aero/browser/customizableui/customize-illustration-rtl.png  (../shared/customizableui/customize-illustration-rtl.png)
@@ -534,8 +556,8 @@ browser.jar:
         skin/classic/aero/browser/feeds/videoFeedIcon16.png          (feeds/feedIcon16-aero.png)
         skin/classic/aero/browser/feeds/subscribe.css                (feeds/subscribe.css)
         skin/classic/aero/browser/feeds/subscribe-ui.css             (feeds/subscribe-ui.css)
-        skin/classic/aero/browser/newtab/newTab.css                  (newtab/newTab.css)
-        skin/classic/aero/browser/newtab/controls.png                (../shared/newtab/controls.png)
+*       skin/classic/aero/browser/newtab/newTab.css                  (newtab/newTab.css)
+        skin/classic/aero/browser/newtab/controls.svg                (../shared/newtab/controls.svg)
 *       skin/classic/aero/browser/places/places.css                  (places/places-aero.css)
 *       skin/classic/aero/browser/places/organizer.css               (places/organizer-aero.css)
         skin/classic/aero/browser/places/bookmark.png                (places/bookmark-aero.png)
@@ -757,6 +779,8 @@ browser.jar:
         skin/classic/aero/browser/devtools/vview-lock@2x.png         (../shared/devtools/images/vview-lock@2x.png)
         skin/classic/aero/browser/devtools/vview-open-inspector.png  (../shared/devtools/images/vview-open-inspector.png)
         skin/classic/aero/browser/devtools/vview-open-inspector@2x.png (../shared/devtools/images/vview-open-inspector@2x.png)
+        skin/classic/aero/browser/devtools/cubic-bezier-swatch.png   (../shared/devtools/images/cubic-bezier-swatch.png)
+        skin/classic/aero/browser/devtools/cubic-bezier-swatch@2x.png  (../shared/devtools/images/cubic-bezier-swatch@2x.png)
         skin/classic/aero/browser/devtools/undock@2x.png             (../shared/devtools/images/undock@2x.png)
         skin/classic/aero/browser/devtools/font-inspector.css        (../shared/devtools/font-inspector.css)
         skin/classic/aero/browser/devtools/computedview.css          (../shared/devtools/computedview.css)

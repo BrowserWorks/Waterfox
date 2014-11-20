@@ -162,12 +162,12 @@ gfx3DMatrix
 gfx3DMatrix::From2D(const gfxMatrix &aMatrix)
 {
   gfx3DMatrix matrix;
-  matrix._11 = (float)aMatrix.xx;
-  matrix._12 = (float)aMatrix.yx;
-  matrix._21 = (float)aMatrix.xy;
-  matrix._22 = (float)aMatrix.yy;
-  matrix._41 = (float)aMatrix.x0;
-  matrix._42 = (float)aMatrix.y0;
+  matrix._11 = (float)aMatrix._11;
+  matrix._12 = (float)aMatrix._12;
+  matrix._21 = (float)aMatrix._21;
+  matrix._22 = (float)aMatrix._22;
+  matrix._41 = (float)aMatrix._31;
+  matrix._42 = (float)aMatrix._32;
   return matrix;
 }
 
@@ -369,22 +369,22 @@ void
 gfx3DMatrix::PreMultiply(const gfxMatrix& aOther)
 {
   gfx3DMatrix temp;
-  temp._11 = aOther.xx * _11 + aOther.yx * _21;
-  temp._21 = aOther.xy * _11 + aOther.yy * _21;
+  temp._11 = aOther._11 * _11 + aOther._12 * _21;
+  temp._21 = aOther._21 * _11 + aOther._22 * _21;
   temp._31 = _31;
-  temp._41 = aOther.x0 * _11 + aOther.y0 * _21 + _41;
-  temp._12 = aOther.xx * _12 + aOther.yx * _22;
-  temp._22 = aOther.xy * _12 + aOther.yy * _22;
+  temp._41 = aOther._31 * _11 + aOther._32 * _21 + _41;
+  temp._12 = aOther._11 * _12 + aOther._12 * _22;
+  temp._22 = aOther._21 * _12 + aOther._22 * _22;
   temp._32 = _32;
-  temp._42 = aOther.x0 * _12 + aOther.y0 * _22 + _42;
-  temp._13 = aOther.xx * _13 + aOther.yx * _23;
-  temp._23 = aOther.xy * _13 + aOther.yy * _23;
+  temp._42 = aOther._31 * _12 + aOther._32 * _22 + _42;
+  temp._13 = aOther._11 * _13 + aOther._12 * _23;
+  temp._23 = aOther._21 * _13 + aOther._22 * _23;
   temp._33 = _33;
-  temp._43 = aOther.x0 * _13 + aOther.y0 * _23 + _43;
-  temp._14 = aOther.xx * _14 + aOther.yx * _24;
-  temp._24 = aOther.xy * _14 + aOther.yy * _24;
+  temp._43 = aOther._31 * _13 + aOther._32 * _23 + _43;
+  temp._14 = aOther._11 * _14 + aOther._12 * _24;
+  temp._24 = aOther._21 * _14 + aOther._22 * _24;
   temp._34 = _34;
-  temp._44 = aOther.x0 * _14 + aOther.y0 * _24 + _44;
+  temp._44 = aOther._31 * _14 + aOther._32 * _24 + _44;
 
   *this = temp;
 }
@@ -711,12 +711,12 @@ gfx3DMatrix::Is2D(gfxMatrix* aMatrix) const
     return false;
   }
   if (aMatrix) {
-    aMatrix->xx = _11;
-    aMatrix->yx = _12;
-    aMatrix->xy = _21;
-    aMatrix->yy = _22;
-    aMatrix->x0 = _41;
-    aMatrix->y0 = _42;
+    aMatrix->_11 = _11;
+    aMatrix->_12 = _12;
+    aMatrix->_21 = _21;
+    aMatrix->_22 = _22;
+    aMatrix->_31 = _41;
+    aMatrix->_32 = _42;
   }
   return true;
 }
@@ -730,12 +730,12 @@ gfx3DMatrix::CanDraw2D(gfxMatrix* aMatrix) const
     return false;
   }
   if (aMatrix) {
-    aMatrix->xx = _11;
-    aMatrix->yx = _12;
-    aMatrix->xy = _21;
-    aMatrix->yy = _22;
-    aMatrix->x0 = _41;
-    aMatrix->y0 = _42;
+    aMatrix->_11 = _11;
+    aMatrix->_12 = _12;
+    aMatrix->_21 = _21;
+    aMatrix->_22 = _22;
+    aMatrix->_31 = _41;
+    aMatrix->_32 = _42;
   }
   return true;
 }
@@ -753,87 +753,86 @@ gfx3DMatrix::ProjectTo2D()
   return *this;
 }
 
-gfxPoint gfx3DMatrix::ProjectPoint(const gfxPoint& aPoint) const
+gfxPointH3D gfx3DMatrix::ProjectPoint(const gfxPoint& aPoint) const
 {
-  // Define a ray of the form P + Ut where t is a real number
-  // w is assumed to always be 1 when transforming 3d points with our
-  // 4x4 matrix.
-  // p is our click point, q is another point on the same ray.
-  // 
-  // Note: since the transformation is a general projective transformation and is not
-  // necessarily affine, we can't just take a unit vector u, back-transform it, and use
-  // it as unit vector on the back-transformed ray. Instead, we really must take two points
-  // on the ray and back-transform them.
-  gfxPoint3D p(aPoint.x, aPoint.y, 0);
-  gfxPoint3D q(aPoint.x, aPoint.y, 1);
+  // Find a value for z that will transform to 0.
 
-  // Back transform the vectors (using w = 1) and normalize
-  // back into 3d vectors by dividing by the w component.
-  gfxPoint3D pback = Transform3D(p);
-  gfxPoint3D qback = Transform3D(q);
-  gfxPoint3D uback = qback - pback;
+  // The transformed value of z is computed as:
+  // z' = aPoint.x * _13 + aPoint.y * _23 + z * _33 + _43;
 
-  // Find the point where the back transformed line intersects z=0
-  // and find t.
+  // Solving for z when z' = 0 gives us:
+  float z = -(aPoint.x * _13 + aPoint.y * _23 + _43) / _33;
+
+  // Compute the transformed point
+  return Transform4D(gfxPointH3D(aPoint.x, aPoint.y, z, 1));
+}
+
+gfxPointH3D ComputePerspectivePlaneIntercept(const gfxPointH3D& aFirst,
+                                             const gfxPointH3D& aSecond)
+{
+  // FIXME: See bug 1035611
+  // Since we can't easily deal with points as w=0 (since we divide by w), we
+  // approximate this by finding a point with w just greater than 0. Unfortunately
+  // this is a tradeoff between accuracy and floating point precision.
   
-  float t = -pback.z / uback.z;
+  // We want to interpolate aFirst and aSecond to find a point as close to
+  // the positive side of the w=0 plane as possible.
 
-  gfxPoint result(pback.x + t*uback.x, pback.y + t*uback.y);
+  // Since we know what we want the w component to be, we can rearrange the
+  // interpolation equation and solve for t.
+  float w = 0.00001f;
+  float t = (w - aFirst.w) / (aSecond.w - aFirst.w);
 
-  return result;
+  // Use t to find the remainder of the components
+  return aFirst + (aSecond - aFirst) * t;
 }
 
 gfxRect gfx3DMatrix::ProjectRectBounds(const gfxRect& aRect) const
 {
-  gfxPoint points[4];
+  gfxPointH3D points[4];
 
   points[0] = ProjectPoint(aRect.TopLeft());
   points[1] = ProjectPoint(aRect.TopRight());
   points[2] = ProjectPoint(aRect.BottomLeft());
   points[3] = ProjectPoint(aRect.BottomRight());
 
-  gfxFloat min_x, max_x;
-  gfxFloat min_y, max_y;
+  gfxFloat min_x = std::numeric_limits<gfxFloat>::max();
+  gfxFloat min_y = std::numeric_limits<gfxFloat>::max();
+  gfxFloat max_x = -std::numeric_limits<gfxFloat>::max();
+  gfxFloat max_y = -std::numeric_limits<gfxFloat>::max();
 
-  min_x = max_x = points[0].x;
-  min_y = max_y = points[0].y;
+  bool foundPoint = false;
+  for (int i=0; i<4; i++) {
+    // Only use points that exist above the w=0 plane
+    if (points[i].HasPositiveWCoord()) {
+      foundPoint = true;
+      gfxPoint point2d = points[i].As2DPoint();
+      min_x = min(point2d.x, min_x);
+      max_x = max(point2d.x, max_x);
+      min_y = min(point2d.y, min_y);
+      max_y = max(point2d.y, max_y);
+    }
 
-  for (int i=1; i<4; i++) {
-    min_x = min(points[i].x, min_x);
-    max_x = max(points[i].x, max_x);
-    min_y = min(points[i].y, min_y);
-    max_y = max(points[i].y, max_y);
+    int next = (i == 3) ? 0 : i + 1;
+    if (points[i].HasPositiveWCoord() != points[next].HasPositiveWCoord()) {
+      // If the line between two points crosses the w=0 plane, then interpolate a point
+      // as close to the w=0 plane as possible and use that instead.
+      gfxPointH3D intercept = ComputePerspectivePlaneIntercept(points[i], points[next]);
+      MOZ_ASSERT(intercept.HasPositiveWCoord());
+
+      gfxPoint point2d = intercept.As2DPoint();
+      min_x = min(point2d.x, min_x);
+      max_x = max(point2d.x, max_x);
+      min_y = min(point2d.y, min_y);
+      max_y = max(point2d.y, max_y);
+    }
+  }
+
+  if (!foundPoint) {
+    return gfxRect(0, 0, 0, 0);
   }
 
   return gfxRect(min_x, min_y, max_x - min_x, max_y - min_y);
-}
-
-gfxRect gfx3DMatrix::UntransformBounds(const gfxRect& aRect, const gfxRect& aChildBounds) const
-{
-  if (Is2D()) {
-    return Inverse().TransformBounds(aRect);
-  }
-  gfxRect bounds = TransformBounds(aChildBounds);
-
-  gfxRect rect = aRect.Intersect(bounds);
-
-  return Inverse().ProjectRectBounds(rect);
-}
-
-bool gfx3DMatrix::UntransformPoint(const gfxPoint& aPoint, const gfxRect& aChildBounds, gfxPoint* aOut) const
-{
-  if (Is2D()) {
-    *aOut = Inverse().Transform(aPoint);
-    return true;
-  }
-  gfxRect bounds = TransformBounds(aChildBounds);
-
-  if (!bounds.Contains(aPoint)) {
-    return false;
-  }
-
-  *aOut = Inverse().ProjectPoint(aPoint);
-  return true;
 }
 
 gfxPoint3D gfx3DMatrix::GetNormalVector() const

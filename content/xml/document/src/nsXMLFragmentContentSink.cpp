@@ -13,7 +13,7 @@
 #include "nsIDOMDocumentFragment.h"
 #include "nsIContent.h"
 #include "nsGkAtoms.h"
-#include "nsINodeInfo.h"
+#include "mozilla/dom/NodeInfo.h"
 #include "nsContentCreatorFunctions.h"
 #include "nsError.h"
 #include "nsIConsoleService.h"
@@ -36,7 +36,6 @@ class nsXMLFragmentContentSink : public nsXMLContentSink,
 {
 public:
   nsXMLFragmentContentSink();
-  virtual ~nsXMLFragmentContentSink();
 
   NS_DECL_AND_IMPL_ZEROING_OPERATOR_NEW
 
@@ -79,11 +78,13 @@ public:
   NS_IMETHOD SetPreventScriptExecution(bool aPreventScriptExecution);
 
 protected:
+  virtual ~nsXMLFragmentContentSink();
+
   virtual bool SetDocElement(int32_t aNameSpaceID, 
                                nsIAtom *aTagName,
                                nsIContent *aContent);
   virtual nsresult CreateElement(const char16_t** aAtts, uint32_t aAttsCount,
-                                 nsINodeInfo* aNodeInfo, uint32_t aLineNumber,
+                                 mozilla::dom::NodeInfo* aNodeInfo, uint32_t aLineNumber,
                                  nsIContent** aResult, bool* aAppendContent,
                                  mozilla::dom::FromParser aFromParser);
   virtual nsresult CloseElement(nsIContent* aContent);
@@ -201,7 +202,7 @@ nsXMLFragmentContentSink::SetDocElement(int32_t aNameSpaceID,
 
 nsresult
 nsXMLFragmentContentSink::CreateElement(const char16_t** aAtts, uint32_t aAttsCount,
-                                        nsINodeInfo* aNodeInfo, uint32_t aLineNumber,
+                                        mozilla::dom::NodeInfo* aNodeInfo, uint32_t aLineNumber,
                                         nsIContent** aResult, bool* aAppendContent,
                                         FromParser /*aFromParser*/)
 {

@@ -7,6 +7,7 @@
 #include "json.h"
 
 #include "mozilla/FloatingPoint.h"
+#include "mozilla/Range.h"
 
 #include "jsarray.h"
 #include "jsatom.h"
@@ -31,6 +32,7 @@ using namespace js::types;
 
 using mozilla::IsFinite;
 using mozilla::Maybe;
+using mozilla::RangedPtr;
 
 const Class js::JSONClass = {
     js_JSON_str,
@@ -55,20 +57,19 @@ static inline bool IsQuoteSpecialCharacter(jschar c)
 }
 
 /* ES5 15.12.3 Quote. */
+template <typename CharT>
 static bool
-Quote(JSContext *cx, StringBuffer &sb, JSString *str)
+Quote(StringBuffer &sb, JSLinearString *str)
 {
-    JS::Anchor<JSString *> anchor(str);
     size_t len = str->length();
-    const jschar *buf = str->getChars(cx);
-    if (!buf)
-        return false;
 
     /* Step 1. */
     if (!sb.append('"'))
         return false;
 
     /* Step 2. */
+    JS::AutoCheckCannotGC nogc;
+    const RangedPtr<const CharT> buf(str->chars<CharT>(nogc), len);
     for (size_t i = 0; i < len; ++i) {
         /* Batch-append maximal character sequences containing no escapes. */
         size_t mark = i;
@@ -77,7 +78,7 @@ Quote(JSContext *cx, StringBuffer &sb, JSString *str)
                 break;
         } while (++i < len);
         if (i > mark) {
-            if (!sb.append(&buf[mark], i - mark))
+            if (!sb.appendSubstring(str, mark, i - mark))
                 return false;
             if (i == len)
                 break;
@@ -105,13 +106,29 @@ Quote(JSContext *cx, StringBuffer &sb, JSString *str)
                 return false;
             JS_ASSERT((c >> 4) < 10);
             uint8_t x = c >> 4, y = c % 16;
-            if (!sb.append('0' + x) || !sb.append(y < 10 ? '0' + y : 'a' + (y - 10)))
+            if (!sb.append(Latin1Char('0' + x)) ||
+                !sb.append(Latin1Char(y < 10 ? '0' + y : 'a' + (y - 10))))
+            {
                 return false;
+            }
         }
     }
 
     /* Steps 3-4. */
     return sb.append('"');
+}
+
+static bool
+Quote(JSContext *cx, StringBuffer &sb, JSString *str)
+{
+    JS::Anchor<JSString *> anchor(str);
+    JSLinearString *linear = str->ensureLinear(cx);
+    if (!linear)
+        return false;
+
+    return linear->hasLatin1Chars()
+           ? Quote<Latin1Char>(sb, linear)
+           : Quote<jschar>(sb, linear);
 }
 
 namespace {
@@ -145,9 +162,17 @@ WriteIndent(JSContext *cx, StringifyContext *scx, uint32_t limit)
     if (!scx->gap.empty()) {
         if (!scx->sb.append('\n'))
             return false;
-        for (uint32_t i = 0; i < limit; i++) {
-            if (!scx->sb.append(scx->gap.begin(), scx->gap.end()))
-                return false;
+
+        if (scx->gap.isUnderlyingBufferLatin1()) {
+            for (uint32_t i = 0; i < limit; i++) {
+                if (!scx->sb.append(scx->gap.rawLatin1Begin(), scx->gap.rawLatin1End()))
+                    return false;
+            }
+        } else {
+            for (uint32_t i = 0; i < limit; i++) {
+                if (!scx->sb.append(scx->gap.rawTwoByteBegin(), scx->gap.rawTwoByteEnd()))
+                    return false;
+            }
         }
     }
 
@@ -267,7 +292,7 @@ PreprocessValue(JSContext *cx, HandleObject holder, KeyType key, MutableHandleVa
 static inline bool
 IsFilteredValue(const Value &v)
 {
-    return v.isUndefined() || IsCallable(v);
+    return v.isUndefined() || v.isSymbol() || IsCallable(v);
 }
 
 /* ES5 15.12.3 JO. */
@@ -475,11 +500,7 @@ Str(JSContext *cx, const Value &v, StringifyContext *scx)
                 return scx->sb.append("null");
         }
 
-        StringBuffer sb(cx);
-        if (!NumberValueToStringBuffer(cx, v, sb))
-            return false;
-
-        return scx->sb.append(sb.begin(), sb.length());
+        return NumberValueToStringBuffer(cx, v, scx->sb);
     }
 
     /* Step 10. */
@@ -632,8 +653,8 @@ js_Stringify(JSContext *cx, MutableHandleValue vp, JSObject *replacer_, Value sp
         if (!str)
             return false;
         JS::Anchor<JSString *> anchor(str);
-        size_t len = Min(size_t(10), space.toString()->length());
-        if (!gap.append(str->chars(), len))
+        size_t len = Min(size_t(10), str->length());
+        if (!gap.appendSubstring(str, 0, len))
             return false;
     } else {
         /* Step 8. */
@@ -773,12 +794,13 @@ Revive(JSContext *cx, HandleValue reviver, MutableHandleValue vp)
     return Walk(cx, obj, id, reviver, vp);
 }
 
+template <typename CharT>
 bool
-js::ParseJSONWithReviver(JSContext *cx, ConstTwoByteChars chars, size_t length,
-                         HandleValue reviver, MutableHandleValue vp)
+js::ParseJSONWithReviver(JSContext *cx, const mozilla::Range<const CharT> chars, HandleValue reviver,
+                         MutableHandleValue vp)
 {
     /* 15.12.2 steps 2-3. */
-    JSONParser parser(cx, chars, length);
+    JSONParser<CharT> parser(cx, chars);
     if (!parser.parse(vp))
         return false;
 
@@ -787,6 +809,14 @@ js::ParseJSONWithReviver(JSContext *cx, ConstTwoByteChars chars, size_t length,
         return Revive(cx, reviver, vp);
     return true;
 }
+
+template bool
+js::ParseJSONWithReviver(JSContext *cx, const mozilla::Range<const Latin1Char> chars,
+                         HandleValue reviver, MutableHandleValue vp);
+
+template bool
+js::ParseJSONWithReviver(JSContext *cx, const mozilla::Range<const jschar> chars, HandleValue reviver,
+                         MutableHandleValue vp);
 
 #if JS_HAS_TOSOURCE
 static bool
@@ -811,17 +841,22 @@ json_parse(JSContext *cx, unsigned argc, Value *vp)
     if (!str)
         return false;
 
-    Rooted<JSFlatString*> flat(cx, str->ensureFlat(cx));
+    JSFlatString *flat = str->ensureFlat(cx);
     if (!flat)
         return false;
 
     JS::Anchor<JSString *> anchor(flat);
 
+    AutoStableStringChars flatChars(cx);
+    if (!flatChars.init(cx, flat))
+        return false;
+
     RootedValue reviver(cx, args.get(1));
 
     /* Steps 2-5. */
-    return ParseJSONWithReviver(cx, ConstTwoByteChars(flat->chars(), flat->length()),
-                                flat->length(), reviver, args.rval());
+    return flatChars.isLatin1()
+           ? ParseJSONWithReviver(cx, flatChars.latin1Range(), reviver, args.rval())
+           : ParseJSONWithReviver(cx, flatChars.twoByteRange(), reviver, args.rval());
 }
 
 /* ES5 15.12.3. */

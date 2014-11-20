@@ -14,6 +14,7 @@
 #include <unistd.h>
 
 #include "jit/arm/Assembler-arm.h"
+#include "jit/RegisterSets.h"
 
 #define HWCAP_USE_HARDFP_ABI (1 << 27)
 
@@ -34,6 +35,97 @@
 namespace js {
 namespace jit {
 
+// The override flags parsed from the ARMHWCAP environment variable or from the
+// --arm-hwcap js shell argument.
+static uint32_t armHwCapFlags = 0;
+
+bool
+ParseARMHwCapFlags(const char *armHwCap)
+{
+    uint32_t flags = 0;
+
+    if (!armHwCap || !armHwCap[0])
+        return false;
+
+#ifdef JS_CODEGEN_ARM_HARDFP
+    flags |= HWCAP_USE_HARDFP_ABI;
+#endif
+
+    if (strstr(armHwCap, "help")) {
+        fflush(NULL);
+        printf(
+               "\n"
+               "usage: ARMHWCAP=option,option,option,... where options can be:\n"
+               "\n"
+               "  armv7    \n"
+               "  vfp      \n"
+               "  neon     \n"
+               "  vfpv3    \n"
+               "  vfpv3d16 \n"
+               "  vfpv4    \n"
+               "  idiva    \n"
+               "  idivt    \n"
+#if defined(JS_ARM_SIMULATOR)
+               "  hardfp   \n"
+#endif
+               "\n"
+               );
+        exit(0);
+        /*NOTREACHED*/
+    }
+
+    // Canonicalize each token to have a leading and trailing space.
+    const char *start = armHwCap;  // Token start.
+    for (;;) {
+        char  ch = *start;
+        if (!ch) {
+            // End of string.
+            break;
+        }
+        if (ch == ' ' || ch == ',') {
+            // Skip separator characters.
+            start++;
+            continue;
+        }
+        // Find the end of the token.
+        const char *end = start + 1;
+        for (; ; end++) {
+            ch = *end;
+            if (!ch || ch == ' ' || ch == ',')
+                break;
+        }
+        size_t count = end - start;
+        if (count == 3 && strncmp(start, "vfp", 3) == 0)
+            flags |= HWCAP_VFP;
+        else if (count == 5 && strncmp(start, "vfpv3", 5) == 0)
+            flags |= HWCAP_VFPv3;
+        else if (count == 8 && strncmp(start, "vfpv3d16", 8) == 0)
+            flags |= HWCAP_VFPv3D16;
+        else if (count == 5 && strncmp(start, "vfpv4", 5) == 0)
+            flags |= HWCAP_VFPv4;
+        else if (count == 5 && strncmp(start, "idiva", 5) == 0)
+            flags |= HWCAP_IDIVA;
+        else if (count == 5 && strncmp(start, "idivt", 5) == 0)
+            flags |= HWCAP_IDIVT;
+        else if (count == 4 && strncmp(start, "neon", 4) == 0)
+            flags |= HWCAP_NEON;
+        else if (count == 5 && strncmp(start, "armv7", 5) == 0)
+            flags |= HWCAP_ARMv7;
+#if defined(JS_ARM_SIMULATOR)
+        else if (count == 6 && strncmp(start, "hardfp", 6) == 0)
+            flags |= HWCAP_USE_HARDFP_ABI;
+#endif
+        else
+            fprintf(stderr, "Warning: unexpected ARMHWCAP flag at: %s\n", start);
+        start = end;
+    }
+#ifdef DEBUG
+    IonSpew(IonSpew_Codegen, "ARMHWCAP: '%s'\n   flags: 0x%x\n", armHwCap, flags);
+#endif
+    armHwCapFlags = flags;
+    return true;
+}
+
 uint32_t GetARMFlags()
 {
     static bool isSet = false;
@@ -41,87 +133,16 @@ uint32_t GetARMFlags()
     if (isSet)
         return flags;
 
+    const char *env = getenv("ARMHWCAP");
+    if (ParseARMHwCapFlags(env) || armHwCapFlags) {
+        isSet = true;
+        flags = armHwCapFlags;
+        return flags;
+    }
+
 #ifdef JS_CODEGEN_ARM_HARDFP
     flags |= HWCAP_USE_HARDFP_ABI;
 #endif
-
-    static const char *env = getenv("ARMHWCAP");
-
-    if (env && env[0]) {
-        if (strstr(env, "help")) {
-            fflush(NULL);
-            printf(
-                   "\n"
-                   "usage: ARMHWCAP=option,option,option,... where options can be:\n"
-                   "\n"
-                   "  armv7    \n"
-                   "  vfp      \n"
-                   "  neon     \n"
-                   "  vfpv3    \n"
-                   "  vfpv3d16 \n"
-                   "  vfpv4    \n"
-                   "  idiva    \n"
-                   "  idivt    \n"
-#if defined(JS_ARM_SIMULATOR)
-                   "  hardfp   \n"
-#endif
-                   "\n"
-                   );
-            exit(0);
-            /*NOTREACHED*/
-        } else {
-            // Canonicalize each token to have a leading and trailing space.
-            const char *start = env;  // Token start.
-            for (;;) {
-                char  ch = *start;
-                if (!ch) {
-                    // End of string.
-                    break;
-                }
-                if (ch == ' ' || ch == ',') {
-                    // Skip separator characters.
-                    start++;
-                    continue;
-                }
-                // Find the end of the token.
-                const char *end = start + 1;
-                for (; ; end++) {
-                    ch = *end;
-                    if (!ch || ch == ' ' || ch == ',')
-                        break;
-                }
-                size_t count = end - start;
-                if (count == 3 && strncmp(start, "vfp", 3) == 0)
-                    flags |= HWCAP_VFP;
-                else if (count == 5 && strncmp(start, "vfpv3", 5) == 0)
-                    flags |= HWCAP_VFPv3;
-                else if (count == 8 && strncmp(start, "vfpv3d16", 8) == 0)
-                    flags |= HWCAP_VFPv3D16;
-                else if (count == 5 && strncmp(start, "vfpv4", 5) == 0)
-                    flags |= HWCAP_VFPv4;
-                else if (count == 5 && strncmp(start, "idiva", 5) == 0)
-                    flags |= HWCAP_IDIVA;
-                else if (count == 5 && strncmp(start, "idivt", 5) == 0)
-                    flags |= HWCAP_IDIVT;
-                else if (count == 4 && strncmp(start, "neon", 4) == 0)
-                    flags |= HWCAP_NEON;
-                else if (count == 5 && strncmp(start, "armv7", 5) == 0)
-                    flags |= HWCAP_ARMv7;
-#if defined(JS_ARM_SIMULATOR)
-                else if (count == 6 && strncmp(start, "hardfp", 6) == 0)
-                    flags |= HWCAP_USE_HARDFP_ABI;
-#endif
-                else
-                    fprintf(stderr, "Warning: unexpected ARMHWCAP flag at: %s\n", start);
-                start = end;
-            }
-#ifdef DEBUG
-            IonSpew(IonSpew_Codegen, "ARMHWCAP: '%s'\n   flags: 0x%x\n", env, flags);
-#endif
-            isSet = true;
-            return flags;
-        }
-    }
 
 #ifdef JS_ARM_SIMULATOR
     isSet = true;
@@ -232,7 +253,7 @@ bool HasVFP()
 
 bool Has32DP()
 {
-    return !(GetARMFlags() & HWCAP_VFPv3D16 && !(GetARMFlags() & HWCAP_NEON));
+    return (GetARMFlags() & HWCAP_VFPv3) && !(GetARMFlags() & HWCAP_VFPv3D16);
 }
 bool UseConvReg()
 {
@@ -288,5 +309,62 @@ FloatRegisters::FromName(const char *name)
     return Invalid;
 }
 
+FloatRegisterSet
+VFPRegister::ReduceSetForPush(const FloatRegisterSet &s)
+{
+    FloatRegisterSet mod;
+    for (TypedRegisterIterator<FloatRegister> iter(s); iter.more(); iter++) {
+        if ((*iter).isSingle()) {
+            // Add in just this float.
+            mod.addUnchecked(*iter);
+        } else if ((*iter).id() < 16) {
+            // A double with an overlay, add in both floats.
+            mod.addUnchecked((*iter).singleOverlay(0));
+            mod.addUnchecked((*iter).singleOverlay(1));
+        } else {
+            // Add in the lone double in the range 16-31.
+            mod.addUnchecked(*iter);
+        }
+    }
+    return mod;
+}
+
+uint32_t
+VFPRegister::GetSizeInBytes(const FloatRegisterSet &s)
+{
+    uint64_t bits = s.bits();
+    uint32_t ret = mozilla::CountPopulation32(bits&0xffffffff) * sizeof(float);
+    ret +=  mozilla::CountPopulation32(bits >> 32) * sizeof(double);
+    return ret;
+}
+uint32_t
+VFPRegister::GetPushSizeInBytes(const FloatRegisterSet &s)
+{
+    FloatRegisterSet ss = s.reduceSetForPush();
+    uint64_t bits = ss.bits();
+    uint32_t ret = mozilla::CountPopulation32(bits&0xffffffff) * sizeof(float);
+    ret +=  mozilla::CountPopulation32(bits >> 32) * sizeof(double);
+    return ret;
+}
+uint32_t
+VFPRegister::getRegisterDumpOffsetInBytes()
+{
+    if (isSingle())
+        return id() * sizeof(float);
+    if (isDouble())
+        return id() * sizeof(double);
+    MOZ_ASSUME_UNREACHABLE();
+}
+
+uint32_t
+FloatRegisters::ActualTotalPhys()
+{
+    if (Has32DP())
+        return 32;
+    return 16;
+}
+
+
 } // namespace jit
 } // namespace js
+

@@ -586,16 +586,6 @@ void nsNSSHttpInterface::initTable()
   v1.freeFcn = freeFcn;
 }
 
-void nsNSSHttpInterface::registerHttpClient()
-{
-  SEC_RegisterDefaultHttpClient(&sNSSInterfaceTable);
-}
-
-void nsNSSHttpInterface::unregisterHttpClient()
-{
-  SEC_RegisterDefaultHttpClient(nullptr);
-}
-
 nsHTTPListener::nsHTTPListener()
 : mResultData(nullptr),
   mResultLen(0),
@@ -1215,7 +1205,7 @@ void HandshakeCallback(PRFileDesc* fd, void* client_data) {
     nsContentUtils::LogSimpleConsoleError(msg, "SSL");
   }
 
-  mozilla::pkix::ScopedCERTCertificate serverCert(SSL_PeerCertificate(fd));
+  ScopedCERTCertificate serverCert(SSL_PeerCertificate(fd));
 
   /* Set the SSL Status information */
   RefPtr<nsSSLStatus> status(infoObject->SSLStatus());

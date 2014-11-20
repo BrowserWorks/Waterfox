@@ -42,8 +42,9 @@ XPCOMUtils.defineLazyGetter(this, "gUnicodeConverter", function () {
   return converter;
 });
 
-// The preference that tells whether this feature is enabled.
+// Boolean preferences that control newtab content
 const PREF_NEWTAB_ENABLED = "browser.newtabpage.enabled";
+const PREF_NEWTAB_ENHANCED = "browser.newtabpage.enhanced";
 
 // The preference that tells the number of rows of the newtab grid.
 const PREF_NEWTAB_ROWS = "browser.newtabpage.rows";
@@ -210,6 +211,11 @@ let AllPages = {
   _enabled: null,
 
   /**
+   * Cached value that tells whether the New Tab Page feature is enhanced.
+   */
+  _enhanced: null,
+
+  /**
    * Adds a page to the internal list of pages.
    * @param aPage The page to register.
    */
@@ -247,6 +253,24 @@ let AllPages = {
   },
 
   /**
+   * Returns whether the history tiles are enhanced.
+   */
+  get enhanced() {
+    if (this._enhanced === null)
+      this._enhanced = Services.prefs.getBoolPref(PREF_NEWTAB_ENHANCED);
+
+    return this._enhanced;
+  },
+
+  /**
+   * Enables or disables the enhancement of history tiles feature.
+   */
+  set enhanced(aEnhanced) {
+    if (this.enhanced != aEnhanced)
+      Services.prefs.setBoolPref(PREF_NEWTAB_ENHANCED, !!aEnhanced);
+  },
+
+  /**
    * Returns the number of registered New Tab Pages (i.e. the number of open
    * about:newtab instances).
    */
@@ -281,10 +305,6 @@ let AllPages = {
     }
   },
 
-  get updateScheduledForHiddenPages() {
-    return !!this._scheduleUpdateTimeout;
-  },
-
   /**
    * Implements the nsIObserver interface to get notified when the preference
    * value changes or when a new copy of a page thumbnail is available.
@@ -292,7 +312,14 @@ let AllPages = {
   observe: function AllPages_observe(aSubject, aTopic, aData) {
     if (aTopic == "nsPref:changed") {
       // Clear the cached value.
-      this._enabled = null;
+      switch (aData) {
+        case PREF_NEWTAB_ENABLED:
+          this._enabled = null;
+          break;
+        case PREF_NEWTAB_ENHANCED:
+          this._enhanced = null;
+          break;
+      }
     }
     // and all notifications get forwarded to each page.
     this._pages.forEach(function (aPage) {
@@ -306,6 +333,7 @@ let AllPages = {
    */
   _addObserver: function AllPages_addObserver() {
     Services.prefs.addObserver(PREF_NEWTAB_ENABLED, this, true);
+    Services.prefs.addObserver(PREF_NEWTAB_ENHANCED, this, true);
     Services.obs.addObserver(this, "page-thumbnail:create", true);
     this._addObserver = function () {};
   },
@@ -577,9 +605,7 @@ let PlacesProvider = {
               title: title,
               frecency: frecency,
               lastVisitDate: lastVisitDate,
-              bgColor: "transparent",
               type: "history",
-              imageURI: null,
             });
           }
         }
@@ -654,6 +680,7 @@ let PlacesProvider = {
         url: aURI.spec,
         frecency: aNewFrecency,
         lastVisitDate: aLastVisitDate,
+        type: "history",
       });
     }
   },
@@ -802,8 +829,19 @@ let Links = {
     let pinnedLinks = Array.slice(PinnedLinks.links);
     let links = this._getMergedProviderLinks();
 
-    // Filter blocked and pinned links.
+    let sites = new Set();
+    for (let link of pinnedLinks) {
+      if (link)
+        sites.add(NewTabUtils.extractSite(link.url));
+    }
+
+    // Filter blocked and pinned links and duplicate base domains.
     links = links.filter(function (link) {
+      let site = NewTabUtils.extractSite(link.url);
+      if (site == null || sites.has(site))
+        return false;
+      sites.add(site);
+
       return !BlockedLinks.isBlocked(link) && !PinnedLinks.isPinned(link);
     });
 
@@ -1130,6 +1168,24 @@ let ExpirationFilter = {
  */
 this.NewTabUtils = {
   _initialized: false,
+
+  /**
+   * Extract a "site" from a url in a way that multiple urls of a "site" returns
+   * the same "site."
+   * @param aUrl Url spec string
+   * @return The "site" string or null
+   */
+  extractSite: function Links_extractSite(url) {
+    let uri;
+    try {
+      uri = Services.io.newURI(url, null, null);
+    } catch (ex) {
+      return null;
+    }
+
+    // Strip off common subdomains of the same site (e.g., www, load balancer)
+    return uri.asciiHost.replace(/^(m|mobile|www\d*)\./, "");
+  },
 
   init: function NewTabUtils_init() {
     if (this.initWithoutProviders()) {

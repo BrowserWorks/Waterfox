@@ -852,7 +852,6 @@ nsBidiPresUtils::ResolveParagraph(nsBlockFrame* aBlockFrame,
             }
           }
           frame->AdjustOffsetsForBidi(contentOffset, contentOffset + fragmentLength);
-          currentLine->MarkDirty();
         }
       } // isTextFrame
       else {
@@ -1113,6 +1112,7 @@ nsBidiPresUtils::TraverseFrames(nsBlockFrame*              aBlockFrame,
                   CreateContinuation(frame, &next, true);
                   createdContinuation = true;
                 }
+                // Mark the line before the newline as dirty.
                 aBpd->GetLineForFrameAt(aBpd->FrameCount() - 1)->MarkDirty();
               }
               ResolveParagraphWithinBlock(aBlockFrame, aBpd);
@@ -1122,6 +1122,8 @@ nsBidiPresUtils::TraverseFrames(nsBlockFrame*              aBlockFrame,
               } else if (next) {
                 frame = next;
                 aBpd->AppendFrame(frame, aLineIter);
+                // Mark the line after the newline as dirty.
+                aBpd->GetLineForFrameAt(aBpd->FrameCount() - 1)->MarkDirty();
               }
 
               /*
@@ -1394,9 +1396,9 @@ nsBidiPresUtils::RepositionFrame(nsIFrame*             aFrame,
   // This method is called from nsBlockFrame::PlaceLine via the call to
   // bidiUtils->ReorderFrames, so this is guaranteed to be after the inlines
   // have been reflowed, which is required for GetUsedMargin/Border/Padding
-  LogicalMargin margin(frameWM, aFrame->GetUsedMargin());
+  LogicalMargin margin(aLineWM, aFrame->GetUsedMargin());
   if (isFirst) {
-    aStart += margin.IStart(frameWM);
+    aStart += margin.IStart(aLineWM);
   }
 
   nscoord start = aStart;
@@ -1455,7 +1457,7 @@ nsBidiPresUtils::RepositionFrame(nsIFrame*             aFrame,
   aFrame->SetRect(aLineWM, logicalRect, aLineWidth);
 
   if (isLast) {
-    aStart += margin.IEnd(frameWM);
+    aStart += margin.IEnd(aLineWM);
   }
 }
 
@@ -1490,11 +1492,10 @@ nsBidiPresUtils::RepositionInlineFrames(BidiLineData *aBld,
   // This method is called from nsBlockFrame::PlaceLine via the call to
   // bidiUtils->ReorderFrames, so this is guaranteed to be after the inlines
   // have been reflowed, which is required for GetUsedMargin/Border/Padding
-  WritingMode frameWM = aFirstChild->GetWritingMode();
-  LogicalMargin margin(frameWM, aFirstChild->GetUsedMargin());
+  LogicalMargin margin(aLineWM, aFirstChild->GetUsedMargin());
   if (!aFirstChild->GetPrevContinuation() &&
       !aFirstChild->FrameIsNonFirstInIBSplit())
-    startSpace = margin.IStart(frameWM);
+    startSpace = margin.IStart(aLineWM);
 
   nscoord start = LogicalRect(aLineWM, aFirstChild->GetRect(),
                               aLineWidth).IStart(aLineWM) - startSpace;

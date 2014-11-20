@@ -5,9 +5,13 @@
 
 package org.mozilla.gecko.preferences;
 
+import org.mozilla.gecko.Telemetry;
+import org.mozilla.gecko.TelemetryContract;
+import org.mozilla.gecko.TelemetryContract.Method;
 import org.mozilla.gecko.fxa.activities.FxAccountGetStartedActivity;
 import org.mozilla.gecko.sync.setup.SyncAccounts;
 import org.mozilla.gecko.sync.setup.activities.SetupSyncActivity;
+import org.mozilla.gecko.util.HardwareUtils;
 
 import android.content.Context;
 import android.content.Intent;
@@ -39,6 +43,11 @@ class SyncPreference extends Preference {
     private void launchFxASetup() {
         Intent intent = new Intent(mContext, FxAccountGetStartedActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        if (HardwareUtils.IS_KINDLE_DEVICE) {
+            intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+        }
+
         mContext.startActivity(intent);
     }
 
@@ -54,6 +63,7 @@ class SyncPreference extends Preference {
         // open the settings page.
         if (SyncAccounts.syncAccountsExist(mContext)) {
             if (SyncAccounts.openSyncSettings(mContext) != null) {
+                Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, Method.SETTINGS, "sync_settings");
                 return;
             }
         }
@@ -61,5 +71,6 @@ class SyncPreference extends Preference {
         // Otherwise, launch the FxA "Get started" activity, which will
         // dispatch to the right location.
         launchFxASetup();
+        Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, Method.SETTINGS, "sync_setup");
     }
 }

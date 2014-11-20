@@ -40,6 +40,8 @@ private:
   // Don't try to use the default constructor.
   DeletedMessageInfo();
 
+  ~DeletedMessageInfo();
+
   DeletedMessageInfoData mData;
 
   nsCOMPtr<nsIWritableVariant> mDeletedMessageIds;

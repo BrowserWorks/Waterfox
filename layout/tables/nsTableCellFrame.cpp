@@ -545,20 +545,20 @@ nsTableCellFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
   BuildDisplayListForChild(aBuilder, kid, aDirtyRect, aLists);
 }
 
-int
+nsIFrame::LogicalSides
 nsTableCellFrame::GetLogicalSkipSides(const nsHTMLReflowState* aReflowState) const
 {
   if (MOZ_UNLIKELY(StyleBorder()->mBoxDecorationBreak ==
                      NS_STYLE_BOX_DECORATION_BREAK_CLONE)) {
-    return 0;
+    return LogicalSides();
   }
 
-  int skip = 0;
+  LogicalSides skip;
   if (nullptr != GetPrevInFlow()) {
-    skip |= LOGICAL_SIDE_B_START;
+    skip |= eLogicalSideBitsBStart;
   }
   if (nullptr != GetNextInFlow()) {
-    skip |= LOGICAL_SIDE_B_END;
+    skip |= eLogicalSideBitsBEnd;
   }
   return skip;
 }
@@ -713,7 +713,7 @@ nsTableCellFrame::GetCellBaseline() const
   nsIFrame *inner = mFrames.FirstChild();
   nscoord borderPadding = GetUsedBorderAndPadding().top;
   nscoord result;
-  if (nsLayoutUtils::GetFirstLineBaseline(inner, &result))
+  if (nsLayoutUtils::GetFirstLineBaseline(GetWritingMode(), inner, &result))
     return result + borderPadding;
   return inner->GetContentRect().YMost() - inner->GetPosition().y +
          borderPadding;
@@ -828,9 +828,10 @@ CalcUnpaginagedHeight(nsPresContext*        aPresContext,
   int32_t rowIndex;
   firstCellInFlow->GetRowIndex(rowIndex);
   int32_t rowSpan = aTableFrame.GetEffectiveRowSpan(*firstCellInFlow);
-  nscoord cellSpacing = firstTableInFlow->GetCellSpacingX();
 
-  nscoord computedHeight = ((rowSpan - 1) * cellSpacing) - aVerticalBorderPadding;
+  nscoord computedHeight = firstTableInFlow->GetCellSpacingY(rowIndex,
+                                                             rowIndex + rowSpan - 1);
+  computedHeight -= aVerticalBorderPadding;
   int32_t rowX;
   for (row = firstRGInFlow->GetFirstRow(), rowX = 0; row; row = row->GetNextRow(), rowX++) {
     if (rowX > rowIndex + rowSpan - 1) {
@@ -1113,7 +1114,7 @@ nsBCTableCellFrame::GetUsedBorder() const
 /* virtual */ bool
 nsBCTableCellFrame::GetBorderRadii(const nsSize& aFrameSize,
                                    const nsSize& aBorderArea,
-                                   int aSkipSides,
+                                   Sides aSkipSides,
                                    nscoord aRadii[8]) const
 {
   NS_FOR_CSS_HALF_CORNERS(corner) {

@@ -74,16 +74,16 @@ XPCOMUtils.defineLazyGetter(this, "libcutils", function() {
 #ifdef MOZ_WIDGET_ANDROID
 // On Android, define the "debug" function as a binding of the "d" function
 // from the AndroidLog module so it gets the "debug" priority and a log tag.
-// We always report debug messages on Android because it's hard to use a debug
-// build on Android and unnecessary to restrict reporting, per bug 1003469.
+// We always report debug messages on Android because it's unnecessary
+// to restrict reporting, per bug 1003469.
 let debug = Cu.import("resource://gre/modules/AndroidLog.jsm", {})
               .AndroidLog.d.bind(null, "Webapps");
 #else
-function debug(aMsg) {
-#ifdef DEBUG
-  dump("-*- Webapps.jsm : " + aMsg + "\n");
-#endif
-}
+// Elsewhere, report debug messages only if dom.mozApps.debug is set to true.
+// The pref is only checked once, on startup, so restart after changing it.
+let debug = Services.prefs.getBoolPref("dom.mozApps.debug")
+              ? (aMsg) => dump("-*- Webapps.jsm : " + aMsg + "\n")
+              : (aMsg) => {};
 #endif
 
 function getNSPRErrorCode(err) {
@@ -306,7 +306,7 @@ this.DOMApplicationRegistry = {
   },
 
   // Registers all the activities and system messages.
-  registerAppsHandlers: function(aRunUpdate) {
+  registerAppsHandlers: Task.async(function*(aRunUpdate) {
     this.notifyAppsRegistryStart();
     let ids = [];
     for (let id in this.webapps) {
@@ -318,40 +318,38 @@ this.DOMApplicationRegistry = {
       // Read the CSPs and roles. If MOZ_SYS_MSG is defined this is done on
       // _processManifestForIds so as to not reading the manifests
       // twice
-      this._readManifests(ids).then((aResults) => {
-        aResults.forEach((aResult) => {
-          if (!aResult.manifest) {
-            // If we can't load the manifest, we probably have a corrupted
-            // registry. We delete the app since we can't do anything with it.
-            delete this.webapps[aResult.id];
-            return;
-          }
-          let app = this.webapps[aResult.id];
-          app.csp = aResult.manifest.csp || "";
-          app.role = aResult.manifest.role || "";
-          if (app.appStatus >= Ci.nsIPrincipal.APP_STATUS_PRIVILEGED) {
-            app.redirects = this.sanitizeRedirects(aResult.redirects);
-          }
-        });
+      let results = yield this._readManifests(ids);
+      results.forEach((aResult) => {
+        if (!aResult.manifest) {
+          // If we can't load the manifest, we probably have a corrupted
+          // registry. We delete the app since we can't do anything with it.
+          delete this.webapps[aResult.id];
+          return;
+        }
+        let app = this.webapps[aResult.id];
+        app.csp = aResult.manifest.csp || "";
+        app.role = aResult.manifest.role || "";
+        if (app.appStatus >= Ci.nsIPrincipal.APP_STATUS_PRIVILEGED) {
+          app.redirects = this.sanitizeRedirects(aResult.redirects);
+        }
       });
 
       // Nothing else to do but notifying we're ready.
       this.notifyAppsRegistryReady();
     }
-  },
+  }),
 
-  updateDataStoreForApp: function(aId) {
+  updateDataStoreForApp: Task.async(function*(aId) {
     if (!this.webapps[aId]) {
       return;
     }
 
     // Create or Update the DataStore for this app
-    this._readManifests([{ id: aId }]).then((aResult) => {
-      let app = this.webapps[aId];
-      this.updateDataStore(app.localId, app.origin, app.manifestURL,
-                           aResult[0].manifest, app.appStatus);
-    });
-  },
+    let results = yield this._readManifests([{ id: aId }]);
+    let app = this.webapps[aId];
+    this.updateDataStore(app.localId, app.origin, app.manifestURL,
+                         results[0].manifest, app.appStatus);
+  }),
 
   updatePermissionsForApp: function(aId, aIsPreinstalled, aIsSystemUpdate) {
     if (!this.webapps[aId]) {
@@ -611,19 +609,20 @@ this.DOMApplicationRegistry = {
 
       // DataStores must be initialized at startup.
       for (let id in this.webapps) {
-        this.updateDataStoreForApp(id);
+        yield this.updateDataStoreForApp(id);
       }
 
-      this.registerAppsHandlers(runUpdate);
+      yield this.registerAppsHandlers(runUpdate);
     }.bind(this)).then(null, Cu.reportError);
   },
 
-  updateDataStore: function(aId, aOrigin, aManifestURL, aManifest, aAppStatus) {
-    // Just Certified Apps can use DataStores
-    let prefName = "dom.testing.datastore_enabled_for_hosted_apps";
-    if (aAppStatus != Ci.nsIPrincipal.APP_STATUS_CERTIFIED &&
-        (Services.prefs.getPrefType(prefName) == Services.prefs.PREF_INVALID ||
-         !Services.prefs.getBoolPref(prefName))) {
+  updateDataStore: function(aId, aOrigin, aManifestURL, aManifest) {
+    let uri = Services.io.newURI(aOrigin, null, null);
+    let secMan = Cc["@mozilla.org/scriptsecuritymanager;1"]
+                   .getService(Ci.nsIScriptSecurityManager);
+    let principal = secMan.getAppCodebasePrincipal(uri, aId,
+                                                   /*mozbrowser*/ false);
+    if (!dataStoreService.checkPermission(principal)) {
       return;
     }
 
@@ -953,7 +952,7 @@ this.DOMApplicationRegistry = {
 
         let localeManifest = new ManifestHelper(manifest, app.origin);
 
-        app.name = localeManifest.name;
+        app.name = manifest.name;
         app.csp = manifest.csp || "";
         app.role = localeManifest.role;
         if (app.appStatus >= Ci.nsIPrincipal.APP_STATUS_PRIVILEGED) {
@@ -1092,7 +1091,7 @@ this.DOMApplicationRegistry = {
 
     switch (aMessage.name) {
       case "Webapps:Install": {
-#ifdef MOZ_ANDROID_SYNTHAPKS
+#ifdef MOZ_WIDGET_ANDROID
         Services.obs.notifyObservers(mm, "webapps-runtime-install", JSON.stringify(msg));
 #else
         this.doInstall(msg, mm);
@@ -1103,7 +1102,11 @@ this.DOMApplicationRegistry = {
         this.getSelf(msg, mm);
         break;
       case "Webapps:Uninstall":
+#ifdef MOZ_WIDGET_ANDROID
+        Services.obs.notifyObservers(mm, "webapps-runtime-uninstall", JSON.stringify(msg));
+#else
         this.doUninstall(msg, mm);
+#endif
         break;
       case "Webapps:Launch":
         this.doLaunch(msg, mm);
@@ -1121,7 +1124,7 @@ this.DOMApplicationRegistry = {
         this.doGetAll(msg, mm);
         break;
       case "Webapps:InstallPackage": {
-#ifdef MOZ_ANDROID_SYNTHAPKS
+#ifdef MOZ_WIDGET_ANDROID
         Services.obs.notifyObservers(mm, "webapps-runtime-install-package", JSON.stringify(msg));
 #else
         this.doInstallPackage(msg, mm);
@@ -1548,7 +1551,7 @@ this.DOMApplicationRegistry = {
         true);
     }
     this.updateDataStore(this.webapps[id].localId, app.origin,
-                         app.manifestURL, newManifest, app.appStatus);
+                         app.manifestURL, newManifest);
     this.broadcastMessage("Webapps:UpdateState", {
       app: app,
       manifest: newManifest,
@@ -1968,9 +1971,9 @@ this.DOMApplicationRegistry = {
       }
 
       this.updateDataStore(this.webapps[aId].localId, aApp.origin,
-                           aApp.manifestURL, aApp.manifest, aApp.appStatus);
+                           aApp.manifestURL, aApp.manifest);
 
-      aApp.name = manifest.name;
+      aApp.name = aNewManifest.name;
       aApp.csp = manifest.csp || "";
       aApp.role = manifest.role || "";
       aApp.updateTime = Date.now();
@@ -2132,7 +2135,7 @@ this.DOMApplicationRegistry = {
       if (xhr.status == 200) {
         if (!AppsUtils.checkManifestContentType(app.installOrigin, app.origin,
                                                 xhr.getResponseHeader("content-type"))) {
-          sendError("INVALID_MANIFEST");
+          sendError("INVALID_MANIFEST_CONTENT_TYPE");
           return;
         }
 
@@ -2232,7 +2235,7 @@ this.DOMApplicationRegistry = {
       if (xhr.status == 200) {
         if (!AppsUtils.checkManifestContentType(app.installOrigin, app.origin,
                                                 xhr.getResponseHeader("content-type"))) {
-          sendError("INVALID_MANIFEST");
+          sendError("INVALID_MANIFEST_CONTENT_TYPE");
           return;
         }
 
@@ -2335,22 +2338,22 @@ this.DOMApplicationRegistry = {
     return app;
   },
 
-  _cloneApp: function(aData, aNewApp, aManifest, aId, aLocalId) {
+  _cloneApp: function(aData, aNewApp, aLocaleManifest, aManifest, aId, aLocalId) {
     let appObject = AppsUtils.cloneAppObject(aNewApp);
     appObject.appStatus =
       aNewApp.appStatus || Ci.nsIPrincipal.APP_STATUS_INSTALLED;
 
-    if (aManifest.appcache_path) {
+    if (aLocaleManifest.appcache_path) {
       appObject.installState = "pending";
       appObject.downloadAvailable = true;
       appObject.downloading = true;
       appObject.downloadSize = 0;
       appObject.readyToApplyDownload = false;
-    } else if (aManifest.package_path) {
+    } else if (aLocaleManifest.package_path) {
       appObject.installState = "pending";
       appObject.downloadAvailable = true;
       appObject.downloading = true;
-      appObject.downloadSize = aManifest.size;
+      appObject.downloadSize = aLocaleManifest.size;
       appObject.readyToApplyDownload = false;
     } else {
       appObject.installState = "installed";
@@ -2362,8 +2365,8 @@ this.DOMApplicationRegistry = {
     appObject.localId = aLocalId;
     appObject.basePath = OS.Path.dirname(this.appsFile);
     appObject.name = aManifest.name;
-    appObject.csp = aManifest.csp || "";
-    appObject.role = aManifest.role || "";
+    appObject.csp = aLocaleManifest.csp || "";
+    appObject.role = aLocaleManifest.role;
     appObject.installerAppId = aData.appId;
     appObject.installerIsBrowser = aData.isBrowser;
 
@@ -2481,7 +2484,7 @@ this.DOMApplicationRegistry = {
     debug("app.origin: " + app.origin);
     let manifest = new ManifestHelper(jsonManifest, app.origin);
 
-    let appObject = this._cloneApp(aData, app, manifest, id, localId);
+    let appObject = this._cloneApp(aData, app, manifest, jsonManifest, id, localId);
 
     this.webapps[id] = appObject;
 
@@ -2501,8 +2504,7 @@ this.DOMApplicationRegistry = {
       }
 
       this.updateDataStore(this.webapps[id].localId,  this.webapps[id].origin,
-                           this.webapps[id].manifestURL, jsonManifest,
-                           this.webapps[id].appStatus);
+                           this.webapps[id].manifestURL, jsonManifest);
     }
 
     for each (let prop in ["installState", "downloadAvailable", "downloading",
@@ -2521,15 +2523,15 @@ this.DOMApplicationRegistry = {
     } else if (manifest.package_path) {
       // If it is a local app then it must been installed from a local file
       // instead of web.
-#ifdef MOZ_ANDROID_SYNTHAPKS
       // In that case, we would already have the manifest, not just the update
       // manifest.
+#ifdef MOZ_WIDGET_ANDROID
       dontNeedNetwork = !!aData.app.manifest;
 #else
       if (aData.app.localInstallPath) {
         dontNeedNetwork = true;
         jsonManifest.package_path = "file://" + aData.app.localInstallPath;
-      }
+      }   
 #endif
 
       // origin for install apps is meaningless here, since it's app:// and this
@@ -2550,6 +2552,19 @@ this.DOMApplicationRegistry = {
 
     this.broadcastMessage("Webapps:AddApp", { id: id, app: appObject });
 
+    if (!aData.isPackage) {
+      this.updateAppHandlers(null, app.manifest, app);
+      if (aInstallSuccessCallback) {
+        try {
+          yield aInstallSuccessCallback(app, app.manifest);
+        } catch (e) {
+          // Ignore exceptions during the local installation of
+          // an app. If it fails, the app will anyway be considered
+          // as not installed because isLaunchable will return false.
+        }
+      }
+    }
+
     // The presence of a requestID means that we have a page to update.
     if (aData.isPackage && aData.apkInstall && !aData.requestID) {
       // Skip directly to onInstallSuccessAck, since there isn't
@@ -2561,13 +2576,6 @@ this.DOMApplicationRegistry = {
       // the installing page about the successful install, after which it'll
       // respond Webapps:Install:Return:Ack, which calls onInstallSuccessAck.
       this.broadcastMessage("Webapps:Install:Return:OK", aData);
-    }
-
-    if (!aData.isPackage) {
-      this.updateAppHandlers(null, app.manifest, app);
-      if (aInstallSuccessCallback) {
-        aInstallSuccessCallback(app.manifest);
-      }
     }
 
     Services.obs.notifyObservers(null, "webapps-installed",
@@ -2638,7 +2646,17 @@ this.DOMApplicationRegistry = {
     }
 
     this.updateDataStore(this.webapps[aId].localId, aNewApp.origin,
-                         aNewApp.manifestURL, aManifest, aNewApp.appStatus);
+                         aNewApp.manifestURL, aManifest);
+
+    if (aInstallSuccessCallback) {
+      try {
+        yield aInstallSuccessCallback(aNewApp, aManifest, zipFile.path);
+      } catch (e) {
+        // Ignore exceptions during the local installation of
+        // an app. If it fails, the app will anyway be considered
+        // as not installed because isLaunchable will return false.
+      }
+    }
 
     this.broadcastMessage("Webapps:UpdateState", {
       app: app,
@@ -2653,10 +2671,6 @@ this.DOMApplicationRegistry = {
       eventType: ["downloadsuccess", "downloadapplied"],
       manifestURL: aNewApp.manifestURL
     });
-
-    if (aInstallSuccessCallback) {
-      aInstallSuccessCallback(aManifest, zipFile.path);
-    }
   }),
 
   _nextLocalId: function() {
@@ -3124,7 +3138,7 @@ this.DOMApplicationRegistry = {
           aOldApp.downloadAvailable = false;
         }
         if (typeof e == 'object') {
-          Cu.reportError("Error while reading package:" + e);
+          Cu.reportError("Error while reading package: " + e + "\n" + e.stack);
           throw "INVALID_PACKAGE";
         } else {
           throw e;
@@ -3385,12 +3399,20 @@ this.DOMApplicationRegistry = {
         debug("Setting origin to " + uri.prePath +
               " for " + aOldApp.manifestURL);
         let newId = uri.prePath.substring(6); // "app://".length
-        if (newId in this.webapps) {
+        if (newId in this.webapps && this._isLaunchable(this.webapps[newId])) {
           throw "DUPLICATE_ORIGIN";
         }
         aOldApp.origin = uri.prePath;
         // Update the registry.
         let oldId = aOldApp.id;
+
+        if (oldId == newId) {
+          // This could happen when we have an app in the registry
+          // that is not launchable. Since the app already has
+          // the correct id, we don't need to change it.
+          return;
+        }
+
         aOldApp.id = newId;
         this.webapps[newId] = aOldApp;
         delete this.webapps[oldId];

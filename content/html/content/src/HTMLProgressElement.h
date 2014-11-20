@@ -18,12 +18,11 @@ namespace dom {
 class HTMLProgressElement MOZ_FINAL : public nsGenericHTMLElement
 {
 public:
-  HTMLProgressElement(already_AddRefed<nsINodeInfo>& aNodeInfo);
-  virtual ~HTMLProgressElement();
+  HTMLProgressElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
 
   EventStates IntrinsicState() const MOZ_OVERRIDE;
 
-  nsresult Clone(nsINodeInfo* aNodeInfo, nsINode** aResult) const MOZ_OVERRIDE;
+  nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult) const MOZ_OVERRIDE;
 
   bool ParseAttribute(int32_t aNamespaceID, nsIAtom* aAttribute,
                         const nsAString& aValue, nsAttrValue& aResult) MOZ_OVERRIDE;
@@ -42,6 +41,8 @@ public:
   double Position() const;
 
 protected:
+  virtual ~HTMLProgressElement();
+
   virtual JSObject* WrapNode(JSContext* aCx) MOZ_OVERRIDE;
 
 protected:

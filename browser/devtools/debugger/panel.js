@@ -1,4 +1,4 @@
-/* -*- Mode: javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -43,6 +43,9 @@ DebuggerPanel.prototype = {
     // Local debugging needs to make the target remote.
     if (!this.target.isRemote) {
       targetPromise = this.target.makeRemote();
+      // Listen for tab switching events to manage focus when the content window
+      // is paused and events suppressed.
+      this.target.tab.addEventListener('TabSelect', this);
     } else {
       targetPromise = promise.resolve(this.target);
     }
@@ -76,6 +79,10 @@ DebuggerPanel.prototype = {
     this.target.off("thread-paused", this.highlightWhenPaused);
     this.target.off("thread-resumed", this.unhighlightWhenResumed);
 
+    if (!this.target.isRemote) {
+      this.target.tab.removeEventListener('TabSelect', this);
+    }
+
     return this._destroyer = this._controller.shutdownDebugger().then(() => {
       this.emit("destroyed");
     });
@@ -105,5 +112,15 @@ DebuggerPanel.prototype = {
 
   unhighlightWhenResumed: function() {
     this._toolbox.unhighlightTool("jsdebugger");
+  },
+
+  // nsIDOMEventListener API
+
+  handleEvent: function(aEvent) {
+    if (aEvent.target == this.target.tab &&
+        this._controller.activeThread.state == "paused") {
+      // Wait a tick for the content focus event to be delivered.
+      DevToolsUtils.executeSoon(() => this._toolbox.focusTool("jsdebugger"));
+    }
   }
 };

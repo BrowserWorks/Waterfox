@@ -86,8 +86,10 @@ interface HTMLMediaElement : HTMLElement {
 
   // TODO: Bug 847379
   // tracks
-  //readonly attribute AudioTrackList audioTracks;
-  //readonly attribute VideoTrackList videoTracks;
+  [Pref="media.track.enabled"]
+  readonly attribute AudioTrackList audioTracks;
+  [Pref="media.track.enabled"]
+  readonly attribute VideoTrackList videoTracks;
   [Pref="media.webvtt.enabled"]
   readonly attribute TextTrackList textTracks;
   [Pref="media.webvtt.enabled"]
@@ -142,18 +144,20 @@ enum MediaWaitingFor {
   "key"
 };
 
+#ifdef MOZ_EME
 // Encrypted Media Extensions
 partial interface HTMLMediaElement {
   [Pref="media.eme.enabled"]
   readonly attribute MediaKeys? mediaKeys;
-  
+
   // Promise<any>
   [Pref="media.eme.enabled", Throws, NewObject]
   Promise setMediaKeys(MediaKeys? mediaKeys);
-  
+
   [Pref="media.eme.enabled"]
   attribute EventHandler onneedkey;
 
   [Pref="media.eme.enabled"]
   readonly attribute MediaWaitingFor waitingFor;
 };
+#endif

@@ -22,6 +22,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
 
 do_get_profile();
 
+// Make sure enabled gets set for xpcshell tests that initialize multiple times
+DirectoryLinksProvider._testing = true;
+
 const DIRECTORY_LINKS_FILE = "directoryLinks.json";
 const DIRECTORY_FRECENCY = 1000;
 const kURLData = {"en-US": [{"url":"http://example.com","title":"LocalSource"}]};
@@ -30,10 +33,8 @@ const kTestURL = 'data:application/json,' + JSON.stringify(kURLData);
 // DirectoryLinksProvider preferences
 const kLocalePref = DirectoryLinksProvider._observedPrefs.prefSelectedLocale;
 const kSourceUrlPref = DirectoryLinksProvider._observedPrefs.linksURL;
-
-// app/profile/firefox.js are not avaialble in xpcshell: hence, preset them
-Services.prefs.setCharPref(kLocalePref, "en-US");
-Services.prefs.setCharPref(kSourceUrlPref, kTestURL);
+const kPingUrlPref = "browser.newtabpage.directory.ping";
+const kNewtabEnhancedPref = "browser.newtabpage.enhanced";
 
 // httpd settings
 var server;
@@ -41,8 +42,16 @@ const kDefaultServerPort = 9000;
 const kBaseUrl = "http://localhost:" + kDefaultServerPort;
 const kExamplePath = "/exampleTest/";
 const kFailPath = "/fail/";
+const kPingPath = "/ping/";
 const kExampleURL = kBaseUrl + kExamplePath;
 const kFailURL = kBaseUrl + kFailPath;
+const kPingUrl = kBaseUrl + kPingPath;
+
+// app/profile/firefox.js are not avaialble in xpcshell: hence, preset them
+Services.prefs.setCharPref(kLocalePref, "en-US");
+Services.prefs.setCharPref(kSourceUrlPref, kTestURL);
+Services.prefs.setCharPref(kPingUrlPref, kPingUrl);
+Services.prefs.setBoolPref(kNewtabEnhancedPref, true);
 
 const kHttpHandlerData = {};
 kHttpHandlerData[kExamplePath] = {"en-US": [{"url":"http://example.com","title":"RemoteSource"}]};
@@ -165,8 +174,117 @@ function run_test() {
     DirectoryLinksProvider.reset();
     Services.prefs.clearUserPref(kLocalePref);
     Services.prefs.clearUserPref(kSourceUrlPref);
+    Services.prefs.clearUserPref(kPingUrlPref);
+    Services.prefs.clearUserPref(kNewtabEnhancedPref);
   });
 }
+
+add_task(function test_reportSitesAction() {
+  yield DirectoryLinksProvider.init();
+  let deferred, expectedPath, expectedPost;
+  let done = false;
+  server.registerPrefixHandler(kPingPath, (aRequest, aResponse) => {
+    if (done) {
+      return;
+    }
+
+    do_check_eq(aRequest.path, expectedPath);
+
+    let bodyStream = new BinaryInputStream(aRequest.bodyInputStream);
+    let bodyObject = JSON.parse(NetUtil.readInputStreamToString(bodyStream, bodyStream.available()));
+    isIdentical(bodyObject, expectedPost);
+
+    deferred.resolve();
+  });
+
+  function sendPingAndTest(path, action, index) {
+    deferred = Promise.defer();
+    expectedPath = kPingPath + path;
+    DirectoryLinksProvider.reportSitesAction(sites, action, index);
+    return deferred.promise;
+  }
+
+  // Start with a single pinned link at position 3
+  let sites = [,,{
+    isPinned: _ => true,
+    link: {
+      directoryId: 1,
+      frecency: 30000,
+      url: "http://directory1/",
+    },
+  }];
+
+  // Make sure we get the click ping for the directory link with fields we want
+  // and unwanted fields removed by stringify/parse
+  expectedPost = JSON.parse(JSON.stringify({
+    click: 0,
+    locale: "en-US",
+    tiles: [{
+      id: 1,
+      pin: 1,
+      pos: 2,
+      score: 3,
+      url: undefined,
+    }],
+  }));
+  yield sendPingAndTest("click", "click", 2);
+
+  // Try a pin click ping
+  delete expectedPost.click;
+  expectedPost.pin = 0;
+  yield sendPingAndTest("click", "pin", 2);
+
+  // Try a block click ping
+  delete expectedPost.pin;
+  expectedPost.block = 0;
+  yield sendPingAndTest("click", "block", 2);
+
+  // A view ping has no actions
+  delete expectedPost.block;
+  expectedPost.view = 0;
+  yield sendPingAndTest("view", "view", 2);
+
+  // Remove the identifier that makes it a directory link so just plain history
+  delete sites[2].link.directoryId;
+  delete expectedPost.tiles[0].id;
+  yield sendPingAndTest("view", "view", 2);
+
+  // Add directory link at position 0
+  sites[0] = {
+    isPinned: _ => false,
+    link: {
+      directoryId: 1234,
+      frecency: 1000,
+      url: "http://directory/",
+    }
+  };
+  expectedPost.tiles.unshift(JSON.parse(JSON.stringify({
+    id: 1234,
+    pin: undefined,
+    pos: undefined,
+    score: undefined,
+    url: undefined,
+  })));
+  expectedPost.view = 1;
+  yield sendPingAndTest("view", "view", 2);
+
+  // Make the history tile enhanced so it reports both id and url
+  sites[2].enhancedId = "id from enhanced";
+  expectedPost.tiles[1].id = "id from enhanced";
+  expectedPost.tiles[1].url = "";
+  yield sendPingAndTest("view", "view", 2);
+
+  // Click the 0th site / 0th tile
+  delete expectedPost.view;
+  expectedPost.click = 0;
+  yield sendPingAndTest("click", "click", 0);
+
+  // Click the 2th site / 1th tile
+  expectedPost.click = 1;
+  yield sendPingAndTest("click", "click", 2);
+
+  done = true;
+});
 
 add_task(function test_fetchAndCacheLinks_local() {
   yield DirectoryLinksProvider.init();
@@ -205,7 +323,7 @@ add_task(function test_fetchAndCacheLinks_malformedURI() {
 add_task(function test_fetchAndCacheLinks_unknownHost() {
   yield DirectoryLinksProvider.init();
   yield cleanJsonFile();
-  let nonExistentServer = "http://nosuchhost.localhost";
+  let nonExistentServer = "http://localhost:56789/";
   try {
     yield DirectoryLinksProvider._fetchAndCacheLinks(nonExistentServer);
     do_throw("BAD URIs should fail");
@@ -259,7 +377,7 @@ add_task(function test_linksURL_locale() {
 
   links = yield fetchData();
   do_check_eq(links.length, 1);
-  expected_data = [{url: "http://example.com", title: "US", frecency: DIRECTORY_FRECENCY, lastVisitDate: 1, directoryIndex: 0}];
+  expected_data = [{url: "http://example.com", title: "US", frecency: DIRECTORY_FRECENCY, lastVisitDate: 1}];
   isIdentical(links, expected_data);
 
   yield promiseDirectoryDownloadOnPrefChange("general.useragent.locale", "zh-CN");
@@ -267,8 +385,8 @@ add_task(function test_linksURL_locale() {
   links = yield fetchData();
   do_check_eq(links.length, 2)
   expected_data = [
-    {url: "http://example.net", title: "CN", frecency: DIRECTORY_FRECENCY, lastVisitDate: 2, directoryIndex: 0},
-    {url: "http://example.net/2", title: "CN2", frecency: DIRECTORY_FRECENCY, lastVisitDate: 1, directoryIndex: 1}
+    {url: "http://example.net", title: "CN", frecency: DIRECTORY_FRECENCY, lastVisitDate: 2},
+    {url: "http://example.net/2", title: "CN2", frecency: DIRECTORY_FRECENCY, lastVisitDate: 1}
   ];
   isIdentical(links, expected_data);
 
@@ -280,13 +398,13 @@ add_task(function test_DirectoryLinksProvider__prefObserver_url() {
 
   let links = yield fetchData();
   do_check_eq(links.length, 1);
-  let expectedData =  [{url: "http://example.com", title: "LocalSource", frecency: DIRECTORY_FRECENCY, lastVisitDate: 1, directoryIndex: 0}];
+  let expectedData =  [{url: "http://example.com", title: "LocalSource", frecency: DIRECTORY_FRECENCY, lastVisitDate: 1}];
   isIdentical(links, expectedData);
 
   // tests these 2 things:
   // 1. _linksURL is properly set after the pref change
   // 2. invalid source url is correctly handled
-  let exampleUrl = 'http://nosuchhost.localhost/bad';
+  let exampleUrl = 'http://localhost:56789/bad';
   yield promiseDirectoryDownloadOnPrefChange(kSourceUrlPref, exampleUrl);
   do_check_eq(DirectoryLinksProvider._linksURL, exampleUrl);
 
@@ -306,6 +424,21 @@ add_task(function test_DirectoryLinksProvider__prefObserver_url() {
 
 add_task(function test_DirectoryLinksProvider_getLinks_noLocaleData() {
   yield promiseSetupDirectoryLinksProvider({locale: 'zh-CN'});
+  let links = yield fetchData();
+  do_check_eq(links.length, 0);
+  yield promiseCleanDirectoryLinksProvider();
+});
+
+add_task(function test_DirectoryLinksProvider_getLinks_badData() {
+  let data = {
+    "en-US": {
+      "en-US": [{url: "http://example.com", title: "US"}],
+    },
+  };
+  let dataURI = 'data:application/json,' + JSON.stringify(data);
+  yield promiseSetupDirectoryLinksProvider({linksURL: dataURI});
+
+  // Make sure we get nothing for incorrectly formatted data
   let links = yield fetchData();
   do_check_eq(links.length, 0);
   yield promiseCleanDirectoryLinksProvider();
@@ -384,31 +517,16 @@ add_task(function test_DirectoryLinksProvider_fetchDirectoryOnPrefChange() {
   yield promiseCleanDirectoryLinksProvider();
 });
 
-add_task(function test_DirectoryLinksProvider_fetchDirectoryOnShowCount() {
+add_task(function test_DirectoryLinksProvider_fetchDirectoryOnShow() {
   yield promiseSetupDirectoryLinksProvider();
 
   // set lastdownload to 0 to make DirectoryLinksProvider want to download
   DirectoryLinksProvider._lastDownloadMS = 0;
   do_check_true(DirectoryLinksProvider._needsDownload);
 
-  // Tell DirectoryLinksProvider that newtab has no room for sponsored links
-  let directoryCount = {sponsored: 0};
-  yield DirectoryLinksProvider.reportShownCount(directoryCount);
-  // the provider must skip download, hence that lastdownload is still 0
-  do_check_eq(DirectoryLinksProvider._lastDownloadMS, 0);
-
-  // make room for sponsored links and repeat, download should happen
-  directoryCount.sponsored = 1;
-  yield DirectoryLinksProvider.reportShownCount(directoryCount);
+  // download should happen on view
+  yield DirectoryLinksProvider.reportSitesAction([], "view");
   do_check_true(DirectoryLinksProvider._lastDownloadMS != 0);
-
-  // test that directoryCount object reaches the backend server
-  expectedBodyObject.directoryCount = directoryCount;
-  // set kSourceUrlPref to kExampleURL, causing request to test http server
-  // server handler validates that expectedBodyObject has correct directoryCount
-  yield promiseDirectoryDownloadOnPrefChange(kSourceUrlPref, kExampleURL);
-  // reset expectedBodyObject to its original state
-  delete expectedBodyObject.directoryCount;
 
   yield promiseCleanDirectoryLinksProvider();
 });
@@ -437,4 +555,140 @@ add_task(function test_DirectoryLinksProvider_getLinksFromCorruptedFile() {
   isIdentical(data, []);
 
   yield promiseCleanDirectoryLinksProvider();
+});
+
+add_task(function test_DirectoryLinksProvider_getEnhancedLink() {
+  let data = {"en-US": [
+    {url: "http://example.net", enhancedImageURI: "net1"},
+    {url: "http://example.com", enhancedImageURI: "com1"},
+    {url: "http://example.com", enhancedImageURI: "com2"},
+  ]};
+  let dataURI = 'data:application/json,' + JSON.stringify(data);
+  yield promiseSetupDirectoryLinksProvider({linksURL: dataURI});
+
+  let links = yield fetchData();
+  do_check_eq(links.length, 3);
+
+  function checkEnhanced(url, image) {
+    let enhanced = DirectoryLinksProvider.getEnhancedLink({url: url});
+    do_check_eq(enhanced && enhanced.enhancedImageURI, image);
+  }
+
+  // Get the expected image for the same site
+  checkEnhanced("http://example.net/", "net1");
+  checkEnhanced("http://example.net/path", "net1");
+  checkEnhanced("https://www.example.net/", "net1");
+  checkEnhanced("https://www3.example.net/", "net1");
+
+  // Get the image of the last entry
+  checkEnhanced("http://example.com", "com2");
+
+  // Get the inline enhanced image
+  let inline = DirectoryLinksProvider.getEnhancedLink({
+    url: "http://example.com/echo",
+    enhancedImageURI: "echo",
+  });
+  do_check_eq(inline.enhancedImageURI, "echo");
+  do_check_eq(inline.url, "http://example.com/echo");
+
+  // Undefined for not enhanced
+  checkEnhanced("http://sub.example.net/", undefined);
+  checkEnhanced("http://example.org", undefined);
+  checkEnhanced("http://localhost", undefined);
+  checkEnhanced("http://127.0.0.1", undefined);
+
+  // Make sure old data is not cached
+  data = {"en-US": [
+    {url: "http://example.com", enhancedImageURI: "fresh"},
+  ]};
+  dataURI = 'data:application/json,' + JSON.stringify(data);
+  yield promiseSetupDirectoryLinksProvider({linksURL: dataURI});
+  links = yield fetchData();
+  do_check_eq(links.length, 1);
+  checkEnhanced("http://example.net", undefined);
+  checkEnhanced("http://example.com", "fresh");
+});
+
+add_task(function test_DirectoryLinksProvider_setDefaultEnhanced() {
+  function checkDefault(expected) {
+    Services.prefs.clearUserPref(kNewtabEnhancedPref);
+    do_check_eq(Services.prefs.getBoolPref(kNewtabEnhancedPref), expected);
+  }
+
+  // Use the default donottrack prefs (enabled = false, value = 1)
+  Services.prefs.clearUserPref("privacy.donottrackheader.enabled");
+  Services.prefs.clearUserPref("privacy.donottrackheader.value");
+  checkDefault(true);
+
+  // Turn on DNT - no track
+  Services.prefs.setBoolPref("privacy.donottrackheader.enabled", true);
+  checkDefault(false);
+
+  // Set DNT - do track
+  Services.prefs.setIntPref("privacy.donottrackheader.value", 0);
+  checkDefault(true);
+
+  // Turn off DNT header
+  Services.prefs.clearUserPref("privacy.donottrackheader.enabled");
+  checkDefault(true);
+
+  // Clean up
+  Services.prefs.clearUserPref("privacy.donottrackheader.value");
+});
+
+add_task(function test_DirectoryLinksProvider_enabledNotEnabled() {
+  let origLocale = Services.prefs.getCharPref(kLocalePref);
+  let origSource = Services.prefs.getCharPref(kSourceUrlPref);
+
+  Services.prefs.setCharPref(kSourceUrlPref, 'data:application/json,' + JSON.stringify({
+    "en-US": [{url: "http://example.com/en", title: "US"}],
+    "te-ST": [{url: "http://example.com/test", title: "TEST"}],
+  }));
+
+  // Pretend we're not en-US to make sure things aren't enabled
+  Services.prefs.setCharPref(kLocalePref, "te-ST");
+  yield cleanJsonFile();
+  yield cleanJsonFile();
+  yield DirectoryLinksProvider.init();
+
+  do_check_false(DirectoryLinksProvider.enabled, "te-ST should trigger not enabled")
+  do_check_eq(DirectoryLinksProvider._linksURL, "data:application/json,{}", "override links url");
+
+  let data = yield readJsonFile();
+  do_check_eq(JSON.stringify(data), "{}", "disk has empty object");
+
+  let links = yield fetchData();
+  do_check_eq(links.length, 0, "get empty links");
+
+  let pinged = false;
+  let pingWait = Promise.defer();
+  server.registerPrefixHandler(kPingPath, _ => {
+    pinged = true;
+    pingWait.resolve();
+  });
+  yield DirectoryLinksProvider.reportSitesAction([], "view", 0);
+  do_check_false(pinged, "shouldn't have gotten a ping");
+
+  // Sanity check with en-US
+  Services.prefs.setCharPref(kLocalePref, "en-US");
+  yield cleanJsonFile();
+  yield cleanJsonFile();
+  yield DirectoryLinksProvider.init();
+
+  do_check_true(DirectoryLinksProvider.enabled, "en-US should trigger enabled")
+  do_check_neq(DirectoryLinksProvider._linksURL, "data:application/json,{}", "links url not overridden");
+
+  let data = yield readJsonFile();
+  do_check_neq(JSON.stringify(data), "{}", "disk has some object");
+
+  let links = yield fetchData();
+  do_check_eq(links.length, 1, "got one link");
+
+  do_check_false(pinged, "still shouldn't have a ping from before");
+  DirectoryLinksProvider.reportSitesAction([], "view", 0);
+  yield pingWait.promise;
+  do_check_true(pinged, "should have gotten a ping");
+
+  Services.prefs.setCharPref(kLocalePref, origLocale);
+  Services.prefs.setCharPref(kSourceUrlPref, origSource);
 });

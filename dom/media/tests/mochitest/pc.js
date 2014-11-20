@@ -1,9 +1,32 @@
-﻿/* This Source Code Form is subject to the terms of the Mozilla Public
+/* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 "use strict";
 
+const LOOPBACK_ADDR = "127.0.0.";
+
+const iceStateTransitions = {
+  "new": ["checking", "closed"], //Note: 'failed' might need to added here
+                                 //      even though it is not in the standard
+  "checking": ["new", "connected", "failed", "closed"], //Note: do we need to
+                                                        // allow 'completed' in
+                                                        // here as well?
+  "connected": ["new", "completed", "disconnected", "closed"],
+  "completed": ["new", "disconnected", "closed"],
+  "disconnected": ["new", "connected", "completed", "failed", "closed"],
+  "failed": ["new", "disconnected", "closed"],
+  "closed": []
+  }
+
+const signalingStateTransitions = {
+  "stable": ["have-local-offer", "have-remote-offer", "closed"],
+  "have-local-offer": ["have-remote-pranswer", "stable", "closed", "have-local-offer"],
+  "have-remote-pranswer": ["stable", "closed", "have-remote-pranswer"],
+  "have-remote-offer": ["have-local-pranswer", "stable", "closed", "have-remote-offer"],
+  "have-local-pranswer": ["stable", "closed", "have-local-pranswer"],
+  "closed": []
+}
 
 /**
  * This class mimics a state machine and handles a list of commands by
@@ -327,6 +350,28 @@ MediaElementChecker.prototype = {
 };
 
 /**
+ * Only calls info() if SimpleTest.info() is available
+ */
+function safeInfo(message) {
+  if (typeof(info) === "function") {
+    info(message);
+  }
+}
+
+// Also remove mode 0 if it's offered
+// Note, we don't bother removing the fmtp lines, which makes a good test
+// for some SDP parsing issues.
+function removeVP8(sdp) {
+  var updated_sdp = sdp.replace("a=rtpmap:120 VP8/90000\r\n","");
+  updated_sdp = updated_sdp.replace("RTP/SAVPF 120 126 97\r\n","RTP/SAVPF 126 97\r\n");
+  updated_sdp = updated_sdp.replace("RTP/SAVPF 120 126\r\n","RTP/SAVPF 126\r\n");
+  updated_sdp = updated_sdp.replace("a=rtcp-fb:120 nack\r\n","");
+  updated_sdp = updated_sdp.replace("a=rtcp-fb:120 nack pli\r\n","");
+  updated_sdp = updated_sdp.replace("a=rtcp-fb:120 ccm fir\r\n","");
+  return updated_sdp;
+}
+
+/**
  * Query function for determining if any IP address is available for
  * generating SDP.
  *
@@ -352,16 +397,16 @@ function isNetworkReady() {
         var ip = ips.value[j];
         // skip IPv6 address until bug 797262 is implemented
         if (ip.indexOf(":") < 0) {
-          info("Network interface is ready with address: " + ip);
+          safeInfo("Network interface is ready with address: " + ip);
           return true;
         }
       }
     }
     // ip address is not available
-    info("Network interface is not ready, required additional network setup");
+    safeInfo("Network interface is not ready, required additional network setup");
     return false;
   }
-  info("Network setup is not required");
+  safeInfo("Network setup is not required");
   return true;
 }
 
@@ -493,12 +538,12 @@ function PeerConnectionTest(options) {
   }
 
   if (options.is_local)
-    this.pcLocal = new PeerConnectionWrapper('pcLocal', options.config_local);
+    this.pcLocal = new PeerConnectionWrapper('pcLocal', options.config_local, options.h264);
   else
     this.pcLocal = null;
 
   if (options.is_remote)
-    this.pcRemote = new PeerConnectionWrapper('pcRemote', options.config_remote || options.config_local);
+    this.pcRemote = new PeerConnectionWrapper('pcRemote', options.config_remote || options.config_local, options.h264);
   else
     this.pcRemote = null;
 
@@ -711,14 +756,14 @@ function PCT_setMediaConstraints(constraintsLocal, constraintsRemote) {
 };
 
 /**
- * Sets the media constraints used on a createOffer call in the test.
+ * Sets the media options used on a createOffer call in the test.
  *
- * @param {object} constraints the media constraints to use on createOffer
+ * @param {object} options the media constraints to use on createOffer
  */
-PeerConnectionTest.prototype.setOfferConstraints =
-function PCT_setOfferConstraints(constraints) {
+PeerConnectionTest.prototype.setOfferOptions =
+function PCT_setOfferOptions(options) {
   if (this.pcLocal)
-    this.pcLocal.offerConstraints = constraints;
+    this.pcLocal.offerOptions = options;
 };
 
 /**
@@ -1312,13 +1357,13 @@ DataChannelWrapper.prototype = {
  * @param {object} configuration
  *        Configuration for the peer connection instance
  */
-function PeerConnectionWrapper(label, configuration) {
+function PeerConnectionWrapper(label, configuration, h264) {
   this.configuration = configuration;
   this.label = label;
   this.whenCreated = Date.now();
 
   this.constraints = [ ];
-  this.offerConstraints = {};
+  this.offerOptions = {};
   this.streams = [ ];
   this.mediaCheckers = [ ];
 
@@ -1327,9 +1372,10 @@ function PeerConnectionWrapper(label, configuration) {
   this.onAddStreamFired = false;
   this.addStreamCallbacks = {};
 
+  this.h264 = typeof h264 !== "undefined" ? true : false;
+
   info("Creating " + this);
   this._pc = new mozRTCPeerConnection(this.configuration);
-  is(this._pc.iceConnectionState, "new", "iceConnectionState starts at 'new'");
 
   /**
    * Setup callback handlers
@@ -1352,8 +1398,6 @@ function PeerConnectionWrapper(label, configuration) {
       self.next_ice_state = "";
     }
   };
-  this.ondatachannel = unexpectedEventAndFinish(this, 'ondatachannel');
-  this.onsignalingstatechange = unexpectedEventAndFinish(this, 'onsignalingstatechange');
 
   /**
    * Callback for native peer connection 'onaddstream' events.
@@ -1376,10 +1420,12 @@ function PeerConnectionWrapper(label, configuration) {
     self.attachMedia(event.stream, type, 'remote');
 
     Object.keys(self.addStreamCallbacks).forEach(function(name) {
-      info(this + " calling addStreamCallback " + name);
+      info(self + " calling addStreamCallback " + name);
       self.addStreamCallbacks[name]();
     });
    };
+
+  this.ondatachannel = unexpectedEventAndFinish(this, 'ondatachannel');
 
   /**
    * Callback for native peer connection 'ondatachannel' events. If no custom handler
@@ -1396,6 +1442,9 @@ function PeerConnectionWrapper(label, configuration) {
     self.ondatachannel = unexpectedEventAndFinish(self, 'ondatachannel');
   };
 
+  this.onsignalingstatechange = unexpectedEventAndFinish(this, 'onsignalingstatechange');
+  this.signalingStateCallbacks = {};
+
   /**
    * Callback for native peer connection 'onsignalingstatechange' events. If no
    * custom handler has been specified via 'this.onsignalingstatechange', a
@@ -1404,12 +1453,15 @@ function PeerConnectionWrapper(label, configuration) {
    * @param {Object} aEvent
    *        Event data which includes the newly created data channel
    */
-  this._pc.onsignalingstatechange = function (aEvent) {
+  this._pc.onsignalingstatechange = function (anEvent) {
     info(self + ": 'onsignalingstatechange' event fired");
 
+    Object.keys(self.signalingStateCallbacks).forEach(function(name) {
+      self.signalingStateCallbacks[name](anEvent);
+    });
     // this calls the eventhandler only once and then overwrites it with the
     // default unexpectedEvent handler
-    self.onsignalingstatechange(aEvent);
+    self.onsignalingstatechange(anEvent);
     self.onsignalingstatechange = unexpectedEventAndFinish(self, 'onsignalingstatechange');
   };
 }
@@ -1581,8 +1633,12 @@ PeerConnectionWrapper.prototype = {
     this._pc.createOffer(function (offer) {
       info("Got offer: " + JSON.stringify(offer));
       self._last_offer = offer;
+      if (self.h264) {
+        isnot(offer.sdp.search("H264/90000"), -1, "H.264 should be present in the SDP offer");
+        offer.sdp = removeVP8(offer.sdp);
+      }
       onSuccess(offer);
-    }, generateErrorCallback(), this.offerConstraints);
+    }, generateErrorCallback(), this.offerOptions);
   },
 
   /**
@@ -1672,6 +1728,28 @@ PeerConnectionWrapper.prototype = {
   },
 
   /**
+   * Registers a callback for the signaling state change and
+   * appends the new state to an array for logging it later.
+   */
+  logSignalingState: function PCW_logSignalingState() {
+    var self = this;
+
+    function _logSignalingState(state) {
+      var newstate = self._pc.signalingState;
+      var oldstate = self.signalingStateLog[self.signalingStateLog.length - 1]
+      if (Object.keys(signalingStateTransitions).indexOf(oldstate) != -1) {
+        ok(signalingStateTransitions[oldstate].indexOf(newstate) != -1, self + ": legal signaling state transition from " + oldstate + " to " + newstate);
+      } else {
+        ok(false, self + ": old signaling state " + oldstate + " missing in signaling transition array");
+      }
+      self.signalingStateLog.push(newstate);
+    }
+
+    self.signalingStateLog = [self._pc.signalingState];
+    self.signalingStateCallbacks.logSignalingStatus = _logSignalingState;
+  },
+
+  /**
    * Adds an ICE candidate and automatically handles the failure case.
    *
    * @param {object} candidate
@@ -1749,6 +1827,28 @@ PeerConnectionWrapper.prototype = {
 
   /**
    * Registers a callback for the ICE connection state change and
+   * appends the new state to an array for logging it later.
+   */
+  logIceConnectionState: function PCW_logIceConnectionState() {
+    var self = this;
+
+    function logIceConState () {
+      var newstate = self._pc.iceConnectionState;
+      var oldstate = self.iceConnectionLog[self.iceConnectionLog.length - 1]
+      if (Object.keys(iceStateTransitions).indexOf(oldstate) != -1) {
+        ok(iceStateTransitions[oldstate].indexOf(newstate) != -1, self + ": legal ICE state transition from " + oldstate + " to " + newstate);
+      } else {
+        ok(false, self + ": old ICE state " + oldstate + " missing in ICE transition array");
+      }
+      self.iceConnectionLog.push(newstate);
+    }
+
+    self.iceConnectionLog = [self._pc.iceConnectionState];
+    self.ice_connection_callbacks.logIceStatus = logIceConState;
+  },
+
+  /**
+   * Registers a callback for the ICE connection state change and
    * reports success (=connected) or failure via the callbacks.
    * States "new" and "checking" are ignored.
    *
@@ -1797,6 +1897,35 @@ PeerConnectionWrapper.prototype = {
   },
 
   /**
+   * Checks for audio in given offer options.
+   *
+   * @param options
+   *        The options to be examined.
+   */
+  audioInOfferOptions : function
+    PCW_audioInOfferOptions(options) {
+    if (!options) {
+      return 0;
+    }
+
+    var offerToReceiveAudio = options.offerToReceiveAudio;
+
+    // TODO: Remove tests of old constraint-like RTCOptions soon (Bug 1064223).
+    if (options.mandatory && options.mandatory.OfferToReceiveAudio !== undefined) {
+      offerToReceiveAudio = options.mandatory.OfferToReceiveAudio;
+    } else if (options.optional && options.optional[0] &&
+               options.optional[0].OfferToReceiveAudio !== undefined) {
+      offerToReceiveAudio = options.optional[0].OfferToReceiveAudio;
+    }
+
+    if (offerToReceiveAudio) {
+      return 1;
+    } else {
+      return 0;
+    }
+  },
+
+  /**
    * Counts the amount of video tracks in a given media constraint.
    *
    * @param constraint
@@ -1814,6 +1943,35 @@ PeerConnectionWrapper.prototype = {
       }
     }
     return videoTracks;
+  },
+
+  /**
+   * Checks for video in given offer options.
+   *
+   * @param options
+   *        The options to be examined.
+   */
+  videoInOfferOptions : function
+    PCW_videoInOfferOptions(options) {
+    if (!options) {
+      return 0;
+    }
+
+    var offerToReceiveVideo = options.offerToReceiveVideo;
+
+    // TODO: Remove tests of old constraint-like RTCOptions soon (Bug 1064223).
+    if (options.mandatory && options.mandatory.OfferToReceiveVideo !== undefined) {
+      offerToReceiveVideo = options.mandatory.OfferToReceiveVideo;
+    } else if (options.optional && options.optional[0] &&
+               options.optional[0].OfferToReceiveVideo !== undefined) {
+      offerToReceiveVideo = options.optional[0].OfferToReceiveVideo;
+    }
+
+    if (offerToReceiveVideo) {
+      return 1;
+    } else {
+      return 0;
+    }
   },
 
   /*
@@ -1863,8 +2021,8 @@ PeerConnectionWrapper.prototype = {
     var addStreamTimeout = null;
 
     function _checkMediaTracks(constraintsRemote, onSuccess) {
-      if (self.addStreamTimeout !== null) {
-        clearTimeout(self.addStreamTimeout);
+      if (addStreamTimeout !== null) {
+        clearTimeout(addStreamTimeout);
       }
 
       var localConstraintAudioTracks =
@@ -1913,10 +2071,65 @@ PeerConnectionWrapper.prototype = {
         _checkMediaTracks(constraintsRemote, onSuccess);
       };
       addStreamTimeout = setTimeout(function () {
-        ok(false, self + " checkMediaTracks() timed out waiting for onaddstream event to fire");
-        onSuccess();
+        ok(self.onAddStreamFired, self + " checkMediaTracks() timed out waiting for onaddstream event to fire");
+        if (!self.onAddStreamFired) {
+          onSuccess();
+        }
       }, 60000);
     }
+  },
+
+  verifySdp : function PCW_verifySdp(desc, expectedType, constraints, offerOptions) {
+    info("Examining this SessionDescription: " + JSON.stringify(desc));
+    info("constraints: " + JSON.stringify(constraints));
+    info("offerOptions: " + JSON.stringify(offerOptions));
+    ok(desc, "SessionDescription is not null");
+    is(desc.type, expectedType, "SessionDescription type is " + expectedType);
+    ok(desc.sdp.length > 10, "SessionDescription body length is plausible");
+    ok(desc.sdp.contains("a=ice-ufrag"), "ICE username is present in SDP");
+    ok(desc.sdp.contains("a=ice-pwd"), "ICE password is present in SDP");
+    ok(desc.sdp.contains("a=fingerprint"), "ICE fingerprint is present in SDP");
+    //TODO: update this for loopback support bug 1027350
+    ok(!desc.sdp.contains(LOOPBACK_ADDR), "loopback interface is absent from SDP");
+    //TODO: update this for trickle ICE bug 1041832
+    ok(desc.sdp.contains("a=candidate"), "at least one ICE candidate is present in SDP");
+    //TODO: how can we check for absence/presence of m=application?
+
+    //TODO: how to handle media contraints + offer options
+    var audioTracks = this.countAudioTracksInMediaConstraint(constraints);
+    if (constraints.length === 0) {
+      audioTracks = this.audioInOfferOptions(offerOptions);
+    }
+    info("expected audio tracks: " + audioTracks);
+    if (audioTracks == 0) {
+      ok(!desc.sdp.contains("m=audio"), "audio m-line is absent from SDP");
+    } else {
+      ok(desc.sdp.contains("m=audio"), "audio m-line is present in SDP");
+      ok(desc.sdp.contains("a=rtpmap:109 opus/48000/2"), "OPUS codec is present in SDP");
+      //TODO: ideally the rtcp-mux should be for the m=audio, and not just
+      //      anywhere in the SDP (JS SDP parser bug 1045429)
+      ok(desc.sdp.contains("a=rtcp-mux"), "RTCP Mux is offered in SDP");
+
+    }
+
+    //TODO: how to handle media contraints + offer options
+    var videoTracks = this.countVideoTracksInMediaConstraint(constraints);
+    if (constraints.length === 0) {
+      videoTracks = this.videoInOfferOptions(offerOptions);
+    }
+    info("expected video tracks: " + videoTracks);
+    if (videoTracks == 0) {
+      ok(!desc.sdp.contains("m=video"), "video m-line is absent from SDP");
+    } else {
+      ok(desc.sdp.contains("m=video"), "video m-line is present in SDP");
+      if (this.h264) {
+        ok(desc.sdp.contains("a=rtpmap:126 H264/90000"), "H.264 codec is present in SDP");
+      } else {
+        ok(desc.sdp.contains("a=rtpmap:120 VP8/90000"), "VP8 codec is present in SDP");
+      }
+      ok(desc.sdp.contains("a=rtcp-mux"), "RTCP Mux is offered in SDP");
+    }
+
   },
 
   /**

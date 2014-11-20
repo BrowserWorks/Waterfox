@@ -72,9 +72,12 @@ struct nsExternalDOMClassInfoData : public nsDOMClassInfoData
 class nsDOMClassInfo : public nsXPCClassInfo
 {
   friend class nsHTMLDocumentSH;
+
+protected:
+  virtual ~nsDOMClassInfo();
+
 public:
   nsDOMClassInfo(nsDOMClassInfoData* aData);
-  virtual ~nsDOMClassInfo();
 
   NS_DECL_NSIXPCSCRIPTABLE
 
@@ -337,12 +340,12 @@ public:
 
 class nsEventListenerThisTranslator : public nsIXPCFunctionThisTranslator
 {
-public:
-  nsEventListenerThisTranslator()
+  virtual ~nsEventListenerThisTranslator()
   {
   }
 
-  virtual ~nsEventListenerThisTranslator()
+public:
+  nsEventListenerThisTranslator()
   {
   }
 

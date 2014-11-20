@@ -200,8 +200,8 @@ class MacroAssemblerMIPS : public Assembler
 
     // fast mod, uses scratch registers, and thus needs to be in the assembler
     // implicitly assumes that we can overwrite dest at the beginning of the sequence
-    void ma_mod_mask(Register src, Register dest, Register hold, int32_t shift,
-                     Label *negZero = nullptr);
+    void ma_mod_mask(Register src, Register dest, Register hold, Register remain,
+                     int32_t shift, Label *negZero = nullptr);
 
     // memory
     // shortcut for when we know we're transferring 32 bits of data
@@ -300,9 +300,6 @@ class MacroAssemblerMIPS : public Assembler
     void ma_callIonNoPush(const Register reg);
     // calls an ion function, assuming that the stack is currently not 8 byte aligned
     void ma_callIonHalfPush(const Register reg);
-
-    // calls reg, storing the return address into sp[stackArgBytes]
-    void ma_callAndStoreRet(const Register reg, uint32_t stackArgBytes);
 
     void ma_call(ImmPtr dest);
 
@@ -415,38 +412,13 @@ class MacroAssemblerMIPSCompat : public MacroAssemblerMIPS
         ma_liPatchable(ScratchRegister, Imm32((uint32_t)c->raw()));
         ma_callIonHalfPush(ScratchRegister);
     }
-
-    void appendCallSite(const CallSiteDesc &desc) {
-        // Add an extra sizeof(void*) to include the return address that was
-        // pushed by the call instruction (see CallSite::stackDepth).
-        enoughMemory_ &= append(CallSite(desc, currentOffset(), framePushed_ + sizeof(void*)));
-    }
-
     void call(const CallSiteDesc &desc, const Register reg) {
         call(reg);
-        appendCallSite(desc);
+        append(desc, currentOffset(), framePushed_);
     }
     void call(const CallSiteDesc &desc, Label *label) {
         call(label);
-        appendCallSite(desc);
-    }
-    void call(const CallSiteDesc &desc, AsmJSImmPtr imm) {
-        call(imm);
-        appendCallSite(desc);
-    }
-    void callExit(AsmJSImmPtr imm, uint32_t stackArgBytes) {
-        movePtr(imm, CallReg);
-        ma_callAndStoreRet(CallReg, stackArgBytes);
-        appendCallSite(CallSiteDesc::Exit());
-    }
-    void callIonFromAsmJS(const Register reg) {
-        ma_callIonNoPush(reg);
-        appendCallSite(CallSiteDesc::Exit());
-
-        // The Ion ABI has the callee pop the return address off the stack.
-        // The asm.js caller assumes that the call leaves sp unchanged, so bump
-        // the stack.
-        subPtr(Imm32(sizeof(void*)), StackPointer);
+        append(desc, currentOffset(), framePushed_);
     }
 
     void branch(JitCode *c) {
@@ -686,10 +658,15 @@ class MacroAssemblerMIPSCompat : public MacroAssemblerMIPS
     void branchTestObject(Condition cond, const ValueOperand &value, Label *label);
     void branchTestObject(Condition cond, Register tag, Label *label);
     void branchTestObject(Condition cond, const BaseIndex &src, Label *label);
+    void testObjectSet(Condition cond, const ValueOperand &value, Register dest);
 
     void branchTestString(Condition cond, const ValueOperand &value, Label *label);
     void branchTestString(Condition cond, Register tag, Label *label);
     void branchTestString(Condition cond, const BaseIndex &src, Label *label);
+
+    void branchTestSymbol(Condition cond, const ValueOperand &value, Label *label);
+    void branchTestSymbol(Condition cond, const Register &tag, Label *label);
+    void branchTestSymbol(Condition cond, const BaseIndex &src, Label *label);
 
     void branchTestUndefined(Condition cond, const ValueOperand &value, Label *label);
     void branchTestUndefined(Condition cond, Register tag, Label *label);
@@ -735,6 +712,10 @@ class MacroAssemblerMIPSCompat : public MacroAssemblerMIPS
     void branchTest32(Condition cond, const Address &address, Imm32 imm, Label *label) {
         ma_lw(SecondScratchReg, address);
         branchTest32(cond, SecondScratchReg, imm, label);
+    }
+    void branchTest32(Condition cond, AbsoluteAddress address, Imm32 imm, Label *label) {
+        loadPtr(address, ScratchRegister);
+        branchTest32(cond, ScratchRegister, imm, label);
     }
     void branchTestPtr(Condition cond, Register lhs, Register rhs, Label *label) {
         branchTest32(cond, lhs, rhs, label);
@@ -842,6 +823,10 @@ public:
             load32(address, dest.gpr());
     }
 
+    template <typename T>
+    void storeUnboxedValue(ConstantOrRegister value, MIRType valueType, const T &dest,
+                           MIRType slotType);
+
     void moveValue(const Value &val, const ValueOperand &dest);
 
     void moveValue(const ValueOperand &src, const ValueOperand &dest) {
@@ -911,10 +896,10 @@ public:
     }
     void storePayload(const Value &val, Address dest);
     void storePayload(Register src, Address dest);
-    void storePayload(const Value &val, Register base, Register index, int32_t shift = defaultShift);
-    void storePayload(Register src, Register base, Register index, int32_t shift = defaultShift);
+    void storePayload(const Value &val, const BaseIndex &dest);
+    void storePayload(Register src, const BaseIndex &dest);
     void storeTypeTag(ImmTag tag, Address dest);
-    void storeTypeTag(ImmTag tag, Register base, Register index, int32_t shift = defaultShift);
+    void storeTypeTag(ImmTag tag, const BaseIndex &dest);
 
     void makeFrameDescriptor(Register frameSizeReg, FrameType type) {
         ma_sll(frameSizeReg, frameSizeReg, Imm32(FRAMESIZE_SHIFT));
@@ -989,6 +974,7 @@ public:
     // Makes an Ion call using the only two methods that it is sane for
     // indep code to make a call
     void callIon(Register callee);
+    void callIonFromAsmJS(Register callee);
 
     void reserveStack(uint32_t amount);
     void freeStack(uint32_t amount);
@@ -1030,8 +1016,11 @@ public:
         }
     }
 
+    void and32(Register src, Register dest);
     void and32(Imm32 imm, Register dest);
     void and32(Imm32 imm, const Address &dest);
+    void and32(const Address &src, Register dest);
+    void or32(Imm32 imm, Register dest);
     void or32(Imm32 imm, const Address &dest);
     void xor32(Imm32 imm, Register dest);
     void xorPtr(Imm32 imm, Register dest);
@@ -1107,6 +1096,7 @@ public:
     void storePtr(ImmPtr imm, const Address &address);
     void storePtr(ImmGCPtr imm, const Address &address);
     void storePtr(Register src, const Address &address);
+    void storePtr(Register src, const BaseIndex &address);
     void storePtr(Register src, AbsoluteAddress dest);
     void storeDouble(FloatRegister src, Address addr) {
         ma_sd(src, addr);
@@ -1156,6 +1146,7 @@ public:
     }
 
     void subPtr(Imm32 imm, const Register dest);
+    void subPtr(const Address &addr, const Register dest);
     void subPtr(Register src, const Address &dest);
     void addPtr(Imm32 imm, const Register dest);
     void addPtr(Imm32 imm, const Address &dest);
@@ -1180,10 +1171,15 @@ public:
 
     void checkStackAlignment();
 
-    void alignPointerUp(Register src, Register dest, uint32_t alignment);
+    void alignStackPointer();
+    void restoreStackPointer();
+    static void calculateAlignedStackPointer(void **stackPointer);
 
     void rshiftPtr(Imm32 imm, Register dest) {
         ma_srl(dest, dest, imm);
+    }
+    void rshiftPtrArithmetic(Imm32 imm, Register dest) {
+        ma_sra(dest, dest, imm);
     }
     void lshiftPtr(Imm32 imm, Register dest) {
         ma_sll(dest, dest, imm);

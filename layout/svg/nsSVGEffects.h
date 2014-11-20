@@ -42,12 +42,15 @@ class nsSVGMaskFrame;
  * StopListening, respectively.
  */
 class nsSVGRenderingObserver : public nsStubMutationObserver {
+
+protected:
+  virtual ~nsSVGRenderingObserver()
+    {}
+
 public:
   typedef mozilla::dom::Element Element;
   nsSVGRenderingObserver()
     : mInObserverList(false)
-    {}
-  virtual ~nsSVGRenderingObserver()
     {}
 
   // nsISupports
@@ -175,10 +178,13 @@ public:
   nsSVGFilterFrame *GetFilterFrame();
 
   // nsISupports
-  NS_DECL_ISUPPORTS
+  NS_DECL_ISUPPORTS_INHERITED
 
   // nsISVGFilterReference
   virtual void Invalidate() MOZ_OVERRIDE { DoUpdate(); };
+
+protected:
+  virtual ~nsSVGFilterReference() {}
 
 private:
   // nsSVGIDRenderingObserver
@@ -199,7 +205,6 @@ class nsSVGFilterProperty : public nsISupports {
 public:
   nsSVGFilterProperty(const nsTArray<nsStyleFilter> &aFilters,
                       nsIFrame *aFilteredFrame);
-  virtual ~nsSVGFilterProperty();
 
   const nsTArray<nsStyleFilter>& GetFilters() { return mFilters; }
   bool ReferencesValidResources();
@@ -208,6 +213,9 @@ public:
 
   // nsISupports
   NS_DECL_ISUPPORTS
+
+protected:
+  virtual ~nsSVGFilterProperty();
 
 private:
   nsTArray<nsSVGFilterReference*> mReferences;

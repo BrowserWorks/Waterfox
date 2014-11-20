@@ -1,4 +1,4 @@
-/* -*- js-indent-level: 4 -*- */
+/* -*- js-indent-level: 4; indent-tabs-mode: nil -*- */
 /*
  * e10s event dispatcher from content->chrome
  *
@@ -66,6 +66,221 @@ function flattenArguments(lst/* ...*/) {
 }
 
 /**
+ * StructuredFormatter: Formatter class turning structured messages
+ * into human-readable messages.
+ */
+this.StructuredFormatter = function() {
+    this.testStartTimes = {};
+};
+
+StructuredFormatter.prototype.log = function(message) {
+  return message.message;
+};
+
+StructuredFormatter.prototype.suite_start = function(message) {
+    this.suiteStartTime = message.time;
+    return "SUITE-START | Running " +  message.tests.length + " tests";
+};
+
+StructuredFormatter.prototype.test_start = function(message) {
+    this.testStartTimes[message.test] = new Date().getTime();
+    return "TEST-START | " + message.test;
+};
+
+StructuredFormatter.prototype.test_status = function(message) {
+    var statusInfo = message.test + " | " + message.subtest +
+                    (message.message ? " | " + message.message : "");
+    if (message.expected) {
+        return "TEST-UNEXPECTED-" + message.status + " | " + statusInfo +
+               " - expected: " + message.expected;
+    } else {
+        return "TEST-" + message.status + " | " + statusInfo;
+    }
+};
+
+StructuredFormatter.prototype.test_end = function(message) {
+    var startTime = this.testStartTimes[message.test];
+    delete this.testStartTimes[message.test];
+    var statusInfo = message.test + (message.message ? " | " + String(message.message) : "");
+    var result;
+    if (message.expected) {
+        result = "TEST-UNEXPECTED-" + message.status + " | " + statusInfo +
+                 " - expected: " + message.expected;
+    } else {
+        return "TEST-" + message.status + " | " + statusInfo;
+    }
+    result = " | took " + message.time - startTime + "ms";
+};
+
+StructuredFormatter.prototype.suite_end = function(message) {
+    return "SUITE-END | took " + message.time - this.suiteStartTime + "ms";
+};
+
+/**
+ * StructuredLogger: Structured logger class following the mozlog.structured protocol
+ *
+ *
+**/
+var VALID_ACTIONS = ['suite_start', 'suite_end', 'test_start', 'test_end', 'test_status', 'process_output', 'log'];
+// This delimiter is used to avoid interleaving Mochitest/Gecko logs.
+var LOG_DELIMITER = String.fromCharCode(0xe175) + String.fromCharCode(0xee31) + String.fromCharCode(0x2c32) + String.fromCharCode(0xacbf);
+
+function StructuredLogger(name) {
+    this.name = name;
+    this.testsStarted = [];
+    this.interactiveDebugger = false;
+    this.structuredFormatter = new StructuredFormatter();
+
+    /* test logs */
+
+    this.testStart = function(test) {
+        var data = {test: test};
+        this._logData("test_start", data);
+    };
+
+    this.testStatus = function(test, subtest, status, expected="PASS", message=null) {
+        // Bugfix for assertions not passing an assertion name
+        if (subtest === null || subtest === undefined) {
+            subtest = "undefined assertion name";
+        }
+
+        var data = {test: test, subtest: subtest, status: status};
+
+        if (message) {
+            data.message = String(message);
+        }
+        if (expected != status && status != 'SKIP') {
+            data.expected = expected;
+        }
+
+        this._logData("test_status", data);
+    };
+
+    this.testEnd = function(test, status, expected="OK", message=null, extra=null) {
+        var data = {test: test, status: status};
+
+        if (message !== null) {
+            data.message = String(message);
+        }
+        if (expected != status) {
+            data.expected = expected;
+        }
+        if (extra !== null) {
+            data.extra = extra;
+        }
+
+        this._logData("test_end", data);
+    };
+
+    this.suiteStart = function(tests, runinfo) {
+        runinfo = typeof runinfo !== "undefined" ? runinfo : null;
+
+        var data = {tests: tests};
+        if (runinfo !== null) {
+            data.runinfo = runinfo;
+        }
+
+        this._logData("suite_start", data);
+    };
+
+    this.suiteEnd = function() {
+        this._logData("suite_end");
+    };
+
+    this.testStart = function(test) {
+        this.testsStarted.push(test);
+        var data = {test: test};
+        this._logData("test_start", data);
+    };
+
+    /* log action: human readable logs */
+
+    this._log = function(level, message) {
+        // Coercing the message parameter to a string, in case an invalid value is passed.
+        message = String(message);
+        var data = {level: level, message: message};
+        this._logData('log', data);
+    };
+
+    this.debug = function(message) {
+        this._log('DEBUG', message);
+    };
+
+    this.info = function(message) {
+        this._log('INFO', message);
+    };
+
+    this.warning = function(message) {
+        this._log('WARNING', message);
+    };
+
+    this.error = function(message) {
+        this._log("ERROR", message);
+    };
+
+    this.critical = function(message) {
+        this._log('CRITICAL', message);
+    };
+
+    /* Special mochitest messages for deactivating/activating buffering */
+
+    this.deactivateBuffering = function() {
+        this._logData("buffering_off");
+    };
+    this.activateBuffering = function() {
+        this._logData("buffering_on");
+    };
+
+    /* dispatches a log to handlers */
+
+    this._logData = function(action, data) {
+        data = typeof data !== "undefined" ? data : null;
+
+        if (data === null) {
+            data = {};
+        }
+
+        var allData = {action: action,
+                       time: new Date().getTime(),
+                       thread: "",
+                       pid: null,
+                       source: this.name};
+
+        for (var attrname in data) {
+            allData[attrname] = data[attrname];
+        }
+
+        this._dumpMessage(allData);
+    };
+
+    this._dumpMessage = function(message) {
+        var str;
+        if (this.interactiveDebugger) {
+            str = this.structuredFormatter[message.action](message);
+        } else {
+            str = LOG_DELIMITER + JSON.stringify(message) + LOG_DELIMITER;
+        }
+        // BUGFIX: browser-chrome tests doesn't use LogController
+        if (Object.keys(LogController.listeners).length !== 0) {
+            LogController.log(str);
+        } else {
+            dump('\n' + str + '\n');
+        }
+
+        // Checking for error messages
+        if (message.expected || message.level === "ERROR") {
+            TestRunner.failureHandler();
+        }
+    };
+
+    /* Message validation. Only checking the action for now */
+    this.validMessage = function(message) {
+        return message.action !== undefined && VALID_ACTIONS.indexOf(message.action) >= 0;
+    };
+
+}
+
+/**
  * TestRunner: A test runner for SimpleTest
  * TODO:
  *
@@ -91,7 +306,6 @@ TestRunner.runSlower = false;
 TestRunner.dumpOutputDirectory = "";
 TestRunner.dumpAboutMemoryAfterTest = false;
 TestRunner.dumpDMDAfterTest = false;
-TestRunner.quiet = false;
 TestRunner.slowestTestTime = 0;
 TestRunner.slowestTestURL = "";
 
@@ -126,6 +340,7 @@ TestRunner._checkForHangs = function() {
     if (runtime >= TestRunner.timeout * TestRunner._timeoutFactor) {
       var frameWindow = $('testframe').contentWindow.wrappedJSObject ||
                           $('testframe').contentWindow;
+      // TODO : Do this in a way that reports that the test ended with a status "TIMEOUT"
       reportError(frameWindow, "Test timed out.");
 
       // If we have too many timeouts, give up. We don't want to wait hours
@@ -205,11 +420,11 @@ TestRunner.generateFailureList = function () {
 /**
  * If logEnabled is true, this is the logger that will be used.
 **/
-TestRunner.logger = LogController;
+TestRunner.structuredLogger = new StructuredLogger('mochitest');
 
 TestRunner.log = function(msg) {
     if (TestRunner.logEnabled) {
-        TestRunner.logger.log(msg);
+        TestRunner.structuredLogger.info(msg);
     } else {
         dump(msg + "\n");
     }
@@ -217,11 +432,14 @@ TestRunner.log = function(msg) {
 
 TestRunner.error = function(msg) {
     if (TestRunner.logEnabled) {
-        TestRunner.logger.error(msg);
+        TestRunner.structuredLogger.error(msg);
     } else {
         dump(msg + "\n");
+        TestRunner.failureHandler();
     }
+};
 
+TestRunner.failureHandler = function() {
     if (TestRunner.runUntilFailure) {
       TestRunner._haltTests = true;
     }
@@ -264,7 +482,7 @@ TestRunner._makeIframe = function (url, retry) {
             return;
         }
 
-        TestRunner.log("Error: Unable to restore focus, expect failures and timeouts.");
+        TestRunner.structuredLogger.info("Error: Unable to restore focus, expect failures and timeouts.");
     }
     window.scrollTo(0, $('indicator').offsetTop);
     iframe.src = url;
@@ -287,6 +505,14 @@ TestRunner.getLoadedTestURL = function () {
     return prefix + $('testframe').contentWindow.location.pathname;
 };
 
+TestRunner.setParameterInfo = function (params) {
+    this._params = params;
+};
+
+TestRunner.getParameterInfo = function() {
+    return this._params;
+};
+
 /**
  * TestRunner entry point.
  *
@@ -294,13 +520,23 @@ TestRunner.getLoadedTestURL = function () {
  *
 **/
 TestRunner.runTests = function (/*url...*/) {
-    TestRunner.log("SimpleTest START");
+    TestRunner.structuredLogger.info("SimpleTest START");
     TestRunner.originalTestURL = $("current-test").innerHTML;
 
     SpecialPowers.registerProcessCrashObservers();
 
     TestRunner._urls = flattenArguments(arguments);
-    $('testframe').src="";
+
+    var singleTestRun = this._urls.length <= 1 && TestRunner.repeat <= 1;
+    TestRunner.showTestReport = singleTestRun;
+    var frame = $('testframe');
+    frame.src = "";
+    if (singleTestRun) {
+        // Can't use document.body because this runs in a XUL doc as well...
+        var body = document.getElementsByTagName("body")[0];
+        body.setAttribute("singletest", "true");
+        frame.removeAttribute("scrolling");
+    }
     TestRunner._checkForHangs();
     TestRunner.runNextTest();
 };
@@ -314,7 +550,7 @@ TestRunner.resetTests = function(listURLs) {
   // Reset our "Current-test" line - functionality depends on it
   $("current-test").innerHTML = TestRunner.originalTestURL;
   if (TestRunner.logEnabled)
-    TestRunner.log("SimpleTest START Loop " + TestRunner._currentLoop);
+    TestRunner.structuredLogger.info("SimpleTest START Loop " + TestRunner._currentLoop);
 
   TestRunner._urls = listURLs;
   $('testframe').src="";
@@ -340,41 +576,52 @@ TestRunner.runNextTest = function() {
         TestRunner._expectedMinAsserts = 0;
         TestRunner._expectedMaxAsserts = 0;
 
-        TestRunner.log("TEST-START | " + url); // used by automation.py
+        TestRunner.structuredLogger.testStart(url);
 
         TestRunner._makeIframe(url, 0);
     } else {
         $("current-test").innerHTML = "<b>Finished</b>";
-        TestRunner._makeIframe("about:blank", 0);
+        // Only unload the last test to run if we're running more than one test.
+        if (TestRunner._urls.length > 1) {
+            TestRunner._makeIframe("about:blank", 0);
+        }
 
-        if (parseInt($("pass-count").innerHTML) == 0 &&
-            parseInt($("fail-count").innerHTML) == 0 &&
-            parseInt($("todo-count").innerHTML) == 0)
+        var passCount = parseInt($("pass-count").innerHTML, 10);
+        var failCount = parseInt($("fail-count").innerHTML, 10);
+        var todoCount = parseInt($("todo-count").innerHTML, 10);
+
+        if (passCount === 0 &&
+            failCount === 0 &&
+            todoCount === 0)
         {
-          // No |$('testframe').contentWindow|, so manually update: ...
-          // ... the log,
-          TestRunner.error("TEST-UNEXPECTED-FAIL | (SimpleTest/TestRunner.js) | No checks actually run.");
-          // ... the count,
-          $("fail-count").innerHTML = 1;
-          // ... the indicator.
-          var indicator = $("indicator");
-          indicator.innerHTML = "Status: Fail (No checks actually run)";
-          indicator.style.backgroundColor = "red";
+            // No |$('testframe').contentWindow|, so manually update: ...
+            // ... the log,
+            TestRunner.structuredLogger.testEnd('SimpleTest/TestRunner.js',
+                                                "ERROR",
+                                                "OK",
+                                                "No checks actually run");
+            // ... the count,
+            $("fail-count").innerHTML = 1;
+            // ... the indicator.
+            var indicator = $("indicator");
+            indicator.innerHTML = "Status: Fail (No checks actually run)";
+            indicator.style.backgroundColor = "red";
         }
 
         SpecialPowers.unregisterProcessCrashObservers();
 
-        TestRunner.log("TEST-START | Shutdown"); // used by automation.py
-        TestRunner.log("Passed:  " + $("pass-count").innerHTML);
-        TestRunner.log("Failed:  " + $("fail-count").innerHTML);
-        TestRunner.log("Todo:    " + $("todo-count").innerHTML);
-        TestRunner.log("Slowest: " + TestRunner.slowestTestTime + 'ms - ' + TestRunner.slowestTestURL);
+        TestRunner.structuredLogger.info("TEST-START | Shutdown");
+        TestRunner.structuredLogger.info("Passed:  " + passCount);
+        TestRunner.structuredLogger.info("Failed:  " + failCount);
+        TestRunner.structuredLogger.info("Todo:    " + todoCount);
+        TestRunner.structuredLogger.info("Slowest: " + TestRunner.slowestTestTime + 'ms - ' + TestRunner.slowestTestURL);
+
         // If we are looping, don't send this cause it closes the log file
-        if (TestRunner.repeat == 0) {
-          TestRunner.log("SimpleTest FINISHED");
+        if (TestRunner.repeat === 0) {
+          TestRunner.structuredLogger.info("SimpleTest FINISHED");
         }
 
-        if (TestRunner.repeat == 0 && TestRunner.onComplete) {
+        if (TestRunner.repeat === 0 && TestRunner.onComplete) {
              TestRunner.onComplete();
          }
 
@@ -385,8 +632,8 @@ TestRunner.runNextTest = function() {
         } else {
           // Loops are finished
           if (TestRunner.logEnabled) {
-            TestRunner.log("TEST-INFO | Ran " + TestRunner._currentLoop + " Loops");
-            TestRunner.log("SimpleTest FINISHED");
+            TestRunner.structuredLogger.info("TEST-INFO | Ran " + TestRunner._currentLoop + " Loops");
+            TestRunner.structuredLogger.info("SimpleTest FINISHED");
           }
 
           if (TestRunner.onComplete)
@@ -408,16 +655,19 @@ TestRunner.testFinished = function(tests) {
     // have a chance to unload it.
     if (TestRunner._currentTest == TestRunner._lastTestFinished &&
         !TestRunner._loopIsRestarting) {
-        TestRunner.error("TEST-UNEXPECTED-FAIL | " +
-                         TestRunner.currentTestURL +
-                         " | called finish() multiple times");
+        TestRunner.structuredLogger.testEnd(TestRunner.currentTestURL,
+                                            "ERROR",
+                                            "OK",
+                                            "called finish() multiple times");
         TestRunner.updateUI([{ result: false }]);
         return;
     }
     TestRunner._lastTestFinished = TestRunner._currentTest;
     TestRunner._loopIsRestarting = false;
 
-    MemoryStats.dump(TestRunner.log, TestRunner._currentTest,
+    // TODO : replace this by a function that returns the mem data as an object
+    // that's dumped later with the test_end message
+    MemoryStats.dump(TestRunner.structuredLogger, TestRunner._currentTest,
                      TestRunner.currentTestURL,
                      TestRunner.dumpOutputDirectory,
                      TestRunner.dumpAboutMemoryAfterTest,
@@ -425,47 +675,63 @@ TestRunner.testFinished = function(tests) {
 
     function cleanUpCrashDumpFiles() {
         if (!SpecialPowers.removeExpectedCrashDumpFiles(TestRunner._expectingProcessCrash)) {
-            TestRunner.error("TEST-UNEXPECTED-FAIL | " +
-                             TestRunner.currentTestURL +
-                             " | This test did not leave any crash dumps behind, but we were expecting some!");
+            TestRunner.structuredLogger.testEnd(TestRunner.currentTestURL,
+                                                "ERROR",
+                                                "OK",
+                                                "This test did not leave any crash dumps behind, but we were expecting some!");
             tests.push({ result: false });
         }
         var unexpectedCrashDumpFiles =
             SpecialPowers.findUnexpectedCrashDumpFiles();
         TestRunner._expectingProcessCrash = false;
         if (unexpectedCrashDumpFiles.length) {
-            TestRunner.error("TEST-UNEXPECTED-FAIL | " +
-                             TestRunner.currentTestURL +
-                             " | This test left crash dumps behind, but we " +
-                             "weren't expecting it to!");
+            TestRunner.structuredLogger.testEnd(TestRunner.currentTestURL,
+                                                "ERROR",
+                                                "OK",
+                                                "This test left crash dumps behind, but we " +
+                                                "weren't expecting it to!",
+                                                {unexpected_crashdump_files: unexpectedCrashDumpFiles});
             tests.push({ result: false });
             unexpectedCrashDumpFiles.sort().forEach(function(aFilename) {
-                TestRunner.log("TEST-INFO | Found unexpected crash dump file " +
-                               aFilename + ".");
+                TestRunner.structuredLogger.info("Found unexpected crash dump file " +
+                                                 aFilename + ".");
             });
         }
     }
 
     function runNextTest() {
         if (TestRunner.currentTestURL != TestRunner.getLoadedTestURL()) {
-            TestRunner.error("TEST-UNEXPECTED-FAIL | " +
-                             TestRunner.currentTestURL +
-                             " | " + TestRunner.getLoadedTestURL() +
-                             " finished in a non-clean fashion, probably" +
-                             " because it didn't call SimpleTest.finish()");
+            TestRunner.structuredLogger.testStatus(TestRunner.currentTestURL,
+                                                   TestRunner.getLoadedTestURL(),
+                                                   "FAIL",
+                                                   "PASS",
+                                                   "finished in a non-clean fashion, probably" +
+                                                   " because it didn't call SimpleTest.finish()",
+                                                   {loaded_test_url: TestRunner.getLoadedTestURL()});
             tests.push({ result: false });
         }
 
         var runtime = new Date().valueOf() - TestRunner._currentTestStartTime;
-        TestRunner.log("TEST-END | " +
-                       TestRunner.currentTestURL +
-                       " | finished in " + runtime + "ms");
+
+        TestRunner.structuredLogger.testEnd(TestRunner.currentTestURL,
+                                            "OK",
+                                            undefined,
+                                            "Finished in " + runtime + "ms",
+                                            {runtime: runtime}
+        );
+
         if (TestRunner.slowestTestTime < runtime && TestRunner._timeoutFactor == 1) {
           TestRunner.slowestTestTime = runtime;
           TestRunner.slowestTestURL = TestRunner.currentTestURL;
         }
 
         TestRunner.updateUI(tests);
+
+        // Don't show the interstitial if we just run one test with no repeats:
+        if (TestRunner._urls.length == 1 && TestRunner.repeat <= 1) {
+            TestRunner.testUnloaded();
+            return;
+        }
 
         var interstitialURL;
         if ($('testframe').contentWindow.location.protocol == "chrome:") {
@@ -496,13 +762,28 @@ TestRunner.testUnloaded = function() {
         var max = TestRunner._expectedMaxAsserts;
         var min = TestRunner._expectedMinAsserts;
         if (numAsserts > max) {
-            TestRunner.error("TEST-UNEXPECTED-FAIL | " + url + " | Assertion count " + numAsserts + " is greater than expected range " + min + "-" + max + " assertions.");
+            TestRunner.structuredLogger.testEnd(url,
+                                                "ERROR",
+                                                "OK",
+                                                "Assertion count " + numAsserts + " is greater than expected range " +
+                                                min + "-" + max + " assertions.",
+                                                {assertions: numAsserts, min_asserts: min, max_asserts: max});
             TestRunner.updateUI([{ result: false }]);
         } else if (numAsserts < min) {
-            TestRunner.error("TEST-UNEXPECTED-PASS | " + url + " | Assertion count " + numAsserts + " is less than expected range " + min + "-" + max + " assertions.");
+            TestRunner.structuredLogger.testEnd(url,
+                                                "OK",
+                                                "ERROR",
+                                                "Assertion count " + numAsserts + " is less than expected range " +
+                                                min + "-" + max + " assertions.",
+                                                {assertions: numAsserts, min_asserts: min, max_asserts: max});
             TestRunner.updateUI([{ result: false }]);
         } else if (numAsserts > 0) {
-            TestRunner.log("TEST-KNOWN-FAIL | " + url + " | Assertion count " + numAsserts + " within expected range " + min + "-" + max + " assertions.");
+            TestRunner.structuredLogger.testEnd(url,
+                                                "ERROR",
+                                                "ERROR",
+                                                "Assertion count " + numAsserts + " within expected range " +
+                                                min + "-" + max + " assertions.",
+                                                {assertions: numAsserts, min_asserts: min, max_asserts: max});
         }
     }
     TestRunner._currentTest++;

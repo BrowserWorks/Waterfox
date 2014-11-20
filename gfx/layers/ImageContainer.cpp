@@ -249,7 +249,7 @@ ImageContainer::HasCurrentImage()
 
   if (mRemoteData) {
     CrossProcessMutexAutoLock autoLock(*mRemoteDataMutex);
-    
+
     EnsureActiveImage();
 
     return !!mActiveImage.get();
@@ -262,7 +262,7 @@ already_AddRefed<Image>
 ImageContainer::LockCurrentImage()
 {
   ReentrantMonitorAutoEnter mon(mReentrantMonitor);
-  
+
   if (mRemoteData) {
     NS_ASSERTION(mRemoteDataMutex, "Should have remote data mutex when having remote data!");
     mRemoteDataMutex->Lock();
@@ -405,13 +405,13 @@ ImageContainer::EnsureActiveImage()
     if (mRemoteData->mType == RemoteImageData::RAW_BITMAP &&
         mRemoteData->mBitmap.mData && !mActiveImage) {
       nsRefPtr<RemoteBitmapImage> newImg = new RemoteBitmapImage();
-      
+
       newImg->mFormat = mRemoteData->mFormat;
       newImg->mData = mRemoteData->mBitmap.mData;
       newImg->mSize = mRemoteData->mSize;
       newImg->mStride = mRemoteData->mBitmap.mStride;
       mRemoteData->mWasUpdated = false;
-              
+
       mActiveImage = newImg;
     }
 #ifdef XP_WIN
@@ -464,10 +464,10 @@ PlanarYCbCrImage::SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
   return size;
 }
 
-uint8_t* 
+uint8_t*
 PlanarYCbCrImage::AllocateBuffer(uint32_t aSize)
 {
-  return mRecycleBin->GetBuffer(aSize); 
+  return mRecycleBin->GetBuffer(aSize);
 }
 
 static void
@@ -575,6 +575,10 @@ PlanarYCbCrImage::GetAsSourceSurface()
   }
 
   RefPtr<gfx::DataSourceSurface> surface = gfx::Factory::CreateDataSourceSurface(size, format);
+  if (!surface) {
+    NS_WARNING("Failed to create SourceSurface.");
+    return nullptr;
+  }
 
   gfx::ConvertYCbCrToRGB(mData, format, size, surface->GetData(), surface->Stride());
 
@@ -590,6 +594,10 @@ RemoteBitmapImage::GetAsSourceSurface()
                          ? gfx::SurfaceFormat::B8G8R8X8
                          : gfx::SurfaceFormat::B8G8R8A8;
   RefPtr<gfx::DataSourceSurface> newSurf = gfx::Factory::CreateDataSourceSurface(mSize, fmt);
+  if (!newSurf) {
+    NS_WARNING("Failed to create SourceSurface.");
+    return nullptr;
+  }
 
   for (int y = 0; y < mSize.height; y++) {
     memcpy(newSurf->GetData() + newSurf->Stride() * y,
@@ -629,25 +637,26 @@ CairoImage::GetTextureClient(CompositableClient *aClient)
 
   // gfx::BackendType::NONE means default to content backend
   textureClient = aClient->CreateTextureClientForDrawing(surface->GetFormat(),
-                                                         TextureFlags::DEFAULT,
+                                                         surface->GetSize(),
                                                          gfx::BackendType::NONE,
-                                                         surface->GetSize());
+                                                         TextureFlags::DEFAULT);
   if (!textureClient) {
     return nullptr;
   }
   MOZ_ASSERT(textureClient->CanExposeDrawTarget());
-  if (!textureClient->AllocateForSurface(surface->GetSize()) ||
-      !textureClient->Lock(OpenMode::OPEN_WRITE_ONLY)) {
+  if (!textureClient->Lock(OpenMode::OPEN_WRITE_ONLY)) {
     return nullptr;
   }
 
+  TextureClientAutoUnlock autoUnolck(textureClient);
   {
     // We must not keep a reference to the DrawTarget after it has been unlocked.
-    RefPtr<DrawTarget> dt = textureClient->GetAsDrawTarget();
+    DrawTarget* dt = textureClient->BorrowDrawTarget();
+    if (!dt) {
+      return nullptr;
+    }
     dt->CopySurface(surface, IntRect(IntPoint(), surface->GetSize()), IntPoint());
   }
-
-  textureClient->Unlock();
 
   mTextureClients.Put(forwarder->GetSerial(), textureClient);
   return textureClient;

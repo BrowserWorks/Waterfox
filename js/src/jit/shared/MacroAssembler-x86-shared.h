@@ -187,14 +187,8 @@ class MacroAssemblerX86Shared : public Assembler
     void not32(Register reg) {
         notl(reg);
     }
-    void inc32(const Operand &addr) {
-        incl(addr);
-    }
     void atomic_inc32(const Operand &addr) {
         lock_incl(addr);
-    }
-    void dec32(const Operand &addr) {
-        decl(addr);
     }
     void atomic_dec32(const Operand &addr) {
         lock_decl(addr);
@@ -336,8 +330,8 @@ class MacroAssemblerX86Shared : public Assembler
         cvtsi2ss(src, dest);
     }
     Condition testDoubleTruthy(bool truthy, FloatRegister reg) {
-        zeroDouble(ScratchFloatReg);
-        ucomisd(ScratchFloatReg, reg);
+        zeroDouble(ScratchDoubleReg);
+        ucomisd(ScratchDoubleReg, reg);
         return truthy ? NonZero : Zero;
     }
     void branchTestDoubleTruthy(bool truthy, FloatRegister reg, Label *label) {
@@ -437,18 +431,18 @@ class MacroAssemblerX86Shared : public Assembler
     }
     void negateDouble(FloatRegister reg) {
         // From MacroAssemblerX86Shared::maybeInlineDouble
-        pcmpeqw(ScratchFloatReg, ScratchFloatReg);
-        psllq(Imm32(63), ScratchFloatReg);
+        pcmpeqw(ScratchDoubleReg, ScratchDoubleReg);
+        psllq(Imm32(63), ScratchDoubleReg);
 
         // XOR the float in a float register with -0.0.
-        xorpd(ScratchFloatReg, reg); // s ^ 0x80000000000000
+        xorpd(ScratchDoubleReg, reg); // s ^ 0x80000000000000
     }
     void negateFloat(FloatRegister reg) {
-        pcmpeqw(ScratchFloatReg, ScratchFloatReg);
-        psllq(Imm32(31), ScratchFloatReg);
+        pcmpeqw(ScratchFloat32Reg, ScratchFloat32Reg);
+        psllq(Imm32(31), ScratchFloat32Reg);
 
         // XOR the float in a float register with -0.0.
-        xorps(ScratchFloatReg, reg); // s ^ 0x80000000
+        xorps(ScratchFloat32Reg, reg); // s ^ 0x80000000
     }
     void addDouble(FloatRegister src, FloatRegister dest) {
         addsd(src, dest);
@@ -536,8 +530,8 @@ class MacroAssemblerX86Shared : public Assembler
             branchNegativeZero(src, dest, fail);
 
         cvttsd2si(src, dest);
-        cvtsi2sd(dest, ScratchFloatReg);
-        ucomisd(src, ScratchFloatReg);
+        cvtsi2sd(dest, ScratchDoubleReg);
+        ucomisd(src, ScratchDoubleReg);
         j(Assembler::Parity, fail);
         j(Assembler::NotEqual, fail);
 
@@ -554,8 +548,8 @@ class MacroAssemblerX86Shared : public Assembler
             branchNegativeZeroFloat32(src, dest, fail);
 
         cvttss2si(src, dest);
-        convertInt32ToFloat32(dest, ScratchFloatReg);
-        ucomiss(src, ScratchFloatReg);
+        convertInt32ToFloat32(dest, ScratchFloat32Reg);
+        ucomiss(src, ScratchFloat32Reg);
         j(Assembler::Parity, fail);
         j(Assembler::NotEqual, fail);
     }
@@ -667,26 +661,23 @@ class MacroAssemblerX86Shared : public Assembler
     bool buildFakeExitFrame(Register scratch, uint32_t *offset);
     void callWithExitFrame(JitCode *target);
 
-    void callIon(Register callee) {
-        call(callee);
-    }
-
-    void appendCallSite(const CallSiteDesc &desc) {
-        // Add an extra sizeof(void*) to include the return address that was
-        // pushed by the call instruction (see CallSite::stackDepth).
-        enoughMemory_ &= append(CallSite(desc, currentOffset(), framePushed_ + sizeof(void*)));
-    }
-
     void call(const CallSiteDesc &desc, Label *label) {
         call(label);
-        appendCallSite(desc);
+        append(desc, currentOffset(), framePushed_);
     }
     void call(const CallSiteDesc &desc, Register reg) {
         call(reg);
-        appendCallSite(desc);
+        append(desc, currentOffset(), framePushed_);
     }
-    void callIonFromAsmJS(Register reg) {
-        call(CallSiteDesc::Exit(), reg);
+    void callIon(Register callee) {
+        call(callee);
+    }
+    void callIonFromAsmJS(Register callee) {
+        call(callee);
+    }
+    void call(AsmJSImmPtr target) {
+        mov(target, eax);
+        call(eax);
     }
 
     void checkStackAlignment() {

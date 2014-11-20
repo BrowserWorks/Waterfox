@@ -13,18 +13,27 @@
 #include "MFTDecoder.h"
 #include "mozilla/RefPtr.h"
 
+namespace mp4_demuxer {
+class MP4Sample;
+}
+
 namespace mozilla {
 
 // Encapsulates the initialization of the MFTDecoder appropriate for decoding
 // a given stream, and the process of converting the IMFSample produced
 // by the MFT into a MediaData object.
-class WMFOutputSource {
+class MFTManager {
 public:
-  virtual ~WMFOutputSource() {}
+  virtual ~MFTManager() {}
 
   // Creates an initializs the MFTDecoder.
   // Returns nullptr on failure.
   virtual TemporaryRef<MFTDecoder> Init() = 0;
+
+  // Submit a compressed sample for decoding.
+  // This should forward to the MFTDecoder after performing
+  // any required sample formatting.
+  virtual HRESULT Input(mp4_demuxer::MP4Sample* aSample) = 0;
 
   // Produces decoded output, if possible. Blocks until output can be produced,
   // or until no more is able to be produced.
@@ -37,13 +46,13 @@ public:
 };
 
 // Decodes audio and video using Windows Media Foundation. Samples are decoded
-// using the MFTDecoder created by the WMFOutputSource. This class implements
+// using the MFTDecoder created by the MFTManager. This class implements
 // the higher-level logic that drives mapping the MFT to the async
 // MediaDataDecoder interface. The specifics of decoding the exact stream
-// type are handled by WMFOutputSource and the MFTDecoder it creates.
+// type are handled by MFTManager and the MFTDecoder it creates.
 class WMFMediaDataDecoder : public MediaDataDecoder {
 public:
-  WMFMediaDataDecoder(WMFOutputSource* aOutputSource,
+  WMFMediaDataDecoder(MFTManager* aOutputSource,
                       MediaTaskQueue* aAudioTaskQueue,
                       MediaDataDecoderCallback* aCallback);
   ~WMFMediaDataDecoder();
@@ -76,7 +85,7 @@ private:
   MediaDataDecoderCallback* mCallback;
 
   RefPtr<MFTDecoder> mDecoder;
-  nsAutoPtr<WMFOutputSource> mSource;
+  nsAutoPtr<MFTManager> mMFTManager;
 
   // The last offset into the media resource that was passed into Input().
   // This is used to approximate the decoder's position in the media resource.

@@ -60,12 +60,14 @@ public:
     NS_DECL_NSIOFFLINECACHEUPDATEOBSERVER
 
     OfflineCacheUpdateGlue();
-    ~OfflineCacheUpdateGlue();
 
     void SetDocument(nsIDOMDocument *aDocument);
 
 private:
+    ~OfflineCacheUpdateGlue();
+
     nsRefPtr<nsOfflineCacheUpdate> mUpdate;
+    bool mCoalesced;
 
     /* Document that requested this update */
     nsCOMPtr<nsIDOMDocument> mDocument;

@@ -139,6 +139,9 @@ status_t SampleIterator::seekTo(uint32_t sampleIndex) {
         return err;
     }
 
+    // mTTSDuration is set by findSampleTime()
+    mCurrentSampleDuration = mTTSDuration;
+
     mCurrentSampleIndex = sampleIndex;
 
     mInitialized = true;

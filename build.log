@@ -1,0 +1,408 @@
+ 0:00.54 C:/mozilla-build/msys/bin/sh.exe -c c:/mozilla-build/mozmake/mozmake.EXE -f client.mk -s
+ 0:03.80 Adding client.mk options from b:/Waterfox/33.0.2/mozilla-release/.mozconfig:
+ 0:03.80     CONFIG_GUESS=x86_64-pc-mingw32
+ 0:03.80     MOZ_OPTIMIZE_LDFLAGS=-MACHINE:X64 -OPT:REF,ICF -FORCE
+ 0:03.80     MOZ_OBJDIR=b:/Waterfox/33.0.2/objdir
+ 0:03.80     OBJDIR=b:/Waterfox/33.0.2/objdir
+ 0:03.80     FOUND_MOZCONFIG=b:/Waterfox/33.0.2/mozilla-release/.mozconfig
+ 0:04.67 From dist/public: Kept 0 existing; Added/updated 0; Removed 0 files and 0 directories.
+ 0:04.76 From dist/idl: Kept 1100 existing; Added/updated 0; Removed 0 files and 0 directories.
+ 0:04.84 From dist/private: Kept 0 existing; Added/updated 0; Removed 157 files and 2 directories.
+ 0:04.91 From dist/sdk: Kept 0 existing; Added/updated 0; Removed 22 files and 4 directories.
+ 0:04.99 From dist/bin: Kept 45 existing; Added/updated 0; Removed 1866 files and 178 directories.
+ 0:05.02 From dist/include: Kept 4163 existing; Added/updated 0; Removed 237 files and 6 directories.
+ 0:05.67 From _tests: Kept 5643 existing; Added/updated 0; Removed 0 files and 0 directories.
+ 0:06.67 From ../../dist/idl: Kept 1100 existing; Added/updated 0; Removed 0 files and 0 directories.
+ 0:07.07 cd include; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:07.12 Creating b:/Waterfox/33.0.2/objdir/dist/private/nss
+ 0:07.52 cd mangle; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:07.69 Creating b:/Waterfox/33.0.2/objdir/dist/private/dbm
+ 0:07.91 cd src; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:08.07 There are no private exports.
+ 0:08.16 There are no private exports.
+ 0:08.27 There are no private exports.
+ 0:08.57 There are no private exports.
+ 0:08.63 There are no private exports.
+ 0:11.55 There are no private exports.
+ 0:11.74 There are no private exports.
+ 0:12.62 cd legacydb; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:13.02 There are no private exports.
+ 0:13.27 There are no private exports.
+ 0:14.35 cd builtins; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:14.40 cd include; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:15.02 There are no private exports.
+ 0:15.21 cd pkix; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:15.51 cd include; c:/mozilla-build/mozmake/mozmake.EXE export
+ 0:15.83 There are no private exports.
+ 0:15.85 cd certsel; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:16.15 Creating b:/Waterfox/33.0.2/objdir/dist/include/dbm
+ 0:16.28 There are no private exports.
+ 0:16.43 cd src; c:/mozilla-build/mozmake/mozmake.EXE export
+ 0:16.44 cd mangle; c:/mozilla-build/mozmake/mozmake.EXE export
+ 0:16.67 cd crlsel; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:17.45 cd checker; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:17.72 Creating b:/Waterfox/33.0.2/objdir/dist/include/nss
+ 0:17.75 Creating b:/Waterfox/33.0.2/objdir/dist/include/nss
+ 0:17.83 There are no private exports.
+ 0:17.87 There are no private exports.
+ 0:18.26 cd params; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:18.62 There are no private exports.
+ 0:18.63 There are no private exports.
+ 0:19.07 cd results; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:19.35 There are no private exports.
+ 0:19.37 There are no private exports.
+ 0:19.86 cd store; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:19.99 There are no private exports.
+ 0:20.12 There are no private exports.
+ 0:20.60 There are no private exports.
+ 0:20.63 cd top; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:20.82 There are no private exports.
+ 0:21.29 There are no private exports.
+ 0:21.41 cd util; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:21.47 There are no private exports.
+ 0:21.87 There are no private exports.
+ 0:22.05 There are no private exports.
+ 0:22.14 There are no private exports.
+ 0:22.22 cd pkix_pl_nss; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:22.47 There are no private exports.
+ 0:22.68 There are no private exports.
+ 0:22.85 cd pki; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:22.99 There are no private exports.
+ 0:23.10 There are no private exports.
+ 0:23.29 There are no private exports.
+ 0:23.63 cd system; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:23.73 There are no private exports.
+ 0:24.38 cd module; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:25.15 There are no private exports.
+ 0:25.21 There are no private exports.
+ 0:25.24 There are no private exports.
+ 0:25.84 cd legacydb; c:/mozilla-build/mozmake/mozmake.EXE export
+ 0:25.88 cd legacydb; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:26.51 There are no private exports.
+ 0:26.52 There are no private exports.
+ 0:26.61 There are no private exports.
+ 0:26.63 There are no private exports.
+ 0:27.16 cd builtins; c:/mozilla-build/mozmake/mozmake.EXE export
+ 0:27.24 cd include; c:/mozilla-build/mozmake/mozmake.EXE export
+ 0:27.37 There are no private exports.
+ 0:27.46 cd include; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:27.87 There are no private exports.
+ 0:27.96 cd pkix; c:/mozilla-build/mozmake/mozmake.EXE export
+ 0:27.98 cd builtins; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:28.05 There are no private exports.
+ 0:28.15 cd pkix; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:28.94 cd certsel; c:/mozilla-build/mozmake/mozmake.EXE export
+ 0:28.94 There are no private exports.
+ 0:29.10 There are no private exports.
+ 0:29.12 cd certsel; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:29.54 There are no private exports.
+ 0:29.59 cd certsel; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:29.63 cd crlsel; c:/mozilla-build/mozmake/mozmake.EXE export
+ 0:29.71 There are no private exports.
+ 0:29.80 cd crlsel; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:30.23 There are no private exports.
+ 0:30.32 There are no private exports.
+ 0:30.32 cd crlsel; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:30.41 cd checker; c:/mozilla-build/mozmake/mozmake.EXE export
+ 0:30.46 There are no private exports.
+ 0:30.54 cd checker; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:30.93 There are no private exports.
+ 0:31.01 cd checker; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:31.07 There are no private exports.
+ 0:31.15 cd params; c:/mozilla-build/mozmake/mozmake.EXE export
+ 0:31.21 There are no private exports.
+ 0:31.28 cd params; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:31.63 There are no private exports.
+ 0:31.71 cd params; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:31.79 There are no private exports.
+ 0:31.88 cd results; c:/mozilla-build/mozmake/mozmake.EXE export
+ 0:31.91 There are no private exports.
+ 0:31.99 cd results; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:32.35 There are no private exports.
+ 0:32.44 cd results; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:32.55 There are no private exports.
+ 0:32.62 There are no private exports.
+ 0:32.63 cd store; c:/mozilla-build/mozmake/mozmake.EXE export
+ 0:32.71 cd store; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:33.07 There are no private exports.
+ 0:33.13 cd store; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:33.29 There are no private exports.
+ 0:33.37 There are no private exports.
+ 0:33.38 cd top; c:/mozilla-build/mozmake/mozmake.EXE export
+ 0:33.45 cd top; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:33.77 There are no private exports.
+ 0:33.85 cd top; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:34.01 There are no private exports.
+ 0:34.07 There are no private exports.
+ 0:34.09 cd util; c:/mozilla-build/mozmake/mozmake.EXE export
+ 0:34.14 cd util; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:34.40 There are no private exports.
+ 0:34.48 There are no private exports.
+ 0:34.55 cd util; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:34.65 There are no private exports.
+ 0:34.70 There are no private exports.
+ 0:34.75 There are no private exports.
+ 0:34.83 cd pkix_pl_nss; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:35.10 There are no private exports.
+ 0:35.15 There are no private exports.
+ 0:35.21 cd pkix_pl_nss; c:/mozilla-build/mozmake/mozmake.EXE export
+ 0:35.35 cd pki; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:35.75 cd pki; c:/mozilla-build/mozmake/mozmake.EXE export
+ 0:35.84 cd pki; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:35.88 There are no private exports.
+ 0:35.96 cd system; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:36.30 There are no private exports.
+ 0:36.36 cd system; c:/mozilla-build/mozmake/mozmake.EXE export
+ 0:36.42 There are no private exports.
+ 0:36.49 cd system; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:36.51 There are no private exports.
+ 0:36.58 cd module; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:36.95 There are no private exports.
+ 0:37.02 cd module; c:/mozilla-build/mozmake/mozmake.EXE export
+ 0:37.04 There are no private exports.
+ 0:37.13 cd module; c:/mozilla-build/mozmake/mozmake.EXE private_export
+ 0:37.18 There are no private exports.
+ 0:37.26 There are no private exports.
+ 0:37.36 There are no private exports.
+ 0:37.62 There are no private exports.
+ 0:37.68 There are no private exports.
+ 0:37.74 There are no private exports.
+ 0:38.77 mozmake.EXE[6]: warning: -jN forced in submake: disabling jobserver mode.
+ 0:38.80 Note: rebuild with "c:/mozilla-build/mozmake/mozmake.EXE VERBOSE=1 " to show all compiler parameters.
+ 0:38.82 Making all in include
+ 0:38.86 Making all in testsuite
+ 0:38.88 c:/mozilla-build/mozmake/mozmake.EXE[6]: Making `all' in `stubdata'
+ 0:38.89 Making all in man
+ 0:39.00 c:/mozilla-build/mozmake/mozmake.EXE[6]: Making `all' in `common'
+ 0:39.16 c:/mozilla-build/mozmake/mozmake.EXE[6]: Making `all' in `i18n'
+ 0:39.32 c:/mozilla-build/mozmake/mozmake.EXE[6]: Making `all' in `tools'
+ 0:39.42 c:/mozilla-build/mozmake/mozmake.EXE[7]: Making `all' in `toolutil'
+ 0:39.53 c:/mozilla-build/mozmake/mozmake.EXE[7]: Making `all' in `ctestfw'
+ 0:39.64 c:/mozilla-build/mozmake/mozmake.EXE[7]: Making `all' in `makeconv'
+ 0:39.68 c:/mozilla-build/mozmake/mozmake.EXE[7]: Making `all' in `genrb'
+ 0:39.72 c:/mozilla-build/mozmake/mozmake.EXE[7]: Making `all' in `genbrk'
+ 0:39.76 c:/mozilla-build/mozmake/mozmake.EXE[7]: Making `all' in `gencnval'
+ 0:39.80 c:/mozilla-build/mozmake/mozmake.EXE[7]: Making `all' in `gensprep'
+ 0:39.84 c:/mozilla-build/mozmake/mozmake.EXE[7]: Making `all' in `icuinfo'
+ 0:39.94 c:/mozilla-build/mozmake/mozmake.EXE[7]: Making `all' in `genccode'
+ 0:39.98 c:/mozilla-build/mozmake/mozmake.EXE[7]: Making `all' in `gencmn'
+ 0:40.02 c:/mozilla-build/mozmake/mozmake.EXE[7]: Making `all' in `icupkg'
+ 0:40.06 c:/mozilla-build/mozmake/mozmake.EXE[7]: Making `all' in `pkgdata'
+ 0:40.10 c:/mozilla-build/mozmake/mozmake.EXE[7]: Making `all' in `gentest'
+ 0:40.14 c:/mozilla-build/mozmake/mozmake.EXE[7]: Making `all' in `gennorm2'
+ 0:40.19 c:/mozilla-build/mozmake/mozmake.EXE[7]: Making `all' in `gencfu'
+ 0:40.23 c:/mozilla-build/mozmake/mozmake.EXE[7]: Making `all' in `gendict'
+ 0:40.31 c:/mozilla-build/mozmake/mozmake.EXE[6]: Making `all' in `data'
+ 0:40.48 Note: rebuild with "c:/mozilla-build/mozmake/mozmake.EXE VERBOSE=1 all-local" to show all compiler parameters.
+ 0:43.43 webapprt.obj
+ 0:43.46 nsBrowserApp.obj
+ 0:44.58 icl: command line warning #10148: option '/Oy-' not supported
+ 0:44.58 webapprt.cpp
+ 0:44.58 b:\Waterfox\33.0.2\objdir\dist\include\mozilla/Move.h(215): warning #734: "nsBaseHashtableET<KeyClass, DataType>::nsBaseHashtableET(nsBaseHashtableET<KeyClass, DataType> &&) [with KeyClass=nsDepCharHashKey, DataType=nsAutoPtr<nsINIParser::INIValue>]" (declared at line 36 of "b:\Waterfox\33.0.2\objdir\dist\include\nsBaseHashtable.h"), required for copy that was eliminated, is inaccessible
+ 0:44.58     return static_cast<typename RemoveReference<T>::Type&&>(aX);
+ 0:44.58            ^
+ 0:44.58           detected during:
+ 0:44.58             instantiation of "mozilla::RemoveReference<T>::Type &&mozilla::Move(T &&) [with T=nsBaseHashtableET<nsDepCharHashKey, nsAutoPtr<nsINIParser::INIValue>> &]" at line 427 of "b:\Waterfox\33.0.2\objdir\dist\include\nsTHashtable.h"
+ 0:44.58             instantiation of "void nsTHashtable<EntryType>::s_CopyEntry(PLDHashTable *, const PLDHashEntryHdr *, PLDHashEntryHdr *) [with EntryType=nsBaseHashtableET<nsDepCharHashKey, nsAutoPtr<nsINIParser::INIValue>>]" at line 390 of "b:\Waterfox\33.0.2\objdir\dist\include\nsTHashtable.h"
+ 0:44.58             instantiation of "void nsTHashtable<EntryType>::Init(uint32_t={unsigned int}) [with EntryType=nsBaseHashtableET<nsDepCharHashKey, nsAutoPtr<nsINIParser::INIValue>>]" at line 88 of "b:\Waterfox\33.0.2\objdir\dist\include\nsTHashtable.h"
+ 0:44.58             instantiation of "nsTHashtable<EntryType>::nsTHashtable() [with EntryType=nsBaseHashtableET<nsDepCharHashKey, nsAutoPtr<nsINIParser::INIValue>>]" at line 64 of "b:\Waterfox\33.0.2\objdir\dist\include\nsBaseHashtable.h"
+ 0:44.58             instantiation of "nsBaseHashtable<KeyClass, DataType, UserDataType>::nsBaseHashtable() [with KeyClass=nsDepCharHashKey, DataType=nsAutoPtr<nsINIParser::INIValue>, UserDataType=nsINIParser::INIValue *]" at line 32 of "b:\Waterfox\33.0.2\objdir\dist\include\nsClassHashtable.h"
+ 0:44.58             instantiation of "nsClassHashtable<KeyClass, T>::nsClassHashtable() [with KeyClass=nsDepCharHashKey, T=nsINIParser::INIValue]" at line 27 of "../..//dist/include/nsINIParser.h"
+ 0:44.58 
+ 0:44.58 b:\Waterfox\33.0.2\objdir\dist\include\mozilla/Move.h(215): warning #3226: "nsBaseHashtableET<KeyClass, DataType>::~nsBaseHashtableET() [with KeyClass=nsDepCharHashKey, DataType=nsAutoPtr<nsINIParser::INIValue>]" (declared at line 37 of "b:\Waterfox\33.0.2\objdir\dist\include\nsBaseHashtable.h"), required to destroy temporary that was eliminated, is inaccessible
+ 0:44.58     return static_cast<typename RemoveReference<T>::Type&&>(aX);
+ 0:44.58            ^
+ 0:44.58           detected during:
+ 0:44.58             instantiation of "mozilla::RemoveReference<T>::Type &&mozilla::Move(T &&) [with T=nsBaseHashtableET<nsDepCharHashKey, nsAutoPtr<nsINIParser::INIValue>> &]" at line 427 of "b:\Waterfox\33.0.2\objdir\dist\include\nsTHashtable.h"
+ 0:44.58             instantiation of "void nsTHashtable<EntryType>::s_CopyEntry(PLDHashTable *, const PLDHashEntryHdr *, PLDHashEntryHdr *) [with EntryType=nsBaseHashtableET<nsDepCharHashKey, nsAutoPtr<nsINIParser::INIValue>>]" at line 390 of "b:\Waterfox\33.0.2\objdir\dist\include\nsTHashtable.h"
+ 0:44.58             instantiation of "void nsTHashtable<EntryType>::Init(uint32_t={unsigned int}) [with EntryType=nsBaseHashtableET<nsDepCharHashKey, nsAutoPtr<nsINIParser::INIValue>>]" at line 88 of "b:\Waterfox\33.0.2\objdir\dist\include\nsTHashtable.h"
+ 0:44.59             instantiation of "nsTHashtable<EntryType>::nsTHashtable() [with EntryType=nsBaseHashtableET<nsDepCharHashKey, nsAutoPtr<nsINIParser::INIValue>>]" at line 64 of "b:\Waterfox\33.0.2\objdir\dist\include\nsBaseHashtable.h"
+ 0:44.59             instantiation of "nsBaseHashtable<KeyClass, DataType, UserDataType>::nsBaseHashtable() [with KeyClass=nsDepCharHashKey, DataType=nsAutoPtr<nsINIParser::INIValue>, UserDataType=nsINIParser::INIValue *]" at line 32 of "b:\Waterfox\33.0.2\objdir\dist\include\nsClassHashtable.h"
+ 0:44.59             instantiation of "nsClassHashtable<KeyClass, T>::nsClassHashtable() [with KeyClass=nsDepCharHashKey, T=nsINIParser::INIValue]" at line 27 of "../..//dist/include/nsINIParser.h"
+ 0:44.59 
+ 0:44.59 icl: command line warning #10148: option '/Oy-' not supported
+ 0:44.59 nsBrowserApp.cpp
+ 0:54.20 cd include; c:/mozilla-build/mozmake/mozmake.EXE libs
+ 0:54.51 cd builtins; c:/mozilla-build/mozmake/mozmake.EXE libs
+ 0:54.90 cd src; c:/mozilla-build/mozmake/mozmake.EXE libs
+ 0:55.05 mkdir: cannot create directory `b:/Waterfox/33.0.2/objdir/security/nss/lib/freebl': File exists
+ 0:55.35 cd mangle; c:/mozilla-build/mozmake/mozmake.EXE libs
+ 0:56.32 cd legacydb; c:/mozilla-build/mozmake/mozmake.EXE libs
+ 1:19.87 Microsoft (R) File Expansion Utility  Version 6.1.7600.16385
+ 1:19.87 Copyright (c) Microsoft Corporation. All rights reserved.
+ 1:19.87 
+ 1:19.87 Adding ../../dist/bin\D3DCompiler_43.dll to Extraction Queue
+ 1:19.89 
+ 1:19.89 Expanding Files ....
+ 1:19.89 
+ 1:19.89 Expanding Files Complete ...
+ 1:20.04 libGLESv2.dll
+ 1:20.72 xilink: executing 'link'
+ 1:20.72 
+ 2:10.79 sethostname: Use the Network Control Panel Applet to set hostname.
+ 2:10.79 hostname -s is not supported.
+ 2:24.79 xul.dll
+ 5:33.57 Intel (R) Linker for C++ Compiler with graphics processor offload, preview version.
+ 5:33.57 
+ 5:33.57 Built Apr 23 2014 02:10:49
+ 5:33.57 
+ 5:33.57 Copyright (C) 1985-2013 Intel Corporation.  All rights reserved.
+ 5:33.57 
+ 5:33.57 Microsoft (R) Windows (R) Resource Compiler Version 6.1.7600.16385
+ 5:33.57 
+ 5:33.57 
+ 5:33.57 Copyright (C) Microsoft Corporation.  All rights reserved.
+ 5:33.57 
+ 5:33.57 
+ 5:33.57 
+ 5:33.57 
+ 5:33.57 xilink: executing 'link'
+ 5:33.57 
+ 5:33.57    Creating library xul.lib and object xul.exp
+ 5:33.57 
+ 5:33.57 CompositorD3D11.obj : error LNK2001: unresolved external symbol "struct CD3D11_DEFAULT const D3D11_DEFAULT" (?D3D11_DEFAULT@@3UCD3D11_DEFAULT@@B)
+ 5:33.57 
+ 5:33.57 xul.dll : warning LNK4088: image being generated due to /FORCE option; image may not run
+ 5:33.57 
+ 5:40.59 b:/Waterfox/33.0.2/mozilla-release/tools/quitter/chrome.manifest: WARNING: no preprocessor directives found
+ 5:42.82 module.res
+ 5:42.94 Creating Resource file: module.res
+ 5:42.99 Microsoft (R) Windows (R) Resource Compiler Version 6.1.7600.16385
+ 5:42.99 
+ 5:42.99 Copyright (C) Microsoft Corporation.  All rights reserved.
+ 5:42.99 
+ 5:42.99 
+ 5:42.99 webapprt-stub.exe
+ 5:43.60 xilink: executing 'link'
+ 5:43.60 
+ 5:43.66 Processing config: c:\mozilla-build\nsis-3.0a2\nsisconf.nsh
+ 5:43.77 Processing script file: "webapp-uninstaller.nsi" (ACP)
+ 5:44.11 
+ 5:44.11 Processed 1 file, writing output (x86-ansi):
+ 5:44.11 warning: Uninstall page instfiles not used, no sections will be executed!
+ 5:44.13 
+ 5:44.13 Output: "b:\Waterfox\33.0.2\objdir\webapprt\win\instgen\webapp-uninstaller.exe"
+ 5:44.13 Install: 0 pages (0 bytes), 1 section (2072 bytes), 66 instructions (1848 bytes), 1 string (1013 bytes), 1 language table (162 bytes).
+ 5:44.13 Uninstall: 0 pages (64 bytes), 0 sections (0 bytes), 903 instructions (25284 bytes), 1 string (5761 bytes), 1 language table (178 bytes).
+ 5:44.13 
+ 5:44.13 Using zlib compression.
+ 5:44.13 
+ 5:44.13 EXE header size:               34816 / 35840 bytes
+ 5:44.13 Install code:                   1134 / 4399 bytes
+ 5:44.13 Install data:                   6392 / 11276 bytes
+ 5:44.13 Uninstall code+data:           38708 / 39207 bytes
+ 5:44.13 CRC (0x32E3E2B2):                  4 / 4 bytes
+ 5:44.13 
+ 5:44.13 Total size:                    81054 / 90726 bytes (89.3%)
+ 5:44.13 
+ 5:44.13 1 warning:
+ 5:44.13   Uninstall page instfiles not used, no sections will be executed!
+ 5:45.83 Processing config: c:\mozilla-build\nsis-3.0a2\nsisconf.nsh
+ 5:45.83 Processing script file: "uninstaller.nsi" (ACP)
+ 5:47.37 
+ 5:47.37 Processed 1 file, writing output (x86-unicode):
+ 5:47.37 warning: install function "CheckIfRegistryKeyExists" not referenced - zeroing code (1457-1487) out
+ 5:47.37 
+ 5:47.37 
+ 5:47.37 Output: "b:\Waterfox\33.0.2\objdir\browser\installer\windows\instgen\helper.exe"
+ 5:47.39 Install: 1 page (64 bytes), 1 section (2072 bytes), 5105 instructions (142940 bytes), 1 string (88870 bytes), 1 language table (226 bytes).
+ 5:47.39 Uninstall: 4 pages (320 bytes), 1 section (2072 bytes), 2733 instructions (76524 bytes), 1 string (42856 bytes), 1 language table (306 bytes).
+ 5:47.39 
+ 5:47.39 Using zlib compression.
+ 5:47.39 
+ 5:47.39 EXE header size:               62464 / 37888 bytes
+ 5:47.39 Install code:                 234616 / 234612 bytes
+ 5:47.39 Install data:                 174856 / 174864 bytes
+ 5:47.39 Uninstall code+data:          484533 / 484525 bytes
+ 5:47.39 CRC (0x28875151):                  4 / 4 bytes
+ 5:47.39 
+ 5:47.39 Total size:                   956473 / 931893 bytes (102.6%)
+ 5:47.39 
+ 5:47.39 1 warning:
+ 5:47.39   install function "CheckIfRegistryKeyExists" not referenced - zeroing code (1457-1487) out
+ 5:47.39 
+ 5:47.95 Processing config: c:\mozilla-build\nsis-3.0a2\nsisconf.nsh
+ 5:47.95 Processing script file: "maintenanceservice_installer.nsi" (ACP)
+ 5:48.26 
+ 5:48.26 Processed 1 file, writing output (x86-unicode):
+ 5:48.26 
+ 5:48.26 Output: "b:\Waterfox\33.0.2\objdir\browser\installer\windows\instgen\maintenanceservice_installer.exe"
+ 5:48.26 Install: 1 page (64 bytes), 1 section (2072 bytes), 549 instructions (15372 bytes), 1 string (9056 bytes), 1 language table (210 bytes).
+ 5:48.26 Uninstall: 2 pages (192 bytes), 1 section (2072 bytes), 120 instructions (3360 bytes), 1 string (5096 bytes), 1 language table (250 bytes).
+ 5:48.26 
+ 5:48.26 Using zlib compression.
+ 5:48.26 
+ 5:48.26 EXE header size:               62976 / 37888 bytes
+ 5:48.26 Install code:                  27218 / 27214 bytes
+ 5:48.26 Install data:                  11268 / 11276 bytes
+ 5:48.26 Uninstall code+data:           47910 / 47902 bytes
+ 5:48.26 CRC (0xAAE952C7):                  4 / 4 bytes
+ 5:48.26 
+ 5:48.26 Total size:                   149376 / 124284 bytes (120.1%)
+ 5:50.96 browser_components_about.lib.desc
+ 5:51.80 browser_components_dirprovider.lib.desc
+ 5:52.74 browser_components_feeds_src.lib.desc
+ 5:56.33 browser_components_shell_src.lib.desc
+ 5:57.81 browser_components_migration_src.lib.desc
+ 5:58.14 module.res
+ 5:58.17 Creating Resource file: module.res
+ 5:58.18 Microsoft (R) Windows (R) Resource Compiler Version 6.1.7600.16385
+ 5:58.18 
+ 5:58.18 Copyright (C) Microsoft Corporation.  All rights reserved.
+ 5:58.18 
+ 5:58.18 
+ 5:58.18 browsercomps.dll
+ 5:58.65 xilink: executing 'link'
+ 5:58.65 
+ 5:58.65    Creating library fake.lib and object fake.exp
+ 5:58.65 
+ 6:00.51 b:/Waterfox/33.0.2/mozilla-release/browser/locales/en-US/searchplugins/amazondotcom.xml: WARNING: no preprocessor directives found
+ 6:00.62 b:/Waterfox/33.0.2/mozilla-release/browser/locales/en-US/searchplugins/bing.xml: WARNING: no preprocessor directives found
+ 6:00.73 b:/Waterfox/33.0.2/mozilla-release/browser/locales/en-US/searchplugins/eBay.xml: WARNING: no preprocessor directives found
+ 6:00.96 b:/Waterfox/33.0.2/mozilla-release/browser/locales/en-US/searchplugins/startpage.xml: WARNING: no preprocessor directives found
+ 6:01.05 b:/Waterfox/33.0.2/mozilla-release/browser/locales/en-US/searchplugins/twitter.xml: WARNING: no preprocessor directives found
+ 6:01.16 b:/Waterfox/33.0.2/mozilla-release/browser/locales/en-US/searchplugins/wikipedia.xml: WARNING: no preprocessor directives found
+ 6:01.27 b:/Waterfox/33.0.2/mozilla-release/browser/locales/en-US/searchplugins/yahoo.xml: WARNING: no preprocessor directives found
+ 6:05.19 b:\Waterfox\33.0.2\mozilla-release\browser\themes\windows\content-contextmenu.svg: WARNING: no preprocessor directives found
+ 6:05.19 b:\Waterfox\33.0.2\mozilla-release\browser\themes\windows\content-contextmenu.svg: WARNING: no preprocessor directives found
+ 6:13.11 b:/Waterfox/33.0.2/mozilla-release/browser/devtools/webide/webide-prefs.js: WARNING: no useful preprocessor directives found
+ 6:14.13 module.res
+ 6:14.14 Creating Resource file: module.res
+ 6:14.19 Microsoft (R) Windows (R) Resource Compiler Version 6.1.7600.16385
+ 6:14.19 
+ 6:14.19 Copyright (C) Microsoft Corporation.  All rights reserved.
+ 6:14.19 
+ 6:14.19 
+ 6:14.19 firefox.exe
+ 6:14.53 xilink: executing 'link'
+ 6:14.53 
+ 6:14.58 Embedding manifest from b:/Waterfox/33.0.2/mozilla-release/browser/app/firefox.exe.manifest
+ 6:22.43 module.res
+ 6:22.44 Creating Resource file: module.res
+ 6:22.46 Microsoft (R) Windows (R) Resource Compiler Version 6.1.7600.16385
+ 6:22.46 
+ 6:22.46 Copyright (C) Microsoft Corporation.  All rights reserved.
+ 6:22.46 
+ 6:22.46 
+ 6:22.46 plugin-container.exe
+ 6:23.22 xilink: executing 'link'
+ 6:23.22 
+ 6:23.22    Creating library plugin-container.lib and object plugin-container.exp
+ 6:23.22 
+ 6:23.27 Embedding manifest from b:/Waterfox/33.0.2/mozilla-release/ipc/app/plugin-container.exe.manifest
+ 6:23.71 module.res
+ 6:23.74 Creating Resource file: module.res
+ 6:23.77 Microsoft (R) Windows (R) Resource Compiler Version 6.1.7600.16385
+ 6:23.77 
+ 6:23.77 Copyright (C) Microsoft Corporation.  All rights reserved.
+ 6:23.77 
+ 6:23.77 
+ 6:23.77 xpcshell.exe
+ 6:24.08 xilink: executing 'link'
+ 6:24.08 
+ 6:24.13 Embedding manifest from b:/Waterfox/33.0.2/mozilla-release/js/xpconnect/shell/xpcshell.exe.manifest
+ 6:26.67 Packaging quitter@mozilla.org.xpi...
+ 6:27.40 365 compiler warnings present.
+Your build was successful!
+To take your build for a test drive, run: |mach run|
+For more information on what to do now, see https://developer.mozilla.org/docs/Developer_Guide/So_You_Just_Built_Firefox

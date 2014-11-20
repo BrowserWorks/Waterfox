@@ -110,10 +110,12 @@ nsColumnSetFrame::PaintColumnRule(nsRenderingContext* aCtx,
                    contentRect.y);
 
     nsRect lineRect(linePt, ruleSize);
+    // Remember, we only have the "left" "border". Skip everything else.
+    Sides skipSides(mozilla::eSideBitsTopBottom);
+    skipSides |= mozilla::eSideBitsRight;
     nsCSSRendering::PaintBorderWithStyleBorder(presContext, *aCtx, this,
         aDirtyRect, lineRect, border, StyleContext(),
-        // Remember, we only have the "left" "border". Skip everything else
-        (1 << NS_SIDE_TOP | 1 << NS_SIDE_RIGHT | 1 << NS_SIDE_BOTTOM));
+        skipSides);
 
     child = nextSibling;
     nextSibling = nextSibling->GetNextSibling();
@@ -177,13 +179,13 @@ nsColumnSetFrame::ChooseColumnStrategy(const nsHTMLReflowState& aReflowState,
     availContentWidth = aReflowState.ComputedWidth();
   }
 
-  nscoord consumedHeight = GetConsumedHeight();
+  nscoord consumedBSize = GetConsumedBSize();
 
   // The effective computed height is the height of the current continuation
   // of the column set frame. This should be the same as the computed height
   // if we have an unconstrained available height.
-  nscoord computedHeight = GetEffectiveComputedHeight(aReflowState,
-                                                      consumedHeight);
+  nscoord computedBSize = GetEffectiveComputedBSize(aReflowState,
+                                                    consumedBSize);
   nscoord colHeight = GetAvailableContentHeight(aReflowState);
 
   if (aReflowState.ComputedHeight() != NS_INTRINSICSIZE) {
@@ -298,7 +300,7 @@ nsColumnSetFrame::ChooseColumnStrategy(const nsHTMLReflowState& aReflowState,
 #endif
   ReflowConfig config = { numColumns, colWidth, expectedWidthLeftOver, colGap,
                           colHeight, isBalancing, knownFeasibleHeight,
-                          knownInfeasibleHeight, computedHeight, consumedHeight };
+                          knownInfeasibleHeight, computedBSize, consumedBSize };
   return config;
 }
 
@@ -464,7 +466,7 @@ nsColumnSetFrame::ReflowChildren(nsHTMLReflowMetrics&     aDesiredSize,
     }
   }
   int columnCount = 0;
-  int contentBottom = 0;
+  int contentBEnd = 0;
   bool reflowNext = false;
 
   while (child) {
@@ -494,7 +496,8 @@ nsColumnSetFrame::ReflowChildren(nsHTMLReflowMetrics&     aDesiredSize,
     bool skipResizeHeightShrink = shrinkingHeightOnly
       && child->GetScrollableOverflowRect().YMost() <= aConfig.mColMaxHeight;
 
-    nscoord childContentBottom = 0;
+    nscoord childContentBEnd = 0;
+    WritingMode wm = child->GetWritingMode();
     if (!reflowNext && (skipIncremental || skipResizeHeightShrink)) {
       // This child does not need to be reflowed, but we may need to move it
       MoveChildTo(this, child, childOrigin);
@@ -508,7 +511,7 @@ nsColumnSetFrame::ReflowChildren(nsHTMLReflowMetrics&     aDesiredSize,
       } else {
         aStatus = mLastFrameStatus;
       }
-      childContentBottom = nsLayoutUtils::CalculateContentBottom(child);
+      childContentBEnd = nsLayoutUtils::CalculateContentBEnd(wm, child);
 #ifdef DEBUG_roc
       printf("*** Skipping child #%d %p (incremental %d, resize height shrink %d): status = %d\n",
              columnCount, (void*)child, skipIncremental, skipResizeHeightShrink, aStatus);
@@ -547,8 +550,7 @@ nsColumnSetFrame::ReflowChildren(nsHTMLReflowMetrics&     aDesiredSize,
         kidReflowState.mFlags.mNextInFlowUntouched = true;
       }
     
-      nsHTMLReflowMetrics kidDesiredSize(aReflowState.GetWritingMode(),
-                                         aDesiredSize.mFlags);
+      nsHTMLReflowMetrics kidDesiredSize(wm, aDesiredSize.mFlags);
 
       // XXX it would be cool to consult the float manager for the
       // previous block to figure out the region of floats from the
@@ -578,12 +580,12 @@ nsColumnSetFrame::ReflowChildren(nsHTMLReflowMetrics&     aDesiredSize,
       FinishReflowChild(child, PresContext(), kidDesiredSize,
                         &kidReflowState, childOrigin.x, childOrigin.y, 0);
 
-      childContentBottom = nsLayoutUtils::CalculateContentBottom(child);
-      if (childContentBottom > aConfig.mColMaxHeight) {
+      childContentBEnd = nsLayoutUtils::CalculateContentBEnd(wm, child);
+      if (childContentBEnd > aConfig.mColMaxHeight) {
         allFit = false;
       }
-      if (childContentBottom > availSize.height) {
-        aColData.mMaxOverflowingHeight = std::max(childContentBottom,
+      if (childContentBEnd > availSize.height) {
+        aColData.mMaxOverflowingHeight = std::max(childContentBEnd,
             aColData.mMaxOverflowingHeight);
       }
     }
@@ -591,9 +593,9 @@ nsColumnSetFrame::ReflowChildren(nsHTMLReflowMetrics&     aDesiredSize,
     contentRect.UnionRect(contentRect, child->GetRect());
 
     ConsiderChildOverflow(overflowRects, child);
-    contentBottom = std::max(contentBottom, childContentBottom);
-    aColData.mLastHeight = childContentBottom;
-    aColData.mSumHeight += childContentBottom;
+    contentBEnd = std::max(contentBEnd, childContentBEnd);
+    aColData.mLastHeight = childContentBEnd;
+    aColData.mSumHeight += childContentBEnd;
 
     // Build a continuation column if necessary
     nsIFrame* kidNextInFlow = child->GetNextInFlow();
@@ -637,8 +639,8 @@ nsColumnSetFrame::ReflowChildren(nsHTMLReflowMetrics&     aDesiredSize,
         kidNextInFlow->RemoveStateBits(NS_FRAME_IS_OVERFLOW_CONTAINER);
       }
 
-      if ((contentBottom > aReflowState.ComputedMaxHeight() ||
-           contentBottom > aReflowState.ComputedHeight()) &&
+      if ((contentBEnd > aReflowState.ComputedMaxBSize() ||
+           contentBEnd > aReflowState.ComputedBSize()) &&
            aConfig.mBalanceColCount < INT32_MAX) {
         // We overflowed vertically, but have not exceeded the number of
         // columns. We're going to go into overflow columns now, so balancing
@@ -702,8 +704,8 @@ nsColumnSetFrame::ReflowChildren(nsHTMLReflowMetrics&     aDesiredSize,
     }
   }
   
-  aColData.mMaxHeight = contentBottom;
-  contentRect.height = std::max(contentRect.height, contentBottom);
+  aColData.mMaxHeight = contentBEnd;
+  contentRect.height = std::max(contentRect.height, contentBEnd);
   mLastFrameStatus = aStatus;
   
   // contentRect included the borderPadding.left,borderPadding.top of the child rects

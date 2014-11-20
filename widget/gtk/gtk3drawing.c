@@ -20,7 +20,7 @@
 static GtkWidget* gProtoWindow;
 static GtkWidget* gProtoLayout;
 static GtkWidget* gButtonWidget;
-static GtkWidget* gToggleMenuButtonWidget;
+static GtkWidget* gToggleButtonWidget;
 static GtkWidget* gButtonArrowWidget;
 static GtkWidget* gCheckboxWidget;
 static GtkWidget* gRadiobuttonWidget;
@@ -145,7 +145,7 @@ static gint
 ensure_hpaned_widget()
 {
     if (!gHPanedWidget) {
-        gHPanedWidget = gtk_hpaned_new();
+        gHPanedWidget = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
         setup_widget_prototype(gHPanedWidget);
     }
     return MOZ_GTK_SUCCESS;
@@ -155,18 +155,18 @@ static gint
 ensure_vpaned_widget()
 {
     if (!gVPanedWidget) {
-        gVPanedWidget = gtk_vpaned_new();
+        gVPanedWidget = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
         setup_widget_prototype(gVPanedWidget);
     }
     return MOZ_GTK_SUCCESS;
 }
 
 static gint
-ensure_toggle_menu_button_widget()
+ensure_toggle_button_widget()
 {
-    if (!gToggleMenuButtonWidget) {
-        gToggleMenuButtonWidget = gtk_menu_button_new();
-        setup_widget_prototype(gToggleMenuButtonWidget);
+    if (!gToggleButtonWidget) {
+        gToggleButtonWidget = gtk_toggle_button_new();
+        setup_widget_prototype(gToggleButtonWidget);
   }
   return MOZ_GTK_SUCCESS;
 }
@@ -175,8 +175,12 @@ static gint
 ensure_button_arrow_widget()
 {
     if (!gButtonArrowWidget) {
-        ensure_toggle_menu_button_widget();
-        gButtonArrowWidget = gtk_bin_get_child(GTK_BIN(gToggleMenuButtonWidget));
+        ensure_toggle_button_widget();
+
+        gButtonArrowWidget = gtk_arrow_new(GTK_ARROW_DOWN, GTK_SHADOW_OUT);
+        gtk_container_add(GTK_CONTAINER(gToggleButtonWidget), gButtonArrowWidget);
+        gtk_widget_realize(gButtonArrowWidget);
+        gtk_widget_show(gButtonArrowWidget);
     }
     return MOZ_GTK_SUCCESS;
 }
@@ -205,11 +209,11 @@ static gint
 ensure_scrollbar_widget()
 {
     if (!gVertScrollbarWidget) {
-        gVertScrollbarWidget = gtk_vscrollbar_new(NULL);
+        gVertScrollbarWidget = gtk_scrollbar_new(GTK_ORIENTATION_VERTICAL, NULL);
         setup_widget_prototype(gVertScrollbarWidget);
     }
     if (!gHorizScrollbarWidget) {
-        gHorizScrollbarWidget = gtk_hscrollbar_new(NULL);
+        gHorizScrollbarWidget = gtk_scrollbar_new(GTK_ORIENTATION_HORIZONTAL, NULL);
         setup_widget_prototype(gHorizScrollbarWidget);
     }
     return MOZ_GTK_SUCCESS;
@@ -229,11 +233,11 @@ static gint
 ensure_scale_widget()
 {
   if (!gHScaleWidget) {
-    gHScaleWidget = gtk_hscale_new(NULL);
+    gHScaleWidget = gtk_scale_new(GTK_ORIENTATION_HORIZONTAL, NULL);
     setup_widget_prototype(gHScaleWidget);
   }
   if (!gVScaleWidget) {
-    gVScaleWidget = gtk_vscale_new(NULL);
+    gVScaleWidget = gtk_scale_new(GTK_ORIENTATION_VERTICAL, NULL);
     setup_widget_prototype(gVScaleWidget);
   }
   return MOZ_GTK_SUCCESS;
@@ -329,8 +333,8 @@ ensure_combo_box_widgets()
         /* Shouldn't be reached with current internal gtk implementation; we
          * use a generic toggle button as last resort fallback to avoid
          * crashing. */
-        ensure_toggle_menu_button_widget();
-        gComboBoxButtonWidget = gToggleMenuButtonWidget;
+        ensure_toggle_button_widget();
+        gComboBoxButtonWidget = gToggleButtonWidget;
     }
 
     if (!gComboBoxArrowWidget) {
@@ -435,8 +439,8 @@ ensure_combo_box_entry_widgets()
         /* Shouldn't be reached with current internal gtk implementation;
          * we use a generic toggle button as last resort fallback to avoid
          * crashing. */
-        ensure_toggle_menu_button_widget();
-        gComboBoxEntryButtonWidget = gToggleMenuButtonWidget;
+        ensure_toggle_button_widget();
+        gComboBoxEntryButtonWidget = gToggleButtonWidget;
     }
 
     if (!gComboBoxEntryArrowWidget) {
@@ -742,6 +746,30 @@ moz_gtk_radio_get_metrics(gint* indicator_size, gint* indicator_spacing)
                           "indicator_spacing", indicator_spacing,
                           NULL);
 
+    return MOZ_GTK_SUCCESS;
+}
+
+gint
+moz_gtk_get_focus_outline_size(gint* focus_h_width, gint* focus_v_width)
+{
+    gboolean interior_focus;
+    gint focus_width = 0;
+
+    ensure_entry_widget();
+    gtk_widget_style_get(gEntryWidget,
+                         "interior-focus", &interior_focus,
+                         "focus-line-width", &focus_width,
+                         NULL);
+    if (interior_focus) {
+        GtkBorder border;
+        GtkStyleContext *style = gtk_widget_get_style_context(gEntryWidget);
+        gtk_style_context_get_border(style, 0, &border);
+        *focus_h_width = border.left + focus_width;
+        *focus_v_width = border.top + focus_width;
+    } else {
+        *focus_h_width = focus_width;
+        *focus_v_width = focus_width;
+    }
     return MOZ_GTK_SUCCESS;
 }
 
@@ -1415,6 +1443,7 @@ moz_gtk_entry_paint(cairo_t *cr, GdkRectangle* rect,
     GtkStyleContext* style;
     gboolean interior_focus;
     gint focus_width;
+    int draw_focus_outline_only = state->depressed; // NS_THEME_FOCUS_OUTLINE
 
     gtk_widget_set_direction(widget, direction);
 
@@ -1424,6 +1453,18 @@ moz_gtk_entry_paint(cairo_t *cr, GdkRectangle* rect,
                          "interior-focus", &interior_focus,
                          "focus-line-width", &focus_width,
                          NULL);
+
+    if (draw_focus_outline_only) {
+        // Inflate the given 'rect' with the focus outline size.
+        gint h, v;
+        moz_gtk_get_focus_outline_size(&h, &v);
+        rect->x -= h;
+        rect->width += 2 * h;
+        rect->y -= v;
+        rect->height += 2 * v;
+        width = rect->width;
+        height = rect->height;
+    }
 
     /* gtkentry.c uses two windows, one for the entire widget and one for the
      * text area inside it. The background of both windows is set to the "base"
@@ -1458,7 +1499,9 @@ moz_gtk_entry_paint(cairo_t *cr, GdkRectangle* rect,
         gtk_style_context_set_state(style, GTK_STATE_FLAG_INSENSITIVE);
     }
 
-    gtk_render_background(style, cr, x, y, width, height);
+    if (!draw_focus_outline_only) {
+        gtk_render_background(style, cr, x, y, width, height);
+    }
     gtk_render_frame(style, cr, x, y, width, height);
 
     if (state->focused && !state->disabled) {
@@ -1633,7 +1676,7 @@ moz_gtk_combo_box_paint(cairo_t *cr, GdkRectangle* rect,
                                 rect, &arrow_rect, direction, ishtml);
     /* Now arrow_rect contains the inner rect ; we want to correct the width
      * to what the arrow needs (see gtk_combo_box_size_allocate) */
-    gtk_widget_size_request(gComboBoxArrowWidget, &arrow_req);
+    gtk_widget_get_preferred_size(gComboBoxArrowWidget, NULL, &arrow_req);
     if (direction == GTK_TEXT_DIR_LTR)
         arrow_rect.x += arrow_rect.width - arrow_req.width;
     arrow_rect.width = arrow_req.width;
@@ -1687,7 +1730,7 @@ moz_gtk_arrow_paint(cairo_t *cr, GdkRectangle* rect,
     GtkStyleContext* style;
     GtkStateFlags state_flags = GetStateFlagsFromGtkWidgetState(state);
     GdkRectangle arrow_rect;
-    gdouble arrow_angle = ARROW_UP;
+    gdouble arrow_angle;
 
     ensure_button_arrow_widget();
     style = gtk_widget_get_style_context(gButtonArrowWidget);
@@ -1699,12 +1742,22 @@ moz_gtk_arrow_paint(cairo_t *cr, GdkRectangle* rect,
                          direction);
 
     if (direction == GTK_TEXT_DIR_RTL) {
-        if (arrow_type == GTK_ARROW_LEFT)
-            arrow_angle = ARROW_RIGHT;
-        else if (arrow_type == GTK_ARROW_RIGHT)
-            arrow_angle = ARROW_LEFT;
-    } else if (arrow_type == GTK_ARROW_DOWN) {
+        arrow_type = (arrow_type == GTK_ARROW_LEFT) ?
+                         GTK_ARROW_RIGHT : GTK_ARROW_LEFT;
+    }
+    switch (arrow_type) {
+    case GTK_ARROW_LEFT:
+        arrow_angle = ARROW_LEFT;
+        break;
+    case GTK_ARROW_RIGHT:
+        arrow_angle = ARROW_RIGHT;
+        break;
+    case GTK_ARROW_DOWN:
         arrow_angle = ARROW_DOWN;
+        break;
+    default:
+        arrow_angle = ARROW_UP;
+        break;
     }
     if (arrow_type != GTK_ARROW_NONE)
         gtk_render_arrow(style, cr, arrow_angle,
@@ -2039,9 +2092,10 @@ gint
 moz_gtk_get_tab_thickness(void)
 {
     GtkBorder border;
+    GtkStyleContext * style;
 
     ensure_tab_widget();
-    GtkStyleContext * style = gtk_widget_get_style_context(gTabWidget);
+    style = gtk_widget_get_style_context(gTabWidget);
     gtk_style_context_add_class(style, GTK_STYLE_CLASS_NOTEBOOK);
     gtk_style_context_get_border(style, 0, &border);
 
@@ -2373,7 +2427,7 @@ moz_gtk_menu_separator_paint(cairo_t *cr, GdkRectangle* rect,
     ensure_menu_separator_widget();
     gtk_widget_set_direction(gMenuSeparatorWidget, direction);
 
-    border_width = gtk_container_get_border_width(gMenuSeparatorWidget);
+    border_width = gtk_container_get_border_width(GTK_CONTAINER(gMenuSeparatorWidget));
     gtk_widget_style_get(gMenuSeparatorWidget,
                          "wide-separators",    &wide_separators,
                          "separator-height",   &separator_height,
@@ -2711,7 +2765,7 @@ moz_gtk_get_widget_border(GtkThemeWidgetType widget, gint* left, gint* top,
                 }
             }
 
-            gtk_widget_size_request(gComboBoxArrowWidget, &arrow_req);
+            gtk_widget_get_preferred_size(gComboBoxArrowWidget, NULL, &arrow_req);
 
             if (direction == GTK_TEXT_DIR_RTL)
                 *left += separator_width + arrow_req.width;
@@ -2882,7 +2936,7 @@ moz_gtk_get_combo_box_entry_button_size(gint* width, gint* height)
     GtkRequisition requisition;
     ensure_combo_box_entry_widgets();
 
-    gtk_widget_size_request(gComboBoxEntryButtonWidget, &requisition);
+    gtk_widget_get_preferred_size(gComboBoxEntryButtonWidget, NULL, &requisition);
     *width = requisition.width;
     *height = requisition.height;
 
@@ -2910,7 +2964,7 @@ moz_gtk_get_arrow_size(gint* width, gint* height)
     GtkRequisition requisition;
     ensure_button_arrow_widget();
 
-    gtk_widget_size_request(gButtonArrowWidget, &requisition);
+    gtk_widget_get_preferred_size(gButtonArrowWidget, NULL, &requisition);
     *width = requisition.width;
     *height = requisition.height;
 
@@ -3063,10 +3117,10 @@ moz_gtk_widget_paint(GtkThemeWidgetType widget, cairo_t *cr,
     switch (widget) {
     case MOZ_GTK_BUTTON:
         if (state->depressed) {
-            ensure_toggle_menu_button_widget();
+            ensure_toggle_button_widget();
             return moz_gtk_button_paint(cr, rect, state,
                                         (GtkReliefStyle) flags,
-                                        gToggleMenuButtonWidget, direction);
+                                        gToggleButtonWidget, direction);
         }
         ensure_button_widget();
         return moz_gtk_button_paint(cr, rect, state,
@@ -3279,7 +3333,7 @@ moz_gtk_shutdown()
     gProtoWindow = NULL;
     gProtoLayout = NULL;
     gButtonWidget = NULL;
-    gToggleMenuButtonWidget = NULL;
+    gToggleButtonWidget = NULL;
     gButtonArrowWidget = NULL;
     gCheckboxWidget = NULL;
     gRadiobuttonWidget = NULL;

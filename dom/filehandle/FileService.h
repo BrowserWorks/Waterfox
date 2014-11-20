@@ -26,7 +26,7 @@ class nsIRunnable;
 namespace mozilla {
 namespace dom {
 
-class LockedFile;
+class FileHandleBase;
 
 class FileService MOZ_FINAL : public nsIObserver
 {
@@ -50,20 +50,20 @@ public:
   IsShuttingDown();
 
   nsresult
-  Enqueue(LockedFile* aLockedFile, FileHelper* aFileHelper);
+  Enqueue(FileHandleBase* aFileHandle, FileHelper* aFileHelper);
 
   void
-  NotifyLockedFileCompleted(LockedFile* aLockedFile);
+  NotifyFileHandleCompleted(FileHandleBase* aFileHandle);
 
   void
   WaitForStoragesToComplete(nsTArray<nsCOMPtr<nsIOfflineStorage> >& aStorages,
                             nsIRunnable* aCallback);
 
   void
-  AbortLockedFilesForStorage(nsIOfflineStorage* aStorage);
+  AbortFileHandlesForStorage(nsIOfflineStorage* aStorage);
 
   bool
-  HasLockedFilesForStorage(nsIOfflineStorage* aStorage);
+  HasFileHandlesForStorage(nsIOfflineStorage* aStorage);
 
   nsIEventTarget*
   StreamTransportTarget()
@@ -73,7 +73,7 @@ public:
   }
 
 private:
-  class LockedFileQueue MOZ_FINAL : public FileHelperListener
+  class FileHandleQueue MOZ_FINAL : public FileHelperListener
   {
     friend class FileService;
 
@@ -92,14 +92,16 @@ private:
 
   private:
     inline
-    LockedFileQueue(LockedFile* aLockedFile);
+    FileHandleQueue(FileHandleBase* aFileHandle);
+
+    ~FileHandleQueue();
 
     nsresult
     ProcessQueue();
 
     ThreadSafeAutoRefCnt mRefCnt;
     NS_DECL_OWNINGTHREAD
-    nsRefPtr<LockedFile> mLockedFile;
+    nsRefPtr<FileHandleBase> mFileHandle;
     nsTArray<nsRefPtr<FileHelper> > mQueue;
     nsRefPtr<FileHelper> mCurrentHelper;
   };
@@ -109,7 +111,7 @@ private:
     DelayedEnqueueInfo();
     ~DelayedEnqueueInfo();
 
-    nsRefPtr<LockedFile> mLockedFile;
+    nsRefPtr<FileHandleBase> mFileHandle;
     nsRefPtr<FileHelper> mFileHelper;
   };
 
@@ -118,31 +120,32 @@ private:
     friend class FileService;
 
   public:
-    inline LockedFileQueue*
-    CreateLockedFileQueue(LockedFile* aLockedFile);
+    inline FileHandleQueue*
+    CreateFileHandleQueue(FileHandleBase* aFileHandle);
 
-    inline LockedFileQueue*
-    GetLockedFileQueue(LockedFile* aLockedFile);
+    inline FileHandleQueue*
+    GetFileHandleQueue(FileHandleBase* aFileHandle);
 
     void
-    RemoveLockedFileQueue(LockedFile* aLockedFile);
+    RemoveFileHandleQueue(FileHandleBase* aFileHandle);
 
     bool
-    HasRunningLockedFiles()
+    HasRunningFileHandles()
     {
-      return !mLockedFileQueues.IsEmpty();
+      return !mFileHandleQueues.IsEmpty();
     }
 
     inline bool
-    HasRunningLockedFiles(nsIOfflineStorage* aStorage);
+    HasRunningFileHandles(nsIOfflineStorage* aStorage);
 
     inline DelayedEnqueueInfo*
-    CreateDelayedEnqueueInfo(LockedFile* aLockedFile, FileHelper* aFileHelper);
+    CreateDelayedEnqueueInfo(FileHandleBase* aFileHandle,
+                             FileHelper* aFileHelper);
 
     inline void
-    CollectRunningAndDelayedLockedFiles(
-                                 nsIOfflineStorage* aStorage,
-                                 nsTArray<nsRefPtr<LockedFile> >& aLockedFiles);
+    CollectRunningAndDelayedFileHandles(
+                              nsIOfflineStorage* aStorage,
+                              nsTArray<nsRefPtr<FileHandleBase>>& aFileHandles);
 
     void
     LockFileForReading(const nsAString& aFileName)
@@ -173,7 +176,7 @@ private:
     {
     }
 
-    nsTArray<nsRefPtr<LockedFileQueue> > mLockedFileQueues;
+    nsTArray<nsRefPtr<FileHandleQueue>> mFileHandleQueues;
     nsTArray<DelayedEnqueueInfo> mDelayedEnqueueInfos;
     nsTHashtable<nsStringHashKey> mFilesReading;
     nsTHashtable<nsStringHashKey> mFilesWriting;

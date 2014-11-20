@@ -40,7 +40,7 @@ class ExternalHelperAppParent : public PExternalHelperAppParent
     typedef mozilla::ipc::OptionalURIParams OptionalURIParams;
 
 public:
-    NS_DECL_ISUPPORTS
+    NS_DECL_ISUPPORTS_INHERITED
     NS_DECL_NSIREQUEST
     NS_DECL_NSICHANNEL
     NS_DECL_NSIMULTIPARTCHANNEL
@@ -65,9 +65,10 @@ public:
               const bool& aForceSave,
               const OptionalURIParams& aReferrer,
               PBrowserParent* aBrowser);
-    virtual ~ExternalHelperAppParent();
 
 protected:
+  virtual ~ExternalHelperAppParent();
+
   virtual void ActorDestroy(ActorDestroyReason why) MOZ_OVERRIDE;
   void Delete();
 

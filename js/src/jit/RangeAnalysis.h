@@ -120,10 +120,10 @@ class Range : public TempObject {
     // Maximal exponenent under which we have no precission loss on double
     // operations. Double has 52 bits of mantissa, so 2^52+1 cannot be
     // represented without loss.
-    static const uint16_t MaxTruncatableExponent = mozilla::FloatingPoint<double>::ExponentShift;
+    static const uint16_t MaxTruncatableExponent = mozilla::FloatingPoint<double>::kExponentShift;
 
     // Maximum exponent for finite values.
-    static const uint16_t MaxFiniteExponent = mozilla::FloatingPoint<double>::ExponentBias;
+    static const uint16_t MaxFiniteExponent = mozilla::FloatingPoint<double>::kExponentBias;
 
     // An special exponent value representing all non-NaN values. This
     // includes finite values and the infinities.
@@ -414,6 +414,8 @@ class Range : public TempObject {
     static Range *abs(TempAllocator &alloc, const Range *op);
     static Range *min(TempAllocator &alloc, const Range *lhs, const Range *rhs);
     static Range *max(TempAllocator &alloc, const Range *lhs, const Range *rhs);
+    static Range *floor(TempAllocator &alloc, const Range *op);
+    static Range *ceil(TempAllocator &alloc, const Range *op);
 
     static bool negativeZeroMul(const Range *lhs, const Range *rhs);
 
@@ -455,9 +457,14 @@ class Range : public TempObject {
         return canHaveFractionalPart() || max_exponent_ >= MaxTruncatableExponent;
     }
 
+    // Test if an integer x belongs to the range.
+    bool contains(int32_t x) const {
+        return x >= lower_ && x <= upper_;
+    }
+
     // Test whether the range contains zero.
     bool canBeZero() const {
-        return lower_ <= 0 && upper_ >= 0;
+        return contains(0);
     }
 
     // Test whether the range contains NaN values.
@@ -586,11 +593,6 @@ class Range : public TempObject {
     }
     void setSymbolicUpper(SymbolicBound *bound) {
         symbolicUpper_ = bound;
-    }
-
-    void resetFractionalPart() {
-        canHaveFractionalPart_ = false;
-        optimize();
     }
 };
 

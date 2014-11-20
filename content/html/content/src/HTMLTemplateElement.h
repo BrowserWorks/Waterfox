@@ -17,8 +17,7 @@ namespace dom {
 class HTMLTemplateElement MOZ_FINAL : public nsGenericHTMLElement
 {
 public:
-  HTMLTemplateElement(already_AddRefed<nsINodeInfo>& aNodeInfo);
-  virtual ~HTMLTemplateElement();
+  HTMLTemplateElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
 
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
@@ -26,7 +25,7 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(HTMLTemplateElement,
                                            nsGenericHTMLElement)
 
-  virtual nsresult Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
 
   DocumentFragment* Content()
   {
@@ -34,6 +33,8 @@ public:
   }
 
 protected:
+  virtual ~HTMLTemplateElement();
+
   virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;
 
   nsRefPtr<DocumentFragment> mContent;

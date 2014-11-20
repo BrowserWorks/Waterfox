@@ -14,6 +14,7 @@ let {OutputParser} = devtools.require("devtools/output-parser");
 
 const COLOR_CLASS = "color-class";
 const URL_CLASS = "url-class";
+const CUBIC_BEZIER_CLASS = "bezier-class";
 
 function test() {
   function countAll(fragment) {
@@ -25,11 +26,17 @@ function test() {
   function countUrls(fragment) {
     return fragment.querySelectorAll("." + URL_CLASS).length;
   }
+  function countCubicBeziers(fragment) {
+    return fragment.querySelectorAll("." + CUBIC_BEZIER_CLASS).length;
+  }
   function getColor(fragment, index) {
     return fragment.querySelectorAll("." + COLOR_CLASS)[index||0].textContent;
   }
   function getUrl(fragment, index) {
     return fragment.querySelectorAll("." + URL_CLASS)[index||0].textContent;
+  }
+  function getCubicBezier(fragment, index) {
+    return fragment.querySelectorAll("." + CUBIC_BEZIER_CLASS)[index||0].textContent;
   }
 
   let testData = [
@@ -73,7 +80,7 @@ function test() {
       name: "background-color",
       value: "transparent",
       test: fragment => {
-        is(countAll(fragment), 1);
+        is(countAll(fragment), 2);
         is(countColors(fragment), 1);
         is(fragment.textContent, "transparent");
       }
@@ -98,7 +105,7 @@ function test() {
       name: "border",
       value: "80em dotted pink",
       test: fragment => {
-        is(countAll(fragment), 1);
+        is(countAll(fragment), 2);
         is(countColors(fragment), 1);
         is(getColor(fragment), "pink");
       }
@@ -119,7 +126,7 @@ function test() {
         is(countUrls(fragment), 1);
         is(getColor(fragment), "red");
         is(getUrl(fragment), "test.png");
-        is(countAll(fragment), 2);
+        is(countAll(fragment), 3);
       }
     },
     {
@@ -130,7 +137,7 @@ function test() {
         is(countUrls(fragment), 1);
         is(getColor(fragment), "blue");
         is(getUrl(fragment), "test.png");
-        is(countAll(fragment), 2);
+        is(countAll(fragment), 3);
       }
     },
     {
@@ -163,7 +170,7 @@ function test() {
       name: "background",
       value: "linear-gradient(to right, rgba(183,222,237,1) 0%, rgba(33,180,226,1) 30%, rgba(31,170,217,.5) 44%, #F06 75%, red 100%)",
       test: fragment => {
-        is(countAll(fragment), 5);
+        is(countAll(fragment), 10);
         let allSwatches = fragment.querySelectorAll("." + COLOR_CLASS);
         is(allSwatches.length, 5);
         is(allSwatches[0].textContent, "rgba(183,222,237,1)");
@@ -177,7 +184,7 @@ function test() {
       name: "background",
       value: "-moz-radial-gradient(center 45deg, circle closest-side, orange 0%, red 100%)",
       test: fragment => {
-        is(countAll(fragment), 2);
+        is(countAll(fragment), 4);
         let allSwatches = fragment.querySelectorAll("." + COLOR_CLASS);
         is(allSwatches.length, 2);
         is(allSwatches[0].textContent, "orange");
@@ -188,7 +195,7 @@ function test() {
       name: "background",
       value: "white  url(http://test.com/wow_such_image.png) no-repeat top left",
       test: fragment => {
-        is(countAll(fragment), 2);
+        is(countAll(fragment), 3);
         is(countUrls(fragment), 1);
         is(countColors(fragment), 1);
       }
@@ -213,7 +220,7 @@ function test() {
       name: "background",
       value: "red url(    \"http://wow.com/cool/../../../you're(doingit)wrong\"   ) repeat center",
       test: fragment => {
-        is(countAll(fragment), 2);
+        is(countAll(fragment), 3);
         is(countColors(fragment), 1);
         is(getUrl(fragment), "http://wow.com/cool/../../../you're(doingit)wrong");
       }
@@ -225,6 +232,67 @@ function test() {
         is(countAll(fragment), 1);
         is(getUrl(fragment), "../../../look/at/this/folder/structure/../../red.blue.green.svg");
       }
+    },
+    {
+      name: "transition-timing-function",
+      value: "linear",
+      test: fragment => {
+        is(countCubicBeziers(fragment), 1);
+        is(getCubicBezier(fragment), "linear");
+      }
+    },
+    {
+      name: "animation-timing-function",
+      value: "ease-in-out",
+      test: fragment => {
+        is(countCubicBeziers(fragment), 1);
+        is(getCubicBezier(fragment), "ease-in-out");
+      }
+    },
+    {
+      name: "animation-timing-function",
+      value: "cubic-bezier(.1, 0.55, .9, -3.45)",
+      test: fragment => {
+        is(countCubicBeziers(fragment), 1);
+        is(getCubicBezier(fragment), "cubic-bezier(.1, 0.55, .9, -3.45)");
+      }
+    },
+    {
+      name: "animation",
+      value: "move 3s cubic-bezier(.1, 0.55, .9, -3.45)",
+      test: fragment => {
+        is(countCubicBeziers(fragment), 1);
+        is(getCubicBezier(fragment), "cubic-bezier(.1, 0.55, .9, -3.45)");
+      }
+    },
+    {
+      name: "transition",
+      value: "top 1s ease-in",
+      test: fragment => {
+        is(countCubicBeziers(fragment), 1);
+        is(getCubicBezier(fragment), "ease-in");
+      }
+    },
+    {
+      name: "transition",
+      value: "top 3s steps(4, end)",
+      test: fragment => {
+        is(countAll(fragment), 0);
+      }
+    },
+    {
+      name: "transition",
+      value: "top 3s step-start",
+      test: fragment => {
+        is(countAll(fragment), 0);
+      }
+    },
+    {
+      name: "transition",
+      value: "top 3s step-end",
+      test: fragment => {
+        is(countAll(fragment), 0);
+      }
     }
   ];
 
@@ -235,6 +303,7 @@ function test() {
     data.test(parser.parseCssProperty(data.name, data.value, {
       colorClass: COLOR_CLASS,
       urlClass: URL_CLASS,
+      bezierClass: CUBIC_BEZIER_CLASS,
       defaultColorType: false
     }));
   }

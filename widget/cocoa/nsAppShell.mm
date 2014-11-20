@@ -9,7 +9,6 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#include <dlfcn.h>
 
 #include "CustomCocoaEvents.h"
 #include "mozilla/WidgetTraceEvent.h"
@@ -34,8 +33,6 @@
 #include "mozilla/HangMonitor.h"
 #include "GeckoProfiler.h"
 #include "pratom.h"
-
-#include "npapi.h"
 
 using namespace mozilla::widget;
 

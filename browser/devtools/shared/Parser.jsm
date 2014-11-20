@@ -1,4 +1,4 @@
-/* -*- Mode: javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -218,7 +218,7 @@ SyntaxTreesPool.prototype = {
         // Can't guarantee that the tree traversal logic is forever perfect :)
         // Language features may be added, in which case the recursive methods
         // need to be updated. If an exception is thrown here, file a bug.
-        DevToolsUtils.reportException("Syntax tree visitor for " + aUrl, e);
+        DevToolsUtils.reportException("Syntax tree visitor for " + this._url, e);
       }
     }
     this._cache.set(requestId, results);
@@ -450,8 +450,8 @@ let ParserHelpers = {
         loc.end.column = loc.start.column + aNode.name.length;
         return loc;
       }
-      if (parentType == "ContinueStatement") {
-        // e.g. continue label
+      if (parentType == "ContinueStatement" || parentType == "BreakStatement") {
+        // e.g. continue label; or break label;
         // The location is unavailable for the identifier node "label".
         let loc = Cu.cloneInto(parentLocation, {});
         loc.start.line = loc.end.line;

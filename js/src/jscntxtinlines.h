@@ -18,6 +18,9 @@
 #include "vm/HelperThreads.h"
 #include "vm/Interpreter.h"
 #include "vm/ProxyObject.h"
+#include "vm/Symbol.h"
+
+#include "gc/ForkJoinNursery-inl.h"
 
 namespace js {
 
@@ -123,19 +126,7 @@ class CompartmentChecker
             check(*p);
     }
 
-    void check(jsid id) {
-        if (JSID_IS_OBJECT(id))
-            check(JSID_TO_OBJECT(id));
-    }
-
-    void check(JSIdArray *ida) {
-        if (ida) {
-            for (int i = 0; i < ida->length; i++) {
-                if (JSID_IS_OBJECT(ida->vector[i]))
-                    check(ida->vector[i]);
-            }
-        }
-    }
+    void check(jsid id) {}
 
     void check(JSScript *script) {
         if (script)
@@ -144,6 +135,7 @@ class CompartmentChecker
 
     void check(InterpreterFrame *fp);
     void check(AbstractFramePtr frame);
+    void check(SavedStacks *stacks);
 };
 #endif /* JS_CRASH_DIAGNOSTICS */
 

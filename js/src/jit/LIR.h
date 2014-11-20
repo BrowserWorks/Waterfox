@@ -143,9 +143,6 @@ class LAllocation : public TempObject
     bool isConstantIndex() const {
         return kind() == CONSTANT_INDEX;
     }
-    bool isValue() const {
-        return kind() == CONSTANT_VALUE;
-    }
     bool isGeneralReg() const {
         return kind() == GPR;
     }
@@ -198,8 +195,9 @@ class LAllocation : public TempObject
 #else
     const char *toString() const { return "???"; }
 #endif
-
+    bool aliases(const LAllocation &other) const;
     void dump() const;
+
 };
 
 class LUse : public LAllocation
@@ -207,7 +205,7 @@ class LUse : public LAllocation
     static const uint32_t POLICY_BITS = 3;
     static const uint32_t POLICY_SHIFT = 0;
     static const uint32_t POLICY_MASK = (1 << POLICY_BITS) - 1;
-    static const uint32_t REG_BITS = 5;
+    static const uint32_t REG_BITS = 6;
     static const uint32_t REG_SHIFT = POLICY_SHIFT + POLICY_BITS;
     static const uint32_t REG_MASK = (1 << REG_BITS) - 1;
 
@@ -217,7 +215,7 @@ class LUse : public LAllocation
     static const uint32_t USED_AT_START_MASK = (1 << USED_AT_START_BITS) - 1;
 
   public:
-    // Virtual registers get the remaining 20 bits.
+    // Virtual registers get the remaining 19 bits.
     static const uint32_t VREG_BITS = DATA_BITS - (USED_AT_START_SHIFT + USED_AT_START_BITS);
     static const uint32_t VREG_SHIFT = USED_AT_START_SHIFT + USED_AT_START_BITS;
     static const uint32_t VREG_MASK = (1 << VREG_BITS) - 1;
@@ -383,7 +381,7 @@ class LDefinition
 
     // Before register allocation, this optionally contains a fixed policy.
     // Register allocation assigns this field to a physical policy if none is
-    // preset.
+    // fixed.
     //
     // Right now, pre-allocated outputs are limited to the following:
     //   * Physical argument stack slots.
@@ -407,15 +405,15 @@ class LDefinition
     // is a stack slot.
     enum Policy {
         // A random register of an appropriate class will be assigned.
-        DEFAULT,
+        REGISTER,
 
         // The policy is predetermined by the LAllocation attached to this
         // definition. The allocation may be:
         //   * A register, which may not appear as any fixed temporary.
         //   * A stack slot or argument.
         //
-        // Register allocation will not modify a preset allocation.
-        PRESET,
+        // Register allocation will not modify a fixed allocation.
+        FIXED,
 
         // One definition per instruction must re-use the first input
         // allocation, which (for now) must be a register.
@@ -451,24 +449,24 @@ class LDefinition
     }
 
   public:
-    LDefinition(uint32_t index, Type type, Policy policy = DEFAULT) {
+    LDefinition(uint32_t index, Type type, Policy policy = REGISTER) {
         set(index, type, policy);
     }
 
-    explicit LDefinition(Type type, Policy policy = DEFAULT) {
+    explicit LDefinition(Type type, Policy policy = REGISTER) {
         set(0, type, policy);
     }
 
     LDefinition(Type type, const LAllocation &a)
       : output_(a)
     {
-        set(0, type, PRESET);
+        set(0, type, FIXED);
     }
 
     LDefinition(uint32_t index, Type type, const LAllocation &a)
       : output_(a)
     {
-        set(index, type, PRESET);
+        set(index, type, FIXED);
     }
 
     LDefinition() : bits_(0)
@@ -484,6 +482,28 @@ class LDefinition
     Type type() const {
         return (Type)((bits_ >> TYPE_SHIFT) & TYPE_MASK);
     }
+    bool isCompatibleReg(const AnyRegister &r) const {
+        if (isFloatReg() && r.isFloat()) {
+#if defined(JS_CODEGEN_ARM)
+            if (type() == FLOAT32)
+                return r.fpu().isSingle();
+            return r.fpu().isDouble();
+#else
+            return true;
+#endif
+        }
+        return !isFloatReg() && !r.isFloat();
+    }
+    bool isCompatibleDef(const LDefinition &other) const {
+#ifdef JS_CODEGEN_ARM
+        if (isFloatReg() && other.isFloatReg())
+            return type() == other.type();
+        return !isFloatReg() && !other.isFloatReg();
+#else
+        return isFloatReg() == other.isFloatReg();
+#endif
+    }
+
     bool isFloatReg() const {
         return type() == FLOAT32 || type() == DOUBLE;
     }
@@ -496,11 +516,11 @@ class LDefinition
     const LAllocation *output() const {
         return &output_;
     }
-    bool isPreset() const {
-        return policy() == PRESET;
+    bool isFixed() const {
+        return policy() == FIXED;
     }
     bool isBogusTemp() const {
-        return isPreset() && output()->isConstantIndex();
+        return isFixed() && output()->isConstantIndex();
     }
     void setVirtualRegister(uint32_t index) {
         JS_ASSERT(index < VREG_MASK);
@@ -511,7 +531,7 @@ class LDefinition
         output_ = a;
         if (!a.isUse()) {
             bits_ &= ~(POLICY_MASK << POLICY_SHIFT);
-            bits_ |= PRESET << POLICY_SHIFT;
+            bits_ |= FIXED << POLICY_SHIFT;
         }
     }
     void setReusedInput(uint32_t operand) {
@@ -531,6 +551,7 @@ class LDefinition
             static_assert(sizeof(bool) <= sizeof(int32_t), "bool doesn't fit in an int32 slot");
             return LDefinition::INT32;
           case MIRType_String:
+          case MIRType_Symbol:
           case MIRType_Object:
             return LDefinition::OBJECT;
           case MIRType_Double:
@@ -552,6 +573,14 @@ class LDefinition
             MOZ_ASSUME_UNREACHABLE("unexpected type");
         }
     }
+
+#ifdef DEBUG
+    const char *toString() const;
+#else
+    const char *toString() const { return "???"; }
+#endif
+
+    void dump() const;
 };
 
 // Forward declarations of LIR types.
@@ -789,8 +818,8 @@ class LBlock : public TempObject
         JS_ASSERT(!at->isLabel());
         instructions_.insertBefore(at, ins);
     }
-    uint32_t firstId();
-    uint32_t lastId();
+    uint32_t firstId() const;
+    uint32_t lastId() const;
 
     // Return the label to branch to when branching to this block.
     Label *label() {
@@ -936,12 +965,22 @@ class LRecoverInfo : public TempObject
     {
       private:
         MNode **it_;
+        MNode **end_;
         size_t op_;
 
       public:
-        explicit OperandIter(MNode **it)
-          : it_(it), op_(0)
-        { }
+        explicit OperandIter(LRecoverInfo *recoverInfo)
+          : it_(recoverInfo->begin()), end_(recoverInfo->end()), op_(0)
+        {
+            settle();
+        }
+
+        void settle() {
+            while ((*it_)->numOperands() == 0) {
+                ++it_;
+                op_ = 0;
+            }
+        }
 
         MDefinition *operator *() {
             return (*it_)->getOperand(op_);
@@ -956,11 +995,14 @@ class LRecoverInfo : public TempObject
                 op_ = 0;
                 ++it_;
             }
+            if (!*this)
+                settle();
+
             return *this;
         }
 
-        bool operator !=(const OperandIter &where) const {
-            return it_ != where.it_ || op_ != where.op_;
+        operator bool() const {
+            return it_ == end_;
         }
 
 #ifdef DEBUG
@@ -1570,7 +1612,7 @@ class LIRGraph
     }
     void setEntrySnapshot(LSnapshot *snapshot) {
         JS_ASSERT(!entrySnapshot_);
-        JS_ASSERT(snapshot->bailoutKind() == Bailout_Normal);
+        JS_ASSERT(snapshot->bailoutKind() == Bailout_InitialState);
         snapshot->setBailoutKind(Bailout_ArgumentCheck);
         entrySnapshot_ = snapshot;
     }

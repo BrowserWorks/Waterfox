@@ -1,4 +1,3 @@
-
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
  * vim: set ts=8 sts=4 et sw=4 tw=99:
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -45,12 +44,14 @@ class SavedFrame : public JSObject {
     struct Lookup;
     struct HashPolicy;
 
-    typedef HashSet<SavedFrame *,
+    typedef HashSet<js::ReadBarriered<SavedFrame *>,
                     HashPolicy,
                     SystemAllocPolicy> Set;
 
+    class AutoLookupRooter;
+
   private:
-    void initFromLookup(Lookup &lookup);
+    void initFromLookup(const Lookup &lookup);
 
     enum {
         // The reserved slots in the SavedFrame class.
@@ -80,26 +81,9 @@ class SavedFrame : public JSObject {
     static SavedFrame *checkThis(JSContext *cx, CallArgs &args, const char *fnName);
 };
 
-struct SavedFrame::Lookup {
-    Lookup(JSAtom *source, size_t line, size_t column, JSAtom *functionDisplayName,
-           Handle<SavedFrame*> parent, JSPrincipals *principals)
-        : source(source),
-          line(line),
-          column(column),
-          functionDisplayName(functionDisplayName),
-          parent(parent),
-          principals(principals)
-    {
-        JS_ASSERT(source);
-    }
-
-    JSAtom              *source;
-    size_t              line;
-    size_t              column;
-    JSAtom              *functionDisplayName;
-    Handle<SavedFrame*> parent;
-    JSPrincipals        *principals;
-};
+typedef JS::Handle<SavedFrame*> HandleSavedFrame;
+typedef JS::MutableHandle<SavedFrame*> MutableHandleSavedFrame;
+typedef JS::Rooted<SavedFrame*> RootedSavedFrame;
 
 struct SavedFrame::HashPolicy
 {
@@ -110,7 +94,7 @@ struct SavedFrame::HashPolicy
     static HashNumber hash(const Lookup &lookup);
     static bool       match(SavedFrame *existing, const Lookup &lookup);
 
-    typedef SavedFrame* Key;
+    typedef ReadBarriered<SavedFrame*> Key;
     static void rekey(Key &key, const Key &newKey);
 };
 
@@ -120,23 +104,107 @@ class SavedStacks {
 
     bool     init();
     bool     initialized() const { return frames.initialized(); }
-    bool     saveCurrentStack(JSContext *cx, MutableHandle<SavedFrame*> frame);
+    bool     saveCurrentStack(JSContext *cx, MutableHandleSavedFrame frame, unsigned maxFrameCount = 0);
     void     sweep(JSRuntime *rt);
+    void     trace(JSTracer *trc);
     uint32_t count();
     void     clear();
 
     size_t sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf);
 
   private:
-    SavedFrame::Set          frames;
-    JSObject                 *savedFrameProto;
+    SavedFrame::Set frames;
+    JSObject        *savedFrameProto;
 
-    bool       insertFrames(JSContext *cx, ScriptFrameIter &iter, MutableHandle<SavedFrame*> frame);
-    SavedFrame *getOrCreateSavedFrame(JSContext *cx, SavedFrame::Lookup &lookup);
+    bool       insertFrames(JSContext *cx, FrameIter &iter, MutableHandleSavedFrame frame,
+                            unsigned maxFrameCount = 0);
+    SavedFrame *getOrCreateSavedFrame(JSContext *cx, const SavedFrame::Lookup &lookup);
     // |SavedFrame.prototype| is created lazily and held weakly. It should only
     // be accessed through this method.
     JSObject   *getOrCreateSavedFramePrototype(JSContext *cx);
-    SavedFrame *createFrameFromLookup(JSContext *cx, SavedFrame::Lookup &lookup);
+    SavedFrame *createFrameFromLookup(JSContext *cx, const SavedFrame::Lookup &lookup);
+
+    // Cache for memoizing PCToLineNumber lookups.
+
+    struct PCKey {
+        PCKey(JSScript *script, jsbytecode *pc) : script(script), pc(pc) { }
+
+        PreBarrieredScript script;
+        jsbytecode         *pc;
+    };
+
+    struct LocationValue {
+        LocationValue() : source(nullptr), line(0), column(0) { }
+        LocationValue(JSAtom *source, size_t line, size_t column)
+            : source(source),
+              line(line),
+              column(column)
+        { }
+
+        PreBarrieredAtom source;
+        size_t           line;
+        size_t           column;
+    };
+
+    class MOZ_STACK_CLASS AutoLocationValueRooter : public JS::CustomAutoRooter
+    {
+      public:
+        AutoLocationValueRooter(JSContext *cx)
+            : JS::CustomAutoRooter(cx),
+              value() {}
+
+        void set(LocationValue &loc) {
+            value = loc;
+        }
+
+        LocationValue &get() {
+            return value;
+        }
+
+      private:
+        virtual void trace(JSTracer *trc) {
+            if (value.source)
+                gc::MarkString(trc, &value.source, "SavedStacks::LocationValue::source");
+        }
+
+        SavedStacks::LocationValue value;
+    };
+
+    class MOZ_STACK_CLASS MutableHandleLocationValue
+    {
+      public:
+        inline MOZ_IMPLICIT MutableHandleLocationValue(AutoLocationValueRooter *location)
+            : location(location) {}
+
+        void set(LocationValue &loc) {
+            location->set(loc);
+        }
+
+      private:
+        AutoLocationValueRooter *location;
+    };
+
+    struct PCLocationHasher : public DefaultHasher<PCKey> {
+        typedef PointerHasher<JSScript *, 3>   ScriptPtrHasher;
+        typedef PointerHasher<jsbytecode *, 3> BytecodePtrHasher;
+
+        static HashNumber hash(const PCKey &key) {
+            return mozilla::AddToHash(ScriptPtrHasher::hash(key.script),
+                                      BytecodePtrHasher::hash(key.pc));
+        }
+
+        static bool match(const PCKey &l, const PCKey &k) {
+            return l.script == k.script && l.pc == k.pc;
+        }
+    };
+
+    typedef HashMap<PCKey, LocationValue, PCLocationHasher, SystemAllocPolicy> PCLocationMap;
+
+    PCLocationMap pcLocationMap;
+
+    void sweepPCLocationMap();
+    bool getLocation(JSContext *cx, JSScript *script, jsbytecode *pc,
+                     MutableHandleLocationValue locationp);
 };
 
 bool SavedStacksMetadataCallback(JSContext *cx, JSObject **pmetadata);

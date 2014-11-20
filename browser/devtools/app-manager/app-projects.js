@@ -5,6 +5,7 @@ const promise = require("devtools/toolkit/deprecated-sync-thenables");
 const {EventEmitter} = Cu.import("resource://gre/modules/devtools/event-emitter.js");
 const {generateUUID} = Cc['@mozilla.org/uuid-generator;1'].getService(Ci.nsIUUIDGenerator);
 const {FileUtils} = Cu.import("resource://gre/modules/FileUtils.jsm");
+const { indexedDB } = require("sdk/indexed-db");
 
 /**
  * IndexedDB wrapper that just save project objects
@@ -13,18 +14,13 @@ const {FileUtils} = Cu.import("resource://gre/modules/FileUtils.jsm");
  * a unique `location` object.
  */
 
-const global = this;
 const IDB = {
   _db: null,
 
   open: function () {
     let deferred = promise.defer();
 
-    var idbManager = Cc["@mozilla.org/dom/indexeddb/manager;1"]
-                       .getService(Ci.nsIIndexedDatabaseManager);
-    idbManager.initWindowless(global);
-
-    let request = global.indexedDB.open("AppProjects", 5);
+    let request = indexedDB.open("AppProjects", 5);
     request.onerror = function(event) {
       deferred.reject("Unable to open AppProjects indexedDB. " +
                       "Error code: " + event.target.errorCode);

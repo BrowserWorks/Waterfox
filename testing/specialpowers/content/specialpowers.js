@@ -106,15 +106,6 @@ SpecialPowers.prototype.executeAfterFlushingMessageQueue = function(aCallback) {
   sendAsyncMessage("SPPingService", { op: "ping" });
 };
 
-// Expose everything but internal APIs (starting with underscores) to
-// web content.  We cannot use Object.keys to view SpecialPowers.prototype since
-// we are using the functions from SpecialPowersAPI.prototype
-SpecialPowers.prototype.__exposedProps__ = {};
-for (var i in SpecialPowers.prototype) {
-  if (i.charAt(0) != "_")
-    SpecialPowers.prototype.__exposedProps__[i] = "r";
-}
-
 // Attach our API to the window.
 function attachSpecialPowersToWindow(aWindow) {
   try {
@@ -149,3 +140,11 @@ var specialpowersmanager = new SpecialPowersManager();
 
 this.SpecialPowers = SpecialPowers;
 this.attachSpecialPowersToWindow = attachSpecialPowersToWindow;
+
+// In the case of Chrome mochitests that inject specialpowers.js as
+// a regular content script
+if (typeof window != 'undefined') {
+  window.addMessageListener = function() {}
+  window.removeMessageListener = function() {}
+  window.wrappedJSObject.SpecialPowers = new SpecialPowers(window);
+}

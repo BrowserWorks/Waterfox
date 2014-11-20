@@ -28,7 +28,8 @@ MOZ_BEGIN_ENUM_CLASS(SurfaceType, int8_t)
   SKIA, /* Surface wrapping a Skia bitmap */
   DUAL_DT, /* Snapshot of a dual drawtarget */
   D2D1_1_IMAGE, /* A D2D 1.1 ID2D1Image SourceSurface */
-  RECORDING /* Surface used for recording */
+  RECORDING, /* Surface used for recording */
+  TILED /* Surface from a tiled DrawTarget */
 MOZ_END_ENUM_CLASS(SurfaceType)
 
 MOZ_BEGIN_ENUM_CLASS(SurfaceFormat, int8_t)
@@ -70,6 +71,12 @@ MOZ_BEGIN_ENUM_CLASS(FilterType, int8_t)
   PREMULTIPLY,
   UNPREMULTIPLY
 MOZ_END_ENUM_CLASS(FilterType)
+
+MOZ_BEGIN_ENUM_CLASS(DrawTargetType, int8_t)
+  SOFTWARE_RASTER = 0,
+  HARDWARE_RASTER,
+  VECTOR
+MOZ_END_ENUM_CLASS(DrawTargetType)
 
 MOZ_BEGIN_ENUM_CLASS(BackendType, int8_t)
   NONE = 0,
@@ -257,17 +264,25 @@ struct GradientStop
 #define GFX2D_API
 #endif
 
-// Side constants for use in various places
 namespace mozilla {
-  namespace css {
-    enum Side {eSideTop, eSideRight, eSideBottom, eSideLeft};
-  }
-}
+// Side constants for use in various places.
+enum Side { eSideTop, eSideRight, eSideBottom, eSideLeft };
 
-// XXX - These don't really belong here. But for now this is where they go.
-#define NS_SIDE_TOP     mozilla::css::eSideTop
-#define NS_SIDE_RIGHT   mozilla::css::eSideRight
-#define NS_SIDE_BOTTOM  mozilla::css::eSideBottom
-#define NS_SIDE_LEFT    mozilla::css::eSideLeft
+enum SideBits {
+  eSideBitsNone   = 0,
+  eSideBitsTop    = 1 << eSideTop,
+  eSideBitsRight  = 1 << eSideRight,
+  eSideBitsBottom = 1 << eSideBottom,
+  eSideBitsLeft   = 1 << eSideLeft,
+  eSideBitsTopBottom = eSideBitsTop  | eSideBitsBottom,
+  eSideBitsLeftRight = eSideBitsLeft | eSideBitsRight,
+  eSideBitsAll = eSideBitsTopBottom | eSideBitsLeftRight
+};
+} // namespace mozilla
+
+#define NS_SIDE_TOP    mozilla::eSideTop
+#define NS_SIDE_RIGHT  mozilla::eSideRight
+#define NS_SIDE_BOTTOM mozilla::eSideBottom
+#define NS_SIDE_LEFT   mozilla::eSideLeft
 
 #endif /* MOZILLA_GFX_TYPES_H_ */

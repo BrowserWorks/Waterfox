@@ -1,4 +1,4 @@
-// -*- Mode: javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+// -*- indent-tabs-mode: nil; js-indent-level: 2 -*-
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -50,8 +50,9 @@ function check_fail_ca(x) {
   return check_cert_err_generic(x, SEC_ERROR_CERT_NOT_IN_NAME_SPACE, certificateUsageSSLCA);
 }
 
-function run_test_in_mode(useMozillaPKIX) {
-  Services.prefs.setBoolPref("security.use_mozillapkix_verification", useMozillaPKIX);
+function run_test() {
+  load_cert("ca-nc-perm-foo.com", "CTu,CTu,CTu");
+  load_cert("ca-nc", "CTu,CTu,CTu");
 
   // Note that CN is only looked at when there is NO subjectAltName!
 
@@ -275,12 +276,4 @@ function run_test_in_mode(useMozillaPKIX) {
   load_cert("dcisscopy", "C,C,C");
   check_ok(certFromFile('NameConstraints.dcissallowed.cert'));
   check_fail(certFromFile('NameConstraints.dcissblocked.cert'));
-}
-
-function run_test() {
-  load_cert("ca-nc-perm-foo.com", "CTu,CTu,CTu");
-  load_cert("ca-nc", "CTu,CTu,CTu");
-
-  run_test_in_mode(true);
-  run_test_in_mode(false);
 }

@@ -16,8 +16,9 @@ class nsGlobalWindow;
 class nsIPresShell;
 class nsIWidget;
 class nsPresContext;
-class nsPoint;
 class nsIDocument;
+class nsView;
+struct nsPoint;
 
 namespace mozilla {
   namespace layers {
@@ -46,6 +47,8 @@ public:
   }
 
 private:
+  ~nsTranslationNodeList() {}
+
   nsTArray<nsCOMPtr<nsIDOMNode> > mNodes;
   nsTArray<bool> mNodeIsRoot;
   uint32_t mLength;
@@ -56,11 +59,12 @@ class nsDOMWindowUtils MOZ_FINAL : public nsIDOMWindowUtils,
 {
 public:
   nsDOMWindowUtils(nsGlobalWindow *aWindow);
-  ~nsDOMWindowUtils();
   NS_DECL_ISUPPORTS
   NS_DECL_NSIDOMWINDOWUTILS
 
 protected:
+  ~nsDOMWindowUtils();
+
   nsWeakPtr mWindow;
 
   // If aOffset is non-null, it gets filled in with the offset of the root
@@ -75,6 +79,8 @@ protected:
   nsIDocument* GetDocument();
   mozilla::layers::LayerTransactionChild* GetLayerTransaction();
 
+  nsView* GetViewToDispatchEvent(nsPresContext* presContext, nsIPresShell** presShell);
+
   NS_IMETHOD SendMouseEventCommon(const nsAString& aType,
                                   float aX,
                                   float aY,
@@ -87,6 +93,26 @@ protected:
                                   bool aToWindow,
                                   bool *aPreventDefault,
                                   bool aIsSynthesized);
+
+  NS_IMETHOD SendPointerEventCommon(const nsAString& aType,
+                                    float aX,
+                                    float aY,
+                                    int32_t aButton,
+                                    int32_t aClickCount,
+                                    int32_t aModifiers,
+                                    bool aIgnoreRootScrollFrame,
+                                    float aPressure,
+                                    unsigned short aInputSourceArg,
+                                    int32_t aPointerId,
+                                    int32_t aWidth,
+                                    int32_t aHeight,
+                                    int32_t aTiltX,
+                                    int32_t aTiltY,
+                                    bool aIsPrimary,
+                                    bool aIsSynthesized,
+                                    uint8_t aOptionalArgCount,
+                                    bool aToWindow,
+                                    bool* aPreventDefault);
 
   NS_IMETHOD SendTouchEventCommon(const nsAString& aType,
                                   uint32_t* aIdentifiers,
@@ -101,7 +127,6 @@ protected:
                                   bool aIgnoreRootScrollFrame,
                                   bool aToWindow,
                                   bool* aPreventDefault);
-
 
   static mozilla::Modifiers GetWidgetModifiers(int32_t aModifiers);
 };

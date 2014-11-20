@@ -457,6 +457,9 @@ struct IonScript
     void setIsParallelEntryScript() {
         isParallelEntryScript_ = true;
     }
+    void clearIsParallelEntryScript() {
+        isParallelEntryScript_ = false;
+    }
     bool isParallelEntryScript() const {
         return isParallelEntryScript_;
     }
@@ -554,7 +557,8 @@ struct IonScript
     void copySafepoints(const SafepointWriter *writer);
     void copyCallTargetEntries(JSScript **callTargets);
     void copyPatchableBackedges(JSContext *cx, JitCode *code,
-                                PatchableBackedgeInfo *backedges);
+                                PatchableBackedgeInfo *backedges,
+                                MacroAssembler &masm);
 
     bool invalidated() const {
         return refcount_ != 0;
@@ -601,6 +605,11 @@ struct IonScript
 
     static const uint32_t MAX_PARALLEL_AGE = 5;
 
+    enum ShouldIncreaseAge {
+        IncreaseAge = true,
+        KeepAge = false
+    };
+
     void resetParallelAge() {
         MOZ_ASSERT(isParallelEntryScript());
         parallelAge_ = 0;
@@ -608,9 +617,9 @@ struct IonScript
     uint32_t parallelAge() const {
         return parallelAge_;
     }
-    uint32_t increaseParallelAge() {
+    uint32_t shouldPreserveParallelCode(ShouldIncreaseAge increaseAge = KeepAge) {
         MOZ_ASSERT(isParallelEntryScript());
-        return ++parallelAge_;
+        return (increaseAge ? ++parallelAge_ : parallelAge_) < MAX_PARALLEL_AGE;
     }
 
     static void writeBarrierPre(Zone *zone, IonScript *ionScript);

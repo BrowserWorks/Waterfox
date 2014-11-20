@@ -17,15 +17,7 @@ if test -z "$SCCACHE_DISABLE" -a -z "$no_sccache"; then
     try)
         case "${master}" in
         *scl1.mozilla.com*|*.scl3.mozilla.com*)
-            case "$platform" in
-            win*)
-                bucket=mozilla-releng-ceph-cache-scl3-try
-                ;;
-            *)
-                bucket=mozilla-releng-s3-cache-us-west-2-try
-                ;;
-            esac
-            mk_add_options "export SCCACHE_NO_HTTPS=1"
+            bucket=mozilla-releng-s3-cache-us-west-1-try
             ;;
         *use1.mozilla.com*)
             bucket=mozilla-releng-s3-cache-us-east-1-try
@@ -68,7 +60,7 @@ else
     ac_add_options "--with-compiler-wrapper=python2.7 $topsrcdir/sccache/sccache.py"
     mk_add_options MOZ_PREFLIGHT_ALL+=build/sccache.mk
     mk_add_options MOZ_POSTFLIGHT_ALL+=build/sccache.mk
-    UPLOAD_EXTRA_FILES="$UPLOAD_EXTRA_FILES sccache.log.gz"
+    mk_add_options "export UPLOAD_EXTRA_FILES+=sccache.log.gz"
     case "$platform" in
     win*)
         # sccache supports a special flag to create depfiles.

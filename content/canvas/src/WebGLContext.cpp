@@ -17,6 +17,7 @@
 #include "WebGLVertexArray.h"
 #include "WebGLQuery.h"
 
+#include "GLBlitHelper.h"
 #include "AccessCheck.h"
 #include "nsIConsoleService.h"
 #include "nsServiceManagerUtils.h"
@@ -30,9 +31,11 @@
 #include "nsIVariant.h"
 
 #include "ImageEncoder.h"
+#include "ImageContainer.h"
 
 #include "gfxContext.h"
 #include "gfxPattern.h"
+#include "gfxPrefs.h"
 #include "gfxUtils.h"
 
 #include "CanvasUtils.h"
@@ -54,9 +57,11 @@
 #include "mozilla/Telemetry.h"
 
 #include "nsIObserverService.h"
+#include "nsIDOMEvent.h"
 #include "mozilla/Services.h"
 #include "mozilla/dom/WebGLRenderingContextBinding.h"
 #include "mozilla/dom/BindingUtils.h"
+#include "mozilla/dom/HTMLVideoElement.h"
 #include "mozilla/dom/ImageData.h"
 #include "mozilla/ProcessPriorityManager.h"
 #include "mozilla/EnumeratedArrayCycleCollection.h"
@@ -73,28 +78,136 @@ using namespace mozilla::gfx;
 using namespace mozilla::gl;
 using namespace mozilla::layers;
 
-NS_IMETHODIMP
-WebGLMemoryPressureObserver::Observe(nsISupports* aSubject,
-                                     const char* aTopic,
-                                     const char16_t* aSomeData)
+WebGLObserver::WebGLObserver(WebGLContext* aContext)
+    : mContext(aContext)
 {
-    if (strcmp(aTopic, "memory-pressure"))
-        return NS_OK;
+}
 
-    bool wantToLoseContext = true;
+WebGLObserver::~WebGLObserver()
+{
+}
+
+void
+WebGLObserver::Destroy()
+{
+    UnregisterMemoryPressureEvent();
+    UnregisterVisibilityChangeEvent();
+    mContext = nullptr;
+}
+
+void
+WebGLObserver::RegisterVisibilityChangeEvent()
+{
+    if (!mContext) {
+        return;
+    }
+
+    HTMLCanvasElement* canvasElement = mContext->GetCanvas();
+
+    MOZ_ASSERT(canvasElement);
+
+    if (canvasElement) {
+        nsIDocument* document = canvasElement->OwnerDoc();
+
+        document->AddSystemEventListener(NS_LITERAL_STRING("visibilitychange"),
+                                         this,
+                                         true,
+                                         false);
+    }
+}
+
+void
+WebGLObserver::UnregisterVisibilityChangeEvent()
+{
+    if (!mContext) {
+        return;
+    }
+
+    HTMLCanvasElement* canvasElement = mContext->GetCanvas();
+
+    if (canvasElement) {
+        nsIDocument* document = canvasElement->OwnerDoc();
+
+        document->RemoveSystemEventListener(NS_LITERAL_STRING("visibilitychange"),
+                                            this,
+                                            true);
+    }
+}
+
+void
+WebGLObserver::RegisterMemoryPressureEvent()
+{
+    if (!mContext) {
+        return;
+    }
+
+    nsCOMPtr<nsIObserverService> observerService =
+        mozilla::services::GetObserverService();
+
+    MOZ_ASSERT(observerService);
+
+    if (observerService) {
+        observerService->AddObserver(this, "memory-pressure", false);
+    }
+}
+
+void
+WebGLObserver::UnregisterMemoryPressureEvent()
+{
+    if (!mContext) {
+        return;
+    }
+
+    nsCOMPtr<nsIObserverService> observerService =
+        mozilla::services::GetObserverService();
+
+    // Do not assert on observerService here. This might be triggered by
+    // the cycle collector at a late enough time, that XPCOM services are
+    // no longer available. See bug 1029504.
+    if (observerService) {
+        observerService->RemoveObserver(this, "memory-pressure");
+    }
+}
+
+NS_IMETHODIMP
+WebGLObserver::Observe(nsISupports* aSubject,
+                       const char* aTopic,
+                       const char16_t* aSomeData)
+{
+    if (!mContext || strcmp(aTopic, "memory-pressure")) {
+        return NS_OK;
+    }
+
+    bool wantToLoseContext = mContext->mLoseContextOnMemoryPressure;
 
     if (!mContext->mCanLoseContextInForeground &&
         ProcessPriorityManager::CurrentProcessIsForeground())
     {
         wantToLoseContext = false;
-    } else if (!nsCRT::strcmp(aSomeData,
-                              MOZ_UTF16("heap-minimize")))
-    {
-        wantToLoseContext = mContext->mLoseContextOnHeapMinimize;
     }
 
     if (wantToLoseContext) {
         mContext->ForceLoseContext();
+    }
+
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+WebGLObserver::HandleEvent(nsIDOMEvent* aEvent)
+{
+    nsAutoString type;
+    aEvent->GetType(type);
+    if (!mContext || !type.EqualsLiteral("visibilitychange")) {
+        return NS_OK;
+    }
+
+    HTMLCanvasElement* canvasElement = mContext->GetCanvas();
+
+    MOZ_ASSERT(canvasElement);
+
+    if (canvasElement && !canvasElement->OwnerDoc()->Hidden()) {
+        mContext->ForceRestoreContext();
     }
 
     return NS_OK;
@@ -177,8 +290,9 @@ WebGLContext::WebGLContext()
     mLastLossWasSimulated = false;
     mContextLossHandler = new WebGLContextLossHandler(this);
     mContextStatus = ContextNotLost;
-    mLoseContextOnHeapMinimize = false;
+    mLoseContextOnMemoryPressure = false;
     mCanLoseContextInForeground = true;
+    mRestoreWhenVisible = false;
 
     mAlreadyGeneratedWarnings = 0;
     mAlreadyWarnedAboutFakeVertexAttrib0 = false;
@@ -189,6 +303,9 @@ WebGLContext::WebGLContext()
         GenerateWarning("webgl.max-warnings-per-context size is too large (seems like a negative value wrapped)");
         mMaxWarnings = 0;
     }
+
+    mContextObserver = new WebGLObserver(this);
+    MOZ_RELEASE_ASSERT(mContextObserver, "Can't alloc WebGLContextObserver");
 
     mLastUseIndex = 0;
 
@@ -203,6 +320,8 @@ WebGLContext::WebGLContext()
 
 WebGLContext::~WebGLContext()
 {
+    mContextObserver->Destroy();
+
     DestroyResourcesAndContext();
     WebGLMemoryTracker::RemoveWebGLContext(this);
 
@@ -213,15 +332,7 @@ WebGLContext::~WebGLContext()
 void
 WebGLContext::DestroyResourcesAndContext()
 {
-    if (mMemoryPressureObserver) {
-        nsCOMPtr<nsIObserverService> observerService
-            = mozilla::services::GetObserverService();
-        if (observerService) {
-            observerService->RemoveObserver(mMemoryPressureObserver,
-                                            "memory-pressure");
-        }
-        mMemoryPressureObserver = nullptr;
-    }
+    mContextObserver->UnregisterMemoryPressureEvent();
 
     if (!gl)
         return;
@@ -330,6 +441,11 @@ WebGLContext::SetContextOptions(JSContext* aCx, JS::Handle<JS::Value> aOptions)
 
     // enforce that if stencil is specified, we also give back depth
     newOpts.depth |= newOpts.stencil;
+
+    // Don't do antialiasing if we've disabled MSAA.
+    if (!gfxPrefs::MSAALevel()) {
+      newOpts.antialias = false;
+    }
 
 #if 0
     GenerateWarning("aaHint: %d stencil: %d depth: %d alpha: %d premult: %d preserve: %d\n",
@@ -493,7 +609,7 @@ WebGLContext::SetDimensions(int32_t width, int32_t height)
     if (mOptions.antialias &&
         gfxInfo &&
         NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_WEBGL_MSAA, &status))) {
-        if (status == nsIGfxInfo::FEATURE_NO_INFO || forceMSAA) {
+        if (status == nsIGfxInfo::FEATURE_STATUS_OK || forceMSAA) {
             caps.antialias = true;
         }
     }
@@ -513,13 +629,13 @@ WebGLContext::SetDimensions(int32_t width, int32_t height)
 
     if (gfxInfo && !forceEnabled) {
         if (NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_WEBGL_OPENGL, &status))) {
-            if (status != nsIGfxInfo::FEATURE_NO_INFO) {
+            if (status != nsIGfxInfo::FEATURE_STATUS_OK) {
                 useOpenGL = false;
             }
         }
 #ifdef XP_WIN
         if (NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_WEBGL_ANGLE, &status))) {
-            if (status != nsIGfxInfo::FEATURE_NO_INFO) {
+            if (status != nsIGfxInfo::FEATURE_STATUS_OK) {
                 useANGLE = false;
             }
         }
@@ -896,7 +1012,7 @@ WebGLContext::GetCanvasLayer(nsDisplayListBuilder* aBuilder,
     data.mGLContext = gl;
     data.mSize = nsIntSize(mWidth, mHeight);
     data.mHasAlpha = gl->Caps().alpha;
-    data.mIsGLAlphaPremult = IsPremultAlpha();
+    data.mIsGLAlphaPremult = IsPremultAlpha() || !data.mHasAlpha;
 
     canvasLayer->Initialize(data);
     uint32_t flags = gl->Caps().alpha ? 0 : Layer::CONTENT_OPAQUE;
@@ -1288,6 +1404,10 @@ WebGLContext::UpdateContextLossStatus()
         if (mLastLossWasSimulated)
             return;
 
+        // Restore when the app is visible
+        if (mRestoreWhenVisible)
+            return;
+
         ForceRestoreContext();
         return;
     }
@@ -1321,16 +1441,22 @@ WebGLContext::UpdateContextLossStatus()
 }
 
 void
-WebGLContext::ForceLoseContext()
+WebGLContext::ForceLoseContext(bool simulateLosing)
 {
     printf_stderr("WebGL(%p)::ForceLoseContext\n", this);
     MOZ_ASSERT(!IsContextLost());
     mContextStatus = ContextLostAwaitingEvent;
     mContextLostErrorSet = false;
-    mLastLossWasSimulated = false;
 
     // Burn it all!
     DestroyResourcesAndContext();
+    mLastLossWasSimulated = simulateLosing;
+
+    // Register visibility change observer to defer the context restoring.
+    // Restore the context when the app is visible.
+    if (mRestoreWhenVisible && !mLastLossWasSimulated) {
+        mContextObserver->RegisterVisibilityChangeEvent();
+    }
 
     // Queue up a task, since we know the status changed.
     EnqueueUpdateContextLossStatus();
@@ -1342,6 +1468,8 @@ WebGLContext::ForceRestoreContext()
     printf_stderr("WebGL(%p)::ForceRestoreContext\n", this);
     mContextStatus = ContextLostAwaitingRestore;
     mAllowContextRestore = true; // Hey, you did say 'force'.
+
+    mContextObserver->UnregisterVisibilityChangeEvent();
 
     // Queue up a task, since we know the status changed.
     EnqueueUpdateContextLossStatus();
@@ -1378,7 +1506,7 @@ WebGLContext::GetSurfaceSnapshot(bool* aPremultAlpha)
         if (aPremultAlpha) {
             *aPremultAlpha = false;
         } else {
-            gfxUtils::PremultiplyDataSurface(surf);
+            gfxUtils::PremultiplyDataSurface(surf, surf);
         }
     }
 
@@ -1403,6 +1531,65 @@ WebGLContext::GetSurfaceSnapshot(bool* aPremultAlpha)
                     DrawOptions(1.0f, CompositionOp::OP_SOURCE));
 
     return dt->Snapshot();
+}
+
+bool WebGLContext::TexImageFromVideoElement(GLenum target, GLint level,
+                              GLenum internalformat, GLenum format, GLenum type,
+                              mozilla::dom::Element& elt)
+{
+    HTMLVideoElement* video = HTMLVideoElement::FromContentOrNull(&elt);
+    if (!video) {
+        return false;
+    }
+
+    uint16_t readyState;
+    if (NS_SUCCEEDED(video->GetReadyState(&readyState)) &&
+        readyState < nsIDOMHTMLMediaElement::HAVE_CURRENT_DATA)
+    {
+        //No frame inside, just return
+        return false;
+    }
+
+    // If it doesn't have a principal, just bail
+    nsCOMPtr<nsIPrincipal> principal = video->GetCurrentPrincipal();
+    if (!principal) {
+        return false;
+    }
+
+    mozilla::layers::ImageContainer* container = video->GetImageContainer();
+    if (!container) {
+        return false;
+    }
+
+    if (video->GetCORSMode() == CORS_NONE) {
+        bool subsumes;
+        nsresult rv = mCanvasElement->NodePrincipal()->Subsumes(principal, &subsumes);
+        if (NS_FAILED(rv) || !subsumes) {
+            GenerateWarning("It is forbidden to load a WebGL texture from a cross-domain element that has not been validated with CORS. "
+                                "See https://developer.mozilla.org/en/WebGL/Cross-Domain_Textures");
+            return false;
+        }
+    }
+
+    gl->MakeCurrent();
+    nsRefPtr<mozilla::layers::Image> srcImage = container->LockCurrentImage();
+    WebGLTexture* tex = activeBoundTextureForTarget(target);
+
+    const WebGLTexture::ImageInfo& info = tex->ImageInfoAt(target, 0);
+    bool dimensionsMatch = info.Width() == srcImage->GetSize().width &&
+                           info.Height() == srcImage->GetSize().height;
+    if (!dimensionsMatch) {
+        // we need to allocation
+        gl->fTexImage2D(target, level, internalformat, srcImage->GetSize().width, srcImage->GetSize().height, 0, format, type, nullptr);
+    }
+    bool ok = gl->BlitHelper()->BlitImageToTexture(srcImage.get(), srcImage->GetSize(), tex->GLName(), target, mPixelStoreFlipY);
+    if (ok) {
+        tex->SetImageInfo(target, level, srcImage->GetSize().width, srcImage->GetSize().height, format, type, WebGLImageDataStatus::InitializedImageData);
+        tex->Bind(target);
+    }
+    srcImage = nullptr;
+    container->UnlockCurrentImage();
+    return ok;
 }
 
 //

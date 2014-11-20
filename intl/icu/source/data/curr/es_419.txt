@@ -1,0 +1,146 @@
+﻿// ***************************************************************************
+// *
+// * Copyright (C) 2014 International Business Machines
+// * Corporation and others. All Rights Reserved.
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/es_419.xml
+// *
+// ***************************************************************************
+es_419{
+    Currencies{
+        AMD{
+            "AMD",
+            "dram",
+        }
+        AWG{
+            "AWG",
+            "florín arubeño",
+        }
+        BBD{
+            "BBD",
+            "dólar barbadense",
+        }
+        BSD{
+            "BSD",
+            "dólar bahameño",
+        }
+        BZD{
+            "BZD",
+            "dólar beliceño",
+        }
+        CAD{
+            "CAD",
+            "dólar canadiense",
+        }
+        ERN{
+            "ERN",
+            "nakfa",
+        }
+        EUR{
+            "EUR",
+            "euro",
+        }
+        HKD{
+            "HKD",
+            "dólar hongkonés",
+        }
+        ILS{
+            "ILS",
+            "nuevo sheqel israelí",
+        }
+        JMD{
+            "JMD",
+            "dólar jamaicano",
+        }
+        KZT{
+            "KZT",
+            "tenge kazako",
+        }
+        LKR{
+            "LKR",
+            "rupia esrilanquesa",
+        }
+        MOP{
+            "MOP",
+            "pataca",
+        }
+        THB{
+            "THB",
+            "bat",
+        }
+        USD{
+            "USD",
+            "dólar estadounidense",
+        }
+        VND{
+            "VND",
+            "dong",
+        }
+        XXX{
+            "XXX",
+            "moneda desconocida",
+        }
+        ZMW{
+            "ZMK",
+            "kuacha zambiano",
+        }
+    }
+    Currencies%narrow{
+        EUR{"€"}
+    }
+    CurrencyPlurals{
+        AWG{
+            one{"florín arubeño"}
+            other{"florines arubeños"}
+        }
+        BBD{
+            one{"dólar barbadense"}
+            other{"dólares barbadenses"}
+        }
+        BHD{
+            one{"dinar bareiní"}
+            other{"dinares bareiníes"}
+        }
+        BSD{
+            one{"dólar bahameño"}
+            other{"dólares bahameños"}
+        }
+        BZD{
+            one{"dólar beliceño"}
+            other{"dólares beliceños"}
+        }
+        HKD{
+            one{"dólar hongkonés"}
+            other{"dólares hongkoneses"}
+        }
+        ILS{
+            one{"nuevo sheqel israelí"}
+            other{"nuevos sheqels israelíes"}
+        }
+        JMD{
+            one{"dólar jamaicano"}
+            other{"dólares jamaicanos"}
+        }
+        KZT{
+            one{"tenge kazako"}
+            other{"tenges kazakos"}
+        }
+        LKR{
+            one{"rupia esrilanquesa"}
+            other{"rupias esrilanquesas"}
+        }
+        MOP{
+            one{"pataca"}
+            other{"patacas"}
+        }
+        MWK{
+            one{"kuacha malauí"}
+            other{"kuachas malauíes"}
+        }
+        XXX{
+            one{"(unidad de moneda desconocida)"}
+            other{"(moneda desconocida)"}
+        }
+    }
+    Version{"2.1.8.19"}
+}

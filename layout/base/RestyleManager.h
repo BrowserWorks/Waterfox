@@ -16,8 +16,9 @@
 #include "RestyleTracker.h"
 #include "nsPresContext.h"
 
-class nsRefreshDriver;
 class nsIFrame;
+class nsRefreshDriver;
+class nsStyleChangeList;
 struct TreeMatchContext;
 
 namespace mozilla {
@@ -106,7 +107,7 @@ public:
                           nsStyleChangeList* aChangeList,
                           nsChangeHint aMinChange,
                           RestyleTracker& aRestyleTracker,
-                          bool aRestyleDescendants);
+                          nsRestyleHint aRestyleHint);
 
 #ifdef DEBUG
   /**
@@ -240,9 +241,12 @@ private:
                       nsIFrame*       aPrimaryFrame,
                       nsChangeHint    aMinHint,
                       RestyleTracker& aRestyleTracker,
-                      bool            aRestyleDescendants);
+                      nsRestyleHint   aRestyleHint);
 
   void StyleChangeReflow(nsIFrame* aFrame, nsChangeHint aHint);
+
+  // Recursively add all the given frame and all children to the tracker.
+  void AddSubtreeToOverflowTracker(nsIFrame* aFrame);
 
   // Returns true if this function managed to successfully move a frame, and
   // false if it could not process the position change, and a reflow should

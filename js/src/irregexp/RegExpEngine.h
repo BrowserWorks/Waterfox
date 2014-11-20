@@ -103,18 +103,20 @@ struct RegExpCode
 
 RegExpCode
 CompilePattern(JSContext *cx, RegExpShared *shared, RegExpCompileData *data,
-               const jschar *sampleChars, size_t sampleLength,
-               bool is_global, bool ignore_case = false, bool is_ascii = false);
+               HandleLinearString sample,  bool is_global, bool ignore_case = false,
+               bool is_ascii = false);
 
 // Note: this may return RegExpRunStatus_Error if an interrupt was requested
 // while the code was executing.
+template <typename CharT>
 RegExpRunStatus
-ExecuteCode(JSContext *cx, jit::JitCode *codeBlock,
-            const jschar *chars, size_t start, size_t length, MatchPairs *matches);
+ExecuteCode(JSContext *cx, jit::JitCode *codeBlock, const CharT *chars, size_t start,
+            size_t length, MatchPairs *matches);
 
+template <typename CharT>
 RegExpRunStatus
-InterpretCode(JSContext *cx, const uint8_t *byteCode,
-              const jschar *chars, size_t start, size_t length, MatchPairs *matches);
+InterpretCode(JSContext *cx, const uint8_t *byteCode, const CharT *chars, size_t start,
+              size_t length, MatchPairs *matches);
 
 #define FOR_EACH_NODE_TYPE(VISIT)                                    \
   VISIT(End)                                                         \
@@ -524,7 +526,7 @@ class RegExpNode
                               int budget,
                               BoyerMooreLookahead* bm,
                               bool not_at_start) {
-        MOZ_ASSUME_UNREACHABLE("Bad call");
+        MOZ_CRASH("Bad call");
     }
 
     // If we know that the input is ASCII then there are some nodes that can
@@ -899,14 +901,14 @@ class EndNode : public RegExpNode
                                       bool not_at_start)
     {
         // Returning 0 from EatsAtLeast should ensure we never get here.
-        MOZ_ASSUME_UNREACHABLE("Bad call");
+        MOZ_CRASH("Bad call");
     }
     virtual bool FillInBMInfo(int offset,
                               int budget,
                               BoyerMooreLookahead* bm,
                               bool not_at_start) {
         // Returning 0 from EatsAtLeast should ensure we never get here.
-        MOZ_ASSUME_UNREACHABLE("Bad call");
+        MOZ_CRASH("Bad call");
     }
 
   private:

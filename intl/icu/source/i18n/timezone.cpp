@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 1997-2013, International Business Machines Corporation and
+* Copyright (C) 1997-2014, International Business Machines Corporation and
 * others. All Rights Reserved.
 *******************************************************************************
 *
@@ -1293,6 +1293,8 @@ TimeZone::getCustomID(const UnicodeString& id, UnicodeString& normalized, UError
     int32_t sign, hour, min, sec;
     if (parseCustomID(id, sign, hour, min, sec)) {
         formatCustomID(hour, min, sec, (sign < 0), normalized);
+    } else {
+        status = U_ILLEGAL_ARGUMENT_ERROR;
     }
     return normalized;
 }
@@ -1538,6 +1540,11 @@ TimeZone::getWindowsID(const UnicodeString& id, UnicodeString& winid, UErrorCode
     getCanonicalID(id, canonicalID, isSystemID, status);
     if (U_FAILURE(status) || !isSystemID) {
         // mapping data is only applicable to tz database IDs
+        if (status == U_ILLEGAL_ARGUMENT_ERROR) {
+            // getWindowsID() sets an empty string where
+            // getCanonicalID() sets a U_ILLEGAL_ARGUMENT_ERROR.
+            status = U_ZERO_ERROR;
+        }
         return winid;
     }
 

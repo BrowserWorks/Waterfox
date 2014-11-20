@@ -252,6 +252,8 @@ class HTMLInputElementState MOZ_FINAL : public nsISupports
     {};
 
   protected:
+    ~HTMLInputElementState() {}
+
     nsString mValue;
     nsTArray<nsCOMPtr<nsIDOMFile> > mFiles;
     bool mChecked;
@@ -330,6 +332,8 @@ namespace {
 class DirPickerRecursiveFileEnumerator MOZ_FINAL
   : public nsISimpleEnumerator
 {
+  ~DirPickerRecursiveFileEnumerator() {}
+
 public:
   NS_DECL_ISUPPORTS
 
@@ -370,7 +374,7 @@ public:
     if (!mNextFile) {
       return NS_ERROR_FAILURE;
     }
-    nsRefPtr<nsDOMFileFile> domFile = new nsDOMFileFile(mNextFile);
+    nsRefPtr<DOMFile> domFile = DOMFile::CreateFromFile(mNextFile);
     nsCString relDescriptor;
     nsresult rv =
       mNextFile->GetRelativeDescriptor(mTopDirsParent, relDescriptor);
@@ -383,7 +387,10 @@ public:
     MOZ_ASSERT(length >= 0);
     if (length > 0) {
       // Note that we leave the trailing "/" on the path.
-      domFile->SetPath(Substring(path, 0, uint32_t(length)));
+      DOMFileImplFile* fileImpl =
+        static_cast<DOMFileImplFile*>(domFile->Impl());
+      MOZ_ASSERT(fileImpl);
+      fileImpl->SetPath(Substring(path, 0, uint32_t(length)));
     }
     *aResult = domFile.forget().downcast<nsIDOMFile>().take();
     LookupAndCacheNext();
@@ -706,6 +713,8 @@ NS_IMPL_ISUPPORTS(HTMLInputElement::nsFilePickerShownCallback,
 class nsColorPickerShownCallback MOZ_FINAL
   : public nsIColorPickerShownCallback
 {
+  ~nsColorPickerShownCallback() {}
+
 public:
   nsColorPickerShownCallback(HTMLInputElement* aInput,
                              nsIColorPicker* aColorPicker)
@@ -842,7 +851,7 @@ HTMLInputElement::InitColorPicker()
   }
 
   if (IsPopupBlocked()) {
-    nsGlobalWindow::FirePopupBlockedEvent(doc, win, nullptr, EmptyString(), EmptyString());
+    win->FirePopupBlockedEvent(doc, nullptr, EmptyString(), EmptyString());
     return NS_OK;
   }
 
@@ -889,7 +898,7 @@ HTMLInputElement::InitFilePicker(FilePickerType aType)
   }
 
   if (IsPopupBlocked()) {
-    nsGlobalWindow::FirePopupBlockedEvent(doc, win, nullptr, EmptyString(), EmptyString());
+    win->FirePopupBlockedEvent(doc, nullptr, EmptyString(), EmptyString());
     return NS_OK;
   }
 
@@ -1095,7 +1104,7 @@ static nsresult FireEventForAccessibility(nsIDOMHTMLInputElement* aTarget,
 // construction, destruction
 //
 
-HTMLInputElement::HTMLInputElement(already_AddRefed<nsINodeInfo>& aNodeInfo,
+HTMLInputElement::HTMLInputElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo,
                                    FromParser aFromParser)
   : nsGenericHTMLFormElementWithState(aNodeInfo)
   , mType(kInputDefaultType->value)
@@ -1228,11 +1237,11 @@ NS_IMPL_NSICONSTRAINTVALIDATION_EXCEPT_SETCUSTOMVALIDITY(HTMLInputElement)
 // nsIDOMNode
 
 nsresult
-HTMLInputElement::Clone(nsINodeInfo* aNodeInfo, nsINode** aResult) const
+HTMLInputElement::Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult) const
 {
   *aResult = nullptr;
 
-  already_AddRefed<nsINodeInfo> ni = nsCOMPtr<nsINodeInfo>(aNodeInfo).forget();
+  already_AddRefed<mozilla::dom::NodeInfo> ni = nsRefPtr<mozilla::dom::NodeInfo>(aNodeInfo).forget();
   nsRefPtr<HTMLInputElement> it = new HTMLInputElement(ni, NOT_FROM_PARSER);
 
   nsresult rv = const_cast<HTMLInputElement*>(this)->CopyInnerTo(it);
@@ -1520,23 +1529,10 @@ HTMLInputElement::GetAutocomplete(nsAString& aValue)
 {
   aValue.Truncate(0);
   const nsAttrValue* attributeVal = GetParsedAttr(nsGkAtoms::autocomplete);
-  if (!attributeVal ||
-      mAutocompleteAttrState == nsContentUtils::eAutocompleteAttrState_Invalid) {
-    return NS_OK;
-  }
-  if (mAutocompleteAttrState == nsContentUtils::eAutocompleteAttrState_Valid) {
-    uint32_t atomCount = attributeVal->GetAtomCount();
-    for (uint32_t i = 0; i < atomCount; i++) {
-      if (i != 0) {
-        aValue.Append(' ');
-      }
-      aValue.Append(nsDependentAtomString(attributeVal->AtomAt(i)));
-    }
-    nsContentUtils::ASCIIToLower(aValue);
-    return NS_OK;
-  }
 
-  mAutocompleteAttrState = nsContentUtils::SerializeAutocompleteAttribute(attributeVal, aValue);
+  mAutocompleteAttrState =
+    nsContentUtils::SerializeAutocompleteAttribute(attributeVal, aValue,
+                                                   mAutocompleteAttrState);
   return NS_OK;
 }
 
@@ -1544,6 +1540,15 @@ NS_IMETHODIMP
 HTMLInputElement::SetAutocomplete(const nsAString& aValue)
 {
   return SetAttr(kNameSpaceID_None, nsGkAtoms::autocomplete, nullptr, aValue, true);
+}
+
+void
+HTMLInputElement::GetAutocompleteInfo(AutocompleteInfo& aInfo)
+{
+  const nsAttrValue* attributeVal = GetParsedAttr(nsGkAtoms::autocomplete);
+  mAutocompleteAttrState =
+    nsContentUtils::SerializeAutocompleteAttribute(attributeVal, aInfo,
+                                                   mAutocompleteAttrState);
 }
 
 int32_t
@@ -2312,7 +2317,7 @@ HTMLInputElement::MozSetFileNameArray(const Sequence< nsString >& aFileNames)
     }
 
     if (file) {
-      nsCOMPtr<nsIDOMFile> domFile = new nsDOMFileFile(file);
+      nsCOMPtr<nsIDOMFile> domFile = DOMFile::CreateFromFile(file);
       files.AppendElement(domFile);
     } else {
       continue; // Not much we can do if the file doesn't exist
@@ -6590,6 +6595,8 @@ HTMLInputElement::UpdateValueMissingValidityStateForRadio(bool aIgnoreSelf)
   bool notify = !mParserCreating;
   nsCOMPtr<nsIDOMHTMLInputElement> selection = GetSelectedRadioButton();
 
+  aIgnoreSelf = aIgnoreSelf || !IsMutable();
+
   // If there is no selection, that might mean the radio is not in a group.
   // In that case, we can look for the checked state of the radio.
   bool selected = selection || (!aIgnoreSelf && mChecked);
@@ -6615,7 +6622,7 @@ HTMLInputElement::UpdateValueMissingValidityStateForRadio(bool aIgnoreSelf)
                  : container->GetRequiredRadioCount(name);
   }
 
-  valueMissing = IsMutable() && required && !selected;
+  valueMissing = required && !selected;
 
   if (container->GetValueMissingState(name) != valueMissing) {
     container->SetValueMissingState(name, valueMissing);

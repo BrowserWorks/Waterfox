@@ -1,4 +1,4 @@
-//* -*- Mode: Javascript; tab-width: 8; indent-tabs-mode: nil; js-indent-level: 2 -*- *
+//* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- *
 function dumpn(s) {
   dump(s + "\n");
 }
@@ -174,9 +174,8 @@ function doStreamUpdate(updateText, success, failure, downloadFailure) {
   if (!downloadFailure)
     downloadFailure = failure;
 
-  streamUpdater.updateUrl = dataUpdate;
   streamUpdater.downloadUpdates("test-phish-simple,test-malware-simple", "",
-                                success, failure, downloadFailure);
+                                dataUpdate, success, failure, downloadFailure);
 }
 
 var gAssertions = {

@@ -31,6 +31,7 @@ ImageHost::ImageHost(const TextureInfo& aTextureInfo)
   : CompositableHost(aTextureInfo)
   , mFrontBuffer(nullptr)
   , mHasPictureRect(false)
+  , mLocked(false)
 {}
 
 ImageHost::~ImageHost() {}
@@ -81,18 +82,17 @@ ImageHost::Composite(EffectChain& aEffectChain,
   mFrontBuffer->SetCompositor(GetCompositor());
   mFrontBuffer->SetCompositableBackendSpecificData(GetCompositableBackendSpecificData());
 
-  AutoLockTextureHost autoLock(mFrontBuffer);
+  AutoLockCompositableHost autoLock(this);
   if (autoLock.Failed()) {
     NS_WARNING("failed to lock front buffer");
     return;
   }
-  RefPtr<NewTextureSource> source = mFrontBuffer->GetTextureSources();
+  RefPtr<NewTextureSource> source = GetTextureSource();
   if (!source) {
     return;
   }
-  RefPtr<TexturedEffect> effect = CreateTexturedEffect(mFrontBuffer->GetFormat(),
-                                                       source,
-                                                       aFilter);
+
+  RefPtr<TexturedEffect> effect = GenEffect(aFilter);
   if (!effect) {
     return;
   }
@@ -189,36 +189,33 @@ ImageHost::SetCompositor(Compositor* aCompositor)
 }
 
 void
-ImageHost::PrintInfo(nsACString& aTo, const char* aPrefix)
+ImageHost::PrintInfo(std::stringstream& aStream, const char* aPrefix)
 {
-  aTo += aPrefix;
-  aTo += nsPrintfCString("ImageHost (0x%p)", this);
+  aStream << aPrefix;
+  aStream << nsPrintfCString("ImageHost (0x%p)", this).get();
 
-  AppendToString(aTo, mPictureRect, " [picture-rect=", "]");
+  AppendToString(aStream, mPictureRect, " [picture-rect=", "]");
 
   if (mFrontBuffer) {
     nsAutoCString pfx(aPrefix);
     pfx += "  ";
-    aTo += "\n";
-    mFrontBuffer->PrintInfo(aTo, pfx.get());
+    aStream << "\n";
+    mFrontBuffer->PrintInfo(aStream, pfx.get());
   }
 }
 
 #ifdef MOZ_DUMP_PAINTING
 void
-ImageHost::Dump(FILE* aFile,
+ImageHost::Dump(std::stringstream& aStream,
                 const char* aPrefix,
                 bool aDumpHtml)
 {
-  if (!aFile) {
-    aFile = stderr;
-  }
   if (mFrontBuffer) {
-    fprintf_stderr(aFile, "%s", aPrefix);
-    fprintf_stderr(aFile, aDumpHtml ? "<ul><li>TextureHost: "
+    aStream << aPrefix;
+    aStream << (aDumpHtml ? "<ul><li>TextureHost: "
                              : "TextureHost: ");
-    DumpTextureHost(aFile, mFrontBuffer);
-    fprintf_stderr(aFile, aDumpHtml ? " </li></ul> " : " ");
+    DumpTextureHost(aStream, mFrontBuffer);
+    aStream << (aDumpHtml ? " </li></ul> " : " ");
   }
 }
 #endif
@@ -239,6 +236,49 @@ ImageHost::GetAsSurface()
   return mFrontBuffer->GetAsSurface();
 }
 #endif
+
+bool
+ImageHost::Lock()
+{
+  MOZ_ASSERT(!mLocked);
+  if (!mFrontBuffer->Lock()) {
+    return false;
+  }
+  mLocked = true;
+  return true;
+}
+
+void
+ImageHost::Unlock()
+{
+  MOZ_ASSERT(mLocked);
+  mFrontBuffer->Unlock();
+  mLocked = false;
+}
+
+TemporaryRef<NewTextureSource>
+ImageHost::GetTextureSource()
+{
+  MOZ_ASSERT(mLocked);
+  return mFrontBuffer->GetTextureSources();
+}
+
+TemporaryRef<TexturedEffect>
+ImageHost::GenEffect(const gfx::Filter& aFilter)
+{
+  RefPtr<NewTextureSource> source = GetTextureSource();
+  if (!source) {
+    return nullptr;
+  }
+  bool isAlphaPremultiplied = true;
+  if (mFrontBuffer->GetFlags() & TextureFlags::NON_PREMULTIPLIED)
+    isAlphaPremultiplied = false;
+
+  return CreateTexturedEffect(mFrontBuffer->GetFormat(),
+                              source,
+                              aFilter,
+                              isAlphaPremultiplied);
+}
 
 }
 }

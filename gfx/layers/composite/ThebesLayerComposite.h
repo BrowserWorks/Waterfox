@@ -38,8 +38,11 @@ class ThebesLayerComposite : public ThebesLayer,
 {
 public:
   ThebesLayerComposite(LayerManagerComposite *aManager);
+
+protected:
   virtual ~ThebesLayerComposite();
 
+public:
   virtual void Disconnect() MOZ_OVERRIDE;
 
   virtual LayerRenderState GetRenderState() MOZ_OVERRIDE;
@@ -55,6 +58,8 @@ public:
   virtual void RenderLayer(const nsIntRect& aClipRect) MOZ_OVERRIDE;
 
   virtual void CleanupResources() MOZ_OVERRIDE;
+
+  virtual void GenEffectChain(EffectChain& aEffect) MOZ_OVERRIDE;
 
   virtual bool SetCompositableHost(CompositableHost* aHost) MOZ_OVERRIDE;
 
@@ -78,11 +83,14 @@ public:
 
 protected:
 
-  virtual nsACString& PrintInfo(nsACString& aTo, const char* aPrefix) MOZ_OVERRIDE;
+  virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix) MOZ_OVERRIDE;
 
 private:
+  gfx::Filter GetEffectFilter() { return gfx::Filter::LINEAR; }
+
   CSSToScreenScale GetEffectiveResolution();
 
+private:
   RefPtr<ContentHost> mBuffer;
   bool mRequiresTiledProperties;
 };

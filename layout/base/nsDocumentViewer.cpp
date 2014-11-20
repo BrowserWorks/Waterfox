@@ -21,7 +21,6 @@
 #include "nsPresContext.h"
 #include "nsIPresShell.h"
 #include "nsStyleSet.h"
-#include "nsCSSStyleSheet.h"
 #include "nsIFrame.h"
 #include "nsIWritablePropertyBag2.h"
 #include "nsSubDocumentFrame.h"
@@ -49,6 +48,7 @@
 #include "nsNetUtil.h"
 #include "nsIContentViewerEdit.h"
 #include "nsIContentViewerFile.h"
+#include "mozilla/CSSStyleSheet.h"
 #include "mozilla/css/Loader.h"
 #include "nsIMarkupDocumentViewer.h"
 #include "nsIInterfaceRequestor.h"
@@ -180,11 +180,11 @@ public:
                        {
                        }
 
-  virtual              ~nsDocViewerSelectionListener() {}
-
   nsresult             Init(nsDocumentViewer *aDocViewer);
 
 protected:
+
+  virtual              ~nsDocViewerSelectionListener() {}
 
   nsDocumentViewer*  mDocViewer;
   bool                 mGotSelectionState;
@@ -201,14 +201,16 @@ public:
   /** default constructor
    */
   nsDocViewerFocusListener();
-  /** default destructor
-   */
-  virtual ~nsDocViewerFocusListener();
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSIDOMEVENTLISTENER
 
   nsresult             Init(nsDocumentViewer *aDocViewer);
+
+protected:
+  /** default destructor
+   */
+  virtual ~nsDocViewerFocusListener();
 
 private:
     nsDocumentViewer*  mDocViewer;
@@ -898,7 +900,11 @@ nsDocumentViewer::InitInternal(nsIWidget* aParentWidget,
     if (window) {
       nsCOMPtr<nsIDocument> curDoc = window->GetExtantDoc();
       if (aForceSetNewDocument || curDoc != mDocument) {
-        window->SetNewDocument(mDocument, aState, false);
+        rv = window->SetNewDocument(mDocument, aState, false);
+        if (NS_FAILED(rv)) {
+          Destroy();
+          return rv;
+        }
         nsJSContext::LoadStart();
       }
     }
@@ -1375,6 +1381,7 @@ AttachContainerRecurse(nsIDocShell* aShell)
   nsCOMPtr<nsIContentViewer> viewer;
   aShell->GetContentViewer(getter_AddRefs(viewer));
   if (viewer) {
+    viewer->SetIsHidden(false);
     nsIDocument* doc = viewer->GetDocument();
     if (doc) {
       doc->SetContainer(static_cast<nsDocShell*>(aShell));
@@ -1799,16 +1806,6 @@ nsDocumentViewer::SetDocumentInternal(nsIDocument* aDocument,
       mDocument->SetScriptGlobalObject(nullptr);
       mDocument->Destroy();
     }
-    // Replace the old document with the new one. Do this only when
-    // the new document really is a new document.
-    mDocument = aDocument;
-
-    // Set the script global object on the new document
-    nsCOMPtr<nsPIDOMWindow> window =
-      mContainer ? mContainer->GetWindow() : nullptr;
-    if (window) {
-      window->SetNewDocument(aDocument, nullptr, aForceReuseInnerWindow);
-    }
 
     // Clear the list of old child docshells. Child docshells for the new
     // document will be constructed as frames are created.
@@ -1822,6 +1819,22 @@ nsDocumentViewer::SetDocumentInternal(nsIDocument* aDocument,
           node->GetChildAt(0, getter_AddRefs(child));
           node->RemoveChild(child);
         }
+      }
+    }
+
+    // Replace the old document with the new one. Do this only when
+    // the new document really is a new document.
+    mDocument = aDocument;
+
+    // Set the script global object on the new document
+    nsCOMPtr<nsPIDOMWindow> window =
+      mContainer ? mContainer->GetWindow() : nullptr;
+    if (window) {
+      nsresult rv = window->SetNewDocument(aDocument, nullptr,
+                                           aForceReuseInnerWindow);
+      if (NS_FAILED(rv)) {
+        Destroy();
+        return rv;
       }
     }
   }
@@ -1839,7 +1852,7 @@ nsDocumentViewer::SetDocumentInternal(nsIDocument* aDocument,
     DestroyPresContext();
 
     mWindow = nullptr;
-    InitInternal(mParentWidget, nullptr, mBounds, true, true, false);
+    rv = InitInternal(mParentWidget, nullptr, mBounds, true, true, false);
   }
 
   return rv;
@@ -2215,7 +2228,7 @@ nsDocumentViewer::CreateStyleSet(nsIDocument* aDocument,
   }
 
   // Handle the user sheets.
-  nsCSSStyleSheet* sheet = nullptr;
+  CSSStyleSheet* sheet = nullptr;
   if (nsContentUtils::IsInChromeDocshell(aDocument)) {
     sheet = nsLayoutStylesheetCache::UserChromeSheet();
   }
@@ -2233,7 +2246,7 @@ nsDocumentViewer::CreateStyleSet(nsIDocument* aDocument,
   nsCOMPtr<nsIDocShell> ds(mContainer);
   nsCOMPtr<nsIDOMEventTarget> chromeHandler;
   nsCOMPtr<nsIURI> uri;
-  nsRefPtr<nsCSSStyleSheet> csssheet;
+  nsRefPtr<CSSStyleSheet> csssheet;
 
   if (ds) {
     ds->GetChromeEventHandler(getter_AddRefs(chromeHandler));
@@ -2302,8 +2315,8 @@ nsDocumentViewer::CreateStyleSet(nsIDocument* aDocument,
 
     // Make sure to clone the quirk sheet so that it can be usefully
     // enabled/disabled as needed.
-    nsRefPtr<nsCSSStyleSheet> quirkClone;
-    nsCSSStyleSheet* quirkSheet;
+    nsRefPtr<CSSStyleSheet> quirkClone;
+    CSSStyleSheet* quirkSheet;
     if (!nsLayoutStylesheetCache::UASheet() ||
         !(quirkSheet = nsLayoutStylesheetCache::QuirkSheet()) ||
         !(quirkClone = quirkSheet->Clone(nullptr, nullptr, nullptr, nullptr)) ||
@@ -2329,6 +2342,11 @@ nsDocumentViewer::CreateStyleSet(nsIDocument* aDocument,
     if (sheet) {
       // Load the minimal XUL rules for scrollbars and a few other XUL things
       // that non-XUL (typically HTML) documents commonly use.
+      styleSet->PrependStyleSheet(nsStyleSet::eAgentSheet, sheet);
+    }
+
+    sheet = nsLayoutStylesheetCache::CounterStylesSheet();
+    if (sheet) {
       styleSet->PrependStyleSheet(nsStyleSet::eAgentSheet, sheet);
     }
 
@@ -4383,7 +4401,8 @@ NS_IMETHODIMP nsDocumentViewer::SetPageMode(bool aPageMode, nsIPrintSettings* aP
     nsresult rv = mPresContext->Init(mDeviceContext);
     NS_ENSURE_SUCCESS(rv, rv);
   }
-  InitInternal(mParentWidget, nullptr, mBounds, true, false);
+  NS_ENSURE_SUCCESS(InitInternal(mParentWidget, nullptr, mBounds, true, false),
+                    NS_ERROR_FAILURE);
 
   Show();
   return NS_OK;
@@ -4407,6 +4426,13 @@ NS_IMETHODIMP
 nsDocumentViewer::GetIsHidden(bool *aHidden)
 {
   *aHidden = mHidden;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDocumentViewer::SetIsHidden(bool aHidden)
+{
+  mHidden = aHidden;
   return NS_OK;
 }
 

@@ -1,4 +1,4 @@
-/* -*- Mode: javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -145,6 +145,11 @@ SourcesView.prototype = Heritage.extend(WidgetMethods, {
     contents.setAttribute("crop", "start");
     contents.setAttribute("flex", "1");
     contents.setAttribute("tooltiptext", unicodeUrl);
+
+    // If the source is blackboxed, apply the appropriate style.
+    if (gThreadClient.source(aSource).isBlackBoxed) {
+      contents.classList.add("black-boxed");
+    }
 
     // Append a source item to this container.
     this.push([contents, fullUrl], {
@@ -1792,7 +1797,7 @@ function VariableBubbleView() {
   dumpn("VariableBubbleView was instantiated");
 
   this._onMouseMove = this._onMouseMove.bind(this);
-  this._onMouseLeave = this._onMouseLeave.bind(this);
+  this._onMouseOut = this._onMouseOut.bind(this);
   this._onPopupHiding = this._onPopupHiding.bind(this);
 }
 
@@ -1805,7 +1810,7 @@ VariableBubbleView.prototype = {
 
     this._editorContainer = document.getElementById("editor");
     this._editorContainer.addEventListener("mousemove", this._onMouseMove, false);
-    this._editorContainer.addEventListener("mouseleave", this._onMouseLeave, false);
+    this._editorContainer.addEventListener("mouseout", this._onMouseOut, false);
 
     this._tooltip = new Tooltip(document, {
       closeOnEvents: [{
@@ -1830,7 +1835,7 @@ VariableBubbleView.prototype = {
 
     this._tooltip.panel.removeEventListener("popuphiding", this._onPopupHiding);
     this._editorContainer.removeEventListener("mousemove", this._onMouseMove, false);
-    this._editorContainer.removeEventListener("mouseleave", this._onMouseLeave, false);
+    this._editorContainer.removeEventListener("mouseout", this._onMouseOut, false);
   },
 
   /**
@@ -2047,9 +2052,9 @@ VariableBubbleView.prototype = {
   },
 
   /**
-   * The mouseleave listener for the source editor container node.
+   * The mouseout listener for the source editor container node.
    */
-  _onMouseLeave: function() {
+  _onMouseOut: function() {
     clearNamedTimeout("editor-mouse-move");
   },
 

@@ -6,6 +6,10 @@ ifndef INCLUDED_RULES_MK
 include $(topsrcdir)/config/rules.mk
 endif
 
+# Make sure that anything that needs to be defined in moz.build wasn't
+# overwritten after including rules.mk.
+_eval_for_side_effects := $(CHECK_MOZBUILD_VARIABLES)
+
 # The traditional model of directory traversal with make is as follows:
 #   make -C foo
 #     Entering foo
@@ -22,8 +26,7 @@ endif
 #   make -C foo/baz
 #   make -C qux
 
-# MOZ_PSEUDO_DERECURSE can have values other than 1.
-ifeq (1_.,$(if $(MOZ_PSEUDO_DERECURSE),1)_$(DEPTH))
+ifeq (.,$(DEPTH))
 
 include root.mk
 
@@ -92,7 +95,7 @@ GARBAGE_DIRS += subtiers
 # root.mk defines subtier_of_* variables, that map a normalized subdir path to
 # a subtier name (e.g. subtier_of_memory_jemalloc = base)
 $(addsuffix /$(CURRENT_TIER),$(CURRENT_DIRS)): %/$(CURRENT_TIER):
-	+@$(MAKE) -C $* $(if $(filter $*,$(tier_$(subtier_of_$(subst /,_,$*))_staticdirs)),,$(CURRENT_TIER))
+	$(call SUBMAKE,$(if $(filter $*,$(tier_$(subtier_of_$(subst /,_,$*))_staticdirs)),,$(CURRENT_TIER)),$*)
 # Ensure existing stamps are up-to-date, but don't create one if submake didn't create one.
 	$(if $(wildcard $@),@$(STAMP_TOUCH))
 
@@ -106,6 +109,8 @@ $(addsuffix /$(CURRENT_TIER),$(filter-out config,$(CURRENT_DIRS))): config/$(CUR
 endif
 
 ifdef COMPILE_ENVIRONMENT
+# Disable dependency aggregation on PGO builds because of bug 934166.
+ifeq (,$(MOZ_PGO)$(MOZ_PROFILE_USE)$(MOZ_PROFILE_GENERATE))
 ifneq (,$(filter libs binaries,$(CURRENT_TIER)))
 # When doing a "libs" build, target_libs.mk ensures the interesting dependency data
 # is available in the "binaries" stamp. Once recursion is done, aggregate all that
@@ -121,8 +126,8 @@ recurse_$(CURRENT_TIER):
 
 # Creating binaries-deps.mk directly would make us build it twice: once when beginning
 # the build because of the include, and once at the end because of the stamps.
-binaries-deps: $(addsuffix /binaries,$(CURRENT_DIRS))
-	@$(call py_action,link_deps,-o $@.mk --group-by-depfile --topsrcdir $(topsrcdir) --topobjdir $(DEPTH) --dist $(DIST) --guard $(addprefix ',$(addsuffix ',$^)))
+binaries-deps:
+	@$(call py_action,link_deps,-o $@.mk --group-by-depfile --topsrcdir $(topsrcdir) --topobjdir $(DEPTH) --dist $(DIST) --guard $(addprefix ',$(addsuffix ', $(wildcard $(addsuffix /binaries,$(CURRENT_DIRS))))))
 	@$(TOUCH) $@
 
 ifeq (recurse_binaries,$(MAKECMDGOALS))
@@ -132,6 +137,8 @@ endif
 endif
 
 DIST_GARBAGE += binaries-deps.mk binaries-deps
+
+endif
 
 endif
 
@@ -185,9 +192,7 @@ endif # ifdef TIERS
 
 endif # ifeq ($(NO_RECURSE_MAKELEVEL),$(MAKELEVEL))
 
-endif # ifeq (1_.,$(MOZ_PSEUDO_DERECURSE)_$(DEPTH))
-
-ifdef MOZ_PSEUDO_DERECURSE
+endif # ifeq (.,$(DEPTH))
 
 ifdef COMPILE_ENVIRONMENT
 
@@ -204,13 +209,14 @@ ALL_DEP_FILES := \
 endif
 
 binaries libs:: $(TARGETS) $(BINARIES_PP)
+# Disable dependency aggregation on PGO builds because of bug 934166.
+ifeq (,$(MOZ_PGO)$(MOZ_PROFILE_USE)$(MOZ_PROFILE_GENERATE))
 ifneq (.,$(DEPTH))
 	@$(if $^,$(call py_action,link_deps,-o binaries --group-all --topsrcdir $(topsrcdir) --topobjdir $(DEPTH) --dist $(DIST) $(ALL_DEP_FILES)))
 endif
-
 endif
 
-endif # ifdef MOZ_PSEUDO_DERECURSE
+endif
 
 recurse:
 	@$(RECURSED_COMMAND)

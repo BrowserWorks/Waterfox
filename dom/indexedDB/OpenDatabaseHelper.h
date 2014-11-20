@@ -19,7 +19,7 @@ class mozIStorageConnection;
 
 namespace mozilla {
 namespace dom {
-class ContentParent;
+class nsIContentParent;
 }
 }
 
@@ -34,6 +34,8 @@ class OpenDatabaseHelper : public HelperBase
   typedef mozilla::dom::quota::PersistenceType PersistenceType;
   typedef mozilla::dom::quota::StoragePrivilege StoragePrivilege;
 
+  ~OpenDatabaseHelper() {}
+
 public:
   OpenDatabaseHelper(IDBOpenDBRequest* aRequest,
                      const nsAString& aName,
@@ -42,7 +44,7 @@ public:
                      uint64_t aRequestedVersion,
                      PersistenceType aPersistenceType,
                      bool aForDeletion,
-                     mozilla::dom::ContentParent* aContentParent,
+                     mozilla::dom::nsIContentParent* aContentParent,
                      StoragePrivilege aPrivilege)
     : HelperBase(aRequest), mOpenDBRequest(aRequest), mName(aName),
       mGroup(aGroup), mASCIIOrigin(aASCIIOrigin),
@@ -137,7 +139,7 @@ protected:
   bool mForDeletion;
   StoragePrivilege mPrivilege;
   nsCString mDatabaseId;
-  mozilla::dom::ContentParent* mContentParent;
+  mozilla::dom::nsIContentParent* mContentParent;
 
   // Out-params.
   nsTArray<nsRefPtr<ObjectStoreInfo> > mObjectStores;

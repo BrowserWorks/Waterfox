@@ -90,6 +90,19 @@ def long_press_action(marionette, wait_for_condition, expected):
     action.long_press(button, 5).perform()
     wait_for_condition(lambda m: expected in m.execute_script("return document.getElementById('button1').innerHTML;"))
 
+def long_press_on_xy_action(marionette, wait_for_condition, expected):
+    testAction = marionette.absolute_url("testAction.html")
+    marionette.navigate(testAction)
+    html = marionette.find_element("tag name", "html")
+    button = marionette.find_element("id", "button1")
+    action = Actions(marionette)
+
+    # Press the center of the button with respect to html.
+    x = button.rect['x'] + button.rect['width'] / 2.0
+    y = button.rect['y'] + button.rect['height'] / 2.0
+    action.long_press(html, 5, x, y).perform()
+    wait_for_condition(lambda m: expected in m.execute_script("return document.getElementById('button1').innerHTML;"))
+
 def single_tap(marionette, wait_for_condition, expected):
     testAction = marionette.absolute_url("testAction.html")
     marionette.navigate(testAction)

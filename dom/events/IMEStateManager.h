@@ -37,6 +37,7 @@ class IMEStateManager
   typedef widget::InputContextAction InputContextAction;
 
 public:
+  static void Init();
   static void Shutdown();
 
   static nsresult OnDestroyPresContext(nsPresContext* aPresContext);
@@ -135,7 +136,7 @@ protected:
 
   static void EnsureTextCompositionArray();
   static void CreateIMEContentObserver();
-  static void DestroyTextStateManager();
+  static void DestroyIMEContentObserver();
 
   static bool IsEditable(nsINode* node);
 
@@ -145,6 +146,23 @@ protected:
   static nsPresContext* sPresContext;
   static bool           sInstalledMenuKeyboardListener;
   static bool           sIsTestingIME;
+  static bool           sIsGettingNewIMEState;
+
+  class MOZ_STACK_CLASS GettingNewIMEStateBlocker MOZ_FINAL
+  {
+  public:
+    GettingNewIMEStateBlocker()
+      : mOldValue(IMEStateManager::sIsGettingNewIMEState)
+    {
+      IMEStateManager::sIsGettingNewIMEState = true;
+    }
+    ~GettingNewIMEStateBlocker()
+    {
+      IMEStateManager::sIsGettingNewIMEState = mOldValue;
+    }
+  private:
+    bool mOldValue;
+  };
 
   static IMEContentObserver* sActiveIMEContentObserver;
 

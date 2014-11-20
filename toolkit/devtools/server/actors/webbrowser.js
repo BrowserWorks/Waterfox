@@ -1,4 +1,4 @@
-/* -*- Mode: javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -812,7 +812,7 @@ TabActor.prototype = {
     return {
       type: "tabAttached",
       threadActor: this.threadActor.actorID,
-      cacheEnabled: this._getCacheEnabled(),
+      cacheDisabled: this._getCacheDisabled(),
       javascriptEnabled: this._getJavascriptEnabled(),
       traits: this.traits,
     };
@@ -875,10 +875,9 @@ TabActor.prototype = {
       this._setJavascriptEnabled(options.javascriptEnabled);
       reload = true;
     }
-    if (typeof options.cacheEnabled !== "undefined" &&
-        options.cacheEnabled !== this._getCacheEnabled()) {
-      this._setCacheEnabled(options.cacheEnabled);
-      reload = true;
+    if (typeof options.cacheDisabled !== "undefined" &&
+        options.cacheDisabled !== this._getCacheDisabled()) {
+      this._setCacheDisabled(options.cacheDisabled);
     }
 
     // Reload if:
@@ -894,12 +893,13 @@ TabActor.prototype = {
   /**
    * Disable or enable the cache via docShell.
    */
-  _setCacheEnabled: function(allow) {
+  _setCacheDisabled: function(disabled) {
     let enable =  Ci.nsIRequest.LOAD_NORMAL;
     let disable = Ci.nsIRequest.LOAD_BYPASS_CACHE |
                   Ci.nsIRequest.INHIBIT_CACHING;
+
     if (this.docShell) {
-      this.docShell.defaultLoadFlags = allow ? enable : disable;
+      this.docShell.defaultLoadFlags = disabled ? disable : enable;
     }
   },
 
@@ -915,7 +915,7 @@ TabActor.prototype = {
   /**
    * Return cache allowed status.
    */
-  _getCacheEnabled: function() {
+  _getCacheDisabled: function() {
     if (!this.docShell) {
       // The tab is already closed.
       return null;
@@ -923,7 +923,7 @@ TabActor.prototype = {
 
     let disable = Ci.nsIRequest.LOAD_BYPASS_CACHE |
                   Ci.nsIRequest.INHIBIT_CACHING;
-    return this.docShell.defaultLoadFlags !== disable;
+    return this.docShell.defaultLoadFlags === disable;
   },
 
   /**
@@ -1152,7 +1152,11 @@ BrowserTabActor.prototype.constructor = BrowserTabActor;
 
 Object.defineProperty(BrowserTabActor.prototype, "docShell", {
   get: function() {
-    return this._browser.docShell;
+    if (this._browser) {
+      return this._browser.docShell;
+    }
+    // The tab is closed.
+    return null;
   },
   enumerable: true,
   configurable: false
@@ -1382,7 +1386,7 @@ BrowserAddonActor.prototype = {
       return { error: "wrongState" };
     }
 
-    this._contextPool.remoteActor(this._threadActor);
+    this._contextPool.removeActor(this._threadActor);
 
     this._threadActor = null;
 

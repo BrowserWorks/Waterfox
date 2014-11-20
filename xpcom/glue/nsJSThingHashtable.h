@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -10,7 +11,7 @@
 #include "nsBaseHashtable.h"
 
 namespace JS {
-template <class T>
+template<class T>
 class Heap;
 } /* namespace JS */
 
@@ -26,8 +27,8 @@ class Heap;
 template<class T>
 class nsHashKeyDisallowMemmove : public T
 {
- public:
-  nsHashKeyDisallowMemmove(const T& key) : T(key) {}
+public:
+  nsHashKeyDisallowMemmove(const T& aKey) : T(aKey) {}
   enum { ALLOW_MEMMOVE = false };
 };
 
@@ -50,9 +51,11 @@ class nsHashKeyDisallowMemmove : public T
  * @param DataType the datatype being wrapped, must be a JS GC thing.
  * @see nsInterfaceHashtable, nsClassHashtable
  */
-template<class KeyClass,class DataType>
-class nsJSThingHashtable :
-  public nsBaseHashtable<nsHashKeyDisallowMemmove<KeyClass>, JS::Heap<DataType>, DataType>
-{ };
+template<class KeyClass, class DataType>
+class nsJSThingHashtable
+  : public nsBaseHashtable<nsHashKeyDisallowMemmove<KeyClass>,
+                           JS::Heap<DataType>, DataType>
+{
+};
 
 #endif // nsJSThingHashtable_h__

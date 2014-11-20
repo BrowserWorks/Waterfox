@@ -15,6 +15,23 @@ if (!SpecialPowers.isMainProcess()) {
   }
 }
 
+function getBuffer(size)
+{
+  let buffer = new ArrayBuffer(size);
+  is(buffer.byteLength, size, "Correct byte length");
+  return buffer;
+}
+
+function getRandomBuffer(size)
+{
+  let buffer = getBuffer(size);
+  let view = new Uint8Array(buffer);
+  for (let i = 0; i < size; i++) {
+    view[i] = parseInt(Math.random() * 255)
+  }
+  return buffer;
+}
+
 function getView(size)
 {
   let buffer = new ArrayBuffer(size);
@@ -49,12 +66,12 @@ function compareBuffers(buffer1, buffer2)
 
 function getBlob(type, view)
 {
-  return SpecialPowers.unwrap(utils.getBlob([view], {type: type}));
+  return new Blob([view], {type: type});
 }
 
 function getFile(name, type, view)
 {
-  return SpecialPowers.unwrap(utils.getFile(name, [view], {type: type}));
+  return new File([view], name, {type: type});
 }
 
 function getRandomBlob(size)

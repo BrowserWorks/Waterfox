@@ -7,11 +7,12 @@
 if CONFIG['MOZ_B2G_BT']:
     SOURCES += [
         'BluetoothAdapter.cpp',
+        'BluetoothClassOfDevice.cpp',
         'BluetoothDevice.cpp',
+        'BluetoothDiscoveryHandle.cpp',
         'BluetoothHidManager.cpp',
         'BluetoothManager.cpp',
         'BluetoothProfileController.cpp',
-        'BluetoothPropertyContainer.cpp',
         'BluetoothReplyRunnable.cpp',
         'BluetoothService.cpp',
         'BluetoothUuid.cpp',
@@ -44,6 +45,7 @@ if CONFIG['MOZ_B2G_BT']:
         elif CONFIG['MOZ_B2G_BT_BLUEDROID']:
             SOURCES += [
                 'bluedroid/BluetoothA2dpManager.cpp',
+                'bluedroid/BluetoothInterface.cpp',
                 'bluedroid/BluetoothOppManager.cpp',
                 'bluedroid/BluetoothServiceBluedroid.cpp',
                 'bluedroid/BluetoothSocket.cpp',
@@ -92,8 +94,10 @@ EXPORTS.mozilla.dom.bluetooth.ipc += [
 
 EXPORTS.mozilla.dom.bluetooth += [
     'BluetoothAdapter.h',
+    'BluetoothClassOfDevice.h',
     'BluetoothCommon.h',
     'BluetoothDevice.h',
+    'BluetoothDiscoveryHandle.h',
     'BluetoothManager.h',
 ]
 

@@ -43,17 +43,17 @@ public:
     mData.inputStream = aInputStream;
   }
 
+  NS_DECL_THREADSAFE_ISUPPORTS
+  NS_DECL_NSIINPUTSTREAM
+  NS_DECL_NSISEEKABLESTREAM
+
+private:
   virtual ~ArchiveInputStream()
   {
     MOZ_COUNT_DTOR(ArchiveInputStream);
     Close();
   }
 
-  NS_DECL_THREADSAFE_ISUPPORTS
-  NS_DECL_NSIINPUTSTREAM
-  NS_DECL_NSISEEKABLESTREAM
-
-private:
   nsresult Init();
 
 private: // data
@@ -351,10 +351,10 @@ ArchiveInputStream::SetEOF()
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-// ArchiveZipFile
+// ArchiveZipFileImpl
 
-NS_IMETHODIMP
-ArchiveZipFile::GetInternalStream(nsIInputStream** aStream)
+nsresult
+ArchiveZipFileImpl::GetInternalStream(nsIInputStream** aStream)
 {
   if (mLength > INT32_MAX) {
     return NS_ERROR_FAILURE;
@@ -382,30 +382,30 @@ ArchiveZipFile::GetInternalStream(nsIInputStream** aStream)
   return NS_OK;
 }
 
-already_AddRefed<nsIDOMBlob>
-ArchiveZipFile::CreateSlice(uint64_t aStart,
-                            uint64_t aLength,
-                            const nsAString& aContentType)
+void
+ArchiveZipFileImpl::Unlink()
 {
-  nsCOMPtr<nsIDOMBlob> t = new ArchiveZipFile(mFilename,
-                                              mContentType,
-                                              aStart,
-                                              mLength,
-                                              mCentral,
-                                              mArchiveReader);
+  ArchiveZipFileImpl* tmp = this;
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mArchiveReader);
+}
+
+void
+ArchiveZipFileImpl::Traverse(nsCycleCollectionTraversalCallback &cb)
+{
+  ArchiveZipFileImpl* tmp = this;
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mArchiveReader);
+}
+
+already_AddRefed<nsIDOMBlob>
+ArchiveZipFileImpl::CreateSlice(uint64_t aStart,
+                                uint64_t aLength,
+                                const nsAString& aContentType)
+{
+  nsCOMPtr<nsIDOMBlob> t =
+    new DOMFile(new ArchiveZipFileImpl(mFilename, mContentType,
+                                       aStart, mLength, mCentral,
+                                       mArchiveReader));
   return t.forget();
 }
 
-NS_IMPL_CYCLE_COLLECTION_INHERITED(ArchiveZipFile, nsDOMFileCC,
-                                   mArchiveReader)
-
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(ArchiveZipFile)
-  NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIDOMFile)
-  NS_INTERFACE_MAP_ENTRY(nsIDOMBlob)
-  NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIDOMFile, mIsFile)
-  NS_INTERFACE_MAP_ENTRY(nsIXHRSendable)
-  NS_INTERFACE_MAP_ENTRY(nsIMutable)
-NS_INTERFACE_MAP_END_INHERITING(nsDOMFileCC)
-
-NS_IMPL_ADDREF_INHERITED(ArchiveZipFile, nsDOMFileCC)
-NS_IMPL_RELEASE_INHERITED(ArchiveZipFile, nsDOMFileCC)
+NS_IMPL_ISUPPORTS_INHERITED0(ArchiveZipFileImpl, DOMFileImpl)

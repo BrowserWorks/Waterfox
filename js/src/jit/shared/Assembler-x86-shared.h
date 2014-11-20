@@ -675,7 +675,6 @@ class AssemblerX86Shared : public AssemblerShared
     }
     void cmpEAX(Label *label) { cmpSrc(label); }
     void bind(Label *label) {
-        JSC::MacroAssembler::Label jsclabel;
         JSC::X86Assembler::JmpDst dst(masm.label());
         if (label->used()) {
             bool more;
@@ -690,7 +689,6 @@ class AssemblerX86Shared : public AssemblerShared
         label->bind(dst.offset());
     }
     void bind(RepatchLabel *label) {
-        JSC::MacroAssembler::Label jsclabel;
         JSC::X86Assembler::JmpDst dst(masm.label());
         if (label->used()) {
             JSC::X86Assembler::JmpSrc jmp(label->offset());
@@ -704,7 +702,6 @@ class AssemblerX86Shared : public AssemblerShared
 
     // Re-routes pending jumps to a new label.
     void retarget(Label *label, Label *target) {
-        JSC::MacroAssembler::Label jsclabel;
         if (label->used()) {
             bool more;
             JSC::X86Assembler::JmpSrc jmp(label->offset());
@@ -863,6 +860,10 @@ class AssemblerX86Shared : public AssemblerShared
     }
     void cmpl(const Operand &op, ImmPtr imm) {
         cmpl(op, ImmWord(uintptr_t(imm.value)));
+    }
+    CodeOffsetLabel cmplWithPatch(Register lhs, Imm32 rhs) {
+        masm.cmpl_ir_force32(rhs.value, lhs.code());
+        return CodeOffsetLabel(masm.currentOffset());
     }
     void cmpw(Register lhs, Register rhs) {
         masm.cmpw_rr(lhs.code(), rhs.code());

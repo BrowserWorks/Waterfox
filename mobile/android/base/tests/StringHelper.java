@@ -105,7 +105,6 @@ public class StringHelper {
     // Option labels
     // Customize
     public static final String SYNC_LABEL = "Sync";
-    public static final String SEARCH_SETTINGS_LABEL = "Search settings";
     public static final String IMPORT_FROM_ANDROID_LABEL = "Import from Android";
     public static final String TABS_LABEL = "Tabs";
 
@@ -125,18 +124,18 @@ public class StringHelper {
     public static final String COOKIES_LABEL = "Cookies";
     public static final String REMEMBER_PASSWORDS_LABEL = "Remember passwords";
     public static final String MASTER_PASWSWORD_LABEL = "Use master password";
-    public static final String CLEAR_PRIVATE_DATA_LABEL = "Clear private data";
+    public static final String CLEAR_PRIVATE_DATA_LABEL = "Clear now";
 
     // Mozilla
     public static final String ABOUT_LABEL = "About (Fennec|Nightly|Aurora|Firefox Beta|Firefox)";
     public static final String FAQS_LABEL = "FAQs";
     public static final String FEEDBACK_LABEL = "Give feedback";
-    public static final String PRODUCT_ANNOUNCEMENTS_LABEL = "Show product announcements";
     public static final String LOCATION_SERVICES_LABEL = "Mozilla location services";
     public static final String HELTH_REPORT_LABEL = "(Fennec|Nightly|Aurora|Firefox Beta|Firefox) Health Report";
     public static final String MY_HEALTH_REPORT_LABEL = "View my Health Report";
 
     // Developer tools
+    public static final String PAINT_FLASHING_LABEL = "Paint flashing";
     public static final String REMOTE_DEBUGGING_LABEL = "Remote debugging";
     public static final String LEARN_MORE_LABEL = "Learn more";
 
@@ -149,6 +148,8 @@ public class StringHelper {
     public static final String TABS_FROM_LAST_TIME_LABEL = "Open all tabs from last time";
 
     // Desktop default bookmarks folders
+    public static final String BOOKMARKS_UP_TO = "Up to %s";
+    public static final String BOOKMARKS_ROOT_LABEL = "Bookmarks";
     public static final String DESKTOP_FOLDER_LABEL = "Desktop Bookmarks";
     public static final String TOOLBAR_FOLDER_LABEL = "Bookmarks Toolbar";
     public static final String BOOKMARKS_MENU_FOLDER_LABEL = "Bookmarks Menu";

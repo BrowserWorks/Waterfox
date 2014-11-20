@@ -6,8 +6,13 @@ const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu, Constructor: CC } =
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
-Cu.import("resource://gre/modules/osfile.jsm");
 Cu.import("resource://gre/modules/Promise.jsm");
+
+#ifndef MOZ_B2G
+#ifdef XP_MACOSX
+Cu.import("resource://gre/modules/osfile.jsm");
+#endif
+#endif
 
 this.EXPORTED_SYMBOLS = ["WebappOSUtils"];
 
@@ -342,7 +347,7 @@ this.WebappOSUtils = {
       if (aResult == Cr.NS_OK) {
         deferred.resolve(true);
       } else {
-        deferred.resolve("Error moving the app to the Trash: " + aResult);
+        deferred.reject("Error moving the app to the Trash: " + aResult);
       }
     });
 

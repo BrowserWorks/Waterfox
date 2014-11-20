@@ -22,7 +22,6 @@
 #include "nsISelectControlFrame.h"
 #include "nsContentUtils.h"
 #include "nsIDocument.h"
-#include "nsINodeInfo.h"
 #include "nsIScrollableFrame.h"
 #include "nsListControlFrame.h"
 #include "nsAutoPtr.h"
@@ -75,6 +74,9 @@ class nsPresState;
  */
 class nsComboButtonListener : public nsIDOMEventListener
 {
+private:
+  virtual ~nsComboButtonListener() {}
+
 public:
   NS_DECL_ISUPPORTS
 
@@ -88,8 +90,6 @@ public:
   {
     mComboBox = aCombobox;
   }
-
-  virtual ~nsComboButtonListener() {}
 
   nsComboboxControlFrame* mComboBox;
 };
@@ -369,11 +369,14 @@ public:
   {
     MOZ_COUNT_CTOR(nsResizeDropdownAtFinalPosition);
   }
+
+protected:
   ~nsResizeDropdownAtFinalPosition()
   {
     MOZ_COUNT_DTOR(nsResizeDropdownAtFinalPosition);
   }
 
+public:
   virtual bool ReflowFinished() MOZ_OVERRIDE
   {
     Run();

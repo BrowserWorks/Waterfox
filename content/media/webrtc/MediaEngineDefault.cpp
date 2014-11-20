@@ -208,7 +208,7 @@ MediaEngineDefaultVideoSource::Snapshot(uint32_t aDuration, nsIDOMFile** aFile)
     return NS_OK;
   }
 
-  nsCOMPtr<nsIDOMFile> domFile = new nsDOMFileFile(localFile);
+  nsCOMPtr<nsIDOMFile> domFile = dom::DOMFile::CreateFromFile(localFile);
   domFile.forget(aFile);
   return NS_OK;
 #endif
@@ -283,7 +283,7 @@ MediaEngineDefaultVideoSource::NotifyPull(MediaStreamGraph* aGraph,
 
   // Note: we're not giving up mImage here
   nsRefPtr<layers::Image> image = mImage;
-  TrackTicks target = TimeToTicksRoundUp(USECS_PER_S, aDesiredTime);
+  TrackTicks target = aSource->TimeToTicksRoundUp(USECS_PER_S, aDesiredTime);
   TrackTicks delta = target - aLastEndTime;
 
   if (delta > 0) {
@@ -478,8 +478,14 @@ MediaEngineDefaultAudioSource::Notify(nsITimer* aTimer)
 }
 
 void
-MediaEngineDefault::EnumerateVideoDevices(nsTArray<nsRefPtr<MediaEngineVideoSource> >* aVSources) {
+MediaEngineDefault::EnumerateVideoDevices(MediaSourceType aMediaSource,
+                                          nsTArray<nsRefPtr<MediaEngineVideoSource> >* aVSources) {
   MutexAutoLock lock(mMutex);
+
+  // only supports camera sources (for now).  See Bug 1038241
+  if (aMediaSource != MediaSourceType::Camera) {
+    return;
+  }
 
   // We once had code here to find a VideoSource with the same settings and re-use that.
   // This no longer is possible since the resolution is being set in Allocate().
@@ -492,9 +498,12 @@ MediaEngineDefault::EnumerateVideoDevices(nsTArray<nsRefPtr<MediaEngineVideoSour
 }
 
 void
-MediaEngineDefault::EnumerateAudioDevices(nsTArray<nsRefPtr<MediaEngineAudioSource> >* aASources) {
+MediaEngineDefault::EnumerateAudioDevices(MediaSourceType aMediaSource,
+                                          nsTArray<nsRefPtr<MediaEngineAudioSource> >* aASources) {
   MutexAutoLock lock(mMutex);
   int32_t len = mASources.Length();
+
+  // aMediaSource is ignored for audio devices (for now).
 
   for (int32_t i = 0; i < len; i++) {
     nsRefPtr<MediaEngineAudioSource> source = mASources.ElementAt(i);

@@ -6,6 +6,8 @@
 #ifndef SCOPEDGLHELPERS_H_
 #define SCOPEDGLHELPERS_H_
 
+#include "mozilla/UniquePtr.h"
+
 #include "GLContext.h"
 
 namespace mozilla {
@@ -74,7 +76,8 @@ struct ScopedBindFramebuffer
     friend struct ScopedGLWrapper<ScopedBindFramebuffer>;
 
 protected:
-    GLuint mOldFB;
+    GLuint mOldReadFB;
+    GLuint mOldDrawFB;
 
 private:
     void Init();
@@ -303,6 +306,38 @@ protected:
     void UnwrapImpl();
 };
 
+struct ScopedGLDrawState {
+    ScopedGLDrawState(GLContext* gl);
+    ~ScopedGLDrawState();
+
+    GLuint boundProgram;
+    GLuint boundBuffer;
+
+    ScopedGLState blend;
+    ScopedGLState cullFace;
+    ScopedGLState depthTest;
+    ScopedGLState dither;
+    ScopedGLState polyOffsFill;
+    ScopedGLState sampleAToC;
+    ScopedGLState sampleCover;
+    ScopedGLState scissor;
+    ScopedGLState stencil;
+
+    GLuint maxAttrib;
+    UniquePtr<GLint[]> attrib_enabled;
+    GLint attrib0_size;
+    GLint attrib0_stride;
+    GLint attrib0_type;
+    GLint attrib0_normalized;
+    GLint attrib0_bufferBinding;
+    void* attrib0_pointer;
+
+    realGLboolean colorMask[4];
+    GLint viewport[4];
+    GLint scissorBox[4];
+    GLContext* const mGL;
+    GLuint packAlign;
+};
 } /* namespace gl */
 } /* namespace mozilla */
 

@@ -54,7 +54,7 @@ class ColorLayerComposite;
 class CompositableHost;
 class Compositor;
 class ContainerLayerComposite;
-class EffectChain;
+struct EffectChain;
 class ImageLayer;
 class ImageLayerComposite;
 class LayerComposite;
@@ -74,7 +74,7 @@ class LayerManagerComposite : public LayerManager
 public:
   LayerManagerComposite(Compositor* aCompositor);
   ~LayerManagerComposite();
-  
+
   virtual void Destroy() MOZ_OVERRIDE;
 
   /**
@@ -151,6 +151,8 @@ public:
   {
     MOZ_CRASH("Shouldn't be called for composited layer manager");
   }
+
+  virtual bool AreComponentAlphaLayersEnabled() MOZ_OVERRIDE;
 
   virtual TemporaryRef<DrawTarget>
     CreateOptimalMaskDrawTarget(const IntSize &aSize) MOZ_OVERRIDE;
@@ -267,7 +269,7 @@ private:
   RefPtr<Compositor> mCompositor;
   nsAutoPtr<LayerProperties> mClonedLayerTreeProperties;
 
-  /** 
+  /**
    * Context target, nullptr when drawing directly to our swap chain.
    */
   RefPtr<gfx::DrawTarget> mTarget;
@@ -322,6 +324,13 @@ public:
 
   virtual Layer* GetLayer() = 0;
 
+  /**
+   * Perform a first pass over the layer tree to prepare intermediate surfaces.
+   * This allows us on to avoid framebuffer switches in the middle of our render
+   * which is inefficient. This must be called before RenderLayer.
+   */
+  virtual void Prepare(const nsIntRect& aClipRect) {}
+
   virtual void RenderLayer(const nsIntRect& aClipRect) = 0;
 
   virtual bool SetCompositableHost(CompositableHost*)
@@ -336,10 +345,11 @@ public:
 
   virtual TiledLayerComposer* GetTiledLayerComposer() { return nullptr; }
 
-
   virtual void DestroyFrontBuffer() { }
 
   void AddBlendModeEffect(EffectChain& aEffectChain);
+
+  virtual void GenEffectChain(EffectChain& aEffect) { }
 
   /**
    * The following methods are

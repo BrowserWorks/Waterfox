@@ -52,11 +52,13 @@ MOZ_DEFINE_MALLOC_SIZE_OF(ImagesMallocSizeOf)
 
 class imgMemoryReporter MOZ_FINAL : public nsIMemoryReporter
 {
+  ~imgMemoryReporter() {}
+
 public:
   NS_DECL_ISUPPORTS
 
   NS_IMETHOD CollectReports(nsIMemoryReporterCallback *aHandleReport,
-                            nsISupports *aData)
+                            nsISupports *aData, bool aAnonymize)
   {
     nsresult rv;
     ImageSizes chrome;
@@ -66,6 +68,8 @@ public:
       mKnownLoaders[i]->mChromeCache.EnumerateRead(EntryImageSizes, &chrome);
       mKnownLoaders[i]->mCache.EnumerateRead(EntryImageSizes, &content);
     }
+
+    // Note that we only need to anonymize content image URIs.
 
     rv = ReportInfoArray(aHandleReport, aData, chrome.mRasterUsedImageInfo,
                          "images/chrome/raster/used");
@@ -84,19 +88,19 @@ public:
     NS_ENSURE_SUCCESS(rv, rv);
 
     rv = ReportInfoArray(aHandleReport, aData, content.mRasterUsedImageInfo,
-                         "images/content/raster/used");
+                         "images/content/raster/used", aAnonymize);
     NS_ENSURE_SUCCESS(rv, rv);
 
     rv = ReportInfoArray(aHandleReport, aData, content.mRasterUnusedImageInfo,
-                         "images/content/raster/unused");
+                         "images/content/raster/unused", aAnonymize);
     NS_ENSURE_SUCCESS(rv, rv);
 
     rv = ReportInfoArray(aHandleReport, aData, content.mVectorUsedImageDocInfo,
-                         "images/content/vector/used/documents");
+                         "images/content/vector/used/documents", aAnonymize);
     NS_ENSURE_SUCCESS(rv, rv);
 
     rv = ReportInfoArray(aHandleReport, aData, content.mVectorUnusedImageDocInfo,
-                         "images/content/vector/unused/documents");
+                         "images/content/vector/unused/documents", aAnonymize);
     NS_ENSURE_SUCCESS(rv, rv);
 
     return NS_OK;
@@ -201,7 +205,7 @@ private:
   nsresult ReportInfoArray(nsIMemoryReporterCallback *aHandleReport,
                            nsISupports *aData,
                            const nsTArray<ImageInfo<Sizes> > &aInfoArray,
-                           const char *aPathPartStr)
+                           const char *aPathPartStr, bool aAnonymize = false)
   {
     nsresult rv;
     Sizes totalSizes;
@@ -214,14 +218,20 @@ private:
     // Report notable images, and compute total and non-notable aggregate sizes.
     for (uint32_t i = 0; i < aInfoArray.Length(); i++) {
       ImageInfo<Sizes> info = aInfoArray[i];
-      // info.mURI can be a data: URI, and thus extremely long. Truncate if
-      // necessary.
-      static const size_t max = 256;
-      if (info.mURI.Length() > max) {
-        info.mURI.Truncate(max);
-        info.mURI.AppendLiteral(" (truncated)");
+
+      if (aAnonymize) {
+        info.mURI.Truncate();
+        info.mURI.AppendPrintf("<anonymized-%u>", i);
+      } else {
+        // info.mURI can be a data: URI, and thus extremely long. Truncate if
+        // necessary.
+        static const size_t max = 256;
+        if (info.mURI.Length() > max) {
+          info.mURI.Truncate(max);
+          info.mURI.AppendLiteral(" (truncated)");
+        }
+        info.mURI.ReplaceChar('/', '\\');
       }
-      info.mURI.ReplaceChar('/', '\\');
 
       totalSizes.add(info.mSizes);
 
@@ -589,6 +599,7 @@ static nsresult NewImageChannel(nsIChannel **aResult,
   // If all of the proxy requests are canceled then this request should be
   // canceled too.
   //
+  aLoadFlags |= nsIChannel::LOAD_CLASSIFY_URI;
   rv = NS_NewChannel(aResult,
                      aURI,        // URI
                      nullptr,      // Cached IOService
@@ -626,7 +637,8 @@ static nsresult NewImageChannel(nsIChannel **aResult,
   }
 
   bool setOwner = nsContentUtils::SetUpChannelOwner(aLoadingPrincipal,
-                                                      *aResult, aURI, false);
+                                                    *aResult, aURI, false,
+                                                    false, false);
   *aForcePrincipalCheckForCacheEntry = setOwner;
 
   // Create a new loadgroup for this new channel, using the old group as
@@ -834,6 +846,8 @@ nsresult imgLoader::CreateNewProxyForRequest(imgRequest *aRequest, nsILoadGroup 
 
 class imgCacheObserver MOZ_FINAL : public nsIObserver
 {
+  ~imgCacheObserver() {}
+
 public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIOBSERVER
@@ -1014,7 +1028,7 @@ void imgLoader::GlobalInit()
   int32_t cachesize;
   rv = Preferences::GetInt("image.cache.size", &cachesize);
   if (NS_SUCCEEDED(rv))
-    sCacheMaxSize = cachesize;
+    sCacheMaxSize = cachesize > 0 ? cachesize : 0;
   else
     sCacheMaxSize = 5 * 1024 * 1024;
 
@@ -1064,7 +1078,7 @@ imgLoader::Observe(nsISupports* aSubject, const char* aTopic, const char16_t* aD
 {
   // We listen for pref change notifications...
   if (!strcmp(aTopic, NS_PREFBRANCH_PREFCHANGE_TOPIC_ID)) {
-    if (!strcmp(NS_ConvertUTF16toUTF8(aData).get(), "image.http.accept")) {
+    if (!NS_strcmp(aData, MOZ_UTF16("image.http.accept"))) {
       ReadAcceptHeaderPref();
     }
 
@@ -1291,8 +1305,8 @@ void imgLoader::CheckCacheLimits(imgCacheTable &cache, imgCacheQueue &queue)
     NS_ASSERTION(queue.GetSize() == 0,
                  "imgLoader::CheckCacheLimits -- incorrect cache size");
 
-  // Remove entries from the cache until we're back under our desired size.
-  while (queue.GetSize() >= sCacheMaxSize) {
+  // Remove entries from the cache until we're back at our desired max size.
+  while (queue.GetSize() > sCacheMaxSize) {
     // Remove the first entry in the queue.
     nsRefPtr<imgCacheEntry> entry(queue.Pop());
 

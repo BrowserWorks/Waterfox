@@ -174,7 +174,11 @@
             'aec/aec_rdft_sse2.c',
           ],
           'cflags': ['-msse2',],
-          'cflags_mozilla': [ '-msse2', ],
+          'conditions': [
+            [ 'os_posix == 1', {
+              'cflags_mozilla': ['-msse2',],
+            }],
+          ],
           'xcode_settings': {
             'OTHER_CFLAGS': ['-msse2',],
           },
@@ -195,9 +199,10 @@
         ],
         'conditions': [
           ['OS=="android" or OS=="ios"', {
-            'dependencies': [
-              '<(gen_core_neon_offsets_gyp):*',
-            ],
+	    # This also provokes it to try to invoke gypi's in libvpx
+            #'dependencies': [
+            #  '<(gen_core_neon_offsets_gyp):*',
+            #],
 	    #
 	    # We disable the ASM source, because our gyp->Makefile translator
 	    # does not support the build steps to get the asm offsets.

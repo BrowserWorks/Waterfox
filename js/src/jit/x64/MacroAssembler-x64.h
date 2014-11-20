@@ -100,18 +100,6 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
     void call(ImmPtr target) {
         call(ImmWord(uintptr_t(target.value)));
     }
-    void call(AsmJSImmPtr target) {
-        mov(target, rax);
-        call(rax);
-    }
-
-    void call(const CallSiteDesc &desc, AsmJSImmPtr target) {
-        call(target);
-        appendCallSite(desc);
-    }
-    void callExit(AsmJSImmPtr target, uint32_t stackArgBytes) {
-        call(CallSiteDesc::Exit(), target);
-    }
 
     // Refers to the upper 32 bits of a 64-bit Value operand.
     // On x86_64, the upper 32 bits do not necessarily only contain the type.
@@ -281,6 +269,11 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
         cmpl(tag, ImmTag(JSVAL_TAG_STRING));
         return cond;
     }
+    Condition testSymbol(Condition cond, Register tag) {
+        JS_ASSERT(cond == Equal || cond == NotEqual);
+        cmpl(tag, ImmTag(JSVAL_TAG_SYMBOL));
+        return cond;
+    }
     Condition testObject(Condition cond, Register tag) {
         JS_ASSERT(cond == Equal || cond == NotEqual);
         cmpl(tag, ImmTag(JSVAL_TAG_OBJECT));
@@ -344,6 +337,10 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
         splitTag(src, ScratchReg);
         return testString(cond, ScratchReg);
     }
+    Condition testSymbol(Condition cond, const ValueOperand &src) {
+        splitTag(src, ScratchReg);
+        return testSymbol(cond, ScratchReg);
+    }
     Condition testObject(Condition cond, const ValueOperand &src) {
         splitTag(src, ScratchReg);
         return testObject(cond, ScratchReg);
@@ -386,6 +383,10 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
         splitTag(src, ScratchReg);
         return testString(cond, ScratchReg);
     }
+    Condition testSymbol(Condition cond, const Address &src) {
+        splitTag(src, ScratchReg);
+        return testSymbol(cond, ScratchReg);
+    }
     Condition testObject(Condition cond, const Address &src) {
         splitTag(src, ScratchReg);
         return testObject(cond, ScratchReg);
@@ -419,6 +420,10 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
     Condition testString(Condition cond, const BaseIndex &src) {
         splitTag(src, ScratchReg);
         return testString(cond, ScratchReg);
+    }
+    Condition testSymbol(Condition cond, const BaseIndex &src) {
+        splitTag(src, ScratchReg);
+        return testSymbol(cond, ScratchReg);
     }
     Condition testInt32(Condition cond, const BaseIndex &src) {
         splitTag(src, ScratchReg);
@@ -839,6 +844,10 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
         cond = testString(cond, tag);
         j(cond, label);
     }
+    void branchTestSymbol(Condition cond, Register tag, Label *label) {
+        cond = testSymbol(cond, tag);
+        j(cond, label);
+    }
     void branchTestObject(Condition cond, Register tag, Label *label) {
         cond = testObject(cond, tag);
         j(cond, label);
@@ -915,6 +924,10 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
         cond = testString(cond, src);
         j(cond, label);
     }
+    void branchTestSymbol(Condition cond, const ValueOperand &src, Label *label) {
+        cond = testSymbol(cond, src);
+        j(cond, label);
+    }
     void branchTestObject(Condition cond, const ValueOperand &src, Label *label) {
         cond = testObject(cond, src);
         j(cond, label);
@@ -948,6 +961,10 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
     }
     void branchTestString(Condition cond, const BaseIndex &address, Label *label) {
         cond = testString(cond, address);
+        j(cond, label);
+    }
+    void branchTestSymbol(Condition cond, const BaseIndex &address, Label *label) {
+        cond = testSymbol(cond, address);
         j(cond, label);
     }
     void branchTestObject(Condition cond, const BaseIndex &address, Label *label) {
@@ -1000,6 +1017,12 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
         cond = testNull(cond, value);
         emitSet(cond, dest);
     }
+
+    void testObjectSet(Condition cond, const ValueOperand &value, Register dest) {
+        cond = testObject(cond, value);
+        emitSet(cond, dest);
+    }
+
     void testUndefinedSet(Condition cond, const ValueOperand &value, Register dest) {
         cond = testUndefined(cond, value);
         emitSet(cond, dest);
@@ -1093,6 +1116,9 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
 
     void unboxString(const ValueOperand &src, Register dest) { unboxNonDouble(src, dest); }
     void unboxString(const Operand &src, Register dest) { unboxNonDouble(src, dest); }
+
+    void unboxSymbol(const ValueOperand &src, Register dest) { unboxNonDouble(src, dest); }
+    void unboxSymbol(const Operand &src, Register dest) { unboxNonDouble(src, dest); }
 
     void unboxObject(const ValueOperand &src, Register dest) { unboxNonDouble(src, dest); }
     void unboxObject(const Operand &src, Register dest) { unboxNonDouble(src, dest); }

@@ -175,19 +175,30 @@ var tests = [
       // we should recognize 'auto', 'hjr', and numeric modes; anything else
       // from the driver is ignored, which this test also verifies.
       test.setFakeParameters(
-        "iso=auto;iso-values=auto,ISO_HJR,ISO100,foo,ISObar,ISO200,ISO400,ISO800,ISO1600",
+        "iso=auto;iso-values=auto,ISO_HJR,ISO100,foo,ISObar,ISO150moz,ISO200,400,ISO800,1600",
         function () {
         run();
       });
     },
     test: function testFakeIso(cam, cap) {
-      // values 'foo' and 'ISObar' should not be included in isoModes
       ok(cap.isoModes.length == 7, "ISO modes length = " + cap.isoModes.length);
-      ok(cap.isoModes.indexOf("foo") == -1, "Unknown ISO mode 'foo' is ignored");
-      ok(cap.isoModes.indexOf("ISObar") == -1, "Unknown ISO mode 'ISObar' is ignored");
-      ok(cap.isoModes.indexOf("bar") == -1, "Unknown ISO mode 'bar' is ignored");
 
-      // test individual ISO modes
+      // make sure we're not leaking any unexpected values formats
+      [ "ISO_HJR", "_HJR", "HJR", "ISO100", "ISO200", "ISO800" ].forEach(function(iso) {
+        ok(cap.isoModes.indexOf(iso) == -1, "ISO mode '" + iso + "' does not appear");
+      });
+
+      // make sure any weird values are dropped entirely
+      [ "foo", "ISObar", "bar", "ISO150moz", "150moz", "150" ].forEach(function(iso) {
+        ok(cap.isoModes.indexOf(iso) == -1, "Unknown ISO mode '" + iso + "' is ignored");
+      });
+
+      // make sure expected values are present
+      [ "auto", "hjr", "100", "200", "400", "800", "1600" ].forEach(function(iso) {
+        ok(cap.isoModes.indexOf(iso) != -1, "ISO mode '" + iso + "' is present");
+      });
+
+      // test setters/getters for individual ISO modes
       cap.isoModes.forEach(function(iso, index) {
         cam.iso = iso;
         ok(cam.iso === iso,
@@ -283,43 +294,42 @@ var tests = [
          "exposureCompensation = " + cam.exposureCompensation);
 
       // Check normal values
-      cam.setExposureCompensation(0.0);
+      cam.exposureCompensation = 0.0;
       ok(cam.exposureCompensation == 0.0,
          "exposureCompensation = " + cam.exposureCompensation);
-      cam.setExposureCompensation(cap.minExposureCompensation);
+      cam.exposureCompensation = cap.minExposureCompensation;
       ok(cam.exposureCompensation == cap.minExposureCompensation,
          "exposureCompensation(min) = " + cam.exposureCompensation);
-      cam.setExposureCompensation(cap.maxExposureCompensation);
+      cam.exposureCompensation = cap.maxExposureCompensation;
       ok(cam.exposureCompensation == cap.maxExposureCompensation,
          "exposureCompensation(max) = " + cam.exposureCompensation);
 
       // Rounding
-      cam.setExposureCompensation(1.24);
+      cam.exposureCompensation = 1.24;
       ok(cam.exposureCompensation == 1.0,
          "exposureCompensation(1.24) = " + cam.exposureCompensation);
-      cam.setExposureCompensation(1.25);
+      cam.exposureCompensation = 1.25;
       ok(cam.exposureCompensation == 1.5,
          "exposureCompensation(1.25) = " + cam.exposureCompensation);
-      cam.setExposureCompensation(-1.24);
+      cam.exposureCompensation = -1.24;
       ok(cam.exposureCompensation == -1.0,
          "exposureCompensation(-1.24) = " + cam.exposureCompensation);
-      cam.setExposureCompensation(-1.25);
+      cam.exposureCompensation = -1.25;
       ok(cam.exposureCompensation == -1.5,
          "exposureCompensation(-1.25) = " + cam.exposureCompensation);
-
       // Check out-of-bounds values
-      cam.setExposureCompensation(cap.minExposureCompensation - 1.0);
+      cam.exposureCompensation = cap.minExposureCompensation - 1.0;
       ok(cam.exposureCompensation == cap.minExposureCompensation,
          "exposureCompensation(min - 1.0) = " + cam.exposureCompensation);
-      cam.setExposureCompensation(cap.maxExposureCompensation + 1.0);
+      cam.exposureCompensation = cap.maxExposureCompensation + 1.0;
       ok(cam.exposureCompensation == cap.maxExposureCompensation,
          "exposureCompensation(max + 1.0) = " + cam.exposureCompensation);
 
       // Check extreme values
-      cam.setExposureCompensation(-1 * Math.pow(2, 32));
+      cam.exposureCompensation = -1 * Math.pow(2, 32);
       ok(cam.exposureCompensation == cap.minExposureCompensation,
          "exposureCompensation(-2^32) = " + cam.exposureCompensation);
-      cam.setExposureCompensation(Math.pow(2, 32));
+      cam.exposureCompensation = Math.pow(2, 32);
       ok(cam.exposureCompensation == cap.maxExposureCompensation,
          "exposureCompensation(2^32) = " + cam.exposureCompensation);
 

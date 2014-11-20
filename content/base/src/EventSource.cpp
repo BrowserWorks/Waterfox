@@ -7,6 +7,7 @@
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/DebugOnly.h"
+#include "mozilla/LoadInfo.h"
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/dom/EventSourceBinding.h"
 #include "mozilla/dom/MessageEvent.h"
@@ -375,7 +376,10 @@ EventSource::OnStartRequest(nsIRequest *aRequest,
     principal = do_CreateInstance("@mozilla.org/nullprincipal;1", &rv);
     NS_ENSURE_SUCCESS(rv, rv);
   }
-  rv = httpChannel->SetOwner(principal);
+  nsCOMPtr<nsILoadInfo> loadInfo =
+    new LoadInfo(principal, LoadInfo::eInheritPrincipal,
+                 LoadInfo::eNotSandboxed);
+  rv = httpChannel->SetLoadInfo(loadInfo);
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIRunnable> event =
@@ -518,6 +522,7 @@ public:
   }
 
 private:
+  ~AsyncVerifyRedirectCallbackFwr() {}
   nsRefPtr<EventSource> mEventSource;
 };
 
@@ -1236,15 +1241,11 @@ EventSource::DispatchAllMessageEvents()
     return;
   }
 
-  // We need a parent object so that we can enter its compartment.
-  nsCOMPtr<nsIGlobalObject> parentObject = do_QueryInterface(GetParentObject());
-  if (NS_WARN_IF(!parentObject)) {
+  AutoJSAPI jsapi;
+  if (NS_WARN_IF(!jsapi.Init(GetOwner()))) {
     return;
   }
-
-  AutoJSAPI jsapi;
   JSContext* cx = jsapi.cx();
-  JSAutoCompartment ac(cx, parentObject->GetGlobalJSObject());
 
   while (mMessagesToDispatch.GetSize() > 0) {
     nsAutoPtr<Message>

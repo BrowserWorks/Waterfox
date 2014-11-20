@@ -1,4 +1,4 @@
-/* -*- Mode: js; tab-width: 2; indent-tabs-mode: nil; js-indent-level: 2; fill-column: 80 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2; fill-column: 80 -*- */
 /* vim:set ts=2 sw=2 sts=2 et tw=80:
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,10 +12,12 @@ const TAB_SIZE    = "devtools.editor.tabsize";
 const EXPAND_TAB  = "devtools.editor.expandtab";
 const KEYMAP      = "devtools.editor.keymap";
 const AUTO_CLOSE  = "devtools.editor.autoclosebrackets";
+const AUTOCOMPLETE  = "devtools.editor.autocomplete";
 const DETECT_INDENT = "devtools.editor.detectindentation";
 const DETECT_INDENT_MAX_LINES = 500;
 const L10N_BUNDLE = "chrome://browser/locale/devtools/sourceeditor.properties";
 const XUL_NS      = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+const VALID_KEYMAPS = new Set(["emacs", "vim", "sublime"]);
 
 // Maximum allowed margin (in number of lines) from top or bottom of the editor
 // while shifting to a line which was initially out of view.
@@ -28,6 +30,7 @@ const RE_JUMP_TO_LINE = /^(\d+):?(\d+)?/;
 
 const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
 const events  = require("devtools/toolkit/event-emitter");
+const { PrefObserver } = require("devtools/styleeditor/utils");
 
 Cu.import("resource://gre/modules/Services.jsm");
 const L10N = Services.strings.createBundle(L10N_BUNDLE);
@@ -98,9 +101,7 @@ const CM_MAPPING = [
   "clearHistory",
   "openDialog",
   "refresh",
-  "getScrollInfo",
-  "getOption",
-  "setOption"
+  "getScrollInfo"
 ];
 
 const { cssProperties, cssValues, cssColors } = getCSSKeywords();
@@ -140,7 +141,6 @@ Editor.modes = {
 function Editor(config) {
   const tabSize = Services.prefs.getIntPref(TAB_SIZE);
   const useTabs = !Services.prefs.getBoolPref(EXPAND_TAB);
-  const keyMap = Services.prefs.getCharPref(KEYMAP);
   const useAutoClose = Services.prefs.getBoolPref(AUTO_CLOSE);
 
   this.version = null;
@@ -157,7 +157,9 @@ function Editor(config) {
     autoCloseBrackets: "()[]{}''\"\"",
     autoCloseEnabled:  useAutoClose,
     theme:             "mozilla",
-    autocomplete:      false
+    themeSwitching:    true,
+    autocomplete:      false,
+    autocompleteOpts:  {}
   };
 
   // Additional shortcuts.
@@ -170,9 +172,6 @@ function Editor(config) {
   this.config.extraKeys[Editor.keyFor("indentLess")] = false;
   this.config.extraKeys[Editor.keyFor("indentMore")] = false;
 
-  // If alternative keymap is provided, use it.
-  if (keyMap === "emacs" || keyMap === "vim" || keyMap === "sublime")
-    this.config.keyMap = keyMap;
 
   // Overwrite default config with user-provided, if needed.
   Object.keys(config).forEach((k) => {
@@ -199,9 +198,8 @@ function Editor(config) {
     }
   }
 
-  // Configure automatic bracket closing.
-  if (!this.config.autoCloseEnabled)
-    this.config.autoCloseBrackets = false;
+  // Remember the initial value of autoCloseBrackets.
+  this.config.autoCloseBracketsSaved = this.config.autoCloseBrackets;
 
   // Overwrite default tab behavior. If something is selected,
   // indent those lines. If nothing is selected and we're
@@ -257,6 +255,9 @@ Editor.prototype = {
 
       env.removeEventListener("load", onLoad, true);
       let win = env.contentWindow.wrappedJSObject;
+
+      if (!this.config.themeSwitching)
+        win.document.documentElement.setAttribute("force-theme", "light");
 
       CM_SCRIPTS.forEach((url) =>
         Services.scriptloader.loadSubScript(url, win, "utf8"));
@@ -322,8 +323,16 @@ Editor.prototype = {
       this.container = env;
       editors.set(this, cm);
 
-      this.resetIndentUnit();
+      this.reloadPreferences = this.reloadPreferences.bind(this);
+      this._prefObserver = new PrefObserver("devtools.editor.");
+      this._prefObserver.on(TAB_SIZE, this.reloadPreferences);
+      this._prefObserver.on(EXPAND_TAB, this.reloadPreferences);
+      this._prefObserver.on(KEYMAP, this.reloadPreferences);
+      this._prefObserver.on(AUTO_CLOSE, this.reloadPreferences);
+      this._prefObserver.on(AUTOCOMPLETE, this.reloadPreferences);
+      this._prefObserver.on(DETECT_INDENT, this.reloadPreferences);
 
+      this.reloadPreferences();
       def.resolve();
     };
 
@@ -333,6 +342,14 @@ Editor.prototype = {
 
     this.once("destroy", () => el.removeChild(env));
     return def.promise;
+  },
+
+  /**
+   * Returns a boolean indicating whether the editor is ready to
+   * use.  Use appendTo(el).then(() => {}) for most cases
+   */
+  isAppended: function() {
+    return editors.has(this);
   },
 
   /**
@@ -356,10 +373,17 @@ Editor.prototype = {
 
   /**
    * Changes the value of a currently used highlighting mode.
-   * See Editor.modes for the list of all suppoert modes.
+   * See Editor.modes for the list of all supported modes.
    */
   setMode: function (value) {
     this.setOption("mode", value);
+
+    // If autocomplete was set up and the mode is changing, then
+    // turn it off and back on again so the proper mode can be used.
+    if (this.config.autocomplete) {
+      this.setOption("autocomplete", false);
+      this.setOption("autocomplete", true);
+    }
   },
 
   /**
@@ -385,6 +409,28 @@ Editor.prototype = {
     cm.setValue(value);
 
     this.resetIndentUnit();
+  },
+
+  /**
+   * Reload the state of the editor based on all current preferences.
+   * This is called automatically when any of the relevant preferences
+   * change.
+   */
+  reloadPreferences: function() {
+    // Restore the saved autoCloseBrackets value if it is preffed on.
+    let useAutoClose = Services.prefs.getBoolPref(AUTO_CLOSE);
+    this.setOption("autoCloseBrackets",
+      useAutoClose ? this.config.autoCloseBracketsSaved : false);
+
+    // If alternative keymap is provided, use it.
+    const keyMap = Services.prefs.getCharPref(KEYMAP);
+    if (VALID_KEYMAPS.has(keyMap))
+      this.setOption("keyMap", keyMap)
+    else
+      this.setOption("keyMap", "default");
+
+    this.resetIndentUnit();
+    this.setupAutoCompletion();
   },
 
   /**
@@ -862,15 +908,60 @@ Editor.prototype = {
   },
 
   /**
+   * Sets an option for the editor.  For most options it just defers to
+   * CodeMirror.setOption, but certain ones are maintained within the editor
+   * instance.
+   */
+  setOption: function(o, v) {
+    let cm = editors.get(this);
+
+    // Save the state of a valid autoCloseBrackets string, so we can reset
+    // it if it gets preffed off and back on.
+    if (o === "autoCloseBrackets" && v) {
+      this.config.autoCloseBracketsSaved = v;
+    }
+
+    if (o === "autocomplete") {
+      this.config.autocomplete = v;
+      this.setupAutoCompletion();
+    } else {
+      cm.setOption(o, v);
+    }
+  },
+
+  /**
+   * Gets an option for the editor.  For most options it just defers to
+   * CodeMirror.getOption, but certain ones are maintained within the editor
+   * instance.
+   */
+  getOption: function(o) {
+    let cm = editors.get(this);
+    if (o === "autocomplete") {
+      return this.config.autocomplete;
+    } else {
+      return cm.getOption(o);
+    }
+  },
+
+  /**
    * Sets up autocompletion for the editor. Lazily imports the required
    * dependencies because they vary by editor mode.
+   *
+   * Autocompletion is special, because we don't want to automatically use
+   * it just because it is preffed on (it still needs to be requested by the
+   * editor), but we do want to always disable it if it is preffed off.
    */
-  setupAutoCompletion: function (options = {}) {
-    if (this.config.autocomplete) {
+  setupAutoCompletion: function () {
+    // The autocomplete module will overwrite this.initializeAutoCompletion
+    // with a mode specific autocompletion handler.
+    if (!this.initializeAutoCompletion) {
       this.extend(require("./autocomplete"));
-      // The autocomplete module will overwrite this.setupAutoCompletion with
-      // a mode specific autocompletion handler.
-      this.setupAutoCompletion(options);
+    }
+
+    if (this.config.autocomplete && Services.prefs.getBoolPref(AUTOCOMPLETE)) {
+      this.initializeAutoCompletion(this.config.autocompleteOpts);
+    } else {
+      this.destroyAutoCompletion();
     }
   },
 
@@ -909,6 +1000,17 @@ Editor.prototype = {
     this.container = null;
     this.config = null;
     this.version = null;
+
+    if (this._prefObserver) {
+      this._prefObserver.off(TAB_SIZE, this.reloadPreferences);
+      this._prefObserver.off(EXPAND_TAB, this.reloadPreferences);
+      this._prefObserver.off(KEYMAP, this.reloadPreferences);
+      this._prefObserver.off(AUTO_CLOSE, this.reloadPreferences);
+      this._prefObserver.off(AUTOCOMPLETE, this.reloadPreferences);
+      this._prefObserver.off(DETECT_INDENT, this.reloadPreferences);
+      this._prefObserver.destroy();
+    }
+
     this.emit("destroy");
   }
 };

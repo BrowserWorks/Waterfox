@@ -12,6 +12,8 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/Endian.h"
 #include "TexturePoolOGL.h"
+#include "mozilla/layers/CompositorOGL.h"
+#include "mozilla/layers/LayerManagerComposite.h"
 #include "mozilla/layers/TextureHostOGL.h"
 
 #include "gfxColor.h"
@@ -46,11 +48,8 @@
 #undef compress
 #include "mozilla/Compression.h"
 
-#ifdef __GNUC__
-#define PACKED_STRUCT __attribute__((packed))
-#else
-#define PACKED_STRUCT
-#endif
+// Protocol buffer (generated automatically)
+#include "protobuf/LayerScopePacket.pb.h"
 
 namespace mozilla {
 namespace layers {
@@ -59,6 +58,7 @@ using namespace mozilla::Compression;
 using namespace mozilla::gfx;
 using namespace mozilla::gl;
 using namespace mozilla;
+using namespace layerscope;
 
 class DebugDataSender;
 class DebugGLData;
@@ -80,6 +80,7 @@ public:
         : mState(NoHandshake)
     { }
 
+private:
     virtual ~LayerScopeWebSocketHandler()
     {
         if (mTransport) {
@@ -87,6 +88,7 @@ public:
         }
     }
 
+public:
     void OpenStream(nsISocketTransport* aTransport) {
         MOZ_ASSERT(aTransport);
 
@@ -239,9 +241,9 @@ private:
         SHA1Sum sha1;
         nsCString combined(wsKey + guid);
         sha1.update(combined.get(), combined.Length());
-        uint8_t digest[SHA1Sum::HashSize]; // SHA1 digests are 20 bytes long.
+        uint8_t digest[SHA1Sum::kHashSize]; // SHA1 digests are 20 bytes long.
         sha1.finish(digest);
-        nsCString newString(reinterpret_cast<char*>(digest), SHA1Sum::HashSize);
+        nsCString newString(reinterpret_cast<char*>(digest), SHA1Sum::kHashSize);
         Base64Encode(newString, res);
 
         nsCString response("HTTP/1.1 101 Switching Protocols\r\n");
@@ -315,6 +317,7 @@ public:
     }
 
     void AppendDebugData(DebugGLData *aDebugData);
+    void CleanDebugData();
     void DispatchDebugData();
 private:
     nsTArray<nsRefPtr<LayerScopeWebSocketHandler> > mHandlers;
@@ -323,211 +326,218 @@ private:
     nsCOMPtr<nsIServerSocket> mServerSocket;
 };
 
-static StaticAutoPtr<LayerScopeWebSocketManager> gLayerScopeWebSocketManager;
-
-class DebugGLData : public LinkedListElement<DebugGLData> {
+// Static class to create and destory LayerScopeWebSocketManager object
+class WebSocketHelper
+{
 public:
-    typedef enum {
-        FrameStart,
-        FrameEnd,
-        TextureData,
-        ColorData
-    } DataType;
+    static void CreateServerSocket()
+    {
+        // Create Web Server Socket (which has to be on the main thread)
+        NS_ASSERTION(NS_IsMainThread(), "Wrong thread!");
+        if (!sWebSocketManager) {
+            sWebSocketManager = new LayerScopeWebSocketManager();
+        }
+    }
+
+    static void DestroyServerSocket()
+    {
+        // Destroy Web Server Socket
+        if (sWebSocketManager) {
+            sWebSocketManager->RemoveAllConnections();
+        }
+    }
+
+    static LayerScopeWebSocketManager* GetSocketManager()
+    {
+        return sWebSocketManager;
+    }
+
+private:
+    static StaticAutoPtr<LayerScopeWebSocketManager> sWebSocketManager;
+};
+
+StaticAutoPtr<LayerScopeWebSocketManager> WebSocketHelper::sWebSocketManager;
+
+/*
+ * DebugGLData is the base class of
+ * 1. DebugGLFrameStatusData (Frame start/end packet)
+ * 2. DebugGLColorData (Color data packet)
+ * 3. DebugGLTextureData (Texture data packet)
+ */
+class DebugGLData: public LinkedListElement<DebugGLData> {
+public:
+    DebugGLData(Packet::DataType aDataType)
+        : mDataType(aDataType)
+    { }
 
     virtual ~DebugGLData() { }
 
-    DataType GetDataType() const { return mDataType; }
-    intptr_t GetContextAddress() const { return mContextAddress; }
-    int64_t GetValue() const { return mValue; }
+    Packet::DataType GetDataType() const { return mDataType; }
 
-    DebugGLData(DataType dataType)
-        : mDataType(dataType),
-          mContextAddress(0),
-          mValue(0)
-    { }
+    virtual bool Write() = 0;
 
-    DebugGLData(DataType dataType, GLContext* cx)
-        : mDataType(dataType),
-          mContextAddress(reinterpret_cast<intptr_t>(cx)),
-          mValue(0)
-    { }
-
-    DebugGLData(DataType dataType, GLContext* cx, int64_t value)
-        : mDataType(dataType),
-          mContextAddress(reinterpret_cast<intptr_t>(cx)),
-          mValue(value)
-    { }
-
-    virtual bool Write() {
-        if (mDataType != FrameStart &&
-            mDataType != FrameEnd)
-        {
-            NS_WARNING("Unimplemented data type!");
-            return false;
-        }
-
-        DebugGLData::BasicPacket packet;
-
-        packet.type = mDataType;
-        packet.ptr = static_cast<uint64_t>(mContextAddress);
-        packet.value = mValue;
-
-        return WriteToStream(&packet, sizeof(packet));
-    }
-
-    static bool WriteToStream(void *ptr, uint32_t size) {
-        if (!gLayerScopeWebSocketManager)
+    static bool WriteToStream(Packet& aPacket) {
+        if (!WebSocketHelper::GetSocketManager())
             return true;
-        return gLayerScopeWebSocketManager->WriteAll(ptr, size);
+
+        uint32_t size = aPacket.ByteSize();
+        nsAutoArrayPtr<uint8_t> data(new uint8_t[size]);
+        aPacket.SerializeToArray(data, size);
+        return WebSocketHelper::GetSocketManager()->WriteAll(data, size);
     }
 
 protected:
-    DataType mDataType;
-    intptr_t mContextAddress;
-    int64_t mValue;
+    Packet::DataType mDataType;
+};
 
+class DebugGLFrameStatusData : public DebugGLData
+{
 public:
-  // the data packet formats; all packed
-#ifdef _MSC_VER
-#pragma pack(push, 1)
-#endif
-    typedef struct {
-        uint32_t type;
-        uint64_t ptr;
-        uint64_t value;
-    } PACKED_STRUCT BasicPacket;
+    DebugGLFrameStatusData(Packet::DataType aDataType,
+                           int64_t aValue)
+        : DebugGLData(aDataType),
+          mFrameStamp(aValue)
+    { }
 
-    typedef struct {
-        uint32_t type;
-        uint64_t ptr;
-        uint64_t layerref;
-        uint32_t color;
-        uint32_t width;
-        uint32_t height;
-    } PACKED_STRUCT ColorPacket;
+    DebugGLFrameStatusData(Packet::DataType aDataType)
+        : DebugGLData(aDataType),
+          mFrameStamp(0)
+    { }
 
-    typedef struct {
-        uint32_t type;
-        uint64_t ptr;
-        uint64_t layerref;
-        uint32_t name;
-        uint32_t width;
-        uint32_t height;
-        uint32_t stride;
-        uint32_t format;
-        uint32_t target;
-        uint32_t dataFormat;
-        uint32_t dataSize;
-    } PACKED_STRUCT TexturePacket;
-#ifdef _MSC_VER
-#pragma pack(pop)
-#endif
+    int64_t GetFrameStamp() const { return mFrameStamp; }
+
+    virtual bool Write() MOZ_OVERRIDE {
+        Packet packet;
+        packet.set_type(mDataType);
+
+        FramePacket *fp = packet.mutable_frame();
+        fp->set_value(mFrameStamp);
+
+        if (!WriteToStream(packet))
+            return false;
+        return true;
+    }
+
+protected:
+    int64_t mFrameStamp;
 };
 
 class DebugGLTextureData : public DebugGLData {
 public:
-    DebugGLTextureData(GLContext* cx, void* layerRef, GLuint target, GLenum name, DataSourceSurface* img)
-        : DebugGLData(DebugGLData::TextureData, cx),
+    DebugGLTextureData(GLContext* cx,
+                       void* layerRef,
+                       GLenum target,
+                       GLuint name,
+                       DataSourceSurface* img)
+        : DebugGLData(Packet::TEXTURE),
           mLayerRef(layerRef),
           mTarget(target),
           mName(name),
-          mImage(img)
-    { }
+          mContextAddress(reinterpret_cast<intptr_t>(cx)),
+          mDatasize(0)
+    {
+        // pre-packing
+        // DataSourceSurface may have locked buffer,
+        // so we should compress now, and then it could
+        // be unlocked outside.
+        pack(img);
+    }
 
-    void *GetLayerRef() const { return mLayerRef; }
+    const void* GetLayerRef() const { return mLayerRef; }
     GLuint GetName() const { return mName; }
-    DataSourceSurface* GetImage() const { return mImage; }
     GLenum GetTextureTarget() const { return mTarget; }
+    intptr_t GetContextAddress() const { return mContextAddress; }
+    uint32_t GetDataSize() const { return mDatasize; }
 
-    virtual bool Write() {
-        DebugGLData::TexturePacket packet;
-        char* dataptr = nullptr;
-        uint32_t datasize = 0;
-        std::auto_ptr<char> compresseddata;
+    virtual bool Write() MOZ_OVERRIDE {
+        if (!WriteToStream(mPacket))
+            return false;
+        return true;
+    }
 
-        packet.type = mDataType;
-        packet.ptr = static_cast<uint64_t>(mContextAddress);
-        packet.layerref = reinterpret_cast<uint64_t>(mLayerRef);
-        packet.name = mName;
-        packet.format = 0;
-        packet.target = mTarget;
-        packet.dataFormat = LOCAL_GL_RGBA;
+private:
+    void pack(DataSourceSurface* aImage) {
+        mPacket.set_type(mDataType);
 
-        if (mImage) {
-            packet.width = mImage->GetSize().width;
-            packet.height = mImage->GetSize().height;
-            packet.stride = mImage->Stride();
-            packet.dataSize = mImage->GetSize().height * mImage->Stride();
+        TexturePacket *tp = mPacket.mutable_texture();
+        tp->set_layerref(reinterpret_cast<uint64_t>(mLayerRef));
+        tp->set_name(mName);
+        tp->set_target(mTarget);
+        tp->set_dataformat(LOCAL_GL_RGBA);
+        tp->set_glcontext(static_cast<uint64_t>(mContextAddress));
 
-            dataptr = (char*) mImage->GetData();
-            datasize = packet.dataSize;
+        if (aImage) {
+            tp->set_width(aImage->GetSize().width);
+            tp->set_height(aImage->GetSize().height);
+            tp->set_stride(aImage->Stride());
 
-            compresseddata = std::auto_ptr<char>((char*) moz_malloc(LZ4::maxCompressedSize(datasize)));
+            mDatasize = aImage->GetSize().height * aImage->Stride();
+
+            nsAutoArrayPtr<char> compresseddata(
+                new char[LZ4::maxCompressedSize(mDatasize)]);
             if (compresseddata.get()) {
-                int ndatasize = LZ4::compress(dataptr, datasize, compresseddata.get());
+                int ndatasize = LZ4::compress((char*)aImage->GetData(),
+                                              mDatasize,
+                                              compresseddata);
                 if (ndatasize > 0) {
-                    datasize = ndatasize;
-                    dataptr = compresseddata.get();
-
-                    packet.dataFormat = (1 << 16) | packet.dataFormat;
-                    packet.dataSize = datasize;
+                    mDatasize = ndatasize;
+                    tp->set_dataformat((1 << 16 | tp->dataformat()));
+                    tp->set_data(compresseddata, mDatasize);
+                } else {
+                    NS_WARNING("Compress data failed");
+                    tp->set_data(aImage->GetData(), mDatasize);
                 }
+            } else {
+                NS_WARNING("Couldn't new compressed data.");
+                tp->set_data(aImage->GetData(), mDatasize);
             }
         } else {
-            packet.width = 0;
-            packet.height = 0;
-            packet.stride = 0;
-            packet.dataSize = 0;
+            tp->set_width(0);
+            tp->set_height(0);
+            tp->set_stride(0);
         }
-
-        // write the packet header data
-        if (!WriteToStream(&packet, sizeof(packet)))
-            return false;
-
-        // then the image data
-        if (!WriteToStream(dataptr, datasize))
-            return false;
-
-        // then pad out to 4 bytes
-        if (datasize % 4 != 0) {
-            static char buf[] = { 0, 0, 0, 0 };
-            if (!WriteToStream(buf, 4 - (datasize % 4)))
-                return false;
-        }
-
-        return true;
     }
 
 protected:
     void* mLayerRef;
     GLenum mTarget;
     GLuint mName;
-    RefPtr<DataSourceSurface> mImage;
+    intptr_t mContextAddress;
+    uint32_t mDatasize;
+
+    // Packet data
+    Packet mPacket;
 };
 
 class DebugGLColorData : public DebugGLData {
 public:
-    DebugGLColorData(void* layerRef, const gfxRGBA& color, int width, int height)
-        : DebugGLData(DebugGLData::ColorData),
+    DebugGLColorData(void* layerRef,
+                     const gfxRGBA& color,
+                     int width,
+                     int height)
+        : DebugGLData(Packet::COLOR),
+          mLayerRef(layerRef),
           mColor(color.Packed()),
           mSize(width, height)
     { }
 
-    void *GetLayerRef() const { return mLayerRef; }
+    const void* GetLayerRef() const { return mLayerRef; }
     uint32_t GetColor() const { return mColor; }
     const nsIntSize& GetSize() const { return mSize; }
 
-    virtual bool Write() {
-        DebugGLData::ColorPacket packet;
+    virtual bool Write() MOZ_OVERRIDE {
+        Packet packet;
+        packet.set_type(mDataType);
 
-        packet.type = mDataType;
-        packet.ptr = static_cast<uint64_t>(mContextAddress);
-        packet.layerref = reinterpret_cast<uintptr_t>(mLayerRef);
-        packet.color = mColor;
-        packet.width = mSize.width;
-        packet.height = mSize.height;
+        ColorPacket *cp = packet.mutable_color();
+        cp->set_layerref(reinterpret_cast<uint64_t>(mLayerRef));
+        cp->set_color(mColor);
+        cp->set_width(mSize.width);
+        cp->set_height(mSize.height);
 
-        return WriteToStream(&packet, sizeof(packet));
+        if (!WriteToStream(packet))
+            return false;
+        return true;
     }
 
 protected:
@@ -536,37 +546,26 @@ protected:
     nsIntSize mSize;
 };
 
-static bool
-CheckSender()
-{
-    if (!gLayerScopeWebSocketManager)
-        return false;
-
-    if (!gLayerScopeWebSocketManager->IsConnected())
-        return false;
-
-    return true;
-}
-
 class DebugListener : public nsIServerSocketListener
 {
+    virtual ~DebugListener() { }
+
 public:
 
     NS_DECL_THREADSAFE_ISUPPORTS
 
     DebugListener() { }
-    virtual ~DebugListener() { }
 
     /* nsIServerSocketListener */
 
     NS_IMETHODIMP OnSocketAccepted(nsIServerSocket *aServ,
                                    nsISocketTransport *aTransport)
     {
-        if (!gLayerScopeWebSocketManager)
+        if (!WebSocketHelper::GetSocketManager())
             return NS_OK;
 
         printf_stderr("*** LayerScope: Accepted connection\n");
-        gLayerScopeWebSocketManager->AddConnection(aTransport);
+        WebSocketHelper::GetSocketManager()->AddConnection(aTransport);
         return NS_OK;
     }
 
@@ -582,32 +581,27 @@ NS_IMPL_ISUPPORTS(DebugListener, nsIServerSocketListener);
 
 class DebugDataSender : public nsIRunnable
 {
-public:
-
-    NS_DECL_THREADSAFE_ISUPPORTS
-
-    DebugDataSender() {
-        mList = new LinkedList<DebugGLData>();
-    }
-
     virtual ~DebugDataSender() {
         Cleanup();
     }
 
+public:
+
+    NS_DECL_THREADSAFE_ISUPPORTS
+
+    DebugDataSender() { }
+
     void Append(DebugGLData *d) {
-        mList->insertBack(d);
+        mList.insertBack(d);
     }
 
     void Cleanup() {
-        if (!mList)
+        if (mList.isEmpty())
             return;
 
         DebugGLData *d;
-        while ((d = mList->popFirst()) != nullptr)
+        while ((d = mList.popFirst()) != nullptr)
             delete d;
-        delete mList;
-
-        mList = nullptr;
     }
 
     /* nsIRunnable impl; send the data */
@@ -616,8 +610,8 @@ public:
         DebugGLData *d;
         nsresult rv = NS_OK;
 
-        while ((d = mList->popFirst()) != nullptr) {
-            std::auto_ptr<DebugGLData> cleaner(d);
+        while ((d = mList.popFirst()) != nullptr) {
+            nsAutoPtr<DebugGLData> cleaner(d);
             if (!d->Write()) {
                 rv = NS_ERROR_FAILURE;
                 break;
@@ -627,84 +621,124 @@ public:
         Cleanup();
 
         if (NS_FAILED(rv)) {
-            LayerScope::DestroyServerSocket();
+            WebSocketHelper::DestroyServerSocket();
         }
 
         return NS_OK;
     }
 
 protected:
-    LinkedList<DebugGLData> *mList;
+    LinkedList<DebugGLData> mList;
 };
 
 NS_IMPL_ISUPPORTS(DebugDataSender, nsIRunnable);
 
-void
-LayerScope::CreateServerSocket()
+/*
+ * LayerScope SendXXX Structure
+ * 1. SendLayer
+ * 2. SendEffectChain
+ *   1. SendTexturedEffect
+ *      -> SendTextureSource
+ *   2. SendYCbCrEffect
+ *      -> SendTextureSource
+ *   3. SendColor
+ */
+class SenderHelper
 {
-    if (!gfxPrefs::LayerScopeEnabled()) {
+// Sender public APIs
+public:
+    static void SendLayer(LayerComposite* aLayer,
+                          int aWidth,
+                          int aHeight);
+
+    static void SendEffectChain(gl::GLContext* aGLContext,
+                                const EffectChain& aEffectChain,
+                                int aWidth = 0,
+                                int aHeight = 0);
+
+// Sender private functions
+private:
+    static void SendColor(void* aLayerRef,
+                          const gfxRGBA& aColor,
+                          int aWidth,
+                          int aHeight);
+    static void SendTextureSource(GLContext* aGLContext,
+                                  void* aLayerRef,
+                                  TextureSourceOGL* aSource,
+                                  bool aFlipY);
+    static void SendTexturedEffect(GLContext* aGLContext,
+                                   void* aLayerRef,
+                                   const TexturedEffect* aEffect);
+    static void SendYCbCrEffect(GLContext* aGLContext,
+                                void* aLayerRef,
+                                const EffectYCbCr* aEffect);
+};
+
+
+// ----------------------------------------------
+// SenderHelper implementation
+// ----------------------------------------------
+void
+SenderHelper::SendLayer(LayerComposite* aLayer,
+                        int aWidth,
+                        int aHeight)
+{
+    MOZ_ASSERT(aLayer && aLayer->GetLayer());
+    if (!aLayer || !aLayer->GetLayer()) {
         return;
     }
 
-    if (!gLayerScopeWebSocketManager) {
-        gLayerScopeWebSocketManager = new LayerScopeWebSocketManager();
+    switch (aLayer->GetLayer()->GetType()) {
+        case Layer::TYPE_COLOR: {
+            EffectChain effect;
+            aLayer->GenEffectChain(effect);
+            SenderHelper::SendEffectChain(nullptr, effect, aWidth, aHeight);
+            break;
+        }
+        case Layer::TYPE_IMAGE:
+        case Layer::TYPE_CANVAS:
+        case Layer::TYPE_THEBES: {
+            // Get CompositableHost and Compositor
+            CompositableHost* compHost = aLayer->GetCompositableHost();
+            Compositor* comp = compHost->GetCompositor();
+            // Send EffectChain only for CompositorOGL
+            if (LayersBackend::LAYERS_OPENGL == comp->GetBackendType()) {
+                CompositorOGL* compOGL = static_cast<CompositorOGL*>(comp);
+                EffectChain effect;
+                // Generate primary effect (lock and gen)
+                AutoLockCompositableHost lock(compHost);
+                aLayer->GenEffectChain(effect);
+                SenderHelper::SendEffectChain(compOGL->gl(), effect);
+            }
+            break;
+        }
+        case Layer::TYPE_CONTAINER:
+        default:
+            break;
     }
 }
 
 void
-LayerScope::DestroyServerSocket()
+SenderHelper::SendColor(void* aLayerRef,
+                        const gfxRGBA& aColor,
+                        int aWidth,
+                        int aHeight)
 {
-    if (gLayerScopeWebSocketManager) {
-        gLayerScopeWebSocketManager->RemoveAllConnections();
-    }
-}
-
-void
-LayerScope::BeginFrame(GLContext* aGLContext, int64_t aFrameStamp)
-{
-    if (!gLayerScopeWebSocketManager)
-        return;
-
-    if (!gLayerScopeWebSocketManager->IsConnected())
-        return;
-
-#if 0
-    // if we're sending data in between frames, flush the list down the socket,
-    // and start a new one
-    if (gCurrentSender) {
-        gDebugSenderThread->Dispatch(gCurrentSender, NS_DISPATCH_NORMAL);
-    }
-#endif
-
-    gLayerScopeWebSocketManager->AppendDebugData(new DebugGLData(DebugGLData::FrameStart, aGLContext, aFrameStamp));
-}
-
-void
-LayerScope::EndFrame(GLContext* aGLContext)
-{
-    if (!CheckSender())
-        return;
-
-    gLayerScopeWebSocketManager->AppendDebugData(new DebugGLData(DebugGLData::FrameEnd, aGLContext));
-    gLayerScopeWebSocketManager->DispatchDebugData();
-}
-
-static void
-SendColor(void* aLayerRef, const gfxRGBA& aColor, int aWidth, int aHeight)
-{
-    if (!CheckSender())
-        return;
-
-    gLayerScopeWebSocketManager->AppendDebugData(
+    WebSocketHelper::GetSocketManager()->AppendDebugData(
         new DebugGLColorData(aLayerRef, aColor, aWidth, aHeight));
 }
 
-static void
-SendTextureSource(GLContext* aGLContext,
-                  void* aLayerRef,
-                  TextureSourceOGL* aSource,
-                  bool aFlipY)
+void
+SenderHelper::SendTextureSource(GLContext* aGLContext,
+                                void* aLayerRef,
+                                TextureSourceOGL* aSource,
+                                bool aFlipY)
 {
+    MOZ_ASSERT(aGLContext);
+    if (!aGLContext) {
+        return;
+    }
+
     GLenum textureTarget = aSource->GetTextureTarget();
     ShaderConfigOGL config = ShaderConfigFromTargetAndFormat(textureTarget,
                                                              aSource->GetFormat());
@@ -732,15 +766,15 @@ SendTextureSource(GLContext* aGLContext,
                                                        size,
                                                        shaderConfig, aFlipY);
 
-    gLayerScopeWebSocketManager->AppendDebugData(
+    WebSocketHelper::GetSocketManager()->AppendDebugData(
         new DebugGLTextureData(aGLContext, aLayerRef, textureTarget,
                                textureId, img));
 }
 
-static void
-SendTexturedEffect(GLContext* aGLContext,
-                   void* aLayerRef,
-                   const TexturedEffect* aEffect)
+void
+SenderHelper::SendTexturedEffect(GLContext* aGLContext,
+                                 void* aLayerRef,
+                                 const TexturedEffect* aEffect)
 {
     TextureSourceOGL* source = aEffect->mTexture->AsSourceOGL();
     if (!source)
@@ -750,10 +784,10 @@ SendTexturedEffect(GLContext* aGLContext,
     SendTextureSource(aGLContext, aLayerRef, source, flipY);
 }
 
-static void
-SendYCbCrEffect(GLContext* aGLContext,
-                void* aLayerRef,
-                const EffectYCbCr* aEffect)
+void
+SenderHelper::SendYCbCrEffect(GLContext* aGLContext,
+                              void* aLayerRef,
+                              const EffectYCbCr* aEffect)
 {
     TextureSource* sourceYCbCr = aEffect->mTexture;
     if (!sourceYCbCr)
@@ -771,49 +805,48 @@ SendYCbCrEffect(GLContext* aGLContext,
 }
 
 void
-LayerScope::SendEffectChain(GLContext* aGLContext,
-                            const EffectChain& aEffectChain,
-                            int aWidth, int aHeight)
+SenderHelper::SendEffectChain(GLContext* aGLContext,
+                              const EffectChain& aEffectChain,
+                              int aWidth,
+                              int aHeight)
 {
-    if (!CheckSender())
-        return;
-
     const Effect* primaryEffect = aEffectChain.mPrimaryEffect;
     switch (primaryEffect->mType) {
-    case EffectTypes::RGB:
-    {
-        const TexturedEffect* texturedEffect =
-            static_cast<const TexturedEffect*>(primaryEffect);
-        SendTexturedEffect(aGLContext, aEffectChain.mLayerRef, texturedEffect);
-    }
-    break;
-    case EffectTypes::YCBCR:
-    {
-        const EffectYCbCr* yCbCrEffect =
-            static_cast<const EffectYCbCr*>(primaryEffect);
-        SendYCbCrEffect(aGLContext, aEffectChain.mLayerRef, yCbCrEffect);
-    }
-    case EffectTypes::SOLID_COLOR:
-    {
-        const EffectSolidColor* solidColorEffect =
-            static_cast<const EffectSolidColor*>(primaryEffect);
-        gfxRGBA color(solidColorEffect->mColor.r,
-                      solidColorEffect->mColor.g,
-                      solidColorEffect->mColor.b,
-                      solidColorEffect->mColor.a);
-        SendColor(aEffectChain.mLayerRef, color, aWidth, aHeight);
-    }
-    break;
-    case EffectTypes::COMPONENT_ALPHA:
-    case EffectTypes::RENDER_TARGET:
-    default:
-        break;
+        case EffectTypes::RGB: {
+            const TexturedEffect* texturedEffect =
+                static_cast<const TexturedEffect*>(primaryEffect);
+            SendTexturedEffect(aGLContext, aEffectChain.mLayerRef, texturedEffect);
+            break;
+        }
+        case EffectTypes::YCBCR: {
+            const EffectYCbCr* yCbCrEffect =
+                static_cast<const EffectYCbCr*>(primaryEffect);
+            SendYCbCrEffect(aGLContext, aEffectChain.mLayerRef, yCbCrEffect);
+            break;
+        }
+        case EffectTypes::SOLID_COLOR: {
+            const EffectSolidColor* solidColorEffect =
+                static_cast<const EffectSolidColor*>(primaryEffect);
+            gfxRGBA color(solidColorEffect->mColor.r,
+                          solidColorEffect->mColor.g,
+                          solidColorEffect->mColor.b,
+                          solidColorEffect->mColor.a);
+            SendColor(aEffectChain.mLayerRef, color, aWidth, aHeight);
+            break;
+        }
+        case EffectTypes::COMPONENT_ALPHA:
+        case EffectTypes::RENDER_TARGET:
+        default:
+            break;
     }
 
     //const Effect* secondaryEffect = aEffectChain.mSecondaryEffects[EffectTypes::MASK];
     // TODO:
 }
 
+// ----------------------------------------------
+// LayerScopeWebSocketManager implementation
+// ----------------------------------------------
 LayerScopeWebSocketManager::LayerScopeWebSocketManager()
 {
     NS_NewThread(getter_AddRefs(mDebugSenderThread));
@@ -828,7 +861,8 @@ LayerScopeWebSocketManager::~LayerScopeWebSocketManager()
 {
 }
 
-void LayerScopeWebSocketManager::AppendDebugData(DebugGLData *aDebugData)
+void
+LayerScopeWebSocketManager::AppendDebugData(DebugGLData *aDebugData)
 {
     if (!mCurrentSender) {
         mCurrentSender = new DebugDataSender();
@@ -837,10 +871,124 @@ void LayerScopeWebSocketManager::AppendDebugData(DebugGLData *aDebugData)
     mCurrentSender->Append(aDebugData);
 }
 
-void LayerScopeWebSocketManager::DispatchDebugData()
+void
+LayerScopeWebSocketManager::CleanDebugData()
+{
+    if (mCurrentSender) {
+        mCurrentSender->Cleanup();
+    }
+}
+
+void
+LayerScopeWebSocketManager::DispatchDebugData()
 {
     mDebugSenderThread->Dispatch(mCurrentSender, NS_DISPATCH_NORMAL);
     mCurrentSender = nullptr;
+}
+
+
+// ----------------------------------------------
+// LayerScope implementation
+// ----------------------------------------------
+void
+LayerScope::Init()
+{
+    if (!gfxPrefs::LayerScopeEnabled()) {
+        return;
+    }
+
+    // Note: The server socket has to be created on the main thread
+    WebSocketHelper::CreateServerSocket();
+}
+
+void
+LayerScope::DeInit()
+{
+    // Destroy Web Server Socket
+    WebSocketHelper::DestroyServerSocket();
+}
+
+void
+LayerScope::SendEffectChain(gl::GLContext* aGLContext,
+                            const EffectChain& aEffectChain,
+                            int aWidth,
+                            int aHeight)
+{
+    // Protect this public function
+    if (!CheckSendable()) {
+        return;
+    }
+    SenderHelper::SendEffectChain(aGLContext, aEffectChain, aWidth, aHeight);
+}
+
+void
+LayerScope::SendLayer(LayerComposite* aLayer,
+                      int aWidth,
+                      int aHeight)
+{
+    // Protect this public function
+    if (!CheckSendable()) {
+        return;
+    }
+    SenderHelper::SendLayer(aLayer, aWidth, aHeight);
+}
+
+bool
+LayerScope::CheckSendable()
+{
+    if (!WebSocketHelper::GetSocketManager()) {
+        return false;
+    }
+    if (!WebSocketHelper::GetSocketManager()->IsConnected()) {
+        return false;
+    }
+    return true;
+}
+
+void
+LayerScope::CleanLayer()
+{
+    if (CheckSendable()) {
+        WebSocketHelper::GetSocketManager()->CleanDebugData();
+    }
+}
+
+// ----------------------------------------------
+// LayerScopeAutoFrame implementation
+// ----------------------------------------------
+LayerScopeAutoFrame::LayerScopeAutoFrame(int64_t aFrameStamp)
+{
+    // Do Begin Frame
+    BeginFrame(aFrameStamp);
+}
+
+LayerScopeAutoFrame::~LayerScopeAutoFrame()
+{
+    // Do End Frame
+    EndFrame();
+}
+
+void
+LayerScopeAutoFrame::BeginFrame(int64_t aFrameStamp)
+{
+    if (!LayerScope::CheckSendable()) {
+        return;
+    }
+
+    WebSocketHelper::GetSocketManager()->AppendDebugData(
+        new DebugGLFrameStatusData(Packet::FRAMESTART, aFrameStamp));
+}
+
+void
+LayerScopeAutoFrame::EndFrame()
+{
+    if (!LayerScope::CheckSendable()) {
+        return;
+    }
+
+    WebSocketHelper::GetSocketManager()->AppendDebugData(
+        new DebugGLFrameStatusData(Packet::FRAMEEND));
+    WebSocketHelper::GetSocketManager()->DispatchDebugData();
 }
 
 } /* layers */

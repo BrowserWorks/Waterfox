@@ -98,6 +98,7 @@
 #include "nsIDOMCSSSupportsRule.h"
 #include "nsIDOMMozCSSKeyframeRule.h"
 #include "nsIDOMMozCSSKeyframesRule.h"
+#include "nsIDOMCSSCounterStyleRule.h"
 #include "nsIDOMCSSPageRule.h"
 #include "nsIDOMCSSStyleRule.h"
 #include "nsIDOMXULCommandDispatcher.h"
@@ -110,10 +111,7 @@
 #include "nsIXULTemplateBuilder.h"
 #include "nsITreeColumns.h"
 #endif
-#include "nsIDOMXPathExpression.h"
-#include "nsIDOMNSXPathExpression.h"
 #include "nsIDOMXPathNSResolver.h"
-#include "nsIDOMXPathResult.h"
 
 // Storage includes
 #include "nsIDOMStorage.h"
@@ -131,7 +129,6 @@
 #include "nsWrapperCacheInlines.h"
 #include "mozilla/dom/HTMLCollectionBinding.h"
 
-#include "nsIDOMMobileMessageManager.h"
 #include "nsIDOMMozSmsMessage.h"
 #include "nsIDOMMozMmsMessage.h"
 #include "nsIDOMSmsFilter.h"
@@ -345,11 +342,7 @@ static nsDOMClassInfoData sClassInfoData[] = {
   NS_DEFINE_CLASSINFO_DATA(XSLTProcessor, nsDOMGenericSH,
                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
 
-  NS_DEFINE_CLASSINFO_DATA(XPathExpression, nsDOMGenericSH,
-                           DOM_DEFAULT_SCRIPTABLE_FLAGS)
   NS_DEFINE_CLASSINFO_DATA(XPathNSResolver, nsDOMGenericSH,
-                           DOM_DEFAULT_SCRIPTABLE_FLAGS)
-  NS_DEFINE_CLASSINFO_DATA(XPathResult, nsDOMGenericSH,
                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
 
   // WhatWG Storage
@@ -375,9 +368,6 @@ static nsDOMClassInfoData sClassInfoData[] = {
   NS_DEFINE_CLASSINFO_DATA(ModalContentWindow, nsWindowSH,
                            DEFAULT_SCRIPTABLE_FLAGS |
                            WINDOW_SCRIPTABLE_FLAGS)
-
-  NS_DEFINE_CLASSINFO_DATA(MozMobileMessageManager, nsDOMGenericSH,
-                           DOM_DEFAULT_SCRIPTABLE_FLAGS)
 
   NS_DEFINE_CLASSINFO_DATA(MozSmsMessage, nsDOMGenericSH,
                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
@@ -409,6 +399,9 @@ static nsDOMClassInfoData sClassInfoData[] = {
   NS_DEFINE_CLASSINFO_DATA(MozCSSKeyframeRule, nsDOMGenericSH,
                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
   NS_DEFINE_CLASSINFO_DATA(MozCSSKeyframesRule, nsDOMGenericSH,
+                           DOM_DEFAULT_SCRIPTABLE_FLAGS)
+
+  NS_DEFINE_CLASSINFO_DATA(CSSCounterStyleRule, nsDOMGenericSH,
                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
 
   NS_DEFINE_CLASSINFO_DATA(CSSPageRule, nsDOMGenericSH,
@@ -457,8 +450,8 @@ struct nsConstructorFuncMapData
 
 static const nsConstructorFuncMapData kConstructorFuncMap[] =
 {
-  NS_DEFINE_CONSTRUCTOR_FUNC_DATA(Blob, nsDOMMultipartFile::NewBlob)
-  NS_DEFINE_CONSTRUCTOR_FUNC_DATA(File, nsDOMMultipartFile::NewFile)
+  NS_DEFINE_CONSTRUCTOR_FUNC_DATA(Blob, DOMMultipartFileImpl::NewBlob)
+  NS_DEFINE_CONSTRUCTOR_FUNC_DATA(File, DOMMultipartFileImpl::NewFile)
   NS_DEFINE_CONSTRUCTOR_FUNC_DATA(MozSmsFilter, SmsFilter::NewSmsFilter)
   NS_DEFINE_CONSTRUCTOR_FUNC_DATA(XSLTProcessor, XSLTProcessorCtor)
 };
@@ -936,17 +929,8 @@ nsDOMClassInfo::Init()
     DOM_CLASSINFO_MAP_ENTRY(nsIXSLTProcessorPrivate)
   DOM_CLASSINFO_MAP_END
 
-  DOM_CLASSINFO_MAP_BEGIN(XPathExpression, nsIDOMXPathExpression)
-    DOM_CLASSINFO_MAP_ENTRY(nsIDOMXPathExpression)
-    DOM_CLASSINFO_MAP_ENTRY(nsIDOMNSXPathExpression)
-  DOM_CLASSINFO_MAP_END
-
   DOM_CLASSINFO_MAP_BEGIN(XPathNSResolver, nsIDOMXPathNSResolver)
     DOM_CLASSINFO_MAP_ENTRY(nsIDOMXPathNSResolver)
-  DOM_CLASSINFO_MAP_END
-
-  DOM_CLASSINFO_MAP_BEGIN(XPathResult, nsIDOMXPathResult)
-    DOM_CLASSINFO_MAP_ENTRY(nsIDOMXPathResult)
   DOM_CLASSINFO_MAP_END
 
   DOM_CLASSINFO_MAP_BEGIN(Storage, nsIDOMStorage)
@@ -968,10 +952,6 @@ nsDOMClassInfo::Init()
 #ifdef MOZ_WEBSPEECH
     DOM_CLASSINFO_MAP_ENTRY(nsISpeechSynthesisGetter)
 #endif
-  DOM_CLASSINFO_MAP_END
-
-  DOM_CLASSINFO_MAP_BEGIN(MozMobileMessageManager, nsIDOMMozMobileMessageManager)
-     DOM_CLASSINFO_MAP_ENTRY(nsIDOMMozMobileMessageManager)
   DOM_CLASSINFO_MAP_END
 
   DOM_CLASSINFO_MAP_BEGIN(MozSmsMessage, nsIDOMMozSmsMessage)
@@ -1025,6 +1005,10 @@ nsDOMClassInfo::Init()
 
   DOM_CLASSINFO_MAP_BEGIN(MozCSSKeyframesRule, nsIDOMMozCSSKeyframesRule)
     DOM_CLASSINFO_MAP_ENTRY(nsIDOMMozCSSKeyframesRule)
+  DOM_CLASSINFO_MAP_END
+
+  DOM_CLASSINFO_MAP_BEGIN(CSSCounterStyleRule, nsIDOMCSSCounterStyleRule)
+    DOM_CLASSINFO_MAP_ENTRY(nsIDOMCSSCounterStyleRule)
   DOM_CLASSINFO_MAP_END
 
   DOM_CLASSINFO_MAP_BEGIN(CSSPageRule, nsIDOMCSSPageRule)
@@ -1948,6 +1932,8 @@ protected:
   {
   }
 
+  ~nsDOMConstructor() {}
+
 public:
 
   static nsresult Create(const char16_t* aName,
@@ -2650,8 +2636,10 @@ nsWindowSH::GlobalResolve(nsGlobalWindow *aWin, JSContext *cx,
 
   // Note - Our only caller is nsGlobalWindow::DoNewResolve, which checks that
   // JSID_IS_STRING(id) is true.
-  nsDependentJSString name;
-  name.infallibleInit(id);
+  nsAutoJSString name;
+  if (!name.init(cx, JSID_TO_STRING(id))) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
 
   const char16_t *class_name = nullptr;
   const nsGlobalNameStruct *name_struct =
@@ -2980,10 +2968,10 @@ LocationSetterGuts(JSContext *cx, JSObject *obj, JS::MutableHandle<JS::Value> vp
     return NS_OK;
   }
 
-  nsDependentJSString depStr;
-  NS_ENSURE_TRUE(depStr.init(cx, val), NS_ERROR_UNEXPECTED);
+  nsAutoJSString str;
+  NS_ENSURE_TRUE(str.init(cx, val), NS_ERROR_UNEXPECTED);
 
-  return location->SetHref(depStr);
+  return location->SetHref(str);
 }
 
 template<class Interface>
@@ -3434,13 +3422,13 @@ nsStorage2SH::NewResolve(nsIXPConnectWrappedNative *wrapper, JSContext *cx,
 
   nsCOMPtr<nsIDOMStorage> storage(do_QueryWrappedNative(wrapper));
 
-  nsDependentJSString depStr;
-  NS_ENSURE_TRUE(depStr.init(cx, jsstr), NS_ERROR_UNEXPECTED);
+  nsAutoJSString autoStr;
+  NS_ENSURE_TRUE(autoStr.init(cx, jsstr), NS_ERROR_UNEXPECTED);
 
   // GetItem() will return null if the caller can't access the session
   // storage item.
   nsAutoString data;
-  nsresult rv = storage->GetItem(depStr, data);
+  nsresult rv = storage->GetItem(autoStr, data);
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (!DOMStringIsNull(data)) {
@@ -3467,7 +3455,7 @@ nsStorage2SH::GetProperty(nsIXPConnectWrappedNative *wrapper, JSContext *cx,
   JSString* key = IdToString(cx, id);
   NS_ENSURE_TRUE(key, NS_ERROR_UNEXPECTED);
 
-  nsDependentJSString keyStr;
+  nsAutoJSString keyStr;
   NS_ENSURE_TRUE(keyStr.init(cx, key), NS_ERROR_UNEXPECTED);
 
   // For native wrappers, do not get random names on storage objects.
@@ -3506,14 +3494,14 @@ nsStorage2SH::SetProperty(nsIXPConnectWrappedNative *wrapper,
   JSString *key = IdToString(cx, id);
   NS_ENSURE_TRUE(key, NS_ERROR_UNEXPECTED);
 
-  nsDependentJSString keyStr;
+  nsAutoJSString keyStr;
   NS_ENSURE_TRUE(keyStr.init(cx, key), NS_ERROR_UNEXPECTED);
 
   JS::Rooted<JS::Value> val(cx, *vp);
   JSString *value = JS::ToString(cx, val);
   NS_ENSURE_TRUE(value, NS_ERROR_UNEXPECTED);
 
-  nsDependentJSString valueStr;
+  nsAutoJSString valueStr;
   NS_ENSURE_TRUE(valueStr.init(cx, value), NS_ERROR_UNEXPECTED);
 
   nsresult rv = storage->SetItem(keyStr, valueStr);
@@ -3536,7 +3524,7 @@ nsStorage2SH::DelProperty(nsIXPConnectWrappedNative *wrapper,
   JSString *key = IdToString(cx, id);
   NS_ENSURE_TRUE(key, NS_ERROR_UNEXPECTED);
 
-  nsDependentJSString keyStr;
+  nsAutoJSString keyStr;
   NS_ENSURE_TRUE(keyStr.init(cx, key), NS_ERROR_UNEXPECTED);
 
   nsresult rv = storage->RemoveItem(keyStr);

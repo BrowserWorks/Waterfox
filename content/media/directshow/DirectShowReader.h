@@ -12,10 +12,10 @@
 #include "mozilla/RefPtr.h"
 #include "MP3FrameParser.h"
 
-class IGraphBuilder;
-class IMediaControl;
-class IMediaSeeking;
-class IMediaEventEx;
+struct IGraphBuilder;
+struct IMediaControl;
+struct IMediaSeeking;
+struct IMediaEventEx;
 
 namespace mozilla {
 
@@ -68,6 +68,8 @@ public:
   void NotifyDataArrived(const char* aBuffer,
                          uint32_t aLength,
                          int64_t aOffset) MOZ_OVERRIDE;
+
+  bool IsMediaSeekable() MOZ_OVERRIDE;
 
 private:
 

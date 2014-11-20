@@ -48,7 +48,9 @@ if CONFIG['OS_TARGET'] != 'Android':
     ]
 
 EXPORTS.mp4_demuxer += [
+    'binding/include/mp4_demuxer/AnnexB.h',
     'binding/include/mp4_demuxer/DecoderData.h',
+    'binding/include/mp4_demuxer/Interval.h',
     'binding/include/mp4_demuxer/mp4_demuxer.h',
 ]
 
@@ -65,6 +67,7 @@ UNIFIED_SOURCES += [
     'binding/Adts.cpp',
     'binding/AnnexB.cpp',
     'binding/DecoderData.cpp',
+    'binding/Index.cpp',
     'binding/mp4_demuxer.cpp',
     'frameworks/av/media/libstagefright/DataSource.cpp',
     'frameworks/av/media/libstagefright/ESDS.cpp',
@@ -74,7 +77,6 @@ UNIFIED_SOURCES += [
     'frameworks/av/media/libstagefright/foundation/AString.cpp',
     'frameworks/av/media/libstagefright/id3/ID3.cpp',
     'frameworks/av/media/libstagefright/MediaBuffer.cpp',
-    'frameworks/av/media/libstagefright/MediaBufferGroup.cpp',
     'frameworks/av/media/libstagefright/MediaDefs.cpp',
     'frameworks/av/media/libstagefright/MediaSource.cpp',
     'frameworks/av/media/libstagefright/MPEG4Extractor.cpp',
@@ -112,6 +114,7 @@ if CONFIG['_MSC_VER']:
         '-wd4309', # '=' : truncation of constant value
         '-wd4355', # 'this' : used in base member initializer list
         '-wd4804', # '>' : unsafe use of type 'bool' in operation
+        '-wd4099', # mismatched class/struct tags
     ]
 elif CONFIG['GNU_CXX']:
     CFLAGS += [
@@ -126,4 +129,7 @@ elif CONFIG['GNU_CXX']:
         '-Wno-unused',
     ]
     if CONFIG['CLANG_CXX']:
-        CXXFLAGS += ['-Wno-tautological-constant-out-of-range-compare']
+        CXXFLAGS += [
+            '-Wno-mismatched-tags',
+            '-Wno-tautological-constant-out-of-range-compare',
+        ]

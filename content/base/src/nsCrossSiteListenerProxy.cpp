@@ -453,6 +453,10 @@ nsCORSListenerProxy::nsCORSListenerProxy(nsIStreamListener* aOuter,
   mPreflightHeaders.Sort();
 }
 
+nsCORSListenerProxy::~nsCORSListenerProxy()
+{
+}
+
 nsresult
 nsCORSListenerProxy::Init(nsIChannel* aChannel, bool aAllowDataURI)
 {
@@ -921,6 +925,8 @@ public:
   NS_DECL_NSICHANNELEVENTSINK
 
 private:
+  ~nsCORSPreflightListener() {}
+
   void AddResultToCache(nsIRequest* aRequest);
 
   nsCOMPtr<nsIChannel> mOuterChannel;

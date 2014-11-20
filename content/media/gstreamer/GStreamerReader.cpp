@@ -139,10 +139,9 @@ GStreamerReader::~GStreamerReader()
 
 nsresult GStreamerReader::Init(MediaDecoderReader* aCloneDonor)
 {
-  GStreamerFormatHelper::Instance();
-  if (!load_gstreamer()) {
- 		return NS_ERROR_FAILURE;
- 	}
+	if (!load_gstreamer()) {
+		return NS_ERROR_FAILURE;
+	}
 
 #if GST_VERSION_MAJOR >= 1
   mAllocator = static_cast<GstAllocator*>(g_object_new(GST_TYPE_MOZ_GFX_MEMORY_ALLOCATOR, nullptr));
@@ -440,8 +439,6 @@ nsresult GStreamerReader::ReadMetadata(MediaInfo* aInfo,
       LOG(PR_LOG_DEBUG, "have duration %" GST_TIME_FORMAT, GST_TIME_ARGS(duration));
       duration = GST_TIME_AS_USECONDS (duration);
       mDecoder->SetMediaDuration(duration);
-    } else {
-      mDecoder->SetMediaSeekable(false);
     }
   }
 
@@ -466,6 +463,28 @@ nsresult GStreamerReader::ReadMetadata(MediaInfo* aInfo,
   gst_element_set_state(mPlayBin, GST_STATE_PLAYING);
 
   return NS_OK;
+}
+
+bool
+GStreamerReader::IsMediaSeekable()
+{
+  if (mUseParserDuration) {
+    return true;
+  }
+
+  gint64 duration;
+#if GST_VERSION_MAJOR >= 1
+  if (gst_element_query_duration(GST_ELEMENT(mPlayBin), GST_FORMAT_TIME,
+                                 &duration)) {
+#else
+  GstFormat format = GST_FORMAT_TIME;
+  if (gst_element_query_duration(GST_ELEMENT(mPlayBin), &format, &duration) &&
+      format == GST_FORMAT_TIME) {
+#endif
+    return true;
+  }
+
+  return false;
 }
 
 nsresult GStreamerReader::CheckSupportedFormats()
@@ -613,9 +632,11 @@ bool GStreamerReader::DecodeAudioData()
   }
 
   int64_t timestamp = GST_BUFFER_TIMESTAMP(buffer);
-  timestamp = gst_segment_to_stream_time(&mAudioSegment,
-      GST_FORMAT_TIME, timestamp);
-
+  {
+    ReentrantMonitorAutoEnter mon(mGstThreadsMonitor);
+    timestamp = gst_segment_to_stream_time(&mAudioSegment,
+                                           GST_FORMAT_TIME, timestamp);
+  }
   timestamp = GST_TIME_AS_USECONDS(timestamp);
 
   int64_t offset = GST_BUFFER_OFFSET(buffer);

@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2013 International Business Machines
+// * Copyright (C) 2014 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/hu.xml
@@ -233,7 +233,7 @@ hu{
         }
         CNY{
             "CNY",
-            "Kínai jüan renminbi",
+            "kínai jüan",
         }
         COP{
             "COP",
@@ -436,7 +436,7 @@ hu{
             "haiti gourde",
         }
         HUF{
-            "Ft",
+            "HUF",
             "magyar forint",
         }
         IDR{
@@ -932,7 +932,7 @@ hu{
             "ugandai shilling",
         }
         USD{
-            "$",
+            "USD",
             "USA-dollár",
         }
         USN{
@@ -1111,6 +1111,59 @@ hu{
             "ZWR",
             "Zimbabwei dollár (2008)",
         }
+    }
+    Currencies%narrow{
+        ARS{"$"}
+        AUD{"$"}
+        BBD{"$"}
+        BDT{"৳"}
+        BMD{"$"}
+        BND{"$"}
+        BRL{"R$"}
+        BSD{"$"}
+        BYR{"р."}
+        BZD{"$"}
+        CAD{"$"}
+        CLP{"$"}
+        CNY{"¥"}
+        COP{"$"}
+        CRC{"₡"}
+        CUP{"$"}
+        DOP{"$"}
+        EUR{"€"}
+        FJD{"$"}
+        GBP{"£"}
+        GIP{"£"}
+        GYD{"$"}
+        HKD{"$"}
+        ILS{"₪"}
+        INR{"₹"}
+        JMD{"$"}
+        JPY{"¥"}
+        KHR{"៛"}
+        KRW{"₩"}
+        KYD{"$"}
+        KZT{"₸"}
+        LAK{"₭"}
+        LRD{"$"}
+        MNT{"₮"}
+        MXN{"$"}
+        NAD{"$"}
+        NGN{"₦"}
+        NZD{"$"}
+        PHP{"₱"}
+        PYG{"₲"}
+        SBD{"$"}
+        SGD{"$"}
+        SRD{"$"}
+        SSP{"£"}
+        TRY{"₺"}
+        TTD{"$"}
+        TWD{"NT$"}
+        UAH{"₴"}
+        USD{"$"}
+        UYU{"$"}
+        VND{"₫"}
     }
     CurrencyPlurals{
         ADP{
@@ -1314,8 +1367,8 @@ hu{
             other{"chilei peso"}
         }
         CNY{
-            one{"Kínai jüan renminbi"}
-            other{"Kínai jüan renminbi"}
+            one{"kínai jüan"}
+            other{"kínai jüan"}
         }
         COP{
             one{"kolumbiai peso"}
@@ -1914,5 +1967,5 @@ hu{
         one{"{0} {1}"}
         other{"{0} {1}"}
     }
-    Version{"2.0.93.17"}
+    Version{"2.1.8.9"}
 }

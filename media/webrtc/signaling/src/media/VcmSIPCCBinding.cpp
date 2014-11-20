@@ -89,6 +89,7 @@ using namespace mozilla;
 using namespace CSF;
 
 VcmSIPCCBinding * VcmSIPCCBinding::gSelf = nullptr;
+bool VcmSIPCCBinding::gInitGmpCodecs = false;
 int VcmSIPCCBinding::gAudioCodecMask = 0;
 int VcmSIPCCBinding::gVideoCodecMask = 0;
 int VcmSIPCCBinding::gVideoCodecGmpMask = 0;
@@ -228,12 +229,6 @@ void VcmSIPCCBinding::setVideoCodecs(int codecMask)
   VcmSIPCCBinding::gVideoCodecMask = codecMask;
 }
 
-void VcmSIPCCBinding::addVideoCodecsGmp(int codecMask)
-{
-  CSFLogDebug(logTag, "ADDING VIDEO: %d", codecMask);
-  VcmSIPCCBinding::gVideoCodecGmpMask |= codecMask;
-}
-
 int VcmSIPCCBinding::getAudioCodecs()
 {
   return VcmSIPCCBinding::gAudioCodecMask;
@@ -244,9 +239,75 @@ int VcmSIPCCBinding::getVideoCodecs()
   return VcmSIPCCBinding::gVideoCodecMask;
 }
 
+static void GMPDummy() {};
+
+bool VcmSIPCCBinding::scanForGmpCodecs()
+{
+  if (!gSelf) {
+    return false;
+  }
+  if (!gSelf->mGMPService) {
+    gSelf->mGMPService = do_GetService("@mozilla.org/gecko-media-plugin-service;1");
+    if (!gSelf->mGMPService) {
+      return false;
+    }
+  }
+
+  // XXX find a way to a) do this earlier, b) not block mainthread
+  // Perhaps fire on first RTCPeerconnection creation, and block
+  // processing (async) CreateOffer or CreateAnswer's until it has returned.
+  // Since they're already async, it's easy to avoid starting them there.
+  // However, we might like to do it even earlier, perhaps.
+
+  // XXX We shouldn't be blocking MainThread on the GMP thread!
+  // This initiates the scan for codecs
+  nsCOMPtr<nsIThread> thread;
+  nsresult rv = gSelf->mGMPService->GetThread(getter_AddRefs(thread));
+  if (NS_FAILED(rv)) {
+    return false;
+  }
+  // presumes that all GMP dir scans have been queued for the GMPThread
+  mozilla::SyncRunnable::DispatchToThread(thread,
+                                          WrapRunnableNM(&GMPDummy));
+  return true;
+}
+
 int VcmSIPCCBinding::getVideoCodecsGmp()
 {
-  return VcmSIPCCBinding::gVideoCodecGmpMask;
+  if (!gInitGmpCodecs) {
+    if (scanForGmpCodecs()) {
+      gInitGmpCodecs = true;
+    }
+  }
+  if (gInitGmpCodecs) {
+    if (!gSelf->mGMPService) {
+     gSelf->mGMPService = do_GetService("@mozilla.org/gecko-media-plugin-service;1");
+    }
+    if (gSelf->mGMPService) {
+      // XXX I'd prefer if this was all known ahead of time...
+
+      nsTArray<nsCString> tags;
+      tags.AppendElement(NS_LITERAL_CSTRING("h264"));
+
+      // H.264 only for now
+      bool has_gmp;
+      nsresult rv;
+      rv = gSelf->mGMPService->HasPluginForAPI(NS_LITERAL_STRING(""),
+                                               NS_LITERAL_CSTRING("encode-video"),
+                                               &tags,
+                                               &has_gmp);
+      if (NS_SUCCEEDED(rv) && has_gmp) {
+        rv = gSelf->mGMPService->HasPluginForAPI(NS_LITERAL_STRING(""),
+                                                 NS_LITERAL_CSTRING("decode-video"),
+                                                 &tags,
+                                                 &has_gmp);
+        if (NS_SUCCEEDED(rv) && has_gmp) {
+          return VCM_CODEC_RESOURCE_H264;
+        }
+      }
+    }
+  }
+  return 0;
 }
 
 int VcmSIPCCBinding::getVideoCodecsHw()
@@ -2171,12 +2232,11 @@ static int vcmEnsureExternalCodec(
 
     // Register H.264 codec.
     if (send) {
-	VideoEncoder* encoder = nullptr;
+      VideoEncoder* encoder = nullptr;
 #ifdef MOZ_WEBRTC_OMX
-	encoder = OMXVideoCodec::CreateEncoder(
-	    OMXVideoCodec::CodecType::CODEC_H264);
+      encoder = OMXVideoCodec::CreateEncoder(OMXVideoCodec::CodecType::CODEC_H264);
 #else
-	encoder = mozilla::GmpVideoCodec::CreateEncoder();
+      encoder = mozilla::GmpVideoCodec::CreateEncoder();
 #endif
       if (encoder) {
         return conduit->SetExternalSendCodec(config, encoder);
@@ -2800,8 +2860,11 @@ int vcmGetVideoCodecList(int request_type)
  */
 int vcmGetH264SupportedPacketizationModes()
 {
-  // We support mode 1 packetization only in webrtc currently
+#ifdef MOZ_WEBRTC_OMX
   return VCM_H264_MODE_1;
+#else
+  return VCM_H264_MODE_0|VCM_H264_MODE_1;
+#endif
 }
 
 /**
@@ -2810,9 +2873,15 @@ int vcmGetH264SupportedPacketizationModes()
  */
 uint32_t vcmGetVideoH264ProfileLevelID()
 {
-  // constrained baseline level 1.2
-  // XXX make variable based on openh264 and OMX support
-  return 0x42E00C;
+  // For OMX, constrained baseline level 1.2 (via a pref)
+  // Max resolution CIF; we should include max-mbps
+  int32_t level = 13; // minimum suggested for WebRTC spec
+
+  vcmGetVideoLevel(0, &level);
+  level &= 0xFF;
+  level |= 0x42E000;
+
+  return (uint32_t) level;
 }
 
 /**
@@ -3307,14 +3376,27 @@ int vcmDisableRtcpComponent(const char *peerconnection, int level) {
   return ret;
 }
 
-static short vcmGetVideoMaxFs_m(uint16_t codec,
-                                int32_t *max_fs) {
+static short vcmGetVideoPref_m(uint16_t codec,
+                               const char *pref,
+                               int32_t *ret) {
   nsCOMPtr<nsIPrefBranch> branch = VcmSIPCCBinding::getPrefBranch();
-  if (branch && NS_SUCCEEDED(branch->GetIntPref("media.navigator.video.max_fs",
-                                                max_fs))) {
+  if (branch && NS_SUCCEEDED(branch->GetIntPref(pref, ret))) {
     return 0;
   }
   return VCM_ERROR;
+}
+
+short vcmGetVideoLevel(uint16_t codec,
+                       int32_t *level) {
+  short ret;
+
+  mozilla::SyncRunnable::DispatchToThread(VcmSIPCCBinding::getMainThread(),
+      WrapRunnableNMRet(&vcmGetVideoPref_m,
+                        codec,
+                        "media.navigator.video.h264.level",
+                        level,
+                        &ret));
+  return ret;
 }
 
 short vcmGetVideoMaxFs(uint16_t codec,
@@ -3322,21 +3404,12 @@ short vcmGetVideoMaxFs(uint16_t codec,
   short ret;
 
   mozilla::SyncRunnable::DispatchToThread(VcmSIPCCBinding::getMainThread(),
-      WrapRunnableNMRet(&vcmGetVideoMaxFs_m,
+      WrapRunnableNMRet(&vcmGetVideoPref_m,
                         codec,
+                        "media.navigator.video.max_fs",
                         max_fs,
                         &ret));
   return ret;
-}
-
-static short vcmGetVideoMaxFr_m(uint16_t codec,
-                                int32_t *max_fr) {
-  nsCOMPtr<nsIPrefBranch> branch = VcmSIPCCBinding::getPrefBranch();
-  if (branch && NS_SUCCEEDED(branch->GetIntPref("media.navigator.video.max_fr",
-                                                max_fr))) {
-    return 0;
-  }
-  return VCM_ERROR;
 }
 
 short vcmGetVideoMaxFr(uint16_t codec,
@@ -3344,9 +3417,55 @@ short vcmGetVideoMaxFr(uint16_t codec,
   short ret;
 
   mozilla::SyncRunnable::DispatchToThread(VcmSIPCCBinding::getMainThread(),
-      WrapRunnableNMRet(&vcmGetVideoMaxFr_m,
+      WrapRunnableNMRet(&vcmGetVideoPref_m,
                         codec,
+                        "media.navigator.video.max_fr",
                         max_fr,
+                        &ret));
+  return ret;
+}
+
+short vcmGetVideoMaxBr(uint16_t codec,
+                       int32_t *max_br) {
+  short ret;
+
+  mozilla::SyncRunnable::DispatchToThread(VcmSIPCCBinding::getMainThread(),
+      WrapRunnableNMRet(&vcmGetVideoPref_m,
+                        codec,
+                        "media.navigator.video.h264.max_br",
+                        max_br,
+                        &ret));
+  return ret;
+}
+
+short vcmGetVideoMaxMbps(uint16_t codec,
+                       int32_t *max_mbps) {
+  short ret;
+
+  mozilla::SyncRunnable::DispatchToThread(VcmSIPCCBinding::getMainThread(),
+      WrapRunnableNMRet(&vcmGetVideoPref_m,
+                        codec,
+                        "media.navigator.video.h264.max_mbps",
+                        max_mbps,
+                        &ret));
+  if (ret == VCM_ERROR) {
+#ifdef MOZ_WEBRTC_OMX
+    // Level 1.2; but let's allow CIF@30 or QVGA@30+ by default
+    *max_mbps = 11880;
+    ret = 0;
+#endif
+  }
+  return ret;
+}
+
+short vcmGetVideoPreferredCodec(int32_t *preferred_codec) {
+  short ret;
+
+  mozilla::SyncRunnable::DispatchToThread(VcmSIPCCBinding::getMainThread(),
+      WrapRunnableNMRet(&vcmGetVideoPref_m,
+                        (uint16_t)0,
+                        "media.navigator.video.preferred_codec",
+                        preferred_codec,
                         &ret));
   return ret;
 }

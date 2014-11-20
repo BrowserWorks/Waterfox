@@ -39,7 +39,6 @@ class InsertTextTxn;
 class JoinElementTxn;
 class RemoveStyleSheetTxn;
 class SplitElementTxn;
-class nsCSSStyleSheet;
 class nsIAtom;
 class nsIContent;
 class nsIDOMCharacterData;
@@ -68,6 +67,7 @@ class nsString;
 class nsTransactionManager;
 
 namespace mozilla {
+class CSSStyleSheet;
 class ErrorResult;
 class TextComposition;
 
@@ -159,11 +159,14 @@ public:
    *  after the construction of the editor class.
    */
   nsEditor();
+
+protected:
   /** The default destructor. This should suffice. Should this be pure virtual 
    *  for someone to derive from the nsEditor later? I don't believe so.
    */
   virtual ~nsEditor();
 
+public:
 //Interfaces for addref and release and queryinterface
 //NOTE: Use   NS_DECL_ISUPPORTS_INHERITED in any class inherited from nsEditor
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -321,11 +324,13 @@ protected:
 
   /** create a transaction for adding a style sheet
     */
-  NS_IMETHOD CreateTxnForAddStyleSheet(nsCSSStyleSheet* aSheet, AddStyleSheetTxn* *aTxn);
+  NS_IMETHOD CreateTxnForAddStyleSheet(mozilla::CSSStyleSheet* aSheet,
+                                       AddStyleSheetTxn* *aTxn);
 
   /** create a transaction for removing a style sheet
     */
-  NS_IMETHOD CreateTxnForRemoveStyleSheet(nsCSSStyleSheet* aSheet, RemoveStyleSheetTxn* *aTxn);
+  NS_IMETHOD CreateTxnForRemoveStyleSheet(mozilla::CSSStyleSheet* aSheet,
+                                          RemoveStyleSheetTxn* *aTxn);
   
   NS_IMETHOD DeleteText(nsIDOMCharacterData *aElement,
                         uint32_t             aOffset,

@@ -4,6 +4,7 @@
 == dir-4.html dir-4-ref.html
 == dir-5.html dir-5-ref.html
 == dir-6.html dir-6-ref.html
+== dir-6a.html dir-6a-ref.html
 == dir-7.html dir-7-ref.html
 fails == dir-8.html dir-8-ref.html
 fails == dir-9.html dir-9-ref.html # Bug 787215
@@ -154,6 +155,7 @@ skip-if(B2G) == maction-dynamic-3.html maction-dynamic-3-ref.html # bug 773482
 fails == whitespace-trim-4.html whitespace-trim-4-ref.html # Bug 787215
 == whitespace-trim-5.html whitespace-trim-5-ref.html
 random-if(winWidget&&!d2d) == opentype-stretchy.html opentype-stretchy-ref.html
+== opentype-fraction-dynamic-linethickness.html opentype-fraction-dynamic-linethickness-ref.html
 == operator-1.xhtml operator-1-ref.xhtml
 == scriptshift-1.xhtml scriptshift-1-ref.xhtml
 == number-size-1.xhtml number-size-1-ref.xhtml
@@ -269,6 +271,16 @@ fails-if(B2G||Android||/^Windows\x20NT\x205\.1/.test(http.oscpu)||OSX) == mathva
 == rowlines-2b.html rowlines-2-ref.html
 != rowlines-3-1.html rowlines-3-1-ref.html
 == rowlines-3-2.html rowlines-3-2-ref.html
+== tablespacing-1.html tablespacing-1-ref.html
+== tablespacing-2.html tablespacing-2-ref.html
+== tablespacing-3.html tablespacing-3-ref.html
+== tablespacing-4.html tablespacing-4-ref.html
+== tablespacing-5.html tablespacing-5-ref.html
+== tablespacing-5a.html tablespacing-5a-ref.html
+== tablespacing-6.html tablespacing-6-ref.html
+== tablespacing-7.html tablespacing-7-ref.html
+!= tablespacing-8a.html tablespacing-8-ref.html
+!= tablespacing-8b.html tablespacing-8-ref.html
 != op-dict-1.html op-dict-1-ref.html
 == op-dict-2.html op-dict-2-ref.html
 != op-dict-3.html op-dict-3-ref.html
@@ -291,18 +303,18 @@ fails-if(B2G||Android||/^Windows\x20NT\x205\.1/.test(http.oscpu)||OSX) == mathva
 == mfrac-A-7.html mfrac-A-7-ref.html
 == mfrac-A-8.html mfrac-A-8-ref.html
 == mfrac-B-1.html mfrac-B-1-ref.html
-== mfrac-B-2.html mfrac-B-2-3-ref.html
-== mfrac-B-3.html mfrac-B-2-3-ref.html
+random-if(winWidget&&!/^Windows\x20NT\x205\.1/.test(http.oscpu)) == mfrac-B-2.html mfrac-B-2-3-ref.html
+random-if(winWidget&&!/^Windows\x20NT\x205\.1/.test(http.oscpu)) == mfrac-B-3.html mfrac-B-2-3-ref.html
 == mfrac-B-4.html mfrac-B-4-5-ref.html
 == mfrac-B-5.html mfrac-B-4-5-ref.html
 == mfrac-B-6.html mfrac-B-6-7-ref.html
 == mfrac-B-7.html mfrac-B-6-7-ref.html
 fuzzy-if(OSX,1,100) == mfrac-C-1.html mfrac-C-1-ref.html
-== mfrac-C-2.html mfrac-C-2-ref.html
+random-if(winWidget&&!/^Windows\x20NT\x205\.1/.test(http.oscpu)) == mfrac-C-2.html mfrac-C-2-ref.html
 == mfrac-C-3.html mfrac-C-3-ref.html
 == mfrac-C-4.html mfrac-C-4-ref.html
 fuzzy-if(OSX,1,100) == mfrac-D-1.html mfrac-D-1-ref.html
-== mfrac-D-2.html mfrac-D-2-ref.html
+random-if(winWidget&&!/^Windows\x20NT\x205\.1/.test(http.oscpu)) == mfrac-D-2.html mfrac-D-2-ref.html
 == mfrac-D-3.html mfrac-D-3-ref.html
 == mfrac-D-4.html mfrac-D-4-ref.html
 == mfrac-E-1.html mfrac-E-1-ref.html

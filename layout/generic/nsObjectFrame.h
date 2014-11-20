@@ -22,6 +22,7 @@
 #undef CreateEvent
 #undef GetClassName
 #undef GetBinaryType
+#undef RemoveDirectory
 #endif
 
 class nsPresContext;
@@ -182,17 +183,17 @@ public:
   nsRect GetPaintedRect(nsDisplayPlugin* aItem);
 
   /**
-   * If aContent has a nsObjectFrame, then prepare it for a DocShell swap.
+   * If aSupports has a nsObjectFrame, then prepare it for a DocShell swap.
    * @see nsSubDocumentFrame::BeginSwapDocShells.
    * There will be a call to EndSwapDocShells after we were moved to the
    * new view tree.
    */
-  static void BeginSwapDocShells(nsIContent* aContent, void*);
+  static void BeginSwapDocShells(nsISupports* aSupports, void*);
   /**
-   * If aContent has a nsObjectFrame, then set it up after a DocShell swap.
+   * If aSupports has a nsObjectFrame, then set it up after a DocShell swap.
    * @see nsSubDocumentFrame::EndSwapDocShells.
    */
-  static void EndSwapDocShells(nsIContent* aContent, void*);
+  static void EndSwapDocShells(nsISupports* aSupports, void*);
 
   nsIWidget* GetWidget() MOZ_OVERRIDE { return mInnerView ? mWidget : nullptr; }
 

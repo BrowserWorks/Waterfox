@@ -11,6 +11,7 @@ if CONFIG['MOZ_ENABLE_XREMOTE']:
 PARALLEL_DIRS += [
     'aboutcache',
     'aboutmemory',
+    'addoncompat',
     'alerts',
     'apppicker',
     'commandlines',
@@ -33,6 +34,7 @@ PARALLEL_DIRS += [
     'passwordmgr',
     'perf',
     'places',
+    'promiseworker',
     'prompts',
     'protobuf',
     'reflect',

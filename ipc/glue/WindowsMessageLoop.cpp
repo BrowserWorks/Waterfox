@@ -296,7 +296,8 @@ ProcessOrDeferMessage(HWND hwnd,
     case WM_GETTEXT:
     case WM_NCHITTEST:
     case WM_STYLECHANGING:  // Intentional fall-through.
-    case WM_WINDOWPOSCHANGING: { 
+    case WM_WINDOWPOSCHANGING:
+    case WM_GETTEXTLENGTH: {
       return DefWindowProc(hwnd, uMsg, wParam, lParam);
     }
 
@@ -634,6 +635,7 @@ InitUIThread()
 } // namespace ipc
 } // namespace mozilla
 
+// See SpinInternalEventLoop below
 MessageChannel::SyncStackFrame::SyncStackFrame(MessageChannel* channel, bool interrupt)
   : mInterrupt(interrupt)
   , mSpinNestedEvents(false)
@@ -642,6 +644,12 @@ MessageChannel::SyncStackFrame::SyncStackFrame(MessageChannel* channel, bool int
   , mPrev(mChannel->mTopFrame)
   , mStaticPrev(sStaticTopFrame)
 {
+  // Only track stack frames when Windows message deferral behavior
+  // is request for the channel.
+  if (!(mChannel->GetChannelFlags() & REQUIRE_DEFERRED_MESSAGE_PROTECTION)) {
+    return;
+  }
+
   mChannel->mTopFrame = this;
   sStaticTopFrame = this;
 
@@ -654,6 +662,10 @@ MessageChannel::SyncStackFrame::SyncStackFrame(MessageChannel* channel, bool int
 
 MessageChannel::SyncStackFrame::~SyncStackFrame()
 {
+  if (!(mChannel->GetChannelFlags() & REQUIRE_DEFERRED_MESSAGE_PROTECTION)) {
+    return;
+  }
+
   NS_ASSERTION(this == mChannel->mTopFrame,
                "Mismatched interrupt stack frames");
   NS_ASSERTION(this == sStaticTopFrame,
@@ -692,6 +704,8 @@ MessageChannel::NotifyGeckoEventDispatch()
 void
 MessageChannel::ProcessNativeEventsInInterruptCall()
 {
+  NS_ASSERTION(GetCurrentThreadId() == gUIThreadId,
+               "Shouldn't be on a non-main thread in here!");
   if (!mTopFrame) {
     NS_ERROR("Spin logic error: no Interrupt frame");
     return;
@@ -775,7 +789,9 @@ MessageChannel::WaitForSyncNotify()
 
   MOZ_ASSERT(gUIThreadId, "InitUIThread was not called!");
 
-  if (GetCurrentThreadId() != gUIThreadId) {
+  // Use a blocking wait if this channel does not require
+  // Windows message deferral behavior.
+  if (!(mFlags & REQUIRE_DEFERRED_MESSAGE_PROTECTION)) {
     PRIntervalTime timeout = (kNoTimeout == mTimeoutMs) ?
                              PR_INTERVAL_NO_TIMEOUT :
                              PR_MillisecondsToInterval(mTimeoutMs);
@@ -795,9 +811,12 @@ MessageChannel::WaitForSyncNotify()
 
     // If the timeout didn't expire, we know we received an event. The
     // converse is not true.
-    return WaitResponse(timeout == PR_INTERVAL_NO_TIMEOUT ? false : IsTimeoutExpired(waitStart, timeout));
+    return WaitResponse(timeout == PR_INTERVAL_NO_TIMEOUT ?
+                        false : IsTimeoutExpired(waitStart, timeout));
   }
 
+  NS_ASSERTION(mFlags & REQUIRE_DEFERRED_MESSAGE_PROTECTION,
+               "Shouldn't be here for channels that don't use message deferral!");
   NS_ASSERTION(mTopFrame && !mTopFrame->mInterrupt,
                "Top frame is not a sync frame!");
 
@@ -919,7 +938,9 @@ MessageChannel::WaitForInterruptNotify()
 
   MOZ_ASSERT(gUIThreadId, "InitUIThread was not called!");
 
-  if (GetCurrentThreadId() != gUIThreadId) {
+  // Re-use sync notification wait code if this channel does not require
+  // Windows message deferral behavior. 
+  if (!(mFlags & REQUIRE_DEFERRED_MESSAGE_PROTECTION)) {
     return WaitForSyncNotify();
   }
 
@@ -928,6 +949,8 @@ MessageChannel::WaitForInterruptNotify()
     NS_RUNTIMEABORT("StackDepth() is 0 in call to MessageChannel::WaitForNotify!");
   }
 
+  NS_ASSERTION(mFlags & REQUIRE_DEFERRED_MESSAGE_PROTECTION,
+               "Shouldn't be here for channels that don't use message deferral!");
   NS_ASSERTION(mTopFrame && mTopFrame->mInterrupt,
                "Top frame is not a sync frame!");
 

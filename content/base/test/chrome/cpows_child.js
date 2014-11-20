@@ -45,6 +45,7 @@ function make_object()
   o.s = "hello";
   o.x = { i: 10 };
   o.f = function () { return 99; };
+  o.ctor = function() { this.a = 3; }
 
   // Doing anything with this Proxy will throw.
   var throwing = new Proxy({}, new Proxy({}, {
@@ -123,6 +124,8 @@ function async_test()
     make_json(),
     async_obj);
 }
+
+var rpc_obj;
 
 function rpc_test()
 {

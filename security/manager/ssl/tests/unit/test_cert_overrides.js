@@ -1,4 +1,4 @@
-// -*- Mode: javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+// -*- indent-tabs-mode: nil; js-indent-level: 2 -*-
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -52,15 +52,16 @@ function check_telemetry() {
                     .getHistogramById("SSL_CERT_ERROR_OVERRIDES")
                     .snapshot();
   do_check_eq(histogram.counts[ 0], 0);
-  do_check_eq(histogram.counts[ 2], 8 + 1); // SEC_ERROR_UNKNOWN_ISSUER
-  do_check_eq(histogram.counts[ 3], 0);     // SEC_ERROR_CA_CERT_INVALID
-  do_check_eq(histogram.counts[ 4], 0 + 5); // SEC_ERROR_UNTRUSTED_ISSUER
-  do_check_eq(histogram.counts[ 5], 0 + 1); // SEC_ERROR_EXPIRED_ISSUER_CERTIFICATE
-  do_check_eq(histogram.counts[ 6], 0 + 1); // SEC_ERROR_UNTRUSTED_CERT
-  do_check_eq(histogram.counts[ 7], 0 + 1); // SEC_ERROR_INADEQUATE_KEY_USAGE
-  do_check_eq(histogram.counts[ 8], 2 + 2); // SEC_ERROR_CERT_SIGNATURE_ALGORITHM_DISABLED
-  do_check_eq(histogram.counts[ 9], 4 + 4); // SSL_ERROR_BAD_CERT_DOMAIN
-  do_check_eq(histogram.counts[10], 5 + 5); // SEC_ERROR_EXPIRED_CERTIFICATE
+  do_check_eq(histogram.counts[ 2], 8); // SEC_ERROR_UNKNOWN_ISSUER
+  do_check_eq(histogram.counts[ 3], 0); // SEC_ERROR_CA_CERT_INVALID
+  do_check_eq(histogram.counts[ 4], 0); // SEC_ERROR_UNTRUSTED_ISSUER
+  do_check_eq(histogram.counts[ 5], 0); // SEC_ERROR_EXPIRED_ISSUER_CERTIFICATE
+  do_check_eq(histogram.counts[ 6], 0); // SEC_ERROR_UNTRUSTED_CERT
+  do_check_eq(histogram.counts[ 7], 0); // SEC_ERROR_INADEQUATE_KEY_USAGE
+  do_check_eq(histogram.counts[ 8], 2); // SEC_ERROR_CERT_SIGNATURE_ALGORITHM_DISABLED
+  do_check_eq(histogram.counts[ 9], 5); // SSL_ERROR_BAD_CERT_DOMAIN
+  do_check_eq(histogram.counts[10], 5); // SEC_ERROR_EXPIRED_CERTIFICATE
+  do_check_eq(histogram.counts[11], 2); // MOZILLA_PKIX_ERROR_CA_CERT_USED_AS_END_ENTITY
   run_next_test();
 }
 
@@ -73,8 +74,9 @@ function run_test() {
   });
   fakeOCSPResponder.start(8080);
 
-  add_tests_in_mode(true);
-  add_tests_in_mode(false);
+  add_simple_tests();
+  add_combo_tests();
+  add_distrust_tests();
 
   add_test(function () {
     fakeOCSPResponder.stop(check_telemetry);
@@ -83,43 +85,19 @@ function run_test() {
   run_next_test();
 }
 
-function add_tests_in_mode(useMozillaPKIX) {
-  add_test(function () {
-    Services.prefs.setBoolPref("security.use_mozillapkix_verification",
-                               useMozillaPKIX);
-    run_next_test();
-  });
-
-  add_simple_tests(useMozillaPKIX);
-  add_combo_tests(useMozillaPKIX);
-  add_distrust_tests(useMozillaPKIX);
-
-  add_test(function () {
-    certOverrideService.clearValidityOverride("all:temporary-certificates", 0);
-    run_next_test();
-  });
-}
-
-function add_simple_tests(useMozillaPKIX) {
+function add_simple_tests() {
   add_cert_override_test("expired.example.com",
                          Ci.nsICertOverrideService.ERROR_TIME,
                          getXPCOMStatusFromNSS(SEC_ERROR_EXPIRED_CERTIFICATE));
-  if (useMozillaPKIX) {
-    add_cert_override_test("selfsigned.example.com",
-                           Ci.nsICertOverrideService.ERROR_UNTRUSTED,
-                           getXPCOMStatusFromNSS(SEC_ERROR_UNKNOWN_ISSUER));
-  } else {
-    add_non_overridable_test("selfsigned.example.com",
-                             SEC_ERROR_CA_CERT_INVALID);
-  }
+  add_cert_override_test("selfsigned.example.com",
+                         Ci.nsICertOverrideService.ERROR_UNTRUSTED,
+                         getXPCOMStatusFromNSS(SEC_ERROR_UNKNOWN_ISSUER));
   add_cert_override_test("unknownissuer.example.com",
                          Ci.nsICertOverrideService.ERROR_UNTRUSTED,
                          getXPCOMStatusFromNSS(SEC_ERROR_UNKNOWN_ISSUER));
   add_cert_override_test("expiredissuer.example.com",
                          Ci.nsICertOverrideService.ERROR_UNTRUSTED,
-                         getXPCOMStatusFromNSS(
-                            useMozillaPKIX ? SEC_ERROR_UNKNOWN_ISSUER
-                                           : SEC_ERROR_EXPIRED_ISSUER_CERTIFICATE));
+                         getXPCOMStatusFromNSS(SEC_ERROR_UNKNOWN_ISSUER));
   add_cert_override_test("md5signature.example.com",
                          Ci.nsICertOverrideService.ERROR_UNTRUSTED,
                          getXPCOMStatusFromNSS(
@@ -131,46 +109,26 @@ function add_simple_tests(useMozillaPKIX) {
   // A Microsoft IIS utility generates self-signed certificates with
   // properties similar to the one this "host" will present (see
   // tlsserver/generate_certs.sh).
-  // One of the errors classic verification collects is that this
-  // certificate has an inadequate key usage to sign a certificate
-  // (i.e. itself). As a result, to be able to override this,
-  // SEC_ERROR_INADEQUATE_KEY_USAGE must be overridable (although,
-  // confusingly, this isn't the main error reported).
-  // mozilla::pkix just says this certificate's issuer is unknown.
-  if (useMozillaPKIX) {
-    add_cert_override_test("selfsigned-inadequateEKU.example.com",
-                           Ci.nsICertOverrideService.ERROR_UNTRUSTED,
-                           getXPCOMStatusFromNSS(SEC_ERROR_UNKNOWN_ISSUER));
-  } else {
-    add_non_overridable_test("selfsigned-inadequateEKU.example.com",
-                             SEC_ERROR_CA_CERT_INVALID);
-  }
+  add_cert_override_test("selfsigned-inadequateEKU.example.com",
+                         Ci.nsICertOverrideService.ERROR_UNTRUSTED,
+                         getXPCOMStatusFromNSS(SEC_ERROR_UNKNOWN_ISSUER));
 
-  // SEC_ERROR_INADEQUATE_KEY_USAGE is overridable in general for
-  // classic verification, but not for mozilla::pkix verification.
-  if (useMozillaPKIX) {
-    add_non_overridable_test("inadequatekeyusage.example.com",
-                             SEC_ERROR_INADEQUATE_KEY_USAGE);
-  } else {
-    add_cert_override_test("inadequatekeyusage.example.com",
-                           Ci.nsICertOverrideService.ERROR_UNTRUSTED,
-                           getXPCOMStatusFromNSS(SEC_ERROR_INADEQUATE_KEY_USAGE));
-  }
+  add_non_overridable_test("inadequatekeyusage.example.com",
+                           SEC_ERROR_INADEQUATE_KEY_USAGE);
 
   // Bug 990603: Apache documentation has recommended generating a self-signed
   // test certificate with basic constraints: CA:true. For compatibility, this
   // is a scenario in which an override is allowed.
   add_cert_override_test("self-signed-end-entity-with-cA-true.example.com",
                          Ci.nsICertOverrideService.ERROR_UNTRUSTED,
-                         getXPCOMStatusFromNSS(
-                            useMozillaPKIX ? SEC_ERROR_UNKNOWN_ISSUER
-                                           : SEC_ERROR_UNTRUSTED_ISSUER));
+                         getXPCOMStatusFromNSS(SEC_ERROR_UNKNOWN_ISSUER));
+
+  add_cert_override_test("ca-used-as-end-entity.example.com",
+                         Ci.nsICertOverrideService.ERROR_UNTRUSTED,
+                         getXPCOMStatusFromNSS(MOZILLA_PKIX_ERROR_CA_CERT_USED_AS_END_ENTITY));
 }
 
-function add_combo_tests(useMozillaPKIX) {
-  // Note that "untrusted" here really is "unknown issuer" in the
-  // mozilla::pkix case.
-
+function add_combo_tests() {
   add_cert_override_test("mismatch-expired.example.com",
                          Ci.nsICertOverrideService.ERROR_MISMATCH |
                          Ci.nsICertOverrideService.ERROR_TIME,
@@ -178,55 +136,47 @@ function add_combo_tests(useMozillaPKIX) {
   add_cert_override_test("mismatch-untrusted.example.com",
                          Ci.nsICertOverrideService.ERROR_MISMATCH |
                          Ci.nsICertOverrideService.ERROR_UNTRUSTED,
-                         getXPCOMStatusFromNSS(
-                            useMozillaPKIX ? SEC_ERROR_UNKNOWN_ISSUER
-                                           : SEC_ERROR_UNTRUSTED_ISSUER));
+                         getXPCOMStatusFromNSS(SEC_ERROR_UNKNOWN_ISSUER));
   add_cert_override_test("untrusted-expired.example.com",
                          Ci.nsICertOverrideService.ERROR_UNTRUSTED |
                          Ci.nsICertOverrideService.ERROR_TIME,
-                         getXPCOMStatusFromNSS(
-                            useMozillaPKIX ? SEC_ERROR_UNKNOWN_ISSUER
-                                           : SEC_ERROR_UNTRUSTED_ISSUER));
+                         getXPCOMStatusFromNSS(SEC_ERROR_UNKNOWN_ISSUER));
   add_cert_override_test("mismatch-untrusted-expired.example.com",
                          Ci.nsICertOverrideService.ERROR_MISMATCH |
                          Ci.nsICertOverrideService.ERROR_UNTRUSTED |
                          Ci.nsICertOverrideService.ERROR_TIME,
-                         getXPCOMStatusFromNSS(
-                            useMozillaPKIX ? SEC_ERROR_UNKNOWN_ISSUER
-                                           : SEC_ERROR_UNTRUSTED_ISSUER));
+                         getXPCOMStatusFromNSS(SEC_ERROR_UNKNOWN_ISSUER));
 
   add_cert_override_test("md5signature-expired.example.com",
                          Ci.nsICertOverrideService.ERROR_UNTRUSTED |
                          Ci.nsICertOverrideService.ERROR_TIME,
                          getXPCOMStatusFromNSS(
                             SEC_ERROR_CERT_SIGNATURE_ALGORITHM_DISABLED));
+
+  add_cert_override_test("ca-used-as-end-entity-name-mismatch.example.com",
+                         Ci.nsICertOverrideService.ERROR_MISMATCH |
+                         Ci.nsICertOverrideService.ERROR_UNTRUSTED,
+                         getXPCOMStatusFromNSS(MOZILLA_PKIX_ERROR_CA_CERT_USED_AS_END_ENTITY));
 }
 
-function add_distrust_tests(useMozillaPKIX) {
+function add_distrust_tests() {
   // Before we specifically distrust this certificate, it should be trusted.
   add_connection_test("untrusted.example.com", Cr.NS_OK);
 
-  // XXX(Bug 975777): Active distrust is an overridable error when NSS-based
-  // verification is used.
   add_distrust_override_test("tlsserver/default-ee.der",
                              "untrusted.example.com",
-                             getXPCOMStatusFromNSS(SEC_ERROR_UNTRUSTED_CERT),
-                             useMozillaPKIX
-                                ? getXPCOMStatusFromNSS(SEC_ERROR_UNTRUSTED_CERT)
-                                : Cr.NS_OK);
+                             getXPCOMStatusFromNSS(SEC_ERROR_UNTRUSTED_CERT));
 
-  // XXX(Bug 975777): Active distrust is an overridable error when NSS-based
-  // verification is used.
   add_distrust_override_test("tlsserver/other-test-ca.der",
                              "untrustedissuer.example.com",
-                             getXPCOMStatusFromNSS(SEC_ERROR_UNTRUSTED_ISSUER),
-                             useMozillaPKIX
-                                ? getXPCOMStatusFromNSS(SEC_ERROR_UNTRUSTED_ISSUER)
-                                : Cr.NS_OK);
+                             getXPCOMStatusFromNSS(SEC_ERROR_UNTRUSTED_ISSUER));
+
+  add_distrust_override_test("tlsserver/test-ca.der",
+                             "ca-used-as-end-entity.example.com",
+                             getXPCOMStatusFromNSS(SEC_ERROR_UNTRUSTED_ISSUER));
 }
 
-function add_distrust_override_test(certFileName, hostName,
-                                    expectedResultBefore, expectedResultAfter) {
+function add_distrust_override_test(certFileName, hostName, expectedResult) {
   let certToDistrust = constructCertFromFile(certFileName);
 
   add_test(function () {
@@ -235,7 +185,7 @@ function add_distrust_override_test(certFileName, hostName,
     clearSessionCache();
     run_next_test();
   });
-  add_connection_test(hostName, expectedResultBefore, null,
+  add_connection_test(hostName, expectedResult, null,
                       function (securityInfo) {
                         securityInfo.QueryInterface(Ci.nsISSLStatusProvider);
                         // XXX(Bug 754369): SSLStatus isn't available for
@@ -249,11 +199,11 @@ function add_distrust_override_test(certFileName, hostName,
                           // 754369) that the error was non-overridable, which
                           // is what we're trying to test, though we'd rather
                           // not test it this way.
-                          do_check_neq(expectedResultAfter, Cr.NS_OK);
+                          do_check_neq(expectedResult, Cr.NS_OK);
                         }
                         clearSessionCache();
                       });
-  add_connection_test(hostName, expectedResultAfter, null,
+  add_connection_test(hostName, expectedResult, null,
                       function () {
                         setCertTrust(certToDistrust, "u,,");
                       });

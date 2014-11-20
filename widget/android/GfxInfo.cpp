@@ -71,9 +71,9 @@ public:
       return;
     }
 
-    nsRefPtr<gl::GLContext> gl = gl::GLContextProvider::CreateOffscreen(
-      gfxIntSize(16, 16),
-      gfx::SurfaceCaps::ForRGB());
+    nsRefPtr<gl::GLContext> gl;
+    gl = gl::GLContextProvider::CreateOffscreen(gfxIntSize(16, 16),
+                                                gl::SurfaceCaps::ForRGB());
 
     if (!gl) {
       // Setting mReady to true here means that we won't retry. Everything will
@@ -370,7 +370,7 @@ GfxInfo::GetGfxDriverInfo()
   if (mDriverInfo->IsEmpty()) {
     APPEND_TO_DRIVER_BLOCKLIST2( DRIVER_OS_ALL,
       (nsAString&) GfxDriverInfo::GetDeviceVendor(VendorAll), GfxDriverInfo::allDevices,
-      nsIGfxInfo::FEATURE_OPENGL_LAYERS, nsIGfxInfo::FEATURE_NO_INFO,
+      nsIGfxInfo::FEATURE_OPENGL_LAYERS, nsIGfxInfo::FEATURE_STATUS_OK,
       DRIVER_COMPARISON_IGNORED, GfxDriverInfo::allDriverVersions );
   }
 
@@ -395,7 +395,7 @@ GfxInfo::GetFeatureStatusImpl(int32_t aFeature,
   // This early return is so we avoid potentially slow
   // GLStrings initialization on startup when we initialize GL layers.
   if (aFeature == nsIGfxInfo::FEATURE_OPENGL_LAYERS) {
-    *aStatus = nsIGfxInfo::FEATURE_NO_INFO;
+    *aStatus = nsIGfxInfo::FEATURE_STATUS_OK;
     return NS_OK;
   }
 
@@ -577,7 +577,7 @@ GfxInfo::GetFeatureStatusImpl(int32_t aFeature,
           CompareVersions(mOSVersion.get(), "4.4.2") >= 0 &&
           cManufacturer.Equals("lge", nsCaseInsensitiveCStringComparator()) &&
           cModel.Equals("nexus 5", nsCaseInsensitiveCStringComparator())) {
-        *aStatus = nsIGfxInfo::FEATURE_NO_INFO;
+        *aStatus = nsIGfxInfo::FEATURE_STATUS_OK;
         return NS_OK;
       } else {
         // Blocklist all other devices except Nexus 5 which VP8 hardware acceleration is supported

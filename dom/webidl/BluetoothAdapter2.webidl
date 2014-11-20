@@ -86,14 +86,35 @@ interface BluetoothAdapter : EventTarget {
   // Fired when attributes of BluetoothAdapter changed
            attribute EventHandler   onattributechanged;
 
+  /**
+   * Enable/Disable a local bluetooth adapter by asynchronus methods and return
+   * its result through a Promise.
+   *
+   * Several onattributechanged events would be triggered during processing the
+   * request, and the last one would indicate adapter.state becomes
+   * enabled/disabled.
+   */
+  // Promise<void>
   [NewObject, Throws]
-  DOMRequest setName(DOMString name);
+  Promise enable();
+  // Promise<void>
   [NewObject, Throws]
-  DOMRequest setDiscoverable(boolean discoverable);
+  Promise disable();
+
+  // Promise<void>
   [NewObject, Throws]
-  DOMRequest startDiscovery();
+  Promise setName(DOMString aName);
+  // Promise<void>
   [NewObject, Throws]
-  DOMRequest stopDiscovery();
+  Promise setDiscoverable(boolean aDiscoverable);
+
+  // Promise<BluetoothDiscoveryHandle>
+  [NewObject, Throws]
+  Promise startDiscovery();
+  // Promise<void>
+  [NewObject, Throws]
+  Promise stopDiscovery();
+
   [NewObject, Throws]
   DOMRequest pair(DOMString deviceAddress);
   [NewObject, Throws]
@@ -108,18 +129,6 @@ interface BluetoothAdapter : EventTarget {
   DOMRequest setPasskey(DOMString deviceAddress, unsigned long passkey);
   [NewObject, Throws]
   DOMRequest setPairingConfirmation(DOMString deviceAddress, boolean confirmation);
-
-  /**
-   * Enable/Disable a local bluetooth adapter by asynchronus methods and return
-   * its result through a Promise.
-   * Several onattributechanged event would be triggered during processing the
-   * request, and the last one would indicate adapter.state becomes
-   * enabled/disabled.
-   */
-  // Promise<void>
-  Promise enable();
-  // Promise<void>
-  Promise disable();
 
   /**
    * Connect/Disconnect to a specific service of a target remote device.

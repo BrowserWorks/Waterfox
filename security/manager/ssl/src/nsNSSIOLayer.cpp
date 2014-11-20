@@ -13,6 +13,7 @@
 #include "mozilla/Telemetry.h"
 
 #include "prlog.h"
+#include "prmem.h"
 #include "prnetdb.h"
 #include "nsIPrefService.h"
 #include "nsIClientAuthDialogs.h"
@@ -142,6 +143,10 @@ nsNSSSocketInfo::nsNSSSocketInfo(SharedSSLState& aState, uint32_t providerFlags)
 {
   mTLSVersionRange.min = 0;
   mTLSVersionRange.max = 0;
+}
+
+nsNSSSocketInfo::~nsNSSSocketInfo()
+{
 }
 
 NS_IMPL_ISUPPORTS_INHERITED(nsNSSSocketInfo, TransportSecurityInfo,
@@ -386,16 +391,45 @@ nsNSSSocketInfo::JoinConnection(const nsACString& npnProtocol,
 
   ScopedCERTCertificate nssCert;
 
-  nsCOMPtr<nsIX509Cert2> cert2 = do_QueryInterface(SSLStatus()->mServerCert);
-  if (cert2)
-    nssCert = cert2->GetCert();
+  nsCOMPtr<nsIX509Cert> cert(SSLStatus()->mServerCert);
+  if (cert) {
+    nssCert = cert->GetCert();
+  }
 
-  if (!nssCert)
+  if (!nssCert) {
     return NS_OK;
+  }
 
-  if (CERT_VerifyCertName(nssCert, PromiseFlatCString(hostname).get()) !=
-      SECSuccess)
+  // Attempt to verify the joinee's certificate using the joining hostname.
+  // This ensures that any hostname-specific verification logic (e.g. key
+  // pinning) is satisfied by the joinee's certificate chain.
+  // This verification only uses local information; since we're on the network
+  // thread, we would be blocking on ourselves if we attempted any network i/o.
+  // TODO(bug 1056935): The certificate chain built by this verification may be
+  // different than the certificate chain originally built during the joined
+  // connection's TLS handshake. Consequently, we may report a wrong and/or
+  // misleading certificate chain for HTTP transactions coalesced onto this
+  // connection. This may become problematic in the future. For example,
+  // if/when we begin relying on intermediate certificates being stored in the
+  // securityInfo of a cached HTTPS response, that cached certificate chain may
+  // actually be the wrong chain. We should consider having JoinConnection
+  // return the certificate chain built here, so that the calling Necko code
+  // can associate the correct certificate chain with the HTTP transactions it
+  // is trying to join onto this connection.
+  RefPtr<SharedCertVerifier> certVerifier(GetDefaultCertVerifier());
+  if (!certVerifier) {
     return NS_OK;
+  }
+  nsAutoCString hostnameFlat(PromiseFlatCString(hostname));
+  CertVerifier::Flags flags = CertVerifier::FLAG_LOCAL_ONLY;
+  SECStatus rv = certVerifier->VerifySSLServerCert(nssCert, nullptr,
+                                                   PR_Now(),
+                                                   nullptr, hostnameFlat.get(),
+                                                   false, flags, nullptr,
+                                                   nullptr);
+  if (rv != SECSuccess) {
+    return NS_OK;
+  }
 
   // All tests pass - this is joinable
   mJoined = true;
@@ -1376,6 +1410,8 @@ public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIOBSERVER
   PrefObserver(nsSSLIOLayerHelpers* aOwner) : mOwner(aOwner) {}
+
+protected:
   virtual ~PrefObserver() {}
 private:
   nsSSLIOLayerHelpers* mOwner;
@@ -1879,9 +1915,9 @@ ClientAuthDataRunnable::RunOnTargetThread()
 {
   PLArenaPool* arena = nullptr;
   char** caNameStrings;
-  mozilla::pkix::ScopedCERTCertificate cert;
+  ScopedCERTCertificate cert;
   ScopedSECKEYPrivateKey privKey;
-  mozilla::pkix::ScopedCERTCertList certList;
+  ScopedCERTCertList certList;
   CERTCertListNode* node;
   ScopedCERTCertNicknames nicknames;
   int keyError = 0; // used for private key retrieval error
@@ -2225,7 +2261,7 @@ done:
     PORT_FreeArena(arena, false);
   }
 
-  *mPRetCert = cert.release();
+  *mPRetCert = cert.forget();
   *mPRetKey = privKey.forget();
 
   if (mRV == SECFailure) {

@@ -6,6 +6,7 @@
 
 #include "jit/IonAnalysis.h"
 
+#include "jit/AliasAnalysis.h"
 #include "jit/BaselineInspector.h"
 #include "jit/BaselineJIT.h"
 #include "jit/Ion.h"
@@ -186,9 +187,12 @@ jit::EliminateDeadCode(MIRGenerator *mir, MIRGraph &graph)
         for (MInstructionReverseIterator inst = block->rbegin(); inst != block->rend(); ) {
             if (!inst->isEffectful() && !inst->resumePoint() &&
                 !inst->hasUses() && !inst->isGuard() &&
-                !inst->isControlInstruction()) {
+                !inst->isControlInstruction())
+            {
                 inst = block->discardAt(inst);
-            } else if (!inst->hasLiveDefUses() && inst->canRecoverOnBailout()) {
+            } else if (!inst->isRecoveredOnBailout() && !inst->hasLiveDefUses() &&
+                       inst->canRecoverOnBailout())
+            {
                 inst->setRecoveredOnBailout();
                 inst++;
             } else {
@@ -294,7 +298,7 @@ jit::EliminatePhis(MIRGenerator *mir, MIRGraph &graph,
 
             // If the phi is redundant, remove it here.
             if (MDefinition *redundant = IsPhiRedundant(*iter)) {
-                iter->replaceAllUsesWith(redundant);
+                iter->justReplaceAllUsesWith(redundant);
                 iter = block->discardPhiAt(iter);
                 continue;
             }
@@ -332,7 +336,7 @@ jit::EliminatePhis(MIRGenerator *mir, MIRGraph &graph,
                     }
                 }
             }
-            phi->replaceAllUsesWith(redundant);
+            phi->justReplaceAllUsesWith(redundant);
         } else {
             // Otherwise flag them as used.
             phi->setNotUnused();
@@ -730,7 +734,7 @@ TypeAnalyzer::replaceRedundantPhi(MPhi *phi)
     MConstant *c = MConstant::New(alloc(), v);
     // The instruction pass will insert the box
     block->insertBefore(*(block->begin()), c);
-    phi->replaceAllUsesWith(c);
+    phi->justReplaceAllUsesWith(c);
 }
 
 bool
@@ -951,11 +955,6 @@ TypeAnalyzer::graphContainsFloat32()
 bool
 TypeAnalyzer::tryEmitFloatOperations()
 {
-    // Backends that currently don't know how to generate Float32 specialized instructions
-    // shouldn't run this pass and just let all instructions as specialized for Double.
-    if (!LIRGenerator::allowFloat32Optimizations())
-        return true;
-
     // Asm.js uses the ahead of time type checks to specialize operations, no need to check
     // them again at this point.
     if (mir->compilingAsmJS())
@@ -1091,6 +1090,59 @@ jit::RenumberBlocks(MIRGraph &graph)
     return true;
 }
 
+// A utility for code which deletes blocks. Renumber the remaining blocks,
+// recompute dominators, and optionally recompute AliasAnalysis dependencies.
+bool
+jit::AccountForCFGChanges(MIRGenerator *mir, MIRGraph &graph, bool updateAliasAnalysis)
+{
+    // Renumber the blocks and clear out the old dominator info.
+    size_t id = 0;
+    for (ReversePostorderIterator i(graph.rpoBegin()), e(graph.rpoEnd()); i != e; ++i) {
+        i->clearDominatorInfo();
+        i->setId(id++);
+    }
+
+    // Recompute dominator info.
+    if (!BuildDominatorTree(graph))
+        return false;
+
+    // If needed, update alias analysis dependencies.
+    if (updateAliasAnalysis) {
+        if (!AliasAnalysis(mir, graph).analyze())
+             return false;
+    }
+
+    AssertExtendedGraphCoherency(graph);
+    return true;
+}
+
+// Remove all blocks not marked with isMarked(). Unmark all remaining blocks.
+// Alias analysis dependencies may be invalid after calling this function.
+bool
+jit::RemoveUnmarkedBlocks(MIRGenerator *mir, MIRGraph &graph, uint32_t numMarkedBlocks)
+{
+    // If all blocks are marked, the CFG is unmodified. Just clear the marks.
+    if (numMarkedBlocks == graph.numBlocks()) {
+        graph.unmarkBlocks();
+        return true;
+    }
+
+    for (ReversePostorderIterator iter(graph.rpoBegin()); iter != graph.rpoEnd();) {
+        MBasicBlock *block = *iter++;
+
+        if (block->isMarked()) {
+            block->unmark();
+            continue;
+        }
+
+        for (size_t i = 0, e = block->numSuccessors(); i != e; ++i)
+            block->getSuccessor(i)->removePredecessor(block);
+        graph.removeBlockIncludingPhis(block);
+    }
+
+    return AccountForCFGChanges(mir, graph, /*updateAliasAnalysis=*/false);
+}
+
 // A Simple, Fast Dominance Algorithm by Cooper et al.
 // Modified to support empty intersections for OSR, and in RPO.
 static MBasicBlock *
@@ -1192,7 +1244,9 @@ jit::BuildDominatorTree(MIRGraph &graph)
 {
     ComputeImmediateDominators(graph);
 
-    // Traversing through the graph in post-order means that every use
+    Vector<MBasicBlock *, 4, IonAllocPolicy> worklist(graph.alloc());
+
+    // Traversing through the graph in post-order means that every non-phi use
     // of a definition is visited before the def itself. Since a def
     // dominates its uses, by the time we reach a particular
     // block, we have processed all of its dominated children, so
@@ -1205,8 +1259,13 @@ jit::BuildDominatorTree(MIRGraph &graph)
         child->addNumDominated(1);
 
         // If the block only self-dominates, it has no definite parent.
-        if (child == parent)
+        // Add it to the worklist as a root for pre-order traversal.
+        // This includes all roots. Order does not matter.
+        if (child == parent) {
+            if (!worklist.append(child))
+                return false;
             continue;
+        }
 
         if (!parent->addImmediatelyDominatedBlock(child))
             return false;
@@ -1220,24 +1279,9 @@ jit::BuildDominatorTree(MIRGraph &graph)
     if (!graph.osrBlock())
         JS_ASSERT(graph.entryBlock()->numDominated() == graph.numBlocks());
 #endif
-    // Now, iterate through the dominator tree and annotate every
-    // block with its index in the pre-order traversal of the
-    // dominator tree.
-    Vector<MBasicBlock *, 1, IonAllocPolicy> worklist(graph.alloc());
-
-    // The index of the current block in the CFG traversal.
+    // Now, iterate through the dominator tree in pre-order and annotate every
+    // block with its index in the traversal.
     size_t index = 0;
-
-    // Add all self-dominating blocks to the worklist.
-    // This includes all roots. Order does not matter.
-    for (MBasicBlockIterator i(graph.begin()); i != graph.end(); i++) {
-        MBasicBlock *block = *i;
-        if (block->immediateDominator() == block) {
-            if (!worklist.append(block))
-                return false;
-        }
-    }
-    // Starting from each self-dominating block, traverse the CFG in pre-order.
     while (!worklist.empty()) {
         MBasicBlock *block = worklist.popCopy();
         block->setDomIndex(index);
@@ -1433,6 +1477,13 @@ static void
 AssertDominatorTree(MIRGraph &graph)
 {
     // Check dominators.
+
+    JS_ASSERT(graph.entryBlock()->immediateDominator() == graph.entryBlock());
+    if (MBasicBlock *osrBlock = graph.osrBlock())
+        JS_ASSERT(osrBlock->immediateDominator() == osrBlock);
+    else
+        JS_ASSERT(graph.entryBlock()->numDominated() == graph.numBlocks());
+
     size_t i = graph.numBlocks();
     size_t totalNumDominated = 0;
     for (MBasicBlockIterator block(graph.begin()); block != graph.end(); block++) {
@@ -1560,7 +1611,13 @@ BoundsCheckHashIgnoreOffset(MBoundsCheck *check)
 static MBoundsCheck *
 FindDominatingBoundsCheck(BoundsCheckMap &checks, MBoundsCheck *check, size_t index)
 {
-    // See the comment in ValueNumberer::findDominatingDef.
+    // Since we are traversing the dominator tree in pre-order, when we
+    // are looking at the |index|-th block, the next numDominated() blocks
+    // we traverse are precisely the set of blocks that are dominated.
+    //
+    // So, this value is visible in all blocks if:
+    // index <= index + ins->block->numDominated()
+    // and becomes invalid after that.
     HashNumber hash = BoundsCheckHashIgnoreOffset(check);
     BoundsCheckMap::Ptr p = checks.lookup(hash);
     if (!p || index >= p->value().validEnd) {
@@ -2356,9 +2413,18 @@ ArgumentsUseCanBeLazy(JSContext *cx, JSScript *script, MInstruction *ins, size_t
         return true;
     }
 
-    // arguments.length length can read fp->numActualArgs() directly.
-    if (ins->isCallGetProperty() && index == 0 && ins->toCallGetProperty()->name() == cx->names().length)
+    // MGetArgumentsObjectArg needs to be considered as a use that allows laziness.
+    if (ins->isGetArgumentsObjectArg() && index == 0)
         return true;
+
+    // arguments.length length can read fp->numActualArgs() directly.
+    // arguments.callee can read fp->callee() directly in non-strict code.
+    if (ins->isCallGetProperty() && index == 0 &&
+        (ins->toCallGetProperty()->name() == cx->names().length ||
+         (!script->strict() && ins->toCallGetProperty()->name() == cx->names().callee)))
+    {
+        return true;
+    }
 
     return false;
 }

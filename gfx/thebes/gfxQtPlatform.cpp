@@ -101,20 +101,6 @@ gfxQtPlatform::CreateOffscreenSurface(const IntSize& size,
     return newSurface.forget();
 }
 
-already_AddRefed<gfxASurface>
-gfxQtPlatform::OptimizeImage(gfxImageSurface *aSurface,
-                             gfxImageFormat format)
-{
-    /* Qt have no special offscreen surfaces so we can avoid a copy */
-    if (OptimalFormatForContent(gfxASurface::ContentFromFormat(format)) ==
-        format) {
-        return nullptr;
-    }
-
-    return gfxPlatform::OptimizeImage(aSurface, format);
-}
-
-
 nsresult
 gfxQtPlatform::GetFontList(nsIAtom *aLangGroup,
                            const nsACString& aGenericFamily,
@@ -158,17 +144,6 @@ gfxQtPlatform::MakePlatformFont(const gfxProxyFontEntry *aProxyEntry,
     // passing ownership of the font data to the new font entry
     return gfxPangoFontGroup::NewFontEntry(*aProxyEntry,
                                            aFontData, aLength);
-}
-
-bool
-gfxQtPlatform::SupportsOffMainThreadCompositing()
-{
-#if defined(MOZ_X11) && !defined(NIGHTLY_BUILD)
-  return (PR_GetEnv("MOZ_USE_OMTC") != nullptr) ||
-         (PR_GetEnv("MOZ_OMTC_ENABLED") != nullptr);
-#else
-  return true;
-#endif
 }
 
 bool

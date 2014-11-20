@@ -42,7 +42,6 @@ class nsIFrame;
 class nsIDOMMozNamedAttrMap;
 class nsIDOMCSSStyleDeclaration;
 class nsIURI;
-class nsINodeInfo;
 class nsIControllers;
 class nsEventChainVisitor;
 class nsIScrollableFrame;
@@ -102,6 +101,7 @@ enum {
 ASSERT_NODE_FLAGS_SPACE(ELEMENT_TYPE_SPECIFIC_BITS_OFFSET);
 
 namespace mozilla {
+class ElementAnimation;
 class EventChainPostVisitor;
 class EventChainPreVisitor;
 class EventChainVisitor;
@@ -118,14 +118,14 @@ class DestinationInsertionPointList;
 
 // IID for the dom::Element interface
 #define NS_ELEMENT_IID \
-{ 0xd123f791, 0x124a, 0x43f3, \
-  { 0x84, 0xe3, 0x55, 0x81, 0x0b, 0x6c, 0xf3, 0x08 } }
+{ 0xb0135f9d, 0xa476, 0x4711, \
+  { 0x8b, 0xb9, 0xca, 0xe5, 0x2a, 0x05, 0xf9, 0xbe } }
 
 class Element : public FragmentOrElement
 {
 public:
 #ifdef MOZILLA_INTERNAL_API
-  Element(already_AddRefed<nsINodeInfo>& aNodeInfo) :
+  Element(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo) :
     FragmentOrElement(aNodeInfo),
     mState(NS_EVENT_STATE_MOZ_READONLY)
   {
@@ -424,7 +424,7 @@ public:
    * @param aStr the unparsed attribute string
    * @return the node info. May be nullptr.
    */
-  already_AddRefed<nsINodeInfo>
+  already_AddRefed<mozilla::dom::NodeInfo>
   GetExistingAttrNameFromQName(const nsAString& aStr) const;
 
   nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
@@ -784,6 +784,8 @@ public:
   {
   }
 
+  void GetAnimationPlayers(nsTArray<nsRefPtr<ElementAnimation> >& aPlayers);
+
   NS_IMETHOD GetInnerHTML(nsAString& aInnerHTML);
   virtual void SetInnerHTML(const nsAString& aInnerHTML, ErrorResult& aError);
   void GetOuterHTML(nsAString& aOuterHTML);
@@ -898,7 +900,7 @@ public:
    */
   virtual nsAttrInfo GetAttrInfo(int32_t aNamespaceID, nsIAtom* aName) const;
 
-  virtual void NodeInfoChanged(nsINodeInfo* aOldNodeInfo)
+  virtual void NodeInfoChanged(mozilla::dom::NodeInfo* aOldNodeInfo)
   {
   }
 
@@ -1124,8 +1126,8 @@ protected:
   Attr* GetAttributeNodeNSInternal(const nsAString& aNamespaceURI,
                                    const nsAString& aLocalName);
 
-  inline void RegisterFreezableElement();
-  inline void UnregisterFreezableElement();
+  inline void RegisterActivityObserver();
+  inline void UnregisterActivityObserver();
 
   /**
    * Add/remove this element to the documents id cache
@@ -1193,7 +1195,6 @@ class DestinationInsertionPointList : public nsINodeList
 {
 public:
   DestinationInsertionPointList(Element* aElement);
-  virtual ~DestinationInsertionPointList();
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_CLASS(DestinationInsertionPointList)
@@ -1208,6 +1209,8 @@ public:
   virtual uint32_t Length() const;
   virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
 protected:
+  virtual ~DestinationInsertionPointList();
+
   nsRefPtr<Element> mParent;
   nsCOMArray<nsIContent> mDestinationPoints;
 };
@@ -1277,11 +1280,11 @@ inline bool nsINode::HasAttributes() const
  */
 #define NS_IMPL_ELEMENT_CLONE(_elementName)                                 \
 nsresult                                                                    \
-_elementName::Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const        \
+_elementName::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const \
 {                                                                           \
   *aResult = nullptr;                                                       \
-  already_AddRefed<nsINodeInfo> ni =                                        \
-    nsCOMPtr<nsINodeInfo>(aNodeInfo).forget();                              \
+  already_AddRefed<mozilla::dom::NodeInfo> ni =                             \
+    nsRefPtr<mozilla::dom::NodeInfo>(aNodeInfo).forget();                   \
   _elementName *it = new _elementName(ni);                                  \
   if (!it) {                                                                \
     return NS_ERROR_OUT_OF_MEMORY;                                          \
@@ -1298,11 +1301,11 @@ _elementName::Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const        \
 
 #define NS_IMPL_ELEMENT_CLONE_WITH_INIT(_elementName)                       \
 nsresult                                                                    \
-_elementName::Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const        \
+_elementName::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const \
 {                                                                           \
   *aResult = nullptr;                                                       \
-  already_AddRefed<nsINodeInfo> ni =                                        \
-    nsCOMPtr<nsINodeInfo>(aNodeInfo).forget();                              \
+  already_AddRefed<mozilla::dom::NodeInfo> ni =                             \
+    nsRefPtr<mozilla::dom::NodeInfo>(aNodeInfo).forget();                   \
   _elementName *it = new _elementName(ni);                                  \
   if (!it) {                                                                \
     return NS_ERROR_OUT_OF_MEMORY;                                          \

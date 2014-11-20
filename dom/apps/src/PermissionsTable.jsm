@@ -192,6 +192,11 @@ this.PermissionsTable =  { geolocation: {
                              privileged: DENY_ACTION,
                              certified: ALLOW_ACTION
                            },
+                           "resourcestats-manage": {
+                             app: DENY_ACTION,
+                             privileged: DENY_ACTION,
+                             certified: ALLOW_ACTION
+                           },
                            "wifi-manage": {
                              app: DENY_ACTION,
                              privileged: DENY_ACTION,

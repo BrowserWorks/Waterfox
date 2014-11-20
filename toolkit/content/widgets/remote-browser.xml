@@ -211,10 +211,6 @@
           let RemoteController = Components.utils.import(jsm, {}).RemoteController;
           this._controller = new RemoteController(this);
           this.controllers.appendController(this._controller);
-
-          jsm = "resource://gre/modules/RemoteAddonsParent.jsm";
-          let RemoteAddonsParent = Components.utils.import(jsm, {}).RemoteAddonsParent;
-          RemoteAddonsParent.init();
         ]]>
       </constructor>
 
@@ -226,7 +222,7 @@
             case "Browser:Init":
               let result = {};
               result.useGlobalHistory = !this.hasAttribute("disableglobalhistory");
-              result.initPopup = this.autoCompletePopup;
+              result.initPopup = this.autoCompletePopup != null;
               return result;
               break;
             case "DOMTitleChanged":

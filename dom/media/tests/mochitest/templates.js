@@ -7,6 +7,8 @@ var HAVE_LOCAL_OFFER = "have-local-offer";
 var HAVE_REMOTE_OFFER = "have-remote-offer";
 var CLOSED = "closed";
 
+const ICE_NEW = "new";
+
 function deltaSeconds(date1, date2) {
   return (date2.getTime() - date1.getTime())/1000;
 }
@@ -17,6 +19,13 @@ function dumpSdp(test) {
   }
   if (typeof test._remote_answer !== 'undefined') {
     dump("ERROR: SDP answer: " + test._remote_answer.sdp.replace(/[\r]/g, ''));
+  }
+
+  if (typeof test.pcLocal.iceConnectionLog !== 'undefined') {
+    dump("pcLocal ICE connection state log: " + test.pcLocal.iceConnectionLog + "\n");
+  }
+  if (typeof test.pcRemote.iceConnectionLog !== 'undefined') {
+    dump("pcRemote ICE connection state log: " + test.pcRemote.iceConnectionLog + "\n");
   }
 
   if ((typeof test.pcLocal.setRemoteDescDate !== 'undefined') &&
@@ -37,6 +46,34 @@ function dumpSdp(test) {
 }
 
 var commandsPeerConnection = [
+  [
+    'PC_LOCAL_SETUP_ICE_LOGGER',
+    function (test) {
+      test.pcLocal.logIceConnectionState();
+      test.next();
+    }
+  ],
+  [
+    'PC_REMOTE_SETUP_ICE_LOGGER',
+    function (test) {
+      test.pcRemote.logIceConnectionState();
+      test.next();
+    }
+  ],
+  [
+    'PC_LOCAL_SETUP_SIGNALING_LOGGER',
+    function (test) {
+      test.pcLocal.logSignalingState();
+      test.next();
+    }
+  ],
+  [
+    'PC_REMOTE_SETUP_SIGNALING_LOGGER',
+    function (test) {
+      test.pcRemote.logSignalingState();
+      test.next();
+    }
+  ],
   [
     'PC_LOCAL_GUM',
     function (test) {
@@ -70,14 +107,31 @@ var commandsPeerConnection = [
     }
   ],
   [
+    'PC_LOCAL_CHECK_INITIAL_ICE_STATE',
+    function (test) {
+      is(test.pcLocal.iceConnectionState, ICE_NEW,
+        "Initial local ICE connection state is 'new'");
+      test.next();
+    }
+  ],
+  [
+    'PC_REMOTE_CHECK_INITIAL_ICE_STATE',
+    function (test) {
+      is(test.pcRemote.iceConnectionState, ICE_NEW,
+        "Initial remote ICE connection state is 'new'");
+      test.next();
+    }
+  ],
+  [
     'PC_LOCAL_CREATE_OFFER',
     function (test) {
-      test.createOffer(test.pcLocal, function () {
+      test.createOffer(test.pcLocal, function (offer) {
         is(test.pcLocal.signalingState, STABLE,
            "Local create offer does not change signaling state");
         if (!test.pcRemote) {
           send_message({"offer": test.pcLocal._last_offer,
-                        "media_constraints": test.pcLocal.constraints});
+                        "offer_constraints": test.pcLocal.constraints,
+                        "offer_options": test.pcLocal.offerOptions});
         }
         test.next();
       });
@@ -98,13 +152,15 @@ var commandsPeerConnection = [
     function (test) {
       if (test.pcLocal) {
         test._local_offer = test.pcLocal._last_offer;
-        test._local_constraints = test.pcLocal.constraints;
+        test._offer_constraints = test.pcLocal.constraints;
+        test._offer_options = test.pcLocal.offerOptions;
         test.next();
       } else {
         wait_for_message().then(function(message) {
           ok("offer" in message, "Got an offer message");
           test._local_offer = new mozRTCSessionDescription(message.offer);
-          test._local_constraints = message.media_constraints;
+          test._offer_constraints = message.offer_constraints;
+          test._offer_options = message.offer_options;
           test.next();
         });
       }
@@ -121,17 +177,75 @@ var commandsPeerConnection = [
     }
   ],
   [
+    'PC_LOCAL_SANE_LOCAL_SDP',
+    function (test) {
+      test.pcLocal.verifySdp(test.pcLocal.localDescription, "offer", test._offer_constraints, test._offer_options);
+      test.next();
+    }
+  ],
+  [
+    'PC_REMOTE_SANE_REMOTE_SDP',
+    function (test) {
+      test.pcRemote.verifySdp(test.pcRemote.remoteDescription, "offer", test._offer_constraints, test._offer_options);
+      test.next();
+    }
+  ],
+  [
     'PC_REMOTE_CREATE_ANSWER',
     function (test) {
-      test.createAnswer(test.pcRemote, function () {
+      test.createAnswer(test.pcRemote, function (answer) {
         is(test.pcRemote.signalingState, HAVE_REMOTE_OFFER,
            "Remote createAnswer does not change signaling state");
         if (!test.pcLocal) {
           send_message({"answer": test.pcRemote._last_answer,
-                        "media_constraints": test.pcRemote.constraints});
+                        "answer_constraints": test.pcRemote.constraints});
         }
         test.next();
       });
+    }
+  ],
+  [
+    'PC_REMOTE_CHECK_FOR_DUPLICATED_PORTS_IN_SDP',
+    function (test) {
+      var re = /a=candidate.* (UDP|TCP) [\d]+ ([\d\.]+) ([\d]+) typ host/g;
+
+      function _sdpCandidatesIntoArray(sdp) {
+        var regexArray = [];
+        var resultArray = [];
+        while ((regexArray = re.exec(sdp)) !== null) {
+          info("regexArray: " + regexArray);
+          if ((regexArray[1] === "TCP") && (regexArray[3] === "9")) {
+            // As both sides can advertise TCP active connection on port 9 lets
+            // ignore them all together
+            info("Ignoring TCP candidate on port 9");
+            continue;
+          }
+          const triple = regexArray[1] + ":" + regexArray[2] + ":" + regexArray[3];
+          info("triple: " + triple);
+          if (resultArray.indexOf(triple) !== -1) {
+            dump("SDP: " + sdp.replace(/[\r]/g, '') + "\n");
+            ok(false, "This Transport:IP:Port " + triple + " appears twice in the SDP above!");
+          }
+          resultArray.push(triple);
+        }
+        return resultArray;
+      }
+
+      const offerTriples = _sdpCandidatesIntoArray(test._local_offer.sdp);
+      info("Offer ICE host candidates: " + JSON.stringify(offerTriples));
+
+      const answerTriples = _sdpCandidatesIntoArray(test.pcRemote._last_answer.sdp);
+      info("Answer ICE host candidates: " + JSON.stringify(answerTriples));
+
+      for (var i=0; i< offerTriples.length; i++) {
+        if (answerTriples.indexOf(offerTriples[i]) !== -1) {
+          dump("SDP offer: " + test._local_offer.sdp.replace(/[\r]/g, '') + "\n");
+          dump("SDP answer: " + test.pcRemote._last_answer.sdp.replace(/[\r]/g, '') + "\n");
+          ok(false, "This IP:Port " + offerTriples[i] + " appears in SDP offer and answer!");
+        }
+      }
+
+      test.next();
     }
   ],
   [
@@ -149,13 +263,13 @@ var commandsPeerConnection = [
     function (test) {
       if (test.pcRemote) {
         test._remote_answer = test.pcRemote._last_answer;
-        test._remote_constraints = test.pcRemote.constraints;
+        test._answer_constraints = test.pcRemote.constraints;
         test.next();
       } else {
         wait_for_message().then(function(message) {
           ok("answer" in message, "Got an answer message");
           test._remote_answer = new mozRTCSessionDescription(message.answer);
-          test._remote_constraints = message.media_constraints;
+          test._answer_constraints = message.answer_constraints;
           test.next();
         });
       }
@@ -172,12 +286,27 @@ var commandsPeerConnection = [
     }
   ],
   [
+    'PC_REMOTE_SANE_LOCAL_SDP',
+    function (test) {
+      test.pcRemote.verifySdp(test.pcRemote.localDescription, "answer", test._answer_constraints, test._offer_options);
+      test.next();
+    }
+  ],
+  [
+    'PC_LOCAL_SANE_REMOTE_SDP',
+    function (test) {
+      test.pcLocal.verifySdp(test.pcLocal.remoteDescription, "answer", test._answer_constraints, test._offer_options);
+      test.next();
+    }
+  ],
+  [
     'PC_LOCAL_WAIT_FOR_ICE_CONNECTED',
     function (test) {
       var myTest = test;
       var myPc = myTest.pcLocal;
 
       function onIceConnectedSuccess () {
+        info("pcLocal ICE connection state log: " + test.pcLocal.iceConnectionLog);
         ok(true, "pc_local: ICE switched to 'connected' state");
         myTest.next();
       };
@@ -188,6 +317,7 @@ var commandsPeerConnection = [
       };
 
       if (myPc.isIceConnected()) {
+        info("pcLocal ICE connection state log: " + test.pcLocal.iceConnectionLog);
         ok(true, "pc_local: ICE is in connected state");
         myTest.next();
       } else if (myPc.isIceConnectionPending()) {
@@ -206,6 +336,7 @@ var commandsPeerConnection = [
       var myPc = myTest.pcRemote;
 
       function onIceConnectedSuccess () {
+        info("pcRemote ICE connection state log: " + test.pcRemote.iceConnectionLog);
         ok(true, "pc_remote: ICE switched to 'connected' state");
         myTest.next();
       };
@@ -216,6 +347,7 @@ var commandsPeerConnection = [
       };
 
       if (myPc.isIceConnected()) {
+        info("pcRemote ICE connection state log: " + test.pcRemote.iceConnectionLog);
         ok(true, "pc_remote: ICE is in connected state");
         myTest.next();
       } else if (myPc.isIceConnectionPending()) {
@@ -230,7 +362,7 @@ var commandsPeerConnection = [
   [
     'PC_LOCAL_CHECK_MEDIA_TRACKS',
     function (test) {
-      test.pcLocal.checkMediaTracks(test._remote_constraints, function () {
+      test.pcLocal.checkMediaTracks(test._answer_constraints, function () {
         test.next();
       });
     }
@@ -238,7 +370,7 @@ var commandsPeerConnection = [
   [
     'PC_REMOTE_CHECK_MEDIA_TRACKS',
     function (test) {
-      test.pcRemote.checkMediaTracks(test._local_constraints, function () {
+      test.pcRemote.checkMediaTracks(test._offer_constraints, function () {
         test.next();
       });
     }
@@ -285,6 +417,34 @@ var commandsPeerConnection = [
  */
 var commandsDataChannel = [
   [
+    'PC_LOCAL_SETUP_ICE_LOGGER',
+    function (test) {
+      test.pcLocal.logIceConnectionState();
+      test.next();
+    }
+  ],
+  [
+    'PC_REMOTE_SETUP_ICE_LOGGER',
+    function (test) {
+      test.pcRemote.logIceConnectionState();
+      test.next();
+    }
+  ],
+  [
+    'PC_LOCAL_SETUP_SIGNALING_LOGGER',
+    function (test) {
+      test.pcLocal.logSignalingState();
+      test.next();
+    }
+  ],
+  [
+    'PC_REMOTE_SETUP_SIGNALING_LOGGER',
+    function (test) {
+      test.pcRemote.logSignalingState();
+      test.next();
+    }
+  ],
+  [
     'PC_LOCAL_GUM',
     function (test) {
       test.pcLocal.getAllUserMedia(function () {
@@ -301,6 +461,14 @@ var commandsDataChannel = [
     }
   ],
   [
+    'PC_LOCAL_CHECK_INITIAL_ICE_STATE',
+    function (test) {
+      is(test.pcLocal.iceConnectionState, ICE_NEW,
+        "Initial local ICE connection state is 'new'");
+      test.next();
+    }
+  ],
+  [
     'PC_REMOTE_GUM',
     function (test) {
       test.pcRemote.getAllUserMedia(function () {
@@ -313,6 +481,14 @@ var commandsDataChannel = [
     function (test) {
       is(test.pcRemote.signalingState, STABLE,
          "Initial remote signalingState is stable");
+      test.next();
+    }
+  ],
+  [
+    'PC_REMOTE_CHECK_INITIAL_ICE_STATE',
+    function (test) {
+      is(test.pcRemote.iceConnectionState, ICE_NEW,
+        "Initial remote ICE connection state is 'new'");
       test.next();
     }
   ],
@@ -336,6 +512,8 @@ var commandsDataChannel = [
       test.pcLocal.createOffer(function (offer) {
         is(test.pcLocal.signalingState, STABLE,
            "Local create offer does not change signaling state");
+        ok(!offer.sdp.contains(LOOPBACK_ADDR),
+           "loopback interface is absent from SDP");
         ok(offer.sdp.contains("m=application"),
            "m=application is contained in the SDP");
         test.next();
@@ -365,11 +543,27 @@ var commandsDataChannel = [
     }
   ],
   [
+    'PC_LOCAL_SANE_LOCAL_SDP',
+    function (test) {
+      test.pcLocal.verifySdp(test.pcLocal.localDescription, "offer", test.pcLocal.constraints);
+      test.next();
+    }
+  ],
+  [
+    'PC_REMOTE_SANE_REMOTE_SDP',
+    function (test) {
+      test.pcRemote.verifySdp(test.pcRemote.remoteDescription, "offer", test.pcLocal.constraints);
+      test.next();
+    }
+  ],
+  [
     'PC_REMOTE_CREATE_ANSWER',
     function (test) {
-      test.createAnswer(test.pcRemote, function () {
+      test.createAnswer(test.pcRemote, function (answer) {
         is(test.pcRemote.signalingState, HAVE_REMOTE_OFFER,
            "Remote create offer does not change signaling state");
+        ok(!answer.sdp.contains(LOOPBACK_ADDR),
+           "loopback interface is absent in SDP");
         test.next();
       });
     }
@@ -420,12 +614,27 @@ var commandsDataChannel = [
     }
   ],
   [
+    'PC_REMOTE_SANE_LOCAL_SDP',
+    function (test) {
+      test.pcRemote.verifySdp(test.pcRemote.localDescription, "answer", test.pcRemote.constraints);
+      test.next();
+    }
+  ],
+  [
+    'PC_LOCAL_SANE_REMOTE_SDP',
+    function (test) {
+      test.pcLocal.verifySdp(test.pcLocal.remoteDescription, "answer", test.pcRemote.constraints);
+      test.next();
+    }
+  ],
+  [
     'PC_LOCAL_WAIT_FOR_ICE_CONNECTED',
     function (test) {
       var myTest = test;
       var myPc = myTest.pcLocal;
 
       function onIceConnectedSuccess () {
+        info("pcLocal ICE connection state log: " + test.pcLocal.iceConnectionLog);
         ok(true, "pc_local: ICE switched to 'connected' state");
         myTest.next();
       };
@@ -436,6 +645,7 @@ var commandsDataChannel = [
       };
 
       if (myPc.isIceConnected()) {
+        info("pcLocal ICE connection state log: " + test.pcLocal.iceConnectionLog);
         ok(true, "pc_local: ICE is in connected state");
         myTest.next();
       } else if (myPc.isIceConnectionPending()) {
@@ -454,6 +664,7 @@ var commandsDataChannel = [
       var myPc = myTest.pcRemote;
 
       function onIceConnectedSuccess () {
+        info("pcRemote ICE connection state log: " + test.pcRemote.iceConnectionLog);
         ok(true, "pc_remote: ICE switched to 'connected' state");
         myTest.next();
       };
@@ -464,6 +675,7 @@ var commandsDataChannel = [
       };
 
       if (myPc.isIceConnected()) {
+        info("pcRemote ICE connection state log: " + test.pcRemote.iceConnectionLog);
         ok(true, "pc_remote: ICE is in connected state");
         myTest.next();
       } else if (myPc.isIceConnectionPending()) {

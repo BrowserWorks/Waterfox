@@ -29,7 +29,7 @@ class HTMLSharedElement MOZ_FINAL : public nsGenericHTMLElement,
                                     public nsIDOMHTMLHtmlElement
 {
 public:
-  HTMLSharedElement(already_AddRefed<nsINodeInfo>& aNodeInfo)
+  HTMLSharedElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
     : nsGenericHTMLElement(aNodeInfo)
   {
     if (mNodeInfo->Equals(nsGkAtoms::head) ||
@@ -37,7 +37,6 @@ public:
       SetHasWeirdParserInsertionMode();
     }
   }
-  virtual ~HTMLSharedElement();
 
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
@@ -81,7 +80,7 @@ public:
   virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const MOZ_OVERRIDE;
   NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const MOZ_OVERRIDE;
 
-  virtual nsresult Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
 
   // WebIDL API
   // HTMLParamElement
@@ -178,6 +177,8 @@ public:
   }
 
 protected:
+  virtual ~HTMLSharedElement();
+
   virtual JSObject* WrapNode(JSContext* aCx) MOZ_OVERRIDE;
 };
 

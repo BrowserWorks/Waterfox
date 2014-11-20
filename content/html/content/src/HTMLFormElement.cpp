@@ -29,7 +29,7 @@
 #include "nsAutoPtr.h"
 #include "nsTArray.h"
 #include "nsIMutableArray.h"
-#include "nsIAutofillController.h"
+#include "nsIFormAutofillContentService.h"
 
 // form submission
 #include "nsIFormSubmitObserver.h"
@@ -48,6 +48,7 @@
 // radio buttons
 #include "mozilla/dom/HTMLInputElement.h"
 #include "nsIRadioVisitor.h"
+#include "RadioNodeList.h"
 
 #include "nsLayoutUtils.h"
 
@@ -64,7 +65,7 @@
 
 // construction, destruction
 nsGenericHTMLElement*
-NS_NewHTMLFormElement(already_AddRefed<nsINodeInfo>&& aNodeInfo,
+NS_NewHTMLFormElement(already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,
                       mozilla::dom::FromParser aFromParser)
 {
   mozilla::dom::HTMLFormElement* it = new mozilla::dom::HTMLFormElement(aNodeInfo);
@@ -96,7 +97,7 @@ static const nsAttrValue::EnumTable* kFormDefaultAutocomplete = &kFormAutocomple
 bool HTMLFormElement::gFirstFormSubmitted = false;
 bool HTMLFormElement::gPasswordManagerInitialized = false;
 
-HTMLFormElement::HTMLFormElement(already_AddRefed<nsINodeInfo>& aNodeInfo)
+HTMLFormElement::HTMLFormElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
   : nsGenericHTMLElement(aNodeInfo),
     mSelectedRadioButtons(4),
     mRequiredRadioButtonCounts(4),
@@ -306,10 +307,12 @@ void
 HTMLFormElement::RequestAutocomplete()
 {
   bool dummy;
-  nsCOMPtr<nsIDOMWindow> win = do_QueryInterface(OwnerDoc()->GetScriptHandlingObject(dummy));
-  nsCOMPtr<nsIAutofillController> controller(do_GetService("@mozilla.org/autofill-controller;1"));
+  nsCOMPtr<nsIDOMWindow> window =
+    do_QueryInterface(OwnerDoc()->GetScriptHandlingObject(dummy));
+  nsCOMPtr<nsIFormAutofillContentService> formAutofillContentService =
+    do_GetService("@mozilla.org/formautofill/content-service;1");
 
-  if (!controller || !win) {
+  if (!formAutofillContentService || !window) {
     AutocompleteErrorEventInit init;
     init.mBubbles = true;
     init.mCancelable = false;
@@ -317,11 +320,12 @@ HTMLFormElement::RequestAutocomplete()
 
     nsRefPtr<AutocompleteErrorEvent> event =
       AutocompleteErrorEvent::Constructor(this, NS_LITERAL_STRING("autocompleteerror"), init);
+
     (new AsyncEventDispatcher(this, event))->PostDOMEvent();
     return;
   }
 
-  controller->RequestAutocomplete(this, win);
+  formAutofillContentService->RequestAutocomplete(this, window);
 }
 
 bool
@@ -2279,7 +2283,7 @@ HTMLFormElement::AddElementToTableInternal(
 
       // Found an element, create a list, add the element to the list and put
       // the list in the hash
-      nsSimpleContentList *list = new nsSimpleContentList(this);
+      RadioNodeList *list = new RadioNodeList(this);
 
       // If an element has a @form, we can assume it *might* be able to not have
       // a parent and still be in the form.
@@ -2303,8 +2307,8 @@ HTMLFormElement::AddElementToTableInternal(
       NS_ENSURE_TRUE(nodeList, NS_ERROR_FAILURE);
 
       // Upcast, uggly, but it works!
-      nsSimpleContentList *list =
-        static_cast<nsSimpleContentList*>(nodeList.get());
+      RadioNodeList *list =
+        static_cast<RadioNodeList*>(nodeList.get());
 
       NS_ASSERTION(list->Length() > 1,
                    "List should have been converted back to a single element");

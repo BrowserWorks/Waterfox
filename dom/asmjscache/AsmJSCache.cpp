@@ -1116,6 +1116,7 @@ public:
     MOZ_COUNT_CTOR(SingleProcessRunnable);
   }
 
+protected:
   ~SingleProcessRunnable()
   {
     MOZ_COUNT_DTOR(SingleProcessRunnable);
@@ -1370,6 +1371,7 @@ public:
     MOZ_COUNT_CTOR(ChildProcessRunnable);
   }
 
+protected:
   ~ChildProcessRunnable()
   {
     MOZ_ASSERT(mState == eFinished);
@@ -1723,6 +1725,8 @@ GetBuildId(JS::BuildIdCharVector* aBuildID)
 
 class Client : public quota::Client
 {
+  ~Client() {}
+
 public:
   NS_IMETHOD_(MozExternalRefCountType)
   AddRef() MOZ_OVERRIDE;

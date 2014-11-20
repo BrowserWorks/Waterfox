@@ -48,64 +48,6 @@ struct AnimationEventInfo {
 
 typedef InfallibleTArray<AnimationEventInfo> EventArray;
 
-/**
- * Data about all of the animations running on an element.
- */
-struct ElementAnimations MOZ_FINAL
-  : public mozilla::css::CommonElementAnimationData
-{
-  typedef mozilla::TimeStamp TimeStamp;
-  typedef mozilla::TimeDuration TimeDuration;
-
-  ElementAnimations(mozilla::dom::Element *aElement, nsIAtom *aElementProperty,
-                    nsAnimationManager *aAnimationManager, TimeStamp aNow);
-
-  // After calling this, be sure to call CheckNeedsRefresh on the animation
-  // manager afterwards.
-  void EnsureStyleRuleFor(TimeStamp aRefreshTime, bool aIsThrottled);
-  void GetEventsAt(TimeStamp aRefreshTime, EventArray &aEventsToDispatch);
-
-  bool IsForElement() const { // rather than for a pseudo-element
-    return mElementProperty == nsGkAtoms::animationsProperty;
-  }
-
-  nsString PseudoElement()
-  {
-    return mElementProperty == nsGkAtoms::animationsProperty ?
-             EmptyString() :
-             mElementProperty == nsGkAtoms::animationsOfBeforeProperty ?
-               NS_LITERAL_STRING("::before") :
-               NS_LITERAL_STRING("::after");
-  }
-
-  void PostRestyleForAnimation(nsPresContext *aPresContext) {
-    nsRestyleHint styleHint = IsForElement() ? eRestyle_Self : eRestyle_Subtree;
-    aPresContext->PresShell()->RestyleForAnimation(mElement, styleHint);
-  }
-
-  // If aFlags contains CanAnimate_AllowPartial, returns whether the
-  // state of this element's animations at the current refresh driver
-  // time contains animation data that can be done on the compositor
-  // thread.  (This is useful for determining whether a layer should be
-  // active, or whether to send data to the layer.)
-  // If aFlags does not contain CanAnimate_AllowPartial, returns whether
-  // the state of this element's animations at the current refresh driver
-  // time can be fully represented by data sent to the compositor.
-  // (This is useful for determining whether throttle the animation
-  // (suppress main-thread style updates).)
-  // Note that when CanPerformOnCompositorThread returns true, it also,
-  // as a side-effect, notifies the ActiveLayerTracker.  FIXME:  This
-  // should probably move to the relevant callers.
-  virtual bool CanPerformOnCompositorThread(CanAnimateFlags aFlags) const MOZ_OVERRIDE;
-
-  virtual bool HasAnimationOfProperty(nsCSSProperty aProperty) const MOZ_OVERRIDE;
-
-  // False when we know that our current style rule is valid
-  // indefinitely into the future (because all of our animations are
-  // either completed or paused).  May be invalidated by a style change.
-  bool mNeedsRefreshes;
-};
-
 class nsAnimationManager MOZ_FINAL
   : public mozilla::css::CommonAnimationManager
 {
@@ -116,21 +58,11 @@ public:
   {
   }
 
-  static ElementAnimations* GetAnimationsForCompositor(nsIContent* aContent,
-                                                       nsCSSProperty aProperty)
+  static mozilla::ElementAnimationCollection*
+  GetAnimationsForCompositor(nsIContent* aContent, nsCSSProperty aProperty)
   {
-    if (!aContent->MayHaveAnimations())
-      return nullptr;
-    ElementAnimations* animations = static_cast<ElementAnimations*>(
-      aContent->GetProperty(nsGkAtoms::animationsProperty));
-    if (!animations)
-      return nullptr;
-    bool propertyMatches = animations->HasAnimationOfProperty(aProperty);
-    return (propertyMatches &&
-            animations->CanPerformOnCompositorThread(
-              mozilla::css::CommonElementAnimationData::CanAnimate_AllowPartial))
-           ? animations
-           : nullptr;
+    return mozilla::css::CommonAnimationManager::GetAnimationsForCompositor(
+      aContent, nsGkAtoms::animationsProperty, aProperty);
   }
 
   // Returns true if aContent or any of its ancestors has an animation.
@@ -144,7 +76,11 @@ public:
     return false;
   }
 
-  void EnsureStyleRuleFor(ElementAnimations* aET);
+  void UpdateStyleAndEvents(mozilla::ElementAnimationCollection* aEA,
+                            mozilla::TimeStamp aRefreshTime,
+                            mozilla::EnsureStyleRuleFlags aFlags);
+  void GetEventsForCurrentTime(mozilla::ElementAnimationCollection* aEA,
+                               EventArray &aEventsToDispatch);
 
   // nsIStyleRuleProcessor (parts)
   virtual void RulesMatching(ElementRuleProcessorData* aData) MOZ_OVERRIDE;
@@ -191,19 +127,21 @@ public:
     }
   }
 
-  ElementAnimations* GetElementAnimations(mozilla::dom::Element *aElement,
-                                          nsCSSPseudoElements::Type aPseudoType,
-                                          bool aCreateIfNeeded);
+  mozilla::ElementAnimationCollection*
+  GetElementAnimations(mozilla::dom::Element *aElement,
+                       nsCSSPseudoElements::Type aPseudoType,
+                       bool aCreateIfNeeded);
 
   // Updates styles on throttled animations. See note on nsTransitionManager
   void UpdateAllThrottledStyles();
 
 protected:
-  virtual void ElementDataRemoved() MOZ_OVERRIDE
+  virtual void ElementCollectionRemoved() MOZ_OVERRIDE
   {
     CheckNeedsRefresh();
   }
-  virtual void AddElementData(mozilla::css::CommonElementAnimationData* aData) MOZ_OVERRIDE;
+  virtual void
+  AddElementCollection(mozilla::ElementAnimationCollection* aData) MOZ_OVERRIDE;
 
   /**
    * Check to see if we should stop or start observing the refresh driver
@@ -212,10 +150,12 @@ protected:
 
 private:
   void BuildAnimations(nsStyleContext* aStyleContext,
+                       mozilla::dom::AnimationTimeline* aTimeline,
                        mozilla::ElementAnimationPtrArray& aAnimations);
   bool BuildSegment(InfallibleTArray<mozilla::AnimationPropertySegment>&
                       aSegments,
-                    nsCSSProperty aProperty, const nsAnimation& aAnimation,
+                    nsCSSProperty aProperty,
+                    const mozilla::StyleAnimation& aAnimation,
                     float aFromKey, nsStyleContext* aFromContext,
                     mozilla::css::Declaration* aFromDeclaration,
                     float aToKey, nsStyleContext* aToContext);

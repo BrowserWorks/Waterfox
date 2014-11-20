@@ -59,7 +59,7 @@ function remoteAnswer(call) {
     is(call.state, "connected");
     deferred.resolve(call);
   };
-  emulator.run("gsm accept " + call.id.number);
+  emulator.runCmdWithCallback("gsm accept " + call.id.number);
 
   return deferred.promise;
 }

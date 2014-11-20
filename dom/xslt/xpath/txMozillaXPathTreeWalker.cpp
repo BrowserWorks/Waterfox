@@ -11,7 +11,6 @@
 #include "nsIDOMNode.h"
 #include "nsIDOMElement.h"
 #include "nsIDOMProcessingInstruction.h"
-#include "nsINodeInfo.h"
 #include "nsPrintfCString.h"
 #include "nsReadableUtils.h"
 #include "nsString.h"
@@ -26,7 +25,7 @@
 #include <stdint.h>
 #include <algorithm>
 
-using mozilla::dom::Attr;
+using namespace mozilla::dom;
 
 const uint32_t kUnknownIndex = uint32_t(-1);
 
@@ -398,7 +397,7 @@ txXPathNodeUtils::getLocalName(const txXPathNode& aNode, nsAString& aLocalName)
 
     if (aNode.isContent()) {
         if (aNode.mNode->IsElement()) {
-            nsINodeInfo* nodeInfo = aNode.Content()->NodeInfo();
+            mozilla::dom::NodeInfo* nodeInfo = aNode.Content()->NodeInfo();
             nodeInfo->GetName(aLocalName);
             return;
         }
@@ -684,16 +683,14 @@ txXPathNativeNode::createXPathNode(nsIContent* aContent, bool aKeepRootAlive)
 
 /* static */
 txXPathNode*
-txXPathNativeNode::createXPathNode(nsIDOMNode* aNode, bool aKeepRootAlive)
+txXPathNativeNode::createXPathNode(nsINode* aNode, bool aKeepRootAlive)
 {
-    uint16_t nodeType;
-    aNode->GetNodeType(&nodeType);
-
+    uint16_t nodeType = aNode->NodeType();
     if (nodeType == nsIDOMNode::ATTRIBUTE_NODE) {
         nsCOMPtr<nsIAttribute> attr = do_QueryInterface(aNode);
         NS_ASSERTION(attr, "doesn't implement nsIAttribute");
 
-        nsINodeInfo *nodeInfo = attr->NodeInfo();
+        mozilla::dom::NodeInfo *nodeInfo = attr->NodeInfo();
         mozilla::dom::Element* parent =
           static_cast<Attr*>(attr.get())->GetElement();
         if (!parent) {
@@ -715,9 +712,8 @@ txXPathNativeNode::createXPathNode(nsIDOMNode* aNode, bool aKeepRootAlive)
         return nullptr;
     }
 
-    nsCOMPtr<nsINode> node = do_QueryInterface(aNode);
     uint32_t index;
-    nsINode* root = aKeepRootAlive ? node.get() : nullptr;
+    nsINode* root = aKeepRootAlive ? aNode : nullptr;
 
     if (nodeType == nsIDOMNode::DOCUMENT_NODE) {
         index = txXPathNode::eDocument;
@@ -729,7 +725,7 @@ txXPathNativeNode::createXPathNode(nsIDOMNode* aNode, bool aKeepRootAlive)
         }
     }
 
-    return new txXPathNode(node, index, root);
+    return new txXPathNode(aNode, index, root);
 }
 
 /* static */
@@ -741,11 +737,11 @@ txXPathNativeNode::createXPathNode(nsIDOMDocument* aDocument)
 }
 
 /* static */
-nsresult
-txXPathNativeNode::getNode(const txXPathNode& aNode, nsIDOMNode** aResult)
+nsINode*
+txXPathNativeNode::getNode(const txXPathNode& aNode)
 {
     if (!aNode.isAttribute()) {
-        return CallQueryInterface(aNode.mNode, aResult);
+        return aNode.mNode;
     }
 
     const nsAttrName* name = aNode.Content()->GetAttrNameAt(aNode.mIndex);
@@ -753,13 +749,10 @@ txXPathNativeNode::getNode(const txXPathNode& aNode, nsIDOMNode** aResult)
     nsAutoString namespaceURI;
     nsContentUtils::NameSpaceManager()->GetNameSpaceURI(name->NamespaceID(), namespaceURI);
 
-    nsCOMPtr<nsIDOMElement> element = do_QueryInterface(aNode.mNode);
-    nsCOMPtr<nsIDOMAttr> attr;
-    element->GetAttributeNodeNS(namespaceURI,
-                                nsDependentAtomString(name->LocalName()),
-                                getter_AddRefs(attr));
-
-    return CallQueryInterface(attr, aResult);
+    nsCOMPtr<Element> element = do_QueryInterface(aNode.mNode);
+    nsDOMAttributeMap* map = element->Attributes();
+    return map->GetNamedItemNS(namespaceURI,
+                               nsDependentAtomString(name->LocalName()));
 }
 
 /* static */

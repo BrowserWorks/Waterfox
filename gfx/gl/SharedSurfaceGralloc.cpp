@@ -4,12 +4,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/Preferences.h"
+#include "mozilla/UniquePtr.h"
 
 #include "SharedSurfaceGralloc.h"
 
 #include "GLContext.h"
-#include "SharedSurfaceGL.h"
-#include "SurfaceFactory.h"
+#include "SharedSurface.h"
 #include "GLLibraryEGL.h"
 #include "mozilla/layers/GrallocTextureClient.h"
 #include "mozilla/layers/ShadowLayers.h"
@@ -32,14 +32,13 @@
 namespace mozilla {
 namespace gl {
 
-using namespace mozilla::gfx;
 using namespace mozilla::layers;
 using namespace android;
 
 SurfaceFactory_Gralloc::SurfaceFactory_Gralloc(GLContext* prodGL,
                                                const SurfaceCaps& caps,
                                                layers::ISurfaceAllocator* allocator)
-    : SurfaceFactory_GL(prodGL, SharedSurfaceType::Gralloc, caps)
+    : SurfaceFactory(prodGL, SharedSurfaceType::Gralloc, caps)
 {
     if (caps.surfaceAllocator) {
         allocator = caps.surfaceAllocator;
@@ -119,6 +118,27 @@ SharedSurface_Gralloc::Create(GLContext* prodGL,
 }
 
 
+SharedSurface_Gralloc::SharedSurface_Gralloc(GLContext* prodGL,
+                                             const gfx::IntSize& size,
+                                             bool hasAlpha,
+                                             GLLibraryEGL* egl,
+                                             layers::ISurfaceAllocator* allocator,
+                                             layers::GrallocTextureClientOGL* textureClient,
+                                             GLuint prodTex)
+    : SharedSurface(SharedSurfaceType::Gralloc,
+                    AttachmentType::GLTexture,
+                    prodGL,
+                    size,
+                    hasAlpha)
+    , mEGL(egl)
+    , mSync(0)
+    , mAllocator(allocator)
+    , mTextureClient(textureClient)
+    , mProdTex(prodTex)
+{
+}
+
+
 bool
 SharedSurface_Gralloc::HasExtensions(GLLibraryEGL* egl, GLContext* gl)
 {
@@ -148,10 +168,19 @@ SharedSurface_Gralloc::Fence()
         mSync = 0;
     }
 
+    bool disableSyncFence = false;
+    // Disable sync fence on AdrenoTM200.
+    // AdrenoTM200's sync fence does not work correctly. See Bug 1022205.
+    if (mGL->Renderer() == GLRenderer::AdrenoTM200) {
+        disableSyncFence = true;
+    }
+
     // When Android native fences are available, try
     // them first since they're more likely to work.
     // Android native fences are also likely to perform better.
-    if (mEGL->IsExtensionSupported(GLLibraryEGL::ANDROID_native_fence_sync)) {
+    if (!disableSyncFence &&
+        mEGL->IsExtensionSupported(GLLibraryEGL::ANDROID_native_fence_sync))
+    {
         mGL->MakeCurrent();
         EGLSync sync = mEGL->fCreateSync(mEGL->Display(),
                                          LOCAL_EGL_SYNC_NATIVE_FENCE_ANDROID,
@@ -175,7 +204,9 @@ SharedSurface_Gralloc::Fence()
         }
     }
 
-    if (mEGL->IsExtensionSupported(GLLibraryEGL::KHR_fence_sync)) {
+    if (!disableSyncFence &&
+        mEGL->IsExtensionSupported(GLLibraryEGL::KHR_fence_sync))
+    {
         mGL->MakeCurrent();
         mSync = mEGL->fCreateSync(mEGL->Display(),
                                   LOCAL_EGL_SYNC_FENCE,
@@ -191,8 +222,8 @@ SharedSurface_Gralloc::Fence()
     // work.  glReadPixels seems to, though.
     if (gfxPrefs::GrallocFenceWithReadPixels()) {
         mGL->MakeCurrent();
-        ScopedDeleteArray<char> buf(new char[4]);
-        mGL->fReadPixels(0, 0, 1, 1, LOCAL_GL_RGBA, LOCAL_GL_UNSIGNED_BYTE, buf);
+        UniquePtr<char[]> buf = MakeUnique<char[]>(4);
+        mGL->fReadPixels(0, 0, 1, 1, LOCAL_GL_RGBA, LOCAL_GL_UNSIGNED_BYTE, buf.get());
     }
 }
 

@@ -1,4 +1,4 @@
-/* -*- Mode: javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2; js-indent-level: 2; -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2; js-indent-level: 2 -*- */
 /* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,14 +6,17 @@
 
 "use strict";
 
-const Debugger = require("Debugger");
 const Services = require("Services");
-const { Cc, Ci, Cu, components } = require("chrome");
+const { Cc, Ci, Cu, components, ChromeWorker } = require("chrome");
 const { ActorPool } = require("devtools/server/actors/common");
 const { DebuggerServer } = require("devtools/server/main");
 const DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
 const { dbg_assert, dumpn, update } = DevToolsUtils;
 const { SourceMapConsumer, SourceMapGenerator } = require("source-map");
+const promise = require("promise");
+const Debugger = require("Debugger");
+const xpcInspector = require("xpcInspector");
+
 const { defer, resolve, reject, all } = require("devtools/toolkit/deprecated-sync-thenables");
 const { CssLogic } = require("devtools/styleinspector/css-logic");
 
@@ -40,7 +43,8 @@ let addonManager = null;
  * about them.
  */
 function mapURIToAddonID(uri, id) {
-  if ((Services.appinfo.ID || undefined) == B2G_ID) {
+  if (Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT ||
+      (Services.appinfo.ID || undefined) == B2G_ID) {
     return false;
   }
 
@@ -326,9 +330,6 @@ exports.BreakpointStore = BreakpointStore;
  * Manages pushing event loops and automatically pops and exits them in the
  * correct order as they are resolved.
  *
- * @param nsIJSInspector inspector
- *        The underlying JS inspector we use to enter and exit nested event
- *        loops.
  * @param ThreadActor thread
  *        The thread actor instance that owns this EventLoopStack.
  * @param DebuggerServerConnection connection
@@ -340,8 +341,7 @@ exports.BreakpointStore = BreakpointStore;
  *          - preNest: function called before entering a nested event loop
  *          - postNest: function called after exiting a nested event loop
  */
-function EventLoopStack({ inspector, thread, connection, hooks }) {
-  this._inspector = inspector;
+function EventLoopStack({ thread, connection, hooks }) {
   this._hooks = hooks;
   this._thread = thread;
   this._connection = connection;
@@ -352,7 +352,7 @@ EventLoopStack.prototype = {
    * The number of nested event loops on the stack.
    */
   get size() {
-    return this._inspector.eventLoopNestLevel;
+    return xpcInspector.eventLoopNestLevel;
   },
 
   /**
@@ -362,7 +362,7 @@ EventLoopStack.prototype = {
     let url = null;
     if (this.size > 0) {
       try {
-        url = this._inspector.lastNestRequestor.url
+        url = xpcInspector.lastNestRequestor.url
       } catch (e) {
         // The tab's URL getter may throw if the tab is destroyed by the time
         // this code runs, but we don't really care at this point.
@@ -377,7 +377,7 @@ EventLoopStack.prototype = {
    * top of the stack
    */
   get lastConnection() {
-    return this._inspector.lastNestRequestor._connection;
+    return xpcInspector.lastNestRequestor._connection;
   },
 
   /**
@@ -387,7 +387,6 @@ EventLoopStack.prototype = {
    */
   push: function () {
     return new EventLoop({
-      inspector: this._inspector,
       thread: this._thread,
       connection: this._connection,
       hooks: this._hooks
@@ -399,8 +398,6 @@ EventLoopStack.prototype = {
  * An object that represents a nested event loop. It is used as the nest
  * requestor with nsIJSInspector instances.
  *
- * @param nsIJSInspector inspector
- *        The JS Inspector that runs nested event loops.
  * @param ThreadActor thread
  *        The thread actor that is creating this nested event loop.
  * @param DebuggerServerConnection connection
@@ -409,8 +406,7 @@ EventLoopStack.prototype = {
  *        The same hooks object passed into EventLoopStack during its
  *        initialization.
  */
-function EventLoop({ inspector, thread, connection, hooks }) {
-  this._inspector = inspector;
+function EventLoop({ thread, connection, hooks }) {
   this._thread = thread;
   this._hooks = hooks;
   this._connection = connection;
@@ -433,13 +429,13 @@ EventLoop.prototype = {
       : null;
 
     this.entered = true;
-    this._inspector.enterNestedEventLoop(this);
+    xpcInspector.enterNestedEventLoop(this);
 
     // Keep exiting nested event loops while the last requestor is resolved.
-    if (this._inspector.eventLoopNestLevel > 0) {
-      const { resolved } = this._inspector.lastNestRequestor;
+    if (xpcInspector.eventLoopNestLevel > 0) {
+      const { resolved } = xpcInspector.lastNestRequestor;
       if (resolved) {
-        this._inspector.exitNestedEventLoop();
+        xpcInspector.exitNestedEventLoop();
       }
     }
 
@@ -467,8 +463,8 @@ EventLoop.prototype = {
       throw new Error("Already resolved this nested event loop!");
     }
     this.resolved = true;
-    if (this === this._inspector.lastNestRequestor) {
-      this._inspector.exitNestedEventLoop();
+    if (this === xpcInspector.lastNestRequestor) {
+      xpcInspector.exitNestedEventLoop();
       return true;
     }
     return false;
@@ -506,7 +502,8 @@ function ThreadActor(aHooks, aGlobal)
   this._allEventsListener = this._allEventsListener.bind(this);
 
   this._options = {
-    useSourceMaps: false
+    useSourceMaps: false,
+    autoBlackBox: false
   };
 
   this._gripDepth = 0;
@@ -544,7 +541,7 @@ ThreadActor.prototype = {
 
   get sources() {
     if (!this._sources) {
-      this._sources = new ThreadSources(this, this._options.useSourceMaps,
+      this._sources = new ThreadSources(this, this._options,
                                         this._allowSource, this.onNewSource);
     }
     return this._sources;
@@ -788,7 +785,6 @@ ThreadActor.prototype = {
     // Initialize an event loop stack. This can't be done in the constructor,
     // because this.conn is not yet initialized by the actor pool at that time.
     this._nestedEventLoops = new EventLoopStack({
-      inspector: DebuggerServer.xpcInspector,
       hooks: this._hooks,
       connection: this.conn,
       thread: this
@@ -1085,10 +1081,12 @@ ThreadActor.prototype = {
    *        The frame we want to clear the stepping hooks from.
    */
   _clearSteppingHooks: function (aFrame) {
-    while (aFrame) {
-      aFrame.onStep = undefined;
-      aFrame.onPop = undefined;
-      aFrame = aFrame.older;
+    if (aFrame && aFrame.live) {
+      while (aFrame) {
+        aFrame.onStep = undefined;
+        aFrame.onPop = undefined;
+        aFrame = aFrame.older;
+      }
     }
   },
 
@@ -1259,7 +1257,29 @@ ThreadActor.prototype = {
         let l = Object.create(null);
         l.type = handler.type;
         let listener = handler.listenerObject;
-        l.script = this.globalDebugObject.makeDebuggeeValue(listener).script;
+        let listenerDO = this.globalDebugObject.makeDebuggeeValue(listener);
+        // If the listener is an object with a 'handleEvent' method, use that.
+        if (listenerDO.class == "Object" || listenerDO.class == "XULElement") {
+          // For some events we don't have permission to access the
+          // 'handleEvent' property when running in content scope.
+          if (!listenerDO.unwrap()) {
+            continue;
+          }
+          let heDesc;
+          while (!heDesc && listenerDO) {
+            heDesc = listenerDO.getOwnPropertyDescriptor("handleEvent");
+            listenerDO = listenerDO.proto;
+          }
+          if (heDesc && heDesc.value) {
+            listenerDO = heDesc.value;
+          }
+        }
+        // When the listener is a bound function, we are actually interested in
+        // the target function.
+        while (listenerDO.isBoundFunction) {
+          listenerDO = listenerDO.boundTargetFunction;
+        }
+        l.script = listenerDO.script;
         // Chrome listeners won't be converted to debuggee values, since their
         // compartment is not added as a debuggee.
         if (!l.script)
@@ -1829,9 +1849,37 @@ ThreadActor.prototype = {
         listenerForm.capturing = handler.capturing;
         listenerForm.allowsUntrusted = handler.allowsUntrusted;
         listenerForm.inSystemEventGroup = handler.inSystemEventGroup;
-        listenerForm.isEventHandler = !!node["on" + listenerForm.type];
+        let handlerName = "on" + listenerForm.type;
+        listenerForm.isEventHandler = false;
+        if (typeof node.hasAttribute !== "undefined") {
+          listenerForm.isEventHandler = !!node.hasAttribute(handlerName);
+        }
+        if (!!node[handlerName]) {
+          listenerForm.isEventHandler = !!node[handlerName];
+        }
         // Get the Debugger.Object for the listener object.
         let listenerDO = this.globalDebugObject.makeDebuggeeValue(listener);
+        // If the listener is an object with a 'handleEvent' method, use that.
+        if (listenerDO.class == "Object" || listenerDO.class == "XULElement") {
+          // For some events we don't have permission to access the
+          // 'handleEvent' property when running in content scope.
+          if (!listenerDO.unwrap()) {
+            continue;
+          }
+          let heDesc;
+          while (!heDesc && listenerDO) {
+            heDesc = listenerDO.getOwnPropertyDescriptor("handleEvent");
+            listenerDO = listenerDO.proto;
+          }
+          if (heDesc && heDesc.value) {
+            listenerDO = heDesc.value;
+          }
+        }
+        // When the listener is a bound function, we are actually interested in
+        // the target function.
+        while (listenerDO.isBoundFunction) {
+          listenerDO = listenerDO.boundTargetFunction;
+        }
         listenerForm.function = this.createValueGrip(listenerDO);
         listeners.push(listenerForm);
       }
@@ -2053,14 +2101,14 @@ ThreadActor.prototype = {
    */
   createProtocolCompletionValue: function (aCompletion) {
     let protoValue = {};
-    if ("return" in aCompletion) {
+    if (aCompletion == null) {
+      protoValue.terminated = true;
+    } else if ("return" in aCompletion) {
       protoValue.return = this.createValueGrip(aCompletion.return);
-    } else if ("yield" in aCompletion) {
-      protoValue.return = this.createValueGrip(aCompletion.yield);
     } else if ("throw" in aCompletion) {
       protoValue.throw = this.createValueGrip(aCompletion.throw);
     } else {
-      protoValue.terminated = true;
+      protoValue.return = this.createValueGrip(aCompletion.yield);
     }
     return protoValue;
   },
@@ -3701,18 +3749,21 @@ DebuggerServer.ObjectActorPreviewers = {
 
     let raw = obj.unsafeDereference();
     let entries = aGrip.preview.entries = [];
-    // We don't have Xrays to Iterators, so .entries returns [key, value]
-    // Arrays that live in content. But since we have Array Xrays,
-    // we'll deny access depending on the nature of those values. So we need
-    // to waive Xrays on those tuples (and re-apply them on the underlying
-    // values) until we fix bug 1023984.
+    // Iterating over a Map via .entries goes through various intermediate
+    // objects - an Iterator object, then a 2-element Array object, then the
+    // actual values we care about. We don't have Xrays to Iterator objects,
+    // so we get Opaque wrappers for them. And even though we have Xrays to
+    // Arrays, the semantics often deny access to the entires based on the
+    // nature of the values. So we need waive Xrays for the iterator object
+    // and the tupes, and then re-apply them on the underlying values until
+    // we fix bug 1023984.
     //
     // Even then though, we might want to continue waiving Xrays here for the
     // same reason we do so for Arrays above - this filtering behavior is likely
     // to be more confusing than beneficial in the case of Object previews.
-    for (let keyValuePair of Map.prototype.entries.call(raw)) {
-      let key = Cu.unwaiveXrays(Cu.waiveXrays(keyValuePair)[0]);
-      let value = Cu.unwaiveXrays(Cu.waiveXrays(keyValuePair)[1]);
+    for (let keyValuePair of Cu.waiveXrays(Map.prototype.entries.call(raw))) {
+      let key = Cu.unwaiveXrays(keyValuePair[0]);
+      let value = Cu.unwaiveXrays(keyValuePair[1]);
       key = makeDebuggeeValueIfNeeded(obj, key);
       value = makeDebuggeeValueIfNeeded(obj, value);
       entries.push([threadActor.createValueGrip(key),
@@ -3858,7 +3909,7 @@ DebuggerServer.ObjectActorPreviewers.Object = [
   },
 
   function CSSMediaRule({obj, threadActor}, aGrip, aRawObj) {
-    if (!aRawObj || Ci && !(aRawObj instanceof Ci.nsIDOMCSSMediaRule)) {
+    if (isWorker || !aRawObj || !(aRawObj instanceof Ci.nsIDOMCSSMediaRule)) {
       return false;
     }
     aGrip.preview = {
@@ -3869,7 +3920,7 @@ DebuggerServer.ObjectActorPreviewers.Object = [
   },
 
   function CSSStyleRule({obj, threadActor}, aGrip, aRawObj) {
-    if (!aRawObj || Ci && !(aRawObj instanceof Ci.nsIDOMCSSStyleRule)) {
+    if (isWorker || !aRawObj || !(aRawObj instanceof Ci.nsIDOMCSSStyleRule)) {
       return false;
     }
     aGrip.preview = {
@@ -3880,16 +3931,15 @@ DebuggerServer.ObjectActorPreviewers.Object = [
   },
 
   function ObjectWithURL({obj, threadActor}, aGrip, aRawObj) {
-    if (!aRawObj ||
-        Ci && !(aRawObj instanceof Ci.nsIDOMCSSImportRule ||
-                aRawObj instanceof Ci.nsIDOMCSSStyleSheet ||
-                aRawObj instanceof Ci.nsIDOMLocation ||
-                aRawObj instanceof Ci.nsIDOMWindow)) {
+    if (isWorker || !aRawObj || !(aRawObj instanceof Ci.nsIDOMCSSImportRule ||
+                                  aRawObj instanceof Ci.nsIDOMCSSStyleSheet ||
+                                  aRawObj instanceof Ci.nsIDOMLocation ||
+                                  aRawObj instanceof Ci.nsIDOMWindow)) {
       return false;
     }
 
     let url;
-    if (Ci && (aRawObj instanceof Ci.nsIDOMWindow) && aRawObj.location) {
+    if (aRawObj instanceof Ci.nsIDOMWindow && aRawObj.location) {
       url = aRawObj.location.href;
     } else if (aRawObj.href) {
       url = aRawObj.href;
@@ -3906,17 +3956,17 @@ DebuggerServer.ObjectActorPreviewers.Object = [
   },
 
   function ArrayLike({obj, threadActor}, aGrip, aRawObj) {
-    if (!aRawObj ||
+    if (isWorker || !aRawObj ||
         obj.class != "DOMStringList" &&
         obj.class != "DOMTokenList" &&
-        Ci && !(aRawObj instanceof Ci.nsIDOMMozNamedAttrMap ||
-                aRawObj instanceof Ci.nsIDOMCSSRuleList ||
-                aRawObj instanceof Ci.nsIDOMCSSValueList ||
-                aRawObj instanceof Ci.nsIDOMFileList ||
-                aRawObj instanceof Ci.nsIDOMFontFaceList ||
-                aRawObj instanceof Ci.nsIDOMMediaList ||
-                aRawObj instanceof Ci.nsIDOMNodeList ||
-                aRawObj instanceof Ci.nsIDOMStyleSheetList)) {
+        !(aRawObj instanceof Ci.nsIDOMMozNamedAttrMap ||
+          aRawObj instanceof Ci.nsIDOMCSSRuleList ||
+          aRawObj instanceof Ci.nsIDOMCSSValueList ||
+          aRawObj instanceof Ci.nsIDOMFileList ||
+          aRawObj instanceof Ci.nsIDOMFontFaceList ||
+          aRawObj instanceof Ci.nsIDOMMediaList ||
+          aRawObj instanceof Ci.nsIDOMNodeList ||
+          aRawObj instanceof Ci.nsIDOMStyleSheetList)) {
       return false;
     }
 
@@ -3945,7 +3995,7 @@ DebuggerServer.ObjectActorPreviewers.Object = [
   }, // ArrayLike
 
   function CSSStyleDeclaration({obj, threadActor}, aGrip, aRawObj) {
-    if (!aRawObj || Ci && !(aRawObj instanceof Ci.nsIDOMCSSStyleDeclaration)) {
+    if (isWorker || !aRawObj || !(aRawObj instanceof Ci.nsIDOMCSSStyleDeclaration)) {
       return false;
     }
 
@@ -3967,7 +4017,8 @@ DebuggerServer.ObjectActorPreviewers.Object = [
   },
 
   function DOMNode({obj, threadActor}, aGrip, aRawObj) {
-    if (obj.class == "Object" || !aRawObj || Ci && !(aRawObj instanceof Ci.nsIDOMNode)) {
+    if (isWorker || obj.class == "Object" || !aRawObj ||
+        !(aRawObj instanceof Ci.nsIDOMNode)) {
       return false;
     }
 
@@ -3977,9 +4028,9 @@ DebuggerServer.ObjectActorPreviewers.Object = [
       nodeName: aRawObj.nodeName,
     };
 
-    if (Ci && (aRawObj instanceof Ci.nsIDOMDocument) && aRawObj.location) {
+    if (aRawObj instanceof Ci.nsIDOMDocument && aRawObj.location) {
       preview.location = threadActor.createValueGrip(aRawObj.location.href);
-    } else if (Ci && (aRawObj instanceof Ci.nsIDOMDocumentFragment)) {
+    } else if (aRawObj instanceof Ci.nsIDOMDocumentFragment) {
       preview.childNodesLength = aRawObj.childNodes.length;
 
       if (threadActor._gripDepth < 2) {
@@ -3992,7 +4043,7 @@ DebuggerServer.ObjectActorPreviewers.Object = [
           }
         }
       }
-    } else if (Ci && (aRawObj instanceof Ci.nsIDOMElement)) {
+    } else if (aRawObj instanceof Ci.nsIDOMElement) {
       // Add preview for DOM element attributes.
       if (aRawObj instanceof Ci.nsIDOMHTMLElement) {
         preview.nodeName = preview.nodeName.toLowerCase();
@@ -4007,10 +4058,10 @@ DebuggerServer.ObjectActorPreviewers.Object = [
           break;
         }
       }
-    } else if (Ci && (aRawObj instanceof Ci.nsIDOMAttr)) {
+    } else if (aRawObj instanceof Ci.nsIDOMAttr) {
       preview.value = threadActor.createValueGrip(aRawObj.value);
-    } else if (Ci && (aRawObj instanceof Ci.nsIDOMText) ||
-               Ci && (aRawObj instanceof Ci.nsIDOMComment)) {
+    } else if (aRawObj instanceof Ci.nsIDOMText ||
+               aRawObj instanceof Ci.nsIDOMComment) {
       preview.textContent = threadActor.createValueGrip(aRawObj.textContent);
     }
 
@@ -4018,7 +4069,7 @@ DebuggerServer.ObjectActorPreviewers.Object = [
   }, // DOMNode
 
   function DOMEvent({obj, threadActor}, aGrip, aRawObj) {
-    if (!aRawObj || Ci && !(aRawObj instanceof Ci.nsIDOMEvent)) {
+    if (isWorker || !aRawObj || !(aRawObj instanceof Ci.nsIDOMEvent)) {
       return false;
     }
 
@@ -4034,9 +4085,9 @@ DebuggerServer.ObjectActorPreviewers.Object = [
     }
 
     let props = [];
-    if (Ci && (aRawObj instanceof Ci.nsIDOMMouseEvent)) {
+    if (aRawObj instanceof Ci.nsIDOMMouseEvent) {
       props.push("buttons", "clientX", "clientY", "layerX", "layerY");
-    } else if (Ci && (aRawObj instanceof Ci.nsIDOMKeyEvent)) {
+    } else if (aRawObj instanceof Ci.nsIDOMKeyEvent) {
       let modifiers = [];
       if (aRawObj.altKey) {
         modifiers.push("Alt");
@@ -4054,10 +4105,10 @@ DebuggerServer.ObjectActorPreviewers.Object = [
       preview.modifiers = modifiers;
 
       props.push("key", "charCode", "keyCode");
-    } else if (Ci && (aRawObj instanceof Ci.nsIDOMTransitionEvent) ||
-               Ci && (aRawObj instanceof Ci.nsIDOMAnimationEvent)) {
+    } else if (aRawObj instanceof Ci.nsIDOMTransitionEvent ||
+               aRawObj instanceof Ci.nsIDOMAnimationEvent) {
       props.push("animationName", "pseudoElement");
-    } else if (Ci && (aRawObj instanceof Ci.nsIDOMClipboardEvent)) {
+    } else if (aRawObj instanceof Ci.nsIDOMClipboardEvent) {
       props.push("clipboardData");
     }
 
@@ -4100,7 +4151,7 @@ DebuggerServer.ObjectActorPreviewers.Object = [
   }, // DOMEvent
 
   function DOMException({obj, threadActor}, aGrip, aRawObj) {
-    if (!aRawObj || Ci && !(aRawObj instanceof Ci.nsIDOMDOMException)) {
+    if (isWorker || !aRawObj || !(aRawObj instanceof Ci.nsIDOMDOMException)) {
       return false;
     }
 
@@ -4974,10 +5025,11 @@ exports.AddonThreadActor = AddonThreadActor;
  * Manages the sources for a thread. Handles source maps, locations in the
  * sources, etc for ThreadActors.
  */
-function ThreadSources(aThreadActor, aUseSourceMaps, aAllowPredicate,
+function ThreadSources(aThreadActor, aOptions, aAllowPredicate,
                        aOnNewSource) {
   this._thread = aThreadActor;
-  this._useSourceMaps = aUseSourceMaps;
+  this._useSourceMaps = aOptions.useSourceMaps;
+  this._autoBlackBox = aOptions.autoBlackBox;
   this._allow = aAllowPredicate;
   this._onNewSource = aOnNewSource;
 
@@ -4997,6 +5049,13 @@ function ThreadSources(aThreadActor, aUseSourceMaps, aAllowPredicate,
  */
 ThreadSources._blackBoxedSources = new Set(["self-hosted"]);
 ThreadSources._prettyPrintedSources = new Map();
+
+/**
+ * Matches strings of the form "foo.min.js" or "foo-min.js", etc. If the regular
+ * expression matches, we can be fairly sure that the source is minified, and
+ * treat it as such.
+ */
+const MINIFIED_SOURCE_REGEXP = /\bmin\.js$/;
 
 ThreadSources.prototype = {
   /**
@@ -5029,6 +5088,10 @@ ThreadSources.prototype = {
       return this._sourceActors[url];
     }
 
+    if (this._autoBlackBox && this._isMinifiedURL(url)) {
+      this.blackBox(url);
+    }
+
     let actor = new SourceActor({
       url: url,
       thread: this._thread,
@@ -5045,6 +5108,26 @@ ThreadSources.prototype = {
       reportError(e);
     }
     return actor;
+  },
+
+  /**
+   * Returns true if the URL likely points to a minified resource, false
+   * otherwise.
+   *
+   * @param String aURL
+   *        The URL to test.
+   * @returns Boolean
+   */
+  _isMinifiedURL: function (aURL) {
+    try {
+      let url = Services.io.newURI(aURL, null, null)
+                           .QueryInterface(Ci.nsIURL);
+      return MINIFIED_SOURCE_REGEXP.test(url.fileName);
+    } catch (e) {
+      // Not a valid URL so don't try to parse out the filename, just test the
+      // whole thing with the minified source regexp.
+      return MINIFIED_SOURCE_REGEXP.test(aURL);
+    }
   },
 
   /**
@@ -5066,7 +5149,13 @@ ThreadSources.prototype = {
           .QueryInterface(Ci.nsIURL);
         if (url.fileExtension === "js") {
           spec.contentType = "text/javascript";
-          spec.text = aScript.source.text;
+          // If the Debugger API wasn't able to load the source,
+          // because sources were discarded
+          // (javascript.options.discardSystemSource == true),
+          // give source() a chance to fetch them.
+          if (aScript.source.text != "[no source]") {
+            spec.text = aScript.source.text;
+          }
         }
       } catch(ex) {
         // Not a valid URI.
@@ -5183,7 +5272,7 @@ ThreadSources.prototype = {
   getOriginalLocation: function ({ url, line, column }) {
     if (url in this._sourceMapsByGeneratedSource) {
       column = column || 0;
-      
+
       return this._sourceMapsByGeneratedSource[url]
         .then((aSourceMap) => {
           let { source: aSourceURL, line: aLine, column: aColumn } = aSourceMap.originalPositionFor({

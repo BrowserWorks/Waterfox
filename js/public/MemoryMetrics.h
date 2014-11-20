@@ -212,8 +212,10 @@ struct GCSizes
 struct StringInfo
 {
 #define FOR_EACH_SIZE(macro) \
-    macro(Strings, IsLiveGCThing,  gcHeap) \
-    macro(Strings, NotLiveGCThing, mallocHeap) \
+    macro(Strings, IsLiveGCThing,  gcHeapLatin1) \
+    macro(Strings, IsLiveGCThing,  gcHeapTwoByte) \
+    macro(Strings, NotLiveGCThing, mallocHeapLatin1) \
+    macro(Strings, NotLiveGCThing, mallocHeapTwoByte)
 
     StringInfo()
       : FOR_EACH_SIZE(ZERO_SIZE)
@@ -349,10 +351,10 @@ struct RuntimeSizes
     macro(_, _, contexts) \
     macro(_, _, dtoa) \
     macro(_, _, temporary) \
-    macro(_, _, regexpData) \
     macro(_, _, interpreterStack) \
     macro(_, _, mathCache) \
-    macro(_, _, sourceDataCache) \
+    macro(_, _, uncompressedSourceCache) \
+    macro(_, _, compressedSourceSet) \
     macro(_, _, scriptData) \
 
     RuntimeSizes()
@@ -400,6 +402,7 @@ struct RuntimeSizes
 struct ZoneStats
 {
 #define FOR_EACH_SIZE(macro) \
+    macro(Other,   IsLiveGCThing,  symbolsGCHeap) \
     macro(Other,   NotLiveGCThing, gcHeapArenaAdmin) \
     macro(Other,   NotLiveGCThing, unusedGCThings) \
     macro(Other,   IsLiveGCThing,  lazyScriptsGCHeap) \
@@ -636,7 +639,7 @@ class ObjectPrivateVisitor
 };
 
 extern JS_PUBLIC_API(bool)
-CollectRuntimeStats(JSRuntime *rt, RuntimeStats *rtStats, ObjectPrivateVisitor *opv);
+CollectRuntimeStats(JSRuntime *rt, RuntimeStats *rtStats, ObjectPrivateVisitor *opv, bool anonymize);
 
 extern JS_PUBLIC_API(size_t)
 SystemCompartmentCount(JSRuntime *rt);

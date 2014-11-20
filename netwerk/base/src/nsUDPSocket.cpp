@@ -386,6 +386,8 @@ public:
   NS_DECL_NSIUDPMESSAGE
 
 private:
+  ~UDPMessageProxy() {}
+
   NetAddr mAddr;
   nsCOMPtr<nsIOutputStream> mOutputStream;
   FallibleTArray<uint8_t> mData;
@@ -680,6 +682,8 @@ namespace {
 //-----------------------------------------------------------------------------
 class SocketListenerProxy MOZ_FINAL : public nsIUDPSocketListener
 {
+  ~SocketListenerProxy() {}
+
 public:
   SocketListenerProxy(nsIUDPSocketListener* aListener)
     : mListener(new nsMainThreadPtrHolder<nsIUDPSocketListener>(aListener))
@@ -794,9 +798,9 @@ public:
     mData.SwapElements(aData);
   }
 
+private:
   virtual ~PendingSend() {}
 
-private:
   nsRefPtr<nsUDPSocket> mSocket;
   uint16_t mPort;
   FallibleTArray<uint8_t> mData;

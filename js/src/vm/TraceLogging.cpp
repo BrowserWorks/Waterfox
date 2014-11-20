@@ -7,10 +7,8 @@
 #include "vm/TraceLogging.h"
 
 #include "mozilla/DebugOnly.h"
+#include "mozilla/Endian.h"
 
-#if defined XP_MACOSX
-#include <libkern/OSByteOrder.h>
-#endif
 #include <string.h>
 
 #include "jsapi.h"
@@ -20,6 +18,7 @@
 #include "vm/Runtime.h"
 
 using namespace js;
+using mozilla::NativeEndian;
 
 #ifndef TRACE_LOG_DIR
 # if defined(_WIN32)
@@ -29,15 +28,14 @@ using namespace js;
 # endif
 #endif
 
-#if defined XP_MACOSX
-#define htobe32(x) OSSwapHostToBigInt32(x)
-#define be32toh(x) OSSwapBigToHostInt32(x)
-
-#define htobe64(x) OSSwapHostToBigInt64(x)
-#define be64toh(x) OSSwapBigToHostInt64(x)
-#endif
-
-#if defined(__i386__)
+#if defined(_WIN32)
+#include <intrin.h>
+static __inline uint64_t
+rdtsc(void)
+{
+    return __rdtsc();
+}
+#elif defined(__i386__)
 static __inline__ uint64_t
 rdtsc(void)
 {
@@ -298,8 +296,8 @@ TraceLogger::flush()
     if (eventFile) {
         // Format data in big endian
         for (size_t i = 0; i < events.size(); i++) {
-            events[i].time = htobe64(events[i].time);
-            events[i].textId = htobe64(events[i].textId);
+            events[i].time = NativeEndian::swapToBigEndian(events[i].time);
+            events[i].textId = NativeEndian::swapToBigEndian(events[i].textId);
         }
 
         size_t bytesWritten = fwrite(events.data(), sizeof(EventEntry), events.size(), eventFile);
@@ -328,7 +326,7 @@ TraceLogger::~TraceLogger()
         // We temporary enable logging for this. Stop doesn't need any extra data,
         // so is safe to do, even when we encountered OOM.
         enabled = true;
-        while (stack.size() > 0)
+        while (stack.currentId() > 0)
             stopEvent();
         enabled = false;
     }
@@ -378,6 +376,9 @@ TraceLogger::createTextId(const char *text)
 uint32_t
 TraceLogger::createTextId(JSScript *script)
 {
+    if (!script->filename())
+        return createTextId("");
+
     assertNoQuotes(script->filename());
 
     PointerHashMap::AddPtr p = pointerMap.lookupForAdd(script);
@@ -406,6 +407,9 @@ TraceLogger::createTextId(JSScript *script)
 uint32_t
 TraceLogger::createTextId(const JS::ReadOnlyCompileOptions &compileOptions)
 {
+    if (!compileOptions.filename())
+        return createTextId("");
+
     assertNoQuotes(compileOptions.filename());
 
     PointerHashMap::AddPtr p = pointerMap.lookupForAdd(&compileOptions);
@@ -453,23 +457,24 @@ TraceLogger::logTimestamp(uint32_t id)
 void
 TraceLogger::entryToBigEndian(TreeEntry *entry)
 {
-    entry->start_ = htobe64(entry->start_);
-    entry->stop_ = htobe64(entry->stop_);
-    entry->u.value_ = htobe32((entry->u.s.textId_ << 1) + entry->u.s.hasChildren_);
-    entry->nextId_ = htobe32(entry->nextId_);
+    entry->start_ = NativeEndian::swapToBigEndian(entry->start_);
+    entry->stop_ = NativeEndian::swapToBigEndian(entry->stop_);
+    uint32_t data = (entry->u.s.textId_ << 1) + entry->u.s.hasChildren_;
+    entry->u.value_ = NativeEndian::swapToBigEndian(data);
+    entry->nextId_ = NativeEndian::swapToBigEndian(entry->nextId_);
 }
 
 void
 TraceLogger::entryToSystemEndian(TreeEntry *entry)
 {
-    entry->start_ = be64toh(entry->start_);
-    entry->stop_ = be64toh(entry->stop_);
+    entry->start_ = NativeEndian::swapFromBigEndian(entry->start_);
+    entry->stop_ = NativeEndian::swapFromBigEndian(entry->stop_);
 
-    uint32_t data = be32toh(entry->u.value_);
+    uint32_t data = NativeEndian::swapFromBigEndian(entry->u.value_);
     entry->u.s.textId_ = data >> 1;
     entry->u.s.hasChildren_ = data & 0x1;
 
-    entry->nextId_ = be32toh(entry->nextId_);
+    entry->nextId_ = NativeEndian::swapFromBigEndian(entry->nextId_);
 }
 
 bool
@@ -701,6 +706,7 @@ TraceLogger::stopEvent()
             return;
         }
     }
+    JS_ASSERT(stack.currentId() > 0);
     stack.pop();
 }
 
@@ -825,14 +831,8 @@ TraceLogging::lazyInit()
         enabledTextIds[TraceLogger::ParserCompileFunction] = true;
         enabledTextIds[TraceLogger::ParserCompileLazy] = true;
         enabledTextIds[TraceLogger::ParserCompileScript] = true;
-#ifdef JS_YARR
-        enabledTextIds[TraceLogger::YarrCompile] = true;
-        enabledTextIds[TraceLogger::YarrInterpret] = true;
-        enabledTextIds[TraceLogger::YarrJIT] = true;
-#else
         enabledTextIds[TraceLogger::IrregexpCompile] = true;
         enabledTextIds[TraceLogger::IrregexpExecute] = true;
-#endif
     }
 
     if (ContainsFlag(env, "IonCompiler") || strlen(env) == 0) {
@@ -938,7 +938,7 @@ js::TraceLoggerForCurrentThread()
     PRThread *thread = PR_GetCurrentThread();
     return traceLoggers.forThread(thread);
 #else
-    MOZ_ASSUME_UNREACHABLE("No threads supported. Use TraceLoggerForMainThread for the main thread.");
+    MOZ_CRASH("No threads supported. Use TraceLoggerForMainThread for the main thread.");
 #endif // JS_THREADSAFE
 }
 

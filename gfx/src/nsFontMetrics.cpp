@@ -6,6 +6,7 @@
 #include "nsFontMetrics.h"
 #include <math.h>                       // for floor, ceil
 #include <algorithm>                    // for max
+#include "gfxFontConstants.h"           // for NS_FONT_SYNTHESIS_*
 #include "gfxPlatform.h"                // for gfxPlatform
 #include "gfxPoint.h"                   // for gfxPoint
 #include "gfxRect.h"                    // for gfxRect
@@ -122,7 +123,8 @@ nsFontMetrics::Init(const nsFont& aFont, nsIAtom* aLanguage,
                        aFont.sizeAdjust,
                        aFont.systemFont,
                        mDeviceContext->IsPrinterSurface(),
-                       aFont.variant == NS_STYLE_FONT_VARIANT_SMALL_CAPS,
+                       aFont.synthesis & NS_FONT_SYNTHESIS_WEIGHT,
+                       aFont.synthesis & NS_FONT_SYNTHESIS_STYLE,
                        aFont.languageOverride);
 
     aFont.AddFontFeaturesToStyle(&style);
@@ -160,13 +162,15 @@ nsFontMetrics::XHeight()
 nscoord
 nsFontMetrics::SuperscriptOffset()
 {
-    return ROUND_TO_TWIPS(GetMetrics().superscriptOffset);
+    return ROUND_TO_TWIPS(GetMetrics().emHeight *
+                          NS_FONT_SUPERSCRIPT_OFFSET_RATIO);
 }
 
 nscoord
 nsFontMetrics::SubscriptOffset()
 {
-    return ROUND_TO_TWIPS(GetMetrics().subscriptOffset);
+    return ROUND_TO_TWIPS(GetMetrics().emHeight *
+                          NS_FONT_SUBSCRIPT_OFFSET_RATIO);
 }
 
 void

@@ -22,6 +22,8 @@
 using namespace js;
 using namespace js::jit;
 
+using mozilla::IsInRange;
+
 // These constructor are exactly the same except for the type of the iterator
 // which is given to the SnapshotIterator constructor. Doing so avoid the
 // creation of virtual functions for the IonIterator but may introduce some
@@ -69,10 +71,6 @@ IonBailoutIterator::dump() const
     }
 }
 
-// This address is a magic number made to cause crashes while indicating that we
-// are making an attempt to mark the stack during a bailout.
-static uint8_t * const FAKE_JIT_TOP_FOR_BAILOUT = reinterpret_cast<uint8_t *>(0xba1);
-
 uint32_t
 jit::Bailout(BailoutStack *sp, BaselineBailoutInfo **bailoutInfo)
 {
@@ -80,8 +78,8 @@ jit::Bailout(BailoutStack *sp, BaselineBailoutInfo **bailoutInfo)
     JS_ASSERT(bailoutInfo);
 
     // We don't have an exit frame.
-    MOZ_ASSERT(size_t(FAKE_JIT_TOP_FOR_BAILOUT + sizeof(IonCommonFrameLayout)) < 0x1000 &&
-               size_t(FAKE_JIT_TOP_FOR_BAILOUT) >= 0,
+    MOZ_ASSERT(IsInRange(FAKE_JIT_TOP_FOR_BAILOUT, 0, 0x1000) &&
+               IsInRange(FAKE_JIT_TOP_FOR_BAILOUT + sizeof(IonCommonFrameLayout), 0, 0x1000),
                "Fake jitTop pointer should be within the first page.");
     cx->mainThread().jitTop = FAKE_JIT_TOP_FOR_BAILOUT;
     gc::AutoSuppressGC suppress(cx);
@@ -112,9 +110,14 @@ jit::Bailout(BailoutStack *sp, BaselineBailoutInfo **bailoutInfo)
         //
         // We call ExitScript here to ensure that if the ionScript had SPS
         // instrumentation, then the SPS entry for it is popped.
+        //
+        // However, if the bailout was during argument check, then a
+        // pseudostack frame would not have been pushed in the first
+        // place, so don't pop anything in that case.
+        bool popSPSFrame = iter.ionScript()->hasSPSInstrumentation() &&
+                           (SnapshotIterator(iter).bailoutKind() != Bailout_ArgumentCheck);
         JSScript *script = iter.script();
-        probes::ExitScript(cx, script, script->functionNonDelazifying(),
-                           iter.ionScript()->hasSPSInstrumentation());
+        probes::ExitScript(cx, script, script->functionNonDelazifying(), popSPSFrame);
 
         EnsureExitFrame(iter.jsFrame());
     }
@@ -163,9 +166,14 @@ jit::InvalidationBailout(InvalidationBailoutStack *sp, size_t *frameSizeOut,
         //
         // We call ExitScript here to ensure that if the ionScript had SPS
         // instrumentation, then the SPS entry for it is popped.
+        //
+        // However, if the bailout was during argument check, then a
+        // pseudostack frame would not have been pushed in the first
+        // place, so don't pop anything in that case.
+        bool popSPSFrame = iter.ionScript()->hasSPSInstrumentation() &&
+                           (SnapshotIterator(iter).bailoutKind() != Bailout_ArgumentCheck);
         JSScript *script = iter.script();
-        probes::ExitScript(cx, script, script->functionNonDelazifying(),
-                           iter.ionScript()->hasSPSInstrumentation());
+        probes::ExitScript(cx, script, script->functionNonDelazifying(), popSPSFrame);
 
         IonJSFrameLayout *frame = iter.jsFrame();
         IonSpew(IonSpew_Invalidate, "Bailout failed (%s): converting to exit frame",
@@ -192,6 +200,7 @@ IonBailoutIterator::IonBailoutIterator(const JitActivationIterator &activations,
   : JitFrameIterator(activations),
     machine_(frame.machineState())
 {
+    kind_ = Kind_BailoutIterator;
     returnAddressToFp_ = frame.returnAddressToFp();
     topIonScript_ = frame.ionScript();
     const OsiIndex *osiIndex = frame.osiIndex();

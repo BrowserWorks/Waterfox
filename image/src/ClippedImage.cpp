@@ -13,12 +13,13 @@
 #include "Orientation.h"
 #include "SVGImageContext.h"
 
-using namespace mozilla;
-using namespace mozilla::gfx;
-using mozilla::layers::LayerManager;
-using mozilla::layers::ImageContainer;
 
 namespace mozilla {
+
+using namespace gfx;
+using layers::LayerManager;
+using layers::ImageContainer;
+
 namespace image {
 
 class ClippedImageCachedSurface
@@ -156,7 +157,7 @@ ClippedImage::ShouldClip()
   return mShouldClip.ref();
 }
 
-NS_IMPL_ISUPPORTS(ClippedImage, imgIContainer)
+NS_IMPL_ISUPPORTS_INHERITED0(ClippedImage, ImageWrapper)
 
 nsIntRect
 ClippedImage::FrameRect(uint32_t aWhichFrame)
@@ -388,19 +389,18 @@ ClippedImage::DrawSingleTile(gfxContext* aContext,
   }
 
   // Add a translation to the transform to reflect the clipping region.
-  gfxMatrix transform(aUserSpaceToImageSpace);
-  transform.Multiply(gfxMatrix().Translate(gfxPoint(mClip.x, mClip.y)));
+  gfxMatrix transform =
+    aUserSpaceToImageSpace * gfxMatrix::Translation(mClip.x, mClip.y);
 
   // "Clamp the source rectangle" to the clipping region's width and height.
   // Really, this means modifying the transform to get the results we want.
   gfxRect sourceRect = transform.Transform(aFill);
   if (sourceRect.width > mClip.width || sourceRect.height > mClip.height) {
-    gfxMatrix clampSource;
-    clampSource.Translate(gfxPoint(sourceRect.x, sourceRect.y));
+    gfxMatrix clampSource = gfxMatrix::Translation(sourceRect.TopLeft());
     clampSource.Scale(ClampFactor(sourceRect.width, mClip.width),
                       ClampFactor(sourceRect.height, mClip.height));
-    clampSource.Translate(gfxPoint(-sourceRect.x, -sourceRect.y));
-    transform.Multiply(clampSource);
+    clampSource.Translate(-sourceRect.TopLeft());
+    transform *= clampSource;
   }
 
   return InnerImage()->Draw(aContext, aFilter, transform, aFill, aSubimage,
@@ -422,6 +422,19 @@ ClippedImage::GetOrientation()
   // XXX(seth): This should not actually be here; this is just to work around a
   // what appears to be a bug in MSVC's linker.
   return InnerImage()->GetOrientation();
+}
+
+NS_IMETHODIMP_(nsIntRect)
+ClippedImage::GetImageSpaceInvalidationRect(const nsIntRect& aRect)
+{
+  if (!ShouldClip()) {
+    return InnerImage()->GetImageSpaceInvalidationRect(aRect);
+  }
+
+  nsIntRect rect(InnerImage()->GetImageSpaceInvalidationRect(aRect));
+  rect = rect.Intersect(mClip);
+  rect.MoveBy(-mClip.x, -mClip.y);
+  return rect;
 }
 
 } // namespace image

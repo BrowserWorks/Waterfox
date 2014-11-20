@@ -25,7 +25,7 @@ const PAGE_CONTENT = [
 ].join("\n");
 
 let test = asyncTest(function*() {
-  yield addTab("data:text/html,rule view color picker tooltip test");
+  yield addTab("data:text/html;charset=utf-8,rule view color picker tooltip test");
   content.document.body.innerHTML = PAGE_CONTENT;
   let {toolbox, inspector, view} = yield openRuleView();
 
@@ -42,7 +42,7 @@ function* testSimpleMultipleColorChanges(inspector, ruleView) {
     .querySelector(".ruleview-colorswatch");
 
   info("Opening the color picker");
-  let picker = ruleView.colorPicker;
+  let picker = ruleView.tooltips.colorPicker;
   let onShown = picker.tooltip.once("shown");
   swatch.click();
   yield onShown;
@@ -70,7 +70,7 @@ function* testComplexMultipleColorChanges(inspector, ruleView) {
     .querySelector(".ruleview-colorswatch");
 
   info("Opening the color picker");
-  let picker = ruleView.colorPicker;
+  let picker = ruleView.tooltips.colorPicker;
   let onShown = picker.tooltip.once("shown");
   swatch.click();
   yield onShown;
@@ -103,7 +103,7 @@ function* testOverriddenMultipleColorChanges(inspector, ruleView) {
     .querySelector(".ruleview-colorswatch");
 
   info("Opening the color picker");
-  let picker = ruleView.colorPicker;
+  let picker = ruleView.tooltips.colorPicker;
   let onShown = picker.tooltip.once("shown");
   swatch.click();
   yield onShown;

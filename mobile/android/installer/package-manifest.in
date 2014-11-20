@@ -147,7 +147,6 @@
 @BINPATH@/components/dom_network.xpt
 @BINPATH@/components/dom_notification.xpt
 @BINPATH@/components/dom_html.xpt
-@BINPATH@/components/dom_indexeddb.xpt
 @BINPATH@/components/dom_offline.xpt
 @BINPATH@/components/dom_json.xpt
 @BINPATH@/components/dom_payment.xpt
@@ -191,7 +190,6 @@
 @BINPATH@/components/inspector.xpt
 @BINPATH@/components/intl.xpt
 @BINPATH@/components/jar.xpt
-@BINPATH@/components/jsdservice.xpt
 @BINPATH@/components/jsdebugger.xpt
 @BINPATH@/components/jsdownloads.xpt
 @BINPATH@/components/jsinspector.xpt
@@ -249,6 +247,7 @@
 @BINPATH@/components/storage.xpt
 @BINPATH@/components/telemetry.xpt
 @BINPATH@/components/toolkit_finalizationwitness.xpt
+@BINPATH@/components/toolkit_formautofill.xpt
 @BINPATH@/components/toolkit_osfile.xpt
 @BINPATH@/components/toolkitprofile.xpt
 #ifdef MOZ_ENABLE_XREMOTE
@@ -380,7 +379,7 @@
 @BINPATH@/components/FormHistoryStartup.js
 @BINPATH@/components/nsInputListAutoComplete.js
 @BINPATH@/components/formautofill.manifest
-@BINPATH@/components/AutofillController.js
+@BINPATH@/components/FormAutofillContentService.js
 @BINPATH@/components/contentSecurityPolicy.manifest
 @BINPATH@/components/contentSecurityPolicy.js
 @BINPATH@/components/contentAreaDropListener.manifest
@@ -621,10 +620,7 @@ bin/components/@DLL_PREFIX@nkgnomevfs@DLL_SUFFIX@
 @BINPATH@/components/marionettecomponent.js
 #endif
 
-#ifdef MOZ_ANDROID_SYNTHAPKS
 @BINPATH@/components/WebappsUpdateTimer.js
-#endif
-
 @BINPATH@/components/DataStore.manifest
 @BINPATH@/components/DataStoreImpl.js
 @BINPATH@/components/dom_datastore.xpt

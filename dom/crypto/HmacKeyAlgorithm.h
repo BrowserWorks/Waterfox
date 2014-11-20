@@ -40,9 +40,6 @@ public:
     }
   }
 
-  ~HmacKeyAlgorithm()
-  {}
-
   virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
 
   KeyAlgorithm* Hash() const
@@ -55,11 +52,16 @@ public:
     return mLength;
   }
 
+  virtual nsString ToJwkAlg() const MOZ_OVERRIDE;
+
   virtual bool WriteStructuredClone(JSStructuredCloneWriter* aWriter) const MOZ_OVERRIDE;
   static KeyAlgorithm* Create(nsIGlobalObject* aGlobal,
                               JSStructuredCloneReader* aReader);
 
 protected:
+  ~HmacKeyAlgorithm()
+  {}
+
   nsRefPtr<KeyAlgorithm> mHash;
   uint32_t mLength;
 };

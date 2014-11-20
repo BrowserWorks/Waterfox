@@ -250,6 +250,8 @@ nsDNSRecord::ReportUnusable(uint16_t aPort)
 class nsDNSAsyncRequest MOZ_FINAL : public nsResolveHostCallback
                                   , public nsICancelable
 {
+    ~nsDNSAsyncRequest() {}
+
 public:
     NS_DECL_THREADSAFE_ISUPPORTS
     NS_DECL_NSICANCELABLE
@@ -264,7 +266,6 @@ public:
         , mListener(listener)
         , mFlags(flags)
         , mAF(af) {}
-    ~nsDNSAsyncRequest() {}
 
     void OnLookupComplete(nsHostResolver *, nsHostRecord *, nsresult);
     // Returns TRUE if the DNS listener arg is the same as the member listener
@@ -675,8 +676,9 @@ nsDNSService::AsyncResolve(const nsACString  &hostname,
 
     const nsACString *hostPtr = &hostname;
 
+    nsAutoCString strLocalhost(NS_LITERAL_CSTRING("localhost"));
     if (localDomain) {
-        hostPtr = &(NS_LITERAL_CSTRING("localhost"));
+        hostPtr = &strLocalhost;
     }
 
     nsresult rv;
@@ -792,8 +794,9 @@ nsDNSService::Resolve(const nsACString &hostname,
 
     const nsACString *hostPtr = &hostname;
 
+    nsAutoCString strLocalhost(NS_LITERAL_CSTRING("localhost"));
     if (localDomain) {
-        hostPtr = &(NS_LITERAL_CSTRING("localhost"));
+        hostPtr = &strLocalhost;
     }
 
     nsresult rv;
@@ -975,7 +978,7 @@ MOZ_DEFINE_MALLOC_SIZE_OF(DNSServiceMallocSizeOf)
 
 NS_IMETHODIMP
 nsDNSService::CollectReports(nsIHandleReportCallback* aHandleReport,
-                             nsISupports* aData)
+                             nsISupports* aData, bool aAnonymize)
 {
     return MOZ_COLLECT_REPORT(
         "explicit/network/dns-service", KIND_HEAP, UNITS_BYTES,

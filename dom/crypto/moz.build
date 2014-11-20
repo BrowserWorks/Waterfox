@@ -8,11 +8,12 @@ TEST_DIRS += ['test']
 
 EXPORTS.mozilla.dom += [
     'AesKeyAlgorithm.h',
+    'BasicSymmetricKeyAlgorithm.h',
     'CryptoBuffer.h',
+    'CryptoKey.h',
+    'CryptoKeyPair.h',
     'HmacKeyAlgorithm.h',
-    'Key.h',
     'KeyAlgorithm.h',
-    'KeyPair.h',
     'RsaHashedKeyAlgorithm.h',
     'RsaKeyAlgorithm.h',
     'WebCryptoCommon.h',
@@ -22,10 +23,10 @@ EXPORTS.mozilla.dom += [
 UNIFIED_SOURCES += [
     'AesKeyAlgorithm.cpp',
     'CryptoBuffer.cpp',
+    'CryptoKey.cpp',
+    'CryptoKeyPair.cpp',
     'HmacKeyAlgorithm.cpp',
-    'Key.cpp',
     'KeyAlgorithm.cpp',
-    'KeyPair.cpp',
     'RsaHashedKeyAlgorithm.cpp',
     'RsaKeyAlgorithm.cpp',
     'WebCryptoTask.cpp',

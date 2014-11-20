@@ -30,7 +30,7 @@ class BailoutStack
     };
 
   protected: // Silence Clang warning about unused private fields.
-    mozilla::Array<double, FloatRegisters::Total> fpregs_;
+    mozilla::Array<double, FloatRegisters::TotalPhys> fpregs_;
     mozilla::Array<uintptr_t, Registers::Total> regs_;
 
     uintptr_t snapshotOffset_;
@@ -77,10 +77,15 @@ IonBailoutIterator::IonBailoutIterator(const JitActivationIterator &activations,
     uint8_t *sp = bailout->parentStackPointer();
     uint8_t *fp = sp + bailout->frameSize();
 
+    kind_ = Kind_BailoutIterator;
     current_ = fp;
     type_ = JitFrame_IonJS;
     topFrameSize_ = current_ - sp;
-    topIonScript_ = script()->ionScript();
+    switch (mode_) {
+      case SequentialExecution: topIonScript_ = script()->ionScript(); break;
+      case ParallelExecution: topIonScript_ = script()->parallelIonScript(); break;
+      default: MOZ_ASSUME_UNREACHABLE("No such execution mode");
+    }
 
     if (bailout->frameClass() == FrameSizeClass::None()) {
         snapshotOffset_ = bailout->snapshotOffset();
@@ -109,6 +114,7 @@ IonBailoutIterator::IonBailoutIterator(const JitActivationIterator &activations,
   : JitFrameIterator(activations),
     machine_(bailout->machine())
 {
+    kind_ = Kind_BailoutIterator;
     returnAddressToFp_ = bailout->osiPointReturnAddress();
     topIonScript_ = bailout->ionScript();
     const OsiIndex *osiIndex = topIonScript_->getOsiIndex(returnAddressToFp_);

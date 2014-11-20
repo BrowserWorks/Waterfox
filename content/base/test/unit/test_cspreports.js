@@ -7,7 +7,6 @@ const Ci = Components.interfaces;
 const Cu = Components.utils;
 const Cr = Components.results;
 
-Cu.import('resource://gre/modules/CSPUtils.jsm');
 Cu.import('resource://gre/modules/NetUtil.jsm');
 
 var httpServer = new HttpServer();
@@ -62,9 +61,9 @@ function makeTest(id, expectedJSON, useReportOnlyPolicy, callback) {
   do_test_pending();
 
   // set up a new CSP instance for each test.
-  var csp = Cc["@mozilla.org/contentsecuritypolicy;1"]
+  var csp = Cc["@mozilla.org/cspcontext;1"]
               .createInstance(Ci.nsIContentSecurityPolicy);
-  var policy = "allow 'none'; " +
+  var policy = "default-src 'none'; " +
                "report-uri " + REPORT_SERVER_URI +
                                ":" + REPORT_SERVER_PORT +
                                "/test" + id;
@@ -80,7 +79,7 @@ function makeTest(id, expectedJSON, useReportOnlyPolicy, callback) {
 
   // Load up the policy
   // set as report-only if that's the case
-  csp.appendPolicy(policy, selfuri, useReportOnlyPolicy, false);
+  csp.appendPolicy(policy, selfuri, useReportOnlyPolicy);
 
   // prime the report server
   var handler = makeReportHandler("/test" + id, "Test " + id, expectedJSON);

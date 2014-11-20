@@ -7,6 +7,8 @@
 #ifndef mozilla_ScopedNSSTypes_h
 #define mozilla_ScopedNSSTypes_h
 
+#include <limits>
+
 #include "NSSErrorsService.h"
 #include "mozilla/Likely.h"
 #include "mozilla/mozalloc_oom.h"
@@ -21,8 +23,8 @@
 #include "pk11pub.h"
 #include "sechash.h"
 #include "secpkcs7.h"
+#include "secport.h"
 #include "prerror.h"
-#include "ocsp.h"
 
 namespace mozilla {
 
@@ -61,6 +63,14 @@ MapSECStatus(SECStatus rv)
   return mozilla::psm::GetXPCOMFromNSSError(PR_GetError());
 }
 
+#ifdef _MSC_VER
+// C4061: enumerator 'symbol' in switch of enum 'symbol' is not explicitly
+// handled.
+#define MOZ_NON_EXHAUSTIVE_SWITCH __pragma(warning(suppress:4061)) switch
+#else
+#define MOZ_NON_EXHAUSTIVE_SWITCH switch
+#endif
+
 // Alphabetical order by NSS type
 MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedPRFileDesc,
                                           PRFileDesc,
@@ -83,9 +93,6 @@ MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedCERTName,
 MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedCERTCertNicknames,
                                           CERTCertNicknames,
                                           CERT_FreeNicknames)
-MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedCERTOCSPCertID,
-                                          CERTOCSPCertID,
-                                          CERT_DestroyOCSPCertID)
 MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedCERTSubjectPublicKeyInfo,
                                           CERTSubjectPublicKeyInfo,
                                           SECKEY_DestroySubjectPublicKeyInfo)
@@ -168,9 +175,13 @@ public:
 
   nsresult DigestBuf(SECOidTag hashAlg, const uint8_t * buf, uint32_t len)
   {
+    if (len > static_cast<uint32_t>(std::numeric_limits<int32_t>::max())) {
+      return NS_ERROR_INVALID_ARG;
+    }
     nsresult rv = SetLength(hashAlg);
     NS_ENSURE_SUCCESS(rv, rv);
-    return MapSECStatus(PK11_HashBuf(hashAlg, item.data, buf, len));
+    return MapSECStatus(PK11_HashBuf(hashAlg, item.data, buf,
+                                     static_cast<int32_t>(len)));
   }
 
   nsresult End(SECOidTag hashAlg, ScopedPK11Context & context)
@@ -190,7 +201,7 @@ public:
 private:
   nsresult SetLength(SECOidTag hashType)
   {
-    switch (hashType)
+    MOZ_NON_EXHAUSTIVE_SWITCH (hashType)
     {
       case SEC_OID_SHA1:   item.len = SHA1_LENGTH;   break;
       case SEC_OID_SHA256: item.len = SHA256_LENGTH; break;
@@ -216,10 +227,29 @@ MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedPK11SlotList,
 MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedPK11SymKey,
                                           PK11SymKey,
                                           PK11_FreeSymKey)
+MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedPK11GenericObject,
+                                          PK11GenericObject,
+                                          PK11_DestroyGenericObject)
 
 MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedSEC_PKCS7ContentInfo,
                                           SEC_PKCS7ContentInfo,
                                           SEC_PKCS7DestroyContentInfo)
+
+namespace internal {
+
+inline void
+PORT_FreeArena_false(PLArenaPool* arena)
+{
+  // PL_FreeArenaPool can't be used because it doesn't actually free the
+  // memory, which doesn't work well with memory analysis tools.
+  return PORT_FreeArena(arena, false);
+}
+
+} // namespace internal
+
+MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedPLArenaPool,
+                                          PLArenaPool,
+                                          internal::PORT_FreeArena_false)
 
 // Wrapper around NSS's SECItem_AllocItem that handles OOM the same way as
 // other allocators.
@@ -257,18 +287,23 @@ public:
   }
 };
 
-namespace psm {
+namespace internal {
 
 inline void SECITEM_FreeItem_true(SECItem * s)
 {
   return SECITEM_FreeItem(s, true);
 }
 
-} // namespace impl
+inline void SECOID_DestroyAlgorithmID_true(SECAlgorithmID * a)
+{
+  return SECOID_DestroyAlgorithmID(a, true);
+}
+
+} // namespace internal
 
 MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedSECItem,
-                                          ::SECItem,
-                                          ::mozilla::psm::SECITEM_FreeItem_true)
+                                          SECItem,
+                                          internal::SECITEM_FreeItem_true)
 
 MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedSECKEYPrivateKey,
                                           SECKEYPrivateKey,
@@ -276,6 +311,10 @@ MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedSECKEYPrivateKey,
 MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedSECKEYPublicKey,
                                           SECKEYPublicKey,
                                           SECKEY_DestroyPublicKey)
+MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedSECAlgorithmID,
+                                          SECAlgorithmID,
+                                          internal::SECOID_DestroyAlgorithmID_true)
+
 
 } // namespace mozilla
 

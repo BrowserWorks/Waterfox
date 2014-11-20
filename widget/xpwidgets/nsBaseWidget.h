@@ -50,6 +50,8 @@ class nsBaseWidget;
 
 class WidgetShutdownObserver MOZ_FINAL : public nsIObserver
 {
+  ~WidgetShutdownObserver() {}
+
 public:
   WidgetShutdownObserver(nsBaseWidget* aWidget)
     : mWidget(aWidget)
@@ -82,9 +84,10 @@ protected:
   typedef mozilla::layers::CompositorParent CompositorParent;
   typedef mozilla::ScreenRotation ScreenRotation;
 
+  virtual ~nsBaseWidget();
+
 public:
   nsBaseWidget();
-  virtual ~nsBaseWidget();
 
   NS_DECL_ISUPPORTS
 
@@ -144,7 +147,6 @@ public:
   virtual void            EndRemoteDrawing() { };
   virtual void            CleanupRemoteDrawing() { };
   virtual void            UpdateThemeGeometries(const nsTArray<ThemeGeometry>& aThemeGeometries) {}
-  virtual gfxASurface*    GetThebesSurface();
   NS_IMETHOD              SetModal(bool aModal);
   virtual uint32_t        GetMaxTouchPoints() const;
   NS_IMETHOD              SetWindowClass(const nsAString& xulWinType);

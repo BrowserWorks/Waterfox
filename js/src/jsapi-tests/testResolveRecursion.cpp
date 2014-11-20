@@ -62,8 +62,8 @@ BEGIN_TEST(testResolveRecursion)
 
 JS::Heap<JSObject *> obj1;
 JS::Heap<JSObject *> obj2;
-unsigned resolveEntryCount;
-unsigned resolveExitCount;
+int resolveEntryCount;
+int resolveExitCount;
 
 struct AutoIncrCounters {
 
@@ -83,7 +83,7 @@ doResolve(JS::HandleObject obj, JS::HandleId id, JS::MutableHandleObject objp)
 {
     CHECK_EQUAL(resolveExitCount, 0);
     AutoIncrCounters incr(this);
-    CHECK_EQUAL(obj, obj1 || obj == obj2);
+    CHECK(obj == obj1 || obj == obj2);
 
     CHECK(JSID_IS_STRING(id));
 

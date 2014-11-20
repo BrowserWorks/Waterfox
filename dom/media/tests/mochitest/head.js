@@ -1,4 +1,4 @@
-﻿/* This Source Code Form is subject to the terms of the Mozilla Public
+/* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -133,7 +133,9 @@ function runTest(aCallback) {
       ['media.peerconnection.enabled', true],
       ['media.peerconnection.identity.enabled', true],
       ['media.peerconnection.identity.timeout', 12000],
-      ['media.navigator.permission.disabled', true]]
+      ['media.navigator.permission.disabled', true],
+      ['media.getusermedia.screensharing.enabled', true],
+      ['media.getusermedia.screensharing.allowed_domains', "mochi.test"]]
     }, function () {
       try {
         aCallback();
@@ -270,3 +272,19 @@ function unexpectedEventAndFinish(message, eventName) {
     SimpleTest.finish();
   }
 }
+
+function IsMacOSX10_6orOlder() {
+    var is106orOlder = false;
+
+    if (navigator.platform.indexOf("Mac") == 0) {
+        var version = Cc["@mozilla.org/system-info;1"]
+                        .getService(SpecialPowers.Ci.nsIPropertyBag2)
+                        .getProperty("version");
+        // the next line is correct: Mac OS 10.6 corresponds to Darwin version 10.x !
+        // Mac OS 10.7 is Darwin version 11.x. the |version| string we've got here
+        // is the Darwin version.
+        is106orOlder = (parseFloat(version) < 11.0);
+    }
+    return is106orOlder;
+}
+

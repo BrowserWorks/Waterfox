@@ -16,7 +16,6 @@
 
 static bool gDisableOptimize = false;
 
-#include "cairo.h"
 #include "GeckoProfiler.h"
 #include "mozilla/Likely.h"
 #include "mozilla/MemoryReporting.h"
@@ -24,9 +23,12 @@ static bool gDisableOptimize = false;
 #include "mozilla/CheckedInt.h"
 #include "mozilla/gfx/Tools.h"
 
-using namespace mozilla;
-using namespace mozilla::gfx;
-using namespace mozilla::image;
+
+namespace mozilla {
+
+using namespace gfx;
+
+namespace image {
 
 static UserDataKey kVolatileBuffer;
 
@@ -339,23 +341,15 @@ imgFrame::SurfaceForDrawing(bool               aDoPadding,
     if (!target)
       return SurfaceWithFormat();
 
-    Rect fillRect(aFill.x, aFill.y, aFill.width, aFill.height);
     // Fill 'available' with whatever we've got
     if (mSinglePixel) {
-      target->FillRect(fillRect, ColorPattern(mSinglePixelColor),
+      target->FillRect(ToRect(available), ColorPattern(mSinglePixelColor),
                        DrawOptions(1.0f, CompositionOp::OP_SOURCE));
     } else {
-      gfxMatrix imageSpaceToUserSpace = aUserSpaceToImageSpace;
-      imageSpaceToUserSpace.Invert();
       SurfacePattern pattern(aSurface,
                              ExtendMode::REPEAT,
-                             Matrix(imageSpaceToUserSpace.xx,
-                                    imageSpaceToUserSpace.xy,
-                                    imageSpaceToUserSpace.yx,
-                                    imageSpaceToUserSpace.yy,
-                                    imageSpaceToUserSpace.x0,
-                                    imageSpaceToUserSpace.y0));
-      target->FillRect(fillRect, pattern);
+                             Matrix::Translation(mDecoded.x, mDecoded.y));
+      target->FillRect(ToRect(available), pattern);
     }
 
     RefPtr<SourceSurface> newsurf = target->Snapshot();
@@ -371,7 +365,7 @@ imgFrame::SurfaceForDrawing(bool               aDoPadding,
   aFill = imageSpaceToUserSpace.Transform(aSourceRect);
 
   aSubimage = aSubimage.Intersect(available) - gfxPoint(aPadding.left, aPadding.top);
-  aUserSpaceToImageSpace.Multiply(gfxMatrix().Translate(-gfxPoint(aPadding.left, aPadding.top)));
+  aUserSpaceToImageSpace *= gfxMatrix::Translation(-aPadding.left, -aPadding.top);
   aSourceRect = aSourceRect - gfxPoint(aPadding.left, aPadding.top);
   aImageRect = gfxRect(0, 0, mSize.width, mSize.height);
 
@@ -399,20 +393,6 @@ bool imgFrame::Draw(gfxContext *aContext, GraphicsFilter aFilter,
     if (mSinglePixelColor.a == 0.0) {
       return true;
     }
-
-    if (aContext->IsCairo()) {
-      gfxContext::GraphicsOperator op = aContext->CurrentOperator();
-      if (op == gfxContext::OPERATOR_OVER && mSinglePixelColor.a == 1.0) {
-        aContext->SetOperator(gfxContext::OPERATOR_SOURCE);
-      }
-      aContext->SetDeviceColor(ThebesColor(mSinglePixelColor));
-      aContext->NewPath();
-      aContext->Rectangle(aFill);
-      aContext->Fill();
-      aContext->SetOperator(op);
-      aContext->SetDeviceColor(gfxRGBA(0,0,0,0));
-      return true;
-    }
     RefPtr<DrawTarget> dt = aContext->GetDrawTarget();
     dt->FillRect(ToRect(aFill),
                  ColorPattern(mSinglePixelColor),
@@ -432,7 +412,7 @@ bool imgFrame::Draw(gfxContext *aContext, GraphicsFilter aFilter,
                "We must be allowed to sample *some* source pixels!");
 
   RefPtr<SourceSurface> surf = GetSurface();
-  if (!surf) {
+  if (!surf && !mSinglePixel) {
     return false;
   }
 
@@ -770,7 +750,7 @@ void imgFrame::SetCompositingFailed(bool val)
 // |aMallocSizeOf|.  If that fails (because the platform doesn't support it) or
 // it's non-heap memory, we fall back to computing the size analytically.
 size_t
-imgFrame::SizeOfExcludingThisWithComputedFallbackIfHeap(gfxMemoryLocation aLocation, mozilla::MallocSizeOf aMallocSizeOf) const
+imgFrame::SizeOfExcludingThisWithComputedFallbackIfHeap(gfxMemoryLocation aLocation, MallocSizeOf aMallocSizeOf) const
 {
   // aMallocSizeOf is only used if aLocation==gfxMemoryLocation::IN_PROCESS_HEAP.  It
   // should be nullptr otherwise.
@@ -807,3 +787,6 @@ imgFrame::SizeOfExcludingThisWithComputedFallbackIfHeap(gfxMemoryLocation aLocat
 
   return n;
 }
+
+} // namespace image
+} // namespace mozilla

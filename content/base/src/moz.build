@@ -5,6 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 EXPORTS += [
+    'AutocompleteFieldList.h',
     'mozAutoDocUpdate.h',
     'nsAtomListUtils.h',
     'nsAttrAndChildArray.h',
@@ -64,6 +65,7 @@ EXPORTS.mozilla.dom += [
     'DocumentFragment.h',
     'DocumentType.h',
     'DOMImplementation.h',
+    'DOMMatrix.h',
     'DOMParser.h',
     'DOMPoint.h',
     'DOMQuad.h',
@@ -88,6 +90,7 @@ UNIFIED_SOURCES += [
     'DocumentFragment.cpp',
     'DocumentType.cpp',
     'DOMImplementation.cpp',
+    'DOMMatrix.cpp',
     'DOMParser.cpp',
     'DOMPoint.cpp',
     'DOMQuad.cpp',
@@ -146,7 +149,6 @@ UNIFIED_SOURCES += [
     'nsMixedContentBlocker.cpp',
     'nsNameSpaceManager.cpp',
     'nsNoDataProtocolContentPolicy.cpp',
-    'nsNodeInfo.cpp',
     'nsNodeUtils.cpp',
     'nsPlainTextSerializer.cpp',
     'nsPropertyTable.cpp',
@@ -217,7 +219,7 @@ include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'gklayout'
 LOCAL_INCLUDES += [
-    '/caps/include',
+    '/caps',
     '/content/html/content/src',
     '/content/html/document/src',
     '/content/svg/content/src',

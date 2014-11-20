@@ -7,6 +7,7 @@
 #include "nsLayoutStylesheetCache.h"
 
 #include "nsAppDirectoryServiceDefs.h"
+#include "mozilla/CSSStyleSheet.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/css/Loader.h"
@@ -15,7 +16,7 @@
 #include "nsIObserverService.h"
 #include "nsServiceManagerUtils.h"
 #include "nsIXULRuntime.h"
-#include "nsCSSStyleSheet.h"
+#include "nsPrintfCString.h"
 
 using namespace mozilla;
 
@@ -50,7 +51,7 @@ nsLayoutStylesheetCache::Observe(nsISupports* aSubject,
   return NS_OK;
 }
 
-nsCSSStyleSheet*
+CSSStyleSheet*
 nsLayoutStylesheetCache::ScrollbarsSheet()
 {
   EnsureGlobal();
@@ -71,7 +72,7 @@ nsLayoutStylesheetCache::ScrollbarsSheet()
   return gStyleCache->mScrollbarsSheet;
 }
 
-nsCSSStyleSheet*
+CSSStyleSheet*
 nsLayoutStylesheetCache::FormsSheet()
 {
   EnsureGlobal();
@@ -93,7 +94,7 @@ nsLayoutStylesheetCache::FormsSheet()
   return gStyleCache->mFormsSheet;
 }
 
-nsCSSStyleSheet*
+CSSStyleSheet*
 nsLayoutStylesheetCache::NumberControlSheet()
 {
   EnsureGlobal();
@@ -118,7 +119,7 @@ nsLayoutStylesheetCache::NumberControlSheet()
   return gStyleCache->mNumberControlSheet;
 }
 
-nsCSSStyleSheet*
+CSSStyleSheet*
 nsLayoutStylesheetCache::UserContentSheet()
 {
   EnsureGlobal();
@@ -128,7 +129,7 @@ nsLayoutStylesheetCache::UserContentSheet()
   return gStyleCache->mUserContentSheet;
 }
 
-nsCSSStyleSheet*
+CSSStyleSheet*
 nsLayoutStylesheetCache::UserChromeSheet()
 {
   EnsureGlobal();
@@ -138,7 +139,7 @@ nsLayoutStylesheetCache::UserChromeSheet()
   return gStyleCache->mUserChromeSheet;
 }
 
-nsCSSStyleSheet*
+CSSStyleSheet*
 nsLayoutStylesheetCache::UASheet()
 {
   EnsureGlobal();
@@ -148,7 +149,7 @@ nsLayoutStylesheetCache::UASheet()
   return gStyleCache->mUASheet;
 }
 
-nsCSSStyleSheet*
+CSSStyleSheet*
 nsLayoutStylesheetCache::HTMLSheet()
 {
   EnsureGlobal();
@@ -158,7 +159,7 @@ nsLayoutStylesheetCache::HTMLSheet()
   return gStyleCache->mHTMLSheet;
 }
 
-nsCSSStyleSheet*
+CSSStyleSheet*
 nsLayoutStylesheetCache::MinimalXULSheet()
 {
   EnsureGlobal();
@@ -168,7 +169,7 @@ nsLayoutStylesheetCache::MinimalXULSheet()
   return gStyleCache->mMinimalXULSheet;
 }
 
-nsCSSStyleSheet*
+CSSStyleSheet*
 nsLayoutStylesheetCache::XULSheet()
 {
   EnsureGlobal();
@@ -178,7 +179,7 @@ nsLayoutStylesheetCache::XULSheet()
   return gStyleCache->mXULSheet;
 }
 
-nsCSSStyleSheet*
+CSSStyleSheet*
 nsLayoutStylesheetCache::QuirkSheet()
 {
   EnsureGlobal();
@@ -188,7 +189,7 @@ nsLayoutStylesheetCache::QuirkSheet()
   return gStyleCache->mQuirkSheet;
 }
 
-nsCSSStyleSheet*
+CSSStyleSheet*
 nsLayoutStylesheetCache::FullScreenOverrideSheet()
 {
   EnsureGlobal();
@@ -198,7 +199,7 @@ nsLayoutStylesheetCache::FullScreenOverrideSheet()
   return gStyleCache->mFullScreenOverrideSheet;
 }
 
-nsCSSStyleSheet*
+CSSStyleSheet*
 nsLayoutStylesheetCache::SVGSheet()
 {
   EnsureGlobal();
@@ -208,7 +209,7 @@ nsLayoutStylesheetCache::SVGSheet()
   return gStyleCache->mSVGSheet;
 }
 
-nsCSSStyleSheet*
+CSSStyleSheet*
 nsLayoutStylesheetCache::MathMLSheet()
 {
   EnsureGlobal();
@@ -227,18 +228,28 @@ nsLayoutStylesheetCache::MathMLSheet()
   return gStyleCache->mMathMLSheet;
 }
 
+CSSStyleSheet*
+nsLayoutStylesheetCache::CounterStylesSheet()
+{
+  EnsureGlobal();
+  if (!gStyleCache)
+    return nullptr;
+
+  return gStyleCache->mCounterStylesSheet;
+}
+
 void
 nsLayoutStylesheetCache::Shutdown()
 {
   NS_IF_RELEASE(gCSSLoader);
-  NS_IF_RELEASE(gStyleCache);
+  gStyleCache = nullptr;
 }
 
 MOZ_DEFINE_MALLOC_SIZE_OF(LayoutStylesheetCacheMallocSizeOf)
 
 NS_IMETHODIMP
 nsLayoutStylesheetCache::CollectReports(nsIHandleReportCallback* aHandleReport,
-                                        nsISupports* aData)
+                                        nsISupports* aData, bool aAnonymize)
 {
   return MOZ_COLLECT_REPORT(
     "explicit/layout/style-sheet-cache", KIND_HEAP, UNITS_BYTES,
@@ -266,6 +277,7 @@ nsLayoutStylesheetCache::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf
   MEASURE(mQuirkSheet);
   MEASURE(mFullScreenOverrideSheet);
   MEASURE(mSVGSheet);
+  MEASURE(mCounterStylesSheet);
   if (mMathMLSheet) {
     MEASURE(mMathMLSheet);
   }
@@ -337,6 +349,12 @@ nsLayoutStylesheetCache::nsLayoutStylesheetCache()
   }
   NS_ASSERTION(mSVGSheet, "Could not load svg.css");
 
+  NS_NewURI(getter_AddRefs(uri), "resource://gre-resources/counterstyles.css");
+  if (uri) {
+    LoadSheet(uri, mCounterStylesSheet, true);
+  }
+  NS_ASSERTION(mCounterStylesSheet, "Could not load counterstyles.css");
+
   // mMathMLSheet is created on-demand since its use is rare. This helps save
   // memory for Firefox OS apps.
 }
@@ -344,7 +362,7 @@ nsLayoutStylesheetCache::nsLayoutStylesheetCache()
 nsLayoutStylesheetCache::~nsLayoutStylesheetCache()
 {
   mozilla::UnregisterWeakMemoryReporter(this);
-  gStyleCache = nullptr;
+  MOZ_ASSERT(!gStyleCache);
 }
 
 void
@@ -360,8 +378,6 @@ nsLayoutStylesheetCache::EnsureGlobal()
 
   gStyleCache = new nsLayoutStylesheetCache();
   if (!gStyleCache) return;
-
-  NS_ADDREF(gStyleCache);
 
   gStyleCache->InitMemoryReporter();
 
@@ -400,7 +416,7 @@ nsLayoutStylesheetCache::InitFromProfile()
 }
 
 void
-nsLayoutStylesheetCache::LoadSheetFile(nsIFile* aFile, nsRefPtr<nsCSSStyleSheet> &aSheet)
+nsLayoutStylesheetCache::LoadSheetFile(nsIFile* aFile, nsRefPtr<CSSStyleSheet>& aSheet)
 {
   bool exists = false;
   aFile->Exists(&exists);
@@ -413,29 +429,47 @@ nsLayoutStylesheetCache::LoadSheetFile(nsIFile* aFile, nsRefPtr<nsCSSStyleSheet>
   LoadSheet(uri, aSheet, false);
 }
 
+static void
+ErrorLoadingBuiltinSheet(nsIURI* aURI, const char* aMsg)
+{
+  nsAutoCString spec;
+  if (aURI) {
+    aURI->GetSpec(spec);
+  }
+  NS_RUNTIMEABORT(nsPrintfCString("%s loading built-in stylesheet '%s'",
+                                  aMsg, spec.get()).get());
+}
+
 void
 nsLayoutStylesheetCache::LoadSheet(nsIURI* aURI,
-                                   nsRefPtr<nsCSSStyleSheet> &aSheet,
+                                   nsRefPtr<CSSStyleSheet>& aSheet,
                                    bool aEnableUnsafeRules)
 {
   if (!aURI) {
-    NS_ERROR("Null URI. Out of memory?");
+    ErrorLoadingBuiltinSheet(aURI, "null URI");
     return;
   }
 
   if (!gCSSLoader) {
     gCSSLoader = new mozilla::css::Loader();
     NS_IF_ADDREF(gCSSLoader);
+    if (!gCSSLoader) {
+      ErrorLoadingBuiltinSheet(aURI, "no Loader");
+      return;
+    }
   }
 
-  if (gCSSLoader) {
-    gCSSLoader->LoadSheetSync(aURI, aEnableUnsafeRules, true,
-                              getter_AddRefs(aSheet));
+
+  nsresult rv = gCSSLoader->LoadSheetSync(aURI, aEnableUnsafeRules, true,
+                                          getter_AddRefs(aSheet));
+  if (NS_FAILED(rv)) {
+    ErrorLoadingBuiltinSheet(aURI,
+      nsPrintfCString("LoadSheetSync failed with error %x", rv).get());
   }
 }
 
-nsLayoutStylesheetCache*
-nsLayoutStylesheetCache::gStyleCache = nullptr;
+mozilla::StaticRefPtr<nsLayoutStylesheetCache>
+nsLayoutStylesheetCache::gStyleCache;
 
 mozilla::css::Loader*
 nsLayoutStylesheetCache::gCSSLoader = nullptr;

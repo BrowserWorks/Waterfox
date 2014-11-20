@@ -6,7 +6,7 @@
 if CONFIG['LIBXUL_SDK']:
     error('toolkit.mozbuild is not compatible with --enable-libxul-sdk=')
 
-if CONFIG['MOZ_CONTENT_SANDBOX']:
+if CONFIG['MOZ_CONTENT_SANDBOX'] or CONFIG['MOZ_GMP_SANDBOX']:
     add_tier_dir('sandbox', 'security/sandbox')
 
 # Depends on NSS and NSPR, and must be built after sandbox or else B2G emulator
@@ -57,9 +57,6 @@ if CONFIG['MOZ_PERMISSIONS']:
     add_tier_dir('platform', ['extensions/cookie', 'extensions/permissions'])
 
 add_tier_dir('platform', 'rdf')
-
-if CONFIG['MOZ_JSDEBUGGER']:
-    add_tier_dir('platform', 'js/jsd')
 
 if CONFIG['MOZ_WEBRTC']:
     add_tier_dir('platform', [

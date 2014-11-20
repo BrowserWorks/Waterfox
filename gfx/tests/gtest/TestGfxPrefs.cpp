@@ -16,15 +16,11 @@
 // result through this API.
 
 TEST(GfxPrefs, Singleton) {
-  ASSERT_FALSE(gfxPrefs::SingletonExists());
   gfxPrefs::GetSingleton();
   ASSERT_TRUE(gfxPrefs::SingletonExists());
-  gfxPrefs::DestroySingleton();
-  ASSERT_FALSE(gfxPrefs::SingletonExists());
 }
 
 TEST(GfxPrefs, LiveValues) {
-  ASSERT_FALSE(gfxPrefs::SingletonExists());
   gfxPrefs::GetSingleton();
   ASSERT_TRUE(gfxPrefs::SingletonExists());
 
@@ -36,13 +32,9 @@ TEST(GfxPrefs, LiveValues) {
 
   // Live uint32_t, default 2
   ASSERT_TRUE(gfxPrefs::MSAALevel() == 2);
-
-  gfxPrefs::DestroySingleton();
-  ASSERT_FALSE(gfxPrefs::SingletonExists());
 }
 
 TEST(GfxPrefs, OnceValues) {
-  ASSERT_FALSE(gfxPrefs::SingletonExists());
   gfxPrefs::GetSingleton();
   ASSERT_TRUE(gfxPrefs::SingletonExists());
 
@@ -60,8 +52,30 @@ TEST(GfxPrefs, OnceValues) {
 
   // Once float, default -1 (should be OK with ==)
   ASSERT_TRUE(gfxPrefs::APZMaxVelocity() == -1.0f);
-
-  gfxPrefs::DestroySingleton();
-  ASSERT_FALSE(gfxPrefs::SingletonExists());
 }
 
+TEST(GfxPrefs, Set) {
+  gfxPrefs::GetSingleton();
+  ASSERT_TRUE(gfxPrefs::SingletonExists());
+
+  // Once boolean, default false
+  ASSERT_FALSE(gfxPrefs::LayersDump());
+  gfxPrefs::SetLayersDump(true);
+  ASSERT_TRUE(gfxPrefs::LayersDump());
+  gfxPrefs::SetLayersDump(false);
+  ASSERT_FALSE(gfxPrefs::LayersDump());
+
+  // Live boolean, default false
+  ASSERT_FALSE(gfxPrefs::CanvasAzureAccelerated());
+  gfxPrefs::SetCanvasAzureAccelerated(true);
+  ASSERT_TRUE(gfxPrefs::CanvasAzureAccelerated());
+  gfxPrefs::SetCanvasAzureAccelerated(false);
+  ASSERT_FALSE(gfxPrefs::CanvasAzureAccelerated());
+
+  // Once float, default -1
+  ASSERT_TRUE(gfxPrefs::APZMaxVelocity() == -1.0f);
+  gfxPrefs::SetAPZMaxVelocity(1.75f);
+  ASSERT_TRUE(gfxPrefs::APZMaxVelocity() == 1.75f);
+  gfxPrefs::SetAPZMaxVelocity(-1.0f);
+  ASSERT_TRUE(gfxPrefs::APZMaxVelocity() == -1.0f);
+}

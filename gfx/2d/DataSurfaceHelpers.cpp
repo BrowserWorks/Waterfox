@@ -8,7 +8,6 @@
 #include "2D.h"
 #include "DataSurfaceHelpers.h"
 #include "Logging.h"
-#include "mozilla/CheckedInt.h"
 #include "mozilla/MathAlgorithms.h"
 #include "Tools.h"
 

@@ -121,7 +121,7 @@ public:
                            nsIFrame*       aOldFrame) MOZ_OVERRIDE;
   virtual const nsFrameList& GetChildList(ChildListID aListID) const MOZ_OVERRIDE;
   virtual void GetChildLists(nsTArray<ChildList>* aLists) const MOZ_OVERRIDE;
-  virtual nscoord GetBaseline() const MOZ_OVERRIDE;
+  virtual nscoord GetLogicalBaseline(mozilla::WritingMode aWritingMode) const MOZ_OVERRIDE;
   virtual nscoord GetCaretBaseline() const MOZ_OVERRIDE;
   virtual void DestroyFrom(nsIFrame* aDestructRoot) MOZ_OVERRIDE;
   virtual nsSplittableType GetSplittableType() const MOZ_OVERRIDE;
@@ -193,7 +193,7 @@ public:
   /**
    * Return the bullet text equivalent.
    */
-  void GetBulletText(nsAString& aText) const;
+  void GetSpokenBulletText(nsAString& aText) const;
 
   /**
    * Return true if there's a bullet.
@@ -232,36 +232,34 @@ public:
   virtual nscoord GetPrefWidth(nsRenderingContext *aRenderingContext) MOZ_OVERRIDE;
 
   virtual nsRect ComputeTightBounds(gfxContext* aContext) const MOZ_OVERRIDE;
-  
+
   virtual nsresult GetPrefWidthTightBounds(nsRenderingContext* aContext,
                                            nscoord* aX,
                                            nscoord* aXMost) MOZ_OVERRIDE;
 
   /**
-   * Compute the final height of this frame.
+   * Compute the final block size of this frame.
    *
    * @param aReflowState Data structure passed from parent during reflow.
-   * @param aReflowStatus A pointed to the reflow status for when we're finished
-   *        doing reflow. this will get set appropriately if the height causes
-   *        us to exceed the current available (page) height.
-   * @param aContentHeight The height of content, precomputed outside of this
-   *        function. The final height that is used in aMetrics will be set to
-   *        either this or the available height, whichever is larger, in the
-   *        case where our available height is constrained, and we overflow that
-   *        available height.
+   * @param aReflowStatus A pointer to the reflow status for when we're finished
+   *        doing reflow. this will get set appropriately if the block-size
+   *        causes us to exceed the current available (page) block-size.
+   * @param aContentBSize The block-size of content, precomputed outside of this
+   *        function. The final block-size that is used in aMetrics will be set
+   *        to either this or the available block-size, whichever is larger, in
+   *        the case where our available block-size is constrained, and we
+   *        overflow that available block-size.
    * @param aBorderPadding The margins representing the border padding for block
    *        frames. Can be 0.
-   * @param aMetrics Out parameter for final height. Taken as an
-   *        nsHTMLReflowMetrics object so that aMetrics can be passed in
-   *        directly during reflow.
-   * @param aConsumed The height already consumed by our previous-in-flows.
+   * @param aFinalSize Out parameter for final block-size.
+   * @param aConsumed The block-size already consumed by our previous-in-flows.
    */
-  void ComputeFinalHeight(const nsHTMLReflowState& aReflowState,
-                          nsReflowStatus*          aStatus,
-                          nscoord                  aContentHeight,
-                          const nsMargin&          aBorderPadding,
-                          nsHTMLReflowMetrics&     aMetrics,
-                          nscoord                  aConsumed);
+  void ComputeFinalBSize(const nsHTMLReflowState&      aReflowState,
+                         nsReflowStatus*               aStatus,
+                         nscoord                       aContentBSize,
+                         const mozilla::LogicalMargin& aBorderPadding,
+                         mozilla::LogicalSize&         aFinalSize,
+                         nscoord                       aConsumed);
 
   virtual void Reflow(nsPresContext*           aPresContext,
                       nsHTMLReflowMetrics&     aDesiredSize,
@@ -297,14 +295,14 @@ public:
    * line includes the margin-top of a line with clearance (in which
    * case we must avoid collapsing that margin with our bottom margin)
    */
-  bool CheckForCollapsedBottomMarginFromClearanceLine();
+  bool CheckForCollapsedBEndMarginFromClearanceLine();
 
   static nsresult GetCurrentLine(nsBlockReflowState *aState, nsLineBox **aOutCurrentLine);
 
   /**
    * Determine if this block is a margin root at the top/bottom edges.
    */
-  void IsMarginRoot(bool* aTopMarginRoot, bool* aBottomMarginRoot);
+  void IsMarginRoot(bool* aBStartMarginRoot, bool* aBEndMarginRoot);
 
   static bool BlockNeedsFloatManager(nsIFrame* aBlock);
 
@@ -638,9 +636,9 @@ protected:
   //----------------------------------------
   // Methods for individual frame reflow
 
-  bool ShouldApplyTopMargin(nsBlockReflowState& aState,
-                            nsLineBox* aLine,
-                            nsIFrame* aChildFrame);
+  bool ShouldApplyBStartMargin(nsBlockReflowState& aState,
+                               nsLineBox* aLine,
+                               nsIFrame* aChildFrame);
 
   void ReflowBlockFrame(nsBlockReflowState& aState,
                         line_iterator aLine,

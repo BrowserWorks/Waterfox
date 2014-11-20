@@ -24,12 +24,12 @@
  * object behavior and, e.g., allows custom slow layout.
  */
 
-class JSFreeOp;
+struct JSFreeOp;
 struct JSFunctionSpec;
 
 namespace js {
 
-class Class;
+struct Class;
 class FreeOp;
 class PropertyName;
 class Shape;
@@ -470,8 +470,12 @@ struct Class
         return flags & JSCLASS_EMULATES_UNDEFINED;
     }
 
+    bool isJSFunction() const {
+        return this == js::FunctionClassPtr;
+    }
+
     bool isCallable() const {
-        return this == js::FunctionClassPtr || call;
+        return isJSFunction() || call;
     }
 
     bool isProxy() const {

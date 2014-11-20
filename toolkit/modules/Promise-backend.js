@@ -1,4 +1,4 @@
-/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ts=2 et sw=2 tw=80 filetype=javascript: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -253,14 +253,17 @@ PendingErrors.init();
 
 // Default mechanism for displaying errors
 PendingErrors.addObserver(function(details) {
+  const generalDescription = "A promise chain failed to handle a rejection." +
+    " Did you forget to '.catch', or did you forget to 'return'?\nSee" +
+    " https://developer.mozilla.org/Mozilla/JavaScript_code_modules/Promise.jsm/Promise\n\n";
+
   let error = Cc['@mozilla.org/scripterror;1'].createInstance(Ci.nsIScriptError);
   if (!error || !Services.console) {
     // Too late during shutdown to use the nsIConsole
     dump("*************************\n");
-    dump("A promise chain failed to handle a rejection\n\n");
+    dump(generalDescription);
     dump("On: " + details.date + "\n");
     dump("Full message: " + details.message + "\n");
-    dump("See https://developer.mozilla.org/Mozilla/JavaScript_code_modules/Promise.jsm/Promise\n");
     dump("Full stack: " + (details.stack||"not available") + "\n");
     dump("*************************\n");
     return;
@@ -270,7 +273,7 @@ PendingErrors.addObserver(function(details) {
     message += "\nFull Stack: " + details.stack;
   }
   error.init(
-             /*message*/"A promise chain failed to handle a rejection.\n\n" +
+             /*message*/ generalDescription +
              "Date: " + details.date + "\nFull Message: " + details.message,
              /*sourceName*/ details.fileName,
              /*sourceLine*/ details.lineNumber?("" + details.lineNumber):0,
@@ -882,9 +885,9 @@ Handler.prototype = {
         dump("*************************\n");
         dump("A coding exception was thrown in a Promise " +
              ((nextStatus == STATUS_RESOLVED) ? "resolution":"rejection") +
-             " callback.\n\n");
+             " callback.\n");
+        dump("See https://developer.mozilla.org/Mozilla/JavaScript_code_modules/Promise.jsm/Promise\n\n");
         dump("Full message: " + ex + "\n");
-        dump("See https://developer.mozilla.org/Mozilla/JavaScript_code_modules/Promise.jsm/Promise\n");
         dump("Full stack: " + (("stack" in ex)?ex.stack:"not available") + "\n");
         dump("*************************\n");
 

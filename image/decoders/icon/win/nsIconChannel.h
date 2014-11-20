@@ -13,6 +13,7 @@
 #include "nsXPIDLString.h"
 #include "nsIChannel.h"
 #include "nsILoadGroup.h"
+#include "nsILoadInfo.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsIURI.h"
@@ -26,6 +27,8 @@ class nsIFile;
 
 class nsIconChannel MOZ_FINAL : public nsIChannel, public nsIStreamListener
 {
+  ~nsIconChannel();
+
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIREQUEST
@@ -34,7 +37,6 @@ public:
   NS_DECL_NSISTREAMLISTENER
 
   nsIconChannel();
-  ~nsIconChannel();
 
   nsresult Init(nsIURI* uri);
 
@@ -45,6 +47,7 @@ protected:
   nsCOMPtr<nsILoadGroup> mLoadGroup;
   nsCOMPtr<nsIInterfaceRequestor> mCallbacks;
   nsCOMPtr<nsISupports>  mOwner; 
+  nsCOMPtr<nsILoadInfo>  mLoadInfo;
 
   nsCOMPtr<nsIInputStreamPump> mPump;
   nsCOMPtr<nsIStreamListener>  mListener;

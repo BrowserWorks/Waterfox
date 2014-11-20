@@ -21,16 +21,12 @@
   "bb.com.br": "\\(Mobile#(Android; Mobile",
   // bug 826712, orkut.com
   "orkut.com": "Mozilla/5.0 (Linux; Android 4.0.4; Galaxy Nexus Build/IMM76B) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.133 Mobile Safari/535.19",
-  // bug 826958, ebay.com
-  "ebay.com": "\\(Mobile#(Android; Mobile",
   // bug 827622, bing.com
   "bing.com": "\\(Mobile#(Android; Mobile",
   // bug 827626, magazineluiza.com.br
   "magazineluiza.com.br": "\\(Mobile#(Android; Mobile",
   // bug 827628, groupon.com.br
   "groupon.com.br": "\\(Mobile#(Android; Mobile",
-  // bug 827632, tecmundo.com.br
-  "tecmundo.com.br": "\\(Mobile#(Android; Mobile",
   // bug 827633, hao123.com
   "hao123.com": "\\(Mobile#(Android; Mobile",
   // bug 827573, webmotors.com.br
@@ -43,8 +39,6 @@
   "marca.com": "\\(Mobile#(Android; Mobile",
   // bug 828371, ingbank.pl
   "ingbank.pl": "\\(Mobile#(Android; Mobile",
-  // bug 828386, ebay.es
-  "ebay.es": "\\(Mobile#(Android; Mobile",
   // bug 828399, antena3.com
   "antena3.com": "\\(Mobile#(Android; Mobile",
   // bug 828416, loteriasyapuestas.es
@@ -95,8 +89,6 @@
   "livescore.com": "\\(Mobile#(Android; Mobile",
   // bug 878277, naslovi.net
   "naslovi.net": "\\(Mobile#(Android; Mobile",
-  // bug 878632, banorte.com
-  "banorte.com": "\\(Mobile#(Android; Mobile",
   // bug 878649, univision.com
   "univision.com": "\\(Mobile#(Android; Mobile",
   // bug 878653, redstarbelgrade.info

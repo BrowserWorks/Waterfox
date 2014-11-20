@@ -1,4 +1,4 @@
-/* -*- Mode: javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1550,8 +1550,8 @@ TiltGL.isWebGLSupported = function TGL_isWebGLSupported()
     let opengl = gfxInfo.FEATURE_WEBGL_OPENGL;
 
     // if either the Angle or OpenGL renderers are available, WebGL should work
-    supported = gfxInfo.getFeatureStatus(angle) === gfxInfo.FEATURE_NO_INFO ||
-                gfxInfo.getFeatureStatus(opengl) === gfxInfo.FEATURE_NO_INFO;
+    supported = gfxInfo.getFeatureStatus(angle) === gfxInfo.FEATURE_STATUS_OK ||
+                gfxInfo.getFeatureStatus(opengl) === gfxInfo.FEATURE_STATUS_OK;
   } catch(e) {
     if (e && e.message) { TiltUtils.Output.error(e.message); }
     return false;

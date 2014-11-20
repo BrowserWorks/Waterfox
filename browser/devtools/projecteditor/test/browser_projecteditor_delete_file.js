@@ -13,68 +13,73 @@ let test = asyncTest(function*() {
   let root = [...projecteditor.project.allStores()][0].root;
   is(root.path, TEMP_PATH, "The root store is set to the correct temp path.");
   for (let child of root.children) {
-    yield deleteWithContextMenu(projecteditor.projectTree.getViewContainer(child));
+    yield deleteWithContextMenu(projecteditor, projecteditor.projectTree.getViewContainer(child));
   }
 
-  function onPopupShow(contextMenu) {
-    let defer = promise.defer();
-    contextMenu.addEventListener("popupshown", function onpopupshown() {
-      contextMenu.removeEventListener("popupshown", onpopupshown);
-      defer.resolve();
-    });
-    return defer.promise;
-  }
+  yield testDeleteOnRoot(projecteditor, projecteditor.projectTree.getViewContainer(root));
+});
 
-  function onPopupHide(contextMenu) {
-    let defer = promise.defer();
-    contextMenu.addEventListener("popuphidden", function popuphidden() {
-      contextMenu.removeEventListener("popuphidden", popuphidden);
-      defer.resolve();
-    });
-    return defer.promise;
-  }
 
-  function openContextMenuOn(node) {
-    EventUtils.synthesizeMouseAtCenter(
-      node,
-      {button: 2, type: "contextmenu"},
-      node.ownerDocument.defaultView
-    );
-  }
+function openContextMenuOn(node) {
+  EventUtils.synthesizeMouseAtCenter(
+    node,
+    {button: 2, type: "contextmenu"},
+    node.ownerDocument.defaultView
+  );
+}
 
-  function deleteWithContextMenu(container) {
-    let defer = promise.defer();
+function testDeleteOnRoot(projecteditor, container) {
+  let popup = projecteditor.contextMenuPopup;
+  let oncePopupShown = onPopupShow(popup);
+  openContextMenuOn(container.label);
+  yield oncePopupShown;
 
-    let resource = container.resource;
-    let popup = projecteditor.document.getElementById("directory-menu-popup");
-    info ("Going to attempt deletion for: " + resource.path)
+  let deleteCommand = popup.querySelector("[command=cmd-delete]");
+  ok (deleteCommand, "Delete command exists in popup");
+  is (deleteCommand.getAttribute("hidden"), "true", "Delete command is hidden");
+}
 
-    onPopupShow(popup).then(function () {
-      let deleteCommand = popup.querySelector("[command=cmd-delete]");
-      ok (deleteCommand, "Delete command exists in popup");
-      is (deleteCommand.getAttribute("hidden"), "", "Delete command is visible");
-      is (deleteCommand.getAttribute("disabled"), "", "Delete command is enabled");
+function deleteWithContextMenu(projecteditor, container) {
+  let defer = promise.defer();
 
-      onPopupHide(popup).then(() => {
-        ok (true, "Popup has been hidden, waiting for project refresh");
-        projecteditor.project.refresh().then(() => {
-          OS.File.stat(resource.path).then(() => {
-            ok (false, "The file was not deleted");
-            defer.resolve();
-          }, (ex) => {
-            ok (ex instanceof OS.File.Error && ex.becauseNoSuchFile, "OS.File.stat promise was rejected because the file is gone");
-            defer.resolve();
-          });
+  let popup = projecteditor.contextMenuPopup;
+  let resource = container.resource;
+  info ("Going to attempt deletion for: " + resource.path);
+
+  onPopupShow(popup).then(function () {
+    let deleteCommand = popup.querySelector("[command=cmd-delete]");
+    ok (deleteCommand, "Delete command exists in popup");
+    is (deleteCommand.getAttribute("hidden"), "", "Delete command is visible");
+    is (deleteCommand.getAttribute("disabled"), "", "Delete command is enabled");
+
+    function onConfirmShown(aSubject) {
+      info("confirm dialog observed as expected");
+      Services.obs.removeObserver(onConfirmShown, "common-dialog-loaded");
+      Services.obs.removeObserver(onConfirmShown, "tabmodal-dialog-loaded");
+
+      projecteditor.project.on("refresh-complete", function refreshComplete() {
+        projecteditor.project.off("refresh-complete", refreshComplete);
+        OS.File.stat(resource.path).then(() => {
+          ok (false, "The file was not deleted");
+          defer.resolve();
+        }, (ex) => {
+          ok (ex instanceof OS.File.Error && ex.becauseNoSuchFile, "OS.File.stat promise was rejected because the file is gone");
+          defer.resolve();
         });
       });
 
-      deleteCommand.click();
-      popup.hidePopup();
-    });
+      // Click the 'OK' button
+      aSubject.Dialog.ui.button0.click();
+    }
 
-    openContextMenuOn(container.label);
+    Services.obs.addObserver(onConfirmShown, "common-dialog-loaded", false);
+    Services.obs.addObserver(onConfirmShown, "tabmodal-dialog-loaded", false);
 
-    return defer.promise;
-  }
+    deleteCommand.click();
+    popup.hidePopup();
+  });
 
-});
+  openContextMenuOn(container.label);
+
+  return defer.promise;
+}

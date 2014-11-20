@@ -10,6 +10,7 @@
 #include "jsobj.h"
 #include "jsscript.h"
 
+#include "gc/ForkJoinNursery.h"
 #include "gc/Marking.h"
 #include "jit/BaselineDebugModeOSR.h"
 #include "jit/BaselineFrame.h"
@@ -29,8 +30,10 @@
 #include "vm/Debugger.h"
 #include "vm/ForkJoin.h"
 #include "vm/Interpreter.h"
+#include "vm/TraceLogging.h"
 
 #include "jsscriptinlines.h"
+#include "gc/Nursery-inl.h"
 #include "jit/JitFrameIterator-inl.h"
 #include "vm/Probes-inl.h"
 
@@ -81,20 +84,23 @@ JitFrameIterator::JitFrameIterator(ThreadSafeContext *cx)
     type_(JitFrame_Exit),
     returnAddressToFp_(nullptr),
     frameSize_(0),
+    mode_(cx->isForkJoinContext() ? ParallelExecution : SequentialExecution),
+    kind_(Kind_FrameIterator),
     cachedSafepointIndex_(nullptr),
-    activation_(nullptr),
-    mode_(cx->isForkJoinContext() ? ParallelExecution : SequentialExecution)
+    activation_(nullptr)
 {
 }
 
 JitFrameIterator::JitFrameIterator(const ActivationIterator &activations)
-    : current_(activations.jitTop()),
-      type_(JitFrame_Exit),
-      returnAddressToFp_(nullptr),
-      frameSize_(0),
-      cachedSafepointIndex_(nullptr),
-      activation_(activations->asJit()),
-      mode_(activation_->cx()->isForkJoinContext() ? ParallelExecution : SequentialExecution)
+  : current_(activations.jitTop()),
+    type_(JitFrame_Exit),
+    returnAddressToFp_(nullptr),
+    frameSize_(0),
+    mode_(activations->asJit()->cx()->isForkJoinContext() ? ParallelExecution
+                                                          : SequentialExecution),
+    kind_(Kind_FrameIterator),
+    cachedSafepointIndex_(nullptr),
+    activation_(activations->asJit())
 {
 }
 
@@ -103,8 +109,23 @@ JitFrameIterator::JitFrameIterator(IonJSFrameLayout *fp, ExecutionMode mode)
     type_(JitFrame_IonJS),
     returnAddressToFp_(fp->returnAddress()),
     frameSize_(fp->prevFrameLocalSize()),
-    mode_(mode)
+    mode_(mode),
+    kind_(Kind_FrameIterator)
 {
+}
+
+IonBailoutIterator *
+JitFrameIterator::asBailoutIterator()
+{
+    MOZ_ASSERT(isBailoutIterator());
+    return static_cast<IonBailoutIterator *>(this);
+}
+
+const IonBailoutIterator *
+JitFrameIterator::asBailoutIterator() const
+{
+    MOZ_ASSERT(isBailoutIterator());
+    return static_cast<const IonBailoutIterator *>(this);
 }
 
 bool
@@ -330,9 +351,21 @@ JitFrameIterator::machineState() const
     for (GeneralRegisterBackwardIterator iter(reader.allGprSpills()); iter.more(); iter++)
         machine.setRegisterLocation(*iter, --spill);
 
-    double *floatSpill = reinterpret_cast<double *>(spill);
-    for (FloatRegisterBackwardIterator iter(reader.allFloatSpills()); iter.more(); iter++)
-        machine.setRegisterLocation(*iter, --floatSpill);
+    uint8_t *spillAlign = alignDoubleSpillWithOffset(reinterpret_cast<uint8_t *>(spill), 0);
+
+    char *floatSpill = reinterpret_cast<char *>(spillAlign);
+    FloatRegisterSet fregs = reader.allFloatSpills();
+    fregs = fregs.reduceSetForPush();
+    for (FloatRegisterBackwardIterator iter(fregs); iter.more(); iter++) {
+        floatSpill -= (*iter).size();
+        for (uint32_t a = 0; a < (*iter).numAlignedAliased(); a++) {
+            // Only say that registers that actually start here start here.
+            // e.g. d0 should not start at s1, only at s0.
+            FloatRegister ftmp;
+            (*iter).alignedAliased(a, &ftmp);
+            machine.setRegisterLocation(ftmp, (double*)floatSpill);
+        }
+    }
 
     return machine;
 }
@@ -588,6 +621,7 @@ void
 HandleException(ResumeFromException *rfe)
 {
     JSContext *cx = GetJSContextFromJitCode();
+    TraceLogger *logger = TraceLoggerForMainThread(cx->runtime());
 
     rfe->kind = ResumeFromException::RESUME_ENTRY_FRAME;
 
@@ -638,10 +672,14 @@ HandleException(ResumeFromException *rfe)
                 // When profiling, each frame popped needs a notification that
                 // the function has exited, so invoke the probe that a function
                 // is exiting.
+
                 JSScript *script = frames.script();
                 probes::ExitScript(cx, script, script->functionNonDelazifying(), popSPSFrame);
-                if (!frames.more())
+                if (!frames.more()) {
+                    TraceLogStopEvent(logger, TraceLogger::IonMonkey);
+                    TraceLogStopEvent(logger);
                     break;
+                }
                 ++frames;
             }
 
@@ -668,6 +706,9 @@ HandleException(ResumeFromException *rfe)
 
             if (rfe->kind != ResumeFromException::RESUME_ENTRY_FRAME)
                 return;
+
+            TraceLogStopEvent(logger, TraceLogger::Baseline);
+            TraceLogStopEvent(logger);
 
             // Unwind profiler pseudo-stack
             JSScript *script = iter.script();
@@ -727,28 +768,23 @@ HandleException(ResumeFromException *rfe)
 void
 HandleParallelFailure(ResumeFromException *rfe)
 {
-    ForkJoinContext *cx = ForkJoinContext::current();
-    JitFrameIterator iter(cx->perThreadData->jitTop, ParallelExecution);
-
     parallel::Spew(parallel::SpewBailouts, "Bailing from VM reentry");
 
-    while (!iter.isEntry()) {
-        if (iter.isScripted()) {
-            cx->bailoutRecord->updateCause(ParallelBailoutUnsupportedVM,
-                                           iter.script(), iter.script(), nullptr);
-            break;
-        }
-        ++iter;
-    }
+    ForkJoinContext *cx = ForkJoinContext::current();
+    JitFrameIterator frameIter(cx);
 
-    while (!iter.isEntry()) {
-        if (iter.isScripted())
-            PropagateAbortPar(iter.script(), iter.script());
-        ++iter;
-    }
+    // Advance to the first Ion frame so we can pull out the BailoutKind.
+    while (!frameIter.isIonJS())
+        ++frameIter;
+    SnapshotIterator snapIter(frameIter);
+
+    cx->bailoutRecord->setIonBailoutKind(snapIter.bailoutKind());
+    cx->bailoutRecord->rematerializeFrames(cx, frameIter);
 
     rfe->kind = ResumeFromException::RESUME_ENTRY_FRAME;
-    rfe->stackPointer = iter.fp();
+
+    MOZ_ASSERT(frameIter.done());
+    rfe->stackPointer = frameIter.fp();
 }
 
 void
@@ -872,10 +908,8 @@ MarkIonJSFrame(JSTracer *trc, const JitFrameIterator &frame)
         // longer reachable through the callee token (JSFunction/JSScript->ion
         // is now nullptr or recompiled). Manually trace it here.
         IonScript::Trace(trc, ionScript);
-    } else if (CalleeTokenIsFunction(layout->calleeToken())) {
-        ionScript = CalleeTokenToFunction(layout->calleeToken())->nonLazyScript()->ionScript();
     } else {
-        ionScript = CalleeTokenToScript(layout->calleeToken())->ionScript();
+        ionScript = frame.ionScriptFromCalleeToken();
     }
 
     if (CalleeTokenIsFunction(layout->calleeToken()))
@@ -929,7 +963,8 @@ MarkIonJSFrame(JSTracer *trc, const JitFrameIterator &frame)
 }
 
 #ifdef JSGC_GENERATIONAL
-static void
+template <typename T>
+void
 UpdateIonJSFrameForMinorGC(JSTracer *trc, const JitFrameIterator &frame)
 {
     // Minor GCs may move slots/elements allocated in the nursery. Update
@@ -942,10 +977,8 @@ UpdateIonJSFrameForMinorGC(JSTracer *trc, const JitFrameIterator &frame)
         // This frame has been invalidated, meaning that its IonScript is no
         // longer reachable through the callee token (JSFunction/JSScript->ion
         // is now nullptr or recompiled).
-    } else if (CalleeTokenIsFunction(layout->calleeToken())) {
-        ionScript = CalleeTokenToFunction(layout->calleeToken())->nonLazyScript()->ionScript();
     } else {
-        ionScript = CalleeTokenToScript(layout->calleeToken())->ionScript();
+        ionScript = frame.ionScriptFromCalleeToken();
     }
 
     const SafepointIndex *si = ionScript->getSafepointIndex(frame.returnAddressToFp());
@@ -956,7 +989,7 @@ UpdateIonJSFrameForMinorGC(JSTracer *trc, const JitFrameIterator &frame)
     for (GeneralRegisterBackwardIterator iter(safepoint.allGprSpills()); iter.more(); iter++) {
         --spill;
         if (slotsRegs.has(*iter))
-            trc->runtime()->gc.nursery.forwardBufferPointer(reinterpret_cast<HeapSlot **>(spill));
+            T::forwardBufferPointer(trc, reinterpret_cast<HeapSlot **>(spill));
     }
 
     // Skip to the right place in the safepoint
@@ -970,6 +1003,12 @@ UpdateIonJSFrameForMinorGC(JSTracer *trc, const JitFrameIterator &frame)
 
     while (safepoint.getSlotsOrElementsSlot(&slot)) {
         HeapSlot **slots = reinterpret_cast<HeapSlot **>(layout->slotRef(slot));
+#ifdef JSGC_FJGENERATIONAL
+        if (trc->callback == gc::ForkJoinNursery::MinorGCCallback) {
+            gc::ForkJoinNursery::forwardBufferPointer(trc, slots);
+            continue;
+        }
+#endif
         trc->runtime()->gc.nursery.forwardBufferPointer(slots);
     }
 }
@@ -1027,6 +1066,43 @@ JitActivationIterator::jitStackRange(uintptr_t *&min, uintptr_t *&end)
 
     end = reinterpret_cast<uintptr_t *>(frames.prevFp());
 }
+
+#ifdef JS_CODEGEN_MIPS
+uint8_t *
+alignDoubleSpillWithOffset(uint8_t *pointer, int32_t offset)
+{
+    uint32_t address = reinterpret_cast<uint32_t>(pointer);
+    address = (address - offset) & ~(StackAlignment - 1);
+    return reinterpret_cast<uint8_t *>(address);
+}
+
+static void
+MarkJitExitFrameCopiedArguments(JSTracer *trc, const VMFunction *f, IonExitFooterFrame *footer)
+{
+    uint8_t *doubleArgs = reinterpret_cast<uint8_t *>(footer);
+    doubleArgs = alignDoubleSpillWithOffset(doubleArgs, sizeof(intptr_t));
+    if (f->outParam == Type_Handle)
+        doubleArgs -= sizeof(Value);
+    doubleArgs -= f->doubleByRefArgs() * sizeof(double);
+
+    for (uint32_t explicitArg = 0; explicitArg < f->explicitArgs; explicitArg++) {
+        if (f->argProperties(explicitArg) == VMFunction::DoubleByRef) {
+            // Arguments with double size can only have RootValue type.
+            if (f->argRootType(explicitArg) == VMFunction::RootValue)
+                gc::MarkValueRoot(trc, reinterpret_cast<Value*>(doubleArgs), "ion-vm-args");
+            else
+                JS_ASSERT(f->argRootType(explicitArg) == VMFunction::RootNone);
+            doubleArgs += sizeof(double);
+        }
+    }
+}
+#else
+static void
+MarkJitExitFrameCopiedArguments(JSTracer *trc, const VMFunction *f, IonExitFooterFrame *footer)
+{
+    // This is NO-OP on other platforms.
+}
+#endif
 
 static void
 MarkJitExitFrame(JSTracer *trc, const JitFrameIterator &frame)
@@ -1174,6 +1250,8 @@ MarkJitExitFrame(JSTracer *trc, const JitFrameIterator &frame)
             break;
         }
     }
+
+    MarkJitExitFrameCopiedArguments(trc, f, footer);
 }
 
 static void
@@ -1231,9 +1309,9 @@ MarkJitActivation(JSTracer *trc, const JitActivationIterator &activations)
 }
 
 void
-MarkJitActivations(JSRuntime *rt, JSTracer *trc)
+MarkJitActivations(PerThreadData *ptd, JSTracer *trc)
 {
-    for (JitActivationIterator activations(rt); !activations.done(); ++activations)
+    for (JitActivationIterator activations(ptd); !activations.done(); ++activations)
         MarkJitActivation(trc, activations);
 }
 
@@ -1250,17 +1328,30 @@ TopmostIonActivationCompartment(JSRuntime *rt)
 }
 
 #ifdef JSGC_GENERATIONAL
-void
-UpdateJitActivationsForMinorGC(JSRuntime *rt, JSTracer *trc)
+template <typename T>
+void UpdateJitActivationsForMinorGC(PerThreadData *ptd, JSTracer *trc)
 {
+#ifdef JSGC_FJGENERATIONAL
+    JS_ASSERT(trc->runtime()->isHeapMinorCollecting() || trc->runtime()->isFJMinorCollecting());
+#else
     JS_ASSERT(trc->runtime()->isHeapMinorCollecting());
-    for (JitActivationIterator activations(rt); !activations.done(); ++activations) {
+#endif
+    for (JitActivationIterator activations(ptd); !activations.done(); ++activations) {
         for (JitFrameIterator frames(activations); !frames.done(); ++frames) {
             if (frames.type() == JitFrame_IonJS)
-                UpdateIonJSFrameForMinorGC(trc, frames);
+                UpdateIonJSFrameForMinorGC<T>(trc, frames);
         }
     }
 }
+
+template
+void UpdateJitActivationsForMinorGC<Nursery>(PerThreadData *ptd, JSTracer *trc);
+
+#ifdef JSGC_FJGENERATIONAL
+template
+void UpdateJitActivationsForMinorGC<gc::ForkJoinNursery>(PerThreadData *ptd, JSTracer *trc);
+#endif
+
 #endif
 
 void
@@ -1305,7 +1396,7 @@ GetPcScript(JSContext *cx, JSScript **scriptRes, jsbytecode **pcRes)
     if (MOZ_UNLIKELY(rt->ionPcScriptCache == nullptr)) {
         rt->ionPcScriptCache = (PcScriptCache *)js_malloc(sizeof(struct PcScriptCache));
         if (rt->ionPcScriptCache)
-            rt->ionPcScriptCache->clear(rt->gc.number);
+            rt->ionPcScriptCache->clear(rt->gc.gcNumber());
     }
 
     // Attempt to lookup address in cache.
@@ -1389,6 +1480,12 @@ SnapshotIterator::SnapshotIterator()
 {
 }
 
+int32_t
+SnapshotIterator::readOuterNumActualArgs() const
+{
+    return fp_->numActualArgs();
+}
+
 uintptr_t
 SnapshotIterator::fromStack(int32_t offset) const
 {
@@ -1408,6 +1505,12 @@ FromStringPayload(uintptr_t payload)
 }
 
 static Value
+FromSymbolPayload(uintptr_t payload)
+{
+    return SymbolValue(reinterpret_cast<JS::Symbol *>(payload));
+}
+
+static Value
 FromTypedPayload(JSValueType type, uintptr_t payload)
 {
     switch (type) {
@@ -1417,6 +1520,8 @@ FromTypedPayload(JSValueType type, uintptr_t payload)
         return BooleanValue(!!payload);
       case JSVAL_TYPE_STRING:
         return FromStringPayload(payload);
+      case JSVAL_TYPE_SYMBOL:
+        return FromSymbolPayload(payload);
       case JSVAL_TYPE_OBJECT:
         return FromObjectPayload(payload);
       default:
@@ -1503,6 +1608,8 @@ SnapshotIterator::allocationValue(const RValueAllocation &alloc)
             return BooleanValue(ReadFrameBooleanSlot(fp_, alloc.stackOffset2()));
           case JSVAL_TYPE_STRING:
             return FromStringPayload(fromStack(alloc.stackOffset2()));
+          case JSVAL_TYPE_SYMBOL:
+            return FromSymbolPayload(fromStack(alloc.stackOffset2()));
           case JSVAL_TYPE_OBJECT:
             return FromObjectPayload(fromStack(alloc.stackOffset2()));
           default:
@@ -1655,10 +1762,26 @@ JitFrameIterator::ionScript() const
     IonScript *ionScript = nullptr;
     if (checkInvalidation(&ionScript))
         return ionScript;
+    return ionScriptFromCalleeToken();
+}
+
+IonScript *
+JitFrameIterator::ionScriptFromCalleeToken() const
+{
+    JS_ASSERT(type() == JitFrame_IonJS);
+    JS_ASSERT(!checkInvalidation());
+
     switch (GetCalleeTokenTag(calleeToken())) {
       case CalleeToken_Function:
       case CalleeToken_Script:
-        return mode_ == ParallelExecution ? script()->parallelIonScript() : script()->ionScript();
+        switch (mode_) {
+          case SequentialExecution:
+            return script()->ionScript();
+          case ParallelExecution:
+            return script()->parallelIonScript();
+          default:
+            MOZ_ASSUME_UNREACHABLE("No such execution mode");
+        }
       default:
         MOZ_ASSUME_UNREACHABLE("unknown callee token type");
     }
@@ -1714,7 +1837,11 @@ InlineFrameIterator::InlineFrameIterator(ThreadSafeContext *cx, const InlineFram
     script_(cx)
 {
     if (frame_) {
-        start_ = SnapshotIterator(*frame_);
+        if (frame_->isBailoutIterator())
+            start_ = SnapshotIterator(*frame_->asBailoutIterator());
+        else
+            start_ = SnapshotIterator(*frame_);
+
         // findNextFrame will iterate to the next frame and init. everything.
         // Therefore to settle on the same frame, we report one frame less readed.
         framesRead_ = iter->framesRead_ - 1;
@@ -1825,11 +1952,11 @@ InlineFrameIterator::computeScopeChain(Value scopeChainValue) const
     if (scopeChainValue.isObject())
         return &scopeChainValue.toObject();
 
-    if (isFunctionFrame()) {
-        // Heavyweight functions should always have a scope chain.
-        MOZ_ASSERT(!callee()->isHeavyweight());
+    // Note we can hit this case even for heavyweight functions, in case we
+    // are walking the frame during the function prologue, before the scope
+    // chain has been initialized.
+    if (isFunctionFrame())
         return callee()->environment();
-    }
 
     // Ion does not handle scripts that are not compile-and-go.
     MOZ_ASSERT(!script()->isForEval());
@@ -1845,15 +1972,22 @@ InlineFrameIterator::isFunctionFrame() const
 
 MachineState
 MachineState::FromBailout(mozilla::Array<uintptr_t, Registers::Total> &regs,
-                          mozilla::Array<double, FloatRegisters::Total> &fpregs)
+                          mozilla::Array<double, FloatRegisters::TotalPhys> &fpregs)
 {
     MachineState machine;
 
     for (unsigned i = 0; i < Registers::Total; i++)
         machine.setRegisterLocation(Register::FromCode(i), &regs[i]);
+#ifdef JS_CODEGEN_ARM
+    float *fbase = (float*)&fpregs[0];
+    for (unsigned i = 0; i < FloatRegisters::TotalDouble; i++)
+        machine.setRegisterLocation(FloatRegister(i, FloatRegister::Double), &fpregs[i]);
+    for (unsigned i = 0; i < FloatRegisters::TotalSingle; i++)
+        machine.setRegisterLocation(FloatRegister(i, FloatRegister::Single), (double*)&fbase[i]);
+#else
     for (unsigned i = 0; i < FloatRegisters::Total; i++)
         machine.setRegisterLocation(FloatRegister::FromCode(i), &fpregs[i]);
-
+#endif
     return machine;
 }
 

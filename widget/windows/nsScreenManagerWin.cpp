@@ -9,9 +9,9 @@
 #include "nsIWidget.h"
 
 
-BOOL CALLBACK CountMonitors ( HMONITOR, HDC, LPRECT, LPARAM ioCount ) ;
+BOOL CALLBACK CountMonitors(HMONITOR, HDC, LPRECT, LPARAM ioCount);
 
-nsScreenManagerWin :: nsScreenManagerWin ( )
+nsScreenManagerWin::nsScreenManagerWin()
   : mNumberOfScreens(0)
 {
   // nothing to do. I guess we could cache a bunch of information
@@ -20,7 +20,7 @@ nsScreenManagerWin :: nsScreenManagerWin ( )
 }
 
 
-nsScreenManagerWin :: ~nsScreenManagerWin()
+nsScreenManagerWin::~nsScreenManagerWin()
 {
 }
 
@@ -38,27 +38,44 @@ NS_IMPL_ISUPPORTS(nsScreenManagerWin, nsIScreenManager)
 //        screen. This should change when a multi-monitor impl is done.
 //
 nsIScreen* 
-nsScreenManagerWin :: CreateNewScreenObject ( HMONITOR inScreen )
+nsScreenManagerWin::CreateNewScreenObject(HMONITOR inScreen)
 {
   nsIScreen* retScreen = nullptr;
   
   // look through our screen list, hoping to find it. If it's not there,
   // add it and return the new one.
-  for ( unsigned i = 0; i < mScreenList.Length(); ++i ) {
+  for (unsigned i = 0; i < mScreenList.Length(); ++i) {
     ScreenListItem& curr = mScreenList[i];
-    if ( inScreen == curr.mMon ) {
+    if (inScreen == curr.mMon) {
       NS_IF_ADDREF(retScreen = curr.mScreen.get());
       return retScreen;
     }
   } // for each screen.
  
   retScreen = new nsScreenWin(inScreen);
-  mScreenList.AppendElement ( ScreenListItem ( inScreen, retScreen ) );
+  mScreenList.AppendElement(ScreenListItem(inScreen, retScreen));
 
   NS_IF_ADDREF(retScreen);
   return retScreen;
 }
 
+NS_IMETHODIMP
+nsScreenManagerWin::ScreenForId(uint32_t aId, nsIScreen **outScreen)
+{
+  *outScreen = nullptr;
+
+  for (unsigned i = 0; i < mScreenList.Length(); ++i) {
+    ScreenListItem& curr = mScreenList[i];
+    uint32_t id;
+    nsresult rv = curr.mScreen->GetId(&id);
+    if (NS_SUCCEEDED(rv) && id == aId) {
+      NS_IF_ADDREF(*outScreen = curr.mScreen.get());
+      return NS_OK;
+    }
+  }
+
+  return NS_ERROR_FAILURE;
+}
 
 //
 // ScreenForRect 
@@ -69,12 +86,12 @@ nsScreenManagerWin :: CreateNewScreenObject ( HMONITOR inScreen )
 // The coordinates are in pixels (not twips) and in logical screen coordinates.
 //
 NS_IMETHODIMP
-nsScreenManagerWin :: ScreenForRect ( int32_t inLeft, int32_t inTop, int32_t inWidth, int32_t inHeight,
-                                        nsIScreen **outScreen )
+nsScreenManagerWin::ScreenForRect(int32_t inLeft, int32_t inTop, int32_t inWidth, int32_t inHeight,
+                                  nsIScreen **outScreen)
 {
-  if ( !(inWidth || inHeight) ) {
-    NS_WARNING ( "trying to find screen for sizeless window, using primary monitor" );
-    *outScreen = CreateNewScreenObject ( nullptr );    // addrefs
+  if (!(inWidth || inHeight)) {
+    NS_WARNING("trying to find screen for sizeless window, using primary monitor");
+    *outScreen = CreateNewScreenObject(nullptr);    // addrefs
     return NS_OK;
   }
 
@@ -90,10 +107,10 @@ nsScreenManagerWin :: ScreenForRect ( int32_t inLeft, int32_t inTop, int32_t inW
     NSToIntRound(dpiScale * (inTop + inHeight))
   };
 
-  HMONITOR genScreen = ::MonitorFromRect( &globalWindowBounds, MONITOR_DEFAULTTOPRIMARY );
-
-  *outScreen = CreateNewScreenObject ( genScreen );    // addrefs
-  
+  HMONITOR genScreen = ::MonitorFromRect(&globalWindowBounds, MONITOR_DEFAULTTOPRIMARY);
+ 
+  *outScreen = CreateNewScreenObject(genScreen);    // addrefs
+ 
   return NS_OK;
     
 } // ScreenForRect
@@ -106,9 +123,9 @@ nsScreenManagerWin :: ScreenForRect ( int32_t inLeft, int32_t inTop, int32_t inW
 // often.
 //
 NS_IMETHODIMP 
-nsScreenManagerWin :: GetPrimaryScreen(nsIScreen** aPrimaryScreen) 
+nsScreenManagerWin::GetPrimaryScreen(nsIScreen** aPrimaryScreen) 
 {
-  *aPrimaryScreen = CreateNewScreenObject ( nullptr );    // addrefs  
+  *aPrimaryScreen = CreateNewScreenObject(nullptr);    // addrefs  
   return NS_OK;
   
 } // GetPrimaryScreen
@@ -122,7 +139,7 @@ nsScreenManagerWin :: GetPrimaryScreen(nsIScreen** aPrimaryScreen)
 // count up to this point.
 //
 BOOL CALLBACK
-CountMonitors ( HMONITOR, HDC, LPRECT, LPARAM ioParam )
+CountMonitors(HMONITOR, HDC, LPRECT, LPARAM ioParam)
 {
   uint32_t* countPtr = reinterpret_cast<uint32_t*>(ioParam);
   ++(*countPtr);
@@ -138,9 +155,9 @@ CountMonitors ( HMONITOR, HDC, LPRECT, LPARAM ioParam )
 // Returns how many physical screens are available.
 //
 NS_IMETHODIMP
-nsScreenManagerWin :: GetNumberOfScreens(uint32_t *aNumberOfScreens)
+nsScreenManagerWin::GetNumberOfScreens(uint32_t *aNumberOfScreens)
 {
-  if ( mNumberOfScreens )
+  if (mNumberOfScreens)
     *aNumberOfScreens = mNumberOfScreens;
   else {
     uint32_t count = 0;
@@ -162,9 +179,9 @@ nsScreenManagerWin::GetSystemDefaultScale(float *aDefaultScale)
 }
 
 NS_IMETHODIMP
-nsScreenManagerWin :: ScreenForNativeWidget(void *aWidget, nsIScreen **outScreen)
+nsScreenManagerWin::ScreenForNativeWidget(void *aWidget, nsIScreen **outScreen)
 {
-  HMONITOR mon = MonitorFromWindow ((HWND) aWidget, MONITOR_DEFAULTTOPRIMARY);
-  *outScreen = CreateNewScreenObject (mon);
+  HMONITOR mon = MonitorFromWindow((HWND) aWidget, MONITOR_DEFAULTTOPRIMARY);
+  *outScreen = CreateNewScreenObject(mon);
   return NS_OK;
 }

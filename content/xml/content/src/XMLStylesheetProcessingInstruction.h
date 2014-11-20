@@ -19,7 +19,7 @@ class XMLStylesheetProcessingInstruction MOZ_FINAL
 , public nsStyleLinkElement
 {
 public:
-  XMLStylesheetProcessingInstruction(already_AddRefed<nsINodeInfo>&& aNodeInfo,
+  XMLStylesheetProcessingInstruction(already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,
                                      const nsAString& aData)
     : ProcessingInstruction(Move(aNodeInfo), aData)
   {
@@ -34,8 +34,6 @@ public:
                                        nsGkAtoms::xml_stylesheet), aData)
   {
   }
-
-  virtual ~XMLStylesheetProcessingInstruction();
 
   virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;
 
@@ -74,6 +72,8 @@ public:
   using ProcessingInstruction::SetData; // Prevent hiding overloaded virtual function.
 
 protected:
+  virtual ~XMLStylesheetProcessingInstruction();
+
   nsCOMPtr<nsIURI> mOverriddenBaseURI;
 
   already_AddRefed<nsIURI> GetStyleSheetURL(bool* aIsInline) MOZ_OVERRIDE;
@@ -82,7 +82,7 @@ protected:
                          nsAString& aMedia,
                          bool* aIsScoped,
                          bool* aIsAlternate) MOZ_OVERRIDE;
-  virtual nsGenericDOMDataNode* CloneDataNode(nsINodeInfo *aNodeInfo,
+  virtual nsGenericDOMDataNode* CloneDataNode(mozilla::dom::NodeInfo *aNodeInfo,
                                               bool aCloneText) const MOZ_OVERRIDE;
 };
 

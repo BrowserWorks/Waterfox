@@ -41,6 +41,7 @@ using namespace js;
 using namespace js::types;
 
 using mozilla::Abs;
+using mozilla::ArrayLength;
 using mozilla::MinNumberValue;
 using mozilla::NegativeInfinity;
 using mozilla::PodCopy;
@@ -175,14 +176,15 @@ ComputeAccurateBinaryBaseInteger(const CharT *start, const CharT *end, int base)
     return value;
 }
 
+template <typename CharT>
 double
-js::ParseDecimalNumber(const JS::TwoByteChars chars)
+js::ParseDecimalNumber(const mozilla::Range<const CharT> chars)
 {
     MOZ_ASSERT(chars.length() > 0);
     uint64_t dec = 0;
-    RangedPtr<jschar> s = chars.start(), end = chars.end();
+    RangedPtr<const CharT> s = chars.start(), end = chars.end();
     do {
-        jschar c = *s;
+        CharT c = *s;
         MOZ_ASSERT('0' <= c && c <= '9');
         uint8_t digit = c - '0';
         uint64_t next = dec * 10 + digit;
@@ -192,6 +194,12 @@ js::ParseDecimalNumber(const JS::TwoByteChars chars)
     } while (++s < end);
     return static_cast<double>(dec);
 }
+
+template double
+js::ParseDecimalNumber(const mozilla::Range<const Latin1Char> chars);
+
+template double
+js::ParseDecimalNumber(const mozilla::Range<const jschar> chars);
 
 template <typename CharT>
 bool
@@ -640,16 +648,14 @@ js::Int32ToString(ThreadSafeContext *cx, int32_t si)
     if (JSFlatString *str = LookupInt32ToString(cx, si))
         return str;
 
-    JSFatInlineString *str = js_NewGCFatInlineString<allowGC>(cx);
+    Latin1Char buffer[JSFatInlineString::MAX_LENGTH_LATIN1 + 1];
+    size_t length;
+    Latin1Char *start = BackfillInt32InBuffer(si, buffer, ArrayLength(buffer), &length);
+
+    mozilla::Range<const Latin1Char> chars(start, length);
+    JSInlineString *str = NewFatInlineString<allowGC>(cx, chars);
     if (!str)
         return nullptr;
-
-    jschar buffer[JSFatInlineString::MAX_LENGTH_TWO_BYTE + 1];
-    size_t length;
-    jschar *start = BackfillInt32InBuffer(si, buffer,
-                                          JSFatInlineString::MAX_LENGTH_TWO_BYTE + 1, &length);
-
-    PodCopy(str->initTwoByte(length), start, length + 1);
 
     CacheNumber(cx, si, str);
     return str;
@@ -875,7 +881,7 @@ num_toLocaleString_impl(JSContext *cx, CallArgs args)
         return ok;
     }
 
-    str = js_NewStringCopyN<CanGC>(cx, buf, buflen);
+    str = NewStringCopyN<CanGC>(cx, buf, buflen);
     js_free(buf);
     if (!str)
         return false;
@@ -936,7 +942,7 @@ DToStrResult(JSContext *cx, double d, JSDToStrMode mode, int precision, CallArgs
         JS_ReportOutOfMemory(cx);
         return false;
     }
-    JSString *str = js_NewStringCopyZ<CanGC>(cx, numStr);
+    JSString *str = NewStringCopyZ<CanGC>(cx, numStr);
     if (!str)
         return false;
     args.rval().setString(str);
@@ -1060,22 +1066,6 @@ Number_isInteger(JSContext *cx, unsigned argc, Value *vp)
     return true;
 }
 
-// ES6 drafult ES6 15.7.3.13
-static bool
-Number_toInteger(JSContext *cx, unsigned argc, Value *vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-    if (args.length() < 1) {
-        args.rval().setInt32(0);
-        return true;
-    }
-    double asint;
-    if (!ToInteger(cx, args[0], &asint))
-        return false;
-    args.rval().setNumber(asint);
-    return true;
-}
-
 
 static const JSFunctionSpec number_static_methods[] = {
     JS_SELF_HOSTED_FN("isFinite", "Number_isFinite", 1,0),
@@ -1084,7 +1074,6 @@ static const JSFunctionSpec number_static_methods[] = {
     JS_SELF_HOSTED_FN("isSafeInteger", "Number_isSafeInteger", 1,0),
     JS_FN("parseFloat", num_parseFloat, 1, 0),
     JS_FN("parseInt", num_parseInt, 2, 0),
-    JS_FN("toInteger", Number_toInteger, 1, 0),
     JS_FS_END
 };
 
@@ -1122,26 +1111,22 @@ static JSConstDoubleSpec number_constants[] = {
     {0,0,0,{0,0,0}}
 };
 
-#if (defined __GNUC__ && defined __i386__) || \
-    (defined __SUNPRO_CC && defined __i386)
-
 /*
  * Set the exception mask to mask all exceptions and set the FPU precision
  * to 53 bit mantissa (64 bit doubles).
  */
-static inline void FIX_FPU() {
+void
+js::FIX_FPU()
+{
+#if (defined __GNUC__ && defined __i386__) || \
+    (defined __SUNPRO_CC && defined __i386)
     short control;
     asm("fstcw %0" : "=m" (control) : );
     control &= ~0x300; // Lower bits 8 and 9 (precision control).
     control |= 0x2f3;  // Raise bits 0-5 (exception masks) and 9 (64-bit precision).
     asm("fldcw %0" : : "m" (control) );
-}
-
-#else
-
-#define FIX_FPU() ((void)0)
-
 #endif
+}
 
 bool
 js::InitRuntimeNumberState(JSRuntime *rt)
@@ -1250,10 +1235,10 @@ js_InitNumberClass(JSContext *cx, HandleObject obj)
     if (!JS_DefineConstDoubles(cx, ctor, number_constants))
         return nullptr;
 
-    if (!DefinePropertiesAndBrand(cx, ctor, nullptr, number_static_methods))
+    if (!DefinePropertiesAndFunctions(cx, ctor, nullptr, number_static_methods))
         return nullptr;
 
-    if (!DefinePropertiesAndBrand(cx, numberProto, nullptr, number_methods))
+    if (!DefinePropertiesAndFunctions(cx, numberProto, nullptr, number_methods))
         return nullptr;
 
     if (!JS_DefineFunctions(cx, global, number_functions))
@@ -1375,7 +1360,7 @@ js_NumberToStringWithBase(ThreadSafeContext *cx, double d, int base)
                      cbuf.dbuf && cbuf.dbuf == numStr);
     }
 
-    JSFlatString *s = js_NewStringCopyZ<allowGC>(cx, numStr);
+    JSFlatString *s = NewStringCopyZ<allowGC>(cx, numStr);
 
     if (comp)
         comp->dtoaCache.cache(base, d, s);
@@ -1442,18 +1427,16 @@ js::IndexToString(JSContext *cx, uint32_t index)
     if (JSFlatString *str = c->dtoaCache.lookup(10, index))
         return str;
 
-    JSFatInlineString *str = js_NewGCFatInlineString<CanGC>(cx);
+    Latin1Char buffer[JSFatInlineString::MAX_LENGTH_LATIN1 + 1];
+    RangedPtr<Latin1Char> end(buffer + JSFatInlineString::MAX_LENGTH_LATIN1,
+                              buffer, JSFatInlineString::MAX_LENGTH_LATIN1 + 1);
+    *end = '\0';
+    RangedPtr<Latin1Char> start = BackfillIndexInCharBuffer(index, end);
+
+    mozilla::Range<const Latin1Char> chars(start.get(), end - start);
+    JSInlineString *str = NewFatInlineString<CanGC>(cx, chars);
     if (!str)
         return nullptr;
-
-    jschar buffer[JSFatInlineString::MAX_LENGTH_TWO_BYTE + 1];
-    RangedPtr<jschar> end(buffer + JSFatInlineString::MAX_LENGTH_TWO_BYTE,
-                          buffer, JSFatInlineString::MAX_LENGTH_TWO_BYTE + 1);
-    *end = '\0';
-    RangedPtr<jschar> start = BackfillIndexInCharBuffer(index, end);
-
-    jschar *dst = str->initTwoByte(end - start);
-    PodCopy(dst, start.get(), end - start + 1);
 
     c->dtoaCache.cache(10, index, str);
     return str;
@@ -1483,7 +1466,7 @@ js::NumberValueToStringBuffer(JSContext *cx, const Value &v, StringBuffer &sb)
      * even if jschars are UTF-8, all chars should map to one jschar.
      */
     JS_ASSERT(!cbuf.dbuf && cstrlen < cbuf.sbufSize);
-    return sb.appendInflated(cstr, cstrlen);
+    return sb.append(cstr, cstrlen);
 }
 
 template <typename CharT>
@@ -1576,7 +1559,7 @@ js::NonObjectToNumberSlow(ThreadSafeContext *cx, Value v, double *out)
         return true;
     }
 
-    JS_ASSERT(v.isUndefined());
+    JS_ASSERT(v.isUndefined() || v.isSymbol());
     *out = GenericNaN();
     return true;
 }

@@ -5,6 +5,7 @@ const { ActorPool, appendExtraActors, createExtraActors } = require("devtools/se
 const { RootActor } = require("devtools/server/actors/root");
 const { ThreadActor } = require("devtools/server/actors/script");
 const { DebuggerServer } = require("devtools/server/main");
+const promise = require("promise");
 
 var gTestGlobals = [];
 DebuggerServer.addTestGlobal = function(aGlobal) {
@@ -44,7 +45,7 @@ function TestTabList(aConnection) {
 TestTabList.prototype = {
   constructor: TestTabList,
   getList: function () {
-    return promise.resolve([tabActor for (tabActor of this._tabActors)]);
+    return Promise.resolve([tabActor for (tabActor of this._tabActors)]);
   }
 };
 

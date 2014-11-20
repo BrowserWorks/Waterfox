@@ -27,6 +27,7 @@ EXPORTS += [
     'ipc/CompositorChild.h',
     'ipc/CompositorParent.h',
     'ipc/ShadowLayersManager.h',
+    'ipc/ThreadSafeRefcountingWithMainThreadDestruction.h',
     'Layers.h',
     'LayerScope.h',
     'LayersLogging.h',
@@ -43,6 +44,10 @@ EXPORTS += [
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
     UNIFIED_SOURCES += [
         'D3D9SurfaceImage.cpp',
+        'TextureDIB.cpp',
+    ]
+    EXPORTS.mozilla.layers += [
+        'TextureDIB.h',
     ]
     if CONFIG['MOZ_ENABLE_D3D9_LAYER']:
         EXPORTS += [
@@ -230,6 +235,7 @@ UNIFIED_SOURCES += [
     'apz/src/Axis.cpp',
     'apz/src/GestureEventListener.cpp',
     'apz/src/TaskThrottler.cpp',
+    'apz/src/TouchBlockState.cpp',
     'apz/testutil/APZTestData.cpp',
     'apz/util/ActiveElementManager.cpp',
     'apz/util/APZCCallbackHelper.cpp',
@@ -304,6 +310,7 @@ UNIFIED_SOURCES += [
     'opengl/TextureClientOGL.cpp',
     'opengl/TextureHostOGL.cpp',
     'opengl/TexturePoolOGL.cpp',
+    'protobuf/LayerScopePacket.pb.cc',
     'ReadbackProcessor.cpp',
     'RenderTrace.cpp',
     'RotatedBuffer.cpp',
@@ -316,6 +323,9 @@ SOURCES += [
     'Layers.cpp',
     'LayerTreeInvalidation.cpp',
 ]
+
+# Disable RTTI in google protocol buffer
+DEFINES['GOOGLE_PROTOBUF_NO_RTTI'] = True
 
 # Workaround compiler bug (Bug 795594)
 if CONFIG['_MSC_VER'] and CONFIG['CPU_ARCH'] == 'x86_64':

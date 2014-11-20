@@ -5,7 +5,7 @@
 MOZ_APP_BASENAME=Fennec
 MOZ_APP_VENDOR=Mozilla
 
-MOZ_APP_VERSION=32.0.1
+MOZ_APP_VERSION=33.0
 MOZ_APP_UA_NAME=Firefox
 
 MOZ_BRANDING_DIRECTORY=mobile/android/branding/unofficial
@@ -58,9 +58,6 @@ MOZ_PAY=1
 # Enable UI for healthreporter
 MOZ_SERVICES_HEALTHREPORT=1
 
-# Enable FirefoxAccounts
-MOZ_SERVICES_FXACCOUNTS=1
-
 # Wifi-AP/cell tower data reporting is enabled on non-release builds.
 if test ! "$RELEASE_BUILD"; then
 MOZ_DATA_REPORTING=1
@@ -69,8 +66,17 @@ fi
 # Enable runtime locale switching.
 MOZ_LOCALE_SWITCHER=1
 
-# Enable the "synthetic APKs" implementation of Open Web Apps.
-MOZ_ANDROID_SYNTHAPKS=1
-
 # Enable second screen and casting support for external devices.
 MOZ_DEVICES=1
+
+# Enable second screen using native Android libraries
+MOZ_NATIVE_DEVICES=1
+
+# Mark as WebGL conformant
+MOZ_WEBGL_CONFORMANT=1
+
+# Don't enable the Search Activity.
+# MOZ_ANDROID_SEARCH_ACTIVITY=1
+
+# Don't enable the Mozilla Location Service stumbler.
+# MOZ_ANDROID_MLS_STUMBLER=1

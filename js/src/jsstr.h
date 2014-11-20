@@ -9,6 +9,7 @@
 
 #include "mozilla/HashFunctions.h"
 #include "mozilla/PodOperations.h"
+#include "mozilla/UniquePtr.h"
 
 #include "jsutil.h"
 #include "NamespaceImports.h"
@@ -48,27 +49,41 @@ SkipSpace(const CharT *s, const CharT *end)
 
 // Return less than, equal to, or greater than zero depending on whether
 // s1 is less than, equal to, or greater than s2.
+template <typename Char1, typename Char2>
 inline int32_t
-CompareChars(const jschar *s1, size_t l1, const jschar *s2, size_t l2)
+CompareChars(const Char1 *s1, size_t len1, const Char2 *s2, size_t len2)
 {
-    size_t n = Min(l1, l2);
+    size_t n = Min(len1, len2);
     for (size_t i = 0; i < n; i++) {
         if (int32_t cmp = s1[i] - s2[i])
             return cmp;
     }
 
-    return (int32_t)(l1 - l2);
+    return int32_t(len1 - len2);
 }
+
+extern int32_t
+CompareChars(const jschar *s1, size_t len1, JSLinearString *s2);
 
 }  /* namespace js */
 
 struct JSSubString {
+    JSLinearString  *base;
+    size_t          offset;
     size_t          length;
-    const jschar    *chars;
-};
 
-extern const jschar js_empty_ucstr[];
-extern const JSSubString js_EmptySubString;
+    JSSubString() { mozilla::PodZero(this); }
+
+    void initEmpty(JSLinearString *base) {
+        this->base = base;
+        offset = length = 0;
+    }
+    void init(JSLinearString *base, size_t offset, size_t length) {
+        this->base = base;
+        this->offset = offset;
+        this->length = length;
+    }
+};
 
 /*
  * Shorthands for ASCII (7-bit) decimal and hex conversion.
@@ -84,40 +99,6 @@ extern const JSSubString js_EmptySubString;
 extern JSObject *
 js_InitStringClass(JSContext *cx, js::HandleObject obj);
 
-extern const char js_escape_str[];
-extern const char js_unescape_str[];
-extern const char js_uneval_str[];
-extern const char js_decodeURI_str[];
-extern const char js_encodeURI_str[];
-extern const char js_decodeURIComponent_str[];
-extern const char js_encodeURIComponent_str[];
-
-/* GC-allocate a string descriptor for the given malloc-allocated chars. */
-template <js::AllowGC allowGC, typename CharT>
-extern JSFlatString *
-js_NewString(js::ThreadSafeContext *cx, CharT *chars, size_t length);
-
-extern JSLinearString *
-js_NewDependentString(JSContext *cx, JSString *base, size_t start, size_t length);
-
-/* Copy a counted string and GC-allocate a descriptor for it. */
-template <js::AllowGC allowGC>
-extern JSFlatString *
-js_NewStringCopyN(js::ExclusiveContext *cx, const jschar *s, size_t n);
-
-template <js::AllowGC allowGC>
-extern JSFlatString *
-js_NewStringCopyN(js::ThreadSafeContext *cx, const char *s, size_t n);
-
-/* Copy a C string and GC-allocate a descriptor for it. */
-template <js::AllowGC allowGC>
-extern JSFlatString *
-js_NewStringCopyZ(js::ExclusiveContext *cx, const jschar *s);
-
-template <js::AllowGC allowGC>
-extern JSFlatString *
-js_NewStringCopyZ(js::ThreadSafeContext *cx, const char *s);
-
 /*
  * Convert a value to a printable C string.
  */
@@ -125,7 +106,26 @@ extern const char *
 js_ValueToPrintable(JSContext *cx, const js::Value &,
                     JSAutoByteString *bytes, bool asSource = false);
 
+extern size_t
+js_strlen(const jschar *s);
+
+extern int32_t
+js_strcmp(const jschar *lhs, const jschar *rhs);
+
+template <typename CharT>
+extern const CharT *
+js_strchr_limit(const CharT *s, jschar c, const CharT *limit);
+
+static MOZ_ALWAYS_INLINE void
+js_strncpy(jschar *dst, const jschar *src, size_t nelem)
+{
+    return mozilla::PodCopy(dst, src, nelem);
+}
+
 namespace js {
+
+extern mozilla::UniquePtr<jschar[], JS::FreePolicy>
+DuplicateString(ThreadSafeContext *cx, const jschar *s);
 
 /*
  * Convert a non-string value to a string, returning null after reporting an
@@ -187,6 +187,9 @@ EqualStrings(JSContext *cx, JSLinearString *str1, JSLinearString *str2, bool *re
 extern bool
 EqualStrings(JSLinearString *str1, JSLinearString *str2);
 
+extern bool
+EqualChars(JSLinearString *str1, JSLinearString *str2);
+
 /*
  * Return less than, equal to, or greater than zero depending on whether
  * str1 is less than, equal to, or greater than str2.
@@ -194,6 +197,10 @@ EqualStrings(JSLinearString *str1, JSLinearString *str2);
 extern bool
 CompareStrings(JSContext *cx, JSString *str1, JSString *str2, int32_t *result);
 
+/*
+ * Same as CompareStrings but for atoms.  Don't use this to just test
+ * for equality; use this when you need an ordering on atoms.
+ */
 extern int32_t
 CompareAtoms(JSAtom *atom1, JSAtom *atom2);
 
@@ -205,42 +212,37 @@ StringEqualsAscii(JSLinearString *str, const char *asciiBytes);
 
 /* Return true if the string contains a pattern anywhere inside it. */
 extern bool
-StringHasPattern(const jschar *text, uint32_t textlen,
-                 const jschar *pat, uint32_t patlen);
+StringHasPattern(JSLinearString *text, const jschar *pat, uint32_t patlen);
 
 extern int
-StringFindPattern(const jschar *text, uint32_t textlen,
-                  const jschar *pat, uint32_t patlen);
+StringFindPattern(JSLinearString *text, JSLinearString *pat, size_t start);
 
 // Whether the string contains any RegExp meta characters (., *, and so forth).
 // Searches the range [beginOffset, length - endOffset>.
 extern bool
 StringHasRegExpMetaChars(JSLinearString *str, size_t beginOffset = 0, size_t endOffset = 0);
 
-extern bool
-StringHasRegExpMetaChars(const jschar *chars, size_t length);
+template <typename Char1, typename Char2>
+inline bool
+EqualChars(const Char1 *s1, const Char2 *s2, size_t len);
 
-} /* namespace js */
-
-extern size_t
-js_strlen(const jschar *s);
-
-extern int32_t
-js_strcmp(const jschar *lhs, const jschar *rhs);
-
-extern jschar *
-js_strchr_limit(const jschar *s, jschar c, const jschar *limit);
-
-static MOZ_ALWAYS_INLINE void
-js_strncpy(jschar *dst, const jschar *src, size_t nelem)
+template <typename Char1>
+inline bool
+EqualChars(const Char1 *s1, const Char1 *s2, size_t len)
 {
-    return mozilla::PodCopy(dst, src, nelem);
+    return mozilla::PodEqual(s1, s2, len);
 }
 
-extern jschar *
-js_strdup(js::ThreadSafeContext *cx, const jschar *s);
-
-namespace js {
+template <typename Char1, typename Char2>
+inline bool
+EqualChars(const Char1 *s1, const Char2 *s2, size_t len)
+{
+    for (const Char1 *s1end = s1 + len; s1 < s1end; s1++, s2++) {
+        if (*s1 != *s2)
+            return false;
+    }
+    return true;
+}
 
 /*
  * Inflate bytes in ASCII encoding to jschars. Return null on error, otherwise
@@ -275,8 +277,9 @@ CopyAndInflateChars(jschar *dst, const JS::Latin1Char *src, size_t srclen)
  * must to be initialized with the buffer size and will contain on return the
  * number of copied bytes.
  */
+template <typename CharT>
 extern bool
-DeflateStringToBuffer(JSContext *maybecx, const jschar *chars,
+DeflateStringToBuffer(JSContext *maybecx, const CharT *chars,
                       size_t charsLength, char *bytes, size_t *length);
 
 /*
@@ -289,7 +292,16 @@ str_replace(JSContext *cx, unsigned argc, js::Value *vp);
 extern bool
 str_fromCharCode(JSContext *cx, unsigned argc, Value *vp);
 
+extern bool
+str_fromCharCode_one_arg(JSContext *cx, HandleValue code, MutableHandleValue rval);
+
 } /* namespace js */
+
+inline jschar *
+js_strdup(js::ThreadSafeContext *cx, const jschar *s)
+{
+    return js::DuplicateString(cx, s).release();
+}
 
 extern bool
 js_str_toString(JSContext *cx, unsigned argc, js::Value *vp);
@@ -297,9 +309,15 @@ js_str_toString(JSContext *cx, unsigned argc, js::Value *vp);
 extern bool
 js_str_charAt(JSContext *cx, unsigned argc, js::Value *vp);
 
+namespace js {
+
+extern bool
+str_charCodeAt_impl(JSContext *cx, HandleString string, HandleValue index, MutableHandleValue res);
+
+} /* namespace js */
+
 extern bool
 js_str_charCodeAt(JSContext *cx, unsigned argc, js::Value *vp);
-
 /*
  * Convert one UCS-4 char and write it into a UTF-8 buffer, which must be at
  * least 6 bytes long.  Return the number of UTF-8 bytes of data written.
@@ -336,8 +354,9 @@ PutEscapedString(char *buffer, size_t size, JSLinearString *str, uint32_t quote)
     return n;
 }
 
+template <typename CharT>
 inline size_t
-PutEscapedString(char *buffer, size_t bufferSize, const jschar *chars, size_t length, uint32_t quote)
+PutEscapedString(char *buffer, size_t bufferSize, const CharT *chars, size_t length, uint32_t quote)
 {
     size_t n = PutEscapedStringImpl(buffer, bufferSize, nullptr, chars, length, quote);
 

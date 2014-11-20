@@ -1,10 +1,11 @@
-./transport
-manifestdestiny
+marionette-transport == 0.3
+manifestparser
 mozhttpd >= 0.5
 mozinfo >= 0.7
 mozprocess >= 0.9
-mozrunner == 5.37.2
-mozdevice >= 0.22
+mozrunner >= 6.0
+mozdevice >= 0.37
+mozlog >= 2.0
 moznetwork >= 0.21
 mozcrash >= 0.5
 mozprofile >= 0.7

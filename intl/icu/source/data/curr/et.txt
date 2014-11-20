@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2013 International Business Machines
+// * Copyright (C) 2014 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/et.xml
@@ -766,7 +766,7 @@ et{
         }
         TOP{
             "TOP",
-            "Tonga pa'anga",
+            "Tonga pa’anga",
         }
         TPE{
             "TPE",
@@ -952,6 +952,59 @@ et{
             "ZWD",
             "Zimbabwe dollar",
         }
+    }
+    Currencies%narrow{
+        ARS{"$"}
+        AUD{"$"}
+        BBD{"$"}
+        BDT{"৳"}
+        BMD{"$"}
+        BND{"$"}
+        BRL{"R$"}
+        BSD{"$"}
+        BYR{"р."}
+        BZD{"$"}
+        CAD{"$"}
+        CLP{"$"}
+        CNY{"¥"}
+        COP{"$"}
+        CRC{"₡"}
+        CUP{"$"}
+        DOP{"$"}
+        EUR{"€"}
+        FJD{"$"}
+        GBP{"£"}
+        GIP{"£"}
+        GYD{"$"}
+        HKD{"$"}
+        ILS{"₪"}
+        INR{"₹"}
+        JMD{"$"}
+        JPY{"¥"}
+        KHR{"៛"}
+        KRW{"₩"}
+        KYD{"$"}
+        KZT{"₸"}
+        LAK{"₭"}
+        LRD{"$"}
+        MNT{"₮"}
+        MXN{"$"}
+        NAD{"$"}
+        NGN{"₦"}
+        NZD{"$"}
+        PHP{"₱"}
+        PYG{"₲"}
+        SBD{"$"}
+        SGD{"$"}
+        SRD{"$"}
+        SSP{"£"}
+        TRY{"₺"}
+        TTD{"$"}
+        TWD{"NT$"}
+        UAH{"₴"}
+        USD{"$"}
+        UYU{"$"}
+        VND{"₫"}
     }
     CurrencyPlurals{
         AED{
@@ -1503,8 +1556,8 @@ et{
             other{"Tuneesia dinaari"}
         }
         TOP{
-            one{"Tonga pa'anga"}
-            other{"Tonga pa'angat"}
+            one{"Tonga pa’anga"}
+            other{"Tonga pa’angat"}
         }
         TRY{
             one{"Türgi uus liir"}
@@ -1619,5 +1672,5 @@ et{
         one{"{0} {1}"}
         other{"{0} {1}"}
     }
-    Version{"2.0.92.87"}
+    Version{"2.1.8.9"}
 }

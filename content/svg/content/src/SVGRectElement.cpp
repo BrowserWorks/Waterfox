@@ -39,7 +39,7 @@ nsSVGElement::LengthInfo SVGRectElement::sLengthInfo[6] =
 //----------------------------------------------------------------------
 // Implementation
 
-SVGRectElement::SVGRectElement(already_AddRefed<nsINodeInfo>& aNodeInfo)
+SVGRectElement::SVGRectElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
   : SVGRectElementBase(aNodeInfo)
 {
 }
@@ -153,7 +153,7 @@ SVGRectElement::ConstructPath(gfxContext *aCtx)
 }
 
 TemporaryRef<Path>
-SVGRectElement::BuildPath()
+SVGRectElement::BuildPath(PathBuilder* aBuilder)
 {
   float x, y, width, height, rx, ry;
   GetAnimatedLengthValues(&x, &y, &width, &height, &rx, &ry, nullptr);
@@ -162,7 +162,7 @@ SVGRectElement::BuildPath()
     return nullptr;
   }
 
-  RefPtr<PathBuilder> pathBuilder = CreatePathBuilder();
+  RefPtr<PathBuilder> pathBuilder = aBuilder ? aBuilder : CreatePathBuilder();
 
   rx = std::max(rx, 0.0f);
   ry = std::max(ry, 0.0f);

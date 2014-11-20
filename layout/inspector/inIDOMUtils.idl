@@ -9,6 +9,7 @@ interface nsISupportsArray;
 interface nsIDOMCharacterData;
 interface nsIDOMElement;
 interface nsIDOMDocument;
+interface nsIDOMCSSRule;
 interface nsIDOMCSSStyleRule;
 interface nsIDOMNode;
 interface nsIDOMNodeList;
@@ -16,7 +17,7 @@ interface nsIDOMFontFaceList;
 interface nsIDOMRange;
 interface nsIDOMCSSStyleSheet;
 
-[scriptable, uuid(948792a7-b786-4a2c-910d-f55b0773c2ca)]
+[scriptable, uuid(1f5b7f08-fa80-49e9-b881-888f081240da)]
 interface inIDOMUtils : nsISupports
 {
   // CSS utilities
@@ -24,8 +25,8 @@ interface inIDOMUtils : nsISupports
                           [optional] out unsigned long aLength,
                           [array, size_is (aLength), retval] out nsISupports aSheets);
   nsISupportsArray getCSSStyleRules(in nsIDOMElement aElement, [optional] in DOMString aPseudo);
-  unsigned long getRuleLine(in nsIDOMCSSStyleRule aRule);
-  unsigned long getRuleColumn(in nsIDOMCSSStyleRule aRule);
+  unsigned long getRuleLine(in nsIDOMCSSRule aRule);
+  unsigned long getRuleColumn(in nsIDOMCSSRule aRule);
 
   // Utilities for working with selectors.  We don't have a JS OM representation
   // of a single selector or a selector list yet, but given a rule we can index
@@ -43,7 +44,8 @@ interface inIDOMUtils : nsISupports
   // idea what the right scope is.
   bool selectorMatchesElement(in nsIDOMElement aElement,
                               in nsIDOMCSSStyleRule aRule,
-                              in unsigned long aSelectorIndex);
+                              in unsigned long aSelectorIndex,
+                              [optional] in DOMString aPseudo);
 
   // Utilities for working with CSS properties
   //
@@ -67,6 +69,55 @@ interface inIDOMUtils : nsISupports
   [implicit_jscontext]
   jsval colorNameToRGB(in DOMString aColorName);
   AString rgbToColorName(in octet aR, in octet aG, in octet aB);
+
+  // Convert a given CSS color string to rgba. Returns null on failure or an
+  // InspectorRGBATuple on success.
+  //
+  // NOTE: Converting a color to RGBA may be lossy when converting from some
+  // formats e.g. CMYK.
+  [implicit_jscontext]
+  jsval colorToRGBA(in DOMString aColorString);
+
+  // Check whether a given color is a valid CSS color.
+  bool isValidCSSColor(in AString aColorString);
+
+  // Utilities for obtaining information about a CSS property.
+
+  // Check whether a CSS property and value are a valid combination. If the
+  // property is pref-disabled it will still be processed.
+  // aPropertyName: A property name e.g. "color"
+  // aPropertyValue: A property value e.g. "red" or "red !important"
+  bool cssPropertyIsValid(in AString aPropertyName, in AString aPropertyValue);
+
+  // Get a list of the longhands corresponding to the given CSS property.  If
+  // the property is a longhand already, just returns the property itself.
+  // Throws on unsupported property names.
+  void getSubpropertiesForCSSProperty(in AString aProperty,
+                                      [optional] out unsigned long aLength,
+                                      [array, size_is(aLength), retval] out wstring aValues);
+  // Check whether a given CSS property is a shorthand.  Throws on unsupported
+  // property names.
+  bool cssPropertyIsShorthand(in AString aProperty);
+
+  // Check whether values of the given type are valid values for the property.
+  // For shorthands, checks whether there's a corresponding longhand property
+  // that accepts values of this type.  Throws on unsupported properties or
+  // unknown types.
+  //
+  // This function may incorrectly return false for properties that use custom
+  // parsing functions instead of table-driven parsing.
+  const unsigned long TYPE_LENGTH = 0;
+  const unsigned long TYPE_PERCENTAGE = 1;
+  const unsigned long TYPE_COLOR = 2;
+  const unsigned long TYPE_URL = 3;
+  const unsigned long TYPE_ANGLE = 4;
+  const unsigned long TYPE_FREQUENCY = 5;
+  const unsigned long TYPE_TIME = 6;
+  const unsigned long TYPE_GRADIENT = 7;
+  const unsigned long TYPE_TIMING_FUNCTION = 8;
+  const unsigned long TYPE_IMAGE_RECT = 9;
+  const unsigned long TYPE_NUMBER = 10;
+  bool cssPropertySupportsType(in AString aProperty, in unsigned long type);
 
   // DOM Node utilities
   boolean isIgnorableWhitespace(in nsIDOMCharacterData aDataNode);

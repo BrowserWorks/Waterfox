@@ -538,8 +538,10 @@ public:
     BluetoothService* bs = BluetoothService::Get();
     NS_ENSURE_TRUE_VOID(bs);
 
+#if 0 // for API_V2
     bs->AdapterAddedReceived();
     bs->TryFiringAdapterAdded();
+#endif
   }
 };
 
@@ -2809,6 +2811,13 @@ BluetoothDBusService::GetPairedDevicePropertiesInternal(
   Task* task = new ProcessRemainingDeviceAddressesTask(handler, aRunnable);
   DispatchToDBusThread(task);
 
+  return NS_OK;
+}
+
+nsresult
+FetchUuidsInternal(const nsAString& aDeviceAddress,
+                   BluetoothReplyRunnable* aRunnable)
+{
   return NS_OK;
 }
 

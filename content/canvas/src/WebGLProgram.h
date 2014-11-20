@@ -19,7 +19,7 @@
 namespace mozilla {
 
 class WebGLShader;
-class WebGLUniformInfo;
+struct WebGLUniformInfo;
 
 typedef nsDataHashtable<nsCStringHashKey, nsCString> CStringMap;
 typedef nsDataHashtable<nsCStringHashKey, WebGLUniformInfo> CStringToUniformInfoMap;
@@ -32,10 +32,6 @@ class WebGLProgram MOZ_FINAL
 {
 public:
     WebGLProgram(WebGLContext *context);
-
-    ~WebGLProgram() {
-        DeleteOnce();
-    }
 
     void Delete();
 
@@ -114,7 +110,13 @@ public:
     // public post-link data
     std::map<GLint, nsCString> mActiveAttribMap;
 
+    static uint64_t IdentifierHashFunction(const char *ident, size_t size);
+    static void HashMapIdentifier(const nsACString& name, nsCString *hashedName);
+
 protected:
+    ~WebGLProgram() {
+        DeleteOnce();
+    }
 
     GLuint mGLName;
     bool mLinkStatus;

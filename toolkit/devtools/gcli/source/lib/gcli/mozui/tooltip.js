@@ -17,10 +17,10 @@
 'use strict';
 
 var util = require('../util/util');
+var host = require('../util/host');
 var domtemplate = require('../util/domtemplate');
 
 var CommandAssignment = require('../cli').CommandAssignment;
-var fields = require('../fields/fields');
 
 var tooltipHtml =
   '<div class="gcli-tt" aria-live="polite">\n' +
@@ -62,7 +62,7 @@ function Tooltip(options, components) {
   // We cache the fields we create so we can destroy them later
   this.fields = [];
 
-  this.template = util.toDom(this.document, tooltipHtml);
+  this.template = host.toDom(this.document, tooltipHtml);
   this.templateOptions = { blankNullUndefined: true, stack: 'tooltip.html' };
 
   this.inputter.onChoiceChange.add(this.choiceChanged, this);
@@ -140,7 +140,7 @@ Tooltip.prototype.assignmentChanged = function(ev) {
     this.field.destroy();
   }
 
-  this.field = fields.getField(this.assignment.param.type, {
+  this.field = this.requisition.system.fields.get(this.assignment.param.type, {
     document: this.document,
     requisition: this.requisition
   });

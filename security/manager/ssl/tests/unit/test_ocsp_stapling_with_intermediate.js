@@ -1,4 +1,4 @@
-// -*- Mode: javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+// -*- indent-tabs-mode: nil; js-indent-level: 2 -*-
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -33,8 +33,7 @@ function run_test() {
 
   add_tls_server_setup("OCSPStaplingServer");
 
-  add_tests_in_mode(true);
-  add_tests_in_mode(false);
+  add_ocsp_test("ocsp-stapling-with-intermediate.example.com", Cr.NS_OK);
 
   add_test(function () { ocspResponder.stop(run_next_test); });
   add_test(function() {
@@ -42,14 +41,4 @@ function run_test() {
     run_next_test();
   });
   run_next_test();
-}
-
-function add_tests_in_mode(useMozillaPKIX) {
-  add_test(function () {
-    Services.prefs.setBoolPref("security.use_mozillapkix_verification",
-                               useMozillaPKIX);
-    run_next_test();
-  });
-
-  add_ocsp_test("ocsp-stapling-with-intermediate.example.com", Cr.NS_OK);
 }

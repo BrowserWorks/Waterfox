@@ -577,48 +577,19 @@ class CodeLocationLabel
     }
 };
 
-// Describes the user-visible properties of a callsite.
-//
-// A few general notes about the stack-walking supported by CallSite(Desc):
-//  - This information facilitates stack-walking performed by FrameIter which
-//    is used by Error.stack and other user-visible stack-walking functions.
-//  - Ion/asm.js calling conventions do not maintain a frame-pointer so
-//    stack-walking must lookup the stack depth based on the PC.
-//  - Stack-walking only occurs from C++ after a synchronous calls (JS-to-JS and
-//    JS-to-C++). Thus, we do not need to map arbitrary PCs to stack-depths,
-//    just the return address at callsites.
-//  - An exception to the above rule is the interrupt callback which can happen
-//    at arbitrary PCs. In such cases, we drop frames from the stack-walk. In
-//    the future when a full PC->stack-depth map is maintained, we handle this
-//    case.
+// While the frame-pointer chain allows the stack to be unwound without
+// metadata, Error.stack still needs to know the line/column of every call in
+// the chain. A CallSiteDesc describes the line/column of a single callsite.
+// A CallSiteDesc is created by callers of MacroAssembler.
 class CallSiteDesc
 {
     uint32_t line_;
     uint32_t column_;
-    uint32_t functionNameIndex_;
-
-    static const uint32_t sEntryTrampoline = UINT32_MAX;
-    static const uint32_t sExit = UINT32_MAX - 1;
-
   public:
-    static const uint32_t FUNCTION_NAME_INDEX_MAX = UINT32_MAX - 2;
-
     CallSiteDesc() {}
-
-    CallSiteDesc(uint32_t line, uint32_t column, uint32_t functionNameIndex)
-     : line_(line), column_(column), functionNameIndex_(functionNameIndex)
-    {}
-
-    static CallSiteDesc Entry() { return CallSiteDesc(0, 0, sEntryTrampoline); }
-    static CallSiteDesc Exit() { return CallSiteDesc(0, 0, sExit); }
-
-    bool isEntry() const { return functionNameIndex_ == sEntryTrampoline; }
-    bool isExit() const { return functionNameIndex_ == sExit; }
-    bool isNormal() const { return !(isEntry() || isExit()); }
-
-    uint32_t line() const { JS_ASSERT(isNormal()); return line_; }
-    uint32_t column() const { JS_ASSERT(isNormal()); return column_; }
-    uint32_t functionNameIndex() const { JS_ASSERT(isNormal()); return functionNameIndex_; }
+    CallSiteDesc(uint32_t line, uint32_t column) : line_(line), column_(column) {}
+    uint32_t line() const { return line_; }
+    uint32_t column() const { return column_; }
 };
 
 // Adds to CallSiteDesc the metadata necessary to walk the stack given an
@@ -641,12 +612,20 @@ struct CallSite : public CallSiteDesc
     uint32_t returnAddressOffset() const { return returnAddressOffset_; }
 
     // The stackDepth measures the amount of stack space pushed since the
-    // function was called. In particular, this includes the word pushed by the
-    // call instruction on x86/x64.
-    uint32_t stackDepth() const { JS_ASSERT(!isEntry()); return stackDepth_; }
+    // function was called. In particular, this includes the pushed return
+    // address on all archs (whether or not the call instruction pushes the
+    // return address (x86/x64) or the prologue does (ARM/MIPS)).
+    uint32_t stackDepth() const { return stackDepth_; }
 };
 
 typedef Vector<CallSite, 0, SystemAllocPolicy> CallSiteVector;
+
+// As an invariant across architectures, within asm.js code:
+//    $sp % StackAlignment = (AsmJSFrameSize + masm.framePushed) % StackAlignment
+// AsmJSFrameSize is 1 word, for the return address pushed by the call (or, in
+// the case of ARM/MIPS, by the first instruction of the prologue). This means
+// masm.framePushed never includes the pushed return address.
+static const uint32_t AsmJSFrameSize = sizeof(void*);
 
 // Summarizes a heap access made by asm.js code that needs to be patched later
 // and/or looked up by the asm.js signal handlers. Different architectures need
@@ -656,10 +635,8 @@ typedef Vector<CallSite, 0, SystemAllocPolicy> CallSiteVector;
 class AsmJSHeapAccess
 {
     uint32_t offset_;
-#if defined(JS_CODEGEN_X86)
-    uint8_t cmpDelta_;  // the number of bytes from the cmp to the load/store instruction
-#endif
 #if defined(JS_CODEGEN_X86) || defined(JS_CODEGEN_X64)
+    uint8_t cmpDelta_;  // the number of bytes from the cmp to the load/store instruction
     uint8_t opLength_;  // the length of the load/store instruction
     uint8_t isFloat32Load_;
     AnyRegister::Code loadedReg_ : 8;
@@ -670,23 +647,21 @@ class AsmJSHeapAccess
   public:
     AsmJSHeapAccess() {}
 #if defined(JS_CODEGEN_X86) || defined(JS_CODEGEN_X64)
+    static const uint32_t NoLengthCheck = UINT32_MAX;
+
     // If 'cmp' equals 'offset' or if it is not supplied then the
     // cmpDelta_ is zero indicating that there is no length to patch.
-    AsmJSHeapAccess(uint32_t offset, uint32_t after, ArrayBufferView::ViewType vt,
-                    AnyRegister loadedReg, uint32_t cmp = UINT32_MAX)
+    AsmJSHeapAccess(uint32_t offset, uint32_t after, Scalar::Type vt,
+                    AnyRegister loadedReg, uint32_t cmp = NoLengthCheck)
       : offset_(offset),
-# if defined(JS_CODEGEN_X86)
-        cmpDelta_(cmp == UINT32_MAX ? 0 : offset - cmp),
-# endif
+        cmpDelta_(cmp == NoLengthCheck ? 0 : offset - cmp),
         opLength_(after - offset),
-        isFloat32Load_(vt == ArrayBufferView::TYPE_FLOAT32),
+        isFloat32Load_(vt == Scalar::Float32),
         loadedReg_(loadedReg.code())
     {}
-    AsmJSHeapAccess(uint32_t offset, uint8_t after, uint32_t cmp = UINT32_MAX)
+    AsmJSHeapAccess(uint32_t offset, uint8_t after, uint32_t cmp = NoLengthCheck)
       : offset_(offset),
-# if defined(JS_CODEGEN_X86)
-        cmpDelta_(cmp == UINT32_MAX ? 0 : offset - cmp),
-# endif
+        cmpDelta_(cmp == NoLengthCheck ? 0 : offset - cmp),
         opLength_(after - offset),
         isFloat32Load_(false),
         loadedReg_(UINT8_MAX)
@@ -700,11 +675,11 @@ class AsmJSHeapAccess
     uint32_t offset() const { return offset_; }
     void setOffset(uint32_t offset) { offset_ = offset; }
 #if defined(JS_CODEGEN_X86)
-    bool hasLengthCheck() const { return cmpDelta_ > 0; }
-    void *patchLengthAt(uint8_t *code) const { return code + (offset_ - cmpDelta_); }
     void *patchOffsetAt(uint8_t *code) const { return code + (offset_ + opLength_); }
 #endif
 #if defined(JS_CODEGEN_X86) || defined(JS_CODEGEN_X64)
+    bool hasLengthCheck() const { return cmpDelta_ > 0; }
+    void *patchLengthAt(uint8_t *code) const { return code + (offset_ - cmpDelta_); }
     unsigned opLength() const { return opLength_; }
     bool isLoad() const { return loadedReg_ != UINT8_MAX; }
     bool isFloat32Load() const { return isFloat32Load_; }
@@ -730,6 +705,7 @@ struct AsmJSGlobalAccess
 enum AsmJSImmKind
 {
     AsmJSImm_Runtime,
+    AsmJSImm_RuntimeInterrupt,
     AsmJSImm_StackLimit,
     AsmJSImm_ReportOverRecursed,
     AsmJSImm_HandleExecutionInterrupt,
@@ -758,9 +734,6 @@ enum AsmJSImmKind
     AsmJSImm_LogD,
     AsmJSImm_PowD,
     AsmJSImm_ATan2D,
-#ifdef DEBUG
-    AsmJSImm_AssumeUnreachable,
-#endif
     AsmJSImm_Invalid
 };
 
@@ -821,17 +794,22 @@ class AssemblerShared
         return !enoughMemory_;
     }
 
-    bool append(CallSite callsite) { return callsites_.append(callsite); }
+    void append(const CallSiteDesc &desc, size_t currentOffset, size_t framePushed) {
+        // framePushed does not include AsmJSFrameSize, so add it in here (see
+        // CallSite::stackDepth).
+        CallSite callsite(desc, currentOffset, framePushed + AsmJSFrameSize);
+        enoughMemory_ &= callsites_.append(callsite);
+    }
     CallSiteVector &&extractCallSites() { return Move(callsites_); }
 
-    bool append(AsmJSHeapAccess access) { return asmJSHeapAccesses_.append(access); }
+    void append(AsmJSHeapAccess access) { enoughMemory_ &= asmJSHeapAccesses_.append(access); }
     AsmJSHeapAccessVector &&extractAsmJSHeapAccesses() { return Move(asmJSHeapAccesses_); }
 
-    bool append(AsmJSGlobalAccess access) { return asmJSGlobalAccesses_.append(access); }
+    void append(AsmJSGlobalAccess access) { enoughMemory_ &= asmJSGlobalAccesses_.append(access); }
     size_t numAsmJSGlobalAccesses() const { return asmJSGlobalAccesses_.length(); }
     AsmJSGlobalAccess asmJSGlobalAccess(size_t i) const { return asmJSGlobalAccesses_[i]; }
 
-    bool append(AsmJSAbsoluteLink link) { return asmJSAbsoluteLinks_.append(link); }
+    void append(AsmJSAbsoluteLink link) { enoughMemory_ &= asmJSAbsoluteLinks_.append(link); }
     size_t numAsmJSAbsoluteLinks() const { return asmJSAbsoluteLinks_.length(); }
     AsmJSAbsoluteLink asmJSAbsoluteLink(size_t i) const { return asmJSAbsoluteLinks_[i]; }
 };

@@ -18,9 +18,12 @@
 #include "nsIAudioChannelAgent.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/AudioChannelBinding.h"
+#include "mozilla/dom/Promise.h"
 #include "mozilla/dom/TextTrackManager.h"
 #include "MediaDecoder.h"
+#ifdef MOZ_EME
 #include "mozilla/dom/MediaKeys.h"
+#endif
 
 // Something on Linux #defines None, which is an entry in the
 // MediaWaitingFor enum, so undef it here before including the binfing,
@@ -51,6 +54,7 @@ class MediaKeys;
 class TextTrack;
 class TimeRanges;
 class WakeLock;
+class MediaTrack;
 }
 }
 
@@ -67,8 +71,11 @@ namespace dom {
 class MediaError;
 class MediaSource;
 class TextTrackList;
+class AudioTrackList;
+class VideoTrackList;
 
 class HTMLMediaElement : public nsGenericHTMLElement,
+                         public nsIDOMHTMLMediaElement,
                          public nsIObserver,
                          public MediaDecoderOwner,
                          public nsIAudioChannelAgentCallback
@@ -86,8 +93,7 @@ public:
     return mCORSMode;
   }
 
-  HTMLMediaElement(already_AddRefed<nsINodeInfo>& aNodeInfo);
-  virtual ~HTMLMediaElement();
+  HTMLMediaElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
 
   /**
    * This is used when the browser is constructing a video element to play
@@ -148,10 +154,7 @@ public:
   // Called by the video decoder object, on the main thread,
   // when it has read the metadata containing video dimensions,
   // etc.
-  virtual void MetadataLoaded(int aChannels,
-                              int aRate,
-                              bool aHasAudio,
-                              bool aHasVideo,
+  virtual void MetadataLoaded(const MediaInfo* aInfo,
                               const MetadataTags* aTags) MOZ_FINAL MOZ_OVERRIDE;
 
   // Called by the video decoder object, on the main thread,
@@ -281,6 +284,8 @@ public:
    * whether it's appropriate to fire an error event.
    */
   void NotifyLoadError();
+
+  void NotifyMediaTrackEnabled(MediaTrack* aTrack);
 
   virtual bool IsNodeOfType(uint32_t aFlags) const MOZ_OVERRIDE;
 
@@ -519,6 +524,7 @@ public:
 
   // XPCOM MozPreservesPitch() is OK
 
+#ifdef MOZ_EME
   MediaKeys* GetMediaKeys() const;
 
   already_AddRefed<Promise> SetMediaKeys(MediaKeys* mediaKeys,
@@ -534,6 +540,7 @@ public:
 
 
   bool IsEventAttributeName(nsIAtom* aName) MOZ_OVERRIDE;
+#endif // MOZ_EME
 
   bool MozAutoplayEnabled() const
   {
@@ -560,6 +567,10 @@ public:
   }
 
   void SetMozAudioChannelType(AudioChannel aValue, ErrorResult& aRv);
+
+  AudioTrackList* AudioTracks();
+
+  VideoTrackList* VideoTracks();
 
   TextTrackList* TextTracks();
 
@@ -591,6 +602,8 @@ public:
   }
 
 protected:
+  virtual ~HTMLMediaElement();
+
   class MediaLoadListener;
   class StreamListener;
 
@@ -1068,8 +1081,10 @@ protected:
   // Range of time played.
   nsRefPtr<TimeRanges> mPlayed;
 
+#ifdef MOZ_EME
   // Encrypted Media Extension media keys.
   nsRefPtr<MediaKeys> mMediaKeys;
+#endif
 
   // Stores the time at the start of the current 'played' range.
   double mCurrentPlayRangeStart;
@@ -1104,7 +1119,8 @@ protected:
   enum MutedReasons {
     MUTED_BY_CONTENT               = 0x01,
     MUTED_BY_INVALID_PLAYBACK_RATE = 0x02,
-    MUTED_BY_AUDIO_CHANNEL         = 0x04
+    MUTED_BY_AUDIO_CHANNEL         = 0x04,
+    MUTED_BY_AUDIO_TRACK           = 0x08
   };
 
   uint32_t mMuted;
@@ -1208,10 +1224,19 @@ protected:
   // Is this media element playing?
   bool mPlayingThroughTheAudioChannel;
 
+  // Disable the video playback by track selection. This flag might not be
+  // enough if we ever expand the ability of supporting multi-tracks video
+  // playback.
+  bool mDisableVideo;
+
   // An agent used to join audio channel service.
   nsCOMPtr<nsIAudioChannelAgent> mAudioChannelAgent;
 
   nsRefPtr<TextTrackManager> mTextTrackManager;
+
+  nsRefPtr<AudioTrackList> mAudioTrackList;
+
+  nsRefPtr<VideoTrackList> mVideoTrackList;
 
   MediaWaitingFor mWaitingFor;
 };

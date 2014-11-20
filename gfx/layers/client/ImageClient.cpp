@@ -276,14 +276,12 @@ ImageClientSingle::UpdateImageInternal(ImageContainer* aContainer,
     if (!mFrontBuffer) {
       gfxImageFormat format
         = gfxPlatform::GetPlatform()->OptimalFormatForContent(gfx::ContentForFormat(surface->GetFormat()));
-      mFrontBuffer = CreateTextureClientForDrawing(gfx::ImageFormatToSurfaceFormat(format),
-                                                   mTextureFlags, gfx::BackendType::NONE, size);
-      MOZ_ASSERT(mFrontBuffer->CanExposeDrawTarget());
-      if (!mFrontBuffer->AllocateForSurface(size)) {
-        mFrontBuffer = nullptr;
+      mFrontBuffer = CreateTextureClientForDrawing(gfx::ImageFormatToSurfaceFormat(format), size,
+                                                   gfx::BackendType::NONE, mTextureFlags);
+      if (!mFrontBuffer) {
         return false;
       }
-
+      MOZ_ASSERT(mFrontBuffer->CanExposeDrawTarget());
       bufferCreated = true;
     }
 
@@ -294,7 +292,7 @@ ImageClientSingle::UpdateImageInternal(ImageContainer* aContainer,
 
     {
       // We must not keep a reference to the DrawTarget after it has been unlocked.
-      RefPtr<DrawTarget> dt = mFrontBuffer->GetAsDrawTarget();
+      DrawTarget* dt = mFrontBuffer->BorrowDrawTarget();
       MOZ_ASSERT(surface.get());
       dt->CopySurface(surface, IntRect(IntPoint(), surface->GetSize()), IntPoint());
     }

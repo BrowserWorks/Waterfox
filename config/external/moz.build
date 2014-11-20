@@ -35,6 +35,9 @@ if CONFIG['MOZ_VPX'] and not CONFIG['MOZ_NATIVE_LIBVPX']:
 
 if not CONFIG['MOZ_NATIVE_PNG']:
     external_dirs += ['media/libpng']
+	
+if CONFIG['OS_ARCH'] == 'Darwin':
+	external_dirs += ['media/gstreamer']
 
 external_dirs += [
     'media/kiss_fft',
@@ -44,7 +47,6 @@ external_dirs += [
     'media/libspeex_resampler',
     'media/libstagefright',
     'media/libsoundtouch',
-    'media/gstreamer',
 ]
 
 PARALLEL_DIRS += ['../../' + i for i in external_dirs]

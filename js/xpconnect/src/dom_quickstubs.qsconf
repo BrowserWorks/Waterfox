@@ -41,17 +41,7 @@ members = [
     'nsIDOMStorage.clear',
 
     # dom/interfaces/xpath
-    'nsIDOMXPathExpression.evaluate',
     'nsIDOMXPathNSResolver.lookupNamespaceURI',
-    'nsIDOMXPathResult.snapshotItem',
-    'nsIDOMXPathResult.iterateNext',
-    'nsIDOMXPathResult.snapshotLength',
-    'nsIDOMXPathResult.resultType',
-    'nsIDOMXPathResult.numberValue',
-    'nsIDOMXPathResult.stringValue',
-    'nsIDOMXPathResult.booleanValue',
-    'nsIDOMXPathResult.singleNodeValue',
-    'nsIDOMNSXPathExpression.evaluateWithContext',
 
     # layout/xul/base/public
     'nsIBoxObject.x',
@@ -61,13 +51,6 @@ members = [
     'nsIBoxObject.width',
     'nsIBoxObject.height',
 
-    # dom/indexedDB
-    'nsIIndexedDatabaseManager.*',
-
-    # dom/quota
-    'nsIQuotaManager.*',
-    'nsIQuotaRequest.*',
-    'nsIUsageCallback.*',
     ]
 
 # Most interfaces can be found by searching the includePath; to find
@@ -79,8 +62,6 @@ members = [
 irregularFilenames = {
     # stowaways
     'nsIDOMBlob': 'nsIDOMFile',
-    'nsIIndexedDatabaseUsageCallback': 'nsIIndexedDatabaseManager',
-    'nsITelephoneCallback': 'nsITelephone',
     }
 
 customIncludes = [

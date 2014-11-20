@@ -81,7 +81,6 @@ libc.declareLazy(LazyBindings, "strerror",
  */
 let OSError = function OSError(operation = "unknown operation",
                                errno = ctypes.errno, path = "") {
-  operation = operation;
   SharedAll.OSError.call(this, operation, path);
   this.unixErrno = errno;
 };
@@ -91,6 +90,9 @@ OSError.prototype.toString = function toString() {
     " during operation " + this.operation +
     (this.path? " on file " + this.path : "") +
     " (" + LazyBindings.strerror(this.unixErrno).readString() + ")";
+};
+OSError.prototype.toMsg = function toMsg() {
+  return OSError.toMsg(this);
 };
 
 /**
@@ -155,6 +157,10 @@ Object.defineProperty(OSError.prototype, "becauseInvalidArgument", {
  */
 OSError.toMsg = function toMsg(error) {
   return {
+    exn: "OS.File.Error",
+    fileName: error.moduleName,
+    lineNumber: error.lineNumber,
+    stack: error.moduleStack,
     operation: error.operation,
     unixErrno: error.unixErrno,
     path: error.path
@@ -165,7 +171,11 @@ OSError.toMsg = function toMsg(error) {
  * Deserialize a message back to an instance of OSError
  */
 OSError.fromMsg = function fromMsg(msg) {
-  return new OSError(msg.operation, msg.unixErrno, msg.path);
+  let error = new OSError(msg.operation, msg.unixErrno, msg.path);
+  error.stack = msg.stack;
+  error.fileName = msg.fileName;
+  error.lineNumber = msg.lineNumber;
+  return error;
 };
 exports.Error = OSError;
 

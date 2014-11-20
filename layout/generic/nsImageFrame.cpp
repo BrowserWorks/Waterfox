@@ -216,7 +216,33 @@ nsImageFrame::DestroyFrom(nsIFrame* aDestructRoot)
   nsSplittableFrame::DestroyFrom(aDestructRoot);
 }
 
+void
+nsImageFrame::DidSetStyleContext(nsStyleContext* aOldStyleContext)
+{
+  ImageFrameSuper::DidSetStyleContext(aOldStyleContext);
 
+  if (!mImage) {
+    // We'll pick this change up whenever we do get an image.
+    return;
+  }
+
+  nsStyleImageOrientation newOrientation = StyleVisibility()->mImageOrientation;
+
+  // We need to update our orientation either if we had no style context before
+  // because this is the first time it's been set, or if the image-orientation
+  // property changed from its previous value.
+  bool shouldUpdateOrientation =
+    !aOldStyleContext ||
+    aOldStyleContext->StyleVisibility()->mImageOrientation != newOrientation;
+
+  if (shouldUpdateOrientation) {
+    nsCOMPtr<imgIContainer> image(mImage->Unwrap());
+    mImage = nsLayoutUtils::OrientImage(image, newOrientation);
+
+    UpdateIntrinsicSize(mImage);
+    UpdateIntrinsicRatio(mImage);
+  }
+}
 
 void
 nsImageFrame::Init(nsIContent*       aContent,
@@ -604,16 +630,19 @@ nsImageFrame::OnDataAvailable(imgIRequest *aRequest,
     return NS_OK;
   }
 
+  nsIntRect rect = mImage ? mImage->GetImageSpaceInvalidationRect(*aRect)
+                          : *aRect;
+
 #ifdef DEBUG_decode
   printf("Source rect (%d,%d,%d,%d)\n",
          aRect->x, aRect->y, aRect->width, aRect->height);
 #endif
 
-  if (aRect->IsEqualInterior(nsIntRect::GetMaxSizedIntRect())) {
+  if (rect.IsEqualInterior(nsIntRect::GetMaxSizedIntRect())) {
     InvalidateFrame(nsDisplayItem::TYPE_IMAGE);
     InvalidateFrame(nsDisplayItem::TYPE_ALT_FEEDBACK);
   } else {
-    nsRect invalid = SourceRectToDest(*aRect);
+    nsRect invalid = SourceRectToDest(rect);
     InvalidateFrameWithRect(invalid, nsDisplayItem::TYPE_IMAGE);
     InvalidateFrameWithRect(invalid, nsDisplayItem::TYPE_ALT_FEEDBACK);
   }
@@ -1196,7 +1225,7 @@ nsImageFrame::DisplayAltFeedback(nsRenderingContext& aRenderingContext,
       nsRect dest((vis->mDirection == NS_STYLE_DIRECTION_RTL) ?
                   inner.XMost() - size : inner.x,
                   inner.y, size, size);
-      nsLayoutUtils::DrawSingleImage(&aRenderingContext, imgCon,
+      nsLayoutUtils::DrawSingleImage(&aRenderingContext, PresContext(), imgCon,
         nsLayoutUtils::GetGraphicsFilterForFrame(this), dest, aDirtyRect,
         nullptr, imgIContainer::FLAG_NONE);
       iconUsed = true;
@@ -1411,7 +1440,7 @@ nsImageFrame::PaintImage(nsRenderingContext& aRenderingContext, nsPoint aPt,
   nsRect dest(inner.TopLeft(), mComputedSize);
   dest.y -= GetContinuationOffset();
 
-  nsLayoutUtils::DrawSingleImage(&aRenderingContext, aImage,
+  nsLayoutUtils::DrawSingleImage(&aRenderingContext, PresContext(), aImage,
     nsLayoutUtils::GetGraphicsFilterForFrame(this), dest, aDirtyRect,
     nullptr, aFlags);
 
@@ -1807,19 +1836,19 @@ nsImageFrame::List(FILE* out, const char* aPrefix, uint32_t aFlags) const
 }
 #endif
 
-int
+nsIFrame::LogicalSides
 nsImageFrame::GetLogicalSkipSides(const nsHTMLReflowState* aReflowState) const
 {
   if (MOZ_UNLIKELY(StyleBorder()->mBoxDecorationBreak ==
                      NS_STYLE_BOX_DECORATION_BREAK_CLONE)) {
-    return 0;
+    return LogicalSides();
   }
-  int skip = 0;
+  LogicalSides skip;
   if (nullptr != GetPrevInFlow()) {
-    skip |= LOGICAL_SIDE_B_START;
+    skip |= eLogicalSideBitsBStart;
   }
   if (nullptr != GetNextInFlow()) {
-    skip |= LOGICAL_SIDE_B_END;
+    skip |= eLogicalSideBitsBEnd;
   }
   return skip;
 }

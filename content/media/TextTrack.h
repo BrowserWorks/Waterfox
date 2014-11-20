@@ -120,6 +120,8 @@ public:
   }
 
 private:
+  ~TextTrack();
+
   nsRefPtr<TextTrackList> mTextTrackList;
 
   TextTrackKind mKind;

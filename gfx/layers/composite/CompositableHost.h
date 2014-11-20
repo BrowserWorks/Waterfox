@@ -17,6 +17,7 @@
 #include "mozilla/gfx/Types.h"          // for Filter
 #include "mozilla/ipc/ProtocolUtils.h"
 #include "mozilla/layers/CompositorTypes.h"  // for TextureInfo, etc
+#include "mozilla/layers/Effects.h"     // for Texture Effect
 #include "mozilla/layers/LayersTypes.h"  // for LayerRenderState, etc
 #include "mozilla/layers/TextureHost.h" // for TextureHost
 #include "mozilla/mozalloc.h"           // for operator delete
@@ -250,15 +251,15 @@ public:
   bool IsAttached() { return mAttached; }
 
 #ifdef MOZ_DUMP_PAINTING
-  virtual void Dump(FILE* aFile=nullptr,
+  virtual void Dump(std::stringstream& aStream,
                     const char* aPrefix="",
                     bool aDumpHtml=false) { }
-  static void DumpTextureHost(FILE* aFile, TextureHost* aTexture);
+  static void DumpTextureHost(std::stringstream& aStream, TextureHost* aTexture);
 
   virtual TemporaryRef<gfx::DataSourceSurface> GetAsSurface() { return nullptr; }
 #endif
 
-  virtual void PrintInfo(nsACString& aTo, const char* aPrefix) = 0;
+  virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix) = 0;
 
   virtual void UseTextureHost(TextureHost* aTexture);
   virtual void UseComponentAlphaTextures(TextureHost* aTextureOnBlack,
@@ -289,6 +290,14 @@ public:
 
   void SetAsyncID(uint64_t aID) { mAsyncID = aID; }
 
+  virtual bool Lock() { return false; }
+
+  virtual void Unlock() { }
+
+  virtual TemporaryRef<TexturedEffect> GenEffect(const gfx::Filter& aFilter) {
+    return nullptr;
+  }
+
 protected:
   TextureInfo mTextureInfo;
   uint64_t mAsyncID;
@@ -299,6 +308,29 @@ protected:
   uint32_t mFlashCounter; // used when the pref "layers.flash-borders" is true.
   bool mAttached;
   bool mKeepAttached;
+};
+
+class AutoLockCompositableHost MOZ_FINAL
+{
+public:
+  AutoLockCompositableHost(CompositableHost* aHost)
+    : mHost(aHost)
+  {
+    mSucceeded = mHost->Lock();
+  }
+
+  ~AutoLockCompositableHost()
+  {
+    if (mSucceeded) {
+      mHost->Unlock();
+    }
+  }
+
+  bool Failed() const { return !mSucceeded; }
+
+private:
+  RefPtr<CompositableHost> mHost;
+  bool mSucceeded;
 };
 
 /**

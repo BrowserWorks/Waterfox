@@ -69,21 +69,30 @@ public:
 
   virtual LayerRenderState GetRenderState() MOZ_OVERRIDE;
 
-  virtual void PrintInfo(nsACString& aTo, const char* aPrefix);
+  virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix);
 
 #ifdef MOZ_DUMP_PAINTING
-  virtual void Dump(FILE* aFile = nullptr,
+  virtual void Dump(std::stringstream& aStream,
                     const char* aPrefix = "",
                     bool aDumpHtml = false) MOZ_OVERRIDE;
 
   virtual TemporaryRef<gfx::DataSourceSurface> GetAsSurface() MOZ_OVERRIDE;
 #endif
 
+  virtual bool Lock() MOZ_OVERRIDE;
+
+  virtual void Unlock() MOZ_OVERRIDE;
+
+  virtual TemporaryRef<NewTextureSource> GetTextureSource();
+
+  virtual TemporaryRef<TexturedEffect> GenEffect(const gfx::Filter& aFilter) MOZ_OVERRIDE;
+
 protected:
 
   RefPtr<TextureHost> mFrontBuffer;
   nsIntRect mPictureRect;
   bool mHasPictureRect;
+  bool mLocked;
 };
 
 }

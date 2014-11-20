@@ -16,6 +16,7 @@
 #include "vm/ArrayObject.h"
 #include "vm/Debugger.h"
 #include "vm/Interpreter.h"
+#include "vm/TraceLogging.h"
 
 #include "jsinferinlines.h"
 
@@ -185,7 +186,7 @@ DefVarOrConst(JSContext *cx, HandlePropertyName dn, unsigned attrs, HandleObject
 {
     // Given the ScopeChain, extract the VarObj.
     RootedObject obj(cx, scopeChain);
-    while (!obj->isVarObj())
+    while (!obj->isQualifiedVarObj())
         obj = obj->enclosingScope();
 
     return DefVarOrConstOperation(cx, obj, dn, attrs);
@@ -196,7 +197,7 @@ SetConst(JSContext *cx, HandlePropertyName name, HandleObject scopeChain, Handle
 {
     // Given the ScopeChain, extract the VarObj.
     RootedObject obj(cx, scopeChain);
-    while (!obj->isVarObj())
+    while (!obj->isQualifiedVarObj())
         obj = obj->enclosingScope();
 
     return SetConstOperation(cx, obj, name, rval);
@@ -474,7 +475,7 @@ StringFromCharCode(JSContext *cx, int32_t code)
     if (StaticStrings::hasUnit(c))
         return cx->staticStrings().getUnit(c);
 
-    return js_NewStringCopyN<CanGC>(cx, &c, 1);
+    return NewStringCopyN<CanGC>(cx, &c, 1);
 }
 
 bool
@@ -684,19 +685,20 @@ GetDynamicName(JSContext *cx, JSObject *scopeChain, JSString *str, Value *vp)
 bool
 FilterArgumentsOrEval(JSContext *cx, JSString *str)
 {
-    // getChars() is fallible, but cannot GC: it can only allocate a character
-    // for the flattened string. If this call fails then the calling Ion code
-    // will bailout, resume in the interpreter and likely fail again when
-    // trying to flatten the string and unwind the stack.
-    const jschar *chars = str->getChars(cx);
-    if (!chars)
+    // ensureLinear() is fallible, but cannot GC: it can only allocate a
+    // character buffer for the flattened string. If this call fails then the
+    // calling Ion code will bailout, resume in Baseline and likely fail again
+    // when trying to flatten the string and unwind the stack.
+    JS::AutoCheckCannotGC nogc;
+    JSLinearString *linear = str->ensureLinear(cx);
+    if (!linear)
         return false;
 
     static const jschar arguments[] = {'a', 'r', 'g', 'u', 'm', 'e', 'n', 't', 's'};
     static const jschar eval[] = {'e', 'v', 'a', 'l'};
 
-    return !StringHasPattern(chars, str->length(), arguments, mozilla::ArrayLength(arguments)) &&
-        !StringHasPattern(chars, str->length(), eval, mozilla::ArrayLength(eval));
+    return !StringHasPattern(linear, arguments, mozilla::ArrayLength(arguments)) &&
+        !StringHasPattern(linear, eval, mozilla::ArrayLength(eval));
 }
 
 #ifdef JSGC_GENERATIONAL
@@ -760,6 +762,21 @@ DebugPrologue(JSContext *cx, BaselineFrame *frame, jsbytecode *pc, bool *mustRet
       default:
         MOZ_ASSUME_UNREACHABLE("Invalid trap status");
     }
+}
+
+bool
+DebugEpilogueOnBaselineReturn(JSContext *cx, BaselineFrame *frame, jsbytecode *pc)
+{
+    if (!DebugEpilogue(cx, frame, pc, true)) {
+        // DebugEpilogue popped the frame by updating jitTop, so run the stop event
+        // here before we enter the exception handler.
+        TraceLogger *logger = TraceLoggerForMainThread(cx->runtime());
+        TraceLogStopEvent(logger, TraceLogger::Baseline);
+        TraceLogStopEvent(logger); // Leave script.
+        return false;
+    }
+
+    return true;
 }
 
 bool
@@ -871,14 +888,9 @@ HandleDebugTrap(JSContext *cx, BaselineFrame *frame, uint8_t *retAddr, bool *mus
 
     RootedValue rval(cx);
     JSTrapStatus status = JSTRAP_CONTINUE;
-    JSInterruptHook hook = cx->runtime()->debugHooks.interruptHook;
 
-    if (hook || script->stepModeEnabled()) {
-        if (hook)
-            status = hook(cx, script, pc, rval.address(), cx->runtime()->debugHooks.interruptHookData);
-        if (status == JSTRAP_CONTINUE && script->stepModeEnabled())
-            status = Debugger::onSingleStep(cx, &rval);
-    }
+    if (script->stepModeEnabled())
+        status = Debugger::onSingleStep(cx, &rval);
 
     if (status == JSTRAP_CONTINUE && script->hasBreakpointsAt(pc))
         status = Debugger::onTrap(cx, &rval);
@@ -1142,16 +1154,33 @@ AssertValidStringPtr(JSContext *cx, JSString *str)
 }
 
 void
+AssertValidSymbolPtr(JSContext *cx, JS::Symbol *sym)
+{
+    // We can't closely inspect symbols from another runtime.
+    if (sym->runtimeFromAnyThread() != cx->runtime())
+        return;
+
+    JS_ASSERT(cx->runtime()->isAtomsZone(sym->tenuredZone()));
+
+    JS_ASSERT(sym->runtimeFromMainThread() == cx->runtime());
+    JS_ASSERT(sym->isAligned());
+    if (JSString *desc = sym->description()) {
+        JS_ASSERT(desc->isAtom());
+        AssertValidStringPtr(cx, desc);
+    }
+
+    JS_ASSERT(sym->tenuredGetAllocKind() == gc::FINALIZE_SYMBOL);
+}
+
+void
 AssertValidValue(JSContext *cx, Value *v)
 {
-    if (v->isObject()) {
+    if (v->isObject())
         AssertValidObjectPtr(cx, &v->toObject());
-        return;
-    }
-    if (v->isString()) {
+    else if (v->isString())
         AssertValidStringPtr(cx, v->toString());
-        return;
-    }
+    else if (v->isSymbol())
+        AssertValidSymbolPtr(cx, v->toSymbol());
 }
 #endif
 

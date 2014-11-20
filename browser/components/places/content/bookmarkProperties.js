@@ -1,4 +1,4 @@
-/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -467,7 +467,6 @@ var BookmarkPropertiesPanel = {
     // The order here is important! We have to uninit the panel first, otherwise
     // late changes could force it to commit more transactions.
     gEditItemOverlay.uninitPanel(true);
-    gEditItemOverlay = null;
     this._endBatch();
     window.arguments[0].performed = true;
   },
@@ -477,7 +476,6 @@ var BookmarkPropertiesPanel = {
     // changes done as part of Undo may change the panel contents and by
     // that force it to commit more transactions.
     gEditItemOverlay.uninitPanel(true);
-    gEditItemOverlay = null;
     this._endBatch();
     PlacesUtils.transactionManager.undoTransaction();
     window.arguments[0].performed = false;

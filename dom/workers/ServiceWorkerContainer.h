@@ -29,15 +29,15 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(ServiceWorkerContainer, DOMEventTargetHelper)
 
   IMPL_EVENT_HANDLER(updatefound)
-  IMPL_EVENT_HANDLER(currentchange)
+  IMPL_EVENT_HANDLER(controllerchange)
   IMPL_EVENT_HANDLER(reloadpage)
   IMPL_EVENT_HANDLER(error)
 
   explicit ServiceWorkerContainer(nsPIDOMWindow* aWindow)
     : mWindow(aWindow)
   {
-    // FIXME(nsm): Bug 983497. Here the NSW should hook into SWM to be notified of events.
     SetIsDOMBinding();
+    StartListeningForEvents();
   }
 
   nsPIDOMWindow*
@@ -64,17 +64,30 @@ public:
   GetWaiting();
 
   already_AddRefed<ServiceWorker>
-  GetCurrent();
+  GetActive();
+
+  already_AddRefed<ServiceWorker>
+  GetController();
 
   already_AddRefed<Promise>
   GetAll(ErrorResult& aRv);
 
   already_AddRefed<Promise>
-  WhenReady(ErrorResult& aRv);
+  GetReady(ErrorResult& aRv);
+
+  nsIURI*
+  GetDocumentURI() const
+  {
+    return mWindow->GetDocumentURI();
+  }
 
   // Testing only.
   already_AddRefed<Promise>
   ClearAllServiceWorkerData(ErrorResult& aRv);
+
+  // Testing only.
+  void
+  GetScopeForUrl(const nsAString& aUrl, nsString& aScope, ErrorResult& aRv);
 
   // Testing only.
   void
@@ -84,8 +97,14 @@ public:
 private:
   ~ServiceWorkerContainer()
   {
-    // FIXME(nsm): Bug 983497. Unhook from events.
+    StopListeningForEvents();
   }
+
+  void
+  StartListeningForEvents();
+
+  void
+  StopListeningForEvents();
 
   nsCOMPtr<nsPIDOMWindow> mWindow;
 };

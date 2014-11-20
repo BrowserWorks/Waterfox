@@ -12,7 +12,6 @@
 #include "mozilla/dom/BluetoothAdapter2Binding.h"
 #include "mozilla/dom/Promise.h"
 #include "BluetoothCommon.h"
-#include "BluetoothPropertyContainer.h"
 #include "nsCOMPtr.h"
 
 namespace mozilla {
@@ -26,13 +25,13 @@ struct MediaPlayStatus;
 BEGIN_BLUETOOTH_NAMESPACE
 
 class BluetoothDevice;
+class BluetoothDiscoveryHandle;
 class BluetoothSignal;
 class BluetoothNamedValue;
 class BluetoothValue;
 
 class BluetoothAdapter : public DOMEventTargetHelper
                        , public BluetoothSignalObserver
-                       , public BluetoothPropertyContainer
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
@@ -46,7 +45,7 @@ public:
   void Notify(const BluetoothSignal& aParam);
 
   void Unroot();
-  virtual void SetPropertyByValue(const BluetoothNamedValue& aValue) MOZ_OVERRIDE;
+  void SetPropertyByValue(const BluetoothNamedValue& aValue);
 
   virtual void DisconnectFromOwner() MOZ_OVERRIDE;
 
@@ -95,15 +94,22 @@ public:
   void GetUuids(JSContext* aContext, JS::MutableHandle<JS::Value> aUuids,
                 ErrorResult& aRv);
 
-  already_AddRefed<mozilla::dom::DOMRequest>
-    SetName(const nsAString& aName, ErrorResult& aRv);
+  /**
+   * Update this adapter's discovery handle in use (mDiscoveryHandleInUse).
+   *
+   * |mDiscoveryHandleInUse| is set to the latest discovery handle when adapter
+   * just starts discovery, and is reset to nullptr when discovery is stopped
+   * by some adapter.
+   *
+   * @param aDiscoveryHandle [in] the discovery handle to set.
+   */
+  void SetDiscoveryHandleInUse(BluetoothDiscoveryHandle* aDiscoveryHandle);
 
-  already_AddRefed<DOMRequest>
+  already_AddRefed<Promise> SetName(const nsAString& aName, ErrorResult& aRv);
+  already_AddRefed<Promise>
     SetDiscoverable(bool aDiscoverable, ErrorResult& aRv);
-  already_AddRefed<DOMRequest>
-    SetDiscoverableTimeout(uint32_t aTimeout, ErrorResult& aRv);
-  already_AddRefed<DOMRequest> StartDiscovery(ErrorResult& aRv);
-  already_AddRefed<DOMRequest> StopDiscovery(ErrorResult& aRv);
+  already_AddRefed<Promise> StartDiscovery(ErrorResult& aRv);
+  already_AddRefed<Promise> StopDiscovery(ErrorResult& aRv);
 
   already_AddRefed<DOMRequest>
     Pair(const nsAString& aDeviceAddress, ErrorResult& aRv);
@@ -124,9 +130,9 @@ public:
     SetAuthorization(const nsAString& aDeviceAddress, bool aAllow,
                      ErrorResult& aRv);
 
-  already_AddRefed<Promise> EnableDisable(bool aEnable);
-  already_AddRefed<Promise> Enable();
-  already_AddRefed<Promise> Disable();
+  already_AddRefed<Promise> EnableDisable(bool aEnable, ErrorResult& aRv);
+  already_AddRefed<Promise> Enable(ErrorResult& aRv);
+  already_AddRefed<Promise> Disable(ErrorResult& aRv);
 
   already_AddRefed<DOMRequest>
     Connect(BluetoothDevice& aDevice,
@@ -183,12 +189,19 @@ private:
   void Root();
 
   already_AddRefed<mozilla::dom::DOMRequest>
-    StartStopDiscovery(bool aStart, ErrorResult& aRv);
-  already_AddRefed<mozilla::dom::DOMRequest>
     PairUnpair(bool aPair, const nsAString& aDeviceAddress, ErrorResult& aRv);
+
+  bool IsAdapterAttributeChanged(BluetoothAdapterAttribute aType,
+                                 const BluetoothValue& aValue);
+  void HandleAdapterStateChanged();
+  void HandlePropertyChanged(const BluetoothValue& aValue);
+  void DispatchAttributeEvent(const nsTArray<nsString>& aTypes);
+  BluetoothAdapterAttribute
+    ConvertStringToAdapterAttribute(const nsAString& aString);
 
   JS::Heap<JSObject*> mJsUuids;
   JS::Heap<JSObject*> mJsDeviceAddresses;
+  nsRefPtr<BluetoothDiscoveryHandle> mDiscoveryHandleInUse;
   BluetoothAdapterState mState;
   nsString mAddress;
   nsString mName;

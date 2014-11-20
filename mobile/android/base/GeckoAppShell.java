@@ -8,18 +8,17 @@ package org.mozilla.gecko;
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.URLConnection;
-import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -44,10 +43,10 @@ import org.mozilla.gecko.mozglue.RobocopTarget;
 import org.mozilla.gecko.mozglue.generatorannotations.OptionalGeneratedParameter;
 import org.mozilla.gecko.mozglue.generatorannotations.WrapElementForJNI;
 import org.mozilla.gecko.prompts.PromptService;
-import org.mozilla.gecko.util.GeckoEventListener;
 import org.mozilla.gecko.util.HardwareUtils;
 import org.mozilla.gecko.util.NativeJSContainer;
 import org.mozilla.gecko.util.ProxySelector;
+import org.mozilla.gecko.util.StringUtils;
 import org.mozilla.gecko.util.ThreadUtils;
 import org.mozilla.gecko.webapp.Allocator;
 
@@ -123,6 +122,7 @@ public class GeckoAppShell
     // We have static members only.
     private GeckoAppShell() { }
 
+    private static Thread.UncaughtExceptionHandler systemUncaughtHandler;
     private static boolean restartScheduled = false;
     private static GeckoEditableListener editableListener = null;
 
@@ -205,6 +205,8 @@ public class GeckoAppShell
     public static native void dispatchMemoryPressure();
 
     public static void registerGlobalExceptionHandler() {
+        systemUncaughtHandler = Thread.getDefaultUncaughtExceptionHandler();
+
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(Thread thread, Throwable e) {
@@ -452,8 +454,19 @@ public class GeckoAppShell
                 editor.putBoolean(GeckoApp.PREFS_OOM_EXCEPTION, true);
                 editor.commit();
             }
-        } finally {
+        } catch (final Throwable exc) {
+            // Report the Java crash below, even if we encounter an exception here.
+        }
+
+        try {
             reportJavaCrash(getStackTraceString(e));
+        } finally {
+            // reportJavaCrash should have caused us to hard crash. If we're still here,
+            // it probably means Gecko is not loaded, and we should do something else.
+            // Bring up the app crashed dialog so we don't crash silently.
+            if (systemUncaughtHandler != null) {
+                systemUncaughtHandler.uncaughtException(thread, e);
+            }
         }
     }
 
@@ -718,9 +731,6 @@ public class GeckoAppShell
 
     @WrapElementForJNI
     public static void startMonitoringGamepad() {
-        if (Build.VERSION.SDK_INT < 9) {
-            return;
-        }
         ThreadUtils.postToUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -731,10 +741,6 @@ public class GeckoAppShell
 
     @WrapElementForJNI
     public static void stopMonitoringGamepad() {
-        if (Build.VERSION.SDK_INT < 9) {
-            return;
-        }
-
         ThreadUtils.postToUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -793,41 +799,19 @@ public class GeckoAppShell
     public static Intent getWebappIntent(String aURI, String aOrigin, String aTitle, Bitmap aIcon) {
         Intent intent;
 
-        if (AppConstants.MOZ_ANDROID_SYNTHAPKS) {
-            Allocator slots = Allocator.getInstance(getContext());
-            int index = slots.getIndexForOrigin(aOrigin);
+        Allocator slots = Allocator.getInstance(getContext());
+        int index = slots.getIndexForOrigin(aOrigin);
 
-            if (index == -1) {
-                return null;
-            }
-            String packageName = slots.getAppForIndex(index);
-            intent = getContext().getPackageManager().getLaunchIntentForPackage(packageName);
-            if (aURI != null) {
-                intent.setData(Uri.parse(aURI));
-            }
-        } else {
-            int index;
-            if (aIcon != null && !TextUtils.isEmpty(aTitle))
-                index = WebappAllocator.getInstance(getContext()).findAndAllocateIndex(aOrigin, aTitle, aIcon);
-            else
-                index = WebappAllocator.getInstance(getContext()).getIndexForApp(aOrigin);
-
-            if (index == -1)
-                return null;
-
-            intent = getWebappIntent(index, aURI);
+        if (index == -1) {
+            return null;
         }
 
-        return intent;
-    }
+        String packageName = slots.getAppForIndex(index);
+        intent = getContext().getPackageManager().getLaunchIntentForPackage(packageName);
+        if (aURI != null) {
+            intent.setData(Uri.parse(aURI));
+        }
 
-    // The old implementation of getWebappIntent.  Not used by MOZ_ANDROID_SYNTHAPKS.
-    public static Intent getWebappIntent(int aIndex, String aURI) {
-        Intent intent = new Intent();
-        intent.setAction(GeckoApp.ACTION_WEBAPP_PREFIX + aIndex);
-        intent.setData(Uri.parse(aURI));
-        intent.setClassName(AppConstants.ANDROID_PACKAGE_NAME,
-                            AppConstants.ANDROID_PACKAGE_NAME + ".WebApps$WebApp" + aIndex);
         return intent;
     }
 
@@ -880,7 +864,7 @@ public class GeckoAppShell
             shortcutIntent = getWebappIntent(aURI, aUniqueURI, aTitle, aIcon);
         } else {
             shortcutIntent = new Intent();
-            shortcutIntent.setAction(GeckoApp.ACTION_BOOKMARK);
+            shortcutIntent.setAction(GeckoApp.ACTION_HOMESCREEN_SHORTCUT);
             shortcutIntent.setData(Uri.parse(aURI));
             shortcutIntent.setClassName(AppConstants.ANDROID_PACKAGE_NAME,
                                         AppConstants.BROWSER_INTENT_CLASS_NAME);
@@ -919,7 +903,7 @@ public class GeckoAppShell
                         return;
                 } else {
                     shortcutIntent = new Intent();
-                    shortcutIntent.setAction(GeckoApp.ACTION_BOOKMARK);
+                    shortcutIntent.setAction(GeckoApp.ACTION_HOMESCREEN_SHORTCUT);
                     shortcutIntent.setClassName(AppConstants.ANDROID_PACKAGE_NAME,
                                                 AppConstants.BROWSER_INTENT_CLASS_NAME);
                     shortcutIntent.setData(Uri.parse(aURI));
@@ -1030,27 +1014,37 @@ public class GeckoAppShell
     }
 
     static boolean hasHandlersForIntent(Intent intent) {
-        PackageManager pm = getContext().getPackageManager();
-        List<ResolveInfo> list = pm.queryIntentActivities(intent, 0);
-        return !list.isEmpty();
+        try {
+            PackageManager pm = getContext().getPackageManager();
+            List<ResolveInfo> list = pm.queryIntentActivities(intent, 0);
+            return !list.isEmpty();
+        } catch (Exception ex) {
+            Log.e(LOGTAG, "Exception in GeckoAppShell.hasHandlersForIntent");
+            return false;
+        }
     }
 
     static String[] getHandlersForIntent(Intent intent) {
-        PackageManager pm = getContext().getPackageManager();
-        List<ResolveInfo> list = pm.queryIntentActivities(intent, 0);
-        int numAttr = 4;
-        String[] ret = new String[list.size() * numAttr];
-        for (int i = 0; i < list.size(); i++) {
-            ResolveInfo resolveInfo = list.get(i);
-            ret[i * numAttr] = resolveInfo.loadLabel(pm).toString();
-            if (resolveInfo.isDefault)
-                ret[i * numAttr + 1] = "default";
-            else
-                ret[i * numAttr + 1] = "";
-            ret[i * numAttr + 2] = resolveInfo.activityInfo.applicationInfo.packageName;
-            ret[i * numAttr + 3] = resolveInfo.activityInfo.name;
+        try {
+            PackageManager pm = getContext().getPackageManager();
+            List<ResolveInfo> list = pm.queryIntentActivities(intent, 0);
+            int numAttr = 4;
+            String[] ret = new String[list.size() * numAttr];
+            for (int i = 0; i < list.size(); i++) {
+                ResolveInfo resolveInfo = list.get(i);
+                ret[i * numAttr] = resolveInfo.loadLabel(pm).toString();
+                if (resolveInfo.isDefault)
+                    ret[i * numAttr + 1] = "default";
+                else
+                    ret[i * numAttr + 1] = "";
+                ret[i * numAttr + 2] = resolveInfo.activityInfo.applicationInfo.packageName;
+                ret[i * numAttr + 3] = resolveInfo.activityInfo.name;
+            }
+            return ret;
+        } catch (Exception ex) {
+            Log.e(LOGTAG, "Exception in GeckoAppShell.getHandlersForIntent");
+            return new String[0];
         }
-        return ret;
     }
 
     static Intent getIntentForActionString(String aAction) {
@@ -2235,17 +2229,12 @@ public class GeckoAppShell
         int[] result = new int[4];
         result[0] = 0;
 
-        if (Build.VERSION.SDK_INT >= 9) {
-            if (android.hardware.Camera.getNumberOfCameras() == 0)
-                return result;
+        if (android.hardware.Camera.getNumberOfCameras() == 0) {
+            return result;
         }
 
         try {
-            // no front/back camera before API level 9
-            if (Build.VERSION.SDK_INT >= 9)
-                sCamera = android.hardware.Camera.open(aCamera);
-            else
-                sCamera = android.hardware.Camera.open();
+            sCamera = android.hardware.Camera.open(aCamera);
 
             android.hardware.Camera.Parameters params = sCamera.getParameters();
             params.setPreviewFormat(ImageFormat.NV21);
@@ -2477,113 +2466,15 @@ public class GeckoAppShell
         GeckoNetworkManager.getInstance().disableNotifications();
     }
 
-    // values taken from android's Base64
-    public static final int BASE64_DEFAULT = 0;
-    public static final int BASE64_URL_SAFE = 8;
-
-    /**
-     * taken from http://www.source-code.biz/base64coder/java/Base64Coder.java.txt and modified (MIT License)
-     */
-    // Mapping table from 6-bit nibbles to Base64 characters.
-    private static final byte[] map1 = new byte[64];
-    private static final byte[] map1_urlsafe;
-    static {
-      int i=0;
-      for (byte c='A'; c<='Z'; c++) map1[i++] = c;
-      for (byte c='a'; c<='z'; c++) map1[i++] = c;
-      for (byte c='0'; c<='9'; c++) map1[i++] = c;
-      map1[i++] = '+'; map1[i++] = '/';
-      map1_urlsafe = map1.clone();
-      map1_urlsafe[62] = '-'; map1_urlsafe[63] = '_'; 
-    }
-
-    // Mapping table from Base64 characters to 6-bit nibbles.
-    private static final byte[] map2 = new byte[128];
-    static {
-        for (int i=0; i<map2.length; i++) map2[i] = -1;
-        for (int i=0; i<64; i++) map2[map1[i]] = (byte)i;
-        map2['-'] = (byte)62; map2['_'] = (byte)63;
-    }
-
-    final static byte EQUALS_ASCII = (byte) '=';
-
-    /**
-     * Encodes a byte array into Base64 format.
-     * No blanks or line breaks are inserted in the output.
-     * @param in    An array containing the data bytes to be encoded.
-     * @return      A character array containing the Base64 encoded data.
-     */
-    public static byte[] encodeBase64(byte[] in, int flags) {
-        if (Build.VERSION.SDK_INT >=Build.VERSION_CODES.FROYO)
-            return Base64.encode(in, flags | Base64.NO_WRAP);
-        int oDataLen = (in.length*4+2)/3;       // output length without padding
-        int oLen = ((in.length+2)/3)*4;         // output length including padding
-        byte[] out = new byte[oLen];
-        int ip = 0;
-        int iEnd = in.length;
-        int op = 0;
-        byte[] toMap = ((flags & BASE64_URL_SAFE) == 0 ? map1 : map1_urlsafe);
-        while (ip < iEnd) {
-            int i0 = in[ip++] & 0xff;
-            int i1 = ip < iEnd ? in[ip++] & 0xff : 0;
-            int i2 = ip < iEnd ? in[ip++] & 0xff : 0;
-            int o0 = i0 >>> 2;
-            int o1 = ((i0 &   3) << 4) | (i1 >>> 4);
-            int o2 = ((i1 & 0xf) << 2) | (i2 >>> 6);
-            int o3 = i2 & 0x3F;
-            out[op++] = toMap[o0];
-            out[op++] = toMap[o1];
-            out[op] = op < oDataLen ? toMap[o2] : EQUALS_ASCII; op++;
-            out[op] = op < oDataLen ? toMap[o3] : EQUALS_ASCII; op++;
-        }
-        return out; 
-    }
-
     /**
      * Decodes a byte array from Base64 format.
      * No blanks or line breaks are allowed within the Base64 encoded input data.
-     * @param in    A character array containing the Base64 encoded data.
-     * @param iOff  Offset of the first character in <code>in</code> to be processed.
-     * @param iLen  Number of characters to process in <code>in</code>, starting at <code>iOff</code>.
+     * @param s     A string containing the Base64 encoded data.
      * @return      An array containing the decoded data bytes.
      * @throws      IllegalArgumentException If the input is not valid Base64 encoded data.
      */
-    public static byte[] decodeBase64(byte[] in, int flags) {
-        if (Build.VERSION.SDK_INT >=Build.VERSION_CODES.FROYO)
-            return Base64.decode(in, flags);
-        int iOff = 0;
-        int iLen = in.length;
-        if (iLen%4 != 0) throw new IllegalArgumentException ("Length of Base64 encoded input string is not a multiple of 4.");
-        while (iLen > 0 && in[iOff+iLen-1] == '=') iLen--;
-        int oLen = (iLen*3) / 4;
-        byte[] out = new byte[oLen];
-        int ip = iOff;
-        int iEnd = iOff + iLen;
-        int op = 0;
-        while (ip < iEnd) {
-            int i0 = in[ip++];
-            int i1 = in[ip++];
-            int i2 = ip < iEnd ? in[ip++] : 'A';
-            int i3 = ip < iEnd ? in[ip++] : 'A';
-            if (i0 > 127 || i1 > 127 || i2 > 127 || i3 > 127)
-                throw new IllegalArgumentException ("Illegal character in Base64 encoded data.");
-            int b0 = map2[i0];
-            int b1 = map2[i1];
-            int b2 = map2[i2];
-            int b3 = map2[i3];
-            if (b0 < 0 || b1 < 0 || b2 < 0 || b3 < 0)
-                throw new IllegalArgumentException ("Illegal character in Base64 encoded data.");
-            int o0 = ( b0       <<2) | (b1>>>4);
-            int o1 = ((b1 & 0xf)<<4) | (b2>>>2);
-            int o2 = ((b2 &   3)<<6) |  b3;
-            out[op++] = (byte)o0;
-            if (op<oLen) out[op++] = (byte)o1;
-            if (op<oLen) out[op++] = (byte)o2; }
-        return out; 
-    }
-
     public static byte[] decodeBase64(String s, int flags) {
-        return decodeBase64(s.getBytes(), flags);
+        return Base64.decode(s.getBytes(), flags);
     }
 
     @WrapElementForJNI(stubName = "GetScreenOrientationWrapper")
@@ -2685,10 +2576,15 @@ public class GeckoAppShell
         return "DIRECT";
     }
 
-    /* Downloads the uri pointed to by a share intent, and alters the intent to point to the locally stored file.
+    /* Downloads the URI pointed to by a share intent, and alters the intent to point to the locally stored file.
      */
     public static void downloadImageForIntent(final Intent intent) {
-        final String src = intent.getStringExtra(Intent.EXTRA_TEXT);
+        final String src = StringUtils.getStringExtra(intent, Intent.EXTRA_TEXT);
+        if (src == null) {
+            showImageShareFailureToast();
+            return;
+        }
+
         final File dir = GeckoApp.getTempDirectory();
 
         if (dir == null) {
@@ -2764,20 +2660,24 @@ public class GeckoAppShell
     }
 
     @WrapElementForJNI(allowMultithread = true, narrowChars = true)
-    static URLConnection getConnection(String url) throws MalformedURLException, IOException {
-        String spec;
-        if (url.startsWith("android://")) {
-            spec = url.substring(10);
-        } else {
-            spec = url.substring(8);
-        }
+    static URLConnection getConnection(String url) {
+        try {
+            String spec;
+            if (url.startsWith("android://")) {
+                spec = url.substring(10);
+            } else {
+                spec = url.substring(8);
+            }
 
-        // if the colon got stripped, put it back
-        int colon = spec.indexOf(':');
-        if (colon == -1 || colon > spec.indexOf('/')) {
-            spec = spec.replaceFirst("/", ":/");
+            // if the colon got stripped, put it back
+            int colon = spec.indexOf(':');
+            if (colon == -1 || colon > spec.indexOf('/')) {
+                spec = spec.replaceFirst("/", ":/");
+            }
+        } catch(Exception ex) {
+            return null;
         }
-        return new URL(spec).openConnection();
+        return null;
     }
 
     @WrapElementForJNI(allowMultithread = true, narrowChars = true)

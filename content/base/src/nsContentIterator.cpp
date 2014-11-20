@@ -83,7 +83,6 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS(nsContentIterator)
 
   explicit nsContentIterator(bool aPre);
-  virtual ~nsContentIterator();
 
   // nsIContentIterator interface methods ------------------------------
 
@@ -106,6 +105,7 @@ public:
   virtual nsresult PositionAt(nsINode* aCurNode);
 
 protected:
+  virtual ~nsContentIterator();
 
   // Recursively get the deepest first/last child of aRoot.  This will return
   // aRoot itself if it has no children.
@@ -1107,7 +1107,6 @@ class nsContentSubtreeIterator : public nsContentIterator
 {
 public:
   nsContentSubtreeIterator() : nsContentIterator(false) {}
-  virtual ~nsContentSubtreeIterator() {}
 
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(nsContentSubtreeIterator, nsContentIterator)
@@ -1131,6 +1130,7 @@ public:
   virtual void Last();
 
 protected:
+  virtual ~nsContentSubtreeIterator() {}
 
   // Returns the highest inclusive ancestor of aNode that's in the range
   // (possibly aNode itself).  Returns null if aNode is null, or is not itself

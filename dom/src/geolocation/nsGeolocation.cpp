@@ -85,8 +85,6 @@ class nsGeolocationRequest
   void NotifyErrorAndShutdown(uint16_t);
   nsIPrincipal* GetPrincipal();
 
-  ~nsGeolocationRequest();
-
   virtual bool Recv__delete__(const bool& allow,
                               const InfallibleTArray<PermissionChoice>& choices) MOZ_OVERRIDE;
   virtual void IPDLRelease() MOZ_OVERRIDE { Release(); }
@@ -94,6 +92,8 @@ class nsGeolocationRequest
   bool IsWatch() { return mIsWatchPositionRequest; }
   int32_t WatchId() { return mWatchId; }
  private:
+  ~nsGeolocationRequest();
+
   bool mIsWatchPositionRequest;
 
   nsCOMPtr<nsITimer> mTimeoutTimer;
@@ -121,15 +121,15 @@ CreatePositionOptionsCopy(const PositionOptions& aOptions)
 
 class GeolocationSettingsCallback : public nsISettingsServiceCallback
 {
+  virtual ~GeolocationSettingsCallback() {
+    MOZ_COUNT_DTOR(GeolocationSettingsCallback);
+  }
+
 public:
   NS_DECL_ISUPPORTS
 
   GeolocationSettingsCallback() {
     MOZ_COUNT_CTOR(GeolocationSettingsCallback);
-  }
-
-  virtual ~GeolocationSettingsCallback() {
-    MOZ_COUNT_DTOR(GeolocationSettingsCallback);
   }
 
   NS_IMETHOD Handle(const nsAString& aName, JS::Handle<JS::Value> aResult)
@@ -431,32 +431,28 @@ nsGeolocationRequest::Allow(JS::HandleValue aChoices)
     return NS_OK;
   }
 
-  nsCOMPtr<nsIDOMGeoPosition> lastPosition = gs->GetCachedPosition();
-  DOMTimeStamp cachedPositionTime;
-  if (lastPosition) {
-    lastPosition->GetTimestamp(&cachedPositionTime);
-  }
-
-  // check to see if we can use a cached value
-  // if the user has specified a maximumAge, return a cached value.
-
-  uint32_t maximumAge = 0;
-  if (mOptions) {
-    if (mOptions->mMaximumAge > 0) {
-      maximumAge = mOptions->mMaximumAge;
+  bool canUseCache = false;
+  CachedPositionAndAccuracy lastPosition = gs->GetCachedPosition();
+  if (lastPosition.position) {
+    DOMTimeStamp cachedPositionTime_ms;
+    lastPosition.position->GetTimestamp(&cachedPositionTime_ms);
+    // check to see if we can use a cached value
+    // if the user has specified a maximumAge, return a cached value.
+    if (mOptions && mOptions->mMaximumAge > 0) {
+      uint32_t maximumAge_ms = mOptions->mMaximumAge;
+      bool isCachedWithinRequestedAccuracy = WantsHighAccuracy() <= lastPosition.isHighAccuracy;
+      bool isCachedWithinRequestedTime =
+        DOMTimeStamp(PR_Now() / PR_USEC_PER_MSEC - maximumAge_ms) <= cachedPositionTime_ms;
+      canUseCache = isCachedWithinRequestedAccuracy && isCachedWithinRequestedTime;
     }
   }
+
   gs->UpdateAccuracy(WantsHighAccuracy());
-
-  bool canUseCache = lastPosition && maximumAge > 0 &&
-    (PRTime(PR_Now() / PR_USEC_PER_MSEC) - maximumAge <=
-    PRTime(cachedPositionTime));
-
   if (canUseCache) {
     // okay, we can return a cached position
     // getCurrentPosition requests serviced by the cache
     // will now be owned by the RequestSendLocationEvent
-    Update(lastPosition);
+    Update(lastPosition.position);
   }
 
   if (mIsWatchPositionRequest || !canUseCache) {
@@ -764,7 +760,7 @@ nsGeolocationService::HandleMozsettingValue(const bool aValue)
       // turn things off
       StopDevice();
       Update(nullptr);
-      mLastPosition = nullptr;
+      mLastPosition.position = nullptr;
       sGeoEnabled = false;
     } else {
       sGeoEnabled = true;
@@ -854,10 +850,11 @@ nsGeolocationService::NotifyError(uint16_t aErrorCode)
 void
 nsGeolocationService::SetCachedPosition(nsIDOMGeoPosition* aPosition)
 {
-  mLastPosition = aPosition;
+  mLastPosition.position = aPosition;
+  mLastPosition.isHighAccuracy = mHigherAccuracy;
 }
 
-nsIDOMGeoPosition*
+CachedPositionAndAccuracy
 nsGeolocationService::GetCachedPosition()
 {
   return mLastPosition;

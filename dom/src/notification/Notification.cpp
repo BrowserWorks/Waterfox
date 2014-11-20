@@ -46,7 +46,7 @@ public:
   {
     MOZ_ASSERT(aWindow);
     MOZ_ASSERT(aPromise);
-    JSContext* cx = aGlobal.GetContext();
+    JSContext* cx = aGlobal.Context();
     JSAutoCompartment ac(cx, mGlobal);
     mNotifications = JS_NewArrayObject(cx, 0);
     HoldData();
@@ -160,13 +160,13 @@ public:
       mPermission(NotificationPermission::Default),
       mCallback(aCallback) {}
 
-  virtual ~NotificationPermissionRequest() {}
-
   bool Recv__delete__(const bool& aAllow,
                       const InfallibleTArray<PermissionChoice>& choices);
   void IPDLRelease() { Release(); }
 
 protected:
+  virtual ~NotificationPermissionRequest() {}
+
   nsresult CallCallback();
   nsresult DispatchCallback();
   nsCOMPtr<nsIPrincipal> mPrincipal;
@@ -184,9 +184,9 @@ public:
   NotificationObserver(Notification* aNotification)
     : mNotification(aNotification) {}
 
+protected:
   virtual ~NotificationObserver() {}
 
-protected:
   nsRefPtr<Notification> mNotification;
 };
 
@@ -204,9 +204,9 @@ public:
   NotificationTask(Notification* aNotification, NotificationAction aAction)
     : mNotification(aNotification), mAction(aAction) {}
 
+protected:
   virtual ~NotificationTask() {}
 
-protected:
   nsRefPtr<Notification> mNotification;
   NotificationAction mAction;
 };
@@ -606,7 +606,7 @@ Notification::ShowInternal()
         ops.mLang = mLang;
         ops.mTag = mTag;
 
-        if (!ops.ToObject(cx, &val)) {
+        if (!ToJSValue(cx, ops, &val)) {
           NS_WARNING("Converting dict to object failed!");
           return;
         }
@@ -744,7 +744,10 @@ Notification::Get(const GlobalObject& aGlobal,
     return nullptr;
   }
 
-  nsRefPtr<Promise> promise = new Promise(global);
+  nsRefPtr<Promise> promise = Promise::Create(global, aRv);
+  if (aRv.Failed()) {
+    return nullptr;
+  }
   nsCOMPtr<nsINotificationStorageCallback> callback =
     new NotificationStorageCallback(aGlobal, window, promise);
   nsString tag = aFilter.mTag.WasPassed() ?

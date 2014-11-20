@@ -18,8 +18,7 @@ class HTMLBRElement MOZ_FINAL : public nsGenericHTMLElement,
                                 public nsIDOMHTMLBRElement
 {
 public:
-  HTMLBRElement(already_AddRefed<nsINodeInfo>& aNodeInfo);
-  virtual ~HTMLBRElement();
+  HTMLBRElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
 
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
@@ -33,7 +32,7 @@ public:
                                 nsAttrValue& aResult) MOZ_OVERRIDE;
   NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const MOZ_OVERRIDE;
   virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const MOZ_OVERRIDE;
-  virtual nsresult Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
 
   bool Clear()
   {
@@ -47,6 +46,8 @@ public:
   virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;
 
 private:
+  virtual ~HTMLBRElement();
+
   static void MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
                                     nsRuleData* aData);
 };

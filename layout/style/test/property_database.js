@@ -1,4 +1,4 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ts=2 sw=2 sts=2 et: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -569,8 +569,8 @@ var gCSSProperties = {
     domProp: "animation",
     inherited: false,
     type: CSS_TYPE_TRUE_SHORTHAND,
-    subproperties: [ "animation-name", "animation-duration", "animation-timing-function", "animation-delay", "animation-direction", "animation-fill-mode", "animation-iteration-count" ],
-    initial_values: [ "none none 0s 0s ease normal 1.0", "none", "0s", "ease", "normal", "1.0" ],
+    subproperties: [ "animation-name", "animation-duration", "animation-timing-function", "animation-delay", "animation-direction", "animation-fill-mode", "animation-iteration-count", "animation-play-state" ],
+    initial_values: [ "none none 0s 0s ease normal running 1.0", "none", "0s", "ease", "normal", "running", "1.0" ],
     other_values: [ "bounce 1s linear 2s", "bounce 1s 2s linear", "bounce linear 1s 2s", "linear bounce 1s 2s", "linear 1s bounce 2s", "linear 1s 2s bounce", "1s bounce linear 2s", "1s bounce 2s linear", "1s 2s bounce linear", "1s linear bounce 2s", "1s linear 2s bounce", "1s 2s linear bounce", "bounce linear 1s", "bounce 1s linear", "linear bounce 1s", "linear 1s bounce", "1s bounce linear", "1s linear bounce", "1s 2s bounce", "1s bounce 2s", "bounce 1s 2s", "1s 2s linear", "1s linear 2s", "linear 1s 2s", "bounce 1s", "1s bounce", "linear 1s", "1s linear", "1s 2s", "2s 1s", "bounce", "linear", "1s", "height", "2s", "ease-in-out", "2s ease-in", "opacity linear", "ease-out 2s", "2s color, 1s bounce, 500ms height linear, 1s opacity 4s cubic-bezier(0.0, 0.1, 1.0, 1.0)", "1s \\32bounce linear 2s", "1s -bounce linear 2s", "1s -\\32bounce linear 2s", "1s \\32 0bounce linear 2s", "1s -\\32 0bounce linear 2s", "1s \\2bounce linear 2s", "1s -\\2bounce linear 2s", "2s, 1s bounce", "1s bounce, 2s", "2s all, 1s bounce", "1s bounce, 2s all", "1s bounce, 2s none", "2s none, 1s bounce", "2s bounce, 1s all", "2s all, 1s bounce" ],
     invalid_values: [  "2s inherit", "inherit 2s", "2s bounce, 1s inherit", "2s inherit, 1s bounce", "2s initial", "2s all,, 1s bounce", "2s all, , 1s bounce" ]
   },
@@ -2615,7 +2615,7 @@ var gCSSProperties = {
     type: CSS_TYPE_TRUE_SHORTHAND,
     subproperties: [ "list-style-type", "list-style-position", "list-style-image" ],
     initial_values: [ "outside", "disc", "disc outside", "outside disc", "disc none", "none disc", "none disc outside", "none outside disc", "disc none outside", "disc outside none", "outside none disc", "outside disc none" ],
-    other_values: [ "inside none", "none inside", "none none inside", "square", "none", "none none", "outside none none", "none outside none", "none none outside", "none outside", "outside none",
+    other_values: [ "inside none", "none inside", "none none inside", "square", "none", "none none", "outside none none", "none outside none", "none none outside", "none outside", "outside none", "outside outside", "outside inside", "\\32 style", "\\32 style inside",
       'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR42u3NQQ0AAAgEoNP+nTWFDzcoQE1udQQCgUAgEAgEAsGTYAGjxAE/G/Q2tQAAAABJRU5ErkJggg==")',
       'none url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR42u3NQQ0AAAgEoNP+nTWFDzcoQE1udQQCgUAgEAgEAsGTYAGjxAE/G/Q2tQAAAABJRU5ErkJggg==")',
       'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR42u3NQQ0AAAgEoNP+nTWFDzcoQE1udQQCgUAgEAgEAsGTYAGjxAE/G/Q2tQAAAABJRU5ErkJggg==") none',
@@ -2628,7 +2628,7 @@ var gCSSProperties = {
       'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR42u3NQQ0AAAgEoNP+nTWFDzcoQE1udQQCgUAgEAgEAsGTYAGjxAE/G/Q2tQAAAABJRU5ErkJggg==") outside none',
       'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR42u3NQQ0AAAgEoNP+nTWFDzcoQE1udQQCgUAgEAgEAsGTYAGjxAE/G/Q2tQAAAABJRU5ErkJggg==") none outside'
     ],
-    invalid_values: [ "outside outside", "disc disc", "unknown value", "none none none", "none disc url(404.png)", "none url(404.png) disc", "disc none url(404.png)", "disc url(404.png) none", "url(404.png) none disc", "url(404.png) disc none", "none disc outside url(404.png)" ]
+    invalid_values: [ "disc disc", "unknown value", "none none none", "none disc url(404.png)", "none url(404.png) disc", "disc none url(404.png)", "disc url(404.png) none", "url(404.png) none disc", "url(404.png) disc none", "none disc outside url(404.png)" ]
   },
   "list-style-image": {
     domProp: "listStyleImage",
@@ -2661,6 +2661,7 @@ var gCSSProperties = {
     type: CSS_TYPE_LONGHAND,
     initial_values: [ "disc" ],
     other_values: [ "none", "circle", "square",
+      "disclosure-closed", "disclosure-open",
       "decimal", "decimal-leading-zero",
       "lower-roman", "upper-roman", "lower-greek",
       "lower-alpha", "lower-latin", "upper-alpha", "upper-latin",
@@ -2671,6 +2672,7 @@ var gCSSProperties = {
       "korean-hanja-informal", "korean-hanja-formal",
       "simp-chinese-informal", "simp-chinese-formal",
       "trad-chinese-informal", "trad-chinese-formal",
+      "ethiopic-numeric",
       "-moz-cjk-heavenly-stem", "-moz-cjk-earthly-branch",
       "-moz-trad-chinese-informal", "-moz-trad-chinese-formal",
       "-moz-simp-chinese-informal", "-moz-simp-chinese-formal",
@@ -2683,7 +2685,8 @@ var gCSSProperties = {
       "-moz-hangul", "-moz-hangul-consonant",
       "-moz-ethiopic-halehame", "-moz-ethiopic-numeric",
       "-moz-ethiopic-halehame-am",
-      "-moz-ethiopic-halehame-ti-er", "-moz-ethiopic-halehame-ti-et"
+      "-moz-ethiopic-halehame-ti-er", "-moz-ethiopic-halehame-ti-et",
+      "other-style", "inside", "outside", "\\32 style"
     ],
     invalid_values: []
   },
@@ -2913,7 +2916,7 @@ var gCSSProperties = {
     type: CSS_TYPE_LONGHAND,
     // XXX Should 'hidden' be the same as initial?
     initial_values: [ "none" ],
-    other_values: [ "solid", "dashed", "dotted", "double", "outset", "inset", "groove", "ridge" ],
+    other_values: [ "solid", "dashed", "dotted", "double", "outset", "inset", "groove", "ridge", "auto" ],
     invalid_values: []
   },
   "outline-width": {
@@ -4238,8 +4241,8 @@ var gCSSProperties = {
     inherited: false,
     type: CSS_TYPE_TRUE_SHORTHAND,
     alias_for: "animation",
-    subproperties: [ "animation-name", "animation-duration", "animation-timing-function", "animation-delay", "animation-direction", "animation-fill-mode", "animation-iteration-count" ],
-    initial_values: [ "none none 0s 0s ease normal 1.0", "none", "0s", "ease", "normal", "1.0" ],
+    subproperties: [ "animation-name", "animation-duration", "animation-timing-function", "animation-delay", "animation-direction", "animation-fill-mode", "animation-iteration-count", "animation-play-state" ],
+    initial_values: [ "none none 0s 0s ease normal running 1.0", "none", "0s", "ease", "normal", "running", "1.0" ],
     other_values: [ "bounce 1s linear 2s", "bounce 1s 2s linear", "bounce linear 1s 2s", "linear bounce 1s 2s", "linear 1s bounce 2s", "linear 1s 2s bounce", "1s bounce linear 2s", "1s bounce 2s linear", "1s 2s bounce linear", "1s linear bounce 2s", "1s linear 2s bounce", "1s 2s linear bounce", "bounce linear 1s", "bounce 1s linear", "linear bounce 1s", "linear 1s bounce", "1s bounce linear", "1s linear bounce", "1s 2s bounce", "1s bounce 2s", "bounce 1s 2s", "1s 2s linear", "1s linear 2s", "linear 1s 2s", "bounce 1s", "1s bounce", "linear 1s", "1s linear", "1s 2s", "2s 1s", "bounce", "linear", "1s", "height", "2s", "ease-in-out", "2s ease-in", "opacity linear", "ease-out 2s", "2s color, 1s bounce, 500ms height linear, 1s opacity 4s cubic-bezier(0.0, 0.1, 1.0, 1.0)", "1s \\32bounce linear 2s", "1s -bounce linear 2s", "1s -\\32bounce linear 2s", "1s \\32 0bounce linear 2s", "1s -\\32 0bounce linear 2s", "1s \\2bounce linear 2s", "1s -\\2bounce linear 2s", "2s, 1s bounce", "1s bounce, 2s", "2s all, 1s bounce", "1s bounce, 2s all", "1s bounce, 2s none", "2s none, 1s bounce", "2s bounce, 1s all", "2s all, 1s bounce" ],
     invalid_values: [  "2s inherit", "inherit 2s", "2s bounce, 1s inherit", "2s inherit, 1s bounce", "2s initial" ]
   },

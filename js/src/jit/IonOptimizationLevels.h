@@ -66,9 +66,6 @@ class OptimizationInfo
     // Toggles whether global value numbering is used.
     bool gvn_;
 
-    // Toggles whether global value numbering is optimistic or pessimistic.
-    IonGvnKind gvnKind_;
-
     // Toggles whether loop invariant code motion is performed.
     bool licm_;
 
@@ -93,6 +90,9 @@ class OptimizationInfo
 
     // The maximum inlining depth.
     uint32_t maxInlineDepth_;
+
+    // Toggles whether scalar replacement is used.
+    bool scalarReplacement_;
 
     // The maximum inlining depth for functions.
     //
@@ -162,16 +162,14 @@ class OptimizationInfo
         return eliminateRedundantChecks_;
     }
 
-    IonGvnKind gvnKind() const {
-        if (!js_JitOptions.forceGvnKind)
-            return gvnKind_;
-        return js_JitOptions.forcedGvnKind;
-    }
-
     IonRegisterAllocator registerAllocator() const {
         if (!js_JitOptions.forceRegisterAllocator)
             return registerAllocator_;
         return js_JitOptions.forcedRegisterAllocator;
+    }
+
+    bool scalarReplacementEnabled() const {
+        return scalarReplacement_ && !js_JitOptions.disableScalarReplacement;
     }
 
     uint32_t smallFunctionMaxInlineDepth() const {

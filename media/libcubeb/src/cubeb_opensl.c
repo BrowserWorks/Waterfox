@@ -11,13 +11,16 @@
 #include <pthread.h>
 #include <SLES/OpenSLES.h>
 #if defined(__ANDROID__)
+#include <sys/system_properties.h>
 #include "android/sles_definitions.h"
 #include <SLES/OpenSLES_Android.h>
 #include <android/log.h>
 #define LOG(args...)  __android_log_print(ANDROID_LOG_INFO, "Cubeb_OpenSL" , ## args)
+#define ANDROID_VERSION_GINGERBREAD_MR1 10
 #endif
 #include "cubeb/cubeb.h"
 #include "cubeb-internal.h"
+#include "cubeb_resampler.h"
 
 static struct cubeb_ops const opensl_ops;
 
@@ -46,7 +49,7 @@ struct cubeb_stream {
   SLObjectItf playerObj;
   SLPlayItf play;
   SLBufferQueueItf bufq;
-  void *queuebuf[NBUFS];
+  uint8_t *queuebuf[NBUFS];
   int queuebuf_idx;
   long queuebuf_len;
   long bytespersec;
@@ -58,6 +61,11 @@ struct cubeb_stream {
   cubeb_data_callback data_callback;
   cubeb_state_callback state_callback;
   void * user_ptr;
+
+  cubeb_resampler * resampler;
+  unsigned int inputrate;
+  unsigned int outputrate;
+  unsigned int latency;
 };
 
 static void
@@ -94,14 +102,15 @@ bufferqueue_callback(SLBufferQueueItf caller, void * user_ptr)
 
   SLuint32 i;
   for (i = state.count; i < NBUFS; i++) {
-    void *buf = stm->queuebuf[stm->queuebuf_idx];
+    uint8_t *buf = stm->queuebuf[stm->queuebuf_idx];
     long written = 0;
     pthread_mutex_lock(&stm->mutex);
     int draining = stm->draining;
     pthread_mutex_unlock(&stm->mutex);
 
     if (!draining) {
-      written = stm->data_callback(stm, stm->user_ptr, buf, stm->queuebuf_len / stm->framesize);
+      written = cubeb_resampler_fill(stm->resampler, buf,
+                                        stm->queuebuf_len / stm->framesize);
       if (written < 0 || written * stm->framesize > stm->queuebuf_len) {
         (*stm->play)->SetPlayState(stm->play, SL_PLAYSTATE_STOPPED);
         return;
@@ -111,7 +120,8 @@ bufferqueue_callback(SLBufferQueueItf caller, void * user_ptr)
     // Keep sending silent data even in draining mode to prevent the audio
     // back-end from being stopped automatically by OpenSL/ES.
     memset(buf + written * stm->framesize, 0, stm->queuebuf_len - written * stm->framesize);
-    (*stm->bufq)->Enqueue(stm->bufq, buf, stm->queuebuf_len);
+    res = (*stm->bufq)->Enqueue(stm->bufq, buf, stm->queuebuf_len);
+    assert(res == SL_RESULT_SUCCESS);
     stm->queuebuf_idx = (stm->queuebuf_idx + 1) % NBUFS;
     if (written > 0) {
       pthread_mutex_lock(&stm->mutex);
@@ -159,10 +169,37 @@ convert_stream_type_to_sl_stream(cubeb_stream_type stream_type)
 
 static void opensl_destroy(cubeb * ctx);
 
+#if defined(__ANDROID__)
+
+static int
+get_android_version(void)
+{
+  char version_string[PROP_VALUE_MAX];
+
+  memset(version_string, 0, PROP_VALUE_MAX);
+
+  int len = __system_property_get("ro.build.version.sdk", version_string);
+  if (len <= 0) {
+    LOG("Failed to get Android version!\n");
+    return len;
+  }
+
+  return (int)strtol(version_string, NULL, 10);
+}
+#endif
+
 /*static*/ int
 opensl_init(cubeb ** context, char const * context_name)
 {
   cubeb * ctx;
+
+#if defined(__ANDROID__)
+  int android_version = get_android_version();
+  if (android_version > 0 && android_version <= ANDROID_VERSION_GINGERBREAD_MR1) {
+    // Don't even attempt to run on Gingerbread and lower
+    return CUBEB_ERROR;
+  }
+#endif
 
   *context = NULL;
 
@@ -425,8 +462,7 @@ opensl_stream_init(cubeb * ctx, cubeb_stream ** stream, char const * stream_name
 
   *stream = NULL;
 
-  if (stream_params.rate < 8000 || stream_params.rate > 88200 ||
-      stream_params.channels < 1 || stream_params.channels > 32 ||
+  if (stream_params.channels < 1 || stream_params.channels > 32 ||
       latency < 1 || latency > 2000) {
     return CUBEB_ERROR_INVALID_FORMAT;
   }
@@ -462,19 +498,10 @@ opensl_stream_init(cubeb * ctx, cubeb_stream ** stream, char const * stream_name
   stm->state_callback = state_callback;
   stm->user_ptr = user_ptr;
 
+  stm->inputrate = stream_params.rate;
+  stm->latency = latency;
   stm->stream_type = stream_params.stream_type;
   stm->framesize = stream_params.channels * sizeof(int16_t);
-  stm->bytespersec = stream_params.rate * stm->framesize;
-  stm->queuebuf_len = (stm->bytespersec * latency) / (1000 * NBUFS);
-  // round up to the next multiple of stm->framesize, if needed.
-  if (stm->queuebuf_len % stm->framesize) {
-    stm->queuebuf_len += stm->framesize - (stm->queuebuf_len % stm->framesize);
-  }
-  int i;
-  for (i = 0; i < NBUFS; i++) {
-    stm->queuebuf[i] = malloc(stm->queuebuf_len);
-    assert(stm->queuebuf[i]);
-  }
 
   int r = pthread_mutex_init(&stm->mutex, NULL);
   assert(r == 0);
@@ -503,9 +530,49 @@ opensl_stream_init(cubeb * ctx, cubeb_stream ** stream, char const * stream_name
   assert(NELEMS(ids) == NELEMS(req));
   SLresult res = (*ctx->eng)->CreateAudioPlayer(ctx->eng, &stm->playerObj,
                                                 &source, &sink, NELEMS(ids), ids, req);
+
+  uint32_t preferred_sampling_rate = stm->inputrate;
+  // Sample rate not supported? Try again with primary sample rate!
+  if (res == SL_RESULT_CONTENT_UNSUPPORTED) {
+    if (opensl_get_preferred_sample_rate(ctx, &preferred_sampling_rate)) {
+      opensl_stream_destroy(stm);
+      return CUBEB_ERROR;
+    }
+
+    format.samplesPerSec = preferred_sampling_rate * 1000;
+    res = (*ctx->eng)->CreateAudioPlayer(ctx->eng, &stm->playerObj,
+                                         &source, &sink, NELEMS(ids), ids, req);
+  }
+
   if (res != SL_RESULT_SUCCESS) {
     opensl_stream_destroy(stm);
     return CUBEB_ERROR;
+  }
+
+  stm->outputrate = preferred_sampling_rate;
+  stm->bytespersec = preferred_sampling_rate * stm->framesize;
+  stm->queuebuf_len = (stm->bytespersec * latency) / (1000 * NBUFS);
+  // round up to the next multiple of stm->framesize, if needed.
+  if (stm->queuebuf_len % stm->framesize) {
+    stm->queuebuf_len += stm->framesize - (stm->queuebuf_len % stm->framesize);
+  }
+
+  stm->resampler = cubeb_resampler_create(stm, stream_params,
+                                          preferred_sampling_rate,
+                                          data_callback,
+                                          stm->queuebuf_len / stm->framesize,
+                                          user_ptr,
+                                          CUBEB_RESAMPLER_QUALITY_DEFAULT);
+
+  if (!stm->resampler) {
+    opensl_stream_destroy(stm);
+    return CUBEB_ERROR;
+  }
+
+  int i;
+  for (i = 0; i < NBUFS; i++) {
+    stm->queuebuf[i] = malloc(stm->queuebuf_len);
+    assert(stm->queuebuf[i]);
   }
 
 #if defined(__ANDROID__)
@@ -575,6 +642,8 @@ opensl_stream_destroy(cubeb_stream * stm)
   }
   pthread_mutex_destroy(&stm->mutex);
 
+  cubeb_resampler_destroy(stm->resampler);
+
   free(stm);
 }
 
@@ -614,25 +683,24 @@ opensl_stream_get_position(cubeb_stream * stm, uint64_t * position)
   if (res != SL_RESULT_SUCCESS)
     return CUBEB_ERROR;
 
-  samplerate = stm->bytespersec / stm->framesize;
+  samplerate = stm->inputrate;
 
   rv = stm->context->get_output_latency(&mixer_latency, stm->stream_type);
   if (rv) {
     return CUBEB_ERROR;
   }
 
-  int64_t compensated_position = samplerate * (msec - mixer_latency) / 1000;
   pthread_mutex_lock(&stm->mutex);
-  int64_t maximum_position = stm->written;
+  int64_t maximum_position = stm->written * (int64_t)stm->inputrate / stm->outputrate;
   pthread_mutex_unlock(&stm->mutex);
   assert(maximum_position >= 0);
 
-  if (compensated_position < 0) {
-    *position = 0;
-  } else if(compensated_position > maximum_position) {
-    *position = maximum_position;
+  if (msec > mixer_latency) {
+    int64_t unadjusted_position = samplerate * (msec - mixer_latency) / 1000;
+    *position = unadjusted_position < maximum_position ?
+                unadjusted_position : maximum_position;
   } else {
-    *position = compensated_position;
+    *position = 0;
   }
   return CUBEB_OK;
 }
@@ -641,15 +709,7 @@ int
 opensl_stream_get_latency(cubeb_stream * stm, uint32_t * latency)
 {
   int rv;
-  uint32_t mixer_latency;
-  uint32_t samplerate;
-
-  /* The latency returned by AudioFlinger is in ms, so we have to get
-   * AudioFlinger's samplerate to convert it to frames. */
-  rv = opensl_get_preferred_sample_rate(stm->context, &samplerate);
-  if (rv) {
-    return CUBEB_ERROR;
-  }
+  uint32_t mixer_latency; // The latency returned by AudioFlinger is in ms.
 
   /* audio_stream_type_t is an int, so this is okay. */
   rv = stm->context->get_output_latency(&mixer_latency, stm->stream_type);
@@ -657,8 +717,8 @@ opensl_stream_get_latency(cubeb_stream * stm, uint32_t * latency)
     return CUBEB_ERROR;
   }
 
-  *latency = NBUFS * stm->queuebuf_len / stm->framesize + // OpenSL latency
-             mixer_latency * samplerate / 1000; // AudioFlinger latency
+  *latency = stm->latency * stm->inputrate / 1000 + // OpenSL latency
+             mixer_latency * stm->inputrate / 1000; // AudioFlinger latency
 
   return CUBEB_OK;
 }

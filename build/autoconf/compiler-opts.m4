@@ -25,8 +25,8 @@ case "$target" in
 *-mingw*)
     if test -z "$CC"; then CC=cl; fi
     if test -z "$CXX"; then CXX=cl; fi
-    if test -z "$CPP"; then CPP="cl -E -nologo"; fi
-    if test -z "$CXXCPP"; then CXXCPP="cl -TP -E -nologo"; ac_cv_prog_CXXCPP="$CXXCPP"; fi
+    if test -z "$CPP"; then CPP="$CC -E -nologo"; fi
+    if test -z "$CXXCPP"; then CXXCPP="$CXX -TP -E -nologo"; ac_cv_prog_CXXCPP="$CXXCPP"; fi
     if test -z "$LD"; then LD=link; fi
     if test -z "$AS"; then
         case "${target_cpu}" in
@@ -184,12 +184,6 @@ fi
 dnl A high level macro for selecting compiler options.
 AC_DEFUN([MOZ_COMPILER_OPTS],
 [
-  if test "${MOZ_PSEUDO_DERECURSE-unset}" = unset; then
-    dnl Don't enable on pymake, because of bug 918652. Bug 912979 is an annoyance
-    dnl with pymake, too.
-    MOZ_PSEUDO_DERECURSE=no-pymake
-  fi
-
   MOZ_DEBUGGING_OPTS
   MOZ_RTTI
 if test "$CLANG_CXX"; then
@@ -197,11 +191,7 @@ if test "$CLANG_CXX"; then
     ## returned by C functions. This is possible because we use knowledge about the ABI
     ## to typedef it to a C type with the same layout when the headers are included
     ## from C.
-    ##
-    ## mismatched-tags is disabled (bug 780474) mostly because it's useless.
-    ## Worse, it's not supported by gcc, so it will cause tryserver bustage
-    ## without any easy way for non-Clang users to check for it.
-    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Wno-unknown-warning-option -Wno-return-type-c-linkage -Wno-mismatched-tags"
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Wno-unknown-warning-option -Wno-return-type-c-linkage"
 fi
 
 AC_MSG_CHECKING([whether the C++ compiler ($CXX $CXXFLAGS $LDFLAGS) actually is a C++ compiler])
@@ -215,15 +205,6 @@ AC_TRY_LINK([#include <new>], [int *foo = new int;],,
 LIBS=$_SAVE_LIBS
 AC_LANG_RESTORE
 AC_MSG_RESULT([yes])
-
-if test -z "$GNU_CC"; then
-    case "$target" in
-    *-mingw*)
-        ## Warning 4099 (equivalent of mismatched-tags) is disabled (bug 780474)
-        ## for the same reasons as above.
-        _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -wd4099"
-    esac
-fi
 
 if test -n "$DEVELOPER_OPTIONS"; then
     MOZ_FORCE_GOLD=1
@@ -259,6 +240,13 @@ if test "$GNU_CC" -a -n "$MOZ_FORCE_GOLD"; then
         fi
     fi
 fi
+if test "$GNU_CC"; then
+    if $CC $LDFLAGS -Wl,--version 2>&1 | grep -q "GNU ld"; then
+        LD_IS_BFD=1
+    fi
+fi
+
+AC_SUBST([LD_IS_BFD])
 
 if test "$GNU_CC"; then
     if test -z "$DEVELOPER_OPTIONS"; then

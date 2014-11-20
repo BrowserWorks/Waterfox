@@ -208,11 +208,6 @@ class GlobalObject : public JSObject
         return !getConstructor(key).isUndefined();
     }
 
-    bool isStandardClassResolved(const js::Class *clasp) const {
-        JSProtoKey key = JSCLASS_CACHED_PROTO_KEY(clasp);
-        return isStandardClassResolved(key);
-    }
-
   private:
     bool arrayClassInitialized() const {
         return classIsInitialized(JSProto_Array);
@@ -337,6 +332,12 @@ class GlobalObject : public JSObject
         if (!ensureConstructor(cx, global, JSProto_String))
             return nullptr;
         return &global->getPrototype(JSProto_String).toObject();
+    }
+
+    static JSObject *getOrCreateSymbolPrototype(JSContext *cx, Handle<GlobalObject*> global) {
+        if (!ensureConstructor(cx, global, JSProto_Symbol))
+            return nullptr;
+        return &global->getPrototype(JSProto_Symbol).toObject();
     }
 
     static JSObject *getOrCreateRegExpPrototype(JSContext *cx, Handle<GlobalObject*> global) {
@@ -770,12 +771,12 @@ extern bool
 LinkConstructorAndPrototype(JSContext *cx, JSObject *ctor, JSObject *proto);
 
 /*
- * Define properties, then functions, on the object, then brand for tracing
- * benefits.
+ * Define properties and/or functions on any object. Either ps or fs, or both,
+ * may be null.
  */
 extern bool
-DefinePropertiesAndBrand(JSContext *cx, JSObject *obj,
-                         const JSPropertySpec *ps, const JSFunctionSpec *fs);
+DefinePropertiesAndFunctions(JSContext *cx, HandleObject obj,
+                             const JSPropertySpec *ps, const JSFunctionSpec *fs);
 
 typedef HashSet<GlobalObject *, DefaultHasher<GlobalObject *>, SystemAllocPolicy> GlobalObjectSet;
 
@@ -784,19 +785,35 @@ typedef HashSet<GlobalObject *, DefaultHasher<GlobalObject *>, SystemAllocPolicy
  * for ClassSpecs.
  */
 
-template<JSNative ctor, size_t atomOffset, unsigned length>
+template<JSNative ctor, unsigned length, gc::AllocKind kind>
 JSObject *
 GenericCreateConstructor(JSContext *cx, JSProtoKey key)
 {
-    JSAtom *atom = AtomStateOffsetToName(cx->names(), atomOffset);
-    return cx->global()->createConstructor(cx, ctor, atom, length);
+    // Note - We duplicate the trick from ClassName() so that we don't need to
+    // include jsatominlines.h here.
+    PropertyName *name = (&cx->names().Null)[key];
+    return cx->global()->createConstructor(cx, ctor, name, length, kind);
 }
 
 template<const Class *clasp>
 JSObject *
 GenericCreatePrototype(JSContext *cx, JSProtoKey key)
 {
-    return cx->global()->createBlankPrototype(cx, clasp);
+    MOZ_ASSERT(key != JSProto_Object);
+    JSProtoKey parentKey = ParentKeyForStandardClass(key);
+    if (!GlobalObject::ensureConstructor(cx, cx->global(), parentKey))
+        return nullptr;
+    JSObject *parentProto = &cx->global()->getPrototype(parentKey).toObject();
+    return cx->global()->createBlankPrototypeInheriting(cx, clasp, *parentProto);
+}
+
+inline JSProtoKey
+StandardProtoKeyOrNull(const JSObject *obj)
+{
+    JSProtoKey key = JSCLASS_CACHED_PROTO_KEY(obj->getClass());
+    if (key == JSProto_Error)
+        return GetExceptionProtoKey(obj->as<ErrorObject>().type());
+    return key;
 }
 
 } // namespace js

@@ -226,7 +226,7 @@
       <hbox id="UITourTooltipButtons" flex="1" align="center"/>
      </vbox>
     </panel>
-    <!-- type="default" forces frames to be created so that the panel's size can be determined --> 
+    <!-- type="default" forces frames to be created so that the panel's size can be determined -->
     <panel id="UITourHighlightContainer"
            type="default"
            hidden="true"
@@ -267,16 +267,48 @@
            noautofocus="true"
            position="topcenter topright"/>
 
+    <panel id="loop-notification-panel"
+           class="loop-panel social-panel"
+           type="arrow"
+           hidden="true"
+           noautofocus="true"/>
+
+    <panel id="loop-panel"
+           class="loop-panel social-panel"
+           type="arrow"
+           orient="horizontal"
+           hidden="true"/>
+
     <menupopup id="toolbar-context-menu"
                onpopupshowing="onViewToolbarsPopupShowing(event, document.getElementById('viewToolbarsMenuSeparator'));">
       <menuitem oncommand="gCustomizeMode.addToPanel(document.popupNode)"
                 accesskey="&customizeMenu.moveToPanel.accesskey;"
                 label="&customizeMenu.moveToPanel.label;"
+                contexttype="toolbaritem"
                 class="customize-context-moveToPanel"/>
       <menuitem oncommand="gCustomizeMode.removeFromArea(document.popupNode)"
                 accesskey="&customizeMenu.removeFromToolbar.accesskey;"
                 label="&customizeMenu.removeFromToolbar.label;"
+                contexttype="toolbaritem"
                 class="customize-context-removeFromToolbar"/>
+      <menuitem id="toolbar-context-reloadAllTabs"
+                class="toolbaritem-tabsmenu"
+                contexttype="tabbar"
+                oncommand="gBrowser.reloadAllTabs();"
+                label="&toolbarContextMenu.reloadAllTabs.label;"
+                accesskey="&toolbarContextMenu.reloadAllTabs.accesskey;"/>
+      <menuitem id="toolbar-context-bookmarkAllTabs"
+                class="toolbaritem-tabsmenu"
+                contexttype="tabbar"
+                command="Browser:BookmarkAllTabs"
+                label="&toolbarContextMenu.bookmarkAllTabs.label;"
+                accesskey="&toolbarContextMenu.bookmarkAllTabs.accesskey;"/>
+      <menuitem id="toolbar-context-undoCloseTab"
+                class="toolbaritem-tabsmenu"
+                contexttype="tabbar"
+                label="&toolbarContextMenu.undoCloseTab.label;"
+                accesskey="&toolbarContextMenu.undoCloseTab.accesskey;"
+                observes="History:UndoCloseTab"/>
       <menuseparator/>
       <menuseparator id="viewToolbarsMenuSeparator"/>
       <!-- XXXgijs: we're using oncommand handler here to avoid the event being
@@ -531,8 +563,7 @@
 #endif
 #endif
              context="toolbar-context-menu">
-      <toolbaritem id="menubar-items" align="center"
-                   cui-areatype="toolbar">
+      <toolbaritem id="menubar-items" align="center">
 # The entire main menubar is placed into browser-menubar.inc, so that it can be shared by
 # hiddenWindow.xul.
 #include browser-menubar.inc
@@ -569,7 +600,6 @@
             flex="1"
             setfocus="false"
             tooltip="tabbrowser-tab-tooltip"
-            cui-areatype="toolbar"
             stopwatchid="FX_TAB_CLICK_MS">
         <tab class="tabbrowser-tab" selected="true" fadein="true"/>
       </tabs>
@@ -600,8 +630,12 @@
                     key="key_tabview"
                     label="&viewTabGroups.label;"
                     command="Browser:ToggleTabView"
-                    cui-areatype="toolbar"
                     observes="tabviewGroupsNumber"/>
+          <menuitem id="alltabs_undoCloseTab"
+                    class="menuitem-iconic"
+                    key="key_undoCloseTab"
+                    label="&undoCloseTab.label;"
+                    observes="History:UndoCloseTab"/>
           <menuseparator id="alltabs-popup-separator"/>
         </menupopup>
       </toolbarbutton>
@@ -635,7 +669,7 @@
              aria-label="&navbarCmd.label;"
              fullscreentoolbar="true" mode="icons" customizable="true"
              iconsize="small"
-             defaultset="urlbar-container,search-container,webrtc-status-button,bookmarks-menu-button,downloads-button,home-button,social-share-button,social-toolbar-item"
+             defaultset="urlbar-container,search-container,bookmarks-menu-button,downloads-button,home-button,loop-call-button,social-share-button,social-toolbar-item"
              customizationtarget="nav-bar-customization-target"
              overflowable="true"
              overflowbutton="nav-bar-overflow-button"
@@ -646,12 +680,10 @@
       <hbox id="nav-bar-customization-target" flex="1">
         <toolbaritem id="urlbar-container" flex="400" persist="width"
                      title="&locationItem.title;" removable="false"
-                     cui-areatype="toolbar"
                      class="chromeclass-location" overflows="false">
           <toolbarbutton id="back-button" class="toolbarbutton-1 chromeclass-toolbar-additional"
                          label="&backCmd.label;"
                          command="Browser:BackOrBackDuplicate"
-                         cui-areatype="toolbar"
                          onclick="checkForMiddleClick(this, event);"
                          tooltip="back-button-tooltip"
                          context="backForwardMenu"/>
@@ -659,7 +691,6 @@
             <toolbarbutton id="forward-button" class="toolbarbutton-1 chromeclass-toolbar-additional"
                            label="&forwardCmd.label;"
                            command="Browser:ForwardOrForwardDuplicate"
-                           cui-areatype="toolbar"
                            onclick="checkForMiddleClick(this, event);"
                            tooltip="forward-button-tooltip"
                            context="backForwardMenu"/>
@@ -698,6 +729,8 @@
                 <image id="webRTC-sharingDevices-notification-icon" class="notification-anchor-icon" role="button"/>
                 <image id="webRTC-shareMicrophone-notification-icon" class="notification-anchor-icon" role="button"/>
                 <image id="webRTC-sharingMicrophone-notification-icon" class="notification-anchor-icon" role="button"/>
+                <image id="webRTC-shareScreen-notification-icon" class="notification-anchor-icon" role="button"/>
+                <image id="webRTC-sharingScreen-notification-icon" class="notification-anchor-icon" role="button"/>
                 <image id="pointerLock-notification-icon" class="notification-anchor-icon" role="button"/>
                 <image id="servicesInstall-notification-icon" class="notification-anchor-icon" role="button"/>
                 <image id="translate-notification-icon" class="notification-anchor-icon" role="button"/>
@@ -713,6 +746,7 @@
                    onkeypress="gIdentityHandler.handleIdentityButtonEvent(event);"
                    ondragstart="gIdentityHandler.onDragStart(event);">
                 <image id="page-proxy-favicon"
+                       consumeanchor="identity-box"
                        onclick="PageProxyClickHandler(event);"
                        pageproxystate="invalid"/>
                 <hbox id="identity-icon-labels">
@@ -753,20 +787,6 @@
                      flex="100" persist="width" removable="true">
           <searchbar id="searchbar" flex="1"/>
         </toolbaritem>
-
-        <toolbarbutton id="webrtc-status-button"
-                       class="toolbarbutton-1 chromeclass-toolbar-additional"
-                       type="menu"
-                       hidden="true"
-                       orient="horizontal"
-                       label="&webrtcIndicatorButton.label;"
-                       tooltiptext="&webrtcIndicatorButton.tooltip;"
-                       cui-areatype="toolbar"
-                       overflows="false">
-          <menupopup onpopupshowing="WebrtcIndicator.fillPopup(this);"
-                     onpopuphiding="WebrtcIndicator.clearPopup(this);"
-                     oncommand="WebrtcIndicator.menuCommand(event.target);"/>
-        </toolbarbutton>
 
         <toolbarbutton id="bookmarks-menu-button"
                        class="toolbarbutton-1 chromeclass-toolbar-additional"
@@ -897,6 +917,21 @@
                        cui-areatype="toolbar"
                        aboutHomeOverrideTooltip="&abouthome.pageTitle;"/>
 
+        <!-- XXX Bug 1013989 will provide a label for the button -->
+        <!-- This uses badged to be compatible with the social api code it shares.
+             We may also want it to be badged in the future, for notification
+             purposes. -->
+        <toolbarbutton id="loop-call-button"
+                       class="toolbarbutton-1 chromeclass-toolbar-additional"
+                       persist="class"
+                       type="badged"
+                       removable="true"
+                       tooltiptext="&loopCallButton.tooltip;"
+                       oncommand="LoopUI.openCallPanel(event);"
+                       cui-areatype="toolbar"
+                       >
+        </toolbarbutton>
+
 
         <toolbarbutton id="social-share-button"
                        class="toolbarbutton-1 chromeclass-toolbar-additional"
@@ -910,17 +945,15 @@
 
       <toolbarbutton id="nav-bar-overflow-button"
                      class="toolbarbutton-1 chromeclass-toolbar-additional overflow-button"
-                     cui-areatype="toolbar"
                      skipintoolbarset="true"
                      tooltiptext="&navbarOverflow.label;"/>
 
       <toolbaritem id="PanelUI-button"
                    class="chromeclass-toolbar-additional"
-                   cui-areatype="toolbar"
                    removable="false">
         <toolbarbutton id="PanelUI-menu-button"
                        class="toolbarbutton-1"
-                       cui-areatype="toolbar"
+                       consumeanchor="PanelUI-button"
                        label="&brandShortName;"
                        tooltiptext="&appmenu.tooltip;"/>
       </toolbaritem>
@@ -936,7 +969,6 @@
 # Prior to 10.7 there wasn't a native fullscreen button so we use #restore-button
 # to exit fullscreen and want it to behave like other toolbar buttons.
                        class="toolbarbutton-1"
-                       cui-areatype="toolbar"
 #endif
                        tooltiptext="&fullScreenRestore.tooltip;"
                        oncommand="BrowserFullScreen();"/>

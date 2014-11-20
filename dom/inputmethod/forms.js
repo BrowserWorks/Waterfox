@@ -1,4 +1,4 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- /
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- /
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
@@ -508,17 +508,18 @@ let FormAssistant = {
       case "Forms:Input:SendKey":
         CompositionManager.endComposition('');
 
+        let flags = domWindowUtils.KEY_FLAG_NOT_SYNTHESIZED_FOR_TESTS;
         this._editing = true;
         let doKeypress = domWindowUtils.sendKeyEvent('keydown', json.keyCode,
-                                  json.charCode, json.modifiers);
+                                                     json.charCode, json.modifiers, flags);
         if (doKeypress) {
           domWindowUtils.sendKeyEvent('keypress', json.keyCode,
-                                  json.charCode, json.modifiers);
+                                      json.charCode, json.modifiers, flags);
         }
 
         if(!json.repeat) {
           domWindowUtils.sendKeyEvent('keyup', json.keyCode,
-                                    json.charCode, json.modifiers);
+                                      json.charCode, json.modifiers, flags);
         }
 
         this._editing = false;

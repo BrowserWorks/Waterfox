@@ -206,7 +206,7 @@ TCPSocketParent::SendEvent(const nsAString& aType, JS::Handle<JS::Value> aDataVa
   CallbackData data;
   if (aDataVal.isString()) {
     JSString* jsstr = aDataVal.toString();
-    nsDependentJSString str;
+    nsAutoJSString str;
     if (!str.init(aCx, jsstr)) {
       FireInteralError(this, __LINE__);
       return NS_ERROR_OUT_OF_MEMORY;
@@ -235,7 +235,7 @@ TCPSocketParent::SendEvent(const nsAString& aType, JS::Handle<JS::Value> aDataVa
       data = SendableData(arr);
 
     } else {
-      nsDependentJSString name;
+      nsAutoJSString name;
 
       JS::Rooted<JS::Value> val(aCx);
       if (!JS_GetProperty(aCx, obj, "name", &val)) {
@@ -276,6 +276,26 @@ TCPSocketParent::SendUpdateBufferedAmount(uint32_t aBufferedAmount,
   mozilla::unused << PTCPSocketParent::SendUpdateBufferedAmount(aBufferedAmount,
                                                                 aTrackingNumber);
   return NS_OK;
+}
+
+NS_IMETHODIMP
+TCPSocketParent::GetHost(nsAString& aHost)
+{
+  if (!mSocket) {
+    NS_ERROR("No internal socket instance mSocket!");
+    return NS_ERROR_FAILURE;
+  }
+  return mSocket->GetHost(aHost);
+}
+
+NS_IMETHODIMP
+TCPSocketParent::GetPort(uint16_t* aPort)
+{
+  if (!mSocket) {
+    NS_ERROR("No internal socket instance mSocket!");
+    return NS_ERROR_FAILURE;
+  }
+  return mSocket->GetPort(aPort);
 }
 
 void

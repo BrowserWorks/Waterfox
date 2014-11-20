@@ -3,30 +3,35 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "gfxImageSurface.h"
 #include "ImageEncoder.h"
 #include "mozilla/dom/CanvasRenderingContext2D.h"
+#include "mozilla/gfx/2D.h"
+#include "mozilla/gfx/DataSurfaceHelpers.h"
+#include "mozilla/RefPtr.h"
+
+using namespace mozilla::gfx;
 
 namespace mozilla {
 namespace dom {
 
 class EncodingCompleteEvent : public nsRunnable
 {
-public:
-  NS_DECL_THREADSAFE_ISUPPORTS
+  virtual ~EncodingCompleteEvent() {}
 
-  EncodingCompleteEvent(nsIScriptContext* aScriptContext,
+public:
+  NS_DECL_ISUPPORTS_INHERITED
+
+  EncodingCompleteEvent(nsIGlobalObject* aGlobal,
                         nsIThread* aEncoderThread,
                         FileCallback& aCallback)
     : mImgSize(0)
     , mType()
     , mImgData(nullptr)
-    , mScriptContext(aScriptContext)
+    , mGlobal(aGlobal)
     , mEncoderThread(aEncoderThread)
     , mCallback(&aCallback)
     , mFailed(false)
   {}
-  virtual ~EncodingCompleteEvent() {}
 
   NS_IMETHOD Run()
   {
@@ -35,14 +40,13 @@ public:
     mozilla::ErrorResult rv;
 
     if (!mFailed) {
-      nsRefPtr<nsDOMMemoryFile> blob =
-        new nsDOMMemoryFile(mImgData, mImgSize, mType);
+      nsRefPtr<DOMFile> blob =
+        DOMFile::CreateMemoryFile(mImgData, mImgSize, mType);
 
-      if (mScriptContext) {
-        JSContext* jsContext = mScriptContext->GetNativeContext();
-        if (jsContext) {
-          JS_updateMallocCounter(jsContext, mImgSize);
-        }
+      {
+        AutoJSAPI jsapi;
+        jsapi.Init(mGlobal);
+        JS_updateMallocCounter(jsapi.cx(), mImgSize);
       }
 
       mCallback->Call(blob, rv);
@@ -52,7 +56,7 @@ public:
     // released on the main thread here. Otherwise, they could be getting
     // released by EncodingRunnable's destructor on the encoding thread
     // (bug 916128).
-    mScriptContext = nullptr;
+    mGlobal = nullptr;
     mCallback = nullptr;
 
     mEncoderThread->Shutdown();
@@ -75,18 +79,20 @@ private:
   uint64_t mImgSize;
   nsAutoString mType;
   void* mImgData;
-  nsCOMPtr<nsIScriptContext> mScriptContext;
+  nsCOMPtr<nsIGlobalObject> mGlobal;
   nsCOMPtr<nsIThread> mEncoderThread;
   nsRefPtr<FileCallback> mCallback;
   bool mFailed;
 };
 
-NS_IMPL_ISUPPORTS(EncodingCompleteEvent, nsIRunnable);
+NS_IMPL_ISUPPORTS_INHERITED0(EncodingCompleteEvent, nsRunnable);
 
 class EncodingRunnable : public nsRunnable
 {
+  virtual ~EncodingRunnable() {}
+
 public:
-  NS_DECL_THREADSAFE_ISUPPORTS
+  NS_DECL_ISUPPORTS_INHERITED
 
   EncodingRunnable(const nsAString& aType,
                    const nsAString& aOptions,
@@ -105,7 +111,6 @@ public:
     , mSize(aSize)
     , mUsingCustomOptions(aUsingCustomOptions)
   {}
-  virtual ~EncodingRunnable() {}
 
   nsresult ProcessImageData(uint64_t* aImgSize, void** aImgData)
   {
@@ -175,7 +180,7 @@ private:
   bool mUsingCustomOptions;
 };
 
-NS_IMPL_ISUPPORTS(EncodingRunnable, nsIRunnable)
+NS_IMPL_ISUPPORTS_INHERITED0(EncodingRunnable, nsRunnable);
 
 /* static */
 nsresult
@@ -203,9 +208,11 @@ ImageEncoder::ExtractDataAsync(nsAString& aType,
                                int32_t aFormat,
                                const nsIntSize aSize,
                                nsICanvasRenderingContextInternal* aContext,
-                               nsIScriptContext* aScriptContext,
+                               nsIGlobalObject* aGlobal,
                                FileCallback& aCallback)
 {
+  MOZ_ASSERT(aGlobal);
+
   nsCOMPtr<imgIEncoder> encoder = ImageEncoder::GetImageEncoder(aType);
   if (!encoder) {
     return NS_IMAGELIB_ERROR_NO_ENCODER;
@@ -216,7 +223,7 @@ ImageEncoder::ExtractDataAsync(nsAString& aType,
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsRefPtr<EncodingCompleteEvent> completeEvent =
-    new EncodingCompleteEvent(aScriptContext, encoderThread, aCallback);
+    new EncodingCompleteEvent(aGlobal, encoderThread, aCallback);
 
   nsCOMPtr<nsIRunnable> event = new EncodingRunnable(aType,
                                                      aOptions,
@@ -259,6 +266,10 @@ ImageEncoder::ExtractDataInternal(const nsAString& aType,
                                   nsIInputStream** aStream,
                                   imgIEncoder* aEncoder)
 {
+  if (aSize.IsEmpty()) {
+    return NS_ERROR_INVALID_ARG;
+  }
+
   nsCOMPtr<nsIInputStream> imgStream;
 
   // get image bytes
@@ -282,19 +293,28 @@ ImageEncoder::ExtractDataInternal(const nsAString& aType,
     // note that if we didn't have a current context, the spec says we're
     // supposed to just return transparent black pixels of the canvas
     // dimensions.
-    nsRefPtr<gfxImageSurface> emptyCanvas =
-      new gfxImageSurface(gfxIntSize(aSize.width, aSize.height),
-                          gfxImageFormat::ARGB32);
-    if (emptyCanvas->CairoStatus()) {
+    RefPtr<DataSourceSurface> emptyCanvas =
+      Factory::CreateDataSourceSurfaceWithStride(IntSize(aSize.width, aSize.height),
+                                                 SurfaceFormat::B8G8R8A8,
+                                                 4 * aSize.width);
+
+    if (!emptyCanvas) {
+      NS_ERROR("Failded to create DataSourceSurface");
       return NS_ERROR_INVALID_ARG;
     }
-    rv = aEncoder->InitFromData(emptyCanvas->Data(),
+    ClearDataSourceSurface(emptyCanvas);
+    DataSourceSurface::MappedSurface map;
+    if (!emptyCanvas->Map(DataSourceSurface::MapType::WRITE, &map)) {
+      return NS_ERROR_INVALID_ARG;
+    }
+    rv = aEncoder->InitFromData(map.mData,
                                 aSize.width * aSize.height * 4,
                                 aSize.width,
                                 aSize.height,
                                 aSize.width * 4,
                                 imgIEncoder::INPUT_FORMAT_HOSTARGB,
                                 aOptions);
+    emptyCanvas->Unmap();
     if (NS_SUCCEEDED(rv)) {
       imgStream = do_QueryInterface(aEncoder);
     }

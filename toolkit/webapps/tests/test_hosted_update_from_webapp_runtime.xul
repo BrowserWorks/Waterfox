@@ -70,13 +70,12 @@ let runTest = Task.async(function*() {
   // On Mac build servers, we don't have enough privileges to write to /Applications,
   // so we install apps in a user-owned directory.
   if (MAC) {
-    nativeApp._rootInstallDir = OS.Path.join(OS.Constants.Path.homeDir, "Applications");
-    yield OS.File.makeDir(nativeApp._rootInstallDir, { ignoreExisting: true });
+    yield setMacRootInstallDir(OS.Path.join(OS.Constants.Path.homeDir, "Applications"));
   }
 
   // Install application
   info("Test installation");
-  yield nativeApp.install(manifest);
+  yield nativeApp.install(app, manifest);
   while (!WebappOSUtils.isLaunchable(app)) {
     yield wait(1000);
   }
@@ -84,7 +83,7 @@ let runTest = Task.async(function*() {
 
   // Prepare update
   info("Test update");
-  yield nativeApp.prepareUpdate(updatedManifest);
+  yield nativeApp.prepareUpdate(app, updatedManifest);
   while (!WebappOSUtils.isLaunchable(app)) {
     yield wait(1000);
   }
@@ -111,17 +110,10 @@ let runTest = Task.async(function*() {
   SimpleTest.finish();
 });
 
-// The test doesn't work yet on Mac OS X 10.6 machines.
-// See bug 993690.
-if (MAC_106) {
-  todo(false, "The test doesn't work on Mac OS X 10.6 machines");
+runTest().catch((e) => {
+  ok(false, "Error during test: " + e);
   SimpleTest.finish();
-} else {
-  runTest().then(null, function(e) {
-    ok(false, "Error during test: " + e);
-    SimpleTest.finish();
-  });
-}
+});
 
 ]]>
 </script>

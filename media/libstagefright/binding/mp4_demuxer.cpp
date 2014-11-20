@@ -8,8 +8,10 @@
 #include "media/stagefright/MetaData.h"
 #include "mp4_demuxer/Adts.h"
 #include "mp4_demuxer/mp4_demuxer.h"
+#include "mp4_demuxer/Index.h"
 
 #include <stdint.h>
+#include <algorithm>
 
 using namespace stagefright;
 
@@ -22,9 +24,11 @@ struct StageFrightPrivate
 
   sp<MediaSource> mAudio;
   MediaSource::ReadOptions mAudioOptions;
+  Index mAudioIndex;
 
   sp<MediaSource> mVideo;
   MediaSource::ReadOptions mVideoOptions;
+  Index mVideoIndex;
 };
 
 class DataSourceAdapter : public DataSource
@@ -46,7 +50,7 @@ public:
     if (bytesRead == 0)
       return ERROR_END_OF_STREAM;
 
-    MOZ_ASSERT(((ssize_t)bytesRead) >= 0);
+    MOZ_ASSERT(((ssize_t)bytesRead) > 0);
     return bytesRead;
   }
 
@@ -65,7 +69,8 @@ private:
   nsAutoPtr<Stream> mSource;
 };
 
-MP4Demuxer::MP4Demuxer(Stream* source) : mPrivate(new StageFrightPrivate())
+MP4Demuxer::MP4Demuxer(Stream* source)
+  : mPrivate(new StageFrightPrivate())
 {
   mPrivate->mExtractor = new MPEG4Extractor(new DataSourceAdapter(source));
 }
@@ -88,19 +93,26 @@ MP4Demuxer::Init()
     sp<MetaData> metaData = e->getTrackMetaData(i);
 
     const char* mimeType;
-    if (!metaData->findCString(kKeyMIMEType, &mimeType))
+    if (metaData == nullptr || !metaData->findCString(kKeyMIMEType, &mimeType)) {
       continue;
+    }
 
     if (!mPrivate->mAudio.get() && !strncmp(mimeType, "audio/", 6)) {
       mPrivate->mAudio = e->getTrack(i);
       mPrivate->mAudio->start();
       mAudioConfig.Update(metaData, mimeType);
+      auto index = mPrivate->mAudio->exportIndex();
+      mPrivate->mAudioIndex.Init(index);
     } else if (!mPrivate->mVideo.get() && !strncmp(mimeType, "video/", 6)) {
       mPrivate->mVideo = e->getTrack(i);
       mPrivate->mVideo->start();
       mVideoConfig.Update(metaData, mimeType);
+      auto index = mPrivate->mVideo->exportIndex();
+      mPrivate->mVideoIndex.Init(index);
     }
   }
+  sp<MetaData> metaData = e->getMetaData();
+  mCrypto.Update(metaData);
 
   return mPrivate->mAudio.get() || mPrivate->mVideo.get();
 }
@@ -179,11 +191,41 @@ MP4Demuxer::DemuxVideoSample()
 
   sample->Update();
 
-  if (sample->is_sync_point) {
-    sample->Prepend(mVideoConfig.annex_b.begin(),
-                    mVideoConfig.annex_b.length());
-  }
-
   return sample.forget();
 }
+
+void
+MP4Demuxer::ConvertByteRangesToTime(
+  const nsTArray<mozilla::MediaByteRange>& aByteRanges,
+  nsTArray<Interval<Microseconds>>* aIntervals)
+{
+  if (!HasValidVideo() && !HasValidAudio()) {
+    return;
+  }
+
+  nsTArray<Interval<Microseconds>> video;
+  if (HasValidVideo()) {
+    nsTArray<Interval<Microseconds>> ranges;
+    if (!HasValidAudio()) {
+      mPrivate->mVideoIndex.ConvertByteRangesToTimeRanges(aByteRanges,
+                                                          aIntervals);
+      return;
+    }
+    mPrivate->mVideoIndex.ConvertByteRangesToTimeRanges(aByteRanges, &video);
+  }
+
+  nsTArray<Interval<Microseconds>> audio;
+  if (HasValidAudio()) {
+    nsTArray<Interval<Microseconds>> ranges;
+    if (!HasValidVideo()) {
+      mPrivate->mAudioIndex.ConvertByteRangesToTimeRanges(aByteRanges,
+                                                          aIntervals);
+      return;
+    }
+    mPrivate->mAudioIndex.ConvertByteRangesToTimeRanges(aByteRanges, &audio);
+  }
+
+  Interval<Microseconds>::Intersection(audio, video, aIntervals);
 }
+
+} // namespace mp4_demuxer

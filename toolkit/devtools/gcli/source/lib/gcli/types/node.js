@@ -16,7 +16,7 @@
 
 'use strict';
 
-var promise = require('../util/promise');
+var Promise = require('../util/promise').Promise;
 var Highlighter = require('../util/host').Highlighter;
 var l10n = require('../util/l10n');
 var util = require('../util/util');
@@ -34,21 +34,10 @@ if (typeof document !== 'undefined') {
 }
 
 /**
- * For testing only.
- * The fake empty NodeList used when there are no matches, we replace this with
- * something that looks better as soon as we have a document, so not only
- * should you not use this, but you shouldn't cache it either.
- */
-var emptyNodeList = [];
-
-/**
  * Setter for the document that contains the nodes we're matching
  */
 exports.setDocument = function(document) {
   doc = document;
-  if (doc != null) {
-    emptyNodeList = util.createEmptyNodeList(doc);
-  }
 };
 
 /**
@@ -56,7 +45,6 @@ exports.setDocument = function(document) {
  */
 exports.unsetDocument = function() {
   doc = undefined;
-  emptyNodeList = undefined;
 };
 
 /**
@@ -151,7 +139,7 @@ exports.items = [
         }
       }
 
-      return promise.resolve(reply);
+      return Promise.resolve(reply);
     },
 
     onEnter: onEnter,
@@ -186,6 +174,7 @@ exports.items = [
     },
 
     getBlank: function(context) {
+      var emptyNodeList = (doc == null ? [] : util.createEmptyNodeList(doc));
       return new Conversion(emptyNodeList, new BlankArgument(), Status.VALID);
     },
 
@@ -223,7 +212,7 @@ exports.items = [
         reply.matches = util.createEmptyNodeList(doc);
       }
 
-      return promise.resolve(reply);
+      return Promise.resolve(reply);
     },
 
     onEnter: onEnter,

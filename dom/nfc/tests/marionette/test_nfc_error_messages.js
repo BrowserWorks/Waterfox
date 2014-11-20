@@ -4,13 +4,13 @@
 'use strict';
 
 /* globals log, is, ok, runTests, toggleNFC, runNextTest,
-   SpecialPowers, nfc, enableRE0, MozNDEFRecord */
+   SpecialPowers, nfc, MozNDEFRecord, emulator */
 
-const MARIONETTE_TIMEOUT = 30000;
+const MARIONETTE_TIMEOUT = 60000;
 const MARIONETTE_HEAD_JS = 'head.js';
 
 const MANIFEST_URL = 'app://system.gaiamobile.org/manifest.webapp';
-const NDEF_MESSAGE = [new MozNDEFRecord(new Uint8Array(0x01),
+const NDEF_MESSAGE = [new MozNDEFRecord(0x01,
                                         new Uint8Array(0x84),
                                         new Uint8Array(0),
                                         new Uint8Array(0x20))];
@@ -27,7 +27,7 @@ let sessionTokens = [];
 function testNfcNotEnabledError() {
   log('testNfcNotEnabledError');
   toggleNFC(true)
-  .then(enableRE0)
+  .then(() => NCI.activateRE(emulator.P2P_RE_INDEX_0))
   .then(registerAndFireOnpeerready)
   .then(() => toggleNFC(false))
   .then(() => sendNDEFExpectError(nfcPeers[0], 'NfcNotEnabledError'))
@@ -45,11 +45,10 @@ function testNfcNotEnabledError() {
 function testNfcBadSessionIdError() {
   log('testNfcBadSessionIdError');
   toggleNFC(true)
-  .then(enableRE0)
+  .then(() => NCI.activateRE(emulator.P2P_RE_INDEX_0))
   .then(registerAndFireOnpeerready)
-  .then(() => toggleNFC(false))
-  .then(() => toggleNFC(true))
-  .then(enableRE0)
+  .then(() => NCI.deactivate())
+  .then(() => NCI.activateRE(emulator.P2P_RE_INDEX_0))
   .then(registerAndFireOnpeerready)
   // we have 2 peers in nfcPeers array, peer0 has old/invalid session token
   .then(() => sendNDEFExpectError(nfcPeers[0], 'NfcBadSessionIdError'))
@@ -66,11 +65,27 @@ function testNfcBadSessionIdError() {
 function testNfcConnectError() {
   log('testNfcConnectError');
   toggleNFC(true)
-  .then(enableRE0)
+  .then(() => NCI.activateRE(emulator.P2P_RE_INDEX_0))
   .then(registerAndFireOnpeerready)
   .then(() => connectToNFCTagExpectError(sessionTokens[0],
                                          'NDEF',
                                          'NfcConnectError'))
+  .then(() => toggleNFC(false))
+  .then(endTest)
+  .catch(handleRejectedPromise);
+}
+
+/**
+ * Enables nfc and RE0, registers tech-discovered msg handler, once it's
+ * fired set tech-lost handler and disables nfc. In both handlers checks
+ * if error message is not present.
+ */
+function testNoErrorInTechMsg() {
+  log('testNoErrorInTechMsg');
+  toggleNFC(true)
+  .then(() => NCI.activateRE(emulator.P2P_RE_INDEX_0))
+  .then(setTechDiscoveredHandler)
+  .then(setAndFireTechLostHandler)
   .then(() => toggleNFC(false))
   .then(endTest)
   .catch(handleRejectedPromise);
@@ -155,10 +170,48 @@ function connectToNFCTagExpectError(sessionToken, tech, errorMsg) {
   return deferred.promise;
 }
 
+function setTechDiscoveredHandler() {
+  let deferred = Promise.defer();
+
+  let techDiscoveredHandler = function(msg) {
+    ok('Message handler for nfc-manager-tech-discovered');
+    is(msg.type, 'techDiscovered');
+    is(msg.errorMsg, undefined, 'Should not get error msg in tech discovered');
+
+    window.navigator.mozSetMessageHandler('nfc-manager-tech-discovered', null);
+    deferred.resolve();
+  };
+
+  window.navigator.mozSetMessageHandler('nfc-manager-tech-discovered',
+                                        techDiscoveredHandler);
+  return deferred.promise;
+}
+
+function setAndFireTechLostHandler() {
+  let deferred = Promise.defer();
+
+  let techLostHandler = function(msg) {
+    ok('Message handler for nfc-manager-tech-lost');
+    is(msg.type, 'techLost');
+    is(msg.errorMsg, undefined, 'Should not get error msg in tech lost');
+
+    window.navigator.mozSetMessageHandler('nfc-manager-tech-lost', null);
+    deferred.resolve();
+  };
+
+  window.navigator.mozSetMessageHandler('nfc-manager-tech-lost',
+                                        techLostHandler);
+
+  // triggers tech-lost
+  NCI.deactivate();
+  return deferred.promise;
+}
+
 let tests = [
   testNfcNotEnabledError,
   testNfcBadSessionIdError,
-  testNfcConnectError
+  testNfcConnectError,
+  testNoErrorInTechMsg
 ];
 
 /**

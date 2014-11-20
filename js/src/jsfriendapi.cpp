@@ -31,7 +31,9 @@
 using namespace js;
 using namespace JS;
 
+using mozilla::Move;
 using mozilla::PodArrayZero;
+using mozilla::UniquePtr;
 
 // Required by PerThreadDataFriendFields::getMainThread()
 JS_STATIC_ASSERT(offsetof(JSRuntime, mainThread) ==
@@ -50,16 +52,24 @@ PerThreadDataFriendFields::PerThreadDataFriendFields()
 }
 
 JS_FRIEND_API(void)
-js::SetSourceHook(JSRuntime *rt, SourceHook *hook)
+js::SetSourceHook(JSRuntime *rt, UniquePtr<SourceHook> hook)
 {
-    rt->sourceHook = hook;
+    rt->sourceHook = Move(hook);
 }
 
-JS_FRIEND_API(SourceHook *)
+JS_FRIEND_API(UniquePtr<SourceHook>)
 js::ForgetSourceHook(JSRuntime *rt)
 {
-    return rt->sourceHook.forget();
+    return Move(rt->sourceHook);
 }
+
+#ifdef NIGHTLY_BUILD
+JS_FRIEND_API(void)
+js::SetAssertOnScriptEntryHook(JSRuntime *rt, AssertOnScriptEntryHook hook)
+{
+    rt->assertOnScriptEntryHook_ = hook;
+}
+#endif
 
 JS_FRIEND_API(void)
 JS_SetGrayGCRootsTracer(JSRuntime *rt, JSTraceDataOp traceOp, void *data)
@@ -263,12 +273,6 @@ JS_FRIEND_API(bool)
 JS_WrapPropertyDescriptor(JSContext *cx, JS::MutableHandle<js::PropertyDescriptor> desc)
 {
     return cx->compartment()->wrap(cx, desc);
-}
-
-JS_FRIEND_API(bool)
-JS_WrapAutoIdVector(JSContext *cx, js::AutoIdVector &props)
-{
-    return cx->compartment()->wrap(cx, props);
 }
 
 JS_FRIEND_API(void)
@@ -521,21 +525,6 @@ js::NewFunctionByIdWithReserved(JSContext *cx, JSNative native, unsigned nargs, 
                        JSFunction::ExtendedFinalizeKind);
 }
 
-JS_FRIEND_API(JSObject *)
-js::InitClassWithReserved(JSContext *cx, JSObject *objArg, JSObject *parent_protoArg,
-                          const JSClass *clasp, JSNative constructor, unsigned nargs,
-                          const JSPropertySpec *ps, const JSFunctionSpec *fs,
-                          const JSPropertySpec *static_ps, const JSFunctionSpec *static_fs)
-{
-    RootedObject obj(cx, objArg);
-    RootedObject parent_proto(cx, parent_protoArg);
-    CHECK_REQUEST(cx);
-    assertSameCompartment(cx, obj, parent_proto);
-    return js_InitClass(cx, obj, parent_proto, Valueify(clasp), constructor,
-                        nargs, ps, fs, static_ps, static_fs, nullptr,
-                        JSFunction::ExtendedFinalizeKind);
-}
-
 JS_FRIEND_API(const Value &)
 js::GetFunctionNativeReserved(JSObject *fun, size_t which)
 {
@@ -639,7 +628,7 @@ js::TraceWeakMaps(WeakMapTracer *trc)
 extern JS_FRIEND_API(bool)
 js::AreGCGrayBitsValid(JSRuntime *rt)
 {
-    return rt->gc.grayBitsValid;
+    return rt->gc.areGrayBitsValid();
 }
 
 JS_FRIEND_API(bool)
@@ -678,6 +667,12 @@ js::GetWeakmapKeyDelegate(JSObject *key)
     if (JSWeakmapKeyDelegateOp op = key->getClass()->ext.weakmapKeyDelegateOp)
         return op(key);
     return nullptr;
+}
+
+JS_FRIEND_API(JSLinearString *)
+js::StringToLinearStringSlow(JSContext *cx, JSString *str)
+{
+    return str->ensureLinear(cx);
 }
 
 JS_FRIEND_API(void)
@@ -869,7 +864,7 @@ JS::SetGCSliceCallback(JSRuntime *rt, GCSliceCallback callback)
 JS_FRIEND_API(bool)
 JS::WasIncrementalGC(JSRuntime *rt)
 {
-    return rt->gc.isIncremental;
+    return rt->gc.isIncrementalGc();
 }
 
 jschar *
@@ -887,46 +882,25 @@ GCDescription::formatJSON(JSRuntime *rt, uint64_t timestamp) const
 JS_FRIEND_API(void)
 JS::NotifyDidPaint(JSRuntime *rt)
 {
-    if (rt->gcZeal() == gc::ZealFrameVerifierPreValue) {
-        gc::VerifyBarriers(rt, gc::PreBarrierVerifier);
-        return;
-    }
-
-    if (rt->gcZeal() == gc::ZealFrameVerifierPostValue) {
-        gc::VerifyBarriers(rt, gc::PostBarrierVerifier);
-        return;
-    }
-
-    if (rt->gcZeal() == gc::ZealFrameGCValue) {
-        PrepareForFullGC(rt);
-        GCSlice(rt, GC_NORMAL, gcreason::REFRESH_FRAME);
-        return;
-    }
-
-    if (JS::IsIncrementalGCInProgress(rt) && !rt->gc.interFrameGC) {
-        JS::PrepareForIncrementalGC(rt);
-        GCSlice(rt, GC_NORMAL, gcreason::REFRESH_FRAME);
-    }
-
-    rt->gc.interFrameGC = false;
+    rt->gc.notifyDidPaint();
 }
 
 JS_FRIEND_API(bool)
 JS::IsIncrementalGCEnabled(JSRuntime *rt)
 {
-    return rt->gc.incrementalEnabled && rt->gcMode() == JSGC_MODE_INCREMENTAL;
+    return rt->gc.isIncrementalGCEnabled();
 }
 
 JS_FRIEND_API(bool)
 JS::IsIncrementalGCInProgress(JSRuntime *rt)
 {
-    return rt->gc.incrementalState != gc::NO_INCREMENTAL && !rt->gc.verifyPreData;
+    return rt->gc.isIncrementalGCInProgress();
 }
 
 JS_FRIEND_API(void)
 JS::DisableIncrementalGC(JSRuntime *rt)
 {
-    rt->gc.incrementalEnabled = false;
+    rt->gc.disallowIncrementalGC();
 }
 
 JS::AutoDisableGenerationalGC::AutoDisableGenerationalGC(JSRuntime *rt)
@@ -961,7 +935,7 @@ JS::IsGenerationalGCEnabled(JSRuntime *rt)
 JS_FRIEND_API(bool)
 JS::IsIncrementalBarrierNeeded(JSRuntime *rt)
 {
-    return rt->gc.incrementalState == gc::MARK && !rt->isHeapBusy();
+    return rt->gc.state() == gc::MARK && !rt->isHeapBusy();
 }
 
 JS_FRIEND_API(bool)
@@ -1005,6 +979,8 @@ JS::IncrementalReferenceBarrier(void *ptr, JSGCTraceKind kind)
         JSObject::writeBarrierPre(static_cast<JSObject*>(cell));
     else if (kind == JSTRACE_STRING)
         JSString::writeBarrierPre(static_cast<JSString*>(cell));
+    else if (kind == JSTRACE_SYMBOL)
+        JS::Symbol::writeBarrierPre(static_cast<JS::Symbol*>(cell));
     else if (kind == JSTRACE_SCRIPT)
         JSScript::writeBarrierPre(static_cast<JSScript*>(cell));
     else if (kind == JSTRACE_LAZY_SCRIPT)
@@ -1197,7 +1173,7 @@ js_DefineOwnProperty(JSContext *cx, JSObject *objArg, jsid idArg,
 {
     RootedObject obj(cx, objArg);
     RootedId id(cx, idArg);
-    JS_ASSERT(cx->runtime()->gc.heapState == js::Idle);
+    js::AssertHeapIsIdle(cx);
     CHECK_REQUEST(cx);
     assertSameCompartment(cx, obj, id, descriptor.value());
     if (descriptor.hasGetterObject())
@@ -1212,6 +1188,21 @@ JS_FRIEND_API(bool)
 js_ReportIsNotFunction(JSContext *cx, JS::HandleValue v)
 {
     return ReportIsNotFunction(cx, v);
+}
+
+JS_FRIEND_API(void)
+js::ReportErrorWithId(JSContext *cx, const char *msg, HandleId id)
+{
+    RootedValue idv(cx);
+    if (!JS_IdToValue(cx, id, &idv))
+        return;
+    JSString *idstr = JS::ToString(cx, idv);
+    if (!idstr)
+        return;
+    JSAutoByteString bytes(cx, idstr);
+    if (!bytes)
+        return;
+    JS_ReportError(cx, msg, bytes.ptr());
 }
 
 #ifdef DEBUG

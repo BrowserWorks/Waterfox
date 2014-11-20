@@ -22,8 +22,11 @@ const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
-let NFC = {};
-Cu.import("resource://gre/modules/nfc_consts.js", NFC);
+XPCOMUtils.defineLazyGetter(this, "NFC", function () {
+  let obj = {};
+  Cu.import("resource://gre/modules/nfc_consts.js", obj);
+  return obj;
+});
 
 Cu.import("resource://gre/modules/systemlibs.js");
 const NFC_ENABLED = libcutils.property_get("ro.moz.nfc.enabled", "false") === "true";
@@ -283,7 +286,7 @@ XPCOMUtils.defineLazyGetter(this, "gMessageManager", function () {
     isRegisteredP2PTarget: function isRegisteredP2PTarget(appId, event) {
       let targetInfo = this.peerTargetsMap[appId];
       // Check if it is a registered target for the 'event'
-      return ((targetInfo != null) && (targetInfo.event & event !== 0));
+      return ((targetInfo != null) && ((targetInfo.event & event) !== 0));
     },
 
     notifyPeerEvent: function notifyPeerEvent(appId, event) {
@@ -494,7 +497,7 @@ Nfc.prototype = {
     debug("Received message from NFC worker: " + JSON.stringify(message));
 
     // mapping error code to error message
-    if(message.status !== NFC.NFC_SUCCESS) {
+    if (message.status !== undefined && message.status !== NFC.NFC_SUCCESS) {
       message.errorMsg = this.getErrorMessage(message.status);
     }
 
@@ -524,7 +527,7 @@ Nfc.prototype = {
 
         gSystemMessenger.broadcastMessage("nfc-manager-tech-lost", message);
         // Notify 'PeerLost' to appropriate registered target, if any
-        gMessageManager.notifyPeerEvent(this.currentPeerAppId, NFC.NFC_PEER_EVENT_LOST);
+        gMessageManager.notifyPeerEvent(gMessageManager.currentPeerAppId, NFC.NFC_PEER_EVENT_LOST);
         delete this.sessionTokenMap[this._currentSessionId];
         this._currentSessionId = null;
         this.currentPeerAppId = null;

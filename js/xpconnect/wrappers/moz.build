@@ -10,6 +10,7 @@ EXPORTS += [
 
 UNIFIED_SOURCES += [
     'AccessCheck.cpp',
+    'AddonWrapper.cpp',
     'ChromeObjectWrapper.cpp',
     'FilteringWrapper.cpp',
     'WaiveXrayWrapper.cpp',
@@ -22,7 +23,12 @@ SOURCES += [
 ]
 
 # warning C4661 for FilteringWrapper
-FAIL_ON_WARNINGS = not CONFIG['_MSC_VER']
+if CONFIG['_MSC_VER']:
+    CXXFLAGS += [
+        '-wd4661', # no suitable definition provided for explicit template instantiation request
+    ]
+
+FAIL_ON_WARNINGS = True
 
 MSVC_ENABLE_PGO = True
 

@@ -36,7 +36,7 @@ threadSelected(ThreadInfo* aInfo, char** aThreadNameFilters, uint32_t aFeatureCo
   return false;
 }
 
-extern TimeStamp sLastTracerEvent;
+extern mozilla::TimeStamp sLastTracerEvent;
 extern int sFrameNumber;
 extern int sLastFrameNumber;
 extern unsigned int sCurrentEventGeneration;
@@ -65,7 +65,9 @@ class TableTicker: public Sampler {
     mProfileJS = hasFeature(aFeatures, aFeatureCount, "js");
     mProfileJava = hasFeature(aFeatures, aFeatureCount, "java");
     mProfilePower = hasFeature(aFeatures, aFeatureCount, "power");
-    mProfileThreads = hasFeature(aFeatures, aFeatureCount, "threads");
+    // Users sometimes ask to filter by a list of threads but forget to request
+    // profiling non main threads. Let's make it implificit if we have a filter
+    mProfileThreads = hasFeature(aFeatures, aFeatureCount, "threads") || aFilterCount > 0;
     mUnwinderThread = hasFeature(aFeatures, aFeatureCount, "unwinder") || sps_version2();
     mAddLeafAddresses = hasFeature(aFeatures, aFeatureCount, "leaf");
     mPrivacyMode = hasFeature(aFeatures, aFeatureCount, "privacy");
@@ -85,7 +87,7 @@ class TableTicker: public Sampler {
       mThreadNameFilters[i] = strdup(aThreadNameFilters[i]);
     }
 
-    sStartTime = TimeStamp::Now();
+    sStartTime = mozilla::TimeStamp::Now();
 
     {
       mozilla::MutexAutoLock lock(*sRegisteredThreadsMutex);
@@ -134,13 +136,7 @@ class TableTicker: public Sampler {
       return;
     }
 
-    ThreadProfile* profile = new ThreadProfile(aInfo->Name(),
-                                               EntrySize(),
-                                               aInfo->Stack(),
-                                               aInfo->ThreadId(),
-                                               aInfo->GetPlatformData(),
-                                               aInfo->IsMainThread(),
-                                               aInfo->StackTop());
+    ThreadProfile* profile = new ThreadProfile(aInfo, EntrySize());
     aInfo->SetProfile(profile);
   }
 

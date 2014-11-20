@@ -378,12 +378,6 @@ nsresult OggReader::ReadMetadata(MediaInfo* aInfo,
         LOG(PR_LOG_DEBUG, ("Got Ogg duration from seeking to end %lld", endTime));
       }
       mDecoder->GetResource()->EndSeekingForMetadata();
-    } else if (mDecoder->GetMediaDuration() == -1) {
-      // We don't have a duration, and we don't know enough about the resource
-      // to try a seek. Abort trying to get a duration. This happens for example
-      // when the server says it accepts range requests, but does not give us a
-      // Content-Length.
-      mDecoder->SetTransportSeekable(false);
     }
   } else {
     return NS_ERROR_FAILURE;
@@ -391,6 +385,15 @@ nsresult OggReader::ReadMetadata(MediaInfo* aInfo,
   *aInfo = mInfo;
 
   return NS_OK;
+}
+
+bool
+OggReader::IsMediaSeekable()
+{
+  if (mIsChained) {
+    return false;
+  }
+  return true;
 }
 
 nsresult OggReader::DecodeVorbis(ogg_packet* aPacket) {
@@ -624,8 +627,6 @@ bool OggReader::ReadOggChain()
   OpusState* newOpusState = nullptr;
 #endif /* MOZ_OPUS */
   VorbisState* newVorbisState = nullptr;
-  int channels = 0;
-  long rate = 0;
   MetadataTags* tags = nullptr;
 
   if (HasVideo() || HasSkeleton() || !HasAudio()) {
@@ -670,6 +671,7 @@ bool OggReader::ReadOggChain()
     return false;
   }
 
+  nsAutoPtr<MediaInfo> info(new MediaInfo());
   if ((newVorbisState && ReadHeaders(newVorbisState)) &&
       (mVorbisState->mInfo.rate == newVorbisState->mInfo.rate) &&
       (mVorbisState->mInfo.channels == newVorbisState->mInfo.channels)) {
@@ -678,8 +680,8 @@ bool OggReader::ReadOggChain()
     mVorbisSerial = mVorbisState->mSerial;
     LOG(PR_LOG_DEBUG, ("New vorbis ogg link, serial=%d\n", mVorbisSerial));
     chained = true;
-    rate = mVorbisState->mInfo.rate;
-    channels = mVorbisState->mInfo.channels;
+    info->mAudio.mRate = mVorbisState->mInfo.rate;
+    info->mAudio.mChannels = mVorbisState->mInfo.channels;
     tags = mVorbisState->GetTags();
   }
 
@@ -691,8 +693,8 @@ bool OggReader::ReadOggChain()
     mOpusState = newOpusState;
     mOpusSerial = mOpusState->mSerial;
     chained = true;
-    rate = mOpusState->mRate;
-    channels = mOpusState->mChannels;
+    info->mAudio.mRate = mOpusState->mRate;
+    info->mAudio.mChannels = mOpusState->mChannels;
     tags = mOpusState->GetTags();
   }
 #endif
@@ -700,13 +702,12 @@ bool OggReader::ReadOggChain()
   if (chained) {
     SetChained(true);
     {
+      info->mAudio.mHasAudio = HasAudio();
+      info->mVideo.mHasVideo = HasVideo();
+      int rate = info->mAudio.mRate;
       ReentrantMonitorAutoEnter mon(mDecoder->GetReentrantMonitor());
       mDecoder->QueueMetadata((mDecodedAudioFrames * USECS_PER_S) / rate,
-                               channels,
-                               rate,
-                               HasAudio(),
-                               HasVideo(),
-                               tags);
+                              info.forget(), tags);
     }
     return true;
   }

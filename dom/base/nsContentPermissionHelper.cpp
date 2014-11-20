@@ -313,12 +313,14 @@ nsContentPermissionRequestProxy::Allow(JS::HandleValue aChoices)
     if (mPermissionRequests[i].type().EqualsLiteral("audio-capture")) {
       GonkPermissionService::GetInstance()->addGrantInfo(
         "android.permission.RECORD_AUDIO",
-        static_cast<TabParent*>(mParent->Manager())->Manager()->Pid());
+        static_cast<TabParent*>(
+          mParent->Manager())->Manager()->AsContentParent()->Pid());
     }
     if (mPermissionRequests[i].type().EqualsLiteral("video-capture")) {
       GonkPermissionService::GetInstance()->addGrantInfo(
         "android.permission.CAMERA",
-        static_cast<TabParent*>(mParent->Manager())->Manager()->Pid());
+        static_cast<TabParent*>(
+          mParent->Manager())->Manager()->AsContentParent()->Pid());
     }
   }
 #endif
@@ -341,7 +343,7 @@ nsContentPermissionRequestProxy::Allow(JS::HandleValue aChoices)
           !val.isString()) {
         // no setting for the permission type, skip it
       } else {
-        nsDependentJSString choice;
+        nsAutoJSString choice;
         if (!choice.init(cx, val)) {
           return NS_ERROR_FAILURE;
         }
@@ -460,10 +462,13 @@ RemotePermissionRequest::Recv__delete__(const bool& aAllow,
   if (aAllow && mWindow->IsCurrentInnerWindow()) {
     // Convert choices to a JS val if any.
     // {"type1": "choice1", "type2": "choiceA"}
-    AutoSafeJSContext cx;
+    AutoJSAPI jsapi;
+    if (NS_WARN_IF(!jsapi.Init(mWindow))) {
+      return true; // This is not an IPC error.
+    }
+    JSContext* cx = jsapi.cx();
     JS::Rooted<JSObject*> obj(cx);
     obj = JS_NewObject(cx, nullptr, JS::NullPtr(), JS::NullPtr());
-    JSAutoCompartment ac(cx, obj);
     for (uint32_t i = 0; i < aChoices.Length(); ++i) {
       const nsString& choice = aChoices[i].choice();
       const nsCString& type = aChoices[i].type();

@@ -121,7 +121,7 @@ pref("browser.sessionhistory.max_entries", 50);
 pref("browser.sessionstore.resume_session_once", false);
 pref("browser.sessionstore.resume_from_crash", true);
 pref("browser.sessionstore.interval", 10000); // milliseconds
-pref("browser.sessionstore.max_tabs_undo", 1);
+pref("browser.sessionstore.max_tabs_undo", 5);
 pref("browser.sessionstore.max_resumed_crashes", 1);
 pref("browser.sessionstore.recent_crashes", 0);
 
@@ -216,7 +216,7 @@ pref("extensions.compatability.locales.buildid", "0");
 /* blocklist preferences */
 pref("extensions.blocklist.enabled", true);
 pref("extensions.blocklist.interval", 86400);
-pref("extensions.blocklist.url", "https://addons.mozilla.org/blocklist/3/%APP_ID%/%APP_VERSION%/%PRODUCT%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/%PING_COUNT%/%TOTAL_PING_COUNT%/%DAYS_SINCE_LAST_PING%/");
+pref("extensions.blocklist.url", "https://blocklist.addons.mozilla.org/blocklist/3/%APP_ID%/%APP_VERSION%/%PRODUCT%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/%PING_COUNT%/%TOTAL_PING_COUNT%/%DAYS_SINCE_LAST_PING%/");
 pref("extensions.blocklist.detailsURL", "https://www.mozilla.com/%LOCALE%/blocklist/");
 
 /* block popups by default, and notify the user about blocked popups */
@@ -230,6 +230,7 @@ pref("dom.disable_window_print", true);
 pref("dom.disable_window_find", true);
 
 pref("keyword.enabled", true);
+pref("browser.fixup.domainwhitelist.localhost", true);
 
 pref("accessibility.typeaheadfind", false);
 pref("accessibility.typeaheadfind.timeout", 5000);
@@ -280,11 +281,7 @@ pref("browser.search.official", true);
 #endif
 
 // Control media casting feature
-#ifdef RELEASE_BUILD
-pref("browser.casting.enabled", false);
-#else
 pref("browser.casting.enabled", true);
-#endif
 
 // Enable sparse localization by setting a few package locale overrides
 pref("chrome.override_package.global", "browser");
@@ -428,6 +425,12 @@ pref("javascript.options.mem.gc_low_frequency_heap_growth", 120);
 pref("javascript.options.mem.high_water_mark", 16);
 pref("javascript.options.mem.gc_allocation_threshold_mb", 3);
 pref("javascript.options.mem.gc_decommit_threshold_mb", 1);
+#ifdef JSGC_GENERATIONAL
+pref("javascript.options.mem.gc_min_empty_chunk_count", 1);
+#else
+pref("javascript.options.mem.gc_min_empty_chunk_count", 0);
+#endif
+pref("javascript.options.mem.gc_max_empty_chunk_count", 2);
 #else
 pref("javascript.options.mem.high_water_mark", 32);
 #endif
@@ -797,9 +800,6 @@ pref("dom.phonenumber.substringmatching.VE", 7);
 // Support for the mozAudioChannel attribute on media elements is disabled in non-webapps
 pref("media.useAudioChannelService", false);
 
-// Turn on the CSP 1.0 parser for Content Security Policy headers
-pref("security.csp.speccompliant", true);
-
 // Enable hardware-accelerated Skia canvas
 pref("gfx.canvas.azure.backends", "skia");
 pref("gfx.canvas.azure.accelerated", true);
@@ -830,7 +830,6 @@ pref("browser.snippets.statsUrl", "https://snippets-stats.mozilla.org/mobile");
 pref("browser.snippets.enabled", true);
 pref("browser.snippets.syncPromo.enabled", true);
 
-#ifdef MOZ_ANDROID_SYNTHAPKS
 // The URL of the APK factory from which we obtain APKs for webapps.
 pref("browser.webapps.apkFactoryUrl", "https://controller.apk.firefox.com/application.apk");
 
@@ -854,8 +853,6 @@ pref("browser.webapps.checkForUpdates", 1);
 // To test updates, set this to http://apk-update-checker.paas.allizom.org,
 // which is a test server that always reports all apps as having updates.
 pref("browser.webapps.updateCheckUrl", "https://controller.apk.firefox.com/app_updates");
-
-#endif
 
 // The mode of home provider syncing.
 // 0: Sync always

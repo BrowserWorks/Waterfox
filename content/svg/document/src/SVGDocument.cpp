@@ -81,7 +81,7 @@ SVGDocument::InsertChildAt(nsIContent* aKid, uint32_t aIndex, bool aNotify)
 }
 
 nsresult
-SVGDocument::Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const
+SVGDocument::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const
 {
   NS_ASSERTION(aNodeInfo->NodeInfoManager() == mNodeInfoManager,
                "Can't import this document into another document!");
@@ -143,7 +143,7 @@ SVGDocument::EnsureNonSVGUserAgentStyleSheetsLoaded()
             nsCOMPtr<nsIURI> uri;
             NS_NewURI(getter_AddRefs(uri), spec);
             if (uri) {
-              nsRefPtr<nsCSSStyleSheet> cssSheet;
+              nsRefPtr<CSSStyleSheet> cssSheet;
               cssLoader->LoadSheetSync(uri, true, true, getter_AddRefs(cssSheet));
               if (cssSheet) {
                 EnsureOnDemandBuiltInUASheet(cssSheet);
@@ -155,12 +155,13 @@ SVGDocument::EnsureNonSVGUserAgentStyleSheetsLoaded()
     }
   }
 
-  nsCSSStyleSheet* sheet = nsLayoutStylesheetCache::NumberControlSheet();
+  CSSStyleSheet* sheet = nsLayoutStylesheetCache::NumberControlSheet();
   if (sheet) {
     // number-control.css can be behind a pref
     EnsureOnDemandBuiltInUASheet(sheet);
   }
   EnsureOnDemandBuiltInUASheet(nsLayoutStylesheetCache::FormsSheet());
+  EnsureOnDemandBuiltInUASheet(nsLayoutStylesheetCache::CounterStylesSheet());
   EnsureOnDemandBuiltInUASheet(nsLayoutStylesheetCache::HTMLSheet());
   EnsureOnDemandBuiltInUASheet(nsLayoutStylesheetCache::UASheet());
 }

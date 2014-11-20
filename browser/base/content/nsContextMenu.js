@@ -344,7 +344,9 @@ nsContextMenu.prototype = {
   },
 
   initSpellingItems: function() {
-    var canSpell = InlineSpellCheckerUI.canSpellCheck && this.canSpellCheck;
+    var canSpell = InlineSpellCheckerUI.canSpellCheck &&
+                   !InlineSpellCheckerUI.initialSpellCheckPending &&
+                   this.canSpellCheck;
     var onMisspelling = InlineSpellCheckerUI.overMisspelling;
     var showUndo = canSpell && InlineSpellCheckerUI.canUndo();
     this.showItem("spell-check-enabled", canSpell);
@@ -855,14 +857,14 @@ nsContextMenu.prototype = {
     // if the mixedContentChannel is present and the referring URI passes
     // a same origin check with the target URI, we can preserve the users
     // decision of disabling MCB on a page for it's child tabs.
-    var persistDisableMCBInChildTab = false;
+    var persistAllowMixedContentInChildTab = false;
 
     if (this.browser.docShell && this.browser.docShell.mixedContentChannel) {
       const sm = Services.scriptSecurityManager;
       try {
         var targetURI = this.linkURI;
         sm.checkSameOriginURI(referrerURI, targetURI, false);
-        persistDisableMCBInChildTab = true;
+        persistAllowMixedContentInChildTab = true;
       }
       catch (e) { }
     }
@@ -870,7 +872,7 @@ nsContextMenu.prototype = {
     openLinkIn(this.linkURL, "tab",
                { charset: doc.characterSet,
                  referrerURI: referrerURI,
-                 disableMCB:  persistDisableMCBInChildTab});
+                 allowMixedContent: persistAllowMixedContentInChildTab });
   },
 
   // open URL in current tab
@@ -1589,22 +1591,22 @@ nsContextMenu.prototype = {
   },
   markLink: function CM_markLink(origin) {
     // send link to social, if it is the page url linkURI will be null
-    SocialMarks.markLink(origin, this.linkURI ? this.linkURI.spec : null);
+    SocialMarks.markLink(origin, this.linkURI ? this.linkURI.spec : null, this.target);
   },
   shareLink: function CM_shareLink() {
-    SocialShare.sharePage(null, { url: this.linkURI.spec });
+    SocialShare.sharePage(null, { url: this.linkURI.spec }, this.target);
   },
 
   shareImage: function CM_shareImage() {
-    SocialShare.sharePage(null, { url: this.imageURL, previews: [ this.mediaURL ] });
+    SocialShare.sharePage(null, { url: this.imageURL, previews: [ this.mediaURL ] }, this.target);
   },
 
   shareVideo: function CM_shareVideo() {
-    SocialShare.sharePage(null, { url: this.mediaURL, source: this.mediaURL });
+    SocialShare.sharePage(null, { url: this.mediaURL, source: this.mediaURL }, this.target);
   },
 
   shareSelect: function CM_shareSelect(selection) {
-    SocialShare.sharePage(null, { url: this.browser.currentURI.spec, text: selection });
+    SocialShare.sharePage(null, { url: this.browser.currentURI.spec, text: selection }, this.target);
   },
 
   savePageAs: function CM_savePageAs() {

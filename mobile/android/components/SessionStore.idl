@@ -14,7 +14,7 @@ interface nsIDOMNode;
  * tabs contained in them.
  */
 
-[scriptable, uuid(91eca9cf-6741-4c8f-a3a0-2e957240894d)]
+[scriptable, uuid(da9ffc70-d444-47d4-b4ab-df3fb0fd24d0)]
 interface nsISessionStore : nsISupports
 {
   /**
@@ -38,10 +38,10 @@ interface nsISessionStore : nsISupports
 
   /**
    * @param aWindow is the browser window to reopen a closed tab in.
-   * @param aIndex  is the index of the tab to be restored (FIFO ordered).
+   * @param aCloseTabData is the data of the tab to be restored.
    * @returns a reference to the reopened tab.
    */
-  nsIDOMNode undoCloseTab(in nsIDOMWindow aWindow, in unsigned long aIndex);
+  nsIDOMNode undoCloseTab(in nsIDOMWindow aWindow, in jsval aCloseTabData);
 
   /**
    * @param aWindow is the browser window associated with the closed tab.
@@ -76,4 +76,11 @@ interface nsISessionStore : nsISupports
    *                       backup session file is read from.
    */
   void restoreLastSession(in AString aSessionString);
+
+  /**
+   * Removes a window from the current session history. Data from this window
+   * won't be saved when its closed.
+   * @param aWindow The window to remove
+   */
+  void removeWindow(in nsIDOMWindow aWindow);
 };

@@ -38,7 +38,6 @@ class nsJSContext : public nsIScriptContext
 {
 public:
   nsJSContext(bool aGCOnDestruction, nsIScriptGlobalObject* aGlobalObject);
-  virtual ~nsJSContext();
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_AMBIGUOUS(nsJSContext,
@@ -101,6 +100,10 @@ public:
   static void BeginCycleCollectionCallback();
   static void EndCycleCollectionCallback(mozilla::CycleCollectorResults &aResults);
 
+  // Return the longest CC slice time since ClearMaxCCSliceTime() was last called.
+  static uint32_t GetMaxCCSliceTimeSinceClear();
+  static void ClearMaxCCSliceTime();
+
   static void RunNextCollectorTimer();
 
   static void PokeGC(JS::gcreason::Reason aReason, int aDelay = 0);
@@ -130,6 +133,8 @@ public:
     return global ? mGlobalObjectRef.get() : nullptr;
   }
 protected:
+  virtual ~nsJSContext();
+
   // Helper to convert xpcom datatypes to jsvals.
   nsresult ConvertSupportsTojsvals(nsISupports *aArgs,
                                    JS::Handle<JSObject*> aScope,

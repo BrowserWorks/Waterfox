@@ -17,6 +17,7 @@
 #include "nsCOMPtr.h"                   // for nsCOMPtr
 #include "nsHashKeys.h"                 // for nsUint64HashKey
 #include "nsISupportsImpl.h"            // for NS_INLINE_DECL_REFCOUNTING
+#include "ThreadSafeRefcountingWithMainThreadDestruction.h"
 
 class nsIObserver;
 
@@ -25,11 +26,12 @@ namespace layers {
 
 class ClientLayerManager;
 class CompositorParent;
-class FrameMetrics;
+struct FrameMetrics;
 
 class CompositorChild MOZ_FINAL : public PCompositorChild
 {
-  NS_INLINE_DECL_REFCOUNTING(CompositorChild)
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING_WITH_MAIN_THREAD_DESTRUCTION(CompositorChild)
+
 public:
   CompositorChild(ClientLayerManager *aLayerManager);
 
@@ -98,7 +100,7 @@ private:
   private:
     // Pointer to the class that allows access to the shared memory that contains
     // the shared FrameMetrics
-    mozilla::ipc::SharedMemoryBasic* mBuffer;
+    nsRefPtr<mozilla::ipc::SharedMemoryBasic> mBuffer;
     CrossProcessMutex* mMutex;
     // Unique ID of the APZC that is sharing the FrameMetrics
     uint32_t mAPZCId;

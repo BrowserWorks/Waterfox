@@ -379,7 +379,7 @@ cppunittests-remote:
         fi
 
 jetpack-tests:
-	$(PYTHON) $(topsrcdir)/addon-sdk/source/bin/cfx -b $(browser_path) --parseable testpkgs
+	cd $(topsrcdir)/addon-sdk/source && $(PYTHON) bin/cfx -b $(abspath $(browser_path)) --parseable testpkgs
 
 pgo-profile-run:
 	$(PYTHON) $(topsrcdir)/build/pgo/profileserver.py $(EXTRA_TEST_ARGS)
@@ -415,6 +415,7 @@ ifndef UNIVERSAL_BINARY
 	$(NSINSTALL) -D $(DIST)/$(PKG_PATH)
 endif
 	find $(PKG_STAGE) -name '*.pyc' -exec rm {} \;
+	$(MKDIR) -p $(abspath $(DIST))/$(PKG_PATH) && \
 	cd $(PKG_STAGE) && \
 	  zip -rq9D '$(abspath $(DIST))/$(PKG_PATH)$(TEST_PACKAGE)' \
 	  * -x \*/.mkdir.done
@@ -503,8 +504,13 @@ endif
 ifeq ($(MOZ_WIDGET_TOOLKIT),android)
 	$(NSINSTALL) $(topsrcdir)/testing/android_cppunittest_manifest.txt $(PKG_STAGE)/cppunittests
 endif
+ifeq ($(MOZ_WIDGET_TOOLKIT),gonk)
+	$(NSINSTALL) $(topsrcdir)/testing/b2g_cppunittest_manifest.txt $(PKG_STAGE)/cppunittests
+endif
+ifeq ($(MOZ_DISABLE_STARTUPCACHE),)
 	$(NSINSTALL) $(topsrcdir)/startupcache/test/TestStartupCacheTelemetry.js $(PKG_STAGE)/cppunittests
 	$(NSINSTALL) $(topsrcdir)/startupcache/test/TestStartupCacheTelemetry.manifest $(PKG_STAGE)/cppunittests
+endif
 ifdef STRIP_CPP_TESTS
 	$(OBJCOPY) $(or $(STRIP_FLAGS),--strip-unneeded) $(DIST)/bin/jsapi-tests$(BIN_SUFFIX) $(PKG_STAGE)/cppunittests/jsapi-tests$(BIN_SUFFIX)
 else

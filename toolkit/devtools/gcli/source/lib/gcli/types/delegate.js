@@ -16,7 +16,7 @@
 
 'use strict';
 
-var promise = require('../util/promise');
+var Promise = require('../util/promise').Promise;
 var Conversion = require('./types').Conversion;
 var Status = require('./types').Status;
 
@@ -39,7 +39,7 @@ exports.items = [
 
     getSpec: function(commandName, paramName) {
       return {
-        name: 'remote',
+        name: 'delegate',
         param: paramName
       };
     },
@@ -84,7 +84,7 @@ exports.items = [
       if (typeof type.parse !== 'function') {
         type = this.types.createType(type);
       }
-      return promise.resolve(type);
+      return Promise.resolve(type);
     },
 
     // DelegateType is designed to be inherited from, so DelegateField needs a way
@@ -142,12 +142,16 @@ exports.items = [
     item: 'type',
     name: 'blank',
 
+    getSpec: function(commandName, paramName) {
+      return 'blank';
+    },
+
     stringify: function(value, context) {
       return '';
     },
 
     parse: function(arg, context) {
-      return promise.resolve(new Conversion(undefined, arg));
+      return Promise.resolve(new Conversion(undefined, arg));
     }
   }
 ];

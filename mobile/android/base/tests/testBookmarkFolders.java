@@ -1,6 +1,7 @@
 package org.mozilla.gecko.tests;
 
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.home.HomePager;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -29,7 +30,7 @@ public class testBookmarkFolders extends AboutHomeTest {
         waitForText(StringHelper.TOOLBAR_FOLDER_LABEL);
 
         // Verify the number of folders displayed in the Desktop Bookmarks folder is correct
-        ListView desktopFolderContent = findListViewWithTag("bookmarks");
+        ListView desktopFolderContent = findListViewWithTag(HomePager.LIST_TAG_BOOKMARKS);
         ListAdapter adapter = desktopFolderContent.getAdapter();
         if (mDevice.type.equals("tablet")) { // On tablets it's 4 folders and 1 view for top padding
             mAsserter.is(adapter.getCount(), 5, "Checking that the correct number of folders is displayed in the Desktop Bookmarks folder");
@@ -40,10 +41,10 @@ public class testBookmarkFolders extends AboutHomeTest {
         clickOnBookmarkFolder(StringHelper.TOOLBAR_FOLDER_LABEL);
 
         // Go up in the bookmark folder hierarchy
-        clickOnBookmarkFolder(StringHelper.TOOLBAR_FOLDER_LABEL);
+        clickOnBookmarkFolder(String.format(StringHelper.BOOKMARKS_UP_TO, StringHelper.DESKTOP_FOLDER_LABEL));
         mAsserter.ok(waitForText(StringHelper.BOOKMARKS_MENU_FOLDER_LABEL), "Going up in the folder hierarchy", "We are back in the Desktop Bookmarks folder");
 
-        clickOnBookmarkFolder(StringHelper.DESKTOP_FOLDER_LABEL);
+        clickOnBookmarkFolder(String.format(StringHelper.BOOKMARKS_UP_TO, StringHelper.BOOKMARKS_ROOT_LABEL));
         mAsserter.ok(waitForText(StringHelper.DESKTOP_FOLDER_LABEL), "Going up in the folder hierarchy", "We are back in the main Bookmarks List View");
 
         clickOnBookmarkFolder(StringHelper.DESKTOP_FOLDER_LABEL);
@@ -74,7 +75,7 @@ public class testBookmarkFolders extends AboutHomeTest {
         mAsserter.ok(!waitForText(contextMenuString), "Folders do not have context menus", "The context menu was not opened");
 
         // Even if no context menu is opened long clicking a folder still opens it. We need to close it.
-        clickOnBookmarkFolder(StringHelper.DESKTOP_FOLDER_LABEL);
+        clickOnBookmarkFolder(String.format(StringHelper.BOOKMARKS_UP_TO, StringHelper.BOOKMARKS_ROOT_LABEL));
     }
 
     private void clickOnBookmarkFolder(final String folderName) {
@@ -98,7 +99,7 @@ public class testBookmarkFolders extends AboutHomeTest {
         mSolo.hideSoftKeyboard();
         getInstrumentation().waitForIdleSync();
 
-        ListView bookmarksTabList = findListViewWithTag("bookmarks");
+        ListView bookmarksTabList = findListViewWithTag(HomePager.LIST_TAG_BOOKMARKS);
         if (!waitForNonEmptyListToLoad(bookmarksTabList)) {
             return null;
         }

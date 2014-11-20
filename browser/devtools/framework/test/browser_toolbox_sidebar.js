@@ -30,7 +30,7 @@ function test() {
     isTargetSupported: function() true,
     build: function(iframeWindow, toolbox) {
       let deferred = promise.defer();
-      executeSoon(function() {
+      executeSoon(() => {
         deferred.resolve({
           target: toolbox.target,
           toolbox: toolbox,
@@ -38,15 +38,15 @@ function test() {
           destroy: function(){},
           panelDoc: iframeWindow.document,
         });
-      }.bind(this));
+      });
       return deferred.promise;
     },
   };
 
   gDevTools.registerTool(toolDefinition);
 
-  addTab("about:blank", function(aBrowser, aTab) {
-    let target = TargetFactory.forTab(gBrowser.selectedTab);
+  addTab("about:blank").then(function(aTab) {
+    let target = TargetFactory.forTab(aTab);
     gDevTools.showToolbox(target, toolDefinition.id).then(function(toolbox) {
       let panel = toolbox.getPanel(toolDefinition.id);
       ok(true, "Tool open");
@@ -142,8 +142,9 @@ function test() {
     panel.sidebar.destroy();
     gDevTools.unregisterTool(toolDefinition.id);
 
+    gBrowser.removeCurrentTab();
+
     executeSoon(function() {
-      gBrowser.removeCurrentTab();
       finish();
     });
   }

@@ -30,7 +30,20 @@ public:
     nsLineBox_id = nsQueryFrame::NON_FRAME_MARKER,
     nsRuleNode_id,
     nsStyleContext_id,
+    nsInheritedStyleData_id,
+    nsResetStyleData_id,
     nsFrameList_id,
+
+    First_nsStyleStruct_id,
+    DummyBeforeStyleStructs_id = First_nsStyleStruct_id - 1,
+
+    #define STYLE_STRUCT(name_, checkdata_cb_) \
+      nsStyle##name_##_id,
+    #include "nsStyleStructList.h"
+    #undef STYLE_STRUCT
+
+    DummyAfterStyleStructs_id,
+    Last_nsStyleStruct_id = DummyAfterStyleStructs_id - 1,
 
     /**
      * The PresArena implementation uses this bit to distinguish objects

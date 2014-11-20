@@ -27,7 +27,7 @@ CacheFileOutputStream::Release()
     mRefCnt = 1;
     {
       CacheFileAutoLock lock(mFile);
-      mFile->RemoveOutput(this);
+      mFile->RemoveOutput(this, mStatus);
     }
     delete (this);
     return 0;
@@ -107,15 +107,23 @@ CacheFileOutputStream::Write(const char * aBuf, uint32_t aCount,
 
   while (aCount) {
     EnsureCorrectChunk(false);
-    if (NS_FAILED(mStatus))
+    if (NS_FAILED(mStatus)) {
       return mStatus;
+    }
 
     FillHole();
+    if (NS_FAILED(mStatus)) {
+      return mStatus;
+    }
 
     uint32_t chunkOffset = mPos - (mPos / kChunkSize) * kChunkSize;
     uint32_t canWrite = kChunkSize - chunkOffset;
     uint32_t thisWrite = std::min(static_cast<uint32_t>(canWrite), aCount);
-    mChunk->EnsureBufSize(chunkOffset + thisWrite);
+    nsresult rv = mChunk->EnsureBufSize(chunkOffset + thisWrite);
+    if (NS_FAILED(rv)) {
+      CloseWithStatusLocked(rv);
+      return rv;
+    }
     memcpy(mChunk->BufForWriting() + chunkOffset, aBuf, thisWrite);
 
     mPos += thisWrite;
@@ -194,7 +202,7 @@ CacheFileOutputStream::CloseWithStatusLocked(nsresult aStatus)
     NotifyListener();
   }
 
-  mFile->RemoveOutput(this);
+  mFile->RemoveOutput(this, mStatus);
 
   return NS_OK;
 }
@@ -213,6 +221,7 @@ CacheFileOutputStream::AsyncWait(nsIOutputStreamCallback *aCallback,
 
   mCallback = aCallback;
   mCallbackFlags = aFlags;
+  mCallbackTarget = aEventTarget;
 
   if (!mCallback)
     return NS_OK;
@@ -389,7 +398,12 @@ CacheFileOutputStream::FillHole()
   LOG(("CacheFileOutputStream::FillHole() - Zeroing hole in chunk %d, range "
        "%d-%d [this=%p]", mChunk->Index(), mChunk->DataSize(), pos - 1, this));
 
-  mChunk->EnsureBufSize(pos);
+  nsresult rv = mChunk->EnsureBufSize(pos);
+  if (NS_FAILED(rv)) {
+    CloseWithStatusLocked(rv);
+    return;
+  }
+
   memset(mChunk->BufForWriting() + mChunk->DataSize(), 0,
          pos - mChunk->DataSize());
 
@@ -405,8 +419,14 @@ CacheFileOutputStream::NotifyListener()
 
   MOZ_ASSERT(mCallback);
 
-  if (!mCallbackTarget)
-    mCallbackTarget = NS_GetCurrentThread();
+  if (!mCallbackTarget) {
+    mCallbackTarget = CacheFileIOManager::IOTarget();
+    if (!mCallbackTarget) {
+      LOG(("CacheFileOutputStream::NotifyListener() - Cannot get Cache I/O "
+           "thread! Using main thread for callback."));
+      mCallbackTarget = do_GetMainThread();
+    }
+  }
 
   nsCOMPtr<nsIOutputStreamCallback> asyncCallback =
     NS_NewOutputStreamReadyEvent(mCallback, mCallbackTarget);

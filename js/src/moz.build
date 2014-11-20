@@ -86,6 +86,8 @@ EXPORTS.js += [
     '../public/StructuredClone.h',
     '../public/TracingAPI.h',
     '../public/TypeDecls.h',
+    '../public/UbiNode.h',
+    '../public/UbiNodeTraverse.h',
     '../public/Utility.h',
     '../public/Value.h',
     '../public/Vector.h',
@@ -100,6 +102,7 @@ UNIFIED_SOURCES += [
     'builtin/Object.cpp',
     'builtin/Profilers.cpp',
     'builtin/SIMD.cpp',
+    'builtin/SymbolObject.cpp',
     'builtin/TestingFunctions.cpp',
     'builtin/TypedObject.cpp',
     'devtools/sharkctl.cpp',
@@ -112,6 +115,8 @@ UNIFIED_SOURCES += [
     'frontend/ParseNode.cpp',
     'frontend/TokenStream.cpp',
     'gc/Barrier.cpp',
+    'gc/ForkJoinNursery.cpp',
+    'gc/GCTrace.cpp',
     'gc/Iteration.cpp',
     'gc/Marking.cpp',
     'gc/Memory.cpp',
@@ -122,6 +127,12 @@ UNIFIED_SOURCES += [
     'gc/Tracer.cpp',
     'gc/Verifier.cpp',
     'gc/Zone.cpp',
+    'irregexp/RegExpAST.cpp',
+    'irregexp/RegExpEngine.cpp',
+    'irregexp/RegExpInterpreter.cpp',
+    'irregexp/RegExpMacroAssembler.cpp',
+    'irregexp/RegExpParser.cpp',
+    'irregexp/RegExpStack.cpp',
     'jsalloc.cpp',
     'jsapi.cpp',
     'jsbool.cpp',
@@ -188,8 +199,10 @@ UNIFIED_SOURCES += [
     'vm/String.cpp',
     'vm/StringBuffer.cpp',
     'vm/StructuredClone.cpp',
+    'vm/Symbol.cpp',
     'vm/ThreadPool.cpp',
     'vm/TypedArrayObject.cpp',
+    'vm/UbiNode.cpp',
     'vm/Unicode.cpp',
     'vm/Value.cpp',
     'vm/WeakMapPtr.cpp',
@@ -230,44 +243,12 @@ if CONFIG['ENABLE_TRACE_LOGGING']:
         'vm/TraceLogging.cpp',
     ]
 
-if CONFIG['ENABLE_YARR']:
-    UNIFIED_SOURCES += [
-        'yarr/PageBlock.cpp',
-        'yarr/YarrCanonicalizeUCS2.cpp',
-        'yarr/YarrInterpreter.cpp',
-        'yarr/YarrPattern.cpp',
-        'yarr/YarrSyntaxChecker.cpp',
-    ]
-    if CONFIG['OS_ARCH'] == 'WINNT':
-        SOURCES += [
-            'yarr/OSAllocatorWin.cpp',
-        ]
-    else:
-        SOURCES += [
-            'yarr/OSAllocatorPosix.cpp',
-        ]
-    if CONFIG['ENABLE_ION']:
-        SOURCES += [
-            'yarr/YarrJIT.cpp'
-        ]
-else:
-    UNIFIED_SOURCES += [
-        'irregexp/RegExpAST.cpp',
-        'irregexp/RegExpEngine.cpp',
-        'irregexp/RegExpInterpreter.cpp',
-        'irregexp/RegExpMacroAssembler.cpp',
-        'irregexp/RegExpParser.cpp',
-        'irregexp/RegExpStack.cpp',
-    ]
-    if CONFIG['ENABLE_ION']:
-        UNIFIED_SOURCES += [
-            'irregexp/NativeRegExpMacroAssembler.cpp',
-        ]
-
 if CONFIG['ENABLE_ION']:
     UNIFIED_SOURCES += [
+        'irregexp/NativeRegExpMacroAssembler.cpp',
         'jit/AliasAnalysis.cpp',
         'jit/AsmJS.cpp',
+        'jit/AsmJSFrameIterator.cpp',
         'jit/AsmJSLink.cpp',
         'jit/AsmJSModule.cpp',
         'jit/AsmJSSignalHandlers.cpp',
@@ -315,12 +296,13 @@ if CONFIG['ENABLE_ION']:
         'jit/RegisterAllocator.cpp',
         'jit/RematerializedFrame.cpp',
         'jit/Safepoints.cpp',
+        'jit/ScalarReplacement.cpp',
         'jit/shared/BaselineCompiler-shared.cpp',
         'jit/shared/CodeGenerator-shared.cpp',
         'jit/shared/Lowering-shared.cpp',
         'jit/Snapshots.cpp',
         'jit/StupidAllocator.cpp',
-        'jit/TypeDescrSet.cpp',
+        'jit/TypedObjectPrediction.cpp',
         'jit/TypePolicy.cpp',
         'jit/UnreachableCodeElimination.cpp',
         'jit/ValueNumbering.cpp',
@@ -394,7 +376,6 @@ if CONFIG['ENABLE_ION']:
         ]
     elif CONFIG['JS_CODEGEN_ARM']:
         SOURCES += [
-            'assembler/assembler/ARMAssembler.cpp',
             'assembler/assembler/MacroAssemblerARM.cpp',
         ]
 
@@ -423,7 +404,10 @@ else:
         'perf/pm_stub.cpp'
     ]
 
-MSVC_ENABLE_PGO = True
+# Disable PGO for MSVC 2010 due to unpredictable performance, see
+# bug 1030706.
+if CONFIG['_MSC_VER'] != '1600':
+    MSVC_ENABLE_PGO = True
 
 HOST_SOURCES += [
     'jskwgen.cpp',
@@ -457,6 +441,8 @@ if CONFIG['NIGHTLY_BUILD']:
     DEFINES['ENABLE_PARALLEL_JS'] = True
     DEFINES['ENABLE_BINARYDATA'] = True
     DEFINES['ENABLE_SHARED_ARRAY_BUFFER'] = True
+    if CONFIG['ENABLE_ION'] and CONFIG['JSGC_GENERATIONAL_CONFIGURED'] and CONFIG['JS_THREADSAFE_CONFIGURED']:
+        DEFINES['JSGC_FJGENERATIONAL'] = True
 
 DEFINES['EXPORT_JS_API'] = True
 
@@ -476,6 +462,9 @@ if CONFIG['_MSC_VER']:
         SOURCES['builtin/RegExp.cpp'].no_pgo = True # Bug 772303
     elif CONFIG['CPU_ARCH'] == 'x86_64' and CONFIG['JS_HAS_CTYPES']:
         SOURCES['ctypes/CTypes.cpp'].no_pgo = True # Bug 810661
+    # Prevent floating point errors caused by VC++ optimizations
+    # XXX We should add this to CXXFLAGS, too?
+    CFLAGS += ['-fp:precise']
 
 # Needed to "configure" it correctly.  Unfortunately these
 # flags wind up being applied to all code in js/src, not just

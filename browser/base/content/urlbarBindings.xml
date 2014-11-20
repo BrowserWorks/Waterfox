@@ -62,6 +62,7 @@
         this._ignoreNextSelect = false;
 
         this.inputField.controllers.insertControllerAt(0, this._copyCutController);
+        this.inputField.addEventListener("paste", this, false);
         this.inputField.addEventListener("mousedown", this, false);
         this.inputField.addEventListener("mousemove", this, false);
         this.inputField.addEventListener("mouseout", this, false);
@@ -71,6 +72,7 @@
         try {
           if (this._prefs.getBoolPref("unifiedcomplete")) {
             this.setAttribute("autocompletesearch", "unifiedcomplete");
+            this.mSearchNames = null;
           }
         } catch (ex) {}
 
@@ -111,6 +113,7 @@
         this._prefs.removeObserver("", this);
         this._prefs = null;
         this.inputField.controllers.removeController(this._copyCutController);
+        this.inputField.removeEventListener("paste", this, false);
         this.inputField.removeEventListener("mousedown", this, false);
         this.inputField.removeEventListener("mousemove", this, false);
         this.inputField.removeEventListener("mouseout", this, false);
@@ -118,7 +121,7 @@
         this.inputField.removeEventListener("underflow", this, false);
       ]]></destructor>
 
-      <field name="_value"></field>
+      <field name="_value">""</field>
 
       <!--
         onBeforeValueGet is called by the base-binding's .value getter.
@@ -311,16 +314,12 @@
             }
 
             function loadCurrent() {
-              let webnav = Ci.nsIWebNavigation;
-              let flags = webnav.LOAD_FLAGS_ALLOW_THIRD_PARTY_FIXUP |
-                          webnav.LOAD_FLAGS_FIXUP_SCHEME_TYPOS;
-              // Pass LOAD_FLAGS_DISALLOW_INHERIT_OWNER to prevent any loads from
-              // inheriting the currently loaded document's principal, unless this
-              // URL is marked as safe to inherit (e.g. came from a bookmark
-              // keyword).
-              if (!mayInheritPrincipal)
-                flags |= Ci.nsIWebNavigation.LOAD_FLAGS_DISALLOW_INHERIT_OWNER;
-              gBrowser.loadURIWithFlags(url, flags, null, null, postData);
+              openUILinkIn(url, "current", {
+                allowThirdPartyFixup: true,
+                disallowInheritPrincipal: !mayInheritPrincipal,
+                allowPinnedTabHostChange: true,
+                postData: postData
+              });
             }
 
             // Focus the content area before triggering loads, since if the load
@@ -618,6 +617,7 @@
                 this.setAttribute("autocompletesearch",
                                   useUnifiedComplete ? "unifiedcomplete"
                                                      : "urlinline history");
+                this.mSearchNames = null;
             }
           }
         ]]></body>
@@ -627,6 +627,36 @@
         <parameter name="aEvent"/>
         <body><![CDATA[
           switch (aEvent.type) {
+            case "paste":
+              let originalPasteData = aEvent.clipboardData.getData("text/plain");
+              if (!originalPasteData) {
+                return;
+              }
+
+              let oldValue = this.inputField.value;
+              let oldStart = oldValue.substring(0, this.inputField.selectionStart);
+              // If there is already non-whitespace content in the URL bar
+              // preceding the pasted content, it's not necessary to check
+              // protocols used by the pasted content:
+              if (oldStart.trim()) {
+                return;
+              }
+              let oldEnd = oldValue.substring(this.inputField.selectionEnd);
+
+              let pasteData = stripUnsafeProtocolOnPaste(originalPasteData);
+              if (originalPasteData != pasteData) {
+                // Unfortunately we're not allowed to set the bits being pasted
+                // so cancel this event:
+                aEvent.preventDefault();
+                aEvent.stopPropagation();
+
+                this.inputField.value = oldStart + pasteData + oldEnd;
+                // Fix up cursor/selection:
+                let newCursorPos = oldStart.length + pasteData.length;
+                this.inputField.selectionStart = newCursorPos;
+                this.inputField.selectionEnd = newCursorPos;
+              }
+              break;
             case "mousedown":
               if (this.doubleClickSelectsAll &&
                   aEvent.button == 0 && aEvent.detail == 2) {

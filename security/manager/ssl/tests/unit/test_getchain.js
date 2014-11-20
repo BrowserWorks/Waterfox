@@ -1,4 +1,4 @@
-// -*- Mode: javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+// -*- indent-tabs-mode: nil; js-indent-level: 2 -*-
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -8,9 +8,6 @@
 do_get_profile(); // must be called before getting nsIX509CertDB
 const certdb  = Cc["@mozilla.org/security/x509certdb;1"]
                   .getService(Ci.nsIX509CertDB);
-const certdb2 = Cc["@mozilla.org/security/x509certdb;1"]
-                  .getService(Ci.nsIX509CertDB2);
-
 // This is the list of certificates needed for the test
 // The certificates prefixed by 'int-' are intermediates
 let certList = [
@@ -29,7 +26,7 @@ function load_cert(cert_name, trust_string) {
 // the ones that I am interested in.
 function get_ca_array() {
   let ret_array = new Array();
-  let allCerts = certdb2.getCerts();
+  let allCerts = certdb.getCerts();
   let enumerator = allCerts.getEnumerator();
   while (enumerator.hasMoreElements()) {
     let cert = enumerator.getNext().QueryInterface(Ci.nsIX509Cert);
@@ -70,8 +67,7 @@ function check_getchain(ee_cert, ssl_ca, email_ca){
   check_matching_issuer_and_getchain(ee_cert.issuer.serialNumber, ee_cert);
 }
 
-function run_test_in_mode(useMozillaPKIX) {
-  Services.prefs.setBoolPref("security.use_mozillapkix_verification", useMozillaPKIX);
+function run_test() {
   clearOCSPCache();
   clearSessionCache();
 
@@ -87,9 +83,4 @@ function run_test_in_mode(useMozillaPKIX) {
   check_getchain(ee_cert, ca[1], ca[2]);
   // Swap ca certs to deal alternate trust settings.
   check_getchain(ee_cert, ca[2], ca[1]);
-}
-
-function run_test() {
-  run_test_in_mode(true);
-  run_test_in_mode(false);
 }

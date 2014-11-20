@@ -7,6 +7,7 @@
 #include "WinUtils.h"
 
 #include "gfxPlatform.h"
+#include "gfxUtils.h"
 #include "nsWindow.h"
 #include "nsWindowDefs.h"
 #include "KeyboardLayout.h"
@@ -59,8 +60,8 @@ using namespace mozilla::gfx;
 namespace mozilla {
 namespace widget {
 
-NS_IMPL_ISUPPORTS(myDownloadObserver, nsIDownloadObserver)
 #ifdef MOZ_PLACES
+NS_IMPL_ISUPPORTS(myDownloadObserver, nsIDownloadObserver)
 NS_IMPL_ISUPPORTS(AsyncFaviconDataReady, nsIFaviconDataCallback)
 #endif
 NS_IMPL_ISUPPORTS(AsyncEncodeAndWriteIcon, nsIRunnable)
@@ -276,6 +277,48 @@ WinUtils::GetMessage(LPMSG aMsg, HWND aWnd, UINT aFirstMessage,
   }
 #endif // #ifdef NS_ENABLE_TSF
   return ::GetMessageW(aMsg, aWnd, aFirstMessage, aLastMessage);
+}
+
+/* static */
+void
+WinUtils::WaitForMessage(DWORD aTimeoutMs)
+{
+  const DWORD waitStart = ::GetTickCount();
+  DWORD elapsed = 0;
+  while (true) {
+    if (aTimeoutMs != INFINITE) {
+      elapsed = ::GetTickCount() - waitStart;
+    }
+    if (elapsed >= aTimeoutMs) {
+      break;
+    }
+    DWORD result = ::MsgWaitForMultipleObjectsEx(0, NULL, aTimeoutMs - elapsed,
+                                                 MOZ_QS_ALLEVENT,
+                                                 MWMO_INPUTAVAILABLE);
+    NS_WARN_IF_FALSE(result != WAIT_FAILED, "Wait failed");
+    if (result == WAIT_TIMEOUT) {
+      break;
+    }
+
+    // Sent messages (via SendMessage and friends) are processed differently
+    // than queued messages (via PostMessage); the destination window procedure
+    // of the sent message is called during (Get|Peek)Message. Since PeekMessage
+    // does not tell us whether it processed any sent messages, we need to query
+    // this ahead of time.
+    bool haveSentMessagesPending =
+      (HIWORD(::GetQueueStatus(QS_SENDMESSAGE)) & QS_SENDMESSAGE) != 0;
+
+    MSG msg = {0};
+    if (haveSentMessagesPending ||
+        ::PeekMessageW(&msg, nullptr, 0, 0, PM_NOREMOVE)) {
+      break;
+    }
+    // The message is intended for another thread that has been synchronized
+    // with our input queue; yield to give other threads an opportunity to
+    // process the message. This should prevent busy waiting if resumed due
+    // to another thread's message.
+    ::SwitchToThread();
+  }
 }
 
 /* static */
@@ -731,8 +774,6 @@ AsyncFaviconDataReady::OnComplete(nsIURI *aFaviconURI,
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Decode the image from the format it was returned to us in (probably PNG)
-  nsAutoCString mimeTypeOfInputData;
-  mimeTypeOfInputData.AssignLiteral("image/vnd.microsoft.icon");
   nsCOMPtr<imgIContainer> container;
   nsCOMPtr<imgITools> imgtool = do_CreateInstance("@mozilla.org/image/tools;1");
   rv = imgtool->DecodeImageData(stream, aMimeType,
@@ -831,65 +872,48 @@ NS_IMETHODIMP AsyncEncodeAndWriteIcon::Run()
 {
   NS_PRECONDITION(!NS_IsMainThread(), "Should not be called on the main thread.");
 
-  nsCOMPtr<nsIInputStream> iconStream;
-  nsRefPtr<imgIEncoder> encoder =
-    do_CreateInstance("@mozilla.org/image/encoder;2?"
-                      "type=image/vnd.microsoft.icon");
-  NS_ENSURE_TRUE(encoder, NS_ERROR_FAILURE);
-  nsresult rv = encoder->InitFromData(mBuffer, mBufferLength,
-                                      mWidth, mHeight,
-                                      mStride,
-                                      imgIEncoder::INPUT_FORMAT_HOSTARGB,
-                                      EmptyString());
-  NS_ENSURE_SUCCESS(rv, rv);
-  CallQueryInterface(encoder.get(), getter_AddRefs(iconStream));
-  if (!iconStream) {
-    return NS_ERROR_FAILURE;
+  RefPtr<DrawTarget> dt =
+    gfxPlatform::GetPlatform()->ScreenReferenceDrawTarget();
+  RefPtr<SourceSurface> surface =
+    dt->CreateSourceSurfaceFromData(mBuffer, IntSize(mWidth, mHeight), mStride,
+                                    SurfaceFormat::B8G8R8A8);
+
+  FILE* file = fopen(NS_ConvertUTF16toUTF8(mIconPath).get(), "wb");
+  if (!file) {
+    // Maybe the directory doesn't exist; try creating it, then fopen again.
+    nsresult rv = NS_ERROR_FAILURE;
+    nsCOMPtr<nsIFile> comFile = do_CreateInstance("@mozilla.org/file/local;1");
+    if (comFile) {
+      //NS_ConvertUTF8toUTF16 utf16path(mIconPath);
+      rv = comFile->InitWithPath(mIconPath);
+      if (NS_SUCCEEDED(rv)) {
+        nsCOMPtr<nsIFile> dirPath;
+        comFile->GetParent(getter_AddRefs(dirPath));
+        if (dirPath) {
+          rv = dirPath->Create(nsIFile::DIRECTORY_TYPE, 0777);
+          if (NS_SUCCEEDED(rv) || rv == NS_ERROR_FILE_ALREADY_EXISTS) {
+            file = fopen(NS_ConvertUTF16toUTF8(mIconPath).get(), "wb");
+            if (!file) {
+              rv = NS_ERROR_FAILURE;
+            }
+          }
+        }
+      }
+    }
+    if (!file) {
+      return rv;
+    }
   }
-
+  nsresult rv =
+    gfxUtils::EncodeSourceSurface(surface,
+                                  NS_LITERAL_CSTRING("image/vnd.microsoft.icon"),
+                                  EmptyString(),
+                                  gfxUtils::eBinaryEncode,
+                                  file);
+  fclose(file);
   NS_ENSURE_SUCCESS(rv, rv);
-  nsCOMPtr<nsIFile> icoFile
-    = do_CreateInstance("@mozilla.org/file/local;1");
-  NS_ENSURE_TRUE(icoFile, NS_ERROR_FAILURE);
-  rv = icoFile->InitWithPath(mIconPath);
-
-  // Try to create the directory if it's not there yet
-  nsCOMPtr<nsIFile> dirPath;
-  icoFile->GetParent(getter_AddRefs(dirPath));
-  rv = (dirPath->Create(nsIFile::DIRECTORY_TYPE, 0777));
-  if (NS_FAILED(rv) && rv != NS_ERROR_FILE_ALREADY_EXISTS) {
-    return rv;
-  }
-
-  // Setup the output stream for the ICO file on disk
-  nsCOMPtr<nsIOutputStream> outputStream;
-  rv = NS_NewLocalFileOutputStream(getter_AddRefs(outputStream), icoFile);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  // Obtain the ICO buffer size from the re-encoded ICO stream
-  uint64_t bufSize64;
-  rv = iconStream->Available(&bufSize64);
-  NS_ENSURE_SUCCESS(rv, rv);
-  NS_ENSURE_TRUE(bufSize64 <= UINT32_MAX, NS_ERROR_FILE_TOO_BIG);
-
-  uint32_t bufSize = (uint32_t)bufSize64;
-
-  // Setup a buffered output stream from the stream object
-  // so that we can simply use WriteFrom with the stream object
-  nsCOMPtr<nsIOutputStream> bufferedOutputStream;
-  rv = NS_NewBufferedOutputStream(getter_AddRefs(bufferedOutputStream),
-                                  outputStream, bufSize);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  // Write out the icon stream to disk and make sure we wrote everything
-  uint32_t wrote;
-  rv = bufferedOutputStream->WriteFrom(iconStream, bufSize, &wrote);
-  NS_ASSERTION(bufSize == wrote, 
-              "Icon wrote size should be equal to requested write size");
 
   // Cleanup
-  bufferedOutputStream->Close();
-  outputStream->Close();
   if (mURLShortcut) {
     SendMessage(HWND_BROADCAST, WM_SETTINGCHANGE, SPI_SETNONCLIENTMETRICS, 0);
   }
@@ -940,6 +964,9 @@ AsyncDeleteAllFaviconsFromDisk::
   AsyncDeleteAllFaviconsFromDisk(bool aIgnoreRecent)
   : mIgnoreRecent(aIgnoreRecent)
 {
+  // We can't call FaviconHelper::GetICOCacheSecondsTimeout() on non-main
+  // threads, as it reads a pref, so cache its value here.
+  mIcoNoDeleteSeconds = FaviconHelper::GetICOCacheSecondsTimeout() + 600;
 }
 
 NS_IMETHODIMP AsyncDeleteAllFaviconsFromDisk::Run()
@@ -986,11 +1013,9 @@ NS_IMETHODIMP AsyncDeleteAllFaviconsFromDisk::Run()
         // If the icon is older than the regeneration time (+ 10 min to be
         // safe), then it's old and we can get rid of it.
         // This code is only hit directly after a regeneration.
-        int32_t icoNoDeleteSeconds =
-          FaviconHelper::GetICOCacheSecondsTimeout() + 600;
         int64_t nowTime = PR_Now() / int64_t(PR_USEC_PER_SEC);
         if (NS_FAILED(rv) ||
-          (nowTime - fileModTime) < icoNoDeleteSeconds) {
+          (nowTime - fileModTime) < mIcoNoDeleteSeconds) {
           continue;
         }
       }

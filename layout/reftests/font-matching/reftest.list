@@ -49,6 +49,9 @@ random-if(cocoaWidget) != impact-bold.html impact.html # bug 539418
 == localized-family-names-003.html localized-family-names-003-ref.html
 == localized-family-names-004.html localized-family-names-004-ref.html
 
+# family names with escaped spaces shouldn't match the names without the spaces
+== familyname-escapedidents.html familyname-escapedidents-ref.html
+
 # weight mapping tests
 skip-if(B2G) HTTP(..) == normalmedium.html normalmedium-ref.html # bug 773482
 skip-if(B2G) HTTP(..) != normalmedium.html normalmedium-notref.html # bug 773482
@@ -87,3 +90,6 @@ random-if(!Android) skip-if(gtk2Widget) != bold-system-fallback-2.html bold-syst
 random-if(!(cocoaWidget||winWidget)) == arial-arabic.html arial-arabic-ref.html
 
 != syntheticbold-rotated.html syntheticbold-rotated-ref.html
+
+pref(layout.css.font-features.enabled,true) HTTP(..) == font-synthesis-1.html font-synthesis-1-ref.html
+pref(layout.css.font-features.enabled,true) HTTP(..) == font-synthesis-2.html font-synthesis-2-ref.html

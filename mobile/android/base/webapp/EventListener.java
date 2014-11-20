@@ -5,33 +5,6 @@
 
 package org.mozilla.gecko.webapp;
 
-import org.mozilla.gecko.ActivityHandlerHelper;
-import org.mozilla.gecko.AppConstants;
-import org.mozilla.gecko.GeckoAppShell;
-import org.mozilla.gecko.GeckoEvent;
-import org.mozilla.gecko.GeckoProfile;
-import org.mozilla.gecko.favicons.decoders.FaviconDecoder;
-import org.mozilla.gecko.gfx.BitmapUtils;
-import org.mozilla.gecko.util.ActivityResultHandler;
-import org.mozilla.gecko.EventDispatcher;
-import org.mozilla.gecko.util.EventCallback;
-import org.mozilla.gecko.util.NativeEventListener;
-import org.mozilla.gecko.util.NativeJSObject;
-import org.mozilla.gecko.util.ThreadUtils;
-import org.mozilla.gecko.WebappAllocator;
-
-import android.app.Activity;
-import android.app.ActivityManager;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.graphics.Bitmap;
-import android.net.Uri;
-import android.util.Log;
-
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -40,6 +13,27 @@ import java.util.Set;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.mozilla.gecko.ActivityHandlerHelper;
+import org.mozilla.gecko.EventDispatcher;
+import org.mozilla.gecko.GeckoAppShell;
+import org.mozilla.gecko.GeckoProfile;
+import org.mozilla.gecko.util.ActivityResultHandler;
+import org.mozilla.gecko.util.EventCallback;
+import org.mozilla.gecko.util.NativeEventListener;
+import org.mozilla.gecko.util.NativeJSObject;
+import org.mozilla.gecko.util.ThreadUtils;
+
+import android.app.Activity;
+import android.app.ActivityManager;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
+import android.util.Log;
 
 public class EventListener implements NativeEventListener  {
 
@@ -49,6 +43,7 @@ public class EventListener implements NativeEventListener  {
         EventDispatcher.getInstance().registerGeckoThreadListener(this,
             "Webapps:Preinstall",
             "Webapps:InstallApk",
+            "Webapps:UninstallApk",
             "Webapps:Postinstall",
             "Webapps:Open",
             "Webapps:Uninstall",
@@ -59,6 +54,7 @@ public class EventListener implements NativeEventListener  {
         EventDispatcher.getInstance().unregisterGeckoThreadListener(this,
             "Webapps:Preinstall",
             "Webapps:InstallApk",
+            "Webapps:UninstallApk",
             "Webapps:Postinstall",
             "Webapps:Open",
             "Webapps:Uninstall",
@@ -68,18 +64,12 @@ public class EventListener implements NativeEventListener  {
     @Override
     public void handleMessage(String event, NativeJSObject message, EventCallback callback) {
         try {
-            if (AppConstants.MOZ_ANDROID_SYNTHAPKS && event.equals("Webapps:InstallApk")) {
+            if (event.equals("Webapps:InstallApk")) {
                 installApk(GeckoAppShell.getGeckoInterface().getActivity(), message, callback);
+            } else if (event.equals("Webapps:UninstallApk")) {
+                uninstallApk(GeckoAppShell.getGeckoInterface().getActivity(), message);
             } else if (event.equals("Webapps:Postinstall")) {
-                if (AppConstants.MOZ_ANDROID_SYNTHAPKS) {
-                    postInstallWebapp(message.getString("apkPackageName"), message.getString("origin"));
-                } else {
-                    postInstallWebapp(message.getString("name"),
-                                      message.getString("manifestURL"),
-                                      message.getString("origin"),
-                                      message.getString("iconURL"),
-                                      message.getString("originalOrigin"));
-                }
+                postInstallWebapp(message.getString("apkPackageName"), message.getString("origin"));
             } else if (event.equals("Webapps:Open")) {
                 Intent intent = GeckoAppShell.getWebappIntent(message.getString("manifestURL"),
                                                               message.getString("origin"),
@@ -88,16 +78,6 @@ public class EventListener implements NativeEventListener  {
                     return;
                 }
                 GeckoAppShell.getGeckoInterface().getActivity().startActivity(intent);
-            } else if (!AppConstants.MOZ_ANDROID_SYNTHAPKS && event.equals("Webapps:Uninstall")) {
-                uninstallWebapp(message.getString("origin"));
-            } else if (!AppConstants.MOZ_ANDROID_SYNTHAPKS && event.equals("Webapps:Preinstall")) {
-                String name = message.getString("name");
-                String manifestURL = message.getString("manifestURL");
-                String origin = message.getString("origin");
-
-                JSONObject obj = new JSONObject();
-                obj.put("profile", preInstallWebapp(name, manifestURL, origin).toString());
-                callback.sendSuccess(obj);
             } else if (event.equals("Webapps:GetApkVersions")) {
                 JSONObject obj = new JSONObject();
                 obj.put("versions", getApkVersions(GeckoAppShell.getGeckoInterface().getActivity(),
@@ -109,30 +89,6 @@ public class EventListener implements NativeEventListener  {
         }
     }
 
-    // Not used by MOZ_ANDROID_SYNTHAPKS.
-    public static File preInstallWebapp(String aTitle, String aURI, String aOrigin) {
-        int index = WebappAllocator.getInstance(GeckoAppShell.getContext()).findAndAllocateIndex(aOrigin, aTitle, (String) null);
-        GeckoProfile profile = GeckoProfile.get(GeckoAppShell.getContext(), "webapp" + index);
-        return profile.getDir();
-    }
-
-    // Not used by MOZ_ANDROID_SYNTHAPKS.
-    public static void postInstallWebapp(String aTitle, String aURI, String aOrigin, String aIconURL, String aOriginalOrigin) {
-        WebappAllocator allocator = WebappAllocator.getInstance(GeckoAppShell.getContext());
-        int index = allocator.getIndexForApp(aOriginalOrigin);
-
-        assert aIconURL != null;
-
-        final int preferredSize = GeckoAppShell.getPreferredIconSize();
-        Bitmap icon = FaviconDecoder.getMostSuitableBitmapFromDataURI(aIconURL, preferredSize);
-
-        assert aOrigin != null && index != -1;
-        allocator.updateAppAllocation(aOrigin, index, icon);
-
-        GeckoAppShell.createShortcut(aTitle, aURI, aOrigin, icon, "webapp");
-    }
-
-    // Used by MOZ_ANDROID_SYNTHAPKS.
     public static void postInstallWebapp(String aPackageName, String aOrigin) {
         Allocator allocator = Allocator.getInstance(GeckoAppShell.getContext());
         int index = allocator.findOrAllocatePackage(aPackageName);
@@ -187,9 +143,9 @@ public class EventListener implements NativeEventListener  {
         final JSONObject messageData;
 
         // We get the manifest url out of javascript here so we can use it as a checksum
-        // in a minute, when a package has been installed.
-        String manifestUrl = null;
-        String filePath = null;
+        // in InstallListener when a package has been installed.
+        String manifestUrl;
+        String filePath;
 
         try {
             filePath = message.getString("filePath");
@@ -201,46 +157,65 @@ public class EventListener implements NativeEventListener  {
             return;
         }
 
-        // We will check the manifestUrl from the one in the APK.
-        // Thus, we can have a one-to-one mapping of apk to receiver.
-        final InstallListener receiver = new InstallListener(manifestUrl, messageData);
+        final File file = new File(filePath);
 
-        // Listen for packages being installed.
-        IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_ADDED);
-        filter.addDataScheme("package");
-        context.registerReceiver(receiver, filter);
-
-        File file = new File(filePath);
         if (!file.exists()) {
             Log.wtf(LOGTAG, "APK file doesn't exist at path " + filePath);
             callback.sendError("APK file doesn't exist at path " + filePath);
             return;
         }
 
+        // We will check the manifestUrl from the one in the APK.
+        // Thus, we can have a one-to-one mapping of apk to receiver.
+        final InstallListener receiver = new InstallListener(manifestUrl, messageData, file);
+
+        // Listen for packages being installed.
+        IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_ADDED);
+        filter.addDataScheme("package");
+
+        // As of API 19 we can do something like this to only trigger this receiver
+        // for a specific package name:
+        // int currentApiVersion = android.os.Build.VERSION.SDK_INT;
+        // if (currentApiVersion >= android.os.Build.VERSION_CODES.KITKAT){ // KITKAT == 19
+        //    filter.addDataSchemeSpecificPart("com.example.someapp", PatternMatcher.PATTERN_LITERAL);
+        // }
+        // TODO: Implement package name filtering to IntentFilter.
+
+        context.registerReceiver(receiver, filter);
+
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setDataAndType(Uri.fromFile(file), "application/vnd.android.package-archive");
 
         // Now call the package installer.
         ActivityHandlerHelper.startIntentForActivity(context, intent, new ActivityResultHandler() {
+            // Invoked if the user cancels installation or presses the 'Done'
+            // button once the app has been successfully installed. It may also
+            // be called when the user presses Open and then returns to Fennec.
             @Override
             public void onActivityResult(int resultCode, Intent data) {
-                // The InstallListener will catch the case where the user pressed install.
-                // Now deal with if the user pressed cancel.
-                if (resultCode == Activity.RESULT_CANCELED) {
-                    try {
-                        context.unregisterReceiver(receiver);
-                        receiver.cleanup();
-                    } catch (java.lang.IllegalArgumentException e) {
-                        // IllegalArgumentException happens because resultCode is RESULT_CANCELED
-                        // when the user presses the Done button in the install confirmation dialog,
-                        // even though the install has been successful (and InstallListener already
-                        // unregistered the receiver).
-                        Log.e(LOGTAG, "error unregistering install receiver: ", e);
-                    }
+                if (!receiver.isReceived()) {
                     callback.sendError("APK installation cancelled by user");
+                    context.unregisterReceiver(receiver);
+                }
+                if (file.delete()) {
+                    Log.i(LOGTAG, "Downloaded APK file deleted");
                 }
             }
         });
+    }
+
+    public static void uninstallApk(final Activity context, NativeJSObject message) {
+        String packageName = message.getString("apkPackageName");
+        Uri packageUri = Uri.parse("package:" + packageName);
+
+        Intent intent;
+        if (Build.VERSION.SDK_INT < 14) {
+            intent = new Intent(Intent.ACTION_DELETE, packageUri);
+        } else {
+            intent = new Intent(Intent.ACTION_UNINSTALL_PACKAGE, packageUri);
+        }
+
+        context.startActivity(intent);
     }
 
     private static final int DEFAULT_VERSION_CODE = -1;

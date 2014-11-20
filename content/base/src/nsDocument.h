@@ -28,7 +28,6 @@
 #include "nsIPrincipal.h"
 #include "nsIParser.h"
 #include "nsBindingManager.h"
-#include "nsINodeInfo.h"
 #include "nsInterfaceHashtable.h"
 #include "nsJSThingHashtable.h"
 #include "nsIBoxObject.h"
@@ -102,7 +101,7 @@ namespace mozilla {
 class EventChainPreVisitor;
 namespace dom {
 class UndoManager;
-class LifecycleCallbacks;
+struct LifecycleCallbacks;
 class CallbackFunction;
 }
 }
@@ -395,9 +394,10 @@ public:
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(Registry)
 
   Registry();
-  virtual ~Registry();
 
 protected:
+  virtual ~Registry();
+
   typedef nsClassHashtable<mozilla::dom::CustomElementHashKey,
                            mozilla::dom::CustomElementDefinition>
     DefinitionMap;
@@ -441,7 +441,6 @@ class nsDOMStyleSheetList : public mozilla::dom::StyleSheetList,
 {
 public:
   nsDOMStyleSheetList(nsIDocument *aDocument);
-  virtual ~nsDOMStyleSheetList();
 
   NS_DECL_ISUPPORTS_INHERITED
 
@@ -458,9 +457,12 @@ public:
   }
 
   virtual uint32_t Length() MOZ_OVERRIDE;
-  virtual nsCSSStyleSheet* IndexedGetter(uint32_t aIndex, bool& aFound) MOZ_OVERRIDE;
+  virtual mozilla::CSSStyleSheet*
+  IndexedGetter(uint32_t aIndex, bool& aFound) MOZ_OVERRIDE;
 
 protected:
+  virtual ~nsDOMStyleSheetList();
+
   int32_t       mLength;
   nsIDocument*  mDocument;
 };
@@ -538,6 +540,8 @@ protected:
   class PendingLoad : public ExternalResourceLoad,
                       public nsIStreamListener
   {
+    ~PendingLoad() {}
+
   public:
     PendingLoad(nsDocument* aDisplayDocument) :
       mDisplayDocument(aDisplayDocument)
@@ -569,6 +573,7 @@ protected:
 
   class LoadgroupCallbacks MOZ_FINAL : public nsIInterfaceRequestor
   {
+    ~LoadgroupCallbacks() {}
   public:
     LoadgroupCallbacks(nsIInterfaceRequestor* aOtherCallbacks)
       : mCallbacks(aOtherCallbacks)
@@ -591,6 +596,7 @@ protected:
     class _i##Shim MOZ_FINAL : public nsIInterfaceRequestor,                 \
                                public _i                                     \
     {                                                                        \
+      ~_i##Shim() {}                                                         \
     public:                                                                  \
       _i##Shim(nsIInterfaceRequestor* aIfreq, _i* aRealPtr)                  \
         : mIfReq(aIfreq), mRealPtr(aRealPtr)                                 \
@@ -781,7 +787,7 @@ public:
   virtual Element* FindContentForSubDocument(nsIDocument *aDocument) const MOZ_OVERRIDE;
   virtual Element* GetRootElementInternal() const MOZ_OVERRIDE;
 
-  virtual void EnsureOnDemandBuiltInUASheet(nsCSSStyleSheet* aSheet) MOZ_OVERRIDE;
+  virtual void EnsureOnDemandBuiltInUASheet(mozilla::CSSStyleSheet* aSheet) MOZ_OVERRIDE;
 
   /**
    * Get the (document) style sheets owned by this document.
@@ -803,11 +809,19 @@ public:
                                             bool aApplicable) MOZ_OVERRIDE;
 
   virtual nsresult LoadAdditionalStyleSheet(additionalSheetType aType, nsIURI* aSheetURI) MOZ_OVERRIDE;
+  virtual nsresult AddAdditionalStyleSheet(additionalSheetType aType, nsIStyleSheet* aSheet) MOZ_OVERRIDE;
   virtual void RemoveAdditionalStyleSheet(additionalSheetType aType, nsIURI* sheetURI) MOZ_OVERRIDE;
   virtual nsIStyleSheet* FirstAdditionalAuthorSheet() MOZ_OVERRIDE;
 
   virtual nsIChannel* GetChannel() const MOZ_OVERRIDE {
     return mChannel;
+  }
+
+  virtual nsIChannel* GetFailedChannel() const MOZ_OVERRIDE {
+    return mFailedChannel;
+  }
+  virtual void SetFailedChannel(nsIChannel* aChannel) MOZ_OVERRIDE {
+    mFailedChannel = aChannel;
   }
 
   virtual void SetScriptGlobalObject(nsIScriptGlobalObject* aGlobalObject) MOZ_OVERRIDE;
@@ -890,7 +904,7 @@ public:
   virtual nsresult InsertChildAt(nsIContent* aKid, uint32_t aIndex,
                                  bool aNotify) MOZ_OVERRIDE;
   virtual void RemoveChildAt(uint32_t aIndex, bool aNotify) MOZ_OVERRIDE;
-  virtual nsresult Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE
   {
     return NS_ERROR_NOT_IMPLEMENTED;
   }
@@ -926,7 +940,7 @@ public:
   virtual nsViewportInfo GetViewportInfo(const mozilla::ScreenIntSize& aDisplaySize) MOZ_OVERRIDE;
 
 private:
-  void AddOnDemandBuiltInUASheet(nsCSSStyleSheet* aSheet);
+  void AddOnDemandBuiltInUASheet(mozilla::CSSStyleSheet* aSheet);
   nsRadioGroupStruct* GetRadioGroupInternal(const nsAString& aName) const;
   void SendToConsole(nsCOMArray<nsISecurityConsoleMessage>& aMessages);
 
@@ -1074,7 +1088,7 @@ public:
                             const nsAString& aCrossOriginAttr) MOZ_OVERRIDE;
 
   virtual nsresult LoadChromeSheetSync(nsIURI* uri, bool isAgentSheet,
-                                       nsCSSStyleSheet** sheet) MOZ_OVERRIDE;
+                                       mozilla::CSSStyleSheet** sheet) MOZ_OVERRIDE;
 
   virtual nsISupports* GetCurrentContentSink() MOZ_OVERRIDE;
 
@@ -1131,6 +1145,32 @@ public:
   virtual nsresult RemoteFrameFullscreenReverted() MOZ_OVERRIDE;
   virtual nsIDocument* GetFullscreenRoot() MOZ_OVERRIDE;
   virtual void SetFullscreenRoot(nsIDocument* aRoot) MOZ_OVERRIDE;
+
+  // Returns the size of the mBlockedTrackingNodes array. (nsIDocument.h)
+  //
+  // This array contains nodes that have been blocked to prevent
+  // user tracking. They most likely have had their nsIChannel
+  // canceled by the URL classifier (Safebrowsing).
+  //
+  // A script can subsequently use GetBlockedTrackingNodes()
+  // to get a list of references to these nodes.
+  //
+  // Note:
+  // This expresses how many tracking nodes have been blocked for this
+  // document since its beginning, not how many of them are still around
+  // in the DOM tree. Weak references to blocked nodes are added in the
+  // mBlockedTrackingNodesArray but they are not removed when those nodes
+  // are removed from the tree or even garbage collected.
+  long BlockedTrackingNodeCount() const;
+
+  //
+  // Returns strong references to mBlockedTrackingNodes. (nsIDocument.h)
+  //
+  // This array contains nodes that have been blocked to prevent
+  // user tracking. They most likely have had their nsIChannel
+  // canceled by the URL classifier (Safebrowsing).
+  //
+  already_AddRefed<nsSimpleContentList> BlockedTrackingNodes() const;
 
   static void ExitFullscreen(nsIDocument* aDoc);
 
@@ -1701,6 +1741,10 @@ private:
 
   nsCOMPtr<nsIDocument> mMasterDocument;
   nsRefPtr<mozilla::dom::ImportManager> mImportManager;
+
+  // Set to true when the document is possibly controlled by the ServiceWorker.
+  // Used to prevent multiple requests to ServiceWorkerManager.
+  bool mMaybeServiceWorkerControlled;
 
 #ifdef DEBUG
 public:

@@ -10,7 +10,7 @@ config = {
         "--app=%(app_name)s", "--console-level=INFO",
         "--http-port=%(http_port)s", "--ssl-port=%(ssl_port)s",
         "--run-only-tests=android.json", "--symbols-path=%(symbols_path)s",
-        "--quiet"
+        "--quiet", "--log-raw=%(raw_log_file)s"
     ],
     "reftest_options": [
         "--deviceIP=%(device_ip)s",
@@ -27,7 +27,7 @@ config = {
         "--xre-path=../hostutils/xre",
         "--utility-path=../hostutils/bin",
         "--app=%(app_name)s",
-        "--enable-privilege", "--ignore-window-size", "--bootstrap",
+        "--ignore-window-size", "--bootstrap",
         "--http-port=%(http_port)s", "--ssl-port=%(ssl_port)s",
         "--symbols-path=%(symbols_path)s",
         "reftest/tests/testing/crashtest/crashtests.list"
@@ -37,7 +37,7 @@ config = {
         "--xre-path=../hostutils/xre",
         "--utility-path=../hostutils/bin",
         "--app=%(app_name)s",
-        "--enable-privilege", "--ignore-window-size", "--bootstrap",
+        "--ignore-window-size", "--bootstrap",
         "--extra-profile-file=jsreftest/tests/user.js", "jsreftest/tests/jstests.list",
         "--http-port=%(http_port)s", "--ssl-port=%(ssl_port)s",
         "--symbols-path=%(symbols_path)s"

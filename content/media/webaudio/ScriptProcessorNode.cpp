@@ -403,14 +403,10 @@ private:
         }
 
         AutoJSAPI jsapi;
-        JSContext* cx = jsapi.cx();
-
-        // Get the global for the context so that we can enter its compartment.
-        JS::Rooted<JSObject*> global(cx, node->Context()->GetGlobalJSObject());
-        if (NS_WARN_IF(!global)) {
+        if (NS_WARN_IF(!jsapi.Init(node->GetOwner()))) {
           return NS_OK;
         }
-        JSAutoCompartment ac(cx, global);
+        JSContext* cx = jsapi.cx();
 
         // Create the input buffer
         nsRefPtr<AudioBuffer> inputBuffer;

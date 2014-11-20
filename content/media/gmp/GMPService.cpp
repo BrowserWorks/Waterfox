@@ -4,22 +4,44 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "GMPService.h"
+#include "prlog.h"
 #include "GMPParent.h"
 #include "GMPVideoDecoderParent.h"
 #include "nsIObserverService.h"
 #include "GeckoChildProcessHost.h"
-#if defined(XP_WIN)
-#include "nsIWindowsRegKey.h"
-#endif
+#include "mozilla/Preferences.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/SyncRunnable.h"
-#include "nsDirectoryServiceUtils.h"
-#include "nsDirectoryServiceDefs.h"
 #include "nsXPCOMPrivate.h"
-#include "nsISimpleEnumerator.h"
 #include "mozilla/Services.h"
+#include "nsNativeCharsetUtils.h"
+#include "nsIConsoleService.h"
+#include "mozilla/unused.h"
+#include "runnable_utils.h"
 
 namespace mozilla {
+
+#ifdef LOG
+#undef LOG
+#endif
+
+#ifdef PR_LOGGING
+PRLogModuleInfo*
+GetGMPLog()
+{
+  static PRLogModuleInfo *sLog;
+  if (!sLog)
+    sLog = PR_NewLogModule("GMP");
+  return sLog;
+}
+
+#define LOGD(msg) PR_LOG(GetGMPLog(), PR_LOG_DEBUG, msg)
+#define LOG(level, msg) PR_LOG(GetGMPLog(), (level), msg)
+#else
+#define LOGD(msg)
+#define LOG(leve1, msg)
+#endif
+
 namespace gmp {
 
 static StaticRefPtr<GeckoMediaPluginService> sSingletonService;
@@ -113,20 +135,19 @@ GeckoMediaPluginService::Init()
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  // Cache user directory while we're on the main thread. We do this because
-  // if we try to use "~" in a path during plugin lookup on a non-main thread,
-  // the nsIFile code will try to resolve it using NS_GetSpecialDirectory, which
-  // doesn't work on non-main threads.
-  nsCOMPtr<nsIFile> homeDir;
-  NS_GetSpecialDirectory(NS_OS_HOME_DIR, getter_AddRefs(homeDir));
-  if (homeDir) {
-    homeDir->GetPath(mHomePath);
-  }
-
   nsCOMPtr<nsIObserverService> obsService = mozilla::services::GetObserverService();
   MOZ_ASSERT(obsService);
   MOZ_ALWAYS_TRUE(NS_SUCCEEDED(obsService->AddObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID, false)));
   MOZ_ALWAYS_TRUE(NS_SUCCEEDED(obsService->AddObserver(this, NS_XPCOM_SHUTDOWN_THREADS_OBSERVER_ID, false)));
+
+  nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
+  if (prefs) {
+    prefs->AddObserver("media.gmp.plugin.crash", this, false);
+  }
+
+  // Kick off scanning for plugins
+  nsCOMPtr<nsIThread> thread;
+  unused << GetThread(getter_AddRefs(thread));
 }
 
 NS_IMETHODIMP
@@ -134,7 +155,26 @@ GeckoMediaPluginService::Observe(nsISupports* aSubject,
                                  const char* aTopic,
                                  const char16_t* aSomeData)
 {
-  if (!strcmp(NS_XPCOM_SHUTDOWN_OBSERVER_ID, aTopic)) {
+  if (!strcmp(aTopic, NS_PREFBRANCH_PREFCHANGE_TOPIC_ID)) {
+    nsCOMPtr<nsIPrefBranch> branch( do_QueryInterface(aSubject) );
+    if (branch) {
+      bool crashNow = false;
+      if (NS_LITERAL_STRING("media.gmp.plugin.crash").Equals(aSomeData)) {
+        branch->GetBoolPref("media.gmp.plugin.crash",  &crashNow);
+      }
+      if (crashNow) {
+        nsCOMPtr<nsIThread> gmpThread;
+        {
+          MutexAutoLock lock(mMutex);
+          gmpThread = mGMPThread;
+        }
+        if (gmpThread) {
+          gmpThread->Dispatch(WrapRunnable(this, &GeckoMediaPluginService::CrashPlugins),
+                              NS_DISPATCH_NORMAL);
+        }
+      }
+    }
+  } else if (!strcmp(NS_XPCOM_SHUTDOWN_OBSERVER_ID, aTopic)) {
     nsCOMPtr<nsIThread> gmpThread;
     {
       MutexAutoLock lock(mMutex);
@@ -164,6 +204,7 @@ GeckoMediaPluginService::Observe(nsISupports* aSubject,
   return NS_OK;
 }
 
+// always call with getter_AddRefs, because it does
 NS_IMETHODIMP
 GeckoMediaPluginService::GetThread(nsIThread** aThread)
 {
@@ -182,6 +223,9 @@ GeckoMediaPluginService::GetThread(nsIThread** aThread)
     if (NS_FAILED(rv)) {
       return rv;
     }
+
+    // Tell the thread to initialize plugins
+    mGMPThread->Dispatch(NS_NewRunnableMethod(this, &GeckoMediaPluginService::LoadFromEnvironment), NS_DISPATCH_NORMAL);
   }
 
   NS_ADDREF(mGMPThread);
@@ -191,19 +235,31 @@ GeckoMediaPluginService::GetThread(nsIThread** aThread)
 }
 
 NS_IMETHODIMP
-GeckoMediaPluginService::GetGMPVideoDecoderVP8(GMPVideoHost** aOutVideoHost, GMPVideoDecoder** aGMPVD)
+GeckoMediaPluginService::GetGMPVideoDecoder(nsTArray<nsCString>* aTags,
+                                            const nsAString& aOrigin,
+                                            GMPVideoHost** aOutVideoHost,
+                                            GMPVideoDecoderProxy** aGMPVD)
 {
   MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
+  NS_ENSURE_ARG(aTags && aTags->Length() > 0);
+  NS_ENSURE_ARG(aOutVideoHost);
+  NS_ENSURE_ARG(aGMPVD);
 
   if (mShuttingDownOnGMPThread) {
     return NS_ERROR_FAILURE;
   }
 
-  nsRefPtr<GMPParent> gmp = SelectPluginForAPI(NS_LITERAL_CSTRING("decode-video"),
-                                               NS_LITERAL_CSTRING("vp8"));
+  nsRefPtr<GMPParent> gmp = SelectPluginForAPI(aOrigin,
+                                               NS_LITERAL_CSTRING("decode-video"),
+                                               *aTags);
+#ifdef PR_LOGGING
+  nsCString api = (*aTags)[0];
+  LOGD(("%s: %p returning %p for api %s", __FUNCTION__, (void *)this, (void *)gmp, api.get()));
+#endif
   if (!gmp) {
     return NS_ERROR_FAILURE;
   }
+
 
   GMPVideoDecoderParent* gmpVDP;
   nsresult rv = gmp->GetGMPVideoDecoder(&gmpVDP);
@@ -218,16 +274,27 @@ GeckoMediaPluginService::GetGMPVideoDecoderVP8(GMPVideoHost** aOutVideoHost, GMP
 }
 
 NS_IMETHODIMP
-GeckoMediaPluginService::GetGMPVideoEncoderVP8(GMPVideoHost** aOutVideoHost, GMPVideoEncoder** aGMPVE)
+GeckoMediaPluginService::GetGMPVideoEncoder(nsTArray<nsCString>* aTags,
+                                            const nsAString& aOrigin,
+                                            GMPVideoHost** aOutVideoHost,
+                                            GMPVideoEncoderProxy** aGMPVE)
 {
   MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
+  NS_ENSURE_ARG(aTags && aTags->Length() > 0);
+  NS_ENSURE_ARG(aOutVideoHost);
+  NS_ENSURE_ARG(aGMPVE);
 
   if (mShuttingDownOnGMPThread) {
     return NS_ERROR_FAILURE;
   }
 
-  nsRefPtr<GMPParent> gmp = SelectPluginForAPI(NS_LITERAL_CSTRING("encode-video"),
-                                               NS_LITERAL_CSTRING("vp8"));
+  nsRefPtr<GMPParent> gmp = SelectPluginForAPI(aOrigin,
+                                               NS_LITERAL_CSTRING("encode-video"),
+                                               *aTags);
+#ifdef PR_LOGGING
+  nsCString api = (*aTags)[0];
+  LOGD(("%s: %p returning %p for api %s", __FUNCTION__, (void *)this, (void *)gmp, api.get()));
+#endif
   if (!gmp) {
     return NS_ERROR_FAILURE;
   }
@@ -252,233 +319,265 @@ GeckoMediaPluginService::UnloadPlugins()
   MOZ_ASSERT(!mShuttingDownOnGMPThread);
   mShuttingDownOnGMPThread = true;
 
+  MutexAutoLock lock(mMutex);
+  // Note: CloseActive is async; it will actually finish
+  // shutting down when all the plugins have unloaded.
   for (uint32_t i = 0; i < mPlugins.Length(); i++) {
-    mPlugins[i]->UnloadProcess();
+    mPlugins[i]->CloseActive(true);
   }
   mPlugins.Clear();
 }
 
-GMPParent*
-GeckoMediaPluginService::SelectPluginForAPI(const nsCString& aAPI,
-                                            const nsCString& aTag)
+void
+GeckoMediaPluginService::CrashPlugins()
 {
   MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
 
-  GMPParent* gmp = SelectPluginFromListForAPI(aAPI, aTag);
-  if (gmp) {
-    return gmp;
+  MutexAutoLock lock(mMutex);
+  for (uint32_t i = 0; i < mPlugins.Length(); i++) {
+    mPlugins[i]->Crash();
+  }
+}
+
+void
+GeckoMediaPluginService::LoadFromEnvironment()
+{
+  MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
+
+  const char* env = PR_GetEnv("MOZ_GMP_PATH");
+  if (!env || !*env) {
+    return;
   }
 
-  RefreshPluginList();
+  nsString allpaths;
+  if (NS_WARN_IF(NS_FAILED(NS_CopyNativeToUnicode(nsDependentCString(env), allpaths)))) {
+    return;
+  }
 
-  return SelectPluginFromListForAPI(aAPI, aTag);
+  uint32_t pos = 0;
+  while (pos < allpaths.Length()) {
+    // Loop over multiple path entries separated by colons (*nix) or
+    // semicolons (Windows)
+    int32_t next = allpaths.FindChar(XPCOM_ENV_PATH_SEPARATOR[0], pos);
+    if (next == -1) {
+      AddOnGMPThread(nsDependentSubstring(allpaths, pos));
+      break;
+    } else {
+      AddOnGMPThread(nsDependentSubstring(allpaths, pos, next - pos));
+      pos = next + 1;
+    }
+  }
+}
+
+NS_IMETHODIMP
+GeckoMediaPluginService::PathRunnable::Run()
+{
+  if (mAdd) {
+    mService->AddOnGMPThread(mPath);
+  } else {
+    mService->RemoveOnGMPThread(mPath);
+  }
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+GeckoMediaPluginService::AddPluginDirectory(const nsAString& aDirectory)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  nsCOMPtr<nsIThread> thread;
+  nsresult rv = GetThread(getter_AddRefs(thread));
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  nsCOMPtr<nsIRunnable> r = new PathRunnable(this, aDirectory, true);
+  thread->Dispatch(r, NS_DISPATCH_NORMAL);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+GeckoMediaPluginService::RemovePluginDirectory(const nsAString& aDirectory)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  nsCOMPtr<nsIThread> thread;
+  nsresult rv = GetThread(getter_AddRefs(thread));
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  nsCOMPtr<nsIRunnable> r = new PathRunnable(this, aDirectory, false);
+  thread->Dispatch(r, NS_DISPATCH_NORMAL);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+GeckoMediaPluginService::HasPluginForAPI(const nsAString& aOrigin,
+                                         const nsACString& aAPI,
+                                         nsTArray<nsCString>* aTags,
+                                         bool* aResult)
+{
+  NS_ENSURE_ARG(aTags && aTags->Length() > 0);
+  NS_ENSURE_ARG(aResult);
+
+  nsCString temp(aAPI);
+  GMPParent *parent = SelectPluginForAPI(aOrigin, temp, *aTags);
+  *aResult = !!parent;
+
+  return NS_OK;
 }
 
 GMPParent*
-GeckoMediaPluginService::SelectPluginFromListForAPI(const nsCString& aAPI,
-                                                    const nsCString& aTag)
+GeckoMediaPluginService::SelectPluginForAPI(const nsAString& aOrigin,
+                                            const nsCString& aAPI,
+                                            const nsTArray<nsCString>& aTags)
 {
-  MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
-
+  MutexAutoLock lock(mMutex);
   for (uint32_t i = 0; i < mPlugins.Length(); i++) {
     GMPParent* gmp = mPlugins[i];
-    if (gmp->SupportsAPI(aAPI, aTag)) {
+    bool supportsAllTags = true;
+    for (uint32_t t = 0; t < aTags.Length(); t++) {
+      const nsCString& tag = aTags[t];
+      if (!gmp->SupportsAPI(aAPI, tag)) {
+        supportsAllTags = false;
+        break;
+      }
+    }
+    if (!supportsAllTags) {
+      continue;
+    }
+    if (aOrigin.IsEmpty()) {
+      if (gmp->CanBeSharedCrossOrigin()) {
+        return gmp;
+      }
+    } else if (gmp->CanBeUsedFrom(aOrigin)) {
+      if (!aOrigin.IsEmpty()) {
+        gmp->SetOrigin(aOrigin);
+      }
       return gmp;
     }
   }
   return nullptr;
 }
 
-nsresult
-GeckoMediaPluginService::GetDirectoriesToSearch(nsTArray<nsCOMPtr<nsIFile>> &aDirs)
+class CreateGMPParentTask : public nsRunnable {
+public:
+  NS_IMETHOD Run() {
+    MOZ_ASSERT(NS_IsMainThread());
+    mParent = new GMPParent();
+    return NS_OK;
+  }
+  already_AddRefed<GMPParent> GetParent() {
+    return mParent.forget();
+  }
+private:
+  nsRefPtr<GMPParent> mParent;
+};
+
+GMPParent*
+GeckoMediaPluginService::ClonePlugin(const GMPParent* aOriginal)
 {
-  MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
+  MOZ_ASSERT(aOriginal);
 
-#if defined(XP_MACOSX)
-  nsCOMPtr<nsIFile> searchDir = do_CreateInstance(NS_LOCAL_FILE_CONTRACTID);
-  MOZ_ASSERT(!mHomePath.IsEmpty());
-  nsresult rv = searchDir->InitWithPath(mHomePath + NS_LITERAL_STRING("/Library/Internet Plug-Ins/"));
+  // The GMPParent inherits from IToplevelProtocol, which must be created
+  // on the main thread to be threadsafe. See Bug 1035653.
+  nsRefPtr<CreateGMPParentTask> task(new CreateGMPParentTask());
+  if (!NS_IsMainThread()) {
+    nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
+    MOZ_ASSERT(mainThread);
+    mozilla::SyncRunnable::DispatchToThread(mainThread, task);
+  }
+
+  nsRefPtr<GMPParent> gmp = task->GetParent();
+  nsresult rv = gmp->CloneFrom(aOriginal);
+
   if (NS_FAILED(rv)) {
-    return rv;
-  }
-  aDirs.AppendElement(searchDir);
-  searchDir = do_CreateInstance(NS_LOCAL_FILE_CONTRACTID);
-  rv = searchDir->InitWithPath(NS_LITERAL_STRING("/Library/Internet Plug-Ins/"));
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-  aDirs.AppendElement(searchDir);
-#elif defined(OS_POSIX)
-  nsCOMPtr<nsIFile> searchDir = do_CreateInstance(NS_LOCAL_FILE_CONTRACTID);
-  nsresult rv = searchDir->InitWithPath(NS_LITERAL_STRING("/usr/lib/mozilla/plugins/"));
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-  aDirs.AppendElement(searchDir);
-#endif
-  return NS_OK;
-}
-
-#if defined(XP_WIN)
-static nsresult
-GetPossiblePluginsForRegRoot(uint32_t aKey, nsTArray<nsCOMPtr<nsIFile>>& aDirs)
-{
-  nsCOMPtr<nsIWindowsRegKey> regKey = do_CreateInstance("@mozilla.org/windows-registry-key;1");
-  if (!regKey) {
-    return NS_ERROR_FAILURE;
+    NS_WARNING("Can't Create GMPParent");
+    return nullptr;
   }
 
-  nsresult rv = regKey->Open(aKey,
-                             NS_LITERAL_STRING("Software\\MozillaPlugins"),
-                             nsIWindowsRegKey::ACCESS_READ);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
+  MutexAutoLock lock(mMutex);
+  mPlugins.AppendElement(gmp);
 
-  uint32_t childCount = 0;
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(regKey->GetChildCount(&childCount)));
-  for (uint32_t index = 0; index < childCount; index++) {
-    nsAutoString childName;
-    rv = regKey->GetChildName(index, childName);
-    if (NS_FAILED(rv)) {
-      continue;
-    }
-
-    nsCOMPtr<nsIWindowsRegKey> childKey;
-    rv = regKey->OpenChild(childName, nsIWindowsRegKey::ACCESS_QUERY_VALUE,
-                           getter_AddRefs(childKey));
-    if (NS_FAILED(rv) || !childKey) {
-      continue;
-    }
-
-    nsAutoString path;
-    rv = childKey->ReadStringValue(NS_LITERAL_STRING("Path"), path);
-    if (NS_FAILED(rv)) {
-      continue;
-    }
-
-    nsCOMPtr<nsIFile> localFile;
-    if (NS_SUCCEEDED(NS_NewLocalFile(path, true, getter_AddRefs(localFile))) &&
-        localFile) {
-      bool isFileThere = false;
-      if (NS_SUCCEEDED(localFile->Exists(&isFileThere)) && isFileThere) {
-        aDirs.AppendElement(localFile);
-      }
-    }
-  }
-
-  regKey->Close();
-
-  return NS_OK;
-}
-#endif
-
-nsresult
-GeckoMediaPluginService::GetPossiblePlugins(nsTArray<nsCOMPtr<nsIFile>>& aDirs)
-{
-  MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
-
-#if defined(XP_WIN)
-  // The ROOT_KEY_CURRENT_USER entry typically fails to open, causing this call to
-  // fail. Don't check any return values because if we find nothing we don't care.
-  GetPossiblePluginsForRegRoot(nsIWindowsRegKey::ROOT_KEY_CURRENT_USER, aDirs);
-  GetPossiblePluginsForRegRoot(nsIWindowsRegKey::ROOT_KEY_LOCAL_MACHINE, aDirs);
-#endif
-  return NS_OK;
-}
-
-nsresult
-GeckoMediaPluginService::SearchDirectory(nsIFile* aSearchDir)
-{
-  MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
-  MOZ_ASSERT(aSearchDir);
-
-  nsCOMPtr<nsISimpleEnumerator> iter;
-  nsresult rv = aSearchDir->GetDirectoryEntries(getter_AddRefs(iter));
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-
-  bool hasMore;
-  while (NS_SUCCEEDED(iter->HasMoreElements(&hasMore)) && hasMore) {
-    nsCOMPtr<nsISupports> supports;
-    rv = iter->GetNext(getter_AddRefs(supports));
-    if (NS_FAILED(rv)) {
-      continue;
-    }
-    nsCOMPtr<nsIFile> dirEntry(do_QueryInterface(supports, &rv));
-    if (NS_FAILED(rv)) {
-      continue;
-    }
-    ProcessPossiblePlugin(dirEntry);
-  }
-
-  return NS_OK;
+  return gmp.get();
 }
 
 void
-GeckoMediaPluginService::ProcessPossiblePlugin(nsIFile* aDir)
+GeckoMediaPluginService::AddOnGMPThread(const nsAString& aDirectory)
 {
   MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
-  MOZ_ASSERT(aDir);
+  //LOGD(("%s::%s: %s", __CLASS__, __FUNCTION__, NS_LossyConvertUTF16toASCII(aDirectory).get()));
 
-  bool isDirectory = false;
-  nsresult rv = aDir->IsDirectory(&isDirectory);
-  if (NS_FAILED(rv) || !isDirectory) {
+  nsCOMPtr<nsIFile> directory;
+  nsresult rv = NS_NewLocalFile(aDirectory, false, getter_AddRefs(directory));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
     return;
   }
 
-  nsAutoString leafName;
-  rv = aDir->GetLeafName(leafName);
+  // The GMPParent inherits from IToplevelProtocol, which must be created
+  // on the main thread to be threadsafe. See Bug 1035653.
+  nsRefPtr<CreateGMPParentTask> task(new CreateGMPParentTask());
+  nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
+  MOZ_ASSERT(mainThread);
+  mozilla::SyncRunnable::DispatchToThread(mainThread, task);
+  nsRefPtr<GMPParent> gmp = task->GetParent();
+  rv = gmp->Init(this, directory);
   if (NS_FAILED(rv)) {
+    NS_WARNING("Can't Create GMPParent");
     return;
   }
 
-  NS_NAMED_LITERAL_STRING(prefix, "gmp-");
-  if (leafName.Length() <= prefix.Length() ||
-      !Substring(leafName, 0, prefix.Length()).Equals(prefix)) {
-    return;
-  }
-
-  nsRefPtr<GMPParent> gmp = new GMPParent();
-  rv = gmp->Init(aDir);
-  if (NS_FAILED(rv)) {
-    return;
-  }
-
+  MutexAutoLock lock(mMutex);
   mPlugins.AppendElement(gmp);
 }
 
 void
-GeckoMediaPluginService::RefreshPluginList()
+GeckoMediaPluginService::RemoveOnGMPThread(const nsAString& aDirectory)
 {
   MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
+  //LOGD(("%s::%s: %s", __CLASS__, __FUNCTION__, NS_LossyConvertUTF16toASCII(aDirectory).get()));
 
-  for (uint32_t iPlusOne = mPlugins.Length(); iPlusOne > 0; iPlusOne--) {
-    if (mPlugins[iPlusOne - 1]->State() == GMPStateNotLoaded) {
-      mPlugins.RemoveElementAt(iPlusOne - 1);
+  nsCOMPtr<nsIFile> directory;
+  nsresult rv = NS_NewLocalFile(aDirectory, false, getter_AddRefs(directory));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
+
+  MutexAutoLock lock(mMutex);
+  for (uint32_t i = 0; i < mPlugins.Length(); ++i) {
+    nsCOMPtr<nsIFile> pluginpath = mPlugins[i]->GetDirectory();
+    bool equals;
+    if (NS_SUCCEEDED(directory->Equals(pluginpath, &equals)) && equals) {
+      mPlugins[i]->CloseActive(true);
+      mPlugins.RemoveElementAt(i);
+      return;
     }
   }
+  NS_WARNING("Removing GMP which was never added.");
+  nsCOMPtr<nsIConsoleService> cs = do_GetService(NS_CONSOLESERVICE_CONTRACTID);
+  cs->LogStringMessage(MOZ_UTF16("Removing GMP which was never added."));
+}
 
-  nsTArray<nsCOMPtr<nsIFile>> searchDirs;
-  nsresult rv = GetDirectoriesToSearch(searchDirs);
-  if (NS_FAILED(rv)) {
-    return;
-  }
+// May remove when Bug 1043671 is fixed
+static void Dummy(nsRefPtr<GMPParent>& aOnDeathsDoor)
+{
+  // exists solely to do nothing and let the Runnable kill the GMPParent
+  // when done.
+}
 
-  for (uint32_t i = 0; i < searchDirs.Length(); i++) {
-    SearchDirectory(searchDirs[i]);
-  }
+void
+GeckoMediaPluginService::ReAddOnGMPThread(nsRefPtr<GMPParent>& aOld)
+{
+  MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
+  //LOGD(("%s::%s: %p", __CLASS__, __FUNCTION__, (void*) aOld));
 
-  nsTArray<nsCOMPtr<nsIFile>> possiblePlugins;
-  rv = GetPossiblePlugins(possiblePlugins);
-  if (NS_FAILED(rv)) {
-    return;
-  }
+  nsRefPtr<GMPParent> gmp = ClonePlugin(aOld);
+  // Note: both are now in the list
+  // Until we give up the GMPThread, we're safe even if we unlock temporarily
+  // since off-main-thread users just test for existance; they don't modify the list.
+  MutexAutoLock lock(mMutex);
+  mPlugins.RemoveElement(aOld);
 
-  for (uint32_t i = 0; i < possiblePlugins.Length(); i++) {
-    ProcessPossiblePlugin(possiblePlugins[i]);
-  }
+  // Schedule aOld to be destroyed.  We can't destroy it from here since we
+  // may be inside ActorDestroyed() for it.
+  NS_DispatchToCurrentThread(WrapRunnableNM(&Dummy, aOld));
 }
 
 } // namespace gmp

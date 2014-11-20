@@ -14,7 +14,7 @@
 namespace mozilla {
 namespace dom {
 
-class MessageEventInit;
+struct MessageEventInit;
 class MessagePort;
 class MessagePortBase;
 class MessagePortList;
@@ -34,7 +34,6 @@ public:
   MessageEvent(EventTarget* aOwner,
                nsPresContext* aPresContext,
                WidgetEvent* aEvent);
-  ~MessageEvent();
 
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_INHERITED(MessageEvent, Event)
@@ -70,10 +69,13 @@ public:
   }
 
   static already_AddRefed<MessageEvent>
-  Constructor(const GlobalObject& aGlobal, JSContext* aCx,
+  Constructor(const GlobalObject& aGlobal,
               const nsAString& aType,
               const MessageEventInit& aEventInit,
               ErrorResult& aRv);
+
+protected:
+  ~MessageEvent();
 
 private:
   JS::Heap<JS::Value> mData;

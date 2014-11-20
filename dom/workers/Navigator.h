@@ -7,6 +7,7 @@
 #define mozilla_dom_workers_navigator_h__
 
 #include "Workers.h"
+#include "RuntimeService.h"
 #include "nsString.h"
 #include "nsWrapperCache.h"
 
@@ -24,25 +25,23 @@ BEGIN_WORKERS_NAMESPACE
 
 class WorkerNavigator MOZ_FINAL : public nsWrapperCache
 {
-  nsString mAppName;
-  nsString mAppVersion;
-  nsString mPlatform;
-  nsString mUserAgent;
+  typedef struct RuntimeService::NavigatorProperties NavigatorProperties;
+
+  NavigatorProperties mProperties;
   bool mOnline;
 
-  WorkerNavigator(const nsAString& aAppName,
-                  const nsAString& aAppVersion,
-                  const nsAString& aPlatform,
-                  const nsAString& aUserAgent,
+  WorkerNavigator(const NavigatorProperties& aProperties,
                   bool aOnline)
-    : mAppName(aAppName)
-    , mAppVersion(aAppVersion)
-    , mPlatform(aPlatform)
-    , mUserAgent(aUserAgent)
+    : mProperties(aProperties)
     , mOnline(aOnline)
   {
     MOZ_COUNT_CTOR(WorkerNavigator);
     SetIsDOMBinding();
+  }
+
+  ~WorkerNavigator()
+  {
+    MOZ_COUNT_DTOR(WorkerNavigator);
   }
 
 public:
@@ -60,42 +59,27 @@ public:
     return nullptr;
   }
 
-  ~WorkerNavigator()
-  {
-    MOZ_COUNT_DTOR(WorkerNavigator);
-  }
-
   void GetAppCodeName(nsString& aAppCodeName) const
   {
     aAppCodeName.AssignLiteral("Mozilla");
   }
-  void GetAppName(nsString& aAppName) const
-  {
-    aAppName = mAppName;
-  }
+  void GetAppName(nsString& aAppName) const;
 
-  void GetAppVersion(nsString& aAppVersion) const
-  {
-    aAppVersion = mAppVersion;
-  }
+  void GetAppVersion(nsString& aAppVersion) const;
 
-  void GetPlatform(nsString& aPlatform) const
-  {
-    aPlatform = mPlatform;
-  }
+  void GetPlatform(nsString& aPlatform) const;
+
   void GetProduct(nsString& aProduct) const
   {
     aProduct.AssignLiteral("Gecko");
   }
+
   bool TaintEnabled() const
   {
     return false;
   }
 
-  void GetUserAgent(nsString& aUserAgent) const
-  {
-    aUserAgent = mUserAgent;
-  }
+  void GetUserAgent(nsString& aUserAgent) const;
 
   bool OnLine() const
   {

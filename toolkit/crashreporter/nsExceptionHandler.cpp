@@ -10,6 +10,7 @@
 #include "mozilla/Services.h"
 #include "nsIObserverService.h"
 #include "mozilla/unused.h"
+#include "mozilla/SyncRunnable.h"
 
 #include "nsThreadUtils.h"
 #include "nsXULAppAPI.h"
@@ -146,8 +147,11 @@ typedef std::string xpstring;
 #endif
 #endif // XP_WIN32
 
+#ifndef XP_LINUX
 static const XP_CHAR dumpFileExtension[] = {'.', 'd', 'm', 'p',
                                             '\0'}; // .dmp
+#endif
+
 static const XP_CHAR extraFileExtension[] = {'.', 'e', 'x', 't',
                                              'r', 'a', '\0'}; // .extra
 
@@ -160,6 +164,7 @@ static XP_CHAR* crashReporterPath;
 
 // Where crash events should go.
 static XP_CHAR* eventsDirectory;
+static char* eventsEnv = nullptr;
 
 // If this is false, we don't launch the crash reporter
 static bool doReport = true;
@@ -199,6 +204,12 @@ static const char kTimeSinceLastCrashParameter[] = "SecondsSinceLastCrash=";
 static const int kTimeSinceLastCrashParameterLen =
                                      sizeof(kTimeSinceLastCrashParameter)-1;
 
+static const char kOOMAllocationSizeParameter[] = "OOMAllocationSize=";
+static const int kOOMAllocationSizeParameterLen =
+  sizeof(kOOMAllocationSizeParameter)-1;
+
+
+#ifdef XP_WIN32
 static const char kSysMemoryParameter[] = "SystemMemoryUsePercentage=";
 static const int kSysMemoryParameterLen = sizeof(kSysMemoryParameter)-1;
 
@@ -209,10 +220,6 @@ static const int kTotalVirtualMemoryParameterLen =
 static const char kAvailableVirtualMemoryParameter[] = "AvailableVirtualMemory=";
 static const int kAvailableVirtualMemoryParameterLen =
   sizeof(kAvailableVirtualMemoryParameter)-1;
-
-static const char kOOMAllocationSizeParameter[] = "OOMAllocationSize=";
-static const int kOOMAllocationSizeParameterLen =
-  sizeof(kOOMAllocationSizeParameter)-1;
 
 static const char kTotalPageFileParameter[] = "TotalPageFile=";
 static const int kTotalPageFileParameterLen =
@@ -229,6 +236,7 @@ static const int kTotalPhysicalMemoryParameterLen =
 static const char kAvailablePhysicalMemoryParameter[] = "AvailablePhysicalMemory=";
 static const int kAvailablePhysicalMemoryParameterLen =
   sizeof(kAvailablePhysicalMemoryParameter)-1;
+#endif
 
 static const char kIsGarbageCollectingParameter[] = "IsGarbageCollecting=";
 static const int kIsGarbageCollectingParameterLen =
@@ -2101,10 +2109,29 @@ SetCrashEventsDir(nsIFile* aDir)
   nsString path;
   eventsDir->GetPath(path);
   eventsDirectory = reinterpret_cast<wchar_t*>(ToNewUnicode(path));
+
+  // Save the path in the environment for the crash reporter application.
+  nsAutoString eventsDirEnv(NS_LITERAL_STRING("MOZ_CRASHREPORTER_EVENTS_DIRECTORY="));
+  eventsDirEnv.Append(path);
+  _wputenv(eventsDirEnv.get());
 #else
   nsCString path;
   eventsDir->GetNativePath(path);
   eventsDirectory = ToNewCString(path);
+
+  // Save the path in the environment for the crash reporter application.
+  nsAutoCString eventsDirEnv("MOZ_CRASHREPORTER_EVENTS_DIRECTORY=");
+  eventsDirEnv.Append(path);
+
+  // PR_SetEnv() wants the string to be available for the lifetime
+  // of the app, so dup it here.
+  char* oldEventsEnv = eventsEnv;
+  eventsEnv = ToNewCString(eventsDirEnv);
+  PR_SetEnv(eventsEnv);
+
+  if (oldEventsEnv) {
+    NS_Free(oldEventsEnv);
+  }
 #endif
 }
 
@@ -2516,6 +2543,21 @@ static bool ChildFilter(void *context) {
 void
 OOPInit()
 {
+  class ProxyToMainThread : public nsRunnable
+  {
+  public:
+    NS_IMETHOD Run() {
+      OOPInit();
+      return NS_OK;
+    }
+  };
+  if (!NS_IsMainThread()) {
+    // This logic needs to run on the main thread
+    nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
+    mozilla::SyncRunnable::DispatchToThread(mainThread, new ProxyToMainThread());
+    return;
+  }
+
   if (OOPInitialized())
     return;
 

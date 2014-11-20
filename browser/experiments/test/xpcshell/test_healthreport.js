@@ -8,7 +8,7 @@ Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource:///modules/experiments/Experiments.jsm");
 Cu.import("resource://testing-common/AddonManagerTesting.jsm");
 Cu.import("resource://testing-common/services/healthreport/utils.jsm");
-Cu.import("resource://testing-common/services-common/logging.js");
+Cu.import("resource://testing-common/services/common/logging.js");
 
 const kMeasurementVersion = 2;
 

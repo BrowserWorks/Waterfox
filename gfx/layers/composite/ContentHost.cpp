@@ -35,27 +35,6 @@ ContentHostBase::~ContentHostBase()
 {
 }
 
-struct AutoLockContentHost
-{
-  AutoLockContentHost(ContentHostBase* aHost)
-    : mHost(aHost)
-  {
-    mSucceeded = mHost->Lock();
-  }
-
-  ~AutoLockContentHost()
-  {
-    if (mSucceeded) {
-      mHost->Unlock();
-    }
-  }
-
-  bool Failed() { return !mSucceeded; }
-
-  ContentHostBase* mHost;
-  bool mSucceeded;
-};
-
 void
 ContentHostBase::Composite(EffectChain& aEffectChain,
                            float aOpacity,
@@ -67,7 +46,7 @@ ContentHostBase::Composite(EffectChain& aEffectChain,
 {
   NS_ASSERTION(aVisibleRegion, "Requires a visible region");
 
-  AutoLockContentHost lock(this);
+  AutoLockCompositableHost lock(this);
   if (lock.Failed()) {
     return;
   }
@@ -78,9 +57,8 @@ ContentHostBase::Composite(EffectChain& aEffectChain,
   if (!source) {
     return;
   }
-  RefPtr<TexturedEffect> effect =
-    CreateTexturedEffect(source, sourceOnWhite, aFilter);
 
+  RefPtr<TexturedEffect> effect = GenEffect(aFilter);
   if (!effect) {
     return;
   }
@@ -229,6 +207,16 @@ ContentHostBase::Composite(EffectChain& aEffectChain,
                                    aTransform, mFlashCounter);
 }
 
+TemporaryRef<TexturedEffect>
+ContentHostBase::GenEffect(const gfx::Filter& aFilter)
+{
+  RefPtr<NewTextureSource> source = GetTextureSource();
+  RefPtr<NewTextureSource> sourceOnWhite = GetTextureSourceOnWhite();
+  if (!source) {
+    return nullptr;
+  }
+  return CreateTexturedEffect(source, sourceOnWhite, aFilter, true);
+}
 
 void
 ContentHostTexture::UseTextureHost(TextureHost* aTexture)
@@ -261,30 +249,27 @@ ContentHostTexture::SetCompositor(Compositor* aCompositor)
 
 #ifdef MOZ_DUMP_PAINTING
 void
-ContentHostTexture::Dump(FILE* aFile,
+ContentHostTexture::Dump(std::stringstream& aStream,
                          const char* aPrefix,
                          bool aDumpHtml)
 {
   if (!aDumpHtml) {
     return;
   }
-  if (!aFile) {
-    aFile = stderr;
-  }
-  fprintf(aFile, "<ul>");
+  aStream << "<ul>";
   if (mTextureHost) {
-    fprintf(aFile, "%s", aPrefix);
-    fprintf(aFile, "<li> <a href=");
-    DumpTextureHost(aFile, mTextureHost);
-    fprintf(aFile, "> Front buffer </a></li> ");
+    aStream << aPrefix;
+    aStream << "<li> <a href=";
+    DumpTextureHost(aStream, mTextureHost);
+    aStream << "> Front buffer </a></li> ";
   }
   if (mTextureHostOnWhite) {
-    fprintf(aFile, "%s", aPrefix);
-    fprintf(aFile, "<li> <a href=");
-    DumpTextureHost(aFile, mTextureHostOnWhite);
-    fprintf(aFile, "> Front buffer on white </a> </li> ");
+    aStream <<  aPrefix;
+    aStream << "<li> <a href=";
+    DumpTextureHost(aStream, mTextureHostOnWhite);
+    aStream << "> Front buffer on white </a> </li> ";
   }
-  fprintf(aFile, "</ul>");
+  aStream << "</ul>";
 }
 #endif
 
@@ -652,34 +637,34 @@ ContentHostIncremental::TextureUpdateRequest::Execute(ContentHostIncremental* aH
 }
 
 void
-ContentHostIncremental::PrintInfo(nsACString& aTo, const char* aPrefix)
+ContentHostIncremental::PrintInfo(std::stringstream& aStream, const char* aPrefix)
 {
-  aTo += aPrefix;
-  aTo += nsPrintfCString("ContentHostIncremental (0x%p)", this);
+  aStream << aPrefix;
+  aStream << nsPrintfCString("ContentHostIncremental (0x%p)", this).get();
 
   if (PaintWillResample()) {
-    aTo += " [paint-will-resample]";
+    aStream << " [paint-will-resample]";
   }
 }
 
 void
-ContentHostTexture::PrintInfo(nsACString& aTo, const char* aPrefix)
+ContentHostTexture::PrintInfo(std::stringstream& aStream, const char* aPrefix)
 {
-  aTo += aPrefix;
-  aTo += nsPrintfCString("ContentHost (0x%p)", this);
+  aStream << aPrefix;
+  aStream << nsPrintfCString("ContentHost (0x%p)", this).get();
 
-  AppendToString(aTo, mBufferRect, " [buffer-rect=", "]");
-  AppendToString(aTo, mBufferRotation, " [buffer-rotation=", "]");
+  AppendToString(aStream, mBufferRect, " [buffer-rect=", "]");
+  AppendToString(aStream, mBufferRotation, " [buffer-rotation=", "]");
   if (PaintWillResample()) {
-    aTo += " [paint-will-resample]";
+    aStream << " [paint-will-resample]";
   }
 
   if (mTextureHost) {
     nsAutoCString pfx(aPrefix);
     pfx += "  ";
 
-    aTo += "\n";
-    mTextureHost->PrintInfo(aTo, pfx.get());
+    aStream << "\n";
+    mTextureHost->PrintInfo(aStream, pfx.get());
   }
 }
 

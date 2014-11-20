@@ -83,19 +83,19 @@ protected:
    *       O(N^2)! So, use this function with caution and minimize the number
    *       of calls to this method.
    */
-  nscoord GetConsumedHeight() const;
+  nscoord GetConsumedBSize() const;
 
   /**
-   * Retrieve the effective computed height of this frame, which is the computed
-   * height, minus the height consumed by any previous in-flows.
+   * Retrieve the effective computed block size of this frame, which is the
+   * computed block size, minus the block size consumed by any previous in-flows.
    */
-  nscoord GetEffectiveComputedHeight(const nsHTMLReflowState& aReflowState,
-                                     nscoord aConsumed = NS_INTRINSICSIZE) const;
+  nscoord GetEffectiveComputedBSize(const nsHTMLReflowState& aReflowState,
+                                    nscoord aConsumed = NS_INTRINSICSIZE) const;
 
   /**
    * @see nsIFrame::GetLogicalSkipSides()
    */
-  virtual int GetLogicalSkipSides(const nsHTMLReflowState* aReflowState = nullptr) const MOZ_OVERRIDE;
+  virtual LogicalSides GetLogicalSkipSides(const nsHTMLReflowState* aReflowState = nullptr) const MOZ_OVERRIDE;
 
 #ifdef DEBUG
   virtual void DumpBaseRegressionData(nsPresContext* aPresContext, FILE* out, int32_t aIndent) MOZ_OVERRIDE;

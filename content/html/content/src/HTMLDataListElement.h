@@ -15,11 +15,10 @@ namespace dom {
 class HTMLDataListElement MOZ_FINAL : public nsGenericHTMLElement
 {
 public:
-  HTMLDataListElement(already_AddRefed<nsINodeInfo>& aNodeInfo)
+  HTMLDataListElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
     : nsGenericHTMLElement(aNodeInfo)
   {
   }
-  virtual ~HTMLDataListElement();
 
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
@@ -34,7 +33,7 @@ public:
   }
 
 
-  virtual nsresult Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
 
   // This function is used to generate the nsContentList (option elements).
   static bool MatchOptions(nsIContent* aContent, int32_t aNamespaceID,
@@ -43,6 +42,8 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(HTMLDataListElement,
                                            nsGenericHTMLElement)
 protected:
+  virtual ~HTMLDataListElement();
+
   virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;
 
   // <option>'s list inside the datalist element.

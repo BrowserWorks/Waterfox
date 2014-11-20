@@ -26,12 +26,10 @@ namespace image {
  */
 class FrozenImage : public ImageWrapper
 {
-  typedef mozilla::gfx::SourceSurface SourceSurface;
+  typedef gfx::SourceSurface SourceSurface;
 
 public:
-  NS_DECL_ISUPPORTS
-
-  virtual ~FrozenImage() { }
+  NS_DECL_ISUPPORTS_INHERITED
 
   virtual nsIntRect FrameRect(uint32_t aWhichFrame) MOZ_OVERRIDE;
   virtual void IncrementAnimationConsumers() MOZ_OVERRIDE;
@@ -52,7 +50,7 @@ public:
                   const SVGImageContext* aSVGContext,
                   uint32_t aWhichFrame,
                   uint32_t aFlags) MOZ_OVERRIDE;
-  NS_IMETHOD_(void) RequestRefresh(const mozilla::TimeStamp& aTime) MOZ_OVERRIDE;
+  NS_IMETHOD_(void) RequestRefresh(const TimeStamp& aTime) MOZ_OVERRIDE;
   NS_IMETHOD GetAnimationMode(uint16_t* aAnimationMode) MOZ_OVERRIDE;
   NS_IMETHOD SetAnimationMode(uint16_t aAnimationMode) MOZ_OVERRIDE;
   NS_IMETHOD ResetAnimation() MOZ_OVERRIDE;
@@ -60,6 +58,7 @@ public:
 
 protected:
   FrozenImage(Image* aImage) : ImageWrapper(aImage) { }
+  virtual ~FrozenImage() { }
 
 private:
   friend class ImageOps;

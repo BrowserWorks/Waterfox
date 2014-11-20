@@ -8,6 +8,7 @@ EXPORTS += [
     'IMediaResourceManagerClient.h',
     'IMediaResourceManagerDeathNotifier.h',
     'IMediaResourceManagerService.h',
+    'MediaResourceHandler.h',
     'MediaResourceManagerClient.h',
     'MediaResourceManagerService.h',
 ]
@@ -16,6 +17,7 @@ SOURCES += [
     'IMediaResourceManagerClient.cpp',
     'IMediaResourceManagerDeathNotifier.cpp',
     'IMediaResourceManagerService.cpp',
+    'MediaResourceHandler.cpp',
     'MediaResourceManagerClient.cpp',
     'MediaResourceManagerService.cpp',
 ]

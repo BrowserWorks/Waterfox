@@ -11,9 +11,7 @@ Cu.import("resource://gre/modules/devtools/event-emitter.js", tempScope);
 let EventEmitter = tempScope.EventEmitter;
 
 function test() {
-  addTab("about:blank", function(aBrowser, aTab) {
-    runTests(aTab);
-  });
+  addTab("about:blank").then(runTests);
 }
 
 function runTests(aTab) {
@@ -38,11 +36,12 @@ function runTests(aTab) {
     "The tool is registered");
 
   let target = TargetFactory.forTab(gBrowser.selectedTab);
-  gDevTools.showToolbox(target, toolId).then(function(toolbox) {
+
+  gDevTools.showToolbox(target, toolId).then(function (toolbox) {
     is(toolbox.target, target, "toolbox target is correct");
     is(toolbox._host.hostTab, gBrowser.selectedTab, "toolbox host is correct");
     continueTests(toolbox);
-  }).then(null, console.error);
+  });
 }
 
 function continueTests(toolbox, panel) {
@@ -65,13 +64,23 @@ function continueTests(toolbox, panel) {
   is(gDevTools.getToolDefinitionMap().has(toolId), false,
     "The tool is no longer registered");
 
+  // Wait for unregisterTool to select the next tool before
+  // attempting to destroy.
+  toolbox.on("select", function selectListener (_, id) {
+    if (id !== "test-tool") {
+      toolbox.off("select", selectListener);
+      destroyToolbox(toolbox);
+    }
+  });
+}
+
+function destroyToolbox(toolbox) {
   toolbox.destroy().then(function() {
     let target = TargetFactory.forTab(gBrowser.selectedTab);
     ok(gDevTools._toolboxes.get(target) == null, "gDevTools doesn't know about target");
     ok(toolbox._target == null, "toolbox doesn't know about target.");
-
     finishUp();
-  }).then(null, console.error);
+  });
 }
 
 function finishUp() {
@@ -105,11 +114,11 @@ DevToolPanel.prototype = {
   open: function() {
     let deferred = promise.defer();
 
-    executeSoon(function() {
+    executeSoon(() => {
       this._isReady = true;
       this.emit("ready");
       deferred.resolve(this);
-    }.bind(this));
+    });
 
     return deferred.promise;
   },

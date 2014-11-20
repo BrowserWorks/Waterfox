@@ -39,8 +39,8 @@ enum nsLinkState {
 
 // IID for the nsIContent interface
 #define NS_ICONTENT_IID \
-{ 0xc534a378, 0x7b5f, 0x43a4, \
-  { 0xaf, 0x65, 0x5f, 0xfe, 0xea, 0xd6, 0x00, 0xfb } }
+{ 0x329f4c0f, 0x369d, 0x4f35, \
+  { 0x9a, 0x49, 0xd6, 0xa3, 0xaf, 0xb4, 0x34, 0x9f } }
 
 /**
  * A node of content in a document's content model. This interface
@@ -54,7 +54,7 @@ public:
   // If you're using the external API, the only thing you can know about
   // nsIContent is that it exists with an IID
 
-  nsIContent(already_AddRefed<nsINodeInfo>& aNodeInfo)
+  nsIContent(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
     : nsINode(aNodeInfo)
   {
     MOZ_ASSERT(mNodeInfo);
@@ -242,7 +242,7 @@ public:
                   static_cast<nsIContent*>(SubtreeRoot())->IsInNativeAnonymousSubtree()),
                  "Must have binding parent when in native anonymous subtree which is in document.\n"
                  "Native anonymous subtree which is not in document must have native anonymous root.");
-    return IsInNativeAnonymousSubtree() || (!HasFlag(NODE_IS_IN_SHADOW_TREE) && GetBindingParent() != nullptr);
+    return IsInNativeAnonymousSubtree() || (!IsInShadowTree() && GetBindingParent() != nullptr);
   }
 
   /**
@@ -264,7 +264,7 @@ public:
    * Get the NodeInfo for this element
    * @return the nodes node info
    */
-  inline nsINodeInfo* NodeInfo() const
+  inline mozilla::dom::NodeInfo* NodeInfo() const
   {
     return mNodeInfo;
   }
@@ -883,10 +883,10 @@ public:
    */
   nsIFrame* GetPrimaryFrame() const
   {
-    return (IsInDoc() || HasFlag(NODE_IS_IN_SHADOW_TREE)) ? mPrimaryFrame : nullptr;
+    return (IsInDoc() || IsInShadowTree()) ? mPrimaryFrame : nullptr;
   }
   void SetPrimaryFrame(nsIFrame* aFrame) {
-    MOZ_ASSERT(IsInDoc() || HasFlag(NODE_IS_IN_SHADOW_TREE), "This will end badly!");
+    MOZ_ASSERT(IsInDoc() || IsInShadowTree(), "This will end badly!");
     NS_PRECONDITION(!aFrame || !mPrimaryFrame || aFrame == mPrimaryFrame,
                     "Losing track of existing primary frame");
     mPrimaryFrame = aFrame;

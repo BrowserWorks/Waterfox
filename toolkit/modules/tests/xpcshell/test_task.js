@@ -385,3 +385,258 @@ add_test(function test_async_throw_on_function_in_place_of_promise()
     do_throw("Unexpected error: " + ex);
   });
 });
+
+
+////////////////// Test rewriting of stack traces
+
+// Backup Task.Debuggin.maintainStack.
+// Will be restored by `exit_stack_tests`.
+let maintainStack;
+add_test(function enter_stack_tests() {
+  maintainStack = Task.Debugging.maintainStack;
+  Task.Debugging.maintainStack = true;
+  run_next_test();
+});
+
+
+/**
+ * Ensure that a list of frames appear in a stack, in the right order
+ */
+function do_check_rewritten_stack(frames, ex) {
+  do_print("Checking that the expected frames appear in the right order");
+  do_print(frames.join(", "));
+  let stack = ex.stack;
+  do_print(stack);
+
+  let framesFound = 0;
+  let lineNumber = 0;
+  let reLine = /([^\r\n])+/g;
+  let match;
+  while (framesFound < frames.length && (match = reLine.exec(stack))) {
+    let line = match[0];
+    let frame = frames[framesFound];
+    do_print("Searching for " + frame + " in line " + line);
+    if (line.indexOf(frame) != -1) {
+      do_print("Found " + frame);
+      ++framesFound;
+    } else {
+      do_print("Didn't find " + frame);
+    }
+  }
+
+  if (framesFound >= frames.length) {
+    return;
+  }
+  do_throw("Did not find: " + frames.slice(framesFound).join(", ") +
+           " in " + stack.substr(reLine.lastIndex));
+
+  do_print("Ensuring that we have removed Task.jsm, Promise.jsm");
+  do_check_true(stack.indexOf("Task.jsm") == -1);
+  do_check_true(stack.indexOf("Promise.jsm") == -1);
+  do_check_true(stack.indexOf("Promise-backend.js") == -1);
+}
+
+
+// Test that we get an acceptable rewritten stack when we launch
+// an error in a Task.spawn.
+add_test(function test_spawn_throw_stack() {
+  Task.spawn(function* task_spawn_throw_stack() {
+    for (let i = 0; i < 5; ++i) {
+      yield Promise.resolve(); // Without stack rewrite, this would lose valuable information
+    }
+    throw new Error("BOOM");
+  }).then(do_throw, function(ex) {
+    do_check_rewritten_stack(["task_spawn_throw_stack",
+                              "test_spawn_throw_stack"],
+                             ex);
+    run_next_test();
+  });
+});
+
+// Test that we get an acceptable rewritten stack when we yield
+// a rejection in a Task.spawn.
+add_test(function test_spawn_yield_reject_stack() {
+  Task.spawn(function* task_spawn_yield_reject_stack() {
+    for (let i = 0; i < 5; ++i) {
+      yield Promise.resolve(); // Without stack rewrite, this would lose valuable information
+    }
+    yield Promise.reject(new Error("BOOM"));
+  }).then(do_throw, function(ex) {
+    do_check_rewritten_stack(["task_spawn_yield_reject_stack",
+                              "test_spawn_yield_reject_stack"],
+                              ex);
+    run_next_test();
+  });
+});
+
+// Test that we get an acceptable rewritten stack when we launch
+// an error in a Task.async function.
+add_test(function test_async_function_throw_stack() {
+  let task_async_function_throw_stack = Task.async(function*() {
+    for (let i = 0; i < 5; ++i) {
+      yield Promise.resolve(); // Without stack rewrite, this would lose valuable information
+    }
+    throw new Error("BOOM");
+  })().then(do_throw, function(ex) {
+    do_check_rewritten_stack(["task_async_function_throw_stack",
+                              "test_async_function_throw_stack"],
+                             ex);
+    run_next_test();
+  });
+});
+
+// Test that we get an acceptable rewritten stack when we launch
+// an error in a Task.async function.
+add_test(function test_async_function_yield_reject_stack() {
+  let task_async_function_yield_reject_stack = Task.async(function*() {
+    for (let i = 0; i < 5; ++i) {
+      yield Promise.resolve(); // Without stack rewrite, this would lose valuable information
+    }
+    yield Promise.reject(new Error("BOOM"));
+  })().then(do_throw, function(ex) {
+    do_check_rewritten_stack(["task_async_function_yield_reject_stack",
+                              "test_async_function_yield_reject_stack"],
+                              ex);
+    run_next_test();
+  });
+});
+
+// Test that we get an acceptable rewritten stack when we launch
+// an error in a Task.async function.
+add_test(function test_async_method_throw_stack() {
+  let object = {
+   task_async_method_throw_stack: Task.async(function*() {
+    for (let i = 0; i < 5; ++i) {
+      yield Promise.resolve(); // Without stack rewrite, this would lose valuable information
+    }
+    throw new Error("BOOM");
+   })
+  };
+  object.task_async_method_throw_stack().then(do_throw, function(ex) {
+    do_check_rewritten_stack(["task_async_method_throw_stack",
+                              "test_async_method_throw_stack"],
+                             ex);
+    run_next_test();
+  });
+});
+
+// Test that we get an acceptable rewritten stack when we launch
+// an error in a Task.async function.
+add_test(function test_async_method_yield_reject_stack() {
+  let object = {
+    task_async_method_yield_reject_stack: Task.async(function*() {
+      for (let i = 0; i < 5; ++i) {
+        yield Promise.resolve(); // Without stack rewrite, this would lose valuable information
+      }
+      yield Promise.reject(new Error("BOOM"));
+    })
+  };
+  object.task_async_method_yield_reject_stack().then(do_throw, function(ex) {
+    do_check_rewritten_stack(["task_async_method_yield_reject_stack",
+                              "test_async_method_yield_reject_stack"],
+                              ex);
+    run_next_test();
+  });
+});
+
+// Test that two tasks whose execution takes place interleaved do not capture each other's stack.
+add_test(function test_throw_stack_do_not_capture_the_wrong_task() {
+  for (let iter_a of [3, 4, 5]) { // Vary the interleaving
+    for (let iter_b of [3, 4, 5]) {
+      Task.spawn(function* task_a() {
+        for (let i = 0; i < iter_a; ++i) {
+          yield Promise.resolve();
+        }
+        throw new Error("BOOM");
+      }).then(do_throw, function(ex) {
+        do_check_rewritten_stack(["task_a",
+                                  "test_throw_stack_do_not_capture_the_wrong_task"],
+                                  ex);
+        do_check_true(!ex.stack.contains("task_b"));
+        run_next_test();
+      });
+      Task.spawn(function* task_b() {
+        for (let i = 0; i < iter_b; ++i) {
+          yield Promise.resolve();
+        }
+      });
+    }
+  }
+});
+
+// Put things together
+add_test(function test_throw_complex_stack()
+{
+  // Setup the following stack:
+  //    inner_method()
+  //    task_3()
+  //    task_2()
+  //    task_1()
+  //    function_3()
+  //    function_2()
+  //    function_1()
+  //    test_throw_complex_stack()
+  (function function_1() {
+    return (function function_2() {
+      return (function function_3() {
+        return Task.spawn(function* task_1() {
+          yield Promise.resolve();
+          try {
+            yield Task.spawn(function* task_2() {
+              yield Promise.resolve();
+              yield Task.spawn(function* task_3() {
+                yield Promise.resolve();
+                  let inner_object = {
+                    inner_method: Task.async(function*() {
+                      throw new Error("BOOM");
+                    })
+                  };
+                  yield Promise.resolve();
+                  yield inner_object.inner_method();
+                });
+              });
+            } catch (ex) {
+              yield Promise.resolve();
+              throw ex;
+            }
+          });
+        })();
+      })();
+  })().then(
+    () => do_throw("Shouldn't have succeeded"),
+    (ex) => {
+      let expect = ["inner_method",
+        "task_3",
+        "task_2",
+        "task_1",
+        "function_3",
+        "function_2",
+        "function_1",
+        "test_throw_complex_stack"];
+      do_check_rewritten_stack(expect, ex);
+
+      run_next_test();
+    });
+});
+
+add_test(function test_without_maintainStack() {
+  do_print("Calling generateReadableStack without a Task");
+  Task.Debugging.generateReadableStack(new Error("Not a real error"));
+
+  Task.Debugging.maintainStack = false;
+
+  do_print("Calling generateReadableStack with neither a Task nor maintainStack");
+  Task.Debugging.generateReadableStack(new Error("Not a real error"));
+
+  do_print("Calling generateReadableStack without maintainStack");
+  Task.spawn(function*() {
+    Task.Debugging.generateReadableStack(new Error("Not a real error"));
+    run_next_test();
+  });
+});
+
+add_test(function exit_stack_tests() {
+  Task.Debugging.maintainStack = maintainStack;
+  run_next_test();
+});
+

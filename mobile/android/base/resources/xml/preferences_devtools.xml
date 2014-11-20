@@ -8,10 +8,15 @@
                   android:title="@string/pref_category_devtools"
                   android:enabled="false">
 
+       <CheckBoxPreference android:key="nglayout.debug.paint_flashing"
+                           android:title="@string/pref_developer_paint_flashing" />
+
        <CheckBoxPreference android:key="devtools.debugger.remote-enabled"
                            android:title="@string/pref_developer_remotedebugging" />
 
-       <org.mozilla.gecko.preferences.AlignRightLinkPreference android:title="@string/pref_learn_more"
+       <org.mozilla.gecko.preferences.AlignRightLinkPreference android:key="android.not_a_preference.remote_debugging.link"
+                                                               android:title="@string/pref_learn_more"
+                                                               android:persistent="false"
                                                                url="https://developer.mozilla.org/docs/Tools/Remote_Debugging" />
 
 </PreferenceScreen>

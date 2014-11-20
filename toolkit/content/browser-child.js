@@ -353,7 +353,14 @@ addEventListener("TextZoomChange", function (aEvent) {
   }
 }, false);
 
-RemoteAddonsChild.init(this);
+// The AddonsChild needs to be rooted so that it stays alive as long as
+// the tab.
+let AddonsChild;
+if (Services.appinfo.browserTabsRemoteAutostart) {
+  // Currently, the addon shims are only supported when autostarting
+  // with remote tabs.
+  AddonsChild = RemoteAddonsChild.init(this);
+}
 
 addMessageListener("NetworkPrioritizer:AdjustPriority", (msg) => {
   let webNav = docShell.QueryInterface(Ci.nsIWebNavigation);

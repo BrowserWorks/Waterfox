@@ -26,7 +26,7 @@ class MDefinitionIterator;
 
 typedef InlineListIterator<MInstruction> MInstructionIterator;
 typedef InlineListReverseIterator<MInstruction> MInstructionReverseIterator;
-typedef InlineForwardListIterator<MPhi> MPhiIterator;
+typedef InlineListIterator<MPhi> MPhiIterator;
 typedef InlineForwardListIterator<MResumePoint> MResumePointIterator;
 
 class LBlock;
@@ -82,7 +82,9 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     static MBasicBlock *NewAsmJS(MIRGraph &graph, CompileInfo &info,
                                  MBasicBlock *pred, Kind kind);
 
-    bool dominates(const MBasicBlock *other) const;
+    bool dominates(const MBasicBlock *other) const {
+        return other->domIndex() - domIndex() < numDominated();
+    }
 
     void setId(uint32_t id) {
         id_ = id;
@@ -91,6 +93,9 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     // Mark this block (and only this block) as unreachable.
     void setUnreachable() {
         JS_ASSERT(!unreachable_);
+        setUnreachableUnchecked();
+    }
+    void setUnreachableUnchecked() {
         unreachable_ = true;
     }
     bool unreachable() const {
@@ -184,9 +189,8 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     void replacePredecessor(MBasicBlock *old, MBasicBlock *split);
     void replaceSuccessor(size_t pos, MBasicBlock *split);
 
-    // Removes `pred` from the predecessor list.  `pred` should not be
-    // the final predecessor. If this block defines phis, removes the
-    // entry for `pred` and updates the indices of later entries.
+    // Removes `pred` from the predecessor list. If this block defines phis,
+    // removes the entry for `pred` and updates the indices of later entries.
     // This may introduce redundant phis if the new block has fewer
     // than two predecessors.
     void removePredecessor(MBasicBlock *pred);
@@ -229,6 +233,7 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     MInstructionReverseIterator discardAt(MInstructionReverseIterator &iter);
     MDefinitionIterator discardDefAt(MDefinitionIterator &iter);
     void discardAllInstructions();
+    void discardAllInstructionsStartingAt(MInstructionIterator &iter);
     void discardAllPhiOperands();
     void discardAllPhis();
     void discardAllResumePoints(bool discardEntry = true);
@@ -275,11 +280,19 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     MBasicBlock *getPredecessor(uint32_t i) const {
         return predecessors_[i];
     }
+#ifdef DEBUG
+    bool hasLastIns() const {
+        return !instructions_.empty() && instructions_.rbegin()->isControlInstruction();
+    }
+#endif
     MControlInstruction *lastIns() const {
-        return lastIns_;
+        return instructions_.rbegin()->toControlInstruction();
     }
     MPhiIterator phisBegin() const {
         return phis_.begin();
+    }
+    MPhiIterator phisBegin(MPhi *at) const {
+        return phis_.begin(at);
     }
     MPhiIterator phisEnd() const {
         return phis_.end();
@@ -371,13 +384,6 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
         MOZ_ASSERT(mark_, "Unarking unmarked block");
         mark_ = false;
     }
-    void makeStart(MStart *start) {
-        add(start);
-        start_ = start;
-    }
-    MStart *start() const {
-        return start_;
-    }
 
     MBasicBlock *immediateDominator() const {
         return immediateDominator_;
@@ -416,7 +422,11 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
         numDominated_ += n;
     }
 
+    // Add |child| to this block's immediately-dominated set.
     bool addImmediatelyDominatedBlock(MBasicBlock *child);
+
+    // Remove |child| from this block's immediately-dominated set.
+    void removeImmediatelyDominatedBlock(MBasicBlock *child);
 
     // This function retrieves the internal instruction associated with a
     // slot, and should not be used for normal stack operations. It is an
@@ -502,28 +512,26 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     CompileInfo &info_; // Each block originates from a particular script.
     InlineList<MInstruction> instructions_;
     Vector<MBasicBlock *, 1, IonAllocPolicy> predecessors_;
-    InlineForwardList<MPhi> phis_;
+    InlineList<MPhi> phis_;
     InlineForwardList<MResumePoint> resumePoints_;
     FixedList<MDefinition *> slots_;
     uint32_t stackPosition_;
-    MControlInstruction *lastIns_;
-    jsbytecode *pc_;
     uint32_t id_;
     uint32_t domIndex_; // Index in the dominator tree.
+    uint32_t numDominated_;
+    jsbytecode *pc_;
     LBlock *lir_;
-    MStart *start_;
     MResumePoint *entryResumePoint_;
     MBasicBlock *successorWithPhis_;
     uint32_t positionInPhiSuccessor_;
-    Kind kind_;
     uint32_t loopDepth_;
+    Kind kind_ : 8;
 
     // Utility mark for traversal algorithms.
     bool mark_;
 
     Vector<MBasicBlock *, 1, IonAllocPolicy> immediatelyDominated_;
     MBasicBlock *immediateDominator_;
-    size_t numDominated_;
 
     BytecodeSite trackedSite_;
 
@@ -563,7 +571,7 @@ class MIRGraph
       : alloc_(alloc),
         returnAccumulator_(nullptr),
         blockIdGen_(0),
-        idGen_(1),
+        idGen_(0),
         osrBlock_(nullptr),
         osrStart_(nullptr),
         numBlocks_(0),
@@ -625,6 +633,7 @@ class MIRGraph
     }
     void removeBlocksAfter(MBasicBlock *block);
     void removeBlock(MBasicBlock *block);
+    void removeBlockIncludingPhis(MBasicBlock *block);
     void moveBlockToEnd(MBasicBlock *block) {
         JS_ASSERT(block->id());
         blocks_.remove(block);

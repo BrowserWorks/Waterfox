@@ -1,4 +1,4 @@
-/* -*- Mode: javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -93,7 +93,8 @@ const ACTIVITY_TYPE = {
   // Forcing the target to reload with cache enabled or disabled.
   RELOAD: {
     WITH_CACHE_ENABLED: 1,
-    WITH_CACHE_DISABLED: 2
+    WITH_CACHE_DISABLED: 2,
+    WITH_CACHE_DEFAULT: 3
   },
 
   // Enabling or disabling the cache without triggering a reload.
@@ -224,6 +225,14 @@ let NetMonitorController = {
   },
 
   /**
+   * Checks whether the netmonitor connection is active.
+   * @return boolean
+   */
+  isConnected: function() {
+    return !!this.client;
+  },
+
+  /**
    * Sets up a monitoring session.
    *
    * @param DebuggerClient aClient
@@ -347,24 +356,26 @@ let NetMonitorController = {
       let navigationFinished = waitForNavigation();
       return reconfigureTab(aOptions).then(() => navigationFinished);
     }
-
+    if (aType == ACTIVITY_TYPE.RELOAD.WITH_CACHE_DEFAULT) {
+      return reconfigureTabAndWaitForNavigation({}).then(standBy);
+    }
     if (aType == ACTIVITY_TYPE.RELOAD.WITH_CACHE_ENABLED) {
       this._currentActivity = ACTIVITY_TYPE.ENABLE_CACHE;
       this._target.once("will-navigate", () => this._currentActivity = aType);
-      return reconfigureTabAndWaitForNavigation({ cacheEnabled: true }).then(standBy);
+      return reconfigureTabAndWaitForNavigation({ cacheDisabled: false, performReload: true }).then(standBy);
     }
     if (aType == ACTIVITY_TYPE.RELOAD.WITH_CACHE_DISABLED) {
       this._currentActivity = ACTIVITY_TYPE.DISABLE_CACHE;
       this._target.once("will-navigate", () => this._currentActivity = aType);
-      return reconfigureTabAndWaitForNavigation({ cacheEnabled: false }).then(standBy);
+      return reconfigureTabAndWaitForNavigation({ cacheDisabled: true, performReload: true }).then(standBy);
     }
     if (aType == ACTIVITY_TYPE.ENABLE_CACHE) {
       this._currentActivity = aType;
-      return reconfigureTab({ cacheEnabled: true, performReload: false }).then(standBy);
+      return reconfigureTab({ cacheDisabled: false, performReload: false }).then(standBy);
     }
     if (aType == ACTIVITY_TYPE.DISABLE_CACHE) {
       this._currentActivity = aType;
-      return reconfigureTab({ cacheEnabled: false, performReload: false }).then(standBy);
+      return reconfigureTab({ cacheDisabled: true, performReload: false }).then(standBy);
     }
     this._currentActivity = ACTIVITY_TYPE.NONE;
     return promise.reject(new Error("Invalid activity type"));
@@ -528,7 +539,7 @@ NetworkEventsHandler.prototype = {
 
     let { actor, startedDateTime, method, url, isXHR } = aPacket.eventActor;
     NetMonitorView.RequestsMenu.addRequest(actor, startedDateTime, method, url, isXHR);
-    window.emit(EVENTS.NETWORK_EVENT);
+    window.emit(EVENTS.NETWORK_EVENT, actor);
   },
 
   /**
@@ -549,23 +560,23 @@ NetworkEventsHandler.prototype = {
     switch (aPacket.updateType) {
       case "requestHeaders":
         this.webConsoleClient.getRequestHeaders(actor, this._onRequestHeaders);
-        window.emit(EVENTS.UPDATING_REQUEST_HEADERS);
+        window.emit(EVENTS.UPDATING_REQUEST_HEADERS, actor);
         break;
       case "requestCookies":
         this.webConsoleClient.getRequestCookies(actor, this._onRequestCookies);
-        window.emit(EVENTS.UPDATING_REQUEST_COOKIES);
+        window.emit(EVENTS.UPDATING_REQUEST_COOKIES, actor);
         break;
       case "requestPostData":
         this.webConsoleClient.getRequestPostData(actor, this._onRequestPostData);
-        window.emit(EVENTS.UPDATING_REQUEST_POST_DATA);
+        window.emit(EVENTS.UPDATING_REQUEST_POST_DATA, actor);
         break;
       case "responseHeaders":
         this.webConsoleClient.getResponseHeaders(actor, this._onResponseHeaders);
-        window.emit(EVENTS.UPDATING_RESPONSE_HEADERS);
+        window.emit(EVENTS.UPDATING_RESPONSE_HEADERS, actor);
         break;
       case "responseCookies":
         this.webConsoleClient.getResponseCookies(actor, this._onResponseCookies);
-        window.emit(EVENTS.UPDATING_RESPONSE_COOKIES);
+        window.emit(EVENTS.UPDATING_RESPONSE_COOKIES, actor);
         break;
       case "responseStart":
         NetMonitorView.RequestsMenu.updateRequest(aPacket.from, {
@@ -574,7 +585,7 @@ NetworkEventsHandler.prototype = {
           statusText: aPacket.response.statusText,
           headersSize: aPacket.response.headersSize
         });
-        window.emit(EVENTS.STARTED_RECEIVING_RESPONSE);
+        window.emit(EVENTS.STARTED_RECEIVING_RESPONSE, actor);
         break;
       case "responseContent":
         NetMonitorView.RequestsMenu.updateRequest(aPacket.from, {
@@ -582,14 +593,14 @@ NetworkEventsHandler.prototype = {
           mimeType: aPacket.mimeType
         });
         this.webConsoleClient.getResponseContent(actor, this._onResponseContent);
-        window.emit(EVENTS.UPDATING_RESPONSE_CONTENT);
+        window.emit(EVENTS.UPDATING_RESPONSE_CONTENT, actor);
         break;
       case "eventTimings":
         NetMonitorView.RequestsMenu.updateRequest(aPacket.from, {
           totalTime: aPacket.totalTime
         });
         this.webConsoleClient.getEventTimings(actor, this._onEventTimings);
-        window.emit(EVENTS.UPDATING_EVENT_TIMINGS);
+        window.emit(EVENTS.UPDATING_EVENT_TIMINGS, actor);
         break;
     }
   },
@@ -604,7 +615,7 @@ NetworkEventsHandler.prototype = {
     NetMonitorView.RequestsMenu.updateRequest(aResponse.from, {
       requestHeaders: aResponse
     });
-    window.emit(EVENTS.RECEIVED_REQUEST_HEADERS);
+    window.emit(EVENTS.RECEIVED_REQUEST_HEADERS, aResponse.from);
   },
 
   /**
@@ -617,7 +628,7 @@ NetworkEventsHandler.prototype = {
     NetMonitorView.RequestsMenu.updateRequest(aResponse.from, {
       requestCookies: aResponse
     });
-    window.emit(EVENTS.RECEIVED_REQUEST_COOKIES);
+    window.emit(EVENTS.RECEIVED_REQUEST_COOKIES, aResponse.from);
   },
 
   /**
@@ -630,7 +641,7 @@ NetworkEventsHandler.prototype = {
     NetMonitorView.RequestsMenu.updateRequest(aResponse.from, {
       requestPostData: aResponse
     });
-    window.emit(EVENTS.RECEIVED_REQUEST_POST_DATA);
+    window.emit(EVENTS.RECEIVED_REQUEST_POST_DATA, aResponse.from);
   },
 
   /**
@@ -643,7 +654,7 @@ NetworkEventsHandler.prototype = {
     NetMonitorView.RequestsMenu.updateRequest(aResponse.from, {
       responseHeaders: aResponse
     });
-    window.emit(EVENTS.RECEIVED_RESPONSE_HEADERS);
+    window.emit(EVENTS.RECEIVED_RESPONSE_HEADERS, aResponse.from);
   },
 
   /**
@@ -656,7 +667,7 @@ NetworkEventsHandler.prototype = {
     NetMonitorView.RequestsMenu.updateRequest(aResponse.from, {
       responseCookies: aResponse
     });
-    window.emit(EVENTS.RECEIVED_RESPONSE_COOKIES);
+    window.emit(EVENTS.RECEIVED_RESPONSE_COOKIES, aResponse.from);
   },
 
   /**
@@ -669,7 +680,7 @@ NetworkEventsHandler.prototype = {
     NetMonitorView.RequestsMenu.updateRequest(aResponse.from, {
       responseContent: aResponse
     });
-    window.emit(EVENTS.RECEIVED_RESPONSE_CONTENT);
+    window.emit(EVENTS.RECEIVED_RESPONSE_CONTENT, aResponse.from);
   },
 
   /**
@@ -682,7 +693,7 @@ NetworkEventsHandler.prototype = {
     NetMonitorView.RequestsMenu.updateRequest(aResponse.from, {
       eventTimings: aResponse
     });
-    window.emit(EVENTS.RECEIVED_EVENT_TIMINGS);
+    window.emit(EVENTS.RECEIVED_EVENT_TIMINGS, aResponse.from);
   },
 
   /**

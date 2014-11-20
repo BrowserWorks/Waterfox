@@ -16,76 +16,46 @@
 
 'use strict';
 
-var promise = require('./util/promise');
-var centralCanon = require('./commands/commands').centralCanon;
-var connectors = require('./connectors/connectors');
-var converters = require('./converters/converters');
-var fields = require('./fields/fields');
-var languages = require('./languages/languages');
-var settings = require('./settings');
-var centralTypes = require('./types/types').centralTypes;
+var Promise = require('./util/promise').Promise;
+var Commands = require('./commands/commands').Commands;
+var Connectors = require('./connectors/connectors').Connectors;
+var Converters = require('./converters/converters').Converters;
+var Fields = require('./fields/fields').Fields;
+var Languages = require('./languages/languages').Languages;
+var Settings = require('./settings').Settings;
+var Types = require('./types/types').Types;
 
 /**
  * This is the heart of the API that we expose to the outside
  */
-exports.getApi = function() {
-  var canon = centralCanon;
-  var types = centralTypes;
+exports.createSystem = function() {
 
-  settings.startup(types);
+  var components = {
+    connector: new Connectors(),
+    converter: new Converters(),
+    field: new Fields(),
+    language: new Languages(),
+    type: new Types()
+  };
+  components.setting = new Settings(components.type);
+  components.command = new Commands(components.type);
 
-  var addItem = function(item) {
+  var getItemType = function(item) {
+    if (item.item) {
+      return item.item;
+    }
     // Some items are registered using the constructor so we need to check
     // the prototype for the the type of the item
-    var type = item.item;
-    if (type == null && item.prototype) {
-      type = item.prototype.item;
-    }
-    if (type === 'connector') {
-      connectors.addConnector(item);
-    }
-    else if (type === 'converter') {
-      converters.addConverter(item);
-    }
-    else if (type === 'field') {
-      fields.addField(item);
-    }
-    else if (type === 'language') {
-      languages.addLanguage(item);
-    }
-    else if (type === 'setting') {
-      settings.addSetting(item);
-    }
-    else if (type === 'type') {
-      types.addType(item);
-    }
-    else {
-      canon.addCommand(item);
-    }
+    return (item.prototype && item.prototype.item) ?
+           item.prototype.item : 'command';
+  };
+
+  var addItem = function(item) {
+    components[getItemType(item)].add(item);
   };
 
   var removeItem = function(item) {
-    if (item.item === 'connector') {
-      connectors.removeConnector(item);
-    }
-    else if (item.item === 'converter') {
-      converters.removeConverter(item);
-    }
-    else if (item.item === 'field') {
-      fields.removeField(item);
-    }
-    else if (item.item === 'language') {
-      languages.removeLanguage(item);
-    }
-    else if (item.item === 'settings') {
-      settings.removeSetting(types, item);
-    }
-    else if (item.item === 'type') {
-      types.removeType(item);
-    }
-    else {
-      canon.removeCommand(item);
-    }
+    components[getItemType(item)].remove(item);
   };
 
   /**
@@ -117,7 +87,7 @@ exports.getApi = function() {
     // And load the new items
     try {
       var loader = loadableModules[name];
-      return promise.resolve(loader(name)).then(function(newModule) {
+      return Promise.resolve(loader(name)).then(function(newModule) {
         if (existingModule === newModule) {
           return;
         }
@@ -138,22 +108,13 @@ exports.getApi = function() {
     }
     catch (ex) {
       console.error(ex);
-      return promise.reject('Failure when loading \'' + name + '\'');
+      return Promise.reject('Failure when loading \'' + name + '\'');
     }
   };
 
-  var api = {
-    addCommand: function(item) { return canon.addCommand(item); },
-    removeCommand: function(item) { return canon.removeCommand(item); },
-    addConnector: connectors.addConnector,
-    removeConnector: connectors.removeConnector,
-    addConverter: converters.addConverter,
-    removeConverter: converters.removeConverter,
-    addLanguage: languages.addLanguage,
-    removeLanguage: languages.removeLanguage,
-    addType: function(item) { return types.addType(item); },
-    removeType: function(item) { return types.removeType(item); },
+  var pendingChanges = false;
 
+  var api = {
     addItems: function(items) {
       items.forEach(addItem);
     },
@@ -175,7 +136,10 @@ exports.getApi = function() {
         }
         loadableModules[name] = options.loader;
 
-        if (!options.delayedLoad) {
+        if (options.delayedLoad) {
+          pendingChanges = true;
+        }
+        else {
           loadModule(name).then(null, console.error);
         }
       });
@@ -187,45 +151,67 @@ exports.getApi = function() {
     },
 
     load: function() {
+      if (!pendingChanges) {
+        return Promise.resolve();
+      }
+
       // clone loadedModules, so we can remove what is left at the end
       var modules = Object.keys(loadedModules).map(function(name) {
         return loadedModules[name];
       });
 
-      Object.keys(loadableModules).forEach(function(name) {
+      var promises = Object.keys(loadableModules).map(function(name) {
         delete modules[name];
-        loadModule(name).then(null, console.error);
+        return loadModule(name);
       });
 
       Object.keys(modules).forEach(unloadModule);
+      pendingChanges = false;
+
+      return Promise.all(promises);
     }
   };
 
-  Object.defineProperty(api, 'canon', {
-    get: function() { return canon; },
-    set: function(c) { canon = c; },
+  Object.defineProperty(api, 'commands', {
+    get: function() { return components.command; },
+    set: function(commands) { components.command = commands; },
+    enumerable: true
+  });
+
+  Object.defineProperty(api, 'connectors', {
+    get: function() { return components.connector; },
+    enumerable: true
+  });
+
+  Object.defineProperty(api, 'converters', {
+    get: function() { return components.converter; },
+    enumerable: true
+  });
+
+  Object.defineProperty(api, 'fields', {
+    get: function() { return components.field; },
+    enumerable: true
+  });
+
+  Object.defineProperty(api, 'languages', {
+    get: function() { return components.language; },
+    enumerable: true
+  });
+
+  Object.defineProperty(api, 'settings', {
+    get: function() { return components.setting; },
     enumerable: true
   });
 
   Object.defineProperty(api, 'types', {
-    get: function() { return types; },
-    set: function(t) {
-      types = t;
-      settings.startup(types);
+    get: function() { return components.type; },
+    set: function(types) {
+      components.type = types;
+      components.command.types = types;
+      components.setting.types = types;
     },
     enumerable: true
   });
 
   return api;
-};
-
-/**
- * api.getApi() is clean, but generally we want to add the functions to the
- * 'exports' object. So this is a quick helper.
- */
-exports.populateApi = function(obj) {
-  var exportable = exports.getApi();
-  Object.keys(exportable).forEach(function(key) {
-    obj[key] = exportable[key];
-  });
 };

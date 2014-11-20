@@ -9,10 +9,12 @@ TEST_TOOL_DIRS += ['test']
 
 EXPORTS += [
     'AnimationCommon.h',
+    'CounterStyleManager.h',
     'nsAnimationManager.h',
     'nsComputedDOMStylePropertyList.h',
     'nsCSSAnonBoxes.h',
     'nsCSSAnonBoxList.h',
+    'nsCSSCounterDescList.h',
     'nsCSSFontDescList.h',
     'nsCSSKeywordList.h',
     'nsCSSKeywords.h',
@@ -27,7 +29,6 @@ EXPORTS += [
     'nsCSSPseudoElements.h',
     'nsCSSRuleProcessor.h',
     'nsCSSScanner.h',
-    'nsCSSStyleSheet.h',
     'nsCSSValue.h',
     'nsDOMCSSAttrDeclaration.h',
     'nsDOMCSSDeclaration.h',
@@ -35,7 +36,6 @@ EXPORTS += [
     'nsICSSDeclaration.h',
     'nsICSSLoaderObserver.h',
     'nsICSSPseudoComparator.h',
-    'nsICSSRuleList.h',
     'nsICSSStyleRuleDOMWrapper.h',
     'nsIStyleRule.h',
     'nsIStyleRuleProcessor.h',
@@ -45,7 +45,6 @@ EXPORTS += [
     'nsRuleNode.h',
     'nsRuleProcessorData.h',
     'nsRuleWalker.h',
-    'nsStyleAnimation.h',
     'nsStyleConsts.h',
     'nsStyleContext.h',
     'nsStyleCoord.h',
@@ -58,13 +57,16 @@ EXPORTS += [
 ]
 
 EXPORTS.mozilla += [
+    'CSSStyleSheet.h',
     'CSSVariableDeclarations.h',
     'CSSVariableResolver.h',
     'CSSVariableValues.h',
+    'StyleAnimationValue.h',
 ]
 
 EXPORTS.mozilla.dom += [
     'CSS.h',
+    'CSSRuleList.h',
     'CSSValue.h',
     'MediaQueryList.h',
 ]
@@ -83,7 +85,10 @@ EXPORTS.mozilla.css += [
 
 UNIFIED_SOURCES += [
     'AnimationCommon.cpp',
+    'CounterStyleManager.cpp',
     'CSS.cpp',
+    'CSSRuleList.cpp',
+    'CSSStyleSheet.cpp',
     'CSSVariableDeclarations.cpp',
     'CSSVariableResolver.cpp',
     'CSSVariableValues.cpp',
@@ -103,7 +108,6 @@ UNIFIED_SOURCES += [
     'nsCSSPseudoElements.cpp',
     'nsCSSRules.cpp',
     'nsCSSScanner.cpp',
-    'nsCSSStyleSheet.cpp',
     'nsCSSValue.cpp',
     'nsDOMCSSAttrDeclaration.cpp',
     'nsDOMCSSDeclaration.cpp',
@@ -112,14 +116,12 @@ UNIFIED_SOURCES += [
     'nsDOMCSSValueList.cpp',
     'nsHTMLCSSStyleSheet.cpp',
     'nsHTMLStyleSheet.cpp',
-    'nsICSSRuleList.cpp',
     'nsLayoutStylesheetCache.cpp',
     'nsMediaFeatures.cpp',
     'nsNthIndexCache.cpp',
     'nsROCSSPrimitiveValue.cpp',
     'nsRuleData.cpp',
     'nsRuleNode.cpp',
-    'nsStyleAnimation.cpp',
     'nsStyleContext.cpp',
     'nsStyleCoord.cpp',
     'nsStyleSet.cpp',
@@ -127,6 +129,7 @@ UNIFIED_SOURCES += [
     'nsStyleTransformMatrix.cpp',
     'nsStyleUtil.cpp',
     'nsTransitionManager.cpp',
+    'StyleAnimationValue.cpp',
     'StyleRule.cpp',
 ]
 

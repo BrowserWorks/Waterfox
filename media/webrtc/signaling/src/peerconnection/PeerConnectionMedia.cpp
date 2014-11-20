@@ -183,10 +183,10 @@ nsresult PeerConnectionMedia::Init(const std::vector<NrIceStunServer>& stun_serv
   }
   mIceCtx->SignalGatheringStateChange.connect(
       this,
-      &PeerConnectionMedia::IceGatheringStateChange);
+      &PeerConnectionMedia::IceGatheringStateChange_s);
   mIceCtx->SignalConnectionStateChange.connect(
       this,
-      &PeerConnectionMedia::IceConnectionStateChange);
+      &PeerConnectionMedia::IceConnectionStateChange_s);
 
   // Create three streams to start with.
   // One each for audio, video and DataChannel
@@ -513,16 +513,52 @@ PeerConnectionMedia::AddRemoteStreamHint(int aIndex, bool aIsVideo)
 
 
 void
-PeerConnectionMedia::IceGatheringStateChange(NrIceCtx* ctx,
-                                             NrIceCtx::GatheringState state)
+PeerConnectionMedia::IceGatheringStateChange_s(NrIceCtx* ctx,
+                                               NrIceCtx::GatheringState state)
 {
+  ASSERT_ON_THREAD(mSTSThread);
+  // ShutdownMediaTransport_s has not run yet because it unhooks this function
+  // from its signal, which means that SelfDestruct_m has not been dispatched
+  // yet either, so this PCMedia will still be around when this dispatch reaches
+  // main.
+  GetMainThread()->Dispatch(
+    WrapRunnable(this,
+                 &PeerConnectionMedia::IceGatheringStateChange_m,
+                 ctx,
+                 state),
+    NS_DISPATCH_NORMAL);
+}
+
+void
+PeerConnectionMedia::IceConnectionStateChange_s(NrIceCtx* ctx,
+                                                NrIceCtx::ConnectionState state)
+{
+  ASSERT_ON_THREAD(mSTSThread);
+  // ShutdownMediaTransport_s has not run yet because it unhooks this function
+  // from its signal, which means that SelfDestruct_m has not been dispatched
+  // yet either, so this PCMedia will still be around when this dispatch reaches
+  // main.
+  GetMainThread()->Dispatch(
+    WrapRunnable(this,
+                 &PeerConnectionMedia::IceConnectionStateChange_m,
+                 ctx,
+                 state),
+    NS_DISPATCH_NORMAL);
+}
+
+void
+PeerConnectionMedia::IceGatheringStateChange_m(NrIceCtx* ctx,
+                                               NrIceCtx::GatheringState state)
+{
+  ASSERT_ON_THREAD(mMainThread);
   SignalIceGatheringStateChange(ctx, state);
 }
 
 void
-PeerConnectionMedia::IceConnectionStateChange(NrIceCtx* ctx,
-                                              NrIceCtx::ConnectionState state)
+PeerConnectionMedia::IceConnectionStateChange_m(NrIceCtx* ctx,
+                                                NrIceCtx::ConnectionState state)
 {
+  ASSERT_ON_THREAD(mMainThread);
   SignalIceConnectionStateChange(ctx, state);
 }
 
@@ -586,26 +622,23 @@ PeerConnectionMedia::ConnectDtlsListener_s(const RefPtr<TransportFlow>& aFlow)
 
 #ifdef MOZILLA_INTERNAL_API
 /**
- * Tells you if any local streams is isolated.  Obviously, we want all the
- * streams to be isolated equally so that they can all be sent or not.  But we
- * can't make that determination for certain, because stream principals change.
- * Therefore, we check once when we are setting a local description and that
- * determines if we flip the "privacy requested" bit on. If a stream cannot be
- * sent, then we'll be sending black/silence later; maybe this will correct
- * itself and we can send actual content.
+ * Tells you if any local streams is isolated to a specific peer identity.
+ * Obviously, we want all the streams to be isolated equally so that they can
+ * all be sent or not.  We check once when we are setting a local description
+ * and that determines if we flip the "privacy requested" bit on.  Once the bit
+ * is on, all media originating from this peer connection is isolated.
  *
- * @param scriptPrincipal the principal
- * @returns true if any stream is isolated
+ * @returns true if any stream has a peerIdentity set on it
  */
 bool
-PeerConnectionMedia::AnyLocalStreamIsolated(nsIPrincipal *scriptPrincipal) const
+PeerConnectionMedia::AnyLocalStreamHasPeerIdentity() const
 {
   ASSERT_ON_THREAD(mMainThread);
 
   for (uint32_t u = 0; u < mLocalSourceStreams.Length(); u++) {
     // check if we should be asking for a private call for this stream
     DOMMediaStream* stream = mLocalSourceStreams[u]->GetMediaStream();
-    if (!scriptPrincipal->Subsumes(stream->GetPrincipal())) {
+    if (stream->GetPeerIdentity()) {
       return true;
     }
   }
@@ -652,6 +685,46 @@ void RemoteSourceStreamInfo::UpdatePrincipal_m(nsIPrincipal* aPrincipal)
   mMediaStream->SetPrincipal(aPrincipal);
 }
 #endif // MOZILLA_INTERNAL_API
+
+bool
+PeerConnectionMedia::AnyCodecHasPluginID(uint64_t aPluginID)
+{
+  for (uint32_t i=0; i < mLocalSourceStreams.Length(); ++i) {
+    if (mLocalSourceStreams[i]->AnyCodecHasPluginID(aPluginID)) {
+      return true;
+    }
+  }
+  for (uint32_t i=0; i < mRemoteSourceStreams.Length(); ++i) {
+    if (mRemoteSourceStreams[i]->AnyCodecHasPluginID(aPluginID)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool
+LocalSourceStreamInfo::AnyCodecHasPluginID(uint64_t aPluginID)
+{
+  // Scan the videoConduits for this plugin ID
+  for (auto it = mPipelines.begin(); it != mPipelines.end(); ++it) {
+    if (it->second->Conduit()->CodecPluginID() == aPluginID) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool
+RemoteSourceStreamInfo::AnyCodecHasPluginID(uint64_t aPluginID)
+{
+  // Scan the videoConduits for this plugin ID
+  for (auto it = mPipelines.begin(); it != mPipelines.end(); ++it) {
+    if (it->second->Conduit()->CodecPluginID() == aPluginID) {
+      return true;
+    }
+  }
+  return false;
+}
 
 void
 LocalSourceStreamInfo::StorePipeline(

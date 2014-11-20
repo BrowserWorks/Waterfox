@@ -149,7 +149,7 @@ InvokeConstructor(JSContext *cx, CallArgs args);
 
 /* See the fval overload of Invoke. */
 extern bool
-InvokeConstructor(JSContext *cx, Value fval, unsigned argc, Value *argv, Value *rval);
+InvokeConstructor(JSContext *cx, Value fval, unsigned argc, const Value *argv, Value *rval);
 
 /*
  * Executes a script with the given scopeChain/this. The 'type' indicates
@@ -203,7 +203,7 @@ class RunState
         return (GeneratorState *)this;
     }
 
-    JSScript *script() const { return script_; }
+    JS::HandleScript script() const { return script_; }
 
     virtual InterpreterFrame *pushInterpreterFrame(JSContext *cx) = 0;
     virtual void setReturnValue(Value v) = 0;
@@ -461,10 +461,6 @@ EnterWithOperation(JSContext *cx, AbstractFramePtr frame, HandleValue val, Handl
 bool
 InitGetterSetterOperation(JSContext *cx, jsbytecode *pc, HandleObject obj, HandleValue idval,
                           HandleObject val);
-
-bool
-SpreadOperation(JSContext *cx, HandleObject arr, HandleValue countVal,
-                HandleValue iterable, MutableHandleValue resultCountVal);
 
 bool
 SpreadCallOperation(JSContext *cx, HandleScript script, jsbytecode *pc, HandleValue thisv,

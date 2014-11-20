@@ -13,8 +13,9 @@
 #include "nsIException.h"
 
 class nsIStackFrame;
+class nsPIDOMWindow;
 template <class T>
-class already_AddRefed;
+struct already_AddRefed;
 
 namespace mozilla {
 namespace dom {
@@ -23,6 +24,11 @@ class Exception;
 
 bool
 Throw(JSContext* cx, nsresult rv, const char* sz = nullptr);
+
+// Create, throw and report an exception to a given window.
+void
+ThrowAndReport(nsPIDOMWindow* aWindow, nsresult aRv,
+               const char* aMessage = nullptr);
 
 bool
 ThrowExceptionObject(JSContext* aCx, Exception* aException);

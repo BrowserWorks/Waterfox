@@ -36,7 +36,6 @@ class MediaEngineDefaultVideoSource : public nsITimerCallback,
 {
 public:
   MediaEngineDefaultVideoSource();
-  ~MediaEngineDefaultVideoSource();
 
   virtual void GetName(nsAString&);
   virtual void GetUUID(nsAString&);
@@ -62,10 +61,16 @@ public:
     return true;
   }
 
+  virtual const MediaSourceType GetMediaSource() {
+    return MediaSourceType::Camera;
+  }
+
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSITIMERCALLBACK
 
 protected:
+  ~MediaEngineDefaultVideoSource();
+
   friend class MediaEngineDefault;
 
   TrackID mTrackID;
@@ -91,7 +96,6 @@ class MediaEngineDefaultAudioSource : public nsITimerCallback,
 {
 public:
   MediaEngineDefaultAudioSource();
-  ~MediaEngineDefaultAudioSource();
 
   virtual void GetName(nsAString&);
   virtual void GetUUID(nsAString&);
@@ -117,10 +121,16 @@ public:
     return true;
   }
 
+  virtual const MediaSourceType GetMediaSource() {
+    return MediaSourceType::Microphone;
+  }
+
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSITIMERCALLBACK
 
 protected:
+  ~MediaEngineDefaultAudioSource();
+
   TrackID mTrackID;
   nsCOMPtr<nsITimer> mTimer;
 
@@ -136,8 +146,10 @@ public:
   : mMutex("mozilla::MediaEngineDefault")
   {}
 
-  virtual void EnumerateVideoDevices(nsTArray<nsRefPtr<MediaEngineVideoSource> >*);
-  virtual void EnumerateAudioDevices(nsTArray<nsRefPtr<MediaEngineAudioSource> >*);
+  virtual void EnumerateVideoDevices(MediaSourceType,
+                                     nsTArray<nsRefPtr<MediaEngineVideoSource> >*);
+  virtual void EnumerateAudioDevices(MediaSourceType,
+                                     nsTArray<nsRefPtr<MediaEngineAudioSource> >*);
 
 private:
   ~MediaEngineDefault() {}

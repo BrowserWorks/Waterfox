@@ -4,20 +4,18 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-interface nsIVariant;
-
 [Pref="dom.sms.enabled",
  Constructor(DOMString type, optional MozMessageDeletedEventInit eventInitDict)]
 interface MozMessageDeletedEvent : Event
 {
   // Array of deleted message ids.
-  readonly attribute nsIVariant? deletedMessageIds;
+  [Cached, Constant] readonly attribute sequence<long>? deletedMessageIds;
   // Array of deleted thread ids.
-  readonly attribute nsIVariant? deletedThreadIds;
+  [Cached, Constant] readonly attribute sequence<unsigned long long>? deletedThreadIds;
 };
 
 dictionary MozMessageDeletedEventInit : EventInit
 {
-  nsIVariant? deletedMessageIds = null;
-  nsIVariant? deletedThreadIds = null;
+  sequence<long>? deletedMessageIds = null;
+  sequence<unsigned long long>? deletedThreadIds = null;
 };

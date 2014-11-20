@@ -14,7 +14,7 @@ NS_IMPL_NS_NEW_HTML_ELEMENT(Meta)
 namespace mozilla {
 namespace dom {
 
-HTMLMetaElement::HTMLMetaElement(already_AddRefed<nsINodeInfo>& aNodeInfo)
+HTMLMetaElement::HTMLMetaElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
   : nsGenericHTMLElement(aNodeInfo)
 {
 }
@@ -47,6 +47,21 @@ HTMLMetaElement::SetItemValueText(const nsAString& aValue)
   SetContent(aValue);
 }
 
+
+nsresult
+HTMLMetaElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
+                              const nsAttrValue* aValue, bool aNotify)
+{
+  if (aNameSpaceID == kNameSpaceID_None) {
+    if (aName == nsGkAtoms::content) {
+      nsIDocument *document = GetCurrentDoc();
+      CreateAndDispatchEvent(document, NS_LITERAL_STRING("DOMMetaChanged"));
+    }
+  }
+
+  return nsGenericHTMLElement::AfterSetAttr(aNameSpaceID, aName, aValue,
+                                            aNotify);
+}
 
 nsresult
 HTMLMetaElement::BindToTree(nsIDocument* aDocument, nsIContent* aParent,

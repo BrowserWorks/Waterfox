@@ -31,7 +31,7 @@
     </style>
 
     <!-- Tabs panel -->
-    <style name="RemoteTabsPanelChild" parent="RemoteTabsPanelChildBase">
+    <style name="TabsPanelFrame.RemoteTabs" parent="TabsPanelFrameBase">
         <item name="android:paddingLeft">212dp</item>
         <item name="android:paddingRight">212dp</item>
     </style>

@@ -7,8 +7,8 @@
 #include "WMF.h"
 #include "WMFDecoderModule.h"
 #include "WMFDecoder.h"
-#include "WMFVideoOutputSource.h"
-#include "WMFAudioOutputSource.h"
+#include "WMFVideoMFTManager.h"
+#include "WMFAudioMFTManager.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/DebugOnly.h"
 #include "WMFMediaDataDecoder.h"
@@ -57,8 +57,6 @@ WMFDecoderModule::Startup()
 nsresult
 WMFDecoderModule::Shutdown()
 {
-  MOZ_ASSERT(NS_IsMainThread(), "Must be on main thread.");
-
   DebugOnly<HRESULT> hr = wmf::MFShutdown();
   NS_ASSERTION(SUCCEEDED(hr), "MFShutdown failed");
 
@@ -72,9 +70,10 @@ WMFDecoderModule::CreateH264Decoder(const mp4_demuxer::VideoDecoderConfig& aConf
                                     MediaTaskQueue* aVideoTaskQueue,
                                     MediaDataDecoderCallback* aCallback)
 {
-  return new WMFMediaDataDecoder(new WMFVideoOutputSource(aLayersBackend,
-                                                          aImageContainer,
-                                                          sDXVAEnabled),
+  return new WMFMediaDataDecoder(new WMFVideoMFTManager(aConfig,
+                                                        aLayersBackend,
+                                                        aImageContainer,
+                                                        sDXVAEnabled),
                                  aVideoTaskQueue,
                                  aCallback);
 }
@@ -84,7 +83,7 @@ WMFDecoderModule::CreateAACDecoder(const mp4_demuxer::AudioDecoderConfig& aConfi
                                    MediaTaskQueue* aAudioTaskQueue,
                                    MediaDataDecoderCallback* aCallback)
 {
-  return new WMFMediaDataDecoder(new WMFAudioOutputSource(aConfig),
+  return new WMFMediaDataDecoder(new WMFAudioMFTManager(aConfig),
                                  aAudioTaskQueue,
                                  aCallback);
 }

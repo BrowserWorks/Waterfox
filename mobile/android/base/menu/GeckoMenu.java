@@ -125,8 +125,8 @@ public class GeckoMenu extends ListView
     public GeckoMenu(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
-        setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT,
-                                         LayoutParams.FILL_PARENT));
+        setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT,
+                                         LayoutParams.MATCH_PARENT));
 
         // Attach an adapter.
         mAdapter = new MenuItemsAdapter();
@@ -787,7 +787,9 @@ public class GeckoMenu extends ListView
 
         @Override
         public boolean isEnabled(int position) {
-            return getItem(position).isEnabled();
+            // Setting this to true is a workaround to fix disappearing
+            // dividers in the menu in L (bug 1050780).
+            return true;
         }
 
         public void addMenuItem(GeckoMenuItem menuItem) {

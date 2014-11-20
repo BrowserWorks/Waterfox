@@ -6,15 +6,13 @@ let Toolbox = devtools.Toolbox;
 let toolbox, toolIDs, idIndex, modifiedPrefs = [];
 
 function test() {
-  waitForExplicitFinish();
-
   if (window.navigator.userAgent.indexOf("Mac OS X 10.8") != -1 ||
       window.navigator.userAgent.indexOf("Windows NT 5.1") != -1) {
     info("Skipping Mac OSX 10.8 and Windows xp, see bug 838069");
     finish();
     return;
   }
-  addTab("about:blank", function() {
+  addTab("about:blank").then(function() {
     toolIDs = [];
     for (let [id, definition] of gDevTools._tools) {
       if (definition.key) {
@@ -41,7 +39,9 @@ function test() {
 }
 
 function testShortcuts(aToolbox, aIndex) {
-  if (aIndex == toolIDs.length) {
+  if (aIndex === undefined) {
+    aIndex = 1;
+  } else if (aIndex == toolIDs.length) {
     tidyUp();
     return;
   }
@@ -51,23 +51,17 @@ function testShortcuts(aToolbox, aIndex) {
 
   toolbox.once("select", selectCB);
 
-  if (aIndex != null) {
-    // This if block is to allow the call of selectCB without shortcut press for
-    // the first time. That happens because on opening of toolbox, one tool gets
-    // selected atleast.
-
-    let key = gDevTools._tools.get(toolIDs[aIndex]).key;
-    let toolModifiers = gDevTools._tools.get(toolIDs[aIndex]).modifiers;
-    let modifiers = {
-      accelKey: toolModifiers.contains("accel"),
-      altKey: toolModifiers.contains("alt"),
-      shiftKey: toolModifiers.contains("shift"),
-    };
-    idIndex = aIndex;
-    info("Testing shortcut for tool " + aIndex + ":" + toolIDs[aIndex] +
-         " using key " + key);
-    EventUtils.synthesizeKey(key, modifiers, toolbox.doc.defaultView.parent);
-  }
+  let key = gDevTools._tools.get(toolIDs[aIndex]).key;
+  let toolModifiers = gDevTools._tools.get(toolIDs[aIndex]).modifiers;
+  let modifiers = {
+    accelKey: toolModifiers.contains("accel"),
+    altKey: toolModifiers.contains("alt"),
+    shiftKey: toolModifiers.contains("shift"),
+  };
+  idIndex = aIndex;
+  info("Testing shortcut for tool " + aIndex + ":" + toolIDs[aIndex] +
+       " using key " + key);
+  EventUtils.synthesizeKey(key, modifiers, toolbox.doc.defaultView.parent);
 }
 
 function selectCB(event, id) {

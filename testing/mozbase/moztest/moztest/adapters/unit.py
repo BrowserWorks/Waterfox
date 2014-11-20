@@ -33,7 +33,10 @@ class StructuredTestResult(TextTestResult):
         return debug_info
 
     def startTestRun(self):
-        self.logger.suite_start(tests=self.test_list)
+        # This would be an opportunity to call the logger's suite_start action,
+        # however some users may use multiple suites, and per the structured
+        # logging protocol, this action should only be called once.
+        pass
 
     def startTest(self, test):
         self.testsRun += 1
@@ -43,7 +46,10 @@ class StructuredTestResult(TextTestResult):
         pass
 
     def stopTestRun(self):
-        self.logger.suite_end()
+        # This would be an opportunity to call the logger's suite_end action,
+        # however some users may use multiple suites, and per the structured
+        # logging protocol, this action should only be called once.
+        pass
 
     def addError(self, test, err):
         self.errors.append((test, self._exc_info_to_string(err, test)))
@@ -132,6 +138,5 @@ class StructuredTestRunner(unittest.TextTestRunner):
         stopTime = time.time()
         if hasattr(result, 'time_taken'):
             result.time_taken = stopTime - startTime
-        run = result.testsRun
 
         return result

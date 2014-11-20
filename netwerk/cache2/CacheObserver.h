@@ -17,10 +17,10 @@ namespace net {
 class CacheObserver : public nsIObserver
                     , public nsSupportsWeakReference
 {
+  virtual ~CacheObserver() {}
+
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIOBSERVER
-
-  virtual ~CacheObserver() {}
 
   static nsresult Init();
   static nsresult Shutdown();
@@ -38,6 +38,10 @@ class CacheObserver : public nsIObserver
   static uint32_t const DiskCacheCapacity() // result in bytes.
     { return sDiskCacheCapacity << 10; }
   static void SetDiskCacheCapacity(uint32_t); // parameter in bytes.
+  static uint32_t const DiskFreeSpaceSoftLimit() // result in bytes.
+    { return sDiskFreeSpaceSoftLimit << 10; }
+  static uint32_t const DiskFreeSpaceHardLimit() // result in bytes.
+    { return sDiskFreeSpaceHardLimit << 10; }
   static bool const SmartCacheSizeEnabled()
     { return sSmartCacheSizeEnabled; }
   static uint32_t const PreloadChunkCount()
@@ -46,6 +50,9 @@ class CacheObserver : public nsIObserver
     { return sMaxMemoryEntrySize << 10; }
   static uint32_t const MaxDiskEntrySize() // result in bytes.
     { return sMaxDiskEntrySize << 10; }
+  static uint32_t const MaxDiskChunksMemoryUsage(bool aPriority) // result in bytes.
+    { return aPriority ? sMaxDiskPriorityChunksMemoryUsage << 10
+                       : sMaxDiskChunksMemoryUsage << 10; }
   static uint32_t const CompressionLevel()
     { return sCompressionLevel; }
   static uint32_t const HalfLifeSeconds()
@@ -71,10 +78,14 @@ private:
   static int32_t sMemoryCacheCapacity;
   static int32_t sAutoMemoryCacheCapacity;
   static uint32_t sDiskCacheCapacity;
+  static uint32_t sDiskFreeSpaceSoftLimit;
+  static uint32_t sDiskFreeSpaceHardLimit;
   static bool sSmartCacheSizeEnabled;
   static uint32_t sPreloadChunkCount;
   static uint32_t sMaxMemoryEntrySize;
   static uint32_t sMaxDiskEntrySize;
+  static uint32_t sMaxDiskChunksMemoryUsage;
+  static uint32_t sMaxDiskPriorityChunksMemoryUsage;
   static uint32_t sCompressionLevel;
   static uint32_t sHalfLifeHours;
   static int32_t sHalfLifeExperiment;

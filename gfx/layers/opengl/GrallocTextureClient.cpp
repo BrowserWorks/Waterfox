@@ -173,13 +173,13 @@ SurfaceFormatForPixelFormat(android::PixelFormat aFormat)
   return gfx::SurfaceFormat::R8G8B8A8;
 }
 
-TemporaryRef<gfx::DrawTarget>
-GrallocTextureClientOGL::GetAsDrawTarget()
+gfx::DrawTarget*
+GrallocTextureClientOGL::BorrowDrawTarget()
 {
   MOZ_ASSERT(IsValid());
-  MOZ_ASSERT(mMappedBuffer, "Calling TextureClient::GetAsDrawTarget without locking :(");
+  MOZ_ASSERT(mMappedBuffer, "Calling TextureClient::BorrowDrawTarget without locking :(");
 
-  if (!IsValid() || !IsAllocated()) {
+  if (!IsValid() || !IsAllocated() || !mMappedBuffer) {
     return nullptr;
   }
 

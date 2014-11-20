@@ -36,11 +36,14 @@ public:
   {
     MOZ_COUNT_CTOR(DOMCameraControlListener::DOMCallback);
   }
+
+protected:
   virtual ~DOMCallback()
   {
     MOZ_COUNT_DTOR(DOMCameraControlListener::DOMCallback);
   }
 
+public:
   virtual void RunCallback(nsDOMCameraControl* aDOMCameraControl) = 0;
 
   NS_IMETHOD
@@ -344,9 +347,10 @@ DOMCameraControlListener::OnTakePictureComplete(uint8_t* aData, uint32_t aLength
     void
     RunCallback(nsDOMCameraControl* aDOMCameraControl) MOZ_OVERRIDE
     {
-      nsCOMPtr<nsIDOMBlob> picture = new nsDOMMemoryFile(static_cast<void*>(mData),
-                                                         static_cast<uint64_t>(mLength),
-                                                         mMimeType);
+      nsCOMPtr<nsIDOMBlob> picture =
+        DOMFile::CreateMemoryFile(static_cast<void*>(mData),
+                                  static_cast<uint64_t>(mLength),
+                                  mMimeType);
       aDOMCameraControl->OnTakePictureComplete(picture);
     }
 

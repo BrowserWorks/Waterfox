@@ -16,7 +16,6 @@
 #include "nsTextFragment.h"
 #include "nsIDOMHTMLTextAreaElement.h"
 #include "nsNameSpaceManager.h"
-#include "nsINodeInfo.h"
 #include "nsFormControlFrame.h" //for registering accesskeys
 
 #include "nsIContent.h"
@@ -493,9 +492,10 @@ nsTextControlFrame::Reflow(nsPresContext*   aPresContext,
   nsLayoutUtils::GetFontMetricsForFrame(this, getter_AddRefs(fontMet),
                                         inflation);
   // now adjust for our borders and padding
-  aDesiredSize.SetTopAscent( 
-        nsLayoutUtils::GetCenteredFontBaseline(fontMet, lineHeight) 
-        + aReflowState.ComputedPhysicalBorderPadding().top);
+  WritingMode wm = aReflowState.GetWritingMode();
+  aDesiredSize.SetBlockStartAscent(
+    nsLayoutUtils::GetCenteredFontBaseline(fontMet, lineHeight) +
+    aReflowState.ComputedLogicalBorderPadding().BStart(wm));
 
   // overflow handling
   aDesiredSize.SetOverflowAreasToDesiredBounds();

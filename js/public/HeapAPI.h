@@ -32,7 +32,11 @@ const size_t ArenaShift = 12;
 const size_t ArenaSize = size_t(1) << ArenaShift;
 const size_t ArenaMask = ArenaSize - 1;
 
+#ifdef JS_GC_SMALL_CHUNK_SIZE
+const size_t ChunkShift = 18;
+#else
 const size_t ChunkShift = 20;
+#endif
 const size_t ChunkSize = size_t(1) << ChunkShift;
 const size_t ChunkMask = ChunkSize - 1;
 
@@ -41,8 +45,13 @@ const size_t CellSize = size_t(1) << CellShift;
 const size_t CellMask = CellSize - 1;
 
 /* These are magic constants derived from actual offsets in gc/Heap.h. */
+#ifdef JS_GC_SMALL_CHUNK_SIZE
+const size_t ChunkMarkBitmapOffset = 258104;
+const size_t ChunkMarkBitmapBits = 31744;
+#else
 const size_t ChunkMarkBitmapOffset = 1032352;
 const size_t ChunkMarkBitmapBits = 129024;
+#endif
 const size_t ChunkRuntimeOffset = ChunkSize - sizeof(void*);
 const size_t ChunkLocationOffset = ChunkSize - 2 * sizeof(void*) - sizeof(uint64_t);
 
@@ -55,11 +64,23 @@ static const uint32_t BLACK = 0;
 static const uint32_t GRAY = 1;
 
 /*
- * Constants used to indicate whether a chunk is part of the tenured heap or the
- * nusery.
+ * The "location" field in the Chunk trailer is a bit vector indicting various
+ * roles of the chunk.
+ *
+ * The value 0 for the "location" field is invalid, at least one bit must be
+ * set.
+ *
+ * Some bits preclude others, for example, any "nursery" bit precludes any
+ * "tenured" or "middle generation" bit.
  */
-const uint32_t ChunkLocationNursery = 0;
-const uint32_t ChunkLocationTenuredHeap = 1;
+const uintptr_t ChunkLocationBitNursery = 1;       // Standard GGC nursery
+const uintptr_t ChunkLocationBitTenuredHeap = 2;   // Standard GGC tenured generation
+const uintptr_t ChunkLocationBitPJSNewspace = 4;   // The PJS generational GC's allocation space
+const uintptr_t ChunkLocationBitPJSFromspace = 8;  // The PJS generational GC's fromspace (during GC)
+
+const uintptr_t ChunkLocationAnyNursery = ChunkLocationBitNursery |
+                                          ChunkLocationBitPJSNewspace |
+                                          ChunkLocationBitPJSFromspace;
 
 #ifdef JS_DEBUG
 /* When downcasting, ensure we are actually the right type. */
@@ -115,6 +136,14 @@ AsCell(JSFlatString *flat)
 {
     js::gc::Cell *cell = reinterpret_cast<js::gc::Cell *>(flat);
     AssertGCThingHasType(cell, JSTRACE_STRING);
+    return cell;
+}
+
+static MOZ_ALWAYS_INLINE js::gc::Cell *
+AsCell(JS::Symbol *sym)
+{
+    js::gc::Cell *cell = reinterpret_cast<js::gc::Cell *>(sym);
+    AssertGCThingHasType(cell, JSTRACE_SYMBOL);
     return cell;
 }
 
@@ -231,9 +260,8 @@ IsInsideNursery(const js::gc::Cell *cell)
     addr &= ~js::gc::ChunkMask;
     addr |= js::gc::ChunkLocationOffset;
     uint32_t location = *reinterpret_cast<uint32_t *>(addr);
-    JS_ASSERT(location == gc::ChunkLocationNursery ||
-              location == gc::ChunkLocationTenuredHeap);
-    return location == gc::ChunkLocationNursery;
+    JS_ASSERT(location != 0);
+    return location & ChunkLocationAnyNursery;
 #else
     return false;
 #endif

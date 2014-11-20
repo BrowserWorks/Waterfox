@@ -1,4 +1,4 @@
-/* -*- Mode: Javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,11 +31,14 @@ const gEncoder = new TextEncoder();
  * This object emits the following events:
  *   - "children-changed": When a child has been added or removed.
  *                         See setChildren.
+ *   - "deleted": When the resource has been deleted.
  */
 var Resource = Class({
   extends: EventTarget,
 
-  refresh: function() { return promise.resolve(this) },
+  refresh: function() { return promise.resolve(this); },
+  destroy: function() { },
+  delete: function() { },
 
   setURI: function(uri) {
     if (typeof(uri) === "string") {
@@ -242,6 +245,21 @@ var FileResource = Class({
     return OS.File.read(this.path).then(bytes => {
       return gDecoder.decode(bytes);
     });
+  },
+
+  /**
+   * Delete the file from the filesystem
+   *
+   * @returns Promise
+   *          Resolves when the file is deleted
+   */
+  delete: function() {
+    emit(this, "deleted", this);
+    if (this.isDir) {
+      return OS.File.removeDir(this.path);
+    } else {
+      return OS.File.remove(this.path);
+    }
   },
 
   /**

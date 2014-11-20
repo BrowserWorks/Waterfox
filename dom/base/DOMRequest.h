@@ -75,13 +75,13 @@ public:
 
   DOMRequest(nsPIDOMWindow* aWindow);
 
+protected:
   virtual ~DOMRequest()
   {
     mResult = JSVAL_VOID;
     mozilla::DropJSObjects(this);
   }
 
-protected:
   void FireEvent(const nsAString& aType, bool aBubble, bool aCancelable);
 
   void RootResultVal();
@@ -89,6 +89,8 @@ protected:
 
 class DOMRequestService MOZ_FINAL : public nsIDOMRequestService
 {
+  ~DOMRequestService() {}
+
 public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIDOMREQUESTSERVICE

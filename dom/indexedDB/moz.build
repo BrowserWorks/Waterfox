@@ -7,24 +7,21 @@
 DIRS += ['ipc']
 TEST_DIRS += ['test']
 
-XPIDL_SOURCES += [
-    'nsIIndexedDatabaseManager.idl',
-]
-
-XPIDL_MODULE = 'dom_indexeddb'
-
 EXPORTS.mozilla.dom.indexedDB += [
     'Client.h',
     'DatabaseInfo.h',
     'FileInfo.h',
     'FileManager.h',
+    'FileSnapshot.h',
     'IDBCursor.h',
     'IDBDatabase.h',
     'IDBEvents.h',
     'IDBFactory.h',
     'IDBFileHandle.h',
+    'IDBFileRequest.h',
     'IDBIndex.h',
     'IDBKeyRange.h',
+    'IDBMutableFile.h',
     'IDBObjectStore.h',
     'IDBRequest.h',
     'IDBTransaction.h',
@@ -42,11 +39,14 @@ UNIFIED_SOURCES += [
     'DatabaseInfo.cpp',
     'FileInfo.cpp',
     'FileManager.cpp',
+    'FileSnapshot.cpp',
     'IDBDatabase.cpp',
     'IDBEvents.cpp',
     'IDBFactory.cpp',
     'IDBFileHandle.cpp',
+    'IDBFileRequest.cpp',
     'IDBKeyRange.cpp',
+    'IDBMutableFile.cpp',
     'IDBRequest.cpp',
     'IDBTransaction.cpp',
     'IDBWrapperCache.cpp',
@@ -71,7 +71,7 @@ include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'gklayout'
 LOCAL_INCLUDES += [
-    '/caps/include',
+    '/caps',
     '/content/base/src',
     '/db/sqlite3/src',
     '/dom/base',

@@ -2,6 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "mozilla/ArrayUtils.h"
 #include "mp4_demuxer/AnnexB.h"
 #include "mp4_demuxer/ByteReader.h"
 #include "mp4_demuxer/DecoderData.h"
@@ -12,6 +13,31 @@ namespace mp4_demuxer
 {
 
 static const uint8_t kAnnexBDelimiter[] = { 0, 0, 0, 1 };
+
+void
+AnnexB::ConvertSample(MP4Sample* aSample,
+                      const mozilla::Vector<uint8_t>& annexB)
+{
+  MOZ_ASSERT(aSample);
+  MOZ_ASSERT(aSample->data);
+  MOZ_ASSERT(aSample->size >= ArrayLength(kAnnexBDelimiter));
+
+  uint8_t* d = aSample->data;
+  while (d + 4 < aSample->data + aSample->size) {
+    uint32_t nalLen = (uint32_t(d[0]) << 24) +
+                      (uint32_t(d[1]) << 16) +
+                      (uint32_t(d[2]) << 8) +
+                       uint32_t(d[3]);
+    // Overwrite the NAL length with the Annex B separator.
+    memcpy(d, kAnnexBDelimiter, ArrayLength(kAnnexBDelimiter));
+    d += 4 + nalLen;
+  }
+
+  // Prepend the Annex B header with SPS and PPS tables to keyframes.
+  if (aSample->is_sync_point) {
+    aSample->Prepend(annexB.begin(), annexB.length());
+  }
+}
 
 Vector<uint8_t>
 AnnexB::ConvertExtraDataToAnnexB(mozilla::Vector<uint8_t>& aExtraData)
@@ -36,18 +62,19 @@ AnnexB::ConvertExtraDataToAnnexB(mozilla::Vector<uint8_t>& aExtraData)
   ByteReader reader(aExtraData);
   const uint8_t* ptr = reader.Read(5);
   if (ptr && ptr[0] == 1) {
-    // Append SPS then PSP
-    ConvertSpsOrPsp(reader, reader.ReadU8() & 31, &annexB);
-    ConvertSpsOrPsp(reader, reader.ReadU8(), &annexB);
+    // Append SPS then PPS
+    ConvertSPSOrPPS(reader, reader.ReadU8() & 31, &annexB);
+    ConvertSPSOrPPS(reader, reader.ReadU8(), &annexB);
 
-    MOZ_ASSERT(!reader.Remaining());
+    // MP4Box adds extra bytes that we ignore. I don't know what they do.
   }
+  reader.DiscardRemaining();
 
   return annexB;
 }
 
 void
-AnnexB::ConvertSpsOrPsp(ByteReader& aReader, uint8_t aCount,
+AnnexB::ConvertSPSOrPPS(ByteReader& aReader, uint8_t aCount,
                         Vector<uint8_t>* aAnnexB)
 {
   for (int i = 0; i < aCount; i++) {
@@ -62,4 +89,5 @@ AnnexB::ConvertSpsOrPsp(ByteReader& aReader, uint8_t aCount,
     aAnnexB->append(ptr, length);
   }
 }
-}
+
+} // namespace mp4_demuxer

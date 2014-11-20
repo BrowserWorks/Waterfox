@@ -8,9 +8,7 @@
 #include "mozilla/MemoryReporting.h"
 
 #include "gfxCoreTextShaper.h"
-#include "gfxHarfBuzzShaper.h"
 #include <algorithm>
-#include "gfxGraphiteShaper.h"
 #include "gfxPlatformMac.h"
 #include "gfxContext.h"
 #include "gfxFontUtils.h"
@@ -64,7 +62,8 @@ gfxMacFont::gfxMacFont(MacOSFontEntry *aFontEntry, const gfxFontStyle *aFontStyl
     bool needsOblique =
         (mFontEntry != nullptr) &&
         (!mFontEntry->IsItalic() &&
-         (mStyle.style & (NS_FONT_STYLE_ITALIC | NS_FONT_STYLE_OBLIQUE)));
+         (mStyle.style & (NS_FONT_STYLE_ITALIC | NS_FONT_STYLE_OBLIQUE))) &&
+        mStyle.allowSyntheticStyle;
 
     if (needsOblique) {
         double skewfactor = (needsOblique ? Fix2X(kATSItalicQDSkew) : 0);
@@ -106,13 +105,6 @@ gfxMacFont::gfxMacFont(MacOSFontEntry *aFontEntry, const gfxFontStyle *aFontStyl
         NS_WARNING(warnBuf);
 #endif
     }
-
-    if (FontCanSupportGraphite()) {
-        mGraphiteShaper = new gfxGraphiteShaper(this);
-    }
-    if (FontCanSupportHarfBuzz()) {
-        mHarfBuzzShaper = new gfxHarfBuzzShaper(this);
-    }
 }
 
 gfxMacFont::~gfxMacFont()
@@ -126,29 +118,31 @@ gfxMacFont::~gfxMacFont()
 }
 
 bool
-gfxMacFont::ShapeText(gfxContext      *aContext,
+gfxMacFont::ShapeText(gfxContext     *aContext,
                       const char16_t *aText,
-                      uint32_t         aOffset,
-                      uint32_t         aLength,
-                      int32_t          aScript,
-                      gfxShapedText   *aShapedText,
-                      bool             aPreferPlatformShaping)
+                      uint32_t        aOffset,
+                      uint32_t        aLength,
+                      int32_t         aScript,
+                      gfxShapedText  *aShapedText)
 {
     if (!mIsValid) {
         NS_WARNING("invalid font! expect incorrect text rendering");
         return false;
     }
 
-    bool requiresAAT =
-        static_cast<MacOSFontEntry*>(GetFontEntry())->RequiresAATLayout();
-    return gfxFont::ShapeText(aContext, aText, aOffset, aLength,
-                              aScript, aShapedText, requiresAAT);
-}
+    if (static_cast<MacOSFontEntry*>(GetFontEntry())->RequiresAATLayout()) {
+        if (!mCoreTextShaper) {
+            mCoreTextShaper = new gfxCoreTextShaper(this);
+        }
+        if (mCoreTextShaper->ShapeText(aContext, aText, aOffset, aLength,
+                                       aScript, aShapedText)) {
+            PostShapingFixup(aContext, aText, aOffset, aLength, aShapedText);
+            return true;
+        }
+    }
 
-void
-gfxMacFont::CreatePlatformShaper()
-{
-    mPlatformShaper = new gfxCoreTextShaper(this);
+    return gfxFont::ShapeText(aContext, aText, aOffset, aLength, aScript,
+                              aShapedText);
 }
 
 bool
@@ -331,7 +325,7 @@ gfxMacFont::InitMetrics()
     fprintf (stderr, "    maxAscent: %f maxDescent: %f maxAdvance: %f\n", mMetrics.maxAscent, mMetrics.maxDescent, mMetrics.maxAdvance);
     fprintf (stderr, "    internalLeading: %f externalLeading: %f\n", mMetrics.internalLeading, mMetrics.externalLeading);
     fprintf (stderr, "    spaceWidth: %f aveCharWidth: %f xHeight: %f\n", mMetrics.spaceWidth, mMetrics.aveCharWidth, mMetrics.xHeight);
-    fprintf (stderr, "    uOff: %f uSize: %f stOff: %f stSize: %f supOff: %f subOff: %f\n", mMetrics.underlineOffset, mMetrics.underlineSize, mMetrics.strikeoutOffset, mMetrics.strikeoutSize, mMetrics.superscriptOffset, mMetrics.subscriptOffset);
+    fprintf (stderr, "    uOff: %f uSize: %f stOff: %f stSize: %f\n", mMetrics.underlineOffset, mMetrics.underlineSize, mMetrics.strikeoutOffset, mMetrics.strikeoutSize);
 #endif
 }
 

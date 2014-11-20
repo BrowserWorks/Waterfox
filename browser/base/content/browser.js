@@ -1,4 +1,4 @@
-# -*- Mode: javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+# -*- indent-tabs-mode: nil; js-indent-level: 2 -*-
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -11,6 +11,8 @@ Cu.import("resource://gre/modules/NotificationDB.jsm");
 Cu.import("resource:///modules/RecentWindow.jsm");
 Cu.import("resource://gre/modules/WindowsPrefSync.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "BrowserUITelemetry",
+                                  "resource:///modules/BrowserUITelemetry.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "BrowserUtils",
                                   "resource://gre/modules/BrowserUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Task",
@@ -19,6 +21,11 @@ XPCOMUtils.defineLazyModuleGetter(this, "CharsetMenu",
                                   "resource://gre/modules/CharsetMenu.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ShortcutUtils",
                                   "resource://gre/modules/ShortcutUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "GMPInstallManager",
+                                  "resource://gre/modules/GMPInstallManager.jsm");
+XPCOMUtils.defineLazyServiceGetter(this, "gDNSService",
+                                   "@mozilla.org/network/dns-service;1",
+                                   "nsIDNSService");
 
 const nsIWebNavigation = Ci.nsIWebNavigation;
 
@@ -153,6 +160,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "SessionStore",
 XPCOMUtils.defineLazyModuleGetter(this, "fxAccounts",
   "resource://gre/modules/FxAccounts.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "gWebRTCUI",
+  "resource:///modules/webrtcUI.jsm", "webrtcUI");
+
 #ifdef MOZ_CRASHREPORTER
 XPCOMUtils.defineLazyModuleGetter(this, "TabCrashReporter",
   "resource:///modules/TabCrashReporter.jsm");
@@ -172,6 +182,7 @@ let gInitialPages = [
 #include browser-feeds.js
 #include browser-fullScreen.js
 #include browser-fullZoom.js
+#include browser-loop.js
 #include browser-places.js
 #include browser-plugins.js
 #include browser-safebrowsing.js
@@ -179,7 +190,6 @@ let gInitialPages = [
 #include browser-tabPreviews.js
 #include browser-tabview.js
 #include browser-thumbnails.js
-#include browser-webrtcUI.js
 #include browser-gestureSupport.js
 
 #ifdef MOZ_DATA_REPORTING
@@ -422,10 +432,17 @@ var gPopupBlockerObserver = {
     if (!this._reportButton && gURLBar)
       this._reportButton = document.getElementById("page-report-button");
 
-    if (!gBrowser.pageReport) {
+    if (!gBrowser.selectedBrowser.blockedPopups) {
       // Hide the icon in the location bar (if the location bar exists)
       if (gURLBar)
         this._reportButton.hidden = true;
+
+      // Hide the notification box (if it's visible).
+      var notificationBox = gBrowser.getNotificationBox();
+      var notification = notificationBox.getNotificationWithValue("popup-blocked");
+      if (notification) {
+        notificationBox.removeNotification(notification, false);
+      }
       return;
     }
 
@@ -435,11 +452,11 @@ var gPopupBlockerObserver = {
     // Only show the notification again if we've not already shown it. Since
     // notifications are per-browser, we don't need to worry about re-adding
     // it.
-    if (!gBrowser.pageReport.reported) {
+    if (!gBrowser.selectedBrowser.blockedPopups.reported) {
       if (gPrefService.getBoolPref("privacy.popups.showBrowserMessage")) {
         var brandBundle = document.getElementById("bundle_brand");
         var brandShortName = brandBundle.getString("brandShortName");
-        var popupCount = gBrowser.pageReport.length;
+        var popupCount = gBrowser.selectedBrowser.blockedPopups.length;
 #ifdef XP_WIN
         var popupButtonText = gNavigatorBundle.getString("popupWarningButton");
         var popupButtonAccesskey = gNavigatorBundle.getString("popupWarningButton.accesskey");
@@ -474,7 +491,7 @@ var gPopupBlockerObserver = {
 
       // Record the fact that we've reported this blocked popup, so we don't
       // show it again.
-      gBrowser.pageReport.reported = true;
+      gBrowser.selectedBrowser.blockedPopups.reported = true;
     }
   },
 
@@ -491,7 +508,7 @@ var gPopupBlockerObserver = {
   fillPopupList: function (aEvent)
   {
     // XXXben - rather than using |currentURI| here, which breaks down on multi-framed sites
-    //          we should really walk the pageReport and create a list of "allow for <host>"
+    //          we should really walk the blockedPopups and create a list of "allow for <host>"
     //          menuitems for the common subset of hosts present in the report, this will
     //          make us frame-safe.
     //
@@ -499,7 +516,8 @@ var gPopupBlockerObserver = {
     //          also back out the fix for bug 343772 where
     //          nsGlobalWindow::CheckOpenAllow() was changed to also
     //          check if the top window's location is whitelisted.
-    var uri = gBrowser.currentURI;
+    let browser = gBrowser.selectedBrowser;
+    var uri = browser.currentURI;
     var blockedPopupAllowSite = document.getElementById("blockedPopupAllowSite");
     try {
       blockedPopupAllowSite.removeAttribute("hidden");
@@ -529,16 +547,18 @@ var gPopupBlockerObserver = {
       blockedPopupAllowSite.removeAttribute("disabled");
 
     var foundUsablePopupURI = false;
-    var pageReports = gBrowser.pageReport;
-    if (pageReports) {
-      for (let pageReport of pageReports) {
+    var blockedPopups = browser.blockedPopups;
+    if (blockedPopups) {
+      for (let i = 0; i < blockedPopups.length; i++) {
+        let blockedPopup = blockedPopups[i];
+
         // popupWindowURI will be null if the file picker popup is blocked.
         // xxxdz this should make the option say "Show file picker" and do it (Bug 590306)
-        if (!pageReport.popupWindowURI)
+        if (!blockedPopup.popupWindowURI)
           continue;
-        var popupURIspec = pageReport.popupWindowURI.spec;
+        var popupURIspec = blockedPopup.popupWindowURI.spec;
 
-        // Sometimes the popup URI that we get back from the pageReport
+        // Sometimes the popup URI that we get back from the blockedPopup
         // isn't useful (for instance, netscape.com's popup URI ends up
         // being "http://www.netscape.com", which isn't really the URI of
         // the popup they're trying to show).  This isn't going to be
@@ -559,11 +579,11 @@ var gPopupBlockerObserver = {
                                                         [popupURIspec]);
         menuitem.setAttribute("label", label);
         menuitem.setAttribute("popupWindowURI", popupURIspec);
-        menuitem.setAttribute("popupWindowFeatures", pageReport.popupWindowFeatures);
-        menuitem.setAttribute("popupWindowName", pageReport.popupWindowName);
+        menuitem.setAttribute("popupWindowFeatures", blockedPopup.popupWindowFeatures);
+        menuitem.setAttribute("popupWindowName", blockedPopup.popupWindowName);
         menuitem.setAttribute("oncommand", "gPopupBlockerObserver.showBlockedPopup(event);");
-        menuitem.requestingWindow = pageReport.requestingWindow;
-        menuitem.requestingDocument = pageReport.requestingDocument;
+        menuitem.setAttribute("popupReportIndex", i);
+        menuitem.popupReportBrowser = browser;
         aEvent.target.appendChild(menuitem);
       }
     }
@@ -602,17 +622,9 @@ var gPopupBlockerObserver = {
   showBlockedPopup: function (aEvent)
   {
     var target = aEvent.target;
-    var popupWindowURI = target.getAttribute("popupWindowURI");
-    var features = target.getAttribute("popupWindowFeatures");
-    var name = target.getAttribute("popupWindowName");
-
-    var dwi = target.requestingWindow;
-
-    // If we have a requesting window and the requesting document is
-    // still the current document, open the popup.
-    if (dwi && dwi.document == target.requestingDocument) {
-      dwi.open(popupWindowURI, name, features);
-    }
+    var popupReportIndex = target.getAttribute("popupReportIndex");
+    let browser = target.popupReportBrowser;
+    browser.unblockPopup(popupReportIndex);
   },
 
   editPopupSettings: function ()
@@ -747,6 +759,118 @@ const gFormSubmitObserver = {
   }
 };
 
+function gKeywordURIFixup(fixupInfo, topic, data) {
+  fixupInfo.QueryInterface(Ci.nsIURIFixupInfo);
+
+  // We get called irrespective of whether we did a keyword search, or
+  // whether the original input would be vaguely interpretable as a URL,
+  // so figure that out first.
+  let alternativeURI = fixupInfo.fixedURI;
+  if (!fixupInfo.fixupUsedKeyword || !alternativeURI) {
+    return;
+  }
+
+  // We should have a document loader...
+  let docshellRef = fixupInfo.consumer;
+  try {
+    docshellRef.QueryInterface(Ci.nsIDocumentLoader);
+  } catch (ex) {
+    return;
+  }
+
+  if (!docshellRef.document)
+    return;
+
+  // ... from which we can deduce the browser
+  let browser = gBrowser.getBrowserForDocument(docshellRef.document);
+  if (!browser)
+    return;
+
+  // At this point we're still only just about to load this URI.
+  // When the async DNS lookup comes back, we may be in any of these states:
+  // 1) still on the previous URI, waiting for the preferredURI (keyword
+  //    search) to respond;
+  // 2) at the keyword search URI (preferredURI)
+  // 3) at some other page because the user stopped navigation.
+  // We keep track of the currentURI to detect case (1) in the DNS lookup
+  // callback.
+  let previousURI = browser.currentURI;
+
+  // now swap for a weak ref so we don't hang on to browser needlessly
+  // even if the DNS query takes forever
+  let weakBrowser = Cu.getWeakReference(browser);
+  browser = null;
+
+  // Additionally, we need the host of the parsed url
+  let hostName = alternativeURI.host;
+  // and the ascii-only host for the pref:
+  let asciiHost = alternativeURI.asciiHost;
+  // Normalize out a single trailing dot - NB: not using endsWith/lastIndexOf
+  // because we need to be sure this last dot is the *only* dot, too.
+  // More generally, this is used for the pref and should stay in sync with
+  // the code in nsDefaultURIFixup::KeywordURIFixup .
+  if (asciiHost.indexOf('.') == asciiHost.length - 1) {
+    asciiHost = asciiHost.slice(0, -1);
+  }
+
+  // Ignore number-only things entirely (no decimal IPs for you!)
+  if (/^\d+$/.test(asciiHost))
+    return;
+
+  let onLookupComplete = (request, record, status) => {
+    let browser = weakBrowser.get();
+    if (!Components.isSuccessCode(status) || !browser)
+      return;
+
+    let currentURI = browser.currentURI;
+    // If we're in case (3) (see above), don't show an info bar.
+    if (!currentURI.equals(previousURI) &&
+        !currentURI.equals(fixupInfo.preferredURI)) {
+      return;
+    }
+
+    // show infobar offering to visit the host
+    let notificationBox = gBrowser.getNotificationBox(browser);
+    if (notificationBox.getNotificationWithValue("keyword-uri-fixup"))
+      return;
+
+    let message = gNavigatorBundle.getFormattedString(
+      "keywordURIFixup.message", [hostName]);
+    let yesMessage = gNavigatorBundle.getFormattedString(
+      "keywordURIFixup.goTo", [hostName])
+
+    let buttons = [
+      {
+        label: yesMessage,
+        accessKey: gNavigatorBundle.getString("keywordURIFixup.goTo.accesskey"),
+        callback: function() {
+          // Do not set this preference while in private browsing.
+          if (!PrivateBrowsingUtils.isWindowPrivate(window)) {
+            let pref = "browser.fixup.domainwhitelist." + asciiHost;
+            Services.prefs.setBoolPref(pref, true);
+          }
+          openUILinkIn(alternativeURI.spec, "current");
+        }
+      },
+      {
+        label: gNavigatorBundle.getString("keywordURIFixup.dismiss"),
+        accessKey: gNavigatorBundle.getString("keywordURIFixup.dismiss.accesskey"),
+        callback: function() {
+          let notification = notificationBox.getNotificationWithValue("keyword-uri-fixup");
+          notificationBox.removeNotification(notification, true);
+        }
+      }
+    ];
+    let notification =
+      notificationBox.appendNotification(message,"keyword-uri-fixup", null,
+                                         notificationBox.PRIORITY_INFO_HIGH,
+                                         buttons);
+    notification.persistence = 1;
+  };
+
+  gDNSService.asyncResolve(hostName, 0, onLookupComplete, Services.tm.mainThread);
+}
+
 var gBrowserInit = {
   delayedStartupFinished: false,
 
@@ -758,13 +882,6 @@ var gBrowserInit = {
       .useRemoteTabs;
 
     var mustLoadSidebar = false;
-
-    if (!gMultiProcessBrowser) {
-      // There is a Content:Click message manually sent from content.
-      Cc["@mozilla.org/eventlistenerservice;1"]
-        .getService(Ci.nsIEventListenerService)
-        .addSystemEventListener(gBrowser, "click", contentAreaClick, true);
-    }
 
     gBrowser.addEventListener("DOMUpdatePageReport", gPopupBlockerObserver, false);
 
@@ -788,6 +905,7 @@ var gBrowserInit = {
     DOMLinkHandler.init();
     gPageStyleMenu.init();
     LanguageDetectionListener.init();
+    BrowserOnClick.init();
 
     let mm = window.getGroupMessageManager("browsers");
     mm.loadFrameScript("chrome://browser/content/content.js", true);
@@ -803,6 +921,15 @@ var gBrowserInit = {
           .XULBrowserWindow = window.XULBrowserWindow;
     window.QueryInterface(Ci.nsIDOMChromeWindow).browserDOMWindow =
       new nsBrowserAccess();
+
+    if (!gMultiProcessBrowser) {
+      // There is a Content:Click message manually sent from content.
+      Cc["@mozilla.org/eventlistenerservice;1"]
+        .getService(Ci.nsIEventListenerService)
+        .addSystemEventListener(gBrowser, "click", contentAreaClick, true);
+    } else {
+      gBrowser.updateBrowserRemoteness(gBrowser.mCurrentBrowser, true);
+    }
 
     // hook up UI through progress listener
     gBrowser.addProgressListener(window.XULBrowserWindow);
@@ -1050,6 +1177,7 @@ var gBrowserInit = {
     Services.obs.addObserver(gXPInstallObserver, "addon-install-failed", false);
     Services.obs.addObserver(gXPInstallObserver, "addon-install-complete", false);
     Services.obs.addObserver(gFormSubmitObserver, "invalidformsubmit", false);
+    Services.obs.addObserver(gKeywordURIFixup, "keyword-uri-fixup", false);
 
     BrowserOffline.init();
     OfflineApps.init();
@@ -1063,7 +1191,6 @@ var gBrowserInit = {
     FullZoom.init();
     PanelUI.init();
     LightweightThemeListener.init();
-    WebrtcIndicator.init();
 
 #ifdef MOZ_CRASHREPORTER
     if (gMultiProcessBrowser)
@@ -1187,6 +1314,8 @@ var gBrowserInit = {
     gDataNotificationInfoBar.init();
 #endif
 
+    LoopUI.initialize();
+
     gBrowserThumbnails.init();
 
     // Add Devtools menuitems and listeners
@@ -1213,6 +1342,14 @@ var gBrowserInit = {
       WindowsPrefSync.init();
     }
 
+    // Delay this a minute because there's no rush
+    setTimeout(() => {
+      this.gmpInstallManager = new GMPInstallManager();
+      // We don't really care about the results, if somenoe is interested they
+      // can check the log.
+      this.gmpInstallManager.simpleCheckAndInstall();
+    }, 1000 * 60);
+
     SessionStore.promiseInitialized.then(() => {
       // Bail out if the window has been closed in the meantime.
       if (window.closed) {
@@ -1224,6 +1361,23 @@ var gBrowserInit = {
 
       SocialUI.init();
       TabView.init();
+
+      // Telemetry for master-password - we do this after 5 seconds as it
+      // can cause IO if NSS/PSM has not already initialized.
+      setTimeout(() => {
+        if (window.closed) {
+          return;
+        }
+        let secmodDB = Cc["@mozilla.org/security/pkcs11moduledb;1"]
+                       .getService(Ci.nsIPKCS11ModuleDB);
+        let slot = secmodDB.findSlotByName("");
+        let mpEnabled = slot &&
+                        slot.status != Ci.nsIPKCS11Slot.SLOT_UNINITIALIZED &&
+                        slot.status != Ci.nsIPKCS11Slot.SLOT_READY;
+        if (mpEnabled) {
+          Services.telemetry.getHistogramById("MASTER_PASSWORD_ENABLED").add(mpEnabled);
+        }
+      }, 5000);
     });
     this.delayedStartupFinished = true;
 
@@ -1301,6 +1455,8 @@ var gBrowserInit = {
 
     ToolbarIconColor.uninit();
 
+    BrowserOnClick.uninit();
+
     var enumerator = Services.wm.getEnumerator(null);
     enumerator.getNext();
     if (!enumerator.hasMoreElements()) {
@@ -1332,6 +1488,7 @@ var gBrowserInit = {
       Services.obs.removeObserver(gXPInstallObserver, "addon-install-failed");
       Services.obs.removeObserver(gXPInstallObserver, "addon-install-complete");
       Services.obs.removeObserver(gFormSubmitObserver, "invalidformsubmit");
+      Services.obs.removeObserver(gKeywordURIFixup, "keyword-uri-fixup");
 
       try {
         gPrefService.removeObserver(gHomeButton.prefDomain, gHomeButton);
@@ -1341,6 +1498,9 @@ var gBrowserInit = {
 
       if (typeof WindowsPrefSync !== 'undefined') {
         WindowsPrefSync.uninit();
+      }
+      if (this.gmpInstallManager) {
+        this.gmpInstallManager.uninit();
       }
 
       BrowserOffline.uninit();
@@ -2073,10 +2233,23 @@ function BrowserViewSourceOfDocument(aDocument)
   // view-source to access the cached copy of the content rather than
   // refetching it from the network...
   //
-  try{
-    var PageLoader = webNav.QueryInterface(Components.interfaces.nsIWebPageDescriptor);
+  try {
 
-    pageCookie = PageLoader.currentDescriptor;
+#ifdef E10S_TESTING_ONLY
+    // Workaround for bug 988133, which causes a crash if we attempt to load
+    // the document from the cache when the document is a CPOW (which occurs
+    // if we're using remote tabs). This causes us to reload the document from
+    // the network in this case, so it's not a permanent solution, hence hiding
+    // it behind the E10S_TESTING_ONLY ifdef. This is just a band-aid fix until
+    // we can find something better - see bug 1025146.
+    if (!Cu.isCrossProcessWrapper(aDocument)) {
+#endif
+      var PageLoader = webNav.QueryInterface(Components.interfaces.nsIWebPageDescriptor);
+
+      pageCookie = PageLoader.currentDescriptor;
+#ifdef E10S_TESTING_ONLY
+    }
+#endif
   } catch(err) {
     // If no page descriptor is available, just use the view-source URL...
   }
@@ -2250,56 +2423,79 @@ function PageProxyClickHandler(aEvent)
 
 /**
  * Handle command events bubbling up from error page content
- * or from about:newtab
+ * or from about:newtab or from remote error pages that invoke
+ * us via async messaging.
  */
 let BrowserOnClick = {
-  handleEvent: function BrowserOnClick_handleEvent(aEvent) {
-    if (!aEvent.isTrusted || // Don't trust synthetic events
-        aEvent.button == 2) {
+  init: function () {
+    let mm = window.messageManager;
+    mm.addMessageListener("Browser:CertExceptionError", this);
+    mm.addMessageListener("Browser:SiteBlockedError", this);
+    mm.addMessageListener("Browser:NetworkError", this);
+  },
+
+  uninit: function () {
+    let mm = window.messageManager;
+    mm.removeMessageListener("Browser:CertExceptionError", this);
+    mm.removeMessageListener("Browser:SiteBlockedError", this);
+    mm.removeMessageListener("Browser:NetworkError", this);
+  },
+
+  handleEvent: function (event) {
+    if (!event.isTrusted || // Don't trust synthetic events
+        event.button == 2) {
       return;
     }
 
-    let originalTarget = aEvent.originalTarget;
+    let originalTarget = event.originalTarget;
     let ownerDoc = originalTarget.ownerDocument;
 
-    // If the event came from an ssl error page, it is probably either the "Add
-    // Exception…" or "Get me out of here!" button
-    if (ownerDoc.documentURI.startsWith("about:certerror")) {
-      this.onAboutCertError(originalTarget, ownerDoc);
-    }
-    else if (ownerDoc.documentURI.startsWith("about:blocked")) {
-      this.onAboutBlocked(originalTarget, ownerDoc);
-    }
-    else if (ownerDoc.documentURI.startsWith("about:neterror")) {
-      this.onAboutNetError(originalTarget, ownerDoc);
-    }
-    else if (gMultiProcessBrowser &&
-             ownerDoc.documentURI.toLowerCase() == "about:newtab") {
-      this.onE10sAboutNewTab(aEvent, ownerDoc);
+    if (gMultiProcessBrowser &&
+        ownerDoc.documentURI.toLowerCase() == "about:newtab") {
+      this.onE10sAboutNewTab(event, ownerDoc);
     }
     else if (ownerDoc.documentURI.startsWith("about:tabcrashed")) {
-      this.onAboutTabCrashed(aEvent, ownerDoc);
+      this.onAboutTabCrashed(event, ownerDoc);
     }
   },
 
-  onAboutCertError: function BrowserOnClick_onAboutCertError(aTargetElm, aOwnerDoc) {
-    let elmId = aTargetElm.getAttribute("id");
-    let secHistogram = Services.telemetry.getHistogramById("SECURITY_UI");
-    let isTopFrame = (aOwnerDoc.defaultView.parent === aOwnerDoc.defaultView);
+  receiveMessage: function (msg) {
+    switch (msg.name) {
+      case "Browser:CertExceptionError":
+        this.onAboutCertError(msg.target, msg.json.elementId,
+                              msg.json.isTopFrame, msg.json.location,
+                              msg.objects.failedChannel);
+      break;
+      case "Browser:SiteBlockedError":
+        this.onAboutBlocked(msg.json.elementId, msg.json.isMalware,
+                            msg.json.isTopFrame, msg.json.location);
+      break;
+      case "Browser:NetworkError":
+        // Reset network state, the error page will refresh on its own.
+        Services.io.offline = false;
+      break;
+    }
+  },
 
-    switch (elmId) {
+  onAboutCertError: function (browser, elementId, isTopFrame, location, failedChannel) {
+    let secHistogram = Services.telemetry.getHistogramById("SECURITY_UI");
+
+    switch (elementId) {
       case "exceptionDialogButton":
         if (isTopFrame) {
           secHistogram.add(Ci.nsISecurityUITelemetry.WARNING_BAD_CERT_TOP_CLICK_ADD_EXCEPTION);
         }
-        let params = { exceptionAdded : false };
+        let sslStatus = failedChannel.securityInfo.QueryInterface(Ci.nsISSLStatusProvider)
+                                                  .SSLStatus;
+        let params = { exceptionAdded : false,
+                       sslStatus : sslStatus };
 
         try {
           switch (Services.prefs.getIntPref("browser.ssl_override_behavior")) {
             case 2 : // Pre-fetch & pre-populate
               params.prefetchCert = true;
             case 1 : // Pre-populate
-              params.location = aOwnerDoc.location.href;
+              params.location = location;
           }
         } catch (e) {
           Components.utils.reportError("Couldn't get ssl_override pref: " + e);
@@ -2310,7 +2506,7 @@ let BrowserOnClick = {
 
         // If the user added the exception cert, attempt to reload the page
         if (params.exceptionAdded) {
-          aOwnerDoc.location.reload();
+          browser.reload();
         }
         break;
 
@@ -2336,20 +2532,14 @@ let BrowserOnClick = {
     }
   },
 
-  onAboutBlocked: function BrowserOnClick_onAboutBlocked(aTargetElm, aOwnerDoc) {
-    let elmId = aTargetElm.getAttribute("id");
-    let secHistogram = Services.telemetry.getHistogramById("SECURITY_UI");
-
-    // The event came from a button on a malware/phishing block page
-    // First check whether it's malware or phishing, so that we can
-    // use the right strings/links
-    let isMalware = /e=malwareBlocked/.test(aOwnerDoc.documentURI);
+  onAboutBlocked: function (elementId, isMalware, isTopFrame, location) {
+    // Depending on what page we are displaying here (malware/phishing)
+    // use the right strings and links for each.
     let bucketName = isMalware ? "WARNING_MALWARE_PAGE_":"WARNING_PHISHING_PAGE_";
+    let secHistogram = Services.telemetry.getHistogramById("SECURITY_UI");
     let nsISecTel = Ci.nsISecurityUITelemetry;
-    let isIframe = (aOwnerDoc.defaultView.parent === aOwnerDoc.defaultView);
-    bucketName += isIframe ? "TOP_" : "FRAME_";
-
-    switch (elmId) {
+    bucketName += isTopFrame ? "TOP_" : "FRAME_";
+    switch (elementId) {
       case "getMeOutButton":
         secHistogram.add(nsISecTel[bucketName + "GET_ME_OUT_OF_HERE"]);
         getMeOutOfHere();
@@ -2369,7 +2559,7 @@ let BrowserOnClick = {
           // append the current url, and go there.
           try {
             let reportURL = formatURL("browser.safebrowsing.malware.reportURL", true);
-            reportURL += aOwnerDoc.location.href;
+            reportURL += location;
             content.location = reportURL;
           } catch (e) {
             Components.utils.reportError("Couldn't get malware report URL: " + e);
@@ -2393,17 +2583,17 @@ let BrowserOnClick = {
    * the next page also in the parent) and instructs the browser to open the url
    * in the current tab which will make it update the remoteness of the tab.
    */
-  onE10sAboutNewTab: function(aEvent, aOwnerDoc) {
-    let isTopFrame = (aOwnerDoc.defaultView.parent === aOwnerDoc.defaultView);
-    if (!isTopFrame || aEvent.button != 0) {
+  onE10sAboutNewTab: function(event, ownerDoc) {
+    let isTopFrame = (ownerDoc.defaultView.parent === ownerDoc.defaultView);
+    if (!isTopFrame || event.button != 0) {
       return;
     }
 
-    let anchorTarget = aEvent.originalTarget.parentNode;
+    let anchorTarget = event.originalTarget.parentNode;
 
     if (anchorTarget instanceof HTMLAnchorElement &&
         anchorTarget.classList.contains("newtab-link")) {
-      aEvent.preventDefault();
+      event.preventDefault();
       openUILinkIn(anchorTarget.href, "current");
     }
   },
@@ -2412,17 +2602,17 @@ let BrowserOnClick = {
    * The about:tabcrashed can't do window.reload() because that
    * would reload the page but not use a remote browser.
    */
-  onAboutTabCrashed: function(aEvent, aOwnerDoc) {
-    let isTopFrame = (aOwnerDoc.defaultView.parent === aOwnerDoc.defaultView);
+  onAboutTabCrashed: function(event, ownerDoc) {
+    let isTopFrame = (ownerDoc.defaultView.parent === ownerDoc.defaultView);
     if (!isTopFrame) {
       return;
     }
 
-    let button = aEvent.originalTarget;
+    let button = event.originalTarget;
     if (button.id == "tryAgain") {
 #ifdef MOZ_CRASHREPORTER
-      if (aOwnerDoc.getElementById("checkSendReport").checked) {
-        let browser = gBrowser.getBrowserForDocument(aOwnerDoc);
+      if (ownerDoc.getElementById("checkSendReport").checked) {
+        let browser = gBrowser.getBrowserForDocument(ownerDoc);
         TabCrashReporter.submitCrashReport(browser);
       }
 #endif
@@ -2431,7 +2621,7 @@ let BrowserOnClick = {
     }
   },
 
-  ignoreWarningButton: function BrowserOnClick_ignoreWarningButton(aIsMalware) {
+  ignoreWarningButton: function (isMalware) {
     // Allow users to override and continue through to the site,
     // but add a notify bar as a reminder, so that they don't lose
     // track after, e.g., tab switching.
@@ -2450,7 +2640,7 @@ let BrowserOnClick = {
     }];
 
     let title;
-    if (aIsMalware) {
+    if (isMalware) {
       title = gNavigatorBundle.getString("safebrowsing.reportedAttackSite");
       buttons[1] = {
         label: gNavigatorBundle.getString("safebrowsing.notAnAttackButton.label"),
@@ -2488,13 +2678,6 @@ let BrowserOnClick = {
     // Persist the notification until the user removes so it
     // doesn't get removed on redirects.
     notification.persistence = -1;
-  },
-
-  onAboutNetError: function BrowserOnClick_onAboutNetError(aTargetElm, aOwnerDoc) {
-    let elmId = aTargetElm.getAttribute("id");
-    if (elmId != "errorTryAgain" || !/e=netOffline/.test(aOwnerDoc.documentURI))
-      return;
-    Services.io.offline = false;
   },
 };
 
@@ -2591,7 +2774,7 @@ function getWebNavigation()
 
 function BrowserReloadWithFlags(reloadFlags) {
   let url = gBrowser.currentURI.spec;
-  if (gBrowser.updateBrowserRemoteness(gBrowser.selectedBrowser, url)) {
+  if (gBrowser.updateBrowserRemotenessByURL(gBrowser.selectedBrowser, url)) {
     // If the remoteness has changed, the new browser doesn't have any
     // information of what was loaded before, so we need to load the previous
     // URL again.
@@ -2599,24 +2782,14 @@ function BrowserReloadWithFlags(reloadFlags) {
     return;
   }
 
-  /* First, we'll try to use the session history object to reload so
-   * that framesets are handled properly. If we're in a special
-   * window (such as view-source) that has no session history, fall
-   * back on using the web navigation's reload method.
-   */
+  let windowUtils = window.QueryInterface(Ci.nsIInterfaceRequestor)
+                          .getInterface(Ci.nsIDOMWindowUtils);
 
-  var webNav = gBrowser.webNavigation;
-  try {
-    var sh = webNav.sessionHistory;
-    if (sh)
-      webNav = sh.QueryInterface(nsIWebNavigation);
-  } catch (e) {
-  }
-
-  try {
-    webNav.reload(reloadFlags);
-  } catch (e) {
-  }
+  gBrowser.selectedBrowser
+          .messageManager
+          .sendAsyncMessage("Browser:Reload",
+                            { flags: reloadFlags,
+                              handlingUserInput: windowUtils.isHandlingUserInput });
 }
 
 var PrintPreviewListener = {
@@ -2819,7 +2992,7 @@ const DOMLinkHandler = {
   init: function() {
     let mm = window.messageManager;
     mm.addMessageListener("Link:AddFeed", this);
-    mm.addMessageListener("Link:AddIcon", this);
+    mm.addMessageListener("Link:SetIcon", this);
     mm.addMessageListener("Link:AddSearch", this);
   },
 
@@ -2830,8 +3003,8 @@ const DOMLinkHandler = {
         FeedHandler.addFeed(link, aMsg.target);
         break;
 
-      case "Link:AddIcon":
-        return this.addIcon(aMsg.target, aMsg.data.url);
+      case "Link:SetIcon":
+        return this.setIcon(aMsg.target, aMsg.data.url);
         break;
 
       case "Link:AddSearch":
@@ -2840,7 +3013,7 @@ const DOMLinkHandler = {
     }
   },
 
-  addIcon: function(aBrowser, aURL) {
+  setIcon: function(aBrowser, aURL) {
     if (gBrowser.isFailedIcon(aURL))
       return false;
 
@@ -3062,6 +3235,7 @@ const BrowserSearch = {
    *        SearchesProvider for allowed values.
    */
   recordSearchInHealthReport: function (engine, source) {
+    BrowserUITelemetry.countSearchEvent(source);
 #ifdef MOZ_SERVICES_HEALTHREPORT
     let reporter = Cc["@mozilla.org/datareporting/service;1"]
                      .getService()
@@ -4266,9 +4440,28 @@ function onViewToolbarsPopupShowing(aEvent, aInsertPoint) {
     toolbarItem = null;
   }
 
-  // Right-clicking on an empty part of the tabstrip will exit
-  // the above loop with toolbarItem being the xul:document.
-  // That has no parentNode, and we should disable the items in
+  let showTabStripItems = toolbarItem && toolbarItem.id == "tabbrowser-tabs";
+  for (let node of popup.querySelectorAll('menuitem[contexttype="toolbaritem"]')) {
+    node.hidden = showTabStripItems;
+  }
+
+  for (let node of popup.querySelectorAll('menuitem[contexttype="tabbar"]')) {
+    node.hidden = !showTabStripItems;
+  }
+
+  if (showTabStripItems) {
+    PlacesCommandHook.updateBookmarkAllTabsCommand();
+
+    let haveMultipleTabs = gBrowser.visibleTabs.length > 1;
+    document.getElementById("toolbar-context-reloadAllTabs").disabled = !haveMultipleTabs;
+
+    document.getElementById("toolbar-context-undoCloseTab").disabled =
+      SessionStore.getClosedTabCount(window) == 0;
+    return;
+  }
+
+  // In some cases, we will exit the above loop with toolbarItem being the
+  // xul:document. That has no parentNode, and we should disable the items in
   // this case.
   let movable = toolbarItem && toolbarItem.parentNode &&
                 CustomizableUI.isWidgetRemovable(toolbarItem);
@@ -5081,14 +5274,14 @@ function handleLinkClick(event, href, linkNode) {
   // if the mixedContentChannel is present and the referring URI passes
   // a same origin check with the target URI, we can preserve the users
   // decision of disabling MCB on a page for it's child tabs.
-  var persistDisableMCBInChildTab = false;
+  var persistAllowMixedContentInChildTab = false;
 
   if (where == "tab" && gBrowser.docShell.mixedContentChannel) {
     const sm = Services.scriptSecurityManager;
     try {
       var targetURI = makeURI(href);
       sm.checkSameOriginURI(referrerURI, targetURI, false);
-      persistDisableMCBInChildTab = true;
+      persistAllowMixedContentInChildTab = true;
     }
     catch (e) { }
   }
@@ -5096,7 +5289,7 @@ function handleLinkClick(event, href, linkNode) {
   urlSecurityCheck(href, doc.nodePrincipal);
   openLinkIn(href, where, { referrerURI: referrerURI,
                             charset: doc.characterSet,
-                            disableMCB: persistDisableMCBInChildTab});
+                            allowMixedContent: persistAllowMixedContentInChildTab });
   event.preventDefault();
   return true;
 }
@@ -5109,6 +5302,8 @@ function middleMousePaste(event) {
   // Strip embedded newlines and surrounding whitespace, to match the URL
   // bar's behavior (stripsurroundingwhitespace)
   clipboard = clipboard.replace(/\s*\n\s*/g, "");
+
+  clipboard = stripUnsafeProtocolOnPaste(clipboard);
 
   // if it's not the current tab, we don't need to do anything because the 
   // browser doesn't exist.
@@ -5143,6 +5338,12 @@ function middleMousePaste(event) {
   });
 
   event.stopPropagation();
+}
+
+function stripUnsafeProtocolOnPaste(pasteData) {
+  // Don't allow pasting javascript URIs since we don't support
+  // LOAD_FLAGS_DISALLOW_INHERIT_OWNER for those.
+  return pasteData.replace(/^(?:\s*javascript:)+/i, "");
 }
 
 function handleDroppedLink(event, url, name)
@@ -6594,7 +6795,6 @@ var gIdentityHandler = {
     switch (newMode) {
     case this.IDENTITY_MODE_DOMAIN_VERIFIED:
       host = this.getEffectiveHost();
-      owner = gNavigatorBundle.getString("identity.ownerUnknown2");
       verifier = this._identityBox.tooltipText;
       break;
     case this.IDENTITY_MODE_IDENTIFIED: {
@@ -6839,8 +7039,8 @@ let gRemoteTabsUI = {
       return;
     }
 
-    let remoteTabs = gPrefService.getBoolPref("browser.tabs.remote");
-    let autostart = gPrefService.getBoolPref("browser.tabs.remote.autostart");
+    let remoteTabs = Services.appinfo.browserTabsRemote;
+    let autostart = Services.appinfo.browserTabsRemoteAutostart;
 
     let newRemoteWindow = document.getElementById("menu_newRemoteWindow");
     let newNonRemoteWindow = document.getElementById("menu_newNonRemoteWindow");
@@ -6870,15 +7070,23 @@ let gRemoteTabsUI = {
  *        If switching to this URI results in us opening a tab, aOpenParams
  *        will be the parameter object that gets passed to openUILinkIn. Please
  *        see the documentation for openUILinkIn to see what parameters can be
- *        passed via this object.
+ *        passed via this object. This object also allows the 'ignoreFragment'
+ *        property to be set to true to exclude fragment-portion matching when
+ *        comparing URIs.
  * @return True if an existing tab was found, false otherwise
  */
-function switchToTabHavingURI(aURI, aOpenNew, aOpenParams) {
+function switchToTabHavingURI(aURI, aOpenNew, aOpenParams={}) {
   // Certain URLs can be switched to irrespective of the source or destination
   // window being in private browsing mode:
   const kPrivateBrowsingWhitelist = new Set([
     "about:customizing",
   ]);
+
+  let ignoreFragment = aOpenParams.ignoreFragment;
+  // This property is only used by switchToTabHavingURI and should
+  // not be used as a parameter for the new load.
+  delete aOpenParams.ignoreFragment;
+
   // This will switch to the tab in aWindow having aURI, if present.
   function switchIfURIInWindow(aWindow) {
     // Only switch to the tab if neither the source nor the destination window
@@ -6893,10 +7101,17 @@ function switchToTabHavingURI(aURI, aOpenNew, aOpenParams) {
     let browsers = aWindow.gBrowser.browsers;
     for (let i = 0; i < browsers.length; i++) {
       let browser = browsers[i];
-      if (browser.currentURI.equals(aURI)) {
+      if (ignoreFragment ? browser.currentURI.equalsExceptRef(aURI) :
+                           browser.currentURI.equals(aURI)) {
         // Focus the matching window & tab
         aWindow.focus();
         aWindow.gBrowser.tabContainer.selectedIndex = i;
+        if (ignoreFragment) {
+          let spec = aURI.spec;
+          if (!aURI.ref)
+            spec += "#";
+          browser.loadURI(spec);
+        }
         return true;
       }
     }
@@ -7264,9 +7479,17 @@ let ToolbarIconColor = {
     toolbarSelector += ":not([type=menubar])";
 #endif
 
+    // The getComputedStyle calls and setting the brighttext are separated in
+    // two loops to avoid flushing layout and making it dirty repeatedly.
+
+    let luminances = new Map;
     for (let toolbar of document.querySelectorAll(toolbarSelector)) {
       let [r, g, b] = parseRGB(getComputedStyle(toolbar).color);
       let luminance = 0.2125 * r + 0.7154 * g + 0.0721 * b;
+      luminances.set(toolbar, luminance);
+    }
+
+    for (let [toolbar, luminance] of luminances) {
       if (luminance <= 110)
         toolbar.removeAttribute("brighttext");
       else

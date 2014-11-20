@@ -35,9 +35,101 @@ static const SnapshotOffset INVALID_SNAPSHOT_OFFSET = uint32_t(-1);
 // the bits reserved for bailout kinds in Bailouts.h
 enum BailoutKind
 {
-    // A normal bailout triggered from type, shape, and assorted overflow
-    // guards in the compiler.
-    Bailout_Normal,
+    // Normal bailouts, that don't need to be handled specially when restarting
+    // in baseline.
+
+    // An inevitable bailout (MBail instruction or type barrier that always bails)
+    Bailout_Inevitable,
+
+    // Bailing out during a VM call. Many possible causes that are hard
+    // to distinguish statically at snapshot construction time.
+    // We just lump them together.
+    Bailout_DuringVMCall,
+
+    // Call to a non-JSFunction (problem for |apply|)
+    Bailout_NonJSFunctionCallee,
+
+    // Dynamic scope chain lookup produced |undefined|
+    Bailout_DynamicNameNotFound,
+
+    // Input string contains 'arguments' or 'eval'
+    Bailout_StringArgumentsEval,
+
+    // Bailout on overflow, but don't immediately invalidate.
+    // Used for abs, sub and LoadTypedArrayElement (when loading a uint32 that
+    // doesn't fit in an int32).
+    Bailout_Overflow,
+
+    // floor, ceiling and round bail if input is NaN, if output would be -0 or
+    // doesn't fit in int32 range
+    Bailout_Round,
+
+    // Non-primitive value used as input for ToDouble, ToInt32, ToString, etc.
+    // For ToInt32, can also mean that input can't be converted without precision
+    // loss (e.g. 5.5).
+    Bailout_NonPrimitiveInput,
+
+    // For ToInt32, would lose precision when converting (e.g. 5.5).
+    Bailout_PrecisionLoss,
+
+    // We tripped a type barrier (object was not in the expected TypeSet)
+    Bailout_TypeBarrierO,
+    // We tripped a type barrier (value was not in the expected TypeSet)
+    Bailout_TypeBarrierV,
+    // We tripped a type monitor (wrote an unexpected type in a property)
+    Bailout_MonitorTypes,
+
+    // We hit a hole in an array.
+    Bailout_Hole,
+
+    // Array access with negative index
+    Bailout_NegativeIndex,
+
+    // Pretty specific case:
+    //  - need a type barrier on a property write
+    //  - all but one of the observed types have property types that reflect the value
+    //  - we need to guard that we're not given an object of that one other type
+    // also used for the unused GuardClass instruction
+    Bailout_ObjectIdentityOrTypeGuard,
+
+    // Unbox expects a given type, bails out if it doesn't get it.
+    Bailout_NonInt32Input,
+    Bailout_NonNumericInput, // unboxing a double works with int32 too
+    Bailout_NonBooleanInput,
+    Bailout_NonObjectInput,
+    Bailout_NonStringInput,
+    Bailout_NonSymbolInput,
+
+    // PJS bailout when writing to a non-thread local object.
+    Bailout_GuardThreadExclusive,
+
+    // PJS bailout when encountering MIR unsafe for parallel execution.
+    Bailout_ParallelUnsafe,
+
+    // For the initial snapshot when entering a function.
+    Bailout_InitialState,
+
+    // END Normal bailouts
+
+
+    // Bailouts caused by invalid assumptions based on Baseline code.
+    // Causes immediate invalidation.
+
+    // Like Bailout_Overflow, but causes immediate invalidation.
+    Bailout_OverflowInvalidate,
+
+    // Like NonStringInput, but should cause immediate invalidation.
+    // Used for jsop_iternext.
+    Bailout_NonStringInputInvalidate,
+
+    // Used for integer division, multiplication and modulo.
+    // If there's a remainder, bails to return a double.
+    // Can also signal overflow or result of -0.
+    // Can also signal division by 0 (returns inf, a double).
+    Bailout_DoubleOutput,
+
+    // END Invalid assumptions bailouts
+
 
     // A bailout at the very start of a function indicates that there may be
     // a type mismatch in the arguments that necessitates a reflow.
@@ -45,12 +137,13 @@ enum BailoutKind
 
     // A bailout triggered by a bounds-check failure.
     Bailout_BoundsCheck,
+    // A bailout triggered by a neutered typed object.
+    Bailout_Neutered,
 
     // A shape guard based on TI information failed.
+    // (We saw an object whose shape does not match that / any of those observed
+    // by the baseline IC.)
     Bailout_ShapeGuard,
-
-    // A bailout caused by invalid assumptions based on Baseline code.
-    Bailout_BaselineInfo,
 
     // A bailout to baseline from Ion on exception to handle Debugger hooks.
     Bailout_IonExceptionDebugMode,
@@ -60,16 +153,71 @@ inline const char *
 BailoutKindString(BailoutKind kind)
 {
     switch (kind) {
-      case Bailout_Normal:
-        return "Bailout_Normal";
+      // Normal bailouts.
+      case Bailout_Inevitable:
+        return "Bailout_Inevitable";
+      case Bailout_DuringVMCall:
+        return "Bailout_DuringVMCall";
+      case Bailout_NonJSFunctionCallee:
+        return "Bailout_NonJSFunctionCallee";
+      case Bailout_DynamicNameNotFound:
+        return "Bailout_DynamicNameNotFound";
+      case Bailout_StringArgumentsEval:
+        return "Bailout_StringArgumentsEval";
+      case Bailout_Overflow:
+        return "Bailout_Overflow";
+      case Bailout_Round:
+        return "Bailout_Round";
+      case Bailout_NonPrimitiveInput:
+        return "Bailout_NonPrimitiveInput";
+      case Bailout_PrecisionLoss:
+        return "Bailout_PrecisionLoss";
+      case Bailout_TypeBarrierO:
+        return "Bailout_TypeBarrierO";
+      case Bailout_TypeBarrierV:
+        return "Bailout_TypeBarrierV";
+      case Bailout_MonitorTypes:
+        return "Bailout_MonitorTypes";
+      case Bailout_Hole:
+        return "Bailout_Hole";
+      case Bailout_NegativeIndex:
+        return "Bailout_NegativeIndex";
+      case Bailout_ObjectIdentityOrTypeGuard:
+        return "Bailout_ObjectIdentityOrTypeGuard";
+      case Bailout_NonInt32Input:
+        return "Bailout_NonInt32Input";
+      case Bailout_NonNumericInput:
+        return "Bailout_NonNumericInput";
+      case Bailout_NonBooleanInput:
+        return "Bailout_NonBooleanInput";
+      case Bailout_NonObjectInput:
+        return "Bailout_NonObjectInput";
+      case Bailout_NonStringInput:
+        return "Bailout_NonStringInput";
+      case Bailout_NonSymbolInput:
+        return "Bailout_NonSymbolInput";
+      case Bailout_GuardThreadExclusive:
+        return "Bailout_GuardThreadExclusive";
+      case Bailout_InitialState:
+        return "Bailout_InitialState";
+
+      // Bailouts caused by invalid assumptions.
+      case Bailout_OverflowInvalidate:
+        return "Bailout_OverflowInvalidate";
+      case Bailout_NonStringInputInvalidate:
+        return "Bailout_NonStringInputInvalidate";
+      case Bailout_DoubleOutput:
+        return "Bailout_DoubleOutput";
+
+      // Other bailouts.
       case Bailout_ArgumentCheck:
         return "Bailout_ArgumentCheck";
       case Bailout_BoundsCheck:
         return "Bailout_BoundsCheck";
+      case Bailout_Neutered:
+        return "Bailout_Neutered";
       case Bailout_ShapeGuard:
         return "Bailout_ShapeGuard";
-      case Bailout_BaselineInfo:
-        return "Bailout_BaselineInfo";
       case Bailout_IonExceptionDebugMode:
         return "Bailout_IonExceptionDebugMode";
       default:
@@ -96,6 +244,7 @@ enum MIRType
     MIRType_Double,
     MIRType_Float32,
     MIRType_String,
+    MIRType_Symbol,
     MIRType_Object,
     MIRType_MagicOptimizedArguments, // JS_OPTIMIZED_ARGUMENTS magic value.
     MIRType_MagicOptimizedOut,       // JS_OPTIMIZED_OUT magic value.
@@ -141,6 +290,8 @@ MIRTypeFromValueType(JSValueType type)
         return MIRType_Undefined;
       case JSVAL_TYPE_STRING:
         return MIRType_String;
+      case JSVAL_TYPE_SYMBOL:
+        return MIRType_Symbol;
       case JSVAL_TYPE_BOOLEAN:
         return MIRType_Boolean;
       case JSVAL_TYPE_NULL:
@@ -171,6 +322,8 @@ ValueTypeFromMIRType(MIRType type)
       return JSVAL_TYPE_DOUBLE;
     case MIRType_String:
       return JSVAL_TYPE_STRING;
+    case MIRType_Symbol:
+      return JSVAL_TYPE_SYMBOL;
     case MIRType_MagicOptimizedArguments:
     case MIRType_MagicOptimizedOut:
     case MIRType_MagicHole:
@@ -206,6 +359,8 @@ StringFromMIRType(MIRType type)
       return "Float32";
     case MIRType_String:
       return "String";
+    case MIRType_Symbol:
+      return "Symbol";
     case MIRType_Object:
       return "Object";
     case MIRType_MagicOptimizedArguments:

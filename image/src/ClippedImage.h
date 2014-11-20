@@ -26,12 +26,10 @@ class DrawSingleTileCallback;
  */
 class ClippedImage : public ImageWrapper
 {
-  typedef mozilla::gfx::SourceSurface SourceSurface;
+  typedef gfx::SourceSurface SourceSurface;
 
 public:
-  NS_DECL_ISUPPORTS
-
-  virtual ~ClippedImage();
+  NS_DECL_ISUPPORTS_INHERITED
 
   virtual nsIntRect FrameRect(uint32_t aWhichFrame) MOZ_OVERRIDE;
 
@@ -39,10 +37,10 @@ public:
   NS_IMETHOD GetHeight(int32_t* aHeight) MOZ_OVERRIDE;
   NS_IMETHOD GetIntrinsicSize(nsSize* aSize) MOZ_OVERRIDE;
   NS_IMETHOD GetIntrinsicRatio(nsSize* aRatio) MOZ_OVERRIDE;
-  NS_IMETHOD_(mozilla::TemporaryRef<SourceSurface>)
+  NS_IMETHOD_(TemporaryRef<SourceSurface>)
     GetFrame(uint32_t aWhichFrame, uint32_t aFlags) MOZ_OVERRIDE;
-  NS_IMETHOD GetImageContainer(mozilla::layers::LayerManager* aManager,
-                               mozilla::layers::ImageContainer** _retval) MOZ_OVERRIDE;
+  NS_IMETHOD GetImageContainer(layers::LayerManager* aManager,
+                               layers::ImageContainer** _retval) MOZ_OVERRIDE;
   NS_IMETHOD Draw(gfxContext* aContext,
                   GraphicsFilter aFilter,
                   const gfxMatrix& aUserSpaceToImageSpace,
@@ -54,12 +52,15 @@ public:
                   uint32_t aFlags) MOZ_OVERRIDE;
   NS_IMETHOD RequestDiscard() MOZ_OVERRIDE;
   NS_IMETHOD_(Orientation) GetOrientation() MOZ_OVERRIDE;
+  NS_IMETHOD_(nsIntRect) GetImageSpaceInvalidationRect(const nsIntRect& aRect) MOZ_OVERRIDE;
 
 protected:
   ClippedImage(Image* aImage, nsIntRect aClip);
 
+  virtual ~ClippedImage();
+
 private:
-  mozilla::TemporaryRef<SourceSurface>
+  TemporaryRef<SourceSurface>
     GetFrameInternal(const nsIntSize& aViewportSize,
                      const SVGImageContext* aSVGContext,
                      uint32_t aWhichFrame,

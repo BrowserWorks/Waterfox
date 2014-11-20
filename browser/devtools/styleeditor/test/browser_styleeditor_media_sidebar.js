@@ -4,17 +4,16 @@
 
 // https rather than chrome to improve coverage
 const TESTCASE_URI = TEST_BASE_HTTPS + "media-rules.html";
-const PREF = "devtools.styleeditor.showMediaSidebar";
+const MEDIA_PREF = "devtools.styleeditor.showMediaSidebar";
 
 const RESIZE = 300;
-const LABELS = ["not all", "all", "(max-width: 400px)"];
-const LINE_NOS = [2, 8, 20];
+const LABELS = ["not all", "all", "(max-width: 400px)", "(max-width: 600px)"];
+const LINE_NOS = [1, 7, 19, 25];
+const NEW_RULE = "\n@media (max-width: 600px) { div { color: blue; } }";
 
 waitForExplicitFinish();
 
 let test = asyncTest(function*() {
-  Services.prefs.setBoolPref(PREF, true);
-
   let {UI} = yield addTabAndOpenStyleEditors(2, null, TESTCASE_URI);
 
   is(UI.editors.length, 2, "correct number of editors");
@@ -29,18 +28,23 @@ let test = asyncTest(function*() {
   yield openEditor(mediaEditor);
   testMediaEditor(mediaEditor);
 
+  // Test that sidebar hides when flipping pref
+  yield testShowHide(UI, mediaEditor);
+
+  // Test adding a rule updates the list
+  yield testMediaRuleAdded(UI, mediaEditor);
+
   // Test resizing and seeing @media matching state change
   let originalWidth = window.outerWidth;
   let originalHeight = window.outerHeight;
 
-  let onMatchesChange = listenForMatchesChange(UI);
+  let onMatchesChange = listenForMediaChange(UI);
   window.resizeTo(RESIZE, RESIZE);
   yield onMatchesChange;
 
   testMediaMatchChanged(mediaEditor);
 
   window.resizeTo(originalWidth, originalHeight);
-  Services.prefs.clearUserPref(PREF);
 });
 
 function testPlainEditor(editor) {
@@ -69,6 +73,37 @@ function testMediaMatchChanged(editor) {
      "media rule is now matched after resizing");
 }
 
+function* testShowHide(UI, editor) {
+  let sidebarChange = listenForMediaChange(UI);
+  Services.prefs.setBoolPref(MEDIA_PREF, false);
+  yield sidebarChange;
+
+  let sidebar = editor.details.querySelector(".stylesheet-sidebar");
+  is(sidebar.hidden, true, "sidebar is hidden after flipping pref");
+
+  sidebarChange = listenForMediaChange(UI);
+  Services.prefs.clearUserPref(MEDIA_PREF);
+  yield sidebarChange;
+
+  is(sidebar.hidden, false, "sidebar is showing after flipping pref back");
+}
+
+function* testMediaRuleAdded(UI, editor) {
+  yield editor.getSourceEditor();
+  let text = editor.sourceEditor.getText();
+  text += NEW_RULE;
+
+  let listChange = listenForMediaChange(UI);
+  editor.sourceEditor.setText(text);
+  yield listChange;
+
+  let sidebar = editor.details.querySelector(".stylesheet-sidebar");
+  let entries = [...sidebar.querySelectorAll(".media-rule-label")];
+  is(entries.length, 4, "four @media rules after changing text");
+
+  testRule(entries[3], LABELS[3], false, LINE_NOS[3]);
+}
+
 function testRule(rule, text, matches, lineno) {
   let cond = rule.querySelector(".media-rule-condition");
   is(cond.textContent, text, "media label is correct for " + text);
@@ -89,7 +124,7 @@ function openEditor(editor) {
   return editor.getSourceEditor();
 }
 
-function listenForMatchesChange(UI) {
+function listenForMediaChange(UI) {
   let deferred = promise.defer();
   UI.once("media-list-changed", () => {
     deferred.resolve();

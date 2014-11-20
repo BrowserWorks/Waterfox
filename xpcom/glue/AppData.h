@@ -1,4 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -18,7 +19,11 @@ namespace mozilla {
 class NS_COM_GLUE ScopedAppData : public nsXREAppData
 {
 public:
-  ScopedAppData() { Zero(); this->size = sizeof(*this); }
+  ScopedAppData()
+  {
+    Zero();
+    this->size = sizeof(*this);
+  }
 
   ScopedAppData(const nsXREAppData* aAppData);
 
@@ -28,29 +33,29 @@ public:
 };
 
 /**
- * Given "str" is holding a string allocated with NS_Alloc, or null:
- * replace the value in "str" with a new value.
+ * Given |aStr| is holding a string allocated with NS_Alloc, or null:
+ * replace the value in |aStr| with a new value.
  *
- * @param newvalue Null is permitted. The string is cloned with
- *                 NS_strdup
+ * @param aNewValue Null is permitted. The string is cloned with NS_strdup.
  */
-void SetAllocatedString(const char *&str, const char *newvalue);
+void SetAllocatedString(const char*& aStr, const char* aNewValue);
 
 /**
  * Given "str" is holding a string allocated with NS_Alloc, or null:
  * replace the value in "str" with a new value.
  *
- * @param newvalue If "newvalue" is the empty string, "str" will be set
- *                 to null.
+ * @param aNewValue If |aNewValue| is the empty string, |aStr| will be set
+ *                  to null.
  */
-void SetAllocatedString(const char *&str, const nsACString &newvalue);
+void SetAllocatedString(const char*& aStr, const nsACString& aNewValue);
 
 template<class T>
-void SetStrongPtr(T *&ptr, T* newvalue)
+void
+SetStrongPtr(T*& aPtr, T* aNewValue)
 {
-  NS_IF_RELEASE(ptr);
-  ptr = newvalue;
-  NS_IF_ADDREF(ptr);
+  NS_IF_RELEASE(aPtr);
+  aPtr = aNewValue;
+  NS_IF_ADDREF(aPtr);
 }
 
 } // namespace mozilla

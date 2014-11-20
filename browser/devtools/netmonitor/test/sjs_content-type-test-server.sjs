@@ -181,6 +181,7 @@ function handleRequest(request, response) {
       default: {
         response.setStatusLine(request.httpVersion, 404, "Not Found");
         response.setHeader("Content-Type", "text/html; charset=utf-8", false);
+        setCacheHeaders();
         response.write("<blink>Not Found</blink>");
         response.finish();
         break;

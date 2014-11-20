@@ -10,7 +10,6 @@
 #include "mozilla/MemoryReporting.h"
 
 #include "builtin/RegExp.h"
-#include "builtin/TypedObject.h"
 #include "gc/Zone.h"
 #include "vm/GlobalObject.h"
 #include "vm/PIC.h"
@@ -131,6 +130,10 @@ struct JSCompartment
     bool                         isSystem;
     bool                         isSelfHosting;
     bool                         marked;
+
+    // A null add-on ID means that the compartment is not associated with an
+    // add-on.
+    JSAddonId                    *addonId;
 
 #ifdef DEBUG
     bool                         firedOnNewGlobalObject;
@@ -313,11 +316,9 @@ struct JSCompartment
     bool wrap(JSContext *cx, js::HeapPtrString *strp);
     bool wrap(JSContext *cx, JS::MutableHandleObject obj,
               JS::HandleObject existingArg = js::NullPtr());
-    bool wrapId(JSContext *cx, jsid *idp);
     bool wrap(JSContext *cx, js::PropertyOp *op);
     bool wrap(JSContext *cx, js::StrictPropertyOp *op);
     bool wrap(JSContext *cx, JS::MutableHandle<js::PropertyDescriptor> desc);
-    bool wrap(JSContext *cx, js::AutoIdVector &props);
     bool wrap(JSContext *cx, JS::MutableHandle<js::PropDesc> desc);
 
     bool putWrapper(JSContext *cx, const js::CrossCompartmentKey& wrapped, const js::Value& wrapper);
@@ -585,11 +586,10 @@ class AutoCompartment
 class ErrorCopier
 {
     mozilla::Maybe<AutoCompartment> &ac;
-    RootedObject scope;
 
   public:
-    ErrorCopier(mozilla::Maybe<AutoCompartment> &ac, JSObject *scope)
-      : ac(ac), scope(ac.ref().context(), scope) {}
+    explicit ErrorCopier(mozilla::Maybe<AutoCompartment> &ac)
+      : ac(ac) {}
     ~ErrorCopier();
 };
 

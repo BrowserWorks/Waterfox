@@ -61,8 +61,8 @@
 
 # ARCH is used when it is necessary to differentiate the x64 registry keys from
 # the x86 registry keys (e.g. the uninstall registry key).
-#ifdef HAVE_64BIT_OS
-!define HAVE_64BIT_OS
+#ifdef HAVE_64BIT_BUILD
+!define HAVE_64BIT_BUILD
 !define ARCH "x64"
 !define MinSupportedVer "Microsoft Windows Vista x64"
 #else
@@ -76,10 +76,6 @@
 
 #ifdef MOZ_METRO
 !define MOZ_METRO
-#endif
-
-#ifdef MOZ_CONTENT_SANDBOX
-!define MOZ_CONTENT_SANDBOX
 #endif
 
 # File details shared by both the installer and uninstaller

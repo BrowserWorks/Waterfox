@@ -1,4 +1,4 @@
-/* -*- Mode: Javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -129,6 +129,9 @@ CssLogic.prototype = {
   _matchedRules: null,
   _matchedSelectors: null,
 
+  // Cached keyframes rules in all stylesheets
+  _keyframesRules: null,
+
   /**
    * Reset various properties
    */
@@ -141,6 +144,7 @@ CssLogic.prototype = {
     this._sheetsCached = false;
     this._matchedRules = null;
     this._matchedSelectors = null;
+    this._keyframesRules = [];
   },
 
   /**
@@ -177,6 +181,15 @@ CssLogic.prototype = {
     this._matchedSelectors = null;
     let win = this.viewedDocument.defaultView;
     this._computedStyle = win.getComputedStyle(this.viewedElement, "");
+  },
+
+  /**
+   * Get the values of all the computed CSS properties for the highlighted
+   * element.
+   * @returns {object} The computed CSS properties for a selected element
+   */
+  get computedStyle() {
+    return this._computedStyle;
   },
 
   /**
@@ -270,7 +283,7 @@ CssLogic.prototype = {
    * Cache a stylesheet if it falls within the requirements: if it's enabled,
    * and if the @media is allowed. This method also walks through the stylesheet
    * cssRules to find @imported rules, to cache the stylesheets of those rules
-   * as well.
+   * as well. In addition, the @keyframes rules in the stylesheet are cached.
    *
    * @private
    * @param {CSSStyleSheet} aDomSheet the CSSStyleSheet object to cache.
@@ -291,13 +304,15 @@ CssLogic.prototype = {
     if (cssSheet._passId != this._passId) {
       cssSheet._passId = this._passId;
 
-      // Find import rules.
-      Array.prototype.forEach.call(aDomSheet.cssRules, function(aDomRule) {
+      // Find import and keyframes rules.
+      for (let aDomRule of aDomSheet.cssRules) {
         if (aDomRule.type == Ci.nsIDOMCSSRule.IMPORT_RULE && aDomRule.styleSheet &&
             this.mediaMatches(aDomRule)) {
           this._cacheSheet(aDomRule.styleSheet);
+        } else if (aDomRule.type == Ci.nsIDOMCSSRule.KEYFRAMES_RULE) {
+          this._keyframesRules.push(aDomRule);
         }
-      }, this);
+      }
     }
   },
 
@@ -320,6 +335,19 @@ CssLogic.prototype = {
     }, this);
 
     return sheets;
+  },
+
+  /**
+   * Retrieve the list of keyframes rules in the document.
+   *
+   * @ return {array} the list of keyframes rules in the document.
+   */
+  get keyframesRules()
+  {
+    if (!this._sheetsCached) {
+      this._cacheSheets();
+    }
+    return this._keyframesRules;
   },
 
   /**
@@ -543,7 +571,7 @@ CssLogic.prototype = {
     this._matchedRules.some(function(aValue) {
       let rule = aValue[0];
       let status = aValue[1];
-      aProperties = aProperties.filter(function(aProperty) {
+      aProperties = aProperties.filter((aProperty) => {
         // We just need to find if a rule has this property while it matches
         // the viewedElement (or its parents).
         if (rule.getPropertyValue(aProperty) &&
@@ -554,7 +582,7 @@ CssLogic.prototype = {
           return false;
         }
         return true; // Keep the property for the next rule.
-      }.bind(this));
+      });
       return aProperties.length == 0;
     }, this);
 
@@ -620,7 +648,6 @@ CssLogic.prototype = {
         this._matchedRules.push([rule, status]);
       }
 
-
       // Add element.style information.
       if (element.style && element.style.length > 0) {
         let rule = new CssRule(null, { style: element.style }, element);
@@ -644,7 +671,7 @@ CssLogic.prototype = {
     let mediaText = aDomObject.media.mediaText;
     return !mediaText || this.viewedDocument.defaultView.
                          matchMedia(mediaText).matches;
-   },
+  },
 };
 
 /**
@@ -812,42 +839,6 @@ CssLogic.shortSource = function CssLogic_shortSource(aSheet)
 
   let dataUrl = aSheet.href.match(/^(data:[^,]*),/);
   return dataUrl ? dataUrl[1] : aSheet.href;
-}
-
-/**
- * Extract the background image URL (if any) from a property value.
- * Used, for example, for the preview tooltip in the rule view and
- * computed view.
- *
- * @param {String} aProperty
- * @param {String} aSheetHref
- * @return {string} a image URL
- */
-CssLogic.getBackgroundImageUriFromProperty = function(aProperty, aSheetHref) {
-  let startToken = "url(", start = aProperty.indexOf(startToken), end;
-  if (start === -1) {
-    return null;
-  }
-
-  aProperty = aProperty.substring(start + startToken.length).trim();
-  let quote = aProperty.substring(0, 1);
-  if (quote === "'" || quote === '"') {
-    end = aProperty.search(new RegExp(quote + "\\s*\\)"));
-    start = 1;
-  } else {
-    end = aProperty.indexOf(")");
-    start = 0;
-  }
-
-  let uri = aProperty.substring(start, end).trim();
-  if (aSheetHref) {
-    let IOService = Cc["@mozilla.org/network/io-service;1"]
-      .getService(Ci.nsIIOService);
-    let sheetUri = IOService.newURI(aSheetHref, null, null);
-    uri = sheetUri.resolve(uri);
-  }
-
-  return uri;
 }
 
 /**
@@ -1571,9 +1562,9 @@ CssPropertyInfo.prototype = {
    */
   get value()
   {
-    if (!this._value && this._cssLogic._computedStyle) {
+    if (!this._value && this._cssLogic.computedStyle) {
       try {
-        this._value = this._cssLogic._computedStyle.getPropertyValue(this.property);
+        this._value = this._cssLogic.computedStyle.getPropertyValue(this.property);
       } catch (ex) {
         Services.console.logStringMessage('Error reading computed style for ' +
           this.property);

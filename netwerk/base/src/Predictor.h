@@ -33,7 +33,6 @@ namespace net {
 typedef nsMainThreadPtrHandle<nsINetworkPredictorVerifier> PredictorVerifierHandle;
 
 class PredictionRunner;
-struct PredictorTelemetryAccumulators;
 class PredictorDNSListener;
 
 class Predictor : public nsINetworkPredictor
@@ -49,13 +48,14 @@ public:
   NS_DECL_NSIINTERFACEREQUESTOR
 
   Predictor();
-  virtual ~Predictor();
 
   nsresult Init();
   void Shutdown();
   static nsresult Create(nsISupports *outer, const nsIID& iid, void **result);
 
 private:
+  virtual ~Predictor();
+
   friend class PredictionEvent;
   friend class LearnEvent;
   friend class PredictorResetEvent;
@@ -220,8 +220,6 @@ private:
 
   int32_t mQueueSize;
   mozilla::Mutex mQueueSizeLock;
-
-  nsAutoPtr<PredictorTelemetryAccumulators> mAccumulators;
 
   nsRefPtr<PredictorDNSListener> mDNSListener;
 

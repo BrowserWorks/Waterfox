@@ -15,6 +15,8 @@ namespace gl {
 
 class GfxTexturesReporter MOZ_FINAL : public nsIMemoryReporter
 {
+    ~GfxTexturesReporter() {}
+
 public:
     NS_DECL_ISUPPORTS
 
@@ -42,7 +44,7 @@ public:
                              int32_t tileWidth, int32_t tileHeight);
 
     NS_IMETHOD CollectReports(nsIHandleReportCallback* aHandleReport,
-                              nsISupports* aData)
+                              nsISupports* aData, bool aAnonymize)
     {
         return MOZ_COLLECT_REPORT(
             "gfx-textures", KIND_OTHER, UNITS_BYTES, sAmount,

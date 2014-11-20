@@ -17,8 +17,7 @@ class HTMLMetaElement MOZ_FINAL : public nsGenericHTMLElement,
                                   public nsIDOMHTMLMetaElement
 {
 public:
-  HTMLMetaElement(already_AddRefed<nsINodeInfo>& aNodeInfo);
-  virtual ~HTMLMetaElement();
+  HTMLMetaElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
 
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
@@ -31,9 +30,13 @@ public:
                               bool aCompileEventHandlers) MOZ_OVERRIDE;
   virtual void UnbindFromTree(bool aDeep = true,
                               bool aNullParent = true) MOZ_OVERRIDE;
+
+  virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
+                                const nsAttrValue* aValue, bool aNotify) MOZ_OVERRIDE;
+
   void CreateAndDispatchEvent(nsIDocument* aDoc, const nsAString& aEventName);
 
-  virtual nsresult Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
 
   // XPCOM GetName is fine.
   void SetName(const nsAString& aName, ErrorResult& aRv)
@@ -59,6 +62,8 @@ public:
   virtual JSObject* WrapNode(JSContext* aCx) MOZ_OVERRIDE;
 
 protected:
+  virtual ~HTMLMetaElement();
+
   virtual void GetItemValueText(nsAString& text) MOZ_OVERRIDE;
   virtual void SetItemValueText(const nsAString& text) MOZ_OVERRIDE;
 };

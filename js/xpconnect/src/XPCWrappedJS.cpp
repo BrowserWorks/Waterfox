@@ -12,6 +12,7 @@
 #include "nsCxPusher.h"
 #include "nsContentUtils.h"
 #include "nsThreadUtils.h"
+#include "JavaScriptParent.h"
 
 using namespace mozilla;
 
@@ -334,7 +335,9 @@ nsXPCWrappedJS::GetNewOrUsed(JS::HandleObject jsObj,
         return NS_ERROR_FAILURE;
     }
 
-    nsRefPtr<nsXPCWrappedJSClass> clasp = nsXPCWrappedJSClass::GetNewOrUsed(cx, aIID);
+    bool allowNonScriptable = mozilla::jsipc::IsWrappedCPOW(jsObj);
+    nsRefPtr<nsXPCWrappedJSClass> clasp = nsXPCWrappedJSClass::GetNewOrUsed(cx, aIID,
+                                                                            allowNonScriptable);
     if (!clasp)
         return NS_ERROR_FAILURE;
 
@@ -450,7 +453,7 @@ nsXPCWrappedJS::Unlink()
     if (mOuter) {
         XPCJSRuntime* rt = nsXPConnect::GetRuntimeInstance();
         if (rt->GCIsRunning()) {
-            nsContentUtils::DeferredFinalize(mOuter.forget().take());
+            cyclecollector::DeferredFinalize(mOuter.forget().take());
         } else {
             mOuter = nullptr;
         }

@@ -10,6 +10,7 @@
 %}
 
 interface xpcIJSWeakReference;
+interface nsIAddonInterposition;
 interface nsIClassInfo;
 interface nsIComponentManager;
 interface nsIJSCID;
@@ -121,7 +122,7 @@ interface ScheduledGCCallback : nsISupports
 /**
 * interface of Components.utils
 */
-[scriptable, uuid(a485ba50-e208-11e3-8b68-0800200c9a66)]
+[scriptable, uuid(1a6c4db7-4b90-4919-9cd8-161ac14a7189)]
 interface nsIXPCComponents_Utils : nsISupports
 {
 
@@ -156,6 +157,19 @@ interface nsIXPCComponents_Utils : nsISupports
                         [optional] in jsval version,
                         [optional] in AUTF8String filename,
                         [optional] in long lineNo);
+
+    /*
+     * getSandboxAddonId is designed to be called from JavaScript only.
+     *
+     * getSandboxAddonId retrieves the add-on ID associated with
+     * a sandbox object. It will return undefined if there
+     * is no add-on ID attached to the sandbox.
+     *
+     * var s = C.u.Sandbox(..., { addonId: "123" });
+     * var id = C.u.getSandboxAddonId(s);
+     */
+    [implicit_jscontext]
+    jsval getSandboxAddonId(in jsval sandbox);
 
     /*
      * getSandboxMetadata is designed to be called from JavaScript only.
@@ -287,6 +301,22 @@ interface nsIXPCComponents_Utils : nsISupports
      * For testing.
      */
     void ccSlice(in long long budget);
+
+    /*
+     * To be called from JS only.
+     *
+     * Return the longest cycle collector slice time since the last
+     * time clearMaxCCTime() was called.
+     */
+    long getMaxCCSliceTimeSinceClear();
+
+    /*
+     * To be called from JS only.
+     *
+     * Reset the internal max slice time value used for
+     * getMaxCCSliceTimeSinceClear().
+     */
+    void clearMaxCCTime();
 
     /*
      * To be called from JS only.
@@ -437,6 +467,14 @@ interface nsIXPCComponents_Utils : nsISupports
     void setWantXrays(in jsval vscope);
 
     /*
+     * For gecko internal automation use only. Calling this in production code
+     * would result in security vulnerabilities, so it will crash if used outside
+     * of automation.
+     */
+    [implicit_jscontext]
+    void forcePermissiveCOWs();
+
+    /*
      * Forces the usage of a privileged |Components| object for a potentially-
      * unprivileged scope. This will crash if used outside of automation.
      */
@@ -581,7 +619,10 @@ interface nsIXPCComponents_Utils : nsISupports
      * The 3rd argument is an optional options object:
      * - cloneFunctions: boolean. If true, functions in the value are
      *   wrapped in a function forwarder that appears to be a native function in
-     *   the content scope.
+     *   the content scope. Defaults to false.
+     * - wrapReflectors: boolean. If true, DOM objects are passed through the
+     *   clone directly with cross-compartment wrappers. Otherwise, the clone
+     *   fails when such an object is encountered. Defaults to false.
      */
     [implicit_jscontext]
     jsval cloneInto(in jsval value, in jsval scope, [optional] in jsval options);
@@ -608,6 +649,9 @@ interface nsIXPCComponents_Utils : nsISupports
      */
     [implicit_jscontext]
     nsIPrincipal getObjectPrincipal(in jsval obj);
+
+    [implicit_jscontext]
+    void setAddonInterposition(in ACString addonId, in nsIAddonInterposition interposition);
 };
 
 /**

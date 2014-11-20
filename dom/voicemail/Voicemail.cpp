@@ -7,21 +7,21 @@
 #include "Voicemail.h"
 
 #include "mozilla/dom/MozVoicemailBinding.h"
-#include "nsIDOMMozVoicemailStatus.h"
-#include "nsIDOMMozVoicemailEvent.h"
+#include "mozilla/dom/MozVoicemailEvent.h"
+#include "mozilla/dom/MozVoicemailStatusBinding.h"
 
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
+#include "nsContentUtils.h"
 #include "nsDOMClassInfo.h"
 #include "nsServiceManagerUtils.h"
-#include "GeneratedEvents.h"
 
 #define NS_RILCONTENTHELPER_CONTRACTID "@mozilla.org/ril/content-helper;1"
 const char* kPrefRilNumRadioInterfaces = "ril.numRadioInterfaces";
 
 using namespace mozilla::dom;
 
-class Voicemail::Listener : public nsIVoicemailListener
+class Voicemail::Listener MOZ_FINAL : public nsIVoicemailListener
 {
   Voicemail* mVoicemail;
 
@@ -39,6 +39,12 @@ public:
   {
     MOZ_ASSERT(mVoicemail);
     mVoicemail = nullptr;
+  }
+
+private:
+  ~Listener()
+  {
+    MOZ_ASSERT(!mVoicemail);
   }
 };
 
@@ -95,7 +101,7 @@ Voicemail::PassedOrDefaultServiceId(const Optional<uint32_t>& aServiceId,
 
 // MozVoicemail WebIDL
 
-already_AddRefed<nsIDOMMozVoicemailStatus>
+already_AddRefed<MozVoicemailStatus>
 Voicemail::GetStatus(const Optional<uint32_t>& aServiceId,
                      ErrorResult& aRv) const
 {
@@ -109,14 +115,20 @@ Voicemail::GetStatus(const Optional<uint32_t>& aServiceId,
     aRv.Throw(NS_ERROR_INVALID_ARG);
     return nullptr;
   }
-  nsCOMPtr<nsIDOMMozVoicemailStatus> status;
-  nsresult rv = mProvider->GetVoicemailStatus(id, getter_AddRefs(status));
+  JSContext *cx = nsContentUtils::GetCurrentJSContext();
+  JS::Rooted<JS::Value> status(cx);
+  nsresult rv = mProvider->GetVoicemailStatus(id, &status);
   if (NS_FAILED(rv)) {
     aRv.Throw(rv);
     return nullptr;
   }
-
-  return status.forget();
+  if (!status.isObject()) {
+    aRv.Throw(NS_ERROR_UNEXPECTED);
+    return nullptr;
+  }
+  JS::Rooted<JSObject*> statusObj(cx, &status.toObject());
+  nsRefPtr<MozVoicemailStatus> res = new MozVoicemailStatus(statusObj, GetParentObject());
+  return res.forget();
 }
 
 void
@@ -162,17 +174,20 @@ Voicemail::GetDisplayName(const Optional<uint32_t>& aServiceId, nsString& aDispl
 // nsIVoicemailListener
 
 NS_IMETHODIMP
-Voicemail::NotifyStatusChanged(nsIDOMMozVoicemailStatus* aStatus)
+Voicemail::NotifyStatusChanged(JS::HandleValue aStatus)
 {
-  nsCOMPtr<nsIDOMEvent> event;
-  NS_NewDOMMozVoicemailEvent(getter_AddRefs(event), this, nullptr, nullptr);
+  MozVoicemailEventInit init;
+  init.mBubbles = false;
+  init.mCancelable = false;
+  if (aStatus.isObject()) {
+    JSContext *cx = nsContentUtils::GetCurrentJSContext();
+    JS::Rooted<JSObject*> statusObj(cx, &aStatus.toObject());
+    init.mStatus = new MozVoicemailStatus(statusObj, GetParentObject());
+  }
 
-  nsCOMPtr<nsIDOMMozVoicemailEvent> ce = do_QueryInterface(event);
-  nsresult rv = ce->InitMozVoicemailEvent(NS_LITERAL_STRING("statuschanged"),
-                                          false, false, aStatus);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  return DispatchTrustedEvent(ce);
+  nsRefPtr<MozVoicemailEvent> event =
+    MozVoicemailEvent::Constructor(this, NS_LITERAL_STRING("statuschanged"), init);
+  return DispatchTrustedEvent(event);
 }
 
 nsresult

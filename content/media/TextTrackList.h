@@ -67,6 +67,8 @@ public:
   IMPL_EVENT_HANDLER(removetrack)
 
 private:
+  ~TextTrackList();
+
   nsTArray< nsRefPtr<TextTrack> > mTextTracks;
   nsRefPtr<TextTrackManager> mTextTrackManager;
 

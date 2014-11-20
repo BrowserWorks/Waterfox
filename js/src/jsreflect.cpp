@@ -532,8 +532,8 @@ class NodeBuilder
     bool catchClause(HandleValue var, HandleValue guard, HandleValue body, TokenPos *pos,
                      MutableHandleValue dst);
 
-    bool propertyInitializer(HandleValue key, HandleValue val, PropKind kind, TokenPos *pos,
-                             MutableHandleValue dst);
+    bool propertyInitializer(HandleValue key, HandleValue val, PropKind kind, bool isShorthand,
+                             TokenPos *pos, MutableHandleValue dst);
 
 
     /*
@@ -629,6 +629,8 @@ class NodeBuilder
 
     bool arrayExpression(NodeVector &elts, TokenPos *pos, MutableHandleValue dst);
 
+    bool templateLiteral(NodeVector &elts, TokenPos *pos, MutableHandleValue dst);
+
     bool spreadExpression(HandleValue expr, TokenPos *pos, MutableHandleValue dst);
 
     bool objectExpression(NodeVector &elts, TokenPos *pos, MutableHandleValue dst);
@@ -663,7 +665,8 @@ class NodeBuilder
 
     bool objectPattern(NodeVector &elts, TokenPos *pos, MutableHandleValue dst);
 
-    bool propertyPattern(HandleValue key, HandleValue patt, TokenPos *pos, MutableHandleValue dst);
+    bool propertyPattern(HandleValue key, HandleValue patt, bool isShorthand, TokenPos *pos,
+                         MutableHandleValue dst);
 };
 
 } /* anonymous namespace */
@@ -1208,6 +1211,14 @@ NodeBuilder::arrayExpression(NodeVector &elts, TokenPos *pos, MutableHandleValue
     return listNode(AST_ARRAY_EXPR, "elements", elts, pos, dst);
 }
 
+#ifdef JS_HAS_TEMPLATE_STRINGS
+bool
+NodeBuilder::templateLiteral(NodeVector &elts, TokenPos *pos, MutableHandleValue dst)
+{
+    return listNode(AST_TEMPLATE_LITERAL, "elements", elts, pos, dst);
+}
+#endif
+
 bool
 NodeBuilder::spreadExpression(HandleValue expr, TokenPos *pos, MutableHandleValue dst)
 {
@@ -1217,12 +1228,14 @@ NodeBuilder::spreadExpression(HandleValue expr, TokenPos *pos, MutableHandleValu
 }
 
 bool
-NodeBuilder::propertyPattern(HandleValue key, HandleValue patt, TokenPos *pos,
+NodeBuilder::propertyPattern(HandleValue key, HandleValue patt, bool isShorthand, TokenPos *pos,
                              MutableHandleValue dst)
 {
     RootedValue kindName(cx);
     if (!atomValue("init", &kindName))
         return false;
+
+    RootedValue isShorthandVal(cx, BooleanValue(isShorthand));
 
     RootedValue cb(cx, callbacks[AST_PROP_PATT]);
     if (!cb.isNull())
@@ -1232,12 +1245,13 @@ NodeBuilder::propertyPattern(HandleValue key, HandleValue patt, TokenPos *pos,
                    "key", key,
                    "value", patt,
                    "kind", kindName,
+                   "shorthand", isShorthandVal,
                    dst);
 }
 
 bool
-NodeBuilder::propertyInitializer(HandleValue key, HandleValue val, PropKind kind, TokenPos *pos,
-                                 MutableHandleValue dst)
+NodeBuilder::propertyInitializer(HandleValue key, HandleValue val, PropKind kind, bool isShorthand,
+                                 TokenPos *pos, MutableHandleValue dst)
 {
     RootedValue kindName(cx);
     if (!atomValue(kind == PROP_INIT
@@ -1248,6 +1262,8 @@ NodeBuilder::propertyInitializer(HandleValue key, HandleValue val, PropKind kind
         return false;
     }
 
+    RootedValue isShorthandVal(cx, BooleanValue(isShorthand));
+
     RootedValue cb(cx, callbacks[AST_PROPERTY]);
     if (!cb.isNull())
         return callback(cb, kindName, key, val, pos, dst);
@@ -1256,6 +1272,7 @@ NodeBuilder::propertyInitializer(HandleValue key, HandleValue val, PropKind kind
                    "key", key,
                    "value", val,
                    "kind", kindName,
+                   "shorthand", isShorthandVal,
                    dst);
 }
 
@@ -2792,11 +2809,6 @@ ASTSerializer::expression(ParseNode *pn, MutableHandleValue dst)
 
       case PNK_OBJECT:
       {
-        /* The parser notes any uninitialized properties by setting the PNX_DESTRUCT flag. */
-        if (pn->pn_xflags & PNX_DESTRUCT) {
-            JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_BAD_OBJECT_INIT);
-            return false;
-        }
         NodeVector elts(cx);
         if (!elts.reserve(pn->pn_count))
             return false;
@@ -2819,6 +2831,26 @@ ASTSerializer::expression(ParseNode *pn, MutableHandleValue dst)
       case PNK_THIS:
         return builder.thisExpression(&pn->pn_pos, dst);
 
+#ifdef JS_HAS_TEMPLATE_STRINGS
+      case PNK_TEMPLATE_STRING_LIST:
+      {
+        NodeVector elts(cx);
+        if (!elts.reserve(pn->pn_count))
+            return false;
+
+        for (ParseNode *next = pn->pn_head; next; next = next->pn_next) {
+            JS_ASSERT(pn->pn_pos.encloses(next->pn_pos));
+
+            RootedValue expr(cx);
+            if (!expression(next, &expr))
+                return false;
+            elts.infallibleAppend(expr);
+        }
+
+        return builder.templateLiteral(elts, &pn->pn_pos, dst);
+      }
+      case PNK_TEMPLATE_STRING:
+#endif
       case PNK_STRING:
       case PNK_REGEXP:
       case PNK_NUMBER:
@@ -2894,10 +2926,11 @@ ASTSerializer::property(ParseNode *pn, MutableHandleValue dst)
         LOCAL_NOT_REACHED("unexpected object-literal property");
     }
 
+    bool isShorthand = pn->isKind(PNK_SHORTHAND);
     RootedValue key(cx), val(cx);
     return propertyName(pn->pn_left, &key) &&
            expression(pn->pn_right, &val) &&
-           builder.propertyInitializer(key, val, kind, &pn->pn_pos, dst);
+           builder.propertyInitializer(key, val, kind, isShorthand, &pn->pn_pos, dst);
 }
 
 bool
@@ -2905,6 +2938,9 @@ ASTSerializer::literal(ParseNode *pn, MutableHandleValue dst)
 {
     RootedValue val(cx);
     switch (pn->getKind()) {
+#ifdef JS_HAS_TEMPLATE_STRINGS
+      case PNK_TEMPLATE_STRING:
+#endif
       case PNK_STRING:
         val.setString(pn->pn_atom);
         break;
@@ -2983,7 +3019,8 @@ ASTSerializer::objectPattern(ParseNode *pn, VarDeclKind *pkind, MutableHandleVal
         RootedValue key(cx), patt(cx), prop(cx);
         if (!propertyName(next->pn_left, &key) ||
             !pattern(next->pn_right, pkind, &patt) ||
-            !builder.propertyPattern(key, patt, &next->pn_pos, &prop)) {
+            !builder.propertyPattern(key, patt, next->isKind(PNK_SHORTHAND), &next->pn_pos,
+                                     &prop)) {
             return false;
         }
 
@@ -3168,7 +3205,7 @@ ASTSerializer::functionArgs(ParseNode *pn, ParseNode *pnargs, ParseNode *pndestr
             else if (!args.append(node))
                 return false;
             if (arg->pn_dflags & PND_DEFAULT) {
-                ParseNode *expr = arg->isDefn() ? arg->expr() : arg->pn_kid->pn_right;
+                ParseNode *expr = arg->expr();
                 RootedValue def(cx);
                 if (!expression(expr, &def) || !defaults.append(def))
                     return false;
@@ -3254,13 +3291,7 @@ reflect_parse(JSContext *cx, uint32_t argc, jsval *vp)
                 if (!str)
                     return false;
 
-                size_t length = str->length();
-                const jschar *chars = str->getChars(cx);
-                if (!chars)
-                    return false;
-
-                TwoByteChars tbchars(chars, length);
-                filename = LossyTwoByteCharsToNewLatin1CharsZ(cx, tbchars).c_str();
+                filename = JS_EncodeString(cx, str);
                 if (!filename)
                     return false;
             }
@@ -3300,11 +3331,16 @@ reflect_parse(JSContext *cx, uint32_t argc, jsval *vp)
     if (!flat)
         return false;
 
+    AutoStableStringChars flatChars(cx);
+    if (!flatChars.initTwoByte(cx, flat))
+        return false;
+
     CompileOptions options(cx);
     options.setFileAndLine(filename, lineno);
     options.setCanLazilyParse(false);
-    Parser<FullParseHandler> parser(cx, &cx->tempLifoAlloc(), options, flat->chars(),
-                                    flat->length(), /* foldConstants = */ false, nullptr, nullptr);
+    mozilla::Range<const jschar> chars = flatChars.twoByteRange();
+    Parser<FullParseHandler> parser(cx, &cx->tempLifoAlloc(), options, chars.start().get(),
+                                    chars.length(), /* foldConstants = */ false, nullptr, nullptr);
 
     serialize.setParser(&parser);
 

@@ -28,7 +28,7 @@ public class GlobalConstants {
   public static final String MOZ_APP_DISPLAYNAME = "@MOZ_APP_DISPLAYNAME@";
   public static final String MOZ_APP_VERSION = "@MOZ_APP_VERSION@";
   public static final String BROWSER_INTENT_PACKAGE = "@ANDROID_PACKAGE_NAME@";
-  public static final String BROWSER_INTENT_CLASS = BROWSER_INTENT_PACKAGE + ".App";
+  public static final String BROWSER_INTENT_CLASS = "org.mozilla.gecko.BrowserApp";
 
   /**
    * Bug 800244: this signing-level permission protects broadcast intents that
@@ -45,7 +45,6 @@ public class GlobalConstants {
   // Eventually Fennec might listen to startup notifications and
   // do this automatically, but this will do for now. See Bug 800244.
   public static String GECKO_PREFERENCES_CLASS = "org.mozilla.gecko.preferences.GeckoPreferences";
-  public static String GECKO_BROADCAST_ANNOUNCEMENTS_PREF_METHOD  = "broadcastAnnouncementsPref";
   public static String GECKO_BROADCAST_HEALTHREPORT_UPLOAD_PREF_METHOD  = "broadcastHealthReportUploadPref";
   public static String GECKO_BROADCAST_HEALTHREPORT_PRUNE_METHOD = "broadcastHealthReportPrune";
 

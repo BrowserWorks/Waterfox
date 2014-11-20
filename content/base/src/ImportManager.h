@@ -49,6 +49,7 @@
 
 class nsIDocument;
 class nsIChannel;
+class nsIPrincipal;
 class nsINode;
 class AutoError;
 
@@ -88,6 +89,8 @@ public:
   }
 
 private:
+  ~ImportLoader() {}
+
   // If a new referrer LinkElement was added, let's
   // see if we are already finished and if so fire
   // the right event.
@@ -98,7 +101,7 @@ private:
   void DispatchLoadEvent(nsINode* aNode);
 
   // Must be called when an error has occured during load.
-  void Error();
+  void Error(bool aUnblockScripts);
 
   // Must be called when the import document has been loaded successfully.
   void Done();
@@ -113,9 +116,10 @@ private:
   void BlockScripts();
   void UnblockScripts();
 
+  nsIPrincipal* Principal();
+
   nsCOMPtr<nsIDocument> mDocument;
   nsCOMPtr<nsIURI> mURI;
-  nsCOMPtr<nsIChannel> mChannel;
   nsCOMPtr<nsIStreamListener> mParserStreamListener;
   nsCOMPtr<nsIDocument> mImportParent;
   // List of the LinkElements that are referring to this import
@@ -129,6 +133,9 @@ private:
 class ImportManager MOZ_FINAL : public nsISupports
 {
   typedef nsRefPtrHashtable<nsURIHashKey, ImportLoader> ImportMap;
+
+  ~ImportManager() {}
+
 public:
   ImportManager() {}
 

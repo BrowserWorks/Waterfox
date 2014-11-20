@@ -23,8 +23,10 @@ private:
                       "Bad NodeType in aNodeInfo");
   }
 
+  virtual ~Comment();
+
 public:
-  Comment(already_AddRefed<nsINodeInfo>&& aNodeInfo)
+  Comment(already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo)
     : nsGenericDOMDataNode(aNodeInfo)
   {
     Init();
@@ -35,8 +37,6 @@ public:
   {
     Init();
   }
-
-  virtual ~Comment();
 
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
@@ -54,7 +54,7 @@ public:
   // nsINode
   virtual bool IsNodeOfType(uint32_t aFlags) const;
 
-  virtual nsGenericDOMDataNode* CloneDataNode(nsINodeInfo *aNodeInfo,
+  virtual nsGenericDOMDataNode* CloneDataNode(mozilla::dom::NodeInfo *aNodeInfo,
                                               bool aCloneText) const MOZ_OVERRIDE;
 
   virtual nsIDOMNode* AsDOMNode() MOZ_OVERRIDE { return this; }

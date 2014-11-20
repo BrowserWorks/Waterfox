@@ -2961,7 +2961,7 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
                     ret=Type.BOOL))
 
             openmeth.addstmts([
-                StmtExpr(ExprAssn(p.otherProcessVar(), ExprCall(ExprVar('base::GetCurrentProcessHandle')))),
+                StmtExpr(ExprAssn(p.otherProcessVar(), ExprVar('ipc::kInvalidProcessHandle'))),
                 StmtReturn(ExprCall(ExprSelect(p.channelVar(), '.', 'Open'),
                                     [ aChannel, aMessageLoop, sidevar ]))
             ])
@@ -3346,7 +3346,7 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
             otherprocess = p.callOtherProcess()
             isparent = ExprLiteral.TRUE
         else:
-            otherprocess = ExprLiteral.NULL
+            otherprocess = ExprLiteral.ZERO
             isparent = ExprLiteral.FALSE
         fatalerror.addstmts([
             _ipcFatalError(actorname, msgparam, otherprocess, isparent)
@@ -4240,7 +4240,7 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
 
             case.addstmts([
                 StmtDecl(Decl(Type('Transport', ptr=1), tvar.name)),
-                StmtDecl(Decl(Type(_actorName(actor.ptype.name(), self.side),
+                StmtDecl(Decl(Type(_actorName(actor.ptype.name(), actor.side),
                                    ptr=1), pvar.name)),
                 iffailopen,
                 iffailalloc,

@@ -33,7 +33,7 @@
 
 .theme-bg-contrast,
 .variable-or-property:not([overridden])[changed] { /* contrast bg color to attract attention on a container */
-  background: #a18650;
+  background: #E8B671; /* Background - Attention */
 }
 
 .theme-link,
@@ -176,7 +176,8 @@
 }
 
 .ruleview-colorswatch,
-.computedview-colorswatch {
+.computedview-colorswatch,
+.ruleview-bezierswatch {
   box-shadow: 0 0 0 1px #c4c4c4;
 }
 
@@ -280,6 +281,10 @@ div.CodeMirror span.eval-text {
 
 .theme-twisty[open] {
   background-position: -14px -14px;
+}
+
+.theme-twisty[invisible] {
+  visibility: hidden;
 }
 
 /* Use white twisty when next to a selected item in markup view */

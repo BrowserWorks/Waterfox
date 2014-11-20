@@ -31,6 +31,9 @@
       // Use the larger google_root_pems pinset instead of google
       "google": "google_root_pems"
     },
+    "production_pinsets": [
+      "google_root_pems"
+    ],
     "production_domains": [
       // Chrome's test domain.
       "pinningtest.appspot.com",
@@ -42,8 +45,12 @@
       "oauth.twitter.com",
       "platform.twitter.com",
       "twimg.com",
-      "twitter.com",
       "www.twitter.com"
+    ],
+    "exclude_domains" : [
+      // Chrome's entry for twitter.com doesn't include subdomains, so replace
+      // it with our own entry below which also uses an expanded pinset.
+      "twitter.com"
     ]
    },
   "pinsets": [
@@ -182,7 +189,9 @@
     { "name": "aus4.mozilla.org", "include_subdomains": true,
       "pins": "mozilla", "test_mode": true, "id": 3 },
     { "name": "accounts.firefox.com", "include_subdomains": true,
-      "pins": "mozilla_fxa", "test_mode": true, "id": 4 },
+      "pins": "mozilla_fxa", "test_mode": false, "id": 4 },
+    { "name": "api.accounts.firefox.com", "include_subdomains": true,
+      "pins": "mozilla_fxa", "test_mode": false, "id": 5 },
     { "name": "cdn.mozilla.net", "include_subdomains": true,
       "pins": "mozilla", "test_mode": false },
     { "name": "cdn.mozilla.org", "include_subdomains": true,
@@ -197,6 +206,11 @@
       "include_subdomains": false, "pins": "mozilla_test",
       "test_mode": false, "id": 0 },
     { "name": "test-mode.pinning.example.com", "include_subdomains": true,
-      "pins": "mozilla_test", "test_mode": true }
+      "pins": "mozilla_test", "test_mode": true },
+    // Expand twitter's pinset to include all of *.twitter.com and use
+    // twitterCDN. More specific rules take precedence because we search for
+    // exact domain name first.
+    { "name": "twitter.com", "include_subdomains": true,
+      "pins": "twitterCDN", "test_mode": false }
   ]
 }

@@ -14,6 +14,7 @@ browser.jar:
   skin/classic/browser/aboutCertError_sectionCollapsed.png
   skin/classic/browser/aboutCertError_sectionCollapsed-rtl.png
   skin/classic/browser/aboutCertError_sectionExpanded.png
+  skin/classic/browser/aboutNetError.css                        (../shared/aboutNetError.css)
   skin/classic/browser/aboutSocialError.css
 #ifdef MOZ_SERVICES_SYNC
   skin/classic/browser/aboutSyncTabs.css
@@ -66,13 +67,21 @@ browser.jar:
   skin/classic/browser/Toolbar.png
   skin/classic/browser/Toolbar-inverted.png
   skin/classic/browser/Toolbar-small.png
+  skin/classic/browser/undoCloseTab.png                        (../shared/undoCloseTab.png)
   skin/classic/browser/urlbar-arrow.png
   skin/classic/browser/webRTC-shareDevice-16.png
   skin/classic/browser/webRTC-shareDevice-64.png
-  skin/classic/browser/webRTC-sharingDevice-16.png
+  skin/classic/browser/webRTC-sharingDevice-16.png    (../shared/webrtc/webRTC-sharingDevice-16.png)
   skin/classic/browser/webRTC-shareMicrophone-16.png
   skin/classic/browser/webRTC-shareMicrophone-64.png
-  skin/classic/browser/webRTC-sharingMicrophone-16.png
+  skin/classic/browser/webRTC-sharingMicrophone-16.png (../shared/webrtc/webRTC-sharingMicrophone-16.png)
+  skin/classic/browser/webRTC-shareScreen-16.png      (../shared/webrtc/webRTC-shareScreen-16.png)
+  skin/classic/browser/webRTC-shareScreen-64.png      (../shared/webrtc/webRTC-shareScreen-64.png)
+  skin/classic/browser/webRTC-sharingScreen-16.png    (../shared/webrtc/webRTC-sharingScreen-16.png)
+  skin/classic/browser/webRTC-indicator.css           (../shared/webrtc/indicator.css)
+  skin/classic/browser/webRTC-camera-white-16.png     (../shared/webrtc/camera-white-16.png)
+  skin/classic/browser/webRTC-microphone-white-16.png (../shared/webrtc/microphone-white-16.png)
+  skin/classic/browser/webRTC-screen-white-16.png     (../shared/webrtc/screen-white-16.png)
   skin/classic/browser/customizableui/background-noise-toolbar.png  (customizableui/background-noise-toolbar.png)
   skin/classic/browser/customizableui/customize-illustration.png  (../shared/customizableui/customize-illustration.png)
   skin/classic/browser/customizableui/customize-illustration-rtl.png  (../shared/customizableui/customize-illustration-rtl.png)
@@ -107,8 +116,8 @@ browser.jar:
   skin/classic/browser/feeds/audioFeedIcon16.png      (feeds/feedIcon16.png)
   skin/classic/browser/feeds/subscribe.css            (feeds/subscribe.css)
   skin/classic/browser/feeds/subscribe-ui.css         (feeds/subscribe-ui.css)
-  skin/classic/browser/newtab/newTab.css              (newtab/newTab.css)
-  skin/classic/browser/newtab/controls.png            (../shared/newtab/controls.png)
+* skin/classic/browser/newtab/newTab.css              (newtab/newTab.css)
+  skin/classic/browser/newtab/controls.svg            (../shared/newtab/controls.svg)
   skin/classic/browser/places/bookmarksMenu.png       (places/bookmarksMenu.png)
   skin/classic/browser/places/bookmarksToolbar.png    (places/bookmarksToolbar.png)
   skin/classic/browser/places/bookmarksToolbar-menuPanel.png (places/bookmarksToolbar-menuPanel.png)
@@ -160,9 +169,13 @@ browser.jar:
   skin/classic/browser/social/chat-icons.png          (social/chat-icons.png)
   skin/classic/browser/social/gear_default.png        (../shared/social/gear_default.png)
   skin/classic/browser/social/gear_clicked.png        (../shared/social/gear_clicked.png)
+  skin/classic/browser/tabbrowser/alltabs.png         (tabbrowser/alltabs.png)
+  skin/classic/browser/tabbrowser/alltabs-inverted.png (tabbrowser/alltabs-inverted.png)
   skin/classic/browser/tabbrowser/connecting.png      (tabbrowser/connecting.png)
   skin/classic/browser/tabbrowser/loading.png         (tabbrowser/loading.png)
   skin/classic/browser/tabbrowser/tab-active-middle.png     (tabbrowser/tab-active-middle.png)
+  skin/classic/browser/tabbrowser/tab-arrow-left.png        (tabbrowser/tab-arrow-left.png)
+  skin/classic/browser/tabbrowser/tab-arrow-left-inverted.png (tabbrowser/tab-arrow-left-inverted.png)
   skin/classic/browser/tabbrowser/tab-background-end.png    (tabbrowser/tab-background-end.png)
   skin/classic/browser/tabbrowser/tab-background-middle.png (tabbrowser/tab-background-middle.png)
   skin/classic/browser/tabbrowser/tab-background-start.png  (tabbrowser/tab-background-start.png)
@@ -315,6 +328,8 @@ browser.jar:
   skin/classic/browser/devtools/vview-lock@2x.png           (../shared/devtools/images/vview-lock@2x.png)
   skin/classic/browser/devtools/vview-open-inspector.png    (../shared/devtools/images/vview-open-inspector.png)
   skin/classic/browser/devtools/vview-open-inspector@2x.png (../shared/devtools/images/vview-open-inspector@2x.png)
+  skin/classic/browser/devtools/cubic-bezier-swatch.png     (../shared/devtools/images/cubic-bezier-swatch.png)
+  skin/classic/browser/devtools/cubic-bezier-swatch@2x.png  (../shared/devtools/images/cubic-bezier-swatch@2x.png)
   skin/classic/browser/devtools/undock@2x.png               (../shared/devtools/images/undock@2x.png)
   skin/classic/browser/devtools/font-inspector.css          (../shared/devtools/font-inspector.css)
   skin/classic/browser/devtools/computedview.css            (../shared/devtools/computedview.css)

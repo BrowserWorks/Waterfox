@@ -197,7 +197,11 @@
 #define unlikely(expr) (expr)
 #endif
 
-#ifndef __GNUC__
+/*
+ * clang-cl supports __attribute__, but MSVC doesn't, so we need to make sure
+ * we do this if not GNUC but also if not clang either.
+ */
+#if !defined(__GNUC__) && !defined(__clang__)
 #undef __attribute__
 #define __attribute__(x)
 #endif
@@ -247,16 +251,14 @@ ffs (int x)
    be needed for GCC but it seems fine for now. */
 #define CAIRO_ENSURE_UNIQUE                       \
     do {                                          \
-	char func[] = __FUNCTION__;               \
 	char file[] = __FILE__;                   \
 	__asm {                                   \
 	    __asm jmp __internal_skip_line_no     \
-	    __asm _emit (__LINE__ & 0xff)         \
-	    __asm _emit ((__LINE__>>8) & 0xff)    \
-	    __asm _emit ((__LINE__>>16) & 0xff)   \
-	    __asm _emit ((__LINE__>>24) & 0xff)   \
-	    __asm lea eax, func                   \
-	    __asm lea eax, file                   \
+	    __asm _emit (__COUNTER__ & 0xff)      \
+	    __asm _emit ((__COUNTER__>>8) & 0xff) \
+	    __asm _emit ((__COUNTER__>>16) & 0xff)\
+	    __asm _emit ((__COUNTER__>>24) & 0xff)\
+	    __asm lea eax, dword ptr file         \
 	    __asm __internal_skip_line_no:        \
 	};                                        \
     } while (0)

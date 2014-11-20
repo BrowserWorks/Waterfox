@@ -539,6 +539,9 @@ LayerTransactionParent::RecvUpdate(const InfallibleTArray<Edit>& cset,
     }
   }
 
+  mShadowLayersManager->ShadowLayersUpdated(this, aTransactionId, targetConfig,
+                                            isFirstPaint, scheduleComposite, paintSequenceNumber);
+
   {
     AutoResolveRefLayers resolve(mShadowLayersManager->GetCompositionManager(this));
     layer_manager()->EndTransaction(nullptr, nullptr, LayerManager::END_NO_IMMEDIATE_REDRAW);
@@ -551,13 +554,12 @@ LayerTransactionParent::RecvUpdate(const InfallibleTArray<Edit>& cset,
     }
   }
 
-  // Ensure that any pending operations involving back and front
-  // buffers have completed, so that neither process stomps on the
-  // other's buffer contents.
-  LayerManagerComposite::PlatformSyncBeforeReplyUpdate();
-
-  mShadowLayersManager->ShadowLayersUpdated(this, aTransactionId, targetConfig,
-                                            isFirstPaint, scheduleComposite, paintSequenceNumber);
+  if (!IsSameProcess()) {
+    // Ensure that any pending operations involving back and front
+    // buffers have completed, so that neither process stomps on the
+    // other's buffer contents.
+    LayerManagerComposite::PlatformSyncBeforeReplyUpdate();
+  }
 
 #ifdef COMPOSITOR_PERFORMANCE_WARNING
   int compositeTime = (int)(mozilla::TimeStamp::Now() - updateStart).ToMilliseconds();

@@ -13,7 +13,7 @@ let gEnableLogging = Services.prefs.getBoolPref("devtools.debugger.log");
 Services.prefs.setBoolPref("devtools.debugger.log", false);
 
 let { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
-let { Promise: promise } = Cu.import("resource://gre/modules/Promise.jsm", {});
+let { Promise: promise } = Cu.import("resource://gre/modules/devtools/deprecated-sync-thenables.js", {});
 let { gDevTools } = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
 let { devtools } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 let { require } = devtools;
@@ -750,6 +750,13 @@ function resumeDebuggerThenCloseAndFinish(aPanel, aFlags = {}) {
 
 function getBlackBoxButton(aPanel) {
   return aPanel.panelWin.document.getElementById("black-box");
+}
+
+/**
+ * Returns the node that has the black-boxed class applied to it.
+ */
+function getSelectedSourceElement(aPanel) {
+    return aPanel.panelWin.DebuggerView.Sources.selectedItem.prebuiltNode;
 }
 
 function toggleBlackBoxing(aPanel, aSource = null) {

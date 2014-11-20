@@ -36,7 +36,7 @@ class nsPresContext;
  * collection.
  */
 
-class nsStyleContext
+class nsStyleContext MOZ_FINAL
 {
 public:
   /**
@@ -56,16 +56,17 @@ public:
    *                   rules that any element, pseudo-element, or
    *                   anonymous box that this style context is for
    *                   matches.  See |nsRuleNode| and |nsIStyleRule|.
-   * @param aSkipFlexOrGridItemStyleFixup
+   * @param aSkipParentDisplayBasedStyleFixup
    *                 If set, this flag indicates that we should skip
-   *                 the chunk of ApplyStyleFixups() that modifies flex
-   *                 and grid items' display values.
+   *                 the chunk of ApplyStyleFixups() that applies to 
+   *                 special cases where a child element's style may 
+   *                 need to be modified based on its parent's display 
+   *                 value.
    */
   nsStyleContext(nsStyleContext* aParent, nsIAtom* aPseudoTag,
                  nsCSSPseudoElements::Type aPseudoType,
                  nsRuleNode* aRuleNode,
-                 bool aSkipFlexOrGridItemStyleFixup);
-  ~nsStyleContext();
+                 bool aSkipParentDisplayBasedStyleFixup);
 
   void* operator new(size_t sz, nsPresContext* aPresContext) CPP_THROW_NEW;
   void Destroy();
@@ -291,7 +292,7 @@ public:
    * Get a color that depends on link-visitedness using this and
    * this->GetStyleIfVisited().
    *
-   * aProperty must be a color-valued property that nsStyleAnimation
+   * aProperty must be a color-valued property that StyleAnimationValue
    * knows how to extract.  It must also be a property that we know to
    * do change handling for in nsStyleContext::CalcDifference.
    *
@@ -311,27 +312,6 @@ public:
                                       bool aLinkIsVisited);
 
   /**
-   * Allocate a chunk of memory that is scoped to the lifetime of this
-   * style context, i.e., memory that will automatically be freed when
-   * this style context is destroyed.  This is intended for allocations
-   * that are stored on this style context or its style structs.  (Use
-   * on style structs is fine since any style context to which this
-   * context's style structs are shared will be a descendant of this
-   * style context and thus keep it alive.)
-   *
-   * This currently allocates the memory out of the pres shell arena.
-   *
-   * It would be relatively straightforward to write a Free method
-   * for the underlying implementation, but we don't need it (or the
-   * overhead of making a doubly-linked list or other structure to
-   * support it).
-   *
-   * WARNING: Memory allocated using this method cannot be stored in the
-   * rule tree, since rule nodes may outlive the style context.
-   */
-  void* Alloc(size_t aSize);
-
-  /**
    * Start the background image loads for this style context.
    */
   void StartBackgroundImageLoads() {
@@ -344,13 +324,14 @@ public:
   static void AssertStyleStructMaxDifferenceValid();
 #endif
 
-protected:
+private:
+  // Private destructor, to discourage deletion outside of Release():
+  ~nsStyleContext();
+
   void AddChild(nsStyleContext* aChild);
   void RemoveChild(nsStyleContext* aChild);
 
-  void ApplyStyleFixups(bool aSkipFlexOrGridItemStyleFixup);
-
-  void FreeAllocations(nsPresContext* aPresContext);
+  void ApplyStyleFixups(bool aSkipParentDisplayBasedStyleFixup);
 
   // Helper function that GetStyleData and GetUniqueStyleData use.  Only
   // returns the structs we cache ourselves; never consults the ruletree.
@@ -412,15 +393,6 @@ protected:
   // |mRule| member of |mRuleNode|.
   nsRuleNode* const       mRuleNode;
 
-  // Private to nsStyleContext::Alloc and FreeAllocations.
-  struct AllocationHeader {
-    AllocationHeader* mNext;
-    size_t mSize;
-
-    void* mStorageStart; // ensure the storage is at least pointer-aligned
-  };
-  AllocationHeader*       mAllocations;
-
   // mCachedInheritedData and mCachedResetData point to both structs that
   // are owned by this style context and structs that are owned by one of
   // this style context's ancestors (which are indirectly owned since this
@@ -442,5 +414,5 @@ NS_NewStyleContext(nsStyleContext* aParentContext,
                    nsIAtom* aPseudoTag,
                    nsCSSPseudoElements::Type aPseudoType,
                    nsRuleNode* aRuleNode,
-                   bool aSkipFlexOrGridItemStyleFixup);
+                   bool aSkipParentDisplayBasedStyleFixup);
 #endif

@@ -43,8 +43,10 @@ static MOZ_CONSTEXPR_VAR Register JSReturnReg_Data = edx;
 static MOZ_CONSTEXPR_VAR Register StackPointer = esp;
 static MOZ_CONSTEXPR_VAR Register FramePointer = ebp;
 static MOZ_CONSTEXPR_VAR Register ReturnReg = eax;
-static MOZ_CONSTEXPR_VAR FloatRegister ReturnFloatReg = xmm0;
-static MOZ_CONSTEXPR_VAR FloatRegister ScratchFloatReg = xmm7;
+static MOZ_CONSTEXPR_VAR FloatRegister ReturnFloat32Reg = xmm0;
+static MOZ_CONSTEXPR_VAR FloatRegister ScratchFloat32Reg = xmm7;
+static MOZ_CONSTEXPR_VAR FloatRegister ReturnDoubleReg = xmm0;
+static MOZ_CONSTEXPR_VAR FloatRegister ScratchDoubleReg = xmm7;
 
 // Avoid ebp, which is the FramePointer, which is unavailable in some modes.
 static MOZ_CONSTEXPR_VAR Register ArgumentsRectifierReg = esi;
@@ -110,8 +112,7 @@ static const uint32_t StackAlignment = 4;
 #endif
 static const bool StackKeptAligned = false;
 static const uint32_t CodeAlignment = 8;
-static const uint32_t NativeFrameSize = sizeof(void*);
-static const uint32_t AlignmentAtAsmJSPrologue = sizeof(void*);
+
 struct ImmTag : public Imm32
 {
     ImmTag(JSValueTag mask)
@@ -259,7 +260,7 @@ class Assembler : public AssemblerX86Shared
     }
     void mov(AsmJSImmPtr imm, Register dest) {
         masm.movl_i32r(-1, dest.code());
-        enoughMemory_ &= append(AsmJSAbsoluteLink(CodeOffsetLabel(masm.currentOffset()), imm.kind()));
+        append(AsmJSAbsoluteLink(CodeOffsetLabel(masm.currentOffset()), imm.kind()));
     }
     void mov(const Operand &src, Register dest) {
         movl(src, dest);
@@ -340,11 +341,7 @@ class Assembler : public AssemblerX86Shared
     }
     void cmpl(AsmJSAbsoluteAddress lhs, Register rhs) {
         masm.cmpl_rm_force32(rhs.code(), (void*)-1);
-        enoughMemory_ &= append(AsmJSAbsoluteLink(CodeOffsetLabel(masm.currentOffset()), lhs.kind()));
-    }
-    CodeOffsetLabel cmplWithPatch(Register lhs, Imm32 rhs) {
-        masm.cmpl_ir_force32(rhs.value, lhs.code());
-        return CodeOffsetLabel(masm.currentOffset());
+        append(AsmJSAbsoluteLink(CodeOffsetLabel(masm.currentOffset()), lhs.kind()));
     }
 
     void jmp(ImmPtr target, Relocation::Kind reloc = Relocation::HARDCODED) {
@@ -374,13 +371,6 @@ class Assembler : public AssemblerX86Shared
         JmpSrc src = masm.call();
         addPendingJump(src, target, Relocation::HARDCODED);
     }
-    void call(AsmJSImmPtr target) {
-        // Moving to a register is suboptimal. To fix (use a single
-        // call-immediate instruction) we'll need to distinguish a new type of
-        // relative patch to an absolute address in AsmJSAbsoluteLink.
-        mov(target, eax);
-        call(eax);
-    }
 
     // Emit a CALL or CMP (nop) instruction. ToggleCall can be used to patch
     // this instruction.
@@ -400,7 +390,6 @@ class Assembler : public AssemblerX86Shared
     // Re-routes pending jumps to an external target, flushing the label in the
     // process.
     void retarget(Label *label, ImmPtr target, Relocation::Kind reloc) {
-        JSC::MacroAssembler::Label jsclabel;
         if (label->used()) {
             bool more;
             JSC::X86Assembler::JmpSrc jmp(label->offset());

@@ -1,4 +1,4 @@
-# -*- Mode: javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+# -*- indent-tabs-mode: nil; js-indent-level: 2 -*-
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -32,11 +32,18 @@ const gXPInstallObserver = {
   {
     var brandBundle = document.getElementById("bundle_brand");
     var installInfo = aSubject.QueryInterface(Components.interfaces.amIWebInstallInfo);
-    var win = installInfo.originatingWindow;
-    var shell = win.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
-                   .getInterface(Components.interfaces.nsIWebNavigation)
-                   .QueryInterface(Components.interfaces.nsIDocShell);
-    var browser = this._getBrowser(shell);
+    var winOrBrowser = installInfo.originator;
+
+    var browser;
+    try {
+      var shell = winOrBrowser.QueryInterface(Components.interfaces.nsIDOMWindow)
+                              .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+                              .getInterface(Components.interfaces.nsIWebNavigation)
+                              .QueryInterface(Components.interfaces.nsIDocShell);
+      browser = this._getBrowser(shell);
+    } catch (e) {
+      browser = winOrBrowser;
+    }
     if (!browser)
       return;
     const anchorID = "addons-notification-icon";

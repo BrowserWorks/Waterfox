@@ -8,8 +8,6 @@
 
 #include "nsIClipboard.h"
 #include "nsITransferable.h"
-#include "nsClipboardPrivacyHandler.h"
-#include "nsAutoPtr.h"
 
 class nsITransferable;
 class nsDataObj;
@@ -25,7 +23,6 @@ class nsBaseClipboard : public nsIClipboard
 
 public:
   nsBaseClipboard();
-  virtual ~nsBaseClipboard();
 
   //nsISupports
   NS_DECL_ISUPPORTS
@@ -34,6 +31,7 @@ public:
   NS_DECL_NSICLIPBOARD
   
 protected:
+  virtual ~nsBaseClipboard();
 
   NS_IMETHOD SetNativeClipboardData ( int32_t aWhichClipboard ) = 0;
   NS_IMETHOD GetNativeClipboardData ( nsITransferable * aTransferable, int32_t aWhichClipboard ) = 0;
@@ -42,7 +40,6 @@ protected:
   bool                mIgnoreEmptyNotification;
   nsIClipboardOwner * mClipboardOwner;
   nsITransferable   * mTransferable;
-  nsRefPtr<nsClipboardPrivacyHandler> mPrivacyHandler;
 
 };
 

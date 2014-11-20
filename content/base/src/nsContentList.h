@@ -42,7 +42,6 @@ public:
   {
     SetIsDOMBinding();
   }
-  virtual ~nsBaseContentList();
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
 
@@ -100,6 +99,8 @@ public:
     mElements.SetCapacity(aCapacity);
   }
 protected:
+  virtual ~nsBaseContentList();
+
   /**
    * To be called from non-destructor locations (e.g. unlink) that want to
    * remove from caches.  Cacheable subclasses should override.
@@ -129,6 +130,9 @@ public:
     return mRoot;
   }
   virtual JSObject* WrapObject(JSContext *cx) MOZ_OVERRIDE;
+
+protected:
+  virtual ~nsSimpleContentList() {}
 
 private:
   // This has to be a strong reference, the root might go away before the list.
@@ -248,12 +252,13 @@ public:
                 nsIAtom* aMatchAtom = nullptr,
                 int32_t aMatchNameSpaceId = kNameSpaceID_None,
                 bool aFuncMayDependOnAttr = true);
-  virtual ~nsContentList();
 
   // nsWrapperCache
   using nsWrapperCache::GetWrapperPreserveColor;
   virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
 protected:
+  virtual ~nsContentList();
+
   virtual JSObject* GetWrapperPreserveColorInternal() MOZ_OVERRIDE
   {
     return nsWrapperCache::GetWrapperPreserveColor();

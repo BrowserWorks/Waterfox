@@ -39,9 +39,6 @@
 #include "jit/PcScriptCache.h"
 #include "js/MemoryMetrics.h"
 #include "js/SliceBudget.h"
-#ifdef JS_YARR
-#include "yarr/BumpPointerAllocator.h"
-#endif
 
 #include "jscntxtinlines.h"
 #include "jsgcinlines.h"
@@ -87,6 +84,9 @@ PerThreadData::PerThreadData(JSRuntime *runtime)
 #endif
     dtoaState(nullptr),
     suppressGC(0),
+#ifdef DEBUG
+    ionCompiling(false),
+#endif
     activeCompilations(0)
 {}
 
@@ -107,10 +107,8 @@ PerThreadData::init()
     if (!dtoaState)
         return false;
 
-#ifndef JS_YARR
     if (!regexpStack.init())
         return false;
-#endif
 
     return true;
 }
@@ -154,9 +152,6 @@ JSRuntime::JSRuntime(JSRuntime *parentRuntime)
     tempLifoAlloc(TEMP_LIFO_ALLOC_PRIMARY_CHUNK_SIZE),
     freeLifoAlloc(TEMP_LIFO_ALLOC_PRIMARY_CHUNK_SIZE),
     execAlloc_(nullptr),
-#ifdef JS_YARR
-    bumpAlloc_(nullptr),
-#endif
     jitRuntime_(nullptr),
     selfHostingGlobal_(nullptr),
     nativeStackBase(0),
@@ -186,6 +181,9 @@ JSRuntime::JSRuntime(JSRuntime *parentRuntime)
     negativeInfinityValue(DoubleValue(NegativeInfinity<double>())),
     positiveInfinityValue(DoubleValue(PositiveInfinity<double>())),
     emptyString(nullptr),
+#ifdef NIGHTLY_BUILD
+    assertOnScriptEntryHook_(nullptr),
+#endif
     debugMode(false),
     spsProfiler(thisFromCtor()),
     profilingScripts(false),
@@ -193,6 +191,7 @@ JSRuntime::JSRuntime(JSRuntime *parentRuntime)
     haveCreatedContext(false),
     data(nullptr),
     signalHandlersInstalled_(false),
+    canUseSignalHandlers_(false),
     defaultFreeOp_(thisFromCtor(), false),
     debuggerMutations(0),
     securityCallbacks(const_cast<JSSecurityCallbacks *>(&NullSecurityCallbacks)),
@@ -216,6 +215,7 @@ JSRuntime::JSRuntime(JSRuntime *parentRuntime)
     staticStrings(nullptr),
     commonNames(nullptr),
     permanentAtoms(nullptr),
+    wellKnownSymbols(nullptr),
     wrapObjectCallbacks(&DefaultWrapObjectCallbacks),
     preserveWrapperCallback(nullptr),
     jitSupportsFloatingPoint(false),
@@ -224,7 +224,7 @@ JSRuntime::JSRuntime(JSRuntime *parentRuntime)
     defaultJSContextCallback(nullptr),
     ctypesActivityCallback(nullptr),
     forkJoinWarmup(0),
-    parallelIonCompilationEnabled_(true),
+    offthreadIonCompilationEnabled_(true),
     parallelParsingEnabled_(true),
 #ifdef DEBUG
     enteredPolicy(nullptr),
@@ -233,8 +233,6 @@ JSRuntime::JSRuntime(JSRuntime *parentRuntime)
     oomCallback(nullptr)
 {
     liveRuntimesCount++;
-
-    setGCMode(JSGC_MODE_GLOBAL);
 
     /* Initialize infallibly first, so we can goto bad and JS_DestroyRuntime. */
     JS_INIT_CLIST(&onNewGlobalObjectWatchers);
@@ -260,6 +258,14 @@ JitSupportsFloatingPoint()
 #else
     return false;
 #endif
+}
+
+static bool
+SignalBasedTriggersDisabled()
+{
+  // Don't bother trying to cache the getenv lookup; this should be called
+  // infrequently.
+  return !!getenv("JS_DISABLE_SLOW_SCRIPT_SIGNALS") || !!getenv("JS_NO_SIGNALS");
 }
 
 bool
@@ -311,10 +317,16 @@ JSRuntime::init(uint32_t maxbytes, uint32_t maxNurseryBytes)
     atomsZone.forget();
     this->atomsCompartment_ = atomsCompartment.forget();
 
+    if (!symbolRegistry_.init())
+        return false;
+
     if (!scriptDataTable_.init())
         return false;
 
     if (!evalCache.init())
+        return false;
+
+    if (!compressedSourceSet.init())
         return false;
 
     /* The garbage collector depends on everything before this point being initialized. */
@@ -337,6 +349,7 @@ JSRuntime::init(uint32_t maxbytes, uint32_t maxNurseryBytes)
 
 #ifdef JS_ION
     signalHandlersInstalled_ = EnsureAsmJSSignalHandlersInstalled(this);
+    canUseSignalHandlers_ = signalHandlersInstalled_ && !SignalBasedTriggersDisabled();
 #endif
 
     if (!spsProfiler.init())
@@ -436,9 +449,6 @@ JSRuntime::~JSRuntime()
     atomsCompartment_ = nullptr;
 
     js_free(defaultLocale);
-#ifdef JS_YARR
-    js_delete(bumpAlloc_);
-#endif
     js_delete(mathCache_);
 #ifdef JS_ION
     js_delete(jitRuntime_);
@@ -490,7 +500,7 @@ JSRuntime::resetJitStackLimit()
 #if defined(JS_ARM_SIMULATOR) || defined(JS_MIPS_SIMULATOR)
     mainThread.setJitStackLimit(js::jit::Simulator::StackLimit());
 #endif
- }
+}
 
 void
 JSRuntime::addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf, JS::RuntimeSizes *rtSizes)
@@ -515,15 +525,13 @@ JSRuntime::addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf, JS::Runtim
 
     rtSizes->temporary += tempLifoAlloc.sizeOfExcludingThis(mallocSizeOf);
 
-#ifdef JS_YARR
-    rtSizes->regexpData += bumpAlloc_ ? bumpAlloc_->sizeOfNonHeapData() : 0;
-#endif
-
     rtSizes->interpreterStack += interpreterStack_.sizeOfExcludingThis(mallocSizeOf);
 
     rtSizes->mathCache += mathCache_ ? mathCache_->sizeOfIncludingThis(mallocSizeOf) : 0;
 
-    rtSizes->sourceDataCache += sourceDataCache.sizeOfExcludingThis(mallocSizeOf);
+    rtSizes->uncompressedSourceCache += uncompressedSourceCache.sizeOfExcludingThis(mallocSizeOf);
+
+    rtSizes->compressedSourceSet += compressedSourceSet.sizeOfExcludingThis(mallocSizeOf);
 
     rtSizes->scriptData += scriptDataTable().sizeOfExcludingThis(mallocSizeOf);
     for (ScriptDataTable::Range r = scriptDataTable().all(); !r.empty(); r.popFront())
@@ -550,14 +558,6 @@ JSRuntime::addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf, JS::Runtim
 #endif
 }
 
-static bool
-SignalBasedTriggersDisabled()
-{
-  // Don't bother trying to cache the getenv lookup; this should be called
-  // infrequently.
-  return !!getenv("JS_DISABLE_SLOW_SCRIPT_SIGNALS");
-}
-
 void
 JSRuntime::requestInterrupt(InterruptMode mode)
 {
@@ -579,11 +579,11 @@ JSRuntime::requestInterrupt(InterruptMode mode)
 #endif
 
     /*
-     * asm.js and, optionally, normal Ion code use memory protection and signal
+     * asm.js and normal Ion code optionally use memory protection and signal
      * handlers to halt running code.
      */
-    if (!SignalBasedTriggersDisabled()) {
-        RequestInterruptForAsmJSCode(this);
+    if (canUseSignalHandlers()) {
+        RequestInterruptForAsmJSCode(this, mode);
         jit::RequestInterruptForIonCode(this, mode);
     }
 #endif
@@ -600,22 +600,6 @@ JSRuntime::createExecutableAllocator(JSContext *cx)
         js_ReportOutOfMemory(cx);
     return execAlloc_;
 }
-
-#ifdef JS_YARR
-
-WTF::BumpPointerAllocator *
-JSRuntime::createBumpPointerAllocator(JSContext *cx)
-{
-    JS_ASSERT(!bumpAlloc_);
-    JS_ASSERT(cx->runtime() == this);
-
-    bumpAlloc_ = js_new<WTF::BumpPointerAllocator>();
-    if (!bumpAlloc_)
-        js_ReportOutOfMemory(cx);
-    return bumpAlloc_;
-}
-
-#endif // JS_YARR
 
 MathCache *
 JSRuntime::createMathCache(JSContext *cx)
@@ -710,8 +694,6 @@ JSRuntime::updateMallocCounter(JS::Zone *zone, size_t nbytes)
 JS_FRIEND_API(void)
 JSRuntime::onTooMuchMalloc()
 {
-    if (!CurrentThreadCanAccessRuntime(this))
-        return;
     gc.onTooMuchMalloc();
 }
 

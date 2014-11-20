@@ -102,8 +102,6 @@ using namespace mozilla::places;
 // for repeating stuff.  These are milliseconds between "now" cache refreshes.
 #define RENEW_CACHED_NOW_TIMEOUT ((int32_t)3 * PR_MSEC_PER_SEC)
 
-static const int64_t USECS_PER_DAY = (int64_t)PR_USEC_PER_SEC * 60 * 60 * 24;
-
 // character-set annotation
 #define CHARSET_ANNO NS_LITERAL_CSTRING("URIProperties/characterSet")
 
@@ -2865,7 +2863,7 @@ NS_IMETHODIMP
 nsNavHistory::SetCharsetForURI(nsIURI* aURI,
                                const nsAString& aCharset)
 {
-  PLACES_WARN_DEPRECATED();
+  //PLACES_WARN_DEPRECATED();
 
   NS_ASSERTION(NS_IsMainThread(), "This can only be called on the main thread");
   NS_ENSURE_ARG(aURI);
@@ -2903,7 +2901,7 @@ NS_IMETHODIMP
 nsNavHistory::GetCharsetForURI(nsIURI* aURI, 
                                nsAString& aCharset)
 {
-  PLACES_WARN_DEPRECATED();
+  //PLACES_WARN_DEPRECATED();
 
   NS_ASSERTION(NS_IsMainThread(), "This can only be called on the main thread");
   NS_ENSURE_ARG(aURI);
@@ -2924,7 +2922,7 @@ nsNavHistory::GetCharsetForURI(nsIURI* aURI,
 NS_IMETHODIMP
 nsNavHistory::GetPageTitle(nsIURI* aURI, nsAString& aTitle)
 {
-  PLACES_WARN_DEPRECATED();
+  //PLACES_WARN_DEPRECATED();
 
   NS_ASSERTION(NS_IsMainThread(), "This can only be called on the main thread");
   NS_ENSURE_ARG(aURI);

@@ -25,6 +25,9 @@
 #define JS_HAS_DESTRUCTURING    2       /* has [a,b] = ... or {p:a,q:b} = ... */
 #define JS_HAS_GENERATOR_EXPRS  1       /* has (expr for (lhs in iterable)) */
 #define JS_HAS_EXPR_CLOSURES    1       /* has function (formals) listexpr */
+#ifdef NIGHTLY_BUILD
+#define JS_HAS_TEMPLATE_STRINGS 1       /* has template string support */
+#endif
 
 /* Support for JS_NewGlobalObject. */
 #define JS_HAS_NEW_GLOBAL_OBJECT        1
@@ -40,5 +43,10 @@
  * support likely to be made opt-in at some future time.
  */
 #define JS_OLD_GETTER_SETTER_METHODS    1
+
+/* Support for Symbols - Nightly-only for now. */
+#ifdef NIGHTLY_BUILD
+#define JS_HAS_SYMBOLS 1
+#endif
 
 #endif /* jsversion_h */

@@ -25,12 +25,17 @@
 #ifndef mozilla_psm_OCSPCache_h
 #define mozilla_psm_OCSPCache_h
 
-#include "certt.h"
 #include "hasht.h"
-#include "pkix/pkixtypes.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/Vector.h"
+#include "pkix/Result.h"
 #include "prerror.h"
+#include "prtime.h"
+#include "seccomon.h"
+
+namespace mozilla { namespace pkix {
+struct CertID;
+} } // namespace mozilla::pkix
 
 namespace mozilla { namespace psm {
 
@@ -53,8 +58,9 @@ public:
   // issuer) is in the cache, and false otherwise.
   // If it is in the cache, returns by reference the error code of the cached
   // status and the time through which the status is considered trustworthy.
-  bool Get(const CERTCertificate* aCert, const CERTCertificate* aIssuerCert,
-           /* out */ PRErrorCode& aErrorCode, /* out */ PRTime& aValidThrough);
+  bool Get(const mozilla::pkix::CertID& aCertID,
+           /*out*/ mozilla::pkix::Result& aResult,
+           /*out*/ PRTime& aValidThrough);
 
   // Caches the status of the given certificate (issued by the given issuer).
   // The status is considered trustworthy through the given time.
@@ -65,11 +71,9 @@ public:
   // A status with a more recent thisUpdate will not be replaced with a
   // status with a less recent thisUpdate unless the less recent status
   // indicates the certificate is revoked.
-  SECStatus Put(const CERTCertificate* aCert,
-                const CERTCertificate* aIssuerCert,
-                PRErrorCode aErrorCode,
-                PRTime aThisUpdate,
-                PRTime aValidThrough);
+  mozilla::pkix::Result Put(const mozilla::pkix::CertID& aCertID,
+                            mozilla::pkix::Result aResult, PRTime aThisUpdate,
+                            PRTime aValidThrough);
 
   // Removes everything from the cache.
   void Clear();
@@ -78,12 +82,11 @@ private:
   class Entry
   {
   public:
-    SECStatus Init(const CERTCertificate* aCert,
-                   const CERTCertificate* aIssuerCert,
-                   PRErrorCode aErrorCode, PRTime aThisUpdate,
-                   PRTime aValidThrough);
+    mozilla::pkix::Result Init(const mozilla::pkix::CertID& aCertID,
+                               mozilla::pkix::Result aResult,
+                               PRTime aThisUpdate, PRTime aValidThrough);
 
-    PRErrorCode mErrorCode;
+    mozilla::pkix::Result mResult;
     PRTime mThisUpdate;
     PRTime mValidThrough;
     // The SHA-384 hash of the concatenation of the DER encodings of the
@@ -92,13 +95,9 @@ private:
     SHA384Buffer mIDHash;
   };
 
-  bool FindInternal(const CERTCertificate* aCert,
-                    const CERTCertificate* aIssuerCert,
-                    /*out*/ size_t& index,
+  bool FindInternal(const mozilla::pkix::CertID& aCertID, /*out*/ size_t& index,
                     const MutexAutoLock& aProofOfLock);
   void MakeMostRecentlyUsed(size_t aIndex, const MutexAutoLock& aProofOfLock);
-  void LogWithCerts(const char* aMessage, const CERTCertificate* aCert,
-                    const CERTCertificate* aIssuerCert);
 
   Mutex mMutex;
   static const size_t MaxEntries = 1024;

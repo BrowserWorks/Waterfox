@@ -82,6 +82,13 @@ when there are no windows but Firefox is still running. -->
 <!ENTITY personalbarCmd.accesskey "B">
 <!ENTITY bookmarksToolbarItem.label "Bookmarks Toolbar Items">
 
+<!ENTITY toolbarContextMenu.reloadAllTabs.label "Reload All Tabs">
+<!ENTITY toolbarContextMenu.reloadAllTabs.accesskey "A">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.label "Bookmark All Tabs…">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.accesskey "T">
+<!ENTITY toolbarContextMenu.undoCloseTab.label "Undo Close Tab">
+<!ENTITY toolbarContextMenu.undoCloseTab.accesskey "U">
+
 <!ENTITY pageSourceCmd.label "Page Source">
 <!ENTITY pageSourceCmd.accesskey "o">
 <!ENTITY pageSourceCmd.commandkey "u">
@@ -259,6 +266,8 @@ These should match what Safari and other Apple applications use on OS X Lion. --
 <!ENTITY devToolbarMenu.accesskey          "v">
 <!ENTITY devAppMgrMenu.label               "App Manager">
 <!ENTITY devAppMgrMenu.accesskey           "A">
+<!ENTITY webide.label                      "WebIDE">
+<!ENTITY webide.accesskey                  "W">
 <!ENTITY devToolbar.keycode                "VK_F2">
 <!ENTITY devToolbar.keytext                "F2">
 <!ENTITY devToolboxMenuItem.label          "Toggle Tools">
@@ -700,11 +709,16 @@ just addresses the organization to follow, e.g. "This site is run by " -->
 
 <!ENTITY getUserMedia.selectCamera.label "Camera to share:">
 <!ENTITY getUserMedia.selectCamera.accesskey "C">
+<!ENTITY getUserMedia.selectWindowOrScreen.label "Window or screen to share:">
+<!ENTITY getUserMedia.selectWindowOrScreen.accesskey "W">
 <!ENTITY getUserMedia.selectMicrophone.label "Microphone to share:">
 <!ENTITY getUserMedia.selectMicrophone.accesskey "M">
+<!ENTITY getUserMedia.allWindowsShared.message "All visible windows on your screen will be shared.">
 
 <!ENTITY webrtcIndicatorButton.label "Camera / Microphone Access">
 <!ENTITY webrtcIndicatorButton.tooltip "Display sites you are currently sharing your camera or microphone with">
+
+<!ENTITY loopCallButton.tooltip "Invite someone to talk">
 
 <!ENTITY mixedContentBlocked.moreinfo "Most websites will still work properly even when this content is blocked.">
 
@@ -735,4 +749,29 @@ just addresses the organization to follow, e.g. "This site is run by " -->
 <!ENTITY appMenuSidebars.label         "Sidebars">
 
 <!ENTITY switchToMetroCmd2.label       "Relaunch in &brandShortName; for Windows 8 Touch">
+
+<!-- LOCALIZATION NOTE: (panicButton.view.mainTimeframeDesc, panicButton.view.5min, panicButton.view.2hr, panicButton.view.day):
+     The .mainTimeframeDesc string combined with any of the 3 others is meant to form a complete sentence, e.g. "Forget the last: Five minutes".
+     Please ensure that this remains the case in the translation. -->
+<!ENTITY panicButton.view.mainTimeframeDesc       "Forget the last:">
+<!ENTITY panicButton.view.5min                    "Five minutes">
+<!ENTITY panicButton.view.2hr                     "Two hours">
+<!ENTITY panicButton.view.day                     "24 hours">
+
+<!-- LOCALIZATION NOTE: (panicButton.view.mainLabel, panicButton.view.deleteCookies, panicButton.view.deleteHistory, panicButton.view.deleteTabsAndWindows, panicButton.view.openNewWindow):
+     The .mainActionDesc string combined with any of the 4 others is meant to form a complete sentence, e.g. "Proceeding will: Delete Recent Cookies".
+     Note also that the deleteCookies, deleteHistory and deleteTabsAndWindows strings include <html:strong> tags for emphasis on the words "Cookies", "History", "Tabs" and "Windows".
+     The translation should do the same. -->
+<!ENTITY panicButton.view.mainActionDesc          "Proceeding will:">
+<!ENTITY panicButton.view.deleteCookies           "Delete Recent <html:strong>Cookies</html:strong>">
+<!ENTITY panicButton.view.deleteHistory           "Delete Recent <html:strong>History</html:strong>">
+<!ENTITY panicButton.view.deleteTabsAndWindows    "Close all <html:strong>Tabs</html:strong> and <html:strong>Windows</html:strong>">
+<!ENTITY panicButton.view.openNewWindow           "Open a new clean Window">
+
+<!ENTITY panicButton.view.undoWarning             "This action cannot be undone.">
+<!ENTITY panicButton.view.forgetButton            "Forget!">
+
+<!ENTITY panicButton.thankyou.msg1                "Your recent history is cleared.">
+<!ENTITY panicButton.thankyou.msg2                "Safe browsing!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Thanks!">
 

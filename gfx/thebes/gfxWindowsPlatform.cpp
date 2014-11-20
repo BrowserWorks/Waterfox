@@ -83,11 +83,13 @@ static const int kSupportedFeatureLevels[] =
 
 class GfxD2DSurfaceReporter MOZ_FINAL : public nsIMemoryReporter
 {
+    ~GfxD2DSurfaceReporter() {}
+
 public:
     NS_DECL_ISUPPORTS
 
     NS_IMETHOD CollectReports(nsIHandleReportCallback* aHandleReport,
-                              nsISupports* aData)
+                              nsISupports* aData, bool aAnonymize)
     {
         nsresult rv;
 
@@ -115,11 +117,13 @@ NS_IMPL_ISUPPORTS(GfxD2DSurfaceReporter, nsIMemoryReporter)
 
 class GfxD2DVramReporter MOZ_FINAL : public nsIMemoryReporter
 {
+    ~GfxD2DVramReporter() {}
+
 public:
     NS_DECL_ISUPPORTS
 
     NS_IMETHOD CollectReports(nsIHandleReportCallback* aHandleReport,
-                              nsISupports* aData)
+                              nsISupports* aData, bool aAnonymize)
     {
         nsresult rv;
 
@@ -170,12 +174,14 @@ class GPUAdapterReporter : public nsIMemoryReporter
         return result;
     }
 
+    ~GPUAdapterReporter() {}
+
 public:
     NS_DECL_ISUPPORTS
 
     NS_IMETHOD
     CollectReports(nsIMemoryReporterCallback* aCb,
-                   nsISupports* aClosure)
+                   nsISupports* aClosure, bool aAnonymize)
     {
         HANDLE ProcessHandle = GetCurrentProcess();
 
@@ -188,7 +194,7 @@ public:
         PFND3DKMTQS queryD3DKMTStatistics;
 
         // GPU memory reporting is not available before Windows 7
-        if (!IsWin7OrLater()) 
+        if (!IsWin7OrLater())
             return NS_OK;
 
         if (gdi32Handle = LoadLibrary(TEXT("gdi32.dll")))
@@ -283,14 +289,6 @@ public:
 
 NS_IMPL_ISUPPORTS(GPUAdapterReporter, nsIMemoryReporter)
 
-static __inline void
-BuildKeyNameFromFontName(nsAString &aName)
-{
-    if (aName.Length() >= LF_FACESIZE)
-        aName.Truncate(LF_FACESIZE - 1);
-    ToLowerCase(aName);
-}
-
 gfxWindowsPlatform::gfxWindowsPlatform()
   : mD3D11DeviceInitialized(false)
   , mPrefFonts(50)
@@ -368,7 +366,7 @@ gfxWindowsPlatform::UpdateRenderMode()
     if (gfxInfo) {
         int32_t status;
         if (NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_DIRECT2D, &status))) {
-            if (status != nsIGfxInfo::FEATURE_NO_INFO) {
+            if (status != nsIGfxInfo::FEATURE_STATUS_OK) {
                 d2dBlocked = true;
             }
         }
@@ -387,9 +385,14 @@ gfxWindowsPlatform::UpdateRenderMode()
         tryD2D = false;
     }
 
-    if (isVistaOrHigher  && !safeMode && tryD2D) {
+    ID3D11Device *device = GetD3D11Device();
+    if (isVistaOrHigher && !safeMode && tryD2D &&
+        device &&
+        device->GetFeatureLevel() >= D3D_FEATURE_LEVEL_10_0 &&
+        DoesD3D11DeviceSupportResourceSharing(device)) {
+
         VerifyD2DDevice(d2dForceEnabled);
-        if (mD2DDevice) {
+        if (mD2DDevice && GetD3D11Device()) {
             mRenderMode = RENDER_DIRECT2D;
             mUseDirectWrite = true;
         }
@@ -627,7 +630,7 @@ gfxWindowsPlatform::GetScaledFontForFont(DrawTarget* aTarget, gfxFont *aFont)
         nativeFont.mType = NativeFontType::DWRITE_FONT_FACE;
         nativeFont.mFont = font->GetFontFace();
 
-        if (aTarget->GetType() == BackendType::CAIRO) {
+        if (aTarget->GetBackendType() == BackendType::CAIRO) {
           return Factory::CreateScaledFontWithCairo(nativeFont,
                                                     font->GetAdjustedSize(),
                                                     font->GetCairoScaledFont());
@@ -646,44 +649,13 @@ gfxWindowsPlatform::GetScaledFontForFont(DrawTarget* aTarget, gfxFont *aFont)
     GetObject(static_cast<gfxGDIFont*>(aFont)->GetHFONT(), sizeof(LOGFONT), &lf);
     nativeFont.mFont = &lf;
 
-    if (aTarget->GetType() == BackendType::CAIRO) {
+    if (aTarget->GetBackendType() == BackendType::CAIRO) {
       return Factory::CreateScaledFontWithCairo(nativeFont,
                                                 aFont->GetAdjustedSize(),
                                                 aFont->GetCairoScaledFont());
     }
 
     return Factory::CreateScaledFontForNativeFont(nativeFont, aFont->GetAdjustedSize());
-}
-
-already_AddRefed<gfxASurface>
-gfxWindowsPlatform::GetThebesSurfaceForDrawTarget(DrawTarget *aTarget)
-{
-#ifdef XP_WIN
-  if (aTarget->GetType() == BackendType::DIRECT2D) {
-    if (!GetD2DDevice()) {
-      // We no longer have a D2D device, can't do this.
-      return nullptr;
-    }
-
-    RefPtr<ID3D10Texture2D> texture =
-      static_cast<ID3D10Texture2D*>(aTarget->GetNativeSurface(NativeSurfaceType::D3D10_TEXTURE));
-
-    if (!texture) {
-      return gfxPlatform::GetThebesSurfaceForDrawTarget(aTarget);
-    }
-
-    aTarget->Flush();
-
-    nsRefPtr<gfxASurface> surf =
-      new gfxD2DSurface(texture, ContentForFormat(aTarget->GetFormat()));
-
-    // shouldn't this hold a reference?
-    surf->SetData(&kDrawTarget, aTarget, nullptr);
-    return surf.forget();
-  }
-#endif
-
-  return gfxPlatform::GetThebesSurfaceForDrawTarget(aTarget);
 }
 
 nsresult
@@ -694,14 +666,6 @@ gfxWindowsPlatform::GetFontList(nsIAtom *aLangGroup,
     gfxPlatformFontList::PlatformFontList()->GetFontList(aLangGroup, aGenericFamily, aListOfFonts);
 
     return NS_OK;
-}
-
-static void
-RemoveCharsetFromFontSubstitute(nsAString &aName)
-{
-    int32_t comma = aName.FindChar(char16_t(','));
-    if (comma >= 0)
-        aName.Truncate(comma);
 }
 
 nsresult
@@ -989,6 +953,12 @@ gfxWindowsPlatform::IsFontFormatSupported(nsIURI *aFontURI, uint32_t aFormatFlag
     return true;
 }
 
+bool
+gfxWindowsPlatform::DidRenderingDeviceReset()
+{
+  return GetD3D10Device() && GetD3D10Device()->GetDeviceRemovedReason() != S_OK;
+}
+
 gfxFontFamily *
 gfxWindowsPlatform::FindFontFamily(const nsAString& aName)
 {
@@ -1020,15 +990,11 @@ gfxWindowsPlatform::GetPlatformCMSOutputProfile(void* &mem, size_t &mem_size)
     if (!dc)
         return;
 
-#if _MSC_VER
-    __try {
+    MOZ_SEH_TRY {
         res = GetICMProfileW(dc, &size, (LPWSTR)&str);
-    } __except(GetExceptionCode() == EXCEPTION_ILLEGAL_INSTRUCTION) {
+    } MOZ_SEH_EXCEPT(GetExceptionCode() == EXCEPTION_ILLEGAL_INSTRUCTION) {
         res = FALSE;
     }
-#else
-    res = GetICMProfileW(dc, &size, (LPWSTR)&str);
-#endif
 
     ReleaseDC(nullptr, dc);
     if (!res)
@@ -1380,8 +1346,8 @@ gfxWindowsPlatform::GetD3D9DeviceManager()
   // We should only create the d3d9 device on the compositor thread
   // or we don't have a compositor thread.
   if (!mDeviceManager &&
-      (CompositorParent::IsInCompositorThread() ||
-       !CompositorParent::CompositorLoop())) {
+      (!gfxPlatform::UsesOffMainThreadCompositing() ||
+       CompositorParent::IsInCompositorThread())) {
     mDeviceManager = new DeviceManagerD3D9();
     if (!mDeviceManager->Init()) {
       NS_WARNING("Could not initialise device manager");
@@ -1400,6 +1366,16 @@ gfxWindowsPlatform::GetD3D11Device()
   }
 
   mD3D11DeviceInitialized = true;
+
+  nsCOMPtr<nsIGfxInfo> gfxInfo = do_GetService("@mozilla.org/gfx/info;1");
+  if (gfxInfo) {
+    int32_t status;
+    if (NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_DIRECT3D_11_LAYERS, &status))) {
+      if (status != nsIGfxInfo::FEATURE_STATUS_OK) {
+        return nullptr;
+      }
+    }
+  }
 
   nsModuleHandle d3d11Module(LoadLibrarySystem32(L"d3d11.dll"));
   decltype(D3D11CreateDevice)* d3d11CreateDevice = (decltype(D3D11CreateDevice)*)
@@ -1424,14 +1400,24 @@ gfxWindowsPlatform::GetD3D11Device()
     return nullptr;
   }
 
-  HRESULT hr = d3d11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr,
-                                 D3D11_CREATE_DEVICE_BGRA_SUPPORT,
-                                 featureLevels.Elements(), featureLevels.Length(),
-                                 D3D11_SDK_VERSION, byRef(mD3D11Device), nullptr, nullptr);
+  HRESULT hr = E_INVALIDARG;
+  __try {
+    hr = d3d11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr,
+                                    D3D11_CREATE_DEVICE_BGRA_SUPPORT,
+                                    featureLevels.Elements(), featureLevels.Length(),
+                                    D3D11_SDK_VERSION, byRef(mD3D11Device), nullptr, nullptr);
+  } __except (EXCEPTION_EXECUTE_HANDLER) {
+    mD3D11Device = nullptr;
+    return nullptr;
+  }
 
   // We leak these everywhere and we need them our entire runtime anyway, let's
   // leak it here as well.
   d3d11Module.disown();
+
+  if (SUCCEEDED(hr)) {
+    mD3D11Device->SetExceptionMode(0);
+  }
 
   return mD3D11Device;
 }
@@ -1509,4 +1495,68 @@ gfxWindowsPlatform::GetDXGIAdapter()
   dxgiModule.disown();
 
   return mAdapter;
+}
+
+// See bug 1083071. On some drivers, Direct3D 11 CreateShaderResourceView fails
+// with E_OUTOFMEMORY.
+bool DoesD3D11DeviceSupportResourceSharing(ID3D11Device *device)
+{
+  static bool checked;
+  static bool result;
+
+  if (checked)
+      return result;
+  checked = true;
+  RefPtr<ID3D11Texture2D> texture;
+  D3D11_TEXTURE2D_DESC desc;
+  desc.Width = 32;
+  desc.Height = 32;
+  desc.MipLevels = 1;
+  desc.ArraySize = 1;
+  desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+  desc.SampleDesc.Count = 1;
+  desc.SampleDesc.Quality = 0;
+  desc.Usage = D3D11_USAGE_DEFAULT;
+  desc.CPUAccessFlags = 0;
+  desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
+  desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+  if (FAILED(device->CreateTexture2D(&desc, NULL, byRef(texture)))) {
+    return false;
+  }
+
+  HANDLE shareHandle;
+  nsRefPtr<IDXGIResource> otherResource;
+  if (FAILED(texture->QueryInterface(__uuidof(IDXGIResource),
+                                     getter_AddRefs(otherResource))))
+  {
+    return false;
+  }
+
+  if (FAILED(otherResource->GetSharedHandle(&shareHandle))) {
+    return false;
+  }
+
+  nsRefPtr<ID3D11Resource> sharedResource;
+  nsRefPtr<ID3D11Texture2D> sharedTexture;
+  if (FAILED(device->OpenSharedResource(shareHandle, __uuidof(ID3D11Resource),
+                                        getter_AddRefs(sharedResource))))
+  {
+    return false;
+  }
+
+  if (FAILED(sharedResource->QueryInterface(__uuidof(ID3D11Texture2D),
+                                            getter_AddRefs(sharedTexture))))
+  {
+    return false;
+  }
+
+  RefPtr<ID3D11ShaderResourceView> sharedView;
+
+  // This if(FAILED()) is the one that actually fails on systems affected by bug 1083071.
+  if (FAILED(device->CreateShaderResourceView(sharedTexture, NULL, byRef(sharedView)))) {
+    return false;
+  }
+
+  result = true;
+  return true;
 }

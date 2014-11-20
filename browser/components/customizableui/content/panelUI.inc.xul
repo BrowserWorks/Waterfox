@@ -7,7 +7,6 @@
        type="arrow"
        hidden="true"
        flip="slide"
-       animate="false"
        position="bottomcenter topright"
        noautofocus="true">
   <panelmultiview id="PanelUI-multiView" mainViewId="PanelUI-mainView">
@@ -141,6 +140,8 @@
     </panelview>
 
     <panelview id="PanelUI-socialapi" flex="1"/>
+
+    <panelview id="PanelUI-loopapi" flex="1"/>
 
     <panelview id="PanelUI-feeds" flex="1" oncommand="FeedHandler.subscribeToFeed(null, event);">
       <label value="&feedsMenu.label;" class="panel-subview-header"/>

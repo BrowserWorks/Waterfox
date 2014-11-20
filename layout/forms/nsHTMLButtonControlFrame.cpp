@@ -331,8 +331,10 @@ nsHTMLButtonControlFrame::ReflowButtonContents(nsPresContext* aPresContext,
                     xoffset, yoffset, 0);
 
   // Make sure we have a useful 'ascent' value for the child
-  if (contentsDesiredSize.TopAscent() == nsHTMLReflowMetrics::ASK_FOR_BASELINE) {
-    contentsDesiredSize.SetTopAscent(aFirstKid->GetBaseline());
+  if (contentsDesiredSize.BlockStartAscent() ==
+      nsHTMLReflowMetrics::ASK_FOR_BASELINE) {
+    WritingMode wm = aButtonReflowState.GetWritingMode();
+    contentsDesiredSize.SetBlockStartAscent(aFirstKid->GetLogicalBaseline(wm));
   }
 
   // OK, we're done with the child frame.
@@ -346,7 +348,8 @@ nsHTMLButtonControlFrame::ReflowButtonContents(nsPresContext* aPresContext,
 
   //  * Button's ascent is its child's ascent, plus the child's y-offset
   // within our frame:
-  aButtonDesiredSize.SetTopAscent(contentsDesiredSize.TopAscent() + yoffset);
+  aButtonDesiredSize.SetBlockStartAscent(contentsDesiredSize.BlockStartAscent() +
+                                         yoffset);
 
   aButtonDesiredSize.SetOverflowAreasToDesiredBounds();
 }

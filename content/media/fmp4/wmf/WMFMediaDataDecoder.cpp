@@ -21,12 +21,12 @@ PRLogModuleInfo* GetDemuxerLog();
 
 namespace mozilla {
 
-WMFMediaDataDecoder::WMFMediaDataDecoder(WMFOutputSource* aSource,
+WMFMediaDataDecoder::WMFMediaDataDecoder(MFTManager* aMFTManager,
                                          MediaTaskQueue* aTaskQueue,
                                          MediaDataDecoderCallback* aCallback)
   : mTaskQueue(aTaskQueue)
   , mCallback(aCallback)
-  , mSource(aSource)
+  , mMFTManager(aMFTManager)
 {
   MOZ_COUNT_CTOR(WMFMediaDataDecoder);
 }
@@ -39,7 +39,7 @@ WMFMediaDataDecoder::~WMFMediaDataDecoder()
 nsresult
 WMFMediaDataDecoder::Init()
 {
-  mDecoder = mSource->Init();
+  mDecoder = mMFTManager->Init();
   NS_ENSURE_TRUE(mDecoder, NS_ERROR_FAILURE);
 
   return NS_OK;
@@ -67,11 +67,9 @@ WMFMediaDataDecoder::Input(mp4_demuxer::MP4Sample* aSample)
 void
 WMFMediaDataDecoder::ProcessDecode(mp4_demuxer::MP4Sample* aSample)
 {
-  const uint8_t* data = reinterpret_cast<const uint8_t*>(aSample->data);
-  uint32_t length = aSample->size;
-  HRESULT hr = mDecoder->Input(data, length, aSample->composition_timestamp);
+  HRESULT hr = mMFTManager->Input(aSample);
   if (FAILED(hr)) {
-    NS_WARNING("WMFAudioDecoder failed to input data");
+    NS_WARNING("MFTManager rejected sample");
     mCallback->Error();
     return;
   }
@@ -86,7 +84,7 @@ WMFMediaDataDecoder::ProcessOutput()
 {
   nsAutoPtr<MediaData> output;
   HRESULT hr = S_OK;
-  while (SUCCEEDED(hr = mSource->Output(mLastStreamOffset, output)) &&
+  while (SUCCEEDED(hr = mMFTManager->Output(mLastStreamOffset, output)) &&
          output) {
     mCallback->Output(output.forget());
   }
@@ -122,7 +120,7 @@ WMFMediaDataDecoder::ProcessDrain()
 {
   // Order the decoder to drain...
   if (FAILED(mDecoder->SendMFTMessage(MFT_MESSAGE_COMMAND_DRAIN, 0))) {
-    NS_WARNING("Failed to send DRAIN command to audio MFT");
+    NS_WARNING("Failed to send DRAIN command to MFT");
   }
   // Then extract all available output.
   ProcessOutput();

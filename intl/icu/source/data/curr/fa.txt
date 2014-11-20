@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2013 International Business Machines
+// * Copyright (C) 2014 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/fa.xml
@@ -864,6 +864,17 @@ fa{
             "دلار زیمبابوه (۲۰۰۸)",
         }
     }
+    Currencies%narrow{
+        CNY{"¥"}
+        EUR{"€"}
+        GBP{"£"}
+        INR{"₹"}
+        JPY{"¥"}
+        USD{"$"}
+    }
+    Currencies%variant{
+        RUB{"₽"}
+    }
     CurrencyPlurals{
         AFN{
             one{"افغانی افغانستان"}
@@ -881,9 +892,17 @@ fa{
             one{"دلار کانادا"}
             other{"دلار کانادا"}
         }
+        CNY{
+            one{"یوآن چین"}
+            other{"یوآن چین"}
+        }
         EUR{
             one{"یورو"}
             other{"یورو"}
+        }
+        GBP{
+            one{"پوند بریتانیا"}
+            other{"پوند بریتانیا"}
         }
         INR{
             one{"روپیهٔ هند"}
@@ -905,10 +924,22 @@ fa{
             one{"دلار امریکا"}
             other{"دلار امریکا"}
         }
+        XAF{
+            one{"فرانک CFA مرکز آفریقا"}
+            other{"فرانک CFA مرکز آفریقا"}
+        }
+        XOF{
+            one{"فرانک CFA غرب آفریقا"}
+            other{"فرانک CFA غرب آفریقا"}
+        }
+        XPF{
+            one{"فرانک CFP"}
+            other{"فرانک CFP"}
+        }
         XXX{
             one{"(ارز نامشخص)"}
             other{"(ارز نامشخص)"}
         }
     }
-    Version{"2.0.92.87"}
+    Version{"2.1.8.9"}
 }

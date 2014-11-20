@@ -9,6 +9,7 @@
 #include "builtin/TypedObject.h"
 #include "jit/arm/Simulator-arm.h"
 #include "jit/mips/Simulator-mips.h"
+#include "jit/RematerializedFrame.h"
 #include "vm/ArrayObject.h"
 
 #include "jsgcinlines.h"
@@ -17,12 +18,13 @@
 using namespace js;
 using namespace jit;
 
+using mozilla::IsInRange;
+
 using JS::AutoCheckCannotGC;
 
 using parallel::Spew;
 using parallel::SpewOps;
 using parallel::SpewBailouts;
-using parallel::SpewBailoutIR;
 
 // Load the current thread context.
 ForkJoinContext *
@@ -38,7 +40,11 @@ JSObject *
 jit::NewGCThingPar(ForkJoinContext *cx, gc::AllocKind allocKind)
 {
     JS_ASSERT(ForkJoinContext::current() == cx);
+#ifdef JSGC_FJGENERATIONAL
+    return js::NewGCObject<CanGC>(cx, allocKind, 0, gc::DefaultHeap);
+#else
     return js::NewGCObject<NoGC>(cx, allocKind, 0, gc::TenuredHeap);
+#endif
 }
 
 bool
@@ -121,93 +127,25 @@ jit::IsInTargetRegion(ForkJoinContext *cx, TypedObject *typedObj)
             typedMem <  cx->targetRegionEnd);
 }
 
-#ifdef DEBUG
-static void
-printTrace(const char *prefix, struct IonLIRTraceData *cached)
-{
-    fprintf(stderr, "%s / Block %3u / LIR %3u / Mode %u / LIR %s\n",
-            prefix,
-            cached->blockIndex, cached->lirIndex, cached->execModeInt, cached->lirOpName);
-}
-
-static struct IonLIRTraceData seqTraceData;
-#endif
-
-void
-jit::TraceLIR(IonLIRTraceData *current)
-{
-#ifdef DEBUG
-    static enum { NotSet, All, Bailouts } traceMode;
-
-    // If you set IONFLAGS=trace, this function will be invoked before every LIR.
-    //
-    // You can either modify it to do whatever you like, or use gdb scripting.
-    // For example:
-    //
-    // break TraceLIR
-    // commands
-    // continue
-    // exit
-
-    if (traceMode == NotSet) {
-        // Racy, but that's ok.
-        const char *env = getenv("IONFLAGS");
-        if (strstr(env, "trace-all"))
-            traceMode = All;
-        else
-            traceMode = Bailouts;
-    }
-
-    IonLIRTraceData *cached;
-    if (current->execModeInt == 0)
-        cached = &seqTraceData;
-    else
-        cached = &ForkJoinContext::current()->traceData;
-
-    if (current->blockIndex == 0xDEADBEEF) {
-        if (current->execModeInt == 0)
-            printTrace("BAILOUT", cached);
-        else
-            SpewBailoutIR(cached);
-    }
-
-    memcpy(cached, current, sizeof(IonLIRTraceData));
-
-    if (traceMode == All)
-        printTrace("Exec", cached);
-#endif
-}
-
 bool
 jit::CheckOverRecursedPar(ForkJoinContext *cx)
 {
     JS_ASSERT(ForkJoinContext::current() == cx);
     int stackDummy_;
 
-    // When an interrupt is requested, the main thread stack limit is
-    // overwritten with a sentinel value that brings us here.
-    // Therefore, we must check whether this is really a stack overrun
-    // and, if not, check whether an interrupt was requested.
-    //
-    // When not on the main thread, we don't overwrite the stack
-    // limit, but we do still call into this routine if the interrupt
+    // In PJS, unlike sequential execution, we don't overwrite the stack limit
+    // on interrupt, but we do still call into this routine if the interrupt
     // flag is set, so we still need to double check.
 
 #if defined(JS_ARM_SIMULATOR) || defined(JS_MIPS_SIMULATOR)
     if (Simulator::Current()->overRecursed()) {
-        cx->bailoutRecord->setCause(ParallelBailoutOverRecursed);
+        cx->bailoutRecord->joinCause(ParallelBailoutOverRecursed);
         return false;
     }
 #endif
 
-    uintptr_t realStackLimit;
-    if (cx->isMainThread())
-        realStackLimit = GetNativeStackLimit(cx);
-    else
-        realStackLimit = cx->perThreadData->jitStackLimit;
-
-    if (!JS_CHECK_STACK_SIZE(realStackLimit, &stackDummy_)) {
-        cx->bailoutRecord->setCause(ParallelBailoutOverRecursed);
+    if (!JS_CHECK_STACK_SIZE(cx->perThreadData->jitStackLimit, &stackDummy_)) {
+        cx->bailoutRecord->joinCause(ParallelBailoutOverRecursed);
         return false;
     }
 
@@ -220,11 +158,7 @@ jit::InterruptCheckPar(ForkJoinContext *cx)
     JS_ASSERT(ForkJoinContext::current() == cx);
     bool result = cx->check();
     if (!result) {
-        // Do not set the cause here.  Either it was set by this
-        // thread already by some code that then triggered an abort,
-        // or else we are just picking up an abort from some other
-        // thread.  Either way we have nothing useful to contribute so
-        // we might as well leave our bailout case unset.
+        cx->bailoutRecord->joinCause(ParallelBailoutInterrupt);
         return false;
     }
     return true;
@@ -363,8 +297,24 @@ CompareStringsPar(ForkJoinContext *cx, JSString *left, JSString *right, int32_t 
     if (!leftInspector.ensureChars(cx, nogc) || !rightInspector.ensureChars(cx, nogc))
         return false;
 
-    *res = CompareChars(leftInspector.twoByteChars(), left->length(),
-                        rightInspector.twoByteChars(), right->length());
+    if (leftInspector.hasLatin1Chars()) {
+        if (rightInspector.hasLatin1Chars()) {
+            *res = CompareChars(leftInspector.latin1Chars(), left->length(),
+                                rightInspector.latin1Chars(), right->length());
+        } else {
+            *res = CompareChars(leftInspector.latin1Chars(), left->length(),
+                                rightInspector.twoByteChars(), right->length());
+        }
+    } else {
+        if (rightInspector.hasLatin1Chars()) {
+            *res = CompareChars(leftInspector.twoByteChars(), left->length(),
+                                rightInspector.latin1Chars(), right->length());
+        } else {
+            *res = CompareChars(leftInspector.twoByteChars(), left->length(),
+                                rightInspector.twoByteChars(), right->length());
+        }
+    }
+
     return true;
 }
 
@@ -569,58 +519,38 @@ jit::UrshValuesPar(ForkJoinContext *cx, HandleValue lhs, HandleValue rhs,
 }
 
 void
-jit::AbortPar(ParallelBailoutCause cause, JSScript *outermostScript, JSScript *currentScript,
-              jsbytecode *bytecode)
+jit::BailoutPar(BailoutStack *sp, uint8_t **entryFramePointer)
 {
-    // Spew before asserts to help with diagnosing failures.
-    Spew(SpewBailouts,
-         "Parallel abort with cause %d in %p:%s:%d "
-         "(%p:%s:%d at line %d)",
-         cause,
-         outermostScript, outermostScript->filename(), outermostScript->lineno(),
-         currentScript, currentScript->filename(), currentScript->lineno(),
-         (currentScript ? PCToLineNumber(currentScript, bytecode) : 0));
-
-    JS_ASSERT(InParallelSection());
-    JS_ASSERT(outermostScript != nullptr);
-    JS_ASSERT(currentScript != nullptr);
-    JS_ASSERT(outermostScript->hasParallelIonScript());
+    parallel::Spew(parallel::SpewBailouts, "Bailing");
 
     ForkJoinContext *cx = ForkJoinContext::current();
 
-    JS_ASSERT(cx->bailoutRecord->depth == 0);
-    cx->bailoutRecord->setCause(cause, outermostScript, currentScript, bytecode);
+    // We don't have an exit frame.
+    MOZ_ASSERT(IsInRange(FAKE_JIT_TOP_FOR_BAILOUT, 0, 0x1000) &&
+               IsInRange(FAKE_JIT_TOP_FOR_BAILOUT + sizeof(IonCommonFrameLayout), 0, 0x1000),
+               "Fake jitTop pointer should be within the first page.");
+    cx->perThreadData->jitTop = FAKE_JIT_TOP_FOR_BAILOUT;
+
+    JitActivationIterator jitActivations(cx->perThreadData);
+    IonBailoutIterator frameIter(jitActivations, sp);
+    SnapshotIterator snapIter(frameIter);
+
+    cx->bailoutRecord->setIonBailoutKind(snapIter.bailoutKind());
+    cx->bailoutRecord->rematerializeFrames(cx, frameIter);
+
+    MOZ_ASSERT(frameIter.done());
+    *entryFramePointer = frameIter.fp();
 }
 
-void
-jit::PropagateAbortPar(JSScript *outermostScript, JSScript *currentScript)
+bool
+jit::CallToUncompiledScriptPar(ForkJoinContext *cx, JSObject *obj)
 {
-    Spew(SpewBailouts,
-         "Propagate parallel abort via %p:%s:%d (%p:%s:%d)",
-         outermostScript, outermostScript->filename(), outermostScript->lineno(),
-         currentScript, currentScript->filename(), currentScript->lineno());
-
-    JS_ASSERT(InParallelSection());
-    JS_ASSERT(outermostScript->hasParallelIonScript());
-
-    outermostScript->parallelIonScript()->setHasUncompiledCallTarget();
-
-    ForkJoinContext *cx = ForkJoinContext::current();
-    if (currentScript)
-        cx->bailoutRecord->addTrace(currentScript, nullptr);
-}
-
-void
-jit::CallToUncompiledScriptPar(JSObject *obj)
-{
-    JS_ASSERT(InParallelSection());
-
 #ifdef DEBUG
     static const int max_bound_function_unrolling = 5;
 
     if (!obj->is<JSFunction>()) {
         Spew(SpewBailouts, "Call to non-function");
-        return;
+        return false;
     }
 
     JSFunction *func = &obj->as<JSFunction>();
@@ -652,6 +582,8 @@ jit::CallToUncompiledScriptPar(JSObject *obj)
         Spew(SpewBailouts, "Call to native function");
     }
 #endif
+
+    return false;
 }
 
 JSObject *

@@ -1000,10 +1000,10 @@
             oldBrowser.setAttribute("type", "content-targetable");
             oldBrowser.docShellIsActive = false;
 
-            var updatePageReport = false;
+            var updateBlockedPopups = false;
             if ((oldBrowser.blockedPopups && !newBrowser.blockedPopups) ||
-                (!oldBrowser.pageReport && newBrowser.pageReport))
-              updatePageReport = true;
+                (!oldBrowser.blockedPopups && newBrowser.blockedPopups))
+              updateBlockedPopups = true;
 
             newBrowser.setAttribute("type", "content-primary");
             newBrowser.docShellIsActive =
@@ -1023,8 +1023,8 @@
 
             this._appendStatusPanel();
 
-            if (updatePageReport)
-              this.mCurrentBrowser.updatePageReport();
+            if (updateBlockedPopups)
+              this.mCurrentBrowser.updateBlockedPopups();
 
             // Update the URL bar.
             var loc = this.mCurrentBrowser.currentURI;
@@ -1284,7 +1284,7 @@
           <![CDATA[
             var aFromExternal;
             var aRelatedToCurrent;
-            var aDisableMCB;
+            var aAllowMixedContent;
             var aSkipAnimation;
             if (arguments.length == 2 &&
                 typeof arguments[1] == "object" &&
@@ -1297,7 +1297,7 @@
               aAllowThirdPartyFixup = params.allowThirdPartyFixup;
               aFromExternal         = params.fromExternal;
               aRelatedToCurrent     = params.relatedToCurrent;
-              aDisableMCB           = params.disableMCB;
+              aAllowMixedContent    = params.allowMixedContent;
               aSkipAnimation        = params.skipAnimation;
             }
 
@@ -1313,7 +1313,7 @@
                                   fromExternal: aFromExternal,
                                   relatedToCurrent: aRelatedToCurrent,
                                   skipAnimation: aSkipAnimation,
-                                  disableMCB: aDisableMCB});
+                                  allowMixedContent: aAllowMixedContent });
             if (!bgLoad)
               this.selectedTab = tab;
 
@@ -1374,16 +1374,13 @@
         ]]></body>
       </method>
 
-#ifdef MAKE_E10S_WORK
       <method name="updateBrowserRemoteness">
         <parameter name="aBrowser"/>
-        <parameter name="aURL"/>
+        <parameter name="aShouldBeRemote"/>
         <body>
           <![CDATA[
-            let shouldBeRemote = this._shouldBrowserBeRemote(aURL);
-
             let isRemote = aBrowser.getAttribute("remote") == "true";
-            if (isRemote == shouldBeRemote)
+            if (isRemote == aShouldBeRemote)
               return false;
 
             let wasActive = document.activeElement == aBrowser;
@@ -1397,13 +1394,13 @@
             // Change the "remote" attribute.
             let parent = aBrowser.parentNode;
             parent.removeChild(aBrowser);
-            aBrowser.setAttribute("remote", shouldBeRemote ? "true" : "false");
+            aBrowser.setAttribute("remote", aShouldBeRemote ? "true" : "false");
             parent.appendChild(aBrowser);
 
             // Restore the progress listener.
             aBrowser.webProgress.addProgressListener(filter, Ci.nsIWebProgress.NOTIFY_ALL);
 
-            if (shouldBeRemote)
+            if (aShouldBeRemote)
               tab.setAttribute("remote", "true");
             else
               tab.removeAttribute("remote");
@@ -1412,6 +1409,18 @@
               aBrowser.focus();
 
             return true;
+          ]]>
+        </body>
+      </method>
+
+#ifdef MAKE_E10S_WORK
+      <method name="updateBrowserRemotenessByURL">
+        <parameter name="aBrowser"/>
+        <parameter name="aURL"/>
+        <body>
+          <![CDATA[
+            let shouldBeRemote = this._shouldBrowserBeRemote(aURL);
+            return this.updateBrowserRemoteness(aBrowser, shouldBeRemote);
           ]]>
         </body>
       </method>
@@ -1463,7 +1472,7 @@
             var aFromExternal;
             var aRelatedToCurrent;
             var aSkipAnimation;
-            var aDisableMCB;
+            var aAllowMixedContent;
             if (arguments.length == 2 &&
                 typeof arguments[1] == "object" &&
                 !(arguments[1] instanceof Ci.nsIURI)) {
@@ -1476,7 +1485,7 @@
               aFromExternal         = params.fromExternal;
               aRelatedToCurrent     = params.relatedToCurrent;
               aSkipAnimation        = params.skipAnimation;
-              aDisableMCB           = params.disableMCB;
+              aAllowMixedContent    = params.allowMixedContent;
             }
 
             // if we're adding tabs, we're past interrupt mode, ditch the owner
@@ -1598,8 +1607,6 @@
             // allows the TabLabelModified event to be properly dispatched.
             if (!aURI || isBlankPageURL(aURI)) {
               t.label = this.mStringBundle.getString("tabs.emptyTabTitle");
-            } else {
-              t.label = aURI;
             }
 
             this.tabContainer.updateVisibility();
@@ -1649,7 +1656,7 @@
               }
               if (aFromExternal)
                 flags |= Ci.nsIWebNavigation.LOAD_FLAGS_FROM_EXTERNAL;
-              if (aDisableMCB)
+              if (aAllowMixedContent)
                 flags |= Ci.nsIWebNavigation.LOAD_FLAGS_ALLOW_MIXED_CONTENT;
               try {
                 b.loadURIWithFlags(aURI, flags, aReferrerURI, aCharset, aPostData);
@@ -2281,6 +2288,8 @@
             // Give others a chance to swap state.
             let event = new CustomEvent("SwapDocShells", {"detail": aOtherBrowser});
             ourBrowser.dispatchEvent(event);
+            event = new CustomEvent("SwapDocShells", {"detail": ourBrowser});
+            aOtherBrowser.dispatchEvent(event);
 
             // Swap the docshells
             ourBrowser.swapDocShells(aOtherBrowser);
@@ -2732,14 +2741,14 @@
         <body>
           <![CDATA[
 #ifdef MAKE_E10S_WORK
-            this.updateBrowserRemoteness(this.mCurrentBrowser, aURI);
+            this.updateBrowserRemotenessByURL(this.mCurrentBrowser, aURI);
             try {
 #endif
             return this.mCurrentBrowser.loadURI(aURI, aReferrerURI, aCharset);
 #ifdef MAKE_E10S_WORK
             } catch (e) {
               let url = this.mCurrentBrowser.currentURI.spec;
-              this.updateBrowserRemoteness(this.mCurrentBrowser, url);
+              this.updateBrowserRemotenessByURL(this.mCurrentBrowser, url);
               throw e;
             }
 #endif
@@ -2757,14 +2766,14 @@
         <body>
           <![CDATA[
 #ifdef MAKE_E10S_WORK
-            this.updateBrowserRemoteness(this.mCurrentBrowser, aURI);
+            this.updateBrowserRemotenessByURL(this.mCurrentBrowser, aURI);
             try {
 #endif
             return this.mCurrentBrowser.loadURIWithFlags(aURI, aFlags, aReferrerURI, aCharset, aPostData);
 #ifdef MAKE_E10S_WORK
             } catch (e) {
               let url = this.mCurrentBrowser.currentURI.spec;
-              this.updateBrowserRemoteness(this.mCurrentBrowser, url);
+              this.updateBrowserRemotenessByURL(this.mCurrentBrowser, url);
               throw e;
             }
 #endif
@@ -2820,10 +2829,6 @@
           }
         ]]></body>
       </method>
-
-      <property name="pageReport"
-                onget="return this.mCurrentBrowser.pageReport;"
-                readonly="true"/>
 
       <property name="currentURI"
                 onget="return this.mCurrentBrowser.currentURI;"
@@ -3291,7 +3296,7 @@
           let uri = browser.currentURI;
           let icon = browser.mIconURL;
 
-          this.updateBrowserRemoteness(browser, "about:tabcrashed");
+          this.updateBrowserRemotenessByURL(browser, "about:tabcrashed");
 
           browser.setAttribute("crashedPageTitle", title);
           browser.docShell.displayLoadError(Cr.NS_ERROR_CONTENT_CRASHED, uri, null);
@@ -4169,8 +4174,6 @@
       </method>
 
       <!-- Deprecated stuff, implemented for backwards compatibility. -->
-      <property name="mTabstripClosebutton" readonly="true"
-                onget="return document.getElementById('tabs-closebutton');"/>
       <property name="mAllTabsPopup" readonly="true"
                 onget="return document.getElementById('alltabs-popup');"/>
     </implementation>
@@ -4956,6 +4959,9 @@
     <handlers>
       <handler event="popupshowing">
       <![CDATA[
+        document.getElementById("alltabs_undoCloseTab").disabled =
+          SessionStore.getClosedTabCount(window) == 0;
+
         var tabcontainer = gBrowser.tabContainer;
 
         // Listen for changes in the tab bar.

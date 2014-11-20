@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-*   Copyright (C) 2000-2012, International Business Machines
+*   Copyright (C) 2000-2014, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *   file name:  ucnv2022.cpp
@@ -42,8 +42,6 @@
 #include "cstring.h"
 #include "cmemory.h"
 #include "uassert.h"
-
-#define LENGTHOF(array) (int32_t)(sizeof(array)/sizeof((array)[0]))
 
 #ifdef U_ENABLE_GENERIC_ISO_2022
 /*
@@ -748,7 +746,7 @@ getKey_2022(char c,int32_t* key,int32_t* offset){
 
     while (hi != low)  /*binary search*/{
 
-        register int32_t mid = (hi+low) >> 1; /*Finds median*/
+        int32_t mid = (hi+low) >> 1; /*Finds median*/
 
         if (mid == oldmid)
             break;
@@ -1719,7 +1717,7 @@ getTrail:
                 }
 
                 /* try all the other possible charsets */
-                for(i = 0; i < LENGTHOF(jpCharsetPref); ++i) {
+                for(i = 0; i < UPRV_LENGTHOF(jpCharsetPref); ++i) {
                     cs = (int8_t)jpCharsetPref[i];
                     if(CSM(cs) & csm) {
                         choices[choiceCount++] = cs;

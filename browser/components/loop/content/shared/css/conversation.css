@@ -1,0 +1,175 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* Conversation window styles */
+
+.conversation {
+  position: relative;
+}
+
+.conversation .controls {
+  position: absolute;
+  z-index: 999; /* required to have it superimposed to the video element */
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, .70);
+  border: 1px solid #5a5a5a;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.conversation .controls li {
+  float: left;
+  font-size: 10px;
+}
+
+.conversation .controls .btn {
+  width: 40px;
+  height: 30px;
+  background: transparent;
+  background-repeat: no-repeat;
+  background-position: 12px 8px;
+  background-size: 14px 14px;
+  border-right: 1px solid #5a5a5a;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.conversation .controls .btn:hover {
+  background-color: rgba(255, 255, 255, .35);
+}
+
+/* Hangup button */
+.conversation .controls .btn-hangup {
+  background-color: #D74345;
+  background-image: url(../img/hangup-inverse-14x14.png);
+}
+.conversation .controls .btn-hangup:hover {
+  background-color: #C53436;
+}
+@media (min-resolution: 2dppx) {
+  .conversation .controls .btn-hangup {
+    background-image: url(../img/hangup-inverse-14x14@2x.png);
+  }
+}
+
+/* Common media control buttons behavior */
+.conversation .controls .media-control {
+  background-color: transparent;
+  opacity: 1;
+}
+.conversation .controls .media-control:hover {
+  background-color: rgba(255, 255, 255, .35);
+  opacity: 1;
+}
+.conversation .controls .media-control.muted {
+  background-color: #0096DD;
+  opacity: 1;
+}
+
+/* Audio mute button */
+.conversation .controls .local-media.btn-mute-audio {
+  background-image: url(../img/audio-inverse-14x14.png);
+}
+.conversation .controls .local-media.btn-mute-audio.muted {
+  background-image: url(../img/mute-inverse-14x14.png);
+}
+@media (min-resolution: 2dppx) {
+  .conversation .controls .local-media.btn-mute-audio {
+    background-image: url(../img/audio-inverse-14x14@2x.png);
+  }
+  .conversation .controls .local-media.btn-mute-audio.muted {
+    background-image: url(../img/mute-inverse-14x14@2x.png);
+  }
+}
+
+/* Video mute button */
+.conversation .controls .local-media.btn-mute-video {
+  background-image: url(../img/video-inverse-14x14.png);
+}
+.conversation .controls .local-media.btn-mute-video.muted {
+  background-image: url(../img/facemute-14x14.png);
+}
+@media (min-resolution: 2dppx) {
+  .conversation .controls .local-media.btn-mute-video {
+    background-image: url(../img/video-inverse-14x14@2x.png);
+  }
+  .conversation .controls .local-media.btn-mute-video.muted {
+    background-image: url(../img/facemute-14x14@2x.png);
+  }
+}
+
+/* Video elements */
+
+.conversation .media video {
+  background: #eee;
+}
+
+/* Nested video elements */
+
+.conversation .media.nested {
+  position: relative;
+}
+
+.conversation .media.nested .remote {
+  display: inline-block;
+  background: #000;
+  width: 100%;
+  min-height: 154px;
+}
+
+.conversation .media.nested .local {
+  position: absolute;
+  bottom: 4px;
+  right: 0;
+  width: 30%;
+  max-width: 140px;
+}
+
+/* Side by side video elements */
+
+.conversation .media.side-by-side .remote {
+  width: 50%;
+  float: left;
+}
+
+.conversation .media.side-by-side .local {
+  width: 50%;
+}
+
+/**
+ * Overriden SDK styles; .OT_video-container is using absolute positioning
+ * therefore moves the video elements it contains outside of the current
+ * viewport.
+ */
+.conversation .OT_video-container {
+  position: inherit;
+}
+
+/* Call ended view */
+.call-ended p {
+  text-align: center;
+}
+
+/* Incoming call */
+
+/*
+ * Height matches the height of the docked window
+ * but the UI breaks when you pop out
+ * Bug 1040985
+ */
+.incoming-call {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 264px;
+}
+
+.incoming-call h2 {
+  font-size: 1.5em;
+  font-weight: normal;
+}
+

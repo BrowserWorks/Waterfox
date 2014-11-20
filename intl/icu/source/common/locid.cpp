@@ -1,6 +1,6 @@
 /*
  **********************************************************************
- *   Copyright (C) 1997-2012, International Business Machines
+ *   Copyright (C) 1997-2014, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  **********************************************************************
 *
@@ -42,15 +42,14 @@
 #include "ucln_cmn.h"
 #include "ustr_imp.h"
 
-#define LENGTHOF(array) (int32_t)(sizeof(array)/sizeof((array)[0]))
-
 U_CDECL_BEGIN
 static UBool U_CALLCONV locale_cleanup(void);
 U_CDECL_END
 
 U_NAMESPACE_BEGIN
 
-static Locale *gLocaleCache = NULL;
+static Locale   *gLocaleCache = NULL;
+static UInitOnce gLocaleCacheInitOnce = U_INITONCE_INITIALIZER;
 
 // gDefaultLocaleMutex protects all access to gDefaultLocalesHashT and gDefaultLocale.
 static UMutex gDefaultLocaleMutex = U_MUTEX_INITIALIZER;
@@ -106,19 +105,50 @@ static UBool U_CALLCONV locale_cleanup(void)
 {
     U_NAMESPACE_USE
 
-    if (gLocaleCache) {
-        delete [] gLocaleCache;
-        gLocaleCache = NULL;
-    }
+    delete [] gLocaleCache;
+    gLocaleCache = NULL;
+    gLocaleCacheInitOnce.reset();
 
     if (gDefaultLocalesHashT) {
         uhash_close(gDefaultLocalesHashT);   // Automatically deletes all elements, using deleter func.
         gDefaultLocalesHashT = NULL;
-        gDefaultLocale = NULL;
     }
-
+    gDefaultLocale = NULL;
     return TRUE;
 }
+
+
+static void U_CALLCONV locale_init(UErrorCode &status) {
+    U_NAMESPACE_USE
+
+    U_ASSERT(gLocaleCache == NULL);
+    gLocaleCache = new Locale[(int)eMAX_LOCALES];
+    if (gLocaleCache == NULL) {
+        status = U_MEMORY_ALLOCATION_ERROR;
+        return;
+    }
+    ucln_common_registerCleanup(UCLN_COMMON_LOCALE, locale_cleanup);
+    gLocaleCache[eROOT]          = Locale("");
+    gLocaleCache[eENGLISH]       = Locale("en");
+    gLocaleCache[eFRENCH]        = Locale("fr");
+    gLocaleCache[eGERMAN]        = Locale("de");
+    gLocaleCache[eITALIAN]       = Locale("it");
+    gLocaleCache[eJAPANESE]      = Locale("ja");
+    gLocaleCache[eKOREAN]        = Locale("ko");
+    gLocaleCache[eCHINESE]       = Locale("zh");
+    gLocaleCache[eFRANCE]        = Locale("fr", "FR");
+    gLocaleCache[eGERMANY]       = Locale("de", "DE");
+    gLocaleCache[eITALY]         = Locale("it", "IT");
+    gLocaleCache[eJAPAN]         = Locale("ja", "JP");
+    gLocaleCache[eKOREA]         = Locale("ko", "KR");
+    gLocaleCache[eCHINA]         = Locale("zh", "CN");
+    gLocaleCache[eTAIWAN]        = Locale("zh", "TW");
+    gLocaleCache[eUK]            = Locale("en", "GB");
+    gLocaleCache[eUS]            = Locale("en", "US");
+    gLocaleCache[eCANADA]        = Locale("en", "CA");
+    gLocaleCache[eCANADA_FRENCH] = Locale("fr", "CA");
+}
+
 U_CDECL_END
 
 U_NAMESPACE_BEGIN
@@ -126,7 +156,7 @@ U_NAMESPACE_BEGIN
 Locale *locale_set_default_internal(const char *id, UErrorCode& status) {
     // Synchronize this entire function.
     Mutex lock(&gDefaultLocaleMutex);
-    
+
     UBool canonicalize = FALSE;
 
     // If given a NULL string for the locale id, grab the default
@@ -387,11 +417,6 @@ Locale::Locale(const Locale &other)
 Locale &Locale::operator=(const Locale &other)
 {
     if (this == &other) {
-        return *this;
-    }
-
-    if (&other == NULL) {
-        this->setToBogus();
         return *this;
     }
 
@@ -842,46 +867,8 @@ initialization and static destruction.
 Locale *
 Locale::getLocaleCache(void)
 {
-    umtx_lock(NULL);
-    UBool needInit = (gLocaleCache == NULL);
-    umtx_unlock(NULL);
-
-    if (needInit) {
-        Locale *tLocaleCache = new Locale[(int)eMAX_LOCALES];
-        if (tLocaleCache == NULL) {
-            return NULL;
-        }
-	tLocaleCache[eROOT]          = Locale("");
-        tLocaleCache[eENGLISH]       = Locale("en");
-        tLocaleCache[eFRENCH]        = Locale("fr");
-        tLocaleCache[eGERMAN]        = Locale("de");
-        tLocaleCache[eITALIAN]       = Locale("it");
-        tLocaleCache[eJAPANESE]      = Locale("ja");
-        tLocaleCache[eKOREAN]        = Locale("ko");
-        tLocaleCache[eCHINESE]       = Locale("zh");
-        tLocaleCache[eFRANCE]        = Locale("fr", "FR");
-        tLocaleCache[eGERMANY]       = Locale("de", "DE");
-        tLocaleCache[eITALY]         = Locale("it", "IT");
-        tLocaleCache[eJAPAN]         = Locale("ja", "JP");
-        tLocaleCache[eKOREA]         = Locale("ko", "KR");
-        tLocaleCache[eCHINA]         = Locale("zh", "CN");
-        tLocaleCache[eTAIWAN]        = Locale("zh", "TW");
-        tLocaleCache[eUK]            = Locale("en", "GB");
-        tLocaleCache[eUS]            = Locale("en", "US");
-        tLocaleCache[eCANADA]        = Locale("en", "CA");
-        tLocaleCache[eCANADA_FRENCH] = Locale("fr", "CA");
-
-        umtx_lock(NULL);
-        if (gLocaleCache == NULL) {
-            gLocaleCache = tLocaleCache;
-            tLocaleCache = NULL;
-            ucln_common_registerCleanup(UCLN_COMMON_LOCALE, locale_cleanup);
-        }
-        umtx_unlock(NULL);
-        if (tLocaleCache) {
-            delete [] tLocaleCache;  // Fancy array delete will destruct each member.
-        }
-    }
+    UErrorCode status = U_ZERO_ERROR;
+    umtx_initOnce(gLocaleCacheInitOnce, locale_init, status);
     return gLocaleCache;
 }
 

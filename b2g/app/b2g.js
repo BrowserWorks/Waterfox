@@ -152,6 +152,7 @@ pref("dom.disable_open_during_load", true);
 pref("privacy.popups.showBrowserMessage", true);
 
 pref("keyword.enabled", true);
+pref("browser.fixup.domainwhitelist.localhost", true);
 
 pref("accessibility.typeaheadfind", false);
 pref("accessibility.typeaheadfind.timeout", 5000);
@@ -291,12 +292,9 @@ pref("layers.offmainthreadcomposition.enabled", true);
 pref("layers.offmainthreadcomposition.async-animations", true);
 #ifndef MOZ_WIDGET_GONK
 pref("dom.ipc.tabs.disabled", true);
-pref("layers.async-video.enabled", false);
 #else
 pref("dom.ipc.tabs.disabled", false);
 pref("layers.acceleration.disabled", false);
-pref("layers.async-video.enabled", true);
-pref("layers.async-video-oop.enabled",true);
 pref("layers.async-pan-zoom.enabled", true);
 pref("gfx.content.azure.backends", "cairo");
 #endif
@@ -391,9 +389,6 @@ pref("content.ime.strict_policy", true);
 // $ adb shell start
 pref("browser.dom.window.dump.enabled", false);
 
-// Turn on the CSP 1.0 parser for Content Security Policy headers
-pref("security.csp.speccompliant", true);
-
 // Default Content Security Policy to apply to privileged and certified apps
 pref("security.apps.privileged.CSP.default", "default-src *; script-src 'self'; object-src 'none'; style-src 'self' 'unsafe-inline'");
 // If you change this CSP, make sure to update the fast path in nsCSPService.cpp
@@ -465,24 +460,30 @@ pref("services.push.retryBaseInterval", 5000);
 pref("services.push.pingInterval", 1800000); // 30 minutes
 // How long before a DOMRequest errors as timeout
 pref("services.push.requestTimeout", 10000);
+pref("services.push.pingInterval.default", 180000);// 3 min
+pref("services.push.pingInterval.mobile", 180000); // 3 min
+pref("services.push.pingInterval.wifi", 180000);  // 3 min
+// Adaptive ping
+pref("services.push.adaptive.enabled", true);
+pref("services.push.adaptive.lastGoodPingInterval", 180000);// 3 min
+pref("services.push.adaptive.lastGoodPingInterval.mobile", 180000);// 3 min
+pref("services.push.adaptive.lastGoodPingInterval.wifi", 180000);// 3 min
+// Valid gap between the biggest good ping and the bad ping
+pref("services.push.adaptive.gap", 60000); // 1 minute
+// We limit the ping to this maximum value
+pref("services.push.adaptive.upperLimit", 1740000); // 29 min
 // enable udp wakeup support
 pref("services.push.udp.wakeupEnabled", true);
-// This value should be the prefix to be added to the current PDP context[1]
-// domain or a full-qualified domain name.
-// If finished with a dot, it will be added as a prefix to the PDP context
-// domain. If not, will be used as the DNS query.
-// If the DNS query is unsuccessful, the push agent will send a null netid and
-// is a server decision what to do with the device. If the MCC-MNC identifies a
-// unique network the server will change to UDP mode. Otherwise, a websocket
-// connection will be maintained.
-// [1] Packet Data Protocol
-//     http://en.wikipedia.org/wiki/GPRS_core_network#PDP_context
-pref("services.push.udp.well-known_netidAddress", "_wakeup_.");
 
 // NetworkStats
 #ifdef MOZ_WIDGET_GONK
 pref("dom.mozNetworkStats.enabled", true);
 pref("dom.webapps.firstRunWithSIM", true);
+#endif
+
+// ResourceStats
+#ifdef MOZ_WIDGET_GONK
+pref("dom.resource_stats.enabled", true);
 #endif
 
 #ifdef MOZ_B2G_RIL
@@ -653,6 +654,12 @@ pref("javascript.options.mem.gc_low_frequency_heap_growth", 120);
 pref("javascript.options.mem.high_water_mark", 6);
 pref("javascript.options.mem.gc_allocation_threshold_mb", 1);
 pref("javascript.options.mem.gc_decommit_threshold_mb", 1);
+#ifdef JSGC_GENERATIONAL
+pref("javascript.options.mem.gc_min_empty_chunk_count", 1);
+#else
+pref("javascript.options.mem.gc_min_empty_chunk_count", 0);
+#endif
+pref("javascript.options.mem.gc_max_empty_chunk_count", 2);
 
 // Show/Hide scrollbars when active/inactive
 pref("ui.showHideScrollbars", 1);
@@ -914,9 +921,6 @@ pref("gfx.canvas.max-size-for-skia-gl", -1);
 // enable fence with readpixels for SurfaceStream
 pref("gfx.gralloc.fence-with-readpixels", true);
 
-// Cell Broadcast API
-pref("ril.cellbroadcast.disabled", false);
-
 // The url of the page used to display network error details.
 pref("b2g.neterror.url", "app://system.gaiamobile.org/net_error.html");
 
@@ -995,13 +999,13 @@ pref("touchcaret.enabled", false);
 pref("selectioncaret.enabled", false);
 
 // Enable sync and mozId with Firefox Accounts.
-#ifdef MOZ_SERVICES_FXACCOUNTS
 pref("services.sync.fxaccounts.enabled", true);
 pref("identity.fxaccounts.enabled", true);
-#endif
 
 // Mobile Identity API.
 pref("services.mobileid.server.uri", "https://msisdn.services.mozilla.com");
 
-// Enable mapped array buffer
+// Enable mapped array buffer.
+#ifndef XP_WIN
 pref("dom.mapped_arraybuffer.enabled", true);
+#endif

@@ -715,15 +715,15 @@ Declaration::GetValue(nsCSSProperty aProperty, nsAString& aValue,
       break;
     }
     case eCSSProperty_list_style:
-      if (AppendValueToString(eCSSProperty_list_style_type, aValue,
-                              aSerialization)) {
-        aValue.Append(char16_t(' '));
-      }
       if (AppendValueToString(eCSSProperty_list_style_position, aValue,
                               aSerialization)) {
         aValue.Append(char16_t(' '));
       }
-      AppendValueToString(eCSSProperty_list_style_image, aValue,
+      if (AppendValueToString(eCSSProperty_list_style_image, aValue,
+                              aSerialization)) {
+        aValue.Append(char16_t(' '));
+      }
+      AppendValueToString(eCSSProperty_list_style_type, aValue,
                           aSerialization);
       break;
     case eCSSProperty_overflow: {
@@ -842,7 +842,7 @@ Declaration::GetValue(nsCSSProperty aProperty, nsAString& aValue,
     case eCSSProperty_animation: {
       const nsCSSProperty* subprops =
         nsCSSProps::SubpropertyEntryFor(eCSSProperty_animation);
-      static const size_t numProps = 7;
+      static const size_t numProps = 8;
       NS_ABORT_IF_FALSE(subprops[numProps] == eCSSProperty_UNKNOWN,
                         "unexpected number of subproperties");
       const nsCSSValue* values[numProps];

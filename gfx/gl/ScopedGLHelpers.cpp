@@ -3,6 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "mozilla/UniquePtr.h"
+
 #include "GLContext.h"
 #include "ScopedGLHelpers.h"
 
@@ -52,7 +54,12 @@ ScopedGLState::UnwrapImpl()
 void
 ScopedBindFramebuffer::Init()
 {
-    mOldFB = mGL->GetFB();
+    if (mGL->IsSupported(GLFeature::framebuffer_blit)) {
+        mOldReadFB = mGL->GetReadFB();
+        mOldDrawFB = mGL->GetDrawFB();
+    } else {
+        mOldReadFB = mOldDrawFB = mGL->GetFB();
+    }
 }
 
 ScopedBindFramebuffer::ScopedBindFramebuffer(GLContext* aGL)
@@ -74,7 +81,12 @@ ScopedBindFramebuffer::UnwrapImpl()
     // Check that we're not falling out of scope after the current context changed.
     MOZ_ASSERT(mGL->IsCurrent());
 
-    mGL->BindFB(mOldFB);
+    if (mOldReadFB == mOldDrawFB) {
+        mGL->BindFB(mOldDrawFB);
+    } else {
+        mGL->BindDrawFB(mOldDrawFB);
+        mGL->BindReadFB(mOldReadFB);
+    }
 }
 
 
@@ -401,5 +413,75 @@ ScopedVertexAttribPointer::UnwrapImpl()
     mGL->fBindBuffer(LOCAL_GL_ARRAY_BUFFER, mBoundBuffer);
 }
 
+ScopedGLDrawState::ScopedGLDrawState(GLContext* aGL)
+    : blend       (aGL, LOCAL_GL_BLEND,      false)
+    , cullFace    (aGL, LOCAL_GL_CULL_FACE,  false)
+    , depthTest   (aGL, LOCAL_GL_DEPTH_TEST, false)
+    , dither      (aGL, LOCAL_GL_DITHER,     false)
+    , polyOffsFill(aGL, LOCAL_GL_POLYGON_OFFSET_FILL,      false)
+    , sampleAToC  (aGL, LOCAL_GL_SAMPLE_ALPHA_TO_COVERAGE, false)
+    , sampleCover (aGL, LOCAL_GL_SAMPLE_COVERAGE, false)
+    , scissor     (aGL, LOCAL_GL_SCISSOR_TEST,    false)
+    , stencil     (aGL, LOCAL_GL_STENCIL_TEST,    false)
+    , mGL(aGL)
+    , packAlign(4)
+{
+    mGL->GetUIntegerv(LOCAL_GL_UNPACK_ALIGNMENT, &packAlign);
+    mGL->GetUIntegerv(LOCAL_GL_CURRENT_PROGRAM, &boundProgram);
+    mGL->GetUIntegerv(LOCAL_GL_ARRAY_BUFFER_BINDING, &boundBuffer);
+    mGL->GetUIntegerv(LOCAL_GL_MAX_VERTEX_ATTRIBS, &maxAttrib);
+    attrib_enabled = MakeUnique<GLint[]>(maxAttrib);
+
+    for (unsigned int i = 0; i < maxAttrib; i++) {
+        mGL->fGetVertexAttribiv(i, LOCAL_GL_VERTEX_ATTRIB_ARRAY_ENABLED, &attrib_enabled[i]);
+        mGL->fDisableVertexAttribArray(i);
+    }
+    // Only Attrib0's client side state affected
+    mGL->fGetVertexAttribiv(0, LOCAL_GL_VERTEX_ATTRIB_ARRAY_SIZE, &attrib0_size);
+    mGL->fGetVertexAttribiv(0, LOCAL_GL_VERTEX_ATTRIB_ARRAY_STRIDE, &attrib0_stride);
+    mGL->fGetVertexAttribiv(0, LOCAL_GL_VERTEX_ATTRIB_ARRAY_TYPE, &attrib0_type);
+    mGL->fGetVertexAttribiv(0, LOCAL_GL_VERTEX_ATTRIB_ARRAY_NORMALIZED, &attrib0_normalized);
+    mGL->fGetVertexAttribiv(0, LOCAL_GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, &attrib0_bufferBinding);
+    mGL->fGetVertexAttribPointerv(0, LOCAL_GL_VERTEX_ATTRIB_ARRAY_POINTER, &attrib0_pointer);
+    mGL->fGetBooleanv(LOCAL_GL_COLOR_WRITEMASK, colorMask);
+    mGL->fGetIntegerv(LOCAL_GL_VIEWPORT, viewport);
+    mGL->fGetIntegerv(LOCAL_GL_SCISSOR_BOX, scissorBox);
+}
+
+ScopedGLDrawState::~ScopedGLDrawState()
+{
+    mGL->fScissor(scissorBox[0], scissorBox[1],
+                  scissorBox[2], scissorBox[3]);
+
+    mGL->fViewport(viewport[0], viewport[1],
+                   viewport[2], viewport[3]);
+
+    mGL->fColorMask(colorMask[0],
+                    colorMask[1],
+                    colorMask[2],
+                    colorMask[3]);
+
+    mGL->fPixelStorei(LOCAL_GL_UNPACK_ALIGNMENT, packAlign);
+
+    for (unsigned int i = 0; i < maxAttrib; i++) {
+        if (attrib_enabled[i])
+            mGL->fEnableVertexAttribArray(i);
+        else
+            mGL->fDisableVertexAttribArray(i);
+    }
+
+
+    mGL->fBindBuffer(LOCAL_GL_ARRAY_BUFFER, attrib0_bufferBinding);
+    mGL->fVertexAttribPointer(0,
+                              attrib0_size,
+                              attrib0_type,
+                              attrib0_normalized,
+                              attrib0_stride,
+                              attrib0_pointer);
+
+    mGL->fBindBuffer(LOCAL_GL_ARRAY_BUFFER, boundBuffer);
+
+    mGL->fUseProgram(boundProgram);
+}
 } /* namespace gl */
 } /* namespace mozilla */

@@ -17,7 +17,7 @@
 'use strict';
 
 var util = require('../util/util');
-var promise = require('../util/promise');
+var Promise = require('../util/promise').Promise;
 
 /**
  * We record where in the input string an argument comes so we can report
@@ -814,7 +814,7 @@ Conversion.prototype.getPredictions = function(context) {
   if (typeof this.predictions === 'function') {
     return this.predictions(context);
   }
-  return promise.resolve(this.predictions || []);
+  return Promise.resolve(this.predictions || []);
 };
 
 /**
@@ -825,7 +825,7 @@ Conversion.prototype.getPredictions = function(context) {
  */
 Conversion.prototype.constrainPredictionIndex = function(context, index) {
   if (index == null) {
-    return promise.resolve();
+    return Promise.resolve();
   }
 
   return this.getPredictions(context).then(function(value) {
@@ -1064,7 +1064,7 @@ Types.prototype.getTypeNames = function() {
  * #getType() is called with a 'name' that matches Type.prototype.name we will
  * pass the typeSpec into this constructor.
  */
-Types.prototype.addType = function(type) {
+Types.prototype.add = function(type) {
   if (typeof type === 'object') {
     if (!type.name) {
       throw new Error('All registered types must have a name');
@@ -1099,12 +1099,12 @@ Types.prototype.addType = function(type) {
 /**
  * Remove a type from the list available to the system
  */
-Types.prototype.removeType = function(type) {
+Types.prototype.remove = function(type) {
   delete this._registered[type.name];
 };
 
 /**
- * Find a type, previously registered using #addType()
+ * Find a previously registered type
  */
 Types.prototype.createType = function(typeSpec) {
   if (typeof typeSpec === 'string') {
@@ -1140,13 +1140,8 @@ Types.prototype.createType = function(typeSpec) {
   // Copy the properties of typeSpec onto the new type
   util.copyProperties(typeSpec, newType);
 
-  // Delegate and Array types need special powers to create types. Injecting
-  // ourselves at this point seems nasty, but better than the alternative of
-  // forcing all children of delegate types to require the full types API, and
-  // not know where to get it from
-  if (newType.name === 'delegate' || newType.name === 'array') {
-    newType.types = this;
-  }
+  // Several types need special powers to create child types
+  newType.types = this;
 
   if (typeof NewTypeCtor !== 'function') {
     if (typeof newType.constructor === 'function') {
@@ -1156,8 +1151,3 @@ Types.prototype.createType = function(typeSpec) {
 
   return newType;
 };
-
-/**
- * Create a central type repository to be used by default
- */
-exports.centralTypes = new Types();

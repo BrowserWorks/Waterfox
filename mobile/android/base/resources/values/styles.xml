@@ -153,15 +153,15 @@
     </style>
 
     <style name="Widget.TopSitesGridItemView">
-      <item name="android:layout_width">fill_parent</item>
-      <item name="android:layout_height">fill_parent</item>
+      <item name="android:layout_width">match_parent</item>
+      <item name="android:layout_height">match_parent</item>
       <item name="android:padding">5dip</item>
       <item name="android:orientation">vertical</item>
     </style>
 
     <style name="Widget.PanelGridView" parent="Widget.GridView">
-        <item name="android:layout_width">fill_parent</item>
-        <item name="android:layout_height">fill_parent</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
         <item name="android:paddingTop">0dp</item>
         <item name="android:stretchMode">columnWidth</item>
         <item name="android:numColumns">auto_fit</item>
@@ -208,7 +208,7 @@
     <style name="Widget.Home" />
 
     <style name="Widget.Home.HeaderItem">
-        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">32dp</item>
         <item name="android:textAppearance">@style/TextAppearance.Widget.Home.Header</item>
         <item name="android:background">#fff5f7f9</item>
@@ -219,7 +219,7 @@
     </style>
 
     <style name="Widget.Home.PageButton">
-        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">40dip</item>
         <item name="android:textAppearance">@style/TextAppearance.Widget.Home.PageTitle</item>
         <item name="android:background">@drawable/action_bar_button</item>
@@ -233,8 +233,15 @@
         <item name="android:textAppearance">@style/TextAppearance.Widget.Home.PageAction</item>
     </style>
 
-    <style name="Widget.Home.HistoryTabIndicator">
+    <style name="Widget.Home.ActionItem">
         <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">40dip</item>
+        <item name="android:textColor">#000000</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <style name="Widget.Home.HistoryTabIndicator">
+        <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">32dp</item>
         <item name="android:textAppearance">@style/TextAppearance.Widget.Home.PageTitle</item>
         <item name="android:background">@drawable/home_panel_title_background</item>
@@ -371,9 +378,19 @@
         <item name="android:textColor">?android:attr/textColorHint</item>
     </style>
 
+    <style name="TextAppearance.Widget.DoorHanger.Medium" parent="TextAppearance.Medium">
+        <item name="android:textColor">@color/doorhanger_text</item>
+        <item name="android:textColorLink">@color/doorhanger_link</item>
+    </style>
+
+    <style name="TextAppearance.Widget.DoorHanger.Small" parent="TextAppearance.Small">
+        <item name="android:textColor">@color/doorhanger_text</item>
+        <item name="android:textColorLink">@color/doorhanger_link</item>
+    </style>
+
     <!-- BrowserToolbar -->
     <style name="BrowserToolbar">
-        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/browser_toolbar_height</item>
         <item name="android:orientation">horizontal</item>
     </style>
@@ -387,14 +404,14 @@
 
     <!-- URL bar -->
     <style name="UrlBar">
-        <item name="android:layout_width">fill_parent</item>
-        <item name="android:layout_height">fill_parent</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
         <item name="android:orientation">horizontal</item>
     </style>
 
     <!-- URL bar - Button -->
     <style name="UrlBar.Button">
-        <item name="android:layout_height">fill_parent</item>
+        <item name="android:layout_height">match_parent</item>
         <item name="android:textSize">16sp</item>
         <item name="android:background">@android:color/transparent</item>
     </style>
@@ -449,74 +466,98 @@
          <item name="android:groupIndicator">@android:color/transparent</item>
     </style>
 
-    <!-- Remote tabs panel -->
-    <style name="RemoteTabsPanelChildBase">
+    <!-- Tabs panel -->
+    <style name="TabsPanelFrameBase">
         <item name="android:paddingLeft">16dp</item>
         <item name="android:paddingRight">16dp</item>
         <item name="android:paddingTop">32dp</item>
         <item name="android:orientation">vertical</item>
     </style>
 
-    <style name="RemoteTabsPanelChild" parent="RemoteTabsPanelChildBase">
+    <style name="TabsPanelFrame" parent="TabsPanelFrameBase">
         <!-- We set values in landscape. -->
     </style>
 
-    <style name="RemoteTabsSectionBase">
+    <style name="TabsPanelFrame.PrivateTabs">
+        <!-- We set values on tablet. -->
+    </style>
+
+    <style name="TabsPanelFrame.RemoteTabs">
+        <!-- We set values on tablet. -->
+    </style>
+
+    <style name="TabsPanelSectionBase">
         <item name="android:orientation">vertical</item>
         <item name="android:layout_marginLeft">40dp</item>
         <item name="android:layout_marginRight">40dp</item>
     </style>
 
-    <style name="RemoteTabsSection" parent="RemoteTabsSectionBase">
+    <style name="TabsPanelSection" parent="TabsPanelSectionBase">
         <!-- We set values in landscape. -->
     </style>
 
-    <style name="RemoteTabsItemBase">
+    <style name="TabsPanelSection.PrivateTabs">
+        <!-- We set values on tablet. -->
+    </style>
+
+    <style name="TabsPanelSection.PrivateTabs.Header">
+        <!-- We set values on landscape and tablet. -->
+    </style>
+
+    <style name="TabsPanelItemBase">
         <item name="android:layout_marginBottom">28dp</item>
         <item name="android:layout_gravity">center</item>
         <item name="android:gravity">center</item>
     </style>
 
-    <style name="RemoteTabsItem" parent="RemoteTabsItemBase">
+    <style name="TabsPanelItem" parent="TabsPanelItemBase">
         <!-- We set values in landscape. -->
     </style>
 
-    <style name="RemoteTabsItem.ButtonBase">
+    <style name="TabsPanelItem.ButtonBase">
         <item name="android:background">@drawable/remote_tabs_setup_button_background</item>
         <item name="android:textColor">#FFFEFF</item>
         <item name="android:textSize">16sp</item>
         <item name="android:gravity">center</item>
     </style>
 
-    <style name="RemoteTabsItem.Button" parent="RemoteTabsItem.ButtonBase">
+    <style name="TabsPanelItem.Button" parent="TabsPanelItem.ButtonBase">
         <item name="android:paddingTop">18dp</item>
         <item name="android:paddingBottom">18dp</item>
         <item name="android:paddingLeft">9dp</item>
         <item name="android:paddingRight">9dp</item>
     </style>
 
-    <style name="RemoteTabsItem.TextAppearance">
+    <style name="TabsPanelItem.TextAppearance">
         <item name="android:textColor">#C0C9D0</item>
         <item name="android:textSize">14sp</item>
         <item name="android:lineSpacingMultiplier">1.35</item>
     </style>
 
-    <style name="RemoteTabsItem.TextAppearance.Header">
+    <style name="TabsPanelItem.TextAppearance.Header">
         <item name="android:textSize">18sp</item>
         <item name="android:layout_marginBottom">16dp</item>
     </style>
 
-    <style name="RemoteTabsItem.TextAppearance.Header.FXAccounts">
+    <style name="TabsPanelItem.TextAppearance.Header.FXAccounts">
         <!-- We change these values on landscape. -->
     </style>
 
-    <style name="RemoteTabsItem.TextAppearance.Linkified">
+    <style name="TabsPanelItem.TextAppearance.Header.PrivateTabs">
+        <!-- We change these values on landscape and tablet. -->
+    </style>
+
+    <style name="TabsPanelItem.TextAppearance.Linkified">
         <item name="android:clickable">true</item>
         <item name="android:focusable">true</item>
         <item name="android:textColor">#0292D6</item>
     </style>
 
-    <style name="RemoteTabsItem.TextAppearance.Linkified.Resend">
+    <style name="TabsPanelItem.TextAppearance.Linkified.LearnMore">
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <style name="TabsPanelItem.TextAppearance.Linkified.Resend">
         <item name="android:layout_height">wrap_content</item>
     </style>
 
@@ -612,8 +653,8 @@
         <item name="android:background">@null</item>
         <item name="android:paddingLeft">12dp</item>
         <item name="android:paddingRight">12dp</item>
-        <item name="android:paddingTop">20dp</item>
-        <item name="android:paddingBottom">20dp</item>
+        <item name="android:paddingTop">11dp</item>
+        <item name="android:paddingBottom">11dp</item>
     </style>
 
     <style name="ToastDividerBase">

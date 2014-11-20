@@ -39,11 +39,10 @@ public:
   MediaKeySession(nsPIDOMWindow* aParent,
                   MediaKeys* aKeys,
                   const nsAString& aKeySystem,
-                  SessionType aSessionType);
+                  SessionType aSessionType,
+                  ErrorResult& aRv);
 
   void Init(const nsAString& aSessionId);
-
-  ~MediaKeySession();
 
   virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
 
@@ -61,11 +60,12 @@ public:
 
   Promise* Closed() const;
 
-  already_AddRefed<Promise> Update(const Uint8Array& response);
+  already_AddRefed<Promise> Update(const Uint8Array& response,
+                                   ErrorResult& aRv);
 
-  already_AddRefed<Promise> Close();
+  already_AddRefed<Promise> Close(ErrorResult& aRv);
 
-  already_AddRefed<Promise> Remove();
+  already_AddRefed<Promise> Remove(ErrorResult& aRv);
 
   void DispatchKeyMessage(const nsTArray<uint8_t>& aMessage,
                           const nsString& aURL);
@@ -77,6 +77,8 @@ public:
   bool IsClosed() const;
 
 private:
+  ~MediaKeySession();
+
   nsRefPtr<Promise> mClosed;
 
   nsRefPtr<MediaKeyError> mMediaKeyError;

@@ -272,7 +272,7 @@ nsChromeRegistryChrome::GetSelectedLocale(const nsACString& aPackage,
                                                       PL_DHASH_LOOKUP));
 
   if (PL_DHASH_ENTRY_IS_FREE(entry))
-    return NS_ERROR_FAILURE;
+    return NS_ERROR_FILE_NOT_FOUND;
 
   aLocale = entry->locales.GetSelected(mSelectedLocale, nsProviderArray::LOCALE);
   if (aLocale.IsEmpty())
@@ -560,7 +560,7 @@ nsChromeRegistryChrome::GetFlagsFromPackage(const nsCString& aPackage,
                                                       & (nsACString&) aPackage,
                                                       PL_DHASH_LOOKUP));
   if (PL_DHASH_ENTRY_IS_FREE(entry))
-    return NS_ERROR_NOT_AVAILABLE;
+    return NS_ERROR_FILE_NOT_FOUND;
 
   *aFlags = entry->flags;
   return NS_OK;
@@ -614,12 +614,12 @@ nsChromeRegistryChrome::kTableOps = {
 nsChromeRegistryChrome::ProviderEntry*
 nsChromeRegistryChrome::nsProviderArray::GetProvider(const nsACString& aPreferred, MatchType aType)
 {
-  int32_t i = mArray.Length();
+  size_t i = mArray.Length();
   if (!i)
     return nullptr;
 
   ProviderEntry* found = nullptr;  // Only set if we find a partial-match locale
-  ProviderEntry* entry;
+  ProviderEntry* entry = nullptr;
 
   while (i--) {
     entry = &mArray[i];

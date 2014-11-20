@@ -10,6 +10,7 @@
 #include "DataStoreService.h"
 #include "mozilla/dom/DataStoreBinding.h"
 #include "mozilla/dom/indexedDB/IDBObjectStore.h"
+#include "mozilla/dom/ToJSValue.h"
 #include "nsIDOMEvent.h"
 
 namespace mozilla {
@@ -52,12 +53,11 @@ DataStoreRevision::AddRevision(JSContext* aCx,
       break;
 
     default:
-      MOZ_ASSUME_UNREACHABLE("This should not happen");
-      break;
+      MOZ_CRASH("This should not happen");
   }
 
   JS::Rooted<JS::Value> value(aCx);
-  if (!data.ToObject(aCx, &value)) {
+  if (!ToJSValue(aCx, data, &value)) {
     return NS_ERROR_FAILURE;
   }
 
@@ -87,8 +87,7 @@ DataStoreRevision::HandleEvent(nsIDOMEvent* aEvent)
   }
 
   if (!type.EqualsASCII("success")) {
-    MOZ_ASSUME_UNREACHABLE("This should not happen");
-    return NS_ERROR_FAILURE;
+    MOZ_CRASH("This should not happen");
   }
 
   mRequest->RemoveEventListener(NS_LITERAL_STRING("success"), this, false);

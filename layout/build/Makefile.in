@@ -12,5 +12,4 @@ include $(topsrcdir)/config/rules.mk
 
 ifdef MOZ_GSTREAMER
 CXXFLAGS += $(GSTREAMER_CFLAGS)
-EXTRA_DSO_LDOPTS += -F/Library/Frameworks -framework GStreamer -liconv -framework CoreVideo -framework VideoToolbox -framework AudioToolbox
 endif

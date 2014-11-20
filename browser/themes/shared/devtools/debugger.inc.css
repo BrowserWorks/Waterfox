@@ -599,11 +599,6 @@
 
 /* Toolbar controls */
 
-.devtools-sidebar-tabs > tabs > tab {
-  min-height: 24px !important;
-  padding: 0 !important;
-}
-
 #debugger-toolbar .devtools-toolbarbutton:not([label]) > .toolbarbutton-icon,
 #sources-toolbar .devtools-toolbarbutton:not([label]) > .toolbarbutton-icon {
   width: 16px;
@@ -613,13 +608,10 @@
 #resume {
   list-style-image: url(debugger-pause.png);
   -moz-image-region: rect(0px,16px,16px,0px);
-  transition: background 0.15s ease-in-out;
 }
 
 #resume[checked] {
-  background: none;
   list-style-image: url(debugger-play.png);
-  -moz-image-region: rect(0px,32px,16px,16px);
 }
 
 @media (min-resolution: 2dppx) {

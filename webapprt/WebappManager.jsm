@@ -42,7 +42,7 @@ this.WebappManager = {
     let nativeApp = new NativeApp(aApp, aManifest,
                                   WebappRT.config.app.categories,
                                   WebappRT.config.registryDir);
-    nativeApp.prepareUpdate(aManifest, aZipPath);
+    nativeApp.prepareUpdate(aApp, aManifest, aZipPath);
   },
 
   doInstall: function(data, window) {
@@ -68,7 +68,7 @@ this.WebappManager = {
     // Perform the install if the user allows it
     if (choice == 0) {
       let nativeApp = new NativeApp(data.app, jsonManifest,
-                                    WebappRT.config.app.categories,
+                                    data.app.categories,
                                     WebappRT.config.registryDir);
       let localDir;
       try {
@@ -79,9 +79,9 @@ this.WebappManager = {
       }
 
       DOMApplicationRegistry.confirmInstall(data, localDir,
-        function (aManifest, aZipPath) {
-          nativeApp.install(aManifest, aZipPath);
-        }
+        Task.async(function*(aApp, aManifest, aZipPath) {
+          yield nativeApp.install(aApp, aManifest, aZipPath);
+        })
       );
     } else {
       DOMApplicationRegistry.denyInstall(data);

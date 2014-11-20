@@ -1,4 +1,4 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -15,11 +15,14 @@
 #include "nsIChannel.h"
 #include "nsIURI.h"
 #include "nsILoadGroup.h"
+#include "nsILoadInfo.h"
 #include "nsIStreamListener.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsIProgressEventSink.h"
 #include "nsITransport.h"
 #include "nsIAsyncVerifyRedirectCallback.h"
+#include "nsIThreadRetargetableRequest.h"
+#include "nsIThreadRetargetableStreamListener.h"
 #include "PrivateBrowsingChannel.h"
 #include "nsThreadUtils.h"
 #include "nsNetUtil.h"
@@ -40,11 +43,13 @@ class nsIInputStream;
 
 class nsBaseChannel : public nsHashPropertyBag
                     , public nsIChannel
+                    , public nsIThreadRetargetableRequest
                     , public nsIInterfaceRequestor
                     , public nsITransportEventSink
                     , public nsIAsyncVerifyRedirectCallback
                     , public mozilla::net::PrivateBrowsingChannel<nsBaseChannel>
                     , protected nsIStreamListener
+                    , protected nsIThreadRetargetableStreamListener
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
@@ -53,6 +58,8 @@ public:
   NS_DECL_NSIINTERFACEREQUESTOR
   NS_DECL_NSITRANSPORTEVENTSINK
   NS_DECL_NSIASYNCVERIFYREDIRECTCALLBACK
+  NS_DECL_NSITHREADRETARGETABLEREQUEST
+  NS_DECL_NSITHREADRETARGETABLESTREAMLISTENER
 
   nsBaseChannel(); 
 
@@ -203,6 +210,11 @@ public:
                                bool invalidatesContentLength = true,
                                nsIStreamListener **converter = nullptr);
 
+protected:
+  void DisallowThreadRetargeting() {
+    mAllowThreadRetargeting = false;
+  }
+
 private:
   NS_DECL_NSISTREAMLISTENER
   NS_DECL_NSIREQUESTOBSERVER
@@ -258,6 +270,7 @@ private:
   nsCOMPtr<nsIProgressEventSink>      mProgressSink;
   nsCOMPtr<nsIURI>                    mOriginalURI;
   nsCOMPtr<nsISupports>               mOwner;
+  nsCOMPtr<nsILoadInfo>               mLoadInfo;
   nsCOMPtr<nsISupports>               mSecurityInfo;
   nsCOMPtr<nsIChannel>                mRedirectChannel;
   nsCString                           mContentType;
@@ -265,6 +278,7 @@ private:
   uint32_t                            mLoadFlags;
   bool                                mQueriedProgressSink;
   bool                                mSynthProgressEvents;
+  bool                                mAllowThreadRetargeting;
   bool                                mWasOpened;
   bool                                mWaitingOnAsyncRedirect;
   bool                                mOpenRedirectChannel;

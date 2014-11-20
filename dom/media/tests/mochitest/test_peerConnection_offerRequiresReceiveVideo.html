@@ -1,4 +1,4 @@
-﻿<!DOCTYPE HTML>
+<!DOCTYPE HTML>
 <html>
 <head>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
@@ -18,7 +18,9 @@
 
   runNetworkTest(function() {
     var test = new PeerConnectionTest();
-    test.setOfferConstraints({ mandatory: { OfferToReceiveVideo: true } });
+    // TODO: Stop using old constraint-like RTCOptions soon (Bug 1064223).
+    // Watch out for case-difference when fixing: { offerToReceiveVideo: true }
+    test.setOfferOptions({ optional: [{ OfferToReceiveAudio: true }] });
     test.run();
   });
 </script>

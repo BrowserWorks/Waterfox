@@ -45,6 +45,16 @@
 #include "dtlsidentity.h"
 
 #ifdef MOZILLA_INTERNAL_API
+#ifdef XP_WIN
+// We need to undef the MS macro for nsIDocument::CreateEvent
+#ifdef CreateEvent
+#undef CreateEvent
+#endif
+#endif // XP_WIN
+
+#ifdef MOZILLA_INTERNAL_API
+#include "nsIDocument.h"
+#endif
 #include "nsPerformance.h"
 #include "nsGlobalWindow.h"
 #include "nsDOMDataChannel.h"
@@ -55,7 +65,6 @@
 #include "nsXULAppAPI.h"
 #include "nsContentUtils.h"
 #include "nsDOMJSUtils.h"
-#include "nsIDocument.h"
 #include "nsIScriptError.h"
 #include "nsPrintfCString.h"
 #include "nsURLHelper.h"
@@ -77,7 +86,18 @@
 #include "DOMMediaStream.h"
 #include "rlogringbuffer.h"
 #include "WebrtcGlobalInformation.h"
+#include "mozilla/dom/Event.h"
+#include "nsIDOMCustomEvent.h"
+#include "mozilla/EventDispatcher.h"
 #endif
+
+#ifdef XP_WIN
+// We need to undef the MS macro again in case the windows include file
+// got imported after we included nsIDocument.h
+#ifdef CreateEvent
+#undef CreateEvent
+#endif
+#endif // XP_WIN
 
 #ifndef USE_FAKE_MEDIA_STREAMS
 #include "MediaSegment.h"
@@ -488,6 +508,7 @@ PeerConnectionImpl::PeerConnectionImpl(const GlobalObject* aGlobal)
   , mDtlsConnected(false)
   , mWindow(nullptr)
   , mIdentity(nullptr)
+  , mPrivacyRequested(false)
   , mSTSThread(nullptr)
   , mMedia(nullptr)
   , mNumAudioStreams(0)
@@ -1082,7 +1103,7 @@ PeerConnectionImpl::CreateDataChannel(const nsAString& aLabel,
 
   if (!mHaveDataStream) {
     // XXX stream_id of 0 might confuse things...
-    mInternal->mCall->addStream(0, 2, DATA, 0);
+    mInternal->mCall->addStream(0, 2, DATA);
     mHaveDataStream = true;
   }
   nsIDOMDataChannel *retval;
@@ -1169,14 +1190,14 @@ PeerConnectionImpl::NotifyDataChannel(already_AddRefed<DataChannel> aChannel)
 }
 
 NS_IMETHODIMP
-PeerConnectionImpl::CreateOffer(const MediaConstraintsInternal& aConstraints)
+PeerConnectionImpl::CreateOffer(const RTCOfferOptions& aOptions)
 {
-  return CreateOffer(MediaConstraintsExternal (aConstraints));
+  return CreateOffer(SipccOfferOptions(aOptions));
 }
 
 // Used by unit tests and the IDL CreateOffer.
 NS_IMETHODIMP
-PeerConnectionImpl::CreateOffer(const MediaConstraintsExternal& aConstraints)
+PeerConnectionImpl::CreateOffer(const SipccOfferOptions& aOptions)
 {
   PC_AUTO_ENTER_API_CALL(true);
 
@@ -1184,20 +1205,14 @@ PeerConnectionImpl::CreateOffer(const MediaConstraintsExternal& aConstraints)
   mTimeCard = nullptr;
   STAMP_TIMECARD(tc, "Create Offer");
 
-  cc_media_constraints_t* cc_constraints = aConstraints.build();
-  NS_ENSURE_TRUE(cc_constraints, NS_ERROR_UNEXPECTED);
-  mInternal->mCall->createOffer(cc_constraints, tc);
+  cc_media_options_t* cc_options = aOptions.build();
+  NS_ENSURE_TRUE(cc_options, NS_ERROR_UNEXPECTED);
+  mInternal->mCall->createOffer(cc_options, tc);
   return NS_OK;
 }
 
 NS_IMETHODIMP
-PeerConnectionImpl::CreateAnswer(const MediaConstraintsInternal& aConstraints)
-{
-  return CreateAnswer(MediaConstraintsExternal (aConstraints));
-}
-
-NS_IMETHODIMP
-PeerConnectionImpl::CreateAnswer(const MediaConstraintsExternal& aConstraints)
+PeerConnectionImpl::CreateAnswer()
 {
   PC_AUTO_ENTER_API_CALL(true);
 
@@ -1205,9 +1220,7 @@ PeerConnectionImpl::CreateAnswer(const MediaConstraintsExternal& aConstraints)
   mTimeCard = nullptr;
   STAMP_TIMECARD(tc, "Create Answer");
 
-  cc_media_constraints_t* cc_constraints = aConstraints.build();
-  NS_ENSURE_TRUE(cc_constraints, NS_ERROR_UNEXPECTED);
-  mInternal->mCall->createAnswer(cc_constraints, tc);
+  mInternal->mCall->createAnswer(tc);
   return NS_OK;
 }
 
@@ -1226,13 +1239,7 @@ PeerConnectionImpl::SetLocalDescription(int32_t aAction, const char* aSDP)
   STAMP_TIMECARD(tc, "Set Local Description");
 
 #ifdef MOZILLA_INTERNAL_API
-  nsIDocument* doc = GetWindow()->GetExtantDoc();
-  bool isolated = true;
-  if (doc) {
-    isolated = mMedia->AnyLocalStreamIsolated(doc->NodePrincipal());
-  } else {
-    CSFLogInfo(logTag, "%s - no document, failing safe", __FUNCTION__);
-  }
+  bool isolated = mMedia->AnyLocalStreamHasPeerIdentity();
   mPrivacyRequested = mPrivacyRequested || isolated;
 #endif
 
@@ -1431,15 +1438,7 @@ PeerConnectionImpl::PrincipalChanged(DOMMediaStream* aMediaStream) {
 #endif
 
 nsresult
-PeerConnectionImpl::AddStream(DOMMediaStream &aMediaStream,
-                              const MediaConstraintsInternal& aConstraints)
-{
-  return AddStream(aMediaStream, MediaConstraintsExternal(aConstraints));
-}
-
-nsresult
-PeerConnectionImpl::AddStream(DOMMediaStream &aMediaStream,
-                              const MediaConstraintsExternal& aConstraints)
+PeerConnectionImpl::AddStream(DOMMediaStream &aMediaStream)
 {
   PC_AUTO_ENTER_API_CALL(true);
 
@@ -1475,16 +1474,12 @@ PeerConnectionImpl::AddStream(DOMMediaStream &aMediaStream,
 
   // TODO(ekr@rtfm.com): these integers should be the track IDs
   if (hints & DOMMediaStream::HINT_CONTENTS_AUDIO) {
-    cc_media_constraints_t* cc_constraints = aConstraints.build();
-    NS_ENSURE_TRUE(cc_constraints, NS_ERROR_UNEXPECTED);
-    mInternal->mCall->addStream(stream_id, 0, AUDIO, cc_constraints);
+    mInternal->mCall->addStream(stream_id, 0, AUDIO);
     mNumAudioStreams++;
   }
 
   if (hints & DOMMediaStream::HINT_CONTENTS_VIDEO) {
-    cc_media_constraints_t* cc_constraints = aConstraints.build();
-    NS_ENSURE_TRUE(cc_constraints, NS_ERROR_UNEXPECTED);
-    mInternal->mCall->addStream(stream_id, 1, VIDEO, cc_constraints);
+    mInternal->mCall->addStream(stream_id, 1, VIDEO);
     mNumVideoStreams++;
   }
 
@@ -1661,6 +1656,78 @@ PeerConnectionImpl::Close()
   return res;
 }
 
+bool
+PeerConnectionImpl::PluginCrash(uint64_t aPluginID,
+                                const nsAString& aPluginName,
+                                const nsAString& aPluginDumpID)
+{
+  // fire an event to the DOM window if this is "ours"
+  bool result = mMedia ? mMedia->AnyCodecHasPluginID(aPluginID) : false;
+  if (!result) {
+    return false;
+  }
+
+  CSFLogError(logTag, "%s: Our plugin %llu crashed", __FUNCTION__, static_cast<unsigned long long>(aPluginID));
+
+#ifdef MOZILLA_INTERNAL_API
+  nsCOMPtr<nsIDocument> doc = mWindow->GetExtantDoc();
+  if (!doc) {
+    NS_WARNING("Couldn't get document for PluginCrashed event!");
+    return true;
+  }
+
+  ErrorResult rv;
+  nsRefPtr<Event> event =
+    doc->CreateEvent(NS_LITERAL_STRING("customevent"), rv);
+  nsCOMPtr<nsIDOMCustomEvent> customEvent(do_QueryObject(event));
+  if (!customEvent) {
+    NS_WARNING("Couldn't QI event for PluginCrashed event!");
+    return true;
+  }
+
+  nsCOMPtr<nsIWritableVariant> variant;
+  variant = do_CreateInstance("@mozilla.org/variant;1");
+  if (!variant) {
+    NS_WARNING("Couldn't create detail variant for PluginCrashed event!");
+    return true;
+  }
+
+  customEvent->InitCustomEvent(NS_LITERAL_STRING("PluginCrashed"),
+                               true, true, variant);
+  event->SetTrusted(true);
+  event->GetInternalNSEvent()->mFlags.mOnlyChromeDispatch = true;
+
+  nsCOMPtr<nsIWritablePropertyBag2> propBag;
+  propBag = do_CreateInstance("@mozilla.org/hash-property-bag;1");
+  if (!propBag) {
+    NS_WARNING("Couldn't create a property bag for PluginCrashed event!");
+    return true;
+  }
+
+  // add a "pluginDumpID" property to this event
+  propBag->SetPropertyAsAString(NS_LITERAL_STRING("pluginDumpID"),
+                                aPluginDumpID);
+
+
+  // add a "pluginName" property to this event
+  propBag->SetPropertyAsAString(NS_LITERAL_STRING("pluginName"),
+                                aPluginName);
+
+  // add a "pluginName" property to this event
+  propBag->SetPropertyAsBool(NS_LITERAL_STRING("gmpPlugin"),
+                             true);
+
+  // add a "submittedCrashReport" property to this event
+  propBag->SetPropertyAsBool(NS_LITERAL_STRING("submittedCrashReport"),
+                             false);
+
+  variant->SetAsISupports(propBag);
+
+  EventDispatcher::DispatchDOMEvent(mWindow, nullptr, event, nullptr, nullptr);
+#endif
+
+  return true;
+}
 
 nsresult
 PeerConnectionImpl::CloseInt()
@@ -1885,36 +1952,6 @@ toDomIceGatheringState(NrIceCtx::GatheringState state) {
   MOZ_CRASH();
 }
 
-// This is called from the STS thread and so we need to thunk
-// to the main thread.
-void PeerConnectionImpl::IceConnectionStateChange(
-    NrIceCtx* ctx,
-    NrIceCtx::ConnectionState state) {
-  (void)ctx;
-  // Do an async call here to unwind the stack. refptr keeps the PC alive.
-  nsRefPtr<PeerConnectionImpl> pc(this);
-  RUN_ON_THREAD(mThread,
-                WrapRunnable(pc,
-                             &PeerConnectionImpl::IceConnectionStateChange_m,
-                             toDomIceConnectionState(state)),
-                NS_DISPATCH_NORMAL);
-}
-
-void
-PeerConnectionImpl::IceGatheringStateChange(
-    NrIceCtx* ctx,
-    NrIceCtx::GatheringState state)
-{
-  (void)ctx;
-  // Do an async call here to unwind the stack. refptr keeps the PC alive.
-  nsRefPtr<PeerConnectionImpl> pc(this);
-  RUN_ON_THREAD(mThread,
-                WrapRunnable(pc,
-                             &PeerConnectionImpl::IceGatheringStateChange_m,
-                             toDomIceGatheringState(state)),
-                NS_DISPATCH_NORMAL);
-}
-
 #ifdef MOZILLA_INTERNAL_API
 static bool isDone(PCImplIceConnectionState state) {
   return state != PCImplIceConnectionState::Checking &&
@@ -1932,33 +1969,35 @@ static bool isFailed(PCImplIceConnectionState state) {
 }
 #endif
 
-nsresult
-PeerConnectionImpl::IceConnectionStateChange_m(PCImplIceConnectionState aState)
-{
-  PC_AUTO_ENTER_API_CALL(false);
+void PeerConnectionImpl::IceConnectionStateChange(
+    NrIceCtx* ctx,
+    NrIceCtx::ConnectionState state) {
+  PC_AUTO_ENTER_API_CALL_VOID_RETURN(false);
 
   CSFLogDebug(logTag, "%s", __FUNCTION__);
 
+  auto domState = toDomIceConnectionState(state);
+
 #ifdef MOZILLA_INTERNAL_API
-  if (!isDone(mIceConnectionState) && isDone(aState)) {
+  if (!isDone(mIceConnectionState) && isDone(domState)) {
     // mIceStartTime can be null if going directly from New to Closed, in which
     // case we don't count it as a success or a failure.
     if (!mIceStartTime.IsNull()){
       TimeDuration timeDelta = TimeStamp::Now() - mIceStartTime;
-      if (isSucceeded(aState)) {
+      if (isSucceeded(domState)) {
         Telemetry::Accumulate(Telemetry::WEBRTC_ICE_SUCCESS_TIME,
                               timeDelta.ToMilliseconds());
-      } else if (isFailed(aState)) {
+      } else if (isFailed(domState)) {
         Telemetry::Accumulate(Telemetry::WEBRTC_ICE_FAILURE_TIME,
                               timeDelta.ToMilliseconds());
       }
     }
 
-    if (isSucceeded(aState)) {
+    if (isSucceeded(domState)) {
       Telemetry::Accumulate(
           Telemetry::WEBRTC_ICE_ADD_CANDIDATE_ERRORS_GIVEN_SUCCESS,
           mAddCandidateErrorCount);
-    } else if (isFailed(aState)) {
+    } else if (isFailed(domState)) {
       Telemetry::Accumulate(
           Telemetry::WEBRTC_ICE_ADD_CANDIDATE_ERRORS_GIVEN_FAILURE,
           mAddCandidateErrorCount);
@@ -1966,7 +2005,7 @@ PeerConnectionImpl::IceConnectionStateChange_m(PCImplIceConnectionState aState)
   }
 #endif
 
-  mIceConnectionState = aState;
+  mIceConnectionState = domState;
 
   // Would be nice if we had a means of converting one of these dom enums
   // to a string that wasn't almost as much text as this switch statement...
@@ -1996,11 +2035,13 @@ PeerConnectionImpl::IceConnectionStateChange_m(PCImplIceConnectionState aState)
     case PCImplIceConnectionState::Closed:
       STAMP_TIMECARD(mTimeCard, "Ice state: closed");
       break;
+    default:
+      MOZ_ASSERT_UNREACHABLE("Unexpected mIceConnectionState!");
   }
 
   nsRefPtr<PeerConnectionObserver> pco = do_QueryObjectReferent(mPCObserver);
   if (!pco) {
-    return NS_OK;
+    return;
   }
   WrappableJSErrorResult rv;
   RUN_ON_THREAD(mThread,
@@ -2009,17 +2050,18 @@ PeerConnectionImpl::IceConnectionStateChange_m(PCImplIceConnectionState aState)
                              PCObserverStateType::IceConnectionState,
                              rv, static_cast<JSCompartment*>(nullptr)),
                 NS_DISPATCH_NORMAL);
-  return NS_OK;
 }
 
-nsresult
-PeerConnectionImpl::IceGatheringStateChange_m(PCImplIceGatheringState aState)
+void
+PeerConnectionImpl::IceGatheringStateChange(
+    NrIceCtx* ctx,
+    NrIceCtx::GatheringState state)
 {
-  PC_AUTO_ENTER_API_CALL(false);
+  PC_AUTO_ENTER_API_CALL_VOID_RETURN(false);
 
   CSFLogDebug(logTag, "%s", __FUNCTION__);
 
-  mIceGatheringState = aState;
+  mIceGatheringState = toDomIceGatheringState(state);
 
   // Would be nice if we had a means of converting one of these dom enums
   // to a string that wasn't almost as much text as this switch statement...
@@ -2033,11 +2075,13 @@ PeerConnectionImpl::IceGatheringStateChange_m(PCImplIceGatheringState aState)
     case PCImplIceGatheringState::Complete:
       STAMP_TIMECARD(mTimeCard, "Ice gathering state: complete");
       break;
+    default:
+      MOZ_ASSERT_UNREACHABLE("Unexpected mIceGatheringState!");
   }
 
   nsRefPtr<PeerConnectionObserver> pco = do_QueryObjectReferent(mPCObserver);
   if (!pco) {
-    return NS_OK;
+    return;
   }
   WrappableJSErrorResult rv;
   RUN_ON_THREAD(mThread,
@@ -2046,7 +2090,6 @@ PeerConnectionImpl::IceGatheringStateChange_m(PCImplIceGatheringState aState)
                              PCObserverStateType::IceGatheringState,
                              rv, static_cast<JSCompartment*>(nullptr)),
                 NS_DISPATCH_NORMAL);
-  return NS_OK;
 }
 
 #ifdef MOZILLA_INTERNAL_API
@@ -2173,34 +2216,33 @@ static void RecordIceStats_s(
     RTCStatsReportInternal* report) {
 
   NS_ConvertASCIItoUTF16 componentId(mediaStream.name().c_str());
-  if (internalStats) {
-    std::vector<NrIceCandidatePair> candPairs;
-    nsresult res = mediaStream.GetCandidatePairs(&candPairs);
-    if (NS_FAILED(res)) {
-      CSFLogError(logTag, "%s: Error getting candidate pairs", __FUNCTION__);
-      return;
-    }
 
-    for (auto p = candPairs.begin(); p != candPairs.end(); ++p) {
-      NS_ConvertASCIItoUTF16 codeword(p->codeword.c_str());
-      NS_ConvertASCIItoUTF16 localCodeword(p->local.codeword.c_str());
-      NS_ConvertASCIItoUTF16 remoteCodeword(p->remote.codeword.c_str());
-      // Only expose candidate-pair statistics to chrome, until we've thought
-      // through the implications of exposing it to content.
+  std::vector<NrIceCandidatePair> candPairs;
+  nsresult res = mediaStream.GetCandidatePairs(&candPairs);
+  if (NS_FAILED(res)) {
+    CSFLogError(logTag, "%s: Error getting candidate pairs", __FUNCTION__);
+    return;
+  }
 
-      RTCIceCandidatePairStats s;
-      s.mId.Construct(codeword);
-      s.mComponentId.Construct(componentId);
-      s.mTimestamp.Construct(now);
-      s.mType.Construct(RTCStatsType::Candidatepair);
-      s.mLocalCandidateId.Construct(localCodeword);
-      s.mRemoteCandidateId.Construct(remoteCodeword);
-      s.mNominated.Construct(p->nominated);
-      s.mMozPriority.Construct(p->priority);
-      s.mSelected.Construct(p->selected);
-      s.mState.Construct(RTCStatsIceCandidatePairState(p->state));
-      report->mIceCandidatePairStats.Value().AppendElement(s);
-    }
+  for (auto p = candPairs.begin(); p != candPairs.end(); ++p) {
+    NS_ConvertASCIItoUTF16 codeword(p->codeword.c_str());
+    NS_ConvertASCIItoUTF16 localCodeword(p->local.codeword.c_str());
+    NS_ConvertASCIItoUTF16 remoteCodeword(p->remote.codeword.c_str());
+    // Only expose candidate-pair statistics to chrome, until we've thought
+    // through the implications of exposing it to content.
+
+    RTCIceCandidatePairStats s;
+    s.mId.Construct(codeword);
+    s.mComponentId.Construct(componentId);
+    s.mTimestamp.Construct(now);
+    s.mType.Construct(RTCStatsType::Candidatepair);
+    s.mLocalCandidateId.Construct(localCodeword);
+    s.mRemoteCandidateId.Construct(remoteCodeword);
+    s.mNominated.Construct(p->nominated);
+    s.mMozPriority.Construct(p->priority);
+    s.mSelected.Construct(p->selected);
+    s.mState.Construct(RTCStatsIceCandidatePairState(p->state));
+    report->mIceCandidatePairStats.Value().AppendElement(s);
   }
 
   std::vector<NrIceCandidate> candidates;

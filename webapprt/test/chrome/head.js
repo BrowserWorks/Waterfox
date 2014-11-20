@@ -27,18 +27,20 @@ function loadWebapp(manifest, parameters, onLoad) {
 
   becomeWebapp(url.spec, parameters, function onBecome() {
     function onLoadApp() {
-      gAppBrowser.removeEventListener("DOMContentLoaded", onLoadApp, true);
+      gAppBrowser.removeEventListener("load", onLoadApp, true);
       onLoad();
     }
-    gAppBrowser.addEventListener("DOMContentLoaded", onLoadApp, true);
+    gAppBrowser.addEventListener("load", onLoadApp, true);
     gAppBrowser.setAttribute("src", WebappRT.launchURI);
   });
 
   registerCleanupFunction(function() {
     // We load DOMApplicationRegistry into a local scope to avoid appearing
     // to leak it.
-    let scope = {};
-    Cu.import("resource://gre/modules/Webapps.jsm", scope);
-    scope.DOMApplicationRegistry.uninstall(url.spec);
+    let { DOMApplicationRegistry } = Cu.import("resource://gre/modules/Webapps.jsm", {});
+
+    return new Promise(function(resolve, reject) {
+      DOMApplicationRegistry.uninstall(url.spec, resolve, reject);
+    });
   });
 }

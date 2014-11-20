@@ -1,4 +1,4 @@
-/* -*- Mode: javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -144,7 +144,8 @@ Tilt.prototype = {
     }
 
     this.lastInstanceId = id;
-    this.emit("change", this.chromeWindow.gBrowser.selectedTab);
+    // E10S: We should be using target here. See bug 1028234
+    this.emit("change", { tab: this.chromeWindow.gBrowser.selectedTab });
     Services.obs.notifyObservers(contentWindow, TILT_NOTIFICATIONS.INITIALIZING, null);
   },
 
@@ -201,7 +202,8 @@ Tilt.prototype = {
 
     this._isDestroying = false;
     this.chromeWindow.gBrowser.selectedBrowser.focus();
-    this.emit("change", this.chromeWindow.gBrowser.selectedTab);
+    // E10S: We should be using target here. See bug 1028234
+    this.emit("change", { tab: this.chromeWindow.gBrowser.selectedTab });
     Services.obs.notifyObservers(contentWindow, TILT_NOTIFICATIONS.DESTROYED, null);
   },
 

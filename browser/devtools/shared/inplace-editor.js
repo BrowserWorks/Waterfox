@@ -1,4 +1,4 @@
-/* -*- Mode: javascript; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ts=2 et sw=2 tw=80: */
 
 /**
@@ -72,6 +72,12 @@ Cu.import("resource://gre/modules/devtools/event-emitter.js");
  *       to the next element.
  *    {boolean} stopOnReturn:
  *       If true, the return key will not advance the editor to the next
+ *       focusable element.
+ *    {boolean} stopOnTab:
+ *       If true, the tab key will not advance the editor to the next
+ *       focusable element.
+ *    {boolean} stopOnShiftTab:
+ *       If true, shift tab will not advance the editor to the previous
  *       focusable element.
  *    {string} trigger: The DOM event that should trigger editing,
  *      defaults to "click"
@@ -171,6 +177,8 @@ function InplaceEditor(aOptions, aEvent)
   this.destroy = aOptions.destroy;
   this.initial = aOptions.initial ? aOptions.initial : this.elt.textContent;
   this.multiline = aOptions.multiline || false;
+  this.stopOnShiftTab = !!aOptions.stopOnShiftTab;
+  this.stopOnTab = !!aOptions.stopOnTab;
   this.stopOnReturn = !!aOptions.stopOnReturn;
   this.contentType = aOptions.contentType || CONTENT_TYPES.PLAIN_TEXT;
   this.property = aOptions.property;
@@ -470,7 +478,7 @@ InplaceEditor.prototype = {
    */
    _parseCSSValue: function InplaceEditor_parseCSSValue(value, offset)
   {
-    const reSplitCSS = /(url\("?[^"\)]+"?\)?)|(rgba?\([^)]*\)?)|(hsla?\([^)]*\)?)|(#[\dA-Fa-f]+)|(-?\d+(\.\d+)?(%|[a-z]{1,4})?)|"([^"]*)"?|'([^']*)'?|([^,\s\/!\(\)]+)|(!(.*)?)/;
+    const reSplitCSS = /(url\("?[^"\)]+"?\)?)|(rgba?\([^)]*\)?)|(hsla?\([^)]*\)?)|(#[\dA-Fa-f]+)|(-?\d*\.?\d+(%|[a-z]{1,4})?)|"([^"]*)"?|'([^']*)'?|([^,\s\/!\(\)]+)|(!(.*)?)/;
     let start = 0;
     let m;
 
@@ -899,9 +907,15 @@ InplaceEditor.prototype = {
       let direction = FOCUS_FORWARD;
       if (aEvent.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_TAB &&
           aEvent.shiftKey) {
-        direction = FOCUS_BACKWARD;
+        if (this.stopOnShiftTab) {
+          direction = null;
+        } else {
+          direction = FOCUS_BACKWARD;
+        }
       }
-      if (this.stopOnReturn && aEvent.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_RETURN) {
+      if ((this.stopOnReturn &&
+           aEvent.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_RETURN) ||
+          (this.stopOnTab && aEvent.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_TAB)) {
         direction = null;
       }
 

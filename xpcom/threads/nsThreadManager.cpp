@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -10,6 +10,7 @@
 #include "nsIClassInfoImpl.h"
 #include "nsTArray.h"
 #include "nsAutoPtr.h"
+#include "mozilla/ThreadLocal.h"
 #ifdef MOZ_CANARY
 #include <fcntl.h>
 #include <unistd.h>
@@ -23,6 +24,26 @@ DWORD gTLSThreadIDIndex = TlsAlloc();
 #elif defined(NS_TLS)
 NS_TLS mozilla::threads::ID gTLSThreadID = mozilla::threads::Generic;
 #endif
+
+static mozilla::ThreadLocal<bool> sTLSIsMainThread;
+
+bool
+NS_IsMainThread()
+{
+  return sTLSIsMainThread.get();
+}
+
+void
+NS_SetMainThread()
+{
+  if (!sTLSIsMainThread.initialized()) {
+    if (!sTLSIsMainThread.init()) {
+      MOZ_CRASH();
+    }
+    sTLSIsMainThread.set(true);
+  }
+  MOZ_ASSERT(NS_IsMainThread());
+}
 
 typedef nsTArray<nsRefPtr<nsThread>> nsThreadArray;
 

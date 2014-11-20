@@ -108,10 +108,10 @@ Site.prototype = {
     let control = this._querySelector(".newtab-control-pin");
 
     if (aPinned) {
-      control.setAttribute("pinned", true);
+      this.node.setAttribute("pinned", true);
       control.setAttribute("title", newTabString("unpin"));
     } else {
-      control.removeAttribute("pinned");
+      this.node.removeAttribute("pinned");
       control.setAttribute("title", newTabString("pin"));
     }
   },
@@ -120,8 +120,9 @@ Site.prototype = {
    * Renders the site's data (fills the HTML fragment).
    */
   _render: function Site_render() {
+    let enhanced = gAllPages.enhanced && DirectoryLinksProvider.getEnhancedLink(this.link);
     let url = this.url;
-    let title = this.title || url;
+    let title = enhanced && enhanced.title || this.title || url;
     let tooltip = (title == url ? title : title + "\n" + url);
 
     let link = this._querySelector(".newtab-link");
@@ -153,12 +154,27 @@ Site.prototype = {
    * Refreshes the thumbnail for the site.
    */
   refreshThumbnail: function Site_refreshThumbnail() {
+    // Only enhance tiles if that feature is turned on
+    let link = gAllPages.enhanced && DirectoryLinksProvider.getEnhancedLink(this.link) ||
+               this.link;
+
     let thumbnail = this._querySelector(".newtab-thumbnail");
-    if (this.link.bgColor) {
-      thumbnail.style.backgroundColor = this.link.bgColor;
+    if (link.bgColor) {
+      thumbnail.style.backgroundColor = link.bgColor;
     }
-    let uri = this.link.imageURI || PageThumbs.getThumbnailURL(this.url);
-    thumbnail.style.backgroundImage = "url(" + uri + ")";
+
+    let uri = link.imageURI || PageThumbs.getThumbnailURL(this.url);
+    thumbnail.style.backgroundImage = 'url("' + uri + '")';
+
+    if (link.enhancedImageURI) {
+      let enhanced = this._querySelector(".enhanced-content");
+      enhanced.style.backgroundImage = 'url("' + link.enhancedImageURI + '")';
+
+      if (this.link.type != link.type) {
+        this.node.setAttribute("type", "enhanced");
+        this.enhancedId = link.directoryId;
+      }
+    }
   },
 
   /**
@@ -171,7 +187,7 @@ Site.prototype = {
     this._node.addEventListener("mouseover", this, false);
 
     // Specially treat the sponsored icon to prevent regular hover effects
-    let sponsored = this._querySelector(".newtab-control-sponsored");
+    let sponsored = this._querySelector(".newtab-sponsored");
     sponsored.addEventListener("mouseover", () => {
       this.cell.node.setAttribute("ignorehover", "true");
     });
@@ -202,12 +218,29 @@ Site.prototype = {
     }
     Services.telemetry.getHistogramById("NEWTAB_PAGE_SITE_CLICKED")
                       .add(aIndex);
+  },
 
-    // Specially count clicks on directory tiles
-    let typeIndex = DirectoryLinksProvider.linkTypes.indexOf(this.link.type);
-    if (typeIndex != -1) {
-      Services.telemetry.getHistogramById("NEWTAB_PAGE_DIRECTORY_TYPE_CLICKED")
-                        .add(typeIndex);
+  _toggleSponsored: function() {
+    let button = this._querySelector(".newtab-sponsored");
+    if (button.hasAttribute("active")) {
+      let explain = this._querySelector(".sponsored-explain");
+      explain.parentNode.removeChild(explain);
+
+      button.removeAttribute("active");
+    }
+    else {
+      let explain = document.createElementNS(HTML_NAMESPACE, "div");
+      explain.className = "sponsored-explain";
+      this.node.appendChild(explain);
+
+      let link = '<a href="' + TILES_EXPLAIN_LINK + '">' +
+                 newTabString("learn.link") + "</a>";
+      let type = this.node.getAttribute("type");
+      let icon = '<input type="button" class="newtab-control newtab-' +
+                 (type == "sponsored" ? "control-block" : "customize") + '"/>';
+      explain.innerHTML = newTabString(type + ".explain", [icon, link]);
+
+      button.setAttribute("active", "true");
     }
   },
 
@@ -215,30 +248,48 @@ Site.prototype = {
    * Handles site click events.
    */
   onClick: function Site_onClick(aEvent) {
+    let action;
+    let pinned = this.isPinned();
+    let tileIndex = this.cell.index;
     let {button, target} = aEvent;
+
+    // Handle tile/thumbnail link click
     if (target.classList.contains("newtab-link") ||
         target.parentElement.classList.contains("newtab-link")) {
       // Record for primary and middle clicks
       if (button == 0 || button == 1) {
-        this._recordSiteClicked(this.cell.index);
+        this._recordSiteClicked(tileIndex);
+        action = "click";
       }
-      return;
     }
-
+    // Handle sponsored explanation link click
+    else if (target.parentElement.classList.contains("sponsored-explain")) {
+      action = "sponsored_link";
+    }
     // Only handle primary clicks for the remaining targets
-    if (button != 0) {
-      return;
+    else if (button == 0) {
+      aEvent.preventDefault();
+      if (target.classList.contains("newtab-control-block")) {
+        this.block();
+        action = "block";
+      }
+      else if (target.classList.contains("sponsored-explain") ||
+               target.classList.contains("newtab-sponsored")) {
+        this._toggleSponsored();
+        action = "sponsored";
+      }
+      else if (pinned) {
+        this.unpin();
+        action = "unpin";
+      }
+      else {
+        this.pin();
+        action = "pin";
+      }
     }
 
-    aEvent.preventDefault();
-    if (aEvent.target.classList.contains("newtab-control-block"))
-      this.block();
-    else if (target.classList.contains("newtab-control-sponsored"))
-      gPage.showSponsoredPanel(target);
-    else if (this.isPinned())
-      this.unpin();
-    else
-      this.pin();
+    // Report all link click actions
+    DirectoryLinksProvider.reportSitesAction(gGrid.sites, action, tileIndex);
   },
 
   /**

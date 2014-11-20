@@ -18,6 +18,10 @@ NS_IMPL_NS_NEW_HTML_ELEMENT(TableRow)
 namespace mozilla {
 namespace dom {
 
+HTMLTableRowElement::~HTMLTableRowElement()
+{
+}
+
 JSObject*
 HTMLTableRowElement::WrapNode(JSContext *aCx)
 {
@@ -171,7 +175,7 @@ HTMLTableRowElement::InsertCell(int32_t aIndex,
   }
 
   // create the cell
-  nsCOMPtr<nsINodeInfo> nodeInfo;
+  nsRefPtr<mozilla::dom::NodeInfo> nodeInfo;
   nsContentUtils::NameChanged(mNodeInfo, nsGkAtoms::td,
                               getter_AddRefs(nodeInfo));
 

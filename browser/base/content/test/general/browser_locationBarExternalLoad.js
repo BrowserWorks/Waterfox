@@ -8,7 +8,6 @@ function test() {
 }
 
 let urls = [
-  "javascript:'foopy';",
   "data:text/html,<body>hi"
 ];
 

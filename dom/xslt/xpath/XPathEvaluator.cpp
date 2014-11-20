@@ -7,9 +7,9 @@
 #include "mozilla/Move.h"
 #include "nsCOMPtr.h"
 #include "nsIAtom.h"
-#include "nsXPathExpression.h"
+#include "mozilla/dom/XPathExpression.h"
 #include "nsXPathNSResolver.h"
-#include "nsXPathResult.h"
+#include "XPathResult.h"
 #include "nsContentCID.h"
 #include "txExpr.h"
 #include "txExprParser.h"
@@ -20,7 +20,9 @@
 #include "nsDOMString.h"
 #include "nsNameSpaceManager.h"
 #include "nsContentUtils.h"
+#include "txIXPathContext.h"
 #include "mozilla/dom/XPathEvaluatorBinding.h"
+#include "mozilla/dom/BindingUtils.h"
 
 extern nsresult
 TX_ResolveFunctionCallXPCOM(const nsCString &aContractID, int32_t aNamespaceID,
@@ -66,6 +68,10 @@ XPathEvaluator::XPathEvaluator(nsIDocument* aDocument)
 {
 }
 
+XPathEvaluator::~XPathEvaluator()
+{
+}
+
 NS_IMETHODIMP
 XPathEvaluator::CreateNSResolver(nsIDOMNode *aNodeResolver,
                                  nsIDOMXPathNSResolver **aResult)
@@ -89,54 +95,56 @@ XPathEvaluator::Evaluate(const nsAString & aExpression,
                          nsISupports *aInResult,
                          nsISupports **aResult)
 {
-    nsCOMPtr<nsIDOMXPathExpression> expression;
-    nsresult rv = CreateExpression(aExpression, aResolver,
-                                   getter_AddRefs(expression));
-    NS_ENSURE_SUCCESS(rv, rv);
+    ErrorResult rv;
+    nsAutoPtr<XPathExpression> expression(CreateExpression(aExpression,
+                                                           aResolver, rv));
+    if (rv.Failed()) {
+        return rv.ErrorCode();
+    }
 
-    return expression->Evaluate(aContextNode, aType, aInResult, aResult);
+    nsCOMPtr<nsINode> node = do_QueryInterface(aContextNode);
+    if (!node) {
+        return NS_ERROR_FAILURE;
+    }
+
+    nsCOMPtr<nsIXPathResult> inResult = do_QueryInterface(aInResult);
+    nsRefPtr<XPathResult> result =
+        expression->Evaluate(*node, aType,
+                             static_cast<XPathResult*>(inResult.get()), rv);
+    if (rv.Failed()) {
+        return rv.ErrorCode();
+    }
+
+    *aResult = ToSupports(result.forget().take());
+
+    return NS_OK;
 }
 
 
-NS_IMETHODIMP
+XPathExpression*
 XPathEvaluator::CreateExpression(const nsAString & aExpression,
                                  nsIDOMXPathNSResolver *aResolver,
-                                 nsIDOMXPathExpression **aResult)
+                                 ErrorResult& aRv)
 {
-    nsresult rv;
     if (!mRecycler) {
-        nsRefPtr<txResultRecycler> recycler = new txResultRecycler;
-        NS_ENSURE_TRUE(recycler, NS_ERROR_OUT_OF_MEMORY);
-        
-        rv = recycler->init();
-        NS_ENSURE_SUCCESS(rv, rv);
-        
-        mRecycler = recycler;
+        mRecycler = new txResultRecycler;
     }
 
     nsCOMPtr<nsIDocument> doc = do_QueryReferent(mDocument);
     XPathEvaluatorParseContext pContext(aResolver, !(doc && doc->IsHTML()));
 
     nsAutoPtr<Expr> expression;
-    rv = txExprParser::createExpr(PromiseFlatString(aExpression), &pContext,
-                                  getter_Transfers(expression));
-    if (NS_FAILED(rv)) {
-        if (rv == NS_ERROR_DOM_NAMESPACE_ERR) {
-            return NS_ERROR_DOM_NAMESPACE_ERR;
+    aRv = txExprParser::createExpr(PromiseFlatString(aExpression), &pContext,
+                                   getter_Transfers(expression));
+    if (aRv.Failed()) {
+        if (aRv.ErrorCode() != NS_ERROR_DOM_NAMESPACE_ERR) {
+            aRv.Throw(NS_ERROR_DOM_INVALID_EXPRESSION_ERR);
         }
 
-        return NS_ERROR_DOM_INVALID_EXPRESSION_ERR;
+        return nullptr;
     }
 
-    nsCOMPtr<nsIDOMDocument> document = do_QueryReferent(mDocument);
-
-    *aResult = new nsXPathExpression(Move(expression), mRecycler, document);
-    if (!*aResult) {
-        return NS_ERROR_OUT_OF_MEMORY;
-    }
-
-    NS_ADDREF(*aResult);
-    return NS_OK;
+    return new XPathExpression(Move(expression), mRecycler, doc);
 }
 
 JSObject*
@@ -154,16 +162,6 @@ XPathEvaluator::Constructor(const GlobalObject& aGlobal,
     return newObj.forget();
 }
 
-already_AddRefed<nsIDOMXPathExpression>
-XPathEvaluator::CreateExpression(const nsAString& aExpression,
-                                 nsIDOMXPathNSResolver* aResolver,
-                                 ErrorResult& rv)
-{
-  nsCOMPtr<nsIDOMXPathExpression> expr;
-  rv = CreateExpression(aExpression, aResolver, getter_AddRefs(expr));
-  return expr.forget();
-}
-
 already_AddRefed<nsIDOMXPathNSResolver>
 XPathEvaluator::CreateNSResolver(nsINode* aNodeResolver,
                                  ErrorResult& rv)
@@ -174,16 +172,18 @@ XPathEvaluator::CreateNSResolver(nsINode* aNodeResolver,
   return res.forget();
 }
 
-already_AddRefed<nsISupports>
-XPathEvaluator::Evaluate(const nsAString& aExpression, nsINode* aContextNode,
+already_AddRefed<XPathResult>
+XPathEvaluator::Evaluate(JSContext* aCx, const nsAString& aExpression,
+                         nsINode* aContextNode,
                          nsIDOMXPathNSResolver* aResolver, uint16_t aType,
-                         nsISupports* aResult, ErrorResult& rv)
+                         JS::Handle<JSObject*> aResult, ErrorResult& rv)
 {
   nsCOMPtr<nsIDOMNode> contextNode = do_QueryInterface(aContextNode);
   nsCOMPtr<nsISupports> res;
   rv = Evaluate(aExpression, contextNode, aResolver, aType,
-                aResult, getter_AddRefs(res));
-  return res.forget();
+                aResult ? UnwrapDOMObjectToISupports(aResult) : nullptr,
+                getter_AddRefs(res));
+  return res.forget().downcast<nsIXPathResult>().downcast<XPathResult>();
 }
 
 

@@ -51,12 +51,11 @@ CanvasLayerD3D10::Initialize(const Data& aData)
         SurfaceStream::ChooseGLStreamType(SurfaceStream::MainThread,
                                           screen->PreserveBuffer());
 
-    SurfaceFactory_GL* factory = nullptr;
+    SurfaceFactory* factory = nullptr;
     if (!gfxPrefs::WebGLForceLayersReadback()) {
       if (mGLContext->IsANGLE()) {
         factory = SurfaceFactory_ANGLEShareHandle::Create(mGLContext,
-                                                          device(),
-                                                          screen->Caps());
+                                                          screen->mCaps);
       }
     }
 
@@ -122,16 +121,28 @@ CanvasLayerD3D10::UpdateSurface()
   }
 
   if (mGLContext) {
-    SharedSurface_GL* surf = mGLContext->RequestFrame();
+    SharedSurface* surf = mGLContext->RequestFrame();
     if (!surf) {
       return;
     }
 
-    switch (surf->Type()) {
+    switch (surf->mType) {
       case SharedSurfaceType::EGLSurfaceANGLE: {
         SharedSurface_ANGLEShareHandle* shareSurf = SharedSurface_ANGLEShareHandle::Cast(surf);
+        HANDLE shareHandle = shareSurf->GetShareHandle();
 
-        mSRView = shareSurf->GetSRV();
+        HRESULT hr = device()->OpenSharedResource(shareHandle,
+                                                  __uuidof(ID3D10Texture2D),
+                                                  getter_AddRefs(mTexture));
+        if (FAILED(hr))
+          return;
+
+        hr = device()->CreateShaderResourceView(mTexture,
+                                                nullptr,
+                                                getter_AddRefs(mSRView));
+        if (FAILED(hr))
+          return;
+
         return;
       }
       case SharedSurfaceType::Basic: {

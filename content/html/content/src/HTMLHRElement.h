@@ -20,8 +20,7 @@ class HTMLHRElement MOZ_FINAL : public nsGenericHTMLElement,
                                 public nsIDOMHTMLHRElement
 {
 public:
-  HTMLHRElement(already_AddRefed<nsINodeInfo>& aNodeInfo);
-  virtual ~HTMLHRElement();
+  HTMLHRElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
 
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
@@ -35,7 +34,7 @@ public:
                               nsAttrValue& aResult) MOZ_OVERRIDE;
   NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const MOZ_OVERRIDE;
   virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const MOZ_OVERRIDE;
-  virtual nsresult Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
 
   // WebIDL API
   void SetAlign(const nsAString& aAlign, ErrorResult& aError)
@@ -71,6 +70,8 @@ public:
   }
 
 protected:
+  virtual ~HTMLHRElement();
+
   virtual JSObject* WrapNode(JSContext* aCx) MOZ_OVERRIDE;
 
 private:

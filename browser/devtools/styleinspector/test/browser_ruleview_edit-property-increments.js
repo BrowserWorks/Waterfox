@@ -8,7 +8,7 @@
 // arrow keys works correctly.
 
 let test = asyncTest(function*() {
-  yield addTab("data:text/html,sample document for bug 722691");
+  yield addTab("data:text/html;charset=utf-8,sample document for bug 722691");
   createDocument();
   let {toolbox, inspector, view} = yield openRuleView();
 
@@ -23,18 +23,22 @@ let test = asyncTest(function*() {
 });
 
 function createDocument() {
-  content.document.body.innerHTML = '<div id="test" style="' +
-                           'margin-top:0px;' +
-                           'padding-top: 0px;' +
-                           'color:#000000;' +
-                           'background-color: #000000;" >'+
-                       '</div>';
+  content.document.body.innerHTML = '' +
+    '<style>' +
+    '  #test {' +
+    '    margin-top:0px;' +
+    '    padding-top: 0px;' +
+    '    color:#000000;' +
+    '    background-color: #000000;' +
+    '  }' +
+    '</style>' +
+    '<div id="test"></div>';
 }
 
 function* testMarginIncrements(view) {
   info("Testing keyboard increments on the margin property");
 
-  let idRuleEditor = view.element.children[0]._ruleEditor;
+  let idRuleEditor = getRuleViewRuleEditor(view, 1);
   let marginPropEditor = idRuleEditor.rule.textProps[0].editor;
 
   yield runIncrementTest(marginPropEditor, view, {
@@ -52,7 +56,7 @@ function* testMarginIncrements(view) {
 function* testVariousUnitIncrements(view) {
   info("Testing keyboard increments on values with various units");
 
-  let idRuleEditor = view.element.children[0]._ruleEditor;
+  let idRuleEditor = getRuleViewRuleEditor(view, 1);
   let paddingPropEditor = idRuleEditor.rule.textProps[1].editor;
 
   yield runIncrementTest(paddingPropEditor, view, {
@@ -71,7 +75,7 @@ function* testVariousUnitIncrements(view) {
 function* testHexIncrements(view) {
   info("Testing keyboard increments with hex colors");
 
-  let idRuleEditor = view.element.children[0]._ruleEditor;
+  let idRuleEditor = getRuleViewRuleEditor(view, 1);
   let hexColorPropEditor = idRuleEditor.rule.textProps[2].editor;
 
   yield runIncrementTest(hexColorPropEditor, view, {
@@ -87,7 +91,7 @@ function* testHexIncrements(view) {
 function* testRgbIncrements(view) {
   info("Testing keyboard increments with rgb colors");
 
-  let idRuleEditor = view.element.children[0]._ruleEditor;
+  let idRuleEditor = getRuleViewRuleEditor(view, 1);
   let rgbColorPropEditor = idRuleEditor.rule.textProps[3].editor;
 
   yield runIncrementTest(rgbColorPropEditor, view, {
@@ -103,7 +107,7 @@ function* testRgbIncrements(view) {
 function* testShorthandIncrements(view) {
   info("Testing keyboard increments within shorthand values");
 
-  let idRuleEditor = view.element.children[0]._ruleEditor;
+  let idRuleEditor = getRuleViewRuleEditor(view, 1);
   let paddingPropEditor = idRuleEditor.rule.textProps[1].editor;
 
   yield runIncrementTest(paddingPropEditor, view, {
@@ -112,14 +116,17 @@ function* testShorthandIncrements(view) {
     3: {start: "0px 0px 0px 0px", end: "1px 0px 0px 0px", selectAll: true},
     4: {shift: true, start: "0px 0px 0px 0px", end: "10px 0px 0px 0px", selectAll: true},
     5: {down: true, start: "0px 0px 0px 0px", end: "0px 0px -1px 0px", selection: [8,11]},
-    6: {down: true, shift: true, start: "0px 0px 0px 0px", end: "-10px 0px 0px 0px", selectAll: true}
+    6: {down: true, shift: true, start: "0px 0px 0px 0px", end: "-10px 0px 0px 0px", selectAll: true},
+    7: {up: true, start: "0.1em .1em 0em 0em", end: "0.1em 1.1em 0em 0em", selection: [6, 9]},
+    8: {up: true, alt: true, start: "0.1em .9em 0em 0em", end: "0.1em 1em 0em 0em", selection: [6, 9]},
+    9: {up: true, shift: true, start: "0.2em .2em 0em 0em", end: "0.2em 10.2em 0em 0em", selection: [6, 9]}
   });
 };
 
 function* testOddCases(view) {
   info("Testing some more odd cases");
 
-  let idRuleEditor = view.element.children[0]._ruleEditor;
+  let idRuleEditor = getRuleViewRuleEditor(view, 1);
   let marginPropEditor = idRuleEditor.rule.textProps[0].editor;
 
   yield runIncrementTest(marginPropEditor, view, {
@@ -144,14 +151,11 @@ function* runIncrementTest(propertyEditor, view, tests) {
   let editor = yield focusEditableField(propertyEditor.valueSpan);
 
   for(let test in tests) {
-    yield testIncrement(editor, tests[test], view);
+    yield testIncrement(editor, tests[test], view, propertyEditor);
   }
-
-  // Once properties have been set, wait for the inspector to update
-  yield view.inspector.once("inspector-updated");
 }
 
-function* testIncrement(editor, options, view) {
+function* testIncrement(editor, options, view, {ruleEditor}) {
   editor.input.value = options.start;
   let input = editor.input;
 
@@ -163,14 +167,15 @@ function* testIncrement(editor, options, view) {
 
   is(input.value, options.start, "Value initialized at " + options.start);
 
+  let onModifications = ruleEditor.rule._applyingModifications;
   let onKeyUp = once(input, "keyup");
-
   let key;
   key = options.down ? "VK_DOWN" : "VK_UP";
   key = options.pageDown ? "VK_PAGE_DOWN" : options.pageUp ? "VK_PAGE_UP" : key;
-  EventUtils.synthesizeKey(key, {altKey: options.alt, shiftKey: options.shift}, view.doc.defaultView);
-
+  EventUtils.synthesizeKey(key, {altKey: options.alt, shiftKey: options.shift},
+    view.doc.defaultView);
   yield onKeyUp;
-  input = editor.input;
-  is(input.value, options.end, "Value changed to " + options.end);
+  yield onModifications;
+
+  is(editor.input.value, options.end, "Value changed to " + options.end);
 }

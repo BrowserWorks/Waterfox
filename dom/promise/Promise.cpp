@@ -7,9 +7,11 @@
 #include "mozilla/dom/Promise.h"
 
 #include "jsfriendapi.h"
+#include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/DOMError.h"
 #include "mozilla/dom/OwningNonNull.h"
 #include "mozilla/dom/PromiseBinding.h"
+#include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/CycleCollectedJSRuntime.h"
 #include "mozilla/Preferences.h"
 #include "PromiseCallback.h"
@@ -22,6 +24,9 @@
 #include "nsJSUtils.h"
 #include "nsPIDOMWindow.h"
 #include "nsJSEnvironment.h"
+#include "nsIScriptObjectPrincipal.h"
+#include "xpcpublic.h"
+#include "nsGlobalWindow.h"
 
 namespace mozilla {
 namespace dom {
@@ -43,11 +48,13 @@ public:
     MOZ_COUNT_CTOR(PromiseTask);
   }
 
+protected:
   ~PromiseTask()
   {
     MOZ_COUNT_DTOR(PromiseTask);
   }
 
+public:
   NS_IMETHOD Run()
   {
     mPromise->mTaskPending = false;
@@ -70,11 +77,13 @@ public:
     MOZ_COUNT_CTOR(WorkerPromiseTask);
   }
 
+protected:
   ~WorkerPromiseTask()
   {
     MOZ_COUNT_DTOR(WorkerPromiseTask);
   }
 
+public:
   bool
   WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate)
   {
@@ -257,7 +266,8 @@ protected:
   {
     NS_ASSERT_OWNINGTHREAD(ThenableResolverMixin);
     ThreadsafeAutoJSContext cx;
-    JS::Rooted<JSObject*> wrapper(cx, mPromise->GetOrCreateWrapper(cx));
+    JS::Rooted<JSObject*> wrapper(cx, mPromise->GetWrapper());
+    MOZ_ASSERT(wrapper); // It was preserved!
     if (!wrapper) {
       return;
     }
@@ -430,31 +440,29 @@ Promise::WrapObject(JSContext* aCx)
   return PromiseBinding::Wrap(aCx, this);
 }
 
-JSObject*
-Promise::GetOrCreateWrapper(JSContext* aCx)
+already_AddRefed<Promise>
+Promise::Create(nsIGlobalObject* aGlobal, ErrorResult& aRv)
 {
-  if (JSObject* wrapper = GetWrapper()) {
-    return wrapper;
+  AutoJSAPI jsapi;
+  if (!jsapi.Init(aGlobal)) {
+    aRv.Throw(NS_ERROR_UNEXPECTED);
+    return nullptr;
   }
+  JSContext* cx = jsapi.cx();
 
-  nsIGlobalObject* global = GetParentObject();
-  MOZ_ASSERT(global);
+  nsRefPtr<Promise> p = new Promise(aGlobal);
 
-  JS::Rooted<JSObject*> scope(aCx, global->GetGlobalJSObject());
-  if (!scope) {
-    JS_ReportError(aCx, "can't get scope");
+  JS::Rooted<JS::Value> ignored(cx);
+  if (!WrapNewBindingObject(cx, p, &ignored)) {
+    JS_ClearPendingException(cx);
+    aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
     return nullptr;
   }
 
-  JSAutoCompartment ac(aCx, scope);
+  // Need the .get() bit here to get template deduction working right
+  dom::PreserveWrapper(p.get());
 
-  JS::Rooted<JS::Value> val(aCx);
-  if (!WrapNewBindingObject(aCx, this, &val)) {
-    MOZ_ASSERT(JS_IsExceptionPending(aCx));
-    return nullptr;
-  }
-
-  return GetWrapper();
+  return p.forget();
 }
 
 void
@@ -593,7 +601,7 @@ Promise::CreateThenableFunction(JSContext* aCx, Promise* aPromise, uint32_t aTas
 Promise::Constructor(const GlobalObject& aGlobal,
                      PromiseInit& aInit, ErrorResult& aRv)
 {
-  JSContext* cx = aGlobal.GetContext();
+  JSContext* cx = aGlobal.Context();
 
   nsCOMPtr<nsIGlobalObject> global;
   global = do_QueryInterface(aGlobal.GetAsSupports());
@@ -602,7 +610,10 @@ Promise::Constructor(const GlobalObject& aGlobal,
     return nullptr;
   }
 
-  nsRefPtr<Promise> promise = new Promise(global);
+  nsRefPtr<Promise> promise = Create(global, aRv);
+  if (aRv.Failed()) {
+    return nullptr;
+  }
 
   JS::Rooted<JSObject*> resolveFunc(cx,
                                     CreateFunction(cx, aGlobal.Get(), promise,
@@ -641,12 +652,12 @@ Promise::Constructor(const GlobalObject& aGlobal,
 }
 
 /* static */ already_AddRefed<Promise>
-Promise::Resolve(const GlobalObject& aGlobal, JSContext* aCx,
+Promise::Resolve(const GlobalObject& aGlobal,
                  JS::Handle<JS::Value> aValue, ErrorResult& aRv)
 {
   // If a Promise was passed, just return it.
   if (aValue.isObject()) {
-    JS::Rooted<JSObject*> valueObj(aCx, &aValue.toObject());
+    JS::Rooted<JSObject*> valueObj(aGlobal.Context(), &aValue.toObject());
     Promise* nextPromise;
     nsresult rv = UNWRAP_OBJECT(Promise, valueObj, nextPromise);
 
@@ -663,21 +674,24 @@ Promise::Resolve(const GlobalObject& aGlobal, JSContext* aCx,
     return nullptr;
   }
 
-  return Resolve(global, aCx, aValue, aRv);
+  return Resolve(global, aGlobal.Context(), aValue, aRv);
 }
 
 /* static */ already_AddRefed<Promise>
 Promise::Resolve(nsIGlobalObject* aGlobal, JSContext* aCx,
                  JS::Handle<JS::Value> aValue, ErrorResult& aRv)
 {
-  nsRefPtr<Promise> promise = new Promise(aGlobal);
+  nsRefPtr<Promise> promise = Create(aGlobal, aRv);
+  if (aRv.Failed()) {
+    return nullptr;
+  }
 
   promise->MaybeResolveInternal(aCx, aValue);
   return promise.forget();
 }
 
 /* static */ already_AddRefed<Promise>
-Promise::Reject(const GlobalObject& aGlobal, JSContext* aCx,
+Promise::Reject(const GlobalObject& aGlobal,
                 JS::Handle<JS::Value> aValue, ErrorResult& aRv)
 {
   nsCOMPtr<nsIGlobalObject> global =
@@ -687,14 +701,17 @@ Promise::Reject(const GlobalObject& aGlobal, JSContext* aCx,
     return nullptr;
   }
 
-  return Reject(global, aCx, aValue, aRv);
+  return Reject(global, aGlobal.Context(), aValue, aRv);
 }
 
 /* static */ already_AddRefed<Promise>
 Promise::Reject(nsIGlobalObject* aGlobal, JSContext* aCx,
                 JS::Handle<JS::Value> aValue, ErrorResult& aRv)
 {
-  nsRefPtr<Promise> promise = new Promise(aGlobal);
+  nsRefPtr<Promise> promise = Create(aGlobal, aRv);
+  if (aRv.Failed()) {
+    return nullptr;
+  }
 
   promise->MaybeRejectInternal(aCx, aValue);
   return promise.forget();
@@ -702,9 +719,12 @@ Promise::Reject(nsIGlobalObject* aGlobal, JSContext* aCx,
 
 already_AddRefed<Promise>
 Promise::Then(JSContext* aCx, AnyCallback* aResolveCallback,
-              AnyCallback* aRejectCallback)
+              AnyCallback* aRejectCallback, ErrorResult& aRv)
 {
-  nsRefPtr<Promise> promise = new Promise(GetParentObject());
+  nsRefPtr<Promise> promise = Create(GetParentObject(), aRv);
+  if (aRv.Failed()) {
+    return nullptr;
+  }
 
   JS::Rooted<JSObject*> global(aCx, JS::CurrentGlobalOrNull(aCx));
 
@@ -722,10 +742,10 @@ Promise::Then(JSContext* aCx, AnyCallback* aResolveCallback,
 }
 
 already_AddRefed<Promise>
-Promise::Catch(JSContext* aCx, AnyCallback* aRejectCallback)
+Promise::Catch(JSContext* aCx, AnyCallback* aRejectCallback, ErrorResult& aRv)
 {
   nsRefPtr<AnyCallback> resolveCb;
-  return Then(aCx, resolveCb, aRejectCallback);
+  return Then(aCx, resolveCb, aRejectCallback, aRv);
 }
 
 /**
@@ -744,9 +764,9 @@ public:
     : mPromise(aPromise), mCountdown(aCountdown)
   {
     MOZ_ASSERT(aCountdown != 0);
-    JSContext* cx = aGlobal.GetContext();
+    JSContext* cx = aGlobal.Context();
 
-    // The only time aGlobal.GetContext() and aGlobal.Get() are not
+    // The only time aGlobal.Context() and aGlobal.Get() are not
     // same-compartment is when we're called via Xrays, and in that situation we
     // in fact want to create the array in the callee compartment
 
@@ -755,11 +775,13 @@ public:
     mozilla::HoldJSObjects(this);
   }
 
+private:
   ~CountdownHolder()
   {
     mozilla::DropJSObjects(this);
   }
 
+public:
   void SetValue(uint32_t index, const JS::Handle<JS::Value> aValue)
   {
     MOZ_ASSERT(mCountdown > 0);
@@ -833,10 +855,6 @@ public:
     MOZ_ASSERT(aHolder);
   }
 
-  ~AllResolveHandler()
-  {
-  }
-
   void
   ResolvedCallback(JSContext* aCx, JS::Handle<JS::Value> aValue)
   {
@@ -851,6 +869,10 @@ public:
   }
 
 private:
+  ~AllResolveHandler()
+  {
+  }
+
   nsRefPtr<CountdownHolder> mCountdownHolder;
   uint32_t mIndex;
 };
@@ -864,7 +886,7 @@ NS_INTERFACE_MAP_END_INHERITING(PromiseNativeHandler)
 NS_IMPL_CYCLE_COLLECTION(AllResolveHandler, mCountdownHolder)
 
 /* static */ already_AddRefed<Promise>
-Promise::All(const GlobalObject& aGlobal, JSContext* aCx,
+Promise::All(const GlobalObject& aGlobal,
              const Sequence<JS::Value>& aIterable, ErrorResult& aRv)
 {
   nsCOMPtr<nsIGlobalObject> global =
@@ -874,21 +896,26 @@ Promise::All(const GlobalObject& aGlobal, JSContext* aCx,
     return nullptr;
   }
 
+  JSContext* cx = aGlobal.Context();
+
   if (aIterable.Length() == 0) {
-    JS::Rooted<JSObject*> empty(aCx, JS_NewArrayObject(aCx, 0));
+    JS::Rooted<JSObject*> empty(cx, JS_NewArrayObject(cx, 0));
     if (!empty) {
       aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
       return nullptr;
     }
-    JS::Rooted<JS::Value> value(aCx, JS::ObjectValue(*empty));
-    return Promise::Resolve(aGlobal, aCx, value, aRv);
+    JS::Rooted<JS::Value> value(cx, JS::ObjectValue(*empty));
+    return Promise::Resolve(aGlobal, value, aRv);
   }
 
-  nsRefPtr<Promise> promise = new Promise(global);
+  nsRefPtr<Promise> promise = Create(global, aRv);
+  if (aRv.Failed()) {
+    return nullptr;
+  }
   nsRefPtr<CountdownHolder> holder =
     new CountdownHolder(aGlobal, promise, aIterable.Length());
 
-  JS::Rooted<JSObject*> obj(aCx, JS::CurrentGlobalOrNull(aCx));
+  JS::Rooted<JSObject*> obj(cx, JS::CurrentGlobalOrNull(cx));
   if (!obj) {
     aRv.Throw(NS_ERROR_UNEXPECTED);
     return nullptr;
@@ -897,8 +924,8 @@ Promise::All(const GlobalObject& aGlobal, JSContext* aCx,
   nsRefPtr<PromiseCallback> rejectCb = new RejectPromiseCallback(promise, obj);
 
   for (uint32_t i = 0; i < aIterable.Length(); ++i) {
-    JS::Rooted<JS::Value> value(aCx, aIterable.ElementAt(i));
-    nsRefPtr<Promise> nextPromise = Promise::Resolve(aGlobal, aCx, value, aRv);
+    JS::Rooted<JS::Value> value(cx, aIterable.ElementAt(i));
+    nsRefPtr<Promise> nextPromise = Promise::Resolve(aGlobal, value, aRv);
 
     MOZ_ASSERT(!aRv.Failed());
 
@@ -916,7 +943,7 @@ Promise::All(const GlobalObject& aGlobal, JSContext* aCx,
 }
 
 /* static */ already_AddRefed<Promise>
-Promise::Race(const GlobalObject& aGlobal, JSContext* aCx,
+Promise::Race(const GlobalObject& aGlobal,
               const Sequence<JS::Value>& aIterable, ErrorResult& aRv)
 {
   nsCOMPtr<nsIGlobalObject> global =
@@ -926,13 +953,18 @@ Promise::Race(const GlobalObject& aGlobal, JSContext* aCx,
     return nullptr;
   }
 
-  JS::Rooted<JSObject*> obj(aCx, JS::CurrentGlobalOrNull(aCx));
+  JSContext* cx = aGlobal.Context();
+
+  JS::Rooted<JSObject*> obj(cx, JS::CurrentGlobalOrNull(cx));
   if (!obj) {
     aRv.Throw(NS_ERROR_UNEXPECTED);
     return nullptr;
   }
 
-  nsRefPtr<Promise> promise = new Promise(global);
+  nsRefPtr<Promise> promise = Create(global, aRv);
+  if (aRv.Failed()) {
+    return nullptr;
+  }
 
   nsRefPtr<PromiseCallback> resolveCb =
     new ResolvePromiseCallback(promise, obj);
@@ -940,8 +972,8 @@ Promise::Race(const GlobalObject& aGlobal, JSContext* aCx,
   nsRefPtr<PromiseCallback> rejectCb = new RejectPromiseCallback(promise, obj);
 
   for (uint32_t i = 0; i < aIterable.Length(); ++i) {
-    JS::Rooted<JS::Value> value(aCx, aIterable.ElementAt(i));
-    nsRefPtr<Promise> nextPromise = Promise::Resolve(aGlobal, aCx, value, aRv);
+    JS::Rooted<JS::Value> value(cx, aIterable.ElementAt(i));
+    nsRefPtr<Promise> nextPromise = Promise::Resolve(aGlobal, value, aRv);
     // According to spec, Resolve can throw, but our implementation never does.
     // Well it does when window isn't passed on the main thread, but that is an
     // implementation detail which should never be reached since we are checking
@@ -1011,10 +1043,8 @@ Promise::RunTask()
 
   ThreadsafeAutoJSContext cx;
   JS::Rooted<JS::Value> value(cx, mResult);
-  JS::Rooted<JSObject*> wrapper(cx, GetOrCreateWrapper(cx));
-  if (!wrapper) {
-    return;
-  }
+  JS::Rooted<JSObject*> wrapper(cx, GetWrapper());
+  MOZ_ASSERT(wrapper); // We preserved it
 
   JSAutoCompartment ac(cx, wrapper);
   if (!MaybeWrapValue(cx, &value)) {
@@ -1033,14 +1063,25 @@ Promise::MaybeReportRejected()
     return;
   }
 
-  if (!mResult.isObject()) {
+  AutoJSAPI jsapi;
+  // We may not have a usable global by now (if it got unlinked
+  // already), so don't init with it.
+  jsapi.Init();
+  JSContext* cx = jsapi.cx();
+  JS::Rooted<JSObject*> obj(cx, GetWrapper());
+  MOZ_ASSERT(obj); // We preserve our wrapper, so should always have one here.
+  JS::Rooted<JS::Value> val(cx, mResult);
+  JS::ExposeValueToActiveJS(val);
+
+  JSAutoCompartment ac(cx, obj);
+  if (!JS_WrapValue(cx, &val)) {
+    JS_ClearPendingException(cx);
     return;
   }
-  ThreadsafeAutoJSContext cx;
-  JS::Rooted<JSObject*> obj(cx, &mResult.toObject());
-  JSAutoCompartment ac(cx, obj);
-  JSErrorReport* report = JS_ErrorFromException(cx, obj);
-  if (!report) {
+
+  js::ErrorReport report(cx);
+  if (!report.init(cx, val)) {
+    JS_ClearPendingException(cx);
     return;
   }
 
@@ -1049,9 +1090,9 @@ Promise::MaybeReportRejected()
   bool isChromeError = false;
 
   if (MOZ_LIKELY(NS_IsMainThread())) {
-    win =
-      do_QueryInterface(nsJSUtils::GetStaticScriptGlobal(obj));
-    nsIPrincipal* principal = nsContentUtils::ObjectPrincipal(obj);
+    nsIPrincipal* principal;
+    win = xpc::WindowGlobalOrNull(obj);
+    principal = nsContentUtils::ObjectPrincipal(obj);
     isChromeError = nsContentUtils::IsSystemPrincipal(principal);
   } else {
     WorkerPrivate* worker = GetCurrentThreadWorkerPrivate();
@@ -1064,9 +1105,9 @@ Promise::MaybeReportRejected()
   // AsyncErrorReporter, otherwise if the call to DispatchToMainThread fails, it
   // will leak. See Bug 958684.
   nsRefPtr<AsyncErrorReporter> r =
-    new AsyncErrorReporter(JS_GetObjectRuntime(obj),
-                           report,
-                           nullptr,
+    new AsyncErrorReporter(CycleCollectedJSRuntime::Get()->Runtime(),
+                           report.report(),
+                           report.message(),
                            isChromeError,
                            win);
   NS_DispatchToMainThread(r);

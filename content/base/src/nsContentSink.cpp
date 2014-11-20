@@ -207,7 +207,7 @@ nsContentSink::Init(nsIDocument* aDoc,
 }
 
 NS_IMETHODIMP
-nsContentSink::StyleSheetLoaded(nsCSSStyleSheet* aSheet,
+nsContentSink::StyleSheetLoaded(CSSStyleSheet* aSheet,
                                 bool aWasAlternate,
                                 nsresult aStatus)
 {
@@ -1177,7 +1177,7 @@ nsContentSink::StartLayout(bool aIgnorePendingSheets)
   // If the document we are loading has a reference or it is a
   // frameset document, disable the scroll bars on the views.
 
-  mDocument->SetScrollToRef(mDocumentURI);
+  mDocument->SetScrollToRef(mDocument->GetDocumentURI());
 }
 
 void

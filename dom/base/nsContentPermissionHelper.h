@@ -40,9 +40,10 @@ public:
   ContentPermissionType(const nsACString& aType,
                         const nsACString& aAccess,
                         const nsTArray<nsString>& aOptions);
-  virtual ~ContentPermissionType();
 
 protected:
+  virtual ~ContentPermissionType();
+
   nsCString mType;
   nsCString mAccess;
   nsTArray<nsString> mOptions;
@@ -71,21 +72,22 @@ class nsContentPermissionRequestProxy : public nsIContentPermissionRequest
   NS_DECL_NSICONTENTPERMISSIONREQUEST
 
   nsContentPermissionRequestProxy();
-  virtual ~nsContentPermissionRequestProxy();
 
   nsresult Init(const nsTArray<mozilla::dom::PermissionRequest>& requests,
                 mozilla::dom::ContentPermissionRequestParent* parent);
   void OnParentDestroyed();
 
  private:
+  virtual ~nsContentPermissionRequestProxy();
+
   // Non-owning pointer to the ContentPermissionRequestParent object which owns this proxy.
   mozilla::dom::ContentPermissionRequestParent* mParent;
   nsTArray<mozilla::dom::PermissionRequest> mPermissionRequests;
 };
 
 /**
-+ * RemotePermissionRequest will send a prompt ipdl request to b2g process.
-+ */
+ * RemotePermissionRequest will send a prompt ipdl request to b2g process.
+ */
 class RemotePermissionRequest : public nsIContentPermissionRequest
                               , public PCOMContentPermissionRequestChild
 {

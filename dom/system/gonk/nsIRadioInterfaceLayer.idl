@@ -8,6 +8,8 @@
 interface nsIDOMMozIccInfo;
 interface nsIMobileConnectionInfo;
 interface nsIMobileMessageCallback;
+interface nsINeighboringCellIdsCallback;
+interface nsICellInfoListCallback;
 
 [scriptable, uuid(6e0f45b8-410e-11e3-8c8e-b715b2cd0128)]
 interface nsIRilNetworkInterface : nsINetworkInterface
@@ -55,7 +57,7 @@ interface nsIRilSendWorkerMessageCallback : nsISupports
   boolean handleResponse(in jsval response);
 };
 
-[scriptable, uuid(181d460e-220e-4274-8ba4-43f122eb518d)]
+[scriptable, uuid(c13a8890-797b-4557-b92f-6b959f56c1d8)]
 interface nsIRadioInterface : nsISupports
 {
   readonly attribute nsIRilContext rilContext;
@@ -85,14 +87,32 @@ interface nsIRadioInterface : nsISupports
               [optional] in nsIRilSendWorkerMessageCallback callback);
 
   void getSmscAddress(in nsIMobileMessageCallback request);
+
+  /**
+   * Request neighboring cell ids in GSM/UMTS network.
+   */
+  void getNeighboringCellIds(in nsINeighboringCellIdsCallback callback);
+
+  /**
+   * Request all of the current cell information known to the radio, including
+   * neighboring cells.
+   */
+  void getCellInfoList(in nsICellInfoListCallback callback);
 };
 
-[scriptable, uuid(d035c32e-b491-11e3-9f9d-c716fab88bd6)]
+[scriptable, uuid(78b65e8c-68e7-4510-9a05-65bba12b283e)]
 interface nsIRadioInterfaceLayer : nsISupports
 {
   readonly attribute unsigned long numRadioInterfaces;
 
   nsIRadioInterface getRadioInterface(in unsigned long clientId);
+
+  /**
+   * Select a proper client for dialing emergency call.
+   *
+   * @return clientId or -1 if none of the clients are avaialble.
+   */
+  unsigned long getClientIdForEmergencyCall();
 
   void setMicrophoneMuted(in boolean muted);
 };

@@ -60,7 +60,6 @@ class SpeechRecognition MOZ_FINAL : public DOMEventTargetHelper,
 public:
   MOZ_DECLARE_REFCOUNTED_TYPENAME(SpeechRecognition)
   SpeechRecognition(nsPIDOMWindow* aOwnerWindow);
-  virtual ~SpeechRecognition() {};
 
   NS_DECL_ISUPPORTS_INHERITED
 
@@ -97,7 +96,7 @@ public:
 
   void SetServiceURI(const nsAString& aArg, ErrorResult& aRv);
 
-  void Start(ErrorResult& aRv);
+  void Start(const Optional<NonNull<DOMMediaStream>>& aStream, ErrorResult& aRv);
 
   void Stop();
 
@@ -162,6 +161,8 @@ public:
 
   friend class SpeechEvent;
 private:
+  virtual ~SpeechRecognition() {};
+
   enum FSMState {
     STATE_IDLE,
     STATE_STARTING,
@@ -185,9 +186,9 @@ private:
       : mRecognition(aRecognition)
     {}
 
+  private:
     virtual ~GetUserMediaSuccessCallback() {}
 
-  private:
     nsRefPtr<SpeechRecognition> mRecognition;
   };
 
@@ -201,9 +202,9 @@ private:
       : mRecognition(aRecognition)
     {}
 
+  private:
     virtual ~GetUserMediaErrorCallback() {}
 
-  private:
     nsRefPtr<SpeechRecognition> mRecognition;
   };
 

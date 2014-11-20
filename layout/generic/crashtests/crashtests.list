@@ -125,7 +125,7 @@ load 385344-2.html
 load 385414-1.html
 load 385414-2.html
 load 385426-1.html
-skip-if(B2G) load 385526.html # Bug 891347
+skip-if(B2G) skip-if(Android&&AndroidVersion==10) load 385526.html # Bug 891347
 load 385681.html
 load 385885-1.xul
 load 386799-1.html
@@ -479,11 +479,13 @@ load 769303-1.html
 load 769303-2.html
 load 769120.html
 load 777838.html
+load 783228.html
 skip-if(Android) load 784600.html
+load 785555.html
 load 786740-1.html
 asserts(0-4) test-pref(font.size.inflation.emPerLine,15) load 791601.xhtml # 3 counts of bug 871327, 1 bug 367185
 test-pref(font.size.inflation.minTwips,120) load 794693.html
-asserts(8) load 798020-1.html
+asserts-if(!Android,8) load 798020-1.html
 load 798235-1.html
 load 799207-1.html
 load 799207-2.html
@@ -492,11 +494,14 @@ load 804089-1.xhtml
 load 807565-1.html
 load 807565-2.html
 load 810726.html
+load 812879.html
+load 812879-2.html
 load 825810-1.html
 load 825810-2.html
 load 827076.html
 load 840818.html
 load 812822-1.html
+load 812893.html
 asserts(1) load 824297-1.html # bug 399262
 load 826483-1.html
 asserts(1) load 826532-1.html # bug 399262
@@ -504,12 +509,14 @@ load 827168-1.html
 load 836895.html
 load 840787.html
 load 842132-1.html
+load 842166.html
 load 844529-1.html
 load 847130.xhtml
 load 847208.html
-asserts(4) load 847209.html # bug 847368
+asserts-if(Android,2) asserts-if(!Android,4) load 847209.html # bug 847368
 load 847211-1.html
 load 849603.html
+asserts(0-12) load 850931.html # bug 569193
 load 851396-1.html
 load 854263-1.html
 load 862947-1.html
@@ -531,6 +538,9 @@ load 986899.html
 load 1001233.html
 load 1001258-1.html
 pref(layout.css.grid.enabled,true) load 1015562.html
-asserts(2) load 1015563-1.html
-asserts(2) load 1015563-2.html
+asserts(1-2) load 1015563-1.html
+asserts(1-2) load 1015563-2.html
+asserts(0-300) load 1015844.html # bug 574889
 load outline-on-frameset.xhtml
+pref(font.size.inflation.minTwips,200) load 1032450.html
+load 1037903.html

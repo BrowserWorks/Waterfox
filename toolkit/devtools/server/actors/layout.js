@@ -133,7 +133,6 @@ let ReflowActor = protocol.ActorClass({
 exports.ReflowFront = protocol.FrontClass(ReflowActor, {
   initialize: function(client, {reflowActor}) {
     protocol.Front.prototype.initialize.call(this, client, {actor: reflowActor});
-    client.addActorPool(this);
     this.manage(this);
   },
 
@@ -277,6 +276,12 @@ LayoutChangesObserver.prototype = Heritage.extend(Observable.prototype, {
    * Calls itself in a loop.
    */
   _startEventLoop: function() {
+    // Avoid emitting events if the tabActor has been detached (may happen
+    // during shutdown)
+    if (!this.tabActor.attached) {
+      return;
+    }
+
     // Send any reflows we have
     if (this.reflows && this.reflows.length) {
       this.emit("reflows", this.reflows);

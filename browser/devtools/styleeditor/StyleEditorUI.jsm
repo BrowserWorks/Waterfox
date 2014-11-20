@@ -34,6 +34,8 @@ const console = require("resource://gre/modules/devtools/Console.jsm").console;
 const LOAD_ERROR = "error-load";
 const STYLE_EDITOR_TEMPLATE = "stylesheet";
 const PREF_MEDIA_SIDEBAR = "devtools.styleeditor.showMediaSidebar";
+const PREF_SIDEBAR_WIDTH = "devtools.styleeditor.mediaSidebarWidth";
+const PREF_NAV_WIDTH = "devtools.styleeditor.navSidebarWidth";
 
 /**
  * StyleEditorUI is controls and builds the UI of the Style Editor, including
@@ -64,7 +66,8 @@ function StyleEditorUI(debuggee, target, panelDoc) {
   this.selectedEditor = null;
   this.savedLocations = {};
 
-  this._updateOptionsMenu = this._updateOptionsMenu.bind(this);
+  this._onOptionsPopupShowing = this._onOptionsPopupShowing.bind(this);
+  this._onOptionsPopupHiding = this._onOptionsPopupHiding.bind(this);
   this._onStyleSheetCreated = this._onStyleSheetCreated.bind(this);
   this._onNewDocument = this._onNewDocument.bind(this);
   this._onMediaPrefChanged = this._onMediaPrefChanged.bind(this);
@@ -134,17 +137,20 @@ StyleEditorUI.prototype = {
 
     this._view = new SplitView(viewRoot);
 
-    wire(this._view.rootElement, ".style-editor-newButton", function onNew() {
+    wire(this._view.rootElement, ".style-editor-newButton", () =>{
       this._debuggee.addStyleSheet(null).then(this._onStyleSheetCreated);
-    }.bind(this));
+    });
 
-    wire(this._view.rootElement, ".style-editor-importButton", function onImport() {
+    wire(this._view.rootElement, ".style-editor-importButton", ()=> {
       this._importFromFile(this._mockImportFile || null, this._window);
-    }.bind(this));
+    });
 
+    this._optionsButton = this._panelDoc.getElementById("style-editor-options");
     this._optionsMenu = this._panelDoc.getElementById("style-editor-options-popup");
     this._optionsMenu.addEventListener("popupshowing",
-                                       this._updateOptionsMenu);
+                                       this._onOptionsPopupShowing);
+    this._optionsMenu.addEventListener("popuphiding",
+                                       this._onOptionsPopupHiding);
 
     this._sourcesItem = this._panelDoc.getElementById("options-origsources");
     this._sourcesItem.addEventListener("command",
@@ -152,16 +158,28 @@ StyleEditorUI.prototype = {
     this._mediaItem = this._panelDoc.getElementById("options-show-media");
     this._mediaItem.addEventListener("command",
                                      this._toggleMediaSidebar);
+
+    let nav = this._panelDoc.querySelector(".splitview-controller");
+    nav.setAttribute("width", Services.prefs.getIntPref(PREF_NAV_WIDTH));
   },
 
   /**
+   * Listener handling the 'gear menu' popup showing event.
    * Update options menu items to reflect current preference settings.
    */
-  _updateOptionsMenu: function() {
+  _onOptionsPopupShowing: function() {
+    this._optionsButton.setAttribute("open", "true");
     this._sourcesItem.setAttribute("checked",
       Services.prefs.getBoolPref(PREF_ORIG_SOURCES));
     this._mediaItem.setAttribute("checked",
       Services.prefs.getBoolPref(PREF_MEDIA_SIDEBAR));
+  },
+
+  /**
+   * Listener handling the 'gear menu' popup hiding event.
+   */
+  _onOptionsPopupHiding: function() {
+    this._optionsButton.removeAttribute("open");
   },
 
   /**
@@ -300,7 +318,7 @@ StyleEditorUI.prototype = {
    *        Optional parent window for the file picker.
    */
   _importFromFile: function(file, parentWindow) {
-    let onFileSelected = function(file) {
+    let onFileSelected = (file) => {
       if (!file) {
         // nothing selected
         return;
@@ -318,7 +336,7 @@ StyleEditorUI.prototype = {
         });
       });
 
-    }.bind(this);
+    };
 
     showFilePicker(file, false, parentWindow, onFileSelected);
   },
@@ -430,11 +448,11 @@ StyleEditorUI.prototype = {
 
         wire(summary, ".stylesheet-name", {
           events: {
-            "keypress": function onStylesheetNameActivate(aEvent) {
+            "keypress": (aEvent) => {
               if (aEvent.keyCode == aEvent.DOM_VK_RETURN) {
                 this._view.activeSummary = summary;
               }
-            }.bind(this)
+            }
           }
         });
 
@@ -453,6 +471,22 @@ StyleEditorUI.prototype = {
             summary.querySelector(".stylesheet-name").focus();
           }
         }, false);
+
+        let sidebar = details.querySelector(".stylesheet-sidebar");
+        sidebar.setAttribute("width",
+            Services.prefs.getIntPref(PREF_SIDEBAR_WIDTH));
+
+        let splitter = details.querySelector(".devtools-side-splitter");
+        splitter.addEventListener("mousemove", () => {
+          let sidebarWidth = sidebar.getAttribute("width");
+          Services.prefs.setIntPref(PREF_SIDEBAR_WIDTH, sidebarWidth);
+
+          // update all @media sidebars for consistency
+          let sidebars = [...this._panelDoc.querySelectorAll(".stylesheet-sidebar")];
+          for (let mediaSidebar of sidebars) {
+            mediaSidebar.setAttribute("width", sidebarWidth);
+          }
+        });
 
         // autofocus if it's a new user-created stylesheet
         if (editor.isNew) {
@@ -494,7 +528,7 @@ StyleEditorUI.prototype = {
               return;
             }
 
-            let href = editor.styleSheet.href || editor.styleSheet.nodeHref;
+            let href = csscoverage.sheetToUrl(editor.styleSheet);
             usage.createEditorReport(href).then(data => {
               editor.removeAllUnusedRegions();
 
@@ -760,7 +794,9 @@ StyleEditorUI.prototype = {
 
         let link = this._panelDoc.createElement("div");
         link.className = "media-rule-line theme-link";
-        link.textContent = ":" + location.line;
+        if (location.line != -1) {
+          link.textContent = ":" + location.line;
+        }
         div.appendChild(link);
 
         list.appendChild(div);
@@ -786,8 +822,14 @@ StyleEditorUI.prototype = {
   destroy: function() {
     this._clearStyleSheetEditors();
 
+    let sidebar = this._panelDoc.querySelector(".splitview-controller");
+    let sidebarWidth = sidebar.getAttribute("width");
+    Services.prefs.setIntPref(PREF_NAV_WIDTH, sidebarWidth);
+
     this._optionsMenu.removeEventListener("popupshowing",
-                                          this._updateOptionsMenu);
+                                          this._onOptionsPopupShowing);
+    this._optionsMenu.removeEventListener("popuphiding",
+                                          this._onOptionsPopupHiding);
 
     this._prefObserver.off(PREF_ORIG_SOURCES, this._onNewDocument);
     this._prefObserver.off(PREF_MEDIA_SIDEBAR, this._onMediaPrefChanged);

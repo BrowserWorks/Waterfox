@@ -25,9 +25,12 @@ _OBJ_SUFFIX := $(OBJ_SUFFIX)
 OBJ_SUFFIX = $(error config/config.mk needs to be included before using OBJ_SUFFIX)
 
 ifeq ($(HOST_OS_ARCH),WINNT)
-# We only support building with pymake or a non-msys gnu make version
+# We only support building with a non-msys gnu make version
 # strictly above 4.0.
-ifndef .PYMAKE
+ifdef .PYMAKE
+$(error Pymake is no longer supported. Please upgrade to MozillaBuild 1.9 or newer and build with 'mach' or 'mozmake')
+endif
+
 ifeq (a,$(firstword a$(subst /, ,$(abspath .))))
 $(error MSYS make is not supported)
 endif
@@ -37,7 +40,7 @@ endif
 ifneq (4.0-,$(firstword $(sort 4.0- $(MAKE_VERSION))))
 $(error Make version too old. Only versions strictly greater than 4.0 are supported.)
 endif
-endif
+
 ifdef INCLUDED_AUTOCONF_MK
 ifeq (a,$(firstword a$(subst /, ,$(srcdir))))
 $(error MSYS-style srcdir are not supported for Windows builds.)
@@ -45,11 +48,7 @@ endif
 endif
 endif # WINNT
 
-ifdef .PYMAKE
-include_deps = $(eval $(if $(2),,-)includedeps $(1))
-else
 include_deps = $(eval $(if $(2),,-)include $(1))
-endif
 
 ifndef INCLUDED_AUTOCONF_MK
 default::
@@ -80,6 +79,7 @@ _MOZBUILD_EXTERNAL_VARIABLES := \
   JAR_MANIFEST \
   JAVA_JAR_TARGETS \
   JS_MODULES_PATH \
+  LD_VERSION_SCRIPT \
   LIBRARY_NAME \
   MODULE \
   MSVC_ENABLE_PGO \
@@ -89,6 +89,7 @@ _MOZBUILD_EXTERNAL_VARIABLES := \
   RESOURCE_FILES \
   SDK_HEADERS \
   SIMPLE_PROGRAMS \
+  SONAME \
   TEST_DIRS \
   TIERS \
   TOOL_DIRS \
@@ -98,6 +99,7 @@ _MOZBUILD_EXTERNAL_VARIABLES := \
 
 _DEPRECATED_VARIABLES := \
   ANDROID_RESFILES \
+  EXPORT_LIBRARY \
   LIBXUL_LIBRARY \
   MOCHITEST_A11Y_FILES \
   MOCHITEST_BROWSER_FILES \
@@ -108,6 +110,8 @@ _DEPRECATED_VARIABLES := \
   MOCHITEST_METRO_FILES \
   MOCHITEST_ROBOCOP_FILES \
   SHORT_LIBNAME \
+  TESTING_JS_MODULES \
+  TESTING_JS_MODULE_DIR \
   $(NULL)
 
 # Freeze the values specified by moz.build to catch them if they fail.

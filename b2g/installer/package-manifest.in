@@ -69,15 +69,9 @@
 @BINPATH@/@MOZ_CHILD_PROCESS_NAME@
 #endif
 #ifdef XP_WIN32
-#if MOZ_MSVC_REDIST == 1600
-@BINPATH@/msvcp100.dll
-@BINPATH@/msvcr100.dll
-#elif MOZ_MSVC_REDIST == 1700
-@BINPATH@/msvcp110.dll
-@BINPATH@/msvcr110.dll
-#elif MOZ_MSVC_REDIST == 1800
-@BINPATH@/msvcp120.dll
-@BINPATH@/msvcr120.dll
+#if MOZ_PACKAGE_MSVC_DLLS
+@BINPATH@/@MSVC_C_RUNTIME_DLL@
+@BINPATH@/@MSVC_CXX_RUNTIME_DLL@
 #endif
 #endif
 #ifdef MOZ_SHARED_MOZGLUE
@@ -188,7 +182,6 @@
 #endif
 @BINPATH@/components/dom_notification.xpt
 @BINPATH@/components/dom_html.xpt
-@BINPATH@/components/dom_indexeddb.xpt
 @BINPATH@/components/dom_offline.xpt
 @BINPATH@/components/dom_payment.xpt
 @BINPATH@/components/dom_json.xpt
@@ -238,7 +231,6 @@
 @BINPATH@/components/jar.xpt
 @BINPATH@/components/jsdebugger.xpt
 @BINPATH@/components/jsdownloads.xpt
-@BINPATH@/components/jsdservice.xpt
 @BINPATH@/components/jsinspector.xpt
 @BINPATH@/components/layout_base.xpt
 #ifdef NS_PRINTING
@@ -301,6 +293,7 @@
 @BINPATH@/components/storage.xpt
 @BINPATH@/components/telemetry.xpt
 @BINPATH@/components/toolkit_finalizationwitness.xpt
+@BINPATH@/components/toolkit_formautofill.xpt
 @BINPATH@/components/toolkit_osfile.xpt
 @BINPATH@/components/toolkitprofile.xpt
 #ifdef MOZ_ENABLE_XREMOTE
@@ -421,6 +414,14 @@
 @BINPATH@/components/WifiWorker.manifest
 #endif // MOZ_WIDGET_GONK
 
+; ResourceStats
+#ifdef MOZ_WIDGET_GONK
+@BINPATH@/components/ResourceStats.js
+@BINPATH@/components/ResourceStats.manifest
+@BINPATH@/components/ResourceStatsManager.js
+@BINPATH@/components/ResourceStatsManager.manifest
+#endif // MOZ_WIDGET_GONK
+
 ; RIL
 #if defined(MOZ_WIDGET_GONK) && defined(MOZ_B2G_RIL)
 @BINPATH@/components/MmsService.js
@@ -487,7 +488,7 @@
 @BINPATH@/components/FormHistoryStartup.js
 @BINPATH@/components/nsInputListAutoComplete.js
 @BINPATH@/components/formautofill.manifest
-@BINPATH@/components/AutofillController.js
+@BINPATH@/components/FormAutofillContentService.js
 @BINPATH@/components/contentSecurityPolicy.manifest
 @BINPATH@/components/contentSecurityPolicy.js
 @BINPATH@/components/contentAreaDropListener.manifest
@@ -598,7 +599,7 @@
 
 ; ANGLE on Win32
 #ifdef XP_WIN32
-#ifndef HAVE_64BIT_OS
+#ifndef HAVE_64BIT_BUILD
 @BINPATH@/libEGL.dll
 @BINPATH@/libGLESv2.dll
 #endif
@@ -650,6 +651,9 @@
 ; [Layout Engine Resources]
 ; Style Sheets, Graphics and other Resources used by the layout engine.
 @BINPATH@/res/EditorOverride.css
+@BINPATH@/res/caret_left.svg
+@BINPATH@/res/caret_middle.svg
+@BINPATH@/res/caret_right.svg
 @BINPATH@/res/contenteditable.css
 @BINPATH@/res/designmode.css
 @BINPATH@/res/ImageDocument.css
@@ -673,21 +677,6 @@
 @BINPATH@/res/table-remove-row-active.gif
 @BINPATH@/res/table-remove-row-hover.gif
 @BINPATH@/res/table-remove-row.gif
-@BINPATH@/res/text_caret.png
-@BINPATH@/res/text_caret@1.5x.png
-@BINPATH@/res/text_caret@2.25x.png
-@BINPATH@/res/text_caret@2x.png
-@BINPATH@/res/text_caret_tilt_left.png
-@BINPATH@/res/text_caret_tilt_left@1.5x.png
-@BINPATH@/res/text_caret_tilt_left@2.25x.png
-@BINPATH@/res/text_caret_tilt_left@2x.png
-@BINPATH@/res/text_caret_tilt_right.png
-@BINPATH@/res/text_caret_tilt_right@1.5x.png
-@BINPATH@/res/text_caret_tilt_right@2.25x.png
-@BINPATH@/res/text_caret_tilt_right@2x.png
-@BINPATH@/res/text_selection_handle.png
-@BINPATH@/res/text_selection_handle@1.5.png
-@BINPATH@/res/text_selection_handle@2.png
 @BINPATH@/res/grabber.gif
 #ifdef XP_MACOSX
 @BINPATH@/res/cursors/*
@@ -780,8 +769,10 @@ bin/components/@DLL_PREFIX@nkgnomevfs@DLL_SUFFIX@
 #ifndef MOZ_WIDGET_GONK
 #ifdef XP_WIN32
 @BINPATH@/xpcshell.exe
+@BINPATH@/ssltunnel.exe
 #else
 @BINPATH@/xpcshell
+@BINPATH@/ssltunnel
 #endif
 #endif
 @BINPATH@/chrome/icons/
@@ -822,10 +813,8 @@ bin/components/@DLL_PREFIX@nkgnomevfs@DLL_SUFFIX@
 @BINPATH@/components/SimulatorScreen.js
 #endif
 
-#ifdef MOZ_SERVICES_FXACCOUNTS
 @BINPATH@/components/FxAccountsUIGlue.js
 @BINPATH@/components/services_fxaccounts.xpt
-#endif
 
 @BINPATH@/components/DataStore.manifest
 @BINPATH@/components/DataStoreImpl.js

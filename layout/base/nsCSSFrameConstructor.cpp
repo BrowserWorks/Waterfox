@@ -170,7 +170,7 @@ NS_NewSVGFEImageFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
 nsIFrame*
 NS_NewSVGFEUnstyledLeafFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
 
-#include "nsINodeInfo.h"
+#include "mozilla/dom/NodeInfo.h"
 #include "prenv.h"
 #include "nsNodeInfoManager.h"
 #include "nsContentCreatorFunctions.h"
@@ -1573,7 +1573,7 @@ struct nsGenConInitializer {
 already_AddRefed<nsIContent>
 nsCSSFrameConstructor::CreateGenConTextNode(nsFrameConstructorState& aState,
                                             const nsString& aString,
-                                            nsCOMPtr<nsIDOMCharacterData>* aText,
+                                            nsRefPtr<nsTextNode>* aText,
                                             nsGenConInitializer* aInitializer)
 {
   nsRefPtr<nsTextNode> content = new nsTextNode(mDocument->NodeInfoManager());
@@ -1610,7 +1610,7 @@ nsCSSFrameConstructor::CreateGeneratedContent(nsFrameConstructorState& aState,
     // Create an image content object and pass it the image request.
     // XXX Check if it's an image type we can handle...
 
-    nsCOMPtr<nsINodeInfo> nodeInfo;
+    nsRefPtr<NodeInfo> nodeInfo;
     nodeInfo = mDocument->NodeInfoManager()->
       GetNodeInfo(nsGkAtoms::mozgeneratedcontentimage, nullptr,
                   kNameSpaceID_XHTML, nsIDOMNode::ELEMENT_NODE);
@@ -1674,7 +1674,8 @@ nsCSSFrameConstructor::CreateGeneratedContent(nsFrameConstructorState& aState,
         return nullptr;
 
       nsCounterUseNode* node =
-        new nsCounterUseNode(counters, aContentIndex,
+        new nsCounterUseNode(mPresShell->GetPresContext(),
+                             counters, aContentIndex,
                              type == eStyleContentType_Counters);
 
       nsGenConInitializer* initializer =
@@ -1785,7 +1786,7 @@ nsCSSFrameConstructor::CreateGeneratedContentItem(nsFrameConstructorState& aStat
     return;
   // |ProbePseudoStyleFor| checked the 'display' property and the
   // |ContentCount()| of the 'content' property for us.
-  nsCOMPtr<nsINodeInfo> nodeInfo;
+  nsRefPtr<NodeInfo> nodeInfo;
   nsIAtom* elemName = aPseudoElement == nsCSSPseudoElements::ePseudo_before ?
     nsGkAtoms::mozgeneratedcontentbefore : nsGkAtoms::mozgeneratedcontentafter;
   nodeInfo = mDocument->NodeInfoManager()->GetNodeInfo(elemName, nullptr,
@@ -3962,9 +3963,10 @@ nsCSSFrameConstructor::CreateAnonymousFrames(nsFrameConstructorState& aState,
     } else {
       FrameConstructionItemList items;
       {
-        // Skip flex item style-fixup during our AddFrameConstructionItems() call:
-        TreeMatchContext::AutoFlexOrGridItemStyleFixupSkipper
-          flexOrGridItemStyleFixupSkipper(aState.mTreeMatchContext);
+        // Skip parent display based style-fixup during our 
+        // AddFrameConstructionItems() call:
+        TreeMatchContext::AutoParentDisplayBasedStyleFixupSkipper
+          parentDisplayBasedStyleFixupSkipper(aState.mTreeMatchContext);
 
         AddFrameConstructionItems(aState, content, true, aParentFrame, items);
       }
@@ -5265,8 +5267,9 @@ nsCSSFrameConstructor::AddFrameConstructionItems(nsFrameConstructorState& aState
                                     aItems);
 }
 
-/* static */ void
-nsCSSFrameConstructor::SetAsUndisplayedContent(FrameConstructionItemList& aList,
+void
+nsCSSFrameConstructor::SetAsUndisplayedContent(nsFrameConstructorState& aState,
+                                               FrameConstructionItemList& aList,
                                                nsIContent* aContent,
                                                nsStyleContext* aStyleContext,
                                                bool aIsGeneratedContent)
@@ -5277,8 +5280,13 @@ nsCSSFrameConstructor::SetAsUndisplayedContent(FrameConstructionItemList& aList,
     }
     return;
   }
-
   NS_ASSERTION(!aIsGeneratedContent, "Should have had pseudo type");
+
+  if (aState.mCreatingExtraFrames) {
+    MOZ_ASSERT(GetUndisplayedContent(aContent),
+               "should have called SetUndisplayedContent earlier");
+    return;
+  }
   aList.AppendUndisplayedItem(aContent, aStyleContext);
 }
 
@@ -5344,7 +5352,7 @@ nsCSSFrameConstructor::AddFrameConstructionItemsInternal(nsFrameConstructorState
   // Pre-check for display "none" - if we find that, don't create
   // any frame at all
   if (NS_STYLE_DISPLAY_NONE == display->mDisplay) {
-    SetAsUndisplayedContent(aItems, aContent, styleContext, isGeneratedContent);
+    SetAsUndisplayedContent(aState, aItems, aContent, styleContext, isGeneratedContent);
     return;
   }
 
@@ -5368,7 +5376,7 @@ nsCSSFrameConstructor::AddFrameConstructionItemsInternal(nsFrameConstructorState
         !aContent->IsRootOfNativeAnonymousSubtree()) {
       // No frame for aContent
       if (!isText) {
-        SetAsUndisplayedContent(aItems, aContent, styleContext,
+        SetAsUndisplayedContent(aState, aItems, aContent, styleContext,
                                 isGeneratedContent);
       }
       return;
@@ -5393,7 +5401,7 @@ nsCSSFrameConstructor::AddFrameConstructionItemsInternal(nsFrameConstructorState
           IsFrameForSVG(aParentFrame) &&
           !aParentFrame->IsFrameOfType(nsIFrame::eSVGForeignObject)) ||
          (aFlags & ITEM_IS_WITHIN_SVG_TEXT))) {
-      SetAsUndisplayedContent(aItems, element, styleContext,
+      SetAsUndisplayedContent(aState, aItems, element, styleContext,
                               isGeneratedContent);
       return;
     }
@@ -5426,7 +5434,7 @@ nsCSSFrameConstructor::AddFrameConstructionItemsInternal(nsFrameConstructorState
     NS_ASSERTION(data, "Should have frame construction data now");
 
     if (data->mBits & FCDATA_SUPPRESS_FRAME) {
-      SetAsUndisplayedContent(aItems, element, styleContext, isGeneratedContent);
+      SetAsUndisplayedContent(aState, aItems, element, styleContext, isGeneratedContent);
       return;
     }
 
@@ -5436,7 +5444,7 @@ nsCSSFrameConstructor::AddFrameConstructionItemsInternal(nsFrameConstructorState
          aParentFrame->GetType() != nsGkAtoms::menuFrame)) {
       if (!aState.mPopupItems.containingBlock &&
           !aState.mHavePendingPopupgroup) {
-        SetAsUndisplayedContent(aItems, element, styleContext,
+        SetAsUndisplayedContent(aState, aItems, element, styleContext,
                                 isGeneratedContent);
         return;
       }
@@ -5453,7 +5461,7 @@ nsCSSFrameConstructor::AddFrameConstructionItemsInternal(nsFrameConstructorState
       aParentFrame->GetType() == nsGkAtoms::tableColGroupFrame &&
       (!(bits & FCDATA_IS_TABLE_PART) ||
        display->mDisplay != NS_STYLE_DISPLAY_TABLE_COLUMN)) {
-    SetAsUndisplayedContent(aItems, aContent, styleContext, isGeneratedContent);
+    SetAsUndisplayedContent(aState, aItems, aContent, styleContext, isGeneratedContent);
     return;
   }
 
@@ -8009,6 +8017,14 @@ nsCSSFrameConstructor::RecalcQuotesAndCounters()
 }
 
 void
+nsCSSFrameConstructor::NotifyCounterStylesAreDirty()
+{
+  NS_PRECONDITION(mUpdateCount != 0, "Should be in an update");
+  mCounterManager.SetAllCounterStylesDirty();
+  CountersDirty();
+}
+
+void
 nsCSSFrameConstructor::WillDestroyFrameTree()
 {
 #if defined(DEBUG_dbaron_off)
@@ -9347,8 +9363,8 @@ nsCSSFrameConstructor::AddFCItemsForAnonymousContent(
                       "Why is someone creating garbage anonymous content");
 
     nsRefPtr<nsStyleContext> styleContext;
-    TreeMatchContext::AutoFlexOrGridItemStyleFixupSkipper
-      flexOrGridItemStyleFixupSkipper(aState.mTreeMatchContext);
+    TreeMatchContext::AutoParentDisplayBasedStyleFixupSkipper
+      parentDisplayBasedStyleFixupSkipper(aState.mTreeMatchContext);
     if (aAnonymousItems[i].mStyleContext) {
       styleContext = aAnonymousItems[i].mStyleContext.forget();
     } else {

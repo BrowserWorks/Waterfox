@@ -88,7 +88,7 @@ LogHeaders(const char *lineStart)
 //-----------------------------------------------------------------------------
 
 nsHttpTransaction::nsHttpTransaction()
-    : mCallbacksLock("transaction mCallbacks lock")
+    : mLock("transaction lock")
     , mRequestSize(0)
     , mConnection(nullptr)
     , mConnInfo(nullptr)
@@ -379,10 +379,19 @@ nsHttpTransaction::Init(uint32_t caps,
     return NS_OK;
 }
 
+// This method should only be used on the socket thread
 nsAHttpConnection *
 nsHttpTransaction::Connection()
 {
     return mConnection;
+}
+
+already_AddRefed<nsAHttpConnection>
+nsHttpTransaction::GetConnectionReference()
+{
+    MutexAutoLock lock(mLock);
+    nsRefPtr<nsAHttpConnection> connection = mConnection;
+    return connection.forget();
 }
 
 nsHttpResponseHead *
@@ -448,8 +457,11 @@ nsHttpTransaction::TakeSubTransactions(
 void
 nsHttpTransaction::SetConnection(nsAHttpConnection *conn)
 {
-    NS_IF_RELEASE(mConnection);
-    NS_IF_ADDREF(mConnection = conn);
+    {
+        MutexAutoLock lock(mLock);
+        NS_IF_RELEASE(mConnection);
+        NS_IF_ADDREF(mConnection = conn);
+    }
 
     if (conn) {
         MOZ_EVENT_TRACER_EXEC(static_cast<nsAHttpTransaction*>(this),
@@ -460,7 +472,7 @@ nsHttpTransaction::SetConnection(nsAHttpConnection *conn)
 void
 nsHttpTransaction::GetSecurityCallbacks(nsIInterfaceRequestor **cb)
 {
-    MutexAutoLock lock(mCallbacksLock);
+    MutexAutoLock lock(mLock);
     NS_IF_ADDREF(*cb = mCallbacks);
 }
 
@@ -468,7 +480,7 @@ void
 nsHttpTransaction::SetSecurityCallbacks(nsIInterfaceRequestor* aCallbacks)
 {
     {
-        MutexAutoLock lock(mCallbacksLock);
+        MutexAutoLock lock(mLock);
         mCallbacks = aCallbacks;
     }
 
@@ -867,6 +879,16 @@ nsHttpTransaction::Close(nsresult reason)
         }
     }
 
+    if ((mChunkedDecoder || (mContentLength >= int64_t(0))) &&
+        (mHttpVersion >= NS_HTTP_VERSION_1_1)) {
+
+        if (NS_SUCCEEDED(reason) && !mResponseIsComplete) {
+            reason = NS_ERROR_NET_PARTIAL_TRANSFER;
+            LOG(("Partial transfer, incomplete HTTP responese received: %s",
+                 mChunkedDecoder ? "broken chunk" : "c-l underrun"));
+        }
+    }
+
     bool relConn = true;
     if (NS_SUCCEEDED(reason)) {
         if (!mResponseIsComplete) {
@@ -912,8 +934,10 @@ nsHttpTransaction::Close(nsresult reason)
         mTimings.responseEnd.IsNull() && !mTimings.responseStart.IsNull())
         mTimings.responseEnd = TimeStamp::Now();
 
-    if (relConn && mConnection)
+    if (relConn && mConnection) {
+        MutexAutoLock lock(mLock);
         NS_RELEASE(mConnection);
+    }
 
     // save network statistics in the end of transaction
     SaveNetworkStats(true);
@@ -1076,6 +1100,7 @@ nsHttpTransaction::Restart()
     mSecurityInfo = 0;
     if (mConnection) {
         mConnection->DontReuse();
+        MutexAutoLock lock(mLock);
         NS_RELEASE(mConnection);
     }
 
@@ -1731,9 +1756,9 @@ nsHttpTransaction::ReleaseBlockingTransaction()
 // nsHttpTransaction deletion event
 //-----------------------------------------------------------------------------
 
-class nsDeleteHttpTransaction : public nsRunnable {
+class DeleteHttpTransaction : public nsRunnable {
 public:
-    nsDeleteHttpTransaction(nsHttpTransaction *trans)
+    DeleteHttpTransaction(nsHttpTransaction *trans)
         : mTrans(trans)
     {}
 
@@ -1757,7 +1782,7 @@ nsHttpTransaction::DeleteSelfOnConsumerThread()
         delete this;
     } else {
         LOG(("proxying delete to consumer thread...\n"));
-        nsCOMPtr<nsIRunnable> event = new nsDeleteHttpTransaction(this);
+        nsCOMPtr<nsIRunnable> event = new DeleteHttpTransaction(this);
         if (NS_FAILED(mConsumerTarget->Dispatch(event, NS_DISPATCH_NORMAL)))
             NS_WARNING("failed to dispatch nsHttpDeleteTransaction event");
     }

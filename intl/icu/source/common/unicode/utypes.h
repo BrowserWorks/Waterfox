@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-*   Copyright (C) 1996-2012, International Business Machines
+*   Copyright (C) 1996-2014, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *
@@ -641,7 +641,7 @@ typedef enum UErrorCode {
     U_REGEX_INVALID_FLAG,                 /**< Invalid value for match mode flags.                */
     U_REGEX_LOOK_BEHIND_LIMIT,            /**< Look-Behind pattern matches must have a bounded maximum length.    */
     U_REGEX_SET_CONTAINS_STRING,          /**< Regexps cannot have UnicodeSets containing strings.*/
-    U_REGEX_OCTAL_TOO_BIG,                /**< Octal character constants must be <= 0377.         */
+    U_REGEX_OCTAL_TOO_BIG,                /**< Octal character constants must be <= 0377. @deprecated ICU 54. This error cannot occur. */
     U_REGEX_MISSING_CLOSE_BRACKET,        /**< Missing closing bracket on a bracket expression.   */
     U_REGEX_INVALID_RANGE,                /**< In a character range [x-y], x is greater than y.   */
     U_REGEX_STACK_OVERFLOW,               /**< Regular expression backtrack stack overflow.       */

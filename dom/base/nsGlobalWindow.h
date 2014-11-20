@@ -146,10 +146,14 @@ NS_CreateJSTimeoutHandler(JSContext* aCx, nsGlobalWindow *aWindow,
  * timeout.  Holds a strong reference to an nsIScriptTimeoutHandler, which
  * abstracts the language specific cruft.
  */
-struct nsTimeout : mozilla::LinkedListElement<nsTimeout>
+struct nsTimeout MOZ_FINAL
+  : mozilla::LinkedListElement<nsTimeout>
 {
-  nsTimeout();
+private:
   ~nsTimeout();
+
+public:
+  nsTimeout();
 
   NS_DECL_CYCLE_COLLECTION_NATIVE_CLASS(nsTimeout)
   NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(nsTimeout)
@@ -290,8 +294,9 @@ public:
       aResult.setUndefined();
     }
   }
-  virtual ~DialogValueHolder() {}
 private:
+  virtual ~DialogValueHolder() {}
+
   nsCOMPtr<nsIPrincipal> mOrigin;
   nsCOMPtr<nsIVariant> mValue;
 };
@@ -482,11 +487,19 @@ public:
 
   virtual void MaybeUpdateTouchState();
   virtual void UpdateTouchState();
-  virtual bool DispatchCustomEvent(const char *aEventName);
-  virtual bool DispatchResizeEvent(const nsIntSize& aSize);
-  virtual void RefreshCompartmentPrincipal();
-  virtual nsresult SetFullScreenInternal(bool aIsFullScreen, bool aRequireTrust);
 
+  // Outer windows only.
+  virtual bool DispatchCustomEvent(const nsAString& aEventName);
+  bool DispatchResizeEvent(const mozilla::CSSIntSize& aSize);
+
+  // Inner windows only.
+  virtual void RefreshCompartmentPrincipal();
+
+  // Outer windows only.
+  virtual nsresult SetFullScreenInternal(bool aIsFullScreen, bool aRequireTrust);
+  bool FullScreen() const;
+
+  // Inner windows only.
   virtual void SetHasGamepadEventListener(bool aHasGamepad = true);
 
   // nsIInterfaceRequestor
@@ -669,10 +682,11 @@ public:
             mCleanedUp);
   }
 
-  static void FirePopupBlockedEvent(nsIDocument* aDoc,
-                                    nsIDOMWindow *aRequestingWindow, nsIURI *aPopupURI,
-                                    const nsAString &aPopupWindowName,
-                                    const nsAString &aPopupWindowFeatures);
+  virtual void
+  FirePopupBlockedEvent(nsIDocument* aDoc,
+                        nsIURI* aPopupURI,
+                        const nsAString& aPopupWindowName,
+                        const nsAString& aPopupWindowFeatures) MOZ_OVERRIDE;
 
   virtual uint32_t GetSerial() {
     return mSerial;
@@ -727,6 +741,7 @@ public:
   SlowScriptResponse ShowSlowScriptDialog();
 
 #ifdef MOZ_GAMEPAD
+  // Inner windows only.
   void AddGamepad(uint32_t aIndex, mozilla::dom::Gamepad* aGamepad);
   void RemoveGamepad(uint32_t aIndex);
   void GetGamepads(nsTArray<nsRefPtr<mozilla::dom::Gamepad> >& aGamepads);
@@ -742,6 +757,7 @@ public:
                                             void* aUserArg);
 #endif
 
+  // Inner windows only.
   // Enable/disable updates for gamepad input.
   void EnableGamepadUpdates();
   void DisableGamepadUpdates();
@@ -811,7 +827,7 @@ public:
   }
   void GetName(nsAString& aName, mozilla::ErrorResult& aError);
   void SetName(const nsAString& aName, mozilla::ErrorResult& aError);
-  nsIDOMLocation* GetLocation(mozilla::ErrorResult& aError);
+  nsLocation* GetLocation(mozilla::ErrorResult& aError);
   nsHistory* GetHistory(mozilla::ErrorResult& aError);
   mozilla::dom::BarProp* GetLocationbar(mozilla::ErrorResult& aError);
   mozilla::dom::BarProp* GetMenubar(mozilla::ErrorResult& aError);
@@ -1091,6 +1107,7 @@ protected:
   // aDocument must not be null.
   void InnerSetNewDocument(JSContext* aCx, nsIDocument* aDocument);
 
+  // Inner windows only.
   nsresult DefineArgumentsProperty(nsIArray *aArguments);
 
   // Get the parent, returns null if this is a toplevel window
@@ -1119,12 +1136,14 @@ protected:
 
   // Window Control Functions
 
+  // Outer windows only.
   virtual nsresult
   OpenNoNavigate(const nsAString& aUrl,
                  const nsAString& aName,
                  const nsAString& aOptions,
                  nsIDOMWindow **_retval);
 
+private:
   /**
    * @param aUrl the URL we intend to load into the window.  If aNavigate is
    *        true, we'll actually load this URL into the window. Otherwise,
@@ -1168,6 +1187,8 @@ protected:
    *        when aCalledNoScript is true.
    *
    * @param aReturn [out] The window that was opened, if any.
+   *
+   * Outer windows only.
    */
   nsresult OpenInternal(const nsAString& aUrl,
                                     const nsAString& aName,
@@ -1183,6 +1204,7 @@ protected:
                                     JSContext *aJSCallerContext,
                                     nsIDOMWindow **aReturn);
 
+public:
   // Timeout Functions
   // Language agnostic timeout function (all args passed).
   // |interval| is in milliseconds.
@@ -1273,8 +1295,9 @@ protected:
 
   // If aDoFlush is true, we'll flush our own layout; otherwise we'll try to
   // just flush our parent and only flush ourselves if we think we need to.
-  mozilla::CSSIntPoint GetScrollXY(bool aDoFlush, mozilla::ErrorResult& aError);
-  nsresult GetScrollXY(int32_t* aScrollX, int32_t* aScrollY, bool aDoFlush);
+  // Outer windows only.
+  mozilla::CSSIntPoint GetScrollXY(bool aDoFlush);
+
   void GetScrollMaxXY(int32_t* aScrollMaxX, int32_t* aScrollMaxY,
                       mozilla::ErrorResult& aError);
 
@@ -1356,6 +1379,8 @@ protected:
 
   inline int32_t DOMMinTimeoutValue() const;
 
+
+  // Inner windows only.
   already_AddRefed<mozilla::dom::StorageEvent>
   CloneStorageEvent(const nsAString& aType,
                     const nsRefPtr<mozilla::dom::StorageEvent>& aEvent);
@@ -1472,6 +1497,7 @@ protected:
   // This member is only used by inner windows.
   bool                   mInnerObjectsFreed : 1;
 
+  // Inner windows only.
   // Indicates whether this window wants gamepad input events
   bool                   mHasGamepad : 1;
 #ifdef MOZ_GAMEPAD
@@ -1656,6 +1682,7 @@ public:
     return PL_DHASH_NEXT;
   }
 
+protected:
   ~nsGlobalChromeWindow()
   {
     NS_ABORT_IF_FALSE(mCleanMessageManager,
@@ -1672,6 +1699,7 @@ public:
     mCleanMessageManager = false;
   }
 
+public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(nsGlobalChromeWindow,
                                            nsGlobalWindow)
 
@@ -1710,6 +1738,9 @@ public:
 
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSIDOMMODALCONTENTWINDOW
+
+protected:
+  ~nsGlobalModalWindow() {}
 };
 
 /* factory function */

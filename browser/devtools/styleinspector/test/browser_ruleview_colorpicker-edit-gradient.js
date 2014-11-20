@@ -17,7 +17,7 @@ const PAGE_CONTENT = [
 ].join("\n");
 
 let test = asyncTest(function*() {
-  yield addTab("data:text/html,rule view color picker tooltip test");
+  yield addTab("data:text/html;charset=utf-8,rule view color picker tooltip test");
 
   info("Creating the test document");
   content.document.body.innerHTML = PAGE_CONTENT;
@@ -57,7 +57,7 @@ function* testPickingNewColor(view) {
   let colorEl = ruleEl.valueSpan.querySelector(".ruleview-color");
 
   info("Getting the color picker tooltip and clicking on the swatch to show it");
-  let cPicker = view.colorPicker;
+  let cPicker = view.tooltips.colorPicker;
   let onShown = cPicker.tooltip.once("shown");
   swatchEl.click();
   yield onShown;

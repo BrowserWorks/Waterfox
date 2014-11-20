@@ -4,24 +4,26 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-UNIFIED_SOURCES += [
+SOURCES += [
     'mozHunspell.cpp',
     'mozHunspellDirProvider.cpp',
+    'RemoteSpellCheckEngineChild.cpp',
+    'RemoteSpellCheckEngineParent.cpp',
 ]
 
 if not CONFIG['MOZ_NATIVE_HUNSPELL']:
     SOURCES += [
-        'affentry.cpp',
-        'affixmgr.cpp',
-        'csutil.cpp',
-        'dictmgr.cpp',
-        'filemgr.cpp',
-        'hashmgr.cpp',
-        'hunspell.cpp',
-        'hunzip.cpp',
-        'phonet.cpp',
-        'replist.cpp',
-        'suggestmgr.cpp',
+        'affentry.cxx',
+        'affixmgr.cxx',
+        'csutil.cxx',
+        'dictmgr.cxx',
+        'filemgr.cxx',
+        'hashmgr.cxx',
+        'hunspell.cxx',
+        'hunzip.cxx',
+        'phonet.cxx',
+        'replist.cxx',
+        'suggestmgr.cxx',
     ]
     # This variable is referenced in configure.in.  Make sure to change that file
     # too if you need to change this variable.
@@ -40,3 +42,14 @@ LOCAL_INCLUDES += [
 # Suppress warnings in third-party code.
 if CONFIG['CLANG_CXX']:
     CXXFLAGS += ['-Wno-unused-private-field']
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+IPDL_SOURCES = [
+    'PRemoteSpellcheckEngine.ipdl',
+]
+
+EXPORTS.mozilla += [
+     'RemoteSpellCheckEngineChild.h',
+     'RemoteSpellCheckEngineParent.h',
+]

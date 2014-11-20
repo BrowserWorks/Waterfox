@@ -16,7 +16,7 @@
 namespace mp4_demuxer {
 class VideoDecoderConfig;
 class AudioDecoderConfig;
-struct MP4Sample;
+class MP4Sample;
 }
 
 class nsIThreadPool;
@@ -179,6 +179,8 @@ public:
   // that are required to decode samples that it expects to get in future.
   // This is called when the demuxer reaches end of stream.
   // The MP4Reader will not call Input() while it's calling Drain().
+  // This function is synchronous. Once it's returned, all samples to be
+  // output should have been returned via callback to the MP4Reader.
   virtual nsresult Drain() = 0;
 
   // Cancels all init/input/drain operations, and shuts down the

@@ -20,7 +20,7 @@
 #include "mozilla/FileUtils.h"
 #include "mozilla/FileLocation.h"
 
-#if defined(XP_WIN) && defined(_MSC_VER)
+#ifdef HAVE_SEH_EXCEPTIONS
 #define MOZ_WIN_MEM_TRY_BEGIN __try {
 #define MOZ_WIN_MEM_TRY_CATCH(cmd) }                                \
   __except(GetExceptionCode()==EXCEPTION_IN_PAGE_ERROR ?            \
@@ -95,12 +95,12 @@ class nsZipArchive
 {
   friend class nsZipFind;
 
+  /** destructing the object closes the archive */
+  ~nsZipArchive();
+
 public:
   /** constructing does not open the archive. See OpenArchive() */
   nsZipArchive();
-
-  /** destructing the object closes the archive */
-  ~nsZipArchive();
 
   /** 
    * OpenArchive 
@@ -120,10 +120,11 @@ public:
    * 
    * Convenience function that generates nsZipHandle
    *
-   * @param   aFile  The file used to access the zip
+   * @param   aFile         The file used to access the zip
+   * @param   aMustCacheFd  Optional flag to keep the PRFileDesc in nsZipHandle
    * @return  status code
    */
-  nsresult OpenArchive(nsIFile *aFile);
+  nsresult OpenArchive(nsIFile *aFile, bool aMustCacheFd = false);
 
   /**
    * Test the integrity of items in this archive by running
@@ -380,7 +381,7 @@ class nsZipHandle {
 friend class nsZipArchive;
 friend class mozilla::FileLocation;
 public:
-  static nsresult Init(nsIFile *file, nsZipHandle **ret,
+  static nsresult Init(nsIFile *file, bool aMustCacheFd, nsZipHandle **ret,
                        PRFileDesc **aFd = nullptr);
   static nsresult Init(nsZipArchive *zip, const char *entry,
                        nsZipHandle **ret);
@@ -389,6 +390,8 @@ public:
   NS_METHOD_(MozExternalRefCountType) Release(void);
 
   int64_t SizeOfMapping();
+
+  nsresult GetNSPRFileDesc(PRFileDesc** aNSPRFileDesc);
 
 protected:
   const uint8_t * mFileData; /* pointer to mmaped file */
@@ -400,6 +403,7 @@ private:
   ~nsZipHandle();
 
   PRFileMap *                       mMap;    /* nspr datastructure for mmap */
+  mozilla::AutoFDClose              mNSPRFileDesc;
   nsAutoPtr<nsZipItemPtr<uint8_t> > mBuf;
   mozilla::ThreadSafeAutoRefCnt     mRefCnt; /* ref count */
   NS_DECL_OWNINGTHREAD

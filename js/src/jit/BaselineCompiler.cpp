@@ -1239,7 +1239,7 @@ static const VMFunction DeepCloneObjectLiteralInfo =
 bool
 BaselineCompiler::emit_JSOP_OBJECT()
 {
-    if (JS::CompartmentOptionsRef(cx).cloneSingletons(cx)) {
+    if (JS::CompartmentOptionsRef(cx).cloneSingletons()) {
         RootedObject obj(cx, script->getObject(GET_UINT32_INDEX(pc)));
         if (!obj)
             return false;
@@ -2195,10 +2195,10 @@ BaselineCompiler::emit_JSOP_DEFVAR()
     frame.syncStack(0);
 
     unsigned attrs = JSPROP_ENUMERATE;
-    if (!script->isForEval())
-        attrs |= JSPROP_PERMANENT;
     if (JSOp(*pc) == JSOP_DEFCONST)
         attrs |= JSPROP_READONLY;
+    else if (!script->isForEval())
+        attrs |= JSPROP_PERMANENT;
     JS_ASSERT(attrs <= UINT32_MAX);
 
     masm.loadPtr(frame.addressOfScopeChain(), R0.scratchReg());
@@ -2367,34 +2367,6 @@ BaselineCompiler::emit_JSOP_INITELEM_INC()
     // Increment index
     Address indexAddr = frame.addressOfStackValue(frame.peek(-1));
     masm.incrementInt32Value(indexAddr);
-    return true;
-}
-
-typedef bool (*SpreadFn)(JSContext *, HandleObject, HandleValue,
-                         HandleValue, MutableHandleValue);
-static const VMFunction SpreadInfo = FunctionInfo<SpreadFn>(js::SpreadOperation);
-
-bool
-BaselineCompiler::emit_JSOP_SPREAD()
-{
-    // Load index and iterator in R0 and R1, but keep values on the stack for
-    // the decompiler.
-    frame.syncStack(0);
-    masm.loadValue(frame.addressOfStackValue(frame.peek(-2)), R0);
-    masm.loadValue(frame.addressOfStackValue(frame.peek(-1)), R1);
-
-    prepareVMCall();
-
-    pushArg(R1);
-    pushArg(R0);
-    masm.extractObject(frame.addressOfStackValue(frame.peek(-3)), R0.scratchReg());
-    pushArg(R0.scratchReg());
-
-    if (!callVM(SpreadInfo))
-        return false;
-
-    frame.popn(2);
-    frame.push(R0);
     return true;
 }
 
@@ -2861,8 +2833,9 @@ BaselineCompiler::emit_JSOP_DEBUGGER()
     return true;
 }
 
-typedef bool (*DebugEpilogueFn)(JSContext *, BaselineFrame *, jsbytecode *, bool);
-static const VMFunction DebugEpilogueInfo = FunctionInfo<DebugEpilogueFn>(jit::DebugEpilogue);
+typedef bool (*DebugEpilogueFn)(JSContext *, BaselineFrame *, jsbytecode *);
+static const VMFunction DebugEpilogueInfo =
+    FunctionInfo<DebugEpilogueFn>(jit::DebugEpilogueOnBaselineReturn);
 
 bool
 BaselineCompiler::emitReturn()
@@ -2877,7 +2850,6 @@ BaselineCompiler::emitReturn()
         masm.loadBaselineFramePtr(BaselineFrameReg, R0.scratchReg());
 
         prepareVMCall();
-        pushArg(Imm32(1));
         pushArg(ImmPtr(pc));
         pushArg(R0.scratchReg());
         if (!callVM(DebugEpilogueInfo))

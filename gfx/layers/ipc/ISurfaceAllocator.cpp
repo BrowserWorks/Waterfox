@@ -111,7 +111,7 @@ ISurfaceAllocator::AllocSurfaceDescriptorWithCaps(const gfx::IntSize& aSize,
   gfx::SurfaceFormat format =
     gfxPlatform::GetPlatform()->Optimal2DFormatForContent(aContent);
   size_t size = ImageDataSerializer::ComputeMinBufferSize(aSize, format);
-  if (gfxPlatform::GetPlatform()->PreferMemoryOverShmem()) {
+  if (IsSameProcess()) {
     uint8_t *data = new (std::nothrow) uint8_t[size];
     if (!data) {
       return false;
@@ -178,7 +178,10 @@ ISurfaceAllocator::DestroySharedSurface(SurfaceDescriptor* aSurface)
 // XXX - We should actually figure out the minimum shmem allocation size on
 // a certain platform and use that.
 const uint32_t sShmemPageSize = 4096;
+
+#ifdef DEBUG
 const uint32_t sSupportedBlockSize = 4;
+#endif
 
 enum AllocationStatus
 {
@@ -330,5 +333,5 @@ ISurfaceAllocator::DropGrallocBuffer(MaybeMagicGrallocBufferHandle* aHandle)
   SharedBufferManagerChild::GetSingleton()->DropGrallocBuffer(*aHandle);
 }
 
-} // namespace
-} // namespace
+} // namespace layers
+} // namespace mozilla

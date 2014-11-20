@@ -1,4 +1,4 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*-
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -43,7 +43,6 @@ function getDERString(cert)
 function getPKCS7String(cert, chainMode)
 {
   var length = {};
-  cert.QueryInterface(Components.interfaces.nsIX509Cert3);
   var pkcs7Array = cert.exportAsCMS(chainMode, length);
   var pkcs7String = '';
   for (var i = 0; i < pkcs7Array.length; i++) {
@@ -110,10 +109,10 @@ function exportToFile(parent, cert)
       content = getDERString(cert);
       break;
     case 3:
-      content = getPKCS7String(cert, Components.interfaces.nsIX509Cert3.CMS_CHAIN_MODE_CertOnly);
+      content = getPKCS7String(cert, Components.interfaces.nsIX509Cert.CMS_CHAIN_MODE_CertOnly);
       break;
     case 4:
-      content = getPKCS7String(cert, Components.interfaces.nsIX509Cert3.CMS_CHAIN_MODE_CertChainWithRoot);
+      content = getPKCS7String(cert, Components.interfaces.nsIX509Cert.CMS_CHAIN_MODE_CertChainWithRoot);
       break;
     case 0:
     default:

@@ -36,6 +36,8 @@ struct RunnableMethodTraits<mozilla::ipc::MessageChannel>
             DebugAbort(__FILE__, __LINE__, #_cond,## __VA_ARGS__);  \
     } while (0)
 
+static uintptr_t gDispatchingUrgentMessageCount;
+
 namespace mozilla {
 namespace ipc {
 
@@ -205,7 +207,10 @@ MessageChannel::MessageChannel(MessageListener *aListener)
     mDispatchingUrgentMessageCount(0),
     mRemoteStackDepthGuess(false),
     mSawInterruptOutMsg(false),
-    mAbortOnError(false)
+    mAbortOnError(false),
+    mFlags(REQUIRE_DEFAULT),
+    mPeerPidSet(false),
+    mPeerPid(-1)
 {
     MOZ_COUNT_CTOR(ipc::MessageChannel);
 
@@ -217,6 +222,10 @@ MessageChannel::MessageChannel(MessageListener *aListener)
     mDequeueOneTask = new RefCountedTask(NewRunnableMethod(
                                                  this,
                                                  &MessageChannel::OnMaybeDequeueOne));
+
+    mOnChannelConnectedTask = new RefCountedTask(NewRunnableMethod(
+        this,
+        &MessageChannel::DispatchOnChannelConnected));
 
 #ifdef OS_WIN
     mEvent = CreateEventW(nullptr, TRUE, FALSE, nullptr);
@@ -279,6 +288,8 @@ MessageChannel::Clear()
     mWorkerLoop = nullptr;
     delete mLink;
     mLink = nullptr;
+
+    mOnChannelConnectedTask->Cancel();
 
     if (mChannelErrorTask) {
         mChannelErrorTask->Cancel();
@@ -1099,9 +1110,13 @@ MessageChannel::DispatchUrgentMessage(const Message& aMsg)
 
     Message *reply = nullptr;
 
+    MOZ_ASSERT(NS_IsMainThread());
+
+    gDispatchingUrgentMessageCount++;
     mDispatchingUrgentMessageCount++;
     Result rv = mListener->OnCallReceived(aMsg, reply);
     mDispatchingUrgentMessageCount--;
+    gDispatchingUrgentMessageCount--;
 
     if (!MaybeHandleError(rv, "DispatchUrgentMessage")) {
         delete reply;
@@ -1420,19 +1435,19 @@ MessageChannel::SetReplyTimeoutMs(int32_t aTimeoutMs)
 void
 MessageChannel::OnChannelConnected(int32_t peer_id)
 {
-    mWorkerLoop->PostTask(
-        FROM_HERE,
-        NewRunnableMethod(this,
-                          &MessageChannel::DispatchOnChannelConnected,
-                          peer_id));
+    MOZ_ASSERT(!mPeerPidSet);
+    mPeerPidSet = true;
+    mPeerPid = peer_id;
+    mWorkerLoop->PostTask(FROM_HERE, new DequeueTask(mOnChannelConnectedTask));
 }
 
 void
-MessageChannel::DispatchOnChannelConnected(int32_t peer_pid)
+MessageChannel::DispatchOnChannelConnected()
 {
     AssertWorkerThread();
+    MOZ_ASSERT(mPeerPidSet);
     if (mListener)
-        mListener->OnChannelConnected(peer_pid);
+        mListener->OnChannelConnected(mPeerPid);
 }
 
 void
@@ -1662,10 +1677,11 @@ MessageChannel::Close()
         }
 
         if (ChannelOpening == mChannelState) {
-            // Mimic CloseWithError().
+            // SynchronouslyClose() waits for an ack from the other side, so
+            // the opening sequence should complete before this returns.
             SynchronouslyClose();
             mChannelState = ChannelError;
-            PostErrorNotifyTask();
+            NotifyMaybeChannelError();
             return;
         }
 
@@ -1749,6 +1765,12 @@ MessageChannel::DumpInterruptStack(const char* const pfx) const
         printf_stderr("%s[(%u) %s %s %s(actor=%d) ]\n", pfx,
                       i, dir, sems, name, id);
     }
+}
+
+bool
+ProcessingUrgentMessages()
+{
+    return gDispatchingUrgentMessageCount > 0;
 }
 
 } // ipc

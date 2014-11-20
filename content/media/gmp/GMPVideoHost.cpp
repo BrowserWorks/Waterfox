@@ -20,41 +20,41 @@ GMPVideoHostImpl::~GMPVideoHostImpl()
 {
 }
 
-GMPVideoErr
+GMPErr
 GMPVideoHostImpl::CreateFrame(GMPVideoFrameFormat aFormat, GMPVideoFrame** aFrame)
 {
   if (!mSharedMemMgr) {
-    return GMPVideoGenericErr;
+    return GMPGenericErr;
   }
 
   if (!aFrame) {
-    return GMPVideoGenericErr;
+    return GMPGenericErr;
   }
   *aFrame = nullptr;
 
   switch (aFormat) {
     case kGMPI420VideoFrame:
       *aFrame = new GMPVideoi420FrameImpl(this);
-      return GMPVideoNoErr;
+      return GMPNoErr;
     case kGMPEncodedVideoFrame:
       *aFrame = new GMPVideoEncodedFrameImpl(this);
-      return GMPVideoNoErr;
+      return GMPNoErr;
     default:
       NS_NOTREACHED("Unknown frame format!");
   }
 
-  return GMPVideoGenericErr;
+  return GMPGenericErr;
 }
 
-GMPVideoErr
+GMPErr
 GMPVideoHostImpl::CreatePlane(GMPPlane** aPlane)
 {
   if (!mSharedMemMgr) {
-    return GMPVideoGenericErr;
+    return GMPGenericErr;
   }
 
   if (!aPlane) {
-    return GMPVideoGenericErr;
+    return GMPGenericErr;
   }
   *aPlane = nullptr;
 
@@ -62,7 +62,7 @@ GMPVideoHostImpl::CreatePlane(GMPPlane** aPlane)
 
   *aPlane = p;
 
-  return GMPVideoNoErr;
+  return GMPNoErr;
 }
 
 GMPSharedMemManager*
@@ -96,7 +96,7 @@ GMPVideoHostImpl::ActorDestroyed()
     mEncodedFrames[i - 1]->ActorDestroyed();
     mEncodedFrames.RemoveElementAt(i - 1);
   }
-  mSharedMemMgr = nullptr;  
+  mSharedMemMgr = nullptr;
 }
 
 void

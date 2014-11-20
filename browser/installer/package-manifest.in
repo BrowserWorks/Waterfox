@@ -85,15 +85,9 @@
 #endif
 #ifdef XP_WIN32
 @BINPATH@/plugin-hang-ui@BIN_SUFFIX@
-#if MOZ_MSVC_REDIST == 1600
-@BINPATH@/msvcp100.dll
-@BINPATH@/msvcr100.dll
-#elif MOZ_MSVC_REDIST == 1700
-@BINPATH@/msvcp110.dll
-@BINPATH@/msvcr110.dll
-#elif MOZ_MSVC_REDIST == 1800
-@BINPATH@/msvcp120.dll
-@BINPATH@/msvcr120.dll
+#if MOZ_PACKAGE_MSVC_DLLS
+@BINPATH@/@MSVC_C_RUNTIME_DLL@
+@BINPATH@/@MSVC_CXX_RUNTIME_DLL@
 #endif
 #endif
 #ifndef MOZ_NATIVE_ICU
@@ -173,6 +167,7 @@
 @BINPATH@/components/content_events.xpt
 @BINPATH@/components/content_htmldoc.xpt
 @BINPATH@/components/content_html.xpt
+@BINPATH@/components/content_geckomediaplugins.xpt
 #ifdef MOZ_WEBRTC
 @BINPATH@/components/content_webrtc.xpt
 #endif
@@ -202,7 +197,6 @@
 @BINPATH@/components/dom_network.xpt
 @BINPATH@/components/dom_notification.xpt
 @BINPATH@/components/dom_html.xpt
-@BINPATH@/components/dom_indexeddb.xpt
 @BINPATH@/components/dom_offline.xpt
 @BINPATH@/components/dom_json.xpt
 @BINPATH@/components/dom_power.xpt
@@ -248,9 +242,6 @@
 @BINPATH@/components/inspector.xpt
 @BINPATH@/components/intl.xpt
 @BINPATH@/components/jar.xpt
-#ifdef MOZ_JSDEBUGGER
-@BINPATH@/components/jsdservice.xpt
-#endif
 @BINPATH@/components/jsdebugger.xpt
 @BINPATH@/components/jsdownloads.xpt
 @BINPATH@/components/jsinspector.xpt
@@ -309,6 +300,7 @@
 @BINPATH@/components/spellchecker.xpt
 @BINPATH@/components/storage.xpt
 @BINPATH@/components/toolkit_finalizationwitness.xpt
+@BINPATH@/components/toolkit_formautofill.xpt
 @BINPATH@/components/toolkit_osfile.xpt
 @BINPATH@/components/toolkitprofile.xpt
 #ifdef MOZ_ENABLE_XREMOTE
@@ -419,6 +411,8 @@
 #endif
 @BINPATH@/components/nsUpdateTimerManager.manifest
 @BINPATH@/components/nsUpdateTimerManager.js
+@BINPATH@/components/addoncompat.manifest
+@BINPATH@/components/multiprocessShims.js
 @BINPATH@/components/pluginGlue.manifest
 @BINPATH@/browser/components/nsSessionStore.manifest
 @BINPATH@/browser/components/nsSessionStartup.js
@@ -456,7 +450,7 @@
 @BINPATH@/components/FormHistoryStartup.js
 @BINPATH@/components/nsInputListAutoComplete.js
 @BINPATH@/components/formautofill.manifest
-@BINPATH@/components/AutofillController.js
+@BINPATH@/components/FormAutofillContentService.js
 @BINPATH@/components/contentSecurityPolicy.manifest
 @BINPATH@/components/contentSecurityPolicy.js
 @BINPATH@/components/contentAreaDropListener.manifest
@@ -639,11 +633,9 @@
 #endif
 
 ; [Webide Files]
-#ifdef MOZ_DEVTOOLS_WEBIDE
 @BINPATH@/browser/chrome/webide@JAREXT@
 @BINPATH@/browser/chrome/webide.manifest
 @BINPATH@/browser/@PREF_DIR@/webide-prefs.js
-#endif
 
 ; shell icons
 #ifdef XP_UNIX
@@ -754,8 +746,8 @@
 @BINPATH@/components/pipnss.xpt
 @BINPATH@/components/pippki.xpt
 
-; For content sandboxing
-#if defined(XP_WIN) && defined(MOZ_CONTENT_SANDBOX)
+; For process sandboxing
+#if defined(XP_WIN)
 @BINPATH@/@DLL_PREFIX@sandboxbroker@DLL_SUFFIX@
 #endif
 

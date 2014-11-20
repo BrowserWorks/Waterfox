@@ -5,7 +5,6 @@
 
 #include "gfxPlatformMac.h"
 
-#include "gfxImageSurface.h"
 #include "gfxQuartzSurface.h"
 #include "gfxQuartzImageSurface.h"
 #include "mozilla/gfx/2D.h"
@@ -103,25 +102,6 @@ gfxPlatformMac::CreateOffscreenSurface(const IntSize& size,
       new gfxQuartzSurface(ThebesIntSize(size),
                            OptimalFormatForContent(contentType));
     return newSurface.forget();
-}
-
-already_AddRefed<gfxASurface>
-gfxPlatformMac::OptimizeImage(gfxImageSurface *aSurface,
-                              gfxImageFormat format)
-{
-    const gfxIntSize& surfaceSize = aSurface->GetSize();
-    nsRefPtr<gfxImageSurface> isurf = aSurface;
-
-    if (format != aSurface->Format()) {
-        isurf = new gfxImageSurface (surfaceSize, format);
-        if (!isurf->CopyFrom (aSurface)) {
-            // don't even bother doing anything more
-            nsRefPtr<gfxASurface> ret = aSurface;
-            return ret.forget();
-        }
-    }
-
-    return nullptr;
 }
 
 TemporaryRef<ScaledFont>
@@ -399,46 +379,11 @@ gfxPlatformMac::ReadAntiAliasingThreshold()
     return threshold;
 }
 
-already_AddRefed<gfxASurface>
-gfxPlatformMac::GetThebesSurfaceForDrawTarget(DrawTarget *aTarget)
-{
-  if (aTarget->GetType() == BackendType::COREGRAPHICS_ACCELERATED) {
-    RefPtr<SourceSurface> source = aTarget->Snapshot();
-    RefPtr<DataSourceSurface> sourceData = source->GetDataSurface();
-    unsigned char* data = sourceData->GetData();
-    nsRefPtr<gfxImageSurface> surf = new gfxImageSurface(data, ThebesIntSize(sourceData->GetSize()), sourceData->Stride(),
-                                                         gfxImageFormat::ARGB32);
-    // We could fix this by telling gfxImageSurface it owns data.
-    nsRefPtr<gfxImageSurface> cpy = new gfxImageSurface(ThebesIntSize(sourceData->GetSize()), gfxImageFormat::ARGB32);
-    cpy->CopyFrom(surf);
-    return cpy.forget();
-  } else if (aTarget->GetType() == BackendType::COREGRAPHICS) {
-    CGContextRef cg = static_cast<CGContextRef>(aTarget->GetNativeSurface(NativeSurfaceType::CGCONTEXT));
-
-    //XXX: it would be nice to have an implicit conversion from IntSize to gfxIntSize
-    IntSize intSize = aTarget->GetSize();
-    gfxIntSize size(intSize.width, intSize.height);
-
-    nsRefPtr<gfxASurface> surf =
-      new gfxQuartzSurface(cg, size);
-
-    return surf.forget();
-  }
-
-  return gfxPlatform::GetThebesSurfaceForDrawTarget(aTarget);
-}
-
 bool
 gfxPlatformMac::UseAcceleratedCanvas()
 {
   // Lion or later is required
   return nsCocoaFeatures::OnLionOrLater() && Preferences::GetBool("gfx.canvas.azure.accelerated", false);
-}
-
-bool
-gfxPlatformMac::SupportsOffMainThreadCompositing()
-{
-  return true;
 }
 
 void

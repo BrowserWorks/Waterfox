@@ -121,8 +121,6 @@ class nsIRequest;
  * it's not allocated until the second frame is added.
  */
 
-class ScaleRequest;
-
 namespace mozilla {
 
 namespace layers {
@@ -133,6 +131,7 @@ class Image;
 
 namespace image {
 
+class ScaleRequest;
 class Decoder;
 class FrameAnimator;
 
@@ -143,6 +142,9 @@ class RasterImage : public ImageResource
                   , public imgIContainerDebug
 #endif
 {
+  // (no public constructor - use ImageFactory)
+  virtual ~RasterImage();
+
 public:
   MOZ_DECLARE_REFCOUNTED_TYPENAME(RasterImage)
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -151,9 +153,6 @@ public:
 #ifdef DEBUG
   NS_DECL_IMGICONTAINERDEBUG
 #endif
-
-  // (no public constructor - use ImageFactory)
-  virtual ~RasterImage();
 
   virtual nsresult StartAnimation();
   virtual nsresult StopAnimation();
@@ -176,8 +175,8 @@ public:
   /* The total number of frames in this image. */
   uint32_t GetNumFrames() const;
 
-  virtual size_t HeapSizeOfSourceWithComputedFallback(mozilla::MallocSizeOf aMallocSizeOf) const;
-  virtual size_t HeapSizeOfDecodedWithComputedFallback(mozilla::MallocSizeOf aMallocSizeOf) const;
+  virtual size_t HeapSizeOfSourceWithComputedFallback(MallocSizeOf aMallocSizeOf) const;
+  virtual size_t HeapSizeOfDecodedWithComputedFallback(MallocSizeOf aMallocSizeOf) const;
   virtual size_t NonHeapSizeOfDecoded() const;
   virtual size_t OutOfProcessSizeOfDecoded() const;
 
@@ -390,6 +389,9 @@ private:
     /* True if a new frame has been allocated, but DecodeSomeData hasn't yet
      * been called to flush data to it */
     bool mAllocatedNewFrame;
+
+  private:
+    ~DecodeRequest() {}
   };
 
   /*
@@ -451,13 +453,12 @@ private:
      */
     already_AddRefed<nsIEventTarget> GetEventTarget();
 
-    virtual ~DecodePool();
-
   private: /* statics */
     static StaticRefPtr<DecodePool> sSingleton;
 
   private: /* methods */
     DecodePool();
+    virtual ~DecodePool();
 
     enum DecodeType {
       DECODE_TYPE_UNTIL_TIME,
@@ -500,7 +501,7 @@ private:
     // mThreadPoolMutex protects mThreadPool. For all RasterImages R,
     // R::mDecodingMonitor must be acquired before mThreadPoolMutex
     // if both are acquired; the other order may cause deadlock.
-    mozilla::Mutex            mThreadPoolMutex;
+    Mutex                     mThreadPoolMutex;
     nsCOMPtr<nsIThreadPool>   mThreadPool;
   };
 
@@ -580,7 +581,7 @@ private:
   uint32_t GetCurrentImgFrameIndex() const;
 
   size_t SizeOfDecodedWithComputedFallbackIfHeap(gfxMemoryLocation aLocation,
-                                                 mozilla::MallocSizeOf aMallocSizeOf) const;
+                                                 MallocSizeOf aMallocSizeOf) const;
 
   void EnsureAnimExists();
 
@@ -663,10 +664,10 @@ private: // data
   int                        mRequestedSampleSize;
 
   // Cached value for GetImageContainer.
-  nsRefPtr<mozilla::layers::ImageContainer> mImageContainer;
+  nsRefPtr<layers::ImageContainer> mImageContainer;
 
   // If not cached in mImageContainer, this might have our image container
-  WeakPtr<mozilla::layers::ImageContainer> mImageContainerCache;
+  WeakPtr<layers::ImageContainer> mImageContainerCache;
 
 #ifdef DEBUG
   uint32_t                       mFramesNotified;
@@ -676,7 +677,7 @@ private: // data
   // at once, and hence need to be locked by mDecodingMonitor.
 
   // BEGIN LOCKED MEMBER VARIABLES
-  mozilla::ReentrantMonitor  mDecodingMonitor;
+  ReentrantMonitor           mDecodingMonitor;
 
   FallibleTArray<char>       mSourceData;
 

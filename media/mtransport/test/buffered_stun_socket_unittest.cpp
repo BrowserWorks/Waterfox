@@ -42,6 +42,18 @@ static uint8_t kStunMessage[] = {
 };
 static size_t kStunMessageLen = sizeof(kStunMessage);
 
+class DummySocket;
+
+// Temporary whitelist for refcounted class dangerously exposing its destructor.
+// Filed bug 1028140 to address this class.
+namespace mozilla {
+template<>
+struct HasDangerousPublicDestructor<DummySocket>
+{
+  static const bool value = true;
+};
+}
+
 class DummySocket : public NrSocketBase {
  public:
   DummySocket()

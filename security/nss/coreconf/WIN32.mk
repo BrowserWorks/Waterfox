@@ -30,12 +30,19 @@ else
 	BSDECHO      = echo
 	RC           = rc.exe
 	MT           = mt.exe
+	# Check for clang-cl
+	CLANG_CL    := $(shell expr `$(CC) -? 2>&1 | grep -w clang | wc -l` \> 0)
 	# Determine compiler version
-	CC_VERSION  := $(shell $(CC) 2>&1 | sed -ne \
+	ifeq ($(CLANG_CL),1)
+	    # clang-cl pretends to be MSVC 2012.
+	    CC_VERSION  := 17.00.00.00
+	else
+	    CC_VERSION  := $(shell $(CC) 2>&1 | sed -ne \
 		's|.* \([0-9]\+\.[0-9]\+\.[0-9]\+\(\.[0-9]\+\)\?\).*|\1|p')
+	endif
 	# Change the dots to spaces.
 	_CC_VERSION_WORDS := $(subst ., ,$(CC_VERSION))
-	_CC_VMAJOR  := $(word 1,$(_CC_VERSION_WORDS))
+	_CC_VMAJOR  := 16
 	_CC_VMINOR  := $(word 2,$(_CC_VERSION_WORDS))
 	_CC_RELEASE := $(word 3,$(_CC_VERSION_WORDS))
 	_CC_BUILD   := $(word 4,$(_CC_VERSION_WORDS))
@@ -44,6 +51,8 @@ else
 	# VC10 (2010) is 16.00.30319.01, VC10SP1 is 16.00.40219.01.
 	_MSC_VER_GE_10SP1 := $(shell expr $(_MSC_VER) \> 1600 \| \
 		$(_MSC_VER) = 1600 \& $(_CC_RELEASE) \>= 40219)
+	# VC11 (2012).
+	_MSC_VER_GE_11 := $(shell expr $(_MSC_VER) \>= 1700)
 	# VC12 (2013).
 	_MSC_VER_GE_12 := $(shell expr $(_MSC_VER) \>= 1800)
 	ifeq ($(_CC_VMAJOR),14)
@@ -113,7 +122,7 @@ ifdef NS_USE_GCC
 	SPACE      := $(NULLSTRING) # end of the line
 	USERNAME   := $(subst $(SPACE),_,$(USERNAME))
 	USERNAME   := $(subst -,_,$(USERNAME))
-	DEFINES    += -DDEBUG -D_DEBUG -UNDEBUG -DDEBUG_$(USERNAME)
+	DEFINES    += -DDEBUG -D_DEBUG -UNDEBUG
     endif
 else # !NS_USE_GCC
     OS_CFLAGS += -W3 -nologo -D_CRT_SECURE_NO_WARNINGS \
@@ -127,8 +136,26 @@ else # !NS_USE_GCC
     ifdef USE_DYNAMICBASE
 	OS_DLLFLAGS += -DYNAMICBASE
     endif
+    #
+    # Define USE_DEBUG_RTL if you want to use the debug runtime library
+    # (RTL) in the debug build.
+    # Define USE_STATIC_RTL if you want to use the static RTL.
+    #
+    ifdef USE_DEBUG_RTL
+	ifdef USE_STATIC_RTL
+		OS_CFLAGS += -MTd
+	else
+		OS_CFLAGS += -MDd
+	endif
+	OS_CFLAGS += -D_CRTDBG_MAP_ALLOC
+    else
+	ifdef USE_STATIC_RTL
+		OS_CFLAGS += -MT
+	else
+		OS_CFLAGS += -MD
+	endif
+    endif
     ifdef BUILD_OPT
-	OS_CFLAGS  += -MD
 	ifeq (11,$(ALLOW_OPT_CODE_SIZE)$(OPT_CODE_SIZE))
 		OPTIMIZER += -O1
 	else
@@ -146,21 +173,12 @@ else # !NS_USE_GCC
 		LDFLAGS += -DEBUG -OPT:REF
 	endif
     else
-	#
-	# Define USE_DEBUG_RTL if you want to use the debug runtime library
-	# (RTL) in the debug build
-	#
-	ifdef USE_DEBUG_RTL
-		OS_CFLAGS += -MDd -D_CRTDBG_MAP_ALLOC
-	else
-		OS_CFLAGS += -MD
-	endif
 	OPTIMIZER += -Zi -Fd$(OBJDIR)/ -Od
 	NULLSTRING :=
 	SPACE      := $(NULLSTRING) # end of the line
 	USERNAME   := $(subst $(SPACE),_,$(USERNAME))
 	USERNAME   := $(subst -,_,$(USERNAME))
-	DEFINES    += -DDEBUG -D_DEBUG -UNDEBUG -DDEBUG_$(USERNAME)
+	DEFINES    += -DDEBUG -D_DEBUG -UNDEBUG
 	DLLFLAGS   += -DEBUG -OUT:$@
 	LDFLAGS    += -DEBUG 
 ifeq ($(_MSC_VER),$(_MSC_VER_6))
@@ -192,8 +210,19 @@ endif
 ifeq (,$(filter-out x386 x86_64,$(CPU_ARCH)))
 ifdef USE_64
 	DEFINES += -D_AMD64_
+	# Use subsystem 5.02 to allow running on Windows XP.
+	ifeq ($(_MSC_VER_GE_11),1)
+		LDFLAGS += -SUBSYSTEM:CONSOLE,5.02
+	endif
 else
 	DEFINES += -D_X86_
+	# VS2012 defaults to -arch:SSE2. Use -arch:IA32 to avoid requiring
+	# SSE2.
+	# Use subsystem 5.01 to allow running on Windows XP.
+	ifeq ($(_MSC_VER_GE_11),1)
+		OS_CFLAGS += -arch:IA32
+		LDFLAGS += -SUBSYSTEM:CONSOLE,5.01
+	endif
 endif
 endif
 ifeq ($(CPU_ARCH), ALPHA)

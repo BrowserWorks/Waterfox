@@ -17,7 +17,7 @@ NS_IMPL_NS_NEW_HTML_ELEMENT(Area)
 namespace mozilla {
 namespace dom {
 
-HTMLAreaElement::HTMLAreaElement(already_AddRefed<nsINodeInfo>& aNodeInfo)
+HTMLAreaElement::HTMLAreaElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
   : nsGenericHTMLElement(aNodeInfo)
   , Link(MOZ_THIS_IN_INITIALIZER_LIST())
 {
@@ -202,13 +202,17 @@ HTMLAreaElement::UnsetAttr(int32_t aNameSpaceID, nsIAtom* aAttribute,
   NS_IMETHODIMP                                              \
   HTMLAreaElement::Get##_part(nsAString& a##_part)           \
   {                                                          \
-    Link::Get##_part(a##_part);                              \
+    ErrorResult rv;                                          \
+    Link::Get##_part(a##_part, rv);                          \
+    MOZ_ASSERT(!rv.Failed());                                \
     return NS_OK;                                            \
   }                                                          \
   NS_IMETHODIMP                                              \
   HTMLAreaElement::Set##_part(const nsAString& a##_part)     \
   {                                                          \
-    Link::Set##_part(a##_part);                              \
+    ErrorResult rv;                                          \
+    Link::Set##_part(a##_part, rv);                          \
+    MOZ_ASSERT(!rv.Failed());                                \
     return NS_OK;                                            \
   }
 

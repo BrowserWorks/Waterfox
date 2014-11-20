@@ -23,6 +23,8 @@ test(null);
 test(false);
 test(1);
 test("stringy");
+if (typeof Symbol === "function")
+    test(Symbol("symbolic"));
 test({});
 test([]);
 

@@ -19,6 +19,7 @@
 #include "nsHttpHandler.h"
 #include "nsHttpConnection.h"
 #include "nsILoadGroup.h"
+#include "nsISupportsPriority.h"
 #include "prprf.h"
 #include "prnetdb.h"
 #include "SpdyPush31.h"
@@ -2057,11 +2058,16 @@ SpdySession31::WriteSegments(nsAHttpSegmentWriter *writer,
   if (mDownstreamState == PROCESSING_CONTROL_RST_STREAM) {
     if (mDownstreamRstReason == RST_REFUSED_STREAM)
       rv = NS_ERROR_NET_RESET;            //we can retry this 100% safely
-    else if (mDownstreamRstReason == RST_CANCEL ||
-             mDownstreamRstReason == RST_PROTOCOL_ERROR ||
+    else if (mDownstreamRstReason == RST_CANCEL) {
+      rv = mInputFrameDataStream->RecvdData() ?
+        NS_ERROR_NET_PARTIAL_TRANSFER :
+        NS_ERROR_NET_INTERRUPT;
+    }
+    else if (mDownstreamRstReason == RST_PROTOCOL_ERROR ||
              mDownstreamRstReason == RST_INTERNAL_ERROR ||
-             mDownstreamRstReason == RST_UNSUPPORTED_VERSION)
+             mDownstreamRstReason == RST_UNSUPPORTED_VERSION) {
       rv = NS_ERROR_NET_INTERRUPT;
+    }
     else if (mDownstreamRstReason == RST_FRAME_TOO_LARGE)
       rv = NS_ERROR_FILE_TOO_BIG;
     else
@@ -2664,7 +2670,7 @@ SpdySession31::DispatchOnTunnel(nsAHttpTransaction *aHttpTransaction,
     nsRefPtr<SpdyConnectTransaction> connectTrans =
       new SpdyConnectTransaction(ci, aCallbacks,
                                  trans->Caps(), trans, this);
-    AddStream(connectTrans, trans->Priority(),
+    AddStream(connectTrans, nsISupportsPriority::PRIORITY_NORMAL,
               false, nullptr);
     SpdyStream31 *tunnel = mStreamTransactionHash.Get(connectTrans);
     MOZ_ASSERT(tunnel);

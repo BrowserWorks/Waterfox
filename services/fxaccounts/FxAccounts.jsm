@@ -163,7 +163,18 @@ AccountState.prototype = {
   },
 
   getKeyPair: function(mustBeValidUntil) {
-    if (this.keyPair && (this.keyPair.validUntil > mustBeValidUntil)) {
+    // If the debugging pref to ignore cached authentication credentials is set for Sync,
+    // then don't use any cached key pair, i.e., generate a new one and get it signed.
+    // The purpose of this pref is to expedite any auth errors as the result of a
+    // expired or revoked FxA session token, e.g., from resetting or changing the FxA
+    // password.
+    let ignoreCachedAuthCredentials = false;
+    try {
+      ignoreCachedAuthCredentials = Services.prefs.getBoolPref("services.sync.debug.ignoreCachedAuthCredentials");
+    } catch(e) {
+      // Pref doesn't exist
+    }
+    if (!ignoreCachedAuthCredentials && this.keyPair && (this.keyPair.validUntil > mustBeValidUntil)) {
       log.debug("getKeyPair: already have a keyPair");
       return this.resolve(this.keyPair.keyPair);
     }
@@ -203,7 +214,7 @@ AccountState.prototype = {
     if (!this.isCurrent) {
       log.info("An accountState promise was rejected, but we are ignoring that" +
                "reason and rejecting it due to a different user being signed in." +
-               "Originally rejected with: " + reason);
+               "Originally rejected with: " + error);
       return Promise.reject(new Error("A different user signed in"));
     }
     return Promise.reject(error);
@@ -649,6 +660,7 @@ FxAccountsInternal.prototype = {
       data.kB = CommonUtils.bytesAsHex(kB_hex);
 
       delete data.keyFetchToken;
+      delete data.unwrapBKey;
 
       log.debug("Keys Obtained: kA=" + !!data.kA + ", kB=" + !!data.kB);
       if (logPII) {
@@ -804,24 +816,36 @@ FxAccountsInternal.prototype = {
               this.notifyObservers(ON_FXA_UPDATE_NOTIFICATION, ONVERIFIED_NOTIFICATION);
             });
         } else {
-          log.debug("polling with step = " + this.POLL_STEP);
-          this.pollTimeRemaining -= this.POLL_STEP;
-          log.debug("time remaining: " + this.pollTimeRemaining);
-          if (this.pollTimeRemaining > 0) {
-            this.currentTimer = setTimeout(() => {
-              this.pollEmailStatus(currentState, sessionToken, "timer")}, this.POLL_STEP);
-            log.debug("started timer " + this.currentTimer);
-          } else {
-            if (currentState.whenVerifiedDeferred) {
-              currentState.whenVerifiedDeferred.reject(
-                new Error("User email verification timed out.")
-              );
-              delete currentState.whenVerifiedDeferred;
-            }
-          }
+          // Poll email status again after a short delay.
+          this.pollEmailStatusAgain(currentState, sessionToken);
+        }
+      }, error => {
+        // The server will return 401 if a request parameter is erroneous or
+        // if the session token expired. Let's continue polling otherwise.
+        if (!error || !error.code || error.code != 401) {
+          this.pollEmailStatusAgain(currentState, sessionToken);
         }
       });
-    },
+  },
+
+  // Poll email status after a short timeout.
+  pollEmailStatusAgain: function (currentState, sessionToken) {
+    log.debug("polling with step = " + this.POLL_STEP);
+    this.pollTimeRemaining -= this.POLL_STEP;
+    log.debug("time remaining: " + this.pollTimeRemaining);
+    if (this.pollTimeRemaining > 0) {
+      this.currentTimer = setTimeout(() => {
+        this.pollEmailStatus(currentState, sessionToken, "timer");
+      }, this.POLL_STEP);
+      log.debug("started timer " + this.currentTimer);
+    } else {
+      if (currentState.whenVerifiedDeferred) {
+        let error = new Error("User email verification timed out.")
+        currentState.whenVerifiedDeferred.reject(error);
+        delete currentState.whenVerifiedDeferred;
+      }
+    }
+  },
 
   // Return the URI of the remote UI flows.
   getAccountsSignUpURI: function() {

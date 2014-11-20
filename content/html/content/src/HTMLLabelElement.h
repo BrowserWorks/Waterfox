@@ -21,12 +21,11 @@ class HTMLLabelElement MOZ_FINAL : public nsGenericHTMLFormElement,
                                    public nsIDOMHTMLLabelElement
 {
 public:
-  HTMLLabelElement(already_AddRefed<nsINodeInfo>& aNodeInfo)
+  HTMLLabelElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
     : nsGenericHTMLFormElement(aNodeInfo),
       mHandlingEvent(false)
   {
   }
-  virtual ~HTMLLabelElement();
 
   NS_IMPL_FROMCONTENT_HTML_WITH_TAG(HTMLLabelElement, label)
 
@@ -65,10 +64,12 @@ public:
                      EventChainPostVisitor& aVisitor) MOZ_OVERRIDE;
   virtual void PerformAccesskey(bool aKeyCausesActivation,
                                 bool aIsTrustedEvent) MOZ_OVERRIDE;
-  virtual nsresult Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
 
   nsGenericHTMLElement* GetLabeledElement() const;
 protected:
+  virtual ~HTMLLabelElement();
+
   virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;
 
   nsGenericHTMLElement* GetFirstLabelableDescendant() const;

@@ -21,11 +21,6 @@ var gContentPane = {
     if (Services.prefs.getBoolPref(prefName)) {
       let row = document.getElementById("translationBox");
       row.removeAttribute("hidden");
-
-      // Update translation provider attribution string.
-      Components.utils.import("resource:///modules/translation/Translation.jsm");
-      document.getElementById("translationAttributionBeforeLogo").textContent =
-        Translation.getAttributionString();
     }
   },
 
@@ -66,8 +61,8 @@ var gContentPane = {
     params.windowTitle = bundlePreferences.getString("popuppermissionstitle");
     params.introText = bundlePreferences.getString("popuppermissionstext");
 
-    openDialog("chrome://browser/content/preferences/permissions.xul", 
-               "Browser:Permissions", "resizable=yes", params);
+    gSubDialog.open("chrome://browser/content/preferences/permissions.xul",
+                    "resizable=yes", params);
   },
 
   // FONTS
@@ -168,8 +163,7 @@ var gContentPane = {
    */
   configureColors: function ()
   {
-    openDialog("chrome://browser/content/preferences/colors.xul", 
-               "Browser:ColorPreferences", null);  
+    gSubDialog.open("chrome://browser/content/preferences/colors.xul");
   },
 
   // LANGUAGES
@@ -179,8 +173,7 @@ var gContentPane = {
    */
   showLanguages: function ()
   {
-    openDialog("chrome://browser/content/preferences/languages.xul", 
-               "Browser:LanguagePreferences", null);
+    gSubDialog.open("chrome://browser/content/preferences/languages.xul");
   },
 
   /**
@@ -195,6 +188,7 @@ var gContentPane = {
 
   openTranslationProviderAttribution: function ()
   {
+    Components.utils.import("resource:///modules/translation/Translation.jsm");
     Translation.openProviderAttribution();
   }
 };

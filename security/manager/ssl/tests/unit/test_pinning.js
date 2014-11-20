@@ -1,4 +1,4 @@
-// -*- Mode: javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+// -*- indent-tabs-mode: nil; js-indent-level: 2 -*-
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -37,9 +37,15 @@ function test_strict() {
     run_next_test();
   });
 
+  // If a host should be pinned but other errors (particularly overridable
+  // errors) like 'unknown issuer' are encountered, the pinning error takes
+  // precedence. This prevents overrides for such hosts.
+  add_connection_test("unknownissuer.include-subdomains.pinning.example.com",
+    getXPCOMStatusFromNSS(MOZILLA_PKIX_ERROR_KEY_PINNING_FAILURE));
+
   // Issued by otherCA, which is not in the pinset for pinning.example.com.
   add_connection_test("bad.include-subdomains.pinning.example.com",
-    getXPCOMStatusFromNSS(PSM_ERROR_KEY_PINNING_FAILURE));
+    getXPCOMStatusFromNSS(MOZILLA_PKIX_ERROR_KEY_PINNING_FAILURE));
 
   // These domains serve certs that match the pinset.
   add_connection_test("include-subdomains.pinning.example.com", Cr.NS_OK);
@@ -68,6 +74,9 @@ function test_mitm() {
   add_connection_test("include-subdomains.pinning.example.com", Cr.NS_OK);
   add_connection_test("good.include-subdomains.pinning.example.com", Cr.NS_OK);
 
+  add_connection_test("unknownissuer.include-subdomains.pinning.example.com",
+    getXPCOMStatusFromNSS(SEC_ERROR_UNKNOWN_ISSUER));
+
   // In this case, even though otherCA is not in the pinset, it is a
   // user-specified trust anchor and the pinning check succeeds.
   add_connection_test("bad.include-subdomains.pinning.example.com", Cr.NS_OK);
@@ -90,6 +99,9 @@ function test_disabled() {
   add_connection_test("exclude-subdomains.pinning.example.com", Cr.NS_OK);
   add_connection_test("sub.exclude-subdomains.pinning.example.com", Cr.NS_OK);
   add_connection_test("test-mode.pinning.example.com", Cr.NS_OK);
+
+  add_connection_test("unknownissuer.include-subdomains.pinning.example.com",
+    getXPCOMStatusFromNSS(SEC_ERROR_UNKNOWN_ISSUER));
 }
 
 function test_enforce_test_mode() {
@@ -99,9 +111,12 @@ function test_enforce_test_mode() {
     run_next_test();
   });
 
+  add_connection_test("unknownissuer.include-subdomains.pinning.example.com",
+    getXPCOMStatusFromNSS(MOZILLA_PKIX_ERROR_KEY_PINNING_FAILURE));
+
   // Issued by otherCA, which is not in the pinset for pinning.example.com.
   add_connection_test("bad.include-subdomains.pinning.example.com",
-    getXPCOMStatusFromNSS(PSM_ERROR_KEY_PINNING_FAILURE));
+    getXPCOMStatusFromNSS(MOZILLA_PKIX_ERROR_KEY_PINNING_FAILURE));
 
   // These domains serve certs that match the pinset.
   add_connection_test("include-subdomains.pinning.example.com", Cr.NS_OK);
@@ -117,7 +132,7 @@ function test_enforce_test_mode() {
   // bad.include-subdomains.pinning.example.com, is in test-mode, but we are
   // enforcing test mode pins.
   add_connection_test("test-mode.pinning.example.com",
-    getXPCOMStatusFromNSS(PSM_ERROR_KEY_PINNING_FAILURE));
+    getXPCOMStatusFromNSS(MOZILLA_PKIX_ERROR_KEY_PINNING_FAILURE));
 }
 
 function check_pinning_telemetry() {
@@ -128,7 +143,7 @@ function check_pinning_telemetry() {
                          .snapshot();
   // Because all of our test domains are pinned to user-specified trust
   // anchors, effectively only strict mode and enforce test-mode get evaluated
-  do_check_eq(prod_histogram.counts[0], 2); // Failure count
+  do_check_eq(prod_histogram.counts[0], 4); // Failure count
   do_check_eq(prod_histogram.counts[1], 4); // Success count
   do_check_eq(test_histogram.counts[0], 2); // Failure count
   do_check_eq(test_histogram.counts[1], 0); // Success count

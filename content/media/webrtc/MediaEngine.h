@@ -9,11 +9,12 @@
 #include "nsIDOMFile.h"
 #include "DOMMediaStream.h"
 #include "MediaStreamGraph.h"
+#include "mozilla/dom/MediaStreamTrackBinding.h"
 
 namespace mozilla {
 
-class VideoTrackConstraintsN;
-class AudioTrackConstraintsN;
+struct VideoTrackConstraintsN;
+struct AudioTrackConstraintsN;
 
 /**
  * Abstract interface for managing audio and video devices. Each platform
@@ -24,7 +25,7 @@ class AudioTrackConstraintsN;
  */
 class MediaEngineVideoSource;
 class MediaEngineAudioSource;
-struct MediaEnginePrefs;
+class MediaEnginePrefs;
 
 enum MediaEngineState {
   kAllocated,
@@ -37,6 +38,16 @@ enum MediaEngineState {
 enum {
   kVideoTrack = 1,
   kAudioTrack = 2
+};
+
+// includes everything from dom::MediaSourceEnum (really video sources), plus audio sources
+enum MediaSourceType {
+  Camera = (int) dom::MediaSourceEnum::Camera,
+  Screen = (int) dom::MediaSourceEnum::Screen,
+  Application = (int) dom::MediaSourceEnum::Application,
+  Window, // = (int) dom::MediaSourceEnum::Window, // XXX bug 1038926
+  //Browser = (int) dom::MediaSourceEnum::Browser, // proposed in WG, unclear if it's useful
+  Microphone
 };
 
 class MediaEngine
@@ -54,11 +65,13 @@ public:
 
   /* Populate an array of video sources in the nsTArray. Also include devices
    * that are currently unavailable. */
-  virtual void EnumerateVideoDevices(nsTArray<nsRefPtr<MediaEngineVideoSource> >*) = 0;
+  virtual void EnumerateVideoDevices(MediaSourceType,
+                                     nsTArray<nsRefPtr<MediaEngineVideoSource> >*) = 0;
 
   /* Populate an array of audio sources in the nsTArray. Also include devices
    * that are currently unavailable. */
-  virtual void EnumerateAudioDevices(nsTArray<nsRefPtr<MediaEngineAudioSource> >*) = 0;
+  virtual void EnumerateAudioDevices(MediaSourceType,
+                                     nsTArray<nsRefPtr<MediaEngineAudioSource> >*) = 0;
 
 protected:
   virtual ~MediaEngine() {}
@@ -70,6 +83,11 @@ protected:
 class MediaEngineSource : public nsISupports
 {
 public:
+  // code inside webrtc.org assumes these sizes; don't use anything smaller
+  // without verifying it's ok
+  static const unsigned int kMaxDeviceNameLength = 128;
+  static const unsigned int kMaxUniqueIdLength = 256;
+
   virtual ~MediaEngineSource() {}
 
   /* Populate the human readable name of this device in the nsAString */
@@ -115,6 +133,9 @@ public:
    * false otherwise
    */
   virtual bool IsFake() = 0;
+
+  /* Returns the type of media source (camera, microphone, screen, window, etc) */
+  virtual const MediaSourceType GetMediaSource() = 0;
 
   /* Return false if device is currently allocated or started */
   bool IsAvailable() {
@@ -182,6 +203,9 @@ class MediaEngineVideoSource : public MediaEngineSource
 public:
   virtual ~MediaEngineVideoSource() {}
 
+  virtual const MediaSourceType GetMediaSource() {
+      return MediaSourceType::Camera;
+  }
   /* This call reserves but does not start the device. */
   virtual nsresult Allocate(const VideoTrackConstraintsN &aConstraints,
                             const MediaEnginePrefs &aPrefs) = 0;

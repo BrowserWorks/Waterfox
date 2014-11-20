@@ -64,6 +64,16 @@ js::intrinsic_ToObject(JSContext *cx, unsigned argc, Value *vp)
 }
 
 bool
+js::intrinsic_IsObject(JSContext *cx, unsigned argc, Value *vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+    Value val = args[0];
+    bool isObject = val.isObject();
+    args.rval().setBoolean(isObject);
+    return true;
+}
+
+bool
 js::intrinsic_ToInteger(JSContext *cx, unsigned argc, Value *vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
@@ -110,8 +120,7 @@ js::intrinsic_ThrowError(JSContext *cx, unsigned argc, Value *vp)
     uint32_t errorNumber = args[0].toInt32();
 
 #ifdef DEBUG
-    const JSErrorFormatString *efs =
-        js_GetLocalizedErrorMessage(cx, nullptr, nullptr, errorNumber);
+    const JSErrorFormatString *efs = js_GetErrorMessage(nullptr, errorNumber);
     JS_ASSERT(efs->argCount == args.length() - 1);
 #endif
 
@@ -150,12 +159,9 @@ intrinsic_AssertionFailed(JSContext *cx, unsigned argc, Value *vp)
         // try to dump the informative string
         JSString *str = ToString<CanGC>(cx, args[0]);
         if (str) {
-            const jschar *chars = str->getChars(cx);
-            if (chars) {
-                fprintf(stderr, "Self-hosted JavaScript assertion info: ");
-                JSString::dumpChars(chars, str->length());
-                fputc('\n', stderr);
-            }
+            fprintf(stderr, "Self-hosted JavaScript assertion info: ");
+            str->dumpCharsNoNewline();
+            fputc('\n', stderr);
         }
     }
 #endif
@@ -292,7 +298,12 @@ intrinsic_ParallelSpew(ThreadSafeContext *cx, unsigned argc, Value *vp)
     if (!inspector.ensureChars(cx, nogc))
         return false;
 
-    ScopedJSFreePtr<char> bytes(TwoByteCharsToNewUTF8CharsZ(cx, inspector.twoByteRange()).c_str());
+    ScopedJSFreePtr<char> bytes;
+    if (inspector.hasLatin1Chars())
+        bytes = JS::CharsToNewUTF8CharsZ(cx, inspector.latin1Range()).c_str();
+    else
+        bytes = JS::CharsToNewUTF8CharsZ(cx, inspector.twoByteRange()).c_str();
+
     parallel::Spew(parallel::SpewOps, bytes);
 
     args.rval().setUndefined();
@@ -304,7 +315,11 @@ JS_JITINFO_NATIVE_PARALLEL_THREADSAFE(intrinsic_ParallelSpew_jitInfo, intrinsic_
 #endif
 
 /*
- * ForkJoin(func, feedback): Invokes |func| many times in parallel.
+ * ForkJoin(func, sliceStart, sliceEnd, mode, updatable): Invokes |func| many times in parallel.
+ *
+ * If "func" will update a pre-existing object then that object /must/ be passed
+ * as the object "updatable".  It is /not/ correct to pass an object that
+ * references the updatable objects indirectly.
  *
  * See ForkJoin.cpp for details and ParallelArray.js for examples.
  */
@@ -760,6 +775,7 @@ intrinsic_RuntimeDefaultLocale(JSContext *cx, unsigned argc, Value *vp)
 
 static const JSFunctionSpec intrinsic_functions[] = {
     JS_FN("ToObject",                intrinsic_ToObject,                1,0),
+    JS_FN("IsObject",                intrinsic_IsObject,                1,0),
     JS_FN("ToInteger",               intrinsic_ToInteger,               1,0),
     JS_FN("ToString",                intrinsic_ToString,                1,0),
     JS_FN("IsCallable",              intrinsic_IsCallable,              1,0),
@@ -786,7 +802,7 @@ static const JSFunctionSpec intrinsic_functions[] = {
     JS_FN("NewStringIterator",       intrinsic_NewStringIterator,       0,0),
     JS_FN("IsStringIterator",        intrinsic_IsStringIterator,        1,0),
 
-    JS_FN("ForkJoin",                intrinsic_ForkJoin,                2,0),
+    JS_FN("ForkJoin",                intrinsic_ForkJoin,                5,0),
     JS_FN("ForkJoinNumWorkers",      intrinsic_ForkJoinNumWorkers,      0,0),
     JS_FN("NewDenseArray",           intrinsic_NewDenseArray,           1,0),
     JS_FN("ShouldForceSequential",   intrinsic_ShouldForceSequential,   0,0),
@@ -993,13 +1009,12 @@ JSRuntime::initSelfHosting(JSContext *cx)
 
     char *filename = getenv("MOZ_SELFHOSTEDJS");
     if (filename) {
-        RootedScript script(cx, Compile(cx, shg, options, filename));
-        if (script)
+        RootedScript script(cx);
+        if (Compile(cx, shg, options, filename, &script))
             ok = Execute(cx, script, *shg.get(), rv.address());
     } else {
         uint32_t srcLen = GetRawScriptsSize();
 
-#ifdef USE_ZLIB
         const unsigned char *compressed = compressedSources;
         uint32_t compressedLen = GetCompressedSize();
         ScopedJSFreePtr<char> src(reinterpret_cast<char *>(cx->malloc_(srcLen)));
@@ -1008,9 +1023,6 @@ JSRuntime::initSelfHosting(JSContext *cx)
         {
             return false;
         }
-#else
-        const char *src = rawSources;
-#endif
 
         ok = Evaluate(cx, shg, options, src, srcLen, &rv);
     }
@@ -1115,6 +1127,30 @@ CloneProperties(JSContext *cx, HandleObject selfHostedObject, HandleObject clone
     return true;
 }
 
+static JSString *
+CloneString(JSContext *cx, JSFlatString *selfHostedString)
+{
+    size_t len = selfHostedString->length();
+    {
+        JS::AutoCheckCannotGC nogc;
+        JSString *clone;
+        if (selfHostedString->hasLatin1Chars())
+            clone = NewStringCopyN<NoGC>(cx, selfHostedString->latin1Chars(nogc), len);
+        else
+            clone = NewStringCopyNDontDeflate<NoGC>(cx, selfHostedString->twoByteChars(nogc), len);
+        if (clone)
+            return clone;
+    }
+
+    AutoStableStringChars chars(cx);
+    if (!chars.init(cx, selfHostedString))
+        return nullptr;
+
+    return chars.isLatin1()
+           ? NewStringCopyN<CanGC>(cx, chars.latin1Range().start().get(), len)
+           : NewStringCopyNDontDeflate<CanGC>(cx, chars.twoByteRange().start().get(), len);
+}
+
 static JSObject *
 CloneObject(JSContext *cx, HandleObject selfHostedObject)
 {
@@ -1155,9 +1191,7 @@ CloneObject(JSContext *cx, HandleObject selfHostedObject)
         JSString *selfHostedString = selfHostedObject->as<StringObject>().unbox();
         if (!selfHostedString->isFlat())
             MOZ_CRASH();
-        RootedString str(cx, js_NewStringCopyN<CanGC>(cx,
-                                                      selfHostedString->asFlat().chars(),
-                                                      selfHostedString->asFlat().length()));
+        RootedString str(cx, CloneString(cx, &selfHostedString->asFlat()));
         if (!str)
             return nullptr;
         clone = StringObject::create(cx, str);
@@ -1192,9 +1226,7 @@ CloneValue(JSContext *cx, HandleValue selfHostedValue, MutableHandleValue vp)
         if (!selfHostedValue.toString()->isFlat())
             MOZ_CRASH();
         JSFlatString *selfHostedString = &selfHostedValue.toString()->asFlat();
-        JSString *clone = js_NewStringCopyN<CanGC>(cx,
-                                                   selfHostedString->chars(),
-                                                   selfHostedString->length());
+        JSString *clone = CloneString(cx, selfHostedString);
         if (!clone)
             return false;
         vp.setString(clone);

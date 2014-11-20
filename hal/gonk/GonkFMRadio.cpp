@@ -27,6 +27,20 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+
+/* Bionic might not have the newer version of the v4l2 headers that
+ * define these controls, so we define them here if they're not found.
+ */
+#ifndef V4L2_CTRL_CLASS_FM_RX
+#define V4L2_CTRL_CLASS_FM_RX 0x00a10000
+#define V4L2_CID_FM_RX_CLASS_BASE (V4L2_CTRL_CLASS_FM_RX | 0x900)
+#define V4L2_CID_TUNE_DEEMPHASIS  (V4L2_CID_FM_RX_CLASS_BASE + 1)
+#define V4L2_DEEMPHASIS_DISABLED  0
+#define V4L2_DEEMPHASIS_50_uS     1
+#define V4L2_DEEMPHASIS_75_uS     2
+#define V4L2_CID_RDS_RECEPTION    (V4L2_CID_FM_RX_CLASS_BASE + 2)
+#endif
+
 namespace mozilla {
 namespace hal_impl {
 
@@ -262,9 +276,14 @@ EnableFMRadio(const hal::FMRadioSettings& aInfo)
     return;
   }
 
+  hal::FMRadioOperationInformation info;
+  info.operation() = hal::FM_RADIO_OPERATION_ENABLE;
+  info.status() = hal::FM_RADIO_OPERATION_STATUS_FAIL;
+
   mozilla::ScopedClose fd(open("/dev/radio0", O_RDWR));
   if (fd < 0) {
     HAL_LOG(("Unable to open radio device"));
+    hal::NotifyFMRadioStatus(info);
     return;
   }
 
@@ -272,6 +291,7 @@ EnableFMRadio(const hal::FMRadioSettings& aInfo)
   int rc = ioctl(fd, VIDIOC_QUERYCAP, &cap);
   if (rc < 0) {
     HAL_LOG(("Unable to query radio device"));
+    hal::NotifyFMRadioStatus(info);
     return;
   }
 
@@ -281,11 +301,13 @@ EnableFMRadio(const hal::FMRadioSettings& aInfo)
 
   if (!(cap.capabilities & V4L2_CAP_RADIO)) {
     HAL_LOG(("/dev/radio0 isn't a radio"));
+    hal::NotifyFMRadioStatus(info);
     return;
   }
 
   if (!(cap.capabilities & V4L2_CAP_TUNER)) {
     HAL_LOG(("/dev/radio0 doesn't support the tuner interface"));
+    hal::NotifyFMRadioStatus(info);
     return;
   }
   sRadioSettings = aInfo;
@@ -293,7 +315,10 @@ EnableFMRadio(const hal::FMRadioSettings& aInfo)
   if (sMsmFMMode) {
     sRadioFD = fd.forget();
     sMsmFMVersion = cap.version;
-    pthread_create(&sRadioThread, nullptr, runMsmFMRadio, nullptr);
+    if (pthread_create(&sRadioThread, nullptr, runMsmFMRadio, nullptr)) {
+      HAL_LOG(("Couldn't create radio thread"));
+      hal::NotifyFMRadioStatus(info);
+    }
     return;
   }
 
@@ -307,11 +332,29 @@ EnableFMRadio(const hal::FMRadioSettings& aInfo)
     HAL_LOG(("Unable to adjust band limits"));
   }
 
+  int emphasis;
+  switch (aInfo.preEmphasis()) {
+  case 0:
+    emphasis = V4L2_DEEMPHASIS_DISABLED;
+    break;
+  case 50:
+    emphasis = V4L2_DEEMPHASIS_50_uS;
+    break;
+  case 75:
+    emphasis = V4L2_DEEMPHASIS_75_uS;
+    break;
+  default:
+    MOZ_CRASH("Invalid preemphasis setting");
+    break;
+  }
+  rc = setControl(V4L2_CID_TUNE_DEEMPHASIS, emphasis);
+  if (rc < 0) {
+    HAL_LOG(("Unable to configure deemphasis"));
+  }
+
   sRadioFD = fd.forget();
   sRadioEnabled = true;
 
-  hal::FMRadioOperationInformation info;
-  info.operation() = hal::FM_RADIO_OPERATION_ENABLE;
   info.status() = hal::FM_RADIO_OPERATION_STATUS_SUCCESS;
   hal::NotifyFMRadioStatus(info);
 }

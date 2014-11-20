@@ -6,8 +6,10 @@
 package org.mozilla.gecko.preferences;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import org.json.JSONObject;
 import org.mozilla.gecko.AppConstants;
@@ -27,12 +29,12 @@ import org.mozilla.gecko.R;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.TelemetryContract.Method;
-import org.mozilla.gecko.background.announcements.AnnouncementsConstants;
 import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 import org.mozilla.gecko.db.BrowserContract.SuggestedSites;
 import org.mozilla.gecko.home.HomePanelPicker;
 import org.mozilla.gecko.util.GeckoEventListener;
+import org.mozilla.gecko.util.HardwareUtils;
 import org.mozilla.gecko.util.ThreadUtils;
 import org.mozilla.gecko.widget.FloatingHintEditText;
 
@@ -86,7 +88,12 @@ OnSharedPreferenceChangeListener
 {
     private static final String LOGTAG = "GeckoPreferences";
 
-    private static final String NON_PREF_PREFIX = "android.not_a_preference.";
+    // We have a white background, which makes transitions on
+    // some devices look bad. Don't use transitions on those
+    // devices.
+    private static final boolean NO_TRANSITIONS = HardwareUtils.IS_KINDLE_DEVICE;
+
+    public static final String NON_PREF_PREFIX = "android.not_a_preference.";
     public static final String INTENT_EXTRA_RESOURCES = "resource";
     public static String PREFS_HEALTHREPORT_UPLOAD_ENABLED = NON_PREF_PREFIX + "healthreport.uploadEnabled";
 
@@ -98,7 +105,6 @@ OnSharedPreferenceChangeListener
     // These match keys in resources/xml*/preferences*.xml
     private static final String PREFS_SEARCH_RESTORE_DEFAULTS = NON_PREF_PREFIX + "search.restore_defaults";
     private static final String PREFS_HOME_ADD_PANEL = NON_PREF_PREFIX + "home.add_panel";
-    private static final String PREFS_ANNOUNCEMENTS_ENABLED = NON_PREF_PREFIX + "privacy.announcements.enabled";
     private static final String PREFS_DATA_REPORTING_PREFERENCES = NON_PREF_PREFIX + "datareporting.preferences";
     private static final String PREFS_TELEMETRY_ENABLED = "toolkit.telemetry.enabled";
     private static final String PREFS_CRASHREPORTER_ENABLED = "datareporting.crashreporter.submitEnabled";
@@ -133,6 +139,19 @@ OnSharedPreferenceChangeListener
     private Locale lastLocale = Locale.getDefault();
     private boolean localeSwitchingIsEnabled;
 
+    private void startActivityForResultChoosingTransition(final Intent intent, final int requestCode) {
+        startActivityForResult(intent, requestCode);
+        if (NO_TRANSITIONS) {
+            overridePendingTransition(0, 0);
+        }
+    }
+
+    private void finishChoosingTransition() {
+        finish();
+        if (NO_TRANSITIONS) {
+            overridePendingTransition(0, 0);
+        }
+    }
     private void updateActionBarTitle(int title) {
         if (Build.VERSION.SDK_INT >= 14) {
             final String newTitle = getString(title);
@@ -244,16 +263,18 @@ OnSharedPreferenceChangeListener
             return;
         }
 
+        refreshSuggestedSites();
+
         // Cause the current fragment to redisplay, the hard way.
         // This avoids nonsense with trying to reach inside fragments and force them
         // to redisplay themselves.
         // We also don't need to update the title.
         final Intent intent = (Intent) getIntent().clone();
         intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-        startActivityForResult(intent, REQUEST_CODE_PREF_SCREEN);
+        startActivityForResultChoosingTransition(intent, REQUEST_CODE_PREF_SCREEN);
 
         setResult(RESULT_CODE_LOCALE_DID_CHANGE);
-        finish();
+        finishChoosingTransition();
     }
 
     private void checkLocale() {
@@ -319,7 +340,9 @@ OnSharedPreferenceChangeListener
             int res = 0;
             if (intentExtras != null && intentExtras.containsKey(INTENT_EXTRA_RESOURCES)) {
                 // Fetch resource id from intent.
-                String resourceName = intentExtras.getString(INTENT_EXTRA_RESOURCES);
+                final String resourceName = intentExtras.getString(INTENT_EXTRA_RESOURCES);
+                Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, Method.SETTINGS, resourceName);
+
                 if (resourceName != null) {
                     res = getResources().getIdentifier(resourceName, "xml", getPackageName());
                     if (res == 0) {
@@ -331,6 +354,7 @@ OnSharedPreferenceChangeListener
                 // No resource specified, or the resource was invalid; use the default preferences screen.
                 Log.e(LOGTAG, "Displaying default settings.");
                 res = R.xml.preferences;
+                Telemetry.startUISession(TelemetryContract.Session.SETTINGS);
             }
 
             // We don't include a title in the XML, so set it here, in a locale-aware fashion.
@@ -441,12 +465,31 @@ OnSharedPreferenceChangeListener
     }
 
     @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+
+        if (NO_TRANSITIONS) {
+            overridePendingTransition(0, 0);
+        }
+
+        Telemetry.sendUIEvent(TelemetryContract.Event.CANCEL, Method.BACK, "settings");
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         EventDispatcher.getInstance().unregisterGeckoThreadListener(this,
             "Sanitize:Finished");
         if (mPrefsRequestId > 0) {
             PrefsHelper.removeObserver(mPrefsRequestId);
+        }
+
+        // The intent extras will be null if this is the top-level settings
+        // activity. In that case, we want to end the SETTINGS telmetry session.
+        // For HC+ versions of Android this is handled in GeckoPreferenceFragment.
+        final boolean versionsPreHC = Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB;
+        if (versionsPreHC && getIntent().getExtras() == null) {
+            Telemetry.stopUISession(TelemetryContract.Session.SETTINGS);
         }
     }
 
@@ -494,7 +537,7 @@ OnSharedPreferenceChangeListener
         // the settings screens.
         // We need to start nested PreferenceScreens withStartActivityForResult().
         // Android doesn't let us do that (see Preference.onClick), so we're overriding here.
-        startActivityForResult(intent, REQUEST_CODE_PREF_SCREEN);
+        startActivityForResultChoosingTransition(intent, REQUEST_CODE_PREF_SCREEN);
     }
 
     @Override
@@ -505,9 +548,12 @@ OnSharedPreferenceChangeListener
         // Overriding because we want to use startActivityForResult for Fragment intents.
         Intent intent = onBuildStartFragmentIntent(fragmentName, args, titleRes, shortTitleRes);
         if (resultTo == null) {
-            startActivityForResult(intent, REQUEST_CODE_PREF_SCREEN);
+            startActivityForResultChoosingTransition(intent, REQUEST_CODE_PREF_SCREEN);
         } else {
             resultTo.startActivityForResult(intent, resultRequestCode);
+            if (NO_TRANSITIONS) {
+                overridePendingTransition(0, 0);
+            }
         }
     }
 
@@ -525,7 +571,7 @@ OnSharedPreferenceChangeListener
 
                   // Pass this result up to the parent activity.
                   setResult(RESULT_CODE_EXIT_SETTINGS);
-                  finish();
+                  finishChoosingTransition();
                   break;
               }
               break;
@@ -597,7 +643,7 @@ OnSharedPreferenceChangeListener
             // This logic will need to be extended when
             // content language selection (Bug 881510) is implemented.
             if (!localeSwitchingIsEnabled &&
-                "preferences_locale".equals(pref.getExtras().getString("resource", null))) {
+                "preferences_locale".equals(pref.getExtras().getString("resource"))) {
                 preferences.removePreference(pref);
                 i--;
                 continue;
@@ -645,7 +691,9 @@ OnSharedPreferenceChangeListener
                     preferences.removePreference(pref);
                     i--;
                     continue;
-                } else if (AppConstants.RELEASE_BUILD && PREFS_GEO_REPORTING.equals(key)) {
+                } else if (AppConstants.RELEASE_BUILD &&
+                            (PREFS_GEO_REPORTING.equals(key) ||
+                             PREFS_GEO_LEARN_MORE.equals(key))) {
                     // We don't build wifi/cell tower collection in release builds, so hide the UI.
                     preferences.removePreference(pref);
                     i--;
@@ -682,6 +730,7 @@ OnSharedPreferenceChangeListener
                         @Override
                         public boolean onPreferenceClick(Preference preference) {
                             GeckoPreferences.this.restoreDefaultSearchEngines();
+                            Telemetry.sendUIEvent(TelemetryContract.Event.SEARCH_RESTORE_DEFAULTS, Method.LIST_ITEM);
                             return true;
                         }
                     });
@@ -690,10 +739,13 @@ OnSharedPreferenceChangeListener
                         @Override
                         public boolean onPreferenceClick(Preference preference) {
                             Intent dialogIntent = new Intent(GeckoPreferences.this, HomePanelPicker.class);
-                            startActivityForResult(dialogIntent, HomePanelPicker.REQUEST_CODE_ADD_PANEL);
+                            startActivityForResultChoosingTransition(dialogIntent, HomePanelPicker.REQUEST_CODE_ADD_PANEL);
                             return true;
                         }
                     });
+                } else if (handlers.containsKey(key)) {
+                    PrefHandler handler = handlers.get(key);
+                    handler.setupPref(this, pref);
                 }
 
                 // Some Preference UI elements are not actually preferences,
@@ -740,13 +792,14 @@ OnSharedPreferenceChangeListener
         int itemId = item.getItemId();
         switch (itemId) {
             case android.R.id.home:
-                finish();
+                finishChoosingTransition();
                 return true;
         }
 
         // Generated R.id.* apparently aren't constant expressions, so they can't be switched.
         if (itemId == R.id.restore_defaults) {
             restoreDefaultSearchEngines();
+            Telemetry.sendUIEvent(TelemetryContract.Event.SEARCH_RESTORE_DEFAULTS, Method.MENU);
             return true;
        }
 
@@ -798,26 +851,6 @@ OnSharedPreferenceChangeListener
             intent.putExtra("profileName", profile.getName())
                   .putExtra("profilePath", profile.getDir().getAbsolutePath());
         }
-    }
-
-    /**
-     * Broadcast the provided value as the value of the
-     * <code>PREFS_ANNOUNCEMENTS_ENABLED</code> pref.
-     */
-    public static void broadcastAnnouncementsPref(final Context context, final boolean value) {
-        broadcastPrefAction(context,
-                            AnnouncementsConstants.ACTION_ANNOUNCEMENTS_PREF,
-                            PREFS_ANNOUNCEMENTS_ENABLED,
-                            value);
-    }
-
-    /**
-     * Broadcast the current value of the
-     * <code>PREFS_ANNOUNCEMENTS_ENABLED</code> pref.
-     */
-    public static void broadcastAnnouncementsPref(final Context context) {
-        final boolean value = getBooleanPref(context, PREFS_ANNOUNCEMENTS_ENABLED, true);
-        broadcastAnnouncementsPref(context, value);
     }
 
     /**
@@ -916,6 +949,14 @@ OnSharedPreferenceChangeListener
         return true;
     }
 
+    private void refreshSuggestedSites() {
+        final ContentResolver cr = getApplicationContext().getContentResolver();
+
+        // This will force all active suggested sites cursors
+        // to request a refresh (e.g. cursor loaders).
+        cr.notifyChange(SuggestedSites.CONTENT_URI, null);
+    }
+
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
@@ -951,17 +992,27 @@ OnSharedPreferenceChangeListener
             onLocaleSelected(BrowserLocaleManager.getLanguageTag(lastLocale),
                              sharedPreferences.getString(key, null));
         } else if (PREFS_SUGGESTED_SITES.equals(key)) {
-            final ContentResolver cr = getApplicationContext().getContentResolver();
-
-            // This will force all active suggested sites cursors
-            // to request a refresh (e.g. cursor loaders).
-            cr.notifyChange(SuggestedSites.CONTENT_URI, null);
+            refreshSuggestedSites();
         }
     }
+
+    public interface PrefHandler {
+        public void setupPref(Context context, Preference pref);
+        public void onChange(Context context, Preference pref, Object newValue);
+    }
+
+    @SuppressWarnings("serial")
+    private Map<String, PrefHandler> handlers = new HashMap<String, PrefHandler>() {{
+        put(ClearOnShutdownPref.PREF, new ClearOnShutdownPref());
+    }};
 
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         final String prefName = preference.getKey();
+        Log.i(LOGTAG, "Changed " + prefName + " = " + newValue);
+
+        Telemetry.sendUIEvent(TelemetryContract.Event.EDIT, Method.SETTINGS, prefName);
+
         if (PREFS_MP_ENABLED.equals(prefName)) {
             showDialog((Boolean) newValue ? DIALOG_CREATE_MASTER_PASSWORD : DIALOG_REMOVE_MASTER_PASSWORD);
 
@@ -978,10 +1029,6 @@ OnSharedPreferenceChangeListener
 
         if (PREFS_MENU_CHAR_ENCODING.equals(prefName)) {
             setCharEncodingState(((String) newValue).equals("true"));
-        } else if (PREFS_ANNOUNCEMENTS_ENABLED.equals(prefName)) {
-            // Send a broadcast intent to the product announcements service, either to start or
-            // to stop the repeated background checks.
-            broadcastAnnouncementsPref(this, ((Boolean) newValue).booleanValue());
         } else if (PREFS_UPDATER_AUTODOWNLOAD.equals(prefName)) {
             org.mozilla.gecko.updater.UpdateServiceHelper.registerForUpdates(this, (String) newValue);
         } else if (PREFS_HEALTHREPORT_UPLOAD_ENABLED.equals(prefName)) {
@@ -993,6 +1040,9 @@ OnSharedPreferenceChangeListener
         } else if (PREFS_GEO_REPORTING.equals(prefName)) {
             // Translate boolean value to int for geo reporting pref.
             newValue = ((Boolean) newValue) ? 1 : 0;
+        } else if (handlers.containsKey(prefName)) {
+            PrefHandler handler = handlers.get(prefName);
+            handler.onChange(this, preference, newValue);
         }
 
         // Send Gecko-side pref changes to Gecko
@@ -1007,7 +1057,7 @@ OnSharedPreferenceChangeListener
             ((ListPreference) preference).setSummary(newEntry);
         } else if (preference instanceof LinkPreference) {
             setResult(RESULT_CODE_EXIT_SETTINGS);
-            finish();
+            finishChoosingTransition();
         } else if (preference instanceof FontSizePreference) {
             final FontSizePreference fontSizePref = (FontSizePreference) preference;
             fontSizePref.setSummary(fontSizePref.getSavedFontSizeName());

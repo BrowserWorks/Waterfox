@@ -22,6 +22,7 @@
 #include "mozilla/dom/TabParent.h"
 #include "mozilla/Hal.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/Services.h"
 #include "mozilla/FileUtils.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "Framebuffer.h"
@@ -33,6 +34,7 @@
 #include "nsAutoPtr.h"
 #include "nsAppShell.h"
 #include "nsIdleService.h"
+#include "nsIObserverService.h"
 #include "nsScreenManagerGonk.h"
 #include "nsTArray.h"
 #include "nsWindow.h"
@@ -67,14 +69,10 @@ static uint32_t sScreenRotation;
 static uint32_t sPhysicalScreenRotation;
 static nsIntRect sVirtualBounds;
 
-static nsRefPtr<GLContext> sGLContext;
 static nsTArray<nsWindow *> sTopWindows;
 static nsWindow *gFocusedWindow = nullptr;
-static bool sFramebufferOpen;
-static bool sUsingOMTC;
 static bool sUsingHwc;
 static bool sScreenInitialized;
-static nsRefPtr<gfxASurface> sOMTCSurface;
 
 namespace {
 
@@ -159,15 +157,11 @@ nsWindow::nsWindow()
         // to know the color depth, which asks our native window.
         // This has to happen after other init has finished.
         gfxPlatform::GetPlatform();
-        sUsingOMTC = ShouldUseOffMainThreadCompositing();
-
+        if (!ShouldUseOffMainThreadCompositing()) {
+            MOZ_CRASH("How can we render apps, then?");
+        }
         //Update sUsingHwc whenever layers.composer2d.enabled changes
         Preferences::AddBoolVarCache(&sUsingHwc, "layers.composer2d.enabled");
-
-        if (sUsingOMTC) {
-          sOMTCSurface = new gfxImageSurface(gfxIntSize(1, 1),
-                                             gfxImageFormat::RGB24);
-        }
     }
 }
 
@@ -200,35 +194,6 @@ nsWindow::DoDraw(void)
     LayerManager* lm = targetWindow->GetLayerManager();
     if (mozilla::layers::LayersBackend::LAYERS_CLIENT == lm->GetBackendType()) {
       // No need to do anything, the compositor will handle drawing
-    } else if (mozilla::layers::LayersBackend::LAYERS_BASIC == lm->GetBackendType()) {
-        MOZ_ASSERT(sFramebufferOpen || sUsingOMTC);
-        nsRefPtr<gfxASurface> targetSurface;
-
-        if(sUsingOMTC)
-            targetSurface = sOMTCSurface;
-        else
-            targetSurface = Framebuffer::BackBuffer();
-
-        {
-            nsRefPtr<gfxContext> ctx = new gfxContext(targetSurface);
-            gfxUtils::PathFromRegion(ctx, sVirtualBounds);
-            ctx->Clip();
-
-            // No double-buffering needed.
-            AutoLayerManagerSetup setupLayerManager(
-                targetWindow, ctx, mozilla::layers::BufferMode::BUFFER_NONE,
-                ScreenRotation(EffectiveScreenRotation()));
-
-            listener = targetWindow->GetWidgetListener();
-            if (listener) {
-                listener->PaintWindow(targetWindow, sVirtualBounds);
-            }
-        }
-
-        if (!sUsingOMTC) {
-            targetSurface->Flush();
-            Framebuffer::Present(sVirtualBounds);
-        }
     } else {
         NS_RUNTIMEABORT("Unexpected layer manager type");
     }
@@ -536,12 +501,7 @@ nsWindow::GetLayerManager(PLayerTransactionChild* aShadowManager,
     if (mLayerManager) {
         // This layer manager might be used for painting outside of DoDraw(), so we need
         // to set the correct rotation on it.
-        if (mLayerManager->GetBackendType() == LayersBackend::LAYERS_BASIC) {
-            BasicLayerManager* manager =
-                static_cast<BasicLayerManager*>(mLayerManager.get());
-            manager->SetDefaultTargetConfiguration(mozilla::layers::BufferMode::BUFFER_NONE,
-                                                   ScreenRotation(EffectiveScreenRotation()));
-        } else if (mLayerManager->GetBackendType() == LayersBackend::LAYERS_CLIENT) {
+        if (mLayerManager->GetBackendType() == LayersBackend::LAYERS_CLIENT) {
             ClientLayerManager* manager =
                 static_cast<ClientLayerManager*>(mLayerManager.get());
             manager->SetDefaultTargetConfiguration(mozilla::layers::BufferMode::BUFFER_NONE,
@@ -560,51 +520,14 @@ nsWindow::GetLayerManager(PLayerTransactionChild* aShadowManager,
         return nullptr;
     }
 
-    if (sUsingOMTC) {
-        CreateCompositor();
-        if (mCompositorParent) {
-            uint64_t rootLayerTreeId = mCompositorParent->RootLayerTreeId();
-            CompositorParent::SetControllerForLayerTree(rootLayerTreeId, new ParentProcessController());
-            CompositorParent::GetAPZCTreeManager(rootLayerTreeId)->SetDPI(GetDPI());
-        }
-        if (mLayerManager)
-            return mLayerManager;
+    CreateCompositor();
+    if (mCompositorParent) {
+        uint64_t rootLayerTreeId = mCompositorParent->RootLayerTreeId();
+        CompositorParent::SetControllerForLayerTree(rootLayerTreeId, new ParentProcessController());
+        CompositorParent::GetAPZCTreeManager(rootLayerTreeId)->SetDPI(GetDPI());
     }
-
-    if (mUseLayersAcceleration) {
-        DebugOnly<nsIntRect> fbBounds = gScreenBounds;
-        if (!sGLContext) {
-            sGLContext = GLContextProvider::CreateForWindow(this);
-        }
-
-        MOZ_ASSERT(fbBounds.value == gScreenBounds);
-    }
-
-    // Fall back to software rendering.
-    sFramebufferOpen = Framebuffer::Open();
-    if (sFramebufferOpen) {
-        LOG("Falling back to framebuffer software rendering");
-    } else {
-        LOGE("Failed to mmap fb(?!?), aborting ...");
-        NS_RUNTIMEABORT("Can't open GL context and can't fall back on /dev/graphics/fb0 ...");
-    }
-
-    mLayerManager = new ClientLayerManager(this);
-    mUseLayersAcceleration = false;
-
+    MOZ_ASSERT(mLayerManager);
     return mLayerManager;
-}
-
-gfxASurface *
-nsWindow::GetThebesSurface()
-{
-    /* This is really a dummy surface; this is only used when doing reflow, because
-     * we need a RenderingContext to measure text against.
-     */
-
-    // XXX this really wants to return already_AddRefed, but this only really gets used
-    // on direct assignment to a gfxASurface
-    return new gfxImageSurface(gfxIntSize(5,5), gfxImageFormat::RGB24);
 }
 
 void
@@ -684,6 +607,13 @@ nsScreenGonk::nsScreenGonk(void *nativeScreen)
 
 nsScreenGonk::~nsScreenGonk()
 {
+}
+
+NS_IMETHODIMP
+nsScreenGonk::GetId(uint32_t *outId)
+{
+    *outId = 1;
+    return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -829,6 +759,13 @@ nsScreenManagerGonk::GetPrimaryScreen(nsIScreen **outScreen)
 {
     NS_IF_ADDREF(*outScreen = mOneScreen.get());
     return NS_OK;
+}
+
+NS_IMETHODIMP
+nsScreenManagerGonk::ScreenForId(uint32_t aId,
+                                 nsIScreen **outScreen)
+{
+    return GetPrimaryScreen(outScreen);
 }
 
 NS_IMETHODIMP

@@ -14,19 +14,27 @@ class nsStandaloneNativeMenu : public nsMenuGroupOwnerX, public nsIStandaloneNat
 {
 public:
   nsStandaloneNativeMenu();
-  virtual ~nsStandaloneNativeMenu();
 
-  NS_DECL_ISUPPORTS  
+  NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSISTANDALONENATIVEMENU
 
   // nsMenuObjectX
   nsMenuObjectTypeX MenuObjectType() { return eStandaloneNativeMenuObjectType; }
   void * NativeData() { return mMenu != nullptr ? mMenu->NativeData() : nullptr; }
+  virtual void IconUpdated() MOZ_OVERRIDE;
 
   nsMenuX * GetMenuXObject() { return mMenu; }
 
+  // If this menu is the menu of a system status bar item (NSStatusItem),
+  // let the menu know about the status item so that it can propagate
+  // any icon changes to the status item.
+  void SetContainerStatusBarItem(NSStatusItem* aItem);
+
 protected:
+  virtual ~nsStandaloneNativeMenu();
+
   nsMenuX * mMenu;
+  NSStatusItem* mContainerStatusBarItem;
 };
 
 #endif

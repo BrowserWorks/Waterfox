@@ -1,4 +1,4 @@
-/* -*- Mode: js2; js2-basic-offset: 2; indent-tabs-mode: nil; -*- */
+/* -*- js-indent-level: 2; indent-tabs-mode: nil -*- */
 /* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -100,7 +100,9 @@ DataStore.prototype = {
     cpmm.addMessageListener("DataStore:Changed:Return:OK", this);
     cpmm.sendAsyncMessage("DataStore:RegisterForMessages",
                           { store: this._name, owner: this._owner,
-                            innerWindowID: this._innerWindowID });
+                            innerWindowID: this._innerWindowID },
+                          null,
+                          this._window.document.nodePrincipal);
   },
 
   observe: function(aSubject, aTopic, aData) {
@@ -110,7 +112,9 @@ DataStore.prototype = {
 
       cpmm.removeMessageListener("DataStore:Changed:Return:OK", this);
       cpmm.sendAsyncMessage("DataStore:UnregisterForMessages",
-                            { innerWindowID: this._innerWindowID });
+                            { innerWindowID: this._innerWindowID },
+                            null,
+                            this._window.document.nodePrincipal);
       this._shuttingdown = true;
       this._db.close();
     }
@@ -336,7 +340,9 @@ DataStore.prototype = {
     cpmm.sendAsyncMessage("DataStore:Changed",
                           { store: this.name, owner: this._owner,
                             message: { revisionId: aRevisionId, id: aId,
-                                       operation: aOperation, owner: this._owner } } );
+                                       operation: aOperation, owner: this._owner } },
+                          null,
+                          this._window.document.nodePrincipal);
   },
 
   receiveMessage: function(aMessage) {

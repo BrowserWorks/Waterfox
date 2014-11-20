@@ -94,8 +94,7 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(nsHTMLEditor, nsPlaintextEditor)
 
 
-           nsHTMLEditor();
-  virtual  ~nsHTMLEditor();
+  nsHTMLEditor();
 
   bool GetReturnInParagraphCreatesNewParagraph();
 
@@ -260,6 +259,8 @@ public:
   static bool NodeIsBlockStatic(const mozilla::dom::Element* aElement);
   static nsresult NodeIsBlockStatic(nsIDOMNode *aNode, bool *aIsBlock);
 protected:
+  virtual ~nsHTMLEditor();
+
   using nsEditor::IsBlockNode;
   virtual bool IsBlockNode(nsINode *aNode);
 
@@ -329,8 +330,8 @@ public:
   NS_IMETHOD GetRootElement(nsIDOMElement **aRootElement);
 
   /* ------------ nsICSSLoaderObserver -------------- */
-  NS_IMETHOD StyleSheetLoaded(nsCSSStyleSheet*aSheet, bool aWasAlternate,
-                              nsresult aStatus);
+  NS_IMETHOD StyleSheetLoaded(mozilla::CSSStyleSheet* aSheet,
+                              bool aWasAlternate, nsresult aStatus);
 
   /* ------------ Utility Routines, not part of public API -------------- */
   NS_IMETHOD TypedText(const nsAString& aString, ETypingAction aAction);
@@ -375,12 +376,13 @@ public:
 
   // Dealing with the internal style sheet lists:
   NS_IMETHOD GetStyleSheetForURL(const nsAString &aURL,
-                                 nsCSSStyleSheet **_retval);
-  NS_IMETHOD GetURLForStyleSheet(nsCSSStyleSheet *aStyleSheet, nsAString &aURL);
+                                 mozilla::CSSStyleSheet** _retval);
+  NS_IMETHOD GetURLForStyleSheet(mozilla::CSSStyleSheet* aStyleSheet,
+                                 nsAString& aURL);
 
   // Add a url + known style sheet to the internal lists:
   nsresult AddNewStyleSheetToList(const nsAString &aURL,
-                                  nsCSSStyleSheet *aStyleSheet);
+                                  mozilla::CSSStyleSheet* aStyleSheet);
 
   nsresult RemoveStyleSheetFromList(const nsAString &aURL);
 
@@ -774,7 +776,7 @@ protected:
 
   // Maintain a list of associated style sheets and their urls.
   nsTArray<nsString> mStyleSheetURLs;
-  nsTArray<nsRefPtr<nsCSSStyleSheet> > mStyleSheets;
+  nsTArray<nsRefPtr<mozilla::CSSStyleSheet>> mStyleSheets;
   
   // an array for holding default style settings
   nsTArray<PropItem*> mDefaultStyles;

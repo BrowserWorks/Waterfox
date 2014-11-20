@@ -46,9 +46,7 @@ DOMCI_CLASS(CSSSupportsRule)
 DOMCI_CLASS(XSLTProcessor)
 
 // DOM Level 3 XPath objects
-DOMCI_CLASS(XPathExpression)
 DOMCI_CLASS(XPathNSResolver)
-DOMCI_CLASS(XPathResult)
 
 // WhatWG WebApps Objects
 DOMCI_CLASS(Storage)
@@ -59,7 +57,6 @@ DOMCI_CLASS(File)
 // DOM modal content window class, almost identical to Window
 DOMCI_CLASS(ModalContentWindow)
 
-DOMCI_CLASS(MozMobileMessageManager)
 DOMCI_CLASS(MozSmsMessage)
 DOMCI_CLASS(MozMmsMessage)
 DOMCI_CLASS(MozSmsFilter)
@@ -75,6 +72,9 @@ DOMCI_CLASS(ChromeMessageSender)
 
 DOMCI_CLASS(MozCSSKeyframeRule)
 DOMCI_CLASS(MozCSSKeyframesRule)
+
+// @counter-style in CSS
+DOMCI_CLASS(CSSCounterStyleRule)
 
 DOMCI_CLASS(CSSPageRule)
 

@@ -7,6 +7,7 @@
 
 #include "FrameLayerBuilder.h"
 
+#include "mozilla/gfx/Matrix.h"
 #include "nsDisplayList.h"
 #include "nsPresContext.h"
 #include "nsLayoutUtils.h"
@@ -267,12 +268,12 @@ public:
   const nsIFrame* GetAnimatedGeometryRoot() { return mAnimatedGeometryRoot; }
 
   /**
-   * Add aHitRegion and aDispatchToContentHitRegion to the hit regions for
-   * this ThebesLayer.
+   * Add aHitRegion, aMaybeHitRegion, and aDispatchToContentHitRegion to the
+   * hit regions for this ThebesLayer.
    */
-  void AccumulateEventRegions(const nsIntRegion& aHitRegion,
-                              const nsIntRegion& aMaybeHitRegion,
-                              const nsIntRegion& aDispatchToContentHitRegion)
+  void AccumulateEventRegions(const nsRegion& aHitRegion,
+                              const nsRegion& aMaybeHitRegion,
+                              const nsRegion& aDispatchToContentHitRegion)
   {
     mHitRegion.Or(mHitRegion, aHitRegion);
     mMaybeHitRegion.Or(mMaybeHitRegion, aMaybeHitRegion);
@@ -372,15 +373,15 @@ public:
   /**
    * The definitely-hit region for this ThebesLayer.
    */
-  nsIntRegion  mHitRegion;
+  nsRegion  mHitRegion;
   /**
    * The maybe-hit region for this ThebesLayer.
    */
-  nsIntRegion  mMaybeHitRegion;
+  nsRegion  mMaybeHitRegion;
   /**
    * The dispatch-to-content hit region for this ThebesLayer.
    */
-  nsIntRegion  mDispatchToContentHitRegion;
+  nsRegion  mDispatchToContentHitRegion;
   /**
    * The "active scrolled root" for all content in the layer. Must
    * be non-null; all content in a ThebesLayer must have the same
@@ -498,8 +499,9 @@ public:
   {
     nsPresContext* presContext = aContainerFrame->PresContext();
     mAppUnitsPerDevPixel = presContext->AppUnitsPerDevPixel();
-    mContainerReferenceFrame = aContainerItem ? aContainerItem->ReferenceFrameForChildren() :
-      mBuilder->FindReferenceFrameFor(mContainerFrame);
+    mContainerReferenceFrame =
+      const_cast<nsIFrame*>(aContainerItem ? aContainerItem->ReferenceFrameForChildren() :
+                                             mBuilder->FindReferenceFrameFor(mContainerFrame));
     mContainerAnimatedGeometryRoot = aContainerItem
       ? nsLayoutUtils::GetAnimatedGeometryRootFor(aContainerItem, aBuilder)
       : mContainerReferenceFrame;
@@ -528,7 +530,7 @@ public:
    * @param aTextContentFlags if any child layer has CONTENT_COMPONENT_ALPHA,
    * set *aTextContentFlags to CONTENT_COMPONENT_ALPHA
    */
-  void Finish(uint32_t *aTextContentFlags, LayerManagerData* aData);
+  void Finish(uint32_t *aTextContentFlags, LayerManagerData* aData, bool& aHasComponentAlphaChildren);
 
   nsRect GetChildrenBounds() { return mBounds; }
 
@@ -707,7 +709,7 @@ protected:
   LayerManager*                    mManager;
   FrameLayerBuilder*               mLayerBuilder;
   nsIFrame*                        mContainerFrame;
-  const nsIFrame*                  mContainerReferenceFrame;
+  nsIFrame*                        mContainerReferenceFrame;
   const nsIFrame*                  mContainerAnimatedGeometryRoot;
   ContainerLayer*                  mContainerLayer;
   ContainerLayerParameters         mParameters;
@@ -1617,7 +1619,8 @@ SetVisibleRegionForLayer(Layer* aLayer, const nsIntRegion& aLayerVisibleRegion,
   nsIntRect childBounds = aLayerVisibleRegion.GetBounds();
   gfxRect childGfxBounds(childBounds.x, childBounds.y,
                          childBounds.width, childBounds.height);
-  gfxRect layerVisible = transform.UntransformBounds(itemVisible, childGfxBounds);
+  gfxRect layerVisible = transform.Inverse().ProjectRectBounds(itemVisible);
+  layerVisible = layerVisible.Intersect(childGfxBounds);
   layerVisible.RoundOut();
 
   nsIntRect visibleRect;
@@ -1832,39 +1835,6 @@ ContainerState::SetFixedPositionLayerData(Layer* aLayer,
       viewportFrame, anchorRect, aFixedPosFrame, presContext, mParameters);
 }
 
-static gfx3DMatrix
-GetTransformToRoot(Layer* aLayer)
-{
-  Matrix4x4 transform = aLayer->GetTransform();
-  for (Layer* l = aLayer->GetParent(); l; l = l->GetParent()) {
-    transform = transform * l->GetTransform();
-  }
-  gfx3DMatrix result;
-  To3DMatrix(transform, result);
-  return result;
-}
-
-static void
-AddTransformedBoundsToRegion(const nsIntRegion& aRegion,
-                             const gfx3DMatrix& aTransform,
-                             nsIntRegion* aDest)
-{
-  nsIntRect bounds = aRegion.GetBounds();
-  if (bounds.IsEmpty()) {
-    return;
-  }
-  gfxRect transformed =
-    aTransform.TransformBounds(gfxRect(bounds.x, bounds.y, bounds.width, bounds.height));
-  transformed.RoundOut();
-  nsIntRect intRect;
-  if (!gfxUtils::GfxRectToIntRect(transformed, &intRect)) {
-    // This should only fail if coordinates are too big to fit in an int32
-    *aDest = nsIntRect(-INT32_MAX/2, -INT32_MAX/2, INT32_MAX, INT32_MAX);
-    return;
-  }
-  aDest->Or(*aDest, intRect);
-}
-
 static bool
 CanOptimizeAwayThebesLayer(ThebesLayerData* aData,
                            FrameLayerBuilder* aLayerBuilder)
@@ -1993,6 +1963,15 @@ ContainerState::PopThebesLayerData()
     if (userData->mForcedBackgroundColor != backgroundColor) {
       // Invalidate the entire target ThebesLayer since we're changing
       // the background color
+#ifdef MOZ_DUMP_PAINTING
+      if (nsLayoutUtils::InvalidationDebuggingIsEnabled()) {
+        printf_stderr("Forced background color has changed from #%08X to #%08X on layer %p\n",
+                      userData->mForcedBackgroundColor, backgroundColor, data->mLayer);
+        nsAutoCString str;
+        AppendToString(str, data->mLayer->GetValidRegion());
+        printf_stderr("Invalidating layer %p: %s\n", data->mLayer, str.get());
+      }
+#endif
       data->mLayer->InvalidateRegion(data->mLayer->GetValidRegion());
     }
     userData->mForcedBackgroundColor = backgroundColor;
@@ -2030,28 +2009,51 @@ ContainerState::PopThebesLayerData()
   ThebesLayerData* containingThebesLayerData =
      mLayerBuilder->GetContainingThebesLayerData();
   if (containingThebesLayerData) {
-    gfx3DMatrix matrix = GetTransformToRoot(layer);
-    nsIntPoint translatedDest = GetTranslationForThebesLayer(containingThebesLayerData->mLayer);
-    matrix.TranslatePost(-gfxPoint3D(translatedDest.x, translatedDest.y, 0));
-    AddTransformedBoundsToRegion(data->mDispatchToContentHitRegion, matrix,
-                                 &containingThebesLayerData->mDispatchToContentHitRegion);
-    AddTransformedBoundsToRegion(data->mMaybeHitRegion, matrix,
-                                 &containingThebesLayerData->mMaybeHitRegion);
-    // Our definitely-hit region must go to the maybe-hit-region since
-    // this function is an approximation.
-    gfxMatrix matrix2D;
-    bool isPrecise = matrix.Is2D(&matrix2D) && !matrix2D.HasNonAxisAlignedTransform();
-    AddTransformedBoundsToRegion(data->mHitRegion, matrix,
-      isPrecise ? &containingThebesLayerData->mHitRegion
-                : &containingThebesLayerData->mMaybeHitRegion);
+    if (!data->mDispatchToContentHitRegion.GetBounds().IsEmpty()) {
+      nsRect rect = nsLayoutUtils::TransformFrameRectToAncestor(
+        mContainerReferenceFrame,
+        data->mDispatchToContentHitRegion.GetBounds(),
+        containingThebesLayerData->mReferenceFrame);
+      containingThebesLayerData->mDispatchToContentHitRegion.Or(
+        containingThebesLayerData->mDispatchToContentHitRegion, rect);
+    }
+    if (!data->mMaybeHitRegion.GetBounds().IsEmpty()) {
+      nsRect rect = nsLayoutUtils::TransformFrameRectToAncestor(
+        mContainerReferenceFrame,
+        data->mMaybeHitRegion.GetBounds(),
+        containingThebesLayerData->mReferenceFrame);
+      containingThebesLayerData->mMaybeHitRegion.Or(
+        containingThebesLayerData->mMaybeHitRegion, rect);
+    }
+    if (!data->mHitRegion.GetBounds().IsEmpty()) {
+      // Our definitely-hit region must go to the maybe-hit-region since
+      // this function is an approximation.
+      gfx3DMatrix matrix = nsLayoutUtils::GetTransformToAncestor(
+        mContainerReferenceFrame, containingThebesLayerData->mReferenceFrame);
+      gfxMatrix matrix2D;
+      bool isPrecise = matrix.Is2D(&matrix2D) && !matrix2D.HasNonAxisAlignedTransform();
+      nsRect rect = nsLayoutUtils::TransformFrameRectToAncestor(
+        mContainerReferenceFrame,
+        data->mHitRegion.GetBounds(),
+        containingThebesLayerData->mReferenceFrame);
+      nsRegion* dest = isPrecise ? &containingThebesLayerData->mHitRegion
+                                 : &containingThebesLayerData->mMaybeHitRegion;
+      dest->Or(*dest, rect);
+    }
   } else {
     EventRegions regions;
-    regions.mHitRegion.Swap(&data->mHitRegion);
+    regions.mHitRegion = ScaleRegionToOutsidePixels(data->mHitRegion);
     // Points whose hit-region status we're not sure about need to be dispatched
     // to the content thread.
-    regions.mDispatchToContentHitRegion.Sub(data->mMaybeHitRegion, regions.mHitRegion);
+    nsIntRegion maybeHitRegion = ScaleRegionToOutsidePixels(data->mMaybeHitRegion);
+    regions.mDispatchToContentHitRegion.Sub(maybeHitRegion, regions.mHitRegion);
     regions.mDispatchToContentHitRegion.Or(regions.mDispatchToContentHitRegion,
-                                           data->mDispatchToContentHitRegion);
+                                           ScaleRegionToOutsidePixels(data->mDispatchToContentHitRegion));
+
+    nsIntPoint translation = -GetTranslationForThebesLayer(data->mLayer);
+    regions.mHitRegion.MoveBy(translation);
+    regions.mDispatchToContentHitRegion.MoveBy(translation);
+
     layer->SetEventRegions(regions);
   }
 
@@ -2308,13 +2310,13 @@ ContainerState::FindThebesLayerFor(nsDisplayItem* aItem,
 
 #ifdef MOZ_DUMP_PAINTING
 static void
-DumpPaintedImage(nsDisplayItem* aItem, gfxASurface* aSurf)
+DumpPaintedImage(nsDisplayItem* aItem, SourceSurface* aSurface)
 {
   nsCString string(aItem->Name());
   string.Append('-');
   string.AppendInt((uint64_t)aItem);
   fprintf_stderr(gfxUtils::sDumpPaintFile, "array[\"%s\"]=\"", string.BeginReading());
-  aSurf->DumpAsDataURL(gfxUtils::sDumpPaintFile);
+  gfxUtils::DumpAsDataURI(aSurface, gfxUtils::sDumpPaintFile);
   fprintf_stderr(gfxUtils::sDumpPaintFile, "\";");
 }
 #endif
@@ -2335,12 +2337,14 @@ PaintInactiveLayer(nsDisplayListBuilder* aBuilder,
   nsIntRect itemVisibleRect =
     aItem->GetVisibleRect().ToOutsidePixels(appUnitsPerDevPixel);
 
-  nsRefPtr<gfxASurface> surf;
+  RefPtr<DrawTarget> tempDT;
   if (gfxUtils::sDumpPainting) {
-    surf = gfxPlatform::GetPlatform()->CreateOffscreenSurface(itemVisibleRect.Size().ToIntSize(),
-                                                              gfxContentType::COLOR_ALPHA);
-    surf->SetDeviceOffset(-itemVisibleRect.TopLeft());
-    context = new gfxContext(surf);
+    tempDT = gfxPlatform::GetPlatform()->CreateOffscreenContentDrawTarget(
+                                      itemVisibleRect.Size().ToIntSize(),
+                                      SurfaceFormat::B8G8R8A8);
+    context = new gfxContext(tempDT);
+    context->SetMatrix(gfxMatrix().Translate(-gfxPoint(itemVisibleRect.x,
+                                                       itemVisibleRect.y)));
   }
 #endif
   basic->BeginTransaction();
@@ -2363,12 +2367,14 @@ PaintInactiveLayer(nsDisplayListBuilder* aBuilder,
 
 #ifdef MOZ_DUMP_PAINTING
   if (gfxUtils::sDumpPainting) {
-    DumpPaintedImage(aItem, surf);
+    RefPtr<SourceSurface> surface = tempDT->Snapshot();
+    DumpPaintedImage(aItem, surface);
 
-    surf->SetDeviceOffset(gfxPoint(0, 0));
-    aContext->SetSource(surf, itemVisibleRect.TopLeft());
-    aContext->Rectangle(itemVisibleRect);
-    aContext->Fill();
+    DrawTarget* drawTarget = aContext->GetDrawTarget();
+    Rect rect(itemVisibleRect.x, itemVisibleRect.y,
+              itemVisibleRect.width, itemVisibleRect.height);
+    drawTarget->DrawSurface(surface, rect, Rect(Point(0,0), rect.Size()));
+
     aItem->SetPainted();
   }
 #endif
@@ -2572,14 +2578,24 @@ ContainerState::ProcessDisplayItems(const nsDisplayList& aList,
       ThebesLayerData* data = GetTopThebesLayerData();
       if (data) {
         // Prerendered transform items can be updated without layer building
-        // (async animations or an empty transaction), so we treat all other
-        // content as being above this so that the transformed layer can correctly
-        // move behind other content.
+        // (async animations or an empty transaction), so we need to put items
+        // that the transform item can potentially move under into a layer
+        // above this item.
         if (item->GetType() == nsDisplayItem::TYPE_TRANSFORM &&
             nsDisplayTransform::ShouldPrerenderTransformedContent(mBuilder,
                                                                   item->Frame(),
                                                                   false)) {
-          data->SetAllDrawingAbove();
+          if (!itemClip.HasClip()) {
+            // The transform item can move anywhere, treat all other content
+            // as being above this item.
+            data->SetAllDrawingAbove();
+          } else {
+            // The transform can't escape from the clip rect, and the clip
+            // rect can't change without new layer building. Treat all content
+            // that intersects the clip rect as being above this item.
+            data->AddVisibleAboveRegion(clipRect);
+            data->AddDrawAboveRegion(clipRect);
+          }
         } else {
           data->AddVisibleAboveRegion(itemVisibleRect);
 
@@ -2627,9 +2643,9 @@ ContainerState::ProcessDisplayItems(const nsDisplayList& aList,
       if (itemType == nsDisplayItem::TYPE_LAYER_EVENT_REGIONS) {
         nsDisplayLayerEventRegions* eventRegions =
             static_cast<nsDisplayLayerEventRegions*>(item);
-        data->AccumulateEventRegions(ScaleRegionToOutsidePixels(eventRegions->HitRegion()),
-                                     ScaleRegionToOutsidePixels(eventRegions->MaybeHitRegion()),
-                                     ScaleRegionToOutsidePixels(eventRegions->DispatchToContentHitRegion()));
+        data->AccumulateEventRegions(eventRegions->HitRegion(),
+                                     eventRegions->MaybeHitRegion(),
+                                     eventRegions->DispatchToContentHitRegion());
       } else {
         // check to see if the new item has rounded rect clips in common with
         // other items in the layer
@@ -2805,7 +2821,7 @@ FrameLayerBuilder::AddThebesDisplayItem(ThebesLayerData* aLayerData,
       tempManager = data->mInactiveManager;
     }
     if (!tempManager) {
-      tempManager = new BasicLayerManager();
+      tempManager = new BasicLayerManager(BasicLayerManager::BLM_INACTIVE);
     }
 
     // We need to grab these before calling AddLayerDisplayItem because it will overwrite them.
@@ -3044,7 +3060,7 @@ ContainerState::CollectOldLayers()
 }
 
 void
-ContainerState::Finish(uint32_t* aTextContentFlags, LayerManagerData* aData)
+ContainerState::Finish(uint32_t* aTextContentFlags, LayerManagerData* aData, bool& aHasComponentAlphaChildren)
 {
   while (!mThebesLayerDataStack.IsEmpty()) {
     PopThebesLayerData();
@@ -3060,7 +3076,19 @@ ContainerState::Finish(uint32_t* aTextContentFlags, LayerManagerData* aData)
     layer = mNewChildLayers[i];
 
     if (!layer->GetVisibleRegion().IsEmpty()) {
-      textContentFlags |= layer->GetContentFlags() & Layer::CONTENT_COMPONENT_ALPHA;
+      textContentFlags |=
+        layer->GetContentFlags() & (Layer::CONTENT_COMPONENT_ALPHA |
+                                    Layer::CONTENT_COMPONENT_ALPHA_DESCENDANT);
+
+      // Notify the parent of component alpha children unless it's coming from
+      // within a transformed child since we don't want flattening of component
+      // alpha layers to happen across transforms. Re-rendering the text during
+      // transform animations looks worse than losing subpixel-AA.
+      if ((layer->GetContentFlags() & Layer::CONTENT_COMPONENT_ALPHA) &&
+          (layer->GetType() != Layer::TYPE_CONTAINER ||
+           layer->GetBaseTransform().IsIdentity())) {
+        aHasComponentAlphaChildren = true;
+      }
     }
 
     if (!layer->GetParent()) {
@@ -3097,10 +3125,37 @@ static inline gfxSize RoundToFloatPrecision(const gfxSize& aSize)
   return gfxSize(float(aSize.width), float(aSize.height));
 }
 
+static void RestrictScaleToMaxLayerSize(gfxSize& aScale,
+                                        const nsRect& aVisibleRect,
+                                        nsIFrame* aContainerFrame,
+                                        Layer* aContainerLayer)
+{
+  if (!aContainerLayer->Manager()->IsWidgetLayerManager()) {
+    return;
+  }
+
+  nsIntRect pixelSize =
+    aVisibleRect.ScaleToOutsidePixels(aScale.width, aScale.height,
+                                      aContainerFrame->PresContext()->AppUnitsPerDevPixel());
+
+  int32_t maxLayerSize = aContainerLayer->GetMaxLayerSize();
+
+  if (pixelSize.width > maxLayerSize) {
+    float scale = (float)pixelSize.width / maxLayerSize;
+    scale = gfxUtils::ClampToScaleFactor(scale);
+    aScale.width /= scale;
+  }
+  if (pixelSize.height > maxLayerSize) {
+    float scale = (float)pixelSize.height / maxLayerSize;
+    scale = gfxUtils::ClampToScaleFactor(scale);
+    aScale.height /= scale;
+  }
+}
 static bool
 ChooseScaleAndSetTransform(FrameLayerBuilder* aLayerBuilder,
                            nsDisplayListBuilder* aDisplayListBuilder,
                            nsIFrame* aContainerFrame,
+                           const nsRect& aVisibleRect,
                            const gfx3DMatrix* aTransform,
                            const ContainerLayerParameters& aIncomingScale,
                            ContainerLayer* aLayer,
@@ -3190,6 +3245,12 @@ ChooseScaleAndSetTransform(FrameLayerBuilder* aLayerBuilder,
     // scaled out of sight anyway.
     if (fabs(scale.width) < 1e-8 || fabs(scale.height) < 1e-8) {
       scale = gfxSize(1.0, 1.0);
+    }
+    // If this is a transform container layer, then pre-rendering might
+    // mean we try render a layer bigger than the max texture size. Apply
+    // clmaping to prevent this.
+    if (aTransform) {
+      RestrictScaleToMaxLayerSize(scale, aVisibleRect, aContainerFrame, aLayer);
     }
   } else {
     scale = gfxSize(1.0, 1.0);
@@ -3328,8 +3389,8 @@ FrameLayerBuilder::BuildContainerLayerFor(nsDisplayListBuilder* aBuilder,
   }
 
   ContainerLayerParameters scaleParameters;
-  if (!ChooseScaleAndSetTransform(this, aBuilder, aContainerFrame, aTransform, aParameters,
-                                  containerLayer, state, scaleParameters)) {
+  if (!ChooseScaleAndSetTransform(this, aBuilder, aContainerFrame, aChildren.GetVisibleRect(),
+                                  aTransform, aParameters, containerLayer, state, scaleParameters)) {
     return nullptr;
   }
 
@@ -3353,7 +3414,7 @@ FrameLayerBuilder::BuildContainerLayerFor(nsDisplayListBuilder* aBuilder,
   int32_t appUnitsPerDevPixel;
   uint32_t stateFlags = 0;
   if ((aContainerFrame->GetStateBits() & NS_FRAME_NO_COMPONENT_ALPHA) &&
-      mRetainingManager && !mRetainingManager->AreComponentAlphaLayersEnabled()) {
+      mRetainingManager && mRetainingManager->ShouldAvoidComponentAlphaLayers()) {
     stateFlags = ContainerState::NO_COMPONENT_ALPHA;
   }
   uint32_t flags;
@@ -3367,14 +3428,16 @@ FrameLayerBuilder::BuildContainerLayerFor(nsDisplayListBuilder* aBuilder,
     // Set CONTENT_COMPONENT_ALPHA if any of our children have it.
     // This is suboptimal ... a child could have text that's over transparent
     // pixels in its own layer, but over opaque parts of previous siblings.
-    state.Finish(&flags, data);
+    bool hasComponentAlphaChildren = false;
+    state.Finish(&flags, data, hasComponentAlphaChildren);
     bounds = state.GetChildrenBounds();
     pixBounds = state.ScaleToOutsidePixels(bounds, false);
     appUnitsPerDevPixel = state.GetAppUnitsPerDevPixel();
 
-    if ((flags & Layer::CONTENT_COMPONENT_ALPHA) &&
+    if (hasComponentAlphaChildren &&
         mRetainingManager &&
-        !mRetainingManager->AreComponentAlphaLayersEnabled() &&
+        mRetainingManager->ShouldAvoidComponentAlphaLayers() &&
+        containerLayer->HasMultipleChildren() &&
         !stateFlags) {
       // Since we don't want any component alpha layers on BasicLayers, we repeat
       // the layer building process with this explicitely forced off.
@@ -3399,13 +3462,24 @@ FrameLayerBuilder::BuildContainerLayerFor(nsDisplayListBuilder* aBuilder,
   } else {
     containerLayer->SetVisibleRegion(pixBounds);
   }
+
+  // CONTENT_COMPONENT_ALPHA is propogated up to the nearest CONTENT_OPAQUE
+  // ancestor so that BasicLayerManager knows when to copy the background into
+  // pushed groups. Accelerated layers managers can't necessarily do this (only
+  // when the visible region is a simple rect), so we propogate
+  // CONTENT_COMPONENT_ALPHA_DESCENDANT all the way to the root.
+  if (flags & Layer::CONTENT_COMPONENT_ALPHA) {
+    flags |= Layer::CONTENT_COMPONENT_ALPHA_DESCENDANT;
+  }
+
   // Make sure that rounding the visible region out didn't add any area
   // we won't paint
   if (aChildren.IsOpaque() && !aChildren.NeedsTransparentSurface()) {
     bounds.ScaleRoundIn(scaleParameters.mXScale, scaleParameters.mYScale);
     if (bounds.Contains(pixBounds.ToAppUnits(appUnitsPerDevPixel))) {
-      // Clear CONTENT_COMPONENT_ALPHA
-      flags = Layer::CONTENT_OPAQUE;
+      // Clear CONTENT_COMPONENT_ALPHA and add CONTENT_OPAQUE instead.
+      flags &= ~Layer::CONTENT_COMPONENT_ALPHA;
+      flags |= Layer::CONTENT_OPAQUE;
     }
   }
   containerLayer->SetContentFlags(flags);
@@ -3508,7 +3582,8 @@ PredictScaleForContent(nsIFrame* aFrame, nsIFrame* aAncestorWithScale,
 gfxSize
 FrameLayerBuilder::GetThebesLayerScaleForFrame(nsIFrame* aFrame)
 {
-  nsIFrame* last;
+  MOZ_ASSERT(aFrame, "need a frame");
+  nsIFrame* last = nullptr;
   for (nsIFrame* f = aFrame; f; f = nsLayoutUtils::GetCrossDocParentFrame(f)) {
     last = f;
 
@@ -3520,7 +3595,7 @@ FrameLayerBuilder::GetThebesLayerScaleForFrame(nsIFrame* aFrame)
     }
 
     nsTArray<DisplayItemData*> *array =
-      reinterpret_cast<nsTArray<DisplayItemData*>*>(aFrame->Properties().Get(LayerManagerDataProperty()));
+      reinterpret_cast<nsTArray<DisplayItemData*>*>(f->Properties().Get(LayerManagerDataProperty()));
     if (!array) {
       continue;
     }
@@ -3548,29 +3623,34 @@ FrameLayerBuilder::GetThebesLayerScaleForFrame(nsIFrame* aFrame)
 }
 
 #ifdef MOZ_DUMP_PAINTING
-static void DebugPaintItem(nsRenderingContext* aDest, nsDisplayItem *aItem, nsDisplayListBuilder* aBuilder)
+static void DebugPaintItem(nsRenderingContext* aDest,
+                           nsPresContext* aPresContext,
+                           nsDisplayItem *aItem,
+                           nsDisplayListBuilder* aBuilder)
 {
   bool snap;
   nsRect appUnitBounds = aItem->GetBounds(aBuilder, &snap);
   gfxRect bounds(appUnitBounds.x, appUnitBounds.y, appUnitBounds.width, appUnitBounds.height);
-  bounds.ScaleInverse(aDest->AppUnitsPerDevPixel());
+  bounds.ScaleInverse(aPresContext->AppUnitsPerDevPixel());
 
-  nsRefPtr<gfxASurface> surf =
-    gfxPlatform::GetPlatform()->CreateOffscreenSurface(IntSize(bounds.width, bounds.height),
-                                                       gfxContentType::COLOR_ALPHA);
-  surf->SetDeviceOffset(-bounds.TopLeft());
-  nsRefPtr<gfxContext> context = new gfxContext(surf);
+  RefPtr<DrawTarget> tempDT =
+    gfxPlatform::GetPlatform()->CreateOffscreenContentDrawTarget(
+                                          IntSize(bounds.width, bounds.height),
+                                          SurfaceFormat::B8G8R8A8);
+  nsRefPtr<gfxContext> context = new gfxContext(tempDT);
+  context->SetMatrix(gfxMatrix().Translate(-gfxPoint(bounds.x, bounds.y)));
   nsRefPtr<nsRenderingContext> ctx = new nsRenderingContext();
   ctx->Init(aDest->DeviceContext(), context);
 
   aItem->Paint(aBuilder, ctx);
-  DumpPaintedImage(aItem, surf);
-  aItem->SetPainted();
+  RefPtr<SourceSurface> surface = tempDT->Snapshot();
+  DumpPaintedImage(aItem, surface);
 
-  surf->SetDeviceOffset(gfxPoint(0, 0));
-  aDest->ThebesContext()->SetSource(surf, bounds.TopLeft());
-  aDest->ThebesContext()->Rectangle(bounds);
-  aDest->ThebesContext()->Fill();
+  DrawTarget* drawTarget = aDest->ThebesContext()->GetDrawTarget();
+  Rect rect = ToRect(bounds);
+  drawTarget->DrawSurface(surface, rect, Rect(Point(0,0), rect.Size()));
+
+  aItem->SetPainted();
 }
 #endif
 
@@ -3659,6 +3739,12 @@ FrameLayerBuilder::PaintItems(nsTArray<ClippedDisplayItem>& aItems,
     if (paintRect.IsEmpty())
       continue;
 
+#ifdef MOZ_DUMP_PAINTING
+    PROFILER_LABEL_PRINTF("DisplayList", "Draw", js::ProfileEntry::Category::GRAPHICS, "%s %p", cdi->mItem->Name(), cdi->mItem);
+#else
+    PROFILER_LABEL_PRINTF("DisplayList", "Draw", js::ProfileEntry::Category::GRAPHICS, "%p", cdi->mItem);
+#endif
+
     // If the new desired clip state is different from the current state,
     // update the clip.
     const DisplayItemClip* clip = &cdi->mItem->GetClip();
@@ -3692,7 +3778,7 @@ FrameLayerBuilder::PaintItems(nsTArray<ClippedDisplayItem>& aItems,
 #ifdef MOZ_DUMP_PAINTING
 
       if (gfxUtils::sDumpPainting) {
-        DebugPaintItem(aRC, cdi->mItem, aBuilder);
+        DebugPaintItem(aRC, aPresContext, cdi->mItem, aBuilder);
       } else {
 #else
       {
@@ -3718,13 +3804,12 @@ FrameLayerBuilder::PaintItems(nsTArray<ClippedDisplayItem>& aItems,
 static bool ShouldDrawRectsSeparately(gfxContext* aContext, DrawRegionClip aClip)
 {
   if (!gfxPrefs::LayoutPaintRectsSeparately() ||
-      aContext->IsCairo() ||
       aClip == DrawRegionClip::CLIP_NONE) {
     return false;
   }
 
   DrawTarget *dt = aContext->GetDrawTarget();
-  return dt->GetType() == BackendType::DIRECT2D;
+  return dt->GetBackendType() == BackendType::DIRECT2D;
 }
 
 static void DrawForcedBackgroundColor(gfxContext* aContext, Layer* aLayer, nscolor aBackgroundColor)
@@ -3859,7 +3944,8 @@ FrameLayerBuilder::DrawThebesLayer(ThebesLayer* aLayer,
                              entry->mCommonClipCount);
   }
 
-  if (presContext->GetPaintFlashing()) {
+  if (presContext->GetPaintFlashing() &&
+      !aLayer->Manager()->IsInactiveLayerManager()) {
     gfxContextAutoSaveRestore save(aContext);
     if (shouldDrawRectsSeparately) {
       if (aClip == DrawRegionClip::DRAW_SNAPPED) {
@@ -3896,9 +3982,9 @@ FrameLayerBuilder::CheckDOMModified()
 
 #ifdef MOZ_DUMP_PAINTING
 /* static */ void
-FrameLayerBuilder::DumpRetainedLayerTree(LayerManager* aManager, FILE* aFile, bool aDumpHtml)
+FrameLayerBuilder::DumpRetainedLayerTree(LayerManager* aManager, std::stringstream& aStream, bool aDumpHtml)
 {
-  aManager->Dump(aFile, "", aDumpHtml);
+  aManager->Dump(aStream, "", aDumpHtml);
 }
 #endif
 

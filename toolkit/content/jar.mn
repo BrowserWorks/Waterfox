@@ -7,7 +7,7 @@ toolkit.jar:
 %  override chrome://global/content/nsTransferable.js chrome://global/content/nsDragAndDrop.js
 *  content/global/license.html                (license.html)
    content/global/XPCNativeWrapper.js         (XPCNativeWrapper.js)
-*  content/global/minimal-xul.css             (minimal-xul.css)
+   content/global/minimal-xul.css             (minimal-xul.css)
 *  content/global/xul.css                     (xul.css)
    content/global/textbox.css                 (textbox.css)
    content/global/menulist.css                (menulist.css)
@@ -36,7 +36,6 @@ toolkit.jar:
 *  content/global/customizeToolbar.js         (customizeToolbar.js)
    content/global/customizeToolbar.xul        (customizeToolbar.xul)
    content/global/devicestorage.properties    (devicestorage.properties)
-   content/global/directoryLinks.json         (directoryLinks.json)
    content/global/editMenuOverlay.js          (editMenuOverlay.js)
 *+ content/global/editMenuOverlay.xul         (editMenuOverlay.xul)
    content/global/finddialog.js               (finddialog.js)

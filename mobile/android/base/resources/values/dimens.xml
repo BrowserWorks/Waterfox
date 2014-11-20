@@ -33,16 +33,12 @@
     <!-- Search Engine Row height -->
     <dimen name="search_row_height">48dp</dimen>
 
-    <!-- Max width of arrow popups on tablets -->
-    <dimen name="arrow_popup_width">400dp</dimen>
-
     <!-- Padding at the top of the site identity popup, when no identity data is available. -->
     <dimen name="identity_padding_top">5dp</dimen>
 
     <dimen name="doorhanger_input_width">250dp</dimen>
     <dimen name="doorhanger_spinner_textsize">9sp</dimen>
     <dimen name="doorhanger_padding">15dp</dimen>
-    <dimen name="doorhanger_textsize_small">8sp</dimen>
 
     <dimen name="flow_layout_spacing">6dp</dimen>
     <dimen name="menu_item_icon">21dp</dimen>
@@ -54,9 +50,6 @@
     <dimen name="menu_item_row_height">64dip</dimen>
     <dimen name="menu_item_row_width">240dp</dimen>
     <dimen name="menu_item_more_offset">5dp</dimen>
-    <dimen name="menu_popup_arrow_offset">8dp</dimen>
-    <dimen name="menu_popup_arrow_margin">5dip</dimen>
-    <dimen name="menu_popup_arrow_width">40dip</dimen>
     <dimen name="menu_popup_offset">12dp</dimen>
     <dimen name="menu_popup_width">256dp</dimen>
     <dimen name="nav_button_border_width">0.75dp</dimen>
@@ -88,12 +81,6 @@
     <dimen name="url_bar_offset_left">32dp</dimen>
     <dimen name="history_tab_indicator_height">50dp</dimen>
 
-    <!-- We need to maintain height for the tab widget on History Page
-         since android does not add footer/header divider height to its
-         calculation for wrap_content in LinearLayout.
-         50dp * 2 Views + 30dp padding + 4dp dividers-->
-    <dimen name="history_tab_widget_height">134dp</dimen>
-
     <!-- PageActionButtons dimensions -->
     <dimen name="page_action_button_width">32dp</dimen>
 
@@ -112,4 +99,9 @@
 
     <!-- Button toast dimenstions. -->
     <dimen name="toast_button_corner_radius">2dp</dimen>
+
+    <!-- ArrowPopup dimensions. -->
+    <dimen name="arrow_popup_arrow_width">40dip</dimen>
+    <dimen name="arrow_popup_arrow_height">12dip</dimen>
+    <dimen name="arrow_popup_arrow_offset">8dp</dimen>
 </resources>

@@ -146,33 +146,35 @@ ParamTraits<MagicGrallocBufferHandle>::Read(const Message* aMsg,
 
   aResult->mRef.mOwner = owner;
   aResult->mRef.mKey = index;
-  if (sameProcess)
+  if (sameProcess) {
     aResult->mGraphicBuffer = SharedBufferManagerParent::GetGraphicBuffer(aResult->mRef);
-  else {
+  } else {
     if (SharedBufferManagerChild::GetSingleton()->IsValidKey(index)) {
       aResult->mGraphicBuffer = SharedBufferManagerChild::GetSingleton()->GetGraphicBuffer(index);
     }
-    if (index >= 0 && aResult->mGraphicBuffer == nullptr) {
-      //Only newly created GraphicBuffer should deserialize
-#if ANDROID_VERSION >= 19
-      sp<GraphicBuffer> flattenable(new GraphicBuffer());
-      const void* datap = (const void*)data;
-      const int* fdsp = &fds[0];
-      if (NO_ERROR == flattenable->unflatten(datap, nbytes, fdsp, nfds)) {
-        aResult->mGraphicBuffer = flattenable;
-      }
-#else
-      sp<GraphicBuffer> buffer(new GraphicBuffer());
-      Flattenable *flattenable = buffer.get();
+    MOZ_ASSERT(!aResult->mGraphicBuffer.get());
 
-      if (NO_ERROR == flattenable->unflatten(data, nbytes, fds, nfds)) {
-        aResult->mGraphicBuffer = buffer;
-      }
+    // Deserialize GraphicBuffer
+#if ANDROID_VERSION >= 19
+    sp<GraphicBuffer> buffer(new GraphicBuffer());
+    const void* datap = (const void*)data;
+    const int* fdsp = &fds[0];
+    if (NO_ERROR != buffer->unflatten(datap, nbytes, fdsp, nfds)) {
+      buffer = nullptr;
+    }
+#else
+    sp<GraphicBuffer> buffer(new GraphicBuffer());
+    Flattenable *flattenable = buffer.get();
+    if (NO_ERROR != flattenable->unflatten(data, nbytes, fds, nfds)) {
+      buffer = nullptr;
+    }
 #endif
+    if(buffer.get() && !aResult->mGraphicBuffer.get()) {
+      aResult->mGraphicBuffer = buffer;
     }
   }
 
-  if (aResult->mGraphicBuffer == nullptr) {
+  if (!aResult->mGraphicBuffer.get()) {
     printf_stderr("ParamTraits<MagicGrallocBufferHandle>::Read() failed to get gralloc buffer\n");
     return false;
   }
@@ -227,39 +229,6 @@ PixelFormatForImageFormat(gfxImageFormat aFormat)
     MOZ_CRASH("Unknown gralloc pixel format");
   }
   return android::PIXEL_FORMAT_RGBA_8888;
-}
-
-static size_t
-BytesPerPixelForPixelFormat(android::PixelFormat aFormat)
-{
-  switch (aFormat) {
-  case PIXEL_FORMAT_RGBA_8888:
-  case PIXEL_FORMAT_RGBX_8888:
-  case PIXEL_FORMAT_BGRA_8888:
-    return 4;
-  case PIXEL_FORMAT_RGB_888:
-    return 3;
-  case PIXEL_FORMAT_RGB_565:
-  case PIXEL_FORMAT_RGBA_5551:
-  case PIXEL_FORMAT_RGBA_4444:
-    return 2;
-  default:
-    return 0;
-  }
-  return 0;
-}
-
-static android::PixelFormat
-PixelFormatForContentType(gfxContentType aContentType)
-{
-  return PixelFormatForImageFormat(
-    gfxPlatform::GetPlatform()->OptimalFormatForContent(aContentType));
-}
-
-static gfxContentType
-ContentTypeFromPixelFormat(android::PixelFormat aFormat)
-{
-  return gfxASurface::ContentFromFormat(ImageFormatForPixelFormat(aFormat));
 }
 
 /*static*/ bool

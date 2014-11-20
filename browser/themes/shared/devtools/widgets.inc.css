@@ -61,13 +61,8 @@
 
 .breadcrumbs-widget-container {
   -moz-margin-end: 3px;
-  max-height: 25px; /* Set max-height for proper sizing on linux */
-  height: 25px; /* Set height to prevent starting small waiting for content */
-  /* A fake 1px-shadow is included in the border-images of the
-     breadcrumbs-widget-items, to match toolbar-buttons style.
-     This negative margin compensates the extra row of pixels created
-     by the shadow.*/
-  margin-bottom: -1px;
+  max-height: 24px; /* Set max-height for proper sizing on linux */
+  height: 24px; /* Set height to prevent starting small waiting for content */
 }
 
 .scrollbutton-up,
@@ -152,7 +147,7 @@
 #breadcrumb-separator-after,
 #breadcrumb-separator-normal {
   width: 12px;
-  height: 25px;
+  height: 24px;
   overflow: hidden;
 }
 
@@ -191,7 +186,7 @@
   content: "";
   display: block;
   width: 25px;
-  height: 25px;
+  height: 24px;
   transform: translateX(-18px) rotate(45deg);
   -moz-box-sizing: border-box;
 }
@@ -199,13 +194,19 @@
 .breadcrumbs-widget-item {
   background-color: transparent;
   -moz-appearance: none;
-  min-height: 25px;
+  min-height: 24px;
   min-width: 65px;
   margin: 0;
   padding: 0 8px 0 20px;
   border: none;
   outline: none;
   color: hsl(210,30%,85%);
+}
+
+.breadcrumbs-widget-item > .button-box {
+  border: none;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .breadcrumbs-widget-item:not([checked]) {
@@ -630,8 +631,12 @@
   color: inherit !important;
 }
 
-.variable-or-property > .title > .arrow {
-  -moz-margin-start: 3px;
+.variables-view-container .theme-twisty {
+  margin: 2px;
+}
+
+.variable-or-property > .title > .theme-twisty {
+  -moz-margin-start: 5px;
 }
 
 .variable-or-property:not([untitled]) > .variables-view-element-details {
@@ -883,32 +888,16 @@
 
 /* Variables and properties searching */
 
-.variables-view-searchinput {
-  min-height: 24px;
-}
-
 .variable-or-property[unmatched] {
   border: none;
   margin: 0;
 }
 
-/* Expand/collapse arrow */
-
-.arrow {
-  -moz-appearance: treetwisty;
-  width: 20px;
-  height: 20px;
-}
-
-.arrow[open] {
-  -moz-appearance: treetwistyopen;
-}
-
-.arrow[invisible] {
-  visibility: hidden;
-}
-
 /* Canvas graphs */
+
+.graph-widget-container {
+  position: relative;
+}
 
 .graph-widget-canvas {
   width: 100%;
@@ -937,15 +926,7 @@
   cursor: grabbing;
 }
 
-.graph-widget-canvas ~ * {
-  pointer-events: none;
-}
-
 /* Line graph widget */
-
-.line-graph-widget-container {
-  position: relative;
-}
 
 .line-graph-widget-canvas {
   background: #0088cc;
@@ -959,6 +940,7 @@
   top: 0;
   left: 0;
   border-right: 1px solid rgba(255,255,255,0.25);
+  pointer-events: none;
 }
 
 .line-graph-widget-gutter-line {
@@ -991,6 +973,7 @@
   transform: translateY(-50%);
   font-size: 80%;
   z-index: 1;
+  pointer-events: none;
 }
 
 .line-graph-widget-tooltip::before {
@@ -1054,6 +1037,49 @@
 
 .line-graph-widget-tooltip[type=average] > [text=value] {
   color: #d97e00;
+}
+
+/* Bar graph widget */
+
+.bar-graph-widget-canvas {
+  background: #f7f7f7;
+}
+
+.bar-graph-widget-legend {
+  position: absolute;
+  top: 4px;
+  left: 8px;
+  color: #292e33;
+  font-size: 80%;
+  pointer-events: none;
+}
+
+.bar-graph-widget-legend-item {
+  float: left;
+  -moz-margin-end: 8px;
+}
+
+.bar-graph-widget-legend-item > [view="color"],
+.bar-graph-widget-legend-item > [view="label"] {
+  vertical-align: middle;
+}
+
+.bar-graph-widget-legend-item > [view="color"] {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border: 1px solid #fff;
+  border-radius: 1px;
+  -moz-margin-end: 4px;
+  pointer-events: all;
+  cursor: pointer;
+}
+
+.bar-graph-widget-legend-item > [view="label"] {
+  text-shadow: 1px  0px rgba(255,255,255,0.8),
+              -1px  0px rgba(255,255,255,0.8),
+               0px -1px rgba(255,255,255,0.8),
+               0px  1px rgba(255,255,255,0.8);
 }
 
 /* Charts */
@@ -1335,13 +1361,23 @@
   box-shadow: inset 0 -1px 0 @smw_itemLightTopBorder@;
 }
 
-.table-widget-cell.flash-out {
-  animation: flash-out 0.5s ease-in;
+.theme-light .table-widget-cell.flash-out {
+  animation: light-flash-out 0.5s ease-in;
 }
 
-@keyframes flash-out {
+@keyframes light-flash-out {
   to {
-    background: #a18650;
+    background: #E8B671;
+  }
+}
+
+.theme-dark .table-widget-cell.flash-out {
+  animation: dark-flash-out 0.5s ease-in;
+}
+
+@keyframes dark-flash-out {
+  to {
+    background: #B28025;
   }
 }
 

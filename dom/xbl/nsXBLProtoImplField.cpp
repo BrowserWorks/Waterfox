@@ -16,6 +16,7 @@
 #include "nsIURI.h"
 #include "nsXBLSerialize.h"
 #include "nsXBLPrototypeBinding.h"
+#include "mozilla/AddonPathService.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "nsGlobalWindow.h"
@@ -112,7 +113,7 @@ ValueHasISupportsPrivate(JS::Handle<JS::Value> v)
     return false;
   }
 
-  const DOMClass* domClass = GetDOMClass(&v.toObject());
+  const DOMJSClass* domClass = GetDOMClass(&v.toObject());
   if (domClass) {
     return domClass->mDOMObjectIsISupports;
   }
@@ -180,7 +181,7 @@ InstallXBLField(JSContext* cx,
   // Field[GS]etter where we attempt a cross-compartment call), we must enter
   // the callee's compartment to access its reserved slots.
   nsXBLPrototypeBinding* protoBinding;
-  nsDependentJSString fieldName;
+  nsAutoJSString fieldName;
   {
     JSAutoCompartment ac(cx, callee);
 
@@ -188,8 +189,9 @@ InstallXBLField(JSContext* cx,
     xblProto = &js::GetFunctionNativeReserved(callee, XBLPROTO_SLOT).toObject();
 
     JS::Rooted<JS::Value> name(cx, js::GetFunctionNativeReserved(callee, FIELD_SLOT));
-    JSFlatString* fieldStr = JS_ASSERT_STRING_IS_FLAT(name.toString());
-    fieldName.infallibleInit(fieldStr);
+    if (!fieldName.init(cx, name.toString())) {
+      return false;
+    }
 
     MOZ_ALWAYS_TRUE(JS_ValueToId(cx, name, idp));
 
@@ -333,7 +335,7 @@ nsXBLProtoImplField::InstallAccessors(JSContext* aCx,
   // First, enter the XBL scope, and compile the functions there.
   JSAutoCompartment ac(aCx, scopeObject);
   JS::Rooted<JS::Value> wrappedClassObj(aCx, JS::ObjectValue(*aTargetClassObject));
-  if (!JS_WrapValue(aCx, &wrappedClassObj) || !JS_WrapId(aCx, &id))
+  if (!JS_WrapValue(aCx, &wrappedClassObj))
     return NS_ERROR_OUT_OF_MEMORY;
 
   JS::Rooted<JSObject*> get(aCx,
@@ -359,9 +361,7 @@ nsXBLProtoImplField::InstallAccessors(JSContext* aCx,
   // Now, re-enter the class object's scope, wrap the getters/setters, and define
   // them there.
   JSAutoCompartment ac2(aCx, aTargetClassObject);
-  if (!JS_WrapObject(aCx, &get) || !JS_WrapObject(aCx, &set) ||
-      !JS_WrapId(aCx, &id))
-  {
+  if (!JS_WrapObject(aCx, &get) || !JS_WrapObject(aCx, &set)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
@@ -413,9 +413,11 @@ nsXBLProtoImplField::InstallField(JS::Handle<JSObject*> aBoundNode,
   NS_ASSERTION(!::JS_IsExceptionPending(cx),
                "Shouldn't get here when an exception is pending!");
 
+  JSAddonId* addonId = MapURIToAddonID(aBindingDocURI);
+
   // First, enter the xbl scope, wrap the node, and use that as the scope for
   // the evaluation.
-  JS::Rooted<JSObject*> scopeObject(cx, xpc::GetXBLScopeOrGlobal(cx, aBoundNode));
+  JS::Rooted<JSObject*> scopeObject(cx, xpc::GetScopeForXBLExecution(cx, aBoundNode, addonId));
   NS_ENSURE_TRUE(scopeObject, NS_ERROR_OUT_OF_MEMORY);
   JSAutoCompartment ac(cx, scopeObject);
 

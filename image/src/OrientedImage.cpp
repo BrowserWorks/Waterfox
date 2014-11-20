@@ -11,16 +11,17 @@
 
 #include "OrientedImage.h"
 
-using namespace mozilla::gfx;
-
 using std::swap;
-using mozilla::layers::LayerManager;
-using mozilla::layers::ImageContainer;
 
 namespace mozilla {
+
+using namespace gfx;
+using layers::LayerManager;
+using layers::ImageContainer;
+
 namespace image {
 
-NS_IMPL_ISUPPORTS(OrientedImage, imgIContainer)
+NS_IMPL_ISUPPORTS_INHERITED0(OrientedImage, ImageWrapper)
 
 nsIntRect
 OrientedImage::FrameRect(uint32_t aWhichFrame)
@@ -107,7 +108,7 @@ OrientedImage::GetFrame(uint32_t aWhichFrame,
   }
 
   // Create a surface to draw into.
-  mozilla::RefPtr<DrawTarget> target =
+  RefPtr<DrawTarget> target =
     gfxPlatform::GetPlatform()->
       CreateOffscreenContentDrawTarget(IntSize(width, height), surfaceFormat);
   if (!target) {
@@ -248,6 +249,36 @@ OrientedImage::Draw(gfxContext* aContext,
   return InnerImage()->Draw(aContext, aFilter, userSpaceToImageSpace,
                             aFill, subimage, viewportSize, aSVGContext,
                             aWhichFrame, aFlags);
+}
+
+NS_IMETHODIMP_(nsIntRect)
+OrientedImage::GetImageSpaceInvalidationRect(const nsIntRect& aRect)
+{
+  nsIntRect rect(InnerImage()->GetImageSpaceInvalidationRect(aRect));
+
+  if (mOrientation.IsIdentity()) {
+    return rect;
+  }
+
+  int32_t width, height;
+  nsresult rv = InnerImage()->GetWidth(&width);
+  rv = NS_FAILED(rv) ? rv : InnerImage()->GetHeight(&height);
+  if (NS_FAILED(rv)) {
+    // Fall back to identity if the width and height aren't available.
+    return rect;
+  }
+
+  // Transform the invalidation rect into the correct orientation.
+  gfxMatrix matrix(OrientationMatrix(nsIntSize(width, height)));
+  if (!matrix.Invert()) {
+    return nsIntRect();
+  }
+  gfxRect invalidRect(matrix.TransformBounds(gfxRect(rect.x, rect.y,
+                                                     rect.width, rect.height)));
+  invalidRect.RoundOut();
+
+  return nsIntRect(invalidRect.x, invalidRect.y,
+                   invalidRect.width, invalidRect.height);
 }
 
 } // namespace image

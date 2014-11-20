@@ -18,12 +18,16 @@
 #include "TabChild.h"
 
 #include "mozilla/Attributes.h"
-#include "mozilla/dom/asmjscache/AsmJSCache.h"
-#include "mozilla/dom/asmjscache/PAsmJSCacheEntryChild.h"
+#include "mozilla/Preferences.h"
+#include "mozilla/dom/ContentBridgeChild.h"
+#include "mozilla/dom/ContentBridgeParent.h"
+#include "mozilla/dom/DOMStorageIPC.h"
 #include "mozilla/dom/ExternalHelperAppChild.h"
 #include "mozilla/dom/PCrashReporterChild.h"
-#include "mozilla/dom/DOMStorageIPC.h"
 #include "mozilla/dom/Promise.h"
+#include "mozilla/dom/asmjscache/AsmJSCache.h"
+#include "mozilla/dom/asmjscache/PAsmJSCacheEntryChild.h"
+#include "mozilla/dom/nsIContentChild.h"
 #include "mozilla/hal_sandbox/PHalChild.h"
 #include "mozilla/ipc/BackgroundChild.h"
 #include "mozilla/ipc/FileDescriptorUtils.h"
@@ -31,10 +35,9 @@
 #include "mozilla/ipc/TestShellChild.h"
 #include "mozilla/layers/CompositorChild.h"
 #include "mozilla/layers/ImageBridgeChild.h"
-#include "mozilla/layers/SharedBufferManagerChild.h"
 #include "mozilla/layers/PCompositorChild.h"
+#include "mozilla/layers/SharedBufferManagerChild.h"
 #include "mozilla/net/NeckoChild.h"
-#include "mozilla/Preferences.h"
 
 #if defined(MOZ_CONTENT_SANDBOX)
 #if defined(XP_WIN)
@@ -56,6 +59,8 @@
 #include "nsIMutable.h"
 #include "nsIObserverService.h"
 #include "nsIScriptSecurityManager.h"
+#include "nsScreenManagerProxy.h"
+#include "nsMemoryInfoDumper.h"
 #include "nsServiceManagerUtils.h"
 #include "nsStyleSheetService.h"
 #include "nsXULAppAPI.h"
@@ -68,6 +73,7 @@
 #include "nsLayoutStylesheetCache.h"
 #include "nsIJSRuntimeService.h"
 #include "nsThreadManager.h"
+#include "nsAnonymousTemporaryFile.h"
 
 #include "IHistory.h"
 #include "nsNetUtil.h"
@@ -146,6 +152,7 @@
 #include "mozilla/dom/telephony/PTelephonyChild.h"
 #include "mozilla/dom/time/DateCacheCleaner.h"
 #include "mozilla/net/NeckoMessageUtils.h"
+#include "mozilla/RemoteSpellCheckEngineChild.h"
 
 using namespace base;
 using namespace mozilla;
@@ -164,6 +171,7 @@ using namespace mozilla::jsipc;
 #if defined(MOZ_WIDGET_GONK)
 using namespace mozilla::system;
 #endif
+using namespace mozilla::widget;
 
 #ifdef MOZ_NUWA_PROCESS
 static bool sNuwaForking = false;
@@ -187,18 +195,23 @@ class MemoryReportRequestChild : public PMemoryReportRequestChild,
 public:
     NS_DECL_ISUPPORTS
 
-    MemoryReportRequestChild(uint32_t aGeneration, const nsAString& aDMDDumpIdent);
-    virtual ~MemoryReportRequestChild();
+    MemoryReportRequestChild(uint32_t aGeneration, bool aAnonymize,
+                             const FileDescriptor& aDMDFile);
     NS_IMETHOD Run();
 private:
+    virtual ~MemoryReportRequestChild();
+
     uint32_t mGeneration;
-    nsString mDMDDumpIdent;
+    bool     mAnonymize;
+    FileDescriptor mDMDFile;
 };
 
 NS_IMPL_ISUPPORTS(MemoryReportRequestChild, nsIRunnable)
 
-MemoryReportRequestChild::MemoryReportRequestChild(uint32_t aGeneration, const nsAString& aDMDDumpIdent)
-: mGeneration(aGeneration), mDMDDumpIdent(aDMDDumpIdent)
+MemoryReportRequestChild::MemoryReportRequestChild(
+    uint32_t aGeneration, bool aAnonymize, const FileDescriptor& aDMDFile)
+  : mGeneration(aGeneration), mAnonymize(aAnonymize),
+    mDMDFile(aDMDFile)
 {
     MOZ_COUNT_CTOR(MemoryReportRequestChild);
 }
@@ -355,6 +368,8 @@ public:
     NS_DECL_NSICONSOLELISTENER
 
 private:
+    ~ConsoleListener() {}
+
     ContentChild* mChild;
     friend class ContentChild;
 };
@@ -411,6 +426,8 @@ ConsoleListener::Observe(nsIConsoleMessage* aMessage)
 
 class SystemMessageHandledObserver MOZ_FINAL : public nsIObserver
 {
+    ~SystemMessageHandledObserver() {}
+
 public:
     NS_DECL_ISUPPORTS
     NS_DECL_NSIOBSERVER
@@ -475,8 +492,17 @@ ContentChild* ContentChild::sSingleton;
 // Performs initialization that is not fork-safe, i.e. that must be done after
 // forking from the Nuwa process.
 static void
-InitOnContentProcessCreated()
+InitOnContentProcessCreated(bool aAfterNuwaFork)
 {
+#ifdef MOZ_NUWA_PROCESS
+    // Wait until we are forked from Nuwa
+    if (!aAfterNuwaFork &&
+        Preferences::GetBool("dom.ipc.processPrelaunch.enabled", false)) {
+        return;
+    }
+#else
+    unused << aAfterNuwaFork;
+#endif
     // This will register cross-process observer.
     mozilla::dom::time::InitializeDateCacheCleaner();
 }
@@ -496,6 +522,11 @@ ContentChild::ContentChild()
 ContentChild::~ContentChild()
 {
 }
+
+NS_INTERFACE_MAP_BEGIN(ContentChild)
+  NS_INTERFACE_MAP_ENTRY(nsIContentChild)
+  NS_INTERFACE_MAP_ENTRY(nsISupports)
+NS_INTERFACE_MAP_END
 
 bool
 ContentChild::Init(MessageLoop* aIOLoop,
@@ -658,17 +689,17 @@ ContentChild::InitXPCOM()
         new SystemMessageHandledObserver();
     sysMsgObserver->Init();
 
-#ifndef MOZ_NUWA_PROCESS
-    InitOnContentProcessCreated();
-#endif
+    InitOnContentProcessCreated(/* aAfterNuwaFork = */false);
 }
 
 PMemoryReportRequestChild*
-ContentChild::AllocPMemoryReportRequestChild(const uint32_t& generation,
-                                             const bool &minimizeMemoryUsage,
-                                             const nsString& aDMDDumpIdent)
+ContentChild::AllocPMemoryReportRequestChild(const uint32_t& aGeneration,
+                                             const bool &aAnonymize,
+                                             const bool &aMinimizeMemoryUsage,
+                                             const FileDescriptor& aDMDFile)
 {
-    MemoryReportRequestChild *actor = new MemoryReportRequestChild(generation, aDMDDumpIdent);
+    MemoryReportRequestChild *actor =
+        new MemoryReportRequestChild(aGeneration, aAnonymize, aDMDFile);
     actor->AddRef();
     return actor;
 }
@@ -676,6 +707,7 @@ ContentChild::AllocPMemoryReportRequestChild(const uint32_t& generation,
 // This is just a wrapper for InfallibleTArray<MemoryReport> that implements
 // nsISupports, so it can be passed to nsIMemoryReporter::CollectReports.
 class MemoryReportsWrapper MOZ_FINAL : public nsISupports {
+    ~MemoryReportsWrapper() {}
 public:
     NS_DECL_ISUPPORTS
     MemoryReportsWrapper(InfallibleTArray<MemoryReport> *r) : mReports(r) { }
@@ -707,6 +739,8 @@ public:
         return NS_OK;
     }
 private:
+    ~MemoryReportCallback() {}
+
     const nsCString mProcess;
 };
 NS_IMPL_ISUPPORTS(
@@ -716,15 +750,17 @@ NS_IMPL_ISUPPORTS(
 
 bool
 ContentChild::RecvPMemoryReportRequestConstructor(
-    PMemoryReportRequestChild* child,
-    const uint32_t& generation,
-    const bool& minimizeMemoryUsage,
-    const nsString& aDMDDumpIdent)
+    PMemoryReportRequestChild* aChild,
+    const uint32_t& aGeneration,
+    const bool& aAnonymize,
+    const bool& aMinimizeMemoryUsage,
+    const FileDescriptor& aDMDFile)
 {
-    MemoryReportRequestChild *actor = static_cast<MemoryReportRequestChild*>(child);
+    MemoryReportRequestChild *actor =
+        static_cast<MemoryReportRequestChild*>(aChild);
     nsresult rv;
 
-    if (minimizeMemoryUsage) {
+    if (aMinimizeMemoryUsage) {
         nsCOMPtr<nsIMemoryReporterManager> mgr = do_GetService("@mozilla.org/memory-reporter-manager;1");
         rv = mgr->MinimizeMemoryUsage(actor);
         // mgr will eventually call actor->Run()
@@ -751,7 +787,8 @@ NS_IMETHODIMP MemoryReportRequestChild::Run()
     nsRefPtr<MemoryReportsWrapper> wrappedReports =
         new MemoryReportsWrapper(&reports);
     nsRefPtr<MemoryReportCallback> cb = new MemoryReportCallback(process);
-    mgr->GetReportsForThisProcessExtended(cb, wrappedReports, mDMDDumpIdent);
+    mgr->GetReportsForThisProcessExtended(cb, wrappedReports, mAnonymize,
+                                          FileDescriptorToFILE(mDMDFile, "wb"));
 
     bool sent = Send__delete__(this, mGeneration, reports);
     return sent ? NS_OK : NS_ERROR_FAILURE;
@@ -829,6 +866,23 @@ ContentChild::DeallocPCycleCollectWithLogsChild(PCycleCollectWithLogsChild* /* a
     return true;
 }
 
+PContentBridgeChild*
+ContentChild::AllocPContentBridgeChild(mozilla::ipc::Transport* aTransport,
+                                       base::ProcessId aOtherProcess)
+{
+    return ContentBridgeChild::Create(aTransport, aOtherProcess);
+}
+
+PContentBridgeParent*
+ContentChild::AllocPContentBridgeParent(mozilla::ipc::Transport* aTransport,
+                                        base::ProcessId aOtherProcess)
+{
+    MOZ_ASSERT(!mLastBridge);
+    mLastBridge = static_cast<ContentBridgeParent*>(
+        ContentBridgeParent::Create(aTransport, aOtherProcess));
+    return mLastBridge;
+}
+
 PCompositorChild*
 ContentChild::AllocPCompositorChild(mozilla::ipc::Transport* aTransport,
                                     base::ProcessId aOtherProcess)
@@ -864,7 +918,9 @@ ContentChild::RecvSetProcessSandbox()
   // at some point; see bug 880808.
 #if defined(MOZ_CONTENT_SANDBOX)
 #if defined(XP_LINUX)
-    SetCurrentProcessSandbox();
+    if (CanSandboxContentProcess()) {
+        SetContentProcessSandbox();
+    }
 #elif defined(XP_WIN)
     mozilla::SandboxTarget::Instance()->StartSandbox();
 #endif
@@ -900,51 +956,43 @@ ContentChild::AllocPJavaScriptChild()
 {
     MOZ_ASSERT(!ManagedPJavaScriptChild().Length());
 
-    nsCOMPtr<nsIJSRuntimeService> svc = do_GetService("@mozilla.org/js/xpc/RuntimeService;1");
-    NS_ENSURE_TRUE(svc, nullptr);
-
-    JSRuntime *rt;
-    svc->GetRuntime(&rt);
-    NS_ENSURE_TRUE(svc, nullptr);
-
-    mozilla::jsipc::JavaScriptChild *child = new mozilla::jsipc::JavaScriptChild(rt);
-    if (!child->init()) {
-        delete child;
-        return nullptr;
-    }
-    return child;
+    return nsIContentChild::AllocPJavaScriptChild();
 }
 
 bool
-ContentChild::DeallocPJavaScriptChild(PJavaScriptChild *child)
+ContentChild::DeallocPJavaScriptChild(PJavaScriptChild *aChild)
 {
-    static_cast<mozilla::jsipc::JavaScriptChild *>(child)->decref();
-    return true;
+    return nsIContentChild::DeallocPJavaScriptChild(aChild);
 }
 
 PBrowserChild*
 ContentChild::AllocPBrowserChild(const IPCTabContext& aContext,
                                  const uint32_t& aChromeFlags,
-                                 const uint64_t& aId,
+                                 const uint64_t& aID,
                                  const bool& aIsForApp,
                                  const bool& aIsForBrowser)
 {
-    // We'll happily accept any kind of IPCTabContext here; we don't need to
-    // check that it's of a certain type for security purposes, because we
-    // believe whatever the parent process tells us.
+    return nsIContentChild::AllocPBrowserChild(aContext,
+                                               aChromeFlags,
+                                               aID,
+                                               aIsForApp,
+                                               aIsForBrowser);
+}
 
-    MaybeInvalidTabContext tc(aContext);
-    if (!tc.IsValid()) {
-        NS_ERROR(nsPrintfCString("Received an invalid TabContext from "
-                                 "the parent process. (%s)  Crashing...",
-                                 tc.GetInvalidReason()).get());
-        MOZ_CRASH("Invalid TabContext received from the parent process.");
-    }
-
-    nsRefPtr<TabChild> child = TabChild::Create(this, tc.GetTabContext(), aChromeFlags);
-
-    // The ref here is released in DeallocPBrowserChild.
-    return child.forget().take();
+bool
+ContentChild::SendPBrowserConstructor(PBrowserChild* aActor,
+                                      const IPCTabContext& aContext,
+                                      const uint32_t& aChromeFlags,
+                                      const uint64_t& aID,
+                                      const bool& aIsForApp,
+                                      const bool& aIsForBrowser)
+{
+    return PContentChild::SendPBrowserConstructor(aActor,
+                                                  aContext,
+                                                  aChromeFlags,
+                                                  aID,
+                                                  aIsForApp,
+                                                  aIsForBrowser);
 }
 
 bool
@@ -998,108 +1046,42 @@ ContentChild::DeallocPFileDescriptorSetChild(PFileDescriptorSetChild* aActor)
 }
 
 bool
-ContentChild::DeallocPBrowserChild(PBrowserChild* iframe)
+ContentChild::DeallocPBrowserChild(PBrowserChild* aIframe)
 {
-    TabChild* child = static_cast<TabChild*>(iframe);
-    NS_RELEASE(child);
-    return true;
+    return nsIContentChild::DeallocPBrowserChild(aIframe);
 }
 
 PBlobChild*
 ContentChild::AllocPBlobChild(const BlobConstructorParams& aParams)
 {
-    return BlobChild::Create(this, aParams);
+    return nsIContentChild::AllocPBlobChild(aParams);
+}
+
+mozilla::PRemoteSpellcheckEngineChild *
+ContentChild::AllocPRemoteSpellcheckEngineChild()
+{
+    NS_NOTREACHED("Default Constructor for PRemoteSpellcheckEngineChilf should never be called");
+    return nullptr;
+}
+
+bool
+ContentChild::DeallocPRemoteSpellcheckEngineChild(PRemoteSpellcheckEngineChild *child)
+{
+    delete child;
+    return true;
 }
 
 bool
 ContentChild::DeallocPBlobChild(PBlobChild* aActor)
 {
-    delete aActor;
-    return true;
+    return nsIContentChild::DeallocPBlobChild(aActor);
 }
 
-BlobChild*
-ContentChild::GetOrCreateActorForBlob(nsIDOMBlob* aBlob)
+PBlobChild*
+ContentChild::SendPBlobConstructor(PBlobChild* aActor,
+                                   const BlobConstructorParams& aParams)
 {
-    MOZ_ASSERT(NS_IsMainThread());
-    MOZ_ASSERT(aBlob);
-
-    // If the blob represents a remote blob then we can simply pass its actor back
-    // here.
-    if (nsCOMPtr<nsIRemoteBlob> remoteBlob = do_QueryInterface(aBlob)) {
-        BlobChild* actor =
-            static_cast<BlobChild*>(
-            static_cast<PBlobChild*>(remoteBlob->GetPBlob()));
-        MOZ_ASSERT(actor);
-        return actor;
-    }
-
-    // All blobs shared between processes must be immutable.
-    nsCOMPtr<nsIMutable> mutableBlob = do_QueryInterface(aBlob);
-    if (!mutableBlob || NS_FAILED(mutableBlob->SetMutable(false))) {
-        NS_WARNING("Failed to make blob immutable!");
-        return nullptr;
-    }
-
-#ifdef DEBUG
-    {
-        // XXX This is only safe so long as all blob implementations in our tree
-        //     inherit nsDOMFileBase. If that ever changes then this will need to
-        //     grow a real interface or something.
-        const auto* blob = static_cast<nsDOMFileBase*>(aBlob);
-
-        MOZ_ASSERT(!blob->IsSizeUnknown());
-        MOZ_ASSERT(!blob->IsDateUnknown());
-    }
-#endif
-
-    ParentBlobConstructorParams params;
-
-    nsString contentType;
-    nsresult rv = aBlob->GetType(contentType);
-    NS_ENSURE_SUCCESS(rv, nullptr);
-
-    uint64_t length;
-    rv = aBlob->GetSize(&length);
-    NS_ENSURE_SUCCESS(rv, nullptr);
-
-    nsCOMPtr<nsIInputStream> stream;
-    rv = aBlob->GetInternalStream(getter_AddRefs(stream));
-    NS_ENSURE_SUCCESS(rv, nullptr);
-
-    InputStreamParams inputStreamParams;
-    nsTArray<mozilla::ipc::FileDescriptor> fds;
-    SerializeInputStream(stream, inputStreamParams, fds);
-
-    MOZ_ASSERT(fds.IsEmpty());
-
-    params.optionalInputStreamParams() = inputStreamParams;
-
-    nsCOMPtr<nsIDOMFile> file = do_QueryInterface(aBlob);
-    if (file) {
-        FileBlobConstructorParams fileParams;
-
-        rv = file->GetName(fileParams.name());
-        NS_ENSURE_SUCCESS(rv, nullptr);
-
-        rv = file->GetMozLastModifiedDate(&fileParams.modDate());
-        NS_ENSURE_SUCCESS(rv, nullptr);
-
-        fileParams.contentType() = contentType;
-        fileParams.length() = length;
-
-        params.blobParams() = fileParams;
-    } else {
-        NormalBlobConstructorParams blobParams;
-        blobParams.contentType() = contentType;
-        blobParams.length() = length;
-        params.blobParams() = blobParams;
-    }
-
-    BlobChild* actor = BlobChild::Create(this, aBlob);
-    NS_ENSURE_TRUE(actor, nullptr);
-
-    return SendPBlobConstructor(actor, params) ? actor : nullptr;
+    return PContentChild::SendPBlobConstructor(aActor, aParams);
 }
 
 PCrashReporterChild*
@@ -1234,6 +1216,28 @@ bool
 ContentChild::DeallocPNeckoChild(PNeckoChild* necko)
 {
     delete necko;
+    return true;
+}
+
+PScreenManagerChild*
+ContentChild::AllocPScreenManagerChild(uint32_t* aNumberOfScreens,
+                                       float* aSystemDefaultScale,
+                                       bool* aSuccess)
+{
+    // The ContentParent should never attempt to allocate the
+    // nsScreenManagerProxy. Instead, the nsScreenManagerProxy
+    // service is requested and instantiated via XPCOM, and the
+    // constructor of nsScreenManagerProxy sets up the IPC connection.
+    NS_NOTREACHED("Should never get here!");
+    return nullptr;
+}
+
+bool
+ContentChild::DeallocPScreenManagerChild(PScreenManagerChild* aService)
+{
+    // nsScreenManagerProxy is AddRef'd in its constructor.
+    nsScreenManagerProxy *child = static_cast<nsScreenManagerProxy*>(aService);
+    child->Release();
     return true;
 }
 
@@ -1897,7 +1901,7 @@ public:
         }
 
         // Perform other after-fork initializations.
-        InitOnContentProcessCreated();
+        InitOnContentProcessCreated(/* aAfterNuwaFork = */true);
 
         return NS_OK;
     }

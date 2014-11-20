@@ -1,4 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -37,19 +38,21 @@ namespace mozilla {
 class ThreadStackHelper
 {
 public:
-  typedef Telemetry::HangHistogram::Stack Stack;
+  typedef Telemetry::HangStack Stack;
 
 private:
 #ifdef MOZ_ENABLE_PROFILER_SPS
   const PseudoStack* const mPseudoStack;
 #endif
-  Stack mStackBuffer;
+  Stack* mStackToFill;
   size_t mMaxStackSize;
+  size_t mMaxBufferSize;
 
   bool PrepareStackBuffer(Stack& aStack);
   void FillStackBuffer();
 #ifdef MOZ_ENABLE_PROFILER_SPS
   const char* AppendJSEntry(const volatile StackEntry* aEntry,
+                            intptr_t& aAvailableBufferSize,
                             const char* aPrevLabel);
 #endif
 
@@ -81,12 +84,11 @@ public:
 #if defined(XP_LINUX)
 private:
   static int sInitialized;
-  static sem_t sSem;
-  static struct sigaction sOldSigAction;
-  static ThreadStackHelper* sCurrent;
+  static int sFillStackSignum;
 
-  static void SigAction(int aSignal, siginfo_t* aInfo, void* aContext);
+  static void FillStackHandler(int aSignal, siginfo_t* aInfo, void* aContext);
 
+  sem_t mSem;
   pid_t mThreadID;
 
 #elif defined(XP_WIN)

@@ -1,0 +1,171 @@
+ 0:00.48 C:/mozilla-build/msys/bin/sh.exe -c c:/mozilla-build/mozmake/mozmake.EXE -f client.mk -s
+ 0:03.60 Adding client.mk options from b:/Waterfox/33.0.2/mozilla-release/.mozconfig:
+ 0:03.60     MOZ_CO_MODULE=mozilla/tools/update-packaging
+ 0:03.60     CONFIG_GUESS=x86_64-pc-mingw32
+ 0:03.60     MOZ_OPTIMIZE_LDFLAGS=-MACHINE:X64 -OPT:REF,ICF -FORCE
+ 0:03.60     MOZ_OBJDIR=b:/Waterfox/33.0.2/objdir
+ 0:03.60     OBJDIR=b:/Waterfox/33.0.2/objdir
+ 0:03.60     FOUND_MOZCONFIG=b:/Waterfox/33.0.2/mozilla-release/.mozconfig
+ 0:05.12 cd b:/Waterfox/33.0.2/objdir
+ 0:05.15 b:/Waterfox/33.0.2/mozilla-release/configure
+ 0:05.77 Adding configure options from b:/Waterfox/33.0.2/mozilla-release/.mozconfig
+ 0:05.77   --enable-application=browser
+ 0:05.77   --enable-application=browser
+ 0:05.77   --target=x86_64-pc-mingw32
+ 0:05.77   --host=x86_64-pc-mingw32
+ 0:05.77   --with-app-name=waterfox
+ 0:05.77   --with-branding=browser/branding/waterfox
+ 0:05.77   --disable-tests
+ 0:05.77   --disable-ipdl-tests
+ 0:05.77   --disable-gamepad
+ 0:05.77   --enable-optimize=-O2 -w
+ 0:05.77   --enable-update-channel=release
+ 0:05.77   --enable-updater
+ 0:05.77   --enable-update-packaging
+ 0:05.77   --enable-crashreporter
+ 0:05.77   --disable-mochitest
+ 0:05.77   --disable-mochitests
+ 0:07.86 loading cache ./config.cache
+ 0:08.54 checking host system type... x86_64-pc-mingw32
+ 0:08.92 checking target system type... x86_64-pc-mingw32
+ 0:09.30 checking build system type... x86_64-pc-mingw32
+ 0:09.32 checking for mawk... no
+ 0:09.33 checking for gawk... gawk
+ 0:09.41 checking for python2.7... /c/mozilla-build/python/python2.7
+ 0:09.47 Creating Python environment
+ 0:09.77 checking Python environment is Mozilla virtualenv... yes
+ 0:09.87 checking for perl5... no
+ 0:09.88 checking for perl... /bin/perl
+ 0:10.19 checking for gcc... icl
+ 0:10.46 checking whether the C compiler (icl  ) works... yes
+ 0:10.46 checking whether the C compiler (icl  ) is a cross-compiler... no
+ 0:10.59 checking whether we are using GNU C... no
+ 0:10.71 checking whether icl accepts -g... no
+ 0:12.76 checking for c++... icl
+ 0:13.02 checking whether the C++ compiler (icl  ) works... yes
+ 0:13.02 checking whether the C++ compiler (icl  ) is a cross-compiler... no
+ 0:13.15 checking whether we are using GNU C++... no
+ 0:13.27 checking whether icl accepts -g... no
+ 0:13.28 checking for ranlib... :
+ 0:13.30 checking for ml64... /c/Program Files (x86)/Microsoft Visual Studio 10.0/VC/BIN/amd64/ml64
+ 0:13.36 checking for ar... xilib -NOLOGO -OUT:"$@"
+ 0:13.36 checking for ld... xilink
+ 0:13.38 checking for strip... no
+ 0:13.39 checking for windres... no
+ 0:13.81 checking for midl... midl
+ 0:14.77 checking for std::_Throw... no
+ 0:15.13 checking for overridable _RAISE... yes
+ 0:15.40 checking for winsdkver.h... yes
+ 0:15.63 checking for highest Windows version supported by this SDK... 0x06010000
+ 0:15.81 checking for Windows SDK being recent enough... yes
+ 0:15.96 checking how to run the C preprocessor... icl -E -nologo
+ 0:15.96 checking how to run the C++ preprocessor... icl -TP -E -nologo
+ 0:16.17 checking for a BSD compatible install... /bin/install -c
+ 0:16.22 checking whether ln -s works... no
+ 0:16.25 checking for minimum required perl version >= 5.006... 5.006001
+ 0:16.29 checking for full perl installation... yes
+ 0:16.31 checking for doxygen... :
+ 0:16.32 checking for autoconf... /bin/autoconf
+ 0:16.39 checking for unzip... /c/mozilla-build/info-zip/unzip
+ 0:16.45 checking for zip... /c/mozilla-build/info-zip/zip
+ 0:16.52 checking for xargs... /bin/xargs
+ 0:16.60 checking for rpmbuild... :
+ 0:16.66 checking for c:/mozilla-build/mozmake/mozmake.EXE... b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /local/bin/c: binary operator expected
+ 0:16.66 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/mozilla-build/wget/c: binary operator expected
+ 0:16.66 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/mozilla-build/7zip/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/mozilla-build/python/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/mozilla-build/svn-win32-1.6.3/bin/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/mozilla-build/upx391w/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/mozilla-build/emacs-24.3/bin/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/mozilla-build/info-zip/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/mozilla-build/nsis-2.46u/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/mozilla-build/nsis-3.0a2/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/mozilla-build/hg/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/mozilla-build/python/Scripts/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/mozilla-build/kdiff3/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/mozilla-build/yasm/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/mozilla-build/mozmake/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: ./c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /local/bin/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /mingw/bin/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /bin/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/Intel/Composer XE 2013 SP1/bin/intel64/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/Intel/Composer XE 2013 SP1/redist/intel64/compiler/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/Microsoft Visual Studio 10.0/VC/BIN/amd64/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/windows/Microsoft.NET/Framework64/v4.0.30319/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/windows/Microsoft.NET/Framework64/v3.5/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/Microsoft Visual Studio 10.0/VC/VCPackages/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/Microsoft Visual Studio 10.0/Common7/IDE/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/Microsoft Visual Studio 10.0/Common7/Tools/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/HTML Help Workshop/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/Microsoft SDKs/Windows/v7.0A/bin/NETFX 4.0 Tools/x64/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/Microsoft SDKs/Windows/v7.0A/bin/x64/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/Microsoft SDKs/Windows/v7.0A/bin/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/Intel/Composer XE 2013 SP1/redist/intel64/ipp/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/Intel/Composer XE 2013 SP1/redist/intel64/compiler/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/Intel/Composer XE 2013 SP1/redist/intel64/mkl/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/Intel/Composer XE 2013 SP1/redist/intel64/compiler/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/Intel/Composer XE 2013 SP1/redist/intel64/tbb/vc10/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/Windows Kits/8.1/bin/x64/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/Microsoft Visual Studio 10.0/VC/BIN/amd64/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/windows/Microsoft.NET/Framework64/v4.0.30319/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/windows/Microsoft.NET/Framework64/v3.5/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/Microsoft Visual Studio 10.0/VC/VCPackages/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/Microsoft Visual Studio 10.0/Common7/IDE/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/Microsoft Visual Studio 10.0/Common7/Tools/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/HTML Help Workshop/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/Microsoft SDKs/Windows/v7.0A/bin/NETFX 4.0 Tools/x64/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/Microsoft SDKs/Windows/v7.0A/bin/x64/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/Microsoft SDKs/Windows/v7.0A/bin/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/windows/System32/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/windows/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/windows/System32/Wbem/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/mozilla-build/moztools-x64/bin/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/Program Files (x86)/Intel/Composer XE 2013 SP1/redist/intel64/mpirt/c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: ./c: binary operator expected
+ 0:16.67 b:/Waterfox/33.0.2/mozilla-release/configure: line 5385: test: /c/mozilla-build/vim/vim72/c: binary operator expected
+ 0:16.67 no
+ 0:16.68 checking for make... /local/bin/make
+ 0:17.40 checking for X... no
+ 0:18.46 checking that static assertion macros used in autoconf tests work... yes
+ 0:18.74 checking for 64-bit OS... yes
+ 0:18.87 checking for custom <inttypes.h> implementation... none specified
+ 0:19.33 grep: conftest.s: No such file or directory
+ 0:20.08 b:/Waterfox/33.0.2/mozilla-release/configure: line 9838: syntax error near unexpected token `else'
+ 0:20.08 b:/Waterfox/33.0.2/mozilla-release/configure: line 9838: `  else'
+ 0:20.08 ------ config.log ------
+ 0:20.11 ; return 0; }
+ 0:20.11 configure:7049: icl -c  -TP -nologo -D_HAS_EXCEPTIONS=0  conftest.C 1>&5
+ 0:20.11 conftest.C
+ 0:20.11 configure:7066: icl -c  -TP -nologo -D_HAS_EXCEPTIONS=0  conftest.C 1>&5
+ 0:20.11 conftest.C
+ 0:20.11 configure(7066): error: the size of an array must be greater than zero
+ 0:20.11   CONFIGURE_STATIC_ASSERT(0)
+ 0:20.11   ^
+ 0:20.11 
+ 0:20.11 compilation aborted for conftest.C (code 2)
+ 0:20.11 configure: failed program was:
+ 0:20.11 #line 7059 "configure"
+ 0:20.11 #include "confdefs.h"
+ 0:20.11 
+ 0:20.11 #define CONFIGURE_STATIC_ASSERT(condition) CONFIGURE_STATIC_ASSERT_IMPL(condition, __LINE__)
+ 0:20.11 #define CONFIGURE_STATIC_ASSERT_IMPL(condition, line) CONFIGURE_STATIC_ASSERT_IMPL2(condition, line)
+ 0:20.11 #define CONFIGURE_STATIC_ASSERT_IMPL2(condition, line) typedef int static_assert_line_##line[(condition) ? 1 : -1]
+ 0:20.11 
+ 0:20.11 int main() {
+ 0:20.11 CONFIGURE_STATIC_ASSERT(0)
+ 0:20.11 ; return 0; }
+ 0:20.11 configure:8333: checking for 64-bit OS
+ 0:20.11 configure:8342: icl -c  -TC -nologo -D_HAS_EXCEPTIONS=0  conftest.c 1>&5
+ 0:20.11 conftest.c
+ 0:20.11 configure:8687: checking for custom <inttypes.h> implementation
+ 0:20.12 *** Fix above errors and then restart with\
+ 0:20.12                "c:/mozilla-build/mozmake/mozmake.EXE -f client.mk build"
+ 0:20.12 b:/Waterfox/33.0.2/mozilla-release/client.mk:355: recipe for target 'configure' failed
+ 0:20.12 mozmake.EXE[2]: *** [configure] Error 1
+ 0:20.12 b:/Waterfox/33.0.2/mozilla-release/client.mk:369: recipe for target 'b:/Waterfox/33.0.2/objdir/Makefile' failed
+ 0:20.12 mozmake.EXE[1]: *** [b:/Waterfox/33.0.2/objdir/Makefile] Error 2
+ 0:20.12 client.mk:168: recipe for target 'build' failed
+ 0:20.12 mozmake.EXE: *** [build] Error 2
+ 0:20.14 0 compiler warnings present.
+2

@@ -1,0 +1,212 @@
+﻿// ***************************************************************************
+// *
+// * Copyright (C) 2014 International Business Machines
+// * Corporation and others. All Rights Reserved.
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/es_419.xml
+// *
+// ***************************************************************************
+es_419{
+    Version{"2.1.8.19"}
+    units{
+        acceleration{
+            g-force{
+                dnam{"unidad de fuerza gravitacional"}
+            }
+        }
+        energy{
+            calorie{
+                dnam{"calorías por gramo"}
+                one{"{0} caloría por gramo"}
+                other{"{0} calorías por gramo"}
+            }
+            foodcalorie{
+                dnam{"calorías por kilogramo"}
+                one{"{0} caloría por kilogramo"}
+                other{"{0} calorías por kilogramo"}
+            }
+        }
+        length{
+            decimeter{
+                dnam{"decímetro"}
+            }
+        }
+        mass{
+            carat{
+                dnam{"quilates de gemología"}
+                one{"{0} quilate de gemología"}
+                other{"{0} quilates de gemología"}
+            }
+        }
+        proportion{
+            karat{
+                dnam{"quilates de orfebrería"}
+                one{"{0} quilate de orfebrería"}
+                other{"{0} quilates de orfebrería"}
+            }
+        }
+        temperature{
+            kelvin{
+                dnam{"grados Kelvin"}
+                one{"{0} grado Kelvin"}
+                other{"{0} grados Kelvin"}
+            }
+        }
+    }
+    unitsNarrow{
+        duration{
+            day{
+                dnam{"d."}
+                one{"{0} d."}
+                other{"{0} dd."}
+            }
+            month{
+                dnam{"m."}
+                one{"{0} m."}
+                other{"{0} mm."}
+            }
+            week{
+                dnam{"sem."}
+                one{"{0} sem."}
+                other{"{0} sems."}
+            }
+            year{
+                dnam{"a."}
+                one{"{0} a."}
+                other{"{0} aa."}
+            }
+        }
+    }
+    unitsShort{
+        angle{
+            degree{
+                dnam{"°"}
+                one{"{0} °"}
+                other{"{0} °"}
+            }
+        }
+        duration{
+            day{
+                dnam{"dd."}
+                one{"{0} d."}
+                other{"{0} dd."}
+            }
+            hour{
+                dnam{"h"}
+            }
+            month{
+                dnam{"mm."}
+                one{"{0} m."}
+                other{"{0} mm."}
+            }
+            week{
+                dnam{"sems."}
+                one{"{0} sem."}
+                other{"{0} sems."}
+            }
+            year{
+                dnam{"aa."}
+                one{"{0} a."}
+                other{"{0} aa."}
+            }
+        }
+        electric{
+            volt{
+                dnam{"V"}
+            }
+        }
+        energy{
+            foodcalorie{
+                dnam{"C"}
+                one{"{0} C"}
+                other{"{0} C"}
+            }
+            joule{
+                dnam{"j"}
+                one{"{0} j"}
+                other{"{0} j"}
+            }
+        }
+        length{
+            light-year{
+                dnam{"aa. l."}
+                one{"{0} a. l."}
+                other{"{0} aa. l."}
+            }
+            nautical-mile{
+                dnam{"nmi"}
+                one{"{0} nmi"}
+                other{"{0} nmi"}
+            }
+            parsec{
+                dnam{"parsecs"}
+            }
+            yard{
+                dnam{"yardas"}
+            }
+        }
+        mass{
+            carat{
+                dnam{"CD"}
+                one{"{0} CD"}
+                other{"{0} CD"}
+            }
+            ounce-troy{
+                dnam{"oz t"}
+                one{"{0} oz t"}
+                other{"{0} oz t"}
+            }
+            ton{
+                dnam{"tn"}
+                one{"{0} tn"}
+                other{"{0} tn"}
+            }
+        }
+        power{
+            watt{
+                dnam{"W"}
+            }
+        }
+        pressure{
+            pound-per-square-inch{
+                dnam{"lb/in²"}
+                one{"{0} lb/in²"}
+                other{"{0} lb/in²"}
+            }
+        }
+        proportion{
+            karat{
+                dnam{"kt"}
+                one{"{0} kt"}
+                other{"{0} kt"}
+            }
+        }
+        temperature{
+            kelvin{
+                dnam{"°K"}
+                one{"{0} °K"}
+                other{"{0} °K"}
+            }
+        }
+        volume{
+            cup{
+                dnam{"c"}
+                one{"{0} c"}
+                other{"{0} c"}
+            }
+            pint{
+                dnam{"pintas"}
+            }
+            tablespoon{
+                dnam{"cdas."}
+                one{"{0} cd."}
+                other{"{0} cdas."}
+            }
+            teaspoon{
+                dnam{"cdtas."}
+                one{"{0} cdta."}
+                other{"{0} cdtas."}
+            }
+        }
+    }
+}

@@ -155,7 +155,8 @@ AutocompletePopup.prototype = {
    * Check if the autocomplete popup is open.
    */
   get isOpen() {
-    return this._panel.state == "open" || this._panel.state == "showing";
+    return this._panel &&
+           (this._panel.state == "open" || this._panel.state == "showing");
   },
 
   /**
@@ -169,7 +170,6 @@ AutocompletePopup.prototype = {
     if (this.isOpen) {
       this.hidePopup();
     }
-    this.clearItems();
 
     if (this.onSelect) {
       this._list.removeEventListener("select", this.onSelect, false);
@@ -187,6 +187,8 @@ AutocompletePopup.prototype = {
       gDevTools.off("pref-changed", this._handleThemeChange);
     }
 
+    this._list.remove();
+    this._panel.remove();
     this._document = null;
     this._list = null;
     this._panel = null;

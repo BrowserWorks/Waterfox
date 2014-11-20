@@ -47,8 +47,10 @@ public:
   uint32_t pointerId;
   uint32_t tiltX;
   uint32_t tiltY;
+  bool retargetedByPointerCapture;
 
-  WidgetPointerHelper() : convertToPointer(true), pointerId(0), tiltX(0), tiltY(0) {}
+  WidgetPointerHelper() : convertToPointer(true), pointerId(0), tiltX(0), tiltY(0),
+                          retargetedByPointerCapture(false) {}
 
   void AssignPointerHelperData(const WidgetPointerHelper& aEvent)
   {
@@ -56,6 +58,7 @@ public:
     pointerId = aEvent.pointerId;
     tiltX = aEvent.tiltX;
     tiltY = aEvent.tiltY;
+    retargetedByPointerCapture = aEvent.retargetedByPointerCapture;
   }
 };
 
@@ -420,7 +423,7 @@ public:
     WidgetMouseEventBase(aIsTrusted, aMessage, aWidget, NS_WHEEL_EVENT),
     deltaX(0.0), deltaY(0.0), deltaZ(0.0),
     deltaMode(nsIDOMWheelEvent::DOM_DELTA_PIXEL),
-    customizedByUserPrefs(false), isMomentum(false), isPixelOnlyDevice(false),
+    customizedByUserPrefs(false), isMomentum(false), mIsNoLineOrPageDelta(false),
     lineOrPageDeltaX(0), lineOrPageDeltaY(0), scrollType(SCROLL_DEFAULT),
     overflowDeltaX(0.0), overflowDeltaY(0.0),
     mViewPortIsOverscrolled(false)
@@ -460,9 +463,9 @@ public:
 
   // If device event handlers don't know when they should set lineOrPageDeltaX
   // and lineOrPageDeltaY, this is true.  Otherwise, false.
-  // If isPixelOnlyDevice is true, ESM will generate NS_MOUSE_SCROLL events
-  // when accumulated pixel delta values reach a line height.
-  bool isPixelOnlyDevice;
+  // If mIsNoLineOrPageDelta is true, ESM will generate NS_MOUSE_SCROLL events
+  // when accumulated delta values reach a line height.
+  bool mIsNoLineOrPageDelta;
 
   // If widget sets lineOrPageDelta, EventStateManager will dispatch
   // NS_MOUSE_SCROLL event for compatibility.  Note that the delta value means
@@ -531,7 +534,7 @@ public:
     deltaMode = aEvent.deltaMode;
     customizedByUserPrefs = aEvent.customizedByUserPrefs;
     isMomentum = aEvent.isMomentum;
-    isPixelOnlyDevice = aEvent.isPixelOnlyDevice;
+    mIsNoLineOrPageDelta = aEvent.mIsNoLineOrPageDelta;
     lineOrPageDeltaX = aEvent.lineOrPageDeltaX;
     lineOrPageDeltaY = aEvent.lineOrPageDeltaY;
     scrollType = aEvent.scrollType;

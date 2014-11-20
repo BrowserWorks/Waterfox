@@ -414,6 +414,7 @@ class ICEntry
     _(GetProp_Primitive)        \
     _(GetProp_StringLength)     \
     _(GetProp_Native)           \
+    _(GetProp_NativeDoesNotExist) \
     _(GetProp_NativePrototype)  \
     _(GetProp_CallScripted)     \
     _(GetProp_CallNative)       \
@@ -422,6 +423,7 @@ class ICEntry
     _(GetProp_CallDOMProxyWithGenerationNative)\
     _(GetProp_DOMProxyShadowed) \
     _(GetProp_ArgumentsLength)  \
+    _(GetProp_ArgumentsCallee)  \
                                 \
     _(SetProp_Fallback)         \
     _(SetProp_Native)           \
@@ -1965,6 +1967,14 @@ class ICCompare_Fallback : public ICFallbackStub
         return space->allocate<ICCompare_Fallback>(code);
     }
 
+    static const size_t UNOPTIMIZABLE_ACCESS_BIT = 0;
+    void noteUnoptimizableAccess() {
+        extra_ |= (1u << UNOPTIMIZABLE_ACCESS_BIT);
+    }
+    bool hadUnoptimizableAccess() const {
+        return extra_ & (1u << UNOPTIMIZABLE_ACCESS_BIT);
+    }
+
     // Compiler for this stub kind.
     class Compiler : public ICStubCompiler {
       protected:
@@ -3397,11 +3407,11 @@ class ICGetElem_TypedArray : public ICStub
   protected: // Protected to silence Clang warning.
     HeapPtrShape shape_;
 
-    ICGetElem_TypedArray(JitCode *stubCode, HandleShape shape, uint32_t type);
+    ICGetElem_TypedArray(JitCode *stubCode, HandleShape shape, Scalar::Type type);
 
   public:
     static inline ICGetElem_TypedArray *New(ICStubSpace *space, JitCode *code,
-                                            HandleShape shape, uint32_t type)
+                                            HandleShape shape, Scalar::Type type)
     {
         if (!code)
             return nullptr;
@@ -3418,7 +3428,7 @@ class ICGetElem_TypedArray : public ICStub
 
     class Compiler : public ICStubCompiler {
       RootedShape shape_;
-      uint32_t type_;
+      Scalar::Type type_;
 
       protected:
         bool generateStubCode(MacroAssembler &masm);
@@ -3428,7 +3438,7 @@ class ICGetElem_TypedArray : public ICStub
         }
 
       public:
-        Compiler(JSContext *cx, Shape *shape, uint32_t type)
+        Compiler(JSContext *cx, Shape *shape, Scalar::Type type)
           : ICStubCompiler(cx, ICStub::GetElem_TypedArray),
             shape_(cx, shape),
             type_(type)
@@ -3712,12 +3722,12 @@ class ICSetElem_TypedArray : public ICStub
   protected: // Protected to silence Clang warning.
     HeapPtrShape shape_;
 
-    ICSetElem_TypedArray(JitCode *stubCode, HandleShape shape, uint32_t type,
+    ICSetElem_TypedArray(JitCode *stubCode, HandleShape shape, Scalar::Type type,
                          bool expectOutOfBounds);
 
   public:
     static inline ICSetElem_TypedArray *New(ICStubSpace *space, JitCode *code,
-                                            HandleShape shape, uint32_t type,
+                                            HandleShape shape, Scalar::Type type,
                                             bool expectOutOfBounds)
     {
         if (!code)
@@ -3725,8 +3735,8 @@ class ICSetElem_TypedArray : public ICStub
         return space->allocate<ICSetElem_TypedArray>(code, shape, type, expectOutOfBounds);
     }
 
-    uint32_t type() const {
-        return extra_ & 0xff;
+    Scalar::Type type() const {
+        return (Scalar::Type) (extra_ & 0xff);
     }
 
     bool expectOutOfBounds() const {
@@ -3743,7 +3753,7 @@ class ICSetElem_TypedArray : public ICStub
 
     class Compiler : public ICStubCompiler {
         RootedShape shape_;
-        uint32_t type_;
+        Scalar::Type type_;
         bool expectOutOfBounds_;
 
       protected:
@@ -3755,7 +3765,7 @@ class ICSetElem_TypedArray : public ICStub
         }
 
       public:
-        Compiler(JSContext *cx, Shape *shape, uint32_t type, bool expectOutOfBounds)
+        Compiler(JSContext *cx, Shape *shape, Scalar::Type type, bool expectOutOfBounds)
           : ICStubCompiler(cx, ICStub::SetElem_TypedArray),
             shape_(cx, shape),
             type_(type),
@@ -4412,6 +4422,104 @@ class ICGetPropNativeCompiler : public ICStubCompiler
     }
 };
 
+template <size_t ProtoChainDepth> class ICGetProp_NativeDoesNotExistImpl;
+
+class ICGetProp_NativeDoesNotExist : public ICMonitoredStub
+{
+    friend class ICStubSpace;
+  public:
+    static const size_t MAX_PROTO_CHAIN_DEPTH = 8;
+
+  protected:
+    ICGetProp_NativeDoesNotExist(JitCode *stubCode, ICStub *firstMonitorStub,
+                                 size_t protoChainDepth);
+
+  public:
+    static inline ICGetProp_NativeDoesNotExist *New(ICStubSpace *space, JitCode *code,
+                                                    ICStub *firstMonitorStub,
+                                                    size_t protoChainDepth)
+    {
+        if (!code)
+            return nullptr;
+        return space->allocate<ICGetProp_NativeDoesNotExist>(code, firstMonitorStub,
+                                                             protoChainDepth);
+    }
+
+    size_t protoChainDepth() const {
+        MOZ_ASSERT(extra_ <= MAX_PROTO_CHAIN_DEPTH);
+        return extra_;
+    }
+
+    template <size_t ProtoChainDepth>
+    ICGetProp_NativeDoesNotExistImpl<ProtoChainDepth> *toImpl() {
+        MOZ_ASSERT(ProtoChainDepth == protoChainDepth());
+        return static_cast<ICGetProp_NativeDoesNotExistImpl<ProtoChainDepth> *>(this);
+    }
+
+    static size_t offsetOfShape(size_t idx);
+};
+
+template <size_t ProtoChainDepth>
+class ICGetProp_NativeDoesNotExistImpl : public ICGetProp_NativeDoesNotExist
+{
+    friend class ICStubSpace;
+  public:
+    static const size_t MAX_PROTO_CHAIN_DEPTH = 8;
+    static const size_t NumShapes = ProtoChainDepth + 1;
+
+  private:
+    mozilla::Array<HeapPtrShape, NumShapes> shapes_;
+
+    ICGetProp_NativeDoesNotExistImpl(JitCode *stubCode, ICStub *firstMonitorStub,
+                                     const AutoShapeVector *shapes);
+
+  public:
+    static inline ICGetProp_NativeDoesNotExistImpl<ProtoChainDepth> *New(
+        ICStubSpace *space, JitCode *code, ICStub *firstMonitorStub,
+        const AutoShapeVector *shapes)
+    {
+        if (!code)
+            return nullptr;
+        return space->allocate<ICGetProp_NativeDoesNotExistImpl<ProtoChainDepth>>(
+                    code, firstMonitorStub, shapes);
+    }
+
+    void traceShapes(JSTracer *trc) {
+        for (size_t i = 0; i < NumShapes; i++)
+            MarkShape(trc, &shapes_[i], "baseline-getpropnativedoesnotexist-stub-shape");
+    }
+
+    static size_t offsetOfShape(size_t idx) {
+        return offsetof(ICGetProp_NativeDoesNotExistImpl, shapes_) + (idx * sizeof(HeapPtrShape));
+    }
+};
+
+class ICGetPropNativeDoesNotExistCompiler : public ICStubCompiler
+{
+    ICStub *firstMonitorStub_;
+    RootedObject obj_;
+    size_t protoChainDepth_;
+
+  protected:
+    virtual int32_t getKey() const {
+        return static_cast<int32_t>(kind) | (static_cast<int32_t>(protoChainDepth_) << 16);
+    }
+
+    bool generateStubCode(MacroAssembler &masm);
+
+  public:
+    ICGetPropNativeDoesNotExistCompiler(JSContext *cx, ICStub *firstMonitorStub,
+                                        HandleObject obj, size_t protoChainDepth);
+
+    template <size_t ProtoChainDepth>
+    ICStub *getStubSpecific(ICStubSpace *space, const AutoShapeVector *shapes) {
+        return ICGetProp_NativeDoesNotExistImpl<ProtoChainDepth>::New(space, getStubCode(),
+                                                                      firstMonitorStub_, shapes);
+    }
+
+    ICStub *getStub(ICStubSpace *space);
+};
+
 class ICGetPropCallGetter : public ICMonitoredStub
 {
     friend class ICStubSpace;
@@ -4684,7 +4792,7 @@ class ICGetPropCallDOMProxyNativeStub : public ICMonitoredStub
     HeapPtrShape shape_;
 
     // Proxy handler to check against.
-    BaseProxyHandler *proxyHandler_;
+    const BaseProxyHandler *proxyHandler_;
 
     // Object shape of expected expando object. (nullptr if no expando object should be there)
     HeapPtrShape expandoShape_;
@@ -4701,7 +4809,7 @@ class ICGetPropCallDOMProxyNativeStub : public ICMonitoredStub
 
     ICGetPropCallDOMProxyNativeStub(ICStub::Kind kind, JitCode *stubCode,
                                     ICStub *firstMonitorStub, HandleShape shape,
-                                    BaseProxyHandler *proxyHandler, HandleShape expandoShape,
+                                    const BaseProxyHandler *proxyHandler, HandleShape expandoShape,
                                     HandleObject holder, HandleShape holderShape,
                                     HandleFunction getter, uint32_t pcOffset);
 
@@ -4752,7 +4860,7 @@ class ICGetProp_CallDOMProxyNative : public ICGetPropCallDOMProxyNativeStub
 {
     friend class ICStubSpace;
     ICGetProp_CallDOMProxyNative(JitCode *stubCode, ICStub *firstMonitorStub, HandleShape shape,
-                                 BaseProxyHandler *proxyHandler, HandleShape expandoShape,
+                                 const BaseProxyHandler *proxyHandler, HandleShape expandoShape,
                                  HandleObject holder, HandleShape holderShape,
                                  HandleFunction getter, uint32_t pcOffset)
       : ICGetPropCallDOMProxyNativeStub(ICStub::GetProp_CallDOMProxyNative, stubCode,
@@ -4763,7 +4871,7 @@ class ICGetProp_CallDOMProxyNative : public ICGetPropCallDOMProxyNativeStub
   public:
     static inline ICGetProp_CallDOMProxyNative *New(
             ICStubSpace *space, JitCode *code, ICStub *firstMonitorStub,
-            HandleShape shape, BaseProxyHandler *proxyHandler,
+            HandleShape shape, const BaseProxyHandler *proxyHandler,
             HandleShape expandoShape, HandleObject holder, HandleShape holderShape,
             HandleFunction getter, uint32_t pcOffset)
     {
@@ -4787,7 +4895,7 @@ class ICGetProp_CallDOMProxyWithGenerationNative : public ICGetPropCallDOMProxyN
 
   public:
     ICGetProp_CallDOMProxyWithGenerationNative(JitCode *stubCode, ICStub *firstMonitorStub,
-                                               HandleShape shape, BaseProxyHandler *proxyHandler,
+                                               HandleShape shape, const BaseProxyHandler *proxyHandler,
                                                ExpandoAndGeneration *expandoAndGeneration,
                                                uint32_t generation, HandleShape expandoShape,
                                                HandleObject holder, HandleShape holderShape,
@@ -4802,7 +4910,7 @@ class ICGetProp_CallDOMProxyWithGenerationNative : public ICGetPropCallDOMProxyN
 
     static inline ICGetProp_CallDOMProxyWithGenerationNative *New(
             ICStubSpace *space, JitCode *code, ICStub *firstMonitorStub,
-            HandleShape shape, BaseProxyHandler *proxyHandler,
+            HandleShape shape, const BaseProxyHandler *proxyHandler,
             ExpandoAndGeneration *expandoAndGeneration, uint32_t generation,
             HandleShape expandoShape, HandleObject holder, HandleShape holderShape,
             HandleFunction getter, uint32_t pcOffset)
@@ -4863,18 +4971,18 @@ class ICGetProp_DOMProxyShadowed : public ICMonitoredStub
   friend class ICStubSpace;
   protected:
     HeapPtrShape shape_;
-    BaseProxyHandler *proxyHandler_;
+    const BaseProxyHandler *proxyHandler_;
     HeapPtrPropertyName name_;
     uint32_t pcOffset_;
 
     ICGetProp_DOMProxyShadowed(JitCode *stubCode, ICStub *firstMonitorStub, HandleShape shape,
-                               BaseProxyHandler *proxyHandler, HandlePropertyName name,
+                               const BaseProxyHandler *proxyHandler, HandlePropertyName name,
                                uint32_t pcOffset);
 
   public:
     static inline ICGetProp_DOMProxyShadowed *New(ICStubSpace *space, JitCode *code,
                                                   ICStub *firstMonitorStub, HandleShape shape,
-                                                  BaseProxyHandler *proxyHandler,
+                                                  const BaseProxyHandler *proxyHandler,
                                                   HandlePropertyName name, uint32_t pcOffset)
     {
         if (!code)
@@ -4966,6 +5074,39 @@ class ICGetProp_ArgumentsLength : public ICStub
 
         ICStub *getStub(ICStubSpace *space) {
             return ICGetProp_ArgumentsLength::New(space, getStubCode());
+        }
+    };
+};
+
+class ICGetProp_ArgumentsCallee : public ICMonitoredStub
+{
+    friend class ICStubSpace;
+
+  protected:
+    ICGetProp_ArgumentsCallee(JitCode *stubCode, ICStub *firstMonitorStub);
+
+  public:
+    static inline ICGetProp_ArgumentsCallee *New(ICStubSpace *space, JitCode *code,
+                                                 ICStub *firstMonitorStub)
+    {
+        if (!code)
+            return nullptr;
+        return space->allocate<ICGetProp_ArgumentsCallee>(code, firstMonitorStub);
+    }
+
+    class Compiler : public ICStubCompiler {
+      protected:
+        ICStub *firstMonitorStub_;
+        bool generateStubCode(MacroAssembler &masm);
+
+      public:
+        Compiler(JSContext *cx, ICStub *firstMonitorStub)
+          : ICStubCompiler(cx, ICStub::GetProp_ArgumentsCallee),
+            firstMonitorStub_(firstMonitorStub)
+        {}
+
+        ICStub *getStub(ICStubSpace *space) {
+            return ICGetProp_ArgumentsCallee::New(space, getStubCode(), firstMonitorStub_);
         }
     };
 };
@@ -5155,7 +5296,8 @@ class ICSetProp_NativeAddImpl : public ICSetProp_NativeAdd
     }
 };
 
-class ICSetPropNativeAddCompiler : public ICStubCompiler {
+class ICSetPropNativeAddCompiler : public ICStubCompiler
+{
     RootedObject obj_;
     RootedShape oldShape_;
     size_t protoChainDepth_;
@@ -6320,7 +6462,7 @@ IsCacheableDOMProxy(JSObject *obj)
     if (!obj->is<ProxyObject>())
         return false;
 
-    BaseProxyHandler *handler = obj->as<ProxyObject>().handler();
+    const BaseProxyHandler *handler = obj->as<ProxyObject>().handler();
 
     if (handler->family() != GetDOMProxyHandlerFamily())
         return false;

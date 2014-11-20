@@ -231,8 +231,10 @@ interface TestExampleInterface {
   void passCastableObjectNullableSequence(sequence<TestInterface>? arg);
   void passNullableCastableObjectNullableSequence(sequence<TestInterface?>? arg);
   void passOptionalSequence(optional sequence<long> arg);
+  void passOptionalSequenceWithDefaultValue(optional sequence<long> arg = []);
   void passOptionalNullableSequence(optional sequence<long>? arg);
   void passOptionalNullableSequenceWithDefaultValue(optional sequence<long>? arg = null);
+  void passOptionalNullableSequenceWithDefaultValue2(optional sequence<long>? arg = []);
   void passOptionalObjectSequence(optional sequence<TestInterface> arg);
   void passExternalInterfaceSequence(sequence<TestExternalInterface> arg);
   void passNullableExternalInterfaceSequence(sequence<TestExternalInterface?> arg);
@@ -321,6 +323,7 @@ interface TestExampleInterface {
   void passOptionalByteString(optional ByteString arg);
   void passOptionalNullableByteString(optional ByteString? arg);
   void passVariadicByteString(ByteString... arg);
+  void passUnionByteString((ByteString or long) arg);
 
   // Enumerated types
   void passEnum(TestEnum arg);
@@ -409,7 +412,18 @@ interface TestExampleInterface {
   void passUnion12(optional (EventInit or long) arg = 5);
   void passUnion13(optional (object or long?) arg = null);
   void passUnion14(optional (object or long?) arg = 5);
+  void passUnion15((sequence<long> or long) arg);
+  void passUnion16(optional (sequence<long> or long) arg);
+  void passUnion17(optional (sequence<long>? or long) arg = 5);
+  void passUnion18((sequence<object> or long) arg);
+  void passUnion19(optional (sequence<object> or long) arg);
+  void passUnion20(optional (sequence<object> or long) arg = []);
+  void passUnion21((MozMap<long> or long) arg);
+  void passUnion22((MozMap<object> or long) arg);
   void passUnionWithCallback((EventHandler or long) arg);
+  void passUnionWithMozMap((MozMap<DOMString> or DOMString) arg);
+  void passUnionWithMozMapAndSequence((MozMap<DOMString> or sequence<DOMString>) arg);
+  void passUnionWithSequenceAndMozMap((sequence<DOMString> or MozMap<DOMString>) arg);
 #endif
   void passUnionWithNullable((object? or long) arg);
   void passNullableUnion((object or long)? arg);
@@ -626,6 +640,8 @@ interface TestExampleInterface {
   [LenientThis] attribute long attrWithLenientThis;
   [Unforgeable] readonly attribute long unforgeableAttr;
   [Unforgeable, ChromeOnly] readonly attribute long unforgeableAttr2;
+  [Unforgeable] long unforgeableMethod();
+  [Unforgeable, ChromeOnly] long unforgeableMethod2();
   stringifier;
   void passRenamedInterface(TestRenamedInterface arg);
   [PutForwards=writableByte] readonly attribute TestExampleInterface putForwardsAttr;

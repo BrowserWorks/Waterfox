@@ -54,8 +54,6 @@ namespace jit {
     _(Safepoints)                           \
     /* Debug info about Pools*/             \
     _(Pools)                                \
-    /* Calls to js::jit::Trace() */         \
-    _(Trace)                                \
     /* Debug info about the I$ */           \
     _(CacheFlush)                           \
                                             \
@@ -115,6 +113,13 @@ class IonSpewer
     void spewPass(const char *pass);
     void spewPass(const char *pass, LinearScanAllocator *ra);
     void endFunction();
+};
+
+class IonSpewFunction
+{
+  public:
+    IonSpewFunction(MIRGraph *graph, JS::HandleScript function);
+    ~IonSpewFunction();
 };
 
 void IonSpewNewFunction(MIRGraph *graph, JS::HandleScript function);

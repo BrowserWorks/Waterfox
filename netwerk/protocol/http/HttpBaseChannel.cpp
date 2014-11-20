@@ -70,6 +70,7 @@ HttpBaseChannel::HttpBaseChannel()
   , mContentDispositionHint(UINT32_MAX)
   , mHttpHandler(gHttpHandler)
   , mRedirectCount(0)
+  , mForcePending(false)
 {
   LOG(("Creating HttpBaseChannel @%x\n", this));
 
@@ -163,6 +164,7 @@ NS_INTERFACE_MAP_BEGIN(HttpBaseChannel)
   NS_INTERFACE_MAP_ENTRY(nsIEncodedChannel)
   NS_INTERFACE_MAP_ENTRY(nsIHttpChannel)
   NS_INTERFACE_MAP_ENTRY(nsIHttpChannelInternal)
+  NS_INTERFACE_MAP_ENTRY(nsIForcePendingChannel)
   NS_INTERFACE_MAP_ENTRY(nsIRedirectHistory)
   NS_INTERFACE_MAP_ENTRY(nsIUploadChannel)
   NS_INTERFACE_MAP_ENTRY(nsIUploadChannel2)
@@ -187,7 +189,7 @@ NS_IMETHODIMP
 HttpBaseChannel::IsPending(bool *aIsPending)
 {
   NS_ENSURE_ARG_POINTER(aIsPending);
-  *aIsPending = mIsPending;
+  *aIsPending = mIsPending || mForcePending;
   return NS_OK;
 }
 
@@ -283,6 +285,20 @@ NS_IMETHODIMP
 HttpBaseChannel::SetOwner(nsISupports *aOwner)
 {
   mOwner = aOwner;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+HttpBaseChannel::SetLoadInfo(nsILoadInfo *aLoadInfo)
+{
+  mLoadInfo = aLoadInfo;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+HttpBaseChannel::GetLoadInfo(nsILoadInfo **aLoadInfo)
+{
+  NS_IF_ADDREF(*aLoadInfo = mLoadInfo);
   return NS_OK;
 }
 
@@ -1616,6 +1632,25 @@ HttpBaseChannel::AddRedirect(nsIPrincipal *aRedirect)
   return NS_OK;
 }
 
+NS_IMETHODIMP
+HttpBaseChannel::ForcePending(bool aForcePending)
+{
+  mForcePending = aForcePending;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+HttpBaseChannel::GetLastModifiedTime(PRTime* lastModifiedTime)
+{
+  if (!mResponseHead)
+    return NS_ERROR_NOT_AVAILABLE;
+  uint32_t lastMod;
+  mResponseHead->GetLastModifiedValue(&lastMod);
+  *lastModifiedTime = lastMod;
+  return NS_OK;
+}
+
+
 //-----------------------------------------------------------------------------
 // HttpBaseChannel::nsISupportsPriority
 //-----------------------------------------------------------------------------
@@ -1877,13 +1912,6 @@ HttpBaseChannel::SetupReplacementChannel(nsIURI       *newURI,
   newChannel->SetNotificationCallbacks(mCallbacks);
   newChannel->SetLoadFlags(newLoadFlags);
 
-  // If our owner is a null principal it will have been set as a security
-  // measure, so we want to propagate it to the new channel.
-  nsCOMPtr<nsIPrincipal> ownerPrincipal = do_QueryInterface(mOwner);
-  if (ownerPrincipal && ownerPrincipal->GetIsNullPrincipal()) {
-    newChannel->SetOwner(mOwner);
-  }
-
   // Try to preserve the privacy bit if it has been overridden
   if (mPrivateBrowsingOverriden) {
     nsCOMPtr<nsIPrivateBrowsingChannel> newPBChannel =
@@ -1892,6 +1920,9 @@ HttpBaseChannel::SetupReplacementChannel(nsIURI       *newURI,
       newPBChannel->SetPrivate(mPrivateBrowsing);
     }
   }
+
+  // Propagate our loadinfo if needed.
+  newChannel->SetLoadInfo(mLoadInfo);
 
   nsCOMPtr<nsIHttpChannel> httpChannel = do_QueryInterface(newChannel);
   if (!httpChannel)

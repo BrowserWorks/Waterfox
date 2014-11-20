@@ -7,6 +7,7 @@
 #define GMPParent_h_
 
 #include "GMPProcessParent.h"
+#include "GMPService.h"
 #include "GMPVideoDecoderParent.h"
 #include "GMPVideoEncoderParent.h"
 #include "mozilla/gmp/PGMPParent.h"
@@ -15,10 +16,22 @@
 #include "nsISupports.h"
 #include "nsString.h"
 #include "nsTArray.h"
+#include "nsIFile.h"
+#include "ThreadSafeRefcountingWithMainThreadDestruction.h"
 
 class nsILineInputStream;
 class nsIThread;
-class nsIFile;
+
+#ifdef MOZ_CRASHREPORTER
+#include "nsExceptionHandler.h"
+
+namespace mozilla {
+namespace dom {
+class PCrashReporterParent;
+class CrashReporterParent;
+}
+}
+#endif
 
 namespace mozilla {
 namespace gmp {
@@ -32,20 +45,39 @@ public:
 
 enum GMPState {
   GMPStateNotLoaded,
-  GMPStateLoaded
+  GMPStateLoaded,
+  GMPStateUnloading,
+  GMPStateClosing
 };
 
-class GMPParent MOZ_FINAL : public PGMPParent
+class GMPParent MOZ_FINAL : public PGMPParent,
+                            public GMPSharedMem
 {
 public:
-  NS_INLINE_DECL_REFCOUNTING(GMPParent)
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING_WITH_MAIN_THREAD_DESTRUCTION(GMPParent)
 
   GMPParent();
 
-  nsresult Init(nsIFile* aPluginDir);
+  nsresult Init(GeckoMediaPluginService *aService, nsIFile* aPluginDir);
+  nsresult CloneFrom(const GMPParent* aOther);
+
+  void Crash();
+
   nsresult LoadProcess();
-  void MaybeUnloadProcess();
-  void UnloadProcess();
+
+  // Called internally to close this if we don't need it
+  void CloseIfUnused();
+
+  // Notify all active de/encoders that we are closing, either because of
+  // normal shutdown or unexpected shutdown/crash.
+  void CloseActive(bool aDieWhenUnloaded);
+
+  // Called by the GMPService to forcibly close active de/encoders at shutdown
+  void Shutdown();
+
+  // This must not be called while we're in the middle of abnormal ActorDestroy
+  void DeleteProcess();
+
   bool SupportsAPI(const nsCString& aAPI, const nsCString& aTag);
   nsresult GetGMPVideoDecoder(GMPVideoDecoderParent** aGMPVD);
   void VideoDecoderDestroyed(GMPVideoDecoderParent* aDecoder);
@@ -56,11 +88,47 @@ public:
   nsIThread* GMPThread();
 #endif
 
+  // A GMP can either be a single instance shared across all origins (like
+  // in the OpenH264 case), or we can require a new plugin instance for every
+  // origin running the plugin (as in the EME plugin case).
+  //
+  // Plugins are associated with an origin by calling SetOrigin() before
+  // loading.
+  //
+  // If a plugin has no origin specified and it is loaded, it is assumed to
+  // be shared across origins.
+
+  // Specifies that a GMP can only work with the specified origin.
+  void SetOrigin(const nsAString& aOrigin);
+
+  // Returns true if a plugin can be or is being used across multiple origins.
+  bool CanBeSharedCrossOrigin() const;
+
+  // A GMP can be used from an origin if it's already been set to work with
+  // that origin, or if it's not been set to work with any origin and has
+  // not yet been loaded (i.e. it's not shared across origins).
+  bool CanBeUsedFrom(const nsAString& aOrigin) const;
+
+  already_AddRefed<nsIFile> GetDirectory() {
+    return nsCOMPtr<nsIFile>(mDirectory).forget();
+  }
+
+  // GMPSharedMem
+  virtual void CheckThread() MOZ_OVERRIDE;
+
 private:
   ~GMPParent();
+  nsRefPtr<GeckoMediaPluginService> mService;
   bool EnsureProcessLoaded();
   nsresult ReadGMPMetaData();
+#ifdef MOZ_CRASHREPORTER
+  void WriteExtraDataForMinidump(CrashReporter::AnnotationTable& notes);
+  void GetCrashID(nsString& aResult);
+#endif
   virtual void ActorDestroy(ActorDestroyReason aWhy) MOZ_OVERRIDE;
+
+  virtual PCrashReporterParent* AllocPCrashReporterParent(const NativeThreadId& aThread) MOZ_OVERRIDE;
+  virtual bool DeallocPCrashReporterParent(PCrashReporterParent* aCrashReporter) MOZ_OVERRIDE;
   virtual PGMPVideoDecoderParent* AllocPGMPVideoDecoderParent() MOZ_OVERRIDE;
   virtual bool DeallocPGMPVideoDecoderParent(PGMPVideoDecoderParent* aActor) MOZ_OVERRIDE;
   virtual PGMPVideoEncoderParent* AllocPGMPVideoEncoderParent() MOZ_OVERRIDE;
@@ -74,12 +142,17 @@ private:
   nsCString mVersion;
   nsTArray<nsAutoPtr<GMPCapability>> mCapabilities;
   GMPProcessParent* mProcess;
+  bool mDeleteProcessOnlyOnUnload;
+  bool mAbnormalShutdownInProgress;
 
   nsTArray<nsRefPtr<GMPVideoDecoderParent>> mVideoDecoders;
   nsTArray<nsRefPtr<GMPVideoEncoderParent>> mVideoEncoders;
 #ifdef DEBUG
   nsCOMPtr<nsIThread> mGMPThread;
 #endif
+  // Origin the plugin is assigned to, or empty if the the plugin is not
+  // assigned to an origin.
+  nsAutoString mOrigin;
 };
 
 } // namespace gmp

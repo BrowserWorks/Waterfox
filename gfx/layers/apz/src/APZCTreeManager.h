@@ -25,6 +25,7 @@ class gfx3DMatrix;
 
 namespace mozilla {
 class InputData;
+class MultiTouchInput;
 
 namespace layers {
 
@@ -121,11 +122,16 @@ public:
    * based on what type of input it is. For example, a PinchGestureEvent will
    * cause scaling. This should only be called externally to this class.
    *
-   * @param aEvent input event object, will not be modified
+   * This function transforms |aEvent| to have its coordinates in DOM space.
+   * This is so that the event can be passed through the DOM and content can
+   * handle them. The event may need to be converted to a WidgetInputEvent
+   * by the caller if it wants to do this.
+   *
+   * @param aEvent input event object; is modified in-place
    * @param aOutTargetGuid returns the guid of the apzc this event was
    * delivered to. May be null.
    */
-  nsEventStatus ReceiveInputEvent(const InputData& aEvent,
+  nsEventStatus ReceiveInputEvent(InputData& aEvent,
                                   ScrollableLayerGuid* aOutTargetGuid);
 
   /**
@@ -287,6 +293,7 @@ public:
   bool HandOffFling(AsyncPanZoomController* aApzc, ScreenPoint aVelocity);
 
   bool FlushRepaintsForOverscrollHandoffChain();
+  bool CancelAnimationsForOverscrollHandoffChain();
 
   /**
    * Determine whether |aApzc|, or any APZC along its overscroll handoff chain,
@@ -329,9 +336,9 @@ private:
                                          bool* aOutInOverscrolledApzc);
   already_AddRefed<AsyncPanZoomController> CommonAncestor(AsyncPanZoomController* aApzc1, AsyncPanZoomController* aApzc2);
   already_AddRefed<AsyncPanZoomController> RootAPZCForLayersId(AsyncPanZoomController* aApzc);
-  already_AddRefed<AsyncPanZoomController> GetTouchInputBlockAPZC(const WidgetTouchEvent& aEvent,
+  already_AddRefed<AsyncPanZoomController> GetTouchInputBlockAPZC(const MultiTouchInput& aEvent,
                                                                   bool* aOutInOverscrolledApzc);
-  nsEventStatus ProcessTouchEvent(WidgetTouchEvent& touchEvent,
+  nsEventStatus ProcessTouchInput(MultiTouchInput& aInput,
                                   ScrollableLayerGuid* aOutTargetGuid);
   nsEventStatus ProcessEvent(WidgetInputEvent& inputEvent,
                              ScrollableLayerGuid* aOutTargetGuid);

@@ -39,6 +39,7 @@ let snapshotFormatters = {
     if (data.vendor)
       version += " (" + data.vendor + ")";
     $("version-box").textContent = version;
+    $("multiprocess-box").textContent = data.numRemoteWindows + "/" + data.numTotalWindows;
   },
 
 #ifdef MOZ_CRASHREPORTER
@@ -142,6 +143,17 @@ let snapshotFormatters = {
           // Very long preference values can cause users problems when they
           // copy and paste them into some text editors.  Long values generally
           // aren't useful anyway, so truncate them to a reasonable length.
+          $.new("td", String(value).substr(0, 120), "pref-value"),
+        ]);
+      }
+    ));
+  },
+
+  lockedPreferences: function lockedPreferences(data) {
+    $.append($("locked-prefs-tbody"), sortedArrayFromObject(data).map(
+      function ([name, value]) {
+        return $.new("tr", [
+          $.new("td", name, "pref-name"),
           $.new("td", String(value).substr(0, 120), "pref-value"),
         ]);
       }

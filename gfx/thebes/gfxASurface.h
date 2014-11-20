@@ -7,8 +7,9 @@
 #define GFX_ASURFACE_H
 
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/UniquePtr.h"
+
 #include "gfxTypes.h"
-#include "mozilla/Scoped.h"
 #include "nscore.h"
 #include "nsSize.h"
 
@@ -175,32 +176,6 @@ public:
 
     virtual const nsIntSize GetSize() const;
 
-    /**
-     * Debug functions to encode the current image as a PNG and export it.
-     */
-
-    /**
-     * Writes a binary PNG file.
-     */
-    void WriteAsPNG(const char* aFile);
-
-    /**
-     * Write as a PNG encoded Data URL to a file.
-     */
-    void DumpAsDataURL(FILE* aOutput = stdout);
-
-    /**
-     * Write as a PNG encoded Data URL to stdout.
-     */
-    void PrintAsDataURL();
-
-    /**
-     * Copy a PNG encoded Data URL to the clipboard.
-     */
-    void CopyAsDataURL();
-
-    void WriteAsPNG_internal(FILE* aFile, bool aBinary);
-
     void SetOpaqueRect(const gfxRect& aRect);
 
     const gfxRect& GetOpaqueRect() {
@@ -235,7 +210,7 @@ protected:
     virtual ~gfxASurface();
 
     cairo_surface_t *mSurface;
-    mozilla::ScopedDeletePtr<gfxRect> mOpaqueRect;
+    mozilla::UniquePtr<gfxRect> mOpaqueRect;
 
 private:
     static void SurfaceDestroyFunc(void *data);

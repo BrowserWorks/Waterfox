@@ -50,8 +50,9 @@ protected:
   typedef mozilla::gfx::ColorSpace ColorSpace;
   typedef mozilla::gfx::FilterPrimitiveDescription FilterPrimitiveDescription;
 
-  nsSVGFE(already_AddRefed<nsINodeInfo>& aNodeInfo)
+  nsSVGFE(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
     : nsSVGFEBase(aNodeInfo) {}
+  virtual ~nsSVGFE() {}
 
 public:
   typedef mozilla::gfx::AttributeMap AttributeMap;
@@ -81,7 +82,7 @@ public:
   NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const MOZ_OVERRIDE;
 
   // nsSVGElement interface
-  virtual nsresult Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE = 0;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE = 0;
 
   virtual bool HasValidDimensions() const MOZ_OVERRIDE;
 
@@ -154,11 +155,11 @@ typedef nsSVGElement SVGFEUnstyledElementBase;
 class SVGFEUnstyledElement : public SVGFEUnstyledElementBase
 {
 protected:
-  SVGFEUnstyledElement(already_AddRefed<nsINodeInfo>& aNodeInfo)
+  SVGFEUnstyledElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
     : SVGFEUnstyledElementBase(aNodeInfo) {}
 
 public:
-  virtual nsresult Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE = 0;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE = 0;
 
   // returns true if changes to the attribute should cause us to
   // repaint the filter
@@ -173,8 +174,10 @@ typedef nsSVGFE nsSVGFELightingElementBase;
 class nsSVGFELightingElement : public nsSVGFELightingElementBase
 {
 protected:
-  nsSVGFELightingElement(already_AddRefed<nsINodeInfo>& aNodeInfo)
+  nsSVGFELightingElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
     : nsSVGFELightingElementBase(aNodeInfo) {}
+
+  virtual ~nsSVGFELightingElement() {}
 
 public:
   // interfaces:
@@ -223,7 +226,7 @@ typedef SVGFEUnstyledElement SVGFELightElementBase;
 class SVGFELightElement : public SVGFELightElementBase
 {
 protected:
-  SVGFELightElement(already_AddRefed<nsINodeInfo>& aNodeInfo)
+  SVGFELightElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
     : SVGFELightElementBase(aNodeInfo) {}
 
 public:

@@ -1,4 +1,4 @@
-/* -*- js-indent-level: 2; tab-width: 2; indent-tabs-mode: nil -*- */
+/* -*- js-indent-level: 2; indent-tabs-mode: nil -*- */
 /* vim:set ts=2 sw=2 sts=2 et: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,7 @@ TestRunner.logger = LogController;
 /* Helper function */
 parseQueryString = function(encodedString, useArrays) {
   // strip a leading '?' from the encoded string
-  var qstr = (encodedString[0] == "?") ? encodedString.substring(1) : 
+  var qstr = (encodedString[0] == "?") ? encodedString.substring(1) :
                                          encodedString;
   var pairs = qstr.replace(/\+/g, "%20").split(/(\&amp\;|\&\#38\;|\&#x26;|\&)/);
   var o = {};
@@ -92,7 +92,7 @@ var consoleLevel = params.consoleLevel || null;
 // repeat tells us how many times to repeat the tests
 if (params.repeat) {
   TestRunner.repeat = params.repeat;
-} 
+}
 
 if (params.runUntilFailure) {
   TestRunner.runUntilFailure = true;
@@ -135,17 +135,17 @@ if (params.dumpDMDAfterTest) {
   TestRunner.dumpDMDAfterTest = true;
 }
 
-if (params.quiet) {
-  TestRunner.quiet = true;
+if (params.interactiveDebugger) {
+  TestRunner.structuredLogger.interactiveDebugger = true;
 }
 
 // Log things to the console if appropriate.
 TestRunner.logger.addListener("dumpListener", consoleLevel + "", function(msg) {
-  dump(msg.num + " " + msg.level + " " + msg.info.join(' ') + "\n");
+  dump(msg.info.join(' ') + "\n");
 });
 
 var gTestList = [];
-var RunSet = {}
+var RunSet = {};
 RunSet.runall = function(e) {
   // Filter tests to include|exclude tests based on data in params.filter.
   // This allows for including or excluding tests from the gTestList
@@ -176,6 +176,7 @@ RunSet.runtests = function(e) {
       my_tests[i] = tmp;
     }
   }
+  TestRunner.setParameterInfo(params);
   TestRunner.runTests(my_tests);
 }
 
@@ -190,7 +191,7 @@ RunSet.reloadAndRunAll = function(e) {
     window.location.href += "&autorun=1";
   } else {
     window.location.href += "?autorun=1";
-  }  
+  }
 };
 
 // UI Stuff
@@ -245,7 +246,7 @@ function hookupTests(testList) {
   }
 
   document.getElementById('runtests').onclick = RunSet.reloadAndRunAll;
-  document.getElementById('toggleNonTests').onclick = toggleNonTests; 
+  document.getElementById('toggleNonTests').onclick = toggleNonTests;
   // run automatically if autorun specified
   if (params.autorun) {
     RunSet.runall();

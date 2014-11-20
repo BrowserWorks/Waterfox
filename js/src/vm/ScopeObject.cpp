@@ -1141,7 +1141,7 @@ class DebugScopeProxy : public BaseProxyHandler
      */
     bool handleUnaliasedAccess(JSContext *cx, Handle<DebugScopeObject*> debugScope,
                                Handle<ScopeObject*> scope, jsid id, Action action,
-                               MutableHandleValue vp, AccessResult *accessResult)
+                               MutableHandleValue vp, AccessResult *accessResult) const
     {
         JS_ASSERT(&debugScope->scope() == scope);
         *accessResult = ACCESS_GENERIC;
@@ -1314,11 +1314,11 @@ class DebugScopeProxy : public BaseProxyHandler
 
   public:
     static int family;
-    static DebugScopeProxy singleton;
+    static const DebugScopeProxy singleton;
 
     DebugScopeProxy() : BaseProxyHandler(&family) {}
 
-    bool isExtensible(JSContext *cx, HandleObject proxy, bool *extensible) MOZ_OVERRIDE
+    bool isExtensible(JSContext *cx, HandleObject proxy, bool *extensible) const MOZ_OVERRIDE
     {
         // always [[Extensible]], can't be made non-[[Extensible]], like most
         // proxies
@@ -1326,7 +1326,7 @@ class DebugScopeProxy : public BaseProxyHandler
         return true;
     }
 
-    bool preventExtensions(JSContext *cx, HandleObject proxy) MOZ_OVERRIDE
+    bool preventExtensions(JSContext *cx, HandleObject proxy) const MOZ_OVERRIDE
     {
         // See above.
         JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_CANT_CHANGE_EXTENSIBILITY);
@@ -1334,13 +1334,13 @@ class DebugScopeProxy : public BaseProxyHandler
     }
 
     bool getPropertyDescriptor(JSContext *cx, HandleObject proxy, HandleId id,
-                               MutableHandle<PropertyDescriptor> desc) MOZ_OVERRIDE
+                               MutableHandle<PropertyDescriptor> desc) const MOZ_OVERRIDE
     {
         return getOwnPropertyDescriptor(cx, proxy, id, desc);
     }
 
     bool getOwnPropertyDescriptor(JSContext *cx, HandleObject proxy, HandleId id,
-                                  MutableHandle<PropertyDescriptor> desc) MOZ_OVERRIDE
+                                  MutableHandle<PropertyDescriptor> desc) const MOZ_OVERRIDE
     {
         Rooted<DebugScopeObject*> debugScope(cx, &proxy->as<DebugScopeObject>());
         Rooted<ScopeObject*> scope(cx, &debugScope->scope());
@@ -1383,12 +1383,12 @@ class DebugScopeProxy : public BaseProxyHandler
             JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_DEBUG_OPTIMIZED_OUT);
             return false;
           default:
-            MOZ_ASSUME_UNREACHABLE("bad AccessResult");
+            MOZ_CRASH("bad AccessResult");
         }
     }
 
     bool get(JSContext *cx, HandleObject proxy, HandleObject receiver, HandleId id,
-             MutableHandleValue vp) MOZ_OVERRIDE
+             MutableHandleValue vp) const MOZ_OVERRIDE
     {
         Rooted<DebugScopeObject*> debugScope(cx, &proxy->as<DebugScopeObject>());
         Rooted<ScopeObject*> scope(cx, &proxy->as<DebugScopeObject>().scope());
@@ -1421,7 +1421,7 @@ class DebugScopeProxy : public BaseProxyHandler
             JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_DEBUG_OPTIMIZED_OUT);
             return false;
           default:
-            MOZ_ASSUME_UNREACHABLE("bad AccessResult");
+            MOZ_CRASH("bad AccessResult");
         }
     }
 
@@ -1430,7 +1430,7 @@ class DebugScopeProxy : public BaseProxyHandler
      * exceptional cases.
      */
     bool getMaybeSentinelValue(JSContext *cx, Handle<DebugScopeObject *> debugScope, HandleId id,
-                               MutableHandleValue vp)
+                               MutableHandleValue vp) const
     {
         Rooted<ScopeObject*> scope(cx, &debugScope->scope());
 
@@ -1455,12 +1455,12 @@ class DebugScopeProxy : public BaseProxyHandler
             vp.setMagic(JS_OPTIMIZED_OUT);
             return true;
           default:
-            MOZ_ASSUME_UNREACHABLE("bad AccessResult");
+            MOZ_CRASH("bad AccessResult");
         }
     }
 
     bool set(JSContext *cx, HandleObject proxy, HandleObject receiver, HandleId id, bool strict,
-             MutableHandleValue vp) MOZ_OVERRIDE
+             MutableHandleValue vp) const MOZ_OVERRIDE
     {
         Rooted<DebugScopeObject*> debugScope(cx, &proxy->as<DebugScopeObject>());
         Rooted<ScopeObject*> scope(cx, &proxy->as<DebugScopeObject>().scope());
@@ -1475,12 +1475,12 @@ class DebugScopeProxy : public BaseProxyHandler
           case ACCESS_GENERIC:
             return JSObject::setGeneric(cx, scope, scope, id, vp, strict);
           default:
-            MOZ_ASSUME_UNREACHABLE("bad AccessResult");
+            MOZ_CRASH("bad AccessResult");
         }
     }
 
     bool defineProperty(JSContext *cx, HandleObject proxy, HandleId id,
-                        MutableHandle<PropertyDescriptor> desc) MOZ_OVERRIDE
+                        MutableHandle<PropertyDescriptor> desc) const MOZ_OVERRIDE
     {
         Rooted<ScopeObject*> scope(cx, &proxy->as<DebugScopeObject>().scope());
 
@@ -1494,7 +1494,7 @@ class DebugScopeProxy : public BaseProxyHandler
     }
 
     bool getScopePropertyNames(JSContext *cx, HandleObject proxy, AutoIdVector &props,
-                               unsigned flags)
+                               unsigned flags) const
     {
         Rooted<ScopeObject*> scope(cx, &proxy->as<DebugScopeObject>().scope());
 
@@ -1529,17 +1529,17 @@ class DebugScopeProxy : public BaseProxyHandler
         return true;
     }
 
-    bool getOwnPropertyNames(JSContext *cx, HandleObject proxy, AutoIdVector &props) MOZ_OVERRIDE
+    bool getOwnPropertyNames(JSContext *cx, HandleObject proxy, AutoIdVector &props) const MOZ_OVERRIDE
     {
         return getScopePropertyNames(cx, proxy, props, JSITER_OWNONLY);
     }
 
-    bool enumerate(JSContext *cx, HandleObject proxy, AutoIdVector &props) MOZ_OVERRIDE
+    bool enumerate(JSContext *cx, HandleObject proxy, AutoIdVector &props) const MOZ_OVERRIDE
     {
         return getScopePropertyNames(cx, proxy, props, 0);
     }
 
-    bool has(JSContext *cx, HandleObject proxy, HandleId id_, bool *bp) MOZ_OVERRIDE
+    bool has(JSContext *cx, HandleObject proxy, HandleId id_, bool *bp) const MOZ_OVERRIDE
     {
         RootedId id(cx, id_);
         ScopeObject &scopeObj = proxy->as<DebugScopeObject>().scope();
@@ -1572,7 +1572,7 @@ class DebugScopeProxy : public BaseProxyHandler
         return true;
     }
 
-    bool delete_(JSContext *cx, HandleObject proxy, HandleId id, bool *bp) MOZ_OVERRIDE
+    bool delete_(JSContext *cx, HandleObject proxy, HandleId id, bool *bp) const MOZ_OVERRIDE
     {
         RootedValue idval(cx, IdToValue(id));
         return js_ReportValueErrorFlags(cx, JSREPORT_ERROR, JSMSG_CANT_DELETE,
@@ -1583,7 +1583,7 @@ class DebugScopeProxy : public BaseProxyHandler
 } /* anonymous namespace */
 
 int DebugScopeProxy::family = 0;
-DebugScopeProxy DebugScopeProxy::singleton;
+const DebugScopeProxy DebugScopeProxy::singleton;
 
 /* static */ DebugScopeObject *
 DebugScopeObject::create(JSContext *cx, ScopeObject &scope, HandleObject enclosing)
@@ -2238,7 +2238,7 @@ GetDebugScopeForMissing(JSContext *cx, const ScopeIter &si)
       }
       case ScopeIter::With:
       case ScopeIter::StrictEvalScope:
-        MOZ_ASSUME_UNREACHABLE("should already have a scope");
+        MOZ_CRASH("should already have a scope");
     }
     if (!debugScope)
         return nullptr;

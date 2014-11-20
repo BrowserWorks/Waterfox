@@ -7,9 +7,12 @@
 #include "mozilla/SystemMemoryReporter.h"
 
 #include "mozilla/Attributes.h"
+#include "mozilla/PodOperations.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/TaggedAnonymousMemory.h"
 #include "mozilla/unused.h"
 
+#include "nsDataHashtable.h"
 #include "nsIMemoryReporter.h"
 #include "nsPrintfCString.h"
 #include "nsString.h"
@@ -99,18 +102,20 @@ IsNumeric(const char* aStr)
 static bool
 IsAnonymous(const nsACString& aName)
 {
-  // Recent kernels (e.g. 3.5) have multiple [stack:nnnn] entries, where |nnnn|
-  // is a thread ID.  However, [stack:nnnn] entries count both stack memory
-  // *and* anonymous memory because the kernel only knows about the start of
-  // each thread stack, not its end.  So we treat such entries as anonymous
-  // memory instead of stack.  This is consistent with older kernels that don't
-  // even show [stack:nnnn] entries.
+  // Recent kernels have multiple [stack:nnnn] entries, where |nnnn| is a
+  // thread ID.  However, the entire virtual memory area containing a thread's
+  // stack pointer is considered the stack for that thread, even if it was
+  // merged with an adjacent area containing non-stack data.  So we treat them
+  // as regular anonymous memory.  However, see below about tagged anonymous
+  // memory.
   return aName.IsEmpty() ||
          StringBeginsWith(aName, NS_LITERAL_CSTRING("[stack:"));
 }
 
 class SystemReporter MOZ_FINAL : public nsIMemoryReporter
 {
+  ~SystemReporter() {}
+
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
 
@@ -133,8 +138,13 @@ public:
   REPORT_WITH_CLEANUP(_path, UNITS_BYTES, _amount, _desc, (void)0)
 
   NS_IMETHOD CollectReports(nsIHandleReportCallback* aHandleReport,
-                            nsISupports* aData)
+                            nsISupports* aData, bool aAnonymize)
   {
+    // There is lots of privacy-sensitive data in /proc. Just skip this
+    // reporter entirely when anonymization is required.
+    if (aAnonymize)
+      return NS_OK;
+
     if (!Preferences::GetBool("memory.system_memory_reporter")) {
       return NS_OK;
     }
@@ -170,32 +180,48 @@ public:
   }
 
 private:
-  // Keep this in sync with SystemReporter::kindPathSuffixes!
-  enum ProcessSizeKind {
-    AnonymousOutsideBrk  = 0,
-    AnonymousBrkHeap     = 1,
-    SharedLibrariesRX    = 2,
-    SharedLibrariesRW    = 3,
-    SharedLibrariesR     = 4,
-    SharedLibrariesOther = 5,
-    OtherFiles           = 6,
-    MainThreadStack      = 7,
-    Vdso                 = 8,
-
-    ProcessSizeKindLimit = 9  // must be last
-  };
-
-  static const char* kindPathSuffixes[ProcessSizeKindLimit];
-
   // These are the cross-cutting measurements across all processes.
-  struct ProcessSizes
+  class ProcessSizes
   {
-    ProcessSizes()
+  public:
+    void Add(const nsACString &aKey, size_t aSize)
     {
-      memset(this, 0, sizeof(*this));
+      mTagged.Put(aKey, mTagged.Get(aKey) + aSize);
     }
 
-    size_t mSizes[ProcessSizeKindLimit];
+    void Report(nsIHandleReportCallback *aHandleReport, nsISupports *aData)
+    {
+      EnumArgs env = { aHandleReport, aData };
+      mTagged.EnumerateRead(ReportSizes, &env);
+    }
+
+  private:
+    nsDataHashtable<nsCStringHashKey, size_t> mTagged;
+
+    struct EnumArgs {
+      nsIHandleReportCallback* mHandleReport;
+      nsISupports* mData;
+    };
+
+    static PLDHashOperator ReportSizes(nsCStringHashKey::KeyType aKey,
+                                       size_t aAmount,
+                                       void *aUserArg)
+    {
+      const EnumArgs *envp = reinterpret_cast<const EnumArgs*>(aUserArg);
+
+      nsAutoCString path("processes/");
+      path.Append(aKey);
+
+      nsAutoCString desc("This is the sum of all processes' '");
+      desc.Append(aKey);
+      desc.AppendLiteral("' numbers.");
+
+      envp->mHandleReport->Callback(NS_LITERAL_CSTRING("System"), path,
+                                    KIND_NONHEAP, UNITS_BYTES, aAmount,
+                                    desc, envp->mData);
+
+      return PL_DHASH_NEXT;
+    }
   };
 
   nsresult ReadMemInfo(int64_t* aMemTotal, int64_t* aMemFree)
@@ -271,18 +297,16 @@ private:
           // so just skip if we can't open the file.
           continue;
         }
-        while (true) {
-          nsresult rv = ParseMapping(f, processName, aHandleReport, aData,
-                                     &processSizes, aTotalPss);
-          if (NS_FAILED(rv)) {
-            break;
-          }
-        }
+        nsresult rv = ParseMappings(f, processName, aHandleReport, aData,
+                                    &processSizes, aTotalPss);
         fclose(f);
+        if (NS_FAILED(rv)) {
+          continue;
+        }
 
         // Report the open file descriptors for this process.
         nsPrintfCString procFdPath("/proc/%s/fd", pidStr);
-        nsresult rv = CollectOpenFileReports(
+        rv = CollectOpenFileReports(
                   aHandleReport, aData, procFdPath, processName);
         if (NS_FAILED(rv)) {
           break;
@@ -292,33 +316,63 @@ private:
     closedir(d);
 
     // Report the "processes/" tree.
-
-    for (size_t i = 0; i < ProcessSizeKindLimit; i++) {
-      nsAutoCString path("processes/");
-      path.Append(kindPathSuffixes[i]);
-
-      nsAutoCString desc("This is the sum of all processes' '");
-      desc.Append(kindPathSuffixes[i]);
-      desc.AppendLiteral("' numbers.");
-
-      REPORT(path, processSizes.mSizes[i], desc);
-    }
+    processSizes.Report(aHandleReport, aData);
 
     return NS_OK;
   }
 
-  nsresult ParseMapping(FILE* aFile,
-                        const nsACString& aProcessName,
-                        nsIHandleReportCallback* aHandleReport,
-                        nsISupports* aData,
-                        ProcessSizes* aProcessSizes,
-                        int64_t* aTotalPss)
+  // Obtain the name of a thread, omitting any numeric suffix added by a
+  // thread pool library (as in, e.g., "Binder_2" or "mozStorage #1").
+  // The empty string is returned on error.
+  //
+  // Note: if this is ever needed on kernels older than 2.6.33 (early 2010),
+  // it will have to parse /proc/<pid>/status instead, because
+  // /proc/<pid>/comm didn't exist before then.
+  void GetThreadName(pid_t aTid, nsACString& aName)
+  {
+    aName.Truncate();
+    if (aTid <= 0) {
+      return;
+    }
+    char buf[16]; // 15 chars max + '\n'
+    nsPrintfCString path("/proc/%d/comm", aTid);
+    FILE* fp = fopen(path.get(), "r");
+    if (!fp) {
+      // The fopen could also fail if the thread exited before we got here.
+      return;
+    }
+    size_t len = fread(buf, 1, sizeof(buf), fp);
+    fclose(fp);
+    // No need to strip the '\n', since isspace() includes it.
+    while (len > 0 &&
+           (isspace(buf[len - 1]) || isdigit(buf[len - 1]) ||
+            buf[len - 1] == '#' || buf[len - 1] == '_')) {
+      --len;
+    }
+    aName.Assign(buf, len);
+  }
+
+  nsresult ParseMappings(FILE* aFile,
+                         const nsACString& aProcessName,
+                         nsIHandleReportCallback* aHandleReport,
+                         nsISupports* aData,
+                         ProcessSizes* aProcessSizes,
+                         int64_t* aTotalPss)
   {
     // The first line of an entry in /proc/<pid>/smaps looks just like an entry
     // in /proc/<pid>/maps:
     //
     //   address           perms offset  dev   inode  pathname
     //   02366000-025d8000 rw-p 00000000 00:00 0      [heap]
+    //
+    // Each of the following lines contains a key and a value, separated
+    // by ": ", where the key does not contain either of those characters.
+    // Assuming more than this about the structure of those lines has
+    // failed to be future-proof in the past, so we avoid doing so.
+    //
+    // This makes it difficult to detect the start of a new entry
+    // until it's been removed from the stdio buffer, so we just loop
+    // over all lines in the file in this routine.
 
     const int argCount = 8;
 
@@ -331,49 +385,55 @@ private:
     char devMajor[17];
     char devMinor[17];
     unsigned int inode;
-    char path[1025];
+    char line[1025];
+    // This variable holds the path of the current entry, or is void
+    // if we're scanning for the start of a new entry.
+    nsAutoCString path;
+    int pathOffset;
 
-    // A path might not be present on this line; set it to the empty string.
-    path[0] = '\0';
+    path.SetIsVoid(true);
+    while (fgets(line, sizeof(line), aFile)) {
+      if (path.IsVoid()) {
+        int n = sscanf(line,
+                       "%llx-%llx %4s %llx "
+                       "%16[0-9a-fA-F]:%16[0-9a-fA-F] %u %n",
+                       &addrStart, &addrEnd, perms, &offset, devMajor,
+                       devMinor, &inode, &pathOffset);
 
-    // This is a bit tricky.  Whitespace in a scanf pattern matches *any*
-    // whitespace, including newlines.  We want this pattern to match a line
-    // with or without a path, but we don't want to look to a new line for the
-    // path.  Thus we have %u%1024[^\n] at the end of the pattern.  This will
-    // capture into the path some leading whitespace, which we'll later trim
-    // off.
-    int n = fscanf(aFile,
-                   "%llx-%llx %4s %llx "
-                   "%16[0-9a-fA-F]:%16[0-9a-fA-F] %u%1024[^\n]",
-                   &addrStart, &addrEnd, perms, &offset, devMajor,
-                   devMinor, &inode, path);
-
-    // Eat up any whitespace at the end of this line, including the newline.
-    unused << fscanf(aFile, " ");
-
-    // We might or might not have a path, but the rest of the arguments should
-    // be there.
-    if (n != argCount && n != argCount - 1) {
-      return NS_ERROR_FAILURE;
-    }
-
-    nsAutoCString name, description;
-    ProcessSizeKind kind;
-    GetReporterNameAndDescription(path, perms, name, description, &kind);
-
-    while (true) {
-      size_t pss = 0;
-      nsresult rv = ParseMapBody(aFile, aProcessName, name, description,
-                                 aHandleReport, aData, &pss);
-      if (NS_FAILED(rv)) {
-        break;
+        if (n >= argCount - 1) {
+          path.Assign(line + pathOffset);
+          path.StripChars("\n");
+        }
+        continue;
       }
 
-      // Increment the appropriate aProcessSizes values, and the total.
-      aProcessSizes->mSizes[kind] += pss;
-      *aTotalPss += pss;
-    }
+      // Now that we have a name and other metadata, scan for the PSS.
+      size_t pss_kb;
+      int n = sscanf(line, "Pss: %zu", &pss_kb);
+      if (n < 1) {
+        continue;
+      }
 
+      size_t pss = pss_kb * 1024;
+      if (pss > 0) {
+        nsAutoCString name, description, tag;
+        GetReporterNameAndDescription(path.get(), perms, name, description, tag);
+
+        nsAutoCString path("mem/processes/");
+        path.Append(aProcessName);
+        path.Append('/');
+        path.Append(name);
+
+        REPORT(path, pss, description);
+
+        // Increment the appropriate aProcessSizes values, and the total.
+        aProcessSizes->Add(tag, pss);
+        *aTotalPss += pss;
+      }
+
+      // Now that we've seen the PSS, we're done with this entry.
+      path.SetIsVoid(true);
+    }
     return NS_OK;
   }
 
@@ -381,48 +441,83 @@ private:
                                      const char* aPerms,
                                      nsACString& aName,
                                      nsACString& aDesc,
-                                     ProcessSizeKind* aProcessSizeKind)
+                                     nsACString& aTag)
   {
     aName.Truncate();
     aDesc.Truncate();
+    aTag.Truncate();
 
-    // If aPath points to a file, we have its absolute path, plus some
-    // whitespace.  Truncate this to its basename, and put the absolute path in
-    // the description.
+    // If aPath points to a file, we have its absolute path; it might
+    // also be a bracketed pseudo-name (see below).  In either case
+    // there is also some whitespace to trim.
     nsAutoCString absPath;
     absPath.Append(aPath);
     absPath.StripChars(" ");
 
-    nsAutoCString basename;
-    GetBasename(absPath, basename);
-
-    if (basename.EqualsLiteral("[heap]")) {
+    if (absPath.EqualsLiteral("[heap]")) {
       aName.AppendLiteral("anonymous/brk-heap");
       aDesc.AppendLiteral(
         "Memory in anonymous mappings within the boundaries defined by "
         "brk() / sbrk().  This is likely to be just a portion of the "
         "application's heap; the remainder lives in other anonymous mappings. "
         "This corresponds to '[heap]' in /proc/<pid>/smaps.");
-      *aProcessSizeKind = AnonymousBrkHeap;
-
-    } else if (basename.EqualsLiteral("[stack]")) {
-      aName.AppendLiteral("main-thread-stack");
-      aDesc.AppendLiteral(
+      aTag = aName;
+    } else if (absPath.EqualsLiteral("[stack]")) {
+      aName.AppendLiteral("stack/main-thread");
+      aDesc.AppendPrintf(
         "The stack size of the process's main thread.  This corresponds to "
         "'[stack]' in /proc/<pid>/smaps.");
-      *aProcessSizeKind = MainThreadStack;
+      aTag = aName;
+    } else if (MozTaggedMemoryIsSupported() &&
+               StringBeginsWith(absPath, NS_LITERAL_CSTRING("[stack:"))) {
+      // If tagged memory is supported, we can be reasonably sure that
+      // the virtual memory area containing the stack hasn't been
+      // merged with unrelated heap memory.  (This prevents the
+      // "[stack:" entries from reaching the IsAnonymous case below.)
+      pid_t tid = atoi(absPath.get() + 7);
+      nsAutoCString threadName, escapedThreadName;
+      GetThreadName(tid, threadName);
+      if (threadName.IsEmpty()) {
+        threadName.AssignLiteral("<unknown>");
+      }
+      escapedThreadName.Assign(threadName);
+      escapedThreadName.StripChars("()");
+      escapedThreadName.ReplaceChar('/', '\\');
 
-    } else if (basename.EqualsLiteral("[vdso]")) {
+      aName.AppendLiteral("stack/non-main-thread");
+      aName.AppendLiteral("/name(");
+      aName.Append(escapedThreadName);
+      aName.Append(')');
+      aTag = aName;
+      aName.AppendPrintf("/thread(%d)", tid);
+
+      aDesc.AppendPrintf("The stack size of a non-main thread named '%s' with "
+                         "thread ID %d.  This corresponds to '[stack:%d]' "
+                         "in /proc/%d/smaps.", threadName.get(), tid, tid);
+    } else if (absPath.EqualsLiteral("[vdso]")) {
       aName.AppendLiteral("vdso");
       aDesc.AppendLiteral(
         "The virtual dynamically-linked shared object, also known as the "
         "'vsyscall page'. This is a memory region mapped by the operating "
         "system for the purpose of allowing processes to perform some "
         "privileged actions without the overhead of a syscall.");
-      *aProcessSizeKind = Vdso;
+      aTag = aName;
+    } else if (StringBeginsWith(absPath, NS_LITERAL_CSTRING("[anon:")) &&
+               EndsWithLiteral(absPath, "]")) {
+      // It's tagged memory; see also "mfbt/TaggedAnonymousMemory.h".
+      nsAutoCString tag(Substring(absPath, 6, absPath.Length() - 7));
 
-    } else if (!IsAnonymous(basename)) {
-      nsAutoCString dirname;
+      aName.AppendLiteral("anonymous/");
+      aName.Append(tag);
+      aTag = aName;
+      aDesc.AppendLiteral("Memory in anonymous mappings tagged with '");
+      aDesc.Append(tag);
+      aDesc.Append('\'');
+    } else if (!IsAnonymous(absPath)) {
+      // We now know it's an actual file.  Truncate this to its
+      // basename, and put the absolute path in the description.
+      nsAutoCString basename, dirname;
+      GetBasename(absPath, basename);
       GetDirname(absPath, dirname);
 
       // Hack: A file is a shared library if the basename contains ".so" and
@@ -430,36 +525,42 @@ private:
       if (EndsWithLiteral(basename, ".so") ||
           (basename.Find(".so") != -1 && dirname.Find("/lib") != -1)) {
         aName.AppendLiteral("shared-libraries/");
+        aTag = aName;
 
         if (strncmp(aPerms, "r-x", 3) == 0) {
-          *aProcessSizeKind = SharedLibrariesRX;
+          aTag.AppendLiteral("read-executable");
         } else if (strncmp(aPerms, "rw-", 3) == 0) {
-          *aProcessSizeKind = SharedLibrariesRW;
+          aTag.AppendLiteral("read-write");
         } else if (strncmp(aPerms, "r--", 3) == 0) {
-          *aProcessSizeKind = SharedLibrariesR;
+          aTag.AppendLiteral("read-only");
         } else {
-          *aProcessSizeKind = SharedLibrariesOther;
+          aTag.AppendLiteral("other");
         }
 
       } else {
-        aName.AppendLiteral("other-files/");
+        aName.AppendLiteral("other-files");
         if (EndsWithLiteral(basename, ".xpi")) {
-          aName.AppendLiteral("extensions/");
+          aName.AppendLiteral("/extensions");
         } else if (dirname.Find("/fontconfig") != -1) {
-          aName.AppendLiteral("fontconfig/");
+          aName.AppendLiteral("/fontconfig");
         }
-        *aProcessSizeKind = OtherFiles;
+        aTag = aName;
+        aName.Append('/');
       }
 
       aName.Append(basename);
       aDesc.Append(absPath);
-
     } else {
-      aName.AppendLiteral("anonymous/outside-brk");
-      aDesc.AppendLiteral(
-        "Memory in anonymous mappings outside the boundaries defined by "
-        "brk() / sbrk().");
-      *aProcessSizeKind = AnonymousOutsideBrk;
+      if (MozTaggedMemoryIsSupported()) {
+        aName.AppendLiteral("anonymous/untagged");
+        aDesc.AppendLiteral("Memory in untagged anonymous mappings.");
+        aTag = aName;
+      } else {
+        aName.AppendLiteral("anonymous/outside-brk");
+        aDesc.AppendLiteral("Memory in anonymous mappings outside the "
+                            "boundaries defined by brk() / sbrk().");
+        aTag = aName;
+      }
     }
 
     aName.AppendLiteral("/[");
@@ -472,61 +573,6 @@ private:
     aDesc.AppendLiteral(" [");
     aDesc.Append(aPerms);
     aDesc.Append(']');
-  }
-
-  nsresult ParseMapBody(
-    FILE* aFile,
-    const nsACString& aProcessName,
-    const nsACString& aName,
-    const nsACString& aDescription,
-    nsIHandleReportCallback* aHandleReport,
-    nsISupports* aData,
-    size_t* aPss)
-  {
-    // Most of the lines in the body look like this:
-    //
-    // Size:                132 kB
-    // Rss:                  20 kB
-    // Pss:                  20 kB
-    //
-    // We're only interested in Pss.  In newer kernels, the last line in the
-    // body has a different form:
-    //
-    // VmFlags: rd wr mr mw me dw ac
-    //
-    // The strings after "VmFlags: " vary.
-
-    char desc[1025];
-    int64_t sizeKB;
-    int n = fscanf(aFile, "%1024[a-zA-Z_]: %" SCNd64 " kB\n", desc, &sizeKB);
-    if (n == EOF || n == 0) {
-      return NS_ERROR_FAILURE;
-    } else if (n == 1 && strcmp(desc, "VmFlags") == 0) {
-      // This is the "VmFlags:" line.  Chew up the rest of it.
-      fscanf(aFile, "%*1024[a-z ]\n");
-      return NS_ERROR_FAILURE;
-    }
-
-    // Only report "Pss" values.
-    if (strcmp(desc, "Pss") == 0) {
-      *aPss = sizeKB * 1024;
-
-      // Don't report zero values.
-      if (*aPss == 0) {
-        return NS_OK;
-      }
-
-      nsAutoCString path("mem/processes/");
-      path.Append(aProcessName);
-      path.Append('/');
-      path.Append(aName);
-
-      REPORT(path, *aPss, aDescription);
-    } else {
-      *aPss = 0;
-    }
-
-    return NS_OK;
   }
 
   nsresult CollectPmemReports(nsIHandleReportCallback* aHandleReport,
@@ -571,10 +617,10 @@ private:
         continue;
       }
       scanned = fscanf(sizeFile, "%" SCNu64, &size);
+      fclose(sizeFile);
       if (NS_WARN_IF(scanned != 1)) {
         continue;
       }
-      fclose(sizeFile);
 
       // Read mapped regions; format described below.
       uint64_t freeSize = size;
@@ -820,19 +866,6 @@ private:
 };
 
 NS_IMPL_ISUPPORTS(SystemReporter, nsIMemoryReporter)
-
-// Keep this in sync with SystemReporter::ProcessSizeKind!
-const char* SystemReporter::kindPathSuffixes[] = {
-  "anonymous/outside-brk",
-  "anonymous/brk-heap",
-  "shared-libraries/read-executable",
-  "shared-libraries/read-write",
-  "shared-libraries/read-only",
-  "shared-libraries/other",
-  "other-files",
-  "main-thread-stack",
-  "vdso"
-};
 
 void
 Init()

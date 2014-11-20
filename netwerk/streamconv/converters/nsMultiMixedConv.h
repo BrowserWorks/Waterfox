@@ -10,6 +10,7 @@
 #include "nsString.h"
 #include "nsCOMPtr.h"
 #include "nsIByteRangeRequest.h"
+#include "nsILoadInfo.h"
 #include "nsIMultiPartChannel.h"
 #include "nsAutoPtr.h"
 #include "mozilla/Attributes.h"
@@ -126,9 +127,10 @@ public:
     NS_DECL_NSIREQUESTOBSERVER
 
     nsMultiMixedConv();
-    virtual ~nsMultiMixedConv();
 
 protected:
+    virtual ~nsMultiMixedConv();
+
     nsresult SendStart(nsIChannel *aChannel);
     nsresult SendStop(nsresult aStatus);
     nsresult SendData(char *aBuffer, uint32_t aLen);

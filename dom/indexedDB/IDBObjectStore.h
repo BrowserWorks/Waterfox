@@ -26,7 +26,7 @@ class nsPIDOMWindow;
 
 namespace mozilla {
 namespace dom {
-class ContentParent;
+class nsIContentParent;
 class PBlobChild;
 class PBlobParent;
 }
@@ -47,7 +47,7 @@ struct IndexInfo;
 struct IndexUpdateInfo;
 struct ObjectStoreInfo;
 
-struct FileHandleData;
+struct MutableFileData;
 struct BlobOrFileData;
 
 class IDBObjectStore MOZ_FINAL : public nsISupports,
@@ -122,7 +122,7 @@ public:
 
   // Called only in the main process.
   static nsresult
-  ConvertBlobsToActors(ContentParent* aContentParent,
+  ConvertBlobsToActors(nsIContentParent* aContentParent,
                        FileManager* aFileManager,
                        const nsTArray<StructuredCloneFile>& aFiles,
                        InfallibleTArray<PBlobParent*>& aActors);
@@ -387,8 +387,8 @@ protected:
   ClearStructuredCloneBuffer(JSAutoStructuredCloneBuffer& aBuffer);
 
   static bool
-  ReadFileHandle(JSStructuredCloneReader* aReader,
-                 FileHandleData* aRetval);
+  ReadMutableFile(JSStructuredCloneReader* aReader,
+                  MutableFileData* aRetval);
 
   static bool
   ReadBlobOrFile(JSStructuredCloneReader* aReader,

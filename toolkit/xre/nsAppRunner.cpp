@@ -191,7 +191,6 @@
 
 extern uint32_t gRestartMode;
 extern void InstallSignalHandlers(const char *ProgramName);
-#include "nsX11ErrorHandler.h"
 
 #define FILE_COMPATIBILITY_INFO NS_LITERAL_CSTRING("compatibility.ini")
 #define FILE_INVALIDATE_CACHES NS_LITERAL_CSTRING(".purgecaches")
@@ -811,6 +810,16 @@ nsXULAppInfo::GetBrowserTabsRemote(bool* aResult)
   return NS_OK;
 }
 
+static bool gBrowserTabsRemoteAutostart = false;
+static bool gBrowserTabsRemoteAutostartInitialized = false;
+
+NS_IMETHODIMP
+nsXULAppInfo::GetBrowserTabsRemoteAutostart(bool* aResult)
+{
+  *aResult = BrowserTabsRemoteAutostart();
+  return NS_OK;
+}
+
 NS_IMETHODIMP
 nsXULAppInfo::EnsureContentProcess()
 {
@@ -1285,9 +1294,9 @@ public:
   NS_DECL_NSIFACTORY
 
   nsSingletonFactory(nsISupports* aSingleton);
-  ~nsSingletonFactory() { }
 
 private:
+  ~nsSingletonFactory() { }
   nsCOMPtr<nsISupports> mSingleton;
 };
 
@@ -3216,19 +3225,6 @@ XREMain::XRE_mainInit(bool* aExitFlag)
     return 0;
   }
 
-  if (PR_GetEnv("MOZ_RUN_GTEST")) {
-    int result;
-    // RunGTest will only be set if we're in xul-unit
-    if (mozilla::RunGTest) {
-      result = mozilla::RunGTest();
-    } else {
-      result = 1;
-      printf("TEST-UNEXPECTED-FAIL | gtest | Not compiled with enable-tests\n");
-    }
-    *aExitFlag = true;
-    return result;
-  }
-
   return 0;
 }
 
@@ -3433,7 +3429,22 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
   // opens.
   if (!gtk_parse_args(&gArgc, &gArgv))
     return 1;
+#endif /* MOZ_WIDGET_GTK */
 
+  if (PR_GetEnv("MOZ_RUN_GTEST")) {
+    int result;
+    // RunGTest will only be set if we're in xul-unit
+    if (mozilla::RunGTest) {
+      result = mozilla::RunGTest();
+    } else {
+      result = 1;
+      printf("TEST-UNEXPECTED-FAIL | gtest | Not compiled with enable-tests\n");
+    }
+    *aExitFlag = true;
+    return result;
+  }
+
+#if defined(MOZ_WIDGET_GTK)
   // display_name is owned by gdk.
   const char *display_name = gdk_get_display_arg_name();
   if (display_name) {
@@ -3445,7 +3456,7 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
       return 1;
     }
   }
-#endif /* MOZ_WIDGET_GTK2 */
+#endif /* MOZ_WIDGET_GTK */
 
 #ifdef MOZ_ENABLE_XREMOTE
   // handle -remote now that xpcom is fired up
@@ -3533,7 +3544,7 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
 #endif /* defined(MOZ_WIDGET_GTK) */
 #ifdef MOZ_X11
   // Do this after initializing GDK, or GDK will install its own handler.
-  InstallX11ErrorHandler();
+  XRE_InstallX11ErrorHandler();
 #endif
 
   // Call the code to install our handler
@@ -4002,8 +4013,8 @@ XREMain::XRE_mainRun()
   }
 
 #ifdef MOZ_INSTRUMENT_EVENT_LOOP
-  if (PR_GetEnv("MOZ_INSTRUMENT_EVENT_LOOP") || profiler_is_active()) {
-    bool logToConsole = !!PR_GetEnv("MOZ_INSTRUMENT_EVENT_LOOP");
+  if (PR_GetEnv("MOZ_INSTRUMENT_EVENT_LOOP")) {
+    bool logToConsole = true;
     mozilla::InitEventTracing(logToConsole);
   }
 #endif /* MOZ_INSTRUMENT_EVENT_LOOP */
@@ -4422,6 +4433,27 @@ mozilla::BrowserTabsRemote()
   }
 
   return gBrowserTabsRemote;
+}
+
+bool
+mozilla::BrowserTabsRemoteAutostart()
+{
+  if (!gBrowserTabsRemoteAutostartInitialized) {
+    gBrowserTabsRemoteAutostartInitialized = true;
+#if !defined(NIGHTLY_BUILD)
+    // When running tests with 'layers.offmainthreadcomposition.testing.enabled' and autostart
+    // set to true, return enabled.  These tests must be allowed to run remotely.
+    if (Preferences::GetBool("layers.offmainthreadcomposition.testing.enabled", false) &&
+        Preferences::GetBool("browser.tabs.remote.autostart", false)) {
+      gBrowserTabsRemoteAutostart = true;
+    }
+#else
+    gBrowserTabsRemoteAutostart = !gSafeMode &&
+                                  Preferences::GetBool("browser.tabs.remote.autostart", false);
+#endif
+  }
+
+  return gBrowserTabsRemoteAutostart;
 }
 
 void

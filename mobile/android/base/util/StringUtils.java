@@ -5,10 +5,13 @@
 
 package org.mozilla.gecko.util;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.text.TextUtils;
+import android.util.Log;
 
 public class StringUtils {
+    private static final String LOGTAG = "GeckoStringUtils";
 
     private static final String FILTER_URL_PREFIX = "filter://";
     private static final String USER_ENTERED_URL_PREFIX = "user-entered:";
@@ -156,6 +159,12 @@ public class StringUtils {
         return url.substring(FILTER_URL_PREFIX.length());
     }
 
+    public static boolean isShareableUrl(final String url) {
+        final String scheme = Uri.parse(url).getScheme();
+        return !("about".equals(scheme) || "chrome".equals(scheme) ||
+                "file".equals(scheme) || "resource".equals(scheme));
+    }
+
     public static boolean isUserEnteredUrl(String url) {
         return (url != null && url.startsWith(USER_ENTERED_URL_PREFIX));
     }
@@ -179,5 +188,17 @@ public class StringUtils {
 
     public static String encodeUserEnteredUrl(String url) {
         return Uri.fromParts("user-entered", url, null).toString();
+    }
+
+    public static String getStringExtra(Intent intent, String name) {
+        try {
+            return intent.getStringExtra(name);
+        } catch (android.os.BadParcelableException ex) {
+            Log.w(LOGTAG, "Couldn't get string extra: malformed intent.");
+            return null;
+        } catch (RuntimeException re) {
+            Log.w(LOGTAG, "Couldn't get string extra.", re);
+            return null;
+        }
     }
 }

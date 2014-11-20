@@ -105,8 +105,11 @@ class WebMReader : public MediaDecoderReader
 {
 public:
   WebMReader(AbstractMediaDecoder* aDecoder);
+
+protected:
   ~WebMReader();
 
+public:
   virtual nsresult Init(MediaDecoderReader* aCloneDonor);
   virtual nsresult ResetDecode();
   virtual bool DecodeAudioData();
@@ -134,6 +137,8 @@ public:
   virtual nsresult Seek(int64_t aTime, int64_t aStartTime, int64_t aEndTime, int64_t aCurrentTime);
   virtual nsresult GetBuffered(dom::TimeRanges* aBuffered, int64_t aStartTime);
   virtual void NotifyDataArrived(const char* aBuffer, uint32_t aLength, int64_t aOffset);
+
+  virtual bool IsMediaSeekable() MOZ_OVERRIDE;
 
 protected:
   // Value passed to NextPacket to determine if we are reading a video or an

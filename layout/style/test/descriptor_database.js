@@ -1,4 +1,4 @@
-/* -*- Mode: Java; tab-width: 4; indent-tabs-mode: t; c-basic-offset: 4 -*- */
+/* -*- tab-width: 4; indent-tabs-mode: nil; js-indent-level: 4 -*- */
 /* vim: set shiftwidth=4 tabstop=4 autoindent cindent noexpandtab: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,7 +44,6 @@ var gCSSFontFaceDescriptors = {
 			"local(Times New Roman)",
 			"local(\'Times New Roman\')",
 			"local(\"Times New Roman\")",
-			"local(serif)", /* is this valid? */
 			"local(\"serif\")",
 			"url(404.ttf) format(\"truetype\", \"unknown\"), local(Times New Roman), url(\'404.eot\')",
 		],
@@ -53,6 +52,7 @@ var gCSSFontFaceDescriptors = {
 			"url(404.ttf) format(\"truetype\" \"opentype\")",
 			"url(404.ttf) format(\"truetype\",)",
 			"local(\"Times New\" Roman)",
+			"local(serif)", /* is this valid? */
 		]
 	},
 	"unicode-range": {

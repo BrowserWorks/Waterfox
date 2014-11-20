@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2013 International Business Machines
+// * Copyright (C) 2014 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/vi.xml
@@ -605,7 +605,7 @@ vi{
         }
         LVL{
             "LVL",
-            "Lats Lít-va",
+            "Lats Latvia",
         }
         LVR{
             "LVR",
@@ -1172,6 +1172,59 @@ vi{
             "Đồng Đô la Zimbabwe (2008)",
         }
     }
+    Currencies%narrow{
+        ARS{"$"}
+        AUD{"$"}
+        BBD{"$"}
+        BDT{"৳"}
+        BMD{"$"}
+        BND{"$"}
+        BRL{"R$"}
+        BSD{"$"}
+        BYR{"р."}
+        BZD{"$"}
+        CAD{"$"}
+        CLP{"$"}
+        CNY{"¥"}
+        COP{"$"}
+        CRC{"₡"}
+        CUP{"$"}
+        DOP{"$"}
+        EUR{"€"}
+        FJD{"$"}
+        GBP{"£"}
+        GIP{"£"}
+        GYD{"$"}
+        HKD{"$"}
+        ILS{"₪"}
+        INR{"₹"}
+        JMD{"$"}
+        JPY{"¥"}
+        KHR{"៛"}
+        KRW{"₩"}
+        KYD{"$"}
+        KZT{"₸"}
+        LAK{"₭"}
+        LRD{"$"}
+        MNT{"₮"}
+        MXN{"$"}
+        NAD{"$"}
+        NGN{"₦"}
+        NZD{"$"}
+        PHP{"₱"}
+        PYG{"₲"}
+        SBD{"$"}
+        SGD{"$"}
+        SRD{"$"}
+        SSP{"£"}
+        TRY{"₺"}
+        TTD{"$"}
+        TWD{"NT$"}
+        UAH{"₴"}
+        USD{"$"}
+        UYU{"$"}
+        VND{"₫"}
+    }
     CurrencyPlurals{
         AED{
             other{"dirham UAE"}
@@ -1315,7 +1368,7 @@ vi{
             other{"bảng Anh"}
         }
         GEL{
-            other{"lari Gruzia"}
+            other{"Lari Gruzia"}
         }
         GHS{
             other{"cedi Ghana"}
@@ -1348,7 +1401,7 @@ vi{
             other{"gourde Haiti"}
         }
         HUF{
-            other{"forint Hungaria"}
+            other{"forint Hungary"}
         }
         IDR{
             other{"rupiah Indonesia"}
@@ -1420,7 +1473,7 @@ vi{
             other{"litas Lít-va"}
         }
         LVL{
-            other{"lats Lít-va"}
+            other{"lats Lativia"}
         }
         LYD{
             other{"dinar Libi"}
@@ -1651,5 +1704,5 @@ vi{
     CurrencyUnitPatterns{
         other{"{0} {1}"}
     }
-    Version{"2.0.92.87"}
+    Version{"2.1.8.9"}
 }

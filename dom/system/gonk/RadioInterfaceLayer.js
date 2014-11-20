@@ -24,8 +24,11 @@ Cu.import("resource://gre/modules/systemlibs.js");
 Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
 
-var RIL = {};
-Cu.import("resource://gre/modules/ril_consts.js", RIL);
+XPCOMUtils.defineLazyGetter(this, "RIL", function () {
+  let obj = {};
+  Cu.import("resource://gre/modules/ril_consts.js", obj);
+  return obj;
+});
 
 // Ril quirk to attach data registration on demand.
 let RILQUIRKS_DATA_REGISTRATION_ON_DEMAND =
@@ -54,6 +57,16 @@ const GSMICCINFO_CID =
   Components.ID("{d90c4261-a99d-47bc-8b05-b057bb7e8f8a}");
 const CDMAICCINFO_CID =
   Components.ID("{39ba3c08-aacc-46d0-8c04-9b619c387061}");
+const NEIGHBORINGCELLINFO_CID =
+  Components.ID("{f9dfe26a-851e-4a8b-a769-cbb1baae7ded}");
+const GSMCELLINFO_CID =
+    Components.ID("{41f6201e-7263-42e3-b31f-38a9dc8a280a}");
+const WCDMACELLINFO_CID =
+    Components.ID("{eeaaf307-df6e-4c98-b121-e3302b1fc468}");
+const CDMACELLINFO_CID =
+    Components.ID("{b497d6e4-4cb8-4d6e-b673-840c7d5ddf25}");
+const LTECELLINFO_CID =
+    Components.ID("{c7e0a78a-4e99-42f5-9251-e6172c5ed8d8}");
 
 const NS_XPCOM_SHUTDOWN_OBSERVER_ID      = "xpcom-shutdown";
 const kNetworkInterfaceStateChangedTopic = "network-interface-state-changed";
@@ -71,6 +84,7 @@ const kSysMsgListenerReadyObserverTopic  = "system-message-listener-ready";
 const kSysClockChangeObserverTopic       = "system-clock-change";
 const kScreenStateChangedTopic           = "screen-state-changed";
 
+const kSettingsCellBroadcastDisabled = "ril.cellbroadcast.disabled";
 const kSettingsCellBroadcastSearchList = "ril.cellbroadcast.searchlist";
 const kSettingsClockAutoUpdateEnabled = "time.clock.automatic-update.enabled";
 const kSettingsClockAutoUpdateAvailable = "time.clock.automatic-update.available";
@@ -79,7 +93,6 @@ const kSettingsTimezoneAutoUpdateAvailable = "time.timezone.automatic-update.ava
 
 const NS_PREFBRANCH_PREFCHANGE_TOPIC_ID = "nsPref:changed";
 
-const kPrefCellBroadcastDisabled = "ril.cellbroadcast.disabled";
 const kPrefRilNumRadioInterfaces = "ril.numRadioInterfaces";
 const kPrefRilDebuggingEnabled = "ril.debugging.enabled";
 
@@ -91,6 +104,9 @@ const DOM_MOBILE_MESSAGE_DELIVERY_ERROR    = "error";
 const RADIO_POWER_OFF_TIMEOUT = 30000;
 const SMS_HANDLED_WAKELOCK_TIMEOUT = 5000;
 const HW_DEFAULT_CLIENT_ID = 0;
+
+const INT32_MAX = 2147483647;
+const UNKNOWN_RSSI = 99;
 
 const RIL_IPC_MOBILECONNECTION_MSG_NAMES = [
   "RIL:GetRilContext",
@@ -1055,6 +1071,127 @@ CdmaIccInfo.prototype = {
   prlVersion: 0
 };
 
+function NeighboringCellInfo() {}
+NeighboringCellInfo.prototype = {
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsINeighboringCellInfo]),
+  classID:        NEIGHBORINGCELLINFO_CID,
+  classInfo:      XPCOMUtils.generateCI({
+    classID:          NEIGHBORINGCELLINFO_CID,
+    classDescription: "NeighboringCellInfo",
+    interfaces:       [Ci.nsINeighboringCellInfo]
+  }),
+
+  // nsINeighboringCellInfo
+
+  networkType: null,
+  gsmLocationAreaCode: -1,
+  gsmCellId: -1,
+  wcdmaPsc: -1,
+  signalStrength: UNKNOWN_RSSI
+};
+
+function CellInfo() {}
+CellInfo.prototype = {
+  type: null,
+  registered: false,
+  timestampType: Ci.nsICellInfo.TIMESTAMP_TYPE_UNKNOWN,
+  timestamp: 0
+};
+
+function GsmCellInfo() {}
+GsmCellInfo.prototype = {
+  __proto__: CellInfo.prototype,
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIGsmCellInfo]),
+  classID: GSMCELLINFO_CID,
+  classInfo: XPCOMUtils.generateCI({
+    classID:          GSMCELLINFO_CID,
+    classDescription: "GsmCellInfo",
+    interfaces:       [Ci.nsIGsmCellInfo]
+  }),
+
+  // nsIGsmCellInfo
+
+  mcc: INT32_MAX,
+  mnc: INT32_MAX,
+  lac: INT32_MAX,
+  cid: INT32_MAX,
+  signalStrength: UNKNOWN_RSSI,
+  bitErrorRate: UNKNOWN_RSSI
+};
+
+function WcdmaCellInfo() {}
+WcdmaCellInfo.prototype = {
+  __proto__: CellInfo.prototype,
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIWcdmaCellInfo]),
+  classID: WCDMACELLINFO_CID,
+  classInfo: XPCOMUtils.generateCI({
+    classID:          WCDMACELLINFO_CID,
+    classDescription: "WcdmaCellInfo",
+    interfaces:       [Ci.nsIWcdmaCellInfo]
+  }),
+
+  // nsIWcdmaCellInfo
+
+  mcc: INT32_MAX,
+  mnc: INT32_MAX,
+  lac: INT32_MAX,
+  cid: INT32_MAX,
+  psc: INT32_MAX,
+  signalStrength: UNKNOWN_RSSI,
+  bitErrorRate: UNKNOWN_RSSI
+};
+
+function LteCellInfo() {}
+LteCellInfo.prototype = {
+  __proto__: CellInfo.prototype,
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsILteCellInfo]),
+  classID: LTECELLINFO_CID,
+  classInfo: XPCOMUtils.generateCI({
+    classID:          LTECELLINFO_CID,
+    classDescription: "LteCellInfo",
+    interfaces:       [Ci.nsILteCellInfo]
+  }),
+
+  // nsILteCellInfo
+
+  mcc: INT32_MAX,
+  mnc: INT32_MAX,
+  cid: INT32_MAX,
+  pcid: INT32_MAX,
+  tac: INT32_MAX,
+  signalStrength: UNKNOWN_RSSI,
+  rsrp: INT32_MAX,
+  rsrq: INT32_MAX,
+  rssnr: INT32_MAX,
+  cqi: INT32_MAX,
+  timingAdvance: INT32_MAX
+};
+
+function CdmaCellInfo() {}
+CdmaCellInfo.prototype = {
+  __proto__: CellInfo.prototype,
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsICdmaCellInfo]),
+  classID: CDMACELLINFO_CID,
+  classInfo: XPCOMUtils.generateCI({
+    classID:          CDMACELLINFO_CID,
+    classDescription: "CdmaCellInfo",
+    interfaces:       [Ci.nsICdmaCellInfo]
+  }),
+
+  // nsICdmaCellInfo
+
+  networkId: INT32_MAX,
+  systemId: INT32_MAX,
+  baseStationId: INT32_MAX,
+  longitude: INT32_MAX,
+  latitude: INT32_MAX,
+  cdmaDbm: INT32_MAX,
+  cdmaEcio: INT32_MAX,
+  evdoDbm: INT32_MAX,
+  evdoEcio: INT32_MAX,
+  evdoSnr: INT32_MAX
+};
+
 function DataConnectionHandler(clientId, radioInterface) {
   // Initial owning attributes.
   this.clientId = clientId;
@@ -1552,6 +1689,15 @@ RadioInterfaceLayer.prototype = {
     return this.radioInterfaces[clientId];
   },
 
+  getClientIdForEmergencyCall: function() {
+    for (let cid = 0; cid < this.numRadioInterfaces; ++cid) {
+      if (gRadioEnabledController._isRadioAbleToEnableAtClient(cid)) {
+        return cid;
+      }
+    }
+    return -1;
+  },
+
   setMicrophoneMuted: function(muted) {
     for (let clientId = 0; clientId < this.numRadioInterfaces; clientId++) {
       let radioInterface = this.radioInterfaces[clientId];
@@ -1591,7 +1737,6 @@ WorkerMessenger.prototype = {
   init: function() {
     let options = {
       debug: DEBUG,
-      cellBroadcastDisabled: false,
       quirks: {
         callstateExtraUint32:
           libcutils.property_get("ro.moz.ril.callstate_extra_int", "false") === "true",
@@ -1609,15 +1754,8 @@ WorkerMessenger.prototype = {
           libcutils.property_get("ro.moz.ril.send_stk_profile_dl", "false") == "true",
         dataRegistrationOnDemand: RILQUIRKS_DATA_REGISTRATION_ON_DEMAND,
         subscriptionControl: RILQUIRKS_SUBSCRIPTION_CONTROL
-      },
-      rilEmergencyNumbers: libcutils.property_get("ril.ecclist") ||
-                           libcutils.property_get("ro.ril.ecclist")
+      }
     };
-
-    try {
-      options.cellBroadcastDisabled =
-        Services.prefs.getBoolPref(kPrefCellBroadcastDisabled);
-    } catch(e) {}
 
     this.send(null, "setInitialOptions", options);
   },
@@ -1815,8 +1953,30 @@ function RadioInterface(aClientId, aWorkerMessenger) {
   // Set "time.timezone.automatic-update.available" to false when starting up.
   this.setTimezoneAutoUpdateAvailable(false);
 
-  // Read the Cell Broadcast Search List setting, string of integers or integer
-  // ranges separated by comma, to set listening channels.
+  /**
+  * Read the settings of the toggle of Cellbroadcast Service:
+  *
+  * Simple Format: Boolean
+  *   true if CBS is disabled. The value is applied to all RadioInterfaces.
+  * Enhanced Format: Array of Boolean
+  *   Each element represents the toggle of CBS per RadioInterface.
+  */
+  lock.get(kSettingsCellBroadcastDisabled, this);
+
+  /**
+   * Read the Cell Broadcast Search List setting to set listening channels:
+   *
+   * Simple Format:
+   *   String of integers or integer ranges separated by comma.
+   *   For example, "1, 2, 4-6"
+   * Enhanced Format:
+   *   Array of Objects with search lists specified in gsm/cdma network.
+   *   For example, [{'gsm' : "1, 2, 4-6", 'cdma' : "1, 50, 99"},
+   *                 {'cdma' : "3, 6, 8-9"}]
+   *   This provides the possibility to
+   *   1. set gsm/cdma search list individually for CDMA+LTE device.
+   *   2. set search list per RadioInterface.
+   */
   lock.get(kSettingsCellBroadcastSearchList, this);
 
   Services.obs.addObserver(this, kMozSettingsChangedObserverTopic, false);
@@ -1825,7 +1985,6 @@ function RadioInterface(aClientId, aWorkerMessenger) {
 
   Services.obs.addObserver(this, kNetworkConnStateChangedTopic, false);
   Services.obs.addObserver(this, kNetworkActiveChangedTopic, false);
-  Services.prefs.addObserver(kPrefCellBroadcastDisabled, this, false);
 
   this.portAddressedSmsApps = {};
   this.portAddressedSmsApps[WAP.WDP_PORT_PUSH] = this.handleSmsWdpPortPush.bind(this);
@@ -1941,10 +2100,10 @@ RadioInterface.prototype = {
         this.workerMessenger.sendWithIPCMessage(msg, "getAvailableNetworks");
         break;
       case "RIL:SelectNetwork":
-        this.workerMessenger.sendWithIPCMessage(msg, "selectNetwork");
+        this.selectNetwork(msg.target, msg.json.data);
         break;
       case "RIL:SelectNetworkAuto":
-        this.workerMessenger.sendWithIPCMessage(msg, "selectNetworkAuto");
+        this.selectNetworkAuto(msg.target, msg.json.data);
         break;
       case "RIL:SetPreferredNetworkType":
         this.setPreferredNetworkType(msg.target, msg.json.data);
@@ -2257,17 +2416,48 @@ RadioInterface.prototype = {
     if (!message || !message.mvnoType || !message.mvnoData) {
       message.errorMsg = RIL.GECKO_ERROR_INVALID_PARAMETER;
     }
-    // Currently we only support imsi matching.
-    if (message.mvnoType != "imsi") {
-      message.errorMsg = RIL.GECKO_ERROR_MODE_NOT_SUPPORTED;
-    }
-    // Fire error if mvnoType is imsi but imsi is not available.
-    if (!this.rilContext.imsi) {
-      message.errorMsg = RIL.GECKO_ERROR_GENERIC_FAILURE;
-    }
 
     if (!message.errorMsg) {
-      message.result = this.isImsiMatches(message.mvnoData);
+      switch (message.mvnoType) {
+        case "imsi":
+          if (!this.rilContext.imsi) {
+            message.errorMsg = RIL.GECKO_ERROR_GENERIC_FAILURE;
+            break;
+          }
+          message.result = this.isImsiMatches(message.mvnoData);
+          break;
+        case "spn":
+          let spn = this.rilContext.iccInfo && this.rilContext.iccInfo.spn;
+          if (!spn) {
+            message.errorMsg = RIL.GECKO_ERROR_GENERIC_FAILURE;
+            break;
+          }
+          message.result = spn == message.mvnoData;
+          break;
+        case "gid":
+          this.workerMessenger.send("getGID1", null, (function(response) {
+            let gid = response.gid1;
+            let mvnoDataLength = message.mvnoData.length;
+
+            if (!gid) {
+              message.errorMsg = RIL.GECKO_ERROR_GENERIC_FAILURE;
+            } else if (mvnoDataLength > gid.length) {
+              message.result = false;
+            } else {
+              message.result =
+                gid.substring(0, mvnoDataLength).toLowerCase() ==
+                message.mvnoData.toLowerCase();
+            }
+
+            target.sendAsyncMessage("RIL:MatchMvno", {
+              clientId: this.clientId,
+              data: message
+            });
+          }).bind(this));
+          return;
+        default:
+          message.errorMsg = RIL.GECKO_ERROR_MODE_NOT_SUPPORTED;
+      }
     }
 
     target.sendAsyncMessage("RIL:MatchMvno", {
@@ -2446,11 +2636,65 @@ RadioInterface.prototype = {
     }).bind(this));
   },
 
-  setCellBroadcastSearchList: function(newSearchList) {
-    if ((newSearchList == this._cellBroadcastSearchList) ||
-          (newSearchList && this._cellBroadcastSearchList &&
-            newSearchList.gsm == this._cellBroadcastSearchList.gsm &&
-            newSearchList.cdma == this._cellBroadcastSearchList.cdma)) {
+  /**
+   * The network that is currently trying to be selected (or "automatic").
+   * This helps ensure that only one network per client is selected at a time.
+   */
+  _selectingNetwork: null,
+
+  selectNetwork: function(target, message) {
+    if (this._selectingNetwork) {
+      message.errorMsg = "AlreadySelectingANetwork";
+      target.sendAsyncMessage("RIL:SelectNetwork", {
+        clientId: this.clientId,
+        data: message
+      });
+      return;
+    }
+
+    this._selectingNetwork = message;
+    this.workerMessenger.send("selectNetwork", message, (function(response) {
+      this._selectingNetwork = null;
+      target.sendAsyncMessage("RIL:SelectNetwork", {
+        clientId: this.clientId,
+        data: response
+      });
+      return false;
+    }).bind(this));
+  },
+
+  selectNetworkAuto: function(target, message) {
+    if (this._selectingNetwork) {
+      message.errorMsg = "AlreadySelectingANetwork";
+      target.sendAsyncMessage("RIL:SelectNetworkAuto", {
+        clientId: this.clientId,
+        data: message
+      });
+      return;
+    }
+
+    this._selectingNetwork = "automatic";
+    this.workerMessenger.send("selectNetworkAuto", message, (function(response) {
+      this._selectingNetwork = null;
+      target.sendAsyncMessage("RIL:SelectNetworkAuto", {
+        clientId: this.clientId,
+        data: response
+      });
+    }).bind(this));
+  },
+
+  setCellBroadcastSearchList: function(settings) {
+    let newSearchList =
+      Array.isArray(settings) ? settings[this.clientId] : settings;
+    let oldSearchList =
+      Array.isArray(this._cellBroadcastSearchList) ?
+        this._cellBroadcastSearchList[this.clientId] :
+        this._cellBroadcastSearchList;
+
+    if ((newSearchList == oldSearchList) ||
+          (newSearchList && oldSearchList &&
+            newSearchList.gsm == oldSearchList.gsm &&
+            newSearchList.cdma == oldSearchList.cdma)) {
       return;
     }
 
@@ -2462,7 +2706,7 @@ RadioInterface.prototype = {
         lock.set(kSettingsCellBroadcastSearchList,
                  this._cellBroadcastSearchList, null);
       } else {
-        this._cellBroadcastSearchList = response.searchList;
+        this._cellBroadcastSearchList = settings;
       }
 
       return false;
@@ -3203,6 +3447,10 @@ RadioInterface.prototype = {
     // Update lastKnownHomeNetwork.
     if (message.mcc && message.mnc) {
       this._lastKnownHomeNetwork = message.mcc + "-" + message.mnc;
+      // Append spn information if available.
+      if (message.spn) {
+        this._lastKnownHomeNetwork += "-" + message.spn;
+      }
     }
 
     // If spn becomes available, we should check roaming again.
@@ -3256,16 +3504,6 @@ RadioInterface.prototype = {
       case kMozSettingsChangedObserverTopic:
         let setting = JSON.parse(data);
         this.handleSettingsChange(setting.key, setting.value, setting.message);
-        break;
-      case NS_PREFBRANCH_PREFCHANGE_TOPIC_ID:
-        if (data === kPrefCellBroadcastDisabled) {
-          let value = false;
-          try {
-            value = Services.prefs.getBoolPref(kPrefCellBroadcastDisabled);
-          } catch(e) {}
-          this.workerMessenger.send("setCellBroadcastDisabled",
-                                    { disabled: value });
-        }
         break;
       case kSysClockChangeObserverTopic:
         let offset = parseInt(data, 10);
@@ -3428,9 +3666,19 @@ RadioInterface.prototype = {
           this.debug("'" + kSettingsCellBroadcastSearchList +
             "' is now " + JSON.stringify(aResult));
         }
-        // TODO: Set searchlist for Multi-SIM. See Bug 921326.
-        let result = Array.isArray(aResult) ? aResult[0] : aResult;
-        this.setCellBroadcastSearchList(result);
+
+        this.setCellBroadcastSearchList(aResult);
+        break;
+      case kSettingsCellBroadcastDisabled:
+        if (DEBUG) {
+          this.debug("'" + kSettingsCellBroadcastDisabled +
+            "' is now " + JSON.stringify(aResult));
+        }
+
+        let setCbsDisabled =
+          Array.isArray(aResult) ? aResult[this.clientId] : aResult;
+        this.workerMessenger.send("setCellBroadcastDisabled",
+                                  { disabled: setCbsDisabled });
         break;
     }
   },
@@ -4283,6 +4531,67 @@ RadioInterface.prototype = {
     } else {
       this.workerMessenger.send(rilMessageType, message);
     }
+  },
+
+  getCellInfoList: function(callback) {
+    this.workerMessenger.send("getCellInfoList",
+                              null,
+                              function(response) {
+      if (response.errorMsg) {
+        callback.notifyGetCellInfoListFailed(response.errorMsg);
+        return;
+      }
+
+      let cellInfoList = [];
+      let count = response.result.length;
+      for (let i = 0; i < count; i++) {
+        let srcCellInfo = response.result[i];
+        let cellInfo;
+        switch (srcCellInfo.type) {
+          case RIL.CELL_INFO_TYPE_GSM:
+            cellInfo = new GsmCellInfo();
+            break;
+          case RIL.CELL_INFO_TYPE_WCDMA:
+            cellInfo = new WcdmaCellInfo();
+            break;
+          case RIL.CELL_INFO_TYPE_LTE:
+            cellInfo = new LteCellInfo();
+            break;
+          case RIL.CELL_INFO_TYPE_CDMA:
+            cellInfo = new CdmaCellInfo();
+            break;
+        }
+
+        if (!cellInfo) {
+          continue;
+        }
+        this.updateInfo(srcCellInfo, cellInfo);
+        cellInfoList.push(cellInfo);
+      }
+      callback.notifyGetCellInfoList(cellInfoList);
+    }.bind(this));
+  },
+
+  getNeighboringCellIds: function(callback) {
+    this.workerMessenger.send("getNeighboringCellIds",
+                              null,
+                              function(response) {
+      if (response.errorMsg) {
+        callback.notifyGetNeighboringCellIdsFailed(response.errorMsg);
+        return;
+      }
+
+      let neighboringCellIds = [];
+      let count = response.result.length;
+      for (let i = 0; i < count; i++) {
+        let srcCellInfo = response.result[i];
+        let cellInfo = new NeighboringCellInfo();
+        this.updateInfo(srcCellInfo, cellInfo);
+        neighboringCellIds.push(cellInfo);
+      }
+      callback.notifyGetNeighboringCellIds(neighboringCellIds);
+
+    }.bind(this));
   }
 };
 

@@ -16,10 +16,11 @@ const COLLAPSE_INSPECTOR_STRING = L10N.getStr("collapseInspector");
 const INSPECTOR_WIDTH = 300;
 
 // Globals for d3 stuff
-// Width/height in pixels of SVG graph
-// TODO investigate to see how this works in other host types bug 994257
-const WIDTH = 1000;
-const HEIGHT = 400;
+// Default properties of the graph on rerender
+const GRAPH_DEFAULTS = {
+  translate: [20, 20],
+  scale: 1
+};
 
 // Sizes of SVG arrows in graph
 const ARROW_HEIGHT = 5;
@@ -38,7 +39,7 @@ const GENERIC_VARIABLES_VIEW_SETTINGS = {
   editableValueTooltip: "",
   editableNameTooltip: "",
   preventDisableOnChange: true,
-  preventDescriptorModifiers: true,
+  preventDescriptorModifiers: false,
   eval: () => {}
 };
 
@@ -54,6 +55,7 @@ let WebAudioGraphView = {
     this._onThemeChange = this._onThemeChange.bind(this);
     this._onNodeSelect = this._onNodeSelect.bind(this);
     this._onStartContext = this._onStartContext.bind(this);
+    this._onDestroyNode = this._onDestroyNode.bind(this);
 
     this.draw = debounce(this.draw.bind(this), GRAPH_DEBOUNCE_TIMER);
     $('#graph-target').addEventListener('click', this._onGraphNodeClick, false);
@@ -61,6 +63,7 @@ let WebAudioGraphView = {
     window.on(EVENTS.THEME_CHANGE, this._onThemeChange);
     window.on(EVENTS.UI_INSPECTOR_NODE_SET, this._onNodeSelect);
     window.on(EVENTS.START_CONTEXT, this._onStartContext);
+    window.on(EVENTS.DESTROY_NODE, this._onDestroyNode);
   },
 
   /**
@@ -74,6 +77,7 @@ let WebAudioGraphView = {
     window.off(EVENTS.THEME_CHANGE, this._onThemeChange);
     window.off(EVENTS.UI_INSPECTOR_NODE_SET, this._onNodeSelect);
     window.off(EVENTS.START_CONTEXT, this._onStartContext);
+    window.off(EVENTS.DESTROY_NODE, this._onDestroyNode);
   },
 
   /**
@@ -81,15 +85,39 @@ let WebAudioGraphView = {
    * and clears out old content
    */
   resetUI: function () {
-    this.resetGraph();
+    this.clearGraph();
+    this.resetGraphPosition();
   },
 
   /**
    * Clears out the rendered graph, called when resetting the SVG elements to draw again,
    * or when resetting the entire UI tool
    */
-  resetGraph: function () {
+  clearGraph: function () {
     $("#graph-target").innerHTML = "";
+  },
+
+  /**
+   * Moves the graph back to its original scale and translation.
+   */
+  resetGraphPosition: function () {
+    if (this._zoomBinding) {
+      let { translate, scale } = GRAPH_DEFAULTS;
+      // Must set the `zoomBinding` so the next `zoom` event is in sync with
+      // where the graph is visually (set by the `transform` attribute).
+      this._zoomBinding.scale(scale);
+      this._zoomBinding.translate(translate);
+      d3.select("#graph-target")
+        .attr("transform", "translate(" + translate + ") scale(" + scale + ")");
+    }
+  },
+
+  getCurrentScale: function () {
+    return this._zoomBinding ? this._zoomBinding.scale() : null;
+  },
+
+  getCurrentTranslation: function () {
+    return this._zoomBinding ? this._zoomBinding.translate() : null;
   },
 
   /**
@@ -121,7 +149,7 @@ let WebAudioGraphView = {
    */
   draw: function () {
     // Clear out previous SVG information
-    this.resetGraph();
+    this.clearGraph();
 
     let graph = new dagreD3.Digraph();
     let edges = [];
@@ -133,7 +161,7 @@ let WebAudioGraphView = {
       // Add all of the connections from this node to the edge array to be added
       // after all the nodes are added, otherwise edges will attempted to be created
       // for nodes that have not yet been added
-      AudioNodeConnections.get(node, []).forEach(dest => edges.push([node, dest]));
+      AudioNodeConnections.get(node, new Set()).forEach(dest => edges.push([node, dest]));
     });
 
     edges.forEach(([node, dest]) => graph.addEdge(null, node.id, dest.id, {
@@ -175,7 +203,7 @@ let WebAudioGraphView = {
 
     // Override Dagre-d3's post render function by passing in our own.
     // This way we can leave styles out of it.
-    renderer.postRender(function (graph, root) {
+    renderer.postRender((graph, root) => {
       // We have to manually set the marker styling since we cannot
       // do this currently with CSS, although it is in spec for SVG2
       // https://svgwg.org/svg2-draft/painting.html#VertexMarkerProperties
@@ -201,6 +229,12 @@ let WebAudioGraphView = {
           .attr("d", "M 0 0 L 10 5 L 0 10 z");
       }
 
+      // Reselect the previously selected audio node
+      let currentNode = WebAudioInspectorView.getCurrentAudioNode();
+      if (currentNode) {
+        this.focusNode(currentNode.id);
+      }
+
       // Fire an event upon completed rendering
       window.emit(EVENTS.UI_GRAPH_RENDERED, AudioNodes.length, edges.length);
     });
@@ -217,6 +251,10 @@ let WebAudioGraphView = {
           .attr("transform", "translate(" + ev.translate + ") scale(" + ev.scale + ")");
       });
       d3.select("svg").call(this._zoomBinding);
+
+      // Set initial translation and scale -- this puts D3's awareness of
+      // the graph in sync with what the user sees originally.
+      this.resetGraphPosition();
     }
   },
 
@@ -229,6 +267,13 @@ let WebAudioGraphView = {
    * context being created to view so render the graph.
    */
   _onStartContext: function () {
+    this.draw();
+  },
+
+  /**
+   * Called when a node gets GC'd -- redraws the graph.
+   */
+  _onDestroyNode: function () {
     this.draw();
   },
 
@@ -289,12 +334,14 @@ let WebAudioInspectorView = {
     this._onEval = this._onEval.bind(this);
     this._onNodeSelect = this._onNodeSelect.bind(this);
     this._onTogglePaneClick = this._onTogglePaneClick.bind(this);
+    this._onDestroyNode = this._onDestroyNode.bind(this);
 
     this._inspectorPaneToggleButton.addEventListener("mousedown", this._onTogglePaneClick, false);
     this._propsView = new VariablesView($("#properties-tabpanel-content"), GENERIC_VARIABLES_VIEW_SETTINGS);
     this._propsView.eval = this._onEval;
 
     window.on(EVENTS.UI_SELECT_NODE, this._onNodeSelect);
+    window.on(EVENTS.DESTROY_NODE, this._onDestroyNode);
   },
 
   /**
@@ -303,6 +350,7 @@ let WebAudioInspectorView = {
   destroy: function () {
     this._inspectorPaneToggleButton.removeEventListener("mousedown", this._onTogglePaneClick);
     window.off(EVENTS.UI_SELECT_NODE, this._onNodeSelect);
+    window.off(EVENTS.DESTROY_NODE, this._onDestroyNode);
 
     this._inspectorPane = null;
     this._inspectorPaneToggleButton = null;
@@ -383,7 +431,7 @@ let WebAudioInspectorView = {
   /**
    * Returns the current AudioNodeView.
    */
-  getCurrentNode: function () {
+  getCurrentAudioNode: function () {
     return this._currentNode;
   },
 
@@ -424,8 +472,11 @@ let WebAudioInspectorView = {
     // when there are no props i.e. AudioDestinationNode
     this._togglePropertiesView(!!props.length);
 
-    props.forEach(({ param, value }) => {
-      let descriptor = { value: value };
+    props.forEach(({ param, value, flags }) => {
+      let descriptor = {
+        value: value,
+        writable: !flags || !flags.readonly,
+      };
       audioParamsScope.addItem(param, descriptor);
     });
 
@@ -464,13 +515,22 @@ let WebAudioInspectorView = {
     let propName = variable.name;
     let error;
 
-    // Cast value to proper type
-    try {
-      value = JSON.parse(value);
-      error = yield node.actor.setParam(propName, value);
-    }
-    catch (e) {
-      error = e;
+    if (!variable._initialDescriptor.writable) {
+      error = new Error("Variable " + propName + " is not writable.");
+    } else {
+      // Cast value to proper type
+      try {
+        let number = parseFloat(value);
+        if (!isNaN(number)) {
+          value = number;
+        } else {
+          value = JSON.parse(value);
+        }
+        error = yield node.actor.setParam(propName, value);
+      }
+      catch (e) {
+        error = e;
+      }
     }
 
     // TODO figure out how to handle and display set prop errors
@@ -503,12 +563,14 @@ let WebAudioInspectorView = {
   },
 
   /**
-   * Called when `DESTROY_NODE` is fired to remove the node from props view.
-   * TODO bug 994263, dependent on node GC events
+   * Called when `DESTROY_NODE` is fired to remove the node from props view if
+   * it's currently selected.
    */
-  removeNode: Task.async(function* (viewNode) {
-
-  })
+  _onDestroyNode: function (_, id) {
+    if (this._currentNode && this._currentNode.id === id) {
+      this.setCurrentAudioNode(null);
+    }
+  }
 };
 
 /**

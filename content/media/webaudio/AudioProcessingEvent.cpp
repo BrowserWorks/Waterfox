@@ -31,6 +31,10 @@ AudioProcessingEvent::AudioProcessingEvent(ScriptProcessorNode* aOwner,
   SetIsDOMBinding();
 }
 
+AudioProcessingEvent::~AudioProcessingEvent()
+{
+}
+
 JSObject*
 AudioProcessingEvent::WrapObject(JSContext* aCx)
 {
@@ -42,15 +46,11 @@ AudioProcessingEvent::LazilyCreateBuffer(uint32_t aNumberOfChannels,
                                          ErrorResult& aRv)
 {
   AutoJSAPI jsapi;
-  JSContext* cx = jsapi.cx();
-
-  // We need the global for the context so that we can enter its compartment.
-  JS::Rooted<JSObject*> global(cx, mNode->Context()->GetGlobalJSObject());
-  if (NS_WARN_IF(!global)) {
+  if (NS_WARN_IF(!jsapi.Init(mNode->GetOwner()))) {
     aRv.Throw(NS_ERROR_UNEXPECTED);
     return nullptr;
   }
-  JSAutoCompartment ac(cx, global);
+  JSContext* cx = jsapi.cx();
 
   nsRefPtr<AudioBuffer> buffer =
     AudioBuffer::Create(mNode->Context(), aNumberOfChannels,

@@ -170,7 +170,7 @@ ExecutionModeString(ExecutionMode mode)
       case ArgumentsUsageAnalysis:
         return "ArgumentsUsageAnalysis";
       default:
-        MOZ_ASSUME_UNREACHABLE("Invalid ExecutionMode");
+        MOZ_CRASH("Invalid ExecutionMode");
     }
 }
 
@@ -209,9 +209,9 @@ namespace jit {
 
 namespace types {
 
-class TypeZone;
+struct TypeZone;
 class TypeSet;
-class TypeObjectKey;
+struct TypeObjectKey;
 
 /*
  * Information about a single concrete type. We pack this into a single word,
@@ -277,6 +277,7 @@ class Type
     }
 
     inline JSObject *singleObject() const;
+    inline JSObject *singleObjectNoBarrier() const;
 
     /* Accessors for TypeObject types */
 
@@ -285,6 +286,7 @@ class Type
     }
 
     inline TypeObject *typeObject() const;
+    inline TypeObject *typeObjectNoBarrier() const;
 
     bool operator == (Type o) const { return data == o.data; }
     bool operator != (Type o) const { return data != o.data; }
@@ -295,6 +297,7 @@ class Type
     static inline Type Int32Type()     { return Type(JSVAL_TYPE_INT32); }
     static inline Type DoubleType()    { return Type(JSVAL_TYPE_DOUBLE); }
     static inline Type StringType()    { return Type(JSVAL_TYPE_STRING); }
+    static inline Type SymbolType()    { return Type(JSVAL_TYPE_SYMBOL); }
     static inline Type MagicArgType()  { return Type(JSVAL_TYPE_MAGIC); }
     static inline Type AnyObjectType() { return Type(JSVAL_TYPE_OBJECT); }
     static inline Type UnknownType()   { return Type(JSVAL_TYPE_UNKNOWN); }
@@ -375,30 +378,32 @@ public:
 
 /* Flags and other state stored in TypeSet::flags */
 enum MOZ_ENUM_TYPE(uint32_t) {
-    TYPE_FLAG_UNDEFINED =  0x1,
-    TYPE_FLAG_NULL      =  0x2,
-    TYPE_FLAG_BOOLEAN   =  0x4,
-    TYPE_FLAG_INT32     =  0x8,
-    TYPE_FLAG_DOUBLE    = 0x10,
-    TYPE_FLAG_STRING    = 0x20,
-    TYPE_FLAG_LAZYARGS  = 0x40,
-    TYPE_FLAG_ANYOBJECT = 0x80,
+    TYPE_FLAG_UNDEFINED =   0x1,
+    TYPE_FLAG_NULL      =   0x2,
+    TYPE_FLAG_BOOLEAN   =   0x4,
+    TYPE_FLAG_INT32     =   0x8,
+    TYPE_FLAG_DOUBLE    =  0x10,
+    TYPE_FLAG_STRING    =  0x20,
+    TYPE_FLAG_SYMBOL    =  0x40,
+    TYPE_FLAG_LAZYARGS  =  0x80,
+    TYPE_FLAG_ANYOBJECT = 0x100,
 
     /* Mask containing all primitives */
     TYPE_FLAG_PRIMITIVE = TYPE_FLAG_UNDEFINED | TYPE_FLAG_NULL | TYPE_FLAG_BOOLEAN |
-                          TYPE_FLAG_INT32 | TYPE_FLAG_DOUBLE | TYPE_FLAG_STRING,
+                          TYPE_FLAG_INT32 | TYPE_FLAG_DOUBLE | TYPE_FLAG_STRING |
+                          TYPE_FLAG_SYMBOL,
 
     /* Mask/shift for the number of objects in objectSet */
-    TYPE_FLAG_OBJECT_COUNT_MASK   = 0x1f00,
-    TYPE_FLAG_OBJECT_COUNT_SHIFT  = 8,
+    TYPE_FLAG_OBJECT_COUNT_MASK   = 0x3e00,
+    TYPE_FLAG_OBJECT_COUNT_SHIFT  = 9,
     TYPE_FLAG_OBJECT_COUNT_LIMIT  =
         TYPE_FLAG_OBJECT_COUNT_MASK >> TYPE_FLAG_OBJECT_COUNT_SHIFT,
 
     /* Whether the contents of this type set are totally unknown. */
-    TYPE_FLAG_UNKNOWN             = 0x00002000,
+    TYPE_FLAG_UNKNOWN             = 0x00004000,
 
     /* Mask of normal type flags on a type set. */
-    TYPE_FLAG_BASE_MASK           = 0x000020ff,
+    TYPE_FLAG_BASE_MASK           = 0x000041ff,
 
     /* Additional flags for HeapTypeSet sets. */
 
@@ -407,10 +412,10 @@ enum MOZ_ENUM_TYPE(uint32_t) {
      * differently from a plain data property, other than making the property
      * non-writable.
      */
-    TYPE_FLAG_NON_DATA_PROPERTY = 0x00004000,
+    TYPE_FLAG_NON_DATA_PROPERTY = 0x00008000,
 
     /* Whether the property has ever been made non-writable. */
-    TYPE_FLAG_NON_WRITABLE_PROPERTY = 0x00008000,
+    TYPE_FLAG_NON_WRITABLE_PROPERTY = 0x00010000,
 
     /*
      * Whether the property is definitely in a particular slot on all objects
@@ -421,8 +426,8 @@ enum MOZ_ENUM_TYPE(uint32_t) {
      * If the property is definite, mask and shift storing the slot + 1.
      * Otherwise these bits are clear.
      */
-    TYPE_FLAG_DEFINITE_MASK       = 0xffff0000,
-    TYPE_FLAG_DEFINITE_SHIFT      = 16
+    TYPE_FLAG_DEFINITE_MASK       = 0xfffe0000,
+    TYPE_FLAG_DEFINITE_SHIFT      = 17
 };
 typedef uint32_t TypeFlags;
 
@@ -578,6 +583,8 @@ class TypeSet
     inline TypeObjectKey *getObject(unsigned i) const;
     inline JSObject *getSingleObject(unsigned i) const;
     inline TypeObject *getTypeObject(unsigned i) const;
+    inline JSObject *getSingleObjectNoBarrier(unsigned i) const;
+    inline TypeObject *getTypeObjectNoBarrier(unsigned i) const;
 
     /* The Class of an object in this set. */
     inline const Class *getObjectClass(unsigned i) const;
@@ -616,6 +623,12 @@ class TypeSet
 
     // Create a new TemporaryTypeSet where undefined and/or null has been filtered out.
     TemporaryTypeSet *filter(LifoAlloc *alloc, bool filterUndefined, bool filterNull) const;
+
+    // Create a new TemporaryTypeSet where the type has been set to object.
+    TemporaryTypeSet *cloneObjectsOnly(LifoAlloc *alloc);
+
+    // Trigger a read barrier on all the contents of a type set.
+    static void readBarrier(const TypeSet *types);
 
   protected:
     uint32_t baseObjectCount() const {
@@ -736,7 +749,7 @@ class TemporaryTypeSet : public TypeSet
     JSObject *getCommonPrototype();
 
     /* Get the typed array type of all objects in this set, or TypedArrayObject::TYPE_MAX. */
-    int getTypedArrayType();
+    Scalar::Type getTypedArrayType();
 
     /* Whether all objects have JSCLASS_IS_DOMJSCLASS set. */
     bool isDOMClass();
@@ -1360,14 +1373,11 @@ struct TypeObjectKey
         return (uintptr_t(this) & 1) != 0;
     }
 
-    TypeObject *asTypeObject() {
-        JS_ASSERT(isTypeObject());
-        return (TypeObject *) this;
-    }
-    JSObject *asSingleObject() {
-        JS_ASSERT(isSingleObject());
-        return (JSObject *) (uintptr_t(this) & ~1);
-    }
+    inline TypeObject *asTypeObject();
+    inline JSObject *asSingleObject();
+
+    inline TypeObject *asTypeObjectNoBarrier();
+    inline JSObject *asSingleObjectNoBarrier();
 
     const Class *clasp();
     TaggedProto proto();
@@ -1396,7 +1406,7 @@ struct TypeObjectKey
 // during generation of baseline caches.
 class HeapTypeSetKey
 {
-    friend class TypeObjectKey;
+    friend struct TypeObjectKey;
 
     // Object and property being accessed.
     TypeObjectKey *object_;

@@ -6,6 +6,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mozilla.gecko.Actions;
+import org.mozilla.gecko.home.HomePager;
 
 import android.widget.ImageView;
 import android.widget.ListAdapter;
@@ -20,7 +21,7 @@ import android.widget.ListView;
 public class testAddSearchEngine extends AboutHomeTest {
     private final int MAX_WAIT_TEST_MS = 5000;
     private final String SEARCH_TEXT = "Firefox for Android";
-    private final String ADD_SEARCHENGINE_OPTION_TEXT = "Add Search Engine";
+    private final String ADD_SEARCHENGINE_OPTION_TEXT = "Add as Search Engine";
 
     public void testAddSearchEngine() {
         String blankPageURL = getAbsoluteUrl(StringHelper.ROBOCOP_BLANK_PAGE_01_URL);
@@ -132,7 +133,7 @@ public class testAddSearchEngine extends AboutHomeTest {
         boolean correctNumSearchEnginesDisplayed = waitForTest(new BooleanTest() {
             @Override
             public boolean test() {
-                ListView list = findListViewWithTag("browser_search");
+                ListView list = findListViewWithTag(HomePager.LIST_TAG_BROWSER_SEARCH);
                 if (list == null) {
                     return false;
                 }

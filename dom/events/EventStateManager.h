@@ -45,9 +45,10 @@ class TabParent;
 
 class OverOutElementsWrapper MOZ_FINAL : public nsISupports
 {
+  ~OverOutElementsWrapper();
+
 public:
   OverOutElementsWrapper();
-  ~OverOutElementsWrapper();
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_CLASS(OverOutElementsWrapper)
@@ -72,9 +73,10 @@ class EventStateManager : public nsSupportsWeakReference,
   friend class mozilla::ScrollbarsForWheel;
   friend class mozilla::WheelTransaction;
 
+  virtual ~EventStateManager();
+
 public:
   EventStateManager();
-  virtual ~EventStateManager();
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_NSIOBSERVER
@@ -293,6 +295,10 @@ protected:
                                         uint32_t aMessage,
                                         nsIContent* aTargetContent,
                                         nsIContent* aRelatedContent);
+  /**
+   * Synthesize DOM pointerover and pointerout events
+   */
+  void GeneratePointerEnterExit(uint32_t aMessage, WidgetMouseEvent* aEvent);
   /**
    * Synthesize DOM and frame mouseover and mouseout events from this
    * MOUSE_MOVE or MOUSE_EXIT event.
@@ -696,7 +702,7 @@ protected:
   private:
     DeltaAccumulator() :
       mX(0.0), mY(0.0), mPendingScrollAmountX(0.0), mPendingScrollAmountY(0.0),
-      mHandlingDeltaMode(UINT32_MAX), mHandlingPixelOnlyDevice(false)
+      mHandlingDeltaMode(UINT32_MAX), mIsNoLineOrPageDeltaDevice(false)
     {
     }
 
@@ -712,7 +718,7 @@ protected:
     TimeStamp mLastTime;
 
     uint32_t mHandlingDeltaMode;
-    bool mHandlingPixelOnlyDevice;
+    bool mIsNoLineOrPageDeltaDevice;
 
     static DeltaAccumulator* sInstance;
   };
@@ -912,7 +918,9 @@ public:
 protected:
   bool mIsHandlingUserInput;
   bool mIsMouseDown;
-  bool mResetFMMouseDownState;
+  bool mResetFMMouseButtonHandlingState;
+
+  nsCOMPtr<nsIDocument> mMouseButtonEventHandlingDocument;
 
 private:
   // Hide so that this class can only be stack-allocated

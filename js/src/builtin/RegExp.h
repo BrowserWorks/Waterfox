@@ -19,15 +19,13 @@ js_InitRegExpClass(JSContext *cx, js::HandleObject obj);
 
 namespace js {
 
-class MatchConduit;
-
 // Whether RegExp statics should be updated with the input and results of a
 // regular expression execution.
 enum RegExpStaticsUpdate { UpdateRegExpStatics, DontUpdateRegExpStatics };
 
 RegExpRunStatus
 ExecuteRegExp(JSContext *cx, HandleObject regexp, HandleString string,
-              MatchConduit &matches, RegExpStaticsUpdate staticsUpdate);
+              MatchPairs &matches, RegExpStaticsUpdate staticsUpdate);
 
 /*
  * Legacy behavior of ExecuteRegExp(), which is baked into the JSAPI.
@@ -38,8 +36,8 @@ ExecuteRegExp(JSContext *cx, HandleObject regexp, HandleString string,
  */
 bool
 ExecuteRegExpLegacy(JSContext *cx, RegExpStatics *res, RegExpObject &reobj,
-                    Handle<JSLinearString*> input, const jschar *chars, size_t length,
-                    size_t *lastIndex, bool test, MutableHandleValue rval);
+                    HandleLinearString input, size_t *lastIndex, bool test,
+                    MutableHandleValue rval);
 
 /* Translation from MatchPairs to a JS array in regexp_exec()'s output format. */
 bool

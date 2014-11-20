@@ -28,6 +28,7 @@
 #include "nsISupportsImpl.h"            // for gfxContext::Release, etc
 #include "nsIWidget.h"                  // for nsIWidget
 #include "prenv.h"                      // for PR_GetEnv
+#include "nsLayoutUtils.h"
 #ifdef XP_WIN
 #include "gfxWindowsPlatform.h"
 #endif
@@ -188,28 +189,28 @@ bool
 ContentClientRemoteBuffer::CreateAndAllocateTextureClient(RefPtr<TextureClient>& aClient,
                                                           TextureFlags aFlags)
 {
-  // gfx::BackendType::NONE means fallback to the content backend
-  aClient = CreateTextureClientForDrawing(mSurfaceFormat,
-                                          mTextureInfo.mTextureFlags | aFlags,
-                                          gfx::BackendType::NONE,
-                                          mSize);
-  if (!aClient) {
-    return false;
+  TextureAllocationFlags allocFlags = TextureAllocationFlags::ALLOC_CLEAR_BUFFER;
+  if (aFlags & TextureFlags::ON_WHITE) {
+    allocFlags = TextureAllocationFlags::ALLOC_CLEAR_BUFFER_WHITE;
   }
 
-  if (!aClient->AllocateForSurface(mSize, ALLOC_CLEAR_BUFFER)) {
-    aClient = CreateTextureClientForDrawing(mSurfaceFormat,
-                mTextureInfo.mTextureFlags | TextureFlags::ALLOC_FALLBACK | aFlags,
-                gfx::BackendType::NONE,
-                mSize);
-    if (!aClient) {
-      return false;
-    }
-    if (!aClient->AllocateForSurface(mSize, ALLOC_CLEAR_BUFFER)) {
-      NS_WARNING("Could not allocate texture client");
-      aClient = nullptr;
-      return false;
-    }
+  // gfx::BackendType::NONE means fallback to the content backend
+  aClient = CreateTextureClientForDrawing(mSurfaceFormat, mSize,
+                                          gfx::BackendType::NONE,
+                                          mTextureInfo.mTextureFlags | aFlags,
+                                          allocFlags);
+  if (!aClient) {
+    // try with ALLOC_FALLBACK
+    aClient = CreateTextureClientForDrawing(mSurfaceFormat, mSize,
+                                            gfx::BackendType::NONE,
+                                            mTextureInfo.mTextureFlags
+                                            | TextureFlags::ALLOC_FALLBACK
+                                            | aFlags,
+                                            allocFlags);
+  }
+
+  if (!aClient) {
+    return false;
   }
 
   NS_WARN_IF_FALSE(aClient->IsValid(), "Created an invalid texture client");
@@ -279,12 +280,12 @@ ContentClientRemoteBuffer::CreateBuffer(ContentType aType,
   DebugOnly<bool> locked = mTextureClient->Lock(OpenMode::OPEN_READ_WRITE);
   MOZ_ASSERT(locked, "Could not lock the TextureClient");
 
-  *aBlackDT = mTextureClient->GetAsDrawTarget();
+  *aBlackDT = mTextureClient->BorrowDrawTarget();
   if (aFlags & BUFFER_COMPONENT_ALPHA) {
     locked = mTextureClientOnWhite->Lock(OpenMode::OPEN_READ_WRITE);
     MOZ_ASSERT(locked, "Could not lock the second TextureClient for component alpha");
 
-    *aWhiteDT = mTextureClientOnWhite->GetAsDrawTarget();
+    *aWhiteDT = mTextureClientOnWhite->BorrowDrawTarget();
   }
 }
 
@@ -498,9 +499,9 @@ ContentClientDoubleBuffered::FinalizeFrame(const nsIntRegion& aRegionToDraw)
     // Restrict the DrawTargets and frontBuffer to a scope to make
     // sure there is no more external references to the DrawTargets
     // when we Unlock the TextureClients.
-    RefPtr<DrawTarget> dt = mFrontClient->GetAsDrawTarget();
+    RefPtr<DrawTarget> dt = mFrontClient->BorrowDrawTarget();
     RefPtr<DrawTarget> dtOnWhite = mFrontClientOnWhite
-      ? mFrontClientOnWhite->GetAsDrawTarget()
+      ? mFrontClientOnWhite->BorrowDrawTarget()
       : nullptr;
     RotatedBuffer frontBuffer(dt,
                               dtOnWhite,
@@ -688,6 +689,17 @@ ContentClientIncremental::BeginPaintBuffer(ThebesLayer* aLayer,
     if (mHasBuffer &&
         (mContentType != contentType ||
          (mode == SurfaceMode::SURFACE_COMPONENT_ALPHA) != mHasBufferOnWhite)) {
+#ifdef MOZ_DUMP_PAINTING
+      if (nsLayoutUtils::InvalidationDebuggingIsEnabled()) {
+        if (mContentType != contentType) {
+          printf_stderr("Layer's content type has changed\n");
+        }
+        if ((mode == SurfaceMode::SURFACE_COMPONENT_ALPHA) != mHasBufferOnWhite) {
+          printf_stderr("Layer's component alpha status has changed\n");
+        }
+        printf_stderr("Invalidating entire layer %p\n", aLayer);
+      }
+#endif
       // We're effectively clearing the valid region, so we need to draw
       // the entire needed region now.
       result.mRegionToInvalidate = aLayer->GetValidRegion();

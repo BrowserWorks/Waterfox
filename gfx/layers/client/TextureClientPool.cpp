@@ -44,7 +44,6 @@ TextureClientPool::GetTextureClient()
   RefPtr<TextureClient> textureClient;
   if (mTextureClients.size()) {
     textureClient = mTextureClients.top();
-    textureClient->WaitForBufferOwnership();
     mTextureClients.pop();
     return textureClient;
   }
@@ -58,11 +57,11 @@ TextureClientPool::GetTextureClient()
     // gfx::BackendType::NONE means use the content backend
     textureClient = TextureClient::CreateBufferTextureClient(mSurfaceAllocator,
       mFormat, TextureFlags::IMMEDIATE_UPLOAD, gfx::BackendType::NONE);
+    textureClient->AllocateForSurface(mSize, ALLOC_DEFAULT);
   } else {
-    textureClient = TextureClient::CreateTextureClientForDrawing(mSurfaceAllocator,
-      mFormat, TextureFlags::IMMEDIATE_UPLOAD, gfx::BackendType::NONE, mSize);
+    textureClient = TextureClient::CreateForDrawing(mSurfaceAllocator,
+      mFormat, mSize, gfx::BackendType::NONE, TextureFlags::IMMEDIATE_UPLOAD);
   }
-  textureClient->AllocateForSurface(mSize, ALLOC_DEFAULT);
 
   return textureClient;
 }

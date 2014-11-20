@@ -17,12 +17,14 @@ namespace dom {
 // It's a logical step in the promise chain of callbacks.
 class PromiseCallback : public nsISupports
 {
+protected:
+  virtual ~PromiseCallback();
+
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_CLASS(PromiseCallback)
 
   PromiseCallback();
-  virtual ~PromiseCallback();
 
   virtual void Call(JSContext* aCx,
                     JS::Handle<JS::Value> aValue) = 0;
@@ -53,9 +55,10 @@ public:
 
   WrapperPromiseCallback(Promise* aNextPromise, JS::Handle<JSObject*> aGlobal,
                          AnyCallback* aCallback);
-  ~WrapperPromiseCallback();
 
 private:
+  ~WrapperPromiseCallback();
+
   nsRefPtr<Promise> mNextPromise;
   JS::Heap<JSObject*> mGlobal;
   nsRefPtr<AnyCallback> mCallback;
@@ -74,9 +77,10 @@ public:
             JS::Handle<JS::Value> aValue) MOZ_OVERRIDE;
 
   ResolvePromiseCallback(Promise* aPromise, JS::Handle<JSObject*> aGlobal);
-  ~ResolvePromiseCallback();
 
 private:
+  ~ResolvePromiseCallback();
+
   nsRefPtr<Promise> mPromise;
   JS::Heap<JSObject*> mGlobal;
 };
@@ -94,9 +98,10 @@ public:
             JS::Handle<JS::Value> aValue) MOZ_OVERRIDE;
 
   RejectPromiseCallback(Promise* aPromise, JS::Handle<JSObject*> aGlobal);
-  ~RejectPromiseCallback();
 
 private:
+  ~RejectPromiseCallback();
+
   nsRefPtr<Promise> mPromise;
   JS::Heap<JSObject*> mGlobal;
 };
@@ -114,9 +119,10 @@ public:
 
   NativePromiseCallback(PromiseNativeHandler* aHandler,
                         Promise::PromiseState aState);
-  ~NativePromiseCallback();
 
 private:
+  ~NativePromiseCallback();
+
   nsRefPtr<PromiseNativeHandler> mHandler;
   Promise::PromiseState mState;
 };

@@ -58,16 +58,18 @@ class RValueAllocation
 
         // The JSValueType is packed in the Mode.
         TYPED_REG_MIN       = 0x10,
-        TYPED_REG_MAX       = 0x17,
+        TYPED_REG_MAX       = 0x1f,
         TYPED_REG = TYPED_REG_MIN,
 
         // The JSValueType is packed in the Mode.
-        TYPED_STACK_MIN     = 0x18,
-        TYPED_STACK_MAX     = 0x1f,
+        TYPED_STACK_MIN     = 0x20,
+        TYPED_STACK_MAX     = 0x2f,
         TYPED_STACK = TYPED_STACK_MIN,
 
         INVALID = 0x100,
     };
+
+    enum { PACKED_TAG_MASK = 0x0f };
 
     // See Payload encoding in Snapshots.cpp
     enum PayloadType {
@@ -89,11 +91,25 @@ class RValueAllocation
     Mode mode_;
 
     // Additional information to recover the content of the allocation.
+    struct FloatRegisterBits {
+        uint32_t data;
+        bool operator == (const FloatRegisterBits &other) const {
+            return data == other.data;
+        }
+        uint32_t code() const {
+            return data;
+        }
+        const char *name() const {
+            FloatRegister tmp = FloatRegister::FromCode(data);
+            return tmp.name();
+        }
+    };
+
     union Payload {
         uint32_t index;
         int32_t stackOffset;
         Register gpr;
-        FloatRegister fpu;
+        FloatRegisterBits fpu;
         JSValueType type;
     };
 
@@ -117,7 +133,9 @@ class RValueAllocation
     }
     static Payload payloadOfFloatRegister(FloatRegister reg) {
         Payload p;
-        p.fpu = reg;
+        FloatRegisterBits b;
+        b.data = reg.code();
+        p.fpu = b;
         return p;
     }
     static Payload payloadOfValueType(JSValueType type) {
@@ -267,7 +285,8 @@ class RValueAllocation
     }
     FloatRegister fpuReg() const {
         JS_ASSERT(layoutFromMode(mode()).type1 == PAYLOAD_FPU);
-        return arg1_.fpu;
+        FloatRegisterBits b = arg1_.fpu;
+        return FloatRegister::FromCode(b.data);
     }
     JSValueType knownType() const {
         JS_ASSERT(layoutFromMode(mode()).type1 == PAYLOAD_PACKED_TAG);

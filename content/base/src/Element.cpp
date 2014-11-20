@@ -12,12 +12,13 @@
 
 #include "mozilla/dom/ElementInlines.h"
 
+#include "AnimationCommon.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/dom/Attr.h"
 #include "nsDOMAttributeMap.h"
 #include "nsIAtom.h"
 #include "nsIContentInlines.h"
-#include "nsINodeInfo.h"
+#include "mozilla/dom/NodeInfo.h"
 #include "nsIDocumentInlines.h"
 #include "nsIDOMNodeList.h"
 #include "nsIDOMDocument.h"
@@ -67,7 +68,6 @@
 #include "nsXULElement.h"
 #endif /* MOZ_XUL */
 #include "nsSVGElement.h"
-#include "nsFrameManager.h"
 #include "nsFrameSelection.h"
 #ifdef DEBUG
 #include "nsRange.h"
@@ -752,7 +752,7 @@ void
 Element::AddToIdTable(nsIAtom* aId)
 {
   NS_ASSERTION(HasID(), "Node doesn't have an ID?");
-  if (HasFlag(NODE_IS_IN_SHADOW_TREE)) {
+  if (IsInShadowTree()) {
     ShadowRoot* containingShadow = GetContainingShadow();
     containingShadow->AddToIdTable(this, aId);
   } else {
@@ -771,7 +771,7 @@ Element::RemoveFromIdTable()
   }
 
   nsIAtom* id = DoGetID();
-  if (HasFlag(NODE_IS_IN_SHADOW_TREE)) {
+  if (IsInShadowTree()) {
     ShadowRoot* containingShadow = GetContainingShadow();
     // Check for containingShadow because it may have
     // been deleted during unlinking.
@@ -791,7 +791,7 @@ Element::CreateShadowRoot(ErrorResult& aError)
 {
   nsAutoScriptBlocker scriptBlocker;
 
-  nsCOMPtr<nsINodeInfo> nodeInfo;
+  nsRefPtr<mozilla::dom::NodeInfo> nodeInfo;
   nodeInfo = mNodeInfo->NodeInfoManager()->GetNodeInfo(
     nsGkAtoms::documentFragmentNodeName, nullptr, kNameSpaceID_None,
     nsIDOMNode::DOCUMENT_FRAGMENT_NODE);
@@ -1049,7 +1049,7 @@ Element::SetAttributeNS(const nsAString& aNamespaceURI,
                         const nsAString& aValue,
                         ErrorResult& aError)
 {
-  nsCOMPtr<nsINodeInfo> ni;
+  nsRefPtr<mozilla::dom::NodeInfo> ni;
   aError =
     nsContentUtils::GetNodeInfoFromQName(aNamespaceURI, aQualifiedName,
                                          mNodeInfo->NodeInfoManager(),
@@ -1233,7 +1233,7 @@ Element::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
     if (aParent->HasFlag(NODE_CHROME_ONLY_ACCESS)) {
       SetFlags(NODE_CHROME_ONLY_ACCESS);
     }
-    if (aParent->HasFlag(NODE_IS_IN_SHADOW_TREE)) {
+    if (aParent->IsInShadowTree()) {
       ClearSubtreeRootPointer();
       SetFlags(NODE_IS_IN_SHADOW_TREE);
     }
@@ -1292,13 +1292,26 @@ Element::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
                NODE_NEEDS_FRAME | NODE_DESCENDANTS_NEED_FRAMES |
                // And the restyle bits
                ELEMENT_ALL_RESTYLE_FLAGS);
-
-    // Propagate scoped style sheet tracking bit.
-    SetIsElementInStyleScope(mParent->IsElementInStyleScope());
-  } else if (!HasFlag(NODE_IS_IN_SHADOW_TREE)) {
+  } else if (!IsInShadowTree()) {
     // If we're not in the doc and not in a shadow tree,
     // update our subtree pointer.
     SetSubtreeRootPointer(aParent->SubtreeRoot());
+  }
+
+  // Propagate scoped style sheet tracking bit.
+  if (mParent->IsContent()) {
+    nsIContent* parent;
+    ShadowRoot* shadowRootParent = ShadowRoot::FromNode(mParent);
+    if (shadowRootParent) {
+      parent = shadowRootParent->GetHost();
+    } else {
+      parent = mParent->AsContent();
+    }
+
+    bool inStyleScope = parent->IsElementInStyleScope();
+
+    SetIsElementInStyleScope(inStyleScope);
+    SetIsElementInStyleScopeFlagOnShadowTree(inStyleScope);
   }
 
   // This has to be here, rather than in nsGenericHTMLElement::BindToTree,
@@ -1611,7 +1624,7 @@ Element::FindAttributeDependence(const nsIAtom* aAttribute,
   return false;
 }
 
-already_AddRefed<nsINodeInfo>
+already_AddRefed<mozilla::dom::NodeInfo>
 Element::GetExistingAttrNameFromQName(const nsAString& aStr) const
 {
   const nsAttrName* name = InternalGetExistingAttrNameFromQName(aStr);
@@ -1619,7 +1632,7 @@ Element::GetExistingAttrNameFromQName(const nsAString& aStr) const
     return nullptr;
   }
 
-  nsCOMPtr<nsINodeInfo> nodeInfo;
+  nsRefPtr<mozilla::dom::NodeInfo> nodeInfo;
   if (name->IsAtom()) {
     nodeInfo = mNodeInfo->NodeInfoManager()->
       GetNodeInfo(name->Atom(), nullptr, kNameSpaceID_None,
@@ -1991,7 +2004,7 @@ Element::SetAttrAndNotify(int32_t aNamespaceID,
     }
   }
   else {
-    nsCOMPtr<nsINodeInfo> ni;
+    nsRefPtr<mozilla::dom::NodeInfo> ni;
     ni = mNodeInfo->NodeInfoManager()->GetNodeInfo(aName, aPrefix,
                                                    aNamespaceID,
                                                    nsIDOMNode::ATTRIBUTE_NODE);
@@ -2852,6 +2865,30 @@ Element::MozRequestPointerLock()
   OwnerDoc()->RequestPointerLock(this);
 }
 
+void
+Element::GetAnimationPlayers(nsTArray<nsRefPtr<ElementAnimation> >& aPlayers)
+{
+  nsIAtom* properties[] = { nsGkAtoms::transitionsProperty,
+                            nsGkAtoms::animationsProperty };
+  for (size_t propIdx = 0; propIdx < MOZ_ARRAY_LENGTH(properties);
+       propIdx++) {
+    ElementAnimationCollection* collection =
+      static_cast<ElementAnimationCollection*>(
+        GetProperty(properties[propIdx]));
+    if (!collection) {
+      continue;
+    }
+    for (size_t animIdx = 0;
+         animIdx < collection->mAnimations.Length();
+         animIdx++) {
+      ElementAnimation* anim = collection->mAnimations[animIdx];
+      if (anim->IsCurrent()) {
+        aPlayers.AppendElement(anim);
+      }
+    }
+  }
+}
+
 NS_IMETHODIMP
 Element::GetInnerHTML(nsAString& aInnerHTML)
 {
@@ -2915,7 +2952,7 @@ Element::SetOuterHTML(const nsAString& aOuterHTML, ErrorResult& aError)
   } else {
     NS_ASSERTION(parent->NodeType() == nsIDOMNode::DOCUMENT_FRAGMENT_NODE,
       "How come the parent isn't a document, a fragment or an element?");
-    nsCOMPtr<nsINodeInfo> info =
+    nsRefPtr<mozilla::dom::NodeInfo> info =
       OwnerDoc()->NodeInfoManager()->GetNodeInfo(nsGkAtoms::body,
                                                  nullptr,
                                                  kNameSpaceID_XHTML,

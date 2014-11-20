@@ -41,7 +41,6 @@ friend class nsWatcherWindowEnumerator;
 
 public:
   nsWindowWatcher();
-  virtual ~nsWindowWatcher();
 
   nsresult Init();
 
@@ -51,7 +50,15 @@ public:
   NS_DECL_NSPIWINDOWWATCHER
   NS_DECL_NSIPROMPTFACTORY
 
+  static int32_t    GetWindowOpenLocation(nsIDOMWindow *aParent,
+                                          uint32_t aChromeFlags,
+                                          bool aCalledFromJS,
+                                          bool aPositionSpecified,
+                                          bool aSizeSpecified);
+
 protected:
+  virtual ~nsWindowWatcher();
+
   friend class nsPromptService;
   bool AddEnumerator(nsWatcherWindowEnumerator* inEnumerator);
   bool RemoveEnumerator(nsWatcherWindowEnumerator* inEnumerator);
@@ -92,7 +99,8 @@ protected:
                                          bool aFeaturesSpecified,
                                          bool aDialog,
                                          bool aChromeURL,
-                                         bool aHasChromeParent);
+                                         bool aHasChromeParent,
+                                         bool aOpenedFromRemoteTab);
   static int32_t    WinHasOption(const char *aOptions, const char *aName,
                                  int32_t aDefault, bool *aPresenceFlag);
   /* Compute the right SizeSpec based on aFeatures */
@@ -103,6 +111,7 @@ protected:
                                             nsIDOMWindow **aOpenedWindow);
   static void       SizeOpenedDocShellItem(nsIDocShellTreeItem *aDocShellItem,
                                            nsIDOMWindow *aParent,
+                                           bool aIsCallerChrome,
                                            const SizeSpec & aSizeSpec);
   static void       GetWindowTreeItem(nsIDOMWindow *inWindow,
                                       nsIDocShellTreeItem **outTreeItem);

@@ -13,7 +13,6 @@
 #include "nsTArray.h"
 #include "nsXPIDLString.h"
 #include "nsWeakReference.h"
-#include "nsCRT.h"
 #include "nsCOMArray.h"
 
 class nsAppShellWindowEnumerator;
@@ -40,9 +39,11 @@ friend class nsASXULWindowFrontToBackEnumerator;
 friend class nsASDOMWindowBackToFrontEnumerator;
 friend class nsASXULWindowBackToFrontEnumerator;
 
+protected:
+  virtual ~nsWindowMediator();
+
 public:
   nsWindowMediator();
-  virtual ~nsWindowMediator();
 
   nsresult Init();
 

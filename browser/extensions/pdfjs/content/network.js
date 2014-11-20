@@ -1,4 +1,4 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /* Copyright 2012 Mozilla Foundation
  *
@@ -57,8 +57,7 @@ var NetworkManager = (function NetworkManagerClosure() {
   }
 
   function getArrayBuffer(xhr) {
-    var data = (xhr.mozResponseArrayBuffer || xhr.mozResponse ||
-                xhr.responseArrayBuffer || xhr.response);
+    var data = xhr.response;
     if (typeof data !== 'string') {
       return data;
     }
@@ -110,7 +109,7 @@ var NetworkManager = (function NetworkManagerClosure() {
         pendingRequest.expectedStatus = 200;
       }
 
-      xhr.mozResponseType = xhr.responseType = 'arraybuffer';
+      xhr.responseType = 'arraybuffer';
 
       if (args.onProgress) {
         xhr.onprogress = args.onProgress;

@@ -21,7 +21,6 @@ public:
     // init version
     nsStringBundle(const char* aURLSpec, nsIStringBundleOverride*);
     nsresult LoadProperties();
-    virtual ~nsStringBundle();
 
     NS_DECL_THREADSAFE_ISUPPORTS
     NS_DECL_NSISTRINGBUNDLE
@@ -29,6 +28,8 @@ public:
     nsCOMPtr<nsIPersistentProperties> mProps;
 
 protected:
+    virtual ~nsStringBundle();
+
     //
     // functional decomposition of the funitions repeatively called
     //
@@ -50,27 +51,29 @@ public:
                                  char16_t **aResult);
 };
 
+class nsExtensibleStringBundle;
+
 /**
  * An extensible implementation of the StringBundle interface.
  *
  * @created         28/Dec/1999
  * @author  Catalin Rotaru [CATA]
  */
-class nsExtensibleStringBundle : public nsIStringBundle
+class nsExtensibleStringBundle MOZ_FINAL : public nsIStringBundle
 {
   NS_DECL_ISUPPORTS
   NS_DECL_NSISTRINGBUNDLE
 
   nsresult Init(const char * aCategory, nsIStringBundleService *);
-private:
-
-  nsCOMArray<nsIStringBundle> mBundles;
-  bool               mLoaded;
 
 public:
-
   nsExtensibleStringBundle();
+
+private:
   virtual ~nsExtensibleStringBundle();
+
+  nsCOMArray<nsIStringBundle> mBundles;
+  bool mLoaded;
 };
 
 

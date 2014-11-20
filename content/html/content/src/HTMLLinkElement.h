@@ -24,8 +24,7 @@ class HTMLLinkElement MOZ_FINAL : public nsGenericHTMLElement,
                                   public Link
 {
 public:
-  HTMLLinkElement(already_AddRefed<nsINodeInfo>& aNodeInfo);
-  virtual ~HTMLLinkElement();
+  HTMLLinkElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
 
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
@@ -51,7 +50,7 @@ public:
                      EventChainPostVisitor& aVisitor) MOZ_OVERRIDE;
 
   // nsINode
-  virtual nsresult Clone(nsINodeInfo* aNodeInfo, nsINode** aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult) const MOZ_OVERRIDE;
   virtual JSObject* WrapNode(JSContext* aCx) MOZ_OVERRIDE;
 
   // nsIContent
@@ -144,6 +143,8 @@ public:
   }
 
 protected:
+  virtual ~HTMLLinkElement();
+
   // nsStyleLinkElement
   virtual already_AddRefed<nsIURI> GetStyleSheetURL(bool* aIsInline) MOZ_OVERRIDE;
   virtual void GetStyleSheetInfo(nsAString& aTitle,

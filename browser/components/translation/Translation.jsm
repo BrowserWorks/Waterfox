@@ -70,7 +70,8 @@ this.Translation = {
     let trUI = aBrowser.translationUI;
 
     // Set all values before showing a new translation infobar.
-    trUI._state = aData.state;
+    trUI._state = Translation.serviceUnavailable ? Translation.STATE_UNAVAILABLE
+                                                 : aData.state;
     trUI.detectedLanguage = aData.detectedLanguage;
     trUI.translatedFrom = aData.translatedFrom;
     trUI.translatedTo = aData.translatedTo;
@@ -80,26 +81,6 @@ this.Translation = {
 
     if (trUI.shouldShowInfoBar(aBrowser.currentURI))
       trUI.showTranslationInfoBar();
-  },
-
-  getAttributionString: function() {
-    let locale = Cc["@mozilla.org/chrome/chrome-registry;1"]
-                   .getService(Ci.nsIXULChromeRegistry)
-                   .getSelectedLocale("browser")
-                   .split("-")[0];
-
-    // Hardcoded translations for the locales that are relevant for Firefox 32.
-    if (locale == "de")
-      return "\xDCbersetzungen von";
-    if (locale == "pl")
-      return "T\u0142umacze\u0144 dostarcza";
-    if (locale == "tr")
-      return "\xC7eviriler:";
-    if (locale == "vi")
-      return "D\u1ECBch b\u1EB1ng";
-
-    // Fallback to the English string if we don't have a suitable translation.
-    return "Translations by";
   },
 
   openProviderAttribution: function() {
@@ -255,23 +236,6 @@ TranslationUI.prototype = {
     }
 
     return true;
-  },
-
-  showTranslationUI: function(aDetectedLanguage) {
-    this.detectedLanguage = aDetectedLanguage;
-
-    // Reset all values before showing a new translation infobar.
-    this.state = 0;
-    this.translatedFrom = "";
-    this.translatedTo = "";
-    this.originalShown = true;
-
-    this.showURLBarIcon();
-
-    if (!this.shouldShowInfoBar(this.browser.currentURI))
-      return null;
-
-    return this.showTranslationInfoBar();
   },
 
   receiveMessage: function(msg) {

@@ -17,6 +17,7 @@
 #include "jsfriendapi.h"
 #include "js/StructuredClone.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/Preferences.h"
 #include "nsJSEnvironment.h"
 #include "mozilla/XPTInterfaceInfoManager.h"
 #include "mozilla/dom/DOMException.h"
@@ -108,9 +109,10 @@ public:
 
 public:
     nsXPCComponents_Interfaces();
-    virtual ~nsXPCComponents_Interfaces();
 
 private:
+    virtual ~nsXPCComponents_Interfaces();
+
     nsCOMArray<nsIInterfaceInfo> mInterfaces;
 };
 
@@ -358,9 +360,10 @@ public:
 
 public:
     nsXPCComponents_InterfacesByID();
-    virtual ~nsXPCComponents_InterfacesByID();
 
 private:
+    virtual ~nsXPCComponents_InterfacesByID();
+
     nsCOMArray<nsIInterfaceInfo> mInterfaces;
 };
 
@@ -555,9 +558,10 @@ nsXPCComponents_InterfacesByID::NewResolve(nsIXPConnectWrappedNative *wrapper,
     if (38 != JS_GetStringLength(str))
         return NS_OK;
 
-    if (const jschar *name = JS_GetInternedStringChars(str)) {
+    JSAutoByteString utf8str;
+    if (utf8str.encodeUtf8(cx, str)) {
         nsID iid;
-        if (!iid.Parse(NS_ConvertUTF16toUTF8(name).get()))
+        if (!iid.Parse(utf8str.ptr()))
             return NS_OK;
 
         nsCOMPtr<nsIInterfaceInfo> info;
@@ -613,6 +617,8 @@ public:
 
 public:
     nsXPCComponents_Classes();
+
+private:
     virtual ~nsXPCComponents_Classes();
 };
 
@@ -852,6 +858,8 @@ public:
 
 public:
     nsXPCComponents_ClassesByID();
+
+private:
     virtual ~nsXPCComponents_ClassesByID();
 };
 
@@ -1113,6 +1121,8 @@ public:
 
 public:
     nsXPCComponents_Results();
+
+private:
     virtual ~nsXPCComponents_Results();
 };
 
@@ -1332,9 +1342,9 @@ public:
 
 public:
     nsXPCComponents_ID();
-    virtual ~nsXPCComponents_ID();
 
 private:
+    virtual ~nsXPCComponents_ID();
     static nsresult CallOrConstruct(nsIXPConnectWrappedNative *wrapper,
                                     JSContext *cx, HandleObject obj,
                                     const CallArgs &args, bool *_retval);
@@ -1549,9 +1559,9 @@ public:
 
 public:
     nsXPCComponents_Exception();
-    virtual ~nsXPCComponents_Exception();
 
 private:
+    virtual ~nsXPCComponents_Exception();
     static nsresult CallOrConstruct(nsIXPConnectWrappedNative *wrapper,
                                     JSContext *cx, HandleObject obj,
                                     const CallArgs &args, bool *_retval);
@@ -1935,9 +1945,9 @@ public:
     nsXPCConstructor(nsIJSCID* aClassID,
                      nsIJSIID* aInterfaceID,
                      const char* aInitializer);
-    virtual ~nsXPCConstructor();
 
 private:
+    virtual ~nsXPCConstructor();
     nsresult CallOrConstruct(nsIXPConnectWrappedNative *wrapper,
                              JSContext *cx, HandleObject obj,
                              const CallArgs &args, bool *_retval);
@@ -2194,9 +2204,9 @@ public:
 
 public:
     nsXPCComponents_Constructor();
-    virtual ~nsXPCComponents_Constructor();
 
 private:
+    virtual ~nsXPCComponents_Constructor();
     static nsresult CallOrConstruct(nsIXPConnectWrappedNative *wrapper,
                                     JSContext *cx, HandleObject obj,
                                     const CallArgs &args, bool *_retval);
@@ -2355,7 +2365,7 @@ nsXPCComponents_Constructor::CallOrConstruct(nsIXPConnectWrappedNative *wrapper,
     // get the various other object pointers we need
 
     nsXPConnect* xpc = nsXPConnect::XPConnect();
-    XPCWrappedNativeScope* scope = GetObjectScope(obj);
+    XPCWrappedNativeScope* scope = ObjectScope(obj);
     nsCOMPtr<nsIXPCComponents> comp;
 
     if (!xpc || !scope || !(comp = do_QueryInterface(scope->GetComponents())))
@@ -2507,9 +2517,9 @@ public:
 
 public:
     nsXPCComponents_Utils() { }
-    virtual ~nsXPCComponents_Utils() { }
 
 private:
+    virtual ~nsXPCComponents_Utils() { }
     nsCOMPtr<nsIXPCComponents_utils_Sandbox> mSandbox;
 };
 
@@ -2597,13 +2607,12 @@ nsXPCComponents_Utils::ReportError(HandleValue error, JSContext *cx)
         frame->GetLineNumber(&lineNo);
     }
 
-    const jschar *msgchars = JS_GetStringCharsZ(cx, msgstr);
-    if (!msgchars)
+    nsAutoJSString msg;
+    if (!msg.init(cx, msgstr))
         return NS_OK;
 
     nsresult rv = scripterr->InitWithWindowID(
-            nsDependentString(static_cast<const char16_t *>(msgchars)),
-            fileName, EmptyString(), lineNo, 0, 0,
+            msg, fileName, EmptyString(), lineNo, 0, 0,
             "XPConnect JavaScript", innerWindowID);
     NS_ENSURE_SUCCESS(rv, NS_OK);
 
@@ -2671,7 +2680,22 @@ nsXPCComponents_Utils::EvalInSandbox(const nsAString& source,
     }
 
     return xpc::EvalInSandbox(cx, sandbox, source, filename, lineNo,
-                              jsVersion, false, retval);
+                              jsVersion, retval);
+}
+
+NS_IMETHODIMP
+nsXPCComponents_Utils::GetSandboxAddonId(HandleValue sandboxVal,
+                                         JSContext *cx, MutableHandleValue rval)
+{
+    if (!sandboxVal.isObject())
+        return NS_ERROR_INVALID_ARG;
+
+    RootedObject sandbox(cx, &sandboxVal.toObject());
+    sandbox = js::CheckedUnwrap(sandbox);
+    if (!sandbox || !xpc::IsSandbox(sandbox))
+        return NS_ERROR_INVALID_ARG;
+
+    return xpc::GetSandboxAddonId(cx, sandbox, rval);
 }
 
 NS_IMETHODIMP
@@ -2817,6 +2841,22 @@ nsXPCComponents_Utils::CcSlice(int64_t budget)
     return NS_OK;
 }
 
+/* long getMaxCCSliceTimeSinceClear(); */
+NS_IMETHODIMP
+nsXPCComponents_Utils::GetMaxCCSliceTimeSinceClear(int32_t *out)
+{
+    *out = nsJSContext::GetMaxCCSliceTimeSinceClear();
+    return NS_OK;
+}
+
+/* void clearMaxCCTime(); */
+NS_IMETHODIMP
+nsXPCComponents_Utils::ClearMaxCCTime()
+{
+    nsJSContext::ClearMaxCCSliceTime();
+    return NS_OK;
+}
+
 /* void forceShrinkingGC (); */
 NS_IMETHODIMP
 nsXPCComponents_Utils::ForceShrinkingGC()
@@ -2906,7 +2946,7 @@ nsXPCComponents_Utils::NondeterministicGetWeakMapKeys(HandleValue aMap,
     return NS_OK;
 }
 
-/* void getDebugObject(); */
+/* [implicit_jscontext] jsval getJSTestingFunctions(); */
 NS_IMETHODIMP
 nsXPCComponents_Utils::GetJSTestingFunctions(JSContext *cx,
                                              MutableHandleValue retval)
@@ -2949,50 +2989,6 @@ nsXPCComponents_Utils::GetGlobalForObject(HandleValue object,
 
     retval.setObject(*obj);
     return NS_OK;
-}
-
-/* jsval createObjectIn(in jsval vobj); */
-bool
-xpc::CreateObjectIn(JSContext *cx, HandleValue vobj, CreateObjectInOptions &options,
-                    MutableHandleValue rval)
-{
-    if (!vobj.isObject()) {
-        JS_ReportError(cx, "Expected an object as the target scope");
-        return false;
-    }
-
-    RootedObject scope(cx, js::CheckedUnwrap(&vobj.toObject()));
-    if (!scope) {
-        JS_ReportError(cx, "Permission denied to create object in the target scope");
-        return false;
-    }
-
-    bool define = !JSID_IS_VOID(options.defineAs);
-
-    if (define && js::IsScriptedProxy(scope)) {
-        JS_ReportError(cx, "Defining property on proxy object is not allowed");
-        return false;
-    }
-
-    RootedObject obj(cx);
-    {
-        JSAutoCompartment ac(cx, scope);
-        obj = JS_NewObject(cx, nullptr, JS::NullPtr(), scope);
-        if (!obj)
-            return false;
-
-        if (define) {
-            if (!JS_DefinePropertyById(cx, scope, options.defineAs, obj, JSPROP_ENUMERATE,
-                                       JS_PropertyStub, JS_StrictPropertyStub))
-                return false;
-        }
-    }
-
-    rval.setObject(*obj);
-    if (!WrapperFactory::WaiveXrayAndWrap(cx, rval))
-        return false;
-
-    return true;
 }
 
 /* boolean isProxy(in value vobj); */
@@ -3089,7 +3085,7 @@ nsXPCComponents_Utils::MakeObjectPropsNormal(HandleValue vobj, JSContext *cx)
         if (!js::IsWrapper(propobj) || !JS_ObjectIsCallable(cx, propobj))
             continue;
 
-        if (!NewFunctionForwarder(cx, id, propobj, /* doclone = */ false, &v) ||
+        if (!NewNonCloningFunctionForwarder(cx, id, propobj, &v) ||
             !JS_SetPropertyById(cx, obj, id, v))
             return NS_ERROR_FAILURE;
     }
@@ -3118,7 +3114,7 @@ nsXPCComponents_Utils::IsCrossProcessWrapper(HandleValue obj, bool *out)
     if (obj.isPrimitive())
         return NS_ERROR_INVALID_ARG;
 
-    *out = jsipc::IsCPOW(js::CheckedUnwrap(&obj.toObject()));
+    *out = jsipc::IsWrappedCPOW(&obj.toObject());
     return NS_OK;
 }
 
@@ -3150,10 +3146,19 @@ nsXPCComponents_Utils::SetWantXrays(HandleValue vscope, JSContext *cx)
         return NS_ERROR_INVALID_ARG;
     JSObject *scopeObj = js::UncheckedUnwrap(&vscope.toObject());
     JSCompartment *compartment = js::GetObjectCompartment(scopeObj);
-    EnsureCompartmentPrivate(scopeObj)->wantXrays = true;
+    CompartmentPrivate::Get(scopeObj)->wantXrays = true;
     bool ok = js::RecomputeWrappers(cx, js::SingleCompartment(compartment),
                                     js::AllCompartments());
     NS_ENSURE_TRUE(ok, NS_ERROR_FAILURE);
+    return NS_OK;
+}
+
+/* jsval forcePermissiveCOWs(); */
+NS_IMETHODIMP
+nsXPCComponents_Utils::ForcePermissiveCOWs(JSContext *cx)
+{
+    CrashIfNotInAutomation();
+    CompartmentPrivate::Get(CurrentGlobalOrNull(cx))->forcePermissiveCOWs = true;
     return NS_OK;
 }
 
@@ -3164,8 +3169,9 @@ nsXPCComponents_Utils::ForcePrivilegedComponentsForScope(HandleValue vscope,
 {
     if (!vscope.isObject())
         return NS_ERROR_INVALID_ARG;
+    CrashIfNotInAutomation();
     JSObject *scopeObj = js::UncheckedUnwrap(&vscope.toObject());
-    XPCWrappedNativeScope *scope = GetObjectScope(scopeObj);
+    XPCWrappedNativeScope *scope = ObjectScope(scopeObj);
     scope->ForcePrivilegedComponents();
     return NS_OK;
 }
@@ -3178,7 +3184,7 @@ nsXPCComponents_Utils::GetComponentsForScope(HandleValue vscope, JSContext *cx,
     if (!vscope.isObject())
         return NS_ERROR_INVALID_ARG;
     JSObject *scopeObj = js::UncheckedUnwrap(&vscope.toObject());
-    XPCWrappedNativeScope *scope = GetObjectScope(scopeObj);
+    XPCWrappedNativeScope *scope = ObjectScope(scopeObj);
     RootedObject components(cx);
     if (!scope->GetComponentsJSObject(&components))
         return NS_ERROR_FAILURE;
@@ -3248,8 +3254,8 @@ nsXPCComponents_Utils::Dispatch(HandleValue runnableArg, HandleValue scope,
     }
 
 GENERATE_JSCONTEXTOPTION_GETTER_SETTER(Strict, extraWarnings, setExtraWarnings)
-GENERATE_JSCONTEXTOPTION_GETTER_SETTER(Werror, werror, setWerror)
-GENERATE_JSCONTEXTOPTION_GETTER_SETTER(Strict_mode, strictMode, setStrictMode)
+GENERATE_JSRUNTIMEOPTION_GETTER_SETTER(Werror, werror, setWerror)
+GENERATE_JSRUNTIMEOPTION_GETTER_SETTER(Strict_mode, strictMode, setStrictMode)
 GENERATE_JSRUNTIMEOPTION_GETTER_SETTER(Ion, ion, setIon)
 
 #undef GENERATE_JSCONTEXTOPTION_GETTER_SETTER
@@ -3405,9 +3411,11 @@ class WrappedJSHolder : public nsISupports
 {
     NS_DECL_ISUPPORTS
     WrappedJSHolder() {}
-    virtual ~WrappedJSHolder() {}
 
     nsRefPtr<nsXPCWrappedJS> mWrappedJS;
+
+private:
+    virtual ~WrappedJSHolder() {}
 };
 NS_IMPL_ISUPPORTS0(WrappedJSHolder);
 
@@ -3472,122 +3480,6 @@ nsXPCComponents_Utils::GetJSEngineTelemetryValue(JSContext *cx, MutableHandleVal
     return NS_OK;
 }
 
-class MOZ_STACK_CLASS CloneIntoOptions : public OptionsBase
-{
-public:
-    CloneIntoOptions(JSContext *cx = xpc_GetSafeJSContext(),
-                     JSObject *options = nullptr)
-        : OptionsBase(cx, options)
-        , cloneFunctions(false)
-    {}
-
-    virtual bool Parse()
-    {
-        return ParseBoolean("cloneFunctions", &cloneFunctions);
-    }
-
-    bool cloneFunctions;
-};
-
-class MOZ_STACK_CLASS CloneIntoCallbacksData
-{
-public:
-    CloneIntoCallbacksData(JSContext *aCx, CloneIntoOptions *aOptions)
-        : mOptions(aOptions)
-        , mFunctions(aCx)
-    {}
-
-    CloneIntoOptions *mOptions;
-    AutoObjectVector mFunctions;
-};
-
-static JSObject*
-CloneIntoReadStructuredClone(JSContext *cx,
-                             JSStructuredCloneReader *reader,
-                             uint32_t tag,
-                             uint32_t value,
-                             void* closure)
-{
-    CloneIntoCallbacksData* data = static_cast<CloneIntoCallbacksData*>(closure);
-    MOZ_ASSERT(data);
-
-    if (tag == mozilla::dom::SCTAG_DOM_BLOB || tag == mozilla::dom::SCTAG_DOM_FILELIST) {
-        MOZ_ASSERT(!value, "Data should be empty");
-
-        nsISupports *supports;
-        if (JS_ReadBytes(reader, &supports, sizeof(supports))) {
-            RootedValue val(cx);
-            if (NS_SUCCEEDED(nsContentUtils::WrapNative(cx, supports, &val)))
-                return val.toObjectOrNull();
-        }
-    }
-
-    if (tag == mozilla::dom::SCTAG_DOM_FUNCTION) {
-      MOZ_ASSERT(value < data->mFunctions.length());
-
-      RootedValue functionValue(cx);
-      RootedObject obj(cx, data->mFunctions[value]);
-
-      if (!JS_WrapObject(cx, &obj))
-          return nullptr;
-
-      if (!xpc::NewFunctionForwarder(cx, obj, false, &functionValue))
-          return nullptr;
-
-      return &functionValue.toObject();
-    }
-
-    return nullptr;
-}
-
-static bool
-CloneIntoWriteStructuredClone(JSContext *cx,
-                              JSStructuredCloneWriter *writer,
-                              HandleObject obj,
-                              void *closure)
-{
-    CloneIntoCallbacksData* data = static_cast<CloneIntoCallbacksData*>(closure);
-    MOZ_ASSERT(data);
-
-    nsCOMPtr<nsIXPConnectWrappedNative> wrappedNative;
-    nsContentUtils::XPConnect()->GetWrappedNativeOfJSObject(cx, obj, getter_AddRefs(wrappedNative));
-    if (wrappedNative) {
-        uint32_t scTag = 0;
-        nsISupports *supports = wrappedNative->Native();
-
-        nsCOMPtr<nsIDOMBlob> blob = do_QueryInterface(supports);
-        if (blob)
-            scTag = mozilla::dom::SCTAG_DOM_BLOB;
-        else {
-            nsCOMPtr<nsIDOMFileList> list = do_QueryInterface(supports);
-            if (list)
-                scTag = mozilla::dom::SCTAG_DOM_FILELIST;
-        }
-
-        if (scTag) {
-            return JS_WriteUint32Pair(writer, scTag, 0) &&
-                   JS_WriteBytes(writer, &supports, sizeof(supports));
-        }
-    }
-
-    if (data->mOptions->cloneFunctions && JS_ObjectIsCallable(cx, obj)) {
-        data->mFunctions.append(obj);
-        return JS_WriteUint32Pair(writer, mozilla::dom::SCTAG_DOM_FUNCTION,
-                                  data->mFunctions.length() - 1);
-    }
-
-    return false;
-}
-
-// These functions serialize raw XPCOM pointers in the data stream, and thus
-// should only be used when the read and write are done together
-// synchronously.
-static JSStructuredCloneCallbacks CloneIntoCallbacks = {
-    CloneIntoReadStructuredClone,
-    CloneIntoWriteStructuredClone,
-    nullptr
-};
-
 bool
 xpc::CloneInto(JSContext *aCx, HandleValue aValue, HandleValue aScope,
                HandleValue aOptions, MutableHandleValue aCloned)
@@ -3609,14 +3501,14 @@ xpc::CloneInto(JSContext *aCx, HandleValue aValue, HandleValue aScope,
 
     RootedObject optionsObject(aCx, aOptions.isObject() ? &aOptions.toObject()
                                                         : nullptr);
-    CloneIntoOptions options(aCx, optionsObject);
+    StackScopedCloneOptions options(aCx, optionsObject);
     if (aOptions.isObject() && !options.Parse())
         return false;
 
     {
-        CloneIntoCallbacksData data(aCx, &options);
         JSAutoCompartment ac(aCx, scope);
-        if (!JS_StructuredClone(aCx, aValue, aCloned, &CloneIntoCallbacks, &data))
+        aCloned.set(aValue);
+        if (!StackScopedClone(aCx, options, aCloned))
             return false;
     }
 
@@ -3657,6 +3549,19 @@ nsXPCComponents_Utils::GetObjectPrincipal(HandleValue val, JSContext *cx,
 
     nsCOMPtr<nsIPrincipal> prin = nsContentUtils::ObjectPrincipal(obj);
     prin.forget(result);
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+nsXPCComponents_Utils::SetAddonInterposition(const nsACString &addonIdStr,
+                                             nsIAddonInterposition *interposition,
+                                             JSContext *cx)
+{
+    JSAddonId *addonId = xpc::NewAddonId(cx, addonIdStr);
+    if (!addonId)
+        return NS_ERROR_FAILURE;
+    if (!XPCWrappedNativeScope::SetAddonInterposition(addonId, interposition))
+        return NS_ERROR_FAILURE;
     return NS_OK;
 }
 

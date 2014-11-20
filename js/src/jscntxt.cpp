@@ -303,27 +303,10 @@ ReportError(JSContext *cx, const char *message, JSErrorReport *reportp,
 
     /*
      * Call the error reporter only if an exception wasn't raised.
-     *
-     * If an exception was raised, then we call the debugErrorHook
-     * (if present) to give it a chance to see the error before it
-     * propagates out of scope.  This is needed for compatibility
-     * with the old scheme.
      */
     if (!JS_IsRunning(cx) || !js_ErrorToException(cx, message, reportp, callback, userRef)) {
         if (message)
             CallErrorReporter(cx, message, reportp);
-    } else if (JSDebugErrorHook hook = cx->runtime()->debugHooks.debugErrorHook) {
-        /*
-         * If we've already chewed up all the C stack, don't call into the
-         * error reporter since this may trigger an infinite recursion where
-         * the reporter triggers an over-recursion.
-         */
-        int stackDummy;
-        if (!JS_CHECK_STACK_SIZE(GetNativeStackLimit(cx), &stackDummy))
-            return;
-
-        if (cx->errorReporter)
-            hook(cx, message, reportp, cx->runtime()->debugHooks.debugErrorHookData);
     }
 }
 
@@ -391,8 +374,7 @@ js_ReportOutOfMemory(ThreadSafeContext *cxArg)
     }
 
     /* Get the message for this error, but we don't expand any arguments. */
-    const JSErrorFormatString *efs =
-        js_GetLocalizedErrorMessage(cx, nullptr, nullptr, JSMSG_OUT_OF_MEMORY);
+    const JSErrorFormatString *efs = js_GetErrorMessage(nullptr, JSMSG_OUT_OF_MEMORY);
     const char *msg = efs ? efs->format : "Out of memory";
 
     /* Fill out the report, but don't do anything that requires allocation. */
@@ -496,7 +478,7 @@ checkReportFlags(JSContext *cx, unsigned *flags)
     }
 
     /* Warnings become errors when JSOPTION_WERROR is set. */
-    if (JSREPORT_IS_WARNING(*flags) && cx->options().werror())
+    if (JSREPORT_IS_WARNING(*flags) && cx->runtime()->options().werror())
         *flags &= ~JSREPORT_WARNING;
 
     return false;
@@ -554,10 +536,14 @@ js::ReportUsageError(JSContext *cx, HandleObject callee, const char *msg)
     } else {
         JSString *str = usage.toString();
         JS::Anchor<JSString *> a_str(str);
-        const jschar *chars = JS_GetStringCharsZ(cx, str);
-        if (!chars)
+
+        if (!str->ensureFlat(cx))
             return;
-        JS_ReportError(cx, "%s. Usage: %hs", msg, chars);
+        AutoStableStringChars chars(cx);
+        if (!chars.initTwoByte(cx, str))
+            return;
+
+        JS_ReportError(cx, "%s. Usage: %hs", msg, chars.twoByteRange().start().get());
     }
 }
 
@@ -667,11 +653,14 @@ js_ExpandErrorArguments(ExclusiveContext *cx, JSErrorCallback callback,
 
     *messagep = nullptr;
 
-    /* Most calls supply js_GetErrorMessage; if this is so, assume nullptr. */
-    if (!callback || callback == js_GetErrorMessage)
-        efs = js_GetLocalizedErrorMessage(cx, userRef, nullptr, errorNumber);
-    else
-        efs = callback(userRef, nullptr, errorNumber);
+    if (!callback)
+        callback = js_GetErrorMessage;
+
+    {
+        AutoSuppressGC suppressGC(cx);
+        efs = callback(userRef, errorNumber);
+    }
+
     if (efs) {
         reportp->exnType = efs->exnType;
 
@@ -756,10 +745,10 @@ js_ExpandErrorArguments(ExclusiveContext *cx, JSErrorCallback callback,
                 JS_ASSERT(expandedArgs == argCount);
                 *out = 0;
                 js_free(buffer);
-                TwoByteChars ucmsg(reportp->ucmessage,
-                                   PointerRangeSize(static_cast<const jschar *>(reportp->ucmessage),
-                                                    static_cast<const jschar *>(out)));
-                *messagep = LossyTwoByteCharsToNewLatin1CharsZ(cx, ucmsg).c_str();
+                size_t msgLen = PointerRangeSize(static_cast<const jschar *>(reportp->ucmessage),
+                                                 static_cast<const jschar *>(out));
+                mozilla::Range<const jschar> ucmsg(reportp->ucmessage, msgLen);
+                *messagep = JS::LossyTwoByteCharsToNewLatin1CharsZ(cx, ucmsg).c_str();
                 if (!*messagep)
                     goto error;
             }
@@ -896,14 +885,6 @@ js::CallErrorReporter(JSContext *cx, const char *message, JSErrorReport *reportp
     JS_ASSERT(message);
     JS_ASSERT(reportp);
 
-    // If debugErrorHook is present, give it a chance to veto sending the error
-    // on to the regular ErrorReporter.
-    if (cx->errorReporter) {
-        JSDebugErrorHook hook = cx->runtime()->debugHooks.debugErrorHook;
-        if (hook && !hook(cx, message, reportp, cx->runtime()->debugHooks.debugErrorHookData))
-            return;
-    }
-
     if (JSErrorReporter onError = cx->errorReporter)
         onError(cx, message, reportp);
 }
@@ -998,9 +979,9 @@ const JSErrorFormatString js_ErrorFormatString[JSErr_Limit] = {
 };
 
 JS_FRIEND_API(const JSErrorFormatString *)
-js_GetErrorMessage(void *userRef, const char *locale, const unsigned errorNumber)
+js_GetErrorMessage(void *userRef, const unsigned errorNumber)
 {
-    if ((errorNumber > 0) && (errorNumber < JSErr_Limit))
+    if (errorNumber > 0 && errorNumber < JSErr_Limit)
         return &js_ErrorFormatString[errorNumber];
     return nullptr;
 }
@@ -1070,9 +1051,14 @@ js::InvokeInterruptCallback(JSContext *cx)
 
     // No need to set aside any pending exception here: ComputeStackString
     // already does that.
-    Rooted<JSString*> stack(cx, ComputeStackString(cx));
-    const jschar *chars = stack ? stack->getCharsZ(cx) : nullptr;
-    if (!chars)
+    JSString *stack = ComputeStackString(cx);
+    JSFlatString *flat = stack ? stack->ensureFlat(cx) : nullptr;
+
+    const jschar *chars;
+    AutoStableStringChars stableChars(cx);
+    if (flat && stableChars.initTwoByte(cx, flat))
+        chars = stableChars.twoByteRange().start().get();
+    else
         chars = MOZ_UTF16("(stack not available)");
     JS_ReportErrorFlagsAndNumberUC(cx, JSREPORT_WARNING, js_GetErrorMessage, nullptr,
                                    JSMSG_TERMINATED, chars);

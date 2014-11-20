@@ -1,4 +1,4 @@
-/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ts=2 et sw=2 tw=80 filetype=javascript: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -187,6 +187,14 @@ LoginStore.prototype = {
           } catch (e2) {
             Cu.reportError(e2);
           }
+        }
+
+        // In some rare cases it's possible for logins to have been added to
+        // our database between the call to OS.File.read and when we've been
+        // notified that there was a problem with it. In that case, leave the
+        // synchronously-added data alone. See bug 1029128, comment 4.
+        if (this.dataReady) {
+          return;
         }
 
         // In any case, initialize a new object to host the data.

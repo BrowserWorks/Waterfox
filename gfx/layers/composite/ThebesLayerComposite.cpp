@@ -133,7 +133,7 @@ ThebesLayerComposite::RenderLayer(const nsIntRect& aClipRect)
   LayerManagerComposite::AutoAddMaskEffect autoMaskEffect(mMaskLayer, effectChain);
   AddBlendModeEffect(effectChain);
 
-  nsIntRegion visibleRegion = GetEffectiveVisibleRegion();
+  const nsIntRegion& visibleRegion = GetEffectiveVisibleRegion();
 
   TiledLayerProperties tiledLayerProps;
   if (mRequiresTiledProperties) {
@@ -147,7 +147,7 @@ ThebesLayerComposite::RenderLayer(const nsIntRect& aClipRect)
   mBuffer->Composite(effectChain,
                      GetEffectiveOpacity(),
                      GetEffectiveTransform(),
-                     gfx::Filter::LINEAR,
+                     GetEffectFilter(),
                      clipRect,
                      &visibleRegion,
                      mRequiresTiledProperties ? &tiledLayerProps
@@ -180,6 +180,13 @@ ThebesLayerComposite::CleanupResources()
   mBuffer = nullptr;
 }
 
+void
+ThebesLayerComposite::GenEffectChain(EffectChain& aEffect)
+{
+  aEffect.mLayerRef = this;
+  aEffect.mPrimaryEffect = mBuffer->GenEffect(GetEffectFilter());
+}
+
 CSSToScreenScale
 ThebesLayerComposite::GetEffectiveResolution()
 {
@@ -193,17 +200,16 @@ ThebesLayerComposite::GetEffectiveResolution()
   return CSSToScreenScale(1.0);
 }
 
-nsACString&
-ThebesLayerComposite::PrintInfo(nsACString& aTo, const char* aPrefix)
+void
+ThebesLayerComposite::PrintInfo(std::stringstream& aStream, const char* aPrefix)
 {
-  ThebesLayer::PrintInfo(aTo, aPrefix);
+  ThebesLayer::PrintInfo(aStream, aPrefix);
   if (mBuffer && mBuffer->IsAttached()) {
-    aTo += "\n";
+    aStream << "\n";
     nsAutoCString pfx(aPrefix);
     pfx += "  ";
-    mBuffer->PrintInfo(aTo, pfx.get());
+    mBuffer->PrintInfo(aStream, pfx.get());
   }
-  return aTo;
 }
 
 } /* layers */

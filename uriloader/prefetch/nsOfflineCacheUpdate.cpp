@@ -142,6 +142,8 @@ public:
 
 private:
 
+    ~nsManifestCheck() {}
+
     static NS_METHOD ReadManifest(nsIInputStream *aInputStream,
                                   void *aClosure,
                                   const char *aFromSegment,
@@ -1990,6 +1992,20 @@ bool
 nsOfflineCacheUpdate::IsForGroupID(const nsCSubstring &groupID)
 {
     return mGroupID == groupID;
+}
+
+bool
+nsOfflineCacheUpdate::IsForProfile(nsIFile* aCustomProfileDir)
+{
+    if (!mCustomProfileDir && !aCustomProfileDir)
+        return true;
+    if (!mCustomProfileDir || !aCustomProfileDir)
+        return false;
+
+    bool equals;
+    nsresult rv = mCustomProfileDir->Equals(aCustomProfileDir, &equals);
+
+    return NS_SUCCEEDED(rv) && equals;
 }
 
 nsresult

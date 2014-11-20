@@ -1,4 +1,4 @@
-/* -*- Mode: javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,7 +11,6 @@
  * debugging global.
  */
 let { Ci, Cc, CC, Cu, Cr } = require("chrome");
-let Debugger = require("Debugger");
 let Services = require("Services");
 let { ActorPool } = require("devtools/server/actors/common");
 let { DebuggerTransport, LocalDebuggerTransport, ChildDebuggerTransport } =
@@ -20,6 +19,7 @@ let DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
 let { dumpn, dumpv, dbg_assert } = DevToolsUtils;
 let Services = require("Services");
 let EventEmitter = require("devtools/toolkit/event-emitter");
+let Debugger = require("Debugger");
 
 // Until all Debugger server code is converted to SDK modules,
 // imports Components.* alias from chrome module.
@@ -52,12 +52,18 @@ DevToolsUtils.defineLazyGetter(this, "nsFile", () => {
   return CC("@mozilla.org/file/local;1", "nsIFile", "initWithPath");
 });
 
-const LOG_PREF = "devtools.debugger.log";
-const VERBOSE_PREF = "devtools.debugger.log.verbose";
-dumpn.wantLogging = Services.prefs.getBoolPref(LOG_PREF);
-dumpv.wantVerbose =
-  Services.prefs.getPrefType(VERBOSE_PREF) !== Services.prefs.PREF_INVALID &&
-  Services.prefs.getBoolPref(VERBOSE_PREF);
+if (isWorker) {
+  dumpn.wantLogging = true;
+  dumpv.wantVerbose = true;
+} else {
+  const LOG_PREF = "devtools.debugger.log";
+  const VERBOSE_PREF = "devtools.debugger.log.verbose";
+
+  dumpn.wantLogging = Services.prefs.getBoolPref(LOG_PREF);
+  dumpv.wantVerbose =
+    Services.prefs.getPrefType(VERBOSE_PREF) !== Services.prefs.PREF_INVALID &&
+    Services.prefs.getBoolPref(VERBOSE_PREF);
+}
 
 function loadSubScript(aURL)
 {
@@ -156,12 +162,9 @@ function ModuleAPI() {
  * Public API
  */
 var DebuggerServer = {
-  _listener: null,
+  _listeners: [],
   _initialized: false,
   _transportInitialized: false,
-  xpcInspector: null,
-  // Number of currently open TCP connections.
-  _socketConnections: 0,
   // Map of global actor names to actor constructors provided by extensions.
   globalActorFactories: {},
   // Map of tab actor names to actor constructors provided by extensions.
@@ -207,7 +210,7 @@ var DebuggerServer = {
       return true;
     }
     if (result == 2) {
-      DebuggerServer.closeListener(true);
+      DebuggerServer.closeAllListeners();
       Services.prefs.setBoolPref("devtools.debugger.remote-enabled", false);
     }
     return false;
@@ -225,7 +228,6 @@ var DebuggerServer = {
       return;
     }
 
-    this.xpcInspector = require("xpcInspector");
     this.initTransport(aAllowConnectionCallback);
 
     this._initialized = true;
@@ -278,7 +280,7 @@ var DebuggerServer = {
     }
     gRegisteredModules = {};
 
-    this.closeListener();
+    this.closeAllListeners();
     this.globalActorFactories = {};
     this.tabActorFactories = {};
     this._allowConnection = null;
@@ -402,6 +404,7 @@ var DebuggerServer = {
     this.registerModule("devtools/server/actors/eventlooplag");
     this.registerModule("devtools/server/actors/layout");
     this.registerModule("devtools/server/actors/csscoverage");
+    this.registerModule("devtools/server/actors/monitor");
     if ("nsIProfiler" in Ci) {
       this.addActors("resource://gre/modules/devtools/server/actors/profiler.js");
     }
@@ -431,71 +434,56 @@ var DebuggerServer = {
     return all(promises);
   },
 
-  /**
-   * Listens on the given port or socket file for remote debugger connections.
-   *
-   * @param aPortOrPath int, string
-   *        If given an integer, the port to listen on.
-   *        Otherwise, the path to the unix socket domain file to listen on.
-   */
-  openListener: function DS_openListener(aPortOrPath) {
-    if (!Services.prefs.getBoolPref("devtools.debugger.remote-enabled")) {
-      return false;
-    }
-    this._checkInit();
-
-    // Return early if the server is already listening.
-    if (this._listener) {
-      return true;
-    }
-
-    let flags = Ci.nsIServerSocket.KeepWhenOffline;
-    // A preference setting can force binding on the loopback interface.
-    if (Services.prefs.getBoolPref("devtools.debugger.force-local")) {
-      flags |= Ci.nsIServerSocket.LoopbackOnly;
-    }
-
-    try {
-      let backlog = 4;
-      let socket;
-      let port = Number(aPortOrPath);
-      if (port) {
-        socket = new ServerSocket(port, flags, backlog);
-      } else {
-        let file = nsFile(aPortOrPath);
-        if (file.exists())
-          file.remove(false);
-        socket = new UnixDomainServerSocket(file, parseInt("666", 8), backlog);
-      }
-      socket.asyncListen(this);
-      this._listener = socket;
-    } catch (e) {
-      dumpn("Could not start debugging listener on '" + aPortOrPath + "': " + e);
-      throw Cr.NS_ERROR_NOT_AVAILABLE;
-    }
-    this._socketConnections++;
-
-    return true;
+  get listeningSockets() {
+    return this._listeners.length;
   },
 
   /**
-   * Close a previously-opened TCP listener.
+   * Listens on the given port or socket file for remote debugger connections.
    *
-   * @param aForce boolean [optional]
-   *        If set to true, then the socket will be closed, regardless of the
-   *        number of open connections.
+   * @param portOrPath int, string
+   *        If given an integer, the port to listen on.
+   *        Otherwise, the path to the unix socket domain file to listen on.
+   * @return SocketListener
+   *         A SocketListener instance that is already opened is returned.  This
+   *         single listener can be closed at any later time by calling |close|
+   *         on the SocketListener.  If a SocketListener could not be opened, an
+   *         error is thrown.  If remote connections are disabled, undefined is
+   *         returned.
    */
-  closeListener: function DS_closeListener(aForce) {
-    if (!this._listener || this._socketConnections == 0) {
+  openListener: function(portOrPath) {
+    if (!Services.prefs.getBoolPref("devtools.debugger.remote-enabled")) {
+      return;
+    }
+    this._checkInit();
+
+    let listener = new SocketListener(this);
+    listener.open(portOrPath);
+    this._listeners.push(listener);
+    return listener;
+  },
+
+  /**
+   * Remove a SocketListener instance from the server's set of active
+   * SocketListeners.  This is called by a SocketListener after it is closed.
+   */
+  _removeListener: function(listener) {
+    this._listeners = this._listeners.filter(l => l !== listener);
+  },
+
+  /**
+   * Closes and forgets all previously opened listeners.
+   *
+   * @return boolean
+   *         Whether any listeners were actually closed.
+   */
+  closeAllListeners: function() {
+    if (!this.listeningSockets) {
       return false;
     }
 
-    // Only close the listener when the last connection is closed, or if the
-    // aForce flag is passed.
-    if (--this._socketConnections == 0 || aForce) {
-      this._listener.close();
-      this._listener = null;
-      this._socketConnections = 0;
+    for (let listener of this._listeners) {
+      listener.close();
     }
 
     return true;
@@ -660,25 +648,6 @@ var DebuggerServer = {
     return deferred.promise;
   },
 
-  // nsIServerSocketListener implementation
-
-  onSocketAccepted:
-  DevToolsUtils.makeInfallible(function DS_onSocketAccepted(aSocket, aTransport) {
-    if (Services.prefs.getBoolPref("devtools.debugger.prompt-connection") && !this._allowConnection()) {
-      return;
-    }
-    dumpn("New debugging connection on " + aTransport.host + ":" + aTransport.port);
-
-    let input = aTransport.openInputStream(0, 0, 0);
-    let output = aTransport.openOutputStream(0, 0, 0);
-    let transport = new DebuggerTransport(input, output);
-    DebuggerServer._onConnection(transport);
-  }, "DebuggerServer.onSocketAccepted"),
-
-  onStopListening: function DS_onStopListening(aSocket, status) {
-    dumpn("onStopListening, status: " + status);
-  },
-
   /**
    * Raises an exception if the server has not been properly initialized.
    */
@@ -840,10 +809,107 @@ if (this.exports) {
 // Needed on B2G (See header note)
 this.DebuggerServer = DebuggerServer;
 
+// When using DebuggerServer.addActors, some symbols are expected to be in
+// the scope of the added actor even before the corresponding modules are
+// loaded, so let's explicitly bind the expected symbols here.
+let includes = ["Components", "Ci", "Cu", "require", "Services", "DebuggerServer",
+                "ActorPool", "DevToolsUtils"];
+includes.forEach(name => {
+  DebuggerServer[name] = this[name];
+});
+
 // Export ActorPool for requirers of main.js
 if (this.exports) {
   exports.ActorPool = ActorPool;
 }
+
+/**
+ * Creates a new socket listener for remote connections to a given
+ * DebuggerServer.  This helps contain and organize the parts of the server that
+ * may differ or are particular to one given listener mechanism vs. another.
+ */
+function SocketListener(server) {
+  this._server = server;
+}
+
+SocketListener.prototype = {
+
+  /**
+   * Listens on the given port or socket file for remote debugger connections.
+   *
+   * @param portOrPath int, string
+   *        If given an integer, the port to listen on.
+   *        Otherwise, the path to the unix socket domain file to listen on.
+   */
+  open: function(portOrPath) {
+    let flags = Ci.nsIServerSocket.KeepWhenOffline;
+    // A preference setting can force binding on the loopback interface.
+    if (Services.prefs.getBoolPref("devtools.debugger.force-local")) {
+      flags |= Ci.nsIServerSocket.LoopbackOnly;
+    }
+
+    try {
+      let backlog = 4;
+      let port = Number(portOrPath);
+      if (port) {
+        this._socket = new ServerSocket(port, flags, backlog);
+      } else {
+        let file = nsFile(portOrPath);
+        if (file.exists())
+          file.remove(false);
+        this._socket = new UnixDomainServerSocket(file, parseInt("666", 8),
+                                                  backlog);
+      }
+      this._socket.asyncListen(this);
+    } catch (e) {
+      dumpn("Could not start debugging listener on '" + portOrPath + "': " + e);
+      throw Cr.NS_ERROR_NOT_AVAILABLE;
+    }
+  },
+
+  /**
+   * Closes the SocketListener.  Notifies the server to remove the listener from
+   * the set of active SocketListeners.
+   */
+  close: function() {
+    this._socket.close();
+    this._server._removeListener(this);
+    this._server = null;
+  },
+
+  /**
+   * Gets the port that a TCP socket listener is listening on, or null if this
+   * is not a TCP socket (so there is no port).
+   */
+  get port() {
+    if (!this._socket) {
+      return null;
+    }
+    return this._socket.port;
+  },
+
+  // nsIServerSocketListener implementation
+
+  onSocketAccepted:
+  DevToolsUtils.makeInfallible(function(aSocket, aTransport) {
+    if (Services.prefs.getBoolPref("devtools.debugger.prompt-connection") &&
+        !this._server._allowConnection()) {
+      return;
+    }
+    dumpn("New debugging connection on " +
+          aTransport.host + ":" + aTransport.port);
+
+    let input = aTransport.openInputStream(0, 0, 0);
+    let output = aTransport.openOutputStream(0, 0, 0);
+    let transport = new DebuggerTransport(input, output);
+    this._server._onConnection(transport);
+  }, "SocketListener.onSocketAccepted"),
+
+  onStopListening: function(aSocket, status) {
+    dumpn("onStopListening, status: " + status);
+  }
+
+};
 
 /**
  * Creates a DebuggerServerConnection.
@@ -1108,6 +1174,12 @@ DebuggerServerConnection.prototype = {
     this._forwardingPrefixes.delete(aPrefix);
   },
 
+  sendActorEvent: function (actorID, eventName, event) {
+    event.from = actorID;
+    event.type = eventName;
+    this.send(event);
+  },
+
   // Transport hooks.
 
   /**
@@ -1196,6 +1268,8 @@ DebuggerServerConnection.prototype = {
    *          @return Promise
    *                  The promise is resolved when copying completes or rejected
    *                  if any (unexpected) errors occur.
+   *                  This object also emits "progress" events for each chunk
+   *                  that is copied.  See stream-utils.js.
    */
   onBulkPacket: function(packet) {
     let { actor: actorKey, type, length } = packet;

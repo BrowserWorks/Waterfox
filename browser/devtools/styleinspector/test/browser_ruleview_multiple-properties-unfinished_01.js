@@ -8,7 +8,7 @@
 // unfinished properties/values in inplace-editors
 
 let test = asyncTest(function*() {
-  yield addTab("data:text/html,test rule view user changes");
+  yield addTab("data:text/html;charset=utf-8,test rule view user changes");
   content.document.body.innerHTML = "<h1>Testing Multiple Properties</h1>";
   let {toolbox, inspector, view} = yield openRuleView();
 
@@ -17,7 +17,7 @@ let test = asyncTest(function*() {
   newElement.textContent = "Test Element";
   content.document.body.appendChild(newElement);
   yield selectNode(newElement, inspector);
-  let ruleEditor = view.element.children[0]._ruleEditor;
+  let ruleEditor = getRuleViewRuleEditor(view, 0);
 
   yield testCreateNewMultiUnfinished(inspector, ruleEditor, view);
 });

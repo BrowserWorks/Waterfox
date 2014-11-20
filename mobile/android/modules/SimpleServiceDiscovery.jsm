@@ -1,4 +1,4 @@
-// -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2; js2-skip-preprocessor-directives: t; -*-
+// -*- Mode: js; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2; js2-skip-preprocessor-directives: t; -*-
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -11,6 +11,7 @@ const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Messaging.jsm");
 
 // Define the "log" function as a binding of the Log.d function so it specifies
 // the "debug" priority and a log tag.
@@ -169,6 +170,29 @@ var SimpleServiceDiscovery = {
         log("failed to convert to byte array: " + e);
       }
     }
+
+    // We also query Java directly here for any devices that Android might support natively (i.e. Chromecast or Miracast)
+    this.getAndroidDevices();
+  },
+
+  getAndroidDevices: function() {
+    sendMessageToJava({ type: "MediaPlayer:Get" }, (result) => {
+      for (let id in result.displays) {
+        let display = result.displays[id];
+
+        // Convert the native data into something matching what is created in _processService()
+        let service = {
+          location: display.location,
+          target: "media:router",
+          friendlyName: display.friendlyName,
+          uuid: display.uuid,
+          manufacturer: display.manufacturer,
+          modelName: display.modelName
+        };
+
+        this._addService(service);
+      }
+    })
   },
 
   _searchFixedTargets: function _searchFixedTargets() {
@@ -219,6 +243,26 @@ var SimpleServiceDiscovery = {
     }
   },
 
+  getSupportedExtensions: function() {
+    let extensions = [];
+    this.services.forEach(function(service) {
+        extensions = extensions.concat(service.extensions);
+      }, this);
+    return extensions.filter(function(extension, pos) {
+      return extensions.indexOf(extension) == pos;
+    });
+  },
+
+  getSupportedMimeTypes: function() {
+    let types = [];
+    this.services.forEach(function(service) {
+        types = types.concat(service.types);
+      }, this);
+    return types.filter(function(type, pos) {
+      return types.indexOf(type) == pos;
+    });
+  },
+
   registerTarget: function registerTarget(aTarget) {
     // We must have "target" and "factory" defined
     if (!("target" in aTarget) || !("factory" in aTarget)) {
@@ -267,6 +311,9 @@ var SimpleServiceDiscovery = {
   get services() {
     let array = [];
     for (let [key, service] of this._services) {
+      let target = this._targets.get(service.target);
+      service.extensions = target.extensions;
+      service.types = target.types;
       array.push(service);
     }
     return array;
@@ -313,22 +360,26 @@ var SimpleServiceDiscovery = {
         aService.manufacturer = doc.querySelector("manufacturer").textContent;
         aService.modelName = doc.querySelector("modelName").textContent;
 
-        // Filter out services that do not match the target filter
-        if (!this._filterService(aService)) {
-          return;
-        }
-
-        // Only add and notify if we don't already know about this service
-        if (!this._services.has(aService.uuid)) {
-          this._services.set(aService.uuid, aService);
-          Services.obs.notifyObservers(null, EVENT_SERVICE_FOUND, aService.uuid);
-        }
-
-        // Make sure we remember this service is not stale
-        this._services.get(aService.uuid).lastPing = this._searchTimestamp;
+        this._addService(aService);
       }
     }).bind(this), false);
 
     xhr.send(null);
+  },
+
+  _addService: function(service) {
+    // Filter out services that do not match the target filter
+    if (!this._filterService(service)) {
+      return;
+    }
+
+    // Only add and notify if we don't already know about this service
+    if (!this._services.has(service.uuid)) {
+      this._services.set(service.uuid, service);
+      Services.obs.notifyObservers(null, EVENT_SERVICE_FOUND, service.uuid);
+    }
+
+    // Make sure we remember this service is not stale
+    this._services.get(service.uuid).lastPing = this._searchTimestamp;
   }
 }

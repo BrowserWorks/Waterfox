@@ -11,10 +11,10 @@
 
 #include "mozilla/css/StyleRule.h"
 
+#include "mozilla/CSSStyleSheet.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/css/GroupRule.h"
 #include "mozilla/css/Declaration.h"
-#include "nsCSSStyleSheet.h"
 #include "nsIDocument.h"
 #include "nsIAtom.h"
 #include "nsString.h"
@@ -541,7 +541,7 @@ int32_t nsCSSSelector::CalcWeight() const
 // StyleRule:selectorText
 //
 void
-nsCSSSelector::ToString(nsAString& aString, nsCSSStyleSheet* aSheet,
+nsCSSSelector::ToString(nsAString& aString, CSSStyleSheet* aSheet,
                         bool aAppend) const
 {
   if (!aAppend)
@@ -584,7 +584,7 @@ nsCSSSelector::ToString(nsAString& aString, nsCSSStyleSheet* aSheet,
 
 void
 nsCSSSelector::AppendToStringWithoutCombinators
-                   (nsAString& aString, nsCSSStyleSheet* aSheet) const
+                   (nsAString& aString, CSSStyleSheet* aSheet) const
 {
   AppendToStringWithoutCombinatorsOrNegations(aString, aSheet, false);
 
@@ -599,7 +599,7 @@ nsCSSSelector::AppendToStringWithoutCombinators
 
 void
 nsCSSSelector::AppendToStringWithoutCombinatorsOrNegations
-                   (nsAString& aString, nsCSSStyleSheet* aSheet,
+                   (nsAString& aString, CSSStyleSheet* aSheet,
                    bool aIsNegated) const
 {
   nsAutoString temp;
@@ -895,7 +895,22 @@ nsCSSSelectorList::AddSelector(char16_t aOperator)
 }
 
 void
-nsCSSSelectorList::ToString(nsAString& aResult, nsCSSStyleSheet* aSheet)
+nsCSSSelectorList::RemoveRightmostSelector()
+{
+  nsCSSSelector* current = mSelectors;
+  mSelectors = mSelectors->mNext;
+  MOZ_ASSERT(mSelectors,
+             "Rightmost selector has been removed, but now "
+             "mSelectors is null");
+  mSelectors->SetOperator(char16_t(0));
+
+  // Make sure that deleting current won't delete the whole list.
+  current->mNext = nullptr;
+  delete current;
+}
+
+void
+nsCSSSelectorList::ToString(nsAString& aResult, CSSStyleSheet* aSheet)
 {
   aResult.Truncate();
   nsCSSSelectorList *p = this;
@@ -982,9 +997,11 @@ class DOMCSSStyleRule;
 
 class DOMCSSDeclarationImpl : public nsDOMCSSDeclaration
 {
+protected:
+  virtual ~DOMCSSDeclarationImpl(void);
+
 public:
   DOMCSSDeclarationImpl(css::StyleRule *aRule);
-  virtual ~DOMCSSDeclarationImpl(void);
 
   NS_IMETHOD GetParentRule(nsIDOMCSSRule **aParent) MOZ_OVERRIDE;
   void DropReference(void);
@@ -1026,7 +1043,6 @@ class DOMCSSStyleRule : public nsICSSStyleRuleDOMWrapper
 {
 public:
   DOMCSSStyleRule(StyleRule *aRule);
-  virtual ~DOMCSSStyleRule();
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(DOMCSSStyleRule)
@@ -1041,6 +1057,8 @@ public:
   friend class ::DOMCSSDeclarationImpl;
 
 protected:
+  virtual ~DOMCSSStyleRule();
+
   DOMCSSDeclarationImpl mDOMDeclaration;
 
   StyleRule* Rule() {
@@ -1255,6 +1273,12 @@ DOMCSSStyleRule::GetParentRule(nsIDOMCSSRule** aParentRule)
   return Rule()->GetParentRule(aParentRule);
 }
 
+css::Rule*
+DOMCSSStyleRule::GetCSSRule()
+{
+  return Rule();
+}
+
 NS_IMETHODIMP
 DOMCSSStyleRule::GetSelectorText(nsAString& aSelectorText)
 {
@@ -1300,15 +1324,12 @@ namespace mozilla {
 namespace css {
 
 StyleRule::StyleRule(nsCSSSelectorList* aSelector,
-                     Declaration* aDeclaration)
-  : Rule(),
+                     Declaration* aDeclaration,
+                     uint32_t aLineNumber,
+                     uint32_t aColumnNumber)
+  : Rule(aLineNumber, aColumnNumber),
     mSelector(aSelector),
-    mDeclaration(aDeclaration),
-    mImportantRule(nullptr),
-    mDOMRule(nullptr),
-    mLineNumber(0),
-    mColumnNumber(0),
-    mWasMatched(false)
+    mDeclaration(aDeclaration)
 {
   NS_PRECONDITION(aDeclaration, "must have a declaration");
 }
@@ -1317,12 +1338,7 @@ StyleRule::StyleRule(nsCSSSelectorList* aSelector,
 StyleRule::StyleRule(const StyleRule& aCopy)
   : Rule(aCopy),
     mSelector(aCopy.mSelector ? aCopy.mSelector->Clone() : nullptr),
-    mDeclaration(new Declaration(*aCopy.mDeclaration)),
-    mImportantRule(nullptr),
-    mDOMRule(nullptr),
-    mLineNumber(aCopy.mLineNumber),
-    mColumnNumber(aCopy.mColumnNumber),
-    mWasMatched(false)
+    mDeclaration(new Declaration(*aCopy.mDeclaration))
 {
   // rest is constructed lazily on existing data
 }
@@ -1333,15 +1349,10 @@ StyleRule::StyleRule(StyleRule& aCopy,
   : Rule(aCopy),
     mSelector(aCopy.mSelector),
     mDeclaration(aDeclaration),
-    mImportantRule(nullptr),
-    mDOMRule(aCopy.mDOMRule),
-    mLineNumber(aCopy.mLineNumber),
-    mColumnNumber(aCopy.mColumnNumber),
-    mWasMatched(false)
+    mDOMRule(aCopy.mDOMRule.forget())
 {
   // The DOM rule is replacing |aCopy| with |this|, so transfer
   // the reverse pointer as well (and transfer ownership).
-  aCopy.mDOMRule = nullptr;
 
   // Similarly for the selector.
   aCopy.mSelector = nullptr;
@@ -1360,10 +1371,8 @@ StyleRule::~StyleRule()
 {
   delete mSelector;
   delete mDeclaration;
-  NS_IF_RELEASE(mImportantRule);
   if (mDOMRule) {
     mDOMRule->DOMDeclaration()->DropReference();
-    NS_RELEASE(mDOMRule);
   }
 }
 
@@ -1391,7 +1400,7 @@ StyleRule::RuleMatched()
     mWasMatched = true;
     mDeclaration->SetImmutable();
     if (mDeclaration->HasImportantData()) {
-      NS_ADDREF(mImportantRule = new ImportantRule(mDeclaration));
+      mImportantRule = new ImportantRule(mDeclaration);
     }
   }
 }
@@ -1420,7 +1429,6 @@ StyleRule::GetDOMRule()
       return nullptr;
     }
     mDOMRule = new DOMCSSStyleRule(this);
-    NS_ADDREF(mDOMRule);
   }
   return mDOMRule;
 }
@@ -1438,7 +1446,7 @@ StyleRule::DeclarationChanged(Declaration* aDecl,
   nsRefPtr<StyleRule> clone = new StyleRule(*this, aDecl);
 
   if (aHandleContainer) {
-    nsCSSStyleSheet* sheet = GetStyleSheet();
+    CSSStyleSheet* sheet = GetStyleSheet();
     if (mParentRule) {
       if (sheet) {
         sheet->ReplaceRuleInGroup(mParentRule, this, clone);

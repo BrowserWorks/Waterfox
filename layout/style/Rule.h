@@ -8,10 +8,10 @@
 #ifndef mozilla_css_Rule_h___
 #define mozilla_css_Rule_h___
 
+#include "mozilla/CSSStyleSheet.h"
 #include "mozilla/MemoryReporting.h"
 #include "nsIStyleRule.h"
 #include "nsIDOMCSSRule.h"
-#include "nsCSSStyleSheet.h"
 
 class nsIStyleSheet;
 class nsIDocument;
@@ -33,15 +33,21 @@ virtual void MapRuleInfoInto(nsRuleData* aRuleData);
 
 class Rule : public nsIStyleRule {
 protected:
-  Rule()
+  Rule(uint32_t aLineNumber, uint32_t aColumnNumber)
     : mSheet(0),
-      mParentRule(nullptr)
+      mParentRule(nullptr),
+      mLineNumber(aLineNumber),
+      mColumnNumber(aColumnNumber),
+      mWasMatched(false)
   {
   }
 
   Rule(const Rule& aCopy)
     : mSheet(aCopy.mSheet),
-      mParentRule(aCopy.mParentRule)
+      mParentRule(aCopy.mParentRule),
+      mLineNumber(aCopy.mLineNumber),
+      mColumnNumber(aCopy.mColumnNumber),
+      mWasMatched(false)
   {
   }
 
@@ -52,7 +58,7 @@ public:
   // The constants in this list must maintain the following invariants:
   //   If a rule of type N must appear before a rule of type M in stylesheets
   //   then N < M
-  // Note that nsCSSStyleSheet::RebuildChildList assumes that no other kinds of
+  // Note that CSSStyleSheet::RebuildChildList assumes that no other kinds of
   // rules can come between two rules of type IMPORT_RULE.
   enum {
     UNKNOWN_RULE = 0,
@@ -67,22 +73,23 @@ public:
     KEYFRAMES_RULE,
     DOCUMENT_RULE,
     SUPPORTS_RULE,
-    FONT_FEATURE_VALUES_RULE
+    FONT_FEATURE_VALUES_RULE,
+    COUNTER_STYLE_RULE
   };
 
   virtual int32_t GetType() const = 0;
 
-  nsCSSStyleSheet* GetStyleSheet() const;
+  CSSStyleSheet* GetStyleSheet() const;
   nsHTMLCSSStyleSheet* GetHTMLCSSStyleSheet() const;
 
   // Return the document the rule lives in, if any
   nsIDocument* GetDocument() const
   {
-    nsCSSStyleSheet* sheet = GetStyleSheet();
+    CSSStyleSheet* sheet = GetStyleSheet();
     return sheet ? sheet->GetDocument() : nullptr;
   }
 
-  virtual void SetStyleSheet(nsCSSStyleSheet* aSheet);
+  virtual void SetStyleSheet(CSSStyleSheet* aSheet);
   // This does not need to be virtual, because GroupRule and MediaRule are not
   // used for inline style.
   void SetHTMLCSSStyleSheet(nsHTMLCSSStyleSheet* aSheet);
@@ -93,6 +100,9 @@ public:
     // it.
     mParentRule = aRule;
   }
+
+  uint32_t GetLineNumber() const { return mLineNumber; }
+  uint32_t GetColumnNumber() const { return mColumnNumber; }
 
   /**
    * Clones |this|. Never returns nullptr.
@@ -109,6 +119,7 @@ public:
   // to implement methods on nsIDOMCSSRule
   nsresult GetParentRule(nsIDOMCSSRule** aParentRule);
   nsresult GetParentStyleSheet(nsIDOMCSSStyleSheet** aSheet);
+  Rule* GetCSSRule();
 
   // This is pure virtual because all of Rule's data members are non-owning and
   // thus measured elsewhere.
@@ -121,10 +132,15 @@ public:
                                                    void* aData);
 
 protected:
-  // This is either an nsCSSStyleSheet* or a nsHTMLStyleSheet*.  The former
+  // This is either a CSSStyleSheet* or an nsHTMLStyleSheet*.  The former
   // if the low bit is 0, the latter if the low bit is 1.
   uintptr_t         mSheet;
   GroupRule*        mParentRule;
+
+  // Keep the same type so that MSVC packs them.
+  uint32_t          mLineNumber;
+  uint32_t          mColumnNumber : 31;
+  uint32_t          mWasMatched : 1;
 };
 
 } // namespace css

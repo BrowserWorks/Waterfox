@@ -568,6 +568,22 @@ class IDLInterface(IDLObjectWithScope):
                               [self.location])
         assert not parent or isinstance(parent, IDLInterface)
 
+        if self.getExtendedAttribute("FeatureDetectible"):
+            if not (self.getExtendedAttribute("Func") or
+                    self.getExtendedAttribute("AvailableIn") or
+                    self.getExtendedAttribute("CheckPermissions")):
+                raise WebIDLError("[FeatureDetectible] is only allowed in combination "
+                                  "with [Func], [AvailableIn] or [CheckPermissions]",
+                                  [self.location])
+            if self.getExtendedAttribute("Pref"):
+                raise WebIDLError("[FeatureDetectible] must not be specified "
+                                  "in combination with [Pref]",
+                                  [self.location])
+            if not self.hasInterfaceObject():
+                raise WebIDLError("[FeatureDetectible] not allowed on interface "
+                                  "with [NoInterfaceObject]",
+                                  [self.location])
+
         self.parent = parent
 
         assert iter(self.members)
@@ -669,8 +685,36 @@ class IDLInterface(IDLObjectWithScope):
             for ancestorConsequential in ancestor.getConsequentialInterfaces():
                 ancestorConsequential.interfacesBasedOnSelf.add(self)
 
+        # Deal with interfaces marked [Unforgeable], now that we have our full
+        # member list, except unforgeables pulled in from parents.  We want to
+        # do this before we set "originatingInterface" on our unforgeable
+        # members.
+        if self.getExtendedAttribute("Unforgeable"):
+            # Check that the interface already has all the things the
+            # spec would otherwise require us to synthesize and is
+            # missing the ones we plan to synthesize.
+            if not any(m.isMethod() and m.isStringifier() for m in self.members):
+                raise WebIDLError("Unforgeable interface %s does not have a "
+                                  "stringifier" % self.identifier.name,
+                                  [self.location])
+
+            for m in self.members:
+                if ((m.isMethod() and m.isJsonifier()) or
+                    m.identifier.name == "toJSON"):
+                    raise WebIDLError("Unforgeable interface %s has a "
+                                      "jsonifier so we won't be able to add "
+                                      "one ourselves" % self.identifier.name,
+                                      [self.location, m.location])
+
+                if m.identifier.name == "valueOf" and not m.isStatic():
+                    raise WebIDLError("Unforgeable interface %s has a valueOf "
+                                      "member so we won't be able to add one "
+                                      "ourselves" % self.identifier.name,
+                                      [self.location, m.location])
+
         for member in self.members:
-            if (member.isAttr() and member.isUnforgeable() and
+            if ((member.isAttr() or member.isMethod()) and
+                member.isUnforgeable() and
                 not hasattr(member, "originatingInterface")):
                 member.originatingInterface = self
 
@@ -693,16 +737,16 @@ class IDLInterface(IDLObjectWithScope):
             # worry about anything other than our parent, because it has already
             # imported its ancestors unforgeable attributes into its member
             # list.
-            for unforgeableAttr in (attr for attr in self.parent.members if
-                                    attr.isAttr() and not attr.isStatic() and
-                                    attr.isUnforgeable()):
+            for unforgeableMember in (member for member in self.parent.members if
+                                      (member.isAttr() or member.isMethod()) and
+                                      member.isUnforgeable()):
                 shadows = [ m for m in self.members if
                             (m.isAttr() or m.isMethod()) and
                             not m.isStatic() and
-                            m.identifier.name == unforgeableAttr.identifier.name ]
+                            m.identifier.name == unforgeableMember.identifier.name ]
                 if len(shadows) != 0:
-                    locs = [unforgeableAttr.location] + [ s.location for s
-                                                          in shadows ]
+                    locs = [unforgeableMember.location] + [ s.location for s
+                                                            in shadows ]
                     raise WebIDLError("Interface %s shadows [Unforgeable] "
                                       "members of %s" %
                                       (self.identifier.name,
@@ -711,10 +755,10 @@ class IDLInterface(IDLObjectWithScope):
                 # And now just stick it in our members, since we won't be
                 # inheriting this down the proto chain.  If we really cared we
                 # could try to do something where we set up the unforgeable
-                # attributes of ancestor interfaces, with their corresponding
-                # getters, on our interface, but that gets pretty complicated
-                # and seems unnecessary.
-                self.members.append(unforgeableAttr)
+                # attributes/methods of ancestor interfaces, with their
+                # corresponding getters, on our interface, but that gets pretty
+                # complicated and seems unnecessary.
+                self.members.append(unforgeableMember)
 
         # Ensure that there's at most one of each {named,indexed}
         # {getter,setter,creator,deleter}, at most one stringifier,
@@ -785,6 +829,26 @@ class IDLInterface(IDLObjectWithScope):
                 parent = parent.parent
 
     def validate(self):
+        # We don't support consequential unforgeable interfaces.  Need to check
+        # this here, becaue in finish() an interface might not know yet that
+        # it's consequential.
+        if self.getExtendedAttribute("Unforgeable") and self.isConsequential():
+            raise WebIDLError(
+                "%s is an unforgeable consequential interface" %
+                self.identifier.name,
+                [self.location] +
+                list(i.location for i in
+                     (self.interfacesBasedOnSelf - { self }) ))
+
+        # We also don't support inheriting from unforgeable interfaces.
+        if self.getExtendedAttribute("Unforgeable") and self.hasChildInterfaces():
+            raise WebIDLError("%s is an unforgeable ancestor interface" %
+                self.identifier.name,
+                [self.location] +
+                list(i.location for i in
+                     self.interfacesBasedOnSelf if i.parent == self))
+
+
         for member in self.members:
             member.validate()
 
@@ -991,7 +1055,10 @@ class IDLInterface(IDLObjectWithScope):
                 self._isOnGlobalProtoChain = True
             elif (identifier == "NeedNewResolve" or
                   identifier == "OverrideBuiltins" or
-                  identifier == "ChromeOnly"):
+                  identifier == "ChromeOnly" or
+                  identifier == "Unforgeable" or
+                  identifier == "LegacyEventInit" or
+                  identifier == "FeatureDetectible"):
                 # Known extended attributes that do not take values
                 if not attr.noArguments():
                     raise WebIDLError("[%s] must take no arguments" % identifier,
@@ -1705,7 +1772,7 @@ class IDLSequenceType(IDLType):
             # Just forward to the union; it'll deal
             return other.isDistinguishableFrom(self)
         return (other.isPrimitive() or other.isString() or other.isEnum() or
-                other.isDate() or other.isNonCallbackInterface())
+                other.isDate() or other.isNonCallbackInterface() or other.isMozMap())
 
     def _getDependentObjects(self):
         return self.inner._getDependentObjects()
@@ -1759,7 +1826,7 @@ class IDLMozMapType(IDLType):
             # Just forward to the union; it'll deal
             return other.isDistinguishableFrom(self)
         return (other.isPrimitive() or other.isString() or other.isEnum() or
-                other.isDate() or other.isNonCallbackInterface())
+                other.isDate() or other.isNonCallbackInterface() or other.isSequence())
 
     def _getDependentObjects(self):
         return self.inner._getDependentObjects()
@@ -2634,6 +2701,34 @@ class IDLNullValue(IDLObject):
     def _getDependentObjects(self):
         return set()
 
+class IDLEmptySequenceValue(IDLObject):
+    def __init__(self, location):
+        IDLObject.__init__(self, location)
+        self.type = None
+        self.value = None
+
+    def coerceToType(self, type, location):
+        if type.isUnion():
+            # We use the flat member types here, because if we have a nullable
+            # member type, or a nested union, we want the type the value
+            # actually coerces to, not the nullable or nested union type.
+            for subtype in type.unroll().flatMemberTypes:
+                try:
+                    return self.coerceToType(subtype, location)
+                except:
+                    pass
+
+        if not type.isSequence():
+            raise WebIDLError("Cannot coerce empty sequence value to type %s." % type,
+                              [location])
+
+        emptySequenceValue = IDLEmptySequenceValue(self.location)
+        emptySequenceValue.type = type
+        return emptySequenceValue
+
+    def _getDependentObjects(self):
+        return set()
+
 class IDLUndefinedValue(IDLObject):
     def __init__(self, location):
         IDLObject.__init__(self, location)
@@ -2812,6 +2907,18 @@ class IDLAttribute(IDLInterfaceMember):
             raise WebIDLError("An attribute with [SameObject] must have an "
                               "interface type as its type", [self.location])
 
+        if self.getExtendedAttribute("FeatureDetectible"):
+            if not (self.getExtendedAttribute("Func") or
+                    self.getExtendedAttribute("AvailableIn") or
+                    self.getExtendedAttribute("CheckPermissions")):
+                raise WebIDLError("[FeatureDetectible] is only allowed in combination "
+                                  "with [Func], [AvailableIn] or [CheckPermissions]",
+                                  [self.location])
+            if self.getExtendedAttribute("Pref"):
+                raise WebIDLError("[FeatureDetectible] must not be specified "
+                                  "in combination with [Pref]",
+                                  [self.location])
+
     def validate(self):
         if ((self.getExtendedAttribute("Cached") or
              self.getExtendedAttribute("StoreInSlot")) and
@@ -2860,9 +2967,6 @@ class IDLAttribute(IDLInterfaceMember):
                                   [attr.location, self.location])
             self.lenientThis = True
         elif identifier == "Unforgeable":
-            if not self.readonly:
-                raise WebIDLError("[Unforgeable] is only allowed on readonly "
-                                  "attributes", [attr.location, self.location])
             if self.isStatic():
                 raise WebIDLError("[Unforgeable] is only allowed on non-static "
                                   "attributes", [attr.location, self.location])
@@ -2922,7 +3026,7 @@ class IDLAttribute(IDLInterfaceMember):
                                   [attr.location, self.location])
         elif (identifier == "CrossOriginReadable" or
               identifier == "CrossOriginWritable"):
-            if not attr.noArguments():
+            if not attr.noArguments() and identifier == "CrossOriginReadable":
                 raise WebIDLError("[%s] must take no arguments" % identifier,
                                   [attr.location])
             if self.isStatic():
@@ -2945,7 +3049,8 @@ class IDLAttribute(IDLInterfaceMember):
               identifier == "Frozen" or
               identifier == "AvailableIn" or
               identifier == "NewObject" or
-              identifier == "CheckPermissions"):
+              identifier == "CheckPermissions" or
+              identifier == "FeatureDetectible"):
             # Known attributes that we don't need to do anything with here
             pass
         else:
@@ -3216,6 +3321,7 @@ class IDLMethod(IDLInterfaceMember, IDLScope):
         assert isinstance(jsonifier, bool)
         self._jsonifier = jsonifier
         self._specialType = specialType
+        self._unforgeable = False
 
         if static and identifier.name == "prototype":
             raise WebIDLError("The identifier of a static operation must not be 'prototype'",
@@ -3347,6 +3453,18 @@ class IDLMethod(IDLInterfaceMember, IDLScope):
                 self._overloads]
 
     def finish(self, scope):
+        if self.getExtendedAttribute("FeatureDetectible"):
+            if not (self.getExtendedAttribute("Func") or
+                    self.getExtendedAttribute("AvailableIn") or
+                    self.getExtendedAttribute("CheckPermissions")):
+                raise WebIDLError("[FeatureDetectible] is only allowed in combination "
+                                  "with [Func], [AvailableIn] or [CheckPermissions]",
+                                  [self.location])
+            if self.getExtendedAttribute("Pref"):
+                raise WebIDLError("[FeatureDetectible] must not be specified "
+                                  "in combination with [Pref]",
+                                  [self.location])
+
         overloadWithPromiseReturnType = None
         overloadWithoutPromiseReturnType = None
         for overload in self._overloads:
@@ -3491,9 +3609,10 @@ class IDLMethod(IDLInterfaceMember, IDLScope):
                               "[SetterThrows]",
                               [attr.location, self.location])
         elif identifier == "Unforgeable":
-            raise WebIDLError("Methods must not be flagged as "
-                              "[Unforgeable]",
-                              [attr.location, self.location])
+            if self.isStatic():
+                raise WebIDLError("[Unforgeable] is only allowed on non-static "
+                                  "methods", [attr.location, self.location])
+            self._unforgeable = True
         elif identifier == "SameObject":
             raise WebIDLError("Methods must not be flagged as [SameObject]",
                               [attr.location, self.location]);
@@ -3514,15 +3633,20 @@ class IDLMethod(IDLInterfaceMember, IDLScope):
                 raise WebIDLError("[LenientFloat] used on an operation with no "
                                   "restricted float type arguments",
                                   [attr.location, self.location])
+        elif (identifier == "Pure" or
+              identifier == "CrossOriginCallable" or
+              identifier == "WebGLHandlesContextLoss" or
+              identifier == "FeatureDetectible"):
+            # Known no-argument attributes.
+            if not attr.noArguments():
+                raise WebIDLError("[%s] must take no arguments" % identifier,
+                                  [attr.location])
         elif (identifier == "Throws" or
               identifier == "NewObject" or
               identifier == "ChromeOnly" or
               identifier == "Pref" or
               identifier == "Func" or
               identifier == "AvailableIn" or
-              identifier == "Pure" or
-              identifier == "CrossOriginCallable" or
-              identifier == "WebGLHandlesContextLoss" or
               identifier == "CheckPermissions"):
             # Known attributes that we don't need to do anything with here
             pass
@@ -3533,6 +3657,9 @@ class IDLMethod(IDLInterfaceMember, IDLScope):
 
     def returnsPromise(self):
         return self._overloads[0].returnType.isPromise()
+
+    def isUnforgeable(self):
+        return self._unforgeable
 
     def _getDependentObjects(self):
         deps = set()
@@ -3645,7 +3772,7 @@ class Tokenizer(object):
         return t
 
     def t_IDENTIFIER(self, t):
-        r'[A-Z_a-z][0-9A-Z_a-z]*'
+        r'[A-Z_a-z][0-9A-Z_a-z-]*'
         t.type = self.keywords.get(t.value, 'IDENTIFIER')
         return t
 
@@ -3954,7 +4081,7 @@ class Parser(Tokenizer):
 
     def p_DictionaryMember(self, p):
         """
-            DictionaryMember : Type IDENTIFIER DefaultValue SEMICOLON
+            DictionaryMember : Type IDENTIFIER Default SEMICOLON
         """
         # These quack a lot like optional arguments, so just treat them that way.
         t = p[1]
@@ -3966,15 +4093,26 @@ class Parser(Tokenizer):
                            defaultValue=defaultValue, variadic=False,
                            dictionaryMember=True)
 
-    def p_DefaultValue(self, p):
+    def p_Default(self, p):
         """
-            DefaultValue : EQUALS ConstValue
-                         |
+            Default : EQUALS DefaultValue
+                    |
         """
         if len(p) > 1:
             p[0] = p[2]
         else:
             p[0] = None
+
+    def p_DefaultValue(self, p):
+        """
+            DefaultValue : ConstValue
+                         | LBRACKET RBRACKET
+        """
+        if len(p) == 2:
+            p[0] = p[1]
+        else:
+            assert len(p) == 3 # Must be []
+            p[0] = IDLEmptySequenceValue(self.getLocation(p, 1))
 
     def p_Exception(self, p):
         """
@@ -4434,7 +4572,7 @@ class Parser(Tokenizer):
 
     def p_Argument(self, p):
         """
-            Argument : ExtendedAttributeList Optional Type Ellipsis ArgumentName DefaultValue
+            Argument : ExtendedAttributeList Optional Type Ellipsis ArgumentName Default
         """
         t = p[3]
         assert isinstance(t, IDLType)
@@ -5005,8 +5143,14 @@ class Parser(Tokenizer):
         self.parser = yacc.yacc(module=self,
                                 outputdir=outputdir,
                                 tabmodule='webidlyacc',
-                                errorlog=yacc.NullLogger(),
-                                picklefile='WebIDLGrammar.pkl')
+                                errorlog=yacc.NullLogger()
+                                # Pickling the grammar is a speedup in
+                                # some cases (older Python?) but a
+                                # significant slowdown in others.
+                                # We're not pickling for now, until it
+                                # becomes a speedup again.
+                                # , picklefile='WebIDLGrammar.pkl'
+                            )
         self._globalScope = IDLScope(BuiltinLocation("<Global Scope>"), None, None)
         self._installBuiltins(self._globalScope)
         self._productions = []

@@ -10,7 +10,9 @@
 #include "mozilla/Casting.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/TypedEnum.h"
+#include "mozilla/UniquePtr.h"
 
+#include "jsapi.h" // For JSAutoByteString.  See bug 1033916.
 #include "jsbytecode.h"
 #include "jspubtd.h"
 
@@ -43,7 +45,7 @@ class JSAtom;
 struct JSErrorFormatString;
 class JSLinearString;
 struct JSJitInfo;
-class JSErrorReport;
+struct JSErrorReport;
 
 namespace JS {
 template <class T>
@@ -420,11 +422,18 @@ class SourceHook {
  * set.
  */
 extern JS_FRIEND_API(void)
-SetSourceHook(JSRuntime *rt, SourceHook *hook);
+SetSourceHook(JSRuntime *rt, mozilla::UniquePtr<SourceHook> hook);
 
 /* Remove |rt|'s source hook, and return it. The caller now owns the hook. */
-extern JS_FRIEND_API(SourceHook *)
+extern JS_FRIEND_API(mozilla::UniquePtr<SourceHook>)
 ForgetSourceHook(JSRuntime *rt);
+
+#ifdef NIGHTLY_BUILD
+typedef void (*AssertOnScriptEntryHook)(JSContext *cx, JS::HandleScript script);
+
+extern JS_FRIEND_API(void)
+SetAssertOnScriptEntryHook(JSRuntime *rt, AssertOnScriptEntryHook hook);
+#endif
 
 extern JS_FRIEND_API(JS::Zone *)
 GetCompartmentZone(JSCompartment *comp);
@@ -457,16 +466,6 @@ IsSystemZone(JS::Zone *zone);
 
 extern JS_FRIEND_API(bool)
 IsAtomsCompartment(JSCompartment *comp);
-
-/*
- * Check whether it is OK to assign an undeclared variable with the name
- * |propname| at the current location in script.  It is not an error if there is
- * no current script location, or if that location is not an assignment to an
- * undeclared variable.  Reports an error if one needs to be reported (and,
- * particularly, always reports when it returns false).
- */
-extern JS_FRIEND_API(bool)
-ReportIfUndeclaredVarAssignment(JSContext *cx, JS::HandleString propname);
 
 /*
  * Returns whether we're in a non-strict property set (in that we're in a
@@ -595,9 +594,12 @@ struct Function {
     void *_1;
 };
 
-struct Atom {
+struct String
+{
     static const uint32_t INLINE_CHARS_BIT = JS_BIT(2);
     static const uint32_t LATIN1_CHARS_BIT = JS_BIT(6);
+    static const uint32_t ROPE_FLAGS       = 0;
+    static const uint32_t TYPE_FLAGS_MASK  = JS_BIT(6) - 1;
     uint32_t flags;
     uint32_t length;
     union {
@@ -624,6 +626,46 @@ inline const JSClass *
 GetObjectJSClass(JSObject *obj)
 {
     return js::Jsvalify(GetObjectClass(obj));
+}
+
+JS_FRIEND_API(const Class *)
+ProtoKeyToClass(JSProtoKey key);
+
+// Returns true if the standard class identified by |key| inherits from
+// another standard class with the same js::Class. This basically means
+// that the various properties described by our js::Class are intended
+// to live higher up on the proto chain.
+//
+// In practice, this only returns true for Error subtypes.
+inline bool
+StandardClassIsDependent(JSProtoKey key)
+{
+    JSProtoKey keyFromClass = JSCLASS_CACHED_PROTO_KEY(ProtoKeyToClass(key));
+    MOZ_ASSERT(keyFromClass);
+    return key != keyFromClass;
+}
+
+// Returns the key for the class inherited by a given standard class (that
+// is to say, the prototype of this standard class's prototype).
+//
+// You must be sure that this corresponds to a standard class with a cached
+// JSProtoKey before calling this function. In general |key| will match the
+// cached proto key, except in cases where multiple JSProtoKeys share a
+// JSClass.
+inline JSProtoKey
+ParentKeyForStandardClass(JSProtoKey key)
+{
+    // [Object] has nothing to inherit from.
+    if (key == JSProto_Object)
+        return JSProto_Null;
+
+    // If we're dependent (i.e. an Error subtype), return the key of the class
+    // we depend on.
+    if (StandardClassIsDependent(key))
+        return JSCLASS_CACHED_PROTO_KEY(ProtoKeyToClass(key));
+
+    // Otherwise, we inherit [Object].
+    return JSProto_Object;
 }
 
 inline bool
@@ -713,12 +755,6 @@ JS_FRIEND_API(JSFunction *)
 NewFunctionByIdWithReserved(JSContext *cx, JSNative native, unsigned nargs, unsigned flags,
                             JSObject *parent, jsid id);
 
-JS_FRIEND_API(JSObject *)
-InitClassWithReserved(JSContext *cx, JSObject *obj, JSObject *parent_proto,
-                      const JSClass *clasp, JSNative constructor, unsigned nargs,
-                      const JSPropertySpec *ps, const JSFunctionSpec *fs,
-                      const JSPropertySpec *static_ps, const JSFunctionSpec *static_fs);
-
 JS_FRIEND_API(const JS::Value &)
 GetFunctionNativeReserved(JSObject *fun, size_t which);
 
@@ -781,29 +817,140 @@ GetObjectSlot(JSObject *obj, size_t slot)
     return reinterpret_cast<const shadow::Object *>(obj)->slotRef(slot);
 }
 
-inline const jschar *
-GetAtomChars(JSAtom *atom)
-{
-    using shadow::Atom;
-    Atom *atom_ = reinterpret_cast<Atom *>(atom);
-    JS_ASSERT(!(atom_->flags & Atom::LATIN1_CHARS_BIT));
-    if (atom_->flags & Atom::INLINE_CHARS_BIT) {
-        char *p = reinterpret_cast<char *>(atom);
-        return reinterpret_cast<const jschar *>(p + offsetof(Atom, inlineStorageTwoByte));
-    }
-    return atom_->nonInlineCharsTwoByte;
-}
-
-inline size_t
+MOZ_ALWAYS_INLINE size_t
 GetAtomLength(JSAtom *atom)
 {
-    return reinterpret_cast<shadow::Atom*>(atom)->length;
+    return reinterpret_cast<shadow::String*>(atom)->length;
 }
 
-inline JSLinearString *
+static const uint32_t MaxStringLength = (1 << 28) - 1;
+
+MOZ_ALWAYS_INLINE size_t
+GetStringLength(JSString *s)
+{
+    return reinterpret_cast<shadow::String*>(s)->length;
+}
+
+MOZ_ALWAYS_INLINE size_t
+GetFlatStringLength(JSFlatString *s)
+{
+    return reinterpret_cast<shadow::String*>(s)->length;
+}
+
+MOZ_ALWAYS_INLINE size_t
+GetLinearStringLength(JSLinearString *s)
+{
+    return reinterpret_cast<shadow::String*>(s)->length;
+}
+
+MOZ_ALWAYS_INLINE bool
+LinearStringHasLatin1Chars(JSLinearString *s)
+{
+    return reinterpret_cast<shadow::String *>(s)->flags & shadow::String::LATIN1_CHARS_BIT;
+}
+
+MOZ_ALWAYS_INLINE bool
+AtomHasLatin1Chars(JSAtom *atom)
+{
+    return reinterpret_cast<shadow::String *>(atom)->flags & shadow::String::LATIN1_CHARS_BIT;
+}
+
+MOZ_ALWAYS_INLINE bool
+StringHasLatin1Chars(JSString *s)
+{
+    return reinterpret_cast<shadow::String *>(s)->flags & shadow::String::LATIN1_CHARS_BIT;
+}
+
+MOZ_ALWAYS_INLINE const JS::Latin1Char *
+GetLatin1LinearStringChars(const JS::AutoCheckCannotGC &nogc, JSLinearString *linear)
+{
+    MOZ_ASSERT(LinearStringHasLatin1Chars(linear));
+
+    using shadow::String;
+    String *s = reinterpret_cast<String *>(linear);
+    if (s->flags & String::INLINE_CHARS_BIT)
+        return s->inlineStorageLatin1;
+    return s->nonInlineCharsLatin1;
+}
+
+MOZ_ALWAYS_INLINE const jschar *
+GetTwoByteLinearStringChars(const JS::AutoCheckCannotGC &nogc, JSLinearString *linear)
+{
+    MOZ_ASSERT(!LinearStringHasLatin1Chars(linear));
+
+    using shadow::String;
+    String *s = reinterpret_cast<String *>(linear);
+    if (s->flags & String::INLINE_CHARS_BIT)
+        return s->inlineStorageTwoByte;
+    return s->nonInlineCharsTwoByte;
+}
+
+MOZ_ALWAYS_INLINE JSLinearString *
 AtomToLinearString(JSAtom *atom)
 {
     return reinterpret_cast<JSLinearString *>(atom);
+}
+
+MOZ_ALWAYS_INLINE JSLinearString *
+FlatStringToLinearString(JSFlatString *s)
+{
+    return reinterpret_cast<JSLinearString *>(s);
+}
+
+MOZ_ALWAYS_INLINE const JS::Latin1Char *
+GetLatin1AtomChars(const JS::AutoCheckCannotGC &nogc, JSAtom *atom)
+{
+    return GetLatin1LinearStringChars(nogc, AtomToLinearString(atom));
+}
+
+MOZ_ALWAYS_INLINE const jschar *
+GetTwoByteAtomChars(const JS::AutoCheckCannotGC &nogc, JSAtom *atom)
+{
+    return GetTwoByteLinearStringChars(nogc, AtomToLinearString(atom));
+}
+
+JS_FRIEND_API(JSLinearString *)
+StringToLinearStringSlow(JSContext *cx, JSString *str);
+
+MOZ_ALWAYS_INLINE JSLinearString *
+StringToLinearString(JSContext *cx, JSString *str)
+{
+    using shadow::String;
+    String *s = reinterpret_cast<String *>(str);
+    if (MOZ_UNLIKELY((s->flags & String::TYPE_FLAGS_MASK) == String::ROPE_FLAGS))
+        return StringToLinearStringSlow(cx, str);
+    return reinterpret_cast<JSLinearString *>(str);
+}
+
+MOZ_ALWAYS_INLINE void
+CopyLinearStringChars(jschar *dest, JSLinearString *s, size_t len)
+{
+    JS::AutoCheckCannotGC nogc;
+    if (LinearStringHasLatin1Chars(s)) {
+        const JS::Latin1Char *src = GetLatin1LinearStringChars(nogc, s);
+        for (size_t i = 0; i < len; i++)
+            dest[i] = src[i];
+    } else {
+        const jschar *src = GetTwoByteLinearStringChars(nogc, s);
+        mozilla::PodCopy(dest, src, len);
+    }
+}
+
+inline bool
+CopyStringChars(JSContext *cx, jschar *dest, JSString *s, size_t len)
+{
+    JSLinearString *linear = StringToLinearString(cx, s);
+    if (!linear)
+        return false;
+
+    CopyLinearStringChars(dest, linear, len);
+    return true;
+}
+
+inline void
+CopyFlatStringChars(jschar *dest, JSFlatString *s, size_t len)
+{
+    CopyLinearStringChars(dest, FlatStringToLinearString(s), len);
 }
 
 JS_FRIEND_API(bool)
@@ -830,10 +977,12 @@ IsObjectInContextCompartment(JSObject *obj, const JSContext *cx);
  * XDR_BYTECODE_VERSION.
  */
 #define JSITER_ENUMERATE  0x1   /* for-in compatible hidden default iterator */
-#define JSITER_FOREACH    0x2   /* return [key, value] pair rather than key */
-#define JSITER_KEYVALUE   0x4   /* destructuring for-in wants [key, value] */
+#define JSITER_FOREACH    0x2   /* get obj[key] for each property */
+#define JSITER_KEYVALUE   0x4   /* obsolete destructuring for-in wants [key, value] */
 #define JSITER_OWNONLY    0x8   /* iterate over obj's own properties only */
 #define JSITER_HIDDEN     0x10  /* also enumerate non-enumerable properties */
+#define JSITER_SYMBOLS    0x20  /* also include symbol property keys */
+#define JSITER_SYMBOLSONLY 0x40 /* exclude string property keys */
 
 JS_FRIEND_API(bool)
 RunningWithTrustedPrincipals(JSContext *cx);
@@ -985,8 +1134,8 @@ CastToJSFreeOp(FreeOp *fop)
  * Get an error type name from a JSExnType constant.
  * Returns nullptr for invalid arguments and JSEXN_INTERNALERR
  */
-extern JS_FRIEND_API(const jschar*)
-GetErrorTypeName(JSRuntime* rt, int16_t exnType);
+extern JS_FRIEND_API(JSFlatString *)
+GetErrorTypeName(JSRuntime *rt, int16_t exnType);
 
 #ifdef JS_DEBUG
 extern JS_FRIEND_API(unsigned)
@@ -1130,14 +1279,141 @@ typedef enum JSErrNum {
 } JSErrNum;
 
 extern JS_FRIEND_API(const JSErrorFormatString *)
-js_GetErrorMessage(void *userRef, const char *locale, const unsigned errorNumber);
+js_GetErrorMessage(void *userRef, const unsigned errorNumber);
 
 namespace js {
+
+// AutoStableStringChars is here so we can use it in ErrorReport.  It
+// should get moved out of here if we can manage it.  See bug 1040316.
+
+/*
+ * This class provides safe access to a string's chars across a GC. Once
+ * we allocate strings and chars in the nursery (bug 903519), this class
+ * will have to make a copy of the string's chars if they are allocated
+ * in the nursery, so it's best to avoid using this class unless you really
+ * need it. It's usually more efficient to use the latin1Chars/twoByteChars
+ * JSString methods and often the code can be rewritten so that only indexes
+ * instead of char pointers are used in parts of the code that can GC.
+ */
+class MOZ_STACK_CLASS AutoStableStringChars
+{
+    /* Ensure the string is kept alive while we're using its chars. */
+    JS::RootedString s_;
+    union {
+        const jschar *twoByteChars_;
+        const JS::Latin1Char *latin1Chars_;
+    };
+    enum State { Uninitialized, Latin1, TwoByte };
+    State state_;
+    bool ownsChars_;
+
+  public:
+    AutoStableStringChars(JSContext *cx)
+      : s_(cx), state_(Uninitialized), ownsChars_(false)
+    {};
+    ~AutoStableStringChars();
+
+    bool init(JSContext *cx, JSString *s);
+
+    /* Like init(), but Latin1 chars are inflated to TwoByte. */
+    bool initTwoByte(JSContext *cx, JSString *s);
+
+    bool isLatin1() const { return state_ == Latin1; }
+    bool isTwoByte() const { return state_ == TwoByte; }
+
+    const jschar *twoByteChars() const {
+        MOZ_ASSERT(state_ == TwoByte);
+        return twoByteChars_;
+    }
+
+    mozilla::Range<const JS::Latin1Char> latin1Range() const {
+        MOZ_ASSERT(state_ == Latin1);
+        return mozilla::Range<const JS::Latin1Char>(latin1Chars_,
+                                                    GetStringLength(s_));
+    }
+
+    mozilla::Range<const jschar> twoByteRange() const {
+        MOZ_ASSERT(state_ == TwoByte);
+        return mozilla::Range<const jschar>(twoByteChars_,
+                                            GetStringLength(s_));
+    }
+
+    /* If we own the chars, transfer ownership to the caller. */
+    bool maybeGiveOwnershipToCaller() {
+        MOZ_ASSERT(state_ != Uninitialized);
+        if (!ownsChars_)
+            return false;
+        state_ = Uninitialized;
+        ownsChars_ = false;
+        return true;
+    }
+
+  private:
+    AutoStableStringChars(const AutoStableStringChars &other) MOZ_DELETE;
+    void operator=(const AutoStableStringChars &other) MOZ_DELETE;
+};
 
 // Creates a string of the form |ErrorType: ErrorMessage| for a JSErrorReport,
 // which generally matches the toString() behavior of an ErrorObject.
 extern JS_FRIEND_API(JSString *)
 ErrorReportToString(JSContext *cx, JSErrorReport *reportp);
+
+struct MOZ_STACK_CLASS JS_FRIEND_API(ErrorReport)
+{
+    ErrorReport(JSContext *cx);
+    ~ErrorReport();
+
+    bool init(JSContext *cx, JS::HandleValue exn);
+
+    JSErrorReport *report()
+    {
+        return reportp;
+    }
+
+    const char *message()
+    {
+        return message_;
+    }
+
+  private:
+    // More or less an equivalent of JS_ReportErrorNumber/js_ReportErrorNumberVA
+    // but fills in an ErrorReport instead of reporting it.  Uses varargs to
+    // make it simpler to call js_ExpandErrorArguments.
+    void populateUncaughtExceptionReport(JSContext *cx, ...);
+    void populateUncaughtExceptionReportVA(JSContext *cx, va_list ap);
+
+    // We may have a provided JSErrorReport, so need a way to represent that.
+    JSErrorReport *reportp;
+
+    // And we may have a message.
+    const char *message_;
+
+    // Or we may need to synthesize a JSErrorReport one of our own.
+    JSErrorReport ownedReport;
+
+    // Or a message of our own.  If this is non-null, we need to clean up both
+    // it and ownedReport.
+    char *ownedMessage;
+
+    // And we have a string to maybe keep alive that has pointers into
+    // it from ownedReport.
+    JS::RootedString str;
+
+    // And keep its chars alive too.
+    AutoStableStringChars strChars;
+
+    // And we need to root our exception value.
+    JS::RootedObject exnObject;
+
+    // And possibly some byte storage for our message_.
+    JSAutoByteString bytesStorage;
+
+    // And for our filename.
+    JSAutoByteString filename;
+
+    // True if we need to free message_ and the stuff in ownedReport
+    bool ownsMessageAndReport;
+};
 
 } /* namespace js */
 
@@ -1147,41 +1423,53 @@ ErrorReportToString(JSContext *cx, JSErrorReport *reportp);
 extern JS_FRIEND_API(uint64_t)
 js_GetSCOffset(JSStructuredCloneWriter* writer);
 
-/* Typed Array functions, implemented in jstypedarray.cpp */
-
 namespace js {
-namespace ArrayBufferView {
+namespace Scalar {
 
-enum ViewType {
-    TYPE_INT8 = 0,
-    TYPE_UINT8,
-    TYPE_INT16,
-    TYPE_UINT16,
-    TYPE_INT32,
-    TYPE_UINT32,
-    TYPE_FLOAT32,
-    TYPE_FLOAT64,
+/* Scalar types which can appear in typed arrays and typed objects. */
+enum Type {
+    Int8 = 0,
+    Uint8,
+    Int16,
+    Uint16,
+    Int32,
+    Uint32,
+    Float32,
+    Float64,
 
     /*
      * Special type that is a uint8_t, but assignments are clamped to [0, 256).
      * Treat the raw data type as a uint8_t.
      */
-    TYPE_UINT8_CLAMPED,
+    Uint8Clamped,
 
-    /*
-     * Type returned for a DataView. Note that there is no single element type
-     * in this case.
-     */
-    TYPE_DATAVIEW,
-
-    TYPE_MAX
+    TypeMax
 };
 
-} /* namespace ArrayBufferView */
+static inline size_t
+byteSize(Type atype)
+{
+    switch (atype) {
+      case Int8:
+      case Uint8:
+      case Uint8Clamped:
+        return 1;
+      case Int16:
+      case Uint16:
+        return 2;
+      case Int32:
+      case Uint32:
+      case Float32:
+        return 4;
+      case Float64:
+        return 8;
+      default:
+        MOZ_CRASH("invalid scalar type");
+    }
+}
 
+} /* namespace Scalar */
 } /* namespace js */
-
-typedef js::ArrayBufferView::ViewType JSArrayBufferViewType;
 
 /*
  * Create a new typed array with nelements elements.
@@ -1434,13 +1722,13 @@ extern JS_FRIEND_API(JSObject *)
 JS_GetObjectAsArrayBuffer(JSObject *obj, uint32_t *length, uint8_t **data);
 
 /*
- * Get the type of elements in a typed array, or TYPE_DATAVIEW if a DataView.
+ * Get the type of elements in a typed array, or TypeMax if a DataView.
  *
  * |obj| must have passed a JS_IsArrayBufferView/JS_Is*Array test, or somehow
  * be known that it would pass such a test: it is an ArrayBufferView or a
  * wrapper of an ArrayBufferView, and the unwrapping will succeed.
  */
-extern JS_FRIEND_API(JSArrayBufferViewType)
+extern JS_FRIEND_API(js::Scalar::Type)
 JS_GetArrayBufferViewType(JSObject *obj);
 
 /*
@@ -2079,16 +2367,13 @@ IdToValue(jsid id)
 {
     if (JSID_IS_STRING(id))
         return JS::StringValue(JSID_TO_STRING(id));
-    if (MOZ_LIKELY(JSID_IS_INT(id)))
+    if (JSID_IS_INT(id))
         return JS::Int32Value(JSID_TO_INT(id));
-    if (MOZ_LIKELY(JSID_IS_OBJECT(id)))
-        return JS::ObjectValue(*JSID_TO_OBJECT(id));
+    if (JSID_IS_SYMBOL(id))
+        return JS::SymbolValue(JSID_TO_SYMBOL(id));
     JS_ASSERT(JSID_IS_VOID(id));
     return JS::UndefinedValue();
 }
-
-extern JS_FRIEND_API(bool)
-IsTypedArrayThisCheck(JS::IsAcceptableThis test);
 
 /*
  * If the embedder has registered a default JSContext callback, returns the
@@ -2229,10 +2514,18 @@ CheckDefineProperty(JSContext *cx, JS::HandleObject obj, JS::HandleId id, JS::Ha
  * Implemented in jsproxy.cpp.
  */
 JS_FRIEND_API(bool)
-SetPropertyIgnoringNamedGetter(JSContext *cx, BaseProxyHandler *handler,
+SetPropertyIgnoringNamedGetter(JSContext *cx, const BaseProxyHandler *handler,
                                JS::HandleObject proxy, JS::HandleObject receiver,
                                JS::HandleId id, JS::MutableHandle<JSPropertyDescriptor> desc,
                                bool descIsOwn, bool strict, JS::MutableHandleValue vp);
+
+JS_FRIEND_API(void)
+ReportErrorWithId(JSContext *cx, const char *msg, JS::HandleId id);
+
+// This function is for one specific use case, please don't use this for anything else!
+extern JS_FRIEND_API(bool)
+ExecuteInGlobalAndReturnScope(JSContext *cx, JS::HandleObject obj, JS::HandleScript script,
+                              JS::MutableHandleObject scope);
 
 } /* namespace js */
 

@@ -16,6 +16,8 @@ namespace mozilla {
 
 class SpdyZlibReporter MOZ_FINAL : public nsIMemoryReporter
 {
+  ~SpdyZlibReporter() {}
+
 public:
   NS_DECL_ISUPPORTS
 
@@ -44,7 +46,8 @@ private:
   MOZ_DEFINE_MALLOC_SIZE_OF_ON_FREE(MallocSizeOfOnFree)
 
   NS_IMETHODIMP
-  CollectReports(nsIHandleReportCallback* aHandleReport, nsISupports* aData);
+  CollectReports(nsIHandleReportCallback* aHandleReport, nsISupports* aData,
+                 bool aAnonymize);
 };
 
 } // namespace mozilla

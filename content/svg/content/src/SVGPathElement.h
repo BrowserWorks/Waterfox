@@ -14,7 +14,7 @@
 #include "DOMSVGPathSeg.h"
 
 nsresult NS_NewSVGPathElement(nsIContent **aResult,
-                              already_AddRefed<nsINodeInfo>&& aNodeInfo);
+                              already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo);
 
 class gfxContext;
 
@@ -34,9 +34,9 @@ friend class nsSVGPathFrame;
 
 protected:
   friend nsresult (::NS_NewSVGPathElement(nsIContent **aResult,
-                                          already_AddRefed<nsINodeInfo>&& aNodeInfo));
+                                          already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo));
   virtual JSObject* WrapNode(JSContext *cx) MOZ_OVERRIDE;
-  SVGPathElement(already_AddRefed<nsINodeInfo>& aNodeInfo);
+  SVGPathElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
 
 public:
   // DOM memory reporter participant
@@ -53,7 +53,7 @@ public:
   virtual bool IsMarkable() MOZ_OVERRIDE;
   virtual void GetMarkPoints(nsTArray<nsSVGMark> *aMarks) MOZ_OVERRIDE;
   virtual void ConstructPath(gfxContext *aCtx) MOZ_OVERRIDE;
-  virtual TemporaryRef<Path> BuildPath() MOZ_OVERRIDE;
+  virtual TemporaryRef<Path> BuildPath(PathBuilder* aBuilder = nullptr) MOZ_OVERRIDE;
 
   /**
    * This returns a path without the extra little line segments that
@@ -64,7 +64,7 @@ public:
     GetPathForLengthOrPositionMeasuring() MOZ_OVERRIDE;
 
   // nsIContent interface
-  virtual nsresult Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
 
   virtual SVGAnimatedPathSegList* GetAnimPathSegList() MOZ_OVERRIDE {
     return &mD;
@@ -88,7 +88,7 @@ public:
 
   // WebIDL
   already_AddRefed<SVGAnimatedNumber> PathLength();
-  float GetTotalLength(ErrorResult& rv);
+  float GetTotalLength();
   already_AddRefed<nsISVGPoint> GetPointAtLength(float distance, ErrorResult& rv);
   uint32_t GetPathSegAtLength(float distance);
   already_AddRefed<DOMSVGPathSegClosePath> CreateSVGPathSegClosePath();

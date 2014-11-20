@@ -45,7 +45,6 @@ public:
 
     // nsJSProtocolHandler methods:
     nsJSProtocolHandler();
-    virtual ~nsJSProtocolHandler();
 
     static nsresult
     Create(nsISupports *aOuter, REFNSIID aIID, void **aResult);
@@ -53,6 +52,7 @@ public:
     nsresult Init();
 
 protected:
+    virtual ~nsJSProtocolHandler();
 
     nsresult EnsureUTF8Spec(const nsAFlatCString &aSpec, const char *aCharset, 
                             nsACString &aUTF8Spec);
@@ -91,6 +91,8 @@ public:
     //NS_IMETHOD QueryInterface( const nsIID& aIID, void** aInstancePtr );
 
 protected:
+    virtual ~nsJSURI() {}
+
     virtual nsresult EqualsInternal(nsIURI* other,
                                     RefHandlingEnum refHandlingMode,
                                     bool* result) MOZ_OVERRIDE;

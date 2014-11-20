@@ -5,7 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 if CONFIG['MOZ_WEBRTC']:
-    DIRS += ['bridge']
+    DIRS += ['bridge', 'gmp-plugin']
 
     LOCAL_INCLUDES += [
         '/media/webrtc/signaling/src/common',
@@ -50,6 +50,7 @@ JS_MODULES_PATH = 'modules/media'
 EXTRA_JS_MODULES += [
     'IdpProxy.jsm',
     'PeerConnectionIdp.jsm',
+    'RTCStatsReport.jsm',
 ]
 
 if CONFIG['MOZ_B2G']:
@@ -65,7 +66,7 @@ FAIL_ON_WARNINGS = True
 LOCAL_INCLUDES += [
     '../base',
     '../camera',
-    '/caps/include',
+    '/caps',
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')

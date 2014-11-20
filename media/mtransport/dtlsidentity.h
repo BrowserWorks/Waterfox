@@ -19,9 +19,10 @@
 namespace mozilla {
 
 class DtlsIdentity {
- public:
+ private:
   ~DtlsIdentity();
 
+ public:
   // Generate an identity with a random name.
   static TemporaryRef<DtlsIdentity> Generate();
 

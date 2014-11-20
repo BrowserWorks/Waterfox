@@ -22,6 +22,9 @@ class nsPresContext;
 class nsMediaQueryResultCacheKey;
 
 namespace mozilla {
+
+class CSSStyleSheet;
+
 namespace css {
 
 class GroupRuleRuleList;
@@ -31,7 +34,7 @@ class GroupRuleRuleList;
 class GroupRule : public Rule
 {
 protected:
-  GroupRule();
+  GroupRule(uint32_t aLineNumber, uint32_t aColumnNumber);
   GroupRule(const GroupRule& aCopy);
   virtual ~GroupRule();
 public:
@@ -41,7 +44,7 @@ public:
 
   // implement part of nsIStyleRule and Rule
   DECL_STYLE_RULE_INHERIT_NO_DOMRULE
-  virtual void SetStyleSheet(nsCSSStyleSheet* aSheet);
+  virtual void SetStyleSheet(CSSStyleSheet* aSheet);
 
   // to help implement nsIStyleRule
 #ifdef DEBUG

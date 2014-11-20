@@ -28,7 +28,6 @@
 
 // Needed for PathAppendW
 #include <shlwapi.h>
-#pragma comment(lib, "shlwapi.lib")
 
 WCHAR* MakeCommandLine(int argc, WCHAR **argv);
 BOOL PathAppendSafe(LPWSTR base, LPCWSTR extra);

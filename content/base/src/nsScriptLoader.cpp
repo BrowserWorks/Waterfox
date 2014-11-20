@@ -69,6 +69,11 @@ using namespace mozilla::dom;
 //////////////////////////////////////////////////////////////
 
 class nsScriptLoadRequest MOZ_FINAL : public nsISupports {
+  ~nsScriptLoadRequest()
+  {
+    js_free(mScriptTextBuf);
+  }
+
 public:
   nsScriptLoadRequest(nsIScriptElement* aElement,
                       uint32_t aVersion,
@@ -83,11 +88,6 @@ public:
       mLineNo(1),
       mCORSMode(aCORSMode)
   {
-  }
-
-  ~nsScriptLoadRequest()
-  {
-    js_free(mScriptTextBuf);
   }
 
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -887,18 +887,15 @@ nsScriptLoader::AttemptAsyncScriptParse(nsScriptLoadRequest* aRequest)
     return NS_ERROR_FAILURE;
   }
 
-  nsCOMPtr<nsIScriptContext> context = globalObject->GetScriptContext();
-  if (!context) {
+  AutoJSAPI jsapi;
+  if (!jsapi.InitWithLegacyErrorReporting(globalObject)) {
     return NS_ERROR_FAILURE;
   }
 
-  AutoJSAPIWithErrorsReportedToWindow jsapi(context);
   JSContext* cx = jsapi.cx();
   JS::Rooted<JSObject*> global(cx, globalObject->GetGlobalJSObject());
-  JSAutoCompartment ac(cx, global);
-
   JS::CompileOptions options(cx);
-  FillCompileOptionsForRequest(aRequest, global, &options);
+  FillCompileOptionsForRequest(jsapi, aRequest, global, &options);
 
   if (!JS::CanCompileOffThread(cx, options, aRequest->mScriptTextLength)) {
     return NS_ERROR_FAILURE;
@@ -1069,7 +1066,8 @@ nsScriptLoader::GetScriptGlobalObject()
 }
 
 void
-nsScriptLoader::FillCompileOptionsForRequest(nsScriptLoadRequest *aRequest,
+nsScriptLoader::FillCompileOptionsForRequest(const AutoJSAPI &jsapi,
+                                             nsScriptLoadRequest *aRequest,
                                              JS::Handle<JSObject *> aScopeChain,
                                              JS::CompileOptions *aOptions)
 {
@@ -1088,15 +1086,9 @@ nsScriptLoader::FillCompileOptionsForRequest(nsScriptLoadRequest *aRequest,
     aOptions->setOriginPrincipals(nsJSPrincipals::get(aRequest->mOriginPrincipal));
   }
 
-  AutoJSContext cx;
+  JSContext* cx = jsapi.cx();
   JS::Rooted<JS::Value> elementVal(cx);
   MOZ_ASSERT(aRequest->mElement);
-  // XXXbz this is super-fragile, because the code that _uses_ the
-  // JS::CompileOptions is nowhere near us, but we have to coordinate
-  // compartments with it... and in particular, it will compile in the
-  // compartment of aScopeChain, so we want to wrap into that compartment as
-  // well.
-  JSAutoCompartment ac(cx, aScopeChain);
   if (NS_SUCCEEDED(nsContentUtils::WrapNative(cx, aRequest->mElement,
                                               &elementVal,
                                               /* aAllowWrapping = */ true))) {
@@ -1168,7 +1160,7 @@ nsScriptLoader::EvaluateScript(nsScriptLoadRequest* aRequest,
     }
 
     JS::CompileOptions options(entryScript.cx());
-    FillCompileOptionsForRequest(aRequest, global, &options);
+    FillCompileOptionsForRequest(entryScript, aRequest, global, &options);
     rv = nsJSUtils::EvaluateString(entryScript.cx(), aSrcBuf, global, options,
                                    aOffThreadToken);
   }
@@ -1410,6 +1402,17 @@ nsScriptLoader::OnStreamComplete(nsIStreamLoader* aLoader,
   nsresult rv = PrepareLoadedRequest(request, aLoader, aStatus, aStringLen,
                                      aString);
   if (NS_FAILED(rv)) {
+    /*
+     * Handle script not loading error because source was a tracking URL.
+     * (Safebrowinsg) We make a note of this script node by including it
+     * in a dedicated array of blocked tracking nodes under its parent
+     * document.
+     */
+    if (rv == NS_ERROR_TRACKING_URI) {
+      nsCOMPtr<nsIContent> cont = do_QueryInterface(request->mElement);
+      mDocument->AddBlockedTrackingNode(cont);
+    }
+
     if (mDeferRequests.RemoveElement(request) ||
         mAsyncRequests.RemoveElement(request) ||
         mNonAsyncExternalScriptInsertedRequests.RemoveElement(request) ||

@@ -19,6 +19,18 @@ add_libdir_to_path()
 import jittests
 from tests import TBPL_FLAGS
 
+# Python 3.3 added shutil.which, but we can't use that yet.
+def which(name):
+    if name.find(os.path.sep) != -1:
+        return os.path.abspath(name)
+
+    for path in os.environ["PATH"].split(os.pathsep):
+        full = os.path.join(path, name)
+        if os.path.exists(full):
+            return os.path.abspath(full)
+
+    return name
+
 def main(argv):
 
     # If no multiprocessing is available, fallback to serial test execution
@@ -187,7 +199,7 @@ def main(argv):
                 new_test.jitflags.extend(variant)
                 job_list.append(new_test)
     elif options.ion:
-        flags = [['--baseline-eager'], ['--ion-eager', '--ion-parallel-compile=off']]
+        flags = [['--baseline-eager'], ['--ion-eager', '--ion-offthread-compile=off']]
         for test in test_list:
             for variant in flags:
                 new_test = test.copy()
@@ -201,18 +213,12 @@ def main(argv):
                 new_test.jitflags.extend(jitflags)
                 job_list.append(new_test)
 
-    prefix = [os.path.abspath(args[0])] + shlex.split(options.shell_args)
+    prefix = [which(args[0])] + shlex.split(options.shell_args)
     prolog = os.path.join(jittests.LIB_DIR, 'prolog.js')
     if options.remote:
         prolog = posixpath.join(options.remote_test_root, 'jit-tests', 'jit-tests', 'lib', 'prolog.js')
 
     prefix += ['-f', prolog]
-
-    # Avoid racing on the cache by having the js shell create a new cache
-    # subdir for each process. The js shell takes care of deleting these
-    # subdirs when the process exits.
-    if options.max_jobs > 1 and jittests.HAVE_MULTIPROCESSING:
-        prefix += ['--js-cache-per-process']
 
     # Clean up any remnants from previous crashes etc
     shutil.rmtree(jittests.JS_CACHE_DIR, ignore_errors=True)

@@ -384,6 +384,10 @@ const nsHTMLElement gHTMLElements[] = {
     /*parent,leaf*/ kSpecial, true
   },
   {
+    /*tag*/         eHTMLTag_picture,
+    /*parent,leaf*/ kSpecial, false
+  },
+  {
     /*tag*/         eHTMLTag_plaintext,
     /*parent,leaf*/ kExtensions, false
   },
@@ -398,6 +402,26 @@ const nsHTMLElement gHTMLElements[] = {
   {
     /*tag*/         eHTMLTag_q,
     /*parent,leaf*/ kSpecial, false
+  },
+  {
+    /*tag*/         eHTMLTag_rb,
+    /*parent,leaf*/ kPhrase, false
+  },
+  {
+    /*tag*/         eHTMLTag_rp,
+    /*parent,leaf*/ kPhrase, false
+  },
+  {
+    /*tag*/         eHTMLTag_rt,
+    /*parent,leaf*/ kPhrase, false
+  },
+  {
+    /*tag*/         eHTMLTag_rtc,
+    /*parent,leaf*/ kPhrase, false
+  },
+  {
+    /*tag*/         eHTMLTag_ruby,
+    /*parent,leaf*/ kPhrase, false
   },
   {
     /*tag*/         eHTMLTag_s,

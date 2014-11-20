@@ -1,4 +1,4 @@
-/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -190,7 +190,6 @@ add_test(function test_local_list() {
 
   let streamUpdater = Cc["@mozilla.org/url-classifier/streamupdater;1"]
     .getService(Ci.nsIUrlClassifierStreamUpdater);
-  streamUpdater.updateUrl = "http://localhost:4444/downloads";
 
   // Load up some update chunks for the safebrowsing server to serve.
   // This chunk contains the hash of blocklisted.com/.
@@ -213,6 +212,7 @@ add_test(function test_local_list() {
   streamUpdater.downloadUpdates(
     "goog-downloadwhite-digest256,goog-badbinurl-shavar",
     "goog-downloadwhite-digest256,goog-badbinurl-shavar;\n",
+    "http://localhost:4444/downloads",
     updateSuccess, handleError, handleError);
 });
 

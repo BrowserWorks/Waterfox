@@ -97,6 +97,7 @@
 #include <cstring>
 
 #include "pkix/pkixtypes.h"
+#include "pkix/pkixnss.h"
 #include "CertVerifier.h"
 #include "CryptoTask.h"
 #include "ExtendedValidation.h"
@@ -105,8 +106,6 @@
 #include "nsICertOverrideService.h"
 #include "nsISiteSecurityService.h"
 #include "nsNSSComponent.h"
-#include "nsNSSCleaner.h"
-#include "nsRecentBadCerts.h"
 #include "nsNSSIOLayer.h"
 #include "nsNSSShutDown.h"
 
@@ -127,7 +126,6 @@
 #include "secerr.h"
 #include "secport.h"
 #include "sslerr.h"
-#include "ocsp.h"
 
 #ifdef PR_LOGGING
 extern PRLogModuleInfo* gPIPNSSLog;
@@ -136,11 +134,6 @@ extern PRLogModuleInfo* gPIPNSSLog;
 namespace mozilla { namespace psm {
 
 namespace {
-
-NS_DEFINE_CID(kNSSComponentCID, NS_NSSCOMPONENT_CID);
-
-NSSCleanupAutoPtrClass(CERTCertificate, CERT_DestroyCertificate)
-NSSCleanupAutoPtrClass_WithParam(PLArenaPool, PORT_FreeArena, FalseParam, false)
 
 // do not use a nsCOMPtr to avoid static initializer/destructor
 nsIThreadPool* gCertVerificationThreadPool = nullptr;
@@ -306,20 +299,20 @@ MapCertErrorToProbeValue(PRErrorCode errorCode)
     case SEC_ERROR_CERT_SIGNATURE_ALGORITHM_DISABLED:  return  8;
     case SSL_ERROR_BAD_CERT_DOMAIN:                    return  9;
     case SEC_ERROR_EXPIRED_CERTIFICATE:                return 10;
+    case mozilla::pkix::MOZILLA_PKIX_ERROR_CA_CERT_USED_AS_END_ENTITY: return 11;
   }
   NS_WARNING("Unknown certificate error code. Does MapCertErrorToProbeValue "
-             "handle everything in PRErrorCodeToOverrideType?");
+             "handle everything in DetermineCertOverrideErrors?");
   return 0;
 }
 
 SECStatus
-MozillaPKIXDetermineCertOverrideErrors(CERTCertificate* cert,
-                                       const char* hostName, PRTime now,
-                                       PRErrorCode defaultErrorCodeToReport,
-                                       /*out*/ uint32_t& collectedErrors,
-                                       /*out*/ PRErrorCode& errorCodeTrust,
-                                       /*out*/ PRErrorCode& errorCodeMismatch,
-                                       /*out*/ PRErrorCode& errorCodeExpired)
+DetermineCertOverrideErrors(CERTCertificate* cert, const char* hostName,
+                            PRTime now, PRErrorCode defaultErrorCodeToReport,
+                            /*out*/ uint32_t& collectedErrors,
+                            /*out*/ PRErrorCode& errorCodeTrust,
+                            /*out*/ PRErrorCode& errorCodeMismatch,
+                            /*out*/ PRErrorCode& errorCodeExpired)
 {
   MOZ_ASSERT(cert);
   MOZ_ASSERT(hostName);
@@ -334,6 +327,7 @@ MozillaPKIXDetermineCertOverrideErrors(CERTCertificate* cert,
   switch (defaultErrorCodeToReport) {
     case SEC_ERROR_CERT_SIGNATURE_ALGORITHM_DISABLED:
     case SEC_ERROR_UNKNOWN_ISSUER:
+    case mozilla::pkix::MOZILLA_PKIX_ERROR_CA_CERT_USED_AS_END_ENTITY:
     {
       collectedErrors = nsICertOverrideService::ERROR_UNTRUSTED;
       errorCodeTrust = defaultErrorCodeToReport;
@@ -507,19 +501,6 @@ CertErrorRunnable::CheckCertOverrides()
     }
   }
 
-  nsCOMPtr<nsIX509CertDB> certdb = do_GetService(NS_X509CERTDB_CONTRACTID);
-  nsCOMPtr<nsIRecentBadCerts> recentBadCertsService;
-  if (certdb) {
-    bool isPrivate = mProviderFlags & nsISocketProvider::NO_PERMANENT_STORAGE;
-    certdb->GetRecentBadCerts(isPrivate, getter_AddRefs(recentBadCertsService));
-  }
-
-  if (recentBadCertsService) {
-    NS_ConvertUTF8toUTF16 hostWithPortStringUTF16(hostWithPortString);
-    recentBadCertsService->AddBadCert(hostWithPortStringUTF16,
-                                      mInfoObject->SSLStatus());
-  }
-
   // pick the error code to report by priority
   PRErrorCode errorCodeToReport = mErrorCodeTrust    ? mErrorCodeTrust
                                 : mErrorCodeMismatch ? mErrorCodeMismatch
@@ -550,129 +531,6 @@ CertErrorRunnable::RunOnTargetThread()
   MOZ_ASSERT(mResult);
 }
 
-// Converts a PRErrorCode into one of
-//   nsICertOverrideService::ERROR_UNTRUSTED,
-//   nsICertOverrideService::ERROR_MISMATCH,
-//   nsICertOverrideService::ERROR_TIME
-// if the given error code is an overridable error.
-// If it is not, then 0 is returned.
-uint32_t
-PRErrorCodeToOverrideType(PRErrorCode errorCode)
-{
-  switch (errorCode)
-  {
-    case SEC_ERROR_UNKNOWN_ISSUER:
-    case SEC_ERROR_UNTRUSTED_ISSUER:
-    case SEC_ERROR_EXPIRED_ISSUER_CERTIFICATE:
-    case SEC_ERROR_UNTRUSTED_CERT:
-    case SEC_ERROR_INADEQUATE_KEY_USAGE:
-    case SEC_ERROR_CERT_SIGNATURE_ALGORITHM_DISABLED:
-      // We group all these errors as "cert not trusted"
-      return nsICertOverrideService::ERROR_UNTRUSTED;
-    case SSL_ERROR_BAD_CERT_DOMAIN:
-      return nsICertOverrideService::ERROR_MISMATCH;
-    case SEC_ERROR_EXPIRED_CERTIFICATE:
-      return nsICertOverrideService::ERROR_TIME;
-    default:
-      return 0;
-  }
-}
-
-SECStatus
-NSSDetermineCertOverrideErrors(CertVerifier& certVerifier,
-                               CERTCertificate* cert,
-                               const SECItem* stapledOCSPResponse,
-                               TransportSecurityInfo* infoObject,
-                               PRTime now,
-                               PRErrorCode defaultErrorCodeToReport,
-                               /*out*/ uint32_t& collectedErrors,
-                               /*out*/ PRErrorCode& errorCodeTrust,
-                               /*out*/ PRErrorCode& errorCodeMismatch,
-                               /*out*/ PRErrorCode& errorCodeExpired)
-{
-  MOZ_ASSERT(cert);
-  MOZ_ASSERT(infoObject);
-  MOZ_ASSERT(defaultErrorCodeToReport != 0);
-  MOZ_ASSERT(collectedErrors == 0);
-  MOZ_ASSERT(errorCodeTrust == 0);
-  MOZ_ASSERT(errorCodeMismatch == 0);
-  MOZ_ASSERT(errorCodeExpired == 0);
-
-  if (defaultErrorCodeToReport == 0) {
-    NS_ERROR("No error code set during certificate validation failure.");
-    PR_SetError(PR_INVALID_STATE_ERROR, 0);
-    return SECFailure;
-  }
-
-  // We only allow overrides for certain errors. Return early if the error
-  // is not one of them. This is to avoid doing revocation fetching in the
-  // case of OCSP stapling and probably for other reasons.
-  if (PRErrorCodeToOverrideType(defaultErrorCodeToReport) == 0) {
-    PR_SetError(defaultErrorCodeToReport, 0);
-    return SECFailure;
-  }
-
-  PLArenaPool* log_arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
-  PLArenaPoolCleanerFalseParam log_arena_cleaner(log_arena);
-  if (!log_arena) {
-    NS_ERROR("PORT_NewArena failed");
-    return SECFailure; // PORT_NewArena set error code
-  }
-
-  CERTVerifyLog* verify_log = PORT_ArenaZNew(log_arena, CERTVerifyLog);
-  if (!verify_log) {
-    NS_ERROR("PORT_ArenaZNew failed");
-    return SECFailure; // PORT_ArenaZNew set error code
-  }
-  CERTVerifyLogContentsCleaner verify_log_cleaner(verify_log);
-  verify_log->arena = log_arena;
-
-  // We ignore the result code of the cert verification (i.e. VerifyCert's rv)
-  // Either it is a failure, which is expected, and we'll process the
-  //                         verify log below.
-  // Or it is a success, then a domain mismatch is the only
-  //                     possible failure.
-  // XXX TODO: convert to VerifySSLServerCert
-  // XXX TODO: get rid of error log
-  certVerifier.VerifyCert(cert, certificateUsageSSLServer,
-                          now, infoObject, infoObject->GetHostNameRaw(),
-                          0, stapledOCSPResponse, nullptr, nullptr, verify_log);
-
-  // Check the name field against the desired hostname.
-  if (CERT_VerifyCertName(cert, infoObject->GetHostNameRaw()) != SECSuccess) {
-    collectedErrors |= nsICertOverrideService::ERROR_MISMATCH;
-    errorCodeMismatch = SSL_ERROR_BAD_CERT_DOMAIN;
-  }
-
-  CERTVerifyLogNode* i_node;
-  for (i_node = verify_log->head; i_node; i_node = i_node->next) {
-    uint32_t overrideType = PRErrorCodeToOverrideType(i_node->error);
-    // If this isn't an overridable error, set the error and return.
-    if (overrideType == 0) {
-      PR_SetError(i_node->error, 0);
-      return SECFailure;
-    }
-    collectedErrors |= overrideType;
-    if (overrideType == nsICertOverrideService::ERROR_UNTRUSTED) {
-      if (errorCodeTrust == 0) {
-        errorCodeTrust = i_node->error;
-      }
-    } else if (overrideType == nsICertOverrideService::ERROR_MISMATCH) {
-      if (errorCodeMismatch == 0) {
-        errorCodeMismatch = i_node->error;
-      }
-    } else if (overrideType == nsICertOverrideService::ERROR_TIME) {
-      if (errorCodeExpired == 0) {
-        errorCodeExpired = i_node->error;
-      }
-    } else {
-      MOZ_CRASH("unexpected return value from PRErrorCodeToOverrideType");
-    }
-  }
-
-  return SECSuccess;
-}
-
 // Returns null with the error code (PR_GetError()) set if it does not create
 // the CertErrorRunnable.
 CertErrorRunnable*
@@ -680,7 +538,6 @@ CreateCertErrorRunnable(CertVerifier& certVerifier,
                         PRErrorCode defaultErrorCodeToReport,
                         TransportSecurityInfo* infoObject,
                         CERTCertificate* cert,
-                        const SECItem* stapledOCSPResponse,
                         const void* fdForLogging,
                         uint32_t providerFlags,
                         PRTime now)
@@ -692,37 +549,10 @@ CreateCertErrorRunnable(CertVerifier& certVerifier,
   PRErrorCode errorCodeTrust = 0;
   PRErrorCode errorCodeMismatch = 0;
   PRErrorCode errorCodeExpired = 0;
-
-  SECStatus rv;
-  switch (certVerifier.mImplementation) {
-    case CertVerifier::classic:
-#ifndef NSS_NO_LIBPKIX
-    case CertVerifier::libpkix:
-#endif
-      rv = NSSDetermineCertOverrideErrors(certVerifier, cert, stapledOCSPResponse,
-                                          infoObject, now,
-                                          defaultErrorCodeToReport,
-                                          collected_errors, errorCodeTrust,
-                                          errorCodeMismatch, errorCodeExpired);
-      break;
-
-    case CertVerifier::mozillapkix:
-      rv = MozillaPKIXDetermineCertOverrideErrors(cert,
-                                                  infoObject->GetHostNameRaw(),
-                                                  now, defaultErrorCodeToReport,
-                                                  collected_errors,
-                                                  errorCodeTrust,
-                                                  errorCodeMismatch,
-                                                  errorCodeExpired);
-      break;
-
-    default:
-      MOZ_CRASH("unexpected CertVerifier implementation");
-      PR_SetError(defaultErrorCodeToReport, 0);
-      return nullptr;
-
-  }
-  if (rv != SECSuccess) {
+  if (DetermineCertOverrideErrors(cert, infoObject->GetHostNameRaw(), now,
+                                  defaultErrorCodeToReport, collected_errors,
+                                  errorCodeTrust, errorCodeMismatch,
+                                  errorCodeExpired) != SECSuccess) {
     return nullptr;
   }
 
@@ -808,7 +638,7 @@ private:
   const RefPtr<SharedCertVerifier> mCertVerifier;
   const void* const mFdForLogging;
   const RefPtr<TransportSecurityInfo> mInfoObject;
-  const mozilla::pkix::ScopedCERTCertificate mCert;
+  const ScopedCERTCertificate mCert;
   const uint32_t mProviderFlags;
   const PRTime mTime;
   const TimeStamp mJobStartTime;
@@ -848,7 +678,6 @@ BlockServerCertChangeForSpdy(nsNSSSocketInfo* infoObject,
   // Get the existing cert. If there isn't one, then there is
   // no cert change to worry about.
   nsCOMPtr<nsIX509Cert> cert;
-  nsCOMPtr<nsIX509Cert2> cert2;
 
   RefPtr<nsSSLStatus> status(infoObject->SSLStatus());
   if (!status) {
@@ -859,10 +688,9 @@ BlockServerCertChangeForSpdy(nsNSSSocketInfo* infoObject,
   }
 
   status->GetServerCert(getter_AddRefs(cert));
-  cert2 = do_QueryInterface(cert);
-  if (!cert2) {
+  if (!cert) {
     NS_NOTREACHED("every nsSSLStatus must have a cert"
-                  "that implements nsIX509Cert2");
+                  "that implements nsIX509Cert");
     PR_SetError(SEC_ERROR_LIBRARY_FAILURE, 0);
     return SECFailure;
   }
@@ -874,9 +702,9 @@ BlockServerCertChangeForSpdy(nsNSSSocketInfo* infoObject,
                "GetNegotiatedNPN() failed during renegotiation");
 
   if (NS_SUCCEEDED(rv) && !StringBeginsWith(negotiatedNPN,
-                                            NS_LITERAL_CSTRING("spdy/")))
+                                            NS_LITERAL_CSTRING("spdy/"))) {
     return SECSuccess;
-
+  }
   // If GetNegotiatedNPN() failed we will assume spdy for safety's safe
   if (NS_FAILED(rv)) {
     PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
@@ -885,11 +713,12 @@ BlockServerCertChangeForSpdy(nsNSSSocketInfo* infoObject,
   }
 
   // Check to see if the cert has actually changed
-  ScopedCERTCertificate c(cert2->GetCert());
+  ScopedCERTCertificate c(cert->GetCert());
   NS_ASSERTION(c, "very bad and hopefully impossible state");
   bool sameCert = CERT_CompareCerts(c, serverCert);
-  if (sameCert)
+  if (sameCert) {
     return SECSuccess;
+  }
 
   // Report an error - changed cert is confirmed
   PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
@@ -908,68 +737,17 @@ AuthCertificate(CertVerifier& certVerifier, TransportSecurityInfo* infoObject,
 
   SECStatus rv;
 
-  // TODO: Remove this after we switch to mozilla::pkix as the
-  // only option
-  if (certVerifier.mImplementation == CertVerifier::classic) {
-    if (stapledOCSPResponse) {
-      CERTCertDBHandle* handle = CERT_GetDefaultCertDB();
-      rv = CERT_CacheOCSPResponseFromSideChannel(handle, cert, PR_Now(),
-                                                 stapledOCSPResponse,
-                                                 infoObject);
-      if (rv != SECSuccess) {
-        // Due to buggy servers that will staple expired OCSP responses
-        // (see for example http://trac.nginx.org/nginx/ticket/425),
-        // don't terminate the connection if the stapled response is expired.
-        // We will fall back to fetching revocation information.
-        PRErrorCode ocspErrorCode = PR_GetError();
-        if (ocspErrorCode != SEC_ERROR_OCSP_OLD_RESPONSE) {
-          // stapled OCSP response present but invalid for some reason
-          Telemetry::Accumulate(Telemetry::SSL_OCSP_STAPLING, 4);
-          return rv;
-        } else {
-          // stapled OCSP response present but expired
-          Telemetry::Accumulate(Telemetry::SSL_OCSP_STAPLING, 3);
-        }
-      } else {
-        // stapled OCSP response present and good
-        Telemetry::Accumulate(Telemetry::SSL_OCSP_STAPLING, 1);
-      }
-    } else {
-      // no stapled OCSP response
-      Telemetry::Accumulate(Telemetry::SSL_OCSP_STAPLING, 2);
-
-      uint32_t reasonsForNotFetching = 0;
-
-      char* ocspURI = CERT_GetOCSPAuthorityInfoAccessLocation(cert);
-      if (!ocspURI) {
-        reasonsForNotFetching |= 1; // invalid/missing OCSP URI
-      } else {
-        if (std::strncmp(ocspURI, "http://", 7)) { // approximation
-          reasonsForNotFetching |= 1; // invalid/missing OCSP URI
-        }
-        PORT_Free(ocspURI);
-      }
-
-      if (!certVerifier.mOCSPDownloadEnabled) {
-        reasonsForNotFetching |= 2;
-      }
-
-      Telemetry::Accumulate(Telemetry::SSL_OCSP_MAY_FETCH,
-                            reasonsForNotFetching);
-    }
-  }
-
   // We want to avoid storing any intermediate cert information when browsing
   // in private, transient contexts.
   bool saveIntermediates =
     !(providerFlags & nsISocketProvider::NO_PERMANENT_STORAGE);
 
-  mozilla::pkix::ScopedCERTCertList certList;
+  ScopedCERTCertList certList;
   SECOidTag evOidPolicy;
   rv = certVerifier.VerifySSLServerCert(cert, stapledOCSPResponse,
                                         time, infoObject,
                                         infoObject->GetHostNameRaw(),
-                                        saveIntermediates, nullptr,
+                                        saveIntermediates, 0, nullptr,
                                         &evOidPolicy);
 
   // We want to remember the CA certs in the temp db, so that the application can find the
@@ -1080,34 +858,11 @@ SSLServerCertVerificationJob::Run()
   if (mInfoObject->isAlreadyShutDown()) {
     error = SEC_ERROR_USER_CANCELLED;
   } else {
-    Telemetry::ID successTelemetry;
-    Telemetry::ID failureTelemetry;
-    switch (mCertVerifier->mImplementation) {
-      case CertVerifier::classic:
-        successTelemetry
-          = Telemetry::SSL_SUCCESFUL_CERT_VALIDATION_TIME_CLASSIC;
-        failureTelemetry
-          = Telemetry::SSL_INITIAL_FAILED_CERT_VALIDATION_TIME_CLASSIC;
-        break;
-      case CertVerifier::mozillapkix:
-        successTelemetry
-          = Telemetry::SSL_SUCCESFUL_CERT_VALIDATION_TIME_MOZILLAPKIX;
-        failureTelemetry
-          = Telemetry::SSL_INITIAL_FAILED_CERT_VALIDATION_TIME_MOZILLAPKIX;
-        break;
-#ifndef NSS_NO_LIBPKIX
-      case CertVerifier::libpkix:
-        successTelemetry
-          = Telemetry::SSL_SUCCESFUL_CERT_VALIDATION_TIME_LIBPKIX;
-        failureTelemetry
-          = Telemetry::SSL_INITIAL_FAILED_CERT_VALIDATION_TIME_LIBPKIX;
-        break;
-#endif
-      default:
-        MOZ_CRASH("Unknown CertVerifier mode");
-    }
+    Telemetry::ID successTelemetry
+      = Telemetry::SSL_SUCCESFUL_CERT_VALIDATION_TIME_MOZILLAPKIX;
+    Telemetry::ID failureTelemetry
+      = Telemetry::SSL_INITIAL_FAILED_CERT_VALIDATION_TIME_MOZILLAPKIX;
 
-    // XXX
     // Reset the error code here so we can detect if AuthCertificate fails to
     // set the error code if/when it fails.
     PR_SetError(0, 0);
@@ -1135,8 +890,8 @@ SSLServerCertVerificationJob::Run()
     if (error != 0) {
       RefPtr<CertErrorRunnable> runnable(
           CreateCertErrorRunnable(*mCertVerifier, error, mInfoObject,
-                                  mCert.get(), mStapledOCSPResponse,
-                                  mFdForLogging, mProviderFlags, mTime));
+                                  mCert.get(), mFdForLogging, mProviderFlags,
+                                  mTime));
       if (!runnable) {
         // CreateCertErrorRunnable set a new error code
         error = PR_GetError();
@@ -1280,7 +1035,6 @@ AuthCertificateHook(void* arg, PRFileDesc* fd, PRBool checkSig, PRBool isServer)
   if (error != 0) {
     RefPtr<CertErrorRunnable> runnable(
         CreateCertErrorRunnable(*certVerifier, error, socketInfo, serverCert,
-                                stapledOCSPResponse,
                                 static_cast<const void*>(fd), providerFlags,
                                 now));
     if (!runnable) {

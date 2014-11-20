@@ -23,6 +23,7 @@
 // <INJECTED SOURCE:END>
 
 
+var Promise = require('gcli/util/promise').Promise;
 var mockCommands = {};
 
 // We use an alias for exports here because this module is used in Firefox
@@ -32,31 +33,11 @@ var mockCommands = {};
  * Registration and de-registration.
  */
 mockCommands.setup = function(requisition) {
-  mockCommands.items.forEach(function(item) {
-    if (item.item === 'command') {
-      requisition.canon.addCommand(item);
-    }
-    else if (item.item === 'type') {
-      requisition.types.addType(item);
-    }
-    else {
-      console.error('Ignoring item ', item);
-    }
-  });
+  requisition.system.addItems(mockCommands.items);
 };
 
 mockCommands.shutdown = function(requisition) {
-  mockCommands.items.forEach(function(item) {
-    if (item.item === 'command') {
-      requisition.canon.removeCommand(item);
-    }
-    else if (item.item === 'type') {
-      requisition.types.removeType(item);
-    }
-    else {
-      console.error('Ignoring item ', item);
-    }
-  });
+  requisition.system.removeItems(mockCommands.items);
 };
 
 function createExec(name) {
@@ -69,6 +50,25 @@ function createExec(name) {
 }
 
 mockCommands.items = [
+  {
+    item: 'converter',
+    from: 'json',
+    to: 'string',
+    exec: function(json, context) {
+      return JSON.stringify(json, null, '  ');
+    }
+  },
+  {
+    item: 'converter',
+    from: 'json',
+    to: 'view',
+    exec: function(json, context) {
+      var html = JSON.stringify(json, null, '&#160;').replace(/\n/g, '<br/>');
+      return {
+        html: '<pre>' + html + '</pre>'
+      };
+    }
+  },
   {
     item: 'type',
     name: 'optionType',
@@ -506,29 +506,28 @@ mockCommands.items = [
       }
     ],
     exec: function(args, context) {
-      var deferred;
       if (args.method === 'reject') {
-        deferred = context.defer();
-        setTimeout(function() {
-          deferred.reject('rejected promise');
-        }, 10);
-        return deferred.promise;
+        return new Promise(function(resolve, reject) {
+          setTimeout(function() {
+            reject('rejected promise');
+          }, 10);
+        });
       }
 
       if (args.method === 'rejecttyped') {
-        deferred = context.defer();
-        setTimeout(function() {
-          deferred.reject(context.typedData('number', 54));
-        }, 10);
-        return deferred.promise;
+        return new Promise(function(resolve, reject) {
+          setTimeout(function() {
+            reject(context.typedData('number', 54));
+          }, 10);
+        });
       }
 
       if (args.method === 'throwinpromise') {
-        deferred = context.defer();
-        setTimeout(function() {
-          deferred.resolve('should be lost');
-        }, 10);
-        return deferred.promise.then(function() {
+        return new Promise(function(resolve, reject) {
+          setTimeout(function() {
+            resolve('should be lost');
+          }, 10);
+        }).then(function() {
           var t = null;
           return t.foo;
         });
@@ -655,23 +654,89 @@ mockCommands.items = [
         type: {
           name: 'selection',
           data: function(context) {
-            var deferred = context.defer();
-
-            var resolve = function() {
-              deferred.resolve([
-                'Shalom', 'Namasté', 'Hallo', 'Dydd-da',
-                'Chào', 'Hej', 'Saluton', 'Sawubona'
-              ]);
-            };
-
-            setTimeout(resolve, 10);
-            return deferred.promise;
+            return new Promise(function(resolve, reject) {
+              setTimeout(function() {
+                resolve([
+                  'Shalom', 'Namasté', 'Hallo', 'Dydd-da',
+                  'Chào', 'Hej', 'Saluton', 'Sawubona'
+                ]);
+              }, 10);
+            });
           }
         }
       }
     ],
     exec: function(args, context) {
       return 'Test completed';
+    }
+  },
+  {
+    item: 'command',
+    name: 'urlc',
+    params: [
+      {
+        name: 'url',
+        type: 'url'
+      }
+    ],
+    returnType: 'json',
+    exec: function(args, context) {
+      return args;
+    }
+  },
+  {
+    item: 'command',
+    name: 'unionc1',
+    params: [
+      {
+        name: 'first',
+        type: {
+          name: 'union',
+          alternatives: [
+            {
+              name: 'selection',
+              lookup: [
+                { name: 'one', value: 1 },
+                { name: 'two', value: 2 },
+              ]
+            },
+            'number',
+            { name: 'string' }
+          ]
+        }
+      }
+    ],
+    returnType: 'json',
+    exec: function(args, context) {
+      return args;
+    }
+  },
+  {
+    item: 'command',
+    name: 'unionc2',
+    params: [
+      {
+        name: 'first',
+        type: {
+          name: 'union',
+          alternatives: [
+            {
+              name: 'selection',
+              lookup: [
+                { name: 'one', value: 1 },
+                { name: 'two', value: 2 },
+              ]
+            },
+            {
+              name: 'url'
+            }
+          ]
+        }
+      }
+    ],
+    returnType: 'json',
+    exec: function(args, context) {
+      return args;
     }
   }
 ];

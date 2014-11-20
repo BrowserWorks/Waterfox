@@ -11,8 +11,10 @@
 #include "DOMSVGPathSegList.h"
 #include "DOMSVGPoint.h"
 #include "gfx2DGlue.h"
+#include "gfxPlatform.h"
 #include "mozilla/dom/SVGPathElementBinding.h"
 #include "mozilla/gfx/2D.h"
+#include "mozilla/RefPtr.h"
 #include "nsCOMPtr.h"
 #include "nsComputedDOMStyle.h"
 #include "nsGkAtoms.h"
@@ -41,7 +43,7 @@ nsSVGElement::NumberInfo SVGPathElement::sNumberInfo =
 //----------------------------------------------------------------------
 // Implementation
 
-SVGPathElement::SVGPathElement(already_AddRefed<nsINodeInfo>& aNodeInfo)
+SVGPathElement::SVGPathElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
   : SVGPathElementBase(aNodeInfo)
 {
 }
@@ -68,16 +70,10 @@ SVGPathElement::PathLength()
 }
 
 float
-SVGPathElement::GetTotalLength(ErrorResult& rv)
+SVGPathElement::GetTotalLength()
 {
   RefPtr<Path> flat = GetPathForLengthOrPositionMeasuring();
-
-  if (!flat) {
-    rv.Throw(NS_ERROR_FAILURE);
-    return 0.f;
-  }
-
-  return flat->ComputeLength();
+  return flat ? flat->ComputeLength() : 0.f;
 }
 
 already_AddRefed<nsISVGPoint>
@@ -353,7 +349,11 @@ SVGPathElement::GetPathLengthScale(PathLengthScaleForType aFor)
     float authorsPathLengthEstimate = mPathLength.GetAnimValue();
     if (authorsPathLengthEstimate > 0) {
       RefPtr<Path> path = GetPathForLengthOrPositionMeasuring();
-
+      if (!path) {
+        // The path is empty or invalid so its length must be zero and
+        // we know that 0 / authorsPathLengthEstimate = 0.
+        return 0.0;
+      }
       if (aFor == eForTextPath) {
         // For textPath, a transform on the referenced path affects the
         // textPath layout, so when calculating the actual path length
@@ -365,17 +365,14 @@ SVGPathElement::GetPathLengthScale(PathLengthScaleForType aFor)
           path = builder->Finish();
         }
       }
-
-      if (path) {
-        return path->ComputeLength() / authorsPathLengthEstimate;
-      }
+      return path->ComputeLength() / authorsPathLengthEstimate;
     }
   }
   return 1.0;
 }
 
 TemporaryRef<Path>
-SVGPathElement::BuildPath()
+SVGPathElement::BuildPath(PathBuilder* aBuilder)
 {
   // The Moz2D PathBuilder that our SVGPathData will be using only cares about
   // the fill rule. However, in order to fulfill the requirements of the SVG
@@ -397,19 +394,28 @@ SVGPathElement::BuildPath()
     // opacity here.
     if (style->mStrokeLinecap == NS_STYLE_STROKE_LINECAP_SQUARE) {
       strokeLineCap = style->mStrokeLinecap;
-      strokeWidth = GetStrokeWidth();
+      strokeWidth = SVGContentUtils::GetStrokeWidth(this, styleContext, nullptr);
     }
   }
 
-  // The fill rule that we pass must be the current
-  // computed value of our CSS 'fill-rule' property if the path that we return
-  // will be used for painting or hit-testing. For all other uses (bounds
-  // calculatons, length measurement, position-at-offset calculations) the fill
-  // rule that we pass doesn't matter. As a result we can just pass the current
-  // computed value regardless of who's calling us, or what they're going to do
-  // with the path that we return.
+  RefPtr<PathBuilder> builder;
+  if (aBuilder) {
+    builder = aBuilder;
+  } else {
+    RefPtr<DrawTarget> drawTarget =
+      gfxPlatform::GetPlatform()->ScreenReferenceDrawTarget();
+    // The fill rule that we pass must be the current computed value of our
+    // CSS 'fill-rule' property if the path that we return will be used for
+    // painting or hit-testing. For all other uses (bounds calculatons, length
+    // measurement, position-at-offset calculations) the fill rule that we pass
+    // doesn't matter. As a result we can just pass the current computed value
+    // regardless of who's calling us, or what they're going to do with the
+    // path that we return.
+    RefPtr<PathBuilder> builder =
+      drawTarget->CreatePathBuilder(GetFillRule());
+  }
 
-  return mD.GetAnimValue().BuildPath(GetFillRule(), strokeLineCap, strokeWidth);
+  return mD.GetAnimValue().BuildPath(builder, strokeLineCap, strokeWidth);
 }
 
 } // namespace dom

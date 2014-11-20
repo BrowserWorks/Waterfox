@@ -1,0 +1,180 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* Panel styles */
+body {
+  font-size: 12px;
+}
+
+.panel {
+  /* XXX the Social API panel behaves weirdly on inner element size changes,
+     adding unwanted scrollbars; quickfix is to hide these for now. */
+  overflow: hidden;
+}
+
+.component-spacer {
+  padding: 5px 10px;
+}
+
+.spacer {
+  margin-bottom: 1em;
+}
+
+.share {
+  background: #fbfbfb;
+}
+
+.share .description .field {
+  padding-bottom: 1em;
+  border-bottom: 1px dotted #ddd;
+}
+
+.share .description select {
+  float: right;
+}
+
+.share .description .preview video {
+  background: #ccc;
+  float: right;
+  width: 180px;
+}
+
+.description-content {
+  margin: .5em 0;
+  font-size: 1em;
+  font-weight: 700;
+  font-family: Open Sans,sans-serif;
+  color: #666;
+}
+
+.share .action {
+  clear: right;
+}
+
+.share .action input[type="text"],
+.share .action input[type="url"] {
+  border: 1px solid #ccc; /* Overriding background style for a text input (see
+                             below) resets its borders to a weird beveled style;
+                             defining a default 1px border solves the issue. */
+  font-size: 1em;
+  width: 100%;
+  padding: 0 10px;
+  margin: 5px 0;
+  border-radius: 2px;
+  outline: 0;
+  height: 24px;
+}
+
+.share .action input.pending {
+  background-image: url(../img/loading-icon.gif);
+  background-repeat: no-repeat;
+  background-position: right;
+}
+
+/* For some reason, buttons have a bigger default font size in FF; we're
+   reducing a bit for graphical consistency here. */
+.share .action button {
+  font-size: .9em;
+  padding-top: 6px;
+}
+
+/* Specific cases */
+
+.panel #messages .alert {
+  margin-bottom: 0;
+}
+
+/* DnD menu */
+
+.dnd-status {
+  border: 1px solid transparent;
+  padding: 2px 4px;
+  font-size: .9em;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.dnd-status:hover {
+  border: 1px solid #DDD;
+  background: #F1F1F1;
+}
+
+.do-not-disturb {
+  position: relative;
+}
+
+.dnd-menu {
+  position: absolute;
+  top: -35px;
+  left: 10px;
+  background: #fdfdfd;
+  box-shadow: 0 1px 3px rgba(0,0,0,.3);
+  list-style: none;
+  padding: 5px;
+  border-radius: 2px;
+}
+
+.dnd-menu-item {
+  text-align: left;
+  margin: .3em 0;
+  padding: .2em .5em;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  font-size: 1em;
+  white-space: nowrap;
+}
+
+.dnd-menu-item:hover {
+  border: 1px solid #ccc;
+  background: #eee;
+}
+
+/* Status badges -- Available/Unavailable */
+
+.status {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin: 0 5px;
+  border-radius: 50%;
+}
+
+.status-available {
+  background: #6cb23e;
+}
+
+.status-dnd {
+  border: 1px solid #888;
+}
+
+/* Terms of Service */
+
+.terms-service {
+  padding: 3px 10px 10px;
+  background: #FFF;
+  text-align: center;
+  opacity: .5;
+  transition: opacity .3s;
+  font-family: 'Lucida Grande', sans-serif;
+  font-size: .9em;
+}
+
+.terms-service a {
+  color: #0095dd;
+}
+
+/* Footer */
+
+.footer {
+  font-size: 1em;
+  border-top: 1px solid #D1D1D1;
+  background: #EAEAEA;
+  color: #7F7F7F;
+  display: flex;
+  align-items: center;
+  margin-top: auto;
+  flex-direction: row;
+}
+

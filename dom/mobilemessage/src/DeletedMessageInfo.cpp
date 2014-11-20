@@ -27,6 +27,10 @@ DeletedMessageInfo::DeletedMessageInfo(int32_t* aMessageIds,
   mData.deletedThreadIds().AppendElements(aThreadIds, aThreadCount);
 }
 
+DeletedMessageInfo::~DeletedMessageInfo()
+{
+}
+
 /* static */ nsresult
 DeletedMessageInfo::Create(int32_t* aMessageIds,
                            uint32_t aMsgCount,

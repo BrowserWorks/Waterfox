@@ -13,6 +13,7 @@
 #include "nsContentUtils.h"
 #include "nsGlobalWindow.h"
 #include "nsPresContext.h"
+#include "ScriptSettings.h"
 
 #include "nsIDocument.h"
 #include "nsIDOMFile.h"
@@ -184,10 +185,12 @@ PostMessageReadTransferStructuredClone(JSContext* aCx,
     scInfo->mPorts.Put(port, nullptr);
 
     JS::Rooted<JSObject*> obj(aCx, port->WrapObject(aCx));
-    if (JS_WrapObject(aCx, &obj)) {
-      MOZ_ASSERT(port->GetOwner() == scInfo->mPort->GetOwner());
-      returnObject.set(obj);
+    if (!obj || !JS_WrapObject(aCx, &obj)) {
+      return false;
     }
+
+    MOZ_ASSERT(port->GetOwner() == scInfo->mPort->GetOwner());
+    returnObject.set(obj);
     return true;
   }
 
@@ -271,14 +274,11 @@ PostMessageRunnable::Run()
 {
   MOZ_ASSERT(mPort);
 
-  // Get the JSContext for the target window
-  nsCOMPtr<nsIScriptGlobalObject> sgo = do_QueryInterface(mPort->GetOwner());
-  NS_ENSURE_STATE(sgo);
-  nsCOMPtr<nsIScriptContext> scriptContext = sgo->GetContext();
-  AutoPushJSContext cx(scriptContext ? scriptContext->GetNativeContext()
-                                     : nsContentUtils::GetSafeJSContext());
-
-  MOZ_ASSERT(cx);
+  AutoJSAPI jsapi;
+  if (NS_WARN_IF(!jsapi.Init(mPort->GetParentObject()))) {
+    return NS_ERROR_UNEXPECTED;
+  }
+  JSContext* cx = jsapi.cx();
 
   // Deserialize the structured clone data
   JS::Rooted<JS::Value> messageData(cx);

@@ -45,6 +45,7 @@ class ErrorResult;
 enum DeviceStorageRequestType {
     DEVICE_STORAGE_REQUEST_READ,
     DEVICE_STORAGE_REQUEST_WRITE,
+    DEVICE_STORAGE_REQUEST_APPEND,
     DEVICE_STORAGE_REQUEST_CREATE,
     DEVICE_STORAGE_REQUEST_DELETE,
     DEVICE_STORAGE_REQUEST_WATCH,
@@ -124,7 +125,7 @@ private:
     // Technically, this doesn't need to be threadsafe, but the implementation
     // of the non-thread safe one causes ASSERTS due to the underlying thread
     // associated with a LazyIdleThread changing from time to time.
-    NS_INLINE_DECL_THREADSAFE_REFCOUNTING(DeviceStorageUsedSpaceCache::CacheEntry)
+    NS_INLINE_DECL_THREADSAFE_REFCOUNTING(CacheEntry)
 
     bool mDirty;
     nsString mStorageName;
@@ -133,6 +134,9 @@ private:
     uint64_t mVideosUsedSize;
     uint64_t mMusicUsedSize;
     uint64_t mTotalUsedSize;
+
+  private:
+    ~CacheEntry() {}
   };
   already_AddRefed<CacheEntry> GetCacheEntry(const nsAString& aStorageName);
 

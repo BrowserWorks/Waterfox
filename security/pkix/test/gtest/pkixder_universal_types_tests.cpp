@@ -28,21 +28,17 @@
 
 #include "pkix/bind.h"
 #include "pkixder.h"
+#include "pkixtestutil.h"
 #include "stdint.h"
 
+using namespace mozilla::pkix;
 using namespace mozilla::pkix::der;
+using namespace mozilla::pkix::test;
 using namespace std;
 
 namespace {
 
-class pkixder_universal_types_tests : public ::testing::Test
-{
-protected:
-  virtual void SetUp()
-  {
-    PR_SetError(0, 0);
-  }
-};
+class pkixder_universal_types_tests : public ::testing::Test { };
 
 TEST_F(pkixder_universal_types_tests, BooleanTrue01)
 {
@@ -57,8 +53,7 @@ TEST_F(pkixder_universal_types_tests, BooleanTrue01)
             input.Init(DER_BOOLEAN_TRUE_01, sizeof DER_BOOLEAN_TRUE_01));
 
   bool value = false;
-  ASSERT_EQ(Failure, Boolean(input, value));
-  ASSERT_EQ(SEC_ERROR_BAD_DER, PR_GetError());
+  ASSERT_EQ(Result::ERROR_BAD_DER, Boolean(input, value));
 }
 
 TEST_F(pkixder_universal_types_tests, BooleanTrue42)
@@ -74,8 +69,7 @@ TEST_F(pkixder_universal_types_tests, BooleanTrue42)
             input.Init(DER_BOOLEAN_TRUE_42, sizeof DER_BOOLEAN_TRUE_42));
 
   bool value = false;
-  ASSERT_EQ(Failure, Boolean(input, value));
-  ASSERT_EQ(SEC_ERROR_BAD_DER, PR_GetError());
+  ASSERT_EQ(Result::ERROR_BAD_DER, Boolean(input, value));
 }
 
 static const uint8_t DER_BOOLEAN_TRUE[] = {
@@ -124,8 +118,7 @@ TEST_F(pkixder_universal_types_tests, BooleanInvalidLength)
                                 sizeof DER_BOOLEAN_INVALID_LENGTH));
 
   bool value = true;
-  ASSERT_EQ(Failure, Boolean(input, value));
-  ASSERT_EQ(SEC_ERROR_BAD_DER, PR_GetError());
+  ASSERT_EQ(Result::ERROR_BAD_DER, Boolean(input, value));
 }
 
 TEST_F(pkixder_universal_types_tests, BooleanInvalidZeroLength)
@@ -140,16 +133,14 @@ TEST_F(pkixder_universal_types_tests, BooleanInvalidZeroLength)
                                 sizeof DER_BOOLEAN_INVALID_ZERO_LENGTH));
 
   bool value = true;
-  ASSERT_EQ(Failure, Boolean(input, value));
-  ASSERT_EQ(SEC_ERROR_BAD_DER, PR_GetError());
+  ASSERT_EQ(Result::ERROR_BAD_DER, Boolean(input, value));
 }
 
 // OptionalBoolean implements decoding of OPTIONAL BOOLEAN DEFAULT FALSE.
 // If the field is present, it must be a valid encoding of a BOOLEAN with
 // value TRUE. If the field is not present, it defaults to FALSE. For
-// compatibility reasons, OptionalBoolean can be told to accept an encoding
-// where the field is present with value FALSE (this is technically not a
-// valid DER encoding).
+// compatibility reasons, OptionalBoolean also accepts encodings where the field
+// is present with value FALSE (this is technically not a valid DER encoding).
 TEST_F(pkixder_universal_types_tests, OptionalBooleanValidEncodings)
 {
   const uint8_t DER_OPTIONAL_BOOLEAN_PRESENT_TRUE[] = {
@@ -162,7 +153,7 @@ TEST_F(pkixder_universal_types_tests, OptionalBooleanValidEncodings)
   ASSERT_EQ(Success, input1.Init(DER_OPTIONAL_BOOLEAN_PRESENT_TRUE,
                                  sizeof DER_OPTIONAL_BOOLEAN_PRESENT_TRUE));
   bool value = false;
-  ASSERT_EQ(Success, OptionalBoolean(input1, false, value)) <<
+  ASSERT_EQ(Success, OptionalBoolean(input1, value)) <<
     "Should accept the only valid encoding of a present OPTIONAL BOOLEAN";
   ASSERT_TRUE(value);
   ASSERT_TRUE(input1.AtEnd());
@@ -177,7 +168,7 @@ TEST_F(pkixder_universal_types_tests, OptionalBooleanValidEncodings)
   Input input2;
   ASSERT_EQ(Success, input2.Init(DER_INTEGER_05, sizeof DER_INTEGER_05));
   value = true;
-  ASSERT_EQ(Success, OptionalBoolean(input2, false, value)) <<
+  ASSERT_EQ(Success, OptionalBoolean(input2, value)) <<
     "Should accept a valid encoding of an omitted OPTIONAL BOOLEAN";
   ASSERT_FALSE(value);
   ASSERT_FALSE(input2.AtEnd());
@@ -185,7 +176,7 @@ TEST_F(pkixder_universal_types_tests, OptionalBooleanValidEncodings)
   Input input3;
   ASSERT_EQ(Success, input3.Init(reinterpret_cast<const uint8_t*>(""), 0));
   value = true;
-  ASSERT_EQ(Success, OptionalBoolean(input3, false, value)) <<
+  ASSERT_EQ(Success, OptionalBoolean(input3, value)) <<
     "Should accept another valid encoding of an omitted OPTIONAL BOOLEAN";
   ASSERT_FALSE(value);
   ASSERT_TRUE(input3.AtEnd());
@@ -202,25 +193,11 @@ TEST_F(pkixder_universal_types_tests, OptionalBooleanInvalidEncodings)
   Input input1;
   ASSERT_EQ(Success, input1.Init(DER_OPTIONAL_BOOLEAN_PRESENT_FALSE,
                                  sizeof DER_OPTIONAL_BOOLEAN_PRESENT_FALSE));
-  bool value;
-  // If the second parameter to OptionalBoolean is false, invalid encodings
-  // that include the field even when it is the DEFAULT FALSE are rejected.
-  bool allowInvalidEncodings = false;
-  ASSERT_EQ(Failure, OptionalBoolean(input1, allowInvalidEncodings, value)) <<
-    "Should reject an invalid encoding of present OPTIONAL BOOLEAN";
-  ASSERT_EQ(SEC_ERROR_BAD_DER, PR_GetError());
-
-  Input input2;
-  ASSERT_EQ(Success, input2.Init(DER_OPTIONAL_BOOLEAN_PRESENT_FALSE,
-                                 sizeof DER_OPTIONAL_BOOLEAN_PRESENT_FALSE));
-  value = true;
-  // If the second parameter to OptionalBoolean is true, invalid encodings
-  // that include the field even when it is the DEFAULT FALSE are accepted.
-  allowInvalidEncodings = true;
-  ASSERT_EQ(Success, OptionalBoolean(input2, allowInvalidEncodings, value)) <<
-    "Should now accept an invalid encoding of present OPTIONAL BOOLEAN";
+  bool value = true;
+  ASSERT_EQ(Success, OptionalBoolean(input1, value)) <<
+    "Should accept an invalid, default-value encoding of OPTIONAL BOOLEAN";
   ASSERT_FALSE(value);
-  ASSERT_TRUE(input2.AtEnd());
+  ASSERT_TRUE(input1.AtEnd());
 
   const uint8_t DER_OPTIONAL_BOOLEAN_PRESENT_42[] = {
     0x01,                       // BOOLEAN
@@ -228,14 +205,11 @@ TEST_F(pkixder_universal_types_tests, OptionalBooleanInvalidEncodings)
     0x42                        // (invalid value for a BOOLEAN)
   };
 
-  Input input3;
-  ASSERT_EQ(Success, input3.Init(DER_OPTIONAL_BOOLEAN_PRESENT_42,
+  Input input2;
+  ASSERT_EQ(Success, input2.Init(DER_OPTIONAL_BOOLEAN_PRESENT_42,
                                  sizeof DER_OPTIONAL_BOOLEAN_PRESENT_42));
-  // Even with the second parameter to OptionalBoolean as true, encodings
-  // of BOOLEAN that are invalid altogether are rejected.
-  ASSERT_EQ(Failure, OptionalBoolean(input3, allowInvalidEncodings, value)) <<
-    "Should reject another invalid encoding of present OPTIONAL BOOLEAN";
-  ASSERT_EQ(SEC_ERROR_BAD_DER, PR_GetError());
+  ASSERT_EQ(Result::ERROR_BAD_DER, OptionalBoolean(input2, value)) <<
+    "Should reject an invalid-valued encoding of OPTIONAL BOOLEAN";
 }
 
 TEST_F(pkixder_universal_types_tests, Enumerated)
@@ -265,7 +239,7 @@ TEST_F(pkixder_universal_types_tests, EnumeratedNotShortestPossibleDER)
   Input input;
   ASSERT_EQ(Success, input.Init(DER_ENUMERATED, sizeof DER_ENUMERATED));
   uint8_t value = 0;
-  ASSERT_EQ(Failure, Enumerated(input, value));
+  ASSERT_EQ(Result::ERROR_BAD_DER, Enumerated(input, value));
 }
 
 TEST_F(pkixder_universal_types_tests, EnumeratedOutOfAcceptedRange)
@@ -285,8 +259,7 @@ TEST_F(pkixder_universal_types_tests, EnumeratedOutOfAcceptedRange)
                                 sizeof DER_ENUMERATED_INVALID_LENGTH));
 
   uint8_t value = 0;
-  ASSERT_EQ(Failure, Enumerated(input, value));
-  ASSERT_EQ(SEC_ERROR_BAD_DER, PR_GetError());
+  ASSERT_EQ(Result::ERROR_BAD_DER, Enumerated(input, value));
 }
 
 TEST_F(pkixder_universal_types_tests, EnumeratedInvalidZeroLength)
@@ -301,64 +274,650 @@ TEST_F(pkixder_universal_types_tests, EnumeratedInvalidZeroLength)
                                 sizeof DER_ENUMERATED_INVALID_ZERO_LENGTH));
 
   uint8_t value = 0;
-  ASSERT_EQ(Failure, Enumerated(input, value));
-  ASSERT_EQ(SEC_ERROR_BAD_DER, PR_GetError());
+  ASSERT_EQ(Result::ERROR_BAD_DER, Enumerated(input, value));
 }
 
-// TODO: Test all acceptable timestamp formats. Find out what formats
-// are being used by looking at large collection of certs.
-TEST_F(pkixder_universal_types_tests, GeneralizedTimeOffset)
+////////////////////////////////////////
+// GeneralizedTime and TimeChoice
+//
+// From RFC 5280 section 4.1.2.5.2
+//
+//   For the purposes of this profile, GeneralizedTime values MUST be
+//   expressed in Greenwich Mean Time (Zulu) and MUST include seconds
+//   (i.e., times are YYYYMMDDHHMMSSZ), even where the number of seconds
+//   is zero.  GeneralizedTime values MUST NOT include fractional seconds.
+//
+// And from from RFC 6960 (OCSP) section 4.2.2.1:
+//
+//   Responses can contain four times -- thisUpdate, nextUpdate,
+//   producedAt, and revocationTime.  The semantics of these fields are
+//   defined in Section 2.4.  The format for GeneralizedTime is as
+//   specified in Section 4.1.2.5.2 of [RFC5280].
+//
+// So while we can could accept other ASN1 (ITU-T X.680) encodings for
+// GeneralizedTime we should not accept them, and breaking reading of these
+// other encodings is actually encouraged.
+
+// e.g. TWO_CHARS(53) => '5', '3'
+#define TWO_CHARS(t) static_cast<uint8_t>('0' + ((t) / 10u)), \
+                     static_cast<uint8_t>('0' + ((t) % 10u))
+
+// Calls TimeChoice on the UTCTime variant of the given generalized time.
+template <uint16_t LENGTH>
+Result
+TimeChoiceForEquivalentUTCTime(const uint8_t (&generalizedTimeDER)[LENGTH],
+                               /*out*/ PRTime& value)
+{
+  static_assert(LENGTH >= 4,
+                "TimeChoiceForEquivalentUTCTime input too small");
+  uint8_t utcTimeDER[LENGTH - 2];
+  utcTimeDER[0] = 0x17; // tag UTCTime
+  utcTimeDER[1] = LENGTH - 1/*tag*/ - 1/*value*/ - 2/*century*/;
+  // Copy the value except for the first two digits of the year
+  for (size_t i = 2; i < LENGTH - 2; ++i) {
+    utcTimeDER[i] = generalizedTimeDER[i + 2];
+  }
+
+  Input input;
+  Result rv = input.Init(utcTimeDER, sizeof utcTimeDER);
+  EXPECT_EQ(Success, rv);
+  if (rv != Success) {
+    return rv;
+  }
+  return TimeChoice(input, value);
+}
+
+template <uint16_t LENGTH>
+void
+ExpectGoodTime(PRTime expectedValue,
+               const uint8_t (&generalizedTimeDER)[LENGTH])
+{
+  // GeneralizedTime
+  {
+    Input input;
+    ASSERT_EQ(Success, input.Init(generalizedTimeDER, LENGTH));
+    PRTime value = 0;
+    ASSERT_EQ(Success, GeneralizedTime(input, value));
+    EXPECT_EQ(expectedValue, value);
+  }
+
+  // TimeChoice: GeneralizedTime
+  {
+    Input input;
+    ASSERT_EQ(Success, input.Init(generalizedTimeDER, LENGTH));
+    PRTime value = 0;
+    ASSERT_EQ(Success, TimeChoice(input, value));
+    EXPECT_EQ(expectedValue, value);
+  }
+
+  // TimeChoice: UTCTime
+  {
+    PRTime value = 0;
+    ASSERT_EQ(Success,
+              TimeChoiceForEquivalentUTCTime(generalizedTimeDER, value));
+    EXPECT_EQ(expectedValue, value);
+  }
+}
+
+template <uint16_t LENGTH>
+void
+ExpectBadTime(const uint8_t (&generalizedTimeDER)[LENGTH])
+{
+  // GeneralizedTime
+  {
+    Input input;
+    ASSERT_EQ(Success, input.Init(generalizedTimeDER, LENGTH));
+    PRTime value;
+    ASSERT_EQ(Result::ERROR_INVALID_TIME, GeneralizedTime(input, value));
+  }
+
+  // TimeChoice: GeneralizedTime
+  {
+    Input input;
+    ASSERT_EQ(Success, input.Init(generalizedTimeDER, LENGTH));
+    PRTime value;
+    ASSERT_EQ(Result::ERROR_INVALID_TIME, TimeChoice(input, value));
+  }
+
+  // TimeChoice: UTCTime
+  {
+    PRTime value;
+    ASSERT_EQ(Result::ERROR_INVALID_TIME,
+              TimeChoiceForEquivalentUTCTime(generalizedTimeDER, value));
+  }
+}
+
+// Control value: a valid time
+TEST_F(pkixder_universal_types_tests, ValidControl)
+{
+  const uint8_t GT_DER[] = {
+    0x18,                           // Generalized Time
+    15,                             // Length = 15
+    '1', '9', '9', '1', '0', '5', '0', '6', '1', '6', '4', '5', '4', '0', 'Z'
+  };
+  ExpectGoodTime(YMDHMS(1991, 5, 6, 16, 45, 40), GT_DER);
+}
+
+TEST_F(pkixder_universal_types_tests, TimeTimeZoneOffset)
 {
   const uint8_t DER_GENERALIZED_TIME_OFFSET[] = {
-    0x18,
-    19,
+    0x18,                           // Generalized Time
+    19,                             // Length = 19
     '1', '9', '9', '1', '0', '5', '0', '6', '1', '6', '4', '5', '4', '0', '-',
     '0', '7', '0', '0'
   };
-
-  Input input;
-  ASSERT_EQ(Success, input.Init(DER_GENERALIZED_TIME_OFFSET,
-                                sizeof DER_GENERALIZED_TIME_OFFSET));
-
-  PRTime value = 0;
-  ASSERT_EQ(Success, GeneralizedTime(input, value));
-  ASSERT_EQ(673573540000000, value);
+  ExpectBadTime(DER_GENERALIZED_TIME_OFFSET);
 }
 
-TEST_F(pkixder_universal_types_tests, GeneralizedTimeGMT)
-{
-  const uint8_t DER_GENERALIZED_TIME_GMT[] = {
-    0x18,
-    15,
-    '1', '9', '9', '1', '0', '5', '0', '6', '1', '6', '4', '5', '4', '0', 'Z'
-  };
-
-  Input input;
-  Result rv1 = input.Init(DER_GENERALIZED_TIME_GMT,
-                          sizeof DER_GENERALIZED_TIME_GMT);
-  ASSERT_EQ(Success, rv1);
-
-  PRTime value = 0;
-  Result rv2 = GeneralizedTime(input, value);
-  ASSERT_EQ(Success, rv2);
-  ASSERT_EQ(673548340000000, value);
-}
-
-TEST_F(pkixder_universal_types_tests, GeneralizedTimeInvalidZeroLength)
+TEST_F(pkixder_universal_types_tests, TimeInvalidZeroLength)
 {
   const uint8_t DER_GENERALIZED_TIME_INVALID_ZERO_LENGTH[] = {
-    0x18,
-    0x00
+    0x18,                           // GeneralizedTime
+    0x00                            // Length = 0
   };
 
-  Input input;
-  ASSERT_EQ(Success,
-            input.Init(DER_GENERALIZED_TIME_INVALID_ZERO_LENGTH,
-                       sizeof DER_GENERALIZED_TIME_INVALID_ZERO_LENGTH));
+  PRTime value;
 
-  PRTime value = 0;
-  ASSERT_EQ(Failure, GeneralizedTime(input, value));
-  ASSERT_EQ(SEC_ERROR_INVALID_TIME, PR_GetError());
+  // GeneralizedTime
+  Input gt;
+  ASSERT_EQ(Success,
+            gt.Init(DER_GENERALIZED_TIME_INVALID_ZERO_LENGTH,
+                    sizeof DER_GENERALIZED_TIME_INVALID_ZERO_LENGTH));
+  ASSERT_EQ(Result::ERROR_INVALID_TIME, GeneralizedTime(gt, value));
+
+  // TimeChoice: GeneralizedTime
+  Input tc_gt;
+  ASSERT_EQ(Success,
+            tc_gt.Init(DER_GENERALIZED_TIME_INVALID_ZERO_LENGTH,
+                       sizeof DER_GENERALIZED_TIME_INVALID_ZERO_LENGTH));
+  ASSERT_EQ(Result::ERROR_INVALID_TIME, TimeChoice(tc_gt, value));
+
+  // TimeChoice: UTCTime
+  const uint8_t DER_UTCTIME_INVALID_ZERO_LENGTH[] = {
+    0x17, // UTCTime
+    0x00  // Length = 0
+  };
+  Input tc_utc;
+  ASSERT_EQ(Success, tc_utc.Init(DER_UTCTIME_INVALID_ZERO_LENGTH,
+                                 sizeof DER_UTCTIME_INVALID_ZERO_LENGTH));
+  ASSERT_EQ(Result::ERROR_INVALID_TIME, TimeChoice(tc_utc, value));
+}
+
+// A non zulu time should fail
+TEST_F(pkixder_universal_types_tests, TimeInvalidLocal)
+{
+  const uint8_t DER_GENERALIZED_TIME_INVALID_LOCAL[] = {
+    0x18,                           // Generalized Time
+    14,                             // Length = 14
+    '1', '9', '9', '1', '0', '5', '0', '6', '1', '6', '4', '5', '4', '0'
+  };
+  ExpectBadTime(DER_GENERALIZED_TIME_INVALID_LOCAL);
+}
+
+// A time missing seconds and zulu should fail
+TEST_F(pkixder_universal_types_tests, TimeInvalidTruncated)
+{
+  const uint8_t DER_GENERALIZED_TIME_INVALID_TRUNCATED[] = {
+    0x18,                           // Generalized Time
+    12,                             // Length = 12
+    '1', '9', '9', '1', '0', '5', '0', '6', '1', '6', '4', '5'
+  };
+  ExpectBadTime(DER_GENERALIZED_TIME_INVALID_TRUNCATED);
+}
+
+TEST_F(pkixder_universal_types_tests, TimeNoSeconds)
+{
+  const uint8_t DER_GENERALIZED_TIME_NO_SECONDS[] = {
+    0x18,                           // Generalized Time
+    13,                             // Length = 13
+    '1', '9', '9', '1', '0', '5', '0', '6', '1', '6', '4', '5', 'Z'
+  };
+  ExpectBadTime(DER_GENERALIZED_TIME_NO_SECONDS);
+}
+
+TEST_F(pkixder_universal_types_tests, TimeInvalidPrefixedYear)
+{
+  const uint8_t DER_GENERALIZED_TIME_INVALID_PREFIXED_YEAR[] = {
+    0x18,                           // Generalized Time
+    16,                             // Length = 16
+    ' ', '1', '9', '9', '1', '0', '1', '0', '1', '0', '1', '0', '1', '0', '1', 'Z'
+  };
+  ExpectBadTime(DER_GENERALIZED_TIME_INVALID_PREFIXED_YEAR);
+}
+
+TEST_F(pkixder_universal_types_tests, TimeTooManyDigits)
+{
+  const uint8_t DER_GENERALIZED_TIME_TOO_MANY_DIGITS[] = {
+    0x18,                           // Generalized Time
+    16,                             // Length = 16
+    '1', '1', '1', '1', '1', '0', '1', '0', '1', '0', '1', '0', '1', '0', '1', 'Z'
+  };
+  ExpectBadTime(DER_GENERALIZED_TIME_TOO_MANY_DIGITS);
+}
+
+// In order to ensure we we don't run into any trouble with conversions to and
+// from time_t we only accept times from 1970 onwards.
+TEST_F(pkixder_universal_types_tests, GeneralizedTimeYearValidRange)
+{
+  // Note that by using the last second of the last day of the year, we're also
+  // effectively testing all the accumulated conversions from Gregorian to to
+  // Julian time, including in particular the effects of leap years.
+
+  for (uint16_t i = 1970; i <= 9999; ++i) {
+    const uint8_t DER[] = {
+      0x18,                           // Generalized Time
+      15,                             // Length = 15
+      TWO_CHARS(i / 100), TWO_CHARS(i % 100), // YYYY
+      '1', '2', '3', '1', // 12-31
+      '2', '3', '5', '9', '5', '9', 'Z' // 23:59:59Z
+    };
+
+    PRTime expectedValue = YMDHMS(i, 12, 31, 23, 59, 59);
+
+    // We have to test GeneralizedTime separately from UTCTime instead of using
+    // ExpectGooDtime because the range of UTCTime is less than the range of
+    // GeneralizedTime.
+
+    // GeneralizedTime
+    {
+      Input input;
+      ASSERT_EQ(Success, input.Init(DER, sizeof(DER)));
+      PRTime value = 0;
+      ASSERT_EQ(Success, GeneralizedTime(input, value));
+      EXPECT_EQ(expectedValue, value);
+    }
+
+    // TimeChoice: GeneralizedTime
+    {
+      Input input;
+      ASSERT_EQ(Success, input.Init(DER, sizeof(DER)));
+      PRTime value = 0;
+      ASSERT_EQ(Success, TimeChoice(input, value));
+      EXPECT_EQ(expectedValue, value);
+    }
+
+    // TimeChoice: UTCTime, which is limited to years less than 2049.
+    if (i <= 2049) {
+      Input input;
+      PRTime value = 0;
+      ASSERT_EQ(Success, TimeChoiceForEquivalentUTCTime(DER, value));
+      EXPECT_EQ(expectedValue, value);
+    }
+  }
+}
+
+// In order to ensure we we don't run into any trouble with conversions to and
+// from time_t we only accept times from 1970 onwards.
+TEST_F(pkixder_universal_types_tests, TimeYearInvalid1969)
+{
+  static const uint8_t DER[] = {
+    0x18,                           // Generalized Time
+    15,                             // Length = 15
+    '1', '9', '6', '9', '1', '2', '3', '1', // !!!1969!!!-12-31
+    '2', '3', '5', '9', '5', '9', 'Z' // 23:59:59Z
+  };
+  ExpectBadTime(DER);
+}
+
+static const uint8_t DAYS_IN_MONTH[] = {
+  0,  // unused
+  31, // January
+  28, // February (leap years tested separately)
+  31, // March
+  30, // April
+  31, // May
+  30, // Jun
+  31, // July
+  31, // August
+  30, // September
+  31, // October
+  30, // November
+  31, // December
+};
+
+TEST_F(pkixder_universal_types_tests, TimeMonthDaysValidRange)
+{
+  for (uint8_t month = 1; month <= 12; ++month) {
+    for (uint8_t day = 1; day <= DAYS_IN_MONTH[month]; ++day) {
+      const uint8_t DER[] = {
+        0x18,                           // Generalized Time
+        15,                             // Length = 15
+        '2', '0', '1', '5', TWO_CHARS(month), TWO_CHARS(day), // (2015-mm-dd)
+        '1', '6', '4', '5', '4', '0', 'Z' // 16:45:40
+      };
+      ExpectGoodTime(YMDHMS(2015, month, day, 16, 45, 40), DER);
+    }
+  }
+}
+
+TEST_F(pkixder_universal_types_tests, TimeMonthInvalid0)
+{
+  static const uint8_t DER[] = {
+    0x18,                           // Generalized Time
+    15,                             // Length = 15
+    '2', '0', '1', '5', '0', '0', '1', '5', // 2015-!!!00!!!-15
+    '1', '6', '4', '5', '4', '0', 'Z' // 16:45:40
+  };
+  ExpectBadTime(DER);
+}
+
+TEST_F(pkixder_universal_types_tests, TimeMonthInvalid13)
+{
+  const uint8_t DER_GENERALIZED_TIME_13TH_MONTH[] = {
+    0x18,                           // Generalized Time
+    15,                             // Length = 15
+    '1', '9', '9', '1', //YYYY (1991)
+    '1', '3', //MM 13th month of the year
+    '0', '6', '1', '6', '4', '5', '4', '0', 'Z'
+  };
+  ExpectBadTime(DER_GENERALIZED_TIME_13TH_MONTH);
+}
+
+TEST_F(pkixder_universal_types_tests, TimeDayInvalid0)
+{
+  static const uint8_t DER[] = {
+    0x18,                           // Generalized Time
+    15,                             // Length = 15
+    '2', '0', '1', '5', '0', '1', '0', '0', // 2015-01-!!!00!!!
+    '1', '6', '4', '5', '4', '0', 'Z' // 16:45:40
+  };
+  ExpectBadTime(DER);
+}
+
+TEST_F(pkixder_universal_types_tests, TimeMonthDayInvalidPastEndOfMonth)
+{
+  for (uint8_t month = 1; month <= 12; ++month) {
+    const uint8_t DER[] = {
+      0x18,                           // Generalized Time
+      15,                             // Length = 15
+      '1', '9', '9', '1', // YYYY 1991
+      TWO_CHARS(month), // MM
+      TWO_CHARS(1 + (month == 2 ? 29 : DAYS_IN_MONTH[month])), // !!!DD!!!
+      '1', '6', '4', '5', '4', '0', 'Z' // 16:45:40
+    };
+    ExpectBadTime(DER);
+  }
+}
+
+TEST_F(pkixder_universal_types_tests, TimeMonthFebLeapYear2016)
+{
+  static const uint8_t DER[] = {
+    0x18,                           // Generalized Time
+    15,                             // Length = 15
+    '2', '0', '1', '6', '0', '2', '2', '9', // 2016-02-29
+    '1', '6', '4', '5', '4', '0', 'Z' // 16:45:40
+  };
+  ExpectGoodTime(YMDHMS(2016, 2, 29, 16, 45, 40), DER);
+}
+
+TEST_F(pkixder_universal_types_tests, TimeMonthFebLeapYear2000)
+{
+  static const uint8_t DER[] = {
+    0x18,                           // Generalized Time
+    15,                             // Length = 15
+    '2', '0', '0', '0', '0', '2', '2', '9', // 2000-02-29
+    '1', '6', '4', '5', '4', '0', 'Z' // 16:45:40
+  };
+  ExpectGoodTime(YMDHMS(2000, 2, 29, 16, 45, 40), DER);
+}
+
+TEST_F(pkixder_universal_types_tests, TimeMonthFebLeapYear2400)
+{
+  static const uint8_t DER[] = {
+    0x18,                           // Generalized Time
+    15,                             // Length = 15
+    '2', '4', '0', '0', '0', '2', '2', '9', // 2400-02-29
+    '1', '6', '4', '5', '4', '0', 'Z' // 16:45:40
+  };
+
+  // We don't use ExpectGoodTime here because UTCTime can't represent 2400.
+
+  PRTime expectedValue = YMDHMS(2400, 2, 29, 16, 45, 40);
+
+  // GeneralizedTime
+  {
+    Input input;
+    ASSERT_EQ(Success, input.Init(DER, sizeof(DER)));
+    PRTime value = 0;
+    ASSERT_EQ(Success, GeneralizedTime(input, value));
+    EXPECT_EQ(expectedValue, value);
+  }
+
+  // TimeChoice: GeneralizedTime
+  {
+    Input input;
+    ASSERT_EQ(Success, input.Init(DER, sizeof(DER)));
+    PRTime value = 0;
+    ASSERT_EQ(Success, TimeChoice(input, value));
+    EXPECT_EQ(expectedValue, value);
+  }
+}
+
+TEST_F(pkixder_universal_types_tests, TimeMonthFebNotLeapYear2014)
+{
+  static const uint8_t DER[] = {
+    0x18,                           // Generalized Time
+    15,                             // Length = 15
+    '2', '0', '1', '4', '0', '2', '2', '9', // 2014-02-29
+    '1', '6', '4', '5', '4', '0', 'Z' // 16:45:40
+  };
+  ExpectBadTime(DER);
+}
+
+TEST_F(pkixder_universal_types_tests, TimeMonthFebNotLeapYear2100)
+{
+  static const uint8_t DER[] = {
+    0x18,                           // Generalized Time
+    15,                             // Length = 15
+    '2', '1', '0', '0', '0', '2', '2', '9', // 2100-02-29
+    '1', '6', '4', '5', '4', '0', 'Z' // 16:45:40
+  };
+
+  // We don't use ExpectBadTime here because UTCTime can't represent 2100.
+
+  // GeneralizedTime
+  {
+    Input input;
+    ASSERT_EQ(Success, input.Init(DER, sizeof(DER)));
+    PRTime value;
+    ASSERT_EQ(Result::ERROR_INVALID_TIME, GeneralizedTime(input, value));
+  }
+
+  // TimeChoice: GeneralizedTime
+  {
+    Input input;
+    ASSERT_EQ(Success, input.Init(DER, sizeof(DER)));
+    PRTime value;
+    ASSERT_EQ(Result::ERROR_INVALID_TIME, TimeChoice(input, value));
+  }
+}
+
+TEST_F(pkixder_universal_types_tests, TimeHoursValidRange)
+{
+  for (uint8_t i = 0; i <= 23; ++i) {
+    const uint8_t DER[] = {
+      0x18,                           // Generalized Time
+      15,                             // Length = 15
+      '2', '0', '1', '2', '0', '6', '3', '0', // YYYYMMDD (2012-06-30)
+      TWO_CHARS(i), '5', '9', '0', '1', 'Z' // HHMMSSZ (!!!!ii!!!!:59:01 Zulu)
+    };
+    ExpectGoodTime(YMDHMS(2012, 6, 30, i, 59, 1), DER);
+  }
+}
+
+TEST_F(pkixder_universal_types_tests, TimeHoursInvalid_24_00_00)
+{
+  static const uint8_t DER[] = {
+    0x18,                           // Generalized Time
+    15,                             // Length = 15
+    '2', '0', '1', '2', '0', '6', '3', '0', // YYYYMMDD (2012-06-30)
+    '2', '4', '0', '0', '0', '0', 'Z' // HHMMSSZ (!!24!!:00:00 Zulu)
+  };
+  ExpectBadTime(DER);
+}
+
+TEST_F(pkixder_universal_types_tests, TimeMinutesValidRange)
+{
+  for (uint8_t i = 0; i <= 59; ++i) {
+    const uint8_t DER[] = {
+      0x18,                           // Generalized Time
+      15,                             // Length = 15
+      '2', '0', '1', '2', '0', '6', '3', '0', // YYYYMMDD (2012-06-30)
+      '2', '3', TWO_CHARS(i), '0', '1', 'Z' // HHMMSSZ (23:!!!!ii!!!!:01 Zulu)
+    };
+    ExpectGoodTime(YMDHMS(2012, 6, 30, 23, i, 1), DER);
+  }
+}
+
+TEST_F(pkixder_universal_types_tests, TimeMinutesInvalid60)
+{
+  const uint8_t DER[] = {
+    0x18,                           // Generalized Time
+    15,                             // Length = 15
+    '2', '0', '1', '2', '0', '6', '3', '0', // YYYYMMDD (2012-06-30)
+    '2', '3', '6', '0', '5', '9', 'Z' // HHMMSSZ (23:!!!60!!!:01 Zulu)
+  };
+  ExpectBadTime(DER);
+}
+
+TEST_F(pkixder_universal_types_tests, TimeSecondsValidRange)
+{
+  for (uint8_t i = 0; i <= 59; ++i) {
+    const uint8_t DER[] = {
+      0x18,                           // Generalized Time
+      15,                             // Length = 15
+      '2', '0', '1', '2', '0', '6', '3', '0', // YYYYMMDD (2012-06-30)
+      '2', '3', '5', '9', TWO_CHARS(i), 'Z' // HHMMSSZ (23:59:!!!!ii!!!! Zulu)
+    };
+    ExpectGoodTime(YMDHMS(2012, 6, 30, 23, 59, i), DER);
+  }
+}
+
+// No Leap Seconds (60)
+TEST_F(pkixder_universal_types_tests, TimeSecondsInvalid60)
+{
+  static const uint8_t DER[] = {
+    0x18,                           // Generalized Time
+    15,                             // Length = 15
+    '2', '0', '1', '2', '0', '6', '3', '0', // YYYYMMDD (2012-06-30)
+    '2', '3', '5', '9', '6', '0', 'Z' // HHMMSSZ (23:59:!!!!60!!!! Zulu)
+  };
+  ExpectBadTime(DER);
+}
+
+// No Leap Seconds (61)
+TEST_F(pkixder_universal_types_tests, TimeSecondsInvalid61)
+{
+  static const uint8_t DER[] = {
+    0x18,                           // Generalized Time
+    15,                             // Length = 15
+    '2', '0', '1', '2', '0', '6', '3', '0', // YYYYMMDD (2012-06-30)
+    '2', '3', '5', '9', '6', '1', 'Z' // HHMMSSZ (23:59:!!!!61!!!! Zulu)
+  };
+  ExpectBadTime(DER);
+}
+
+TEST_F(pkixder_universal_types_tests, TimeInvalidZulu)
+{
+  const uint8_t DER_GENERALIZED_TIME_INVALID_ZULU[] = {
+    0x18,                           // Generalized Time
+    15,                             // Length = 15
+    '2', '0', '1', '2', '0', '6', '3', '0', // YYYYMMDD (2012-06-30)
+    '2', '3', '5', '9', '5', '9', 'z' // HHMMSSZ (23:59:59 !!!z!!!) should be Z
+  };
+  ExpectBadTime(DER_GENERALIZED_TIME_INVALID_ZULU);
+}
+
+TEST_F(pkixder_universal_types_tests, TimeInvalidExtraData)
+{
+  const uint8_t DER_GENERALIZED_TIME_INVALID_EXTRA_DATA[] = {
+    0x18,                           // Generalized Time
+    16,                             // Length = 16
+    '2', '0', '1', '2', '0', '6', '3', '0', // YYYYMMDD (2012-06-30)
+    '2', '3', '5', '9', '5', '9', 'Z', // HHMMSSZ (23:59:59Z)
+    0 // Extra null character
+  };
+  ExpectBadTime(DER_GENERALIZED_TIME_INVALID_EXTRA_DATA);
+}
+
+TEST_F(pkixder_universal_types_tests, TimeInvalidCenturyChar)
+{
+  const uint8_t DER_GENERALIZED_TIME_INVALID_CENTURY_CHAR[] = {
+    0x18,                           // Generalized Time
+    15,                             // Length = 15
+    'X', '9', '9', '1', '1', '2', '0', '6', // YYYYMMDD (X991-12-06)
+    '1', '6', '4', '5', '4', '0', 'Z' // HHMMSSZ (16:45:40Z)
+  };
+
+  // We can't use ExpectBadTime here, because ExpectBadTime requires
+  // consistent results for GeneralizedTime and UTCTime, but the results
+  // for this input are different.
+
+  // GeneralizedTime
+  {
+    Input input;
+    ASSERT_EQ(Success,
+              input.Init(DER_GENERALIZED_TIME_INVALID_CENTURY_CHAR,
+                         sizeof DER_GENERALIZED_TIME_INVALID_CENTURY_CHAR));
+    PRTime value = 0;
+    ASSERT_EQ(Result::ERROR_INVALID_TIME, GeneralizedTime(input, value));
+  }
+
+  // TimeChoice: GeneralizedTime
+  {
+    Input input;
+    ASSERT_EQ(Success,
+              input.Init(DER_GENERALIZED_TIME_INVALID_CENTURY_CHAR,
+                         sizeof DER_GENERALIZED_TIME_INVALID_CENTURY_CHAR));
+    PRTime value = 0;
+    ASSERT_EQ(Result::ERROR_INVALID_TIME, TimeChoice(input, value));
+  }
+
+  // This test is not applicable to TimeChoice: UTCTime
+}
+
+TEST_F(pkixder_universal_types_tests, TimeInvalidYearChar)
+{
+  const uint8_t DER_GENERALIZED_TIME_INVALID_YEAR_CHAR[] = {
+    0x18,                           // Generalized Time
+    15,                             // Length = 15
+    '1', '9', '9', 'I', '0', '1', '0', '6', // YYYYMMDD (199I-12-06)
+    '1', '6', '4', '5', '4', '0', 'Z' // HHMMSSZ (16:45:40Z)
+  };
+  ExpectBadTime(DER_GENERALIZED_TIME_INVALID_YEAR_CHAR);
+}
+
+TEST_F(pkixder_universal_types_tests, GeneralizedTimeInvalidMonthChar)
+{
+  const uint8_t DER_GENERALIZED_TIME_INVALID_MONTH_CHAR[] = {
+    0x18,                           // Generalized Time
+    15,                             // Length = 15
+    '1', '9', '9', '1', '0', 'I', '0', '6', // YYYYMMDD (1991-0I-06)
+    '1', '6', '4', '5', '4', '0', 'Z' // HHMMSSZ (16:45:40Z)
+  };
+  ExpectBadTime(DER_GENERALIZED_TIME_INVALID_MONTH_CHAR);
+}
+
+TEST_F(pkixder_universal_types_tests, TimeInvalidDayChar)
+{
+  const uint8_t DER_GENERALIZED_TIME_INVALID_DAY_CHAR[] = {
+    0x18,                           // Generalized Time
+    15,                             // Length = 15
+    '1', '9', '9', '1', '0', '1', '0', 'S', // YYYYMMDD (1991-01-0S)
+    '1', '6', '4', '5', '4', '0', 'Z' // HHMMSSZ (16:45:40Z)
+  };
+  ExpectBadTime(DER_GENERALIZED_TIME_INVALID_DAY_CHAR);
+}
+
+TEST_F(pkixder_universal_types_tests, TimeInvalidFractionalSeconds)
+{
+  const uint8_t DER_GENERALIZED_TIME_INVALID_FRACTIONAL_SECONDS[] = {
+    0x18,                           // Generalized Time
+    17,                             // Length = 17
+    '1', '9', '9', '1', '0', '1', '0', '1', // YYYYMMDD (1991-01-01)
+    '1', '6', '4', '5', '4', '0', '.', '3', 'Z' // HHMMSS.FFF (16:45:40.3Z)
+  };
+  ExpectBadTime(DER_GENERALIZED_TIME_INVALID_FRACTIONAL_SECONDS);
 }
 
 TEST_F(pkixder_universal_types_tests, Integer_0_127)
@@ -394,8 +953,7 @@ TEST_F(pkixder_universal_types_tests, Integer_Negative1)
   ASSERT_EQ(Success, input.Init(DER, sizeof DER));
 
   uint8_t value;
-  ASSERT_EQ(Failure, Integer(input, value));
-  ASSERT_EQ(SEC_ERROR_BAD_DER, PR_GetError());
+  ASSERT_EQ(Result::ERROR_BAD_DER, Integer(input, value));
 }
 
 TEST_F(pkixder_universal_types_tests, Integer_Negative128)
@@ -413,8 +971,7 @@ TEST_F(pkixder_universal_types_tests, Integer_Negative128)
   ASSERT_EQ(Success, input.Init(DER, sizeof DER));
 
   uint8_t value;
-  ASSERT_EQ(Failure, Integer(input, value));
-  ASSERT_EQ(SEC_ERROR_BAD_DER, PR_GetError());
+  ASSERT_EQ(Result::ERROR_BAD_DER, Integer(input, value));
 }
 
 TEST_F(pkixder_universal_types_tests, Integer_128)
@@ -432,8 +989,7 @@ TEST_F(pkixder_universal_types_tests, Integer_128)
   ASSERT_EQ(Success, input.Init(DER, sizeof DER));
 
   uint8_t value;
-  ASSERT_EQ(Failure, Integer(input, value));
-  ASSERT_EQ(SEC_ERROR_BAD_DER, PR_GetError());
+  ASSERT_EQ(Result::ERROR_BAD_DER, Integer(input, value));
 }
 
 TEST_F(pkixder_universal_types_tests, Integer11223344)
@@ -451,8 +1007,7 @@ TEST_F(pkixder_universal_types_tests, Integer11223344)
   ASSERT_EQ(Success, input.Init(DER, sizeof DER));
 
   uint8_t value;
-  ASSERT_EQ(Failure, Integer(input, value));
-  ASSERT_EQ(SEC_ERROR_BAD_DER, PR_GetError());
+  ASSERT_EQ(Result::ERROR_BAD_DER, Integer(input, value));
 }
 
 TEST_F(pkixder_universal_types_tests, IntegerTruncatedOneByte)
@@ -468,8 +1023,7 @@ TEST_F(pkixder_universal_types_tests, IntegerTruncatedOneByte)
             input.Init(DER_INTEGER_TRUNCATED, sizeof DER_INTEGER_TRUNCATED));
 
   uint8_t value;
-  ASSERT_EQ(Failure, Integer(input, value));
-  ASSERT_EQ(SEC_ERROR_BAD_DER, PR_GetError());
+  ASSERT_EQ(Result::ERROR_BAD_DER, Integer(input, value));
 }
 
 TEST_F(pkixder_universal_types_tests, IntegerTruncatedLarge)
@@ -486,8 +1040,7 @@ TEST_F(pkixder_universal_types_tests, IntegerTruncatedLarge)
             input.Init(DER_INTEGER_TRUNCATED, sizeof DER_INTEGER_TRUNCATED));
 
   uint8_t value;
-  ASSERT_EQ(Failure, Integer(input, value));
-  ASSERT_EQ(SEC_ERROR_BAD_DER, PR_GetError());
+  ASSERT_EQ(Result::ERROR_BAD_DER, Integer(input, value));
 }
 
 TEST_F(pkixder_universal_types_tests, IntegerZeroLength)
@@ -501,8 +1054,7 @@ TEST_F(pkixder_universal_types_tests, IntegerZeroLength)
   ASSERT_EQ(Success, input.Init(DER_INTEGER_ZERO_LENGTH,
                                 sizeof DER_INTEGER_ZERO_LENGTH));
   uint8_t value;
-  ASSERT_EQ(Failure, Integer(input, value));
-  ASSERT_EQ(SEC_ERROR_BAD_DER, PR_GetError());
+  ASSERT_EQ(Result::ERROR_BAD_DER, Integer(input, value));
 }
 
 TEST_F(pkixder_universal_types_tests, IntegerOverlyLong1)
@@ -517,8 +1069,7 @@ TEST_F(pkixder_universal_types_tests, IntegerOverlyLong1)
   ASSERT_EQ(Success, input.Init(DER_INTEGER_OVERLY_LONG1,
                                 sizeof DER_INTEGER_OVERLY_LONG1));
   uint8_t value;
-  ASSERT_EQ(Failure, Integer(input, value));
-  ASSERT_EQ(SEC_ERROR_BAD_DER, PR_GetError());
+  ASSERT_EQ(Result::ERROR_BAD_DER, Integer(input, value));
 }
 
 TEST_F(pkixder_universal_types_tests, IntegerOverlyLong2)
@@ -533,8 +1084,7 @@ TEST_F(pkixder_universal_types_tests, IntegerOverlyLong2)
   ASSERT_EQ(Success, input.Init(DER_INTEGER_OVERLY_LONG2,
                                 sizeof DER_INTEGER_OVERLY_LONG2));
   uint8_t value;
-  ASSERT_EQ(Failure, Integer(input, value));
-  ASSERT_EQ(SEC_ERROR_BAD_DER, PR_GetError());
+  ASSERT_EQ(Result::ERROR_BAD_DER, Integer(input, value));
 }
 
 TEST_F(pkixder_universal_types_tests, OptionalIntegerSupportedDefault)
@@ -557,8 +1107,7 @@ TEST_F(pkixder_universal_types_tests, OptionalIntegerUnsupportedDefault)
   Input input;
   ASSERT_EQ(Success, input.Init(DER_BOOLEAN_TRUE, sizeof DER_BOOLEAN_TRUE));
   long value;
-  ASSERT_EQ(Failure, OptionalInteger(input, 0, value));
-  ASSERT_EQ(SEC_ERROR_INVALID_ARGS, PR_GetError());
+  ASSERT_EQ(Result::FATAL_ERROR_INVALID_ARGS, OptionalInteger(input, 0, value));
 }
 
 TEST_F(pkixder_universal_types_tests, OptionalIntegerSupportedDefaultAtEnd)
@@ -612,7 +1161,7 @@ TEST_F(pkixder_universal_types_tests, NullWithBadLength)
   ASSERT_EQ(Success,
             input.Init(DER_NULL_BAD_LENGTH, sizeof DER_NULL_BAD_LENGTH));
 
-  ASSERT_EQ(Failure, Null(input));
+  ASSERT_EQ(Result::ERROR_BAD_DER, Null(input));
 }
 
 TEST_F(pkixder_universal_types_tests, OID)

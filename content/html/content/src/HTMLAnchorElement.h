@@ -26,12 +26,11 @@ public:
   using Element::GetText;
   using Element::SetText;
 
-  HTMLAnchorElement(already_AddRefed<nsINodeInfo>& aNodeInfo)
+  HTMLAnchorElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
     : nsGenericHTMLElement(aNodeInfo)
     , Link(MOZ_THIS_IN_INITIALIZER_LIST())
   {
   }
-  virtual ~HTMLAnchorElement();
 
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
@@ -78,7 +77,7 @@ public:
                                 const nsAString& aValue,
                                 nsAttrValue& aResult) MOZ_OVERRIDE;
 
-  virtual nsresult Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
 
   virtual EventStates IntrinsicState() const MOZ_OVERRIDE;
 
@@ -87,7 +86,7 @@ public:
   virtual bool HasDeferredDNSPrefetchRequest();
 
   // WebIDL API
-  void GetHref(nsString& aValue)
+  void GetHref(nsAString& aValue, ErrorResult& rv)
   {
     GetHTMLURIAttr(nsGkAtoms::href, aValue);
   }
@@ -146,11 +145,32 @@ public:
 
   // Link::GetOrigin is OK for us
 
+  using Link::GetProtocol;
+  using Link::SetProtocol;
+
   // Link::GetUsername is OK for us
   // Link::SetUsername is OK for us
 
-  // Link::Getpassword is OK for us
-  // Link::Setpassword is OK for us
+  // Link::GetPassword is OK for us
+  // Link::SetPassword is OK for us
+
+  using Link::GetHost;
+  using Link::SetHost;
+
+  using Link::GetHostname;
+  using Link::SetHostname;
+
+  using Link::GetPort;
+  using Link::SetPort;
+
+  using Link::GetPathname;
+  using Link::SetPathname;
+
+  using Link::GetSearch;
+  using Link::SetSearch;
+
+  using Link::GetHash;
+  using Link::SetHash;
 
   // The XPCOM URI decomposition attributes are fine for us
   void GetCoords(nsString& aValue)
@@ -193,12 +213,14 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::shape, aValue, rv);
   }
-  void Stringify(nsAString& aResult)
+  void Stringify(nsAString& aResult, ErrorResult& aError)
   {
-    GetHref(aResult);
+    GetHref(aResult, aError);
   }
 
 protected:
+  virtual ~HTMLAnchorElement();
+
   virtual void GetItemValueText(nsAString& text) MOZ_OVERRIDE;
   virtual void SetItemValueText(const nsAString& text) MOZ_OVERRIDE;
   virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;

@@ -27,7 +27,6 @@ class XULContentSinkImpl : public nsIXMLContentSink,
 {
 public:
     XULContentSinkImpl();
-    virtual ~XULContentSinkImpl();
 
     // nsISupports
     NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -54,6 +53,8 @@ public:
     nsresult Init(nsIDocument* aDocument, nsXULPrototypeDocument* aPrototype);
 
 protected:
+    virtual ~XULContentSinkImpl();
+
     // pseudo-constants
     char16_t* mText;
     int32_t mTextLength;
@@ -66,12 +67,12 @@ protected:
 
     nsresult OpenRoot(const char16_t** aAttributes,
                       const uint32_t aAttrLen,
-                      nsINodeInfo *aNodeInfo);
+                      mozilla::dom::NodeInfo *aNodeInfo);
 
     nsresult OpenTag(const char16_t** aAttributes,
                      const uint32_t aAttrLen,
                      const uint32_t aLineNumber,
-                     nsINodeInfo *aNodeInfo);
+                     mozilla::dom::NodeInfo *aNodeInfo);
 
     // If OpenScript returns NS_OK and after it returns our state is eInScript,
     // that means that we created a prototype script and stuck it on
@@ -93,7 +94,7 @@ protected:
 
     nsresult NormalizeAttributeString(const char16_t *aExpatName,
                                       nsAttrName &aName);
-    nsresult CreateElement(nsINodeInfo *aNodeInfo,
+    nsresult CreateElement(mozilla::dom::NodeInfo *aNodeInfo,
                            nsXULPrototypeElement** aResult);
 
 

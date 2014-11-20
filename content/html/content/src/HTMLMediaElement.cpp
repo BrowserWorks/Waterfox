@@ -6,11 +6,14 @@
 
 #include "mozilla/dom/HTMLMediaElement.h"
 #include "mozilla/dom/HTMLMediaElementBinding.h"
+#include "mozilla/dom/HTMLSourceElement.h"
 #include "mozilla/dom/ElementInlines.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/MathAlgorithms.h"
-#include "mozilla/dom/MediaKeyNeededEvent.h"
 #include "mozilla/AsyncEventDispatcher.h"
+#ifdef MOZ_EME
+#include "mozilla/dom/MediaKeyNeededEvent.h"
+#endif
 
 #include "base/basictypes.h"
 #include "nsIDOMHTMLMediaElement.h"
@@ -36,7 +39,6 @@
 #include "nsContentUtils.h"
 #include "nsIRequest.h"
 
-#include "nsFrameManager.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsIXPConnect.h"
 #include "jsapi.h"
@@ -48,7 +50,6 @@
 #include "nsICategoryManager.h"
 #include "MediaResource.h"
 
-#include "nsIDOMHTMLVideoElement.h"
 #include "nsIContentPolicy.h"
 #include "nsContentPolicyUtils.h"
 #include "nsCrossSiteListenerProxy.h"
@@ -73,11 +74,13 @@
 
 #include "AudioChannelService.h"
 
-#include "nsCSSParser.h"
-#include "nsIMediaList.h"
 #include "mozilla/dom/power/PowerManagerService.h"
 #include "mozilla/dom/WakeLock.h"
 
+#include "mozilla/dom/AudioTrack.h"
+#include "mozilla/dom/AudioTrackList.h"
+#include "mozilla/dom/VideoTrack.h"
+#include "mozilla/dom/VideoTrackList.h"
 #include "mozilla/dom/TextTrack.h"
 
 #include "ImageContainer.h"
@@ -243,6 +246,8 @@ class HTMLMediaElement::MediaLoadListener MOZ_FINAL : public nsIStreamListener,
                                                       public nsIInterfaceRequestor,
                                                       public nsIObserver
 {
+  ~MediaLoadListener() {}
+
   NS_DECL_ISUPPORTS
   NS_DECL_NSIREQUESTOBSERVER
   NS_DECL_NSISTREAMLISTENER
@@ -425,7 +430,11 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(HTMLMediaElement, nsGenericHTM
   }
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mPlayed);
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mTextTrackManager)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mAudioTrackList)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mVideoTrackList)
+#ifdef MOZ_EME
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mMediaKeys)
+#endif
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(HTMLMediaElement, nsGenericHTMLElement)
@@ -446,10 +455,15 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(HTMLMediaElement, nsGenericHTMLE
   }
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mPlayed)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mTextTrackManager)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mAudioTrackList)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mVideoTrackList)
+#ifdef MOZ_EME
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mMediaKeys)
+#endif
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(HTMLMediaElement)
+  NS_INTERFACE_MAP_ENTRY(nsIDOMHTMLMediaElement)
   NS_INTERFACE_MAP_ENTRY(nsIObserver)
   NS_INTERFACE_MAP_ENTRY(nsIAudioChannelAgentCallback)
 NS_INTERFACE_MAP_END_INHERITING(nsGenericHTMLElement)
@@ -478,6 +492,12 @@ NS_IMETHODIMP
 HTMLMediaElement::SetMozAudioChannelType(const nsAString& aValue)
 {
   return SetAttrHelper(nsGkAtoms::mozaudiochannel, aValue);
+}
+
+NS_IMETHODIMP_(bool)
+HTMLMediaElement::IsVideo()
+{
+  return false;
 }
 
 already_AddRefed<DOMMediaStream>
@@ -612,6 +632,13 @@ void HTMLMediaElement::AbortExistingLoads()
   mCurrentLoadID++;
 
   bool fireTimeUpdate = false;
+
+  // When aborting the existing loads, empty the objects in audio track list and
+  // video track list, no events (in particular, no removetrack events) are
+  // fired as part of this. Ending MediaStream sends track ended notifications,
+  // so we empty the track lists prior.
+  AudioTracks()->EmptyTracks();
+  VideoTracks()->EmptyTracks();
 
   if (mDecoder) {
     fireTimeUpdate = mDecoder->GetCurrentTime() != 0.0;
@@ -858,6 +885,24 @@ void HTMLMediaElement::NotifyLoadError()
   }
 }
 
+void HTMLMediaElement::NotifyMediaTrackEnabled(MediaTrack* aTrack)
+{
+  if (!aTrack) {
+    return;
+  }
+
+  // TODO: We are dealing with single audio track and video track for now.
+  if (AudioTrack* track = aTrack->AsAudioTrack()) {
+    if (!track->Enabled()) {
+      SetMutedInternal(mMuted | MUTED_BY_AUDIO_TRACK);
+    } else {
+      SetMutedInternal(mMuted & ~MUTED_BY_AUDIO_TRACK);
+    }
+  } else if (VideoTrack* track = aTrack->AsVideoTrack()) {
+    mDisableVideo = !track->Selected();
+  }
+}
+
 void HTMLMediaElement::LoadFromSourceChildren()
 {
   NS_ASSERTION(mDelayingLoadEvent,
@@ -903,17 +948,13 @@ void HTMLMediaElement::LoadFromSourceChildren()
     //       Key System that the user agent knows it cannot use with type,
     //       then end the synchronous section[...]" (Bug 1016707)
     nsAutoString media;
-    if (child->GetAttr(kNameSpaceID_None, nsGkAtoms::media, media) && !media.IsEmpty()) {
-      nsCSSParser cssParser;
-      nsRefPtr<nsMediaList> mediaList(new nsMediaList());
-      cssParser.ParseMediaList(media, nullptr, 0, mediaList, false);
-      nsIPresShell* presShell = OwnerDoc()->GetShell();
-      if (presShell && !mediaList->Matches(presShell->GetPresContext(), nullptr)) {
-        DispatchAsyncSourceError(child);
-        const char16_t* params[] = { media.get(), src.get() };
-        ReportLoadError("MediaLoadSourceMediaNotMatched", params, ArrayLength(params));
-        continue;
-      }
+    HTMLSourceElement *childSrc = HTMLSourceElement::FromContent(child);
+    MOZ_ASSERT(childSrc, "Expect child to be HTMLSourceElement");
+    if (childSrc && !childSrc->MatchesCurrentMedia()) {
+      DispatchAsyncSourceError(child);
+      const char16_t* params[] = { media.get(), src.get() };
+      ReportLoadError("MediaLoadSourceMediaNotMatched", params, ArrayLength(params));
+      continue;
     }
     LOG(PR_LOG_DEBUG, ("%p Trying load from <source>=%s type=%s media=%s", this,
       NS_ConvertUTF16toUTF8(src).get(), NS_ConvertUTF16toUTF8(type).get(),
@@ -1280,7 +1321,7 @@ HTMLMediaElement::CurrentTime() const
   if (mSrcStream) {
     MediaStream* stream = GetSrcMediaStream();
     if (stream) {
-      return MediaTimeToSeconds(stream->GetCurrentTime());
+      return stream->StreamTimeToSeconds(stream->GetCurrentTime());
     }
   }
 
@@ -1395,13 +1436,13 @@ HTMLMediaElement::Seek(double aTime,
   }
 
   // Clamp the seek target to inside the seekable ranges.
-  dom::TimeRanges seekable;
-  if (NS_FAILED(mDecoder->GetSeekable(&seekable))) {
+  nsRefPtr<dom::TimeRanges> seekable = new dom::TimeRanges();
+  if (NS_FAILED(mDecoder->GetSeekable(seekable))) {
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return;
   }
   uint32_t length = 0;
-  seekable.GetLength(&length);
+  seekable->GetLength(&length);
   if (!length) {
     return;
   }
@@ -1413,7 +1454,7 @@ HTMLMediaElement::Seek(double aTime,
   // http://www.whatwg.org/specs/web-apps/current-work/multipage/the-video-element.html#seeking
   int32_t range = 0;
   bool isInRange = false;
-  if (NS_FAILED(IsInRanges(seekable, aTime, isInRange, range))) {
+  if (NS_FAILED(IsInRanges(*seekable, aTime, isInRange, range))) {
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return;
   }
@@ -1423,11 +1464,11 @@ HTMLMediaElement::Seek(double aTime,
       // for |range| is -1.
       if (uint32_t(range + 1) < length) {
         double leftBound, rightBound;
-        if (NS_FAILED(seekable.End(range, &leftBound))) {
+        if (NS_FAILED(seekable->End(range, &leftBound))) {
           aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
           return;
         }
-        if (NS_FAILED(seekable.Start(range + 1, &rightBound))) {
+        if (NS_FAILED(seekable->Start(range + 1, &rightBound))) {
           aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
           return;
         }
@@ -1442,7 +1483,7 @@ HTMLMediaElement::Seek(double aTime,
       } else {
         // Seek target is after the end last range in seekable data.
         // Clamp the seek target to the end of the last seekable range.
-        if (NS_FAILED(seekable.End(length - 1, &aTime))) {
+        if (NS_FAILED(seekable->End(length - 1, &aTime))) {
           aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
           return;
         }
@@ -1450,7 +1491,7 @@ HTMLMediaElement::Seek(double aTime,
     } else {
       // aTime is before the first range in |seekable|, the closest point we can
       // seek to is the start of the first range.
-      seekable.Start(0, &aTime);
+      seekable->Start(0, &aTime);
     }
   }
 
@@ -1791,8 +1832,7 @@ HTMLMediaElement::CaptureStreamInternal(bool aFinishWhenEnded)
   // holistically.
   uint8_t hints = 0;
   if (Preferences::GetBool("media.capturestream_hints.enabled")) {
-    nsCOMPtr<nsIDOMHTMLVideoElement> video = do_QueryObject(this);
-    if (video && GetVideoFrameContainer()) {
+    if (IsVideo() && GetVideoFrameContainer()) {
       hints = DOMMediaStream::HINT_CONTENTS_VIDEO | DOMMediaStream::HINT_CONTENTS_AUDIO;
     } else {
       hints = DOMMediaStream::HINT_CONTENTS_AUDIO;
@@ -1967,7 +2007,7 @@ HTMLMediaElement::LookupMediaElementURITable(nsIURI* aURI)
   return nullptr;
 }
 
-HTMLMediaElement::HTMLMediaElement(already_AddRefed<nsINodeInfo>& aNodeInfo)
+HTMLMediaElement::HTMLMediaElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
   : nsGenericHTMLElement(aNodeInfo),
     mSrcStreamListener(nullptr),
     mCurrentLoadID(0),
@@ -2016,6 +2056,7 @@ HTMLMediaElement::HTMLMediaElement(already_AddRefed<nsINodeInfo>& aNodeInfo)
     mDownloadSuspendedByCache(false),
     mAudioChannelFaded(false),
     mPlayingThroughTheAudioChannel(false),
+    mDisableVideo(false),
     mWaitingFor(MediaWaitingFor::None)
 {
 #ifdef PR_LOGGING
@@ -2031,7 +2072,7 @@ HTMLMediaElement::HTMLMediaElement(already_AddRefed<nsINodeInfo>& aNodeInfo)
 
   mPaused.SetOuter(this);
 
-  RegisterFreezableElement();
+  RegisterActivityObserver();
   NotifyOwnerDocumentActivityChanged();
 }
 
@@ -2043,7 +2084,7 @@ HTMLMediaElement::~HTMLMediaElement()
   if (mVideoFrameContainer) {
     mVideoFrameContainer->ForgetElement();
   }
-  UnregisterFreezableElement();
+  UnregisterActivityObserver();
   if (mDecoder) {
     ShutdownDecoder();
   }
@@ -2528,7 +2569,6 @@ nsresult HTMLMediaElement::InitializeDecoderAsClone(MediaDecoder* aOriginal)
   double duration = aOriginal->GetDuration();
   if (duration >= 0) {
     decoder->SetDuration(duration);
-    decoder->SetTransportSeekable(aOriginal->IsTransportSeekable());
     decoder->SetMediaSeekable(aOriginal->IsMediaSeekable());
   }
 
@@ -2795,6 +2835,11 @@ void HTMLMediaElement::SetupSrcMediaStreamPlayback(DOMMediaStream* aStream)
   if (container) {
     GetSrcMediaStream()->AddVideoOutput(container);
   }
+
+  // Note: we must call DisconnectTrackListListeners(...)  before dropping
+  // mSrcStream
+  mSrcStream->ConstructMediaTracks(AudioTracks(), VideoTracks());
+
   ChangeReadyState(nsIDOMHTMLMediaElement::HAVE_METADATA);
   DispatchAsyncEvent(NS_LITERAL_STRING("durationchange"));
   DispatchAsyncEvent(NS_LITERAL_STRING("loadedmetadata"));
@@ -2811,6 +2856,8 @@ void HTMLMediaElement::EndSrcMediaStreamPlayback()
   if (stream) {
     stream->RemoveListener(mSrcStreamListener);
   }
+  mSrcStream->DisconnectTrackListListeners(AudioTracks(), VideoTracks());
+
   // Kill its reference to this element
   mSrcStreamListener->Forget();
   mSrcStreamListener = nullptr;
@@ -2847,13 +2894,10 @@ void HTMLMediaElement::ProcessMediaFragmentURI()
   }
 }
 
-void HTMLMediaElement::MetadataLoaded(int aChannels,
-                                      int aRate,
-                                      bool aHasAudio,
-                                      bool aHasVideo,
+void HTMLMediaElement::MetadataLoaded(const MediaInfo* aInfo,
                                       const MetadataTags* aTags)
 {
-  mHasAudio = aHasAudio;
+  mHasAudio = aInfo->HasAudio();
   mTags = aTags;
   ChangeReadyState(nsIDOMHTMLMediaElement::HAVE_METADATA);
   DispatchAsyncEvent(NS_LITERAL_STRING("durationchange"));
@@ -2866,7 +2910,7 @@ void HTMLMediaElement::MetadataLoaded(int aChannels,
   // If this element had a video track, but consists only of an audio track now,
   // delete the VideoFrameContainer. This happens when the src is changed to an
   // audio only file.
-  if (!aHasVideo && mVideoFrameContainer) {
+  if (!aInfo->HasVideo() && mVideoFrameContainer) {
     // call ForgetElement() such that callbacks from |mVideoFrameContainer|
     // won't reach us anymore.
     mVideoFrameContainer->ForgetElement();
@@ -3249,9 +3293,9 @@ VideoFrameContainer* HTMLMediaElement::GetVideoFrameContainer()
     return mVideoFrameContainer;
 
   // Only video frames need an image container.
-  nsCOMPtr<nsIDOMHTMLVideoElement> video = do_QueryObject(this);
-  if (!video)
+  if (!IsVideo()) {
     return nullptr;
+  }
 
   mVideoFrameContainer =
     new VideoFrameContainer(this, LayerManager::CreateAsynchronousImageContainer());
@@ -3404,6 +3448,7 @@ void HTMLMediaElement::NotifyOwnerDocumentActivityChanged()
   // CanPlayChanged callback.
   if (UseAudioChannelService() && mPlayingThroughTheAudioChannel &&
       mAudioChannelAgent) {
+    AutoNoJSAPI nojsapi;
     mAudioChannelAgent->SetVisibilityState(!ownerDoc->Hidden());
   }
   bool suspendEvents = !ownerDoc->IsActive() || !ownerDoc->IsVisible();
@@ -3858,9 +3903,8 @@ void HTMLMediaElement::UpdateAudioChannelPlayingState()
       if (!mAudioChannelAgent) {
         return;
       }
-      nsCOMPtr<nsIDOMHTMLVideoElement> video = do_QueryObject(this);
       // Use a weak ref so the audio channel agent can't leak |this|.
-      if (AudioChannel::Normal == mAudioChannel && video) {
+      if (AudioChannel::Normal == mAudioChannel && IsVideo()) {
         mAudioChannelAgent->InitWithVideo(OwnerDoc()->GetWindow(),
                                           static_cast<int32_t>(mAudioChannel),
                                           this, true);
@@ -3910,6 +3954,7 @@ NS_IMETHODIMP HTMLMediaElement::CanPlayChanged(int32_t canPlay)
   return NS_OK;
 }
 
+#ifdef MOZ_EME
 MediaKeys*
 HTMLMediaElement::GetMediaKeys() const
 {
@@ -3927,7 +3972,10 @@ HTMLMediaElement::SetMediaKeys(mozilla::dom::MediaKeys* aMediaKeys,
     return nullptr;
   }
   // TODO: Need to shutdown existing MediaKeys instance? bug 1016709.
-  nsRefPtr<Promise> promise = new Promise(global);
+  nsRefPtr<Promise> promise = Promise::Create(global, aRv);
+  if (aRv.Failed()) {
+    return nullptr;
+  }
   if (mMediaKeys != aMediaKeys) {
     mMediaKeys = aMediaKeys;
   }
@@ -3975,11 +4023,32 @@ HTMLMediaElement::IsEventAttributeName(nsIAtom* aName)
   return aName == nsGkAtoms::onneedkey ||
          nsGenericHTMLElement::IsEventAttributeName(aName);
 }
+#endif // MOZ_EME
 
 NS_IMETHODIMP HTMLMediaElement::WindowVolumeChanged()
 {
   SetVolumeInternal();
   return NS_OK;
+}
+
+AudioTrackList*
+HTMLMediaElement::AudioTracks()
+{
+  if (!mAudioTrackList) {
+    nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(OwnerDoc()->GetParentObject());
+    mAudioTrackList = new AudioTrackList(window, this);
+  }
+  return mAudioTrackList;
+}
+
+VideoTrackList*
+HTMLMediaElement::VideoTracks()
+{
+  if (!mVideoTrackList) {
+    nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(OwnerDoc()->GetParentObject());
+    mVideoTrackList = new VideoTrackList(window, this);
+  }
+  return mVideoTrackList;
 }
 
 /* readonly attribute TextTrackList textTracks; */

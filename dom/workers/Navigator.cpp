@@ -15,6 +15,8 @@
 #include "nsProxyRelease.h"
 #include "RuntimeService.h"
 
+#include "nsIDocument.h"
+
 #include "WorkerPrivate.h"
 #include "WorkerRunnable.h"
 #include "WorkerScope.h"
@@ -36,9 +38,7 @@ WorkerNavigator::Create(bool aOnLine)
     rts->GetNavigatorProperties();
 
   nsRefPtr<WorkerNavigator> navigator =
-    new WorkerNavigator(properties.mAppName, properties.mAppVersion,
-                        properties.mPlatform, properties.mUserAgent,
-                        aOnLine);
+    new WorkerNavigator(properties, aOnLine);
 
   return navigator.forget();
 }
@@ -261,13 +261,113 @@ WorkerNavigator::GetDataStores(JSContext* aCx,
   MOZ_ASSERT(workerPrivate);
   workerPrivate->AssertIsOnWorkerThread();
 
-  nsRefPtr<Promise> promise = new Promise(workerPrivate->GlobalScope());
+  nsRefPtr<Promise> promise = Promise::Create(workerPrivate->GlobalScope(), aRv);
+  if (aRv.Failed()) {
+    return nullptr;
+  }
 
   nsRefPtr<NavigatorGetDataStoresRunnable> runnable =
     new NavigatorGetDataStoresRunnable(workerPrivate, promise, aName, aRv);
   runnable->Dispatch(aCx);
 
   return promise.forget();
+}
+
+void
+WorkerNavigator::GetAppName(nsString& aAppName) const
+{
+  WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
+  MOZ_ASSERT(workerPrivate);
+
+  if (!mProperties.mAppNameOverridden.IsEmpty() &&
+      !workerPrivate->UsesSystemPrincipal()) {
+    aAppName = mProperties.mAppNameOverridden;
+  } else {
+    aAppName = mProperties.mAppName;
+  }
+}
+
+void
+WorkerNavigator::GetAppVersion(nsString& aAppVersion) const
+{
+  WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
+  MOZ_ASSERT(workerPrivate);
+
+  if (!mProperties.mAppVersionOverridden.IsEmpty() &&
+      !workerPrivate->UsesSystemPrincipal()) {
+    aAppVersion = mProperties.mAppVersionOverridden;
+  } else {
+    aAppVersion = mProperties.mAppVersion;
+  }
+}
+
+void
+WorkerNavigator::GetPlatform(nsString& aPlatform) const
+{
+  WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
+  MOZ_ASSERT(workerPrivate);
+
+  if (!mProperties.mPlatformOverridden.IsEmpty() &&
+      !workerPrivate->UsesSystemPrincipal()) {
+    aPlatform = mProperties.mPlatformOverridden;
+  } else {
+    aPlatform = mProperties.mPlatform;
+  }
+}
+
+namespace {
+
+class GetUserAgentRunnable MOZ_FINAL : public WorkerMainThreadRunnable
+{
+  nsString& mUA;
+
+public:
+  GetUserAgentRunnable(WorkerPrivate* aWorkerPrivate, nsString& aUA)
+    : WorkerMainThreadRunnable(aWorkerPrivate)
+    , mUA(aUA)
+  {
+    MOZ_ASSERT(aWorkerPrivate);
+    aWorkerPrivate->AssertIsOnWorkerThread();
+  }
+
+  virtual bool MainThreadRun() MOZ_OVERRIDE
+  {
+    AssertIsOnMainThread();
+
+    nsCOMPtr<nsPIDOMWindow> window = mWorkerPrivate->GetWindow();
+    nsCOMPtr<nsIURI> uri;
+    if (window && window->GetDocShell()) {
+      nsIDocument* doc = window->GetExtantDoc();
+      if (doc) {
+        doc->NodePrincipal()->GetURI(getter_AddRefs(uri));
+      }
+    }
+
+    bool isCallerChrome = mWorkerPrivate->UsesSystemPrincipal();
+    nsresult rv = dom::Navigator::GetUserAgent(window, uri,
+                                               isCallerChrome, mUA);
+    if (NS_FAILED(rv)) {
+      NS_WARNING("Failed to retrieve user-agent from the worker thread.");
+    }
+
+    return true;
+  }
+};
+
+} // anonymous namespace
+
+void
+WorkerNavigator::GetUserAgent(nsString& aUserAgent) const
+{
+  WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
+  MOZ_ASSERT(workerPrivate);
+
+  nsRefPtr<GetUserAgentRunnable> runnable =
+    new GetUserAgentRunnable(workerPrivate, aUserAgent);
+
+  if (!runnable->Dispatch(workerPrivate->GetJSContext())) {
+    JS_ReportPendingException(workerPrivate->GetJSContext());
+  }
 }
 
 END_WORKERS_NAMESPACE

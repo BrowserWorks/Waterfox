@@ -75,6 +75,12 @@ class SyntaxParseHandler
         return NodeString;
     }
 
+#ifdef JS_HAS_TEMPLATE_STRINGS
+    Node newTemplateStringLiteral(JSAtom *atom, const TokenPos &pos) {
+        return NodeGeneric;
+    }
+#endif
+
     Node newThisLiteral(const TokenPos &pos) { return NodeGeneric; }
     Node newNullLiteral(const TokenPos &pos) { return NodeGeneric; }
 
@@ -117,8 +123,7 @@ class SyntaxParseHandler
 
     Node newObjectLiteral(uint32_t begin) { return NodeGeneric; }
     bool addPrototypeMutation(Node literal, uint32_t begin, Node expr) { return true; }
-    bool addPropertyDefinition(Node literal, Node name, Node expr) { return true; }
-    bool addShorthandPropertyDefinition(Node literal, Node name) { return true; }
+    bool addPropertyDefinition(Node literal, Node name, Node expr, bool isShorthand = false) { return true; }
     bool addAccessorPropertyDefinition(Node literal, Node name, Node fn, JSOp op) { return true; }
 
     // Statements

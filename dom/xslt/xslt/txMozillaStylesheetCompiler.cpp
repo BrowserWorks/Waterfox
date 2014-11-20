@@ -12,7 +12,6 @@
 #include "nsIChannelEventSink.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsILoadGroup.h"
-#include "nsINodeInfo.h"
 #include "nsIParser.h"
 #include "nsCharsetSource.h"
 #include "nsIRequestObserver.h"
@@ -94,6 +93,8 @@ private:
     bool mCheckedForXML;
 
 protected:
+    ~txStylesheetSink() {}
+
     // This exists solely to suppress a warning from nsDerivedSafe
     txStylesheetSink();
 };
@@ -559,7 +560,7 @@ handleNode(nsINode* aNode, txStylesheetCompiler* aCompiler)
             }
         }
 
-        nsINodeInfo *ni = element->NodeInfo();
+        mozilla::dom::NodeInfo *ni = element->NodeInfo();
 
         rv = aCompiler->startElement(ni->NamespaceID(),
                                      ni->NameAtom(),

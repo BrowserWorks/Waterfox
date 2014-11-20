@@ -1,4 +1,4 @@
-/* -*- Mode: JavaScript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim:set ts=2 sw=2 sts=2 et: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -622,16 +622,17 @@ function do_throw(error, stack) {
 }
 
 function _format_stack(stack) {
+  let normalized;
   if (stack instanceof Components.interfaces.nsIStackFrame) {
-    let stack_msg = "";
-    let frame = stack;
-    while (frame != null) {
-      stack_msg += frame + "\n";
-      frame = frame.caller;
+    let frames = [];
+    for (let frame = stack; frame; frame = frame.caller) {
+      frames.push(frame.filename + ":" + frame.name + ":" + frame.lineNumber);
     }
-    return stack_msg;
+    normalized = frames.join("\n");
+  } else {
+    normalized = "" + stack;
   }
-  return "" + stack;
+  return _Task.Debugging.generateReadableStack(normalized, "    ");
 }
 
 function do_throw_todo(text, stack) {
@@ -722,6 +723,9 @@ function todo_check_neq(left, right, stack) {
 }
 
 function do_report_result(passed, text, stack, todo) {
+  while (stack.filename.contains("head.js") && stack.caller) {
+    stack = stack.caller;
+  }
   if (passed) {
     if (todo) {
       do_throw_todo(text, stack);
@@ -1231,9 +1235,6 @@ function add_test(func) {
   return func;
 }
 
-// We lazy import Task.jsm so we don't incur a run-time penalty for all tests.
-let _Task;
-
 /**
  * Add a test function which is a Task function.
  *
@@ -1272,13 +1273,11 @@ let _Task;
  * });
  */
 function add_task(func) {
-  if (!_Task) {
-    let ns = {};
-    _Task = Components.utils.import("resource://gre/modules/Task.jsm", ns).Task;
-  }
-
   _gTests.push([true, func]);
 }
+let _Task = Components.utils.import("resource://gre/modules/Task.jsm", {}).Task;
+_Task.Debugging.maintainStack = true;
+
 
 /**
  * Runs the next test function from the list of async tests.
@@ -1341,5 +1340,15 @@ try {
       .getService(Components.interfaces.nsIPrefBranch);
 
     prefs.setBoolPref("geo.provider.testing", true);
+  }
+} catch (e) { }
+
+// We need to avoid hitting the network with certain components.
+try {
+  if (runningInParent) {
+    let prefs = Components.classes["@mozilla.org/preferences-service;1"]
+      .getService(Components.interfaces.nsIPrefBranch);
+
+    prefs.setCharPref("media.gmp-manager.url.override", "http://%(server)s/dummy-gmp-manager.xml");
   }
 } catch (e) { }

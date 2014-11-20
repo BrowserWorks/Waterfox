@@ -53,10 +53,12 @@
 #include "ipc/Nuwa.h"
 #endif
 
-using namespace mozilla;
-using namespace mozilla::gfx;
-using namespace mozilla::image;
-using namespace mozilla::layers;
+namespace mozilla {
+
+using namespace gfx;
+using namespace layers;
+
+namespace image {
 
 // a mask for flags that will affect the decoding
 #define DECODE_FLAGS_MASK (imgIContainer::FLAG_DECODE_NO_PREMULTIPLY_ALPHA | imgIContainer::FLAG_DECODE_NO_COLORSPACE_CONVERSION)
@@ -350,9 +352,9 @@ public:
     ScaleRequest* request = mScaleRequest;
 
     if (!request->stopped) {
-      request->done = mozilla::gfx::Scale(request->srcData, request->srcRect.width, request->srcRect.height, request->srcStride,
-                                          request->dstData, request->dstSize.width, request->dstSize.height, request->dstStride,
-                                          request->srcFormat);
+      request->done = gfx::Scale(request->srcData, request->srcRect.width, request->srcRect.height, request->srcStride,
+                                 request->dstData, request->dstSize.width, request->dstSize.height, request->dstStride,
+                                 request->srcFormat);
     } else {
       request->done = false;
     }
@@ -370,9 +372,6 @@ public:
 private:
   nsAutoPtr<ScaleRequest> mScaleRequest;
 };
-
-namespace mozilla {
-namespace image {
 
 /* static */ StaticRefPtr<RasterImage::DecodePool> RasterImage::DecodePool::sSingleton;
 static nsCOMPtr<nsIThread> sScaleWorkerThread = nullptr;
@@ -539,7 +538,7 @@ RasterImage::Init(const char* aMimeType,
 //******************************************************************************
 // [notxpcom] void requestRefresh ([const] in TimeStamp aTime);
 NS_IMETHODIMP_(void)
-RasterImage::RequestRefresh(const mozilla::TimeStamp& aTime)
+RasterImage::RequestRefresh(const TimeStamp& aTime)
 {
   if (HadRecentRefresh(aTime)) {
     return;
@@ -865,7 +864,9 @@ RasterImage::CopyFrame(uint32_t aWhichFrame,
 
   IntSize size(mSize.width, mSize.height);
   RefPtr<DataSourceSurface> surf =
-    Factory::CreateDataSourceSurface(size, SurfaceFormat::B8G8R8A8);
+    Factory::CreateDataSourceSurface(size,
+                                     SurfaceFormat::B8G8R8A8,
+                                     /* aZero = */ true);
 
   DataSourceSurface::MappedSurface mapping;
   DebugOnly<bool> success =
@@ -1572,7 +1573,7 @@ RasterImage::ResetAnimation()
 //******************************************************************************
 // [notxpcom] void setAnimationStartTime ([const] in TimeStamp aTime);
 NS_IMETHODIMP_(void)
-RasterImage::SetAnimationStartTime(const mozilla::TimeStamp& aTime)
+RasterImage::SetAnimationStartTime(const TimeStamp& aTime)
 {
   if (mError || mAnimationMode == kDontAnimMode || mAnimating || !mAnim)
     return;
@@ -1599,6 +1600,12 @@ RasterImage::SetLoopCount(int32_t aLoopCount)
     // No need to set this if we're not an animation
     mFrameBlender.SetLoopCount(aLoopCount);
   }
+}
+
+NS_IMETHODIMP_(nsIntRect)
+RasterImage::GetImageSpaceInvalidationRect(const nsIntRect& aRect)
+{
+  return aRect;
 }
 
 nsresult
@@ -2594,7 +2601,9 @@ RasterImage::DrawWithPreDownscaleIfNeeded(imgFrame *aFrame,
   nsIntRect framerect = frame->GetRect();
   gfxMatrix userSpaceToImageSpace = aUserSpaceToImageSpace;
   gfxMatrix imageSpaceToUserSpace = aUserSpaceToImageSpace;
-  imageSpaceToUserSpace.Invert();
+  if (!imageSpaceToUserSpace.Invert()) {
+    return false;
+  }
   gfxSize scale = imageSpaceToUserSpace.ScaleFactors(true);
   nsIntRect subimage = aSubimage;
   RefPtr<SourceSurface> surf;
@@ -2615,8 +2624,7 @@ RasterImage::DrawWithPreDownscaleIfNeeded(imgFrame *aFrame,
       needScaleReq = !surf;
       if (surf) {
         frame = mScaleResult.frame;
-        userSpaceToImageSpace.Multiply(gfxMatrix().Scale(scale.width,
-                                                         scale.height));
+        userSpaceToImageSpace *= gfxMatrix::Scaling(scale.width, scale.height);
 
         // Since we're switching to a scaled image, we need to transform the
         // area of the subimage to draw accordingly, since imgFrame::Draw()
@@ -3160,6 +3168,13 @@ RasterImage::FinishedSomeDecoding(eShutdownIntent aIntent /* = eShutdownIntent_D
   return RequestDecodeIfNeeded(rv, aIntent, done, wasSize);
 }
 
+already_AddRefed<imgIContainer>
+RasterImage::Unwrap()
+{
+  nsCOMPtr<imgIContainer> self(this);
+  return self.forget();
+}
+
 NS_IMPL_ISUPPORTS(RasterImage::DecodePool,
                   nsIObserver)
 
@@ -3236,7 +3251,7 @@ RasterImage::DecodePool::DecodePool()
       }
 #endif
 
-      nsCOMPtr<nsIObserverService> obsSvc = mozilla::services::GetObserverService();
+      nsCOMPtr<nsIObserverService> obsSvc = services::GetObserverService();
       if (obsSvc) {
         obsSvc->AddObserver(this, "xpcom-shutdown-threads", false);
       }

@@ -61,7 +61,11 @@ const events = require("sdk/event/core");
 const {Unknown} = require("sdk/platform/xpcom");
 const {Class} = require("sdk/core/heritage");
 const {PageStyleActor} = require("devtools/server/actors/styles");
-const {HighlighterActor} = require("devtools/server/actors/highlighter");
+const {
+  HighlighterActor,
+  CustomHighlighterActor,
+  HIGHLIGHTER_CLASSES
+} = require("devtools/server/actors/highlighter");
 const {getLayoutChangesObserver, releaseLayoutChangesObserver} =
   require("devtools/server/actors/layout");
 
@@ -113,6 +117,20 @@ loader.lazyImporter(this, "gDevTools", "resource:///modules/devtools/gDevTools.j
 
 loader.lazyGetter(this, "DOMParser", function() {
   return Cc["@mozilla.org/xmlextras/domparser;1"].createInstance(Ci.nsIDOMParser);
+});
+
+loader.lazyGetter(this, "Debugger", function() {
+  let JsDebugger = require("resource://gre/modules/jsdebugger.jsm");
+
+  let global = Cu.getGlobalForObject({});
+  JsDebugger.addDebuggerToGlobal(global);
+
+  return global.Debugger;
+});
+
+loader.lazyGetter(this, "eventListenerService", function() {
+  return Cc["@mozilla.org/eventlistenerservice;1"]
+           .getService(Ci.nsIEventListenerService);
 });
 
 exports.register = function(handle) {
@@ -235,6 +253,8 @@ var NodeActor = exports.NodeActor = protocol.ActorClass({
       pseudoClassLocks: this.writePseudoClassLocks(),
 
       isDisplayed: this.isDisplayed,
+
+      hasEventListeners: this._hasEventListeners,
     };
 
     if (this.isDocumentElement()) {
@@ -278,6 +298,27 @@ var NodeActor = exports.NodeActor = protocol.ActorClass({
     }
   },
 
+  /**
+   * Are event listeners that are listening on this node?
+   */
+  get _hasEventListeners() {
+    let listeners;
+
+    if (this.rawNode.nodeName.toLowerCase() === "html") {
+      listeners = eventListenerService.getListenerInfoFor(this.rawNode.ownerGlobal);
+    } else {
+      listeners = eventListenerService.getListenerInfoFor(this.rawNode) || [];
+    }
+
+    listeners = listeners.filter(listener => {
+      return listener.listenerObject && listener.type && listener.listenerObject;
+    });
+
+    let hasListeners = listeners.length > 0;
+
+    return hasListeners;
+  },
+
   writeAttrs: function() {
     if (!this.rawNode.attributes) {
       return undefined;
@@ -298,6 +339,123 @@ var NodeActor = exports.NodeActor = protocol.ActorClass({
       }
     }
     return ret;
+  },
+
+  /**
+   * Get event listeners attached to a node.
+   *
+   * @param  {Node} node
+   *         Node for which we are to get listeners.
+   * @return {Array}
+   *         An array of objects where a typical object looks like this:
+   *           {
+   *             type: "click",
+   *             DOM0: true,
+   *             capturing: true,
+   *             handler: "function() { doSomething() }",
+   *             origin: "http://www.mozilla.com",
+   *             searchString: 'onclick="doSomething()"'
+   *           }
+   */
+  getEventListeners: function(node) {
+    let dbg = new Debugger();
+    let handlers = eventListenerService.getListenerInfoFor(node);
+    let events = [];
+
+    for (let handler of handlers) {
+      let listener = handler.listenerObject;
+
+      // If there is no JS event listener skip this.
+      if (!listener) {
+        continue;
+      }
+
+      let global = Cu.getGlobalForObject(listener);
+      let globalDO = dbg.addDebuggee(global);
+      let listenerDO = globalDO.makeDebuggeeValue(listener);
+
+      // If the listener is an object with a 'handleEvent' method, use that.
+      if (listenerDO.class === "Object" || listenerDO.class === "XULElement") {
+        let desc;
+
+        while (!desc && listenerDO) {
+          desc = listenerDO.getOwnPropertyDescriptor("handleEvent");
+          listenerDO = listenerDO.proto;
+        }
+
+        if (desc && desc.value) {
+          listenerDO = desc.value;
+        }
+      }
+
+      if (listenerDO.isBoundFunction) {
+        listenerDO = listenerDO.boundTargetFunction;
+      }
+
+      let script = listenerDO.script;
+      let scriptSource = script.source.text;
+      let functionSource =
+        scriptSource.substr(script.sourceStart, script.sourceLength);
+
+      /*
+      The script returned is the whole script and
+      scriptSource.substr(script.sourceStart, script.sourceLength) returns
+      something like:
+        () { doSomething(); }
+
+      So we need to work back to the preceeding \n, ; or } so we can get the
+        appropriate function info e.g.:
+        () => { doSomething(); }
+        function doit() { doSomething(); }
+        doit: function() { doSomething(); }
+      */
+      let scriptBeforeFunc = scriptSource.substr(0, script.sourceStart);
+      let lastEnding = Math.max(
+        scriptBeforeFunc.lastIndexOf(";"),
+        scriptBeforeFunc.lastIndexOf("}"),
+        scriptBeforeFunc.lastIndexOf("{"),
+        scriptBeforeFunc.lastIndexOf("("),
+        scriptBeforeFunc.lastIndexOf(","),
+        scriptBeforeFunc.lastIndexOf("!")
+      );
+
+      if (lastEnding !== -1) {
+        let functionPrefix = scriptBeforeFunc.substr(lastEnding + 1);
+        functionSource = functionPrefix + functionSource;
+      }
+
+      let type = handler.type;
+      let dom0 = false;
+
+      if (typeof node.hasAttribute !== "undefined") {
+        dom0 = !!node.hasAttribute("on" + type);
+      } else {
+        dom0 = !!node["on" + type];
+      }
+
+      let line = script.startLine;
+      let url = script.url;
+      let origin = url + (dom0 ? "" : ":" + line);
+      let searchString;
+
+      if (dom0) {
+        searchString = "on" + type + "=\"" + script.source.text + "\"";
+      } else {
+        scriptSource = "    " + scriptSource;
+      }
+
+      events.push({
+        type: type,
+        DOM0: dom0,
+        capturing: handler.capturing,
+        handler: functionSource.trim(),
+        origin: origin,
+        searchString: searchString
+      });
+
+      dbg.removeDebuggee(globalDO);
+    }
+    return events;
   },
 
   /**
@@ -347,6 +505,21 @@ var NodeActor = exports.NodeActor = protocol.ActorClass({
   }, {
     request: {maxDim: Arg(0, "nullable:number")},
     response: RetVal("imageData")
+  }),
+
+  /**
+   * Get all event listeners that are listening on this node.
+   */
+  getEventListenerInfo: method(function() {
+    if (this.rawNode.nodeName.toLowerCase() === "html") {
+      return this.getEventListeners(this.rawNode.ownerGlobal);
+    }
+    return this.getEventListeners(this.rawNode);
+  }, {
+    request: {},
+    response: {
+      events: RetVal("json")
+    }
   }),
 
   /**
@@ -547,6 +720,8 @@ let NodeFront = protocol.FrontClass(NodeActor, {
   get hasChildren() this._form.numChildren > 0,
   get numChildren() this._form.numChildren,
 
+  get hasEventListeners() this._form.hasEventListeners,
+
   get tagName() this.nodeType === Ci.nsIDOMNode.ELEMENT_NODE ? this.nodeName : null,
   get shortValue() this._form.shortValue,
   get incompleteValue() !!this._form.incompleteValue,
@@ -723,7 +898,7 @@ var NodeListActor = exports.NodeListActor = protocol.ActorClass({
   initialize: function(walker, nodeList) {
     protocol.Actor.prototype.initialize.call(this);
     this.walker = walker;
-    this.nodeList = nodeList;
+    this.nodeList = nodeList || [];
   },
 
   destroy: function() {
@@ -935,9 +1110,12 @@ var WalkerActor = protocol.ActorClass({
   },
 
   destroy: function() {
-    this._hoveredNode = null;
+    this._destroyed = true;
+
     this.clearPseudoClassLocks();
     this._activePseudoClassLocks = null;
+
+    this._hoveredNode = null;
     this.rootDoc = null;
 
     this.reflowObserver.off("reflows", this._onReflows);
@@ -983,6 +1161,10 @@ var WalkerActor = protocol.ActorClass({
     // had their display changed and send a display-change event if any
     let changes = [];
     for (let [node, actor] of this._refMap) {
+      if (Cu.isDeadWrapper(node)) {
+        continue;
+      }
+
       let isDisplayed = actor.isDisplayed;
       if (isDisplayed !== actor.wasDisplayed) {
         changes.push(actor);
@@ -1711,13 +1893,14 @@ var WalkerActor = protocol.ActorClass({
     if (!node.writePseudoClassLocks()) {
       this._activePseudoClassLocks.delete(node);
     }
+
     this._queuePseudoClassMutation(node);
     return true;
   },
 
   /**
-   * Clear all the pseudo-classes on a given node
-   * or all nodes.
+   * Clear all the pseudo-classes on a given node or all nodes.
+   * @param {NodeActor} node Optional node to clear pseudo-classes on
    */
   clearPseudoClassLocks: method(function(node) {
     if (node) {
@@ -1929,7 +2112,7 @@ var WalkerActor = protocol.ActorClass({
   }),
 
   queueMutation: function(mutation) {
-    if (!this.actorID) {
+    if (!this.actorID || this._destroyed) {
       // We've been destroyed, don't bother queueing this mutation.
       return;
     }
@@ -2597,6 +2780,19 @@ var InspectorActor = protocol.ActorClass({
     }
   }),
 
+  /**
+   * The most used highlighter actor is the HighlighterActor which can be
+   * conveniently retrieved by this method.
+   * The same instance will always be returned by this method when called
+   * several times.
+   * The highlighter actor returned here is used to highlighter elements's
+   * box-models from the markup-view, layout-view, console, debugger, ... as
+   * well as select elements with the pointer (pick).
+   *
+   * @param {Boolean} autohide Optionally autohide the highlighter after an
+   * element has been picked
+   * @return {HighlighterActor}
+   */
   getHighlighter: method(function (autohide) {
     if (this._highlighterPromise) {
       return this._highlighterPromise;
@@ -2607,9 +2803,37 @@ var InspectorActor = protocol.ActorClass({
     });
     return this._highlighterPromise;
   }, {
-    request: { autohide: Arg(0, "boolean") },
+    request: {
+      autohide: Arg(0, "boolean")
+    },
     response: {
       highligter: RetVal("highlighter")
+    }
+  }),
+
+  /**
+   * If consumers need to display several highlighters at the same time or
+   * different types of highlighters, then this method should be used, passing
+   * the type name of the highlighter needed as argument.
+   * A new instance will be created everytime the method is called, so it's up
+   * to the consumer to release it when it is not needed anymore
+   *
+   * @param {String} type The type of highlighter to create
+   * @return {Highlighter} The highlighter actor instance or null if the
+   * typeName passed doesn't match any available highlighter
+   */
+  getHighlighterByType: method(function (typeName) {
+    if (HIGHLIGHTER_CLASSES[typeName]) {
+      return CustomHighlighterActor(this, typeName);
+    } else {
+      return null;
+    }
+  }, {
+    request: {
+      typeName: Arg(0)
+    },
+    response: {
+      highlighter: RetVal("nullable:customhighlighter")
     }
   }),
 
@@ -2675,7 +2899,6 @@ var InspectorFront = exports.InspectorFront = protocol.FrontClass(InspectorActor
 
     // XXX: This is the first actor type in its hierarchy to use the protocol
     // library, so we're going to self-own on the client side for now.
-    client.addActorPool(this);
     this.manage(this);
   },
 
@@ -2727,6 +2950,10 @@ function nodeDocument(node) {
  * See TreeWalker documentation for explanations of the methods.
  */
 function DocumentWalker(aNode, aRootWin, aShow, aFilter, aExpandEntityReferences) {
+  if (!aRootWin.location) {
+    throw new Error("Got an invalid root window in DocumentWalker");
+  }
+
   let doc = nodeDocument(aNode);
   this.layoutHelpers = new LayoutHelpers(aRootWin);
   this.walker = doc.createTreeWalker(doc,
@@ -2785,7 +3012,7 @@ DocumentWalker.prototype = {
       return null;
     if (node.contentDocument) {
       return this._reparentWalker(node.contentDocument);
-    } else if (node.getSVGDocument) {
+    } else if (node.getSVGDocument && node.getSVGDocument()) {
       return this._reparentWalker(node.getSVGDocument());
     }
     return this.walker.firstChild();
@@ -2797,7 +3024,7 @@ DocumentWalker.prototype = {
       return null;
     if (node.contentDocument) {
       return this._reparentWalker(node.contentDocument);
-    } else if (node.getSVGDocument) {
+    } else if (node.getSVGDocument && node.getSVGDocument()) {
       return this._reparentWalker(node.getSVGDocument());
     }
     return this.walker.lastChild();

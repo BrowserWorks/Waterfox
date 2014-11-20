@@ -235,7 +235,7 @@ using mozilla::dom::Element;
 static bool
 DoesNotParticipateInAutoDirection(const Element* aElement)
 {
-  nsINodeInfo* nodeInfo = aElement->NodeInfo();
+  mozilla::dom::NodeInfo* nodeInfo = aElement->NodeInfo();
   return (!aElement->IsHTML() ||
           nodeInfo->Equals(nsGkAtoms::script) ||
           nodeInfo->Equals(nsGkAtoms::style) ||
@@ -320,12 +320,15 @@ GetDirectionFromText(const char16_t* aText, const uint32_t aLength,
       current++;
     }
 
-    Directionality dir = GetDirectionFromChar(ch);
-    if (dir != eDir_NotSet) {
-      if (aFirstStrong) {
-        *aFirstStrong = current;
+    // Just ignore lone surrogates
+    if (!IS_SURROGATE(ch)) {
+      Directionality dir = GetDirectionFromChar(ch);
+      if (dir != eDir_NotSet) {
+        if (aFirstStrong) {
+          *aFirstStrong = current;
+        }
+        return dir;
       }
-      return dir;
     }
   }
 

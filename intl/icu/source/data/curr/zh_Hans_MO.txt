@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2013 International Business Machines
+// * Copyright (C) 2014 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/zh_Hans_MO.xml
@@ -8,10 +8,6 @@
 // ***************************************************************************
 zh_Hans_MO{
     Currencies{
-        ANG{
-            "ANG",
-            "荷属安的列斯盾",
-        }
         AWG{
             "AWG",
             "阿鲁巴弗罗林",
@@ -58,5 +54,5 @@ zh_Hans_MO{
     CurrencyUnitPatterns{
         other{"{0} {1}"}
     }
-    Version{"2.0.92.87"}
+    Version{"2.1.8.19"}
 }

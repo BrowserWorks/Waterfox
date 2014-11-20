@@ -160,7 +160,7 @@ Var ControlRightPX
 !define DownloadMinSizeBytes 15728640 ; 15 MB
 
 ; Maximum size expected to download in bytes
-!define DownloadMaxSizeBytes 36700160 ; 35 MB
+!define DownloadMaxSizeBytes 73400320 ; 70 MB
 
 ; Interval before retrying to download. 3 seconds is used along with 10
 ; attempted downloads (the first attempt along with 9 retries) to give a
@@ -269,7 +269,7 @@ icon "setup.ico"
 XPStyle on
 BrandingText " "
 ChangeUI all "nsisui.exe"
-!ifdef HAVE_64BIT_OS
+!ifdef HAVE_64BIT_BUILD
   InstallDir "$PROGRAMFILES64\${BrandFullName}\"
 !else
   InstallDir "$PROGRAMFILES32\${BrandFullName}\"
@@ -310,7 +310,7 @@ Function .onInit
   ; isn't supported for the stub installer.
   ${SetBrandNameVars} "$PLUGINSDIR\ignored.ini"
 
-!ifdef HAVE_64BIT_OS
+!ifdef HAVE_64BIT_BUILD
   ; Restrict x64 builds from being installed on x86 and pre Vista
   ${Unless} ${RunningX64}
   ${OrUnless} ${AtLeastWinVista}
@@ -561,7 +561,7 @@ Function SendPing
     ; completion of all phases.
     ${GetSecondsElapsed} "$EndInstallPhaseTickCount" "$EndFinishPhaseTickCount" $4
 
-!ifdef HAVE_64BIT_OS
+!ifdef HAVE_64BIT_BUILD
     StrCpy $R0 "1"
 !else
     StrCpy $R0 "0"

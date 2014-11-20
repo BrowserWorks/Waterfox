@@ -19,6 +19,7 @@
 
 #include "builtin/MapObject.h"
 #include "frontend/BytecodeCompiler.h"
+#include "gc/ForkJoinNursery.h"
 #include "gc/GCInternals.h"
 #include "gc/Marking.h"
 #ifdef JS_ION
@@ -100,32 +101,41 @@ MarkExactStackRootList(JSTracer *trc, Source *s, const char *name)
     }
 }
 
-template <class T, void (MarkFunc)(JSTracer *trc, T *ref, const char *name)>
-static inline void
-MarkExactStackRootsForType(JSTracer *trc, const char *name = nullptr)
+template<class T>
+static void
+MarkExactStackRootsAcrossTypes(T context, JSTracer *trc)
 {
-    for (ContextIter cx(trc->runtime()); !cx.done(); cx.next())
-        MarkExactStackRootList<T, MarkFunc>(trc, cx.get(), name);
-    MarkExactStackRootList<T, MarkFunc>(trc, &trc->runtime()->mainThread, name);
+    MarkExactStackRootList<JSObject *, MarkObjectRoot>(trc, context, "exact-object");
+    MarkExactStackRootList<Shape *, MarkShapeRoot>(trc, context, "exact-shape");
+    MarkExactStackRootList<BaseShape *, MarkBaseShapeRoot>(trc, context, "exact-baseshape");
+    MarkExactStackRootList<types::TypeObject *, MarkTypeObjectRoot>(
+        trc, context, "exact-typeobject");
+    MarkExactStackRootList<JSString *, MarkStringRoot>(trc, context, "exact-string");
+    MarkExactStackRootList<JS::Symbol *, MarkSymbolRoot>(trc, context, "exact-symbol");
+    MarkExactStackRootList<jit::JitCode *, MarkJitCodeRoot>(trc, context, "exact-jitcode");
+    MarkExactStackRootList<JSScript *, MarkScriptRoot>(trc, context, "exact-script");
+    MarkExactStackRootList<LazyScript *, MarkLazyScriptRoot>(trc, context, "exact-lazy-script");
+    MarkExactStackRootList<jsid, MarkIdRoot>(trc, context, "exact-id");
+    MarkExactStackRootList<Value, MarkValueRoot>(trc, context, "exact-value");
+    MarkExactStackRootList<types::Type, MarkTypeRoot>(trc, context, "types::Type");
+    MarkExactStackRootList<Bindings, MarkBindingsRoot>(trc, context, "Bindings");
+    MarkExactStackRootList<JSPropertyDescriptor, MarkPropertyDescriptorRoot>(
+        trc, context, "JSPropertyDescriptor");
+    MarkExactStackRootList<PropDesc, MarkPropDescRoot>(trc, context, "PropDesc");
 }
 
 static void
-MarkExactStackRoots(JSTracer *trc)
+MarkExactStackRoots(ThreadSafeContext* cx, JSTracer *trc)
 {
-    MarkExactStackRootsForType<JSObject *, MarkObjectRoot>(trc, "exact-object");
-    MarkExactStackRootsForType<Shape *, MarkShapeRoot>(trc, "exact-shape");
-    MarkExactStackRootsForType<BaseShape *, MarkBaseShapeRoot>(trc, "exact-baseshape");
-    MarkExactStackRootsForType<types::TypeObject *, MarkTypeObjectRoot>(trc, "exact-typeobject");
-    MarkExactStackRootsForType<JSString *, MarkStringRoot>(trc, "exact-string");
-    MarkExactStackRootsForType<jit::JitCode *, MarkJitCodeRoot>(trc, "exact-jitcode");
-    MarkExactStackRootsForType<JSScript *, MarkScriptRoot>(trc, "exact-script");
-    MarkExactStackRootsForType<LazyScript *, MarkLazyScriptRoot>(trc, "exact-lazy-script");
-    MarkExactStackRootsForType<jsid, MarkIdRoot>(trc, "exact-id");
-    MarkExactStackRootsForType<Value, MarkValueRoot>(trc, "exact-value");
-    MarkExactStackRootsForType<types::Type, MarkTypeRoot>(trc, "exact-type");
-    MarkExactStackRootsForType<Bindings, MarkBindingsRoot>(trc);
-    MarkExactStackRootsForType<JSPropertyDescriptor, MarkPropertyDescriptorRoot>(trc);
-    MarkExactStackRootsForType<PropDesc, MarkPropDescRoot>(trc);
+    MarkExactStackRootsAcrossTypes<ThreadSafeContext*>(cx, trc);
+}
+
+static void
+MarkExactStackRoots(JSRuntime* rt, JSTracer *trc)
+{
+    for (ContextIter cx(rt); !cx.done(); cx.next())
+        MarkExactStackRootsAcrossTypes<ThreadSafeContext*>(cx.get(), trc);
+    MarkExactStackRootsAcrossTypes<PerThreadData*>(&rt->mainThread, trc);
 }
 #endif /* JSGC_USE_EXACT_ROOTING */
 
@@ -160,7 +170,7 @@ IsAddressableGCThing(JSRuntime *rt, uintptr_t w,
      * do not touch the low two bits. Thus any word with the low two bits set
      * is not a valid GC-thing.
      */
-    JS_STATIC_ASSERT(JSID_TYPE_STRING == 0 && JSID_TYPE_OBJECT == 4);
+    JS_STATIC_ASSERT(JSID_TYPE_STRING == 0 && JSID_TYPE_SYMBOL == 4);
     if (w & 0x3)
         return CGCT_LOWBITSET;
 
@@ -177,7 +187,7 @@ IsAddressableGCThing(JSRuntime *rt, uintptr_t w,
 
     Chunk *chunk = Chunk::fromAddress(addr);
 
-    if (!rt->gc.chunkSet.has(chunk))
+    if (!rt->gc.hasChunk(chunk))
         return CGCT_NOTCHUNK;
 
     /*
@@ -257,7 +267,7 @@ MarkIfGCThingWord(JSTracer *trc, uintptr_t w)
     JS_ASSERT(tmp == thing);
 
 #ifdef DEBUG
-    if (trc->runtime()->gc.incrementalState == MARK_ROOTS)
+    if (trc->runtime()->gc.state() == MARK_ROOTS)
         trc->runtime()->mainThread.gcSavedRoots.append(
             PerThreadData::SavedGCRoot(thing, traceKind));
 #endif
@@ -567,7 +577,7 @@ AutoGCRooter::trace(JSTracer *trc)
       }
 
       case JSONPARSER:
-        static_cast<js::JSONParser *>(this)->trace(trc);
+        static_cast<js::JSONParserBase *>(this)->trace(trc);
         return;
 
       case CUSTOM:
@@ -583,10 +593,8 @@ AutoGCRooter::trace(JSTracer *trc)
 /* static */ void
 AutoGCRooter::traceAll(JSTracer *trc)
 {
-    for (ContextIter cx(trc->runtime()); !cx.done(); cx.next()) {
-        for (AutoGCRooter *gcr = cx->autoGCRooters; gcr; gcr = gcr->down)
-            gcr->trace(trc);
-    }
+    for (ContextIter cx(trc->runtime()); !cx.done(); cx.next())
+        traceAllInContext(&*cx, trc);
 }
 
 /* static */ void
@@ -685,6 +693,27 @@ js::gc::MarkPersistentRootedChains(JSTracer *trc)
                                                             "PersistentRooted<Value>");
 }
 
+#ifdef JSGC_FJGENERATIONAL
+void
+js::gc::MarkForkJoinStack(ForkJoinNurseryCollectionTracer *trc)
+{
+    ForkJoinContext *cx = ForkJoinContext::current();
+    PerThreadData *ptd = cx->perThreadData;
+
+    AutoGCRooter::traceAllInContext(cx, trc);
+    MarkExactStackRoots(cx, trc);
+    jit::MarkJitActivations(ptd, trc);
+
+#ifdef DEBUG
+    // There should be only JIT activations on the stack
+    for (ActivationIterator iter(ptd); !iter.done(); ++iter) {
+        Activation *act = iter.activation();
+        JS_ASSERT(act->isJit());
+    }
+#endif
+}
+#endif  // JSGC_FJGENERATIONAL
+
 void
 js::gc::GCRuntime::markRuntime(JSTracer *trc, bool useSavedRoots)
 {
@@ -704,7 +733,7 @@ js::gc::GCRuntime::markRuntime(JSTracer *trc, bool useSavedRoots)
 
     if (!rt->isBeingDestroyed()) {
 #ifdef JSGC_USE_EXACT_ROOTING
-        MarkExactStackRoots(trc);
+        MarkExactStackRoots(rt, trc);
 #else
         markConservativeStackRoots(trc, useSavedRoots);
 #endif
@@ -726,7 +755,7 @@ js::gc::GCRuntime::markRuntime(JSTracer *trc, bool useSavedRoots)
             else if (type == JS_GC_ROOT_SCRIPT_PTR)
                 MarkScriptRoot(trc, reinterpret_cast<JSScript **>(key), name);
             else
-                MOZ_ASSUME_UNREACHABLE("unexpected js::RootInfo::type value");
+                MOZ_CRASH("unexpected js::RootInfo::type value");
         }
     }
 
@@ -742,6 +771,7 @@ js::gc::GCRuntime::markRuntime(JSTracer *trc, bool useSavedRoots)
         if (!IS_GC_MARKING_TRACER(trc) || rt->atomsCompartment()->zone()->isCollecting()) {
             MarkPermanentAtoms(trc);
             MarkAtoms(trc);
+            MarkWellKnownSymbols(trc);
 #ifdef JS_ION
             jit::JitRuntime::Mark(trc);
 #endif
@@ -786,10 +816,10 @@ js::gc::GCRuntime::markRuntime(JSTracer *trc, bool useSavedRoots)
             c->debugScopes->mark(trc);
     }
 
-    MarkInterpreterActivations(rt, trc);
+    MarkInterpreterActivations(&rt->mainThread, trc);
 
 #ifdef JS_ION
-    jit::MarkJitActivations(rt, trc);
+    jit::MarkJitActivations(&rt->mainThread, trc);
 #endif
 
     if (!isHeapMinorCollecting()) {

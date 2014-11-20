@@ -98,19 +98,28 @@ struct NativeProperties
 {
   const Prefable<const JSFunctionSpec>* staticMethods;
   jsid* staticMethodIds;
-  const JSFunctionSpec* staticMethodsSpecs;
+  const JSFunctionSpec* staticMethodSpecs;
+
   const Prefable<const JSPropertySpec>* staticAttributes;
   jsid* staticAttributeIds;
   const JSPropertySpec* staticAttributeSpecs;
+
   const Prefable<const JSFunctionSpec>* methods;
   jsid* methodIds;
-  const JSFunctionSpec* methodsSpecs;
+  const JSFunctionSpec* methodSpecs;
+
   const Prefable<const JSPropertySpec>* attributes;
   jsid* attributeIds;
   const JSPropertySpec* attributeSpecs;
+
+  const Prefable<const JSFunctionSpec>* unforgeableMethods;
+  jsid* unforgeableMethodIds;
+  const JSFunctionSpec* unforgeableMethodSpecs;
+
   const Prefable<const JSPropertySpec>* unforgeableAttributes;
   jsid* unforgeableAttributeIds;
   const JSPropertySpec* unforgeableAttributeSpecs;
+
   const Prefable<const ConstantSpec>* constants;
   jsid* constantIds;
   const ConstantSpec* constantSpecs;
@@ -167,8 +176,14 @@ typedef JSObject* (*ParentGetter)(JSContext* aCx, JS::Handle<JSObject*> aObj);
 typedef JS::Handle<JSObject*> (*ProtoGetter)(JSContext* aCx,
                                              JS::Handle<JSObject*> aGlobal);
 
-struct DOMClass
+// Special JSClass for reflected DOM objects.
+struct DOMJSClass
 {
+  // It would be nice to just inherit from JSClass, but that precludes pure
+  // compile-time initialization of the form |DOMJSClass = {...};|, since C++
+  // only allows brace initialization for aggregate/POD types.
+  const js::Class mBase;
+
   // A list of interfaces that this object implements, in order of decreasing
   // derivedness.
   const prototypes::ID mInterfaceChain[MAX_PROTOTYPE_CHAIN_LENGTH];
@@ -188,17 +203,6 @@ struct DOMClass
   // worker or for a native inheriting from nsISupports (we can get the CC
   // participant by QI'ing in that case).
   nsCycleCollectionParticipant* mParticipant;
-};
-
-// Special JSClass for reflected DOM objects.
-struct DOMJSClass
-{
-  // It would be nice to just inherit from JSClass, but that precludes pure
-  // compile-time initialization of the form |DOMJSClass = {...};|, since C++
-  // only allows brace initialization for aggregate/POD types.
-  const js::Class mBase;
-
-  const DOMClass mClass;
 
   static const DOMJSClass* FromJSClass(const JSClass* base) {
     MOZ_ASSERT(base->flags & JSCLASS_IS_DOMJSCLASS);

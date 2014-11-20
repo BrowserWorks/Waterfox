@@ -29,6 +29,13 @@ menulist:not([editable="true"]) > .menulist-dropmarker {
   margin-bottom: 1px;
 }
 
+menulist > menupopup menu,
+menulist > menupopup menuitem,
+button[type="menu"] > menupopup menu,
+button[type="menu"] > menupopup menuitem {
+  -moz-padding-end: 34px;
+}
+
 .help-button > .button-box > .button-icon {
   -moz-margin-start: 0;
 }
@@ -78,4 +85,12 @@ spinbuttons {
 description {
   font-size: 1.25rem;
   line-height: 22px;
+}
+
+#popupPolicyRow {
+  /* Override styles from
+     browser/themes/osx/preferences/preferences.css */
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+  border-bottom: none;
 }

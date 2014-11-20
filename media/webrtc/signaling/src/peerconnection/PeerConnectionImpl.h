@@ -72,8 +72,8 @@ class DOMMediaStream;
 #endif
 
 namespace dom {
-class RTCConfiguration;
-class MediaConstraintsInternal;
+struct RTCConfiguration;
+struct RTCOfferOptions;
 class MediaStreamTrack;
 
 #ifdef USE_FAKE_PCOBSERVER
@@ -84,7 +84,7 @@ class PeerConnectionObserver;
 typedef NS_ConvertUTF8toUTF16 PCObserverString;
 #endif
 }
-class MediaConstraintsExternal;
+class SipccOfferOptions;
 }
 
 #if defined(__cplusplus) && __cplusplus >= 201103L
@@ -108,8 +108,7 @@ namespace sipcc {
 
 using mozilla::dom::PeerConnectionObserver;
 using mozilla::dom::RTCConfiguration;
-using mozilla::dom::MediaConstraintsInternal;
-using mozilla::MediaConstraintsExternal;
+using mozilla::dom::RTCOfferOptions;
 using mozilla::DOMMediaStream;
 using mozilla::NrIceCtx;
 using mozilla::NrIceMediaStream;
@@ -197,6 +196,12 @@ class RTCStatsQuery {
       nsresult res = CheckApiState(assert_ice_ready);             \
       if (NS_FAILED(res)) return res; \
     } while(0)
+#define PC_AUTO_ENTER_API_CALL_VOID_RETURN(assert_ice_ready) \
+    do { \
+      /* do/while prevents res from conflicting with locals */    \
+      nsresult res = CheckApiState(assert_ice_ready);             \
+      if (NS_FAILED(res)) return; \
+    } while(0)
 #define PC_AUTO_ENTER_API_CALL_NO_CHECK() CheckThread()
 
 class PeerConnectionImpl MOZ_FINAL : public nsISupports,
@@ -207,21 +212,18 @@ class PeerConnectionImpl MOZ_FINAL : public nsISupports,
 #endif
                                      public sigslot::has_slots<>
 {
-  class Internal; // Avoid exposing c includes to bindings
+  struct Internal; // Avoid exposing c includes to bindings
 
 public:
   PeerConnectionImpl(const mozilla::dom::GlobalObject* aGlobal = nullptr);
-  virtual ~PeerConnectionImpl();
 
   enum Error {
     kNoError                          = 0,
-    kInvalidConstraintsType           = 1,
     kInvalidCandidateType             = 2,
     kInvalidMediastreamTrack          = 3,
     kInvalidState                     = 4,
     kInvalidSessionDescription        = 5,
     kIncompatibleSessionDescription   = 6,
-    kIncompatibleConstraints          = 7,
     kIncompatibleMediaStreamTrack     = 8,
     kInternalError                    = 9
   };
@@ -317,19 +319,18 @@ public:
   }
 
   NS_IMETHODIMP_TO_ERRORRESULT(CreateOffer, ErrorResult &rv,
-                               const MediaConstraintsInternal& aConstraints)
+                               const RTCOfferOptions& aOptions)
   {
-    rv = CreateOffer(aConstraints);
+    rv = CreateOffer(aOptions);
   }
 
-  NS_IMETHODIMP_TO_ERRORRESULT(CreateAnswer, ErrorResult &rv,
-                               const MediaConstraintsInternal& aConstraints)
+  NS_IMETHODIMP CreateAnswer();
+  void CreateAnswer(ErrorResult &rv)
   {
-    rv = CreateAnswer(aConstraints);
+    rv = CreateAnswer();
   }
 
-  NS_IMETHODIMP CreateOffer(const MediaConstraintsExternal& aConstraints);
-  NS_IMETHODIMP CreateAnswer(const MediaConstraintsExternal& aConstraints);
+  NS_IMETHODIMP CreateOffer(const mozilla::SipccOfferOptions& aConstraints);
 
   NS_IMETHODIMP SetLocalDescription (int32_t aAction, const char* aSDP);
 
@@ -369,14 +370,10 @@ public:
   }
 
   NS_IMETHODIMP_TO_ERRORRESULT(AddStream, ErrorResult &rv,
-                               DOMMediaStream& aMediaStream,
-                               const MediaConstraintsInternal& aConstraints)
+                               DOMMediaStream& aMediaStream)
   {
-    rv = AddStream(aMediaStream, aConstraints);
+    rv = AddStream(aMediaStream);
   }
-
-  nsresult AddStream(DOMMediaStream &aMediaStream,
-                     const MediaConstraintsExternal& aConstraints);
 
   NS_IMETHODIMP_TO_ERRORRESULT(RemoveStream, ErrorResult &rv,
                                DOMMediaStream& aMediaStream)
@@ -491,6 +488,10 @@ public:
     rv = Close();
   }
 
+  bool PluginCrash(uint64_t aPluginID,
+                   const nsAString& aPluginName,
+                   const nsAString& aPluginDumpID);
+
   nsresult InitializeDataChannel(int track_id, uint16_t aLocalport,
                                  uint16_t aRemoteport, uint16_t aNumstreams);
 
@@ -566,6 +567,7 @@ public:
 #endif
 
 private:
+  virtual ~PeerConnectionImpl();
   PeerConnectionImpl(const PeerConnectionImpl&rhs);
   PeerConnectionImpl& operator=(PeerConnectionImpl);
   NS_IMETHODIMP Initialize(PeerConnectionObserver& aObserver,
@@ -601,12 +603,6 @@ private:
 
   // Shut down media - called on main thread only
   void ShutdownMedia();
-
-  // ICE callbacks run on the right thread.
-  nsresult IceConnectionStateChange_m(
-      mozilla::dom::PCImplIceConnectionState aState);
-  nsresult IceGatheringStateChange_m(
-      mozilla::dom::PCImplIceGatheringState aState);
 
   NS_IMETHOD FingerprintSplitHelper(
       std::string& fingerprint, size_t& spaceIdx) const;
@@ -669,7 +665,7 @@ private:
   mozilla::RefPtr<DtlsIdentity> mIdentity;
 #ifdef MOZILLA_INTERNAL_API
   // The entity on the other end of the peer-to-peer connection;
-  // void if they are not yet identified, and no constraint has been set
+  // void if they are not yet identified, and no identity setting has been set
   nsAutoPtr<PeerIdentity> mPeerIdentity;
 #endif
   // Whether an app should be prevented from accessing media produced by the PC

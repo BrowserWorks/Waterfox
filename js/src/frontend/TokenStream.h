@@ -11,6 +11,7 @@
 
 #include "mozilla/DebugOnly.h"
 #include "mozilla/PodOperations.h"
+#include "mozilla/UniquePtr.h"
 
 #include <stdarg.h>
 #include <stddef.h>
@@ -21,6 +22,8 @@
 
 #include "js/Vector.h"
 #include "vm/RegExpObject.h"
+
+struct KeywordInfo;
 
 namespace js {
 namespace frontend {
@@ -43,6 +46,8 @@ enum TokenKind {
     TOK_NAME,                      // identifier
     TOK_NUMBER,                    // numeric constant
     TOK_STRING,                    // string constant
+    TOK_TEMPLATE_HEAD,             // start of template literal with substitutions
+    TOK_NO_SUBS_TEMPLATE,          // template literal without substitutions
     TOK_REGEXP,                    // RegExp constant
     TOK_TRUE,                      // true
     TOK_FALSE,                     // false
@@ -275,7 +280,9 @@ struct Token
     }
 
     void setAtom(JSAtom *atom) {
-        JS_ASSERT(type == TOK_STRING);
+        JS_ASSERT (type == TOK_STRING ||
+                   type == TOK_TEMPLATE_HEAD ||
+                   type == TOK_NO_SUBS_TEMPLATE);
         JS_ASSERT(!IsPoisonedPtr(atom));
         u.atom = atom;
     }
@@ -300,7 +307,9 @@ struct Token
     }
 
     JSAtom *atom() const {
-        JS_ASSERT(type == TOK_STRING);
+        JS_ASSERT (type == TOK_STRING ||
+                   type == TOK_TEMPLATE_HEAD ||
+                   type == TOK_NO_SUBS_TEMPLATE);
         return u.atom;
     }
 
@@ -493,6 +502,7 @@ class MOZ_STACK_CLASS TokenStream
                         //   we look for a regexp instead of just returning
                         //   TOK_DIV.
         KeywordIsName,  // Treat keywords as names by returning TOK_NAME.
+        TemplateTail,   // Treat next characters as part of a template string
     };
 
     // Get the next token from the stream, make it the current token, and
@@ -633,7 +643,7 @@ class MOZ_STACK_CLASS TokenStream
     }
 
     jschar *displayURL() {
-        return displayURL_;
+        return displayURL_.get();
     }
 
     bool hasSourceMapURL() const {
@@ -641,7 +651,7 @@ class MOZ_STACK_CLASS TokenStream
     }
 
     jschar *sourceMapURL() {
-        return sourceMapURL_;
+        return sourceMapURL_.get();
     }
 
     // If the name at s[0:length] is not a keyword in this version, return
@@ -654,7 +664,9 @@ class MOZ_STACK_CLASS TokenStream
     // null, report a SyntaxError ("if is a reserved identifier") and return
     // false. If ttp is non-null, return true with the keyword's TokenKind in
     // *ttp.
+    bool checkForKeyword(const KeywordInfo *kw, TokenKind *ttp);
     bool checkForKeyword(const jschar *s, size_t length, TokenKind *ttp);
+    bool checkForKeyword(JSAtom *atom, TokenKind *ttp);
 
     // This class maps a userbuf offset (which is 0-indexed) to a line number
     // (which is 1-indexed) and a column index (which is 0-indexed).
@@ -830,6 +842,8 @@ class MOZ_STACK_CLASS TokenStream
 
     TokenKind getTokenInternal(Modifier modifier);
 
+    bool getStringOrTemplateToken(int qc, Token **tp);
+
     int32_t getChar();
     int32_t getCharIgnoreEOL();
     void ungetChar(int32_t c);
@@ -843,7 +857,8 @@ class MOZ_STACK_CLASS TokenStream
     bool getDirectives(bool isMultiline, bool shouldWarnDeprecated);
     bool getDirective(bool isMultiline, bool shouldWarnDeprecated,
                       const char *directive, int directiveLength,
-                      const char *errorMsgPragma, jschar **destination);
+                      const char *errorMsgPragma,
+                      mozilla::UniquePtr<jschar[], JS::FreePolicy> *destination);
     bool getDisplayURL(bool isMultiline, bool shouldWarnDeprecated);
     bool getSourceMappingURL(bool isMultiline, bool shouldWarnDeprecated);
 
@@ -885,8 +900,8 @@ class MOZ_STACK_CLASS TokenStream
     const jschar        *prevLinebase;      // start of previous line;  nullptr if on the first line
     TokenBuf            userbuf;            // user input buffer
     const char          *filename;          // input filename or null
-    jschar              *displayURL_;       // the user's requested source URL or null
-    jschar              *sourceMapURL_;     // source map's filename or null
+    mozilla::UniquePtr<jschar[], JS::FreePolicy> displayURL_; // the user's requested source URL or null
+    mozilla::UniquePtr<jschar[], JS::FreePolicy> sourceMapURL_; // source map's filename or null
     CharBuffer          tokenbuf;           // current token string buffer
     bool                maybeEOL[256];      // probabilistic EOL lookup table
     bool                maybeStrSpecial[256];   // speeds up string scanning

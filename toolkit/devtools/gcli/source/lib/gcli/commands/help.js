@@ -16,7 +16,7 @@
 
 'use strict';
 
-var promise = require('../util/promise');
+var Promise = require('../util/promise').Promise;
 var l10n = require('../util/l10n');
 var cli = require('../cli');
 
@@ -68,13 +68,13 @@ function getHelpManData(commandData, context) {
         input = l10n.lookupFormat('helpManOptional');
         /*
         var val = param.type.stringify(param.defaultValue);
-        input = promise.resolve(val).then(function(defaultValue) {
+        input = Promise.resolve(val).then(function(defaultValue) {
           return l10n.lookupFormat('helpManDefault', [ defaultValue ]);
         }.bind(this));
         */
       }
 
-      return promise.resolve(input).then(function(defaultDescr) {
+      return Promise.resolve(input).then(function(defaultDescr) {
         return '(' + (param.type.name || param.type) + ', ' + defaultDescr + ')';
       }.bind(this));
     },
@@ -127,8 +127,8 @@ function getHelpListData(commandsData, context) {
  * Create a block of data suitable to be passed to the help_list.html template
  */
 function getMatchingCommands(context, prefix) {
-  var canon = cli.getMapping(context).requisition.canon;
-  var commands = canon.getCommands().filter(function(command) {
+  var commands = cli.getMapping(context).requisition.system.commands;
+  var reply = commands.getAll().filter(function(command) {
     if (command.hidden) {
       return false;
     }
@@ -144,23 +144,23 @@ function getMatchingCommands(context, prefix) {
     return true;
   });
 
-  commands.sort(function(c1, c2) {
+  reply.sort(function(c1, c2) {
     return c1.name.localeCompare(c2.name);
   });
 
-  commands = commands.map(function(command) {
+  reply = reply.map(function(command) {
     return command.toJson();
   });
 
-  return commands;
+  return reply;
 }
 
 /**
  * Find all the sub commands of the given command
  */
 function getSubCommands(context, command) {
-  var canon = cli.getMapping(context).requisition.canon;
-  var subcommands = canon.getCommands().filter(function(subcommand) {
+  var commands = cli.getMapping(context).requisition.system.commands;
+  var subcommands = commands.getAll().filter(function(subcommand) {
     return subcommand.name.indexOf(command.name) === 0 &&
            subcommand.name !== command.name &&
            !subcommand.hidden;
@@ -218,8 +218,8 @@ exports.items = [
     ],
 
     exec: function(args, context) {
-      var canon = cli.getMapping(context).requisition.canon;
-      var command = canon.getCommand(args.search);
+      var commands = cli.getMapping(context).requisition.system.commands;
+      var command = commands.get(args.search);
       if (command) {
         return context.typedData('commandData', {
           command: command.toJson(),
@@ -314,7 +314,7 @@ exports.items = [
           '</span>\n' +
           '</loop>\n' +
           '\n' +
-          '<span if="${command.isParent}"># ${l10n.subCommands}:\n' +
+          '<span if="${command.isParent}"># ${l10n.subCommands}:</span>\n' +
           '\n' +
           '<span if="${subcommands.length === 0}">${l10n.subcommandsNone}</span>\n' +
           '<loop foreach="subcommand in ${subcommands}">* ${subcommand.name}: ${subcommand.description}\n' +
@@ -368,9 +368,7 @@ exports.items = [
     exec: function(commandsData, context) {
       return {
         html:
-          '<pre><span if="${includeIntro}">## ${l10n.helpIntro1}\n' +
-          '\n' +
-          '${l10n.helpIntro}\n' +
+          '<pre><span if="${includeIntro}">## ${l10n.helpIntro}</span>\n' +
           '\n' +
           '# ${heading}\n' +
           '\n' +

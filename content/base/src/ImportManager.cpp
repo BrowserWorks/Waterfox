@@ -10,6 +10,7 @@
 #include "HTMLLinkElement.h"
 #include "nsContentPolicyUtils.h"
 #include "nsContentUtils.h"
+#include "nsCrossSiteListenerProxy.h"
 #include "nsIChannel.h"
 #include "nsIChannelPolicy.h"
 #include "nsIContentPolicy.h"
@@ -24,15 +25,16 @@
 
 class AutoError {
 public:
-  AutoError(mozilla::dom::ImportLoader* loader)
+  AutoError(mozilla::dom::ImportLoader* loader, bool scriptsBlocked = true)
     : mLoader(loader)
     , mPassed(false)
+    , mScriptsBlocked(scriptsBlocked)
   {}
 
   ~AutoError()
   {
     if (!mPassed) {
-      mLoader->Error();
+      mLoader->Error(mScriptsBlocked);
     }
   }
 
@@ -41,6 +43,7 @@ public:
 private:
   mozilla::dom::ImportLoader* mLoader;
   bool mPassed;
+  bool mScriptsBlocked;
 };
 
 namespace mozilla {
@@ -57,6 +60,7 @@ NS_IMPL_CYCLE_COLLECTING_RELEASE(ImportLoader)
 
 NS_IMPL_CYCLE_COLLECTION(ImportLoader,
                          mDocument,
+                         mImportParent,
                          mLinks)
 
 ImportLoader::ImportLoader(nsIURI* aURI, nsIDocument* aImportParent)
@@ -130,8 +134,8 @@ public:
                                                 mNode,
                                                 mSuccess ? NS_LITERAL_STRING("load")
                                                          : NS_LITERAL_STRING("error"),
-                                                /* aCanBubble = */ true,
-                                                /* aCancelable = */ true);
+                                                /* aCanBubble = */ false,
+                                                /* aCancelable = */ false);
   }
 
 private:
@@ -164,7 +168,7 @@ ImportLoader::Done()
 }
 
 void
-ImportLoader::Error()
+ImportLoader::Error(bool aUnblockScripts)
 {
   mDocument = nullptr;
   mStopped = true;
@@ -172,7 +176,9 @@ ImportLoader::Error()
   for (uint32_t i = 0; i < count; i++) {
     DispatchErrorEvent(mLinks[i]);
   }
-  UnblockScripts();
+  if (aUnblockScripts) {
+    UnblockScripts();
+  }
   ReleaseResources();
 }
 
@@ -181,18 +187,27 @@ ImportLoader::Error()
 void ImportLoader::ReleaseResources()
 {
   mParserStreamListener = nullptr;
-  mChannel = nullptr;
   mImportParent = nullptr;
+}
+
+nsIPrincipal*
+ImportLoader::Principal()
+{
+  MOZ_ASSERT(mImportParent);
+  nsCOMPtr<nsIDocument> master = mImportParent->MasterDocument();
+  nsCOMPtr<nsIScriptObjectPrincipal> sop = do_QueryInterface(master);
+  MOZ_ASSERT(sop);
+  return sop->GetPrincipal();
 }
 
 void
 ImportLoader::Open()
 {
-  AutoError ae(this);
+  AutoError ae(this, false);
   // Imports should obey to the master documents CSP.
   nsCOMPtr<nsIDocument> master = mImportParent->MasterDocument();
-  nsCOMPtr<nsIScriptObjectPrincipal> sop = do_QueryInterface(master);
-  nsCOMPtr<nsIPrincipal> principal = sop->GetPrincipal();
+  nsIPrincipal* principal = Principal();
+
   int16_t shouldLoad = nsIContentPolicy::ACCEPT;
   nsresult rv = NS_CheckContentLoadPolicy(nsIContentPolicy::TYPE_SCRIPT,
                                           mURI,
@@ -208,6 +223,11 @@ ImportLoader::Open()
     return;
   }
 
+  nsIScriptSecurityManager* secMan = nsContentUtils::GetSecurityManager();
+  rv = secMan->CheckLoadURIWithPrincipal(principal, mURI,
+                                         nsIScriptSecurityManager::STANDARD);
+  NS_ENSURE_SUCCESS_VOID(rv);
+
   nsCOMPtr<nsILoadGroup> loadGroup = mImportParent->GetDocumentLoadGroup();
   nsCOMPtr<nsIChannelPolicy> channelPolicy;
   nsCOMPtr<nsIContentSecurityPolicy> csp;
@@ -219,7 +239,8 @@ ImportLoader::Open()
     channelPolicy->SetContentSecurityPolicy(csp);
     channelPolicy->SetLoadType(nsIContentPolicy::TYPE_SUBDOCUMENT);
   }
-  rv = NS_NewChannel(getter_AddRefs(mChannel),
+  nsCOMPtr<nsIChannel> channel;
+  rv = NS_NewChannel(getter_AddRefs(channel),
                      mURI,
                      /* ioService = */ nullptr,
                      loadGroup,
@@ -228,7 +249,16 @@ ImportLoader::Open()
                      channelPolicy);
   NS_ENSURE_SUCCESS_VOID(rv);
 
-  mChannel->AsyncOpen(this, nullptr);
+  // Init CORSListenerProxy and omit credentials.
+  nsRefPtr<nsCORSListenerProxy> corsListener =
+    new nsCORSListenerProxy(this, principal,
+                            /* aWithCredentials */ false);
+  rv = corsListener->Init(channel, true);
+  NS_ENSURE_SUCCESS_VOID(rv);
+
+  rv = channel->AsyncOpen(corsListener, nullptr);
+  NS_ENSURE_SUCCESS_VOID(rv);
+
   BlockScripts();
   ae.Pass();
 }
@@ -243,9 +273,13 @@ ImportLoader::OnDataAvailable(nsIRequest* aRequest,
   MOZ_ASSERT(mParserStreamListener);
 
   AutoError ae(this);
-  nsresult rv = mParserStreamListener->OnDataAvailable(mChannel, aContext,
-                                                       aStream, aOffset,
-                                                       aCount);
+  nsresult rv;
+  nsCOMPtr<nsIChannel> channel = do_QueryInterface(aRequest, &rv);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  rv = mParserStreamListener->OnDataAvailable(channel, aContext,
+                                              aStream, aOffset,
+                                              aCount);
   NS_ENSURE_SUCCESS(rv, rv);
   ae.Pass();
   return rv;
@@ -268,11 +302,23 @@ ImportLoader::OnStopRequest(nsIRequest* aRequest,
                             nsISupports* aContext,
                             nsresult aStatus)
 {
-  MOZ_ASSERT(aRequest == mChannel,
-             "Wrong channel something went horribly wrong");
+  // OnStartRequest throws a special error code to let us know that we
+  // shouldn't do anything else.
+  if (aStatus == NS_ERROR_DOM_ABORT_ERR) {
+    // We failed in OnStartRequest, nothing more to do (we've already
+    // dispatched an error event) just return here.
+    MOZ_ASSERT(mStopped);
+    return NS_OK;
+  }
 
   if (mParserStreamListener) {
     mParserStreamListener->OnStopRequest(aRequest, aContext, aStatus);
+  }
+
+  if (!mDocument) {
+    // If at this point we don't have a document, then the error was
+    // already reported.
+    return NS_ERROR_DOM_ABORT_ERR;
   }
 
   nsCOMPtr<EventTarget> eventTarget = do_QueryInterface(mDocument);
@@ -286,19 +332,30 @@ ImportLoader::OnStopRequest(nsIRequest* aRequest,
 NS_IMETHODIMP
 ImportLoader::OnStartRequest(nsIRequest* aRequest, nsISupports* aContext)
 {
-  MOZ_ASSERT(aRequest == mChannel,
-             "Wrong channel, something went horribly wrong");
-
   AutoError ae(this);
-  nsCOMPtr<nsIScriptObjectPrincipal> sop = do_QueryInterface(mImportParent);
-  nsCOMPtr<nsIPrincipal> principal = sop->GetPrincipal();
-  mChannel->SetOwner(principal);
+  nsIPrincipal* principal = Principal();
+
+  nsCOMPtr<nsIChannel> channel = do_QueryInterface(aRequest);
+  if (!channel) {
+    return NS_ERROR_DOM_ABORT_ERR;
+  }
+
+  if (nsContentUtils::IsSystemPrincipal(principal)) {
+    // We should never import non-system documents and run their scripts with system principal!
+    nsCOMPtr<nsIPrincipal> channelPrincipal;
+    nsContentUtils::GetSecurityManager()->GetChannelPrincipal(channel,
+                                                              getter_AddRefs(channelPrincipal));
+    if (!nsContentUtils::IsSystemPrincipal(channelPrincipal)) {
+      return NS_ERROR_FAILURE;
+    }
+  }
+  channel->SetOwner(principal);
 
   nsAutoCString type;
-  mChannel->GetContentType(type);
+  channel->GetContentType(type);
   if (!type.EqualsLiteral("text/html")) {
     NS_WARNING("ImportLoader wrong content type");
-    return NS_ERROR_FAILURE;
+    return NS_ERROR_DOM_ABORT_ERR;
   }
 
   // The scope object is same for all the imports in an import tree,
@@ -311,26 +368,30 @@ ImportLoader::OnStartRequest(nsIRequest* aRequest, nsISupports* aContext)
                                   emptyStr, emptyStr, nullptr, mURI,
                                   baseURI, principal, false, global,
                                   DocumentFlavorHTML);
-  NS_ENSURE_SUCCESS(rv, rv);
+  NS_ENSURE_SUCCESS(rv, NS_ERROR_DOM_ABORT_ERR);
 
   // The imported document must know which master document it belongs to.
   mDocument = do_QueryInterface(importDoc);
   nsCOMPtr<nsIDocument> master = mImportParent->MasterDocument();
   mDocument->SetMasterDocument(master);
 
-  // We have to connect the blank document we created with the channel we opened.
+  // We have to connect the blank document we created with the channel we opened,
+  // and create its own LoadGroup for it.
   nsCOMPtr<nsIStreamListener> listener;
   nsCOMPtr<nsILoadGroup> loadGroup;
-  mChannel->GetLoadGroup(getter_AddRefs(loadGroup));
-  rv = mDocument->StartDocumentLoad("import", mChannel, loadGroup,
+  channel->GetLoadGroup(getter_AddRefs(loadGroup));
+  nsCOMPtr<nsILoadGroup> newLoadGroup = do_CreateInstance(NS_LOADGROUP_CONTRACTID);
+  NS_ENSURE_TRUE(newLoadGroup, NS_ERROR_OUT_OF_MEMORY);
+  newLoadGroup->SetLoadGroup(loadGroup);
+  rv = mDocument->StartDocumentLoad("import", channel, newLoadGroup,
                                     nullptr, getter_AddRefs(listener),
                                     true);
-  NS_ENSURE_SUCCESS(rv, rv);
+  NS_ENSURE_SUCCESS(rv, NS_ERROR_DOM_ABORT_ERR);
 
   // Let's start parser.
   mParserStreamListener = listener;
   rv = listener->OnStartRequest(aRequest, aContext);
-  NS_ENSURE_SUCCESS(rv, rv);
+  NS_ENSURE_SUCCESS(rv, NS_ERROR_DOM_ABORT_ERR);
 
   ae.Pass();
   return NS_OK;

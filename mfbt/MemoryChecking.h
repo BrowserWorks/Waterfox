@@ -5,7 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /*
- * Provides a common interface to the ASan (AddressSanitizer) and Valgrind 
+ * Provides a common interface to the ASan (AddressSanitizer) and Valgrind
  * functions used to mark memory in certain ways. In detail, the following
  * three macros are provided:
  *
@@ -34,14 +34,14 @@
 #if defined(MOZ_ASAN)
 #include <stddef.h>
 
+#include "mozilla/Types.h"
+
 extern "C" {
-  /* These definitions are usually provided through the 
-   * sanitizer/asan_interface.h header installed by ASan.
-   */
-  void __asan_poison_memory_region(void const volatile *addr, size_t size)
-    __attribute__((visibility("default")));
-  void __asan_unpoison_memory_region(void const volatile *addr, size_t size)
-    __attribute__((visibility("default")));
+/* These definitions are usually provided through the
+ * sanitizer/asan_interface.h header installed by ASan.
+ */
+void MOZ_EXPORT __asan_poison_memory_region(void const volatile *addr, size_t size);
+void MOZ_EXPORT __asan_unpoison_memory_region(void const volatile *addr, size_t size);
 
 #define MOZ_MAKE_MEM_NOACCESS(addr, size) \
   __asan_poison_memory_region((addr), (size))
@@ -63,9 +63,9 @@ extern "C" {
   VALGRIND_MAKE_MEM_DEFINED((addr), (size))
 #else
 
-#define MOZ_MAKE_MEM_NOACCESS(addr, size) do {} while(0)
-#define MOZ_MAKE_MEM_UNDEFINED(addr, size) do {} while(0)
-#define MOZ_MAKE_MEM_DEFINED(addr, size) do {} while(0)
+#define MOZ_MAKE_MEM_NOACCESS(addr, size) do {} while (0)
+#define MOZ_MAKE_MEM_UNDEFINED(addr, size) do {} while (0)
+#define MOZ_MAKE_MEM_DEFINED(addr, size) do {} while (0)
 
 #endif
 

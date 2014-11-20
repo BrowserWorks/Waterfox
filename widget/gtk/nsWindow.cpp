@@ -136,6 +136,9 @@ const gint kEvents = GDK_EXPOSURE_MASK | GDK_STRUCTURE_MASK |
                      GDK_VISIBILITY_NOTIFY_MASK |
                      GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK |
                      GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK |
+#if GTK_CHECK_VERSION(3,4,0)
+                     GDK_SMOOTH_SCROLL_MASK |
+#endif
                      GDK_SCROLL_MASK |
                      GDK_POINTER_MOTION_MASK;
 
@@ -381,6 +384,10 @@ nsWindow::nsWindow()
 
     mTransparencyBitmapWidth  = 0;
     mTransparencyBitmapHeight = 0;
+
+#if GTK_CHECK_VERSION(3,4,0)
+    mLastScrollEventTime = GDK_CURRENT_TIME;
+#endif
 }
 
 nsWindow::~nsWindow()
@@ -398,7 +405,11 @@ nsWindow::ReleaseGlobals()
 {
   for (uint32_t i = 0; i < ArrayLength(gCursorCache); ++i) {
     if (gCursorCache[i]) {
+#if (MOZ_WIDGET_GTK == 3)
+      g_object_unref(gCursorCache[i]);
+#else
       gdk_cursor_unref(gCursorCache[i]);
+#endif
       gCursorCache[i] = nullptr;
     }
   }
@@ -1580,7 +1591,11 @@ nsWindow::SetCursor(imgIContainer* aCursor,
             gdk_window_set_cursor(gtk_widget_get_window(GTK_WIDGET(mContainer)), cursor);
             rv = NS_OK;
         }
+#if (MOZ_WIDGET_GTK == 3)
+        g_object_unref(cursor);
+#else
         gdk_cursor_unref(cursor);
+#endif
     }
 
     return rv;
@@ -2135,18 +2150,21 @@ nsWindow::OnExposeEvent(cairo_t *cr)
     if (gfxPlatform::GetPlatform()->
             SupportsAzureContentForType(BackendType::CAIRO)) {
         IntSize intSize(surf->GetSize().width, surf->GetSize().height);
-        ctx = new gfxContext(gfxPlatform::GetPlatform()->
-            CreateDrawTargetForSurface(surf, intSize));
+        RefPtr<DrawTarget> dt =
+          gfxPlatform::GetPlatform()->CreateDrawTargetForSurface(surf, intSize);
+        ctx = new gfxContext(dt);
     } else if (gfxPlatform::GetPlatform()->
                    SupportsAzureContentForType(BackendType::SKIA) &&
                surf->GetType() == gfxSurfaceType::Image) {
        gfxImageSurface* imgSurf = static_cast<gfxImageSurface*>(surf);
        SurfaceFormat format = ImageFormatToSurfaceFormat(imgSurf->Format());
        IntSize intSize(surf->GetSize().width, surf->GetSize().height);
-       ctx = new gfxContext(gfxPlatform::GetPlatform()->CreateDrawTargetForData(
-           imgSurf->Data(), intSize, imgSurf->Stride(), format));
-    }  else {
-        ctx = new gfxContext(surf);
+       RefPtr<DrawTarget> dt =
+         gfxPlatform::GetPlatform()->CreateDrawTargetForData(
+                        imgSurf->Data(), intSize, imgSurf->Stride(), format);
+       ctx = new gfxContext(dt);
+    } else {
+        MOZ_MAKE_COMPILER_ASSUME_IS_UNREACHABLE("Unexpected content type");
     }
 
 #ifdef MOZ_X11
@@ -3075,10 +3093,37 @@ nsWindow::OnScrollEvent(GdkEventScroll *aEvent)
     // check to see if we should rollup
     if (CheckForRollup(aEvent->x_root, aEvent->y_root, true, false))
         return;
-
+#if GTK_CHECK_VERSION(3,4,0)
+    // check for duplicate legacy scroll event, see GNOME bug 726878
+    if (mLastScrollEventTime == aEvent->time)
+        return; 
+#endif
     WidgetWheelEvent wheelEvent(true, NS_WHEEL_WHEEL, this);
     wheelEvent.deltaMode = nsIDOMWheelEvent::DOM_DELTA_LINE;
     switch (aEvent->direction) {
+#if GTK_CHECK_VERSION(3,4,0)
+    case GDK_SCROLL_SMOOTH:
+    {
+        // As of GTK 3.4, all directional scroll events are provided by
+        // the GDK_SCROLL_SMOOTH direction on XInput2 devices.
+        mLastScrollEventTime = aEvent->time;
+        // TODO - use a more appropriate scrolling unit than lines.
+        // Multiply event deltas by 3 to emulate legacy behaviour.
+        wheelEvent.deltaX = aEvent->delta_x * 3;
+        wheelEvent.deltaY = aEvent->delta_y * 3;
+        wheelEvent.mIsNoLineOrPageDelta = true;
+        // This next step manually unsets smooth scrolling for touch devices 
+        // that trigger GDK_SCROLL_SMOOTH. We use the slave device, which 
+        // represents the actual input.
+        GdkDevice *device = gdk_event_get_source_device((GdkEvent*)aEvent);
+        GdkInputSource source = gdk_device_get_source(device);
+        if (source == GDK_SOURCE_TOUCHSCREEN ||
+            source == GDK_SOURCE_TOUCHPAD) {
+            wheelEvent.scrollType = WidgetWheelEvent::SCROLL_ASYNCHRONOUSELY;
+        }
+        break;
+    }
+#endif
     case GDK_SCROLL_UP:
         wheelEvent.deltaY = wheelEvent.lineOrPageDeltaY = -3;
         break;
@@ -4568,7 +4613,11 @@ nsWindow::SetNonXEmbedPluginFocus()
                    RevertToNone,
                    CurrentTime);
     gdk_flush();
+#if (MOZ_WIDGET_GTK == 3)
+    gdk_error_trap_pop_ignored();
+#else
     gdk_error_trap_pop();
+#endif
     gPluginFocusWindow = this;
     gdk_window_add_filter(nullptr, plugin_client_message_filter, this);
 
@@ -4609,7 +4658,11 @@ nsWindow::LoseNonXEmbedPluginFocus()
                        RevertToParent,
                        CurrentTime);
         gdk_flush();
+#if (MOZ_WIDGET_GTK == 3)
+        gdk_error_trap_pop_ignored();
+#else
         gdk_error_trap_pop();
+#endif
     }
     gPluginFocusWindow = nullptr;
     mOldFocusWindow = 0;
@@ -4950,8 +5003,6 @@ get_gtk_cursor(nsCursor aCursor)
     // Those two aren’t standardized. Trying both KDE’s and GNOME’s names
     case eCursor_grab:
         gdkcursor = gdk_cursor_new_from_name(defaultDisplay, "openhand");
-        if (!gdkcursor)
-            gdkcursor = gdk_cursor_new_from_name(defaultDisplay, "hand1");
         if (!gdkcursor)
             newType = MOZ_CURSOR_HAND_GRAB;
         break;
@@ -6081,27 +6132,27 @@ nsWindow::GetThebesSurface(cairo_t *cr)
     }
     if (!usingShm)
 #  endif  // MOZ_HAVE_SHMIMAGE
-
+    {
 #if (MOZ_WIDGET_GTK == 3)
 #if MOZ_TREE_CAIRO
 #error "cairo-gtk3 target must be built with --enable-system-cairo"
 #else    
-    if (cr) {
-        cairo_surface_t *surf = cairo_get_target(cr);
-        if (cairo_surface_status(surf) != CAIRO_STATUS_SUCCESS) {
-          NS_NOTREACHED("Missing cairo target?");
-          return nullptr;
-        }
-        mThebesSurface = gfxASurface::Wrap(surf);
-    } else
+        if (cr) {
+            cairo_surface_t *surf = cairo_get_target(cr);
+            if (cairo_surface_status(surf) != CAIRO_STATUS_SUCCESS) {
+              NS_NOTREACHED("Missing cairo target?");
+              return nullptr;
+            }
+            mThebesSurface = gfxASurface::Wrap(surf);
+        } else
 #endif
 #endif // (MOZ_WIDGET_GTK == 3)
-        mThebesSurface = new gfxXlibSurface
-            (GDK_WINDOW_XDISPLAY(mGdkWindow),
-             gdk_x11_window_get_xid(mGdkWindow),
-             visual,
-             size);
-
+            mThebesSurface = new gfxXlibSurface
+                (GDK_WINDOW_XDISPLAY(mGdkWindow),
+                 gdk_x11_window_get_xid(mGdkWindow),
+                 visual,
+                 size);
+    }
 #endif // MOZ_X11
 
     // if the surface creation is reporting an error, then

@@ -54,8 +54,6 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(ShadowRoot,
   tmp->mIdentifierMap.Clear();
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
-DOMCI_DATA(ShadowRoot, ShadowRoot)
-
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(ShadowRoot)
   NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIContent)
   NS_INTERFACE_MAP_ENTRY(nsIMutationObserver)
@@ -65,7 +63,7 @@ NS_IMPL_ADDREF_INHERITED(ShadowRoot, DocumentFragment)
 NS_IMPL_RELEASE_INHERITED(ShadowRoot, DocumentFragment)
 
 ShadowRoot::ShadowRoot(nsIContent* aContent,
-                       already_AddRefed<nsINodeInfo>&& aNodeInfo,
+                       already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,
                        nsXBLPrototypeBinding* aProtoBinding)
   : DocumentFragment(aNodeInfo), mPoolHost(aContent),
     mProtoBinding(aProtoBinding), mShadowElement(nullptr),
@@ -114,7 +112,7 @@ ShadowRoot::WrapObject(JSContext* aCx)
 ShadowRoot*
 ShadowRoot::FromNode(nsINode* aNode)
 {
-  if (aNode->HasFlag(NODE_IS_IN_SHADOW_TREE) && !aNode->GetParentNode()) {
+  if (aNode->IsInShadowTree() && !aNode->GetParentNode()) {
     MOZ_ASSERT(aNode->NodeType() == nsIDOMNode::DOCUMENT_FRAGMENT_NODE,
                "ShadowRoot is a document fragment.");
     return static_cast<ShadowRoot*>(aNode);
@@ -137,7 +135,7 @@ ShadowRoot::StyleSheetChanged()
 }
 
 void
-ShadowRoot::InsertSheet(nsCSSStyleSheet* aSheet,
+ShadowRoot::InsertSheet(CSSStyleSheet* aSheet,
                         nsIContent* aLinkingContent)
 {
   nsCOMPtr<nsIStyleSheetLinkingElement>
@@ -168,7 +166,7 @@ ShadowRoot::InsertSheet(nsCSSStyleSheet* aSheet,
 }
 
 void
-ShadowRoot::RemoveSheet(nsCSSStyleSheet* aSheet)
+ShadowRoot::RemoveSheet(CSSStyleSheet* aSheet)
 {
   mProtoBinding->RemoveStyleSheet(aSheet);
 
@@ -719,7 +717,7 @@ ShadowRootStyleSheetList::~ShadowRootStyleSheetList()
   MOZ_COUNT_DTOR(ShadowRootStyleSheetList);
 }
 
-nsCSSStyleSheet*
+CSSStyleSheet*
 ShadowRootStyleSheetList::IndexedGetter(uint32_t aIndex, bool& aFound)
 {
   aFound = aIndex < mShadowRoot->mProtoBinding->SheetCount();

@@ -9,6 +9,7 @@
 #include "nsJARChannel.h"
 #include "nsNetCID.h"
 #include "nsIAppsService.h"
+#include "nsILoadInfo.h"
 #include "nsCxPusher.h"
 #include "nsXULAppAPI.h"
 
@@ -21,7 +22,7 @@ class DummyChannel : public nsIJARChannel
                           , nsRunnable
 {
 public:
-  NS_DECL_ISUPPORTS
+  NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSIREQUEST
   NS_DECL_NSICHANNEL
   NS_DECL_NSIJARCHANNEL
@@ -31,15 +32,18 @@ public:
   NS_IMETHODIMP Run();
 
 private:
+  ~DummyChannel() {}
+
   bool                        mPending;
   uint32_t                    mSuspendCount;
   nsCOMPtr<nsISupports>       mListenerContext;
   nsCOMPtr<nsIStreamListener> mListener;
   nsCOMPtr<nsILoadGroup>      mLoadGroup;
   nsLoadFlags                 mLoadFlags;
+  nsCOMPtr<nsILoadInfo>       mLoadInfo;
 };
 
-NS_IMPL_ISUPPORTS(DummyChannel, nsIRequest, nsIChannel, nsIJARChannel)
+NS_IMPL_ISUPPORTS_INHERITED(DummyChannel, nsRunnable, nsIRequest, nsIChannel, nsIJARChannel)
 
 DummyChannel::DummyChannel() : mPending(false)
                              , mSuspendCount(0)
@@ -123,6 +127,11 @@ NS_IMETHODIMP DummyChannel::GetJarFile(nsIFile* *aFile)
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 
+NS_IMETHODIMP DummyChannel::EnsureChildFd()
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
 NS_IMETHODIMP DummyChannel::Run()
 {
   nsresult rv = mListener->OnStartRequest(this, mListenerContext);
@@ -190,6 +199,18 @@ NS_IMETHODIMP DummyChannel::GetOwner(nsISupports**)
 NS_IMETHODIMP DummyChannel::SetOwner(nsISupports*)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP DummyChannel::GetLoadInfo(nsILoadInfo** aLoadInfo)
+{
+  NS_IF_ADDREF(*aLoadInfo = mLoadInfo);
+  return NS_OK;
+}
+
+NS_IMETHODIMP DummyChannel::SetLoadInfo(nsILoadInfo* aLoadInfo)
+{
+  mLoadInfo = aLoadInfo;
+  return NS_OK;
 }
 
 NS_IMETHODIMP DummyChannel::GetNotificationCallbacks(nsIInterfaceRequestor**)

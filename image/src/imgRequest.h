@@ -46,10 +46,11 @@ class imgRequest : public nsIStreamListener,
                    public nsIInterfaceRequestor,
                    public nsIAsyncVerifyRedirectCallback
 {
+  virtual ~imgRequest();
+
 public:
   typedef mozilla::image::ImageURL ImageURL;
   imgRequest(imgLoader* aLoader);
-  virtual ~imgRequest();
 
   NS_DECL_THREADSAFE_ISUPPORTS
 
@@ -74,6 +75,9 @@ public:
 
   // Called or dispatched by cancel for main thread only execution.
   void ContinueCancel(nsresult aStatus);
+
+  // Called or dispatched by EvictFromCache for main thread only execution.
+  void ContinueEvict();
 
   // Methods that get forwarded to the Image, or deferred until it's
   // instantiated.
@@ -132,6 +136,8 @@ public:
   // OK to use on any thread.
   nsresult GetURI(ImageURL **aURI);
 
+  nsresult GetImageErrorCode(void);
+
 private:
   friend class imgCacheEntry;
   friend class imgRequestProxy;
@@ -145,6 +151,7 @@ private:
     mLoadId = aLoadId;
   }
   void Cancel(nsresult aStatus);
+  void EvictFromCache();
   void RemoveFromCache();
 
   nsresult GetSecurityInfo(nsISupports **aSecurityInfo);
@@ -237,6 +244,8 @@ private:
   // The CORS mode (defined in imgIRequest) this image was loaded with. By
   // default, imgIRequest::CORS_NONE.
   int32_t mCORSMode;
+
+  nsresult mImageErrorCode;
 
   // Sometimes consumers want to do things before the image is ready. Let them,
   // and apply the action when the image becomes available.

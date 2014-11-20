@@ -12,6 +12,8 @@
 #include "nsContainerFrame.h"
 #include "nsIFrameInlines.h"
 
+using namespace mozilla;
+
 NS_IMPL_FRAMEARENA_HELPERS(nsSplittableFrame)
 
 void
@@ -207,7 +209,7 @@ nsSplittableFrame::RemoveFromFlow(nsIFrame* aFrame)
 }
 
 nscoord
-nsSplittableFrame::GetConsumedHeight() const
+nsSplittableFrame::GetConsumedBSize() const
 {
   nscoord height = 0;
   for (nsIFrame* prev = GetPrevInFlow(); prev; prev = prev->GetPrevInFlow()) {
@@ -217,39 +219,39 @@ nsSplittableFrame::GetConsumedHeight() const
 }
 
 nscoord
-nsSplittableFrame::GetEffectiveComputedHeight(const nsHTMLReflowState& aReflowState,
-                                              nscoord aConsumedHeight) const
+nsSplittableFrame::GetEffectiveComputedBSize(const nsHTMLReflowState& aReflowState,
+                                              nscoord aConsumedBSize) const
 {
-  nscoord height = aReflowState.ComputedHeight();
-  if (height == NS_INTRINSICSIZE) {
+  nscoord bSize = aReflowState.ComputedBSize();
+  if (bSize == NS_INTRINSICSIZE) {
     return NS_INTRINSICSIZE;
   }
 
-  if (aConsumedHeight == NS_INTRINSICSIZE) {
-    aConsumedHeight = GetConsumedHeight();
+  if (aConsumedBSize == NS_INTRINSICSIZE) {
+    aConsumedBSize = GetConsumedBSize();
   }
 
-  height -= aConsumedHeight;
+  bSize -= aConsumedBSize;
 
   // We may have stretched the frame beyond its computed height. Oh well.
-  return std::max(0, height);
+  return std::max(0, bSize);
 }
 
-int
+nsIFrame::LogicalSides
 nsSplittableFrame::GetLogicalSkipSides(const nsHTMLReflowState* aReflowState) const
 {
   if (IS_TRUE_OVERFLOW_CONTAINER(this)) {
-    return LOGICAL_SIDES_B_BOTH;
+    return LogicalSides(eLogicalSideBitsBBoth);
   }
 
   if (MOZ_UNLIKELY(StyleBorder()->mBoxDecorationBreak ==
                      NS_STYLE_BOX_DECORATION_BREAK_CLONE)) {
-    return 0;
+    return LogicalSides();
   }
 
-  int skip = 0;
+  LogicalSides skip;
   if (GetPrevInFlow()) {
-    skip |= LOGICAL_SIDE_B_START;
+    skip |= eLogicalSideBitsBStart;
   }
 
   if (aReflowState) {
@@ -258,19 +260,19 @@ nsSplittableFrame::GetLogicalSkipSides(const nsHTMLReflowState* aReflowState) co
     // height, though, then we're going to need a next-in-flow, it just hasn't
     // been created yet.
 
-    if (NS_UNCONSTRAINEDSIZE != aReflowState->AvailableHeight()) {
-      nscoord effectiveCH = this->GetEffectiveComputedHeight(*aReflowState);
+    if (NS_UNCONSTRAINEDSIZE != aReflowState->AvailableBSize()) {
+      nscoord effectiveCH = this->GetEffectiveComputedBSize(*aReflowState);
       if (effectiveCH != NS_INTRINSICSIZE &&
-          effectiveCH > aReflowState->AvailableHeight()) {
+          effectiveCH > aReflowState->AvailableBSize()) {
         // Our content height is going to exceed our available height, so we're
         // going to need a next-in-flow.
-        skip |= LOGICAL_SIDE_B_END;
+        skip |= eLogicalSideBitsBEnd;
       }
     }
   } else {
     nsIFrame* nif = GetNextInFlow();
     if (nif && !IS_TRUE_OVERFLOW_CONTAINER(nif)) {
-      skip |= LOGICAL_SIDE_B_END;
+      skip |= eLogicalSideBitsBEnd;
     }
   }
 

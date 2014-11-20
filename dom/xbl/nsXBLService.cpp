@@ -168,12 +168,13 @@ public:
   nsXBLStreamListener(nsIDocument* aBoundDocument,
                       nsIXMLContentSink* aSink,
                       nsIDocument* aBindingDocument);
-  ~nsXBLStreamListener();
 
   void AddRequest(nsXBLBindingRequest* aRequest) { mBindingRequests.AppendElement(aRequest); }
   bool HasRequest(nsIURI* aURI, nsIContent* aBoundElement);
 
 private:
+  ~nsXBLStreamListener();
+
   nsCOMPtr<nsIStreamListener> mInner;
   nsAutoTArray<nsXBLBindingRequest*, 8> mBindingRequests;
 
@@ -875,7 +876,7 @@ nsXBLService::LoadBindingDocumentInfo(nsIContent* aBoundElement,
       }
     }
 
-    nsINodeInfo *ni = nullptr;
+    NodeInfo *ni = nullptr;
     if (aBoundElement)
       ni = aBoundElement->NodeInfo();
 

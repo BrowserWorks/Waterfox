@@ -3,14 +3,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-ifndef .PYMAKE
 ifeq (,$(MAKE_VERSION))
 $(error GNU Make is required)
 endif
 make_min_ver := 3.81
 ifneq ($(make_min_ver),$(firstword $(sort $(make_min_ver) $(MAKE_VERSION))))
 $(error GNU Make $(make_min_ver) or higher is required)
-endif
 endif
 
 export TOPLEVEL_BUILD := 1
@@ -132,6 +130,7 @@ install-manifests: install-tests
 install-tests: $(install_manifest_depends)
 	$(call py_action,process_install_manifest,$(if $(NO_REMOVE),--no-remove )_tests _build_manifests/install/tests)
 
+include $(topsrcdir)/build/moz-automation.mk
 
 # _tests should be purged during cleaning. However, we don't want it purged
 # during PGO builds because it contains some auto-generated files.
@@ -168,7 +167,7 @@ endif
 endif
 
 default all::
-	$(call BUILDSTATUS,TIERS export $(if $(COMPILE_ENVIRONMENT),$(if $(MOZ_PSEUDO_DERECURSE),compile ))libs tools)
+	$(call BUILDSTATUS,TIERS export $(if $(COMPILE_ENVIRONMENT),compile )libs tools $(if $(MOZ_AUTOMATION),$(MOZ_AUTOMATION_TIERS)))
 
 include $(topsrcdir)/config/rules.mk
 
@@ -252,6 +251,26 @@ MOZ_SOURCE_STAMP := $(MOZ_SOURCE_STAMP)
 export MOZ_SOURCE_STAMP
 endif
 
+.PHONY: update-packaging
+update-packaging:
+	$(MAKE) -C tools/update-packaging
+
+.PHONY: pretty-package
+pretty-package:
+	$(MAKE) package MOZ_PKG_PRETTYNAMES=1
+
+.PHONY: pretty-package-tests
+pretty-package-tests:
+	$(MAKE) package-tests MOZ_PKG_PRETTYNAMES=1
+
+.PHONY: pretty-l10n-check
+pretty-l10n-check:
+	$(MAKE) l10n-check MOZ_PKG_PRETTYNAMES=1
+
+.PHONY: pretty-update-packaging
+pretty-update-packaging:
+	$(MAKE) -C tools/update-packaging MOZ_PKG_PRETTYNAMES=1
+
 #XXX: this is a hack, since we don't want to clobber for MSVC
 # PGO support, but we can't do this test in client.mk
 ifneq ($(OS_ARCH)_$(GNU_CC), WINNT_)
@@ -291,11 +310,9 @@ config/export:
 
 endif
 
-ifdef MOZ_PSEUDO_DERECURSE
 # Interdependencies for parallel export.
 js/xpconnect/src/export: dom/bindings/export xpcom/xpidl/export
-accessible/src/xpcom/export: xpcom/xpidl/export
+accessible/xpcom/export: xpcom/xpidl/export
 ifdef ENABLE_CLANG_PLUGIN
 js/src/export config/export: build/clang-plugin/export
-endif
 endif

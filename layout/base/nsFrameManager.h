@@ -19,11 +19,15 @@
 #ifndef _nsFrameManager_h_
 #define _nsFrameManager_h_
 
-#include "nsIFrame.h"
 #include "nsFrameManagerBase.h"
+
+#include "nsAutoPtr.h"
+#include "nsFrameList.h"
 #include "nsIContent.h"
+#include "nsStyleContext.h"
 
 class nsContainerFrame;
+class nsPlaceholderFrame;
 
 namespace mozilla {
 /**
@@ -68,12 +72,14 @@ struct UndisplayedNode {
  * lock can be acquired, then the changes are processed immediately; otherwise,
  * they're queued and processed later.
  *
- * Do not add virtual methods to this class, or bryner will punish you.
+ * Do not add virtual methods (a vtable pointer) or members to this class, or
+ * else you'll break the validity of the reinterpret_cast in nsIPresShell's
+ * FrameManager() method.
  */
 
 class nsFrameManager : public nsFrameManagerBase
 {
-  typedef nsIFrame::ChildListID ChildListID;
+  typedef mozilla::layout::FrameChildListID ChildListID;
 
 public:
   nsFrameManager(nsIPresShell *aPresShell, nsStyleSet* aStyleSet) {
@@ -155,11 +161,6 @@ public:
 
   void RestoreFrameStateFor(nsIFrame*              aFrame,
                                         nsILayoutHistoryState* aState);
-
-  nsIPresShell* GetPresShell() const { return mPresShell; }
-  nsPresContext* GetPresContext() const {
-    return mPresShell->GetPresContext();
-  }
 };
 
 #endif

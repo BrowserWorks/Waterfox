@@ -620,7 +620,9 @@ public:
   DrawTarget() : mTransformDirty(false), mPermitSubpixelAA(false) {}
   virtual ~DrawTarget() {}
 
-  virtual BackendType GetType() const = 0;
+  virtual DrawTargetType GetType() const = 0;
+
+  virtual BackendType GetBackendType() const = 0;
   /**
    * Returns a SourceSurface which is a snapshot of the current contents of the DrawTarget.
    * Multiple calls to Snapshot() without any drawing operations in between will
@@ -998,6 +1000,18 @@ public:
   virtual ~DrawEventRecorder() { }
 };
 
+struct Tile
+{
+  RefPtr<DrawTarget> mDrawTarget;
+  IntPoint mTileOrigin;
+};
+
+struct TileSet
+{
+  Tile* mTiles;
+  size_t mTileCount;
+};
+
 class GFX2D_API Factory
 {
 public:
@@ -1046,19 +1060,19 @@ public:
   /**
    * This creates a simple data source surface for a certain size. It allocates
    * new memory for the surface. This memory is freed when the surface is
-   * destroyed.
+   * destroyed. The surface is not zeroed unless requested.
    */
   static TemporaryRef<DataSourceSurface>
-    CreateDataSourceSurface(const IntSize &aSize, SurfaceFormat aFormat);
+    CreateDataSourceSurface(const IntSize &aSize, SurfaceFormat aFormat, bool aZero = false);
 
   /**
    * This creates a simple data source surface for a certain size with a
    * specific stride, which must be large enough to fit all pixels.
    * It allocates new memory for the surface. This memory is freed when
-   * the surface is destroyed.
+   * the surface is destroyed. The surface is not zeroed unless requested.
    */
   static TemporaryRef<DataSourceSurface>
-    CreateDataSourceSurfaceWithStride(const IntSize &aSize, SurfaceFormat aFormat, int32_t aStride);
+    CreateDataSourceSurfaceWithStride(const IntSize &aSize, SurfaceFormat aFormat, int32_t aStride, bool aZero = false);
 
   /**
    * This creates a simple data source surface for some existing data. It will
@@ -1090,6 +1104,14 @@ public:
 #endif
   static TemporaryRef<DrawTarget>
     CreateDualDrawTarget(DrawTarget *targetA, DrawTarget *targetB);
+
+  /*
+   * This creates a new tiled DrawTarget. When a tiled drawtarget is used the
+   * drawing is distributed over number of tiles which may each hold an
+   * individual offset. The tiles in the set must each have the same backend
+   * and format.
+   */
+  static TemporaryRef<DrawTarget> CreateTiledDrawTarget(const TileSet& aTileSet);
 
 #ifdef XP_MACOSX
   static TemporaryRef<DrawTarget> CreateDrawTargetForCairoCGContext(CGContextRef cg, const IntSize& aSize);

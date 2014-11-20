@@ -9,6 +9,7 @@
 #ifndef nsCaret_h__
 #define nsCaret_h__
 
+#include "mozilla/MemoryReporting.h"
 #include "nsCoord.h"
 #include "nsISelectionListener.h"
 #include "nsIWeakReferenceUtils.h"
@@ -22,17 +23,17 @@ class nsITimer;
 class nsCaret : public nsISelectionListener
 {
   public:
+    nsCaret();
 
-                  nsCaret();
-    virtual       ~nsCaret();
+  protected:
+    virtual ~nsCaret();
 
+  public:
     enum EViewCoordinates {
       eTopLevelWindowCoordinates,
       eRenderingViewCoordinates,
       eClosestViewCoordinates
     };
-
-  public:
 
     NS_DECL_ISUPPORTS
 
@@ -45,8 +46,8 @@ class nsCaret : public nsISelectionListener
     /** GetCaretVisible will get the visibility of the caret
      *  This function is virtual so that it can be used by nsCaretAccessible
      *  without linking
-     *  @param inMakeVisible true it is shown, false it is hidden
-     *  @return false if and only if inMakeVisible is null, otherwise true 
+     *  @param outMakeVisible true if it is shown, false if it is hidden
+     *  @return NS_OK
      */
     virtual nsresult    GetCaretVisible(bool *outMakeVisible);
 
@@ -57,13 +58,13 @@ class nsCaret : public nsISelectionListener
 
     /** SetCaretReadOnly set the appearance of the caret
      *  @param inMakeReadonly true to show the caret in a 'read only' state,
-     *	    false to show the caret in normal, editing state
+     *         false to show the caret in normal, editing state
      */
     void    SetCaretReadOnly(bool inMakeReadonly);
 
     /** GetCaretReadOnly get the appearance of the caret
-     *	@return true if the caret is in 'read only' state, otherwise,
-     *	    returns false
+     *  @return true if the caret is in 'read only' state, otherwise,
+     *          returns false
      */
     bool GetCaretReadOnly()
     {
@@ -165,6 +166,8 @@ class nsCaret : public nsISelectionListener
 
     void CheckCaretDrawingState();
 
+    size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
+
 protected:
 
     void          KillTimer();
@@ -229,13 +232,13 @@ protected:
     uint32_t              mBlinkRate;         // time for one cyle (on then off), in milliseconds
     nscoord               mCaretWidthCSSPx;   // caret width in CSS pixels
     float                 mCaretAspectRatio;  // caret width/height aspect ratio
-    
+
     bool                  mVisible;           // is the caret blinking
 
     bool                  mDrawn;             // Denotes when the caret is physically drawn on the screen.
     bool                  mPendingDraw;       // True when the last on-state draw was suppressed.
 
-    bool                  mReadOnly;          // it the caret in readonly state (draws differently)      
+    bool                  mReadOnly;          // it the caret in readonly state (draws differently)
     bool                  mShowDuringSelection; // show when text is selected
 
     bool                  mIgnoreUserModify;

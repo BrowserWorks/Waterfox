@@ -17,7 +17,7 @@ using namespace mozilla::gfx;
 //----------------------------------------------------------------------
 // Implementation
 
-nsSVGPathGeometryElement::nsSVGPathGeometryElement(already_AddRefed<nsINodeInfo>& aNodeInfo)
+nsSVGPathGeometryElement::nsSVGPathGeometryElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
   : nsSVGPathGeometryElementBase(aNodeInfo)
 {
 }
@@ -110,16 +110,4 @@ nsSVGPathGeometryElement::GetFillRule()
   }
 
   return fillRule;
-}
-
-Float
-nsSVGPathGeometryElement::GetStrokeWidth()
-{
-  nsRefPtr<nsStyleContext> styleContext =
-    nsComputedDOMStyle::GetStyleContextForElementNoFlush(this, nullptr,
-                                                         nullptr);
-  return styleContext ?
-    SVGContentUtils::CoordToFloat(styleContext->PresContext(), this,
-                                  styleContext->StyleSVG()->mStrokeWidth) :
-    0.0f;
 }

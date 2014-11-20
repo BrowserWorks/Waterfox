@@ -14,6 +14,7 @@ EXPORTS += [
 ]
 
 UNIFIED_SOURCES += [
+    'ExportHelpers.cpp',
     'nsCxPusher.cpp',
     'nsScriptError.cpp',
     'nsXPConnect.cpp',
@@ -54,7 +55,6 @@ SOURCES += [
 
 GENERATED_SOURCES += [
     'dom_quickstubs.cpp',
-    'GeneratedEvents.cpp',
 ]
 
 FAIL_ON_WARNINGS = True
@@ -69,19 +69,14 @@ FINAL_LIBRARY = 'gklayout'
 
 GENERATED_FILES = [
     'dom_quickstubs.h',
-    'GeneratedEventClasses.h',
-    'GeneratedEvents.h',
 ]
 
 DEFINES['JS_THREADSAFE'] = True
 
-if CONFIG['MOZ_JSDEBUGGER']:
-    DEFINES['MOZ_JSDEBUGGER'] = True
-
 LOCAL_INCLUDES += [
     '../loader',
     '../wrappers',
-    '/caps/include',
+    '/caps',
     '/content/base/public',
     '/content/base/src',
     '/content/html/content/src',
@@ -92,7 +87,7 @@ LOCAL_INCLUDES += [
     '/js/ipc',
     '/layout/base',
     '/layout/style',
-    '/xpcom/reflect/xptinfo/src',
+    '/xpcom/reflect/xptinfo',
 ]
 
 if CONFIG['MOZ_B2G_BT']:

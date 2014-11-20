@@ -13,6 +13,7 @@
 
 #include "mozilla/PodOperations.h"
 
+#include "builtin/SymbolObject.h"
 #include "vm/ArrayObject.h"
 #include "vm/BooleanObject.h"
 #include "vm/NumberObject.h"
@@ -42,8 +43,9 @@ CompilerOutput::ion() const
     jit::IonScript *ion = jit::GetIonScript(script(), mode());
     JS_ASSERT(ion != ION_COMPILING_SCRIPT);
     return ion;
+#else
+    MOZ_CRASH("Invalid kind of CompilerOutput");
 #endif
-    MOZ_ASSUME_UNREACHABLE("Invalid kind of CompilerOutput");
 }
 
 inline CompilerOutput*
@@ -75,6 +77,36 @@ RecompileInfo::shouldSweep(TypeZone &types)
 /////////////////////////////////////////////////////////////////////
 // Types
 /////////////////////////////////////////////////////////////////////
+
+inline TypeObject *
+TypeObjectKey::asTypeObjectNoBarrier()
+{
+    JS_ASSERT(isTypeObject());
+    return (TypeObject *) this;
+}
+
+inline JSObject *
+TypeObjectKey::asSingleObjectNoBarrier()
+{
+    JS_ASSERT(isSingleObject());
+    return (JSObject *) (uintptr_t(this) & ~1);
+}
+
+inline TypeObject *
+TypeObjectKey::asTypeObject()
+{
+    TypeObject *res = asTypeObjectNoBarrier();
+    TypeObject::readBarrier(res);
+    return res;
+}
+
+inline JSObject *
+TypeObjectKey::asSingleObject()
+{
+    JSObject *res = asSingleObjectNoBarrier();
+    JSObject::readBarrier(res);
+    return res;
+}
 
 /* static */ inline Type
 Type::ObjectType(JSObject *obj)
@@ -132,6 +164,8 @@ PrimitiveTypeFlag(JSValueType type)
         return TYPE_FLAG_DOUBLE;
       case JSVAL_TYPE_STRING:
         return TYPE_FLAG_STRING;
+      case JSVAL_TYPE_SYMBOL:
+        return TYPE_FLAG_SYMBOL;
       case JSVAL_TYPE_MAGIC:
         return TYPE_FLAG_LAZYARGS;
       default:
@@ -155,6 +189,8 @@ TypeFlagPrimitive(TypeFlags flags)
         return JSVAL_TYPE_DOUBLE;
       case TYPE_FLAG_STRING:
         return JSVAL_TYPE_STRING;
+      case TYPE_FLAG_SYMBOL:
+        return JSVAL_TYPE_SYMBOL;
       case TYPE_FLAG_LAZYARGS:
         return JSVAL_TYPE_MAGIC;
       default:
@@ -301,6 +337,8 @@ GetClassForProtoKey(JSProtoKey key)
         return &BooleanObject::class_;
       case JSProto_String:
         return &StringObject::class_;
+      case JSProto_Symbol:
+        return &SymbolObject::class_;
       case JSProto_RegExp:
         return &RegExpObject::class_;
 
@@ -983,27 +1021,31 @@ inline TypeObjectKey *
 Type::objectKey() const
 {
     JS_ASSERT(isObject());
-    if (isTypeObject())
-        TypeObject::readBarrier((TypeObject *) data);
-    else
-        JSObject::readBarrier((JSObject *) (data ^ 1));
     return (TypeObjectKey *) data;
 }
 
 inline JSObject *
 Type::singleObject() const
 {
-    JS_ASSERT(isSingleObject());
-    JSObject::readBarrier((JSObject *) (data ^ 1));
-    return (JSObject *) (data ^ 1);
+    return objectKey()->asSingleObject();
 }
 
 inline TypeObject *
 Type::typeObject() const
 {
-    JS_ASSERT(isTypeObject());
-    TypeObject::readBarrier((TypeObject *) data);
-    return (TypeObject *) data;
+    return objectKey()->asTypeObject();
+}
+
+inline JSObject *
+Type::singleObjectNoBarrier() const
+{
+    return objectKey()->asSingleObjectNoBarrier();
+}
+
+inline TypeObject *
+Type::typeObjectNoBarrier() const
+{
+    return objectKey()->asTypeObjectNoBarrier();
 }
 
 inline bool
@@ -1107,6 +1149,20 @@ TypeSet::getTypeObject(unsigned i) const
 {
     TypeObjectKey *key = getObject(i);
     return (key && key->isTypeObject()) ? key->asTypeObject() : nullptr;
+}
+
+inline JSObject *
+TypeSet::getSingleObjectNoBarrier(unsigned i) const
+{
+    TypeObjectKey *key = getObject(i);
+    return (key && key->isSingleObject()) ? key->asSingleObjectNoBarrier() : nullptr;
+}
+
+inline TypeObject *
+TypeSet::getTypeObjectNoBarrier(unsigned i) const
+{
+    TypeObjectKey *key = getObject(i);
+    return (key && key->isTypeObject()) ? key->asTypeObjectNoBarrier() : nullptr;
 }
 
 inline const Class *

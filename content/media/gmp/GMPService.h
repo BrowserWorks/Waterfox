@@ -6,6 +6,7 @@
 #ifndef GMPService_h_
 #define GMPService_h_
 
+#include "nsString.h"
 #include "mozIGeckoMediaPluginService.h"
 #include "nsIObserver.h"
 #include "nsTArray.h"
@@ -13,9 +14,9 @@
 #include "nsString.h"
 #include "nsCOMPtr.h"
 #include "nsIThread.h"
+#include "nsThreadUtils.h"
 
-class nsIFile;
-template <class> class already_AddRefed;
+template <class> struct already_AddRefed;
 
 namespace mozilla {
 namespace gmp {
@@ -38,22 +39,47 @@ public:
 private:
   ~GeckoMediaPluginService();
 
-  GMPParent* SelectPluginFromListForAPI(const nsCString& aAPI, const nsCString& aTag);
-  GMPParent* SelectPluginForAPI(const nsCString& aAPI, const nsCString& aTag);
+  GMPParent* SelectPluginForAPI(const nsAString& aOrigin,
+                                const nsCString& aAPI,
+                                const nsTArray<nsCString>& aTags);
+
   void UnloadPlugins();
+  void CrashPlugins();
 
-  void RefreshPluginList();
+  void LoadFromEnvironment();
   void ProcessPossiblePlugin(nsIFile* aDir);
-  nsresult SearchDirectory(nsIFile* aSearchDir);
-  nsresult GetPossiblePlugins(nsTArray<nsCOMPtr<nsIFile>>& aDirs);
-  nsresult GetDirectoriesToSearch(nsTArray<nsCOMPtr<nsIFile>>& aDirs);
 
+  void AddOnGMPThread(const nsAString& aSearchDir);
+  void RemoveOnGMPThread(const nsAString& aSearchDir);
+protected:
+  friend class GMPParent;
+  void ReAddOnGMPThread(nsRefPtr<GMPParent>& aOld);
+private:
+  GMPParent* ClonePlugin(const GMPParent* aOriginal);
+
+  class PathRunnable : public nsRunnable
+  {
+  public:
+    PathRunnable(GeckoMediaPluginService* service, const nsAString& path,
+                 bool add)
+      : mService(service)
+      , mPath(path)
+      , mAdd(add)
+    { }
+
+    NS_DECL_NSIRUNNABLE
+
+  private:
+    nsRefPtr<GeckoMediaPluginService> mService;
+    nsString mPath;
+    bool mAdd;
+  };
+
+  Mutex mMutex; // Protects mGMPThread and mShuttingDown and mPlugins
   nsTArray<nsRefPtr<GMPParent>> mPlugins;
-  Mutex mMutex; // Protects mGMPThread and mShuttingDown
   nsCOMPtr<nsIThread> mGMPThread;
   bool mShuttingDown;
   bool mShuttingDownOnGMPThread;
-  nsString mHomePath;
 };
 
 } // namespace gmp

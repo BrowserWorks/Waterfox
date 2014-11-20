@@ -232,12 +232,6 @@ public:
    * Update "have enough data" flags in aStream.
    */
   void UpdateBufferSufficiencyState(SourceMediaStream* aStream);
-  /*
-   * If aStream hasn't already been ordered, push it onto aStack and order
-   * its children.
-   */
-  void UpdateStreamOrderForStream(mozilla::LinkedList<MediaStream>* aStack,
-                                  already_AddRefed<MediaStream> aStream);
   /**
    * Mark aStream and all its inputs (recursively) as consumed.
    */
@@ -393,7 +387,26 @@ public:
    */
   void ResumeAllAudioOutputs();
 
-  TrackRate AudioSampleRate() { return mSampleRate; }
+  TrackRate AudioSampleRate() const { return mSampleRate; }
+  TrackRate GraphRate() const { return mSampleRate; }
+
+  double MediaTimeToSeconds(GraphTime aTime)
+  {
+    return TrackTicksToSeconds(GraphRate(), aTime);
+  }
+  GraphTime SecondsToMediaTime(double aS)
+  {
+    return SecondsToTicksRoundDown(GraphRate(), aS);
+  }
+  GraphTime MillisecondsToMediaTime(int32_t aMS)
+  {
+    return RateConvertTicksRoundDown(GraphRate(), 1000, aMS);
+  }
+
+  TrackTicks TimeToTicksRoundDown(TrackRate aRate, StreamTime aTime)
+  {
+    return RateConvertTicksRoundDown(aRate, GraphRate(), aTime);
+  }
 
   // Data members
 
@@ -407,12 +420,18 @@ public:
   // mLifecycleState > LIFECYCLE_RUNNING in which case the graph thread
   // is not running and this state can be used from the main thread.
 
-  nsTArray<nsRefPtr<MediaStream> > mStreams;
   /**
-   * mOldStreams is used as temporary storage for streams when computing the
-   * order in which we compute them.
+   * The graph keeps a reference to each stream.
+   * References are maintained manually to simplify reordering without
+   * unnecessary thread-safe refcount changes.
    */
-  nsTArray<nsRefPtr<MediaStream> > mOldStreams;
+  nsTArray<MediaStream*> mStreams;
+  /**
+   * Streams from mFirstCycleBreaker to the end of mStreams produce output
+   * before they receive input.  They correspond to DelayNodes that are in
+   * cycles.
+   */
+  uint32_t mFirstCycleBreaker;
   /**
    * The current graph time for the current iteration of the RunThread control
    * loop.

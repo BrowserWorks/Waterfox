@@ -15,12 +15,12 @@
 #include "BrowserElementParent.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/dom/HTMLIFrameElement.h"
-#include "nsIDOMCustomEvent.h"
+#include "mozilla/dom/ToJSValue.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsVariant.h"
 #include "mozilla/dom/BrowserElementDictionariesBinding.h"
 #include "nsCxPusher.h"
-#include "GeneratedEventClasses.h"
+#include "mozilla/dom/CustomEvent.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -38,7 +38,7 @@ CreateIframe(Element* aOpenerFrameElement, const nsAString& aName, bool aRemote)
   nsNodeInfoManager *nodeInfoManager =
     aOpenerFrameElement->OwnerDoc()->NodeInfoManager();
 
-  nsCOMPtr<nsINodeInfo> nodeInfo =
+  nsRefPtr<NodeInfo> nodeInfo =
     nodeInfoManager->GetNodeInfo(nsGkAtoms::iframe,
                                  /* aPrefix = */ nullptr,
                                  kNameSpaceID_XHTML,
@@ -160,7 +160,7 @@ BrowserElementParent::DispatchOpenWindowEvent(Element* aOpenerFrameElement,
 
   JS::Rooted<JSObject*> global(cx, sgo->GetGlobalJSObject());
   JSAutoCompartment ac(cx, global);
-  if (!detail.ToObject(cx, &val)) {
+  if (!ToJSValue(cx, detail, &val)) {
     MOZ_CRASH("Failed to convert dictionary to JS::Value due to OOM.");
     return BrowserElementParent::OPEN_WINDOW_IGNORED;
   }
@@ -332,7 +332,7 @@ NS_IMETHODIMP DispatchAsyncScrollEventRunnable::Run()
   JSAutoCompartment ac(cx, globalJSObject);
   JS::Rooted<JS::Value> val(cx);
 
-  if (!detail.ToObject(cx, &val)) {
+  if (!ToJSValue(cx, detail, &val)) {
     MOZ_CRASH("Failed to convert dictionary to JS::Value due to OOM.");
     return NS_ERROR_FAILURE;
   }

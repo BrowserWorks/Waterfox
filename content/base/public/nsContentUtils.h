@@ -27,6 +27,7 @@
 #include "nsMathUtils.h"
 #include "nsTArrayForwardDeclare.h"
 #include "Units.h"
+#include "mozilla/dom/AutocompleteInfoBinding.h"
 
 #if defined(XP_WIN)
 // Undefine LoadImage to prevent naming conflict with Windows.
@@ -69,7 +70,6 @@ class nsIIOService;
 class nsIJSRuntimeService;
 class nsILineBreaker;
 class nsNameSpaceManager;
-class nsINodeInfo;
 class nsIObserver;
 class nsIParser;
 class nsIParserService;
@@ -114,22 +114,13 @@ namespace dom {
 class DocumentFragment;
 class Element;
 class EventTarget;
+class NodeInfo;
 class Selection;
 } // namespace dom
 
 namespace layers {
 class LayerManager;
 } // namespace layers
-
-// Called back from DeferredFinalize.  Should add 'thing' to the array of smart
-// pointers in 'pointers', creating the array if 'pointers' is null, and return
-// the array.
-typedef void* (*DeferredFinalizeAppendFunction)(void* pointers, void* thing);
-
-// Called to finalize a number of objects. Slice is the number of objects
-// to finalize, or if it's UINT32_MAX, all objects should be finalized.
-// Return value indicates whether it finalized all objects in the buffer.
-typedef bool (*DeferredFinalizeFunction)(uint32_t slice, void* data);
 
 } // namespace mozilla
 
@@ -367,6 +358,19 @@ public:
    */
   static bool IsHTMLVoid(nsIAtom* aLocalName);
 
+  enum ParseHTMLIntegerResultFlags {
+    eParseHTMLInteger_NoFlags               = 0,
+    eParseHTMLInteger_IsPercent             = 1 << 0,
+    eParseHTMLInteger_NonStandard           = 1 << 1,
+    eParseHTMLInteger_DidNotConsumeAllInput = 1 << 2,
+    // Set if one or more error flags were set.
+    eParseHTMLInteger_Error                 = 1 << 3,
+    eParseHTMLInteger_ErrorNoValue          = 1 << 4,
+    eParseHTMLInteger_ErrorOverflow         = 1 << 5
+  };
+  static int32_t ParseHTMLInteger(const nsAString& aValue,
+                                  ParseHTMLIntegerResultFlags *aResult);
+
   /**
    * Parse a margin string of format 'top, right, bottom, left' into
    * an nsIntMargin.
@@ -473,8 +477,7 @@ public:
   /**
    * Get the ContentSecurityPolicy for a JS context.
    **/
-  static bool GetContentSecurityPolicy(JSContext* aCx,
-                                       nsIContentSecurityPolicy** aCSP);
+  static bool GetContentSecurityPolicy(nsIContentSecurityPolicy** aCSP);
 
   // Returns the subject principal. Guaranteed to return non-null. May only
   // be called when nsContentUtils is initialized.
@@ -538,7 +541,7 @@ public:
                                        const nsAString& aQualifiedName,
                                        nsNodeInfoManager* aNodeInfoManager,
                                        uint16_t aNodeType,
-                                       nsINodeInfo** aNodeInfo);
+                                       mozilla::dom::NodeInfo** aNodeInfo);
 
   static void SplitExpatName(const char16_t *aExpatName, nsIAtom **aPrefix,
                              nsIAtom **aTagName, int32_t *aNameSpaceID);
@@ -704,8 +707,8 @@ public:
    * Convenience method to create a new nodeinfo that differs only by name
    * from aNodeInfo.
    */
-  static nsresult NameChanged(nsINodeInfo* aNodeInfo, nsIAtom* aName,
-                              nsINodeInfo** aResult);
+  static nsresult NameChanged(mozilla::dom::NodeInfo* aNodeInfo, nsIAtom* aName,
+                              mozilla::dom::NodeInfo** aResult);
 
   /**
    * Returns the appropriate event argument names for the specified
@@ -1266,11 +1269,6 @@ public:
    */
   static void DestroyAnonymousContent(nsCOMPtr<nsIContent>* aContent);
   static void DestroyAnonymousContent(nsCOMPtr<Element>* aElement);
-
-  static void DeferredFinalize(nsISupports* aSupports);
-  static void DeferredFinalize(mozilla::DeferredFinalizeAppendFunction aAppendFunc,
-                               mozilla::DeferredFinalizeFunction aFunc,
-                               void* aThing);
 
   /*
    * Notify when the first XUL menu is opened and when the all XUL menus are
@@ -1995,20 +1993,27 @@ public:
   static nsresult URIInheritsSecurityContext(nsIURI *aURI, bool *aResult);
 
   /**
-   * Set the given principal as the owner of the given channel, if
-   * needed.  aURI must be the URI of aChannel.  aPrincipal may be
-   * null.  If aSetUpForAboutBlank is true, then about:blank will get
-   * the principal set up on it. If aForceOwner is true, the owner
-   * will be set on the channel, even if the principal can be determined
-   * from the channel.
-   * The return value is whether the principal was set up as the owner
-   * of the channel.
+   * Set the given principal as the principal on the nsILoadInfo of the given
+   * channel, and tell the channel to inherit it if needed.  aPrincipal may be
+   * null, in which case this method is a no-op.
+   *
+   * If aLoadingPrincipal is not null, aURI must be the URI of aChannel.  If
+   * aInheritForAboutBlank is true, then about:blank will be told to inherit the
+   * principal. If aForceInherit is true, the channel will be told to inherit
+   * the principal no matter what, as long as the principal is not null.
+   *
+   * If aIsSandboxed is true, then aLoadingPrincipal must not be null.  In this
+   * case, the owner on the channel, if any, will be reset to null and the
+   * nsILoadInfo will say the channel should be sandboxed.
+   *
+   * The return value is whether the channel was told to inherit the principal.
    */
   static bool SetUpChannelOwner(nsIPrincipal* aLoadingPrincipal,
                                 nsIChannel* aChannel,
                                 nsIURI* aURI,
-                                bool aSetUpForAboutBlank,
-                                bool aForceOwner = false);
+                                bool aInheritForAboutBlank,
+                                bool aIsSandboxed,
+                                bool aForceInherit);
 
   static nsresult Btoa(const nsAString& aBinaryData,
                        nsAString& aAsciiBase64String);
@@ -2040,8 +2045,22 @@ public:
    *
    * @return whether aAttr was valid and can be cached.
    */
-  static AutocompleteAttrState SerializeAutocompleteAttribute(const nsAttrValue* aAttr,
-                                                          nsAString& aResult);
+  static AutocompleteAttrState
+  SerializeAutocompleteAttribute(const nsAttrValue* aAttr,
+                                 nsAString& aResult,
+                                 AutocompleteAttrState aCachedState =
+                                   eAutocompleteAttrState_Unknown);
+
+  /* Variation that is used to retrieve a dictionary of the parts of the
+   * autocomplete attribute.
+   *
+   * @return whether aAttr was valid and can be cached.
+   */
+  static AutocompleteAttrState
+  SerializeAutocompleteAttribute(const nsAttrValue* aAttr,
+                                 mozilla::dom::AutocompleteInfo& aInfo,
+                                 AutocompleteAttrState aCachedState =
+                                   eAutocompleteAttrState_Unknown);
 
   /**
    * This will parse aSource, to extract the value of the pseudo attribute
@@ -2151,6 +2170,24 @@ public:
    */
   static bool IsContentInsertionPoint(const nsIContent* aContent);
 
+  /**
+   * Returns whether a given header is forbidden for an XHR or fetch
+   * request.
+   */
+  static bool IsForbiddenRequestHeader(const nsACString& aHeader);
+
+  /**
+   * Returns whether a given header is forbidden for a system XHR
+   * request.
+   */
+  static bool IsForbiddenSystemRequestHeader(const nsACString& aHeader);
+
+  /**
+   * Returns whether a given header is forbidden for an XHR or fetch
+   * response.
+   */
+  static bool IsForbiddenResponseHeader(const nsACString& aHeader);
+
 private:
   static bool InitializeEventTable();
 
@@ -2182,8 +2219,9 @@ private:
   static void* AllocClassMatchingInfo(nsINode* aRootNode,
                                       const nsString* aClasses);
 
+  // Fills in aInfo with the tokens from the supplied autocomplete attribute.
   static AutocompleteAttrState InternalSerializeAutocompleteAttribute(const nsAttrValue* aAttrVal,
-                                                                  nsAString& aResult);
+                                                                      mozilla::dom::AutocompleteInfo& aInfo);
 
   static nsIXPConnect *sXPConnect;
 

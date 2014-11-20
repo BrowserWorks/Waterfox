@@ -66,7 +66,7 @@ InitializeStaticHeaders()
     AddStaticElement(NS_LITERAL_CSTRING(":status"), NS_LITERAL_CSTRING("404"));
     AddStaticElement(NS_LITERAL_CSTRING(":status"), NS_LITERAL_CSTRING("500"));
     AddStaticElement(NS_LITERAL_CSTRING("accept-charset"));
-    AddStaticElement(NS_LITERAL_CSTRING("accept-encoding"));
+    AddStaticElement(NS_LITERAL_CSTRING("accept-encoding"), NS_LITERAL_CSTRING("gzip, deflate"));
     AddStaticElement(NS_LITERAL_CSTRING("accept-language"));
     AddStaticElement(NS_LITERAL_CSTRING("accept-ranges"));
     AddStaticElement(NS_LITERAL_CSTRING("accept"));
@@ -298,10 +298,12 @@ Http2BaseCompressor::DumpState()
   }
 
   LOG(("Header Table"));
-  length = mHeaderTable.VariableLength();
+  length = mHeaderTable.Length();
+  uint32_t variableLength = mHeaderTable.VariableLength();
   for (i = 0; i < length; ++i) {
     const nvPair *pair = mHeaderTable[i];
-    LOG(("index %u: %s %s", i, pair->mName.get(), pair->mValue.get()));
+    LOG(("%sindex %u: %s %s", i < variableLength ? "" : "static ", i,
+         pair->mName.get(), pair->mValue.get()));
   }
 }
 
@@ -511,8 +513,10 @@ nsresult
 Http2Decompressor::OutputHeader(uint32_t index)
 {
   // bounds check
-  if (mHeaderTable.Length() <= index)
+  if (mHeaderTable.Length() <= index) {
+    LOG(("Http2Decompressor::OutputHeader index too large %u", index));
     return NS_ERROR_ILLEGAL_VALUE;
+  }
 
   return OutputHeader(mHeaderTable[index]->mName,
                       mHeaderTable[index]->mValue);
@@ -718,10 +722,11 @@ Http2Decompressor::MakeRoom(uint32_t amount)
   uint32_t removedCount = 0;
   while (mHeaderTable.VariableLength() && ((mHeaderTable.ByteCount() + amount) > mMaxBuffer)) {
     uint32_t index = mHeaderTable.VariableLength() - 1;
+    LOG(("HTTP decompressor header table index %u %s %s removed for size.\n",
+         index, mHeaderTable[index]->mName.get(),
+         mHeaderTable[index]->mValue.get()));
     mHeaderTable.RemoveElement();
     ++removedCount;
-    LOG(("HTTP decompressor header table index %u removed for size.\n",
-         index));
   }
 
   // adjust references to header table
@@ -772,6 +777,8 @@ Http2Decompressor::DoIndexed()
       return rv;
     }
 
+    LOG(("HTTP decompressor inserting static entry %u %s %s into dynamic table",
+         index, pair->mName.get(), pair->mValue.get()));
     MakeRoom(room);
     mHeaderTable.AddElement(pair->mName, pair->mValue);
     IncrementReferenceSetIndices();
@@ -812,9 +819,13 @@ Http2Decompressor::DoLiteralInternal(nsACString &name, nsACString &value,
         rv = CopyStringFromInput(nameLen, name);
       }
     }
+    LOG(("Http2Decompressor::DoLiteralInternal literal name %s",
+         name.BeginReading()));
   } else {
     // name is from headertable
     rv = CopyHeaderString(index - 1, name);
+    LOG(("Http2Decompressor::DoLiteralInternal indexed name %d %s",
+         index, name.BeginReading()));
   }
   if (NS_FAILED(rv))
     return rv;
@@ -832,6 +843,7 @@ Http2Decompressor::DoLiteralInternal(nsACString &name, nsACString &value,
   }
   if (NS_FAILED(rv))
     return rv;
+  LOG(("Http2Decompressor::DoLiteralInternal value %s", value.BeginReading()));
   return NS_OK;
 }
 
@@ -965,13 +977,13 @@ Http2Compressor::EncodeHeaderBlock(const nsCString &nvInput,
 
   // colon headers first
   if (!connectForm) {
-    ProcessHeader(nvPair(NS_LITERAL_CSTRING(":method"), method), false);
-    ProcessHeader(nvPair(NS_LITERAL_CSTRING(":path"), path), false);
-    ProcessHeader(nvPair(NS_LITERAL_CSTRING(":authority"), host), false);
-    ProcessHeader(nvPair(NS_LITERAL_CSTRING(":scheme"), scheme), false);
+    ProcessHeader(nvPair(NS_LITERAL_CSTRING(":method"), method), false, false);
+    ProcessHeader(nvPair(NS_LITERAL_CSTRING(":path"), path), true, false);
+    ProcessHeader(nvPair(NS_LITERAL_CSTRING(":authority"), host), false, false);
+    ProcessHeader(nvPair(NS_LITERAL_CSTRING(":scheme"), scheme), false, false);
   } else {
-    ProcessHeader(nvPair(NS_LITERAL_CSTRING(":method"), method), false);
-    ProcessHeader(nvPair(NS_LITERAL_CSTRING(":authority"), host), false);
+    ProcessHeader(nvPair(NS_LITERAL_CSTRING(":method"), method), false, false);
+    ProcessHeader(nvPair(NS_LITERAL_CSTRING(":authority"), host), false, false);
   }
 
   // now the non colon headers
@@ -1003,8 +1015,7 @@ Http2Compressor::EncodeHeaderBlock(const nsCString &nvInput,
         name.EqualsLiteral("proxy-connection") ||
         name.EqualsLiteral("te") ||
         name.EqualsLiteral("transfer-encoding") ||
-        name.EqualsLiteral("upgrade") ||
-        name.EqualsLiteral("accept-encoding")) {
+        name.EqualsLiteral("upgrade")) {
       continue;
     }
 
@@ -1062,11 +1073,14 @@ Http2Compressor::EncodeHeaderBlock(const nsCString &nvInput,
         }
         nsDependentCSubstring cookie = Substring(beginBuffer + nextCookie,
                                                  beginBuffer + semiSpaceIndex);
-        ProcessHeader(nvPair(name, cookie), true);
+        // cookies less than 20 bytes are not indexed
+        ProcessHeader(nvPair(name, cookie), false, name.Length() < 20);
         nextCookie = semiSpaceIndex + 2;
       }
     } else {
-      ProcessHeader(nvPair(name, value), name.EqualsLiteral("authorization"));
+      // allow indexing of every non-cookie except authorization
+      ProcessHeader(nvPair(name, value), false,
+                    name.EqualsLiteral("authorization"));
     }
   }
 
@@ -1312,9 +1326,6 @@ Http2Compressor::HuffmanAppend(const nsCString &value)
     uint8_t idx = static_cast<uint8_t>(value[i]);
     uint8_t huffLength = HuffmanOutgoing[idx].mLength;
     uint32_t huffValue = HuffmanOutgoing[idx].mValue;
-    LOG(("Http2Compressor::HuffmanAppend %p character=%c (%d) value=%X "
-         "length=%d offset=%d bitsLeft=%d\n", this, value[i], idx, huffValue,
-         huffLength, offset, bitsLeft));
 
     if (bitsLeft < 8) {
       // Fill in the least significant <bitsLeft> bits of the previous byte
@@ -1328,8 +1339,6 @@ Http2Compressor::HuffmanAppend(const nsCString &value)
       }
       val &= ((1 << bitsLeft) - 1);
       offset = buf.Length() - 1;
-      LOG(("Http2Compressor::HuffmanAppend %p appending %X to byte %d.",
-           this, val, offset));
       startByte = reinterpret_cast<unsigned char *>(buf.BeginWriting()) + offset;
       *startByte = *startByte | static_cast<uint8_t>(val & 0xFF);
       if (huffLength >= bitsLeft) {
@@ -1339,8 +1348,6 @@ Http2Compressor::HuffmanAppend(const nsCString &value)
         bitsLeft -= huffLength;
         huffLength = 0;
       }
-      LOG(("Http2Compressor::HuffmanAppend %p encoded length remaining=%d, "
-           "bitsLeft=%d\n", this, huffLength, bitsLeft));
     }
 
     while (huffLength >= 8) {
@@ -1348,8 +1355,6 @@ Http2Compressor::HuffmanAppend(const nsCString &value)
       uint8_t val = ((huffValue & mask) >> (huffLength - 8)) & 0xFF;
       buf.Append(reinterpret_cast<char *>(&val), 1);
       huffLength -= 8;
-      LOG(("Http2Compressor::HuffmanAppend %p appended byte %X, encoded "
-           "length remaining=%d\n", this, val, huffLength));
     }
 
     if (huffLength) {
@@ -1357,8 +1362,6 @@ Http2Compressor::HuffmanAppend(const nsCString &value)
       bitsLeft = 8 - huffLength;
       uint8_t val = (huffValue & ((1 << huffLength) - 1)) << bitsLeft;
       buf.Append(reinterpret_cast<char *>(&val), 1);
-      LOG(("Http2Compressor::HuffmanAppend %p setting high %d bits of last "
-           "byte to %X. bitsLeft=%d.\n", this, huffLength, val, bitsLeft));
     }
   }
 
@@ -1369,8 +1372,6 @@ Http2Compressor::HuffmanAppend(const nsCString &value)
     offset = buf.Length() - 1;
     startByte = reinterpret_cast<unsigned char *>(buf.BeginWriting()) + offset;
     *startByte = *startByte | val;
-    LOG(("Http2Compressor::HuffmanAppend %p padded low %d bits of last byte "
-         "with %X", this, bitsLeft, val));
   }
 
   // Now we know how long our encoded string is, we can fill in our length
@@ -1399,7 +1400,8 @@ Http2Compressor::DumpState()
 }
 
 void
-Http2Compressor::ProcessHeader(const nvPair inputPair, bool neverIndex)
+Http2Compressor::ProcessHeader(const nvPair inputPair, bool noLocalIndex,
+                               bool neverIndex)
 {
   uint32_t newSize = inputPair.Size();
   uint32_t headerTableSize = mHeaderTable.Length();
@@ -1422,7 +1424,7 @@ Http2Compressor::ProcessHeader(const nvPair inputPair, bool neverIndex)
   }
 
   // We need to emit a new literal
-  if (!match || neverIndex) {
+  if (!match || noLocalIndex || neverIndex) {
     if (neverIndex) {
       DoOutput(kNeverIndexedLiteral, &inputPair, nameReference);
       LOG(("Compressor state after literal never index"));
@@ -1430,7 +1432,7 @@ Http2Compressor::ProcessHeader(const nvPair inputPair, bool neverIndex)
       return;
     }
 
-    if ((newSize > (mMaxBuffer / 2)) || (mMaxBuffer < 128)) {
+    if (noLocalIndex || (newSize > (mMaxBuffer / 2)) || (mMaxBuffer < 128)) {
       DoOutput(kPlainLiteral, &inputPair, nameReference);
       LOG(("Compressor state after literal without index"));
       DumpState();

@@ -21,7 +21,7 @@ public:
   // of the caller to manage the memory of the MediaResource object.
   SubBufferDecoder(MediaResource* aResource, MediaSourceDecoder* aParentDecoder)
     : BufferDecoder(aResource), mParentDecoder(aParentDecoder), mReader(nullptr)
-    , mMediaDuration(-1), mMediaStartTime(0)
+    , mMediaDuration(-1), mMediaStartTime(0), mDiscarded(false)
   {
   }
 
@@ -44,7 +44,6 @@ public:
   virtual void SetMediaDuration(int64_t aDuration) MOZ_OVERRIDE;
   virtual void UpdateEstimatedMediaDuration(int64_t aDuration) MOZ_OVERRIDE;
   virtual void SetMediaSeekable(bool aMediaSeekable) MOZ_OVERRIDE;
-  virtual void SetTransportSeekable(bool aTransportSeekable) MOZ_OVERRIDE;
   virtual layers::ImageContainer* GetImageContainer() MOZ_OVERRIDE;
   virtual MediaDecoderOwner* GetOwner() MOZ_OVERRIDE;
 
@@ -84,11 +83,23 @@ public:
     mMediaStartTime = aMediaStartTime;
   }
 
+  bool IsDiscarded()
+  {
+    return mDiscarded;
+  }
+
+  void SetDiscarded()
+  {
+    GetResource()->Ended();
+    mDiscarded = true;
+  }
+
 private:
   MediaSourceDecoder* mParentDecoder;
-  nsAutoPtr<MediaDecoderReader> mReader;
+  nsRefPtr<MediaDecoderReader> mReader;
   int64_t mMediaDuration;
   int64_t mMediaStartTime;
+  bool mDiscarded;
 };
 
 } // namespace mozilla

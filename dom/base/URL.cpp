@@ -6,7 +6,7 @@
 #include "URL.h"
 
 #include "nsGlobalWindow.h"
-#include "nsIDOMFile.h"
+#include "nsDOMFile.h"
 #include "DOMMediaStream.h"
 #include "mozilla/dom/MediaSource.h"
 #include "mozilla/dom/URLBinding.h"
@@ -15,6 +15,7 @@
 #include "nsIIOService.h"
 #include "nsEscape.h"
 #include "nsNetCID.h"
+#include "nsNetUtil.h"
 #include "nsIURL.h"
 
 namespace mozilla {
@@ -115,7 +116,10 @@ URL::CreateObjectURL(const GlobalObject& aGlobal,
                      nsString& aResult,
                      ErrorResult& aError)
 {
-  CreateObjectURLInternal(aGlobal, aBlob,
+  DOMFile* blob = static_cast<DOMFile*>(aBlob);
+  MOZ_ASSERT(blob);
+
+  CreateObjectURLInternal(aGlobal, blob->Impl(),
                           NS_LITERAL_CSTRING(BLOBURI_SCHEME), aOptions, aResult,
                           aError);
 }
@@ -200,7 +204,7 @@ URL::RevokeObjectURL(const GlobalObject& aGlobal, const nsAString& aURL)
 }
 
 void
-URL::GetHref(nsString& aHref) const
+URL::GetHref(nsString& aHref, ErrorResult& aRv) const
 {
   aHref.Truncate();
 
@@ -236,13 +240,13 @@ URL::SetHref(const nsAString& aHref, ErrorResult& aRv)
 }
 
 void
-URL::GetOrigin(nsString& aOrigin) const
+URL::GetOrigin(nsString& aOrigin, ErrorResult& aRv) const
 {
   nsContentUtils::GetUTFNonNullOrigin(mURI, aOrigin);
 }
 
 void
-URL::GetProtocol(nsString& aProtocol) const
+URL::GetProtocol(nsString& aProtocol, ErrorResult& aRv) const
 {
   nsCString protocol;
   if (NS_SUCCEEDED(mURI->GetScheme(protocol))) {
@@ -254,7 +258,7 @@ URL::GetProtocol(nsString& aProtocol) const
 }
 
 void
-URL::SetProtocol(const nsAString& aProtocol)
+URL::SetProtocol(const nsAString& aProtocol, ErrorResult& aRv)
 {
   nsAString::const_iterator start, end;
   aProtocol.BeginReading(start);
@@ -262,7 +266,34 @@ URL::SetProtocol(const nsAString& aProtocol)
   nsAString::const_iterator iter(start);
 
   FindCharInReadable(':', iter, end);
-  mURI->SetScheme(NS_ConvertUTF16toUTF8(Substring(start, iter)));
+
+  // Changing the protocol of a URL, changes the "nature" of the URI
+  // implementation. In order to do this properly, we have to serialize the
+  // existing URL and reparse it in a new object.
+  nsCOMPtr<nsIURI> clone;
+  nsresult rv = mURI->Clone(getter_AddRefs(clone));
+  if (NS_WARN_IF(NS_FAILED(rv)) || !clone) {
+    return;
+  }
+
+  rv = clone->SetScheme(NS_ConvertUTF16toUTF8(Substring(start, iter)));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
+
+  nsAutoCString href;
+  rv = clone->GetSpec(href);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
+
+  nsCOMPtr<nsIURI> uri;
+  rv = NS_NewURI(getter_AddRefs(uri), href);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
+
+  mURI = uri;
 }
 
 #define URL_GETTER( value, func ) \
@@ -274,37 +305,37 @@ URL::SetProtocol(const nsAString& aProtocol)
   }
 
 void
-URL::GetUsername(nsString& aUsername) const
+URL::GetUsername(nsString& aUsername, ErrorResult& aRv) const
 {
   URL_GETTER(aUsername, GetUsername);
 }
 
 void
-URL::SetUsername(const nsAString& aUsername)
+URL::SetUsername(const nsAString& aUsername, ErrorResult& aRv)
 {
   mURI->SetUsername(NS_ConvertUTF16toUTF8(aUsername));
 }
 
 void
-URL::GetPassword(nsString& aPassword) const
+URL::GetPassword(nsString& aPassword, ErrorResult& aRv) const
 {
   URL_GETTER(aPassword, GetPassword);
 }
 
 void
-URL::SetPassword(const nsAString& aPassword)
+URL::SetPassword(const nsAString& aPassword, ErrorResult& aRv)
 {
   mURI->SetPassword(NS_ConvertUTF16toUTF8(aPassword));
 }
 
 void
-URL::GetHost(nsString& aHost) const
+URL::GetHost(nsString& aHost, ErrorResult& aRv) const
 {
   URL_GETTER(aHost, GetHostPort);
 }
 
 void
-URL::SetHost(const nsAString& aHost)
+URL::SetHost(const nsAString& aHost, ErrorResult& aRv)
 {
   mURI->SetHostPort(NS_ConvertUTF16toUTF8(aHost));
 }
@@ -339,7 +370,7 @@ URL::UpdateURLSearchParams()
 }
 
 void
-URL::GetHostname(nsString& aHostname) const
+URL::GetHostname(nsString& aHostname, ErrorResult& aRv) const
 {
   aHostname.Truncate();
   nsAutoCString tmp;
@@ -356,7 +387,7 @@ URL::GetHostname(nsString& aHostname) const
 }
 
 void
-URL::SetHostname(const nsAString& aHostname)
+URL::SetHostname(const nsAString& aHostname, ErrorResult& aRv)
 {
   // nsStandardURL returns NS_ERROR_UNEXPECTED for an empty hostname
   // The return code is silently ignored
@@ -364,7 +395,7 @@ URL::SetHostname(const nsAString& aHostname)
 }
 
 void
-URL::GetPort(nsString& aPort) const
+URL::GetPort(nsString& aPort, ErrorResult& aRv) const
 {
   aPort.Truncate();
 
@@ -378,7 +409,7 @@ URL::GetPort(nsString& aPort) const
 }
 
 void
-URL::SetPort(const nsAString& aPort)
+URL::SetPort(const nsAString& aPort, ErrorResult& aRv)
 {
   nsresult rv;
   nsAutoString portStr(aPort);
@@ -396,7 +427,7 @@ URL::SetPort(const nsAString& aPort)
 }
 
 void
-URL::GetPathname(nsString& aPathname) const
+URL::GetPathname(nsString& aPathname, ErrorResult& aRv) const
 {
   aPathname.Truncate();
 
@@ -415,7 +446,7 @@ URL::GetPathname(nsString& aPathname) const
 }
 
 void
-URL::SetPathname(const nsAString& aPathname)
+URL::SetPathname(const nsAString& aPathname, ErrorResult& aRv)
 {
   nsCOMPtr<nsIURL> url(do_QueryInterface(mURI));
   if (!url) {
@@ -427,7 +458,7 @@ URL::SetPathname(const nsAString& aPathname)
 }
 
 void
-URL::GetSearch(nsString& aSearch) const
+URL::GetSearch(nsString& aSearch, ErrorResult& aRv) const
 {
   aSearch.Truncate();
 
@@ -446,7 +477,7 @@ URL::GetSearch(nsString& aSearch) const
 }
 
 void
-URL::SetSearch(const nsAString& aSearch)
+URL::SetSearch(const nsAString& aSearch, ErrorResult& aRv)
 {
   SetSearchInternal(aSearch);
   UpdateURLSearchParams();
@@ -488,7 +519,7 @@ URL::SetSearchParams(URLSearchParams& aSearchParams)
 }
 
 void
-URL::GetHash(nsString& aHash) const
+URL::GetHash(nsString& aHash, ErrorResult& aRv) const
 {
   aHash.Truncate();
 
@@ -502,7 +533,7 @@ URL::GetHash(nsString& aHash) const
 }
 
 void
-URL::SetHash(const nsAString& aHash)
+URL::SetHash(const nsAString& aHash, ErrorResult& aRv)
 {
   mURI->SetRef(NS_ConvertUTF16toUTF8(aHash));
 }

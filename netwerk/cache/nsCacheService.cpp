@@ -120,6 +120,8 @@ const int32_t PRE_GECKO_2_0_DEFAULT_CACHE_SIZE = 50 * 1024;
 
 class nsCacheProfilePrefObserver : public nsIObserver
 {
+    virtual ~nsCacheProfilePrefObserver() {}
+
 public:
     NS_DECL_THREADSAFE_ISUPPORTS
     NS_DECL_NSIOBSERVER
@@ -141,8 +143,6 @@ public:
         , mClearCacheOnShutdown(false)
     {
     }
-
-    virtual ~nsCacheProfilePrefObserver() {}
     
     nsresult        Install();
     void            Remove();
@@ -205,6 +205,8 @@ NS_IMPL_ISUPPORTS(nsCacheProfilePrefObserver, nsIObserver)
 
 class nsSetDiskSmartSizeCallback MOZ_FINAL : public nsITimerCallback
 {
+    ~nsSetDiskSmartSizeCallback() {}
+
 public:
     NS_DECL_THREADSAFE_ISUPPORTS
 
@@ -3268,7 +3270,7 @@ MOZ_DEFINE_MALLOC_SIZE_OF(DiskCacheDeviceMallocSizeOf)
 
 NS_IMETHODIMP
 nsCacheService::CollectReports(nsIHandleReportCallback* aHandleReport,
-                               nsISupports* aData)
+                               nsISupports* aData, bool aAnonymize)
 {
     size_t disk = 0;
     if (mDiskDevice) {

@@ -39,7 +39,7 @@ class nsITimer;
 class nsIURI;
 
 namespace JS {
-class RuntimeStats;
+struct RuntimeStats;
 }
 
 namespace mozilla {
@@ -339,6 +339,9 @@ public:
     return Notify(aCx, Killing);
   }
 
+  // We can assume that an nsPIDOMWindow will be available for Suspend, Resume
+  // and SynchronizeAndResume as these are only used for globals going in and
+  // out of the bfcache.
   bool
   Suspend(JSContext* aCx, nsPIDOMWindow* aWindow);
 
@@ -346,8 +349,7 @@ public:
   Resume(JSContext* aCx, nsPIDOMWindow* aWindow);
 
   bool
-  SynchronizeAndResume(JSContext* aCx, nsPIDOMWindow* aWindow,
-                       nsIScriptContext* aScriptContext);
+  SynchronizeAndResume(JSContext* aCx, nsPIDOMWindow* aWindow);
 
   bool
   Terminate(JSContext* aCx)
@@ -948,7 +950,7 @@ public:
   ScheduleDeletion(WorkerRanOrNot aRanOrNot);
 
   bool
-  BlockAndCollectRuntimeStats(JS::RuntimeStats* aRtStats);
+  BlockAndCollectRuntimeStats(JS::RuntimeStats* aRtStats, bool aAnonymize);
 
 #ifdef JS_GC_ZEAL
   void

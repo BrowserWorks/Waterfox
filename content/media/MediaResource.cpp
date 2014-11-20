@@ -348,7 +348,6 @@ ChannelMediaResource::OnStartRequest(nsIRequest* aRequest)
 
     mDecoder->SetInfinite(!dataIsBounded);
   }
-  mDecoder->SetTransportSeekable(seekable);
   mCacheStream.SetTransportSeekable(seekable);
 
   {
@@ -1640,11 +1639,13 @@ public:
     MOZ_COUNT_CTOR(DispatchBytesConsumedEvent);
   }
 
+protected:
   ~DispatchBytesConsumedEvent()
   {
     MOZ_COUNT_DTOR(DispatchBytesConsumedEvent);
   }
 
+public:
   NS_IMETHOD Run() {
     mDecoder->NotifyBytesConsumed(mNumBytes, mOffset);
     // Drop ref to decoder on main thread, just in case this reference

@@ -22,7 +22,7 @@ let PAGE_CONTENT = [
 ].join("\n");
 
 let test = asyncTest(function*() {
-  yield addTab("data:text/html,test rule view user changes");
+  yield addTab("data:text/html;charset=utf-8,test rule view user changes");
 
   info("Creating the test document");
   content.document.body.innerHTML = PAGE_CONTENT;
@@ -39,7 +39,7 @@ let test = asyncTest(function*() {
 function* testCreateNew(view) {
   info("Test creating a new property");
 
-  let elementRuleEditor = view.element.children[0]._ruleEditor;
+  let elementRuleEditor = getRuleViewRuleEditor(view, 0);
 
   info("Focusing a new property name in the rule-view");
   let editor = yield focusEditableField(elementRuleEditor.closeBrace);

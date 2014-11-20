@@ -1,4 +1,4 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ts=2 sw=2 sts=2 et: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,6 +41,14 @@ var _fromByTestLists =
                                            midComp: "4px",
                                            toComp: "8px"}),
     new AnimTestcaseFromBy("1px", "10px", { midComp: "6px", toComp: "11px"}),
+  ],
+  lengthPxSVG: [
+    new AnimTestcaseFromBy("0px", "8px", { fromComp: "0",
+                                           midComp: "4",
+                                           toComp: "8"}),
+    new AnimTestcaseFromBy("1px", "10px", { fromComp: "1",
+                                            midComp: "6",
+                                            toComp: "11"}),
   ],
   opacity: [
     new AnimTestcaseFromBy("1", "-1", { midComp: "0.5", toComp: "0"}),
@@ -137,5 +145,5 @@ var gFromByBundles =
   ]),
   new TestcaseBundle(gPropList.stroke_width,
                      [].concat(_fromByTestLists.lengthNoUnitsSVG,
-                               _fromByTestLists.lengthPx))
+                               _fromByTestLists.lengthPxSVG))
 ];

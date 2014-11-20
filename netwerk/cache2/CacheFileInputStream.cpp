@@ -28,7 +28,7 @@ CacheFileInputStream::Release()
   }
 
   if (count == 1) {
-    mFile->RemoveInput(this);
+    mFile->RemoveInput(this, mStatus);
   }
 
   return count;
@@ -150,13 +150,15 @@ CacheFileInputStream::ReadSegments(nsWriteSegmentFun aWriter, void *aClosure,
     int64_t canRead;
     const char *buf;
     CanRead(&canRead, &buf);
+    if (NS_FAILED(mStatus)) {
+      return mStatus;
+    }
 
     if (canRead < 0) {
       // file was truncated ???
       MOZ_ASSERT(false, "SetEOF is currenty not implemented?!");
       rv = NS_OK;
-    }
-    else if (canRead > 0) {
+    } else if (canRead > 0) {
       uint32_t toRead = std::min(static_cast<uint32_t>(canRead), aCount);
 
       uint32_t read;
@@ -180,8 +182,7 @@ CacheFileInputStream::ReadSegments(nsWriteSegmentFun aWriter, void *aClosure,
       }
 
       rv = NS_OK;
-    }
-    else {
+    } else {
       if (mFile->mOutput)
         rv = NS_BASE_STREAM_WOULD_BLOCK;
       else {
@@ -256,6 +257,7 @@ CacheFileInputStream::AsyncWait(nsIInputStreamCallback *aCallback,
 
   mCallback = aCallback;
   mCallbackFlags = aFlags;
+  mCallbackTarget = aEventTarget;
 
   if (!mCallback) {
     if (mWaitingForUpdate) {
@@ -306,7 +308,7 @@ CacheFileInputStream::Seek(int32_t whence, int64_t offset)
       return NS_ERROR_INVALID_ARG;
   }
   mPos = newPos;
-  EnsureCorrectChunk(true);
+  EnsureCorrectChunk(false);
 
   LOG(("CacheFileInputStream::Seek() [this=%p, pos=%lld]", this, mPos));
   return NS_OK;
@@ -515,7 +517,14 @@ CacheFileInputStream::CanRead(int64_t *aCanRead, const char **aBuf)
 
   uint32_t chunkOffset = mPos - (mPos / kChunkSize) * kChunkSize;
   *aCanRead = mChunk->DataSize() - chunkOffset;
-  *aBuf = mChunk->BufForReading() + chunkOffset;
+  if (*aCanRead > 0) {
+    *aBuf = mChunk->BufForReading() + chunkOffset;
+  } else {
+    *aBuf = nullptr;
+    if (NS_FAILED(mChunk->GetStatus())) {
+      CloseWithStatusLocked(mChunk->GetStatus());
+    }
+  }
 
   LOG(("CacheFileInputStream::CanRead() [this=%p, canRead=%lld]",
        this, *aCanRead));
@@ -530,8 +539,14 @@ CacheFileInputStream::NotifyListener()
 
   MOZ_ASSERT(mCallback);
 
-  if (!mCallbackTarget)
-    mCallbackTarget = NS_GetCurrentThread();
+  if (!mCallbackTarget) {
+    mCallbackTarget = CacheFileIOManager::IOTarget();
+    if (!mCallbackTarget) {
+      LOG(("CacheFileInputStream::NotifyListener() - Cannot get Cache I/O "
+           "thread! Using main thread for callback."));
+      mCallbackTarget = do_GetMainThread();
+    }
+  }
 
   nsCOMPtr<nsIInputStreamCallback> asyncCallback =
     NS_NewInputStreamReadyEvent(mCallback, mCallbackTarget);
@@ -576,6 +591,12 @@ CacheFileInputStream::MaybeNotifyListener()
   int64_t canRead;
   const char *buf;
   CanRead(&canRead, &buf);
+  if (NS_FAILED(mStatus)) {
+    // CanRead() called CloseWithStatusLocked() which called
+    // MaybeNotifyListener() so the listener was already notified. Stop here.
+    MOZ_ASSERT(!mCallback);
+    return;
+  }
 
   if (canRead > 0) {
     if (!(mCallbackFlags & WAIT_CLOSURE_ONLY))

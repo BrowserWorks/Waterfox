@@ -199,9 +199,9 @@ GeneratePermissionName(nsAString& aPermission,
                        const nsAString& aName,
                        const nsAString& aManifestURL)
 {
-  aPermission.AssignASCII("indexedDB-chrome-");
+  aPermission.AssignLiteral("indexedDB-chrome-");
   aPermission.Append(aName);
-  aPermission.AppendASCII("|");
+  aPermission.Append('|');
   aPermission.Append(aManifestURL);
 }
 
@@ -252,7 +252,7 @@ ResetPermission(uint32_t aAppId, const nsAString& aOriginURL,
   {
     nsCString permission;
     permission.Append(basePermission);
-    permission.AppendASCII("-write");
+    permission.AppendLiteral("-write");
 
     uint32_t perm = nsIPermissionManager::UNKNOWN_ACTION;
     rv = pm->TestExactPermissionFromPrincipal(principal, permission.get(),
@@ -279,7 +279,7 @@ ResetPermission(uint32_t aAppId, const nsAString& aOriginURL,
   {
     nsCString permission;
     permission.Append(basePermission);
-    permission.AppendASCII("-read");
+    permission.AppendLiteral("-read");
 
     uint32_t perm = nsIPermissionManager::UNKNOWN_ACTION;
     rv = pm->TestExactPermissionFromPrincipal(principal, permission.get(),
@@ -476,6 +476,8 @@ public:
 class RevisionAddedEnableStoreCallback MOZ_FINAL :
   public DataStoreRevisionCallback
 {
+private:
+  ~RevisionAddedEnableStoreCallback() {}
 public:
   NS_INLINE_DECL_REFCOUNTING(RevisionAddedEnableStoreCallback);
 
@@ -614,12 +616,14 @@ public:
       new RevisionAddedEnableStoreCallback(mAppId, mName, mManifestURL);
 
     // If the revision doesn't exist, let's create it.
-    nsRefPtr<DataStoreRevision> mRevision = new DataStoreRevision();
-    return mRevision->AddRevision(cx, store, 0, DataStoreRevision::RevisionVoid,
-                                  callback);
+    nsRefPtr<DataStoreRevision> revision = new DataStoreRevision();
+    return revision->AddRevision(cx, store, 0, DataStoreRevision::RevisionVoid,
+                                 callback);
   }
 
 private:
+  ~FirstRevisionIdCallback() {}
+
   nsRefPtr<IDBRequest> mRequest;
 
   nsRefPtr<IDBTransaction> mTxn;
@@ -640,6 +644,8 @@ NS_IMPL_ISUPPORTS(FirstRevisionIdCallback, nsIDOMEventListener)
 // created, but they don't know its value yet.
 class RetrieveRevisionsCounter
 {
+private:
+  ~RetrieveRevisionsCounter() {}
 public:
   NS_INLINE_DECL_REFCOUNTING(RetrieveRevisionsCounter);
 
@@ -878,7 +884,11 @@ DataStoreService::GetDataStores(nsIDOMWindow* aWindow,
   }
 
   nsCOMPtr<nsIGlobalObject> global = do_QueryInterface(window);
-  nsRefPtr<Promise> promise = new Promise(global);
+  ErrorResult rv;
+  nsRefPtr<Promise> promise = Promise::Create(global, rv);
+  if (rv.Failed()) {
+    return rv.ErrorCode();
+  }
 
   nsCOMPtr<nsIDocument> document = window->GetDoc();
   MOZ_ASSERT(document);
@@ -899,7 +909,7 @@ DataStoreService::GetDataStores(nsIDOMWindow* aWindow,
       return NS_OK;
     }
 
-    rv = GetDataStoreInfos(aName, appId, stores);
+    rv = GetDataStoreInfos(aName, appId, principal, stores);
     if (NS_FAILED(rv)) {
       RejectPromise(window, promise, rv);
       promise.forget(aDataStores);
@@ -1039,6 +1049,7 @@ DataStoreService::GetDataStoresResolve(nsPIDOMWindow* aWindow,
 nsresult
 DataStoreService::GetDataStoreInfos(const nsAString& aName,
                                     uint32_t aAppId,
+                                    nsIPrincipal* aPrincipal,
                                     nsTArray<DataStoreInfo>& aStores)
 {
   AssertIsInMainProcess();
@@ -1060,15 +1071,7 @@ DataStoreService::GetDataStoreInfos(const nsAString& aName,
     return NS_ERROR_DOM_SECURITY_ERR;
   }
 
-  uint16_t status;
-  rv = app->GetAppStatus(&status);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
-  }
-
-  if (status != nsIPrincipal::APP_STATUS_CERTIFIED &&
-      !Preferences::GetBool("dom.testing.datastore_enabled_for_hosted_apps",
-                            false)) {
+  if (!DataStoreService::CheckPermission(aPrincipal)) {
     return NS_ERROR_DOM_SECURITY_ERR;
   }
 
@@ -1088,6 +1091,45 @@ DataStoreService::GetDataStoreInfos(const nsAString& aName,
 
   GetDataStoreInfosData data(mAccessStores, aName, aAppId, aStores);
   apps->EnumerateRead(GetDataStoreInfosEnumerator, &data);
+  return NS_OK;
+}
+
+bool
+DataStoreService::CheckPermission(nsIPrincipal* aPrincipal)
+{
+  // First of all, the general pref has to be turned on.
+  bool enabled = false;
+  Preferences::GetBool("dom.datastore.enabled", &enabled);
+  if (!enabled) {
+    return false;
+  }
+
+  // Just for testing, we can enable DataStore for any kind of app.
+  if (Preferences::GetBool("dom.testing.datastore_enabled_for_hosted_apps", false)) {
+    return true;
+  }
+
+  if (!aPrincipal) {
+    return false;
+  }
+
+  uint16_t status;
+  if (NS_FAILED(aPrincipal->GetAppStatus(&status))) {
+    return false;
+  }
+
+  // Only support DataStore API for certified apps for now.
+  return status == nsIPrincipal::APP_STATUS_CERTIFIED;
+}
+
+NS_IMETHODIMP
+DataStoreService::CheckPermission(nsIPrincipal* aPrincipal,
+                                  bool* aResult)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  *aResult = DataStoreService::CheckPermission(aPrincipal);
+
   return NS_OK;
 }
 
@@ -1307,7 +1349,7 @@ DataStoreService::GetDataStoresFromIPC(const nsAString& aName,
   }
 
   nsTArray<DataStoreInfo> stores;
-  rv = GetDataStoreInfos(aName, appId, stores);
+  rv = GetDataStoreInfos(aName, appId, aPrincipal, stores);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }

@@ -6,7 +6,7 @@
 #include "nscore.h"
 #include "nsError.h"
 #include "nsIContent.h"
-#include "nsINodeInfo.h"
+#include "mozilla/dom/NodeInfo.h"
 #include "nsIDOMElement.h"
 #include "nsILocalStore.h"
 #include "nsIBoxObject.h"
@@ -64,6 +64,7 @@ protected:
     NS_NewXULTreeBuilder(nsISupports* aOuter, REFNSIID aIID, void** aResult);
 
     nsXULTreeBuilder();
+    ~nsXULTreeBuilder();
 
     /**
      * Uninitialize the template builder
@@ -290,6 +291,10 @@ NS_INTERFACE_MAP_END_INHERITING(nsXULTemplateBuilder)
 
 nsXULTreeBuilder::nsXULTreeBuilder()
     : mSortDirection(eDirection_Natural), mSortHints(0)
+{
+}
+
+nsXULTreeBuilder::~nsXULTreeBuilder()
 {
 }
 

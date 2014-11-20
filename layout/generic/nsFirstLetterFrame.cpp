@@ -204,7 +204,7 @@ nsFirstLetterFrame::Reflow(nsPresContext*          aPresContext,
 
     // In the floating first-letter case, we need to set this ourselves;
     // nsLineLayout::BeginSpan will set it in the other case
-    mBaseline = aMetrics.TopAscent();
+    mBaseline = aMetrics.BlockStartAscent();
   }
   else {
     // Pretend we are a span and reflow the child frame
@@ -226,7 +226,7 @@ nsFirstLetterFrame::Reflow(nsPresContext*          aPresContext,
 
   aMetrics.Width() += lr;
   aMetrics.Height() += tb;
-  aMetrics.SetTopAscent(aMetrics.TopAscent() + bp.top);
+  aMetrics.SetBlockStartAscent(aMetrics.BlockStartAscent() + bp.top);
 
   // Ensure that the overflow rect contains the child textframe's overflow rect.
   // Note that if this is floating, the overline/underline drawable area is in
@@ -373,12 +373,12 @@ nsFirstLetterFrame::DrainOverflowFrames(nsPresContext* aPresContext)
 }
 
 nscoord
-nsFirstLetterFrame::GetBaseline() const
+nsFirstLetterFrame::GetLogicalBaseline(WritingMode aWritingMode) const
 {
   return mBaseline;
 }
 
-int
+nsIFrame::LogicalSides
 nsFirstLetterFrame::GetLogicalSkipSides(const nsHTMLReflowState* aReflowState) const
 {
   if (GetPrevContinuation()) {
@@ -387,7 +387,7 @@ nsFirstLetterFrame::GetLogicalSkipSides(const nsHTMLReflowState* aReflowState) c
     // properties that could trigger a call to GetSkipSides.  Then again,
     // it's not really an error to call GetSkipSides on any frame, so
     // that's why we handle it properly.
-    return LOGICAL_SIDES_ALL;
+    return LogicalSides(eLogicalSideBitsAll);
   }
-  return 0;  // first continuation displays all sides
+  return LogicalSides();  // first continuation displays all sides
 }

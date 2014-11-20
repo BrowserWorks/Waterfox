@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -28,13 +29,13 @@ GenericModule::GetClassObject(nsIComponentManager* aCompMgr,
       nsCOMPtr<nsIFactory> f;
       if (e->getFactoryProc) {
         f = e->getFactoryProc(*mData, *e);
-      }
-      else {
+      } else {
         NS_ASSERTION(e->constructorProc, "No constructor proc?");
         f = new GenericFactory(e->constructorProc);
       }
-      if (!f)
+      if (!f) {
         return NS_ERROR_FAILURE;
+      }
 
       return f->QueryInterface(aIID, aResult);
     }
@@ -50,20 +51,25 @@ GenericModule::RegisterSelf(nsIComponentManager* aCompMgr,
                             const char* aType)
 {
   nsCOMPtr<nsIComponentRegistrar> r = do_QueryInterface(aCompMgr);
-  for (const Module::CIDEntry* e = mData->mCIDs; e->cid; ++e)
-    r->RegisterFactoryLocation(*e->cid, "", nullptr, aLocation, aLoaderStr, aType);
+  for (const Module::CIDEntry* e = mData->mCIDs; e->cid; ++e) {
+    r->RegisterFactoryLocation(*e->cid, "", nullptr, aLocation,
+                               aLoaderStr, aType);
+  }
 
   for (const Module::ContractIDEntry* e = mData->mContractIDs;
        e && e->contractid;
-       ++e)
-    r->RegisterFactoryLocation(*e->cid, "", e->contractid, aLocation, aLoaderStr, aType);
+       ++e) {
+    r->RegisterFactoryLocation(*e->cid, "", e->contractid, aLocation,
+                               aLoaderStr, aType);
+  }
 
   nsCOMPtr<nsICategoryManager> catman;
   for (const Module::CategoryEntry* e = mData->mCategoryEntries;
        e && e->category;
        ++e) {
-    if (!catman)
+    if (!catman) {
       catman = do_GetService(NS_CATEGORYMANAGER_CONTRACTID);
+    }
 
     nsAutoCString r;
     catman->AddCategoryEntry(e->category, e->entry, e->value, true, true,

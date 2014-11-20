@@ -24,7 +24,6 @@
 #include "nsThreadUtils.h"
 #include "nsIThreadManager.h"
 #include "mozilla/dom/mobilemessage/PSms.h"
-#include "gfxImageSurface.h"
 #include "gfxPlatform.h"
 #include "gfxContext.h"
 #include "mozilla/gfx/2D.h"
@@ -1589,14 +1588,8 @@ NS_IMETHODIMP nsAndroidBridge::HandleGeckoMessage(JS::HandleValue val,
     }
     JS::RootedString jsonStr(cx, val.toString());
 
-    size_t strLen = 0;
-    const jschar* strChar = JS_GetStringCharsAndLength(cx, jsonStr, &strLen);
-    if (!strChar) {
-        return NS_ERROR_UNEXPECTED;
-    }
-
     JS::RootedValue jsonVal(cx);
-    if (!JS_ParseJSON(cx, strChar, strLen, &jsonVal) || !jsonVal.isObject()) {
+    if (!JS_ParseJSON(cx, jsonStr, &jsonVal) || !jsonVal.isObject()) {
         return NS_ERROR_INVALID_ARG;
     }
 

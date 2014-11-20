@@ -18,7 +18,6 @@ dnl MOZ_ARG_WITH_BOOL(             NAME, HELP, IF-YES [, IF-NO [, ELSE])
 dnl MOZ_ARG_WITHOUT_BOOL(          NAME, HELP, IF-NO [, IF-YES [, ELSE])
 dnl MOZ_ARG_WITH_STRING(           NAME, HELP, IF-SET [, ELSE])
 dnl MOZ_ARG_HEADER(Comment)
-dnl MOZ_CHECK_PTHREADS(            NAME, IF-YES [, ELSE ])
 dnl MOZ_READ_MYCONFIG() - Read in 'myconfig.sh' file
 
 
@@ -80,43 +79,45 @@ dnl MOZ_ARG_HEADER(Comment)
 dnl This is used by webconfig to group options
 define(MOZ_ARG_HEADER, [# $1])
 
-dnl
-dnl Apparently, some systems cannot properly check for the pthread
-dnl library unless <pthread.h> is included so we need to test
-dnl using it
-dnl
-dnl MOZ_CHECK_PTHREADS(lib, success, failure)
-AC_DEFUN([MOZ_CHECK_PTHREADS],
-[
-AC_MSG_CHECKING([for pthread_create in -l$1])
-echo "
-    #include <pthread.h>
-    #include <stdlib.h>
-    void *foo(void *v) { int a = 1;  } 
-    int main() { 
-        pthread_t t;
-        if (!pthread_create(&t, 0, &foo, 0)) {
-            pthread_join(t, 0);
-        }
-        exit(0);
-    }" > dummy.c ;
-    echo "${CC-cc} -o dummy${ac_exeext} dummy.c $CFLAGS $CPPFLAGS -l[$1] $LDFLAGS $LIBS" 1>&5;
-    ${CC-cc} -o dummy${ac_exeext} dummy.c $CFLAGS $CPPFLAGS -l[$1] $LDFLAGS $LIBS 2>&5;
-    _res=$? ;
-    rm -f dummy.c dummy${ac_exeext} ;
-    if test "$_res" = "0"; then
-        AC_MSG_RESULT([yes])
-        [$2]
-    else
-        AC_MSG_RESULT([no])
-        [$3]
-    fi
-])
-
 dnl MOZ_READ_MYCONFIG() - Read in 'myconfig.sh' file
 AC_DEFUN([MOZ_READ_MOZCONFIG],
 [AC_REQUIRE([AC_INIT_BINSH])dnl
-# Read in '.mozconfig' script to set the initial options.
-# See the mozconfig2configure script for more details.
-_AUTOCONF_TOOLS_DIR=`dirname [$]0`/[$1]/build/autoconf
-. $_AUTOCONF_TOOLS_DIR/mozconfig2configure])
+inserted=
+dnl Shell is hard, so here is what the following does:
+dnl - Reset $@ (command line arguments)
+dnl - Add the configure options from mozconfig to $@ one by one
+dnl - Add the original command line arguments after that, one by one
+dnl
+dnl There are several tricks involved:
+dnl - It is not possible to preserve the whitespaces in $@ by assigning to
+dnl   another variable, so the two first steps above need to happen in the first
+dnl   iteration of the third step.
+dnl - We always want the configure options to be added, so the loop must be
+dnl   iterated at least once, so we add a dummy argument first, and discard it.
+dnl - something | while read line ... makes the while run in a subshell, meaning
+dnl   that anything it does is not propagated to the main shell, so we can't do
+dnl   set -- foo there. As a consequence, what the while loop reading mach
+dnl   environment output does is output a set of shell commands for the main shell
+dnl   to eval.
+dnl - Extra care is due when lines from mach environment output contain special
+dnl   shell characters, so we use ' for quoting and ensure no ' end up in between
+dnl   the quoting mark unescaped.
+dnl Some of the above is directly done in mach environment --format=configure.
+failed_eval() {
+  echo "Failed eval'ing the following:"
+  $(dirname [$]0)/[$1]/mach environment --format=configure
+  exit 1
+}
+
+set -- dummy "[$]@"
+for ac_option
+do
+  if test -z "$inserted"; then
+    set --
+    eval "$($(dirname [$]0)/[$1]/mach environment --format=configure)" || failed_eval
+    inserted=1
+  else
+    set -- "[$]@" "$ac_option"
+  fi
+done
+])

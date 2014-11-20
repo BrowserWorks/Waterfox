@@ -20,10 +20,12 @@ const PROGRAM_HIGHLIGHT_TRAIT = 2;
 
 exports.register = function(handle) {
   handle.addTabActor(WebGLActor, "webglActor");
+  handle.addGlobalActor(WebGLActor, "webglActor");
 }
 
 exports.unregister = function(handle) {
   handle.removeTabActor(WebGLActor);
+  handle.removeGlobalActor(WebGLActor);
 }
 
 /**
@@ -341,7 +343,6 @@ let WebGLActor = exports.WebGLActor = protocol.ActorClass({
 let WebGLFront = exports.WebGLFront = protocol.FrontClass(WebGLActor, {
   initialize: function(client, { webglActor }) {
     protocol.Front.prototype.initialize.call(this, client, { actor: webglActor });
-    client.addActorPool(this);
     this.manage(this);
   }
 });

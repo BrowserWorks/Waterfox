@@ -27,7 +27,7 @@ struct JSRuntime;
 
 namespace JS {
 namespace shadow {
-class Runtime;
+struct Runtime;
 }
 }
 
@@ -39,6 +39,7 @@ namespace gc {
 
 struct Arena;
 class ArenaList;
+class SortedArenaList;
 struct ArenaHeader;
 struct Chunk;
 
@@ -75,6 +76,7 @@ enum AllocKind {
     FINALIZE_FAT_INLINE_STRING,
     FINALIZE_STRING,
     FINALIZE_EXTERNAL_STRING,
+    FINALIZE_SYMBOL,
     FINALIZE_JITCODE,
     FINALIZE_LAST = FINALIZE_JITCODE
 };
@@ -181,8 +183,7 @@ class FreeSpan
         first = firstArg;
         last = lastArg;
         FreeSpan *lastSpan = reinterpret_cast<FreeSpan*>(last);
-        lastSpan->first = 0;
-        lastSpan->last = 0;
+        lastSpan->initAsEmpty();
         JS_ASSERT(!isEmpty());
         checkSpan(thingSize);
     }
@@ -190,6 +191,14 @@ class FreeSpan
     bool isEmpty() const {
         checkSpan();
         return !first;
+    }
+
+    static size_t offsetOfFirst() {
+        return offsetof(FreeSpan, first);
+    }
+
+    static size_t offsetOfLast() {
+        return offsetof(FreeSpan, last);
     }
 
     // Like nextSpan(), but no checking of the following span is done.
@@ -597,7 +606,7 @@ struct Arena
     void setAsFullyUnused(AllocKind thingKind);
 
     template <typename T>
-    bool finalize(FreeOp *fop, AllocKind thingKind, size_t thingSize);
+    size_t finalize(FreeOp *fop, AllocKind thingKind, size_t thingSize);
 };
 
 static_assert(sizeof(Arena) == ArenaSize, "The hardcoded arena size must match the struct size.");
@@ -699,7 +708,12 @@ const size_t BytesPerArenaWithHeader = ArenaSize + ArenaBitmapBytes;
 const size_t ChunkDecommitBitmapBytes = ChunkSize / ArenaSize / JS_BITS_PER_BYTE;
 const size_t ChunkBytesAvailable = ChunkSize - sizeof(ChunkInfo) - ChunkDecommitBitmapBytes;
 const size_t ArenasPerChunk = ChunkBytesAvailable / BytesPerArenaWithHeader;
+
+#ifdef JS_GC_SMALL_CHUNK_SIZE
+static_assert(ArenasPerChunk == 62, "Do not accidentally change our heap's density.");
+#else
 static_assert(ArenasPerChunk == 252, "Do not accidentally change our heap's density.");
+#endif
 
 /* A chunk bitmap contains enough mark bits for all the cells in a chunk. */
 struct ChunkBitmap
@@ -828,18 +842,12 @@ struct Chunk
     ArenaHeader *allocateArena(JS::Zone *zone, AllocKind kind);
 
     void releaseArena(ArenaHeader *aheader);
-    void recycleArena(ArenaHeader *aheader, ArenaList &dest, AllocKind thingKind);
+    void recycleArena(ArenaHeader *aheader, SortedArenaList &dest, AllocKind thingKind,
+                      size_t thingsPerArena);
 
     static Chunk *allocate(JSRuntime *rt);
 
     void decommitAllArenas(JSRuntime *rt);
-
-    /* Must be called with the GC lock taken. */
-    static inline void release(JSRuntime *rt, Chunk *chunk);
-    static inline void releaseList(JSRuntime *rt, Chunk *chunkListHead);
-
-    /* Must be called with the GC lock taken. */
-    inline void prepareToBeFreed(JSRuntime *rt);
 
     /*
      * Assuming that the info.prevp points to the next field of the previous
@@ -1109,7 +1117,7 @@ Cell::chunk() const
 {
     uintptr_t addr = uintptr_t(this);
     JS_ASSERT(addr % CellSize == 0);
-    addr &= ~(ChunkSize - 1);
+    addr &= ~ChunkMask;
     return reinterpret_cast<Chunk *>(addr);
 }
 

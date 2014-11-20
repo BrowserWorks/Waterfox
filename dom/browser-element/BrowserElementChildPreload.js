@@ -13,6 +13,8 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/BrowserElementPromptService.jsm");
 
+let kLongestReturnedString = 128;
+
 // Event whitelisted for bubbling.
 let whitelistedEvents = [
   Ci.nsIDOMKeyEvent.DOM_VK_ESCAPE,   // Back button.
@@ -79,6 +81,9 @@ let SEC_ERROR_CERT_SIGNATURE_ALGORITHM_DISABLED = (SEC_ERROR_BASE + 176);
 let SSL_ERROR_BASE = Ci.nsINSSErrorsService.NSS_SSL_ERROR_BASE;
 let SSL_ERROR_BAD_CERT_DOMAIN = (SSL_ERROR_BASE + 12);
 
+let MOZILLA_PKIX_ERROR_BASE = Ci.nsINSSErrorsService.PSM_ERROR_BASE;
+let MOZILLA_PKIX_ERROR_CA_CERT_USED_AS_END_ENTITY = (MOZILLA_PKIX_ERROR_BASE + 1);
+
 function getErrorClass(errorCode) {
   let NSPRCode = -1 * NS_ERROR_GET_CODE(errorCode);
 
@@ -90,6 +95,7 @@ function getErrorClass(errorCode) {
     case SSL_ERROR_BAD_CERT_DOMAIN:
     case SEC_ERROR_EXPIRED_CERTIFICATE:
     case SEC_ERROR_CERT_SIGNATURE_ALGORITHM_DISABLED:
+    case MOZILLA_PKIX_ERROR_CA_CERT_USED_AS_END_ENTITY:
       return Ci.nsINSSErrorsService.ERROR_CLASS_BAD_CERT;
     default:
       return Ci.nsINSSErrorsService.ERROR_CLASS_SSL_PROTOCOL;
@@ -184,9 +190,20 @@ BrowserElementChild.prototype = {
                      /* wantsUntrusted = */ false);
 
     addEventListener('DOMMetaAdded',
-                     this._metaAddedHandler.bind(this),
+                     this._metaChangedHandler.bind(this),
                      /* useCapture = */ true,
                      /* wantsUntrusted = */ false);
+
+    addEventListener('DOMMetaChanged',
+                     this._metaChangedHandler.bind(this),
+                     /* useCapture = */ true,
+                     /* wantsUntrusted = */ false);
+
+    addEventListener('DOMMetaRemoved',
+                     this._metaChangedHandler.bind(this),
+                     /* useCapture = */ true,
+                     /* wantsUntrusted = */ false);
+
 
     // This listens to unload events from our message manager, but /not/ from
     // the |content| window.  That's because the window's unload event doesn't
@@ -511,7 +528,7 @@ BrowserElementChild.prototype = {
     }, this);
   },
 
-  _metaAddedHandler: function(e) {
+  _metaChangedHandler: function(e) {
     let win = e.target.ownerDocument.defaultView;
     // Ignore metas which don't come from the top-level
     // <iframe mozbrowser> window.
@@ -524,39 +541,65 @@ BrowserElementChild.prototype = {
       return;
     }
 
-    debug('Got metaAdded: (' + e.target.name + ') ' + e.target.content);
-    if (e.target.name == 'application-name') {
-      let meta = { name: e.target.name,
-                   content: e.target.content };
+    debug('Got metaChanged: (' + e.target.name + ') ' + e.target.content);
 
-      let lang;
-      let elm;
+    let handlers = {
+      'theme-color': this._themeColorChangedHandler,
+      'application-name': this._applicationNameChangedHandler
+    };
 
-      for (elm = e.target;
-           !lang && elm && elm.nodeType == e.target.ELEMENT_NODE;
-           elm = elm.parentNode) {
-        if (elm.hasAttribute('lang')) {
-          lang = elm.getAttribute('lang');
-          continue;
-        }
-
-        if (elm.hasAttributeNS('http://www.w3.org/XML/1998/namespace', 'lang')) {
-          lang = elm.getAttributeNS('http://www.w3.org/XML/1998/namespace', 'lang');
-          continue;
-        }
-      }
-
-      // No lang has been detected.
-      if (!lang && elm.nodeType == e.target.DOCUMENT_NODE) {
-        lang = elm.contentLanguage;
-      }
-
-      if (lang) {
-        meta.lang = lang;
-      }
-
-      sendAsyncMsg('metachange', meta);
+    let handler = handlers[e.target.name];
+    if (handler) {
+      handler(e.type, e.target);
     }
+  },
+
+  _applicationNameChangedHandler: function(eventType, target) {
+    if (eventType !== 'DOMMetaAdded') {
+      // Bug 1037448 - Decide what to do when <meta name="application-name">
+      // changes
+      return;
+    }
+
+    let meta = { name: 'application-name',
+                 content: target.content };
+
+    let lang;
+    let elm;
+
+    for (elm = target;
+         !lang && elm && elm.nodeType == target.ELEMENT_NODE;
+         elm = elm.parentNode) {
+      if (elm.hasAttribute('lang')) {
+        lang = elm.getAttribute('lang');
+        continue;
+      }
+
+      if (elm.hasAttributeNS('http://www.w3.org/XML/1998/namespace', 'lang')) {
+        lang = elm.getAttributeNS('http://www.w3.org/XML/1998/namespace', 'lang');
+        continue;
+      }
+    }
+
+    // No lang has been detected.
+    if (!lang && elm.nodeType == target.DOCUMENT_NODE) {
+      lang = elm.contentLanguage;
+    }
+
+    if (lang) {
+      meta.lang = lang;
+    }
+
+    sendAsyncMsg('metachange', meta);
+  },
+
+  _themeColorChangedHandler: function(eventType, target) {
+    let meta = {
+      name: 'theme-color',
+      content: target.content,
+      type: eventType.replace('DOMMeta', '').toLowerCase()
+    };
+    sendAsyncMsg('metachange', meta);
   },
 
   _addMozAfterPaintHandler: function(callback) {
@@ -695,7 +738,8 @@ BrowserElementChild.prototype = {
   _getSystemCtxMenuData: function(elem) {
     if ((elem instanceof Ci.nsIDOMHTMLAnchorElement && elem.href) ||
         (elem instanceof Ci.nsIDOMHTMLAreaElement && elem.href)) {
-      return {uri: elem.href};
+      return {uri: elem.href,
+              text: elem.textContent.substring(0, kLongestReturnedString)};
     }
     if (elem instanceof Ci.nsIImageLoadingContent && elem.currentURI) {
       return {uri: elem.currentURI.spec};

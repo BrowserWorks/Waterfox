@@ -20,6 +20,7 @@
 #include "vm/Runtime.h"
 #include "vm/Shape.h"
 #include "vm/String.h"
+#include "vm/Symbol.h"
 #include "vm/WrapperObject.h"
 
 using mozilla::DebugOnly;
@@ -43,51 +44,78 @@ MemoryReportingSundriesThreshold()
     return 8 * 1024;
 }
 
-/* static */ HashNumber
-InefficientNonFlatteningStringHashPolicy::hash(const Lookup &l)
+template <typename CharT>
+static uint32_t
+HashStringChars(JSString *s)
 {
-    ScopedJSFreePtr<jschar> ownedChars;
-    const jschar *chars;
-    if (l->hasPureChars()) {
-        chars = l->pureChars();
+    ScopedJSFreePtr<CharT> ownedChars;
+    const CharT *chars;
+    JS::AutoCheckCannotGC nogc;
+    if (s->isLinear()) {
+        chars = s->asLinear().chars<CharT>(nogc);
     } else {
         // Slowest hash function evar!
-        if (!l->copyNonPureChars(/* tcx */ nullptr, ownedChars))
+        if (!s->asRope().copyChars<CharT>(/* tcx */ nullptr, ownedChars))
             MOZ_CRASH("oom");
         chars = ownedChars;
     }
 
-    return mozilla::HashString(chars, l->length());
+    return mozilla::HashString(chars, s->length());
+}
+
+/* static */ HashNumber
+InefficientNonFlatteningStringHashPolicy::hash(const Lookup &l)
+{
+    return l->hasLatin1Chars()
+           ? HashStringChars<Latin1Char>(l)
+           : HashStringChars<jschar>(l);
+}
+
+template <typename Char1, typename Char2>
+static bool
+EqualStringsPure(JSString *s1, JSString *s2)
+{
+    if (s1->length() != s2->length())
+        return false;
+
+    const Char1 *c1;
+    ScopedJSFreePtr<Char1> ownedChars1;
+    JS::AutoCheckCannotGC nogc;
+    if (s1->isLinear()) {
+        c1 = s1->asLinear().chars<Char1>(nogc);
+    } else {
+        if (!s1->asRope().copyChars<Char1>(/* tcx */ nullptr, ownedChars1))
+            MOZ_CRASH("oom");
+        c1 = ownedChars1;
+    }
+
+    const Char2 *c2;
+    ScopedJSFreePtr<Char2> ownedChars2;
+    if (s2->isLinear()) {
+        c2 = s2->asLinear().chars<Char2>(nogc);
+    } else {
+        if (!s2->asRope().copyChars<Char2>(/* tcx */ nullptr, ownedChars2))
+            MOZ_CRASH("oom");
+        c2 = ownedChars2;
+    }
+
+    return EqualChars(c1, c2, s1->length());
 }
 
 /* static */ bool
 InefficientNonFlatteningStringHashPolicy::match(const JSString *const &k, const Lookup &l)
 {
     // We can't use js::EqualStrings, because that flattens our strings.
-    if (k->length() != l->length())
-        return false;
-
-    const jschar *c1;
-    ScopedJSFreePtr<jschar> ownedChars1;
-    if (k->hasPureChars()) {
-        c1 = k->pureChars();
-    } else {
-        if (!k->copyNonPureChars(/* tcx */ nullptr, ownedChars1))
-            MOZ_CRASH("oom");
-        c1 = ownedChars1;
+    JSString *s1 = const_cast<JSString *>(k);
+    if (k->hasLatin1Chars()) {
+        return l->hasLatin1Chars()
+               ? EqualStringsPure<Latin1Char, Latin1Char>(s1, l)
+               : EqualStringsPure<Latin1Char, jschar>(s1, l);
     }
 
-    const jschar *c2;
-    ScopedJSFreePtr<jschar> ownedChars2;
-    if (l->hasPureChars()) {
-        c2 = l->pureChars();
-    } else {
-        if (!l->copyNonPureChars(/* tcx */ nullptr, ownedChars2))
-            MOZ_CRASH("oom");
-        c2 = ownedChars2;
-    }
-
-    return PodEqual(c1, c2, k->length());
+    return l->hasLatin1Chars()
+           ? EqualStringsPure<jschar, Latin1Char>(s1, l)
+           : EqualStringsPure<jschar, jschar>(s1, l);
 }
 
 /* static */ HashNumber
@@ -113,6 +141,27 @@ NotableStringInfo::NotableStringInfo()
 {
 }
 
+template <typename CharT>
+static void
+StoreStringChars(char *buffer, size_t bufferSize, JSString *str)
+{
+    const CharT* chars;
+    ScopedJSFreePtr<CharT> ownedChars;
+    JS::AutoCheckCannotGC nogc;
+    if (str->isLinear()) {
+        chars = str->asLinear().chars<CharT>(nogc);
+    } else {
+        if (!str->asRope().copyChars<CharT>(/* tcx */ nullptr, ownedChars))
+            MOZ_CRASH("oom");
+        chars = ownedChars;
+    }
+
+    // We might truncate |str| even if it's much shorter than 1024 chars, if
+    // |str| contains unicode chars.  Since this is just for a memory reporter,
+    // we don't care.
+    PutEscapedString(buffer, bufferSize, chars, str->length(), /* quote */ 0);
+}
+
 NotableStringInfo::NotableStringInfo(JSString *str, const StringInfo &info)
   : StringInfo(info),
     length(str->length())
@@ -123,20 +172,10 @@ NotableStringInfo::NotableStringInfo(JSString *str, const StringInfo &info)
         MOZ_CRASH("oom");
     }
 
-    const jschar* chars;
-    ScopedJSFreePtr<jschar> ownedChars;
-    if (str->hasPureChars()) {
-        chars = str->pureChars();
-    } else {
-        if (!str->copyNonPureChars(/* tcx */ nullptr, ownedChars))
-            MOZ_CRASH("oom");
-        chars = ownedChars;
-    }
-
-    // We might truncate |str| even if it's much shorter than 1024 chars, if
-    // |str| contains unicode chars.  Since this is just for a memory reporter,
-    // we don't care.
-    PutEscapedString(buffer, bufferSize, chars, str->length(), /* quote */ 0);
+    if (str->hasLatin1Chars())
+        StoreStringChars<Latin1Char>(buffer, bufferSize, str);
+    else
+        StoreStringChars<jschar>(buffer, bufferSize, str);
 }
 
 NotableStringInfo::NotableStringInfo(NotableStringInfo &&info)
@@ -196,7 +235,14 @@ struct StatsClosure
     RuntimeStats *rtStats;
     ObjectPrivateVisitor *opv;
     SourceSet seenSources;
-    StatsClosure(RuntimeStats *rt, ObjectPrivateVisitor *v) : rtStats(rt), opv(v) {}
+    bool anonymize;
+
+    StatsClosure(RuntimeStats *rt, ObjectPrivateVisitor *v, bool anon)
+      : rtStats(rt),
+        opv(v),
+        anonymize(anon)
+    {}
+
     bool init() {
         return seenSources.init();
     }
@@ -287,9 +333,13 @@ GetCompartmentStats(JSCompartment *comp)
     return static_cast<CompartmentStats *>(comp->compartmentStats);
 }
 
+// FineGrained is used for normal memory reporting.  CoarseGrained is used by
+// AddSizeOfTab(), which aggregates all the measurements into a handful of
+// high-level numbers, which means that fine-grained reporting would be a waste
+// of effort.
 enum Granularity {
-    FineGrained,    // Corresponds to CollectRuntimeStats()
-    CoarseGrained   // Corresponds to AddSizeOfTab()
+    FineGrained,
+    CoarseGrained
 };
 
 // The various kinds of hashing are expensive, and the results are unused when
@@ -330,13 +380,21 @@ StatsCellCallback(JSRuntime *rt, void *data, void *thing, JSGCTraceKind traceKin
         JSString *str = static_cast<JSString *>(thing);
 
         JS::StringInfo info;
-        info.gcHeap = thingSize;
-        info.mallocHeap = str->sizeOfExcludingThis(rtStats->mallocSizeOf_);
+        if (str->hasLatin1Chars()) {
+            info.gcHeapLatin1 = thingSize;
+            info.mallocHeapLatin1 = str->sizeOfExcludingThis(rtStats->mallocSizeOf_);
+        } else {
+            info.gcHeapTwoByte = thingSize;
+            info.mallocHeapTwoByte = str->sizeOfExcludingThis(rtStats->mallocSizeOf_);
+        }
         info.numCopies = 1;
 
         zStats->stringInfo.add(info);
 
-        if (granularity == FineGrained) {
+        // The primary use case for anonymization is automated crash submission
+        // (to help detect OOM crashes). In that case, we don't want to pay the
+        // memory cost required to do notable string detection.
+        if (granularity == FineGrained && !closure->anonymize) {
             ZoneStats::StringsHashMap::AddPtr p = zStats->allStrings->lookupForAdd(str);
             if (!p) {
                 // Ignore failure -- we just won't record the string as notable.
@@ -347,6 +405,10 @@ StatsCellCallback(JSRuntime *rt, void *data, void *thing, JSGCTraceKind traceKin
         }
         break;
       }
+
+      case JSTRACE_SYMBOL:
+        zStats->symbolsGCHeap += thingSize;
+        break;
 
       case JSTRACE_SHAPE: {
         Shape *shape = static_cast<Shape *>(thing);
@@ -443,7 +505,7 @@ StatsCellCallback(JSRuntime *rt, void *data, void *thing, JSGCTraceKind traceKin
       }
 
       default:
-        MOZ_ASSUME_UNREACHABLE("invalid traceKind");
+        MOZ_CRASH("invalid traceKind");
     }
 
     // Yes, this is a subtraction:  see StatsArenaCallback() for details.
@@ -532,7 +594,8 @@ FindNotableScriptSources(JS::RuntimeSizes &runtime)
 }
 
 JS_PUBLIC_API(bool)
-JS::CollectRuntimeStats(JSRuntime *rt, RuntimeStats *rtStats, ObjectPrivateVisitor *opv)
+JS::CollectRuntimeStats(JSRuntime *rt, RuntimeStats *rtStats, ObjectPrivateVisitor *opv,
+                        bool anonymize)
 {
     if (!rtStats->compartmentStatsVector.reserve(rt->numCompartments))
         return false;
@@ -550,11 +613,14 @@ JS::CollectRuntimeStats(JSRuntime *rt, RuntimeStats *rtStats, ObjectPrivateVisit
                   DecommittedArenasChunkCallback);
 
     // Take the per-compartment measurements.
-    StatsClosure closure(rtStats, opv);
+    StatsClosure closure(rtStats, opv, anonymize);
     if (!closure.init())
         return false;
-    IterateZonesCompartmentsArenasCells(rt, &closure, StatsZoneCallback, StatsCompartmentCallback,
-                                        StatsArenaCallback, StatsCellCallback<FineGrained>);
+    IterateZonesCompartmentsArenasCells(rt, &closure,
+                                        StatsZoneCallback,
+                                        StatsCompartmentCallback,
+                                        StatsArenaCallback,
+                                        StatsCellCallback<FineGrained>);
 
     // Take the "explicit/js/runtime/" measurements.
     rt->addSizeOfIncludingThis(rtStats->mallocSizeOf_, &rtStats->runtime);
@@ -674,8 +740,9 @@ AddSizeOfTab(JSRuntime *rt, HandleObject obj, MallocSizeOf mallocSizeOf, ObjectP
     if (!rtStats.zoneStatsVector.reserve(1))
         return false;
 
-    // Take the per-compartment measurements.
-    StatsClosure closure(&rtStats, opv);
+    // Take the per-compartment measurements. No need to anonymize because
+    // these measurements will be aggregated.
+    StatsClosure closure(&rtStats, opv, /* anonymize = */ false);
     if (!closure.init())
         return false;
     IterateZoneCompartmentsArenasCells(rt, zone, &closure, StatsZoneCallback,

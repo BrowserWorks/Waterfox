@@ -5,30 +5,70 @@
 
 #include "nsISupports.idl"
 #include "nsIThread.idl"
+#include "nsIPrincipal.idl"
 
 %{C++
-class GMPVideoDecoder;
-class GMPVideoEncoder;
+#include "nsTArray.h"
+#include "nsStringGlue.h"
+class GMPVideoDecoderProxy;
+class GMPVideoEncoderProxy;
 class GMPVideoHost;
 %}
 
-[ptr] native GMPVideoDecoder(GMPVideoDecoder);
-[ptr] native GMPVideoEncoder(GMPVideoEncoder);
+[ptr] native GMPVideoDecoderProxy(GMPVideoDecoderProxy);
+[ptr] native GMPVideoEncoderProxy(GMPVideoEncoderProxy);
 [ptr] native GMPVideoHost(GMPVideoHost);
 [ptr] native MessageLoop(MessageLoop);
+[ptr] native TagArray(nsTArray<nsCString>);
 
-[uuid(BF5A9086-70F5-4D38-832D-1609BBF963CD)]
+[scriptable, uuid(a9b826da-725a-4b81-814f-b715445188f2)]
 interface mozIGeckoMediaPluginService : nsISupports
 {
-  // Returns the GMP thread.
-  // Callable from any thread.
+  /**
+   * The GMP thread. Callable from any thread.
+   */
   readonly attribute nsIThread thread;
 
-  // Returns a video decoder API object that should support VP8.
-  // Callable only on GMP thread.
-  GMPVideoDecoder getGMPVideoDecoderVP8(out GMPVideoHost outVideoHost);
+  /**
+   * Get a plugin that supports the specified tags.
+   * Callable on any thread
+   */
+  [noscript]
+  boolean hasPluginForAPI([optional] in AString origin,
+                          in ACString api,
+                          in TagArray tags);
 
-  // Returns a video encoder API object that should support VP8.
-  // Callable only on GMP thread.
-  GMPVideoEncoder getGMPVideoEncoderVP8(out GMPVideoHost outVideoHost);
+  /**
+   * Get a video decoder that supports the specified tags.
+   * The array of tags should at least contain a codec tag, and optionally
+   * other tags such as for EME keysystem.
+   * Callable only on GMP thread.
+   */
+  [noscript]
+  GMPVideoDecoderProxy getGMPVideoDecoder(in TagArray tags,
+                                          [optional] in AString origin,
+                                          out GMPVideoHost outVideoHost);
+
+  /**
+   * Get a video encoder that supports the specified tags.
+   * The array of tags should at least contain a codec tag, and optionally
+   * other tags.
+   * Callable only on GMP thread.
+   */
+  [noscript]
+  GMPVideoEncoderProxy getGMPVideoEncoder(in TagArray tags,
+		                                      [optional] in AString origin,
+		                                      out GMPVideoHost outVideoHost);
+
+  /**
+   * Add a directory to scan for gecko media plugins.
+   * @note Main-thread API.
+   */
+  void addPluginDirectory(in AString directory);
+
+  /**
+   * Remove a directory for gecko media plugins.
+   * @note Main-thread API.
+   */
+  void removePluginDirectory(in AString directory);
 };

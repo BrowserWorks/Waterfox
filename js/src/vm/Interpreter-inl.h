@@ -241,7 +241,7 @@ SetNameOperation(JSContext *cx, JSScript *script, jsbytecode *pc, HandleObject s
      * undeclared global variable. To do this, we call SetPropertyHelper
      * directly and pass Unqualified.
      */
-    if (scope->is<GlobalObject>()) {
+    if (scope->isUnqualifiedVarObj()) {
         JS_ASSERT(!scope->getOps()->setProperty);
         RootedId id(cx, NameToId(name));
         return baseops::SetPropertyHelper<SequentialExecution>(cx, scope, scope, id,
@@ -255,7 +255,7 @@ SetNameOperation(JSContext *cx, JSScript *script, jsbytecode *pc, HandleObject s
 inline bool
 DefVarOrConstOperation(JSContext *cx, HandleObject varobj, HandlePropertyName dn, unsigned attrs)
 {
-    JS_ASSERT(varobj->isVarObj());
+    JS_ASSERT(varobj->isQualifiedVarObj());
 
     RootedShape prop(cx);
     RootedObject obj2(cx);
@@ -352,6 +352,16 @@ GetObjectElementOperation(JSContext *cx, JSOp op, JSObject *objArg, bool wasObje
             RootedObject obj(cx, objArg);
             if (!JSObject::getElement(cx, obj, obj, index, res))
                 return false;
+            objArg = obj;
+            break;
+        }
+
+        if (rref.isSymbol()) {
+            RootedObject obj(cx, objArg);
+            RootedId id(cx, SYMBOL_TO_JSID(rref.toSymbol()));
+            if (!JSObject::getGeneric(cx, obj, obj, id, res))
+                return false;
+
             objArg = obj;
             break;
         }

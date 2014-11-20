@@ -206,6 +206,24 @@ nsXULPopupManager::Rollup(uint32_t aCount, const nsIntPoint* pos, nsIContent** a
     // clicking on a menu doesn't reopen the menu.
     if (!consume && pos) {
       nsCOMPtr<nsIContent> anchor = item->Frame()->GetAnchor();
+
+      // Check if the anchor has indicated another node to use for checking
+      // for roll-up. That way, we can anchor a popup on anonymous content or
+      // an individual icon, while clicking elsewhere within a button or other
+      // container doesn't result in us re-opening the popup.
+      if (anchor) {
+        nsAutoString consumeAnchor;
+        anchor->GetAttr(kNameSpaceID_None, nsGkAtoms::consumeanchor,
+                        consumeAnchor);
+        if (!consumeAnchor.IsEmpty()) {
+          nsIDocument* doc = anchor->GetOwnerDocument();
+          nsIContent* newAnchor = doc->GetElementById(consumeAnchor);
+          if (newAnchor) {
+            anchor = newAnchor;
+          }
+        }
+      }
+
       if (anchor && anchor->GetPrimaryFrame()) {
         // It's possible that some other element is above the anchor at the same
         // position, but the only thing that would happen is that the mouse
@@ -376,7 +394,7 @@ nsMenuPopupFrame* GetPopupToMoveOrResize(nsIFrame* aFrame)
     return nullptr;
 
   // no point moving or resizing hidden popups
-  if (menuPopupFrame->PopupState() != ePopupOpenAndVisible)
+  if (!menuPopupFrame->IsVisible())
     return nullptr;
 
   nsIWidget* widget = menuPopupFrame->GetWidget();
@@ -932,6 +950,9 @@ nsXULPopupManager::HidePopup(nsIContent* aPopup,
 // This is used to hide the popup after a transition finishes.
 class TransitionEnder : public nsIDOMEventListener
 {
+protected:
+  virtual ~TransitionEnder() { }
+
 public:
 
   nsCOMPtr<nsIContent> mContent;
@@ -944,8 +965,6 @@ public:
     : mContent(aContent), mDeselectMenu(aDeselectMenu)
   {
   }
-
-  virtual ~TransitionEnder() { }
 
   NS_IMETHOD HandleEvent(nsIDOMEvent* aEvent) MOZ_OVERRIDE
   {
@@ -1371,33 +1390,43 @@ nsXULPopupManager::FirePopupHidingEvent(nsIContent* aPopup,
     // from hiding.
     if (status == nsEventStatus_eConsumeNoDefault &&
         !popupFrame->IsInContentShell()) {
-      popupFrame->SetPopupState(ePopupOpenAndVisible);
+      // XXXndeakin
+      // If an attempt was made to hide this popup before the popupshown event
+      // fired, then ePopupShown is set here even though it should be
+      // ePopupVisible. This probably isn't worth the hassle of handling.
+      popupFrame->SetPopupState(ePopupShown);
     }
     else {
-      // If the popup has an animate attribute and it is not set to false, assume
-      // that it has a closing transition and wait for it to finish. The transition
+      // If the popup has an animate attribute and it is not set to false, check
+      // if it has a closing transition and wait for it to finish. The transition
       // may still occur either way, but the view will be hidden and you won't be
       // able to see it. If there is a next popup, indicating that mutliple popups
       // are rolling up, don't wait and hide the popup right away since the effect
-      // would likely be undesirable. This also does a quick check to see if the
-      // popup has a transition defined, and skips the wait if not. Transitions
-      // are currently disabled on Linux due to rendering issues on certain
-      // configurations.
+      // would likely be undesirable. Transitions are currently disabled on Linux
+      // due to rendering issues on certain configurations.
 #ifndef MOZ_WIDGET_GTK
-      if (!aNextPopup && aPopup->HasAttr(kNameSpaceID_None, nsGkAtoms::animate) &&
-          popupFrame->StyleDisplay()->mTransitionPropertyCount > 0) {
-        nsAutoString animate;
-        aPopup->GetAttr(kNameSpaceID_None, nsGkAtoms::animate, animate);
-
+      if (!aNextPopup && aPopup->HasAttr(kNameSpaceID_None, nsGkAtoms::animate)) {
         // If animate="false" then don't transition at all. If animate="cancel",
         // only show the transition if cancelling the popup or rolling up.
         // Otherwise, always show the transition.
+        nsAutoString animate;
+        aPopup->GetAttr(kNameSpaceID_None, nsGkAtoms::animate, animate);
+
         if (!animate.EqualsLiteral("false") &&
             (!animate.EqualsLiteral("cancel") || aIsRollup)) {
-          nsRefPtr<TransitionEnder> ender = new TransitionEnder(aPopup, aDeselectMenu);
-          aPopup->AddSystemEventListener(NS_LITERAL_STRING("transitionend"),
-                                         ender, false, false);
-          return;
+          presShell->FlushPendingNotifications(Flush_Layout);
+
+          // Get the frame again in case the flush caused it to go away
+          popupFrame = do_QueryFrame(aPopup->GetPrimaryFrame());
+          if (!popupFrame)
+            return;
+
+          if (nsLayoutUtils::HasCurrentAnimations(aPopup, nsGkAtoms::transitionsProperty, aPresContext)) {
+            nsRefPtr<TransitionEnder> ender = new TransitionEnder(aPopup, aDeselectMenu);
+            aPopup->AddSystemEventListener(NS_LITERAL_STRING("transitionend"),
+                                           ender, false, false);
+            return;
+          }
         }
       }
 #endif
@@ -1484,10 +1513,9 @@ nsXULPopupManager::GetVisiblePopups(nsTArray<nsIFrame *>& aPopups)
   nsMenuChainItem* item = mPopups;
   for (int32_t list = 0; list < 2; list++) {
     while (item) {
-      // Skip panels which are not open and visible as well as popups that
+      // Skip panels which are not visible as well as popups that
       // are transparent to mouse events.
-      if (item->Frame()->PopupState() == ePopupOpenAndVisible &&
-          !item->Frame()->IsMouseTransparent()) {
+      if (item->Frame()->IsVisible() && !item->Frame()->IsMouseTransparent()) {
         aPopups.AppendElement(item->Frame());
       }
 

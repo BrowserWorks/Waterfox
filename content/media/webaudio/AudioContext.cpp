@@ -437,6 +437,7 @@ AudioContext::DecodeAudioData(const ArrayBuffer& aBuffer,
                               const Optional<OwningNonNull<DecodeErrorCallback> >& aFailureCallback)
 {
   AutoJSAPI jsapi;
+  jsapi.Init();
   JSContext* cx = jsapi.cx();
   JSAutoCompartment ac(cx, aBuffer.Obj());
 
@@ -537,7 +538,8 @@ AudioContext::DestinationStream() const
 double
 AudioContext::CurrentTime() const
 {
-  return MediaTimeToSeconds(Destination()->Stream()->GetCurrentTime()) +
+  MediaStream* stream = Destination()->Stream();
+  return stream->StreamTimeToSeconds(stream->GetCurrentTime()) +
       ExtraCurrentTime();
 }
 
@@ -674,7 +676,7 @@ AudioContext::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
 
 NS_IMETHODIMP
 AudioContext::CollectReports(nsIHandleReportCallback* aHandleReport,
-                             nsISupports* aData)
+                             nsISupports* aData, bool aAnonymize)
 {
   int64_t amount = SizeOfIncludingThis(MallocSizeOf);
   return MOZ_COLLECT_REPORT("explicit/webaudio/audiocontext", KIND_HEAP, UNITS_BYTES,

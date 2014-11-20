@@ -17,6 +17,7 @@
 #include "OmxDecoder.h"
 #include "MPAPI.h"
 #include "gfx2DGlue.h"
+#include "MediaStreamSource.h"
 
 #ifdef MOZ_AUDIO_OFFLOAD
 #include <stagefright/Utils.h>
@@ -59,14 +60,27 @@ MediaOmxReader::MediaOmxReader(AbstractMediaDecoder *aDecoder)
 
 MediaOmxReader::~MediaOmxReader()
 {
-  ReleaseMediaResources();
-  ReleaseDecoder();
-  mOmxDecoder.clear();
 }
 
 nsresult MediaOmxReader::Init(MediaDecoderReader* aCloneDonor)
 {
   return NS_OK;
+}
+
+void MediaOmxReader::ReleaseDecoder()
+{
+  if (mOmxDecoder.get()) {
+    mOmxDecoder->ReleaseDecoder();
+  }
+  mOmxDecoder.clear();
+}
+
+void MediaOmxReader::Shutdown()
+{
+  ReleaseMediaResources();
+  nsCOMPtr<nsIRunnable> event =
+    NS_NewRunnableMethod(this, &MediaOmxReader::ReleaseDecoder);
+  NS_DispatchToMainThread(event);
 }
 
 bool MediaOmxReader::IsWaitingMediaResources()
@@ -99,13 +113,6 @@ void MediaOmxReader::ReleaseMediaResources()
   }
 }
 
-void MediaOmxReader::ReleaseDecoder()
-{
-  if (mOmxDecoder.get()) {
-    mOmxDecoder->ReleaseDecoder();
-  }
-}
-
 nsresult MediaOmxReader::InitOmxDecoder()
 {
   if (!mOmxDecoder.get()) {
@@ -113,7 +120,7 @@ nsresult MediaOmxReader::InitOmxDecoder()
     DataSource::RegisterDefaultSniffers();
     mDecoder->GetResource()->SetReadMode(MediaCacheStream::MODE_METADATA);
 
-    sp<DataSource> dataSource = new MediaStreamSource(mDecoder->GetResource(), mDecoder);
+    sp<DataSource> dataSource = new MediaStreamSource(mDecoder->GetResource());
     dataSource->initCheck();
 
     mExtractor = MediaExtractor::Create(dataSource);
@@ -162,9 +169,6 @@ nsresult MediaOmxReader::ReadMetadata(MediaInfo* aInfo,
     mDecoder->SetMediaDuration(durationUs);
   }
 
-  // Check the MediaExtract flag if the source is seekable.
-  mDecoder->SetMediaSeekable(mExtractor->flags() & MediaExtractor::CAN_SEEK);
-
   if (mOmxDecoder->HasVideo()) {
     int32_t displayWidth, displayHeight, width, height;
     mOmxDecoder->GetVideoParameters(&displayWidth, &displayHeight,
@@ -203,6 +207,13 @@ nsresult MediaOmxReader::ReadMetadata(MediaInfo* aInfo,
  *aInfo = mInfo;
 
   return NS_OK;
+}
+
+bool
+MediaOmxReader::IsMediaSeekable()
+{
+  // Check the MediaExtract flag if the source is seekable.
+  return (mExtractor->flags() & MediaExtractor::CAN_SEEK);
 }
 
 bool MediaOmxReader::DecodeVideoFrame(bool &aKeyframeSkip,
@@ -317,7 +328,7 @@ bool MediaOmxReader::DecodeVideoFrame(bool &aKeyframeSkip,
     }
 
     decoded++;
-    NS_ASSERTION(decoded <= parsed, "Expect to decode fewer frames than parsed in MediaPlugin...");
+    NS_ASSERTION(decoded <= parsed, "Expect to decode fewer frames than parsed in OMX decoder...");
 
     mVideoQueue.Push(v);
 
@@ -375,7 +386,6 @@ nsresult MediaOmxReader::Seek(int64_t aTarget, int64_t aStartTime, int64_t aEndT
   NS_ASSERTION(mDecoder->OnDecodeThread(), "Should be on decode thread.");
   EnsureActive();
 
-  ResetDecode();
   VideoFrameContainer* container = mDecoder->GetVideoFrameContainer();
   if (container && container->GetImageContainer()) {
     container->GetImageContainer()->ClearAllImagesExceptFront();
@@ -398,13 +408,6 @@ nsresult MediaOmxReader::Seek(int64_t aTarget, int64_t aStartTime, int64_t aEndT
   }
 
   return NS_OK;
-}
-
-static uint64_t BytesToTime(int64_t offset, uint64_t length, uint64_t durationUs) {
-  double perc = double(offset) / double(length);
-  if (perc > 1.0)
-    perc = 1.0;
-  return uint64_t(double(durationUs) * perc);
 }
 
 void MediaOmxReader::SetIdle() {

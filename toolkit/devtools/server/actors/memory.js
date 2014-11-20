@@ -70,6 +70,13 @@ let MemoryActor = protocol.ActorClass({
   }, {
     request: {},
     response: RetVal("json"),
+  }),
+
+  residentUnique: method(function() {
+    return this._mgr.residentUnique;
+  }, {
+    request: {},
+    response: { value: RetVal("number") }
   })
 });
 
@@ -79,7 +86,6 @@ exports.MemoryFront = protocol.FrontClass(MemoryActor, {
   initialize: function(client, form) {
     protocol.Front.prototype.initialize.call(this, client, form);
     this.actorID = form.memoryActor;
-    client.addActorPool(this);
     this.manage(this);
   }
 });

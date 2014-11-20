@@ -183,10 +183,6 @@ VARIABLES = {
         disabled.
         """, 'binaries'),
 
-    'EXPORT_LIBRARY': (bool, bool,
-        """Install the library to the static libraries folder.
-        """, None),
-
     'EXTRA_COMPONENTS': (StrictOrderingOnAppendList, list,
         """Additional component files to distribute.
 
@@ -208,6 +204,18 @@ VARIABLES = {
         This variable contains a list of files to copy into
         ``$(FINAL_TARGET)/$(JS_MODULES_PATH)``, after preprocessing.
         ``JS_MODULES_PATH`` defaults to ``modules`` if left undefined.
+        """, 'libs'),
+
+    'TESTING_JS_MODULES': (HierarchicalStringList, list,
+        """JavaScript modules to install in the test-only destination.
+
+        Some JavaScript modules (JSMs) are test-only and not distributed
+        with Firefox. This variable defines them.
+
+        To install modules in a subdirectory, use properties of this
+        variable to control the final destination. e.g.
+
+        ``TESTING_JS_MODULES.foo += ['module.jsm']``.
         """, 'libs'),
 
     'EXTRA_PP_COMPONENTS': (StrictOrderingOnAppendList, list,
@@ -359,6 +367,12 @@ VARIABLES = {
         This variable can only be used on Windows.
         """, None),
 
+    'LD_VERSION_SCRIPT': (unicode, unicode,
+        """The linker version script for shared libraries.
+
+        This variable can only be used on Linux.
+        """, None),
+
     'RESOURCE_FILES': (HierarchicalStringListWithFlagsFactory({'preprocess': bool}), list,
         """List of resources to be exported, and in which subdirectories.
 
@@ -397,6 +411,14 @@ VARIABLES = {
         If the configuration token ``BIN_SUFFIX`` is set, its value will be
         automatically appended to each name. If a name already ends with
         ``BIN_SUFFIX``, the name will remain unchanged.
+        """, 'binaries'),
+
+    'SONAME': (unicode, unicode,
+        """The soname of the shared object currently being linked
+
+        soname is the "logical name" of a shared object, often used to provide
+        version backwards compatibility. This variable makes sense only for
+        shared objects, and is supported only on some unix platforms.
         """, 'binaries'),
 
     'HOST_SIMPLE_PROGRAMS': (StrictOrderingOnAppendList, list,
@@ -593,6 +615,12 @@ VARIABLES = {
         """List of manifest files defining browser chrome tests.
         """, None),
 
+    'CRASHTEST_MANIFESTS': (StrictOrderingOnAppendList, list,
+        """List of manifest files defining crashtests.
+
+        These are commonly named crashtests.list.
+        """, None),
+
     'METRO_CHROME_MANIFESTS': (StrictOrderingOnAppendList, list,
         """List of manifest files defining metro browser chrome tests.
         """, None),
@@ -607,6 +635,12 @@ VARIABLES = {
 
     'MOCHITEST_WEBAPPRT_CHROME_MANIFESTS': (StrictOrderingOnAppendList, list,
         """List of manifest files defining webapprt mochitest chrome tests.
+        """, None),
+
+    'REFTEST_MANIFESTS': (StrictOrderingOnAppendList, list,
+        """List of manifest files defining reftests.
+
+        These are commonly named reftest.list.
         """, None),
 
     'WEBRTC_SIGNALLING_TEST_MANIFESTS': (StrictOrderingOnAppendList, list,

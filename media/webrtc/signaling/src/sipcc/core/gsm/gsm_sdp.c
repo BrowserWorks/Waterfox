@@ -226,22 +226,22 @@ void gsmsdp_process_cap_constraint(cc_media_cap_t *cap,
 }
 
 /*
- * Process constraints only related to media capabilities., i.e
+ * Process options only related to media capabilities., i.e
  * OfferToReceiveAudio, OfferToReceiveVideo
  */
-void gsmsdp_process_cap_constraints(fsmdef_dcb_t *dcb,
-                                    cc_media_constraints_t* constraints) {
-  if (constraints->offer_to_receive_audio.was_passed) {
+void gsmsdp_process_cap_options(fsmdef_dcb_t *dcb,
+                                    cc_media_options_t* options) {
+  if (options->offer_to_receive_audio.was_passed) {
     gsmsdp_process_cap_constraint(&dcb->media_cap_tbl->cap[CC_AUDIO_1],
-                                  constraints->offer_to_receive_audio.value);
+                                  options->offer_to_receive_audio.value);
   }
-  if (constraints->offer_to_receive_video.was_passed) {
+  if (options->offer_to_receive_video.was_passed) {
     gsmsdp_process_cap_constraint(&dcb->media_cap_tbl->cap[CC_VIDEO_1],
-                                  constraints->offer_to_receive_video.value);
+                                  options->offer_to_receive_video.value);
   }
-  if (constraints->moz_dont_offer_datachannel.was_passed) {
+  if (options->moz_dont_offer_datachannel.was_passed) {
     /* Hack to suppress data channel */
-    if (constraints->moz_dont_offer_datachannel.value) {
+    if (options->moz_dont_offer_datachannel.value) {
       dcb->media_cap_tbl->cap[CC_DATACHANNEL_1].enabled = FALSE;
     }
   }
@@ -1141,6 +1141,8 @@ gsmsdp_set_video_media_attributes (uint32_t media_type, void *cc_sdp_p, uint16_t
     void *sdp_p = ((cc_sdp_t*)cc_sdp_p)->src_sdp;
     int max_fs = 0;
     int max_fr = 0;
+    int max_br = 0;
+    int max_mbps = 0;
 
     switch (media_type) {
         case RTP_H263:
@@ -1178,10 +1180,12 @@ gsmsdp_set_video_media_attributes (uint32_t media_type, void *cc_sdp_p, uint16_t
                 return;
             }
             added_fmtp = 1;
+            (void) sdp_attr_set_fmtp_payload_type(sdp_p, level, 0, a_inst,
+                                                  payload_number);
             {
                 char buffer[32];
                 uint32_t profile_level_id = vcmGetVideoH264ProfileLevelID();
-                snprintf(buffer, sizeof(buffer), "0x%x", profile_level_id);
+                snprintf(buffer, sizeof(buffer), "%06x", profile_level_id);
                 (void) sdp_attr_set_fmtp_profile_level_id(sdp_p, level, 0, a_inst,
                                                           buffer);
             }
@@ -1209,11 +1213,14 @@ gsmsdp_set_video_media_attributes (uint32_t media_type, void *cc_sdp_p, uint16_t
         switch (media_type) {
         case RTP_H264_P0:
         case RTP_H264_P1:
+            max_br = config_get_video_max_br((rtp_ptype) media_type); // H264 only
+            max_mbps = config_get_video_max_mbps((rtp_ptype) media_type); // H264 only
+            // fall through
         case RTP_VP8:
             max_fs = config_get_video_max_fs((rtp_ptype) media_type);
             max_fr = config_get_video_max_fr((rtp_ptype) media_type);
 
-            if (max_fs || max_fr) {
+            if (max_fs || max_fr || max_br || max_mbps) {
                 if (!added_fmtp) {
                     if (sdp_add_new_attr(sdp_p, level, 0, SDP_ATTR_FMTP, &a_inst)
                         != SDP_SUCCESS) {
@@ -1221,19 +1228,26 @@ gsmsdp_set_video_media_attributes (uint32_t media_type, void *cc_sdp_p, uint16_t
                         return;
                     }
                     added_fmtp = 1;
-                }
 
-                (void) sdp_attr_set_fmtp_payload_type(sdp_p, level, 0, a_inst,
-                                                      payload_number);
+                    (void) sdp_attr_set_fmtp_payload_type(sdp_p, level, 0, a_inst,
+                                                          payload_number);
+                }
 
                 if (max_fs) {
                     (void) sdp_attr_set_fmtp_max_fs(sdp_p, level, 0, a_inst,
                                                     max_fs);
                 }
-
                 if (max_fr) {
                     (void) sdp_attr_set_fmtp_max_fr(sdp_p, level, 0, a_inst,
                                                     max_fr);
+                }
+                if (max_br) {
+                    (void) sdp_attr_set_fmtp_max_br(sdp_p, level, 0, a_inst,
+                                                    max_br);
+                }
+                if (max_mbps) {
+                    (void) sdp_attr_set_fmtp_max_mbps(sdp_p, level, 0, a_inst,
+                                                      max_mbps);
                 }
             }
             break;

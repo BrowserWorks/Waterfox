@@ -5,6 +5,8 @@
 
 package org.mozilla.gecko.home;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.mozilla.gecko.EditBookmarkDialog;
 import org.mozilla.gecko.GeckoApp;
 import org.mozilla.gecko.GeckoAppShell;
@@ -20,6 +22,7 @@ import org.mozilla.gecko.db.BrowserContract.Combined;
 import org.mozilla.gecko.db.BrowserContract.SuggestedSites;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.favicons.Favicons;
+import org.mozilla.gecko.home.HomeContextMenuInfo.RemoveItemType;
 import org.mozilla.gecko.home.TopSitesGridView.TopSitesGridContextMenuInfo;
 import org.mozilla.gecko.util.Clipboard;
 import org.mozilla.gecko.util.StringUtils;
@@ -44,7 +47,7 @@ import android.widget.Toast;
 
 /**
  * HomeFragment is an empty fragment that can be added to the HomePager.
- * Subclasses can add their own views. 
+ * Subclasses can add their own views.
  */
 abstract class HomeFragment extends Fragment {
     // Log Tag.
@@ -96,7 +99,7 @@ abstract class HomeFragment extends Fragment {
 
         menu.setHeaderTitle(info.getDisplayTitle());
 
-        // Hide ununsed menu items.
+        // Hide unused menu items.
         menu.findItem(R.id.top_sites_edit).setVisible(false);
         menu.findItem(R.id.top_sites_pin).setVisible(false);
         menu.findItem(R.id.top_sites_unpin).setVisible(false);
@@ -112,10 +115,9 @@ abstract class HomeFragment extends Fragment {
             menu.findItem(R.id.home_remove).setVisible(false);
         }
 
-        menu.findItem(R.id.home_share).setVisible(!GeckoProfile.get(getActivity()).inGuestMode());
-
-        final boolean canOpenInReader = (info.display == Combined.DISPLAY_READER);
-        menu.findItem(R.id.home_open_in_reader).setVisible(canOpenInReader);
+        if (!StringUtils.isShareableUrl(info.url) || GeckoProfile.get(getActivity()).inGuestMode()) {
+            menu.findItem(R.id.home_share).setVisible(false);
+        }
     }
 
     @Override
@@ -193,13 +195,26 @@ abstract class HomeFragment extends Fragment {
             // Some pinned site items have "user-entered" urls. URLs entered in the PinSiteDialog are wrapped in
             // a special URI until we can get a valid URL. If the url is a user-entered url, decode the URL before loading it.
             final Tab newTab = Tabs.getInstance().loadUrl(StringUtils.decodeUserEnteredUrl(url), flags);
+            final int newTabId = newTab.getId(); // We don't want to hold a reference to the Tab.
+
             final String message = isPrivate ?
                     getResources().getString(R.string.new_private_tab_opened) :
                     getResources().getString(R.string.new_tab_opened);
-            // Bug 1023407: ButtonToasts interact badly with touch events, blocking interaction with
-            // the rest of the system until the ButtonToast expires or is otherwise dismissed (Bug
-            // 1019735). Until this is fixed, we'll just use regular system Toasts.
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+            final String buttonMessage = getResources().getString(R.string.switch_button_message);
+            final GeckoApp geckoApp = (GeckoApp) context;
+            geckoApp.getButtonToast().show(false,
+                    message,
+                    buttonMessage,
+                    R.drawable.switch_button_icon,
+                    new ButtonToast.ToastListener() {
+                        @Override
+                        public void onButtonClicked() {
+                            Tabs.getInstance().selectTab(newTabId);
+                        }
+
+                        @Override
+                        public void onToastHidden(ButtonToast.ReasonHidden reason) { }
+                    });
             return true;
         }
 
@@ -209,22 +224,12 @@ abstract class HomeFragment extends Fragment {
             return true;
         }
 
-        if (itemId == R.id.home_open_in_reader) {
-            final String url = ReaderModeUtils.getAboutReaderForUrl(info.url);
-            Tabs.getInstance().loadUrl(url, Tabs.LOADURL_NONE);
-            return true;
-        }
-
         if (itemId == R.id.home_remove) {
-            if (info instanceof TopSitesGridContextMenuInfo) {
-                (new RemoveItemByUrlTask(context, info.url, info.position)).execute();
-                return true;
-            }
+            // For Top Sites grid items, position is required in case item is Pinned.
+            final int position = info instanceof TopSitesGridContextMenuInfo ? info.position : -1;
 
-            if (info.isInReadingList() || info.hasBookmarkId() || info.hasHistoryId()) {
-                (new RemoveItemByUrlTask(context, info.url)).execute();
-                return true;
-            }
+            (new RemoveItemByUrlTask(context, info.url, info.itemType, position)).execute();
+            return true;
         }
 
         return false;
@@ -258,7 +263,6 @@ abstract class HomeFragment extends Fragment {
         return mCanLoadHint;
     }
 
-
     protected abstract void load();
 
     protected boolean canLoad() {
@@ -277,24 +281,19 @@ abstract class HomeFragment extends Fragment {
     private static class RemoveItemByUrlTask extends UiAsyncTask<Void, Void, Void> {
         private final Context mContext;
         private final String mUrl;
+        private final RemoveItemType mType;
         private final int mPosition;
 
         /**
-         * Remove bookmark/history/reading list item by url.
-         */
-        public RemoveItemByUrlTask(Context context, String url) {
-            this(context, url, -1);
-        }
-
-        /**
-         * Remove bookmark/history/reading list item by url, and also unpin the
+         * Remove bookmark/history/reading list type item by url, and also unpin the
          * Top Sites grid item at index <code>position</code>.
          */
-        public RemoveItemByUrlTask(Context context, String url, int position) {
+        public RemoveItemByUrlTask(Context context, String url, RemoveItemType type, int position) {
             super(ThreadUtils.getBackgroundHandler());
 
             mContext = context;
             mUrl = url;
+            mType = type;
             mPosition = position;
         }
 
@@ -309,12 +308,31 @@ abstract class HomeFragment extends Fragment {
                 }
             }
 
-            BrowserDB.removeBookmarksWithURL(cr, mUrl);
-            BrowserDB.removeHistoryEntry(cr, mUrl);
+            switch(mType) {
+                case BOOKMARKS:
+                    BrowserDB.removeBookmarksWithURL(cr, mUrl);
+                    break;
+                case HISTORY:
+                    BrowserDB.removeHistoryEntry(cr, mUrl);
+                    break;
+                case READING_LIST:
+                    BrowserDB.removeReadingListItemWithURL(cr, mUrl);
 
-            BrowserDB.removeReadingListItemWithURL(cr, mUrl);
-            GeckoEvent e = GeckoEvent.createBroadcastEvent("Reader:Remove", mUrl);
-            GeckoAppShell.sendEventToGecko(e);
+                    final JSONObject json = new JSONObject();
+                    try {
+                        json.put("url", mUrl);
+                        json.put("notify", false);
+                    } catch (JSONException e) {
+                        Log.e(LOGTAG, "error building JSON arguments");
+                    }
+
+                    GeckoEvent e = GeckoEvent.createBroadcastEvent("Reader:Remove", json.toString());
+                    GeckoAppShell.sendEventToGecko(e);
+                    break;
+                default:
+                    Log.e(LOGTAG, "Can't remove item type " + mType.toString());
+                    break;
+            }
 
             return null;
         }

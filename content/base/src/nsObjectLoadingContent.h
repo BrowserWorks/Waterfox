@@ -473,16 +473,15 @@ class nsObjectLoadingContent : public nsImageLoadingContent
     // Helper class for SetupProtoChain
     class SetupProtoChainRunner MOZ_FINAL : public nsIRunnable
     {
+      ~SetupProtoChainRunner();
     public:
       NS_DECL_ISUPPORTS
 
-      SetupProtoChainRunner(nsIScriptContext* scriptContext,
-                            nsObjectLoadingContent* aContent);
+      SetupProtoChainRunner(nsObjectLoadingContent* aContent);
 
       NS_IMETHOD Run() MOZ_OVERRIDE;
 
     private:
-      nsCOMPtr<nsIScriptContext> mContext;
       // We store an nsIObjectLoadingContent because we can
       // unambiguously refcount that.
       nsRefPtr<nsIObjectLoadingContent> mContent;

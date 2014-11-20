@@ -111,6 +111,11 @@ bool WebGLContext::DrawArrays_check(GLint first, GLsizei count, GLsizei primcoun
     if (!DoFakeVertexAttrib0(checked_firstPlusCount.value())) {
         return false;
     }
+
+    if (!DrawInstanced_check(info)) {
+        return false;
+    }
+
     BindFakeBlackTextures();
 
     return true;
@@ -144,9 +149,6 @@ WebGLContext::DrawArraysInstanced(GLenum mode, GLint first, GLsizei count, GLsiz
         return;
 
     if (!DrawArrays_check(first, count, primcount, "drawArraysInstanced"))
-        return;
-
-    if (!DrawInstanced_check("drawArraysInstanced"))
         return;
 
     RunContextLossTimer();
@@ -282,6 +284,11 @@ WebGLContext::DrawElements_check(GLsizei count, GLenum type,
     if (!DoFakeVertexAttrib0(mMaxFetchedVertices)) {
         return false;
     }
+
+    if (!DrawInstanced_check(info)) {
+        return false;
+    }
+
     BindFakeBlackTextures();
 
     return true;
@@ -297,7 +304,7 @@ WebGLContext::DrawElements(GLenum mode, GLsizei count, GLenum type,
     if (!ValidateDrawModeEnum(mode, "drawElements: mode"))
         return;
 
-    GLuint upperBound = UINT_MAX;
+    GLuint upperBound = 0;
     if (!DrawElements_check(count, type, byteOffset, 1, "drawElements",
                             &upperBound))
     {
@@ -326,10 +333,9 @@ WebGLContext::DrawElementsInstanced(GLenum mode, GLsizei count, GLenum type,
     if (!ValidateDrawModeEnum(mode, "drawElementsInstanced: mode"))
         return;
 
-    if (!DrawElements_check(count, type, byteOffset, primcount, "drawElementsInstanced"))
-        return;
-
-    if (!DrawInstanced_check("drawElementsInstanced"))
+    GLuint upperBound = 0;
+    if (!DrawElements_check(count, type, byteOffset, primcount, "drawElementsInstanced",
+                            &upperBound))
         return;
 
     RunContextLossTimer();
@@ -446,7 +452,17 @@ WebGLContext::ValidateBufferFetching(const char *info)
             maxVertices = std::min(maxVertices, checked_maxAllowedCount.value());
             hasPerVertex = true;
         } else {
-            maxInstances = std::min(maxInstances, checked_maxAllowedCount.value() / vd.divisor);
+            CheckedUint32 checked_curMaxInstances = checked_maxAllowedCount * vd.divisor;
+
+            uint32_t curMaxInstances = UINT32_MAX;
+            // If this isn't valid, it's because we overflowed our
+            // uint32 above. Just leave this as UINT32_MAX, since
+            // sizeof(uint32) becomes our limiting factor.
+            if (checked_curMaxInstances.isValid()) {
+                curMaxInstances = checked_curMaxInstances.value();
+            }
+
+            maxInstances = std::min(maxInstances, curMaxInstances);
         }
     }
 
@@ -623,8 +639,8 @@ void
 WebGLContext::BindFakeBlackTexturesHelper(
     GLenum target,
     const nsTArray<WebGLRefPtr<WebGLTexture> > & boundTexturesArray,
-    ScopedDeletePtr<FakeBlackTexture> & opaqueTextureScopedPtr,
-    ScopedDeletePtr<FakeBlackTexture> & transparentTextureScopedPtr)
+    UniquePtr<FakeBlackTexture> & opaqueTextureScopedPtr,
+    UniquePtr<FakeBlackTexture> & transparentTextureScopedPtr)
 {
     for (int32_t i = 0; i < mGLMaxTextureUnits; ++i) {
         if (!boundTexturesArray[i]) {
@@ -640,15 +656,14 @@ WebGLContext::BindFakeBlackTexturesHelper(
 
         bool alpha = s == WebGLTextureFakeBlackStatus::UninitializedImageData &&
                      FormatHasAlpha(boundTexturesArray[i]->ImageInfoBase().WebGLFormat());
-        ScopedDeletePtr<FakeBlackTexture>&
+        UniquePtr<FakeBlackTexture>&
             blackTexturePtr = alpha
                               ? transparentTextureScopedPtr
                               : opaqueTextureScopedPtr;
 
         if (!blackTexturePtr) {
             GLenum format = alpha ? LOCAL_GL_RGBA : LOCAL_GL_RGB;
-            blackTexturePtr
-                = new FakeBlackTexture(gl, target, format);
+            blackTexturePtr = MakeUnique<FakeBlackTexture>(gl, target, format);
         }
 
         gl->fActiveTexture(LOCAL_GL_TEXTURE0 + i);

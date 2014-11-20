@@ -12,11 +12,12 @@
 
 #include "nsStyleLinkElement.h"
 
+#include "mozilla/CSSStyleSheet.h"
 #include "mozilla/css/Loader.h"
 #include "mozilla/dom/Element.h"
+#include "mozilla/dom/FragmentOrElement.h"
 #include "mozilla/dom/ShadowRoot.h"
 #include "mozilla/Preferences.h"
-#include "nsCSSStyleSheet.h"
 #include "nsIContent.h"
 #include "nsIDocument.h"
 #include "nsIDOMComment.h"
@@ -59,7 +60,7 @@ nsStyleLinkElement::Traverse(nsCycleCollectionTraversalCallback &cb)
 }
 
 NS_IMETHODIMP 
-nsStyleLinkElement::SetStyleSheet(nsCSSStyleSheet* aStyleSheet)
+nsStyleLinkElement::SetStyleSheet(CSSStyleSheet* aStyleSheet)
 {
   if (mStyleSheet) {
     mStyleSheet->SetOwningNode(nullptr);
@@ -76,13 +77,10 @@ nsStyleLinkElement::SetStyleSheet(nsCSSStyleSheet* aStyleSheet)
   return NS_OK;
 }
 
-NS_IMETHODIMP 
-nsStyleLinkElement::GetStyleSheet(nsIStyleSheet*& aStyleSheet)
+NS_IMETHODIMP_(CSSStyleSheet*)
+nsStyleLinkElement::GetStyleSheet()
 {
-  aStyleSheet = mStyleSheet;
-  NS_IF_ADDREF(aStyleSheet);
-
-  return NS_OK;
+  return mStyleSheet;
 }
 
 NS_IMETHODIMP 
@@ -230,28 +228,6 @@ IsScopedStyleElement(nsIContent* aContent)
          aContent->HasAttr(kNameSpaceID_None, nsGkAtoms::scoped);
 }
 
-static void
-SetIsElementInStyleScopeFlagOnSubtree(Element* aElement)
-{
-  if (aElement->IsElementInStyleScope()) {
-    return;
-  }
-
-  aElement->SetIsElementInStyleScope();
-
-  nsIContent* n = aElement->GetNextNode(aElement);
-  while (n) {
-    if (n->IsElementInStyleScope()) {
-      n = n->GetNextNonChildNode(aElement);
-    } else {
-      if (n->IsElement()) {
-        n->SetIsElementInStyleScope();
-      }
-      n = n->GetNextNode(aElement);
-    }
-  }
-}
-
 static bool
 HasScopedStyleSheetChild(nsIContent* aContent)
 {
@@ -293,7 +269,7 @@ UpdateIsElementInStyleScopeFlagOnSubtree(Element* aElement)
 static Element*
 GetScopeElement(nsIStyleSheet* aSheet)
 {
-  nsRefPtr<nsCSSStyleSheet> cssStyleSheet = do_QueryObject(aSheet);
+  nsRefPtr<CSSStyleSheet> cssStyleSheet = do_QueryObject(aSheet);
   if (!cssStyleSheet) {
     return nullptr;
   }
@@ -377,7 +353,7 @@ nsStyleLinkElement::DoUpdateStyleSheet(nsIDocument* aOldDocument,
   }
 
   if (mStyleSheet) {
-    if (thisContent->HasFlag(NODE_IS_IN_SHADOW_TREE)) {
+    if (thisContent->IsInShadowTree()) {
       ShadowRoot* containingShadow = thisContent->GetContainingShadow();
       containingShadow->RemoveSheet(mStyleSheet);
     } else {
@@ -406,7 +382,7 @@ nsStyleLinkElement::DoUpdateStyleSheet(nsIDocument* aOldDocument,
   Element* scopeElement = isScoped ? thisContent->GetParentElement() : nullptr;
   if (scopeElement) {
     NS_ASSERTION(isInline, "non-inline style must not have scope element");
-    SetIsElementInStyleScopeFlagOnSubtree(scopeElement);
+    scopeElement->SetIsElementInStyleScopeFlagOnSubtree(true);
   }
 
   bool doneLoading = false;
@@ -477,7 +453,7 @@ nsStyleLinkElement::UpdateStyleSheetScopedness(bool aIsNowScoped)
 
   nsIDocument* document = thisContent->GetOwnerDocument();
 
-  if (thisContent->HasFlag(NODE_IS_IN_SHADOW_TREE)) {
+  if (thisContent->IsInShadowTree()) {
     ShadowRoot* containingShadow = thisContent->GetContainingShadow();
     containingShadow->RemoveSheet(mStyleSheet);
 
@@ -498,6 +474,6 @@ nsStyleLinkElement::UpdateStyleSheetScopedness(bool aIsNowScoped)
     UpdateIsElementInStyleScopeFlagOnSubtree(oldScopeElement);
   }
   if (newScopeElement) {
-    SetIsElementInStyleScopeFlagOnSubtree(newScopeElement);
+    newScopeElement->SetIsElementInStyleScopeFlagOnSubtree(true);
   }
 }

@@ -17,6 +17,12 @@
 namespace mozilla {
 namespace dom {
 
+class TimeRanges;
+
+}
+
+namespace dom {
+
 // Implements media TimeRanges:
 // http://www.whatwg.org/specs/web-apps/current-work/multipage/video.html#timeranges
 class TimeRanges MOZ_FINAL : public nsIDOMTimeRanges
@@ -26,7 +32,6 @@ public:
   NS_DECL_NSIDOMTIMERANGES
 
   TimeRanges();
-  ~TimeRanges();
 
   void Add(double aStart, double aEnd);
 
@@ -51,6 +56,7 @@ public:
   virtual double End(uint32_t aIndex, ErrorResult& aRv);
 
 private:
+  ~TimeRanges();
 
   // Comparator which orders TimeRanges by start time. Used by Normalize().
   struct TimeRange

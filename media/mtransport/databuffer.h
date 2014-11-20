@@ -33,8 +33,6 @@ class DataBuffer {
   size_t len() const { return len_; }
   const bool empty() const { return len_ != 0; }
 
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(DataBuffer)
-
 private:
   ScopedDeleteArray<uint8_t> data_;
   size_t len_;

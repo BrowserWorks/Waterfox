@@ -20,7 +20,7 @@
 #include "js/TypeDecls.h"
 
 class JSAtom;
-class JSFreeOp;
+struct JSFreeOp;
 
 namespace js {
 class InterpreterFrame;
@@ -36,69 +36,6 @@ extern JS_PUBLIC_API(const char *)
 JS_GetScriptFilename(JSScript *script);
 
 namespace JS {
-
-class FrameDescription
-{
-  public:
-    explicit FrameDescription(const js::FrameIter& iter);
-    FrameDescription(const FrameDescription &rhs);
-    ~FrameDescription();
-
-    unsigned lineno() {
-        if (!linenoComputed_) {
-            lineno_ = JS_PCToLineNumber(nullptr, script_, pc_);
-            linenoComputed_ = true;
-        }
-        return lineno_;
-    }
-
-    const char *filename() const {
-        return filename_;
-    }
-
-    JSFlatString *funDisplayName() const {
-        return funDisplayName_ ? JS_ASSERT_STRING_IS_FLAT(funDisplayName_) : nullptr;
-    }
-
-    // Both these locations should be traced during GC but otherwise not used;
-    // they are implementation details.
-    Heap<JSScript*> &markedLocation1() {
-        return script_;
-    }
-    Heap<JSString*> &markedLocation2() {
-        return funDisplayName_;
-    }
-
-  private:
-    void operator=(const FrameDescription &) MOZ_DELETE;
-
-    // These fields are always initialized:
-    Heap<JSString*> funDisplayName_;
-    const char *filename_;
-
-    // One of script_ xor scriptSource_ is non-null.
-    Heap<JSScript*> script_;
-    js::ScriptSource *scriptSource_;
-
-    // For script_-having frames, lineno_ is lazily computed as an optimization.
-    bool linenoComputed_;
-    unsigned lineno_;
-
-    // pc_ is non-null iff script_ is non-null. If !pc_, linenoComputed_ = true.
-    jsbytecode *pc_;
-};
-
-struct StackDescription
-{
-    unsigned nframes;
-    FrameDescription *frames;
-};
-
-extern JS_PUBLIC_API(StackDescription *)
-DescribeStack(JSContext *cx, unsigned maxFrames);
-
-extern JS_PUBLIC_API(void)
-FreeStackDescription(JSContext *cx, StackDescription *desc);
 
 extern JS_PUBLIC_API(char *)
 FormatStackDump(JSContext *cx, char *buf, bool showArgs, bool showLocals, bool showThisProps);
@@ -127,39 +64,12 @@ typedef JSTrapStatus
                   JS::Value closure);
 
 typedef JSTrapStatus
-(* JSInterruptHook)(JSContext *cx, JSScript *script, jsbytecode *pc, JS::Value *rval,
-                    void *closure);
-
-typedef JSTrapStatus
 (* JSDebuggerHandler)(JSContext *cx, JSScript *script, jsbytecode *pc, JS::Value *rval,
                       void *closure);
-
-typedef JSTrapStatus
-(* JSThrowHook)(JSContext *cx, JSScript *script, jsbytecode *pc, JS::Value *rval,
-                void *closure);
 
 typedef bool
 (* JSWatchPointHandler)(JSContext *cx, JSObject *obj, jsid id, JS::Value old,
                         JS::Value *newp, void *closure);
-
-/* called just after script creation */
-typedef void
-(* JSNewScriptHook)(JSContext  *cx,
-                    const char *filename,  /* URL of script */
-                    unsigned   lineno,     /* first line */
-                    JSScript   *script,
-                    JSFunction *fun,
-                    void       *callerdata);
-
-/* called just before script destruction */
-typedef void
-(* JSDestroyScriptHook)(JSFreeOp *fop,
-                        JSScript *script,
-                        void     *callerdata);
-
-typedef void
-(* JSSourceHandler)(const char *filename, unsigned lineno, const jschar *str,
-                    size_t length, void **listenerTSData, void *closure);
 
 
 
@@ -229,12 +139,6 @@ JS_ClearScriptTraps(JSRuntime *rt, JSScript *script);
 
 extern JS_PUBLIC_API(void)
 JS_ClearAllTrapsForCompartment(JSContext *cx);
-
-extern JS_PUBLIC_API(bool)
-JS_SetInterrupt(JSRuntime *rt, JSInterruptHook handler, void *closure);
-
-extern JS_PUBLIC_API(bool)
-JS_ClearInterrupt(JSRuntime *rt, JSInterruptHook *handlerp, void **closurep);
 
 /************************************************************************/
 
@@ -324,22 +228,6 @@ JS_GetScriptVersion(JSContext *cx, JSScript *script);
 
 extern JS_PUBLIC_API(bool)
 JS_GetScriptIsSelfHosted(JSScript *script);
-
-/************************************************************************/
-
-/*
- * Hook setters for script creation and destruction.  These macros provide
- * binary compatibility and newer, shorter synonyms.
- */
-#define JS_SetNewScriptHook     JS_SetNewScriptHookProc
-#define JS_SetDestroyScriptHook JS_SetDestroyScriptHookProc
-
-extern JS_PUBLIC_API(void)
-JS_SetNewScriptHook(JSRuntime *rt, JSNewScriptHook hook, void *callerdata);
-
-extern JS_PUBLIC_API(void)
-JS_SetDestroyScriptHook(JSRuntime *rt, JSDestroyScriptHook hook,
-                        void *callerdata);
 
 /************************************************************************/
 
@@ -450,79 +338,19 @@ class JS_PUBLIC_API(JSBrokenFrameIterator)
     bool isConstructing() const;
 };
 
-/*
- * This hook captures high level script execution and function calls (JS or
- * native).  It is used by JS_SetExecuteHook to hook top level scripts and by
- * JS_SetCallHook to hook function calls.  It will get called twice per script
- * or function call: just before execution begins and just after it finishes.
- * In both cases the 'current' frame is that of the executing code.
- *
- * The 'before' param is true for the hook invocation before the execution
- * and false for the invocation after the code has run.
- *
- * The 'ok' param is significant only on the post execution invocation to
- * signify whether or not the code completed 'normally'.
- *
- * The 'closure' param is as passed to JS_SetExecuteHook or JS_SetCallHook
- * for the 'before'invocation, but is whatever value is returned from that
- * invocation for the 'after' invocation. Thus, the hook implementor *could*
- * allocate a structure in the 'before' invocation and return a pointer to that
- * structure. The pointer would then be handed to the hook for the 'after'
- * invocation. Alternately, the 'before' could just return the same value as
- * in 'closure' to cause the 'after' invocation to be called with the same
- * 'closure' value as the 'before'.
- *
- * Returning nullptr in the 'before' hook will cause the 'after' hook *not* to
- * be called.
- */
-typedef void *
-(* JSInterpreterHook)(JSContext *cx, JSAbstractFramePtr frame, bool isConstructing,
-                      bool before, bool *ok, void *closure);
-
 typedef bool
 (* JSDebugErrorHook)(JSContext *cx, const char *message, JSErrorReport *report,
                      void *closure);
 
 typedef struct JSDebugHooks {
-    JSInterruptHook     interruptHook;
-    void                *interruptHookData;
-    JSNewScriptHook     newScriptHook;
-    void                *newScriptHookData;
-    JSDestroyScriptHook destroyScriptHook;
-    void                *destroyScriptHookData;
     JSDebuggerHandler   debuggerHandler;
     void                *debuggerHandlerData;
-    JSSourceHandler     sourceHandler;
-    void                *sourceHandlerData;
-    JSInterpreterHook   executeHook;
-    void                *executeHookData;
-    JSInterpreterHook   callHook;
-    void                *callHookData;
-    JSThrowHook         throwHook;
-    void                *throwHookData;
-    JSDebugErrorHook    debugErrorHook;
-    void                *debugErrorHookData;
 } JSDebugHooks;
 
 /************************************************************************/
 
 extern JS_PUBLIC_API(bool)
 JS_SetDebuggerHandler(JSRuntime *rt, JSDebuggerHandler hook, void *closure);
-
-extern JS_PUBLIC_API(bool)
-JS_SetSourceHandler(JSRuntime *rt, JSSourceHandler handler, void *closure);
-
-extern JS_PUBLIC_API(bool)
-JS_SetExecuteHook(JSRuntime *rt, JSInterpreterHook hook, void *closure);
-
-extern JS_PUBLIC_API(bool)
-JS_SetCallHook(JSRuntime *rt, JSInterpreterHook hook, void *closure);
-
-extern JS_PUBLIC_API(bool)
-JS_SetThrowHook(JSRuntime *rt, JSThrowHook hook, void *closure);
-
-extern JS_PUBLIC_API(bool)
-JS_SetDebugErrorHook(JSRuntime *rt, JSDebugErrorHook hook, void *closure);
 
 /************************************************************************/
 

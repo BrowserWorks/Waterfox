@@ -10,12 +10,12 @@
 #include "nsXBLPrototypeBinding.h"
 #include "nsContentUtils.h"
 #include "nsCxPusher.h"
+#include "nsGlobalWindow.h"
 #include "nsIContent.h"
 #include "nsIAtom.h"
 #include "nsIDOMKeyEvent.h"
 #include "nsIDOMMouseEvent.h"
 #include "nsNameSpaceManager.h"
-#include "nsIScriptContext.h"
 #include "nsIDocument.h"
 #include "nsIController.h"
 #include "nsIControllers.h"
@@ -35,6 +35,7 @@
 #include "nsGkAtoms.h"
 #include "nsIXPConnect.h"
 #include "nsIDOMScriptObjectFactory.h"
+#include "mozilla/AddonPathService.h"
 #include "nsDOMCID.h"
 #include "nsUnicharUtils.h"
 #include "nsCRT.h"
@@ -45,6 +46,8 @@
 #include "mozilla/JSEventHandler.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/dom/EventHandlerBinding.h"
+#include "mozilla/dom/ScriptSettings.h"
+#include "xpcpublic.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -258,10 +261,6 @@ nsXBLPrototypeHandler::ExecuteHandler(EventTarget* aTarget,
   if (!boundGlobal)
     return NS_OK;
 
-  nsIScriptContext *boundContext = boundGlobal->GetScriptContext();
-  if (!boundContext)
-    return NS_OK;
-
   nsISupports *scriptTarget;
 
   if (winRoot) {
@@ -270,20 +269,23 @@ nsXBLPrototypeHandler::ExecuteHandler(EventTarget* aTarget,
     scriptTarget = aTarget;
   }
 
-  // We're about to create a new JSEventHandler, which means that we're
-  // responsible for pushing the context of the event target. See the similar
-  // comment in nsEventManagerListener.cpp.
-  nsCxPusher pusher;
-  NS_ENSURE_STATE(pusher.Push(aTarget));
-
-  AutoPushJSContext cx(boundContext->GetNativeContext());
+  // We're about to create a new JSEventHandler, which means that we need to
+  // Initiatize an AutoJSAPI with aTarget's bound global to make sure any errors
+  // are reported to the correct place.
+  AutoJSAPI jsapi;
+  if (NS_WARN_IF(!jsapi.InitWithLegacyErrorReporting(boundGlobal))) {
+    return NS_OK;
+  }
+  JSContext* cx = jsapi.cx();
   JS::Rooted<JSObject*> handler(cx);
 
-  rv = EnsureEventHandler(boundGlobal, boundContext, onEventAtom, &handler);
+  rv = EnsureEventHandler(jsapi, onEventAtom, &handler);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  JSAddonId* addonId = MapURIToAddonID(mPrototypeBinding->DocURI());
+
   JS::Rooted<JSObject*> globalObject(cx, boundGlobal->GetGlobalJSObject());
-  JS::Rooted<JSObject*> scopeObject(cx, xpc::GetXBLScopeOrGlobal(cx, globalObject));
+  JS::Rooted<JSObject*> scopeObject(cx, xpc::GetScopeForXBLExecution(cx, globalObject, addonId));
   NS_ENSURE_TRUE(scopeObject, NS_ERROR_OUT_OF_MEMORY);
 
   // Bind it to the bound element. Note that if we're using a separate XBL scope,
@@ -335,15 +337,14 @@ nsXBLPrototypeHandler::ExecuteHandler(EventTarget* aTarget,
 }
 
 nsresult
-nsXBLPrototypeHandler::EnsureEventHandler(nsIScriptGlobalObject* aGlobal,
-                                          nsIScriptContext *aBoundContext,
-                                          nsIAtom *aName,
+nsXBLPrototypeHandler::EnsureEventHandler(AutoJSAPI& jsapi, nsIAtom* aName,
                                           JS::MutableHandle<JSObject*> aHandler)
 {
-  AutoPushJSContext cx(aBoundContext->GetNativeContext());
+  JSContext* cx = jsapi.cx();
 
   // Check to see if we've already compiled this
-  nsCOMPtr<nsPIDOMWindow> pWindow = do_QueryInterface(aGlobal);
+  JS::Rooted<JSObject*> globalObject(cx, JS::CurrentGlobalOrNull(cx));
+  nsCOMPtr<nsPIDOMWindow> pWindow = xpc::WindowOrNull(globalObject);
   if (pWindow) {
     JS::Rooted<JSObject*> cachedHandler(cx, pWindow->GetCachedXBLPrototypeHandler(this));
     if (cachedHandler) {
@@ -358,8 +359,9 @@ nsXBLPrototypeHandler::EnsureEventHandler(nsIScriptGlobalObject* aGlobal,
   nsDependentString handlerText(mHandlerText);
   NS_ENSURE_TRUE(!handlerText.IsEmpty(), NS_ERROR_FAILURE);
 
-  JS::Rooted<JSObject*> globalObject(cx, aGlobal->GetGlobalJSObject());
-  JS::Rooted<JSObject*> scopeObject(cx, xpc::GetXBLScopeOrGlobal(cx, globalObject));
+  JSAddonId* addonId = MapURIToAddonID(mPrototypeBinding->DocURI());
+
+  JS::Rooted<JSObject*> scopeObject(cx, xpc::GetScopeForXBLExecution(cx, globalObject, addonId));
   NS_ENSURE_TRUE(scopeObject, NS_ERROR_OUT_OF_MEMORY);
 
   nsAutoCString bindingURI;

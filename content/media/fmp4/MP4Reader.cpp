@@ -13,6 +13,7 @@
 #include "Layers.h"
 #include "SharedThreadPool.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/dom/TimeRanges.h"
 
 using mozilla::layers::Image;
 using mozilla::layers::LayerManager;
@@ -38,7 +39,7 @@ namespace mozilla {
 // Uncomment to enable verbose per-sample logging.
 //#define LOG_SAMPLE_DECODE 1
 
-#ifdef LOG_SAMPLE_DECODE
+#ifdef PR_LOGGING
 static const char*
 TrackTypeToStr(TrackType aTrack)
 {
@@ -71,17 +72,17 @@ public:
                       size_t* aBytesRead) MOZ_OVERRIDE
   {
     uint32_t sum = 0;
+    uint32_t bytesRead = 0;
     do {
       uint32_t offset = aOffset + sum;
       char* buffer = reinterpret_cast<char*>(aBuffer) + sum;
       uint32_t toRead = aCount - sum;
-      uint32_t bytesRead = 0;
       nsresult rv = mResource->ReadAt(offset, buffer, toRead, &bytesRead);
       if (NS_FAILED(rv)) {
         return false;
       }
       sum += bytesRead;
-    } while (sum < aCount);
+    } while (sum < aCount && bytesRead > 0);
     *aBytesRead = sum;
     return true;
   }
@@ -243,16 +244,19 @@ MP4Reader::ReadMetadata(MediaInfo* aInfo,
     ReentrantMonitorAutoEnter mon(mDecoder->GetReentrantMonitor());
     mDecoder->SetMediaDuration(duration);
   }
-  // We can seek if we get a duration *and* the reader reports that it's
-  // seekable.
-  if (!mDecoder->GetResource()->IsTransportSeekable() || !mDemuxer->CanSeek()) {
-    mDecoder->SetMediaSeekable(false);
-  }
 
   *aInfo = mInfo;
   *aTags = nullptr;
 
   return NS_OK;
+}
+
+bool
+MP4Reader::IsMediaSeekable()
+{
+  // We can seek if we get a duration *and* the reader reports that it's
+  // seekable.
+  return mDecoder->GetResource()->IsTransportSeekable() && mDemuxer->CanSeek();
 }
 
 bool
@@ -347,9 +351,8 @@ MP4Reader::Decode(TrackType aTrack)
       if (!compressed) {
         // EOS, or error. Let the state machine know there are no more
         // frames coming.
-#ifdef LOG_SAMPLE_DECODE
-        LOG("PopSample %s nullptr", TrackTypeToStr(aTrack));
-#endif
+        LOG("Draining %s", TrackTypeToStr(aTrack));
+        data.mDecoder->Drain();
         return false;
       } else {
 #ifdef LOG_SAMPLE_DECODE
@@ -454,13 +457,13 @@ MP4Reader::Flush(TrackType aTrack)
   // Set a flag so that we ignore all output while we call
   // MediaDataDecoder::Flush().
   {
-    data.mIsFlushing = true;
     MonitorAutoLock mon(data.mMonitor);
+    data.mIsFlushing = true;
   }
   data.mDecoder->Flush();
   {
-    data.mIsFlushing = false;
     MonitorAutoLock mon(data.mMonitor);
+    data.mIsFlushing = false;
   }
 }
 
@@ -545,6 +548,25 @@ MP4Reader::Seek(int64_t aTime,
   if (mDemuxer->HasValidAudio()) {
     mDemuxer->SeekAudio(
       mQueuedVideoSample ? mQueuedVideoSample->composition_timestamp : aTime);
+  }
+
+  return NS_OK;
+}
+
+nsresult
+MP4Reader::GetBuffered(dom::TimeRanges* aBuffered, int64_t aStartTime)
+{
+  nsTArray<MediaByteRange> ranges;
+  if (NS_FAILED(mDecoder->GetResource()->GetCachedRanges(ranges))) {
+    return NS_ERROR_FAILURE;
+  }
+
+  nsTArray<Interval<Microseconds>> timeRanges;
+  mDemuxer->ConvertByteRangesToTime(ranges, &timeRanges);
+
+  for (size_t i = 0; i < timeRanges.Length(); i++) {
+    aBuffered->Add((timeRanges[i].start - aStartTime) / 1000000.0,
+                   (timeRanges[i].end - aStartTime) / 1000000.0);
   }
 
   return NS_OK;

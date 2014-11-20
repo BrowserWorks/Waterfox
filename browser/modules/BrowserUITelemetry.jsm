@@ -48,7 +48,6 @@ XPCOMUtils.defineLazyGetter(this, "DEFAULT_AREA_PLACEMENTS", function() {
     "nav-bar": [
       "urlbar-container",
       "search-container",
-      "webrtc-status-button",
       "bookmarks-menu-button",
       "downloads-button",
       "home-button",
@@ -549,6 +548,13 @@ this.BrowserUITelemetry = {
 
   countCustomizationEvent: function(aEventType) {
     this._countEvent(["customize", aEventType]);
+  },
+
+  countSearchEvent: function(source, query) {
+    this._countEvent(["search", source]);
+    if ((/^[a-zA-Z]+:[^\/\\]/).test(query)) {
+      this._countEvent(["search", "urlbar-keyword"]);
+    }
   },
 
   _durations: {

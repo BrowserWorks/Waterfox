@@ -28,6 +28,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "cert.h"
+#include "keyhi.h"
 #include "pkix/enumclass.h"
 #include "pkix/pkixtypes.h"
 #include "pkix/ScopedPtr.h"
@@ -50,6 +52,8 @@ SECITEM_FreeItem_true(SECItem* item)
 
 } // unnamed namespace
 
+typedef ScopedPtr<CERTCertificate, CERT_DestroyCertificate> ScopedCERTCertificate;
+typedef ScopedPtr<CERTCertList, CERT_DestroyCertList> ScopedCERTCertList;
 typedef mozilla::pkix::ScopedPtr<FILE, fclose_void> ScopedFILE;
 typedef mozilla::pkix::ScopedPtr<SECItem, SECITEM_FreeItem_true> ScopedSECItem;
 typedef mozilla::pkix::ScopedPtr<SECKEYPublicKey, SECKEY_DestroyPublicKey>
@@ -61,11 +65,25 @@ FILE* OpenFile(const char* dir, const char* filename, const char* mode);
 
 extern const PRTime ONE_DAY;
 
+// e.g. YMDHMS(2016, 12, 31, 1, 23, 45) => 2016-12-31:01:23:45 (GMT)
+PRTime YMDHMS(int16_t year, int16_t month, int16_t day,
+              int16_t hour, int16_t minutes, int16_t seconds);
+
 SECStatus GenerateKeyPair(/*out*/ ScopedSECKEYPublicKey& publicKey,
                           /*out*/ ScopedSECKEYPrivateKey& privateKey);
 
 // The result will be owned by the arena
 const SECItem* ASCIIToDERName(PLArenaPool* arena, const char* cn);
+
+// Replace one substring in item with another of the same length, but only if
+// the substring was found exactly once. The "only once" restriction is helpful
+// for avoiding making multiple changes at once.
+//
+// The string to search for must be 8 or more bytes long so that it is
+// extremely unlikely that there will ever be any false positive matches
+// in digital signatures, keys, hashes, etc.
+SECStatus TamperOnce(SECItem& item, const uint8_t* from, size_t fromLen,
+                     const uint8_t* to, size_t toLen);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Encode Certificates
@@ -128,11 +146,11 @@ public:
 class OCSPResponseContext
 {
 public:
-  OCSPResponseContext(PLArenaPool* arena, CERTCertificate* cert, PRTime time);
+  OCSPResponseContext(PLArenaPool* arena, const CertID& certID, PRTime time);
 
   PLArenaPool* arena;
+  const CertID& certID;
   // TODO(bug 980538): add a way to specify what certificates are included.
-  pkix::ScopedCERTCertificate cert; // The subject of the OCSP response
 
   // The fields below are in the order that they appear in an OCSP response.
 
@@ -160,8 +178,6 @@ public:
   bool skipResponseBytes; // If true, don't include responseBytes
 
   // responderID
-  const SECItem* issuerNameDER; // non-owning
-  const CERTSubjectPublicKeyInfo* issuerSPKI; // non-owning pointer
   const SECItem* signerNameDER; // If set, responderID will use the byName
                                 // form; otherwise responderID will use the
                                 // byKeyHash form.
@@ -173,6 +189,7 @@ public:
                                // regardless of if there are any actual
                                // extensions.
   ScopedSECKEYPrivateKey signerPrivateKey;
+  SECOidTag signatureHashAlgorithm;
   bool badSignature; // If true, alter the signature to fail verification
   SECItem const* const* certs; // non-owning pointer to certs to embed
 

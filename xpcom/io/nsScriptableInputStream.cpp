@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -55,7 +56,7 @@ nsScriptableInputStream::Read(uint32_t aCount, char** aResult)
   }
 
   // bug716556 - Ensure count+1 doesn't overflow
-  uint32_t count = XPCOM_MIN(uint32_t(XPCOM_MIN<uint64_t>(count64, aCount)), uint32_t(UINT32_MAX - 1));
+  uint32_t count = XPCOM_MIN((uint32_t)XPCOM_MIN<uint64_t>(count64, aCount), UINT32_MAX - 1);
   buffer = (char*)moz_malloc(count + 1);  // make room for '\0'
   if (!buffer) {
     return NS_ERROR_OUT_OF_MEMORY;

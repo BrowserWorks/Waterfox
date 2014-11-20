@@ -13,6 +13,7 @@
 #include "mozilla/dom/XMLHttpRequestUploadBinding.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/EventListenerManager.h"
+#include "mozilla/LoadInfo.h"
 #include "mozilla/MemoryReporting.h"
 #include "nsDOMBlobBuilder.h"
 #include "nsIDOMDocument.h"
@@ -183,6 +184,8 @@ public:
   NS_DECL_NSIAUTHPROMPT
 
   XMLHttpRequestAuthPrompt();
+
+protected:
   virtual ~XMLHttpRequestAuthPrompt();
 };
 
@@ -1169,7 +1172,17 @@ nsXMLHttpRequest::GetStatusText(nsCString& aStatusText)
     return;
   }
 
-  httpChannel->GetResponseStatusText(aStatusText);
+
+  // Check the current XHR state to see if it is valid to obtain the statusText
+  // value.  This check is to prevent the status text for redirects from being
+  // available before all the redirects have been followed and HTTP headers have
+  // been received.
+  uint16_t readyState;
+  GetReadyState(&readyState);
+  if (readyState != OPENED && readyState != UNSENT) {
+    httpChannel->GetResponseStatusText(aStatusText);
+  }
+
 
 }
 
@@ -1242,9 +1255,7 @@ bool
 nsXMLHttpRequest::IsSafeHeader(const nsACString& header, nsIHttpChannel* httpChannel)
 {
   // See bug #380418. Hide "Set-Cookie" headers from non-chrome scripts.
-  if (!IsSystemXHR() &&
-       (header.LowerCaseEqualsASCII("set-cookie") ||
-        header.LowerCaseEqualsASCII("set-cookie2"))) {
+  if (!IsSystemXHR() && nsContentUtils::IsForbiddenResponseHeader(header)) {
     NS_WARNING("blocked access to response header");
     return false;
   }
@@ -1862,7 +1873,9 @@ bool nsXMLHttpRequest::CreateDOMFile(nsIRequest *request)
   mChannel->GetContentType(contentType);
 
   mDOMFile =
-    new nsDOMFileFile(file, EmptyString(), NS_ConvertASCIItoUTF16(contentType));
+    DOMFile::CreateFromFile(file, EmptyString(),
+                            NS_ConvertASCIItoUTF16(contentType));
+
   mBlobSet = nullptr;
   NS_ASSERTION(mResponseBody.IsEmpty(), "mResponseBody should be empty");
   return true;
@@ -1961,7 +1974,10 @@ nsXMLHttpRequest::OnStartRequest(nsIRequest *request, nsISupports *ctxt)
     documentPrincipal = mPrincipal;
   }
 
-  channel->SetOwner(documentPrincipal);
+  nsCOMPtr<nsILoadInfo> loadInfo =
+    new LoadInfo(documentPrincipal, LoadInfo::eInheritPrincipal,
+                 LoadInfo::eNotSandboxed);
+  channel->SetLoadInfo(loadInfo);
 
   nsresult status;
   request->GetStatus(&status);
@@ -2975,6 +2991,14 @@ nsXMLHttpRequest::Send(nsIVariant* aVariant, const Nullable<RequestBody>& aBody)
         if (scheme.LowerCaseEqualsLiteral("app") ||
             scheme.LowerCaseEqualsLiteral("jar")) {
           mIsMappedArrayBuffer = true;
+          if (XRE_GetProcessType() != GeckoProcessType_Default) {
+            nsCOMPtr<nsIJARChannel> jarChannel = do_QueryInterface(mChannel);
+            // For memory mapping from child process, we need to get file
+            // descriptor of the JAR file opened remotely on the parent proess.
+            // Set this to make sure that file descriptor can be obtained by
+            // child process.
+            jarChannel->EnsureChildFd();
+          }
         }
       }
     }
@@ -3107,34 +3131,11 @@ nsXMLHttpRequest::SetRequestHeader(const nsACString& header,
   //     content to override default headers the first time they set them.
   bool mergeHeaders = true;
 
-  // Prevent modification to certain HTTP headers (see bug 302263), unless
-  // the executing script is privileged.
-  bool isInvalidHeader = false;
-  static const char *kInvalidHeaders[] = {
-    "accept-charset", "accept-encoding", "access-control-request-headers",
-    "access-control-request-method", "connection", "content-length",
-    "cookie", "cookie2", "content-transfer-encoding", "date", "dnt",
-    "expect", "host", "keep-alive", "origin", "referer", "te", "trailer",
-    "transfer-encoding", "upgrade", "user-agent", "via"
-  };
-  uint32_t i;
-  for (i = 0; i < ArrayLength(kInvalidHeaders); ++i) {
-    if (header.LowerCaseEqualsASCII(kInvalidHeaders[i])) {
-      isInvalidHeader = true;
-      break;
-    }
-  }
-
   if (!IsSystemXHR()) {
     // Step 5: Check for dangerous headers.
-    if (isInvalidHeader) {
-      NS_WARNING("refusing to set request header");
-      return NS_OK;
-    }
-    if (StringBeginsWith(header, NS_LITERAL_CSTRING("proxy-"),
-                         nsCaseInsensitiveCStringComparator()) ||
-        StringBeginsWith(header, NS_LITERAL_CSTRING("sec-"),
-                         nsCaseInsensitiveCStringComparator())) {
+    // Prevent modification to certain HTTP headers (see bug 302263), unless
+    // the executing script is privileged.
+    if (nsContentUtils::IsForbiddenRequestHeader(header)) {
       NS_WARNING("refusing to set request header");
       return NS_OK;
     }
@@ -3147,7 +3148,7 @@ nsXMLHttpRequest::SetRequestHeader(const nsACString& header,
         "accept", "accept-language", "content-language", "content-type",
         "last-event-id"
       };
-      for (i = 0; i < ArrayLength(kCrossOriginSafeHeaders); ++i) {
+      for (uint32_t i = 0; i < ArrayLength(kCrossOriginSafeHeaders); ++i) {
         if (header.LowerCaseEqualsASCII(kCrossOriginSafeHeaders[i])) {
           safeHeader = true;
           break;
@@ -3162,7 +3163,7 @@ nsXMLHttpRequest::SetRequestHeader(const nsACString& header,
     }
   } else {
     // Case 1 above
-    if (isInvalidHeader) {
+    if (nsContentUtils::IsForbiddenSystemRequestHeader(header)) {
       mergeHeaders = false;
     }
   }
@@ -3436,6 +3437,8 @@ public:
   }
 
 private:
+  ~AsyncVerifyRedirectCallbackForwarder() {}
+
   nsRefPtr<nsXMLHttpRequest> mXHR;
 };
 
@@ -4051,12 +4054,11 @@ ArrayBufferBuilder::getArrayBuffer(JSContext* aCx)
   }
 
   JSObject* obj = JS_NewArrayBufferWithContents(aCx, mLength, mDataPtr);
-  mDataPtr = nullptr;
   mLength = mCapacity = 0;
   if (!obj) {
     js_free(mDataPtr);
-    return nullptr;
   }
+  mDataPtr = nullptr;
   return obj;
 }
 

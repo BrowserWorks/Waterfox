@@ -735,6 +735,7 @@ nsNativeThemeWin::GetTheme(uint8_t aWidgetType)
     case NS_THEME_NUMBER_INPUT:
     case NS_THEME_TEXTFIELD:
     case NS_THEME_TEXTFIELD_MULTILINE:
+    case NS_THEME_FOCUS_OUTLINE:
       return nsUXThemeData::GetTheme(eUXEdit);
     case NS_THEME_TOOLTIP:
       // XP/2K3 should force a classic treatment of tooltips
@@ -990,6 +991,17 @@ nsNativeThemeWin::GetThemePartAndState(nsIFrame* aFrame, uint8_t aWidgetType,
           aState = StandardGetState(aFrame, aWidgetType, true);
       }
 
+      return NS_OK;
+    }
+    case NS_THEME_FOCUS_OUTLINE: {
+      if (IsVistaOrLater()) {
+        // XXX the EDITBORDER values don't respect DTBG_OMITCONTENT
+        aPart = TFP_TEXTFIELD; //TFP_EDITBORDER_NOSCROLL;
+        aState = TS_FOCUSED; //TFS_EDITBORDER_FOCUSED;
+      } else {
+        aPart = TFP_TEXTFIELD;
+        aState = TS_FOCUSED;
+      }
       return NS_OK;
     }
     case NS_THEME_TOOLTIP: {
@@ -1586,7 +1598,7 @@ nsNativeThemeWin::DrawWidgetBackground(nsRenderingContext* aContext,
     return NS_OK;
   }
 
-  gfxFloat p2a = gfxFloat(aContext->AppUnitsPerDevPixel());
+  gfxFloat p2a = gfxFloat(aFrame->PresContext()->AppUnitsPerDevPixel());
   RECT widgetRect;
   RECT clipRect;
   gfxRect tr(aRect.x, aRect.y, aRect.width, aRect.height),
@@ -1611,8 +1623,8 @@ RENDER_AGAIN:
 #if 0
   {
     PR_LOG(gWindowsLog, PR_LOG_ERROR,
-           (stderr, "xform: %f %f %f %f [%f %f]\n", m.xx, m.yx, m.xy, m.yy, 
-            m.x0, m.y0));
+           (stderr, "xform: %f %f %f %f [%f %f]\n", m._11, m._21, m._12, m._22,
+            m._31, m._32));
     PR_LOG(gWindowsLog, PR_LOG_ERROR,
            (stderr, "tr: [%d %d %d %d]\ndr: [%d %d %d %d]\noff: [%f %f]\n",
             tr.x, tr.y, tr.width, tr.height, dr.x, dr.y, dr.width, dr.height,
@@ -1834,6 +1846,24 @@ RENDER_AGAIN:
            aWidgetType == NS_THEME_PROGRESSBAR_CHUNK_VERTICAL) {
     DrawThemedProgressMeter(aFrame, aWidgetType, theme, hdc, part, state,
                             &widgetRect, &clipRect, p2a);
+  }
+  else if (aWidgetType == NS_THEME_FOCUS_OUTLINE) {
+    // Inflate 'widgetRect' with the focus outline size.
+    nsIntMargin border;
+    if (NS_SUCCEEDED(GetWidgetBorder(aFrame->PresContext()->DeviceContext(),
+                                     aFrame, aWidgetType, &border))) {
+      widgetRect.left -= border.left;
+      widgetRect.right += border.right;
+      widgetRect.top -= border.top;
+      widgetRect.bottom += border.bottom;
+    }
+
+    DTBGOPTS opts = {
+      sizeof(DTBGOPTS),
+      DTBG_OMITCONTENT | DTBG_CLIPRECT,
+      clipRect
+    };
+    DrawThemeBackgroundEx(theme, hdc, part, state, &widgetRect, &opts);
   }
   // If part is negative, the element wishes us to not render a themed
   // background, instead opting to be drawn specially below.
@@ -2161,8 +2191,8 @@ nsNativeThemeWin::GetWidgetPadding(nsDeviceContext* aContext,
 bool
 nsNativeThemeWin::GetWidgetOverflow(nsDeviceContext* aContext, 
                                     nsIFrame* aFrame,
-                                    uint8_t aOverflowRect,
-                                    nsRect* aResult)
+                                    uint8_t aWidgetType,
+                                    nsRect* aOverflowRect)
 {
   /* This is disabled for now, because it causes invalidation problems --
    * see bug 420381.  The effect of not updating the overflow area is that
@@ -2192,11 +2222,25 @@ nsNativeThemeWin::GetWidgetOverflow(nsDeviceContext* aContext,
   }
 #endif
 
+  if (aWidgetType == NS_THEME_FOCUS_OUTLINE) {
+    nsIntMargin border;
+    nsresult rv = GetWidgetBorder(aContext, aFrame, aWidgetType, &border);
+    if (NS_SUCCEEDED(rv)) {
+      int32_t p2a = aContext->AppUnitsPerDevPixel();
+      nsMargin m(NSIntPixelsToAppUnits(border.top, p2a),
+                 NSIntPixelsToAppUnits(border.right, p2a),
+                 NSIntPixelsToAppUnits(border.bottom, p2a),
+                 NSIntPixelsToAppUnits(border.left, p2a));
+      aOverflowRect->Inflate(m);
+      return true;
+    }
+  }
+
   return false;
 }
 
 NS_IMETHODIMP
-nsNativeThemeWin::GetMinimumWidgetSize(nsRenderingContext* aContext, nsIFrame* aFrame,
+nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aFrame,
                                        uint8_t aWidgetType,
                                        nsIntSize* aResult, bool* aIsOverridable)
 {
@@ -2205,7 +2249,7 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsRenderingContext* aContext, nsIFrame* a
 
   HANDLE theme = GetTheme(aWidgetType);
   if (!theme)
-    return ClassicGetMinimumWidgetSize(aContext, aFrame, aWidgetType, aResult, aIsOverridable);
+    return ClassicGetMinimumWidgetSize(aPresContext, aFrame, aWidgetType, aResult, aIsOverridable);
 
   switch (aWidgetType) {
     case NS_THEME_GROUPBOX:
@@ -2246,7 +2290,7 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsRenderingContext* aContext, nsIFrame* a
     case NS_THEME_SCROLLBAR_TRACK_HORIZONTAL:
     case NS_THEME_SCROLLBAR_TRACK_VERTICAL:
     case NS_THEME_DROPDOWN_BUTTON:
-      return ClassicGetMinimumWidgetSize(aContext, aFrame, aWidgetType, aResult, aIsOverridable);
+      return ClassicGetMinimumWidgetSize(aPresContext, aFrame, aWidgetType, aResult, aIsOverridable);
 
     case NS_THEME_MENUITEM:
     case NS_THEME_CHECKMENUITEM:
@@ -2479,7 +2523,7 @@ nsNativeThemeWin::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType,
       aWidgetType == NS_THEME_WINDOW_FRAME_BOTTOM ||
       aWidgetType == NS_THEME_WINDOW_BUTTON_CLOSE ||
       aWidgetType == NS_THEME_WINDOW_BUTTON_MINIMIZE ||
-      aWidgetType == NS_THEME_WINDOW_BUTTON_MINIMIZE ||
+      aWidgetType == NS_THEME_WINDOW_BUTTON_MAXIMIZE ||
       aWidgetType == NS_THEME_WINDOW_BUTTON_RESTORE) {
     *aShouldRepaint = true;
     return NS_OK;
@@ -2544,6 +2588,10 @@ nsNativeThemeWin::ThemeSupportsWidget(nsPresContext* aPresContext,
 
   if (aPresContext && !aPresContext->PresShell()->IsThemeSupportEnabled())
     return false;
+
+  if (aWidgetType == NS_THEME_FOCUS_OUTLINE) {
+    return true;
+  }
 
   HANDLE theme = nullptr;
   if (aWidgetType == NS_THEME_CHECKBOX_CONTAINER)
@@ -2766,6 +2814,7 @@ nsNativeThemeWin::ClassicGetWidgetBorder(nsDeviceContext* aContext,
     case NS_THEME_NUMBER_INPUT:
     case NS_THEME_TEXTFIELD:
     case NS_THEME_TEXTFIELD_MULTILINE:
+    case NS_THEME_FOCUS_OUTLINE:
       (*aResult).top = (*aResult).left = (*aResult).bottom = (*aResult).right = 2;
       break;
     case NS_THEME_STATUSBAR_PANEL:
@@ -2838,7 +2887,7 @@ nsNativeThemeWin::ClassicGetWidgetPadding(nsDeviceContext* aContext,
 }
 
 nsresult
-nsNativeThemeWin::ClassicGetMinimumWidgetSize(nsRenderingContext* aContext, nsIFrame* aFrame,
+nsNativeThemeWin::ClassicGetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aFrame,
                                        uint8_t aWidgetType,
                                        nsIntSize* aResult, bool* aIsOverridable)
 {
@@ -3157,6 +3206,7 @@ nsresult nsNativeThemeWin::ClassicGetThemePartAndState(nsIFrame* aFrame, uint8_t
     case NS_THEME_LISTBOX:
     case NS_THEME_TREEVIEW:
     case NS_THEME_NUMBER_INPUT:
+    case NS_THEME_FOCUS_OUTLINE:
     case NS_THEME_TEXTFIELD:
     case NS_THEME_TEXTFIELD_MULTILINE:
     case NS_THEME_DROPDOWN:
@@ -3523,7 +3573,7 @@ nsresult nsNativeThemeWin::ClassicDrawWidgetBackground(nsRenderingContext* aCont
     return NS_OK;
   }
 
-  gfxFloat p2a = gfxFloat(aContext->AppUnitsPerDevPixel());
+  gfxFloat p2a = gfxFloat(aFrame->PresContext()->AppUnitsPerDevPixel());
   RECT widgetRect;
   gfxRect tr(aRect.x, aRect.y, aRect.width, aRect.height),
           dr(aDirtyRect.x, aDirtyRect.y, aDirtyRect.width, aDirtyRect.height);
@@ -3957,6 +4007,7 @@ nsNativeThemeWin::GetWidgetNativeDrawingFlags(uint8_t aWidgetType)
   switch (aWidgetType) {
     case NS_THEME_BUTTON:
     case NS_THEME_NUMBER_INPUT:
+    case NS_THEME_FOCUS_OUTLINE:
     case NS_THEME_TEXTFIELD:
     case NS_THEME_TEXTFIELD_MULTILINE:
 

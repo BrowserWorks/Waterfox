@@ -23,6 +23,7 @@
 #include "nsString.h"
 #include "AutoRwLock.h"
 #include "nsPrintfCString.h"
+#include "nsClassHashtable.h"
 #include "ICameraControl.h"
 
 namespace mozilla {
@@ -101,6 +102,7 @@ protected:
   nsTArray<int> mZoomRatios;
   nsTArray<nsString> mIsoModes;
   nsTArray<nsString> mSceneModes;
+  nsClassHashtable<nsStringHashKey, nsCString> mIsoModeMap;
 
   // This subclass of android::CameraParameters just gives
   // all of the AOSP getters and setters the same signature.

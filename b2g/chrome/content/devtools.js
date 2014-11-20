@@ -27,6 +27,7 @@ XPCOMUtils.defineLazyGetter(this, 'MemoryFront', function() {
   return devtools.require('devtools/server/actors/memory').MemoryFront;
 });
 
+Cu.import('resource://gre/modules/AppFrames.jsm');
 
 /**
  * The Developer HUD is an on-device developer tool that displays widgets,
@@ -36,7 +37,6 @@ XPCOMUtils.defineLazyGetter(this, 'MemoryFront', function() {
 let developerHUD = {
 
   _targets: new Map(),
-  _frames: new Map(),
   _client: null,
   _conn: null,
   _watchers: [],
@@ -77,15 +77,9 @@ let developerHUD = {
       }
     }
 
-    Services.obs.addObserver(this, 'remote-browser-shown', false);
-    Services.obs.addObserver(this, 'inprocess-browser-shown', false);
-    Services.obs.addObserver(this, 'message-manager-disconnect', false);
+    AppFrames.addObserver(this);
 
-    let systemapp = document.querySelector('#systemapp');
-    this.trackFrame(systemapp);
-
-    let frames = systemapp.contentWindow.document.querySelectorAll('iframe[mozapp]');
-    for (let frame of frames) {
+    for (let frame of AppFrames.list()) {
       this.trackFrame(frame);
     }
 
@@ -102,9 +96,7 @@ let developerHUD = {
       this.untrackFrame(frame);
     }
 
-    Services.obs.removeObserver(this, 'remote-browser-shown');
-    Services.obs.removeObserver(this, 'inprocess-browser-shown');
-    Services.obs.removeObserver(this, 'message-manager-disconnect');
+    AppFrames.removeObserver(this);
 
     this._client.close();
     delete this._client;
@@ -140,41 +132,12 @@ let developerHUD = {
     }
   },
 
-  observe: function dwp_observe(subject, topic, data) {
-    if (!this._client)
-      return;
+  onAppFrameCreated: function (frame, isFirstAppFrame) {
+    this.trackFrame(frame);
+  },
 
-    let frame;
-
-    switch(topic) {
-
-      // listen for frame creation in OOP (device) as well as in parent process (b2g desktop)
-      case 'remote-browser-shown':
-      case 'inprocess-browser-shown':
-        let frameLoader = subject;
-        // get a ref to the app <iframe>
-        frameLoader.QueryInterface(Ci.nsIFrameLoader);
-        // Ignore notifications that aren't from a BrowserOrApp
-        if (!frameLoader.ownerIsBrowserOrAppFrame) {
-          return;
-        }
-        frame = frameLoader.ownerElement;
-        if (!frame.appManifestURL) // Ignore all frames but app frames
-          return;
-        this.trackFrame(frame);
-        this._frames.set(frameLoader.messageManager, frame);
-        break;
-
-      // Every time an iframe is destroyed, its message manager also is
-      case 'message-manager-disconnect':
-        let mm = subject;
-        frame = this._frames.get(mm);
-        if (!frame)
-          return;
-        this.untrackFrame(frame);
-        this._frames.delete(mm);
-        break;
-    }
+  onAppFrameDestroyed: function (frame, isLastAppFrame) {
+    this.untrackFrame(frame);
   },
 
   log: function dwp_log(message) {
@@ -272,7 +235,14 @@ Target.prototype = {
   },
 
   _send: function target_send(data) {
-    shell.sendEvent(this.frame, 'developer-hud-update', Cu.cloneInto(data, this.frame));
+    let frame = this.frame;
+
+    let systemapp = document.querySelector('#systemapp');
+    if (this.frame === systemapp) {
+      frame = getContentWindow();
+    }
+
+    shell.sendEvent(frame, 'developer-hud-update', Cu.cloneInto(data, frame));
   }
 
 };
@@ -501,6 +471,8 @@ let memoryWatcher = {
   _fronts: new Map(),
   _timers: new Map(),
   _watching: {
+    uss: false,
+    appmemory: false,
     jsobjects: false,
     jsstrings: false,
     jsother: false,
@@ -518,60 +490,72 @@ let memoryWatcher = {
       let category = key;
       SettingsListener.observe('hud.' + category, false, watch => {
         watching[category] = watch;
+        this.update();
       });
     }
+  },
 
-    SettingsListener.observe('hud.appmemory', false, enabled => {
-      if (this._active = enabled) {
-        for (let target of this._fronts.keys()) {
-          this.measure(target);
-        }
-      } else {
-        for (let target of this._fronts.keys()) {
-          clearTimeout(this._timers.get(target));
-          target.clear({name: 'memory'});
-        }
+  update: function mw_update() {
+    let watching = this._watching;
+    let active = watching.memory || watching.uss;
+
+    if (this._active) {
+      for (let target of this._fronts.keys()) {
+        if (!watching.appmemory) target.clear({name: 'memory'});
+        if (!watching.uss) target.clear({name: 'uss'});
+        if (!active) clearTimeout(this._timers.get(target));
       }
-    });
+    } else if (active) {
+      for (let target of this._fronts.keys()) {
+        this.measure(target);
+      }
+    }
+    this._active = active;
   },
 
   measure: function mw_measure(target) {
-
-    // TODO Also track USS (bug #976024).
-
     let watch = this._watching;
     let front = this._fronts.get(target);
 
-    front.measure().then((data) => {
+    if (watch.uss) {
+      front.residentUnique().then(value => {
+        target.update({name: 'uss', value: value});
+      }, err => {
+        console.error(err);
+      });
+    }
 
-      let total = 0;
-      if (watch.jsobjects) {
-        total += parseInt(data.jsObjectsSize);
-      }
-      if (watch.jsstrings) {
-        total += parseInt(data.jsStringsSize);
-      }
-      if (watch.jsother) {
-        total += parseInt(data.jsOtherSize);
-      }
-      if (watch.dom) {
-        total += parseInt(data.domSize);
-      }
-      if (watch.style) {
-        total += parseInt(data.styleSize);
-      }
-      if (watch.other) {
-        total += parseInt(data.otherSize);
-      }
-      // TODO Also count images size (bug #976007).
+    if (watch.appmemory) {
+      front.measure().then(data => {
+        let total = 0;
+        if (watch.jsobjects) {
+          total += parseInt(data.jsObjectsSize);
+        }
+        if (watch.jsstrings) {
+          total += parseInt(data.jsStringsSize);
+        }
+        if (watch.jsother) {
+          total += parseInt(data.jsOtherSize);
+        }
+        if (watch.dom) {
+          total += parseInt(data.domSize);
+        }
+        if (watch.style) {
+          total += parseInt(data.styleSize);
+        }
+        if (watch.other) {
+          total += parseInt(data.otherSize);
+        }
+        // TODO Also count images size (bug #976007).
 
-      target.update({name: 'memory', value: total});
-      let duration = parseInt(data.jsMilliseconds) + parseInt(data.nonJSMilliseconds);
-      let timer = setTimeout(() => this.measure(target), 100 * duration);
-      this._timers.set(target, timer);
-    }, (err) => {
-      console.error(err);
-    });
+        target.update({name: 'memory', value: total});
+      }, err => {
+        console.error(err);
+      });
+    }
+
+    let timer = setTimeout(() => this.measure(target), 300);
+    this._timers.set(target, timer);
   },
 
   trackTarget: function mw_trackTarget(target) {

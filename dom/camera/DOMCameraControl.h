@@ -26,10 +26,10 @@ namespace mozilla {
 
 namespace dom {
   class CameraCapabilities;
-  class CameraPictureOptions;
-  class CameraStartRecordingOptions;
-  class CameraRegion;
-  class CameraSize;
+  struct CameraPictureOptions;
+  struct CameraStartRecordingOptions;
+  struct CameraRegion;
+  struct CameraSize;
   template<typename T> class Optional;
 }
 class ErrorResult;
@@ -76,7 +76,7 @@ public:
   double GetFocusDistanceNear(ErrorResult& aRv);
   double GetFocusDistanceOptimum(ErrorResult& aRv);
   double GetFocusDistanceFar(ErrorResult& aRv);
-  void SetExposureCompensation(const dom::Optional<double>& aCompensation, ErrorResult& aRv);
+  void SetExposureCompensation(double aCompensation, ErrorResult& aRv);
   double GetExposureCompensation(ErrorResult& aRv);
   int32_t SensorAngle();
   already_AddRefed<dom::CameraCapabilities> Capabilities();

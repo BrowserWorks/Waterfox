@@ -426,7 +426,7 @@ public:
   // to the caller.
   static nsOpenTypeTable* Create(gfxFont* aFont)
   {
-    if (!aFont->GetFontEntry()->TryGetMathTable(aFont)) {
+    if (!aFont->GetFontEntry()->TryGetMathTable()) {
       return nullptr;
     }
     return new nsOpenTypeTable(aFont->GetFontEntry());
@@ -575,7 +575,7 @@ nsOpenTypeTable::MakeTextRun(gfxContext*        aThebesContext,
 // user' system. The class is an XPCOM shutdown observer to allow us to
 // free its allocated data at shutdown
 
-class nsGlyphTableList : public nsIObserver
+class nsGlyphTableList MOZ_FINAL : public nsIObserver
 {
 public:
   NS_DECL_ISUPPORTS
@@ -587,11 +587,6 @@ public:
     : mUnicodeTable(NS_LITERAL_STRING("Unicode"))
   {
     MOZ_COUNT_CTOR(nsGlyphTableList);
-  }
-
-  virtual ~nsGlyphTableList()
-  {
-    MOZ_COUNT_DTOR(nsGlyphTableList);
   }
 
   nsresult Initialize();
@@ -606,6 +601,11 @@ public:
   GetGlyphTableFor(const nsAString& aFamily);
 
 private:
+  ~nsGlyphTableList()
+  {
+    MOZ_COUNT_DTOR(nsGlyphTableList);
+  }
+
   nsPropertiesTable* PropertiesTableAt(int32_t aIndex) {
     return &mPropertiesTableList.ElementAt(aIndex);
   }
@@ -662,6 +662,7 @@ nsGlyphTableList::Finalize()
 
   gGlyphTableInitialized = false;
   // our oneself will be destroyed when our |Release| is called by the observer
+  NS_IF_RELEASE(gGlyphTableList);
   return rv;
 }
 
@@ -705,29 +706,28 @@ InitGlobals(nsPresContext* aPresContext)
 
   // Allocate the placeholders for the preferred parts and variants
   nsresult rv = NS_ERROR_OUT_OF_MEMORY;
-  gGlyphTableList = new nsGlyphTableList();
-  if (gGlyphTableList) {
-    rv = gGlyphTableList->Initialize();
+  nsRefPtr<nsGlyphTableList> glyphTableList = new nsGlyphTableList();
+  if (glyphTableList) {
+    rv = glyphTableList->Initialize();
   }
   if (NS_FAILED(rv)) {
-    delete gGlyphTableList;
-    gGlyphTableList = nullptr;
     return rv;
   }
   // The gGlyphTableList has been successfully registered as a shutdown
   // observer and will be deleted at shutdown. We now add some private
   // per font-family tables for stretchy operators, in order of preference.
   // Do not include the Unicode table in this list.
-  if (!gGlyphTableList->AddGlyphTable(NS_LITERAL_STRING("MathJax_Main")) ||
-      !gGlyphTableList->AddGlyphTable(NS_LITERAL_STRING("STIXGeneral")) ||
-      !gGlyphTableList->AddGlyphTable(NS_LITERAL_STRING("Standard Symbols L"))
+  if (!glyphTableList->AddGlyphTable(NS_LITERAL_STRING("MathJax_Main")) ||
+      !glyphTableList->AddGlyphTable(NS_LITERAL_STRING("STIXGeneral")) ||
+      !glyphTableList->AddGlyphTable(NS_LITERAL_STRING("Standard Symbols L"))
 #ifdef XP_WIN
-      || !gGlyphTableList->AddGlyphTable(NS_LITERAL_STRING("Symbol"))
+      || !glyphTableList->AddGlyphTable(NS_LITERAL_STRING("Symbol"))
 #endif
       ) {
     rv = NS_ERROR_OUT_OF_MEMORY;
   }
 
+  glyphTableList.forget(&gGlyphTableList);
   return rv;
 }
 
@@ -1113,26 +1113,27 @@ StretchEnumContext::TryVariants(nsGlyphTable* aGlyphTable,
     ch = aGlyphTable->BigOf(mThebesContext, oneDevPixel, *aFontGroup, uchar,
                             isVertical, 0);
     if (ch.IsGlyphID()) {
-      gfxFont* mathFont = aFontGroup->get()->GetFontAt(0);
+      gfxFont* mathFont = aFontGroup->get()->GetFirstMathFont();
       // For OpenType MATH fonts, we will rely on the DisplayOperatorMinHeight
       // to select the right size variant. Note that the value is sometimes too
       // small so we use kLargeOpFactor/kIntegralFactor as a minimum value.
-      displayOperatorMinHeight =
-        NSToCoordRound(mathFont->GetFontEntry()->
-                       GetMathConstant(gfxFontEntry::DisplayOperatorMinHeight) *
-                       mathFont->GetAdjustedSize() * oneDevPixel);
-      nsAutoPtr<gfxTextRun> textRun;
-      textRun = aGlyphTable->MakeTextRun(mThebesContext, oneDevPixel,
-                                         *aFontGroup, ch);
-      nsBoundingMetrics bm = MeasureTextRun(mThebesContext, textRun);
-      float largeopFactor = kLargeOpFactor;
-      if (NS_STRETCH_INTEGRAL & mStretchHint) {
-        // integrals are drawn taller
-        largeopFactor = kIntegralFactor;
-      }
-      nscoord minHeight = largeopFactor * (bm.ascent + bm.descent);
-      if (displayOperatorMinHeight < minHeight) {
-        displayOperatorMinHeight = minHeight;
+      if (mathFont) {
+        displayOperatorMinHeight =
+          mathFont->GetMathConstant(gfxFontEntry::DisplayOperatorMinHeight,
+                                    oneDevPixel);
+        nsAutoPtr<gfxTextRun> textRun;
+        textRun = aGlyphTable->MakeTextRun(mThebesContext, oneDevPixel,
+                                           *aFontGroup, ch);
+        nsBoundingMetrics bm = MeasureTextRun(mThebesContext, textRun);
+        float largeopFactor = kLargeOpFactor;
+        if (NS_STRETCH_INTEGRAL & mStretchHint) {
+          // integrals are drawn taller
+          largeopFactor = kIntegralFactor;
+        }
+        nscoord minHeight = largeopFactor * (bm.ascent + bm.descent);
+        if (displayOperatorMinHeight < minHeight) {
+          displayOperatorMinHeight = minHeight;
+        }
       }
     }
   }
@@ -1156,8 +1157,8 @@ StretchEnumContext::TryVariants(nsGlyphTable* aGlyphTable,
                                        *aFontGroup, ch);
     nsBoundingMetrics bm = MeasureTextRun(mThebesContext, textRun);
     if (ch.IsGlyphID()) {
-      gfxFont* mathFont = aFontGroup->get()->GetFontAt(0);
-      if (mathFont->GetFontEntry()->TryGetMathTable(mathFont)) {
+      gfxFont* mathFont = aFontGroup->get()->GetFirstMathFont();
+      if (mathFont) {
         // MeasureTextRun should have set the advance width to the right
         // bearing for OpenType MATH fonts. We now subtract the italic
         // correction, so that nsMathMLmmultiscripts will place the scripts
@@ -1956,7 +1957,7 @@ void nsDisplayMathMLCharDebug::Paint(nsDisplayListBuilder* aBuilder,
                                      nsRenderingContext* aCtx)
 {
   // for visual debug
-  int skipSides = 0;
+  Sides skipSides;
   nsPresContext* presContext = mFrame->PresContext();
   nsStyleContext* styleContext = mFrame->StyleContext();
   nsRect rect = mRect + ToReferenceFrame();

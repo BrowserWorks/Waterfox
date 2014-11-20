@@ -50,7 +50,6 @@ class nsCrypto: public mozilla::dom::Crypto
 {
 public:
   nsCrypto();
-  virtual ~nsCrypto();
 
   NS_DECL_ISUPPORTS_INHERITED
 
@@ -88,6 +87,9 @@ public:
 
   virtual void Logout(mozilla::ErrorResult& aRv) MOZ_OVERRIDE;
 
+protected:
+  virtual ~nsCrypto();
+
 private:
   static already_AddRefed<nsIPrincipal> GetScriptPrincipal(JSContext *cx);
 
@@ -104,11 +106,12 @@ class nsPkcs11 : public nsIPKCS11
 {
 public:
   nsPkcs11();
-  virtual ~nsPkcs11();
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSIPKCS11
 
+protected:
+  virtual ~nsPkcs11();
 };
 
 #endif //_nsCrypto_h_

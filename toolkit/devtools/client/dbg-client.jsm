@@ -1,4 +1,4 @@
-/* -*- Mode: javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -256,11 +256,7 @@ this.DebuggerClient = function (aTransport)
   this._transport.hooks = this;
 
   // Map actor ID to client instance for each actor type.
-  this._threadClients = new Map;
-  this._addonClients = new Map;
-  this._tabClients = new Map;
-  this._tracerClients = new Map;
-  this._consoleClients = new Map;
+  this._clients = new Map;
 
   this._pendingRequests = [];
   this._activeRequests = new Map;
@@ -333,7 +329,7 @@ DebuggerClient.requester = function (aPacketSkeleton,
       outgoingPacket = before.call(this, outgoingPacket);
     }
 
-    this.request(outgoingPacket, DevToolsUtils.makeInfallible(function (aResponse) {
+    this.request(outgoingPacket, DevToolsUtils.makeInfallible((aResponse) => {
       if (after) {
         let { from } = aResponse;
         aResponse = after.call(this, aResponse);
@@ -351,7 +347,7 @@ DebuggerClient.requester = function (aPacketSkeleton,
       if (histogram) {
         histogram.add(+new Date - startTime);
       }
-    }.bind(this), "DebuggerClient.requester request callback"));
+    }, "DebuggerClient.requester request callback"));
 
   }, "DebuggerClient.requester");
 };
@@ -408,37 +404,22 @@ DebuggerClient.prototype = {
       });
     }
 
-    const detachClients = (clientMap, next) => {
-      const clients = clientMap.values();
-      const total = clientMap.size;
-      let numFinished = 0;
-
-      if (total == 0) {
-        next();
+    // Call each client's `detach` method by calling
+    // lastly registered ones first to give a chance
+    // to detach child clients first.
+    let clients = [...this._clients.values()];
+    this._clients.clear();
+    const detachClients = () => {
+      let client = clients.pop();
+      if (!client) {
+        // All clients detached.
+        this._transport.close();
+        this._transport = null;
         return;
       }
-
-      for (let client of clients) {
-        let method = client instanceof WebConsoleClient ? "close" : "detach";
-        client[method](() => {
-          if (++numFinished === total) {
-            clientMap.clear();
-            next();
-          }
-        });
-      }
+      client.detach(detachClients);
     };
-
-    detachClients(this._consoleClients, () => {
-      detachClients(this._threadClients, () => {
-        detachClients(this._tabClients, () => {
-          detachClients(this._addonClients, () => {
-            this._transport.close();
-            this._transport = null;
-          });
-        });
-      });
-    });
+    detachClients();
   },
 
   /*
@@ -463,10 +444,10 @@ DebuggerClient.prototype = {
    *        (which will be undefined on error).
    */
   attachTab: function (aTabActor, aOnResponse) {
-    if (this._tabClients.has(aTabActor)) {
-      let cachedTab = this._tabClients.get(aTabActor);
+    if (this._clients.has(aTabActor)) {
+      let cachedTab = this._clients.get(aTabActor);
       let cachedResponse = {
-        cacheEnabled: cachedTab.cacheEnabled,
+        cacheDisabled: cachedTab.cacheDisabled,
         javascriptEnabled: cachedTab.javascriptEnabled,
         traits: cachedTab.traits,
       };
@@ -482,7 +463,7 @@ DebuggerClient.prototype = {
       let tabClient;
       if (!aResponse.error) {
         tabClient = new TabClient(this, aResponse);
-        this._tabClients.set(aTabActor, tabClient);
+        this.registerClient(tabClient);
       }
       aOnResponse(aResponse, tabClient);
     });
@@ -506,7 +487,7 @@ DebuggerClient.prototype = {
       let addonClient;
       if (!aResponse.error) {
         addonClient = new AddonClient(this, aAddonActor);
-        this._addonClients[aAddonActor] = addonClient;
+        this.registerClient(addonClient);
         this.activeAddon = addonClient;
       }
       aOnResponse(aResponse, addonClient);
@@ -535,11 +516,11 @@ DebuggerClient.prototype = {
     this.request(packet, (aResponse) => {
       let consoleClient;
       if (!aResponse.error) {
-        if (this._consoleClients.has(aConsoleActor)) {
-          consoleClient = this._consoleClients.get(aConsoleActor);
+        if (this._clients.has(aConsoleActor)) {
+          consoleClient = this._clients.get(aConsoleActor);
         } else {
           consoleClient = new WebConsoleClient(this, aResponse);
-          this._consoleClients.set(aConsoleActor, consoleClient);
+          this.registerClient(consoleClient);
         }
       }
       aOnResponse(aResponse, consoleClient);
@@ -559,8 +540,8 @@ DebuggerClient.prototype = {
    *        - useSourceMaps: whether to use source maps or not.
    */
   attachThread: function (aThreadActor, aOnResponse, aOptions={}) {
-    if (this._threadClients.has(aThreadActor)) {
-      setTimeout(() => aOnResponse({}, this._threadClients.get(aThreadActor)), 0);
+    if (this._clients.has(aThreadActor)) {
+      setTimeout(() => aOnResponse({}, this._clients.get(aThreadActor)), 0);
       return;
     }
 
@@ -572,7 +553,7 @@ DebuggerClient.prototype = {
     this.request(packet, (aResponse) => {
       if (!aResponse.error) {
         var threadClient = new ThreadClient(this, aThreadActor);
-        this._threadClients.set(aThreadActor, threadClient);
+        this.registerClient(threadClient);
       }
       aOnResponse(aResponse, threadClient);
     });
@@ -588,8 +569,8 @@ DebuggerClient.prototype = {
    *        (which will be undefined on error).
    */
   attachTracer: function (aTraceActor, aOnResponse) {
-    if (this._tracerClients.has(aTraceActor)) {
-      setTimeout(() => aOnResponse({}, this._tracerClients.get(aTraceActor)), 0);
+    if (this._clients.has(aTraceActor)) {
+      setTimeout(() => aOnResponse({}, this._clients.get(aTraceActor)), 0);
       return;
     }
 
@@ -600,7 +581,7 @@ DebuggerClient.prototype = {
     this.request(packet, (aResponse) => {
       if (!aResponse.error) {
         var traceClient = new TraceClient(this, aTraceActor);
-        this._tracerClients.set(aTraceActor, traceClient);
+        this.registerClient(traceClient);
       }
       aOnResponse(aResponse, traceClient);
     });
@@ -633,6 +614,9 @@ DebuggerClient.prototype = {
    * @return Request
    *         This object emits a number of events to allow you to respond to
    *         different parts of the request lifecycle.
+   *         It is also a Promise object, with a `then` method, that is resolved
+   *         whenever a JSON or a Bulk response is received; and is rejected
+   *         if the response is an error.
    *         Note: This return value can be ignored if you are using JSON alone,
    *         because the callback provided in |aOnResponse| will be bound to the
    *         "json-reply" event automatically.
@@ -663,6 +647,8 @@ DebuggerClient.prototype = {
    *             @return Promise
    *                     The promise is resolved when copying completes or
    *                     rejected if any (unexpected) errors occur.
+   *                     This object also emits "progress" events for each chunk
+   *                     that is copied.  See stream-utils.js.
    */
   request: function (aRequest, aOnResponse) {
     if (!this.mainRoot) {
@@ -681,6 +667,27 @@ DebuggerClient.prototype = {
 
     this._pendingRequests.push(request);
     this._sendRequests();
+
+    // Implement a Promise like API on the returned object
+    // that resolves/rejects on request response
+    let deferred = promise.defer();
+    function listenerJson(resp) {
+      request.off("json-reply", listenerJson);
+      request.off("bulk-reply", listenerBulk);
+      if (resp.error) {
+        deferred.reject(resp);
+      } else {
+        deferred.resolve(resp);
+      }
+    }
+    function listenerBulk(resp) {
+      request.off("json-reply", listenerJson);
+      request.off("bulk-reply", listenerBulk);
+      deferred.resolve(resp);
+    }
+    request.on("json-reply", listenerJson);
+    request.on("bulk-reply", listenerBulk);
+    request.then = deferred.promise.then.bind(deferred.promise);
 
     return request;
   },
@@ -728,6 +735,8 @@ DebuggerClient.prototype = {
    *             @return Promise
    *                     The promise is resolved when copying completes or
    *                     rejected if any (unexpected) errors occur.
+   *                     This object also emits "progress" events for each chunk
+   *                     that is copied.  See stream-utils.js.
    *         * json-reply: The server replied with a JSON packet, which is
    *           passed as event data.
    *         * bulk-reply: The server replied with bulk data, which you can read
@@ -753,6 +762,8 @@ DebuggerClient.prototype = {
    *             @return Promise
    *                     The promise is resolved when copying completes or
    *                     rejected if any (unexpected) errors occur.
+   *                     This object also emits "progress" events for each chunk
+   *                     that is copied.  See stream-utils.js.
    */
   startBulkRequest: function(request) {
     if (!this.traits.bulk) {
@@ -864,6 +875,16 @@ DebuggerClient.prototype = {
         return;
       }
 
+      if (this._clients.has(aPacket.from) && aPacket.type) {
+        let client = this._clients.get(aPacket.from);
+        let type = aPacket.type;
+        if (client.events.indexOf(type) != -1) {
+          client.emit(type, aPacket);
+          // we ignore the rest, as the client is expected to handle this packet.
+          return;
+        }
+      }
+
       let activeRequest;
       // See if we have a handler function waiting for a reply from this
       // actor. (Don't count unsolicited notifications or pauses as
@@ -878,16 +899,16 @@ DebuggerClient.prototype = {
 
       // Packets that indicate thread state changes get special treatment.
       if (aPacket.type in ThreadStateTypes &&
-          this._threadClients.has(aPacket.from)) {
-        this._threadClients.get(aPacket.from)._onThreadState(aPacket);
+          this._clients.has(aPacket.from)) {
+        this._clients.get(aPacket.from)._onThreadState(aPacket);
       }
       // On navigation the server resumes, so the client must resume as well.
       // We achieve that by generating a fake resumption packet that triggers
       // the client's thread state change listeners.
       if (aPacket.type == UnsolicitedNotifications.tabNavigated &&
-          this._tabClients.has(aPacket.from) &&
-          this._tabClients.get(aPacket.from).thread) {
-        let thread = this._tabClients.get(aPacket.from).thread;
+          this._clients.has(aPacket.from) &&
+          this._clients.get(aPacket.from).thread) {
+        let thread = this._clients.get(aPacket.from).thread;
         let resumption = { from: thread._actor, type: "resumed" };
         thread._onThreadState(resumption);
       }
@@ -932,6 +953,8 @@ DebuggerClient.prototype = {
    *          @return Promise
    *                  The promise is resolved when copying completes or rejected
    *                  if any (unexpected) errors occur.
+   *                  This object also emits "progress" events for each chunk
+   *                  that is copied.  See stream-utils.js.
    */
   onBulkPacket: function(packet) {
     let { actor, type, length } = packet;
@@ -966,6 +989,42 @@ DebuggerClient.prototype = {
    */
   onClosed: function (aStatus) {
     this.notify("closed");
+  },
+
+  registerClient: function (client) {
+    let actorID = client.actor;
+    if (!actorID) {
+      throw new Error("DebuggerServer.registerClient expects " +
+                      "a client instance with an `actor` attribute.");
+    }
+    if (!Array.isArray(client.events)) {
+      throw new Error("DebuggerServer.registerClient expects " +
+                      "a client instance with an `events` attribute " +
+                      "that is an array.");
+    }
+    if (client.events.length > 0 && typeof(client.emit) != "function") {
+      throw new Error("DebuggerServer.registerClient expects " +
+                      "client instances with non-empty `events` array to" +
+                      "have an `emit` function.");
+    }
+    if (typeof(client.detach) != "function") {
+      throw new Error("DebuggerServer.registerClient expects " +
+                      "a client instance with a `detach` function.");
+    }
+    if (this._clients.has(actorID)) {
+      throw new Error("DebuggerServer.registerClient already registered " +
+                      "a client for this actor.");
+    }
+    this._clients.set(actorID, client);
+  },
+
+  unregisterClient: function (client) {
+    let actorID = client.actor;
+    if (!actorID) {
+      throw new Error("DebuggerServer.unregisterClient expects " +
+                      "a Client instance with a `actor` attribute.");
+    }
+    this._clients.delete(actorID);
   },
 
   /**
@@ -1128,7 +1187,7 @@ ProtocolCompatibility.prototype = {
   _shimPacket: function (aPacket) {
     let extraPackets = [];
 
-    let loop = function (aFeatures, aPacket) {
+    let loop = (aFeatures, aPacket) => {
       if (aFeatures.length === 0) {
         for (let packet of extraPackets) {
           this._client.onPacket(packet, true);
@@ -1151,7 +1210,7 @@ ProtocolCompatibility.prototype = {
                                                      keepPacket);
         return resolve(newPacket).then(loop.bind(null, aFeatures.slice(1)));
       }
-    }.bind(this);
+    };
 
     return loop([f for (f of this._featuresWithoutSupport)],
                 aPacket);
@@ -1197,10 +1256,11 @@ function TabClient(aClient, aForm) {
   this._actor = aForm.from;
   this._threadActor = aForm.threadActor;
   this.javascriptEnabled = aForm.javascriptEnabled;
-  this.cacheEnabled = aForm.cacheEnabled;
+  this.cacheDisabled = aForm.cacheDisabled;
   this.thread = null;
   this.request = this.client.request;
   this.traits = aForm.traits || {};
+  this.events = [];
 }
 
 TabClient.prototype = {
@@ -1231,7 +1291,7 @@ TabClient.prototype = {
     this.request(packet, (aResponse) => {
       if (!aResponse.error) {
         this.thread = new ThreadClient(this, this._threadActor);
-        this.client._threadClients.set(this._threadActor, this.thread);
+        this.client.registerClient(this.thread);
       }
       aOnResponse(aResponse, this.thread);
     });
@@ -1253,7 +1313,7 @@ TabClient.prototype = {
       return aPacket;
     },
     after: function (aResponse) {
-      this.client._tabClients.delete(this.actor);
+      this.client.unregisterClient(this);
       return aResponse;
     },
     telemetry: "TABDETACH"
@@ -1311,6 +1371,7 @@ function AddonClient(aClient, aActor) {
   this._client = aClient;
   this._actor = aActor;
   this.request = this._client.request;
+  this.events = [];
 }
 
 AddonClient.prototype = {
@@ -1327,10 +1388,10 @@ AddonClient.prototype = {
     type: "detach"
   }, {
     after: function(aResponse) {
-      if (this._client.activeAddon === this._client._addonClients[this.actor]) {
+      if (this._client.activeAddon === this) {
         this._client.activeAddon = null
       }
-      delete this._client._addonClients[this.actor];
+      this._client.unregisterClient(this);
       return aResponse;
     },
     telemetry: "ADDONDETACH"
@@ -1413,6 +1474,7 @@ function ThreadClient(aClient, aActor) {
   this._pauseGrips = {};
   this._threadGrips = {};
   this.request = this.client.request;
+  this.events = [];
 }
 
 ThreadClient.prototype = {
@@ -1662,7 +1724,7 @@ ThreadClient.prototype = {
     type: "detach"
   }, {
     after: function (aResponse) {
-      this.client._threadClients.delete(this.actor);
+      this.client.unregisterClient(this);
       this._parent.thread = null;
       return aResponse;
     },
@@ -1679,7 +1741,7 @@ ThreadClient.prototype = {
    */
   setBreakpoint: function ({ url, line, column, condition }, aOnResponse) {
     // A helper function that sets the breakpoint.
-    let doSetBreakpoint = function (aCallback) {
+    let doSetBreakpoint = (aCallback) => {
       const location = {
         url: url,
         line: line,
@@ -1692,7 +1754,7 @@ ThreadClient.prototype = {
         location: location,
         condition: condition
       };
-      this.client.request(packet, function (aResponse) {
+      this.client.request(packet, (aResponse) => {
         // Ignoring errors, since the user may be setting a breakpoint in a
         // dead script that will reappear on a page reload.
         if (aOnResponse) {
@@ -1708,8 +1770,8 @@ ThreadClient.prototype = {
         if (aCallback) {
           aCallback();
         }
-      }.bind(this));
-    }.bind(this);
+      });
+    };
 
     // If the debuggee is paused, just set the breakpoint.
     if (this.paused) {
@@ -1717,14 +1779,14 @@ ThreadClient.prototype = {
       return;
     }
     // Otherwise, force a pause in order to set the breakpoint.
-    this.interrupt(function (aResponse) {
+    this.interrupt((aResponse) => {
       if (aResponse.error) {
         // Can't set the breakpoint if pausing failed.
         aOnResponse(aResponse);
         return;
       }
       doSetBreakpoint(this.resume.bind(this));
-    }.bind(this));
+    });
   },
 
   /**
@@ -1778,21 +1840,6 @@ ThreadClient.prototype = {
   }, {
     telemetry: "SOURCES"
   }),
-
-  _doInterrupted: function (aAction, aError) {
-    if (this.paused) {
-      aAction();
-      return;
-    }
-    this.interrupt(function (aResponse) {
-      if (aResponse) {
-        aError(aResponse);
-        return;
-      }
-      aAction();
-      this.resume();
-    }.bind(this));
-  },
 
   /**
    * Clear the thread's source script cache. A scriptscleared event
@@ -2043,6 +2090,7 @@ function TraceClient(aClient, aActor) {
   this._waitingPackets = new Map();
   this._expectedPacket = 0;
   this.request = this._client.request;
+  this.events = [];
 }
 
 TraceClient.prototype = {
@@ -2058,7 +2106,7 @@ TraceClient.prototype = {
     type: "detach"
   }, {
     after: function (aResponse) {
-      this._client._tracerClients.delete(this.actor);
+      this._client.unregisterClient(this);
       return aResponse;
     },
     telemetry: "TRACERDETACH"

@@ -28,6 +28,7 @@
 #include "nsISSLSocketControl.h"
 #include "nsISSLStatus.h"
 #include "nsISSLStatusProvider.h"
+#include "nsISupportsPriority.h"
 #include "prprf.h"
 #include "prnetdb.h"
 #include "sslt.h"
@@ -97,6 +98,8 @@ Http2Session::Http2Session(nsISocketTransport *aSocketTransport)
   , mOutputQueueSent(0)
   , mLastReadEpoch(PR_IntervalNow())
   , mPingSentEpoch(0)
+  , mWaitingForSettingsAck(false)
+  , mGoAwayOnPush(false)
 {
   MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
 
@@ -133,12 +136,24 @@ CopyAsNetwork32(charType dest,   // where to store it
 template void CopyAsNetwork32(char *dest, uint32_t number);
 template void CopyAsNetwork32(uint8_t *dest, uint32_t number);
 
+template<typename charType> static void
+CopyAsNetwork16(charType dest, // where to store it
+                uint16_t number) // the 16 bit number in native format
+{
+  number = PR_htons(number);
+  memcpy(dest, &number, sizeof(number));
+}
+
+template void CopyAsNetwork16(char *dest, uint16_t number);
+template void CopyAsNetwork16(uint8_t *dest, uint16_t number);
+
 PLDHashOperator
 Http2Session::ShutdownEnumerator(nsAHttpTransaction *key,
                                  nsAutoPtr<Http2Stream> &stream,
                                  void *closure)
 {
   Http2Session *self = static_cast<Http2Session *>(closure);
+  nsresult result;
 
   // On a clean server hangup the server sets the GoAwayID to be the ID of
   // the last transaction it processed. If the ID of stream in the
@@ -148,10 +163,14 @@ Http2Session::ShutdownEnumerator(nsAHttpTransaction *key,
   // restarted.
   if (self->mCleanShutdown &&
       (stream->StreamID() > self->mGoAwayID || !stream->HasRegisteredID())) {
-    self->CloseStream(stream, NS_ERROR_NET_RESET); // can be restarted
+    result = NS_ERROR_NET_RESET;  // can be restarted
+  } else if (stream->RecvdData()) {
+    result = NS_ERROR_NET_PARTIAL_TRANSFER;
   } else {
-    self->CloseStream(stream, NS_ERROR_ABORT);
+    result = NS_ERROR_ABORT;
   }
+
+  self->CloseStream(stream, result);
 
   return PL_DHASH_NEXT;
 }
@@ -236,9 +255,7 @@ static Http2ControlFx sControlFunctions[] = {
   Http2Session::RecvPing,
   Http2Session::RecvGoAway,
   Http2Session::RecvWindowUpdate,
-  Http2Session::RecvContinuation,
-  Http2Session::RecvAltSvc,
-  Http2Session::RecvBlocked
+  Http2Session::RecvContinuation
 };
 
 bool
@@ -593,9 +610,7 @@ Http2Session::CreateFrameHeader(charType dest, uint16_t frameLength,
   MOZ_ASSERT(frameLength <= kMaxFrameData, "framelength too large");
   MOZ_ASSERT(!(streamID & 0x80000000));
 
-  frameLength = PR_htons(frameLength);
-
-  memcpy(dest, &frameLength, 2);
+  CopyAsNetwork16(dest, frameLength);
   dest[2] = frameType;
   dest[3] = frameFlags;
   CopyAsNetwork32(dest + 4, streamID);
@@ -765,10 +780,10 @@ Http2Session::SendHello()
   MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
   LOG3(("Http2Session::SendHello %p\n", this));
 
-  // sized for magic + 2 settings and a session window update to follow
-  // 24 magic, 23 for settings (8 header + 3 settings @5), 12 for window update
-  static const uint32_t maxSettings = 4;
-  static const uint32_t maxDataLen = 24 + 8 + maxSettings * 5 + 12;
+  // sized for magic + 3 settings and a session window update to follow
+  // 24 magic, 26 for settings (8 header + 3 settings @6), 12 for window update
+  static const uint32_t maxSettings = 3;
+  static const uint32_t maxDataLen = 24 + 8 + maxSettings * 6 + 12;
   char *packet = EnsureOutputBuffer(maxDataLen);
   memcpy(packet, kMagicHello, 24);
   mOutputQueueUsed += 24;
@@ -781,37 +796,32 @@ Http2Session::SendHello()
   uint8_t numberOfEntries = 0;
 
   // entries need to be listed in order by ID
-  // 1st entry is bytes 8 to 12
-  // 2nd entry is bytes 13 to 17
-  // 3rd entry is bytes 18 to 22
-  // 4th entry is bytes 23 to 17
+  // 1st entry is bytes 8 to 13
+  // 2nd entry is bytes 14 to 19
+  // 3rd entry is bytes 20 to 25
 
   if (!gHttpHandler->AllowPush()) {
     // If we don't support push then set MAX_CONCURRENT to 0 and also
     // set ENABLE_PUSH to 0
-    packet[8 + 5 * numberOfEntries] = SETTINGS_TYPE_ENABLE_PUSH;
+    CopyAsNetwork16(packet + 8 + (6 * numberOfEntries), SETTINGS_TYPE_ENABLE_PUSH);
     // The value portion of the setting pair is already initialized to 0
     numberOfEntries++;
 
-    packet[8 + 5 * numberOfEntries] = SETTINGS_TYPE_MAX_CONCURRENT;
+    CopyAsNetwork16(packet + 8 + (6 * numberOfEntries), SETTINGS_TYPE_MAX_CONCURRENT);
     // The value portion of the setting pair is already initialized to 0
     numberOfEntries++;
+
+    mWaitingForSettingsAck = true;
   }
 
   // Advertise the Push RWIN for the session, and on each new pull stream
   // send a window update with END_FLOW_CONTROL
-  packet[8 + 5 * numberOfEntries] = SETTINGS_TYPE_INITIAL_WINDOW;
-  CopyAsNetwork32(packet + 9 + 5 * numberOfEntries, mPushAllowance);
-  numberOfEntries++;
-
-  // Explicitly signal that we do NOT support compressed data frames, even
-  // though the default is to not support anyway.
-  packet[8 + 5 * numberOfEntries] = SETTINGS_TYPE_COMPRESS_DATA;
-  // The value portion of the setting pair is already initialized to 0
+  CopyAsNetwork16(packet + 8 + (6 * numberOfEntries), SETTINGS_TYPE_INITIAL_WINDOW);
+  CopyAsNetwork32(packet + 8 + (6 * numberOfEntries) + 2, mPushAllowance);
   numberOfEntries++;
 
   MOZ_ASSERT(numberOfEntries <= maxSettings);
-  uint32_t dataLen = 5 * numberOfEntries;
+  uint32_t dataLen = 6 * numberOfEntries;
   CreateFrameHeader(packet, dataLen, FRAME_TYPE_SETTINGS, 0, 0);
   mOutputQueueUsed += 8 + dataLen;
 
@@ -1029,16 +1039,9 @@ Http2Session::SetInputFrameDataStream(uint32_t streamID)
 nsresult
 Http2Session::ParsePadding(uint8_t &paddingControlBytes, uint16_t &paddingLength)
 {
-  if (mInputFrameFlags & kFlag_PAD_HIGH) {
-    uint8_t paddingHighValue = *reinterpret_cast<uint8_t *>(mInputFrameBuffer + 8);
-    paddingLength = static_cast<uint16_t>(paddingHighValue) * 256;
-    ++paddingControlBytes;
-  }
-
-  if (mInputFrameFlags & kFlag_PAD_LOW) {
-    uint8_t paddingLowValue = *reinterpret_cast<uint8_t *>(mInputFrameBuffer + 8 + paddingControlBytes);
-    paddingLength += paddingLowValue;
-    ++paddingControlBytes;
+  if (mInputFrameFlags & kFlag_PADDED) {
+    paddingLength = *reinterpret_cast<uint8_t *>(mInputFrameBuffer + 8);
+    paddingControlBytes = 1;
   }
 
   if (paddingLength > mInputFrameDataSize) {
@@ -1056,6 +1059,8 @@ nsresult
 Http2Session::RecvHeaders(Http2Session *self)
 {
   MOZ_ASSERT(self->mInputFrameType == FRAME_TYPE_HEADERS);
+
+  bool isContinuation = self->mExpectedHeaderID != 0;
 
   // If this doesn't have END_HEADERS set on it then require the next
   // frame to be HEADERS of the same ID
@@ -1076,22 +1081,25 @@ Http2Session::RecvHeaders(Http2Session *self)
   // header data from the frame.
   uint16_t paddingLength = 0;
   uint8_t paddingControlBytes = 0;
+  nsresult rv;
 
-  nsresult rv = self->ParsePadding(paddingControlBytes, paddingLength);
-  if (NS_FAILED(rv)) {
-    return rv;
+  if (!isContinuation) {
+    self->mDecompressBuffer.Truncate();
+    rv = self->ParsePadding(paddingControlBytes, paddingLength);
+    if (NS_FAILED(rv)) {
+      return rv;
+    }
   }
 
   LOG3(("Http2Session::RecvHeaders %p stream 0x%X priorityLen=%d stream=%p "
         "end_stream=%d end_headers=%d priority_group=%d "
-        "paddingLength=%d pad_high_flag=%d pad_low_flag=%d\n",
+        "paddingLength=%d padded=%d\n",
         self, self->mInputFrameID, priorityLen, self->mInputFrameDataStream,
         self->mInputFrameFlags & kFlag_END_STREAM,
         self->mInputFrameFlags & kFlag_END_HEADERS,
         self->mInputFrameFlags & kFlag_PRIORITY,
         paddingLength,
-        self->mInputFrameFlags & kFlag_PAD_HIGH,
-        self->mInputFrameFlags & kFlag_PAD_LOW));
+        self->mInputFrameFlags & kFlag_PADDED));
 
   if (!self->mInputFrameDataStream) {
     // Cannot find stream. We can continue the session, but we need to
@@ -1153,9 +1161,25 @@ Http2Session::ResponseHeadersComplete()
   LOG3(("Http2Session::ResponseHeadersComplete %p for 0x%X fin=%d",
         this, mInputFrameDataStream->StreamID(), mInputFrameFinal));
 
-  // only do this once, afterwards ignore trailers
-  if (mInputFrameDataStream->AllHeadersReceived())
+  // only interpret headers once, afterwards ignore trailers
+  if (mInputFrameDataStream->AllHeadersReceived()) {
+    LOG3(("Http2Session::ResponseHeadersComplete extra headers"));
+    nsresult rv = UncompressAndDiscard();
+    if (NS_FAILED(rv)) {
+      LOG3(("Http2Session::ResponseHeadersComplete extra uncompress failed\n"));
+      return rv;
+    }
+    mFlatHTTPResponseHeadersOut = 0;
+    mFlatHTTPResponseHeaders.Truncate();
+    if (mInputFrameFinal) {
+      // need to process the fin
+      ChangeDownstreamState(PROCESSING_COMPLETE_HEADERS);
+    } else {
+      ResetDownstreamState();
+    }
+
     return NS_OK;
+  }
   mInputFrameDataStream->SetAllHeadersReceived();
 
   // The stream needs to see flattened http headers
@@ -1277,15 +1301,15 @@ Http2Session::RecvSettings(Http2Session *self)
     RETURN_SESSION_ERROR(self, PROTOCOL_ERROR);
   }
 
-  if (self->mInputFrameDataSize % 5) {
-    // Number of Settings is determined by dividing by each 5 byte setting
-    // entry. So the payload must be a multiple of 5.
+  if (self->mInputFrameDataSize % 6) {
+    // Number of Settings is determined by dividing by each 6 byte setting
+    // entry. So the payload must be a multiple of 6.
     LOG3(("Http2Session::RecvSettings %p SETTINGS wrong length data=%d",
           self, self->mInputFrameDataSize));
     RETURN_SESSION_ERROR(self, PROTOCOL_ERROR);
   }
 
-  uint32_t numEntries = self->mInputFrameDataSize / 5;
+  uint32_t numEntries = self->mInputFrameDataSize / 6;
   LOG3(("Http2Session::RecvSettings %p SETTINGS Control Frame "
         "with %d entries ack=%X", self, numEntries,
         self->mInputFrameFlags & kFlag_ACK));
@@ -1297,11 +1321,11 @@ Http2Session::RecvSettings(Http2Session *self)
 
   for (uint32_t index = 0; index < numEntries; ++index) {
     uint8_t *setting = reinterpret_cast<uint8_t *>
-      (self->mInputFrameBuffer.get()) + 8 + index * 5;
+      (self->mInputFrameBuffer.get()) + 8 + index * 6;
 
-    uint8_t id = setting[0];
-    uint32_t value = PR_ntohl(*reinterpret_cast<uint32_t *>(setting + 1));
-    LOG3(("Settings ID %d, Value %d", id, value));
+    uint16_t id = PR_ntohs(*reinterpret_cast<uint16_t *>(setting));
+    uint32_t value = PR_ntohl(*reinterpret_cast<uint32_t *>(setting + 2));
+    LOG3(("Settings ID %u, Value %u", id, value));
 
     switch (id)
     {
@@ -1333,11 +1357,6 @@ Http2Session::RecvSettings(Http2Session *self)
       }
       break;
 
-    case SETTINGS_TYPE_COMPRESS_DATA:
-      LOG3(("Received DATA compression setting: %d\n", value));
-      // nop
-      break;
-
     default:
       break;
     }
@@ -1345,8 +1364,11 @@ Http2Session::RecvSettings(Http2Session *self)
 
   self->ResetDownstreamState();
 
-  if (!(self->mInputFrameFlags & kFlag_ACK))
+  if (!(self->mInputFrameFlags & kFlag_ACK)) {
     self->GenerateSettingsAck();
+  } else if (self->mWaitingForSettingsAck) {
+    self->mGoAwayOnPush = true;
+  }
 
   return NS_OK;
 }
@@ -1360,10 +1382,6 @@ Http2Session::RecvPushPromise(Http2Session *self)
   // header data from the frame.
   uint16_t paddingLength = 0;
   uint8_t paddingControlBytes = 0;
-  nsresult rv = self->ParsePadding(paddingControlBytes, paddingLength);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
 
   // If this doesn't have END_PUSH_PROMISE set on it then require the next
   // frame to be PUSH_PROMISE of the same ID
@@ -1374,6 +1392,11 @@ Http2Session::RecvPushPromise(Http2Session *self)
     promiseLen = 0; // really a continuation frame
     promisedID = self->mContinuedPromiseStream;
   } else {
+    self->mDecompressBuffer.Truncate();
+    nsresult rv = self->ParsePadding(paddingControlBytes, paddingLength);
+    if (NS_FAILED(rv)) {
+      return rv;
+    }
     promiseLen = 4;
     promisedID =
       PR_ntohl(*reinterpret_cast<uint32_t *>(self->mInputFrameBuffer.get() + 8 + paddingControlBytes));
@@ -1400,10 +1423,9 @@ Http2Session::RecvPushPromise(Http2Session *self)
   }
 
   LOG3(("Http2Session::RecvPushPromise %p ID 0x%X assoc ID 0x%X "
-        "paddingLength %d pad_high_flag %d pad_low_flag %d.\n",
+        "paddingLength %d padded %d\n",
         self, promisedID, associatedID, paddingLength,
-        self->mInputFrameFlags & kFlag_PAD_HIGH,
-        self->mInputFrameFlags & kFlag_PAD_LOW));
+        self->mInputFrameFlags & kFlag_PADDED));
 
   if (!associatedID || !promisedID || (promisedID & 1)) {
     LOG3(("Http2Session::RecvPushPromise %p ID invalid.\n", self));
@@ -1411,7 +1433,7 @@ Http2Session::RecvPushPromise(Http2Session *self)
   }
 
   // confirm associated-to
-  rv = self->SetInputFrameDataStream(associatedID);
+  nsresult rv = self->SetInputFrameDataStream(associatedID);
   if (NS_FAILED(rv))
     return rv;
 
@@ -1431,8 +1453,12 @@ Http2Session::RecvPushPromise(Http2Session *self)
           "mode refused.\n", self));
     self->GenerateRstStream(REFUSED_STREAM_ERROR, promisedID);
   } else if (!gHttpHandler->AllowPush()) {
-    // MAX_CONCURRENT_STREAMS of 0 in settings disabled push
+    // ENABLE_PUSH and MAX_CONCURRENT_STREAMS of 0 in settings disabled push
     LOG3(("Http2Session::RecvPushPromise Push Recevied when Disabled\n"));
+    if (self->mGoAwayOnPush) {
+      LOG3(("Http2Session::RecvPushPromise sending GOAWAY"));
+      RETURN_SESSION_ERROR(self, PROTOCOL_ERROR);
+    }
     self->GenerateRstStream(REFUSED_STREAM_ERROR, promisedID);
   } else if (!(self->mInputFrameFlags & kFlag_END_PUSH_PROMISE)) {
     LOG3(("Http2Session::RecvPushPromise no support for multi frame push\n"));
@@ -1777,33 +1803,6 @@ Http2Session::RecvContinuation(Http2Session *self)
   return RecvPushPromise(self);
 }
 
-nsresult
-Http2Session::RecvAltSvc(Http2Session *self)
-{
-  MOZ_ASSERT(self->mInputFrameType == FRAME_TYPE_ALTSVC);
-  LOG3(("Http2Session::RecvAltSvc %p Flags 0x%X id 0x%X\n", self,
-        self->mInputFrameFlags, self->mInputFrameID));
-
-  // For now, we don't do anything with ALTSVC frames
-  self->ResetDownstreamState();
-  return NS_OK;
-}
-
-nsresult
-Http2Session::RecvBlocked(Http2Session *self)
-{
-  MOZ_ASSERT(self->mInputFrameType == FRAME_TYPE_BLOCKED);
-  LOG3(("Http2Session::RecvBlocked %p id 0x%X\n", self, self->mInputFrameID));
-
-  if (self->mInputFrameDataSize) {
-    RETURN_SESSION_ERROR(self, FRAME_SIZE_ERROR);
-  }
-
-  // Logging is all we do with BLOCKED for now
-  self->ResetDownstreamState();
-  return NS_OK;
-}
-
 //-----------------------------------------------------------------------------
 // nsAHttpTransaction. It is expected that nsHttpConnection is the caller
 // of these methods
@@ -1977,12 +1976,6 @@ Http2Session::ReadyToProcessDataFrame(enum internalStateType newState)
     RETURN_SESSION_ERROR(this, PROTOCOL_ERROR);
   }
 
-  if (mInputFrameFlags & kFlag_COMPRESSED) {
-    LOG3(("Http2Session::ReadyToProcessDataFrame %p streamID 0x%X compressed\n",
-          this, mInputFrameID));
-    RETURN_SESSION_ERROR(this, PROTOCOL_ERROR);
-  }
-
   nsresult rv = SetInputFrameDataStream(mInputFrameID);
   if (NS_FAILED(rv)) {
     LOG3(("Http2Session::ReadyToProcessDataFrame %p lookup streamID 0x%X "
@@ -2011,6 +2004,10 @@ Http2Session::ReadyToProcessDataFrame(enum internalStateType newState)
         this, mInputFrameID, mInputFrameDataStream, mInputFrameFinal,
         mInputFrameDataSize));
   UpdateLocalRwin(mInputFrameDataStream, mInputFrameDataSize);
+
+  if (mInputFrameDataStream) {
+    mInputFrameDataStream->SetRecvdData(true);
+  }
 
   return NS_OK;
 }
@@ -2142,17 +2139,6 @@ Http2Session::WriteSegments(nsAHttpSegmentWriter *writer,
     }
 
     mPaddingLength = 0;
-    if (mInputFrameType == FRAME_TYPE_DATA ||
-        mInputFrameType == FRAME_TYPE_HEADERS ||
-        mInputFrameType == FRAME_TYPE_PUSH_PROMISE ||
-        mInputFrameType == FRAME_TYPE_CONTINUATION) {
-      if ((mInputFrameFlags & kFlag_PAD_HIGH) &&
-          !(mInputFrameFlags & kFlag_PAD_LOW)) {
-        LOG3(("Http2Session::WriteSegments %p PROTOCOL_ERROR pad_high present "
-              "without pad_low\n", this));
-        RETURN_SESSION_ERROR(this, PROTOCOL_ERROR);
-      }
-    }
 
     if (mInputFrameDataSize >= 0x4000) {
       // Section 9.1 HTTP frames cannot exceed 2^14 - 1 but receviers must ignore
@@ -2196,7 +2182,7 @@ Http2Session::WriteSegments(nsAHttpSegmentWriter *writer,
       EnsureBuffer(mInputFrameBuffer, mInputFrameDataSize + 8, 8,
                    mInputFrameBufferSize);
       ChangeDownstreamState(BUFFERING_CONTROL_FRAME);
-    } else if (mInputFrameFlags & (kFlag_PAD_LOW | kFlag_PAD_HIGH)) {
+    } else if (mInputFrameFlags & kFlag_PADDED) {
       ChangeDownstreamState(PROCESSING_DATA_FRAME_PADDING_CONTROL);
     } else {
       rv = ReadyToProcessDataFrame(PROCESSING_DATA_FRAME);
@@ -2207,21 +2193,14 @@ Http2Session::WriteSegments(nsAHttpSegmentWriter *writer,
   }
 
   if (mDownstreamState == PROCESSING_DATA_FRAME_PADDING_CONTROL) {
-    uint32_t numControlBytes = 0;
-    if (mInputFrameFlags & kFlag_PAD_LOW) {
-      ++numControlBytes;
-    }
-    if (mInputFrameFlags & kFlag_PAD_HIGH) {
-      ++numControlBytes;
-    }
+    MOZ_ASSERT(mInputFrameFlags & kFlag_PADDED,
+               "Processing padding control on unpadded frame");
 
-    MOZ_ASSERT(numControlBytes,
-               "Processing padding control with no control bytes!");
-    MOZ_ASSERT(mInputFrameBufferUsed < (8 + numControlBytes),
+    MOZ_ASSERT(mInputFrameBufferUsed < (8 + 1),
                "Frame buffer used too large for state");
 
     rv = NetworkRead(writer, mInputFrameBuffer + mInputFrameBufferUsed,
-                     (8 + numControlBytes) - mInputFrameBufferUsed,
+                     (8 + 1) - mInputFrameBufferUsed,
                      countWritten);
 
     if (NS_FAILED(rv)) {
@@ -2238,26 +2217,22 @@ Http2Session::WriteSegments(nsAHttpSegmentWriter *writer,
 
     mInputFrameBufferUsed += *countWritten;
 
-    if (mInputFrameBufferUsed - 8 < numControlBytes) {
+    if (mInputFrameBufferUsed - 8 < 1) {
       LOG3(("Http2Session::WriteSegments %p "
             "BUFFERING DATA FRAME CONTROL PADDING incomplete size=%d",
             this, mInputFrameBufferUsed - 8));
       return rv;
     }
 
-    mInputFrameDataRead += numControlBytes;
+    ++mInputFrameDataRead;
 
     char *control = mInputFrameBuffer + 8;
-    if (mInputFrameFlags & kFlag_PAD_HIGH) {
-      mPaddingLength = static_cast<uint16_t>(*control) * 256;
-      ++control;
-    }
-    mPaddingLength += static_cast<uint8_t>(*control);
+    mPaddingLength = static_cast<uint8_t>(*control);
 
     LOG3(("Http2Session::WriteSegments %p stream 0x%X mPaddingLength=%d", this,
           mInputFrameID, mPaddingLength));
 
-    if (numControlBytes + mPaddingLength == mInputFrameDataSize) {
+    if (1U + mPaddingLength == mInputFrameDataSize) {
       // This frame consists entirely of padding, we can just discard it
       LOG3(("Http2Session::WriteSegments %p stream 0x%X frame with only padding",
             this, mInputFrameID));
@@ -2284,7 +2259,9 @@ Http2Session::WriteSegments(nsAHttpSegmentWriter *writer,
     if (mDownstreamRstReason == REFUSED_STREAM_ERROR) {
       streamCleanupCode = NS_ERROR_NET_RESET;      // can retry this 100% safely
     } else {
-      streamCleanupCode = NS_ERROR_NET_INTERRUPT;
+      streamCleanupCode = mInputFrameDataStream->RecvdData() ?
+        NS_ERROR_NET_PARTIAL_TRANSFER :
+        NS_ERROR_NET_INTERRUPT;
     }
 
     if (mDownstreamRstReason == COMPRESSION_ERROR)
@@ -2432,7 +2409,7 @@ Http2Session::WriteSegments(nsAHttpSegmentWriter *writer,
   } else {
     // Section 4.1 requires this to be ignored; though protocol_error would
     // be better
-    LOG3(("Http2Session %p unknow frame type %x ignored\n",
+    LOG3(("Http2Session %p unknown frame type %x ignored\n",
           this, mInputFrameType));
     ResetDownstreamState();
     rv = NS_OK;
@@ -2892,7 +2869,7 @@ Http2Session::DispatchOnTunnel(nsAHttpTransaction *aHttpTransaction,
     nsRefPtr<SpdyConnectTransaction> connectTrans =
       new SpdyConnectTransaction(ci, aCallbacks,
                                  trans->Caps(), trans, this);
-    AddStream(connectTrans, trans->Priority(),
+    AddStream(connectTrans, nsISupportsPriority::PRIORITY_NORMAL,
               false, nullptr);
     Http2Stream *tunnel = mStreamTransactionHash.Get(connectTrans);
     MOZ_ASSERT(tunnel);

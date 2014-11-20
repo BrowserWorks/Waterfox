@@ -20,7 +20,7 @@ if CONFIG['MOZ_NFC']:
     LOCAL_INCLUDES += [
         '/dom/nfc'
     ]
-    
+	
 if CONFIG['MOZ_GSTREAMER'] and not CONFIG['SYSTEM_GSTREAMER']:
  LOCAL_INCLUDES += [
  '/media/gstreamer/glib',
@@ -28,8 +28,7 @@ if CONFIG['MOZ_GSTREAMER'] and not CONFIG['SYSTEM_GSTREAMER']:
  '/media/gstreamer/gst-plugins-base/gst-libs',
  '/media/gstreamer/gstreamer',
  '/media/gstreamer/gstreamer/libs'
-]
-
+ ]
 
 FAIL_ON_WARNINGS = True
 
@@ -48,7 +47,7 @@ LOCAL_INCLUDES += [
     '../style',
     '../tables',
     '../xul',
-    '/caps/include',
+    '/caps',
     '/content/base/src',
     '/content/canvas/src',
     '/content/html/content/src',
@@ -76,12 +75,12 @@ LOCAL_INCLUDES += [
     '/dom/xslt/xml',
     '/dom/xslt/xpath',
     '/dom/xslt/xslt',
-    '/editor/composer/src',
+    '/editor/composer',
     '/editor/libeditor/base',
     '/editor/libeditor/html',
     '/editor/libeditor/text',
-    '/editor/txmgr/src',
-    '/editor/txtsvc/src',
+    '/editor/txmgr',
+    '/editor/txtsvc',
     '/extensions/cookie',
     '/js/xpconnect/loader',
     '/js/xpconnect/src',

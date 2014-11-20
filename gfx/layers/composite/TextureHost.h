@@ -33,6 +33,9 @@ struct nsIntSize;
 struct nsIntRect;
 
 namespace mozilla {
+namespace gl {
+class SurfaceStream;
+}
 namespace ipc {
 class Shmem;
 }
@@ -44,6 +47,7 @@ class CompositableHost;
 class CompositableBackendSpecificData;
 class CompositableParentManager;
 class SurfaceDescriptor;
+class SurfaceStreamDescriptor;
 class ISurfaceAllocator;
 class TextureHostOGL;
 class TextureSourceOGL;
@@ -144,11 +148,13 @@ public:
   {
     MOZ_COUNT_CTOR(NewTextureSource);
   }
+protected:
   virtual ~NewTextureSource()
   {
     MOZ_COUNT_DTOR(NewTextureSource);
   }
 
+public:
   /**
    * Should be overridden in order to deallocate the data that is associated
    * with the rendering backend, such as GL textures.
@@ -281,8 +287,10 @@ class TextureHost
 public:
   TextureHost(TextureFlags aFlags);
 
+protected:
   virtual ~TextureHost();
 
+public:
   /**
    * Factory method.
    */
@@ -438,11 +446,11 @@ public:
   // to forget about the shmem _without_ releasing it.
   virtual void OnShutdown() {}
 
-  // Forget buffer actor. Used only for hacky fix for bug 966446. 
+  // Forget buffer actor. Used only for hacky fix for bug 966446.
   virtual void ForgetBufferActor() {}
 
   virtual const char *Name() { return "TextureHost"; }
-  virtual void PrintInfo(nsACString& aTo, const char* aPrefix);
+  virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix);
 
   /**
    * Indicates whether the TextureHost implementation is backed by an
@@ -528,7 +536,7 @@ protected:
   gfx::SurfaceFormat mFormat;
   uint32_t mUpdateSerial;
   bool mLocked;
-  bool mPartialUpdate;
+  bool mNeedsFullUpdate;
 };
 
 /**
@@ -544,8 +552,10 @@ public:
                    ISurfaceAllocator* aDeallocator,
                    TextureFlags aFlags);
 
+protected:
   ~ShmemTextureHost();
 
+public:
   virtual void DeallocateSharedData() MOZ_OVERRIDE;
 
   virtual void ForgetSharedData() MOZ_OVERRIDE;
@@ -576,8 +586,10 @@ public:
                     gfx::SurfaceFormat aFormat,
                     TextureFlags aFlags);
 
+protected:
   ~MemoryTextureHost();
 
+public:
   virtual void DeallocateSharedData() MOZ_OVERRIDE;
 
   virtual void ForgetSharedData() MOZ_OVERRIDE;
@@ -590,6 +602,50 @@ public:
 
 protected:
   uint8_t* mBuffer;
+};
+
+/**
+ * A TextureHost for shared SurfaceStream
+ */
+class StreamTextureHost : public TextureHost
+{
+public:
+  StreamTextureHost(TextureFlags aFlags,
+                    const SurfaceStreamDescriptor& aDesc);
+
+  virtual ~StreamTextureHost();
+
+  virtual void DeallocateDeviceData() MOZ_OVERRIDE {};
+
+  virtual void SetCompositor(Compositor* aCompositor) MOZ_OVERRIDE;
+
+  virtual bool Lock() MOZ_OVERRIDE;
+
+  virtual void Unlock() MOZ_OVERRIDE;
+
+  virtual gfx::SurfaceFormat GetFormat() const MOZ_OVERRIDE;
+
+  virtual NewTextureSource* GetTextureSources() MOZ_OVERRIDE
+  {
+    return mTextureSource;
+  }
+
+  virtual TemporaryRef<gfx::DataSourceSurface> GetAsSurface() MOZ_OVERRIDE
+  {
+    return nullptr; // XXX - implement this (for MOZ_DUMP_PAINTING)
+  }
+
+  virtual gfx::IntSize GetSize() const MOZ_OVERRIDE;
+
+#ifdef MOZ_LAYERS_HAVE_LOG
+  virtual const char* Name() { return "StreamTextureHost"; }
+#endif
+
+protected:
+  Compositor* mCompositor;
+  gl::SurfaceStream* mStream;
+  RefPtr<NewTextureSource> mTextureSource;
+  RefPtr<DataTextureSource> mDataTextureSource;
 };
 
 class MOZ_STACK_CLASS AutoLockTextureHost

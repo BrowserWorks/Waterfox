@@ -76,20 +76,15 @@ js_ReportUncaughtException(JSContext *cx);
 extern JSErrorReport *
 js_ErrorFromException(JSContext *cx, js::HandleObject obj);
 
-extern const JSErrorFormatString *
-js_GetLocalizedErrorMessage(js::ExclusiveContext *cx, void *userRef, const char *locale,
-                            const unsigned errorNumber);
-
 /*
- * Make a copy of errobj parented to scope.
+ * Make a copy of errobj parented to cx's compartment's global.
  *
- * cx must be in the same compartment as scope. errobj may be in a different
- * compartment, but it must be an Error object (not a wrapper of one) and it
- * must not be one of the prototype objects created by js_InitExceptionClasses
- * (errobj->getPrivate() must not be nullptr).
+ * errobj may be in a different compartment than cx, but it must be an Error
+ * object (not a wrapper of one) and it must not be one of the standard error
+ * prototype objects (errobj->getPrivate() must not be nullptr).
  */
 extern JSObject *
-js_CopyErrorObject(JSContext *cx, JS::Handle<js::ErrorObject*> errobj, js::HandleObject scope);
+js_CopyErrorObject(JSContext *cx, JS::Handle<js::ErrorObject*> errobj);
 
 static inline JSProtoKey
 GetExceptionProtoKey(JSExnType exn)
@@ -97,6 +92,15 @@ GetExceptionProtoKey(JSExnType exn)
     JS_ASSERT(JSEXN_ERR <= exn);
     JS_ASSERT(exn < JSEXN_LIMIT);
     return JSProtoKey(JSProto_Error + int(exn));
+}
+
+static inline JSExnType
+ExnTypeFromProtoKey(JSProtoKey key)
+{
+    JSExnType type = static_cast<JSExnType>(key - JSProto_Error);
+    JS_ASSERT(type >= JSEXN_ERR);
+    JS_ASSERT(type < JSEXN_LIMIT);
+    return type;
 }
 
 #endif /* jsexn_h */

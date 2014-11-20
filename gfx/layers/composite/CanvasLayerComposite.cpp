@@ -87,18 +87,6 @@ CanvasLayerComposite::RenderLayer(const nsIntRect& aClipRect)
   }
 #endif
 
-  GraphicsFilter filter = mFilter;
-#ifdef ANDROID
-  // Bug 691354
-  // Using the LINEAR filter we get unexplained artifacts.
-  // Use NEAREST when no scaling is required.
-  Matrix matrix;
-  bool is2D = GetEffectiveTransform().Is2D(&matrix);
-  if (is2D && !ThebesMatrix(matrix).HasNonTranslationOrFlip()) {
-    filter = GraphicsFilter::FILTER_NEAREST;
-  }
-#endif
-
   EffectChain effectChain(this);
   AddBlendModeEffect(effectChain);
 
@@ -108,7 +96,7 @@ CanvasLayerComposite::RenderLayer(const nsIntRect& aClipRect)
   mImageHost->Composite(effectChain,
                         GetEffectiveOpacity(),
                         GetEffectiveTransform(),
-                        gfx::ToFilter(filter),
+                        GetEffectFilter(),
                         clipRect);
   mImageHost->BumpFlashCounter();
 }
@@ -132,17 +120,40 @@ CanvasLayerComposite::CleanupResources()
   mImageHost = nullptr;
 }
 
-nsACString&
-CanvasLayerComposite::PrintInfo(nsACString& aTo, const char* aPrefix)
+gfx::Filter
+CanvasLayerComposite::GetEffectFilter()
 {
-  CanvasLayer::PrintInfo(aTo, aPrefix);
-  aTo += "\n";
+  GraphicsFilter filter = mFilter;
+#ifdef ANDROID
+  // Bug 691354
+  // Using the LINEAR filter we get unexplained artifacts.
+  // Use NEAREST when no scaling is required.
+  Matrix matrix;
+  bool is2D = GetEffectiveTransform().Is2D(&matrix);
+  if (is2D && !ThebesMatrix(matrix).HasNonTranslationOrFlip()) {
+    filter = GraphicsFilter::FILTER_NEAREST;
+  }
+#endif
+  return gfx::ToFilter(filter);
+}
+
+void
+CanvasLayerComposite::GenEffectChain(EffectChain& aEffect)
+{
+  aEffect.mLayerRef = this;
+  aEffect.mPrimaryEffect = mImageHost->GenEffect(GetEffectFilter());
+}
+
+void
+CanvasLayerComposite::PrintInfo(std::stringstream& aStream, const char* aPrefix)
+{
+  CanvasLayer::PrintInfo(aStream, aPrefix);
+  aStream << "\n";
   if (mImageHost && mImageHost->IsAttached()) {
     nsAutoCString pfx(aPrefix);
     pfx += "  ";
-    mImageHost->PrintInfo(aTo, pfx.get());
+    mImageHost->PrintInfo(aStream, pfx.get());
   }
-  return aTo;
 }
 
 }

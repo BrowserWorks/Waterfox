@@ -70,10 +70,12 @@ public:
 
   // WebIDL
   already_AddRefed<Promise>
-  Dial(const nsAString& aNumber, const Optional<uint32_t>& aServiceId);
+  Dial(const nsAString& aNumber, const Optional<uint32_t>& aServiceId,
+       ErrorResult& aRv);
 
   already_AddRefed<Promise>
-  DialEmergency(const nsAString& aNumber, const Optional<uint32_t>& aServiceId);
+  DialEmergency(const nsAString& aNumber, const Optional<uint32_t>& aServiceId,
+                ErrorResult& aRv);
 
   void
   StartTone(const nsAString& aDTMFChar, const Optional<uint32_t>& aServiceId,
@@ -167,11 +169,20 @@ private:
   HasDialingCall();
 
   already_AddRefed<Promise>
-  DialInternal(uint32_t aServiceId, const nsAString& aNumber, bool isEmergency);
+  DialInternal(uint32_t aServiceId, const nsAString& aNumber, bool aEmergency,
+               ErrorResult& aRv);
+
+  already_AddRefed<TelephonyCallId>
+  CreateCallId(const nsAString& aNumber,
+               uint16_t aNumberPresentation = nsITelephonyService::CALL_PRESENTATION_ALLOWED,
+               const nsAString& aName = EmptyString(),
+               uint16_t aNamePresentation = nsITelephonyService::CALL_PRESENTATION_ALLOWED);
 
   already_AddRefed<TelephonyCall>
-  CreateNewDialingCall(uint32_t aServiceId, const nsAString& aNumber,
-                       uint32_t aCallIndex);
+  CreateCall(TelephonyCallId* aId,
+             uint32_t aServiceId, uint32_t aCallIndex, uint16_t aCallState,
+             bool aEmergency = false, bool aConference = false,
+             bool aSwitchable = true, bool aMergeable = true);
 
   nsresult
   NotifyCallsChanged(TelephonyCall* aCall);
@@ -184,9 +195,6 @@ private:
 
   already_AddRefed<TelephonyCall>
   GetCall(uint32_t aServiceId, uint32_t aCallIndex);
-
-  already_AddRefed<TelephonyCall>
-  GetOutgoingCall();
 
   already_AddRefed<TelephonyCall>
   GetCallFromEverywhere(uint32_t aServiceId, uint32_t aCallIndex);

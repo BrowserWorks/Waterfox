@@ -22,8 +22,7 @@ class HTMLOptionElement MOZ_FINAL : public nsGenericHTMLElement,
                                     public nsIDOMHTMLOptionElement
 {
 public:
-  HTMLOptionElement(already_AddRefed<nsINodeInfo>& aNodeInfo);
-  virtual ~HTMLOptionElement();
+  HTMLOptionElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
 
   static already_AddRefed<HTMLOptionElement>
     Option(const GlobalObject& aGlobal,
@@ -65,7 +64,7 @@ public:
   // nsIContent
   virtual EventStates IntrinsicState() const MOZ_OVERRIDE;
 
-  virtual nsresult Clone(nsINodeInfo* aNodeInfo, nsINode** aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult) const MOZ_OVERRIDE;
 
   nsresult CopyInnerTo(mozilla::dom::Element* aDest);
 
@@ -118,6 +117,8 @@ public:
   int32_t Index();
 
 protected:
+  virtual ~HTMLOptionElement();
+
   virtual JSObject* WrapNode(JSContext* aCx) MOZ_OVERRIDE;
 
   /**

@@ -21,6 +21,7 @@
 #include "mozilla/Likely.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Telemetry.h"
+#include "mozilla/TimeStamp.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/Event.h"
 #include "mozilla/dom/ShadowRoot.h"
@@ -41,7 +42,6 @@
 #include "nsDOMString.h"
 #include "nsDOMTokenList.h"
 #include "nsFocusManager.h"
-#include "nsFrameManager.h"
 #include "nsFrameSelection.h"
 #include "nsGenericHTMLElement.h"
 #include "nsGkAtoms.h"
@@ -62,7 +62,8 @@
 #include "nsIEditor.h"
 #include "nsIEditorIMESupport.h"
 #include "nsILinkHandler.h"
-#include "nsINodeInfo.h"
+#include "mozilla/dom/NodeInfo.h"
+#include "mozilla/dom/NodeInfoInlines.h"
 #include "nsIPresShell.h"
 #include "nsIScriptError.h"
 #include "nsIScriptGlobalObject.h"
@@ -385,7 +386,7 @@ nsINode::GetTextContentInternal(nsAString& aTextContent, ErrorResult& aError)
 }
 
 nsIDocument*
-nsINode::GetCrossShadowCurrentDocInternal() const
+nsINode::GetComposedDocInternal() const
 {
   MOZ_ASSERT(HasFlag(NODE_IS_IN_SHADOW_TREE) && IsContent(),
              "Should only be caled on nodes in the shadow tree.");
@@ -972,8 +973,8 @@ nsINode::IsEqualNode(nsINode* aOther)
       return false;
     }
 
-    nsINodeInfo* nodeInfo1 = node1->mNodeInfo;
-    nsINodeInfo* nodeInfo2 = node2->mNodeInfo;
+    mozilla::dom::NodeInfo* nodeInfo1 = node1->mNodeInfo;
+    mozilla::dom::NodeInfo* nodeInfo2 = node2->mNodeInfo;
     if (!nodeInfo1->Equals(nodeInfo2) ||
         nodeInfo1->GetExtraName() != nodeInfo2->GetExtraName()) {
       return false;
@@ -2740,9 +2741,32 @@ EventTarget::DispatchEvent(Event& aEvent,
   return result;
 }
 
+Element*
+nsINode::GetParentElementCrossingShadowRoot() const
+{
+  if (!mParent) {
+    return nullptr;
+  }
+
+  if (mParent->IsElement()) {
+    return mParent->AsElement();
+  }
+
+  ShadowRoot* shadowRoot = ShadowRoot::FromNode(mParent);
+  if (shadowRoot) {
+    nsIContent* host = shadowRoot->GetHost();
+    MOZ_ASSERT(host, "ShowRoots should always have a host");
+    MOZ_ASSERT(host->IsElement(), "ShadowRoot hosts should always be Elements");
+    return host->AsElement();
+  }
+
+  return nullptr;
+}
+
 bool
 nsINode::HasBoxQuadsSupport(JSContext* aCx, JSObject* /* unused */)
 {
   return xpc::AccessCheck::isChrome(js::GetContextCompartment(aCx)) ||
          Preferences::GetBool("layout.css.getBoxQuads.enabled");
 }
+

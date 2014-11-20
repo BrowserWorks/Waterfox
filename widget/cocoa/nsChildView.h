@@ -404,9 +404,8 @@ private:
   typedef mozilla::layers::APZCTreeManager APZCTreeManager;
 
 public:
-                          nsChildView();
-  virtual                 ~nsChildView();
-  
+  nsChildView();
+
   NS_DECL_ISUPPORTS_INHERITED
 
   // nsIWidget interface
@@ -539,7 +538,6 @@ public:
 
   virtual CompositorParent* NewCompositorParent(int aSurfaceWidth, int aSurfaceHeight);
   virtual void CreateCompositor();
-  virtual gfxASurface* GetThebesSurface();
   virtual void PrepareWindowEffects() MOZ_OVERRIDE;
   virtual void CleanupWindowEffects() MOZ_OVERRIDE;
   virtual bool PreRender(LayerManagerComposite* aManager) MOZ_OVERRIDE;
@@ -596,6 +594,7 @@ public:
   APZCTreeManager* APZCTM() { return mAPZCTreeManager; }
 
 protected:
+  virtual ~nsChildView();
 
   void              ReportMoveEvent();
   void              ReportSizeEvent();
@@ -643,8 +642,6 @@ protected:
   // (we get queried for it *a lot* but don't want to own it)
   nsWeakPtr             mAccessible;
 #endif
-
-  nsRefPtr<gfxASurface> mTempThebesSurface;
 
   // Protects the view from being teared down while a composition is in
   // progress on the compositor thread.

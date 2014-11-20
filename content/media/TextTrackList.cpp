@@ -35,6 +35,10 @@ TextTrackList::TextTrackList(nsPIDOMWindow* aOwnerWindow,
 {
 }
 
+TextTrackList::~TextTrackList()
+{
+}
+
 void
 TextTrackList::UpdateAndGetShowingCues(nsTArray<nsRefPtr<TextTrackCue> >& aCues)
 {
@@ -180,9 +184,7 @@ TextTrackList::CreateAndDispatchTrackEventRunner(TextTrack* aTrack,
                                                  const nsAString& aEventName)
 {
   TrackEventInit eventInit;
-  eventInit.mBubbles = false;
-  eventInit.mCancelable = false;
-  eventInit.mTrack = aTrack;
+  eventInit.mTrack.SetValue().SetAsTextTrack() = aTrack;
   nsRefPtr<TrackEvent> event =
     TrackEvent::Constructor(this, aEventName, eventInit);
 

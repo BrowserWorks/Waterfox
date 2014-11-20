@@ -9,7 +9,6 @@
 #include <stdint.h>                     // for INT32_MAX, int32_t
 #include "Layers.h"                     // for Layer (ptr only), etc
 #include "gfxTypes.h"
-#include "gfxCachedTempSurface.h"       // for gfxCachedTempSurface
 #include "gfxContext.h"                 // for gfxContext
 #include "mozilla/Attributes.h"         // for MOZ_OVERRIDE
 #include "mozilla/WidgetUtils.h"        // for ScreenRotation
@@ -46,13 +45,18 @@ class BasicLayerManager :
     public LayerManager
 {
 public:
+  enum BasicLayerManagerType {
+    BLM_WIDGET,
+    BLM_OFFSCREEN,
+    BLM_INACTIVE
+  };
   /**
    * Construct a BasicLayerManager which will have no default
    * target context. SetDefaultTarget or BeginTransactionWithTarget
    * must be called for any rendering to happen. ThebesLayers will not
    * be retained.
    */
-  BasicLayerManager();
+  BasicLayerManager(BasicLayerManagerType aType);
   /**
    * Construct a BasicLayerManager which will have no default
    * target context. SetDefaultTarget or BeginTransactionWithTarget
@@ -69,8 +73,11 @@ public:
    * ClearWidget before the widget dies.
    */
   BasicLayerManager(nsIWidget* aWidget);
+
+protected:
   virtual ~BasicLayerManager();
 
+public:
   /**
    * Set the default target context that will be used when BeginTransaction
    * is called. This can only be called outside a transaction.
@@ -90,6 +97,7 @@ public:
   void ClearRetainerWidget() { mWidget = nullptr; }
 
   virtual bool IsWidgetLayerManager() { return mWidget != nullptr; }
+  virtual bool IsInactiveLayerManager() { return mType == BLM_INACTIVE; }
 
   virtual void BeginTransaction();
   virtual void BeginTransactionWithTarget(gfxContext* aTarget);
@@ -97,7 +105,7 @@ public:
   virtual void EndTransaction(DrawThebesLayerCallback aCallback,
                               void* aCallbackData,
                               EndTransactionFlags aFlags = END_DEFAULT);
-  virtual bool AreComponentAlphaLayersEnabled() { return !IsWidgetLayerManager(); }
+  virtual bool ShouldAvoidComponentAlphaLayers() { return IsWidgetLayerManager(); }
 
   void AbortTransaction();
 
@@ -136,9 +144,6 @@ public:
   already_AddRefed<gfxContext> PushGroupForLayer(gfxContext* aContext, Layer* aLayer,
                                                  const nsIntRegion& aRegion,
                                                  bool* aNeedsClipToVisibleRegion);
-  already_AddRefed<gfxContext> PushGroupWithCachedSurface(gfxContext *aTarget,
-                                                          gfxContentType aContent);
-  void PopGroupToSourceWithCachedSurface(gfxContext *aTarget, gfxContext *aPushed);
 
   virtual bool IsCompositingCheap() { return false; }
   virtual int32_t GetMaxTextureSize() const { return INT32_MAX; }
@@ -176,8 +181,6 @@ protected:
 
   void FlashWidgetUpdateArea(gfxContext* aContext);
 
-  void RenderDebugOverlay();
-
   // Widget whose surface should be used as the basis for ThebesLayer
   // buffers.
   nsIWidget* mWidget;
@@ -188,12 +191,9 @@ protected:
   // Image factory we use.
   nsRefPtr<ImageFactory> mFactory;
 
-  // Cached surface for double buffering
-  gfxCachedTempSurface mCachedSurface;
-
   BufferMode mDoubleBuffering;
+  BasicLayerManagerType mType;
   bool mUsingDefaultTarget;
-  bool mCachedSurfaceInUse;
   bool mTransactionIncomplete;
   bool mCompositorMightResample;
 };

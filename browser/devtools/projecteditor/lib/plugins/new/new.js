@@ -1,4 +1,4 @@
-/* -*- Mode: Javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,23 +12,22 @@ const { getLocalizedString } = require("projecteditor/helpers/l10n");
 var NewFile = Class({
   extends: Plugin,
 
-  init: function(host) {
-    this.host.createMenuItem({
-      parent: "#file-menu-popup",
-      label: getLocalizedString("projecteditor.newLabel"),
-      command: "cmd-new",
-      key: "key-new"
-    });
-    this.host.createMenuItem({
-      parent: "#directory-menu-popup",
-      label: getLocalizedString("projecteditor.newLabel"),
-      command: "cmd-new"
-    });
-
-    this.command = this.host.addCommand({
+  init: function() {
+    this.command = this.host.addCommand(this, {
       id: "cmd-new",
       key: getLocalizedString("projecteditor.new.commandkey"),
       modifiers: "accel"
+    });
+    this.host.createMenuItem({
+      parent: this.host.fileMenuPopup,
+      label: getLocalizedString("projecteditor.newLabel"),
+      command: "cmd-new",
+      key: "key_cmd-new"
+    });
+    this.host.createMenuItem({
+      parent: this.host.contextMenuPopup,
+      label: getLocalizedString("projecteditor.newLabel"),
+      command: "cmd-new"
     });
   },
 

@@ -12,7 +12,7 @@
 #include "nsPresContext.h"
 #include "nsRuleNode.h"
 #include "nsCSSKeywords.h"
-#include "nsStyleAnimation.h"
+#include "mozilla/StyleAnimationValue.h"
 #include "gfxMatrix.h"
 
 using namespace mozilla;
@@ -53,7 +53,7 @@ ProcessTranslatePart(const nsCSSValue& aValue,
     // Handle this here (even though nsRuleNode::CalcLength handles it
     // fine) so that callers are allowed to pass a null style context
     // and pres context to SetToTransformFunction if they know (as
-    // nsStyleAnimation does) that all lengths within the transform
+    // StyleAnimationValue does) that all lengths within the transform
     // function have already been computed to pixels and percents.
     //
     // Raw numbers are treated as being pixels.
@@ -97,18 +97,18 @@ ProcessMatrix(gfx3DMatrix& aMatrix,
   /* Take the first four elements out of the array as floats and store
    * them.
    */
-  result.xx = aData->Item(1).GetFloatValue();
-  result.yx = aData->Item(2).GetFloatValue();
-  result.xy = aData->Item(3).GetFloatValue();
-  result.yy = aData->Item(4).GetFloatValue();
+  result._11 = aData->Item(1).GetFloatValue();
+  result._12 = aData->Item(2).GetFloatValue();
+  result._21 = aData->Item(3).GetFloatValue();
+  result._22 = aData->Item(4).GetFloatValue();
 
   /* The last two elements have their length parts stored in aDelta
    * and their percent parts stored in aX[0] and aY[1].
    */
-  result.x0 = ProcessTranslatePart(aData->Item(5),
+  result._31 = ProcessTranslatePart(aData->Item(5),
                                    aContext, aPresContext, aCanStoreInRuleTree,
                                    aBounds.Width());
-  result.y0 = ProcessTranslatePart(aData->Item(6),
+  result._32 = ProcessTranslatePart(aData->Item(6),
                                    aContext, aPresContext, aCanStoreInRuleTree,
                                    aBounds.Height());
 
@@ -180,12 +180,14 @@ ProcessInterpolateMatrix(gfx3DMatrix& aMatrix,
   }
   double progress = aData->Item(3).GetPercentValue();
 
-  aMatrix = nsStyleAnimation::InterpolateTransformMatrix(matrix1, matrix2, progress) * aMatrix;
+  aMatrix =
+    StyleAnimationValue::InterpolateTransformMatrix(matrix1, matrix2, progress)
+    * aMatrix;
 }
 
 /* Helper function to process a translatex function. */
 static void
-ProcessTranslateX(gfx3DMatrix& aMatrix, 
+ProcessTranslateX(gfx3DMatrix& aMatrix,
                   const nsCSSValue::Array* aData,
                   nsStyleContext* aContext,
                   nsPresContext* aPresContext,
@@ -435,33 +437,29 @@ ProcessRotate3D(gfx3DMatrix& aMatrix, const nsCSSValue::Array* aData)
   float cosTheta = FlushToZero(cos(theta));
   float sinTheta = FlushToZero(sin(theta));
 
-  float x = aData->Item(1).GetFloatValue();
-  float y = aData->Item(2).GetFloatValue();
-  float z = aData->Item(3).GetFloatValue();
+  gfxPoint3D vector(aData->Item(1).GetFloatValue(),
+                    aData->Item(2).GetFloatValue(),
+                    aData->Item(3).GetFloatValue());
 
-  /* Normalize [x,y,z] */
-  float length = sqrt(x*x + y*y + z*z);
-  if (length == 0.0) {
+  if (!vector.Length()) {
     return;
   }
-  x /= length;
-  y /= length;
-  z /= length;
+  vector.Normalize();
 
   gfx3DMatrix temp;
 
   /* Create our matrix */
-  temp._11 = 1 + (1 - cosTheta) * (x * x - 1);
-  temp._12 = -z * sinTheta + (1 - cosTheta) * x * y;
-  temp._13 = y * sinTheta + (1 - cosTheta) * x * z;
+  temp._11 = 1 + (1 - cosTheta) * (vector.x * vector.x - 1);
+  temp._12 = -vector.z * sinTheta + (1 - cosTheta) * vector.x * vector.y;
+  temp._13 = vector.y * sinTheta + (1 - cosTheta) * vector.x * vector.z;
   temp._14 = 0.0f;
-  temp._21 = z * sinTheta + (1 - cosTheta) * x * y;
-  temp._22 = 1 + (1 - cosTheta) * (y * y - 1);
-  temp._23 = -x * sinTheta + (1 - cosTheta) * y * z;
+  temp._21 = vector.z * sinTheta + (1 - cosTheta) * vector.x * vector.y;
+  temp._22 = 1 + (1 - cosTheta) * (vector.y * vector.y - 1);
+  temp._23 = -vector.x * sinTheta + (1 - cosTheta) * vector.y * vector.z;
   temp._24 = 0.0f;
-  temp._31 = -y * sinTheta + (1 - cosTheta) * x * z;
-  temp._32 = x * sinTheta + (1 - cosTheta) * y * z;
-  temp._33 = 1 + (1 - cosTheta) * (z * z - 1);
+  temp._31 = -vector.y * sinTheta + (1 - cosTheta) * vector.x * vector.z;
+  temp._32 = vector.x * sinTheta + (1 - cosTheta) * vector.y * vector.z;
+  temp._33 = 1 + (1 - cosTheta) * (vector.z * vector.z - 1);
   temp._34 = 0.0f;
   temp._41 = 0.0f;
   temp._42 = 0.0f;
@@ -502,7 +500,7 @@ MatrixForTransformFunction(gfx3DMatrix& aMatrix,
   NS_PRECONDITION(aData, "Why did you want to get data from a null array?");
   // It's OK if aContext and aPresContext are null if the caller already
   // knows that all length units have been converted to pixels (as
-  // nsStyleAnimation does).
+  // StyleAnimationValue does).
 
 
   /* Get the keyword for the transform. */

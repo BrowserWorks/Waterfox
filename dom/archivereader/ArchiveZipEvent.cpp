@@ -84,11 +84,11 @@ ArchiveZipItem::File(ArchiveReader* aArchiveReader)
     return nullptr;
   }
 
-  return new ArchiveZipFile(filename,
-                            NS_ConvertUTF8toUTF16(GetType()),
-                            StrToInt32(mCentralStruct.orglen),
-                            mCentralStruct,
-                            aArchiveReader);
+  return new DOMFile(
+    new ArchiveZipFileImpl(filename,
+                           NS_ConvertUTF8toUTF16(GetType()),
+                           StrToInt32(mCentralStruct.orglen),
+                           mCentralStruct, aArchiveReader));
 }
 
 uint32_t

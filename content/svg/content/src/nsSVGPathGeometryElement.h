@@ -9,7 +9,7 @@
 #include "mozilla/gfx/2D.h"
 #include "SVGGraphicsElement.h"
 
-struct gfxMatrix;
+class gfxMatrix;
 
 struct nsSVGMark {
   enum Type {
@@ -39,7 +39,7 @@ protected:
   typedef mozilla::gfx::PathBuilder PathBuilder;
 
 public:
-  nsSVGPathGeometryElement(already_AddRefed<nsINodeInfo>& aNodeInfo);
+  nsSVGPathGeometryElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
 
   virtual bool AttributeDefinesGeometry(const nsIAtom *aName);
 
@@ -62,7 +62,7 @@ public:
    * Returns a Path that can be used to paint, hit-test or calculate bounds for
    * this element. May return nullptr if there is no [valid] path.
    */
-  virtual mozilla::TemporaryRef<Path> BuildPath() = 0;
+  virtual mozilla::TemporaryRef<Path> BuildPath(PathBuilder* aBuilder = nullptr) = 0;
 
   virtual mozilla::TemporaryRef<Path> GetPathForLengthOrPositionMeasuring();
 
@@ -77,14 +77,6 @@ public:
    * this element.
    */
   FillRule GetFillRule();
-
-  /**
-   * Returns the current computed value of the CSS property 'stroke-width' for
-   * this element. (I.e. this does NOT take account of the value of the
-   * 'stroke' and 'stroke-opacity' properties to, say, return zero if they are
-   * "none" or "0", respectively.)
-   */
-  Float GetStrokeWidth();
 };
 
 #endif

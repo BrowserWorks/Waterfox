@@ -1,4 +1,5 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -204,7 +205,7 @@ endif
 ifeq ($(TARGET),WIN32)
 ifeq ($(CPU_ARCH),x86_64)
 AS_OBJS = mpi_amd64.obj mpi_amd64_masm.obj mp_comba_amd64_masm.asm
-CFLAGS  = -Od -Z7 -MDd -W3 -nologo -DDEBUG -D_DEBUG -UNDEBUG -DDEBUG_$(USER)
+CFLAGS  = -Od -Z7 -MDd -W3 -nologo -DDEBUG -D_DEBUG -UNDEBUG
 CFLAGS += -DWIN32 -DWIN64 -D_WINDOWS -D_AMD_64_ -D_M_AMD64 -DWIN95 -DXP_PC
 CFLAGS += $(MPICMN)
 
@@ -219,7 +220,7 @@ MPICMN += -DMP_ASSEMBLY_MULTIPLY -DMP_ASSEMBLY_SQUARE -DMP_ASSEMBLY_DIV_2DX1D
 MPICMN += -DMP_USE_UINT_DIGIT -DMP_NO_MP_WORD -DMP_API_COMPATIBLE 
 MPICMN += -DMP_MONT_USE_MP_MUL 
 MPICMN += -DMP_CHAR_STORE_SLOW -DMP_IS_LITTLE_ENDIAN
-CFLAGS  = -Od -Z7 -MDd -W3 -nologo -DDEBUG -D_DEBUG -UNDEBUG -DDEBUG_$(USER)
+CFLAGS  = -Od -Z7 -MDd -W3 -nologo -DDEBUG -D_DEBUG -UNDEBUG
 CFLAGS += -DWIN32 -D_WINDOWS -D_X86_ -DWIN95 -DXP_PC
 CFLAGS += $(MPICMN)
 

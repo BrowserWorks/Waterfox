@@ -14,6 +14,7 @@
 #include <errno.h>
 #include "mozilla/Assertions.h"
 #include "mozilla/Scoped.h"
+#include "mozilla/UniquePtr.h"
 #include "SeekableZStream.h"
 #include "Utils.h"
 #include "Logging.h"
@@ -213,7 +214,7 @@ int SzipDecompress::run(const char *name, Buffer &origBuf,
 {
   size_t origSize = origBuf.GetLength();
   if (origSize < sizeof(SeekableZStreamHeader)) {
-    LOG("%s is not compressed", name);
+    ERROR("%s is not compressed", name);
     return 0;
   }
 
@@ -225,7 +226,7 @@ int SzipDecompress::run(const char *name, Buffer &origBuf,
 
   /* Give enough room for the uncompressed data */
   if (!outBuf.Resize(size)) {
-    LOG("Error resizing %s: %s", outName, strerror(errno));
+    ERROR("Error resizing %s: %s", outName, strerror(errno));
     return 1;
   }
 
@@ -241,11 +242,11 @@ int SzipCompress::run(const char *name, Buffer &origBuf,
 {
   size_t origSize = origBuf.GetLength();
   if (origSize == 0) {
-    LOG("Won't compress %s: it's empty", name);
+    ERROR("Won't compress %s: it's empty", name);
     return 1;
   }
   if (SeekableZStreamHeader::validate(origBuf)) {
-    LOG("Skipping %s: it's already a szip", name);
+    WARN("Skipping %s: it's already a szip", name);
     return 0;
   }
   bool compressed = false;
@@ -254,7 +255,7 @@ int SzipCompress::run(const char *name, Buffer &origBuf,
   /* Allocate a buffer the size of the uncompressed data: we don't want
    * a compressed file larger than that anyways. */
   if (!outBuf.Resize(origSize)) {
-    LOG("Couldn't allocate output buffer: %s", strerror(errno));
+    ERROR("Couldn't allocate output buffer: %s", strerror(errno));
     return 1;
   }
 
@@ -351,11 +352,11 @@ int SzipCompress::run(const char *name, Buffer &origBuf,
 
   size_t size = tmpBuf.GetLength();
   if (size != origSize) {
-    LOG("Compression error: %" PRIuSize " != %" PRIuSize, size, origSize);
+    ERROR("Compression error: %" PRIuSize " != %" PRIuSize, size, origSize);
     return 1;
   }
   if (memcmp(static_cast<void *>(origBuf), static_cast<void *>(tmpBuf), size)) {
-    LOG("Compression error: content mismatch");
+    ERROR("Compression error: content mismatch");
     return 1;
   }
   return 0;
@@ -382,7 +383,7 @@ int SzipCompress::do_compress(Buffer &origBuf, Buffer &outBuf,
     /* Allocate a buffer the size of the uncompressed data: we don't want
    * a compressed file larger than that anyways. */
   if (!outBuf.Resize(origSize)) {
-    LOG("Couldn't allocate output buffer: %s", strerror(errno));
+    ERROR("Couldn't allocate output buffer: %s", strerror(errno));
     return 1;
   }
 
@@ -447,7 +448,7 @@ int SzipCompress::do_compress(Buffer &origBuf, Buffer &outBuf,
   MOZ_ASSERT(header->nChunks == nChunks);
 
   if (!outBuf.Resize(offset)) {
-    LOG("Error truncating output: %s", strerror(errno));
+    ERROR("Error truncating output: %s", strerror(errno));
     return 1;
   }
 
@@ -466,7 +467,7 @@ bool GetSize(const char *str, size_t *out)
 
 int main(int argc, char* argv[])
 {
-  mozilla::ScopedDeletePtr<SzipAction> action;
+  mozilla::UniquePtr<SzipAction> action;
   char **firstArg;
   bool compress = true;
   size_t chunkSize = 0;
@@ -487,7 +488,7 @@ int main(int argc, char* argv[])
         break;
       if (!GetSize(firstArg[0], &chunkSize) || !chunkSize ||
           (chunkSize % 4096) || (chunkSize > maxChunkSize)) {
-        LOG("Invalid chunk size");
+        ERROR("Invalid chunk size");
         return 1;
       }
     } else if (strcmp(firstArg[0], "-f") == 0) {
@@ -504,7 +505,7 @@ int main(int argc, char* argv[])
         }
       }
       if (!matched) {
-        LOG("Invalid filter");
+        ERROR("Invalid filter");
         return 1;
       }
     } else if (strcmp(firstArg[0], "-D") == 0) {
@@ -515,7 +516,7 @@ int main(int argc, char* argv[])
       if (strcmp(firstArg[0], "auto") == 0) {
         dictSize = -1;
       } else if (!GetSize(firstArg[0], &dictSize) || (dictSize >= 1 << 16)) {
-        LOG("Invalid dictionary size");
+        ERROR("Invalid dictionary size");
         return 1;
       }
     }
@@ -528,17 +529,17 @@ int main(int argc, char* argv[])
   }
 
   if (compress) {
-    action = new SzipCompress(chunkSize, filter, dictSize);
+    action.reset(new SzipCompress(chunkSize, filter, dictSize));
   } else {
     if (chunkSize) {
-      LOG("-c is incompatible with -d");
+      ERROR("-c is incompatible with -d");
       return 1;
     }
     if (dictSize) {
-      LOG("-D is incompatible with -d");
+      ERROR("-D is incompatible with -d");
       return 1;
     }
-    action = new SzipDecompress();
+    action.reset(new SzipDecompress());
   }
 
   std::stringstream tmpOutStream;
@@ -549,13 +550,13 @@ int main(int argc, char* argv[])
   {
     FileBuffer origBuf;
     if (!origBuf.Init(firstArg[0])) {
-      LOG("Couldn't open %s: %s", firstArg[0], strerror(errno));
+      ERROR("Couldn't open %s: %s", firstArg[0], strerror(errno));
       return 1;
     }
 
     ret = fstat(origBuf.getFd(), &st);
     if (ret == -1) {
-      LOG("Couldn't stat %s: %s", firstArg[0], strerror(errno));
+      ERROR("Couldn't stat %s: %s", firstArg[0], strerror(errno));
       return 1;
     }
 
@@ -563,14 +564,14 @@ int main(int argc, char* argv[])
 
     /* Mmap the original file */
     if (!origBuf.Resize(origSize)) {
-      LOG("Couldn't mmap %s: %s", firstArg[0], strerror(errno));
+      ERROR("Couldn't mmap %s: %s", firstArg[0], strerror(errno));
       return 1;
     }
 
     /* Create the compressed file */
     FileBuffer outBuf;
     if (!outBuf.Init(tmpOut.c_str(), true)) {
-      LOG("Couldn't open %s: %s", tmpOut.c_str(), strerror(errno));
+      ERROR("Couldn't open %s: %s", tmpOut.c_str(), strerror(errno));
       return 1;
     }
 

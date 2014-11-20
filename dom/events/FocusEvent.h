@@ -17,7 +17,7 @@ class FocusEvent : public UIEvent,
                    public nsIDOMFocusEvent
 {
 public:
-  NS_DECL_ISUPPORTS
+  NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSIDOMFOCUSEVENT
 
   // Forward to base class
@@ -39,6 +39,8 @@ public:
                                                   const FocusEventInit& aParam,
                                                   ErrorResult& aRv);
 protected:
+  ~FocusEvent() {}
+
   nsresult InitFocusEvent(const nsAString& aType,
                           bool aCanBubble,
                           bool aCancelable,

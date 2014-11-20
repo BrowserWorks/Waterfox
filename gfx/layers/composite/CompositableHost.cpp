@@ -8,6 +8,7 @@
 #include <utility>                      // for pair
 #include "ContentHost.h"                // for ContentHostDoubleBuffered, etc
 #include "Effects.h"                    // for EffectMask, Effect, etc
+#include "gfxUtils.h"
 #include "ImageHost.h"                  // for ImageHostBuffered, etc
 #include "TiledContentHost.h"           // for TiledContentHost
 #include "mozilla/layers/LayersSurfaces.h"  // for SurfaceDescriptor
@@ -213,7 +214,7 @@ CompositableHost::Create(const TextureInfo& aTextureInfo)
 
 #ifdef MOZ_DUMP_PAINTING
 void
-CompositableHost::DumpTextureHost(FILE* aFile, TextureHost* aTexture)
+CompositableHost::DumpTextureHost(std::stringstream& aStream, TextureHost* aTexture)
 {
   if (!aTexture) {
     return;
@@ -227,11 +228,8 @@ CompositableHost::DumpTextureHost(FILE* aFile, TextureHost* aTexture)
                                                                  dSurf->GetSize(),
                                                                  dSurf->Stride(),
                                                                  dSurf->GetFormat());
-  nsRefPtr<gfxASurface> surf = platform->GetThebesSurfaceForDrawTarget(dt);
-  if (!surf) {
-    return;
-  }
-  surf->DumpAsDataURL(aFile ? aFile : stderr);
+  // TODO stream surface
+  gfxUtils::DumpAsDataURI(dt, stderr);
 }
 #endif
 

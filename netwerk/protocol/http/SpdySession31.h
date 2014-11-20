@@ -30,15 +30,16 @@ class SpdySession31 MOZ_FINAL : public ASpdySession
                               , public nsAHttpSegmentReader
                               , public nsAHttpSegmentWriter
 {
+  ~SpdySession31();
+
 public:
-  NS_DECL_ISUPPORTS
+  NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSAHTTPTRANSACTION
   NS_DECL_NSAHTTPCONNECTION(mConnection)
   NS_DECL_NSAHTTPSEGMENTREADER
   NS_DECL_NSAHTTPSEGMENTWRITER
 
   SpdySession31(nsISocketTransport *);
-  ~SpdySession31();
 
   bool AddStream(nsAHttpTransaction *, int32_t,
                  bool, nsIInterfaceRequestor *);

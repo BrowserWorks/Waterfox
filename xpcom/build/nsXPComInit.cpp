@@ -149,6 +149,8 @@ extern nsresult nsStringInputStreamConstructor(nsISupports *, REFNSIID, void **)
 
 #include "jsapi.h"
 
+#include "gfxPlatform.h"
+
 using namespace mozilla;
 using base::AtExitManager;
 using mozilla::ipc::BrowserProcessSubThread;
@@ -268,6 +270,7 @@ nsXPTIInterfaceInfoManagerGetSingleton(nsISupports* outer,
 nsComponentManagerImpl* nsComponentManagerImpl::gComponentManager = nullptr;
 bool gXPCOMShuttingDown = false;
 bool gXPCOMThreadsShutDown = false;
+char16_t* gGREPath = nullptr;
 
 static NS_DEFINE_CID(kComponentManagerCID, NS_COMPONENTMANAGER_CID);
 static NS_DEFINE_CID(kINIParserFactoryCID, NS_INIPARSERFACTORY_CID);
@@ -371,12 +374,15 @@ public:
 
 private:
     NS_IMETHODIMP
-    CollectReports(nsIHandleReportCallback* aHandleReport, nsISupports* aData)
+    CollectReports(nsIHandleReportCallback* aHandleReport, nsISupports* aData,
+                   bool aAnonymize)
     {
         return MOZ_COLLECT_REPORT(
             "explicit/icu", KIND_HEAP, UNITS_BYTES, MemoryAllocated(),
             "Memory used by ICU, a Unicode and globalization support library.");
     }
+
+    ~ICUReporter() {}
 };
 
 NS_IMPL_ISUPPORTS(ICUReporter, nsIMemoryReporter)
@@ -391,12 +397,15 @@ public:
 
 private:
     NS_IMETHODIMP
-    CollectReports(nsIHandleReportCallback* aHandleReport, nsISupports* aData)
+    CollectReports(nsIHandleReportCallback* aHandleReport, nsISupports* aData,
+                   bool aAnonymize)
     {
         return MOZ_COLLECT_REPORT(
             "explicit/media/libogg", KIND_HEAP, UNITS_BYTES, MemoryAllocated(),
             "Memory allocated through libogg for Ogg, Theora, and related media files.");
     }
+
+    ~OggReporter() {}
 };
 
 NS_IMPL_ISUPPORTS(OggReporter, nsIMemoryReporter)
@@ -412,12 +421,15 @@ public:
 
 private:
     NS_IMETHODIMP
-    CollectReports(nsIHandleReportCallback* aHandleReport, nsISupports* aData)
+    CollectReports(nsIHandleReportCallback* aHandleReport, nsISupports* aData,
+                   bool aAnonymize)
     {
         return MOZ_COLLECT_REPORT(
             "explicit/media/libvpx", KIND_HEAP, UNITS_BYTES, MemoryAllocated(),
             "Memory allocated through libvpx for WebM media files.");
     }
+
+    ~VPXReporter() {}
 };
 
 NS_IMPL_ISUPPORTS(VPXReporter, nsIMemoryReporter)
@@ -434,12 +446,15 @@ public:
 
 private:
     NS_IMETHODIMP
-    CollectReports(nsIHandleReportCallback* aHandleReport, nsISupports* aData)
+    CollectReports(nsIHandleReportCallback* aHandleReport, nsISupports* aData,
+                   bool aAnonymize)
     {
         return MOZ_COLLECT_REPORT(
             "explicit/media/libnestegg", KIND_HEAP, UNITS_BYTES, MemoryAllocated(),
             "Memory allocated through libnestegg for WebM media files.");
     }
+
+    ~NesteggReporter() {}
 };
 
 NS_IMPL_ISUPPORTS(NesteggReporter, nsIMemoryReporter)
@@ -550,15 +565,18 @@ NS_InitXPCOM2(nsIServiceManager* *result,
     }
 
     nsCOMPtr<nsIFile> xpcomLib;
-
     nsDirectoryService::gService->Get(NS_GRE_DIR,
                                       NS_GET_IID(nsIFile),
                                       getter_AddRefs(xpcomLib));
+    MOZ_ASSERT(xpcomLib);
 
-    if (xpcomLib) {
-        xpcomLib->AppendNative(nsDependentCString(XPCOM_DLL));
-        nsDirectoryService::gService->Set(NS_XPCOM_LIBRARY_FILE, xpcomLib);
-    }
+    // set gGREPath
+    nsAutoString path;
+    xpcomLib->GetPath(path);
+    gGREPath = ToNewUnicode(path);
+
+    xpcomLib->AppendNative(nsDependentCString(XPCOM_DLL));
+    nsDirectoryService::gService->Set(NS_XPCOM_LIBRARY_FILE, xpcomLib);
 
     if (!mozilla::Omnijar::IsInitialized()) {
         mozilla::Omnijar::Init();
@@ -705,10 +723,6 @@ NS_InitXPCOM2(nsIServiceManager* *result,
     mozilla::eventtracer::Init();
 #endif
 
-    // TODO: Cache the GRE dir here instead of telling GeckoChildProcessHost to do it.
-    //       Then have GeckoChildProcessHost get the dir from XPCOM::GetGREPath().
-    mozilla::ipc::GeckoChildProcessHost::CacheGreDir();
-
     return NS_OK;
 }
 
@@ -799,19 +813,14 @@ ShutdownXPCOM(nsIServiceManager* servMgr)
 
         // This must happen after the shutdown of media and widgets, which
         // are triggered by the NS_XPCOM_SHUTDOWN_OBSERVER_ID notification.
-        layers::ImageBridgeChild::ShutDown();
-#ifdef MOZ_WIDGET_GONK
-        layers::SharedBufferManagerChild::ShutDown();
-#endif
-
         NS_ProcessPendingEvents(thread);
+        gfxPlatform::ShutdownLayersIPC();
+
         mozilla::scache::StartupCache::DeleteSingleton();
         if (observerService)
             (void) observerService->
                 NotifyObservers(nullptr, NS_XPCOM_SHUTDOWN_THREADS_OBSERVER_ID,
                                 nullptr);
-
-        layers::CompositorParent::ShutDown();
 
         gXPCOMThreadsShutDown = true;
         NS_ProcessPendingEvents(thread);
@@ -871,6 +880,9 @@ ShutdownXPCOM(nsIServiceManager* servMgr)
 
     // Release the directory service
     NS_IF_RELEASE(nsDirectoryService::gService);
+
+    NS_Free(gGREPath);
+    gGREPath = nullptr;
 
     if (moduleLoaders) {
         bool more;

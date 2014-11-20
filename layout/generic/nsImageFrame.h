@@ -24,7 +24,7 @@ class nsImageMap;
 class nsIURI;
 class nsILoadGroup;
 struct nsHTMLReflowState;
-struct nsHTMLReflowMetrics;
+class nsHTMLReflowMetrics;
 class nsDisplayImage;
 class nsPresContext;
 class nsImageFrame;
@@ -41,9 +41,11 @@ namespace layers {
 
 class nsImageListener : public imgINotificationObserver
 {
+protected:
+  virtual ~nsImageListener();
+
 public:
   nsImageListener(nsImageFrame *aFrame);
-  virtual ~nsImageListener();
 
   NS_DECL_ISUPPORTS
   NS_DECL_IMGINOTIFICATIONOBSERVER
@@ -71,6 +73,8 @@ public:
   NS_DECL_QUERYFRAME
 
   virtual void DestroyFrom(nsIFrame* aDestructRoot) MOZ_OVERRIDE;
+  virtual void DidSetStyleContext(nsStyleContext* aOldStyleContext) MOZ_OVERRIDE;
+
   virtual void Init(nsIContent*       aContent,
                     nsContainerFrame* aParent,
                     nsIFrame*         aPrevInFlow) MOZ_OVERRIDE;
@@ -114,7 +118,7 @@ public:
             uint32_t aFlags = 0) const MOZ_OVERRIDE;
 #endif
 
-  virtual int GetLogicalSkipSides(const nsHTMLReflowState* aReflowState = nullptr) const MOZ_OVERRIDE;
+  virtual LogicalSides GetLogicalSkipSides(const nsHTMLReflowState* aReflowState = nullptr) const MOZ_OVERRIDE;
 
   nsresult GetIntrinsicImageSize(nsSize& aSize);
 
@@ -331,6 +335,8 @@ private:
     }
 
   private:
+    ~IconLoad() {}
+
     void GetPrefs();
     nsTObserverArray<nsImageFrame*> mIconObservers;
 

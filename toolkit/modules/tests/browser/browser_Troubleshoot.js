@@ -98,6 +98,12 @@ const SNAPSHOT_SCHEMA = {
         supportURL: {
           type: "string",
         },
+        numTotalWindows: {
+          type: "number",
+        },
+        numRemoteWindows: {
+          type: "number",
+        },
       },
     },
     crashes: {
@@ -157,6 +163,10 @@ const SNAPSHOT_SCHEMA = {
       },
     },
     modifiedPreferences: {
+      required: true,
+      type: "object",
+    },
+    lockedPreferences: {
       required: true,
       type: "object",
     },

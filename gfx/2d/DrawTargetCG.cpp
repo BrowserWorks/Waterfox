@@ -155,8 +155,15 @@ DrawTargetCG::~DrawTargetCG()
     CGContextRelease(mCg);
 }
 
-BackendType
+DrawTargetType
 DrawTargetCG::GetType() const
+{
+  return GetBackendType() == BackendType::COREGRAPHICS_ACCELERATED ?
+           DrawTargetType::HARDWARE_RASTER : DrawTargetType::SOFTWARE_RASTER;
+}
+
+BackendType
+DrawTargetCG::GetBackendType() const
 {
   // It may be worth spliting Bitmap and IOSurface DrawTarget
   // into seperate classes.
@@ -173,9 +180,8 @@ DrawTargetCG::Snapshot()
   if (!mSnapshot) {
     if (GetContextType(mCg) == CG_CONTEXT_TYPE_IOSURFACE) {
       return new SourceSurfaceCGIOSurfaceContext(this);
-    } else {
-      mSnapshot = new SourceSurfaceCGBitmapContext(this);
     }
+    mSnapshot = new SourceSurfaceCGBitmapContext(this);
   }
 
   return mSnapshot;
@@ -187,11 +193,10 @@ DrawTargetCG::CreateSimilarDrawTarget(const IntSize &aSize, SurfaceFormat aForma
   // XXX: in thebes we use CGLayers to do this kind of thing. It probably makes sense
   // to add that in somehow, but at a higher level
   RefPtr<DrawTargetCG> newTarget = new DrawTargetCG();
-  if (newTarget->Init(GetType(), aSize, aFormat)) {
-    return newTarget;
-  } else {
-    return nullptr;
+  if (newTarget->Init(GetBackendType(), aSize, aFormat)) {
+    return newTarget.forget();
   }
+  return nullptr;
 }
 
 TemporaryRef<SourceSurface>
@@ -202,11 +207,11 @@ DrawTargetCG::CreateSourceSurfaceFromData(unsigned char *aData,
 {
   RefPtr<SourceSurfaceCG> newSurf = new SourceSurfaceCG();
 
- if (!newSurf->InitFromData(aData, aSize, aStride, aFormat)) {
+  if (!newSurf->InitFromData(aData, aSize, aStride, aFormat)) {
     return nullptr;
   }
 
-  return newSurf;
+  return newSurf.forget();
 }
 
 // This function returns a retained CGImage that needs to be released after
@@ -215,18 +220,23 @@ DrawTargetCG::CreateSourceSurfaceFromData(unsigned char *aData,
 static CGImageRef
 GetRetainedImageFromSourceSurface(SourceSurface *aSurface)
 {
-  if (aSurface->GetType() == SurfaceType::COREGRAPHICS_IMAGE)
-    return CGImageRetain(static_cast<SourceSurfaceCG*>(aSurface)->GetImage());
-  else if (aSurface->GetType() == SurfaceType::COREGRAPHICS_CGCONTEXT)
-    return CGImageRetain(static_cast<SourceSurfaceCGContext*>(aSurface)->GetImage());
+  switch(aSurface->GetType()) {
+    case SurfaceType::COREGRAPHICS_IMAGE:
+      return CGImageRetain(static_cast<SourceSurfaceCG*>(aSurface)->GetImage());
 
-  if (aSurface->GetType() == SurfaceType::DATA) {
-    DataSourceSurface* dataSource = static_cast<DataSourceSurface*>(aSurface);
-    return CreateCGImage(nullptr, dataSource->GetData(), dataSource->GetSize(),
-                         dataSource->Stride(), dataSource->GetFormat());
+    case SurfaceType::COREGRAPHICS_CGCONTEXT:
+      return CGImageRetain(static_cast<SourceSurfaceCGContext*>(aSurface)->GetImage());
+
+    default:
+    {
+      RefPtr<DataSourceSurface> data = aSurface->GetDataSurface();
+      if (!data) {
+        MOZ_CRASH("unsupported source surface");
+      }
+      return CreateCGImage(nullptr, data->GetData(), data->GetSize(),
+                           data->Stride(), data->GetFormat());
+    }
   }
-
-  MOZ_CRASH("unsupported source surface");
 }
 
 TemporaryRef<SourceSurface>
@@ -1323,9 +1333,8 @@ DrawTargetCG::Init(BackendType aType,
     }
     static_assert(sizeof(decltype(mData[0])) == 1,
                   "mData.Realloc() takes an object count, so its objects must be 1-byte sized if we use bufLen");
-    mData.Realloc(/* actually an object count */ bufLen);
+    mData.Realloc(/* actually an object count */ bufLen, true);
     aData = static_cast<unsigned char*>(mData);
-    memset(aData, 0, bufLen);
   }
 
   mSize = aSize;
@@ -1459,8 +1468,7 @@ DrawTargetCG::Init(BackendType aType, const IntSize &aSize, SurfaceFormat &aForm
 TemporaryRef<PathBuilder>
 DrawTargetCG::CreatePathBuilder(FillRule aFillRule) const
 {
-  RefPtr<PathBuilderCG> pb = new PathBuilderCG(aFillRule);
-  return pb;
+  return new PathBuilderCG(aFillRule);
 }
 
 void*
@@ -1576,7 +1584,8 @@ DrawTargetCG::MarkChanged()
 CGContextRef
 BorrowedCGContext::BorrowCGContextFromDrawTarget(DrawTarget *aDT)
 {
-  if (aDT->GetType() == BackendType::COREGRAPHICS || aDT->GetType() == BackendType::COREGRAPHICS_ACCELERATED) {
+  if (aDT->GetBackendType() == BackendType::COREGRAPHICS ||
+      aDT->GetBackendType() == BackendType::COREGRAPHICS_ACCELERATED) {
     DrawTargetCG* cgDT = static_cast<DrawTargetCG*>(aDT);
     cgDT->MarkChanged();
 

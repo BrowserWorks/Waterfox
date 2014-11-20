@@ -12,7 +12,6 @@
 #include "mozilla/Assertions.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/DOMEventTargetHelper.h"
-#include "nsAutoPtr.h"
 #include "nsCycleCollectionNoteChild.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsISupports.h"
@@ -81,6 +80,8 @@ public:
   bool AllContainsTime(double aTime);
 
 private:
+  ~SourceBufferList();
+
   friend class AsyncEventRunner<SourceBufferList>;
   void DispatchSimpleEvent(const char* aName);
   void QueueAsyncSimpleEvent(const char* aName);

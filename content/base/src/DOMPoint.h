@@ -18,7 +18,7 @@ namespace mozilla {
 namespace dom {
 
 class GlobalObject;
-class DOMPointInit;
+struct DOMPointInit;
 
 class DOMPointReadOnly : public nsWrapperCache
 {
@@ -46,6 +46,8 @@ protected:
 
 class DOMPoint MOZ_FINAL : public DOMPointReadOnly
 {
+  ~DOMPoint() {}
+
 public:
   DOMPoint(nsISupports* aParent, double aX = 0.0, double aY = 0.0,
            double aZ = 0.0, double aW = 1.0)

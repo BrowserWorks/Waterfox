@@ -18,9 +18,10 @@ class HTMLBodyElement;
 
 class BodyRule: public nsIStyleRule
 {
+  virtual ~BodyRule();
+
 public:
   BodyRule(HTMLBodyElement* aPart);
-  virtual ~BodyRule();
 
   NS_DECL_ISUPPORTS
 
@@ -40,11 +41,10 @@ public:
   using Element::GetText;
   using Element::SetText;
 
-  HTMLBodyElement(already_AddRefed<nsINodeInfo>& aNodeInfo)
+  HTMLBodyElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
     : nsGenericHTMLElement(aNodeInfo)
   {
   }
-  virtual ~HTMLBodyElement();
 
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
@@ -127,11 +127,13 @@ public:
   NS_IMETHOD WalkContentStyleRules(nsRuleWalker* aRuleWalker) MOZ_OVERRIDE;
   NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const MOZ_OVERRIDE;
   virtual already_AddRefed<nsIEditor> GetAssociatedEditor() MOZ_OVERRIDE;
-  virtual nsresult Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
 
   virtual bool IsEventAttributeName(nsIAtom* aName) MOZ_OVERRIDE;
 
 protected:
+  virtual ~HTMLBodyElement();
+
   virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;
 
   nsRefPtr<BodyRule> mContentStyleRule;

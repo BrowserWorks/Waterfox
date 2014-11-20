@@ -53,8 +53,7 @@ class MemoryTextureHost;
 enum BufferCapabilities {
   DEFAULT_BUFFER_CAPS = 0,
   /**
-   * The allocated buffer must be efficiently mappable as a
-   * gfxImageSurface.
+   * The allocated buffer must be efficiently mappable as a DataSourceSurface.
    */
   MAP_AS_IMAGE_SURFACE = 1 << 0,
   /**
@@ -196,6 +195,8 @@ protected:
 
 class GfxMemoryImageReporter MOZ_FINAL : public nsIMemoryReporter
 {
+  ~GfxMemoryImageReporter() {}
+
 public:
   NS_DECL_ISUPPORTS
 
@@ -224,7 +225,7 @@ public:
   }
 
   NS_IMETHOD CollectReports(nsIHandleReportCallback* aHandleReport,
-                            nsISupports* aData)
+                            nsISupports* aData, bool aAnonymize)
   {
     return MOZ_COLLECT_REPORT(
       "explicit/gfx/heap-textures", KIND_HEAP, UNITS_BYTES, sAmount,

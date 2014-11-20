@@ -236,7 +236,6 @@ private:
 public:
 
     nsCocoaWindow();
-    virtual ~nsCocoaWindow();
 
     NS_DECL_ISUPPORTS_INHERITED
     NS_DECL_NSPIWIDGETCOCOA
@@ -315,8 +314,6 @@ public:
 
     void DispatchSizeModeEvent();
 
-    virtual gfxASurface* GetThebesSurface();
-
     // be notified that a some form of drag event needs to go into Gecko
     virtual bool DragEvent(unsigned int aMessage, Point aMouseGlobal, UInt16 aKeyModifiers);
 
@@ -354,6 +351,7 @@ public:
 
     NS_IMETHOD         ReparentNativeWidget(nsIWidget* aNewParent);
 protected:
+  virtual ~nsCocoaWindow();
 
   nsresult             CreateNativeWindow(const NSRect &aRect,
                                           nsBorderStyle aBorderStyle,

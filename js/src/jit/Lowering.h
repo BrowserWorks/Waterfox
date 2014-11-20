@@ -77,7 +77,6 @@ class LIRGenerator : public LIRGeneratorSpecific
     bool visitNewPar(MNewPar *ins);
     bool visitNewCallObjectPar(MNewCallObjectPar *ins);
     bool visitNewDenseArrayPar(MNewDenseArrayPar *ins);
-    bool visitAbortPar(MAbortPar *ins);
     bool visitInitElem(MInitElem *ins);
     bool visitInitElemGetterSetter(MInitElemGetterSetter *ins);
     bool visitMutateProto(MMutateProto *ins);
@@ -100,6 +99,7 @@ class LIRGenerator : public LIRGeneratorSpecific
     bool visitApplyArgs(MApplyArgs *apply);
     bool visitArraySplice(MArraySplice *splice);
     bool visitBail(MBail *bail);
+    bool visitUnreachable(MUnreachable *unreachable);
     bool visitAssertFloat32(MAssertFloat32 *ins);
     bool visitGetDynamicName(MGetDynamicName *ins);
     bool visitFilterArgumentsOrEval(MFilterArgumentsOrEval *ins);
@@ -169,6 +169,7 @@ class LIRGenerator : public LIRGeneratorSpecific
     bool visitForkJoinContext(MForkJoinContext *ins);
     bool visitGuardThreadExclusive(MGuardThreadExclusive *ins);
     bool visitInterruptCheck(MInterruptCheck *ins);
+    bool visitAsmJSInterruptCheck(MAsmJSInterruptCheck *ins);
     bool visitInterruptCheckPar(MInterruptCheckPar *ins);
     bool visitStoreSlot(MStoreSlot *ins);
     bool visitFilterTypeSet(MFilterTypeSet *ins);
@@ -245,6 +246,7 @@ class LIRGenerator : public LIRGeneratorSpecific
     bool visitCallInstanceOf(MCallInstanceOf *ins);
     bool visitProfilerStackOp(MProfilerStackOp *ins);
     bool visitIsCallable(MIsCallable *ins);
+    bool visitIsObject(MIsObject *ins);
     bool visitHaveSameClass(MHaveSameClass *ins);
     bool visitHasClass(MHasClass *ins);
     bool visitAsmJSLoadGlobalVar(MAsmJSLoadGlobalVar *ins);

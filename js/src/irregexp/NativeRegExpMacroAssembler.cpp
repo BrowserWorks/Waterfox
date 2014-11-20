@@ -668,7 +668,8 @@ NativeRegExpMacroAssembler::CheckNotBackReference(int start_reg, Label* on_no_ma
     Label loop;
     masm.bind(&loop);
     if (mode_ == ASCII) {
-        MOZ_ASSUME_UNREACHABLE("Ascii loading not implemented");
+        masm.load8ZeroExtend(Address(current_character, 0), temp0);
+        masm.load8ZeroExtend(Address(temp1, 0), temp2);
     } else {
         JS_ASSERT(mode_ == JSCHAR);
         masm.load16ZeroExtend(Address(current_character, 0), temp0);
@@ -728,7 +729,69 @@ NativeRegExpMacroAssembler::CheckNotBackReferenceIgnoreCase(int start_reg, Label
     masm.branchPtr(Assembler::GreaterThan, temp0, ImmWord(0), BranchOrBacktrack(on_no_match));
 
     if (mode_ == ASCII) {
-        MOZ_ASSUME_UNREACHABLE("Ascii case not implemented");
+        Label success, fail;
+
+        // Save register contents to make the registers available below. After
+        // this, the temp0, temp2, and current_position registers are available.
+        masm.push(current_position);
+
+        masm.addPtr(input_end_pointer, current_character); // Start of capture.
+        masm.addPtr(input_end_pointer, current_position); // Start of text to match against capture.
+        masm.addPtr(current_position, temp1); // End of text to match against capture.
+
+        Label loop, loop_increment;
+        masm.bind(&loop);
+        masm.load8ZeroExtend(Address(current_position, 0), temp0);
+        masm.load8ZeroExtend(Address(current_character, 0), temp2);
+        masm.branch32(Assembler::Equal, temp0, temp2, &loop_increment);
+
+        // Mismatch, try case-insensitive match (converting letters to lower-case).
+        masm.or32(Imm32(0x20), temp0); // Convert match character to lower-case.
+
+        // Is temp0 a lowercase letter?
+        Label convert_capture;
+        masm.computeEffectiveAddress(Address(temp0, -'a'), temp2);
+        masm.branch32(Assembler::BelowOrEqual, temp2, Imm32(static_cast<int32_t>('z' - 'a')),
+                      &convert_capture);
+
+        // Latin-1: Check for values in range [224,254] but not 247.
+        masm.sub32(Imm32(224 - 'a'), temp2);
+        masm.branch32(Assembler::Above, temp2, Imm32(254 - 224), &fail);
+
+        // Check for 247.
+        masm.branch32(Assembler::Equal, temp2, Imm32(247 - 224), &fail);
+
+        masm.bind(&convert_capture);
+
+        // Also convert capture character.
+        masm.load8ZeroExtend(Address(current_character, 0), temp2);
+        masm.or32(Imm32(0x20), temp2);
+
+        masm.branch32(Assembler::NotEqual, temp0, temp2, &fail);
+
+        masm.bind(&loop_increment);
+
+        // Increment pointers into match and capture strings.
+        masm.addPtr(Imm32(1), current_character);
+        masm.addPtr(Imm32(1), current_position);
+
+        // Compare to end of match, and loop if not done.
+        masm.branchPtr(Assembler::Below, current_position, temp1, &loop);
+        masm.jump(&success);
+
+        masm.bind(&fail);
+
+        // Restore original values before failing.
+        masm.pop(current_position);
+        JumpOrBacktrack(on_no_match);
+
+        masm.bind(&success);
+
+        // Drop original character position value.
+        masm.addPtr(Imm32(sizeof(uintptr_t)), StackPointer);
+
+        // Compute new value of character position after the matched part.
+        masm.subPtr(input_end_pointer, current_position);
     } else {
         JS_ASSERT(mode_ == JSCHAR);
 
@@ -755,7 +818,8 @@ NativeRegExpMacroAssembler::CheckNotBackReferenceIgnoreCase(int start_reg, Label
         masm.passABIArg(current_character);
         masm.passABIArg(current_position);
         masm.passABIArg(temp1);
-        masm.callWithABI(JS_FUNC_TO_DATA_PTR(void *, CaseInsensitiveCompareStrings));
+        int (*fun)(const jschar*, const jschar*, size_t) = CaseInsensitiveCompareStrings;
+        masm.callWithABI(JS_FUNC_TO_DATA_PTR(void *, fun));
         masm.storeCallResult(temp0);
 
         masm.PopRegsInMask(volatileRegs);
@@ -812,9 +876,12 @@ NativeRegExpMacroAssembler::CheckBitInTable(uint8_t *table, Label *on_bit_set)
 {
     IonSpew(SPEW_PREFIX "CheckBitInTable");
 
-    JS_ASSERT(mode_ != ASCII); // Ascii case not handled here.
-
     masm.movePtr(ImmPtr(table), temp0);
+
+    // kTableMask is currently 127, so we need to mask even if the input is
+    // Latin1. V8 has the same issue.
+    static_assert(JSString::MAX_LATIN1_CHAR > kTableMask,
+                  "No need to mask if MAX_LATIN1_CHAR <= kTableMask");
     masm.move32(Imm32(kTableSize - 1), temp1);
     masm.and32(current_character, temp1);
 
@@ -875,7 +942,15 @@ NativeRegExpMacroAssembler::LoadCurrentCharacterUnchecked(int cp_offset, int cha
     IonSpew(SPEW_PREFIX "LoadCurrentCharacterUnchecked(%d, %d)", cp_offset, characters);
 
     if (mode_ == ASCII) {
-        MOZ_ASSUME_UNREACHABLE("Ascii loading not implemented");
+        BaseIndex address(input_end_pointer, current_position, TimesOne, cp_offset);
+        if (characters == 4) {
+            masm.load32(address, current_character);
+        } else if (characters == 2) {
+            masm.load16ZeroExtend(address, current_character);
+        } else {
+            JS_ASSERT(characters = 1);
+            masm.load8ZeroExtend(address, current_character);
+        }
     } else {
         JS_ASSERT(mode_ == JSCHAR);
         JS_ASSERT(characters <= 2);
@@ -1134,9 +1209,22 @@ NativeRegExpMacroAssembler::CheckSpecialCharacterClass(jschar type, Label* on_no
     // (c - min) <= (max - min) check
     switch (type) {
       case 's':
-        // Match space-characters
-        if (mode_ == ASCII)
-            MOZ_ASSUME_UNREACHABLE("Ascii version not implemented");
+        // Match space-characters.
+        if (mode_ == ASCII) {
+            // One byte space characters are '\t'..'\r', ' ' and \u00a0.
+            Label success;
+            masm.branch32(Assembler::Equal, current_character, Imm32(' '), &success);
+
+            // Check range 0x09..0x0d.
+            masm.computeEffectiveAddress(Address(current_character, -'\t'), temp0);
+            masm.branch32(Assembler::BelowOrEqual, temp0, Imm32('\r' - '\t'), &success);
+
+            // \u00a0 (NBSP).
+            masm.branch32(Assembler::NotEqual, temp0, Imm32(0x00a0 - '\t'), branch);
+
+            masm.bind(&success);
+            return true;
+        }
         return false;
       case 'S':
         // The emitted code for generic character classes is good enough.

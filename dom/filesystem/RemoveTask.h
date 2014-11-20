@@ -9,10 +9,12 @@
 
 #include "mozilla/dom/FileSystemTaskBase.h"
 #include "nsAutoPtr.h"
+#include "mozilla/ErrorResult.h"
 
 namespace mozilla {
 namespace dom {
 
+class DOMFileImpl;
 class Promise;
 
 class RemoveTask MOZ_FINAL
@@ -21,9 +23,10 @@ class RemoveTask MOZ_FINAL
 public:
   RemoveTask(FileSystemBase* aFileSystem,
              const nsAString& aDirPath,
-             nsIDOMFile* aTargetFile,
+             DOMFileImpl* aTargetFile,
              const nsAString& aTargetPath,
-             bool aRecursive);
+             bool aRecursive,
+             ErrorResult& aRv);
   RemoveTask(FileSystemBase* aFileSystem,
              const FileSystemRemoveParams& aParam,
              FileSystemRequestParent* aParent);
@@ -56,7 +59,9 @@ protected:
 private:
   nsRefPtr<Promise> mPromise;
   nsString mDirRealPath;
-  nsCOMPtr<nsIDOMFile> mTargetFile;
+  // This cannot be a DOMFile because this object will be used on a different
+  // thread and DOMFile is not thread-safe. Let's use the DOMFileImpl instead.
+  nsRefPtr<DOMFileImpl> mTargetFileImpl;
   nsString mTargetRealPath;
   bool mRecursive;
   bool mReturnValue;

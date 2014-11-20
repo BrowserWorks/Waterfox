@@ -24,7 +24,11 @@ const EXAMPLE_URL = "http://example.com/browser/browser/devtools/webaudioeditor/
 const SIMPLE_CONTEXT_URL = EXAMPLE_URL + "doc_simple-context.html";
 const COMPLEX_CONTEXT_URL = EXAMPLE_URL + "doc_complex-context.html";
 const SIMPLE_NODES_URL = EXAMPLE_URL + "doc_simple-node-creation.html";
+const MEDIA_NODES_URL = EXAMPLE_URL + "doc_media-node-creation.html";
 const BUFFER_AND_ARRAY_URL = EXAMPLE_URL + "doc_buffer-and-array.html";
+const DESTROY_NODES_URL = EXAMPLE_URL + "doc_destroy-nodes.html";
+const CONNECT_TOGGLE_URL = EXAMPLE_URL + "doc_connect-toggle.html";
+const CONNECT_PARAM_URL = EXAMPLE_URL + "doc_connect-param.html";
 
 // All tests are asynchronous.
 waitForExplicitFinish();
@@ -216,6 +220,16 @@ function checkVariableView (view, index, hash, description = "") {
   info("Checking Variable View");
   let scope = view.getScopeAtIndex(index);
   let variables = Object.keys(hash);
+
+  // If node shouldn't display any properties, ensure that the 'empty' message is
+  // visible
+  if (!variables.length) {
+    ok(isVisible(scope.window.$("#properties-tabpanel-content-empty")),
+      description + " should show the empty properties tab.");
+    return;
+  }
+
+  // Otherwise, iterate over expected properties
   variables.forEach(variable => {
     let aVar = scope.get(variable);
     is(aVar.target.querySelector(".name").getAttribute("value"), variable,
@@ -362,11 +376,25 @@ function countGraphObjects (win) {
 }
 
 /**
+* Forces cycle collection and GC, used in AudioNode destruction tests.
+*/
+function forceCC () {
+  SpecialPowers.DOMWindowUtils.cycleCollect();
+  SpecialPowers.DOMWindowUtils.garbageCollect();
+  SpecialPowers.DOMWindowUtils.garbageCollect();
+}
+
+/**
  * List of audio node properties to test against expectations of the AudioNode actor
  */
 
 const NODE_DEFAULT_VALUES = {
   "AudioDestinationNode": {},
+  "MediaElementAudioSourceNode": {},
+  "MediaStreamAudioSourceNode": {},
+  "MediaStreamAudioDestinationNode": {
+    "stream": "MediaStream"
+  },
   "AudioBufferSourceNode": {
     "playbackRate": 1,
     "loop": false,

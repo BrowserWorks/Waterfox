@@ -535,13 +535,9 @@ AppendErrorTextUntrusted(PRErrorCode errTrust,
                          nsString &returnedMessage)
 {
   const char *errorID = nullptr;
-  nsCOMPtr<nsIX509Cert3> cert3 = do_QueryInterface(ix509);
-  if (cert3) {
-    bool isSelfSigned;
-    if (NS_SUCCEEDED(cert3->GetIsSelfSigned(&isSelfSigned))
-        && isSelfSigned) {
-      errorID = "certErrorTrust_SelfSigned";
-    }
+  bool isSelfSigned;
+  if (NS_SUCCEEDED(ix509->GetIsSelfSigned(&isSelfSigned)) && isSelfSigned) {
+    errorID = "certErrorTrust_SelfSigned";
   }
 
   if (!errorID) {
@@ -601,22 +597,24 @@ GetSubjectAltNames(CERTCertificate *nssCert,
   allNames.Truncate();
   nameCount = 0;
 
-  PLArenaPool *san_arena = nullptr;
   SECItem altNameExtension = {siBuffer, nullptr, 0 };
   CERTGeneralName *sanNameList = nullptr;
 
   SECStatus rv = CERT_FindCertExtension(nssCert, SEC_OID_X509_SUBJECT_ALT_NAME,
                                         &altNameExtension);
-  if (rv != SECSuccess)
+  if (rv != SECSuccess) {
     return false;
+  }
 
-  san_arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
-  if (!san_arena)
+  ScopedPLArenaPool arena(PORT_NewArena(DER_DEFAULT_CHUNKSIZE));
+  if (!arena) {
     return false;
+  }
 
-  sanNameList = CERT_DecodeAltNameExtension(san_arena, &altNameExtension);
-  if (!sanNameList)
+  sanNameList = CERT_DecodeAltNameExtension(arena.get(), &altNameExtension);
+  if (!sanNameList) {
     return false;
+  }
 
   SECITEM_FreeItem(&altNameExtension, false);
 
@@ -675,7 +673,6 @@ GetSubjectAltNames(CERTCertificate *nssCert,
     current = CERT_GetNextGeneralName(current);
   } while (current != sanNameList); // double linked
 
-  PORT_FreeArena(san_arena, false);
   return true;
 }
 
@@ -689,11 +686,7 @@ AppendErrorTextMismatch(const nsString &host,
   const char16_t *params[1];
   nsresult rv;
 
-  mozilla::pkix::ScopedCERTCertificate nssCert;
-
-  nsCOMPtr<nsIX509Cert2> cert2 = do_QueryInterface(ix509, &rv);
-  if (cert2)
-    nssCert = cert2->GetCert();
+  ScopedCERTCertificate nssCert(ix509->GetCert());
 
   if (!nssCert) {
     // We are unable to extract the valid names, say "not valid for name".

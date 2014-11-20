@@ -7,6 +7,7 @@
 #define nsXULTemplateResultXML_h__
 
 #include "nsCOMPtr.h"
+#include "nsIContent.h"
 #include "nsIURI.h"
 #include "nsIRDFResource.h"
 #include "nsXULTemplateQueryProcessorXML.h"
@@ -24,14 +25,17 @@ public:
     NS_DECL_NSIXULTEMPLATERESULT
 
     nsXULTemplateResultXML(nsXMLQuery* aQuery,
-                           nsIDOMNode* aNode,
+                           nsIContent* aNode,
                            nsXMLBindingSet* aBindings);
 
-    ~nsXULTemplateResultXML() {}
-
-    void GetNode(nsIDOMNode** aNode);
+    nsIContent* Node()
+    {
+        return mNode;
+    }
 
 protected:
+
+    ~nsXULTemplateResultXML() {}
 
     // ID used for persisting data. It is constructed using the mNode's
     // base uri plus the node's id to form 'baseuri#id'. If the node has no
@@ -43,7 +47,7 @@ protected:
     nsCOMPtr<nsXMLQuery> mQuery;
 
     // context node in datasource
-    nsCOMPtr<nsIDOMNode> mNode;
+    nsCOMPtr<nsIContent> mNode;
 
     // assignments in query
     nsXMLBindingValues mRequiredValues;

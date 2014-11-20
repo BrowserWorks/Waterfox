@@ -11,6 +11,7 @@
 <!ENTITY  bookmarks_title "Bookmarks">
 <!ENTITY  history_title "History">
 <!ENTITY  reading_list_title "Reading List">
+<!ENTITY  recent_tabs_title "Recent Tabs">
 
 <!ENTITY  switch_to_tab "Switch to tab">
 
@@ -43,8 +44,8 @@
 
 <!ENTITY history_today_section "Today">
 <!ENTITY history_yesterday_section "Yesterday">
-<!ENTITY history_week_section "7 days ago">
-<!ENTITY history_older_section "Older than 7 days">
+<!ENTITY history_week_section2 "Last Week">
+<!ENTITY history_older_section2 "Last Month">
 
 <!ENTITY go "Go">
 <!ENTITY search "Search">
@@ -103,13 +104,13 @@
      it is applicable. -->
 <!ENTITY pref_search_hint "TIP: Add any website to your list of search providers by long-pressing on its search field and then tapping the &formatI; icon.">
 <!ENTITY pref_category_devtools "Developer tools">
+<!ENTITY pref_developer_paint_flashing "Paint flashing">
 <!ENTITY pref_developer_remotedebugging "Remote debugging">
 <!ENTITY pref_remember_signons "Remember passwords">
 
 <!ENTITY pref_category_home "Home">
 <!ENTITY pref_category_home_summary "Customize your homepage">
 <!ENTITY pref_category_home_panels "Panels">
-<!ENTITY pref_home_add_panel "Add panel">
 <!ENTITY home_add_panel_title "Add new panel">
 <!ENTITY home_add_panel_empty "Sorry, we couldn\'t find any panels for you to add.">
 <!-- Localization note (home_add_panel_installed):
@@ -145,7 +146,11 @@
 <!ENTITY pref_char_encoding "Character encoding">
 <!ENTITY pref_char_encoding_on "Show menu">
 <!ENTITY pref_char_encoding_off "Don\'t show menu">
-<!ENTITY pref_clear_private_data "Clear private data">
+<!ENTITY pref_clear_private_data2 "Clear now">
+<!ENTITY pref_clear_private_data_category "Clear private data">
+<!ENTITY pref_clear_on_exit_title "Always clear when quitting">
+<!ENTITY pref_clear_on_exit_summary "&brandShortName; will automatically clear your data whenever you select &quot;Quit&quot; from the main menu">
+<!ENTITY pref_clear_on_exit_dialog_title "Select which data to clear">
 <!ENTITY pref_plugins "Plugins">
 <!ENTITY pref_plugins_enabled "Enabled">
 <!ENTITY pref_plugins_tap_to_play "Tap to play">
@@ -257,6 +262,7 @@ size. -->
 <!ENTITY new_tab "New Tab">
 <!ENTITY new_private_tab "New Private Tab">
 <!ENTITY close_all_tabs "Close All Tabs">
+<!ENTITY close_private_tabs "Close Private Tabs">
 <!ENTITY tabs_normal "Tabs">
 <!ENTITY tabs_private "Private">
 <!ENTITY tabs_synced "Synced">
@@ -279,7 +285,6 @@ size. -->
 
 <!ENTITY contextmenu_open_new_tab "Open in New Tab">
 <!ENTITY contextmenu_open_private_tab "Open in Private Tab">
-<!ENTITY contextmenu_open_in_reader "Open in Reader">
 <!ENTITY contextmenu_remove "Remove">
 <!ENTITY contextmenu_add_to_launcher "Add to Home Screen">
 <!ENTITY contextmenu_share "Share">
@@ -349,10 +354,10 @@ size. -->
 <!ENTITY home_clear_history_button "Clear browsing history">
 <!ENTITY home_clear_history_confirm "Are you sure you want to clear your history?">
 <!ENTITY home_bookmarks_empty "Bookmarks you save show up here.">
+<!ENTITY home_closed_tabs_title "Recently closed tabs">
 <!ENTITY home_last_tabs_title "Tabs from last time">
-<!ENTITY home_last_tabs_open "Open all tabs from last time">
 <!ENTITY home_last_tabs_empty "Your recent tabs show up here.">
-<!ENTITY home_most_recent_title "Most recent">
+<!ENTITY home_open_all "Open all">
 <!ENTITY home_most_recent_empty "Websites you visited most recently show up here.">
 <!ENTITY home_reading_list_empty "Articles you save for later show up here.">
 <!-- Localization note (home_reading_list_hint): The "TIP" string is synonymous to "hint", "clue", etc. This string is displayed
@@ -371,6 +376,10 @@ size. -->
 <!-- Localization note (home_move_up_to_filter): The variable is replaced by the name of the
      previous location in the navigation, such as the previous folder -->
 <!ENTITY home_move_up_to_filter "Up to &formatS;">
+
+<!ENTITY private_browsing_title "Private Browsing">
+<!ENTITY private_tabs_panel_empty_desc "Your private tabs will show up here. While we don\'t keep any of your browsing history or cookies, bookmarks and files that you download will still be saved on your device.">
+<!ENTITY private_tabs_panel_learn_more "Want to learn more?">
 
 <!ENTITY pin_site_dialog_hint "Enter a search keyword">
 

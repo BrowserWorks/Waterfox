@@ -13,6 +13,7 @@ import types
 from collections import namedtuple
 
 import mozwebidlcodegen
+from reftest import ReftestManifest
 
 import mozbuild.makeutil as mozmakeutil
 from mozpack.copier import FilePurger
@@ -35,6 +36,7 @@ from ..frontend.data import (
     IPDLFile,
     JARManifest,
     JavaJarData,
+    JavaScriptModules,
     LibraryDefinition,
     LocalInclude,
     PerSourceFlag,
@@ -318,13 +320,6 @@ class RecursiveMakeBackend(CommonBackend):
             'tools': set(),
         }
 
-        derecurse = self.environment.substs.get('MOZ_PSEUDO_DERECURSE', '').split(',')
-        self._parallel_export = False
-        self._no_skip = False
-        if derecurse != ['']:
-            self._parallel_export = 'no-parallel-export' not in derecurse
-            self._no_skip = 'no-skip' in derecurse
-
     def consume_object(self, obj):
         """Write out build files necessary to build with recursive make."""
 
@@ -449,6 +444,9 @@ class RecursiveMakeBackend(CommonBackend):
         elif isinstance(obj, InstallationTarget):
             self._process_installation_target(obj, backend_file)
 
+        elif isinstance(obj, JavaScriptModules):
+            self._process_javascript_modules(obj, backend_file)
+
         elif isinstance(obj, SandboxWrapped):
             # Process a rich build system object from the front-end
             # as-is.  Please follow precedent and handle CamelCaseData
@@ -475,11 +473,10 @@ class RecursiveMakeBackend(CommonBackend):
         convenience variables, and the other dependency definitions for a
         hopefully proper directory traversal.
         """
-        if not self._no_skip:
-            for tier, skip in self._may_skip.items():
-                self.log(logging.DEBUG, 'fill_root_mk', {
-                    'number': len(skip), 'tier': tier
-                    }, 'Ignoring {number} directories during {tier}')
+        for tier, skip in self._may_skip.items():
+            self.log(logging.DEBUG, 'fill_root_mk', {
+                'number': len(skip), 'tier': tier
+                }, 'Ignoring {number} directories during {tier}')
 
         # Traverse directories in parallel, and skip static dirs
         def parallel_filter(current, subdirs):
@@ -498,14 +495,6 @@ class RecursiveMakeBackend(CommonBackend):
         def compile_filter(current, subdirs):
             current, parallel, sequential = parallel_filter(current, subdirs)
             return current, subdirs.static + parallel, sequential
-
-        # Skip static dirs during export traversal, or build everything in
-        # parallel when enabled.
-        def export_filter(current, subdirs):
-            if self._parallel_export:
-                return parallel_filter(current, subdirs)
-            return current, subdirs.parallel, \
-                subdirs.dirs + subdirs.tests + subdirs.tools
 
         # Skip tools dirs during libs traversal. Because of bug 925236 and
         # possible other unknown race conditions, don't parallelize the libs
@@ -526,7 +515,7 @@ class RecursiveMakeBackend(CommonBackend):
 
         # compile, binaries and tools tiers use the same traversal as export
         filters = {
-            'export': export_filter,
+            'export': parallel_filter,
             'compile': compile_filter,
             'binaries': parallel_filter,
             'libs': libs_filter,
@@ -872,9 +861,6 @@ class RecursiveMakeBackend(CommonBackend):
         if obj.is_tool_dir:
             fh.write('IS_TOOL_DIR := 1\n')
 
-        if self._no_skip:
-            return
-
         affected_tiers = set(obj.affected_tiers)
         # Until all SOURCES are really in moz.build, consider all directories
         # building binaries to require a pass at compile, too.
@@ -967,6 +953,20 @@ class RecursiveMakeBackend(CommonBackend):
 
         if not obj.enabled:
             backend_file.write('NO_DIST_INSTALL := 1\n')
+
+    def _process_javascript_modules(self, obj, backend_file):
+        if obj.flavor != 'testing':
+            raise Exception('We only support testing JavaScriptModules instances.')
+
+        if not self.environment.substs.get('ENABLE_TESTS', False):
+            return
+
+        manifest = self._install_manifests['tests']
+
+        def onmodule(source, dest, flags):
+            manifest.add_symlink(source, mozpath.join('modules', dest))
+
+        self._process_hierarchy(obj, obj.modules, '', onmodule)
 
     def _handle_idl_manager(self, manager):
         build_files = self._install_manifests['xpidl']
@@ -1074,6 +1074,11 @@ class RecursiveMakeBackend(CommonBackend):
         m = self._test_manifests.setdefault(obj.flavor,
             (obj.install_prefix, set()))
         m[1].add(obj.manifest_obj_relpath)
+
+        if isinstance(obj.manifest, ReftestManifest):
+            # Mark included files as part of the build backend so changes
+            # result in re-config.
+            self.backend_input_files |= obj.manifest.manifests
 
     def _process_local_include(self, local_include, backend_file):
         if local_include.startswith('/'):

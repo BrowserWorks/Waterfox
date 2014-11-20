@@ -53,10 +53,12 @@ const INTERESTING_CALLS = [
 
 exports.register = function(handle) {
   handle.addTabActor(CanvasActor, "canvasActor");
+  handle.addGlobalActor(CanvasActor, "canvasActor");
 };
 
 exports.unregister = function(handle) {
   handle.removeTabActor(CanvasActor);
+  handle.removeGlobalActor(CanvasActor);
 };
 
 /**
@@ -254,7 +256,8 @@ let CanvasActor = exports.CanvasActor = protocol.ActorClass({
     this._callWatcher.setup({
       tracedGlobals: CANVAS_CONTEXTS,
       tracedFunctions: ANIMATION_GENERATORS,
-      performReload: reload
+      performReload: reload,
+      storeCalls: true
     });
   }, {
     request: { reload: Option(0, "boolean") },
@@ -720,7 +723,6 @@ let ContextUtils = {
 let CanvasFront = exports.CanvasFront = protocol.FrontClass(CanvasActor, {
   initialize: function(client, { canvasActor }) {
     protocol.Front.prototype.initialize.call(this, client, { actor: canvasActor });
-    client.addActorPool(this);
     this.manage(this);
   }
 });

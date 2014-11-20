@@ -17,6 +17,7 @@
 #include "nsClassHashtable.h"
 #include "nsHashKeys.h"
 #include "nsTArray.h"
+#include "WorkerPrivate.h"
 
 class nsIRunnable;
 class nsIThread;
@@ -104,9 +105,11 @@ public:
   struct NavigatorProperties
   {
     nsString mAppName;
+    nsString mAppNameOverridden;
     nsString mAppVersion;
+    nsString mAppVersionOverridden;
     nsString mPlatform;
-    nsString mUserAgent;
+    nsString mPlatformOverridden;
   };
 
 private:
@@ -158,6 +161,13 @@ public:
                       const nsACString& aScope,
                       ServiceWorker** aServiceWorker);
 
+  nsresult
+  CreateServiceWorkerFromLoadInfo(JSContext* aCx,
+                                  WorkerPrivate::LoadInfo aLoadInfo,
+                                  const nsAString& aScriptURL,
+                                  const nsACString& aScope,
+                                  ServiceWorker** aServiceWorker);
+
   void
   ForgetSharedWorker(WorkerPrivate* aWorkerPrivate);
 
@@ -195,6 +205,15 @@ public:
     sDefaultJSSettings.content.contextOptions = aContentCxOptions;
     sDefaultJSSettings.chrome.contextOptions = aChromeCxOptions;
   }
+
+  void
+  UpdateAppNameOverridePreference(const nsAString& aValue);
+
+  void
+  UpdateAppVersionOverridePreference(const nsAString& aValue);
+
+  void
+  UpdatePlatformOverridePreference(const nsAString& aValue);
 
   void
   UpdateAllWorkerRuntimeAndContextOptions();
@@ -296,6 +315,14 @@ private:
                              const nsACString& aName,
                              WorkerType aType,
                              SharedWorker** aSharedWorker);
+
+  nsresult
+  CreateSharedWorkerFromLoadInfo(JSContext* aCx,
+                                 WorkerPrivate::LoadInfo aLoadInfo,
+                                 const nsAString& aScriptURL,
+                                 const nsACString& aName,
+                                 WorkerType aType,
+                                 SharedWorker** aSharedWorker);
 };
 
 END_WORKERS_NAMESPACE

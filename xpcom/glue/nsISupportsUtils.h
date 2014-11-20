@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -35,16 +36,15 @@ extern "C++" {
 // an |extern "C"|
 
 
-// Making this a |inline| |template| allows |expr| to be evaluated only once,
+// Making this a |inline| |template| allows |aExpr| to be evaluated only once,
 // yet still denies you the ability to |AddRef()| an |nsCOMPtr|.
-template <class T>
-inline
-void
-ns_if_addref( T expr )
+template<class T>
+inline void
+ns_if_addref(T aExpr)
 {
-    if (expr) {
-        expr->AddRef();
-    }
+  if (aExpr) {
+    aExpr->AddRef();
+  }
 }
 
 } /* extern "C++" */
@@ -124,22 +124,21 @@ ns_if_addref( T expr )
   static_cast<nsISupports*>(static_cast<__unambiguousBase>(__expr))
 
 // a type-safe shortcut for calling the |QueryInterface()| member function
-template <class T, class DestinationType>
-inline
-nsresult
-CallQueryInterface( T* aSource, DestinationType** aDestination )
+template<class T, class DestinationType>
+inline nsresult
+CallQueryInterface(T* aSource, DestinationType** aDestination)
 {
-    // We permit nsISupports-to-nsISupports here so that one can still obtain
-    // the canonical nsISupports pointer with CallQueryInterface.
-    static_assert(!mozilla::IsSame<T, DestinationType>::value ||
-                  mozilla::IsSame<DestinationType, nsISupports>::value,
-                  "don't use CallQueryInterface for compile-time-determinable casts");
+  // We permit nsISupports-to-nsISupports here so that one can still obtain
+  // the canonical nsISupports pointer with CallQueryInterface.
+  static_assert(!mozilla::IsSame<T, DestinationType>::value ||
+                mozilla::IsSame<DestinationType, nsISupports>::value,
+                "don't use CallQueryInterface for compile-time-determinable casts");
 
-    NS_PRECONDITION(aSource, "null parameter");
-    NS_PRECONDITION(aDestination, "null parameter");
+  NS_PRECONDITION(aSource, "null parameter");
+  NS_PRECONDITION(aDestination, "null parameter");
 
-    return aSource->QueryInterface(NS_GET_TEMPLATE_IID(DestinationType),
-                                   reinterpret_cast<void**>(aDestination));
+  return aSource->QueryInterface(NS_GET_TEMPLATE_IID(DestinationType),
+                                 reinterpret_cast<void**>(aDestination));
 }
 
 #endif /* __nsISupportsUtils_h */

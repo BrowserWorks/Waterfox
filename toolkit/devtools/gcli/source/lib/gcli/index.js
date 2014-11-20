@@ -33,7 +33,7 @@ var Cu = require('chrome').Cu;
  * - lib/gcli/connectors/index.js: Client only items when executing remotely
  * - lib/gcli/connectors/direct.js: Test items for connecting to in-process GCLI
  */
-var items = [
+exports.items = [
   require('./types/delegate').items,
   require('./types/selection').items,
   require('./types/array').items,
@@ -48,7 +48,10 @@ var items = [
   require('./types/resource').items,
   require('./types/setting').items,
   require('./types/string').items,
+  require('./types/union').items,
+  require('./types/url').items,
 
+  require('./fields/fields').items,
   require('./fields/delegate').items,
   require('./fields/selection').items,
 
@@ -87,8 +90,14 @@ var items = [
 ].reduce(function(prev, curr) { return prev.concat(curr); }, []);
 
 var api = require('./api');
-api.populateApi(exports);
-exports.addItems(items);
+var system = api.createSystem();
+
+// Export the system API by adding it to our exports
+Object.keys(system).forEach(function(key) {
+  exports[key] = system[key];
+});
+
+system.addItems(exports.items);
 
 var host = require('./util/host');
 
@@ -108,9 +117,14 @@ exports.useTarget = host.script.useTarget;
  * - hintElement: GCLITerm.hintNode
  * - inputBackgroundElement: GCLITerm.inputStack
  */
-exports.createDisplay = function(opts) {
+exports.createDisplay = function(options) {
   var FFDisplay = require('./mozui/ffdisplay').FFDisplay;
-  return new FFDisplay(opts);
+  return new FFDisplay(system, options);
+};
+
+exports.createRequisition = function(options) {
+  var Requisition = require('./cli').Requisition;
+  return new Requisition(system, options);
 };
 
 var prefSvc = Cc['@mozilla.org/preferences-service;1']

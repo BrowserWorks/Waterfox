@@ -33,6 +33,9 @@ public class BrowserContract {
     public static final String READING_LIST_AUTHORITY = AppConstants.ANDROID_PACKAGE_NAME + ".db.readinglist";
     public static final Uri READING_LIST_AUTHORITY_URI = Uri.parse("content://" + READING_LIST_AUTHORITY);
 
+    public static final String SEARCH_HISTORY_AUTHORITY = AppConstants.ANDROID_PACKAGE_NAME + ".db.searchhistory";
+    public static final Uri SEARCH_HISTORY_AUTHORITY_URI = Uri.parse("content://" + SEARCH_HISTORY_AUTHORITY);
+
     public static final String PARAM_PROFILE = "profile";
     public static final String PARAM_PROFILE_PATH = "profilePath";
     public static final String PARAM_LIMIT = "limit";
@@ -216,12 +219,8 @@ public class BrowserContract {
 
         public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, "combined");
 
-        public static final int DISPLAY_NORMAL = 0;
-        public static final int DISPLAY_READER = 1;
-
         public static final String BOOKMARK_ID = "bookmark_id";
         public static final String HISTORY_ID = "history_id";
-        public static final String DISPLAY = "display";
     }
 
     public static final class Schema {
@@ -328,6 +327,8 @@ public class BrowserContract {
         // Last modified time for the client's tab record. For remote records, a server
         // timestamp provided by Sync during insertion.
         public static final String LAST_MODIFIED = "last_modified";
+
+        public static final String DEVICE_TYPE = "device_type";
     }
 
     // Data storage for dynamic panels on about:home
@@ -382,6 +383,10 @@ public class BrowserContract {
             private Combined() {}
 
             public static final String THUMBNAIL = "thumbnail";
+            public static final String DISPLAY = "display";
+
+            public static final int DISPLAY_NORMAL = 0;
+            public static final int DISPLAY_READER = 1;
         }
 
         static final String TABLE_BOOKMARKS_JOIN_IMAGES = Bookmarks.TABLE_NAME + " LEFT OUTER JOIN " +
@@ -426,9 +431,18 @@ public class BrowserContract {
 
         public static final String BOOKMARK_ID = "bookmark_id";
         public static final String HISTORY_ID = "history_id";
-        public static final String DISPLAY = "display";
-
         public static final String TYPE = "type";
+    }
+
+    @RobocopTarget
+    public static final class SearchHistory implements CommonColumns, HistoryColumns {
+        private SearchHistory() {}
+
+        public static final String CONTENT_TYPE = "vnd.android.cursor.dir/searchhistory";
+        public static final String QUERY = "query";
+        public static final String TABLE_NAME = "searchhistory";
+
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(SEARCH_HISTORY_AUTHORITY_URI, "searchhistory");
     }
 
     @RobocopTarget

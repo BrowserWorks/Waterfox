@@ -244,13 +244,13 @@ const char *
 js::gcstats::ExplainReason(JS::gcreason::Reason reason)
 {
     switch (reason) {
-#define SWITCH_REASON(name)                     \
+#define SWITCH_REASON(name)                         \
         case JS::gcreason::name:                    \
           return #name;
         GCREASONS(SWITCH_REASON)
 
         default:
-          MOZ_ASSUME_UNREACHABLE("bad GC reason");
+          MOZ_CRASH("bad GC reason");
 #undef SWITCH_REASON
     }
 }
@@ -288,6 +288,7 @@ static const PhaseInfo phases[] = {
     { PHASE_SWEEP_MARK_GRAY_WEAK, "Mark Gray and Weak", PHASE_SWEEP_MARK },
     { PHASE_FINALIZE_START, "Finalize Start Callback", PHASE_SWEEP },
     { PHASE_SWEEP_ATOMS, "Sweep Atoms", PHASE_SWEEP },
+    { PHASE_SWEEP_SYMBOL_REGISTRY, "Sweep Symbol Registry", PHASE_SWEEP },
     { PHASE_SWEEP_COMPARTMENTS, "Sweep Compartments", PHASE_SWEEP },
     { PHASE_SWEEP_DISCARD_CODE, "Sweep Discard Code", PHASE_SWEEP_COMPARTMENTS },
     { PHASE_SWEEP_TABLES, "Sweep Tables", PHASE_SWEEP_COMPARTMENTS },
@@ -527,7 +528,7 @@ Statistics::beginGC()
     sccTimes.clearAndFree();
     nonincrementalReason = nullptr;
 
-    preBytes = runtime->gc.bytes;
+    preBytes = runtime->gc.bytesAllocated();
 }
 
 void
@@ -553,7 +554,7 @@ Statistics::endGC()
         (*cb)(JS_TELEMETRY_GC_MARK_ROOTS_MS, t(phaseTimes[PHASE_MARK_ROOTS]));
         (*cb)(JS_TELEMETRY_GC_MARK_GRAY_MS, t(phaseTimes[PHASE_SWEEP_MARK_GRAY]));
         (*cb)(JS_TELEMETRY_GC_NON_INCREMENTAL, !!nonincrementalReason);
-        (*cb)(JS_TELEMETRY_GC_INCREMENTAL_DISABLED, !runtime->gc.incrementalEnabled);
+        (*cb)(JS_TELEMETRY_GC_INCREMENTAL_DISABLED, !runtime->gc.isIncrementalGCAllowed());
         (*cb)(JS_TELEMETRY_GC_SCC_SWEEP_TOTAL_MS, t(sccTotal));
         (*cb)(JS_TELEMETRY_GC_SCC_SWEEP_MAX_PAUSE_MS, t(sccLongest));
 
@@ -570,11 +571,11 @@ Statistics::beginSlice(const ZoneGCStats &zoneStats, JS::gcreason::Reason reason
 {
     this->zoneStats = zoneStats;
 
-    bool first = runtime->gc.incrementalState == gc::NO_INCREMENTAL;
+    bool first = runtime->gc.state() == gc::NO_INCREMENTAL;
     if (first)
         beginGC();
 
-    SliceData data(reason, PRMJ_Now(), SystemPageAllocator::GetPageFaultCount());
+    SliceData data(reason, PRMJ_Now(), GetPageFaultCount());
     (void) slices.append(data); /* Ignore any OOMs here. */
 
     if (JSAccumulateTelemetryDataCallback cb = runtime->telemetryCallback)
@@ -593,14 +594,14 @@ void
 Statistics::endSlice()
 {
     slices.back().end = PRMJ_Now();
-    slices.back().endFaults = SystemPageAllocator::GetPageFaultCount();
+    slices.back().endFaults = GetPageFaultCount();
 
     if (JSAccumulateTelemetryDataCallback cb = runtime->telemetryCallback) {
         (*cb)(JS_TELEMETRY_GC_SLICE_MS, t(slices.back().end - slices.back().start));
         (*cb)(JS_TELEMETRY_GC_RESET, !!slices.back().resetReason);
     }
 
-    bool last = runtime->gc.incrementalState == gc::NO_INCREMENTAL;
+    bool last = runtime->gc.state() == gc::NO_INCREMENTAL;
     if (last)
         endGC();
 

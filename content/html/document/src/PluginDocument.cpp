@@ -27,7 +27,6 @@ class PluginDocument MOZ_FINAL : public MediaDocument
 {
 public:
   PluginDocument();
-  virtual ~PluginDocument();
 
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSIPLUGINDOCUMENT
@@ -50,6 +49,8 @@ public:
 
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(PluginDocument, MediaDocument)
 protected:
+  virtual ~PluginDocument();
+
   nsresult CreateSyntheticPluginDocument();
 
   nsCOMPtr<Element>                        mPluginContent;
@@ -217,7 +218,7 @@ PluginDocument::CreateSyntheticPluginDocument()
 
 
   // make plugin content
-  nsCOMPtr<nsINodeInfo> nodeInfo;
+  nsRefPtr<mozilla::dom::NodeInfo> nodeInfo;
   nodeInfo = mNodeInfoManager->GetNodeInfo(nsGkAtoms::embed, nullptr,
                                            kNameSpaceID_XHTML,
                                            nsIDOMNode::ELEMENT_NODE);

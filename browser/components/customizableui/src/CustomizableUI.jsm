@@ -49,6 +49,11 @@ const kSubviewEvents = [
 ];
 
 /**
+ * The current version. We can use this to auto-add new default widgets as necessary.
+ */
+const kVersion = 0;
+
+/**
  * gPalette is a map of every widget that CustomizableUI.jsm knows about, keyed
  * on their IDs.
  */
@@ -145,6 +150,7 @@ let CustomizableUIInternal = {
     this.addListener(this);
     this._defineBuiltInWidgets();
     this.loadSavedState();
+    this._introduceNewBuiltinWidgets();
 
     let panelPlacements = [
       "edit-controls",
@@ -196,10 +202,10 @@ let CustomizableUIInternal = {
       defaultPlacements: [
         "urlbar-container",
         "search-container",
-        "webrtc-status-button",
         "bookmarks-menu-button",
         "downloads-button",
         "home-button",
+        "loop-call-button",
         "social-share-button",
       ],
       defaultCollapsed: false,
@@ -270,6 +276,25 @@ let CustomizableUIInternal = {
     //       app versions to already customized areas.
     for (let widgetDefinition of CustomizableWidgets) {
       this.createBuiltinWidget(widgetDefinition);
+    }
+  },
+
+  _introduceNewBuiltinWidgets: function() {
+    if (!gSavedState || gSavedState.currentVersion >= kVersion) {
+      return;
+    }
+
+    let currentVersion = gSavedState.currentVersion;
+    for (let [id, widget] of gPalette) {
+      if (widget._introducedInVersion > currentVersion &&
+          widget.defaultArea) {
+        let futurePlacements = gFuturePlacements.get(widget.defaultArea);
+        if (futurePlacements) {
+          futurePlacements.add(id);
+        } else {
+          gFuturePlacements.set(widget.defaultArea, new Set([id]));
+        }
+      }
     }
   },
 
@@ -356,7 +381,9 @@ let CustomizableUIInternal = {
       if (props.get("legacy") && !gPlacements.has(aName)) {
         // Guarantee this area exists in gFuturePlacements, to avoid checking it in
         // various places elsewhere.
-        gFuturePlacements.set(aName, new Set());
+        if (!gFuturePlacements.has(aName)) {
+          gFuturePlacements.set(aName, new Set());
+        }
       } else {
         this.restoreStateForArea(aName);
       }
@@ -591,7 +618,6 @@ let CustomizableUIInternal = {
                 container.removeChild(node);
               }
             } else {
-              this.setLocationAttributes(currentNode, aArea);
               node.setAttribute("removable", false);
               LOG("Adding non-removable widget to placements of " + aArea + ": " +
                   node.id);
@@ -779,7 +805,7 @@ let CustomizableUIInternal = {
       }
 
       if (!widgetNode || !container.contains(widgetNode)) {
-        INFO("Widget not found, unable to remove");
+        INFO("Widget " + aWidgetId + " not found, unable to remove from " + aArea);
         continue;
       }
 
@@ -1272,7 +1298,6 @@ let CustomizableUIInternal = {
         shortcut = ShortcutUtils.findShortcut(document.getElementById(commandId));
     }
     if (!shortcut) {
-      ERROR("Could not find a keyboard shortcut for '" + aShortcutNode.outerHTML + "'.");
       return;
     }
 
@@ -1744,6 +1769,10 @@ let CustomizableUIInternal = {
       gSavedState.placements = {};
     }
 
+    if (!("currentVersion" in gSavedState)) {
+      gSavedState.currentVersion = 0;
+    }
+
     gSeenWidgets = new Set(gSavedState.seen || []);
     gDirtyAreaCache = new Set(gSavedState.dirtyAreaCache || []);
     gNewElementCount = gSavedState.newElementCount || 0;
@@ -1802,6 +1831,7 @@ let CustomizableUIInternal = {
       if (gFuturePlacements.has(aArea)) {
         for (let id of gFuturePlacements.get(aArea))
           this.addWidgetToArea(id, aArea);
+        gFuturePlacements.delete(aArea);
       }
 
       LOG("Placements for " + aArea + ":\n\t" + gPlacements.get(aArea).join("\n\t"));
@@ -1819,6 +1849,7 @@ let CustomizableUIInternal = {
     let state = { placements: gPlacements,
                   seen: gSeenWidgets,
                   dirtyAreaCache: gDirtyAreaCache,
+                  currentVersion: kVersion,
                   newElementCount: gNewElementCount };
 
     LOG("Saving state.");
@@ -1926,13 +1957,19 @@ let CustomizableUIInternal = {
     this.notifyListeners("onWidgetCreated", widget.id);
 
     if (widget.defaultArea) {
+      let addToDefaultPlacements = false;
       let area = gAreas.get(widget.defaultArea);
-      //XXXgijs this won't have any effect for legacy items. Sort of OK because
-      // consumers can modify currentset? Maybe?
-      if (area.has("defaultPlacements")) {
-        area.get("defaultPlacements").push(widget.id);
-      } else {
-        area.set("defaultPlacements", [widget.id]);
+      if (!CustomizableUI.isBuiltinToolbar(widget.defaultArea) &&
+          widget.defaultArea != CustomizableUI.AREA_PANEL) {
+        addToDefaultPlacements = true;
+      }
+
+      if (addToDefaultPlacements) {
+        if (area.has("defaultPlacements")) {
+          area.get("defaultPlacements").push(widget.id);
+        } else {
+          area.set("defaultPlacements", [widget.id]);
+        }
       }
     }
 
@@ -2050,6 +2087,7 @@ let CustomizableUIInternal = {
       shortcutId: null,
       tooltiptext: null,
       showInPrivateBrowsing: true,
+      _introducedInVersion: -1,
     };
 
     if (typeof aData.id != "string" || !/^[a-z0-9-_]{1,}$/i.test(aData.id)) {
@@ -2084,7 +2122,9 @@ let CustomizableUIInternal = {
       }
     }
 
-    if (aData.defaultArea && gAreas.has(aData.defaultArea)) {
+    // When we normalize builtin widgets, areas have not yet been registered:
+    if (aData.defaultArea &&
+        (aSource == CustomizableUI.SOURCE_BUILTIN || gAreas.has(aData.defaultArea))) {
       widget.defaultArea = aData.defaultArea;
     } else if (!widget.removable) {
       ERROR("Widget '" + widget.id + "' is not removable but does not specify " +
@@ -2100,6 +2140,10 @@ let CustomizableUIInternal = {
     }
 
     widget.disabled = aData.disabled === true;
+
+    if (aSource == CustomizableUI.SOURCE_BUILTIN) {
+      widget._introducedInVersion = aData.introducedInVersion || 0;
+    }
 
     this.wrapWidgetEventHandler("onBeforeCreated", widget);
     this.wrapWidgetEventHandler("onClick", widget);

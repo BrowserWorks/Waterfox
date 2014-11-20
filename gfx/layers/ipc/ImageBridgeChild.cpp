@@ -221,7 +221,6 @@ static void ImageBridgeShutdownStep2(ReentrantMonitor *aBarrier, bool *aDone)
 
   sImageBridgeChildSingleton->SendStop();
 
-  sImageBridgeChildSingleton = nullptr;
   *aDone = true;
   aBarrier->NotifyAll();
 }
@@ -248,10 +247,14 @@ static void ConnectImageBridge(ImageBridgeChild * child, ImageBridgeParent * par
 ImageBridgeChild::ImageBridgeChild()
   : mShuttingDown(false)
 {
+  MOZ_ASSERT(NS_IsMainThread());
+
   mTxn = new CompositableTransaction();
 }
 ImageBridgeChild::~ImageBridgeChild()
 {
+  MOZ_ASSERT(NS_IsMainThread());
+
   delete mTxn;
 }
 
@@ -487,7 +490,10 @@ ImageBridgeChild::EndTransaction()
   if (!mTxn->mOperations.empty()) {
     cset.AppendElements(&mTxn->mOperations.front(), mTxn->mOperations.size());
   }
-  ShadowLayerForwarder::PlatformSyncBeforeUpdate();
+
+  if (!IsSameProcess()) {
+    ShadowLayerForwarder::PlatformSyncBeforeUpdate();
+  }
 
   AutoInfallibleTArray<EditReply, 10> replies;
 
@@ -544,7 +550,7 @@ PImageBridgeChild*
 ImageBridgeChild::StartUpInChildProcess(Transport* aTransport,
                                         ProcessId aOtherProcess)
 {
-  NS_ASSERTION(NS_IsMainThread(), "Should be on the main Thread!");
+  MOZ_ASSERT(NS_IsMainThread());
 
   gfxPlatform::GetPlatform();
 
@@ -569,7 +575,7 @@ ImageBridgeChild::StartUpInChildProcess(Transport* aTransport,
 
 void ImageBridgeChild::ShutDown()
 {
-  MOZ_ASSERT(NS_IsMainThread(), "Should be on the main Thread!");
+  MOZ_ASSERT(NS_IsMainThread());
   if (ImageBridgeChild::IsCreated()) {
     MOZ_ASSERT(!sImageBridgeChildSingleton->mShuttingDown);
 
@@ -596,6 +602,8 @@ void ImageBridgeChild::ShutDown()
         barrier.Wait();
       }
     }
+
+    sImageBridgeChildSingleton = nullptr;
 
     delete sImageBridgeChildThread;
     sImageBridgeChildThread = nullptr;

@@ -63,6 +63,7 @@ imgRequest::imgRequest(imgLoader* aLoader)
  , mValidator(nullptr)
  , mInnerWindowId(0)
  , mCORSMode(imgIRequest::CORS_NONE)
+ , mImageErrorCode(NS_OK)
  , mDecodeRequested(false)
  , mIsMultiPartChannel(false)
  , mGotData(false)
@@ -299,6 +300,47 @@ void imgRequest::ContinueCancel(nsresult aStatus)
   }
 }
 
+class imgRequestMainThreadEvict : public nsRunnable
+{
+public:
+  imgRequestMainThreadEvict(imgRequest *aImgRequest)
+    : mImgRequest(aImgRequest)
+  {
+    MOZ_ASSERT(!NS_IsMainThread(), "Create me off main thread only!");
+    MOZ_ASSERT(aImgRequest);
+  }
+
+  NS_IMETHOD Run()
+  {
+    MOZ_ASSERT(NS_IsMainThread(), "I should be running on the main thread!");
+    mImgRequest->ContinueEvict();
+    return NS_OK;
+  }
+private:
+  nsRefPtr<imgRequest> mImgRequest;
+};
+
+// EvictFromCache() is written to allowed to get called from any thread
+void imgRequest::EvictFromCache()
+{
+  /* The EvictFromCache() method here should only be called by this class. */
+  LOG_SCOPE(GetImgLog(), "imgRequest::EvictFromCache");
+
+  if (NS_IsMainThread()) {
+    ContinueEvict();
+  } else {
+    NS_DispatchToMainThread(new imgRequestMainThreadEvict(this));
+  }
+}
+
+// Helper-method used by EvictFromCache()
+void imgRequest::ContinueEvict()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  RemoveFromCache();
+}
+
 nsresult imgRequest::GetURI(ImageURL **aURI)
 {
   MOZ_ASSERT(aURI);
@@ -312,6 +354,11 @@ nsresult imgRequest::GetURI(ImageURL **aURI)
   }
 
   return NS_ERROR_FAILURE;
+}
+
+nsresult imgRequest::GetImageErrorCode()
+{
+  return mImageErrorCode;
 }
 
 nsresult imgRequest::GetSecurityInfo(nsISupports **aSecurityInfo)
@@ -668,6 +715,12 @@ NS_IMETHODIMP imgRequest::OnStopRequest(nsIRequest *aRequest, nsISupports *ctxt,
   if (mpchan)
     mpchan->GetIsLastPart(&lastPart);
 
+  bool isPartial = false;
+  if (mImage && (status == NS_ERROR_NET_PARTIAL_TRANSFER)) {
+    isPartial = true;
+    status = NS_OK; // fake happy face
+  }
+
   // Tell the image that it has all of the source data. Note that this can
   // trigger a failure, since the image might be waiting for more non-optional
   // data and this is the point where we break the news that it's not coming.
@@ -684,12 +737,19 @@ NS_IMETHODIMP imgRequest::OnStopRequest(nsIRequest *aRequest, nsISupports *ctxt,
 
   // If the request went through, update the cache entry size. Otherwise,
   // cancel the request, which removes us from the cache.
-  if (mImage && NS_SUCCEEDED(status)) {
+  if (mImage && NS_SUCCEEDED(status) && !isPartial) {
     // We update the cache entry size here because this is where we finish
     // loading compressed source data, which is part of our size calculus.
     UpdateCacheEntrySize();
   }
+  else if (isPartial) {
+    // Remove the partial image from the cache.
+    this->EvictFromCache();
+  }
   else {
+    mImageErrorCode = status;
+
+    // if the error isn't "just" a partial transfer
     // stops animations, removes from cache
     this->Cancel(status);
   }

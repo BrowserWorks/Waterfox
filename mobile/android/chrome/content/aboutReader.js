@@ -35,6 +35,7 @@ let AboutReader = function(doc, win) {
   Services.obs.addObserver(this, "Reader:Add", false);
   Services.obs.addObserver(this, "Reader:Remove", false);
   Services.obs.addObserver(this, "Reader:ListStatusReturn", false);
+  Services.obs.addObserver(this, "Gesture:DoubleTap", false);
 
   this._article = null;
 
@@ -198,9 +199,9 @@ AboutReader.prototype = {
         }
         break;
       }
-
       case "Reader:Remove": {
-        if (aData == this._article.url) {
+        let args = JSON.parse(aData);
+        if (args.url == this._article.url) {
           if (this._isReadingListItem != 0) {
             this._isReadingListItem = 0;
             this._updateToggleButton();
@@ -223,6 +224,19 @@ AboutReader.prototype = {
             }
           }
         }
+        break;
+      }
+
+      case "Gesture:DoubleTap": {
+        let args = JSON.parse(aData);
+        let scrollBy;
+        // Arbitary choice of innerHeight - 50 to give some context after scroll
+        if (args.y < (this._win.innerHeight / 2)) {
+          scrollBy = -this._win.innerHeight + 50;
+        } else {
+          scrollBy = this._win.innerHeight - 50;
+        }
+        this._scrollPage(scrollBy);
         break;
       }
     }
@@ -267,8 +281,19 @@ AboutReader.prototype = {
         Services.obs.removeObserver(this, "Reader:Add");
         Services.obs.removeObserver(this, "Reader:Remove");
         Services.obs.removeObserver(this, "Reader:ListStatusReturn");
+        Services.obs.removeObserver(this, "Gesture:DoubleTap");
         break;
     }
+  },
+
+  _scrollPage: function Reader_scrollPage(scrollByPixels) {
+    let viewport = BrowserApp.selectedTab.getViewport();
+    let newY = Math.min(Math.max(viewport.cssY + scrollByPixels, viewport.cssPageTop), viewport.cssPageBottom);
+    let newRect = new Rect(viewport.cssX, newY, viewport.cssWidth, viewport.cssHeight);
+
+    this._setToolbarVisibility(false);
+    this._scrolled  = true;
+    ZoomHelper.zoomToRect(newRect, -1, false, false);
   },
 
   _updateToggleButton: function Reader_updateToggleButton() {
@@ -322,7 +347,8 @@ AboutReader.prototype = {
       // In addition to removing the article from the cache (handled in
       // browser.js), sending this message will cause the toggle button to be
       // updated (handled in this file).
-      Services.obs.notifyObservers(null, "Reader:Remove", this._article.url);
+      let json = JSON.stringify({ url: this._article.url, notify: true });
+      Services.obs.notifyObservers(null, "Reader:Remove", json);
 
       UITelemetry.addEvent("unsave.1", "button", null, "reader");
     }
@@ -492,7 +518,7 @@ AboutReader.prototype = {
     }
   },
 
-  _toggleToolbarVisibility: function Reader_toggleToolbarVisibility(visible) {
+  _toggleToolbarVisibility: function Reader_toggleToolbarVisibility() {
     this._setToolbarVisibility(!this._getToolbarVisibility());
   },
 

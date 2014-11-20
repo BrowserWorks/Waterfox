@@ -7,10 +7,10 @@
 #ifndef mozilla_dom_MetadataHelper_h
 #define mozilla_dom_MetadataHelper_h
 
-#include "AsyncHelper.h"
 #include "FileHelper.h"
 #include "js/TypeDecls.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/dom/AsyncHelper.h"
 #include "nsAutoPtr.h"
 
 namespace mozilla {
@@ -76,10 +76,10 @@ private:
 class MetadataHelper : public FileHelper
 {
 public:
-  MetadataHelper(LockedFile* aLockedFile,
-                 FileRequest* aFileRequest,
+  MetadataHelper(FileHandleBase* aFileHandle,
+                 FileRequestBase* aFileRequest,
                  MetadataParameters* aParams)
-  : FileHelper(aLockedFile, aFileRequest),
+  : FileHelper(aFileHandle, aFileRequest),
     mParams(aParams)
   { }
 

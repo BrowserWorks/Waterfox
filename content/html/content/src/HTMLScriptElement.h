@@ -23,9 +23,8 @@ public:
   using Element::GetText;
   using Element::SetText;
 
-  HTMLScriptElement(already_AddRefed<nsINodeInfo>& aNodeInfo,
+  HTMLScriptElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo,
                     FromParser aFromParser);
-  virtual ~HTMLScriptElement();
 
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
@@ -54,7 +53,7 @@ public:
                               const nsAString& aValue,
                               nsAttrValue& aResult) MOZ_OVERRIDE;
 
-  virtual nsresult Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
 
   // Element
   virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
@@ -74,6 +73,8 @@ public:
   void SetAsync(bool aValue, ErrorResult& rv);
 
 protected:
+  virtual ~HTMLScriptElement();
+
   virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;
   // nsScriptElement
   virtual bool HasScriptContent() MOZ_OVERRIDE;

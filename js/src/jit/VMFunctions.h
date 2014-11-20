@@ -188,6 +188,27 @@ struct VMFunction
         return stackSlots;
     }
 
+    size_t doubleByRefArgs() const {
+        size_t count = 0;
+
+        // Fetch all explicit arguments.
+        uint32_t n =
+            ((1 << (explicitArgs * 2)) - 1) // = Explicit argument mask.
+            & argumentProperties;
+
+        // Filter double-size arguments (0x5 = 0b0101) and take (&) only
+        // arguments passed by reference (0b1010 >> 1 == 0b0101).
+        n = (n & 0x55555555) & (n >> 1);
+
+        // Add the number of double-word transfered by refference. (expect a
+        // few loop iterations)
+        while (n) {
+            count++;
+            n &= n - 1;
+        }
+        return count;
+    }
+
     VMFunction()
       : wrapped(nullptr),
         explicitArgs(0),
@@ -358,6 +379,18 @@ template <> struct TypeToRootType<HandleShape> {
 };
 template <> struct TypeToRootType<HandleTypeObject> {
     static const uint32_t result = VMFunction::RootCell;
+};
+template <> struct TypeToRootType<HandleScript> {
+    static const uint32_t result = VMFunction::RootCell;
+};
+template <> struct TypeToRootType<Handle<StaticBlockObject *> > {
+    static const uint32_t result = VMFunction::RootObject;
+};
+template <> struct TypeToRootType<Handle<StaticWithObject *> > {
+    static const uint32_t result = VMFunction::RootCell;
+};
+template <class T> struct TypeToRootType<Handle<T> > {
+    // Fail for Handle types that aren't specialized above.
 };
 
 template <class> struct OutParamToDataType { static const DataType result = Type_Void; };
@@ -647,6 +680,7 @@ uint32_t GetIndexFromString(JSString *str);
 
 bool DebugPrologue(JSContext *cx, BaselineFrame *frame, jsbytecode *pc, bool *mustReturn);
 bool DebugEpilogue(JSContext *cx, BaselineFrame *frame, jsbytecode *pc, bool ok);
+bool DebugEpilogueOnBaselineReturn(JSContext *cx, BaselineFrame *frame, jsbytecode *pc);
 
 bool StrictEvalPrologue(JSContext *cx, BaselineFrame *frame);
 bool HeavyweightFunPrologue(JSContext *cx, BaselineFrame *frame);
@@ -687,6 +721,7 @@ bool SetDenseElement(JSContext *cx, HandleObject obj, int32_t index, HandleValue
 #ifdef DEBUG
 void AssertValidObjectPtr(JSContext *cx, JSObject *obj);
 void AssertValidStringPtr(JSContext *cx, JSString *str);
+void AssertValidSymbolPtr(JSContext *cx, JS::Symbol *sym);
 void AssertValidValue(JSContext *cx, Value *v);
 #endif
 

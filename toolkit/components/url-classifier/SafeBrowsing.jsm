@@ -24,17 +24,19 @@ function getLists(prefName) {
 }
 
 // These may be a comma-separated lists of tables.
-const phishingLists = getLists("urlclassifier.phish_table");
-const malwareLists = getLists("urlclassifier.malware_table");
+const phishingLists = getLists("urlclassifier.phishTable");
+const malwareLists = getLists("urlclassifier.malwareTable");
 const downloadBlockLists = getLists("urlclassifier.downloadBlockTable");
 const downloadAllowLists = getLists("urlclassifier.downloadAllowTable");
+const trackingProtectionLists = getLists("urlclassifier.trackingTable");
 
 var debug = false;
 function log(...stuff) {
   if (!debug)
     return;
 
-  let msg = "SafeBrowsing: " + stuff.join(" ");
+  var d = new Date();
+  let msg = "SafeBrowsing: " + d.toTimeString() + ": " + stuff.join(" ");
   Services.console.logStringMessage(msg);
   dump(msg + "\n");
 }
@@ -48,22 +50,28 @@ this.SafeBrowsing = {
     }
 
     Services.prefs.addObserver("browser.safebrowsing", this.readPrefs.bind(this), false);
+    Services.prefs.addObserver("privacy.trackingprotection", this.readPrefs.bind(this), false);
     this.readPrefs();
 
     // Register our two types of tables, and add custom Mozilla entries
     let listManager = Cc["@mozilla.org/url-classifier/listmanager;1"].
                       getService(Ci.nsIUrlListManager);
     for (let i = 0; i < phishingLists.length; ++i) {
-      listManager.registerTable(phishingLists[i], false);
+      listManager.registerTable(phishingLists[i], this.updateURL, this.gethashURL);
     }
     for (let i = 0; i < malwareLists.length; ++i) {
-      listManager.registerTable(malwareLists[i], false);
+      listManager.registerTable(malwareLists[i], this.updateURL, this.gethashURL);
     }
     for (let i = 0; i < downloadBlockLists.length; ++i) {
-      listManager.registerTable(downloadBlockLists[i], false);
+      listManager.registerTable(downloadBlockLists[i], this.updateURL, this.gethashURL);
     }
     for (let i = 0; i < downloadAllowLists.length; ++i) {
-      listManager.registerTable(downloadAllowLists[i], false);
+      listManager.registerTable(downloadAllowLists[i], this.updateURL, this.gethashURL);
+    }
+    for (let i = 0; i < trackingProtectionLists.length; ++i) {
+      listManager.registerTable(trackingProtectionLists[i],
+                                this.trackingUpdateURL,
+                                this.trackingGethashURL);
     }
     this.addMozEntries();
 
@@ -99,14 +107,16 @@ this.SafeBrowsing = {
 
     debug = Services.prefs.getBoolPref("browser.safebrowsing.debug");
     this.phishingEnabled = Services.prefs.getBoolPref("browser.safebrowsing.enabled");
-    this.malwareEnabled  = Services.prefs.getBoolPref("browser.safebrowsing.malware.enabled");
+    this.malwareEnabled = Services.prefs.getBoolPref("browser.safebrowsing.malware.enabled");
+    this.trackingEnabled = Services.prefs.getBoolPref("privacy.trackingprotection.enabled");
     this.updateProviderURLs();
 
     // XXX The listManager backend gets confused if this is called before the
     // lists are registered. So only call it here when a pref changes, and not
     // when doing initialization. I expect to refactor this later, so pardon the hack.
-    if (this.initialized)
+    if (this.initialized) {
       this.controlUpdateChecking();
+    }
   },
 
 
@@ -134,17 +144,15 @@ this.SafeBrowsing = {
 
     this.updateURL  = this.updateURL.replace("SAFEBROWSING_ID", clientID);
     this.gethashURL = this.gethashURL.replace("SAFEBROWSING_ID", clientID);
-
-    let listManager = Cc["@mozilla.org/url-classifier/listmanager;1"].
-                      getService(Ci.nsIUrlListManager);
-
-    listManager.setUpdateUrl(this.updateURL);
-    listManager.setGethashUrl(this.gethashURL);
+    this.trackingUpdateURL = Services.urlFormatter.formatURLPref(
+      "browser.trackingprotection.updateURL");
+    this.trackingGethashURL = Services.urlFormatter.formatURLPref(
+      "browser.trackingprotection.gethashURL");
   },
 
-
   controlUpdateChecking: function() {
-    log("phishingEnabled:", this.phishingEnabled, "malwareEnabled:", this.malwareEnabled);
+    log("phishingEnabled:", this.phishingEnabled, "malwareEnabled:",
+        this.malwareEnabled, "trackingEnabled:", this.trackingEnabled);
 
     let listManager = Cc["@mozilla.org/url-classifier/listmanager;1"].
                       getService(Ci.nsIUrlListManager);
@@ -177,6 +185,14 @@ this.SafeBrowsing = {
         listManager.disableUpdate(downloadAllowLists[i]);
       }
     }
+    for (let i = 0; i < trackingProtectionLists.length; ++i) {
+      if (this.trackingEnabled) {
+        listManager.enableUpdate(trackingProtectionLists[i]);
+      } else {
+        listManager.disableUpdate(trackingProtectionLists[i]);
+      }
+    }
+    listManager.maybeToggleUpdateChecking();
   },
 
 

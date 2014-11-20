@@ -17,13 +17,6 @@
 #include "gc/Zone.h"
 #include "vm/Shape.h"
 
-#ifdef JS_YARR
-#ifdef JS_ION
-#include "yarr/YarrJIT.h"
-#endif
-#include "yarr/YarrInterpreter.h"
-#endif // JS_YARR
-
 /*
  * JavaScript Regular Expressions
  *
@@ -44,7 +37,7 @@
  */
 namespace js {
 
-class MatchPair;
+struct MatchPair;
 class MatchPairs;
 class RegExpShared;
 
@@ -111,17 +104,6 @@ class RegExpShared
 
     typedef frontend::TokenStream TokenStream;
 
-#ifdef JS_YARR
-    typedef JSC::Yarr::BytecodePattern BytecodePattern;
-    typedef JSC::Yarr::ErrorCode ErrorCode;
-    typedef JSC::Yarr::YarrPattern YarrPattern;
-#ifdef JS_ION
-    typedef JSC::Yarr::JSGlobalData JSGlobalData;
-    typedef JSC::Yarr::YarrCodeBlock YarrCodeBlock;
-    typedef JSC::Yarr::YarrJITCompileMode YarrJITCompileMode;
-#endif
-#endif
-
     /* Source to the RegExp, for lazy compilation. */
     HeapPtrAtom        source;
 
@@ -130,68 +112,29 @@ class RegExpShared
     bool               canStringMatch;
     bool               marked_;
 
-#ifdef JS_YARR
-
 #ifdef JS_ION
-    /* Note: Native code is valid only if |codeBlock.isFallBack() == false|. */
-    YarrCodeBlock   codeBlock;
+    HeapPtrJitCode     jitCodeLatin1;
+    HeapPtrJitCode     jitCodeTwoByte;
 #endif
-    BytecodePattern *bytecode;
-
-#else // JS_YARR
-
-#ifdef JS_ION
-    HeapPtrJitCode     jitCode;
-#endif
-    uint8_t            *byteCode;
-
-#endif // JS_YARR
+    uint8_t            *byteCodeLatin1;
+    uint8_t            *byteCodeTwoByte;
 
     // Tables referenced by JIT code.
     Vector<uint8_t *, 0, SystemAllocPolicy> tables;
 
     /* Internal functions. */
-    bool compile(JSContext *cx, bool matchOnly, const jschar *sampleChars, size_t sampleLength);
-    bool compile(JSContext *cx, HandleAtom pattern, bool matchOnly, const jschar *sampleChars, size_t sampleLength);
+    bool compile(JSContext *cx, HandleLinearString input);
+    bool compile(JSContext *cx, HandleAtom pattern, HandleLinearString input);
 
-    bool compileIfNecessary(JSContext *cx, const jschar *sampleChars, size_t sampleLength);
-
-#ifdef JS_YARR
-    bool compileMatchOnlyIfNecessary(JSContext *cx);
-#endif
+    bool compileIfNecessary(JSContext *cx, HandleLinearString input);
 
   public:
     RegExpShared(JSAtom *source, RegExpFlag flags);
     ~RegExpShared();
 
-#ifdef JS_YARR
-    /* Static functions to expose some Yarr logic. */
-
-    // This function should be deleted once bad Android platforms phase out. See bug 604774.
-    static bool isJITRuntimeEnabled(JSContext *cx) {
-        #ifdef JS_ION
-        # if defined(ANDROID)
-            return !cx->jitIsBroken;
-        # else
-            return true;
-        # endif
-        #else
-            return false;
-        #endif
-    }
-    static void reportYarrError(ExclusiveContext *cx, TokenStream *ts, ErrorCode error);
-    static bool checkSyntax(ExclusiveContext *cx, TokenStream *tokenStream, JSLinearString *source);
-#endif // JS_YARR
-
     /* Primary interface: run this regular expression on the given string. */
-    RegExpRunStatus execute(JSContext *cx, const jschar *chars, size_t length,
-                            size_t *lastIndex, MatchPairs &matches);
-
-#ifdef JS_YARR
-    /* Run the regular expression without collecting matches, for test(). */
-    RegExpRunStatus executeMatchOnly(JSContext *cx, const jschar *chars, size_t length,
-                                     size_t *lastIndex, MatchPair &match);
-#endif
+    RegExpRunStatus execute(JSContext *cx, HandleLinearString input, size_t *lastIndex,
+                            MatchPairs &matches);
 
     // Register a table with this RegExpShared, and take ownership.
     bool addTable(uint8_t *table) {
@@ -201,7 +144,7 @@ class RegExpShared
     /* Accessors */
 
     size_t getParenCount() const {
-        JS_ASSERT(isCompiled(true) || isCompiled(false) || canStringMatch);
+        JS_ASSERT(isCompiled() || canStringMatch);
         return parenCount;
     }
 
@@ -215,40 +158,38 @@ class RegExpShared
     bool multiline() const              { return flags & MultilineFlag; }
     bool sticky() const                 { return flags & StickyFlag; }
 
-#ifdef JS_YARR
-
-    bool hasCode(bool matchOnly) const {
+    bool hasJitCodeLatin1() const {
 #ifdef JS_ION
-        return matchOnly ? codeBlock.has16BitCodeMatchOnly() : codeBlock.has16BitCode();
+        return jitCodeLatin1 != nullptr;
 #else
         return false;
 #endif
     }
-    bool hasBytecode() const {
-        return bytecode != nullptr;
-    }
-    bool isCompiled(bool matchOnly) const {
-        return hasBytecode() || hasCode(matchOnly);
-    }
-
-#else // JS_YARR
-
-    bool hasJitCode() const {
+    bool hasJitCodeTwoByte() const {
 #ifdef JS_ION
-        return jitCode != nullptr;
+        return jitCodeTwoByte != nullptr;
 #else
         return false;
 #endif
     }
-    bool hasByteCode() const {
-        return byteCode != nullptr;
+    bool hasByteCodeLatin1() const {
+        return byteCodeLatin1 != nullptr;
+    }
+    bool hasByteCodeTwoByte() const {
+        return byteCodeTwoByte != nullptr;
+    }
+    uint8_t *maybeByteCode(bool latin1) const {
+        return latin1 ? byteCodeLatin1 : byteCodeTwoByte;
     }
 
-    bool isCompiled(bool matchOnly) const {
-        return hasJitCode() || hasByteCode();
+    bool isCompiled(bool latin1) const {
+        if (latin1)
+            return hasJitCodeLatin1() || hasByteCodeLatin1();
+        return hasJitCodeTwoByte() || hasByteCodeTwoByte();
     }
-
-#endif // JS_YARR
+    bool isCompiled() const {
+        return isCompiled(true) || isCompiled(false);
+    }
 
     void trace(JSTracer *trc);
 

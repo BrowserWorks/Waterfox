@@ -33,7 +33,6 @@ class nsStyleSheetService MOZ_FINAL
 {
  public:
   nsStyleSheetService();
-  ~nsStyleSheetService();
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSISTYLESHEETSERVICE
@@ -51,6 +50,7 @@ class nsStyleSheetService MOZ_FINAL
   static nsStyleSheetService *gInstance;
 
  private:
+  ~nsStyleSheetService();
 
   void RegisterFromEnumerator(nsICategoryManager  *aManager,
                                           const char          *aCategory,
@@ -63,7 +63,7 @@ class nsStyleSheetService MOZ_FINAL
   // Like LoadAndRegisterSheet, but doesn't notify.  If successful, the
   // new sheet will be the last sheet in mSheets[aSheetType].
   nsresult LoadAndRegisterSheetInternal(nsIURI *aSheetURI,
-                                                    uint32_t aSheetType);
+                                        uint32_t aSheetType);
 
   nsCOMArray<nsIStyleSheet> mSheets[3];
 };

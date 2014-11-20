@@ -10,11 +10,11 @@ let toolbox, target;
 let tempScope = {};
 
 function test() {
-  addTab("about:blank", function(aBrowser, aTab) {
+  addTab("about:blank").then(function(aTab) {
     target = TargetFactory.forTab(gBrowser.selectedTab);
     loadWebConsole(aTab).then(function() {
       console.log('loaded');
-    }, console.error);
+    });
   });
 }
 
@@ -24,7 +24,7 @@ function loadWebConsole(aTab) {
   return gDevTools.showToolbox(target, "webconsole").then(function(aToolbox) {
     toolbox = aToolbox;
     checkToolLoading();
-  }, console.error);
+  });
 }
 
 function checkToolLoading() {
@@ -35,7 +35,7 @@ function checkToolLoading() {
     selectAndCheckById("styleeditor").then(function() {
       testToggle();
     });
-  }, console.error);
+  });
 }
 
 function selectAndCheckById(id) {
@@ -48,7 +48,7 @@ function selectAndCheckById(id) {
 }
 
 function testToggle() {
-  toolbox.once("destroyed", function() {
+  toolbox.once("destroyed", () => {
     // Cannot reuse a target after it's destroyed.
     target = TargetFactory.forTab(gBrowser.selectedTab);
     gDevTools.showToolbox(target, "styleeditor").then(function(aToolbox) {
@@ -56,7 +56,7 @@ function testToggle() {
       is(toolbox.currentToolId, "styleeditor", "The style editor is selected");
       finishUp();
     });
-  }.bind(this));
+  });
 
   toolbox.destroy();
 }

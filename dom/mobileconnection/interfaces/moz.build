@@ -5,10 +5,12 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 XPIDL_SOURCES += [
+    'nsICellInfo.idl',
     'nsIMobileCellInfo.idl',
     'nsIMobileConnectionInfo.idl',
     'nsIMobileConnectionProvider.idl',
     'nsIMobileNetworkInfo.idl',
+    'nsINeighboringCellInfo.idl',
 ]
 
 XPIDL_MODULE = 'dom_mobileconnection'

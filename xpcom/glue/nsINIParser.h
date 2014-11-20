@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -23,103 +24,104 @@ class nsIFile;
 class NS_COM_GLUE nsINIParser
 {
 public:
-    nsINIParser() { }
-    ~nsINIParser() { }
+  nsINIParser() {}
+  ~nsINIParser() {}
 
-    /**
-     * Initialize the INIParser with a nsIFile. If this method fails, no
-     * other methods should be called. This method reads and parses the file,
-     * the class does not hold a file handle open. An instance must only be
-     * initialized once.
-     */
-    nsresult Init(nsIFile* aFile);
+  /**
+   * Initialize the INIParser with a nsIFile. If this method fails, no
+   * other methods should be called. This method reads and parses the file,
+   * the class does not hold a file handle open. An instance must only be
+   * initialized once.
+   */
+  nsresult Init(nsIFile* aFile);
 
-    /**
-     * Initialize the INIParser with a file path. If this method fails, no
-     * other methods should be called. This method reads and parses the file,
-     * the class does not hold a file handle open. An instance must only
-     * be initialized once.
-     */
-    nsresult Init(const char *aPath);
+  /**
+   * Initialize the INIParser with a file path. If this method fails, no
+   * other methods should be called. This method reads and parses the file,
+   * the class does not hold a file handle open. An instance must only
+   * be initialized once.
+   */
+  nsresult Init(const char* aPath);
 
-    /**
-     * Callback for GetSections
-     * @return false to stop enumeration, or true to continue.
-     */
-    typedef bool
-    (* INISectionCallback)(const char *aSection, void *aClosure);
+  /**
+   * Callback for GetSections
+   * @return false to stop enumeration, or true to continue.
+   */
+  typedef bool (*INISectionCallback)(const char* aSection, void* aClosure);
 
-    /**
-     * Enumerate the sections within the INI file.
-     */
-    nsresult GetSections(INISectionCallback aCB, void *aClosure);
+  /**
+   * Enumerate the sections within the INI file.
+   */
+  nsresult GetSections(INISectionCallback aCB, void* aClosure);
 
-    /**
-     * Callback for GetStrings
-     * @return false to stop enumeration, or true to continue
-     */
-    typedef bool
-    (* INIStringCallback)(const char *aString, const char *aValue,
-                          void *aClosure);
+  /**
+   * Callback for GetStrings
+   * @return false to stop enumeration, or true to continue
+   */
+  typedef bool (*INIStringCallback)(const char* aString, const char* aValue,
+                                    void* aClosure);
 
-    /**
-     * Enumerate the strings within a section. If the section does
-     * not exist, this function will silently return.
-     */
-    nsresult GetStrings(const char *aSection,
-                        INIStringCallback aCB, void *aClosure);
+  /**
+   * Enumerate the strings within a section. If the section does
+   * not exist, this function will silently return.
+   */
+  nsresult GetStrings(const char* aSection,
+                      INIStringCallback aCB, void* aClosure);
 
-    /**
-     * Get the value of the specified key in the specified section
-     * of the INI file represented by this instance.
-     *
-     * @param aSection      section name
-     * @param aKey          key name
-     * @param aResult       the value found
-     * @throws NS_ERROR_FAILURE if the specified section/key could not be
-     *                          found.
-     */
-    nsresult GetString(const char *aSection, const char *aKey, 
-                       nsACString &aResult);
+  /**
+   * Get the value of the specified key in the specified section
+   * of the INI file represented by this instance.
+   *
+   * @param aSection      section name
+   * @param aKey          key name
+   * @param aResult       the value found
+   * @throws NS_ERROR_FAILURE if the specified section/key could not be
+   *                          found.
+   */
+  nsresult GetString(const char* aSection, const char* aKey,
+                     nsACString& aResult);
 
-    /**
-     * Alternate signature of GetString that uses a pre-allocated buffer
-     * instead of a nsACString (for use in the standalone glue before
-     * the glue is initialized).
-     *
-     * @throws NS_ERROR_LOSS_OF_SIGNIFICANT_DATA if the aResult buffer is not
-     *         large enough for the data. aResult will be filled with as
-     *         much data as possible.
-     *         
-     * @see GetString [1]
-     */
-    nsresult GetString(const char *aSection, const char* aKey,
-                       char *aResult, uint32_t aResultLen);
+  /**
+   * Alternate signature of GetString that uses a pre-allocated buffer
+   * instead of a nsACString (for use in the standalone glue before
+   * the glue is initialized).
+   *
+   * @throws NS_ERROR_LOSS_OF_SIGNIFICANT_DATA if the aResult buffer is not
+   *         large enough for the data. aResult will be filled with as
+   *         much data as possible.
+   *
+   * @see GetString [1]
+   */
+  nsresult GetString(const char* aSection, const char* aKey,
+                     char* aResult, uint32_t aResultLen);
 
 private:
-    struct INIValue
+  struct INIValue
+  {
+    INIValue(const char* aKey, const char* aValue)
+      : key(aKey)
+      , value(aValue)
     {
-        INIValue(const char *aKey, const char *aValue)
-            : key(aKey), value(aValue) { }
+    }
 
-        const char *key;
-        const char *value;
-        nsAutoPtr<INIValue> next;
-    };
+    const char* key;
+    const char* value;
+    nsAutoPtr<INIValue> next;
+  };
 
-    struct GSClosureStruct
-    {
-        INISectionCallback  usercb;
-        void               *userclosure;
-    };
+  struct GSClosureStruct
+  {
+    INISectionCallback usercb;
+    void* userclosure;
+  };
 
-    nsClassHashtable<nsDepCharHashKey, INIValue> mSections;
-    nsAutoArrayPtr<char> mFileContents;    
+  nsClassHashtable<nsDepCharHashKey, INIValue> mSections;
+  nsAutoArrayPtr<char> mFileContents;
 
-    nsresult InitFromFILE(FILE *fd);
+  nsresult InitFromFILE(FILE* aFd);
 
-    static PLDHashOperator GetSectionsCB(const char *aKey,
-                                         INIValue *aData, void *aClosure);
+  static PLDHashOperator GetSectionsCB(const char* aKey,
+                                       INIValue* aData, void* aClosure);
 };
 
 #endif /* nsINIParser_h__ */

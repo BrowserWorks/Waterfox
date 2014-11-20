@@ -103,49 +103,12 @@ inFlasher::SetInvert(bool aInvert)
 NS_IMETHODIMP
 inFlasher::RepaintElement(nsIDOMElement* aElement)
 {
-  NS_ENSURE_ARG_POINTER(aElement);
-  nsIFrame* frame = inLayoutUtils::GetFrameFor(aElement);
-  if (!frame) return NS_OK;
-
-  frame->InvalidateFrame();
-
   return NS_OK;
 }
 
 NS_IMETHODIMP
 inFlasher::DrawElementOutline(nsIDOMElement* aElement)
 {
-  NS_ENSURE_ARG_POINTER(aElement);
-  nsCOMPtr<nsIDOMWindow> window = inLayoutUtils::GetWindowFor(aElement);
-  if (!window) return NS_OK;
-  nsCOMPtr<nsIPresShell> presShell = inLayoutUtils::GetPresShellFor(window);
-  if (!presShell) return NS_OK;
-
-  nsIFrame* frame = inLayoutUtils::GetFrameFor(aElement);
-
-  bool isFirstFrame = true;
-
-  while (frame) {
-    nsPoint offset;
-    nsIWidget* widget = frame->GetNearestWidget(offset);
-    if (widget) {
-      nsRefPtr<nsRenderingContext> rcontext = new nsRenderingContext();
-      rcontext->Init(frame->PresContext()->DeviceContext(),
-                     widget->GetThebesSurface());
-
-      nsRect rect(offset, frame->GetSize());
-      if (mInvert) {
-        rcontext->InvertRect(rect);
-      }
-
-      bool isLastFrame = frame->GetNextContinuation() == nullptr;
-      DrawOutline(rect.x, rect.y, rect.width, rect.height, rcontext,
-                  isFirstFrame, isLastFrame);
-      isFirstFrame = false;
-    }
-    frame = frame->GetNextContinuation();
-  }
-
   return NS_OK;
 }
 

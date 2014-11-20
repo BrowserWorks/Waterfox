@@ -45,6 +45,7 @@
 #include "prtime.h"
 #include "CSSVariableResolver.h"
 #include "nsCSSParser.h"
+#include "CounterStyleManager.h"
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #include <malloc.h>
@@ -591,11 +592,7 @@ SpecifiedCalcToComputedCalc(const nsCSSValue& aValue, nsStyleCoord& aCoord,
                                aCanStoreInRuleTree);
   nsRuleNode::ComputedCalc vals = ComputeCalc(aValue, ops);
 
-  nsStyleCoord::Calc *calcObj =
-    new (aStyleContext->Alloc(sizeof(nsStyleCoord::Calc))) nsStyleCoord::Calc;
-  // Because we use aStyleContext->Alloc(), we have to store the result
-  // on the style context and not in the rule tree.
-  aCanStoreInRuleTree = false;
+  nsStyleCoord::Calc* calcObj = new nsStyleCoord::Calc;
 
   calcObj->mLength = vals.mLength;
   calcObj->mPercent = vals.mPercent;
@@ -621,7 +618,7 @@ nsRuleNode::SpecifiedCalcToComputedCalc(const nsCSSValue& aValue,
 nsRuleNode::ComputeComputedCalc(const nsStyleCoord& aValue,
                                 nscoord aPercentageBasis)
 {
-  nsStyleCoord::Calc *calc = aValue.GetCalcValue();
+  nsStyleCoord::Calc* calc = aValue.GetCalcValue();
   return calc->mLength +
          NSToCoordFloorClamped(aPercentageBasis * calc->mPercent);
 }
@@ -1334,8 +1331,7 @@ SetFactor(const nsCSSValue& aValue, float& aField, bool& aCanStoreInRuleTree,
   NS_NOTREACHED("SetFactor: inappropriate unit");
 }
 
-// Overloaded new operator. Initializes the memory to 0 and relies on an arena
-// (which comes from the presShell) to perform the allocation.
+// Overloaded new operator that allocates from a presShell arena.
 void*
 nsRuleNode::operator new(size_t sz, nsPresContext* aPresContext) CPP_THROW_NEW
 {
@@ -1418,6 +1414,7 @@ nsRuleNode::nsRuleNode(nsPresContext* aContext, nsRuleNode* aParent,
   : mPresContext(aContext),
     mParent(aParent),
     mRule(aRule),
+    mNextSibling(nullptr),
     mDependentBits((uint32_t(aLevel) << NS_RULE_NODE_LEVEL_SHIFT) |
                    (aIsImportant ? NS_RULE_NODE_IS_IMPORTANT : 0)),
     mNoneBits(0),
@@ -2387,7 +2384,7 @@ nsRuleNode::SetDefaultOnRoot(const nsStyleStructID aSID, nsStyleContext* aContex
     }
     case eStyleStruct_List:
     {
-      nsStyleList* list = new (mPresContext) nsStyleList();
+      nsStyleList* list = new (mPresContext) nsStyleList(mPresContext);
       aContext->SetStyle(eStyleStruct_List, list);
       return list;
     }
@@ -2745,12 +2742,10 @@ ComputeScriptLevelSize(const nsStyleFont* aFont, const nsStyleFont* aParentFont,
   // Compute the size we would have had if minscriptsize had never been
   // applied, also prevent overflow (bug 413274)
   *aUnconstrainedSize =
-    NSToCoordRound(std::min(aParentFont->mScriptUnconstrainedSize*scriptLevelScale,
-                          double(nscoord_MAX)));
+    NSToCoordRoundWithClamp(aParentFont->mScriptUnconstrainedSize*scriptLevelScale);
   // Compute the size we could get via scriptlevel change
   nscoord scriptLevelSize =
-    NSToCoordRound(std::min(aParentFont->mSize*scriptLevelScale,
-                          double(nscoord_MAX)));
+    NSToCoordRoundWithClamp(aParentFont->mSize*scriptLevelScale);
   if (scriptLevelScale <= 1.0) {
     if (aParentFont->mSize <= minScriptSize) {
       // We can't decrease the font size at all, so just stick to no change
@@ -3957,6 +3952,7 @@ nsRuleNode::ComputeFontData(void* aStartStruct,
         case eFamily_moz_fixed:
           fl = FontFamilyList(eFamily_moz_fixed);
           generic = kGenericFont_moz_fixed;
+          break;
         default:
           fl.Clear();
           generic = kGenericFont_NONE;
@@ -4828,7 +4824,7 @@ nsRuleNode::ComputeDisplayData(void* aStartStruct,
 
   // Fill in the transitions we just allocated with the appropriate values.
   for (uint32_t i = 0; i < numTransitions; ++i) {
-    nsTransition *transition = &display->mTransitions[i];
+    StyleTransition *transition = &display->mTransitions[i];
 
     if (i >= delay.num) {
       transition->SetDelay(display->mTransitions[i % delay.num].GetDelay());
@@ -4985,7 +4981,7 @@ nsRuleNode::ComputeDisplayData(void* aStartStruct,
 
   // Fill in the animations we just allocated with the appropriate values.
   for (uint32_t i = 0; i < numAnimations; ++i) {
-    nsAnimation *animation = &display->mAnimations[i];
+    StyleAnimation *animation = &display->mAnimations[i];
 
     if (i >= animDelay.num) {
       animation->SetDelay(display->mAnimations[i % animDelay.num].GetDelay());
@@ -7016,14 +7012,59 @@ nsRuleNode::ComputeListData(void* aStartStruct,
                             const RuleDetail aRuleDetail,
                             const bool aCanStoreInRuleTree)
 {
-  COMPUTE_START_INHERITED(List, (), list, parentList)
+  COMPUTE_START_INHERITED(List, (mPresContext), list, parentList)
 
-  // list-style-type: enum, inherit, initial
-  SetDiscrete(*aRuleData->ValueForListStyleType(),
-              list->mListStyleType, canStoreInRuleTree,
-              SETDSC_ENUMERATED | SETDSC_UNSET_INHERIT,
-              parentList->mListStyleType,
-              NS_STYLE_LIST_STYLE_DISC, 0, 0, 0, 0);
+  // list-style-type: string, none, inherit, initial
+  const nsCSSValue* typeValue = aRuleData->ValueForListStyleType();
+  switch (typeValue->GetUnit()) {
+    case eCSSUnit_Unset:
+    case eCSSUnit_Inherit: {
+      canStoreInRuleTree = false;
+      nsString type;
+      parentList->GetListStyleType(type);
+      list->SetListStyleType(type, parentList->GetCounterStyle());
+      break;
+    }
+    case eCSSUnit_Initial:
+      list->SetListStyleType(NS_LITERAL_STRING("disc"), mPresContext);
+      break;
+    case eCSSUnit_Ident: {
+      nsString typeIdent;
+      typeValue->GetStringValue(typeIdent);
+      list->SetListStyleType(typeIdent, mPresContext);
+      break;
+    }
+    case eCSSUnit_Enumerated: {
+      // For compatibility with html attribute map.
+      // This branch should never be called for value from CSS.
+      int32_t intValue = typeValue->GetIntValue();
+      nsAutoString name;
+      switch (intValue) {
+        case NS_STYLE_LIST_STYLE_LOWER_ROMAN:
+          name.AssignLiteral(MOZ_UTF16("lower-roman"));
+          break;
+        case NS_STYLE_LIST_STYLE_UPPER_ROMAN:
+          name.AssignLiteral(MOZ_UTF16("upper-roman"));
+          break;
+        case NS_STYLE_LIST_STYLE_LOWER_ALPHA:
+          name.AssignLiteral(MOZ_UTF16("lower-alpha"));
+          break;
+        case NS_STYLE_LIST_STYLE_UPPER_ALPHA:
+          name.AssignLiteral(MOZ_UTF16("upper-alpha"));
+          break;
+        default:
+          CopyASCIItoUTF16(nsCSSProps::ValueToKeyword(
+                  intValue, nsCSSProps::kListStyleKTable), name);
+          break;
+      }
+      list->SetListStyleType(name, mPresContext);
+      break;
+    }
+    case eCSSUnit_Null:
+      break;
+    default:
+      NS_NOTREACHED("Unexpected value unit");
+  }
 
   // list-style-image: url, none, inherit
   const nsCSSValue* imageValue = aRuleData->ValueForListStyleImage();
@@ -8879,18 +8920,8 @@ nsRuleNode::Mark()
     node->mDependentBits |= NS_RULE_NODE_GC_MARK;
 }
 
-static PLDHashOperator
-SweepRuleNodeChildren(PLDHashTable *table, PLDHashEntryHdr *hdr,
-                      uint32_t number, void *arg)
-{
-  ChildrenHashEntry *entry = static_cast<ChildrenHashEntry*>(hdr);
-  if (entry->mRuleNode->Sweep())
-    return PL_DHASH_REMOVE; // implies NEXT, unless |ed with STOP
-  return PL_DHASH_NEXT;
-}
-
 bool
-nsRuleNode::Sweep()
+nsRuleNode::DestroyIfNotMarked()
 {
   // If we're not marked, then we have to delete ourself.
   // However, we never allow the root node to GC itself, because nsStyleSet
@@ -8905,36 +8936,92 @@ nsRuleNode::Sweep()
 
   // Clear our mark, for the next time around.
   mDependentBits &= ~NS_RULE_NODE_GC_MARK;
+  return false;
+}
 
-  // Call sweep on the children, since some may not be marked, and
-  // remove any deleted children from the child lists.
-  if (HaveChildren()) {
-    uint32_t childrenDestroyed;
-    if (ChildrenAreHashed()) {
-      PLDHashTable *children = ChildrenHash();
-      uint32_t oldChildCount = children->entryCount;
-      PL_DHashTableEnumerate(children, SweepRuleNodeChildren, nullptr);
-      childrenDestroyed = children->entryCount - oldChildCount;
-    } else {
-      childrenDestroyed = 0;
-      for (nsRuleNode **children = ChildrenListPtr(); *children; ) {
-        nsRuleNode *next = (*children)->mNextSibling;
-        if ((*children)->Sweep()) {
-          // This rule node was destroyed, so implicitly advance by
-          // making *children point to the next entry.
-          *children = next;
-          ++childrenDestroyed;
-        } else {
-          // Advance.
-          children = &(*children)->mNextSibling;
-        }
+PLDHashOperator
+nsRuleNode::SweepHashEntry(PLDHashTable *table, PLDHashEntryHdr *hdr,
+                           uint32_t number, void *arg)
+{
+  ChildrenHashEntry *entry = static_cast<ChildrenHashEntry*>(hdr);
+  nsRuleNode* node = entry->mRuleNode;
+  if (node->DestroyIfNotMarked()) {
+    return PL_DHASH_REMOVE; // implies NEXT, unless |ed with STOP
+  }
+  if (node->HaveChildren()) {
+    // When children are hashed mNextSibling is not normally used but we use it
+    // here to build a list of children that needs to be swept.
+    nsRuleNode** headQ = static_cast<nsRuleNode**>(arg);
+    node->mNextSibling = *headQ;
+    *headQ = node;
+  }
+  return PL_DHASH_NEXT;
+}
+
+void
+nsRuleNode::SweepChildren(nsTArray<nsRuleNode*>& aSweepQueue)
+{
+  NS_ASSERTION(!(mDependentBits & NS_RULE_NODE_GC_MARK),
+               "missing DestroyIfNotMarked() call");
+  NS_ASSERTION(HaveChildren(),
+               "why call SweepChildren with no children?");
+  uint32_t childrenDestroyed = 0;
+  nsRuleNode* survivorsWithChildren = nullptr;
+  if (ChildrenAreHashed()) {
+    PLDHashTable* children = ChildrenHash();
+    uint32_t oldChildCount = children->entryCount;
+    PL_DHashTableEnumerate(children, SweepHashEntry, &survivorsWithChildren);
+    childrenDestroyed = oldChildCount - children->entryCount;
+    if (childrenDestroyed == oldChildCount) {
+      PL_DHashTableDestroy(children);
+      mChildren.asVoid = nullptr;
+    }
+  } else {
+    for (nsRuleNode** children = ChildrenListPtr(); *children; ) {
+      nsRuleNode* next = (*children)->mNextSibling;
+      if ((*children)->DestroyIfNotMarked()) {
+        // This rule node was destroyed, unlink it from the list by
+        // making *children point to the next entry.
+        *children = next;
+        ++childrenDestroyed;
+      } else {
+        children = &(*children)->mNextSibling;
       }
     }
-    mRefCnt -= childrenDestroyed;
-    NS_POSTCONDITION(IsRoot() || mRefCnt > 0,
-                     "We didn't get swept, so we'd better have style contexts "
-                     "pointing to us or to one of our descendants, which means "
-                     "we'd better have a nonzero mRefCnt here!");
+    survivorsWithChildren = ChildrenList();
+  }
+  if (survivorsWithChildren) {
+    aSweepQueue.AppendElement(survivorsWithChildren);
+  }
+  NS_ASSERTION(childrenDestroyed <= mRefCnt, "wrong ref count");
+  mRefCnt -= childrenDestroyed;
+  NS_POSTCONDITION(IsRoot() || mRefCnt > 0,
+                   "We didn't get swept, so we'd better have style contexts "
+                   "pointing to us or to one of our descendants, which means "
+                   "we'd better have a nonzero mRefCnt here!");
+}
+
+bool
+nsRuleNode::Sweep()
+{
+  NS_ASSERTION(IsRoot(), "must start sweeping at a root");
+  NS_ASSERTION(!mNextSibling, "root must not have mNextSibling");
+
+  if (DestroyIfNotMarked()) {
+    return true;
+  }
+
+  nsAutoTArray<nsRuleNode*, 70> sweepQueue;
+  sweepQueue.AppendElement(this);
+  while (!sweepQueue.IsEmpty()) {
+    nsTArray<nsRuleNode*>::index_type last = sweepQueue.Length() - 1;
+    nsRuleNode* ruleNode = sweepQueue[last];
+    sweepQueue.RemoveElementAt(last);
+    for (; ruleNode; ruleNode = ruleNode->mNextSibling) {
+      if (ruleNode->HaveChildren()) {
+        ruleNode->SweepChildren(sweepQueue);
+      }
+    }
   }
   return false;
 }

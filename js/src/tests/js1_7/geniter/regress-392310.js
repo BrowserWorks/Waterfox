@@ -1,4 +1,4 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -28,20 +28,13 @@ function test()
     actual = 'after yield';
   }
 
-  expect = /TypeError: attempt to send ("before yield"|value) to newborn generator/i;
   var gen = yielder();
-  try
-  {
-    gen.send('before yield');
-  }
-  catch(ex)
-  {
-    actual = ex + '';
-  }
-  reportMatch(expect, actual, 'send(value) to newborn generator');
-
   expect = 'before yield';
+  gen.send('foo');
+  reportCompare(expect, actual, 'send(value) to newborn generator');
+
   var gen = yielder();
+  expect = 'before yield';
   gen.send(undefined);
   reportCompare(expect, actual, 'send(undefined) to newborn generator');
 

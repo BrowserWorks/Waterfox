@@ -71,7 +71,7 @@
 #include "nsIParser.h"
 #include "nsCharsetSource.h"
 #include "nsIParserService.h"
-#include "nsCSSStyleSheet.h"
+#include "mozilla/CSSStyleSheet.h"
 #include "mozilla/css/Loader.h"
 #include "nsIScriptError.h"
 #include "nsIStyleSheetLinkingElement.h"
@@ -82,11 +82,14 @@
 #include "nsXULPopupManager.h"
 #include "nsCCUncollectableMarker.h"
 #include "nsURILoader.h"
+#include "mozilla/AddonPathService.h"
 #include "mozilla/BasicEvents.h"
 #include "mozilla/dom/Element.h"
+#include "mozilla/dom/NodeInfoInlines.h"
 #include "mozilla/dom/ProcessingInstruction.h"
 #include "mozilla/dom/XULDocumentBinding.h"
 #include "mozilla/EventDispatcher.h"
+#include "mozilla/LoadInfo.h"
 #include "mozilla/Preferences.h"
 #include "nsTextNode.h"
 #include "nsJSUtils.h"
@@ -1301,7 +1304,7 @@ XULDocument::Persist(const nsAString& aID,
     nsCOMPtr<nsIAtom> tag;
     int32_t nameSpaceID;
 
-    nsCOMPtr<nsINodeInfo> ni = element->GetExistingAttrNameFromQName(aAttr);
+    nsRefPtr<mozilla::dom::NodeInfo> ni = element->GetExistingAttrNameFromQName(aAttr);
     nsresult rv;
     if (ni) {
         tag = ni->NameAtom();
@@ -1967,7 +1970,7 @@ XULDocument::RemoveElementFromRefMap(Element* aElement)
 //
 
 nsresult
-XULDocument::Clone(nsINodeInfo *aNodeInfo, nsINode **aResult) const
+XULDocument::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const
 {
     // We don't allow cloning of a XUL document
     *aResult = nullptr;
@@ -2827,7 +2830,10 @@ XULDocument::LoadOverlayInternal(nsIURI* aURI, bool aIsDynamic,
             // that the overlay's JSObjects etc end up being created
             // with the right principal and in the correct
             // compartment.
-            channel->SetOwner(NodePrincipal());
+            nsCOMPtr<nsILoadInfo> loadInfo =
+                new LoadInfo(NodePrincipal(), LoadInfo::eInheritPrincipal,
+                             LoadInfo::eNotSandboxed);
+            channel->SetLoadInfo(loadInfo);
 
             rv = channel->AsyncOpen(listener, nullptr);
         }
@@ -3287,7 +3293,7 @@ XULDocument::DoneWalking()
 }
 
 NS_IMETHODIMP
-XULDocument::StyleSheetLoaded(nsCSSStyleSheet* aSheet,
+XULDocument::StyleSheetLoaded(CSSStyleSheet* aSheet,
                               bool aWasAlternate,
                               nsresult aStatus)
 {
@@ -3690,9 +3696,14 @@ XULDocument::ExecuteScript(nsIScriptContext * aContext,
     nsAutoMicroTask mt;
     JSContext *cx = aContext->GetNativeContext();
     AutoCxPusher pusher(cx);
-    JS::Rooted<JSObject*> global(cx, mScriptGlobalObject->GetGlobalJSObject());
+    JS::Rooted<JSObject*> baseGlobal(cx, mScriptGlobalObject->GetGlobalJSObject());
+    NS_ENSURE_TRUE(baseGlobal, NS_ERROR_FAILURE);
+    NS_ENSURE_TRUE(nsContentUtils::GetSecurityManager()->ScriptAllowed(baseGlobal), NS_OK);
+
+    JSAddonId *addonId = mCurrentPrototype ? MapURIToAddonID(mCurrentPrototype->GetURI()) : nullptr;
+    JS::Rooted<JSObject*> global(cx, xpc::GetAddonScope(cx, baseGlobal, addonId));
     NS_ENSURE_TRUE(global, NS_ERROR_FAILURE);
-    NS_ENSURE_TRUE(nsContentUtils::GetSecurityManager()->ScriptAllowed(global), NS_OK);
+
     JS::ExposeObjectToActiveJS(global);
     xpc_UnmarkGrayScript(aScriptObject);
     JSAutoCompartment ac(cx, global);
@@ -3762,13 +3773,13 @@ XULDocument::CreateElementFromPrototype(nsXULPrototypeElement* aPrototype,
         // what. So we need to copy everything out of the prototype
         // into the element.  Get a nodeinfo from our nodeinfo manager
         // for this node.
-        nsCOMPtr<nsINodeInfo> newNodeInfo;
+        nsRefPtr<mozilla::dom::NodeInfo> newNodeInfo;
         newNodeInfo = mNodeInfoManager->GetNodeInfo(aPrototype->mNodeInfo->NameAtom(),
                                                     aPrototype->mNodeInfo->GetPrefixAtom(),
                                                     aPrototype->mNodeInfo->NamespaceID(),
                                                     nsIDOMNode::ELEMENT_NODE);
         if (!newNodeInfo) return NS_ERROR_OUT_OF_MEMORY;
-        nsCOMPtr<nsINodeInfo> xtfNi = newNodeInfo;
+        nsRefPtr<mozilla::dom::NodeInfo> xtfNi = newNodeInfo;
         rv = NS_NewElement(getter_AddRefs(result), newNodeInfo.forget(),
                            NOT_FROM_PARSER);
         if (NS_FAILED(rv))
@@ -3938,7 +3949,7 @@ XULDocument::AddPrototypeSheets()
     for (int32_t i = 0; i < sheets.Count(); i++) {
         nsCOMPtr<nsIURI> uri = sheets[i];
 
-        nsRefPtr<nsCSSStyleSheet> incompleteSheet;
+        nsRefPtr<CSSStyleSheet> incompleteSheet;
         rv = CSSLoader()->LoadSheet(uri,
                                     mCurrentPrototype->DocumentPrincipal(),
                                     EmptyCString(), this,
@@ -4329,7 +4340,7 @@ XULDocument::FindBroadcaster(Element* aElement,
                              nsString& aAttribute,
                              Element** aBroadcaster)
 {
-    nsINodeInfo *ni = aElement->NodeInfo();
+    mozilla::dom::NodeInfo *ni = aElement->NodeInfo();
     *aListener = nullptr;
     *aBroadcaster = nullptr;
 

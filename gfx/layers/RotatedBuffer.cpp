@@ -100,7 +100,7 @@ RotatedBuffer::DrawBufferQuadrant(gfx::DrawTarget* aTarget,
   // (to avoid flickering) but direct2d is ok since it defers rendering.
   // We should try abstract this logic in a helper when we have other use
   // cases.
-  if (aTarget->GetType() == BackendType::DIRECT2D && aOperator == CompositionOp::OP_SOURCE) {
+  if (aTarget->GetBackendType() == BackendType::DIRECT2D && aOperator == CompositionOp::OP_SOURCE) {
     aOperator = CompositionOp::OP_OVER;
     if (mDTBuffer->GetFormat() == SurfaceFormat::B8G8R8A8) {
       aTarget->ClearRect(ToRect(fillRect));
@@ -332,7 +332,7 @@ RotatedContentBuffer::EnsureBuffer()
   NS_ASSERTION(!mLoanedDrawTarget, "Loaned draw target must be returned");
   if (!mDTBuffer) {
     if (mBufferProvider) {
-      mDTBuffer = mBufferProvider->GetAsDrawTarget();
+      mDTBuffer = mBufferProvider->BorrowDrawTarget();
     }
   }
 
@@ -347,7 +347,7 @@ RotatedContentBuffer::EnsureBufferOnWhite()
   if (!mDTBufferOnWhite) {
     if (mBufferProviderOnWhite) {
       mDTBufferOnWhite =
-        mBufferProviderOnWhite->GetAsDrawTarget();
+        mBufferProviderOnWhite->BorrowDrawTarget();
     }
   }
 
@@ -465,10 +465,8 @@ RotatedContentBuffer::BeginPaint(ThebesLayer* aLayer,
 #else
       if (!aLayer->GetParent() ||
           !aLayer->GetParent()->SupportsComponentAlphaChildren() ||
-          !aLayer->Manager()->IsCompositingCheap() ||
           !aLayer->AsShadowableLayer() ||
-          !aLayer->AsShadowableLayer()->HasShadow() ||
-          !gfxPrefs::ComponentAlphaEnabled()) {
+          !aLayer->AsShadowableLayer()->HasShadow()) {
         mode = SurfaceMode::SURFACE_SINGLE_CHANNEL_ALPHA;
       } else {
         result.mContentType = gfxContentType::COLOR;
@@ -712,8 +710,8 @@ RotatedContentBuffer::BorrowDrawTargetForPainting(PaintState& aPaintState,
     aIter->mDrawRegion.And(aIter->mDrawRegion, aPaintState.mRegionToDraw);
     drawPtr = &aIter->mDrawRegion;
   }
-  if (result->GetType() == BackendType::DIRECT2D ||
-      result->GetType() == BackendType::DIRECT2D1_1) {
+  if (result->GetBackendType() == BackendType::DIRECT2D ||
+      result->GetBackendType() == BackendType::DIRECT2D1_1) {
     drawPtr->SimplifyOutwardByArea(100 * 100);
   }
 

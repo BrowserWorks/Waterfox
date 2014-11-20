@@ -21,9 +21,12 @@
 #include "nsCSSPseudoClasses.h"
 
 class nsIAtom;
-class nsCSSStyleSheet;
 struct nsCSSSelectorList;
 class nsCSSCompressedDataBlock;
+
+namespace mozilla {
+class CSSStyleSheet;
+} // namespace mozilla
 
 struct nsAtomList {
 public:
@@ -154,7 +157,7 @@ public:
   // Calculate the specificity of this selector (not including its mNext!).
   int32_t CalcWeight() const;
 
-  void ToString(nsAString& aString, nsCSSStyleSheet* aSheet,
+  void ToString(nsAString& aString, mozilla::CSSStyleSheet* aSheet,
                 bool aAppend = false) const;
 
 private:
@@ -162,9 +165,9 @@ private:
   nsCSSSelector* Clone(bool aDeepNext, bool aDeepNegations) const;
 
   void AppendToStringWithoutCombinators(nsAString& aString,
-                                        nsCSSStyleSheet* aSheet) const;
+                                        mozilla::CSSStyleSheet* aSheet) const;
   void AppendToStringWithoutCombinatorsOrNegations(nsAString& aString,
-                                                   nsCSSStyleSheet* aSheet,
+                                                   mozilla::CSSStyleSheet* aSheet,
                                                    bool aIsNegated)
                                                         const;
   // Returns true if this selector can have a namespace specified (which
@@ -236,9 +239,16 @@ struct nsCSSSelectorList {
   nsCSSSelector* AddSelector(char16_t aOperator);
 
   /**
+   * Point |mSelectors| to its |mNext|, and delete the first node in the old
+   * |mSelectors|.
+   * Should only be used on a list with more than one selector in it.
+   */
+  void RemoveRightmostSelector();
+
+  /**
    * Should be used only on the first in the list
    */
-  void ToString(nsAString& aResult, nsCSSStyleSheet* aSheet);
+  void ToString(nsAString& aResult, mozilla::CSSStyleSheet* aSheet);
 
   /**
    * Do a deep clone.  Should be used only on the first in the list.
@@ -299,7 +309,8 @@ class StyleRule MOZ_FINAL : public Rule
 {
  public:
   StyleRule(nsCSSSelectorList* aSelector,
-            Declaration *aDeclaration);
+            Declaration *aDeclaration,
+            uint32_t aLineNumber, uint32_t aColumnNumber);
 private:
   // for |Clone|
   StyleRule(const StyleRule& aCopy);
@@ -313,12 +324,6 @@ public:
 
   // null for style attribute
   nsCSSSelectorList* Selector() { return mSelector; }
-
-  uint32_t GetLineNumber() const { return mLineNumber; }
-  uint32_t GetColumnNumber() const { return mColumnNumber; }
-  void SetLineNumberAndColumnNumber(uint32_t aLineNumber,
-                                    uint32_t aColumnNumber)
-  { mLineNumber = aLineNumber; mColumnNumber = aColumnNumber; }
 
   Declaration* GetDeclaration() const { return mDeclaration; }
 
@@ -371,12 +376,8 @@ private:
 private:
   nsCSSSelectorList*      mSelector; // null for style attribute
   Declaration*            mDeclaration;
-  ImportantRule*          mImportantRule; // initialized by RuleMatched
-  DOMCSSStyleRule*        mDOMRule;
-  // Keep the same type so that MSVC packs them.
-  uint32_t                mLineNumber;
-  uint32_t                mColumnNumber : 31;
-  uint32_t                mWasMatched : 1;
+  nsRefPtr<ImportantRule> mImportantRule; // initialized by RuleMatched
+  nsRefPtr<DOMCSSStyleRule> mDOMRule;
 
 private:
   StyleRule& operator=(const StyleRule& aCopy) MOZ_DELETE;

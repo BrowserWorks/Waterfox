@@ -201,6 +201,8 @@
   ERROR(NS_ERROR_NET_INTERRUPT,             FAILURE(71)),
   /* The connection attempt to a proxy failed. */
   ERROR(NS_ERROR_PROXY_CONNECTION_REFUSED,  FAILURE(72)),
+  /* A transfer was only partially done when it completed. */
+  ERROR(NS_ERROR_NET_PARTIAL_TRANSFER,      FAILURE(76)),
 
   /* XXX really need to better rationalize these error codes.  are consumers of
    * necko really expected to know how to discern the meaning of these?? */
@@ -662,6 +664,7 @@
    * blacklist. */
   ERROR(NS_ERROR_MALWARE_URI,           FAILURE(30)),
   ERROR(NS_ERROR_PHISHING_URI,          FAILURE(31)),
+  ERROR(NS_ERROR_TRACKING_URI,          FAILURE(34)),
   /* Used when "Save Link As..." doesn't see the headers quickly enough to
    * choose a filename.  See nsContextMenu.js. */
   ERROR(NS_ERROR_SAVE_LINK_AS_TIMEOUT,  FAILURE(32)),
@@ -811,7 +814,7 @@
 #define MODULE NS_ERROR_MODULE_DOM_FILEHANDLE
   ERROR(NS_ERROR_DOM_FILEHANDLE_UNKNOWN_ERR,              FAILURE(1)),
   ERROR(NS_ERROR_DOM_FILEHANDLE_NOT_ALLOWED_ERR,          FAILURE(2)),
-  ERROR(NS_ERROR_DOM_FILEHANDLE_LOCKEDFILE_INACTIVE_ERR,  FAILURE(3)),
+  ERROR(NS_ERROR_DOM_FILEHANDLE_INACTIVE_ERR,             FAILURE(3)),
   ERROR(NS_ERROR_DOM_FILEHANDLE_ABORT_ERR,                FAILURE(4)),
   ERROR(NS_ERROR_DOM_FILEHANDLE_READ_ONLY_ERR,            FAILURE(5)),
   ERROR(NS_ERROR_DOM_FILEHANDLE_QUOTA_ERR,                FAILURE(6)),

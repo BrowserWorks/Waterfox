@@ -114,7 +114,7 @@ void TableTicker::StreamMetaJSCustomObject(JSStreamWriter& b)
     b.NameValue("jank", mJankOnly);
     b.NameValue("processType", XRE_GetProcessType());
 
-    TimeDuration delta = TimeStamp::Now() - sStartTime;
+    mozilla::TimeDuration delta = mozilla::TimeStamp::Now() - sStartTime;
     b.NameValue("startTime", static_cast<double>(PR_Now()/1000.0 - delta.ToMilliseconds()));
 
     nsresult res;
@@ -428,7 +428,7 @@ static void mergeNativeBacktrace(ThreadProfile &aProfile, const PCArray &array) 
     while (pseudoStackPos < stack->stackSize()) {
       volatile StackEntry& entry = stack->mStack[pseudoStackPos];
 
-      if (entry.stackAddress() < array.sp_array[i-1] && entry.stackAddress())
+      if (entry.isCpp() && entry.stackAddress() && entry.stackAddress() < array.sp_array[i-1])
         break;
 
       addProfileEntry(entry, aProfile, stack, array.array[0]);
@@ -602,6 +602,7 @@ void TableTicker::InplaceTick(TickSample* sample)
   ThreadProfile& currThreadProfile = *sample->threadProfile;
 
   PseudoStack* stack = currThreadProfile.GetPseudoStack();
+  stack->updateGeneration(currThreadProfile.GetGenerationID());
   bool recordSample = true;
 #if defined(XP_WIN)
   bool powerSample = false;
@@ -617,7 +618,6 @@ void TableTicker::InplaceTick(TickSample* sample)
       stack->addStoredMarker(marker);
       currThreadProfile.addTag(ProfileEntry('m', marker));
     }
-    stack->updateGeneration(currThreadProfile.GetGenerationID());
 
 #if defined(XP_WIN)
     if (mProfilePower) {
@@ -640,7 +640,7 @@ void TableTicker::InplaceTick(TickSample* sample)
       recordSample = false;
       // only record the events when we have a we haven't seen a tracer event for 100ms
       if (!sLastTracerEvent.IsNull()) {
-        TimeDuration delta = sample->timestamp - sLastTracerEvent;
+        mozilla::TimeDuration delta = sample->timestamp - sLastTracerEvent;
         if (delta.ToMilliseconds() > 100.0) {
             recordSample = true;
         }
@@ -661,13 +661,13 @@ void TableTicker::InplaceTick(TickSample* sample)
   if (recordSample)
     currThreadProfile.flush();
 
-  if (!sLastTracerEvent.IsNull() && sample && currThreadProfile.IsMainThread()) {
-    TimeDuration delta = sample->timestamp - sLastTracerEvent;
+  if (sample && currThreadProfile.GetThreadResponsiveness()->HasData()) {
+    mozilla::TimeDuration delta = currThreadProfile.GetThreadResponsiveness()->GetUnresponsiveDuration(sample->timestamp);
     currThreadProfile.addTag(ProfileEntry('r', static_cast<float>(delta.ToMilliseconds())));
   }
 
   if (sample) {
-    TimeDuration delta = sample->timestamp - sStartTime;
+    mozilla::TimeDuration delta = sample->timestamp - sStartTime;
     currThreadProfile.addTag(ProfileEntry('t', static_cast<float>(delta.ToMilliseconds())));
   }
 
@@ -704,9 +704,8 @@ SyncProfile* NewSyncProfile()
   }
   Thread::tid_t tid = Thread::GetCurrentId();
 
-  SyncProfile* profile = new SyncProfile("SyncProfile",
-                                         GET_BACKTRACE_DEFAULT_ENTRY,
-                                         stack, tid, NS_IsMainThread());
+  ThreadInfo* info = new ThreadInfo("SyncProfile", tid, NS_IsMainThread(), stack, nullptr);
+  SyncProfile* profile = new SyncProfile(info, GET_BACKTRACE_DEFAULT_ENTRY);
   return profile;
 }
 
@@ -769,7 +768,9 @@ void mozilla_sampler_print_location1()
 
   printf_stderr("Backtrace:\n");
   syncProfile->IterateTags(print_callback);
+  ThreadInfo* info = syncProfile->GetThreadInfo();
   delete syncProfile;
+  delete info;
 }
 
 

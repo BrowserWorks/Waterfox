@@ -21,6 +21,7 @@ namespace mozilla {
 
 MFTDecoder::MFTDecoder()
   : mMFTProvidesOutputSamples(false)
+  , mDiscontinuity(true)
 {
   memset(&mInputStreamInfo, 0, sizeof(MFT_INPUT_STREAM_INFO));
   memset(&mOutputStreamInfo, 0, sizeof(MFT_OUTPUT_STREAM_INFO));
@@ -132,7 +133,7 @@ MFTDecoder::CreateInputSample(const uint8_t* aData,
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
   RefPtr<IMFMediaBuffer> buffer;
-  int32_t bufferSize = std::max(uint32_t(mInputStreamInfo.cbSize), aDataSize);
+  int32_t bufferSize = std::max<uint32_t>(uint32_t(mInputStreamInfo.cbSize), aDataSize);
   UINT32 alignment = (mInputStreamInfo.cbAlignment > 1) ? mInputStreamInfo.cbAlignment - 1 : 0;
   hr = wmf::MFCreateAlignedMemoryBuffer(bufferSize, alignment, byRef(buffer));
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
@@ -237,6 +238,11 @@ MFTDecoder::Output(RefPtr<IMFSample>* aOutput)
 
   MOZ_ASSERT(output.pSample);
 
+  if (mDiscontinuity) {
+    output.pSample->SetUINT32(MFSampleExtension_Discontinuity, TRUE);
+    mDiscontinuity = false;
+  }
+
   *aOutput = output.pSample; // AddRefs
   if (mMFTProvidesOutputSamples) {
     // If the MFT is providing samples, we must release the sample here.
@@ -276,6 +282,8 @@ MFTDecoder::Flush()
 {
   HRESULT hr = SendMFTMessage(MFT_MESSAGE_COMMAND_FLUSH, 0);
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+
+  mDiscontinuity = true;
 
   return S_OK;
 }

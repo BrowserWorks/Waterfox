@@ -33,6 +33,8 @@
 #include "mozilla/ChaosMode.h"
 #include "mozilla/unused.h"
 
+#include "mozilla/Telemetry.h"
+
 // defined by the socket transport service while active
 extern PRThread *gSocketThread;
 
@@ -340,9 +342,10 @@ nsHttpConnectionMgr::DoShiftReloadConnectionCleanup(nsHttpConnectionInfo *aCI)
 
 class SpeculativeConnectArgs
 {
+    virtual ~SpeculativeConnectArgs() {}
+
 public:
     SpeculativeConnectArgs() { mOverridesOK = false; }
-    virtual ~SpeculativeConnectArgs() {}
 
     // Added manually so we can use nsRefPtr without inheriting from
     // nsISupports
@@ -356,6 +359,7 @@ public: // intentional!
     uint32_t mParallelSpeculativeConnectLimit;
     bool mIgnoreIdle;
     bool mIgnorePossibleSpdyConnections;
+    bool mIsFromPredictor;
 
     // As above, added manually so we can use nsRefPtr without inheriting from
     // nsISupports
@@ -404,6 +408,7 @@ nsHttpConnectionMgr::SpeculativeConnect(nsHttpConnectionInfo *ci,
         overrider->GetIgnoreIdle(&args->mIgnoreIdle);
         overrider->GetIgnorePossibleSpdyConnections(
             &args->mIgnorePossibleSpdyConnections);
+        overrider->GetIsFromPredictor(&args->mIsFromPredictor);
     }
 
     nsresult rv =
@@ -1395,6 +1400,13 @@ nsHttpConnectionMgr::MakeNewConnection(nsConnectionEntry *ent,
                  "Found a speculative half open connection\n",
                  ent->mConnInfo->HashKey().get()));
             ent->mHalfOpens[i]->SetSpeculative(false);
+            Telemetry::AutoCounter<Telemetry::HTTPCONNMGR_USED_SPECULATIVE_CONN> usedSpeculativeConn;
+            ++usedSpeculativeConn;
+
+            if (ent->mHalfOpens[i]->IsFromPredictor()) {
+              Telemetry::AutoCounter<Telemetry::PREDICTOR_TOTAL_PRECONNECTS_USED> totalPreconnectsUsed;
+              ++totalPreconnectsUsed;
+            }
 
             // return OK because we have essentially opened a new connection
             // by converting a speculative half-open to general use
@@ -2056,13 +2068,24 @@ nsresult
 nsHttpConnectionMgr::CreateTransport(nsConnectionEntry *ent,
                                      nsAHttpTransaction *trans,
                                      uint32_t caps,
-                                     bool speculative)
+                                     bool speculative,
+                                     bool isFromPredictor)
 {
     MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
 
     nsRefPtr<nsHalfOpenSocket> sock = new nsHalfOpenSocket(ent, trans, caps);
-    if (speculative)
+    if (speculative) {
         sock->SetSpeculative(true);
+        Telemetry::AutoCounter<Telemetry::HTTPCONNMGR_TOTAL_SPECULATIVE_CONN> totalSpeculativeConn;
+        ++totalSpeculativeConn;
+
+        if (isFromPredictor) {
+          sock->SetIsFromPredictor(true);
+          Telemetry::AutoCounter<Telemetry::PREDICTOR_TOTAL_PRECONNECTS_CREATED> totalPreconnectsCreated;
+          ++totalPreconnectsCreated;
+        }
+    }
+
     nsresult rv = sock->SetupPrimaryStreams();
     NS_ENSURE_SUCCESS(rv, rv);
 
@@ -2776,11 +2799,13 @@ nsHttpConnectionMgr::OnMsgSpeculativeConnect(int32_t, void *param)
         gHttpHandler->ParallelSpeculativeConnectLimit();
     bool ignorePossibleSpdyConnections = false;
     bool ignoreIdle = false;
+    bool isFromPredictor = false;
 
     if (args->mOverridesOK) {
         parallelSpeculativeConnectLimit = args->mParallelSpeculativeConnectLimit;
         ignorePossibleSpdyConnections = args->mIgnorePossibleSpdyConnections;
         ignoreIdle = args->mIgnoreIdle;
+        isFromPredictor = args->mIsFromPredictor;
     }
 
     if (mNumHalfOpenConns < parallelSpeculativeConnectLimit &&
@@ -2788,7 +2813,7 @@ nsHttpConnectionMgr::OnMsgSpeculativeConnect(int32_t, void *param)
          !ent->mIdleConns.Length()) &&
         !RestrictConnections(ent, ignorePossibleSpdyConnections) &&
         !AtActiveConnectionLimit(ent, args->mTrans->Caps())) {
-        CreateTransport(ent, args->mTrans, args->mTrans->Caps(), true);
+        CreateTransport(ent, args->mTrans, args->mTrans->Caps(), true, isFromPredictor);
     }
     else {
         LOG(("  Transport not created due to existing connection count\n"));
@@ -2837,6 +2862,7 @@ nsHalfOpenSocket::nsHalfOpenSocket(nsConnectionEntry *ent,
     , mTransaction(trans)
     , mCaps(caps)
     , mSpeculative(false)
+    , mIsFromPredictor(false)
     , mHasConnected(false)
     , mPrimaryConnectedOK(false)
     , mBackupConnectedOK(false)
@@ -3704,6 +3730,16 @@ void
 nsHttpConnectionMgr::
 nsConnectionEntry::RemoveHalfOpen(nsHalfOpenSocket *halfOpen)
 {
+    if (halfOpen->IsSpeculative()) {
+      Telemetry::AutoCounter<Telemetry::HTTPCONNMGR_UNUSED_SPECULATIVE_CONN> unusedSpeculativeConn;
+      ++unusedSpeculativeConn;
+
+      if (halfOpen->IsFromPredictor()) {
+        Telemetry::AutoCounter<Telemetry::PREDICTOR_TOTAL_PRECONNECTS_UNUSED> totalPreconnectsUnused;
+        ++totalPreconnectsUnused;
+      }
+    }
+
     // A failure to create the transport object at all
     // will result in it not being present in the halfopen table
     // so ignore failures of RemoveElement()

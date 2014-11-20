@@ -16,6 +16,12 @@ resjar.sources = []
 resjar.generated_sources += [
     'org/mozilla/gecko/R.java',
 ]
+
+if CONFIG['MOZ_NATIVE_DEVICES']:
+    resjar.generated_sources += ['com/google/android/gms/R.java']
+    resjar.generated_sources += ['android/support/v7/appcompat/R.java']
+    resjar.generated_sources += ['android/support/v7/mediarouter/R.java']
+
 resjar.javac_flags += ['-Xlint:all']
 
 mgjar = add_java_jar('gecko-mozglue')
@@ -65,6 +71,7 @@ gujar.sources += [
     'util/NativeJSContainer.java',
     'util/NativeJSObject.java',
     'util/NonEvictingLruCache.java',
+    'util/PrefUtils.java',
     'util/ProxySelector.java',
     'util/RawResource.java',
     'util/StringUtils.java',
@@ -132,6 +139,7 @@ gbjar.sources += [
     'DataReportingNotification.java',
     'db/AbstractPerProfileDatabaseProvider.java',
     'db/AbstractTransactionalProvider.java',
+    'db/BaseTable.java',
     'db/BrowserContract.java',
     'db/BrowserDatabaseHelper.java',
     'db/BrowserDB.java',
@@ -144,12 +152,18 @@ gbjar.sources += [
     'db/PerProfileDatabaseProvider.java',
     'db/PerProfileDatabases.java',
     'db/ReadingListProvider.java',
+    'db/SearchHistoryProvider.java',
     'db/SharedBrowserDatabaseProvider.java',
     'db/SQLiteBridgeContentProvider.java',
     'db/SuggestedSites.java',
+    'db/Table.java',
     'db/TabsProvider.java',
     'db/TopSitesCursorWrapper.java',
+    'db/URLMetadata.java',
+    'db/URLMetadataTable.java',
     'distribution/Distribution.java',
+    'distribution/ReferrerDescriptor.java',
+    'distribution/ReferrerReceiver.java',
     'DoorHangerPopup.java',
     'DynamicToolbar.java',
     'EditBookmarkDialog.java',
@@ -265,8 +279,7 @@ gbjar.sources += [
     'home/HomePagerTabStrip.java',
     'home/HomePanelPicker.java',
     'home/HomePanelsManager.java',
-    'home/LastTabsPanel.java',
-    'home/MostRecentPanel.java',
+    'home/ImageLoader.java',
     'home/MultiTypeCursorAdapter.java',
     'home/PanelAuthCache.java',
     'home/PanelAuthLayout.java',
@@ -282,6 +295,7 @@ gbjar.sources += [
     'home/PinSiteDialog.java',
     'home/ReadingListPanel.java',
     'home/ReadingListRow.java',
+    'home/RecentTabsPanel.java',
     'home/SearchEngine.java',
     'home/SearchEngineRow.java',
     'home/SearchLoader.java',
@@ -321,15 +335,18 @@ gbjar.sources += [
     'preferences/AlignRightLinkPreference.java',
     'preferences/AndroidImport.java',
     'preferences/AndroidImportPreference.java',
+    'preferences/ClearOnShutdownPref.java',
     'preferences/CustomListCategory.java',
     'preferences/CustomListPreference.java',
     'preferences/FontSizePreference.java',
     'preferences/GeckoPreferenceFragment.java',
     'preferences/GeckoPreferences.java',
     'preferences/LinkPreference.java',
+    'preferences/ListCheckboxPreference.java',
     'preferences/LocaleListPreference.java',
     'preferences/ModifiableHintPreference.java',
     'preferences/MultiChoicePreference.java',
+    'preferences/MultiPrefMultiChoicePreference.java',
     'preferences/PanelsPreference.java',
     'preferences/PanelsPreferenceCategory.java',
     'preferences/PrivateDataPreference.java',
@@ -349,7 +366,6 @@ gbjar.sources += [
     'prompts/PromptService.java',
     'prompts/TabInput.java',
     'ReaderModeUtils.java',
-    'ReferrerReceiver.java',
     'Restarter.java',
     'ScrollAnimator.java',
     'ServiceNotificationClient.java',
@@ -365,6 +381,7 @@ gbjar.sources += [
     'Tab.java',
     'Tabs.java',
     'TabsAccessor.java',
+    'tabspanel/PrivateTabsPanel.java',
     'tabspanel/RemoteTabsContainerPanel.java',
     'tabspanel/RemoteTabsList.java',
     'tabspanel/RemoteTabsPanel.java',
@@ -394,6 +411,7 @@ gbjar.sources += [
     'TouchEventInterceptor.java',
     'updater/UpdateService.java',
     'updater/UpdateServiceHelper.java',
+    'Webapp.java',
     'webapp/Allocator.java',
     'webapp/ApkResources.java',
     'webapp/Dispatcher.java',
@@ -403,8 +421,7 @@ gbjar.sources += [
     'webapp/TaskKiller.java',
     'webapp/UninstallListener.java',
     'webapp/WebappImpl.java',
-    'WebappAllocator.java',
-    'WebappImpl.java',
+    'webapp/Webapps.java',
     'widget/ActivityChooserModel.java',
     'widget/AllCapsTextView.java',
     'widget/AnimatedHeightLayout.java',
@@ -438,13 +455,6 @@ gbjar.sources += [ thirdparty_source_dir + f for f in [
     'com/googlecode/eyesfree/braille/selfbraille/WriteData.java',
 ] ]
 android_package_dir = CONFIG['ANDROID_PACKAGE_NAME'].replace('.', '/')
-# All generated sources are handled specially in Makefile.in.  And
-# R.java is handled even more specially than the others!
-gbjar.generated_sources += [ android_package_dir + f for f in [
-    '/App.java',
-    '/Webapp.java',
-    '/WebApps.java',
-] ]
 gbjar.generated_sources += [
     'org/mozilla/gecko/AppConstants.java',
     'org/mozilla/gecko/SysInfo.java',
@@ -471,6 +481,14 @@ gbjar.extra_jars = [
     'sync-thirdparty.jar',
     'websockets.jar',
 ]
+
+if CONFIG['MOZ_NATIVE_DEVICES']:
+    gbjar.extra_jars += [CONFIG['ANDROID_APPCOMPAT_LIB']]
+    gbjar.extra_jars += [CONFIG['ANDROID_MEDIAROUTER_LIB']]
+    gbjar.extra_jars += [CONFIG['GOOGLE_PLAY_SERVICES_LIB']]
+    gbjar.sources += ['ChromeCast.java']
+    gbjar.sources += ['MediaPlayerManager.java']
+
 gbjar.javac_flags += ['-Xlint:all,-deprecation,-fallthrough']
 
 spjar = add_java_jar('squareup-picasso')
@@ -520,7 +538,8 @@ ANDROID_GENERATED_RESFILES += [
     'res/values/strings.xml',
 ]
 
-for var in ('MOZ_ANDROID_ANR_REPORTER', 'MOZ_LINKER_EXTRACT', 'MOZILLA_OFFICIAL', 'MOZ_DEBUG'):
+for var in ('MOZ_ANDROID_ANR_REPORTER', 'MOZ_LINKER_EXTRACT', 'MOZILLA_OFFICIAL', 'MOZ_DEBUG',
+            'MOZ_ANDROID_SEARCH_ACTIVITY', 'MOZ_NATIVE_DEVICES', 'MOZ_ANDROID_MLS_STUMBLER'):
     if CONFIG[var]:
         DEFINES[var] = 1
 
@@ -544,6 +563,26 @@ if '-march=armv7' in CONFIG['OS_CFLAGS']:
     DEFINES['MOZ_MIN_CPU_VERSION'] = 7
 else:
     DEFINES['MOZ_MIN_CPU_VERSION'] = 5
+
+if CONFIG['MOZ_ANDROID_SEARCH_ACTIVITY']:
+    # The Search Activity is mostly independent of Fennec proper, but
+    # it does depend on Geckoview.  Therefore, we build it as a jar
+    # that depends on the Geckoview jars.
+    search_source_dir = SRCDIR + '/../search'
+    include('../search/search_activity_sources.mozbuild')
+
+    ANDROID_RES_DIRS += [search_source_dir + '/res']
+    resjar.generated_sources += ['org/mozilla/search/R.java']
+
+    search_activity = add_java_jar('search-activity')
+    search_activity.sources += [search_source_dir + '/' + f for f in search_activity_sources]
+    search_activity.javac_flags += ['-Xlint:all']
+    search_activity.extra_jars = [
+        'gecko-R.jar',
+        'gecko-browser.jar',
+        'gecko-mozglue.jar',
+        'gecko-util.jar',
+    ]
 
 generated_recursive_make_targets = ['.aapt.deps', '.locales.deps'] # Captures dependencies on Android manifest and all resources.
 
@@ -569,10 +608,9 @@ main.filtered_resources += [
 ]
 
 main.recursive_make_targets += generated_recursive_make_targets
-main.recursive_make_targets += [OBJDIR + '/generated/' + f for f in mgjar.generated_sources]
-main.recursive_make_targets += [OBJDIR + '/generated/' + f for f in gbjar.generated_sources]
+main.recursive_make_targets += ['generated/' + f for f in mgjar.generated_sources]
+main.recursive_make_targets += ['generated/' + f for f in gbjar.generated_sources]
 
-main.included_projects += ['../' + generated.name, '../' + branding.name]
 main.extra_jars += [CONFIG['ANDROID_COMPAT_LIB']]
 main.assets = TOPOBJDIR + '/dist/' + CONFIG['MOZ_APP_NAME'] + '/assets'
 main.libs = TOPOBJDIR + '/dist/' + CONFIG['MOZ_APP_NAME'] + '/lib'
@@ -584,6 +622,9 @@ cpe = main.add_classpathentry('src', SRCDIR,
         'org/mozilla/gecko/resources/**'])
 if not CONFIG['MOZ_CRASHREPORTER']:
     cpe.exclude_patterns += ['org/mozilla/gecko/CrashReporter.java']
+if not CONFIG['MOZ_NATIVE_DEVICES']:
+    cpe.exclude_patterns += ['org/mozilla/gecko/ChromeCast.java']
+    cpe.exclude_patterns += ['org/mozilla/gecko/MediaPlayerManager.java']
 main.add_classpathentry('generated', OBJDIR + '/generated',
     dstdir='generated')
 main.add_classpathentry('thirdparty', TOPSRCDIR + '/mobile/android/thirdparty',
@@ -596,8 +637,23 @@ resources.res = SRCDIR + '/resources'
 resources.included_projects += ['../' + generated.name, '../' + branding.name]
 resources.recursive_make_targets += generated_recursive_make_targets
 
+# The resources are included in the Fennec APK.
 main.included_projects += ['../' + resources.name]
-main.referenced_projects += [resources.name]
+
+omnijar = add_android_eclipse_library_project('FennecOmnijar')
+omnijar.package_name = 'org.mozilla.fennec.omnijar'
+# This is delicate.  We write into OBJDIR, and write triggers a new build of the
+# Fennec project, because the omni.ja timestamp is always updated. (The target
+# is FORCE and the installer does not track dependencies.) However, Eclipse only
+# triggers a new build (of FennecOmnijar) when something actually changes, so
+# we're not constantly rebuilding the FennecOmnijar (or Fennec) project.
+omnijar.recursive_make_targets += [TOPOBJDIR + '/dist/fennec/assets/omni.ja']
+for d in ['app', 'chrome', 'components', 'locales', 'modules', 'themes']:
+    omnijar.add_classpathentry(d, TOPSRCDIR + '/mobile/android/' + d, dstdir=d)
+
+# The omnijar is included in the Fennec APK (although it's empty,
+# having no resources, assets, or Java code).
+main.included_projects += ['../' + omnijar.name]
 
 if CONFIG['MOZ_CRASHREPORTER']:
     crashreporter = add_android_eclipse_library_project('FennecResourcesCrashReporter')
@@ -606,3 +662,7 @@ if CONFIG['MOZ_CRASHREPORTER']:
     crashreporter.included_projects += ['../' + resources.name]
 
     main.included_projects += ['../' + crashreporter.name]
+
+if CONFIG['MOZ_ANDROID_MLS_STUMBLER']:
+    main.included_projects += ['../FennecStumbler']
+    main.referenced_projects += ['../FennecStumbler']

@@ -139,7 +139,7 @@ function test()
       let snippetsPromise = promiseSetupSnippetsMap(tab, test.setup);
 
       // Start loading about:home and wait for it to complete.
-      yield promiseTabLoadEvent(tab, "about:home", "AboutHomeLoadSnippetsSucceeded");
+      yield promiseTabLoadEvent(tab, "about:home", "AboutHomeLoadSnippetsCompleted");
 
       // This promise should already be resolved since the page is done,
       // but we still want to get the snippets map out of it.

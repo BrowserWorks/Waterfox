@@ -7,6 +7,12 @@
 const {Cu, Cc, Ci} = require("chrome");
 const events = require("sdk/event/core");
 const protocol = require("devtools/server/protocol");
+try {
+    const { indexedDB } = require("sdk/indexed-db");
+} catch (e) {
+    // In xpcshell tests, we can't actually have indexedDB, which is OK:
+    // we don't use it there anyway.
+}
 const {async} = require("devtools/async-utils");
 const {Arg, Option, method, RetVal, types} = protocol;
 const {LongStringActor, ShortLongString} = require("devtools/server/actors/string");
@@ -930,11 +936,6 @@ StorageActors.createActor({
 }, {
   initialize: function(storageActor) {
     protocol.Actor.prototype.initialize.call(this, null);
-    if (!global.indexedDB) {
-      let idbManager = Cc["@mozilla.org/dom/indexeddb/manager;1"]
-                         .getService(Ci.nsIIndexedDatabaseManager);
-      idbManager.initWindowless(global);
-    }
     this.objectsSize = {};
     this.storageActor = storageActor;
     this.onWindowReady = this.onWindowReady.bind(this);
@@ -1183,7 +1184,7 @@ StorageActors.createActor({
       principal = Services.scriptSecurityManager.getCodebasePrincipal(uri);
     }
 
-    return indexedDB.openForPrincipal(principal, name);
+    return require("indexedDB").openForPrincipal(principal, name);
   },
 
   /**
@@ -1701,8 +1702,6 @@ let StorageFront = exports.StorageFront = protocol.FrontClass(StorageActor, {
   initialize: function(client, tabForm) {
     protocol.Front.prototype.initialize.call(this, client);
     this.actorID = tabForm.storageActor;
-
-    client.addActorPool(this);
     this.manage(this);
   }
 });

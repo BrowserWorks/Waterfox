@@ -1,0 +1,201 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+:root {
+  -moz-appearance: none;
+  font-size: 75%;
+  background-color: transparent;
+}
+
+/* SCROLLBOX */
+#newtab-scrollbox:not([page-disabled]) {
+  color: rgb(0,0,0);
+  background-color: #f9f9f9;
+}
+
+#newtab-scrollbox:not([page-disabled]) #newtab-margin-bottom {
+  background: inherit;
+}
+
+/* UNDO */
+#newtab-undo-container {
+  padding: 4px 3px;
+  border: 1px solid;
+  border-color: rgba(8,22,37,.12) rgba(8,22,37,.14) rgba(8,22,37,.16);
+  background-color: rgba(255,255,255,.4);
+  color: #525e69;
+}
+
+#newtab-undo-label {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.newtab-undo-button {
+  -moz-appearance: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0 4px;
+  border: 0;
+  background: transparent;
+  text-decoration: none;
+  min-width: 0;
+}
+
+.newtab-undo-button:hover {
+  text-decoration: underline;
+}
+
+.newtab-undo-button:-moz-focusring {
+  outline: 1px dotted;
+}
+
+#newtab-undo-close-button {
+  -moz-appearance: none;
+  padding: 0;
+  border: none;
+}
+
+#newtab-undo-close-button:-moz-focusring {
+  outline: 1px dotted;
+}
+
+/* CUSTOMIZE */
+#newtab-customize-button,
+.newtab-customize {
+  background-color: transparent;
+  background-image: -moz-image-rect(url(chrome://browser/skin/newtab/controls.svg), 0, 32, 32, 0);
+  background-size: 28px;
+  border: none;
+  height: 28px;
+  width: 28px;
+}
+
+#newtab-customize-button:-moz-any(:hover, :active, [active]) {
+  background-image: -moz-image-rect(url(chrome://browser/skin/newtab/controls.svg), 0, 64, 32, 32);
+}
+
+/* CELLS */
+.newtab-cell {
+  background-color: rgba(255,255,255,.2);
+  border-radius: 8px;
+}
+
+.newtab-cell:empty {
+  outline: 2px dashed #c1c1c1;
+  -moz-outline-radius: 8px;
+}
+
+/* SITES */
+.newtab-site {
+  border-radius: inherit;
+  box-shadow: 0 1px 3px #c1c1c1;
+  text-decoration: none;
+  transition-property: top, left, opacity, box-shadow, background-color;
+}
+
+.newtab-cell:not([ignorehover]) > .newtab-site:hover,
+.newtab-site[dragged] {
+  border: 2px solid white;
+  box-shadow: 0 0 6px 2px #4cb1ff;
+  margin: -2px;
+}
+
+.newtab-site[dragged] {
+  transition-property: box-shadow, background-color;
+  background-color: rgb(242,242,242);
+}
+
+/* LINKS */
+.newtab-link {
+  border-radius: 6px;
+}
+
+/* THUMBNAILS */
+.newtab-thumbnail {
+  background-origin: padding-box;
+  background-clip: padding-box;
+  background-repeat: no-repeat;
+  background-size: cover;
+  border-radius: inherit;
+  transition: opacity 100ms ease-out;
+}
+
+.newtab-thumbnail.enhanced-content:hover {
+  opacity: 0;
+}
+
+.newtab-site[type=affiliate] .newtab-thumbnail,
+.newtab-site[type=enhanced] .newtab-thumbnail,
+.newtab-site[type=organic] .newtab-thumbnail,
+.newtab-site[type=sponsored] .newtab-thumbnail {
+  background-position: center center;
+  background-size: auto;
+}
+
+/* TITLES */
+#newtab-intro-what,
+.newtab-sponsored,
+.newtab-title {
+  color: #5c5c5c;
+}
+
+.newtab-site:hover .newtab-title {
+  color: #222;
+}
+
+.newtab-site[pinned] .newtab-title {
+  padding: 0 15px;
+}
+
+.newtab-site[pinned] .newtab-title::before {
+  background-image: -moz-image-rect(url("chrome://browser/skin/newtab/controls.svg"), 7, 278, 28, 266);
+  background-size: 10px;
+  content: "";
+  height: 17px;
+  left: 0;
+  position: absolute;
+  width: 10px;
+}
+
+.newtab-site[pinned] .newtab-title:-moz-locale-dir(rtl)::before {
+  left: auto;
+  right: 0;
+}
+
+/* CONTROLS */
+.newtab-control {
+  background-color: transparent;
+  background-size: 24px;
+  border: none;
+  height: 24px;
+  width: 24px;
+}
+
+.newtab-control-pin,
+.newtab-site[pinned] .newtab-control-pin:hover:active {
+  background-image: -moz-image-rect(url(chrome://browser/skin/newtab/controls.svg), 0, 96, 32, 64);
+}
+
+.newtab-control-pin:hover,
+.newtab-site[pinned] .newtab-control-pin:hover {
+  background-image: -moz-image-rect(url(chrome://browser/skin/newtab/controls.svg), 0, 160, 32, 128);
+}
+
+.newtab-control-pin:hover:active,
+.newtab-site[pinned] .newtab-control-pin {
+  background-image: -moz-image-rect(url(chrome://browser/skin/newtab/controls.svg), 0, 128, 32, 96);
+}
+
+.newtab-control-block {
+  background-image: -moz-image-rect(url(chrome://browser/skin/newtab/controls.svg), 0, 192, 32, 160);
+}
+
+.newtab-control-block:hover {
+  background-image: -moz-image-rect(url(chrome://browser/skin/newtab/controls.svg), 0, 224, 32, 192);
+}
+
+.newtab-control-block:hover:active {
+  background-image: -moz-image-rect(url(chrome://browser/skin/newtab/controls.svg), 0, 256, 32, 224);
+}

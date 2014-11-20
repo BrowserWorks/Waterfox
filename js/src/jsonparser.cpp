@@ -6,6 +6,7 @@
 
 #include "jsonparser.h"
 
+#include "mozilla/Range.h"
 #include "mozilla/RangedPtr.h"
 
 #include <ctype.h>
@@ -23,7 +24,7 @@ using namespace js;
 
 using mozilla::RangedPtr;
 
-JSONParser::~JSONParser()
+JSONParserBase::~JSONParserBase()
 {
     for (size_t i = 0; i < stack.length(); i++) {
         if (stack[i].state == FinishArrayElement)
@@ -40,7 +41,7 @@ JSONParser::~JSONParser()
 }
 
 void
-JSONParser::trace(JSTracer *trc)
+JSONParserBase::trace(JSTracer *trc)
 {
     for (size_t i = 0; i < stack.length(); i++) {
         if (stack[i].state == FinishArrayElement) {
@@ -57,10 +58,11 @@ JSONParser::trace(JSTracer *trc)
     }
 }
 
+template <typename CharT>
 void
-JSONParser::getTextPosition(uint32_t *column, uint32_t *line)
+JSONParser<CharT>::getTextPosition(uint32_t *column, uint32_t *line)
 {
-    ConstTwoByteChars ptr = begin;
+    CharPtr ptr = begin;
     uint32_t col = 1;
     uint32_t row = 1;
     for (; ptr < current; ptr++) {
@@ -78,8 +80,9 @@ JSONParser::getTextPosition(uint32_t *column, uint32_t *line)
     *line = row;
 }
 
+template <typename CharT>
 void
-JSONParser::error(const char *msg)
+JSONParser<CharT>::error(const char *msg)
 {
     if (errorHandling == RaiseError) {
         uint32_t column = 1, line = 1;
@@ -97,14 +100,15 @@ JSONParser::error(const char *msg)
 }
 
 bool
-JSONParser::errorReturn()
+JSONParserBase::errorReturn()
 {
     return errorHandling == NoError;
 }
 
-template<JSONParser::StringType ST>
-JSONParser::Token
-JSONParser::readString()
+template <typename CharT>
+template <JSONParserBase::StringType ST>
+JSONParserBase::Token
+JSONParser<CharT>::readString()
 {
     JS_ASSERT(current < end);
     JS_ASSERT(*current == '"');
@@ -123,14 +127,14 @@ JSONParser::readString()
      * Optimization: if the source contains no escaped characters, create the
      * string directly from the source text.
      */
-    RangedPtr<const jschar> start = current;
+    CharPtr start = current;
     for (; current < end; current++) {
         if (*current == '"') {
             size_t length = current - start;
             current++;
             JSFlatString *str = (ST == JSONParser::PropertyName)
                                 ? AtomizeChars(cx, start.get(), length)
-                                : js_NewStringCopyN<CanGC>(cx, start.get(), length);
+                                : NewStringCopyN<CanGC>(cx, start.get(), length);
             if (!str)
                 return token(OOM);
             return stringToken(str);
@@ -205,7 +209,7 @@ JSONParser::readString()
                 else if (current + 3 == end || !JS7_ISHEX(current[3]))
                     current += 3;
                 else
-                    MOZ_ASSUME_UNREACHABLE("logic error determining first erroneous character");
+                    MOZ_CRASH("logic error determining first erroneous character");
 
                 error("bad Unicode escape");
                 return token(Error);
@@ -236,8 +240,9 @@ JSONParser::readString()
     return token(Error);
 }
 
-JSONParser::Token
-JSONParser::readNumber()
+template <typename CharT>
+JSONParserBase::Token
+JSONParser<CharT>::readNumber()
 {
     JS_ASSERT(current < end);
     JS_ASSERT(JS7_ISDEC(*current) || *current == '-');
@@ -255,7 +260,7 @@ JSONParser::readNumber()
         return token(Error);
     }
 
-    const RangedPtr<const jschar> digitStart = current;
+    const CharPtr digitStart = current;
 
     /* 0|[1-9][0-9]+ */
     if (!JS7_ISDEC(*current)) {
@@ -271,7 +276,7 @@ JSONParser::readNumber()
 
     /* Fast path: no fractional or exponent part. */
     if (current == end || (*current != '.' && *current != 'e' && *current != 'E')) {
-        TwoByteChars chars(digitStart.get(), current - digitStart);
+        mozilla::Range<const CharT> chars(digitStart.get(), current - digitStart);
         if (chars.length() < strlen("9007199254740992")) {
             // If the decimal number is shorter than the length of 2**53, (the
             // largest number a double can represent with integral precision),
@@ -282,7 +287,7 @@ JSONParser::readNumber()
         }
 
         double d;
-        const jschar *dummy;
+        const CharT *dummy;
         if (!GetPrefixInteger(cx, digitStart.get(), current.get(), 10, &dummy, &d))
             return token(OOM);
         JS_ASSERT(current == dummy);
@@ -328,7 +333,7 @@ JSONParser::readNumber()
     }
 
     double d;
-    const jschar *finish;
+    const CharT *finish;
     if (!js_strtod(cx, digitStart.get(), current.get(), &finish, &d))
         return token(OOM);
     JS_ASSERT(current == finish);
@@ -341,8 +346,9 @@ IsJSONWhitespace(jschar c)
     return c == '\t' || c == '\r' || c == '\n' || c == ' ';
 }
 
-JSONParser::Token
-JSONParser::advance()
+template <typename CharT>
+JSONParserBase::Token
+JSONParser<CharT>::advance()
 {
     while (current < end && IsJSONWhitespace(*current))
         current++;
@@ -422,8 +428,9 @@ JSONParser::advance()
     }
 }
 
-JSONParser::Token
-JSONParser::advanceAfterObjectOpen()
+template <typename CharT>
+JSONParserBase::Token
+JSONParser<CharT>::advanceAfterObjectOpen()
 {
     JS_ASSERT(current[-1] == '{');
 
@@ -446,8 +453,9 @@ JSONParser::advanceAfterObjectOpen()
     return token(Error);
 }
 
+template <typename CharT>
 static inline void
-AssertPastValue(const RangedPtr<const jschar> current)
+AssertPastValue(const RangedPtr<const CharT> current)
 {
     /*
      * We're past an arbitrary JSON value, so the previous character is
@@ -473,8 +481,9 @@ AssertPastValue(const RangedPtr<const jschar> current)
               JS7_ISDEC(current[-1]));
 }
 
-JSONParser::Token
-JSONParser::advanceAfterArrayElement()
+template <typename CharT>
+JSONParserBase::Token
+JSONParser<CharT>::advanceAfterArrayElement()
 {
     AssertPastValue(current);
 
@@ -499,8 +508,9 @@ JSONParser::advanceAfterArrayElement()
     return token(Error);
 }
 
-JSONParser::Token
-JSONParser::advancePropertyName()
+template <typename CharT>
+JSONParserBase::Token
+JSONParser<CharT>::advancePropertyName()
 {
     JS_ASSERT(current[-1] == ',');
 
@@ -518,8 +528,9 @@ JSONParser::advancePropertyName()
     return token(Error);
 }
 
-JSONParser::Token
-JSONParser::advancePropertyColon()
+template <typename CharT>
+JSONParserBase::Token
+JSONParser<CharT>::advancePropertyColon()
 {
     JS_ASSERT(current[-1] == '"');
 
@@ -539,8 +550,9 @@ JSONParser::advancePropertyColon()
     return token(Error);
 }
 
-JSONParser::Token
-JSONParser::advanceAfterProperty()
+template <typename CharT>
+JSONParserBase::Token
+JSONParser<CharT>::advanceAfterProperty()
 {
     AssertPastValue(current);
 
@@ -566,7 +578,7 @@ JSONParser::advanceAfterProperty()
 }
 
 JSObject *
-JSONParser::createFinishedObject(PropertyVector &properties)
+JSONParserBase::createFinishedObject(PropertyVector &properties)
 {
     /*
      * Look for an existing cached type and shape for objects with this set of
@@ -611,7 +623,7 @@ JSONParser::createFinishedObject(PropertyVector &properties)
 }
 
 inline bool
-JSONParser::finishObject(MutableHandleValue vp, PropertyVector &properties)
+JSONParserBase::finishObject(MutableHandleValue vp, PropertyVector &properties)
 {
     JS_ASSERT(&properties == &stack.back().properties());
 
@@ -627,7 +639,7 @@ JSONParser::finishObject(MutableHandleValue vp, PropertyVector &properties)
 }
 
 inline bool
-JSONParser::finishArray(MutableHandleValue vp, ElementVector &elements)
+JSONParserBase::finishArray(MutableHandleValue vp, ElementVector &elements)
 {
     JS_ASSERT(&elements == &stack.back().elements());
 
@@ -645,8 +657,9 @@ JSONParser::finishArray(MutableHandleValue vp, ElementVector &elements)
     return true;
 }
 
+template <typename CharT>
 bool
-JSONParser::parse(MutableHandleValue vp)
+JSONParser<CharT>::parse(MutableHandleValue vp)
 {
     RootedValue value(cx);
     JS_ASSERT(stack.empty());
@@ -815,3 +828,6 @@ JSONParser::parse(MutableHandleValue vp)
     vp.set(value);
     return true;
 }
+
+template class js::JSONParser<Latin1Char>;
+template class js::JSONParser<jschar>;

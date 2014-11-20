@@ -17,8 +17,7 @@
 #include "AudioSegment.h"
 #include "endpointer.h"
 
-#include "GeneratedEvents.h"
-#include "nsIDOMSpeechRecognitionEvent.h"
+#include "mozilla/dom/SpeechRecognitionEvent.h"
 #include "nsIObserverService.h"
 #include "nsServiceManagerUtils.h"
 
@@ -467,20 +466,20 @@ SpeechRecognition::NotifyFinalResult(SpeechEvent* aEvent)
 {
   ResetAndEnd();
 
-  nsCOMPtr<nsIDOMEvent> domEvent;
-  NS_NewDOMSpeechRecognitionEvent(getter_AddRefs(domEvent), nullptr, nullptr, nullptr);
+  SpeechRecognitionEventInit init;
+  init.mBubbles = true;
+  init.mCancelable = false;
+  // init.mResultIndex = 0;
+  init.mResults = aEvent->mRecognitionResultList;
+  init.mInterpretation = NS_LITERAL_STRING("NOT_IMPLEMENTED");
+  // init.mEmma = nullptr;
 
-  nsCOMPtr<nsIDOMSpeechRecognitionEvent> srEvent = do_QueryInterface(domEvent);
-  nsRefPtr<SpeechRecognitionResultList> rlist = aEvent->mRecognitionResultList;
-  nsCOMPtr<nsISupports> ilist = do_QueryInterface(rlist);
-  srEvent->InitSpeechRecognitionEvent(NS_LITERAL_STRING("result"),
-                                      true, false, 0, ilist,
-                                      NS_LITERAL_STRING("NOT_IMPLEMENTED"),
-                                      nullptr);
-  domEvent->SetTrusted(true);
+  nsRefPtr<SpeechRecognitionEvent> event =
+    SpeechRecognitionEvent::Constructor(this, NS_LITERAL_STRING("result"), init);
+  event->SetTrusted(true);
 
   bool defaultActionEnabled;
-  this->DispatchEvent(domEvent, &defaultActionEnabled);
+  this->DispatchEvent(event, &defaultActionEnabled);
 }
 
 void
@@ -585,19 +584,12 @@ SpeechRecognition::Observe(nsISupports* aSubject, const char* aTopic,
 void
 SpeechRecognition::ProcessTestEventRequest(nsISupports* aSubject, const nsAString& aEventName)
 {
-  if (aEventName.EqualsLiteral("EVENT_START")) {
-    ErrorResult err;
-    Start(err);
-  } else if (aEventName.EqualsLiteral("EVENT_STOP")) {
-    Stop();
-  } else if (aEventName.EqualsLiteral("EVENT_ABORT")) {
+  if (aEventName.EqualsLiteral("EVENT_ABORT")) {
     Abort();
   } else if (aEventName.EqualsLiteral("EVENT_AUDIO_ERROR")) {
     DispatchError(SpeechRecognition::EVENT_AUDIO_ERROR,
                   SpeechRecognitionErrorCode::Audio_capture, // TODO different codes?
                   NS_LITERAL_STRING("AUDIO_ERROR test event"));
-  } else if (aEventName.EqualsLiteral("EVENT_AUDIO_DATA")) {
-    StartRecording(static_cast<DOMMediaStream*>(aSubject));
   } else {
     NS_ASSERTION(mTestConfig.mFakeRecognitionService,
                  "Got request for fake recognition service event, but "
@@ -694,7 +686,7 @@ SpeechRecognition::SetServiceURI(const nsAString& aArg, ErrorResult& aRv)
 }
 
 void
-SpeechRecognition::Start(ErrorResult& aRv)
+SpeechRecognition::Start(const Optional<NonNull<DOMMediaStream>>& aStream, ErrorResult& aRv)
 {
   if (mCurrentState != STATE_IDLE) {
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
@@ -714,7 +706,9 @@ SpeechRecognition::Start(ErrorResult& aRv)
   MediaStreamConstraints constraints;
   constraints.mAudio.SetAsBoolean() = true;
 
-  if (!mTestConfig.mFakeFSMEvents) {
+  if (aStream.WasPassed()) {
+    StartRecording(&aStream.Value());
+  } else {
     MediaManager* manager = MediaManager::Get();
     manager->GetUserMedia(false,
                           GetOwner(),

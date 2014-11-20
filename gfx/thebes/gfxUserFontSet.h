@@ -61,7 +61,7 @@ operator==(const gfxFontFaceSrc& a, const gfxFontFaceSrc& b)
 class gfxUserFontData {
 public:
     gfxUserFontData()
-        : mSrcIndex(0), mFormat(0), mMetaOrigLen(0)
+        : mSrcIndex(0), mFormat(0), mMetaOrigLen(0), mPrivate(false)
     { }
     virtual ~gfxUserFontData() { }
 
@@ -103,7 +103,17 @@ public:
                 break;
             }
         }
-        aFontEntry->mFamilyName = Name();
+        if (aFontEntry->mFamilyName.IsEmpty()) {
+            aFontEntry->mFamilyName = Name();
+        } else {
+#ifdef DEBUG
+            nsString thisName = Name();
+            nsString entryName = aFontEntry->mFamilyName;
+            ToLowerCase(thisName);
+            ToLowerCase(entryName);
+            MOZ_ASSERT(thisName.Equals(entryName));
+#endif
+        }
         ResetCharacterMap();
     }
 
@@ -118,7 +128,17 @@ public:
                 // Note that this may delete aProxyFontEntry, if there's no
                 // other reference to it except from its family.
                 mAvailableFonts[i] = aRealFontEntry;
-                aRealFontEntry->mFamilyName = Name();
+                if (aRealFontEntry->mFamilyName.IsEmpty()) {
+                    aRealFontEntry->mFamilyName = Name();
+                } else {
+#ifdef DEBUG
+                  nsString thisName = Name();
+                  nsString entryName = aRealFontEntry->mFamilyName;
+                  ToLowerCase(thisName);
+                  ToLowerCase(entryName);
+                  MOZ_ASSERT(thisName.Equals(entryName));
+#endif
+                }
                 break;
             }
         }
@@ -135,6 +155,7 @@ public:
 class gfxProxyFontEntry;
 
 class gfxUserFontSet {
+    friend class gfxProxyFontEntry;
 
 public:
 
@@ -157,19 +178,12 @@ public:
         FLAG_FORMAT_NOT_USED       = ~((1 << 7)-1)
     };
 
-    enum LoadStatus {
-        STATUS_LOADING = 0,
-        STATUS_LOADED,
-        STATUS_FORMAT_NOT_SUPPORTED,
-        STATUS_ERROR,
-        STATUS_END_OF_LIST
-    };
-
 
     // add in a font face
-    // weight - 0 == unknown, [100, 900] otherwise (multiples of 100)
+    // weight - [100, 900] (multiples of 100)
     // stretch = [NS_FONT_STRETCH_ULTRA_CONDENSED, NS_FONT_STRETCH_ULTRA_EXPANDED]
     // italic style = constants in gfxFontConstants.h, e.g. NS_FONT_STYLE_NORMAL
+    // language override = result of calling gfxFontStyle::ParseFontLanguageOverride
     // TODO: support for unicode ranges not yet implemented
     gfxFontEntry *AddFontFace(const nsAString& aFamilyName,
                               const nsTArray<gfxFontFaceSrc>& aFontFaceSrcList,
@@ -177,7 +191,7 @@ public:
                               int32_t aStretch,
                               uint32_t aItalicStyle,
                               const nsTArray<gfxFontFeature>& aFeatureSettings,
-                              const nsString& aLanguageOverride,
+                              uint32_t aLanguageOverride,
                               gfxSparseBitSet *aUnicodeRanges = nullptr);
 
     // add in a font face for which we have the gfxFontEntry already
@@ -186,13 +200,15 @@ public:
     // Whether there is a face with this family name
     bool HasFamily(const nsAString& aFamilyName) const
     {
-        return GetFamily(aFamilyName) != nullptr;
+        return LookupFamily(aFamilyName) != nullptr;
     }
 
-    gfxFontFamily *GetFamily(const nsAString& aName) const;
+    // Look up and return the gfxMixedFontFamily in mFontFamilies with
+    // the given name
+    gfxMixedFontFamily* LookupFamily(const nsAString& aName) const;
 
     // Lookup a font entry for a given style, returns null if not loaded.
-    // aFamily must be a family returned by our GetFamily method.
+    // aFamily must be a family returned by our LookupFamily method.
     gfxFontEntry *FindFontEntry(gfxFontFamily *aFamily,
                                 const gfxFontStyle& aFontStyle,
                                 bool& aNeedsBold,
@@ -247,10 +263,21 @@ public:
 
     class UserFontCache {
     public:
+        // Flag passed when caching a font entry, to specify whether the entry
+        // should persist in the cache or be discardable.
+        typedef enum {
+            kDiscardable,
+            kPersistent
+        } EntryPersistence;
+
         // Record a loaded user-font in the cache. This requires that the
         // font-entry's userFontData has been set up already, as it relies
         // on the URI and Principal recorded there.
-        static void CacheFont(gfxFontEntry *aFontEntry);
+        // If aPersistence is Persistent, the entry will remain in the cache
+        // across cacheservice:empty-cache notifications. This is used for
+        // "preloaded hidden fonts" on FxOS.
+        static void CacheFont(gfxFontEntry *aFontEntry,
+                              EntryPersistence aPersistence = kDiscardable);
 
         // The given gfxFontEntry is being destroyed, so remove any record that
         // refers to it.
@@ -279,11 +306,11 @@ public:
         // from nsICacheService.
         class Flusher : public nsIObserver
         {
+            virtual ~Flusher() {}
         public:
             NS_DECL_ISUPPORTS
             NS_DECL_NSIOBSERVER
             Flusher() {}
-            virtual ~Flusher() {}
         };
 
         // Key used to look up entries in the user-font cache.
@@ -294,16 +321,19 @@ public:
         // entry and the corresponding "real" font entry.
         struct Key {
             nsCOMPtr<nsIURI>        mURI;
-            nsCOMPtr<nsIPrincipal>  mPrincipal;
+            nsCOMPtr<nsIPrincipal>  mPrincipal; // use nullptr with data: URLs
             gfxFontEntry           *mFontEntry;
             bool                    mPrivate;
+            EntryPersistence        mPersistence;
 
             Key(nsIURI* aURI, nsIPrincipal* aPrincipal,
-                gfxFontEntry* aFontEntry, bool aPrivate)
+                gfxFontEntry* aFontEntry, bool aPrivate,
+                EntryPersistence aPersistence = kDiscardable)
                 : mURI(aURI),
                   mPrincipal(aPrincipal),
                   mFontEntry(aFontEntry),
-                  mPrivate(aPrivate)
+                  mPrivate(aPrivate),
+                  mPersistence(aPersistence)
             { }
         };
 
@@ -316,14 +346,16 @@ public:
                 : mURI(aKey->mURI),
                   mPrincipal(aKey->mPrincipal),
                   mFontEntry(aKey->mFontEntry),
-                  mPrivate(aKey->mPrivate)
+                  mPrivate(aKey->mPrivate),
+                  mPersistence(aKey->mPersistence)
             { }
 
             Entry(const Entry& aOther)
                 : mURI(aOther.mURI),
                   mPrincipal(aOther.mPrincipal),
                   mFontEntry(aOther.mFontEntry),
-                  mPrivate(aOther.mPrivate)
+                  mPrivate(aOther.mPrivate),
+                  mPersistence(aOther.mPersistence)
             { }
 
             ~Entry() { }
@@ -333,8 +365,10 @@ public:
             static KeyTypePointer KeyToPointer(KeyType aKey) { return &aKey; }
 
             static PLDHashNumber HashKey(const KeyTypePointer aKey) {
-                uint32_t principalHash;
-                aKey->mPrincipal->GetHashValue(&principalHash);
+                uint32_t principalHash = 0;
+                if (aKey->mPrincipal) {
+                    aKey->mPrincipal->GetHashValue(&principalHash);
+                }
                 return mozilla::HashGeneric(principalHash + int(aKey->mPrivate),
                                             nsURIHashKey::HashKey(aKey->mURI),
                                             HashFeatures(aKey->mFontEntry->mFeatureSettings),
@@ -349,9 +383,14 @@ public:
 
             gfxFontEntry* GetFontEntry() const { return mFontEntry; }
 
-            static PLDHashOperator RemoveIfPrivate(Entry* aEntry, void* aUserData);
-            static PLDHashOperator RemoveIfMatches(Entry* aEntry, void* aUserData);
-            static PLDHashOperator DisconnectSVG(Entry* aEntry, void* aUserData);
+            static PLDHashOperator
+            RemoveUnlessPersistent(Entry* aEntry, void* aUserData);
+            static PLDHashOperator
+            RemoveIfPrivate(Entry* aEntry, void* aUserData);
+            static PLDHashOperator
+            RemoveIfMatches(Entry* aEntry, void* aUserData);
+            static PLDHashOperator
+            DisconnectSVG(Entry* aEntry, void* aUserData);
 
 #ifdef DEBUG_USERFONT_CACHE
             static PLDHashOperator DumpEntry(Entry* aEntry, void* aUserData);
@@ -365,7 +404,7 @@ public:
             }
 
             nsCOMPtr<nsIURI>       mURI;
-            nsCOMPtr<nsIPrincipal> mPrincipal;
+            nsCOMPtr<nsIPrincipal> mPrincipal; // or nullptr for data: URLs
 
             // The "real" font entry corresponding to this downloaded font.
             // The font entry MUST notify the cache when it is destroyed
@@ -374,6 +413,9 @@ public:
 
             // Whether this font was loaded from a private window.
             bool                   mPrivate;
+
+            // Whether this entry should survive cache-flushing.
+            EntryPersistence       mPersistence;
         };
 
         static nsTHashtable<Entry> *sUserFonts;
@@ -385,19 +427,6 @@ protected:
 
     // Return whether the font set is associated with a private-browsing tab.
     virtual bool GetPrivateBrowsing() = 0;
-
-    // for a given proxy font entry, attempt to load the next resource
-    // in the src list
-    LoadStatus LoadNext(gfxMixedFontFamily *aFamily,
-                        gfxProxyFontEntry *aProxyEntry);
-
-    // helper method for creating a platform font
-    // returns font entry if platform font creation successful
-    // Ownership of aFontData is passed in here; the font set must
-    // ensure that it is eventually deleted with NS_Free().
-    gfxFontEntry* LoadFont(gfxMixedFontFamily *aFamily,
-                           gfxProxyFontEntry *aProxy,
-                           const uint8_t *aFontData, uint32_t &aLength);
 
     // parse data for a data URL
     virtual nsresult SyncLoadFontData(gfxProxyFontEntry *aFontToLoad,
@@ -412,17 +441,12 @@ protected:
                                 uint32_t aFlags = nsIScriptError::errorFlag,
                                 nsresult aStatus = NS_OK) = 0;
 
-    const uint8_t* SanitizeOpenTypeData(gfxMixedFontFamily *aFamily,
-                                        gfxProxyFontEntry *aProxy,
-                                        const uint8_t* aData,
-                                        uint32_t aLength,
-                                        uint32_t& aSaneLength,
-                                        bool aIsCompressed);
-
-    static bool OTSMessage(void *aUserData, const char *format, ...);
-
     // helper method for performing the actual userfont set rebuild
     virtual void DoRebuildUserFontSet() = 0;
+
+    // creates a new gfxMixedFontFamily in mFontFamilies, or returns an existing
+    // family if there is one
+    gfxMixedFontFamily* GetFamily(const nsAString& aFamilyName);
 
     // font families defined by @font-face rules
     nsRefPtrHashtable<nsStringHashKey, gfxMixedFontFamily> mFontFamilies;
@@ -433,21 +457,26 @@ protected:
     bool mLocalRulesUsed;
 
     static PRLogModuleInfo* GetUserFontsLog();
-
-private:
-    static void CopyWOFFMetadata(const uint8_t* aFontData,
-                                 uint32_t aLength,
-                                 FallibleTArray<uint8_t>* aMetadata,
-                                 uint32_t* aMetaOrigLen);
 };
 
 // acts a placeholder until the real font is downloaded
 
 class gfxProxyFontEntry : public gfxFontEntry {
     friend class gfxUserFontSet;
+    friend class nsUserFontSet;
+    friend class nsFontFaceLoader;
 
 public:
-    gfxProxyFontEntry(const nsTArray<gfxFontFaceSrc>& aFontFaceSrcList,
+    enum LoadStatus {
+        STATUS_LOADING = 0,
+        STATUS_LOADED,
+        STATUS_FORMAT_NOT_SUPPORTED,
+        STATUS_ERROR,
+        STATUS_END_OF_LIST
+    };
+
+    gfxProxyFontEntry(gfxUserFontSet *aFontSet,
+                      const nsTArray<gfxFontFaceSrc>& aFontFaceSrcList,
                       uint32_t aWeight,
                       int32_t aStretch,
                       uint32_t aItalicStyle,
@@ -468,6 +497,35 @@ public:
 
     virtual gfxFont *CreateFontInstance(const gfxFontStyle *aFontStyle, bool aNeedsBold);
 
+protected:
+    const uint8_t* SanitizeOpenTypeData(gfxMixedFontFamily *aFamily,
+                                        const uint8_t* aData,
+                                        uint32_t aLength,
+                                        uint32_t& aSaneLength,
+                                        bool aIsCompressed);
+
+    // Attempt to load the next resource in the src list.
+    // aLocalRules is set to true if an attempt was made to load a
+    // local() font was loaded, and left as it is otherwise.
+    LoadStatus LoadNext(gfxMixedFontFamily *aFamily,
+                        bool& aLocalRulesUsed);
+
+    // helper method for creating a platform font
+    // returns font entry if platform font creation successful
+    // Ownership of aFontData is passed in here; the font must
+    // ensure that it is eventually deleted with NS_Free().
+    gfxFontEntry* LoadFont(gfxMixedFontFamily *aFamily,
+                           const uint8_t *aFontData, uint32_t &aLength);
+
+    // store metadata and src details for current src into aFontEntry
+    void StoreUserFontData(gfxFontEntry*      aFontEntry,
+                           bool               aPrivate,
+                           const nsAString&   aOriginalName,
+                           FallibleTArray<uint8_t>* aMetadata,
+                           uint32_t           aMetaOrigLen);
+
+    static bool OTSMessage(void *aUserData, const char *format, ...);
+
     // note that code depends on the ordering of these values!
     enum LoadingState {
         NOT_LOADING = 0,     // not started to load any font resources yet
@@ -484,6 +542,7 @@ public:
     nsTArray<gfxFontFaceSrc> mSrcList;
     uint32_t                 mSrcIndex; // index of loading src item
     nsFontFaceLoader        *mLoader; // current loader for this entry, if any
+    gfxUserFontSet          *mFontSet; // font-set to which the proxy belongs
     nsCOMPtr<nsIPrincipal>   mPrincipal;
 };
 

@@ -67,6 +67,8 @@ function run_test() {
   do_test_pending();
   createAppInfo("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9.2");
 
+  Services.prefs.setBoolPref("media.gmp-gmpopenh264.provider.enabled", false);
+
   startupManager();
   AddonManager.addAddonListener(AddonListener);
   AddonManager.addInstallListener(InstallListener);

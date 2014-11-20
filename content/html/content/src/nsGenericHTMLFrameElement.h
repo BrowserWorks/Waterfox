@@ -28,7 +28,7 @@ class nsGenericHTMLFrameElement : public nsGenericHTMLElement,
                                   public nsIMozBrowserFrame
 {
 public:
-  nsGenericHTMLFrameElement(already_AddRefed<nsINodeInfo>& aNodeInfo,
+  nsGenericHTMLFrameElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo,
                             mozilla::dom::FromParser aFromParser)
     : nsGenericHTMLElement(aNodeInfo)
     , nsElementFrameLoaderOwner(aFromParser)
@@ -82,6 +82,8 @@ public:
   static int32_t MapScrollingAttribute(const nsAttrValue* aValue);
 
 protected:
+  virtual ~nsGenericHTMLFrameElement() {}
+
   virtual mozilla::dom::Element* ThisFrameElement() MOZ_OVERRIDE
   {
     return this;

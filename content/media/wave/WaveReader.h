@@ -21,8 +21,11 @@ class WaveReader : public MediaDecoderReader
 {
 public:
   WaveReader(AbstractMediaDecoder* aDecoder);
+
+protected:
   ~WaveReader();
 
+public:
   virtual nsresult Init(MediaDecoderReader* aCloneDonor);
   virtual bool DecodeAudioData();
   virtual bool DecodeVideoFrame(bool &aKeyframeSkip,
@@ -47,6 +50,8 @@ public:
   virtual bool IsSeekableInBufferedRanges() {
     return true;
   }
+
+  virtual bool IsMediaSeekable() MOZ_OVERRIDE;
 
 private:
   bool ReadAll(char* aBuf, int64_t aSize, int64_t* aBytesRead = nullptr);

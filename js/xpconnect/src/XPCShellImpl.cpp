@@ -32,6 +32,7 @@
 #include "nsCxPusher.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsIPrincipal.h"
+#include "nsJSUtils.h"
 
 #ifdef ANDROID
 #include <android/log.h>
@@ -257,26 +258,23 @@ Print(JSContext *cx, unsigned argc, jsval *vp)
     args.rval().setUndefined();
 
     RootedString str(cx);
-    nsAutoCString utf8str;
-    size_t length;
-    const jschar *chars;
+    nsAutoCString utf8output;
 
     for (unsigned i = 0; i < args.length(); i++) {
         str = ToString(cx, args[i]);
         if (!str)
             return false;
-        chars = JS_GetStringCharsAndLength(cx, str, &length);
-        if (!chars)
+
+        JSAutoByteString utf8str;
+        if (!utf8str.encodeUtf8(cx, str))
             return false;
 
         if (i)
-            utf8str.Append(' ');
-        AppendUTF16toUTF8(Substring(reinterpret_cast<const char16_t*>(chars),
-                                    length),
-                          utf8str);
+            utf8output.Append(' ');
+        utf8output.Append(utf8str.ptr(), utf8str.length());
     }
-    utf8str.Append('\n');
-    fputs(utf8str.get(), gOutFile);
+    utf8output.Append('\n');
+    fputs(utf8output.get(), gOutFile);
     fflush(gOutFile);
     return true;
 }
@@ -294,22 +292,22 @@ Dump(JSContext *cx, unsigned argc, jsval *vp)
     if (!str)
         return false;
 
-    size_t length;
-    const jschar *chars = JS_GetStringCharsAndLength(cx, str, &length);
-    if (!chars)
+    JSAutoByteString utf8str;
+    if (!utf8str.encodeUtf8(cx, str))
         return false;
 
-    NS_ConvertUTF16toUTF8 utf8str(reinterpret_cast<const char16_t*>(chars),
-                                  length);
 #ifdef ANDROID
-    __android_log_print(ANDROID_LOG_INFO, "Gecko", "%s", utf8str.get());
+    __android_log_print(ANDROID_LOG_INFO, "Gecko", "%s", utf8str.ptr());
 #endif
 #ifdef XP_WIN
     if (IsDebuggerPresent()) {
-      OutputDebugStringW(reinterpret_cast<const wchar_t*>(chars));
+        nsAutoJSString wstr;
+        if (!wstr.init(cx, str))
+            return false;
+        OutputDebugStringW(wstr.get());
     }
 #endif
-    fputs(utf8str.get(), gOutFile);
+    fputs(utf8str.ptr(), gOutFile);
     fflush(gOutFile);
     return true;
 }
@@ -339,8 +337,10 @@ Load(JSContext *cx, unsigned argc, jsval *vp)
         }
         JS::CompileOptions options(cx);
         options.setUTF8(true)
-               .setFileAndLine(filename.ptr(), 1);
-        JS::Rooted<JSScript*> script(cx, JS::Compile(cx, obj, options, file));
+               .setFileAndLine(filename.ptr(), 1)
+               .setCompileAndGo(true);
+        JS::Rooted<JSScript*> script(cx);
+        JS::Compile(cx, obj, options, file, &script);
         fclose(file);
         if (!script)
             return false;
@@ -478,7 +478,8 @@ static bool
 Options(JSContext *cx, unsigned argc, jsval *vp)
 {
     JS::CallArgs args = CallArgsFromVp(argc, vp);
-    ContextOptions oldOptions = ContextOptionsRef(cx);
+    ContextOptions oldContextOptions = ContextOptionsRef(cx);
+    RuntimeOptions oldRuntimeOptions = RuntimeOptionsRef(cx);
 
     for (unsigned i = 0; i < args.length(); ++i) {
         JSString *str = ToString(cx, args[i]);
@@ -492,9 +493,9 @@ Options(JSContext *cx, unsigned argc, jsval *vp)
         if (strcmp(opt.ptr(), "strict") == 0)
             ContextOptionsRef(cx).toggleExtraWarnings();
         else if (strcmp(opt.ptr(), "werror") == 0)
-            ContextOptionsRef(cx).toggleWerror();
+            RuntimeOptionsRef(cx).toggleWerror();
         else if (strcmp(opt.ptr(), "strict_mode") == 0)
-            ContextOptionsRef(cx).toggleStrictMode();
+            RuntimeOptionsRef(cx).toggleStrictMode();
         else {
             JS_ReportError(cx, "unknown option name '%s'. The valid names are "
                            "strict, werror, and strict_mode.", opt.ptr());
@@ -503,21 +504,21 @@ Options(JSContext *cx, unsigned argc, jsval *vp)
     }
 
     char *names = nullptr;
-    if (oldOptions.extraWarnings()) {
+    if (oldContextOptions.extraWarnings()) {
         names = JS_sprintf_append(names, "%s", "strict");
         if (!names) {
             JS_ReportOutOfMemory(cx);
             return false;
         }
     }
-    if (oldOptions.werror()) {
+    if (oldRuntimeOptions.werror()) {
         names = JS_sprintf_append(names, "%s%s", names ? "," : "", "werror");
         if (!names) {
             JS_ReportOutOfMemory(cx);
             return false;
         }
     }
-    if (names && oldOptions.strictMode()) {
+    if (names && oldRuntimeOptions.strictMode()) {
         names = JS_sprintf_append(names, "%s%s", names ? "," : "", "strict_mode");
         if (!names) {
             JS_ReportOutOfMemory(cx);
@@ -880,7 +881,7 @@ static const JSErrorFormatString jsShell_ErrorFormatString[JSShellErr_Limit] = {
 };
 
 static const JSErrorFormatString *
-my_GetErrorMessage(void *userRef, const char *locale, const unsigned errorNumber)
+my_GetErrorMessage(void *userRef, const unsigned errorNumber)
 {
     if (errorNumber == 0 || errorNumber >= JSShellErr_Limit)
         return nullptr;
@@ -923,9 +924,9 @@ ProcessFile(JSContext *cx, JS::Handle<JSObject*> obj, const char *filename, FILE
 
         JS::CompileOptions options(cx);
         options.setUTF8(true)
-               .setFileAndLine(filename, 1);
-        script = JS::Compile(cx, obj, options, file);
-        if (script && !compileOnly)
+               .setFileAndLine(filename, 1)
+               .setCompileAndGo(true);
+        if (JS::Compile(cx, obj, options, file, &script) && !compileOnly)
             (void)JS_ExecuteScript(cx, obj, script, &result);
         DoEndRequest(cx);
 
@@ -959,9 +960,9 @@ ProcessFile(JSContext *cx, JS::Handle<JSObject*> obj, const char *filename, FILE
         /* Clear any pending exception from previous failed compiles.  */
         JS_ClearPendingException(cx);
         JS::CompileOptions options(cx);
-        options.setFileAndLine("typein", startline);
-        script = JS_CompileScript(cx, obj, buffer, strlen(buffer), options);
-        if (script) {
+        options.setFileAndLine("typein", startline)
+               .setCompileAndGo(true);
+        if (JS_CompileScript(cx, obj, buffer, strlen(buffer), options, &script)) {
             JSErrorReporter older;
 
             if (!compileOnly) {
@@ -1031,7 +1032,7 @@ ProcessArgsForCompartment(JSContext *cx, char **argv, int argc)
                 return;
             break;
         case 'S':
-            ContextOptionsRef(cx).toggleWerror();
+            RuntimeOptionsRef(cx).toggleWerror();
         case 's':
             ContextOptionsRef(cx).toggleExtraWarnings();
             break;
@@ -1123,7 +1124,7 @@ ProcessArgs(JSContext *cx, JS::Handle<JSObject*> obj, char **argv, int argc, XPC
         case 'x':
             break;
         case 'd':
-            xpc_ActivateDebugMode();
+            /* This used to try to turn on the debugger. */
             break;
         case 'f':
             if (++i == argc) {

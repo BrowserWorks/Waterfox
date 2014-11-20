@@ -432,6 +432,10 @@ interface WebGLRenderingContext {
     const GLenum VERTEX_ATTRIB_ARRAY_POINTER        = 0x8645;
     const GLenum VERTEX_ATTRIB_ARRAY_BUFFER_BINDING = 0x889F;
 
+    /* Read Format */
+    const GLenum IMPLEMENTATION_COLOR_READ_TYPE   = 0x8B9A;
+    const GLenum IMPLEMENTATION_COLOR_READ_FORMAT = 0x8B9B;
+
     /* Shader Source */
     const GLenum COMPILE_STATUS                 = 0x8B81;
 
@@ -958,4 +962,10 @@ interface WebGLExtensionInstancedArrays {
     void drawArraysInstancedANGLE(GLenum mode, GLint first, GLsizei count, GLsizei primcount);
     void drawElementsInstancedANGLE(GLenum mode, GLsizei count, GLenum type, GLintptr offset, GLsizei primcount);
     void vertexAttribDivisorANGLE(GLuint index, GLuint divisor);
+};
+
+[NoInterfaceObject]
+interface WebGLExtensionBlendMinMax {
+    const GLenum MIN_EXT = 0x8007;
+    const GLenum MAX_EXT = 0x8008;
 };

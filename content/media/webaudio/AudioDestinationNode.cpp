@@ -127,14 +127,10 @@ public:
     // AudioDestinationNode::FireOfflineCompletionEvent.
 
     AutoJSAPI jsapi;
-    JSContext* cx = jsapi.cx();
-
-    // We need the global for the context so that we can enter its compartment.
-    JS::Rooted<JSObject*> global(cx, context->GetGlobalJSObject());
-    if (NS_WARN_IF(!global)) {
+    if (NS_WARN_IF(!jsapi.Init(aNode->GetOwner()))) {
       return;
     }
-    JSAutoCompartment ac(cx, global);
+    JSContext* cx = jsapi.cx();
 
     // Create the input buffer
     ErrorResult rv;
@@ -320,6 +316,10 @@ AudioDestinationNode::AudioDestinationNode(AudioContext* aContext,
 
     CreateAudioChannelAgent();
   }
+}
+
+AudioDestinationNode::~AudioDestinationNode()
+{
 }
 
 size_t

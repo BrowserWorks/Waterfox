@@ -7,7 +7,6 @@ __all__ = ['Profile',
            'MetroFirefoxProfile',
            'ThunderbirdProfile']
 
-import json
 import os
 import time
 import tempfile
@@ -106,7 +105,7 @@ class Profile(object):
         self.webapps.update_manifests()
 
     def __del__(self):
-      self.cleanup()
+        self.cleanup()
 
     ### cleanup
 

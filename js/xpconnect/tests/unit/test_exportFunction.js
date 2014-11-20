@@ -3,13 +3,14 @@ function run_test() {
   var epsb = new Cu.Sandbox(["http://example.com", "http://example.org"], { wantExportHelpers: true });
   var subsb = new Cu.Sandbox("http://example.com", { wantGlobalProperties: ["XMLHttpRequest"] });
   var subsb2 = new Cu.Sandbox("http://example.com", { wantGlobalProperties: ["XMLHttpRequest"] });
-  var xorigsb = new Cu.Sandbox("http://test.com");
+  var xorigsb = new Cu.Sandbox("http://test.com", { wantGlobalProperties: ["XMLHttpRequest"] });
 
   epsb.subsb = subsb;
   epsb.xorigsb = xorigsb;
   epsb.do_check_true = do_check_true;
   epsb.do_check_eq = do_check_eq;
   epsb.do_check_neq = do_check_neq;
+  subsb.do_check_true = do_check_true;
 
   // Exporting should work if prinicipal of the source sandbox
   // subsumes the principal of the target sandbox.
@@ -17,7 +18,7 @@ function run_test() {
     Object.prototype.protoProp = "common";
     var wasCalled = false;
     var _this = this;
-    this.funToExport = function(a, obj, native, mixed) {
+    this.funToExport = function(a, obj, native, mixed, callback) {
       do_check_eq(a, 42);
       do_check_neq(obj, subsb.tobecloned);
       do_check_eq(obj.cloned, "cloned");
@@ -26,13 +27,18 @@ function run_test() {
       do_check_eq(_this, this);
       do_check_eq(mixed.xrayed, subsb.xrayed);
       do_check_eq(mixed.xrayed2, subsb.xrayed2);
+      if (typeof callback == 'function') {
+        do_check_eq(typeof subsb.callback, 'function');
+        do_check_neq(callback, subsb.callback);
+        callback();
+      }
       wasCalled = true;
     };
     this.checkIfCalled = function() {
       do_check_true(wasCalled);
       wasCalled = false;
     }
-    exportFunction(funToExport, subsb, { defineAs: "imported" });
+    exportFunction(funToExport, subsb, { defineAs: "imported", allowCallbacks: true });
   }.toSource() + ")()", epsb);
 
   subsb.xrayed = Cu.evalInSandbox("(" + function () {
@@ -47,8 +53,27 @@ function run_test() {
     xrayed2 = XPCNativeWrapper(new XMLHttpRequest());
     mixed = { xrayed: xrayed, xrayed2: xrayed2 };
     tobecloned = { cloned: "cloned" };
-    imported(42,tobecloned, native, mixed);
+    invokedCallback = false;
+    callback = function() { invokedCallback = true; };
+    imported(42, tobecloned, native, mixed, callback);
+    do_check_true(invokedCallback);
+    try {
+      // Callbacks must be functions, not objects leading to functions.
+      imported(42, tobecloned, native, mixed, { cb: callback });
+      do_check_true(false);
+    } catch (e) {
+      do_check_true(/denied/.test(e) && /Function/.test(e));
+    }
   }.toSource() + ")()", subsb);
+
+  // Invoking an exported function with cross-origin arguments should throw.
+  subsb.xoNative = Cu.evalInSandbox('new XMLHttpRequest()', xorigsb);
+  try {
+    Cu.evalInSandbox('imported({val: xoNative})', subsb);
+    do_check_true(false);
+  } catch (e) {
+    do_check_true(/denied|insecure/.test(e));
+  }
 
   // Apply should work but the |this| argument should not be
   // possible to be changed.
@@ -104,6 +129,16 @@ function run_test() {
   Cu.evalInSandbox("(" + function () {
     imported2(42, tobecloned, native, mixed);
   }.toSource() + ")()", subsb);
+
+  // Make sure that functions may not be passed when allowCallbacks is not set.
+  try {
+    Cu.evalInSandbox("(" + function () {
+      imported2(42, tobecloned, native, mixed, callback);
+    }.toSource() + ")()", subsb);
+    do_check_true(false);
+  } catch (e) {
+    do_check_true(/denied/.test(e) && /Function/.test(e));
+  }
 
   Cu.evalInSandbox("(" + function() {
     checkIfCalled();

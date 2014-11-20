@@ -167,11 +167,11 @@ mozJSSubScriptLoader::ReadScript(nsIURI *uri, JSContext *cx, JSObject *targetObj
         // the lazy source loader doesn't know the encoding.
         if (!reuseGlobal) {
             options.setSourceIsLazy(true);
-            script.set(JS::Compile(cx, target_obj, options, buf.get(), len));
+            JS::Compile(cx, target_obj, options, buf.get(), len, script);
         } else {
-            function.set(JS::CompileFunction(cx, target_obj, options,
-                                             nullptr, 0, nullptr, buf.get(),
-                                             len));
+            JS::CompileFunction(cx, target_obj, options,
+                                nullptr, 0, nullptr, buf.get(),
+                                len, function);
         }
     }
 
@@ -386,6 +386,12 @@ public:
         , mScriptLength(0)
     {}
 
+    static void OffThreadCallback(void *aToken, void *aData);
+
+    /* Sends the "done" notification back. Main thread only. */
+    void SendObserverNotification();
+
+private:
     virtual ~ScriptPrecompiler()
     {
       if (mScriptBuf) {
@@ -393,12 +399,6 @@ public:
       }
     }
 
-    static void OffThreadCallback(void *aToken, void *aData);
-
-    /* Sends the "done" notification back. Main thread only. */
-    void SendObserverNotification();
-
-private:
     nsRefPtr<nsIObserver> mObserver;
     nsRefPtr<nsIPrincipal> mPrincipal;
     nsRefPtr<nsIChannel> mChannel;

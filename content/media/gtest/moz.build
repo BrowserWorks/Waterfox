@@ -9,6 +9,7 @@ LIBRARY_NAME = 'media_gtest'
 UNIFIED_SOURCES += [
     'TestAudioCompactor.cpp',
     'TestTrackEncoder.cpp',
+    'TestVideoSegment.cpp'
 ]
 
 if CONFIG['MOZ_WEBM_ENCODER']:
@@ -16,8 +17,6 @@ if CONFIG['MOZ_WEBM_ENCODER']:
                         'TestVorbisTrackEncoder.cpp',
                         'TestWebMWriter.cpp',
 ]
-
-EXPORT_LIBRARY = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

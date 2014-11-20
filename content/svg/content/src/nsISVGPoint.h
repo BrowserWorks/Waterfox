@@ -65,6 +65,7 @@ public:
     mPt.mY = aPt->GetY();
   }
 
+protected:
   virtual ~nsISVGPoint()
   {
     // Our mList's weak ref to us must be nulled out when we die. If GC has
@@ -75,6 +76,7 @@ public:
     }
   }
 
+public:
   /**
    * Creates an unowned copy of this object's point as a DOMSVGPoint.
    */

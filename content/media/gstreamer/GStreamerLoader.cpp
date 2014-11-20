@@ -6,7 +6,7 @@
 #include <dlfcn.h>
 #include <stdio.h>
 
-#include "prlog.h"
+#include "prlog.h" 
 #include "nsDebug.h"
 #include "mozilla/NullPtr.h"
 
@@ -111,7 +111,7 @@ load_gstreamer()
   if (loaded) {
     return true;
   }
-
+  
 #if defined(__APPLE__) || !defined(SYSTEM_GSTREAMER)
  loaded = true;
  return init_gstreamer();

@@ -29,9 +29,6 @@ public:
       CreateOffscreenSurface(const IntSize& size,
                              gfxContentType contentType) MOZ_OVERRIDE;
 
-    already_AddRefed<gfxASurface> OptimizeImage(gfxImageSurface *aSurface,
-                                                gfxImageFormat format);
-
     mozilla::TemporaryRef<mozilla::gfx::ScaledFont>
       GetScaledFontForFont(mozilla::gfx::DrawTarget* aTarget, gfxFont *aFont);
 
@@ -67,12 +64,8 @@ public:
     // lower threshold on font anti-aliasing
     uint32_t GetAntiAliasingThreshold() { return mFontAntiAliasingThreshold; }
 
-    virtual already_AddRefed<gfxASurface>
-    GetThebesSurfaceForDrawTarget(mozilla::gfx::DrawTarget *aTarget);
 private:
     virtual void GetPlatformCMSOutputProfile(void* &mem, size_t &size);
-
-    virtual bool SupportsOffMainThreadCompositing();
 
     // read in the pref value for the lower threshold on font anti-aliasing
     static uint32_t ReadAntiAliasingThreshold();

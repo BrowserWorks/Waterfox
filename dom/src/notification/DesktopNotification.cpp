@@ -4,6 +4,7 @@
 #include "mozilla/dom/DesktopNotification.h"
 #include "mozilla/dom/DesktopNotificationBinding.h"
 #include "mozilla/dom/AppNotificationServiceOptionsBinding.h"
+#include "mozilla/dom/ToJSValue.h"
 #include "nsContentPermissionHelper.h"
 #include "nsXULAppAPI.h"
 #include "mozilla/dom/PBrowserChild.h"
@@ -28,8 +29,12 @@ class DesktopNotificationRequest : public nsIContentPermissionRequest,
                                    public PCOMContentPermissionRequestChild
 
 {
+  ~DesktopNotificationRequest()
+  {
+  }
+
 public:
-  NS_DECL_ISUPPORTS
+  NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSICONTENTPERMISSIONREQUEST
 
   DesktopNotificationRequest(DesktopNotification* notification)
@@ -43,10 +48,6 @@ public:
       prompt->Prompt(this);
     }
     return NS_OK;
-  }
-
-  ~DesktopNotificationRequest()
-  {
   }
 
   virtual bool Recv__delete__(const bool& aAllow,
@@ -101,7 +102,7 @@ DesktopNotification::PostDesktopNotification()
       ops.mTextClickable = true;
       ops.mManifestURL = manifestUrl;
 
-      if (!ops.ToObject(cx, &val)) {
+      if (!ToJSValue(cx, ops, &val)) {
         return NS_ERROR_FAILURE;
       }
 
@@ -308,9 +309,8 @@ DesktopNotificationCenter::WrapObject(JSContext* aCx)
 /* DesktopNotificationRequest                                               */
 /* ------------------------------------------------------------------------ */
 
-NS_IMPL_ISUPPORTS(DesktopNotificationRequest,
-                  nsIContentPermissionRequest,
-                  nsIRunnable)
+NS_IMPL_ISUPPORTS_INHERITED(DesktopNotificationRequest, nsRunnable,
+			    nsIContentPermissionRequest)
 
 NS_IMETHODIMP
 DesktopNotificationRequest::GetPrincipal(nsIPrincipal * *aRequestingPrincipal)

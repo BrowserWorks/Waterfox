@@ -19,7 +19,7 @@ load 399289-1.svg
 load 404470-1.html
 load 411603-1.html
 load 412588-1.html
-asserts-if(winWidget,2) load 413274-1.xhtml # Bug 576435
+load 413274-1.xhtml
 load 416461-1.xul
 load 418007-1.xhtml
 load 431705-1.xul
@@ -69,6 +69,7 @@ load 592698-1.html
 load 601437-1.html
 load 601439-1.html
 load 605689-1.html
+load 637242.xhtml
 load 645142.html
 load 611922-1.html
 == 645951-1.html 645951-1-ref.html
@@ -104,5 +105,7 @@ load 945048-1.html
 load 972199-1.html
 load 989965-1.html
 load 992333-1.html
+pref(dom.webcomponents.enabled,true) load 1017798-1.html
+load 1028514-1.html
 load large_border_image_width.html
 load border-image-visited-link.html

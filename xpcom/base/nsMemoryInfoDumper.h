@@ -8,6 +8,7 @@
 #define mozilla_nsMemoryInfoDumper_h
 
 #include "nsIMemoryInfoDumper.h"
+#include <stdio.h>
 
 class nsACString;
 
@@ -20,18 +21,25 @@ class nsACString;
  */
 class nsMemoryInfoDumper : public nsIMemoryInfoDumper
 {
+  virtual ~nsMemoryInfoDumper();
+
 public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIMEMORYINFODUMPER
 
   nsMemoryInfoDumper();
-  virtual ~nsMemoryInfoDumper();
 
-public:
   static void Initialize();
 
 #ifdef MOZ_DMD
+  // Write a DMD report.
   static nsresult DumpDMD(const nsAString& aIdentifier);
+  // Open an appropriately named file for a DMD report.  If DMD is
+  // disabled, return a null FILE* instead.
+  static nsresult OpenDMDFile(const nsAString& aIdentifier, int aPid,
+                              FILE** aOutFile);
+  // Write a DMD report to the given file and close it.
+  static nsresult DumpDMDToFile(FILE* aFile);
 #endif
 };
 

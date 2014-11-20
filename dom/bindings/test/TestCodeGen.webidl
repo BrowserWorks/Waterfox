@@ -113,7 +113,8 @@ interface OnlyForUseInConstructor {
  NamedConstructor=Test(DOMString str),
  NamedConstructor=Test2(DictForConstructor dict, any any1, object obj1,
                         object? obj2, sequence<Dict> seq, optional any any2,
-                        optional object obj3, optional object? obj4)
+                        optional object obj3, optional object? obj4),
+ NamedConstructor=Test3((long or MozMap<any>) arg1)
  ]
 interface TestInterface {
   // Integer types
@@ -340,8 +341,10 @@ interface TestInterface {
   void passCastableObjectNullableSequence(sequence<TestInterface>? arg);
   void passNullableCastableObjectNullableSequence(sequence<TestInterface?>? arg);
   void passOptionalSequence(optional sequence<long> arg);
+  void passOptionalSequenceWithDefaultValue(optional sequence<long> arg = []);
   void passOptionalNullableSequence(optional sequence<long>? arg);
   void passOptionalNullableSequenceWithDefaultValue(optional sequence<long>? arg = null);
+  void passOptionalNullableSequenceWithDefaultValue2(optional sequence<long>? arg = []);
   void passOptionalObjectSequence(optional sequence<TestInterface> arg);
   void passExternalInterfaceSequence(sequence<TestExternalInterface> arg);
   void passNullableExternalInterfaceSequence(sequence<TestExternalInterface?> arg);
@@ -517,7 +520,19 @@ interface TestInterface {
   void passUnion12(optional (EventInit or long) arg = 5);
   void passUnion13(optional (object or long?) arg = null);
   void passUnion14(optional (object or long?) arg = 5);
+  void passUnion15((sequence<long> or long) arg);
+  void passUnion16(optional (sequence<long> or long) arg);
+  void passUnion17(optional (sequence<long>? or long) arg = 5);
+  void passUnion18((sequence<object> or long) arg);
+  void passUnion19(optional (sequence<object> or long) arg);
+  void passUnion20(optional (sequence<object> or long) arg = []);
+  void passUnion21((MozMap<long> or long) arg);
+  void passUnion22((MozMap<object> or long) arg);
   void passUnionWithCallback((EventHandler or long) arg);
+  void passUnionWithByteString((ByteString or long) arg);
+  void passUnionWithMozMap((MozMap<DOMString> or DOMString) arg);
+  void passUnionWithMozMapAndSequence((MozMap<DOMString> or sequence<DOMString>) arg);
+  void passUnionWithSequenceAndMozMap((sequence<DOMString> or MozMap<DOMString>) arg);
 #endif
   void passUnionWithNullable((object? or long) arg);
   void passNullableUnion((object or long)? arg);
@@ -686,6 +701,10 @@ interface TestInterface {
   void overload15(optional TestInterface arg);
   void overload16(long arg);
   void overload16(optional TestInterface? arg);
+  void overload17(sequence<long> arg);
+  void overload17(MozMap<long> arg);
+  void overload18(MozMap<DOMString> arg);
+  void overload18(sequence<DOMString> arg);
 
   // Variadic handling
   void passVariadicThirdArg(DOMString arg1, long arg2, TestInterface... arg3);
@@ -744,6 +763,8 @@ interface TestInterface {
   [LenientThis] attribute long attrWithLenientThis;
   [Unforgeable] readonly attribute long unforgeableAttr;
   [Unforgeable, ChromeOnly] readonly attribute long unforgeableAttr2;
+  [Unforgeable] long unforgeableMethod();
+  [Unforgeable, ChromeOnly] long unforgeableMethod2();
   stringifier;
   void passRenamedInterface(TestRenamedInterface arg);
   [PutForwards=writableByte] readonly attribute TestInterface putForwardsAttr;
@@ -875,12 +896,21 @@ dictionary Dict : ParentDict {
   (CustomEventInit or long) eventInitOrLongWithDefaultValue2 = null;
   (EventInit or long) eventInitOrLongWithDefaultValue3 = 5;
   (CustomEventInit or long) eventInitOrLongWithDefaultValue4 = 5;
+  (sequence<object> or long) objectSequenceOrLong;
 #endif
 
   ArrayBuffer arrayBuffer;
   ArrayBuffer? nullableArrayBuffer;
   Uint8Array uint8Array;
   Float64Array? float64Array = null;
+
+  sequence<long> seq1;
+  sequence<long> seq2 = [];
+  sequence<long>? seq3;
+  sequence<long>? seq4 = null;
+  sequence<long>? seq5 = [];
+
+  long dashed-name;
 };
 
 dictionary ParentDict : GrandparentDict {

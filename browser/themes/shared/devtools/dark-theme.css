@@ -33,7 +33,7 @@
 
 .theme-bg-contrast,
 .variable-or-property:not([overridden])[changed] { /* contrast bg color to attract attention on a container */
-  background: #a18650;
+  background: #B28025; /* Background - Attention */
 }
 
 .theme-link,
@@ -177,7 +177,8 @@
 }
 
 .ruleview-colorswatch,
-.computedview-colorswatch {
+.computedview-colorswatch,
+.ruleview-bezierswatch {
   box-shadow: 0 0 0 1px #818181;
 }
 
@@ -280,6 +281,10 @@ div.CodeMirror span.eval-text {
 
 .theme-twisty[open] {
   background-position: -42px -14px;
+}
+
+.theme-twisty[invisible] {
+  visibility: hidden;
 }
 
 .theme-checkbox {
