@@ -74,7 +74,7 @@ HTMLFormControlsCollection::HTMLFormControlsCollection(HTMLFormElement* aForm)
   // Initialize the elements list to have an initial capacity
   // of 8 to reduce allocations on small forms.
   , mElements(8)
-  , mNameLookupTable(HTMLFormElement::FORM_CONTROL_LIST_HASHTABLE_SIZE)
+  , mNameLookupTable(HTMLFormElement::FORM_CONTROL_LIST_HASHTABLE_LENGTH)
 {
   SetIsDOMBinding();
 }
@@ -136,7 +136,7 @@ NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 // XPConnect interface list for HTMLFormControlsCollection
 NS_INTERFACE_TABLE_HEAD(HTMLFormControlsCollection)
-  NS_WRAPPERCACHE_INTERFACE_MAP_ENTRY
+  NS_WRAPPERCACHE_INTERFACE_TABLE_ENTRY
   NS_INTERFACE_TABLE(HTMLFormControlsCollection,
                      nsIHTMLCollection,
                      nsIDOMHTMLCollection)

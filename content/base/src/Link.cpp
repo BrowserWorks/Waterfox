@@ -282,7 +282,7 @@ Link::GetOrigin(nsAString &aOrigin, ErrorResult& aError)
   }
 
   nsString origin;
-  nsContentUtils::GetUTFNonNullOrigin(uri, origin);
+  nsContentUtils::GetUTFOrigin(uri, origin);
   aOrigin.Assign(origin);
 }
 
@@ -596,9 +596,10 @@ Link::SetSearchParams(URLSearchParams& aSearchParams)
 }
 
 void
-Link::URLSearchParamsUpdated()
+Link::URLSearchParamsUpdated(URLSearchParams* aSearchParams)
 {
   MOZ_ASSERT(mSearchParams);
+  MOZ_ASSERT(mSearchParams == aSearchParams);
 
   nsString search;
   mSearchParams->Serialize(search);

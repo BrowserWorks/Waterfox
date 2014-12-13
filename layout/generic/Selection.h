@@ -30,7 +30,7 @@ class ErrorResult;
 
 struct RangeData
 {
-  RangeData(nsRange* aRange)
+  explicit RangeData(nsRange* aRange)
     : mRange(aRange)
   {}
 
@@ -46,16 +46,16 @@ struct RangeData
 namespace mozilla {
 namespace dom {
 
-class Selection : public nsISelectionPrivate,
-                  public nsWrapperCache,
-                  public nsSupportsWeakReference
+class Selection MOZ_FINAL : public nsISelectionPrivate,
+                            public nsWrapperCache,
+                            public nsSupportsWeakReference
 {
 protected:
   virtual ~Selection();
 
 public:
   Selection();
-  Selection(nsFrameSelection *aList);
+  explicit Selection(nsFrameSelection *aList);
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_AMBIGUOUS(Selection, nsISelectionPrivate)

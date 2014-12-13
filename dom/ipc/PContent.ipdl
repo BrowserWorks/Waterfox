@@ -57,6 +57,12 @@ using mozilla::dom::NativeThreadId from "mozilla/dom/TabMessageUtils.h";
 using mozilla::hal::ProcessPriority from "mozilla/HalTypes.h";
 using gfxIntSize from "nsSize.h";
 
+union ChromeRegistryItem
+{
+    ChromePackage;
+    OverrideMapping;
+};
+
 namespace mozilla {
 namespace dom {
 
@@ -283,6 +289,20 @@ struct DataStoreSetting {
   bool enabled;
 };
 
+// Note: Any changes to this structure should also be changed in
+// FileSystemUpdate below.
+struct VolumeInfo {
+  nsString name;
+  nsString mountPoint;
+  int32_t volState;
+  int32_t mountGeneration;
+  bool isMediaPresent;
+  bool isSharing;
+  bool isFormatting;
+  bool isFake;
+  bool isUnmounting;
+};
+
 intr protocol PContent
 {
     parent opens PCompositor;
@@ -381,7 +401,8 @@ child:
     PTestShell();
 
     RegisterChrome(ChromePackage[] packages, ResourceMapping[] resources,
-                   OverrideMapping[] overrides, nsCString locale);
+                   OverrideMapping[] overrides, nsCString locale, bool reset);
+    RegisterChromeItem(ChromeRegistryItem item);
 
     async SetOffline(bool offline);
 
@@ -418,9 +439,11 @@ child:
     FilePathUpdate(nsString storageType, nsString storageName, nsString filepath,
                    nsCString reasons);
 
+    // Note: Any changes to this structure should also be changed in
+    // VolumeInfo above.
     FileSystemUpdate(nsString fsName, nsString mountPoint, int32_t fsState,
                      int32_t mountGeneration, bool isMediaPresent,
-                     bool isSharing, bool isFormatting, bool isFake);
+                     bool isSharing, bool isFormatting, bool isFake, bool isUnmounting);
 
     // Ask the Nuwa process to create a new child process.
     NuwaFork();
@@ -440,6 +463,12 @@ child:
      * Notify idle observers in the child
      */
     NotifyIdleObserver(uint64_t observerId, nsCString topic, nsString str);
+
+    /**
+     * Notify windows in the child to apply a new app style.
+     */
+    OnAppThemeChanged();
+
 parent:
     /**
      * Tell the content process some attributes of itself.  This is
@@ -478,13 +507,16 @@ parent:
 
     async GetSystemMemory(uint64_t getterId);
 
+    sync IsSecureURI(uint32_t type, URIParams uri, uint32_t flags)
+        returns (bool isSecureURI);
+
     PHal();
 
     PIndexedDB();
 
     PNecko();
 
-    sync PScreenManager()
+    rpc PScreenManager()
         returns (uint32_t numberOfScreens,
                  float systemDefaultScale,
                  bool success);
@@ -532,6 +564,7 @@ parent:
                           nsString name,
                           nsString bidi,
                           nsString lang,
+                          nsString data,
                           Principal principal);
 
     CloseAlert(nsString name, Principal principal);
@@ -593,15 +626,15 @@ parent:
     async AudioChannelChangedNotification();
     async AudioChannelChangeDefVolChannel(int32_t aChannel, bool aHidden);
 
-    sync DataStoreGetStores(nsString aName, Principal aPrincipal)
+    sync DataStoreGetStores(nsString aName, nsString aOwner, Principal aPrincipal)
         returns (DataStoreSetting[] dataStores);
 
     async FilePathUpdateNotify(nsString aType,
                                nsString aStorageName,
                                nsString aFilepath,
                                nsCString aReason);
-    // get nsIVolumeService to broadcast volume information
-    async BroadcastVolume(nsString volumeName);
+
+    sync GetVolumes() returns (VolumeInfo[] volumes);
 
     // Notify the parent that the child has finished handling a system message.
     async SystemMessageHandled();

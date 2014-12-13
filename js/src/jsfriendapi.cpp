@@ -197,25 +197,25 @@ JS::SkipZoneForGC(Zone *zone)
 JS_FRIEND_API(void)
 JS::GCForReason(JSRuntime *rt, gcreason::Reason reason)
 {
-    GC(rt, GC_NORMAL, reason);
+    rt->gc.gc(GC_NORMAL, reason);
 }
 
 JS_FRIEND_API(void)
 JS::ShrinkingGC(JSRuntime *rt, gcreason::Reason reason)
 {
-    GC(rt, GC_SHRINK, reason);
+    rt->gc.gc(GC_SHRINK, reason);
 }
 
 JS_FRIEND_API(void)
 JS::IncrementalGC(JSRuntime *rt, gcreason::Reason reason, int64_t millis)
 {
-    GCSlice(rt, GC_NORMAL, reason, millis);
+    rt->gc.gcSlice(GC_NORMAL, reason, millis);
 }
 
 JS_FRIEND_API(void)
 JS::FinishIncrementalGC(JSRuntime *rt, gcreason::Reason reason)
 {
-    GCFinalSlice(rt, GC_NORMAL, reason);
+    rt->gc.gcFinalSlice(GC_NORMAL, reason);
 }
 
 JS_FRIEND_API(JSPrincipals *)
@@ -416,20 +416,6 @@ js::AssertSameCompartment(JSObject *objA, JSObject *objB)
 }
 #endif
 
-JS_FRIEND_API(JSObject *)
-js::DefaultObjectForContextOrNull(JSContext *cx)
-{
-    if (cx->options().noDefaultCompartmentObject())
-        return nullptr;
-    return cx->maybeDefaultCompartmentObject();
-}
-
-JS_FRIEND_API(void)
-js::SetDefaultObjectForContext(JSContext *cx, JSObject *obj)
-{
-    cx->setDefaultCompartmentObject(obj);
-}
-
 JS_FRIEND_API(void)
 js::NotifyAnimationActivity(JSObject *obj)
 {
@@ -615,7 +601,7 @@ JS_IsDeadWrapper(JSObject *obj)
         return false;
     }
 
-    return obj->as<ProxyObject>().handler()->family() == &DeadObjectProxy::sDeadObjectFamily;
+    return obj->as<ProxyObject>().handler()->family() == &DeadObjectProxy::family;
 }
 
 void
@@ -810,7 +796,7 @@ js::DumpHeapComplete(JSRuntime *rt, FILE *fp, js::DumpHeapNurseryBehaviour nurse
 {
 #ifdef JSGC_GENERATIONAL
     if (nurseryBehaviour == js::CollectNurseryBeforeDump)
-        MinorGC(rt, JS::gcreason::API);
+        rt->gc.evictNursery(JS::gcreason::API);
 #endif
 
     DumpHeapTracer dtrc(fp, rt, DumpHeapVisitRoot, TraceWeakMapKeysValues);
@@ -834,13 +820,11 @@ js::GetContextStructuredCloneCallbacks(JSContext *cx)
     return cx->runtime()->structuredCloneCallbacks;
 }
 
-#ifdef JS_THREADSAFE
 JS_FRIEND_API(bool)
 js::ContextHasOutstandingRequests(const JSContext *cx)
 {
     return cx->outstandingRequests > 0;
 }
-#endif
 
 JS_FRIEND_API(void)
 js::SetActivityCallback(JSRuntime *rt, ActivityCallback cb, void *arg)
@@ -952,8 +936,6 @@ JS::IncrementalObjectBarrier(JSObject *obj)
 
     JS_ASSERT(!obj->zone()->runtimeFromMainThread()->isHeapMajorCollecting());
 
-    AutoMarkInDeadZone amn(obj->zone());
-
     JSObject::writeBarrierPre(obj);
 }
 
@@ -967,13 +949,13 @@ JS::IncrementalReferenceBarrier(void *ptr, JSGCTraceKind kind)
         return;
 
     gc::Cell *cell = static_cast<gc::Cell *>(ptr);
+
+#ifdef DEBUG
     Zone *zone = kind == JSTRACE_OBJECT
                  ? static_cast<JSObject *>(cell)->zone()
                  : cell->tenuredZone();
-
     JS_ASSERT(!zone->runtimeFromMainThread()->isHeapMajorCollecting());
-
-    AutoMarkInDeadZone amn(zone);
+#endif
 
     if (kind == JSTRACE_OBJECT)
         JSObject::writeBarrierPre(static_cast<JSObject*>(cell));
@@ -985,14 +967,16 @@ JS::IncrementalReferenceBarrier(void *ptr, JSGCTraceKind kind)
         JSScript::writeBarrierPre(static_cast<JSScript*>(cell));
     else if (kind == JSTRACE_LAZY_SCRIPT)
         LazyScript::writeBarrierPre(static_cast<LazyScript*>(cell));
+    else if (kind == JSTRACE_JITCODE)
+        jit::JitCode::writeBarrierPre(static_cast<jit::JitCode*>(cell));
     else if (kind == JSTRACE_SHAPE)
         Shape::writeBarrierPre(static_cast<Shape*>(cell));
     else if (kind == JSTRACE_BASE_SHAPE)
         BaseShape::writeBarrierPre(static_cast<BaseShape*>(cell));
     else if (kind == JSTRACE_TYPE_OBJECT)
-        types::TypeObject::writeBarrierPre((types::TypeObject *) ptr);
+        types::TypeObject::writeBarrierPre(static_cast<types::TypeObject *>(cell));
     else
-        MOZ_ASSUME_UNREACHABLE("invalid trace kind");
+        MOZ_CRASH("invalid trace kind");
 }
 
 JS_FRIEND_API(void)
@@ -1024,7 +1008,7 @@ JS::ObjectPtr::isAboutToBeFinalized()
 void
 JS::ObjectPtr::trace(JSTracer *trc, const char *name)
 {
-    JS_CallHeapObjectTracer(trc, &value, name);
+    JS_CallObjectTracer(trc, &value, name);
 }
 
 JS_FRIEND_API(JSObject *)
@@ -1209,11 +1193,7 @@ js::ReportErrorWithId(JSContext *cx, const char *msg, HandleId id)
 JS_PUBLIC_API(bool)
 js::IsInRequest(JSContext *cx)
 {
-#ifdef JS_THREADSAFE
     return !!cx->runtime()->requestDepth;
-#else
-    return true;
-#endif
 }
 #endif
 

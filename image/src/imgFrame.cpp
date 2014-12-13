@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "imgFrame.h"
+#include "ImageRegion.h"
 #include "DiscardTracker.h"
 
 #include "prenv.h"
@@ -315,12 +316,10 @@ imgFrame::SurfaceWithFormat
 imgFrame::SurfaceForDrawing(bool               aDoPadding,
                             bool               aDoPartialDecode,
                             bool               aDoTile,
+                            gfxContext*        aContext,
                             const nsIntMargin& aPadding,
-                            gfxMatrix&         aUserSpaceToImageSpace,
-                            gfxRect&           aFill,
-                            gfxRect&           aSubimage,
-                            gfxRect&           aSourceRect,
                             gfxRect&           aImageRect,
+                            ImageRegion&       aRegion,
                             SourceSurface*     aSurface)
 {
   IntSize size(int32_t(aImageRect.Width()), int32_t(aImageRect.Height()));
@@ -343,13 +342,14 @@ imgFrame::SurfaceForDrawing(bool               aDoPadding,
 
     // Fill 'available' with whatever we've got
     if (mSinglePixel) {
-      target->FillRect(ToRect(available), ColorPattern(mSinglePixelColor),
+      target->FillRect(ToRect(aRegion.Intersect(available).Rect()),
+                       ColorPattern(mSinglePixelColor),
                        DrawOptions(1.0f, CompositionOp::OP_SOURCE));
     } else {
       SurfacePattern pattern(aSurface,
                              ExtendMode::REPEAT,
                              Matrix::Translation(mDecoded.x, mDecoded.y));
-      target->FillRect(ToRect(available), pattern);
+      target->FillRect(ToRect(aRegion.Intersect(available).Rect()), pattern);
     }
 
     RefPtr<SourceSurface> newsurf = target->Snapshot();
@@ -358,15 +358,9 @@ imgFrame::SurfaceForDrawing(bool               aDoPadding,
 
   // Not tiling, and we have a surface, so we can account for
   // padding and/or a partial decode just by twiddling parameters.
-  // First, update our user-space fill rect.
-  aSourceRect = aSourceRect.Intersect(available);
-  gfxMatrix imageSpaceToUserSpace = aUserSpaceToImageSpace;
-  imageSpaceToUserSpace.Invert();
-  aFill = imageSpaceToUserSpace.Transform(aSourceRect);
-
-  aSubimage = aSubimage.Intersect(available) - gfxPoint(aPadding.left, aPadding.top);
-  aUserSpaceToImageSpace *= gfxMatrix::Translation(-aPadding.left, -aPadding.top);
-  aSourceRect = aSourceRect - gfxPoint(aPadding.left, aPadding.top);
+  gfxPoint paddingTopLeft(aPadding.left, aPadding.top);
+  aRegion = aRegion.Intersect(available) - paddingTopLeft;
+  aContext->Multiply(gfxMatrix::Translation(paddingTopLeft));
   aImageRect = gfxRect(0, 0, mSize.width, mSize.height);
 
   gfxIntSize availableSize(mDecoded.width, mDecoded.height);
@@ -374,16 +368,17 @@ imgFrame::SurfaceForDrawing(bool               aDoPadding,
                            mFormat);
 }
 
-bool imgFrame::Draw(gfxContext *aContext, GraphicsFilter aFilter,
-                    const gfxMatrix &aUserSpaceToImageSpace, const gfxRect& aFill,
-                    const nsIntMargin &aPadding, const nsIntRect &aSubimage,
+bool imgFrame::Draw(gfxContext* aContext, const ImageRegion& aRegion,
+                    const nsIntMargin& aPadding, GraphicsFilter aFilter,
                     uint32_t aImageFlags)
 {
   PROFILER_LABEL("imgFrame", "Draw",
     js::ProfileEntry::Category::GRAPHICS);
 
-  NS_ASSERTION(!aFill.IsEmpty(), "zero dest size --- fix caller");
-  NS_ASSERTION(!aSubimage.IsEmpty(), "zero source size --- fix caller");
+  NS_ASSERTION(!aRegion.Rect().IsEmpty(), "Drawing empty region!");
+  NS_ASSERTION(!aRegion.IsRestricted() ||
+               !aRegion.Rect().Intersect(aRegion.Restriction()).IsEmpty(),
+               "We must be allowed to sample *some* source pixels!");
   NS_ASSERTION(!mPalettedImageData, "Directly drawing a paletted image!");
 
   bool doPadding = aPadding != nsIntMargin(0,0,0,0);
@@ -394,40 +389,39 @@ bool imgFrame::Draw(gfxContext *aContext, GraphicsFilter aFilter,
       return true;
     }
     RefPtr<DrawTarget> dt = aContext->GetDrawTarget();
-    dt->FillRect(ToRect(aFill),
+    dt->FillRect(ToRect(aRegion.Rect()),
                  ColorPattern(mSinglePixelColor),
                  DrawOptions(1.0f,
                              CompositionOpForOp(aContext->CurrentOperator())));
     return true;
   }
 
-  gfxMatrix userSpaceToImageSpace = aUserSpaceToImageSpace;
-  gfxRect sourceRect = userSpaceToImageSpace.TransformBounds(aFill);
   gfxRect imageRect(0, 0, mSize.width + aPadding.LeftRight(),
                     mSize.height + aPadding.TopBottom());
-  gfxRect subimage(aSubimage.x, aSubimage.y, aSubimage.width, aSubimage.height);
-  gfxRect fill = aFill;
-
-  NS_ASSERTION(!sourceRect.Intersect(subimage).IsEmpty(),
-               "We must be allowed to sample *some* source pixels!");
 
   RefPtr<SourceSurface> surf = GetSurface();
   if (!surf && !mSinglePixel) {
     return false;
   }
 
-  bool doTile = !imageRect.Contains(sourceRect) &&
+  bool doTile = !imageRect.Contains(aRegion.Rect()) &&
                 !(aImageFlags & imgIContainer::FLAG_CLAMP);
+  ImageRegion region(aRegion);
+  // SurfaceForDrawing changes the current transform, and we need it to still
+  // be changed when we call gfxUtils::DrawPixelSnapped. We still need to
+  // restore it before returning though.
+  // XXXjwatt In general having functions require someone further up the stack
+  // to undo transform changes that they make is bad practice. We should
+  // change how this code works.
+  gfxContextMatrixAutoSaveRestore autoSR(aContext);
   SurfaceWithFormat surfaceResult =
-    SurfaceForDrawing(doPadding, doPartialDecode, doTile, aPadding,
-                      userSpaceToImageSpace, fill, subimage, sourceRect,
-                      imageRect, surf);
+    SurfaceForDrawing(doPadding, doPartialDecode, doTile, aContext,
+                      aPadding, imageRect, region, surf);
 
   if (surfaceResult.IsValid()) {
     gfxUtils::DrawPixelSnapped(aContext, surfaceResult.mDrawable,
-                               userSpaceToImageSpace,
-                               subimage, sourceRect, imageRect, fill,
-                               surfaceResult.mFormat, aFilter, aImageFlags);
+                               imageRect.Size(), region, surfaceResult.mFormat,
+                               aFilter, aImageFlags);
   }
   return true;
 }
@@ -450,6 +444,16 @@ nsresult imgFrame::ImageUpdated(const nsIntRect &aUpdateRect)
 nsIntRect imgFrame::GetRect() const
 {
   return nsIntRect(mOffset, nsIntSize(mSize.width, mSize.height));
+}
+
+int32_t
+imgFrame::GetStride() const
+{
+  if (mImageSurface) {
+    return mImageSurface->Stride();
+  }
+
+  return VolatileSurfaceStride(mSize, mFormat);
 }
 
 SurfaceFormat imgFrame::GetFormat() const
@@ -677,6 +681,21 @@ imgFrame::GetSurface()
     return nullptr;
 
   return CreateLockedSurface(mVBuf, mSize, mFormat);
+}
+
+TemporaryRef<DrawTarget>
+imgFrame::GetDrawTarget()
+{
+  MOZ_ASSERT(mLockCount >= 1, "Should lock before requesting a DrawTarget");
+
+  uint8_t* data = GetImageData();
+  if (!data) {
+    return nullptr;
+  }
+
+  int32_t stride = GetStride();
+  return gfxPlatform::GetPlatform()->
+    CreateDrawTargetForData(data, mSize, stride, mFormat);
 }
 
 int32_t imgFrame::GetRawTimeout() const

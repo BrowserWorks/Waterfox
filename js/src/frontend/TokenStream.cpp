@@ -328,10 +328,8 @@ TokenStream::TokenStream(ExclusiveContext *cx, const ReadOnlyCompileOptions &opt
     // See getTokenInternal() for an explanation of maybeStrSpecial[].
     memset(maybeStrSpecial, 0, sizeof(maybeStrSpecial));
     maybeStrSpecial[unsigned('"')] = true;
-#ifdef JS_HAS_TEMPLATE_STRINGS
     maybeStrSpecial[unsigned('`')] = true;
     maybeStrSpecial[unsigned('$')] = true;
-#endif
     maybeStrSpecial[unsigned('\'')] = true;
     maybeStrSpecial[unsigned('\\')] = true;
     maybeStrSpecial[unsigned('\n')] = true;
@@ -1073,11 +1071,7 @@ enum FirstCharKind {
 #define T_COMMA     TOK_COMMA
 #define T_COLON     TOK_COLON
 #define T_BITNOT    TOK_BITNOT
-#ifdef JS_HAS_TEMPLATE_STRINGS
 #define Templat     String
-#else
-#define Templat     Other
-#endif
 #define _______     Other
 static const uint8_t firstCharKinds[] = {
 /*         0        1        2        3        4        5        6        7        8        9    */
@@ -1118,13 +1112,11 @@ TokenStream::getTokenInternal(Modifier modifier)
 
     // Check if in the middle of a template string. Have to get this out of
     // the way first.
-#ifdef JS_HAS_TEMPLATE_STRINGS
     if (MOZ_UNLIKELY(modifier == TemplateTail)) {
         if (!getStringOrTemplateToken('`', &tp))
             goto error;
         goto out;
     }
-#endif
 
   retry:
     if (MOZ_UNLIKELY(!userbuf.hasRawChars())) {
@@ -1653,9 +1645,7 @@ bool TokenStream::getStringOrTemplateToken(int qc, Token **tp)
 {
     *tp = newToken(-1);
     int c;
-#ifdef JS_HAS_TEMPLATE_STRINGS
     int nc = -1;
-#endif
     tokenbuf.clear();
     while (true) {
         // We need to detect any of these chars:  " or ', \n (or its
@@ -1683,12 +1673,10 @@ bool TokenStream::getStringOrTemplateToken(int qc, Token **tp)
                         c = peekChar();
                         // Strict mode code allows only \0, then a non-digit.
                         if (val != 0 || JS7_ISDEC(c)) {
-#ifdef JS_HAS_TEMPLATE_STRINGS
                             if (qc == '`') {
                                 reportError(JSMSG_DEPRECATED_OCTAL);
                                 return false;
                             }
-#endif
                             if (!reportStrictModeError(JSMSG_DEPRECATED_OCTAL))
                                 return false;
                             flags.sawOctalEscape = true;
@@ -1744,13 +1732,10 @@ bool TokenStream::getStringOrTemplateToken(int qc, Token **tp)
                 reportError(JSMSG_UNTERMINATED_STRING);
                 return false;
             } else if (TokenBuf::isRawEOLChar(c)) {
-#ifdef JS_HAS_TEMPLATE_STRINGS
                 if (qc != '`') {
-#endif
                     ungetCharIgnoreEOL(c);
                     reportError(JSMSG_UNTERMINATED_STRING);
                     return false;
-#ifdef JS_HAS_TEMPLATE_STRINGS
                 }
                 if (c == '\r') {
                     c = '\n';
@@ -1761,7 +1746,6 @@ bool TokenStream::getStringOrTemplateToken(int qc, Token **tp)
                 if ((nc = getCharIgnoreEOL()) == '{')
                     break;
                 ungetCharIgnoreEOL(nc);
-#endif
             }
         }
         if (!tokenbuf.append(c))
@@ -1770,18 +1754,14 @@ bool TokenStream::getStringOrTemplateToken(int qc, Token **tp)
     JSAtom *atom = atomize(cx, tokenbuf);
     if (!atom)
         return false;
-#ifdef JS_HAS_TEMPLATE_STRINGS
     if (qc != '`') {
-#endif
         (*tp)->type = TOK_STRING;
-#ifdef JS_HAS_TEMPLATE_STRINGS
     } else {
         if (c == '$' && nc == '{')
             (*tp)->type = TOK_TEMPLATE_HEAD;
         else
             (*tp)->type = TOK_NO_SUBS_TEMPLATE;
     }
-#endif
     (*tp)->setAtom(atom);
     return true;
 }
@@ -1835,104 +1815,11 @@ const char *
 TokenKindToString(TokenKind tt)
 {
     switch (tt) {
-      case TOK_ERROR:           return "TOK_ERROR";
-      case TOK_EOF:             return "TOK_EOF";
-      case TOK_EOL:             return "TOK_EOL";
-      case TOK_SEMI:            return "TOK_SEMI";
-      case TOK_COMMA:           return "TOK_COMMA";
-      case TOK_HOOK:            return "TOK_HOOK";
-      case TOK_COLON:           return "TOK_COLON";
-      case TOK_OR:              return "TOK_OR";
-      case TOK_AND:             return "TOK_AND";
-      case TOK_BITOR:           return "TOK_BITOR";
-      case TOK_BITXOR:          return "TOK_BITXOR";
-      case TOK_BITAND:          return "TOK_BITAND";
-      case TOK_ADD:             return "TOK_ADD";
-      case TOK_SUB:             return "TOK_SUB";
-      case TOK_MUL:             return "TOK_MUL";
-      case TOK_DIV:             return "TOK_DIV";
-      case TOK_MOD:             return "TOK_MOD";
-      case TOK_INC:             return "TOK_INC";
-      case TOK_DEC:             return "TOK_DEC";
-      case TOK_DOT:             return "TOK_DOT";
-      case TOK_TRIPLEDOT:       return "TOK_TRIPLEDOT";
-      case TOK_LB:              return "TOK_LB";
-      case TOK_RB:              return "TOK_RB";
-      case TOK_LC:              return "TOK_LC";
-      case TOK_RC:              return "TOK_RC";
-      case TOK_LP:              return "TOK_LP";
-      case TOK_RP:              return "TOK_RP";
-      case TOK_ARROW:           return "TOK_ARROW";
-      case TOK_NAME:            return "TOK_NAME";
-      case TOK_NUMBER:          return "TOK_NUMBER";
-      case TOK_STRING:          return "TOK_STRING";
-#ifdef JS_HAS_TEMPLATE_STRINGS
-      case TOK_TEMPLATE_HEAD:   return "TOK_TEMPLATE_HEAD";
-      case TOK_NO_SUBS_TEMPLATE:return "TOK_NO_SUBS_TEMPLATE";
-#endif
-      case TOK_REGEXP:          return "TOK_REGEXP";
-      case TOK_TRUE:            return "TOK_TRUE";
-      case TOK_FALSE:           return "TOK_FALSE";
-      case TOK_NULL:            return "TOK_NULL";
-      case TOK_THIS:            return "TOK_THIS";
-      case TOK_FUNCTION:        return "TOK_FUNCTION";
-      case TOK_IF:              return "TOK_IF";
-      case TOK_ELSE:            return "TOK_ELSE";
-      case TOK_SWITCH:          return "TOK_SWITCH";
-      case TOK_CASE:            return "TOK_CASE";
-      case TOK_DEFAULT:         return "TOK_DEFAULT";
-      case TOK_WHILE:           return "TOK_WHILE";
-      case TOK_DO:              return "TOK_DO";
-      case TOK_FOR:             return "TOK_FOR";
-      case TOK_BREAK:           return "TOK_BREAK";
-      case TOK_CONTINUE:        return "TOK_CONTINUE";
-      case TOK_IN:              return "TOK_IN";
-      case TOK_VAR:             return "TOK_VAR";
-      case TOK_CONST:           return "TOK_CONST";
-      case TOK_WITH:            return "TOK_WITH";
-      case TOK_RETURN:          return "TOK_RETURN";
-      case TOK_NEW:             return "TOK_NEW";
-      case TOK_DELETE:          return "TOK_DELETE";
-      case TOK_TRY:             return "TOK_TRY";
-      case TOK_CATCH:           return "TOK_CATCH";
-      case TOK_FINALLY:         return "TOK_FINALLY";
-      case TOK_THROW:           return "TOK_THROW";
-      case TOK_INSTANCEOF:      return "TOK_INSTANCEOF";
-      case TOK_DEBUGGER:        return "TOK_DEBUGGER";
-      case TOK_YIELD:           return "TOK_YIELD";
-      case TOK_LET:             return "TOK_LET";
-      case TOK_RESERVED:        return "TOK_RESERVED";
-      case TOK_STRICT_RESERVED: return "TOK_STRICT_RESERVED";
-      case TOK_STRICTEQ:        return "TOK_STRICTEQ";
-      case TOK_EQ:              return "TOK_EQ";
-      case TOK_STRICTNE:        return "TOK_STRICTNE";
-      case TOK_NE:              return "TOK_NE";
-      case TOK_TYPEOF:          return "TOK_TYPEOF";
-      case TOK_VOID:            return "TOK_VOID";
-      case TOK_NOT:             return "TOK_NOT";
-      case TOK_BITNOT:          return "TOK_BITNOT";
-      case TOK_LT:              return "TOK_LT";
-      case TOK_LE:              return "TOK_LE";
-      case TOK_GT:              return "TOK_GT";
-      case TOK_GE:              return "TOK_GE";
-      case TOK_LSH:             return "TOK_LSH";
-      case TOK_RSH:             return "TOK_RSH";
-      case TOK_URSH:            return "TOK_URSH";
-      case TOK_ASSIGN:          return "TOK_ASSIGN";
-      case TOK_ADDASSIGN:       return "TOK_ADDASSIGN";
-      case TOK_SUBASSIGN:       return "TOK_SUBASSIGN";
-      case TOK_BITORASSIGN:     return "TOK_BITORASSIGN";
-      case TOK_BITXORASSIGN:    return "TOK_BITXORASSIGN";
-      case TOK_BITANDASSIGN:    return "TOK_BITANDASSIGN";
-      case TOK_LSHASSIGN:       return "TOK_LSHASSIGN";
-      case TOK_RSHASSIGN:       return "TOK_RSHASSIGN";
-      case TOK_URSHASSIGN:      return "TOK_URSHASSIGN";
-      case TOK_MULASSIGN:       return "TOK_MULASSIGN";
-      case TOK_DIVASSIGN:       return "TOK_DIVASSIGN";
-      case TOK_MODASSIGN:       return "TOK_MODASSIGN";
-      case TOK_EXPORT:          return "TOK_EXPORT";
-      case TOK_IMPORT:          return "TOK_IMPORT";
-      case TOK_LIMIT:           break;
+#define EMIT_CASE(name, desc) case TOK_##name: return "TOK_" #name;
+      FOR_EACH_TOKEN_KIND(EMIT_CASE)
+#undef EMIT_CASE
+      case TOK_ERROR: return "TOK_ERROR";
+      case TOK_LIMIT: break;
     }
 
     return "<bad TokenKind>";

@@ -16,7 +16,7 @@ class nsITransaction;
 class nsTransactionManager;
 class nsTransactionStack;
 
-class nsTransactionItem
+class nsTransactionItem MOZ_FINAL
 {
   nsCOMArray<nsISupports>  mData;
   nsCOMPtr<nsITransaction> mTransaction;
@@ -25,7 +25,7 @@ class nsTransactionItem
 
 public:
 
-  nsTransactionItem(nsITransaction *aTransaction);
+  explicit nsTransactionItem(nsITransaction *aTransaction);
   NS_METHOD_(MozExternalRefCountType) AddRef();
   NS_METHOD_(MozExternalRefCountType) Release();
 

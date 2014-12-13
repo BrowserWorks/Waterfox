@@ -154,18 +154,16 @@ PrintDisplayItemTo(nsDisplayListBuilder* aBuilder, nsDisplayItem* aItem,
   nsRect component = aItem->GetComponentAlphaBounds(aBuilder);
   nsDisplayList* list = aItem->GetChildren();
   const DisplayItemClip& clip = aItem->GetClip();
-  nsRegion opaque;
-  if (!list || list->DidComputeVisibility()) {
-    opaque = aItem->GetOpaqueRegion(aBuilder, &snap);
-  }
+  nsRegion opaque = aItem->GetOpaqueRegion(aBuilder, &snap);
   if (aDumpHtml && aItem->Painted()) {
     nsCString string(aItem->Name());
     string.Append('-');
     string.AppendInt((uint64_t)aItem);
     aStream << nsPrintfCString("<a href=\"javascript:ViewImage('%s')\">", string.BeginReading());
   }
-  aStream << nsPrintfCString("%s p=0x%p f=0x%p(%s) bounds(%d,%d,%d,%d) visible(%d,%d,%d,%d) componentAlpha(%d,%d,%d,%d) clip(%s) %s",
+  aStream << nsPrintfCString("%s p=0x%p f=0x%p(%s) %sbounds(%d,%d,%d,%d) visible(%d,%d,%d,%d) componentAlpha(%d,%d,%d,%d) clip(%s) %s",
           aItem->Name(), aItem, (void*)f, NS_ConvertUTF16toUTF8(fName).get(),
+          (aItem->ZIndex() ? nsPrintfCString("z=%d ", aItem->ZIndex()).get() : ""),
           rect.x, rect.y, rect.width, rect.height,
           vis.x, vis.y, vis.width, vis.height,
           component.x, component.y, component.width, component.height,
@@ -175,6 +173,10 @@ PrintDisplayItemTo(nsDisplayListBuilder* aBuilder, nsDisplayItem* aItem,
   nsRegionRectIterator iter(opaque);
   for (const nsRect* r = iter.Next(); r; r = iter.Next()) {
     aStream << nsPrintfCString(" (opaque %d,%d,%d,%d)", r->x, r->y, r->width, r->height);
+  }
+
+  if (aItem->ShouldFixToViewport(nullptr)) {
+    aStream << " fixed";
   }
 
   if (aItem->Frame()->StyleDisplay()->mWillChange.Length() > 0) {
@@ -269,7 +271,7 @@ PrintDisplayListSetItem(nsDisplayListBuilder* aBuilder,
   if (aDumpHtml) {
     aStream << "<li>";
   }
-  aStream << aItemName;
+  aStream << aItemName << "\n";
   PrintDisplayListTo(aBuilder, aList, aStream, 0, aDumpHtml);
   if (aDumpHtml) {
     aStream << "</li>";

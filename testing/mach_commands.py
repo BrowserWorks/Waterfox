@@ -165,7 +165,7 @@ TEST_HELP = TEST_HELP.strip()
 
 @CommandProvider
 class Test(MachCommandBase):
-    @Command('test', category='testing', description='Run tests.')
+    @Command('test', category='testing', description='Run tests (detects the kind of test and runs it).')
     @CommandArgument('what', default=None, nargs='*', help=TEST_HELP)
     def test(self, what):
         from mozbuild.testing import TestResolver
@@ -246,15 +246,19 @@ class Test(MachCommandBase):
 @CommandProvider
 class MachCommands(MachCommandBase):
     @Command('cppunittest', category='testing',
-        description='Run cpp unit tests.')
+        description='Run cpp unit tests (C++ tests).')
     @CommandArgument('test_files', nargs='*', metavar='N',
         help='Test to run. Can be specified as one or more files or ' \
             'directories, or omitted. If omitted, the entire test suite is ' \
             'executed.')
 
     def run_cppunit_test(self, **params):
+        from mozlog.structured import commandline
         import runcppunittests as cppunittests
-        import logging
+
+        log = commandline.setup_logging("cppunittest",
+                                        {},
+                                        {"tbpl": sys.stdout})
 
         if len(params['test_files']) == 0:
             testdir = os.path.join(self.distdir, 'cppunittests')
@@ -269,18 +273,16 @@ class MachCommands(MachCommandBase):
 
         tester = cppunittests.CPPUnitTests()
         try:
-            result = tester.run_tests(progs, self.bindir, symbols_path)
-        except Exception, e:
-            self.log(logging.ERROR, 'cppunittests',
-                {'exception': str(e)},
-                'Caught exception running cpp unit tests: {exception}')
+            result = tester.run_tests(progs, self.bindir, symbols_path, interactive=True)
+        except Exception as e:
+            log.error("Caught exception running cpp unit tests: %s" % str(e))
             result = False
 
         return 0 if result else 1
 
 @CommandProvider
 class CheckSpiderMonkeyCommand(MachCommandBase):
-    @Command('check-spidermonkey', category='testing', description='Run SpiderMonkey tests.')
+    @Command('check-spidermonkey', category='testing', description='Run SpiderMonkey tests (JavaScript engine).')
     @CommandArgument('--valgrind', action='store_true', help='Run jit-test suite with valgrind flag')
 
     def run_checkspidermonkey(self, **params):

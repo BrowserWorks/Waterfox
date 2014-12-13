@@ -8,6 +8,8 @@ let {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "BrowserUtils",
+  "resource://gre/modules/BrowserUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ContentLinkHandler",
   "resource:///modules/ContentLinkHandler.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "LoginManagerContent",
@@ -18,18 +20,21 @@ XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
   "resource://gre/modules/PrivateBrowsingUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "UITour",
   "resource:///modules/UITour.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "FormSubmitObserver",
+  "resource:///modules/FormSubmitObserver.jsm");
 
-// Creates a new nsIURI object.
-function makeURI(uri, originCharset, baseURI) {
-  return Services.io.newURI(uri, originCharset, baseURI);
-}
+// TabChildGlobal
+var global = this;
+
+// Load the form validation popup handler
+var formSubmitObserver = new FormSubmitObserver(content, this);
 
 addMessageListener("Browser:HideSessionRestoreButton", function (message) {
   // Hide session restore button on about:home
   let doc = content.document;
   let container;
   if (doc.documentURI.toLowerCase() == "about:home" &&
-      (container = doc.getElementById("sessionRestoreContainer"))){
+      (container = doc.getElementById("sessionRestoreContainer"))) {
     container.hidden = true;
   }
 });
@@ -75,7 +80,23 @@ addEventListener("blur", function(event) {
 
 if (Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT) {
   addEventListener("contextmenu", function (event) {
-    sendAsyncMessage("contextmenu", {}, { event: event });
+    let defaultPrevented = event.defaultPrevented;
+    if (!Services.prefs.getBoolPref("dom.event.contextmenu.enabled")) {
+      let plugin = null;
+      try {
+        plugin = event.target.QueryInterface(Ci.nsIObjectLoadingContent);
+      } catch (e) {}
+      if (plugin && plugin.displayedType == Ci.nsIObjectLoadingContent.TYPE_PLUGIN) {
+        // Don't open a context menu for plugins.
+        return;
+      }
+
+      defaultPrevented = false;
+    }
+
+    if (!defaultPrevented) {
+      sendSyncMessage("contextmenu", {}, { event: event });
+    }
   }, false);
 } else {
   addEventListener("mozUITour", function(event) {
@@ -90,30 +111,52 @@ if (Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT) {
 
 let AboutHomeListener = {
   init: function(chromeGlobal) {
-    chromeGlobal.addEventListener('AboutHomeLoad', () => this.onPageLoad(), false, true);
+    chromeGlobal.addEventListener('AboutHomeLoad', this, false, true);
+  },
+
+  get isAboutHome() {
+    return content.document.documentURI.toLowerCase() == "about:home";
   },
 
   handleEvent: function(aEvent) {
+    if (!this.isAboutHome) {
+      return;
+    }
     switch (aEvent.type) {
       case "AboutHomeLoad":
         this.onPageLoad();
+        break;
+      case "AboutHomeSearchEvent":
+        this.onSearch(aEvent);
+        break;
+      case "AboutHomeSearchPanel":
+        this.onOpenSearchPanel(aEvent);
+        break;
+      case "click":
+        this.onClick(aEvent);
+        break;
+      case "pagehide":
+        this.onPageHide(aEvent);
         break;
     }
   },
 
   receiveMessage: function(aMessage) {
+    if (!this.isAboutHome) {
+      return;
+    }
     switch (aMessage.name) {
       case "AboutHome:Update":
         this.onUpdate(aMessage.data);
+        break;
+      case "AboutHome:FocusInput":
+        this.onFocusInput();
         break;
     }
   },
 
   onUpdate: function(aData) {
     let doc = content.document;
-    if (doc.documentURI.toLowerCase() != "about:home")
-      return;
-
     if (aData.showRestoreLastSession && !PrivateBrowsingUtils.isWindowPrivate(content))
       doc.getElementById("launcher").setAttribute("session", "true");
 
@@ -130,24 +173,19 @@ let AboutHomeListener = {
 
   onPageLoad: function() {
     let doc = content.document;
-    if (doc.documentURI.toLowerCase() != "about:home" ||
-        doc.documentElement.hasAttribute("hasBrowserHandlers")) {
+    if (doc.documentElement.hasAttribute("hasBrowserHandlers")) {
       return;
     }
 
     doc.documentElement.setAttribute("hasBrowserHandlers", "true");
-    let self = this;
-    addMessageListener("AboutHome:Update", self);
-    addEventListener("click", this.onClick, true);
-    addEventListener("pagehide", function onPageHide(event) {
-      if (event.target.defaultView.frameElement)
-        return;
-      removeMessageListener("AboutHome:Update", self);
-      removeEventListener("click", self.onClick, true);
-      removeEventListener("pagehide", onPageHide, true);
-      if (event.target.documentElement)
-        event.target.documentElement.removeAttribute("hasBrowserHandlers");
-    }, true);
+    addMessageListener("AboutHome:Update", this);
+    addMessageListener("AboutHome:FocusInput", this);
+    addEventListener("click", this, true);
+    addEventListener("pagehide", this, true);
+
+    if (!Services.prefs.getBoolPref("browser.search.showOneOffButtons")) {
+      doc.documentElement.setAttribute("searchUIConfiguration", "oldsearchui");
+    }
 
     // XXX bug 738646 - when Marketplace is launched, remove this statement and
     // the hidden attribute set on the apps button in aboutHome.xhtml
@@ -156,10 +194,8 @@ let AboutHomeListener = {
       doc.getElementById("apps").removeAttribute("hidden");
 
     sendAsyncMessage("AboutHome:RequestUpdate");
-
-    doc.addEventListener("AboutHomeSearchEvent", function onSearch(e) {
-      sendAsyncMessage("AboutHome:Search", { searchData: e.detail });
-    }, true, true);
+    doc.addEventListener("AboutHomeSearchEvent", this, true, true);
+    doc.addEventListener("AboutHomeSearchPanel", this, true, true);
   },
 
   onClick: function(aEvent) {
@@ -210,10 +246,68 @@ let AboutHomeListener = {
       case "settings":
         sendAsyncMessage("AboutHome:Settings");
         break;
+
+      case "searchIcon":
+        sendAsyncMessage("AboutHome:OpenSearchPanel", null, { anchor: originalTarget });
+        break;
+    }
+  },
+
+  onPageHide: function(aEvent) {
+    if (aEvent.target.defaultView.frameElement) {
+      return;
+    }
+    removeMessageListener("AboutHome:Update", this);
+    removeEventListener("click", this, true);
+    removeEventListener("pagehide", this, true);
+    if (aEvent.target.documentElement) {
+      aEvent.target.documentElement.removeAttribute("hasBrowserHandlers");
+    }
+  },
+
+  onSearch: function(aEvent) {
+    sendAsyncMessage("AboutHome:Search", { searchData: aEvent.detail });
+  },
+
+  onOpenSearchPanel: function(aEvent) {
+    sendAsyncMessage("AboutHome:OpenSearchPanel");
+  },
+
+  onFocusInput: function () {
+    let searchInput = content.document.getElementById("searchText");
+    if (searchInput) {
+      searchInput.focus();
     }
   },
 };
 AboutHomeListener.init(this);
+
+
+// An event listener for custom "WebChannelMessageToChrome" events on pages
+addEventListener("WebChannelMessageToChrome", function (e) {
+  // if target is window then we want the document principal, otherwise fallback to target itself.
+  let principal = e.target.nodePrincipal ? e.target.nodePrincipal : e.target.document.nodePrincipal;
+
+  if (e.detail) {
+    sendAsyncMessage("WebChannelMessageToChrome", e.detail, null, principal);
+  } else  {
+    Cu.reportError("WebChannel message failed. No message detail.");
+  }
+}, true, true);
+
+// Add message listener for "WebChannelMessageToContent" messages from chrome scripts
+addMessageListener("WebChannelMessageToContent", function (e) {
+  if (e.data) {
+    content.dispatchEvent(new content.CustomEvent("WebChannelMessageToContent", {
+      detail: Cu.cloneInto({
+        id: e.data.id,
+        message: e.data.message,
+      }, content),
+    }));
+  } else {
+    Cu.reportError("WebChannel message failed. No message data.");
+  }
+});
 
 
 let ContentSearchMediator = {
@@ -270,9 +364,6 @@ let ContentSearchMediator = {
   },
 };
 ContentSearchMediator.init(this);
-
-
-var global = this;
 
 // Lazily load the finder code
 addMessageListener("Finder:Initialize", function () {
@@ -408,7 +499,7 @@ let ClickEventHandler = {
     // In case of XLink, we don't return the node we got href from since
     // callers expect <a>-like elements.
     // Note: makeURI() will throw if aUri is not a valid URI.
-    return [href ? makeURI(href, null, baseURI).spec : null, null];
+    return [href ? BrowserUtils.makeURI(href, null, baseURI).spec : null, null];
   }
 };
 ClickEventHandler.init();
@@ -430,7 +521,7 @@ let PageStyleHandler = {
   },
 
   get markupDocumentViewer() {
-    return docShell.contentViewer.QueryInterface(Ci.nsIMarkupDocumentViewer);
+    return docShell.contentViewer;
   },
 
   // Called synchronously via CPOW from the parent.
@@ -521,3 +612,40 @@ if (Services.prefs.getBoolPref("browser.translation.detectLanguage")) {
   Cu.import("resource:///modules/translation/TranslationContentHandler.jsm");
   trHandler = new TranslationContentHandler(global, docShell);
 }
+
+let DOMFullscreenHandler = {
+  _fullscreenDoc: null,
+
+  init: function() {
+    addMessageListener("DOMFullscreen:Approved", this);
+    addMessageListener("DOMFullscreen:CleanUp", this);
+    addEventListener("MozEnteredDomFullscreen", this);
+  },
+
+  receiveMessage: function(aMessage) {
+    switch(aMessage.name) {
+      case "DOMFullscreen:Approved": {
+        if (this._fullscreenDoc) {
+          Services.obs.notifyObservers(this._fullscreenDoc,
+                                       "fullscreen-approved",
+                                       "");
+        }
+        break;
+      }
+      case "DOMFullscreen:CleanUp": {
+        this._fullscreenDoc = null;
+        break;
+      }
+    }
+  },
+
+  handleEvent: function(aEvent) {
+    if (aEvent.type == "MozEnteredDomFullscreen") {
+      this._fullscreenDoc = aEvent.target;
+      sendAsyncMessage("MozEnteredDomFullscreen", {
+        origin: this._fullscreenDoc.nodePrincipal.origin,
+      });
+    }
+  }
+};
+DOMFullscreenHandler.init();

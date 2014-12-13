@@ -5,12 +5,16 @@
 MOZ_APP_BASENAME=Fennec
 MOZ_APP_VENDOR=Mozilla
 
-MOZ_APP_VERSION=33.0
+MOZ_APP_VERSION=34.0
 MOZ_APP_UA_NAME=Firefox
 
 MOZ_BRANDING_DIRECTORY=mobile/android/branding/unofficial
 MOZ_OFFICIAL_BRANDING_DIRECTORY=mobile/android/branding/official
 # MOZ_APP_DISPLAYNAME is set by branding/configure.sh
+
+# We support Android SDK version 9 and up by default.
+# See the --enable-android-min-sdk and --enable-android-max-sdk arguments in configure.in.
+MOZ_ANDROID_MIN_SDK_VERSION=9
 
 MOZ_SAFE_BROWSING=1
 
@@ -35,16 +39,11 @@ MOZ_SOCIAL=
 MOZ_ANDROID_HISTORY=1
 MOZ_DISABLE_EXPORT_JS=1
 
-# Needed for building our components as part of libxul
-MOZ_APP_COMPONENT_INCLUDE=nsBrowserComponents.h
-
 # use custom widget for html:select
 MOZ_USE_NATIVE_POPUP_WINDOWS=1
 
 MOZ_APP_ID={aa3c5121-dab2-40e2-81ca-7ea25febc110}
 
-MOZ_ANDROID_OMTC=1
-MOZ_EXTENSION_MANAGER=1
 MOZ_APP_STATIC_INI=1
 
 # Enable on-demand decompression
@@ -75,8 +74,17 @@ MOZ_NATIVE_DEVICES=1
 # Mark as WebGL conformant
 MOZ_WEBGL_CONFORMANT=1
 
-# Don't enable the Search Activity.
-# MOZ_ANDROID_SEARCH_ACTIVITY=1
+# Enable the Search Activity in nightly.
+if test "$NIGHTLY_BUILD"; then
+  MOZ_ANDROID_SEARCH_ACTIVITY=1
+else
+  MOZ_ANDROID_SEARCH_ACTIVITY=
+fi
+
+# Enable the share handler in pre-release builds.
+if test ! "$RELEASE_BUILD"; then
+  MOZ_ANDROID_SHARE_OVERLAY=1
+fi
 
 # Don't enable the Mozilla Location Service stumbler.
 # MOZ_ANDROID_MLS_STUMBLER=1

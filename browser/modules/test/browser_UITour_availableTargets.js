@@ -14,6 +14,13 @@ function test() {
   UITourTest();
 }
 
+function searchEngineTargets() {
+  let engines = Services.search.getVisibleEngines();
+  return ["searchEngine-" + engine.identifier
+          for (engine of engines)
+          if (engine.identifier)];
+}
+
 let tests = [
   function test_availableTargets(done) {
     gContentAPI.getConfiguration("availableTargets", (data) => {
@@ -27,11 +34,12 @@ let tests = [
         "help",
         "home",
         "pinnedTab",
+        "privateWindow",
         "quit",
         "search",
-        "searchProvider",
+        "searchIcon",
         "urlbar",
-      ]);
+      ].concat(searchEngineTargets()));
       ok(UITour.availableTargetsCache.has(window),
          "Targets should now be cached");
       done();
@@ -52,11 +60,12 @@ let tests = [
         "help",
         "home",
         "pinnedTab",
+        "privateWindow",
         "quit",
         "search",
-        "searchProvider",
+        "searchIcon",
         "urlbar",
-      ]);
+      ].concat(searchEngineTargets()));
       ok(UITour.availableTargetsCache.has(window),
          "Targets should now be cached again");
       CustomizableUI.reset();
@@ -71,7 +80,7 @@ let tests = [
     // Make sure the callback still fires with the other available targets.
     CustomizableUI.removeWidgetFromArea("search-container");
     gContentAPI.getConfiguration("availableTargets", (data) => {
-      // Default minus "search" and "searchProvider"
+      // Default minus "search", "searchProvider" and "searchIcon"
       ok_targets(data, [
         "accountStatus",
         "addons",
@@ -82,6 +91,7 @@ let tests = [
         "help",
         "home",
         "pinnedTab",
+        "privateWindow",
         "quit",
         "urlbar",
       ]);

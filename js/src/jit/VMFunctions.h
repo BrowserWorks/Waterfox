@@ -643,6 +643,7 @@ bool ArrayPopDense(JSContext *cx, HandleObject obj, MutableHandleValue rval);
 bool ArrayPushDense(JSContext *cx, HandleObject obj, HandleValue v, uint32_t *length);
 bool ArrayShiftDense(JSContext *cx, HandleObject obj, MutableHandleValue rval);
 JSObject *ArrayConcatDense(JSContext *cx, HandleObject obj1, HandleObject obj2, HandleObject res);
+JSString *ArrayJoin(JSContext *cx, HandleObject array, HandleString sep);
 
 bool CharCodeAt(JSContext *cx, HandleString str, int32_t index, uint32_t *code);
 JSFlatString *StringFromCharCode(JSContext *cx, int32_t code);
@@ -726,6 +727,25 @@ void AssertValidValue(JSContext *cx, Value *v);
 #endif
 
 JSObject *TypedObjectProto(JSObject *obj);
+
+void MarkValueFromIon(JSRuntime *rt, Value *vp);
+void MarkShapeFromIon(JSRuntime *rt, Shape **shapep);
+void MarkTypeObjectFromIon(JSRuntime *rt, types::TypeObject **typep);
+
+// Helper for generatePreBarrier.
+inline void *
+IonMarkFunction(MIRType type)
+{
+    switch (type) {
+      case MIRType_Value:
+        return JS_FUNC_TO_DATA_PTR(void *, MarkValueFromIon);
+      case MIRType_Shape:
+        return JS_FUNC_TO_DATA_PTR(void *, MarkShapeFromIon);
+      case MIRType_TypeObject:
+        return JS_FUNC_TO_DATA_PTR(void *, MarkTypeObjectFromIon);
+      default: MOZ_CRASH();
+    }
+}
 
 } // namespace jit
 } // namespace js

@@ -26,12 +26,12 @@ StaticRefPtr<SpeakerManagerService> gSpeakerManagerService;
 
 // static
 SpeakerManagerService*
-SpeakerManagerService::GetSpeakerManagerService()
+SpeakerManagerService::GetOrCreateSpeakerManagerService()
 {
   MOZ_ASSERT(NS_IsMainThread());
 
   if (XRE_GetProcessType() != GeckoProcessType_Default) {
-    return SpeakerManagerServiceChild::GetSpeakerManagerService();
+    return SpeakerManagerServiceChild::GetOrCreateSpeakerManagerService();
   }
 
   // If we already exist, exit early
@@ -41,9 +41,21 @@ SpeakerManagerService::GetSpeakerManagerService()
 
   // Create new instance, register, return
   nsRefPtr<SpeakerManagerService> service = new SpeakerManagerService();
-  NS_ENSURE_TRUE(service, nullptr);
 
   gSpeakerManagerService = service;
+
+  return gSpeakerManagerService;
+}
+
+SpeakerManagerService*
+SpeakerManagerService::GetSpeakerManagerService()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  if (XRE_GetProcessType() != GeckoProcessType_Default) {
+    return SpeakerManagerServiceChild::GetSpeakerManagerService();
+  }
+
   return gSpeakerManagerService;
 }
 
@@ -182,7 +194,7 @@ SpeakerManagerService::SpeakerManagerService()
     }
   }
   AudioChannelService* audioChannelService =
-    AudioChannelService::GetAudioChannelService();
+    AudioChannelService::GetOrCreateAudioChannelService();
   if (audioChannelService) {
     audioChannelService->RegisterSpeakerManager(this);
   }
@@ -192,7 +204,7 @@ SpeakerManagerService::~SpeakerManagerService()
 {
   MOZ_COUNT_DTOR(SpeakerManagerService);
   AudioChannelService* audioChannelService =
-    AudioChannelService::GetAudioChannelService();
+    AudioChannelService::GetOrCreateAudioChannelService();
   if (audioChannelService)
     audioChannelService->UnregisterSpeakerManager(this);
 }

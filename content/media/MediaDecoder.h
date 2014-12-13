@@ -190,6 +190,9 @@ destroying the MediaDecoder object.
 #include "MediaStreamGraph.h"
 #include "AbstractMediaDecoder.h"
 #include "necko-config.h"
+#ifdef MOZ_EME
+#include "mozilla/CDMProxy.h"
+#endif
 
 class nsIStreamListener;
 class nsIPrincipal;
@@ -567,7 +570,7 @@ public:
 
   // Called as data arrives on the stream and is read into the cache.  Called
   // on the main thread only.
-  virtual void NotifyDataArrived(const char* aBuffer, uint32_t aLength, int64_t aOffset);
+  virtual void NotifyDataArrived(const char* aBuffer, uint32_t aLength, int64_t aOffset) MOZ_OVERRIDE;
 
   // Called by MediaResource when the principal of the resource has
   // changed. Called on main thread only.
@@ -755,6 +758,9 @@ public:
                      MediaInfo* aInfo,
                      MetadataTags* aTags);
 
+  int64_t GetSeekTime() { return mRequestedSeekTarget.mTime; }
+  void ResetSeekTime() { mRequestedSeekTarget.Reset(); }
+
   /******
    * The following methods must only be called on the main
    * thread.
@@ -848,6 +854,14 @@ public:
   // calls Play() and then Seek(), we still count as logically playing.
   // The decoder monitor must be held.
   bool IsLogicallyPlaying();
+
+#ifdef MOZ_EME
+  // This takes the decoder monitor.
+  virtual nsresult SetCDMProxy(CDMProxy* aProxy) MOZ_OVERRIDE;
+
+  // Decoder monitor must be held.
+  virtual CDMProxy* GetCDMProxy() MOZ_OVERRIDE;
+#endif
 
 #ifdef MOZ_RAW
   static bool IsRawEnabled();
@@ -1004,6 +1018,7 @@ public:
 
 protected:
   virtual ~MediaDecoder();
+  void SetStateMachineParameters();
 
   /******
    * The following members should be accessed with the decoder lock held.
@@ -1078,7 +1093,7 @@ private:
   class RestrictedAccessMonitor
   {
   public:
-    RestrictedAccessMonitor(const char* aName) :
+    explicit RestrictedAccessMonitor(const char* aName) :
       mReentrantMonitor(aName)
     {
       MOZ_COUNT_CTOR(RestrictedAccessMonitor);
@@ -1098,6 +1113,10 @@ private:
 
   // The |RestrictedAccessMonitor| member object.
   RestrictedAccessMonitor mReentrantMonitor;
+
+#ifdef MOZ_EME
+  nsRefPtr<CDMProxy> mProxy;
+#endif
 
 protected:
   // Data about MediaStreams that are being fed by this decoder.

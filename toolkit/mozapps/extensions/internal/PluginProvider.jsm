@@ -463,6 +463,9 @@ function PluginWrapper(aId, aName, aDescription, aTags) {
 
   this.__defineGetter__("permissions", function() {
     let permissions = 0;
+    if (aTags[0].isEnabledStateLocked) {
+      return permissions;
+    }
     if (!this.appDisabled) {
 
       if (this.userDisabled !== true)

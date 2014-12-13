@@ -79,7 +79,7 @@ struct BaselineStackBuilder
 
     static size_t HeaderSize() {
         return AlignBytes(sizeof(BaselineBailoutInfo), sizeof(void *));
-    };
+    }
     size_t bufferTotal_;
     size_t bufferAvail_;
     size_t bufferUsed_;
@@ -371,6 +371,8 @@ struct BaselineStackBuilder
         size_t extraOffset = IonRectifierFrameLayout::Size() + priorFrame->prevFrameLocalSize() +
                              IonBaselineStubFrameLayout::reverseOffsetOfSavedFramePtr();
         return virtualPointerAtStackOffset(priorOffset + extraOffset);
+#elif defined(JS_CODEGEN_NONE)
+        MOZ_CRASH();
 #else
 #  error "Bad architecture!"
 #endif
@@ -484,9 +486,12 @@ InitFromBailout(JSContext *cx, HandleScript caller, jsbytecode *callerPC,
                 HandleFunction fun, HandleScript script, IonScript *ionScript,
                 SnapshotIterator &iter, bool invalidate, BaselineStackBuilder &builder,
                 AutoValueVector &startFrameFormals, MutableHandleFunction nextCallee,
-                jsbytecode **callPC, const ExceptionBailoutInfo *excInfo)
+                jsbytecode **callPC, const ExceptionBailoutInfo *excInfo,
+                bool *poppedLastSPSFrameOut)
 {
     MOZ_ASSERT(script->hasBaselineScript());
+    MOZ_ASSERT(poppedLastSPSFrameOut);
+    MOZ_ASSERT(!*poppedLastSPSFrameOut);
 
     // Are we catching an exception?
     bool catchingException = excInfo && excInfo->catchingException();
@@ -1004,6 +1009,11 @@ InitFromBailout(JSContext *cx, HandleScript caller, jsbytecode *callerPC,
                         IonSpew(IonSpew_BaselineBailouts,
                                 "      Popping SPS entry for outermost frame");
                         cx->runtime()->spsProfiler.exit(script, fun);
+
+                        // Notify caller that the last SPS frame was popped, so not
+                        // to do it again.
+                        if (poppedLastSPSFrameOut)
+                            *poppedLastSPSFrameOut = true;
                     }
                 }
             } else {
@@ -1260,7 +1270,7 @@ InitFromBailout(JSContext *cx, HandleScript caller, jsbytecode *callerPC,
 uint32_t
 jit::BailoutIonToBaseline(JSContext *cx, JitActivation *activation, IonBailoutIterator &iter,
                           bool invalidate, BaselineBailoutInfo **bailoutInfo,
-                          const ExceptionBailoutInfo *excInfo)
+                          const ExceptionBailoutInfo *excInfo, bool *poppedLastSPSFrameOut)
 {
     // The Baseline frames we will reconstruct on the heap are not rooted, so GC
     // must be suppressed here.
@@ -1268,6 +1278,9 @@ jit::BailoutIonToBaseline(JSContext *cx, JitActivation *activation, IonBailoutIt
 
     JS_ASSERT(bailoutInfo != nullptr);
     JS_ASSERT(*bailoutInfo == nullptr);
+
+    JS_ASSERT(poppedLastSPSFrameOut);
+    JS_ASSERT(!*poppedLastSPSFrameOut);
 
     TraceLogger *logger = TraceLoggerForMainThread(cx->runtime());
     TraceLogStopEvent(logger, TraceLogger::IonMonkey);
@@ -1404,7 +1417,8 @@ jit::BailoutIonToBaseline(JSContext *cx, JitActivation *activation, IonBailoutIt
         RootedFunction nextCallee(cx, nullptr);
         if (!InitFromBailout(cx, caller, callerPC, fun, scr, iter.ionScript(),
                              snapIter, invalidate, builder, startFrameFormals,
-                             &nextCallee, &callPC, passExcInfo ? excInfo : nullptr))
+                             &nextCallee, &callPC, passExcInfo ? excInfo : nullptr,
+                             poppedLastSPSFrameOut))
         {
             return BAILOUT_RETURN_FATAL_ERROR;
         }
@@ -1724,7 +1738,7 @@ jit::FinishBailoutToBaseline(BaselineBailoutInfo *bailoutInfo)
         // baseline frame.
         return false;
       default:
-        MOZ_ASSUME_UNREACHABLE("Unknown bailout kind!");
+        MOZ_CRASH("Unknown bailout kind!");
     }
 
     if (!CheckFrequentBailouts(cx, outerScript))

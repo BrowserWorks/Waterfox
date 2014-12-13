@@ -139,9 +139,7 @@ GStreamerReader::~GStreamerReader()
 
 nsresult GStreamerReader::Init(MediaDecoderReader* aCloneDonor)
 {
-	if (!load_gstreamer()) {
-		return NS_ERROR_FAILURE;
-	}
+  GStreamerFormatHelper::Instance();
 
 #if GST_VERSION_MAJOR >= 1
   mAllocator = static_cast<GstAllocator*>(g_object_new(GST_TYPE_MOZ_GFX_MEMORY_ALLOCATOR, nullptr));

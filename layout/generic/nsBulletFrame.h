@@ -18,7 +18,7 @@ class imgRequestProxy;
 
 class nsBulletFrame;
 
-class nsBulletListener : public imgINotificationObserver
+class nsBulletListener MOZ_FINAL : public imgINotificationObserver
 {
 public:
   nsBulletListener();
@@ -38,7 +38,7 @@ private:
  * A simple class that manages the layout and rendering of html bullets.
  * This class also supports the CSS list-style properties.
  */
-class nsBulletFrame : public nsFrame {
+class nsBulletFrame MOZ_FINAL : public nsFrame {
 public:
   NS_DECL_FRAMEARENA_HELPERS
 #ifdef DEBUG
@@ -46,8 +46,10 @@ public:
   NS_DECL_QUERYFRAME
 #endif
 
-  nsBulletFrame(nsStyleContext* aContext)
+  explicit nsBulletFrame(nsStyleContext* aContext)
     : nsFrame(aContext)
+    , mPadding(GetWritingMode())
+    , mIntrinsicSize(GetWritingMode())
   {
   }
   virtual ~nsBulletFrame();
@@ -70,8 +72,8 @@ public:
                       nsHTMLReflowMetrics& aMetrics,
                       const nsHTMLReflowState& aReflowState,
                       nsReflowStatus& aStatus) MOZ_OVERRIDE;
-  virtual nscoord GetMinWidth(nsRenderingContext *aRenderingContext) MOZ_OVERRIDE;
-  virtual nscoord GetPrefWidth(nsRenderingContext *aRenderingContext) MOZ_OVERRIDE;
+  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) MOZ_OVERRIDE;
+  virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) MOZ_OVERRIDE;
 
   // nsBulletFrame
   int32_t SetListItemOrdinal(int32_t aNextOrdinal, bool* aChanged,
@@ -110,11 +112,11 @@ protected:
 
   void GetLoadGroup(nsPresContext *aPresContext, nsILoadGroup **aLoadGroup);
 
-  nsMargin mPadding;
+  mozilla::LogicalMargin mPadding;
   nsRefPtr<imgRequestProxy> mImageRequest;
   nsRefPtr<nsBulletListener> mListener;
 
-  nsSize mIntrinsicSize;
+  mozilla::LogicalSize mIntrinsicSize;
   int32_t mOrdinal;
 
 private:

@@ -6,7 +6,7 @@
 
 var loop = loop || {};
 loop.shared = loop.shared || {};
-loop.shared.models = (function() {
+loop.shared.models = (function(l10n) {
   "use strict";
 
   /**
@@ -14,22 +14,26 @@ loop.shared.models = (function() {
    */
   var ConversationModel = Backbone.Model.extend({
     defaults: {
-      connected:    false,     // Session connected flag
-      ongoing:      false,     // Ongoing call flag
-      callerId:     undefined, // Loop caller id
-      loopToken:    undefined, // Loop conversation token
-      loopVersion:  undefined, // Loop version for /calls/ information. This
-                               // is the version received from the push
-                               // notification and is used by the server to
-                               // determine the pending calls
-      sessionId:    undefined, // OT session id
-      sessionToken: undefined, // OT session token
-      apiKey:       undefined,  // OT api key
+      connected:    false,         // Session connected flag
+      ongoing:      false,         // Ongoing call flag
+      callerId:     undefined,     // Loop caller id
+      loopToken:    undefined,     // Loop conversation token
+      sessionId:    undefined,     // OT session id
+      sessionToken: undefined,     // OT session token
+      sessionType:  undefined,     // Hawk session type
+      apiKey:       undefined,     // OT api key
       callId:       undefined,     // The callId on the server
       progressURL:  undefined,     // The websocket url to use for progress
       websocketToken: undefined,   // The token to use for websocket auth, this is
                                    // stored as a hex string which is what the server
                                    // requires.
+      callType:     undefined,     // The type of incoming call selected by
+                                   // other peer ("audio" or "audio-video")
+      selectedCallType: "audio-video", // The selected type for the call that was
+                                       // initiated ("audio" or "audio-video")
+      callToken:    undefined,     // Incoming call token.
+      callUrl:      undefined,     // Incoming call url
+                                   // Used for blocking a call url
       subscribedStream: false,     // Used to indicate that a stream has been
                                    // subscribed to
       publishedStream: false       // Used to indicate that a stream has been
@@ -49,28 +53,12 @@ loop.shared.models = (function() {
     session: undefined,
 
     /**
-     * Pending call timeout value.
-     * @type {Number}
-     */
-    pendingCallTimeout: undefined,
-
-    /**
-     * Pending call timer.
-     * @type {Number}
-     */
-    _pendingCallTimer: undefined,
-
-    /**
      * Constructor.
      *
      * Options:
      *
      * Required:
      * - {OT} sdk: OT SDK object.
-     *
-     * Optional:
-     * - {Number} pendingCallTimeout: Pending call timeout in milliseconds
-     *                                (default: 20000).
      *
      * @param  {Object} attributes Attributes object.
      * @param  {Object} options    Options object.
@@ -81,24 +69,31 @@ loop.shared.models = (function() {
         throw new Error("missing required sdk");
       }
       this.sdk = options.sdk;
-      this.pendingCallTimeout = options.pendingCallTimeout || 20000;
 
-      // Ensure that any pending call timer is cleared on disconnect/error
-      this.on("session:ended session:error", this._clearPendingCallTimer, this);
+      // Set loop.debug.sdk to true in the browser, or standalone:
+      // localStorage.setItem("debug.sdk", true);
+      if (loop.shared.utils.getBoolPreference("debug.sdk")) {
+        this.sdk.setLogLevel(this.sdk.DEBUG);
+      }
     },
 
     /**
-     * Starts an incoming conversation.
+     * Indicates an incoming conversation has been accepted.
      */
-    incoming: function() {
-      this.trigger("call:incoming");
+    accepted: function() {
+      this.trigger("call:accepted");
     },
 
     /**
      * Used to indicate that an outgoing call should start any necessary
      * set-up.
+     *
+     * @param {String} selectedCallType Call type ("audio" or "audio-video")
      */
-    setupOutgoingCall: function() {
+    setupOutgoingCall: function(selectedCallType) {
+      if (selectedCallType) {
+        this.set("selectedCallType", selectedCallType);
+      }
       this.trigger("call:outgoing:setup");
     },
 
@@ -109,21 +104,7 @@ loop.shared.models = (function() {
      *                             server for the outgoing call.
      */
     outgoing: function(sessionData) {
-      this._clearPendingCallTimer();
-
-      // Outgoing call has never reached destination, closing - see bug 1020448
-      function handleOutgoingCallTimeout() {
-        /*jshint validthis:true */
-        if (!this.get("ongoing")) {
-          this.trigger("timeout").endSession();
-        }
-      }
-
-      // Setup pending call timeout.
-      this._pendingCallTimer = setTimeout(
-        handleOutgoingCallTimeout.bind(this), this.pendingCallTimeout);
-
-      this.setSessionData(sessionData);
+      this.setOutgoingSessionData(sessionData);
       this.trigger("call:outgoing");
     },
 
@@ -138,10 +119,11 @@ loop.shared.models = (function() {
 
     /**
      * Sets session information.
+     * Session data received by creating an outgoing call.
      *
      * @param {Object} sessionData Conversation session information.
      */
-    setSessionData: function(sessionData) {
+    setOutgoingSessionData: function(sessionData) {
       // Explicit property assignment to prevent later "surprises"
       this.set({
         sessionId:      sessionData.sessionId,
@@ -150,6 +132,29 @@ loop.shared.models = (function() {
         callId:         sessionData.callId,
         progressURL:    sessionData.progressURL,
         websocketToken: sessionData.websocketToken.toString(16)
+      });
+    },
+
+    /**
+     * Sets session information about the incoming call.
+     *
+     * @param {Object} sessionData Conversation session information.
+     */
+    setIncomingSessionData: function(sessionData) {
+      // Explicit property assignment to prevent later "surprises"
+      this.set({
+        sessionId:       sessionData.sessionId,
+        sessionToken:    sessionData.sessionToken,
+        sessionType:     sessionData.sessionType,
+        apiKey:          sessionData.apiKey,
+        callId:          sessionData.callId,
+        callerId:        sessionData.callerId,
+        urlCreationDate: sessionData.urlCreationDate,
+        progressURL:     sessionData.progressURL,
+        websocketToken:  sessionData.websocketToken.toString(16),
+        callType:        sessionData.callType || "audio-video",
+        callToken:       sessionData.callToken,
+        callUrl:         sessionData.callUrl
       });
     },
 
@@ -179,6 +184,39 @@ loop.shared.models = (function() {
       this.session.disconnect();
       this.set("ongoing", false)
           .once("session:ended", this.stopListening, this);
+    },
+
+    /**
+     * Helper function to determine if video stream is available for the
+     * incoming or outgoing call
+     *
+     * @param {string} callType Incoming or outgoing call
+     */
+    hasVideoStream: function(callType) {
+      if (callType === "incoming") {
+        return this.get("callType") === "audio-video";
+      }
+      if (callType === "outgoing") {
+        return this.get("selectedCallType") === "audio-video";
+      }
+      return undefined;
+    },
+
+    /**
+     * Used to remove the scheme from a url.
+     */
+    _removeScheme: function(url) {
+      if (!url) {
+        return "";
+      }
+      return url.replace(/^https?:\/\//, "");
+    },
+
+    /**
+     * Returns a conversation identifier for the incoming call view
+     */
+    getCallIdentifier: function() {
+      return this.get("callerId") || this._removeScheme(this.get("callUrl"));
     },
 
     /**
@@ -215,11 +253,27 @@ loop.shared.models = (function() {
     },
 
     /**
-     * Clears current pending call timer, if any.
+     * Handle a loop-server error, which has an optional `errno` property which
+     * is server error identifier.
+     *
+     * Triggers the following events:
+     *
+     * - `session:expired` for expired call urls
+     * - `session:error` for other generic errors
+     *
+     * @param  {Error} err Error object.
      */
-    _clearPendingCallTimer: function() {
-      if (this._pendingCallTimer) {
-        clearTimeout(this._pendingCallTimer);
+    _handleServerError: function(err) {
+      switch (err.errno) {
+        // loop-server sends 404 + INVALID_TOKEN (errno 105) whenever a token is
+        // missing OR expired; we treat this information as if the url is always
+        // expired.
+        case 105:
+          this.trigger("session:expired", err);
+          break;
+        default:
+          this.trigger("session:error", err);
+          break;
       }
     },
 
@@ -299,6 +353,8 @@ loop.shared.models = (function() {
    */
   var NotificationModel = Backbone.Model.extend({
     defaults: {
+      details: "",
+      detailsButtonLabel: "",
       level: "info",
       message: ""
     }
@@ -308,7 +364,46 @@ loop.shared.models = (function() {
    * Notification collection
    */
   var NotificationCollection = Backbone.Collection.extend({
-    model: NotificationModel
+    model: NotificationModel,
+
+    /**
+     * Adds a warning notification to the stack and renders it.
+     *
+     * @return {String} message
+     */
+    warn: function(message) {
+      this.add({level: "warning", message: message});
+    },
+
+    /**
+     * Adds a l10n warning notification to the stack and renders it.
+     *
+     * @param  {String} messageId L10n message id
+     */
+    warnL10n: function(messageId) {
+      this.warn(l10n.get(messageId));
+    },
+
+    /**
+     * Adds an error notification to the stack and renders it.
+     *
+     * @return {String} message
+     */
+    error: function(message) {
+      this.add({level: "error", message: message});
+    },
+
+    /**
+     * Adds a l10n error notification to the stack and renders it.
+     *
+     * @param  {String} messageId L10n message id
+     * @param  {Object} [l10nProps] An object with variables to be interpolated
+     *                  into the translation. All members' values must be
+     *                  strings or numbers.
+     */
+    errorL10n: function(messageId, l10nProps) {
+      this.error(l10n.get(messageId, l10nProps));
+    }
   });
 
   return {
@@ -316,4 +411,4 @@ loop.shared.models = (function() {
     NotificationCollection: NotificationCollection,
     NotificationModel: NotificationModel
   };
-})();
+})(navigator.mozL10n || document.mozL10n);

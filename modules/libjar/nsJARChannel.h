@@ -58,11 +58,11 @@ private:
     virtual ~nsJARChannel();
 
     nsresult CreateJarInput(nsIZipReaderCache *, nsJARInputThunk **);
-    nsresult LookupFile();
+    nsresult LookupFile(bool aAllowAsync);
     nsresult OpenLocalFile();
     void NotifyError(nsresult aError);
-
     void FireOnProgress(uint64_t aProgress);
+    nsresult SetRemoteNSPRFileDesc(PRFileDesc *fd);
 
 #if defined(PR_LOGGING)
     nsCString                       mSpec;

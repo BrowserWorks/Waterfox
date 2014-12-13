@@ -904,6 +904,12 @@ var gApplicationsPane = {
   // Initialization & Destruction
 
   init: function() {
+    function setEventListener(aId, aEventType, aCallback)
+    {
+      document.getElementById(aId)
+              .addEventListener(aEventType, aCallback.bind(gApplicationsPane));
+    }
+
     // Initialize shortcuts to some commonly accessed elements & values.
     this._brandShortName =
       document.getElementById("bundleBrand").getString("brandShortName");
@@ -930,6 +936,14 @@ var gApplicationsPane = {
     this._prefSvc.addObserver(PREF_AUDIO_FEED_SELECTED_ACTION, this, false);
     this._prefSvc.addObserver(PREF_AUDIO_FEED_SELECTED_READER, this, false);
 
+
+    setEventListener("focusSearch1", "command", gApplicationsPane.focusFilterBox);
+    setEventListener("focusSearch2", "command", gApplicationsPane.focusFilterBox);
+    setEventListener("filter", "command", gApplicationsPane.filter);
+    setEventListener("handlersView", "select",
+      gApplicationsPane.onSelectionChanged);
+    setEventListener("typeColumn", "click", gApplicationsPane.sort);
+    setEventListener("actionColumn", "click", gApplicationsPane.sort);
 
     // Listen for window unload so we can remove our preference observers.
     window.addEventListener("unload", this, false);
@@ -1089,29 +1103,20 @@ var gApplicationsPane = {
   _loadPluginHandlers: function() {
     "use strict";
 
-    let pluginHost = Cc["@mozilla.org/plugin/host;1"].getService(Ci.nsIPluginHost);
-    let pluginTags = pluginHost.getPluginTags();
+    let mimeTypes = navigator.mimeTypes;
 
-    for (let i = 0; i < pluginTags.length; ++i) {
-      let pluginTag = pluginTags[i];
-
-      let mimeTypes = pluginTag.getMimeTypes();
-      for (let j = 0; j < mimeTypes.length; ++j) {
-        let type = mimeTypes[j];
-
-        let handlerInfoWrapper;
-        if (type in this._handledTypes)
-          handlerInfoWrapper = this._handledTypes[type];
-        else {
-          let wrappedHandlerInfo =
-            this._mimeSvc.getFromTypeAndExtension(type, null);
-          handlerInfoWrapper = new HandlerInfoWrapper(type, wrappedHandlerInfo);
-          handlerInfoWrapper.handledOnlyByPlugin = true;
-          this._handledTypes[type] = handlerInfoWrapper;
-        }
-
-        handlerInfoWrapper.pluginName = pluginTag.name;
+    for (let mimeType of mimeTypes) {
+      let handlerInfoWrapper;
+      if (mimeType.type in this._handledTypes) {
+        handlerInfoWrapper = this._handledTypes[mimeType.type];
+      } else {
+        let wrappedHandlerInfo =
+              this._mimeSvc.getFromTypeAndExtension(mimeType.type, null);
+        handlerInfoWrapper = new HandlerInfoWrapper(mimeType.type, wrappedHandlerInfo);
+        handlerInfoWrapper.handledOnlyByPlugin = true;
+        this._handledTypes[mimeType.type] = handlerInfoWrapper;
       }
+      handlerInfoWrapper.pluginName = mimeType.enabledPlugin.name;
     }
   },
 

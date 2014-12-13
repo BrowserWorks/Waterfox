@@ -65,7 +65,7 @@ using parallel::SpewCompile;
         return insertWriteGuard(prop, prop->obj());                           \
     }
 
-class ParallelSafetyVisitor : public MInstructionVisitor
+class ParallelSafetyVisitor : public MDefinitionVisitor
 {
     MIRGraph &graph_;
     bool unsafe_;
@@ -112,6 +112,14 @@ class ParallelSafetyVisitor : public MInstructionVisitor
     // obviously safe for now.  We can loosen as we need.
 
     SAFE_OP(Constant)
+    SAFE_OP(SimdValueX4)
+    SAFE_OP(SimdSplatX4)
+    SAFE_OP(SimdConstant)
+    SAFE_OP(SimdExtractElement)
+    SAFE_OP(SimdSignMask)
+    SAFE_OP(SimdBinaryComp)
+    SAFE_OP(SimdBinaryArith)
+    SAFE_OP(SimdBinaryBitwise)
     UNSAFE_OP(CloneLiteral)
     SAFE_OP(Parameter)
     SAFE_OP(Callee)
@@ -157,6 +165,7 @@ class ParallelSafetyVisitor : public MInstructionVisitor
     SAFE_OP(Ursh)
     SPECIALIZED_OP(MinMax, PERMIT_NUMERIC)
     SAFE_OP(Abs)
+    SAFE_OP(Clz)
     SAFE_OP(Sqrt)
     UNSAFE_OP(Atan2)
     UNSAFE_OP(Hypot)
@@ -183,11 +192,13 @@ class ParallelSafetyVisitor : public MInstructionVisitor
     SAFE_OP(MaybeToDoubleElement)
     CUSTOM_OP(ToString)
     CUSTOM_OP(NewArray)
+    UNSAFE_OP(NewArrayCopyOnWrite)
     CUSTOM_OP(NewObject)
     CUSTOM_OP(NewCallObject)
     CUSTOM_OP(NewRunOnceCallObject)
     CUSTOM_OP(NewDerivedTypedObject)
     SAFE_OP(ObjectState)
+    SAFE_OP(ArrayState)
     UNSAFE_OP(InitElem)
     UNSAFE_OP(InitElemGetterSetter)
     UNSAFE_OP(MutateProto)
@@ -285,6 +296,7 @@ class ParallelSafetyVisitor : public MInstructionVisitor
     SAFE_OP(NewCallObjectPar)
     SAFE_OP(LambdaPar)
     UNSAFE_OP(ArrayConcat)
+    UNSAFE_OP(ArrayJoin)
     UNSAFE_OP(GetDOMProperty)
     UNSAFE_OP(GetDOMMember)
     UNSAFE_OP(SetDOMProperty)
@@ -330,16 +342,15 @@ class ParallelSafetyVisitor : public MInstructionVisitor
 
     // It looks like this could easily be made safe:
     UNSAFE_OP(ConvertElementsToDoubles)
+    UNSAFE_OP(MaybeCopyElementsForWrite)
 };
 
 static void
 TransplantResumePoint(MInstruction *oldInstruction, MInstruction *replacementInstruction)
 {
-    if (MResumePoint *rp = oldInstruction->resumePoint()) {
-        replacementInstruction->setResumePoint(rp);
-        if (rp->instruction() == oldInstruction)
-            rp->setInstruction(replacementInstruction);
-    }
+    MOZ_ASSERT(!oldInstruction->isDiscarded());
+    if (oldInstruction->resumePoint())
+        replacementInstruction->stealResumePoint(oldInstruction);
 }
 
 bool
@@ -435,6 +446,10 @@ ParallelSafetyVisitor::convertToBailout(MInstructionIterator &iter)
 
     clearUnsafe();
 
+    // Allocate a new bailout instruction and transplant the resume point.
+    MBail *bail = MBail::New(graph_.alloc(), Bailout_ParallelUnsafe);
+    TransplantResumePoint(ins, bail);
+
     // Discard the rest of the block and sever its link to its successors in
     // the CFG.
     for (size_t i = 0; i < block->numSuccessors(); i++)
@@ -442,8 +457,6 @@ ParallelSafetyVisitor::convertToBailout(MInstructionIterator &iter)
     block->discardAllInstructionsStartingAt(iter);
 
     // End the block in a bail.
-    MBail *bail = MBail::New(graph_.alloc(), Bailout_ParallelUnsafe);
-    TransplantResumePoint(ins, bail);
     block->add(bail);
     block->end(MUnreachable::New(alloc()));
     return true;

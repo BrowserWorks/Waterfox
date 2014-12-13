@@ -39,7 +39,7 @@ NS_IMPL_ISUPPORTS(MediaEngineDefaultVideoSource, nsITimerCallback)
  */
 
 MediaEngineDefaultVideoSource::MediaEngineDefaultVideoSource()
-  : mTimer(nullptr), mMonitor("Fake video")
+  : mTimer(nullptr), mMonitor("Fake video"), mCb(16), mCr(16)
 {
   mImageContainer = layers::LayerManager::CreateImageContainer();
   mState = kReleased;
@@ -192,7 +192,7 @@ MediaEngineDefaultVideoSource::Snapshot(uint32_t aDuration, nsIDOMFile** aFile)
   filePicker->AppendFilters(nsIFilePicker::filterImages);
 
   // XXX - This API should be made async
-  PRInt16 dialogReturn;
+  int16_t dialogReturn;
   rv = filePicker->Show(&dialogReturn);
   NS_ENSURE_SUCCESS(rv, rv);
   if (dialogReturn == nsIFilePicker::returnCancel) {
@@ -306,7 +306,7 @@ public:
   static const int millisecondsPerSecond = 1000;
   static const int frequency = 1000;
 
-  SineWaveGenerator(int aSampleRate) :
+  explicit SineWaveGenerator(int aSampleRate) :
     mTotalLength(aSampleRate / frequency),
     mReadLength(0) {
     MOZ_ASSERT(mTotalLength * frequency == aSampleRate);

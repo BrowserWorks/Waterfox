@@ -6,7 +6,7 @@
 /* jshint newcap:false */
 
 var expect = chai.expect;
-var l10n = document.webL10n || document.mozL10n;
+var l10n = navigator.mozL10n || document.mozL10n;
 var TestUtils = React.addons.TestUtils;
 
 describe("loop.shared.views", function() {
@@ -20,27 +20,14 @@ describe("loop.shared.views", function() {
   beforeEach(function() {
     sandbox = sinon.sandbox.create();
     sandbox.useFakeTimers(); // exposes sandbox.clock as a fake timer
+    sandbox.stub(l10n, "get", function(x) {
+      return "translated:" + x;
+    });
   });
 
   afterEach(function() {
     $("#fixtures").empty();
     sandbox.restore();
-  });
-
-  describe("L10nView", function() {
-    beforeEach(function() {
-      sandbox.stub(l10n, "translate");
-    });
-
-    it("should translate generated contents on render()", function() {
-      var TestView = loop.shared.views.L10nView.extend();
-
-      var view = new TestView();
-      view.render();
-
-      sinon.assert.calledOnce(l10n.translate);
-      sinon.assert.calledWithExactly(l10n.translate, view.el);
-    });
   });
 
   describe("MediaControlButton", function() {
@@ -203,18 +190,46 @@ describe("loop.shared.views", function() {
         initSession: sandbox.stub().returns(fakeSession)
       };
       model = new sharedModels.ConversationModel(fakeSessionData, {
-        sdk: fakeSDK,
-        pendingCallTimeout: 1000
+        sdk: fakeSDK
       });
     });
 
     describe("#componentDidMount", function() {
-      it("should start a session", function() {
+      it("should start a session by default", function() {
         sandbox.stub(model, "startSession");
 
-        mountTestComponent({sdk: fakeSDK, model: model});
+        mountTestComponent({
+          sdk: fakeSDK,
+          model: model,
+          video: {enabled: true}
+        });
 
         sinon.assert.calledOnce(model.startSession);
+      });
+
+      it("shouldn't start a session if initiate is false", function() {
+        sandbox.stub(model, "startSession");
+
+        mountTestComponent({
+          initiate: false,
+          sdk: fakeSDK,
+          model: model,
+          video: {enabled: true}
+        });
+
+        sinon.assert.notCalled(model.startSession);
+      });
+
+      it("should set the correct stream publish options", function() {
+
+        var component = mountTestComponent({
+          sdk: fakeSDK,
+          model: model,
+          video: {enabled: false}
+        });
+
+        expect(component.publisherConfig.publishVideo).to.eql(false);
+
       });
     });
 
@@ -222,7 +237,11 @@ describe("loop.shared.views", function() {
       var comp;
 
       beforeEach(function() {
-        comp = mountTestComponent({sdk: fakeSDK, model: model});
+        comp = mountTestComponent({
+          sdk: fakeSDK,
+          model: model,
+          video: {enabled: false}
+        });
       });
 
       describe("#hangup", function() {
@@ -293,7 +312,11 @@ describe("loop.shared.views", function() {
         var comp;
 
         beforeEach(function() {
-          comp = mountTestComponent({sdk: fakeSDK, model: model});
+          comp = mountTestComponent({
+            sdk: fakeSDK,
+            model: model,
+            video: {enabled: false}
+          });
           comp.startPublishing();
         });
 
@@ -400,195 +423,195 @@ describe("loop.shared.views", function() {
     });
   });
 
-  describe("NotificationView", function() {
-    var collection, model, view;
+  describe("FeedbackView", function() {
+    var comp, fakeFeedbackApiClient;
 
     beforeEach(function() {
-      $("#fixtures").append('<div id="test-notif"></div>');
-      model = new sharedModels.NotificationModel({
-        level: "error",
-        message: "plop"
-      });
-      collection = new sharedModels.NotificationCollection([model]);
-      view = new sharedViews.NotificationView({
-        el: $("#test-notif"),
-        collection: collection,
-        model: model
+      fakeFeedbackApiClient = {send: sandbox.stub()};
+      comp = TestUtils.renderIntoDocument(sharedViews.FeedbackView({
+        feedbackApiClient: fakeFeedbackApiClient
+      }));
+    });
+
+    // local test helpers
+    function clickHappyFace(comp) {
+      var happyFace = comp.getDOMNode().querySelector(".face-happy");
+      TestUtils.Simulate.click(happyFace);
+    }
+
+    function clickSadFace(comp) {
+      var sadFace = comp.getDOMNode().querySelector(".face-sad");
+      TestUtils.Simulate.click(sadFace);
+    }
+
+    function fillSadFeedbackForm(comp, category, text) {
+      TestUtils.Simulate.change(
+        comp.getDOMNode().querySelector("[value='" + category + "']"));
+
+      if (text) {
+        TestUtils.Simulate.change(
+          comp.getDOMNode().querySelector("[name='description']"), {
+            target: {value: "fake reason"}
+          });
+      }
+    }
+
+    function submitSadFeedbackForm(comp, category, text) {
+      TestUtils.Simulate.submit(comp.getDOMNode().querySelector("form"));
+    }
+
+    describe("Happy feedback", function() {
+      it("should send feedback data when clicking on the happy face",
+        function() {
+          clickHappyFace(comp);
+
+          sinon.assert.calledOnce(fakeFeedbackApiClient.send);
+          sinon.assert.calledWith(fakeFeedbackApiClient.send, {happy: true});
+        });
+
+      it("should thank the user once happy feedback data is sent", function() {
+        fakeFeedbackApiClient.send = function(data, cb) {
+          cb();
+        };
+
+        clickHappyFace(comp);
+
+        expect(comp.getDOMNode()
+                   .querySelectorAll(".feedback .thank-you").length).eql(1);
+        expect(comp.getDOMNode().querySelector("button.back")).to.be.a("null");
       });
     });
 
-    describe("#dismiss", function() {
-      it("should automatically dismiss notification after 500ms", function() {
-        view.render().dismiss({preventDefault: sandbox.spy()});
+    describe("Sad feedback", function() {
+      it("should bring the user to feedback form when clicking on the sad face",
+        function() {
+          clickSadFace(comp);
 
-        expect(view.$(".message").text()).eql("plop");
+          expect(comp.getDOMNode().querySelectorAll("form").length).eql(1);
+        });
 
-        sandbox.clock.tick(500);
+      it("should disable the form submit button when no category is chosen",
+        function() {
+          clickSadFace(comp);
 
-        expect(collection).to.have.length.of(0);
-        expect($("#test-notif").html()).eql(undefined);
+          expect(comp.getDOMNode()
+                     .querySelector("form button").disabled).eql(true);
+        });
+
+      it("should disable the form submit button when the 'other' category is " +
+         "chosen but no description has been entered yet",
+        function() {
+          clickSadFace(comp);
+          fillSadFeedbackForm(comp, "other");
+
+          expect(comp.getDOMNode()
+                     .querySelector("form button").disabled).eql(true);
+        });
+
+      it("should enable the form submit button when the 'other' category is " +
+         "chosen and a description is entered",
+        function() {
+          clickSadFace(comp);
+          fillSadFeedbackForm(comp, "other", "fake");
+
+          expect(comp.getDOMNode()
+                     .querySelector("form button").disabled).eql(false);
+        });
+
+      it("should empty the description field when a predefined category is " +
+         "chosen",
+        function() {
+          clickSadFace(comp);
+
+          fillSadFeedbackForm(comp, "confusing");
+
+          expect(comp.getDOMNode()
+                     .querySelector("form input[type='text']").value).eql("");
+        });
+
+      it("should enable the form submit button once a predefined category is " +
+         "chosen",
+        function() {
+          clickSadFace(comp);
+
+          fillSadFeedbackForm(comp, "confusing");
+
+          expect(comp.getDOMNode()
+                     .querySelector("form button").disabled).eql(false);
+        });
+
+      it("should disable the form submit button once the form is submitted",
+        function() {
+          clickSadFace(comp);
+          fillSadFeedbackForm(comp, "confusing");
+
+          submitSadFeedbackForm(comp);
+
+          expect(comp.getDOMNode()
+                     .querySelector("form button").disabled).eql(true);
+        });
+
+      it("should send feedback data when the form is submitted", function() {
+        clickSadFace(comp);
+        fillSadFeedbackForm(comp, "confusing");
+
+        submitSadFeedbackForm(comp);
+
+        sinon.assert.calledOnce(fakeFeedbackApiClient.send);
+        sinon.assert.calledWithMatch(fakeFeedbackApiClient.send, {
+          happy: false,
+          category: "confusing"
+        });
       });
-    });
 
-    describe("#render", function() {
-      it("should render template with model attribute values", function() {
-        view.render();
+      it("should send feedback data when user has entered a custom description",
+        function() {
+          clickSadFace(comp);
 
-        expect(view.$(".message").text()).eql("plop");
+          fillSadFeedbackForm(comp, "other", "fake reason");
+          submitSadFeedbackForm(comp);
+
+          sinon.assert.calledOnce(fakeFeedbackApiClient.send);
+          sinon.assert.calledWith(fakeFeedbackApiClient.send, {
+            happy: false,
+            category: "other",
+            description: "fake reason"
+          });
+        });
+
+      it("should thank the user when feedback data has been sent", function() {
+        fakeFeedbackApiClient.send = function(data, cb) {
+          cb();
+        };
+        clickSadFace(comp);
+        fillSadFeedbackForm(comp, "confusing");
+        submitSadFeedbackForm(comp);
+
+        expect(comp.getDOMNode()
+                   .querySelectorAll(".feedback .thank-you").length).eql(1);
       });
     });
   });
 
   describe("NotificationListView", function() {
-    var coll, notifData, testNotif;
+    var coll, view, testNotif;
+
+    function mountTestComponent(props) {
+      return TestUtils.renderIntoDocument(sharedViews.NotificationListView(props));
+    }
 
     beforeEach(function() {
-      sandbox.stub(l10n, "get", function(x) {
-        return "translated:" + x;
-      });
-      notifData = {level: "error", message: "plop"};
-      testNotif = new sharedModels.NotificationModel(notifData);
       coll = new sharedModels.NotificationCollection();
+      view = mountTestComponent({notifications: coll});
+      testNotif = {level: "warning", message: "foo"};
+      sinon.spy(view, "render");
     });
 
-    describe("#initialize", function() {
-      it("should accept a collection option", function() {
-        var view = new sharedViews.NotificationListView({collection: coll});
-
-        expect(view.collection).to.be.an.instanceOf(
-          sharedModels.NotificationCollection);
-      });
-
-      it("should set a default collection when none is passed", function() {
-        var view = new sharedViews.NotificationListView();
-
-        expect(view.collection).to.be.an.instanceOf(
-          sharedModels.NotificationCollection);
-      });
-    });
-
-    describe("#clear", function() {
-      it("should clear all notifications from the collection", function() {
-        var view = new sharedViews.NotificationListView();
-        view.notify(testNotif);
-
-        view.clear();
-
-        expect(coll).to.have.length.of(0);
-      });
-    });
-
-    describe("#notify", function() {
-      var view;
-
-      beforeEach(function() {
-        view = new sharedViews.NotificationListView({collection: coll});
-      });
-
-      describe("adds a new notification to the stack", function() {
-        it("using a plain object", function() {
-          view.notify(notifData);
-
-          expect(coll).to.have.length.of(1);
-        });
-
-        it("using a NotificationModel instance", function() {
-          view.notify(testNotif);
-
-          expect(coll).to.have.length.of(1);
-        });
-      });
-    });
-
-    describe("#notifyL10n", function() {
-      var view;
-
-      beforeEach(function() {
-        view = new sharedViews.NotificationListView({collection: coll});
-      });
-
-      it("should translate a message string identifier", function() {
-        view.notifyL10n("fakeId", "warning");
-
-        sinon.assert.calledOnce(l10n.get);
-        sinon.assert.calledWithExactly(l10n.get, "fakeId");
-      });
-
-      it("should notify end user with the provided message", function() {
-        sandbox.stub(view, "notify");
-
-        view.notifyL10n("fakeId", "warning");
-
-        sinon.assert.calledOnce(view.notify);
-        sinon.assert.calledWithExactly(view.notify, {
-          message: "translated:fakeId",
-          level: "warning"
-        });
-      });
-    });
-
-    describe("#warn", function() {
-      it("should add a warning notification to the stack", function() {
-        var view = new sharedViews.NotificationListView({collection: coll});
-
-        view.warn("watch out");
-
-        expect(coll).to.have.length.of(1);
-        expect(coll.at(0).get("level")).eql("warning");
-        expect(coll.at(0).get("message")).eql("watch out");
-      });
-    });
-
-    describe("#warnL10n", function() {
-      it("should warn using a l10n string id", function() {
-        var view = new sharedViews.NotificationListView({collection: coll});
-        sandbox.stub(view, "notify");
-
-        view.warnL10n("fakeId");
-
-        sinon.assert.called(view.notify);
-        sinon.assert.calledWithExactly(view.notify, {
-          message: "translated:fakeId",
-          level: "warning"
-        });
-      });
-    });
-
-    describe("#error", function() {
-      it("should add an error notification to the stack", function() {
-        var view = new sharedViews.NotificationListView({collection: coll});
-
-        view.error("wrong");
-
-        expect(coll).to.have.length.of(1);
-        expect(coll.at(0).get("level")).eql("error");
-        expect(coll.at(0).get("message")).eql("wrong");
-      });
-    });
-
-    describe("#errorL10n", function() {
-      it("should notify an error using a l10n string id", function() {
-        var view = new sharedViews.NotificationListView({collection: coll});
-        sandbox.stub(view, "notify");
-
-        view.errorL10n("fakeId");
-
-        sinon.assert.called(view.notify);
-        sinon.assert.calledWithExactly(view.notify, {
-          message: "translated:fakeId",
-          level: "error"
-        });
-      });
+    afterEach(function() {
+      view.render.restore();
     });
 
     describe("Collection events", function() {
-      var view;
-
-      beforeEach(function() {
-        sandbox.stub(sharedViews.NotificationListView.prototype, "render");
-        view = new sharedViews.NotificationListView({collection: coll});
-      });
-
       it("should render when a notification is added to the collection",
         function() {
           coll.add(testNotif);
@@ -601,7 +624,7 @@ describe("loop.shared.views", function() {
           coll.add(testNotif);
           coll.remove(testNotif);
 
-          sinon.assert.calledTwice(view.render);
+          sinon.assert.calledOnce(view.render);
         });
 
       it("should render when the collection is reset", function() {

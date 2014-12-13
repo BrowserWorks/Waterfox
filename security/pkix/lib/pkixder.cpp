@@ -23,8 +23,9 @@
  */
 
 #include "pkixder.h"
+
 #include "pkix/bind.h"
-#include "cert.h"
+#include "pkixutil.h"
 
 namespace mozilla { namespace pkix { namespace der {
 
@@ -32,9 +33,9 @@ namespace internal {
 
 // Too complicated to be inline
 Result
-ExpectTagAndGetLength(Input& input, uint8_t expectedTag, uint16_t& length)
+ExpectTagAndGetLength(Reader& input, uint8_t expectedTag, uint16_t& length)
 {
-  PR_ASSERT((expectedTag & 0x1F) != 0x1F); // high tag number form not allowed
+  assert((expectedTag & 0x1F) != 0x1F); // high tag number form not allowed
 
   uint8_t tag;
   Result rv;
@@ -90,7 +91,7 @@ ExpectTagAndGetLength(Input& input, uint8_t expectedTag, uint16_t& length)
 } // namespace internal
 
 static Result
-OptionalNull(Input& input)
+OptionalNull(Reader& input)
 {
   if (input.Peek(NULLTag)) {
     return Null(input);
@@ -101,7 +102,8 @@ OptionalNull(Input& input)
 namespace {
 
 Result
-DigestAlgorithmOIDValue(Input& algorithmID, /*out*/ DigestAlgorithm& algorithm)
+DigestAlgorithmOIDValue(Reader& algorithmID,
+                        /*out*/ DigestAlgorithm& algorithm)
 {
   // RFC 4055 Section 2.1
   // python DottedOIDToCode.py id-sha1 1.3.14.3.2.26
@@ -139,7 +141,7 @@ DigestAlgorithmOIDValue(Input& algorithmID, /*out*/ DigestAlgorithm& algorithm)
 }
 
 Result
-SignatureAlgorithmOIDValue(Input& algorithmID,
+SignatureAlgorithmOIDValue(Reader& algorithmID,
                            /*out*/ SignatureAlgorithm& algorithm)
 {
   // RFC 5758 Section 3.1 (id-dsa-with-sha224 is intentionally excluded)
@@ -246,16 +248,16 @@ SignatureAlgorithmOIDValue(Input& algorithmID,
 
 template <typename OidValueParser, typename Algorithm>
 Result
-AlgorithmIdentifier(OidValueParser oidValueParser, Input& input,
+AlgorithmIdentifier(OidValueParser oidValueParser, Reader& input,
                     /*out*/ Algorithm& algorithm)
 {
-  Input value;
+  Reader value;
   Result rv = ExpectTagAndGetValue(input, SEQUENCE, value);
   if (rv != Success) {
     return rv;
   }
 
-  Input algorithmID;
+  Reader algorithmID;
   rv = ExpectTagAndGetValue(value, der::OIDTag, algorithmID);
   if (rv != Success) {
     return rv;
@@ -276,23 +278,23 @@ AlgorithmIdentifier(OidValueParser oidValueParser, Input& input,
 } // unnamed namespace
 
 Result
-SignatureAlgorithmIdentifier(Input& input,
+SignatureAlgorithmIdentifier(Reader& input,
                              /*out*/ SignatureAlgorithm& algorithm)
 {
   return AlgorithmIdentifier(SignatureAlgorithmOIDValue, input, algorithm);
 }
 
 Result
-DigestAlgorithmIdentifier(Input& input, /*out*/ DigestAlgorithm& algorithm)
+DigestAlgorithmIdentifier(Reader& input, /*out*/ DigestAlgorithm& algorithm)
 {
   return AlgorithmIdentifier(DigestAlgorithmOIDValue, input, algorithm);
 }
 
 Result
-SignedData(Input& input, /*out*/ Input& tbs,
+SignedData(Reader& input, /*out*/ Reader& tbs,
            /*out*/ SignedDataWithSignature& signedData)
 {
-  Input::Mark mark(input.GetMark());
+  Reader::Mark mark(input.GetMark());
 
   Result rv;
   rv = ExpectTagAndGetValue(input, SEQUENCE, tbs);
@@ -300,7 +302,7 @@ SignedData(Input& input, /*out*/ Input& tbs,
     return rv;
   }
 
-  rv = input.GetSECItem(siBuffer, mark, signedData.data);
+  rv = input.GetInput(mark, signedData.data);
   if (rv != Success) {
     return rv;
   }
@@ -310,31 +312,42 @@ SignedData(Input& input, /*out*/ Input& tbs,
     return rv;
   }
 
-  rv = ExpectTagAndGetValue(input, BIT_STRING, signedData.signature);
+  rv = BitStringWithNoUnusedBits(input, signedData.signature);
+  if (rv == Result::ERROR_BAD_DER) {
+    rv = Result::ERROR_BAD_SIGNATURE;
+  }
+  return rv;
+}
+
+Result
+BitStringWithNoUnusedBits(Reader& input, /*out*/ Input& value)
+{
+  Reader valueWithUnusedBits;
+  Result rv = ExpectTagAndGetValue(input, BIT_STRING, valueWithUnusedBits);
   if (rv != Success) {
     return rv;
   }
-  if (signedData.signature.len == 0) {
-    return Result::ERROR_BAD_SIGNATURE;
-  }
-  unsigned int unusedBitsAtEnd = signedData.signature.data[0];
-  // XXX: Really the constraint should be that unusedBitsAtEnd must be less
-  // than 7. But, we suspect there are no real-world OCSP responses or X.509
-  // certificates with non-zero unused bits. It seems like NSS assumes this in
-  // various places, so we enforce it too in order to simplify this code. If we
-  // find compatibility issues, we'll know we're wrong and we'll have to figure
-  // out how to shift the bits around.
-  if (unusedBitsAtEnd != 0) {
-    return Result::ERROR_BAD_SIGNATURE;
-  }
-  ++signedData.signature.data;
-  --signedData.signature.len;
 
-  return Success;
+  uint8_t unusedBitsAtEnd;
+  if (valueWithUnusedBits.Read(unusedBitsAtEnd) != Success) {
+    return Result::ERROR_BAD_DER;
+  }
+  // XXX: Really the constraint should be that unusedBitsAtEnd must be less
+  // than 7. But, we suspect there are no real-world values in OCSP responses
+  // or certificates with non-zero unused bits. It seems like NSS assumes this
+  // in various places, so we enforce it too in order to simplify this code. If
+  // we find compatibility issues, we'll know we're wrong and we'll have to
+  // figure out how to shift the bits around.
+  if (unusedBitsAtEnd != 0) {
+    return Result::ERROR_BAD_DER;
+  }
+  Reader::Mark mark(valueWithUnusedBits.GetMark());
+  valueWithUnusedBits.SkipToEnd();
+  return valueWithUnusedBits.GetInput(mark, value);
 }
 
 static inline Result
-ReadDigit(Input& input, /*out*/ int& value)
+ReadDigit(Reader& input, /*out*/ unsigned int& value)
 {
   uint8_t b;
   if (input.Read(b) != Success) {
@@ -343,19 +356,20 @@ ReadDigit(Input& input, /*out*/ int& value)
   if (b < '0' || b > '9') {
     return Result::ERROR_INVALID_TIME;
   }
-  value = b - '0';
+  value = static_cast<unsigned int>(b - static_cast<uint8_t>('0'));
   return Success;
 }
 
 static inline Result
-ReadTwoDigits(Input& input, int minValue, int maxValue, /*out*/ int& value)
+ReadTwoDigits(Reader& input, unsigned int minValue, unsigned int maxValue,
+              /*out*/ unsigned int& value)
 {
-  int hi;
+  unsigned int hi;
   Result rv = ReadDigit(input, hi);
   if (rv != Success) {
     return rv;
   }
-  int lo;
+  unsigned int lo;
   rv = ReadDigit(input, lo);
   if (rv != Success) {
     return rv;
@@ -367,15 +381,6 @@ ReadTwoDigits(Input& input, int minValue, int maxValue, /*out*/ int& value)
   return Success;
 }
 
-inline int
-daysBeforeYear(int year)
-{
-  return (365 * (year - 1))
-       + ((year - 1) / 4)    // leap years are every 4 years,
-       - ((year - 1) / 100)  // except years divisible by 100,
-       + ((year - 1) / 400); // except years divisible by 400.
-}
-
 namespace internal {
 
 // We parse GeneralizedTime and UTCTime according to RFC 5280 and we do not
@@ -384,18 +389,18 @@ namespace internal {
 // must always be in the format YYMMDDHHMMSSZ. Timezone formats of the form
 // +HH:MM or -HH:MM or NOT accepted.
 Result
-TimeChoice(Input& tagged, uint8_t expectedTag, /*out*/ PRTime& time)
+TimeChoice(Reader& tagged, uint8_t expectedTag, /*out*/ Time& time)
 {
-  int days;
+  unsigned int days;
 
-  Input input;
+  Reader input;
   Result rv = ExpectTagAndGetValue(tagged, expectedTag, input);
   if (rv != Success) {
     return rv;
   }
 
-  int yearHi;
-  int yearLo;
+  unsigned int yearHi;
+  unsigned int yearLo;
   if (expectedTag == GENERALIZED_TIME) {
     rv = ReadTwoDigits(input, 0, 99, yearHi);
     if (rv != Success) {
@@ -410,47 +415,39 @@ TimeChoice(Input& tagged, uint8_t expectedTag, /*out*/ PRTime& time)
     if (rv != Success) {
       return rv;
     }
-    yearHi = yearLo >= 50 ? 19 : 20;
+    yearHi = yearLo >= 50u ? 19u : 20u;
   } else {
-    PR_NOT_REACHED("invalid tag given to TimeChoice");
-    return Result::ERROR_INVALID_TIME;
+    return NotReached("invalid tag given to TimeChoice",
+                      Result::ERROR_INVALID_TIME);
   }
-  int year = (yearHi * 100) + yearLo;
-  if (year < 1970) {
+  unsigned int year = (yearHi * 100u) + yearLo;
+  if (year < 1970u) {
     // We don't support dates before January 1, 1970 because that is the epoch.
     return Result::ERROR_INVALID_TIME;
   }
-  if (year > 1970) {
-    // This is NOT equivalent to daysBeforeYear(year - 1970) because the
-    // leap year calculations in daysBeforeYear only works on absolute years.
-    days = daysBeforeYear(year) - daysBeforeYear(1970);
-    // We subtract 1 because we're interested in knowing how many days there
-    // were *before* the given year, relative to 1970.
-  } else {
-    days = 0;
-  }
+  days = DaysBeforeYear(year);
 
-  int month;
-  rv = ReadTwoDigits(input, 1, 12, month);
+  unsigned int month;
+  rv = ReadTwoDigits(input, 1u, 12u, month);
   if (rv != Success) {
     return rv;
   }
-  int daysInMonth;
-  static const int jan = 31;
-  const int feb = ((year % 4 == 0) &&
-                   ((year % 100 != 0) || (year % 400 == 0)))
-                ? 29
-                : 28;
-  static const int mar = 31;
-  static const int apr = 30;
-  static const int may = 31;
-  static const int jun = 30;
-  static const int jul = 31;
-  static const int aug = 31;
-  static const int sep = 30;
-  static const int oct = 31;
-  static const int nov = 30;
-  static const int dec = 31;
+  unsigned int daysInMonth;
+  static const unsigned int jan = 31u;
+  const unsigned int feb = ((year % 4u == 0u) &&
+                           ((year % 100u != 0u) || (year % 400u == 0u)))
+                         ? 29u
+                         : 28u;
+  static const unsigned int mar = 31u;
+  static const unsigned int apr = 30u;
+  static const unsigned int may = 31u;
+  static const unsigned int jun = 30u;
+  static const unsigned int jul = 31u;
+  static const unsigned int aug = 31u;
+  static const unsigned int sep = 30u;
+  static const unsigned int oct = 31u;
+  static const unsigned int nov = 30u;
+  static const unsigned int dec = 31u;
   switch (month) {
     case 1:  daysInMonth = jan; break;
     case 2:  daysInMonth = feb; days += jan; break;
@@ -476,29 +473,29 @@ TimeChoice(Input& tagged, uint8_t expectedTag, /*out*/ PRTime& time)
                                         jul + aug + sep + oct + nov;
              break;
     default:
-      PR_NOT_REACHED("month already bounds-checked by ReadTwoDigits");
-      return Result::FATAL_ERROR_INVALID_STATE;
+      return NotReached("month already bounds-checked by ReadTwoDigits",
+                        Result::FATAL_ERROR_INVALID_STATE);
   }
 
-  int dayOfMonth;
-  rv = ReadTwoDigits(input, 1, daysInMonth, dayOfMonth);
+  unsigned int dayOfMonth;
+  rv = ReadTwoDigits(input, 1u, daysInMonth, dayOfMonth);
   if (rv != Success) {
     return rv;
   }
   days += dayOfMonth - 1;
 
-  int hours;
-  rv = ReadTwoDigits(input, 0, 23, hours);
+  unsigned int hours;
+  rv = ReadTwoDigits(input, 0u, 23u, hours);
   if (rv != Success) {
     return rv;
   }
-  int minutes;
-  rv = ReadTwoDigits(input, 0, 59, minutes);
+  unsigned int minutes;
+  rv = ReadTwoDigits(input, 0u, 59u, minutes);
   if (rv != Success) {
     return rv;
   }
-  int seconds;
-  rv = ReadTwoDigits(input, 0, 59, seconds);
+  unsigned int seconds;
+  rv = ReadTwoDigits(input, 0u, 59u, seconds);
   if (rv != Success) {
     return rv;
   }
@@ -514,12 +511,12 @@ TimeChoice(Input& tagged, uint8_t expectedTag, /*out*/ PRTime& time)
     return Result::ERROR_INVALID_TIME;
   }
 
-  int64_t totalSeconds = (static_cast<int64_t>(days) * 24 * 60 * 60) +
-                         (static_cast<int64_t>(hours)     * 60 * 60) +
-                         (static_cast<int64_t>(minutes)        * 60) +
-                         seconds;
+  uint64_t totalSeconds = (static_cast<uint64_t>(days) * 24u * 60u * 60u) +
+                          (static_cast<uint64_t>(hours)      * 60u * 60u) +
+                          (static_cast<uint64_t>(minutes)          * 60u) +
+                          seconds;
 
-  time = totalSeconds * PR_USEC_PER_SEC;
+  time = TimeFromElapsedSecondsAD(totalSeconds);
   return Success;
 }
 

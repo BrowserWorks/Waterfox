@@ -835,7 +835,7 @@ nsBaseWidget::ComputeShouldAccelerate(bool aDefault)
       NS_WARNING("OpenGL-accelerated layers are not supported on this system");
       tell_me_once = 1;
     }
-#ifdef MOZ_ANDROID_OMTC
+#ifdef MOZ_WIDGET_ANDROID
     NS_RUNTIMEABORT("OpenGL-accelerated layers are a hard requirement on this platform. "
                     "Cannot continue without support for them");
 #endif
@@ -872,22 +872,11 @@ nsBaseWidget::GetPreferredCompositorBackends(nsTArray<LayersBackend>& aHints)
   aHints.AppendElement(LayersBackend::LAYERS_BASIC);
 }
 
-static void
-CheckForBasicBackends(nsTArray<LayersBackend>& aHints)
-{
-#ifndef XP_WIN
-  for (size_t i = 0; i < aHints.Length(); ++i) {
-    if (aHints[i] == LayersBackend::LAYERS_BASIC &&
-        !Preferences::GetBool("layers.offmainthreadcomposition.force-basic", false)) {
-      // basic compositor is not stable enough for regular use
-      aHints[i] = LayersBackend::LAYERS_NONE;
-    }
-  }
-#endif
-}
-
 void nsBaseWidget::CreateCompositor(int aWidth, int aHeight)
 {
+  // This makes sure that gfxPlatforms gets initialized if it hasn't by now.
+  gfxPlatform::GetPlatform();
+
   MOZ_ASSERT(gfxPlatform::UsesOffMainThreadCompositing(),
              "This function assumes OMTC");
 
@@ -915,9 +904,16 @@ void nsBaseWidget::CreateCompositor(int aWidth, int aHeight)
   nsTArray<LayersBackend> backendHints;
   GetPreferredCompositorBackends(backendHints);
 
-  if (!mRequireOffMainThreadCompositing) {
-    CheckForBasicBackends(backendHints);
+#if !defined(MOZ_X11) && !defined(XP_WIN)
+  if (!mRequireOffMainThreadCompositing &&
+      !Preferences::GetBool("layers.offmainthreadcomposition.force-basic", false)) {
+    for (size_t i = 0; i < backendHints.Length(); ++i) {
+      if (backendHints[i] == LayersBackend::LAYERS_BASIC) {
+        backendHints[i] = LayersBackend::LAYERS_NONE;
+      }
+    }
   }
+#endif
 
   bool success = false;
   if (!backendHints.IsEmpty()) {

@@ -13,9 +13,13 @@ LIBRARY_NAME = 'omxpluginhc'
 FORCE_SHARED_LIB = True
 
 LOCAL_INCLUDES += [
-    '../../../content/media/plugins',
     '../include/gb',
     '../include/gb/media/stagefright/openmax',
+]
+
+USE_LIBS += [
+    '/media/omx-plugin/lib/gb/libutils/utils',
+    '/media/omx-plugin/lib/hc/libstagefright/stagefright',
 ]
 
 # Don't use STL wrappers; this isn't Gecko code

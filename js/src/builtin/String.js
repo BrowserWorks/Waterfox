@@ -94,9 +94,11 @@ function StringIteratorNext() {
     var S = UnsafeGetReservedSlot(this, STRING_ITERATOR_SLOT_ITERATED_OBJECT);
     var index = UnsafeGetReservedSlot(this, STRING_ITERATOR_SLOT_NEXT_INDEX);
     var size = S.length;
+    var result = { value: undefined, done: false };
 
     if (index >= size) {
-        return { value: undefined, done: true };
+        result.done = true;
+        return result;
     }
 
     var charCount = 1;
@@ -109,9 +111,9 @@ function StringIteratorNext() {
     }
 
     UnsafeSetReservedSlot(this, STRING_ITERATOR_SLOT_NEXT_INDEX, index + charCount);
-    var value = callFunction(std_String_substring, S, index, index + charCount);
+    result.value = callFunction(std_String_substring, S, index, index + charCount);
 
-    return { value: value, done: false };
+    return result;
 }
 
 /**
@@ -163,7 +165,7 @@ function String_static_fromCodePoint() {
         var nextCP = ToNumber(next);
 
         // Step 5d.
-        if (nextCP !== ToInteger(nextCP) || std_isNaN(nextCP))
+        if (nextCP !== ToInteger(nextCP) || Number_isNaN(nextCP))
             ThrowError(JSMSG_NOT_A_CODEPOINT, ToString(nextCP));
 
         // Step 5e.
@@ -183,6 +185,59 @@ function String_static_fromCodePoint() {
 
     // Step 6.
     return callFunction(std_Function_apply, std_String_fromCharCode, null, elements);
+}
+
+/* ES6 Draft May 22, 2014 21.1.2.4 */
+function String_static_raw(callSite, ...substitutions) {
+    // Step 1 (implicit).
+    // Step 2.
+    var numberOfSubstitutions = substitutions.length;
+
+    // Steps 3-4.
+    var cooked = ToObject(callSite);
+
+    // Steps 5-7.
+    var raw = ToObject(cooked.raw);
+
+    // Steps 8-10.
+    var literalSegments = ToLength(raw.length);
+
+    // Step 11.
+    if (literalSegments <= 0)
+        return "";
+
+    // Step 12.
+    var resultString = "";
+
+    // Step 13.
+    var nextIndex = 0;
+
+    // Step 14.
+    while (true) {
+        // Steps a-d.
+        var nextSeg = ToString(raw[nextIndex]);
+
+        // Step e.
+        resultString = resultString + nextSeg;
+
+        // Step f.
+        if (nextIndex + 1 === literalSegments)
+            // Step f.i.
+            return resultString;
+
+        // Steps g-j.
+        var nextSub;
+        if (nextIndex < numberOfSubstitutions)
+            nextSub = ToString(substitutions[nextIndex]);
+        else
+            nextSub = "";
+
+        // Step k.
+        resultString = resultString + nextSub;
+
+        // Step l.
+        nextIndex++;
+    }
 }
 
 /**

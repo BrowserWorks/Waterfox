@@ -28,6 +28,7 @@ if CONFIG['MOZ_B2G_BT']:
 
     if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
         if CONFIG['MOZ_B2G_BT_BLUEZ']:
+            CXXFLAGS += CONFIG['MOZ_DBUS_CFLAGS']
             SOURCES += [
                 'bluez/BluetoothA2dpManager.cpp',
                 'bluez/BluetoothDBusService.cpp',
@@ -71,6 +72,10 @@ if CONFIG['MOZ_B2G_BT']:
 
             DEFINES['MOZ_B2G_BT_BLUEDROID'] = True
     elif CONFIG['MOZ_ENABLE_DBUS']:
+        CFLAGS += CONFIG['MOZ_DBUS_CFLAGS']
+        CFLAGS += CONFIG['MOZ_DBUS_GLIB_CFLAGS']
+        CXXFLAGS += CONFIG['MOZ_DBUS_CFLAGS']
+        CXXFLAGS += CONFIG['MOZ_DBUS_GLIB_CFLAGS']
         SOURCES += [
             'bluez/BluetoothDBusService.cpp',
             'bluez/BluetoothHfpManager.cpp',
@@ -81,7 +86,7 @@ if CONFIG['MOZ_B2G_BT']:
         DEFINES['MOZ_BLUETOOTH_DBUS'] = True
         DEFINES['HAVE_PTHREADS'] = True
 
-    FINAL_LIBRARY = 'gklayout'
+    FINAL_LIBRARY = 'xul'
 
     LOCAL_INCLUDES += [
         'ipc',
@@ -108,7 +113,7 @@ FAIL_ON_WARNINGS = True
 
 LOCAL_INCLUDES += [
     '../base',
-    '../network/src',
+    '../network',
     '../system/gonk',
 ]
 

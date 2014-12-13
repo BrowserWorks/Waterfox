@@ -7,7 +7,6 @@
 
 #include "LayersLogging.h"
 #include <stdint.h>                     // for uint8_t
-#include "gfx3DMatrix.h"                // for gfx3DMatrix
 #include "gfxColor.h"                   // for gfxRGBA
 #include "mozilla/gfx/Matrix.h"         // for Matrix4x4, Matrix
 #include "nsDebug.h"                    // for NS_ERROR
@@ -124,24 +123,38 @@ AppendToString(std::stringstream& aStream, const FrameMetrics& m,
   AppendToString(aStream, m.GetScrollOffset(), " s=");
   AppendToString(aStream, m.mDisplayPort, " dp=");
   AppendToString(aStream, m.mCriticalDisplayPort, " cdp=");
+  AppendToString(aStream, m.GetBackgroundColor(), " color=");
   if (!detailed) {
     AppendToString(aStream, m.GetScrollId(), " scrollId=");
+    if (m.GetScrollParentId() != FrameMetrics::NULL_SCROLL_ID) {
+      AppendToString(aStream, m.GetScrollParentId(), " scrollParent=");
+    }
     aStream << nsPrintfCString(" z=%.3f }", m.GetZoom().scale).get();
   } else {
     AppendToString(aStream, m.GetDisplayPortMargins(), " dpm=");
     aStream << nsPrintfCString(" um=%d", m.GetUseDisplayPortMargins()).get();
     AppendToString(aStream, m.GetRootCompositionSize(), " rcs=");
-    AppendToString(aStream, m.mViewport, " v=");
+    AppendToString(aStream, m.GetViewport(), " v=");
     aStream << nsPrintfCString(" z=(ld=%.3f r=%.3f cr=%.3f z=%.3f ts=%.3f)",
             m.mDevPixelsPerCSSPixel.scale, m.mResolution.scale,
             m.mCumulativeResolution.scale, m.GetZoom().scale,
             m.mTransformScale.scale).get();
     aStream << nsPrintfCString(" u=(%d %lu)",
             m.GetScrollOffsetUpdated(), m.GetScrollGeneration()).get();
+    AppendToString(aStream, m.GetScrollParentId(), " p=");
     aStream << nsPrintfCString(" i=(%ld %lld) }",
             m.GetPresShellId(), m.GetScrollId()).get();
   }
   aStream << sfx;
+}
+
+void
+AppendToString(std::stringstream& aStream, const ScrollableLayerGuid& s,
+               const char* pfx, const char* sfx)
+{
+  aStream << pfx
+          << nsPrintfCString("{ l=%llu, p=%u, v=%llu }", s.mLayersId, s.mPresShellId, s.mScrollId).get()
+          << sfx;
 }
 
 void
@@ -169,6 +182,22 @@ AppendToString(std::stringstream& aStream, const Matrix4x4& m,
   }
   aStream << sfx;
 }
+
+void
+AppendToString(std::stringstream& aStream, const Matrix5x4& m,
+               const char* pfx, const char* sfx)
+{
+  aStream << pfx;
+  aStream << nsPrintfCString(
+    "[ %g %g %g %g; %g %g %g %g; %g %g %g %g; %g %g %g %g; %g %g %g %g]",
+    m._11, m._12, m._13, m._14,
+    m._21, m._22, m._23, m._24,
+    m._31, m._32, m._33, m._34,
+    m._41, m._42, m._43, m._44,
+    m._51, m._52, m._53, m._54).get();
+  aStream << sfx;
+}
+
 
 void
 AppendToString(std::stringstream& aStream, const Filter filter,
@@ -236,3 +265,38 @@ AppendToString(std::stringstream& aStream, mozilla::gfx::SurfaceFormat format,
 
 } // namespace
 } // namespace
+
+void
+print_stderr(std::stringstream& aStr)
+{
+#if defined(ANDROID)
+  // On Android logcat output is truncated to 1024 chars per line, and
+  // we usually use std::stringstream to build up giant multi-line gobs
+  // of output. So to avoid the truncation we find the newlines and
+  // print the lines individually.
+  char line[1024];
+  while (!aStr.eof()) {
+    aStr.getline(line, sizeof(line));
+    if (!aStr.eof() || strlen(line) > 0) {
+      printf_stderr("%s\n", line);
+    }
+    if (aStr.fail()) {
+      // line was too long, skip to next newline
+      aStr.clear();
+      aStr.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
+  }
+#else
+  printf_stderr("%s", aStr.str().c_str());
+#endif
+}
+
+void
+fprint_stderr(FILE* aFile, std::stringstream& aStr)
+{
+  if (aFile == stderr) {
+    print_stderr(aStr);
+  } else {
+    fprintf_stderr(aFile, "%s", aStr.str().c_str());
+  }
+}

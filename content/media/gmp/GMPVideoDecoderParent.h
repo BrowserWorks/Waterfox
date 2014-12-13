@@ -26,7 +26,7 @@ class GMPVideoDecoderParent MOZ_FINAL : public PGMPVideoDecoderParent
 public:
   NS_INLINE_DECL_REFCOUNTING(GMPVideoDecoderParent)
 
-  GMPVideoDecoderParent(GMPParent *aPlugin);
+  explicit GMPVideoDecoderParent(GMPParent *aPlugin);
 
   GMPVideoHostImpl& Host();
   nsresult Shutdown();
@@ -37,7 +37,7 @@ public:
                               const nsTArray<uint8_t>& aCodecSpecific,
                               GMPVideoDecoderCallbackProxy* aCallback,
                               int32_t aCoreCount) MOZ_OVERRIDE;
-  virtual nsresult Decode(GMPVideoEncodedFrame* aInputFrame,
+  virtual nsresult Decode(UniquePtr<GMPVideoEncodedFrame> aInputFrame,
                           bool aMissingFrames,
                           const nsTArray<uint8_t>& aCodecSpecificInfo,
                           int64_t aRenderTimeMs = -1) MOZ_OVERRIDE;
@@ -70,6 +70,7 @@ private:
   virtual bool RecvInputDataExhausted() MOZ_OVERRIDE;
   virtual bool RecvDrainComplete() MOZ_OVERRIDE;
   virtual bool RecvResetComplete() MOZ_OVERRIDE;
+  virtual bool RecvError(const GMPErr& aError) MOZ_OVERRIDE;
   virtual bool RecvParentShmemForPool(Shmem& aEncodedBuffer) MOZ_OVERRIDE;
   virtual bool AnswerNeedShmem(const uint32_t& aFrameBufferSize,
                                Shmem* aMem) MOZ_OVERRIDE;

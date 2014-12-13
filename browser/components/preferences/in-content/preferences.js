@@ -24,6 +24,7 @@ function init_all() {
 
   gSubDialog.init();
   gMainPane.init();
+  gSearchPane.init();
   gPrivacyPane.init();
   gAdvancedPane.init();
   gApplicationsPane.init();
@@ -51,6 +52,9 @@ function init_all() {
 
   window.addEventListener("hashchange", onHashChange);
   gotoPref();
+
+  let helpCmd = document.getElementById("help-button");
+  helpCmd.addEventListener("command", helpButtonCommand);
 
   // Wait until initialization of all preferences are complete before
   // notifying observers that the UI is now ready.

@@ -30,9 +30,12 @@ public:
   };
 
   static BluetoothA2dpManager* Get();
-  static void InitA2dpInterface();
-  static void DeinitA2dpInterface();
+  static void InitA2dpInterface(BluetoothProfileResultHandler* aRes);
+  static void DeinitA2dpInterface(BluetoothProfileResultHandler* aRes);
   virtual ~BluetoothA2dpManager();
+
+  void OnConnectError();
+  void OnDisconnectError();
 
   // A2DP-specific functions
   void HandleSinkPropertyChanged(const BluetoothSignal& aSignal);
@@ -49,7 +52,7 @@ public:
   void UpdatePlayStatus(uint32_t aDuration,
                         uint32_t aPosition,
                         ControlPlayStatus aPlayStatus);
-  void UpdateRegisterNotification(int aEventId, int aParam);
+  void UpdateRegisterNotification(BluetoothAvrcpEvent aEvent, uint32_t aParam);
   void GetAlbum(nsAString& aAlbum);
   uint32_t GetDuration();
   ControlPlayStatus GetPlayStatus();
@@ -102,9 +105,9 @@ private:
    * mPlayPosChangedNotifType represents current RegisterNotification
    * notification type.
    */
-  int mPlayStatusChangedNotifyType;
-  int mTrackChangedNotifyType;
-  int mPlayPosChangedNotifyType;
+  BluetoothAvrcpNotification mPlayStatusChangedNotifyType;
+  BluetoothAvrcpNotification mTrackChangedNotifyType;
+  BluetoothAvrcpNotification mPlayPosChangedNotifyType;
 };
 
 END_BLUETOOTH_NAMESPACE

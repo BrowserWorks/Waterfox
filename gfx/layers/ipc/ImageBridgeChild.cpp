@@ -101,7 +101,7 @@ struct CompositableTransaction
 };
 
 struct AutoEndTransaction {
-  AutoEndTransaction(CompositableTransaction* aTxn) : mTxn(aTxn) {}
+  explicit AutoEndTransaction(CompositableTransaction* aTxn) : mTxn(aTxn) {}
   ~AutoEndTransaction() { mTxn->End(); }
   CompositableTransaction* mTxn;
 };
@@ -134,6 +134,16 @@ ImageBridgeChild::UseComponentAlphaTextures(CompositableClient* aCompositable,
                                                   nullptr, aTextureOnBlack->GetIPDLActor(),
                                                   nullptr, aTextureOnWhite->GetIPDLActor()));
 }
+
+#ifdef MOZ_WIDGET_GONK
+void
+ImageBridgeChild::UseOverlaySource(CompositableClient* aCompositable,
+                                   const OverlaySource& aOverlay)
+{
+  MOZ_ASSERT(aCompositable);
+  mTxn->AddEdit(OpUseOverlaySource(nullptr, aCompositable->GetIPDLActor(), aOverlay));
+}
+#endif
 
 void
 ImageBridgeChild::UpdatedTexture(CompositableClient* aCompositable,
@@ -248,6 +258,9 @@ ImageBridgeChild::ImageBridgeChild()
   : mShuttingDown(false)
 {
   MOZ_ASSERT(NS_IsMainThread());
+
+  // Always run destructor on the main thread
+  SetMessageLoopToPostDestructionTo(MessageLoop::current());
 
   mTxn = new CompositableTransaction();
 }
@@ -461,7 +474,7 @@ ImageBridgeChild::BeginTransaction()
 class MOZ_STACK_CLASS AutoRemoveTextures
 {
 public:
-  AutoRemoveTextures(ImageBridgeChild* aImageBridge)
+  explicit AutoRemoveTextures(ImageBridgeChild* aImageBridge)
     : mImageBridge(aImageBridge) {}
 
   ~AutoRemoveTextures()

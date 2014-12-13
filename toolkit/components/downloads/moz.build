@@ -53,7 +53,7 @@ if not CONFIG['MOZ_SUITE']:
 
 FAIL_ON_WARNINGS = True
 
-FINAL_LIBRARY = 'toolkitcomps'
+FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [
     '../protobuf',
@@ -61,3 +61,5 @@ LOCAL_INCLUDES += [
 ]
 
 DEFINES['GOOGLE_PROTOBUF_NO_RTTI'] = True
+
+CXXFLAGS += CONFIG['TK_CFLAGS']

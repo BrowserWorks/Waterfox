@@ -243,6 +243,10 @@ function StructuredLogger(name) {
         var allData = {action: action,
                        time: new Date().getTime(),
                        thread: "",
+                       // This is a directive to python to format these messages
+                       // for compatibility with mozharness. This can be removed
+                       // with the MochitestFormatter (see bug 1045525).
+                       js_source: "TestRunner",
                        pid: null,
                        source: this.name};
 
@@ -739,6 +743,19 @@ TestRunner.testFinished = function(tests) {
         } else {
             interstitialURL = "/tests/SimpleTest/iframe-between-tests.html";
         }
+        // check if there were test run after SimpleTest.finish, which should never happen
+        $('testframe').contentWindow.addEventListener('unload', function() {
+           var testwin = $('testframe').contentWindow;
+           if (testwin.SimpleTest && testwin.SimpleTest._tests.length != testwin.SimpleTest.testsLength) {
+             var wrongtestlength = testwin.SimpleTest._tests.length - testwin.SimpleTest.testsLength;
+             var wrongtestname = '';
+             for (var i = 0; i < wrongtestlength; i++) {
+               wrongtestname = testwin.SimpleTest._tests[testwin.SimpleTest.testsLength + i].name;
+               TestRunner.structuredLogger.testStatus(TestRunner.currentTestURL, wrongtestname, 'FAIL', 'PASS', "Result logged after SimpleTest.finish()");
+             }
+             TestRunner.updateUI([{ result: false }]);
+           }
+        } , false);
         TestRunner._makeIframe(interstitialURL, 0);
     }
 

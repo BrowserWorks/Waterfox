@@ -242,7 +242,18 @@ URL::SetHref(const nsAString& aHref, ErrorResult& aRv)
 void
 URL::GetOrigin(nsString& aOrigin, ErrorResult& aRv) const
 {
-  nsContentUtils::GetUTFNonNullOrigin(mURI, aOrigin);
+  nsCOMPtr<nsIURIWithPrincipal> uriWithPrincipal = do_QueryInterface(mURI);
+  if (uriWithPrincipal) {
+    nsCOMPtr<nsIPrincipal> principal;
+    uriWithPrincipal->GetPrincipal(getter_AddRefs(principal));
+
+    if (principal) {
+      nsContentUtils::GetUTFOrigin(principal, aOrigin);
+      return;
+    }
+  }
+
+  nsContentUtils::GetUTFOrigin(mURI, aOrigin);
 }
 
 void
@@ -341,9 +352,10 @@ URL::SetHost(const nsAString& aHost, ErrorResult& aRv)
 }
 
 void
-URL::URLSearchParamsUpdated()
+URL::URLSearchParamsUpdated(URLSearchParams* aSearchParams)
 {
   MOZ_ASSERT(mSearchParams);
+  MOZ_ASSERT(mSearchParams == aSearchParams);
 
   nsAutoString search;
   mSearchParams->Serialize(search);

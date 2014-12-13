@@ -17,8 +17,6 @@ EXPORTS += [
     'nsCocoaUtils.h',
 ]
 
-LIBRARY_NAME = 'widget_mac'
-
 UNIFIED_SOURCES += [
     'GfxInfo.mm',
     'NativeKeyBindings.mm',
@@ -55,6 +53,7 @@ UNIFIED_SOURCES += [
     'nsWidgetFactory.mm',
     'nsWindowMap.mm',
     'OSXNotificationCenter.mm',
+    'VibrancyManager.mm',
     'WidgetTraceEvent.mm',
 ]
 
@@ -129,3 +128,4 @@ RESOURCE_FILES.__setattr__('MainMenu.nib', [
     'resources/MainMenu.nib/keyedobjects.nib',
 ])
 
+CXXFLAGS += CONFIG['TK_CFLAGS']

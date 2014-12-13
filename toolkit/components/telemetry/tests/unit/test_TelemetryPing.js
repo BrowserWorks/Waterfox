@@ -41,11 +41,21 @@ const RW_OWNER = 0600;
 const NUMBER_OF_THREADS_TO_LAUNCH = 30;
 let gNumberOfThreadsLaunched = 0;
 
+const PREF_BRANCH = "toolkit.telemetry.";
+const PREF_ENABLED = PREF_BRANCH + "enabled";
+const PREF_FHR_UPLOAD_ENABLED = "datareporting.healthreport.uploadEnabled";
+
 const Telemetry = Cc["@mozilla.org/base/telemetry;1"].getService(Ci.nsITelemetry);
 
 let gHttpServer = new HttpServer();
 let gServerStarted = false;
 let gRequestIterator = null;
+let gDataReportingClientID = null;
+
+XPCOMUtils.defineLazyGetter(this, "gDatareportingService",
+  () => Cc["@mozilla.org/datareporting/service;1"]
+          .getService(Ci.nsISupports)
+          .wrappedJSObject);
 
 function sendPing () {
   TelemetryPing.gatherStartup();
@@ -75,13 +85,20 @@ function registerPingHandler(handler) {
 }
 
 function setupTestData() {
-  Telemetry.newHistogram(IGNORE_HISTOGRAM, "never", 1, 2, 3, Telemetry.HISTOGRAM_BOOLEAN);
+  Telemetry.newHistogram(IGNORE_HISTOGRAM, "never", Telemetry.HISTOGRAM_BOOLEAN);
   Telemetry.histogramFrom(IGNORE_CLONED_HISTOGRAM, IGNORE_HISTOGRAM_TO_CLONE);
   Services.startup.interrupted = true;
   Telemetry.registerAddonHistogram(ADDON_NAME, ADDON_HISTOGRAM, 1, 5, 6,
                                    Telemetry.HISTOGRAM_LINEAR);
-  h1 = Telemetry.getAddonHistogram(ADDON_NAME, ADDON_HISTOGRAM);
+  let h1 = Telemetry.getAddonHistogram(ADDON_NAME, ADDON_HISTOGRAM);
   h1.add(1);
+  let h2 = Telemetry.getHistogramById("TELEMETRY_TEST_COUNT");
+  h2.add();
+
+  let k1 = Telemetry.getKeyedHistogramById("TELEMETRY_TEST_KEYED_COUNT");
+  k1.add("a");
+  k1.add("a");
+  k1.add("b");
 }
 
 function getSavedHistogramsFile(basename) {
@@ -158,6 +175,13 @@ function checkPayloadInfo(payload, reason) {
   do_check_true("revision" in payload.info);
   do_check_true(payload.info.revision.startsWith("http"));
 
+  if ("@mozilla.org/datareporting/service;1" in Cc &&
+      Services.prefs.getBoolPref(PREF_FHR_UPLOAD_ENABLED)) {
+    do_check_true("clientID" in payload);
+    do_check_neq(payload.clientID, null);
+    do_check_eq(payload.clientID, gDataReportingClientID);
+  }
+
   try {
     // If we've not got nsIGfxInfoDebug, then this will throw and stop us doing
     // this test.
@@ -168,6 +192,9 @@ function checkPayloadInfo(payload, reason) {
     if (isWindows || isOSX) {
       do_check_true("adapterVendorID" in payload.info);
       do_check_true("adapterDeviceID" in payload.info);
+      if (isWindows) {
+        do_check_true("adapterSubsysID" in payload.info);
+      }
     }
   }
   catch (x) {
@@ -206,9 +233,16 @@ function checkPayload(request, reason, successfulPings) {
   const TELEMETRY_PING = "TELEMETRY_PING";
   const TELEMETRY_SUCCESS = "TELEMETRY_SUCCESS";
   const TELEMETRY_TEST_FLAG = "TELEMETRY_TEST_FLAG";
+  const TELEMETRY_TEST_COUNT = "TELEMETRY_TEST_COUNT";
+  const TELEMETRY_TEST_KEYED_FLAG = "TELEMETRY_TEST_KEYED_FLAG";
+  const TELEMETRY_TEST_KEYED_COUNT = "TELEMETRY_TEST_KEYED_COUNT";
   const READ_SAVED_PING_SUCCESS = "READ_SAVED_PING_SUCCESS";
+
   do_check_true(TELEMETRY_PING in payload.histograms);
   do_check_true(READ_SAVED_PING_SUCCESS in payload.histograms);
+  do_check_true(TELEMETRY_TEST_FLAG in payload.histograms);
+  do_check_true(TELEMETRY_TEST_COUNT in payload.histograms);
+
   let rh = Telemetry.registeredHistograms([]);
   for (let name of rh) {
     if (/SQLITE/.test(name) && name in payload.histograms) {
@@ -230,6 +264,19 @@ function checkPayload(request, reason, successfulPings) {
   };
   let flag = payload.histograms[TELEMETRY_TEST_FLAG];
   do_check_eq(uneval(flag), uneval(expected_flag));
+
+  // We should have a test count.
+  const expected_count = {
+    range: [1, 2],
+    bucket_count: 3,
+    histogram_type: 4,
+    values: {0:1, 1:0},
+    sum: 1,
+    sum_squares_lo: 1,
+    sum_squares_hi: 0,
+  };
+  let count = payload.histograms[TELEMETRY_TEST_COUNT];
+  do_check_eq(uneval(count), uneval(expected_count));
 
   // There should be one successful report from the previous telemetry ping.
   const expected_tc = {
@@ -267,6 +314,37 @@ function checkPayload(request, reason, successfulPings) {
 
   do_check_true(("mainThread" in payload.slowSQL) &&
                 ("otherThreads" in payload.slowSQL));
+
+  // Check keyed histogram payload.
+
+  do_check_true("keyedHistograms" in payload);
+  let keyedHistograms = payload.keyedHistograms;
+  do_check_true(TELEMETRY_TEST_KEYED_FLAG in keyedHistograms);
+  do_check_true(TELEMETRY_TEST_KEYED_COUNT in keyedHistograms);
+
+  Assert.deepEqual({}, keyedHistograms[TELEMETRY_TEST_KEYED_FLAG]);
+
+  const expected_keyed_count = {
+    "a": {
+      range: [1, 2],
+      bucket_count: 3,
+      histogram_type: 4,
+      values: {0:2, 1:0},
+      sum: 2,
+      sum_squares_lo: 2,
+      sum_squares_hi: 0,
+    },
+    "b": {
+      range: [1, 2],
+      bucket_count: 3,
+      histogram_type: 4,
+      values: {0:1, 1:0},
+      sum: 1,
+      sum_squares_lo: 1,
+      sum_squares_hi: 0,
+    },
+  };
+  Assert.deepEqual(expected_keyed_count, keyedHistograms[TELEMETRY_TEST_KEYED_COUNT]);
 }
 
 function dummyTheme(id) {
@@ -354,6 +432,16 @@ function run_test() {
   do_get_profile();
   createAppInfo("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9.2");
 
+  Services.prefs.setBoolPref(PREF_ENABLED, true);
+  Services.prefs.setBoolPref(PREF_FHR_UPLOAD_ENABLED, true);
+
+  // Send the needed startup notifications to the datareporting service
+  // to ensure that it has been initialized.
+  if ("@mozilla.org/datareporting/service;1" in Cc) {
+    gDatareportingService.observe(null, "app-startup", null);
+    gDatareportingService.observe(null, "profile-after-change", null);
+  }
+
   // Make it look like we've previously failed to lock a profile a couple times.
   write_fake_failedprofilelocks_file();
 
@@ -400,6 +488,14 @@ function actualTest() {
   run_next_test();
 }
 
+add_task(function* asyncSetup() {
+  yield TelemetryPing.setup();
+
+  if ("@mozilla.org/datareporting/service;1" in Cc) {
+    gDataReportingClientID = yield gDatareportingService.getClientID();
+  }
+});
+
 // Ensure that not overwriting an existing file fails silently
 add_task(function* test_overwritePing() {
   let ping = {slug: "foo"}
@@ -411,7 +507,7 @@ add_task(function* test_overwritePing() {
 // Ensures that expired histograms are not part of the payload.
 add_task(function* test_expiredHistogram() {
   let histogram_id = "FOOBAR";
-  let dummy = Telemetry.newHistogram(histogram_id, "30", 1, 2, 3, Telemetry.HISTOGRAM_EXPONENTIAL);
+  let dummy = Telemetry.newHistogram(histogram_id, "30", Telemetry.HISTOGRAM_EXPONENTIAL, 1, 2, 3);
 
   dummy.add(1);
 

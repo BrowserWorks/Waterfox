@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const CURRENT_SCHEMA_VERSION = 23;
+const CURRENT_SCHEMA_VERSION = 24;
 
 const NS_APP_USER_PROFILE_50_DIR = "ProfD";
 const NS_APP_PROFILE_DIR_STARTUP = "ProfDS";
@@ -312,9 +312,9 @@ function visits_in_database(aURI)
 {
   let url = aURI instanceof Ci.nsIURI ? aURI.spec : aURI;
   let stmt = DBConn().createStatement(
-    "SELECT count(*) FROM moz_historyvisits v "
-  + "JOIN moz_places h ON h.id = v.place_id "
-  + "WHERE url = :url"
+    `SELECT count(*) FROM moz_historyvisits v
+     JOIN moz_places h ON h.id = v.place_id
+     WHERE url = :url`
   );
   stmt.params.url = url;
   try {
@@ -689,9 +689,9 @@ function do_get_guid_for_uri(aURI,
     aStack = Components.stack.caller;
   }
   let stmt = DBConn().createStatement(
-    "SELECT guid "
-  + "FROM moz_places "
-  + "WHERE url = :url "
+    `SELECT guid
+     FROM moz_places
+     WHERE url = :url`
   );
   stmt.params.url = aURI.spec;
   do_check_true(stmt.executeStep(), aStack);
@@ -736,9 +736,9 @@ function do_get_guid_for_bookmark(aId,
     aStack = Components.stack.caller;
   }
   let stmt = DBConn().createStatement(
-    "SELECT guid "
-  + "FROM moz_bookmarks "
-  + "WHERE id = :item_id "
+    `SELECT guid
+     FROM moz_bookmarks
+     WHERE id = :item_id`
   );
   stmt.params.item_id = aId;
   do_check_true(stmt.executeStep(), aStack);

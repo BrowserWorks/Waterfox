@@ -33,7 +33,6 @@ class BluetoothSignal;
 typedef mozilla::ObserverList<BluetoothSignal> BluetoothSignalObserverList;
 
 class BluetoothService : public nsIObserver
-                       , public BluetoothSignalObserver
 {
   class ToggleBtTask;
   friend class ToggleBtTask;
@@ -96,13 +95,6 @@ public:
    */
   void
   DistributeSignal(const BluetoothSignal& aEvent);
-
-  /**
-   * Called when get a Bluetooth Signal from BluetoothDBusService
-   *
-   */
-  void
-  Notify(const BluetoothSignal& aParam);
 
   /**
    * Returns the BluetoothService singleton. Only to be called from main thread.
@@ -219,15 +211,15 @@ public:
   UpdateSdpRecords(const nsAString& aDeviceAddress,
                    BluetoothProfileManagerBase* aManager) = 0;
 
-  virtual bool
+  virtual void
   SetPinCodeInternal(const nsAString& aDeviceAddress, const nsAString& aPinCode,
                      BluetoothReplyRunnable* aRunnable) = 0;
 
-  virtual bool
+  virtual void
   SetPasskeyInternal(const nsAString& aDeviceAddress, uint32_t aPasskey,
                      BluetoothReplyRunnable* aRunnable) = 0;
 
-  virtual bool
+  virtual void
   SetPairingConfirmationInternal(const nsAString& aDeviceAddress, bool aConfirm,
                                  BluetoothReplyRunnable* aRunnable) = 0;
 

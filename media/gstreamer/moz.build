@@ -1,2 +1,0 @@
-if not CONFIG['SYSTEM_GSTREAMER']:
-    DIRS = ['mozbuild']

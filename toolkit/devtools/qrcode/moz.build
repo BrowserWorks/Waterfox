@@ -4,14 +4,17 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-PARALLEL_DIRS += [
-    'decoder',
+DIRS += [
     'encoder'
 ]
 
-JS_MODULES_PATH = 'modules/devtools/qrcode'
+# Save file size on Fennec until there are active plans to use the decoder there
+if CONFIG['MOZ_BUILD_APP'] != 'mobile/android':
+    DIRS += [
+        'decoder'
+    ]
 
-EXTRA_JS_MODULES += [
+EXTRA_JS_MODULES.devtools.qrcode += [
     'index.js',
 ]
 

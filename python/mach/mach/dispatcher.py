@@ -5,6 +5,7 @@
 from __future__ import unicode_literals
 
 import argparse
+import difflib
 import sys
 
 from operator import itemgetter
@@ -85,7 +86,7 @@ class CommandAction(argparse.Action):
         """
         if namespace.help:
             # -h or --help is in the global arguments.
-            self._handle_main_help(parser)
+            self._handle_main_help(parser, namespace.verbose)
             sys.exit(0)
         elif values:
             command = values[0].lower()
@@ -96,7 +97,7 @@ class CommandAction(argparse.Action):
                     # Make sure args[0] is indeed a command.
                     self._handle_subcommand_help(parser, args[0])
                 else:
-                    self._handle_main_help(parser)
+                    self._handle_main_help(parser, namespace.verbose)
                 sys.exit(0)
             elif '-h' in args or '--help' in args:
                 # -h or --help is in the command arguments.
@@ -105,12 +106,21 @@ class CommandAction(argparse.Action):
         else:
             raise NoCommandError()
 
-        handler = self._mach_registrar.command_handlers.get(command)
+        # Command suggestion
+        if command not in self._mach_registrar.command_handlers:
+            # We first try to look for a valid command that is very similar to the given command.
+            suggested_commands = difflib.get_close_matches(command, self._mach_registrar.command_handlers.keys(), cutoff=0.8)
+            # If we find more than one matching command, or no command at all, we give command suggestions instead
+            # (with a lower matching threshold). All commands that start with the given command (for instance: 'mochitest-plain',
+            # 'mochitest-chrome', etc. for 'mochitest-') are also included.
+            if len(suggested_commands) != 1:
+                suggested_commands = set(difflib.get_close_matches(command, self._mach_registrar.command_handlers.keys(), cutoff=0.5))
+                suggested_commands |= {cmd for cmd in self._mach_registrar.command_handlers if cmd.startswith(command)}
+                raise UnknownCommandError(command, 'run', suggested_commands)
+            sys.stderr.write("We're assuming the '%s' command is '%s' and we're executing it for you.\n\n" % (command, suggested_commands[0]))
+            command = suggested_commands[0]
 
-        # FUTURE consider looking for commands with similar names and
-        # suggest or run them.
-        if not handler:
-            raise UnknownCommandError(command, 'run')
+        handler = self._mach_registrar.command_handlers.get(command)
 
         # FUTURE
         # If we wanted to conditionally enable commands based on whether
@@ -146,11 +156,10 @@ class CommandAction(argparse.Action):
 
         command_namespace, extra = subparser.parse_known_args(args)
         setattr(namespace, 'command_args', command_namespace)
-
         if extra:
             raise UnrecognizedArgumentError(command, extra)
 
-    def _handle_main_help(self, parser):
+    def _handle_main_help(self, parser, verbose):
         # Since we don't need full sub-parser support for the main help output,
         # we create groups in the ArgumentParser and populate each group with
         # arguments corresponding to command names. This has the side-effect
@@ -197,9 +206,10 @@ class CommandAction(argparse.Action):
         if disabled_commands and 'disabled' in r.categories:
             title, description, _priority = r.categories['disabled']
             group = parser.add_argument_group(title, description)
-            for c in disabled_commands:
-                group.add_argument(c['command'], help=c['description'],
-                    action='store_true')
+            if verbose == True:
+                for c in disabled_commands:
+                    group.add_argument(c['command'], help=c['description'],
+                                       action='store_true')
 
         parser.print_help()
 
@@ -230,16 +240,17 @@ class CommandAction(argparse.Action):
         if handler.parser:
             c_parser = handler.parser
             c_parser.formatter_class = NoUsageFormatter
-            try:
-                # By default argparse adds two groups called "positional arguments"
-                # and "optional arguments". We want to rename these to reflect standard
-                # mach terminology.
-                c_parser._action_groups[0].title = 'Command Parameters'
-                c_parser._action_groups[1].title = 'Command Arguments'
-            except:
-                # If argparse changes the internal data structures here continue;
-                # this will just make the output more ugly
-                pass
+            # Accessing _action_groups is a bit shady. We are highly dependent
+            # on the argparse implementation not changing. We fail fast to
+            # detect upstream changes so we can intelligently react to them.
+            group = c_parser._action_groups[1]
+
+            # By default argparse adds two groups called "positional arguments"
+            # and "optional arguments". We want to rename these to reflect standard
+            # mach terminology.
+            c_parser._action_groups[0].title = 'Command Parameters'
+            c_parser._action_groups[1].title = 'Command Arguments'
+
             if not handler.description:
                 handler.description = c_parser.description
                 c_parser.description = None

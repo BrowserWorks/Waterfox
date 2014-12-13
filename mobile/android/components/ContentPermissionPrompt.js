@@ -10,9 +10,21 @@ const Cc = Components.classes;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
-const kEntities = { "geolocation": "geolocation",
-                    "desktop-notification": "desktopNotification",
-                    "contacts": "contacts" };
+const kEntities = {
+  "contacts": "contacts",
+  "desktop-notification": "desktopNotification",
+  "device-storage:music": "deviceStorageMusic",
+  "device-storage:pictures": "deviceStoragePictures",
+  "device-storage:sdcard": "deviceStorageSdcard",
+  "device-storage:videos": "deviceStorageVideos",
+  "geolocation": "geolocation",
+};
+
+// For these types, prompt for permission if action is unknown.
+const PROMPT_FOR_UNKNOWN = [
+  "desktop-notification",
+  "geolocation",
+];
 
 function ContentPermissionPrompt() {}
 
@@ -21,18 +33,19 @@ ContentPermissionPrompt.prototype = {
 
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIContentPermissionPrompt]),
 
-  handleExistingPermission: function handleExistingPermission(request, type, isApp) {
+  handleExistingPermission: function handleExistingPermission(request, type, denyUnknown) {
     let result = Services.perms.testExactPermissionFromPrincipal(request.principal, type);
     if (result == Ci.nsIPermissionManager.ALLOW_ACTION) {
       request.allow();
       return true;
     }
+
     if (result == Ci.nsIPermissionManager.DENY_ACTION) {
       request.cancel();
       return true;
     }
 
-    if (isApp && (result == Ci.nsIPermissionManager.UNKNOWN_ACTION && !!kEntities[type])) {
+    if (denyUnknown && result == Ci.nsIPermissionManager.UNKNOWN_ACTION) {
       request.cancel();
       return true;
     }
@@ -71,7 +84,10 @@ ContentPermissionPrompt.prototype = {
     let perm = types.queryElementAt(0, Ci.nsIContentPermissionType);
 
     // Returns true if the request was handled
-    if (this.handleExistingPermission(request, perm.type, isApp))
+    let access = (perm.access && perm.access !== "unused") ?
+                 (perm.type + "-" + perm.access) : perm.type;
+    if (this.handleExistingPermission(request, access,
+          /* denyUnknown */ isApp || PROMPT_FOR_UNKNOWN.indexOf(perm.type) < 0))
        return;
 
     let chromeWin = this.getChromeForRequest(request);
@@ -87,10 +103,10 @@ ContentPermissionPrompt.prototype = {
       callback: function(aChecked) {
         // If the user checked "Don't ask again", make a permanent exception
         if (aChecked) {
-          Services.perms.addFromPrincipal(request.principal, perm.type, Ci.nsIPermissionManager.ALLOW_ACTION);
+          Services.perms.addFromPrincipal(request.principal, access, Ci.nsIPermissionManager.ALLOW_ACTION);
         } else if (isApp || entityName == "desktopNotification") {
           // Otherwise allow the permission for the current session (if the request comes from an app or if it's a desktop-notification request)
-          Services.perms.addFromPrincipal(request.principal, perm.type, Ci.nsIPermissionManager.ALLOW_ACTION, Ci.nsIPermissionManager.EXPIRE_SESSION);
+          Services.perms.addFromPrincipal(request.principal, access, Ci.nsIPermissionManager.ALLOW_ACTION, Ci.nsIPermissionManager.EXPIRE_SESSION);
         }
 
         request.allow();
@@ -101,7 +117,7 @@ ContentPermissionPrompt.prototype = {
       callback: function(aChecked) {
         // If the user checked "Don't ask again", make a permanent exception
         if (aChecked)
-          Services.perms.addFromPrincipal(request.principal, perm.type, Ci.nsIPermissionManager.DENY_ACTION);
+          Services.perms.addFromPrincipal(request.principal, access, Ci.nsIPermissionManager.DENY_ACTION);
 
         request.cancel();
       }

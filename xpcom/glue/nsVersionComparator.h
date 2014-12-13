@@ -43,15 +43,15 @@
 
 namespace mozilla {
 
-int32_t NS_COM_GLUE CompareVersions(const char* aStrA, const char* aStrB);
+int32_t CompareVersions(const char* aStrA, const char* aStrB);
 
 #ifdef XP_WIN
-int32_t NS_COM_GLUE CompareVersions(const char16_t* aStrA, const char16_t* aStrB);
+int32_t CompareVersions(const char16_t* aStrA, const char16_t* aStrB);
 #endif
 
-struct NS_COM_GLUE Version
+struct Version
 {
-  Version(const char* aVersionString)
+  explicit Version(const char* aVersionString)
   {
     versionContent = strdup(aVersionString);
   }
@@ -90,13 +90,37 @@ struct NS_COM_GLUE Version
   {
     return CompareVersions(versionContent, aRhs.ReadContent()) != 0;
   }
+  bool operator<(const char* aRhs) const
+  {
+    return CompareVersions(versionContent, aRhs) == -1;
+  }
+  bool operator<=(const char* aRhs) const
+  {
+    return CompareVersions(versionContent, aRhs) < 1;
+  }
+  bool operator>(const char* aRhs) const
+  {
+    return CompareVersions(versionContent, aRhs) == 1;
+  }
+  bool operator>=(const char* aRhs) const
+  {
+    return CompareVersions(versionContent, aRhs) > -1;
+  }
+  bool operator==(const char* aRhs) const
+  {
+    return CompareVersions(versionContent, aRhs) == 0;
+  }
+  bool operator!=(const char* aRhs) const
+  {
+    return CompareVersions(versionContent, aRhs) != 0;
+  }
 
 private:
   char* versionContent;
 };
 
 #ifdef XP_WIN
-struct NS_COM_GLUE VersionW
+struct VersionW
 {
   VersionW(const char16_t* aVersionStringW)
   {

@@ -507,24 +507,12 @@ CacheFileHandles::Log(CacheFileHandlesEntry *entry)
 
 // Memory reporting
 
-namespace { // anon
-
-size_t
-CollectHandlesMemory(CacheFileHandles::HandleHashKey* key,
-                     mozilla::MallocSizeOf mallocSizeOf,
-                     void *arg)
-{
-  return key->SizeOfExcludingThis(mallocSizeOf);
-}
-
-} // anon
-
 size_t
 CacheFileHandles::SizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const
 {
   MOZ_ASSERT(CacheFileIOManager::IsOnIOThread());
 
-  return mTable.SizeOfExcludingThis(&CollectHandlesMemory, mallocSizeOf);
+  return mTable.SizeOfExcludingThis(mallocSizeOf);
 }
 
 // Events
@@ -837,7 +825,7 @@ protected:
 
 class ReleaseNSPRHandleEvent : public nsRunnable {
 public:
-  ReleaseNSPRHandleEvent(CacheFileHandle *aHandle)
+  explicit ReleaseNSPRHandleEvent(CacheFileHandle *aHandle)
     : mHandle(aHandle)
   {
     MOZ_COUNT_CTOR(ReleaseNSPRHandleEvent);

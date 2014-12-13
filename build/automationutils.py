@@ -4,35 +4,18 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import with_statement
-import glob, logging, os, platform, shutil, subprocess, sys, tempfile, urllib2, zipfile
-import base64
-import re
-import os
-from urlparse import urlparse
+import logging
 from operator import itemgetter
+import os
+import platform
+import re
 import signal
-
-try:
-  import mozinfo
-except ImportError:
-  # Stub out fake mozinfo since this is not importable on Android 4.0 Opt.
-  # This should be fixed; see
-  # https://bugzilla.mozilla.org/show_bug.cgi?id=650881
-  mozinfo = type('mozinfo', (), dict(info={}))()
-  mozinfo.isWin = mozinfo.isLinux = mozinfo.isUnix = mozinfo.isMac = False
-
-  # TODO! FILE: localautomation :/
-  # mapping from would-be mozinfo attr <-> sys.platform
-  mapping = {'isMac': ['mac', 'darwin'],
-             'isLinux': ['linux', 'linux2'],
-             'isWin': ['win32', 'win64'],
-             }
-  mapping = dict(sum([[(value, key) for value in values] for key, values in mapping.items()], []))
-  attr = mapping.get(sys.platform)
-  if attr:
-    setattr(mozinfo, attr, True)
-  if mozinfo.isLinux:
-    mozinfo.isUnix = True
+import subprocess
+import sys
+import tempfile
+from urlparse import urlparse
+import zipfile
+import mozinfo
 
 __all__ = [
   "ZipFileReader",
@@ -40,53 +23,28 @@ __all__ = [
   "dumpLeakLog",
   "isURL",
   "processLeakLog",
-  "getDebuggerInfo",
-  "DEBUGGER_INFO",
   "replaceBackSlashes",
-  "wrapCommand",
   'KeyValueParseError',
   'parseKeyValue',
   'systemMemory',
   'environment',
   'dumpScreen',
-  "ShutdownLeaks"
+  "ShutdownLeaks",
+  "setAutomationLog",
   ]
 
-# Map of debugging programs to information about them, like default arguments
-# and whether or not they are interactive.
-DEBUGGER_INFO = {
-  # gdb requires that you supply the '--args' flag in order to pass arguments
-  # after the executable name to the executable.
-  "gdb": {
-    "interactive": True,
-    "args": "-q --args"
-  },
+log = logging.getLogger()
+def resetGlobalLog():
+  while log.handlers:
+    log.removeHandler(log.handlers[0])
+  handler = logging.StreamHandler(sys.stdout)
+  log.setLevel(logging.INFO)
+  log.addHandler(handler)
+resetGlobalLog()
 
-  "cgdb": {
-    "interactive": True,
-    "args": "-q --args"
-  },
-
-  "lldb": {
-    "interactive": True,
-    "args": "--",
-    "requiresEscapedArgs": True
-  },
-
-  # valgrind doesn't explain much about leaks unless you set the
-  # '--leak-check=full' flag. But there are a lot of objects that are
-  # semi-deliberately leaked, so we set '--show-possibly-lost=no' to avoid
-  # uninteresting output from those objects. We set '--smc-check==all-non-file'
-  # and '--vex-iropt-register-updates=allregs-at-mem-access' so that valgrind
-  # deals properly with JIT'd JavaScript code.
-  "valgrind": {
-    "interactive": False,
-    "args": " ".join(["--leak-check=full",
-                      "--show-possibly-lost=no",
-                      "--smc-check=all-non-file",
-                      "--vex-iropt-register-updates=allregs-at-mem-access"])
-  }
-}
+def setAutomationLog(alt_logger):
+  global log
+  log = alt_logger
 
 class ZipFileReader(object):
   """
@@ -149,8 +107,6 @@ class ZipFileReader(object):
 
     for name in self._zipfile.namelist():
       self._extractname(name, path)
-
-log = logging.getLogger()
 
 def isURL(thing):
   """Return True if |thing| looks like a URL."""
@@ -217,58 +173,6 @@ def addCommonOptions(parser, defaults={}):
                     action = "store_true", dest = "debuggerInteractive",
                     help = "prevents the test harness from redirecting "
                         "stdout and stderr for interactive debuggers")
-
-def getFullPath(directory, path):
-  "Get an absolute path relative to 'directory'."
-  return os.path.normpath(os.path.join(directory, os.path.expanduser(path)))
-
-def searchPath(directory, path):
-  "Go one step beyond getFullPath and try the various folders in PATH"
-  # Try looking in the current working directory first.
-  newpath = getFullPath(directory, path)
-  if os.path.isfile(newpath):
-    return newpath
-
-  # At this point we have to fail if a directory was given (to prevent cases
-  # like './gdb' from matching '/usr/bin/./gdb').
-  if not os.path.dirname(path):
-    for dir in os.environ['PATH'].split(os.pathsep):
-      newpath = os.path.join(dir, path)
-      if os.path.isfile(newpath):
-        return newpath
-  return None
-
-def getDebuggerInfo(directory, debugger, debuggerArgs, debuggerInteractive = False):
-
-  debuggerInfo = None
-
-  if debugger:
-    debuggerPath = searchPath(directory, debugger)
-    if not debuggerPath:
-      print "Error: Path %s doesn't exist." % debugger
-      sys.exit(1)
-
-    debuggerName = os.path.basename(debuggerPath).lower()
-
-    def getDebuggerInfo(type, default):
-      if debuggerName in DEBUGGER_INFO and type in DEBUGGER_INFO[debuggerName]:
-        return DEBUGGER_INFO[debuggerName][type]
-      return default
-
-    debuggerInfo = {
-      "path": debuggerPath,
-      "interactive" : getDebuggerInfo("interactive", False),
-      "args": getDebuggerInfo("args", "").split(),
-      "requiresEscapedArgs": getDebuggerInfo("requiresEscapedArgs", False)
-    }
-
-    if debuggerArgs:
-      debuggerInfo["args"] = debuggerArgs.split()
-    if debuggerInteractive:
-      debuggerInfo["interactive"] = debuggerInteractive
-
-  return debuggerInfo
-
 
 def dumpLeakLog(leakLogFile, filter = False):
   """Process the leak log, without parsing it.
@@ -360,8 +264,13 @@ def processSingleLeakFile(leakLogFileName, processType, leakThreshold):
 
   # totalBytesLeaked was seen and is non-zero.
   if totalBytesLeaked > leakThreshold:
-    # Fail the run if we're over the threshold (which defaults to 0)
-    prefix = "TEST-UNEXPECTED-FAIL"
+    if processType and processType == "tab":
+      # For now, ignore tab process leaks. See bug 1051230.
+      log.info("WARNING | leakcheck | ignoring leaks in tab process")
+      prefix = "WARNING"
+    else:
+      # Fail the run if we're over the threshold (which defaults to 0)
+      prefix = "TEST-UNEXPECTED-FAIL"
   else:
     prefix = "WARNING"
   # Create a comma delimited string of the first N leaked objects found,
@@ -407,19 +316,6 @@ def processLeakLog(leakLogFile, leakThreshold = 0):
 def replaceBackSlashes(input):
   return input.replace('\\', '/')
 
-def wrapCommand(cmd):
-  """
-  If running on OS X 10.5 or older, wrap |cmd| so that it will
-  be executed as an i386 binary, in case it's a 32-bit/64-bit universal
-  binary.
-  """
-  if platform.system() == "Darwin" and \
-     hasattr(platform, 'mac_ver') and \
-     platform.mac_ver()[0][:4] < '10.6':
-    return ["arch", "-arch", "i386"] + cmd
-  # otherwise just execute the command normally
-  return cmd
-
 class KeyValueParseError(Exception):
   """error when parsing strings of serialized key-values"""
   def __init__(self, msg, errors=()):
@@ -455,12 +351,18 @@ def environment(xrePath, env=None, crashreporter=True, debugger=False, dmdPath=N
 
   assert os.path.isabs(xrePath)
 
-  ldLibraryPath = xrePath
+  if mozinfo.isMac:
+    ldLibraryPath = os.path.join(os.path.dirname(xrePath), "MacOS")
+  else:
+    ldLibraryPath = xrePath
 
   envVar = None
   dmdLibrary = None
   preloadEnvVar = None
-  if mozinfo.isUnix:
+  if 'toolkit' in mozinfo.info and mozinfo.info['toolkit'] == "gonk":
+    # Skip all of this, it's only valid for the host.
+    pass
+  elif mozinfo.isUnix:
     envVar = "LD_LIBRARY_PATH"
     env['MOZILLA_FIVE_HOME'] = xrePath
     dmdLibrary = "libdmd.so"
@@ -511,9 +413,9 @@ def environment(xrePath, env=None, crashreporter=True, debugger=False, dmdPath=N
       llvmsym = os.path.join(xrePath, "llvm-symbolizer")
       if os.path.isfile(llvmsym):
         env["ASAN_SYMBOLIZER_PATH"] = llvmsym
-        log.info("INFO | runtests.py | ASan using symbolizer at %s", llvmsym)
+        log.info("INFO | runtests.py | ASan using symbolizer at %s" % llvmsym)
       else:
-        log.info("TEST-UNEXPECTED-FAIL | runtests.py | Failed to find ASan symbolizer at %s", llvmsym)
+        log.info("TEST-UNEXPECTED-FAIL | runtests.py | Failed to find ASan symbolizer at %s" % llvmsym)
 
       totalMemory = systemMemory()
 
@@ -546,7 +448,7 @@ def environment(xrePath, env=None, crashreporter=True, debugger=False, dmdPath=N
         env['ASAN_OPTIONS'] = ':'.join(asanOptions)
 
     except OSError,err:
-      log.info("Failed determine available memory, disabling ASan low-memory configuration: %s", err.strerror)
+      log.info("Failed determine available memory, disabling ASan low-memory configuration: %s" % err.strerror)
     except:
       log.info("Failed determine available memory, disabling ASan low-memory configuration")
     else:
@@ -557,7 +459,6 @@ def environment(xrePath, env=None, crashreporter=True, debugger=False, dmdPath=N
 def dumpScreen(utilityPath):
   """dumps a screenshot of the entire screen to a directory specified by
   the MOZ_UPLOAD_DIR environment variable"""
-  import mozfile
 
   # Need to figure out which OS-dependent tool to use
   if mozinfo.isUnix:
@@ -583,7 +484,7 @@ def dumpScreen(utilityPath):
     returncode = subprocess.call(utility + [imgfilename])
     printstatus(returncode, utilityname)
   except OSError, err:
-    log.info("Failed to start %s for screenshot: %s",
+    log.info("Failed to start %s for screenshot: %s" %
              utility[0], err.strerror)
     return
 

@@ -17,7 +17,7 @@ namespace jsipc {
 class JavaScriptChild : public JavaScriptBase<PJavaScriptChild>
 {
   public:
-    JavaScriptChild(JSRuntime *rt);
+    explicit JavaScriptChild(JSRuntime *rt);
     virtual ~JavaScriptChild();
 
     bool init();
@@ -27,6 +27,7 @@ class JavaScriptChild : public JavaScriptBase<PJavaScriptChild>
 
   protected:
     virtual bool isParent() { return false; }
+    virtual JSObject *defaultScope() MOZ_OVERRIDE;
 
   private:
     bool fail(JSContext *cx, ReturnStatus *rs);

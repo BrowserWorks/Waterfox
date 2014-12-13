@@ -19,6 +19,7 @@
 #include "mozilla/layers/FenceUtils.h"  // for FenceHandle
 #include "mozilla/layers/LayersTypes.h"  // for LayerRenderState, etc
 #include "mozilla/mozalloc.h"           // for operator delete
+#include "mozilla/UniquePtr.h"          // for UniquePtr
 #include "nsCOMPtr.h"                   // for already_AddRefed
 #include "nsDebug.h"                    // for NS_RUNTIMEABORT
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
@@ -285,7 +286,7 @@ class TextureHost
 
   friend class AtomicRefCountedWithFinalize<TextureHost>;
 public:
-  TextureHost(TextureFlags aFlags);
+  explicit TextureHost(TextureFlags aFlags);
 
 protected:
   virtual ~TextureHost();
@@ -569,7 +570,7 @@ public:
   virtual void OnShutdown() MOZ_OVERRIDE;
 
 protected:
-  mozilla::ipc::Shmem* mShmem;
+  UniquePtr<mozilla::ipc::Shmem> mShmem;
   RefPtr<ISurfaceAllocator> mDeallocator;
 };
 
@@ -651,7 +652,7 @@ protected:
 class MOZ_STACK_CLASS AutoLockTextureHost
 {
 public:
-  AutoLockTextureHost(TextureHost* aTexture)
+  explicit AutoLockTextureHost(TextureHost* aTexture)
     : mTexture(aTexture)
   {
     mLocked = mTexture ? mTexture->Lock() : false;
@@ -678,7 +679,7 @@ private:
 class CompositingRenderTarget : public TextureSource
 {
 public:
-  CompositingRenderTarget(const gfx::IntPoint& aOrigin)
+  explicit CompositingRenderTarget(const gfx::IntPoint& aOrigin)
     : mOrigin(aOrigin)
   {}
   virtual ~CompositingRenderTarget() {}

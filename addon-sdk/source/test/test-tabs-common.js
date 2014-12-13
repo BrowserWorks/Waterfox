@@ -12,6 +12,11 @@ const { isWindowPrivate } = require('sdk/window/utils');
 const { setTimeout } = require('sdk/timers');
 const { openWebpage } = require('./private-browsing/helper');
 const { isTabPBSupported, isWindowPBSupported } = require('sdk/private-browsing/utils');
+const { getTabContentWindow } = require('sdk/tabs/utils');
+const { attach, detach } = require('sdk/content/mod');
+const { Style } = require('sdk/stylesheet/style');
+const fixtures = require('./fixtures');
+const { viewFor } = require('sdk/view/core');
 const app = require("sdk/system/xul-app");
 
 const URL = 'data:text/html;charset=utf-8,<html><head><title>#title#</title></head></html>';
@@ -23,9 +28,9 @@ exports.testTabCounts = function(assert, done) {
     onReady: function(tab) {
       let count1 = 0,
           count2 = 0;
-      for each(let window in browserWindows) {
+      for (let window of browserWindows) {
         count1 += window.tabs.length;
-        for each(let tab in window.tabs) {
+        for (let tab of window.tabs) {
           count2 += 1;
         }
       }
@@ -40,6 +45,38 @@ exports.testTabCounts = function(assert, done) {
   });
 };
 
+exports.testTabRelativePath = function(assert, done) {
+  const { merge } = require("sdk/util/object");
+  const self = require("sdk/self");
+
+  let loader = Loader(module, null, null, {
+    modules: {
+      "sdk/self": merge({}, self, {
+        data: merge({}, self.data, fixtures)
+      })
+    }
+  });
+
+  let tabs = loader.require("sdk/tabs");
+
+  tabs.open({
+    url: "./test.html",
+    onReady: (tab) => {
+      assert.equal(tab.title, "foo",
+        "tab opened a document with relative path");
+
+      tab.attach({
+        contentScriptFile: "./test-contentScriptFile.js",
+        onMessage: (message) => {
+          assert.equal(message, "msg from contentScriptFile",
+            "Tab attach a contentScriptFile with relative path worked");
+
+          tab.close(done);
+        }
+      });
+    }
+  });
+};
 
 // TEST: tabs.activeTab getter
 exports.testActiveTab_getter = function(assert, done) {
@@ -515,6 +552,57 @@ exports.testOnPageShowEventDeclarative = function (assert, done) {
     onPageShow: onPageShow,
     onOpen: onOpen,
     onReady: onReady
+  });
+};
+
+exports.testAttachStyleToTab = function(assert, done) {
+   let style = Style({
+    source: "div { height: 100px; }",
+    uri: fixtures.url("include-file.css")
+  });
+
+  tabs.open({
+    url: "data:text/html;charset=utf-8,<div style='background: silver'>css test</div>",
+    onReady: (tab) => {
+      let xulTab = viewFor(tab);
+
+      attach(style, tab)
+
+      let { document } = getTabContentWindow(xulTab);
+      let div = document.querySelector("div");
+
+      assert.equal(div.clientHeight, 100,
+        "Style.source properly attached to tab");
+
+      assert.equal(div.offsetHeight, 120,
+        "Style.uri properly attached to tab");
+
+      detach(style, tab);
+
+      assert.notEqual(div.clientHeight, 100,
+        "Style.source properly detached from tab");
+
+      assert.notEqual(div.offsetHeight, 120,
+        "Style.uri properly detached from tab");
+
+      attach(style, xulTab);
+
+      assert.equal(div.clientHeight, 100,
+        "Style.source properly attached to xul tab");
+
+      assert.equal(div.offsetHeight, 120,
+        "Style.uri properly attached to xul tab");
+
+      detach(style, tab);
+
+      assert.notEqual(div.clientHeight, 100,
+        "Style.source properly detached from xul tab");
+
+      assert.notEqual(div.offsetHeight, 120,
+        "Style.uri properly detached from xul tab");
+
+      tab.close(done);
+    }
   });
 };
 

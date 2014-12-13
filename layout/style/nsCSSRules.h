@@ -184,7 +184,7 @@ protected:
 
 // A nsCSSFontFaceStyleDecl is always embedded in a nsCSSFontFaceRule.
 class nsCSSFontFaceRule;
-class nsCSSFontFaceStyleDecl : public nsICSSDeclaration
+class nsCSSFontFaceStyleDecl MOZ_FINAL : public nsICSSDeclaration
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
@@ -338,15 +338,6 @@ public:
 
   virtual size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE;
 
-  static bool PrefEnabled()
-  {
-    // font-variant-alternates enabled ==> layout.css.font-features.enabled is true
-    bool fontFeaturesEnabled =
-      nsCSSProps::IsEnabled(eCSSProperty_font_variant_alternates);
-
-    return fontFeaturesEnabled;
-  }
-
 protected:
   ~nsCSSFontFeatureValuesRule() {}
 
@@ -403,7 +394,7 @@ class nsCSSKeyframeRule;
 class nsCSSKeyframeStyleDeclaration MOZ_FINAL : public nsDOMCSSDeclaration
 {
 public:
-  nsCSSKeyframeStyleDeclaration(nsCSSKeyframeRule *aRule);
+  explicit nsCSSKeyframeStyleDeclaration(nsCSSKeyframeRule *aRule);
 
   NS_IMETHOD GetParentRule(nsIDOMCSSRule **aParent) MOZ_OVERRIDE;
   void DropReference() { mRule = nullptr; }
@@ -536,7 +527,7 @@ class nsCSSPageRule;
 class nsCSSPageStyleDeclaration MOZ_FINAL : public nsDOMCSSDeclaration
 {
 public:
-  nsCSSPageStyleDeclaration(nsCSSPageRule *aRule);
+  explicit nsCSSPageStyleDeclaration(nsCSSPageRule *aRule);
 
   NS_IMETHOD GetParentRule(nsIDOMCSSRule **aParent) MOZ_OVERRIDE;
   void DropReference() { mRule = nullptr; }

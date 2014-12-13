@@ -8,14 +8,15 @@
 #define mozilla_dom_bluetooth_BluetoothSocket_h
 
 #include "BluetoothCommon.h"
-#include "mozilla/ipc/UnixSocket.h"
+#include "mozilla/ipc/SocketBase.h"
 
 BEGIN_BLUETOOTH_NAMESPACE
 
 class BluetoothSocketObserver;
+class BluetoothSocketResultHandler;
 class DroidSocketImpl;
 
-class BluetoothSocket : public mozilla::ipc::UnixSocketConsumer
+class BluetoothSocket : public mozilla::ipc::SocketConsumerBase
 {
 public:
   BluetoothSocket(BluetoothSocketObserver* aObserver,
@@ -23,14 +24,13 @@ public:
                   bool aAuth,
                   bool aEncrypt);
 
-  bool Connect(const nsAString& aDeviceAddress, int aChannel);
+  bool ConnectSocket(const nsAString& aDeviceAddress, int aChannel);
 
-  bool Listen(int aChannel);
+  bool ListenSocket(int aChannel);
 
-  inline void Disconnect()
-  {
-    CloseDroidSocket();
-  }
+  void CloseSocket();
+
+  bool SendSocketData(mozilla::ipc::UnixSocketRawData* aData);
 
   virtual void OnConnectSuccess() MOZ_OVERRIDE;
   virtual void OnConnectError() MOZ_OVERRIDE;
@@ -48,11 +48,14 @@ public:
     mDeviceAddress = aDeviceAddress;
   }
 
-  void CloseDroidSocket();
-  bool SendDroidSocketData(mozilla::ipc::UnixSocketRawData* aData);
+  inline void SetCurrentResultHandler(BluetoothSocketResultHandler* aRes)
+  {
+    mCurrentRes = aRes;
+  }
 
 private:
   BluetoothSocketObserver* mObserver;
+  BluetoothSocketResultHandler* mCurrentRes;
   DroidSocketImpl* mImpl;
   nsString mDeviceAddress;
   bool mAuth;

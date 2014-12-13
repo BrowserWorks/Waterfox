@@ -23,8 +23,8 @@ class nsTransactionItem;
 /** implementation of a transaction manager object.
  *
  */
-class nsTransactionManager : public nsITransactionManager
-                           , public nsSupportsWeakReference
+class nsTransactionManager MOZ_FINAL : public nsITransactionManager
+                                     , public nsSupportsWeakReference
 {
 private:
 
@@ -42,7 +42,7 @@ public:
 
   /** The default constructor.
    */
-  nsTransactionManager(int32_t aMaxTransactionCount=-1);
+  explicit nsTransactionManager(int32_t aMaxTransactionCount=-1);
 
   /* Macro for AddRef(), Release(), and QueryInterface() */
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS

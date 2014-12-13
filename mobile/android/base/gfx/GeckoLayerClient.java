@@ -118,8 +118,6 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
         mCurrentViewTransformMargins = new RectF();
         mProgressiveUpdateData = new ProgressiveUpdateData();
         mProgressiveUpdateDisplayPort = new DisplayPortMetrics();
-        mLastProgressiveUpdateWasLowPrecision = false;
-        mProgressiveUpdateWasInDanger = false;
 
         mForceRedraw = true;
         DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
@@ -748,8 +746,11 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
     }
 
     @WrapElementForJNI(allowMultithread = true)
-    public void deactivateProgram() {
+    public void deactivateProgramAndRestoreState(boolean enableScissor,
+            int scissorX, int scissorY, int scissorW, int scissorH)
+    {
         mLayerRenderer.deactivateDefaultProgram();
+        mLayerRenderer.restoreState(enableScissor, scissorX, scissorY, scissorW, scissorH);
     }
 
     private void geometryChanged(DisplayPortMetrics displayPort) {
@@ -939,13 +940,6 @@ class GeckoLayerClient implements LayerView.Listener, PanZoomTarget
     @Override
     public void removeRenderTask(RenderTask task) {
         mView.removeRenderTask(task);
-    }
-
-
-    /** Implementation of PanZoomTarget */
-    @Override
-    public boolean postDelayed(Runnable action, long delayMillis) {
-        return mView.postDelayed(action, delayMillis);
     }
 
     /** Implementation of PanZoomTarget */

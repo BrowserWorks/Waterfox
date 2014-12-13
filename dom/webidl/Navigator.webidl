@@ -30,7 +30,7 @@ Navigator implements NavigatorContentUtils;
 Navigator implements NavigatorStorageUtils;
 Navigator implements NavigatorFeatures;
 
-[NoInterfaceObject]
+[NoInterfaceObject, Exposed=(Window,Worker)]
 interface NavigatorID {
   // WebKit/Blink/Trident/Presto support this (hardcoded "Mozilla").
   [Constant, Cached]
@@ -58,10 +58,11 @@ interface NavigatorLanguage {
 
   [Pure, Cached]
   readonly attribute DOMString? language;
-  [Pure, Cached, Frozen] readonly attribute sequence<DOMString> languages;
+  [Pure, Cached, Frozen]
+  readonly attribute sequence<DOMString> languages;
 };
 
-[NoInterfaceObject]
+[NoInterfaceObject, Exposed=(Window,Worker)]
 interface NavigatorOnLine {
   readonly attribute boolean onLine;
 };
@@ -89,7 +90,10 @@ interface NavigatorStorageUtils {
 [NoInterfaceObject]
 interface NavigatorFeatures {
   [CheckPermissions="feature-detection", Throws]
-  Promise getFeature(DOMString name);
+  Promise<any> getFeature(DOMString name);
+
+  [CheckPermissions="feature-detection", Throws]
+  Promise<any> hasFeature(DOMString name);
 };
 
 // Things that definitely need to be in the spec and and are not for some
@@ -125,10 +129,12 @@ interface NavigatorBattery {
 Navigator implements NavigatorBattery;
 
 // https://wiki.mozilla.org/WebAPI/DataStore
-[NoInterfaceObject]
+[NoInterfaceObject,
+ Exposed=(Window,Worker)]
 interface NavigatorDataStore {
     [Throws, NewObject, Func="Navigator::HasDataStoreSupport"]
-    Promise getDataStores(DOMString name);
+    Promise<sequence<DataStore>> getDataStores(DOMString name,
+                                               optional DOMString? owner = null);
 };
 Navigator implements NavigatorDataStore;
 
@@ -166,8 +172,9 @@ interface NavigatorMobileId {
     // Ideally we would use [CheckPermissions] here, but the "mobileid"
     // permission is set to PROMPT_ACTION and [CheckPermissions] only checks
     // for ALLOW_ACTION.
+    // XXXbz what is this promise resolved with?
     [Throws, NewObject, Func="Navigator::HasMobileIdSupport"]
-    Promise getMobileIdAssertion(optional MobileIdOptions options);
+    Promise<any> getMobileIdAssertion(optional MobileIdOptions options);
 };
 Navigator implements NavigatorMobileId;
 #endif // MOZ_B2G
@@ -196,13 +203,13 @@ partial interface Navigator {
   /**
    * Navigator requests to add an idle observer to the existing window.
    */
-  [Throws, CheckPermissions="idle", Pref="dom.idle-observers-api.enabled"]
+  [Throws, CheckPermissions="idle"]
   void addIdleObserver(MozIdleObserver aIdleObserver);
 
   /**
    * Navigator requests to remove an idle observer from the existing window.
    */
-  [Throws, CheckPermissions="idle", Pref="dom.idle-observers-api.enabled"]
+  [Throws, CheckPermissions="idle"]
   void removeIdleObserver(MozIdleObserver aIdleObserver);
 
   /**

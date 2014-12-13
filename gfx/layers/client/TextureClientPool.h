@@ -26,6 +26,8 @@ public:
   NS_INLINE_DECL_REFCOUNTING(TextureClientPool)
 
   TextureClientPool(gfx::SurfaceFormat aFormat, gfx::IntSize aSize,
+                    uint32_t aMaxTextureClients,
+                    uint32_t aShrinkTimeoutMsec,
                     ISurfaceAllocator *aAllocator);
 
   /**
@@ -53,7 +55,7 @@ public:
 
   /**
    * Attempt to shrink the pool so that there are no more than
-   * sMaxTextureClients clients outstanding.
+   * mMaxTextureClients clients outstanding.
    */
   void ShrinkToMaximumSize();
 
@@ -73,7 +75,10 @@ public:
    * Report that a client retrieved via GetTextureClient() has become
    * unusable, so that it will no longer be tracked.
    */
-  void ReportClientLost() { mOutstandingClients--; }
+  void ReportClientLost() {
+    MOZ_ASSERT(mOutstandingClients > mTextureClientsDeferred.size());
+    mOutstandingClients--;
+  }
 
   /**
    * Calling this will cause the pool to attempt to relinquish any unused
@@ -84,21 +89,27 @@ public:
   gfx::SurfaceFormat GetFormat() { return mFormat; }
 
 private:
-  // The time in milliseconds before the pool will be shrunk to the minimum
-  // size after returning a client.
-  static const uint32_t sShrinkTimeout = 1000;
-
   // The minimum size of the pool (the number of tiles that will be kept after
   // shrinking).
   static const uint32_t sMinCacheSize = 0;
 
-  // The maximum number of texture clients managed by this pool that we want
-  // to remain active.
-  static const uint32_t sMaxTextureClients = 50;
-
+  /// Format is passed to the TextureClient for buffer creation.
   gfx::SurfaceFormat mFormat;
+
+  /// The width and height of the tiles to be used.
   gfx::IntSize mSize;
 
+  // The maximum number of texture clients managed by this pool that we want
+  // to remain active.
+  uint32_t mMaxTextureClients;
+
+  // The time in milliseconds before the pool will be shrunk to the minimum
+  // size after returning a client.
+  uint32_t mShrinkTimeoutMsec;
+
+  /// This is a total number of clients in the wild and in the stack of
+  /// deferred clients (see below).  So, the total number of clients in
+  /// existence is always mOutstandingClients + the size of mTextureClients.
   uint32_t mOutstandingClients;
 
   // On b2g gonk, std::queue might be a better choice.

@@ -21,7 +21,7 @@ class nsFileControlFrame : public nsBlockFrame,
                            public nsIAnonymousContentCreator
 {
 public:
-  nsFileControlFrame(nsStyleContext* aContext);
+  explicit nsFileControlFrame(nsStyleContext* aContext);
 
   virtual void Init(nsIContent*       aContent,
                     nsContainerFrame* aParent,
@@ -38,7 +38,7 @@ public:
   virtual nsresult SetFormProperty(nsIAtom* aName, const nsAString& aValue) MOZ_OVERRIDE;
   virtual void SetFocus(bool aOn, bool aRepaint) MOZ_OVERRIDE;
 
-  virtual nscoord GetMinWidth(nsRenderingContext *aRenderingContext) MOZ_OVERRIDE;
+  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) MOZ_OVERRIDE;
 
   virtual void DestroyFrom(nsIFrame* aDestructRoot) MOZ_OVERRIDE;
 
@@ -57,7 +57,7 @@ public:
 
   // nsIAnonymousContentCreator
   virtual nsresult CreateAnonymousContent(nsTArray<ContentInfo>& aElements) MOZ_OVERRIDE;
-  virtual void AppendAnonymousContentTo(nsBaseContentList& aElements,
+  virtual void AppendAnonymousContentTo(nsTArray<nsIContent*>& aElements,
                                         uint32_t aFilter) MOZ_OVERRIDE;
 
 #ifdef ACCESSIBILITY
@@ -74,7 +74,7 @@ protected:
   public:
     NS_DECL_ISUPPORTS
 
-    MouseListener(nsFileControlFrame* aFrame)
+    explicit MouseListener(nsFileControlFrame* aFrame)
      : mFrame(aFrame)
     {}
 
@@ -93,7 +93,7 @@ protected:
   class SyncDisabledStateEvent : public nsRunnable
   {
   public:
-    SyncDisabledStateEvent(nsFileControlFrame* aFrame)
+    explicit SyncDisabledStateEvent(nsFileControlFrame* aFrame)
       : mFrame(aFrame)
     {}
 
@@ -111,7 +111,7 @@ protected:
 
   class DnDListener: public MouseListener {
   public:
-    DnDListener(nsFileControlFrame* aFrame)
+    explicit DnDListener(nsFileControlFrame* aFrame)
       : MouseListener(aFrame)
     {}
 

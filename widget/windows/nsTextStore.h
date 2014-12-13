@@ -13,6 +13,7 @@
 #include "nsWindowBase.h"
 #include "WinUtils.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/StaticPtr.h"
 #include "mozilla/TextRange.h"
 #include "mozilla/WindowsVersion.h"
 
@@ -23,6 +24,9 @@
 // With initguid.h, we get its instance instead of extern declaration.
 #ifdef INPUTSCOPE_INIT_GUID
 #include <initguid.h>
+#endif
+#ifdef TEXTATTRS_INIT_GUID
+#include <tsattrs.h>
 #endif
 #include <inputscope.h>
 
@@ -48,10 +52,11 @@ struct MSGResult;
  * Text Services Framework text store
  */
 
-class nsTextStore MOZ_FINAL : public ITextStoreACP,
-                              public ITfContextOwnerCompositionSink,
-                              public ITfActiveLanguageProfileNotifySink,
-                              public ITfInputProcessorProfileActivationSink
+class nsTextStore MOZ_FINAL : public ITextStoreACP
+                            , public ITfContextOwnerCompositionSink
+                            , public ITfActiveLanguageProfileNotifySink
+                            , public ITfInputProcessorProfileActivationSink
+                            , public ITfMouseTrackerACP
 {
 public: /*IUnknown*/
   STDMETHODIMP          QueryInterface(REFIID, void**);
@@ -104,6 +109,10 @@ public: /*ITfInputProcessorProfileActivationSink*/
   STDMETHODIMP OnActivated(DWORD, LANGID, REFCLSID, REFGUID, REFGUID,
                            HKL, DWORD);
 
+public: /*ITfMouseTrackerACP*/
+  STDMETHODIMP AdviseMouseSink(ITfRangeACP*, ITfMouseSink*, DWORD*);
+  STDMETHODIMP UnadviseMouseSink(DWORD);
+
 protected:
   typedef mozilla::widget::IMENotification IMENotification;
   typedef mozilla::widget::IMEState IMEState;
@@ -125,8 +134,8 @@ public:
 
   static void     CommitComposition(bool aDiscard)
   {
-    NS_ENSURE_TRUE_VOID(sTsfTextStore);
-    sTsfTextStore->CommitCompositionInternal(aDiscard);
+    NS_ENSURE_TRUE_VOID(sEnabledTextStore);
+    sEnabledTextStore->CommitCompositionInternal(aDiscard);
   }
 
   static void SetInputContext(nsWindowBase* aWidget,
@@ -135,23 +144,31 @@ public:
 
   static nsresult OnFocusChange(bool aGotFocus,
                                 nsWindowBase* aFocusedWidget,
-                                IMEState::Enabled aIMEEnabled);
+                                const IMEState& aIMEState);
   static nsresult OnTextChange(const IMENotification& aIMENotification)
   {
-    NS_ENSURE_TRUE(sTsfTextStore, NS_ERROR_NOT_AVAILABLE);
-    return sTsfTextStore->OnTextChangeInternal(aIMENotification);
+    NS_ENSURE_TRUE(sEnabledTextStore, NS_ERROR_NOT_AVAILABLE);
+    return sEnabledTextStore->OnTextChangeInternal(aIMENotification);
   }
 
   static nsresult OnSelectionChange(void)
   {
-    NS_ENSURE_TRUE(sTsfTextStore, NS_ERROR_NOT_AVAILABLE);
-    return sTsfTextStore->OnSelectionChangeInternal();
+    NS_ENSURE_TRUE(sEnabledTextStore, NS_ERROR_NOT_AVAILABLE);
+    return sEnabledTextStore->OnSelectionChangeInternal();
   }
 
   static nsresult OnLayoutChange()
   {
-    NS_ENSURE_TRUE(sTsfTextStore, NS_ERROR_NOT_AVAILABLE);
-    return sTsfTextStore->OnLayoutChangeInternal();
+    NS_ENSURE_TRUE(sEnabledTextStore, NS_ERROR_NOT_AVAILABLE);
+    return sEnabledTextStore->OnLayoutChangeInternal();
+  }
+
+  static nsresult OnMouseButtonEvent(const IMENotification& aIMENotification)
+  {
+    if (NS_WARN_IF(!sEnabledTextStore)) {
+      return NS_ERROR_NOT_AVAILABLE;
+    }
+    return sEnabledTextStore->OnMouseButtonEventInternal(aIMENotification);
   }
 
   static nsIMEUpdatePreference GetIMEUpdatePreference();
@@ -180,12 +197,12 @@ public:
 
   static void*    GetTextStore()
   {
-    return static_cast<void*>(sTsfTextStore);
+    return static_cast<void*>(sEnabledTextStore);
   }
 
   static bool     ThinksHavingFocus()
   {
-    return (sTsfTextStore && sTsfTextStore->mContext);
+    return (sEnabledTextStore && sEnabledTextStore->mContext);
   }
 
   static bool     IsInTSFMode()
@@ -195,20 +212,21 @@ public:
 
   static bool     IsComposing()
   {
-    return (sTsfTextStore && sTsfTextStore->mComposition.IsComposing());
+    return (sEnabledTextStore && sEnabledTextStore->mComposition.IsComposing());
   }
 
   static bool     IsComposingOn(nsWindowBase* aWidget)
   {
-    return (IsComposing() && sTsfTextStore->mWidget == aWidget);
+    return (IsComposing() && sEnabledTextStore->mWidget == aWidget);
   }
 
   static bool     IsIMM_IME()
   {
-    if (!sTsfTextStore || !sTsfTextStore->EnsureInitActiveTIPKeyboard()) {
+    if (!sEnabledTextStore ||
+        !sEnabledTextStore->EnsureInitActiveTIPKeyboard()) {
       return IsIMM_IME(::GetKeyboardLayout(0));
     }
-    return sTsfTextStore->mIsIMM_IME;
+    return sEnabledTextStore->mIsIMM_IME;
   }
 
   static bool     IsIMM_IME(HKL aHKL)
@@ -266,10 +284,13 @@ protected:
   void     CommitCompositionInternal(bool);
   nsresult OnTextChangeInternal(const IMENotification& aIMENotification);
   nsresult OnSelectionChangeInternal(void);
+  nsresult OnMouseButtonEventInternal(const IMENotification& aIMENotification);
   HRESULT  GetDisplayAttribute(ITfProperty* aProperty,
                                ITfRange* aRange,
                                TF_DISPLAYATTRIBUTE* aResult);
   HRESULT  RestartCompositionIfNecessary(ITfRange* pRangeNew = nullptr);
+  HRESULT  RestartComposition(ITfCompositionView* aCompositionView,
+                              ITfRange* aNewRange);
 
   // Following methods record composing action(s) to mPendingActions.
   // They will be flushed FlushPendingActions().
@@ -284,9 +305,9 @@ protected:
   void     FlushPendingActions();
 
   nsresult OnLayoutChangeInternal();
-  HRESULT  ProcessScopeRequest(DWORD dwFlags,
-                               ULONG cFilterAttrs,
-                               const TS_ATTRID *paFilterAttrs);
+  HRESULT  HandleRequestAttrs(DWORD aFlags,
+                              ULONG aFilterCount,
+                              const TS_ATTRID* aFilterAttrs);
   void     SetInputScope(const nsString& aHTMLInputType);
 
   // Creates native caret over our caret.  This method only works on desktop
@@ -480,11 +501,11 @@ protected:
   // selection or content is changed without document lock.
   Selection mSelection;
 
-  // Get "current selection" while the document is locked.  The selection is
-  // NOT modified immediately during document lock.  The pending changes will
-  // be flushed at unlocking the document.  The "current selection" is the
-  // modified selection during document lock.  This is also called
-  // CurrentContent() too.
+  // Get "current selection".  If the document is locked, this initializes
+  // mSelection with the selection at the first call during a lock and returns
+  // it.  However, mSelection is NOT modified immediately.  When pending
+  // changes are flushed at unlocking the document, cached mSelection is
+  // modified.  Note that this is also called by LockedContent().
   Selection& CurrentSelection();
 
   struct PendingAction MOZ_FINAL
@@ -506,6 +527,10 @@ protected:
     nsRefPtr<mozilla::TextRangeArray> mRanges;
     // For selectionset
     bool mSelectionReversed;
+    // For compositionupdate
+    bool mIncomplete;
+    // For compositionstart
+    bool mAdjustSelection;
   };
   // Items of mPendingActions are appended when TSF tells us to need to dispatch
   // DOM composition events.  However, we cannot dispatch while the document is
@@ -513,7 +538,7 @@ protected:
   // actions should be performed when document lock is unlocked.
   nsTArray<PendingAction> mPendingActions;
 
-  PendingAction* GetPendingCompositionUpdate()
+  PendingAction* LastOrNewPendingCompositionUpdate()
   {
     if (!mPendingActions.IsEmpty()) {
       PendingAction& lastAction = mPendingActions.LastElement();
@@ -524,7 +549,26 @@ protected:
     PendingAction* newAction = mPendingActions.AppendElement();
     newAction->mType = PendingAction::COMPOSITION_UPDATE;
     newAction->mRanges = new mozilla::TextRangeArray();
+    newAction->mIncomplete = true;
     return newAction;
+  }
+
+  bool IsPendingCompositionUpdateIncomplete() const
+  {
+    if (mPendingActions.IsEmpty()) {
+      return false;
+    }
+    const PendingAction& lastAction = mPendingActions.LastElement();
+    return lastAction.mType == PendingAction::COMPOSITION_UPDATE &&
+           lastAction.mIncomplete;
+  }
+
+  void CompleteLastActionIfStillIncomplete()
+  {
+    if (!IsPendingCompositionUpdateIncomplete()) {
+      return;
+    }
+    RecordCompositionUpdateAction();
   }
 
   // When On*Composition() is called without document lock, we need to flush
@@ -629,20 +673,80 @@ protected:
 
     bool mInitialized;
   };
-  // mContent caches "current content" of the document ONLY while the document
+  // mLockedContent caches content of the document ONLY while the document
   // is locked.  I.e., the content is cleared at unlocking the document since
   // we need to reduce the memory usage.  This is initialized by
-  // CurrentContent() automatically, so, don't access this member directly
+  // LockedContent() automatically.  So, don't access this member directly
   // except at calling Clear(), IsInitialized(), IsLayoutChangedAfter() or
   // IsLayoutChanged().
-  Content mContent;
+  Content mLockedContent;
 
-  Content& CurrentContent();
+  Content& LockedContent();
+
+  // While the documet is locked, this returns the text stored by
+  // mLockedContent.  Otherwise, return the current text content.
+  bool GetCurrentText(nsAString& aTextContent);
+
+  class MouseTracker MOZ_FINAL
+  {
+  public:
+    static const DWORD kInvalidCookie = static_cast<DWORD>(-1);
+
+    MouseTracker();
+
+    HRESULT Init(nsTextStore* aTextStore);
+    HRESULT AdviseSink(nsTextStore* aTextStore,
+                       ITfRangeACP* aTextRange, ITfMouseSink* aMouseSink);
+    void UnadviseSink();
+
+    bool IsUsing() const { return mSink != nullptr; }
+    bool InRange(uint32_t aOffset) const
+    {
+      if (NS_WARN_IF(mStart < 0) ||
+          NS_WARN_IF(mLength <= 0)) {
+        return false;
+      }
+      return aOffset >= static_cast<uint32_t>(mStart) &&
+             aOffset < static_cast<uint32_t>(mStart + mLength);
+    }
+    DWORD Cookie() const { return mCookie; }
+    bool OnMouseButtonEvent(ULONG aEdge, ULONG aQuadrant, DWORD aButtonStatus);
+    LONG RangeStart() const { return mStart; }
+  
+  private:
+    nsRefPtr<ITfMouseSink> mSink;
+    LONG mStart;
+    LONG mLength;
+    DWORD mCookie;
+  };
+  // mMouseTrackers is an array to store each information of installed
+  // ITfMouseSink instance.
+  nsTArray<MouseTracker> mMouseTrackers;
 
   // The input scopes for this context, defaults to IS_DEFAULT.
   nsTArray<InputScope>         mInputScopes;
-  bool                         mInputScopeDetected;
-  bool                         mInputScopeRequested;
+
+  // Support retrieving attributes.
+  // TODO: We should support RightToLeft, perhaps.
+  enum
+  {
+    // Used for result of GetRequestedAttrIndex()
+    eNotSupported = -1,
+
+    // Supported attributes
+    eInputScope = 0,
+    eTextVerticalWriting,
+
+    // Count of the supported attributes
+    NUM_OF_SUPPORTED_ATTRS
+  };
+  bool mRequestedAttrs[NUM_OF_SUPPORTED_ATTRS];
+
+  int32_t GetRequestedAttrIndex(const TS_ATTRID& aAttrID);
+  TS_ATTRID GetAttrID(int32_t aIndex);
+
+  bool mRequestedAttrValues;
+
   // If edit actions are being recorded without document lock, this is true.
   // Otherwise, false.
   bool                         mIsRecordingActionsWithoutLock;
@@ -681,10 +785,11 @@ protected:
 
   // TSF client ID for the current application
   static DWORD          sTsfClientId;
-  // Current text store. Currently only ONE nsTextStore instance is ever used,
+  // Current text store which is managing a keyboard enabled editor (i.e.,
+  // editable editor).  Currently only ONE nsTextStore instance is ever used,
   // although Create is called when an editor is focused and Destroy called
   // when the focused editor is blurred.
-  static nsTextStore*   sTsfTextStore;
+  static mozilla::StaticRefPtr<nsTextStore> sEnabledTextStore;
 
   // For IME (keyboard) disabled state:
   static ITfDocumentMgr* sTsfDisabledDocumentMgr;
@@ -694,6 +799,8 @@ protected:
 
   // Enables/Disables hack for specific TIP.
   static bool sCreateNativeCaretForATOK;
+  static bool sDoNotReturnNoLayoutErrorToFreeChangJie;
+  static bool sDoNotReturnNoLayoutErrorToEasyChangjei;
 
   // Message the Tablet Input Panel uses to flush text during blurring.
   // See comments in Destroy

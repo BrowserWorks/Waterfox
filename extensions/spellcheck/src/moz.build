@@ -16,14 +16,12 @@ SOURCES += [
     'mozSpellI18NManager.cpp',
 ]
 
-LIBRARY_NAME = 'spellchecker'
-
 FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [
     '../hunspell/src',
     '/content/base/src',
-    '/editor/libeditor/base',
+    '/editor/libeditor',
 ]
 EXPORTS.mozilla += [
      'mozSpellChecker.h',

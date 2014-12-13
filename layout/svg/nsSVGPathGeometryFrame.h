@@ -40,7 +40,7 @@ class nsSVGPathGeometryFrame : public nsSVGPathGeometryFrameBase,
   friend class nsDisplaySVGPathGeometry;
 
 protected:
-  nsSVGPathGeometryFrame(nsStyleContext* aContext)
+  explicit nsSVGPathGeometryFrame(nsStyleContext* aContext)
     : nsSVGPathGeometryFrameBase(aContext)
   {
      AddStateBits(NS_FRAME_SVG_LAYOUT | NS_FRAME_MAY_BE_TRANSFORMED);
@@ -96,7 +96,7 @@ protected:
   virtual nsresult PaintSVG(nsRenderingContext *aContext,
                             const nsIntRect *aDirtyRect,
                             nsIFrame* aTransformRoot = nullptr) MOZ_OVERRIDE;
-  virtual nsIFrame* GetFrameForPoint(const nsPoint &aPoint) MOZ_OVERRIDE;
+  virtual nsIFrame* GetFrameForPoint(const gfxPoint& aPoint) MOZ_OVERRIDE;
   virtual nsRect GetCoveredRegion() MOZ_OVERRIDE;
   virtual void ReflowSVG() MOZ_OVERRIDE;
   virtual void NotifySVGChanged(uint32_t aFlags) MOZ_OVERRIDE;

@@ -9,6 +9,7 @@
 
 #include "pk11pub.h"
 #include "nsString.h"
+#include "nsContentUtils.h"
 #include "mozilla/dom/CryptoBuffer.h"
 #include "js/StructuredClone.h"
 
@@ -23,9 +24,9 @@
 #define WEBCRYPTO_ALG_SHA512        "SHA-512"
 #define WEBCRYPTO_ALG_HMAC          "HMAC"
 #define WEBCRYPTO_ALG_PBKDF2        "PBKDF2"
-#define WEBCRYPTO_ALG_RSAES_PKCS1   "RSAES-PKCS1-v1_5"
 #define WEBCRYPTO_ALG_RSASSA_PKCS1  "RSASSA-PKCS1-v1_5"
 #define WEBCRYPTO_ALG_RSA_OAEP      "RSA-OAEP"
+#define WEBCRYPTO_ALG_ECDH          "ECDH"
 
 // WebCrypto key formats
 #define WEBCRYPTO_KEY_FORMAT_RAW    "raw"
@@ -47,6 +48,11 @@
 #define WEBCRYPTO_KEY_USAGE_DERIVEBITS  "deriveBits"
 #define WEBCRYPTO_KEY_USAGE_WRAPKEY     "wrapKey"
 #define WEBCRYPTO_KEY_USAGE_UNWRAPKEY   "unwrapKey"
+
+// WebCrypto named curves
+#define WEBCRYPTO_NAMED_CURVE_P256  "P-256"
+#define WEBCRYPTO_NAMED_CURVE_P384  "P-384"
+#define WEBCRYPTO_NAMED_CURVE_P521  "P-521"
 
 // JWK key types
 #define JWK_TYPE_SYMMETRIC          "oct"
@@ -85,6 +91,11 @@
 
 // Define an unknown mechanism type
 #define UNKNOWN_CK_MECHANISM        CKM_VENDOR_DEFINED+1
+
+// python security/pkix/tools/DottedOIDToCode.py id-ecDH 1.3.132.112
+static const uint8_t id_ecDH[] = { 0x2b, 0x81, 0x04, 0x70 };
+const SECItem SEC_OID_DATA_EC_DH = { siBuffer, (unsigned char*)id_ecDH,
+                                     PR_ARRAY_SIZE(id_ecDH) };
 
 namespace mozilla {
 namespace dom {
@@ -170,15 +181,128 @@ MapAlgorithmNameToMechanism(const nsString& aName)
     mechanism = CKM_SHA512;
   } else if (aName.EqualsLiteral(WEBCRYPTO_ALG_PBKDF2)) {
     mechanism = CKM_PKCS5_PBKD2;
-  } else if (aName.EqualsLiteral(WEBCRYPTO_ALG_RSAES_PKCS1)) {
-    mechanism = CKM_RSA_PKCS;
   } else if (aName.EqualsLiteral(WEBCRYPTO_ALG_RSASSA_PKCS1)) {
     mechanism = CKM_RSA_PKCS;
   } else if (aName.EqualsLiteral(WEBCRYPTO_ALG_RSA_OAEP)) {
     mechanism = CKM_RSA_PKCS_OAEP;
+  } else if (aName.EqualsLiteral(WEBCRYPTO_ALG_ECDH)) {
+    mechanism = CKM_ECDH1_DERIVE;
   }
 
   return mechanism;
+}
+
+#define NORMALIZED_EQUALS(aTest, aConst) \
+        nsContentUtils::EqualsIgnoreASCIICase(aTest, NS_LITERAL_STRING(aConst))
+
+inline bool
+NormalizeToken(const nsString& aName, nsString& aDest)
+{
+  // Algorithm names
+  if (NORMALIZED_EQUALS(aName, WEBCRYPTO_ALG_AES_CBC)) {
+    aDest.AssignLiteral(WEBCRYPTO_ALG_AES_CBC);
+  } else if (NORMALIZED_EQUALS(aName, WEBCRYPTO_ALG_AES_CTR)) {
+    aDest.AssignLiteral(WEBCRYPTO_ALG_AES_CTR);
+  } else if (NORMALIZED_EQUALS(aName, WEBCRYPTO_ALG_AES_GCM)) {
+    aDest.AssignLiteral(WEBCRYPTO_ALG_AES_GCM);
+  } else if (NORMALIZED_EQUALS(aName, WEBCRYPTO_ALG_AES_KW)) {
+    aDest.AssignLiteral(WEBCRYPTO_ALG_AES_KW);
+  } else if (NORMALIZED_EQUALS(aName, WEBCRYPTO_ALG_SHA1)) {
+    aDest.AssignLiteral(WEBCRYPTO_ALG_SHA1);
+  } else if (NORMALIZED_EQUALS(aName, WEBCRYPTO_ALG_SHA256)) {
+    aDest.AssignLiteral(WEBCRYPTO_ALG_SHA256);
+  } else if (NORMALIZED_EQUALS(aName, WEBCRYPTO_ALG_SHA384)) {
+    aDest.AssignLiteral(WEBCRYPTO_ALG_SHA384);
+  } else if (NORMALIZED_EQUALS(aName, WEBCRYPTO_ALG_SHA512)) {
+    aDest.AssignLiteral(WEBCRYPTO_ALG_SHA512);
+  } else if (NORMALIZED_EQUALS(aName, WEBCRYPTO_ALG_HMAC)) {
+    aDest.AssignLiteral(WEBCRYPTO_ALG_HMAC);
+  } else if (NORMALIZED_EQUALS(aName, WEBCRYPTO_ALG_PBKDF2)) {
+    aDest.AssignLiteral(WEBCRYPTO_ALG_PBKDF2);
+  } else if (NORMALIZED_EQUALS(aName, WEBCRYPTO_ALG_RSASSA_PKCS1)) {
+    aDest.AssignLiteral(WEBCRYPTO_ALG_RSASSA_PKCS1);
+  } else if (NORMALIZED_EQUALS(aName, WEBCRYPTO_ALG_RSA_OAEP)) {
+    aDest.AssignLiteral(WEBCRYPTO_ALG_RSA_OAEP);
+  } else if (NORMALIZED_EQUALS(aName, WEBCRYPTO_ALG_ECDH)) {
+    aDest.AssignLiteral(WEBCRYPTO_ALG_ECDH);
+  // Named curve values
+  } else if (NORMALIZED_EQUALS(aName, WEBCRYPTO_NAMED_CURVE_P256)) {
+    aDest.AssignLiteral(WEBCRYPTO_NAMED_CURVE_P256);
+  } else if (NORMALIZED_EQUALS(aName, WEBCRYPTO_NAMED_CURVE_P384)) {
+    aDest.AssignLiteral(WEBCRYPTO_NAMED_CURVE_P384);
+  } else if (NORMALIZED_EQUALS(aName, WEBCRYPTO_NAMED_CURVE_P521)) {
+    aDest.AssignLiteral(WEBCRYPTO_NAMED_CURVE_P521);
+  } else {
+    return false;
+  }
+
+  return true;
+}
+
+inline bool
+CheckEncodedECParameters(const SECItem* aEcParams)
+{
+  // Need at least two bytes for a valid ASN.1 encoding.
+  if (aEcParams->len < 2) {
+    return false;
+  }
+
+  // Check the ASN.1 tag.
+  if (aEcParams->data[0] != SEC_ASN1_OBJECT_ID) {
+    return false;
+  }
+
+  // OID tags are short, we never need more than one length byte.
+  if (aEcParams->data[1] >= 128) {
+    return false;
+  }
+
+  // Check that the SECItem's length is correct.
+  if (aEcParams->len != (unsigned)aEcParams->data[1] + 2) {
+    return false;
+  }
+
+  return true;
+}
+
+inline SECItem*
+CreateECParamsForCurve(const nsString& aNamedCurve, PLArenaPool* aArena)
+{
+  SECOidTag curveOIDTag;
+
+  if (aNamedCurve.EqualsLiteral(WEBCRYPTO_NAMED_CURVE_P256)) {
+    curveOIDTag = SEC_OID_SECG_EC_SECP256R1;
+  } else if (aNamedCurve.EqualsLiteral(WEBCRYPTO_NAMED_CURVE_P384)) {
+    curveOIDTag = SEC_OID_SECG_EC_SECP384R1;
+  } else if (aNamedCurve.EqualsLiteral(WEBCRYPTO_NAMED_CURVE_P521)) {
+    curveOIDTag = SEC_OID_SECG_EC_SECP521R1;
+  } else {
+    return nullptr;
+  }
+
+  // Retrieve curve data by OID tag.
+  SECOidData* oidData = SECOID_FindOIDByTag(curveOIDTag);
+  if (!oidData) {
+    return nullptr;
+  }
+
+  // Create parameters.
+  SECItem* params = ::SECITEM_AllocItem(aArena, nullptr, 2 + oidData->oid.len);
+  if (!params) {
+    return nullptr;
+  }
+
+  // Set parameters.
+  params->data[0] = SEC_ASN1_OBJECT_ID;
+  params->data[1] = oidData->oid.len;
+  memcpy(params->data + 2, oidData->oid.data, oidData->oid.len);
+
+  // Sanity check the params we just created.
+  if (!CheckEncodedECParameters(params)) {
+    return nullptr;
+  }
+
+  return params;
 }
 
 } // namespace dom

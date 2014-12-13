@@ -44,6 +44,7 @@
 #include "nsDisplayList.h"
 #include "ImageLayers.h"
 #include "ImageContainer.h"
+#include "nsIContent.h"
 
 #include "nsContentUtils.h"
 
@@ -149,7 +150,7 @@ nsImageBoxFrame::nsImageBoxFrame(nsIPresShell* aShell, nsStyleContext* aContext)
   mSuppressStyleCheck(false),
   mFireEventOnDecode(false)
 {
-  MarkIntrinsicWidthsDirty();
+  MarkIntrinsicISizesDirty();
 }
 
 nsImageBoxFrame::~nsImageBoxFrame()
@@ -158,10 +159,10 @@ nsImageBoxFrame::~nsImageBoxFrame()
 
 
 /* virtual */ void
-nsImageBoxFrame::MarkIntrinsicWidthsDirty()
+nsImageBoxFrame::MarkIntrinsicISizesDirty()
 {
   SizeNeedsRecalc(mImageSize);
-  nsLeafBoxFrame::MarkIntrinsicWidthsDirty();
+  nsLeafBoxFrame::MarkIntrinsicISizesDirty();
 }
 
 void
@@ -220,7 +221,7 @@ nsImageBoxFrame::UpdateImage()
   mContent->GetAttr(kNameSpaceID_None, nsGkAtoms::src, src);
   mUseSrcAttr = !src.IsEmpty();
   if (mUseSrcAttr) {
-    nsIDocument* doc = mContent->GetDocument();
+    nsIDocument* doc = mContent->GetComposedDoc();
     if (!doc) {
       // No need to do anything here...
       return;
@@ -406,8 +407,6 @@ nsDisplayXULImage::ConfigureLayer(ImageLayer* aLayer, const nsIntPoint& aOffset)
   transform.Scale(destRect.Width()/imageWidth,
                   destRect.Height()/imageHeight);
   aLayer->SetBaseTransform(gfx::Matrix4x4::From2D(transform));
-
-  aLayer->SetVisibleRegion(nsIntRect(0, 0, imageWidth, imageHeight));
 }
 
 already_AddRefed<ImageContainer>

@@ -15,11 +15,11 @@ namespace dom {
 class Text : public nsGenericDOMDataNode
 {
 public:
-  Text(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
+  explicit Text(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
     : nsGenericDOMDataNode(aNodeInfo)
   {}
 
-  Text(already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo)
+  explicit Text(already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo)
     : nsGenericDOMDataNode(aNodeInfo)
   {}
 
@@ -39,5 +39,17 @@ public:
 
 } // namespace dom
 } // namespace mozilla
+
+inline mozilla::dom::Text* nsINode::GetAsText()
+{
+  return IsNodeOfType(eTEXT) ? static_cast<mozilla::dom::Text*>(this)
+                             : nullptr;
+}
+
+inline const mozilla::dom::Text* nsINode::GetAsText() const
+{
+  return IsNodeOfType(eTEXT) ? static_cast<const mozilla::dom::Text*>(this)
+                             : nullptr;
+}
 
 #endif // mozilla_dom_Text_h

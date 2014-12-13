@@ -10,6 +10,9 @@
 #include "nsLayoutUtils.h"
 #include "nsIDOMElement.h"
 #include "nsIInterfaceRequestorUtils.h"
+#include "nsIContent.h"
+#include "nsIDocument.h"
+#include "nsIDOMWindow.h"
 
 namespace mozilla {
 namespace layers {
@@ -285,6 +288,15 @@ public:
         nsIScrollableFrame* sf = nsLayoutUtils::FindScrollableFrameFor(mScrollId);
         if (sf) {
             sf->ResetOriginIfScrollAtGeneration(mScrollGeneration);
+        }
+
+        // Since the APZ and content are in sync, we need to clear any callback transform
+        // that might have been set on the last repaint request (which might have failed
+        // due to the inflight scroll update that this message is acknowledging).
+        nsCOMPtr<nsIContent> content = nsLayoutUtils::FindContentFor(mScrollId);
+        if (content) {
+            content->SetProperty(nsGkAtoms::apzCallbackTransform, new CSSPoint(),
+                                 nsINode::DeleteProperty<CSSPoint>);
         }
 
         return NS_OK;

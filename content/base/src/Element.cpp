@@ -14,6 +14,7 @@
 
 #include "AnimationCommon.h"
 #include "mozilla/DebugOnly.h"
+#include "mozilla/dom/AnimationPlayer.h"
 #include "mozilla/dom/Attr.h"
 #include "nsDOMAttributeMap.h"
 #include "nsIAtom.h"
@@ -308,7 +309,7 @@ Element::LockedStyleStates() const
 void
 Element::NotifyStyleStateChange(EventStates aStates)
 {
-  nsIDocument* doc = GetCurrentDoc();
+  nsIDocument* doc = GetComposedDoc();
   if (doc) {
     nsIPresShell *presShell = doc->GetShell();
     if (presShell) {
@@ -585,7 +586,13 @@ Element::GetScrollFrame(nsIFrame **aStyledFrame, bool aFlushLayout)
 }
 
 void
-Element::ScrollIntoView(bool aTop)
+Element::ScrollIntoView()
+{
+  ScrollIntoView(true, ScrollOptions());
+}
+
+void
+Element::ScrollIntoView(bool aTop, const ScrollOptions &aOptions)
 {
   nsIDocument *document = GetCurrentDoc();
   if (!document) {
@@ -601,12 +608,17 @@ Element::ScrollIntoView(bool aTop)
   int16_t vpercent = aTop ? nsIPresShell::SCROLL_TOP :
     nsIPresShell::SCROLL_BOTTOM;
 
+  uint32_t flags = nsIPresShell::SCROLL_OVERFLOW_HIDDEN;
+  if (aOptions.mBehavior == ScrollBehavior::Smooth) {
+    flags |= nsIPresShell::SCROLL_SMOOTH;
+  }
+
   presShell->ScrollContentIntoView(this,
                                    nsIPresShell::ScrollAxis(
                                      vpercent,
                                      nsIPresShell::SCROLL_ALWAYS),
                                    nsIPresShell::ScrollAxis(),
-                                   nsIPresShell::SCROLL_OVERFLOW_HIDDEN);
+                                   flags);
 }
 
 bool
@@ -800,7 +812,7 @@ Element::CreateShadowRoot(ErrorResult& aError)
 
   nsXBLPrototypeBinding* protoBinding = new nsXBLPrototypeBinding();
   aError = protoBinding->Init(NS_LITERAL_CSTRING("shadowroot"),
-                              docInfo, this, true);
+                              docInfo, nullptr, true);
   if (aError.Failed()) {
     delete protoBinding;
     return nullptr;
@@ -958,10 +970,8 @@ Element::SetAttribute(const nsAString& aName,
     nsCOMPtr<nsIAtom> nameAtom;
     if (IsHTML() && IsInHTMLDocument()) {
       nsAutoString lower;
-      nsresult rv = nsContentUtils::ASCIIToLower(aName, lower);
-      if (NS_SUCCEEDED(rv)) {
-        nameAtom = do_GetAtom(lower);
-      }
+      nsContentUtils::ASCIIToLower(aName, lower);
+      nameAtom = do_GetAtom(lower);
     }
     else {
       nameAtom = do_GetAtom(aName);
@@ -1490,20 +1500,22 @@ Element::UnbindFromTree(bool aDeep, bool aNullParent)
 
   // Unset this since that's what the old code effectively did.
   UnsetFlags(NODE_FORCE_XBL_BINDINGS);
-  
+  bool clearBindingParent = true;
+
 #ifdef MOZ_XUL
   nsXULElement* xulElem = nsXULElement::FromContent(this);
   if (xulElem) {
     xulElem->SetXULBindingParent(nullptr);
+    clearBindingParent = false;
   }
-  else
 #endif
-  {
-    nsDOMSlots *slots = GetExistingDOMSlots();
-    if (slots) {
+
+  nsDOMSlots* slots = GetExistingDOMSlots();
+  if (slots) {
+    if (clearBindingParent) {
       slots->mBindingParent = nullptr;
-      slots->mContainingShadow = nullptr;
     }
+    slots->mContainingShadow = nullptr;
   }
 
   // This has to be here, rather than in nsGenericHTMLElement::UnbindFromTree, 
@@ -1651,7 +1663,7 @@ Element::ShouldBlur(nsIContent *aContent)
 {
   // Determine if the current element is focused, if it is not focused
   // then we should not try to blur
-  nsIDocument *document = aContent->GetDocument();
+  nsIDocument* document = aContent->GetComposedDoc();
   if (!document)
     return false;
 
@@ -1728,7 +1740,7 @@ Element::DispatchClickEvent(nsPresContext* aPresContext,
     clickCount = sourceMouseEvent->clickCount;
     pressure = sourceMouseEvent->pressure;
     inputSource = sourceMouseEvent->inputSource;
-  } else if (aSourceEvent->eventStructType == NS_KEY_EVENT) {
+  } else if (aSourceEvent->mClass == eKeyboardEventClass) {
     inputSource = nsIDOMMouseEvent::MOZ_SOURCE_KEYBOARD;
   }
   event.pressure = pressure;
@@ -1746,7 +1758,7 @@ Element::DispatchClickEvent(nsPresContext* aPresContext,
 nsIFrame*
 Element::GetPrimaryFrame(mozFlushType aType)
 {
-  nsIDocument* doc = GetCurrentDoc();
+  nsIDocument* doc = GetComposedDoc();
   if (!doc) {
     return nullptr;
   }
@@ -2736,8 +2748,7 @@ Element::SetTokenList(nsIAtom* aAtom, nsIVariant* aValue)
 }
 
 bool
-Element::MozMatchesSelector(const nsAString& aSelector,
-                            ErrorResult& aError)
+Element::Matches(const nsAString& aSelector, ErrorResult& aError)
 {
   nsCSSSelectorList* selectorList = ParseSelectorList(aSelector, aError);
   if (!selectorList) {
@@ -2866,24 +2877,24 @@ Element::MozRequestPointerLock()
 }
 
 void
-Element::GetAnimationPlayers(nsTArray<nsRefPtr<ElementAnimation> >& aPlayers)
+Element::GetAnimationPlayers(nsTArray<nsRefPtr<AnimationPlayer> >& aPlayers)
 {
   nsIAtom* properties[] = { nsGkAtoms::transitionsProperty,
                             nsGkAtoms::animationsProperty };
   for (size_t propIdx = 0; propIdx < MOZ_ARRAY_LENGTH(properties);
        propIdx++) {
-    ElementAnimationCollection* collection =
-      static_cast<ElementAnimationCollection*>(
+    AnimationPlayerCollection* collection =
+      static_cast<AnimationPlayerCollection*>(
         GetProperty(properties[propIdx]));
     if (!collection) {
       continue;
     }
-    for (size_t animIdx = 0;
-         animIdx < collection->mAnimations.Length();
-         animIdx++) {
-      ElementAnimation* anim = collection->mAnimations[animIdx];
-      if (anim->IsCurrent()) {
-        aPlayers.AppendElement(anim);
+    for (size_t playerIdx = 0;
+         playerIdx < collection->mPlayers.Length();
+         playerIdx++) {
+      AnimationPlayer* player = collection->mPlayers[playerIdx];
+      if (player->IsCurrent()) {
+        aPlayers.AppendElement(player);
       }
     }
   }

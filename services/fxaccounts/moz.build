@@ -4,15 +4,20 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-PARALLEL_DIRS += ['interfaces']
+DIRS += ['interfaces']
 
 TEST_DIRS += ['tests']
 
 EXTRA_JS_MODULES += [
   'Credentials.jsm',
-  'FxAccounts.jsm',
   'FxAccountsClient.jsm',
-  'FxAccountsCommon.js'
+  'FxAccountsCommon.js',
+  'FxAccountsOAuthClient.jsm',
+  'FxAccountsProfileClient.jsm',
+]
+
+EXTRA_PP_JS_MODULES += [
+  'FxAccounts.jsm',
 ]
 
 # For now, we will only be using the FxA manager in B2G.

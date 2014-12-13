@@ -135,6 +135,11 @@ cubeb_stream_init
 cubeb_stream_start
 cubeb_stream_stop
 cubeb_stream_get_latency
+cubeb_stream_set_volume
+cubeb_stream_set_panning
+cubeb_stream_get_current_device
+cubeb_stream_device_destroy
+cubeb_stream_register_device_changed_callback
 th_comment_clear
 th_comment_init
 th_decode_alloc
@@ -434,6 +439,7 @@ _moz_cairo_set_source_rgba
 _moz_cairo_set_source_surface
 _moz_cairo_show_glyphs
 _moz_cairo_status
+_moz_cairo_status_to_string
 _moz_cairo_stroke
 _moz_cairo_stroke_extents
 _moz_cairo_stroke_preserve
@@ -588,7 +594,9 @@ hb_set_add
 hb_set_clear
 hb_set_create
 hb_set_destroy
+hb_set_get_population
 hb_set_has
+hb_set_intersect
 hb_set_is_empty
 hb_set_next
 hb_shape

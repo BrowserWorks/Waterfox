@@ -35,7 +35,7 @@ this.MobileIdentityClient = function(aServerUrl) {
     throw new Error(ERROR_INTERNAL_HTTP_NOT_ALLOWED);
   }
 
-  this.hawk = new HawkClient(SERVER_URL);
+  this.hawk = new HawkClient(serverUrl);
   this.hawk.observerPrefix = "MobileId:hawk";
 };
 
@@ -54,10 +54,13 @@ this.MobileIdentityClient.prototype = {
     return this._request(REGISTER, "POST", null, {});
   },
 
-  smsMtVerify: function(aSessionToken, aMsisdn, aWantShortCode = false) {
+  smsMtVerify: function(aSessionToken, aMsisdn, aMcc, aMnc,
+                        aWantShortCode = false) {
     let credentials = this._deriveHawkCredentials(aSessionToken);
     return this._request(SMS_MT_VERIFY, "POST", credentials, {
       msisdn: aMsisdn,
+      mcc: aMcc,
+      mnc: aMnc,
       shortVerificationCode: aWantShortCode
     });
   },
@@ -132,13 +135,17 @@ this.MobileIdentityClient.prototype = {
       (response) => {
         log.debug("MobileIdentityClient -> response.body " + response.body);
         try {
-          let responseObj = JSON.parse(response.body);
+          let responseObj;
+          // We parse the response body unless we are handling a 204 response,
+          // which MUST NOT include a message body.
+          if (response.status != 204) {
+            responseObj = JSON.parse(response.body);
+          }
           deferred.resolve(responseObj);
         } catch (err) {
           deferred.reject({error: err});
         }
       },
-
       (error) => {
         log.error("MobileIdentityClient -> Error ${}", error);
         deferred.reject(SERVER_ERRNO_TO_ERROR[error.errno] || ERROR_UNKNOWN);

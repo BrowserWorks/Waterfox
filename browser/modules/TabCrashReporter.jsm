@@ -58,7 +58,7 @@ this.TabCrashReporter = {
     if (!dumpID)
       return
 
-    if (CrashSubmit.submit(dumpID)) {
+    if (CrashSubmit.submit(dumpID, { recordSubmission: true })) {
       this.childMap.set(childID, null); // Avoid resubmission.
     }
   },

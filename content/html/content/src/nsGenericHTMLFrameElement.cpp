@@ -23,6 +23,7 @@
 #include "nsIScrollable.h"
 #include "nsPresContext.h"
 #include "nsServiceManagerUtils.h"
+#include "nsSubDocumentFrame.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -58,6 +59,14 @@ nsGenericHTMLFrameElement::CreateRemoteFrameLoader(nsITabParent* aTabParent)
   EnsureFrameLoader();
   NS_ENSURE_STATE(mFrameLoader);
   mFrameLoader->SetRemoteBrowser(aTabParent);
+
+  if (nsSubDocumentFrame* subdocFrame = do_QueryFrame(GetPrimaryFrame())) {
+    // The reflow for this element already happened while we were waiting
+    // for the iframe creation. Therefore the subdoc frame didn't have a
+    // frameloader when UpdatePositionAndSize was supposed to be called in
+    // ReflowFinished, and we need to do it properly now.
+    mFrameLoader->UpdatePositionAndSize(subdocFrame);
+  }
   return NS_OK;
 }
 
@@ -310,6 +319,44 @@ nsGenericHTMLFrameElement::GetReallyIsApp(bool *aOut)
   return NS_OK;
 }
 
+namespace {
+
+bool WidgetsEnabled()
+{
+  static bool sMozWidgetsEnabled = false;
+  static bool sBoolVarCacheInitialized = false;
+
+  if (!sBoolVarCacheInitialized) {
+    sBoolVarCacheInitialized = true;
+    Preferences::AddBoolVarCache(&sMozWidgetsEnabled,
+                                 "dom.enable_widgets");
+  }
+
+  return sMozWidgetsEnabled;
+}
+
+} // anonymous namespace
+
+/* [infallible] */ NS_IMETHODIMP
+nsGenericHTMLFrameElement::GetReallyIsWidget(bool *aOut)
+{
+  *aOut = false;
+  if (!WidgetsEnabled()) {
+    return NS_OK;
+  }
+
+  nsAutoString appManifestURL;
+  GetManifestURLByType(nsGkAtoms::mozapp, appManifestURL);
+  bool isApp = !appManifestURL.IsEmpty();
+
+  nsAutoString widgetManifestURL;
+  GetManifestURLByType(nsGkAtoms::mozwidget, widgetManifestURL);
+  bool isWidget = !widgetManifestURL.IsEmpty();
+
+  *aOut = isWidget && !isApp;
+  return NS_OK;
+}
+
 /* [infallible] */ NS_IMETHODIMP
 nsGenericHTMLFrameElement::GetIsExpectingSystemMessage(bool *aOut)
 {
@@ -323,6 +370,63 @@ nsGenericHTMLFrameElement::GetIsExpectingSystemMessage(bool *aOut)
   return NS_OK;
 }
 
+/** Get manifest url of app or widget
+ * @param AppType: nsGkAtoms::mozapp or nsGkAtoms::mozwidget
+ */
+void nsGenericHTMLFrameElement::GetManifestURLByType(nsIAtom *aAppType,
+                                                     nsAString& aManifestURL)
+{
+  aManifestURL.Truncate();
+
+  if (aAppType != nsGkAtoms::mozapp && aAppType != nsGkAtoms::mozwidget) {
+    return;
+  }
+
+  nsAutoString manifestURL;
+  GetAttr(kNameSpaceID_None, aAppType, manifestURL);
+  if (manifestURL.IsEmpty()) {
+    return;
+  }
+
+  // Check permission.
+  nsCOMPtr<nsIPermissionManager> permMgr = services::GetPermissionManager();
+  NS_ENSURE_TRUE_VOID(permMgr);
+  nsIPrincipal *principal = NodePrincipal();
+  const char* aPermissionType = (aAppType == nsGkAtoms::mozapp) ? "embed-apps"
+                                                                : "embed-widgets";
+  uint32_t permission = nsIPermissionManager::DENY_ACTION;
+  nsresult rv = permMgr->TestPermissionFromPrincipal(principal,
+                                                     aPermissionType,
+                                                     &permission);
+  NS_ENSURE_SUCCESS_VOID(rv);
+  if (permission != nsIPermissionManager::ALLOW_ACTION) {
+    return;
+  }
+
+  nsCOMPtr<nsIAppsService> appsService = do_GetService(APPS_SERVICE_CONTRACTID);
+  NS_ENSURE_TRUE_VOID(appsService);
+
+  nsCOMPtr<mozIApplication> app;
+  appsService->GetAppByManifestURL(manifestURL, getter_AddRefs(app));
+
+  if (!app) {
+    return;
+  }
+
+  bool hasWidgetPage = false;
+  nsAutoString src;
+  if (aAppType == nsGkAtoms::mozwidget) {
+    GetAttr(kNameSpaceID_None, nsGkAtoms::src, src);
+    nsresult rv = app->HasWidgetPage(src, &hasWidgetPage);
+
+    if (!NS_SUCCEEDED(rv) || !hasWidgetPage) {
+      return;
+    }
+  }
+
+  aManifestURL.Assign(manifestURL);
+}
+
 NS_IMETHODIMP
 nsGenericHTMLFrameElement::GetAppManifestURL(nsAString& aOut)
 {
@@ -333,35 +437,36 @@ nsGenericHTMLFrameElement::GetAppManifestURL(nsAString& aOut)
     return NS_OK;
   }
 
-  // Check permission.
-  nsIPrincipal *principal = NodePrincipal();
-  nsCOMPtr<nsIPermissionManager> permMgr =
-    services::GetPermissionManager();
-  NS_ENSURE_TRUE(permMgr, NS_OK);
+  nsAutoString appManifestURL;
+  nsAutoString widgetManifestURL;
 
-  uint32_t permission = nsIPermissionManager::DENY_ACTION;
-  nsresult rv = permMgr->TestPermissionFromPrincipal(principal,
-                                                     "embed-apps",
-                                                     &permission);
-  NS_ENSURE_SUCCESS(rv, NS_OK);
-  if (permission != nsIPermissionManager::ALLOW_ACTION) {
+  GetManifestURLByType(nsGkAtoms::mozapp, appManifestURL);
+
+  if (WidgetsEnabled()) {
+    GetManifestURLByType(nsGkAtoms::mozwidget, widgetManifestURL);
+  }
+
+  bool isApp = !appManifestURL.IsEmpty();
+  bool isWidget = !widgetManifestURL.IsEmpty();
+
+  if (!isApp && !isWidget) {
+    // No valid case to get manifest
+    return NS_OK;
+  }
+
+  if (isApp && isWidget) {
+    NS_WARNING("Can not simultaneously be mozapp and mozwidget");
     return NS_OK;
   }
 
   nsAutoString manifestURL;
-  GetAttr(kNameSpaceID_None, nsGkAtoms::mozapp, manifestURL);
-  if (manifestURL.IsEmpty()) {
-    return NS_OK;
+  if (isApp) {
+    manifestURL.Assign(appManifestURL);
+  } else if (isWidget) {
+    manifestURL.Assign(widgetManifestURL);
   }
 
-  nsCOMPtr<nsIAppsService> appsService = do_GetService(APPS_SERVICE_CONTRACTID);
-  NS_ENSURE_TRUE(appsService, NS_OK);
-
-  nsCOMPtr<mozIApplication> app;
-  appsService->GetAppByManifestURL(manifestURL, getter_AddRefs(app));
-  if (app) {
-    aOut.Assign(manifestURL);
-  }
+  aOut.Assign(manifestURL);
 
   return NS_OK;
 }

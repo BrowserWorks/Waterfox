@@ -8,8 +8,12 @@
 
 #include "GMPProcessParent.h"
 #include "GMPService.h"
+#include "GMPAudioDecoderParent.h"
+#include "GMPDecryptorParent.h"
 #include "GMPVideoDecoderParent.h"
 #include "GMPVideoEncoderParent.h"
+#include "GMPTimerParent.h"
+#include "GMPStorageParent.h"
 #include "mozilla/gmp/PGMPParent.h"
 #include "nsCOMPtr.h"
 #include "nscore.h"
@@ -79,14 +83,21 @@ public:
   void DeleteProcess();
 
   bool SupportsAPI(const nsCString& aAPI, const nsCString& aTag);
+
   nsresult GetGMPVideoDecoder(GMPVideoDecoderParent** aGMPVD);
   void VideoDecoderDestroyed(GMPVideoDecoderParent* aDecoder);
+
   nsresult GetGMPVideoEncoder(GMPVideoEncoderParent** aGMPVE);
   void VideoEncoderDestroyed(GMPVideoEncoderParent* aEncoder);
+
+  nsresult GetGMPDecryptor(GMPDecryptorParent** aGMPKS);
+  void DecryptorDestroyed(GMPDecryptorParent* aSession);
+
+  nsresult GetGMPAudioDecoder(GMPAudioDecoderParent** aGMPAD);
+  void AudioDecoderDestroyed(GMPAudioDecoderParent* aDecoder);
+
   GMPState State() const;
-#ifdef DEBUG
   nsIThread* GMPThread();
-#endif
 
   // A GMP can either be a single instance shared across all origins (like
   // in the OpenH264 case), or we can require a new plugin instance for every
@@ -116,6 +127,8 @@ public:
   // GMPSharedMem
   virtual void CheckThread() MOZ_OVERRIDE;
 
+  void AbortAsyncShutdown();
+
 private:
   ~GMPParent();
   nsRefPtr<GeckoMediaPluginService> mService;
@@ -129,10 +142,29 @@ private:
 
   virtual PCrashReporterParent* AllocPCrashReporterParent(const NativeThreadId& aThread) MOZ_OVERRIDE;
   virtual bool DeallocPCrashReporterParent(PCrashReporterParent* aCrashReporter) MOZ_OVERRIDE;
+
   virtual PGMPVideoDecoderParent* AllocPGMPVideoDecoderParent() MOZ_OVERRIDE;
   virtual bool DeallocPGMPVideoDecoderParent(PGMPVideoDecoderParent* aActor) MOZ_OVERRIDE;
+
   virtual PGMPVideoEncoderParent* AllocPGMPVideoEncoderParent() MOZ_OVERRIDE;
   virtual bool DeallocPGMPVideoEncoderParent(PGMPVideoEncoderParent* aActor) MOZ_OVERRIDE;
+
+  virtual PGMPDecryptorParent* AllocPGMPDecryptorParent() MOZ_OVERRIDE;
+  virtual bool DeallocPGMPDecryptorParent(PGMPDecryptorParent* aActor) MOZ_OVERRIDE;
+
+  virtual PGMPAudioDecoderParent* AllocPGMPAudioDecoderParent() MOZ_OVERRIDE;
+  virtual bool DeallocPGMPAudioDecoderParent(PGMPAudioDecoderParent* aActor) MOZ_OVERRIDE;
+
+  virtual bool RecvPGMPStorageConstructor(PGMPStorageParent* actor) MOZ_OVERRIDE;
+  virtual PGMPStorageParent* AllocPGMPStorageParent() MOZ_OVERRIDE;
+  virtual bool DeallocPGMPStorageParent(PGMPStorageParent* aActor) MOZ_OVERRIDE;
+
+  virtual bool RecvPGMPTimerConstructor(PGMPTimerParent* actor) MOZ_OVERRIDE;
+  virtual PGMPTimerParent* AllocPGMPTimerParent() MOZ_OVERRIDE;
+  virtual bool DeallocPGMPTimerParent(PGMPTimerParent* aActor) MOZ_OVERRIDE;
+
+  virtual bool RecvAsyncShutdownComplete() MOZ_OVERRIDE;
+  virtual bool RecvAsyncShutdownRequired() MOZ_OVERRIDE;
 
   GMPState mState;
   nsCOMPtr<nsIFile> mDirectory; // plugin directory on disk
@@ -147,12 +179,17 @@ private:
 
   nsTArray<nsRefPtr<GMPVideoDecoderParent>> mVideoDecoders;
   nsTArray<nsRefPtr<GMPVideoEncoderParent>> mVideoEncoders;
-#ifdef DEBUG
+  nsTArray<nsRefPtr<GMPDecryptorParent>> mDecryptors;
+  nsTArray<nsRefPtr<GMPAudioDecoderParent>> mAudioDecoders;
+  nsTArray<nsRefPtr<GMPTimerParent>> mTimers;
+  nsTArray<nsRefPtr<GMPStorageParent>> mStorage;
   nsCOMPtr<nsIThread> mGMPThread;
-#endif
   // Origin the plugin is assigned to, or empty if the the plugin is not
   // assigned to an origin.
   nsAutoString mOrigin;
+
+  bool mAsyncShutdownRequired;
+  bool mAsyncShutdownInProgress;
 };
 
 } // namespace gmp

@@ -426,10 +426,6 @@ private:
       return aStatus;
     }
 
-    if (!aStringLen) {
-      return NS_OK;
-    }
-
     NS_ASSERTION(aString, "This should never be null!");
 
     // Make sure we're not seeing the result of a 404 or something by checking
@@ -724,6 +720,11 @@ ScriptExecutorRunnable::WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate)
     JS::CompartmentOptionsRef(global).setDiscardSource(discard);
   }
 
+  // Similar to the above.
+  if (xpc::ExtraWarningsForSystemJS() && aWorkerPrivate->UsesSystemPrincipal()) {
+      JS::CompartmentOptionsRef(global).extraWarningsOverride().set(true);
+  }
+
   for (uint32_t index = mFirstIndex; index <= mLastIndex; index++) {
     ScriptLoadInfo& loadInfo = loadInfos.ElementAt(index);
 
@@ -740,7 +741,8 @@ ScriptExecutorRunnable::WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate)
     NS_ConvertUTF16toUTF8 filename(loadInfo.mURL);
 
     JS::CompileOptions options(aCx);
-    options.setFileAndLine(filename.get(), 1);
+    options.setFileAndLine(filename.get(), 1)
+           .setNoScriptRval(true);
 
     JS::SourceBufferHolder srcBuf(loadInfo.mScriptTextBuf,
                                   loadInfo.mScriptTextLength,

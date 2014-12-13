@@ -18,10 +18,10 @@
 #include <string.h>
 
 #include "libdisplay/GonkDisplay.h"
-#include "Framebuffer.h"
 #include "HwcUtils.h"
 #include "HwcComposer2D.h"
 #include "LayerScope.h"
+#include "mozilla/layers/CompositorParent.h"
 #include "mozilla/layers/LayerManagerComposite.h"
 #include "mozilla/layers/PLayerTransaction.h"
 #include "mozilla/layers/ShadowLayerUtilsGralloc.h"
@@ -29,9 +29,13 @@
 #include "mozilla/StaticPtr.h"
 #include "cutils/properties.h"
 #include "gfx2DGlue.h"
+#include "GeckoTouchDispatcher.h"
 
 #if ANDROID_VERSION >= 17
 #include "libdisplay/FramebufferSurface.h"
+#include "gfxPrefs.h"
+#include "nsThreadUtils.h"
+
 #ifndef HWC_BLIT
 #define HWC_BLIT (HWC_FRAMEBUFFER_TARGET + 1)
 #endif
@@ -60,9 +64,38 @@
 #define LAYER_COUNT_INCREMENTS 5
 
 using namespace android;
+using namespace mozilla::gfx;
 using namespace mozilla::layers;
 
 namespace mozilla {
+
+#if ANDROID_VERSION >= 17
+static void
+HookInvalidate(const struct hwc_procs* aProcs)
+{
+    HwcComposer2D::GetInstance()->Invalidate();
+}
+
+static void
+HookVsync(const struct hwc_procs* aProcs, int aDisplay,
+          int64_t aTimestamp)
+{
+    HwcComposer2D::GetInstance()->Vsync(aDisplay, aTimestamp);
+}
+
+static void
+HookHotplug(const struct hwc_procs* aProcs, int aDisplay,
+            int aConnected)
+{
+    // no op
+}
+
+static const hwc_procs_t sHWCProcs = {
+    &HookInvalidate, // 1st: void (*invalidate)(...)
+    &HookVsync,      // 2nd: void (*vsync)(...)
+    &HookHotplug     // 3rd: void (*hotplug)(...)
+};
+#endif
 
 static StaticRefPtr<HwcComposer2D> sInstance;
 
@@ -78,6 +111,8 @@ HwcComposer2D::HwcComposer2D()
     , mPrevDisplayFence(Fence::NO_FENCE)
 #endif
     , mPrepared(false)
+    , mHasHWVsync(false)
+    , mLock("mozilla.HwcComposer2D.mLock")
 {
 }
 
@@ -98,8 +133,10 @@ HwcComposer2D::Init(hwc_display_t dpy, hwc_surface_t sur, gl::GLContext* aGLCont
 
     nsIntSize screenSize;
 
-    mozilla::Framebuffer::GetSize(&screenSize);
-    mScreenRect  = nsIntRect(nsIntPoint(0, 0), screenSize);
+    ANativeWindow *win = GetGonkDisplay()->GetNativeWindow();
+    win->query(win, NATIVE_WINDOW_WIDTH, &screenSize.width);
+    win->query(win, NATIVE_WINDOW_HEIGHT, &screenSize.height);
+    mScreenRect = nsIntRect(nsIntPoint(0, 0), screenSize);
 
 #if ANDROID_VERSION >= 17
     int supported = 0;
@@ -114,6 +151,10 @@ HwcComposer2D::Init(hwc_display_t dpy, hwc_surface_t sur, gl::GLContext* aGLCont
     } else {
         mColorFill = false;
         mRBSwapSupport = false;
+    }
+
+    if (RegisterHwcEventCallback()) {
+        EnableVsync(true);
     }
 #else
     char propValue[PROPERTY_VALUE_MAX];
@@ -137,6 +178,83 @@ HwcComposer2D::GetInstance()
         sInstance = new HwcComposer2D();
     }
     return sInstance;
+}
+
+void
+HwcComposer2D::EnableVsync(bool aEnable)
+{
+#if ANDROID_VERSION >= 17
+    if (NS_IsMainThread()) {
+        RunVsyncEventControl(aEnable);
+    } else {
+        nsRefPtr<nsIRunnable> event =
+            NS_NewRunnableMethodWithArg<bool>(this, &HwcComposer2D::RunVsyncEventControl, aEnable);
+        NS_DispatchToMainThread(event);
+    }
+#endif
+}
+
+#if ANDROID_VERSION >= 17
+bool
+HwcComposer2D::RegisterHwcEventCallback()
+{
+    HwcDevice* device = (HwcDevice*)GetGonkDisplay()->GetHWCDevice();
+    if (!device || !device->registerProcs) {
+        LOGE("Failed to get hwc");
+        return false;
+    }
+
+    // Disable Vsync first, and then register callback functions.
+    device->eventControl(device, HWC_DISPLAY_PRIMARY, HWC_EVENT_VSYNC, false);
+    device->registerProcs(device, &sHWCProcs);
+    mHasHWVsync = true;
+
+    if (!gfxPrefs::FrameUniformityHWVsyncEnabled()) {
+        device->eventControl(device, HWC_DISPLAY_PRIMARY, HWC_EVENT_VSYNC, false);
+        mHasHWVsync = false;
+    }
+
+    return mHasHWVsync;
+}
+
+void
+HwcComposer2D::RunVsyncEventControl(bool aEnable)
+{
+    if (mHasHWVsync) {
+        HwcDevice* device = (HwcDevice*)GetGonkDisplay()->GetHWCDevice();
+        if (device && device->eventControl) {
+            device->eventControl(device, HWC_DISPLAY_PRIMARY, HWC_EVENT_VSYNC, aEnable);
+        }
+    }
+}
+
+void
+HwcComposer2D::Vsync(int aDisplay, int64_t aTimestamp)
+{
+    GeckoTouchDispatcher::NotifyVsync(aTimestamp);
+}
+
+// Called on the "invalidator" thread (run from HAL).
+void
+HwcComposer2D::Invalidate()
+{
+    if (!Initialized()) {
+        LOGE("HwcComposer2D::Invalidate failed!");
+        return;
+    }
+
+    MutexAutoLock lock(mLock);
+    if (mCompositorParent) {
+        mCompositorParent->ScheduleRenderOnCompositorThread();
+    }
+}
+#endif
+
+void
+HwcComposer2D::SetCompositorParent(CompositorParent* aCompositorParent)
+{
+    MutexAutoLock lock(mLock);
+    mCompositorParent = aCompositorParent;
 }
 
 bool
@@ -192,8 +310,7 @@ HwcComposer2D::setHwcGeometry(bool aGeometryChanged)
 bool
 HwcComposer2D::PrepareLayerList(Layer* aLayer,
                                 const nsIntRect& aClip,
-                                const gfxMatrix& aParentTransform,
-                                const gfxMatrix& aGLWorldTransform)
+                                const Matrix& aParentTransform)
 {
     // NB: we fall off this path whenever there are container layers
     // that require intermediate surfaces.  That means all the
@@ -215,7 +332,7 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
 #endif
 
     nsIntRect clip;
-    if (!HwcUtils::CalculateClipRect(aParentTransform * aGLWorldTransform,
+    if (!HwcUtils::CalculateClipRect(aParentTransform,
                                      aLayer->GetEffectiveClipRect(),
                                      aClip,
                                      &clip))
@@ -233,9 +350,8 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
     //
     // A 2D transform with PreservesAxisAlignedRectangles() has all the attributes
     // above
-    gfxMatrix transform;
-    gfx3DMatrix transform3D;
-    gfx::To3DMatrix(aLayer->GetEffectiveTransform(), transform3D);
+    Matrix transform;
+    Matrix4x4 transform3D = aLayer->GetEffectiveTransform();
 
     if (!transform3D.Is2D(&transform) || !transform.PreservesAxisAlignedRectangles()) {
         LOGD("Layer has a 3D transform or a non-square angle rotation");
@@ -252,7 +368,7 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
         container->SortChildrenBy3DZOrder(children);
 
         for (uint32_t i = 0; i < children.Length(); i++) {
-            if (!PrepareLayerList(children[i], clip, transform, aGLWorldTransform)) {
+            if (!PrepareLayerList(children[i], clip, transform)) {
                 return false;
             }
         }
@@ -297,7 +413,7 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
 
     hwc_rect_t sourceCrop, displayFrame;
     if(!HwcUtils::PrepareLayerRects(visibleRect,
-                          transform * aGLWorldTransform,
+                          transform,
                           clip,
                           bufferRect,
                           state.YFlipped(),
@@ -377,7 +493,7 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
         // And ignore scaling.
         //
         // Reflection is applied before rotation
-        gfxMatrix rotation = transform * aGLWorldTransform;
+        gfx::Matrix rotation = transform;
         // Compute fuzzy zero like PreservesAxisAlignedRectangles()
         if (fabs(rotation._11) < 1e-6) {
             if (rotation._21 < 0) {
@@ -482,7 +598,7 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
             mVisibleRegions.push_back(HwcUtils::RectVector());
             HwcUtils::RectVector* visibleRects = &(mVisibleRegions.back());
             if(!HwcUtils::PrepareVisibleRegion(visibleRegion,
-                                     transform * aGLWorldTransform,
+                                     transform,
                                      clip,
                                      bufferRect,
                                      visibleRects)) {
@@ -608,6 +724,7 @@ HwcComposer2D::TryHwComposition()
     Commit();
 
     GetGonkDisplay()->SetFBReleaseFd(mList->hwLayers[idx].releaseFenceFd);
+    mList->hwLayers[idx].releaseFenceFd = -1;
     return true;
 }
 
@@ -648,6 +765,7 @@ HwcComposer2D::Render(EGLDisplay dpy, EGLSurface sur)
     Commit();
 
     GetGonkDisplay()->SetFBReleaseFd(mList->hwLayers[mList->numHwLayers - 1].releaseFenceFd);
+    mList->hwLayers[mList->numHwLayers - 1].releaseFenceFd = -1;
     return true;
 }
 
@@ -692,6 +810,7 @@ HwcComposer2D::Commit()
     displays[HWC_DISPLAY_PRIMARY] = mList;
 
     for (uint32_t j=0; j < (mList->numHwLayers - 1); j++) {
+        mList->hwLayers[j].acquireFenceFd = -1;
         if (mHwcLayerMap.IsEmpty() ||
             (mList->hwLayers[j].compositionType == HWC_FRAMEBUFFER)) {
             continue;
@@ -772,15 +891,8 @@ HwcComposer2D::Reset()
 
 bool
 HwcComposer2D::TryRender(Layer* aRoot,
-                         const gfx::Matrix& GLWorldTransform,
                          bool aGeometryChanged)
 {
-    gfxMatrix aGLWorldTransform = ThebesMatrix(GLWorldTransform);
-    if (!aGLWorldTransform.PreservesAxisAlignedRectangles()) {
-        LOGD("Render aborted. World transform has non-square angle rotation");
-        return false;
-    }
-
     MOZ_ASSERT(Initialized());
     if (mList) {
         setHwcGeometry(aGeometryChanged);
@@ -799,8 +911,7 @@ HwcComposer2D::TryRender(Layer* aRoot,
     MOZ_ASSERT(mHwcLayerMap.IsEmpty());
     if (!PrepareLayerList(aRoot,
                           mScreenRect,
-                          gfxMatrix(),
-                          aGLWorldTransform))
+                          gfx::Matrix()))
     {
         mHwcLayerMap.Clear();
         LOGD("Render aborted. Nothing was drawn to the screen");

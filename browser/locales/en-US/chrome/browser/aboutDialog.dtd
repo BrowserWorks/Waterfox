@@ -10,7 +10,7 @@
 -->
 <!ENTITY update.checkForUpdatesButton.label       "Check for updates">
 <!ENTITY update.checkForUpdatesButton.accesskey   "C">
-<!ENTITY update.updateButton.label                "Restart to Update">
+<!ENTITY update.updateButton.label2                "Restart &brandShortName; to Update">
 <!ENTITY update.updateButton.accesskey            "R">
 <!ENTITY update.applyButtonBillboard.label        "Apply Update…">
 <!ENTITY update.applyButtonBillboard.accesskey    "A">
@@ -24,19 +24,19 @@
 <!-- LOCALIZATION NOTE (community.exp.*) This paragraph is shown in "experimental" builds, i.e. Nightly and Aurora builds, instead of the other "community.*" strings below. -->
 <!ENTITY community.exp.start        "">
 <!-- LOCALIZATION NOTE (community.exp.mozillaLink): This is a link title that links to http://www.mozilla.org/. -->
-<!ENTITY community.exp.mozillaLink  "Mozilla">
-<!ENTITY community.exp.middle       " is a ">
+<!ENTITY community.exp.mozillaLink  "Waterfox">
+<!ENTITY community.exp.middle       " is made by">
 <!-- LOCALIZATION NOTE (community.exp.creditslink): This is a link title that links to about:credits. -->
-<!ENTITY community.exp.creditsLink  "global community">
-<!ENTITY community.exp.end          " working together to keep the Web open, public and accessible to all.">
+<!ENTITY community.exp.creditsLink  "one person, with the help">
+<!ENTITY community.exp.end          " of the kind people on the internet, based on the Mozilla platform.">
 
-<!ENTITY community.start2           "&brandShortName; is designed by ">
+<!ENTITY community.start2           "Waterfox is designed by ">
 <!-- LOCALIZATION NOTE (community.mozillaLink): This is a link title that links to http://www.mozilla.org/. -->
-<!ENTITY community.mozillaLink      "the Waterfox team">
-<!ENTITY community.middle2          ", a ">
+<!ENTITY community.mozillaLink      "one person">
+<!ENTITY community.middle2          " and ">
 <!-- LOCALIZATION NOTE (community.creditsLink): This is a link title that links to about:credits. -->
-<!ENTITY community.creditsLink      "few people">
-<!ENTITY community.end3             " inspired by what Mozilla have achieved.">
+<!ENTITY community.creditsLink      "the kind people of the internet">
+<!ENTITY community.end3             " inspired by what Mozilla have done.">
 
 <!ENTITY contribute.start           "Sound interesting? ">
 <!-- LOCALIZATION NOTE (contribute.getInvolvedLink): This is a link title that links to http://www.mozilla.org/contribute/. -->

@@ -58,7 +58,7 @@ GonkCameraHardware::OnNewFrame()
   }
   RefPtr<TextureClient> buffer = mNativeWindow->getCurrentBuffer();
   if (!buffer) {
-    DOM_CAMERA_LOGW("received null frame");
+    DOM_CAMERA_LOGE("received null frame");
     return;
   }
   OnNewPreviewFrame(mTarget, buffer);
@@ -185,9 +185,13 @@ GonkCameraHardware::Init()
 
 #if ANDROID_VERSION >= 19
   mNativeWindow = new GonkNativeWindow(GonkCameraHardware::MIN_UNDEQUEUED_BUFFERS);
+  sp<GonkBufferQueue> bq = mNativeWindow->getBufferQueue();
+  bq->setSynchronousMode(false);
   mCamera->setPreviewTarget(mNativeWindow->getBufferQueue());
 #elif ANDROID_VERSION >= 17
   mNativeWindow = new GonkNativeWindow(GonkCameraHardware::MIN_UNDEQUEUED_BUFFERS);
+  sp<GonkBufferQueue> bq = mNativeWindow->getBufferQueue();
+  bq->setSynchronousMode(false);
   mCamera->setPreviewTexture(mNativeWindow->getBufferQueue());
 #else
   mNativeWindow = new GonkNativeWindow();
@@ -234,6 +238,7 @@ GonkCameraHardware::Connect(mozilla::nsGonkCameraControl* aTarget, uint32_t aCam
   nsresult rv = cameraHardware->Init();
   if (NS_FAILED(rv)) {
     DOM_CAMERA_LOGE("Failed to initialize camera hardware (0x%X)\n", rv);
+    cameraHardware->Close();
     return nullptr;
   }
 

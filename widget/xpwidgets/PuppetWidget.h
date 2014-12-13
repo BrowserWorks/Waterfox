@@ -37,7 +37,8 @@ namespace widget {
 
 struct AutoCacheNativeKeyCommands;
 
-class PuppetWidget : public nsBaseWidget, public nsSupportsWeakReference
+class PuppetWidget MOZ_FINAL : public nsBaseWidget,
+                               public nsSupportsWeakReference
 {
   typedef mozilla::dom::TabChild TabChild;
   typedef mozilla::gfx::DrawTarget DrawTarget;
@@ -47,7 +48,7 @@ class PuppetWidget : public nsBaseWidget, public nsSupportsWeakReference
   static const size_t kMaxDimension;
 
 public:
-  PuppetWidget(TabChild* aTabChild);
+  explicit PuppetWidget(TabChild* aTabChild);
 
 protected:
   virtual ~PuppetWidget();
@@ -208,7 +209,7 @@ private:
   class PaintTask : public nsRunnable {
   public:
     NS_DECL_NSIRUNNABLE
-    PaintTask(PuppetWidget* widget) : mWidget(widget) {}
+    explicit PaintTask(PuppetWidget* widget) : mWidget(widget) {}
     void Revoke() { mWidget = nullptr; }
   private:
     PuppetWidget* mWidget;
@@ -256,7 +257,7 @@ private:
 
 struct AutoCacheNativeKeyCommands
 {
-  AutoCacheNativeKeyCommands(PuppetWidget* aWidget)
+  explicit AutoCacheNativeKeyCommands(PuppetWidget* aWidget)
     : mWidget(aWidget)
   {
     mSavedValid = mWidget->mNativeKeyCommandsValid;
@@ -302,7 +303,7 @@ private:
 class PuppetScreen : public nsBaseScreen
 {
 public:
-    PuppetScreen(void* nativeScreen);
+    explicit PuppetScreen(void* nativeScreen);
     ~PuppetScreen();
 
     NS_IMETHOD GetId(uint32_t* aId) MOZ_OVERRIDE;

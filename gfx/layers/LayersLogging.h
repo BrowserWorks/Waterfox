@@ -54,9 +54,7 @@ void
 AppendToString(std::stringstream& aStream, const mozilla::gfx::PointTyped<T>& p,
                const char* pfx="", const char* sfx="")
 {
-  aStream << pfx;
-  aStream << nsPrintfCString("(x=%f, y=%f)", p.x, p.y).get();
-  aStream << sfx;
+  aStream << pfx << p << sfx;
 }
 
 void
@@ -99,6 +97,10 @@ void
 AppendToString(std::stringstream& aStream, const FrameMetrics& m,
                const char* pfx="", const char* sfx="", bool detailed = false);
 
+void
+AppendToString(std::stringstream& aStream, const ScrollableLayerGuid& s,
+               const char* pfx="", const char* sfx="");
+
 template<class T>
 void
 AppendToString(std::stringstream& aStream, const mozilla::gfx::MarginTyped<T>& m,
@@ -140,6 +142,10 @@ AppendToString(std::stringstream& aStream, const mozilla::gfx::Matrix4x4& m,
                const char* pfx="", const char* sfx="");
 
 void
+AppendToString(std::stringstream& aStream, const mozilla::gfx::Matrix5x4& m,
+               const char* pfx="", const char* sfx="");
+
+void
 AppendToString(std::stringstream& aStream, const mozilla::gfx::Filter filter,
                const char* pfx="", const char* sfx="");
 
@@ -163,5 +169,11 @@ Stringify(const T& obj)
 
 } // namespace
 } // namespace
+
+// versions of printf_stderr and fprintf_stderr that deal with line
+// truncation on android by printing individual lines out of the
+// stringstream as separate calls to logcat.
+void print_stderr(std::stringstream& aStr);
+void fprint_stderr(FILE* aFile, std::stringstream& aStr);
 
 #endif /* GFX_LAYERSLOGGING_H */

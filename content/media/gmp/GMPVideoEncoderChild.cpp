@@ -58,6 +58,14 @@ GMPVideoEncoderChild::Encoded(GMPVideoEncodedFrame* aEncodedFrame,
   aEncodedFrame->Destroy();
 }
 
+void
+GMPVideoEncoderChild::Error(GMPErr aError)
+{
+  MOZ_ASSERT(mPlugin->GMPMessageLoop() == MessageLoop::current());
+
+  SendError(aError);
+}
+
 bool
 GMPVideoEncoderChild::RecvInitEncode(const GMPVideoCodec& aCodecSettings,
                                      const nsTArray<uint8_t>& aCodecSpecific,

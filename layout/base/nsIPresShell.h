@@ -137,10 +137,9 @@ typedef struct CapturingContentInfo {
   nsIContent* mContent;
 } CapturingContentInfo;
 
-//a4e5ff3a-dc5c-4b3a-a625-d164a9e50619
 #define NS_IPRESSHELL_IID \
-{ 0xa4e5ff3a, 0xdc5c, 0x4b3a, \
-  {0xa6, 0x25, 0xd1, 0x64, 0xa9, 0xe5, 0x06, 0x19}}
+		{ 0x42e9a352, 0x76f3, 0x4ba3, \
+		  { 0x94, 0x0b, 0x78, 0x9e, 0x58, 0x38, 0x73, 0x4f } }
 
 // debug VerifyReflow flags
 #define VERIFY_REFLOW_ON                    0x01
@@ -658,9 +657,9 @@ public:
    *                no scrollbar showing and less than one device pixel of
    *                scrollable distance), don't scroll. Defaults to false.
    */
-    ScrollAxis(int16_t aWhere = SCROLL_MINIMUM,
-               WhenToScroll aWhen = SCROLL_IF_NOT_FULLY_VISIBLE,
-               bool aOnlyIfPerceivedScrollableDirection = false) :
+    explicit ScrollAxis(int16_t aWhere = SCROLL_MINIMUM,
+                        WhenToScroll aWhen = SCROLL_IF_NOT_FULLY_VISIBLE,
+                        bool aOnlyIfPerceivedScrollableDirection = false) :
       mWhereToScroll(aWhere), mWhenToScroll(aWhen),
       mOnlyIfPerceivedScrollableDirection(aOnlyIfPerceivedScrollableDirection)
     {}
@@ -685,6 +684,10 @@ public:
    *                  If SCROLL_NO_PARENT_FRAMES is set then we only scroll
    *                  nodes in this document, not in any parent documents which
    *                  contain this document in a iframe or the like.
+   *                  If SCROLL_SMOOTH is set and CSSOM-VIEW scroll-behavior
+   *                  is enabled, we will scroll smoothly using
+   *                  nsIScrollableFrame::ScrollMode::SMOOTH_MSD; otherwise,
+   *                  nsIScrollableFrame::ScrollMode::INSTANT will be used.
    */
   virtual nsresult ScrollContentIntoView(nsIContent* aContent,
                                                      ScrollAxis  aVertical,
@@ -694,7 +697,8 @@ public:
   enum {
     SCROLL_FIRST_ANCESTOR_ONLY = 0x01,
     SCROLL_OVERFLOW_HIDDEN = 0x02,
-    SCROLL_NO_PARENT_FRAMES = 0x04
+    SCROLL_NO_PARENT_FRAMES = 0x04,
+    SCROLL_SMOOTH = 0x08
   };
   /**
    * Scrolls the view of the document so that the given area of a frame
@@ -776,29 +780,22 @@ public:
   /**
    * Get the selection caret, if it exists. AddRefs it.
    */
-  virtual NS_HIDDEN_(already_AddRefed<mozilla::SelectionCarets>) GetSelectionCarets() const = 0;
+  virtual already_AddRefed<mozilla::SelectionCarets> GetSelectionCarets() const = 0;
 
   /**
    * Returns the start part of selection caret element of the presshell.
    */
-  virtual NS_HIDDEN_(mozilla::dom::Element*) GetSelectionCaretsStartElement() const = 0;
+  virtual mozilla::dom::Element* GetSelectionCaretsStartElement() const = 0;
 
   /**
    * Returns the end part of selection caret element of the presshell.
    */
-  virtual NS_HIDDEN_(mozilla::dom::Element*) GetSelectionCaretsEndElement() const = 0;
+  virtual mozilla::dom::Element* GetSelectionCaretsEndElement() const = 0;
 
   /**
    * Get the caret, if it exists. AddRefs it.
    */
   virtual already_AddRefed<nsCaret> GetCaret() const = 0;
-
-  /**
-   * Invalidate the caret's current position if it's outside of its frame's
-   * boundaries. This function is useful if you're batching selection
-   * notifications and might remove the caret's frame out from under it.
-   */
-  virtual void MaybeInvalidateCaretPosition() = 0;
 
   /**
    * Set the current caret to a new caret. To undo this, call RestoreCaret.

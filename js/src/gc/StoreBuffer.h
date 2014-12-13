@@ -13,6 +13,7 @@
 # error "Generational GC requires exact rooting."
 #endif
 
+#include "mozilla/Attributes.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/ReentrancyGuard.h"
 
@@ -25,7 +26,7 @@
 
 namespace js {
 
-void
+MOZ_NORETURN void
 CrashAtUnhandlableOOM(const char *reason);
 
 namespace gc {
@@ -206,7 +207,7 @@ class StoreBuffer
             (void)static_cast<const BufferableRef*>(&t);
 
             unsigned size = sizeof(T);
-            unsigned *sizep = storage_->newPod<unsigned>();
+            unsigned *sizep = storage_->pod_malloc<unsigned>();
             if (!sizep)
                 CrashAtUnhandlableOOM("Failed to allocate for GenericBuffer::put.");
             *sizep = size;

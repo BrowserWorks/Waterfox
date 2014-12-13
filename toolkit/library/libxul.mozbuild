@@ -6,7 +6,15 @@
 
 MSVC_ENABLE_PGO = True
 
-FORCE_SHARED_LIB = True
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+    # This is going to be a framework named "XUL", not an ordinary library named
+    # "libxul.dylib"
+    SHARED_LIBRARY_NAME = 'XUL'
+    IS_FRAMEWORK = True
+else:
+    SHARED_LIBRARY_NAME = 'xul'
+    FORCE_SHARED_LIB = True
+
 
 DELAYLOAD_DLLS += [
     'comdlg32.dll',
@@ -32,20 +40,13 @@ if CONFIG['ACCESSIBILITY']:
 if CONFIG['MOZ_WEBRTC']:
     DELAYLOAD_DLLS += ['msdmo.dll']
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
-    LDFLAGS += [
-        '-framework OpenGL',
-        '-framework SystemConfiguration',
-        '-framework QTKit',
-        '-framework IOKit',
-        '-F%s' % CONFIG['MACOS_PRIVATE_FRAMEWORKS_DIR'],
-        '-framework CoreUI',
-    ]
-
 if CONFIG['OS_ARCH'] == 'WINNT' and not CONFIG['GNU_CC']:
     LOCAL_INCLUDES += [
         '/widget/windows',
         '/xpcom/base',
     ]
-    # This file is (only) included from subdirectories, and the file is here.
-    RCINCLUDE = '../xulrunner.rc'
+    # config/version.mk says $(srcdir)/$(RCINCLUDE), and this needs to
+    # be valid in both toolkit/library and toolkit/library/gtest.
+    # Eventually, the make backend would do its own path canonicalization
+    # and config/version.mk would lift the $(srcdir)
+    RCINCLUDE = '$(DEPTH)/toolkit/library/xulrunner.rc'

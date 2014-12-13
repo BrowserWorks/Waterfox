@@ -13,7 +13,6 @@
 #include "nsIDocument.h"
 #include "nsHTMLStyleSheet.h"
 #include "nsIEditor.h"
-#include "nsIMarkupDocumentViewer.h"
 #include "nsMappedAttributes.h"
 #include "nsRuleData.h"
 #include "nsIDocShell.h"
@@ -454,7 +453,7 @@ HTMLBodyElement::GetAssociatedEditor()
   }
 
   // For designmode, try to get document's editor
-  nsPresContext* presContext = GetPresContext();
+  nsPresContext* presContext = GetPresContext(eForComposedDoc);
   if (!presContext) {
     return nullptr;
   }

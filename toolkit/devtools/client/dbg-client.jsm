@@ -29,7 +29,6 @@ this.EXPORTED_SYMBOLS = ["DebuggerTransport",
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Timer.jsm");
 
 let promise = Cu.import("resource://gre/modules/devtools/deprecated-sync-thenables.js").Promise;
 const { defer, resolve, reject } = promise;
@@ -66,6 +65,8 @@ let wantVerbose =
   Services.prefs.getPrefType(VERBOSE_PREF) !== Services.prefs.PREF_INVALID &&
   Services.prefs.getBoolPref(VERBOSE_PREF);
 
+const noop = () => {};
+
 function dumpn(str) {
   if (wantLogging) {
     dump("DBG-CLIENT: " + str + "\n");
@@ -83,6 +84,8 @@ let loader = Cc["@mozilla.org/moz/jssubscript-loader;1"]
 loader.loadSubScript("resource://gre/modules/devtools/transport/transport.js", this);
 
 /**
+ * TODO: Get rid of this API in favor of EventTarget (bug 1042642)
+ *
  * Add simple event notification to a prototype object. Any object that has
  * some use for event notifications or the observer pattern in general can be
  * augmented with the necessary facilities by passing its prototype to this
@@ -173,7 +176,7 @@ function eventSource(aProto) {
    *        All arguments will be passed along to the listeners,
    *        including the name argument.
    */
-  aProto.notify = function () {
+  aProto.emit = function () {
     if (!this._listeners) {
       return;
     }
@@ -222,6 +225,7 @@ const UnsolicitedNotifications = {
   "reflowActivity": "reflowActivity",
   "addonListChanged": "addonListChanged",
   "tabNavigated": "tabNavigated",
+  "frameUpdate": "frameUpdate",
   "pageError": "pageError",
   "documentLoad": "documentLoad",
   "enteredFrame": "enteredFrame",
@@ -275,7 +279,7 @@ this.DebuggerClient = function (aTransport)
   this.mainRoot = null;
   this.expectReply("root", (aPacket) => {
     this.mainRoot = new RootClient(this, aPacket);
-    this.notify("connected", aPacket.applicationType, aPacket.traits);
+    this.emit("connected", aPacket.applicationType, aPacket.traits);
   });
 }
 
@@ -417,7 +421,11 @@ DebuggerClient.prototype = {
         this._transport = null;
         return;
       }
-      client.detach(detachClients);
+      if (client.detach) {
+        client.detach(detachClients);
+        return;
+      }
+      detachClients();
     };
     detachClients();
   },
@@ -443,7 +451,7 @@ DebuggerClient.prototype = {
    *        Called with the response packet and a TabClient
    *        (which will be undefined on error).
    */
-  attachTab: function (aTabActor, aOnResponse) {
+  attachTab: function (aTabActor, aOnResponse = noop) {
     if (this._clients.has(aTabActor)) {
       let cachedTab = this._clients.get(aTabActor);
       let cachedResponse = {
@@ -451,7 +459,7 @@ DebuggerClient.prototype = {
         javascriptEnabled: cachedTab.javascriptEnabled,
         traits: cachedTab.traits,
       };
-      setTimeout(() => aOnResponse(cachedResponse, cachedTab), 0);
+      DevToolsUtils.executeSoon(() => aOnResponse(cachedResponse, cachedTab));
       return;
     }
 
@@ -478,7 +486,7 @@ DebuggerClient.prototype = {
    *        Called with the response packet and a AddonClient
    *        (which will be undefined on error).
    */
-  attachAddon: function DC_attachAddon(aAddonActor, aOnResponse) {
+  attachAddon: function DC_attachAddon(aAddonActor, aOnResponse = noop) {
     let packet = {
       to: aAddonActor,
       type: "attach"
@@ -506,7 +514,7 @@ DebuggerClient.prototype = {
    *        instance (which will be undefined on error).
    */
   attachConsole:
-  function (aConsoleActor, aListeners, aOnResponse) {
+  function (aConsoleActor, aListeners, aOnResponse = noop) {
     let packet = {
       to: aConsoleActor,
       type: "startListeners",
@@ -539,9 +547,9 @@ DebuggerClient.prototype = {
    *        Configuration options.
    *        - useSourceMaps: whether to use source maps or not.
    */
-  attachThread: function (aThreadActor, aOnResponse, aOptions={}) {
+  attachThread: function (aThreadActor, aOnResponse = noop, aOptions={}) {
     if (this._clients.has(aThreadActor)) {
-      setTimeout(() => aOnResponse({}, this._clients.get(aThreadActor)), 0);
+      DevToolsUtils.executeSoon(() => aOnResponse({}, this._clients.get(aThreadActor)));
       return;
     }
 
@@ -568,9 +576,9 @@ DebuggerClient.prototype = {
    *        Called with the response packet and a TraceClient
    *        (which will be undefined on error).
    */
-  attachTracer: function (aTraceActor, aOnResponse) {
+  attachTracer: function (aTraceActor, aOnResponse = noop) {
     if (this._clients.has(aTraceActor)) {
-      setTimeout(() => aOnResponse({}, this._clients.get(aTraceActor)), 0);
+      DevToolsUtils.executeSoon(() => aOnResponse({}, this._clients.get(aTraceActor)));
       return;
     }
 
@@ -899,7 +907,8 @@ DebuggerClient.prototype = {
 
       // Packets that indicate thread state changes get special treatment.
       if (aPacket.type in ThreadStateTypes &&
-          this._clients.has(aPacket.from)) {
+          this._clients.has(aPacket.from) &&
+          typeof this._clients.get(aPacket.from)._onThreadState == "function") {
         this._clients.get(aPacket.from)._onThreadState(aPacket);
       }
       // On navigation the server resumes, so the client must resume as well.
@@ -915,7 +924,7 @@ DebuggerClient.prototype = {
       // Only try to notify listeners on events, not responses to requests
       // that lack a packet type.
       if (aPacket.type) {
-        this.notify(aPacket.type, aPacket);
+        this.emit(aPacket.type, aPacket);
       }
 
       if (activeRequest) {
@@ -988,7 +997,7 @@ DebuggerClient.prototype = {
    *        the stream.
    */
   onClosed: function (aStatus) {
-    this.notify("closed");
+    this.emit("closed");
   },
 
   registerClient: function (client) {
@@ -1004,12 +1013,8 @@ DebuggerClient.prototype = {
     }
     if (client.events.length > 0 && typeof(client.emit) != "function") {
       throw new Error("DebuggerServer.registerClient expects " +
-                      "client instances with non-empty `events` array to" +
+                      "a client instance with non-empty `events` array to" +
                       "have an `emit` function.");
-    }
-    if (typeof(client.detach) != "function") {
-      throw new Error("DebuggerServer.registerClient expects " +
-                      "a client instance with a `detach` function.");
     }
     if (this._clients.has(actorID)) {
       throw new Error("DebuggerServer.registerClient already registered " +
@@ -1277,9 +1282,9 @@ TabClient.prototype = {
    *        Called with the response packet and a ThreadClient
    *        (which will be undefined on error).
    */
-  attachThread: function(aOptions={}, aOnResponse) {
+  attachThread: function(aOptions={}, aOnResponse = noop) {
     if (this.thread) {
-      setTimeout(() => aOnResponse({}, this.thread), 0);
+      DevToolsUtils.executeSoon(() => aOnResponse({}, this.thread));
       return;
     }
 
@@ -1625,7 +1630,7 @@ ThreadClient.prototype = {
    */
   pauseOnExceptions: function (aPauseOnExceptions,
                                aIgnoreCaughtExceptions,
-                               aOnResponse) {
+                               aOnResponse = noop) {
     this._pauseOnExceptions = aPauseOnExceptions;
     this._ignoreCaughtExceptions = aIgnoreCaughtExceptions;
 
@@ -1661,13 +1666,13 @@ ThreadClient.prototype = {
    * @param function onResponse
    *        Called with the response packet in a future turn of the event loop.
    */
-  pauseOnDOMEvents: function (events, onResponse) {
+  pauseOnDOMEvents: function (events, onResponse = noop) {
     this._pauseOnDOMEvents = events;
     // If the debuggee is paused, the value of the array will be communicated in
     // the next resumption. Otherwise we have to force a pause in order to send
     // the array.
     if (this.paused) {
-      setTimeout(() => onResponse({}), 0);
+      DevToolsUtils.executeSoon(() => onResponse({}));
       return;
     }
     this.interrupt(response => {
@@ -1739,7 +1744,8 @@ ThreadClient.prototype = {
    * @param function aOnResponse
    *        Called with the thread's response.
    */
-  setBreakpoint: function ({ url, line, column, condition }, aOnResponse) {
+  setBreakpoint: function ({ url, line, column, condition },
+                           aOnResponse = noop) {
     // A helper function that sets the breakpoint.
     let doSetBreakpoint = (aCallback) => {
       const location = {
@@ -1757,16 +1763,17 @@ ThreadClient.prototype = {
       this.client.request(packet, (aResponse) => {
         // Ignoring errors, since the user may be setting a breakpoint in a
         // dead script that will reappear on a page reload.
-        if (aOnResponse) {
+        let bpClient;
+        if (aResponse.actor) {
           let root = this.client.mainRoot;
-          let bpClient = new BreakpointClient(
+          bpClient = new BreakpointClient(
             this.client,
             aResponse.actor,
             location,
             root.traits.conditionalBreakpoints ? condition : undefined
           );
-          aOnResponse(aResponse, bpClient);
         }
+        aOnResponse(aResponse, bpClient);
         if (aCallback) {
           aCallback();
         }
@@ -1785,7 +1792,13 @@ ThreadClient.prototype = {
         aOnResponse(aResponse);
         return;
       }
-      doSetBreakpoint(this.resume.bind(this));
+
+      const { type, why } = aResponse;
+      const cleanUp = type == "paused" && why.type == "interrupted"
+        ? () => this.resume()
+        : noop;
+
+      doSetBreakpoint(cleanUp);
     });
   },
 
@@ -1848,7 +1861,7 @@ ThreadClient.prototype = {
   _clearScripts: function () {
     if (Object.keys(this._scriptCache).length > 0) {
       this._scriptCache = {}
-      this.notify("scriptscleared");
+      this.emit("scriptscleared");
     }
   },
 
@@ -1918,7 +1931,7 @@ ThreadClient.prototype = {
 
       // If we got as many frames as we asked for, there might be more
       // frames available.
-      this.notify("framesadded");
+      this.emit("framesadded");
 
       aCallback(aResponse);
     });
@@ -1933,7 +1946,7 @@ ThreadClient.prototype = {
   _clearFrames: function () {
     if (this._frameCache.length > 0) {
       this._frameCache = [];
-      this.notify("framescleared");
+      this.emit("framescleared");
     }
   },
 
@@ -2033,7 +2046,7 @@ ThreadClient.prototype = {
     this._clearFrames();
     this._clearPauseGrips();
     aPacket.type === ThreadStateTypes.detached && this._clearThreadGrips();
-    this.client._eventsEnabled && this.notify(aPacket.type, aPacket);
+    this.client._eventsEnabled && this.emit(aPacket.type, aPacket);
   },
 
   /**
@@ -2384,7 +2397,7 @@ SourceClient.prototype = {
       if (!aResponse.error) {
         this._isBlackBoxed = true;
         if (this._activeThread) {
-          this._activeThread.notify("blackboxchange", this);
+          this._activeThread.emit("blackboxchange", this);
         }
       }
       return aResponse;
@@ -2405,7 +2418,7 @@ SourceClient.prototype = {
       if (!aResponse.error) {
         this._isBlackBoxed = false;
         if (this._activeThread) {
-          this._activeThread.notify("blackboxchange", this);
+          this._activeThread.emit("blackboxchange", this);
         }
       }
       return aResponse;
@@ -2438,7 +2451,7 @@ SourceClient.prototype = {
       if (!aResponse.error) {
         this._isPrettyPrinted = true;
         this._activeThread._clearFrames();
-        this._activeThread.notify("prettyprintchange", this);
+        this._activeThread.emit("prettyprintchange", this);
       }
       this._onSourceResponse(aResponse, aCallback);
     });
@@ -2456,7 +2469,7 @@ SourceClient.prototype = {
       if (!aResponse.error) {
         this._isPrettyPrinted = false;
         this._activeThread._clearFrames();
-        this._activeThread.notify("prettyprintchange", this);
+        this._activeThread.emit("prettyprintchange", this);
       }
       this._onSourceResponse(aResponse, aCallback);
     });
@@ -2679,11 +2692,3 @@ this.debuggerSocketConnect = function (aHost, aPort)
   }
   return transport;
 }
-
-/**
- * Takes a pair of items and returns them as an array.
- */
-function pair(aItemOne, aItemTwo) {
-  return [aItemOne, aItemTwo];
-}
-function noop() {}

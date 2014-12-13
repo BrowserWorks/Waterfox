@@ -25,7 +25,7 @@ enum nsTableColGroupType {
  *
  * @author  sclark
  */
-class nsTableColGroupFrame : public nsContainerFrame
+class nsTableColGroupFrame MOZ_FINAL : public nsContainerFrame
 {
 public:
   NS_DECL_FRAMEARENA_HELPERS
@@ -202,7 +202,7 @@ public:
   virtual void InvalidateFrameForRemoval() MOZ_OVERRIDE { InvalidateFrameSubtree(); }
 
 protected:
-  nsTableColGroupFrame(nsStyleContext* aContext);
+  explicit nsTableColGroupFrame(nsStyleContext* aContext);
 
   void InsertColsReflow(int32_t                   aColIndex,
                         const nsFrameList::Slice& aCols);

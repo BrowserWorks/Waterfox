@@ -19,8 +19,8 @@ class nsImageBoxFrame;
 
 class nsDisplayXULImage;
 
-class nsImageBoxListener : public imgINotificationObserver,
-                           public imgIOnloadBlocker
+class nsImageBoxListener MOZ_FINAL : public imgINotificationObserver,
+                                     public imgIOnloadBlocker
 {
 public:
   nsImageBoxListener();
@@ -37,7 +37,7 @@ private:
   nsImageBoxFrame *mFrame;
 };
 
-class nsImageBoxFrame : public nsLeafBoxFrame
+class nsImageBoxFrame MOZ_FINAL : public nsLeafBoxFrame
 {
 public:
   typedef mozilla::layers::LayerManager LayerManager;
@@ -48,7 +48,7 @@ public:
   virtual nsSize GetPrefSize(nsBoxLayoutState& aBoxLayoutState) MOZ_OVERRIDE;
   virtual nsSize GetMinSize(nsBoxLayoutState& aBoxLayoutState) MOZ_OVERRIDE;
   virtual nscoord GetBoxAscent(nsBoxLayoutState& aBoxLayoutState) MOZ_OVERRIDE;
-  virtual void MarkIntrinsicWidthsDirty() MOZ_OVERRIDE;
+  virtual void MarkIntrinsicISizesDirty() MOZ_OVERRIDE;
 
   nsresult Notify(imgIRequest *aRequest, int32_t aType, const nsIntRect* aData);
 

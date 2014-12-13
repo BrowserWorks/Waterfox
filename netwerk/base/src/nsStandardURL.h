@@ -61,7 +61,7 @@ public:
     virtual size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
     virtual size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
-    nsStandardURL(bool aSupportsFileURL = false);
+    explicit nsStandardURL(bool aSupportsFileURL = false, bool aTrackURL = true);
 
     static void InitGlobalObjects();
     static void ShutdownGlobalObjects();
@@ -111,7 +111,7 @@ public: /* internal -- HPUX compiler can't handle this being private */
     class nsSegmentEncoder
     {
     public:
-        nsSegmentEncoder(const char *charset);
+        explicit nsSegmentEncoder(const char *charset);
 
         // Encode the given segment if necessary, and return the length of
         // the encoded segment.  The encoded segment is appended to |buf|
@@ -156,6 +156,10 @@ protected:
     // Helper to share code between Clone methods.
     nsresult CloneInternal(RefHandlingEnum aRefHandlingMode,
                            nsIURI** aClone);
+    // Helper method that copies member variables from the source StandardURL
+    // if copyCached = true, it will also copy mFile and mHostA
+    nsresult CopyMembers(nsStandardURL * source, RefHandlingEnum mode,
+                         bool copyCached = false);
 
     // Helper for subclass implementation of GetFile().  Subclasses that map
     // URIs to files in a special way should implement this method.  It should

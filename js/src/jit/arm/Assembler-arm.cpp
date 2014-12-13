@@ -12,9 +12,9 @@
 #include "jscompartment.h"
 #include "jsutil.h"
 
-#include "assembler/jit/ExecutableAllocator.h"
 #include "gc/Marking.h"
 #include "jit/arm/MacroAssembler-arm.h"
+#include "jit/ExecutableAllocator.h"
 #include "jit/JitCompartment.h"
 
 using namespace js;
@@ -72,13 +72,16 @@ ABIArgGenerator::next(MIRType type)
         floatRegIndex_+=2;
         break;
       default:
-        MOZ_ASSUME_UNREACHABLE("Unexpected argument type");
+        MOZ_CRASH("Unexpected argument type");
     }
 
     return current_;
 }
-const Register ABIArgGenerator::NonArgReturnVolatileReg0 = r4;
-const Register ABIArgGenerator::NonArgReturnVolatileReg1 = r5;
+
+const Register ABIArgGenerator::NonArgReturnReg0 = r4;
+const Register ABIArgGenerator::NonArgReturnReg1 = r5;
+const Register ABIArgGenerator::NonReturn_VolatileReg0 = r2;
+const Register ABIArgGenerator::NonReturn_VolatileReg1 = r3;
 
 // Encode a standard register when it is being used as src1, the dest, and an
 // extra register. These should never be called with an InvalidReg.
@@ -347,7 +350,7 @@ InstBLImm::IsTHIS(const Instruction &i)
 
 }
 InstBLImm *
-InstBLImm::AsTHIS(Instruction &i)
+InstBLImm::AsTHIS(const Instruction &i)
 {
     if (IsTHIS(i))
         return (InstBLImm*)&i;
@@ -557,20 +560,20 @@ Assembler::finish()
     isFinished = true;
 
     for (unsigned int i = 0; i < tmpDataRelocations_.length(); i++) {
-        int offset = tmpDataRelocations_[i].getOffset();
-        int real_offset = offset + m_buffer.poolSizeBefore(offset);
+        size_t offset = tmpDataRelocations_[i].getOffset();
+        size_t real_offset = offset + m_buffer.poolSizeBefore(offset);
         dataRelocations_.writeUnsigned(real_offset);
     }
 
     for (unsigned int i = 0; i < tmpJumpRelocations_.length(); i++) {
-        int offset = tmpJumpRelocations_[i].getOffset();
-        int real_offset = offset + m_buffer.poolSizeBefore(offset);
+        size_t offset = tmpJumpRelocations_[i].getOffset();
+        size_t real_offset = offset + m_buffer.poolSizeBefore(offset);
         jumpRelocations_.writeUnsigned(real_offset);
     }
 
     for (unsigned int i = 0; i < tmpPreBarriers_.length(); i++) {
-        int offset = tmpPreBarriers_[i].getOffset();
-        int real_offset = offset + m_buffer.poolSizeBefore(offset);
+        size_t offset = tmpPreBarriers_[i].getOffset();
+        size_t real_offset = offset + m_buffer.poolSizeBefore(offset);
         preBarriers_.writeUnsigned(real_offset);
     }
 }
@@ -707,7 +710,7 @@ Assembler::GetCF32Target(Iter *iter)
 
     }
 
-    MOZ_ASSUME_UNREACHABLE("unsupported branch relocation");
+    MOZ_CRASH("unsupported branch relocation");
 }
 
 uintptr_t
@@ -771,7 +774,7 @@ Assembler::GetPtr32Target(Iter *start, Register *dest, RelocStyle *style)
         return *ptr;
     }
 
-    MOZ_ASSUME_UNREACHABLE("unsupported relocation");
+    MOZ_CRASH("unsupported relocation");
 }
 
 static JitCode *
@@ -792,36 +795,55 @@ Assembler::TraceJumpRelocations(JSTracer *trc, JitCode *code, CompactBufferReade
     }
 }
 
+template <class Iter>
 static void
-TraceDataRelocations(JSTracer *trc, uint8_t *buffer, CompactBufferReader &reader)
+TraceOneDataRelocation(JSTracer *trc, Iter *iter, MacroAssemblerARM *masm)
+{
+    Instruction *ins = iter->cur();
+    Register dest;
+    Assembler::RelocStyle rs;
+    const void *prior = Assembler::GetPtr32Target(iter, &dest, &rs);
+    void *ptr = const_cast<void *>(prior);
+
+    // No barrier needed since these are constants.
+    gc::MarkGCThingUnbarriered(trc, &ptr, "ion-masm-ptr");
+
+    if (ptr != prior) {
+        masm->ma_movPatchable(Imm32(int32_t(ptr)), dest, Assembler::Always, rs, ins);
+        // L_LDR won't cause any instructions to be updated.
+        if (rs != Assembler::L_LDR) {
+            AutoFlushICache::flush(uintptr_t(ins), 4);
+            AutoFlushICache::flush(uintptr_t(ins->next()), 4);
+        }
+    }
+}
+
+static void
+TraceDataRelocations(JSTracer *trc, uint8_t *buffer, CompactBufferReader &reader,
+                     MacroAssemblerARM *masm)
 {
     while (reader.more()) {
         size_t offset = reader.readUnsigned();
         InstructionIterator iter((Instruction*)(buffer + offset));
-        void *ptr = const_cast<uint32_t *>(Assembler::GetPtr32Target(&iter));
-        // No barrier needed since these are constants.
-        gc::MarkGCThingUnbarriered(trc, reinterpret_cast<void **>(&ptr), "ion-masm-ptr");
+        TraceOneDataRelocation(trc, &iter, masm);
     }
-
 }
+
 static void
 TraceDataRelocations(JSTracer *trc, ARMBuffer *buffer,
-                     Vector<BufferOffset, 0, SystemAllocPolicy> *locs)
+                     Vector<BufferOffset, 0, SystemAllocPolicy> *locs, MacroAssemblerARM *masm)
 {
     for (unsigned int idx = 0; idx < locs->length(); idx++) {
         BufferOffset bo = (*locs)[idx];
         ARMBuffer::AssemblerBufferInstIterator iter(bo, buffer);
-        void *ptr = const_cast<uint32_t *>(Assembler::GetPtr32Target(&iter));
-
-        // No barrier needed since these are constants.
-        gc::MarkGCThingUnbarriered(trc, reinterpret_cast<void **>(&ptr), "ion-masm-ptr");
+        TraceOneDataRelocation(trc, &iter, masm);
     }
-
 }
+
 void
 Assembler::TraceDataRelocations(JSTracer *trc, JitCode *code, CompactBufferReader &reader)
 {
-    ::TraceDataRelocations(trc, code->raw(), reader);
+    ::TraceDataRelocations(trc, code->raw(), reader, static_cast<MacroAssemblerARM *>(Dummy));
 }
 
 void
@@ -857,8 +879,10 @@ Assembler::trace(JSTracer *trc)
         }
     }
 
-    if (tmpDataRelocations_.length())
-        ::TraceDataRelocations(trc, &m_buffer, &tmpDataRelocations_);
+    if (tmpDataRelocations_.length()) {
+        ::TraceDataRelocations(trc, &m_buffer, &tmpDataRelocations_,
+                               static_cast<MacroAssemblerARM *>(this));
+    }
 }
 
 void
@@ -1526,6 +1550,13 @@ Assembler::as_udiv(Register rd, Register rn, Register rm, Condition c)
     return writeInst(0x0730f010 | c | RN(rd) | RM(rm) | rn.code());
 }
 
+BufferOffset
+Assembler::as_clz(Register dest, Register src, Condition c, Instruction *instdest)
+{
+    return writeInst(RD(dest) | src.code() | c | 0x016f0f10, (uint32_t*)instdest);
+}
+
+
 // Data transfer instructions: ldr, str, ldrb, strb. Using an int to
 // differentiate between 8 bits and 32 bits is overkill, but meh.
 BufferOffset
@@ -1656,7 +1687,7 @@ Assembler::as_extdtr(LoadStore ls, int size, bool IsSigned, Index mode,
         extra_bits1 = 0;
         break;
       default:
-        MOZ_ASSUME_UNREACHABLE("SAY WHAT?");
+        MOZ_CRASH("SAY WHAT?");
     }
     return writeInst(extra_bits2 << 5 | extra_bits1 << 20 | 0x90 |
                      addr.encode() | RT(rt) | mode | c, dest);
@@ -1754,7 +1785,7 @@ Assembler::PatchConstantPoolLoad(void* loadAddr, void* constPoolAddr)
     int offset = (char *)constPoolAddr - (char *)loadAddr;
     switch(data.getLoadType()) {
       case PoolHintData::PoolBOGUS:
-        MOZ_ASSUME_UNREACHABLE("bogus load type!");
+        MOZ_CRASH("bogus load type!");
       case PoolHintData::PoolDTR:
         Dummy->as_dtr(IsLoad, 32, Offset, data.getReg(),
                       DTRAddr(pc, DtrOffImm(offset+4*data.getIndex() - 8)), data.getCond(), instAddr);
@@ -1979,22 +2010,20 @@ Assembler::as_vnmul(VFPRegister vd, VFPRegister vn, VFPRegister vm,
                   Condition c)
 {
     return as_vfp_float(vd, vn, vm, OpvMul, c);
-    MOZ_ASSUME_UNREACHABLE("Feature NYI");
 }
 
 BufferOffset
 Assembler::as_vnmla(VFPRegister vd, VFPRegister vn, VFPRegister vm,
                   Condition c)
 {
-    MOZ_ASSUME_UNREACHABLE("Feature NYI");
+    MOZ_CRASH("Feature NYI");
 }
 
 BufferOffset
 Assembler::as_vnmls(VFPRegister vd, VFPRegister vn, VFPRegister vm,
                   Condition c)
 {
-    MOZ_ASSUME_UNREACHABLE("Feature NYI");
-    return BufferOffset();
+    MOZ_CRASH("Feature NYI");
 }
 
 BufferOffset
@@ -2228,7 +2257,7 @@ Assembler::bind(Label *label, BufferOffset boff)
             else if (branch.is<InstBLImm>())
                 as_bl(dest.diffB<BOffImm>(b), c, b);
             else
-                MOZ_ASSUME_UNREACHABLE("crazy fixup!");
+                MOZ_CRASH("crazy fixup!");
             b = next;
         } while (more);
     }
@@ -2285,7 +2314,7 @@ Assembler::retarget(Label *label, Label *target)
             else if (branch.is<InstBLImm>())
                 as_bl(BOffImm(prev), c, labelBranchOffset);
             else
-                MOZ_ASSUME_UNREACHABLE("crazy fixup!");
+                MOZ_CRASH("crazy fixup!");
         } else {
             // The target is unbound and unused. We can just take the head of
             // the list hanging off of label, and dump that into target.

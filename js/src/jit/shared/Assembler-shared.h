@@ -11,6 +11,7 @@
 
 #include <limits.h>
 
+#include "asmjs/AsmJSFrameIterator.h"
 #include "jit/IonAllocPolicy.h"
 #include "jit/Label.h"
 #include "jit/Registers.h"
@@ -24,6 +25,11 @@
 #endif
 namespace js {
 namespace jit {
+
+static const uint32_t Simd128DataSize = 4 * sizeof(int32_t);
+static_assert(Simd128DataSize == 4 * sizeof(int32_t), "SIMD data should be able to contain int32x4");
+static_assert(Simd128DataSize == 4 * sizeof(float), "SIMD data should be able to contain float32x4");
+static_assert(Simd128DataSize == 2 * sizeof(double), "SIMD data should be able to contain float64x2");
 
 enum Scale {
     TimesOne = 0,
@@ -192,9 +198,32 @@ struct PatchedImmPtr {
     { }
 };
 
-// Used for immediates which require relocation.
-struct ImmGCPtr
+class AssemblerShared;
+class ImmGCPtr;
+
+// Used for immediates which require relocation and may be traced during minor GC.
+class ImmMaybeNurseryPtr
 {
+    friend class AssemblerShared;
+    friend class ImmGCPtr;
+    const gc::Cell *value;
+
+    ImmMaybeNurseryPtr() : value(0) {}
+
+  public:
+    explicit ImmMaybeNurseryPtr(const gc::Cell *ptr) : value(ptr)
+    {
+        MOZ_ASSERT(!IsPoisonedPtr(ptr));
+
+        // asm.js shouldn't be creating GC things
+        MOZ_ASSERT(!IsCompilingAsmJS());
+    }
+};
+
+// Used for immediates which require relocation.
+class ImmGCPtr
+{
+  public:
     const gc::Cell *value;
 
     explicit ImmGCPtr(const gc::Cell *ptr) : value(ptr)
@@ -206,17 +235,13 @@ struct ImmGCPtr
         JS_ASSERT(!IsCompilingAsmJS());
     }
 
-  protected:
+  private:
     ImmGCPtr() : value(0) {}
-};
 
-// Used for immediates which require relocation and may be traced during minor GC.
-struct ImmMaybeNurseryPtr : public ImmGCPtr
-{
-    explicit ImmMaybeNurseryPtr(gc::Cell *ptr)
+    friend class AssemblerShared;
+    explicit ImmGCPtr(ImmMaybeNurseryPtr ptr) : value(ptr.value)
     {
-        this->value = ptr;
-        JS_ASSERT(!IsPoisonedPtr(ptr));
+        JS_ASSERT(!IsPoisonedPtr(ptr.value));
 
         // asm.js shouldn't be creating GC things
         JS_ASSERT(!IsCompilingAsmJS());
@@ -584,17 +609,30 @@ class CodeLocationLabel
 class CallSiteDesc
 {
     uint32_t line_;
-    uint32_t column_;
+    uint32_t column_ : 31;
+    uint32_t kind_ : 1;
   public:
+    enum Kind {
+        Relative,  // pc-relative call
+        Register   // call *register
+    };
     CallSiteDesc() {}
-    CallSiteDesc(uint32_t line, uint32_t column) : line_(line), column_(column) {}
+    explicit CallSiteDesc(Kind kind)
+      : line_(0), column_(0), kind_(kind)
+    {}
+    CallSiteDesc(uint32_t line, uint32_t column, Kind kind)
+      : line_(line), column_(column), kind_(kind)
+    {
+        JS_ASSERT(column <= INT32_MAX);
+    }
     uint32_t line() const { return line_; }
     uint32_t column() const { return column_; }
+    Kind kind() const { return Kind(kind_); }
 };
 
 // Adds to CallSiteDesc the metadata necessary to walk the stack given an
 // initial stack-pointer.
-struct CallSite : public CallSiteDesc
+class CallSite : public CallSiteDesc
 {
     uint32_t returnAddressOffset_;
     uint32_t stackDepth_;
@@ -621,11 +659,30 @@ struct CallSite : public CallSiteDesc
 typedef Vector<CallSite, 0, SystemAllocPolicy> CallSiteVector;
 
 // As an invariant across architectures, within asm.js code:
-//    $sp % StackAlignment = (AsmJSFrameSize + masm.framePushed) % StackAlignment
-// AsmJSFrameSize is 1 word, for the return address pushed by the call (or, in
-// the case of ARM/MIPS, by the first instruction of the prologue). This means
-// masm.framePushed never includes the pushed return address.
-static const uint32_t AsmJSFrameSize = sizeof(void*);
+//   $sp % AsmJSStackAlignment = (sizeof(AsmJSFrame) + masm.framePushed) % AsmJSStackAlignment
+// Thus, AsmJSFrame represents the bytes pushed after the call (which occurred
+// with a AsmJSStackAlignment-aligned StackPointer) that are not included in
+// masm.framePushed.
+struct AsmJSFrame
+{
+    // The caller's saved frame pointer. In non-profiling mode, internal
+    // asm.js-to-asm.js calls don't update fp and thus don't save the caller's
+    // frame pointer; the space is reserved, however, so that profiling mode can
+    // reuse the same function body without recompiling.
+    uint8_t *callerFP;
+
+    // The return address pushed by the call (in the case of ARM/MIPS the return
+    // address is pushed by the first instruction of the prologue).
+    void *returnAddress;
+};
+static_assert(sizeof(AsmJSFrame) == 2 * sizeof(void*), "?!");
+static const uint32_t AsmJSFrameBytesAfterReturnAddress = sizeof(void*);
+
+// A hoisting of constants that would otherwise require #including AsmJSModule.h
+// everywhere. Values are asserted in AsmJSModule.h.
+static const unsigned AsmJSActivationGlobalDataOffset = 0;
+static const unsigned AsmJSNaN64GlobalDataOffset = 2 * sizeof(void*);
+static const unsigned AsmJSNaN32GlobalDataOffset = 2 * sizeof(void*) + sizeof(double);
 
 // Summarizes a heap access made by asm.js code that needs to be patched later
 // and/or looked up by the asm.js signal handlers. Different architectures need
@@ -704,6 +761,26 @@ struct AsmJSGlobalAccess
 // patched after deserialization when the address of global things has changed.
 enum AsmJSImmKind
 {
+    AsmJSImm_ToInt32         = AsmJSExit::Builtin_ToInt32,
+#if defined(JS_CODEGEN_ARM)
+    AsmJSImm_aeabi_idivmod   = AsmJSExit::Builtin_IDivMod,
+    AsmJSImm_aeabi_uidivmod  = AsmJSExit::Builtin_UDivMod,
+#endif
+    AsmJSImm_ModD            = AsmJSExit::Builtin_ModD,
+    AsmJSImm_SinD            = AsmJSExit::Builtin_SinD,
+    AsmJSImm_CosD            = AsmJSExit::Builtin_CosD,
+    AsmJSImm_TanD            = AsmJSExit::Builtin_TanD,
+    AsmJSImm_ASinD           = AsmJSExit::Builtin_ASinD,
+    AsmJSImm_ACosD           = AsmJSExit::Builtin_ACosD,
+    AsmJSImm_ATanD           = AsmJSExit::Builtin_ATanD,
+    AsmJSImm_CeilD           = AsmJSExit::Builtin_CeilD,
+    AsmJSImm_CeilF           = AsmJSExit::Builtin_CeilF,
+    AsmJSImm_FloorD          = AsmJSExit::Builtin_FloorD,
+    AsmJSImm_FloorF          = AsmJSExit::Builtin_FloorF,
+    AsmJSImm_ExpD            = AsmJSExit::Builtin_ExpD,
+    AsmJSImm_LogD            = AsmJSExit::Builtin_LogD,
+    AsmJSImm_PowD            = AsmJSExit::Builtin_PowD,
+    AsmJSImm_ATan2D          = AsmJSExit::Builtin_ATan2D,
     AsmJSImm_Runtime,
     AsmJSImm_RuntimeInterrupt,
     AsmJSImm_StackLimit,
@@ -714,28 +791,23 @@ enum AsmJSImmKind
     AsmJSImm_InvokeFromAsmJS_ToNumber,
     AsmJSImm_CoerceInPlace_ToInt32,
     AsmJSImm_CoerceInPlace_ToNumber,
-    AsmJSImm_ToInt32,
-#if defined(JS_CODEGEN_ARM)
-    AsmJSImm_aeabi_idivmod,
-    AsmJSImm_aeabi_uidivmod,
-#endif
-    AsmJSImm_ModD,
-    AsmJSImm_SinD,
-    AsmJSImm_CosD,
-    AsmJSImm_TanD,
-    AsmJSImm_ASinD,
-    AsmJSImm_ACosD,
-    AsmJSImm_ATanD,
-    AsmJSImm_CeilD,
-    AsmJSImm_CeilF,
-    AsmJSImm_FloorD,
-    AsmJSImm_FloorF,
-    AsmJSImm_ExpD,
-    AsmJSImm_LogD,
-    AsmJSImm_PowD,
-    AsmJSImm_ATan2D,
-    AsmJSImm_Invalid
+    AsmJSImm_Limit
 };
+
+static inline AsmJSImmKind
+BuiltinToImmKind(AsmJSExit::BuiltinKind builtin)
+{
+    return AsmJSImmKind(builtin);
+}
+
+static inline bool
+ImmKindIsBuiltin(AsmJSImmKind imm, AsmJSExit::BuiltinKind *builtin)
+{
+    if (unsigned(imm) >= unsigned(AsmJSExit::Builtin_Limit))
+        return false;
+    *builtin = AsmJSExit::BuiltinKind(imm);
+    return true;
+}
 
 // Pointer to be embedded as an immediate in asm.js code.
 class AsmJSImmPtr
@@ -780,10 +852,12 @@ class AssemblerShared
 
   protected:
     bool enoughMemory_;
+    bool embedsNurseryPointers_;
 
   public:
     AssemblerShared()
-     : enoughMemory_(true)
+     : enoughMemory_(true),
+       embedsNurseryPointers_(false)
     {}
 
     void propagateOOM(bool success) {
@@ -794,10 +868,27 @@ class AssemblerShared
         return !enoughMemory_;
     }
 
+    bool embedsNurseryPointers() const {
+        return embedsNurseryPointers_;
+    }
+
+    ImmGCPtr noteMaybeNurseryPtr(ImmMaybeNurseryPtr ptr) {
+#ifdef JSGC_GENERATIONAL
+        if (ptr.value && gc::IsInsideNursery(ptr.value)) {
+            // FIXME: Ideally we'd assert this in all cases, but PJS needs to
+            //        compile IC's from off-main-thread; it will not touch
+            //        nursery pointers, however.
+            MOZ_ASSERT(GetIonContext()->runtime->onMainThread());
+            embedsNurseryPointers_ = true;
+        }
+#endif
+        return ImmGCPtr(ptr);
+    }
+
     void append(const CallSiteDesc &desc, size_t currentOffset, size_t framePushed) {
-        // framePushed does not include AsmJSFrameSize, so add it in here (see
+        // framePushed does not include sizeof(AsmJSFrame), so add it in here (see
         // CallSite::stackDepth).
-        CallSite callsite(desc, currentOffset, framePushed + AsmJSFrameSize);
+        CallSite callsite(desc, currentOffset, framePushed + sizeof(AsmJSFrame));
         enoughMemory_ &= callsites_.append(callsite);
     }
     CallSiteVector &&extractCallSites() { return Move(callsites_); }

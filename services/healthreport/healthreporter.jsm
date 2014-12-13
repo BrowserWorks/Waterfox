@@ -2,9 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-"use strict";
-
 #ifndef MERGED_COMPARTMENT
+
+"use strict";
 
 this.EXPORTED_SYMBOLS = ["HealthReporter"];
 
@@ -127,8 +127,13 @@ HealthReporterState.prototype = Object.freeze({
   },
 
   init: function () {
-    return Task.spawn(function init() {
-      OS.File.makeDir(this._stateDir);
+    return Task.spawn(function* init() {
+      yield OS.File.makeDir(this._stateDir);
+
+      let drs = Cc["@mozilla.org/datareporting/service;1"]
+                  .getService(Ci.nsISupports)
+                  .wrappedJSObject;
+      let drsClientID = yield drs.getClientID();
 
       let resetObjectState = function () {
         this._s = {
@@ -136,7 +141,7 @@ HealthReporterState.prototype = Object.freeze({
           // backwards-incompatible change.
           v: 1,
           // The persistent client identifier.
-          clientID: CommonUtils.generateUUID(),
+          clientID: drsClientID,
           // Denotes the mechanism used to generate the client identifier.
           // 1: Random UUID.
           clientIDVersion: 1,
@@ -176,22 +181,7 @@ HealthReporterState.prototype = Object.freeze({
         // comes along and fixes us.
       }
 
-      let regen = false;
-      if (!this._s.clientID) {
-        this._log.warn("No client ID stored. Generating random ID.");
-        regen = true;
-      }
-
-      if (typeof(this._s.clientID) != "string") {
-        this._log.warn("Client ID is not a string. Regenerating.");
-        regen = true;
-      }
-
-      if (regen) {
-        this._s.clientID = CommonUtils.generateUUID();
-        this._s.clientIDVersion = 1;
-        yield this.save();
-      }
+      this._s.clientID = drsClientID;
 
       // Always look for preferences. This ensures that downgrades followed
       // by reupgrades don't result in excessive data loss.
@@ -255,21 +245,18 @@ HealthReporterState.prototype = Object.freeze({
 
   /**
    * Reset the client ID to something else.
-   *
-   * This fails if remote IDs are stored because changing the client ID
-   * while there is remote data will create orphaned records.
+   * Returns a promise that is resolved when completed.
    */
-  resetClientID: function () {
-    if (this.remoteIDs.length) {
-      throw new Error("Cannot reset client ID while remote IDs are stored.");
-    }
+  resetClientID: Task.async(function* () {
+    let drs = Cc["@mozilla.org/datareporting/service;1"]
+                .getService(Ci.nsISupports)
+                .wrappedJSObject;
+    yield drs.resetClientID();
+    this._s.clientID = yield drs.getClientID();
+    this._log.info("Reset client id to " + this._s.clientID + ".");
 
-    this._log.warn("Resetting client ID.");
-    this._s.clientID = CommonUtils.generateUUID();
-    this._s.clientIDVersion = 1;
-
-    return this.save();
-  },
+    yield this.save();
+  }),
 
   _migratePrefs: function () {
     let prefs = this._reporter._prefs;
@@ -494,7 +481,7 @@ AbstractHealthReporter.prototype = Object.freeze({
     }.bind(this));
   },
 
-  _initializeProviderManager: function () {
+  _initializeProviderManager: Task.async(function* _initializeProviderManager() {
     if (this._collector) {
       throw new Error("Provider manager has already been initialized.");
     }
@@ -511,7 +498,7 @@ AbstractHealthReporter.prototype = Object.freeze({
         yield this._providerManager.registerProvidersFromCategoryManager(category);
       }
     }
-  },
+  }),
 
   _onProviderManagerInitialized: function () {
     TelemetryStopwatch.finish(this._initHistogram, this);
@@ -1260,8 +1247,8 @@ this.HealthReporter.prototype = Object.freeze({
    * Whether this instance will upload data to a server.
    */
   get willUploadData() {
-    return this._policy.dataSubmissionPolicyAccepted &&
-           this._policy.healthReportUploadEnabled;
+    return  this._policy.userNotifiedOfCurrentPolicy &&
+            this._policy.healthReportUploadEnabled;
   },
 
   /**
@@ -1321,8 +1308,8 @@ this.HealthReporter.prototype = Object.freeze({
     // Need to capture this before we call the parent else it's always
     // set.
     let inShutdown = this._shutdownRequested;
-
     let result;
+
     try {
       result = AbstractHealthReporter.prototype._onInitError.call(this, error);
     } catch (ex) {
@@ -1335,8 +1322,8 @@ this.HealthReporter.prototype = Object.freeze({
     // startup errors is important. And, they should not occur with much
     // frequency in the wild. So, it shouldn't be too big of a deal.
     if (!inShutdown &&
-        this._policy.ensureNotifyResponse(new Date()) &&
-        this._policy.healthReportUploadEnabled) {
+        this._policy.healthReportUploadEnabled &&
+        this._policy.ensureUserNotified()) {
       // We don't care about what happens to this request. It's best
       // effort.
       let request = {
@@ -1363,7 +1350,12 @@ this.HealthReporter.prototype = Object.freeze({
         // The built-in provider may not be initialized if this instance failed
         // to initialize fully.
         if (hrProvider && !isDelete) {
-          hrProvider.recordEvent("uploadTransportFailure", date);
+          try {
+            hrProvider.recordEvent("uploadTransportFailure", date);
+          } catch (ex) {
+            this._log.error("Error recording upload transport failure: " +
+                            CommonUtils.exceptionStr(ex));
+          }
         }
 
         request.onSubmissionFailureSoft("Network transport error.");
@@ -1372,7 +1364,12 @@ this.HealthReporter.prototype = Object.freeze({
 
       if (!result.serverSuccess) {
         if (hrProvider && !isDelete) {
-          hrProvider.recordEvent("uploadServerFailure", date);
+          try {
+            hrProvider.recordEvent("uploadServerFailure", date);
+          } catch (ex) {
+            this._log.error("Error recording server failure: " +
+                            CommonUtils.exceptionStr(ex));
+          }
         }
 
         request.onSubmissionFailureHard("Server failure.");
@@ -1380,7 +1377,12 @@ this.HealthReporter.prototype = Object.freeze({
       }
 
       if (hrProvider && !isDelete) {
-        hrProvider.recordEvent("uploadSuccess", date);
+        try {
+          hrProvider.recordEvent("uploadSuccess", date);
+        } catch (ex) {
+          this._log.error("Error recording upload success: " +
+                          CommonUtils.exceptionStr(ex));
+        }
       }
 
       if (isDelete) {
@@ -1445,7 +1447,12 @@ this.HealthReporter.prototype = Object.freeze({
         if (hrProvider) {
           let event = lastID ? "continuationUploadAttempt"
                              : "firstDocumentUploadAttempt";
-          hrProvider.recordEvent(event, now);
+          try {
+            hrProvider.recordEvent(event, now);
+          } catch (ex) {
+            this._log.error("Error when recording upload attempt: " +
+                            CommonUtils.exceptionStr(ex));
+          }
         }
 
         TelemetryStopwatch.start(TELEMETRY_UPLOAD, this);
@@ -1461,7 +1468,12 @@ this.HealthReporter.prototype = Object.freeze({
         } catch (ex) {
           TelemetryStopwatch.cancel(TELEMETRY_UPLOAD, this);
           if (hrProvider) {
-            hrProvider.recordEvent("uploadClientFailure", now);
+            try {
+              hrProvider.recordEvent("uploadClientFailure", now);
+            } catch (ex) {
+              this._log.error("Error when recording client failure: " +
+                              CommonUtils.exceptionStr(ex));
+            }
           }
           throw ex;
         }

@@ -32,21 +32,21 @@ class TestRecursiveMakeTraversal(unittest.TestCase):
         traversal.add('', dirs=['D'])
         traversal.add('A')
         traversal.add('B', dirs=['E', 'F'])
-        traversal.add('C', parallel=['G', 'H'])
-        traversal.add('D', parallel=['I'], dirs=['K'])
-        traversal.add('D', parallel=['J'], dirs=['L'])
+        traversal.add('C', dirs=['G', 'H'])
+        traversal.add('D', dirs=['I', 'K'])
+        traversal.add('D', dirs=['J', 'L'])
         traversal.add('E')
         traversal.add('F')
         traversal.add('G')
         traversal.add('H')
         traversal.add('I', dirs=['M', 'N'])
-        traversal.add('J', parallel=['O', 'P'])
-        traversal.add('K', parallel=['Q', 'R'])
+        traversal.add('J', dirs=['O', 'P'])
+        traversal.add('K', dirs=['Q', 'R'])
         traversal.add('L', dirs=['S'])
         traversal.add('M')
         traversal.add('N', dirs=['T'])
         traversal.add('O')
-        traversal.add('P', parallel=['U'])
+        traversal.add('P', dirs=['U'])
         traversal.add('Q')
         traversal.add('R', dirs=['V'])
         traversal.add('S', dirs=['W'])
@@ -56,8 +56,14 @@ class TestRecursiveMakeTraversal(unittest.TestCase):
         traversal.add('W', dirs=['X'])
         traversal.add('X')
 
-        start, deps = traversal.compute_dependencies()
+        parallels = set(('G', 'H', 'I', 'J', 'O', 'P', 'Q', 'R', 'U'))
+        def filter(current, subdirs):
+            return (current, [d for d in subdirs.dirs if d in parallels],
+                [d for d in subdirs.dirs if d not in parallels])
+
+        start, deps = traversal.compute_dependencies(filter)
         self.assertEqual(start, ('X',))
+        self.maxDiff = None
         self.assertEqual(deps, {
             'A': ('',),
             'B': ('A',),
@@ -85,21 +91,21 @@ class TestRecursiveMakeTraversal(unittest.TestCase):
             'X': ('W',),
         })
 
-        self.assertEqual(list(traversal.traverse('')),
+        self.assertEqual(list(traversal.traverse('', filter)),
                          ['', 'A', 'B', 'E', 'F', 'C', 'G', 'H', 'D', 'I',
                          'M', 'N', 'T', 'J', 'O', 'P', 'U', 'K', 'Q', 'R',
                          'V', 'L', 'S', 'W', 'X'])
 
-        self.assertEqual(list(traversal.traverse('C')),
+        self.assertEqual(list(traversal.traverse('C', filter)),
                          ['C', 'G', 'H'])
 
     def test_traversal_2(self):
         traversal = RecursiveMakeTraversal()
         traversal.add('', dirs=['A', 'B', 'C'])
         traversal.add('A')
-        traversal.add('B', static=['D'], dirs=['E', 'F'])
-        traversal.add('C', parallel=['G', 'H'], dirs=['I'])
-        # Don't register D
+        traversal.add('B', dirs=['D', 'E', 'F'])
+        traversal.add('C', dirs=['G', 'H', 'I'])
+        traversal.add('D')
         traversal.add('E')
         traversal.add('F')
         traversal.add('G')
@@ -116,16 +122,16 @@ class TestRecursiveMakeTraversal(unittest.TestCase):
             'E': ('D',),
             'F': ('E',),
             'G': ('C',),
-            'H': ('C',),
-            'I': ('G', 'H'),
+            'H': ('G',),
+            'I': ('H',),
         })
 
     def test_traversal_filter(self):
         traversal = RecursiveMakeTraversal()
         traversal.add('', dirs=['A', 'B', 'C'])
         traversal.add('A')
-        traversal.add('B', static=['D'], dirs=['E', 'F'])
-        traversal.add('C', parallel=['G', 'H'], dirs=['I'])
+        traversal.add('B', dirs=['D', 'E', 'F'])
+        traversal.add('C', dirs=['G', 'H', 'I'])
         traversal.add('D')
         traversal.add('E')
         traversal.add('F')
@@ -136,18 +142,19 @@ class TestRecursiveMakeTraversal(unittest.TestCase):
         def filter(current, subdirs):
             if current == 'B':
                 current = None
-            return current, subdirs.parallel, subdirs.dirs
+            return current, [], subdirs.dirs
 
         start, deps = traversal.compute_dependencies(filter)
         self.assertEqual(start, ('I',))
         self.assertEqual(deps, {
             'A': ('',),
             'C': ('F',),
-            'E': ('A',),
+            'D': ('A',),
+            'E': ('D',),
             'F': ('E',),
             'G': ('C',),
-            'H': ('C',),
-            'I': ('G', 'H'),
+            'H': ('G',),
+            'I': ('H',),
         })
 
 class TestRecursiveMakeBackend(BackendTester):
@@ -212,8 +219,7 @@ class TestRecursiveMakeBackend(BackendTester):
 
         lines = [l.strip() for l in open(p, 'rt').readlines()[2:]]
         self.assertEqual(lines, [
-            'DIRS := dir1',
-            'PARALLEL_DIRS := dir2',
+            'DIRS := dir1 dir2',
             'TEST_DIRS := dir3',
         ])
 
@@ -262,9 +268,6 @@ class TestRecursiveMakeBackend(BackendTester):
                 'CMMSRCS += bar.mm',
                 'CMMSRCS += foo.mm',
             ],
-            'CPP_UNIT_TESTS': [
-                'CPP_UNIT_TESTS += foo.cpp',
-            ],
             'CSRCS': [
                 'CSRCS += bar.c',
                 'CSRCS += foo.c',
@@ -280,14 +283,6 @@ class TestRecursiveMakeBackend(BackendTester):
                 'EXTRA_PP_COMPONENTS += bar.pp.js',
                 'EXTRA_PP_COMPONENTS += foo.pp.js',
             ],
-            'EXTRA_JS_MODULES': [
-                'EXTRA_JS_MODULES += bar.jsm',
-                'EXTRA_JS_MODULES += foo.jsm',
-            ],
-            'EXTRA_PP_JS_MODULES': [
-                'EXTRA_PP_JS_MODULES += bar.pp.jsm',
-                'EXTRA_PP_JS_MODULES += foo.pp.jsm',
-            ],
             'FAIL_ON_WARNINGS': [
                 'FAIL_ON_WARNINGS := 1',
             ],
@@ -299,20 +294,8 @@ class TestRecursiveMakeBackend(BackendTester):
                 'HOST_CSRCS += bar.c',
                 'HOST_CSRCS += foo.c',
             ],
-            'HOST_LIBRARY_NAME': [
-                'HOST_LIBRARY_NAME := host_bar',
-            ],
             'MSVC_ENABLE_PGO': [
                 'MSVC_ENABLE_PGO := 1',
-            ],
-            'OS_LIBS': [
-                'OS_LIBS += foo.so',
-                'OS_LIBS += -l123',
-                'OS_LIBS += bar.a',
-            ],
-            'SDK_LIBRARY': [
-                'SDK_LIBRARY += bar.sdk',
-                'SDK_LIBRARY += foo.sdk',
             ],
             'SSRCS': [
                 'SSRCS += baz.S',

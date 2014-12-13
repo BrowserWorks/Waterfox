@@ -8,6 +8,7 @@
 
 #include "gfxAndroidPlatform.h"
 #include "mozilla/gfx/2D.h"
+#include "mozilla/CountingAllocatorBase.h"
 #include "mozilla/Preferences.h"
 
 #include "gfx2DGlue.h"
@@ -43,6 +44,9 @@ static FT_Library gPlatformFTLibrary = nullptr;
 class FreetypeReporter MOZ_FINAL : public nsIMemoryReporter,
                                    public CountingAllocatorBase<FreetypeReporter>
 {
+private:
+    ~FreetypeReporter() {}
+
 public:
     NS_DECL_ISUPPORTS
 

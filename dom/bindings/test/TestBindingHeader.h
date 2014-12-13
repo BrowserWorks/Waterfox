@@ -184,6 +184,10 @@ public:
   int8_t CachedWritableByte();
   void SetCachedWritableByte(int8_t);
 
+  void UnsafePrerenderMethod();
+  int32_t UnsafePrerenderWritable();
+  void SetUnsafePrerenderWritable(int32_t);
+  int32_t UnsafePrerenderReadonly();
   int16_t ReadonlyShort();
   int16_t WritableShort();
   void SetWritableShort(int16_t);
@@ -457,6 +461,8 @@ public:
   void PassVariadicTypedArray(const Sequence<Float32Array>&);
   void PassVariadicNullableTypedArray(const Sequence<Nullable<Float32Array> >&);
   void ReceiveUint8Array(JSContext*, JS::MutableHandle<JSObject*>);
+  void SetUint8ArrayAttr(const Uint8Array&);
+  void GetUint8ArrayAttr(JSContext*, JS::MutableHandle<JSObject*>);
 
   // DOMString types
   void PassString(const nsAString&);
@@ -466,6 +472,7 @@ public:
   void PassOptionalNullableString(const Optional<nsAString>&);
   void PassOptionalNullableStringWithDefaultValue(const nsAString&);
   void PassVariadicString(const Sequence<nsString>&);
+  void ReceiveString(DOMString&);
 
   // ByteString types
   void PassByteString(const nsCString&);
@@ -473,6 +480,16 @@ public:
   void PassOptionalByteString(const Optional<nsCString>&);
   void PassOptionalNullableByteString(const Optional<nsCString>&);
   void PassVariadicByteString(const Sequence<nsCString>&);
+
+  // ScalarValueString types
+  void PassSVS(const nsAString&);
+  void PassNullableSVS(const nsAString&);
+  void PassOptionalSVS(const Optional<nsAString>&);
+  void PassOptionalSVSWithDefaultValue(const nsAString&);
+  void PassOptionalNullableSVS(const Optional<nsAString>&);
+  void PassOptionalNullableSVSWithDefaultValue(const nsAString&);
+  void PassVariadicSVS(const Sequence<nsString>&);
+  void ReceiveSVS(DOMString&);
 
   // Enumerated types
   void PassEnum(TestEnum);
@@ -591,6 +608,7 @@ public:
   void PassUnionWithMozMap(const StringMozMapOrString&);
   void PassUnionWithMozMapAndSequence(const StringMozMapOrStringSequence&);
   void PassUnionWithSequenceAndMozMap(const StringSequenceOrStringMozMap&);
+  void PassUnionWithSVS(const ScalarValueStringOrLong&);
 #endif
   void PassNullableUnion(JSContext*, const Nullable<ObjectOrLong>&);
   void PassOptionalUnion(JSContext*, const Optional<ObjectOrLong>&);

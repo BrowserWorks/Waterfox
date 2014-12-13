@@ -51,7 +51,7 @@ _SUBDIR_CONFIG_ARGS="$ac_configure_args"
 dnl Set the version number of the libs included with mozilla
 dnl ========================================================
 MOZJPEG=62
-MOZPNG=10610
+MOZPNG=10613
 NSPR_VERSION=4
 NSPR_MINVER=4.10.3
 NSS_VERSION=3
@@ -72,7 +72,7 @@ GCONF_VERSION=1.2.1
 GIO_VERSION=2.20
 STARTUP_NOTIFICATION_VERSION=0.8
 DBUS_VERSION=0.60
-SQLITE_VERSION=3.8.5
+SQLITE_VERSION=3.8.6
 
 MSMANIFEST_TOOL=
 
@@ -261,6 +261,7 @@ if test -n "$gonkdir" ; then
         MOZ_OMX_ENCODER=1
         AC_SUBST(MOZ_OMX_ENCODER)
         AC_DEFINE(MOZ_OMX_ENCODER)
+	MOZ_FMP4=1
         ;;
     19)
         GONK_INCLUDES="-I$gonkdir/frameworks/native/include -I$gonkdir/frameworks/av/include -I$gonkdir/frameworks/av/include/media -I$gonkdir/frameworks/av/include/camera -I$gonkdir/frameworks/native/include/media/openmax -I$gonkdir/frameworks/av/media/libstagefright/include"
@@ -275,7 +276,7 @@ if test -n "$gonkdir" ; then
         MOZ_AUDIO_OFFLOAD=1
         AC_SUBST(MOZ_AUDIO_OFFLOAD)
         AC_DEFINE(MOZ_AUDIO_OFFLOAD)
-
+	MOZ_FMP4=1
         ;;
     *)
         AC_MSG_ERROR([Unsupported platform version: $ANDROID_VERSION])
@@ -959,36 +960,9 @@ TARGET_MD_ARCH=unix
 DIRENT_INO=d_ino
 MOZ_USER_DIR=".mozilla"
 
-MOZ_JPEG_CFLAGS=
-MOZ_JPEG_LIBS='$(call EXPAND_LIBNAME_PATH,mozjpeg,$(DEPTH)/media/libjpeg)'
-MOZ_BZ2_CFLAGS=
-MOZ_BZ2_LIBS='$(call EXPAND_LIBNAME_PATH,bz2,$(DEPTH)/modules/libbz2/src)'
-MOZ_PNG_CFLAGS="-I$_objdir/dist/include" # needed for freetype compilation
-MOZ_PNG_LIBS='$(call EXPAND_LIBNAME_PATH,mozpng,$(DEPTH)/media/libpng)'
-
-MOZ_JS_STATIC_LIBS='$(call EXPAND_LIBNAME_PATH,js_static,$(LIBXUL_DIST)/lib)'
-MOZ_JS_SHARED_LIBS='$(call EXPAND_LIBNAME_PATH,mozjs,$(LIBXUL_DIST)/lib)'
 MOZ_FIX_LINK_PATHS='-Wl,-rpath-link,$(LIBXUL_DIST)/bin -Wl,-rpath-link,$(prefix)/lib'
-XPCOM_FROZEN_LDOPTS='$(call EXPAND_LIBNAME_PATH,xul mozalloc,$(LIBXUL_DIST)/bin)'
-LIBXUL_LIBS='$(XPCOM_FROZEN_LDOPTS)'
-XPCOM_GLUE_LDOPTS='$(LIBXUL_DIST)/lib/$(LIB_PREFIX)xpcomglue_s.$(LIB_SUFFIX) $(XPCOM_FROZEN_LDOPTS)'
-XPCOM_STANDALONE_GLUE_LDOPTS='$(LIBXUL_DIST)/lib/$(LIB_PREFIX)xpcomglue.$(LIB_SUFFIX)'
-
-# These are specially defined on Windows only
-case "$target" in
-*-mingw*)
-  XPCOM_STATICRUNTIME_GLUE_LDOPTS='$(LIBXUL_DIST)/lib/$(LIB_PREFIX)xpcomglue_staticruntime_s.$(LIB_SUFFIX) $(XPCOM_FROZEN_LDOPTS)'
-  XPCOM_STANDALONE_STATICRUNTIME_GLUE_LDOPTS='$(LIBXUL_DIST)/lib/$(LIB_PREFIX)xpcomglue_staticruntime.$(LIB_SUFFIX)'
-  ;;
-*)
-  XPCOM_STATICRUNTIME_GLUE_LDOPTS=$XPCOM_GLUE_LDOPTS
-  XPCOM_STANDALONE_STATICRUNTIME_GLUE_LDOPTS=$XPCOM_STANDALONE_GLUE_LDOPTS
-  ;;
-esac
 
 MOZ_FS_LAYOUT=unix
-
-MOZ_COMPONENT_NSPR_LIBS='-L$(LIBXUL_DIST)/bin $(NSPR_LIBS)'
 
 USE_DEPENDENT_LIBS=1
 
@@ -1397,8 +1371,6 @@ if test "$GNU_CC"; then
       AC_MSG_RESULT("$result")
       if test "$result" = "yes"; then
           HAVE_X86_AVX2=1
-          AC_DEFINE(HAVE_X86_AVX2)
-          AC_SUBST(HAVE_X86_AVX2)
       fi
     esac
 
@@ -1496,14 +1468,14 @@ if test "$GNU_CXX"; then
     # -Woverloaded-virtual - ???
     # -Werror=return-type - catches missing returns, zero false positives
     # -Werror=int-to-pointer-cast - catches cast to pointer from integer of different size
-    # -Wtype-limits - catches overflow bugs, few false positives
+    # -Werror=type-limits - catches overflow bugs, few false positives
     # -Wempty-body - catches bugs, e.g. "if (c); foo();", few false positives
     # -Wsign-compare - catches comparison of signed and unsigned types
     #
     _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Wall -Wpointer-arith -Woverloaded-virtual"
     MOZ_CXX_SUPPORTS_WARNING(-W, error=return-type, ac_cxx_has_werror_return_type)
     MOZ_CXX_SUPPORTS_WARNING(-W, error=int-to-pointer-cast, ac_cxx_has_werror_int_to_pointer_cast)
-    MOZ_CXX_SUPPORTS_WARNING(-W, type-limits, ac_cxx_has_wtype_limits)
+    MOZ_CXX_SUPPORTS_WARNING(-W, error=type-limits, ac_cxx_has_werror_type_limits)
     MOZ_CXX_SUPPORTS_WARNING(-W, empty-body, ac_cxx_has_wempty_body)
     MOZ_CXX_SUPPORTS_WARNING(-W, sign-compare, ac_cxx_has_sign_compare)
 
@@ -2018,7 +1990,10 @@ ia64*-hpux*)
     TARGET_NSPR_MDCPUCFG='\"md/_linux.cfg\"'
 
     MOZ_GFX_OPTIMIZE_MOBILE=1
-    MOZ_OPTIMIZE_FLAGS="-Os -freorder-blocks -fno-reorder-functions"
+    MOZ_OPTIMIZE_FLAGS="-Os -fno-reorder-functions"
+    if test -z "$CLANG_CC"; then
+       MOZ_OPTIMIZE_FLAGS="-freorder-blocks $MOZ_OPTIMIZE_FLAGS"
+    fi
     ;;
 
 *-*linux*)
@@ -2035,7 +2010,10 @@ ia64*-hpux*)
             MOZ_OPTIMIZE_SIZE_TWEAK="-finline-limit=50"
         esac
         MOZ_PGO_OPTIMIZE_FLAGS="-O3"
-        MOZ_OPTIMIZE_FLAGS="-Os -freorder-blocks $MOZ_OPTIMIZE_SIZE_TWEAK"
+        MOZ_OPTIMIZE_FLAGS="-Os $MOZ_OPTIMIZE_SIZE_TWEAK"
+        if test -z "$CLANG_CC"; then
+           MOZ_OPTIMIZE_FLAGS="-freorder-blocks $MOZ_OPTIMIZE_FLAGS"
+        fi
     fi
 
     TARGET_NSPR_MDCPUCFG='\"md/_linux.cfg\"'
@@ -2061,7 +2039,6 @@ ia64*-hpux*)
     MC=mc.exe
     # certain versions of cygwin's makedepend barf on the
     # #include <string> vs -I./dist/include/string issue so don't use it
-    XPCOM_FROZEN_LDOPTS='$(call EXPAND_LIBNAME_PATH,xul mozalloc,$(LIBXUL_DIST)/lib)'
     if test -n "$GNU_CC" -o -n "$CLANG_CC"; then
         CC="$CC -mwindows"
         CXX="$CXX -mwindows"
@@ -2082,6 +2059,9 @@ ia64*-hpux*)
         MOZ_FIX_LINK_PATHS=
         DLL_PREFIX=
         IMPORT_LIB_SUFFIX=dll.a
+
+        WIN32_CONSOLE_EXE_LDFLAGS=-mconsole
+        WIN32_GUI_EXE_LDFLAGS=-mwindows
 
         # We use mix of both POSIX and Win32 printf format across the tree, so format
         # warnings are useless on mingw.
@@ -2115,13 +2095,21 @@ ia64*-hpux*)
         MKCSHLIB='$(LD) -NOLOGO -DLL -OUT:$@ -PDB:$(LINK_PDBFILE) $(DSO_LDOPTS)'
         MKSHLIB_FORCE_ALL=
         MKSHLIB_UNFORCE_ALL=
-        DSO_LDOPTS=-SUBSYSTEM:WINDOWS
+        dnl Set subsystem version 5 for Windows XP.
+        if test "$CPU_ARCH" = "x86"; then
+            WIN32_SUBSYSTEM_VERSION=5.01
+        else
+            WIN32_SUBSYSTEM_VERSION=5.02
+        fi
+        WIN32_CONSOLE_EXE_LDFLAGS=-SUBSYSTEM:CONSOLE,$WIN32_SUBSYSTEM_VERSION
+        WIN32_GUI_EXE_LDFLAGS=-SUBSYSTEM:WINDOWS,$WIN32_SUBSYSTEM_VERSION
+        DSO_LDOPTS=-SUBSYSTEM:WINDOWS,$WIN32_SUBSYSTEM_VERSION
         _USE_CPP_INCLUDE_FLAG=1
         _DEFINES_CFLAGS='-FI $(DEPTH)/dist/include/mozilla-config.h -DMOZILLA_CLIENT'
         _DEFINES_CXXFLAGS='-FI $(DEPTH)/dist/include/mozilla-config.h -DMOZILLA_CLIENT'
         CFLAGS="$CFLAGS -W3 -Gy"
         CXXFLAGS="$CXXFLAGS -W3 -Gy"
-        if test "$_CC_SUITE" -ge "11"; then
+        if test "$_CC_SUITE" -ge "11" -a "$CPU_ARCH" = "x86"; then
             dnl VS2012+ defaults to -arch:SSE2.
             CFLAGS="$CFLAGS -arch:IA32"
             CXXFLAGS="$CXXFLAGS -arch:IA32"
@@ -2157,7 +2145,7 @@ ia64*-hpux*)
         CFLAGS="$CFLAGS -we4553"
         CXXFLAGS="$CXXFLAGS -we4553"
         LIBS="$LIBS kernel32.lib user32.lib gdi32.lib winmm.lib wsock32.lib advapi32.lib secur32.lib netapi32.lib"
-        MOZ_DEBUG_LDFLAGS=''
+        MOZ_DEBUG_LDFLAGS='-DEBUG'
         WARNINGS_AS_ERRORS='-WX'
         MOZ_OPTIMIZE_FLAGS='-O1 -Oi'
         MOZ_FIX_LINK_PATHS=
@@ -2189,6 +2177,10 @@ ia64*-hpux*)
         dnl both SSSE3 and SSE4.1.
         HAVE_TOOLCHAIN_SUPPORT_MSSSE3=1
         HAVE_TOOLCHAIN_SUPPORT_MSSE4_1=1
+        if test "$_CC_SUITE" -ge "11"; then
+            dnl allow AVX2 code from VS2012
+            HAVE_X86_AVX2=1
+        fi
         MOZ_MEMORY=1
     fi
     AC_DEFINE(HAVE_SNPRINTF)
@@ -2505,33 +2497,6 @@ AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 AC_LANG_CPLUSPLUS
 AC_LANG_C
-AC_MSG_CHECKING(for ssize_t)
-AC_CACHE_VAL(ac_cv_type_ssize_t,
- [AC_TRY_COMPILE([#include <stdio.h>
-                  #include <sys/types.h>],
-                 [ssize_t foo = 0;],
-                 [ac_cv_type_ssize_t=true],
-                 [ac_cv_type_ssize_t=false])])
-if test "$ac_cv_type_ssize_t" = true ; then
-  AC_DEFINE(HAVE_SSIZE_T)
-  AC_MSG_RESULT(yes)
-else
-  AC_MSG_RESULT(no)
-fi
-AC_STRUCT_ST_BLKSIZE
-AC_MSG_CHECKING(for siginfo_t)
-AC_CACHE_VAL(ac_cv_siginfo_t,
- [AC_TRY_COMPILE([#define _POSIX_C_SOURCE 199506L
-                  #include <signal.h>],
-                 [siginfo_t* info;],
-                 [ac_cv_siginfo_t=true],
-                 [ac_cv_siginfo_t=false])])
-if test "$ac_cv_siginfo_t" = true ; then
-  AC_DEFINE(HAVE_SIGINFO_T)
-  AC_MSG_RESULT(yes)
-else
-  AC_MSG_RESULT(no)
-fi
 
 AC_LANG_CPLUSPLUS
 
@@ -2552,10 +2517,10 @@ if test "$GNU_CC" -a "$OS_TARGET" != WINNT; then
   *)
     case $GCC_VERSION in
     4.4*|4.6*)
-      VISIBILITY_FLAGS='-I$(DIST)/system_wrappers -include $(topsrcdir)/config/gcc_hidden_dso_handle.h'
+      VISIBILITY_FLAGS='-I$(DIST)/system_wrappers -include $(MOZILLA_DIR)/config/gcc_hidden_dso_handle.h'
       ;;
     *)
-      VISIBILITY_FLAGS='-I$(DIST)/system_wrappers -include $(topsrcdir)/config/gcc_hidden.h'
+      VISIBILITY_FLAGS='-I$(DIST)/system_wrappers -include $(MOZILLA_DIR)/config/gcc_hidden.h'
       ;;
     esac
     WRAP_SYSTEM_INCLUDES=1
@@ -2679,7 +2644,7 @@ if test "$ac_cv_sockaddr_sa_len" = true ; then
   AC_DEFINE(HAVE_SA_LEN)
 fi
 
-AC_ARG_ENABLE(dtrace,
+MOZ_ARG_ENABLE_BOOL(dtrace,
               [  --enable-dtrace         build with dtrace support if available (default=no)],
               [enable_dtrace="yes"],)
 if test "x$enable_dtrace" = "xyes"; then
@@ -2800,12 +2765,12 @@ else
     LDFLAGS="$_SAVE_LDFLAGS"
 fi # $no_x
 
-AC_SUBST(XCFLAGS)
-AC_SUBST(XLDFLAGS)
-AC_SUBST(XLIBS)
-AC_SUBST(XEXT_LIBS)
-AC_SUBST(XT_LIBS)
-AC_SUBST(XSS_LIBS)
+AC_SUBST_LIST(XCFLAGS)
+AC_SUBST_LIST(XLDFLAGS)
+AC_SUBST_LIST(XLIBS)
+AC_SUBST_LIST(XEXT_LIBS)
+AC_SUBST_LIST(XT_LIBS)
+AC_SUBST_LIST(XSS_LIBS)
 
 dnl ========================================================
 dnl = pthread support
@@ -2962,7 +2927,7 @@ if test "$ac_cv_clock_monotonic" != "no"; then
     REALTIME_LIBS=$ac_cv_clock_monotonic
     AC_DEFINE(HAVE_CLOCK_MONOTONIC)
     AC_SUBST(HAVE_CLOCK_MONOTONIC)
-    AC_SUBST(REALTIME_LIBS)
+    AC_SUBST_LIST(REALTIME_LIBS)
 fi
 
 dnl check for wcrtomb/mbrtowc
@@ -3023,16 +2988,18 @@ fi
 
 AC_LANG_CPLUSPLUS
 
+ICONV_LIBS=
+
 case $target_os in
     darwin*|mingw*)
         ;;
     *)
 
-AC_CHECK_LIB(c, iconv, [_ICONV_LIBS="$_ICONV_LIBS"],
-    AC_CHECK_LIB(iconv, iconv, [_ICONV_LIBS="$_ICONV_LIBS -liconv"],
-        AC_CHECK_LIB(iconv, libiconv, [_ICONV_LIBS="$_ICONV_LIBS -liconv"])))
+AC_CHECK_LIB(c, iconv, [ICONV_LIBS=],
+    AC_CHECK_LIB(iconv, iconv, [ICONV_LIBS="-liconv"],
+        AC_CHECK_LIB(iconv, libiconv, [ICONV_LIBS="-liconv"])))
 _SAVE_LIBS=$LIBS
-LIBS="$LIBS $_ICONV_LIBS"
+LIBS="$LIBS $ICONV_LIBS"
 AC_CACHE_CHECK(
     [for iconv()],
     ac_cv_func_iconv,
@@ -3051,8 +3018,7 @@ AC_CACHE_CHECK(
     )
 if test "$ac_cv_func_iconv" = "yes"; then
     AC_DEFINE(HAVE_ICONV)
-    LIBXUL_LIBS="$LIBXUL_LIBS $_ICONV_LIBS"
-    LIBICONV="$_ICONV_LIBS"
+    LIBICONV="$ICONV_LIBS"
     AC_CACHE_CHECK(
         [for iconv() with const input],
         ac_cv_func_const_iconv,
@@ -3078,6 +3044,8 @@ LIBS=$_SAVE_LIBS
 
     ;;
 esac
+
+AC_SUBST_LIST(ICONV_LIBS)
 
 AM_LANGINFO_CODESET
 
@@ -3527,8 +3495,6 @@ LDFLAGS=$_SAVE_LDFLAGS
 LIBS=$_SAVE_LIBS
 
 AC_SUBST(MOZ_NATIVE_LIBEVENT)
-AC_SUBST(MOZ_LIBEVENT_CFLAGS)
-AC_SUBST(MOZ_LIBEVENT_LIBS)
 
 dnl ========================================================
 dnl = If NSS was not detected in the system,
@@ -3540,7 +3506,7 @@ MOZ_ARG_WITH_BOOL(system-nss,
     _USE_SYSTEM_NSS=1 )
 
 if test -n "$_USE_SYSTEM_NSS"; then
-    AM_PATH_NSS(3.17.1, [MOZ_NATIVE_NSS=1], [AC_MSG_ERROR([you don't have NSS installed or your version is too old])])
+    AM_PATH_NSS(3.17.2, [MOZ_NATIVE_NSS=1], [AC_MSG_ERROR([you don't have NSS installed or your version is too old])])
 fi
 
 if test -n "$MOZ_NATIVE_NSS"; then
@@ -3624,11 +3590,6 @@ fi # SKIP_LIBRARY_CHECKS
 dnl system ZLIB support
 dnl ========================================================
 MOZ_ZLIB_CHECK([1.2.3])
-
-if test "$MOZ_NATIVE_ZLIB" != 1; then
-    MOZ_ZLIB_CFLAGS="-I${_topsrcdir}/modules/zlib/src"
-    MOZ_ZLIB_LIBS='$(call EXPAND_LIBNAME_PATH,mozz,'"$MOZ_BUILD_ROOT"'/modules/zlib/src)'
-fi
 
 if test "$MOZ_LINKER" = 1 -a "$MOZ_NATIVE_ZLIB" != 1; then
     AC_MSG_ERROR([Custom dynamic linker requires --with-system-zlib])
@@ -3760,10 +3721,6 @@ dnl system libffi Support
 dnl ========================================================
 MOZ_CONFIG_FFI()
 
-if test -n "$MOZ_NATIVE_FFI"; then
-    MOZ_JS_STATIC_LIBS="$MOZ_JS_STATIC_LIBS $MOZ_FFI_LIBS"
-fi
-
 # split JS out by default to avoid VS2005 PGO crash (bug 591836).
 if test "$OS_ARCH" = "WINNT"; then
   JS_SHARED_LIBRARY=1
@@ -3811,7 +3768,11 @@ MOZ_WEBM=1
 MOZ_GSTREAMER=
 MOZ_DIRECTSHOW=
 MOZ_WMF=
-MOZ_FMP4=
+if test -n "$MOZ_FMP4"; then
+  MOZ_FMP4=1
+else
+  MOZ_FMP4=
+fi
 MOZ_EME=1
 MOZ_FFMPEG=
 MOZ_WEBRTC=1
@@ -3819,6 +3780,7 @@ MOZ_PEERCONNECTION=
 MOZ_SRTP=
 MOZ_WEBRTC_SIGNALING=
 MOZ_WEBRTC_ASSERT_ALWAYS=1
+MOZ_WEBRTC_HARDWARE_AEC_NS=
 MOZ_SCTP=
 MOZ_ANDROID_OMX=
 MOZ_MEDIA_NAVIGATOR=
@@ -3847,7 +3809,7 @@ MOZ_REFLOW_PERF=
 MOZ_SAFE_BROWSING=
 MOZ_HELP_VIEWER=
 MOZ_SPELLCHECK=1
-MOZ_ANDROID_OMTC=
+MOZ_ANDROID_APZ=
 MOZ_TOOLKIT_SEARCH=1
 MOZ_UI_LOCALE=en-US
 MOZ_UNIVERSALCHARDET=1
@@ -3872,6 +3834,7 @@ MOZ_ANDROID_BEAM=
 MOZ_LOCALE_SWITCHER=
 MOZ_ANDROID_SEARCH_ACTIVITY=
 MOZ_ANDROID_MLS_STUMBLER=
+MOZ_ANDROID_SHARE_OVERLAY=
 ACCESSIBILITY=1
 MOZ_TIME_MANAGER=
 MOZ_PAY=
@@ -3879,7 +3842,8 @@ MOZ_AUDIO_CHANNEL_MANAGER=
 NSS_NO_LIBPKIX=
 MOZ_CONTENT_SANDBOX=
 MOZ_GMP_SANDBOX=
-JSGC_USE_EXACT_ROOTING=
+MOZ_SANDBOX=1
+JSGC_USE_EXACT_ROOTING=1
 JSGC_GENERATIONAL=
 
 case "$target_os" in
@@ -3943,6 +3907,11 @@ else
     AC_MSG_RESULT([none])
     AC_MSG_ERROR([--enable-application=mobile is no longer supported.])
   fi
+  # Support comm-central.
+  if test -n "$EXTERNAL_SOURCE_DIR" ; then
+    MOZ_BUILD_APP="$EXTERNAL_SOURCE_DIR/$MOZ_BUILD_APP"
+    MOZ_BUILD_APP=`${PYTHON} -c "import mozpack.path as mozpath; print(mozpath.relpath(\"${MOZ_BUILD_APP}\", \"${srcdir}\"))"`
+  fi
   # We have a valid application only if it has a build.mk file in its top
   # directory.
   if test ! -f "${srcdir}/${MOZ_BUILD_APP}/build.mk" ; then
@@ -3985,6 +3954,19 @@ if test -z "$MOZ_GOOGLE_API_KEY"; then
     MOZ_GOOGLE_API_KEY=no-google-api-key
 fi
 AC_SUBST(MOZ_GOOGLE_API_KEY)
+
+# Allow to specify a Google OAuth API key file that contains the client ID and
+# the secret key to be used for various Google OAuth API requests.
+MOZ_ARG_WITH_STRING(google-oauth-api-keyfile,
+[ --with-google-oauth-api-keyfile=file  Use the client id and secret key contained in the given keyfile for Google OAuth API requests],
+ [MOZ_GOOGLE_OAUTH_API_CLIENTID=`cat $withval | cut -f 1 -d " "`
+  MOZ_GOOGLE_OAUTH_API_KEY=`cat $withval | cut -f 2 -d " "`])
+if test -z "$MOZ_GOOGLE_OAUTH_API_CLIENTID"; then
+    MOZ_GOOGLE_OAUTH_API_CLIENTID=no-google-oauth-api-clientid
+    MOZ_GOOGLE_OAUTH_API_KEY=no-google-oauth-api-key
+fi
+AC_SUBST(MOZ_GOOGLE_OAUTH_API_CLIENTID)
+AC_SUBST(MOZ_GOOGLE_OAUTH_API_KEY)
 
 # Allow specifying a Bing API key file that contains the client ID and the
 # secret key to be used for the Bing Translation API requests.
@@ -4171,7 +4153,6 @@ case "$MOZ_WIDGET_TOOLKIT" in
 
 cairo-windows)
     MOZ_WIDGET_TOOLKIT=windows
-    MOZ_WEBGL=1
     MOZ_PDF_PRINTING=1
     MOZ_INSTRUMENT_EVENT_LOOP=1
     if test -n "$GNU_CC"; then
@@ -4184,7 +4165,6 @@ cairo-gtk3)
     MOZ_ENABLE_GTK=1
     MOZ_ENABLE_GTK3=1
     MOZ_ENABLE_XREMOTE=1
-    MOZ_WEBGL=1
     MOZ_GL_DEFAULT_PROVIDER=GLX
 
     AC_DEFINE(MOZ_X11)
@@ -4204,7 +4184,6 @@ cairo-gtk2|cairo-gtk2-x11)
     MOZ_ENABLE_GTK=1
     MOZ_ENABLE_GTK2=1
     MOZ_ENABLE_XREMOTE=1
-    MOZ_WEBGL=1
     MOZ_GL_DEFAULT_PROVIDER=GLX
 
     AC_DEFINE(MOZ_X11)
@@ -4231,7 +4210,6 @@ cairo-qt)
       XT_LIBS=
     fi
 
-    MOZ_WEBGL=1
     USE_FC_FREETYPE=1
     TK_CFLAGS='$(MOZ_QT_CFLAGS)'
     TK_LIBS='$(MOZ_QT_LIBS)'
@@ -4244,14 +4222,14 @@ cairo-cocoa)
     MOZ_WIDGET_TOOLKIT=cocoa
     AC_DEFINE(MOZ_WIDGET_COCOA)
     LDFLAGS="$LDFLAGS -framework Cocoa -lobjc"
-    TK_LIBS='-framework CoreLocation -framework QuartzCore -framework Carbon -framework CoreAudio -framework AudioToolbox -framework AudioUnit -framework AddressBook -framework OpenGL'
+    # Use -Wl as a trick to avoid -framework and framework names from
+    # being separated by AC_SUBST_LIST.
+    TK_LIBS='-Wl,-framework,CoreLocation -Wl,-framework,QuartzCore -Wl,-framework,Carbon -Wl,-framework,CoreAudio -Wl,-framework,AudioToolbox -Wl,-framework,AudioUnit -Wl,-framework,AddressBook -Wl,-framework,OpenGL'
     TK_CFLAGS="-DNO_X11"
     CFLAGS="$CFLAGS $TK_CFLAGS"
     CXXFLAGS="$CXXFLAGS $TK_CFLAGS"
-    XPCOM_FROZEN_LDOPTS='$(LIBXUL_DIST)/bin/XUL $(call EXPAND_LIBNAME_PATH,mozalloc,$(LIBXUL_DIST)/bin)'
     MOZ_USER_DIR="Mozilla"
     MOZ_FS_LAYOUT=bundle
-    MOZ_WEBGL=1
     MOZ_INSTRUMENT_EVENT_LOOP=1
     ;;
 
@@ -4260,10 +4238,9 @@ cairo-uikit)
     AC_DEFINE(MOZ_WIDGET_UIKIT)
     LDFLAGS="$LDFLAGS -framework UIKit -lobjc"
     TK_CFLAGS="-DNO_X11"
-    TK_LIBS='-framework Foundation -framework CoreFoundation -framework CoreGraphics -framework CoreText'
+    TK_LIBS='-Wl,-framework,Foundation -Wl,-framework,CoreFoundation -Wl,-framework,CoreGraphics -Wl,-framework,CoreText'
     CFLAGS="$CFLAGS $TK_CFLAGS"
     CXXFLAGS="$CXXFLAGS $TK_CFLAGS"
-    XPCOM_FROZEN_LDOPTS='$(LIBXUL_DIST)/bin/XUL $(call EXPAND_LIBNAME_PATH,mozalloc,$(LIBXUL_DIST)/bin)'
     MOZ_USER_DIR="Mozilla"
     MOZ_FS_LAYOUT=bundle
     ;;
@@ -4273,19 +4250,16 @@ cairo-android)
     MOZ_WIDGET_TOOLKIT=android
     TK_CFLAGS='$(MOZ_CAIRO_CFLAGS) $(MOZ_PIXMAN_CFLAGS)'
     TK_LIBS='$(MOZ_CAIRO_LIBS) $(MOZ_PIXMAN_LIBS)'
-    MOZ_WEBGL=1
     MOZ_PDF_PRINTING=1
     MOZ_INSTRUMENT_EVENT_LOOP=1
     ;;
 
 cairo-gonk)
-    XPCOM_FROZEN_LDOPTS='$(call EXPAND_LIBNAME_PATH,xul mozalloc,$(LIBXUL_DIST)/lib)'
     AC_DEFINE(MOZ_WIDGET_GONK)
     AC_DEFINE(MOZ_TOUCH)
     MOZ_WIDGET_TOOLKIT=gonk
     TK_CFLAGS='$(MOZ_CAIRO_CFLAGS) $(MOZ_PIXMAN_CFLAGS)'
     TK_LIBS='$(MOZ_CAIRO_LIBS) $(MOZ_PIXMAN_LIBS)'
-    MOZ_WEBGL=1
     MOZ_PDF_PRINTING=1
     MOZ_TOUCH=1
     MOZ_INSTRUMENT_EVENT_LOOP=1
@@ -4310,6 +4284,7 @@ fi
 if test "$COMPILE_ENVIRONMENT"; then
   if test "$MOZ_ENABLE_GTK3"; then
     PKG_CHECK_MODULES(MOZ_GTK3, gtk+-3.0 >= $GTK3_VERSION gtk+-unix-print-3.0 glib-2.0 gobject-2.0 $GDK_PACKAGES)
+    MOZ_GTK3_CFLAGS="-I${_topsrcdir}/widget/gtk/compat-gtk3 $MOZ_GTK3_CFLAGS"
   fi
   if test "$MOZ_ENABLE_GTK"; then
     if test "$MOZ_X11"; then
@@ -4317,6 +4292,7 @@ if test "$COMPILE_ENVIRONMENT"; then
     fi
 
     PKG_CHECK_MODULES(MOZ_GTK2, gtk+-2.0 >= $GTK2_VERSION gtk+-unix-print-2.0 glib-2.0 gobject-2.0 $GDK_PACKAGES)
+    MOZ_GTK2_CFLAGS="-I${_topsrcdir}/widget/gtk/compat $MOZ_GTK2_CFLAGS"
   fi
 
 fi # COMPILE_ENVIRONMENT
@@ -4367,8 +4343,6 @@ then
     TK_LIBS="$TK_LIBS $MOZ_STARTUP_NOTIFICATION_LIBS"
 fi
 AC_SUBST(MOZ_ENABLE_STARTUP_NOTIFICATION)
-AC_SUBST(MOZ_STARTUP_NOTIFICATION_CFLAGS)
-AC_SUBST(MOZ_STARTUP_NOTIFICATION_LIBS)
 
 dnl ========================================================
 dnl Disable printing
@@ -4545,8 +4519,8 @@ then
 fi
 
 AC_SUBST(GTK_CONFIG)
-AC_SUBST(TK_CFLAGS)
-AC_SUBST(TK_LIBS)
+AC_SUBST_LIST(TK_CFLAGS)
+AC_SUBST_LIST(TK_LIBS)
 
 AC_SUBST(MOZ_ENABLE_GTK2)
 AC_SUBST(MOZ_ENABLE_GTK3)
@@ -4556,13 +4530,9 @@ AC_SUBST(MOZ_ENABLE_QTNETWORK)
 AC_SUBST(MOZ_ENABLE_QMSYSTEM2)
 AC_SUBST(MOZ_ENABLE_QTMOBILITY)
 AC_SUBST(MOZ_ENABLE_XREMOTE)
-AC_SUBST(MOZ_GTK2_CFLAGS)
-AC_SUBST(MOZ_GTK2_LIBS)
-AC_SUBST(MOZ_GTK3_CFLAGS)
-AC_SUBST(MOZ_GTK3_LIBS)
 AC_SUBST(MOZ_WIDGET_GTK)
-AC_SUBST(MOZ_QT_CFLAGS)
-AC_SUBST(MOZ_QT_LIBS)
+AC_SUBST_LIST(MOZ_QT_CFLAGS)
+AC_SUBST_LIST(MOZ_QT_LIBS)
 
 AC_SUBST(MOC)
 AC_SUBST(RCC)
@@ -4620,6 +4590,8 @@ fi
 
 if test -f "${_topsrcdir}/$REAL_BRANDING_DIRECTORY/configure.sh"; then
   . "${_topsrcdir}/$REAL_BRANDING_DIRECTORY/configure.sh"
+elif test -f "${EXTERNAL_SOURCE_DIR}/$REAL_BRANDING_DIRECTORY/configure.sh"; then
+  . "${EXTERNAL_SOURCE_DIR}/$REAL_BRANDING_DIRECTORY/configure.sh"
 fi
 
 AC_SUBST(MOZ_BRANDING_DIRECTORY)
@@ -4649,8 +4621,6 @@ then
     PKG_CHECK_MODULES(_PANGOCHK, pango >= $PANGO_VERSION)
 
     PKG_CHECK_MODULES(MOZ_PANGO, pango >= $PANGO_VERSION pangoft2 >= $PANGO_VERSION pangocairo >= $PANGO_VERSION)
-    AC_SUBST(MOZ_PANGO_CFLAGS)
-    AC_SUBST(MOZ_PANGO_LIBS)
 fi
 
 dnl ========================================================
@@ -4691,8 +4661,6 @@ then
     fi
 
     AC_SUBST(MOZ_ENABLE_GNOMEVFS)
-    AC_SUBST(MOZ_GNOMEVFS_CFLAGS)
-    AC_SUBST(MOZ_GNOMEVFS_LIBS)
 
     dnl ========================================================
     dnl = GIO support module
@@ -4723,8 +4691,6 @@ then
     fi
 
     AC_SUBST(MOZ_ENABLE_GIO)
-    AC_SUBST(MOZ_GIO_CFLAGS)
-    AC_SUBST(MOZ_GIO_LIBS)
 
     dnl ========================================================
     dnl = GConf support module
@@ -4753,8 +4719,6 @@ then
     fi
 
     AC_SUBST(MOZ_ENABLE_GCONF)
-    AC_SUBST(MOZ_GCONF_CFLAGS)
-    AC_SUBST(MOZ_GCONF_LIBS)
 fi
 
 dnl ========================================================
@@ -4777,8 +4741,6 @@ then
     fi
 fi
 AC_SUBST(MOZ_ENABLE_LIBPROXY)
-AC_SUBST(MOZ_LIBPROXY_CFLAGS)
-AC_SUBST(MOZ_LIBPROXY_LIBS)
 
 dnl ========================================================
 dnl = GNOME component (mozgnome)
@@ -4821,7 +4783,6 @@ then
 fi
 
 AC_SUBST(MOZ_ENABLE_GNOMEUI)
-AC_SUBST(MOZ_GNOMEUI_CFLAGS)
 
 dnl ========================================================
 dnl = dbus support
@@ -4844,10 +4805,6 @@ then
     fi
 fi
 AC_SUBST(MOZ_ENABLE_DBUS)
-AC_SUBST(MOZ_DBUS_CFLAGS)
-AC_SUBST(MOZ_DBUS_LIBS)
-AC_SUBST(MOZ_DBUS_GLIB_CFLAGS)
-AC_SUBST(MOZ_DBUS_GLIB_LIBS)
 
 dnl ========================================================
 dnl = Enable Android History instead of Places
@@ -4861,11 +4818,15 @@ if test -n "$MOZ_ANDROID_HISTORY"; then
 fi
 
 dnl ========================================================
-dnl = Build with the Android compositor
+dnl = Enable the C++ async pan/zoom code instead of the Java version
 dnl ========================================================
-if test -n "$MOZ_ANDROID_OMTC"; then
+MOZ_ARG_ENABLE_BOOL(android-apz,
+[  --enable-android-apz      Switch to C++ pan/zoom code],
+    MOZ_ANDROID_APZ=1,
+    MOZ_ANDROID_APZ=)
+if test -n "$MOZ_ANDROID_APZ"; then
      dnl Do this if defined in confvars.sh
-     AC_DEFINE(MOZ_ANDROID_OMTC)
+     AC_DEFINE(MOZ_ANDROID_APZ)
 fi
 
 dnl ========================================================
@@ -4907,6 +4868,13 @@ dnl = Include Mozilla Location Service Stumbler on Android
 dnl ========================================================
 if test -n "$MOZ_ANDROID_MLS_STUMBLER"; then
     AC_DEFINE(MOZ_ANDROID_MLS_STUMBLER)
+fi
+
+dnl ========================================================
+dnl = Include share overlay on Android
+dnl ========================================================
+if test -n "$MOZ_ANDROID_SHARE_OVERLAY"; then
+    AC_DEFINE(MOZ_ANDROID_SHARE_OVERLAY)
 fi
 
 dnl ========================================================
@@ -5029,14 +4997,27 @@ else
     MOZ_SYNTH_PICO=
 fi
 
+dnl ========================================================
+dnl = Force hardware AEC, disable webrtc.org AEC
+dnl ========================================================
+MOZ_ARG_ENABLE_BOOL(hardware-aec-ns,
+[  --enable-hardware-aec-ns   Enable support for hardware AEC and noise suppression],
+    MOZ_WEBRTC_HARDWARE_AEC_NS=1,
+    MOZ_WEBRTC_HARDWARE_AEC_NS=)
+
+if test -n "$MOZ_WEBRTC_HARDWARE_AEC_NS"; then
+    AC_DEFINE(MOZ_WEBRTC_HARDWARE_AEC_NS)
+fi
+
 AC_SUBST(MOZ_WEBRTC)
 AC_SUBST(MOZ_WEBRTC_LEAKING_TESTS)
 AC_SUBST(MOZ_WEBRTC_SIGNALING)
 AC_SUBST(MOZ_PEERCONNECTION)
 AC_SUBST(MOZ_WEBRTC_ASSERT_ALWAYS)
+AC_SUBST(MOZ_WEBRTC_HARDWARE_AEC_NS)
 AC_SUBST(MOZ_SCTP)
 AC_SUBST(MOZ_SRTP)
-AC_SUBST(MOZ_WEBRTC_X11_LIBS)
+AC_SUBST_LIST(MOZ_WEBRTC_X11_LIBS)
 
 dnl Use integers over floats for audio on B2G and Android
 dnl (regarless of the CPU architecture, because audio
@@ -5123,6 +5104,23 @@ if test -n "$MOZ_WEBM"; then
 fi;
 
 dnl ========================================================
+dnl = Apple platform decoder support
+dnl ========================================================
+if test "$MOZ_WIDGET_TOOLKIT" = "cocoa"; then
+  MOZ_APPLEMEDIA=1
+fi
+
+if test -n "$MOZ_APPLEMEDIA"; then
+  AC_DEFINE(MOZ_APPLEMEDIA)
+  # hack in frameworks for fmp4 - see bug 1029974
+  # We load VideoToolbox and CoreMedia dynamically, so they don't appear here.
+  LDFLAGS="$LDFLAGS -framework AudioToolbox"
+  dnl Verify CoreMedia is available.
+  AC_CHECK_HEADER([CoreMedia/CoreMedia.h], [],
+    [AC_MSG_ERROR([MacOS X 10.7 SDK or later is required])])
+fi
+
+dnl ========================================================
 dnl = DirectShow support
 dnl ========================================================
 if test "$OS_ARCH" = "WINNT"; then
@@ -5182,7 +5180,12 @@ fi;
 dnl ========================================================
 dnl = Built-in fragmented MP4 support.
 dnl ========================================================
-if test -n "$MOZ_WMF" -o -n "$MOZ_FFMPEG"; then
+
+if test "$OS_TARGET" = Android; then
+    MOZ_FMP4=1
+fi
+
+if test -n "$MOZ_WMF" -o -n "$MOZ_FFMPEG" -o -n "$MOZ_APPLEMEDIA"; then
     dnl Enable fragmented MP4 parser on Windows by default.
     dnl We will also need to enable it on other platforms as we implement
     dnl platform decoder support there too.
@@ -5226,22 +5229,6 @@ MOZ_ARG_ENABLE_BOOL(android-omx,
 
 if test -n "$MOZ_ANDROID_OMX"; then
   AC_DEFINE(MOZ_ANDROID_OMX)
-fi
-
-dnl ========================================================
-dnl = Disable platform MP3 decoder on OSX
-dnl ========================================================
-if test "$MOZ_WIDGET_TOOLKIT" = "cocoa"; then
-  MOZ_APPLEMEDIA=1
-fi
-
-MOZ_ARG_DISABLE_BOOL(apple-media,
-[  --disable-apple-media  Disable support for Apple AudioToolbox/VideoToolbox],
-    MOZ_APPLEMEDIA=,
-    MOZ_APPLEMEDIA=1)
-
-if test -n "$MOZ_APPLEMEDIA"; then
-  AC_DEFINE(MOZ_APPLEMEDIA)
 fi
 
 dnl ========================================================
@@ -5324,8 +5311,8 @@ if test -n "$MOZ_VPX"; then
 fi
 
 AC_SUBST(MOZ_NATIVE_LIBVPX)
-AC_SUBST(MOZ_LIBVPX_CFLAGS)
-AC_SUBST(MOZ_LIBVPX_LIBS)
+AC_SUBST_LIST(MOZ_LIBVPX_CFLAGS)
+AC_SUBST_LIST(MOZ_LIBVPX_LIBS)
 
 if test "$MOZ_WEBM"; then
     if test "$MOZ_SAMPLE_TYPE_FLOAT32"; then
@@ -5482,8 +5469,6 @@ if test -n "$MOZ_ALSA"; then
 fi
 
 AC_SUBST(MOZ_ALSA)
-AC_SUBST(MOZ_ALSA_CFLAGS)
-AC_SUBST(MOZ_ALSA_LIBS)
 
 dnl ========================================================
 dnl = Disable PulseAudio
@@ -5516,7 +5501,6 @@ if test -n "$MOZ_PULSEAUDIO"; then
 fi
 
 AC_SUBST(MOZ_PULSEAUDIO)
-AC_SUBST(MOZ_PULSEAUDIO_CFLAGS)
 
 dnl ========================================================
 dnl = Enable GStreamer
@@ -5570,9 +5554,6 @@ if test -n "$MOZ_GSTREAMER"; then
         AC_MSG_ERROR([gstreamer-plugins-base found, but no libgstvideo. Something has gone terribly wrong. Try reinstalling gstreamer-plugins-base; failing that, disable the gstreamer backend with --disable-gstreamer.])
     fi
     LDFLAGS=$_SAVE_LDFLAGS
-
-    AC_SUBST(GSTREAMER_CFLAGS)
-    AC_SUBST(GSTREAMER_LIBS)
 fi
 
 AC_SUBST(MOZ_GSTREAMER)
@@ -5683,12 +5664,29 @@ if test -n "${JAVA_BIN_PATH}" -o \
   if test -z "$KEYTOOL" -o "$KEYTOOL" = ":"; then
     AC_MSG_ERROR([The program keytool was not found.  Set \$JAVA_HOME to your Java SDK directory or use --with-java-bin-path={java-bin-dir}])
   fi
+
+  AC_MSG_CHECKING([for minimum required javac version = 1.7])
+
+  dnl Javac spits out something like `javac 1.7.0`. This line cuts off the 'javac'
+  _javac_version=$($JAVAC -version 2>&1 | cut -d ' ' -f 2)
+
+  dnl Here, we extract the major (1) and minor (7) version numbers from the
+  dnl acquired version string.
+  _javac_major_version=$(echo $_javac_version | cut -d '.' -f 1)
+  _javac_minor_version=$(echo $_javac_version | cut -d '.' -f 2)
+
+  AC_MSG_RESULT([$_javac_version])
+
+  dnl Fail if we have a version other than 1.7.X
+  if test "$_javac_major_version" -ne "1" -o \
+      \( "$_javac_minor_version" -ne "7" \); then
+      AC_MSG_ERROR([javac 1.7 is required.])
+  fi
 fi
 
 dnl ========================================================
 dnl = ANGLE OpenGL->D3D translator for WebGL
 dnl = * only applies to win32
-dnl = * enabled by default (shipping build); requires explicit --disable to disable
 dnl ========================================================
 
 MOZ_ANGLE_RENDERER=
@@ -5716,25 +5714,14 @@ x86_64)
   ;;
 esac
 
-MOZ_ARG_DISABLE_BOOL(webgl,
-[  --disable-webgl     Disable building of the WebGL implementation],
-    MOZ_WEBGL_DISABLED=1,
-    MOZ_WEBGL_DISABLED=)
-
 MOZ_ARG_ENABLE_BOOL(require-all-d3dc-versions,
 [  --enable-require-all-d3dc-versions Require all versions of the D3D compiler needed for supported Windows systems.],
     MOZ_REQUIRE_ALL_D3DCS=1,
     MOZ_REQUIRE_ALL_D3DCS=)
 
-if test -n "$MOZ_WEBGL_DISABLED"; then
-  MOZ_WEBGL=
-  MOZ_ANGLE_RENDERER=
-fi
-
-if test -n "$MOZ_WEBGL"; then
-  AC_DEFINE(MOZ_WEBGL)
-fi
-
+# This is potentially set in external mozconfig files; if it's set,
+# then the build exposes the "webgl" context name, which is reserved
+# for conformant implementations.
 if test -n "$MOZ_WEBGL_CONFORMANT"; then
   AC_DEFINE(MOZ_WEBGL_CONFORMANT)
 fi
@@ -5979,8 +5966,6 @@ if test -n "$MOZ_CRASHREPORTER"; then
   if test "$OS_TARGET" = "Linux" -o "$OS_ARCH" = "SunOS" && \
     test -z "$SKIP_LIBRARY_CHECKS"; then
     PKG_CHECK_MODULES(MOZ_GTHREAD, gthread-2.0)
-    AC_SUBST(MOZ_GTHREAD_CFLAGS)
-    AC_SUBST(MOZ_GTHREAD_LIBS)
   fi
 
   if test "$OS_ARCH" = "WINNT"; then
@@ -6190,12 +6175,11 @@ if test -n "$MOZ_TREE_FREETYPE"; then
    FT_FONT_FEATURE="#define CAIRO_HAS_FT_FONT 1"
    FT2_CFLAGS='-I$(topsrcdir)/modules/freetype2/include'
    CAIRO_FT_CFLAGS='-I$(topsrcdir)/modules/freetype2/include'
-   FT2_LIBS='$(call EXPAND_LIBNAME_PATH,freetype,$(DEPTH)/modules/freetype2/.libs)'
    CAIRO_FT_OSLIBS=''
    AC_DEFINE(HAVE_FT_BITMAP_SIZE_Y_PPEM)
    AC_DEFINE(HAVE_FT_GLYPHSLOT_EMBOLDEN)
    AC_DEFINE(HAVE_FT_LOAD_SFNT_TABLE)
-   AC_SUBST(CAIRO_FT_CFLAGS)
+   AC_SUBST_LIST(CAIRO_FT_CFLAGS)
 fi
 
 dnl ========================================================
@@ -6431,10 +6415,18 @@ fi
 AC_SUBST(NSS_NO_LIBPKIX)
 
 dnl ========================================================
+dnl = Sandboxing support
+dnl ========================================================
+MOZ_ARG_DISABLE_BOOL(sandbox,
+[  --disable-sandbox        Disable sandboxing support],
+    MOZ_SANDBOX=,
+    MOZ_SANDBOX=1)
+
+dnl ========================================================
 dnl = Content process sandboxing
 dnl ========================================================
 if test -n "$gonkdir"; then
-    MOZ_CONTENT_SANDBOX=1
+    MOZ_CONTENT_SANDBOX=$MOZ_SANDBOX
 fi
 
 MOZ_ARG_ENABLE_BOOL(content-sandbox,
@@ -6453,17 +6445,17 @@ dnl = Gecko Media Plugin sandboxing
 dnl ========================================================
 case $OS_TARGET in
 WINNT)
-    MOZ_GMP_SANDBOX=1
+    MOZ_GMP_SANDBOX=$MOZ_SANDBOX
     ;;
 Linux)
     case $CPU_ARCH in
     x86_64|x86)
-        MOZ_GMP_SANDBOX=1
+        MOZ_GMP_SANDBOX=$MOZ_SANDBOX
         ;;
     esac
     ;;
 Darwin)
-    MOZ_GMP_SANDBOX=1
+    MOZ_GMP_SANDBOX=$MOZ_SANDBOX
     ;;
 esac
 
@@ -6472,6 +6464,17 @@ if test -n "$MOZ_GMP_SANDBOX"; then
 fi
 
 AC_SUBST(MOZ_GMP_SANDBOX)
+
+if test -z "$MOZ_CONTENT_SANDBOX" -a -z "$MOZ_GMP_SANDBOX"; then
+    MOZ_SANDBOX=
+fi
+
+if test -n "$MOZ_SANDBOX"; then
+    AC_DEFINE(MOZ_SANDBOX)
+fi
+
+AC_SUBST(MOZ_SANDBOX)
+
 
 dnl ========================================================
 dnl =
@@ -6505,11 +6508,8 @@ MOZ_ARG_ENABLE_BOOL(system-sqlite,
 MOZ_NATIVE_SQLITE=1,
 MOZ_NATIVE_SQLITE= )
 
-if test -z "$MOZ_NATIVE_SQLITE"
+if test -n "$MOZ_NATIVE_SQLITE"
 then
-    SQLITE_CFLAGS=
-    SQLITE_LIBS='$(call EXPAND_LIBNAME_PATH,mozsqlite3,$(DIST)/lib)'
-else
     dnl ============================
     dnl === SQLite Version check ===
     dnl ============================
@@ -7106,7 +7106,7 @@ AC_SUBST(MOZ_JEMALLOC3)
 AC_SUBST(MOZ_NATIVE_JEMALLOC)
 AC_SUBST(MOZ_GLUE_LDFLAGS)
 AC_SUBST(MOZ_GLUE_PROGRAM_LDFLAGS)
-AC_SUBST(WIN32_CRT_LIBS)
+AC_SUBST_LIST(WIN32_CRT_LIBS)
 dnl Need to set this for make because NSS doesn't have configure
 AC_SUBST(DLLFLAGS)
 
@@ -7214,6 +7214,17 @@ MOZ_ARG_DISABLE_BOOL(gcgenerational,
     JSGC_GENERATIONAL=1 )
 if test -n "$JSGC_GENERATIONAL"; then
     AC_DEFINE(JSGC_GENERATIONAL)
+fi
+
+dnl ========================================================
+dnl = Use compacting GC
+dnl ========================================================
+MOZ_ARG_ENABLE_BOOL(gccompacting,
+[  --enable-gccompacting   Compact the JS heap by moving GC things],
+    JS_GCCOMPACTING=1,
+    JS_GCCOMPACTING= )
+if test -n "$JS_GCCOMPACTING"; then
+    AC_DEFINE(JS_GCCOMPACTING)
 fi
 
 dnl ========================================================
@@ -7874,9 +7885,6 @@ dnl =
 dnl ========================================================
 MOZ_ARG_HEADER(Static build options)
 
-AC_SUBST(LIBXUL_LIBS)
-XPCOM_LIBS="$LIBXUL_LIBS"
-
 if test "$OS_ARCH" = "WINNT"; then
   GKMEDIAS_SHARED_LIBRARY=1
   AC_DEFINE(GKMEDIAS_SHARED_LIBRARY)
@@ -7917,9 +7925,7 @@ if test -z "${GLIB_GMODULE_LIBS}" \
     GLIB_GMODULE_LIBS=`$GLIB_CONFIG gmodule --libs`
 fi
 
-AC_SUBST(GLIB_CFLAGS)
-AC_SUBST(GLIB_LIBS)
-AC_SUBST(GLIB_GMODULE_LIBS)
+AC_SUBST_LIST(GLIB_GMODULE_LIBS)
 
 dnl ========================================================
 dnl Graphics checks.
@@ -8049,15 +8055,13 @@ fi
 
 if test "$MOZ_TREE_PIXMAN"; then
     AC_DEFINE(MOZ_TREE_PIXMAN)
-    MOZ_PIXMAN_CFLAGS=""
-    MOZ_PIXMAN_LIBS='$(call EXPAND_LIBNAME_PATH,mozlibpixman,$(DEPTH)/gfx/cairo/libpixman/src)'
 else
     PKG_CHECK_MODULES(PIXMAN, pixman-1 >= 0.19.2)
     MOZ_PIXMAN_CFLAGS="$PIXMAN_CFLAGS"
     MOZ_PIXMAN_LIBS="$PIXMAN_LIBS"
 fi
 AC_SUBST(MOZ_PIXMAN_CFLAGS)
-AC_SUBST(MOZ_PIXMAN_LIBS)
+AC_SUBST_LIST(MOZ_PIXMAN_LIBS)
 
 # Check for headers defining standard int types.
 if test -n "$COMPILE_ENVIRONMENT"; then
@@ -8086,10 +8090,13 @@ if test "$MOZ_TREE_CAIRO"; then
         XLIB_SURFACE_FEATURE="#define CAIRO_HAS_XLIB_SURFACE 1"
         XLIB_XRENDER_SURFACE_FEATURE="#define CAIRO_HAS_XLIB_XRENDER_SURFACE 1"
         PS_SURFACE_FEATURE="#define CAIRO_HAS_PS_SURFACE 1"
+    fi
+    if test "$_HAVE_FREETYPE2"; then
         FT_FONT_FEATURE="#define CAIRO_HAS_FT_FONT 1"
         MOZ_ENABLE_CAIRO_FT=1
         CAIRO_FT_CFLAGS="$FT2_CFLAGS"
     fi
+
     case "$MOZ_WIDGET_TOOLKIT" in
       qt)
         QT_SURFACE_FEATURE="#define CAIRO_HAS_QT_SURFACE 1"
@@ -8131,7 +8138,6 @@ if test "$MOZ_TREE_CAIRO"; then
     AC_SUBST(MOZ_ENABLE_D2D_SURFACE)
     AC_SUBST(MOZ_ENABLE_D3D9_LAYER)
     AC_SUBST(MOZ_ENABLE_D3D10_LAYER)
-    AC_SUBST(CAIRO_FT_CFLAGS)
 
     AC_SUBST(PS_SURFACE_FEATURE)
     AC_SUBST(PDF_SURFACE_FEATURE)
@@ -8174,9 +8180,9 @@ else
 fi
 
 AC_SUBST(MOZ_TREE_CAIRO)
-AC_SUBST(MOZ_CAIRO_CFLAGS)
-AC_SUBST(MOZ_CAIRO_LIBS)
-AC_SUBST(MOZ_CAIRO_OSLIBS)
+AC_SUBST_LIST(MOZ_CAIRO_CFLAGS)
+AC_SUBST_LIST(MOZ_CAIRO_LIBS)
+AC_SUBST_LIST(MOZ_CAIRO_OSLIBS)
 AC_SUBST(MOZ_TREE_PIXMAN)
 
 dnl ========================================================
@@ -8375,6 +8381,12 @@ if test -n "$MOZ_SERVICES_SYNC"; then
   AC_DEFINE(MOZ_SERVICES_SYNC)
 fi
 
+dnl Build Services/CloudSync if required
+AC_SUBST(MOZ_SERVICES_CLOUDSYNC)
+if test -n "$MOZ_SERVICES_CLOUDSYNC"; then
+  AC_DEFINE(MOZ_SERVICES_CLOUDSYNC)
+fi
+
 dnl Build Captive Portal Detector if required
 AC_SUBST(MOZ_CAPTIVEDETECT)
 if test -n "$MOZ_CAPTIVEDETECT"; then
@@ -8390,14 +8402,6 @@ fi
 dnl ========================================================
 if test "$MOZ_DEBUG" -o "$NS_TRACE_MALLOC" -o "$MOZ_DMD"; then
     MOZ_COMPONENTS_VERSION_SCRIPT_LDFLAGS=
-fi
-
-if test "$MOZ_APP_COMPONENT_INCLUDE"; then
-  AC_DEFINE_UNQUOTED(MOZ_APP_COMPONENT_INCLUDE, "$MOZ_APP_COMPONENT_INCLUDE")
-fi
-
-if test "$MOZ_APP_COMPONENT_MODULES"; then
-  AC_DEFINE_UNQUOTED(MOZ_APP_COMPONENT_MODULES, $MOZ_APP_COMPONENT_MODULES)
 fi
 
 dnl ========================================================
@@ -8427,7 +8431,6 @@ AC_SUBST(MOZ_UPDATE_XTERM)
 AC_SUBST(MOZ_AUTH_EXTENSION)
 AC_SUBST(MOZ_PERMISSIONS)
 AC_SUBST(MOZ_PREF_EXTENSIONS)
-AC_SUBST(MOZ_JS_LIBS)
 AC_SUBST(MOZ_DEBUG)
 AC_SUBST(MOZ_DEBUG_SYMBOLS)
 AC_SUBST(MOZ_DEBUG_ENABLE_DEFS)
@@ -8448,7 +8451,6 @@ AC_SUBST(MOZ_SOCIAL)
 AC_SUBST(MOZ_TOOLKIT_SEARCH)
 AC_SUBST(MOZ_FEEDS)
 AC_SUBST(NS_PRINTING)
-AC_SUBST(MOZ_WEBGL)
 AC_SUBST(MOZ_HELP_VIEWER)
 AC_SUBST(TOOLCHAIN_PREFIX)
 
@@ -8465,7 +8467,7 @@ AC_SUBST(ENABLE_TESTS)
 AC_SUBST(MOZ_UNIVERSALCHARDET)
 AC_SUBST(ACCESSIBILITY)
 AC_SUBST(MOZ_SPELLCHECK)
-AC_SUBST(MOZ_ANDROID_OMTC)
+AC_SUBST(MOZ_ANDROID_APZ)
 AC_SUBST(MOZ_ANDROID_ANR_REPORTER)
 AC_SUBST(MOZ_CRASHREPORTER)
 AC_SUBST(MOZ_CRASHREPORTER_INJECTOR)
@@ -8493,6 +8495,7 @@ AC_SUBST(MOZ_ANDROID_BEAM)
 AC_SUBST(MOZ_LOCALE_SWITCHER)
 AC_SUBST(MOZ_DISABLE_GECKOVIEW)
 AC_SUBST(MOZ_ANDROID_SEARCH_ACTIVITY)
+AC_SUBST(MOZ_ANDROID_SHARE_OVERLAY)
 AC_SUBST(MOZ_ANDROID_MLS_STUMBLER)
 AC_SUBST(ENABLE_STRIP)
 AC_SUBST(PKG_SKIP_STRIP)
@@ -8503,12 +8506,6 @@ AC_SUBST(MOZ_COMPONENTS_VERSION_SCRIPT_LDFLAGS)
 AC_SUBST(MOZ_COMPONENT_NSPR_LIBS)
 
 AC_SUBST(MOZ_FIX_LINK_PATHS)
-AC_SUBST(XPCOM_LIBS)
-AC_SUBST(XPCOM_FROZEN_LDOPTS)
-AC_SUBST(XPCOM_GLUE_LDOPTS)
-AC_SUBST(XPCOM_STANDALONE_GLUE_LDOPTS)
-AC_SUBST(XPCOM_STATICRUNTIME_GLUE_LDOPTS)
-AC_SUBST(XPCOM_STANDALONE_STATICRUNTIME_GLUE_LDOPTS)
 
 AC_SUBST(USE_DEPENDENT_LIBS)
 
@@ -8591,7 +8588,6 @@ AC_SUBST(MOZ_CHILD_PROCESS_BUNDLE)
 # - MOZ_APP_ID: When set, used for application.ini's "ID" field, and
 # crash reporter server url.
 # - MOZ_PROFILE_MIGRATOR: When set, enables profile migrator.
-# - MOZ_EXTENSION_MANAGER: When set, enabled extension manager.
 
 if test -z "$MOZ_APP_NAME"; then
    MOZ_APP_NAME=`echo $MOZ_APP_BASENAME | tr A-Z a-z`
@@ -8624,7 +8620,6 @@ AC_SUBST(MOZ_APP_ID)
 AC_SUBST(MAR_CHANNEL_ID)
 AC_SUBST(ACCEPTED_MAR_CHANNEL_IDS)
 AC_SUBST(MOZ_PROFILE_MIGRATOR)
-AC_SUBST(MOZ_EXTENSION_MANAGER)
 AC_DEFINE_UNQUOTED(MOZ_APP_UA_NAME, "$MOZ_APP_UA_NAME")
 AC_SUBST(MOZ_APP_UA_NAME)
 AC_DEFINE_UNQUOTED(MOZ_APP_UA_VERSION, "$MOZ_APP_VERSION")
@@ -8702,24 +8697,30 @@ AC_SUBST(MOZ_NATIVE_PNG)
 AC_SUBST(MOZ_NATIVE_BZ2)
 
 AC_SUBST(MOZ_JPEG_CFLAGS)
-AC_SUBST(MOZ_JPEG_LIBS)
+AC_SUBST_LIST(MOZ_JPEG_LIBS)
 AC_SUBST(MOZ_BZ2_CFLAGS)
-AC_SUBST(MOZ_BZ2_LIBS)
+AC_SUBST_LIST(MOZ_BZ2_LIBS)
 AC_SUBST(MOZ_PNG_CFLAGS)
-AC_SUBST(MOZ_PNG_LIBS)
+AC_SUBST_LIST(MOZ_PNG_LIBS)
 
 if test "$MOZ_WIDGET_TOOLKIT" = gonk -a -n "$MOZ_NUWA_PROCESS"; then
     export MOZ_NUWA_PROCESS
     AC_DEFINE(MOZ_NUWA_PROCESS)
 fi
 AC_SUBST(MOZ_NUWA_PROCESS)
+if test "$MOZ_WIDGET_TOOLKIT" = gonk -a -n "$MOZ_B2G_LOADER"; then
+    if test -z "$MOZ_NUWA_PROCESS"; then
+       AC_MSG_ERROR([B2G loader works with Nuwa]);
+    fi
+    export MOZ_B2G_LOADER
+    AC_DEFINE(MOZ_B2G_LOADER)
+fi
+AC_SUBST(MOZ_B2G_LOADER)
 
 AC_SUBST(NSPR_CFLAGS)
-AC_SUBST(NSPR_LIBS)
 AC_SUBST(MOZ_NATIVE_NSPR)
 
 AC_SUBST(NSS_CFLAGS)
-AC_SUBST(NSS_LIBS)
 AC_SUBST(MOZ_NATIVE_NSS)
 AC_SUBST(NSS_DISABLE_DBM)
 
@@ -8768,6 +8769,7 @@ AC_SUBST(CPU_ARCH)
 AC_SUBST(INTEL_ARCHITECTURE)
 AC_SUBST(HAVE_TOOLCHAIN_SUPPORT_MSSSE3)
 AC_SUBST(HAVE_TOOLCHAIN_SUPPORT_MSSE4_1)
+AC_SUBST(HAVE_X86_AVX2)
 AC_SUBST(GCC_USE_GNU_LD)
 
 AC_SUBST(MOZ_CHROME_FILE_FORMAT)
@@ -8794,7 +8796,8 @@ AC_SUBST(CC_VERSION)
 AC_SUBST(CXX_VERSION)
 AC_SUBST(MSMANIFEST_TOOL)
 AC_SUBST(NS_ENABLE_TSF)
-AC_SUBST(MOZ_APP_EXTRA_LIBS)
+AC_SUBST(WIN32_CONSOLE_EXE_LDFLAGS)
+AC_SUBST(WIN32_GUI_EXE_LDFLAGS)
 
 AC_SUBST(MOZ_WAVE)
 AC_SUBST(MOZ_VORBIS)
@@ -8820,6 +8823,7 @@ AC_SUBST(VPX_X86_ASM)
 AC_SUBST(VPX_ARM_ASM)
 AC_SUBST(VPX_NEED_OBJ_INT_EXTRACT)
 AC_SUBST(MOZ_INSTRUMENT_EVENT_LOOP)
+AC_SUBST(MOZ_CODE_COVERAGE)
 AC_SUBST(LIBJPEG_TURBO_AS)
 AC_SUBST(LIBJPEG_TURBO_ASFLAGS)
 AC_SUBST(LIBJPEG_TURBO_X86_ASM)
@@ -8964,14 +8968,7 @@ fi
 
 MOZ_CONFIG_ICU()
 
-if test -n "$MOZ_NATIVE_ICU"; then
-    MOZ_JS_STATIC_LIBS="$MOZ_JS_STATIC_LIBS $MOZ_ICU_LIBS"
-fi
-
-if test -n "$JS_SHARED_LIBRARY"; then
-  MOZ_JS_LIBS="$MOZ_JS_SHARED_LIBS"
-else
-  MOZ_JS_LIBS="$MOZ_JS_STATIC_LIBS"
+if test -z "$JS_SHARED_LIBRARY"; then
   AC_DEFINE(MOZ_STATIC_JS)
 fi
 AC_SUBST(JS_SHARED_LIBRARY)
@@ -9064,13 +9061,7 @@ if test -z "$MOZ_NATIVE_JEMALLOC" -a "$MOZ_MEMORY" && test -n "$MOZ_JEMALLOC3" -
     mkdir -p memory/jemalloc
   fi
 
-  dnl jemalloc's configure uses $srcdir in AC_CONFIG_HEADERS, which syntax uses
-  dnl colons, conflicting with the windows-style path in $srcdir.
-  dnl Turn it into a msys path just for jemalloc's configure
-  _save_srcdir="$srcdir"
-  srcdir=`cd $srcdir; pwd`
   AC_OUTPUT_SUBDIRS(memory/jemalloc/src)
-  srcdir="$_save_srcdir"
   ac_configure_args="$_SUBDIR_CONFIG_ARGS"
 fi
 
@@ -9083,7 +9074,11 @@ if test "$MOZ_TREE_FREETYPE"; then
    export LDFLAGS="$LDFLAGS $MOZ_DEBUG_LDFLAGS"
    # Spaces in the *_CFLAGS and *_LIBS variables are intentionally placed
    # to force freetype to use our settings rather than autodetecting
-   export LIBPNG_CFLAGS="$MOZ_PNG_CFLAGS "
+   if test -n "$MOZ_NATIVE_PNG"; then
+     export LIBPNG_CFLAGS="$MOZ_PNG_CFLAGS "
+   else
+     export LIBPNG_CFLAGS="-I$_objdir/dist/include"
+   fi
    export LIBPNG_LIBS="$MOZ_PNG_LIBS "
    export ZLIB_CFLAGS="$MOZ_ZLIB_CFLAGS "
    export ZLIB_LIBS="$MOZ_ZLIB_LIBS "
@@ -9093,8 +9088,11 @@ if test "$MOZ_TREE_FREETYPE"; then
    if ! test -e modules; then
      mkdir modules
    fi
-
-   AC_OUTPUT_SUBDIRS(modules/freetype2,$cache_file)
+   # Only export CC, CXX and RANLIB for the subconfigure, and avoid spilling
+   # that further down the road.
+   (export CC CXX RANLIB;
+    AC_OUTPUT_SUBDIRS(modules/freetype2)
+   ) || exit 1
 fi
 
 if test -z "$direct_nspr_config"; then
@@ -9120,10 +9118,13 @@ unset CONFIG_FILES
 
 # Run all configure scripts specified by a subconfigure
 if test -n "$_subconfigure_subdir"; then
+  _save_srcdir="$srcdir"
+  srcdir="$srcdir/.."
   _save_ac_configure_args="$ac_configure_args"
   ac_configure_args="$_subconfigure_config_args"
-  AC_OUTPUT_SUBDIRS("$_subconfigure_subdir")
+  AC_OUTPUT_SUBDIRS("$_subconfigure_subdir",$cache_file)
   ac_configure_args="$_save_ac_configure_args"
+  srcdir="$_save_srcdir"
 fi
 
 # No need to run subconfigures when building with LIBXUL_SDK_DIR
@@ -9189,6 +9190,9 @@ fi
 if test -z "$JSGC_GENERATIONAL" ; then
     ac_configure_args="$ac_configure_args --disable-gcgenerational"
 fi
+if test -n "$JS_GCCOMPACTING" ; then
+    ac_configure_args="$ac_configure_args --enable-gccompacting"
+fi
 if test -n "$JS_GC_SMALL_CHUNK_SIZE" ; then
     ac_configure_args="$ac_configure_args --enable-small-chunk-size"
 fi
@@ -9217,7 +9221,6 @@ export DONT_POPULATE_VIRTUALENV=1
 export PYTHON
 export MOZILLA_CENTRAL_PATH=$_topsrcdir
 export STLPORT_CPPFLAGS
-export STLPORT_LDFLAGS
 export STLPORT_LIBS
 export JS_STANDALONE=no
 export MOZ_LINKER

@@ -6,6 +6,7 @@
 
 #include "xpcprivate.h"
 #include "WrapperFactory.h"
+#include "AccessCheck.h"
 #include "jsfriendapi.h"
 #include "jsproxy.h"
 #include "jswrapper.h"
@@ -25,6 +26,9 @@ namespace xpc {
 bool
 IsReflector(JSObject *obj)
 {
+    obj = CheckedUnwrap(obj, /* stopAtOuter = */ false);
+    if (!obj)
+        return false;
     return IS_WN_REFLECTOR(obj) || dom::IsDOMObject(obj);
 }
 
@@ -79,9 +83,12 @@ StackScopedCloneRead(JSContext *cx, JSStructuredCloneReader *reader, uint32_t ta
       if (!JS_WrapObject(cx, &obj))
           return nullptr;
 
-      FunctionForwarderOptions forwarderOptions(cx);
-      if (!xpc::NewFunctionForwarder(cx, JSID_VOIDHANDLE, obj, forwarderOptions, &functionValue))
+      FunctionForwarderOptions forwarderOptions;
+      if (!xpc::NewFunctionForwarder(cx, JSID_VOIDHANDLE, obj, forwarderOptions,
+                                     &functionValue))
+      {
           return nullptr;
+      }
 
       return &functionValue.toObject();
     }
@@ -117,15 +124,11 @@ bool IsBlobOrFileList(JSObject *obj)
 
 static bool
 StackScopedCloneWrite(JSContext *cx, JSStructuredCloneWriter *writer,
-                      Handle<JSObject *> objArg, void *closure)
+                      Handle<JSObject *> obj, void *closure)
 {
     MOZ_ASSERT(closure, "Null pointer!");
     StackScopedCloneData *cloneData = static_cast<StackScopedCloneData *>(closure);
 
-    // The SpiderMonkey structured clone machinery does a CheckedUnwrap, but
-    // doesn't strip off outer windows. Do that to avoid confusing the reflector
-    // detection.
-    RootedObject obj(cx, JS_ObjectToInnerObject(cx, objArg));
     if ((cloneData->mOptions->wrapReflectors && IsReflector(obj)) ||
         IsBlobOrFileList(obj))
     {
@@ -185,7 +188,7 @@ StackScopedClone(JSContext *cx, StackScopedCloneOptions &options,
         // (unless it's a primitive)
         Maybe<JSAutoCompartment> ac;
         if (val.isObject()) {
-            ac.construct(cx, &val.toObject());
+            ac.emplace(cx, &val.toObject());
         } else if (val.isString() && !JS_WrapValue(cx, val)) {
             return false;
         }
@@ -198,12 +201,43 @@ StackScopedClone(JSContext *cx, StackScopedCloneOptions &options,
     return buffer.read(cx, val, &gStackScopedCloneCallbacks, &data);
 }
 
-/*
- * Forwards the call to the exported function. Clones all the non reflectors, ignores
- * the |this| argument.
- */
+// Note - This function mirrors the logic of CheckPassToChrome in
+// ChromeObjectWrapper.cpp.
 static bool
-CloningFunctionForwarder(JSContext *cx, unsigned argc, Value *vp)
+CheckSameOriginArg(JSContext *cx, FunctionForwarderOptions &options, HandleValue v)
+{
+    // Consumers can explicitly opt out of this security check. This is used in
+    // the web console to allow the utility functions to accept cross-origin Windows.
+    if (options.allowCrossOriginArguments)
+        return true;
+
+    // Primitives are fine.
+    if (!v.isObject())
+        return true;
+    RootedObject obj(cx, &v.toObject());
+    MOZ_ASSERT(js::GetObjectCompartment(obj) != js::GetContextCompartment(cx),
+               "This should be invoked after entering the compartment but before "
+               "wrapping the values");
+
+    // Non-wrappers are fine.
+    if (!js::IsWrapper(obj))
+        return true;
+
+    // Wrappers leading back to the scope of the exported function are fine.
+    if (js::GetObjectCompartment(js::UncheckedUnwrap(obj)) == js::GetContextCompartment(cx))
+        return true;
+
+    // Same-origin wrappers are fine.
+    if (AccessCheck::wrapperSubsumes(obj))
+        return true;
+
+    // Badness.
+    JS_ReportError(cx, "Permission denied to pass object to exported function");
+    return false;
+}
+
+static bool
+FunctionForwarder(JSContext *cx, unsigned argc, Value *vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
@@ -214,53 +248,38 @@ CloningFunctionForwarder(JSContext *cx, unsigned argc, Value *vp)
         return false;
 
     // Grab and unwrap the underlying callable.
-    RootedObject forwarderObj(cx, &js::GetFunctionNativeReserved(&args.callee(), 0).toObject());
-    RootedObject origFunObj(cx, UncheckedUnwrap(forwarderObj));
+    RootedValue v(cx, js::GetFunctionNativeReserved(&args.callee(), 0));
+    RootedObject unwrappedFun(cx, js::UncheckedUnwrap(&v.toObject()));
+
+    RootedObject thisObj(cx, JS_THIS_OBJECT(cx, vp));
+    if (!thisObj) {
+        return false;
+    }
+
     {
-        JSAutoCompartment ac(cx, origFunObj);
-        // Note: only the arguments are cloned not the |this| or the |callee|.
-        // Function forwarder does not use those.
-        StackScopedCloneOptions cloneOptions;
-        cloneOptions.wrapReflectors = true;
-        for (unsigned i = 0; i < args.length(); i++) {
-            RootedObject argObj(cx, args[i].isObject() ? &args[i].toObject() : nullptr);
-            if (options.allowCallbacks && argObj && JS_ObjectIsCallable(cx, argObj)) {
-                FunctionForwarderOptions innerOptions(cx);
-                if (!JS_WrapObject(cx, &argObj))
-                    return false;
-                if (!xpc::NewFunctionForwarder(cx, JSID_VOIDHANDLE, argObj, innerOptions, args[i]))
-                    return false;
-            } else if (!StackScopedClone(cx, cloneOptions, args[i])) {
+        // We manually implement the contents of CrossCompartmentWrapper::call
+        // here, because certain function wrappers (notably content->nsEP) are
+        // not callable.
+        JSAutoCompartment ac(cx, unwrappedFun);
+
+        RootedValue thisVal(cx, ObjectValue(*thisObj));
+        if (!CheckSameOriginArg(cx, options, thisVal) || !JS_WrapObject(cx, &thisObj))
+            return false;
+
+        for (size_t n = 0;  n < args.length(); ++n) {
+            if (!CheckSameOriginArg(cx, options, args[n]) || !JS_WrapValue(cx, args[n]))
                 return false;
-            }
         }
 
-        // JS API does not support any JSObject to JSFunction conversion,
-        // so let's use JS_CallFunctionValue instead.
-        RootedValue functionVal(cx, ObjectValue(*origFunObj));
-
-        if (!JS_CallFunctionValue(cx, JS::NullPtr(), functionVal, args, args.rval()))
+        RootedValue fval(cx, ObjectValue(*unwrappedFun));
+        if (!JS_CallFunctionValue(cx, thisObj, fval, args, args.rval()))
             return false;
     }
 
-    // Return value must be wrapped.
+    // Rewrap the return value into our compartment.
     return JS_WrapValue(cx, args.rval());
 }
 
-static bool
-NonCloningFunctionForwarder(JSContext *cx, unsigned argc, Value *vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-
-    RootedValue v(cx, js::GetFunctionNativeReserved(&args.callee(), 0));
-    MOZ_ASSERT(v.isObject(), "weird function");
-
-    RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
-    if (!obj) {
-        return false;
-    }
-    return JS_CallFunctionValue(cx, obj, v, args, args.rval());
-}
 bool
 NewFunctionForwarder(JSContext *cx, HandleId idArg, HandleObject callable,
                      FunctionForwarderOptions &options, MutableHandleValue vp)
@@ -269,37 +288,22 @@ NewFunctionForwarder(JSContext *cx, HandleId idArg, HandleObject callable,
     if (id == JSID_VOIDHANDLE)
         id = GetRTIdByIndex(cx, XPCJSRuntime::IDX_EMPTYSTRING);
 
-    JSFunction *fun = js::NewFunctionByIdWithReserved(cx, CloningFunctionForwarder, 0,0,
-                                                      JS::CurrentGlobalOrNull(cx), id);
+    JSFunction *fun = js::NewFunctionByIdWithReserved(cx, FunctionForwarder,
+                                                      0,0, JS::CurrentGlobalOrNull(cx), id);
     if (!fun)
         return false;
 
     // Stash the callable in slot 0.
     AssertSameCompartment(cx, callable);
-    RootedObject funObj(cx, JS_GetFunctionObject(fun));
-    js::SetFunctionNativeReserved(funObj, 0, ObjectValue(*callable));
+    RootedObject funobj(cx, JS_GetFunctionObject(fun));
+    js::SetFunctionNativeReserved(funobj, 0, ObjectValue(*callable));
 
     // Stash the options in slot 1.
     RootedObject optionsObj(cx, options.ToJSObject(cx));
     if (!optionsObj)
         return false;
-    js::SetFunctionNativeReserved(funObj, 1, ObjectValue(*optionsObj));
+    js::SetFunctionNativeReserved(funobj, 1, ObjectValue(*optionsObj));
 
-    vp.setObject(*funObj);
-    return true;
-}
-
-bool
-NewNonCloningFunctionForwarder(JSContext *cx, HandleId id, HandleObject callable,
-                               MutableHandleValue vp)
-{
-    JSFunction *fun = js::NewFunctionByIdWithReserved(cx, NonCloningFunctionForwarder,
-                                                      0,0, JS::CurrentGlobalOrNull(cx), id);
-    if (!fun)
-        return false;
-
-    JSObject *funobj = JS_GetFunctionObject(fun);
-    js::SetFunctionNativeReserved(funobj, 0, ObjectValue(*callable));
     vp.setObject(*funobj);
     return true;
 }
@@ -320,10 +324,13 @@ ExportFunction(JSContext *cx, HandleValue vfunction, HandleValue vscope, HandleV
     if (hasOptions && !options.Parse())
         return false;
 
-    // We can only export functions to scopes those are transparent for us,
-    // so if there is a security wrapper around targetScope we must throw.
+    // Restrictions:
+    // * We must subsume the scope we are exporting to.
+    // * We must subsume the function being exported, because the function
+    //   forwarder manually circumvents security wrapper CALL restrictions.
     targetScope = CheckedUnwrap(targetScope);
-    if (!targetScope) {
+    funObj = CheckedUnwrap(funObj);
+    if (!targetScope || !funObj) {
         JS_ReportError(cx, "Permission denied to export function into scope");
         return false;
     }
@@ -367,8 +374,8 @@ ExportFunction(JSContext *cx, HandleValue vfunction, HandleValue vscope, HandleV
 
         // And now, let's create the forwarder function in the target compartment
         // for the function the be exported.
-        FunctionForwarderOptions forwarderOptions(cx);
-        forwarderOptions.allowCallbacks = options.allowCallbacks;
+        FunctionForwarderOptions forwarderOptions;
+        forwarderOptions.allowCrossOriginArguments = options.allowCrossOriginArguments;
         if (!NewFunctionForwarder(cx, id, funObj, forwarderOptions, rval)) {
             JS_ReportError(cx, "Exporting function failed");
             return false;
@@ -388,116 +395,6 @@ ExportFunction(JSContext *cx, HandleValue vfunction, HandleValue vscope, HandleV
     // Finally we have to re-wrap the exported function back to the caller compartment.
     if (!JS_WrapValue(cx, rval))
         return false;
-
-    return true;
-}
-
-static bool
-GetFilenameAndLineNumber(JSContext *cx, nsACString &filename, unsigned &lineno)
-{
-    JS::AutoFilename scriptFilename;
-    if (JS::DescribeScriptedCaller(cx, &scriptFilename, &lineno)) {
-        if (const char *cfilename = scriptFilename.get()) {
-            filename.Assign(nsDependentCString(cfilename));
-            return true;
-        }
-    }
-    return false;
-}
-
-bool
-EvalInWindow(JSContext *cx, const nsAString &source, HandleObject scope, MutableHandleValue rval)
-{
-    // If we cannot unwrap we must not eval in it.
-    RootedObject targetScope(cx, CheckedUnwrap(scope));
-    if (!targetScope) {
-        JS_ReportError(cx, "Permission denied to eval in target scope");
-        return false;
-    }
-
-    // Make sure that we have a window object.
-    RootedObject inner(cx, CheckedUnwrap(targetScope, /* stopAtOuter = */ false));
-    nsCOMPtr<nsIGlobalObject> global;
-    nsCOMPtr<nsPIDOMWindow> window;
-    if (!JS_IsGlobalObject(inner) ||
-        !(global = GetNativeForGlobal(inner)) ||
-        !(window = do_QueryInterface(global)))
-    {
-        JS_ReportError(cx, "Second argument must be a window");
-        return false;
-    }
-
-    nsCOMPtr<nsIScriptContext> context =
-        (static_cast<nsGlobalWindow*>(window.get()))->GetScriptContext();
-    if (!context) {
-        JS_ReportError(cx, "Script context needed");
-        return false;
-    }
-
-    nsCString filename;
-    unsigned lineNo;
-    if (!GetFilenameAndLineNumber(cx, filename, lineNo)) {
-        // Default values for non-scripted callers.
-        filename.AssignLiteral("Unknown");
-        lineNo = 0;
-    }
-
-    RootedObject cxGlobal(cx, JS::CurrentGlobalOrNull(cx));
-    {
-        // CompileOptions must be created from the context
-        // we will execute this script in.
-        JSContext *wndCx = context->GetNativeContext();
-        AutoCxPusher pusher(wndCx);
-        JS::CompileOptions compileOptions(wndCx);
-        compileOptions.setFileAndLine(filename.get(), lineNo);
-
-        // We don't want the JS engine to automatically report
-        // uncaught exceptions.
-        nsJSUtils::EvaluateOptions evaluateOptions;
-        evaluateOptions.setReportUncaught(false);
-
-        nsresult rv = nsJSUtils::EvaluateString(wndCx,
-                                                source,
-                                                targetScope,
-                                                compileOptions,
-                                                evaluateOptions,
-                                                rval);
-
-        if (NS_FAILED(rv)) {
-            // If there was an exception we get it as a return value, if
-            // the evaluation failed for some other reason, then a default
-            // exception is raised.
-            MOZ_ASSERT(!JS_IsExceptionPending(wndCx),
-                       "Exception should be delivered as return value.");
-            if (rval.isUndefined()) {
-                MOZ_ASSERT(rv == NS_ERROR_OUT_OF_MEMORY);
-                return false;
-            }
-
-            // If there was an exception thrown we should set it
-            // on the calling context.
-            RootedValue exn(wndCx, rval);
-            // First we should reset the return value.
-            rval.set(UndefinedValue());
-
-            // Then clone the exception.
-            JSAutoCompartment ac(wndCx, cxGlobal);
-            StackScopedCloneOptions cloneOptions;
-            cloneOptions.wrapReflectors = true;
-            if (StackScopedClone(wndCx, cloneOptions, &exn))
-                js::SetPendingExceptionCrossContext(cx, exn);
-
-            return false;
-        }
-    }
-
-    // Let's clone the return value back to the callers compartment.
-    StackScopedCloneOptions cloneOptions;
-    cloneOptions.wrapReflectors = true;
-    if (!StackScopedClone(cx, cloneOptions, rval)) {
-        rval.set(UndefinedValue());
-        return false;
-    }
 
     return true;
 }

@@ -9,7 +9,6 @@
 #include "mozilla/Range.h"
 
 #include "xpcprivate.h"
-#include "nsCxPusher.h"
 
 #include "jsfriendapi.h"
 #include "jsprf.h"
@@ -70,7 +69,7 @@ void XPCTraceableVariant::TraceJS(JSTracer* trc)
 {
     MOZ_ASSERT(mJSVal.isMarkable());
     trc->setTracingDetails(GetTraceName, this, 0);
-    JS_CallHeapValueTracer(trc, &mJSVal, "XPCTraceableVariant::mJSVal");
+    JS_CallValueTracer(trc, &mJSVal, "XPCTraceableVariant::mJSVal");
 }
 
 // static

@@ -25,10 +25,8 @@
 #ifndef mozilla_pkix__pkixtypes_h
 #define mozilla_pkix__pkixtypes_h
 
-#include "pkix/Result.h"
-#include "pkix/nullptr.h"
-#include "prtime.h"
-#include "seccomon.h"
+#include "pkix/Input.h"
+#include "pkix/Time.h"
 #include "stdint.h"
 
 namespace mozilla { namespace pkix {
@@ -84,16 +82,12 @@ MOZILLA_PKIX_ENUM_CLASS SignatureAlgorithm
 struct SignedDataWithSignature
 {
 public:
-  SignedDataWithSignature()
-  {
-    data.data = nullptr;
-    data.len = 0;
-    signature.data = nullptr;
-    signature.len = 0;
-  }
-  SECItem data; // non-owning
+  Input data;
   SignatureAlgorithm algorithm;
-  SECItem signature; // non-owning
+  Input signature;
+
+private:
+  void operator=(const SignedDataWithSignature&) /*= delete*/;
 };
 
 MOZILLA_PKIX_ENUM_CLASS EndEntityOrCA { MustBeEndEntity = 0, MustBeCA = 1 };
@@ -151,16 +145,15 @@ MOZILLA_PKIX_ENUM_CLASS TrustLevel {
 struct CertID
 {
 public:
-  CertID(const SECItem& issuer, const SECItem& issuerSubjectPublicKeyInfo,
-         const SECItem& serialNumber)
+  CertID(Input issuer, Input issuerSubjectPublicKeyInfo, Input serialNumber)
     : issuer(issuer)
     , issuerSubjectPublicKeyInfo(issuerSubjectPublicKeyInfo)
     , serialNumber(serialNumber)
   {
   }
-  const SECItem& issuer;
-  const SECItem& issuerSubjectPublicKeyInfo;
-  const SECItem& serialNumber;
+  const Input issuer;
+  const Input issuerSubjectPublicKeyInfo;
+  const Input serialNumber;
 private:
   void operator=(const CertID&) /*= delete*/;
 };
@@ -174,7 +167,7 @@ public:
   // Returns a weak (non-owning) pointer the ith DER-encoded item in the array
   // (0-indexed). The result is guaranteed to be non-null if i < GetLength(),
   // and the result is guaranteed to be nullptr if i >= GetLength().
-  virtual const SECItem* GetDER(size_t i) const = 0;
+  virtual const Input* GetDER(size_t i) const = 0;
 protected:
   DERArray() { }
   virtual ~DERArray() { }
@@ -195,16 +188,16 @@ public:
   //
   // When policy.IsAnyPolicy(), then no policy-related checking should be done.
   // When !policy.IsAnyPolicy(), then GetCertTrust MUST NOT return with
-  // *trustLevel == TrustAnchor unless the given cert is considered a trust
+  // trustLevel == TrustAnchor unless the given cert is considered a trust
   // anchor *for that policy*. In particular, if the user has marked an
   // intermediate certificate as trusted, but that intermediate isn't in the
   // list of EV roots, then GetCertTrust must result in
-  // *trustLevel == InheritsTrust instead of *trustLevel == TrustAnchor
+  // trustLevel == InheritsTrust instead of trustLevel == TrustAnchor
   // (assuming the candidate cert is not actively distrusted).
   virtual Result GetCertTrust(EndEntityOrCA endEntityOrCA,
                               const CertPolicyId& policy,
-                              const SECItem& candidateCertDER,
-                              /*out*/ TrustLevel* trustLevel) = 0;
+                              Input candidateCertDER,
+                              /*out*/ TrustLevel& trustLevel) = 0;
 
   class IssuerChecker
   {
@@ -216,9 +209,9 @@ public:
     // encoded NameConstraints extension value; in that case, those name
     // constraints will be checked in addition to any any name constraints
     // contained in potentialIssuerDER.
-    virtual Result Check(const SECItem& potentialIssuerDER,
-                         /*optional*/ const SECItem* additionalNameConstraints,
-                         /*out*/ bool& keepGoing) = 0;
+    virtual Result Check(Input potentialIssuerDER,
+            /*optional*/ const Input* additionalNameConstraints,
+                 /*out*/ bool& keepGoing) = 0;
   protected:
     IssuerChecker();
     virtual ~IssuerChecker();
@@ -268,8 +261,8 @@ public:
   //
   // checker.Check is responsible for limiting the recursion to a reasonable
   // limit.
-  virtual Result FindIssuer(const SECItem& encodedIssuerName,
-                            IssuerChecker& checker, PRTime time) = 0;
+  virtual Result FindIssuer(Input encodedIssuerName,
+                            IssuerChecker& checker, Time time) = 0;
 
   // Called as soon as we think we have a valid chain but before revocation
   // checks are done. This function can be used to compute additional checks,
@@ -297,9 +290,9 @@ public:
   // issuerCertToDup is only non-const so CERT_DupCertificate can be called on
   // it.
   virtual Result CheckRevocation(EndEntityOrCA endEntityOrCA,
-                                 const CertID& certID, PRTime time,
-                    /*optional*/ const SECItem* stapledOCSPresponse,
-                    /*optional*/ const SECItem* aiaExtension) = 0;
+                                 const CertID& certID, Time time,
+                    /*optional*/ const Input* stapledOCSPresponse,
+                    /*optional*/ const Input* aiaExtension) = 0;
 
   // Check that the key size, algorithm, and parameters of the given public key
   // are acceptable.
@@ -307,7 +300,7 @@ public:
   // VerifySignedData() should do the same checks that this function does, but
   // mainly for efficiency, some keys are not passed to VerifySignedData().
   // This function is called instead for those keys.
-  virtual Result CheckPublicKey(const SECItem& subjectPublicKeyInfo) = 0;
+  virtual Result CheckPublicKey(Input subjectPublicKeyInfo) = 0;
 
   // Verify the given signature using the given public key.
   //
@@ -317,7 +310,7 @@ public:
   // In any case, the implementation must perform checks on the public key
   // similar to how mozilla::pkix::CheckPublicKey() does.
   virtual Result VerifySignedData(const SignedDataWithSignature& signedData,
-                                  const SECItem& subjectPublicKeyInfo) = 0;
+                                  Input subjectPublicKeyInfo) = 0;
 
   // Compute the SHA-1 hash of the data in the current item.
   //
@@ -330,7 +323,7 @@ public:
   // other, extensive, memory safety efforts in mozilla::pkix, and we should
   // find a way to provide a more-obviously-safe interface.
   static const size_t DIGEST_LENGTH = 20; // length of SHA-1 digest
-  virtual Result DigestBuf(const SECItem& item, /*out*/ uint8_t* digestBuf,
+  virtual Result DigestBuf(Input item, /*out*/ uint8_t* digestBuf,
                            size_t digestBufLen) = 0;
 protected:
   TrustDomain() { }

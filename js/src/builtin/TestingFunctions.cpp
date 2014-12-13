@@ -19,8 +19,8 @@
 #endif
 #include "jswrapper.h"
 
-#include "jit/AsmJS.h"
-#include "jit/AsmJSLink.h"
+#include "asmjs/AsmJSLink.h"
+#include "asmjs/AsmJSValidate.h"
 #include "js/HashTable.h"
 #include "js/StructuredClone.h"
 #include "js/UbiNode.h"
@@ -121,14 +121,6 @@ GetBuildConfiguration(JSContext *cx, unsigned argc, jsval *vp)
     value = BooleanValue(false);
 #endif
     if (!JS_SetProperty(cx, info, "has-gczeal", value))
-        return false;
-
-#ifdef JS_THREADSAFE
-    value = BooleanValue(true);
-#else
-    value = BooleanValue(false);
-#endif
-    if (!JS_SetProperty(cx, info, "threadsafe", value))
         return false;
 
 #ifdef JS_MORE_DETERMINISTIC
@@ -247,7 +239,7 @@ GC(JSContext *cx, unsigned argc, jsval *vp)
     }
 
 #ifndef JS_MORE_DETERMINISTIC
-    size_t preBytes = cx->runtime()->gc.bytesAllocated();
+    size_t preBytes = cx->runtime()->gc.usage.gcBytes();
 #endif
 
     if (compartment)
@@ -259,7 +251,7 @@ GC(JSContext *cx, unsigned argc, jsval *vp)
     char buf[256] = { '\0' };
 #ifndef JS_MORE_DETERMINISTIC
     JS_snprintf(buf, sizeof(buf), "before %lu, after %lu\n",
-                (unsigned long)preBytes, (unsigned long)cx->runtime()->gc.bytesAllocated());
+                (unsigned long)preBytes, (unsigned long)cx->runtime()->gc.usage.gcBytes());
 #endif
     JSString *str = JS_NewStringCopyZ(cx, buf);
     if (!str)
@@ -276,7 +268,7 @@ MinorGC(JSContext *cx, unsigned argc, jsval *vp)
     if (args.get(0) == BooleanValue(true))
         cx->runtime()->gc.storeBuffer.setAboutToOverflow();
 
-    MinorGC(cx, gcreason::API);
+    cx->minorGC(gcreason::API);
 #endif
     args.rval().setUndefined();
     return true;
@@ -527,7 +519,7 @@ SelectForGC(JSContext *cx, unsigned argc, Value *vp)
      * to be in the set, so evict the nursery before adding items.
      */
     JSRuntime *rt = cx->runtime();
-    MinorGC(rt, JS::gcreason::EVICT_NURSERY);
+    rt->gc.evictNursery();
 
     for (unsigned i = 0; i < args.length(); i++) {
         if (args[i].isObject()) {
@@ -636,7 +628,7 @@ GCSlice(JSContext *cx, unsigned argc, Value *vp)
         limit = false;
     }
 
-    GCDebugSlice(cx->runtime(), limit, budget);
+    cx->runtime()->gc.gcDebugSlice(limit, budget);
     args.rval().setUndefined();
     return true;
 }
@@ -837,7 +829,7 @@ CountHeap(JSContext *cx, unsigned argc, jsval *vp)
     if (startValue.isUndefined()) {
         JS_TraceRuntime(&countTracer.base);
     } else {
-        JS_CallValueTracer(&countTracer.base, startValue.address(), "root");
+        JS_CallUnbarrieredValueTracer(&countTracer.base, startValue.address(), "root");
     }
 
     JSCountHeapNode *node;
@@ -1115,7 +1107,7 @@ static bool
 EnableOsiPointRegisterChecks(JSContext *, unsigned argc, jsval *vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-#if defined(JS_ION) && defined(CHECK_OSIPOINT_REGISTERS)
+#ifdef CHECK_OSIPOINT_REGISTERS
     jit::js_JitOptions.checkOsiPointRegisters = true;
 #endif
     args.rval().setUndefined();
@@ -1333,9 +1325,7 @@ static bool
 SetIonCheckGraphCoherency(JSContext *cx, unsigned argc, jsval *vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-#ifdef JS_ION
     jit::js_JitOptions.checkGraphConsistency = ToBoolean(args.get(0));
-#endif
     args.rval().setUndefined();
     return true;
 }
@@ -1605,11 +1595,10 @@ static bool
 HelperThreadCount(JSContext *cx, unsigned argc, jsval *vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-#ifdef JS_THREADSAFE
-    args.rval().setInt32(HelperThreadState().threadCount);
-#else
-    args.rval().setInt32(0);
-#endif
+    if (CanUseExtraThreads())
+        args.rval().setInt32(HelperThreadState().threadCount);
+    else
+        args.rval().setInt32(0);
     return true;
 }
 
@@ -1627,7 +1616,7 @@ EnableTraceLogger(JSContext *cx, unsigned argc, jsval *vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
     TraceLogger *logger = TraceLoggerForMainThread(cx->runtime());
-    args.rval().setBoolean(TraceLoggerEnable(logger));
+    args.rval().setBoolean(TraceLoggerEnable(logger, cx));
 
     return true;
 }
@@ -1657,6 +1646,59 @@ DumpObject(JSContext *cx, unsigned argc, jsval *vp)
     return true;
 }
 #endif
+
+static bool
+DumpBacktrace(JSContext *cx, unsigned argc, jsval *vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+    js_DumpBacktrace(cx);
+    args.rval().setUndefined();
+    return true;
+}
+
+static bool
+GetBacktrace(JSContext *cx, unsigned argc, jsval *vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+
+    bool showArgs = false;
+    bool showLocals = false;
+    bool showThisProps = false;
+
+    if (args.length() > 1) {
+        RootedObject callee(cx, &args.callee());
+        ReportUsageError(cx, callee, "Too many arguments");
+        return false;
+    }
+
+    if (args.length() == 1) {
+        RootedObject cfg(cx, ToObject(cx, args[0]));
+        if (!cfg)
+            return false;
+        RootedValue v(cx);
+
+        if (!JS_GetProperty(cx, cfg, "args", &v))
+            return false;
+        showArgs = ToBoolean(v);
+
+        if (!JS_GetProperty(cx, cfg, "locals", &v))
+            return false;
+        showLocals = ToBoolean(v);
+
+        if (!JS_GetProperty(cx, cfg, "thisprops", &v))
+            return false;
+        showThisProps = ToBoolean(v);
+    }
+
+    char *buf = JS::FormatStackDump(cx, nullptr, showArgs, showLocals, showThisProps);
+    RootedString str(cx);
+    if (!(str = JS_NewStringCopyZ(cx, buf)))
+        return false;
+    JS_smprintf_free(buf);
+
+    args.rval().setString(str);
+    return true;
+}
 
 static bool
 ReportOutOfMemory(JSContext *cx, unsigned argc, jsval *vp)
@@ -1733,7 +1775,7 @@ struct FindPathHandler {
 
         // Record how we reached this node. This is the last edge on a
         // shortest path to this node.
-        EdgeName edgeName(js_strdup(traversal.cx, edge.name));
+        EdgeName edgeName = DuplicateString(traversal.cx, edge.name);
         if (!edgeName)
             return false;
         *backEdge = mozilla::Move(BackEdge(origin, Move(edgeName)));
@@ -1801,21 +1843,20 @@ FindPath(JSContext *cx, unsigned argc, jsval *vp)
         return false;
     }
 
-    // We don't ToString non-objects given as 'start' or 'target'. We can't
-    // see edges to non-string primitive values, and it doesn't make much
-    // sense to ask for paths to or from a freshly allocated string, so
-    // if a non-string primitive appears here it's probably a mistake.
-    if (!args[0].isObject() && !args[0].isString()) {
+    // We don't ToString non-objects given as 'start' or 'target', because this
+    // test is all about object identity, and ToString doesn't preserve that.
+    // Non-GCThing endpoints don't make much sense.
+    if (!args[0].isObject() && !args[0].isString() && !args[0].isSymbol()) {
         js_ReportValueErrorFlags(cx, JSREPORT_ERROR, JSMSG_UNEXPECTED_TYPE,
                                  JSDVG_SEARCH_STACK, args[0], JS::NullPtr(),
-                                 "neither an object nor a string", NULL);
+                                 "not an object, string, or symbol", NULL);
         return false;
     }
 
-    if (!args[1].isObject() && !args[1].isString()) {
+    if (!args[1].isObject() && !args[1].isString() && !args[1].isSymbol()) {
         js_ReportValueErrorFlags(cx, JSREPORT_ERROR, JSMSG_UNEXPECTED_TYPE,
                                  JSDVG_SEARCH_STACK, args[0], JS::NullPtr(),
-                                 "neither an object nor a string", NULL);
+                                 "not an object, string, or symbol", NULL);
         return false;
     }
 
@@ -1848,10 +1889,13 @@ FindPath(JSContext *cx, unsigned argc, jsval *vp)
     // Construct a JavaScript array describing the path from the start to the
     // target. Each element has the form:
     //
-    //   { node: <object or string>, edge: <string describing outgoing edge from node> }
+    //   {
+    //     node: <object or string or symbol>,
+    //     edge: <string describing outgoing edge from node>
+    //   }
     //
-    // or, if the node is some internal thing, that isn't a proper
-    // JavaScript value:
+    // or, if the node is some internal thing that isn't a proper JavaScript
+    // value:
     //
     //   { node: undefined, edge: <string> }
     size_t length = nodes.length();
@@ -1879,8 +1923,7 @@ FindPath(JSContext *cx, unsigned argc, jsval *vp)
             return false;
         edgeName.release(); // edgeStr acquired ownership
 
-        if (!JS_DefineProperty(cx, obj, "edge", edgeStr,
-                               JSPROP_ENUMERATE, nullptr, nullptr))
+        if (!JS_DefineProperty(cx, obj, "edge", edgeStr, JSPROP_ENUMERATE, nullptr, nullptr))
             return false;
 
         result->setDenseElement(length - i - 1, ObjectValue(*obj));
@@ -1928,6 +1971,19 @@ EvalReturningScope(JSContext *cx, unsigned argc, jsval *vp)
         return false;
 
     args.rval().setObject(*scope);
+    return true;
+}
+
+static bool
+IsSimdAvailable(JSContext *cx, unsigned argc, Value *vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+#ifdef JS_CODEGEN_NONE
+    bool available = false;
+#else
+    bool available = cx->jitSupportsSimd();
+#endif
+    args.rval().set(BooleanValue(available));
     return true;
 }
 
@@ -2019,6 +2075,7 @@ static const JSFunctionSpecWithHelp TestingFunctions[] = {
 "   11: Verify post write barriers between instructions\n"
 "   12: Verify post write barriers between paints\n"
 "   13: Check internal hashtables on minor GC\n"
+"   14: Always compact arenas after GC\n"
 "  Period specifies that collection happens every n allocations.\n"),
 
     JS_FN_HELP("schedulegc", ScheduleGC, 1, 0,
@@ -2112,6 +2169,10 @@ static const JSFunctionSpecWithHelp TestingFunctions[] = {
 "isAsmJSCompilationAvailable",
 "  Returns whether asm.js compilation is currently available or whether it is disabled\n"
 "  (e.g., by the debugger)."),
+
+    JS_FN_HELP("isSimdAvailable", IsSimdAvailable, 0, 0,
+"isSimdAvailable",
+"  Returns true if SIMD extensions are supported on this platform."),
 
     JS_FN_HELP("getJitCompilerOptions", GetJitCompilerOptions, 0, 0,
 "getCompilerOptions()",
@@ -2233,6 +2294,18 @@ static const JSFunctionSpecWithHelp TestingFunctions[] = {
     JS_FN_HELP("evalReturningScope", EvalReturningScope, 1, 0,
 "evalReturningScope(scriptStr)",
 "  Evaluate the script in a new scope and return the scope."),
+
+    JS_FN_HELP("backtrace", DumpBacktrace, 1, 0,
+"backtrace()",
+"  Dump out a brief backtrace."),
+
+    JS_FN_HELP("getBacktrace", GetBacktrace, 1, 0,
+"getBacktrace([options])",
+"  Return the current stack as a string. Takes an optional options object,\n"
+"  which may contain any or all of the boolean properties\n"
+"    options.args - show arguments to each function\n"
+"    options.locals - show local variables in each frame\n"
+"    options.thisprops - show the properties of the 'this' object of each frame\n"),
 
     JS_FS_HELP_END
 };

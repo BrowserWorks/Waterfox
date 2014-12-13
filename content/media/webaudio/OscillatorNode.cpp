@@ -30,7 +30,7 @@ class DCBlocker
 {
 public:
   // These are sane defauts when the initial mPhase is zero
-  DCBlocker(float aLastInput = 0.0f,
+  explicit DCBlocker(float aLastInput = 0.0f,
             float aLastOutput = 0.0f,
             float aPole = 0.995)
     :mLastInput(aLastInput),
@@ -553,7 +553,9 @@ OscillatorNode::SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
   size_t amount = AudioNode::SizeOfExcludingThis(aMallocSizeOf);
 
   // For now only report if we know for sure that it's not shared.
-  amount += mPeriodicWave->SizeOfIncludingThisIfNotShared(aMallocSizeOf);
+  if (mPeriodicWave) {
+    amount += mPeriodicWave->SizeOfIncludingThisIfNotShared(aMallocSizeOf);
+  }
   amount += mFrequency->SizeOfIncludingThis(aMallocSizeOf);
   amount += mDetune->SizeOfIncludingThis(aMallocSizeOf);
   return amount;

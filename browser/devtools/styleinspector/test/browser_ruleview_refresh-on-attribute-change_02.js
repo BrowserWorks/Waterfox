@@ -14,7 +14,7 @@ let test = asyncTest(function*() {
   testElement.setAttribute("style", "margin-top: 1px; padding-top: 5px;");
 
   let {toolbox, inspector, view} = yield openRuleView();
-  yield selectNode(testElement, inspector);
+  yield selectNode("#testid", inspector);
 
   yield testPropertyChanges(inspector, view, testElement);
   yield testPropertyChange0(inspector, view, testElement);
@@ -103,7 +103,7 @@ function* testPropertyChange6(inspector, ruleView, testElement) {
   validateTextProp(rule.textProps[4], true, "background",
                    "url(\"chrome://branding/content/about-logo.png\") repeat scroll 0% 0% red",
                    "shortcut property correctly set",
-                   "url('chrome://branding/content/about-logo.png') repeat scroll 0% 0% #F00");
+                   "url(\"chrome://branding/content/about-logo.png\") repeat scroll 0% 0% #F00");
 }
 
 function* changeElementStyle(testElement, style, inspector) {

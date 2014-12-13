@@ -27,13 +27,15 @@
 #include <utils/RefBase.h>
 
 #include "AudioOutput.h"
-
+#include "AudioOffloadPlayerBase.h"
 #include "MediaDecoderOwner.h"
-#include "MediaOmxDecoder.h"
+#include "MediaOmxCommonDecoder.h"
 
 namespace mozilla {
 
-class MediaOmxDecoder;
+namespace dom {
+class WakeLock;
+}
 
 /**
  * AudioOffloadPlayer adds support for audio tunneling to a digital signal
@@ -47,11 +49,12 @@ class MediaOmxDecoder;
  * data, FillBuffer() will read data from compressed audio source and provide
  * it to the sink
  *
- * Also this class passes state changes (play/pause/seek) from MediaOmxDecoder
- * to AudioSink as well as provide AudioSink status (position changed,
- * playback ended, seek complete, audio tear down) back to MediaOmxDecoder
+ * Also this class passes state changes (play/pause/seek) from
+ * MediaOmxCommonDecoder to AudioSink as well as provide AudioSink status
+ * (position changed, playback ended, seek complete, audio tear down) back to
+ * MediaOmxCommonDecoder
  *
- * It acts as a bridge between MediaOmxDecoder and AudioSink during
+ * It acts as a bridge between MediaOmxCommonDecoder and AudioSink during
  * offload playback
  */
 
@@ -70,7 +73,7 @@ public:
     SEEK_COMPLETE
   };
 
-  AudioOffloadPlayer(MediaOmxDecoder* aDecoder = nullptr);
+  AudioOffloadPlayer(MediaOmxCommonDecoder* aDecoder = nullptr);
 
   ~AudioOffloadPlayer();
 
@@ -146,7 +149,8 @@ private:
   // relative to the seeked position. And seeked position may be slightly
   // different than given mSeekTimeUs, if audio source cannot find a frame at
   // that position. Store seeked position in mStartPosUs and provide
-  // mStartPosUs + GetPosition() (i.e. absolute position) to MediaOmxDecoder
+  // mStartPosUs + GetPosition() (i.e. absolute position) to
+  // MediaOmxCommonDecoder
   // Used in main thread and offload callback thread, protected by Mutex
   // mLock
   int64_t mStartPosUs;
@@ -161,7 +165,7 @@ private:
   // mLock
   int64_t mPositionTimeMediaUs;
 
-  // State obtained from MediaOmxDecoder. Used only in main thread
+  // State obtained from MediaOmxCommonDecoder. Used only in main thread
   MediaDecoder::PlayState mPlayState;
 
   // Protect accessing audio position related variables between main thread and
@@ -180,8 +184,8 @@ private:
   // Buffer used to get date from audio source. Used in offload callback thread
   MediaBuffer* mInputBuffer;
 
-  // MediaOmxDecoder object used mainly to notify the audio sink status
-  MediaOmxDecoder* mObserver;
+  // MediaOmxCommonDecoder object used mainly to notify the audio sink status
+  MediaOmxCommonDecoder* mObserver;
 
   TimeStamp mLastFireUpdateTime;
 
@@ -192,6 +196,10 @@ private:
   // It is triggered in Pause() and canceled when there is a Play() within
   // OFFLOAD_PAUSE_MAX_USECS. Used only from main thread so no lock is needed.
   nsCOMPtr<nsITimer> mResetTimer;
+
+  // To avoid device suspend when mResetTimer is going to be triggered.
+  // Used only from main thread so no lock is needed.
+  nsRefPtr<mozilla::dom::WakeLock> mWakeLock;
 
   int64_t GetMediaTimeUs();
 
@@ -239,6 +247,9 @@ private:
   // Also make sure timer functions are always called from main thread
   nsresult StartTimeUpdate();
   nsresult StopTimeUpdate();
+
+  void WakeLockCreate();
+  void WakeLockRelease();
 
   // Notify end of stream by sending PlaybackEnded event to observer
   // (i.e.MediaDecoder)

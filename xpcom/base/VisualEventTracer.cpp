@@ -439,7 +439,8 @@ Init()
     gEventFilter = EventFilter::Build(logEvents);
   }
 
-  PRStatus status = PR_NewThreadPrivateIndex(&gThreadPrivateIndex, &RecordBatch::Close);
+  PRStatus status = PR_NewThreadPrivateIndex(&gThreadPrivateIndex,
+                                             &RecordBatch::Close);
   if (status != PR_SUCCESS) {
     return;
   }
@@ -466,25 +467,17 @@ Shutdown()
 
   RecordBatch::DeleteLog();
 
-  if (gMonitor) {
-    delete gMonitor;
-    gMonitor = nullptr;
-  }
+  delete gMonitor;
+  gMonitor = nullptr;
 
-  if (gEventFilter) {
-    delete gEventFilter;
-    gEventFilter = nullptr;
-  }
+  delete gEventFilter;
+  gEventFilter = nullptr;
 
-  if (gProfilerStart) {
-    delete gProfilerStart;
-    gProfilerStart = nullptr;
-  }
+  delete gProfilerStart;
+  gProfilerStart = nullptr;
 
-  if (gMaxBacklogTime) {
-    delete gMaxBacklogTime;
-    gMaxBacklogTime = nullptr;
-  }
+  delete gMaxBacklogTime;
+  gMaxBacklogTime = nullptr;
 #endif
 }
 
@@ -505,8 +498,8 @@ Mark(uint32_t aType, void* aItem, const char* aText, const char* aText2)
     return;
   }
 
-  RecordBatch* threadLogPrivate = static_cast<RecordBatch*>(
-    PR_GetThreadPrivate(gThreadPrivateIndex));
+  RecordBatch* threadLogPrivate =
+    static_cast<RecordBatch*>(PR_GetThreadPrivate(gThreadPrivateIndex));
   if (!threadLogPrivate) {
     threadLogPrivate = RecordBatch::Register();
     if (!threadLogPrivate) {

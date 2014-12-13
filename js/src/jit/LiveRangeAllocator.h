@@ -52,7 +52,7 @@ class Requirement
       : kind_(FIXED),
         allocation_(fixed)
     {
-        JS_ASSERT(fixed == LAllocation() || !fixed.isUse());
+        JS_ASSERT(!fixed.isBogus() && !fixed.isUse());
     }
 
     // Only useful as a hint, encodes where the fixed requirement is used to
@@ -62,7 +62,7 @@ class Requirement
         allocation_(fixed),
         position_(at)
     {
-        JS_ASSERT(fixed == LAllocation() || !fixed.isUse());
+        JS_ASSERT(!fixed.isBogus() && !fixed.isUse());
     }
 
     Requirement(uint32_t vreg, CodePosition at)
@@ -76,7 +76,7 @@ class Requirement
     }
 
     LAllocation allocation() const {
-        JS_ASSERT(!allocation_.isUse());
+        JS_ASSERT(!allocation_.isBogus() && !allocation_.isUse());
         return allocation_;
     }
 
@@ -159,7 +159,7 @@ UseCompatibleWith(const LUse *use, LAllocation alloc)
           // UsePosition is only used as hint.
         return alloc.isRegister();
       default:
-        MOZ_ASSUME_UNREACHABLE("Unknown use policy");
+        MOZ_CRASH("Unknown use policy");
     }
 }
 
@@ -185,10 +185,8 @@ DefinitionCompatibleWith(LInstruction *ins, const LDefinition *def, LAllocation 
         if (!alloc.isRegister() || !ins->numOperands())
             return false;
         return alloc == *ins->getOperand(def->getReusedInput());
-      case LDefinition::PASSTHROUGH:
-        return true;
       default:
-        MOZ_ASSUME_UNREACHABLE("Unknown definition policy");
+        MOZ_CRASH("Unknown definition policy");
     }
 }
 
@@ -490,6 +488,7 @@ class VirtualRegister
     }
     bool addInterval(LiveInterval *interval) {
         JS_ASSERT(interval->numRanges());
+        JS_ASSERT(interval->vreg() != 0);
 
         // Preserve ascending order for faster lookups.
         LiveInterval **found = nullptr;
@@ -569,8 +568,8 @@ static inline bool
 IsNunbox(VirtualRegister *vreg)
 {
 #ifdef JS_NUNBOX32
-    return (vreg->type() == LDefinition::TYPE ||
-            vreg->type() == LDefinition::PAYLOAD);
+    return vreg->type() == LDefinition::TYPE ||
+           vreg->type() == LDefinition::PAYLOAD;
 #else
     return false;
 #endif

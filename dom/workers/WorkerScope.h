@@ -23,6 +23,7 @@ BEGIN_WORKERS_NAMESPACE
 class WorkerPrivate;
 class WorkerLocation;
 class WorkerNavigator;
+class Performance;
 
 class WorkerGlobalScope : public DOMEventTargetHelper,
                           public nsIGlobalObject
@@ -30,6 +31,7 @@ class WorkerGlobalScope : public DOMEventTargetHelper,
   nsRefPtr<Console> mConsole;
   nsRefPtr<WorkerLocation> mLocation;
   nsRefPtr<WorkerNavigator> mNavigator;
+  nsRefPtr<Performance> mPerformance;
 
 protected:
   WorkerPrivate* mWorkerPrivate;
@@ -60,7 +62,7 @@ public:
     return nsRefPtr<WorkerGlobalScope>(this).forget();
   }
 
-  already_AddRefed<Console>
+  Console*
   GetConsole();
 
   already_AddRefed<WorkerLocation>
@@ -115,6 +117,8 @@ public:
 
   void
   Dump(const Optional<nsAString>& aString) const;
+
+  Performance* GetPerformance();
 };
 
 class DedicatedWorkerGlobalScope MOZ_FINAL : public WorkerGlobalScope
@@ -123,9 +127,6 @@ class DedicatedWorkerGlobalScope MOZ_FINAL : public WorkerGlobalScope
 
 public:
   DedicatedWorkerGlobalScope(WorkerPrivate* aWorkerPrivate);
-
-  static bool
-  Visible(JSContext* aCx, JSObject* aObj);
 
   virtual JSObject*
   WrapGlobalObject(JSContext* aCx) MOZ_OVERRIDE;
@@ -148,9 +149,6 @@ public:
   SharedWorkerGlobalScope(WorkerPrivate* aWorkerPrivate,
                           const nsCString& aName);
 
-  static bool
-  Visible(JSContext* aCx, JSObject* aObj);
-
   virtual JSObject*
   WrapGlobalObject(JSContext* aCx) MOZ_OVERRIDE;
 
@@ -169,9 +167,6 @@ class ServiceWorkerGlobalScope MOZ_FINAL : public WorkerGlobalScope
 
 public:
   ServiceWorkerGlobalScope(WorkerPrivate* aWorkerPrivate, const nsACString& aScope);
-
-  static bool
-  Visible(JSContext* aCx, JSObject* aObj);
 
   virtual JSObject*
   WrapGlobalObject(JSContext* aCx) MOZ_OVERRIDE;

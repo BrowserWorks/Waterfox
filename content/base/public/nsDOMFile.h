@@ -201,9 +201,6 @@ public:
 
   virtual nsresult GetInternalStream(nsIInputStream** aStream) = 0;
 
-  virtual nsresult
-  GetInternalUrl(nsIPrincipal* aPrincipal, nsAString& aURL) = 0;
-
   virtual int64_t GetFileId() = 0;
 
   virtual void AddFileInfo(indexedDB::FileInfo* aFileInfo) = 0;
@@ -335,8 +332,6 @@ public:
   }
 
   virtual nsresult GetInternalStream(nsIInputStream** aStream) MOZ_OVERRIDE;
-
-  virtual nsresult GetInternalUrl(nsIPrincipal* aPrincipal, nsAString& aURL) MOZ_OVERRIDE;
 
   virtual int64_t GetFileId() MOZ_OVERRIDE;
 
@@ -748,23 +743,13 @@ private:
 } // dom namespace
 } // file namespace
 
-class MOZ_STACK_CLASS nsDOMFileInternalUrlHolder {
-public:
-  nsDOMFileInternalUrlHolder(nsIDOMBlob* aFile, nsIPrincipal* aPrincipal
-                             MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
-  ~nsDOMFileInternalUrlHolder();
-  nsAutoString mUrl;
-private:
-  MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
-};
-
 class nsDOMFileList MOZ_FINAL : public nsIDOMFileList,
                                 public nsWrapperCache
 {
   ~nsDOMFileList() {}
 
 public:
-  nsDOMFileList(nsISupports *aParent) : mParent(aParent)
+  explicit nsDOMFileList(nsISupports *aParent) : mParent(aParent)
   {
     SetIsDOMBinding();
   }

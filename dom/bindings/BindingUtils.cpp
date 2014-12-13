@@ -25,6 +25,7 @@
 #include "nsIPermissionManager.h"
 #include "nsIPrincipal.h"
 #include "nsIXPConnect.h"
+#include "nsUTF8Utils.h"
 #include "WrapperFactory.h"
 #include "xpcprivate.h"
 #include "XPCQuickStubs.h"
@@ -1251,7 +1252,7 @@ ResolvePrototypeOrConstructor(JSContext* cx, JS::Handle<JSObject*> wrapper,
                               JS::Handle<JSObject*> obj,
                               size_t protoAndIfaceCacheIndex, unsigned attrs,
                               JS::MutableHandle<JSPropertyDescriptor> desc,
-                              bool& cacheOnHolder)
+                              bool cacheOnHolder)
 {
   JS::Rooted<JSObject*> global(cx, js::GetGlobalForObjectCrossCompartment(obj));
   {
@@ -1584,7 +1585,7 @@ HasPropertyOnPrototype(JSContext* cx, JS::Handle<JSObject*> proxy,
   Maybe<JSAutoCompartment> ac;
   if (xpc::WrapperFactory::IsXrayWrapper(obj)) {
     obj = js::UncheckedUnwrap(obj);
-    ac.construct(cx, obj);
+    ac.emplace(cx, obj);
   }
 
   bool found;
@@ -1765,9 +1766,10 @@ ReparentWrapper(JSContext* aCx, JS::Handle<JSObject*> aObjArg)
 {
   js::AssertSameCompartment(aCx, aObjArg);
 
-  // Check if we're near the stack limit before we get anywhere near the
-  // transplanting code. We use a conservative check since we'll use a little
-  // more space before we actually hit the critical "can't fail" path.
+  // Check if we're anywhere near the stack limit before we reach the
+  // transplanting code, since it has no good way to handle errors. This uses
+  // the untrusted script limit, which is not strictly necessary since no
+  // actual script should run.
   JS_CHECK_RECURSION_CONSERVATIVE(aCx, return NS_ERROR_FAILURE);
 
   JS::Rooted<JSObject*> aObj(aCx, aObjArg);
@@ -1786,10 +1788,6 @@ ReparentWrapper(JSContext* aCx, JS::Handle<JSObject*> aObjArg)
     }
     return NS_OK;
   }
-
-  // Telemetry.
-  xpc::RecordDonatedNode(oldCompartment);
-  xpc::RecordAdoptedNode(newCompartment);
 
   nsISupports* native = UnwrapDOMObjectToISupports(aObj);
   if (!native) {
@@ -2189,6 +2187,36 @@ NonVoidByteStringToJsval(JSContext *cx, const nsACString &str,
     return true;
 }
 
+
+template<typename T> static void
+NormalizeScalarValueStringInternal(JSContext* aCx, T& aString)
+{
+  char16_t* start = aString.BeginWriting();
+  // Must use const here because we can't pass char** to UTF16CharEnumerator as
+  // it expects const char**.  Unclear why this is illegal...
+  const char16_t* nextChar = start;
+  const char16_t* end = aString.Data() + aString.Length();
+  while (nextChar < end) {
+    uint32_t enumerated = UTF16CharEnumerator::NextChar(&nextChar, end);
+    if (enumerated == UCS2_REPLACEMENT_CHAR) {
+      int32_t lastCharIndex = (nextChar - start) - 1;
+      start[lastCharIndex] = static_cast<char16_t>(enumerated);
+    }
+  }
+}
+
+void
+NormalizeScalarValueString(JSContext* aCx, nsAString& aString)
+{
+  NormalizeScalarValueStringInternal(aCx, aString);
+}
+
+void
+NormalizeScalarValueString(JSContext* aCx, binding_detail::FakeString& aString)
+{
+  NormalizeScalarValueStringInternal(aCx, aString);
+}
+
 bool
 ConvertJSValueToByteString(JSContext* cx, JS::Handle<JS::Value> v,
                            bool nullable, nsACString& result)
@@ -2348,6 +2376,14 @@ CheckPermissions(JSContext* aCx, JSObject* aObj, const char* const aPermissions[
       return true;
     }
   } while (*(++aPermissions));
+  return false;
+}
+
+bool
+CheckSafetyInPrerendering(JSContext* aCx, JSObject* aObj)
+{
+  //TODO: Check if page is being prerendered.
+  //Returning false for now.
   return false;
 }
 

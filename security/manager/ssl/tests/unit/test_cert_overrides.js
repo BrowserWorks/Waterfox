@@ -52,16 +52,17 @@ function check_telemetry() {
                     .getHistogramById("SSL_CERT_ERROR_OVERRIDES")
                     .snapshot();
   do_check_eq(histogram.counts[ 0], 0);
-  do_check_eq(histogram.counts[ 2], 8); // SEC_ERROR_UNKNOWN_ISSUER
+  do_check_eq(histogram.counts[ 2], 7); // SEC_ERROR_UNKNOWN_ISSUER
   do_check_eq(histogram.counts[ 3], 0); // SEC_ERROR_CA_CERT_INVALID
   do_check_eq(histogram.counts[ 4], 0); // SEC_ERROR_UNTRUSTED_ISSUER
-  do_check_eq(histogram.counts[ 5], 0); // SEC_ERROR_EXPIRED_ISSUER_CERTIFICATE
+  do_check_eq(histogram.counts[ 5], 1); // SEC_ERROR_EXPIRED_ISSUER_CERTIFICATE
   do_check_eq(histogram.counts[ 6], 0); // SEC_ERROR_UNTRUSTED_CERT
   do_check_eq(histogram.counts[ 7], 0); // SEC_ERROR_INADEQUATE_KEY_USAGE
   do_check_eq(histogram.counts[ 8], 2); // SEC_ERROR_CERT_SIGNATURE_ALGORITHM_DISABLED
   do_check_eq(histogram.counts[ 9], 5); // SSL_ERROR_BAD_CERT_DOMAIN
   do_check_eq(histogram.counts[10], 5); // SEC_ERROR_EXPIRED_CERTIFICATE
   do_check_eq(histogram.counts[11], 2); // MOZILLA_PKIX_ERROR_CA_CERT_USED_AS_END_ENTITY
+  do_check_eq(histogram.counts[13], 1); // MOZILLA_PKIX_ERROR_INADEQUATE_KEY_SIZE
   run_next_test();
 }
 
@@ -97,7 +98,7 @@ function add_simple_tests() {
                          getXPCOMStatusFromNSS(SEC_ERROR_UNKNOWN_ISSUER));
   add_cert_override_test("expiredissuer.example.com",
                          Ci.nsICertOverrideService.ERROR_UNTRUSTED,
-                         getXPCOMStatusFromNSS(SEC_ERROR_UNKNOWN_ISSUER));
+                         getXPCOMStatusFromNSS(SEC_ERROR_EXPIRED_ISSUER_CERTIFICATE));
   add_cert_override_test("md5signature.example.com",
                          Ci.nsICertOverrideService.ERROR_UNTRUSTED,
                          getXPCOMStatusFromNSS(
@@ -126,6 +127,10 @@ function add_simple_tests() {
   add_cert_override_test("ca-used-as-end-entity.example.com",
                          Ci.nsICertOverrideService.ERROR_UNTRUSTED,
                          getXPCOMStatusFromNSS(MOZILLA_PKIX_ERROR_CA_CERT_USED_AS_END_ENTITY));
+
+  add_cert_override_test("inadequate-key-size-ee.example.com",
+                         Ci.nsICertOverrideService.ERROR_UNTRUSTED,
+                         getXPCOMStatusFromNSS(MOZILLA_PKIX_ERROR_INADEQUATE_KEY_SIZE));
 }
 
 function add_combo_tests() {

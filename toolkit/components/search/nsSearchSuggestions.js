@@ -25,6 +25,7 @@ SuggestAutoComplete.prototype = {
 
   _init: function() {
     this._suggestionController = new SearchSuggestionController(obj => this.onResultsReturned(obj));
+    this._suggestionController.maxLocalResults = this._historyLimit;
   },
 
   get _suggestionLabel() {
@@ -57,8 +58,7 @@ SuggestAutoComplete.prototype = {
     let finalComments = [];
 
     // If form history has results, add them to the list.
-    let maxHistoryItems = Math.min(results.local.length, this._historyLimit);
-    for (let i = 0; i < maxHistoryItems; ++i) {
+    for (let i = 0; i < results.local.length; ++i) {
       finalResults.push(results.local[i]);
       finalComments.push("");
     }
@@ -71,6 +71,13 @@ SuggestAutoComplete.prototype = {
       // now put the history results above the suggestions
       finalResults = finalResults.concat(results.remote);
       finalComments = finalComments.concat(comments);
+    }
+
+    // If no result, add the search term so that the panel of the new UI is shown anyway.
+    if (!finalResults.length &&
+        Services.prefs.getBoolPref("browser.search.showOneOffButtons")) {
+      finalResults.push(results.term);
+      finalComments.push("");
     }
 
     // Notify the FE of our new results

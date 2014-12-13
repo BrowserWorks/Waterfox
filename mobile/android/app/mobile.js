@@ -502,6 +502,9 @@ pref("security.warn_viewing_mixed", false); // Warning is disabled.  See Bug 616
 // Block insecure active content on https pages
 pref("security.mixed_content.block_active_content", true);
 
+// Enable pinning
+pref("security.cert_pinning.enforcement_level", 1);
+
 // Override some named colors to avoid inverse OS themes
 pref("ui.-moz-dialog", "#efebe7");
 pref("ui.-moz-dialogtext", "#101010");
@@ -560,6 +563,9 @@ pref("ui.dragThresholdY", 25);
 pref("layers.acceleration.disabled", false);
 pref("layers.offmainthreadcomposition.enabled", true);
 pref("layers.async-video.enabled", true);
+#ifdef MOZ_ANDROID_APZ
+pref("layers.async-pan-zoom.enabled", true);
+#endif
 pref("layers.progressive-paint", true);
 pref("layers.low-precision-buffer", true);
 pref("layers.low-precision-resolution", "0.25");
@@ -589,6 +595,12 @@ pref("media.preload.auto", 2);    // preload metadata if preload=auto
 // chronically starved of video frames. All decoders seen so far have a value
 // of at least 4.
 pref("media.video-queue.default-size", 3);
+
+// Enable the MediaCodec PlatformDecoderModule by default.
+pref("media.fragmented-mp4.exposed", true);
+pref("media.fragmented-mp4.enabled", true);
+pref("media.fragmented-mp4.android-media-codec.enabled", true);
+pref("media.fragmented-mp4.android-media-codec.preferred", true);
 
 // optimize images memory usage
 pref("image.mem.decodeondraw", true);
@@ -829,6 +841,7 @@ pref("browser.snippets.statsUrl", "https://snippets-stats.mozilla.org/mobile");
 // These prefs require a restart to take effect.
 pref("browser.snippets.enabled", true);
 pref("browser.snippets.syncPromo.enabled", true);
+pref("browser.snippets.firstrunHomepage.enabled", true);
 
 // The URL of the APK factory from which we obtain APKs for webapps.
 pref("browser.webapps.apkFactoryUrl", "https://controller.apk.firefox.com/application.apk");
@@ -861,3 +874,6 @@ pref("home.sync.updateMode", 0);
 
 // How frequently to check if we should sync home provider data.
 pref("home.sync.checkIntervalSecs", 3600);
+
+// Enable device storage API
+pref("device.storage.enabled", true);

@@ -9,6 +9,7 @@
 
 #include "AndroidBridge.h"
 #include "AndroidGraphicBuffer.h"
+#include "APZCCallbackHandler.h"
 
 #include <jni.h>
 #include <pthread.h>
@@ -30,6 +31,7 @@
 #endif
 
 #include "mozilla/unused.h"
+#include "mozilla/UniquePtr.h"
 
 #include "mozilla/dom/SmsMessage.h"
 #include "mozilla/dom/mobilemessage/Constants.h"
@@ -39,7 +41,7 @@
 #include "mozilla/layers/APZCTreeManager.h"
 #include "nsIMobileMessageDatabaseService.h"
 #include "nsPluginInstanceOwner.h"
-#include "nsSurfaceTexture.h"
+#include "AndroidSurfaceTexture.h"
 #include "GeckoProfiler.h"
 #include "nsMemoryPressure.h"
 
@@ -55,6 +57,12 @@ extern "C" {
 /*
  * Incoming JNI methods
  */
+
+NS_EXPORT void JNICALL
+Java_org_mozilla_gecko_GeckoAppShell_registerJavaUiThread(JNIEnv *jenv, jclass jc)
+{
+    AndroidBridge::RegisterJavaUiThread();
+}
 
 NS_EXPORT void JNICALL
 Java_org_mozilla_gecko_GeckoAppShell_nativeInit(JNIEnv *jenv, jclass jc)
@@ -76,6 +84,16 @@ Java_org_mozilla_gecko_GeckoAppShell_processNextNativeEvent(JNIEnv *jenv, jclass
     // poke the appshell
     if (nsAppShell::gAppShell)
         nsAppShell::gAppShell->ProcessNextNativeEvent(mayWait != JNI_FALSE);
+}
+
+NS_EXPORT jlong JNICALL
+Java_org_mozilla_gecko_GeckoAppShell_runUiThreadCallback(JNIEnv* env, jclass)
+{
+    if (!AndroidBridge::Bridge()) {
+        return -1;
+    }
+
+    return AndroidBridge::Bridge()->RunDelayedUiThreadTasks();
 }
 
 NS_EXPORT void JNICALL
@@ -828,9 +846,9 @@ Java_org_mozilla_gecko_GeckoAppShell_getNextMessageFromQueue(JNIEnv* jenv, jclas
 NS_EXPORT void JNICALL
 Java_org_mozilla_gecko_GeckoAppShell_onSurfaceTextureFrameAvailable(JNIEnv* jenv, jclass, jobject surfaceTexture, jint id)
 {
-  nsSurfaceTexture* st = nsSurfaceTexture::Find(id);
+  mozilla::gl::AndroidSurfaceTexture* st = mozilla::gl::AndroidSurfaceTexture::Find(id);
   if (!st) {
-    __android_log_print(ANDROID_LOG_ERROR, "GeckoJNI", "Failed to find nsSurfaceTexture with id %d", id);
+    __android_log_print(ANDROID_LOG_ERROR, "GeckoJNI", "Failed to find AndroidSurfaceTexture with id %d", id);
     return;
   }
 
@@ -866,41 +884,41 @@ Java_org_mozilla_gecko_gfx_NativePanZoomController_init(JNIEnv* env, jobject ins
         return;
     }
 
-    NativePanZoomController* oldRef = AndroidBridge::Bridge()->SetNativePanZoomController(instance);
+    NativePanZoomController* oldRef = APZCCallbackHandler::GetInstance()->SetNativePanZoomController(instance);
     if (oldRef && !oldRef->isNull()) {
         MOZ_ASSERT(false, "Registering a new NPZC when we already have one");
         delete oldRef;
     }
 }
 
-NS_EXPORT void JNICALL
+NS_EXPORT jboolean JNICALL
 Java_org_mozilla_gecko_gfx_NativePanZoomController_handleTouchEvent(JNIEnv* env, jobject instance, jobject event)
 {
     APZCTreeManager *controller = nsWindow::GetAPZCTreeManager();
-    if (controller) {
-        AndroidGeckoEvent* wrapper = AndroidGeckoEvent::MakeFromJavaObject(env, event);
-        MultiTouchInput input = wrapper->MakeMultiTouchInput(nsWindow::TopWindow());
-        delete wrapper;
-        if (input.mType >= 0) {
-            controller->ReceiveInputEvent(input, nullptr);
-        }
+    if (!controller) {
+        return false;
     }
+
+    AndroidGeckoEvent* wrapper = AndroidGeckoEvent::MakeFromJavaObject(env, event);
+    MultiTouchInput input = wrapper->MakeMultiTouchInput(nsWindow::TopWindow());
+    delete wrapper;
+
+    if (input.mType < 0 || !nsAppShell::gAppShell) {
+        return false;
+    }
+
+    ScrollableLayerGuid guid;
+    nsEventStatus status = controller->ReceiveInputEvent(input, &guid);
+    if (status != nsEventStatus_eConsumeNoDefault) {
+        nsAppShell::gAppShell->PostEvent(AndroidGeckoEvent::MakeApzInputEvent(input, guid));
+    }
+    return true;
 }
 
 NS_EXPORT void JNICALL
 Java_org_mozilla_gecko_gfx_NativePanZoomController_handleMotionEvent(JNIEnv* env, jobject instance, jobject event)
 {
     // FIXME implement this
-}
-
-NS_EXPORT jlong JNICALL
-Java_org_mozilla_gecko_gfx_NativePanZoomController_runDelayedCallback(JNIEnv* env, jobject instance)
-{
-    if (!AndroidBridge::Bridge()) {
-        return -1;
-    }
-
-    return AndroidBridge::Bridge()->RunDelayedTasks();
 }
 
 NS_EXPORT void JNICALL
@@ -910,21 +928,11 @@ Java_org_mozilla_gecko_gfx_NativePanZoomController_destroy(JNIEnv* env, jobject 
         return;
     }
 
-    NativePanZoomController* oldRef = AndroidBridge::Bridge()->SetNativePanZoomController(nullptr);
+    NativePanZoomController* oldRef = APZCCallbackHandler::GetInstance()->SetNativePanZoomController(nullptr);
     if (!oldRef || oldRef->isNull()) {
         MOZ_ASSERT(false, "Clearing a non-existent NPZC");
     } else {
         delete oldRef;
-    }
-}
-
-NS_EXPORT void JNICALL
-Java_org_mozilla_gecko_gfx_NativePanZoomController_notifyDefaultActionPrevented(JNIEnv* env, jobject instance, jboolean prevented)
-{
-    APZCTreeManager *controller = nsWindow::GetAPZCTreeManager();
-    if (controller) {
-        // TODO: Pass in correct values for presShellId and viewId.
-        controller->ContentReceivedTouch(ScrollableLayerGuid(nsWindow::RootLayerTreeId(), 0, 0), prevented);
     }
 }
 
@@ -988,18 +996,30 @@ Java_org_mozilla_gecko_ANRReporter_getNativeStack(JNIEnv* jenv, jclass)
         // Maybe profiler support is disabled?
         return nullptr;
     }
-    char *profile = profiler_get_profile();
-    while (profile && !strlen(profile)) {
+
+    // Timeout if we don't get a profiler sample after 5 seconds.
+    const PRIntervalTime timeout = PR_SecondsToInterval(5);
+    const PRIntervalTime startTime = PR_IntervalNow();
+
+    typedef struct { void operator()(void* p) { free(p); } } ProfilePtrPolicy;
+    // Pointer to a profile JSON string
+    typedef mozilla::UniquePtr<char, ProfilePtrPolicy> ProfilePtr;
+
+    ProfilePtr profile(profiler_get_profile());
+
+    while (profile && !strstr(profile.get(), "\"samples\":[{")) {
         // no sample yet?
+        if (PR_IntervalNow() - startTime >= timeout) {
+            return nullptr;
+        }
         sched_yield();
-        profile = profiler_get_profile();
+        profile = ProfilePtr(profiler_get_profile());
     }
-    jstring result = nullptr;
+
     if (profile) {
-        result = jenv->NewStringUTF(profile);
-        free(profile);
+        return jenv->NewStringUTF(profile.get());
     }
-    return result;
+    return nullptr;
 }
 
 NS_EXPORT void JNICALL

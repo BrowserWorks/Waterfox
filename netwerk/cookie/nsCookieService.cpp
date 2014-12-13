@@ -357,7 +357,7 @@ LogSuccess(bool aSetCookie, nsIURI *aHostURI, const nsAFlatCString &aCookieStrin
 class DBListenerErrorHandler : public mozIStorageStatementCallback
 {
 protected:
-  DBListenerErrorHandler(DBState* dbState) : mDBState(dbState) { }
+  explicit DBListenerErrorHandler(DBState* dbState) : mDBState(dbState) { }
   nsRefPtr<DBState> mDBState;
   virtual const char *GetOpType() = 0;
 
@@ -397,7 +397,7 @@ private:
 public:
   NS_DECL_ISUPPORTS
 
-  InsertCookieDBListener(DBState* dbState) : DBListenerErrorHandler(dbState) { }
+  explicit InsertCookieDBListener(DBState* dbState) : DBListenerErrorHandler(dbState) { }
   NS_IMETHOD HandleResult(mozIStorageResultSet*)
   {
     NS_NOTREACHED("Unexpected call to InsertCookieDBListener::HandleResult");
@@ -433,7 +433,7 @@ private:
 public:
   NS_DECL_ISUPPORTS
 
-  UpdateCookieDBListener(DBState* dbState) : DBListenerErrorHandler(dbState) { }
+  explicit UpdateCookieDBListener(DBState* dbState) : DBListenerErrorHandler(dbState) { }
   NS_IMETHOD HandleResult(mozIStorageResultSet*)
   {
     NS_NOTREACHED("Unexpected call to UpdateCookieDBListener::HandleResult");
@@ -461,7 +461,7 @@ private:
 public:
   NS_DECL_ISUPPORTS
 
-  RemoveCookieDBListener(DBState* dbState) : DBListenerErrorHandler(dbState) { }
+  explicit RemoveCookieDBListener(DBState* dbState) : DBListenerErrorHandler(dbState) { }
   NS_IMETHOD HandleResult(mozIStorageResultSet*)
   {
     NS_NOTREACHED("Unexpected call to RemoveCookieDBListener::HandleResult");
@@ -490,7 +490,7 @@ private:
 public:
   NS_DECL_ISUPPORTS
 
-  ReadCookieDBListener(DBState* dbState)
+  explicit ReadCookieDBListener(DBState* dbState)
     : DBListenerErrorHandler(dbState)
     , mCanceled(false)
   {
@@ -566,7 +566,7 @@ class CloseCookieDBListener MOZ_FINAL :  public mozIStorageCompletionCallback
   ~CloseCookieDBListener() {}
 
 public:
-  CloseCookieDBListener(DBState* dbState) : mDBState(dbState) { }
+  explicit CloseCookieDBListener(DBState* dbState) : mDBState(dbState) { }
   nsRefPtr<DBState> mDBState;
   NS_DECL_ISUPPORTS
 
@@ -630,14 +630,6 @@ nsCookieEntry::SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
   return amount;
 }
 
-static size_t
-HostTableEntrySizeOfExcludingThis(nsCookieEntry *aEntry,
-                                  MallocSizeOf aMallocSizeOf,
-                                  void *arg)
-{
-  return aEntry->SizeOfExcludingThis(aMallocSizeOf);
-}
-
 size_t
 CookieDomainTuple::SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
 {
@@ -649,28 +641,18 @@ CookieDomainTuple::SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
   return amount;
 }
 
-static size_t
-ReadSetEntrySizeOfExcludingThis(nsCookieKey *aEntry,
-                                MallocSizeOf aMallocSizeOf,
-                                void *)
-{
-  return aEntry->SizeOfExcludingThis(aMallocSizeOf);
-}
-
 size_t
 DBState::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
 {
   size_t amount = 0;
 
   amount += aMallocSizeOf(this);
-  amount += hostTable.SizeOfExcludingThis(HostTableEntrySizeOfExcludingThis,
-                                          aMallocSizeOf);
+  amount += hostTable.SizeOfExcludingThis(aMallocSizeOf);
   amount += hostArray.SizeOfExcludingThis(aMallocSizeOf);
   for (uint32_t i = 0; i < hostArray.Length(); ++i) {
     amount += hostArray[i].SizeOfExcludingThis(aMallocSizeOf);
   }
-  amount += readSet.SizeOfExcludingThis(ReadSetEntrySizeOfExcludingThis,
-                                        aMallocSizeOf);
+  amount += readSet.SizeOfExcludingThis(aMallocSizeOf);
 
   return amount;
 }
@@ -1484,7 +1466,7 @@ RebuildDBCallback(nsCookieEntry *aEntry,
     nsCookie* cookie = cookies[i];
 
     if (!cookie->IsSession()) {
-      bindCookieParameters(paramsArray, aEntry, cookie);
+      bindCookieParameters(paramsArray, nsCookieKey(aEntry), cookie);
     }
   }
 

@@ -33,7 +33,6 @@
 #include "nsIDOMHTMLScriptElement.h"
 #include "nsIDocShell.h"
 #include "nsContentUtils.h"
-#include "nsCxPusher.h"
 #include "nsUnicharUtils.h"
 #include "nsAutoPtr.h"
 #include "nsIXPConnect.h"
@@ -54,7 +53,6 @@
 
 #include "mozilla/CORSMode.h"
 #include "mozilla/Attributes.h"
-#include "mozilla/Telemetry.h"
 #include "mozilla/unused.h"
 
 #ifdef PR_LOGGING
@@ -327,12 +325,19 @@ nsScriptLoader::StartLoad(nsScriptLoadRequest *aRequest, const nsAString &aType,
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsIScriptElement *script = aRequest->mElement;
-  if (aScriptFromHead &&
-      !(script && (script->GetScriptAsync() || script->GetScriptDeferred()))) {
-    nsCOMPtr<nsIHttpChannelInternal>
-      internalHttpChannel(do_QueryInterface(channel));
-    if (internalHttpChannel)
+  nsCOMPtr<nsIHttpChannelInternal>
+    internalHttpChannel(do_QueryInterface(channel));
+
+  if (internalHttpChannel) {
+    if (aScriptFromHead &&
+        !(script && (script->GetScriptAsync() || script->GetScriptDeferred()))) {
+      // synchronous head scripts block lading of most other non js/css
+      // content such as images
       internalHttpChannel->SetLoadAsBlocking(true);
+    } else if (!(script && script->GetScriptDeferred())) {
+      // other scripts are neither blocked nor prioritized unless marked deferred
+      internalHttpChannel->SetLoadUnblocked(true);
+    }
   }
 
   nsCOMPtr<nsIHttpChannel> httpChannel(do_QueryInterface(channel));
@@ -539,43 +544,6 @@ CSPAllowsInlineScript(nsIScriptElement *aElement, nsIDocument *aDocument)
   return true;
 }
 
-static void
-AccumulateJavaScriptVersionTelemetry(nsIScriptElement* aElement,
-                                     JSVersion aVersion)
-{
-  uint32_t minorVersion;
-  switch (aVersion) {
-    case JSVERSION_DEFAULT: minorVersion = 5; break;
-    case JSVERSION_1_6:     minorVersion = 6; break;
-    case JSVERSION_1_7:     minorVersion = 7; break;
-    case JSVERSION_1_8:     minorVersion = 8; break;
-    default:                MOZ_ASSERT_UNREACHABLE("Unexpected JSVersion");
-    case JSVERSION_UNKNOWN: minorVersion = 0; break;
-  }
-
-  // Only report SpiderMonkey's nonstandard JS versions: 1.6, 1.7, and 1.8.
-  if (minorVersion < 6) {
-    return;
-  }
-
-  nsCOMPtr<nsIURI> scriptURI = aElement->GetScriptURI();
-  if (!scriptURI) {
-    return;
-  }
-
-  // We only care about web content, not chrome or add-on JS versions.
-  bool chrome = false;
-  scriptURI->SchemeIs("chrome", &chrome);
-  if (!chrome) {
-    scriptURI->SchemeIs("resource", &chrome);
-  }
-  if (chrome) {
-    return;
-  }
-
-  Telemetry::Accumulate(Telemetry::JS_MINOR_VERSION, minorVersion);
-}
-
 bool
 nsScriptLoader::ProcessScriptElement(nsIScriptElement *aElement)
 {
@@ -604,7 +572,6 @@ nsScriptLoader::ProcessScriptElement(nsIScriptElement *aElement)
   aElement->GetScriptType(type);
   if (!type.IsEmpty()) {
     NS_ENSURE_TRUE(ParseTypeAttribute(type, &version), false);
-    AccumulateJavaScriptVersionTelemetry(aElement, version);
   } else {
     // no 'type=' element
     // "language" is a deprecated attribute of HTML, so we check it only for
@@ -1155,8 +1122,8 @@ nsScriptLoader::EvaluateScript(nsScriptLoadRequest* aRequest,
       // execution currentScript of the master should refer to this
       // script. So let's update the mCurrentScript of the ScriptLoader
       // of the master document too.
-      masterScriptUpdater.construct(master->ScriptLoader(),
-                                    aRequest->mElement);
+      masterScriptUpdater.emplace(master->ScriptLoader(),
+                                  aRequest->mElement);
     }
 
     JS::CompileOptions options(entryScript.cx());
@@ -1404,9 +1371,8 @@ nsScriptLoader::OnStreamComplete(nsIStreamLoader* aLoader,
   if (NS_FAILED(rv)) {
     /*
      * Handle script not loading error because source was a tracking URL.
-     * (Safebrowinsg) We make a note of this script node by including it
-     * in a dedicated array of blocked tracking nodes under its parent
-     * document.
+     * We make a note of this script node by including it in a dedicated
+     * array of blocked tracking nodes under its parent document.
      */
     if (rv == NS_ERROR_TRACKING_URI) {
       nsCOMPtr<nsIContent> cont = do_QueryInterface(request->mElement);

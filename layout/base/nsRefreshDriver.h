@@ -66,7 +66,7 @@ public:
 class nsRefreshDriver MOZ_FINAL : public mozilla::layers::TransactionIdAllocator,
                                   public nsARefreshObserver {
 public:
-  nsRefreshDriver(nsPresContext *aPresContext);
+  explicit nsRefreshDriver(nsPresContext *aPresContext);
   ~nsRefreshDriver();
 
   static void InitializeStatics();
@@ -275,8 +275,9 @@ public:
   virtual uint64_t GetTransactionId() MOZ_OVERRIDE;
   void NotifyTransactionCompleted(uint64_t aTransactionId) MOZ_OVERRIDE;
   void RevokeTransactionId(uint64_t aTransactionId) MOZ_OVERRIDE;
+  mozilla::TimeStamp GetTransactionStart() MOZ_OVERRIDE;
 
-  bool IsWaitingForPaint();
+  bool IsWaitingForPaint(mozilla::TimeStamp aTime);
 
   // nsARefreshObserver
   NS_IMETHOD_(MozExternalRefCountType) AddRef(void) { return TransactionIdAllocator::AddRef(); }
@@ -355,10 +356,12 @@ private:
   // True if Tick() was skipped because of mWaitingForTransaction and
   // we should schedule a new Tick immediately when resumed instead
   // of waiting until the next interval.
-  uint32_t mSkippedPaints;
+  bool mSkippedPaints;
 
   int64_t mMostRecentRefreshEpochTime;
   mozilla::TimeStamp mMostRecentRefresh;
+  mozilla::TimeStamp mMostRecentTick;
+  mozilla::TimeStamp mTickStart;
 
   // separate arrays for each flush type we support
   ObserverArray mObservers[3];

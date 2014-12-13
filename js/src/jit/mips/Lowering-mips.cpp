@@ -109,15 +109,14 @@ LIRGeneratorMIPS::visitBox(MBox *box)
     if (vreg >= MAX_VIRTUAL_REGISTERS)
         return false;
 
-    // Note that because we're using PASSTHROUGH, we do not change the type of
+    // Note that because we're using BogusTemp(), we do not change the type of
     // the definition. We also do not define the first output as "TYPE",
     // because it has no corresponding payload at (vreg + 1). Also note that
     // although we copy the input's original type for the payload half of the
-    // definition, this is only for clarity. PASSTHROUGH definitions are
+    // definition, this is only for clarity. BogusTemp() definitions are
     // ignored.
     lir->setDef(0, LDefinition(vreg, LDefinition::GENERAL));
-    lir->setDef(1, LDefinition(inner->virtualRegister(), LDefinition::TypeFrom(inner->type()),
-                               LDefinition::PASSTHROUGH));
+    lir->setDef(1, LDefinition::BogusTemp());
     box->setVirtualRegister(vreg);
     return add(lir);
 }
@@ -129,6 +128,7 @@ LIRGeneratorMIPS::visitUnbox(MUnbox *unbox)
     // a payload. Unlike most instructions consuming a box, we ask for the type
     // second, so that the result can re-use the first input.
     MDefinition *inner = unbox->getOperand(0);
+    JS_ASSERT(inner->type() == MIRType_Value);
 
     if (!ensureDefined(inner))
         return false;
@@ -151,12 +151,11 @@ LIRGeneratorMIPS::visitUnbox(MUnbox *unbox)
     if (unbox->fallible() && !assignSnapshot(lir, unbox->bailoutKind()))
         return false;
 
-    // Note that PASSTHROUGH here is illegal, since types and payloads form two
-    // separate intervals. If the type becomes dead before the payload, it
-    // could be used as a Value without the type being recoverable. Unbox's
-    // purpose is to eagerly kill the definition of a type tag, so keeping both
-    // alive (for the purpose of gcmaps) is unappealing. Instead, we create a
-    // new virtual register.
+    // Types and payloads form two separate intervals. If the type becomes dead
+    // before the payload, it could be used as a Value without the type being
+    // recoverable. Unbox's purpose is to eagerly kill the definition of a type
+    // tag, so keeping both alive (for the purpose of gcmaps) is unappealing.
+    // Instead, we create a new virtual register.
     return defineReuseInput(lir, unbox, 0);
 }
 
@@ -357,7 +356,7 @@ LIRGeneratorMIPS::newLTableSwitch(const LAllocation &in, const LDefinition &inpu
 LTableSwitchV *
 LIRGeneratorMIPS::newLTableSwitchV(MTableSwitch *tableswitch)
 {
-    return new(alloc()) LTableSwitchV(temp(), tempFloat32(), temp(), tableswitch);
+    return new(alloc()) LTableSwitchV(temp(), tempDouble(), temp(), tableswitch);
 }
 
 bool
@@ -499,7 +498,7 @@ LIRGeneratorMIPS::visitAsmJSStoreHeap(MAsmJSStoreHeap *ins)
 bool
 LIRGeneratorMIPS::visitAsmJSLoadFuncPtr(MAsmJSLoadFuncPtr *ins)
 {
-    return define(new(alloc()) LAsmJSLoadFuncPtr(useRegister(ins->index()), temp()), ins);
+    return define(new(alloc()) LAsmJSLoadFuncPtr(useRegister(ins->index())), ins);
 }
 
 bool
@@ -523,11 +522,17 @@ LIRGeneratorMIPS::lowerTruncateFToInt32(MTruncateToInt32 *ins)
 bool
 LIRGeneratorMIPS::visitStoreTypedArrayElementStatic(MStoreTypedArrayElementStatic *ins)
 {
-    MOZ_ASSUME_UNREACHABLE("NYI");
+    MOZ_CRASH("NYI");
 }
 
 bool
 LIRGeneratorMIPS::visitForkJoinGetSlice(MForkJoinGetSlice *ins)
 {
-    MOZ_ASSUME_UNREACHABLE("NYI");
+    MOZ_CRASH("NYI");
+}
+
+bool
+LIRGeneratorMIPS::visitSimdSplatX4(MSimdSplatX4 *ins)
+{
+    MOZ_CRASH("NYI");
 }

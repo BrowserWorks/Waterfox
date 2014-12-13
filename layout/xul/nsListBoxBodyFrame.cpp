@@ -7,6 +7,7 @@
 
 #include "nsListBoxLayout.h"
 
+#include "mozilla/MathAlgorithms.h"
 #include "nsCOMPtr.h"
 #include "nsGridRowGroupLayout.h"
 #include "nsIServiceManager.h"
@@ -40,6 +41,7 @@
 #include "nsAccessibilityService.h"
 #endif
 
+using namespace mozilla;
 using namespace mozilla::dom;
 
 /////////////// nsListScrollSmoother //////////////////
@@ -64,7 +66,7 @@ using namespace mozilla::dom;
 // do we wait before checking again?
 #define SMOOTH_INTERVAL 100
 
-class nsListScrollSmoother : public nsITimerCallback
+class nsListScrollSmoother MOZ_FINAL : public nsITimerCallback
 {
 private:
   virtual ~nsListScrollSmoother();
@@ -72,7 +74,7 @@ private:
 public:
   NS_DECL_ISUPPORTS
 
-  nsListScrollSmoother(nsListBoxBodyFrame* aOuter);
+  explicit nsListScrollSmoother(nsListBoxBodyFrame* aOuter);
 
   // nsITimerCallback
   NS_DECL_NSITIMERCALLBACK
@@ -185,7 +187,9 @@ nsListBoxBodyFrame::Init(nsIContent*       aContent,
                          nsIFrame*         aPrevInFlow)
 {
   nsBoxFrame::Init(aContent, aParent, aPrevInFlow);
-  nsIScrollableFrame* scrollFrame = nsLayoutUtils::GetScrollableFrameFor(this);
+  // Don't call nsLayoutUtils::GetScrollableFrameFor since we are not its
+  // scrollframe child yet.
+  nsIScrollableFrame* scrollFrame = do_QueryFrame(aParent);
   if (scrollFrame) {
     nsIFrame* verticalScrollbar = scrollFrame->GetScrollbarBox(true);
     nsScrollbarFrame* scrollbarFrame = do_QueryFrame(verticalScrollbar);
@@ -237,10 +241,10 @@ nsListBoxBodyFrame::AttributeChanged(int32_t aNameSpaceID,
 }
 
 /* virtual */ void
-nsListBoxBodyFrame::MarkIntrinsicWidthsDirty()
+nsListBoxBodyFrame::MarkIntrinsicISizesDirty()
 {
   mStringWidth = -1;
-  nsBoxFrame::MarkIntrinsicWidthsDirty();
+  nsBoxFrame::MarkIntrinsicISizesDirty();
 }
 
 /////////// nsBox ///////////////
@@ -322,43 +326,89 @@ nsListBoxBodyFrame::GetPrefSize(nsBoxLayoutState& aBoxLayoutState)
 
 ///////////// nsIScrollbarMediator ///////////////
 
-NS_IMETHODIMP
-nsListBoxBodyFrame::PositionChanged(nsScrollbarFrame* aScrollbar, int32_t aOldIndex, int32_t& aNewIndex)
+void
+nsListBoxBodyFrame::ScrollByPage(nsScrollbarFrame* aScrollbar, int32_t aDirection)
+{
+  MOZ_ASSERT(aScrollbar != nullptr);
+  aScrollbar->SetIncrementToPage(aDirection);
+  nsWeakFrame weakFrame(this);
+  int32_t newPos = aScrollbar->MoveToNewPosition();
+  if (!weakFrame.IsAlive()) {
+    return;
+  }
+  UpdateIndex(newPos);
+}
+
+void
+nsListBoxBodyFrame::ScrollByWhole(nsScrollbarFrame* aScrollbar, int32_t aDirection)
+{
+  MOZ_ASSERT(aScrollbar != nullptr);
+  aScrollbar->SetIncrementToWhole(aDirection);
+  nsWeakFrame weakFrame(this);
+  int32_t newPos = aScrollbar->MoveToNewPosition();
+  if (!weakFrame.IsAlive()) {
+    return;
+  }
+  UpdateIndex(newPos);
+}
+
+void
+nsListBoxBodyFrame::ScrollByLine(nsScrollbarFrame* aScrollbar, int32_t aDirection)
+{
+  MOZ_ASSERT(aScrollbar != nullptr);
+  aScrollbar->SetIncrementToLine(aDirection);
+  nsWeakFrame weakFrame(this);
+  int32_t newPos = aScrollbar->MoveToNewPosition();
+  if (!weakFrame.IsAlive()) {
+    return;
+  }
+  UpdateIndex(newPos);
+}
+
+void
+nsListBoxBodyFrame::RepeatButtonScroll(nsScrollbarFrame* aScrollbar)
+{
+  nsWeakFrame weakFrame(this);
+  int32_t newPos = aScrollbar->MoveToNewPosition();
+  if (!weakFrame.IsAlive()) {
+    return;
+  }
+  UpdateIndex(newPos);
+}
+
+int32_t
+nsListBoxBodyFrame::ToRowIndex(nscoord aPos) const
+{
+  return NS_roundf(float(std::max(aPos, 0)) / mRowHeight);
+}
+
+void
+nsListBoxBodyFrame::ThumbMoved(nsScrollbarFrame* aScrollbar,
+                               nscoord aOldPos,
+                               nscoord aNewPos)
 { 
   if (mScrolling || mRowHeight == 0)
-    return NS_OK;
+    return;
 
-  nscoord oldTwipIndex, newTwipIndex;
-  oldTwipIndex = mCurrentIndex*mRowHeight;
-  newTwipIndex = nsPresContext::CSSPixelsToAppUnits(aNewIndex);
-  int32_t twipDelta = newTwipIndex > oldTwipIndex ? newTwipIndex - oldTwipIndex : oldTwipIndex - newTwipIndex;
-
-  int32_t rowDelta = twipDelta / mRowHeight;
-  int32_t remainder = twipDelta % mRowHeight;
-  if (remainder > (mRowHeight/2))
-    rowDelta++;
-
-  if (rowDelta == 0)
-    return NS_OK;
-
-  // update the position to be row based.
-
-  int32_t newIndex = newTwipIndex > oldTwipIndex ? mCurrentIndex + rowDelta : mCurrentIndex - rowDelta;
-  //aNewIndex = newIndex*mRowHeight/mOnePixel;
+  int32_t newIndex = ToRowIndex(aNewPos);
+  if (newIndex == mCurrentIndex) {
+    return;
+  }
+  int32_t rowDelta = newIndex - mCurrentIndex;
 
   nsListScrollSmoother* smoother = GetSmoother();
 
   // if we can't scroll the rows in time then start a timer. We will eat
   // events until the user stops moving and the timer stops.
-  if (smoother->IsRunning() || rowDelta*mTimePerRow > USER_TIME_THRESHOLD) {
+  if (smoother->IsRunning() || Abs(rowDelta)*mTimePerRow > USER_TIME_THRESHOLD) {
 
      smoother->Stop();
 
-     smoother->mDelta = newTwipIndex > oldTwipIndex ? rowDelta : -rowDelta;
+     smoother->mDelta = rowDelta;
 
      smoother->Start();
 
-     return NS_OK;
+     return;
   }
 
   smoother->Stop();
@@ -368,17 +418,16 @@ nsListBoxBodyFrame::PositionChanged(nsScrollbarFrame* aScrollbar, int32_t aOldIn
   
   if (mCurrentIndex < 0) {
     mCurrentIndex = 0;
-    return NS_OK;
+    return;
   }
-
-  return InternalPositionChanged(newTwipIndex < oldTwipIndex, rowDelta);
+  InternalPositionChanged(rowDelta < 0, Abs(rowDelta));
 }
 
-NS_IMETHODIMP
+void
 nsListBoxBodyFrame::VisibilityChanged(bool aVisible)
 {
   if (mRowHeight == 0)
-    return NS_OK;
+    return;
 
   int32_t lastPageTopRow = GetRowCount() - (GetAvailableHeight() / mRowHeight);
   if (lastPageTopRow < 0)
@@ -388,27 +437,28 @@ nsListBoxBodyFrame::VisibilityChanged(bool aVisible)
     mCurrentIndex = lastPageTopRow;
     InternalPositionChanged(true, delta);
   }
-
-  return NS_OK;
 }
 
-NS_IMETHODIMP
-nsListBoxBodyFrame::ScrollbarButtonPressed(nsScrollbarFrame* aScrollbar, int32_t aOldIndex, int32_t aNewIndex)
+nsIFrame*
+nsListBoxBodyFrame::GetScrollbarBox(bool aVertical)
 {
-  if (aOldIndex == aNewIndex)
-    return NS_OK;
-  if (aNewIndex < aOldIndex)
-    mCurrentIndex--;
-  else mCurrentIndex++;
-  if (mCurrentIndex < 0) {
-    mCurrentIndex = 0;
-    return NS_OK;
-  }
-  InternalPositionChanged(aNewIndex < aOldIndex, 1);
-
-  return NS_OK;
+  nsIScrollableFrame* scrollFrame = nsLayoutUtils::GetScrollableFrameFor(this);
+  return scrollFrame ? scrollFrame->GetScrollbarBox(true) : nullptr;
 }
 
+void
+nsListBoxBodyFrame::UpdateIndex(int32_t aNewPos)
+{
+  int32_t newIndex = ToRowIndex(nsPresContext::CSSPixelsToAppUnits(aNewPos));
+  if (newIndex == mCurrentIndex) {
+    return;
+  }
+  bool up = newIndex < mCurrentIndex;
+  int32_t indexDelta = Abs(newIndex - mCurrentIndex);
+  mCurrentIndex = newIndex;
+  InternalPositionChanged(up, indexDelta);
+}
+ 
 ///////////// nsIReflowCallback ///////////////
 
 bool
@@ -641,7 +691,7 @@ nsListBoxBodyFrame::GetYPosition()
 }
 
 nscoord
-nsListBoxBodyFrame::ComputeIntrinsicWidth(nsBoxLayoutState& aBoxLayoutState)
+nsListBoxBodyFrame::ComputeIntrinsicISize(nsBoxLayoutState& aBoxLayoutState)
 {
   if (mStringWidth != -1)
     return mStringWidth;
@@ -757,7 +807,7 @@ nsListBoxBodyFrame::ScrollToIndex(int32_t aRowIndex)
   // This change has to happen immediately.
   // Flush any pending reflow commands.
   // XXXbz why, exactly?
-  mContent->GetDocument()->FlushPendingNotifications(Flush_Layout);
+  mContent->GetComposedDoc()->FlushPendingNotifications(Flush_Layout);
 
   return NS_OK;
 }
@@ -830,7 +880,7 @@ nsListBoxBodyFrame::DoInternalPositionChanged(bool aUp, int32_t aDelta)
   PRTime start = PR_Now();
 
   nsWeakFrame weakThis(this);
-  mContent->GetDocument()->FlushPendingNotifications(Flush_Layout);
+  mContent->GetComposedDoc()->FlushPendingNotifications(Flush_Layout);
   if (!weakThis.IsAlive()) {
     return NS_OK;
   }

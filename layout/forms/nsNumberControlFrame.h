@@ -38,7 +38,7 @@ class nsNumberControlFrame MOZ_FINAL : public nsContainerFrame
   typedef mozilla::WidgetEvent WidgetEvent;
   typedef mozilla::WidgetGUIEvent WidgetGUIEvent;
 
-  nsNumberControlFrame(nsStyleContext* aContext);
+  explicit nsNumberControlFrame(nsStyleContext* aContext);
 
 public:
   NS_DECL_QUERYFRAME_TARGET(nsNumberControlFrame)
@@ -53,9 +53,9 @@ public:
   virtual mozilla::a11y::AccType AccessibleType() MOZ_OVERRIDE;
 #endif
 
-  virtual nscoord GetMinWidth(nsRenderingContext* aRenderingContext) MOZ_OVERRIDE;
+  virtual nscoord GetMinISize(nsRenderingContext* aRenderingContext) MOZ_OVERRIDE;
 
-  virtual nscoord GetPrefWidth(nsRenderingContext* aRenderingContext) MOZ_OVERRIDE;
+  virtual nscoord GetPrefISize(nsRenderingContext* aRenderingContext) MOZ_OVERRIDE;
 
   virtual void Reflow(nsPresContext*           aPresContext,
                       nsHTMLReflowMetrics&     aDesiredSize,
@@ -68,7 +68,7 @@ public:
 
   // nsIAnonymousContentCreator
   virtual nsresult CreateAnonymousContent(nsTArray<ContentInfo>& aElements) MOZ_OVERRIDE;
-  virtual void AppendAnonymousContentTo(nsBaseContentList& aElements,
+  virtual void AppendAnonymousContentTo(nsTArray<nsIContent*>& aElements,
                                         uint32_t aFilter) MOZ_OVERRIDE;
 
 #ifdef DEBUG_FRAME_DUMP
@@ -204,7 +204,7 @@ private:
   class SyncDisabledStateEvent : public nsRunnable
   {
   public:
-    SyncDisabledStateEvent(nsNumberControlFrame* aFrame)
+    explicit SyncDisabledStateEvent(nsNumberControlFrame* aFrame)
     : mFrame(aFrame)
     {}
 

@@ -58,8 +58,9 @@ Listener.prototype = {
     onStartRequest: function(request, ctx) {
         this.gotStartRequest = true;
     },
-    onStopRequest: function(request, ctx) {
+    onStopRequest: function(request, ctx, status) {
         this.gotStopRequest = true;
+        do_check_eq(status, 0);
         if (this._callback) {
             this._callback.call(null, this);
         }
@@ -87,6 +88,20 @@ add_test(testAsync);
 // Run same test again so we test the codepath for a zipcache hit
 add_test(testAsync);
 
+/**
+ * Basic test for nsIZipReader.
+ * This relies on the jar cache to succeed in child processes.
+ */
+function testZipEntry() {
+    var uri = jarBase + "/inner40.zip";
+    var chan = ios.newChannel(uri, null, null).QueryInterface(Ci.nsIJARChannel);
+    var entry = chan.zipEntry;
+    do_check_true(entry.CRC32 == 0x8b635486);
+    do_check_true(entry.realSize == 184);
+    run_next_test();
+}
+
+add_test(testZipEntry);
 
 // In e10s child processes we don't currently support 
 // 1) synchronously opening jar files on parent
@@ -198,5 +213,42 @@ if (!inChild) {
   });
 
 } // if !inChild
+
+if (inChild) {
+    /**
+     * Multiple simultaneous opening test for bug 1048615
+     */
+    add_test(function testSimultaneous() {
+        var uri = jarBase + "/inner1.zip";
+
+        // Drop any JAR caches
+        obs.notifyObservers(null, "chrome-flush-caches", null);
+
+        // Open the first channel without ensureChildFd()
+        var chan_first = ios.newChannel(uri, null, null)
+                            .QueryInterface(Ci.nsIJARChannel);
+        chan_first.asyncOpen(new Listener(function(l) {
+        }), null);
+
+        // Open multiple channels with ensureChildFd()
+        var num = 10;
+        var chan = [];
+        for (var i = 0; i < num; i++) {
+            chan[i] = ios.newChannel(uri, null, null)
+                         .QueryInterface(Ci.nsIJARChannel);
+            chan[i].ensureChildFd();
+            chan[i].asyncOpen(new Listener(function(l) {
+            }), null);
+        }
+
+        // Open the last channel with ensureChildFd()
+        var chan_last = ios.newChannel(uri, null, null)
+                           .QueryInterface(Ci.nsIJARChannel);
+        chan_last.ensureChildFd();
+        chan_last.asyncOpen(new Listener(function(l) {
+            run_next_test();
+        }), null);
+    });
+} // if inChild
 
 function run_test() run_next_test();

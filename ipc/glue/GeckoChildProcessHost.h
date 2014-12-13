@@ -20,7 +20,7 @@
 #include "nsXULAppAPI.h"        // for GeckoProcessType
 #include "nsString.h"
 
-#if defined(XP_WIN)
+#if defined(XP_WIN) && defined(MOZ_SANDBOX)
 #include "sandboxBroker.h"
 #endif
 
@@ -41,8 +41,8 @@ public:
 
   static ChildPrivileges DefaultChildPrivileges();
 
-  GeckoChildProcessHost(GeckoProcessType aProcessType,
-                        ChildPrivileges aPrivileges=base::PRIVILEGES_DEFAULT);
+  explicit GeckoChildProcessHost(GeckoProcessType aProcessType,
+                                 ChildPrivileges aPrivileges=base::PRIVILEGES_DEFAULT);
 
   ~GeckoChildProcessHost();
 
@@ -165,8 +165,11 @@ protected:
 #ifdef XP_WIN
   void InitWindowsGroupID();
   nsString mGroupId;
+
+#ifdef MOZ_SANDBOX
   SandboxBroker mSandboxBroker;
   std::vector<std::wstring> mAllowedFilesRead;
+#endif
 #endif // XP_WIN
 
 #if defined(OS_POSIX)

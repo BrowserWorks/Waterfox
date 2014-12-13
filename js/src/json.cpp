@@ -314,7 +314,8 @@ JO(JSContext *cx, HandleObject obj, StringifyContext *scx)
     if (!detect.init())
         return false;
     if (detect.foundCycle()) {
-        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_CYCLIC_VALUE, js_object_str);
+        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_JSON_CYCLIC_VALUE,
+                             js_object_str);
         return false;
     }
 
@@ -329,10 +330,10 @@ JO(JSContext *cx, HandleObject obj, StringifyContext *scx)
         props = &scx->propertyList;
     } else {
         JS_ASSERT_IF(scx->replacer, scx->propertyList.length() == 0);
-        ids.construct(cx);
-        if (!GetPropertyNames(cx, obj, JSITER_OWNONLY, ids.addr()))
+        ids.emplace(cx);
+        if (!GetPropertyNames(cx, obj, JSITER_OWNONLY, ids.ptr()))
             return false;
-        props = ids.addr();
+        props = ids.ptr();
     }
 
     /* My kingdom for not-quite-initialized-from-the-start references. */
@@ -404,7 +405,8 @@ JA(JSContext *cx, HandleObject obj, StringifyContext *scx)
     if (!detect.init())
         return false;
     if (detect.foundCycle()) {
-        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_CYCLIC_VALUE, js_object_str);
+        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_JSON_CYCLIC_VALUE,
+                             js_object_str);
         return false;
     }
 

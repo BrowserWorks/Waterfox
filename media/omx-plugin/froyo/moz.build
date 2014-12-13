@@ -13,9 +13,14 @@ LIBRARY_NAME = 'omxpluginfroyo'
 FORCE_SHARED_LIB = True
 
 LOCAL_INCLUDES += [
-    '../../../content/media/plugins',
     '../include/froyo',
     '../include/froyo/media/stagefright/openmax',
+]
+
+USE_LIBS += [
+    '/media/omx-plugin/lib/froyo/libstagefright/stagefright',
+    '/media/omx-plugin/lib/gb/libutils/utils',
+    'stagefright_color_conversion',
 ]
 
 # Don't use STL wrappers; this isn't Gecko code

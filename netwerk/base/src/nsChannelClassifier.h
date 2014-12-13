@@ -24,10 +24,17 @@ public:
 
 private:
     nsCOMPtr<nsIChannel> mSuspendedChannel;
+    // Set true if the channel is on the allow list.
+    bool mIsAllowListed;
 
     ~nsChannelClassifier() {}
     void MarkEntryClassified(nsresult status);
     bool HasBeenClassified(nsIChannel *aChannel);
+    // Whether or not tracking protection should be enabled on this channel.
+    nsresult ShouldEnableTrackingProtection(nsIChannel *aChannel, bool *result);
+    // If we are blocking tracking content, update the corresponding flag in
+    // the respective docshell and call nsISecurityEventSink::onSecurityChange.
+    nsresult SetBlockedTrackingContent(nsIChannel *channel);
 };
 
 #endif

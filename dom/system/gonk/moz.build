@@ -43,6 +43,7 @@ SOURCES += [
     'GonkGPSGeolocationProvider.cpp',
     'MozMtpDatabase.cpp',
     'MozMtpServer.cpp',
+    'MozMtpStorage.cpp',
     'NetworkUtils.cpp',
     'NetworkWorker.cpp',
     'nsVolume.cpp',
@@ -95,20 +96,6 @@ if CONFIG['MOZ_B2G_RIL']:
         'ril_worker.js',
     ]
 
-if CONFIG['MOZ_NFC']:
-    XPIDL_SOURCES += [
-        'nsINfcContentHelper.idl',
-    ]
-    EXTRA_COMPONENTS += [
-        'Nfc.js',
-        'Nfc.manifest',
-        'NfcContentHelper.js',
-    ]
-    EXTRA_JS_MODULES += [
-    'nfc_consts.js',
-    'nfc_worker.js',
-    ]
-
 FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
@@ -116,9 +103,8 @@ include('/ipc/chromium/chromium-config.mozbuild')
 LOCAL_INCLUDES += [
     '/dom/base',
     '/dom/bluetooth',
-    '/dom/nfc',
-    '/dom/src/geolocation',
+    '/dom/geolocation',
     '/dom/wifi',
 ]
 
-FINAL_LIBRARY = 'gklayout'
+FINAL_LIBRARY = 'xul'

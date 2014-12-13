@@ -20,11 +20,6 @@ let gCustomize = {
       this._nodes[idSuffix] = document.getElementById("newtab-customize-" + idSuffix);
     }
 
-    this._nodes.button.setAttribute("title", newTabString("customize.title"));
-    ["enhanced", "classic", "blank"].forEach(name => {
-      this._nodes[name].firstChild.textContent = newTabString("customize." + name);
-    });
-
     this._nodes.button.addEventListener("click", e => this.showPanel());
     this._nodes.blank.addEventListener("click", e => {
       gAllPages.enabled = false;
@@ -42,11 +37,6 @@ let gCustomize = {
   },
 
   showPanel: function() {
-    if (!DirectoryLinksProvider.enabled) {
-      gAllPages.enabled = !gAllPages.enabled;
-      return;
-    }
-
     let nodes = this._nodes;
     let {button, panel} = nodes;
     if (button.hasAttribute("active")) {
@@ -70,12 +60,6 @@ let gCustomize = {
 
   updateSelected: function() {
     let {enabled, enhanced} = gAllPages;
-
-    if (!DirectoryLinksProvider.enabled) {
-      this._nodes.button.setAttribute("title", newTabString(enabled ? "hide" : "show"));
-      return;
-    }
-
     let selected = enabled ? enhanced ? "enhanced" : "classic" : "blank";
     ["enhanced", "classic", "blank"].forEach(id => {
       let node = this._nodes[id];

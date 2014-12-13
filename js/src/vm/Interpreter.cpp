@@ -353,6 +353,23 @@ js::ValueToCallable(JSContext *cx, HandleValue v, int numToSkip, MaybeConstruct 
     return nullptr;
 }
 
+bool
+RunState::maybeCreateThisForConstructor(JSContext *cx)
+{
+    if (isInvoke()) {
+        InvokeState &invoke = *asInvoke();
+        if (invoke.constructing() && invoke.args().thisv().isPrimitive()) {
+            RootedObject callee(cx, &invoke.args().callee());
+            NewObjectKind newKind = invoke.useNewType() ? SingletonObject : GenericObject;
+            JSObject *obj = CreateThisForFunction(cx, callee, newKind);
+            if (!obj)
+                return false;
+            invoke.args().setThis(ObjectValue(*obj));
+        }
+    }
+    return true;
+}
+
 static MOZ_NEVER_INLINE bool
 Interpret(JSContext *cx, RunState &state);
 
@@ -383,7 +400,6 @@ js::RunScript(JSContext *cx, RunState &state)
 
     state.script()->ensureNonLazyCanonicalFunction(cx);
 
-#ifdef JS_ION
     if (jit::IsIonEnabled(cx)) {
         jit::MethodStatus status = jit::CanEnter(cx, state);
         if (status == jit::Method_Error)
@@ -403,7 +419,6 @@ js::RunScript(JSContext *cx, RunState &state)
             return !IsErrorStatus(status);
         }
     }
-#endif
 
     if (state.isInvoke()) {
         InvokeState &invoke = *state.asInvoke();
@@ -417,7 +432,7 @@ struct AutoGCIfNeeded
 {
     JSContext *cx_;
     explicit AutoGCIfNeeded(JSContext *cx) : cx_(cx) {}
-    ~AutoGCIfNeeded() { js::gc::GCIfNeeded(cx_); }
+    ~AutoGCIfNeeded() { cx_->gcIfNeeded(); }
 };
 
 /*
@@ -717,10 +732,12 @@ js::LooselyEqual(JSContext *cx, const Value &lval, const Value &rval, bool *resu
     if (!ToPrimitive(cx, &rvalue))
         return false;
 
-    if (lvalue.get().isString() && rvalue.get().isString()) {
-        JSString *l = lvalue.get().toString();
-        JSString *r = rvalue.get().toString();
-        return EqualStrings(cx, l, r, result);
+    if (SameType(lvalue, rvalue))
+        return EqualGivenSameType(cx, lvalue, rvalue, result);
+
+    if (lvalue.isSymbol() || rvalue.isSymbol()) {
+        *result = false;
+        return true;
     }
 
     double l, r;
@@ -1288,7 +1305,6 @@ SetObjectElementOperation(JSContext *cx, Handle<JSObject*> obj, HandleId id, con
 {
     types::TypeScript::MonitorAssign(cx, obj, id);
 
-#ifdef JS_ION
     if (obj->isNative() && JSID_IS_INT(id)) {
         uint32_t length = obj->getDenseInitializedLength();
         int32_t i = JSID_TO_INT(id);
@@ -1298,7 +1314,6 @@ SetObjectElementOperation(JSContext *cx, Handle<JSObject*> obj, HandleId id, con
                 script->baselineScript()->noteArrayWriteHole(script->pcToOffset(pc));
         }
     }
-#endif
 
     if (obj->isNative() && !JSID_IS_INT(id) && !obj->setHadElementsAccess(cx))
         return false;
@@ -1598,8 +1613,6 @@ CASE(JSOP_UNUSED51)
 CASE(JSOP_UNUSED52)
 CASE(JSOP_UNUSED57)
 CASE(JSOP_UNUSED83)
-CASE(JSOP_UNUSED101)
-CASE(JSOP_UNUSED102)
 CASE(JSOP_UNUSED103)
 CASE(JSOP_UNUSED104)
 CASE(JSOP_UNUSED105)
@@ -1681,8 +1694,6 @@ CASE(JSOP_LABEL)
 END_CASE(JSOP_LABEL)
 
 CASE(JSOP_LOOPENTRY)
-
-#ifdef JS_ION
     // Attempt on-stack replacement with Baseline code.
     if (jit::IsBaselineEnabled(cx)) {
         jit::MethodStatus status = jit::CanEnterBaselineAtBranch(cx, REGS.fp(), false);
@@ -1708,8 +1719,6 @@ CASE(JSOP_LOOPENTRY)
             goto leave_on_safe_point;
         }
     }
-#endif /* JS_ION */
-
 END_CASE(JSOP_LOOPENTRY)
 
 CASE(JSOP_LINENO)
@@ -1791,16 +1800,12 @@ CASE(JSOP_RETRVAL)
             probes::ExitScript(cx, script, script->functionNonDelazifying(),
                                REGS.fp()->hasPushedSPSFrame());
 
-#if defined(JS_ION)
   jit_return_pop_frame:
-#endif
 
         activation.popInlineFrame(REGS.fp());
         SET_SCRIPT(REGS.fp()->script());
 
-#if defined(JS_ION)
   jit_return:
-#endif
 
         JS_ASSERT(js_CodeSpec[*REGS.pc].format & JOF_INVOKE);
 
@@ -2004,7 +2009,7 @@ CASE(JSOP_SETCONST)
     if (!SetConstOperation(cx, obj, name, rval))
         goto error;
 }
-END_CASE(JSOP_SETCONST);
+END_CASE(JSOP_SETCONST)
 
 CASE(JSOP_BINDGNAME)
     PUSH_OBJECT(REGS.fp()->global());
@@ -2569,7 +2574,6 @@ CASE(JSOP_FUNCALL)
 
     TypeMonitorCall(cx, args, construct);
 
-#ifdef JS_ION
     {
         InvokeState state(cx, args, initial);
         if (newType)
@@ -2601,7 +2605,6 @@ CASE(JSOP_FUNCALL)
             }
         }
     }
-#endif
 
     funScript = fun->nonLazyScript();
     if (!activation.pushInlineFrame(args, funScript, initial))
@@ -2744,6 +2747,23 @@ CASE(JSOP_OBJECT)
     }
 }
 END_CASE(JSOP_OBJECT)
+
+CASE(JSOP_CALLSITEOBJ)
+{
+
+    RootedObject &cso = rootObject0;
+    cso = script->getObject(REGS.pc);
+    RootedObject &raw = rootObject1;
+    raw = script->getObject(GET_UINT32_INDEX(REGS.pc) + 1);
+    RootedValue &rawValue = rootValue0;
+    rawValue.setObject(*raw);
+
+    if (!ProcessCallSiteObjOperation(cx, cso, raw, rawValue))
+        goto error;
+
+    PUSH_OBJECT(*cso);
+}
+END_CASE(JSOP_CALLSITEOBJ)
 
 CASE(JSOP_REGEXP)
 {
@@ -3059,6 +3079,22 @@ CASE(JSOP_NEWARRAY)
 }
 END_CASE(JSOP_NEWARRAY)
 
+CASE(JSOP_NEWARRAY_COPYONWRITE)
+{
+    RootedObject &baseobj = rootObject0;
+    baseobj = types::GetOrFixupCopyOnWriteObject(cx, script, REGS.pc);
+    if (!baseobj)
+        goto error;
+
+    RootedObject &obj = rootObject1;
+    obj = NewDenseCopyOnWriteArray(cx, baseobj, gc::DefaultHeap);
+    if (!obj)
+        goto error;
+
+    PUSH_OBJECT(*obj);
+}
+END_CASE(JSOP_NEWARRAY_COPYONWRITE)
+
 CASE(JSOP_NEWOBJECT)
 {
     RootedObject &baseobj = rootObject0;
@@ -3102,7 +3138,7 @@ CASE(JSOP_MUTATEPROTO)
 
     REGS.sp--;
 }
-END_CASE(JSOP_MUTATEPROTO);
+END_CASE(JSOP_MUTATEPROTO)
 
 CASE(JSOP_INITPROP)
 {
@@ -3126,7 +3162,7 @@ CASE(JSOP_INITPROP)
 
     REGS.sp--;
 }
-END_CASE(JSOP_INITPROP);
+END_CASE(JSOP_INITPROP)
 
 CASE(JSOP_INITELEM)
 {
@@ -3264,13 +3300,8 @@ END_CASE(JSOP_INSTANCEOF)
 
 CASE(JSOP_DEBUGGER)
 {
-    JSTrapStatus st = JSTRAP_CONTINUE;
     RootedValue rval(cx);
-    if (JSDebuggerHandler handler = cx->runtime()->debugHooks.debuggerHandler)
-        st = handler(cx, script, REGS.pc, rval.address(), cx->runtime()->debugHooks.debuggerHandlerData);
-    if (st == JSTRAP_CONTINUE)
-        st = Debugger::onDebuggerStatement(cx, &rval);
-    switch (st) {
+    switch (Debugger::onDebuggerStatement(cx, &rval)) {
       case JSTRAP_ERROR:
         goto error;
       case JSTRAP_CONTINUE:
@@ -3425,13 +3456,11 @@ DEFAULT()
     TraceLogStopEvent(logger);
     TraceLogStopEvent(logger, scriptLogId);
 
-#ifdef JS_ION
     /*
      * This path is used when it's guaranteed the method can be finished
      * inside the JIT.
      */
   leave_on_safe_point:
-#endif
 
     if (interpReturnOK)
         state.setReturnValue(activation.entryFrame()->returnValue());

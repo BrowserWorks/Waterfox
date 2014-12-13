@@ -5,6 +5,17 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 if CONFIG["MOZ_B2G"]:
-    TEST_DIRS += ['tests']
+    MOCHITEST_MANIFESTS += ['tests/mochitest.ini']
 
-PARALLEL_DIRS += ['src']
+EXTRA_COMPONENTS += [
+    'DownloadsAPI.manifest',
+]
+
+EXTRA_PP_COMPONENTS = [
+    'DownloadsAPI.js',
+]
+
+EXTRA_PP_JS_MODULES += [
+    'DownloadsAPI.jsm',
+    'DownloadsIPC.jsm',
+]

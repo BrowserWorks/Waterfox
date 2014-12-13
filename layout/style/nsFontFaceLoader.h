@@ -27,7 +27,7 @@ class nsFontFaceLoader;
 class nsUserFontSet : public gfxUserFontSet
 {
 public:
-  nsUserFontSet(nsPresContext* aContext);
+  explicit nsUserFontSet(nsPresContext* aContext);
 
   // Called when this font set is no longer associated with a presentation.
   void Destroy();
@@ -69,6 +69,11 @@ protected:
   void InsertRule(nsCSSFontFaceRule* aRule, uint8_t aSheetType,
                   nsTArray<FontFaceRuleRecord>& oldRules,
                   bool& aFontSetModified);
+
+  already_AddRefed<gfxFontEntry> FindOrCreateFontFaceFromRule(
+                                                   const nsAString& aFamilyName,
+                                                   nsCSSFontFaceRule* aRule,
+                                                   uint8_t aSheetType);
 
   virtual nsresult LogMessage(gfxMixedFontFamily* aFamily,
                               gfxProxyFontEntry* aProxy,

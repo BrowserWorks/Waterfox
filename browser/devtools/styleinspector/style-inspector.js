@@ -61,11 +61,12 @@ function RuleViewTool(aInspector, aWindow, aIFrame)
     if (Services.prefs.getBoolPref(PREF_ORIG_SOURCES)) {
       location = rule.getOriginalLocation();
     }
-    location.then(({ href, line, column }) => {
+    location.then(({ source, href, line, column }) => {
       let target = this.inspector.target;
       if (ToolDefinitions.styleEditor.isTargetSupported(target)) {
         gDevTools.showToolbox(target, "styleeditor").then(function(toolbox) {
-          toolbox.getCurrentPanel().selectStyleSheet(href, line, column);
+          let sheet = source || href;
+          toolbox.getCurrentPanel().selectStyleSheet(sheet, line, column);
         });
       }
       return;
@@ -82,6 +83,9 @@ function RuleViewTool(aInspector, aWindow, aIFrame)
   this.inspector.on("layout-change", this.refresh);
 
   this.inspector.selection.on("pseudoclass", this.refresh);
+
+  this._clearUserProperties = this._clearUserProperties.bind(this);
+  this.inspector.target.on("navigate", this._clearUserProperties);
 
   this.onSelect();
 }
@@ -112,10 +116,17 @@ RuleViewTool.prototype = {
     this.view.refreshPanel();
   },
 
+  _clearUserProperties: function() {
+    if (this.view && this.view.store && this.view.store.userProperties) {
+      this.view.store.userProperties.clear();
+    }
+  },
+
   destroy: function RVT_destroy() {
     this.inspector.off("layout-change", this.refresh);
     this.inspector.selection.off("pseudoclass", this.refresh);
     this.inspector.selection.off("new-node-front", this._onSelect);
+    this.inspector.target.off("navigate", this._clearUserProperties);
 
     this.view.element.removeEventListener("CssRuleViewCSSLinkClicked",
       this._cssLinkHandler);

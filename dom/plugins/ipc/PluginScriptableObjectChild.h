@@ -43,10 +43,10 @@ class PluginScriptableObjectChild : public PPluginScriptableObjectChild
   friend class PluginInstanceChild;
 
 public:
-  PluginScriptableObjectChild(ScriptableObjectType aType);
+  explicit PluginScriptableObjectChild(ScriptableObjectType aType);
   virtual ~PluginScriptableObjectChild();
 
-  void
+  bool
   InitializeProxy();
 
   void

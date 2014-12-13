@@ -258,8 +258,40 @@ static bool UseAudioChannelService()
   return Preferences::GetBool("media.useAudioChannelService");
 }
 
+class EventProxyHandler MOZ_FINAL : public nsIDOMEventListener
+{
+public:
+  NS_DECL_ISUPPORTS
+
+  explicit EventProxyHandler(nsIDOMEventListener* aNode)
+  {
+    MOZ_ASSERT(aNode);
+    mWeakNode = do_GetWeakReference(aNode);
+  }
+
+  // nsIDOMEventListener
+  NS_IMETHOD HandleEvent(nsIDOMEvent* aEvent) MOZ_OVERRIDE
+  {
+    nsCOMPtr<nsIDOMEventListener> listener = do_QueryReferent(mWeakNode);
+    if (!listener) {
+      return NS_OK;
+    }
+
+    auto node = static_cast<AudioDestinationNode*>(listener.get());
+    return node->HandleEvent(aEvent);
+  }
+
+private:
+  ~EventProxyHandler()
+  { }
+
+  nsWeakPtr mWeakNode;
+};
+
+NS_IMPL_ISUPPORTS(EventProxyHandler, nsIDOMEventListener)
+
 NS_IMPL_CYCLE_COLLECTION_INHERITED(AudioDestinationNode, AudioNode,
-                                   mAudioChannelAgent)
+                                   mAudioChannelAgent, mEventProxyHelper)
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(AudioDestinationNode)
   NS_INTERFACE_MAP_ENTRY(nsIDOMEventListener)
@@ -290,31 +322,19 @@ AudioDestinationNode::AudioDestinationNode(AudioContext* aContext,
 {
   MediaStreamGraph* graph = aIsOffline ?
                             MediaStreamGraph::CreateNonRealtimeInstance(aSampleRate) :
-                            MediaStreamGraph::GetInstance();
+                            MediaStreamGraph::GetInstance(DOMMediaStream::HINT_CONTENTS_AUDIO, aChannel);
   AudioNodeEngine* engine = aIsOffline ?
                             new OfflineDestinationNodeEngine(this, aNumberOfChannels,
                                                              aLength, aSampleRate) :
                             static_cast<AudioNodeEngine*>(new DestinationNodeEngine(this));
 
   mStream = graph->CreateAudioNodeStream(engine, MediaStreamGraph::EXTERNAL_STREAM);
-  mStream->SetAudioChannelType(aChannel);
   mStream->AddMainThreadListener(this);
   mStream->AddAudioOutput(&gWebAudioOutputKey);
 
   if (aChannel != AudioChannel::Normal) {
     ErrorResult rv;
     SetMozAudioChannelType(aChannel, rv);
-  }
-
-  if (!aIsOffline && UseAudioChannelService()) {
-    nsCOMPtr<nsIDOMEventTarget> target = do_QueryInterface(GetOwner());
-    if (target) {
-      target->AddSystemEventListener(NS_LITERAL_STRING("visibilitychange"), this,
-                                     /* useCapture = */ true,
-                                     /* wantsUntrusted = */ false);
-    }
-
-    CreateAudioChannelAgent();
   }
 }
 
@@ -347,7 +367,8 @@ AudioDestinationNode::DestroyMediaStream()
     nsCOMPtr<nsIDOMEventTarget> target = do_QueryInterface(GetOwner());
     NS_ENSURE_TRUE_VOID(target);
 
-    target->RemoveSystemEventListener(NS_LITERAL_STRING("visibilitychange"), this,
+    target->RemoveSystemEventListener(NS_LITERAL_STRING("visibilitychange"),
+                                      mEventProxyHelper,
                                       /* useCapture = */ true);
   }
 
@@ -517,6 +538,10 @@ AudioDestinationNode::SetMozAudioChannelType(AudioChannel aValue, ErrorResult& a
       CheckAudioChannelPermissions(aValue)) {
     mAudioChannel = aValue;
 
+    if (mStream) {
+      mStream->SetAudioChannelType(mAudioChannel);
+    }
+
     if (mAudioChannelAgent) {
       CreateAudioChannelAgent();
     }
@@ -565,6 +590,24 @@ AudioDestinationNode::CheckAudioChannelPermissions(AudioChannel aValue)
 void
 AudioDestinationNode::CreateAudioChannelAgent()
 {
+  if (mIsOffline || !UseAudioChannelService()) {
+    return;
+  }
+
+  if (!mEventProxyHelper) {
+    nsCOMPtr<nsIDOMEventTarget> target = do_QueryInterface(GetOwner());
+    if (target) {
+      // We use a proxy because otherwise the event listerner would hold a
+      // reference of the destination node, and by extension, everything
+      // connected to it.
+      mEventProxyHelper = new EventProxyHandler(this);
+      target->AddSystemEventListener(NS_LITERAL_STRING("visibilitychange"),
+                                     mEventProxyHelper,
+                                     /* useCapture = */ true,
+                                     /* wantsUntrusted = */ false);
+    }
+  }
+
   if (mAudioChannelAgent) {
     mAudioChannelAgent->StopPlaying();
   }

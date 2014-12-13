@@ -5,27 +5,32 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 EXPORTS.mozilla.dom += [
+    'MediaEncryptedEvent.h',
     'MediaKeyError.h',
     'MediaKeyMessageEvent.h',
-    'MediaKeyNeededEvent.h',
     'MediaKeys.h',
     'MediaKeySession.h',
 ]
 
 EXPORTS.mozilla += [
+    'CDMCallbackProxy.h',
+    'CDMCaps.h',
     'CDMProxy.h',
+    'EMELog.h'
 ]
 
 UNIFIED_SOURCES += [
+    'CDMCallbackProxy.cpp',
+    'CDMCaps.cpp',
     'CDMProxy.cpp',
     'EMELog.cpp',
+    'MediaEncryptedEvent.cpp',
     'MediaKeyError.cpp',
     'MediaKeyMessageEvent.cpp',
-    'MediaKeyNeededEvent.cpp',
     'MediaKeys.cpp',
     'MediaKeySession.cpp',
 ]
 
-FINAL_LIBRARY = 'gklayout'
+FINAL_LIBRARY = 'xul'
 
 FAIL_ON_WARNINGS = True

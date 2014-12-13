@@ -1,0 +1,138 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Firefox WebIDE">
+
+<!ENTITY projectMenu_label "Project">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "New App…">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "Open Packaged App…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "P">
+<!ENTITY projectMenu_importHostedApp_label "Open Hosted App…">
+<!ENTITY projectMenu_importHostedApp_accesskey "H">
+<!ENTITY projectMenu_selectApp_label "Open App…">
+<!ENTITY projectMenu_selectApp_accesskey "O">
+<!ENTITY projectMenu_play_label "Install and Run">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_stop_label "Stop App">
+<!ENTITY projectMenu_stop_accesskey "S">
+<!ENTITY projectMenu_debug_label "Debug App">
+<!ENTITY projectMenu_debug_accesskey "D">
+<!ENTITY projectMenu_remove_label "Remove Project">
+<!ENTITY projectMenu_remove_accesskey "R">
+<!ENTITY projectMenu_showPrefs_label "Preferences">
+<!ENTITY projectMenu_showPrefs_accesskey "e">
+
+<!ENTITY runtimeMenu_label "Runtime">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "Disconnect">
+<!ENTITY runtimeMenu_disconnect_accesskey "D">
+<!ENTITY runtimeMenu_showPermissionTable_label "Permissions Table">
+<!ENTITY runtimeMenu_showPermissionTable_accesskey "P">
+<!ENTITY runtimeMenu_takeScreenshot_label "Screenshot">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "S">
+<!ENTITY runtimeMenu_showDetails_label "Runtime Info">
+<!ENTITY runtimeMenu_showDetails_accesskey "E">
+<!ENTITY runtimeMenu_showMonitor_label "Monitor">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+
+<!ENTITY viewMenu_label "View">
+<!ENTITY viewMenu_accesskey "V">
+<!ENTITY viewMenu_toggleEditor_label "Toggle Editor">
+<!ENTITY viewMenu_toggleEditor_accesskey "E">
+<!ENTITY viewMenu_showAddons_label "Manage Simulators">
+<!ENTITY viewMenu_showAddons_accesskey "M">
+
+<!ENTITY projectButton_label "Open App">
+<!ENTITY runtimeButton_label "Select Runtime">
+
+<!-- We try to repicate Firefox' bindings: -->
+<!-- quit app -->
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- toggle sidebar -->
+<!ENTITY key_toggleEditor "B">
+
+<!ENTITY projectPanel_myProjects "My Projects">
+<!ENTITY projectPanel_runtimeApps "Runtime Apps">
+<!ENTITY runtimePanel_USBDevices "USB Devices">
+<!ENTITY runtimePanel_WiFiDevices "Wi-Fi Devices">
+<!ENTITY runtimePanel_simulators "Simulators">
+<!ENTITY runtimePanel_custom "Custom">
+<!ENTITY runtimePanel_installsimulator "Install Simulator">
+<!ENTITY runtimePanel_noadbhelper "Install ADB Helper">
+<!ENTITY runtimePanel_nousbdevice "Can't see your device?">
+
+<!-- Lense -->
+<!ENTITY details_valid_header "valid">
+<!ENTITY details_warning_header "warnings">
+<!ENTITY details_error_header "errors">
+<!ENTITY details_description "Description">
+<!ENTITY details_location "Location">
+<!ENTITY details_manifestURL "App ID">
+<!ENTITY details_removeProject_button "Remove Project">
+
+<!-- New App -->
+<!ENTITY newAppWindowTitle "New App">
+<!ENTITY newAppHeader "Select template">
+<!ENTITY newAppLoadingTemplate "Loading templates…">
+<!ENTITY newAppProjectName "Project Name:">
+
+
+<!-- Decks -->
+
+<!ENTITY deck_close "Close">
+
+<!-- Addons -->
+<!ENTITY addons_title "Extra Components">
+<!ENTITY addons_aboutaddons "Open Add-ons Manager">
+
+<!-- Prefs -->
+<!ENTITY prefs_title "Preferences">
+<!ENTITY prefs_editor_title "Editor">
+<!ENTITY prefs_general_title "General">
+<!ENTITY prefs_restore "Restore Defaults">
+<!ENTITY prefs_simulators "Manage Simulators">
+<!ENTITY prefs_options_enablelocalruntime "Enable local runtime">
+<!ENTITY prefs_options_enablelocalruntime_tooltip "Allow WebIDE to connect to its own runtime (running browser instance)">
+<!ENTITY prefs_options_rememberlastproject "Remember last project">
+<!ENTITY prefs_options_rememberlastproject_tooltip "Restore previous project when WebIDE starts">
+<!ENTITY prefs_options_templatesurl "Templates URL">
+<!ENTITY prefs_options_templatesurl_tooltip "Index of available templates">
+<!ENTITY prefs_options_showeditor "Show editor">
+<!ENTITY prefs_options_showeditor_tooltip "Show internal editor">
+<!ENTITY prefs_options_tabsize "Tab size">
+<!ENTITY prefs_options_expandtab "Soft tabs">
+<!ENTITY prefs_options_expandtab_tooltip "Use spaces instead of the tab character">
+<!ENTITY prefs_options_detectindentation "Autoindent">
+<!ENTITY prefs_options_detectindentation_tooltip "Guess indentation based on source content">
+<!ENTITY prefs_options_autocomplete "Autocomplete">
+<!ENTITY prefs_options_autocomplete_tooltip "Enable code autocompletion">
+<!ENTITY prefs_options_autoclosebrackets "Autoclose brackets">
+<!ENTITY prefs_options_autoclosebrackets_tooltip "Automatically insert closing brackets">
+<!ENTITY prefs_options_keybindings "Keybindings">
+<!ENTITY prefs_options_keybindings_default "Default">
+
+<!-- Permissions Table -->
+<!ENTITY permissionstable_title "Permissions Table">
+<!ENTITY permissionstable_name_header "Name">
+
+<!-- Runtime Details -->
+<!ENTITY runtimedetails_title "Runtime Info">
+<!ENTITY runtimedetails_adbIsRoot "ADB is root: ">
+<!ENTITY runtimedetails_summonADBRoot "root device">
+<!ENTITY runtimedetails_ADBRootWarning "(requires unlocked bootloader)">
+<!ENTITY runtimedetails_restrictedPrivileges "DevTools restricted privileges: ">
+<!ENTITY runtimedetails_requestPrivileges "request higher privileges">
+<!ENTITY runtimedetails_privilegesWarning "(Will reboot device. Requires root access.)">
+
+<!-- Monitor -->
+<!ENTITY monitor_title "Monitor">
+<!ENTITY monitor_help "Help">

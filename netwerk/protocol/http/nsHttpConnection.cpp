@@ -310,21 +310,19 @@ nsHttpConnection::EnsureNPNComplete()
         return false;
     }
 
-    if (NS_FAILED(rv)) {
-        goto npnComplete;
-    }
-    LOG(("nsHttpConnection::EnsureNPNComplete %p [%s] negotiated to '%s'%s\n",
-         this, mConnInfo->HashKey().get(), negotiatedNPN.get(),
-         mTLSFilter ? " [Double Tunnel]" : ""));
-
-    uint8_t spdyVersion;
-    rv = gHttpHandler->SpdyInfo()->GetNPNVersionIndex(negotiatedNPN,
-                                                      &spdyVersion);
     if (NS_SUCCEEDED(rv)) {
-        StartSpdy(spdyVersion);
-    }
+        LOG(("nsHttpConnection::EnsureNPNComplete %p [%s] negotiated to '%s'%s\n",
+             this, mConnInfo->HashKey().get(), negotiatedNPN.get(),
+             mTLSFilter ? " [Double Tunnel]" : ""));
 
-    Telemetry::Accumulate(Telemetry::SPDY_NPN_CONNECT, UsingSpdy());
+        uint32_t infoIndex;
+        const SpdyInformation *info = gHttpHandler->SpdyInfo();
+        if (NS_SUCCEEDED(info->GetNPNIndex(negotiatedNPN, &infoIndex))) {
+            StartSpdy(info->Version[infoIndex]);
+        }
+
+        Telemetry::Accumulate(Telemetry::SPDY_NPN_CONNECT, UsingSpdy());
+    }
 
 npnComplete:
     LOG(("nsHttpConnection::EnsureNPNComplete setting complete to true"));
@@ -475,6 +473,10 @@ nsHttpConnection::SetupSSL()
     }
 }
 
+// The naming of NPN is historical - this function creates the basic
+// offer list for both NPN and ALPN. ALPN validation callbacks are made
+// now before the handshake is complete, and NPN validation callbacks
+// are made during the handshake.
 nsresult
 nsHttpConnection::SetupNPNList(nsISSLSocketControl *ssl, uint32_t caps)
 {
@@ -482,17 +484,22 @@ nsHttpConnection::SetupNPNList(nsISSLSocketControl *ssl, uint32_t caps)
 
     // The first protocol is used as the fallback if none of the
     // protocols supported overlap with the server's list.
-    // In the case of overlap, matching priority is driven by
-    // the order of the server's advertisement.
+    // When using ALPN the advertised preferences are protocolArray indicies
+    // {1, .., N, 0} in decreasing order.
+    // For NPN, In the case of overlap, matching priority is driven by
+    // the order of the server's advertisement - with index 0 used when
+    // there is no match.
     protocolArray.AppendElement(NS_LITERAL_CSTRING("http/1.1"));
 
     if (gHttpHandler->IsSpdyEnabled() &&
         !(caps & NS_HTTP_DISALLOW_SPDY)) {
         LOG(("nsHttpConnection::SetupSSL Allow SPDY NPN selection"));
-        for (uint32_t index = 0; index < SpdyInformation::kCount; ++index) {
-            if (gHttpHandler->SpdyInfo()->ProtocolEnabled(index))
-                protocolArray.AppendElement(
-                    gHttpHandler->SpdyInfo()->VersionString[index]);
+        const SpdyInformation *info = gHttpHandler->SpdyInfo();
+        for (uint32_t index = SpdyInformation::kCount; index > 0; --index) {
+            if (info->ProtocolEnabled(index - 1) &&
+                info->ALPNCallbacks[index - 1](ssl)) {
+                protocolArray.AppendElement(info->VersionString[index - 1]);
+            }
         }
     }
 

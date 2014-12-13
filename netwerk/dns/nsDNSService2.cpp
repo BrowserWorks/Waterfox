@@ -57,7 +57,7 @@ public:
     NS_DECL_THREADSAFE_ISUPPORTS
     NS_DECL_NSIDNSRECORD
 
-    nsDNSRecord(nsHostRecord *hostRecord)
+    explicit nsDNSRecord(nsHostRecord *hostRecord)
         : mHostRecord(hostRecord)
         , mIter(nullptr)
         , mIterGenCnt(-1)
@@ -311,6 +311,12 @@ nsDNSAsyncRequest::OnLookupComplete(nsHostResolver *resolver,
 bool
 nsDNSAsyncRequest::EqualsAsyncListener(nsIDNSListener *aListener)
 {
+    nsCOMPtr<nsIDNSListenerProxy> wrapper = do_QueryInterface(mListener);
+    if (wrapper) {
+        nsCOMPtr<nsIDNSListener> originalListener;
+        wrapper->GetOriginalListener(getter_AddRefs(originalListener));
+        return aListener == originalListener;
+    }
     return (aListener == mListener);
 }
 
@@ -342,7 +348,7 @@ nsDNSAsyncRequest::Cancel(nsresult reason)
 class nsDNSSyncRequest : public nsResolveHostCallback
 {
 public:
-    nsDNSSyncRequest(PRMonitor *mon)
+    explicit nsDNSSyncRequest(PRMonitor *mon)
         : mDone(false)
         , mStatus(NS_OK)
         , mMonitor(mon) {}
@@ -951,13 +957,6 @@ nsDNSService::GetDNSCacheEntries(nsTArray<mozilla::net::DNSCacheEntries> *args)
     return NS_OK;
 }
 
-static size_t
-SizeOfLocalDomainsEntryExcludingThis(nsCStringHashKey* entry,
-                                     MallocSizeOf mallocSizeOf, void*)
-{
-    return entry->GetKey().SizeOfExcludingThisMustBeUnshared(mallocSizeOf);
-}
-
 size_t
 nsDNSService::SizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) const
 {
@@ -969,8 +968,7 @@ nsDNSService::SizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) const
     size_t n = mallocSizeOf(this);
     n += mResolver->SizeOfIncludingThis(mallocSizeOf);
     n += mIPv4OnlyDomains.SizeOfExcludingThisMustBeUnshared(mallocSizeOf);
-    n += mLocalDomains.SizeOfExcludingThis(SizeOfLocalDomainsEntryExcludingThis,
-                                           mallocSizeOf);
+    n += mLocalDomains.SizeOfExcludingThis(mallocSizeOf);
     return n;
 }
 

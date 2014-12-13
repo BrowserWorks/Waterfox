@@ -6,6 +6,9 @@
 package org.mozilla.gecko;
 
 import org.mozilla.gecko.mozglue.JNITarget;
+import org.mozilla.gecko.util.NativeEventListener;
+import org.mozilla.gecko.util.NativeJSObject;
+import org.mozilla.gecko.util.EventCallback;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -31,10 +34,17 @@ import android.util.Log;
  * connection type defined in Network Information API version 3.
  */
 
-public class GeckoNetworkManager extends BroadcastReceiver {
+public class GeckoNetworkManager extends BroadcastReceiver implements NativeEventListener {
     private static final String LOGTAG = "GeckoNetworkManager";
 
-    static private final GeckoNetworkManager sInstance = new GeckoNetworkManager();
+    private static GeckoNetworkManager sInstance;
+
+    public static void destroy() {
+        if (sInstance != null) {
+            sInstance.onDestroy();
+            sInstance = null;
+        }
+    }
 
     // Connection Type defined in Network Information API v3.
     private enum ConnectionType {
@@ -57,21 +67,34 @@ public class GeckoNetworkManager extends BroadcastReceiver {
         MNC
     }
 
-    private ConnectionType mConnectionType = ConnectionType.NONE;
+    private GeckoNetworkManager() {
+        EventDispatcher.getInstance().registerGeckoThreadListener(this, "Wifi:Enable");
+    }
+
+    private void onDestroy() {
+        EventDispatcher.getInstance().unregisterGeckoThreadListener(this, "Wifi:Enable");
+    }
+
+    private volatile ConnectionType mConnectionType = ConnectionType.NONE;
     private final IntentFilter mNetworkFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
 
     // Whether the manager should be listening to Network Information changes.
-    private boolean mShouldBeListening = false;
+    private boolean mShouldBeListening;
 
     // Whether the manager should notify Gecko that a change in Network
     // Information happened.
-    private boolean mShouldNotify = false;
+    private boolean mShouldNotify;
 
     // The application context used for registering receivers, so
     // we can unregister them again later.
     private volatile Context mApplicationContext;
+    private boolean mIsListening;
 
     public static GeckoNetworkManager getInstance() {
+        if (sInstance == null) {
+            sInstance = new GeckoNetworkManager();
+        }
+
         return sInstance;
     }
 
@@ -96,14 +119,23 @@ public class GeckoNetworkManager extends BroadcastReceiver {
     }
 
     private void startListening() {
+        if (mIsListening) {
+            Log.w(LOGTAG, "Already started!");
+            return;
+        }
+
         final Context appContext = mApplicationContext;
         if (appContext == null) {
             Log.w(LOGTAG, "Not registering receiver: no context!");
             return;
         }
 
-        Log.v(LOGTAG, "Registering receiver.");
-        appContext.registerReceiver(this, mNetworkFilter);
+        // registerReceiver will return null if registering fails.
+        if (appContext.registerReceiver(this, mNetworkFilter) == null) {
+            Log.e(LOGTAG, "Registering receiver failed");
+        } else {
+            mIsListening = true;
+        }
     }
 
     public void stop() {
@@ -114,12 +146,35 @@ public class GeckoNetworkManager extends BroadcastReceiver {
         }
     }
 
+    @Override
+    public void handleMessage(final String event, final NativeJSObject message,
+                              final EventCallback callback) {
+        if (event.equals("Wifi:Enable")) {
+            final WifiManager mgr = (WifiManager) mApplicationContext.getSystemService(Context.WIFI_SERVICE);
+
+            if (!mgr.isWifiEnabled()) {
+                mgr.setWifiEnabled(true);
+            } else {
+                // If Wifi is enabled, maybe you need to select a network
+                Intent intent = new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                mApplicationContext.startActivity(intent);
+            }
+        }
+    }
+
     private void stopListening() {
         if (null == mApplicationContext) {
             return;
         }
 
+        if (!mIsListening) {
+            Log.w(LOGTAG, "Already stopped!");
+            return;
+        }
+
         mApplicationContext.unregisterReceiver(this);
+        mIsListening = false;
     }
 
     private int wifiDhcpGatewayAddress() {
@@ -149,23 +204,29 @@ public class GeckoNetworkManager extends BroadcastReceiver {
     }
 
     private void updateConnectionType() {
-        ConnectionType previousConnectionType = mConnectionType;
-        mConnectionType = getConnectionType();
+        final ConnectionType previousConnectionType = mConnectionType;
+        final ConnectionType newConnectionType = getConnectionType();
+        if (newConnectionType == previousConnectionType) {
+            return;
+        }
 
-        if (mConnectionType == previousConnectionType || !mShouldNotify) {
+        mConnectionType = newConnectionType;
+
+        if (!mShouldNotify) {
             return;
         }
 
         GeckoAppShell.sendEventToGecko(GeckoEvent.createNetworkEvent(
-                                       mConnectionType.value,
-                                       mConnectionType == ConnectionType.WIFI,
+                                       newConnectionType.value,
+                                       newConnectionType == ConnectionType.WIFI,
                                        wifiDhcpGatewayAddress()));
     }
 
     public double[] getCurrentInformation() {
-        return new double[] { mConnectionType.value,
-                              (mConnectionType == ConnectionType.WIFI) ? 1.0 : 0.0,
-                              wifiDhcpGatewayAddress()};
+        final ConnectionType connectionType = mConnectionType;
+        return new double[] { connectionType.value,
+                              connectionType == ConnectionType.WIFI ? 1.0 : 0.0,
+                              wifiDhcpGatewayAddress() };
     }
 
     public void enableNotifications() {

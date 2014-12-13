@@ -32,7 +32,7 @@ class MediaTrackListListener
 public:
   friend class mozilla::DOMMediaStream;
 
-  MediaTrackListListener(MediaTrackList* aMediaTrackList)
+  explicit MediaTrackListListener(MediaTrackList* aMediaTrackList)
     : mMediaTrackList(aMediaTrackList) {};
 
   ~MediaTrackListListener()

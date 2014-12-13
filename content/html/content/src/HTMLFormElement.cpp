@@ -64,21 +64,7 @@
 #include "mozilla/dom/HTMLImageElement.h"
 
 // construction, destruction
-nsGenericHTMLElement*
-NS_NewHTMLFormElement(already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,
-                      mozilla::dom::FromParser aFromParser)
-{
-  mozilla::dom::HTMLFormElement* it = new mozilla::dom::HTMLFormElement(aNodeInfo);
-
-  nsresult rv = it->Init();
-
-  if (NS_FAILED(rv)) {
-    delete it;
-    return nullptr;
-  }
-
-  return it;
-}
+NS_IMPL_NS_NEW_HTML_ELEMENT(Form)
 
 namespace mozilla {
 namespace dom {
@@ -99,9 +85,10 @@ bool HTMLFormElement::gPasswordManagerInitialized = false;
 
 HTMLFormElement::HTMLFormElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
   : nsGenericHTMLElement(aNodeInfo),
-    mSelectedRadioButtons(4),
-    mRequiredRadioButtonCounts(4),
-    mValueMissingRadioGroups(4),
+    mControls(new HTMLFormControlsCollection(MOZ_THIS_IN_INITIALIZER_LIST())),
+    mSelectedRadioButtons(2),
+    mRequiredRadioButtonCounts(2),
+    mValueMissingRadioGroups(2),
     mGeneratingSubmit(false),
     mGeneratingReset(false),
     mIsSubmitting(false),
@@ -115,8 +102,8 @@ HTMLFormElement::HTMLFormElement(already_AddRefed<mozilla::dom::NodeInfo>& aNode
     mDefaultSubmitElement(nullptr),
     mFirstSubmitInElements(nullptr),
     mFirstSubmitNotInElements(nullptr),
-    mImageNameLookupTable(FORM_CONTROL_LIST_HASHTABLE_SIZE),
-    mPastNameLookupTable(FORM_CONTROL_LIST_HASHTABLE_SIZE),
+    mImageNameLookupTable(FORM_CONTROL_LIST_HASHTABLE_LENGTH),
+    mPastNameLookupTable(FORM_CONTROL_LIST_HASHTABLE_LENGTH),
     mInvalidElementsCount(0),
     mEverTriedInvalidSubmit(false)
 {
@@ -130,14 +117,6 @@ HTMLFormElement::~HTMLFormElement()
 
   Clear();
 }
-
-nsresult
-HTMLFormElement::Init()
-{
-  mControls = new HTMLFormControlsCollection(this);
-  return NS_OK;
-}
-
 
 // nsISupports
 
@@ -191,7 +170,7 @@ NS_INTERFACE_TABLE_TAIL_INHERITING(nsGenericHTMLElement)
 
 // nsIDOMHTMLFormElement
 
-NS_IMPL_ELEMENT_CLONE_WITH_INIT(HTMLFormElement)
+NS_IMPL_ELEMENT_CLONE(HTMLFormElement)
 
 nsIHTMLCollection*
 HTMLFormElement::Elements()
@@ -268,7 +247,6 @@ void
 HTMLFormElement::Submit(ErrorResult& aRv)
 {
   // Send the submit event
-  nsRefPtr<nsPresContext> presContext = GetPresContext();
   if (mPendingSubmission) {
     // aha, we have a pending submission that was not flushed
     // (this happens when form.submit() is called twice)
@@ -1709,7 +1687,7 @@ HTMLFormElement::ImplicitSubmissionIsDisabled() const
       numDisablingControlsFound++;
     }
   }
-  return numDisablingControlsFound > 1;
+  return numDisablingControlsFound != 1;
 }
 
 NS_IMETHODIMP

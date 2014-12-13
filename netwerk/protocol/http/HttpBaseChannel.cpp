@@ -604,13 +604,19 @@ HttpBaseChannel::SetApplyConversion(bool value)
   return NS_OK;
 }
 
-nsresult
-HttpBaseChannel::ApplyContentConversions()
+NS_IMETHODIMP
+HttpBaseChannel::DoApplyContentConversions(nsIStreamListener* aNextListener,
+                                           nsIStreamListener** aNewNextListener,
+                                           nsISupports *aCtxt)
 {
-  if (!mResponseHead)
+  *aNewNextListener = nullptr;
+  if (!mResponseHead || ! aNextListener) {
     return NS_OK;
+  }
 
-  LOG(("HttpBaseChannel::ApplyContentConversions [this=%p]\n", this));
+  nsCOMPtr<nsIStreamListener> nextListener = aNextListener;
+
+  LOG(("HttpBaseChannel::DoApplyContentConversions [this=%p]\n", this));
 
   if (!mApplyConversion) {
     LOG(("not applying conversion per mApplyConversion\n"));
@@ -659,8 +665,8 @@ HttpBaseChannel::ApplyContentConversions()
       ToLowerCase(from);
       rv = serv->AsyncConvertData(from.get(),
                                   "uncompressed",
-                                  mListener,
-                                  mListenerContext,
+                                  nextListener,
+                                  aCtxt,
                                   getter_AddRefs(converter));
       if (NS_FAILED(rv)) {
         LOG(("Unexpected failure of AsyncConvertData %s\n", val));
@@ -668,14 +674,15 @@ HttpBaseChannel::ApplyContentConversions()
       }
 
       LOG(("converter removed '%s' content-encoding\n", val));
-      mListener = converter;
+      nextListener = converter;
     }
     else {
       if (val)
         LOG(("Unknown content encoding '%s', ignoring\n", val));
     }
   }
-
+  *aNewNextListener = nextListener;
+  NS_IF_ADDREF(*aNewNextListener);
   return NS_OK;
 }
 
@@ -1117,18 +1124,12 @@ HttpBaseChannel::SetRequestHeader(const nsACString& aHeader,
   LOG(("HttpBaseChannel::SetRequestHeader [this=%p header=\"%s\" value=\"%s\" merge=%u]\n",
       this, flatHeader.get(), flatValue.get(), aMerge));
 
-  // Header names are restricted to valid HTTP tokens.
-  if (!nsHttp::IsValidToken(flatHeader))
+  // Verify header names are valid HTTP tokens and header values are reasonably
+  // close to whats allowed in RFC 2616.
+  if (!nsHttp::IsValidToken(flatHeader) ||
+      !nsHttp::IsReasonableHeaderValue(flatValue)) {
     return NS_ERROR_INVALID_ARG;
-
-  // Header values MUST NOT contain line-breaks.  RFC 2616 technically
-  // permits CTL characters, including CR and LF, in header values provided
-  // they are quoted.  However, this can lead to problems if servers do not
-  // interpret quoted strings properly.  Disallowing CR and LF here seems
-  // reasonable and keeps things simple.  We also disallow a null byte.
-  if (flatValue.FindCharInSet("\r\n") != kNotFound ||
-      flatValue.Length() != strlen(flatValue.get()))
-    return NS_ERROR_INVALID_ARG;
+  }
 
   nsHttpAtom atom = nsHttp::ResolveAtom(flatHeader.get());
   if (!atom) {

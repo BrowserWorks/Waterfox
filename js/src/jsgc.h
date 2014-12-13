@@ -12,6 +12,7 @@
 #include "mozilla/Atomics.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/TypeTraits.h"
 
 #include "jslock.h"
 #include "jsobj.h"
@@ -20,31 +21,7 @@
 #include "js/SliceBudget.h"
 #include "js/Vector.h"
 
-class JSAtom;
-struct JSCompartment;
-class JSFlatString;
-class JSLinearString;
-
-namespace JS {
-class Symbol;
-} /* namespace JS */
-
 namespace js {
-
-class ArgumentsObject;
-class ArrayBufferObject;
-class ArrayBufferViewObject;
-class SharedArrayBufferObject;
-class BaseShape;
-class DebugScopeObject;
-class GlobalObject;
-class LazyScript;
-class Nursery;
-class PropertyName;
-class SavedFrame;
-class ScopeObject;
-class Shape;
-class UnownedBaseShape;
 
 namespace gc {
 class ForkJoinNursery;
@@ -70,7 +47,9 @@ enum State {
     MARK_ROOTS,
     MARK,
     SWEEP,
-    INVALID
+#ifdef JSGC_COMPACTING
+    COMPACT
+#endif
 };
 
 static inline JSGCTraceKind
@@ -103,32 +82,6 @@ MapAllocToTraceKind(AllocKind kind)
     JS_STATIC_ASSERT(JS_ARRAY_LENGTH(map) == FINALIZE_LIMIT);
     return map[kind];
 }
-
-template <typename T> struct MapTypeToTraceKind {};
-template <> struct MapTypeToTraceKind<ObjectImpl>       { static const JSGCTraceKind kind = JSTRACE_OBJECT; };
-template <> struct MapTypeToTraceKind<JSObject>         { static const JSGCTraceKind kind = JSTRACE_OBJECT; };
-template <> struct MapTypeToTraceKind<JSFunction>       { static const JSGCTraceKind kind = JSTRACE_OBJECT; };
-template <> struct MapTypeToTraceKind<ArgumentsObject>  { static const JSGCTraceKind kind = JSTRACE_OBJECT; };
-template <> struct MapTypeToTraceKind<ArrayBufferObject>{ static const JSGCTraceKind kind = JSTRACE_OBJECT; };
-template <> struct MapTypeToTraceKind<ArrayBufferViewObject>{ static const JSGCTraceKind kind = JSTRACE_OBJECT; };
-template <> struct MapTypeToTraceKind<SharedArrayBufferObject>{ static const JSGCTraceKind kind = JSTRACE_OBJECT; };
-template <> struct MapTypeToTraceKind<DebugScopeObject> { static const JSGCTraceKind kind = JSTRACE_OBJECT; };
-template <> struct MapTypeToTraceKind<GlobalObject>     { static const JSGCTraceKind kind = JSTRACE_OBJECT; };
-template <> struct MapTypeToTraceKind<ScopeObject>      { static const JSGCTraceKind kind = JSTRACE_OBJECT; };
-template <> struct MapTypeToTraceKind<SavedFrame>       { static const JSGCTraceKind kind = JSTRACE_OBJECT; };
-template <> struct MapTypeToTraceKind<JSScript>         { static const JSGCTraceKind kind = JSTRACE_SCRIPT; };
-template <> struct MapTypeToTraceKind<LazyScript>       { static const JSGCTraceKind kind = JSTRACE_LAZY_SCRIPT; };
-template <> struct MapTypeToTraceKind<Shape>            { static const JSGCTraceKind kind = JSTRACE_SHAPE; };
-template <> struct MapTypeToTraceKind<BaseShape>        { static const JSGCTraceKind kind = JSTRACE_BASE_SHAPE; };
-template <> struct MapTypeToTraceKind<UnownedBaseShape> { static const JSGCTraceKind kind = JSTRACE_BASE_SHAPE; };
-template <> struct MapTypeToTraceKind<types::TypeObject>{ static const JSGCTraceKind kind = JSTRACE_TYPE_OBJECT; };
-template <> struct MapTypeToTraceKind<JSAtom>           { static const JSGCTraceKind kind = JSTRACE_STRING; };
-template <> struct MapTypeToTraceKind<JSString>         { static const JSGCTraceKind kind = JSTRACE_STRING; };
-template <> struct MapTypeToTraceKind<JSFlatString>     { static const JSGCTraceKind kind = JSTRACE_STRING; };
-template <> struct MapTypeToTraceKind<JSLinearString>   { static const JSGCTraceKind kind = JSTRACE_STRING; };
-template <> struct MapTypeToTraceKind<JS::Symbol>       { static const JSGCTraceKind kind = JSTRACE_SYMBOL; }; 
-template <> struct MapTypeToTraceKind<PropertyName>     { static const JSGCTraceKind kind = JSTRACE_STRING; };
-template <> struct MapTypeToTraceKind<jit::JitCode>     { static const JSGCTraceKind kind = JSTRACE_JITCODE; };
 
 /* Return a printable string for the given kind, for diagnostic purposes. */
 const char *
@@ -482,7 +435,7 @@ class ArenaList {
         return *this;
     }
 
-    ArenaList(const SortedArenaListSegment &segment) {
+    explicit ArenaList(const SortedArenaListSegment &segment) {
         head_ = segment.head;
         cursorp_ = segment.isEmpty() ? &head_ : segment.tailp;
         check();
@@ -570,6 +523,11 @@ class ArenaList {
         check();
         return *this;
     }
+
+#ifdef JSGC_COMPACTING
+    ArenaHeader *pickArenasToRelocate();
+    ArenaHeader *relocateArenas(ArenaHeader *toRelocate, ArenaHeader *relocated);
+#endif
 };
 
 /*
@@ -846,7 +804,6 @@ class ArenaLists
             clearFreeListInArena(AllocKind(i));
     }
 
-
     void clearFreeListInArena(AllocKind kind) {
         FreeList *freeList = &freeLists[kind];
         if (!freeList->isEmpty()) {
@@ -892,6 +849,8 @@ class ArenaLists
     template <AllowGC allowGC>
     static void *refillFreeList(ThreadSafeContext *cx, AllocKind thingKind);
 
+    static void *refillFreeListInGC(Zone *zone, AllocKind thingKind);
+
     /*
      * Moves all arenas from |fromArenaLists| into |this|.  In
      * parallel blocks, we temporarily create one ArenaLists per
@@ -915,13 +874,15 @@ class ArenaLists
         JS_ASSERT(freeLists[kind].isEmpty());
     }
 
+#ifdef JSGC_COMPACTING
+    ArenaHeader *relocateArenas(ArenaHeader *relocatedList);
+#endif
+
     void queueObjectsForSweep(FreeOp *fop);
     void queueStringsAndSymbolsForSweep(FreeOp *fop);
     void queueShapesForSweep(FreeOp *fop);
     void queueScriptsForSweep(FreeOp *fop);
-#ifdef JS_ION
     void queueJitCodeForSweep(FreeOp *fop);
-#endif
 
     bool foregroundFinalize(FreeOp *fop, AllocKind thingKind, SliceBudget &sliceBudget,
                             SortedArenaList &sweepList);
@@ -1015,17 +976,6 @@ MarkCompartmentActive(js::InterpreterFrame *fp);
 extern void
 TraceRuntime(JSTracer *trc);
 
-/* Must be called with GC lock taken. */
-extern bool
-TriggerGC(JSRuntime *rt, JS::gcreason::Reason reason);
-
-/* Must be called with GC lock taken. */
-extern bool
-TriggerZoneGC(Zone *zone, JS::gcreason::Reason reason);
-
-extern void
-MaybeGC(JSContext *cx);
-
 extern void
 ReleaseAllJITCode(FreeOp *op);
 
@@ -1041,25 +991,7 @@ typedef enum JSGCInvocationKind {
 } JSGCInvocationKind;
 
 extern void
-GC(JSRuntime *rt, JSGCInvocationKind gckind, JS::gcreason::Reason reason);
-
-extern void
-GCSlice(JSRuntime *rt, JSGCInvocationKind gckind, JS::gcreason::Reason reason, int64_t millis = 0);
-
-extern void
-GCFinalSlice(JSRuntime *rt, JSGCInvocationKind gckind, JS::gcreason::Reason reason);
-
-extern void
-GCDebugSlice(JSRuntime *rt, bool limit, int64_t objCount);
-
-extern void
 PrepareForDebugGC(JSRuntime *rt);
-
-extern void
-MinorGC(JSRuntime *rt, JS::gcreason::Reason reason);
-
-extern void
-MinorGC(JSContext *cx, JS::gcreason::Reason reason);
 
 /* Functions for managing cross compartment gray pointers. */
 
@@ -1092,19 +1024,6 @@ class GCHelperState
         CANCEL_ALLOCATION
     };
 
-    /*
-     * During the finalization we do not free immediately. Rather we add the
-     * corresponding pointers to a buffer which we later release on a
-     * separated thread.
-     *
-     * The buffer is implemented as a vector of 64K arrays of pointers, not as
-     * a simple vector, to avoid realloc calls during the vector growth and to
-     * not bloat the binary size of the inlined freeLater method. Any OOM
-     * during buffer growth results in the pointer being freed immediately.
-     */
-    static const size_t FREE_ARRAY_SIZE = size_t(1) << 16;
-    static const size_t FREE_ARRAY_LENGTH = FREE_ARRAY_SIZE / sizeof(void *);
-
     // Associated runtime.
     JSRuntime *const rt;
 
@@ -1128,16 +1047,9 @@ class GCHelperState
     bool              sweepFlag;
     bool              shrinkFlag;
 
-    Vector<void **, 16, js::SystemAllocPolicy> freeVector;
-    void            **freeCursor;
-    void            **freeCursorEnd;
-
     bool              backgroundAllocation;
 
     friend class js::gc::ArenaLists;
-
-    void
-    replenishAndFreeLater(void *ptr);
 
     static void freeElementsAndArray(void **array, void **end) {
         JS_ASSERT(array <= end);
@@ -1157,8 +1069,6 @@ class GCHelperState
         thread(nullptr),
         sweepFlag(false),
         shrinkFlag(false),
-        freeCursor(nullptr),
-        freeCursorEnd(nullptr),
         backgroundAllocation(true)
     { }
 
@@ -1203,14 +1113,6 @@ class GCHelperState
     bool shouldShrink() const {
         JS_ASSERT(isBackgroundSweeping());
         return shrinkFlag;
-    }
-
-    void freeLater(void *ptr) {
-        JS_ASSERT(!isBackgroundSweeping());
-        if (freeCursor != freeCursorEnd)
-            *freeCursor++ = ptr;
-        else
-            replenishAndFreeLater(ptr);
     }
 };
 
@@ -1310,23 +1212,110 @@ NewCompartment(JSContext *cx, JS::Zone *zone, JSPrincipals *principals,
 
 namespace gc {
 
-extern void
-GCIfNeeded(JSContext *cx);
-
-/* Tries to run a GC no matter what (used for GC zeal). */
-void
-RunDebugGC(JSContext *cx);
-
-/* Wait for the background thread to finish sweeping if it is running. */
-void
-FinishBackgroundFinalize(JSRuntime *rt);
-
 /*
  * Merge all contents of source into target. This can only be used if source is
  * the only compartment in its zone.
  */
 void
 MergeCompartments(JSCompartment *source, JSCompartment *target);
+
+#ifdef JSGC_COMPACTING
+
+/* Functions for checking and updating things that might be moved by compacting GC. */
+
+#ifdef JS_PUNBOX64
+const uintptr_t ForwardedCellMagicValue = 0xf1f1f1f1f1f1f1f1;
+#else
+const uintptr_t ForwardedCellMagicValue = 0xf1f1f1f1;
+#endif
+
+template <typename T>
+inline bool
+IsForwarded(T *t)
+{
+    static_assert(mozilla::IsBaseOf<Cell, T>::value, "T must be a subclass of Cell");
+    uintptr_t *ptr = reinterpret_cast<uintptr_t *>(t);
+    return ptr[1] == ForwardedCellMagicValue;
+}
+
+inline bool
+IsForwarded(const JS::Value &value)
+{
+    if (value.isObject())
+        return IsForwarded(&value.toObject());
+
+    if (value.isString())
+        return IsForwarded(value.toString());
+
+    if (value.isSymbol())
+        return IsForwarded(value.toSymbol());
+
+    JS_ASSERT(!value.isGCThing());
+    return false;
+}
+
+template <typename T>
+inline T *
+Forwarded(T *t)
+{
+    JS_ASSERT(IsForwarded(t));
+    uintptr_t *ptr = reinterpret_cast<uintptr_t *>(t);
+    return reinterpret_cast<T *>(ptr[0]);
+}
+
+inline Value
+Forwarded(const JS::Value &value)
+{
+    if (value.isObject())
+        return ObjectValue(*Forwarded(&value.toObject()));
+    else if (value.isString())
+        return StringValue(Forwarded(value.toString()));
+    else if (value.isSymbol())
+        return SymbolValue(Forwarded(value.toSymbol()));
+
+    JS_ASSERT(!value.isGCThing());
+    return value;
+}
+
+template <typename T>
+inline T
+MaybeForwarded(T t)
+{
+    return IsForwarded(t) ? Forwarded(t) : t;
+}
+
+#else
+
+template <typename T> inline bool IsForwarded(T t) { return false; }
+template <typename T> inline T Forwarded(T t) { return t; }
+template <typename T> inline T MaybeForwarded(T t) { return t; }
+
+#endif // JSGC_COMPACTING
+
+#ifdef JSGC_HASH_TABLE_CHECKS
+
+template <typename T>
+inline void
+CheckGCThingAfterMovingGC(T *t)
+{
+    JS_ASSERT_IF(t, !IsInsideNursery(t));
+#ifdef JSGC_COMPACTING
+    JS_ASSERT_IF(t, !IsForwarded(t));
+#endif
+}
+
+inline void
+CheckValueAfterMovingGC(const JS::Value& value)
+{
+    if (value.isObject())
+        return CheckGCThingAfterMovingGC(&value.toObject());
+    else if (value.isString())
+        return CheckGCThingAfterMovingGC(value.toString());
+    else if (value.isSymbol())
+        return CheckGCThingAfterMovingGC(value.toSymbol());
+}
+
+#endif // JSGC_HASH_TABLE_CHECKS
 
 const int ZealPokeValue = 1;
 const int ZealAllocValue = 2;
@@ -1341,7 +1330,8 @@ const int ZealIncrementalMultipleSlices = 10;
 const int ZealVerifierPostValue = 11;
 const int ZealFrameVerifierPostValue = 12;
 const int ZealCheckHashTablesOnMinorGC = 13;
-const int ZealLimit = 13;
+const int ZealCompactValue = 14;
+const int ZealLimit = 14;
 
 enum VerifierType {
     PreBarrierVerifier,
@@ -1436,6 +1426,20 @@ struct AutoDisableProxyCheck
     explicit AutoDisableProxyCheck(JSRuntime *rt) {}
 };
 #endif
+
+struct AutoDisableCompactingGC
+{
+#ifdef JSGC_COMPACTING
+    explicit AutoDisableCompactingGC(JSRuntime *rt);
+    ~AutoDisableCompactingGC();
+
+  private:
+    gc::GCRuntime &gc;
+#else
+    explicit AutoDisableCompactingGC(JSRuntime *rt) {}
+    ~AutoDisableCompactingGC() {}
+#endif
+};
 
 void
 PurgeJITCaches(JS::Zone *zone);

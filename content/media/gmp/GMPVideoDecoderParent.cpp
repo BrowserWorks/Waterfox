@@ -14,13 +14,6 @@
 #include "GMPMessageUtils.h"
 #include "mozilla/gmp/GMPTypes.h"
 
-template <>
-class nsAutoRefTraits<GMPVideoEncodedFrame> : public nsPointerRefTraits<GMPVideoEncodedFrame>
-{
-public:
-  static void Release(GMPVideoEncodedFrame* aFrame) { aFrame->Destroy(); }
-};
-
 namespace mozilla {
 
 #ifdef LOG
@@ -114,13 +107,11 @@ GMPVideoDecoderParent::InitDecode(const GMPVideoCodec& aCodecSettings,
 }
 
 nsresult
-GMPVideoDecoderParent::Decode(GMPVideoEncodedFrame* aInputFrame,
+GMPVideoDecoderParent::Decode(UniquePtr<GMPVideoEncodedFrame> aInputFrame,
                               bool aMissingFrames,
                               const nsTArray<uint8_t>& aCodecSpecificInfo,
                               int64_t aRenderTimeMs)
 {
-  nsAutoRef<GMPVideoEncodedFrame> autoDestroy(aInputFrame);
-
   if (!mIsOpen) {
     NS_WARNING("Trying to use an dead GMP video decoder");
     return NS_ERROR_FAILURE;
@@ -128,7 +119,8 @@ GMPVideoDecoderParent::Decode(GMPVideoEncodedFrame* aInputFrame,
 
   MOZ_ASSERT(mPlugin->GMPThread() == NS_GetCurrentThread());
 
-  auto inputFrameImpl = static_cast<GMPVideoEncodedFrameImpl*>(aInputFrame);
+  UniquePtr<GMPVideoEncodedFrameImpl> inputFrameImpl(
+    static_cast<GMPVideoEncodedFrameImpl*>(aInputFrame.release()));
 
   // Very rough kill-switch if the plugin stops processing.  If it's merely
   // hung and continues, we'll come back to life eventually.
@@ -309,6 +301,19 @@ GMPVideoDecoderParent::RecvResetComplete()
 
   // Ignore any return code. It is OK for this to fail without killing the process.
   mCallback->ResetComplete();
+
+  return true;
+}
+
+bool
+GMPVideoDecoderParent::RecvError(const GMPErr& aError)
+{
+  if (!mCallback) {
+    return false;
+  }
+
+  // Ignore any return code. It is OK for this to fail without killing the process.
+  mCallback->Error(aError);
 
   return true;
 }

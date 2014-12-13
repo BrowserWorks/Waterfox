@@ -15,7 +15,9 @@ class HTMLShadowElement MOZ_FINAL : public nsGenericHTMLElement,
                                     public nsStubMutationObserver
 {
 public:
-  HTMLShadowElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
+  explicit HTMLShadowElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
+
+  NS_IMPL_FROMCONTENT_HTML_WITH_TAG(HTMLShadowElement, shadow)
 
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED

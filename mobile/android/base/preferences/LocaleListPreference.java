@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
+import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.BrowserLocaleManager;
 import org.mozilla.gecko.R;
 
@@ -61,7 +62,7 @@ public class LocaleListPreference extends ListPreference {
 
         private static byte[] getPixels(final Bitmap b) {
             final int byteCount;
-            if (android.os.Build.VERSION.SDK_INT >= 19) {
+            if (Versions.feature19Plus) {
                 // TODO: when Bug 1042829 lands, do the right thing for KitKat devices.
                 // Which is:
                 // byteCount = b.getAllocationByteCount();

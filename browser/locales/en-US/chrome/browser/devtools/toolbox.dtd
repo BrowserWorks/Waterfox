@@ -18,6 +18,10 @@
 <!ENTITY toolboxZoomReset.key          "0">
 
 <!ENTITY toolboxReload.key             "r">
+<!-- LOCALIZATION NOTE (toolboxFramesButton): This is the label for
+  -  the iframes menu list that appears only when the document has some.
+  -  It allows you to switch the context of the whole toolbox. -->
+<!ENTITY toolboxFramesTooltip          "Select an iframe as the currently targeted document">
 
 <!-- LOCALIZATION NOTE (options.context.advancedSettings): This is the label for
   -  the heading of the advanced settings group in the options panel. -->
@@ -114,8 +118,6 @@
   -  the heading of the radiobox corresponding to the theme of the developer
   -  tools. -->
 <!ENTITY options.selectDevToolsTheme.label   "Choose DevTools theme:">
-<!ENTITY options.darkTheme.label             "Dark theme">
-<!ENTITY options.lightTheme.label            "Light theme">
 
 <!-- LOCALIZATION NOTE (options.webconsole.label): This is the label for the
   -  heading of the group of Web Console preferences in the options panel. -->
@@ -175,7 +177,7 @@ Gecko platform symbols">
 <!ENTITY options.sourceeditor.autoclosebrackets.label   "Autoclose brackets">
 <!ENTITY options.sourceeditor.autoclosebrackets.tooltip "Automatically insert closing brackets">
 <!ENTITY options.sourceeditor.expandtab.label           "Indent using spaces">
-<!ENTITY options.sourceeditor.expandtab.tooltip         "Use spaces intead of the tab character">
+<!ENTITY options.sourceeditor.expandtab.tooltip         "Use spaces instead of the tab character">
 <!ENTITY options.sourceeditor.tabsize.label             "Tab size">
 <!ENTITY options.sourceeditor.tabsize.accesskey         "T">
 <!ENTITY options.sourceeditor.keybinding.label          "Keybindings">

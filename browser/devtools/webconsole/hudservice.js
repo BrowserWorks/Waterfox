@@ -19,6 +19,7 @@ loader.lazyImporter(this, "devtools", "resource://gre/modules/devtools/Loader.js
 loader.lazyImporter(this, "Services", "resource://gre/modules/Services.jsm");
 loader.lazyImporter(this, "DebuggerServer", "resource://gre/modules/devtools/dbg-server.jsm");
 loader.lazyImporter(this, "DebuggerClient", "resource://gre/modules/devtools/dbg-client.jsm");
+loader.lazyGetter(this, "showDoorhanger", () => require("devtools/shared/doorhanger").showDoorhanger);
 
 const STRINGS_URI = "chrome://browser/locale/devtools/webconsole.properties";
 let l10n = new WebConsoleUtils.l10n(STRINGS_URI);
@@ -581,6 +582,30 @@ WebConsole.prototype = {
   },
 
   /**
+   * Retrieves the current selection from the Inspector, if such a selection
+   * exists. This is used to pass the ID of the selected actor to the Web
+   * Console server for the $0 helper.
+   *
+   * @return object|null
+   *         A Selection referring to the currently selected node in the
+   *         Inspector.
+   *         If the inspector was never opened, or no node was ever selected,
+   *         then |null| is returned.
+   */
+  getInspectorSelection: function WC_getInspectorSelection()
+  {
+    let toolbox = gDevTools.getToolbox(this.target);
+    if (!toolbox) {
+      return null;
+    }
+    let panel = toolbox.getPanel("inspector");
+    if (!panel || !panel.selection) {
+      return null;
+    }
+    return panel.selection;
+  },
+
+  /**
    * Destroy the object. Call this method to avoid memory leaks when the Web
    * Console is closed.
    *
@@ -680,6 +705,7 @@ BrowserConsole.prototype = Heritage.extend(WebConsole.prototype,
     // instance.
     let onClose = () => {
       window.removeEventListener("unload", onClose);
+      window.removeEventListener("focus", onFocus);
       this.destroy();
     };
     window.addEventListener("unload", onClose);
@@ -688,6 +714,12 @@ BrowserConsole.prototype = Heritage.extend(WebConsole.prototype,
     window.document.getElementById("cmd_close").removeAttribute("disabled");
 
     this._telemetry.toolOpened("browserconsole");
+
+    // Create an onFocus handler just to display the dev edition promo.
+    // This is to prevent race conditions in some environments.
+    // Hook to display promotional Developer Edition doorhanger. Only displayed once.
+    let onFocus = () => showDoorhanger({ window, type: "deveditionpromo" });
+    window.addEventListener("focus", onFocus);
 
     this._bc_init = this.$init();
     return this._bc_init;

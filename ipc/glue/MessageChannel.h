@@ -58,7 +58,7 @@ class MessageChannel : HasResultCodes
     typedef IPC::Message Message;
     typedef mozilla::ipc::Transport Transport;
 
-    MessageChannel(MessageListener *aListener);
+    explicit MessageChannel(MessageListener *aListener);
     ~MessageChannel();
 
     // "Open" from the perspective of the transport layer; the underlying
@@ -102,6 +102,13 @@ class MessageChannel : HasResultCodes
     };
     void SetChannelFlags(ChannelFlags aFlags) { mFlags = aFlags; }
     ChannelFlags GetChannelFlags() { return mFlags; }
+
+    void BlockScripts();
+
+    bool ShouldBlockScripts() const
+    {
+        return mBlockScripts;
+    }
 
     // Asynchronously send a message to the other side of the channel
     bool Send(Message* aMsg);
@@ -198,7 +205,7 @@ class MessageChannel : HasResultCodes
     void OnNotifyMaybeChannelError();
     void ReportConnectionError(const char* aChannelName) const;
     void ReportMessageRouteError(const char* channelName) const;
-    bool MaybeHandleError(Result code, const char* channelName);
+    bool MaybeHandleError(Result code, const Message& aMsg, const char* channelName);
 
     void Clear();
 
@@ -395,7 +402,7 @@ class MessageChannel : HasResultCodes
     class RefCountedTask
     {
       public:
-        RefCountedTask(CancelableTask* aTask)
+        explicit RefCountedTask(CancelableTask* aTask)
           : mTask(aTask)
         { }
       private:
@@ -415,7 +422,7 @@ class MessageChannel : HasResultCodes
     class DequeueTask : public Task
     {
       public:
-        DequeueTask(RefCountedTask* aTask)
+        explicit DequeueTask(RefCountedTask* aTask)
           : mTask(aTask)
         { }
         void Run() { mTask->Run(); }
@@ -455,7 +462,7 @@ class MessageChannel : HasResultCodes
 
     class AutoEnterPendingReply {
       public:
-        AutoEnterPendingReply(size_t &replyVar)
+        explicit AutoEnterPendingReply(size_t &replyVar)
           : mReplyVar(replyVar)
         {
             mReplyVar++;
@@ -501,7 +508,7 @@ class MessageChannel : HasResultCodes
     class AutoEnterRPCTransaction
     {
       public:
-       AutoEnterRPCTransaction(MessageChannel *aChan)
+       explicit AutoEnterRPCTransaction(MessageChannel *aChan)
         : mChan(aChan),
           mOldTransaction(mChan->mCurrentRPCTransaction)
        {
@@ -653,6 +660,9 @@ class MessageChannel : HasResultCodes
     // Should the channel abort the process from the I/O thread when
     // a channel error occurs?
     bool mAbortOnError;
+
+    // Should we prevent scripts from running while dispatching urgent messages?
+    bool mBlockScripts;
 
     // See SetChannelFlags
     ChannelFlags mFlags;

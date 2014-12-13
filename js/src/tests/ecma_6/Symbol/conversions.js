@@ -1,6 +1,6 @@
-if (typeof Symbol === "function") {
-    // Section numbers cite ES6 rev 24 (2014 April 27).
+// Section numbers cite ES6 rev 24 (2014 April 27).
 
+if (typeof Symbol === "function") {
     var symbols = [
         Symbol(),
         Symbol("one"),
@@ -22,10 +22,12 @@ if (typeof Symbol === "function") {
         assertThrowsInstanceOf(() => String(symobj), TypeError);
         assertThrowsInstanceOf(() => symobj < 0, TypeError);
         assertThrowsInstanceOf(() => 0 < symobj, TypeError);
-        assertThrowsInstanceOf(() => symobj == 0, TypeError);
-        assertThrowsInstanceOf(() => 0 != symobj, TypeError);
         assertThrowsInstanceOf(() => symobj + 1, TypeError);
         assertThrowsInstanceOf(() => "" + symobj, TypeError);
+        assertEq(sym == symobj, true);
+        assertEq(sym === symobj, false);
+        assertEq(symobj == 0, false);
+        assertEq(0 != symobj, true);
 
         // 7.1.2 ToBoolean
         assertEq(Boolean(sym), true);
@@ -34,8 +36,8 @@ if (typeof Symbol === "function") {
         assertEq(sym && 13, 13);
 
         // 7.1.3 ToNumber
-        assertEq(+sym, NaN);
-        assertEq(sym | 0, 0);
+        assertThrowsInstanceOf(() => +sym, TypeError);
+        assertThrowsInstanceOf(() => sym | 0, TypeError);
 
         // 7.1.12 ToString
         assertThrowsInstanceOf(() => String(sym), TypeError);

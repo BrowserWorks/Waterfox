@@ -4,13 +4,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "ImageLogging.h"
 #include "imgStatusTracker.h"
 
 #include "imgIContainer.h"
 #include "imgRequestProxy.h"
 #include "imgDecoderObserver.h"
 #include "Image.h"
-#include "ImageLogging.h"
 #include "nsNetUtil.h"
 #include "nsIObserverService.h"
 
@@ -24,7 +24,7 @@ class imgStatusTrackerObserver : public imgDecoderObserver
 {
 public:
   imgStatusTrackerObserver(imgStatusTracker* aTracker)
-  : mTracker(aTracker->asWeakPtr())
+  : mTracker(aTracker)
   {
     MOZ_ASSERT(aTracker);
   }
@@ -32,7 +32,7 @@ public:
   void SetTracker(imgStatusTracker* aTracker)
   {
     MOZ_ASSERT(aTracker);
-    mTracker = aTracker->asWeakPtr();
+    mTracker = aTracker;
   }
 
   /** imgDecoderObserver methods **/
@@ -553,7 +553,7 @@ imgStatusTracker::SyncNotify(imgRequestProxy* proxy)
   }
 
   ProxyArray array;
-  array.AppendElement(proxy->asWeakPtr());
+  array.AppendElement(proxy);
   SyncNotifyState(array, !!mImage, mState, r, mHadLastPart);
 }
 
@@ -584,7 +584,7 @@ void
 imgStatusTracker::AddConsumer(imgRequestProxy* aConsumer)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  mConsumers.AppendElementUnlessExists(aConsumer->asWeakPtr());
+  mConsumers.AppendElementUnlessExists(aConsumer);
 }
 
 // XXX - The last argument should go away.

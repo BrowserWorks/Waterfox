@@ -124,7 +124,8 @@ private:
   const bool mDumpChildProcesses;
 };
 
-NS_IMPL_ISUPPORTS_INHERITED(GCAndCCLogDumpRunnable, nsRunnable, nsIDumpGCAndCCLogsCallback)
+NS_IMPL_ISUPPORTS_INHERITED(GCAndCCLogDumpRunnable, nsRunnable,
+                            nsIDumpGCAndCCLogsCallback)
 
 } // anonymous namespace
 
@@ -178,10 +179,9 @@ void doGCCCDump(const uint8_t aRecvSig)
   LOG("SignalWatcher(sig %d) dispatching GC/CC log runnable.", aRecvSig);
   // Dump GC and CC logs (from the main thread).
   nsRefPtr<GCAndCCLogDumpRunnable> runnable =
-    new GCAndCCLogDumpRunnable(
-      /* identifier = */ EmptyString(),
-      /* allTraces = */ true,
-      /* dumpChildProcesses = */ true);
+    new GCAndCCLogDumpRunnable(/* identifier = */ EmptyString(),
+                               /* allTraces = */ true,
+                               /* dumpChildProcesses = */ true);
   NS_DispatchToMainThread(runnable);
 }
 
@@ -195,7 +195,8 @@ void
 doMemoryReport(const nsCString& aInputStr)
 {
   bool minimize = aInputStr.EqualsLiteral("minimize memory report");
-  LOG("FifoWatcher(command:%s) dispatching memory report runnable.", aInputStr.get());
+  LOG("FifoWatcher(command:%s) dispatching memory report runnable.",
+      aInputStr.get());
   nsRefPtr<DumpMemoryInfoToTempDirRunnable> runnable =
     new DumpMemoryInfoToTempDirRunnable(/* identifier = */ EmptyString(),
                                         /* anonymize = */ false,
@@ -314,12 +315,13 @@ EnsureNonEmptyIdentifier(nsAString& aIdentifier)
 // Use XPCOM refcounting to fire |onFinish| when all reference-holders
 // (remote dump actors or the |DumpGCAndCCLogsToFile| activation itself)
 // have gone away.
-class nsDumpGCAndCCLogsCallbackHolder MOZ_FINAL : public nsIDumpGCAndCCLogsCallback
+class nsDumpGCAndCCLogsCallbackHolder MOZ_FINAL
+  : public nsIDumpGCAndCCLogsCallback
 {
 public:
   NS_DECL_ISUPPORTS
 
-  nsDumpGCAndCCLogsCallbackHolder(nsIDumpGCAndCCLogsCallback* aCallback)
+  explicit nsDumpGCAndCCLogsCallbackHolder(nsIDumpGCAndCCLogsCallback* aCallback)
     : mCallback(aCallback)
   {
   }
@@ -430,7 +432,7 @@ class DumpReportCallback MOZ_FINAL : public nsIHandleReportCallback
 public:
   NS_DECL_ISUPPORTS
 
-  DumpReportCallback(nsGZFileWriter* aWriter)
+  explicit DumpReportCallback(nsGZFileWriter* aWriter)
     : mIsFirst(true)
     , mWriter(aWriter)
   {
@@ -721,10 +723,10 @@ nsMemoryInfoDumper::DumpDMDToFile(FILE* aFile)
     return rv;
   }
 
-  // Dump DMD output to the file.
+  // Dump DMD's memory reports analysis to the file.
   DMDWriteState state(dmdWriter);
   dmd::Writer w(DMDWrite, &state);
-  dmd::Dump(w);
+  dmd::AnalyzeReports(w);
 
   rv = dmdWriter->Finish();
   NS_WARN_IF(NS_FAILED(rv));

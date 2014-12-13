@@ -75,7 +75,7 @@ nsFileControlFrame::DestroyFrom(nsIFrame* aDestructRoot)
 nsresult
 nsFileControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
 {
-  nsCOMPtr<nsIDocument> doc = mContent->GetDocument();
+  nsCOMPtr<nsIDocument> doc = mContent->GetComposedDoc();
 
   // Create and setup the file picking button.
   mBrowse = doc->CreateHTMLElement(nsGkAtoms::button);
@@ -150,11 +150,16 @@ nsFileControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
 }
 
 void
-nsFileControlFrame::AppendAnonymousContentTo(nsBaseContentList& aElements,
+nsFileControlFrame::AppendAnonymousContentTo(nsTArray<nsIContent*>& aElements,
                                              uint32_t aFilter)
 {
-  aElements.MaybeAppendElement(mBrowse);
-  aElements.MaybeAppendElement(mTextContent);
+  if (mBrowse) {
+    aElements.AppendElement(mBrowse);
+  }
+
+  if (mTextContent) {
+    aElements.AppendElement(mTextContent);
+  }
 }
 
 NS_QUERYFRAME_HEAD(nsFileControlFrame)
@@ -233,13 +238,13 @@ nsFileControlFrame::DnDListener::IsValidDropData(nsIDOMDragEvent* aEvent)
 }
 
 nscoord
-nsFileControlFrame::GetMinWidth(nsRenderingContext *aRenderingContext)
+nsFileControlFrame::GetMinISize(nsRenderingContext *aRenderingContext)
 {
   nscoord result;
   DISPLAY_MIN_WIDTH(this, result);
 
   // Our min width is our pref width
-  result = GetPrefWidth(aRenderingContext);
+  result = GetPrefISize(aRenderingContext);
   return result;
 }
 

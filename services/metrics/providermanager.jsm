@@ -2,9 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#ifndef MERGED_COMPARTMENT
 "use strict";
 
-#ifndef MERGED_COMPARTMENT
 this.EXPORTED_SYMBOLS = ["ProviderManager"];
 
 const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
@@ -528,7 +528,7 @@ this.ProviderManager.prototype = Object.freeze({
    * Record an error that occurred operating on a provider.
    */
   _recordProviderError: function (name, msg, ex) {
-    let msg = "Provider error: " + name + ": " + msg;
+    msg = "Provider error: " + name + ": " + msg;
     if (ex) {
       msg += ": " + CommonUtils.exceptionStr(ex);
     }

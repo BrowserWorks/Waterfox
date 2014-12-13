@@ -13,9 +13,9 @@
 #include "nsWrapperCache.h"
 #include "nsPluginTags.h"
 #include "nsPIDOMWindow.h"
-#include "nsMimeTypeArray.h"
 
 class nsPluginElement;
+class nsMimeType;
 
 class nsPluginArray MOZ_FINAL : public nsIObserver,
                                 public nsSupportsWeakReference,
@@ -29,7 +29,7 @@ public:
   // nsIObserver
   NS_DECL_NSIOBSERVER
 
-  nsPluginArray(nsPIDOMWindow* aWindow);
+  explicit nsPluginArray(nsPIDOMWindow* aWindow);
   nsPIDOMWindow* GetParentObject() const;
   virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
 

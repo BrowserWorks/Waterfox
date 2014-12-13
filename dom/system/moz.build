@@ -6,7 +6,7 @@
 
 toolkit = CONFIG['MOZ_WIDGET_TOOLKIT']
 
-if toolkit in ('qt'):
+if toolkit == 'qt':
     DIRS += ['qt']
 elif toolkit == 'windows':
     DIRS += ['windows']
@@ -16,8 +16,6 @@ elif toolkit == 'android':
     DIRS += ['android']
 elif toolkit == 'gonk':
     DIRS += ['gonk']
-
-TEST_DIRS += ['tests']
 
 XPIDL_SOURCES += [
     'nsIOSFileConstantsService.idl',
@@ -47,7 +45,7 @@ FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
-FINAL_LIBRARY = 'gklayout'
+FINAL_LIBRARY = 'xul'
 # We fire the nsDOMDeviceAcceleration
 LOCAL_INCLUDES += [
     '/dom/base',
@@ -57,3 +55,5 @@ LOCAL_INCLUDES += [
 
 DEFINES['DLL_PREFIX'] = '"%s"' % CONFIG['DLL_PREFIX']
 DEFINES['DLL_SUFFIX'] = '"%s"' % CONFIG['DLL_SUFFIX']
+
+MOCHITEST_CHROME_MANIFESTS += ['tests/chrome.ini']

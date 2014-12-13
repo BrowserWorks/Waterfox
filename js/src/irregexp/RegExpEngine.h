@@ -69,7 +69,6 @@ struct RegExpCompileData
 
 struct RegExpCode
 {
-#ifdef JS_ION
     jit::JitCode *jitCode;
     uint8_t *byteCode;
 
@@ -84,27 +83,12 @@ struct RegExpCode
     void destroy() {
         js_free(byteCode);
     }
-#else
-    uint8_t *byteCode;
-
-    RegExpCode()
-      : byteCode(nullptr)
-    {}
-
-    bool empty() {
-        return !byteCode;
-    }
-
-    void destroy() {
-        js_free(byteCode);
-    }
-#endif
 };
 
 RegExpCode
 CompilePattern(JSContext *cx, RegExpShared *shared, RegExpCompileData *data,
-               HandleLinearString sample,  bool is_global, bool ignore_case = false,
-               bool is_ascii = false);
+               HandleLinearString sample,  bool is_global, bool ignore_case,
+               bool is_ascii, bool force_bytecode);
 
 // Note: this may return RegExpRunStatus_Error if an interrupt was requested
 // while the code was executing.

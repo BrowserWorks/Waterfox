@@ -10,6 +10,7 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/dom/Animation.h"
 #include "AnimationCommon.h"
 #include "nsCSSPseudoElements.h"
 
@@ -28,10 +29,11 @@ struct StyleTransition;
 
 namespace mozilla {
 
-struct ElementPropertyTransition : public mozilla::ElementAnimation
+struct ElementPropertyTransition : public dom::Animation
 {
-  explicit ElementPropertyTransition(mozilla::dom::AnimationTimeline* aTimeline)
-    : mozilla::ElementAnimation(aTimeline) { }
+  ElementPropertyTransition(nsIDocument* aDocument,
+                            const AnimationTiming &aTiming)
+    : dom::Animation(aDocument, aTiming, EmptyString()) { }
 
   virtual ElementPropertyTransition* AsTransition() { return this; }
   virtual const ElementPropertyTransition* AsTransition() const { return this; }
@@ -65,16 +67,17 @@ class nsTransitionManager MOZ_FINAL
   : public mozilla::css::CommonAnimationManager
 {
 public:
-  nsTransitionManager(nsPresContext *aPresContext)
+  explicit nsTransitionManager(nsPresContext *aPresContext)
     : mozilla::css::CommonAnimationManager(aPresContext)
+    , mInAnimationOnlyStyleUpdate(false)
   {
   }
 
-  typedef mozilla::ElementAnimationCollection ElementAnimationCollection;
+  typedef mozilla::AnimationPlayerCollection AnimationPlayerCollection;
 
-  static ElementAnimationCollection*
+  static AnimationPlayerCollection*
   GetTransitions(nsIContent* aContent) {
-    return static_cast<ElementAnimationCollection*>
+    return static_cast<AnimationPlayerCollection*>
       (aContent->GetProperty(nsGkAtoms::transitionsProperty));
   }
 
@@ -89,7 +92,7 @@ public:
     return false;
   }
 
-  static ElementAnimationCollection*
+  static AnimationPlayerCollection*
   GetAnimationsForCompositor(nsIContent* aContent, nsCSSProperty aProperty)
   {
     return mozilla::css::CommonAnimationManager::GetAnimationsForCompositor(
@@ -117,6 +120,10 @@ public:
                         nsStyleContext *aOldStyleContext,
                         nsStyleContext *aNewStyleContext);
 
+  void SetInAnimationOnlyStyleUpdate(bool aInAnimationOnlyUpdate) {
+    mInAnimationOnlyStyleUpdate = aInAnimationOnlyUpdate;
+  }
+
   // nsIStyleRuleProcessor (parts)
   virtual void RulesMatching(ElementRuleProcessorData* aData) MOZ_OVERRIDE;
   virtual void RulesMatching(PseudoElementRuleProcessorData* aData) MOZ_OVERRIDE;
@@ -134,28 +141,7 @@ public:
 
   void FlushTransitions(FlushFlags aFlags);
 
-  // Performs a 'mini-flush' to make styles from throttled transitions
-  // up-to-date prior to processing an unrelated style change, so that
-  // any transitions triggered by that style change produce correct
-  // results.
-  //
-  // In more detail:  when we're able to run animations on the
-  // compositor, we sometimes "throttle" these animations by skipping
-  // updating style data on the main thread.  However, whenever we
-  // process a normal (non-animation) style change, any changes in
-  // computed style on elements that have transition-* properties set
-  // may need to trigger new transitions; this process requires knowing
-  // both the old and new values of the property.  To do this correctly,
-  // we need to have an up-to-date *old* value of the property on the
-  // primary frame.  So the purpose of the mini-flush is to update the
-  // style for all throttled transitions and animations to the current
-  // animation state without making any other updates, so that when we
-  // process the queued style updates we'll have correct old data to
-  // compare against.  When we do this, we don't bother touching frames
-  // other than primary frames.
-  void UpdateAllThrottledStyles();
-
-  ElementAnimationCollection* GetElementTransitions(
+  AnimationPlayerCollection* GetElementTransitions(
     mozilla::dom::Element *aElement,
     nsCSSPseudoElements::Type aPseudoType,
     bool aCreateIfNeeded);
@@ -163,27 +149,22 @@ public:
 protected:
   virtual void ElementCollectionRemoved() MOZ_OVERRIDE;
   virtual void
-  AddElementCollection(ElementAnimationCollection* aCollection) MOZ_OVERRIDE;
+  AddElementCollection(AnimationPlayerCollection* aCollection) MOZ_OVERRIDE;
 
 private:
   void
   ConsiderStartingTransition(nsCSSProperty aProperty,
                              const mozilla::StyleTransition& aTransition,
                              mozilla::dom::Element* aElement,
-                             ElementAnimationCollection*& aElementTransitions,
+                             AnimationPlayerCollection*& aElementTransitions,
                              nsStyleContext* aOldStyleContext,
                              nsStyleContext* aNewStyleContext,
                              bool* aStartedAny,
                              nsCSSPropertySet* aWhichStarted);
   void WalkTransitionRule(ElementDependentRuleProcessorData* aData,
                           nsCSSPseudoElements::Type aPseudoType);
-  // Update the animated styles of an element and its descendants.
-  // If the element has a transition, it is flushed back to its primary frame.
-  // If the element does not have a transition, then its style is reparented.
-  void UpdateThrottledStylesForSubtree(nsIContent* aContent,
-                                       nsStyleContext* aParentStyle,
-                                       nsStyleChangeList &aChangeList);
-  void UpdateAllThrottledStylesInternal();
+
+  bool mInAnimationOnlyStyleUpdate;
 };
 
 #endif /* !defined(nsTransitionManager_h_) */

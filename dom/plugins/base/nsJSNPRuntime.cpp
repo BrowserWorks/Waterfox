@@ -12,11 +12,11 @@
 #include "nsJSNPRuntime.h"
 #include "nsNPAPIPlugin.h"
 #include "nsNPAPIPluginInstance.h"
+#include "nsIGlobalObject.h"
 #include "nsIScriptGlobalObject.h"
 #include "nsIScriptContext.h"
 #include "nsDOMJSUtils.h"
 #include "nsJSUtils.h"
-#include "nsCxPusher.h"
 #include "nsIDocument.h"
 #include "nsIJSRuntimeService.h"
 #include "nsIXPConnect.h"
@@ -274,7 +274,7 @@ OnWrapperDestroyed()
     }
 
     if (sNPObjWrappers.ops) {
-      MOZ_ASSERT(sNPObjWrappers.entryCount == 0);
+      MOZ_ASSERT(sNPObjWrappers.EntryCount() == 0);
 
       // No more wrappers, and our hash was initialized. Finish the
       // hash to prevent leaking it.
@@ -608,11 +608,16 @@ doInvoke(NPObject *npobj, NPIdentifier method, const NPVariant *args,
          uint32_t argCount, bool ctorCall, NPVariant *result)
 {
   NPP npp = NPPStack::Peek();
-  JSContext *cx = GetJSContext(npp);
 
-  if (!cx) {
+  nsCOMPtr<nsIGlobalObject> globalObject = GetGlobalObject(npp);
+  if (NS_WARN_IF(!globalObject)) {
     return false;
   }
+
+  // We're about to run script via JS_CallFunctionValue, so we need an
+  // AutoEntryScript. NPAPI plugins are Gecko-specific and not in any spec.
+  dom::AutoEntryScript aes(globalObject);
+  JSContext *cx = aes.cx();
 
   if (!npobj || !result) {
     ThrowJSException(cx, "Null npobj, or result in doInvoke!");
@@ -625,8 +630,6 @@ doInvoke(NPObject *npobj, NPIdentifier method, const NPVariant *args,
 
   nsJSObjWrapper *npjsobj = (nsJSObjWrapper *)npobj;
 
-  nsCxPusher pusher;
-  pusher.Push(cx);
   JS::Rooted<JSObject*> jsobj(cx, npjsobj->mJSObj);
   JSAutoCompartment ac(cx, jsobj);
   JS::Rooted<JS::Value> fv(cx);
@@ -733,11 +736,16 @@ nsJSObjWrapper::NP_GetProperty(NPObject *npobj, NPIdentifier id,
                                NPVariant *result)
 {
   NPP npp = NPPStack::Peek();
-  JSContext *cx = GetJSContext(npp);
 
-  if (!cx) {
+  nsCOMPtr<nsIGlobalObject> globalObject = GetGlobalObject(npp);
+  if (NS_WARN_IF(!globalObject)) {
     return false;
   }
+
+  // We're about to run script via JS_CallFunctionValue, so we need an
+  // AutoEntryScript. NPAPI plugins are Gecko-specific and not in any spec.
+  dom::AutoEntryScript aes(globalObject);
+  JSContext *cx = aes.cx();
 
   if (!npobj) {
     ThrowJSException(cx,
@@ -748,8 +756,6 @@ nsJSObjWrapper::NP_GetProperty(NPObject *npobj, NPIdentifier id,
 
   nsJSObjWrapper *npjsobj = (nsJSObjWrapper *)npobj;
 
-  nsCxPusher pusher;
-  pusher.Push(cx);
   AutoJSExceptionReporter reporter(cx);
   JSAutoCompartment ac(cx, npjsobj->mJSObj);
 
@@ -764,11 +770,16 @@ nsJSObjWrapper::NP_SetProperty(NPObject *npobj, NPIdentifier npid,
                                const NPVariant *value)
 {
   NPP npp = NPPStack::Peek();
-  JSContext *cx = GetJSContext(npp);
 
-  if (!cx) {
+  nsCOMPtr<nsIGlobalObject> globalObject = GetGlobalObject(npp);
+  if (NS_WARN_IF(!globalObject)) {
     return false;
   }
+
+  // We're about to run script via JS_CallFunctionValue, so we need an
+  // AutoEntryScript. NPAPI plugins are Gecko-specific and not in any spec.
+  dom::AutoEntryScript aes(globalObject);
+  JSContext *cx = aes.cx();
 
   if (!npobj) {
     ThrowJSException(cx,
@@ -780,8 +791,6 @@ nsJSObjWrapper::NP_SetProperty(NPObject *npobj, NPIdentifier npid,
   nsJSObjWrapper *npjsobj = (nsJSObjWrapper *)npobj;
   bool ok = false;
 
-  nsCxPusher pusher;
-  pusher.Push(cx);
   AutoJSExceptionReporter reporter(cx);
   JS::Rooted<JSObject*> jsObj(cx, npjsobj->mJSObj);
   JSAutoCompartment ac(cx, jsObj);
@@ -942,7 +951,7 @@ JSObjWrapperKeyMarkCallback(JSTracer *trc, JSObject *obj, void *data) {
   if (!p)
     return;
 
-  JS_CallObjectTracer(trc, &obj, "sJSObjWrappers key object");
+  JS_CallUnbarrieredObjectTracer(trc, &obj, "sJSObjWrappers key object");
   nsJSObjWrapperKey newKey(obj, npp);
   sJSObjWrappers.rekeyIfMoved(oldKey, newKey);
 }
@@ -1528,6 +1537,9 @@ static bool
 NPObjWrapper_NewResolve(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id,
                         JS::MutableHandle<JSObject*> objp)
 {
+  if (JSID_IS_SYMBOL(id))
+    return true;
+
   NPObject *npobj = GetNPObject(cx, obj);
 
   if (!npobj || !npobj->_class || !npobj->_class->hasProperty ||
@@ -1725,7 +1737,7 @@ nsNPObjWrapper::GetNewOrUsed(NPP npp, JSContext *cx, NPObject *npobj)
   if (!sNPObjWrappers.ops) {
     // No hash yet (or any more), initialize it.
     PL_DHashTableInit(&sNPObjWrappers, PL_DHashGetStubOps(), nullptr,
-                      sizeof(NPObjWrapperHashEntry), 16);
+                      sizeof(NPObjWrapperHashEntry));
   }
 
   NPObjWrapperHashEntry *entry = static_cast<NPObjWrapperHashEntry *>
@@ -1751,14 +1763,14 @@ nsNPObjWrapper::GetNewOrUsed(NPP npp, JSContext *cx, NPObject *npobj)
   entry->mNPObj = npobj;
   entry->mNpp = npp;
 
-  uint32_t generation = sNPObjWrappers.generation;
+  uint32_t generation = sNPObjWrappers.Generation();
 
   // No existing JSObject, create one.
 
   JS::Rooted<JSObject*> obj(cx, ::JS_NewObject(cx, &sNPObjectJSWrapperClass, JS::NullPtr(),
                                                JS::NullPtr()));
 
-  if (generation != sNPObjWrappers.generation) {
+  if (generation != sNPObjWrappers.Generation()) {
       // Reload entry if the JS_NewObject call caused a GC and reallocated
       // the table (see bug 445229). This is guaranteed to succeed.
 
@@ -2109,18 +2121,18 @@ NPObjectMember_Trace(JSTracer *trc, JSObject *obj)
     return;
 
   // Our NPIdentifier is not always interned, so we must root it explicitly.
-  JS_CallHeapIdTracer(trc, &memberPrivate->methodName, "NPObjectMemberPrivate.methodName");
+  JS_CallIdTracer(trc, &memberPrivate->methodName, "NPObjectMemberPrivate.methodName");
 
   if (!memberPrivate->fieldValue.isPrimitive()) {
-    JS_CallHeapValueTracer(trc, &memberPrivate->fieldValue,
-                           "NPObject Member => fieldValue");
+    JS_CallValueTracer(trc, &memberPrivate->fieldValue,
+                       "NPObject Member => fieldValue");
   }
 
   // There's no strong reference from our private data to the
   // NPObject, so make sure to mark the NPObject wrapper to keep the
   // NPObject alive as long as this NPObjectMember is alive.
   if (memberPrivate->npobjWrapper) {
-    JS_CallHeapObjectTracer(trc, &memberPrivate->npobjWrapper,
-                            "NPObject Member => npobjWrapper");
+    JS_CallObjectTracer(trc, &memberPrivate->npobjWrapper,
+                        "NPObject Member => npobjWrapper");
   }
 }

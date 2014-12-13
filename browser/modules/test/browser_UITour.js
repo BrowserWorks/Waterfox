@@ -195,6 +195,58 @@ let tests = [
     gContentAPI.showHighlight("urlbar");
     waitForElementToBeVisible(highlight, checkDefaultEffect, "Highlight should be shown after showHighlight()");
   },
+  function test_highlight_search_engine(done) {
+    let highlight = document.getElementById("UITourHighlight");
+    gContentAPI.showHighlight("urlbar");
+    waitForElementToBeVisible(highlight, () => {
+
+      let searchbar = document.getElementById("searchbar");
+      if (searchbar.getAttribute("oneoffui")) {
+        done();
+        return; // The oneoffui removes the menu that's being tested here.
+      }
+
+      gContentAPI.showMenu("searchEngines", function() {
+        isnot(searchbar, null, "Should have found searchbar");
+        let searchPopup = document.getAnonymousElementByAttribute(searchbar,
+                                                                   "anonid",
+                                                                   "searchbar-popup");
+        isnot(searchPopup, null, "Should have found search popup");
+
+        function getEngineNode(identifier) {
+          let engineNode = null;
+          for (let node of searchPopup.children) {
+            if (node.engine.identifier == identifier) {
+              engineNode = node;
+              break;
+            }
+          }
+          isnot(engineNode, null, "Should have found search engine node in popup");
+          return engineNode;
+        }
+        let googleEngineNode = getEngineNode("google");
+        let bingEngineNode = getEngineNode("bing");
+
+        gContentAPI.showHighlight("searchEngine-google");
+        waitForCondition(() => googleEngineNode.getAttribute("_moz-menuactive") == "true", function() {
+          is_element_hidden(highlight, "Highlight panel should be hidden by highlighting search engine");
+
+          gContentAPI.showHighlight("searchEngine-bing");
+          waitForCondition(() => bingEngineNode.getAttribute("_moz-menuactive") == "true", function() {
+            isnot(googleEngineNode.getAttribute("_moz-menuactive"), "true", "Previous engine should no longer be highlighted");
+
+            gContentAPI.hideHighlight();
+            waitForCondition(() => bingEngineNode.getAttribute("_moz-menuactive") != "true", function() {
+              gContentAPI.hideMenu("searchEngines");
+              waitForCondition(() => searchPopup.state == "closed", function() {
+                done();
+              }, "Search dropdown should close");
+            }, "Menu item should get attribute removed");
+          }, "Menu item should get attribute to make it look active");
+        });
+      });
+    });
+  },
   function test_highlight_effect_unsupported(done) {
     function checkUnsupportedEffect() {
       is(highlight.getAttribute("active"), "none", "No effect should be used when an unsupported effect is requested");
@@ -264,6 +316,71 @@ let tests = [
     });
 
     gContentAPI.showInfo("urlbar", "urlbar title", "urlbar text");
+  },
+  function test_addToolbarButton(done) {
+    let placement = CustomizableUI.getPlacementOfWidget("panic-button");
+    is(placement, null, "default UI has panic button in the palette");
+
+    gContentAPI.getConfiguration("availableTargets", (data) => {
+      let available = (data.targets.indexOf("forget") != -1);
+      ok(!available, "Forget button should not be available by default");
+
+      gContentAPI.addNavBarWidget("forget", () => {
+        info("addNavBarWidget callback successfully called");
+
+        let placement = CustomizableUI.getPlacementOfWidget("panic-button");
+        is(placement.area, CustomizableUI.AREA_NAVBAR);
+
+        gContentAPI.getConfiguration("availableTargets", (data) => {
+          let available = (data.targets.indexOf("forget") != -1);
+          ok(available, "Forget button should now be available");
+
+          // Cleanup
+          CustomizableUI.removeWidgetFromArea("panic-button");
+          done();
+        });
+      });
+    });
+  },
+
+  function test_select_search_engine(done) {
+    Services.search.init(rv => {
+      if (!Components.isSuccessCode(rv)) {
+        ok(false, "search service init failed: " + rv);
+        done();
+        return;
+      }
+      let defaultEngine = Services.search.defaultEngine;
+      gContentAPI.getConfiguration("availableTargets", data => {
+        let searchEngines = data.targets.filter(t => t.startsWith("searchEngine-"));
+        let someOtherEngineID = searchEngines.filter(t => t != "searchEngine-" + defaultEngine.identifier)[0];
+        someOtherEngineID = someOtherEngineID.replace(/^searchEngine-/, "");
+
+        let observe = function (subject, topic, verb) {
+          info("browser-search-engine-modified: " + verb);
+          if (verb == "engine-current") {
+            is(Services.search.defaultEngine.identifier, someOtherEngineID, "correct engine was switched to");
+            done();
+          }
+        };
+        Services.obs.addObserver(observe, "browser-search-engine-modified", false);
+        registerCleanupFunction(() => {
+          // Clean up
+          Services.obs.removeObserver(observe, "browser-search-engine-modified");
+          Services.search.defaultEngine = defaultEngine;
+        });
+
+        gContentAPI.setDefaultSearchEngine(someOtherEngineID);
+      });
+    });
+  },
+
+  function test_treatment_tag(done) {
+    gContentAPI.setTreatmentTag("foobar", "baz");
+    gContentAPI.getTreatmentTag("foobar", (data) => {
+      is(data.value, "baz", "set and retrieved treatmentTag");
+      done();
+    });
   },
 
   // Make sure this test is last in the file so the appMenu gets left open and done will confirm it got tore down.

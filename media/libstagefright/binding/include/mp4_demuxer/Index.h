@@ -12,20 +12,27 @@ namespace mp4_demuxer
 {
 
 template <typename T> class Interval;
+class MoofParser;
+class Sample;
 
 class Index
 {
 public:
-  Index() {}
+  Index(const stagefright::Vector<stagefright::MediaSource::Indice>& aIndex,
+        Stream* aSource, uint32_t aTrackId);
+  ~Index();
 
-  void Init(
-    const stagefright::Vector<stagefright::MediaSource::Indice>& aIndex);
+  void UpdateMoofIndex(const nsTArray<mozilla::MediaByteRange>& aByteRanges);
+  Microseconds GetEndCompositionIfBuffered(
+    const nsTArray<mozilla::MediaByteRange>& aByteRanges);
   void ConvertByteRangesToTimeRanges(
     const nsTArray<mozilla::MediaByteRange>& aByteRanges,
     nsTArray<Interval<Microseconds>>* aTimeRanges);
+  uint64_t GetEvictionOffset(Microseconds aTime);
 
 private:
-  nsTArray<stagefright::MediaSource::Indice> mIndex;
+  nsTArray<Sample> mIndex;
+  nsAutoPtr<MoofParser> mMoofParser;
 };
 }
 

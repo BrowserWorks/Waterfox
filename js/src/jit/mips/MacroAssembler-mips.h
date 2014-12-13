@@ -379,10 +379,10 @@ class MacroAssemblerMIPSCompat : public MacroAssemblerMIPS
         mov(ImmWord(uintptr_t(imm.value)), dest);
     }
     void mov(Register src, Address dest) {
-        MOZ_ASSUME_UNREACHABLE("NYI-IC");
+        MOZ_CRASH("NYI-IC");
     }
     void mov(Address src, Register dest) {
-        MOZ_ASSUME_UNREACHABLE("NYI-IC");
+        MOZ_CRASH("NYI-IC");
     }
 
     void call(const Register reg) {
@@ -485,7 +485,7 @@ class MacroAssemblerMIPSCompat : public MacroAssemblerMIPS
     // this instruction.
     CodeOffsetLabel toggledCall(JitCode *target, bool enabled);
 
-    static size_t ToggledCallSize() {
+    static size_t ToggledCallSize(uint8_t *code) {
         // Four instructions used in: MacroAssemblerMIPSCompat::toggledCall
         return 4 * sizeof(uint32_t);
     }
@@ -757,6 +757,7 @@ protected:
 public:
     void moveValue(const Value &val, Register type, Register data);
 
+    CodeOffsetJump backedgeJump(RepatchLabel *label);
     CodeOffsetJump jumpWithPatch(RepatchLabel *label);
 
     template <typename T>
@@ -997,7 +998,7 @@ public:
             ma_addTestOverflow(dest, dest, src, overflow);
             break;
           default:
-            MOZ_ASSUME_UNREACHABLE("NYI");
+            MOZ_CRASH("NYI");
         }
     }
     template <typename T>
@@ -1012,7 +1013,7 @@ public:
             ma_b(dest, dest, overflow, cond);
             break;
           default:
-            MOZ_ASSUME_UNREACHABLE("NYI");
+            MOZ_CRASH("NYI");
         }
     }
 
@@ -1091,6 +1092,12 @@ public:
     void store32(Register src, const BaseIndex &address);
     void store32(Imm32 src, const Address &address);
     void store32(Imm32 src, const BaseIndex &address);
+
+    // NOTE: This will use second scratch on MIPS. Only ARM needs the
+    // implementation without second scratch.
+    void store32_NoSecondScratch(Imm32 src, const Address &address) {
+        store32(src, address);
+    }
 
     void storePtr(ImmWord imm, const Address &address);
     void storePtr(ImmPtr imm, const Address &address);
@@ -1274,6 +1281,10 @@ public:
     void branchValueIsNurseryObject(Condition cond, ValueOperand value, Register temp,
                                     Label *label);
 #endif
+
+    void loadAsmJSActivation(Register dest) {
+        loadPtr(Address(GlobalReg, AsmJSActivationGlobalDataOffset - AsmJSGlobalRegBias), dest);
+    }
 };
 
 typedef MacroAssemblerMIPSCompat MacroAssemblerSpecific;

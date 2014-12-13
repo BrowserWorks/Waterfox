@@ -673,6 +673,7 @@ nsHttpConnectionMgr::ReportSpdyConnection(nsHttpConnection *conn,
               "abandon this connection yet."));
     }
 
+    ProcessPendingQ(ent->mConnInfo);
     PostEvent(&nsHttpConnectionMgr::OnMsgProcessAllSpdyPendingQ);
 }
 
@@ -804,21 +805,19 @@ nsHttpConnectionMgr::GetSpdyPreferredEnt(nsConnectionEntry *aOriginalEntry)
         return nullptr;
     }
 
-    if (gHttpHandler->SpdyInfo()->ProtocolEnabled(0))
-        rv = sslSocketControl->JoinConnection(gHttpHandler->SpdyInfo()->VersionString[0],
-                                              aOriginalEntry->mConnInfo->GetHost(),
-                                              aOriginalEntry->mConnInfo->Port(),
-                                              &isJoined);
-    else
-        rv = NS_OK;                               /* simulate failed join */
-
-    // JoinConnection() may have failed due to spdy version level. Try the other
-    // level we support (if any)
-    if (NS_SUCCEEDED(rv) && !isJoined && gHttpHandler->SpdyInfo()->ProtocolEnabled(1)) {
-        rv = sslSocketControl->JoinConnection(gHttpHandler->SpdyInfo()->VersionString[1],
-                                              aOriginalEntry->mConnInfo->GetHost(),
-                                              aOriginalEntry->mConnInfo->Port(),
-                                              &isJoined);
+    // try all the spdy versions we support.
+    const SpdyInformation *info = gHttpHandler->SpdyInfo();
+    for (uint32_t index = SpdyInformation::kCount;
+         NS_SUCCEEDED(rv) && index > 0; --index) {
+        if (info->ProtocolEnabled(index - 1)) {
+            rv = sslSocketControl->JoinConnection(info->VersionString[index - 1],
+                                                  aOriginalEntry->mConnInfo->GetHost(),
+                                                  aOriginalEntry->mConnInfo->Port(),
+                                                  &isJoined);
+            if (NS_SUCCEEDED(rv) && isJoined) {
+                break;
+            }
+        }
     }
 
     if (NS_FAILED(rv) || !isJoined) {
@@ -2298,7 +2297,19 @@ nsHttpConnectionMgr::OnMsgCancelTransaction(int32_t reason, void *param)
                 nsHttpTransaction *temp = trans;
                 NS_RELEASE(temp); // b/c NS_RELEASE nulls its argument!
             }
+
+            // Abandon all half-open sockets belonging to the given transaction.
+            for (uint32_t index = 0;
+                 index < ent->mHalfOpens.Length();
+                 ++index) {
+                nsHalfOpenSocket *half = ent->mHalfOpens[index];
+                if (trans == half->Transaction()) {
+                    ent->RemoveHalfOpen(half);
+                    half->Abandon();
+                }
+            }
         }
+
         trans->Close(closeCode);
 
         // Cancel is a pretty strong signal that things might be hanging

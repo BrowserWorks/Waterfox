@@ -26,7 +26,7 @@ class DocAccessible;
 class Notification
 {
 public:
-  NS_INLINE_DECL_REFCOUNTING(Notification)
+  NS_INLINE_DECL_REFCOUNTING(mozilla::a11y::Notification)
 
   /**
    * Process notification.
@@ -85,8 +85,8 @@ private:
 /**
  * Used to process notifications from core for the document accessible.
  */
-class NotificationController : public EventQueue,
-                               public nsARefreshObserver
+class NotificationController MOZ_FINAL : public EventQueue,
+                                         public nsARefreshObserver
 {
 public:
   NotificationController(DocAccessible* aDocument, nsIPresShell* aPresShell);

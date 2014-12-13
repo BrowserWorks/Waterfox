@@ -13,6 +13,8 @@ const ERR_DESTROYED =
   "Couldn't find the worker to receive this message. " +
   "The script may not be initialized yet, or may already have been unloaded.";
 
+const Isolate = fn => "(" + fn + ")()";
+
 exports.testSimplePageCreation = function(assert, done) {
   let page = new Page({
     contentScript: "self.postMessage(window.location.href)",
@@ -79,7 +81,7 @@ exports.testUnwrappedDOM = function(assert, done) {
 exports.testPageProperties = function(assert) {
   let page = new Page();
 
-  for each (let prop in ['contentURL', 'allow', 'contentScriptFile',
+  for (let prop of ['contentURL', 'allow', 'contentScriptFile',
                          'contentScript', 'contentScriptWhen', 'on',
                          'postMessage', 'removeListener']) {
     assert.ok(prop in page, prop + " property is defined on page.");
@@ -268,6 +270,33 @@ exports.testLoadContentPage = function(assert, done) {
   });
 }
 
+exports.testLoadContentPageRelativePath = function(assert, done) {
+  const self = require("sdk/self");
+  const { merge } = require("sdk/util/object");
+
+  let loader = Loader(module, null, null, {
+    modules: {
+      "sdk/self": merge({}, self, {
+        data: merge({}, self.data, fixtures)
+      })
+    }
+  });
+
+  let page = loader.require("sdk/page-worker").Page({
+    onMessage: function(message) {
+      // The message is an array whose first item is the test method to call
+      // and the rest of whose items are arguments to pass it.
+      let msg = message.shift();
+      if (msg == "done")
+        return done();
+      assert[msg].apply(assert, message);
+    },
+    contentURL: "./test-page-worker.html",
+    contentScriptFile: "./test-page-worker.js",
+    contentScriptWhen: "ready"
+  });
+}
+
 exports.testAllowScriptDefault = function(assert, done) {
   let page = Page({
     onMessage: function(message) {
@@ -449,6 +478,38 @@ exports.testMessageQueue = function (assert, done) {
     done();
   });
 };
+
+exports.testWindowStopDontBreak = function (assert, done) {
+  const { Ci, Cc } = require('chrome');
+  const consoleService = Cc['@mozilla.org/consoleservice;1'].
+                            getService(Ci.nsIConsoleService);
+  const listener = {
+    observe: ({message}) => {
+      if (message.contains('contentWorker is null'))
+        assert.fail('contentWorker is null');
+    }
+  };
+  consoleService.registerListener(listener)
+
+  let page = new Page({
+    contentURL: 'data:text/html;charset=utf-8,testWindowStopDontBreak',
+    contentScriptWhen: 'ready',
+    contentScript: Isolate(() => {
+      window.stop();
+      self.port.on('ping', () => self.port.emit('pong'));
+    })
+  });
+
+  page.port.on('pong', () => {
+    assert.pass('page-worker works after window.stop');
+    page.destroy();
+    consoleService.unregisterListener(listener);
+    done();
+  });
+
+  page.port.emit("ping");
+};
+
 
 function isDestroyed(page) {
   try {

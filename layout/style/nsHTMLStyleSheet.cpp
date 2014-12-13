@@ -479,7 +479,7 @@ nsHTMLStyleSheet::UniqueMappedAttributes(nsMappedAttributes* aMapped)
 {
   if (!mMappedAttrTable.ops) {
     PL_DHashTableInit(&mMappedAttrTable, &MappedAttrTable_Ops,
-                      nullptr, sizeof(MappedAttrTableEntry), 16);
+                      nullptr, sizeof(MappedAttrTableEntry));
   }
   MappedAttrTableEntry *entry = static_cast<MappedAttrTableEntry*>
                                            (PL_DHashTableOperate(&mMappedAttrTable, aMapped, PL_DHASH_ADD));
@@ -500,12 +500,12 @@ nsHTMLStyleSheet::DropMappedAttributes(nsMappedAttributes* aMapped)
 
   NS_ASSERTION(mMappedAttrTable.ops, "table uninitialized");
 #ifdef DEBUG
-  uint32_t entryCount = mMappedAttrTable.entryCount - 1;
+  uint32_t entryCount = mMappedAttrTable.EntryCount() - 1;
 #endif
 
   PL_DHashTableOperate(&mMappedAttrTable, aMapped, PL_DHASH_REMOVE);
 
-  NS_ASSERTION(entryCount == mMappedAttrTable.entryCount, "not removed");
+  NS_ASSERTION(entryCount == mMappedAttrTable.EntryCount(), "not removed");
 }
 
 nsIStyleRule*
@@ -513,7 +513,7 @@ nsHTMLStyleSheet::LangRuleFor(const nsString& aLanguage)
 {
   if (!mLangRuleTable.ops) {
     PL_DHashTableInit(&mLangRuleTable, &LangRuleTable_Ops,
-                      nullptr, sizeof(LangRuleTableEntry), 16);
+                      nullptr, sizeof(LangRuleTableEntry));
   }
   LangRuleTableEntry *entry = static_cast<LangRuleTableEntry*>
     (PL_DHashTableOperate(&mLangRuleTable, &aLanguage, PL_DHASH_ADD));

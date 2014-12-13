@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "mozilla/RefPtr.h"
 #include "CC_Common.h"
 #include "CSFAudioControl.h"
 
@@ -15,7 +16,7 @@ namespace CSF
 	public:
 		// device names are in UTF-8 encoding
 
-		AudioControlWrapper(AudioControl * audioControl){_realAudioControl = audioControl;};
+		explicit AudioControlWrapper(AudioControl * audioControl){_realAudioControl = audioControl;};
 		virtual std::vector<std::string> getRecordingDevices();
 		virtual std::vector<std::string> getPlayoutDevices();
 
@@ -33,9 +34,9 @@ namespace CSF
 
 		virtual void setAudioControl(AudioControl * audioControl){_realAudioControl = audioControl;};
 
-        virtual ~AudioControlWrapper();
-
 	private:
-		AudioControl * _realAudioControl;
+		virtual ~AudioControlWrapper();
+
+		mozilla::RefPtr<AudioControl> _realAudioControl;
 	};
 };

@@ -19,27 +19,25 @@
 using namespace mozilla;
 
 nsFont::nsFont(const FontFamilyList& aFontlist, uint8_t aStyle,
-               uint8_t aVariant, uint16_t aWeight, int16_t aStretch,
+               uint16_t aWeight, int16_t aStretch,
                uint8_t aDecoration, nscoord aSize)
   : fontlist(aFontlist)
 {
   Init();
   style = aStyle;
-  variant = aVariant;
   weight = aWeight;
   stretch = aStretch;
   decorations = aDecoration;
   size = aSize;
 }
 
-nsFont::nsFont(FontFamilyType aGenericType, uint8_t aStyle, uint8_t aVariant,
+nsFont::nsFont(FontFamilyType aGenericType, uint8_t aStyle,
                uint16_t aWeight, int16_t aStretch, uint8_t aDecoration,
                nscoord aSize)
   : fontlist(aGenericType)
 {
   Init();
   style = aStyle;
-  variant = aVariant;
   weight = aWeight;
   stretch = aStretch;
   decorations = aDecoration;
@@ -68,7 +66,6 @@ nsFont::nsFont(const nsFont& aOther)
 {
   style = aOther.style;
   systemFont = aOther.systemFont;
-  variant = aOther.variant;
   weight = aOther.weight;
   stretch = aOther.stretch;
   decorations = aOther.decorations;
@@ -110,7 +107,6 @@ bool nsFont::BaseEquals(const nsFont& aOther) const
       (synthesis == aOther.synthesis) &&
       (fontFeatureSettings == aOther.fontFeatureSettings) &&
       (languageOverride == aOther.languageOverride) &&
-      (variant == aOther.variant) &&
       (variantAlternates == aOther.variantAlternates) &&
       (variantCaps == aOther.variantCaps) &&
       (variantEastAsian == aOther.variantEastAsian) &&
@@ -139,7 +135,6 @@ nsFont& nsFont::operator=(const nsFont& aOther)
   fontlist = aOther.fontlist;
   style = aOther.style;
   systemFont = aOther.systemFont;
-  variant = aOther.variant;
   weight = aOther.weight;
   stretch = aOther.stretch;
   decorations = aOther.decorations;
@@ -268,21 +263,13 @@ void nsFont::AddFontFeaturesToStyle(gfxFontStyle *aStyle) const
     aStyle->featureSettings.AppendElement(setting);
   }
 
-
   // -- copy font-specific alternate info into style
   //    (this will be resolved after font-matching occurs)
   aStyle->alternateValues.AppendElements(alternateValues);
   aStyle->featureValueLookup = featureValueLookup;
 
   // -- caps
-  // passed into gfxFontStyle to deal with appropriate fallback.
-  // for now, font-variant setting overrides font-variant-caps
-  // when font-variant becomes a shorthand, this will be removed
-  if (variant == NS_FONT_VARIANT_SMALL_CAPS) {
-    aStyle->variantCaps = NS_FONT_VARIANT_CAPS_SMALLCAPS;
-  } else {
-    aStyle->variantCaps = variantCaps;
-  }
+  aStyle->variantCaps = variantCaps;
 
   // -- east-asian
   if (variantEastAsian) {
@@ -332,22 +319,12 @@ void nsFont::AddFontFeaturesToStyle(gfxFontStyle *aStyle) const
   }
 
   // -- position
-  setting.mTag = 0;
-  setting.mValue = 1;
-  switch (variantPosition) {
-    case NS_FONT_VARIANT_POSITION_SUPER:
-      setting.mTag = TRUETYPE_TAG('s','u','p','s');
-      aStyle->featureSettings.AppendElement(setting);
-      break;
+  aStyle->variantSubSuper = variantPosition;
 
-    case NS_FONT_VARIANT_POSITION_SUB:
-      setting.mTag = TRUETYPE_TAG('s','u','b','s');
-      aStyle->featureSettings.AppendElement(setting);
-      break;
-
-    default:
-      break;
-  }
+  // indicate common-path case when neither variantCaps or variantSubSuper are set
+  aStyle->noFallbackVariantFeatures =
+    (aStyle->variantCaps == NS_FONT_VARIANT_CAPS_NORMAL) &&
+    (variantPosition == NS_FONT_VARIANT_POSITION_NORMAL);
 
   // add in features from font-feature-settings
   aStyle->featureSettings.AppendElements(fontFeatureSettings);

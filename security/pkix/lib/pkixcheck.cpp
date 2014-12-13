@@ -22,11 +22,12 @@
  * limitations under the License.
  */
 
+#include "pkixcheck.h"
+
 #include "cert.h"
 #include "pkix/bind.h"
 #include "pkix/pkix.h"
 #include "pkix/ScopedPtr.h"
-#include "pkixcheck.h"
 #include "pkixder.h"
 #include "pkix/pkixnss.h"
 #include "pkixutil.h"
@@ -34,13 +35,10 @@
 namespace mozilla { namespace pkix {
 
 Result
-CheckValidity(const SECItem& encodedValidity, PRTime time)
+CheckValidity(Input encodedValidity, Time time)
 {
-  Input validity;
-  if (validity.Init(encodedValidity.data, encodedValidity.len) != Success) {
-    return Result::ERROR_EXPIRED_CERTIFICATE;
-  }
-  PRTime notBefore;
+  Reader validity(encodedValidity);
+  Time notBefore(Time::uninitialized);
   if (der::TimeChoice(validity, notBefore) != Success) {
     return Result::ERROR_EXPIRED_CERTIFICATE;
   }
@@ -48,7 +46,7 @@ CheckValidity(const SECItem& encodedValidity, PRTime time)
     return Result::ERROR_EXPIRED_CERTIFICATE;
   }
 
-  PRTime notAfter;
+  Time notAfter(Time::uninitialized);
   if (der::TimeChoice(validity, notAfter) != Success) {
     return Result::ERROR_EXPIRED_CERTIFICATE;
   }
@@ -65,12 +63,12 @@ CheckValidity(const SECItem& encodedValidity, PRTime time)
 // bit and bit 7 is the least significant bit.
 inline uint8_t KeyUsageToBitMask(KeyUsage keyUsage)
 {
-  PR_ASSERT(keyUsage != KeyUsage::noParticularKeyUsageRequired);
+  assert(keyUsage != KeyUsage::noParticularKeyUsageRequired);
   return 0x80u >> static_cast<uint8_t>(keyUsage);
 }
 
 Result
-CheckKeyUsage(EndEntityOrCA endEntityOrCA, const SECItem* encodedKeyUsage,
+CheckKeyUsage(EndEntityOrCA endEntityOrCA, const Input* encodedKeyUsage,
               KeyUsage requiredKeyUsageIfPresent)
 {
   if (!encodedKeyUsage) {
@@ -88,11 +86,8 @@ CheckKeyUsage(EndEntityOrCA endEntityOrCA, const SECItem* encodedKeyUsage,
     return Success;
   }
 
-  Input input;
-  if (input.Init(encodedKeyUsage->data, encodedKeyUsage->len) != Success) {
-    return Result::ERROR_INADEQUATE_KEY_USAGE;
-  }
-  Input value;
+  Reader input(*encodedKeyUsage);
+  Reader value;
   if (der::ExpectTagAndGetValue(input, der::BIT_STRING, value) != Success) {
     return Result::ERROR_INADEQUATE_KEY_USAGE;
   }
@@ -187,57 +182,31 @@ CheckKeyUsage(EndEntityOrCA endEntityOrCA, const SECItem* encodedKeyUsage,
 // "The user-initial-policy-set contains the special value any-policy if the
 // user is not concerned about certificate policy."
 //
-// id-ce OBJECT IDENTIFIER  ::=  {joint-iso-ccitt(2) ds(5) 29}
-// id-ce-certificatePolicies OBJECT IDENTIFIER ::=  { id-ce 32 }
-// anyPolicy OBJECT IDENTIFIER ::= { id-ce-certificatePolicies 0 }
+// python DottedOIDToCode.py anyPolicy 2.5.29.32.0
 
-/*static*/ const CertPolicyId CertPolicyId::anyPolicy = {
-  4, { (40*2)+5, 29, 32, 0 }
+static const uint8_t anyPolicy[] = {
+  0x55, 0x1d, 0x20, 0x00
 };
 
-bool CertPolicyId::IsAnyPolicy() const
-{
-  return this == &anyPolicy ||
-         (numBytes == anyPolicy.numBytes &&
-          !memcmp(bytes, anyPolicy.bytes, anyPolicy.numBytes));
-}
+/*static*/ const CertPolicyId CertPolicyId::anyPolicy = {
+  4, { 0x55, 0x1d, 0x20, 0x00 }
+};
 
-// PolicyInformation ::= SEQUENCE {
-//         policyIdentifier   CertPolicyId,
-//         policyQualifiers   SEQUENCE SIZE (1..MAX) OF
-//                                 PolicyQualifierInfo OPTIONAL }
-inline Result
-CheckPolicyInformation(Input& input, EndEntityOrCA endEntityOrCA,
-                       const CertPolicyId& requiredPolicy,
-                       /*in/out*/ bool& found)
-{
-  if (input.MatchTLV(der::OIDTag, requiredPolicy.numBytes,
-                     requiredPolicy.bytes)) {
-    found = true;
-  } else if (endEntityOrCA == EndEntityOrCA::MustBeCA &&
-             input.MatchTLV(der::OIDTag, CertPolicyId::anyPolicy.numBytes,
-                            CertPolicyId::anyPolicy.bytes)) {
-    found = true;
+bool
+CertPolicyId::IsAnyPolicy() const {
+  if (this == &CertPolicyId::anyPolicy) {
+    return true;
   }
-
-  // RFC 5280 Section 4.2.1.4 says "Optional qualifiers, which MAY be present,
-  // are not expected to change the definition of the policy." Also, it seems
-  // that Section 6, which defines validation, does not require any matching of
-  // qualifiers. Thus, doing anything with the policy qualifiers would be a
-  // waste of time and a source of potential incompatibilities, so we just
-  // ignore them.
-
-  // Skip unmatched OID and/or policyQualifiers
-  input.SkipToEnd();
-
-  return Success;
+  return numBytes == sizeof(::mozilla::pkix::anyPolicy) &&
+         !memcmp(bytes, ::mozilla::pkix::anyPolicy,
+                 sizeof(::mozilla::pkix::anyPolicy));
 }
 
 // certificatePolicies ::= SEQUENCE SIZE (1..MAX) OF PolicyInformation
 Result
 CheckCertificatePolicies(EndEntityOrCA endEntityOrCA,
-                         const SECItem* encodedCertificatePolicies,
-                         const SECItem* encodedInhibitAnyPolicy,
+                         const Input* encodedCertificatePolicies,
+                         const Input* encodedInhibitAnyPolicy,
                          TrustLevel trustLevel,
                          const CertPolicyId& requiredPolicy)
 {
@@ -246,17 +215,14 @@ CheckCertificatePolicies(EndEntityOrCA endEntityOrCA,
     return Result::FATAL_ERROR_INVALID_ARGS;
   }
 
-  // Ignore all policy information if the caller indicates any policy is
-  // acceptable. See TrustDomain::GetCertTrust and the policy part of
-  // BuildCertChain's documentation.
-  if (requiredPolicy.IsAnyPolicy()) {
+  bool requiredPolicyFound = requiredPolicy.IsAnyPolicy();
+  if (requiredPolicyFound) {
     return Success;
   }
 
   // Bug 989051. Until we handle inhibitAnyPolicy we will fail close when
-  // inhibitAnyPolicy extension is present and we need to evaluate certificate
-  // policies.
-  if (encodedInhibitAnyPolicy) {
+  // inhibitAnyPolicy extension is present and we are validating for a policy.
+  if (!requiredPolicyFound && encodedInhibitAnyPolicy) {
     return Result::ERROR_POLICY_VALIDATION_FAILED;
   }
 
@@ -266,29 +232,63 @@ CheckCertificatePolicies(EndEntityOrCA endEntityOrCA,
   // which policies is made by the TrustDomain's GetCertTrust method.
   if (trustLevel == TrustLevel::TrustAnchor &&
       endEntityOrCA == EndEntityOrCA::MustBeCA) {
-    return Success;
+    requiredPolicyFound = true;
   }
 
-  if (!encodedCertificatePolicies) {
-    return Result::ERROR_POLICY_VALIDATION_FAILED;
+  Input requiredPolicyDER;
+  if (requiredPolicyDER.Init(requiredPolicy.bytes, requiredPolicy.numBytes)
+        != Success) {
+    return Result::FATAL_ERROR_INVALID_ARGS;
   }
 
-  bool found = false;
+  if (encodedCertificatePolicies) {
+    Reader extension(*encodedCertificatePolicies);
+    Reader certificatePolicies;
+    Result rv = der::ExpectTagAndGetValue(extension, der::SEQUENCE,
+                                          certificatePolicies);
+    if (rv != Success) {
+      return Result::ERROR_POLICY_VALIDATION_FAILED;
+    }
+    if (!extension.AtEnd()) {
+      return Result::ERROR_POLICY_VALIDATION_FAILED;
+    }
 
-  Input input;
-  if (input.Init(encodedCertificatePolicies->data,
-                 encodedCertificatePolicies->len) != Success) {
-    return Result::ERROR_POLICY_VALIDATION_FAILED;
+    do {
+      // PolicyInformation ::= SEQUENCE {
+      //         policyIdentifier   CertPolicyId,
+      //         policyQualifiers   SEQUENCE SIZE (1..MAX) OF
+      //                                 PolicyQualifierInfo OPTIONAL }
+      Reader policyInformation;
+      rv = der::ExpectTagAndGetValue(certificatePolicies, der::SEQUENCE,
+                                     policyInformation);
+      if (rv != Success) {
+        return Result::ERROR_POLICY_VALIDATION_FAILED;
+      }
+
+      Reader policyIdentifier;
+      rv = der::ExpectTagAndGetValue(policyInformation, der::OIDTag,
+                                     policyIdentifier);
+      if (rv != Success) {
+        return rv;
+      }
+
+      if (policyIdentifier.MatchRest(requiredPolicyDER)) {
+        requiredPolicyFound = true;
+      } else if (endEntityOrCA == EndEntityOrCA::MustBeCA &&
+                 policyIdentifier.MatchRest(anyPolicy)) {
+        requiredPolicyFound = true;
+      }
+
+      // RFC 5280 Section 4.2.1.4 says "Optional qualifiers, which MAY be
+      // present, are not expected to change the definition of the policy." Also,
+      // it seems that Section 6, which defines validation, does not require any
+      // matching of qualifiers. Thus, doing anything with the policy qualifiers
+      // would be a waste of time and a source of potential incompatibilities, so
+      // we just ignore them.
+    } while (!requiredPolicyFound && !certificatePolicies.AtEnd());
   }
-  if (der::NestedOf(input, der::SEQUENCE, der::SEQUENCE, der::EmptyAllowed::No,
-                    bind(CheckPolicyInformation, _1, endEntityOrCA,
-                         requiredPolicy, ref(found))) != Success) {
-    return Result::ERROR_POLICY_VALIDATION_FAILED;
-  }
-  if (der::End(input) != Success) {
-    return Result::ERROR_POLICY_VALIDATION_FAILED;
-  }
-  if (!found) {
+
+  if (!requiredPolicyFound) {
     return Result::ERROR_POLICY_VALIDATION_FAILED;
   }
 
@@ -301,7 +301,7 @@ static const long UNLIMITED_PATH_LEN = -1; // must be less than zero
 //          cA                      BOOLEAN DEFAULT FALSE,
 //          pathLenConstraint       INTEGER (0..MAX) OPTIONAL }
 static Result
-DecodeBasicConstraints(Input& input, /*out*/ bool& isCA,
+DecodeBasicConstraints(Reader& input, /*out*/ bool& isCA,
                        /*out*/ long& pathLenConstraint)
 {
   if (der::OptionalBoolean(input, isCA) != Success) {
@@ -322,7 +322,7 @@ DecodeBasicConstraints(Input& input, /*out*/ bool& isCA,
 // RFC5280 4.2.1.9. Basic Constraints (id-ce-basicConstraints)
 Result
 CheckBasicConstraints(EndEntityOrCA endEntityOrCA,
-                      const SECItem* encodedBasicConstraints,
+                      const Input* encodedBasicConstraints,
                       const der::Version version, TrustLevel trustLevel,
                       unsigned int subCACount)
 {
@@ -330,11 +330,7 @@ CheckBasicConstraints(EndEntityOrCA endEntityOrCA,
   long pathLenConstraint = UNLIMITED_PATH_LEN;
 
   if (encodedBasicConstraints) {
-    Input input;
-    if (input.Init(encodedBasicConstraints->data,
-                   encodedBasicConstraints->len) != Success) {
-      return Result::ERROR_EXTENSION_VALUE_INVALID;
-    }
+    Reader input(*encodedBasicConstraints);
     if (der::Nested(input, der::SEQUENCE,
                     bind(DecodeBasicConstraints, _1, ref(isCA),
                          ref(pathLenConstraint))) != Success) {
@@ -372,7 +368,7 @@ CheckBasicConstraints(EndEntityOrCA endEntityOrCA,
     return Success;
   }
 
-  PORT_Assert(endEntityOrCA == EndEntityOrCA::MustBeCA);
+  assert(endEntityOrCA == EndEntityOrCA::MustBeCA);
 
   // End-entity certificates are not allowed to act as CA certs.
   if (!isCA) {
@@ -396,10 +392,11 @@ PORT_FreeArena_false(PLArenaPool* arena) {
   return PORT_FreeArena(arena, PR_FALSE);
 }
 
-// TODO: remove #include "pkix/pkixnss.h" when this is rewritten to be
-// independent of NSS.
+// TODO: Remove #include "pkix/pkixnss.h", #include "cert.h",
+// #include "ScopedPtr.h", etc. when this is rewritten to be independent of
+// NSS.
 Result
-CheckNameConstraints(const SECItem& encodedNameConstraints,
+CheckNameConstraints(Input encodedNameConstraints,
                      const BackCert& firstChild,
                      KeyPurposeId requiredEKUIfPresent)
 {
@@ -409,17 +406,21 @@ CheckNameConstraints(const SECItem& encodedNameConstraints,
     return Result::FATAL_ERROR_NO_MEMORY;
   }
 
+  SECItem encodedNameConstraintsSECItem =
+    UnsafeMapInputToSECItem(encodedNameConstraints);
+
   // Owned by arena
   const CERTNameConstraints* constraints =
-    CERT_DecodeNameConstraintsExtension(arena.get(), &encodedNameConstraints);
+    CERT_DecodeNameConstraintsExtension(arena.get(),
+                                        &encodedNameConstraintsSECItem);
   if (!constraints) {
     return MapPRErrorCodeToResult(PR_GetError());
   }
 
   for (const BackCert* child = &firstChild; child; child = child->childCert) {
+    SECItem childCertDER = UnsafeMapInputToSECItem(child->GetDER());
     ScopedPtr<CERTCertificate, CERT_DestroyCertificate>
-      nssCert(CERT_NewTempCertificate(CERT_GetDefaultCertDB(),
-                                      const_cast<SECItem*>(&child->GetDER()),
+      nssCert(CERT_NewTempCertificate(CERT_GetDefaultCertDB(), &childCertDER,
                                       nullptr, false, true));
     if (!nssCert) {
       return MapPRErrorCodeToResult(PR_GetError());
@@ -454,7 +455,7 @@ CheckNameConstraints(const SECItem& encodedNameConstraints,
 // 4.2.1.12. Extended Key Usage (id-ce-extKeyUsage)
 
 static Result
-MatchEKU(Input& value, KeyPurposeId requiredEKU,
+MatchEKU(Reader& value, KeyPurposeId requiredEKU,
          EndEntityOrCA endEntityOrCA, /*in/out*/ bool& found,
          /*in/out*/ bool& foundOCSPSigning)
 {
@@ -513,12 +514,12 @@ MatchEKU(Input& value, KeyPurposeId requiredEKU,
         break;
 
       case KeyPurposeId::anyExtendedKeyUsage:
-        PR_NOT_REACHED("anyExtendedKeyUsage should start with found==true");
-        return Result::FATAL_ERROR_LIBRARY_FAILURE;
+        return NotReached("anyExtendedKeyUsage should start with found==true",
+                          Result::FATAL_ERROR_LIBRARY_FAILURE);
 
       default:
-        PR_NOT_REACHED("unrecognized EKU");
-        return Result::FATAL_ERROR_LIBRARY_FAILURE;
+        return NotReached("unrecognized EKU",
+                          Result::FATAL_ERROR_LIBRARY_FAILURE);
     }
   }
 
@@ -538,7 +539,7 @@ MatchEKU(Input& value, KeyPurposeId requiredEKU,
 
 Result
 CheckExtendedKeyUsage(EndEntityOrCA endEntityOrCA,
-                      const SECItem* encodedExtendedKeyUsage,
+                      const Input* encodedExtendedKeyUsage,
                       KeyPurposeId requiredEKU)
 {
   // XXX: We're using Result::ERROR_INADEQUATE_CERT_TYPE here so that callers
@@ -551,11 +552,7 @@ CheckExtendedKeyUsage(EndEntityOrCA endEntityOrCA,
   if (encodedExtendedKeyUsage) {
     bool found = requiredEKU == KeyPurposeId::anyExtendedKeyUsage;
 
-    Input input;
-    if (input.Init(encodedExtendedKeyUsage->data,
-                   encodedExtendedKeyUsage->len) != Success) {
-      return Result::ERROR_INADEQUATE_CERT_TYPE;
-    }
+    Reader input(*encodedExtendedKeyUsage);
     if (der::NestedOf(input, der::SEQUENCE, der::OIDTag, der::EmptyAllowed::No,
                       bind(MatchEKU, _1, requiredEKU, endEntityOrCA,
                            ref(found), ref(foundOCSPSigning)))
@@ -611,20 +608,19 @@ CheckExtendedKeyUsage(EndEntityOrCA endEntityOrCA,
 Result
 CheckIssuerIndependentProperties(TrustDomain& trustDomain,
                                  const BackCert& cert,
-                                 PRTime time,
+                                 Time time,
                                  KeyUsage requiredKeyUsageIfPresent,
                                  KeyPurposeId requiredEKUIfPresent,
                                  const CertPolicyId& requiredPolicy,
                                  unsigned int subCACount,
-                /*optional out*/ TrustLevel* trustLevelOut)
+                                 /*out*/ TrustLevel& trustLevel)
 {
   Result rv;
 
   const EndEntityOrCA endEntityOrCA = cert.endEntityOrCA;
 
-  TrustLevel trustLevel;
   rv = trustDomain.GetCertTrust(endEntityOrCA, requiredPolicy, cert.GetDER(),
-                                &trustLevel);
+                                trustLevel);
   if (rv != Success) {
     return rv;
   }
@@ -635,9 +631,6 @@ CheckIssuerIndependentProperties(TrustDomain& trustDomain,
       trustLevel != TrustLevel::InheritsTrust) {
     // The TrustDomain returned a trust level that we weren't expecting.
     return Result::FATAL_ERROR_INVALID_STATE;
-  }
-  if (trustLevelOut) {
-    *trustLevelOut = trustLevel;
   }
 
   // 4.2.1.1. Authority Key Identifier is ignored (see bug 965136).

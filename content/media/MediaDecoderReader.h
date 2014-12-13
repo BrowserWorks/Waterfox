@@ -31,7 +31,7 @@ class MediaDecoderReader {
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(MediaDecoderReader)
 
-  MediaDecoderReader(AbstractMediaDecoder* aDecoder);
+  explicit MediaDecoderReader(AbstractMediaDecoder* aDecoder);
 
   // Initializes the reader, returns NS_OK on success, or NS_ERROR_FAILURE
   // on failure.
@@ -95,12 +95,6 @@ public:
   virtual nsresult ReadMetadata(MediaInfo* aInfo,
                                 MetadataTags** aTags) = 0;
 
-  // TODO: DEPRECATED. This uses synchronous decoding.
-  // Stores the presentation time of the first frame we'd be able to play if
-  // we started playback at the current position. Returns the first video
-  // frame, if we have video.
-  virtual VideoData* FindStartTime(int64_t& aOutStartTime);
-
   // Moves the decode head to aTime microseconds. aStartTime and aEndTime
   // denote the start and end times of the media in usecs, and aCurrentTime
   // is the current playback position in microseconds.
@@ -159,6 +153,7 @@ public:
   // Only used by WebMReader and MediaOmxReader for now, so stub here rather
   // than in every reader than inherits from MediaDecoderReader.
   virtual void NotifyDataArrived(const char* aBuffer, uint32_t aLength, int64_t aOffset) {}
+  virtual int64_t GetEvictionOffset(double aTime) { return -1; }
 
   virtual MediaQueue<AudioData>& AudioQueue() { return mAudioQueue; }
   virtual MediaQueue<VideoData>& VideoQueue() { return mVideoQueue; }
@@ -168,7 +163,7 @@ public:
     return mDecoder;
   }
 
-  AudioData* DecodeToFirstAudioData();
+  // TODO: DEPRECATED.  This uses synchronous decoding.
   VideoData* DecodeToFirstVideoData();
 
   MediaInfo GetMediaInfo() { return mInfo; }
@@ -176,7 +171,7 @@ public:
   // Indicates if the media is seekable.
   // ReadMetada should be called before calling this method.
   virtual bool IsMediaSeekable() = 0;
-  
+
 protected:
   virtual ~MediaDecoderReader();
 

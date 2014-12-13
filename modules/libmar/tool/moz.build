@@ -4,25 +4,55 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+HOST_SOURCES += [
+    'mar.c',
+]
+
+HOST_PROGRAM = 'mar'
+
+HOST_USE_LIBS += [
+    'hostmar',
+]
+
 if CONFIG['MOZ_ENABLE_SIGNMAR']:
     PROGRAM = 'signmar'
 
-SOURCES = [
-    'mar.c',
-]
-HOST_SOURCES += SOURCES
+    SOURCES += HOST_SOURCES
 
-HOST_PROGRAM = 'mar'
+    USE_LIBS += [
+        'mar',
+        'signmar',
+        'verifymar',
+    ]
 
 for var in ('MAR_CHANNEL_ID', 'MOZ_APP_VERSION'):
     DEFINES[var] = '"%s"' % CONFIG[var]
 
-if not CONFIG['MOZ_ENABLE_SIGNMAR']:
+if CONFIG['MOZ_ENABLE_SIGNMAR']:
+    USE_LIBS += [
+        'nspr',
+        'nss',
+    ]
+else:
     DEFINES['NO_SIGN_VERIFY'] = True
 
 if CONFIG['OS_ARCH'] == 'WINNT':
     USE_STATIC_LIBS = True
+
+    OS_LIBS += [
+        'ws2_32',
+    ]
+    if CONFIG['MOZ_ENABLE_SIGNMAR']:
+        OS_LIBS += [
+            'crypt32',
+            'advapi32',
+        ]
 elif CONFIG['OS_ARCH'] == 'Darwin':
-    LDFLAGS += [
+    OS_LIBS += [
       '-framework Security',
+    ]
+
+if CONFIG['HOST_OS_ARCH'] == 'WINNT':
+    HOST_OS_LIBS += [
+        'ws2_32',
     ]

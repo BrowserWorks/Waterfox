@@ -25,11 +25,11 @@ class nsAutoString;
 class nsINSSComponent;
 class nsIASN1Sequence;
 
-class nsNSSCertificate : public nsIX509Cert,
-                         public nsIIdentityInfo,
-                         public nsISerializable,
-                         public nsIClassInfo,
-                         public nsNSSShutDownObject
+class nsNSSCertificate MOZ_FINAL : public nsIX509Cert,
+                                   public nsIIdentityInfo,
+                                   public nsISerializable,
+                                   public nsIClassInfo,
+                                   public nsNSSShutDownObject
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -40,9 +40,8 @@ public:
 
   friend class nsNSSCertificateFakeTransport;
 
-  nsNSSCertificate(CERTCertificate* cert, SECOidTag* evOidPolicy = nullptr);
+  explicit nsNSSCertificate(CERTCertificate* cert, SECOidTag* evOidPolicy = nullptr);
   nsNSSCertificate();
-  virtual ~nsNSSCertificate();
   nsresult FormatUIStrings(const nsAutoString& nickname,
                            nsAutoString& nickWithSerial,
                            nsAutoString& details);
@@ -51,6 +50,8 @@ public:
   static nsNSSCertificate* ConstructFromDER(char* certDER, int derLen);
 
 private:
+  virtual ~nsNSSCertificate();
+
   mozilla::ScopedCERTCertificate mCert;
   bool             mPermDelete;
   uint32_t         mCertType;
@@ -74,12 +75,6 @@ private:
 
 namespace mozilla {
 
-template<>
-struct HasDangerousPublicDestructor<nsNSSCertificate>
-{
-  static const bool value = true;
-};
-
 SECStatus ConstructCERTCertListFromReversedDERArray(
             const mozilla::pkix::DERArray& certArray,
             /*out*/ mozilla::ScopedCERTCertList& certList);
@@ -87,11 +82,13 @@ SECStatus ConstructCERTCertListFromReversedDERArray(
 } // namespcae mozilla
 
 class nsNSSCertList: public nsIX509CertList,
+                     public nsISerializable,
                      public nsNSSShutDownObject
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIX509CERTLIST
+  NS_DECL_NSISERIALIZABLE
 
   // certList is adopted
   nsNSSCertList(mozilla::ScopedCERTCertList& certList,

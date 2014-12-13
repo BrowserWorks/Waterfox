@@ -22,9 +22,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
 
 do_get_profile();
 
-// Make sure enabled gets set for xpcshell tests that initialize multiple times
-DirectoryLinksProvider._testing = true;
-
 const DIRECTORY_LINKS_FILE = "directoryLinks.json";
 const DIRECTORY_FRECENCY = 1000;
 const kURLData = {"en-US": [{"url":"http://example.com","title":"LocalSource"}]};
@@ -56,11 +53,11 @@ Services.prefs.setBoolPref(kNewtabEnhancedPref, true);
 const kHttpHandlerData = {};
 kHttpHandlerData[kExamplePath] = {"en-US": [{"url":"http://example.com","title":"RemoteSource"}]};
 
-const expectedBodyObject = {locale: DirectoryLinksProvider.locale};
 const BinaryInputStream = CC("@mozilla.org/binaryinputstream;1",
                               "nsIBinaryInputStream",
                               "setInputStream");
 
+let gLastRequestPath;
 function getHttpHandler(path) {
   let code = 200;
   let body = JSON.stringify(kHttpHandlerData[path]);
@@ -68,10 +65,7 @@ function getHttpHandler(path) {
     code = 204;
   }
   return function(aRequest, aResponse) {
-    let bodyStream = new BinaryInputStream(aRequest.bodyInputStream);
-    let bodyObject = JSON.parse(NetUtil.readInputStreamToString(bodyStream, bodyStream.available()));
-    isIdentical(bodyObject, expectedBodyObject);
-
+    gLastRequestPath = aRequest.path;
     aResponse.setStatusLine(null, code);
     aResponse.setHeader("Content-Type", "application/json");
     aResponse.write(body);
@@ -134,7 +128,9 @@ function promiseDirectoryDownloadOnPrefChange(pref, newValue) {
     let observer = new LinksChangeObserver();
     DirectoryLinksProvider.addObserver(observer);
     Services.prefs.setCharPref(pref, newValue);
-    return observer.deferred.promise;
+    return observer.deferred.promise.then(() => {
+      DirectoryLinksProvider.removeObserver(observer);
+    });
   }
   return Promise.resolve();
 }
@@ -299,7 +295,8 @@ add_task(function test_fetchAndCacheLinks_remote() {
   yield DirectoryLinksProvider.init();
   yield cleanJsonFile();
   // this must trigger directory links json download and save it to cache file
-  yield DirectoryLinksProvider._fetchAndCacheLinks(kExampleURL);
+  yield promiseDirectoryDownloadOnPrefChange(kSourceUrlPref, kExampleURL + "%LOCALE%");
+  do_check_eq(gLastRequestPath, kExamplePath + "en-US");
   let data = yield readJsonFile();
   isIdentical(data, kHttpHandlerData[kExamplePath]);
 });
@@ -339,7 +336,8 @@ add_task(function test_fetchAndCacheLinks_unknownHost() {
 add_task(function test_fetchAndCacheLinks_non200Status() {
   yield DirectoryLinksProvider.init();
   yield cleanJsonFile();
-  yield DirectoryLinksProvider._fetchAndCacheLinks(kFailURL);
+  yield promiseDirectoryDownloadOnPrefChange(kSourceUrlPref, kFailURL);
+  do_check_eq(gLastRequestPath, kFailPath);
   let data = yield readJsonFile();
   isIdentical(data, {});
 });
@@ -511,6 +509,7 @@ add_task(function test_DirectoryLinksProvider_fetchDirectoryOnPrefChange() {
   yield promiseDirectoryDownloadOnPrefChange(kSourceUrlPref, kExampleURL);
   // then wait for testObserver to fire and test that json is downloaded
   yield testObserver.deferred.promise;
+  do_check_eq(gLastRequestPath, kExamplePath);
   let data = yield readJsonFile();
   isIdentical(data, kHttpHandlerData[kExamplePath]);
 
@@ -557,11 +556,74 @@ add_task(function test_DirectoryLinksProvider_getLinksFromCorruptedFile() {
   yield promiseCleanDirectoryLinksProvider();
 });
 
+add_task(function test_DirectoryLinksProvider_getAllowedLinks() {
+  let data = {"en-US": [
+    {url: "ftp://example.com"},
+    {url: "http://example.net"},
+    {url: "javascript:5"},
+    {url: "https://example.com"},
+    {url: "httpJUNKjavascript:42"},
+    {url: "data:text/plain,hi"},
+    {url: "http/bork:eh"},
+  ]};
+  let dataURI = 'data:application/json,' + JSON.stringify(data);
+  yield promiseSetupDirectoryLinksProvider({linksURL: dataURI});
+
+  let links = yield fetchData();
+  do_check_eq(links.length, 2);
+
+  // The only remaining url should be http and https
+  do_check_eq(links[0].url, data["en-US"][1].url);
+  do_check_eq(links[1].url, data["en-US"][3].url);
+});
+
+add_task(function test_DirectoryLinksProvider_getAllowedImages() {
+  let data = {"en-US": [
+    {url: "http://example.com", imageURI: "ftp://example.com"},
+    {url: "http://example.com", imageURI: "http://example.net"},
+    {url: "http://example.com", imageURI: "javascript:5"},
+    {url: "http://example.com", imageURI: "https://example.com"},
+    {url: "http://example.com", imageURI: "httpJUNKjavascript:42"},
+    {url: "http://example.com", imageURI: "data:text/plain,hi"},
+    {url: "http://example.com", imageURI: "http/bork:eh"},
+  ]};
+  let dataURI = 'data:application/json,' + JSON.stringify(data);
+  yield promiseSetupDirectoryLinksProvider({linksURL: dataURI});
+
+  let links = yield fetchData();
+  do_check_eq(links.length, 2);
+
+  // The only remaining images should be https and data
+  do_check_eq(links[0].imageURI, data["en-US"][3].imageURI);
+  do_check_eq(links[1].imageURI, data["en-US"][5].imageURI);
+});
+
+add_task(function test_DirectoryLinksProvider_getAllowedEnhancedImages() {
+  let data = {"en-US": [
+    {url: "http://example.com", enhancedImageURI: "ftp://example.com"},
+    {url: "http://example.com", enhancedImageURI: "http://example.net"},
+    {url: "http://example.com", enhancedImageURI: "javascript:5"},
+    {url: "http://example.com", enhancedImageURI: "https://example.com"},
+    {url: "http://example.com", enhancedImageURI: "httpJUNKjavascript:42"},
+    {url: "http://example.com", enhancedImageURI: "data:text/plain,hi"},
+    {url: "http://example.com", enhancedImageURI: "http/bork:eh"},
+  ]};
+  let dataURI = 'data:application/json,' + JSON.stringify(data);
+  yield promiseSetupDirectoryLinksProvider({linksURL: dataURI});
+
+  let links = yield fetchData();
+  do_check_eq(links.length, 2);
+
+  // The only remaining enhancedImages should be http and https and data
+  do_check_eq(links[0].enhancedImageURI, data["en-US"][3].enhancedImageURI);
+  do_check_eq(links[1].enhancedImageURI, data["en-US"][5].enhancedImageURI);
+});
+
 add_task(function test_DirectoryLinksProvider_getEnhancedLink() {
   let data = {"en-US": [
-    {url: "http://example.net", enhancedImageURI: "net1"},
-    {url: "http://example.com", enhancedImageURI: "com1"},
-    {url: "http://example.com", enhancedImageURI: "com2"},
+    {url: "http://example.net", enhancedImageURI: "data:,net1"},
+    {url: "http://example.com", enhancedImageURI: "data:,com1"},
+    {url: "http://example.com", enhancedImageURI: "data:,com2"},
   ]};
   let dataURI = 'data:application/json,' + JSON.stringify(data);
   yield promiseSetupDirectoryLinksProvider({linksURL: dataURI});
@@ -575,20 +637,20 @@ add_task(function test_DirectoryLinksProvider_getEnhancedLink() {
   }
 
   // Get the expected image for the same site
-  checkEnhanced("http://example.net/", "net1");
-  checkEnhanced("http://example.net/path", "net1");
-  checkEnhanced("https://www.example.net/", "net1");
-  checkEnhanced("https://www3.example.net/", "net1");
+  checkEnhanced("http://example.net/", "data:,net1");
+  checkEnhanced("http://example.net/path", "data:,net1");
+  checkEnhanced("https://www.example.net/", "data:,net1");
+  checkEnhanced("https://www3.example.net/", "data:,net1");
 
   // Get the image of the last entry
-  checkEnhanced("http://example.com", "com2");
+  checkEnhanced("http://example.com", "data:,com2");
 
   // Get the inline enhanced image
   let inline = DirectoryLinksProvider.getEnhancedLink({
     url: "http://example.com/echo",
-    enhancedImageURI: "echo",
+    enhancedImageURI: "data:,echo",
   });
-  do_check_eq(inline.enhancedImageURI, "echo");
+  do_check_eq(inline.enhancedImageURI, "data:,echo");
   do_check_eq(inline.url, "http://example.com/echo");
 
   // Undefined for not enhanced
@@ -599,14 +661,14 @@ add_task(function test_DirectoryLinksProvider_getEnhancedLink() {
 
   // Make sure old data is not cached
   data = {"en-US": [
-    {url: "http://example.com", enhancedImageURI: "fresh"},
+    {url: "http://example.com", enhancedImageURI: "data:,fresh"},
   ]};
   dataURI = 'data:application/json,' + JSON.stringify(data);
   yield promiseSetupDirectoryLinksProvider({linksURL: dataURI});
   links = yield fetchData();
   do_check_eq(links.length, 1);
   checkEnhanced("http://example.net", undefined);
-  checkEnhanced("http://example.com", "fresh");
+  checkEnhanced("http://example.com", "data:,fresh");
 });
 
 add_task(function test_DirectoryLinksProvider_setDefaultEnhanced() {
@@ -634,61 +696,4 @@ add_task(function test_DirectoryLinksProvider_setDefaultEnhanced() {
 
   // Clean up
   Services.prefs.clearUserPref("privacy.donottrackheader.value");
-});
-
-add_task(function test_DirectoryLinksProvider_enabledNotEnabled() {
-  let origLocale = Services.prefs.getCharPref(kLocalePref);
-  let origSource = Services.prefs.getCharPref(kSourceUrlPref);
-
-  Services.prefs.setCharPref(kSourceUrlPref, 'data:application/json,' + JSON.stringify({
-    "en-US": [{url: "http://example.com/en", title: "US"}],
-    "te-ST": [{url: "http://example.com/test", title: "TEST"}],
-  }));
-
-  // Pretend we're not en-US to make sure things aren't enabled
-  Services.prefs.setCharPref(kLocalePref, "te-ST");
-  yield cleanJsonFile();
-  yield cleanJsonFile();
-  yield DirectoryLinksProvider.init();
-
-  do_check_false(DirectoryLinksProvider.enabled, "te-ST should trigger not enabled")
-  do_check_eq(DirectoryLinksProvider._linksURL, "data:application/json,{}", "override links url");
-
-  let data = yield readJsonFile();
-  do_check_eq(JSON.stringify(data), "{}", "disk has empty object");
-
-  let links = yield fetchData();
-  do_check_eq(links.length, 0, "get empty links");
-
-  let pinged = false;
-  let pingWait = Promise.defer();
-  server.registerPrefixHandler(kPingPath, _ => {
-    pinged = true;
-    pingWait.resolve();
-  });
-  yield DirectoryLinksProvider.reportSitesAction([], "view", 0);
-  do_check_false(pinged, "shouldn't have gotten a ping");
-
-  // Sanity check with en-US
-  Services.prefs.setCharPref(kLocalePref, "en-US");
-  yield cleanJsonFile();
-  yield cleanJsonFile();
-  yield DirectoryLinksProvider.init();
-
-  do_check_true(DirectoryLinksProvider.enabled, "en-US should trigger enabled")
-  do_check_neq(DirectoryLinksProvider._linksURL, "data:application/json,{}", "links url not overridden");
-
-  let data = yield readJsonFile();
-  do_check_neq(JSON.stringify(data), "{}", "disk has some object");
-
-  let links = yield fetchData();
-  do_check_eq(links.length, 1, "got one link");
-
-  do_check_false(pinged, "still shouldn't have a ping from before");
-  DirectoryLinksProvider.reportSitesAction([], "view", 0);
-  yield pingWait.promise;
-  do_check_true(pinged, "should have gotten a ping");
-
-  Services.prefs.setCharPref(kLocalePref, origLocale);
-  Services.prefs.setCharPref(kSourceUrlPref, origSource);
 });

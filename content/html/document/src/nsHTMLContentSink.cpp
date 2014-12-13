@@ -23,7 +23,6 @@
 #include "nsIURI.h"
 #include "nsNetUtil.h"
 #include "nsIContentViewer.h"
-#include "nsIMarkupDocumentViewer.h"
 #include "mozilla/dom/NodeInfo.h"
 #include "nsToken.h"
 #include "nsIAppShell.h"
@@ -201,7 +200,7 @@ protected:
 class SinkContext
 {
 public:
-  SinkContext(HTMLContentSink* aSink);
+  explicit SinkContext(HTMLContentSink* aSink);
   ~SinkContext();
 
   nsresult Begin(nsHTMLTag aNodeType, nsGenericHTMLElement* aRoot,

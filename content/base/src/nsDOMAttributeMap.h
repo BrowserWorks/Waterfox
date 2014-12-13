@@ -11,6 +11,7 @@
 #define nsDOMAttributeMap_h
 
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/UniquePtr.h"
 #include "mozilla/dom/Attr.h"
 #include "mozilla/ErrorResult.h"
 #include "nsCycleCollectionParticipant.h"
@@ -55,7 +56,7 @@ public:
   typedef const nsAttrKey& KeyType;
   typedef const nsAttrKey* KeyTypePointer;
 
-  nsAttrHashKey(KeyTypePointer aKey) : mKey(*aKey) {}
+  explicit nsAttrHashKey(KeyTypePointer aKey) : mKey(*aKey) {}
   nsAttrHashKey(const nsAttrHashKey& aCopy) : mKey(aCopy.mKey) {}
   ~nsAttrHashKey() {}
 
@@ -89,7 +90,7 @@ public:
   typedef mozilla::dom::Element Element;
   typedef mozilla::ErrorResult ErrorResult;
 
-  nsDOMAttributeMap(Element *aContent);
+  explicit nsDOMAttributeMap(Element *aContent);
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SKIPPABLE_SCRIPT_HOLDER_CLASS(nsDOMAttributeMap)
@@ -183,9 +184,11 @@ private:
   nsCOMPtr<Element> mContent;
 
   /**
-   * Cache of Attrs.
+   * Cache of Attrs. It's usually empty, and thus initialized lazily.
    */
-  AttrCache mAttributeCache;
+  mozilla::UniquePtr<AttrCache> mAttributeCache;
+
+  void EnsureAttributeCache();
 
   /**
    * SetNamedItem() (aWithNS = false) and SetNamedItemNS() (aWithNS =

@@ -7,6 +7,7 @@
 #include "nsISupports.idl"
 
 interface nsIInterfaceRequestor;
+interface nsIX509Cert;
 
 %{C++
 template<class T> class nsTArray;
@@ -14,7 +15,7 @@ class nsCString;
 %}
 [ref] native nsCStringTArrayRef(nsTArray<nsCString>);
 
-[scriptable, builtinclass, uuid(ec72446c-8241-457f-ba75-83d214392289)]
+[scriptable, builtinclass, uuid(89b819dc-31b0-4d09-915a-66f8a3703483)]
 interface nsISSLSocketControl : nsISupports {
     attribute nsIInterfaceRequestor     notificationCallbacks;
 
@@ -82,5 +83,25 @@ interface nsISSLSocketControl : nsISupports {
     const short SSL_VERSION_UNKNOWN = -1;
 
     [infallible] readonly attribute short SSLVersionUsed;
+    [infallible] readonly attribute short SSLVersionOffered;
+
+    /* These values match the NSS defined values in sslt.h */
+    const short SSL_MAC_UNKNOWN = -1;
+    const short SSL_MAC_NULL    = 0;
+    const short SSL_MAC_MD5     = 1;
+    const short SSL_MAC_SHA     = 2;
+    const short SSL_HMAC_MD5    = 3;
+    const short SSL_HMAC_SHA    = 4;
+    const short SSL_HMAC_SHA256 = 5;
+    const short SSL_MAC_AEAD    = 6;
+
+    [infallible] readonly attribute short MACAlgorithmUsed;
+
+    /**
+     * If set before the server requests a client cert (assuming it does so at
+     * all), then this cert will be presented to the server, instead of asking
+     * the user or searching the set of rememebered user cert decisions.
+     */
+    attribute nsIX509Cert clientCert;
 };
 

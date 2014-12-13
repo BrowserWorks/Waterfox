@@ -22,6 +22,7 @@
 
   <xul:panel id="newtab-intro-panel" orient="vertical" type="arrow"
              noautohide="true">
+    <h1>&newtab.intro.header;</h1>
   </xul:panel>
 
   <xul:panel id="newtab-search-panel" orient="vertical" type="arrow"
@@ -34,13 +35,13 @@
   <xul:panel id="newtab-customize-panel" orient="vertical" type="arrow"
              noautohide="true">
     <xul:hbox id="newtab-customize-enhanced" class="newtab-customize-panel-item">
-      <xul:label/>
+      <xul:label>&newtab.customize.enhanced;</xul:label>
     </xul:hbox>
     <xul:hbox id="newtab-customize-classic" class="newtab-customize-panel-item">
-      <xul:label/>
+      <xul:label>&newtab.customize.classic;</xul:label>
     </xul:hbox>
     <xul:hbox id="newtab-customize-blank" class="newtab-customize-panel-item">
-      <xul:label/>
+      <xul:label>&newtab.customize.blank;</xul:label>
     </xul:hbox>
   </xul:panel>
 
@@ -89,9 +90,9 @@
 
     </div>
 
-    <div id="newtab-intro-what"></div>
+    <div id="newtab-intro-what">&newtab.customize.what;</div>
 
-    <input id="newtab-customize-button" type="button"/>
+    <input id="newtab-customize-button" type="button" title="&newtab.customize.title;"/>
   </div>
 
   <xul:script type="text/javascript;version=1.8"

@@ -23,7 +23,6 @@
 #define DEVICESTORAGE_SDCARD     "sdcard"
 #define DEVICESTORAGE_CRASHES    "crashes"
 
-class DeviceStorageFile;
 class nsIInputStream;
 class nsIOutputStream;
 
@@ -39,13 +38,6 @@ class DeviceStorageFileSystem;
 namespace ipc {
 class FileDescriptor;
 }
-
-template<>
-struct HasDangerousPublicDestructor<DeviceStorageFile>
-{
-  static const bool value = true;
-};
-
 } // namespace mozilla
 
 class DeviceStorageFile MOZ_FINAL
@@ -126,6 +118,7 @@ public:
   nsresult CreateFileDescriptor(mozilla::ipc::FileDescriptor& aFileDescriptor);
 
 private:
+  ~DeviceStorageFile() {}
   void Init();
   void NormalizeFilePath();
   void AppendRelativePath(const nsAString& aPath);
@@ -201,7 +194,7 @@ public:
                                    bool aUseCapture,
                                    ErrorResult& aRv) MOZ_OVERRIDE;
 
-  nsDOMDeviceStorage(nsPIDOMWindow* aWindow);
+  explicit nsDOMDeviceStorage(nsPIDOMWindow* aWindow);
 
   nsresult Init(nsPIDOMWindow* aWindow, const nsAString& aType,
                 const nsAString& aVolName);
@@ -349,8 +342,9 @@ private:
 
 #ifdef MOZ_WIDGET_GONK
   nsString mLastStatus;
+  nsString mLastStorageStatus;
   void DispatchStatusChangeEvent(nsAString& aStatus);
-  void DispatchStorageStatusChangeEvent(nsAString& aVolumeStatus);
+  void DispatchStorageStatusChangeEvent(nsAString& aStorageStatus);
 #endif
 
   // nsIDOMDeviceStorage.type

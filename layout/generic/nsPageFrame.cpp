@@ -82,13 +82,14 @@ nsPageFrame::Reflow(nsPresContext*           aPresContext,
     // XXX Shouldn't we do something more friendly when invalid margins
     //     are set?
     if (maxSize.width < onePixelInTwips || maxSize.height < onePixelInTwips) {
-      aDesiredSize.Width() = 0;
-      aDesiredSize.Height() = 0;
+      aDesiredSize.ClearSize();
       NS_WARNING("Reflow aborted; no space for content");
       return;
     }
 
-    nsHTMLReflowState kidReflowState(aPresContext, aReflowState, frame, maxSize);
+    nsHTMLReflowState kidReflowState(aPresContext, aReflowState, frame,
+                                     LogicalSize(frame->GetWritingMode(),
+                                                 maxSize));
     kidReflowState.mFlags.mIsTopOfPage = true;
     kidReflowState.mFlags.mTableIsSplittable = true;
 
@@ -143,12 +144,14 @@ nsPageFrame::Reflow(nsPresContext*           aPresContext,
                  !frame->GetNextInFlow(), "bad child flow list");
   }
   PR_PL(("PageFrame::Reflow %p ", this));
-  PR_PL(("[%d,%d][%d,%d]\n", aDesiredSize.Width(), aDesiredSize.Height(), aReflowState.AvailableWidth(), aReflowState.AvailableHeight()));
+  PR_PL(("[%d,%d][%d,%d]\n", aDesiredSize.Width(), aDesiredSize.Height(),
+         aReflowState.AvailableWidth(), aReflowState.AvailableHeight()));
 
   // Return our desired size
-  aDesiredSize.Width() = aReflowState.AvailableWidth();
-  if (aReflowState.AvailableHeight() != NS_UNCONSTRAINEDSIZE) {
-    aDesiredSize.Height() = aReflowState.AvailableHeight();
+  WritingMode wm = aReflowState.GetWritingMode();
+  aDesiredSize.ISize(wm) = aReflowState.AvailableISize();
+  if (aReflowState.AvailableBSize() != NS_UNCONSTRAINEDSIZE) {
+    aDesiredSize.BSize(wm) = aReflowState.AvailableBSize();
   }
 
   aDesiredSize.SetOverflowAreasToDesiredBounds();
@@ -414,22 +417,22 @@ PruneDisplayListForExtraPage(nsDisplayListBuilder* aBuilder,
   aList->AppendToTop(&newList);
 }
 
-static nsresult
+static void
 BuildDisplayListForExtraPage(nsDisplayListBuilder* aBuilder,
                              nsPageFrame* aPage, nsIFrame* aExtraPage,
-                             nsDisplayList* aList)
+                             const nsRect& aDirtyRect, nsDisplayList* aList)
 {
+  // The only content in aExtraPage we care about is out-of-flow content whose
+  // placeholders have occurred in aPage. If
+  // NS_FRAME_FORCE_DISPLAY_LIST_DESCEND_INTO is not set, then aExtraPage has
+  // no such content.
+  if (!aExtraPage->HasAnyStateBits(NS_FRAME_FORCE_DISPLAY_LIST_DESCEND_INTO)) {
+    return;
+  }
   nsDisplayList list;
-  // Pass an empty dirty rect since we're only interested in finding
-  // placeholders whose out-of-flows are in the page
-  // aBuilder->GetReferenceFrame(), and the paths to those placeholders
-  // have already been marked as NS_FRAME_FORCE_DISPLAY_LIST_DESCEND_INTO.
-  // Note that we should still do a prune step since we don't want to
-  // rely on dirty-rect checking for correctness.
-  aExtraPage->BuildDisplayListForStackingContext(aBuilder, nsRect(), &list);
+  aExtraPage->BuildDisplayListForStackingContext(aBuilder, aDirtyRect, &list);
   PruneDisplayListForExtraPage(aBuilder, aPage, aExtraPage, &list);
   aList->AppendToTop(&list);
-  return NS_OK;
 }
 
 static nsIFrame*
@@ -457,10 +460,10 @@ static void PaintHeaderFooter(nsIFrame* aFrame, nsRenderingContext* aCtx,
   static_cast<nsPageFrame*>(aFrame)->PaintHeaderFooter(*aCtx, aPt);
 }
 
-static gfx3DMatrix ComputePageTransform(nsIFrame* aFrame, float aAppUnitsPerPixel)
+static gfx::Matrix4x4 ComputePageTransform(nsIFrame* aFrame, float aAppUnitsPerPixel)
 {
   float scale = aFrame->PresContext()->GetPageScale();
-  return gfx3DMatrix::ScalingMatrix(scale, scale, 1);
+  return gfx::Matrix4x4().Scale(scale, scale, 1);
 }
 
 //------------------------------------------------------------------------------
@@ -506,8 +509,8 @@ nsPageFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
     clipState.Clear();
     clipState.ClipContainingBlockDescendants(clipRect, nullptr);
 
-    child->BuildDisplayListForStackingContext(aBuilder,
-      child->GetVisualOverflowRectRelativeToSelf(), &content);
+    nsRect dirtyRect = child->GetVisualOverflowRectRelativeToSelf();
+    child->BuildDisplayListForStackingContext(aBuilder, dirtyRect, &content);
 
     // We may need to paint out-of-flow frames whose placeholders are
     // on other pages. Add those pages to our display list. Note that
@@ -518,8 +521,15 @@ nsPageFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
     // following placeholders to their out-of-flows) end up on the list.
     nsIFrame* page = child;
     while ((page = GetNextPage(page)) != nullptr) {
-      BuildDisplayListForExtraPage(aBuilder, this, page, &content);
+      BuildDisplayListForExtraPage(aBuilder, this, page,
+          dirtyRect + child->GetOffsetTo(page), &content);
     }
+
+    // Invoke AutoBuildingDisplayList to ensure that the correct dirtyRect
+    // is used to compute the visible rect if AddCanvasBackgroundColorItem
+    // creates a display item.
+    nsDisplayListBuilder::AutoBuildingDisplayList
+      building(aBuilder, child, dirtyRect, true);
 
     // Add the canvas background color to the bottom of the list. This
     // happens after we've built the list so that AddCanvasBackgroundColorItem
@@ -530,7 +540,8 @@ nsPageFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
       *aBuilder, content, child, backgroundRect, NS_RGBA(0,0,0,0));
   }
 
-  content.AppendNewToTop(new (aBuilder) nsDisplayTransform(aBuilder, child, &content, ::ComputePageTransform));
+  content.AppendNewToTop(new (aBuilder) nsDisplayTransform(aBuilder, child,
+      &content, content.GetVisibleRect(), ::ComputePageTransform));
 
   set.Content()->AppendToTop(&content);
 
@@ -637,13 +648,13 @@ nsPageBreakFrame::~nsPageBreakFrame()
 }
 
 nscoord
-nsPageBreakFrame::GetIntrinsicWidth()
+nsPageBreakFrame::GetIntrinsicISize()
 {
   return nsPresContext::CSSPixelsToAppUnits(1);
 }
 
 nscoord
-nsPageBreakFrame::GetIntrinsicHeight()
+nsPageBreakFrame::GetIntrinsicBSize()
 {
   return 0;
 }
@@ -659,12 +670,14 @@ nsPageBreakFrame::Reflow(nsPresContext*           aPresContext,
 
   // Override reflow, since we don't want to deal with what our
   // computed values are.
-  aDesiredSize.Width() = GetIntrinsicWidth();
-  aDesiredSize.Height() = (aReflowState.AvailableHeight() == NS_UNCONSTRAINEDSIZE ?
-                         0 : aReflowState.AvailableHeight());
+  WritingMode wm = aReflowState.GetWritingMode();
+  LogicalSize finalSize(wm, GetIntrinsicISize(),
+                        aReflowState.AvailableBSize() == NS_UNCONSTRAINEDSIZE ?
+                          0 : aReflowState.AvailableBSize());
   // round the height down to the nearest pixel
-  aDesiredSize.Height() -=
-    aDesiredSize.Height() % nsPresContext::CSSPixelsToAppUnits(1);
+  finalSize.BSize(wm) -=
+    finalSize.BSize(wm) % nsPresContext::CSSPixelsToAppUnits(1);
+  aDesiredSize.SetSize(wm, finalSize);
 
   // Note: not using NS_FRAME_FIRST_REFLOW here, since it's not clear whether
   // DidReflow will always get called before the next Reflow() call.

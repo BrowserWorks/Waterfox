@@ -19,7 +19,10 @@ bool GStreamerFormatHelper::sLoadOK = false;
 
 GStreamerFormatHelper* GStreamerFormatHelper::Instance() {
   if (!gInstance) {
-		sLoadOK = load_gstreamer();
+    if ((sLoadOK = load_gstreamer())) {
+      gst_init(nullptr, nullptr);
+    }
+
     gInstance = new GStreamerFormatHelper();
   }
 

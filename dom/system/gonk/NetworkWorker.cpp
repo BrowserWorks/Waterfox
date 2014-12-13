@@ -7,9 +7,9 @@
 #include <nsThreadUtils.h>
 #include "mozilla/ModuleUtils.h"
 #include "mozilla/ClearOnShutdown.h"
+#include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/dom/ToJSValue.h"
 #include "nsXULAppAPI.h"
-#include "nsCxPusher.h"
 
 #define NS_NETWORKWORKER_CID \
   { 0x6df093e1, 0x8127, 0x4fa7, {0x90, 0x13, 0xa3, 0xaa, 0xa7, 0x79, 0xbb, 0xdd} }
@@ -45,9 +45,6 @@ public:
     COPY_FIELD(mResultCode)
     COPY_FIELD(mResultReason)
     COPY_FIELD(mError)
-    COPY_FIELD(mRxBytes)
-    COPY_FIELD(mTxBytes)
-    COPY_FIELD(mDate)
     COPY_FIELD(mEnable)
     COPY_FIELD(mResult)
     COPY_FIELD(mSuccess)

@@ -137,6 +137,14 @@ public:
   // Called by the media decoder object, on the main thread,
   // when the connection between Rtsp server and client gets lost.
   virtual void ResetConnectionState() = 0;
+
+#ifdef MOZ_EME
+  // Dispatches a "encrypted" event to the HTMLMediaElement, with the
+  // provided init data.
+  // Main thread only.
+  virtual void DispatchEncrypted(const nsTArray<uint8_t>& aInitData,
+                                 const nsAString& aInitDataType) = 0;
+#endif
 };
 
 }

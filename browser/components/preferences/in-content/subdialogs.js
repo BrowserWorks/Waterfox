@@ -8,13 +8,16 @@ let gSubDialog = {
   _closingCallback: null,
   _frame: null,
   _overlay: null,
+  _box: null,
   _injectedStyleSheets: ["chrome://mozapps/content/preferences/preferences.css",
                          "chrome://browser/skin/preferences/preferences.css",
+                         "chrome://global/skin/in-content/common.css",
                          "chrome://browser/skin/preferences/in-content/preferences.css"],
 
   init: function() {
     this._frame = document.getElementById("dialogFrame");
     this._overlay = document.getElementById("dialogOverlay");
+    this._box = document.getElementById("dialogBox");
 
     // Make the close button work.
     let dialogClose = document.getElementById("dialogClose");
@@ -59,11 +62,16 @@ let gSubDialog = {
   },
 
   open: function(aURL, aFeatures = null, aParams = null, aClosingCallback = null) {
-    let features = aFeatures || "modal,centerscreen,resizable=no";
+    let features = (!!aFeatures ? aFeatures + "," : "") + "resizable,dialog=no,centerscreen";
     let dialog = window.openDialog(aURL, "dialogFrame", features, aParams);
     if (aClosingCallback) {
       this._closingCallback = aClosingCallback.bind(dialog);
     }
+    features = features.replace(/,/g, "&");
+    let featureParams = new URLSearchParams(features.toLowerCase());
+    this._box.setAttribute("resizable", featureParams.has("resizable") &&
+                                        featureParams.get("resizable") != "no" &&
+                                        featureParams.get("resizable") != "0");
     return dialog;
   },
 
@@ -128,8 +136,13 @@ let gSubDialog = {
 
     // Do this on load to wait for the CSS to load and apply before calculating the size.
     let docEl = this._frame.contentDocument.documentElement;
+
+    // padding-bottom doesn't seem to be included in the scrollHeight of the document element in XUL
+    // so add it ourselves.
+    let paddingBottom = parseFloat(this._frame.contentWindow.getComputedStyle(docEl).paddingBottom);
+
     this._frame.style.width = docEl.style.width || docEl.scrollWidth + "px";
-    this._frame.style.height = docEl.style.height || docEl.scrollHeight + "px";
+    this._frame.style.height = docEl.style.height || (docEl.scrollHeight + paddingBottom) + "px";
 
     this._overlay.style.visibility = "visible";
     this._frame.focus();

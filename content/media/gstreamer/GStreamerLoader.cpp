@@ -6,7 +6,6 @@
 #include <dlfcn.h>
 #include <stdio.h>
 
-#include "prlog.h" 
 #include "nsDebug.h"
 #include "mozilla/NullPtr.h"
 
@@ -20,13 +19,6 @@
 #define LIB_GST_SUFFIX ".so"
 #else
 #define LIB_GST_SUFFIX ".so.0"
-#endif
-
-#ifdef PR_LOGGING
-extern PRLogModuleInfo* gMediaDecoderLog;
-#define LOG(type, msg) PR_LOG(gMediaDecoderLog, type, msg)
-#else
-#define LOG(type, msg)
 #endif
 
 namespace mozilla {
@@ -54,68 +46,17 @@ void gst_caps_unref_impl(GstCaps *caps);
 void gst_sample_unref_impl(GstSample *sample);
 #endif
 
-#ifndef SYSTEM_GSTREAMER
-extern "C" {
- GST_PLUGIN_STATIC_DECLARE(coreelements);
- GST_PLUGIN_STATIC_DECLARE(typefindfunctions);
- GST_PLUGIN_STATIC_DECLARE(app);
- GST_PLUGIN_STATIC_DECLARE(playback);
- GST_PLUGIN_STATIC_DECLARE(audioconvert);
- GST_PLUGIN_STATIC_DECLARE(audioresample);
- GST_PLUGIN_STATIC_DECLARE(volume);
- GST_PLUGIN_STATIC_DECLARE(videoconvert);
- GST_PLUGIN_STATIC_DECLARE(videoscale);
- GST_PLUGIN_STATIC_DECLARE(isomp4);
- GST_PLUGIN_STATIC_DECLARE(id3demux);
- GST_PLUGIN_STATIC_DECLARE(audioparsers);
- GST_PLUGIN_STATIC_DECLARE(videoparsersbad);
- GST_PLUGIN_STATIC_DECLARE(applemedia);
-}
-#endif
-
-static bool
-init_gstreamer()
-{
- GError* error = nullptr;
- if (!gst_init_check(0, 0, &error)) {
- LOG(PR_LOG_ERROR, ("gst initialization failed: %s", error->message));
- g_error_free(error);
- return false;
- }
-
-#ifndef SYSTEM_GSTREAMER
- GST_PLUGIN_STATIC_REGISTER(coreelements);
- GST_PLUGIN_STATIC_REGISTER(typefindfunctions);
- GST_PLUGIN_STATIC_REGISTER(app);
- GST_PLUGIN_STATIC_REGISTER(playback);
- GST_PLUGIN_STATIC_REGISTER(audioconvert);
- GST_PLUGIN_STATIC_REGISTER(audioresample);
- GST_PLUGIN_STATIC_REGISTER(volume);
- GST_PLUGIN_STATIC_REGISTER(videoconvert);
- GST_PLUGIN_STATIC_REGISTER(videoscale);
- GST_PLUGIN_STATIC_REGISTER(isomp4);
- GST_PLUGIN_STATIC_REGISTER(id3demux);
- GST_PLUGIN_STATIC_REGISTER(audioparsers);
- GST_PLUGIN_STATIC_REGISTER(videoparsersbad);
- GST_PLUGIN_STATIC_REGISTER(applemedia);
-#endif
-
- return true;
-}
-
 bool
 load_gstreamer()
 {
+#ifdef __APPLE__
+  return true;
+#endif
   static bool loaded = false;
 
   if (loaded) {
     return true;
   }
-  
-#if defined(__APPLE__) || !defined(SYSTEM_GSTREAMER)
- loaded = true;
- return init_gstreamer();
-#endif
 
   void *gstreamerLib = nullptr;
   guint major = 0;
@@ -157,7 +98,7 @@ load_gstreamer()
 #undef REPLACE_FUNC
 
   loaded = true;
-  return init_gstreamer();
+  return true;
 
 fail:
 

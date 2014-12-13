@@ -221,8 +221,8 @@ nsBlockReflowState::ComputeBlockAvailSpace(nsIFrame* aFrame,
   // If we did that, then for those frames where the condition below is
   // true but nsBlockFrame::BlockCanIntersectFloats is false,
   // nsBlockFrame::WidthToClearPastFloats would need to use the
-  // shrink-wrap formula, max(MIN_WIDTH, min(avail width, PREF_WIDTH))
-  // rather than just using MIN_WIDTH.
+  // shrink-wrap formula, max(MIN_ISIZE, min(avail width, PREF_ISIZE))
+  // rather than just using MIN_ISIZE.
   NS_ASSERTION(nsBlockFrame::BlockCanIntersectFloats(aFrame) == 
                  !aBlockAvoidsFloats,
                "unexpected replaced width");
@@ -601,20 +601,17 @@ FloatMarginWidth(const nsHTMLReflowState& aCBReflowState,
                  const nsCSSOffsetState& aFloatOffsetState)
 {
   AutoMaybeDisableFontInflation an(aFloat);
+  WritingMode fosWM = aFloatOffsetState.GetWritingMode();
   return aFloat->ComputeSize(
     aCBReflowState.rendContext,
-    nsSize(aCBReflowState.ComputedWidth(),
-           aCBReflowState.ComputedHeight()),
+    fosWM,
+    aCBReflowState.ComputedSize(fosWM),
     aFloatAvailableWidth,
-    nsSize(aFloatOffsetState.ComputedPhysicalMargin().LeftRight(),
-           aFloatOffsetState.ComputedPhysicalMargin().TopBottom()),
-    nsSize(aFloatOffsetState.ComputedPhysicalBorderPadding().LeftRight() -
-             aFloatOffsetState.ComputedPhysicalPadding().LeftRight(),
-           aFloatOffsetState.ComputedPhysicalBorderPadding().TopBottom() -
-             aFloatOffsetState.ComputedPhysicalPadding().TopBottom()),
-    nsSize(aFloatOffsetState.ComputedPhysicalPadding().LeftRight(),
-           aFloatOffsetState.ComputedPhysicalPadding().TopBottom()),
-    true).width +
+    aFloatOffsetState.ComputedLogicalMargin().Size(fosWM),
+    aFloatOffsetState.ComputedLogicalBorderPadding().Size(fosWM) -
+      aFloatOffsetState.ComputedLogicalPadding().Size(fosWM),
+    aFloatOffsetState.ComputedLogicalPadding().Size(fosWM),
+    true).Width(fosWM) +
   aFloatOffsetState.ComputedPhysicalMargin().LeftRight() +
   aFloatOffsetState.ComputedPhysicalBorderPadding().LeftRight();
 }
@@ -995,6 +992,7 @@ nsBlockReflowState::ClearFloats(nscoord aBCoord, uint8_t aBreakType,
   }
 
   nscoord newBCoord = aBCoord;
+  WritingMode wm = mReflowState.GetWritingMode();
 
   if (aBreakType != NS_STYLE_CLEAR_NONE) {
     newBCoord = mFloatManager->ClearFloats(newBCoord, aBreakType, aFlags);
@@ -1012,12 +1010,14 @@ nsBlockReflowState::ClearFloats(nscoord aBCoord, uint8_t aBreakType,
       nsBlockFrame::ReplacedElementWidthToClear replacedWidth =
         nsBlockFrame::WidthToClearPastFloats(*this, floatAvailableSpace.mRect,
                                              aReplacedBlock);
-      if (std::max(floatAvailableSpace.mRect.x - ContentIStart(),
+      if (std::max(floatAvailableSpace.mRect.x -
+                    mContentArea.X(wm, mContainerWidth),
                    replacedWidth.marginLeft) +
             replacedWidth.borderBoxWidth +
-            std::max(ContentIEnd() - floatAvailableSpace.mRect.XMost(),
+            std::max(mContentArea.XMost(wm, mContainerWidth) -
+                      floatAvailableSpace.mRect.XMost(),
                      replacedWidth.marginRight) <=
-          ContentISize()) {
+          mContentArea.Width(wm)) {
         break;
       }
       // See the analogous code for inlines in nsBlockFrame::DoReflowInlineFrames

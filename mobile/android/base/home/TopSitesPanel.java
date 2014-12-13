@@ -5,6 +5,9 @@
 
 package org.mozilla.gecko.home;
 
+import static org.mozilla.gecko.db.URLMetadataTable.TILE_COLOR_COLUMN;
+import static org.mozilla.gecko.db.URLMetadataTable.TILE_IMAGE_URL_COLUMN;
+
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -19,7 +22,6 @@ import org.mozilla.gecko.db.BrowserContract.Thumbnails;
 import org.mozilla.gecko.db.BrowserContract.TopSites;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.db.URLMetadata;
-import org.mozilla.gecko.db.URLMetadataTable;
 import org.mozilla.gecko.favicons.Favicons;
 import org.mozilla.gecko.favicons.OnFaviconLoadedListener;
 import org.mozilla.gecko.gfx.BitmapUtils;
@@ -31,17 +33,12 @@ import org.mozilla.gecko.home.TopSitesGridView.TopSitesGridContextMenuInfo;
 import org.mozilla.gecko.util.StringUtils;
 import org.mozilla.gecko.util.ThreadUtils;
 
-import static org.mozilla.gecko.db.URLMetadataTable.TILE_IMAGE_URL_COLUMN;
-import static org.mozilla.gecko.db.URLMetadataTable.TILE_COLOR_COLUMN;
-
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
-import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.v4.app.FragmentManager;
@@ -98,9 +95,6 @@ public class TopSitesPanel extends HomeFragment {
     // Listener for editing pinned sites.
     private EditPinnedSiteListener mEditPinnedSiteListener;
 
-    // On URL open listener
-    private OnUrlOpenListener mUrlOpenListener;
-
     // Max number of entries shown in the grid from the cursor.
     private int mMaxGridEntries;
 
@@ -109,10 +103,6 @@ public class TopSitesPanel extends HomeFragment {
 
     public static TopSitesPanel newInstance() {
         return new TopSitesPanel();
-    }
-
-    public TopSitesPanel() {
-        mUrlOpenListener = null;
     }
 
     private static boolean logDebug = Log.isLoggable(LOGTAG, Log.DEBUG);
@@ -135,20 +125,6 @@ public class TopSitesPanel extends HomeFragment {
         super.onAttach(activity);
 
         mMaxGridEntries = activity.getResources().getInteger(R.integer.number_of_top_sites);
-
-        try {
-            mUrlOpenListener = (OnUrlOpenListener) activity;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString()
-                    + " must implement HomePager.OnUrlOpenListener");
-        }
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-
-        mUrlOpenListener = null;
     }
 
     @Override
@@ -236,19 +212,6 @@ public class TopSitesPanel extends HomeFragment {
         mGrid = null;
         mListAdapter = null;
         mGridAdapter = null;
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-
-        // Detach and reattach the fragment as the layout changes.
-        if (isVisible()) {
-            getFragmentManager().beginTransaction()
-                                .detach(this)
-                                .attach(this)
-                                .commitAllowingStateLoss();
-        }
     }
 
     @Override

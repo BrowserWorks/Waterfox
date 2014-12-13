@@ -103,7 +103,7 @@ struct AlignedArray
   {
   }
 
-  MOZ_ALWAYS_INLINE AlignedArray(size_t aCount, bool aZero = false)
+  explicit MOZ_ALWAYS_INLINE AlignedArray(size_t aCount, bool aZero = false)
     : mStorage(nullptr)
     , mCount(0)
   {

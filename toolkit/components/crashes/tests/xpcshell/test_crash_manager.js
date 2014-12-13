@@ -15,6 +15,9 @@ Cu.import("resource://testing-common/CrashManagerTest.jsm", this);
 const DUMMY_DATE = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
 DUMMY_DATE.setMilliseconds(0);
 
+const DUMMY_DATE_2 = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000);
+DUMMY_DATE_2.setMilliseconds(0);
+
 function run_test() {
   do_get_profile();
   configureLogging();
@@ -219,6 +222,48 @@ add_task(function* test_main_crash_event_file() {
   Assert.equal(count, 0);
 });
 
+add_task(function* test_crash_submission_event_file() {
+  let m = yield getManager();
+  yield m.createEventsFile("1", "crash.main.1", DUMMY_DATE, "crash1");
+  yield m.createEventsFile("1-submission", "crash.submission.1", DUMMY_DATE_2,
+                           "crash1\nfalse\n");
+
+  // The line below has been intentionally commented out to make sure that
+  // the crash record is created when one does not exist.
+  //yield m.createEventsFile("2", "crash.main.1", DUMMY_DATE, "crash2");
+  yield m.createEventsFile("2-submission", "crash.submission.1", DUMMY_DATE_2,
+                           "crash2\ntrue\nbp-2");
+  let count = yield m.aggregateEventsFiles();
+  Assert.equal(count, 3);
+
+  let crashes = yield m.getCrashes();
+  Assert.equal(crashes.length, 2);
+
+  let map = new Map(crashes.map(crash => [crash.id, crash]));
+
+  let crash1 = map.get("crash1");
+  Assert.ok(!!crash1);
+  Assert.equal(crash1.remoteID, null);
+  let crash2 = map.get("crash2");
+  Assert.ok(!!crash2);
+  Assert.equal(crash2.remoteID, "bp-2");
+
+  Assert.equal(crash1.submissions.size, 1);
+  let submission = crash1.submissions.values().next().value;
+  Assert.equal(submission.result, m.SUBMISSION_RESULT_FAILED);
+  Assert.equal(submission.requestDate.getTime(), DUMMY_DATE_2.getTime());
+  Assert.equal(submission.responseDate.getTime(), DUMMY_DATE_2.getTime());
+
+  Assert.equal(crash2.submissions.size, 1);
+  submission = crash2.submissions.values().next().value;
+  Assert.equal(submission.result, m.SUBMISSION_RESULT_OK);
+  Assert.equal(submission.requestDate.getTime(), DUMMY_DATE_2.getTime());
+  Assert.equal(submission.responseDate.getTime(), DUMMY_DATE_2.getTime());
+
+  count = yield m.aggregateEventsFiles();
+  Assert.equal(count, 0);
+});
+
 add_task(function* test_multiline_crash_id_rejected() {
   let m = yield getManager();
   yield m.createEventsFile("1", "crash.main.1", DUMMY_DATE, "id1\nid2");
@@ -264,9 +309,16 @@ add_task(function* test_addCrash() {
                    "plugin-crash", DUMMY_DATE);
   yield m.addCrash(m.PROCESS_TYPE_PLUGIN, m.CRASH_TYPE_HANG,
                    "plugin-hang", DUMMY_DATE);
+  yield m.addCrash(m.PROCESS_TYPE_GMPLUGIN, m.CRASH_TYPE_CRASH,
+                   "gmplugin-crash", DUMMY_DATE);
+
+  yield m.addCrash(m.PROCESS_TYPE_MAIN, m.CRASH_TYPE_CRASH,
+                   "changing-item", DUMMY_DATE);
+  yield m.addCrash(m.PROCESS_TYPE_CONTENT, m.CRASH_TYPE_HANG,
+                   "changing-item", DUMMY_DATE_2);
 
   crashes = yield m.getCrashes();
-  Assert.equal(crashes.length, 6);
+  Assert.equal(crashes.length, 8);
 
   let map = new Map(crashes.map(crash => [crash.id, crash]));
 
@@ -305,43 +357,50 @@ add_task(function* test_addCrash() {
   Assert.equal(crash.crashDate, DUMMY_DATE);
   Assert.equal(crash.type, m.PROCESS_TYPE_PLUGIN + "-" + m.CRASH_TYPE_HANG);
   Assert.ok(crash.isOfType(m.PROCESS_TYPE_PLUGIN, m.CRASH_TYPE_HANG));
+
+  crash = map.get("gmplugin-crash");
+  Assert.ok(!!crash);
+  Assert.equal(crash.crashDate, DUMMY_DATE);
+  Assert.equal(crash.type, m.PROCESS_TYPE_GMPLUGIN + "-" + m.CRASH_TYPE_CRASH);
+  Assert.ok(crash.isOfType(m.PROCESS_TYPE_GMPLUGIN, m.CRASH_TYPE_CRASH));
+
+  crash = map.get("changing-item");
+  Assert.ok(!!crash);
+  Assert.equal(crash.crashDate, DUMMY_DATE_2);
+  Assert.equal(crash.type, m.PROCESS_TYPE_CONTENT + "-" + m.CRASH_TYPE_HANG);
+  Assert.ok(crash.isOfType(m.PROCESS_TYPE_CONTENT, m.CRASH_TYPE_HANG));
 });
 
-add_task(function* test_addSubmission() {
+add_task(function* test_addSubmissionAttemptAndResult() {
   let m = yield getManager();
 
   let crashes = yield m.getCrashes();
   Assert.equal(crashes.length, 0);
 
-  yield m.addSubmission(m.PROCESS_TYPE_MAIN, m.CRASH_TYPE_CRASH, true,
-                        "success", DUMMY_DATE);
-  yield m.addSubmission(m.PROCESS_TYPE_MAIN, m.CRASH_TYPE_CRASH, false,
-                        "failure", DUMMY_DATE);
+  yield m.addCrash(m.PROCESS_TYPE_MAIN, m.CRASH_TYPE_CRASH,
+                   "main-crash", DUMMY_DATE);
+  yield m.addSubmissionAttempt("main-crash", "submission", DUMMY_DATE);
+  yield m.addSubmissionResult("main-crash", "submission", DUMMY_DATE_2,
+                              m.SUBMISSION_RESULT_OK);
 
   crashes = yield m.getCrashes();
-  Assert.equal(crashes.length, 2);
+  Assert.equal(crashes.length, 1);
 
-  let map = new Map(crashes.map(crash => [crash.id, crash]));
+  let submissions = crashes[0].submissions;
+  Assert.ok(!!submissions);
 
-  let crash = map.get("success-submission");
-  Assert.ok(!!crash);
-  Assert.equal(crash.crashDate, DUMMY_DATE);
-  Assert.equal(crash.type,
-               m.PROCESS_TYPE_MAIN + "-" + m.CRASH_TYPE_CRASH + "-" +
-               m.PROCESS_TYPE_SUBMISSION + "-" + m.SUBMISSION_TYPE_SUCCEEDED);
-  Assert.ok(
-    crash.isOfType(m.PROCESS_TYPE_MAIN + "-" + m.CRASH_TYPE_CRASH + "-" +
-                   m.PROCESS_TYPE_SUBMISSION, m.SUBMISSION_TYPE_SUCCEEDED));
-
-  let crash = map.get("failure-submission");
-  Assert.ok(!!crash);
-  Assert.equal(crash.crashDate, DUMMY_DATE);
-  Assert.equal(crash.type,
-               m.PROCESS_TYPE_MAIN + "-" + m.CRASH_TYPE_CRASH + "-" +
-               m.PROCESS_TYPE_SUBMISSION + "-" + m.SUBMISSION_TYPE_FAILED);
-  Assert.ok(
-    crash.isOfType(m.PROCESS_TYPE_MAIN + "-" + m.CRASH_TYPE_CRASH + "-" +
-                   m.PROCESS_TYPE_SUBMISSION, m.SUBMISSION_TYPE_FAILED));
-
+  let submission = submissions.get("submission");
+  Assert.ok(!!submission);
+  Assert.equal(submission.requestDate.getTime(), DUMMY_DATE.getTime());
+  Assert.equal(submission.responseDate.getTime(), DUMMY_DATE_2.getTime());
+  Assert.equal(submission.result, m.SUBMISSION_RESULT_OK);
 });
 
+add_task(function* test_setRemoteCrashID() {
+  let m = yield getManager();
+
+  yield m.addCrash(m.PROCESS_TYPE_MAIN, m.CRASH_TYPE_CRASH,
+                   "main-crash", DUMMY_DATE);
+  yield m.setRemoteCrashID("main-crash", "bp-1");
+  Assert.equal((yield m.getCrashes())[0].remoteID, "bp-1");
+});

@@ -7,13 +7,14 @@
 #define mozilla_layers_APZCTreeManager_h
 
 #include <stdint.h>                     // for uint64_t, uint32_t
+#include <map>                          // for std::map
 #include "FrameMetrics.h"               // for FrameMetrics, etc
 #include "Units.h"                      // for CSSPoint, CSSRect, etc
 #include "gfxPoint.h"                   // for gfxPoint
-#include "gfx3DMatrix.h"                // for gfx3DMatrix
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT_HELPER2
 #include "mozilla/EventForwards.h"      // for WidgetInputEvent, nsEventStatus
 #include "mozilla/Monitor.h"            // for Monitor
+#include "mozilla/gfx/Matrix.h"         // for Matrix4x4
 #include "nsAutoPtr.h"                  // for nsRefPtr
 #include "nsCOMPtr.h"                   // for already_AddRefed
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
@@ -21,7 +22,7 @@
 #include "nsTArrayForwardDeclare.h"     // for nsTArray, nsTArray_Impl, etc
 #include "mozilla/gfx/Logging.h"        // for gfx::TreeLog
 
-class gfx3DMatrix;
+class nsIntRegion;
 
 namespace mozilla {
 class InputData;
@@ -42,6 +43,9 @@ class Layer;
 class AsyncPanZoomController;
 class CompositorParent;
 class APZPaintLogHelper;
+class OverscrollHandoffChain;
+struct OverscrollHandoffState;
+class LayerMetricsWrapper;
 
 /**
  * ****************** NOTE ON LOCK ORDERING IN APZ **************************
@@ -87,6 +91,12 @@ class APZCTreeManager {
   typedef mozilla::layers::AllowedTouchBehavior AllowedTouchBehavior;
   typedef uint32_t TouchBehaviorFlags;
 
+  // Helper struct to hold some state while we build the APZ tree. The
+  // sole purpose of this struct is to shorten the argument list to
+  // UpdatePanZoomControllerTree. All the state that we don't need to
+  // push on the stack during recursion and pop on unwind is stored here.
+  struct TreeBuildingState;
+
 public:
   APZCTreeManager();
 
@@ -127,6 +137,25 @@ public:
    * handle them. The event may need to be converted to a WidgetInputEvent
    * by the caller if it wants to do this.
    *
+   * The following values may be returned by this function:
+   * nsEventStatus_eConsumeNoDefault is returned to indicate the
+   *   caller should discard the event with extreme prejudice.
+   *   Currently this is only returned if the APZ determines that
+   *   something is in overscroll and the event should be ignored entirely.
+   *   There may be other scenarios where this return code might be used in
+   *   the future.
+   * nsEventStatus_eIgnore is returned to indicate that the APZ code didn't
+   *   use this event. This might be because it was directed at a point on
+   *   the screen where there was no APZ, or because the thing the user was
+   *   trying to do was not allowed. (For example, attempting to pan a
+   *   non-pannable document).
+   * nsEventStatus_eConsumeDoDefault is returned to indicate that the APZ
+   *   code may have used this event to do some user-visible thing. Note that
+   *   in some cases CONSUMED is returned even if the event was NOT used. This
+   *   is because we cannot always know at the time of event delivery whether
+   *   the event will be used or not. So we err on the side of sending
+   *   CONSUMED when we are uncertain.
+   *
    * @param aEvent input event object; is modified in-place
    * @param aOutTargetGuid returns the guid of the apzc this event was
    * delivered to. May be null.
@@ -149,6 +178,7 @@ public:
    * @param aEvent input event object; is modified in-place
    * @param aOutTargetGuid returns the guid of the apzc this event was
    * delivered to. May be null.
+   * @return See documentation for other ReceiveInputEvent above.
    */
   nsEventStatus ReceiveInputEvent(WidgetInputEvent& aEvent,
                                   ScrollableLayerGuid* aOutTargetGuid);
@@ -249,6 +279,9 @@ public:
    *   than a displacement because with certain 3D transforms, the same
    *   displacement between different points in transformed coordinates can
    *   represent different displacements in untransformed coordinates.
+   * |aOverscrollHandoffChain| is the overscroll handoff chain used for
+   *   determining the order in which scroll should be handed off between
+   *   APZCs
    * |aOverscrollHandoffChainIndex| is the next position in the overscroll
    *   handoff chain that should be scrolled.
    *
@@ -275,46 +308,49 @@ public:
    *   - TM.DispatchScroll() discards the rest of the scroll as there are no more elements in the chain.
    *
    * Note: this should be used for panning only. For handing off overscroll for
-   *       a fling, use HandOffFling().
+   *       a fling, use DispatchFling().
    */
-  bool DispatchScroll(AsyncPanZoomController* aAPZC, ScreenPoint aStartPoint, ScreenPoint aEndPoint,
-                      uint32_t aOverscrollHandoffChainIndex);
+  bool DispatchScroll(AsyncPanZoomController* aApzc,
+                      ScreenPoint aStartPoint,
+                      ScreenPoint aEndPoint,
+                      OverscrollHandoffState& aOverscrollHandoffState);
 
   /**
    * This is a callback for AsyncPanZoomController to call when it wants to
-   * hand off overscroll from a fling.
-   * @param aApzc the APZC that is handing off the fling
+   * start a fling in response to a touch-end event, or when it needs to hand
+   * off a fling to the next APZC. Note that because of scroll grabbing, the
+   * first APZC to fling may not be the one that is receiving the touch events.
+   *
+   * @param aApzc the APZC that wants to start or hand off the fling
    * @param aVelocity the current velocity of the fling, in |aApzc|'s screen
    *                  pixels per millisecond
-   * Returns true iff. another APZC accepted the handed-off fling. The caller
-   * (|aApzc|) uses this return value to determine whether it should consume
+   * @param aOverscrollHandoffChain the chain of APZCs along which the fling
+   *                                should be handed off
+   * @param aHandoff is true if |aApzc| is handing off an existing fling (in
+   *                 this case the fling is given to the next APZC in the
+   *                 handoff chain after |aApzc|), and false is |aApzc| wants
+   *                 start a fling (in this case the fling is given to the
+   *                 first APZC in the chain)
+   *
+   * Returns true iff. an APZC accepted the fling. In the case of fling handoff,
+   * the caller uses this return value to determine whether it should consume
    * the excess fling itself by going into an overscroll fling.
    */
-  bool HandOffFling(AsyncPanZoomController* aApzc, ScreenPoint aVelocity);
+  bool DispatchFling(AsyncPanZoomController* aApzc,
+                     ScreenPoint aVelocity,
+                     nsRefPtr<const OverscrollHandoffChain> aOverscrollHandoffChain,
+                     bool aHandoff);
 
-  bool FlushRepaintsForOverscrollHandoffChain();
-  bool CancelAnimationsForOverscrollHandoffChain();
-
-  /**
-   * Determine whether |aApzc|, or any APZC along its overscroll handoff chain,
-   * has room to be panned.
-   * Expects the overscroll handoff chain to already be built.
-   */
-  bool CanBePanned(AsyncPanZoomController* aApzc);
-
-protected:
-  // Protected destructor, to discourage deletion outside of Release():
-  virtual ~APZCTreeManager();
+  void SnapBackOverscrolledApzc(AsyncPanZoomController* aStart);
 
   /*
    * Build the chain of APZCs that will handle overscroll for a pan starting at |aInitialTarget|.
    */
-  void BuildOverscrollHandoffChain(const nsRefPtr<AsyncPanZoomController>& aInitialTarget);
+  nsRefPtr<const OverscrollHandoffChain> BuildOverscrollHandoffChain(const nsRefPtr<AsyncPanZoomController>& aInitialTarget);
+protected:
+  // Protected destructor, to discourage deletion outside of Release():
+  virtual ~APZCTreeManager();
 
-  /*
-   * Clear the handoff chain built in BuildOverscrollHandoffChain().
-   */
-  void ClearOverscrollHandoffChain();
 public:
   /* Some helper functions to find an APZC given some identifying input. These functions
      lock the tree of APZCs while they find the right one, and then return an addref'd
@@ -325,14 +361,14 @@ public:
   already_AddRefed<AsyncPanZoomController> GetTargetAPZC(const ScrollableLayerGuid& aGuid);
   already_AddRefed<AsyncPanZoomController> GetTargetAPZC(const ScreenPoint& aPoint,
                                                          bool* aOutInOverscrolledApzc);
-  void GetInputTransforms(AsyncPanZoomController *aApzc, gfx3DMatrix& aTransformToApzcOut,
-                          gfx3DMatrix& aTransformToGeckoOut);
+  void GetInputTransforms(AsyncPanZoomController *aApzc, gfx::Matrix4x4& aTransformToApzcOut,
+                          gfx::Matrix4x4& aTransformToGeckoOut);
 private:
   /* Helpers */
   AsyncPanZoomController* FindTargetAPZC(AsyncPanZoomController* aApzc, FrameMetrics::ViewID aScrollId);
   AsyncPanZoomController* FindTargetAPZC(AsyncPanZoomController* aApzc, const ScrollableLayerGuid& aGuid);
   AsyncPanZoomController* GetAPZCAtPoint(AsyncPanZoomController* aApzc,
-                                         const gfxPoint& aHitTestPoint,
+                                         const gfx::Point& aHitTestPoint,
                                          bool* aOutInOverscrolledApzc);
   already_AddRefed<AsyncPanZoomController> CommonAncestor(AsyncPanZoomController* aApzc1, AsyncPanZoomController* aApzc2);
   already_AddRefed<AsyncPanZoomController> RootAPZCForLayersId(AsyncPanZoomController* aApzc);
@@ -345,6 +381,15 @@ private:
   void UpdateZoomConstraintsRecursively(AsyncPanZoomController* aApzc,
                                         const ZoomConstraints& aConstraints);
 
+  AsyncPanZoomController* PrepareAPZCForLayer(const LayerMetricsWrapper& aLayer,
+                                              const FrameMetrics& aMetrics,
+                                              uint64_t aLayersId,
+                                              const gfx::Matrix4x4& aAncestorTransform,
+                                              const nsIntRegion& aObscured,
+                                              AsyncPanZoomController* aParent,
+                                              AsyncPanZoomController* aNextSibling,
+                                              TreeBuildingState& aState);
+
   /**
    * Recursive helper function to build the APZC tree. The tree of APZC instances has
    * the same shape as the layer tree, but excludes all the layers that are not scrollable.
@@ -354,15 +399,13 @@ private:
    * tree also as a last-child-prev-sibling tree because that simplifies the hit detection
    * code.
    */
-  AsyncPanZoomController* UpdatePanZoomControllerTree(CompositorParent* aCompositor,
-                                                      Layer* aLayer, uint64_t aLayersId,
-                                                      gfx3DMatrix aTransform,
+  AsyncPanZoomController* UpdatePanZoomControllerTree(TreeBuildingState& aState,
+                                                      const LayerMetricsWrapper& aLayer,
+                                                      uint64_t aLayersId,
+                                                      const gfx::Matrix4x4& aAncestorTransform,
                                                       AsyncPanZoomController* aParent,
                                                       AsyncPanZoomController* aNextSibling,
-                                                      bool aIsFirstPaint,
-                                                      uint64_t aOriginatingLayersId,
-                                                      const APZPaintLogHelper& aPaintLogger,
-                                                      nsTArray< nsRefPtr<AsyncPanZoomController> >* aApzcsToDestroy);
+                                                      const nsIntRegion& aObscured);
 
 private:
   /* Whenever walking or mutating the tree rooted at mRootApzc, mTreeLock must be held.
@@ -398,13 +441,7 @@ private:
    * but for some operations we need to use the initial transform.
    * Meaningless if mApzcForInputBlock is nullptr.
    */
-  gfx3DMatrix mCachedTransformToApzcForInputBlock;
-  /* The chain of APZCs that will handle pans for the current touch input
-   * block, in the order in which they will be scrolled. When one APZC has
-   * been scrolled as far as it can, any overscroll will be handed off to
-   * the next APZC in the chain.
-   */
-  Vector< nsRefPtr<AsyncPanZoomController> > mOverscrollHandoffChain;
+  gfx::Matrix4x4 mCachedTransformToApzcForInputBlock;
   /* For logging the APZC tree for debugging (enabled by the apz.printtree
    * pref). */
   gfx::TreeLog mApzcTreeLog;

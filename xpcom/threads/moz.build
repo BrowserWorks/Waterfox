@@ -55,10 +55,12 @@ MSVC_ENABLE_PGO = True
 LOCAL_INCLUDES += [
     '../build',
     '/caps',
+    '/toolkit/crashreporter/google-breakpad/src',
+    '/tools/profiler',
 ]
 
 FAIL_ON_WARNINGS = True
 
-FINAL_LIBRARY = 'xpcom_core'
+FINAL_LIBRARY = 'xul'
 
 include('/ipc/chromium/chromium-config.mozbuild')

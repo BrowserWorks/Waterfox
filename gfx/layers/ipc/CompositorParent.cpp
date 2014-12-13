@@ -19,6 +19,9 @@
 #include "base/tracked.h"               // for FROM_HERE
 #include "gfxContext.h"                 // for gfxContext
 #include "gfxPlatform.h"                // for gfxPlatform
+#ifdef MOZ_WIDGET_GTK
+#include "gfxPlatformGtk.h"             // for gfxPlatform
+#endif
 #include "gfxPrefs.h"                   // for gfxPrefs
 #include "ipc/ShadowLayersManager.h"    // for ShadowLayersManager
 #include "mozilla/AutoRestore.h"        // for AutoRestore
@@ -36,6 +39,9 @@
 #include "mozilla/layers/LayersTypes.h"
 #include "mozilla/layers/PLayerTransactionParent.h"
 #include "mozilla/mozalloc.h"           // for operator new, etc
+#ifdef MOZ_WIDGET_GTK
+#include "basic/X11BasicCompositor.h" // for X11BasicCompositor
+#endif
 #include "nsCOMPtr.h"                   // for already_AddRefed
 #include "nsDebug.h"                    // for NS_ABORT_IF_FALSE, etc
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
@@ -139,9 +145,10 @@ CompositorThreadHolder::CreateCompositorThread()
      128ms is chosen for transient hangs because 8Hz should be the minimally
      acceptable goal for Compositor responsiveness (normal goal is 60Hz). */
   options.transient_hang_timeout = 128; // milliseconds
-  /* 8192ms is chosen for permanent hangs because it's several seconds longer
-     than the default hang timeout on major platforms (about 5 seconds). */
-  options.permanent_hang_timeout = 8192; // milliseconds
+  /* 2048ms is chosen for permanent hangs because it's longer than most
+   * Compositor hangs seen in the wild, but is short enough to not miss getting
+   * native hang stacks. */
+  options.permanent_hang_timeout = 2048; // milliseconds
 #if defined(_WIN32)
   /* With d3d9 the compositor thread creates native ui, see DeviceManagerD3D9. As
    * such the thread is a gui thread, and must process a windows message queue or
@@ -241,7 +248,9 @@ CompositorParent::CompositorParent(nsIWidget* aWidget,
   mRootLayerTreeID = AllocateLayerTreeId();
   sIndirectLayerTrees[mRootLayerTreeID].mParent = this;
 
-  mApzcTreeManager = new APZCTreeManager();
+  if (gfxPrefs::AsyncPanZoomEnabled()) {
+    mApzcTreeManager = new APZCTreeManager();
+  }
 }
 
 bool
@@ -276,8 +285,10 @@ CompositorParent::Destroy()
   mCompositor = nullptr;
 
   mCompositionManager = nullptr;
-  mApzcTreeManager->ClearTree();
-  mApzcTreeManager = nullptr;
+  if (mApzcTreeManager) {
+    mApzcTreeManager->ClearTree();
+    mApzcTreeManager = nullptr;
+  }
   sIndirectLayerTrees.erase(mRootLayerTreeID);
 }
 
@@ -550,9 +561,11 @@ CompositorParent::ScheduleTask(CancelableTask* task, int time)
 
 void
 CompositorParent::NotifyShadowTreeTransaction(uint64_t aId, bool aIsFirstPaint,
-    bool aScheduleComposite, uint32_t aPaintSequenceNumber)
+    bool aScheduleComposite, uint32_t aPaintSequenceNumber,
+    bool aIsRepeatTransaction)
 {
   if (mApzcTreeManager &&
+      !aIsRepeatTransaction &&
       mLayerManager &&
       mLayerManager->GetRoot()) {
     AutoResolveRefLayers resolve(mCompositionManager);
@@ -672,6 +685,8 @@ CompositorParent::CompositeToTarget(DrawTarget* aTarget, const nsIntRect* aRect)
     }
   }
 
+  mCompositionManager->ComputeRotation();
+
   TimeStamp time = mIsTesting ? mTestTime : mLastCompose;
   bool requestNextFrame = mCompositionManager->TransformShadowTree(time);
   if (requestNextFrame) {
@@ -679,8 +694,6 @@ CompositorParent::CompositeToTarget(DrawTarget* aTarget, const nsIntRect* aRect)
   }
 
   RenderTraceLayers(mLayerManager->GetRoot(), "0000");
-
-  mCompositionManager->ComputeRotation();
 
 #ifdef MOZ_DUMP_PAINTING
   static bool gDumpCompositorTree = false;
@@ -786,21 +799,22 @@ CompositorParent::ShadowLayersUpdated(LayerTransactionParent* aLayerTree,
                                       const TargetConfig& aTargetConfig,
                                       bool aIsFirstPaint,
                                       bool aScheduleComposite,
-                                      uint32_t aPaintSequenceNumber)
+                                      uint32_t aPaintSequenceNumber,
+                                      bool aIsRepeatTransaction)
 {
   ScheduleRotationOnCompositorThread(aTargetConfig, aIsFirstPaint);
 
   // Instruct the LayerManager to update its render bounds now. Since all the orientation
   // change, dimension change would be done at the stage, update the size here is free of
   // race condition.
-  mLayerManager->UpdateRenderBounds(aTargetConfig.clientBounds());
+  mLayerManager->UpdateRenderBounds(aTargetConfig.naturalBounds());
   mLayerManager->SetRegionToClear(aTargetConfig.clearRegion());
 
   mCompositionManager->Updated(aIsFirstPaint, aTargetConfig);
   Layer* root = aLayerTree->GetRoot();
   mLayerManager->SetRoot(root);
 
-  if (mApzcTreeManager) {
+  if (mApzcTreeManager && !aIsRepeatTransaction) {
     AutoResolveRefLayers resolve(mCompositionManager);
     mApzcTreeManager->UpdatePanZoomControllerTree(this, root, aIsFirstPaint,
         mRootLayerTreeID, aPaintSequenceNumber);
@@ -904,7 +918,14 @@ CompositorParent::InitializeLayerManager(const nsTArray<LayersBackend>& aBackend
                                      mEGLSurfaceSize.height,
                                      mUseExternalSurfaceSize);
     } else if (aBackendHints[i] == LayersBackend::LAYERS_BASIC) {
-      compositor = new BasicCompositor(mWidget);
+#ifdef MOZ_WIDGET_GTK
+      if (gfxPlatformGtk::GetPlatform()->UseXRender()) {
+        compositor = new X11BasicCompositor(mWidget);
+      } else
+#endif
+      {
+        compositor = new BasicCompositor(mWidget);
+      }
 #ifdef XP_WIN
     } else if (aBackendHints[i] == LayersBackend::LAYERS_D3D11) {
       compositor = new CompositorD3D11(mWidget);
@@ -1116,6 +1137,7 @@ public:
     : mTransport(aTransport)
     , mChildProcessId(aOtherProcess)
     , mCompositorThreadHolder(sCompositorThreadHolder)
+    , mNotifyAfterRemotePaint(false)
   {
     MOZ_ASSERT(NS_IsMainThread());
   }
@@ -1143,6 +1165,11 @@ public:
   virtual bool RecvStartFrameTimeRecording(const int32_t& aBufferSize, uint32_t* aOutStartIndex) MOZ_OVERRIDE { return true; }
   virtual bool RecvStopFrameTimeRecording(const uint32_t& aStartIndex, InfallibleTArray<float>* intervals) MOZ_OVERRIDE  { return true; }
 
+  /**
+   * Tells this CompositorParent to send a message when the compositor has received the transaction.
+   */
+  virtual bool RecvRequestNotifyAfterRemotePaint() MOZ_OVERRIDE;
+
   virtual PLayerTransactionParent*
     AllocPLayerTransactionParent(const nsTArray<LayersBackend>& aBackendHints,
                                  const uint64_t& aId,
@@ -1156,7 +1183,8 @@ public:
                                    const TargetConfig& aTargetConfig,
                                    bool aIsFirstPaint,
                                    bool aScheduleComposite,
-                                   uint32_t aPaintSequenceNumber) MOZ_OVERRIDE;
+                                   uint32_t aPaintSequenceNumber,
+                                   bool aIsRepeatTransaction) MOZ_OVERRIDE;
   virtual void ForceComposite(LayerTransactionParent* aLayerTree) MOZ_OVERRIDE;
   virtual bool SetTestSampleTime(LayerTransactionParent* aLayerTree,
                                  const TimeStamp& aTime) MOZ_OVERRIDE;
@@ -1183,6 +1211,9 @@ private:
   base::ProcessId mChildProcessId;
 
   nsRefPtr<CompositorThreadHolder> mCompositorThreadHolder;
+  // If true, we should send a RemotePaintIsReady message when the layer transaction
+  // is received
+  bool mNotifyAfterRemotePaint;
 };
 
 void
@@ -1275,6 +1306,13 @@ RemoveIndirectTree(uint64_t aId)
   sIndirectLayerTrees.erase(aId);
 }
 
+bool
+CrossProcessCompositorParent::RecvRequestNotifyAfterRemotePaint()
+{
+  mNotifyAfterRemotePaint = true;
+  return true;
+}
+
 void
 CrossProcessCompositorParent::ActorDestroy(ActorDestroyReason aWhy)
 {
@@ -1347,7 +1385,8 @@ CrossProcessCompositorParent::ShadowLayersUpdated(
   const TargetConfig& aTargetConfig,
   bool aIsFirstPaint,
   bool aScheduleComposite,
-  uint32_t aPaintSequenceNumber)
+  uint32_t aPaintSequenceNumber,
+  bool aIsRepeatTransaction)
 {
   uint64_t id = aLayerTree->GetId();
 
@@ -1367,7 +1406,14 @@ CrossProcessCompositorParent::ShadowLayersUpdated(
   UpdateIndirectTree(id, shadowRoot, aTargetConfig);
 
   state->mParent->NotifyShadowTreeTransaction(id, aIsFirstPaint, aScheduleComposite,
-      aPaintSequenceNumber);
+      aPaintSequenceNumber, aIsRepeatTransaction);
+
+  // Send the 'remote paint ready' message to the content thread if it has already asked.
+  if(mNotifyAfterRemotePaint)  {
+    unused << SendRemotePaintIsReady();
+    mNotifyAfterRemotePaint = false;
+  }
+
   aLayerTree->SetPendingTransactionId(aTransactionId);
 }
 

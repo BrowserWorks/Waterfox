@@ -14,7 +14,7 @@ function onLoad()
 
   var hostname = dialogParams.GetString(0);
   var bundle = document.getElementById("pippki_bundle");
-  var intro = bundle.getFormattedString("formSigningIntro", [hostname]);
+  var intro = "The site '" + hostname + "' has requested that you sign the following text message:";
   setText("sign.intro", intro);
 
   document.getElementById("sign.text").value = dialogParams.GetString(1);

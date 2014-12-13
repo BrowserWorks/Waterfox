@@ -4,6 +4,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+if CONFIG['ENABLE_TESTS']:
+    MOCHITEST_CHROME_MANIFESTS += ['tests/chrome/chrome.ini']
+    MOCHITEST_MANIFESTS += ['tests/mochitest.ini']
+
 XPIDL_SOURCES += [
     'inICSSValueSearch.idl',
     'inIDeepTreeWalker.idl',
@@ -41,15 +45,9 @@ if CONFIG['MOZ_XUL']:
 
 FAIL_ON_WARNINGS = True
 
-FINAL_LIBRARY = 'gklayout'
+FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '../style',
     '/content/base/src',
     '/dom/xbl',
 ]
-
-if CONFIG['ENABLE_TESTS']:
-    PARALLEL_DIRS += [
-        'tests',
-        'tests/chrome',
-    ]

@@ -8,6 +8,7 @@ FAIL_ON_WARNINGS = True
 
 SIMPLE_PROGRAMS = [
     'BadCertServer',
+    'ClientAuthServer',
     'GenerateOCSPResponse',
     'OCSPStaplingServer',
 ]
@@ -20,3 +21,13 @@ LOCAL_INCLUDES += [
     '../lib',
 ]
 
+USE_LIBS += [
+    'mozalloc',
+    'mozillapkix',
+    'nspr',
+    'nss',
+    'pkixtestutil',
+    'tlsserver',
+]
+
+CXXFLAGS += CONFIG['TK_CFLAGS']

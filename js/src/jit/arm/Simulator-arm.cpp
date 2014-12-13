@@ -33,8 +33,8 @@
 #include "mozilla/Likely.h"
 #include "mozilla/MathAlgorithms.h"
 
+#include "asmjs/AsmJSValidate.h"
 #include "jit/arm/Assembler-arm.h"
-#include "jit/AsmJS.h"
 #include "vm/Runtime.h"
 
 extern "C" {
@@ -385,31 +385,23 @@ class SimulatorRuntime
     {}
     ~SimulatorRuntime();
     bool init() {
-#ifdef JS_THREADSAFE
         lock_ = PR_NewLock();
         if (!lock_)
             return false;
-#endif
         if (!icache_.init())
             return false;
         return true;
     }
     ICacheMap &icache() {
-#ifdef JS_THREADSAFE
         MOZ_ASSERT(lockOwner_ == PR_GetCurrentThread());
-#endif
         return icache_;
     }
     Redirection *redirection() const {
-#ifdef JS_THREADSAFE
         MOZ_ASSERT(lockOwner_ == PR_GetCurrentThread());
-#endif
         return redirection_;
     }
     void setRedirection(js::jit::Redirection *redirection) {
-#ifdef JS_THREADSAFE
         MOZ_ASSERT(lockOwner_ == PR_GetCurrentThread());
-#endif
         redirection_ = redirection;
     }
 };
@@ -423,21 +415,17 @@ class AutoLockSimulatorRuntime
     AutoLockSimulatorRuntime(SimulatorRuntime *srt)
       : srt_(srt)
     {
-#ifdef JS_THREADSAFE
         PR_Lock(srt_->lock_);
         MOZ_ASSERT(!srt_->lockOwner_);
 #ifdef DEBUG
         srt_->lockOwner_ = PR_GetCurrentThread();
 #endif
-#endif
     }
 
     ~AutoLockSimulatorRuntime() {
-#ifdef JS_THREADSAFE
         MOZ_ASSERT(srt_->lockOwner_ == PR_GetCurrentThread());
         srt_->lockOwner_ = nullptr;
         PR_Unlock(srt_->lock_);
-#endif
     }
 };
 
@@ -1140,6 +1128,9 @@ Simulator::Simulator(SimulatorRuntime *srt)
     resume_pc_ = 0;
     break_pc_ = nullptr;
     break_instr_ = 0;
+    single_stepping_ = false;
+    single_step_callback_ = nullptr;
+    single_step_callback_arg_ = nullptr;
     skipCalleeSavedRegsCheck = false;
 
     // Set up architecture state.
@@ -1261,10 +1252,8 @@ SimulatorRuntime::~SimulatorRuntime()
         js_delete(r);
         r = next;
     }
-#ifdef JS_THREADSAFE
     if (lock_)
         PR_DestroyLock(lock_);
-#endif
 }
 
 // Sets the register in the architecture state. It will also deal with updating
@@ -1661,7 +1650,7 @@ Simulator::conditionallyExecute(SimInstruction *instr)
       case Assembler::GT: return !z_flag_ && (n_flag_ == v_flag_);
       case Assembler::LE: return z_flag_ || (n_flag_ != v_flag_);
       case Assembler::AL: return true;
-      default: MOZ_ASSUME_UNREACHABLE();
+      default: MOZ_CRASH();
     }
     return false;
 }
@@ -1776,7 +1765,7 @@ Simulator::getShiftRm(SimInstruction *instr, bool *carry_out)
     if (instr->bit(4) == 0) {
         // By immediate.
         if (shift == ROR && shift_amount == 0) {
-            MOZ_ASSUME_UNREACHABLE("NYI");
+            MOZ_CRASH("NYI");
             return result;
         }
         if ((shift == LSR || shift == ASR) && shift_amount == 0)
@@ -1837,8 +1826,7 @@ Simulator::getShiftRm(SimInstruction *instr, bool *carry_out)
           }
 
           default:
-            MOZ_ASSUME_UNREACHABLE();
-            break;
+            MOZ_CRASH();
         }
     } else {
         // By register.
@@ -1915,8 +1903,7 @@ Simulator::getShiftRm(SimInstruction *instr, bool *carry_out)
           }
 
           default:
-            MOZ_ASSUME_UNREACHABLE();
-            break;
+            MOZ_CRASH();
         }
     }
     return result;
@@ -1960,8 +1947,7 @@ Simulator::processPU(SimInstruction *instr, int num_regs, int reg_size,
         rn_val = *end_address;
         break;
       default:
-        MOZ_ASSUME_UNREACHABLE();
-        break;
+        MOZ_CRASH();
     }
     return rn_val;
 }
@@ -2128,11 +2114,14 @@ Simulator::softwareInterrupt(SimInstruction *instr)
         int32_t saved_lr = get_register(lr);
         intptr_t external = reinterpret_cast<intptr_t>(redirection->nativeFunction());
 
-        bool stack_aligned = (get_register(sp) & (StackAlignment - 1)) == 0;
+        bool stack_aligned = (get_register(sp) & (ABIStackAlignment - 1)) == 0;
         if (!stack_aligned) {
             fprintf(stderr, "Runtime call with unaligned stack!\n");
             MOZ_CRASH();
         }
+
+        if (single_stepping_)
+            single_step_callback_(single_step_callback_arg_, this, nullptr);
 
         switch (redirection->type()) {
           case Args_General0: {
@@ -2299,8 +2288,11 @@ Simulator::softwareInterrupt(SimInstruction *instr)
             break;
           }
           default:
-            MOZ_ASSUME_UNREACHABLE("call");
+            MOZ_CRASH("call");
         }
+
+        if (single_stepping_)
+            single_step_callback_(single_step_callback_arg_, this, nullptr);
 
         set_register(lr, saved_lr);
         set_pc(get_register(lr));
@@ -3340,7 +3332,7 @@ Simulator::decodeTypeVFP(SimInstruction *instr)
             const bool is_vmls = (instr->opc3Value() & 0x1);
 
             if (instr->szValue() != 0x1)
-                MOZ_ASSUME_UNREACHABLE();  // Not used by V8.
+                MOZ_CRASH("Not used by V8.");
 
             const double dd_val = get_double_from_d_register(vd);
             const double dn_val = get_double_from_d_register(vn);
@@ -3747,7 +3739,7 @@ Simulator::decodeVCVTBetweenFloatingPointAndIntegerFrac(SimInstruction *instr)
             set_s_register_from_sinteger(dst, temp);
         }
     } else {
-        MOZ_ASSUME_UNREACHABLE();  // Not implemented, fixed to float.
+        MOZ_CRASH();  // Not implemented, fixed to float.
     }
 }
 
@@ -3867,7 +3859,9 @@ Simulator::decodeSpecialCondition(SimInstruction *instr)
       case 5:
         if (instr->bits(18, 16) == 0 && instr->bits(11, 6) == 0x28 && instr->bit(4) == 1) {
             // vmovl signed
-            int Vd = (instr->bit(22) << 4) | instr->vdValue();
+            if ((instr->vdValue() & 1) != 0)
+                MOZ_CRASH("Undefined behavior");
+            int Vd = (instr->bit(22) << 3) | (instr->vdValue() >> 1);
             int Vm = (instr->bit(5) << 4) | instr->vmValue();
             int imm3 = instr->bits(21, 19);
             if (imm3 != 1 && imm3 != 2 && imm3 != 4)
@@ -3890,7 +3884,9 @@ Simulator::decodeSpecialCondition(SimInstruction *instr)
       case 7:
         if (instr->bits(18, 16) == 0 && instr->bits(11, 6) == 0x28 && instr->bit(4) == 1) {
             // vmovl unsigned.
-            int Vd = (instr->bit(22) << 4) | instr->vdValue();
+            if ((instr->vdValue() & 1) != 0)
+                MOZ_CRASH("Undefined behavior");
+            int Vd = (instr->bit(22) << 3) | (instr->vdValue() >> 1);
             int Vm = (instr->bit(5) << 4) | instr->vmValue();
             int imm3 = instr->bits(21, 19);
             if (imm3 != 1 && imm3 != 2 && imm3 != 4)
@@ -4059,15 +4055,34 @@ Simulator::instructionDecode(SimInstruction *instr)
         set_register(pc, reinterpret_cast<int32_t>(instr) + SimInstruction::kInstrSize);
 }
 
+void
+Simulator::enable_single_stepping(SingleStepCallback cb, void *arg)
+{
+    single_stepping_ = true;
+    single_step_callback_ = cb;
+    single_step_callback_arg_ = arg;
+    single_step_callback_(single_step_callback_arg_, this, (void*)get_pc());
+}
+
+void
+Simulator::disable_single_stepping()
+{
+    single_step_callback_(single_step_callback_arg_, this, (void*)get_pc());
+    single_stepping_ = false;
+    single_step_callback_ = nullptr;
+    single_step_callback_arg_ = nullptr;
+}
 
 template<bool EnableStopSimAt>
 void
 Simulator::execute()
 {
+    if (single_stepping_)
+        single_step_callback_(single_step_callback_arg_, this, nullptr);
+
     // Get the PC to simulate. Cannot use the accessor here as we need the raw
     // PC value and not the one used as input to arithmetic instructions.
     int program_counter = get_pc();
-    AsmJSActivation *activation = TlsPerThreadData.get()->asmJSActivationStackFromOwnerThread();
 
     while (program_counter != end_sim_pc) {
         if (EnableStopSimAt && (icount_ == Simulator::StopSimAt)) {
@@ -4075,6 +4090,8 @@ Simulator::execute()
             ArmDebugger dbg(this);
             dbg.debug();
         } else {
+            if (single_stepping_)
+                single_step_callback_(single_step_callback_arg_, this, (void*)program_counter);
             SimInstruction *instr = reinterpret_cast<SimInstruction *>(program_counter);
             instructionDecode(instr);
             icount_++;
@@ -4082,13 +4099,16 @@ Simulator::execute()
             int32_t rpc = resume_pc_;
             if (MOZ_UNLIKELY(rpc != 0)) {
                 // AsmJS signal handler ran and we have to adjust the pc.
-                activation->setResumePC((void *)get_pc());
+                PerThreadData::innermostAsmJSActivation()->setResumePC((void *)get_pc());
                 set_pc(rpc);
                 resume_pc_ = 0;
             }
         }
         program_counter = get_pc();
     }
+
+    if (single_stepping_)
+        single_step_callback_(single_step_callback_arg_, this, nullptr);
 }
 
 void
@@ -4235,7 +4255,7 @@ Simulator::call(uint8_t* entry, int argument_count, ...)
     if (argument_count >= 4)
         entry_stack -= (argument_count - 4) * sizeof(int32_t);
 
-    entry_stack &= ~StackAlignment;
+    entry_stack &= ~ABIStackAlignment;
 
     // Store remaining arguments on stack, from low to high memory.
     intptr_t *stack_argument = reinterpret_cast<intptr_t*>(entry_stack);

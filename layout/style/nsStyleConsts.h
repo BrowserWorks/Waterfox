@@ -416,6 +416,11 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 #define NS_STYLE_DISPLAY_INLINE_FLEX            30
 #define NS_STYLE_DISPLAY_GRID                   31
 #define NS_STYLE_DISPLAY_INLINE_GRID            32
+#define NS_STYLE_DISPLAY_RUBY                   33
+#define NS_STYLE_DISPLAY_RUBY_BASE              34
+#define NS_STYLE_DISPLAY_RUBY_BASE_CONTAINER    35
+#define NS_STYLE_DISPLAY_RUBY_TEXT              36
+#define NS_STYLE_DISPLAY_RUBY_TEXT_CONTAINER    37
 
 // See nsStylePosition
 #define NS_STYLE_ALIGN_CONTENT_FLEX_START       0
@@ -488,11 +493,6 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 #define NS_STYLE_FONT_STYLE_NORMAL              NS_FONT_STYLE_NORMAL
 #define NS_STYLE_FONT_STYLE_ITALIC              NS_FONT_STYLE_ITALIC
 #define NS_STYLE_FONT_STYLE_OBLIQUE             NS_FONT_STYLE_OBLIQUE
-
-// See nsStyleFont
-// We should eventually stop using the NS_STYLE_* variants here.
-#define NS_STYLE_FONT_VARIANT_NORMAL            NS_FONT_VARIANT_NORMAL
-#define NS_STYLE_FONT_VARIANT_SMALL_CAPS        NS_FONT_VARIANT_SMALL_CAPS
 
 // See nsStyleFont
 // We should eventually stop using the NS_STYLE_* variants here.
@@ -829,24 +829,6 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 #define NS_STYLE_UNICODE_BIDI_OVERRIDE          0x4
 #define NS_STYLE_UNICODE_BIDI_ISOLATE_OVERRIDE  0x6
 #define NS_STYLE_UNICODE_BIDI_PLAINTEXT         0x8
-
-// See nsStyleTable (here for HTML 4.0 for now, should probably change to side flags)
-#define NS_STYLE_TABLE_FRAME_NONE               0
-#define NS_STYLE_TABLE_FRAME_ABOVE              1
-#define NS_STYLE_TABLE_FRAME_BELOW              2
-#define NS_STYLE_TABLE_FRAME_HSIDES             3
-#define NS_STYLE_TABLE_FRAME_VSIDES             4
-#define NS_STYLE_TABLE_FRAME_LEFT               5
-#define NS_STYLE_TABLE_FRAME_RIGHT              6
-#define NS_STYLE_TABLE_FRAME_BOX                7
-#define NS_STYLE_TABLE_FRAME_BORDER             8
-
-// See nsStyleTable
-#define NS_STYLE_TABLE_RULES_NONE               0
-#define NS_STYLE_TABLE_RULES_GROUPS             1
-#define NS_STYLE_TABLE_RULES_ROWS               2
-#define NS_STYLE_TABLE_RULES_COLS               3
-#define NS_STYLE_TABLE_RULES_ALL                4
 
 #define NS_STYLE_TABLE_LAYOUT_AUTO              0
 #define NS_STYLE_TABLE_LAYOUT_FIXED             1

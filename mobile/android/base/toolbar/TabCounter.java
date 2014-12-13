@@ -5,19 +5,19 @@
 
 package org.mozilla.gecko.toolbar;
 
-import org.mozilla.gecko.animation.Rotate3DAnimation;
+import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.animation.Rotate3DAnimation;
 import org.mozilla.gecko.widget.ThemedTextSwitcher;
 
 import android.content.Context;
-import android.os.Build;
-import android.view.accessibility.AccessibilityNodeInfo;
-import android.view.animation.Animation;
-import android.view.animation.AnimationSet;
-import android.view.animation.AlphaAnimation;
+import android.content.res.TypedArray;
+import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.util.AttributeSet;
+import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.AnimationSet;
 import android.widget.ViewSwitcher;
 
 public class TabCounter extends ThemedTextSwitcher
@@ -33,8 +33,9 @@ public class TabCounter extends ThemedTextSwitcher
     private final AnimationSet mFlipOutForward;
     private final AnimationSet mFlipOutBackward;
     private final LayoutInflater mInflater;
+    private final int mLayoutId;
 
-    private int mCount = 0;
+    private int mCount;
 
     private enum FadeMode {
         FADE_IN,
@@ -43,6 +44,11 @@ public class TabCounter extends ThemedTextSwitcher
 
     public TabCounter(Context context, AttributeSet attrs) {
         super(context, attrs);
+
+        final TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.TabCounter);
+        mLayoutId = a.getResourceId(R.styleable.TabCounter_android_layout, R.layout.tabs_counter);
+        a.recycle();
+
         mInflater = LayoutInflater.from(context);
 
         mFlipInForward = createAnimation(-90, 0, FadeMode.FADE_IN, -1 * Z_DISTANCE, false);
@@ -53,7 +59,7 @@ public class TabCounter extends ThemedTextSwitcher
         removeAllViews();
         setFactory(this);
 
-        if (Build.VERSION.SDK_INT >= 16) {
+        if (Versions.feature16Plus) {
             // This adds the TextSwitcher to the a11y node tree, where we in turn
             // could make it return an empty info node. If we don't do this the
             // TextSwitcher's child TextViews get picked up, and we don't want
@@ -127,7 +133,7 @@ public class TabCounter extends ThemedTextSwitcher
 
     @Override
     public View makeView() {
-        return mInflater.inflate(R.layout.tabs_counter, null);
+        return mInflater.inflate(mLayoutId, null);
     }
 
 }

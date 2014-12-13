@@ -37,8 +37,10 @@ if not CONFIG['MOZ_WEBRTC']:
 
 FAIL_ON_WARNINGS = True
 
-FINAL_LIBRARY = 'gklayout'
+FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '/media/webrtc/trunk/webrtc/modules/video_capture/windows',
 ]
 
+if CONFIG['OS_ARCH'] == 'WINNT':
+    DEFINES['NOMINMAX'] = True

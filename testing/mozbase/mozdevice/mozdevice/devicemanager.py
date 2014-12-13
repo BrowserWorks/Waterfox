@@ -46,12 +46,13 @@ class DeviceManager(object):
 
     _logcatNeedsRoot = True
 
-    def __init__(self, logLevel=mozlog.ERROR, deviceRoot=None):
+    def __init__(self, logLevel=None, deviceRoot=None):
         try:
-            self._logger = mozlog.structured.structuredlog.get_default_logger(component="DeviceManager")
+            self._logger = mozlog.structured.structuredlog.get_default_logger(component="mozdevice")
             if not self._logger: # no global structured logger, fall back to reg logging
-                self._logger = mozlog.getLogger("DeviceManager")
-                self._logger.setLevel(logLevel)
+                self._logger = mozlog.getLogger("mozdevice")
+                if logLevel is not None:
+                    self._logger.setLevel(logLevel)
         except AttributeError:
             # Structured logging doesn't work on Python 2.6
             self._logger = None
@@ -84,14 +85,14 @@ class DeviceManager(object):
 
     @property
     def debug(self):
-        self._logger.warn("dm.debug is deprecated. Use logLevel.")
+        self._logger.warning("dm.debug is deprecated. Use logLevel.")
         levels = {mozlog.DEBUG: 5, mozlog.INFO: 3, mozlog.WARNING: 2,
                   mozlog.ERROR: 1, mozlog.CRITICAL: 0}
         return levels[self.logLevel]
 
     @debug.setter
     def debug_setter(self, newDebug):
-        self._logger.warn("dm.debug is deprecated. Use logLevel.")
+        self._logger.warning("dm.debug is deprecated. Use logLevel.")
         newDebug = 5 if newDebug > 5 else newDebug # truncate >=5 to 5
         levels = {5: mozlog.DEBUG, 3: mozlog.INFO, 2: mozlog.WARNING,
                   1: mozlog.ERROR, 0: mozlog.CRITICAL}
@@ -403,14 +404,16 @@ class DeviceManager(object):
         Format of tuples is (processId, processName, userId)
         """
 
-    def processExist(self, processName):
+    def processInfo(self, processName):
         """
-        Returns True if process with name processName is running on device.
+        Returns information on the process with processName.
+        Information on process is in tuple format: (pid, process path, user)
+        If a process with the specified name does not exist this function will return None.
         """
         if not isinstance(processName, basestring):
             raise TypeError("Process name %s is not a string" % processName)
 
-        pid = None
+        processInfo = None
 
         #filter out extra spaces
         parts = filter(lambda x: x != '', processName.split(' '))
@@ -433,10 +436,17 @@ class DeviceManager(object):
         for proc in procList:
             procName = proc[1].split('/')[-1]
             if (procName == app):
-                pid = proc[0]
+                processInfo = proc
                 break
-        return pid
+        return processInfo
 
+    def processExist(self, processName):
+        """
+        Returns True if process with name processName is running on device.
+        """
+        processInfo = self.processInfo(processName)
+        if processInfo:
+            return processInfo[0]
 
     @abstractmethod
     def killProcess(self, processName, sig=None):

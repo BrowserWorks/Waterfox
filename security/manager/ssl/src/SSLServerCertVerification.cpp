@@ -131,6 +131,8 @@
 extern PRLogModuleInfo* gPIPNSSLog;
 #endif
 
+using namespace mozilla::pkix;
+
 namespace mozilla { namespace psm {
 
 namespace {
@@ -292,6 +294,7 @@ MapCertErrorToProbeValue(PRErrorCode errorCode)
   switch (errorCode)
   {
     case SEC_ERROR_UNKNOWN_ISSUER:                     return  2;
+    case SEC_ERROR_CA_CERT_INVALID:                    return  3;
     case SEC_ERROR_UNTRUSTED_ISSUER:                   return  4;
     case SEC_ERROR_EXPIRED_ISSUER_CERTIFICATE:         return  5;
     case SEC_ERROR_UNTRUSTED_CERT:                     return  6;
@@ -300,6 +303,7 @@ MapCertErrorToProbeValue(PRErrorCode errorCode)
     case SSL_ERROR_BAD_CERT_DOMAIN:                    return  9;
     case SEC_ERROR_EXPIRED_CERTIFICATE:                return 10;
     case mozilla::pkix::MOZILLA_PKIX_ERROR_CA_CERT_USED_AS_END_ENTITY: return 11;
+    case mozilla::pkix::MOZILLA_PKIX_ERROR_INADEQUATE_KEY_SIZE: return 13;
   }
   NS_WARNING("Unknown certificate error code. Does MapCertErrorToProbeValue "
              "handle everything in DetermineCertOverrideErrors?");
@@ -326,8 +330,11 @@ DetermineCertOverrideErrors(CERTCertificate* cert, const char* hostName,
   // called if CertVerifier::VerifyCert succeeded.
   switch (defaultErrorCodeToReport) {
     case SEC_ERROR_CERT_SIGNATURE_ALGORITHM_DISABLED:
+    case SEC_ERROR_CA_CERT_INVALID:
+    case SEC_ERROR_EXPIRED_ISSUER_CERTIFICATE:
     case SEC_ERROR_UNKNOWN_ISSUER:
     case mozilla::pkix::MOZILLA_PKIX_ERROR_CA_CERT_USED_AS_END_ENTITY:
+    case mozilla::pkix::MOZILLA_PKIX_ERROR_INADEQUATE_KEY_SIZE:
     {
       collectedErrors = nsICertOverrideService::ERROR_UNTRUSTED;
       errorCodeTrust = defaultErrorCodeToReport;
@@ -594,7 +601,7 @@ CreateCertErrorRunnable(CertVerifier& certVerifier,
 class CertErrorRunnableRunnable : public nsRunnable
 {
 public:
-  CertErrorRunnableRunnable(CertErrorRunnable* certErrorRunnable)
+  explicit CertErrorRunnableRunnable(CertErrorRunnable* certErrorRunnable)
     : mCertErrorRunnable(certErrorRunnable)
   {
   }
@@ -621,9 +628,11 @@ public:
                             const void* fdForLogging,
                             TransportSecurityInfo* infoObject,
                             CERTCertificate* serverCert,
+                            ScopedCERTCertList& peerCertChain,
                             SECItem* stapledOCSPResponse,
                             uint32_t providerFlags,
-                            PRTime time);
+                            Time time,
+                            PRTime prtime);
 private:
   NS_DECL_NSIRUNNABLE
 
@@ -632,15 +641,19 @@ private:
                                const void* fdForLogging,
                                TransportSecurityInfo* infoObject,
                                CERTCertificate* cert,
+                               CERTCertList* peerCertChain,
                                SECItem* stapledOCSPResponse,
                                uint32_t providerFlags,
-                               PRTime time);
+                               Time time,
+                               PRTime prtime);
   const RefPtr<SharedCertVerifier> mCertVerifier;
   const void* const mFdForLogging;
   const RefPtr<TransportSecurityInfo> mInfoObject;
   const ScopedCERTCertificate mCert;
+  ScopedCERTCertList mPeerCertChain;
   const uint32_t mProviderFlags;
-  const PRTime mTime;
+  const Time mTime;
+  const PRTime mPRTime;
   const TimeStamp mJobStartTime;
   const ScopedSECItem mStapledOCSPResponse;
 };
@@ -648,13 +661,16 @@ private:
 SSLServerCertVerificationJob::SSLServerCertVerificationJob(
     const RefPtr<SharedCertVerifier>& certVerifier, const void* fdForLogging,
     TransportSecurityInfo* infoObject, CERTCertificate* cert,
-    SECItem* stapledOCSPResponse, uint32_t providerFlags, PRTime time)
+    CERTCertList* peerCertChain, SECItem* stapledOCSPResponse,
+    uint32_t providerFlags, Time time, PRTime prtime)
   : mCertVerifier(certVerifier)
   , mFdForLogging(fdForLogging)
   , mInfoObject(infoObject)
   , mCert(CERT_DupCertificate(cert))
+  , mPeerCertChain(peerCertChain)
   , mProviderFlags(providerFlags)
   , mTime(time)
+  , mPRTime(prtime)
   , mJobStartTime(TimeStamp::Now())
   , mStapledOCSPResponse(SECITEM_DupItem(stapledOCSPResponse))
 {
@@ -728,9 +744,13 @@ BlockServerCertChangeForSpdy(nsNSSSocketInfo* infoObject,
 }
 
 SECStatus
-AuthCertificate(CertVerifier& certVerifier, TransportSecurityInfo* infoObject,
-                CERTCertificate* cert, SECItem* stapledOCSPResponse,
-                uint32_t providerFlags, PRTime time)
+AuthCertificate(CertVerifier& certVerifier,
+                TransportSecurityInfo* infoObject,
+                CERTCertificate* cert,
+                ScopedCERTCertList& peerCertChain,
+                SECItem* stapledOCSPResponse,
+                uint32_t providerFlags,
+                Time time)
 {
   MOZ_ASSERT(infoObject);
   MOZ_ASSERT(cert);
@@ -742,7 +762,6 @@ AuthCertificate(CertVerifier& certVerifier, TransportSecurityInfo* infoObject,
   bool saveIntermediates =
     !(providerFlags & nsISocketProvider::NO_PERMANENT_STORAGE);
 
-  ScopedCERTCertList certList;
   SECOidTag evOidPolicy;
   rv = certVerifier.VerifySSLServerCert(cert, stapledOCSPResponse,
                                         time, infoObject,
@@ -794,6 +813,13 @@ AuthCertificate(CertVerifier& certVerifier, TransportSecurityInfo* infoObject,
     }
   }
 
+  if (rv != SECSuccess) {
+    // Certificate validation failed; store the peer certificate chain on
+    // infoObject so it can be used for error reporting. Note: infoObject
+    // indirectly takes ownership of peerCertChain.
+    infoObject->SetFailedCertChain(peerCertChain);
+  }
+
   return rv;
 }
 
@@ -803,9 +829,11 @@ SSLServerCertVerificationJob::Dispatch(
   const void* fdForLogging,
   TransportSecurityInfo* infoObject,
   CERTCertificate* serverCert,
+  ScopedCERTCertList& peerCertChain,
   SECItem* stapledOCSPResponse,
   uint32_t providerFlags,
-  PRTime time)
+  Time time,
+  PRTime prtime)
 {
   // Runs on the socket transport thread
   if (!certVerifier || !infoObject || !serverCert) {
@@ -814,10 +842,18 @@ SSLServerCertVerificationJob::Dispatch(
     return SECFailure;
   }
 
+  // Copy the certificate list so the runnable can take ownership of it in the
+  // constructor.
+  // We can safely skip checking if NSS has already shut down here since we're
+  // in the middle of verifying a certificate.
+  nsNSSShutDownPreventionLock lock;
+  CERTCertList* peerCertChainCopy = nsNSSCertList::DupCertList(peerCertChain, lock);
+
   RefPtr<SSLServerCertVerificationJob> job(
     new SSLServerCertVerificationJob(certVerifier, fdForLogging, infoObject,
-                                     serverCert, stapledOCSPResponse,
-                                     providerFlags, time));
+                                     serverCert, peerCertChainCopy,
+                                     stapledOCSPResponse, providerFlags,
+                                     time, prtime));
 
   nsresult nrv;
   if (!gCertVerificationThreadPool) {
@@ -867,8 +903,8 @@ SSLServerCertVerificationJob::Run()
     // set the error code if/when it fails.
     PR_SetError(0, 0);
     SECStatus rv = AuthCertificate(*mCertVerifier, mInfoObject, mCert.get(),
-                                   mStapledOCSPResponse, mProviderFlags,
-                                   mTime);
+                                   mPeerCertChain, mStapledOCSPResponse,
+                                   mProviderFlags, mTime);
     if (rv == SECSuccess) {
       uint32_t interval = (uint32_t) ((TimeStamp::Now() - mJobStartTime).ToMilliseconds());
       RefPtr<SSLServerCertVerificationResult> restart(
@@ -891,7 +927,7 @@ SSLServerCertVerificationJob::Run()
       RefPtr<CertErrorRunnable> runnable(
           CreateCertErrorRunnable(*mCertVerifier, error, mInfoObject,
                                   mCert.get(), mFdForLogging, mProviderFlags,
-                                  mTime));
+                                  mPRTime));
       if (!runnable) {
         // CreateCertErrorRunnable set a new error code
         error = PR_GetError();
@@ -969,11 +1005,13 @@ AuthCertificateHook(void* arg, PRFileDesc* fd, PRBool checkSig, PRBool isServer)
       return SECFailure;
   }
 
+  // Get the peer certificate chain for error reporting
+  ScopedCERTCertList peerCertChain(SSL_PeerCertificateChain(fd));
+
   socketInfo->SetFullHandshake();
 
-  // This value of "now" is used both here for OCSP stapling and later
-  // when calling CreateCertErrorRunnable.
-  PRTime now = PR_Now();
+  Time now(Now());
+  PRTime prnow(PR_Now());
 
   if (BlockServerCertChangeForSpdy(socketInfo, serverCert) != SECSuccess)
     return SECFailure;
@@ -1015,7 +1053,8 @@ AuthCertificateHook(void* arg, PRFileDesc* fd, PRBool checkSig, PRBool isServer)
     socketInfo->SetCertVerificationWaiting();
     SECStatus rv = SSLServerCertVerificationJob::Dispatch(
                      certVerifier, static_cast<const void*>(fd), socketInfo,
-                     serverCert, stapledOCSPResponse, providerFlags, now);
+                     serverCert, peerCertChain, stapledOCSPResponse,
+                     providerFlags, now, prnow);
     return rv;
   }
 
@@ -1025,7 +1064,8 @@ AuthCertificateHook(void* arg, PRFileDesc* fd, PRBool checkSig, PRBool isServer)
   // a non-blocking socket.
 
   SECStatus rv = AuthCertificate(*certVerifier, socketInfo, serverCert,
-                                 stapledOCSPResponse, providerFlags, now);
+                                 peerCertChain, stapledOCSPResponse,
+                                 providerFlags, now);
   if (rv == SECSuccess) {
     Telemetry::Accumulate(Telemetry::SSL_CERT_ERROR_OVERRIDES, 1);
     return SECSuccess;
@@ -1036,7 +1076,7 @@ AuthCertificateHook(void* arg, PRFileDesc* fd, PRBool checkSig, PRBool isServer)
     RefPtr<CertErrorRunnable> runnable(
         CreateCertErrorRunnable(*certVerifier, error, socketInfo, serverCert,
                                 static_cast<const void*>(fd), providerFlags,
-                                now));
+                                prnow));
     if (!runnable) {
       // CreateCertErrorRunnable sets a new error code when it fails
       error = PR_GetError();

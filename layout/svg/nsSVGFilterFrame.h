@@ -18,7 +18,6 @@ class nsIFrame;
 class nsIPresShell;
 class nsRenderingContext;
 class nsStyleContext;
-class nsSVGFilterPaintCallback;
 class nsSVGIntegerPair;
 class nsSVGLength2;
 
@@ -37,7 +36,7 @@ class nsSVGFilterFrame : public nsSVGFilterFrameBase
   friend nsIFrame*
   NS_NewSVGFilterFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
 protected:
-  nsSVGFilterFrame(nsStyleContext* aContext)
+  explicit nsSVGFilterFrame(nsStyleContext* aContext)
     : nsSVGFilterFrameBase(aContext),
       mLoopFlag(false),
       mNoHRefURI(false)

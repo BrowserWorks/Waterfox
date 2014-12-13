@@ -58,7 +58,6 @@
 #include "nsInputStreamPump.h"
 #include "nsURLHelper.h"
 #include "nsISocketTransport.h"
-#include "nsICacheSession.h"
 #include "nsIStreamConverterService.h"
 #include "nsISiteSecurityService.h"
 #include "nsCRT.h"
@@ -154,7 +153,7 @@ WillRedirect(const nsHttpResponseHead * response)
 class AutoRedirectVetoNotifier
 {
 public:
-    AutoRedirectVetoNotifier(nsHttpChannel* channel) : mChannel(channel)
+    explicit AutoRedirectVetoNotifier(nsHttpChannel* channel) : mChannel(channel)
     {
       if (mChannel->mHasAutoRedirectVetoNotifier) {
         MOZ_CRASH("Nested AutoRedirectVetoNotifier on the stack");
@@ -864,11 +863,8 @@ nsHttpChannel::CallOnStartRequest()
         }
     }
 
-    bool shouldSniff = mResponseHead && (mResponseHead->ContentType().IsEmpty() ||
-        ((mResponseHead->ContentType().EqualsLiteral(APPLICATION_OCTET_STREAM) &&
-        (mLoadFlags & LOAD_TREAT_APPLICATION_OCTET_STREAM_AS_UNKNOWN))));
-
-    if (shouldSniff) {
+    bool unknownDecoderStarted = false;
+    if (mResponseHead && mResponseHead->ContentType().IsEmpty()) {
         MOZ_ASSERT(mConnectionInfo, "Should have connection info here");
         if (!mContentTypeHint.IsEmpty())
             mResponseHead->SetContentType(mContentTypeHint);
@@ -877,10 +873,6 @@ nsHttpChannel::CallOnStartRequest()
             mResponseHead->SetContentType(NS_LITERAL_CSTRING(TEXT_PLAIN));
         else {
             // Uh-oh.  We had better find out what type we are!
-
-            // XXX This does not work with content-encodings...  but
-            // neither does applying the conversion from the URILoader
-
             nsCOMPtr<nsIStreamConverterService> serv;
             rv = gHttpHandler->
                 GetStreamConverterService(getter_AddRefs(serv));
@@ -894,6 +886,7 @@ nsHttpChannel::CallOnStartRequest()
                                             getter_AddRefs(converter));
                 if (NS_SUCCEEDED(rv)) {
                     mListener = converter;
+                    unknownDecoderStarted = true;
                 }
             }
         }
@@ -924,9 +917,20 @@ nsHttpChannel::CallOnStartRequest()
         NS_WARNING("OnStartRequest skipped because of null listener");
     }
 
-    // install stream converter if required
-    rv = ApplyContentConversions();
-    if (NS_FAILED(rv)) return rv;
+    // Install stream converter if required.
+    // If we use unknownDecoder, stream converters will be installed later (in
+    // nsUnknownDecoder) after OnStartRequest is called for the real listener.
+    if (!unknownDecoderStarted) {
+      nsCOMPtr<nsIStreamListener> listener;
+      nsISupports *ctxt = mListenerContext;
+      rv = DoApplyContentConversions(mListener, getter_AddRefs(listener), ctxt);
+      if (NS_FAILED(rv)) {
+        return rv;
+      }
+      if (listener) {
+        mListener = listener;
+      }
+    }
 
     rv = EnsureAssocReq();
     if (NS_FAILED(rv))
@@ -2808,11 +2812,20 @@ nsHttpChannel::OnCacheEntryCheck(nsICacheEntry* entry, nsIApplicationCache* appC
     bool doValidation = false;
     bool canAddImsHeader = true;
 
+    bool isForcedValid = false;
+    entry->GetIsForcedValid(&isForcedValid);
+
     // Cached entry is not the entity we request (see bug #633743)
     if (ResponseWouldVary(entry)) {
         LOG(("Validating based on Vary headers returning TRUE\n"));
         canAddImsHeader = false;
         doValidation = true;
+    }
+    // Check isForcedValid to see if it is possible to skip validation
+    // See netwerk/cache2/nsICacheEntry.idl for details
+    else if (isForcedValid) {
+        LOG(("NOT validating based on isForcedValid being true.\n"));
+        doValidation = false;
     }
     // If the LOAD_FROM_CACHE flag is set, any cached data can simply be used
     else if (mLoadFlags & nsIRequest::LOAD_FROM_CACHE) {
@@ -3398,6 +3411,7 @@ nsHttpChannel::OpenCacheInputStream(nsICacheEntry* cacheEntry, bool startBufferi
             LOG(("failed to parse security-info [channel=%p, entry=%p]",
                  this, cacheEntry));
             NS_WARNING("failed to parse security-info");
+            cacheEntry->AsyncDoom(nullptr);
             return rv;
         }
 
@@ -3409,6 +3423,7 @@ nsHttpChannel::OpenCacheInputStream(nsICacheEntry* cacheEntry, bool startBufferi
             LOG(("mCacheEntry->GetSecurityInfo returned success but did not "
                  "return the security info [channel=%p, entry=%p]",
                  this, cacheEntry));
+            cacheEntry->AsyncDoom(nullptr);
             return NS_ERROR_UNEXPECTED; // XXX error code
         }
     }
@@ -5435,14 +5450,18 @@ nsHttpChannel::OnTransportStatus(nsITransport *trans, nsresult status,
     }
 
     // block socket status event after Cancel or OnStopRequest has been called.
-    if (mProgressSink && NS_SUCCEEDED(mStatus) && mIsPending && !(mLoadFlags & LOAD_BACKGROUND)) {
-        LOG(("sending status notification [this=%p status=%x progress=%llu/%llu]\n",
+    if (mProgressSink && NS_SUCCEEDED(mStatus) && mIsPending) {
+        LOG(("sending progress%s notification [this=%p status=%x"
+             " progress=%llu/%llu]\n",
+            (mLoadFlags & LOAD_BACKGROUND)? "" : " and status",
             this, status, progress, progressMax));
 
-        nsAutoCString host;
-        mURI->GetHost(host);
-        mProgressSink->OnStatus(this, nullptr, status,
-                                NS_ConvertUTF8toUTF16(host).get());
+        if (!(mLoadFlags & LOAD_BACKGROUND)) {
+            nsAutoCString host;
+            mURI->GetHost(host);
+            mProgressSink->OnStatus(this, nullptr, status,
+                                    NS_ConvertUTF8toUTF16(host).get());
+        }
 
         if (progress > 0) {
             MOZ_ASSERT(progress <= progressMax, "unexpected progress values");
@@ -5455,11 +5474,6 @@ nsHttpChannel::OnTransportStatus(nsITransport *trans, nsresult status,
             }
         }
     }
-#ifdef DEBUG
-    else
-        LOG(("skipping status notification [this=%p sink=%p pending=%u background=%x]\n",
-            this, mProgressSink.get(), mIsPending, (mLoadFlags & LOAD_BACKGROUND)));
-#endif
 
     return NS_OK;
 }

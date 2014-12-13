@@ -579,14 +579,12 @@ public:
   int32_t FindChild(nsNavHistoryResultNode* aNode)
     { return mChildren.IndexOf(aNode); }
 
-  nsresult InsertChildAt(nsNavHistoryResultNode* aNode, int32_t aIndex,
-                         bool aIsTemporary = false);
+  nsresult InsertChildAt(nsNavHistoryResultNode* aNode, int32_t aIndex);
   nsresult InsertSortedChild(nsNavHistoryResultNode* aNode,
-                             bool aIsTemporary = false,
                              bool aIgnoreDuplicates = false);
   bool EnsureItemPosition(uint32_t aIndex);
 
-  nsresult RemoveChildAt(int32_t aIndex, bool aIsTemporary = false);
+  nsresult RemoveChildAt(int32_t aIndex);
 
   void RecursiveFindURIs(bool aOnlyOne,
                          nsNavHistoryContainerResultNode* aContainer,
@@ -624,7 +622,8 @@ NS_DEFINE_STATIC_IID_ACCESSOR(nsNavHistoryContainerResultNode,
 //    bookmark notifications.
 
 class nsNavHistoryQueryResultNode : public nsNavHistoryContainerResultNode,
-                                    public nsINavHistoryQueryResultNode
+                                    public nsINavHistoryQueryResultNode,
+                                    public nsINavBookmarkObserver
 {
 public:
   nsNavHistoryQueryResultNode(const nsACString& aTitle,
@@ -707,6 +706,7 @@ protected:
 
 class nsNavHistoryFolderResultNode : public nsNavHistoryContainerResultNode,
                                      public nsINavHistoryQueryResultNode,
+                                     public nsINavBookmarkObserver,
                                      public mozilla::places::AsyncStatementCallback
 {
 public:
@@ -736,9 +736,8 @@ public:
   virtual nsresult OpenContainerAsync();
   NS_DECL_ASYNCSTATEMENTCALLBACK
 
-  // This object implements a bookmark observer interface without deriving from
-  // the bookmark observers. This is called from the result's actual observer
-  // and it knows all observers are FolderResultNodes
+  // This object implements a bookmark observer interface. This is called from the
+  // result's actual observer and it knows all observers are FolderResultNodes
   NS_DECL_NSINAVBOOKMARKOBSERVER
 
   virtual void OnRemoving();

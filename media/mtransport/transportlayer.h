@@ -29,7 +29,7 @@ enum {
 };
 
 #define TRANSPORT_LAYER_ID(name) \
-  virtual const std::string id() { return name; } \
+  virtual const std::string id() const { return name; } \
   static std::string ID() { return name; }
 
 // Abstract base class for network transport layers.
@@ -38,11 +38,9 @@ class TransportLayer : public sigslot::has_slots<> {
   // The state of the transport flow
   // We can't use "ERROR" because Windows has a macro named "ERROR"
   enum State { TS_NONE, TS_INIT, TS_CONNECTING, TS_OPEN, TS_CLOSED, TS_ERROR };
-  enum Mode { STREAM, DGRAM };
 
   // Is this a stream or datagram flow
-  TransportLayer(Mode mode = STREAM) :
-    mode_(mode),
+  TransportLayer() :
     state_(TS_NONE),
     flow_id_(),
     downward_(nullptr) {}
@@ -81,10 +79,10 @@ class TransportLayer : public sigslot::has_slots<> {
                          SignalPacketReceived;
 
   // Return the layer id for this layer
-  virtual const std::string id() = 0;
+  virtual const std::string id() const = 0;
 
   // The id of the flow
-  const std::string& flow_id() {
+  const std::string& flow_id() const {
     return flow_id_;
   }
 
@@ -92,11 +90,10 @@ class TransportLayer : public sigslot::has_slots<> {
   virtual void WasInserted() {}
   virtual void SetState(State state, const char *file, unsigned line);
   // Check if we are on the right thread
-  void CheckThread() {
+  void CheckThread() const {
     NS_ABORT_IF_FALSE(CheckThreadInt(), "Wrong thread");
   }
 
-  Mode mode_;
   State state_;
   std::string flow_id_;
   TransportLayer *downward_; // The next layer in the stack
@@ -105,7 +102,7 @@ class TransportLayer : public sigslot::has_slots<> {
  private:
   DISALLOW_COPY_ASSIGN(TransportLayer);
 
-  bool CheckThreadInt() {
+  bool CheckThreadInt() const {
     bool on;
 
     if (!target_)  // OK if no thread set.

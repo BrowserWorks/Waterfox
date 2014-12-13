@@ -152,15 +152,20 @@ function getSettings(aKey, aAllowError) {
  *
  * @return A deferred promise.
  */
+
 function setSettings(aSettings, aAllowError) {
-  let request =
-    workingFrame.contentWindow.navigator.mozSettings.createLock().set(aSettings);
-  return wrapDomRequestAsPromise(request)
-    .then(function resolve() {
+  let lock = window.navigator.mozSettings.createLock();
+  let request = lock.set(aSettings);
+  let deferred = Promise.defer();
+  lock.onsettingstransactionsuccess = function () {
       ok(true, "setSettings(" + JSON.stringify(aSettings) + ")");
-    }, function reject() {
+    deferred.resolve();
+  };
+  lock.onsettingstransactionfailure = function (aEvent) {
       ok(aAllowError, "setSettings(" + JSON.stringify(aSettings) + ")");
-    });
+    deferred.reject();
+  };
+  return deferred.promise;
 }
 
 /**
@@ -1128,17 +1133,13 @@ function getNumOfRadioInterfaces() {
 }
 
 /**
- * Flush permission settings and call |finish()|.
+ * Wait for pending emulator transactions and call |finish()|.
  */
 function cleanUp() {
-  waitFor(function() {
-    SpecialPowers.flushPermissions(function() {
-      // Use ok here so that we have at least one test run.
-      ok(true, "permissions flushed");
+  // Use ok here so that we have at least one test run.
+  ok(true, ":: CLEANING UP ::");
 
-      finish();
-    });
-  }, function() {
+  waitFor(finish, function() {
     return _pendingEmulatorCmdCount === 0 &&
            _pendingEmulatorShellCmdCount === 0;
   });

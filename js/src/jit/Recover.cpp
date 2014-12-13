@@ -8,8 +8,10 @@
 
 #include "jscntxt.h"
 #include "jsmath.h"
+#include "jsobj.h"
 #include "jsstr.h"
 
+#include "builtin/RegExp.h"
 #include "builtin/TypedObject.h"
 
 #include "jit/IonSpewer.h"
@@ -44,7 +46,7 @@ RInstruction::readRecoverData(CompactBufferReader &reader, RInstructionStorage *
         break;
 
         RECOVER_OPCODE_LIST(MATCH_OPCODES_)
-#   undef DEFINE_OPCODES_
+#   undef MATCH_OPCODES_
 
       case Recover_Invalid:
       default:
@@ -697,7 +699,7 @@ RPow::recover(JSContext *cx, SnapshotIterator &iter) const
     RootedValue result(cx);
 
     MOZ_ASSERT(base.isNumber() && power.isNumber());
-    if (!js_math_pow_handle(cx, base, power, &result))
+    if (!js::math_pow_handle(cx, base, power, &result))
         return false;
 
     iter.storeInstructionResult(result);
@@ -724,7 +726,7 @@ RPowHalf::recover(JSContext *cx, SnapshotIterator &iter) const
     power.setNumber(0.5);
 
     MOZ_ASSERT(base.isNumber());
-    if (!js_math_pow_handle(cx, base, power, &result))
+    if (!js::math_pow_handle(cx, base, power, &result))
         return false;
 
     iter.storeInstructionResult(result);
@@ -752,7 +754,7 @@ RMinMax::recover(JSContext *cx, SnapshotIterator &iter) const
     RootedValue b(cx, iter.read());
     RootedValue result(cx);
 
-    if (!js_minmax_impl(cx, isMax_, a, b, &result))
+    if (!js::minmax_impl(cx, isMax_, a, b, &result))
         return false;
 
     iter.storeInstructionResult(result);
@@ -776,7 +778,7 @@ RAbs::recover(JSContext *cx, SnapshotIterator &iter) const
     RootedValue v(cx, iter.read());
     RootedValue result(cx);
 
-    if (!js_math_abs_handle(cx, v, &result))
+    if (!js::math_abs_handle(cx, v, &result))
         return false;
 
     iter.storeInstructionResult(result);
@@ -888,6 +890,56 @@ RStringSplit::recover(JSContext *cx, SnapshotIterator &iter) const
     return true;
 }
 
+bool MRegExpExec::writeRecoverData(CompactBufferWriter &writer) const
+{
+    MOZ_ASSERT(canRecoverOnBailout());
+    writer.writeUnsigned(uint32_t(RInstruction::Recover_RegExpExec));
+    return true;
+}
+
+RRegExpExec::RRegExpExec(CompactBufferReader &reader)
+{}
+
+bool RRegExpExec::recover(JSContext *cx, SnapshotIterator &iter) const{
+    RootedObject regexp(cx, &iter.read().toObject());
+    RootedString input(cx, iter.read().toString());
+
+    RootedValue result(cx);
+
+    if(!regexp_exec_raw(cx, regexp, input, &result))
+        return false;
+
+    iter.storeInstructionResult(result);
+    return true;
+}
+
+bool
+MRegExpTest::writeRecoverData(CompactBufferWriter &writer) const
+{
+    MOZ_ASSERT(canRecoverOnBailout());
+    writer.writeUnsigned(uint32_t(RInstruction::Recover_RegExpTest));
+    return true;
+}
+
+RRegExpTest::RRegExpTest(CompactBufferReader &reader)
+{ }
+
+bool
+RRegExpTest::recover(JSContext *cx, SnapshotIterator &iter) const
+{
+    RootedString string(cx, iter.read().toString());
+    RootedObject regexp(cx, &iter.read().toObject());
+    bool resultBool;
+
+    if (!js::regexp_test_raw(cx, regexp, string, &resultBool))
+        return false;
+
+    RootedValue result(cx);
+    result.setBoolean(resultBool);
+    iter.storeInstructionResult(result);
+    return true;
+}
+
 bool
 MNewObject::writeRecoverData(CompactBufferWriter &writer) const
 {
@@ -919,6 +971,46 @@ RNewObject::recover(JSContext *cx, SnapshotIterator &iter) const
     else
         resultObject = NewInitObject(cx, templateObject);
 
+    if (!resultObject)
+        return false;
+
+    result.setObject(*resultObject);
+    iter.storeInstructionResult(result);
+    return true;
+}
+
+bool
+MNewArray::writeRecoverData(CompactBufferWriter &writer) const
+{
+    MOZ_ASSERT(canRecoverOnBailout());
+    writer.writeUnsigned(uint32_t(RInstruction::Recover_NewArray));
+    writer.writeUnsigned(count());
+    writer.writeByte(isAllocating());
+    return true;
+}
+
+RNewArray::RNewArray(CompactBufferReader &reader)
+{
+    count_ = reader.readUnsigned();
+    isAllocating_ = reader.readByte();
+}
+
+bool
+RNewArray::recover(JSContext *cx, SnapshotIterator &iter) const
+{
+    RootedObject templateObject(cx, &iter.read().toObject());
+    RootedValue result(cx);
+    RootedTypeObject type(cx);
+
+    // Use AutoEnterAnalysis to avoid invoking the object metadata callback
+    // while bailing out, which could try to walk the stack.
+    types::AutoEnterAnalysis enter(cx);
+
+    // See CodeGenerator::visitNewArrayCallVM
+    if (!templateObject->hasSingletonType())
+        type = templateObject->type();
+
+    JSObject *resultObject = NewDenseArray(cx, count_, type, isAllocating_);
     if (!resultObject)
         return false;
 
@@ -986,5 +1078,43 @@ RObjectState::recover(JSContext *cx, SnapshotIterator &iter) const
 
     val.setObject(*object);
     iter.storeInstructionResult(val);
+    return true;
+}
+
+bool
+MArrayState::writeRecoverData(CompactBufferWriter &writer) const
+{
+    MOZ_ASSERT(canRecoverOnBailout());
+    writer.writeUnsigned(uint32_t(RInstruction::Recover_ArrayState));
+    writer.writeUnsigned(numElements());
+    return true;
+}
+
+RArrayState::RArrayState(CompactBufferReader &reader)
+{
+    numElements_ = reader.readUnsigned();
+}
+
+bool
+RArrayState::recover(JSContext *cx, SnapshotIterator &iter) const
+{
+    RootedValue result(cx);
+    JSObject *object = &iter.read().toObject();
+    uint32_t initLength = iter.read().toInt32();
+
+    object->setDenseInitializedLength(initLength);
+    for (size_t index = 0; index < numElements(); index++) {
+        Value val = iter.read();
+
+        if (index >= initLength) {
+            MOZ_ASSERT(val.isUndefined());
+            continue;
+        }
+
+        object->initDenseElement(index, val);
+    }
+
+    result.setObject(*object);
+    iter.storeInstructionResult(result);
     return true;
 }

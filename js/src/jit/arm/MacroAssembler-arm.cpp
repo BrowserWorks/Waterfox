@@ -782,7 +782,7 @@ MacroAssemblerARM::ma_cmn(Register src1, Register src2, Condition c)
 void
 MacroAssemblerARM::ma_cmn(Register src1, Operand op, Condition c)
 {
-    MOZ_ASSUME_UNREACHABLE("Feature NYI");
+    MOZ_CRASH("Feature NYI");
 }
 
 // Compare (src - src2).
@@ -816,7 +816,7 @@ MacroAssemblerARM::ma_cmp(Register src1, Operand op, Condition c)
         as_cmp(src1, O2Reg(ScratchRegister), c);
         break;
       default:
-        MOZ_ASSUME_UNREACHABLE("trying to compare FP and integer registers");
+        MOZ_CRASH("trying to compare FP and integer registers");
     }
 }
 void
@@ -889,7 +889,7 @@ MacroAssemblerARM::ma_check_mul(Register src1, Register src2, Register dest, Con
         return NotEqual;
     }
 
-    MOZ_ASSUME_UNREACHABLE("Condition NYI");
+    MOZ_CRASH("Condition NYI");
 }
 
 Assembler::Condition
@@ -907,7 +907,7 @@ MacroAssemblerARM::ma_check_mul(Register src1, Imm32 imm, Register dest, Conditi
         return NotEqual;
     }
 
-    MOZ_ASSUME_UNREACHABLE("Condition NYI");
+    MOZ_CRASH("Condition NYI");
 }
 
 void
@@ -1004,7 +1004,12 @@ MacroAssemblerARM::ma_udiv(Register num, Register div, Register dest, Condition 
 {
     as_udiv(dest, num, div, cond);
 }
-
+// Miscelanous instructions
+void
+MacroAssemblerARM::ma_clz(Register src, Register dest, Condition cond)
+{
+    as_clz(dest, src, cond);
+}
 // Memory.
 // Shortcut for when we know we're transferring 32 bits of data.
 void
@@ -1018,7 +1023,7 @@ void
 MacroAssemblerARM::ma_dtr(LoadStore ls, Register rn, Register rm, Register rt,
                           Index mode, Assembler::Condition cc)
 {
-    MOZ_ASSUME_UNREACHABLE("Feature NYI");
+    MOZ_CRASH("Feature NYI");
 }
 
 void
@@ -1360,7 +1365,7 @@ MacroAssemblerARM::ma_b(void *target, Relocation::Kind reloc, Assembler::Conditi
         as_Imm32Pool(pc, trg, c);
         break;
       default:
-        MOZ_ASSUME_UNREACHABLE("Other methods of generating tracable jumps NYI");
+        MOZ_CRASH("Other methods of generating tracable jumps NYI");
     }
 }
 
@@ -1873,8 +1878,9 @@ MacroAssemblerARMCompat::freeStack(Register amount)
 }
 
 void
-MacroAssembler::PushRegsInMask(RegisterSet set)
+MacroAssembler::PushRegsInMask(RegisterSet set, FloatRegisterSet simdSet)
 {
+    JS_ASSERT(!SupportsSimd() && simdSet.size() == 0);
     int32_t diffF = set.fpus().getPushSizeInBytes();
     int32_t diffG = set.gprs().size() * sizeof(intptr_t);
 
@@ -1901,8 +1907,9 @@ MacroAssembler::PushRegsInMask(RegisterSet set)
 }
 
 void
-MacroAssembler::PopRegsInMaskIgnore(RegisterSet set, RegisterSet ignore)
+MacroAssembler::PopRegsInMaskIgnore(RegisterSet set, RegisterSet ignore, FloatRegisterSet simdSet)
 {
+    JS_ASSERT(!SupportsSimd() && simdSet.size() == 0);
     int32_t diffG = set.gprs().size() * sizeof(intptr_t);
     int32_t diffF = set.fpus().getPushSizeInBytes();
     const int32_t reservedG = diffG;
@@ -2103,6 +2110,11 @@ void
 MacroAssemblerARMCompat::movePtr(ImmGCPtr imm, Register dest)
 {
     ma_mov(imm, dest);
+}
+void
+MacroAssemblerARMCompat::movePtr(ImmMaybeNurseryPtr imm, Register dest)
+{
+    movePtr(noteMaybeNurseryPtr(imm), dest);
 }
 void
 MacroAssemblerARMCompat::movePtr(ImmPtr imm, Register dest)
@@ -2455,6 +2467,13 @@ MacroAssemblerARMCompat::store32(Register src, const BaseIndex &dest)
         base = ScratchRegister;
     }
     ma_str(src, DTRAddr(base, DtrRegImmShift(dest.index, LSL, scale)));
+}
+
+void
+MacroAssemblerARMCompat::store32_NoSecondScratch(Imm32 src, const Address &address)
+{
+    move32(src, ScratchRegister);
+    storePtr(ScratchRegister, address);
 }
 
 void
@@ -3496,7 +3515,7 @@ MacroAssemblerARMCompat::loadValue(Address src, ValueOperand val)
                 mode = IB;
                 break;
               default:
-                MOZ_ASSUME_UNREACHABLE("Bogus Offset for LoadValue as DTM");
+                MOZ_CRASH("Bogus Offset for LoadValue as DTM");
             }
             startDataTransferM(IsLoad, Register::FromCode(srcOp.base()), mode);
             transferReg(val.payloadReg());
@@ -3566,7 +3585,7 @@ MacroAssemblerARMCompat::storePayload(Register src, Operand dest)
         ma_str(src, ToPayload(dest));
         return;
     }
-    MOZ_ASSUME_UNREACHABLE("why do we do all of these things?");
+    MOZ_CRASH("why do we do all of these things?");
 
 }
 
@@ -3616,7 +3635,7 @@ MacroAssemblerARMCompat::storeTypeTag(ImmTag tag, Operand dest) {
         return;
     }
 
-    MOZ_ASSUME_UNREACHABLE("why do we do all of these things?");
+    MOZ_CRASH("why do we do all of these things?");
 
 }
 
@@ -3764,7 +3783,7 @@ MacroAssemblerARMCompat::setupUnalignedABICall(uint32_t args, Register scratch)
     ma_mov(sp, scratch);
 
     // Force sp to be aligned.
-    ma_and(Imm32(~(StackAlignment - 1)), sp, sp);
+    ma_and(Imm32(~(ABIStackAlignment - 1)), sp, sp);
     ma_push(scratch);
 }
 
@@ -3836,7 +3855,7 @@ MacroAssemblerARMCompat::passHardFpABIArg(const MoveOperand &from, MoveOp::Type 
         break;
       }
       default:
-        MOZ_ASSUME_UNREACHABLE("Unexpected argument type");
+        MOZ_CRASH("Unexpected argument type");
     }
 
     enoughMemory_ = moveResolver_.addMove(from, to, type);
@@ -3866,7 +3885,7 @@ MacroAssemblerARMCompat::passSoftFpABIArg(const MoveOperand &from, MoveOp::Type 
         passedArgTypes_ = (passedArgTypes_ << ArgType_Shift) | ArgType_General;
         break;
       default:
-        MOZ_ASSUME_UNREACHABLE("Unexpected argument type");
+        MOZ_CRASH("Unexpected argument type");
     }
 
     Register destReg;
@@ -3923,7 +3942,7 @@ MacroAssemblerARMCompat::passABIArg(FloatRegister freg, MoveOp::Type type)
 void MacroAssemblerARMCompat::checkStackAlignment()
 {
 #ifdef DEBUG
-    ma_tst(sp, Imm32(StackAlignment - 1));
+    ma_tst(sp, Imm32(ABIStackAlignment - 1));
     breakpoint(NonZero);
 #endif
 }
@@ -3938,15 +3957,15 @@ MacroAssemblerARMCompat::callWithABIPre(uint32_t *stackAdjust, bool callFromAsmJ
     if (UseHardFpABI())
         *stackAdjust += 2*((usedFloatSlots_ > NumFloatArgRegs) ? usedFloatSlots_ - NumFloatArgRegs : 0) * sizeof(intptr_t);
 #endif
-    uint32_t alignmentAtPrologue = callFromAsmJS ? AsmJSFrameSize : 0;
+    uint32_t alignmentAtPrologue = callFromAsmJS ? sizeof(AsmJSFrame) : 0;
 
     if (!dynamicAlignment_) {
         *stackAdjust += ComputeByteAlignment(framePushed_ + *stackAdjust + alignmentAtPrologue,
-                                             StackAlignment);
+                                             ABIStackAlignment);
     } else {
         // sizeof(intptr_t) accounts for the saved stack pointer pushed by
         // setupUnalignedABICall.
-        *stackAdjust += ComputeByteAlignment(*stackAdjust + sizeof(intptr_t), StackAlignment);
+        *stackAdjust += ComputeByteAlignment(*stackAdjust + sizeof(intptr_t), ABIStackAlignment);
     }
 
     reserveStack(*stackAdjust);
@@ -4024,7 +4043,7 @@ MacroAssemblerARMCompat::callWithABIPost(uint32_t stackAdjust, MoveOp::Type resu
         break;
 
       default:
-        MOZ_ASSUME_UNREACHABLE("unexpected callWithABI result");
+        MOZ_CRASH("unexpected callWithABI result");
     }
 
     freeStack(stackAdjust);
@@ -4064,7 +4083,7 @@ AssertValidABIFunctionType(uint32_t passedArgTypes)
       case Args_Int_IntDouble:
         break;
       default:
-        MOZ_ASSUME_UNREACHABLE("Unexpected type");
+        MOZ_CRASH("Unexpected type");
     }
 }
 #endif
@@ -4079,7 +4098,7 @@ MacroAssemblerARMCompat::callWithABI(void *fun, MoveOp::Type result)
       case MoveOp::GENERAL: passedArgTypes_ |= ArgType_General; break;
       case MoveOp::DOUBLE:  passedArgTypes_ |= ArgType_Double;  break;
       case MoveOp::FLOAT32: passedArgTypes_ |= ArgType_Float32; break;
-      default: MOZ_ASSUME_UNREACHABLE("Invalid return type");
+      default: MOZ_CRASH("Invalid return type");
     }
 #ifdef DEBUG
     AssertValidABIFunctionType(passedArgTypes_);

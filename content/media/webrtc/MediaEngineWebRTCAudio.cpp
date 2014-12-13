@@ -49,7 +49,7 @@ extern PRLogModuleInfo* GetMediaManagerLog();
 NS_IMPL_ISUPPORTS0(MediaEngineWebRTCAudioSource)
 
 // XXX temp until MSG supports registration
-StaticAutoPtr<AudioOutputObserver> gFarendObserver;
+StaticRefPtr<AudioOutputObserver> gFarendObserver;
 
 AudioOutputObserver::AudioOutputObserver()
   : mPlayoutFreq(0)
@@ -90,9 +90,22 @@ AudioOutputObserver::Size()
   return mPlayoutFifo->size();
 }
 
+void
+AudioOutputObserver::MixerCallback(AudioDataValue* aMixedBuffer,
+                                   AudioSampleFormat aFormat,
+                                   uint32_t aChannels,
+                                   uint32_t aFrames,
+                                   uint32_t aSampleRate)
+{
+  if (gFarendObserver) {
+    gFarendObserver->InsertFarEnd(aMixedBuffer, aFrames, false,
+                                  aSampleRate, aChannels, aFormat);
+  }
+}
+
 // static
 void
-AudioOutputObserver::InsertFarEnd(const AudioDataValue *aBuffer, uint32_t aSamples, bool aOverran,
+AudioOutputObserver::InsertFarEnd(const AudioDataValue *aBuffer, uint32_t aFrames, bool aOverran,
                                   int aFreq, int aChannels, AudioSampleFormat aFormat)
 {
   if (mPlayoutChannels != 0) {
@@ -126,7 +139,7 @@ AudioOutputObserver::InsertFarEnd(const AudioDataValue *aBuffer, uint32_t aSampl
   // Rechunk to 10ms.
   // The AnalyzeReverseStream() and WebRtcAec_BufferFarend() functions insist on 10ms
   // samples per call.  Annoying...
-  while (aSamples) {
+  while (aFrames) {
     if (!mSaved) {
       mSaved = (FarEndAudioChunk *) moz_xmalloc(sizeof(FarEndAudioChunk) +
                                                 (mChunkSize * aChannels - 1)*sizeof(int16_t));
@@ -135,8 +148,8 @@ AudioOutputObserver::InsertFarEnd(const AudioDataValue *aBuffer, uint32_t aSampl
       aOverran = false;
     }
     uint32_t to_copy = mChunkSize - mSamplesSaved;
-    if (to_copy > aSamples) {
-      to_copy = aSamples;
+    if (to_copy > aFrames) {
+      to_copy = aFrames;
     }
 
     int16_t *dest = &(mSaved->mData[mSamplesSaved * aChannels]);
@@ -147,7 +160,7 @@ AudioOutputObserver::InsertFarEnd(const AudioDataValue *aBuffer, uint32_t aSampl
       fwrite(&(mSaved->mData[mSamplesSaved * aChannels]), to_copy * aChannels, sizeof(int16_t), fp);
     }
 #endif
-    aSamples -= to_copy;
+    aFrames -= to_copy;
     mSamplesSaved += to_copy;
     aBuffer += to_copy * aChannels;
 

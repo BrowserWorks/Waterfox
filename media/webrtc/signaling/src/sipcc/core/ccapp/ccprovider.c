@@ -53,7 +53,6 @@
 #include "prlog.h"
 #include "prlock.h"
 #include "prcvar.h"
-#include "thread_monitor.h"
 
 /*---------------------------------------------------------
  *
@@ -176,7 +175,7 @@ extern void cc_media_update_video_txcap(boolean val);
 session_data_t * getDeepCopyOfSessionData(session_data_t *data);
 static void ccappUpdateSessionData(session_update_t *sessUpd);
 static void ccappFeatureUpdated (feature_update_t *featUpd);
-void destroy_ccapp_thread();
+void ccapp_shutdown();
 void ccpro_handleserviceControlNotify();
 /* Sets up mutex needed for protecting state variables. */
 static cc_int32_t InitInternal();
@@ -361,11 +360,6 @@ void CCAppInit()
   if (platThreadInit("CCApp_Task") != 0) {
     return;
   }
-
-  /*
-   * Adjust relative priority of CCApp thread.
-   */
-  (void) cprAdjustRelativeThreadPriority(CCPROVIDER_THREAD_RELATIVE_PRIORITY);
 
   debug_bind_keyword("cclog", &g_CCLogDebug);
   srvcState.cause = gCCApp.cause;  // XXX set but not used
@@ -1020,6 +1014,8 @@ void CCApp_processCmds(unsigned int cmd, unsigned int reason, string_t reasonStr
          case CMD_UNREGISTER_ALL_LINES:
             /* send a shutdown message to the SIP Task */
             SIPTaskPostShutdown(SIP_EXTERNAL, reason, reasonStr);
+            ccsnap_line_free();
+            ccsnap_device_free();
             break;
          case CMD_RESTART:
             SIPTaskPostRestart(TRUE);
@@ -1506,6 +1502,7 @@ static void ccappUpdateSessionData (session_update_t *sessUpd)
                     state_data.media_stream_track_id;
                 data->media_stream_id = sessUpd->update.ccSessionUpd.data.
                     state_data.media_stream_id;
+                strlib_free(data->status);
                 data->status =
                   sessUpd->update.ccSessionUpd.data.state_data.reason_text;
                 break;
@@ -1762,6 +1759,7 @@ static void ccappUpdateSessionData (session_update_t *sessUpd)
 	data->status = ccsnap_EscapeStrToLocaleStr(data->status, sessUpd->update.ccSessionUpd.data.status.status, LEN_UNKNOWN);
         if (data->status != NULL) {
             if(strncmp(data->status, UNKNOWN_PHRASE_STR, UNKNOWN_PHRASE_STR_SIZE) == 0){
+                    strlib_free(data->status);
                     data->status = strlib_empty();
             }
             if(strcmp(data->status, strlib_empty()) != 0){
@@ -1848,9 +1846,11 @@ static void ccappUpdateSessionData (session_update_t *sessUpd)
     case ICE_CANDIDATE_FOUND:
 	if (sessUpd->update.ccSessionUpd.data.state_data.extra) {
 	    if (sessUpd->eventID == ICE_CANDIDATE_FOUND) {
+                strlib_free(data->candidate);
 		data->candidate = sessUpd->update.ccSessionUpd.data.state_data.extra;
 	    }
 	}
+        strlib_free(data->sdp);
         data->sdp = sessUpd->update.ccSessionUpd.data.state_data.sdp;
         /* Fall through to the next case... */
     case REMOTE_STREAM_ADD:
@@ -2051,7 +2051,7 @@ void ccp_handler(void* msg, int type) {
             cc_uint32_t major_ver=0, minor_ver=0,addtnl_ver=0;
             char name[CC_MAX_LEN_REQ_SUPP_PARAM_CISCO_SISTAG]={0};
             platGetSISProtocolVer( &major_ver, &minor_ver, &addtnl_ver, name);
-            CCAPP_DEBUG(DEB_F_PREFIX"The SIS verion is: %s, sis ver: %d.%d.%d", DEB_F_PREFIX_ARGS(SIP_CC_PROV, fname), name, major_ver, minor_ver, addtnl_ver);
+            CCAPP_DEBUG(DEB_F_PREFIX"The SIS version is: %s, sis ver: %d.%d.%d", DEB_F_PREFIX_ARGS(SIP_CC_PROV, fname), name, major_ver, minor_ver, addtnl_ver);
             if(!strncmp(name, REQ_SUPP_PARAM_CISCO_CME_SISTAG, strlen(REQ_SUPP_PARAM_CISCO_CME_SISTAG))){
                 CCAPP_DEBUG(DEB_F_PREFIX"This is CUCME mode.", DEB_F_PREFIX_ARGS(SIP_CC_PROV, fname));
             } else if(!strncmp(name, REQ_SUPP_PARAM_CISCO_SISTAG, strlen(REQ_SUPP_PARAM_CISCO_SISTAG))){
@@ -2147,8 +2147,7 @@ void ccp_handler(void* msg, int type) {
         break;
 
     case CCAPP_THREAD_UNLOAD:
-        thread_ended(THREADMON_CCAPP);
-        destroy_ccapp_thread();
+        ccapp_shutdown();
         break;
     default:
         APP_ERR_MSG("CCApp_Task: Error: Unknown message %d msg =%p",
@@ -2158,19 +2157,18 @@ void ccp_handler(void* msg, int type) {
 }
 
 /*
- *  Function: destroy_ccapp_thread
- *  Description:  shutdown and kill ccapp thread
+ *  Function: ccapp_shutdown
+ *  Description:  shutdown ccapp
  *  Parameters:   none
  *  Returns: none
  */
-void destroy_ccapp_thread()
+void ccapp_shutdown()
 {
-    static const char fname[] = "destroy_ccapp_thread";
-    TNP_DEBUG(DEB_F_PREFIX"Unloading ccapp and destroying ccapp thread",
+    static const char fname[] = "ccapp_shutdown";
+    TNP_DEBUG(DEB_F_PREFIX"Unloading ccapp",
         DEB_F_PREFIX_ARGS(SIP_CC_INIT, fname));
     platform_initialized = FALSE;
     CCAppShutdown();
-    (void)cprDestroyThread(ccapp_thread);
 }
 
 /**

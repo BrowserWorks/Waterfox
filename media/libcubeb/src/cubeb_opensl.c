@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <SLES/OpenSLES.h>
+#include <math.h>
 #if defined(__ANDROID__)
 #include <sys/system_properties.h>
 #include "android/sles_definitions.h"
@@ -21,6 +22,7 @@
 #include "cubeb/cubeb.h"
 #include "cubeb-internal.h"
 #include "cubeb_resampler.h"
+#include "cubeb-sles.h"
 
 static struct cubeb_ops const opensl_ops;
 
@@ -34,6 +36,7 @@ struct cubeb {
 #if defined(__ANDROID__)
   SLInterfaceID SL_IID_ANDROIDCONFIGURATION;
 #endif
+  SLInterfaceID SL_IID_VOLUME;
   SLObjectItf engObj;
   SLEngineItf eng;
   SLObjectItf outmixObj;
@@ -49,6 +52,7 @@ struct cubeb_stream {
   SLObjectItf playerObj;
   SLPlayItf play;
   SLBufferQueueItf bufq;
+  SLVolumeItf volume;
   uint8_t *queuebuf[NBUFS];
   int queuebuf_idx;
   long queuebuf_len;
@@ -77,9 +81,9 @@ play_callback(SLPlayItf caller, void * user_ptr, SLuint32 event)
     case SL_PLAYEVENT_HEADATMARKER:
       pthread_mutex_lock(&stm->mutex);
       assert(stm->draining);
-      stm->draining = 0;
       pthread_mutex_unlock(&stm->mutex);
       stm->state_callback(stm, stm->user_ptr, CUBEB_STATE_DRAINED);
+      (*stm->play)->SetPlayState(stm->play, SL_PLAYSTATE_STOPPED);
       break;
     default:
       break;
@@ -243,6 +247,7 @@ opensl_init(cubeb ** context, char const * context_name)
     (slCreateEngine_t)dlsym(ctx->lib, "slCreateEngine");
   SLInterfaceID SL_IID_ENGINE = *(SLInterfaceID *)dlsym(ctx->lib, "SL_IID_ENGINE");
   SLInterfaceID SL_IID_OUTPUTMIX = *(SLInterfaceID *)dlsym(ctx->lib, "SL_IID_OUTPUTMIX");
+  ctx->SL_IID_VOLUME = *(SLInterfaceID *)dlsym(ctx->lib, "SL_IID_VOLUME");
   ctx->SL_IID_BUFFERQUEUE = *(SLInterfaceID *)dlsym(ctx->lib, "SL_IID_BUFFERQUEUE");
 #if defined(__ANDROID__)
   ctx->SL_IID_ANDROIDCONFIGURATION = *(SLInterfaceID *)dlsym(ctx->lib, "SL_IID_ANDROIDCONFIGURATION");
@@ -263,13 +268,14 @@ opensl_init(cubeb ** context, char const * context_name)
   const SLEngineOption opt[] = {{SL_ENGINEOPTION_THREADSAFE, SL_BOOLEAN_TRUE}};
 
   SLresult res;
-  res = f_slCreateEngine(&ctx->engObj, 1, opt, 0, NULL, NULL);
+  res = cubeb_get_sles_engine(&ctx->engObj, 1, opt, 0, NULL, NULL);
+
   if (res != SL_RESULT_SUCCESS) {
     opensl_destroy(ctx);
     return CUBEB_ERROR;
   }
 
-  res = (*ctx->engObj)->Realize(ctx->engObj, SL_BOOLEAN_FALSE);
+  res = cubeb_realize_sles_engine(ctx->engObj);
   if (res != SL_RESULT_SUCCESS) {
     opensl_destroy(ctx);
     return CUBEB_ERROR;
@@ -442,7 +448,7 @@ opensl_destroy(cubeb * ctx)
   if (ctx->outmixObj)
     (*ctx->outmixObj)->Destroy(ctx->outmixObj);
   if (ctx->engObj)
-    (*ctx->engObj)->Destroy(ctx->engObj);
+    cubeb_destroy_sles_engine(&ctx->engObj);
   dlclose(ctx->lib);
   dlclose(ctx->libmedia);
   free(ctx);
@@ -521,11 +527,13 @@ opensl_stream_init(cubeb * ctx, cubeb_stream ** stream, char const * stream_name
   sink.pFormat = NULL;
 
 #if defined(__ANDROID__)
-  const SLInterfaceID ids[] = {ctx->SL_IID_BUFFERQUEUE, ctx->SL_IID_ANDROIDCONFIGURATION};
-  const SLboolean req[] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
+  const SLInterfaceID ids[] = {ctx->SL_IID_BUFFERQUEUE,
+                               ctx->SL_IID_VOLUME,
+                               ctx->SL_IID_ANDROIDCONFIGURATION};
+  const SLboolean req[] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
 #else
-  const SLInterfaceID ids[] = {ctx->SL_IID_BUFFERQUEUE};
-  const SLboolean req[] = {SL_BOOLEAN_TRUE};
+  const SLInterfaceID ids[] = {ctx->SL_IID_BUFFERQUEUE, ctx->SL_IID_VOLUME};
+  const SLboolean req[] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
 #endif
   assert(NELEMS(ids) == NELEMS(req));
   SLresult res = (*ctx->eng)->CreateAudioPlayer(ctx->eng, &stm->playerObj,
@@ -604,6 +612,14 @@ opensl_stream_init(cubeb * ctx, cubeb_stream ** stream, char const * stream_name
 
   res = (*stm->playerObj)->GetInterface(stm->playerObj, ctx->SL_IID_BUFFERQUEUE,
                                     &stm->bufq);
+  if (res != SL_RESULT_SUCCESS) {
+    opensl_stream_destroy(stm);
+    return CUBEB_ERROR;
+  }
+
+  res = (*stm->playerObj)->GetInterface(stm->playerObj, ctx->SL_IID_VOLUME,
+                                        &stm->volume);
+
   if (res != SL_RESULT_SUCCESS) {
     opensl_stream_destroy(stm);
     return CUBEB_ERROR;
@@ -723,6 +739,45 @@ opensl_stream_get_latency(cubeb_stream * stm, uint32_t * latency)
   return CUBEB_OK;
 }
 
+int
+opensl_stream_set_volume(cubeb_stream * stm, float volume)
+{
+  SLresult res;
+  SLmillibel max_level, millibels;
+  float unclamped_millibels;
+
+  res = (*stm->volume)->GetMaxVolumeLevel(stm->volume, &max_level);
+
+  if (res != SL_RESULT_SUCCESS) {
+    return CUBEB_ERROR;
+  }
+
+  /* millibels are 100*dB, so the conversion from the volume's linear amplitude
+   * is 100 * 20 * log(volume). However we clamp the resulting value before
+   * passing it to lroundf() in order to prevent it from silently returning an
+   * erroneous value when the unclamped value exceeds the size of a long. */
+  unclamped_millibels = 100.0f * 20.0f * log10f(fmaxf(volume, 0.0f));
+  unclamped_millibels = fmaxf(unclamped_millibels, SL_MILLIBEL_MIN);
+  unclamped_millibels = fminf(unclamped_millibels, max_level);
+
+  millibels = lroundf(unclamped_millibels);
+
+  res = (*stm->volume)->SetVolumeLevel(stm->volume, millibels);
+
+  if (res != SL_RESULT_SUCCESS) {
+    return CUBEB_ERROR;
+  }
+  return CUBEB_OK;
+}
+
+int
+opensl_stream_set_panning(cubeb_stream * stream, float panning)
+{
+  assert(0 && "not implemented.");
+
+  return CUBEB_OK;
+}
+
 static struct cubeb_ops const opensl_ops = {
   .init = opensl_init,
   .get_backend_id = opensl_get_backend_id,
@@ -735,5 +790,10 @@ static struct cubeb_ops const opensl_ops = {
   .stream_start = opensl_stream_start,
   .stream_stop = opensl_stream_stop,
   .stream_get_position = opensl_stream_get_position,
-  .stream_get_latency = opensl_stream_get_latency
+  .stream_get_latency = opensl_stream_get_latency,
+  .stream_set_volume = opensl_stream_set_volume,
+  .stream_set_panning = opensl_stream_set_panning,
+  .stream_get_current_device = NULL,
+  .stream_device_destroy = NULL,
+  .stream_register_device_changed_callback = NULL
 };

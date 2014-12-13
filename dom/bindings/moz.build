@@ -30,6 +30,7 @@ EXPORTS.mozilla.dom += [
     'OwningNonNull.h',
     'PrimitiveConversions.h',
     'RootedDictionary.h',
+    'StructuredClone.h',
     'ToJSValue.h',
     'TypedArray.h',
     'UnionMember.h',
@@ -41,24 +42,23 @@ MSVC_ENABLE_PGO = True
 
 LOCAL_INCLUDES += [
     '/content/base/src',
-    '/content/canvas/src',
     '/content/html/content/src',
     '/content/html/document/src',
     '/content/media/webaudio',
     '/content/media/webspeech/recognition',
     '/content/svg/content/src',
-    '/content/xml/content/src',
     '/content/xul/content/src',
     '/content/xul/document/src',
     '/dom/base',
     '/dom/battery',
     '/dom/bluetooth',
     '/dom/camera',
-    '/dom/file',
+    '/dom/canvas',
+    '/dom/geolocation',
     '/dom/indexedDB',
-    '/dom/src/geolocation',
     '/dom/workers',
     '/dom/xbl',
+    '/dom/xml',
     '/dom/xslt/base',
     '/dom/xslt/xpath',
     '/js/ipc',
@@ -81,6 +81,10 @@ UNIFIED_SOURCES += [
     'ToJSValue.cpp',
 ]
 
+SOURCES += [
+    'StructuredClone.cpp',
+]
+
 include('/ipc/chromium/chromium-config.mozbuild')
 
 if CONFIG['MOZ_AUDIO_CHANNEL_MANAGER']:
@@ -96,3 +100,7 @@ SPHINX_PYTHON_PACKAGE_DIRS += ['mozwebidlcodegen']
 if CONFIG['MOZ_BUILD_APP'] in ['browser', 'mobile/android', 'xulrunner']:
     # This is needed for Window.webidl
     DEFINES['HAVE_SIDEBAR'] = True
+
+PYTHON_UNIT_TESTS += [
+    'mozwebidlcodegen/test/test_mozwebidlcodegen.py',
+]

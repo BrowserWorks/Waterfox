@@ -16,13 +16,6 @@
 #include "nsThreadUtils.h"
 #include "runnable_utils.h"
 
-template <>
-class nsAutoRefTraits<GMPVideoi420Frame> : public nsPointerRefTraits<GMPVideoi420Frame>
-{
-public:
-  static void Release(GMPVideoi420Frame* aFrame) { aFrame->Destroy(); }
-};
-
 namespace mozilla {
 
 #ifdef LOG
@@ -131,12 +124,10 @@ GMPVideoEncoderParent::InitEncode(const GMPVideoCodec& aCodecSettings,
 }
 
 GMPErr
-GMPVideoEncoderParent::Encode(GMPVideoi420Frame* aInputFrame,
+GMPVideoEncoderParent::Encode(UniquePtr<GMPVideoi420Frame> aInputFrame,
                               const nsTArray<uint8_t>& aCodecSpecificInfo,
                               const nsTArray<GMPVideoFrameType>& aFrameTypes)
 {
-  nsAutoRef<GMPVideoi420Frame> frameRef(aInputFrame);
-
   if (!mIsOpen) {
     NS_WARNING("Trying to use an dead GMP video encoder");
     return GMPGenericErr;
@@ -144,7 +135,8 @@ GMPVideoEncoderParent::Encode(GMPVideoi420Frame* aInputFrame,
 
   MOZ_ASSERT(mPlugin->GMPThread() == NS_GetCurrentThread());
 
-  auto inputFrameImpl = static_cast<GMPVideoi420FrameImpl*>(aInputFrame);
+  UniquePtr<GMPVideoi420FrameImpl> inputFrameImpl(
+    static_cast<GMPVideoi420FrameImpl*>(aInputFrame.release()));
 
   // Very rough kill-switch if the plugin stops processing.  If it's merely
   // hung and continues, we'll come back to life eventually.
@@ -311,6 +303,19 @@ GMPVideoEncoderParent::RecvEncoded(const GMPVideoEncodedFrameData& aEncodedFrame
 }
 
 bool
+GMPVideoEncoderParent::RecvError(const GMPErr& aError)
+{
+  if (!mCallback) {
+    return false;
+  }
+
+  // Ignore any return code. It is OK for this to fail without killing the process.
+  mCallback->Error(aError);
+
+  return true;
+}
+
+bool
 GMPVideoEncoderParent::RecvParentShmemForPool(Shmem& aFrameBuffer)
 {
   if (aFrameBuffer.IsWritable()) {
@@ -330,6 +335,8 @@ GMPVideoEncoderParent::AnswerNeedShmem(const uint32_t& aEncodedBufferSize,
                                                 aEncodedBufferSize,
                                                 ipc::SharedMemory::TYPE_BASIC, &mem))
   {
+    LOG(PR_LOG_ERROR, ("%s::%s: Failed to get a shared mem buffer for Child! size %u",
+                       __CLASS__, __FUNCTION__, aEncodedBufferSize));
     return false;
   }
   *aMem = mem;

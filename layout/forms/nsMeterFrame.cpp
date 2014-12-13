@@ -23,6 +23,7 @@
 #include "nsThemeConstants.h"
 #include <algorithm>
 
+using namespace mozilla;
 using mozilla::dom::Element;
 using mozilla::dom::HTMLMeterElement;
 
@@ -59,7 +60,7 @@ nsresult
 nsMeterFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
 {
   // Get the NodeInfoManager and tag necessary to create the meter bar div.
-  nsCOMPtr<nsIDocument> doc = mContent->GetDocument();
+  nsCOMPtr<nsIDocument> doc = mContent->GetComposedDoc();
 
   // Create the div.
   mBarDiv = doc->CreateHTMLElement(nsGkAtoms::div);
@@ -78,10 +79,12 @@ nsMeterFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
 }
 
 void
-nsMeterFrame::AppendAnonymousContentTo(nsBaseContentList& aElements,
+nsMeterFrame::AppendAnonymousContentTo(nsTArray<nsIContent*>& aElements,
                                        uint32_t aFilter)
 {
-  aElements.MaybeAppendElement(mBarDiv);
+  if (mBarDiv) {
+    aElements.AppendElement(mBarDiv);
+  }
 }
 
 NS_QUERYFRAME_HEAD(nsMeterFrame)
@@ -113,10 +116,8 @@ nsMeterFrame::Reflow(nsPresContext*           aPresContext,
 
   ReflowBarFrame(barFrame, aPresContext, aReflowState, aStatus);
 
-  aDesiredSize.Width() = aReflowState.ComputedWidth() +
-                       aReflowState.ComputedPhysicalBorderPadding().LeftRight();
-  aDesiredSize.Height() = aReflowState.ComputedHeight() +
-                        aReflowState.ComputedPhysicalBorderPadding().TopBottom();
+  aDesiredSize.SetSize(aReflowState.GetWritingMode(),
+                       aReflowState.ComputedSizeWithBorderPadding());
 
   aDesiredSize.SetOverflowAreasToDesiredBounds();
   ConsiderChildOverflow(aDesiredSize.mOverflowAreas, barFrame);
@@ -134,9 +135,11 @@ nsMeterFrame::ReflowBarFrame(nsIFrame*                aBarFrame,
                              nsReflowStatus&          aStatus)
 {
   bool vertical = StyleDisplay()->mOrient == NS_STYLE_ORIENT_VERTICAL;
-  nsHTMLReflowState reflowState(aPresContext, aReflowState, aBarFrame,
-                                nsSize(aReflowState.ComputedWidth(),
-                                       NS_UNCONSTRAINEDSIZE));
+  WritingMode wm = aBarFrame->GetWritingMode();
+  LogicalSize availSize = aReflowState.ComputedSize(wm);
+  availSize.BSize(wm) = NS_UNCONSTRAINEDSIZE;
+  nsHTMLReflowState reflowState(aPresContext, aReflowState,
+                                aBarFrame, availSize);
   nscoord size = vertical ? aReflowState.ComputedHeight()
                           : aReflowState.ComputedWidth();
   nscoord xoffset = aReflowState.ComputedPhysicalBorderPadding().left;
@@ -207,31 +210,36 @@ nsMeterFrame::AttributeChanged(int32_t  aNameSpaceID,
                                             aModType);
 }
 
-nsSize
+LogicalSize
 nsMeterFrame::ComputeAutoSize(nsRenderingContext *aRenderingContext,
-                              nsSize aCBSize, nscoord aAvailableWidth,
-                              nsSize aMargin, nsSize aBorder,
-                              nsSize aPadding, bool aShrinkWrap)
+                              WritingMode aWM,
+                              const LogicalSize& aCBSize,
+                              nscoord aAvailableISize,
+                              const LogicalSize& aMargin,
+                              const LogicalSize& aBorder,
+                              const LogicalSize& aPadding,
+                              bool aShrinkWrap)
 {
   nsRefPtr<nsFontMetrics> fontMet;
   NS_ENSURE_SUCCESS(nsLayoutUtils::GetFontMetricsForFrame(this,
                                                           getter_AddRefs(fontMet)),
-                    nsSize(0, 0));
+                    LogicalSize(aWM));
 
-  nsSize autoSize;
-  autoSize.height = autoSize.width = fontMet->Font().size; // 1em
+  const WritingMode wm = GetWritingMode();
+  LogicalSize autoSize(wm);
+  autoSize.BSize(wm) = autoSize.ISize(wm) = fontMet->Font().size; // 1em
 
   if (StyleDisplay()->mOrient == NS_STYLE_ORIENT_VERTICAL) {
-    autoSize.height *= 5; // 5em
+    autoSize.Height(wm) *= 5; // 5em
   } else {
-    autoSize.width *= 5; // 5em
+    autoSize.Width(wm) *= 5; // 5em
   }
 
-  return autoSize;
+  return autoSize.ConvertTo(aWM, wm);
 }
 
 nscoord
-nsMeterFrame::GetMinWidth(nsRenderingContext *aRenderingContext)
+nsMeterFrame::GetMinISize(nsRenderingContext *aRenderingContext)
 {
   nsRefPtr<nsFontMetrics> fontMet;
   NS_ENSURE_SUCCESS(
@@ -249,9 +257,9 @@ nsMeterFrame::GetMinWidth(nsRenderingContext *aRenderingContext)
 }
 
 nscoord
-nsMeterFrame::GetPrefWidth(nsRenderingContext *aRenderingContext)
+nsMeterFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
 {
-  return GetMinWidth(aRenderingContext);
+  return GetMinISize(aRenderingContext);
 }
 
 bool

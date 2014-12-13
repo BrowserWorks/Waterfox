@@ -456,7 +456,11 @@ CompositorD3D11::CreateRenderTargetFromSource(const gfx::IntRect &aRect,
     const IntSize& srcSize = sourceD3D11->GetSize();
     MOZ_ASSERT(srcSize.width >= 0 && srcSize.height >= 0,
                "render targets should have nonnegative sizes");
-    if (srcBox.right <= static_cast<uint32_t>(srcSize.width) &&
+    if (srcBox.left >= 0 &&
+        srcBox.top >= 0 &&
+        srcBox.left < srcBox.right &&
+        srcBox.top < srcBox.bottom &&
+        srcBox.right <= static_cast<uint32_t>(srcSize.width) &&
         srcBox.bottom <= static_cast<uint32_t>(srcSize.height)) {
       mContext->CopySubresourceRegion(texture, 0,
                                       0, 0, 0,
@@ -483,7 +487,7 @@ CompositorD3D11::SetRenderTarget(CompositingRenderTarget* aRenderTarget)
   ID3D11RenderTargetView* view = newRT->mRTView;
   mCurrentRT = newRT;
   mContext->OMSetRenderTargets(1, &view, nullptr);
-  PrepareViewport(newRT->GetSize(), gfx::Matrix());
+  PrepareViewport(newRT->GetSize());
 }
 
 void
@@ -744,7 +748,6 @@ CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
 void
 CompositorD3D11::BeginFrame(const nsIntRegion& aInvalidRegion,
                             const Rect* aClipRectIn,
-                            const gfx::Matrix& aTransform,
                             const Rect& aRenderBounds,
                             Rect* aClipRectOut,
                             Rect* aRenderBoundsOut)
@@ -822,8 +825,7 @@ CompositorD3D11::EndFrame()
 }
 
 void
-CompositorD3D11::PrepareViewport(const gfx::IntSize& aSize,
-                                 const gfx::Matrix& aWorldTransform)
+CompositorD3D11::PrepareViewport(const gfx::IntSize& aSize)
 {
   D3D11_VIEWPORT viewport;
   viewport.MaxDepth = 1.0f;
@@ -839,8 +841,6 @@ CompositorD3D11::PrepareViewport(const gfx::IntSize& aSize,
   viewMatrix.Translate(-1.0, 1.0);
   viewMatrix.Scale(2.0f / float(aSize.width), 2.0f / float(aSize.height));
   viewMatrix.Scale(1.0f, -1.0f);
-
-  viewMatrix = aWorldTransform * viewMatrix;
 
   Matrix4x4 projection = Matrix4x4::From2D(viewMatrix);
   projection._33 = 0.0f;
@@ -865,7 +865,7 @@ CompositorD3D11::VerifyBufferSize()
 
   if ((swapDesc.BufferDesc.Width == mSize.width &&
        swapDesc.BufferDesc.Height == mSize.height) ||
-      mSize.width == 0 || mSize.height == 0) {
+      mSize.width <= 0 || mSize.height <= 0) {
     return;
   }
 

@@ -14,6 +14,7 @@
 #include "ImageLayers.h"
 #include "DisplayItemClip.h"
 #include "mozilla/layers/LayersTypes.h"
+#include "LayerState.h"
 
 class nsDisplayListBuilder;
 class nsDisplayList;
@@ -29,22 +30,14 @@ class BasicLayerManager;
 class ThebesLayer;
 }
 
+namespace gfx {
+class Matrix4x4;
+}
+
 class FrameLayerBuilder;
 class LayerManagerData;
 class ThebesLayerData;
-
-enum LayerState {
-  LAYER_NONE,
-  LAYER_INACTIVE,
-  LAYER_ACTIVE,
-  // Force an active layer even if it causes incorrect rendering, e.g.
-  // when the layer has rounded rect clips.
-  LAYER_ACTIVE_FORCE,
-  // Special layer that is metadata only.
-  LAYER_ACTIVE_EMPTY,
-  // Inactive style layer for rendering SVG effects.
-  LAYER_SVG_EFFECTS
-};
+class ContainerState;
 
 class RefCountedRegion {
 private:
@@ -57,40 +50,54 @@ public:
   bool mIsInfinite;
 };
 
+struct NewLayerEntry;
+
 struct ContainerLayerParameters {
-  ContainerLayerParameters() :
-    mXScale(1), mYScale(1), mAncestorClipRect(nullptr),
-    mInTransformedSubtree(false), mInActiveTransformedSubtree(false),
-    mDisableSubpixelAntialiasingInDescendants(false)
+  ContainerLayerParameters()
+    : mXScale(1)
+    , mYScale(1)
+    , mLayerContentsVisibleRect(nullptr)
+    , mInTransformedSubtree(false)
+    , mInActiveTransformedSubtree(false)
+    , mDisableSubpixelAntialiasingInDescendants(false)
+    , mInLowPrecisionDisplayPort(false)
   {}
-  ContainerLayerParameters(float aXScale, float aYScale) :
-    mXScale(aXScale), mYScale(aYScale), mAncestorClipRect(nullptr),
-    mInTransformedSubtree(false), mInActiveTransformedSubtree(false),
-    mDisableSubpixelAntialiasingInDescendants(false)
+  ContainerLayerParameters(float aXScale, float aYScale)
+    : mXScale(aXScale)
+    , mYScale(aYScale)
+    , mLayerContentsVisibleRect(nullptr)
+    , mInTransformedSubtree(false)
+    , mInActiveTransformedSubtree(false)
+    , mDisableSubpixelAntialiasingInDescendants(false)
+    , mInLowPrecisionDisplayPort(false)
   {}
   ContainerLayerParameters(float aXScale, float aYScale,
                            const nsIntPoint& aOffset,
-                           const ContainerLayerParameters& aParent) :
-    mXScale(aXScale), mYScale(aYScale), mAncestorClipRect(nullptr),
-    mOffset(aOffset),
-    mInTransformedSubtree(aParent.mInTransformedSubtree),
-    mInActiveTransformedSubtree(aParent.mInActiveTransformedSubtree),
-    mDisableSubpixelAntialiasingInDescendants(aParent.mDisableSubpixelAntialiasingInDescendants)
+                           const ContainerLayerParameters& aParent)
+    : mXScale(aXScale)
+    , mYScale(aYScale)
+    , mLayerContentsVisibleRect(nullptr)
+    , mOffset(aOffset)
+    , mInTransformedSubtree(aParent.mInTransformedSubtree)
+    , mInActiveTransformedSubtree(aParent.mInActiveTransformedSubtree)
+    , mDisableSubpixelAntialiasingInDescendants(aParent.mDisableSubpixelAntialiasingInDescendants)
+    , mInLowPrecisionDisplayPort(aParent.mInLowPrecisionDisplayPort)
   {}
   float mXScale, mYScale;
   /**
-   * An ancestor clip rect that can be applied to restrict the visibility
-   * of this container. Null if none available.
+   * If non-null, the rectangle in which BuildContainerLayerFor stores the
+   * visible rect of the layer, in the coordinate system of the created layer.
    */
-  const nsIntRect* mAncestorClipRect;
+  nsIntRect* mLayerContentsVisibleRect;
   /**
-   * An offset to append to the transform set on all child layers created.
+   * An offset to apply to all child layers created.
    */
   nsIntPoint mOffset;
 
   bool mInTransformedSubtree;
   bool mInActiveTransformedSubtree;
   bool mDisableSubpixelAntialiasingInDescendants;
+  bool mInLowPrecisionDisplayPort;
   /**
    * When this is false, ThebesLayer coordinates are drawn to with an integer
    * translation and the scale in mXScale/mYScale.
@@ -207,15 +214,18 @@ public:
    * is set based on what's in the layer.
    * The container layer is transformed by aTransform (if non-null), and
    * the result is transformed by the scale factors in aContainerParameters.
+   * aChildren is modified due to display item merging and flattening.
+   * The visible region of the returned layer is set only if aContainerItem
+   * is null.
    */
   already_AddRefed<ContainerLayer>
   BuildContainerLayerFor(nsDisplayListBuilder* aBuilder,
                          LayerManager* aManager,
                          nsIFrame* aContainerFrame,
                          nsDisplayItem* aContainerItem,
-                         const nsDisplayList& aChildren,
+                         nsDisplayList* aChildren,
                          const ContainerLayerParameters& aContainerParameters,
-                         const gfx3DMatrix* aTransform,
+                         const gfx::Matrix4x4* aTransform,
                          uint32_t aFlags = 0);
 
   /**
@@ -283,11 +293,9 @@ public:
    */
   void AddLayerDisplayItem(Layer* aLayer,
                            nsDisplayItem* aItem,
-                           const DisplayItemClip& aClip,
                            LayerState aLayerState,
                            const nsPoint& aTopLeft,
-                           BasicLayerManager* aManager,
-                           nsAutoPtr<nsDisplayItemGeometry> aGeometry);
+                           BasicLayerManager* aManager);
 
   /**
    * Record aItem as a display item that is rendered by the ThebesLayer
@@ -299,10 +307,10 @@ public:
   void AddThebesDisplayItem(ThebesLayerData* aLayer,
                             nsDisplayItem* aItem,
                             const DisplayItemClip& aClip,
-                            nsIFrame* aContainerLayerFrame,
+                            const nsIntRect& aItemVisibleRect,
+                            const ContainerState& aContainerState,
                             LayerState aLayerState,
-                            const nsPoint& aTopLeft,
-                            nsAutoPtr<nsDisplayItemGeometry> aGeometry);
+                            const nsPoint& aTopLeft);
 
   /**
    * Gets the frame property descriptor for the given manager, or for the current
@@ -317,9 +325,9 @@ public:
    */
   Layer* GetOldLayerFor(nsDisplayItem* aItem, 
                         nsDisplayItemGeometry** aOldGeometry = nullptr, 
-                        DisplayItemClip** aOldClip = nullptr,
-                        nsTArray<nsIFrame*>* aChangedFrames = nullptr,
-                        bool *aIsInvalid = nullptr);
+                        DisplayItemClip** aOldClip = nullptr);
+
+  void ClearCachedGeometry(nsDisplayItem* aItem);
 
   static Layer* GetDebugOldLayerFor(nsIFrame* aFrame, uint32_t aDisplayItemKey);
 
@@ -347,7 +355,7 @@ public:
    * of the active scrolled root frame. It must be an integer
    * translation.
    */
-  void SaveLastPaintOffset(ThebesLayer* aLayer);
+  void SavePreviousDataForLayer(ThebesLayer* aLayer, uint32_t aClipCount);
   /**
    * Get the translation transform that was in aLayer when we last painted. It's either
    * the transform saved by SaveLastPaintTransform, or else the transform
@@ -400,7 +408,9 @@ public:
     void Invalidate() { mIsInvalid = true; }
 
   private:
-    DisplayItemData(LayerManagerData* aParent, uint32_t aKey, Layer* aLayer, LayerState aLayerState, uint32_t aGeneration);
+    DisplayItemData(LayerManagerData* aParent,
+                    uint32_t aKey,
+                    nsIFrame* aFrame = nullptr);
     DisplayItemData(DisplayItemData &toCopy);
 
     /**
@@ -418,17 +428,30 @@ public:
      */
     void AddFrame(nsIFrame* aFrame);
     void RemoveFrame(nsIFrame* aFrame);
-    void GetFrameListChanges(nsDisplayItem* aOther, nsTArray<nsIFrame*>& aOut);
+    const nsTArray<nsIFrame*>& GetFrameListChanges();
 
     /**
      * Updates the contents of this item to a new set of data, instead of allocating a new
      * object.
-     * Set the passed in parameters, and clears the opt layer, inactive manager, geometry
-     * and clip.
-     * Parent, frame list and display item key are assumed to be the same.
+     * Set the passed in parameters, and clears the opt layer and inactive manager.
+     * Parent, and display item key are assumed to be the same.
+     *
+     * EndUpdate must be called before the end of the transaction to complete the update.
      */
-    void UpdateContents(Layer* aLayer, LayerState aState,
-                        uint32_t aContainerLayerGeneration, nsDisplayItem* aItem = nullptr);
+    void BeginUpdate(Layer* aLayer, LayerState aState,
+                     uint32_t aContainerLayerGeneration, nsDisplayItem* aItem = nullptr);
+
+    /**
+     * Completes the update of this, and removes any references to data that won't live
+     * longer than the transaction.
+     *
+     * Updates the geometry, frame list and clip.
+     * For items within a ThebesLayer, a geometry object must be specifed to retain
+     * until the next transaction.
+     *
+     */
+    void EndUpdate(nsAutoPtr<nsDisplayItemGeometry> aGeometry);
+    void EndUpdate();
 
     LayerManagerData* mParent;
     nsRefPtr<Layer> mLayer;
@@ -440,6 +463,13 @@ public:
     uint32_t        mDisplayItemKey;
     uint32_t        mContainerLayerGeneration;
     LayerState      mLayerState;
+
+    /**
+     * Temporary stoarage of the display item being referenced, only valid between
+     * BeginUpdate and EndUpdate.
+     */
+    nsDisplayItem* mItem;
+    nsAutoTArray<nsIFrame*, 1> mFrameListChanges;
 
     /**
      * Used to track if data currently stored in mFramesWithLayers (from an existing
@@ -529,6 +559,7 @@ protected:
     nsRefPtr<LayerManager> mInactiveLayerManager;
 
     uint32_t mContainerLayerGeneration;
+
   };
 
   static void RecomputeVisibilityForItems(nsTArray<ClippedDisplayItem>& aItems,
@@ -556,10 +587,14 @@ protected:
 public:
   class ThebesLayerItemsEntry : public nsPtrHashKey<ThebesLayer> {
   public:
-    ThebesLayerItemsEntry(const ThebesLayer *key) :
-        nsPtrHashKey<ThebesLayer>(key), mContainerLayerFrame(nullptr),
-        mContainerLayerGeneration(0),
-        mHasExplicitLastPaintOffset(false), mCommonClipCount(0) {}
+    explicit ThebesLayerItemsEntry(const ThebesLayer *key)
+      : nsPtrHashKey<ThebesLayer>(key)
+      , mContainerLayerFrame(nullptr)
+      , mLastCommonClipCount(0)
+      , mContainerLayerGeneration(0)
+      , mHasExplicitLastPaintOffset(false)
+      , mCommonClipCount(0)
+    {}
     ThebesLayerItemsEntry(const ThebesLayerItemsEntry &toCopy) :
       nsPtrHashKey<ThebesLayer>(toCopy.mKey), mItems(toCopy.mItems)
     {
@@ -571,6 +606,8 @@ public:
     // The translation set on this ThebesLayer before we started updating the
     // layer tree.
     nsIntPoint mLastPaintOffset;
+    uint32_t mLastCommonClipCount;
+
     uint32_t mContainerLayerGeneration;
     bool mHasExplicitLastPaintOffset;
     /**
@@ -596,12 +633,19 @@ public:
     return mContainingThebesLayer;
   }
 
+  bool IsBuildingRetainedLayers()
+  {
+    return !mContainingThebesLayer && mRetainingManager;
+  }
+
   /**
    * Attempt to build the most compressed layer tree possible, even if it means
    * throwing away existing retained buffers.
    */
   void SetLayerTreeCompressionMode() { mInLayerTreeCompressionMode = true; }
   bool CheckInLayerTreeCompressionMode();
+
+  void ComputeGeometryChangeForItem(DisplayItemData* aData);
 
 protected:
   void RemoveThebesItemsAndOwnerDataForLayerSubtree(Layer* aLayer,

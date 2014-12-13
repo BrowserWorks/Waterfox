@@ -35,8 +35,6 @@ Object.defineProperty = null; // See bug 988416.
 // Object) below. Setting `var std_Array = Array;`, for instance, would cause
 // the entire Array constructor, including its prototype and methods, to be
 // cloned into content compartments.
-var std_isFinite = isFinite;
-var std_isNaN = isNaN;
 var std_Array_indexOf = ArrayIndexOf;
 var std_Array_iterator = Array.prototype.iterator;
 var std_Array_join = Array.prototype.join;
@@ -64,6 +62,7 @@ var std_Object_create = Object.create;
 var std_Object_getOwnPropertyNames = Object.getOwnPropertyNames;
 var std_Object_hasOwnProperty = Object.prototype.hasOwnProperty;
 var std_Object_getPrototypeOf = Object.getPrototypeOf;
+var std_Object_getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
 var std_RegExp_test = RegExp.prototype.test;
 var std_String_fromCharCode = String.fromCharCode;
 var std_String_charCodeAt = String.prototype.charCodeAt;
@@ -80,6 +79,8 @@ var std_WeakMap = WeakMap;
 var std_WeakMap_get = WeakMap.prototype.get;
 var std_WeakMap_has = WeakMap.prototype.has;
 var std_WeakMap_set = WeakMap.prototype.set;
+var std_WeakMap_clear = WeakMap.prototype.clear;
+var std_WeakMap_delete = WeakMap.prototype.delete;
 var std_Map_has = Map.prototype.has;
 var std_Set_has = Set.prototype.has;
 var std_iterator = '@@iterator'; // FIXME: Change to be a symbol.
@@ -144,6 +145,17 @@ function CheckObjectCoercible(v) {
         ThrowError(JSMSG_CANT_CONVERT_TO, ToString(v), "object");
 }
 
+/* Spec: ECMAScript Draft, 6 edition May 22, 2014, 7.1.15 */
+function ToLength(v) {
+    v = ToInteger(v);
+
+    if (v <= 0)
+        return 0;
+
+    // Math.pow(2, 53) - 1 = 0x1fffffffffffff
+    return v < 0x1fffffffffffff ? v : 0x1fffffffffffff;
+}
+
 /********** Testing code **********/
 
 #ifdef ENABLE_PARALLEL_JS
@@ -171,7 +183,6 @@ function ForkJoinMode(mode) {
     return 4;
   }
   ThrowError(JSMSG_PAR_ARRAY_BAD_ARG);
-  return undefined;
 }
 
 #endif

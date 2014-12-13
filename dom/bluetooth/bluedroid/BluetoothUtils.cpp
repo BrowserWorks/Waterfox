@@ -14,7 +14,6 @@
 #include "mozilla/Scoped.h"
 #include "mozilla/dom/bluetooth/BluetoothTypes.h"
 #include "nsContentUtils.h"
-#include "nsCxPusher.h"
 #include "nsIScriptContext.h"
 #include "nsISystemMessagesInternal.h"
 #include "nsString.h"
@@ -23,38 +22,12 @@
 
 BEGIN_BLUETOOTH_NAMESPACE
 
-void
-StringToBdAddressType(const nsAString& aBdAddress,
-                      bt_bdaddr_t *aRetBdAddressType)
-{
-  NS_ConvertUTF16toUTF8 bdAddressUTF8(aBdAddress);
-  const char* str = bdAddressUTF8.get();
-
-  for (int i = 0; i < 6; i++) {
-    aRetBdAddressType->address[i] = (uint8_t) strtoul(str, (char **)&str, 16);
-    str++;
-  }
-}
-
-void
-BdAddressTypeToString(bt_bdaddr_t* aBdAddressType, nsAString& aRetBdAddress)
-{
-  uint8_t* addr = aBdAddressType->address;
-  char bdstr[18];
-
-  sprintf(bdstr, "%02x:%02x:%02x:%02x:%02x:%02x",
-          (int)addr[0],(int)addr[1],(int)addr[2],
-          (int)addr[3],(int)addr[4],(int)addr[5]);
-
-  aRetBdAddress = NS_ConvertUTF8toUTF16(bdstr);
-}
-
 uint16_t
-UuidToServiceClassInt(bt_uuid_t* p_uuid)
+UuidToServiceClassInt(const BluetoothUuid& mUuid)
 {
   // extract short UUID 0000xxxx-0000-1000-8000-00805f9b34fb
   uint16_t shortUuid;
-  memcpy(&shortUuid, &(p_uuid->uu[2]), sizeof(uint16_t));
+  memcpy(&shortUuid, mUuid.mUuid + 2, sizeof(uint16_t));
   return ntohs(shortUuid);
 }
 

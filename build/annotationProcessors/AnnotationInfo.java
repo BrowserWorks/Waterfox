@@ -9,17 +9,22 @@ package org.mozilla.gecko.annotationProcessors;
  */
 public class AnnotationInfo {
     public final String wrapperName;
-    public final boolean isStatic;
     public final boolean isMultithreaded;
     public final boolean noThrow;
     public final boolean narrowChars;
+    public final boolean catchException;
 
-    public AnnotationInfo(String aWrapperName, boolean aIsStatic, boolean aIsMultithreaded,
-                          boolean aNoThrow, boolean aNarrowChars) {
+    public AnnotationInfo(String aWrapperName, boolean aIsMultithreaded,
+                          boolean aNoThrow, boolean aNarrowChars, boolean aCatchException) {
         wrapperName = aWrapperName;
-        isStatic = aIsStatic;
         isMultithreaded = aIsMultithreaded;
         noThrow = aNoThrow;
-	narrowChars = aNarrowChars;
+        narrowChars = aNarrowChars;
+        catchException = aCatchException;
+
+        if (!noThrow && catchException) {
+            // It doesn't make sense to have these together
+            throw new IllegalArgumentException("noThrow and catchException are not allowed together");
+        }
     }
 }

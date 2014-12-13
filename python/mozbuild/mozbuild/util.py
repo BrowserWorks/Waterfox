@@ -10,12 +10,17 @@ from __future__ import unicode_literals
 import copy
 import difflib
 import errno
+import functools
 import hashlib
 import os
 import stat
 import sys
 import time
 
+from collections import (
+    defaultdict,
+    OrderedDict,
+)
 from StringIO import StringIO
 
 
@@ -45,11 +50,17 @@ def hash_file(path):
 
 class ReadOnlyDict(dict):
     """A read-only dictionary."""
-    def __init__(self, d):
-        dict.__init__(self, d)
+    def __init__(self, *args, **kwargs):
+        dict.__init__(self, *args, **kwargs)
 
-    def __setitem__(self, name, value):
+    def __delitem__(self, key):
+        raise Exception('Object does not support deletion.')
+
+    def __setitem__(self, key, value):
         raise Exception('Object does not support assignment.')
+
+    def update(self, *args, **kwargs):
+        raise Exception('Object does not support update.')
 
 
 class undefined_default(object):
@@ -59,43 +70,16 @@ class undefined_default(object):
 undefined = undefined_default()
 
 
-class DefaultOnReadDict(dict):
-    """A dictionary that returns default values for missing keys on read."""
-
-    def __init__(self, d, defaults=None, global_default=undefined):
-        """Create an instance from an iterable with defaults.
-
-        The first argument is fed into the dict constructor.
-
-        defaults is a dict mapping keys to their default values.
-
-        global_default is the default value for *all* missing keys. If it isn't
-        specified, no default value for keys not in defaults will be used and
-        IndexError will be raised on access.
-        """
-        dict.__init__(self, d)
-
-        self._defaults = defaults or {}
-        self._global_default = global_default
-
-    def __getitem__(self, k):
-        try:
-            return dict.__getitem__(self, k)
-        except:
-            pass
-
-        if k in self._defaults:
-            dict.__setitem__(self, k, copy.deepcopy(self._defaults[k]))
-        elif self._global_default != undefined:
-            dict.__setitem__(self, k, copy.deepcopy(self._global_default))
-
-        return dict.__getitem__(self, k)
-
-
-class ReadOnlyDefaultDict(DefaultOnReadDict, ReadOnlyDict):
+class ReadOnlyDefaultDict(ReadOnlyDict):
     """A read-only dictionary that supports default values on retrieval."""
-    def __init__(self, d, defaults=None, global_default=undefined):
-        DefaultOnReadDict.__init__(self, d, defaults, global_default)
+    def __init__(self, default_factory, *args, **kwargs):
+        ReadOnlyDict.__init__(self, *args, **kwargs)
+        self._default_factory = default_factory
+
+    def __missing__(self, key):
+        value = self._default_factory()
+        dict.__setitem__(self, key, value)
+        return value
 
 
 def ensureParentDir(path):
@@ -248,6 +232,44 @@ def resolve_target_to_make(topobjdir, target):
         reldir = os.path.dirname(reldir)
 
 
+class List(list):
+    """A list specialized for moz.build environments.
+
+    We overload the assignment and append operations to require that the
+    appended thing is a list. This avoids bad surprises coming from appending
+    a string to a list, which would just add each letter of the string.
+    """
+    def extend(self, l):
+        if not isinstance(l, list):
+            raise ValueError('List can only be extended with other list instances.')
+
+        return list.extend(self, l)
+
+    def __setslice__(self, i, j, sequence):
+        if not isinstance(sequence, list):
+            raise ValueError('List can only be sliced with other list instances.')
+
+        return list.__setslice__(self, i, j, sequence)
+
+    def __add__(self, other):
+        # Allow None is a special case because it makes undefined variable
+        # references in moz.build behave better.
+        other = [] if other is None else other
+        if not isinstance(other, list):
+            raise ValueError('Only lists can be appended to lists.')
+
+        return List(list.__add__(self, other))
+
+    def __iadd__(self, other):
+        other = [] if other is None else other
+        if not isinstance(other, list):
+            raise ValueError('Only lists can be appended to lists.')
+
+        list.__iadd__(self, other)
+
+        return self
+
+
 class UnsortedError(Exception):
     def __init__(self, srtd, original):
         assert len(srtd) == len(original)
@@ -312,10 +334,12 @@ class StrictOrderingOnAppendList(list):
         if not isinstance(other, list):
             raise ValueError('Only lists can be appended to lists.')
 
-        StrictOrderingOnAppendList.ensure_sorted(other)
-
-        # list.__add__ will return a new list. We "cast" it to our type.
-        return StrictOrderingOnAppendList(list.__add__(self, other))
+        new_list = StrictOrderingOnAppendList()
+        # Can't extend with self because it may already be the result of
+        # several extensions and not be ordered.
+        list.extend(new_list, self)
+        new_list.extend(other)
+        return new_list
 
     def __iadd__(self, other):
         if not isinstance(other, list):
@@ -347,6 +371,10 @@ def FlagsFactory(flags):
     class Flags(object):
         __slots__ = flags.keys()
         _flags = flags
+
+        def update(self, **kwargs):
+            for k, v in kwargs.iteritems():
+                setattr(self, k, v)
 
         def __getattr__(self, name):
             if name not in self.__slots__:
@@ -454,10 +482,7 @@ class HierarchicalStringList(object):
         # to try to actually set the attribute. We want to ignore this case,
         # since we don't actually create an attribute called 'foo', but just add
         # it to our list of children (using _get_exportvariable()).
-        exports = self._get_exportvariable(name)
-        if not isinstance(value, HierarchicalStringList):
-            exports._check_list(value)
-            exports._strings = value
+        self._set_exportvariable(name, value)
 
     def __getattr__(self, name):
         if name.startswith('__'):
@@ -472,8 +497,20 @@ class HierarchicalStringList(object):
         self._strings += other
         return self
 
+    def __getitem__(self, name):
+        return self._get_exportvariable(name)
+
+    def __setitem__(self, name, value):
+        self._set_exportvariable(name, value)
+
     def _get_exportvariable(self, name):
         return self._children.setdefault(name, HierarchicalStringList())
+
+    def _set_exportvariable(self, name, value):
+        exports = self._get_exportvariable(name)
+        if not isinstance(value, HierarchicalStringList):
+            exports._check_list(value)
+            exports._strings = value
 
     def _check_list(self, value):
         if not isinstance(value, list):
@@ -667,3 +704,74 @@ def shell_quote(s):
     # be closed, an escaped single quote added, and reopened.
     t = type(s)
     return t("'%s'") % s.replace(t("'"), t("'\\''"))
+
+
+class OrderedDefaultDict(OrderedDict):
+    '''A combination of OrderedDict and defaultdict.'''
+    def __init__(self, default_factory, *args, **kwargs):
+        OrderedDict.__init__(self, *args, **kwargs)
+        self._default_factory = default_factory
+
+    def __missing__(self, key):
+        value = self[key] = self._default_factory()
+        return value
+
+
+class KeyedDefaultDict(dict):
+    '''Like a defaultdict, but the default_factory function takes the key as
+    argument'''
+    def __init__(self, default_factory, *args, **kwargs):
+        dict.__init__(self, *args, **kwargs)
+        self._default_factory = default_factory
+
+    def __missing__(self, key):
+        value = self._default_factory(key)
+        dict.__setitem__(self, key, value)
+        return value
+
+
+class ReadOnlyKeyedDefaultDict(KeyedDefaultDict, ReadOnlyDict):
+    '''Like KeyedDefaultDict, but read-only.'''
+
+
+class memoize(dict):
+    '''A decorator to memoize the results of function calls depending
+    on its arguments.
+    Both functions and instance methods are handled, although in the
+    instance method case, the results are cache in the instance itself.
+    '''
+    def __init__(self, func):
+        self.func = func
+        functools.update_wrapper(self, func)
+
+    def __call__(self, *args):
+        if args not in self:
+            self[args] = self.func(*args)
+        return self[args]
+
+    def method_call(self, instance, *args):
+        name = '_%s' % self.func.__name__
+        if not hasattr(instance, name):
+            setattr(instance, name, {})
+        cache = getattr(instance, name)
+        if args not in cache:
+            cache[args] = self.func(instance, *args)
+        return cache[args]
+
+    def __get__(self, instance, cls):
+        return functools.update_wrapper(
+            functools.partial(self.method_call, instance), self.func)
+
+
+class memoized_property(object):
+    '''A specialized version of the memoize decorator that works for
+    class instance properties.
+    '''
+    def __init__(self, func):
+        self.func = func
+
+    def __get__(self, instance, cls):
+        name = '_%s' % self.func.__name__
+        if not hasattr(instance, name):
+            setattr(instance, name, self.func(instance))
+        return getattr(instance, name)

@@ -20,26 +20,11 @@
 #include "js/CallNonGenericMethod.h"
 #include "js/Class.h"
 
-/*
- * This macro checks if the stack pointer has exceeded a given limit. If
- * |tolerance| is non-zero, it returns true only if the stack pointer has
- * exceeded the limit by more than |tolerance| bytes. The WITH_INTOLERANCE
- * versions use a negative tolerance (i.e., the limit is reduced by
- * |intolerance| bytes).
- */
 #if JS_STACK_GROWTH_DIRECTION > 0
-# define JS_CHECK_STACK_SIZE_WITH_TOLERANCE(limit, sp, tolerance)  \
-    ((uintptr_t)(sp) < (limit)+(tolerance))
-# define JS_CHECK_STACK_SIZE_WITH_INTOLERANCE(limit, sp, intolerance)  \
-    ((uintptr_t)(sp) < (limit)-(intolerance))
+# define JS_CHECK_STACK_SIZE(limit, sp) ((uintptr_t)(sp) < (limit))
 #else
-# define JS_CHECK_STACK_SIZE_WITH_TOLERANCE(limit, sp, tolerance)  \
-    ((uintptr_t)(sp) > (limit)-(tolerance))
-# define JS_CHECK_STACK_SIZE_WITH_INTOLERANCE(limit, sp, intolerance)  \
-    ((uintptr_t)(sp) > (limit)+(intolerance))
+# define JS_CHECK_STACK_SIZE(limit, sp) ((uintptr_t)(sp) > (limit))
 #endif
-
-#define JS_CHECK_STACK_SIZE(limit, lval) JS_CHECK_STACK_SIZE_WITH_TOLERANCE(limit, lval, 0)
 
 class JSAtom;
 struct JSErrorFormatString;
@@ -119,7 +104,8 @@ enum {
     JS_TELEMETRY_GC_INCREMENTAL_DISABLED,
     JS_TELEMETRY_GC_NON_INCREMENTAL,
     JS_TELEMETRY_GC_SCC_SWEEP_TOTAL_MS,
-    JS_TELEMETRY_GC_SCC_SWEEP_MAX_PAUSE_MS
+    JS_TELEMETRY_GC_SCC_SWEEP_MAX_PAUSE_MS,
+    JS_TELEMETRY_DEPRECATED_LANGUAGE_EXTENSIONS_IN_CONTENT
 };
 
 typedef void
@@ -721,13 +707,6 @@ AssertSameCompartment(JSObject *objA, JSObject *objB);
 inline void AssertSameCompartment(JSObject *objA, JSObject *objB) {}
 #endif
 
-// For legacy consumers only. This whole concept is going away soon.
-JS_FRIEND_API(JSObject *)
-DefaultObjectForContextOrNull(JSContext *cx);
-
-JS_FRIEND_API(void)
-SetDefaultObjectForContext(JSContext *cx, JSObject *obj);
-
 JS_FRIEND_API(void)
 NotifyAnimationActivity(JSObject *obj);
 
@@ -988,30 +967,47 @@ JS_FRIEND_API(bool)
 RunningWithTrustedPrincipals(JSContext *cx);
 
 inline uintptr_t
-GetNativeStackLimit(JSContext *cx)
+GetNativeStackLimit(JSContext *cx, StackKind kind, int extraAllowance = 0)
+{
+    PerThreadDataFriendFields *mainThread =
+      PerThreadDataFriendFields::getMainThread(GetRuntime(cx));
+    uintptr_t limit = mainThread->nativeStackLimit[kind];
+#if JS_STACK_GROWTH_DIRECTION > 0
+    limit += extraAllowance;
+#else
+    limit -= extraAllowance;
+#endif
+    return limit;
+}
+
+inline uintptr_t
+GetNativeStackLimit(JSContext *cx, int extraAllowance = 0)
 {
     StackKind kind = RunningWithTrustedPrincipals(cx) ? StackForTrustedScript
                                                       : StackForUntrustedScript;
-    PerThreadDataFriendFields *mainThread =
-      PerThreadDataFriendFields::getMainThread(GetRuntime(cx));
-    return mainThread->nativeStackLimit[kind];
+    return GetNativeStackLimit(cx, kind, extraAllowance);
 }
 
 /*
  * These macros report a stack overflow and run |onerror| if we are close to
- * using up the C stack. The JS_CHECK_CHROME_RECURSION variant gives us a little
- * extra space so that we can ensure that crucial code is able to run.
- * JS_CHECK_RECURSION_CONSERVATIVE gives us a little less space.
+ * using up the C stack. The JS_CHECK_CHROME_RECURSION variant gives us a
+ * little extra space so that we can ensure that crucial code is able to run.
+ * JS_CHECK_RECURSION_CONSERVATIVE allows less space than any other check,
+ * including a safety buffer (as in, it uses the untrusted limit and subtracts
+ * a little more from it).
  */
 
-#define JS_CHECK_RECURSION(cx, onerror)                                         \
+#define JS_CHECK_RECURSION_LIMIT(cx, limit, onerror)                            \
     JS_BEGIN_MACRO                                                              \
         int stackDummy_;                                                        \
-        if (!JS_CHECK_STACK_SIZE(js::GetNativeStackLimit(cx), &stackDummy_)) {  \
+        if (!JS_CHECK_STACK_SIZE(limit, &stackDummy_)) {                        \
             js_ReportOverRecursed(cx);                                          \
             onerror;                                                            \
         }                                                                       \
     JS_END_MACRO
+
+#define JS_CHECK_RECURSION(cx, onerror)                                         \
+    JS_CHECK_RECURSION_LIMIT(cx, js::GetNativeStackLimit(cx), onerror)
 
 #define JS_CHECK_RECURSION_DONT_REPORT(cx, onerror)                             \
     JS_BEGIN_MACRO                                                              \
@@ -1036,29 +1032,11 @@ GetNativeStackLimit(JSContext *cx)
         }                                                                       \
     JS_END_MACRO
 
-#define JS_CHECK_CHROME_RECURSION(cx, onerror)                                  \
-    JS_BEGIN_MACRO                                                              \
-        int stackDummy_;                                                        \
-        if (!JS_CHECK_STACK_SIZE_WITH_TOLERANCE(js::GetNativeStackLimit(cx),    \
-                                                &stackDummy_,                   \
-                                                1024 * sizeof(size_t)))         \
-        {                                                                       \
-            js_ReportOverRecursed(cx);                                          \
-            onerror;                                                            \
-        }                                                                       \
-    JS_END_MACRO
+#define JS_CHECK_SYSTEM_RECURSION(cx, onerror)                                  \
+    JS_CHECK_RECURSION_LIMIT(cx, js::GetNativeStackLimit(cx, js::StackForSystemCode), onerror)
 
 #define JS_CHECK_RECURSION_CONSERVATIVE(cx, onerror)                            \
-    JS_BEGIN_MACRO                                                              \
-        int stackDummy_;                                                        \
-        if (!JS_CHECK_STACK_SIZE_WITH_INTOLERANCE(js::GetNativeStackLimit(cx),  \
-                                                  &stackDummy_,                 \
-                                                  1024 * sizeof(size_t)))       \
-        {                                                                       \
-            js_ReportOverRecursed(cx);                                          \
-            onerror;                                                            \
-        }                                                                       \
-    JS_END_MACRO
+    JS_CHECK_RECURSION_LIMIT(cx, js::GetNativeStackLimit(cx, js::StackForUntrustedScript, -1024 * int(sizeof(size_t))), onerror)
 
 JS_FRIEND_API(void)
 StartPCCountProfiling(JSContext *cx);
@@ -1078,10 +1056,8 @@ GetPCCountScriptSummary(JSContext *cx, size_t script);
 JS_FRIEND_API(JSString *)
 GetPCCountScriptContents(JSContext *cx, size_t script);
 
-#ifdef JS_THREADSAFE
 JS_FRIEND_API(bool)
 ContextHasOutstandingRequests(const JSContext *cx);
-#endif
 
 typedef void
 (* ActivityCallback)(void *arg, bool active);
@@ -1271,8 +1247,8 @@ js_DateGetMsecSinceEpoch(JSObject *obj);
  * string and its arguments.
  */
 typedef enum JSErrNum {
-#define MSG_DEF(name, number, count, exception, format) \
-    name = number,
+#define MSG_DEF(name, count, exception, format) \
+    name,
 #include "js.msg"
 #undef MSG_DEF
     JSErr_Limit
@@ -1308,9 +1284,9 @@ class MOZ_STACK_CLASS AutoStableStringChars
     bool ownsChars_;
 
   public:
-    AutoStableStringChars(JSContext *cx)
+    explicit AutoStableStringChars(JSContext *cx)
       : s_(cx), state_(Uninitialized), ownsChars_(false)
-    {};
+    {}
     ~AutoStableStringChars();
 
     bool init(JSContext *cx, JSString *s);
@@ -1360,7 +1336,7 @@ ErrorReportToString(JSContext *cx, JSErrorReport *reportp);
 
 struct MOZ_STACK_CLASS JS_FRIEND_API(ErrorReport)
 {
-    ErrorReport(JSContext *cx);
+    explicit ErrorReport(JSContext *cx);
     ~ErrorReport();
 
     bool init(JSContext *cx, JS::HandleValue exn);
@@ -1665,7 +1641,7 @@ Get ## Type ## ArrayLengthAndData(JSObject *obj, uint32_t *length, type **data) 
 { \
     JS_ASSERT(GetObjectClass(obj) == detail::Type ## ArrayClassPtr); \
     const JS::Value &slot = GetReservedSlot(obj, detail::TypedArrayLengthSlot); \
-    *length = mozilla::SafeCast<uint32_t>(slot.toInt32()); \
+    *length = mozilla::AssertedCast<uint32_t>(slot.toInt32()); \
     *data = static_cast<type*>(GetObjectPrivate(obj)); \
 }
 
@@ -1749,6 +1725,17 @@ JS_IsArrayBufferObject(JSObject *obj);
  */
 extern JS_FRIEND_API(uint32_t)
 JS_GetArrayBufferByteLength(JSObject *obj);
+
+/*
+ * Return true if the arrayBuffer contains any data. This will return false for
+ * ArrayBuffer.prototype and neutered ArrayBuffers.
+ *
+ * |obj| must have passed a JS_IsArrayBufferObject test, or somehow be known
+ * that it would pass such a test: it is an ArrayBuffer or a wrapper of an
+ * ArrayBuffer, and the unwrapping will succeed.
+ */
+extern JS_FRIEND_API(bool)
+JS_ArrayBufferHasData(JSObject *obj);
 
 /*
  * Check whether the obj is ArrayBufferObject and memory mapped. Note that this
@@ -2400,7 +2387,7 @@ JS_FRIEND_API(void)
 Debug_SetActiveJSContext(JSRuntime *rt, JSContext *cx);
 #else
 inline void
-Debug_SetActiveJSContext(JSRuntime *rt, JSContext *cx) {};
+Debug_SetActiveJSContext(JSRuntime *rt, JSContext *cx) {}
 #endif
 
 

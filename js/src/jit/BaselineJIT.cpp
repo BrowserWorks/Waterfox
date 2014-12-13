@@ -321,17 +321,8 @@ jit::CanEnterBaselineMethod(JSContext *cx, RunState &state)
             return Method_CantCompile;
         }
 
-        // If constructing, allocate a new |this| object.
-        if (invoke.constructing() && invoke.args().thisv().isPrimitive()) {
-            RootedObject callee(cx, &invoke.args().callee());
-            RootedObject obj(cx, CreateThisForFunction(cx, callee,
-                                                       invoke.useNewType()
-                                                       ? SingletonObject
-                                                       : GenericObject));
-            if (!obj)
-                return Method_Skipped;
-            invoke.args().setThis(ObjectValue(*obj));
-        }
+        if (!state.maybeCreateThisForConstructor(cx))
+            return Method_Skipped;
     } else if (state.isExecute()) {
         ExecuteType type = state.asExecute()->type();
         if (type == EXECUTE_DEBUG || type == EXECUTE_DEBUG_GLOBAL) {
@@ -349,14 +340,12 @@ jit::CanEnterBaselineMethod(JSContext *cx, RunState &state)
 };
 
 BaselineScript *
-BaselineScript::New(JSContext *cx, uint32_t prologueOffset, uint32_t epilogueOffset,
+BaselineScript::New(JSScript *jsscript, uint32_t prologueOffset, uint32_t epilogueOffset,
                     uint32_t spsPushToggleOffset, uint32_t postDebugPrologueOffset,
                     size_t icEntries, size_t pcMappingIndexEntries, size_t pcMappingSize,
                     size_t bytecodeTypeMapEntries)
 {
     static const unsigned DataAlignment = sizeof(uintptr_t);
-
-    size_t paddedBaselineScriptSize = AlignBytes(sizeof(BaselineScript), DataAlignment);
 
     size_t icEntriesSize = icEntries * sizeof(ICEntry);
     size_t pcMappingIndexEntriesSize = pcMappingIndexEntries * sizeof(PCMappingIndexEntry);
@@ -367,21 +356,19 @@ BaselineScript::New(JSContext *cx, uint32_t prologueOffset, uint32_t epilogueOff
     size_t paddedPCMappingSize = AlignBytes(pcMappingSize, DataAlignment);
     size_t paddedBytecodeTypesMapSize = AlignBytes(bytecodeTypeMapSize, DataAlignment);
 
-    size_t allocBytes = paddedBaselineScriptSize +
-        paddedICEntriesSize +
-        paddedPCMappingIndexEntriesSize +
-        paddedPCMappingSize +
-        paddedBytecodeTypesMapSize;
+    size_t allocBytes = paddedICEntriesSize +
+                        paddedPCMappingIndexEntriesSize +
+                        paddedPCMappingSize +
+                        paddedBytecodeTypesMapSize;
 
-    uint8_t *buffer = (uint8_t *)cx->malloc_(allocBytes);
-    if (!buffer)
+    BaselineScript *script = jsscript->pod_malloc_with_extra<BaselineScript, uint8_t>(allocBytes);
+    if (!script)
         return nullptr;
-
-    BaselineScript *script = reinterpret_cast<BaselineScript *>(buffer);
     new (script) BaselineScript(prologueOffset, epilogueOffset,
                                 spsPushToggleOffset, postDebugPrologueOffset);
 
-    size_t offsetCursor = paddedBaselineScriptSize;
+    size_t offsetCursor = sizeof(BaselineScript);
+    MOZ_ASSERT(offsetCursor == AlignBytes(sizeof(BaselineScript), DataAlignment));
 
     script->icEntriesOffset_ = offsetCursor;
     script->icEntries_ = icEntries;
@@ -422,7 +409,7 @@ void
 BaselineScript::writeBarrierPre(Zone *zone, BaselineScript *script)
 {
 #ifdef JSGC_INCREMENTAL
-    if (zone->needsBarrier())
+    if (zone->needsIncrementalBarrier())
         script->trace(zone->barrierTracer());
 #endif
 }
@@ -446,6 +433,7 @@ BaselineScript::Destroy(FreeOp *fop, BaselineScript *script)
      */
     JS_ASSERT(fop->runtime()->gc.nursery.isEmpty());
 #endif
+
     fop->delete_(script);
 }
 
@@ -542,7 +530,7 @@ BaselineScript::icEntryFromPCOffset(uint32_t pcOffset)
         if (icEntry(i).isForOp())
             return icEntry(i);
     }
-    MOZ_ASSUME_UNREACHABLE("Invalid PC offset for IC entry.");
+    MOZ_CRASH("Invalid PC offset for IC entry.");
 }
 
 ICEntry &
@@ -684,12 +672,31 @@ BaselineScript::nativeCodeForPC(JSScript *script, jsbytecode *pc, PCMappingSlotI
 
         curPC += GetBytecodeLength(curPC);
     }
-
-    MOZ_ASSUME_UNREACHABLE("Invalid pc");
 }
 
 jsbytecode *
 BaselineScript::pcForReturnOffset(JSScript *script, uint32_t nativeOffset)
+{
+    return pcForNativeOffset(script, nativeOffset, true);
+}
+
+jsbytecode *
+BaselineScript::pcForReturnAddress(JSScript *script, uint8_t *nativeAddress)
+{
+    JS_ASSERT(script->baselineScript() == this);
+    JS_ASSERT(nativeAddress >= method_->raw());
+    JS_ASSERT(nativeAddress < method_->raw() + method_->instructionsSize());
+    return pcForReturnOffset(script, uint32_t(nativeAddress - method_->raw()));
+}
+
+jsbytecode *
+BaselineScript::pcForNativeOffset(JSScript *script, uint32_t nativeOffset)
+{
+    return pcForNativeOffset(script, nativeOffset, false);
+}
+
+jsbytecode *
+BaselineScript::pcForNativeOffset(JSScript *script, uint32_t nativeOffset, bool isReturn)
 {
     JS_ASSERT(script->baselineScript() == this);
     JS_ASSERT(nativeOffset < method_->instructionsSize());
@@ -707,14 +714,19 @@ BaselineScript::pcForReturnOffset(JSScript *script, uint32_t nativeOffset)
     i--;
 
     PCMappingIndexEntry &entry = pcMappingIndexEntry(i);
-    JS_ASSERT(nativeOffset >= entry.nativeOffset);
+    JS_ASSERT_IF(isReturn, nativeOffset >= entry.nativeOffset);
 
     CompactBufferReader reader(pcMappingReader(i));
     jsbytecode *curPC = script->offsetToPC(entry.pcOffset);
     uint32_t curNativeOffset = entry.nativeOffset;
 
     JS_ASSERT(script->containsPC(curPC));
-    JS_ASSERT(curNativeOffset <= nativeOffset);
+    JS_ASSERT_IF(isReturn, nativeOffset >= curNativeOffset);
+
+    // In the raw native-lookup case, the native code address can occur
+    // before the start of ops.  Associate those with bytecode offset 0.
+    if (!isReturn && (curNativeOffset > nativeOffset))
+        return script->code();
 
     while (true) {
         // If the high bit is set, the native offset relative to the
@@ -723,22 +735,26 @@ BaselineScript::pcForReturnOffset(JSScript *script, uint32_t nativeOffset)
         if (b & 0x80)
             curNativeOffset += reader.readUnsigned();
 
-        if (curNativeOffset == nativeOffset)
+        if (isReturn ? (nativeOffset == curNativeOffset) : (nativeOffset <= curNativeOffset))
+            return curPC;
+
+        // If this is a raw native lookup (not jsop return addresses), then
+        // the native address may lie in-between the last delta-entry in
+        // a pcMappingIndexEntry, and the next pcMappingIndexEntry.
+        if (!isReturn && !reader.more())
             return curPC;
 
         curPC += GetBytecodeLength(curPC);
     }
-
-    MOZ_ASSUME_UNREACHABLE("Invalid pc");
 }
 
 jsbytecode *
-BaselineScript::pcForReturnAddress(JSScript *script, uint8_t *nativeAddress)
+BaselineScript::pcForNativeAddress(JSScript *script, uint8_t *nativeAddress)
 {
     JS_ASSERT(script->baselineScript() == this);
     JS_ASSERT(nativeAddress >= method_->raw());
     JS_ASSERT(nativeAddress < method_->raw() + method_->instructionsSize());
-    return pcForReturnOffset(script, uint32_t(nativeAddress - method_->raw()));
+    return pcForNativeOffset(script, uint32_t(nativeAddress - method_->raw()));
 }
 
 void

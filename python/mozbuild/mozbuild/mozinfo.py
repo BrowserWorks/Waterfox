@@ -51,7 +51,9 @@ def build_dict(config, env=os.environ):
         d["appname"] = substs["MOZ_APP_NAME"]
 
     # Build app name
-    if 'MOZ_BUILD_APP' in substs:
+    if 'MOZ_MULET' in substs and substs.get('MOZ_MULET') == "1":
+        d["buildapp"] = "mulet"
+    elif 'MOZ_BUILD_APP' in substs:
         d["buildapp"] = substs["MOZ_BUILD_APP"]
 
     # processor
@@ -85,6 +87,8 @@ def build_dict(config, env=os.environ):
 
     d['webm'] = bool(substs.get('MOZ_WEBM'))
     d['wave'] = bool(substs.get('MOZ_WAVE'))
+
+    d['official'] = bool(substs.get('MOZILLA_OFFICIAL'))
 
     return d
 

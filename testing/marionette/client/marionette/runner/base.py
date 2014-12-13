@@ -2,7 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from datetime import datetime
 from optparse import OptionParser
 
 import json
@@ -237,19 +236,6 @@ class BaseMarionetteOptions(OptionParser):
         OptionParser.__init__(self, **kwargs)
         self.parse_args_handlers = [] # Used by mixins
         self.verify_usage_handlers = [] # Used by mixins
-        self.add_option('--autolog',
-                        action='store_true',
-                        dest='autolog',
-                        default=False,
-                        help='send test results to autolog')
-        self.add_option('--revision',
-                        action='store',
-                        dest='revision',
-                        help='git revision for autolog submissions')
-        self.add_option('--testgroup',
-                        action='store',
-                        dest='testgroup',
-                        help='testgroup names for autolog submissions')
         self.add_option('--emulator',
                         action='store',
                         dest='emulator',
@@ -296,7 +282,6 @@ class BaseMarionetteOptions(OptionParser):
         self.add_option('--type',
                         dest='type',
                         action='store',
-                        default='browser+b2g',
                         help="the type of test to run, can be a combination of values defined in the manifest file; "
                              "individual values are combined with '+' or '-' characters. for example: 'browser+b2g' "
                              "means the set of tests which are compatible with both browser and b2g; 'b2g-qemu' means "
@@ -451,15 +436,13 @@ class BaseMarionetteTestRunner(object):
 
     def __init__(self, address=None, emulator=None, emulator_binary=None,
                  emulator_img=None, emulator_res='480x800', homedir=None,
-                 app=None, app_args=None, binary=None, profile=None, autolog=False,
-                 revision=None, logger=None, testgroup="marionette", no_window=False,
-                 logdir=None, xml_output=None, repeat=0,
-                 testvars=None, tree=None, type=None, device_serial=None,
-                 symbols_path=None, timeout=None, shuffle=False,
-                 shuffle_seed=random.randint(0, sys.maxint), sdcard=None,
-                 this_chunk=1, total_chunks=1, sources=None, server_root=None,
-                 gecko_log=None,
-                 **kwargs):
+                 app=None, app_args=None, binary=None, profile=None,
+                 logger=None, no_window=False, logdir=None, xml_output=None,
+                 repeat=0, testvars=None, tree=None, type=None,
+                 device_serial=None, symbols_path=None, timeout=None,
+                 shuffle=False, shuffle_seed=random.randint(0, sys.maxint),
+                 sdcard=None, this_chunk=1, total_chunks=1, sources=None,
+                 server_root=None, gecko_log=None, **kwargs):
         self.address = address
         self.emulator = emulator
         self.emulator_binary = emulator_binary
@@ -470,9 +453,6 @@ class BaseMarionetteTestRunner(object):
         self.app_args = app_args or []
         self.bin = binary
         self.profile = profile
-        self.autolog = autolog
-        self.testgroup = testgroup
-        self.revision = revision
         self.logger = logger
         self.no_window = no_window
         self.httpd = None
@@ -632,7 +612,7 @@ class BaseMarionetteTestRunner(object):
 
     def run_tests(self, tests):
         self.reset_test_stats()
-        starttime = datetime.utcnow()
+        self.start_time = time.time()
 
         need_external_ip = True
         if not self.marionette:
@@ -655,6 +635,14 @@ class BaseMarionetteTestRunner(object):
             self.add_test(test)
 
         self.logger.suite_start(self.tests)
+
+        for test in self.manifest_skipped_tests:
+            name = os.path.basename(test['path'])
+            self.logger.test_start(name)
+            self.logger.test_end(name,
+                                 'SKIP',
+                                 message=test['disabled'])
+            self.todo += 1
 
         counter = self.repeat
         while counter >=0:
@@ -685,7 +673,8 @@ class BaseMarionetteTestRunner(object):
         except:
             traceback.print_exc()
 
-        self.elapsedtime = datetime.utcnow() - starttime
+        self.end_time = time.time()
+        self.elapsedtime = self.end_time - self.start_time
 
         if self.xml_output:
             xml_dir = os.path.dirname(os.path.abspath(self.xml_output))
@@ -707,13 +696,13 @@ class BaseMarionetteTestRunner(object):
 
         self.logger.suite_end()
 
-    def add_test(self, test, expected='pass', oop=None):
+    def add_test(self, test, expected='pass', test_container=False):
         filepath = os.path.abspath(test)
 
         if os.path.isdir(filepath):
             for root, dirs, files in os.walk(filepath):
                 for filename in files:
-                    if ((filename.startswith('test_') or filename.startswith('browser_')) and
+                    if (filename.startswith('test_') and
                         (filename.endswith('.py') or filename.endswith('.js'))):
                         filepath = os.path.join(root, filename)
                         self.add_test(filepath)
@@ -730,8 +719,7 @@ class BaseMarionetteTestRunner(object):
                 else:
                     testargs.update({ atype: 'true' })
 
-        # testarg_oop = either None, 'true' or 'false'.
-        testarg_oop = testargs.get('oop')
+        testarg_b2g = bool(testargs.get('b2g'))
 
         file_ext = os.path.splitext(os.path.split(filepath)[-1])[1]
 
@@ -751,76 +739,31 @@ class BaseMarionetteTestRunner(object):
                 else:
                     unfiltered_tests.append(test)
 
-            # Don't filter tests with "oop" flag because manifest parser can't
-            # handle it well.
-            if testarg_oop is not None:
-                del testargs['oop']
-
             target_tests = manifest.get(tests=unfiltered_tests, **testargs)
             for test in unfiltered_tests:
                 if test['path'] not in [x['path'] for x in target_tests]:
                     test.setdefault('disabled', 'filtered by type (%s)' % self.type)
                     self.manifest_skipped_tests.append(test)
 
-            for test in self.manifest_skipped_tests:
-                self.logger.test_start(os.path.basename(test['path']))
-                self.logger.test_end(os.path.basename(test['path']),
-                                     'SKIP',
-                                     message=test['disabled'])
-                self.todo += 1
-
             for i in target_tests:
                 if not os.path.exists(i["path"]):
                     raise IOError("test file: %s does not exist" % i["path"])
 
-                # manifest_oop is either 'false', 'true' or 'both'.  Anything
-                # else implies 'false'.
-                manifest_oop = i.get('oop', 'false')
-
-                # We only add an oop test when following conditions are met:
-                # 1) It's written by javascript because we have only
-                #    MarionetteJSTestCase that supports oop mode.
-                # 2) we're running with "--type=+oop" or no "--type=-oop", which
-                #    follows testarg_oop is either None or 'true' and must not
-                #    be 'false'.
-                # 3) When no "--type=[+-]oop" is applied, all active tests are
-                #    included in target_tests, so we must filter out those
-                #    really capable of running in oop mode. Besides, oop tests
-                #    must be explicitly specified for backward compatibility. So
-                #    test manifest_oop equals to either 'both' or 'true'.
                 file_ext = os.path.splitext(os.path.split(i['path'])[-1])[-1]
-                if (file_ext == '.js' and
-                    testarg_oop != 'false' and
-                    (manifest_oop == 'both' or manifest_oop == 'true')):
-                    self.add_test(i["path"], i["expected"], True)
-
-                # We only add an in-process test when following conditions are
-                # met:
-                # 1) we're running with "--type=-oop" or no "--type=+oop", which
-                #    follows testarg_oop is either None or 'false' and must not
-                #    be 'true'.
-                # 2) When no "--type=[+-]oop" is applied, all active tests are
-                #    included in target_tests, so we must filter out those
-                #    really capable of running in in-process mode.
-                if (testarg_oop != 'true' and
-                    (manifest_oop == 'both' or manifest_oop != 'true')):
-                    self.add_test(i["path"], i["expected"], False)
+                test_container = False
+                if i.get('test_container') and i.get('test_container') == 'true' and testarg_b2g:
+                    test_container = True
+                self.add_test(i["path"], i["expected"], test_container)
             return
 
-        if oop is None:
-            # This test is added by directory enumeration or directly specified
-            # in argument list.  We have no manifest information here so we just
-            # respect the "--type=[+-]oop" argument here.
-            oop = file_ext == '.js' and testarg_oop == 'true'
+        self.tests.append({'filepath': filepath, 'expected': expected, 'test_container': test_container})
 
-        self.tests.append({'filepath': filepath, 'expected': expected, 'oop': oop})
-
-    def run_test(self, filepath, expected, oop):
+    def run_test(self, filepath, expected, test_container):
 
         testloader = unittest.TestLoader()
         suite = unittest.TestSuite()
         self.test_kwargs['expected'] = expected
-        self.test_kwargs['oop'] = oop
+        self.test_kwargs['test_container'] = test_container
         mod_name = os.path.splitext(os.path.split(filepath)[-1])[0]
         for handler in self.test_handlers:
             if handler.match(os.path.basename(filepath)):
@@ -861,7 +804,7 @@ class BaseMarionetteTestRunner(object):
             random.shuffle(tests)
 
         for test in tests:
-            self.run_test(test['filepath'], test['expected'], test['oop'])
+            self.run_test(test['filepath'], test['expected'], test['test_container'])
             if self.marionette.check_for_crash():
                 break
 
@@ -880,11 +823,7 @@ class BaseMarionetteTestRunner(object):
                                                len(self.tests)))
             self.tests = chunks[self.this_chunk - 1]
 
-        oop_tests = [x for x in self.tests if x.get('oop')]
-        self.run_test_set(oop_tests)
-
-        in_process_tests = [x for x in self.tests if not x.get('oop')]
-        self.run_test_set(in_process_tests)
+        self.run_test_set(self.tests)
 
     def cleanup(self):
         if self.httpd:
@@ -926,7 +865,7 @@ class BaseMarionetteTestRunner(object):
 
         testsuite = doc.createElement('testsuite')
         testsuite.setAttribute('name', 'Marionette')
-        testsuite.setAttribute('time', str(self.elapsedtime.total_seconds()))
+        testsuite.setAttribute('time', str(self.elapsedtime))
         testsuite.setAttribute('tests', str(sum([results.testsRun for
                                                  results in results_list])))
 
@@ -974,4 +913,9 @@ class BaseMarionetteTestRunner(object):
             _extract_xml_from_skipped_manifest_test(test)
 
         doc.appendChild(testsuite)
+
+        # change default encoding to avoid encoding problem for page source
+        reload(sys)
+        sys.setdefaultencoding('utf-8')
+
         return doc.toprettyxml(encoding='utf-8')

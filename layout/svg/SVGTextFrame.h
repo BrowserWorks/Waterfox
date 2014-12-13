@@ -12,7 +12,7 @@
 #include "gfxMatrix.h"
 #include "gfxRect.h"
 #include "gfxSVGGlyphs.h"
-#include "nsIContent.h"
+#include "nsIContent.h" // for GetContent
 #include "nsStubMutationObserver.h"
 #include "nsSVGPaintServerFrame.h"
 
@@ -130,7 +130,7 @@ private:
 class GlyphMetricsUpdater : public nsRunnable {
 public:
   NS_DECL_NSIRUNNABLE
-  GlyphMetricsUpdater(SVGTextFrame* aFrame) : mFrame(aFrame) { }
+  explicit GlyphMetricsUpdater(SVGTextFrame* aFrame) : mFrame(aFrame) { }
   static void Run(SVGTextFrame* aFrame);
   void Revoke() { mFrame = nullptr; }
 private:
@@ -238,7 +238,7 @@ struct SVGTextContextPaint : public gfxTextContextPaint {
  * itself do the painting.  Otherwise, a DrawPathCallback is passed to
  * PaintText so that we can fill the text geometry with SVG paint servers.
  */
-class SVGTextFrame : public SVGTextFrameBase
+class SVGTextFrame MOZ_FINAL : public SVGTextFrameBase
 {
   friend nsIFrame*
   NS_NewSVGTextFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
@@ -253,10 +253,11 @@ class SVGTextFrame : public SVGTextFrameBase
   friend class nsDisplaySVGText;
 
   typedef mozilla::gfx::Path Path;
+  typedef mozilla::gfx::Point Point;
   typedef mozilla::SVGTextContextPaint SVGTextContextPaint;
 
 protected:
-  SVGTextFrame(nsStyleContext* aContext)
+  explicit SVGTextFrame(nsStyleContext* aContext)
     : SVGTextFrameBase(aContext),
       mFontSizeScaleFactor(1.0f),
       mLastContextScale(1.0f),
@@ -319,7 +320,7 @@ public:
   virtual nsresult PaintSVG(nsRenderingContext* aContext,
                             const nsIntRect* aDirtyRect,
                             nsIFrame* aTransformRoot = nullptr) MOZ_OVERRIDE;
-  virtual nsIFrame* GetFrameForPoint(const nsPoint& aPoint) MOZ_OVERRIDE;
+  virtual nsIFrame* GetFrameForPoint(const gfxPoint& aPoint) MOZ_OVERRIDE;
   virtual void ReflowSVG() MOZ_OVERRIDE;
   virtual nsRect GetCoveredRegion() MOZ_OVERRIDE;
   virtual SVGBBox GetBBoxContribution(const Matrix& aToBBoxUserspace,
@@ -403,8 +404,8 @@ public:
    * converts it to the appropriate frame user space of aChildFrame,
    * according to which rendered run the point hits.
    */
-  gfxPoint TransformFramePointToTextChild(const gfxPoint& aPoint,
-                                          nsIFrame* aChildFrame);
+  Point TransformFramePointToTextChild(const Point& aPoint,
+                                       nsIFrame* aChildFrame);
 
   /**
    * Takes a rectangle, aRect, in the <text> element's user space, and
@@ -431,7 +432,7 @@ private:
    */
   class MutationObserver MOZ_FINAL : public nsStubMutationObserver {
   public:
-    MutationObserver(SVGTextFrame* aFrame)
+    explicit MutationObserver(SVGTextFrame* aFrame)
       : mFrame(aFrame)
     {
       MOZ_ASSERT(mFrame, "MutationObserver needs a non-null frame");

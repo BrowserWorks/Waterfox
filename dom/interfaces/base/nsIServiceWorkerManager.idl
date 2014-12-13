@@ -8,18 +8,43 @@
 interface nsIDocument;
 interface nsIURI;
 
-[uuid(6e1382f4-3cbc-435f-8ce0-70175f6eb400)]
+[uuid(91b9d3fc-1654-44da-b438-15123cdbe7aa)]
 interface nsIServiceWorkerManager : nsISupports
 {
-  // Returns a Promise
-  nsISupports register(in nsIDOMWindow aWindow, in DOMString aScope, in DOMString aScriptURI);
+  /**
+   * Registers a ServiceWorker with script loaded from `aScriptURI` to act as
+   * the ServiceWorker for aScope.  Requires a valid entry settings object on
+   * the stack. This means you must call this from content code 'within'
+   * a window.
+   *
+   * Returns a Promise.
+   */
+  nsISupports register(in DOMString aScope, in DOMString aScriptURI);
+
+  /**
+   * Unregister an existing ServiceWorker registration for `aScope`.  Requires
+   * a valid entry settings object on the stack. This means you must call this
+   * from content code 'within' a window.
+   *
+   * Returns a Promise.
+   */
+  nsISupports unregister(in DOMString aScope);
 
   // Returns a Promise
-  nsISupports unregister(in nsIDOMWindow aWindow, in DOMString aScope);
+  nsISupports getRegistrations(in nsIDOMWindow aWindow);
 
-  // aTarget MUST be a ServiceWorkerContainer.
-  [noscript] void AddContainerEventListener(in nsIURI aPageURI, in nsIDOMEventTarget aTarget);
-  [noscript] void RemoveContainerEventListener(in nsIURI aPageURI, in nsIDOMEventTarget aTarget);
+  // Returns a Promise
+  nsISupports getRegistration(in nsIDOMWindow aWindow, in DOMString aScope);
+
+  // Returns a Promise
+  nsISupports getReadyPromise(in nsIDOMWindow aWindow);
+
+  // Remove ready pending Promise
+  void removeReadyPromise(in nsIDOMWindow aWindow);
+
+  // aTarget MUST be a ServiceWorkerRegistration.
+  [noscript] void AddRegistrationEventListener(in nsIURI aPageURI, in nsIDOMEventTarget aTarget);
+  [noscript] void RemoveRegistrationEventListener(in nsIURI aPageURI, in nsIDOMEventTarget aTarget);
 
   /**
    * Call this to request that document `aDoc` be controlled by a ServiceWorker
@@ -35,6 +60,12 @@ interface nsIServiceWorkerManager : nsISupports
    * idempotent.
    */
   [notxpcom,nostdcall] void MaybeStopControlling(in nsIDocument aDoc);
+
+  // Returns a ServiceWorker
+  [noscript] nsISupports GetInstalling(in nsIDOMWindow aWindow);
+  [noscript] nsISupports GetWaiting(in nsIDOMWindow aWindow);
+  [noscript] nsISupports GetActive(in nsIDOMWindow aWindow);
+  [noscript] nsISupports GetDocumentController(in nsIDOMWindow aWindow);
 
   // Testing
   DOMString getScopeForUrl(in DOMString path);

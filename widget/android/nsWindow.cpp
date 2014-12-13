@@ -48,6 +48,7 @@ using mozilla::unused;
 #include "GLContextProvider.h"
 #include "ScopedGLHelpers.h"
 #include "mozilla/layers/CompositorOGL.h"
+#include "APZCCallbackHandler.h"
 
 #include "nsTArray.h"
 
@@ -86,6 +87,10 @@ static StaticRefPtr<ContentCreationNotifier> gContentCreationNotifier;
 // are created. Currently an update for the screen size is sent.
 class ContentCreationNotifier MOZ_FINAL : public nsIObserver
 {
+private:
+    ~ContentCreationNotifier() {}
+
+public:
     NS_DECL_ISUPPORTS
 
     NS_IMETHOD Observe(nsISupports* aSubject,
@@ -832,6 +837,7 @@ nsWindow::OnGlobalAndroidEvent(AndroidGeckoEvent *ae)
             break;
         }
 
+        case AndroidGeckoEvent::APZ_INPUT_EVENT:
         case AndroidGeckoEvent::MOTION_EVENT: {
             win->UserActivity();
             if (!gTopLevelWindows.IsEmpty()) {
@@ -855,6 +861,31 @@ nsWindow::OnGlobalAndroidEvent(AndroidGeckoEvent *ae)
                     if (!preventDefaultActions && ae->Count() < 2)
                         target->OnMouseEvent(ae);
                 }
+            }
+            break;
+        }
+
+        // LongPress events mostly trigger contextmenu options, but can also lead to
+        // textSelection processing.
+        case AndroidGeckoEvent::LONG_PRESS: {
+            win->UserActivity();
+
+            nsCOMPtr<nsIObserverService> obsServ = mozilla::services::GetObserverService();
+            obsServ->NotifyObservers(nullptr, "before-build-contextmenu", nullptr);
+
+            nsIntPoint pt;
+            const nsTArray<nsIntPoint>& points = ae->Points();
+            if (points.Length() > 0) {
+                pt = nsIntPoint(points[0].x, points[0].y);
+            }
+
+            // Clamp our point within bounds, and locate the target element for the event.
+            pt.x = clamped(pt.x, 0, std::max(gAndroidBounds.width - 1, 0));
+            pt.y = clamped(pt.y, 0, std::max(gAndroidBounds.height - 1, 0));
+            nsWindow *target = win->FindWindowForPoint(pt);
+            if (target) {
+                // Send the contextmenu event to Gecko.
+                target->OnContextmenuEvent(ae);
             }
             break;
         }
@@ -994,6 +1025,39 @@ nsWindow::OnMouseEvent(AndroidGeckoEvent *ae)
     DispatchEvent(&event);
 }
 
+void
+nsWindow::OnContextmenuEvent(AndroidGeckoEvent *ae)
+{
+    nsRefPtr<nsWindow> kungFuDeathGrip(this);
+
+    CSSPoint pt;
+    const nsTArray<nsIntPoint>& points = ae->Points();
+    if (points.Length() > 0) {
+        pt = CSSPoint(points[0].x, points[0].y);
+    }
+
+    // Send the contextmenu event.
+    WidgetMouseEvent contextMenuEvent(true, NS_CONTEXTMENU, this,
+                                      WidgetMouseEvent::eReal, WidgetMouseEvent::eNormal);
+    contextMenuEvent.refPoint =
+        LayoutDeviceIntPoint(RoundedToInt(pt * GetDefaultScale())) -
+        LayoutDeviceIntPoint::FromUntyped(WidgetToScreenOffset());
+    contextMenuEvent.ignoreRootScrollFrame = true;
+    contextMenuEvent.inputSource = nsIDOMMouseEvent::MOZ_SOURCE_TOUCH;
+
+    nsEventStatus contextMenuStatus;
+    DispatchEvent(&contextMenuEvent, contextMenuStatus);
+
+    // If the contextmenu event was consumed (preventDefault issued), we follow with a
+    // touchcancel event. This avoids followup touchend events passsing through and
+    // triggering further element behaviour such as link-clicks.
+    if (contextMenuStatus == nsEventStatus_eConsumeNoDefault) {
+        WidgetTouchEvent canceltouchEvent = ae->MakeTouchEvent(this);
+        canceltouchEvent.message = NS_TOUCH_CANCEL;
+        DispatchEvent(&canceltouchEvent);
+    }
+}
+
 bool nsWindow::OnMultitouchEvent(AndroidGeckoEvent *ae)
 {
     nsRefPtr<nsWindow> kungFuDeathGrip(this);
@@ -1031,7 +1095,11 @@ bool nsWindow::OnMultitouchEvent(AndroidGeckoEvent *ae)
         // if this event is a down event, that means it's the start of a new block, and the
         // previous block should not be default-prevented
         bool defaultPrevented = isDownEvent ? false : preventDefaultActions;
-        mozilla::widget::android::GeckoAppShell::NotifyDefaultPrevented(defaultPrevented);
+        if (ae->Type() == AndroidGeckoEvent::APZ_INPUT_EVENT) {
+            mozilla::widget::android::APZCCallbackHandler::GetInstance()->NotifyDefaultPrevented(ae->ApzGuid(), defaultPrevented);
+        } else {
+            mozilla::widget::android::GeckoAppShell::NotifyDefaultPrevented(defaultPrevented);
+        }
         sDefaultPreventedNotified = true;
     }
 
@@ -1040,7 +1108,11 @@ bool nsWindow::OnMultitouchEvent(AndroidGeckoEvent *ae)
     // for the next event.
     if (isDownEvent) {
         if (preventDefaultActions) {
-            mozilla::widget::android::GeckoAppShell::NotifyDefaultPrevented(true);
+            if (ae->Type() == AndroidGeckoEvent::APZ_INPUT_EVENT) {
+                mozilla::widget::android::APZCCallbackHandler::GetInstance()->NotifyDefaultPrevented(ae->ApzGuid(), true);
+            } else {
+                mozilla::widget::android::GeckoAppShell::NotifyDefaultPrevented(true);
+            }
             sDefaultPreventedNotified = true;
         } else {
             sDefaultPreventedNotified = false;
@@ -1448,7 +1520,7 @@ nsWindow::InitKeyEvent(WidgetKeyboardEvent& event, AndroidGeckoEvent& key,
         event.isChar = (charCode >= ' ');
         event.charCode = event.isChar ? charCode : 0;
         event.keyCode = (event.charCode > 0) ? 0 : domKeyCode;
-        event.pluginEvent = nullptr;
+        event.mPluginEvent.Clear();
     } else {
 #ifdef DEBUG
         if (event.message != NS_KEY_DOWN && event.message != NS_KEY_UP) {
@@ -1465,7 +1537,7 @@ nsWindow::InitKeyEvent(WidgetKeyboardEvent& event, AndroidGeckoEvent& key,
         event.isChar = false;
         event.charCode = 0;
         event.keyCode = domKeyCode;
-        event.pluginEvent = pluginEvent;
+        event.mPluginEvent.Copy(*pluginEvent);
     }
 
     event.modifiers = key.DOMModifiers();
@@ -2263,13 +2335,15 @@ nsWindow::DrawWindowUnderlay(LayerManagerComposite* aManager, nsIntRect aRect)
     }
 
     gl::GLContext* gl = static_cast<CompositorOGL*>(aManager->GetCompositor())->gl();
-    gl::ScopedGLState scopedScissorTestState(gl, LOCAL_GL_SCISSOR_TEST);
-    gl::ScopedScissorRect scopedScissorRectState(gl);
+    bool scissorEnabled = gl->fIsEnabled(LOCAL_GL_SCISSOR_TEST);
+    GLint scissorRect[4];
+    gl->fGetIntegerv(LOCAL_GL_SCISSOR_BOX, scissorRect);
 
     client->ActivateProgram();
     if (!mLayerRendererFrame.BeginDrawing(&jniFrame)) return;
     if (!mLayerRendererFrame.DrawBackground(&jniFrame)) return;
-    client->DeactivateProgram(); // redundant, but in case somebody adds code after this...
+    client->DeactivateProgramAndRestoreState(scissorEnabled,
+        scissorRect[0], scissorRect[1], scissorRect[2], scissorRect[3]);
 }
 
 void
@@ -2290,13 +2364,15 @@ nsWindow::DrawWindowOverlay(LayerManagerComposite* aManager, nsIntRect aRect)
     mozilla::widget::android::GeckoLayerClient* client = AndroidBridge::Bridge()->GetLayerClient();
 
     gl::GLContext* gl = static_cast<CompositorOGL*>(aManager->GetCompositor())->gl();
-    gl::ScopedGLState scopedScissorTestState(gl, LOCAL_GL_SCISSOR_TEST);
-    gl::ScopedScissorRect scopedScissorRectState(gl);
+    bool scissorEnabled = gl->fIsEnabled(LOCAL_GL_SCISSOR_TEST);
+    GLint scissorRect[4];
+    gl->fGetIntegerv(LOCAL_GL_SCISSOR_BOX, scissorRect);
 
     client->ActivateProgram();
     if (!mLayerRendererFrame.DrawForeground(&jniFrame)) return;
     if (!mLayerRendererFrame.EndDrawing(&jniFrame)) return;
-    client->DeactivateProgram();
+    client->DeactivateProgramAndRestoreState(scissorEnabled,
+        scissorRect[0], scissorRect[1], scissorRect[2], scissorRect[3]);
     mLayerRendererFrame.Dispose(env);
 }
 
@@ -2392,7 +2468,7 @@ nsWindow::GetAPZCTreeManager()
             return nullptr;
         }
         uint64_t rootLayerTreeId = compositor->RootLayerTreeId();
-        CompositorParent::SetControllerForLayerTree(rootLayerTreeId, AndroidBridge::Bridge());
+        CompositorParent::SetControllerForLayerTree(rootLayerTreeId, mozilla::widget::android::APZCCallbackHandler::GetInstance());
         sApzcTreeManager = CompositorParent::GetAPZCTreeManager(rootLayerTreeId);
     }
     return sApzcTreeManager;

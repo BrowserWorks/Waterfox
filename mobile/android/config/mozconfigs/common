@@ -15,7 +15,7 @@ ac_add_options --enable-elf-hack
 
 ANDROID_NDK_VERSION="r8e"
 ANDROID_NDK_VERSION_32BIT="r8c"
-ANDROID_SDK_VERSION="17"
+ANDROID_SDK_VERSION="20"
 
 # Build Fennec
 ac_add_options --enable-application=mobile/android
@@ -52,4 +52,4 @@ ac_add_options --enable-stdcxx-compat
 
 mk_add_options "export ANT_HOME=$topsrcdir/apache-ant"
 
-mk_add_options "export PATH=$topsrcdir/gcc/bin:$topsrcdir/apache-ant/bin:$PATH"
+mk_add_options "export PATH=$topsrcdir/apache-ant/bin:$PATH"

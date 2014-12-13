@@ -335,7 +335,7 @@ load 477928.html
 load 478131-1.html
 load 478170-1.html
 load 478185-1.html
-asserts-if(!Android,1) load 479938-1.html # Bug 575011
+asserts-if(!Android,0-1) load 479938-1.html # Bug 575011
 load 480345-1.html
 skip-if(Android) load 481921.html
 load 489462-1.html
@@ -469,7 +469,7 @@ load 737313-2.html
 load 737313-3.html
 load 747688.html
 load 750066.html
-test-pref(font.size.inflation.emPerLine,15) asserts(1-100) load font-inflation-762332.html # bug 762332
+test-pref(font.size.inflation.emPerLine,15) asserts-if(!browserIsRemote,1-100) load font-inflation-762332.html # bug 762332
 load 762902.html
 load 762764-1.html
 load 765409.html
@@ -522,7 +522,7 @@ load 854263-1.html
 load 862947-1.html
 needs-focus pref(accessibility.browsewithcaret,true) load 868906.html
 load 866547-1.html
-asserts(1-4) load 876074-1.html # bug 876749
+asserts-if(Android,0-4) asserts-if(!Android,1-4) load 876074-1.html # bug 876749
 load 885009-1.html
 load 893496-1.html
 load 893523.html
@@ -531,6 +531,7 @@ test-pref(layout.css.sticky.enabled,true) load 915475.xhtml
 load 927558.html
 load 943509-1.html
 asserts(3-6) load 944909-1.html
+load 946167-1.html
 test-pref(layout.css.sticky.enabled,true) load 949932.html
 load 973701-1.xhtml
 load 973701-2.xhtml
@@ -544,3 +545,6 @@ asserts(0-300) load 1015844.html # bug 574889
 load outline-on-frameset.xhtml
 pref(font.size.inflation.minTwips,200) load 1032450.html
 load 1037903.html
+load 1039454-1.html
+load 1058954-1.html
+load 1042489.html

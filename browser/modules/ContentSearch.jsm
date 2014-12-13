@@ -81,7 +81,7 @@ this.ContentSearch = {
   // them immediately, which would result in non-FIFO responses due to the
   // asynchrononicity added by converting image data URIs to ArrayBuffers.
   _eventQueue: [],
-  _currentEvent: null,
+  _currentEventPromise: null,
 
   // This is used to handle search suggestions.  It maps xul:browsers to objects
   // { controller, previousFormHistoryResult }.  See _onMessageGetSuggestions.
@@ -92,6 +92,27 @@ this.ContentSearch = {
       getService(Ci.nsIMessageListenerManager).
       addMessageListener(INBOUND_MESSAGE, this);
     Services.obs.addObserver(this, "browser-search-engine-modified", false);
+  },
+
+  destroy: function () {
+    Cc["@mozilla.org/globalmessagemanager;1"].
+      getService(Ci.nsIMessageListenerManager).
+      removeMessageListener(INBOUND_MESSAGE, this);
+    Services.obs.removeObserver(this, "browser-search-engine-modified");
+
+    this._eventQueue.length = 0;
+    return Promise.resolve(this._currentEventPromise);
+  },
+
+  /**
+   * Focuses the search input in the page with the given message manager.
+   * @param  messageManager
+   *         The MessageManager object of the selected browser.
+   */
+  focusInput: function (messageManager) {
+    messageManager.sendAsyncMessage(OUTBOUND_MESSAGE, {
+      type: "FocusInput"
+    });
   },
 
   receiveMessage: function (msg) {
@@ -130,22 +151,24 @@ this.ContentSearch = {
     }
   },
 
-  _processEventQueue: Task.async(function* () {
-    if (this._currentEvent || !this._eventQueue.length) {
+  _processEventQueue: function () {
+    if (this._currentEventPromise || !this._eventQueue.length) {
       return;
     }
-    this._currentEvent = this._eventQueue.shift();
-    try {
-      yield this["_on" + this._currentEvent.type](this._currentEvent.data);
-    }
-    catch (err) {
-      Cu.reportError(err);
-    }
-    finally {
-      this._currentEvent = null;
-      this._processEventQueue();
-    }
-  }),
+
+    let event = this._eventQueue.shift();
+
+    return this._currentEventPromise = Task.spawn(function* () {
+      try {
+        yield this["_on" + event.type](event.data);
+      } catch (err) {
+        Cu.reportError(err);
+      } finally {
+        this._currentEventPromise = null;
+        this._processEventQueue();
+      }
+    }.bind(this));
+  },
 
   _onMessage: Task.async(function* (msg) {
     let methodName = "_onMessage" + msg.data.type;
@@ -183,6 +206,12 @@ this.ContentSearch = {
 
   _onMessageManageEngines: function (msg, data) {
     let browserWin = msg.target.ownerDocument.defaultView;
+
+    if (Services.prefs.getBoolPref("browser.search.showOneOffButtons")) {
+      browserWin.openPreferences("paneSearch");
+      return Promise.resolve();
+    }
+
     let wm = Components.classes["@mozilla.org/appshell/window-mediator;1"].
              getService(Components.interfaces.nsIWindowMediator);
     let window = wm.getMostRecentWindow("Browser:SearchManager");
@@ -237,12 +266,14 @@ this.ContentSearch = {
   }),
 
   _onMessageAddFormHistoryEntry: function (msg, entry) {
-    // There are some tests that use about:home and newtab that trigger a search
-    // and then immediately close the tab.  In those cases, the browser may have
-    // been destroyed by the time we receive this message, and as a result
-    // contentWindow is undefined.
-    if (!msg.target.contentWindow ||
-        PrivateBrowsingUtils.isWindowPrivate(msg.target.contentWindow)) {
+    let isPrivate = true;
+    try {
+      // isBrowserPrivate assumes that the passed-in browser has all the normal
+      // properties, which won't be true if the browser has been destroyed.
+      // That may be the case here due to the asynchronous nature of messaging.
+      isPrivate = PrivateBrowsingUtils.isBrowserPrivate(msg.target);
+    } catch (err) {}
+    if (isPrivate || entry === "") {
       return Promise.resolve();
     }
     let browserData = this._suggestionDataForBrowser(msg.target, true);

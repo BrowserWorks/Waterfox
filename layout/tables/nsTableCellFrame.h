@@ -40,7 +40,7 @@ public:
 
   // default constructor supplied by the compiler
 
-  nsTableCellFrame(nsStyleContext* aContext);
+  explicit nsTableCellFrame(nsStyleContext* aContext);
   ~nsTableCellFrame();
 
   virtual void Init(nsIContent*       aContent,
@@ -102,10 +102,10 @@ public:
                                   nsDisplayListBuilder* aBuilder,
                                   const nsDisplayListSet& aLists);
 
-  virtual nscoord GetMinWidth(nsRenderingContext *aRenderingContext) MOZ_OVERRIDE;
-  virtual nscoord GetPrefWidth(nsRenderingContext *aRenderingContext) MOZ_OVERRIDE;
-  virtual IntrinsicWidthOffsetData
-    IntrinsicWidthOffsets(nsRenderingContext* aRenderingContext) MOZ_OVERRIDE;
+  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) MOZ_OVERRIDE;
+  virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) MOZ_OVERRIDE;
+  virtual IntrinsicISizeOffsetData
+    IntrinsicISizeOffsets(nsRenderingContext* aRenderingContext) MOZ_OVERRIDE;
 
   virtual void Reflow(nsPresContext*      aPresContext,
                       nsHTMLReflowMetrics& aDesiredSize,
@@ -187,7 +187,7 @@ public:
   inline void SetPriorAvailWidth(nscoord aPriorAvailWidth);
 
   /** return the desired size returned by this frame during its last reflow */
-  inline nsSize GetDesiredSize();
+  inline mozilla::LogicalSize GetDesiredSize();
 
   /** set the desired size returned by this frame during its last reflow */
   inline void SetDesiredSize(const nsHTMLReflowMetrics & aDesiredSize);
@@ -238,7 +238,7 @@ protected:
   uint32_t     mColIndex;             // the starting column for this cell
 
   nscoord      mPriorAvailWidth;      // the avail width during the last reflow
-  nsSize       mDesiredSize;          // the last desired width & height
+  mozilla::LogicalSize mDesiredSize;  // the last desired inline and block size
 };
 
 inline nscoord nsTableCellFrame::GetPriorAvailWidth()
@@ -247,13 +247,13 @@ inline nscoord nsTableCellFrame::GetPriorAvailWidth()
 inline void nsTableCellFrame::SetPriorAvailWidth(nscoord aPriorAvailWidth)
 { mPriorAvailWidth = aPriorAvailWidth;}
 
-inline nsSize nsTableCellFrame::GetDesiredSize()
+inline mozilla::LogicalSize nsTableCellFrame::GetDesiredSize()
 { return mDesiredSize; }
 
 inline void nsTableCellFrame::SetDesiredSize(const nsHTMLReflowMetrics & aDesiredSize)
 {
-  mDesiredSize.width = aDesiredSize.Width();
-  mDesiredSize.height = aDesiredSize.Height();
+  mozilla::WritingMode wm = aDesiredSize.GetWritingMode();
+  mDesiredSize = aDesiredSize.Size(wm).ConvertTo(GetWritingMode(), wm);
 }
 
 inline bool nsTableCellFrame::GetContentEmpty()
@@ -287,12 +287,12 @@ inline void nsTableCellFrame::SetHasPctOverHeight(bool aValue)
 }
 
 // nsBCTableCellFrame
-class nsBCTableCellFrame : public nsTableCellFrame
+class nsBCTableCellFrame MOZ_FINAL : public nsTableCellFrame
 {
 public:
   NS_DECL_FRAMEARENA_HELPERS
 
-  nsBCTableCellFrame(nsStyleContext* aContext);
+  explicit nsBCTableCellFrame(nsStyleContext* aContext);
 
   ~nsBCTableCellFrame();
 

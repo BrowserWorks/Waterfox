@@ -12,16 +12,25 @@ SOURCES += [
     'nsModule.cpp',
 ]
 
-LIBRARY_NAME = 'browsercomps'
-
-IS_COMPONENT = True
-
-FORCE_SHARED_LIB = True
+XPCOMBinaryComponent('browsercomps')
 
 LOCAL_INCLUDES += [
     '../about',
     '../dirprovider',
-    '../feeds/src',
-    '../migration/src',
-    '../shell/src',
+    '../feeds',
+    '../migration',
+    '../shell',
 ]
+
+if CONFIG['OS_ARCH'] == 'WINNT':
+    OS_LIBS += [
+        'ole32',
+        'shell32',
+        'shlwapi',
+        'version',
+    ]
+
+# Mac: Need to link with CoreFoundation for Mac Migrators (PList reading code)
+# GTK2: Need to link with glib for GNOME shell service
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('cocoa', 'gtk2', 'gtk3'):
+    OS_LIBS += CONFIG['TK_LIBS']

@@ -6,11 +6,14 @@
 
 if CONFIG['OS_TARGET'] != 'WINNT' and CONFIG['MOZ_WIDGET_TOOLKIT'] != 'gonk':
     CPP_UNIT_TESTS += [
-        'mediaconduit_unittests.cpp',
-        'mediapipeline_unittest.cpp',
-        'sdp_unittests.cpp',
-        'signaling_unittests.cpp',
+        'mediaconduit_unittests',
+        'mediapipeline_unittest',
+        'sdp_unittests',
+        'signaling_unittests',
     ]
+
+SOURCES += sorted('%s.cpp' % t for t in CPP_UNIT_TESTS)
+
 include('/ipc/chromium/chromium-config.mozbuild')
 
 if CONFIG['OS_TARGET'] in ('Darwin', 'Android'):
@@ -38,7 +41,6 @@ LOCAL_INCLUDES += [
     '/media/mtransport/third_party/nrappkit/src/stats',
     '/media/mtransport/third_party/nrappkit/src/util/libekr',
     '/media/webrtc/signaling/include',
-    '/media/webrtc/signaling/media-conduit',
     '/media/webrtc/signaling/src/common/browser_logging',
     '/media/webrtc/signaling/src/common/time_profiling',
     '/media/webrtc/signaling/src/media',
@@ -51,7 +53,6 @@ LOCAL_INCLUDES += [
     '/media/webrtc/signaling/src/sipcc/include',
     '/media/webrtc/trunk',
     '/media/webrtc/trunk/testing/gtest/include',
-    '/media/webrtc/trunk/third_party/libjingle/source',
     '/xpcom/base',
 ]
 
@@ -69,7 +70,7 @@ if CONFIG['OS_TARGET'] == 'Darwin':
     LOCAL_INCLUDES += [
         '/media/mtransport/third_party/nrappkit/src/port/darwin/include',
     ]
-    LDFLAGS += [
+    OS_LIBS += [
         '-framework AudioToolbox',
         '-framework AudioUnit',
         '-framework Carbon',
@@ -89,3 +90,71 @@ if CONFIG['OS_TARGET'] in ('DragonFly', 'FreeBSD', 'NetBSD', 'OpenBSD'):
         '/media/mtransport/third_party/nrappkit/src/port/darwin/include',
         '/media/mtransport/third_party/nrappkit/src/port/generic/include',
     ]
+
+USE_LIBS += [
+    '/media/webrtc/signalingtest/signaling_ecc/ecc',
+    '/media/webrtc/signalingtest/signaling_sipcc/sipcc',
+    '/media/webrtc/trunk/testing/gtest_gtest/gtest',
+    'gkmedias',
+    'mozalloc',
+    'mtransport_s',
+    'nksrtp_s',
+    'nspr',
+    'nss',
+    'webrtc',
+    'xpcomglue_s',
+    'xul',
+    'yuv',
+    'zlib',
+]
+
+if CONFIG['BUILD_ARM_NEON']:
+    USE_LIBS += [
+        'yuv_neon',
+    ]
+
+if CONFIG['JS_SHARED_LIBRARY']:
+    USE_LIBS += [
+        'js',
+    ]
+
+OS_LIBS += CONFIG['MOZ_WEBRTC_X11_LIBS']
+OS_LIBS += CONFIG['REALTIME_LIBS']
+
+if CONFIG['MOZ_ALSA']:
+    OS_LIBS += CONFIG['MOZ_ALSA_LIBS']
+
+if CONFIG['MOZ_NATIVE_JPEG']:
+    OS_LIBS += CONFIG['MOZ_JPEG_LIBS']
+
+if CONFIG['MOZ_NATIVE_LIBVPX']:
+    OS_LIBS += CONFIG['MOZ_LIBVPX_LIBS']
+
+if not CONFIG['MOZ_TREE_PIXMAN']:
+    OS_LIBS += CONFIG['MOZ_PIXMAN_LIBS']
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk2':
+    OS_LIBS += CONFIG['XLIBS']
+    OS_LIBS += CONFIG['MOZ_GTK2_LIBS']
+    OS_LIBS += [
+        'gmodule-2.0',
+        'gthread-2.0',
+    ]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk3':
+    OS_LIBS += CONFIG['MOZ_GTK3_LIBS']
+    USE_LIBS += [
+        'freetype',
+    ]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'qt':
+    OS_LIBS += CONFIG['XLIBS']
+    OS_LIBS += CONFIG['TK_LIBS']
+    OS_LIBS += CONFIG['MOZ_PANGO_LIBS']
+
+if CONFIG['OS_TARGET'] in ('Linux', 'DragonFly', 'FreeBSD', 'NetBSD',
+        'OpenBSD'):
+    OS_LIBS += CONFIG['MOZ_CAIRO_OSLIBS']
+
+if CONFIG['OS_TARGET'] == 'Darwin':
+    OS_LIBS += CONFIG['TK_LIBS']

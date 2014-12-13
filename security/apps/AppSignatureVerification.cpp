@@ -12,6 +12,7 @@
 
 #include "pkix/pkix.h"
 #include "pkix/pkixnss.h"
+#include "pkix/ScopedPtr.h"
 #include "mozilla/RefPtr.h"
 #include "CryptoTask.h"
 #include "AppTrustDomain.h"
@@ -20,16 +21,20 @@
 #include "nsDataSignatureVerifier.h"
 #include "nsHashKeys.h"
 #include "nsIFile.h"
+#include "nsIFileStreams.h"
 #include "nsIInputStream.h"
 #include "nsIStringEnumerator.h"
 #include "nsIZipReader.h"
+#include "nsNetUtil.h"
 #include "nsNSSCertificate.h"
 #include "nsProxyRelease.h"
+#include "NSSCertDBTrustDomain.h"
 #include "nsString.h"
 #include "nsTHashtable.h"
 
 #include "base64.h"
 #include "certdb.h"
+#include "nssb64.h"
 #include "secmime.h"
 #include "plstr.h"
 #include "prlog.h"
@@ -43,6 +48,59 @@ extern PRLogModuleInfo* gPIPNSSLog;
 #endif
 
 namespace {
+
+// Reads a maximum of 1MB from a stream into the supplied buffer.
+// The reason for the 1MB limit is because this function is used to read
+// signature-related files and we want to avoid OOM. The uncompressed length of
+// an entry can be hundreds of times larger than the compressed version,
+// especially if someone has specifically crafted the entry to cause OOM or to
+// consume massive amounts of disk space.
+//
+// @param stream  The input stream to read from.
+// @param buf     The buffer that we read the stream into, which must have
+//                already been allocated.
+nsresult
+ReadStream(const nsCOMPtr<nsIInputStream>& stream, /*out*/ SECItem& buf)
+{
+  // The size returned by Available() might be inaccurate so we need
+  // to check that Available() matches up with the actual length of
+  // the file.
+  uint64_t length;
+  nsresult rv = stream->Available(&length);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  // Cap the maximum accepted size of signature-related files at 1MB (which is
+  // still crazily huge) to avoid OOM. The uncompressed length of an entry can be
+  // hundreds of times larger than the compressed version, especially if
+  // someone has speifically crafted the entry to cause OOM or to consume
+  // massive amounts of disk space.
+  static const uint32_t MAX_LENGTH = 1024 * 1024;
+  if (length > MAX_LENGTH) {
+    return NS_ERROR_FILE_TOO_BIG;
+  }
+
+  // With bug 164695 in mind we +1 to leave room for null-terminating
+  // the buffer.
+  SECITEM_AllocItem(buf, static_cast<uint32_t>(length + 1));
+
+  // buf.len == length + 1. We attempt to read length + 1 bytes
+  // instead of length, so that we can check whether the metadata for
+  // the entry is incorrect.
+  uint32_t bytesRead;
+  rv = stream->Read(char_ptr_cast(buf.data), buf.len, &bytesRead);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+  if (bytesRead != length) {
+    return NS_ERROR_FILE_CORRUPTED;
+  }
+
+  buf.data[buf.len - 1] = 0; // null-terminate
+
+  return NS_OK;
+}
 
 // Finds exactly one (signature metadata) entry that matches the given
 // search pattern, and then load it. Fails if there are no matches or if
@@ -82,38 +140,10 @@ FindAndLoadOneEntry(nsIZipReader * zip,
   rv = zip->GetInputStream(filename, getter_AddRefs(stream));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  // The size returned by Available() might be inaccurate so we need to check
-  // that Available() matches up with the actual length of the file.
-  uint64_t len64;
-  rv = stream->Available(&len64);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-
-  // Cap the maximum accepted size of signature-related files at 1MB (which is
-  // still crazily huge) to avoid OOM. The uncompressed length of an entry can be
-  // hundreds of times larger than the compressed version, especially if
-  // someone has speifically crafted the entry to cause OOM or to consume
-  // massive amounts of disk space.
-  //
-  // Also, keep in mind bug 164695 and that we must leave room for
-  // null-terminating the buffer.
-  static const uint32_t MAX_LENGTH = 1024 * 1024;
-  static_assert(MAX_LENGTH < UINT32_MAX, "MAX_LENGTH < UINT32_MAX");
-  NS_ENSURE_TRUE(len64 < MAX_LENGTH, NS_ERROR_FILE_CORRUPTED);
-  NS_ENSURE_TRUE(len64 < UINT32_MAX, NS_ERROR_FILE_CORRUPTED); // bug 164695
-  SECITEM_AllocItem(buf, static_cast<uint32_t>(len64 + 1));
-
-  // buf.len == len64 + 1. We attempt to read len64 + 1 bytes instead of len64,
-  // so that we can check whether the metadata in the ZIP for the entry is
-  // incorrect.
-  uint32_t bytesRead;
-  rv = stream->Read(char_ptr_cast(buf.data), buf.len, &bytesRead);
-  NS_ENSURE_SUCCESS(rv, rv);
-  if (bytesRead != len64) {
+  rv = ReadStream(stream, buf);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
     return NS_ERROR_SIGNED_JAR_ENTRY_INVALID;
   }
-
-  buf.data[buf.len - 1] = 0; // null-terminate
 
   if (bufDigest) {
     rv = bufDigest->DigestBuf(SEC_OID_SHA1, buf.data, buf.len - 1);
@@ -542,12 +572,18 @@ VerifyCertificate(CERTCertificate* signerCert, void* voidContext, void* pinArg)
   if (trustDomain.SetTrustedRoot(context.trustedRoot) != SECSuccess) {
     return MapSECStatus(SECFailure);
   }
-  Result rv = BuildCertChain(trustDomain, signerCert->derCert, PR_Now(),
-                             EndEntityOrCA::MustBeEndEntity,
-                             KeyUsage::digitalSignature,
-                             KeyPurposeId::id_kp_codeSigning,
-                             CertPolicyId::anyPolicy,
-                             nullptr/*stapledOCSPResponse*/);
+  Input certDER;
+  Result rv = certDER.Init(signerCert->derCert.data, signerCert->derCert.len);
+  if (rv != Success) {
+    return mozilla::psm::GetXPCOMFromNSSError(MapResultToPRErrorCode(rv));
+  }
+
+  rv = BuildCertChain(trustDomain, certDER, Now(),
+                      EndEntityOrCA::MustBeEndEntity,
+                      KeyUsage::digitalSignature,
+                      KeyPurposeId::id_kp_codeSigning,
+                      CertPolicyId::anyPolicy,
+                      nullptr/*stapledOCSPResponse*/);
   if (rv != Success) {
     return mozilla::psm::GetXPCOMFromNSSError(MapResultToPRErrorCode(rv));
   }
@@ -737,6 +773,82 @@ OpenSignedAppFile(AppTrustedRoot aTrustedRoot, nsIFile* aJarFile,
   return NS_OK;
 }
 
+nsresult
+VerifySignedManifest(AppTrustedRoot aTrustedRoot,
+                     nsIInputStream* aManifestStream,
+                     nsIInputStream* aSignatureStream,
+                     /*out, optional */ nsIX509Cert** aSignerCert)
+{
+  NS_ENSURE_ARG(aManifestStream);
+  NS_ENSURE_ARG(aSignatureStream);
+
+  if (aSignerCert) {
+    *aSignerCert = nullptr;
+  }
+
+  // Load signature file in buffer
+  ScopedAutoSECItem signatureBuffer;
+  nsresult rv = ReadStream(aSignatureStream, signatureBuffer);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  signatureBuffer.type = siBuffer;
+
+  // Load manifest file in buffer
+  ScopedAutoSECItem manifestBuffer;
+  rv = ReadStream(aManifestStream, manifestBuffer);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
+  // Calculate SHA1 digest of the manifest buffer
+  Digest manifestCalculatedDigest;
+  rv = manifestCalculatedDigest.DigestBuf(SEC_OID_SHA1,
+                                          manifestBuffer.data,
+                                          manifestBuffer.len - 1); // buffer is null terminated
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  // Get base64 encoded string from manifest buffer digest
+  ScopedPtr<char, PORT_Free_string> base64EncDigest(NSSBase64_EncodeItem(nullptr,
+    nullptr, 0, const_cast<SECItem*>(&manifestCalculatedDigest.get())));
+  if (NS_WARN_IF(!base64EncDigest)) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+
+  // Calculate SHA1 digest of the base64 encoded string
+  Digest doubleDigest;
+  rv = doubleDigest.DigestBuf(SEC_OID_SHA1,
+                              reinterpret_cast<uint8_t*>(base64EncDigest.get()),
+                              strlen(base64EncDigest.get()));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  // Verify the manifest signature (signed digest of the base64 encoded string)
+  ScopedCERTCertList builtChain;
+  rv = VerifySignature(aTrustedRoot, signatureBuffer,
+                       doubleDigest.get(), builtChain);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
+  // Return the signer's certificate to the reader if they want it.
+  if (aSignerCert) {
+    MOZ_ASSERT(CERT_LIST_HEAD(builtChain));
+    nsCOMPtr<nsIX509Cert> signerCert =
+      nsNSSCertificate::Create(CERT_LIST_HEAD(builtChain)->cert);
+    if (NS_WARN_IF(!signerCert)) {
+      return NS_ERROR_OUT_OF_MEMORY;
+    }
+
+    signerCert.forget(aSignerCert);
+  }
+
+  return NS_OK;
+}
+
 class OpenSignedAppFileTask MOZ_FINAL : public CryptoTask
 {
 public:
@@ -772,6 +884,44 @@ private:
   nsCOMPtr<nsIX509Cert> mSignerCert; // out
 };
 
+class VerifySignedmanifestTask MOZ_FINAL : public CryptoTask
+{
+public:
+  VerifySignedmanifestTask(AppTrustedRoot aTrustedRoot,
+                           nsIInputStream* aManifestStream,
+                           nsIInputStream* aSignatureStream,
+                           nsIVerifySignedManifestCallback* aCallback)
+    : mTrustedRoot(aTrustedRoot)
+    , mManifestStream(aManifestStream)
+    , mSignatureStream(aSignatureStream)
+    , mCallback(
+      new nsMainThreadPtrHolder<nsIVerifySignedManifestCallback>(aCallback))
+  {
+  }
+
+private:
+  virtual nsresult CalculateResult() MOZ_OVERRIDE
+  {
+    return VerifySignedManifest(mTrustedRoot, mManifestStream,
+                                mSignatureStream, getter_AddRefs(mSignerCert));
+  }
+
+  // nsNSSCertificate implements nsNSSShutdownObject, so there's nothing that
+  // needs to be released
+  virtual void ReleaseNSSResources() { }
+
+  virtual void CallCallback(nsresult rv)
+  {
+    (void) mCallback->VerifySignedManifestFinished(rv, mSignerCert);
+  }
+
+  const AppTrustedRoot mTrustedRoot;
+  const nsCOMPtr<nsIInputStream> mManifestStream;
+  const nsCOMPtr<nsIInputStream> mSignatureStream;
+  nsMainThreadPtrHandle<nsIVerifySignedManifestCallback> mCallback;
+  nsCOMPtr<nsIX509Cert> mSignerCert; // out
+};
+
 } // unnamed namespace
 
 NS_IMETHODIMP
@@ -785,4 +935,19 @@ nsNSSCertificateDB::OpenSignedAppFileAsync(
                                                                aJarFile,
                                                                aCallback));
   return task->Dispatch("SignedJAR");
+}
+
+NS_IMETHODIMP
+nsNSSCertificateDB::VerifySignedManifestAsync(
+  AppTrustedRoot aTrustedRoot, nsIInputStream* aManifestStream,
+  nsIInputStream* aSignatureStream, nsIVerifySignedManifestCallback* aCallback)
+{
+  NS_ENSURE_ARG_POINTER(aManifestStream);
+  NS_ENSURE_ARG_POINTER(aSignatureStream);
+  NS_ENSURE_ARG_POINTER(aCallback);
+
+  RefPtr<VerifySignedmanifestTask> task(
+    new VerifySignedmanifestTask(aTrustedRoot, aManifestStream,
+                                 aSignatureStream, aCallback));
+  return task->Dispatch("SignedManifest");
 }

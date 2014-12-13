@@ -3,7 +3,9 @@
 == solid-image-2.html solid-image-2-ref.html
 == solid-image-2a.html solid-image-2-ref.html
 == multicolor-image-1.html multicolor-image-1-ref.html
-== multicolor-image-2.html multicolor-image-2-ref.html
+# This is fuzzy temporarily until bug 1044702 makes it possible to use source
+# clipping on Windows. (Any other fix would have a significant perf cost.)
+fuzzy-if(winWidget,1,1) == multicolor-image-2.html multicolor-image-2-ref.html
 == multicolor-image-3.html multicolor-image-3-ref.html
 == multicolor-image-4.html multicolor-image-4-ref.html
 == multicolor-image-5.html multicolor-image-5-ref.html
@@ -64,7 +66,7 @@ fuzzy(1,139) fuzzy-if(OSX,2,4478) == border-image-radial-gradient-slice-fill-2.h
 fuzzy(1,9000) == border-image-radial-gradient-slice-width.html border-image-radial-gradient-slice-width-ref.html
 
 # OS X failures tracked in bug 957025
-fails-if(OSX) == border-image-repeating-linear-gradient.html border-image-repeating-linear-gradient-ref.html
+== border-image-repeating-linear-gradient.html border-image-repeating-linear-gradient-ref.html
 fuzzy(1,5608) fails-if(OSX) == border-image-repeating-linear-gradient-slice-fill-2.html border-image-repeating-linear-gradient-slice-fill-2-ref.html
 fuzzy(1,19200) fails-if(OSX) == border-image-repeating-linear-gradient-repeat-round-2.html border-image-repeating-linear-gradient-repeat-round-2-ref.html
 
@@ -75,7 +77,7 @@ fuzzy(1,1357) fails-if(OSX) == border-image-repeating-radial-gradient-slice-fill
 fuzzy(1,1058) fails-if(OSX) == border-image-repeating-radial-gradient-slice-fill-2.html border-image-repeating-radial-gradient-slice-fill-2-ref.html
 fuzzy(1,602) fails-if(OSX) == border-image-repeating-radial-gradient-width.html border-image-repeating-radial-gradient-width-ref.html
 fuzzy(3,18000) fails-if(OSX) == border-image-repeating-radial-gradient-slice-width.html border-image-repeating-radial-gradient-slice-width-ref.html
-fails-if(OSX) == border-image-repeating-radial-gradient-repeat-repeat-2.html border-image-repeating-radial-gradient-repeat-repeat-2-ref.html
+== border-image-repeating-radial-gradient-repeat-repeat-2.html border-image-repeating-radial-gradient-repeat-repeat-2-ref.html
 fuzzy(1,1054) fails-if(OSX) == border-image-repeating-radial-gradient-repeat-round-2.html border-image-repeating-radial-gradient-repeat-round-2-ref.html
 
 # border-image-source (-moz-)element

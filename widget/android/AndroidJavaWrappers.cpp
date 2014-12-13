@@ -454,6 +454,7 @@ AndroidGeckoEvent::Init(JNIEnv *jenv, jobject jobj)
             break;
 
         case MOTION_EVENT:
+        case LONG_PRESS:
             mTime = jenv->GetLongField(jobj, jTimeField);
             mMetaState = jenv->GetIntField(jobj, jMetaStateField);
             mCount = jenv->GetIntField(jobj, jCountField);
@@ -655,9 +656,33 @@ AndroidGeckoEvent::Init(AndroidGeckoEvent *aResizeEvent)
     mPoints = aResizeEvent->mPoints; // x,y coordinates
 }
 
+bool
+AndroidGeckoEvent::CanCoalesceWith(AndroidGeckoEvent* ae)
+{
+    if (Type() == MOTION_EVENT && ae->Type() == MOTION_EVENT) {
+        return Action() == AndroidMotionEvent::ACTION_MOVE
+            && ae->Action() == AndroidMotionEvent::ACTION_MOVE;
+    } else if (Type() == APZ_INPUT_EVENT && ae->Type() == APZ_INPUT_EVENT) {
+        return mApzInput.mType == MultiTouchInput::MULTITOUCH_MOVE
+            && ae->mApzInput.mType == MultiTouchInput::MULTITOUCH_MOVE;
+    }
+    return false;
+}
+
+mozilla::layers::ScrollableLayerGuid
+AndroidGeckoEvent::ApzGuid()
+{
+    MOZ_ASSERT(Type() == APZ_INPUT_EVENT);
+    return mApzGuid;
+}
+
 WidgetTouchEvent
 AndroidGeckoEvent::MakeTouchEvent(nsIWidget* widget)
 {
+    if (Type() == APZ_INPUT_EVENT) {
+        return mApzInput.ToWidgetTouchEvent(widget);
+    }
+
     int type = NS_EVENT_NULL;
     int startIndex = 0;
     int endIndex = Count();

@@ -59,7 +59,7 @@ protected:
     DONT_REPORT = 1 << 1
   };
 
-  CacheMemoryConsumer(uint32_t aFlags);
+  explicit CacheMemoryConsumer(uint32_t aFlags);
   ~CacheMemoryConsumer() { DoMemoryReport(0); }
   void DoMemoryReport(uint32_t aCurrentSize);
 };
@@ -90,6 +90,10 @@ public:
   static bool IsOnManagementThread();
   already_AddRefed<nsIEventTarget> Thread() const;
   mozilla::Mutex& Lock() { return mLock; }
+
+  // Tracks entries that may be forced valid in a pruned hashtable.
+  nsDataHashtable<nsCStringHashKey, TimeStamp> mForcedValidEntries;
+  void ForcedValidEntriesPrune(TimeStamp &now);
 
   // Helper thread-safe interface to pass entry info, only difference from
   // nsICacheStorageVisitor is that instead of nsIURI only the uri spec is
@@ -145,6 +149,26 @@ private:
   void RecordMemoryOnlyEntry(CacheEntry* aEntry,
                              bool aOnlyInMemory,
                              bool aOverwrite);
+
+  /**
+   * Sets a cache entry valid (overrides the default loading behavior by loading
+   * directly from cache) for the given number of seconds
+   * See nsICacheEntry.idl for more details
+   */
+  void ForceEntryValidFor(nsACString &aCacheEntryKey,
+                          uint32_t aSecondsToTheFuture);
+
+private:
+  friend class CacheIndex;
+
+  /**
+   * Retrieves the status of the cache entry to see if it has been forced valid
+   * (so it will loaded directly from cache without further validation)
+   * CacheIndex uses this to prevent a cache entry from being prememptively
+   * thrown away when forced valid
+   * See nsICacheEntry.idl for more details
+   */
+  bool IsForcedValidEntry(nsACString &aCacheEntryKey);
 
 private:
   // These are helpers for telemetry monitorying of the memory pools.
@@ -263,6 +287,7 @@ private:
   static CacheStorageService* sSelf;
 
   mozilla::Mutex mLock;
+  mozilla::Mutex mForcedValidEntriesLock;
 
   bool mShutdown;
 
@@ -276,7 +301,7 @@ private:
       MEMORY,
     } mType;
 
-    MemoryPool(EType aType);
+    explicit MemoryPool(EType aType);
     ~MemoryPool();
 
     nsTArray<nsRefPtr<CacheEntry> > mFrecencyArray;

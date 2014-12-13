@@ -35,15 +35,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "CommonUtils",
 XPCOMUtils.defineLazyModuleGetter(this, "Metrics",
                                   "resource://gre/modules/Metrics.jsm");
 
-// CertUtils.jsm doesn't expose a single "CertUtils" object like a normal .jsm
-// would.
-XPCOMUtils.defineLazyGetter(this, "CertUtils",
-  function() {
-    var mod = {};
-    Cu.import("resource://gre/modules/CertUtils.jsm", mod);
-    return mod;
-  });
-
 XPCOMUtils.defineLazyServiceGetter(this, "gCrashReporter",
                                    "@mozilla.org/xre/app-info;1",
                                    "nsICrashReporter");
@@ -63,9 +54,7 @@ const PREF_LOGGING              = "logging";
 const PREF_LOGGING_LEVEL        = PREF_LOGGING + ".level"; // experiments.logging.level
 const PREF_LOGGING_DUMP         = PREF_LOGGING + ".dump"; // experiments.logging.dump
 const PREF_MANIFEST_URI         = "manifest.uri"; // experiments.logging.manifest.uri
-const PREF_MANIFEST_CHECKCERT   = "manifest.cert.checkAttributes"; // experiments.manifest.cert.checkAttributes
-const PREF_MANIFEST_REQUIREBUILTIN = "manifest.cert.requireBuiltin"; // experiments.manifest.cert.requireBuiltin
-const PREF_FORCE_SAMPLE = "force-sample-value"; // experiments.force-sample-value
+const PREF_FORCE_SAMPLE         = "force-sample-value"; // experiments.force-sample-value
 
 const PREF_HEALTHREPORT_ENABLED = "datareporting.healthreport.service.enabled";
 
@@ -336,6 +325,14 @@ Experiments.Policy.prototype = {
   telemetryPayload: function () {
     return TelemetryPing.getPayload();
   },
+
+  /**
+   * For testing a race condition, one of the tests delays the callback of
+   * writing the cache by replacing this policy function.
+   */
+  delayCacheWrite: function(promise) {
+    return promise;
+  },
 };
 
 function AlreadyShutdownError(message="already shut down") {
@@ -371,7 +368,7 @@ Experiments.Experiments = function (policy=new Experiments.Policy()) {
   // crashes. For forensics purposes, keep the last few log
   // messages in memory and upload them in case of crash.
   this._forensicsLogs = [];
-  this._forensicsLogs.length = 3;
+  this._forensicsLogs.length = 10;
   this._log = Object.create(log);
   this._log.log = (level, string, params) => {
     this._forensicsLogs.shift();
@@ -526,7 +523,7 @@ Experiments.Experiments.prototype = {
       hasTimer: !!this._hasTimer,
       hasAddonProvider: !!gAddonProvider,
       latestLogs: this._forensicsLogs,
-      experiments: this._experiments.keys(),
+      experiments: this._experiments ? this._experiments.keys() : null,
       terminateReason: this._terminateReason,
     };
     if (this._latestError) {
@@ -994,20 +991,6 @@ Experiments.Experiments.prototype = {
         return;
       }
 
-      let certs = null;
-      if (gPrefs.get(PREF_MANIFEST_CHECKCERT, true)) {
-        certs = CertUtils.readCertPrefs(PREF_BRANCH + "manifest.certs.");
-      }
-      try {
-        let allowNonBuiltin = !gPrefs.get(PREF_MANIFEST_REQUIREBUILTIN, true);
-        CertUtils.checkCert(xhr.channel, allowNonBuiltin, certs);
-      }
-      catch (e) {
-        log.error("manifest fetch failed certificate checks", [e]);
-        deferred.reject(new Error("Experiments - manifest fetch failed certificate checks: " + e));
-        return;
-      }
-
       deferred.resolve(xhr.responseText);
       this._networkRequest = null;
     };
@@ -1044,7 +1027,7 @@ Experiments.Experiments.prototype = {
       let encoder = new TextEncoder();
       let data = encoder.encode(textData);
       let options = { tmpPath: path + ".tmp", compression: "lz4" };
-      yield OS.File.writeAtomic(path, data, options);
+      yield this._policy.delayCacheWrite(OS.File.writeAtomic(path, data, options));
     } catch (e) {
       // We failed to write the cache, it's still dirty.
       this._dirty = true;
@@ -2286,7 +2269,11 @@ this.Experiments.PreviousExperimentProvider.prototype = Object.freeze({
 
   shutdown: function () {
     this._log.trace("shutdown()");
-    Services.obs.removeObserver(this, EXPERIMENTS_CHANGED_TOPIC);
+    try {
+      Services.obs.removeObserver(this, EXPERIMENTS_CHANGED_TOPIC);
+    } catch(e) {
+      // Prevent crash in mochitest-browser3 on Mulet
+    }
   },
 
   observe: function (subject, topic, data) {

@@ -4,53 +4,6 @@
 
 %include ../../../shared/incontentprefs/preferences.css
 
-tab[selected] {
-  /* Override styles for tab[selected] from
-     toolkit/themes/linux/global/tabbox.css */
-  margin-bottom: 0;
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
-button > .button-box,
-menulist > .menulist-label-box {
-  -moz-appearance: none;
-}
-
-button[type="menu"] > .button-box > .button-menu-dropmarker {
-  -moz-appearance: none !important;
-}
-
-.help-button > .button-box > .button-icon {
-  -moz-margin-end: 0;
-}
-
-menulist:not([editable="true"]) > .menulist-dropmarker {
-  display: -moz-box;
-  margin-top: 6px;
-  margin-bottom: 6px;
-}
-
-checkbox {
-  -moz-binding: url("chrome://global/content/bindings/checkbox.xml#checkbox");
-  -moz-box-align: center;
-}
-
-radio {
-  -moz-binding: url("chrome://global/content/bindings/radio.xml#radio");
-  -moz-box-align: center;
-  -moz-margin-start: 0;
-}
-
-.radio-label-box {
-  -moz-appearance: none;
-}
-
-.numberbox-input-box {
-  -moz-appearance: none;
-  border-width: 0;
-}
-
 spinbuttons {
   -moz-appearance: none;
 }
@@ -79,4 +32,18 @@ spinbuttons {
 menulist.actionsMenu > .menulist-dropmarker {
   margin-top: 11px;
   margin-bottom: 11px;
+}
+
+textbox + button,
+filefield + button {
+  -moz-margin-start: -4px;
+}
+
+#dialogTitle {
+  -moz-margin-start: 12px !important;
+}
+
+.actionButtons {
+  margin-right: 8px !important;
+  margin-left: 8px !important;
 }

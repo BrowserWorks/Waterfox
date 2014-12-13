@@ -161,9 +161,9 @@ public class Utils {
 
         // Check for CharSequences (Strings and things that are string-like)
         if (isCharSequence(type)) {
-	    if (aNarrowChars) {
-		return "const nsACString&";
-	    }
+            if (aNarrowChars) {
+                return "const nsACString&";
+            }
             return "const nsAString&";
         }
 
@@ -303,7 +303,7 @@ public class Utils {
      * @param aConstructor The Constructor to generate a signature for.
      * @return The canonical JNI type signature for this method.
      */
-    protected static String getTypeSignatureStringForConstructor(Constructor aConstructor) {
+    protected static String getTypeSignatureStringForConstructor(Constructor<?> aConstructor) {
         Class<?>[] arguments = aConstructor.getParameterTypes();
         return getTypeSignatureInternal(arguments, Void.class);
     }
@@ -314,11 +314,15 @@ public class Utils {
         } else if (aMember instanceof Field) {
             return getTypeSignatureStringForField((Field) aMember);
         } else {
-            return getTypeSignatureStringForConstructor((Constructor) aMember);
+            return getTypeSignatureStringForConstructor((Constructor<?>) aMember);
         }
     }
 
-    public static String getTypeSignatureString(Constructor aConstructor) {
+    public static String getTypeSignatureStringForClass(Class<?> clazz) {
+        return clazz.getCanonicalName().replace('.', '/');
+    }
+
+    public static String getTypeSignatureString(Constructor<?> aConstructor) {
         Class<?>[] arguments = aConstructor.getParameterTypes();
         StringBuilder sb = new StringBuilder();
         sb.append('(');
@@ -341,7 +345,7 @@ public class Utils {
      * @param c  The type of the element to write the subsignature of.
      */
     private static void writeTypeSignature(StringBuilder sb, Class<?> c) {
-        String name = c.getCanonicalName().replaceAll("\\.", "/");
+        String name = Utils.getTypeSignatureStringForClass(c);
 
         // Determine if this is an array type and, if so, peel away the array operators..
         int len = name.length();
@@ -384,7 +388,8 @@ public class Utils {
      * @param aCClassName Name of the C++ class into which the method is declared.
      * @return The C++ method implementation signature for the method described.
      */
-    public static String getCImplementationMethodSignature(Class<?>[] aArgumentTypes, Class<?> aReturnType, String aCMethodName, String aCClassName, boolean aNarrowChars) {
+    public static String getCImplementationMethodSignature(Class<?>[] aArgumentTypes, Class<?> aReturnType,
+        String aCMethodName, String aCClassName, boolean aNarrowChars, boolean aCatchException) {
         StringBuilder retBuffer = new StringBuilder();
 
         retBuffer.append(getCReturnType(aReturnType, aNarrowChars));
@@ -406,6 +411,14 @@ public class Utils {
                 retBuffer.append(", ");
             }
         }
+
+        if (aCatchException) {
+            if (aArgumentTypes.length > 0) {
+                retBuffer.append(", ");
+            }
+            retBuffer.append("nsresult* aResult");
+        }
+
         retBuffer.append(')');
         return retBuffer.toString();
     }
@@ -423,7 +436,8 @@ public class Utils {
      * @param aIsStaticStub true if the generated C++ method should be static, false otherwise.
      * @return The generated C++ header method signature for the method described.
      */
-    public static String getCHeaderMethodSignature(Class<?>[] aArgumentTypes, Annotation[][] aArgumentAnnotations, Class<?> aReturnType, String aCMethodName, String aCClassName, boolean aIsStaticStub, boolean aNarrowChars) {
+    public static String getCHeaderMethodSignature(Class<?>[] aArgumentTypes, Annotation[][] aArgumentAnnotations, Class<?> aReturnType,
+        String aCMethodName, String aCClassName, boolean aIsStaticStub, boolean aNarrowChars, boolean aCatchException) {
         StringBuilder retBuffer = new StringBuilder();
 
         // Add the static keyword, if applicable.
@@ -453,6 +467,14 @@ public class Utils {
                 retBuffer.append(", ");
             }
         }
+
+        if (aCatchException) {
+            if (aArgumentTypes.length > 0) {
+                retBuffer.append(", ");
+            }
+            retBuffer.append("nsresult* aResult = nullptr");
+        }
+
         retBuffer.append(')');
         return retBuffer.toString();
     }
@@ -587,9 +609,9 @@ public class Utils {
         StringBuilder sb = new StringBuilder();
         sb.append("    ");
         sb.append(getClassReferenceName(aClass));
-        sb.append(" = getClassGlobalRef(\"");
+        sb.append(" = AndroidBridge::GetClassGlobalRef(env, \"");
 
-        String name = aClass.getCanonicalName().replaceAll("\\.", "/");
+        String name = Utils.getTypeSignatureStringForClass(aClass);
         Class<?> containerClass = aClass.getDeclaringClass();
         if (containerClass != null) {
             // Is an inner class. Add the $ symbol.

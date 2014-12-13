@@ -5,6 +5,7 @@
 
 package org.mozilla.gecko;
 
+import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.favicons.Favicons;
@@ -15,7 +16,6 @@ import android.content.ComponentCallbacks2;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.Build;
 import android.util.Log;
 
 /**
@@ -40,7 +40,7 @@ class MemoryMonitor extends BroadcastReceiver {
     private static final String ACTION_MEMORY_DUMP = "org.mozilla.gecko.MEMORY_DUMP";
     private static final String ACTION_FORCE_PRESSURE = "org.mozilla.gecko.FORCE_MEMORY_PRESSURE";
 
-    // Memory pressue levels, keep in sync with those in AndroidJavaWrappers.h
+    // Memory pressure levels. Keep these in sync with those in AndroidJavaWrappers.h
     private static final int MEMORY_PRESSURE_NONE = 0;
     private static final int MEMORY_PRESSURE_CLEANUP = 1;
     private static final int MEMORY_PRESSURE_LOW = 2;
@@ -54,14 +54,13 @@ class MemoryMonitor extends BroadcastReceiver {
     }
 
     private final PressureDecrementer mPressureDecrementer;
-    private int mMemoryPressure;
-    private boolean mStoragePressure;
+    private int mMemoryPressure;                  // Synchronized access only.
+    private volatile boolean mStoragePressure;    // Accessed via UI thread intent, background runnables.
     private boolean mInited;
 
     private MemoryMonitor() {
         mPressureDecrementer = new PressureDecrementer();
         mMemoryPressure = MEMORY_PRESSURE_NONE;
-        mStoragePressure = false;
     }
 
     public void init(final Context context) {
@@ -89,8 +88,8 @@ class MemoryMonitor extends BroadcastReceiver {
 
     public void onTrimMemory(int level) {
         Log.d(LOGTAG, "onTrimMemory() notification received with level " + level);
-        if (Build.VERSION.SDK_INT < 14) {
-            // this won't even get called pre-ICS
+        if (Versions.preICS) {
+            // This won't even get called pre-ICS.
             return;
         }
 
@@ -166,6 +165,13 @@ class MemoryMonitor extends BroadcastReceiver {
         return true;
     }
 
+    /**
+     * Thread-safe due to mStoragePressure's volatility.
+     */
+    boolean isUnderStoragePressure() {
+        return mStoragePressure;
+    }
+
     private boolean decreaseMemoryPressure() {
         int newLevel;
         synchronized (this) {
@@ -207,7 +213,7 @@ class MemoryMonitor extends BroadcastReceiver {
         }
     }
 
-    class StorageReducer implements Runnable {
+    private static class StorageReducer implements Runnable {
         private final Context mContext;
         public StorageReducer(final Context context) {
             this.mContext = context;
@@ -221,8 +227,8 @@ class MemoryMonitor extends BroadcastReceiver {
                 return;
             }
 
-            if (!mStoragePressure) {
-                // pressure is off, so we can abort
+            if (!MemoryMonitor.getInstance().isUnderStoragePressure()) {
+                // Pressure is off, so we can abort.
                 return;
             }
 

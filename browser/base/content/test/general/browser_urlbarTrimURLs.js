@@ -55,6 +55,11 @@ function test() {
   testVal("jar:http://mozilla.org/example.jar!/");
   testVal("view-source:http://mozilla.org/");
 
+  testVal("http://localhost");
+  testVal("http://someotherhostwithnodots");
+  testVal("http://localhost/ foo bar baz");
+  testVal("http://localhost.localdomain/ foo bar baz", "localhost.localdomain/ foo bar baz");
+
   Services.prefs.setBoolPref(prefname, false);
 
   testVal("http://mozilla.org/");

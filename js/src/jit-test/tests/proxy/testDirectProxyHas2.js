@@ -7,7 +7,7 @@ var keys = ['foo'];
 if (typeof Symbol === "function")
     keys.push(Symbol('bar'));
 for (var key of keys) {
-    var called = false;
+    var called;
     var handler = {
         has: function (target1, name) {
             assertEq(this, handler);
@@ -16,6 +16,9 @@ for (var key of keys) {
             called = true;
         }
     };
-    key in new Proxy(target, handler);
-    assertEq(called, true);
+    for (let p of [new Proxy(target, handler), Proxy.revocable(target, handler).proxy]) {
+        called = false;
+        key in p;
+        assertEq(called, true);
+    }
 }

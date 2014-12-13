@@ -205,11 +205,11 @@ private:
   uint32_t mSize;
 };
 
-class imgLoader : public imgILoader,
-                  public nsIContentSniffer,
-                  public imgICache,
-                  public nsSupportsWeakReference,
-                  public nsIObserver
+class imgLoader MOZ_FINAL : public imgILoader,
+                            public nsIContentSniffer,
+                            public imgICache,
+                            public nsSupportsWeakReference,
+                            public nsIObserver
 {
   virtual ~imgLoader();
 
@@ -399,7 +399,7 @@ class ProxyListener : public nsIStreamListener
                     , public nsIThreadRetargetableStreamListener
 {
 public:
-  ProxyListener(nsIStreamListener *dest);
+  explicit ProxyListener(nsIStreamListener *dest);
 
   /* additional members */
   NS_DECL_ISUPPORTS

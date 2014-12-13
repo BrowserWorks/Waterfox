@@ -35,6 +35,7 @@
 #include "nsAttrValue.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/dom/BindingDeclarations.h"
+#include "mozilla/dom/WindowBinding.h"
 #include "Units.h"
 
 class nsIDOMEventListener;
@@ -81,18 +82,32 @@ enum {
   // will attempt to restyle descendants).
   ELEMENT_IS_POTENTIAL_ANIMATION_RESTYLE_ROOT = ELEMENT_FLAG_BIT(3),
 
+  // Set if the element has a pending animation-only style change as
+  // part of an animation-only style update (where we update styles from
+  // animation to the current refresh tick, but leave everything else as
+  // it was).
+  ELEMENT_HAS_PENDING_ANIMATION_ONLY_RESTYLE =  ELEMENT_FLAG_BIT(4),
+
+  // Set if the element is a potential animation-only restyle root (that
+  // is, has an animation-only style change pending _and_ that style
+  // change will attempt to restyle descendants).
+  ELEMENT_IS_POTENTIAL_ANIMATION_ONLY_RESTYLE_ROOT = ELEMENT_FLAG_BIT(5),
+
   // All of those bits together, for convenience.
   ELEMENT_ALL_RESTYLE_FLAGS = ELEMENT_HAS_PENDING_RESTYLE |
                               ELEMENT_IS_POTENTIAL_RESTYLE_ROOT |
                               ELEMENT_HAS_PENDING_ANIMATION_RESTYLE |
-                              ELEMENT_IS_POTENTIAL_ANIMATION_RESTYLE_ROOT,
+                              ELEMENT_IS_POTENTIAL_ANIMATION_RESTYLE_ROOT |
+                              ELEMENT_HAS_PENDING_ANIMATION_ONLY_RESTYLE |
+                              ELEMENT_IS_POTENTIAL_ANIMATION_ONLY_RESTYLE_ROOT,
 
   // Just the HAS_PENDING bits, for convenience
   ELEMENT_PENDING_RESTYLE_FLAGS = ELEMENT_HAS_PENDING_RESTYLE |
-                                  ELEMENT_HAS_PENDING_ANIMATION_RESTYLE,
+                                  ELEMENT_HAS_PENDING_ANIMATION_RESTYLE |
+                                  ELEMENT_HAS_PENDING_ANIMATION_ONLY_RESTYLE,
 
   // Remaining bits are for subclasses
-  ELEMENT_TYPE_SPECIFIC_BITS_OFFSET = NODE_TYPE_SPECIFIC_BITS_OFFSET + 4
+  ELEMENT_TYPE_SPECIFIC_BITS_OFFSET = NODE_TYPE_SPECIFIC_BITS_OFFSET + 6
 };
 
 #undef ELEMENT_FLAG_BIT
@@ -101,7 +116,6 @@ enum {
 ASSERT_NODE_FLAGS_SPACE(ELEMENT_TYPE_SPECIFIC_BITS_OFFSET);
 
 namespace mozilla {
-class ElementAnimation;
 class EventChainPostVisitor;
 class EventChainPreVisitor;
 class EventChainVisitor;
@@ -110,6 +124,7 @@ class EventStateManager;
 
 namespace dom {
 
+class AnimationPlayer;
 class Link;
 class UndoManager;
 class DOMRect;
@@ -125,7 +140,7 @@ class Element : public FragmentOrElement
 {
 public:
 #ifdef MOZILLA_INTERNAL_API
-  Element(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo) :
+  explicit Element(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo) :
     FragmentOrElement(aNodeInfo),
     mState(NS_EVENT_STATE_MOZ_READONLY)
   {
@@ -631,6 +646,8 @@ public:
   }
   bool HasAttributeNS(const nsAString& aNamespaceURI,
                       const nsAString& aLocalName) const;
+  bool Matches(const nsAString& aSelector,
+               ErrorResult& aError);
   already_AddRefed<nsIHTMLCollection>
     GetElementsByTagName(const nsAString& aQualifiedName);
   already_AddRefed<nsIHTMLCollection>
@@ -640,7 +657,10 @@ public:
   already_AddRefed<nsIHTMLCollection>
     GetElementsByClassName(const nsAString& aClassNames);
   bool MozMatchesSelector(const nsAString& aSelector,
-                          ErrorResult& aError);
+                          ErrorResult& aError)
+  {
+    return Matches(aSelector, aError);
+  }
   void SetPointerCapture(int32_t aPointerId, ErrorResult& aError)
   {
     bool activeState = false;
@@ -701,11 +721,8 @@ public:
   already_AddRefed<ShadowRoot> CreateShadowRoot(ErrorResult& aError);
   already_AddRefed<DestinationInsertionPointList> GetDestinationInsertionPoints();
 
-  void ScrollIntoView()
-  {
-    ScrollIntoView(true);
-  }
-  void ScrollIntoView(bool aTop);
+  void ScrollIntoView();
+  void ScrollIntoView(bool aTop, const ScrollOptions &aOptions);
   int32_t ScrollTop()
   {
     nsIScrollableFrame* sf = GetScrollFrame();
@@ -784,7 +801,7 @@ public:
   {
   }
 
-  void GetAnimationPlayers(nsTArray<nsRefPtr<ElementAnimation> >& aPlayers);
+  void GetAnimationPlayers(nsTArray<nsRefPtr<AnimationPlayer> >& aPlayers);
 
   NS_IMETHOD GetInnerHTML(nsAString& aInnerHTML);
   virtual void SetInnerHTML(const nsAString& aInnerHTML, ErrorResult& aError);
@@ -1194,7 +1211,7 @@ private:
 class DestinationInsertionPointList : public nsINodeList
 {
 public:
-  DestinationInsertionPointList(Element* aElement);
+  explicit DestinationInsertionPointList(Element* aElement);
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_CLASS(DestinationInsertionPointList)

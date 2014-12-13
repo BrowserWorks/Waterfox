@@ -3125,10 +3125,10 @@ if test -n "$MOZ_DEBUG"; then
 
     case "${target_os}" in
     beos*)
-        DEFINES="$DEFINES"
+        DEFINES="$DEFINES -DDEBUG_${USER}"
         ;;
     mks*|cygwin*|mingw*|msys*|os2*)
-        DEFINES="$DEFINES"
+        DEFINES="$DEFINES -DDEBUG_`echo ${USERNAME} | sed -e 's| |_|g'`"
         ;;
     *)
         DEFINES="$DEFINES -DDEBUG_`$WHOAMI`"

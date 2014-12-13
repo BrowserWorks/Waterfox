@@ -11,6 +11,7 @@
 #include "gfxWindowsPlatform.h"
 #include "gfxD2DSurface.h"
 #include "gfx2DGlue.h"
+#include "ReadbackManagerD3D11.h"
 
 namespace mozilla {
 
@@ -26,6 +27,10 @@ SurfaceFormatToDXGIFormat(gfx::SurfaceFormat aFormat)
       return DXGI_FORMAT_B8G8R8A8_UNORM;
     case SurfaceFormat::B8G8R8X8:
       return DXGI_FORMAT_B8G8R8A8_UNORM;
+    case SurfaceFormat::R8G8B8A8:
+      return DXGI_FORMAT_R8G8B8A8_UNORM;
+    case SurfaceFormat::R8G8B8X8:
+      return DXGI_FORMAT_R8G8B8A8_UNORM;
     case SurfaceFormat::A8:
       return DXGI_FORMAT_A8_UNORM;
     default:
@@ -185,6 +190,19 @@ TextureClientD3D11::~TextureClientD3D11()
 #endif
 }
 
+TemporaryRef<TextureClient>
+TextureClientD3D11::CreateSimilar(TextureFlags aFlags,
+                                  TextureAllocationFlags aAllocFlags) const
+{
+  RefPtr<TextureClient> tex = new TextureClientD3D11(mFormat, mFlags | aFlags);
+
+  if (!tex->AllocateForSurface(mSize, aAllocFlags)) {
+    return nullptr;
+  }
+
+  return tex;
+}
+
 bool
 TextureClientD3D11::Lock(OpenMode aMode)
 {
@@ -234,6 +252,28 @@ TextureClientD3D11::Unlock()
     // reference remains by the time Unlock() is called.
     MOZ_ASSERT(mDrawTarget->refCount() == 1);
     mDrawTarget->Flush();
+  }
+
+  if (mReadbackSink) {
+    ID3D10Device* device = gfxWindowsPlatform::GetPlatform()->GetD3D10Device();
+
+    D3D10_TEXTURE2D_DESC desc;
+    mTexture->GetDesc(&desc);
+    desc.BindFlags = 0;
+    desc.Usage = D3D10_USAGE_STAGING;
+    desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
+    desc.MiscFlags = 0;
+
+    RefPtr<ID3D10Texture2D> tex;
+    HRESULT hr = device->CreateTexture2D(&desc, nullptr, byRef(tex));
+
+    if (SUCCEEDED(hr)) {
+      device->CopyResource(tex, mTexture);
+
+      gfxWindowsPlatform::GetPlatform()->GetReadbackManager()->PostTask(tex, mReadbackSink);
+    } else {
+      mReadbackSink->ProcessReadback(nullptr);
+    }
   }
 
   // The DrawTarget is created only once, and is only usable between calls
@@ -381,6 +421,9 @@ DXGITextureHostD3D11::Unlock()
 NewTextureSource*
 DXGITextureHostD3D11::GetTextureSources()
 {
+  MOZ_ASSERT(mIsLocked);
+  // If Lock was successful we must have a valid TextureSource.
+  MOZ_ASSERT(mTextureSource);
   return mTextureSource.get();
 }
 

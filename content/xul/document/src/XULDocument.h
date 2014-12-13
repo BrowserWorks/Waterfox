@@ -22,6 +22,7 @@
 #include "nsScriptLoader.h"
 #include "nsIStreamListener.h"
 #include "nsICSSLoaderObserver.h"
+#include "nsIXULStore.h"
 
 #include "mozilla/Attributes.h"
 
@@ -48,11 +49,11 @@ struct PRLogModuleInfo;
 class nsRefMapEntry : public nsStringHashKey
 {
 public:
-  nsRefMapEntry(const nsAString& aKey) :
+  explicit nsRefMapEntry(const nsAString& aKey) :
     nsStringHashKey(&aKey)
   {
   }
-  nsRefMapEntry(const nsAString *aKey) :
+  explicit nsRefMapEntry(const nsAString* aKey) :
     nsStringHashKey(aKey)
   {
   }
@@ -259,7 +260,7 @@ protected:
 
     nsresult ApplyPersistentAttributes();
     nsresult ApplyPersistentAttributesInternal();
-    nsresult ApplyPersistentAttributesToElements(nsIRDFResource* aResource,
+    nsresult ApplyPersistentAttributesToElements(const nsAString &aID,
                                                  nsCOMArray<nsIContent>& aElements);
 
     nsresult
@@ -314,10 +315,10 @@ protected:
     // Tracks elements with a 'ref' attribute, or an 'id' attribute where
     // the element's namespace has no registered ID attribute name.
     nsTHashtable<nsRefMapEntry> mRefMap;
-    nsCOMPtr<nsIRDFDataSource> mLocalStore;
-    bool                       mApplyingPersistedAttrs;
-    bool                       mIsWritingFastLoad;
-    bool                       mDocumentLoaded;
+    nsCOMPtr<nsIXULStore>       mLocalStore;
+    bool                        mApplyingPersistedAttrs;
+    bool                        mIsWritingFastLoad;
+    bool                        mDocumentLoaded;
     /**
      * Since ResumeWalk is interruptible, it's possible that last
      * stylesheet finishes loading while the PD walk is still in
@@ -412,14 +413,7 @@ protected:
 
     /**
      * Execute the precompiled script object scoped by this XUL document's
-     * containing window object, and using its associated script context.
-     */
-    nsresult ExecuteScript(nsIScriptContext *aContext,
-                           JS::Handle<JSScript*> aScriptObject);
-
-    /**
-     * Helper method for the above that uses aScript to find the appropriate
-     * script context and object.
+     * containing window object.
      */
     nsresult ExecuteScript(nsXULPrototypeScript *aScript);
 
@@ -569,7 +563,7 @@ protected:
         nsCOMPtr<nsIContent> mElement; // [OWNER]
 
     public:
-        TemplateBuilderHookup(nsIContent* aElement)
+        explicit TemplateBuilderHookup(nsIContent* aElement)
             : mElement(aElement) {}
 
         virtual Phase GetPhase() MOZ_OVERRIDE { return eHookup; }

@@ -87,14 +87,10 @@ class TestEmitterBasic(unittest.TestCase):
 
         for o in objs:
             self.assertIsInstance(o, DirectoryTraversal)
-            self.assertEqual(o.parallel_dirs, [])
-            self.assertEqual(o.tool_dirs, [])
             self.assertEqual(o.test_dirs, [])
-            self.assertEqual(o.test_tool_dirs, [])
             self.assertEqual(len(o.tier_dirs), 0)
-            self.assertEqual(len(o.tier_static_dirs), 0)
-            self.assertTrue(os.path.isabs(o.sandbox_main_path))
-            self.assertEqual(len(o.sandbox_all_paths), 1)
+            self.assertTrue(os.path.isabs(o.context_main_path))
+            self.assertEqual(len(o.context_all_paths), 1)
 
         reldirs = [o.relativedir for o in objs]
         self.assertEqual(reldirs, ['', 'foo', 'foo/biz', 'bar'])
@@ -105,32 +101,29 @@ class TestEmitterBasic(unittest.TestCase):
     def test_traversal_all_vars(self):
         reader = self.reader('traversal-all-vars')
         objs = self.read_topsrcdir(reader, filter_common=False)
-        self.assertEqual(len(objs), 6)
+        self.assertEqual(len(objs), 3)
 
         for o in objs:
             self.assertIsInstance(o, DirectoryTraversal)
 
         reldirs = set([o.relativedir for o in objs])
-        self.assertEqual(reldirs, set(['', 'parallel', 'regular', 'test',
-            'test_tool', 'tool']))
+        self.assertEqual(reldirs, set(['', 'regular', 'test']))
 
         for o in objs:
             reldir = o.relativedir
 
             if reldir == '':
                 self.assertEqual(o.dirs, ['regular'])
-                self.assertEqual(o.parallel_dirs, ['parallel'])
                 self.assertEqual(o.test_dirs, ['test'])
-                self.assertEqual(o.test_tool_dirs, ['test_tool'])
-                self.assertEqual(o.tool_dirs, ['tool'])
 
     def test_tier_simple(self):
         reader = self.reader('traversal-tier-simple')
         objs = self.read_topsrcdir(reader, filter_common=False)
-        self.assertEqual(len(objs), 4)
+        self.assertEqual(len(objs), 6)
 
         reldirs = [o.relativedir for o in objs]
-        self.assertEqual(reldirs, ['', 'foo', 'foo/biz', 'bar'])
+        self.assertEqual(reldirs, ['', 'foo', 'foo/biz', 'foo_static', 'bar',
+            'baz'])
 
     def test_config_file_substitution(self):
         reader = self.reader('config-file-substitution')
@@ -158,23 +151,14 @@ class TestEmitterBasic(unittest.TestCase):
             ASFILES=['fans.asm', 'tans.s'],
             CMMSRCS=['fans.mm', 'tans.mm'],
             CSRCS=['fans.c', 'tans.c'],
-            CPP_UNIT_TESTS=['foo.cpp'],
             DISABLE_STL_WRAPPING=True,
             EXTRA_COMPONENTS=['fans.js', 'tans.js'],
             EXTRA_PP_COMPONENTS=['fans.pp.js', 'tans.pp.js'],
-            EXTRA_JS_MODULES=['bar.jsm', 'foo.jsm'],
-            EXTRA_PP_JS_MODULES=['bar.pp.jsm', 'foo.pp.jsm'],
             FAIL_ON_WARNINGS=True,
-            FORCE_SHARED_LIB=True,
             HOST_CPPSRCS=['fans.cpp', 'tans.cpp'],
             HOST_CSRCS=['fans.c', 'tans.c'],
-            HOST_LIBRARY_NAME='host_fans',
-            IS_COMPONENT=True,
-            LIBS=['fans.lib', 'tans.lib'],
             MSVC_ENABLE_PGO=True,
             NO_DIST_INSTALL=True,
-            OS_LIBS=['foo.so', '-l123', 'aaa.a'],
-            SDK_LIBRARY=['fans.sdk', 'tans.sdk'],
             SSRCS=['bans.S', 'fans.S'],
             VISIBILITY_FLAGS='',
             DELAYLOAD_LDFLAGS=['-DELAYLOAD:foo.dll', '-DELAYLOAD:bar.dll'],
@@ -236,7 +220,7 @@ class TestEmitterBasic(unittest.TestCase):
         reader = self.reader('resources')
         objs = self.read_topsrcdir(reader)
 
-        expected_defines = reader.config.defines
+        expected_defines = dict(reader.config.defines)
         expected_defines.update({
             'FOO': True,
             'BAR': 'BAZ',
@@ -590,6 +574,12 @@ class TestEmitterBasic(unittest.TestCase):
             reader = self.reader('xpidl-module-no-sources')
             self.read_topsrcdir(reader)
 
+    def test_missing_local_includes(self):
+        """LOCAL_INCLUDES containing non-existent directories should be rejected."""
+        with self.assertRaisesRegexp(SandboxValidationError, 'Path specified in '
+            'LOCAL_INCLUDES does not exist'):
+            reader = self.reader('missing-local-includes')
+            self.read_topsrcdir(reader)
 
 if __name__ == '__main__':
     main()

@@ -20,6 +20,8 @@
 # include "jit/arm/CodeGenerator-arm.h"
 #elif defined(JS_CODEGEN_MIPS)
 # include "jit/mips/CodeGenerator-mips.h"
+#elif defined(JS_CODEGEN_NONE)
+# include "jit/none/CodeGenerator-none.h"
 #else
 #error "Unknown architecture!"
 #endif
@@ -53,7 +55,7 @@ class CodeGenerator : public CodeGeneratorSpecific
 
   public:
     bool generate();
-    bool generateAsmJS(Label *stackOverflowLabel);
+    bool generateAsmJS(AsmJSFunctionLabels *labels);
     bool link(JSContext *cx, types::CompilerConstraintList *constraints);
 
     bool visitLabel(LLabel *lir);
@@ -113,6 +115,7 @@ class CodeGenerator : public CodeGeneratorSpecific
     bool visitElements(LElements *lir);
     bool visitConvertElementsToDoubles(LConvertElementsToDoubles *lir);
     bool visitMaybeToDoubleElement(LMaybeToDoubleElement *lir);
+    bool visitMaybeCopyElementsForWrite(LMaybeCopyElementsForWrite *lir);
     bool visitGuardObjectIdentity(LGuardObjectIdentity *guard);
     bool visitGuardShapePolymorphic(LGuardShapePolymorphic *lir);
     bool visitTypeBarrierV(LTypeBarrierV *lir);
@@ -142,6 +145,7 @@ class CodeGenerator : public CodeGeneratorSpecific
     bool visitNewArrayCallVM(LNewArray *lir);
     bool visitNewArray(LNewArray *lir);
     bool visitOutOfLineNewArray(OutOfLineNewArray *ool);
+    bool visitNewArrayCopyOnWrite(LNewArrayCopyOnWrite *lir);
     bool visitNewObjectVMCall(LNewObject *lir);
     bool visitNewObject(LNewObject *lir);
     bool visitOutOfLineNewObject(OutOfLineNewObject *ool);
@@ -249,6 +253,7 @@ class CodeGenerator : public CodeGeneratorSpecific
     bool visitArrayPushV(LArrayPushV *lir);
     bool visitArrayPushT(LArrayPushT *lir);
     bool visitArrayConcat(LArrayConcat *lir);
+    bool visitArrayJoin(LArrayJoin *lir);
     bool visitLoadTypedArrayElement(LLoadTypedArrayElement *lir);
     bool visitLoadTypedArrayElementHole(LLoadTypedArrayElementHole *lir);
     bool visitStoreTypedArrayElement(LStoreTypedArrayElement *lir);

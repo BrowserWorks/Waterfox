@@ -249,6 +249,15 @@ public class LayerRenderer implements Tabs.OnTabsChangedListener {
         GLES20.glUseProgram(0);
     }
 
+    void restoreState(boolean enableScissor, int scissorX, int scissorY, int scissorW, int scissorH) {
+        GLES20.glScissor(scissorX, scissorY, scissorW, scissorH);
+        if (enableScissor) {
+            GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
+        } else {
+            GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
+        }
+    }
+
     public int getMaxTextureSize() {
         return mMaxTextureSize;
     }
@@ -543,45 +552,6 @@ public class LayerRenderer implements Tabs.OnTabsChangedListener {
             }
         }
 
-        /** Retrieves the bounds for the layer, rounded in such a way that it
-         * can be used as a mask for something that will render underneath it.
-         * This will round the bounds inwards, but stretch the mask towards any
-         * near page edge, where near is considered to be 'within 2 pixels'.
-         * Returns null if the given layer is null.
-         */
-        private Rect getMaskForLayer(Layer layer) {
-            if (layer == null) {
-                return null;
-            }
-
-            RectF bounds = RectUtils.contract(layer.getBounds(mPageContext), 1.0f, 1.0f);
-            Rect mask = RectUtils.roundIn(bounds);
-
-            // If the mask is within two pixels of any page edge, stretch it over
-            // that edge. This is to avoid drawing thin slivers when masking
-            // layers.
-            if (mask.top <= 2) {
-                mask.top = -1;
-            }
-            if (mask.left <= 2) {
-                mask.left = -1;
-            }
-
-            // Because we're drawing relative to the page-rect, we only need to
-            // take into account its width and height (and not its origin)
-            int pageRight = mPageRect.width();
-            int pageBottom = mPageRect.height();
-
-            if (mask.right >= pageRight - 2) {
-                mask.right = pageRight + 1;
-            }
-            if (mask.bottom >= pageBottom - 2) {
-                mask.bottom = pageBottom + 1;
-            }
-
-            return mask;
-        }
-
         private void clear(int color) {
             GLES20.glClearColor(((color >> 16) & 0xFF) / 255.0f,
                                 ((color >> 8) & 0xFF) / 255.0f,
@@ -597,7 +567,7 @@ public class LayerRenderer implements Tabs.OnTabsChangedListener {
         @JNITarget
         public void drawBackground() {
             // Any GL state which is changed here must be restored in
-            // CompositorOGL::RestoreState
+            // restoreState(...)
 
             GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
 
@@ -613,20 +583,10 @@ public class LayerRenderer implements Tabs.OnTabsChangedListener {
             GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
         }
 
-        // Draws the layer the client added to us.
-        void drawRootLayer() {
-            Layer rootLayer = mView.getLayerClient().getRoot();
-            if (rootLayer == null) {
-                return;
-            }
-
-            rootLayer.draw(mPageContext);
-        }
-
         @JNITarget
         public void drawForeground() {
             // Any GL state which is changed here must be restored in
-            // CompositorOGL::RestoreState
+            // restoreState(...)
 
             /* Draw any extra layers that were added (likely plugins) */
             if (mExtraLayers.size() > 0) {

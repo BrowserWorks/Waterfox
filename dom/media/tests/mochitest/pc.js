@@ -225,6 +225,20 @@ CommandChain.prototype = {
   },
 
   /**
+   * Replaces a single command.
+   *
+   * @param {string} id
+   *        Identifier of the command to be replaced
+   * @param {Array[]} commands
+   *        List of commands
+   * @returns {object[]} Removed commands
+   */
+  replace : function (id, commands) {
+    this.insertBefore(id, commands);
+    return this.remove(id);
+  },
+
+  /**
    * Replaces all commands after the specified one.
    *
    * @param {string} id
@@ -547,6 +561,8 @@ function PeerConnectionTest(options) {
   else
     this.pcRemote = null;
 
+  this.steeplechase = this.pcLocal === null || this.pcRemote === null;
+
   // Create command chain instance and assign default commands
   this.chain = new CommandChain(this, options.commands);
   if (!options.is_local) {
@@ -672,7 +688,11 @@ PeerConnectionTest.prototype.setStepTimeout = function(ms) {
  */
 PeerConnectionTest.prototype.createAnswer =
 function PCT_createAnswer(peer, onSuccess) {
+  var self = this;
+
   peer.createAnswer(function (answer) {
+    // make a copy so this does not get updated with ICE candidates
+    self.originalAnswer = new mozRTCSessionDescription(JSON.parse(JSON.stringify(answer)));
     onSuccess(answer);
   });
 };
@@ -688,7 +708,11 @@ function PCT_createAnswer(peer, onSuccess) {
  */
 PeerConnectionTest.prototype.createOffer =
 function PCT_createOffer(peer, onSuccess) {
+  var self = this;
+
   peer.createOffer(function (offer) {
+    // make a copy so this does not get updated with ICE candidates
+    self.originalOffer = new mozRTCSessionDescription(JSON.parse(JSON.stringify(offer)));
     onSuccess(offer);
   });
 };
@@ -827,6 +851,136 @@ PeerConnectionTest.prototype.teardown = function PCT_teardown() {
       finish();
   });
 };
+
+/**
+ * Routes ice candidates from one PCW to the other PCW
+ */
+PeerConnectionTest.prototype.iceCandidateHandler = function
+PCT_iceCandidateHandler(caller, candidate) {
+  var self = this;
+
+  info("Received: " + JSON.stringify(candidate) + " from " + caller);
+
+  var target = null;
+  if (caller.contains("pcLocal")) {
+    if (self.pcRemote) {
+      target = self.pcRemote;
+    }
+  } else if (caller.contains("pcRemote")) {
+    if (self.pcLocal) {
+      target = self.pcLocal;
+    }
+  } else {
+    ok(false, "received event from unknown caller: " + caller);
+    return;
+  }
+
+  if (target) {
+    target.storeOrAddIceCandidate(candidate);
+  } else {
+    info("sending ice candidate to signaling server");
+    send_message({"type": "ice_candidate", "ice_candidate": candidate});
+  }
+};
+
+/**
+ * Installs a polling function for the socket.io client to read
+ * all messages from the chat room into a message queue.
+ */
+PeerConnectionTest.prototype.setupSignalingClient = function
+PCT_setupSignalingClient() {
+  var self = this;
+
+  self.signalingMessageQueue = [];
+  self.signalingCallbacks = {};
+  self.signalingLoopRun = true;
+
+  function queueMessage(message) {
+    info("Received signaling message: " + JSON.stringify(message));
+    var fired = false;
+    Object.keys(self.signalingCallbacks).forEach(function(name) {
+      if (name === message.type) {
+        info("Invoking callback for message type: " + name);
+        self.signalingCallbacks[name](message);
+        fired = true;
+      }
+    });
+    if (!fired) {
+      self.signalingMessageQueue.push(message);
+      info("signalingMessageQueue.length: " + self.signalingMessageQueue.length);
+    }
+    if (self.signalingLoopRun) {
+      wait_for_message().then(queueMessage);
+    } else {
+      info("Exiting signaling message event loop");
+    }
+  }
+
+  wait_for_message().then(queueMessage);
+}
+
+/**
+ * Sets a flag to stop reading further messages from the chat room.
+ */
+PeerConnectionTest.prototype.signalingMessagesFinished = function
+PCT_signalingMessagesFinished() {
+  this.signalingLoopRun = false;
+}
+
+/**
+ * Callback to stop reading message from chat room once trickle ICE
+ * on the far end is over.
+ *
+ * @param {string} caller
+ *        The lable of the caller of the function
+ */
+PeerConnectionTest.prototype.signalEndOfTrickleIce = function
+PCT_signalEndOfTrickleIce(caller) {
+  if (this.steeplechase) {
+    send_message({"type": "end_of_trickle_ice"});
+  }
+};
+
+/**
+ * Register a callback function to deliver messages from the chat room
+ * directly instead of storing them in the message queue.
+ *
+ * @param {string} messageType
+ *        For which message types should the callback get invoked.
+ *
+ * @param {function} onMessage
+ *        The function which gets invoked if a message of the messageType
+ *        has been received from the chat room.
+ */
+PeerConnectionTest.prototype.registerSignalingCallback = function
+PCT_registerSignalingCallback(messageType, onMessage) {
+  this.signalingCallbacks[messageType] = onMessage;
+}
+
+/**
+ * Searches the message queue for the first message of a given type
+ * and invokes the given callback function, or registers the callback
+ * function for future messages if the queue contains no such message.
+ *
+ * @param {string} messageType
+ *        The type of message to search and register for.
+ *
+ * @param {function} onMessage
+ *        The callback function which gets invoked with the messages
+ *        of the given mesage type.
+ */
+PeerConnectionTest.prototype.getSignalingMessage = function
+PCT_getSignalingMessage(messageType, onMessage) {
+  for(var i=0; i < this.signalingMessageQueue.length; i++) {
+    if (messageType === this.signalingMessageQueue[i].type) {
+      //FIXME
+      info("invoking callback on message " + i + " from message queue, for message type:" + messageType);
+      onMessage(this.signalingMessageQueue.splice(i, 1)[0]);
+      return;
+    }
+  }
+  this.registerSignalingCallback(messageType, onMessage);
+}
 
 /**
  * This class handles tests for data channels.
@@ -1103,6 +1257,12 @@ DataChannelTest.prototype = Object.create(PeerConnectionTest.prototype, {
     }
   },
 
+  createOffer : {
+    value : function DCT_createOffer(peer, onSuccess) {
+      PeerConnectionTest.prototype.createOffer.call(this, peer, onSuccess);
+    }
+  },
+
   setLocalDescription : {
     /**
      * Sets the local description for the specified peer connection instance
@@ -1372,6 +1532,11 @@ function PeerConnectionWrapper(label, configuration, h264) {
   this.onAddStreamFired = false;
   this.addStreamCallbacks = {};
 
+  this.remoteDescriptionSet = false;
+  this.endOfTrickleIce = false;
+  this.localRequiresTrickleIce = false;
+  this.remoteRequiresTrickleIce  = false;
+
   this.h264 = typeof h264 !== "undefined" ? true : false;
 
   info("Creating " + this);
@@ -1539,11 +1704,27 @@ PeerConnectionWrapper.prototype = {
    *        The location the stream is coming from ('local' or 'remote')
    */
   attachMedia : function PCW_attachMedia(stream, type, side) {
+    function isSenderOfTrack(sender) {
+      return sender.track == this;
+    }
+
     info("Got media stream: " + type + " (" + side + ")");
     this.streams.push(stream);
 
     if (side === 'local') {
-      this._pc.addStream(stream);
+      // In order to test both the addStream and addTrack APIs, we do video one
+      // way and audio + audiovideo the other.
+      if (type == "video") {
+        this._pc.addStream(stream);
+        ok(this._pc.getSenders().find(isSenderOfTrack,
+                                      stream.getVideoTracks()[0]),
+           "addStream adds sender");
+      } else {
+        stream.getTracks().forEach(function(track) {
+          var sender = this._pc.addTrack(track, stream);
+          is(sender.track, track, "addTrack returns sender");
+        }.bind(this));
+      }
     }
 
     var element = createMediaElement(type, this.label + '_' + side);
@@ -1632,7 +1813,8 @@ PeerConnectionWrapper.prototype = {
 
     this._pc.createOffer(function (offer) {
       info("Got offer: " + JSON.stringify(offer));
-      self._last_offer = offer;
+      // note: this might get updated through ICE gathering
+      self._latest_offer = offer;
       if (self.h264) {
         isnot(offer.sdp.search("H264/90000"), -1, "H.264 should be present in the SDP offer");
         offer.sdp = removeVP8(offer.sdp);
@@ -1704,6 +1886,15 @@ PeerConnectionWrapper.prototype = {
     var self = this;
     this._pc.setRemoteDescription(desc, function () {
       info(self + ": Successfully set remote description");
+      self.remoteDescriptionSet = true;
+      if ((self._ice_candidates_to_add) &&
+          (self._ice_candidates_to_add.length > 0)) {
+        info("adding stored ice candidates");
+        for (var i = 0; i < self._ice_candidates_to_add.length; i++) {
+          self.addIceCandidate(self._ice_candidates_to_add[i]);
+        }
+        self._ice_candidates_to_add = [];
+      }
       onSuccess();
     }, generateErrorCallback());
   },
@@ -1750,6 +1941,24 @@ PeerConnectionWrapper.prototype = {
   },
 
   /**
+   * Either adds a given ICE candidate right away or stores it to be added
+   * later, depending on the state of the PeerConnection.
+   *
+   * @param {object} candidate
+   *        The mozRTCIceCandidate to be added or stored
+   */
+  storeOrAddIceCandidate : function PCW_storeOrAddIceCandidate(candidate) {
+    var self = this;
+
+    self._remote_ice_candidates.push(candidate);
+    if (self.remoteDescriptionSet) {
+      self.addIceCandidate(candidate);
+    } else {
+      self._ice_candidates_to_add.push(candidate);
+    }
+  },
+
+  /**
    * Adds an ICE candidate and automatically handles the failure case.
    *
    * @param {object} candidate
@@ -1760,9 +1969,12 @@ PeerConnectionWrapper.prototype = {
   addIceCandidate : function PCW_addIceCandidate(candidate, onSuccess) {
     var self = this;
 
+    info(self + ": adding ICE candidate " + JSON.stringify(candidate));
     this._pc.addIceCandidate(candidate, function () {
       info(self + ": Successfully added an ICE candidate");
-      onSuccess();
+      if (onSuccess) {
+        onSuccess();
+      }
     }, generateErrorCallback());
   },
 
@@ -1792,7 +2004,7 @@ PeerConnectionWrapper.prototype = {
    * @returns {boolean} True if the connection state is "connected", otherwise false.
    */
   isIceConnected : function PCW_isIceConnected() {
-    info("iceConnectionState: " + this.iceConnectionState);
+    info(this + ": iceConnectionState = " + this.iceConnectionState);
     return this.iceConnectionState === "connected";
   },
 
@@ -1874,6 +2086,46 @@ PeerConnectionWrapper.prototype = {
     }
 
     self.ice_connection_callbacks.waitForIceConnected = iceConnectedChanged;
+  },
+
+  /**
+   * Setup a onicecandidate handler
+   *
+   * @param {object} test
+   *        A PeerConnectionTest object to which the ice candidates gets
+   *        forwarded.
+   */
+  setupIceCandidateHandler : function
+    PCW_setupIceCandidateHandler(test, candidateHandler, endHandler) {
+    var self = this;
+    self._local_ice_candidates = [];
+    self._remote_ice_candidates = [];
+    self._ice_candidates_to_add = [];
+
+    candidateHandler = candidateHandler || test.iceCandidateHandler.bind(test);
+    endHandler = endHandler || test.signalEndOfTrickleIce.bind(test);
+
+    function iceCandidateCallback (anEvent) {
+      info(self.label + ": received iceCandidateEvent");
+      if (!anEvent.candidate) {
+        info(self.label + ": received end of trickle ICE event");
+        self.endOfTrickleIce = true;
+        endHandler(self.label);
+      } else {
+        if (self.endOfTrickleIce) {
+          ok(false, "received ICE candidate after end of trickle");
+        }
+        info(self.label + ": iceCandidate = " + JSON.stringify(anEvent.candidate));
+        ok(anEvent.candidate.candidate.length > 0, "ICE candidate contains candidate");
+        // we don't support SDP MID's yet
+        ok(anEvent.candidate.sdpMid.length === 0, "SDP MID has length zero");
+        ok(typeof anEvent.candidate.sdpMLineIndex === 'number', "SDP MLine Index needs to exist");
+        self._local_ice_candidates.push(anEvent.candidate);
+        candidateHandler(self.label, anEvent.candidate);
+      }
+    }
+
+    self._pc.onicecandidate = iceCandidateCallback;
   },
 
   /**
@@ -2079,7 +2331,8 @@ PeerConnectionWrapper.prototype = {
     }
   },
 
-  verifySdp : function PCW_verifySdp(desc, expectedType, constraints, offerOptions) {
+  verifySdp : function PCW_verifySdp(desc, expectedType, constraints,
+      offerOptions, trickleIceCallback) {
     info("Examining this SessionDescription: " + JSON.stringify(desc));
     info("constraints: " + JSON.stringify(constraints));
     info("offerOptions: " + JSON.stringify(offerOptions));
@@ -2091,8 +2344,13 @@ PeerConnectionWrapper.prototype = {
     ok(desc.sdp.contains("a=fingerprint"), "ICE fingerprint is present in SDP");
     //TODO: update this for loopback support bug 1027350
     ok(!desc.sdp.contains(LOOPBACK_ADDR), "loopback interface is absent from SDP");
-    //TODO: update this for trickle ICE bug 1041832
-    ok(desc.sdp.contains("a=candidate"), "at least one ICE candidate is present in SDP");
+    if (desc.sdp.contains("a=candidate")) {
+      ok(true, "at least one ICE candidate is present in SDP");
+      trickleIceCallback(false);
+    } else {
+      info("No ICE candidate in SDP -> requiring trickle ICE");
+      trickleIceCallback(true);
+    }
     //TODO: how can we check for absence/presence of m=application?
 
     //TODO: how to handle media contraints + offer options
@@ -2292,6 +2550,34 @@ PeerConnectionWrapper.prototype = {
       is(numLocalCandidates, 0, "Have no localcandidate stats");
       is(numRemoteCandidates, 0, "Have no remotecandidate stats");
     }
+  },
+
+  /**
+   * Property-matching function for finding a certain stat in passed-in stats
+   *
+   * @param {object} stats
+   *        The stats to check from this PeerConnectionWrapper
+   * @param {object} props
+   *        The properties to look for
+   * @returns {boolean} Whether an entry containing all match-props was found.
+   */
+  hasStat : function PCW_hasStat(stats, props) {
+    for (var key in stats) {
+      if (stats.hasOwnProperty(key)) {
+        var res = stats[key];
+        var match = true;
+        for (var prop in props) {
+          if (res[prop] !== props[prop]) {
+            match = false;
+            break;
+          }
+        }
+        if (match) {
+          return true;
+        }
+      }
+    }
+    return false;
   },
 
   /**

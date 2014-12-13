@@ -16,7 +16,7 @@ namespace mozilla {
 
 // Like nsXREAppData, but releases all strong refs/allocated memory
 // in the destructor.
-class NS_COM_GLUE ScopedAppData : public nsXREAppData
+class ScopedAppData : public nsXREAppData
 {
 public:
   ScopedAppData()
@@ -25,7 +25,7 @@ public:
     this->size = sizeof(*this);
   }
 
-  ScopedAppData(const nsXREAppData* aAppData);
+  explicit ScopedAppData(const nsXREAppData* aAppData);
 
   void Zero() { memset(this, 0, sizeof(*this)); }
 

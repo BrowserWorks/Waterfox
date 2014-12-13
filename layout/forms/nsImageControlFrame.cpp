@@ -2,6 +2,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 #include "nsImageFrame.h"
 #include "nsIFormControlFrame.h"
 #include "nsPresContext.h"
@@ -10,6 +11,7 @@
 #include "nsFormControlFrame.h"
 #include "nsLayoutUtils.h"
 #include "mozilla/MouseEvents.h"
+#include "nsIContent.h"
 
 using namespace mozilla;
 
@@ -18,7 +20,7 @@ class nsImageControlFrame : public nsImageControlFrameSuper,
                             public nsIFormControlFrame
 {
 public:
-  nsImageControlFrame(nsStyleContext* aContext);
+  explicit nsImageControlFrame(nsStyleContext* aContext);
   ~nsImageControlFrame();
 
   virtual void DestroyFrom(nsIFrame* aDestructRoot) MOZ_OVERRIDE;

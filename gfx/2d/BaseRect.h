@@ -79,13 +79,17 @@ struct BaseRect {
            (x <= aRect.x && aRect.XMost() <= XMost() &&
             y <= aRect.y && aRect.YMost() <= YMost());
   }
-  // Returns true if this rectangle contains the rectangle (aX,aY,1,1).
+  // Returns true if this rectangle contains the point. Points are considered
+  // in the rectangle if they are on the left or top edge, but outside if they
+  // are on the right or bottom edge.
   bool Contains(T aX, T aY) const
   {
-    return x <= aX && aX + 1 <= XMost() &&
-           y <= aY && aY + 1 <= YMost();
+    return x <= aX && aX < XMost() &&
+           y <= aY && aY < YMost();
   }
-  // Returns true if this rectangle contains the rectangle (aPoint.x,aPoint.y,1,1).
+  // Returns true if this rectangle contains the point. Points are considered
+  // in the rectangle if they are on the left or top edge, but outside if they
+  // are on the right or bottom edge.
   bool Contains(const Point& aPoint) const { return Contains(aPoint.x, aPoint.y); }
 
   // Intersection. Returns TRUE if the receiver's area has non-empty
@@ -203,6 +207,20 @@ struct BaseRect {
     height += aMargin.TopBottom();
   }
   void Inflate(const SizeT& aSize) { Inflate(aSize.width, aSize.height); }
+
+  void InflateToMultiple(const SizeT& aMultiple)
+  {
+    T xMost = XMost();
+    T yMost = YMost();
+
+    x = static_cast<T>(floor(x / aMultiple.width)) * aMultiple.width;
+    y = static_cast<T>(floor(y / aMultiple.height)) * aMultiple.height;
+    xMost = static_cast<T>(ceil(x / aMultiple.width)) * aMultiple.width;
+    yMost = static_cast<T>(ceil(y / aMultiple.height)) * aMultiple.height;
+
+    width = xMost - x;
+    height = yMost - y;
+  }
 
   void Deflate(T aD) { Deflate(aD, aD); }
   void Deflate(T aDx, T aDy)
@@ -484,7 +502,8 @@ struct BaseRect {
     return rect;
   }
 
-  friend std::ostream& operator<<(std::ostream& stream, const Sub& aRect) {
+  friend std::ostream& operator<<(std::ostream& stream,
+      const BaseRect<T, Sub, Point, SizeT, MarginT>& aRect) {
     return stream << '(' << aRect.x << ',' << aRect.y << ','
                   << aRect.width << ',' << aRect.height << ')';
   }

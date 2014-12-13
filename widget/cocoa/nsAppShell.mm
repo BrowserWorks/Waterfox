@@ -34,7 +34,60 @@
 #include "GeckoProfiler.h"
 #include "pratom.h"
 
+#include <IOKit/pwr_mgt/IOPMLib.h>
+#include "nsIDOMWakeLockListener.h"
+#include "nsIPowerManagerService.h"
+
 using namespace mozilla::widget;
+
+// A wake lock listener that disables screen saver when requested by
+// Gecko. For example when we're playing video in a foreground tab we
+// don't want the screen saver to turn on.
+
+class MacWakeLockListener MOZ_FINAL : public nsIDOMMozWakeLockListener {
+public:
+  NS_DECL_ISUPPORTS;
+
+private:
+  ~MacWakeLockListener() {}
+
+  IOPMAssertionID mAssertionID = kIOPMNullAssertionID;
+
+  NS_IMETHOD Callback(const nsAString& aTopic, const nsAString& aState) {
+    if (!aTopic.EqualsASCII("screen")) {
+      return NS_OK;
+    }
+    // Note the wake lock code ensures that we're not sent duplicate
+    // "locked-foreground" notifications when multiple wake locks are held.
+    if (aState.EqualsASCII("locked-foreground")) {
+      // Prevent screen saver.
+      CFStringRef cf_topic =
+        ::CFStringCreateWithCharacters(kCFAllocatorDefault,
+                                       reinterpret_cast<const UniChar*>
+                                         (aTopic.Data()),
+                                       aTopic.Length());
+      IOReturn success =
+        ::IOPMAssertionCreateWithName(kIOPMAssertionTypeNoDisplaySleep,
+                                      kIOPMAssertionLevelOn,
+                                      cf_topic,
+                                      &mAssertionID);
+      CFRelease(cf_topic);
+      if (success != kIOReturnSuccess) {
+        NS_WARNING("failed to disable screensaver");
+      }
+    } else {
+      // Re-enable screen saver.
+      NS_WARNING("Releasing screensaver");
+      if (mAssertionID != kIOPMNullAssertionID) {
+        IOReturn result = ::IOPMAssertionRelease(mAssertionID);
+        if (result != kIOReturnSuccess) {
+          NS_WARNING("failed to release screensaver");
+        }
+      }
+    }
+    return NS_OK;
+  }
+};
 
 // defined in nsCocoaWindow.mm
 extern int32_t             gXULModalLevel;
@@ -141,6 +194,38 @@ nsAppShell::~nsAppShell()
   NS_OBJC_END_TRY_ABORT_BLOCK
 }
 
+NS_IMPL_ISUPPORTS(MacWakeLockListener, nsIDOMMozWakeLockListener)
+mozilla::StaticRefPtr<MacWakeLockListener> sWakeLockListener;
+
+static void
+AddScreenWakeLockListener()
+{
+  nsCOMPtr<nsIPowerManagerService> sPowerManagerService = do_GetService(
+                                                          POWERMANAGERSERVICE_CONTRACTID);
+  if (sPowerManagerService) {
+    sWakeLockListener = new MacWakeLockListener();
+    sPowerManagerService->AddWakeLockListener(sWakeLockListener);
+  } else {
+    NS_WARNING("Failed to retrieve PowerManagerService, wakelocks will be broken!");
+  }
+}
+
+static void
+RemoveScreenWakeLockListener()
+{
+  nsCOMPtr<nsIPowerManagerService> sPowerManagerService = do_GetService(
+                                                          POWERMANAGERSERVICE_CONTRACTID);
+  if (sPowerManagerService) {
+    sPowerManagerService->RemoveWakeLockListener(sWakeLockListener);
+    sPowerManagerService = nullptr;
+    sWakeLockListener = nullptr;
+  }
+}
+
+// An undocumented CoreGraphics framework method, present in the same form
+// since at least OS X 10.5.
+extern "C" CGError CGSSetDebugOptions(int options);
+
 // Init
 //
 // Loads the nib (see bug 316076c21) and sets up the CFRunLoopSource used to
@@ -223,6 +308,16 @@ nsAppShell::Init()
                                 @selector(nsAppShell_NSApplication_terminate:));
     }
     gAppShellMethodsSwizzled = true;
+  }
+
+  if (nsCocoaFeatures::OnYosemiteOrLater()) {
+    // Explicitly turn off CGEvent logging.  This works around bug 1092855.
+    // If there are already CGEvents in the log, turning off logging also
+    // causes those events to be written to disk.  But at this point no
+    // CGEvents have yet been processed.  CGEvents are events (usually
+    // input events) pulled from the WindowServer.  An option of 0x80000008
+    // turns on CGEvent logging.
+    CGSSetDebugOptions(0x80000007);
   }
 
   [localPool release];
@@ -484,14 +579,15 @@ nsAppShell::ProcessNextNativeEvent(bool aMayWait)
       UInt32 eventKind = GetEventKind(currentEvent);
       UInt32 eventClass = GetEventClass(currentEvent);
       bool osCocoaEvent =
-        ((eventClass == 'appl') ||
+        ((eventClass == 'appl') || (eventClass == kEventClassAppleEvent) ||
          ((eventClass == 'cgs ') && (eventKind != NSApplicationDefined)));
       // If attrs is kEventAttributeUserEvent or kEventAttributeMonitored
       // (i.e. a user input event), we shouldn't process it here while
       // aMayWait is false.  Likewise if currentEvent will eventually be
-      // turned into an OS-defined Cocoa event.  Doing otherwise risks
-      // doing too much work here, and preventing the event from being
-      // properly processed as a Cocoa event.
+      // turned into an OS-defined Cocoa event, or otherwise needs AppKit
+      // processing.  Doing otherwise risks doing too much work here, and
+      // preventing the event from being properly processed by the AppKit
+      // framework.
       if ((attrs != kEventAttributeNone) || osCocoaEvent) {
         // Since we can't process the next event here (while aMayWait is false),
         // we want moreEvents to be false on return.
@@ -550,7 +646,12 @@ nsAppShell::Run(void)
     return NS_OK;
 
   mStarted = true;
+
+  AddScreenWakeLockListener();
+
   NS_OBJC_TRY_ABORT([NSApp run]);
+
+  RemoveScreenWakeLockListener();
 
   return NS_OK;
 }

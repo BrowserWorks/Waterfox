@@ -186,35 +186,48 @@ RangesContainLatin1Equivalents(const CharacterRangeVector &ranges)
 static const size_t kEcma262UnCanonicalizeMaxWidth = 4;
 
 // Returns the number of characters in the equivalence class, omitting those
-// that cannot occur in the source string because it is ASCII.
+// that cannot occur in the source string if it is a one byte string.
 static int
 GetCaseIndependentLetters(jschar character,
                           bool ascii_subject,
                           jschar *letters)
 {
-    jschar lower = unicode::ToLowerCase(character);
-    jschar upper = unicode::ToUpperCase(character);
+    jschar choices[] = {
+        character,
+        unicode::ToLowerCase(character),
+        unicode::ToUpperCase(character)
+    };
 
-    // The standard requires that non-ASCII characters cannot have ASCII
-    // character codes in their equivalence class.
-    if (ascii_subject && character > kMaxOneByteCharCode)
-        return 0;
+    size_t count = 0;
+    for (size_t i = 0; i < ArrayLength(choices); i++) {
+        jschar c = choices[i];
 
-    letters[0] = character;
+        // The standard requires that non-ASCII characters cannot have ASCII
+        // character codes in their equivalence class, even though this
+        // situation occurs multiple times in the unicode tables.
+        static const unsigned kMaxAsciiCharCode = 127;
+        if (character > kMaxAsciiCharCode && c <= kMaxAsciiCharCode)
+            continue;
 
-    if (lower != character) {
-        letters[1] = lower;
-        if (upper != character && upper != lower) {
-            letters[2] = upper;
-            return 3;
+        // Skip characters that can't appear in one byte strings.
+        if (ascii_subject && c > kMaxOneByteCharCode)
+            continue;
+
+        // Watch for duplicates.
+        bool found = false;
+        for (size_t j = 0; j < count; j++) {
+            if (letters[j] == c) {
+                found = true;
+                break;
+            }
         }
-        return 2;
+        if (found)
+            continue;
+
+        letters[count++] = c;
     }
-    if (upper != character) {
-        letters[1] = upper;
-        return 2;
-    }
-    return 1;
+
+    return count;
 }
 
 static jschar
@@ -988,7 +1001,7 @@ ChoiceNode::FilterASCII(int depth, bool ignore_case)
         }
     }
 
-    alternatives_.appendAll(new_alternatives);
+    alternatives_ = Move(new_alternatives);
     return this;
 }
 
@@ -1620,10 +1633,20 @@ SampleChars(FrequencyCollator *collator, const CharT *chars, size_t length)
     }
 }
 
+static bool
+IsNativeRegExpEnabled(JSContext *cx)
+{
+#ifdef JS_CODEGEN_NONE
+    return false;
+#else
+    return cx->runtime()->options().nativeRegExp();
+#endif
+}
+
 RegExpCode
 irregexp::CompilePattern(JSContext *cx, RegExpShared *shared, RegExpCompileData *data,
                          HandleLinearString sample, bool is_global, bool ignore_case,
-                         bool is_ascii)
+                         bool is_ascii, bool force_bytecode)
 {
     if ((data->capture_count + 1) * 2 - 1 > RegExpMacroAssembler::kMaxRegister) {
         JS_ReportError(cx, "regexp too big");
@@ -1695,28 +1718,23 @@ irregexp::CompilePattern(JSContext *cx, RegExpShared *shared, RegExpCompileData 
         return RegExpCode();
     }
 
-#ifdef JS_ION
     Maybe<jit::IonContext> ctx;
     Maybe<NativeRegExpMacroAssembler> native_assembler;
     Maybe<InterpretedRegExpMacroAssembler> interpreted_assembler;
 
     RegExpMacroAssembler *assembler;
-    if (cx->runtime()->options().nativeRegExp()) {
+    if (IsNativeRegExpEnabled(cx) && !force_bytecode) {
         NativeRegExpMacroAssembler::Mode mode =
             is_ascii ? NativeRegExpMacroAssembler::ASCII
                      : NativeRegExpMacroAssembler::JSCHAR;
 
-        ctx.construct(cx, (jit::TempAllocator *) nullptr);
-        native_assembler.construct(&alloc, shared, cx->runtime(), mode, (data->capture_count + 1) * 2);
-        assembler = native_assembler.addr();
+        ctx.emplace(cx, (jit::TempAllocator *) nullptr);
+        native_assembler.emplace(&alloc, shared, cx->runtime(), mode, (data->capture_count + 1) * 2);
+        assembler = native_assembler.ptr();
     } else {
-        interpreted_assembler.construct(&alloc, shared, (data->capture_count + 1) * 2);
-        assembler = interpreted_assembler.addr();
+        interpreted_assembler.emplace(&alloc, shared, (data->capture_count + 1) * 2);
+        assembler = interpreted_assembler.ptr();
     }
-#else // JS_ION
-    InterpretedRegExpMacroAssembler macro_assembler(&alloc, shared, (data->capture_count + 1) * 2);
-    RegExpMacroAssembler *assembler = &macro_assembler;
-#endif // JS_ION
 
     // Inserted here, instead of in Assembler, because it depends on information
     // in the AST that isn't replicated in the Node structure.
@@ -1741,7 +1759,6 @@ RegExpRunStatus
 irregexp::ExecuteCode(JSContext *cx, jit::JitCode *codeBlock, const CharT *chars, size_t start,
                       size_t length, MatchPairs *matches)
 {
-#ifdef JS_ION
     typedef void (*RegExpCodeSignature)(InputOutputData *);
 
     InputOutputData data(chars, chars + length, start, matches);
@@ -1754,9 +1771,6 @@ irregexp::ExecuteCode(JSContext *cx, jit::JitCode *codeBlock, const CharT *chars
     }
 
     return (RegExpRunStatus) data.result;
-#else
-    MOZ_CRASH();
-#endif
 }
 
 template RegExpRunStatus

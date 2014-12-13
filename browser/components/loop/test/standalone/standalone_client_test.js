@@ -15,15 +15,6 @@ describe("loop.StandaloneClient", function() {
       callback,
       fakeToken;
 
-  var fakeErrorRes = JSON.stringify({
-      status: "errors",
-      errors: [{
-        location: "url",
-        name: "token",
-        description: "invalid token"
-      }]
-    });
-
   beforeEach(function() {
     sandbox = sinon.sandbox.create();
     fakeXHR = sandbox.useFakeXMLHttpRequest();
@@ -49,13 +40,79 @@ describe("loop.StandaloneClient", function() {
       });
     });
 
-    describe("requestCallInfo", function() {
-      var client;
+    describe("#requestCallUrlInfo", function() {
+      var client, fakeServerErrorDescription;
 
       beforeEach(function() {
         client = new loop.StandaloneClient(
           {baseServerUrl: "http://fake.api"}
         );
+      });
+
+      describe("should make the requests to the server", function() {
+
+        it("should throw if loopToken is missing", function() {
+          expect(client.requestCallUrlInfo).to
+                                .throw(/Missing required parameter loopToken/);
+        });
+
+        it("should make a GET request for the call url creation date", function() {
+          client.requestCallUrlInfo("fakeCallUrlToken", function() {});
+
+          expect(requests).to.have.length.of(1);
+          expect(requests[0].url)
+                            .to.eql("http://fake.api/calls/fakeCallUrlToken");
+          expect(requests[0].method).to.eql("GET");
+        });
+
+        it("should call the callback with (null, serverResponse)", function() {
+          var successCallback = sandbox.spy(function() {});
+          var serverResponse = {
+            calleeFriendlyName: "Andrei",
+            urlCreationDate: 0
+          };
+
+          client.requestCallUrlInfo("fakeCallUrlToken", successCallback);
+          requests[0].respond(200, {"Content-Type": "application/json"},
+                              JSON.stringify(serverResponse));
+
+          sinon.assert.calledWithExactly(successCallback,
+                                         null,
+                                         serverResponse);
+        });
+
+        it("should log the error if the requests fails", function() {
+          sinon.stub(console, "error");
+          var serverResponse = {error: true};
+          var error = JSON.stringify(serverResponse);
+
+          client.requestCallUrlInfo("fakeCallUrlToken", sandbox.stub());
+          requests[0].respond(404, {"Content-Type": "application/json"},
+                              error);
+
+          sinon.assert.calledOnce(console.error);
+          sinon.assert.calledWithExactly(console.error, "Server error",
+                                        "HTTP 404 Not Found", serverResponse);
+        });
+      })
+    });
+
+
+
+    describe("requestCallInfo", function() {
+      var client, fakeServerErrorDescription;
+
+      beforeEach(function() {
+        client = new loop.StandaloneClient(
+          {baseServerUrl: "http://fake.api"}
+        );
+        fakeServerErrorDescription = {
+          code: 401,
+          errno: 101,
+          error: "error",
+          message: "invalid token",
+          info: "error info"
+        };
       });
 
       it("should prevent launching a conversation when token is missing",
@@ -71,7 +128,7 @@ describe("loop.StandaloneClient", function() {
         expect(requests).to.have.length.of(1);
         expect(requests[0].url).to.be.equal("http://fake.api/calls/fake");
         expect(requests[0].method).to.be.equal("POST");
-        expect(requests[0].requestBody).to.be.equal('{"callType":"audio"}');
+        expect(requests[0].requestBody).to.be.equal('{"callType":"audio","channel":"standalone"}');
       });
 
       it("should receive call data for the given call", function() {
@@ -91,12 +148,25 @@ describe("loop.StandaloneClient", function() {
       it("should send an error when the request fails", function() {
         client.requestCallInfo("fake", "audio", callback);
 
-        requests[0].respond(400, {"Content-Type": "application/json"},
-                            fakeErrorRes);
+        requests[0].respond(401, {"Content-Type": "application/json"},
+                            JSON.stringify(fakeServerErrorDescription));
         sinon.assert.calledWithMatch(callback, sinon.match(function(err) {
-          return /400.*invalid token/.test(err.message);
+          return /HTTP 401 Unauthorized/.test(err.message);
         }));
       });
+
+      it("should attach the server error description object to the error " +
+         "passed to the callback",
+        function() {
+          client.requestCallInfo("fake", "audio", callback);
+
+          requests[0].respond(401, {"Content-Type": "application/json"},
+                              JSON.stringify(fakeServerErrorDescription));
+
+          sinon.assert.calledWithMatch(callback, sinon.match(function(err) {
+            return err.errno === fakeServerErrorDescription.errno;
+          }));
+        });
 
       it("should send an error if the data is not valid", function() {
         client.requestCallInfo("fake", "audio", callback);

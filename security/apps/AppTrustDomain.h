@@ -25,24 +25,26 @@ public:
 
   virtual Result GetCertTrust(mozilla::pkix::EndEntityOrCA endEntityOrCA,
                               const mozilla::pkix::CertPolicyId& policy,
-                              const SECItem& candidateCertDER,
-                              /*out*/ mozilla::pkix::TrustLevel* trustLevel)
+                              mozilla::pkix::Input candidateCertDER,
+                              /*out*/ mozilla::pkix::TrustLevel& trustLevel)
                               MOZ_OVERRIDE;
-  virtual Result FindIssuer(const SECItem& encodedIssuerName,
+  virtual Result FindIssuer(mozilla::pkix::Input encodedIssuerName,
                             IssuerChecker& checker,
-                            PRTime time) MOZ_OVERRIDE;
+                            mozilla::pkix::Time time) MOZ_OVERRIDE;
   virtual Result CheckRevocation(mozilla::pkix::EndEntityOrCA endEntityOrCA,
-                                 const mozilla::pkix::CertID& certID, PRTime time,
-                                 /*optional*/ const SECItem* stapledOCSPresponse,
-                                 /*optional*/ const SECItem* aiaExtension);
+                                 const mozilla::pkix::CertID& certID,
+                                 mozilla::pkix::Time time,
+                    /*optional*/ const mozilla::pkix::Input* stapledOCSPresponse,
+                    /*optional*/ const mozilla::pkix::Input* aiaExtension);
   virtual Result IsChainValid(const mozilla::pkix::DERArray& certChain)
                               MOZ_OVERRIDE;
-  virtual Result CheckPublicKey(const SECItem& subjectPublicKeyInfo)
+  virtual Result CheckPublicKey(mozilla::pkix::Input subjectPublicKeyInfo)
                                 MOZ_OVERRIDE;
   virtual Result VerifySignedData(
            const mozilla::pkix::SignedDataWithSignature& signedData,
-           const SECItem& subjectPublicKeyInfo) MOZ_OVERRIDE;
-  virtual Result DigestBuf(const SECItem& item, /*out*/ uint8_t* digestBuf,
+           mozilla::pkix::Input subjectPublicKeyInfo) MOZ_OVERRIDE;
+  virtual Result DigestBuf(mozilla::pkix::Input item,
+                           /*out*/ uint8_t* digestBuf,
                            size_t digestBufLen) MOZ_OVERRIDE;
 
 private:

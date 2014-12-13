@@ -18,12 +18,11 @@ FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
-FINAL_LIBRARY = 'necko'
+FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [
     '../src',
     '/media/mtransport',
-    '/media/webrtc/trunk/third_party/libjingle/source',
 ]
 
 DEFINES['INET'] = 1

@@ -32,6 +32,7 @@ const PREF_BRANCH = "toolkit.telemetry.";
 const PREF_SERVER = PREF_BRANCH + "server";
 const PREF_ENABLED = PREF_BRANCH + "enabled";
 const PREF_PREVIOUS_BUILDID = PREF_BRANCH + "previousBuildID";
+const PREF_FHR_UPLOAD_ENABLED = "datareporting.healthreport.uploadEnabled";
 
 // Do not gather data more than once a minute
 const TELEMETRY_INTERVAL = 60000;
@@ -226,7 +227,16 @@ this.TelemetryPing = Object.freeze({
    */
   observe: function (aSubject, aTopic, aData) {
     return Impl.observe(aSubject, aTopic, aData);
-  }
+  },
+
+  /**
+   * The client id send with the telemetry ping.
+   *
+   * @return The client id as string, or null.
+   */
+   get clientID() {
+    return Impl.clientID;
+   },
 });
 
 let Impl = {
@@ -247,6 +257,7 @@ let Impl = {
   // The previous build ID, if this is the first run with a new build.
   // Undefined if this is not the first run, or the previous build ID is unknown.
   _previousBuildID: undefined,
+  _clientID: null,
 
   /**
    * Gets a series of simple measurements (counters). At the moment, this
@@ -424,6 +435,22 @@ let Impl = {
     return ret;
   },
 
+  getKeyedHistograms: function() {
+    let registered = Telemetry.registeredKeyedHistograms([]);
+    let ret = {};
+
+    for (let id of registered) {
+      ret[id] = {};
+      let keyed = Telemetry.getKeyedHistogramById(id);
+      let snapshot = keyed.snapshot();
+      for (let key of Object.keys(snapshot)) {
+        ret[id][key] = this.packHistogram(snapshot[key]);
+      }
+    }
+
+    return ret;
+  },
+
   getThreadHangStats: function getThreadHangStats(stats) {
     stats.forEach((thread) => {
       thread.activity = this.packHistogram(thread.activity);
@@ -495,9 +522,10 @@ let Impl = {
     // gfxInfo fields are not always available, get what we can.
     let gfxInfo = Cc["@mozilla.org/gfx/info;1"].getService(Ci.nsIGfxInfo);
     let gfxfields = ["adapterDescription", "adapterVendorID", "adapterDeviceID",
-                     "adapterRAM", "adapterDriver", "adapterDriverVersion",
-                     "adapterDriverDate", "adapterDescription2",
-                     "adapterVendorID2", "adapterDeviceID2", "adapterRAM2",
+                     "adapterSubsysID", "adapterRAM", "adapterDriver",
+                     "adapterDriverVersion", "adapterDriverDate",
+                     "adapterDescription2", "adapterVendorID2",
+                     "adapterDeviceID2", "adapterSubsysID2", "adapterRAM2",
                      "adapterDriver2", "adapterDriverVersion2",
                      "adapterDriverDate2", "isGPU2Active", "D2DEnabled",
                      "DWriteEnabled", "DWriteVersion"
@@ -691,6 +719,7 @@ let Impl = {
       ver: PAYLOAD_VERSION,
       simpleMeasurements: simpleMeasurements,
       histograms: this.getHistograms(Telemetry.histogramSnapshots),
+      keyedHistograms: this.getKeyedHistograms(),
       slowSQL: Telemetry.slowSQL,
       fileIOReports: Telemetry.fileIOReports,
       chromeHangs: Telemetry.chromeHangs,
@@ -700,13 +729,24 @@ let Impl = {
       addonDetails: AddonManagerPrivate.getTelemetryDetails(),
       UIMeasurements: UITelemetry.getUIMeasurements(),
       log: TelemetryLog.entries(),
-      info: info
+      info: info,
     };
 
     if (Object.keys(this._slowSQLStartup).length != 0 &&
         (Object.keys(this._slowSQLStartup.mainThread).length ||
          Object.keys(this._slowSQLStartup.otherThreads).length)) {
       payloadObj.slowSQLStartup = this._slowSQLStartup;
+    }
+
+    let fhrUploadEnabled = false;
+    try {
+      fhrUploadEnabled = Services.prefs.getBoolPref(PREF_FHR_UPLOAD_ENABLED);
+    } catch (e) {
+      // Pref not set.
+    }
+
+    if (this._clientID && fhrUploadEnabled) {
+      payloadObj.clientID = this._clientID;
     }
 
     return payloadObj;
@@ -893,7 +933,7 @@ let Impl = {
     }
 
 #ifdef MOZILLA_OFFICIAL
-    if (!Telemetry.canSend) {
+    if (!Telemetry.canSend && !aTesting) {
       // We can't send data; no point in initializing observers etc.
       // Only do this for official builds so that e.g. developer builds
       // still enable Telemetry based on prefs.
@@ -955,6 +995,13 @@ let Impl = {
 
         this.attachObservers();
         this.gatherMemory();
+
+        if ("@mozilla.org/datareporting/service;1" in Cc) {
+          let drs = Cc["@mozilla.org/datareporting/service;1"]
+                      .getService(Ci.nsISupports)
+                      .wrappedJSObject;
+          this._clientID = yield drs.getClientID();
+        }
 
         Telemetry.asyncFetchTelemetryData(function () {});
         delete this._timer;
@@ -1125,5 +1172,9 @@ let Impl = {
       break;
 #endif
     }
+  },
+
+  get clientID() {
+    return this._clientID;
   },
 };

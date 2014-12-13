@@ -45,10 +45,10 @@ public:
   inline void TraceSelf(JSTracer* trc)
   {
     if (mTypedObj) {
-      JS_CallObjectTracer(trc, &mTypedObj, "TypedArray.mTypedObj");
+      JS_CallUnbarrieredObjectTracer(trc, &mTypedObj, "TypedArray.mTypedObj");
     }
     if (mWrappedObj) {
-      JS_CallObjectTracer(trc, &mTypedObj, "TypedArray.mWrappedObj");
+      JS_CallUnbarrieredObjectTracer(trc, &mTypedObj, "TypedArray.mWrappedObj");
     }
   }
 
@@ -162,7 +162,7 @@ public:
     JS::Rooted<JSObject*> creatorWrapper(cx);
     Maybe<JSAutoCompartment> ac;
     if (creator && (creatorWrapper = creator->GetWrapperPreserveColor())) {
-      ac.construct(cx, creatorWrapper);
+      ac.emplace(cx, creatorWrapper);
     }
 
     return CreateCommon(cx, length, data);
@@ -233,7 +233,7 @@ class TypedArrayCreator
   typedef nsTArray<typename TypedArrayType::element_type> ArrayType;
 
   public:
-    TypedArrayCreator(const ArrayType& aArray)
+    explicit TypedArrayCreator(const ArrayType& aArray)
       : mArray(aArray)
     {}
 
@@ -298,7 +298,7 @@ class MOZ_STACK_CLASS RootedTypedArray : public ArrayType,
                                          private TypedArrayRooter<ArrayType>
 {
 public:
-  RootedTypedArray(JSContext* cx MOZ_GUARD_OBJECT_NOTIFIER_PARAM) :
+  explicit RootedTypedArray(JSContext* cx MOZ_GUARD_OBJECT_NOTIFIER_PARAM) :
     ArrayType(),
     TypedArrayRooter<ArrayType>(cx,
                                 MOZ_THIS_IN_INITIALIZER_LIST()

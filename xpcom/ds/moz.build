@@ -62,7 +62,6 @@ EXPORTS += [
 ]
 
 EXPORTS.mozilla += [
-    'CharTokenizer.h',
     'TimeStamp.h',
 ]
 
@@ -119,4 +118,4 @@ LOCAL_INCLUDES += [
     '../io',
 ]
 
-FINAL_LIBRARY = 'xpcom_core'
+FINAL_LIBRARY = 'xul'

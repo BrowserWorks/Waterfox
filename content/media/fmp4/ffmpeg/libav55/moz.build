@@ -5,7 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 UNIFIED_SOURCES += [
-    '../FFmpegAACDecoder.cpp',
+    '../FFmpegAudioDecoder.cpp',
     '../FFmpegDataDecoder.cpp',
     '../FFmpegDecoderModule.cpp',
     '../FFmpegH264Decoder.cpp',
@@ -16,6 +16,6 @@ LOCAL_INCLUDES += [
 ]
 CXXFLAGS += [ '-Wno-deprecated-declarations' ]
 
-FINAL_LIBRARY = 'gklayout'
+FINAL_LIBRARY = 'xul'
 
 FAIL_ON_WARNINGS = True

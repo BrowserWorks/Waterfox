@@ -23,6 +23,7 @@ class DebugScopeObject;
 class GCMarker;
 class GlobalObject;
 class LazyScript;
+class NestedScopeObject;
 class SavedFrame;
 class ScopeObject;
 class Shape;
@@ -112,6 +113,7 @@ DeclMarker(Object, DebugScopeObject)
 DeclMarker(Object, GlobalObject)
 DeclMarker(Object, JSObject)
 DeclMarker(Object, JSFunction)
+DeclMarker(Object, NestedScopeObject)
 DeclMarker(Object, SavedFrame)
 DeclMarker(Object, ScopeObject)
 DeclMarker(Script, JSScript)
@@ -354,9 +356,6 @@ IsAboutToBeFinalized(BarrieredBase<JSScript*> *scriptp)
     return IsScriptAboutToBeFinalized(scriptp);
 }
 
-#ifdef JS_ION
-/* Nonsense to get WeakCache to work with new Marking semantics. */
-
 inline bool
 IsAboutToBeFinalized(const js::jit::VMFunction **vmfunc)
 {
@@ -372,7 +371,6 @@ IsAboutToBeFinalized(ReadBarrieredJitCode code)
 {
     return IsJitCodeAboutToBeFinalized(code.unsafeGet());
 }
-#endif
 
 inline Cell *
 ToMarkable(const Value &v)

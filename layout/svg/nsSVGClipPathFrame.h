@@ -21,7 +21,7 @@ class nsSVGClipPathFrame : public nsSVGClipPathFrameBase
   friend nsIFrame*
   NS_NewSVGClipPathFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
 protected:
-  nsSVGClipPathFrame(nsStyleContext* aContext)
+  explicit nsSVGClipPathFrame(nsStyleContext* aContext)
     : nsSVGClipPathFrameBase(aContext)
     , mInUse(false)
   {
@@ -37,13 +37,26 @@ public:
                                 const nsDisplayListSet& aLists) MOZ_OVERRIDE {}
 
   // nsSVGClipPathFrame methods:
-  nsresult ClipPaint(nsRenderingContext* aContext,
-                     nsIFrame* aParent,
-                     const gfxMatrix &aMatrix);
 
-  bool ClipHitTest(nsIFrame* aParent,
-                     const gfxMatrix &aMatrix,
-                     const nsPoint &aPoint);
+  /**
+   * If the SVG clipPath is simple (as determined by the IsTrivial() method),
+   * calling this method simply pushes a clip path onto the DrawTarget.  If the
+   * SVG clipPath is not simple then calling this method will paint the
+   * clipPath's contents (geometry being filled only, with opaque black) to the
+   * DrawTarget.  In this latter case callers are expected to first push a
+   * group before calling this method, then pop the group after calling and use
+   * it as a mask to mask the clipped frame.
+   *
+   * XXXjwatt Maybe split this into two methods.
+   */
+  nsresult ApplyClipOrPaintClipMask(nsRenderingContext* aContext,
+                                    nsIFrame* aClippedFrame,
+                                    const gfxMatrix &aMatrix);
+
+  /**
+   * aPoint is expected to be in aClippedFrame's SVG user space.
+   */
+  bool PointIsInsideClipPath(nsIFrame* aClippedFrame, const gfxPoint &aPoint);
 
   // Check if this clipPath is made up of more than one geometry object.
   // If so, the clipping API in cairo isn't enough and we need to use
@@ -78,6 +91,14 @@ public:
   SVGBBox 
   GetBBoxForClipPathFrame(const SVGBBox &aBBox, const gfxMatrix &aMatrix);
 
+  /**
+   * If the clipPath element transforms its children due to
+   * clipPathUnits="objectBoundingBox" being set on it and/or due to the
+   * 'transform' attribute being set on it, this function returns the resulting
+   * transform.
+   */
+  gfxMatrix GetClipPathTransform(nsIFrame* aClippedFrame);
+
  private:
   // A helper class to allow us to paint clip paths safely. The helper
   // automatically sets and clears the mInUse flag on the clip path frame
@@ -86,8 +107,8 @@ public:
   class MOZ_STACK_CLASS AutoClipPathReferencer
   {
   public:
-    AutoClipPathReferencer(nsSVGClipPathFrame *aFrame
-                           MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
+    explicit AutoClipPathReferencer(nsSVGClipPathFrame *aFrame
+                                    MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
        : mFrame(aFrame) {
       MOZ_GUARD_OBJECT_NOTIFIER_INIT;
       NS_ASSERTION(!mFrame->mInUse, "reference loop!");
@@ -101,8 +122,7 @@ public:
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
   };
 
-  nsIFrame *mClipParent;
-  nsAutoPtr<gfxMatrix> mClipParentMatrix;
+  gfxMatrix mMatrixForChildren;
   // recursion prevention flag
   bool mInUse;
 

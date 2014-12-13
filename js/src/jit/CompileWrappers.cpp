@@ -78,13 +78,11 @@ CompileRuntime::addressOfInterrupt()
     return &runtime()->interrupt;
 }
 
-#ifdef JS_THREADSAFE
 const void *
 CompileRuntime::addressOfInterruptPar()
 {
     return &runtime()->interruptPar;
 }
-#endif
 
 const void *
 CompileRuntime::addressOfThreadPool()
@@ -193,9 +191,9 @@ CompileZone::get(Zone *zone)
 }
 
 const void *
-CompileZone::addressOfNeedsBarrier()
+CompileZone::addressOfNeedsIncrementalBarrier()
 {
-    return zone()->addressOfNeedsBarrier();
+    return zone()->addressOfNeedsIncrementalBarrier();
 }
 
 const void *

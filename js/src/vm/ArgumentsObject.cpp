@@ -8,9 +8,7 @@
 
 #include "jsinfer.h"
 
-#ifdef JS_ION
 #include "jit/IonFrames.h"
-#endif
 #include "vm/GlobalObject.h"
 #include "vm/Stack.h"
 
@@ -47,7 +45,6 @@ ArgumentsObject::MaybeForwardToCallObject(AbstractFramePtr frame, JSObject *obj,
     }
 }
 
-#if defined(JS_ION)
 /* static */ void
 ArgumentsObject::MaybeForwardToCallObject(jit::IonJSFrameLayout *frame, HandleObject callObj,
                                           JSObject *obj, ArgumentsData *data)
@@ -61,7 +58,6 @@ ArgumentsObject::MaybeForwardToCallObject(jit::IonJSFrameLayout *frame, HandleOb
             data->args[fi.frameIndex()] = JS::MagicValueUint32(fi.scopeSlot());
     }
 }
-#endif
 
 struct CopyFrameArgs
 {
@@ -84,7 +80,6 @@ struct CopyFrameArgs
     }
 };
 
-#if defined(JS_ION)
 struct CopyIonJSFrameArgs
 {
     jit::IonJSFrameLayout *frame_;
@@ -123,7 +118,6 @@ struct CopyIonJSFrameArgs
         ArgumentsObject::MaybeForwardToCallObject(frame_, callObj_, obj, data);
     }
 };
-#endif
 
 struct CopyScriptFrameIterArgs
 {
@@ -163,8 +157,8 @@ struct CopyScriptFrameIterArgs
 
 template <typename CopyArgs>
 /* static */ ArgumentsObject *
-ArgumentsObject::create(JSContext *cx, HandleScript script, HandleFunction callee, unsigned numActuals,
-                        CopyArgs &copy)
+ArgumentsObject::create(JSContext *cx, HandleScript script, HandleFunction callee,
+                        unsigned numActuals, CopyArgs &copy)
 {
     RootedObject proto(cx, callee->global().getOrCreateObjectPrototype(cx));
     if (!proto)
@@ -194,7 +188,8 @@ ArgumentsObject::create(JSContext *cx, HandleScript script, HandleFunction calle
                         numDeletedWords * sizeof(size_t) +
                         numArgs * sizeof(Value);
 
-    ArgumentsData *data = (ArgumentsData *)cx->malloc_(numBytes);
+    ArgumentsData *data = reinterpret_cast<ArgumentsData *>(
+            cx->zone()->pod_malloc<uint8_t>(numBytes));
     if (!data)
         return nullptr;
 
@@ -260,7 +255,6 @@ ArgumentsObject::createUnexpected(JSContext *cx, AbstractFramePtr frame)
     return create(cx, script, callee, frame.numActualArgs(), copy);
 }
 
-#if defined(JS_ION)
 ArgumentsObject *
 ArgumentsObject::createForIon(JSContext *cx, jit::IonJSFrameLayout *frame, HandleObject scopeChain)
 {
@@ -272,7 +266,6 @@ ArgumentsObject::createForIon(JSContext *cx, jit::IonJSFrameLayout *frame, Handl
     CopyIonJSFrameArgs copy(frame, callObj);
     return create(cx, script, callee, frame->numActualArgs(), copy);
 }
-#endif
 
 static bool
 args_delProperty(JSContext *cx, HandleObject obj, HandleId id, bool *succeeded)

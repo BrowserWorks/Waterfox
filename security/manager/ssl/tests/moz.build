@@ -11,8 +11,11 @@ TEST_DIRS += [
     'mochitest',
 ]
 
-TEST_TOOL_DIRS += [
+TEST_DIRS += [
   'compiled',
 ]
 
 XPCSHELL_TESTS_MANIFESTS += ['unit/xpcshell.ini']
+
+if not CONFIG['MOZ_DISABLE_CRYPTOLEGACY']:
+    XPCSHELL_TESTS_MANIFESTS += ['unit/xpcshell-smartcards.ini']

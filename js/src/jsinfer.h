@@ -358,7 +358,7 @@ public:
 
     /*
      * For constraints attached to an object property's type set, mark the
-     * property as having its configuration changed.
+     * property as having changed somehow.
      */
     virtual void newPropertyState(JSContext *cx, TypeSet *source) {}
 
@@ -417,6 +417,9 @@ enum MOZ_ENUM_TYPE(uint32_t) {
     /* Whether the property has ever been made non-writable. */
     TYPE_FLAG_NON_WRITABLE_PROPERTY = 0x00010000,
 
+    /* Whether the property might not be constant. */
+    TYPE_FLAG_NON_CONSTANT_PROPERTY = 0x00020000,
+
     /*
      * Whether the property is definitely in a particular slot on all objects
      * from which it has not been deleted or reconfigured. For singletons
@@ -426,8 +429,8 @@ enum MOZ_ENUM_TYPE(uint32_t) {
      * If the property is definite, mask and shift storing the slot + 1.
      * Otherwise these bits are clear.
      */
-    TYPE_FLAG_DEFINITE_MASK       = 0xfffe0000,
-    TYPE_FLAG_DEFINITE_SHIFT      = 17
+    TYPE_FLAG_DEFINITE_MASK       = 0xfffc0000,
+    TYPE_FLAG_DEFINITE_SHIFT      = 18
 };
 typedef uint32_t TypeFlags;
 
@@ -436,24 +439,21 @@ enum MOZ_ENUM_TYPE(uint32_t) {
     /* Whether this type object is associated with some allocation site. */
     OBJECT_FLAG_FROM_ALLOCATION_SITE  = 0x1,
 
-    /* If set, addendum information should not be installed on this object. */
-    OBJECT_FLAG_ADDENDUM_CLEARED      = 0x2,
-
     /*
      * If set, the object's prototype might be in the nursery and can't be
      * used during Ion compilation (which may be occurring off thread).
      */
-    OBJECT_FLAG_NURSERY_PROTO         = 0x4,
+    OBJECT_FLAG_NURSERY_PROTO         = 0x2,
 
     /*
      * Whether we have ensured all type sets in the compartment contain
      * ANYOBJECT instead of this object.
      */
-    OBJECT_FLAG_SETS_MARKED_UNKNOWN   = 0x8,
+    OBJECT_FLAG_SETS_MARKED_UNKNOWN   = 0x4,
 
     /* Mask/shift for the number of properties in propertySet */
-    OBJECT_FLAG_PROPERTY_COUNT_MASK   = 0xfff0,
-    OBJECT_FLAG_PROPERTY_COUNT_SHIFT  = 4,
+    OBJECT_FLAG_PROPERTY_COUNT_MASK   = 0xfff8,
+    OBJECT_FLAG_PROPERTY_COUNT_SHIFT  = 3,
     OBJECT_FLAG_PROPERTY_COUNT_LIMIT  =
         OBJECT_FLAG_PROPERTY_COUNT_MASK >> OBJECT_FLAG_PROPERTY_COUNT_SHIFT,
 
@@ -487,14 +487,17 @@ enum MOZ_ENUM_TYPE(uint32_t) {
      */
     OBJECT_FLAG_PRE_TENURE            = 0x00400000,
 
+    /* Whether objects with this type might have copy on write elements. */
+    OBJECT_FLAG_COPY_ON_WRITE         = 0x00800000,
+
     /*
      * Whether all properties of this object are considered unknown.
      * If set, all other flags in DYNAMIC_MASK will also be set.
      */
-    OBJECT_FLAG_UNKNOWN_PROPERTIES    = 0x00800000,
+    OBJECT_FLAG_UNKNOWN_PROPERTIES    = 0x01000000,
 
     /* Flags which indicate dynamic properties of represented objects. */
-    OBJECT_FLAG_DYNAMIC_MASK          = 0x00ff0000,
+    OBJECT_FLAG_DYNAMIC_MASK          = 0x01ff0000,
 
     /* Mask for objects created with unknown properties. */
     OBJECT_FLAG_UNKNOWN_MASK =
@@ -557,6 +560,9 @@ class TypeSet
     }
     bool nonWritableProperty() const {
         return flags & TYPE_FLAG_NON_WRITABLE_PROPERTY;
+    }
+    bool nonConstantProperty() const {
+        return flags & TYPE_FLAG_NON_CONSTANT_PROPERTY;
     }
     bool definiteProperty() const { return flags & TYPE_FLAG_DEFINITE_MASK; }
     unsigned definiteSlot() const {
@@ -676,6 +682,9 @@ class HeapTypeSet : public ConstraintTypeSet
 
     /* Mark this type set as representing a non-writable property. */
     inline void setNonWritableProperty(ExclusiveContext *cx);
+
+    // Mark this type set as being non-constant.
+    inline void setNonConstantProperty(ExclusiveContext *cx);
 };
 
 class CompilerConstraintList;
@@ -766,6 +775,10 @@ class TemporaryTypeSet : public TypeSet
     /* Whether any objects in the type set needs a barrier on id. */
     bool propertyNeedsBarrier(CompilerConstraintList *constraints, jsid id);
 
+    /* Whether any objects in the type set might treat id as a constant property. */
+    bool propertyMightBeConstant(CompilerConstraintList *constraints, jsid id);
+    bool propertyIsConstant(CompilerConstraintList *constraints, jsid id, Value *valOut);
+
     /*
      * Whether this set contains all types in other, except (possibly) the
      * specified type.
@@ -824,32 +837,6 @@ struct Property
     static jsid getKey(Property *p) { return p->id; }
 };
 
-struct TypeNewScript;
-
-struct TypeObjectAddendum
-{
-    enum Kind {
-        NewScript
-    };
-
-    explicit TypeObjectAddendum(Kind kind);
-
-    const Kind kind;
-
-    bool isNewScript() {
-        return kind == NewScript;
-    }
-
-    TypeNewScript *asNewScript() {
-        JS_ASSERT(isNewScript());
-        return (TypeNewScript*) this;
-    }
-
-    static inline void writeBarrierPre(TypeObjectAddendum *type);
-
-    static void writeBarrierPost(TypeObjectAddendum *newScript, void *addr) {}
-};
-
 /*
  * Information attached to a TypeObject if it is always constructed using 'new'
  * on a particular script. This is used to manage state related to the definite
@@ -860,10 +847,8 @@ struct TypeObjectAddendum
  * remove the definite property information and repair the JS stack if the
  * constraints are violated.
  */
-struct TypeNewScript : public TypeObjectAddendum
+struct TypeNewScript
 {
-    TypeNewScript();
-
     HeapPtrFunction fun;
 
     /*
@@ -899,6 +884,7 @@ struct TypeNewScript : public TypeObjectAddendum
     Initializer *initializerList;
 
     static inline void writeBarrierPre(TypeNewScript *newScript);
+    static void writeBarrierPost(TypeNewScript *newScript, void *addr) {}
 };
 
 /*
@@ -982,16 +968,12 @@ struct TypeObject : gc::BarrieredCell<TypeObject>
     TypeObjectFlags flags_;
 
     /*
-     * This field allows various special classes of objects to attach
-     * additional information to a type object:
-     *
-     * - `TypeNewScript`: If addendum is a `TypeNewScript`, it
-     *   indicates that objects of this type have always been
-     *   constructed using 'new' on the specified script, which adds
-     *   some number of properties to the object in a definite order
-     *   before the object escapes.
+     * If specified, holds information about properties which are definitely
+     * added to objects of this type after being constructed by a particular
+     * script.
      */
-    HeapPtrTypeObjectAddendum addendum;
+    HeapPtrTypeNewScript newScript_;
+
   public:
 
     TypeObjectFlags flags() const {
@@ -1006,15 +988,11 @@ struct TypeObject : gc::BarrieredCell<TypeObject>
         flags_ &= ~flags;
     }
 
-    bool hasNewScript() const {
-        return addendum && addendum->isNewScript();
-    }
-
     TypeNewScript *newScript() {
-        return addendum->asNewScript();
+        return newScript_;
     }
 
-    void setAddendum(TypeObjectAddendum *addendum);
+    void setNewScript(TypeNewScript *newScript);
 
   private:
     /*
@@ -1094,7 +1072,7 @@ struct TypeObject : gc::BarrieredCell<TypeObject>
         // this bit reliably.
         if (unknownProperties())
             return false;
-        return (flags() & OBJECT_FLAG_FROM_ALLOCATION_SITE) || hasNewScript();
+        return (flags() & OBJECT_FLAG_FROM_ALLOCATION_SITE) || newScript();
     }
 
     void setShouldPreTenure(ExclusiveContext *cx) {
@@ -1127,9 +1105,8 @@ struct TypeObject : gc::BarrieredCell<TypeObject>
     void markStateChange(ExclusiveContext *cx);
     void setFlags(ExclusiveContext *cx, TypeObjectFlags flags);
     void markUnknown(ExclusiveContext *cx);
-    void maybeClearNewScriptAddendumOnOOM();
-    void clearAddendum(ExclusiveContext *cx);
-    void clearNewScriptAddendum(ExclusiveContext *cx);
+    void maybeClearNewScriptOnOOM();
+    void clearNewScript(ExclusiveContext *cx);
     bool isPropertyNonData(jsid id);
     bool isPropertyNonWritable(jsid id);
 
@@ -1319,6 +1296,12 @@ class TypeScript
 void
 FillBytecodeTypeMap(JSScript *script, uint32_t *bytecodeMap);
 
+JSObject *
+GetOrFixupCopyOnWriteObject(JSContext *cx, HandleScript script, jsbytecode *pc);
+
+JSObject *
+GetCopyOnWriteObject(JSScript *script, jsbytecode *pc);
+
 class RecompileInfo;
 
 // Allocate a CompilerOutput for a finished compilation and generate the type
@@ -1434,6 +1417,7 @@ class HeapTypeSetKey
     bool knownSubset(CompilerConstraintList *constraints, const HeapTypeSetKey &other);
     JSObject *singleton(CompilerConstraintList *constraints);
     bool needsBarrier(CompilerConstraintList *constraints);
+    bool constant(CompilerConstraintList *constraints, Value *valOut);
 };
 
 /*
@@ -1604,7 +1588,7 @@ struct TypeZone
     JS::Zone *zone() const { return zone_; }
 
     void sweep(FreeOp *fop, bool releaseTypes, bool *oom);
-    void clearAllNewScriptAddendumsOnOOM();
+    void clearAllNewScriptsOnOOM();
 
     /* Mark a script as needing recompilation once inference has finished. */
     void addPendingRecompile(JSContext *cx, const RecompileInfo &info);

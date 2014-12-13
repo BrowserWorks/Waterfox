@@ -20,7 +20,8 @@
 #include "InputData.h"
 #include "Axis.h"
 #include "TaskThrottler.h"
-#include "gfx3DMatrix.h"
+#include "mozilla/gfx/Matrix.h"
+#include "nsRegion.h"
 
 #include "base/message_loop.h"
 
@@ -37,12 +38,13 @@ namespace layers {
 struct ScrollableLayerGuid;
 class CompositorParent;
 class GestureEventListener;
-class ContainerLayer;
 class PCompositorParent;
 struct ViewTransform;
 class AsyncPanZoomAnimation;
 class FlingAnimation;
+class InputBlockState;
 class TouchBlockState;
+class OverscrollHandoffChain;
 
 /**
  * Controller for all panning and zooming logic. Any time a user input is
@@ -68,6 +70,7 @@ class AsyncPanZoomController {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(AsyncPanZoomController)
 
   typedef mozilla::MonitorAutoLock MonitorAutoLock;
+  typedef mozilla::gfx::Matrix4x4 Matrix4x4;
   typedef uint32_t TouchBehaviorFlags;
 
 public:
@@ -113,9 +116,8 @@ public:
    * based on what type of input it is. For example, a PinchGestureEvent will
    * cause scaling. This should only be called externally to this class.
    * HandleInputEvent() should be used internally.
-   * This function returns nsEventStatus_eIgnore for events that are ignored,
-   * and nsEventStatus_eConsumeDoDefault for events that are queued for
-   * processing pending a content response.
+   * See the documentation on APZCTreeManager::ReceiveInputEvent for info on
+   * return values from this function.
    */
   nsEventStatus ReceiveInputEvent(const InputData& aEvent);
 
@@ -147,30 +149,32 @@ public:
   // These methods must only be called on the compositor thread.
   //
 
-  bool UpdateAnimation(const TimeStamp& aSampleTime,
-                       Vector<Task*>* aOutDeferredTasks);
-
   /**
-   * RQuery the transforms that should be applied to the layer corresponding
-   * to this APZC due to asynchronous panning and zooming.
-   * |aSampleTime| is the time that this is sampled at; this is used for
-   * interpolating animations.
-   * This function returns two transforms via out parameters:
-   *   |aOutTransform| is the transform due to regular panning and zooming
-   *   |aOverscrollTransform| is the transform due to overscrolling
-   * The two are separated because some clients want to ignore the overscroll
-   * transform for some purposes (and for convenience to these clients, the
-   * overscroll transform parameter may be nullptr). Clients who do not want
-   * to ignore the overscroll transform should multiply the two transforms
-   * together.
+   * Advances any animations currently running to the given timestamp.
+   * This may be called multiple times with the same timestamp.
    *
    * The return value indicates whether or not any currently running animation
    * should continue. If true, the compositor should schedule another composite.
    */
-  bool SampleContentTransformForFrame(const TimeStamp& aSampleTime,
-                                      ViewTransform* aOutTransform,
-                                      ScreenPoint& aScrollOffset,
-                                      ViewTransform* aOutOverscrollTransform = nullptr);
+  bool AdvanceAnimations(const TimeStamp& aSampleTime);
+
+  bool UpdateAnimation(const TimeStamp& aSampleTime,
+                       Vector<Task*>* aOutDeferredTasks);
+
+  /**
+   * Query the transforms that should be applied to the layer corresponding
+   * to this APZC due to asynchronous panning and zooming.
+   * This function returns the async transform via the |aOutTransform|
+   * out parameter.
+   */
+  void SampleContentTransformForFrame(ViewTransform* aOutTransform,
+                                      ScreenPoint& aScrollOffset);
+
+  /**
+   * Return a visual effect that reflects this apzc's
+   * overscrolled state, if any.
+   */
+  Matrix4x4 GetOverscrollTransform() const;
 
   /**
    * A shadow layer update has arrived. |aLayerMetrics| is the new FrameMetrics
@@ -220,9 +224,9 @@ public:
   /**
    * Returns the part of the async transform that will remain once Gecko does a
    * repaint at the desired metrics. That is, in the steady state:
-   * gfx3DMatrix(GetCurrentAsyncTransform()) === GetNontransientAsyncTransform()
+   * Matrix4x4(GetCurrentAsyncTransform()) === GetNontransientAsyncTransform()
    */
-  gfx3DMatrix GetNontransientAsyncTransform();
+  Matrix4x4 GetNontransientAsyncTransform();
 
   /**
    * Returns the transform to take something from the coordinate space of the
@@ -231,7 +235,15 @@ public:
    * processed, this is needed to transform input events properly into a space
    * gecko will understand.
    */
-  gfx3DMatrix GetTransformToLastDispatchedPaint();
+  Matrix4x4 GetTransformToLastDispatchedPaint();
+
+  /**
+   * Returns whether or not the APZC is currently in a state of checkerboarding.
+   * This is a simple computation based on the last-painted content and whether
+   * the async transform has pushed it so far that it doesn't fully contain the
+   * composition bounds.
+   */
+  bool IsCurrentlyCheckerboarding() const;
 
   /**
    * Recalculates the displayport. Ideally, this should paint an area bigger
@@ -283,11 +295,14 @@ public:
   void StartAnimation(AsyncPanZoomAnimation* aAnimation);
 
   /**
-   * Cancels any currently running animation. Note that all this does is set the
-   * state of the AsyncPanZoomController back to NOTHING, but it is the
-   * animation's responsibility to check this before advancing.
+   * Cancels any currently running animation.
    */
   void CancelAnimation();
+
+  /**
+   * Clear any overscroll on this APZC.
+   */
+  void ClearOverscroll();
 
   /**
    * Returns allowed touch behavior for the given point on the scrollable layer.
@@ -462,11 +477,10 @@ protected:
   const ScreenPoint GetVelocityVector();
 
   /**
-   * Gets a reference to the first touch point from a MultiTouchInput.  This
-   * gets only the first one and assumes the rest are either missing or not
-   * relevant.
+   * Gets the first touch point from a MultiTouchInput.  This gets only
+   * the first one and assumes the rest are either missing or not relevant.
    */
-  ScreenIntPoint& GetFirstTouchScreenPoint(const MultiTouchInput& aEvent);
+  ScreenPoint GetFirstTouchScreenPoint(const MultiTouchInput& aEvent);
 
   /**
    * Sets the panning state basing on the pan direction angle and current touch-action value.
@@ -537,10 +551,12 @@ protected:
 
 private:
   /**
-   * Cancel animations all the way up the overscroll handoff chain if possible,
-   * or just the local APZC if not.
+   * Given the number of touch points in an input event and touch block they
+   * belong to, check if the event can result in a panning/zooming behavior.
+   * This is primarily used to figure out when to dispatch the pointercancel
+   * event for the pointer events spec.
    */
-  void CancelAnimationForHandoffChain();
+  bool ArePointerEventsConsumable(TouchBlockState* aBlock, uint32_t aTouchPoints);
 
   /**
    * Helper to set the current state. Holds the monitor before actually setting
@@ -560,14 +576,8 @@ private:
   /**
    * Internal helpers for checking general state of this apzc.
    */
-  bool IsTransformingState(PanZoomState aState);
-  bool IsPanningState(PanZoomState mState);
-
-  /**
-   * Return in |aTransform| a visual effect that reflects this apzc's
-   * overscrolled state, if any.
-   */
-  void GetOverscrollTransform(ViewTransform* aTransform) const;
+  static bool IsTransformingState(PanZoomState aState);
+  bool IsInPanningState() const;
 
   enum AxisLockMode {
     FREE,     /* No locking at all */
@@ -781,17 +791,30 @@ private:
 
   /* ===================================================================
    * The functions and members in this section are used to manage
+   * pan gestures.
+   */
+
+private:
+  UniquePtr<InputBlockState> mPanGestureState;
+
+
+  /* ===================================================================
+   * The functions and members in this section are used to manage
    * fling animations and handling overscroll during a fling.
    */
 public:
   /**
-   * Take over a fling with the given velocity from another APZC. Used for
-   * during overscroll handoff for a fling. If we are not pannable, calls
-   * mTreeManager->HandOffFling() to hand the fling off further.
-   * Returns true iff. any APZC (whether this one or one further in the handoff
-   * chain accepted the fling).
+   * Attempt a fling with the given velocity. If we are not pannable, tehe fling
+   * is handed off to the next APZC in the handoff chain via
+   * mTreeManager->DspatchFling(). Returns true iff. any APZC (whether this
+   * one or one further in the handoff chain) accepted the fling.
+   * |aHandoff| should be true iff. the fling was handed off from a previous
+   *            APZC, and determines whether acceleration is applied to the
+   *            fling.
    */
-  bool TakeOverFling(ScreenPoint aVelocity);
+  bool AttemptFling(ScreenPoint aVelocity,
+                    const nsRefPtr<const OverscrollHandoffChain>& aOverscrollHandoffChain,
+                    bool aHandoff);
 
 private:
   friend class FlingAnimation;
@@ -806,10 +829,14 @@ private:
   // The overscroll is handled by trying to hand the fling off to an APZC
   // later in the handoff chain, or if there are no takers, continuing the
   // fling and entering an overscrolled state.
-  void HandleFlingOverscroll(const ScreenPoint& aVelocity);
+  void HandleFlingOverscroll(const ScreenPoint& aVelocity,
+                             const nsRefPtr<const OverscrollHandoffChain>& aOverscrollHandoffChain);
 
   // Helper function used by TakeOverFling() and HandleFlingOverscroll().
-  void AcceptFling(const ScreenPoint& aVelocity, bool aAllowOverscroll);
+  void AcceptFling(const ScreenPoint& aVelocity,
+                   const nsRefPtr<const OverscrollHandoffChain>& aOverscrollHandoffChain,
+                   bool aHandoff,
+                   bool aAllowOverscroll);
 
   // Start a snap-back animation to relieve overscroll.
   void StartSnapBack();
@@ -845,6 +872,14 @@ public:
   AsyncPanZoomController* GetPrevSibling() const { return mPrevSibling; }
   AsyncPanZoomController* GetParent() const { return mParent; }
 
+  AsyncPanZoomController* GetFirstChild() const {
+    AsyncPanZoomController* child = GetLastChild();
+    while (child && child->GetPrevSibling()) {
+      child = child->GetPrevSibling();
+    }
+    return child;
+  }
+
   /* Returns true if there is no APZC higher in the tree with the same
    * layers id.
    */
@@ -870,12 +905,8 @@ private:
    * including handing off scroll to another APZC, and overscrolling.
    */
 public:
-  void SetScrollHandoffParentId(FrameMetrics::ViewID aScrollParentId) {
-    mScrollParentId = aScrollParentId;
-  }
-
   FrameMetrics::ViewID GetScrollHandoffParentId() const {
-    return mScrollParentId;
+    return mFrameMetrics.GetScrollParentId();
   }
 
   /**
@@ -889,30 +920,43 @@ public:
    * does not find an APZC further in the handoff chain to accept the
    * overscroll, and this APZC is pannable, this APZC enters an overscrolled
    * state.
-   * |aOverscrollHandoffChainIndex| is used by the tree manager to keep track
-   * of which APZC to hand off the overscroll to; this function increments it
-   * and passes it on to APZCTreeManager::DispatchScroll() in the event of
-   * overscroll.
+   * |aOverscrollHandoffChain| and |aOverscrollHandoffChainIndex| are used by
+   * the tree manager to keep track of which APZC to hand off the overscroll
+   * to; this function increments the chain and the index and passes it on to
+   * APZCTreeManager::DispatchScroll() in the event of overscroll.
    * Returns true iff. this APZC, or an APZC further down the
    * handoff chain, accepted the scroll (possibly entering an overscrolled
-   * state). If this return false, the caller APZC knows that it should enter
+   * state). If this returns false, the caller APZC knows that it should enter
    * an overscrolled state itself if it can.
    */
   bool AttemptScroll(const ScreenPoint& aStartPoint, const ScreenPoint& aEndPoint,
-                     uint32_t aOverscrollHandoffChainIndex = 0);
+                     OverscrollHandoffState& aOverscrollHandoffState);
 
   void FlushRepaintForOverscrollHandoff();
 
-private:
-  FrameMetrics::ViewID mScrollParentId;
+  /**
+   * If overscrolled, start a snap-back animation and return true.
+   * Otherwise return false.
+   */
+  bool SnapBackIfOverscrolled();
 
+private:
   /**
    * A helper function for calling APZCTreeManager::DispatchScroll().
    * Guards against the case where the APZC is being concurrently destroyed
    * (and thus mTreeManager is being nulled out).
    */
-  bool CallDispatchScroll(const ScreenPoint& aStartPoint, const ScreenPoint& aEndPoint,
-                          uint32_t aOverscrollHandoffChainIndex);
+  bool CallDispatchScroll(const ScreenPoint& aStartPoint,
+                          const ScreenPoint& aEndPoint,
+                          OverscrollHandoffState& aOverscrollHandoffState);
+
+  /**
+   * A helper function for overscrolling during panning. This is a wrapper
+   * around OverscrollBy() that also implements restrictions on entering
+   * overscroll based on the pan angle.
+   */
+  bool OverscrollForPanning(ScreenPoint aOverscroll,
+                            const ScreenPoint& aPanDistance);
 
   /**
    * Try to overscroll by 'aOverscroll'.
@@ -920,8 +964,28 @@ private:
    * and the function returns true.
    * Otherwise, nothing happens and the function return false.
    */
-  bool OverscrollBy(const CSSPoint& aOverscroll);
+  bool OverscrollBy(const ScreenPoint& aOverscroll);
 
+  /**
+   * Build the chain of APZCs along which scroll will be handed off when
+   * this APZC receives input events.
+   *
+   * Notes on lifetime and const-correctness:
+   *   - The returned handoff chain is |const|, to indicate that it cannot be
+   *     changed after being built.
+   *   - When passing the chain to a function that uses it without storing it,
+   *     pass it by reference-to-const (as in |const OverscrollHandoffChain&|).
+   *   - When storing the chain, store it by RefPtr-to-const (as in
+   *     |nsRefPtr<const OverscrollHandoffChain>|). This ensures the chain is
+   *     kept alive. Note that queueing a task that uses the chain as an
+   *     argument constitutes storing, as the task may outlive its queuer.
+   *   - When passing the chain to a function that will store it, pass it as
+   *     |const nsRefPtr<const OverscrollHandoffChain>&|. This allows the
+   *     function to copy it into the |nsRefPtr<const OverscrollHandoffChain>|
+   *     that will store it, while avoiding an unnecessary copy (and thus
+   *     AddRef() and Release()) when passing it.
+   */
+  nsRefPtr<const OverscrollHandoffChain> BuildOverscrollHandoffChain();
 
   /* ===================================================================
    * The functions and members in this section are used to maintain the
@@ -929,24 +993,22 @@ private:
    * hit-testing to see which APZC instance should handle touch events.
    */
 public:
-  void SetLayerHitTestData(const ParentLayerRect& aRect, const gfx3DMatrix& aTransformToLayer,
-                           const gfx3DMatrix& aTransformForLayer) {
-    mVisibleRect = aRect;
+  void SetLayerHitTestData(const nsIntRegion& aRegion, const Matrix4x4& aTransformToLayer) {
+    mVisibleRegion = aRegion;
     mAncestorTransform = aTransformToLayer;
-    mCSSTransform = aTransformForLayer;
-    UpdateTransformScale();
   }
 
-  gfx3DMatrix GetAncestorTransform() const {
+  void AddHitTestRegion(const nsIntRegion& aRegion) {
+    mVisibleRegion.OrWith(aRegion);
+  }
+
+  Matrix4x4 GetAncestorTransform() const {
     return mAncestorTransform;
   }
 
-  gfx3DMatrix GetCSSTransform() const {
-    return mCSSTransform;
-  }
-
   bool VisibleRegionContains(const ParentLayerPoint& aPoint) const {
-    return mVisibleRect.Contains(aPoint);
+    ParentLayerIntPoint point = RoundedToInt(aPoint);
+    return mVisibleRegion.Contains(point.x, point.y);
   }
 
   bool IsOverscrolled() const {
@@ -954,15 +1016,14 @@ public:
   }
 
 private:
-  /* This is the visible region of the layer that this APZC corresponds to, in
-   * that layer's screen pixels (the same coordinate system in which this APZC
-   * receives events in ReceiveInputEvent()). */
-  ParentLayerRect mVisibleRect;
-  /* This is the cumulative CSS transform for all the layers between the parent
-   * APZC and this one (not inclusive) */
-  gfx3DMatrix mAncestorTransform;
-  /* This is the CSS transform for this APZC's layer. */
-  gfx3DMatrix mCSSTransform;
+  /* This is the union of the visible regions of the layers that this APZC
+   * corresponds to, in the screen pixels of those layers. (This is the same
+   * coordinate system in which this APZC receives events in
+   * ReceiveInputEvent()). */
+  nsIntRegion mVisibleRegion;
+  /* This is the cumulative CSS transform for all the layers from (and including)
+   * the parent APZC down to (but excluding) this one. */
+  Matrix4x4 mAncestorTransform;
 
 
   /* ===================================================================
@@ -991,7 +1052,7 @@ private:
 
   /* ===================================================================
    * The functions and members in this section are used for testing
-   * purposes only.
+   * and assertion purposes only.
    */
 public:
   /**
@@ -1008,6 +1069,12 @@ public:
   static void SetThreadAssertionsEnabled(bool aEnabled);
   static bool GetThreadAssertionsEnabled();
   /**
+   * This can be used to assert that the current thread is the
+   * controller/UI thread (on which input events are received.
+   * This does nothing if thread assertions are disabled.
+   */
+  static void AssertOnControllerThread();
+  /**
    * Set an extra offset for testing async scrolling.
    */
   void SetTestAsyncScrollOffset(const CSSPoint& aPoint)
@@ -1015,17 +1082,30 @@ public:
     mTestAsyncScrollOffset = aPoint;
   }
 
+  void MarkAsyncTransformAppliedToContent()
+  {
+    mAsyncTransformAppliedToContent = true;
+  }
+
+  bool GetAsyncTransformAppliedToContent() const
+  {
+    return mAsyncTransformAppliedToContent;
+  }
+
 private:
   // Extra offset to add in SampleContentTransformForFrame for testing
   CSSPoint mTestAsyncScrollOffset;
+  // Flag to track whether or not the APZ transform is not used. This
+  // flag is recomputed for every composition frame.
+  bool mAsyncTransformAppliedToContent;
 };
 
 class AsyncPanZoomAnimation {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(AsyncPanZoomAnimation)
 
 public:
-  AsyncPanZoomAnimation(const TimeDuration& aRepaintInterval =
-                        TimeDuration::Forever())
+  explicit AsyncPanZoomAnimation(const TimeDuration& aRepaintInterval =
+                                 TimeDuration::Forever())
     : mRepaintInterval(aRepaintInterval)
   { }
 

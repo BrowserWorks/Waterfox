@@ -273,9 +273,19 @@ let OpenH264Provider = {
       try {
         gmpService.addPluginDirectory(this.gmpPath);
       } catch (e if e.name == 'NS_ERROR_NOT_AVAILABLE') {
-        this._log.warning("startup() - adding gmp directory failed with " + e.name + " - sandboxing not available?");
+        this._log.warn("startup() - adding gmp directory failed with " + e.name + " - sandboxing not available?");
       }
     }
+
+    let telemetry = {};
+    if (this.isEnabled) {
+      telemetry[OPENH264_PLUGIN_ID] = {
+	userDisabled: OpenH264Wrapper.userDisabled,
+	version: OpenH264Wrapper.version,
+	applyBackgroundUpdates: OpenH264Wrapper.applyBackgroundUpdates,
+      };
+    }
+    AddonManagerPrivate.setTelemetryDetails("GMP", telemetry);
   },
 
   shutdown: function() {

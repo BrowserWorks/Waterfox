@@ -81,6 +81,8 @@
             "mouse_cursor_monitor_x11.cc",
             "screen_capturer_x11.cc",
             "window_capturer_x11.cc",
+            "x11/shared_x_util.h",
+            "x11/shared_x_util.cc",
             "x11/shared_x_display.h",
             "x11/shared_x_display.cc",
             "x11/x_error_trap.cc",
@@ -104,6 +106,8 @@
         }],
         ['OS!="win" and OS!="mac" and use_x11==0', {
           'sources': [
+            "app_capturer_null.cc",
+            "desktop_device_info_null.cc",
             "mouse_cursor_monitor_null.cc",
             "screen_capturer_null.cc",
             "window_capturer_null.cc",
@@ -147,6 +151,8 @@
              "win/scoped_gdi_object.h",
              "win/scoped_thread_desktop.cc",
              "win/scoped_thread_desktop.h",
+             "win/win_shared.h",
+             "win/win_shared.cc",
              "win/desktop_device_info_win.h",
              "win/desktop_device_info_win.cc",
              "window_capturer_win.cc",

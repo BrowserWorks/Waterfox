@@ -24,6 +24,9 @@ from errors import (
         )
 from marionette import Marionette
 from mozlog.structured.structuredlog import get_default_logger
+from wait import Wait
+from expected import element_present, element_not_present
+
 
 class SkipTest(Exception):
     """
@@ -79,10 +82,10 @@ def expectedFailure(func):
 
 def skip_if_b2g(target):
     def wrapper(self, *args, **kwargs):
-        if not hasattr(self.marionette, 'b2g') or not self.marionette.b2g:
+        if not self.marionette.session_capabilities['device'] == 'qemu':
             return target(self, *args, **kwargs)
         else:
-            sys.stderr.write('skipping ... ')
+            raise SkipTest('skipping due to b2g')
     return wrapper
 
 class CommonTestCase(unittest.TestCase):
@@ -286,6 +289,12 @@ permissions.forEach(function (perm) {
             self.marionette.timeouts(self.marionette.TIMEOUT_PAGE, self.marionette.timeout)
         else:
             self.marionette.timeouts(self.marionette.TIMEOUT_PAGE, 30000)
+        if hasattr(self, 'test_container') and self.test_container:
+            self.switch_into_test_container()
+        else:
+            if self.marionette.session_capabilities.has_key('b2g') \
+            and self.marionette.session_capabilities['b2g'] == True:
+                self.close_test_container()
 
     def tearDown(self):
         pass
@@ -313,6 +322,96 @@ permissions.forEach(function (perm) {
                         pass
         self.marionette = None
 
+    def switch_into_test_container(self):
+        self.marionette.set_context("content")
+        frame = None
+        try:
+            frame = self.marionette.find_element(
+                'css selector',
+                'iframe[src*="app://test-container.gaiamobile.org/index.html"]'
+            )
+        except NoSuchElementException:
+            result = self.marionette.execute_async_script("""
+if((navigator.mozSettings == undefined) || (navigator.mozSettings == null) || (navigator.mozApps == undefined) || (navigator.mozApps == null)) {
+    marionetteScriptFinished(false);
+    return;
+}
+let setReq = navigator.mozSettings.createLock().set({'lockscreen.enabled': false});
+setReq.onsuccess = function() {
+    let appsReq = navigator.mozApps.mgmt.getAll();
+    appsReq.onsuccess = function() {
+        let apps = appsReq.result;
+        for (let i = 0; i < apps.length; i++) {
+            let app = apps[i];
+            if (app.manifest.name === 'Test Container') {
+                app.launch();
+                window.addEventListener('apploadtime', function apploadtime(){
+                    window.removeEventListener('apploadtime', apploadtime);
+                    marionetteScriptFinished(true);
+                });
+                return;
+            }
+        }
+        marionetteScriptFinished(false);
+    }
+    appsReq.onerror = function() {
+        marionetteScriptFinished(false);
+    }
+}
+setReq.onerror = function() {
+    marionetteScriptFinished(false);
+}""", script_timeout=60000)
+
+            self.assertTrue(result)
+            frame = Wait(self.marionette, timeout=10, interval=0.2).until(element_present(
+                'css selector',
+                'iframe[src*="app://test-container.gaiamobile.org/index.html"]'
+            ))
+
+        self.marionette.switch_to_frame(frame)
+
+    def close_test_container(self):
+        self.marionette.set_context("content")
+        self.marionette.switch_to_frame()
+        result = self.marionette.execute_async_script("""
+if((navigator.mozSettings == undefined) || (navigator.mozSettings == null) || (navigator.mozApps == undefined) || (navigator.mozApps == null)) {
+    marionetteScriptFinished(false);
+    return;
+}
+let setReq = navigator.mozSettings.createLock().set({'lockscreen.enabled': false});
+setReq.onsuccess = function() {
+    let appsReq = navigator.mozApps.mgmt.getAll();
+    appsReq.onsuccess = function() {
+        let apps = appsReq.result;
+        for (let i = 0; i < apps.length; i++) {
+            let app = apps[i];
+            if (app.manifest.name === 'Test Container') {
+                let manager = window.wrappedJSObject.AppWindowManager || window.wrappedJSObject.WindowManager;
+                if (!manager) {
+                    marionetteScriptFinished(false);
+                    return;
+                }
+                manager.kill(app.origin);
+                marionetteScriptFinished(true);
+                return;
+            }
+        }
+        marionetteScriptFinished(false);
+    }
+    appsReq.onerror = function() {
+        marionetteScriptFinished(false);
+    }
+}
+setReq.onerror = function() {
+    marionetteScriptFinished(false);
+}""", script_timeout=60000)
+
+        frame = Wait(self.marionette, timeout=10, interval=0.2).until(element_not_present(
+            'css selector',
+            'iframe[src*="app://test-container.gaiamobile.org/index.html"]'
+        ))
+
+
 class MarionetteTestCase(CommonTestCase):
 
     match_re = re.compile(r"test_(.*)\.py$")
@@ -325,6 +424,7 @@ class MarionetteTestCase(CommonTestCase):
         self.methodName = methodName
         self.filepath = filepath
         self.testvars = kwargs.pop('testvars', None)
+        self.test_container = kwargs.pop('test_container', False)
         CommonTestCase.__init__(self, methodName, **kwargs)
 
     @classmethod
@@ -395,7 +495,7 @@ class MarionetteJSTestCase(CommonTestCase):
         self.jsFile = jsFile
         self._marionette_weakref = marionette_weakref
         self.marionette = None
-        self.oop = kwargs.pop('oop')
+        self.test_container = kwargs.pop('test_container', False)
         CommonTestCase.__init__(self, methodName)
 
     @classmethod
@@ -412,73 +512,12 @@ class MarionetteJSTestCase(CommonTestCase):
         js = f.read()
         args = []
 
-        # if this is a browser_ test, prepend head.js to it
-        if os.path.basename(self.jsFile).startswith('browser_'):
-            local_head = open(os.path.join(os.path.dirname(__file__), 'tests', 'head.js'), 'r')
-            js = local_head.read() + js
-            head = open(os.path.join(os.path.dirname(self.jsFile), 'head.js'), 'r')
-            for line in head:
-                # we need a bigger timeout than the default specified by the
-                # 'real' head.js
-                if 'const kDefaultWait' in line:
-                    js += 'const kDefaultWait = 45000;\n'
-                else:
-                    js += line
-
         if os.path.basename(self.jsFile).startswith('test_'):
             head_js = self.head_js_re.search(js);
             if head_js:
                 head_js = head_js.group(3)
                 head = open(os.path.join(os.path.dirname(self.jsFile), head_js), 'r')
                 js = head.read() + js;
-
-        if self.oop:
-            print 'running oop'
-            frame = None
-            try:
-                frame = self.marionette.find_element(
-                    'css selector',
-                    'iframe[src*="app://test-container.gaiamobile.org/index.html"]'
-                )
-            except NoSuchElementException:
-                result = self.marionette.execute_async_script("""
-let setReq = navigator.mozSettings.createLock().set({'lockscreen.enabled': false});
-setReq.onsuccess = function() {
-    let appsReq = navigator.mozApps.mgmt.getAll();
-    appsReq.onsuccess = function() {
-        let apps = appsReq.result;
-        for (let i = 0; i < apps.length; i++) {
-            let app = apps[i];
-            if (app.manifest.name === 'Test Container') {
-                app.launch();
-                window.addEventListener('apploadtime', function apploadtime(){
-                    window.removeEventListener('apploadtime', apploadtime);
-                    marionetteScriptFinished(true);
-                });
-                return;
-            }
-        }
-        marionetteScriptFinished(false);
-    }
-    appsReq.onerror = function() {
-        marionetteScriptFinished(false);
-    }
-}
-setReq.onerror = function() {
-    marionetteScriptFinished(false);
-}""", script_timeout=60000)
-                self.assertTrue(result)
-
-                frame = self.marionette.find_element(
-                    'css selector',
-                    'iframe[src*="app://test-container.gaiamobile.org/index.html"]'
-                )
-
-            self.marionette.switch_to_frame(frame)
-            main_process = self.marionette.execute_script("""
-                return SpecialPowers.isMainProcess();
-                """)
-            self.assertFalse(main_process)
 
         context = self.context_re.search(js)
         if context:
@@ -508,7 +547,7 @@ setReq.onerror = function() {
                             'expected timeout not triggered')
 
             if 'fail' in self.jsFile:
-                self.assertTrue(results['failed'] > 0,
+                self.assertTrue(len(results['failures']) > 0,
                                 "expected test failures didn't occur")
             else:
                 logger = get_default_logger()
@@ -517,10 +556,27 @@ setReq.onerror = function() {
                     name = "got false, expected true" if failure.get('name') is None else failure['name']
                     logger.test_status(self.test_name, name, 'FAIL',
                                        message=diag)
-                self.assertEqual(0, results['failed'],
-                                 '%d tests failed' % (results['failed']))
+                for failure in results['expectedFailures']:
+                    diag = "" if failure.get('diag') is None else failure['diag']
+                    name = "got false, expected false" if failure.get('name') is None else failure['name']
+                    logger.test_status(self.test_name, name, 'FAIL',
+                                       expected='FAIL', message=diag)
+                for failure in results['unexpectedSuccesses']:
+                    diag = "" if failure.get('diag') is None else failure['diag']
+                    name = "got true, expected false" if failure.get('name') is None else failure['name']
+                    logger.test_status(self.test_name, name, 'PASS',
+                                       expected='FAIL', message=diag)
+                self.assertEqual(0, len(results['failures']),
+                                 '%d tests failed' % len(results['failures']))
+                if len(results['unexpectedSuccesses']) > 0:
+                    raise _UnexpectedSuccess('')
+                if len(results['expectedFailures']) > 0:
+                    raise _ExpectedFailure((AssertionError, AssertionError(''), None))
 
-            self.assertTrue(results['passed'] + results['failed'] > 0,
+            self.assertTrue(results['passed']
+                            + len(results['failures'])
+                            + len(results['expectedFailures'])
+                            + len(results['unexpectedSuccesses']) > 0,
                             'no tests run')
 
         except ScriptTimeoutException:
@@ -530,9 +586,6 @@ setReq.onerror = function() {
             else:
                 self.loglines = self.marionette.get_logs()
                 raise
-
-        if self.oop:
-            self.marionette.switch_to_frame()
 
         self.marionette.execute_script("log('TEST-END: %s');" % self.jsFile.replace('\\', '\\\\'))
         self.marionette.test_name = None

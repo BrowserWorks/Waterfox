@@ -78,10 +78,10 @@ class ValueNumberer
     };
 
     bool deleteDefsRecursively(MDefinition *def);
-    bool pushDeadPhiOperands(MPhi *phi, const MBasicBlock *phiBlock,
-                             UseRemovedOption useRemovedOption = SetUseRemoved);
-    bool pushDeadInsOperands(MInstruction *ins,
-                             UseRemovedOption useRemovedOption = SetUseRemoved);
+    bool discardPhiOperands(MPhi *phi, const MBasicBlock *phiBlock,
+                            UseRemovedOption useRemovedOption = SetUseRemoved);
+    bool discardInsOperands(MInstruction *ins,
+                            UseRemovedOption useRemovedOption = SetUseRemoved);
     bool deleteDef(MDefinition *def,
                    UseRemovedOption useRemovedOption = SetUseRemoved);
     bool processDeadDefs();

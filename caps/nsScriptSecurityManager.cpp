@@ -11,6 +11,7 @@
 #include "js/OldDebugAPI.h"
 #include "xpcprivate.h"
 #include "XPCWrapper.h"
+#include "nsIAppsService.h"
 #include "nsILoadContext.h"
 #include "nsIServiceManager.h"
 #include "nsIScriptObjectPrincipal.h"
@@ -57,13 +58,14 @@
 #include "nsIChromeRegistry.h"
 #include "nsIContentSecurityPolicy.h"
 #include "nsIAsyncVerifyRedirectCallback.h"
+#include "mozIApplication.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/dom/BindingUtils.h"
 #include <stdint.h>
+#include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/StaticPtr.h"
 #include "nsContentUtils.h"
-#include "nsCxPusher.h"
 #include "nsJSUtils.h"
 #include "nsILoadInfo.h"
 
@@ -253,6 +255,57 @@ nsScriptSecurityManager::SecurityHashURI(nsIURI* aURI)
     return NS_SecurityHashURI(aURI);
 }
 
+uint16_t
+nsScriptSecurityManager::AppStatusForPrincipal(nsIPrincipal *aPrin)
+{
+    uint32_t appId = aPrin->GetAppId();
+    bool inMozBrowser = aPrin->GetIsInBrowserElement();
+    NS_WARN_IF_FALSE(appId != nsIScriptSecurityManager::UNKNOWN_APP_ID,
+                     "Asking for app status on a principal with an unknown app id");
+    // Installed apps have a valid app id (not NO_APP_ID or UNKNOWN_APP_ID)
+    // and they are not inside a mozbrowser.
+    if (appId == nsIScriptSecurityManager::NO_APP_ID ||
+        appId == nsIScriptSecurityManager::UNKNOWN_APP_ID || inMozBrowser)
+    {
+        return nsIPrincipal::APP_STATUS_NOT_INSTALLED;
+    }
+
+    nsCOMPtr<nsIAppsService> appsService = do_GetService(APPS_SERVICE_CONTRACTID);
+    NS_ENSURE_TRUE(appsService, nsIPrincipal::APP_STATUS_NOT_INSTALLED);
+
+    nsCOMPtr<mozIApplication> app;
+    appsService->GetAppByLocalId(appId, getter_AddRefs(app));
+    NS_ENSURE_TRUE(app, nsIPrincipal::APP_STATUS_NOT_INSTALLED);
+
+    uint16_t status = nsIPrincipal::APP_STATUS_INSTALLED;
+    NS_ENSURE_SUCCESS(app->GetAppStatus(&status),
+                      nsIPrincipal::APP_STATUS_NOT_INSTALLED);
+
+    nsAutoCString origin;
+    NS_ENSURE_SUCCESS(aPrin->GetOrigin(getter_Copies(origin)),
+                      nsIPrincipal::APP_STATUS_NOT_INSTALLED);
+    nsString appOrigin;
+    NS_ENSURE_SUCCESS(app->GetOrigin(appOrigin),
+                      nsIPrincipal::APP_STATUS_NOT_INSTALLED);
+
+    // We go from string -> nsIURI -> origin to be sure we
+    // compare two punny-encoded origins.
+    nsCOMPtr<nsIURI> appURI;
+    NS_ENSURE_SUCCESS(NS_NewURI(getter_AddRefs(appURI), appOrigin),
+                      nsIPrincipal::APP_STATUS_NOT_INSTALLED);
+
+    nsAutoCString appOriginPunned;
+    NS_ENSURE_SUCCESS(nsPrincipal::GetOriginForURI(appURI, getter_Copies(appOriginPunned)),
+                      nsIPrincipal::APP_STATUS_NOT_INSTALLED);
+
+    if (!appOriginPunned.Equals(origin)) {
+        return nsIPrincipal::APP_STATUS_NOT_INSTALLED;
+    }
+
+    return status;
+
+}
+
 NS_IMETHODIMP
 nsScriptSecurityManager::GetChannelPrincipal(nsIChannel* aChannel,
                                              nsIPrincipal** aPrincipal)
@@ -272,7 +325,11 @@ nsScriptSecurityManager::GetChannelPrincipal(nsIChannel* aChannel,
     aChannel->GetLoadInfo(getter_AddRefs(loadInfo));
     if (loadInfo) {
         if (loadInfo->GetLoadingSandboxed()) {
-            return CallCreateInstance(NS_NULLPRINCIPAL_CONTRACTID, aPrincipal);
+            nsRefPtr<nsNullPrincipal> prin =
+              nsNullPrincipal::CreateWithInheritedAttributes(loadInfo->LoadingPrincipal());
+            NS_ENSURE_TRUE(prin, NS_ERROR_FAILURE);
+            prin.forget(aPrincipal);
+            return NS_OK;
         }
 
         if (loadInfo->GetForceInheritPrincipal()) {
@@ -667,11 +724,27 @@ nsScriptSecurityManager::CheckLoadURIWithPrincipal(nsIPrincipal* aPrincipal,
         NS_ENSURE_SUCCESS(rv, rv);
 
         if (hasFlags) {
+            // Let apps load the whitelisted theme resources even if they don't
+            // have the webapps-manage permission but have the themeable one.
+            // Resources from the theme origin are also allowed to load from
+            // the theme origin (eg. stylesheets using images from the theme).
+            auto themeOrigin = Preferences::GetCString("b2g.theme.origin");
+            if (themeOrigin) {
+                nsAutoCString targetOrigin;
+                nsPrincipal::GetOriginForURI(targetBaseURI, getter_Copies(targetOrigin));
+                if (targetOrigin.Equals(themeOrigin)) {
+                    nsAutoCString pOrigin;
+                    aPrincipal->GetOrigin(getter_Copies(pOrigin));
+                    return nsContentUtils::IsExactSitePermAllow(aPrincipal, "themeable") ||
+                           pOrigin.Equals(themeOrigin)
+                        ? NS_OK : NS_ERROR_DOM_BAD_URI;
+                }
+            }
             // In this case, we allow opening only if the source and target URIS
             // are on the same domain, or the opening URI has the webapps
             // permision granted
-            if (!SecurityCompareURIs(sourceBaseURI,targetBaseURI) &&
-                !nsContentUtils::IsExactSitePermAllow(aPrincipal,WEBAPPS_PERM_NAME)){
+            if (!SecurityCompareURIs(sourceBaseURI, targetBaseURI) &&
+                !nsContentUtils::IsExactSitePermAllow(aPrincipal, WEBAPPS_PERM_NAME)) {
                 return NS_ERROR_DOM_BAD_URI;
             }
         }

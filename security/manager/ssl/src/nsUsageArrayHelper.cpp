@@ -62,7 +62,7 @@ nsUsageArrayHelper::check(uint32_t previousCheckResult,
                           const char *suffix,
                           CertVerifier * certVerifier,
                           SECCertificateUsage aCertUsage,
-                          PRTime time,
+                          mozilla::pkix::Time time,
                           CertVerifier::Flags flags,
                           uint32_t &aCounter,
                           char16_t **outUsages)
@@ -150,6 +150,7 @@ nsUsageArrayHelper::verifyFailed(uint32_t *_verified, int err)
   case SEC_ERROR_INADEQUATE_CERT_TYPE:
   case SEC_ERROR_CA_CERT_INVALID:
   case mozilla::pkix::MOZILLA_PKIX_ERROR_CA_CERT_USED_AS_END_ENTITY:
+  case mozilla::pkix::MOZILLA_PKIX_ERROR_INADEQUATE_KEY_SIZE:
     *_verified = nsNSSCertificate::USAGE_NOT_ALLOWED; break;
   /* These are the cases that have individual error messages */
   case SEC_ERROR_REVOKED_CERTIFICATE:
@@ -195,7 +196,8 @@ nsUsageArrayHelper::GetUsagesArray(const char *suffix,
   uint32_t &count = *_count;
   count = 0;
 
-  PRTime now = PR_Now();
+  mozilla::pkix::Time now(mozilla::pkix::Now());
+
   CertVerifier::Flags flags = localOnly ? CertVerifier::FLAG_LOCAL_ONLY : 0;
 
   // The following list of checks must be < max_returned_out_array_size

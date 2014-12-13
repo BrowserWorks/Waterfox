@@ -66,6 +66,7 @@ NS_IMPL_CYCLE_COLLECTION_INHERITED(nsDOMCameraControl, DOMMediaStream,
                                    mOnRecorderStateChangeCb,
                                    mOnPreviewStateChangeCb,
                                    mOnAutoFocusMovingCb,
+                                   mOnAutoFocusCompletedCb,
                                    mOnFacesDetectedCb)
 
 /* static */
@@ -155,6 +156,7 @@ nsDOMCameraControl::nsDOMCameraControl(uint32_t aCameraId,
   , mOnRecorderStateChangeCb(nullptr)
   , mOnPreviewStateChangeCb(nullptr)
   , mOnAutoFocusMovingCb(nullptr)
+  , mOnAutoFocusCompletedCb(nullptr)
   , mOnFacesDetectedCb(nullptr)
   , mWindow(aWindow)
 {
@@ -168,23 +170,33 @@ nsDOMCameraControl::nsDOMCameraControl(uint32_t aCameraId,
 
   // Create and initialize the underlying camera.
   ICameraControl::Configuration config;
+  bool haveInitialConfig = false;
+  nsresult rv;
 
   switch (aInitialConfig.mMode) {
     case CameraMode::Picture:
       config.mMode = ICameraControl::kPictureMode;
+      haveInitialConfig = true;
       break;
 
     case CameraMode::Video:
       config.mMode = ICameraControl::kVideoMode;
+      haveInitialConfig = true;
+      break;
+
+    case CameraMode::Unspecified:
       break;
 
     default:
       MOZ_ASSERT_UNREACHABLE("Unanticipated camera mode!");
+      break;
   }
 
-  config.mPreviewSize.width = aInitialConfig.mPreviewSize.mWidth;
-  config.mPreviewSize.height = aInitialConfig.mPreviewSize.mHeight;
-  config.mRecorderProfile = aInitialConfig.mRecorderProfile;
+  if (haveInitialConfig) {
+    config.mPreviewSize.width = aInitialConfig.mPreviewSize.mWidth;
+    config.mPreviewSize.height = aInitialConfig.mPreviewSize.mHeight;
+    config.mRecorderProfile = aInitialConfig.mRecorderProfile;
+  }
 
   mCameraControl = ICameraControl::Create(aCameraId);
   mCurrentConfiguration = initialConfig.forget();
@@ -201,7 +213,11 @@ nsDOMCameraControl::nsDOMCameraControl(uint32_t aCameraId,
   mCameraControl->AddListener(mListener);
 
   // Start the camera...
-  nsresult rv = mCameraControl->Start(&config);
+  if (haveInitialConfig) {
+    rv = mCameraControl->Start(&config);
+  } else {
+    rv = mCameraControl->Start();
+  }
   if (NS_FAILED(rv)) {
     mListener->OnUserError(DOMCameraControlListener::kInStartCamera, rv);
   }
@@ -384,11 +400,27 @@ nsDOMCameraControl::SetIsoMode(const nsAString& aIsoMode, ErrorResult& aRv)
 }
 
 double
+nsDOMCameraControl::GetPictureQuality(ErrorResult& aRv)
+{
+  MOZ_ASSERT(mCameraControl);
+
+  double quality;
+  aRv = mCameraControl->Get(CAMERA_PARAM_PICTURE_QUALITY, quality);
+  return quality;
+}
+void
+nsDOMCameraControl::SetPictureQuality(double aQuality, ErrorResult& aRv)
+{
+  MOZ_ASSERT(mCameraControl);
+  aRv = mCameraControl->Set(CAMERA_PARAM_PICTURE_QUALITY, aQuality);
+}
+
+double
 nsDOMCameraControl::GetZoom(ErrorResult& aRv)
 {
   MOZ_ASSERT(mCameraControl);
 
-  double zoom;
+  double zoom = 1.0;
   aRv = mCameraControl->Get(CAMERA_PARAM_ZOOM, zoom);
   return zoom;
 }
@@ -586,6 +618,17 @@ void
 nsDOMCameraControl::SetOnAutoFocusMoving(CameraAutoFocusMovingCallback* aCb)
 {
   mOnAutoFocusMovingCb = aCb;
+}
+
+CameraAutoFocusCallback*
+nsDOMCameraControl::GetOnAutoFocusCompleted()
+{
+  return mOnAutoFocusCompletedCb;
+}
+void
+nsDOMCameraControl::SetOnAutoFocusCompleted(CameraAutoFocusCallback* aCb)
+{
+  mOnAutoFocusCompletedCb = aCb;
 }
 
 CameraFaceDetectionCallback*
@@ -927,6 +970,7 @@ nsDOMCameraControl::Shutdown()
   mOnRecorderStateChangeCb = nullptr;
   mOnPreviewStateChangeCb = nullptr;
   mOnAutoFocusMovingCb = nullptr;
+  mOnAutoFocusCompletedCb = nullptr;
   mOnFacesDetectedCb = nullptr;
 
   mCameraControl->Shutdown();
@@ -1118,6 +1162,12 @@ nsDOMCameraControl::OnAutoFocusComplete(bool aAutoFocusSucceeded)
 
   nsRefPtr<CameraAutoFocusCallback> cb = mAutoFocusOnSuccessCb.forget();
   mAutoFocusOnErrorCb = nullptr;
+  if (cb) {
+    ErrorResult ignored;
+    cb->Call(aAutoFocusSucceeded, ignored);
+  }
+
+  cb = mOnAutoFocusCompletedCb;
   if (cb) {
     ErrorResult ignored;
     cb->Call(aAutoFocusSucceeded, ignored);

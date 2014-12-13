@@ -6,15 +6,16 @@
 
 #include "FMRadioService.h"
 #include "mozilla/Hal.h"
+#include "mozilla/ClearOnShutdown.h"
 #include "nsIAudioManager.h"
 #include "AudioManager.h"
 #include "nsDOMClassInfo.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/dom/FMRadioChild.h"
+#include "mozilla/dom/ScriptSettings.h"
 #include "nsIObserverService.h"
 #include "nsISettingsService.h"
 #include "nsJSUtils.h"
-#include "nsCxPusher.h"
 
 #define BAND_87500_108000_kHz 1
 #define BAND_76000_108000_kHz 2
@@ -135,6 +136,13 @@ public:
 
     EnableFMRadio(info);
 
+    FMRadioService* fmRadioService = FMRadioService::Singleton();
+    if (!fmRadioService->mTuneThread) {
+      // SeekRunnable and SetFrequencyRunnable run on this thread.
+      // These call ioctls that can stall the main thread, so we run them here.
+      NS_NewNamedThread("FM Tuning", getter_AddRefs(fmRadioService->mTuneThread));
+    }
+
     return NS_OK;
   }
 
@@ -214,10 +222,15 @@ public:
 
   NS_IMETHOD Run()
   {
+    FMRadioService* fmRadioService = FMRadioService::Singleton();
+    if (fmRadioService->mTuneThread) {
+      fmRadioService->mTuneThread->Shutdown();
+      fmRadioService->mTuneThread = nullptr;
+    }
     // Fix Bug 796733. DisableFMRadio should be called before
     // SetFmRadioAudioEnabled to prevent the annoying beep sound.
     DisableFMRadio();
-    IFMRadioService::Singleton()->EnableAudio(false);
+    fmRadioService->EnableAudio(false);
 
     return NS_OK;
   }
@@ -298,7 +311,7 @@ FMRadioService::RemoveObserver(FMRadioEventObserver* aObserver)
   {
     // Turning off the FM radio HW because observer list is empty.
     if (IsFMRadioOn()) {
-      NS_DispatchToMainThread(new DisableRunnable());
+      DoDisable();
     }
   }
 }
@@ -595,7 +608,8 @@ FMRadioService::SetFrequency(double aFrequencyInMHz,
     return;
   }
 
-  NS_DispatchToMainThread(new SetFrequencyRunnable(roundedFrequency));
+  mTuneThread->Dispatch(new SetFrequencyRunnable(roundedFrequency),
+                        nsIThread::DISPATCH_NORMAL);
 
   aReplyRunnable->SetReply(SuccessResponse());
   NS_DispatchToMainThread(aReplyRunnable);
@@ -636,7 +650,7 @@ FMRadioService::Seek(FMRadioSeekDirection aDirection,
   SetState(Seeking);
   mPendingRequest = aReplyRunnable;
 
-  NS_DispatchToMainThread(new SeekRunnable(aDirection));
+  mTuneThread->Dispatch(new SeekRunnable(aDirection), nsIThread::DISPATCH_NORMAL);
 }
 
 void
@@ -819,6 +833,7 @@ FMRadioService::Singleton()
 
   if (!sFMRadioService) {
     sFMRadioService = new FMRadioService();
+    ClearOnShutdown(&sFMRadioService);
   }
 
   return sFMRadioService;

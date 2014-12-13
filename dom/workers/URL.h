@@ -13,6 +13,8 @@
 #include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/URLSearchParams.h"
 
+class nsIPrincipal;
+
 namespace mozilla {
 namespace dom {
 struct objectURLOptions;
@@ -119,7 +121,7 @@ public:
   }
 
   // IURLSearchParamsObserver
-  void URLSearchParamsUpdated() MOZ_OVERRIDE;
+  void URLSearchParamsUpdated(URLSearchParams* aSearchParams) MOZ_OVERRIDE;
 
 private:
   URLProxy* GetURLProxy() const

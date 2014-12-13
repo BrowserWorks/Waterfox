@@ -16,6 +16,18 @@
     _(Pointer)                      \
     _(Double)                       \
     _(Float32)                      \
+    _(SimdValueX4)                  \
+    _(SimdSplatX4)                  \
+    _(Int32x4)                      \
+    _(Float32x4)                    \
+    _(SimdExtractElementI)          \
+    _(SimdExtractElementF)          \
+    _(SimdSignMaskX4)               \
+    _(SimdBinaryCompIx4)            \
+    _(SimdBinaryCompFx4)            \
+    _(SimdBinaryArithIx4)           \
+    _(SimdBinaryArithFx4)           \
+    _(SimdBinaryBitwiseX4)          \
     _(Value)                        \
     _(CloneLiteral)                 \
     _(Parameter)                    \
@@ -24,6 +36,7 @@
     _(TableSwitchV)                 \
     _(Goto)                         \
     _(NewArray)                     \
+    _(NewArrayCopyOnWrite)          \
     _(ArraySplice)                  \
     _(NewObject)                    \
     _(NewDeclEnvObject)             \
@@ -107,6 +120,7 @@
     _(AbsI)                         \
     _(AbsD)                         \
     _(AbsF)                         \
+    _(ClzI)                         \
     _(SqrtD)                        \
     _(SqrtF)                        \
     _(Atan2D)                       \
@@ -167,6 +181,7 @@
     _(Elements)                     \
     _(ConvertElementsToDoubles)     \
     _(MaybeToDoubleElement)         \
+    _(MaybeCopyElementsForWrite)    \
     _(LoadSlotV)                    \
     _(LoadSlotT)                    \
     _(StoreSlotV)                   \
@@ -198,6 +213,7 @@
     _(ArrayPushV)                   \
     _(ArrayPushT)                   \
     _(ArrayConcat)                  \
+    _(ArrayJoin)                    \
     _(StoreElementHoleV)            \
     _(StoreElementHoleT)            \
     _(LoadTypedArrayElement)        \
@@ -311,6 +327,8 @@
 # include "jit/arm/LOpcodes-arm.h"
 #elif defined(JS_CODEGEN_MIPS)
 # include "jit/mips/LOpcodes-mips.h"
+#elif defined(JS_CODEGEN_NONE)
+# include "jit/none/LOpcodes-none.h"
 #else
 # error "Unknown architecture!"
 #endif

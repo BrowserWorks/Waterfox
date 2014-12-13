@@ -30,7 +30,7 @@ public:
   {
   }
 
-  SharedMemoryBasic(const Handle& aHandle)
+  explicit SharedMemoryBasic(const Handle& aHandle)
     : mSharedMemory(aHandle, false)
   {
   }
@@ -84,6 +84,10 @@ public:
   }
 
 private:
+  ~SharedMemoryBasic()
+  {
+  }
+
   base::SharedMemory mSharedMemory;
 };
 

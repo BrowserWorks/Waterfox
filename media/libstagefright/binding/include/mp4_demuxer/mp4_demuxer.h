@@ -9,6 +9,7 @@
 #include "nsTArray.h"
 #include "mp4_demuxer/DecoderData.h"
 #include "mp4_demuxer/Interval.h"
+#include "nsISupportsImpl.h"
 
 namespace mozilla { class MediaByteRange; }
 
@@ -20,12 +21,14 @@ typedef int64_t Microseconds;
 
 class Stream
 {
-
 public:
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(Stream);
+
   virtual bool ReadAt(int64_t offset, void* data, size_t size,
                       size_t* bytes_read) = 0;
   virtual bool Length(int64_t* size) = 0;
 
+protected:
   virtual ~Stream() {}
 };
 
@@ -34,7 +37,7 @@ enum TrackType { kVideo = 1, kAudio };
 class MP4Demuxer
 {
 public:
-  MP4Demuxer(Stream* aSource);
+  explicit MP4Demuxer(Stream* aSource);
   ~MP4Demuxer();
 
   bool Init();
@@ -56,9 +59,13 @@ public:
   const AudioDecoderConfig& AudioConfig() { return mAudioConfig; }
   const VideoDecoderConfig& VideoConfig() { return mVideoConfig; }
 
+  void UpdateIndex(const nsTArray<mozilla::MediaByteRange>& aByteRanges);
+
   void ConvertByteRangesToTime(
     const nsTArray<mozilla::MediaByteRange>& aByteRanges,
-    nsTArray<Interval<Microseconds> >* aIntervals);
+    nsTArray<Interval<Microseconds>>* aIntervals);
+
+  int64_t GetEvictionOffset(Microseconds aTime);
 
 private:
   AudioDecoderConfig mAudioConfig;
@@ -66,7 +73,11 @@ private:
   CryptoFile mCrypto;
 
   nsAutoPtr<StageFrightPrivate> mPrivate;
+  nsRefPtr<Stream> mSource;
+  nsTArray<mozilla::MediaByteRange> mCachedByteRanges;
+  nsTArray<Interval<Microseconds>> mCachedTimeRanges;
 };
-}
 
-#endif
+} // namespace mozilla
+
+#endif // MP4_DEMUXER_H_

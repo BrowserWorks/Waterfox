@@ -9,6 +9,7 @@
 #include "jsfriendapi.h"
 #include "jsprf.h"
 #include "js/OldDebugAPI.h"
+#include "mozilla/dom/ScriptSettings.h"
 #include "nsServiceManagerUtils.h"
 #include "nsComponentManagerUtils.h"
 #include "nsIXPConnect.h"
@@ -29,7 +30,6 @@
 #include "nsJSPrincipals.h"
 #include "xpcpublic.h"
 #include "BackstagePass.h"
-#include "nsCxPusher.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsIPrincipal.h"
 #include "nsJSUtils.h"
@@ -71,8 +71,9 @@ public:
     ~XPCShellDirProvider() { }
 
     // The platform resource folder
-    void SetGREDir(nsIFile *greDir);
-    void ClearGREDir() { mGREDir = nullptr; }
+    void SetGREDirs(nsIFile *greDir);
+    void ClearGREDirs() { mGREDir = nullptr;
+                          mGREBinDir = nullptr; }
     // The application resource folder
     void SetAppDir(nsIFile *appFile);
     void ClearAppDir() { mAppDir = nullptr; }
@@ -85,18 +86,11 @@ public:
 
 private:
     nsCOMPtr<nsIFile> mGREDir;
+    nsCOMPtr<nsIFile> mGREBinDir;
     nsCOMPtr<nsIFile> mAppDir;
     nsCOMPtr<nsIFile> mPluginDir;
     nsCOMPtr<nsIFile> mAppFile;
 };
-
-#ifdef JS_THREADSAFE
-#define DoBeginRequest(cx) JS_BeginRequest((cx))
-#define DoEndRequest(cx)   JS_EndRequest((cx))
-#else
-#define DoBeginRequest(cx) ((void)0)
-#define DoEndRequest(cx)   ((void)0)
-#endif
 
 static const char kXPConnectServiceContractID[] = "@mozilla.org/js/xpc/XPConnect;1";
 
@@ -478,7 +472,6 @@ static bool
 Options(JSContext *cx, unsigned argc, jsval *vp)
 {
     JS::CallArgs args = CallArgsFromVp(argc, vp);
-    ContextOptions oldContextOptions = ContextOptionsRef(cx);
     RuntimeOptions oldRuntimeOptions = RuntimeOptionsRef(cx);
 
     for (unsigned i = 0; i < args.length(); ++i) {
@@ -491,7 +484,7 @@ Options(JSContext *cx, unsigned argc, jsval *vp)
             return false;
 
         if (strcmp(opt.ptr(), "strict") == 0)
-            ContextOptionsRef(cx).toggleExtraWarnings();
+            RuntimeOptionsRef(cx).toggleExtraWarnings();
         else if (strcmp(opt.ptr(), "werror") == 0)
             RuntimeOptionsRef(cx).toggleWerror();
         else if (strcmp(opt.ptr(), "strict_mode") == 0)
@@ -504,7 +497,7 @@ Options(JSContext *cx, unsigned argc, jsval *vp)
     }
 
     char *names = nullptr;
-    if (oldContextOptions.extraWarnings()) {
+    if (oldRuntimeOptions.extraWarnings()) {
         names = JS_sprintf_append(names, "%s", "strict");
         if (!names) {
             JS_ReportOutOfMemory(cx);
@@ -657,8 +650,8 @@ static Maybe<PersistentRootedValue> sScriptedInterruptCallback;
 static bool
 XPCShellInterruptCallback(JSContext *cx)
 {
-    MOZ_ASSERT(!sScriptedInterruptCallback.empty());
-    RootedValue callback(cx, sScriptedInterruptCallback.ref());
+    MOZ_ASSERT(sScriptedInterruptCallback);
+    RootedValue callback(cx, *sScriptedInterruptCallback);
 
     // If no interrupt callback was set by script, no-op.
     if (callback.isUndefined())
@@ -680,7 +673,7 @@ XPCShellInterruptCallback(JSContext *cx)
 static bool
 SetInterruptCallback(JSContext *cx, unsigned argc, jsval *vp)
 {
-    MOZ_ASSERT(!sScriptedInterruptCallback.empty());
+    MOZ_ASSERT(sScriptedInterruptCallback);
 
     // Sanity-check args.
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
@@ -691,7 +684,7 @@ SetInterruptCallback(JSContext *cx, unsigned argc, jsval *vp)
 
     // Allow callers to remove the interrupt callback by passing undefined.
     if (args[0].isUndefined()) {
-        sScriptedInterruptCallback.ref() = UndefinedValue();
+        *sScriptedInterruptCallback = UndefinedValue();
         return true;
     }
 
@@ -701,7 +694,7 @@ SetInterruptCallback(JSContext *cx, unsigned argc, jsval *vp)
         return false;
     }
 
-    sScriptedInterruptCallback.ref() = args[0];
+    *sScriptedInterruptCallback = args[0];
 
     return true;
 }
@@ -920,7 +913,7 @@ ProcessFile(JSContext *cx, JS::Handle<JSObject*> obj, const char *filename, FILE
             }
         }
         ungetc(ch, file);
-        DoBeginRequest(cx);
+        JS_BeginRequest(cx);
 
         JS::CompileOptions options(cx);
         options.setUTF8(true)
@@ -928,7 +921,7 @@ ProcessFile(JSContext *cx, JS::Handle<JSObject*> obj, const char *filename, FILE
                .setCompileAndGo(true);
         if (JS::Compile(cx, obj, options, file, &script) && !compileOnly)
             (void)JS_ExecuteScript(cx, obj, script, &result);
-        DoEndRequest(cx);
+        JS_EndRequest(cx);
 
         return;
     }
@@ -956,7 +949,7 @@ ProcessFile(JSContext *cx, JS::Handle<JSObject*> obj, const char *filename, FILE
             lineno++;
         } while (!JS_BufferIsCompilableUnit(cx, obj, buffer, strlen(buffer)));
 
-        DoBeginRequest(cx);
+        JS_BeginRequest(cx);
         /* Clear any pending exception from previous failed compiles.  */
         JS_ClearPendingException(cx);
         JS::CompileOptions options(cx);
@@ -980,7 +973,7 @@ ProcessFile(JSContext *cx, JS::Handle<JSObject*> obj, const char *filename, FILE
                 }
             }
         }
-        DoEndRequest(cx);
+        JS_EndRequest(cx);
     } while (!hitEOF && !gQuitting);
 
     fprintf(gOutFile, "\n");
@@ -1013,7 +1006,7 @@ static int
 usage(void)
 {
     fprintf(gErrFile, "%s\n", JS_GetImplementationVersion());
-    fprintf(gErrFile, "usage: xpcshell [-g gredir] [-a appdir] [-r manifest]... [-PsSwWCijmIn] [-v version] [-f scriptfile] [-e script] [scriptfile] [scriptarg...]\n");
+    fprintf(gErrFile, "usage: xpcshell [-g gredir] [-a appdir] [-r manifest]... [-WwxiCSsmIp] [-v version] [-f scriptfile] [-e script] [scriptfile] [scriptarg...]\n");
     return 2;
 }
 
@@ -1034,7 +1027,7 @@ ProcessArgsForCompartment(JSContext *cx, char **argv, int argc)
         case 'S':
             RuntimeOptionsRef(cx).toggleWerror();
         case 's':
-            ContextOptionsRef(cx).toggleExtraWarnings();
+            RuntimeOptionsRef(cx).toggleExtraWarnings();
             break;
         case 'I':
             RuntimeOptionsRef(cx).toggleIon()
@@ -1126,6 +1119,8 @@ ProcessArgs(JSContext *cx, JS::Handle<JSObject*> obj, char **argv, int argc, XPC
         case 'd':
             /* This used to try to turn on the debugger. */
             break;
+        case 'm':
+            break;
         case 'f':
             if (++i == argc) {
                 return usage();
@@ -1160,7 +1155,6 @@ ProcessArgs(JSContext *cx, JS::Handle<JSObject*> obj, char **argv, int argc, XPC
             break;
         case 'S':
         case 's':
-        case 'm':
         case 'I':
             // These options are processed in ProcessArgsForCompartment.
             break;
@@ -1362,11 +1356,27 @@ XRE_XPCShellMain(int argc, char **argv, char **envp)
             return 1;
         }
 
-        dirprovider.SetGREDir(greDir);
+        dirprovider.SetGREDirs(greDir);
 
         argc -= 2;
         argv += 2;
     } else {
+#ifdef XP_MACOSX
+        // On OSX, the GreD needs to point to Contents/Resources in the .app
+        // bundle. Libraries will be loaded at a relative path to GreD, i.e.
+        // ../MacOS.
+        nsCOMPtr<nsIFile> tmpDir;
+        XRE_GetFileFromPath(argv[0], getter_AddRefs(tmpDir));
+        tmpDir->GetParent(getter_AddRefs(greDir));
+        greDir->SetNativeLeafName(NS_LITERAL_CSTRING("Resources"));
+        bool dirExists = false;
+        greDir->Exists(&dirExists);
+        if (!dirExists) {
+            printf("Setting GreD failed.\n");
+            return 1;
+        }
+        dirprovider.SetGREDirs(greDir);
+#else
         nsAutoString workingDir;
         if (!GetCurrentWorkingDirectory(workingDir)) {
             printf("GetCurrentWorkingDirectory failed.\n");
@@ -1377,6 +1387,7 @@ XRE_XPCShellMain(int argc, char **argv, char **envp)
             printf("NS_NewLocalFile failed.\n");
             return 1;
         }
+#endif
     }
 
     if (argc > 1 && !strcmp(argv[1], "-a")) {
@@ -1467,14 +1478,12 @@ XRE_XPCShellMain(int argc, char **argv, char **envp)
         // Override the default XPConnect interrupt callback. We could store the
         // old one and restore it before shutting down, but there's not really a
         // reason to bother.
-        sScriptedInterruptCallback.construct(rt, UndefinedValue());
+        sScriptedInterruptCallback.emplace(rt, UndefinedValue());
         JS_SetInterruptCallback(rt, XPCShellInterruptCallback);
 
-        cx = JS_NewContext(rt, 8192);
-        if (!cx) {
-            printf("JS_NewContext failed!\n");
-            return 1;
-        }
+        dom::AutoJSAPI jsapi;
+        jsapi.Init();
+        cx = jsapi.cx();
 
         argc--;
         argv++;
@@ -1519,9 +1528,6 @@ XRE_XPCShellMain(int argc, char **argv, char **envp)
         xpc->SetFunctionThisTranslator(NS_GET_IID(nsITestXPCFunctionCallback), translator);
 #endif
 
-        nsCxPusher pusher;
-        pusher.Push(cx);
-
         nsRefPtr<BackstagePass> backstagePass;
         rv = NS_NewBackstagePass(getter_AddRefs(backstagePass));
         if (NS_FAILED(rv)) {
@@ -1561,20 +1567,17 @@ XRE_XPCShellMain(int argc, char **argv, char **envp)
             JSAutoCompartment ac(cx, glob);
 
             if (!JS_InitReflect(cx, glob)) {
-                JS_EndRequest(cx);
                 return 1;
             }
 
             if (!JS_DefineFunctions(cx, glob, glob_functions) ||
                 !JS_DefineProfilingFunctions(cx, glob)) {
-                JS_EndRequest(cx);
                 return 1;
             }
 
             JS::Rooted<JSObject*> envobj(cx);
             envobj = JS_DefineObject(cx, glob, "environment", &env_class);
             if (!envobj) {
-                JS_EndRequest(cx);
                 return 1;
             }
 
@@ -1587,15 +1590,16 @@ XRE_XPCShellMain(int argc, char **argv, char **envp)
             JS_DefineProperty(cx, glob, "__LOCATION__", JS::UndefinedHandleValue, 0,
                               GetLocationProperty, nullptr);
 
-            result = ProcessArgs(cx, glob, argv, argc, &dirprovider);
+            // We are almost certainly going to run script here, so we need an
+            // AutoEntryScript. This is Gecko-specific and not in any spec.
+            dom::AutoEntryScript aes(backstagePass);
+            result = ProcessArgs(aes.cx(), glob, argv, argc, &dirprovider);
 
             JS_DropPrincipals(rt, gJSPrincipals);
-            JS_SetAllNonReservedSlotsToUndefined(cx, glob);
+            JS_SetAllNonReservedSlotsToUndefined(aes.cx(), glob);
             JS_GC(rt);
         }
-        pusher.Pop();
         JS_GC(rt);
-        JS_DestroyContext(cx);
     } // this scopes the nsCOMPtrs
 
     if (!XRE_ShutdownTestShell())
@@ -1605,7 +1609,7 @@ XRE_XPCShellMain(int argc, char **argv, char **envp)
     rv = NS_ShutdownXPCOM( nullptr );
     MOZ_ASSERT(NS_SUCCEEDED(rv), "NS_ShutdownXPCOM failed");
 
-    sScriptedInterruptCallback.destroyIfConstructed();
+    sScriptedInterruptCallback.reset();
 
 #ifdef TEST_CALL_ON_WRAPPED_JS_AFTER_SHUTDOWN
     // test of late call and release (see above)
@@ -1616,7 +1620,7 @@ XRE_XPCShellMain(int argc, char **argv, char **envp)
 
     appDir = nullptr;
     appFile = nullptr;
-    dirprovider.ClearGREDir();
+    dirprovider.ClearGREDirs();
     dirprovider.ClearAppDir();
     dirprovider.ClearPluginDir();
     dirprovider.ClearAppFile();
@@ -1633,9 +1637,13 @@ XRE_XPCShellMain(int argc, char **argv, char **envp)
 }
 
 void
-XPCShellDirProvider::SetGREDir(nsIFile* greDir)
+XPCShellDirProvider::SetGREDirs(nsIFile* greDir)
 {
     mGREDir = greDir;
+    mGREDir->Clone(getter_AddRefs(mGREBinDir));
+#ifdef XP_MACOSX
+    mGREBinDir->SetNativeLeafName(NS_LITERAL_CSTRING("MacOS"));
+#endif
 }
 
 void
@@ -1679,6 +1687,9 @@ XPCShellDirProvider::GetFile(const char *prop, bool *persistent,
     if (mGREDir && !strcmp(prop, NS_GRE_DIR)) {
         *persistent = true;
         return mGREDir->Clone(result);
+    } else if (mGREBinDir && !strcmp(prop, NS_GRE_BIN_DIR)) {
+        *persistent = true;
+        return mGREBinDir->Clone(result);
     } else if (mAppFile && !strcmp(prop, XRE_EXECUTABLE_FILE)) {
         *persistent = true;
         return mAppFile->Clone(result);

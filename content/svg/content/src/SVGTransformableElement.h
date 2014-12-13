@@ -24,7 +24,7 @@ struct SVGBoundingBoxOptions;
 class SVGTransformableElement : public nsSVGElement
 {
 public:
-  SVGTransformableElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
+  explicit SVGTransformableElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
     : nsSVGElement(aNodeInfo) {}
   virtual ~SVGTransformableElement() {}
 
@@ -48,6 +48,7 @@ public:
                                       int32_t aModType) const MOZ_OVERRIDE;
 
 
+  // nsSVGElement overrides
   virtual bool IsEventAttributeName(nsIAtom* aName) MOZ_OVERRIDE;
 
 
@@ -65,8 +66,6 @@ public:
   virtual bool IsTransformable() MOZ_OVERRIDE { return true; }
 
 protected:
-  // nsSVGElement overrides
-
   nsAutoPtr<nsSVGAnimatedTransformList> mTransforms;
 
   // XXX maybe move this to property table, to save space on un-animated elems?
@@ -77,4 +76,3 @@ protected:
 } // namespace mozilla
 
 #endif // SVGTransformableElement_h
-

@@ -13,9 +13,14 @@ LIBRARY_NAME = 'omxplugingb235'
 FORCE_SHARED_LIB = True
 
 LOCAL_INCLUDES += [
-    '../../../content/media/plugins',
     '../include/gb',
     '../include/gb/media/stagefright/openmax',
+]
+
+USE_LIBS += [
+    '/media/omx-plugin/lib/gb/libutils/utils',
+    '/media/omx-plugin/lib/gb235/libstagefright/stagefright',
+    'stagefright_color_conversion',
 ]
 
 # Don't use STL wrappers; this isn't Gecko code

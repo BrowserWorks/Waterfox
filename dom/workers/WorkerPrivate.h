@@ -79,7 +79,7 @@ class SharedMutex
   class RefCountedMutex MOZ_FINAL : public Mutex
   {
   public:
-    RefCountedMutex(const char* aName)
+    explicit RefCountedMutex(const char* aName)
     : Mutex(aName)
     { }
 
@@ -93,7 +93,7 @@ class SharedMutex
   nsRefPtr<RefCountedMutex> mMutex;
 
 public:
-  SharedMutex(const char* aName)
+  explicit SharedMutex(const char* aName)
   : mMutex(new RefCountedMutex(aName))
   { }
 
@@ -243,6 +243,7 @@ private:
   bool mMainThreadObjectsForgotten;
   WorkerType mWorkerType;
   TimeStamp mCreationTimeStamp;
+  TimeStamp mNowBaseTimeStamp;
 
 protected:
   // The worker is owned by its thread, which is represented here.  This is set
@@ -393,10 +394,8 @@ public:
   GetInnerWindowId();
 
   void
-  UpdateRuntimeAndContextOptions(JSContext* aCx,
-                                 const JS::RuntimeOptions& aRuntimeOptions,
-                                 const JS::ContextOptions& aContentCxOptions,
-                                 const JS::ContextOptions& aChromeCxOptions);
+  UpdateRuntimeOptions(JSContext* aCx,
+                       const JS::RuntimeOptions& aRuntimeOptions);
 
   void
   UpdatePreference(JSContext* aCx, WorkerPreference aPref, bool aValue);
@@ -515,6 +514,11 @@ public:
   TimeStamp CreationTimeStamp() const
   {
     return mCreationTimeStamp;
+  }
+
+  TimeStamp NowBaseTimeStamp() const
+  {
+    return mNowBaseTimeStamp;
   }
 
   nsIPrincipal*
@@ -748,7 +752,7 @@ class WorkerPrivate : public WorkerPrivateParent<WorkerPrivate>
 
   struct SyncLoopInfo
   {
-    SyncLoopInfo(EventTarget* aEventTarget);
+    explicit SyncLoopInfo(EventTarget* aEventTarget);
 
     nsRefPtr<EventTarget> mEventTarget;
     bool mCompleted;
@@ -929,11 +933,7 @@ public:
   }
 
   void
-  UpdateRuntimeAndContextOptionsInternal(
-                                    JSContext* aCx,
-                                    const JS::RuntimeOptions& aRuntimeOptions,
-                                    const JS::ContextOptions& aContentCxOptions,
-                                    const JS::ContextOptions& aChromeCxOptions);
+  UpdateRuntimeOptionsInternal(JSContext* aCx, const JS::RuntimeOptions& aRuntimeOptions);
 
   void
   UpdatePreferenceInternal(JSContext* aCx, WorkerPreference aPref, bool aValue);
@@ -1039,6 +1039,13 @@ public:
   {
     AssertIsOnWorkerThread();
     return mPreferences[WORKERPREF_DUMP];
+  }
+
+  bool
+  DOMFetchEnabled() const
+  {
+    AssertIsOnWorkerThread();
+    return mPreferences[WORKERPREF_DOM_FETCH];
   }
 
   bool
@@ -1190,7 +1197,7 @@ public:
               ErrorResult& rv);
 
   static bool
-  WorkerAvailable(JSContext* /* unused */, JSObject* /* unused */);
+  WorkerAvailable(JSContext* aCx, JSObject* /* unused */);
 
 private:
   ChromeWorkerPrivate() MOZ_DELETE;
@@ -1231,7 +1238,7 @@ class AutoSyncLoopHolder
   uint32_t mIndex;
 
 public:
-  AutoSyncLoopHolder(WorkerPrivate* aWorkerPrivate)
+  explicit AutoSyncLoopHolder(WorkerPrivate* aWorkerPrivate)
   : mWorkerPrivate(aWorkerPrivate)
   , mTarget(aWorkerPrivate->CreateNewSyncLoop())
   , mIndex(aWorkerPrivate->mSyncLoopStack.Length() - 1)

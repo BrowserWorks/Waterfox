@@ -448,13 +448,11 @@ let Option = Class({
   },
 
   write: function(arg, ctx, name) {
-    if (!arg) {
+    // Ignore if arg is undefined or null; allow other falsy values
+    if (arg == undefined || arg[name] == undefined) {
       return undefined;
     }
-    let v = arg[name] || undefined;
-    if (v === undefined) {
-      return undefined;
-    }
+    let v = arg[name];
     return this.type.write(v, ctx);
   },
   read: function(v, ctx, outArgs, name) {
@@ -1107,7 +1105,12 @@ let Front = Class({
 
     let deferred = this._requests.shift();
     if (packet.error) {
-      deferred.reject(packet.error);
+      // "Protocol error" is here to avoid TBPL heuristics. See also
+      // https://mxr.mozilla.org/webtools-central/source/tbpl/php/inc/GeneralErrorFilter.php
+      let message = (packet.error == "unknownError" && packet.message) ?
+                    "Protocol error: " + packet.message :
+                    packet.error;
+      deferred.reject(message);
     } else {
       deferred.resolve(packet);
     }

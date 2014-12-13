@@ -154,6 +154,12 @@ LIRGeneratorShared::defineReturn(LInstruction *lir, MDefinition *mir)
       case MIRType_Double:
         lir->setDef(0, LDefinition(vreg, LDefinition::DOUBLE, LFloatReg(ReturnDoubleReg)));
         break;
+      case MIRType_Int32x4:
+        lir->setDef(0, LDefinition(vreg, LDefinition::INT32X4, LFloatReg(ReturnSimdReg)));
+        break;
+      case MIRType_Float32x4:
+        lir->setDef(0, LDefinition(vreg, LDefinition::FLOAT32X4, LFloatReg(ReturnSimdReg)));
+        break;
       default:
         LDefinition::Type type = LDefinition::TypeFrom(mir->type());
         JS_ASSERT(type != LDefinition::DOUBLE && type != LDefinition::FLOAT32);
@@ -223,30 +229,6 @@ LIRGeneratorShared::redefine(MDefinition *def, MDefinition *as)
         return false;
     def->setVirtualRegister(as->virtualRegister());
     return true;
-}
-
-bool
-LIRGeneratorShared::defineAs(LInstruction *outLir, MDefinition *outMir, MDefinition *inMir)
-{
-    uint32_t vreg = inMir->virtualRegister();
-    LDefinition::Policy policy = LDefinition::PASSTHROUGH;
-
-    if (outMir->type() == MIRType_Value) {
-#ifdef JS_NUNBOX32
-        outLir->setDef(TYPE_INDEX,
-                       LDefinition(vreg + VREG_TYPE_OFFSET, LDefinition::TYPE, policy));
-        outLir->setDef(PAYLOAD_INDEX,
-                       LDefinition(vreg + VREG_DATA_OFFSET, LDefinition::PAYLOAD, policy));
-#elif JS_PUNBOX64
-        outLir->setDef(0, LDefinition(vreg, LDefinition::BOX, policy));
-#else
-# error "Unexpected boxing type"
-#endif
-    } else {
-        outLir->setDef(0, LDefinition(vreg, LDefinition::TypeFrom(inMir->type()), policy));
-    }
-    outLir->setMir(outMir);
-    return redefine(outMir, inMir);
 }
 
 bool

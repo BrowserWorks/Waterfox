@@ -3,17 +3,20 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#ifndef nsColumnSetFrame_h___
+#define nsColumnSetFrame_h___
+
 /* rendering object for css3 multi-column layout */
 
 #include "mozilla/Attributes.h"
 #include "nsContainerFrame.h"
 #include "nsIFrameInlines.h" // for methods used by IS_TRUE_OVERFLOW_CONTAINER
 
-class nsColumnSetFrame : public nsContainerFrame {
+class nsColumnSetFrame MOZ_FINAL : public nsContainerFrame {
 public:
   NS_DECL_FRAMEARENA_HELPERS
 
-  nsColumnSetFrame(nsStyleContext* aContext);
+  explicit nsColumnSetFrame(nsStyleContext* aContext);
 
   virtual void Reflow(nsPresContext* aPresContext,
                       nsHTMLReflowMetrics& aDesiredSize,
@@ -32,8 +35,8 @@ public:
                            nsIFrame*       aOldFrame) MOZ_OVERRIDE;
 #endif
 
-  virtual nscoord GetMinWidth(nsRenderingContext *aRenderingContext) MOZ_OVERRIDE;
-  virtual nscoord GetPrefWidth(nsRenderingContext *aRenderingContext) MOZ_OVERRIDE;
+  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) MOZ_OVERRIDE;
+  virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) MOZ_OVERRIDE;
 
   /**
    * Retrieve the available height for content of this frame. The available content
@@ -74,6 +77,13 @@ public:
   virtual void PaintColumnRule(nsRenderingContext* aCtx,
                                const nsRect&        aDirtyRect,
                                const nsPoint&       aPt);
+
+  /**
+   * Similar to nsBlockFrame::DrainOverflowLines. Locate any columns not
+   * handled by our prev-in-flow, and any columns sitting on our own
+   * overflow list, and put them in our primary child list for reflowing.
+   */
+  void DrainOverflowColumns();
 
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const MOZ_OVERRIDE {
@@ -153,13 +163,6 @@ protected:
     }
   };
 
-  /**
-   * Similar to nsBlockFrame::DrainOverflowLines. Locate any columns not
-   * handled by our prev-in-flow, and any columns sitting on our own
-   * overflow list, and put them in our primary child list for reflowing.
-   */
-  void DrainOverflowColumns();
-
   bool ReflowColumns(nsHTMLReflowMetrics& aDesiredSize,
                      const nsHTMLReflowState& aReflowState,
                      nsReflowStatus& aReflowStatus,
@@ -224,3 +227,5 @@ protected:
                         nsCollapsingMargin* aCarriedOutBottomMargin,
                         ColumnBalanceData& aColData);
 };
+
+#endif // nsColumnSetFrame_h___

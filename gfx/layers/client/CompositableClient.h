@@ -123,7 +123,7 @@ protected:
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(CompositableClient)
 
-  CompositableClient(CompositableForwarder* aForwarder, TextureFlags aFlags = TextureFlags::NO_FLAGS);
+  explicit CompositableClient(CompositableForwarder* aForwarder, TextureFlags aFlags = TextureFlags::NO_FLAGS);
 
   virtual TextureInfo GetTextureInfo() const = 0;
 
@@ -131,8 +131,9 @@ public:
 
   TemporaryRef<BufferTextureClient>
   CreateBufferTextureClient(gfx::SurfaceFormat aFormat,
-                            TextureFlags aFlags = TextureFlags::DEFAULT,
-                            gfx::BackendType aMoz2dBackend = gfx::BackendType::NONE);
+                            gfx::IntSize aSize,
+                            gfx::BackendType aMoz2dBackend = gfx::BackendType::NONE,
+                            TextureFlags aFlags = TextureFlags::DEFAULT);
 
   TemporaryRef<TextureClient>
   CreateTextureClientForDrawing(gfx::SurfaceFormat aFormat,
@@ -245,8 +246,8 @@ protected:
  */
 struct AutoRemoveTexture
 {
-  AutoRemoveTexture(CompositableClient* aCompositable,
-                    TextureClient* aTexture = nullptr)
+  explicit AutoRemoveTexture(CompositableClient* aCompositable,
+                             TextureClient* aTexture = nullptr)
     : mTexture(aTexture)
     , mCompositable(aCompositable)
   {}

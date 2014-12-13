@@ -28,67 +28,67 @@ using namespace js::gc;
 using mozilla::DebugOnly;
 
 JS_PUBLIC_API(void)
-JS_CallValueTracer(JSTracer *trc, Value *valuep, const char *name)
+JS_CallUnbarrieredValueTracer(JSTracer *trc, Value *valuep, const char *name)
 {
     MarkValueUnbarriered(trc, valuep, name);
 }
 
 JS_PUBLIC_API(void)
-JS_CallIdTracer(JSTracer *trc, jsid *idp, const char *name)
+JS_CallUnbarrieredIdTracer(JSTracer *trc, jsid *idp, const char *name)
 {
     MarkIdUnbarriered(trc, idp, name);
 }
 
 JS_PUBLIC_API(void)
-JS_CallObjectTracer(JSTracer *trc, JSObject **objp, const char *name)
+JS_CallUnbarrieredObjectTracer(JSTracer *trc, JSObject **objp, const char *name)
 {
     MarkObjectUnbarriered(trc, objp, name);
 }
 
 JS_PUBLIC_API(void)
-JS_CallStringTracer(JSTracer *trc, JSString **strp, const char *name)
+JS_CallUnbarrieredStringTracer(JSTracer *trc, JSString **strp, const char *name)
 {
     MarkStringUnbarriered(trc, strp, name);
 }
 
 JS_PUBLIC_API(void)
-JS_CallScriptTracer(JSTracer *trc, JSScript **scriptp, const char *name)
+JS_CallUnbarrieredScriptTracer(JSTracer *trc, JSScript **scriptp, const char *name)
 {
     MarkScriptUnbarriered(trc, scriptp, name);
 }
 
 JS_PUBLIC_API(void)
-JS_CallHeapValueTracer(JSTracer *trc, JS::Heap<JS::Value> *valuep, const char *name)
+JS_CallValueTracer(JSTracer *trc, JS::Heap<JS::Value> *valuep, const char *name)
 {
     MarkValueUnbarriered(trc, valuep->unsafeGet(), name);
 }
 
 JS_PUBLIC_API(void)
-JS_CallHeapIdTracer(JSTracer *trc, JS::Heap<jsid> *idp, const char *name)
+JS_CallIdTracer(JSTracer *trc, JS::Heap<jsid> *idp, const char *name)
 {
     MarkIdUnbarriered(trc, idp->unsafeGet(), name);
 }
 
 JS_PUBLIC_API(void)
-JS_CallHeapObjectTracer(JSTracer *trc, JS::Heap<JSObject *> *objp, const char *name)
+JS_CallObjectTracer(JSTracer *trc, JS::Heap<JSObject *> *objp, const char *name)
 {
     MarkObjectUnbarriered(trc, objp->unsafeGet(), name);
 }
 
 JS_PUBLIC_API(void)
-JS_CallHeapStringTracer(JSTracer *trc, JS::Heap<JSString *> *strp, const char *name)
+JS_CallStringTracer(JSTracer *trc, JS::Heap<JSString *> *strp, const char *name)
 {
     MarkStringUnbarriered(trc, strp->unsafeGet(), name);
 }
 
 JS_PUBLIC_API(void)
-JS_CallHeapScriptTracer(JSTracer *trc, JS::Heap<JSScript *> *scriptp, const char *name)
+JS_CallScriptTracer(JSTracer *trc, JS::Heap<JSScript *> *scriptp, const char *name)
 {
     MarkScriptUnbarriered(trc, scriptp->unsafeGet(), name);
 }
 
 JS_PUBLIC_API(void)
-JS_CallHeapFunctionTracer(JSTracer *trc, JS::Heap<JSFunction *> *funp, const char *name)
+JS_CallFunctionTracer(JSTracer *trc, JS::Heap<JSFunction *> *funp, const char *name)
 {
     MarkObjectUnbarriered(trc, funp->unsafeGet(), name);
 }
@@ -554,9 +554,8 @@ GCMarker::markDelayedChildren(ArenaHeader *aheader)
 bool
 GCMarker::markDelayedChildren(SliceBudget &budget)
 {
-    gcstats::MaybeAutoPhase ap;
-    if (runtime()->gc.state() == MARK)
-        ap.construct(runtime()->gc.stats, gcstats::PHASE_MARK_DELAYED);
+    GCRuntime &gc = runtime()->gc;
+    gcstats::MaybeAutoPhase ap(gc.stats, gc.state() == MARK, gcstats::PHASE_MARK_DELAYED);
 
     JS_ASSERT(unmarkedArenaStackTop);
     do {
@@ -632,16 +631,13 @@ void
 GCMarker::markBufferedGrayRoots(JS::Zone *zone)
 {
     JS_ASSERT(grayBufferState == GRAY_BUFFER_OK);
-    JS_ASSERT(zone->isGCMarkingGray());
+    JS_ASSERT(zone->isGCMarkingGray() || zone->isGCCompacting());
 
     for (GrayRoot *elem = zone->gcGrayRoots.begin(); elem != zone->gcGrayRoots.end(); elem++) {
 #ifdef DEBUG
         setTracingDetails(elem->debugPrinter, elem->debugPrintArg, elem->debugPrintIndex);
 #endif
-        void *tmp = elem->thing;
-        setTracingLocation((void *)&elem->thing);
-        MarkKind(this, &tmp, elem->kind);
-        JS_ASSERT(tmp == elem->thing);
+        MarkKind(this, &elem->thing, elem->kind);
     }
 }
 
@@ -662,7 +658,20 @@ GCMarker::appendGrayRoot(void *thing, JSGCTraceKind kind)
 
     Zone *zone = static_cast<Cell *>(thing)->tenuredZone();
     if (zone->isCollecting()) {
-        zone->maybeAlive = true;
+        // See the comment on SetMaybeAliveFlag to see why we only do this for
+        // objects and scripts. We rely on gray root buffering for this to work,
+        // but we only need to worry about uncollected dead compartments during
+        // incremental GCs (when we do gray root buffering).
+        switch (kind) {
+          case JSTRACE_OBJECT:
+            static_cast<JSObject *>(thing)->compartment()->maybeAlive = true;
+            break;
+          case JSTRACE_SCRIPT:
+            static_cast<JSScript *>(thing)->compartment()->maybeAlive = true;
+            break;
+          default:
+            break;
+        }
         if (!zone->gcGrayRoots.append(root)) {
             resetBufferedGrayRoots();
             grayBufferState = GRAY_BUFFER_FAILED;

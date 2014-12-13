@@ -38,6 +38,26 @@ nsMediaSniffer::nsMediaSnifferEntry nsMediaSniffer::sSnifferEntries[] = {
   PATTERN_ENTRY("\xFF\xFF\xFF", "ID3", AUDIO_MP3)
 };
 
+static bool MatchesMP4orISOBrand(const uint8_t aData[4])
+{
+  // Return true if aData contains the string "mp4" (last byte ignored).
+  if (aData[0] == 0x6D &&
+      aData[1] == 0x70 &&
+      aData[2] == 0x34) {
+    return true;
+  }
+
+  // Return true if aData contains the string "isom", or "iso2".
+  if (aData[0] == 0x69 &&
+      aData[1] == 0x73 &&
+      aData[2] == 0x6F &&
+      (aData[3] == 0x6D || aData[3] == 0x32)) {
+    return true;
+  }
+
+  return false;
+}
+
 // This function implements mp4 sniffing algorithm, described at
 // http://mimesniff.spec.whatwg.org/#signature-for-mp4
 static bool MatchesMP4(const uint8_t* aData, const uint32_t aLength)
@@ -59,24 +79,18 @@ static bool MatchesMP4(const uint8_t* aData, const uint32_t aLength)
       aData[7] != 0x70) {
     return false;
   }
-  for (uint32_t i = 2; i <= boxSize / 4 - 1 ; i++) {
-    if (i == 3) {
-      continue;
-    }
-    // The string "mp42" or "mp41".
-    if (aData[4*i]   == 0x6D &&
-        aData[4*i+1] == 0x70 &&
-        aData[4*i+2] == 0x34) {
-      return true;
-    }
-    // The string "isom" or "iso2".
-    if (aData[4*i]   == 0x69 &&
-        aData[4*i+1] == 0x73 &&
-        aData[4*i+2] == 0x6F &&
-        (aData[4*i+3] == 0x6D || aData[4*i+3] == 0x32)) {
-      return true;
-    }
+  if (MatchesMP4orISOBrand(&aData[8])) {
+    return true;
   }
+  // Skip minor_version (bytes 12-15).
+  uint32_t bytesRead = 16;
+  while (bytesRead < boxSize) {
+    if (MatchesMP4orISOBrand(&aData[bytesRead])) {
+      return true;
+    }
+    bytesRead += 4;
+  }
+
   return false;
 }
 
@@ -102,17 +116,21 @@ nsMediaSniffer::GetMIMETypeFromContent(nsIRequest* aRequest,
                                        const uint32_t aLength,
                                        nsACString& aSniffedType)
 {
-  // For media, we want to sniff only if the Content-Type is unknown, or if it
-  // is application/octet-stream.
   nsCOMPtr<nsIChannel> channel = do_QueryInterface(aRequest);
   if (channel) {
-    nsAutoCString contentType;
-    nsresult rv = channel->GetContentType(contentType);
-    NS_ENSURE_SUCCESS(rv, rv);
-    if (!contentType.IsEmpty() &&
-        !contentType.EqualsLiteral(APPLICATION_OCTET_STREAM) &&
-        !contentType.EqualsLiteral(UNKNOWN_CONTENT_TYPE)) {
-      return NS_ERROR_NOT_AVAILABLE;
+    nsLoadFlags loadFlags = 0;
+    channel->GetLoadFlags(&loadFlags);
+    if (!(loadFlags & nsIChannel::LOAD_MEDIA_SNIFFER_OVERRIDES_CONTENT_TYPE)) {
+      // For media, we want to sniff only if the Content-Type is unknown, or if it
+      // is application/octet-stream.
+      nsAutoCString contentType;
+      nsresult rv = channel->GetContentType(contentType);
+      NS_ENSURE_SUCCESS(rv, rv);
+      if (!contentType.IsEmpty() &&
+          !contentType.EqualsLiteral(APPLICATION_OCTET_STREAM) &&
+          !contentType.EqualsLiteral(UNKNOWN_CONTENT_TYPE)) {
+        return NS_ERROR_NOT_AVAILABLE;
+      }
     }
   }
 

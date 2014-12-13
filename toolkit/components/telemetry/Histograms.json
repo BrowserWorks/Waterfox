@@ -43,7 +43,13 @@
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 3,
-    "description": "Application reputation remote status (0 = OK, 1 = FAIL, 2 = INVALID)"
+    "description": "Application reputation remote status (0=OK, 1=FAIL, 2=INVALID)"
+  },
+  "APPLICATION_REPUTATION_SERVER_VERDICT": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 8,
+    "description": "Application reputation remote response (0=SAFE, 1=DANGEROUS, 2=UNCOMMON, 3=POTENTIALLY_UNWANTED, 4=DANGEROUS_HOST)"
   },
   "APPLICATION_REPUTATION_COUNT": {
     "expires_in_version": "never",
@@ -71,25 +77,10 @@
     "description": "Maximum number of concurrent threads reached during a given download session"
   },
   "BLOCKLIST_SYNC_FILE_LOAD": {
+    "alert_emails": ["rvitillo@mozilla.com"],
     "expires_in_version": "35",
     "kind": "boolean",
     "description": "blocklist.xml has been loaded synchronously"
-  },
-  "COMPARTMENT_DONATED_NODE": {
-    "expires_in_version": "never",
-    "kind": "boolean",
-    "description": "When a compartment is destroyed, we record whether one of its nodes was ever adopted into another compartment"
-  },
-  "COMPARTMENT_ADOPTED_NODE": {
-    "expires_in_version": "never",
-    "kind": "boolean",
-    "description": "When a compartment is destroyed, we record whether it had ever adopted a node from another compartment"
-  },
-  "COMPARTMENT_LIVING_ADOPTERS": {
-    "expires_in_version": "never",
-    "kind": "enumerated",
-    "n_values": 10,
-    "description": "The number of living compartments for which COMPARTMENT_ADOPTED_NODE is true"
   },
   "CYCLE_COLLECTOR": {
     "expires_in_version": "never",
@@ -327,11 +318,11 @@
     "kind": "flag",
     "description": "Has seen location error"
   },
-  "JS_MINOR_VERSION": {
+  "JS_DEPRECATED_LANGUAGE_EXTENSIONS_IN_CONTENT": {
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 10,
-    "description": "JavaScript version in web content (1.x)"
+    "description": "Use of SpiderMonkey's deprecated language extensions in web content: ForEach, DestructuringForIn, LegacyGenerator, ExpressionClosure"
   },
   "TELEMETRY_PING": {
     "expires_in_version": "never",
@@ -352,6 +343,7 @@
     "description": "XUL cache was disabled"
   },
   "MEMORY_RESIDENT": {
+    "alert_emails": ["memshrink-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "exponential",
     "low": "32 * 1024",
@@ -361,6 +353,7 @@
     "description": "Resident memory size (KB)"
   },
   "MEMORY_VSIZE": {
+    "alert_emails": ["memshrink-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "exponential",
     "low": "32 * 1024",
@@ -370,6 +363,7 @@
     "description": "Virtual memory size (KB)"
   },
   "MEMORY_VSIZE_MAX_CONTIGUOUS": {
+    "alert_emails": ["memshrink-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "exponential",
     "low": "32 * 1024",
@@ -379,6 +373,7 @@
     "description": "Maximum-sized block of contiguous virtual memory (KB)"
   },
   "MEMORY_JS_COMPARTMENTS_SYSTEM": {
+    "alert_emails": ["memshrink-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "exponential",
     "high": "1000",
@@ -387,6 +382,7 @@
     "description": "Total JavaScript compartments used for add-ons and internals."
   },
   "MEMORY_JS_COMPARTMENTS_USER": {
+    "alert_emails": ["memshrink-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "exponential",
     "high": "1000",
@@ -395,6 +391,7 @@
     "description": "Total JavaScript compartments used for web pages"
   },
   "MEMORY_JS_MAIN_RUNTIME_TEMPORARY_PEAK": {
+    "alert_emails": ["memshrink-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "exponential",
     "low": 1024,
@@ -404,6 +401,7 @@
     "description": "Peak memory used by the main JSRuntime to store transient data (KB)"
   },
   "MEMORY_JS_GC_HEAP": {
+    "alert_emails": ["memshrink-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "exponential",
     "low": 1024,
@@ -413,6 +411,7 @@
     "description": "Memory used by the garbage-collected JavaScript heap (KB)"
   },
   "MEMORY_STORAGE_SQLITE": {
+    "alert_emails": ["memshrink-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "exponential",
     "low": 1024,
@@ -422,6 +421,7 @@
     "description": "Memory used by SQLite (KB)"
   },
   "MEMORY_IMAGES_CONTENT_USED_UNCOMPRESSED": {
+    "alert_emails": ["memshrink-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "exponential",
     "low": 1024,
@@ -431,6 +431,7 @@
     "description": "Memory used for uncompressed, in-use content images (KB)"
   },
   "MEMORY_HEAP_ALLOCATED": {
+    "alert_emails": ["memshrink-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "exponential",
     "low": 1024,
@@ -440,6 +441,7 @@
     "description": "Heap memory allocated (KB)"
   },
   "MEMORY_HEAP_COMMITTED_UNUSED": {
+    "alert_emails": ["memshrink-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "exponential",
     "low": 1024,
@@ -449,6 +451,7 @@
     "description": "Committed, unused heap memory (KB)"
   },
   "MEMORY_HEAP_COMMITTED_UNUSED_RATIO": {
+    "alert_emails": ["memshrink-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "linear",
     "high": "100",
@@ -456,6 +459,7 @@
     "description": "Ratio of committed, unused memory to allocated memory in the heap (percentage)."
   },
   "GHOST_WINDOWS": {
+    "alert_emails": ["memshrink-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "exponential",
     "high": "128",
@@ -464,6 +468,7 @@
     "description": "Number of ghost windows"
   },
   "MEMORY_FREE_PURGED_PAGES_MS": {
+    "alert_emails": ["memshrink-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "exponential",
     "high": "1024",
@@ -473,6 +478,7 @@
     "cpp_guard": "XP_MACOSX"
   },
   "LOW_MEMORY_EVENTS_VIRTUAL": {
+    "alert_emails": ["memshrink-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "exponential",
     "high": "1024",
@@ -482,6 +488,7 @@
     "cpp_guard": "XP_WIN"
   },
   "LOW_MEMORY_EVENTS_PHYSICAL": {
+    "alert_emails": ["memshrink-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "exponential",
     "high": "1024",
@@ -491,6 +498,7 @@
     "cpp_guard": "XP_WIN"
   },
   "LOW_MEMORY_EVENTS_COMMIT_SPACE": {
+    "alert_emails": ["memshrink-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "exponential",
     "high": "1024",
@@ -3012,6 +3020,68 @@
     "extended_statistics_ok": true,
     "description": "PLACES: Time to calculate the md5 hash for a backup"
   },
+  "PLACES_FAVICON_ICO_SIZES": {
+    "expires_in_version" : "never",
+    "kind": "exponential",
+    "high": 524288,
+    "n_buckets" : 100,
+    "description": "PLACES: Size of the ICO favicon files loaded from the web (Bytes)"
+  },
+  "PLACES_FAVICON_PNG_SIZES": {
+    "expires_in_version" : "never",
+    "kind": "exponential",
+    "high": 524288,
+    "n_buckets" : 100,
+    "description": "PLACES: Size of the PNG favicon files loaded from the web (Bytes)"
+  },
+  "PLACES_FAVICON_GIF_SIZES": {
+    "expires_in_version" : "never",
+    "kind": "exponential",
+    "high": 524288,
+    "n_buckets" : 100,
+    "description": "PLACES: Size of the GIF favicon files loaded from the web (Bytes)"
+  },
+  "PLACES_FAVICON_JPEG_SIZES": {
+    "expires_in_version" : "never",
+    "kind": "exponential",
+    "high": 524288,
+    "n_buckets" : 100,
+    "description": "PLACES: Size of the JPEG favicon files loaded from the web (Bytes)"
+  },
+  "PLACES_FAVICON_BMP_SIZES": {
+    "expires_in_version" : "never",
+    "kind": "exponential",
+    "high": 524288,
+    "n_buckets" : 100,
+    "description": "PLACES: Size of the BMP favicon files loaded from the web (Bytes)"
+  },
+  "PLACES_FAVICON_SVG_SIZES": {
+    "expires_in_version" : "never",
+    "kind": "exponential",
+    "high": 524288,
+    "n_buckets" : 100,
+    "description": "PLACES: Size of the SVG favicon files loaded from the web (Bytes)"
+  },
+  "PLACES_FAVICON_OTHER_SIZES": {
+    "expires_in_version" : "never",
+    "kind": "exponential",
+    "high": 524288,
+    "n_buckets" : 100,
+    "description": "PLACES: Size of favicon files without a specific file type probe, loaded from the web (Bytes)"
+  },
+  "LINK_ICON_SIZES_ATTR_USAGE": {
+    "expires_in_version" : "never",
+    "kind": "enumerated",
+    "n_values": 4,
+    "description": "The possible types of the 'sizes' attribute for <link rel=icon>. 0: Attribute not specified, 1: 'any', 2: Integer dimensions, 3: Invalid value."
+  },
+  "LINK_ICON_SIZES_ATTR_DIMENSION": {
+    "expires_in_version" : "never",
+    "kind": "linear",
+    "high": 513,
+    "n_buckets" : 64,
+    "description": "The width dimension of the 'sizes' attribute for <link rel=icon>."
+  },
   "FENNEC_DISTRIBUTION_REFERRER_INVALID": {
     "expires_in_version": "never",
     "kind": "flag",
@@ -3051,6 +3121,15 @@
     "cpp_guard": "ANDROID",
     "extended_statistics_ok": true,
     "description": "Number of thumbnails stored in the browser DB"
+  },
+  "FENNEC_READING_LIST_COUNT": {
+    "expires_in_version": "40",
+    "kind": "exponential",
+    "high": "1000",
+    "n_buckets": 10,
+    "cpp_guard": "ANDROID",
+    "extended_statistics_ok": true,
+    "description": "Number of reading list items stored in the browser DB"
   },
   "PLACES_SORTED_BOOKMARKS_PERC": {
     "expires_in_version": "never",
@@ -3986,14 +4065,6 @@
     "kind": "boolean",
     "description": "True when we had to wait for a pending preload on first access to localStorage data, false otherwise"
   },
-  "LOCALDOMSTORAGE_GETALLKEYS_MS": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": "3000",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "Time to return a list of all keys in domain's LocalStorage (ms)"
-  },
   "LOCALDOMSTORAGE_GETALLKEYS_BLOCKING_MS": {
     "expires_in_version": "never",
     "kind": "exponential",
@@ -4001,14 +4072,6 @@
     "n_buckets": 10,
     "extended_statistics_ok": true,
     "description": "Time to block before we return a list of all keys in domain's LocalStorage (ms)"
-  },
-  "LOCALDOMSTORAGE_GETKEY_MS": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": "3000",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "Time to return a key name in domain's LocalStorage (ms)"
   },
   "LOCALDOMSTORAGE_GETKEY_BLOCKING_MS": {
     "expires_in_version": "never",
@@ -4018,14 +4081,6 @@
     "extended_statistics_ok": true,
     "description": "Time to block before we return a key name in domain's LocalStorage (ms)"
   },
-  "LOCALDOMSTORAGE_GETLENGTH_MS": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": "3000",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "Time to return number of keys in domain's LocalStorage (ms)"
-  },
   "LOCALDOMSTORAGE_GETLENGTH_BLOCKING_MS": {
     "expires_in_version": "never",
     "kind": "exponential",
@@ -4033,14 +4088,6 @@
     "n_buckets": 10,
     "extended_statistics_ok": true,
     "description": "Time to block before we return number of keys in domain's LocalStorage (ms)"
-  },
-  "LOCALDOMSTORAGE_GETVALUE_MS": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": "3000",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "Time to return a value for a key in LocalStorage (ms)"
   },
   "LOCALDOMSTORAGE_GETVALUE_BLOCKING_MS": {
     "expires_in_version": "never",
@@ -4050,14 +4097,6 @@
     "extended_statistics_ok": true,
     "description": "Time to block before we return a value for a key in LocalStorage (ms)"
   },
-  "LOCALDOMSTORAGE_SETVALUE_MS": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": "3000",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "Time to set a single key's value in LocalStorage (ms)"
-  },
   "LOCALDOMSTORAGE_SETVALUE_BLOCKING_MS": {
     "expires_in_version": "never",
     "kind": "exponential",
@@ -4066,14 +4105,6 @@
     "extended_statistics_ok": true,
     "description": "Time to block before we set a single key's value in LocalStorage (ms)"
   },
-  "LOCALDOMSTORAGE_REMOVEKEY_MS": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": "3000",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "Time to remove a single key from LocalStorage (ms)"
-  },
   "LOCALDOMSTORAGE_REMOVEKEY_BLOCKING_MS": {
     "expires_in_version": "never",
     "kind": "exponential",
@@ -4081,14 +4112,6 @@
     "n_buckets": 10,
     "extended_statistics_ok": true,
     "description": "Time to block before we remove a single key from LocalStorage (ms)"
-  },
-  "LOCALDOMSTORAGE_CLEAR_MS": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": "3000",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "Time to clear LocalStorage for all domains (ms)"
   },
   "LOCALDOMSTORAGE_CLEAR_BLOCKING_MS": {
     "expires_in_version": "never",
@@ -4183,6 +4206,7 @@
     "description": "Number of histograms with total count low errors"
   },
   "TELEMETRY_FILES_EVICTED": {
+    "alert_emails": ["rvitillo@mozilla.com"],
     "expires_in_version": "36",
     "kind": "enumerated",
     "n_values": 30,
@@ -4191,6 +4215,23 @@
   "TELEMETRY_TEST_FLAG": {
     "expires_in_version": "never",
     "kind": "flag",
+    "description": "a testing histogram; not meant to be touched"
+  },
+  "TELEMETRY_TEST_COUNT": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "description": "a testing histogram; not meant to be touched"
+  },
+  "TELEMETRY_TEST_KEYED_FLAG": {
+    "expires_in_version": "never",
+    "kind": "flag",
+    "keyed": true,
+    "description": "a testing histogram; not meant to be touched"
+  },
+  "TELEMETRY_TEST_KEYED_COUNT": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "keyed": true,
     "description": "a testing histogram; not meant to be touched"
   },
   "STARTUP_CRASH_DETECTED": {
@@ -4321,14 +4362,6 @@
     "description": "Time to update the visited link set (ms)",
     "cpp_guard": "ANDROID"
   },
-  "FENNEC_LOWMEM_TAB_COUNT": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 100,
-    "n_buckets": 30,
-    "description": "How many tabs were open when a low-memory event was received",
-    "cpp_guard": "ANDROID"
-  },
   "FENNEC_RESTORING_ACTIVITY": {
     "expires_in_version": "never",
     "kind": "flag",
@@ -4378,26 +4411,6 @@
     "description": "Time for the Java UI to load (ms)",
     "cpp_guard": "ANDROID"
   },
-  "FENNEC_TAB_EXPIRED": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "low": 10,
-    "high": 604800,
-    "n_buckets": 20,
-    "extended_statistics_ok": true,
-    "description": "How long (in seconds) a tab was inactive before it was expired",
-    "cpp_guard": "ANDROID"
-  },
-  "FENNEC_TAB_ZOMBIFIED": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "low": 10,
-    "high": 604800,
-    "n_buckets": 20,
-    "extended_statistics_ok": true,
-    "description": "How long (in seconds) a tab was inactive when it was OOM-zombified",
-    "cpp_guard": "ANDROID"
-  },
   "FENNEC_TOPSITES_LOADER_TIME_MS": {
     "expires_in_version": "never",
     "kind": "exponential",
@@ -4419,6 +4432,18 @@
     "n_values": 100,
     "description": "Security UI Telemetry"
   },
+  "SEARCH_COUNTS": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "keyed": true,
+    "description": "Record the search counts for search engines that have partner agreements with Mozilla"
+  },
+  "SEARCH_DEFAULT_ENGINE": {
+    "expires_in_version": "never",
+    "kind": "flag",
+    "keyed": true,
+    "description": "Record the default search engine."
+  },
   "SEARCH_SERVICE_INIT_MS": {
     "expires_in_version": "never",
     "kind": "exponential",
@@ -4428,6 +4453,7 @@
     "description": "Time (ms) it takes to initialize the search service"
   },
   "SEARCH_SERVICE_INIT_SYNC": {
+    "alert_emails": ["rvitillo@mozilla.com"],
     "expires_in_version": "35",
     "kind": "boolean",
     "description": "search service has been initialized synchronously"
@@ -4475,6 +4501,7 @@
     "description": "Time (ms) it takes to figure out extension last modified time"
   },
   "TELEMETRY_MEMORY_REPORTER_MS": {
+    "alert_emails": ["memshrink-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "exponential",
     "high": "5000",
@@ -6305,6 +6332,14 @@
     "n_values": 24,
     "description": "Was a certificate error overridden on this handshake? What was it? (0=unknown error (indicating bug), 1=no, >1=a specific error)"
   },
+  "SSL_PERMANENT_CERT_ERROR_OVERRIDES": {
+    "alert_emails": ["seceng@mozilla.org"],
+    "expires_in_version": "42",
+    "kind": "exponential",
+    "high": 1024,
+    "n_buckets": 10,
+    "description": "How many permanent certificate overrides a user has stored."
+  },
   "TELEMETRY_TEST_EXPIRED": {
     "expires_in_version": "4.0a1",
     "kind": "flag",
@@ -6345,32 +6380,38 @@
     "extended_statistics_ok": true
   },
   "CERT_PINNING_RESULTS": {
+    "alert_emails": ["pinning@mozilla.org"],
     "expires_in_version": "never",
     "kind": "boolean",
     "description": "Certificate pinning results (0 = failure, 1 = success)"
   },
   "CERT_PINNING_TEST_RESULTS": {
+    "alert_emails": ["pinning@mozilla.org"],
     "expires_in_version": "never",
     "kind": "boolean",
     "description": "Certificate pinning test results (0 = failure, 1 = success)"
   },
   "CERT_PINNING_MOZ_RESULTS": {
+    "alert_emails": ["pinning@mozilla.org"],
     "expires_in_version": "never",
     "kind": "boolean",
     "description": "Certificate pinning results for Mozilla sites (0 = failure, 1 = success)"
   },
   "CERT_PINNING_MOZ_TEST_RESULTS": {
+    "alert_emails": ["pinning@mozilla.org"],
     "expires_in_version": "never",
     "kind": "boolean",
     "description": "Certificate pinning test results for Mozilla sites (0 = failure, 1 = success)"
   },
   "CERT_PINNING_MOZ_RESULTS_BY_HOST": {
+    "alert_emails": ["pinning@mozilla.org"],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 512,
     "description": "Certificate pinning results by host for Mozilla operational sites"
   },
   "CERT_PINNING_MOZ_TEST_RESULTS_BY_HOST": {
+    "alert_emails": ["pinning@mozilla.org"],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 512,
@@ -6511,5 +6552,32 @@
     "high": "10000000",
     "n_buckets": 10,
     "description": "Sidebar showing: seconds that the sidebar has been opened"
+  },
+  "TRACKING_PROTECTION_ENABLED": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Whether or not a session has tracking protection enabled"
+  },
+  "TRACKING_PROTECTION_SHIELD": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 4,
+    "description": "Tracking protection shield (0 = not shown, 1 = blocked, 2 = loaded, 3 = due to mixed content"
+  },
+  "TRACKING_PROTECTION_EVENTS": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 3,
+    "description": "Doorhanger shown = 0, Disable = 1, Enable = 2"
+  },
+  "LOOP_CLIENT_CALL_URL_REQUESTS_SUCCESS": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Stores 1 if generating a call URL succeeded, and 0 if it failed."
+  },
+  "LOOP_CLIENT_CALL_URL_SHARED": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Stores 1 every time the URL is copied or shared."
   }
 }

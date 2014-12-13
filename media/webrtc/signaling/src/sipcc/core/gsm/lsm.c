@@ -647,6 +647,7 @@ lsm_open_rx (lsm_lcb_t *lcb, cc_action_data_open_rcv_t *data,
 
           if (!status) {
             sstrncpy(dcb->ice_default_candidate_addr, default_addr, sizeof(dcb->ice_default_candidate_addr));
+            cpr_free(default_addr);
 
             data->port = (uint16_t)port_allocated;
             media->candidate_ct = candidate_ct;
@@ -916,8 +917,12 @@ lsm_rx_start (lsm_lcb_t *lcb, const char *fname, fsmdef_media_t *media)
            have > 2 streams. (adam@nostrum.com): For now,
            we use all the same stream so pc_stream_id == 0
            and the tracks are assigned in order and are
-           equal to the level in the media objects */
+           equal to the level in the media objects  bug 1056650 */
+        /* See also ReplaceTrack in PeerConnectionMedia.cpp */
+        /* Possible solution is a map from MediaStreamTrack->GetTrackID to this, or
+           to find a way to make them match */
         pc_stream_id = 0;
+        // note: not a TrackID! (on receive, we may use it to create a TrackID though)
         pc_track_id = media->level;
 
         /*

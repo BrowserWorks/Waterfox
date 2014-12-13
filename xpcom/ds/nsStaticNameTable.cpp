@@ -19,13 +19,13 @@ using namespace mozilla;
 
 struct NameTableKey
 {
-  NameTableKey(const nsAFlatCString* aKeyStr)
+  explicit NameTableKey(const nsAFlatCString* aKeyStr)
     : mIsUnichar(false)
   {
     mKeyStr.m1b = aKeyStr;
   }
 
-  NameTableKey(const nsAFlatString* aKeyStr)
+  explicit NameTableKey(const nsAFlatString* aKeyStr)
     : mIsUnichar(true)
   {
     mKeyStr.m2b = aKeyStr;
@@ -116,7 +116,7 @@ nsStaticCaseInsensitiveNameTable::~nsStaticCaseInsensitiveNameTable()
 {
   if (mNameArray) {
     // manually call the destructor on placement-new'ed objects
-    for (uint32_t index = 0; index < mNameTable.entryCount; index++) {
+    for (uint32_t index = 0; index < mNameTable.EntryCount(); index++) {
       mNameArray[index].~nsDependentCString();
     }
     nsMemory::Free((void*)mNameArray);
@@ -129,27 +129,27 @@ nsStaticCaseInsensitiveNameTable::~nsStaticCaseInsensitiveNameTable()
 
 bool
 nsStaticCaseInsensitiveNameTable::Init(const char* const aNames[],
-                                       int32_t aCount)
+                                       int32_t aLength)
 {
   NS_ASSERTION(!mNameArray, "double Init");
   NS_ASSERTION(!mNameTable.ops, "double Init");
   NS_ASSERTION(aNames, "null name table");
-  NS_ASSERTION(aCount, "0 count");
+  NS_ASSERTION(aLength, "0 length");
 
   mNameArray = (nsDependentCString*)
-    nsMemory::Alloc(aCount * sizeof(nsDependentCString));
+    nsMemory::Alloc(aLength * sizeof(nsDependentCString));
   if (!mNameArray) {
     return false;
   }
 
   if (!PL_DHashTableInit(&mNameTable, &nametable_CaseInsensitiveHashTableOps,
-                         nullptr, sizeof(NameTableEntry), aCount,
-                         fallible_t())) {
+                         nullptr, sizeof(NameTableEntry), fallible_t(),
+                         aLength)) {
     mNameTable.ops = nullptr;
     return false;
   }
 
-  for (int32_t index = 0; index < aCount; ++index) {
+  for (int32_t index = 0; index < aLength; ++index) {
     const char* raw = aNames[index];
 #ifdef DEBUG
     {
@@ -231,7 +231,7 @@ nsStaticCaseInsensitiveNameTable::GetStringValue(int32_t aIndex)
   NS_ASSERTION(mNameArray, "not inited");
   NS_ASSERTION(mNameTable.ops, "not inited");
 
-  if ((NOT_FOUND < aIndex) && ((uint32_t)aIndex < mNameTable.entryCount)) {
+  if ((NOT_FOUND < aIndex) && ((uint32_t)aIndex < mNameTable.EntryCount())) {
     return mNameArray[aIndex];
   }
   return mNullStr;

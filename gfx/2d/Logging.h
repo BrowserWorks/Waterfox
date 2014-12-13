@@ -89,7 +89,7 @@ template<int L>
 class Log
 {
 public:
-  Log(LogOptions aOptions = LogOptions(0)) : mOptions(aOptions) {}
+  explicit Log(LogOptions aOptions = LogOptions(0)) : mOptions(aOptions) {}
   ~Log() {
     Flush();
   }
@@ -120,13 +120,13 @@ public:
   Log &operator <<(double aDouble) { mMessage << aDouble; return *this; }
   template <typename T, typename Sub>
   Log &operator <<(const BasePoint<T, Sub>& aPoint)
-    { mMessage << "Point(" << aPoint.x << "," << aPoint.y << ")"; return *this; }
+    { mMessage << "Point" << aPoint; return *this; }
   template <typename T, typename Sub>
   Log &operator <<(const BaseSize<T, Sub>& aSize)
     { mMessage << "Size(" << aSize.width << "," << aSize.height << ")"; return *this; }
   template <typename T, typename Sub, typename Point, typename SizeT, typename Margin>
   Log &operator <<(const BaseRect<T, Sub, Point, SizeT, Margin>& aRect)
-    { mMessage << "Rect(" << aRect.x << "," << aRect.y << "," << aRect.width << "," << aRect.height << ")"; return *this; }
+    { mMessage << "Rect" << aRect; return *this; }
   Log &operator<<(const Matrix& aMatrix)
     { mMessage << "Matrix(" << aMatrix._11 << " " << aMatrix._12 << " ; " << aMatrix._21 << " " << aMatrix._22 << " ; " << aMatrix._31 << " " << aMatrix._32 << ")"; return *this; }
 
@@ -155,12 +155,31 @@ typedef Log<LOG_WARNING> WarningLog;
 #define gfxWarning if (1) ; else NoLog
 #endif
 
+// See nsDebug.h and the NS_WARN_IF macro
+
+#ifdef __cplusplus
+#ifdef DEBUG
+inline bool MOZ2D_warn_if_impl(bool aCondition, const char* aExpr,
+                               const char* aFile, int32_t aLine)
+{
+  if (MOZ_UNLIKELY(aCondition)) {
+    gfxWarning() << aExpr << " at " << aFile << ":" << aLine;
+  }
+  return aCondition;
+}
+#define MOZ2D_WARN_IF(condition) \
+  MOZ2D_warn_if_impl(condition, #condition, __FILE__, __LINE__)
+#else
+#define MOZ2D_WARN_IF(condition) (bool)(condition)
+#endif
+#endif
+
 const int INDENT_PER_LEVEL = 2;
 
 class TreeLog
 {
 public:
-  TreeLog(const std::string& aPrefix = "")
+  explicit TreeLog(const std::string& aPrefix = "")
         : mLog(LogOptions::NoNewline),
           mPrefix(aPrefix),
           mDepth(0),
@@ -223,7 +242,7 @@ private:
 class TreeAutoIndent
 {
 public:
-  TreeAutoIndent(TreeLog& aTreeLog) : mTreeLog(aTreeLog) {
+  explicit TreeAutoIndent(TreeLog& aTreeLog) : mTreeLog(aTreeLog) {
     mTreeLog.IncreaseIndent();
   }
   ~TreeAutoIndent() {

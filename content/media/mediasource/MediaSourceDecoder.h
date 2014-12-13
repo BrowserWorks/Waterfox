@@ -7,24 +7,19 @@
 #ifndef MOZILLA_MEDIASOURCEDECODER_H_
 #define MOZILLA_MEDIASOURCEDECODER_H_
 
-#include "MediaCache.h"
-#include "MediaDecoder.h"
 #include "mozilla/Attributes.h"
-#include "mozilla/ReentrantMonitor.h"
 #include "nsCOMPtr.h"
 #include "nsError.h"
-#include "nsStringGlue.h"
-#include "nsTArray.h"
+#include "MediaDecoder.h"
 
 class nsIStreamListener;
 
 namespace mozilla {
 
 class MediaResource;
-class MediaDecoderReader;
 class MediaDecoderStateMachine;
-class SubBufferDecoder;
 class MediaSourceReader;
+class SourceBufferDecoder;
 
 namespace dom {
 
@@ -36,27 +31,38 @@ class MediaSource;
 class MediaSourceDecoder : public MediaDecoder
 {
 public:
-  MediaSourceDecoder(dom::HTMLMediaElement* aElement);
+  explicit MediaSourceDecoder(dom::HTMLMediaElement* aElement);
 
   virtual MediaDecoder* Clone() MOZ_OVERRIDE;
   virtual MediaDecoderStateMachine* CreateStateMachine() MOZ_OVERRIDE;
   virtual nsresult Load(nsIStreamListener**, MediaDecoder*) MOZ_OVERRIDE;
   virtual nsresult GetSeekable(dom::TimeRanges* aSeekable) MOZ_OVERRIDE;
 
+  virtual void Shutdown() MOZ_OVERRIDE;
+
   static already_AddRefed<MediaResource> CreateResource();
 
   void AttachMediaSource(dom::MediaSource* aMediaSource);
   void DetachMediaSource();
 
-  already_AddRefed<SubBufferDecoder> CreateSubDecoder(const nsACString& aType);
+  already_AddRefed<SourceBufferDecoder> CreateSubDecoder(const nsACString& aType);
 
-  nsresult EnqueueDecoderInitialization();
+  void Ended();
+
+  void SetMediaSourceDuration(double aDuration);
+
+  // Provide a mechanism for MediaSourceReader to block waiting on data from a SourceBuffer.
+  void WaitForData();
+
+  // Called whenever a SourceBuffer has new data appended.
+  void NotifyGotData();
 
 private:
   // The owning MediaSource holds a strong reference to this decoder, and
   // calls Attach/DetachMediaSource on this decoder to set and clear
   // mMediaSource.
   dom::MediaSource* mMediaSource;
+  nsRefPtr<MediaSourceReader> mReader;
 };
 
 } // namespace mozilla

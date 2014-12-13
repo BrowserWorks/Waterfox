@@ -25,6 +25,19 @@ DIBTextureClient::~DIBTextureClient()
   MOZ_COUNT_DTOR(DIBTextureClient);
 }
 
+TemporaryRef<TextureClient>
+DIBTextureClient::CreateSimilar(TextureFlags aFlags,
+                                TextureAllocationFlags aAllocFlags) const
+{
+  RefPtr<TextureClient> tex = new DIBTextureClient(mFormat, mFlags | aFlags);
+
+  if (!tex->AllocateForSurface(mSize, aAllocFlags)) {
+    return nullptr;
+  }
+
+  return tex;
+}
+
 bool
 DIBTextureClient::Lock(OpenMode)
 {
@@ -41,6 +54,12 @@ DIBTextureClient::Unlock()
 {
   MOZ_ASSERT(mIsLocked, "Unlocked called while the texture is not locked!");
   if (mDrawTarget) {
+    if (mReadbackSink) {
+      RefPtr<SourceSurface> snapshot = mDrawTarget->Snapshot();
+      RefPtr<DataSourceSurface> dataSurf = snapshot->GetDataSurface();
+      mReadbackSink->ProcessReadback(dataSurf);
+    }
+
     mDrawTarget->Flush();
     mDrawTarget = nullptr;
   }

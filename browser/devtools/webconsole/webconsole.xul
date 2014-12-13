@@ -9,6 +9,8 @@
 <?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
 <?xml-stylesheet href="chrome://browser/skin/devtools/common.css"
                  type="text/css"?>
+<?xml-stylesheet href="chrome://browser/skin/devtools/widgets.css"
+                 type="text/css"?>
 <?xml-stylesheet href="chrome://browser/skin/devtools/webconsole.css"
                  type="text/css"?>
 <?xul-overlay href="chrome://global/content/editMenuOverlay.xul"?>
@@ -82,7 +84,7 @@ function goUpdateConsoleCommands() {
   <tooltip id="aHTMLTooltip" page="true"/>
 
   <box class="hud-outer-wrapper devtools-responsive-container theme-body" flex="1">
-    <vbox class="hud-console-wrapper" flex="1">
+    <vbox class="hud-console-wrapper devtools-main-content" flex="1">
       <toolbar class="hud-console-filter-toolbar devtools-toolbar" mode="full">
         <hbox class="devtools-toolbarbutton-group">
           <toolbarbutton label="&btnPageNet.label;" type="menu-button"
@@ -172,7 +174,8 @@ function goUpdateConsoleCommands() {
       </toolbar>
 
       <hbox id="output-wrapper" flex="1" context="output-contextmenu" tooltip="aHTMLTooltip">
-        <div xmlns="http://www.w3.org/1999/xhtml" id="output-container" tabindex="1" />
+        <div xmlns="http://www.w3.org/1999/xhtml" id="output-container"
+             tabindex="0" role="document" aria-live="polite" />
       </hbox>
       <notificationbox id="webconsole-notificationbox">
         <hbox class="jsterm-input-container" style="direction:ltr">
@@ -180,7 +183,8 @@ function goUpdateConsoleCommands() {
             <textbox class="jsterm-complete-node devtools-monospace"
                      multiline="true" rows="1" tabindex="-1"/>
             <textbox class="jsterm-input-node devtools-monospace"
-                     multiline="true" rows="1" tabindex="0"/>
+                     multiline="true" rows="1" tabindex="0"
+                     aria-autocomplete="list"/>
           </stack>
         </hbox>
       </notificationbox>

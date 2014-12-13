@@ -6,14 +6,14 @@
 #ifndef GFX_ASYNCCOMPOSITIONMANAGER_H
 #define GFX_ASYNCCOMPOSITIONMANAGER_H
 
-#include "Units.h"                      // for LayerPoint, etc
+#include "Units.h"                      // for ScreenPoint, etc
 #include "mozilla/layers/LayerManagerComposite.h"  // for LayerManagerComposite
-#include "gfx3DMatrix.h"                // for gfx3DMatrix
 #include "mozilla/Attributes.h"         // for MOZ_DELETE, MOZ_FINAL, etc
 #include "mozilla/RefPtr.h"             // for RefCounted
 #include "mozilla/TimeStamp.h"          // for TimeStamp
 #include "mozilla/dom/ScreenOrientation.h"  // for ScreenOrientation
 #include "mozilla/gfx/BasePoint.h"      // for BasePoint
+#include "mozilla/gfx/Matrix.h"         // for Matrix4x4
 #include "mozilla/layers/LayersMessages.h"  // for TargetConfig
 #include "nsAutoPtr.h"                  // for nsRefPtr
 #include "nsISupportsImpl.h"            // for LayerManager::AddRef, etc
@@ -28,23 +28,23 @@ class AutoResolveRefLayers;
 
 // Represents (affine) transforms that are calculated from a content view.
 struct ViewTransform {
-  ViewTransform(LayerPoint aTranslation = LayerPoint(),
-                ParentLayerToScreenScale aScale = ParentLayerToScreenScale())
-    : mTranslation(aTranslation)
-    , mScale(aScale)
+  explicit ViewTransform(ParentLayerToScreenScale aScale = ParentLayerToScreenScale(),
+                         ScreenPoint aTranslation = ScreenPoint())
+    : mScale(aScale)
+    , mTranslation(aTranslation)
   {}
 
-  operator gfx3DMatrix() const
+  operator gfx::Matrix4x4() const
   {
     return
-      gfx3DMatrix::Translation(mTranslation.x, mTranslation.y, 0) *
-      gfx3DMatrix::ScalingMatrix(mScale.scale, mScale.scale, 1);
+      gfx::Matrix4x4().Scale(mScale.scale, mScale.scale, 1)
+                      .PostTranslate(mTranslation.x, mTranslation.y, 0);
   }
 
   // For convenience, to avoid writing the cumbersome
-  // "gfx3dMatrix(a) * gfx3DMatrix(b)".
-  friend gfx3DMatrix operator*(const ViewTransform& a, const ViewTransform& b) {
-    return gfx3DMatrix(a) * gfx3DMatrix(b);
+  // "gfx::Matrix4x4(a) * gfx::Matrix4x4(b)".
+  friend gfx::Matrix4x4 operator*(const ViewTransform& a, const ViewTransform& b) {
+    return gfx::Matrix4x4(a) * gfx::Matrix4x4(b);
   }
 
   bool operator==(const ViewTransform& rhs) const {
@@ -55,8 +55,8 @@ struct ViewTransform {
     return !(*this == rhs);
   }
 
-  LayerPoint mTranslation;
   ParentLayerToScreenScale mScale;
+  ScreenPoint mTranslation;
 };
 
 /**
@@ -76,7 +76,7 @@ class AsyncCompositionManager MOZ_FINAL
 public:
   NS_INLINE_DECL_REFCOUNTING(AsyncCompositionManager)
 
-  AsyncCompositionManager(LayerManagerComposite* aManager)
+  explicit AsyncCompositionManager(LayerManagerComposite* aManager)
     : mLayerManager(aManager)
     , mIsFirstPaint(false)
     , mLayersUpdated(false)
@@ -124,15 +124,13 @@ public:
 private:
   void TransformScrollableLayer(Layer* aLayer);
   // Return true if an AsyncPanZoomController content transform was
-  // applied for |aLayer|.  *aWantNextFrame is set to true if the
-  // controller wants another animation frame.
-  bool ApplyAsyncContentTransformToTree(TimeStamp aCurrentFrame, Layer* aLayer,
-                                        bool* aWantNextFrame);
+  // applied for |aLayer|.
+  bool ApplyAsyncContentTransformToTree(Layer* aLayer);
   /**
    * Update the shadow transform for aLayer assuming that is a scrollbar,
    * so that it stays in sync with the content that is being scrolled by APZ.
    */
-  void ApplyAsyncTransformToScrollbar(TimeStamp aCurrentFrame, ContainerLayer* aLayer);
+  void ApplyAsyncTransformToScrollbar(Layer* aLayer);
 
   void SetFirstPaintViewport(const LayerIntPoint& aOffset,
                              const CSSToLayerScale& aZoom,
@@ -171,6 +169,7 @@ private:
    * zooming.
    */
   void AlignFixedAndStickyLayers(Layer* aLayer, Layer* aTransformedSubtreeRoot,
+                                 FrameMetrics::ViewID aTransformScrollId,
                                  const gfx::Matrix4x4& aPreviousTransformForRoot,
                                  const gfx::Matrix4x4& aCurrentTransformForRoot,
                                  const LayerMargin& aFixedLayerMargins);
@@ -205,11 +204,13 @@ private:
   bool mLayersUpdated;
 
   bool mReadyForCompose;
+
+  gfx::Matrix mWorldTransform;
 };
 
 class MOZ_STACK_CLASS AutoResolveRefLayers {
 public:
-  AutoResolveRefLayers(AsyncCompositionManager* aManager) : mManager(aManager)
+  explicit AutoResolveRefLayers(AsyncCompositionManager* aManager) : mManager(aManager)
   {
     if (mManager) {
       mManager->ResolveRefLayers();

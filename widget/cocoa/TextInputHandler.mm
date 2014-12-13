@@ -2029,7 +2029,7 @@ TextInputHandler::DispatchKeyEventForFlagsChanged(NSEvent* aNativeEvent,
   if ([mView isPluginView]) {
     if ([mView pluginEventModel] == NPEventModelCocoa) {
       ConvertCocoaKeyEventToNPCocoaEvent(aNativeEvent, cocoaEvent);
-      keyEvent.pluginEvent = &cocoaEvent;
+      keyEvent.mPluginEvent.Copy(cocoaEvent);
     }
   }
 
@@ -3199,15 +3199,34 @@ IMEInputHandler::FirstRectForCharacterRange(NSRange& aRange,
 NSUInteger
 IMEInputHandler::CharacterIndexForPoint(NSPoint& aPoint)
 {
+  NS_OBJC_BEGIN_TRY_ABORT_BLOCK_RETURN;
+
   PR_LOG(gLog, PR_LOG_ALWAYS,
     ("%p IMEInputHandler::CharacterIndexForPoint, aPoint={ x=%f, y=%f }",
      this, aPoint.x, aPoint.y));
 
-  //nsRefPtr<IMEInputHandler> kungFuDeathGrip(this);
+  NSWindow* mainWindow = [NSApp mainWindow];
+  if (!mWidget || !mainWindow) {
+    return NSNotFound;
+  }
 
-  // To implement this, we'd have to grovel in text frames looking at text
-  // offsets.
-  return 0;
+  WidgetQueryContentEvent charAt(true, NS_QUERY_CHARACTER_AT_POINT, mWidget);
+  NSPoint ptInWindow = [mainWindow convertScreenToBase:aPoint];
+  NSPoint ptInView = [mView convertPoint:ptInWindow fromView:nil];
+  charAt.refPoint.x =
+    static_cast<int32_t>(ptInView.x) * mWidget->BackingScaleFactor();
+  charAt.refPoint.y =
+    static_cast<int32_t>(ptInView.y) * mWidget->BackingScaleFactor();
+  mWidget->DispatchWindowEvent(charAt);
+  if (!charAt.mSucceeded ||
+      charAt.mReply.mOffset == WidgetQueryContentEvent::NOT_FOUND ||
+      charAt.mReply.mOffset >= static_cast<uint32_t>(NSNotFound)) {
+    return NSNotFound;
+  }
+
+  return charAt.mReply.mOffset;
+
+  NS_OBJC_END_TRY_ABORT_BLOCK_RETURN(NSNotFound);
 }
 
 NSArray*
@@ -3890,7 +3909,7 @@ PluginTextInputHandler::HandleCarbonPluginKeyEvent(EventRef aKeyEvent)
       uint32_t charCode(charCodes.ElementAt(i));
 
       keydownEvent.time = PR_IntervalNow();
-      keydownEvent.pluginEvent = &eventRec;
+      keydownEvent.mPluginEvent.Copy(eventRec);
       if (IsSpecialGeckoKey(macKeyCode)) {
         keydownEvent.keyCode = keyCode;
       } else {
@@ -4080,7 +4099,7 @@ PluginTextInputHandler::HandleKeyUpEventForPlugin(NSEvent* aNativeKeyEvent)
     InitKeyEvent(aNativeKeyEvent, keyupEvent);
     NPCocoaEvent pluginEvent;
     ConvertCocoaKeyEventToNPCocoaEvent(aNativeKeyEvent, pluginEvent);
-    keyupEvent.pluginEvent = &pluginEvent;
+    keyupEvent.mPluginEvent.Copy(pluginEvent);
     DispatchEvent(keyupEvent);
     return;
   }

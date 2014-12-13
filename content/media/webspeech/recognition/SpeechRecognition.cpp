@@ -490,13 +490,11 @@ SpeechRecognition::DoNothing(SpeechEvent* aEvent)
 void
 SpeechRecognition::AbortSilently(SpeechEvent* aEvent)
 {
-  bool stopRecording = StateBetween(STATE_ESTIMATING, STATE_RECOGNIZING);
-
   if (mRecognitionService) {
     mRecognitionService->Abort();
   }
 
-  if (stopRecording) {
+  if (mDOMStream) {
     StopRecording();
   }
 
@@ -700,7 +698,7 @@ SpeechRecognition::Start(const Optional<NonNull<DOMMediaStream>>& aStream, Error
   mRecognitionService = do_GetService(speechRecognitionServiceCID.get(), &rv);
   NS_ENSURE_SUCCESS_VOID(rv);
 
-  rv = mRecognitionService->Initialize(this->asWeakPtr());
+  rv = mRecognitionService->Initialize(this);
   NS_ENSURE_SUCCESS_VOID(rv);
 
   MediaStreamConstraints constraints;

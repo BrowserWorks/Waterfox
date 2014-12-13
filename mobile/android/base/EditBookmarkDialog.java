@@ -8,8 +8,9 @@ package org.mozilla.gecko;
 import org.mozilla.gecko.db.BrowserContract.Bookmarks;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.util.ThreadUtils;
-import org.mozilla.gecko.util.UiAsyncTask;
+import org.mozilla.gecko.util.UIAsyncTask;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -24,12 +25,11 @@ import android.widget.Toast;
 /**
  * A dialog that allows editing a bookmarks url, title, or keywords
  * <p>
- * Invoked by calling one of the {@link org.mozilla.gecko.EditBookmarkDialog.show}
+ * Invoked by calling one of the {@link org.mozilla.gecko.EditBookmarkDialog#show(String)}
  * methods.
  */
 public class EditBookmarkDialog {
-    private static final String LOGTAG = "GeckoEditBookmarkDialog";
-    private Context mContext;
+    private final Context mContext;
 
     public EditBookmarkDialog(Context context) {
         mContext = context;
@@ -39,10 +39,10 @@ public class EditBookmarkDialog {
      * A private struct to make it easier to pass bookmark data across threads
      */
     private class Bookmark {
-        int id;
-        String title;
-        String url;
-        String keyword;
+        final int id;
+        final String title;
+        final String url;
+        final String keyword;
 
         public Bookmark(int aId, String aTitle, String aUrl, String aKeyword) {
             id = aId;
@@ -140,10 +140,11 @@ public class EditBookmarkDialog {
      *            information about the first it finds.
      */
     public void show(final String url) {
-        (new UiAsyncTask<Void, Void, Bookmark>(ThreadUtils.getBackgroundHandler()) {
+        final ContentResolver cr = mContext.getContentResolver();
+        (new UIAsyncTask.WithoutParams<Bookmark>(ThreadUtils.getBackgroundHandler()) {
             @Override
-            public Bookmark doInBackground(Void... params) {
-                Cursor cursor = BrowserDB.getBookmarkForUrl(mContext.getContentResolver(), url);
+            public Bookmark doInBackground() {
+                final Cursor cursor = BrowserDB.getBookmarkForUrl(cr, url);
                 if (cursor == null) {
                     return null;
                 }
@@ -163,8 +164,9 @@ public class EditBookmarkDialog {
 
             @Override
             public void onPostExecute(Bookmark bookmark) {
-                if (bookmark == null)
+                if (bookmark == null) {
                     return;
+                }
 
                 show(bookmark.id, bookmark.title, bookmark.url, bookmark.keyword);
             }
@@ -183,8 +185,10 @@ public class EditBookmarkDialog {
      * @param keyword The initial keyword to show in the dialog
      */
     public void show(final int id, final String title, final String url, final String keyword) {
-        AlertDialog.Builder editPrompt = new AlertDialog.Builder(mContext);
-        final View editView = LayoutInflater.from(mContext).inflate(R.layout.bookmark_edit, null);
+        final Context context = mContext;
+
+        AlertDialog.Builder editPrompt = new AlertDialog.Builder(context);
+        final View editView = LayoutInflater.from(context).inflate(R.layout.bookmark_edit, null);
         editPrompt.setTitle(R.string.bookmark_edit_title);
         editPrompt.setView(editView);
 
@@ -198,18 +202,18 @@ public class EditBookmarkDialog {
         editPrompt.setPositiveButton(R.string.button_ok, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int whichButton) {
-                (new UiAsyncTask<Void, Void, Void>(ThreadUtils.getBackgroundHandler()) {
+                (new UIAsyncTask.WithoutParams<Void>(ThreadUtils.getBackgroundHandler()) {
                     @Override
-                    public Void doInBackground(Void... params) {
+                    public Void doInBackground() {
                         String newUrl = locationText.getText().toString().trim();
                         String newKeyword = keywordText.getText().toString().trim();
-                        BrowserDB.updateBookmark(mContext.getContentResolver(), id, newUrl, nameText.getText().toString(), newKeyword);
+                        BrowserDB.updateBookmark(context.getContentResolver(), id, newUrl, nameText.getText().toString(), newKeyword);
                         return null;
                     }
 
                     @Override
                     public void onPostExecute(Void result) {
-                        Toast.makeText(mContext, R.string.bookmark_updated, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, R.string.bookmark_updated, Toast.LENGTH_SHORT).show();
                     }
                 }).execute();
             }

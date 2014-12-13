@@ -36,7 +36,7 @@ class ClientCanvasLayer : public CopyableCanvasLayer,
 {
   typedef CanvasClient::CanvasClientType CanvasClientType;
 public:
-  ClientCanvasLayer(ClientLayerManager* aLayerManager) :
+  explicit ClientCanvasLayer(ClientLayerManager* aLayerManager) :
     CopyableCanvasLayer(aLayerManager,
                         static_cast<ClientLayer*>(MOZ_THIS_IN_INITIALIZER_LIST()))
     , mTextureSurface(nullptr)
@@ -101,8 +101,8 @@ protected:
 
   RefPtr<CanvasClient> mCanvasClient;
 
-  gl::SharedSurface* mTextureSurface;
-  gl::SurfaceFactory* mFactory;
+  UniquePtr<gl::SharedSurface> mTextureSurface;
+  UniquePtr<gl::SurfaceFactory> mFactory;
 
   friend class DeprecatedCanvasClient2D;
   friend class CanvasClient2D;

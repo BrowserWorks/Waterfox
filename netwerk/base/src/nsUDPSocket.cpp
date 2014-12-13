@@ -31,6 +31,7 @@ using namespace mozilla::net;
 using namespace mozilla;
 
 static NS_DEFINE_CID(kSocketTransportServiceCID, NS_SOCKETTRANSPORTSERVICE_CID);
+static const uint32_t UDP_PACKET_CHUNK_SIZE = 1400;
 
 //-----------------------------------------------------------------------------
 
@@ -273,7 +274,10 @@ nsUDPSocket::nsUDPSocket()
 
 nsUDPSocket::~nsUDPSocket()
 {
-  Close(); // just in case :)
+  if (mFD) {
+    PR_Close(mFD);
+    mFD = nullptr;
+  }
 
   MOZ_COUNT_DTOR(nsUDPSocket);
 }
@@ -479,7 +483,7 @@ nsUDPSocket::OnSocketReady(PRFileDesc *fd, int16_t outFlags)
   nsCOMPtr<nsIAsyncInputStream> pipeIn;
   nsCOMPtr<nsIAsyncOutputStream> pipeOut;
 
-  uint32_t segsize = 1400;
+  uint32_t segsize = UDP_PACKET_CHUNK_SIZE;
   uint32_t segcount = 0;
   net_ResolveSegmentParams(segsize, segcount);
   nsresult rv = NS_NewPipe2(getter_AddRefs(pipeIn), getter_AddRefs(pipeOut),
@@ -491,7 +495,7 @@ nsUDPSocket::OnSocketReady(PRFileDesc *fd, int16_t outFlags)
 
   nsRefPtr<nsUDPOutputStream> os = new nsUDPOutputStream(this, mFD, prClientAddr);
   rv = NS_AsyncCopy(pipeIn, os, mSts,
-                    NS_ASYNCCOPY_VIA_READSEGMENTS, 1400);
+                    NS_ASYNCCOPY_VIA_READSEGMENTS, UDP_PACKET_CHUNK_SIZE);
 
   if (NS_FAILED(rv)) {
     return;
@@ -552,7 +556,7 @@ NS_IMPL_ISUPPORTS(nsUDPSocket, nsIUDPSocket)
 //-----------------------------------------------------------------------------
 
 NS_IMETHODIMP
-nsUDPSocket::Init(int32_t aPort, bool aLoopbackOnly)
+nsUDPSocket::Init(int32_t aPort, bool aLoopbackOnly, bool aAddressReuse, uint8_t aOptionalArgc)
 {
   NetAddr addr;
 
@@ -567,13 +571,15 @@ nsUDPSocket::Init(int32_t aPort, bool aLoopbackOnly)
   else
     addr.inet.ip = htonl(INADDR_ANY);
 
-  return InitWithAddress(&addr);
+  return InitWithAddress(&addr, aAddressReuse, aOptionalArgc);
 }
 
 NS_IMETHODIMP
-nsUDPSocket::InitWithAddress(const NetAddr *aAddr)
+nsUDPSocket::InitWithAddress(const NetAddr *aAddr, bool aAddressReuse, uint8_t aOptionalArgc)
 {
   NS_ENSURE_TRUE(mFD == nullptr, NS_ERROR_ALREADY_INITIALIZED);
+
+  bool addressReuse = (aOptionalArgc == 1) ? aAddressReuse : true;
 
   //
   // configure listening socket...
@@ -598,7 +604,7 @@ nsUDPSocket::InitWithAddress(const NetAddr *aAddr)
   // to port 0 with SO_REUSEADDR
   if (port) {
     opt.option = PR_SockOpt_Reuseaddr;
-    opt.value.reuse_addr = true;
+    opt.value.reuse_addr = addressReuse;
     PR_SetSocketOption(mFD, &opt);
   }
 
@@ -669,6 +675,17 @@ nsUDPSocket::GetPort(int32_t *aResult)
 }
 
 NS_IMETHODIMP
+nsUDPSocket::GetLocalAddr(nsINetAddr * *aResult)
+{
+  NS_ENSURE_ARG_POINTER(aResult);
+
+  nsCOMPtr<nsINetAddr> result = new nsNetAddr(&mAddr);
+  result.forget(aResult);
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsUDPSocket::GetAddress(NetAddr *aResult)
 {
   // no need to enter the lock here
@@ -685,7 +702,7 @@ class SocketListenerProxy MOZ_FINAL : public nsIUDPSocketListener
   ~SocketListenerProxy() {}
 
 public:
-  SocketListenerProxy(nsIUDPSocketListener* aListener)
+  explicit SocketListenerProxy(nsIUDPSocketListener* aListener)
     : mListener(new nsMainThreadPtrHolder<nsIUDPSocketListener>(aListener))
     , mTargetThread(do_GetCurrentThread())
   { }
@@ -829,6 +846,47 @@ PendingSend::OnLookupComplete(nsICancelable *request,
   return NS_OK;
 }
 
+class PendingSendStream : public nsIDNSListener
+{
+public:
+  NS_DECL_THREADSAFE_ISUPPORTS
+  NS_DECL_NSIDNSLISTENER
+
+  PendingSendStream(nsUDPSocket *aSocket, uint16_t aPort,
+                    nsIInputStream *aStream)
+      : mSocket(aSocket)
+      , mPort(aPort)
+      , mStream(aStream) {}
+
+private:
+  virtual ~PendingSendStream() {}
+
+  nsRefPtr<nsUDPSocket> mSocket;
+  uint16_t mPort;
+  nsCOMPtr<nsIInputStream> mStream;
+};
+
+NS_IMPL_ISUPPORTS(PendingSendStream, nsIDNSListener)
+
+NS_IMETHODIMP
+PendingSendStream::OnLookupComplete(nsICancelable *request,
+                                    nsIDNSRecord  *rec,
+                                    nsresult       status)
+{
+  if (NS_FAILED(status)) {
+    NS_WARNING("Failed to send UDP packet due to DNS lookup failure");
+    return NS_OK;
+  }
+
+  NetAddr addr;
+  if (NS_SUCCEEDED(rec->GetNextAddr(mPort, &addr))) {
+    nsresult rv = mSocket->SendBinaryStreamWithAddress(&addr, mStream);
+    NS_ENSURE_SUCCESS(rv, rv);
+  }
+
+  return NS_OK;
+}
+
 class SendRequestRunnable: public nsRunnable {
 public:
   SendRequestRunnable(nsUDPSocket *aSocket,
@@ -951,6 +1009,32 @@ nsUDPSocket::SendWithAddress(const NetAddr *aAddr, const uint8_t *aData,
     *_retval = aDataLength;
   }
   return NS_OK;
+}
+
+NS_IMETHODIMP
+nsUDPSocket::SendBinaryStream(const nsACString &aHost, uint16_t aPort,
+                              nsIInputStream *aStream)
+{
+  NS_ENSURE_ARG(aStream);
+
+  nsCOMPtr<nsIDNSListener> listener = new PendingSendStream(this, aPort, aStream);
+
+  return ResolveHost(aHost, listener);
+}
+
+NS_IMETHODIMP
+nsUDPSocket::SendBinaryStreamWithAddress(const NetAddr *aAddr, nsIInputStream *aStream)
+{
+  NS_ENSURE_ARG(aAddr);
+  NS_ENSURE_ARG(aStream);
+
+  PRNetAddr prAddr;
+  PR_InitializeNetAddr(PR_IpAddrAny, 0, &prAddr);
+  NetAddrToPRNetAddr(aAddr, &prAddr);
+
+  nsRefPtr<nsUDPOutputStream> os = new nsUDPOutputStream(this, mFD, prAddr);
+  return NS_AsyncCopy(aStream, os, mSts, NS_ASYNCCOPY_VIA_READSEGMENTS,
+                      UDP_PACKET_CHUNK_SIZE);
 }
 
 nsresult

@@ -20,10 +20,11 @@ class SharedSurface_ANGLEShareHandle
     : public SharedSurface
 {
 public:
-    static SharedSurface_ANGLEShareHandle* Create(GLContext* gl,
-                                                  EGLContext context, EGLConfig config,
-                                                  const gfx::IntSize& size,
-                                                  bool hasAlpha);
+    static UniquePtr<SharedSurface_ANGLEShareHandle> Create(GLContext* gl,
+                                                            EGLContext context,
+                                                            EGLConfig config,
+                                                            const gfx::IntSize& size,
+                                                            bool hasAlpha);
 
     static SharedSurface_ANGLEShareHandle* Cast(SharedSurface* surf) {
         MOZ_ASSERT(surf->mType == SharedSurfaceType::EGLSurfaceANGLE);
@@ -64,7 +65,8 @@ public:
     virtual void UnlockProdImpl() MOZ_OVERRIDE;
 
     virtual void Fence() MOZ_OVERRIDE;
-    virtual bool WaitSync() MOZ_OVERRIDE;
+    virtual bool WaitSync() MOZ_OVERRIDE { return true; } // Fence is glFinish.
+    virtual bool PollSync() MOZ_OVERRIDE { return true; }
 
     // Implementation-specific functions below:
     HANDLE GetShareHandle() {
@@ -84,15 +86,15 @@ protected:
     EGLConfig mConfig;
 
 public:
-    static SurfaceFactory_ANGLEShareHandle* Create(GLContext* gl,
-                                                   const SurfaceCaps& caps);
+    static UniquePtr<SurfaceFactory_ANGLEShareHandle> Create(GLContext* gl,
+                                                             const SurfaceCaps& caps);
 
 protected:
     SurfaceFactory_ANGLEShareHandle(GLContext* gl,
                                     GLLibraryEGL* egl,
                                     const SurfaceCaps& caps);
 
-    virtual SharedSurface* CreateShared(const gfx::IntSize& size) MOZ_OVERRIDE {
+    virtual UniquePtr<SharedSurface> CreateShared(const gfx::IntSize& size) MOZ_OVERRIDE {
         bool hasAlpha = mReadCaps.alpha;
         return SharedSurface_ANGLEShareHandle::Create(mProdGL,
                                                       mContext, mConfig,

@@ -1,4 +1,5 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
+/* -*- Mode: Java; c-basic-offset: 4; tab-width: 4; indent-tabs-mode: nil; -*-
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -20,6 +21,8 @@ import android.support.v7.media.MediaRouter;
 import android.support.v7.media.MediaRouter.RouteInfo;
 import android.util.Log;
 
+import com.google.android.gms.cast.CastMediaControlIntent;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Iterator;
@@ -33,6 +36,8 @@ interface GeckoMediaPlayer {
     public void stop(EventCallback callback);
     public void start(EventCallback callback);
     public void end(EventCallback callback);
+    public void mirror(EventCallback callback);
+    public void message(String message, EventCallback callback);
 }
 
 /* Manages a list of GeckoMediaPlayers methods (i.e. Chromecast/Miracast). Routes messages
@@ -79,14 +84,17 @@ class MediaPlayerManager implements NativeEventListener,
             app.addAppStateListener(this);
         }
 
-        mediaRouter = MediaRouter.getInstance(context); 
-        EventDispatcher.getInstance().registerGeckoThreadListener(this, "MediaPlayer:Load",
-                                                                        "MediaPlayer:Start",
-                                                                        "MediaPlayer:Stop",
-                                                                        "MediaPlayer:Play",
-                                                                        "MediaPlayer:Pause",
-                                                                        "MediaPlayer:Get",
-                                                                        "MediaPlayer:End");
+        mediaRouter = MediaRouter.getInstance(context);
+        EventDispatcher.getInstance().registerGeckoThreadListener(this,
+                                                                  "MediaPlayer:Load",
+                                                                  "MediaPlayer:Start",
+                                                                  "MediaPlayer:Stop",
+                                                                  "MediaPlayer:Play",
+                                                                  "MediaPlayer:Pause",
+                                                                  "MediaPlayer:Get",
+                                                                  "MediaPlayer:End",
+                                                                  "MediaPlayer:Mirror",
+                                                                  "MediaPlayer:Message");
     }
 
     @JNITarget
@@ -95,13 +103,16 @@ class MediaPlayerManager implements NativeEventListener,
             return;
         }
 
-        EventDispatcher.getInstance().unregisterGeckoThreadListener(instance, "MediaPlayer:Load",
-                                                                              "MediaPlayer:Start",
-                                                                              "MediaPlayer:Stop",
-                                                                              "MediaPlayer:Play",
-                                                                              "MediaPlayer:Pause",
-                                                                              "MediaPlayer:Get",
-                                                                              "MediaPlayer:End");
+        EventDispatcher.getInstance().unregisterGeckoThreadListener(instance,
+                                                                    "MediaPlayer:Load",
+                                                                    "MediaPlayer:Start",
+                                                                    "MediaPlayer:Stop",
+                                                                    "MediaPlayer:Play",
+                                                                    "MediaPlayer:Pause",
+                                                                    "MediaPlayer:Get",
+                                                                    "MediaPlayer:End",
+                                                                    "MediaPlayer:Mirror",
+                                                                    "MediaPlayer:Message");
         if (instance.context instanceof GeckoApp) {
             GeckoApp app = (GeckoApp) instance.context;
             app.removeAppStateListener(instance);
@@ -146,8 +157,10 @@ class MediaPlayerManager implements NativeEventListener,
 
         final GeckoMediaPlayer display = displays.get(message.getString("id"));
         if (display == null) {
-            Log.e(LOGTAG, "Couldn't find a display for this id");
-            callback.sendError(null);
+            Log.e(LOGTAG, "Couldn't find a display for this id: " + message.getString("id") + " for message: " + event);
+            if (callback != null) {
+                callback.sendError(null);
+            }
             return;
         }
 
@@ -161,6 +174,10 @@ class MediaPlayerManager implements NativeEventListener,
             display.pause(callback);
         } else if ("MediaPlayer:End".equals(event)) {
             display.end(callback);
+        } else if ("MediaPlayer:Mirror".equals(event)) {
+            display.mirror(callback);
+        } else if ("MediaPlayer:Message".equals(event) && message.has("data")) {
+            display.message(message.getString("data"), callback);
         } else if ("MediaPlayer:Load".equals(event)) {
             final String url = message.optString("source", "");
             final String type = message.optString("type", "video/mp4");
@@ -169,48 +186,49 @@ class MediaPlayerManager implements NativeEventListener,
         }
     }
 
-    private final MediaRouter.Callback callback = new MediaRouter.Callback() {
-        @Override
-        public void onRouteRemoved(MediaRouter router, RouteInfo route) {
-            debug("onRouteRemoved: route=" + route);
-            displays.remove(route.getId());
-        }
-
-        @SuppressWarnings("unused")
-        public void onRouteSelected(MediaRouter router, int type, MediaRouter.RouteInfo route) {
-        }
-
-        // These methods aren't used by the support version Media Router
-        @SuppressWarnings("unused")
-        public void onRouteUnselected(MediaRouter router, int type, RouteInfo route) {
-        }
-
-        @Override
-        public void onRoutePresentationDisplayChanged(MediaRouter router, RouteInfo route) {
-        }
-
-        @Override
-        public void onRouteVolumeChanged(MediaRouter router, RouteInfo route) {
-        }
-
-        @Override
-        public void onRouteAdded(MediaRouter router, MediaRouter.RouteInfo route) {
-            debug("onRouteAdded: route=" + route);
-            GeckoMediaPlayer display = getMediaPlayerForRoute(route);
-            if (display != null) {
-                displays.put(route.getId(), display);
+    private final MediaRouter.Callback callback =
+        new MediaRouter.Callback() {
+            @Override
+            public void onRouteRemoved(MediaRouter router, RouteInfo route) {
+                debug("onRouteRemoved: route=" + route);
+                displays.remove(route.getId());
             }
-        }
 
-        @Override
-        public void onRouteChanged(MediaRouter router, MediaRouter.RouteInfo route) {
-            debug("onRouteChanged: route=" + route);
-            GeckoMediaPlayer display = displays.get(route.getId());
-            if (display != null) {
-                displays.put(route.getId(), display);
+            @SuppressWarnings("unused")
+            public void onRouteSelected(MediaRouter router, int type, MediaRouter.RouteInfo route) {
             }
-        }
-    };
+
+            // These methods aren't used by the support version Media Router
+            @SuppressWarnings("unused")
+            public void onRouteUnselected(MediaRouter router, int type, RouteInfo route) {
+            }
+
+            @Override
+            public void onRoutePresentationDisplayChanged(MediaRouter router, RouteInfo route) {
+            }
+
+            @Override
+            public void onRouteVolumeChanged(MediaRouter router, RouteInfo route) {
+            }
+
+            @Override
+            public void onRouteAdded(MediaRouter router, MediaRouter.RouteInfo route) {
+                debug("onRouteAdded: route=" + route);
+                GeckoMediaPlayer display = getMediaPlayerForRoute(route);
+                if (display != null) {
+                    displays.put(route.getId(), display);
+                }
+            }
+
+            @Override
+            public void onRouteChanged(MediaRouter router, MediaRouter.RouteInfo route) {
+                debug("onRouteChanged: route=" + route);
+                GeckoMediaPlayer display = displays.get(route.getId());
+                if (display != null) {
+                    displays.put(route.getId(), display);
+                }
+            }
+        };
 
     private GeckoMediaPlayer getMediaPlayerForRoute(MediaRouter.RouteInfo route) {
         try {
@@ -235,6 +253,7 @@ class MediaPlayerManager implements NativeEventListener,
         MediaRouteSelector selectorBuilder = new MediaRouteSelector.Builder()
             .addControlCategory(MediaControlIntent.CATEGORY_LIVE_VIDEO)
             .addControlCategory(MediaControlIntent.CATEGORY_REMOTE_PLAYBACK)
+            .addControlCategory(CastMediaControlIntent.categoryForCast(ChromeCast.MIRROR_RECEIVER_APP_ID))
             .build();
         mediaRouter.addCallback(selectorBuilder, callback, MediaRouter.CALLBACK_FLAG_REQUEST_DISCOVERY);
     }

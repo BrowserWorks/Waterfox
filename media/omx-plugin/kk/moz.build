@@ -13,9 +13,14 @@ LIBRARY_NAME = 'omxpluginkk'
 FORCE_SHARED_LIB = True
 
 LOCAL_INCLUDES += [
-    '../../../content/media/plugins',
     '../include/ics',
     '../include/ics/media/stagefright/openmax',
+]
+
+USE_LIBS += [
+    '/media/omx-plugin/lib/ics/libstagefright/stagefright',
+    '/media/omx-plugin/lib/ics/libutils/utils',
+    'videoeditorplayer',
 ]
 
 # Don't use STL wrappers; this isn't Gecko code

@@ -240,7 +240,9 @@ public:
     virtual bool RecvRegisterChrome(const InfallibleTArray<ChromePackage>& packages,
                                     const InfallibleTArray<ResourceMapping>& resources,
                                     const InfallibleTArray<OverrideMapping>& overrides,
-                                    const nsCString& locale) MOZ_OVERRIDE;
+                                    const nsCString& locale,
+                                    const bool& reset) MOZ_OVERRIDE;
+    virtual bool RecvRegisterChromeItem(const ChromeRegistryItem& item) MOZ_OVERRIDE;
 
     virtual mozilla::jsipc::PJavaScriptChild* AllocPJavaScriptChild() MOZ_OVERRIDE;
     virtual bool DeallocPJavaScriptChild(mozilla::jsipc::PJavaScriptChild*) MOZ_OVERRIDE;
@@ -297,7 +299,8 @@ public:
                                       const bool& aIsMediaPresent,
                                       const bool& aIsSharing,
                                       const bool& aIsFormatting,
-                                      const bool& aIsFake) MOZ_OVERRIDE;
+                                      const bool& aIsFake,
+                                      const bool& aIsUnmounting) MOZ_OVERRIDE;
 
     virtual bool RecvNuwaFork() MOZ_OVERRIDE;
 
@@ -316,6 +319,9 @@ public:
     virtual bool RecvNotifyIdleObserver(const uint64_t& aObserver,
                                         const nsCString& aTopic,
                                         const nsString& aData) MOZ_OVERRIDE;
+
+    virtual bool RecvOnAppThemeChanged() MOZ_OVERRIDE;
+
 #ifdef ANDROID
     gfxIntSize GetScreenSize() { return mScreenSize; }
 #endif

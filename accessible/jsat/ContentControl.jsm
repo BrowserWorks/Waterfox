@@ -120,7 +120,7 @@ this.ContentControl.prototype = {
 
         // Attempt to forward move to a potential child cursor in our
         // new position.
-        this.sendToChild(vc, aMessage, { action: childAction});
+        this.sendToChild(vc, aMessage, { action: childAction }, true);
       }
     } else if (!this._childMessageSenders.has(aMessage.target)) {
       // We failed to move, and the message is not from a child, so forward
@@ -136,6 +136,8 @@ this.ContentControl.prototype = {
     }
     if (!Utils.getMessageManager(aEvent.target)) {
       aEvent.preventDefault();
+    } else {
+      aEvent.target.focus();
     }
   },
 
@@ -153,6 +155,7 @@ this.ContentControl.prototype = {
     if (!forwarded) {
       this._contentScope.get().sendAsyncMessage('AccessFu:CursorCleared');
     }
+    this.document.activeElement.blur();
   },
 
   handleAutoMove: function cc_handleAutoMove(aMessage) {
@@ -248,7 +251,7 @@ this.ContentControl.prototype = {
     };
 
     let vc = this.vc;
-    if (!this.sendToChild(vc, aMessage)) {
+    if (!this.sendToChild(vc, aMessage, null, true)) {
       let position = vc.position;
       activateAccessible(getActivatableDescendant(position) || position);
     }
@@ -347,10 +350,16 @@ this.ContentControl.prototype = {
     return null;
   },
 
-  sendToChild: function cc_sendToChild(aVirtualCursor, aMessage, aReplacer) {
-    let mm = this.getChildCursor(aVirtualCursor.position);
+  sendToChild: function cc_sendToChild(aVirtualCursor, aMessage, aReplacer,
+                                       aFocus) {
+    let position = aVirtualCursor.position;
+    let mm = this.getChildCursor(position);
     if (!mm) {
       return false;
+    }
+
+    if (aFocus) {
+      position.takeFocus();
     }
 
     // XXX: This is a silly way to make a deep copy
@@ -396,7 +405,7 @@ this.ContentControl.prototype = {
           this._contentScope.get().sendAsyncMessage(
             'AccessFu:Present', Presentation.pivotChanged(
               vc.position, null, Ci.nsIAccessiblePivot.REASON_NONE,
-              vc.startOffset, vc.endOffset));
+              vc.startOffset, vc.endOffset, false));
         }
       };
 
@@ -416,17 +425,23 @@ this.ContentControl.prototype = {
       let moveFirstOrLast = moveMethod in ['moveFirst', 'moveLast'];
       if (!moveFirstOrLast || acc) {
         // We either need next/previous or there is an anchor we need to use.
-        moved = vc[moveFirstOrLast ? 'moveNext' : moveMethod](rule, acc, true);
+        moved = vc[moveFirstOrLast ? 'moveNext' : moveMethod](rule, acc, true,
+                                                              false);
       }
       if (moveFirstOrLast && !moved) {
         // We move to first/last after no anchor move happened or succeeded.
-        moved = vc[moveMethod](rule);
+        moved = vc[moveMethod](rule, false);
       }
 
       let sentToChild = this.sendToChild(vc, {
         name: 'AccessFu:AutoMove',
-        json: aOptions
-      });
+        json: {
+          moveMethod: aOptions.moveMethod,
+          moveToFocused: aOptions.moveToFocused,
+          noOpIfOnScreen: true,
+          forcePresent: true
+        }
+      }, null, true);
 
       if (!moved && !sentToChild) {
         forcePresentFunc();

@@ -41,7 +41,6 @@
 #include "nsIStreamConverterService.h"
 #include "nsICachingChannel.h"
 #include "nsContentUtils.h"
-#include "nsCxPusher.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsIContentPolicy.h"
 #include "nsContentPolicyUtils.h"
@@ -150,7 +149,7 @@ NS_IMPL_ISUPPORTS(nsXHRParseEndListener, nsIDOMEventListener)
 class nsResumeTimeoutsEvent : public nsRunnable
 {
 public:
-  nsResumeTimeoutsEvent(nsPIDOMWindow* aWindow) : mWindow(aWindow) {}
+  explicit nsResumeTimeoutsEvent(nsPIDOMWindow* aWindow) : mWindow(aWindow) {}
 
   NS_IMETHOD Run()
   {
@@ -353,9 +352,7 @@ nsXMLHttpRequest::Init()
   // Instead of grabbing some random global from the context stack,
   // let's use the default one (junk scope) for now.
   // We should move away from this Init...
-  nsCOMPtr<nsIGlobalObject> global = xpc::GetJunkScopeGlobal();
-  NS_ENSURE_TRUE(global, NS_ERROR_FAILURE);
-  Construct(subjectPrincipal, global);
+  Construct(subjectPrincipal, xpc::GetNativeForGlobal(xpc::PrivilegedJunkScope()));
   return NS_OK;
 }
 
@@ -433,6 +430,7 @@ nsXMLHttpRequest::ResetResponse()
   mResultArrayBuffer = nullptr;
   mArrayBufferBuilder.reset();
   mResultJSON = JSVAL_VOID;
+  mDataAvailable = 0;
   mLoadTransferred = 0;
   mResponseBodyDecodedPos = 0;
 }
@@ -781,11 +779,14 @@ void
 nsXMLHttpRequest::CreatePartialBlob()
 {
   if (mDOMFile) {
+    // Use progress info to determine whether load is complete, but use
+    // mDataAvailable to ensure a slice is created based on the uncompressed
+    // data count.
     if (mLoadTotal == mLoadTransferred) {
       mResponseBlob = mDOMFile;
     } else {
       mResponseBlob =
-        mDOMFile->CreateSlice(0, mLoadTransferred, EmptyString());
+        mDOMFile->CreateSlice(0, mDataAvailable, EmptyString());
     }
     return;
   }
@@ -1295,7 +1296,7 @@ nsXMLHttpRequest::IsSafeHeader(const nsACString& header, nsIHttpChannel* httpCha
     if (token.IsEmpty()) {
       continue;
     }
-    if (!IsValidHTTPToken(token)) {
+    if (!NS_IsValidHTTPToken(token)) {
       return false;
     }
     if (header.Equals(token, nsCaseInsensitiveCStringComparator())) {
@@ -1909,12 +1910,12 @@ nsXMLHttpRequest::OnDataAvailable(nsIRequest *request,
 
   if (cancelable) {
     // We don't have to read from the local file for the blob response
-    mDOMFile->GetSize(&mLoadTransferred);
+    mDOMFile->GetSize(&mDataAvailable);
     ChangeState(XML_HTTP_REQUEST_LOADING);
     return request->Cancel(NS_OK);
   }
 
-  mLoadTransferred += totalRead;
+  mDataAvailable += totalRead;
 
   ChangeState(XML_HTTP_REQUEST_LOADING);
   
@@ -2869,13 +2870,7 @@ nsXMLHttpRequest::Send(nsIVariant* aVariant, const Nullable<RequestBody>& aBody)
     rv = httpChannel->GetRequestHeader(NS_LITERAL_CSTRING("Content-Type"),
                                        contentTypeHeader);
     if (NS_SUCCEEDED(rv)) {
-      nsAutoCString contentType, charset;
-      rv = NS_ParseContentType(contentTypeHeader, contentType, charset);
-      NS_ENSURE_SUCCESS(rv, rv);
-  
-      if (!contentType.LowerCaseEqualsLiteral("text/plain") &&
-          !contentType.LowerCaseEqualsLiteral("application/x-www-form-urlencoded") &&
-          !contentType.LowerCaseEqualsLiteral("multipart/form-data")) {
+      if (!nsContentUtils::IsAllowedNonCorsContentType(contentTypeHeader)) {
         mCORSUnsafeHeaders.AppendElement(NS_LITERAL_CSTRING("Content-Type"));
       }
     }
@@ -3099,7 +3094,7 @@ nsXMLHttpRequest::SetRequestHeader(const nsACString& header,
 
   // Step 3
   // Make sure we don't store an invalid header name in mCORSUnsafeHeaders
-  if (!IsValidHTTPToken(header)) { // XXX nsHttp::IsValidToken?
+  if (!NS_IsValidHTTPToken(header)) {
     return NS_ERROR_DOM_SYNTAX_ERR;
   }
 
@@ -3420,7 +3415,7 @@ nsXMLHttpRequest::ChangeState(uint32_t aState, bool aBroadcast)
 class AsyncVerifyRedirectCallbackForwarder MOZ_FINAL : public nsIAsyncVerifyRedirectCallback
 {
 public:
-  AsyncVerifyRedirectCallbackForwarder(nsXMLHttpRequest *xhr)
+  explicit AsyncVerifyRedirectCallbackForwarder(nsXMLHttpRequest* xhr)
     : mXHR(xhr)
   {
   }
@@ -3607,7 +3602,7 @@ nsXMLHttpRequest::OnProgress(nsIRequest *aRequest, nsISupports *aContext, uint64
   } else {
     mLoadLengthComputable = lengthComputable;
     mLoadTotal = lengthComputable ? aProgressMax : 0;
-    
+    mLoadTransferred = aProgress;
     // Don't dispatch progress events here. OnDataAvailable will take care
     // of that.
   }
@@ -3976,9 +3971,13 @@ ArrayBufferBuilder::setCapacity(uint32_t aNewCap)
 {
   MOZ_ASSERT(!mMapPtr);
 
-  uint8_t *newdata = (uint8_t *) JS_ReallocateArrayBufferContents(nullptr, aNewCap, mDataPtr, mCapacity);
+  uint8_t *newdata = (uint8_t *) realloc(mDataPtr, aNewCap);
   if (!newdata) {
     return false;
+  }
+
+  if (aNewCap > mCapacity) {
+    memset(newdata + mCapacity, 0, aNewCap - mCapacity);
   }
 
   mDataPtr = newdata;
@@ -4080,8 +4079,8 @@ ArrayBufferBuilder::mapToFileInPackage(const nsCString& aFile,
     return rv;
   }
   nsZipItem* zipItem = zip->GetItem(aFile.get());
-  if (NS_FAILED(rv)) {
-    return rv;
+  if (!zipItem) {
+    return NS_ERROR_FILE_TARGET_DOES_NOT_EXIST;
   }
 
   // If file was added to the package as stored(uncompressed), map to the

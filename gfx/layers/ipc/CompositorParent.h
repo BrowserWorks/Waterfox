@@ -87,15 +87,15 @@ private:
   friend class CompositorParent;
 };
 
-class CompositorParent : public PCompositorParent,
-                         public ShadowLayersManager
+class CompositorParent MOZ_FINAL : public PCompositorParent,
+                                   public ShadowLayersManager
 {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING_WITH_MAIN_THREAD_DESTRUCTION(CompositorParent)
 
 public:
-  CompositorParent(nsIWidget* aWidget,
-                   bool aUseExternalSurfaceSize = false,
-                   int aSurfaceWidth = -1, int aSurfaceHeight = -1);
+  explicit CompositorParent(nsIWidget* aWidget,
+                            bool aUseExternalSurfaceSize = false,
+                            int aSurfaceWidth = -1, int aSurfaceHeight = -1);
 
   // IToplevelProtocol::CloneToplevel()
   virtual IToplevelProtocol*
@@ -117,6 +117,10 @@ public:
   virtual bool RecvStartFrameTimeRecording(const int32_t& aBufferSize, uint32_t* aOutStartIndex) MOZ_OVERRIDE;
   virtual bool RecvStopFrameTimeRecording(const uint32_t& aStartIndex, InfallibleTArray<float>* intervals) MOZ_OVERRIDE;
 
+  // Unused for chrome <-> compositor communication (which this class does).
+  // @see CrossProcessCompositorParent::RecvRequestNotifyAfterRemotePaint
+  virtual bool RecvRequestNotifyAfterRemotePaint() MOZ_OVERRIDE { return true; };
+
   virtual void ActorDestroy(ActorDestroyReason why) MOZ_OVERRIDE;
 
   virtual void ShadowLayersUpdated(LayerTransactionParent* aLayerTree,
@@ -124,7 +128,8 @@ public:
                                    const TargetConfig& aTargetConfig,
                                    bool aIsFirstPaint,
                                    bool aScheduleComposite,
-                                   uint32_t aPaintSequenceNumber) MOZ_OVERRIDE;
+                                   uint32_t aPaintSequenceNumber,
+                                   bool aIsRepeatTransaction) MOZ_OVERRIDE;
   virtual void ForceComposite(LayerTransactionParent* aLayerTree) MOZ_OVERRIDE;
   virtual bool SetTestSampleTime(LayerTransactionParent* aLayerTree,
                                  const TimeStamp& aTime) MOZ_OVERRIDE;
@@ -158,7 +163,8 @@ public:
 
   virtual void ScheduleComposition();
   void NotifyShadowTreeTransaction(uint64_t aId, bool aIsFirstPaint,
-      bool aScheduleComposite, uint32_t aPaintSequenceNumber);
+      bool aScheduleComposite, uint32_t aPaintSequenceNumber,
+      bool aIsRepeatTransaction);
 
   /**
    * Check rotation info and schedule a rendering task if needed.

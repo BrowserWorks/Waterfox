@@ -19,7 +19,6 @@ const BrowserElementIsPreloaded = true;
   Cu.import("resource://gre/modules/AppsServiceChild.jsm");
   Cu.import("resource://gre/modules/AppsUtils.jsm");
   Cu.import("resource://gre/modules/BrowserElementPromptService.jsm");
-  Cu.import("resource://gre/modules/CSPUtils.jsm");
   Cu.import("resource://gre/modules/DOMRequestHelper.jsm");
   Cu.import("resource://gre/modules/FileUtils.jsm");
   Cu.import("resource://gre/modules/Geometry.jsm");
@@ -27,7 +26,6 @@ const BrowserElementIsPreloaded = true;
   Cu.import("resource://gre/modules/NetUtil.jsm");
   Cu.import("resource://gre/modules/Services.jsm");
   Cu.import("resource://gre/modules/SettingsDB.jsm");
-  Cu.import("resource://gre/modules/SettingsQueue.jsm");
   Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
   Cc["@mozilla.org/appshell/appShellService;1"].getService(Ci["nsIAppShellService"]);
@@ -70,7 +68,7 @@ const BrowserElementIsPreloaded = true;
   Cc["@mozilla.org/thread-manager;1"].getService(Ci["nsIThreadManager"]);
   Cc["@mozilla.org/toolkit/app-startup;1"].getService(Ci["nsIAppStartup"]);
   Cc["@mozilla.org/uriloader;1"].getService(Ci["nsIURILoader"]);
-  Cc["@mozilla.org/contentsecuritypolicy;1"].createInstance(Ci["nsIContentSecurityPolicy"]);
+  Cc["@mozilla.org/cspcontext;1"].createInstance(Ci["nsIContentSecurityPolicy"]);
 
   /* Applications Specific Helper */
   try {

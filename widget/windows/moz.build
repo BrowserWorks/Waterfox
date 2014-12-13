@@ -91,8 +91,6 @@ if CONFIG['NS_ENABLE_TSF']:
 
 MSVC_ENABLE_PGO = True
 
-LIBRARY_NAME = 'widget_windows'
-
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
@@ -113,3 +111,5 @@ for var in ('MOZ_ENABLE_D3D9_LAYER', 'MOZ_ENABLE_D3D10_LAYER'):
         DEFINES[var] = True
 
 RESFILE = 'widget.res'
+
+CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']

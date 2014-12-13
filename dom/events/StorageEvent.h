@@ -13,8 +13,6 @@
 #include "mozilla/dom/Event.h"
 #include "mozilla/dom/StorageEventBinding.h"
 
-class nsIDOMStorage;
-
 // Helper for EventDispatcher.
 nsresult NS_NewDOMStorageEvent(nsIDOMEvent** aDOMEvent,
                                mozilla::dom::EventTarget* aOwner);
@@ -22,13 +20,15 @@ nsresult NS_NewDOMStorageEvent(nsIDOMEvent** aDOMEvent,
 namespace mozilla {
 namespace dom {
 
+class DOMStorage;
+
 class StorageEvent : public Event
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_INHERITED(StorageEvent, Event)
 
-  StorageEvent(EventTarget* aOwner);
+  explicit StorageEvent(EventTarget* aOwner);
 
 protected:
   virtual ~StorageEvent();
@@ -37,7 +37,7 @@ protected:
   nsString mOldValue;
   nsString mNewValue;
   nsString mUrl;
-  nsCOMPtr<nsIDOMStorage> mStorageArea;
+  nsRefPtr<DOMStorage> mStorageArea;
 
 public:
   virtual StorageEvent* AsStorageEvent();
@@ -57,7 +57,7 @@ public:
                         const nsAString& aOldValue,
                         const nsAString& aNewValue,
                         const nsAString& aURL,
-                        nsIDOMStorage* aStorageArea,
+                        DOMStorage* aStorageArea,
                         ErrorResult& aRv);
 
   void GetKey(nsString& aRetVal) const
@@ -80,7 +80,7 @@ public:
     aRetVal = mUrl;
   }
 
-  nsIDOMStorage* GetStorageArea() const
+  DOMStorage* GetStorageArea() const
   {
     return mStorageArea;
   }

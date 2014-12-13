@@ -115,6 +115,16 @@
 
 
   /* ======================================================================= */
+  /* 4:  NS_ERROR_MODULE_WIDGET */
+  /* ======================================================================= */
+#define MODULE  NS_ERROR_MODULE_WIDGET
+  /* Used by nsIWidget::NotifyIME(). Returned when the notification is handled
+   * and the notified event is consumed by IME. */
+  ERROR(NS_SUCCESS_EVENT_CONSUMED,                        SUCCESS(1)),
+#undef MODULE
+
+
+  /* ======================================================================= */
   /* 6: NS_ERROR_MODULE_NETWORK */
   /* ======================================================================= */
 #define MODULE NS_ERROR_MODULE_NETWORK
@@ -844,6 +854,30 @@
   ERROR(NS_ERROR_DOM_FILESYSTEM_PATH_EXISTS_ERR,           FAILURE(4)),
   ERROR(NS_ERROR_DOM_FILESYSTEM_TYPE_MISMATCH_ERR,         FAILURE(5)),
   ERROR(NS_ERROR_DOM_FILESYSTEM_UNKNOWN_ERR,               FAILURE(6)),
+#undef MODULE
+
+  /* ======================================================================= */
+  /* 37: NS_ERROR_MODULE_DOM_BLUETOOTH */
+  /* ======================================================================= */
+#define MODULE NS_ERROR_MODULE_DOM_BLUETOOTH
+  ERROR(NS_ERROR_DOM_BLUETOOTH_FAIL,                      FAILURE(1)),
+  ERROR(NS_ERROR_DOM_BLUETOOTH_NOT_READY,                 FAILURE(2)),
+  ERROR(NS_ERROR_DOM_BLUETOOTH_NOMEM,                     FAILURE(3)),
+  ERROR(NS_ERROR_DOM_BLUETOOTH_BUSY,                      FAILURE(4)),
+  ERROR(NS_ERROR_DOM_BLUETOOTH_DONE,                      FAILURE(5)),
+  ERROR(NS_ERROR_DOM_BLUETOOTH_UNSUPPORTED,               FAILURE(6)),
+  ERROR(NS_ERROR_DOM_BLUETOOTH_PARM_INVALID,              FAILURE(7)),
+  ERROR(NS_ERROR_DOM_BLUETOOTH_UNHANDLED,                 FAILURE(8)),
+  ERROR(NS_ERROR_DOM_BLUETOOTH_AUTH_FAILURE,              FAILURE(9)),
+  ERROR(NS_ERROR_DOM_BLUETOOTH_RMT_DEV_DOWN,              FAILURE(10)),
+  ERROR(NS_ERROR_DOM_BLUETOOTH_AUTH_REJECTED,             FAILURE(11)),
+#undef MODULE
+
+  /* ======================================================================= */
+  /* 38: NS_ERROR_MODULE_SIGNED_APP */
+  /* ======================================================================= */
+#define MODULE NS_ERROR_MODULE_SIGNED_APP
+  ERROR(NS_ERROR_SIGNED_APP_MANIFEST_INVALID,   FAILURE(1)),
 #undef MODULE
 
   /* ======================================================================= */

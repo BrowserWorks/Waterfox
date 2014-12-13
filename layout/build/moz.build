@@ -20,21 +20,10 @@ if CONFIG['MOZ_NFC']:
     LOCAL_INCLUDES += [
         '/dom/nfc'
     ]
-	
-if CONFIG['MOZ_GSTREAMER'] and not CONFIG['SYSTEM_GSTREAMER']:
- LOCAL_INCLUDES += [
- '/media/gstreamer/glib',
- '/media/gstreamer/glib/glib',
- '/media/gstreamer/gst-plugins-base/gst-libs',
- '/media/gstreamer/gstreamer',
- '/media/gstreamer/gstreamer/libs'
- ]
 
 FAIL_ON_WARNINGS = True
 
 MSVC_ENABLE_PGO = True
-
-LIBRARY_NAME = 'gklayout'
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
@@ -49,7 +38,6 @@ LOCAL_INCLUDES += [
     '../xul',
     '/caps',
     '/content/base/src',
-    '/content/canvas/src',
     '/content/html/content/src',
     '/content/html/document/src',
     '/content/svg/content/src',
@@ -60,15 +48,15 @@ LOCAL_INCLUDES += [
     '/dom/audiochannel',
     '/dom/base',
     '/dom/camera',
-    '/dom/file',
+    '/dom/canvas',
     '/dom/filesystem',
+    '/dom/geolocation',
+    '/dom/json',
+    '/dom/jsurl',
     '/dom/media',
+    '/dom/offline',
     '/dom/speakermanager',
-    '/dom/src/geolocation',
-    '/dom/src/json',
-    '/dom/src/jsurl',
-    '/dom/src/offline',
-    '/dom/src/storage',
+    '/dom/storage',
     '/dom/telephony',
     '/dom/xbl',
     '/dom/xslt/base',
@@ -76,9 +64,7 @@ LOCAL_INCLUDES += [
     '/dom/xslt/xpath',
     '/dom/xslt/xslt',
     '/editor/composer',
-    '/editor/libeditor/base',
-    '/editor/libeditor/html',
-    '/editor/libeditor/text',
+    '/editor/libeditor',
     '/editor/txmgr',
     '/editor/txtsvc',
     '/extensions/cookie',
@@ -86,14 +72,10 @@ LOCAL_INCLUDES += [
     '/js/xpconnect/src',
     '/netwerk/base/src',
     '/netwerk/cookie',
-    '/view/src',
+    '/view',
 ]
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('qt', 'gtk2', 'gtk3'):
-    LOCAL_INCLUDES += [
-        '/dom/system/unix',
-    ]
-elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
     LOCAL_INCLUDES += [
         '/dom/system/windows',
     ]
@@ -137,9 +119,7 @@ if CONFIG['MOZ_WEBSPEECH']:
         '/content/media/webspeech/synth',
     ]
 
-if CONFIG['MOZ_FFMPEG']:
-    LOCAL_INCLUDES += [
-        '/content/media/fmp4/ffmpeg/include',
-    ]
+if CONFIG['MOZ_GSTREAMER']:
+    CXXFLAGS += CONFIG['GSTREAMER_CFLAGS']
 
 FINAL_LIBRARY = 'xul'

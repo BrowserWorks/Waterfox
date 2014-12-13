@@ -38,11 +38,14 @@ interface PeerConnectionImpl  {
   [Throws]
   void getStats(MediaStreamTrack? selector);
 
-  /* Adds the stream created by GetUserMedia */
+  /* Adds the tracks created by GetUserMedia */
   [Throws]
-  void addStream(MediaStream stream);
+  void addTrack(MediaStreamTrack track, MediaStream... streams);
   [Throws]
-  void removeStream(MediaStream stream);
+  void removeTrack(MediaStreamTrack track);
+  [Throws]
+  void replaceTrack(MediaStreamTrack thisTrack, MediaStreamTrack withTrack,
+                    MediaStream stream);
   [Throws]
   void closeStreams();
 

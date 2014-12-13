@@ -37,7 +37,6 @@
 #include "nsURILoader.h"
 #include "nsIDocShell.h"
 #include "nsIContentViewer.h"
-#include "nsIMarkupDocumentViewer.h"
 #include "nsThreadUtils.h"
 #include "nsIScrollableFrame.h"
 #include "nsContentUtils.h"
@@ -58,7 +57,7 @@ class ImageListener : public MediaDocumentStreamListener
 public:
   NS_DECL_NSIREQUESTOBSERVER
 
-  ImageListener(ImageDocument* aDocument);
+  explicit ImageListener(ImageDocument* aDocument);
   virtual ~ImageListener();
 };
 
@@ -114,12 +113,14 @@ ImageListener::OnStartRequest(nsIRequest* request, nsISupports *ctxt)
     return NS_OK;
   }
 
-  nsCOMPtr<nsIImageLoadingContent> imageLoader = do_QueryInterface(imgDoc->mImageContent);
-  NS_ENSURE_TRUE(imageLoader, NS_ERROR_UNEXPECTED);
+  if (!imgDoc->mObservingImageLoader) {
+    nsCOMPtr<nsIImageLoadingContent> imageLoader = do_QueryInterface(imgDoc->mImageContent);
+    NS_ENSURE_TRUE(imageLoader, NS_ERROR_UNEXPECTED);
 
-  imageLoader->AddObserver(imgDoc);
-  imgDoc->mObservingImageLoader = true;
-  imageLoader->LoadImageWithChannel(channel, getter_AddRefs(mNextStream));
+    imageLoader->AddObserver(imgDoc);
+    imgDoc->mObservingImageLoader = true;
+    imageLoader->LoadImageWithChannel(channel, getter_AddRefs(mNextStream));
+  }
 
   return MediaDocumentStreamListener::OnStartRequest(request, ctxt);
 }
@@ -385,12 +386,14 @@ ImageDocument::ScrollImageTo(int32_t aX, int32_t aY, bool restoreImage)
   }
 
   nsCOMPtr<nsIPresShell> shell = GetShell();
-  if (!shell)
+  if (!shell) {
     return;
+  }
 
   nsIScrollableFrame* sf = shell->GetRootScrollFrameAsScrollable();
-  if (!sf)
+  if (!sf) {
     return;
+  }
 
   nsRect portRect = sf->GetScrollPortRect();
   sf->ScrollTo(nsPoint(nsPresContext::CSSPixelsToAppUnits(aX/ratio) - portRect.width/2,
@@ -793,9 +796,8 @@ ImageDocument::ResetZoomLevel()
 
     nsCOMPtr<nsIContentViewer> cv;
     docShell->GetContentViewer(getter_AddRefs(cv));
-    nsCOMPtr<nsIMarkupDocumentViewer> mdv = do_QueryInterface(cv);
-    if (mdv) {
-      mdv->SetFullZoom(mOriginalZoomLevel);
+    if (cv) {
+      cv->SetFullZoom(mOriginalZoomLevel);
     }
   }
 }
@@ -808,9 +810,8 @@ ImageDocument::GetZoomLevel()
   if (docShell) {
     nsCOMPtr<nsIContentViewer> cv;
     docShell->GetContentViewer(getter_AddRefs(cv));
-    nsCOMPtr<nsIMarkupDocumentViewer> mdv = do_QueryInterface(cv);
-    if (mdv) {
-      mdv->GetFullZoom(&zoomLevel);
+    if (cv) {
+      cv->GetFullZoom(&zoomLevel);
     }
   }
   return zoomLevel;

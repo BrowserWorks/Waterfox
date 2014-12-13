@@ -8,22 +8,13 @@
 
 #include "AudioSampleFormat.h"
 #include "nsAutoPtr.h"
-#include "nsAutoRef.h"
 #include "nsCOMPtr.h"
 #include "nsThreadUtils.h"
 #include "Latency.h"
 #include "mozilla/dom/AudioChannelBinding.h"
-#include "mozilla/StaticMutex.h"
 #include "mozilla/RefPtr.h"
-
-#include "cubeb/cubeb.h"
-
-template <>
-class nsAutoRefTraits<cubeb_stream> : public nsPointerRefTraits<cubeb_stream>
-{
-public:
-  static void Release(cubeb_stream* aStream) { cubeb_stream_destroy(aStream); }
-};
+#include "mozilla/UniquePtr.h"
+#include "CubebUtils.h"
 
 namespace soundtouch {
 class SoundTouch;
@@ -31,13 +22,22 @@ class SoundTouch;
 
 namespace mozilla {
 
+template<>
+struct DefaultDelete<cubeb_stream>
+{
+  void operator()(cubeb_stream* aStream) const
+  {
+    cubeb_stream_destroy(aStream);
+  }
+};
+
 class AudioStream;
 class FrameHistory;
 
 class AudioClock
 {
 public:
-  AudioClock(AudioStream* aStream);
+  explicit AudioClock(AudioStream* aStream);
   // Initialize the clock with the current AudioStream. Need to be called
   // before querying the clock. Called on the audio thread.
   void Init();
@@ -158,6 +158,14 @@ public:
     return amount;
   }
 
+  void Reset()
+  {
+    mBuffer = nullptr;
+    mCapacity = 0;
+    mStart = 0;
+    mCount = 0;
+  }
+
 private:
   nsAutoArrayPtr<uint8_t> mBuffer;
   uint32_t mCapacity;
@@ -169,31 +177,13 @@ class AudioInitTask;
 
 // Access to a single instance of this class must be synchronized by
 // callers, or made from a single thread.  One exception is that access to
-// GetPosition, GetPositionInFrames, SetVolume, and Get{Rate,Channels}
-// is thread-safe without external synchronization.
+// GetPosition, GetPositionInFrames, SetVolume, and Get{Rate,Channels},
+// SetMicrophoneActive is thread-safe without external synchronization.
 class AudioStream MOZ_FINAL
 {
   virtual ~AudioStream();
 
 public:
-  // Initialize Audio Library. Some Audio backends require initializing the
-  // library before using it.
-  static void InitLibrary();
-
-  // Shutdown Audio Library. Some Audio backends require shutting down the
-  // library after using it.
-  static void ShutdownLibrary();
-
-  // Returns the maximum number of channels supported by the audio hardware.
-  static int MaxNumberOfChannels();
-
-  // Queries the samplerate the hardware/mixer runs at, and stores it.
-  // Can be called on any thread. When this returns, it is safe to call
-  // PreferredSampleRate without locking.
-  static void InitPreferredSampleRate();
-  // Get the aformentionned sample rate. Does not lock.
-  static int PreferredSampleRate();
-
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(AudioStream)
   AudioStream();
 
@@ -212,6 +202,8 @@ public:
   // Closes the stream. All future use of the stream is an error.
   void Shutdown();
 
+  void Reset();
+
   // Write audio data to the audio hardware.  aBuf is an array of AudioDataValues
   // AudioDataValue of length aFrames*mChannels.  If aFrames is larger
   // than the result of Available(), the write will block until sufficient
@@ -225,6 +217,12 @@ public:
   // Set the current volume of the audio playback. This is a value from
   // 0 (meaning muted) to 1 (meaning full volume).  Thread-safe.
   void SetVolume(double aVolume);
+
+  // Informs the AudioStream that a microphone is being used by someone in the
+  // application.
+  void SetMicrophoneActive(bool aActive);
+  void PanOutputIfNeeded(bool aMicrophoneActive);
+  void ResetStreamIfNeeded();
 
   // Block until buffered audio data has been consumed.
   void Drain();
@@ -287,14 +285,6 @@ private:
 
   void CheckForStart();
 
-  static void PrefChanged(const char* aPref, void* aClosure);
-  static double GetVolumeScale();
-  static bool GetFirstStream();
-  static cubeb* GetCubebContext();
-  static cubeb* GetCubebContextUnlocked();
-  static uint32_t GetCubebLatency();
-  static bool CubebLatencyPrefSet();
-
   static long DataCallback_S(cubeb_stream*, void* aThis, void* aBuffer, long aFrames)
   {
     return static_cast<AudioStream*>(aThis)->DataCallback(aBuffer, aFrames);
@@ -305,8 +295,14 @@ private:
     static_cast<AudioStream*>(aThis)->StateCallback(aState);
   }
 
+
+  static void DeviceChangedCallback_s(void * aThis) {
+    static_cast<AudioStream*>(aThis)->DeviceChangedCallback();
+  }
+
   long DataCallback(void* aBuffer, long aFrames);
   void StateCallback(cubeb_state aState);
+  void DeviceChangedCallback();
 
   nsresult EnsureTimeStretcherInitializedUnlocked();
 
@@ -332,6 +328,9 @@ private:
   int mOutRate;
   int mChannels;
   int mOutChannels;
+#if defined(__ANDROID__)
+  dom::AudioChannel mAudioChannel;
+#endif
   // Number of frames written to the buffers.
   int64_t mWritten;
   AudioClock mAudioClock;
@@ -362,12 +361,8 @@ private:
   // frames.
   CircularByteBuffer mBuffer;
 
-  // Software volume level.  Applied during the servicing of DataCallback().
-  double mVolume;
-
-  // Owning reference to a cubeb_stream.  cubeb_stream_destroy is called by
-  // nsAutoRef's destructor.
-  nsAutoRef<cubeb_stream> mCubebStream;
+  // Owning reference to a cubeb_stream.
+  UniquePtr<cubeb_stream> mCubebStream;
 
   uint32_t mBytesPerFrame;
 
@@ -398,22 +393,15 @@ private:
   StreamState mState;
   bool mNeedsStart; // needed in case Start() is called before cubeb is open
   bool mIsFirst;
-
+  // True if a microphone is active.
+  bool mMicrophoneActive;
+  // When we are in the process of changing the output device, and the callback
+  // is not going to be called for a little while, simply drop incoming frames.
+  // This is only on OSX for now, because other systems handle this gracefully.
+  bool mShouldDropFrames;
   // True if there is a pending AudioInitTask. Shutdown() will wait until the
   // pending AudioInitTask is finished.
   bool mPendingAudioInitTask;
-
-  // This mutex protects the static members below.
-  static StaticMutex sMutex;
-  static cubeb* sCubebContext;
-
-  // Prefered samplerate, in Hz (characteristic of the
-  // hardware/mixer/platform/API used).
-  static uint32_t sPreferredSampleRate;
-
-  static double sVolumeScale;
-  static uint32_t sCubebLatency;
-  static bool sCubebLatencyPrefSet;
 };
 
 class AudioInitTask : public nsRunnable

@@ -56,7 +56,7 @@ static eNormalLineHeightControl sNormalLineHeightControl = eUninitialized;
 nsHTMLReflowState::nsHTMLReflowState(nsPresContext*       aPresContext,
                                      nsIFrame*            aFrame,
                                      nsRenderingContext*  aRenderingContext,
-                                     const nsSize&        aAvailableSpace,
+                                     const LogicalSize&   aAvailableSpace,
                                      uint32_t             aFlags)
   : nsCSSOffsetState(aFrame, aRenderingContext)
   , mBlockDelta(0)
@@ -67,8 +67,8 @@ nsHTMLReflowState::nsHTMLReflowState(nsPresContext*       aPresContext,
   MOZ_ASSERT(aFrame, "no frame");
   MOZ_ASSERT(aPresContext == aFrame->PresContext(), "wrong pres context");
   parentReflowState = nullptr;
-  AvailableWidth() = aAvailableSpace.width;
-  AvailableHeight() = aAvailableSpace.height;
+  AvailableISize() = aAvailableSpace.ISize(mWritingMode);
+  AvailableBSize() = aAvailableSpace.BSize(mWritingMode);
   mFloatManager = nullptr;
   mLineLayout = nullptr;
   memset(&mFlags, 0, sizeof(mFlags));
@@ -159,7 +159,7 @@ nsCSSOffsetState::nsCSSOffsetState(nsIFrame *aFrame,
 nsHTMLReflowState::nsHTMLReflowState(nsPresContext*           aPresContext,
                                      const nsHTMLReflowState& aParentReflowState,
                                      nsIFrame*                aFrame,
-                                     const nsSize&            aAvailableSpace,
+                                     const LogicalSize&       aAvailableSpace,
                                      nscoord                  aContainingBlockWidth,
                                      nscoord                  aContainingBlockHeight,
                                      uint32_t                 aFlags)
@@ -187,8 +187,8 @@ nsHTMLReflowState::nsHTMLReflowState(nsPresContext*           aPresContext,
     frame->AddStateBits(parentReflowState->frame->GetStateBits() &
                         NS_FRAME_IS_DIRTY);
 
-  AvailableWidth() = aAvailableSpace.width;
-  AvailableHeight() = aAvailableSpace.height;
+  AvailableISize() = aAvailableSpace.ISize(mWritingMode);
+  AvailableBSize() = aAvailableSpace.BSize(mWritingMode);
 
   mFloatManager = aParentReflowState.mFloatManager;
   if (frame->IsFrameOfType(nsIFrame::eLineParticipant))
@@ -544,7 +544,7 @@ nsHTMLReflowState::InitResizeFlags(nsPresContext* aPresContext, nsIAtom* aFrameT
           nsFrameList::Enumerator childFrames(lists.CurrentList());
           for (; !childFrames.AtEnd(); childFrames.Next()) {
             nsIFrame* kid = childFrames.get();
-            kid->MarkIntrinsicWidthsDirty();
+            kid->MarkIntrinsicISizesDirty();
             stack.AppendElement(kid);
           }
         }
@@ -1454,28 +1454,24 @@ nsHTMLReflowState::InitAbsoluteConstraints(nsPresContext* aPresContext,
   {
     AutoMaybeDisableFontInflation an(frame);
 
-    nsSize size =
-      frame->ComputeSize(rendContext,
-                         nsSize(containingBlockWidth,
-                                containingBlockHeight),
+    WritingMode wm = GetWritingMode();
+    LogicalSize size =
+      frame->ComputeSize(rendContext, wm,
+                         LogicalSize(wm, nsSize(containingBlockWidth,
+                                containingBlockHeight)),
                          containingBlockWidth, // XXX or mAvailableWidth?
-                         nsSize(ComputedPhysicalMargin().LeftRight() +
-                                  ComputedPhysicalOffsets().LeftRight(),
-                                ComputedPhysicalMargin().TopBottom() +
-                                  ComputedPhysicalOffsets().TopBottom()),
-                         nsSize(ComputedPhysicalBorderPadding().LeftRight() -
-                                  ComputedPhysicalPadding().LeftRight(),
-                                ComputedPhysicalBorderPadding().TopBottom() -
-                                  ComputedPhysicalPadding().TopBottom()),
-                         nsSize(ComputedPhysicalPadding().LeftRight(),
-                                ComputedPhysicalPadding().TopBottom()),
+                         ComputedLogicalMargin().Size(wm) +
+                           ComputedLogicalOffsets().Size(wm),
+                         ComputedLogicalBorderPadding().Size(wm) -
+                           ComputedLogicalPadding().Size(wm),
+                         ComputedLogicalPadding().Size(wm),
                          computeSizeFlags);
-    ComputedWidth() = size.width;
-    ComputedHeight() = size.height;
+    ComputedISize() = size.ISize(wm);
+    ComputedBSize() = size.BSize(wm);
   }
-  NS_ASSERTION(ComputedWidth() >= 0, "Bogus width");
-  NS_ASSERTION(ComputedHeight() == NS_UNCONSTRAINEDSIZE ||
-               ComputedHeight() >= 0, "Bogus height");
+  NS_ASSERTION(ComputedISize() >= 0, "Bogus inline-size");
+  NS_ASSERTION(ComputedBSize() == NS_UNCONSTRAINEDSIZE ||
+               ComputedBSize() >= 0, "Bogus block-size");
 
   // XXX Now that we have ComputeSize, can we condense many of the
   // branches off of widthIsAuto?
@@ -2133,26 +2129,23 @@ nsHTMLReflowState::InitConstraints(nsPresContext* aPresContext,
                    "'mIsFlexContainerMeasuringHeight' shouldn't be set");
       }
 
-      nsSize size =
-        frame->ComputeSize(rendContext,
-                           nsSize(aContainingBlockWidth,
-                                  aContainingBlockHeight),
+      WritingMode wm = GetWritingMode();
+      LogicalSize size =
+        frame->ComputeSize(rendContext, wm,
+                           LogicalSize(wm, nsSize(aContainingBlockWidth,
+                                                  aContainingBlockHeight)),
                            AvailableWidth(),
-                           nsSize(ComputedPhysicalMargin().LeftRight(),
-                                  ComputedPhysicalMargin().TopBottom()),
-                           nsSize(ComputedPhysicalBorderPadding().LeftRight() -
-                                    ComputedPhysicalPadding().LeftRight(),
-                                  ComputedPhysicalBorderPadding().TopBottom() -
-                                    ComputedPhysicalPadding().TopBottom()),
-                           nsSize(ComputedPhysicalPadding().LeftRight(),
-                                  ComputedPhysicalPadding().TopBottom()),
+                           ComputedLogicalMargin().Size(wm),
+                           ComputedLogicalBorderPadding().Size(wm) -
+                             ComputedLogicalPadding().Size(wm),
+                           ComputedLogicalPadding().Size(wm),
                            computeSizeFlags);
 
-      ComputedWidth() = size.width;
-      ComputedHeight() = size.height;
-      NS_ASSERTION(ComputedWidth() >= 0, "Bogus width");
-      NS_ASSERTION(ComputedHeight() == NS_UNCONSTRAINEDSIZE ||
-                   ComputedHeight() >= 0, "Bogus height");
+      ComputedISize() = size.ISize(wm);
+      ComputedBSize() = size.BSize(wm);
+      NS_ASSERTION(ComputedISize() >= 0, "Bogus inline-size");
+      NS_ASSERTION(ComputedBSize() == NS_UNCONSTRAINEDSIZE ||
+                   ComputedBSize() >= 0, "Bogus block-size");
 
       // Exclude inline tables and flex items from the block margin calculations
       if (isBlock &&
@@ -2595,9 +2588,16 @@ nsHTMLReflowState::ComputeMinMaxValues(nscoord aContainingBlockWidth,
                                        nscoord aContainingBlockHeight,
                                        const nsHTMLReflowState* aContainingBlockRS)
 {
-  ComputedMinWidth() = ComputeWidthValue(aContainingBlockWidth,
-                                        mStylePosition->mBoxSizing,
-                                        mStylePosition->mMinWidth);
+  // NOTE: min-width:auto resolves to 0, except on a flex item. (But
+  // even there, it's supposed to be ignored (i.e. treated as 0) until
+  // the flex container explicitly resolves & considers it.)
+  if (eStyleUnit_Auto == mStylePosition->mMinWidth.GetUnit()) {
+    ComputedMinWidth() = 0;
+  } else {
+    ComputedMinWidth() = ComputeWidthValue(aContainingBlockWidth,
+                                          mStylePosition->mBoxSizing,
+                                          mStylePosition->mMinWidth);
+  }
 
   if (eStyleUnit_None == mStylePosition->mMaxWidth.GetUnit()) {
     // Specified value of 'none'
@@ -2621,8 +2621,12 @@ nsHTMLReflowState::ComputeMinMaxValues(nscoord aContainingBlockWidth,
   // Likewise, if we're a child of a flex container who's measuring our
   // intrinsic height, then we want to disregard our min-height.
 
+  // NOTE: min-height:auto resolves to 0, except on a flex item. (But
+  // even there, it's supposed to be ignored (i.e. treated as 0) until
+  // the flex container explicitly resolves & considers it.)
   const nsStyleCoord &minHeight = mStylePosition->mMinHeight;
-  if ((NS_AUTOHEIGHT == aContainingBlockHeight &&
+  if (eStyleUnit_Auto == minHeight.GetUnit() ||
+      (NS_AUTOHEIGHT == aContainingBlockHeight &&
        minHeight.HasPercent()) ||
       (mFrameType == NS_CSS_FRAME_TYPE_INTERNAL_TABLE &&
        minHeight.IsCalcUnit() && minHeight.CalcHasPercent()) ||

@@ -769,7 +769,10 @@ SpecialPowersAPI.prototype = {
           originalValue = Ci.nsICookiePermission.ACCESS_LIMIT_THIRD_PARTY;
         }
 
-        let [url, appId, isInBrowserElement] = this._getInfoFromPermissionArg(context);
+        let [url, appId, isInBrowserElement, isSystem] = this._getInfoFromPermissionArg(context);
+        if (isSystem) {
+          continue;
+        }
 
         let perm;
         if (typeof permission.allow !== 'boolean') {
@@ -1074,6 +1077,10 @@ SpecialPowersAPI.prototype = {
     this.pushPrefEnv({set: [['dom.mozApps.auto_confirm_install', true]]}, cb);
   },
 
+  autoConfirmAppUninstall: function(cb) {
+    this.pushPrefEnv({set: [['dom.mozApps.auto_confirm_uninstall', true]]}, cb);
+  },
+
   // Allow tests to disable the per platform app validity checks so we can
   // test higher level WebApp functionality without full platform support.
   setAllAppsLaunchable: function(launchable) {
@@ -1214,8 +1221,7 @@ SpecialPowersAPI.prototype = {
                  .QueryInterface(Ci.nsIDocShell);
   },
   _getMUDV: function(window) {
-    return this._getDocShell(window).contentViewer
-               .QueryInterface(Ci.nsIMarkupDocumentViewer);
+    return this._getDocShell(window).contentViewer;
   },
   //XXX: these APIs really ought to be removed, they're not e10s-safe.
   // (also they're pretty Firefox-specific)
@@ -1673,6 +1679,7 @@ SpecialPowersAPI.prototype = {
     let url = "";
     let appId = Ci.nsIScriptSecurityManager.NO_APP_ID;
     let isInBrowserElement = false;
+    let isSystem = false;
 
     if (typeof(arg) == "string") {
       // It's an URL.
@@ -1695,20 +1702,32 @@ SpecialPowersAPI.prototype = {
       isInBrowserElement = arg.isInBrowserElement || false;
     } else if (arg.nodePrincipal) {
       // It's a document.
-      url = arg.nodePrincipal.URI.spec;
-      appId = arg.nodePrincipal.appId;
-      isInBrowserElement = arg.nodePrincipal.isInBrowserElement;
+      isSystem = (arg.nodePrincipal instanceof Ci.nsIPrincipal) &&
+                 Cc["@mozilla.org/scriptsecuritymanager;1"].
+                 getService(Ci.nsIScriptSecurityManager).
+                 isSystemPrincipal(arg.nodePrincipal);
+      if (!isSystem) {
+        // System principals don't have a URL associated with them, and they
+        // don't really need any permissions to be registered with the
+        // permission manager anyway.
+        url = arg.nodePrincipal.URI.spec;
+        appId = arg.nodePrincipal.appId;
+        isInBrowserElement = arg.nodePrincipal.isInBrowserElement;
+      }
     } else {
       url = arg.url;
       appId = arg.appId;
       isInBrowserElement = arg.isInBrowserElement;
     }
 
-    return [ url, appId, isInBrowserElement ];
+    return [ url, appId, isInBrowserElement, isSystem ];
   },
 
   addPermission: function(type, allow, arg) {
-    let [url, appId, isInBrowserElement] = this._getInfoFromPermissionArg(arg);
+    let [url, appId, isInBrowserElement, isSystem] = this._getInfoFromPermissionArg(arg);
+    if (isSystem) {
+      return; // nothing to do
+    }
 
     let permission;
     if (typeof allow !== 'boolean') {
@@ -1731,7 +1750,10 @@ SpecialPowersAPI.prototype = {
   },
 
   removePermission: function(type, arg) {
-    let [url, appId, isInBrowserElement] = this._getInfoFromPermissionArg(arg);
+    let [url, appId, isInBrowserElement, isSystem] = this._getInfoFromPermissionArg(arg);
+    if (isSystem) {
+      return; // nothing to do
+    }
 
     var msg = {
       'op': 'remove',
@@ -1745,7 +1767,10 @@ SpecialPowersAPI.prototype = {
   },
 
   hasPermission: function (type, arg) {
-   let [url, appId, isInBrowserElement] = this._getInfoFromPermissionArg(arg);
+    let [url, appId, isInBrowserElement, isSystem] = this._getInfoFromPermissionArg(arg);
+    if (isSystem) {
+      return true; // system principals have all permissions
+    }
 
     var msg = {
       'op': 'has',
@@ -1758,7 +1783,10 @@ SpecialPowersAPI.prototype = {
     return this._sendSyncMessage('SPPermissionManager', msg)[0];
   },
   testPermission: function (type, value, arg) {
-   let [url, appId, isInBrowserElement] = this._getInfoFromPermissionArg(arg);
+    let [url, appId, isInBrowserElement, isSystem] = this._getInfoFromPermissionArg(arg);
+    if (isSystem) {
+      return true; // system principals have all permissions
+    }
 
     var msg = {
       'op': 'test',

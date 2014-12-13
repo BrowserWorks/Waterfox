@@ -2,8 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-pref("security.tls.version.min", 0);
+pref("security.tls.version.min", 1);
 pref("security.tls.version.max", 3);
+pref("security.tls.version.fallback-limit", 1);
 
 pref("security.ssl.allow_unrestricted_renego_everywhere__temporarily_available_pref", false);
 pref("security.ssl.renego_unrestricted_hosts", "");
@@ -15,7 +16,7 @@ pref("security.ssl.enable_false_start", true);
 pref("security.ssl.false_start.require-npn", true);
 pref("security.ssl.false_start.require-forward-secrecy", true);
 pref("security.ssl.enable_npn", true);
-pref("security.ssl.enable_alpn", false);
+pref("security.ssl.enable_alpn", true);
 
 pref("security.ssl3.ecdhe_rsa_aes_128_gcm_sha256", true);
 pref("security.ssl3.ecdhe_ecdsa_aes_128_gcm_sha256", true);

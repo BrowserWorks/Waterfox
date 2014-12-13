@@ -47,6 +47,7 @@ namespace mozilla {
 MediaEngineWebRTC::MediaEngineWebRTC(MediaEnginePrefs &aPrefs)
     : mMutex("mozilla::MediaEngineWebRTC")
     , mScreenEngine(nullptr)
+    , mBrowserEngine(nullptr)
     , mWinEngine(nullptr)
     , mAppEngine(nullptr)
     , mVideoEngine(nullptr)
@@ -54,6 +55,7 @@ MediaEngineWebRTC::MediaEngineWebRTC(MediaEnginePrefs &aPrefs)
     , mVideoEngineInit(false)
     , mAudioEngineInit(false)
     , mScreenEngineInit(false)
+    , mBrowserEngineInit(false)
     , mAppEngineInit(false)
 {
 #ifndef MOZ_B2G_CAMERA
@@ -171,6 +173,17 @@ MediaEngineWebRTC::EnumerateVideoDevices(MediaSourceType aMediaSource,
       videoEngine = mScreenEngine;
       videoEngineInit = &mScreenEngineInit;
       break;
+    case MediaSourceType::Browser:
+      mBrowserEngineConfig.Set<webrtc::CaptureDeviceInfo>(
+          new webrtc::CaptureDeviceInfo(webrtc::CaptureDeviceType::Browser));
+      if (!mBrowserEngine) {
+        if (!(mBrowserEngine = webrtc::VideoEngine::Create(mBrowserEngineConfig))) {
+          return;
+        }
+      }
+      videoEngine = mBrowserEngine;
+      videoEngineInit = &mBrowserEngineInit;
+      break;
     case MediaSourceType::Camera:
       // fall through
     default:
@@ -264,7 +277,7 @@ MediaEngineWebRTC::EnumerateVideoDevices(MediaSourceType aMediaSource,
     }
   }
 
-  if (mHasTabVideoSource)
+  if (mHasTabVideoSource || MediaSourceType::Browser == aMediaSource)
     aVSources->AppendElement(new MediaEngineTabVideoSource());
 
   return;
@@ -384,6 +397,10 @@ MediaEngineWebRTC::Shutdown()
     mWinEngine->SetTraceCallback(nullptr);
     webrtc::VideoEngine::Delete(mWinEngine);
   }
+  if (mBrowserEngine) {
+    mBrowserEngine->SetTraceCallback(nullptr);
+    webrtc::VideoEngine::Delete(mBrowserEngine);
+  }
   if (mAppEngine) {
     mAppEngine->SetTraceCallback(nullptr);
     webrtc::VideoEngine::Delete(mAppEngine);
@@ -398,6 +415,7 @@ MediaEngineWebRTC::Shutdown()
   mVoiceEngine = nullptr;
   mScreenEngine = nullptr;
   mWinEngine = nullptr;
+  mBrowserEngine = nullptr;
   mAppEngine = nullptr;
 
   if (mThread) {

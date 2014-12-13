@@ -74,7 +74,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
   // Used to do cheap in-memory rate limiting. Don't sync again if we
   // successfully synced within this duration.
   private static final int MINIMUM_SYNC_DELAY_MILLIS = 15 * 1000;        // 15 seconds.
-  private volatile long lastSyncRealtimeMillis = 0L;
+  private volatile long lastSyncRealtimeMillis;
 
   protected final ExecutorService executor;
   protected final FxAccountNotificationManager notificationManager;
@@ -357,7 +357,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
 
         FxAccountGlobalSession globalSession = null;
         try {
-          final ClientsDataDelegate clientsDataDelegate = new SharedPreferencesClientsDataDelegate(sharedPrefs);
+          final ClientsDataDelegate clientsDataDelegate = new SharedPreferencesClientsDataDelegate(sharedPrefs, getContext());
           if (FxAccountConstants.LOG_PERSONAL_INFORMATION) {
             FxAccountConstants.pii(LOG_TAG, "Client device name is: '" + clientsDataDelegate.getClientName() + "'.");
             FxAccountConstants.pii(LOG_TAG, "Client device data last modified: " + clientsDataDelegate.getLastModifiedTimestamp());

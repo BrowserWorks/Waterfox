@@ -61,7 +61,7 @@ NS_ProxyRelease(nsIEventTarget* aTarget, nsRefPtr<T>& aDoomed,
  *        true, then an event will always be posted to the target thread for
  *        asynchronous release.
  */
-NS_COM_GLUE nsresult
+nsresult
 NS_ProxyRelease(nsIEventTarget* aTarget, nsISupports* aDoomed,
                 bool aAlwaysProxy = false);
 
@@ -112,7 +112,7 @@ public:
   // off-main-thread. But some consumers need to use the same pointer for
   // multiple classes, some of which are main-thread-only and some of which
   // aren't. So we allow them to explicitly disable this strict checking.
-  nsMainThreadPtrHolder(T* aPtr, bool aStrict = true)
+  explicit nsMainThreadPtrHolder(T* aPtr, bool aStrict = true)
     : mRawPtr(nullptr)
     , mStrict(aStrict)
   {
@@ -177,7 +177,10 @@ class nsMainThreadPtrHandle
 
 public:
   nsMainThreadPtrHandle() : mPtr(nullptr) {}
-  nsMainThreadPtrHandle(nsMainThreadPtrHolder<T>* aHolder) : mPtr(aHolder) {}
+  explicit nsMainThreadPtrHandle(nsMainThreadPtrHolder<T>* aHolder)
+    : mPtr(aHolder)
+  {
+  }
   nsMainThreadPtrHandle(const nsMainThreadPtrHandle& aOther)
     : mPtr(aOther.mPtr)
   {
@@ -185,6 +188,11 @@ public:
   nsMainThreadPtrHandle& operator=(const nsMainThreadPtrHandle& aOther)
   {
     mPtr = aOther.mPtr;
+    return *this;
+  }
+  nsMainThreadPtrHandle& operator=(nsMainThreadPtrHolder<T>* aHolder)
+  {
+    mPtr = aHolder;
     return *this;
   }
 

@@ -224,11 +224,18 @@ public:
   AudioChannel MozAudioChannelType() const;
   void SetMozAudioChannelType(AudioChannel aValue, ErrorResult& aRv);
 
+  AudioChannel TestAudioChannelInAudioNodeStream();
+
   void UpdateNodeCount(int32_t aDelta);
 
   double DOMTimeToStreamTime(double aTime) const
   {
     return aTime - ExtraCurrentTime();
+  }
+
+  double StreamTimeToDOMTime(double aTime) const
+  {
+    return aTime + ExtraCurrentTime();
   }
 
   IMPL_EVENT_HANDLER(mozinterruptbegin)

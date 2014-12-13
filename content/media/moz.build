@@ -4,87 +4,79 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-PARALLEL_DIRS += [
+DIRS += [
   'encoder',
   'gmp',
   'mediasource',
   'ogg',
+  'systemservices',
   'webaudio',
   'webvtt'
 ]
 
-TEST_TOOL_DIRS += ['compiledtest']
+TEST_DIRS += ['compiledtest']
 
 if CONFIG['MOZ_RAW']:
-    PARALLEL_DIRS += ['raw']
+    DIRS += ['raw']
 
 if CONFIG['MOZ_WAVE']:
-    PARALLEL_DIRS += ['wave']
+    DIRS += ['wave']
 
 if CONFIG['MOZ_WEBM']:
-    PARALLEL_DIRS += ['webm']
+    DIRS += ['webm']
 
 if CONFIG['MOZ_GSTREAMER']:
-    PARALLEL_DIRS += ['gstreamer']
-	
-    if not CONFIG['SYSTEM_GSTREAMER']:
-        LOCAL_INCLUDES += [
-            '/media/gstreamer/glib',
-            '/media/gstreamer/glib/glib',
-            '/media/gstreamer/gst-plugins-base/gst-libs',
-            '/media/gstreamer/gstreamer',
-            '/media/gstreamer/gstreamer/libs'
-        ]
+    DIRS += ['gstreamer']
 
 if CONFIG['MOZ_DIRECTSHOW']:
-    PARALLEL_DIRS += ['directshow']
+    DIRS += ['directshow']
 
 if CONFIG['MOZ_ANDROID_OMX']:
-    PARALLEL_DIRS += ['android']
+    DIRS += ['android']
 
 if CONFIG['MOZ_WMF']:
-    PARALLEL_DIRS += ['wmf']
+    DIRS += ['wmf']
 
 if CONFIG['MOZ_FMP4']:
-    PARALLEL_DIRS += ['fmp4']
+    DIRS += ['fmp4']
 
 if CONFIG['MOZ_APPLEMEDIA']:
-    PARALLEL_DIRS += ['apple']
+    DIRS += ['apple']
 
-PARALLEL_DIRS += ['webrtc']
+DIRS += ['webrtc']
 
 if CONFIG['MOZ_OMX_DECODER']:
-    PARALLEL_DIRS += ['omx']
-    PARALLEL_DIRS += ['omx/mediaresourcemanager']
+    DIRS += ['omx']
+    DIRS += ['omx/mediaresourcemanager']
 
-PARALLEL_DIRS += ['webspeech']
+DIRS += ['webspeech']
 
 if CONFIG['MOZ_EME']:
-    PARALLEL_DIRS += ['eme']
+    DIRS += ['eme']
 
 TEST_DIRS += [
-    'test',
     'gtest',
 ]
 
+MOCHITEST_MANIFESTS += ['test/mochitest.ini']
+MOCHITEST_CHROME_MANIFESTS += ['test/chrome.ini']
+
 EXPORTS += [
     'AbstractMediaDecoder.h',
+    'AudioBufferUtils.h',
     'AudioChannelFormat.h',
     'AudioCompactor.h',
-    'AudioEventTimeline.h',
     'AudioMixer.h',
-    'AudioNodeEngine.h',
-    'AudioNodeExternalInputStream.h',
-    'AudioNodeStream.h',
     'AudioSampleFormat.h',
     'AudioSegment.h',
     'AudioStream.h',
-    'BufferDecoder.h',
     'BufferMediaResource.h',
+    'CubebUtils.h',
     'DecoderTraits.h',
     'DOMMediaStream.h',
     'EncodedBufferCache.h',
     'FileBlockCache.h',
+    'GraphDriver.h',
     'Latency.h',
     'MediaCache.h',
     'MediaData.h',
@@ -106,6 +98,7 @@ EXPORTS += [
     'MP3FrameParser.h',
     'nsIDocumentActivity.h',
     'RtspMediaResource.h',
+    'SelfRef.h',
     'SharedBuffer.h',
     'SharedThreadPool.h',
     'StreamBuffer.h',
@@ -137,19 +130,17 @@ EXPORTS.mozilla.dom += [
 UNIFIED_SOURCES += [
     'AudioChannelFormat.cpp',
     'AudioCompactor.cpp',
-    'AudioNodeEngine.cpp',
-    'AudioNodeExternalInputStream.cpp',
-    'AudioNodeStream.cpp',
     'AudioSegment.cpp',
     'AudioSink.cpp',
     'AudioStream.cpp',
     'AudioStreamTrack.cpp',
     'AudioTrack.cpp',
     'AudioTrackList.cpp',
-    'BufferDecoder.cpp',
+    'CubebUtils.cpp',
     'DOMMediaStream.cpp',
     'EncodedBufferCache.cpp',
     'FileBlockCache.cpp',
+    "GraphDriver.cpp",
     'MediaCache.cpp',
     'MediaData.cpp',
     'MediaDecoder.cpp',
@@ -195,15 +186,11 @@ SOURCES += [
 
 FAIL_ON_WARNINGS = True
 
-if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['BUILD_ARM_NEON']:
-    SOURCES += ['AudioNodeEngineNEON.cpp']
-    SOURCES['AudioNodeEngineNEON.cpp'].flags += ['-mfpu=neon']
-
 MSVC_ENABLE_PGO = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
-FINAL_LIBRARY = 'gklayout'
+FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '/content/base/src',
     '/layout/generic',
@@ -223,3 +210,6 @@ if CONFIG['MOZ_OMX_DECODER']:
 
 if CONFIG['ANDROID_VERSION'] > '15':
     DEFINES['MOZ_OMX_WEBM_DECODER'] = True
+
+CFLAGS += CONFIG['GSTREAMER_CFLAGS']
+CXXFLAGS += CONFIG['GSTREAMER_CFLAGS']

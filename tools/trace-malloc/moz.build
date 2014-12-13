@@ -43,3 +43,10 @@ SIMPLE_PROGRAMS += simple_cpp_sources
 RESOURCE_FILES += [
     'spacetrace.css'
 ]
+
+USE_LIBS += [
+    'mozalloc',
+    'nspr',
+    'xpcomglue_s',
+    'xul',
+]

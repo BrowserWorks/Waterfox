@@ -14,6 +14,8 @@ let { AddonThreadActor, ThreadActor } = require("devtools/server/actors/script")
 let { DebuggerServer } = require("devtools/server/main");
 let DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
 let { dbg_assert } = DevToolsUtils;
+let makeDebugger = require("./utils/make-debugger");
+let mapURIToAddonID = require("./utils/map-uri-to-addon-id");
 
 let {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -27,9 +29,15 @@ XPCOMUtils.defineLazyGetter(this, "events", () => {
   return require("sdk/event/core");
 });
 
-// Also depends on following symbols, shared by common scope with main.js:
-// DebuggerServer, CommonCreateExtraActors, CommonAppendExtraActors, ActorPool,
-// ThreadActor
+XPCOMUtils.defineLazyGetter(this, "StyleSheetActor", () => {
+  return require("devtools/server/actors/stylesheets").StyleSheetActor;
+});
+
+function getWindowID(window) {
+  return window.QueryInterface(Ci.nsIInterfaceRequestor)
+               .getInterface(Ci.nsIDOMWindowUtils)
+               .currentInnerWindowID;
+}
 
 /**
  * Browser-specific actors.
@@ -70,6 +78,29 @@ function sendShutdownEvent() {
 }
 
 exports.sendShutdownEvent = sendShutdownEvent;
+
+/**
+ * Unwrap a global that is wrapped in a |Debugger.Object|, or if the global has
+ * become a dead object, return |undefined|.
+ *
+ * @param Debugger.Object wrappedGlobal
+ *        The |Debugger.Object| which wraps a global.
+ *
+ * @returns {Object|undefined}
+ *          Returns the unwrapped global object or |undefined| if unwrapping
+ *          failed.
+ */
+const unwrapDebuggerObjectGlobal = wrappedGlobal => {
+  let global;
+  try {
+    global = wrappedGlobal.unsafeDereference();
+  }
+  catch (e) {
+    // Because of bug 991399 we sometimes get bad objects here. If we
+    // can't dereference them then they won't be useful to us.
+  }
+  return global;
+};
 
 /**
  * Construct a root actor appropriate for use in a server running in a
@@ -520,7 +551,17 @@ function TabActor(aConnection)
   this._extraActors = {};
   this._exited = false;
 
-  this.traits = { reconfigure: true };
+  // Map of DOM stylesheets to StyleSheetActors
+  this._styleSheetActors = new Map();
+
+  this._shouldAddNewGlobalAsDebuggee = this._shouldAddNewGlobalAsDebuggee.bind(this);
+
+  this.makeDebugger = makeDebugger.bind(null, {
+    findDebuggees: () => this.windows,
+    shouldAddNewGlobalAsDebuggee: this._shouldAddNewGlobalAsDebuggee
+  });
+
+  this.traits = { reconfigure: true, frames: true };
 }
 
 // XXX (bug 710213): TabActor attach/detach/exit/disconnect is a
@@ -581,7 +622,10 @@ TabActor.prototype = {
 
     let docShells = [];
     while (docShellsEnum.hasMoreElements()) {
-      docShells.push(docShellsEnum.getNext());
+      let docShell = docShellsEnum.getNext();
+      docShell.QueryInterface(Ci.nsIInterfaceRequestor)
+              .getInterface(Ci.nsIWebProgress);
+      docShells.push(docShell);
     }
 
     return docShells;
@@ -690,6 +734,7 @@ TabActor.prototype = {
   disconnect: function BTA_disconnect() {
     this._detach();
     this._extraActors = null;
+    this._styleSheetActors.clear();
     this._exited = true;
   },
 
@@ -715,6 +760,37 @@ TabActor.prototype = {
     this._exited = true;
   },
 
+  /**
+   * Return true if the given global is associated with this tab and should be
+   * added as a debuggee, false otherwise.
+   */
+  _shouldAddNewGlobalAsDebuggee: function (wrappedGlobal) {
+    if (wrappedGlobal.hostAnnotations &&
+        wrappedGlobal.hostAnnotations.type == "document" &&
+        wrappedGlobal.hostAnnotations.element === this.window) {
+      return true;
+    }
+
+    let global = unwrapDebuggerObjectGlobal(wrappedGlobal);
+    if (!global) {
+      return false;
+    }
+
+    // Check if the global is a sdk page-mod sandbox.
+    let metadata = {};
+    let id = "";
+    try {
+      id = getInnerId(this.window);
+      metadata = Cu.getSandboxMetadata(global);
+    }
+    catch (e) {}
+    if (metadata["inner-window-id"] && metadata["inner-window-id"] == id) {
+      return true;
+    }
+
+    return false;
+  },
+
   /* Support for DebuggerServer.addTabActor. */
   _createExtraActors: createExtraActors,
   _appendExtraActors: appendExtraActors,
@@ -736,9 +812,174 @@ TabActor.prototype = {
     this._pushContext();
 
     this._progressListener = new DebuggerProgressListener(this);
-    this._progressListener.watch(this.docShell);
+
+    // Save references to the original document we attached to
+    this._originalWindow = this.window;
+
+    // Ensure replying to attach() request first
+    // before notifying about new docshells.
+    DevToolsUtils.executeSoon(() => this._watchDocshells());
 
     this._attached = true;
+  },
+
+  _watchDocshells: function BTA_watchDocshells() {
+    // In child processes, we watch all docshells living in the process.
+    if (Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT) {
+      Services.obs.addObserver(this, "webnavigation-create", false);
+    }
+    Services.obs.addObserver(this, "webnavigation-destroy", false);
+
+    // We watch for all child docshells under the current document,
+    this._progressListener.watch(this.docShell);
+
+    // And list all already existing ones.
+    this._updateChildDocShells();
+  },
+
+  onSwitchToFrame: function BTA_onSwitchToFrame(aRequest) {
+    let windowId = aRequest.windowId;
+    let win;
+    try {
+      win = Services.wm.getOuterWindowWithId(windowId);
+    } catch(e) {}
+    if (!win) {
+      return { error: "noWindow",
+               message: "The related docshell is destroyed or not found" };
+    } else if (win == this.window) {
+      return {};
+    }
+
+    // Reply first before changing the document
+    DevToolsUtils.executeSoon(() => this._changeTopLevelDocument(win));
+
+    return {};
+  },
+
+  onListFrames: function BTA_onListFrames(aRequest) {
+    let windows = this._docShellsToWindows(this.docShells);
+    return { frames: windows };
+  },
+
+  observe: function (aSubject, aTopic, aData) {
+    // Ignore any event that comes before/after the tab actor is attached
+    // That typically happens during firefox shutdown.
+    if (!this.attached) {
+      return;
+    }
+    if (aTopic == "webnavigation-create") {
+      aSubject.QueryInterface(Ci.nsIDocShell);
+      // webnavigation-create is fired very early during docshell construction.
+      // In new root docshells within child processes, involving TabChild,
+      // this event is from within this call:
+      //   http://hg.mozilla.org/mozilla-central/annotate/74d7fb43bb44/dom/ipc/TabChild.cpp#l912
+      // whereas the chromeEventHandler (and most likely other stuff) is set later:
+      //   http://hg.mozilla.org/mozilla-central/annotate/74d7fb43bb44/dom/ipc/TabChild.cpp#l944
+      // So wait a tick before watching it:
+      DevToolsUtils.executeSoon(() => {
+        // In child processes, we have new root docshells,
+        // let's watch them and all their child docshells.
+        if (this._isRootDocShell(aSubject)) {
+          this._progressListener.watch(aSubject);
+        }
+        this._notifyDocShellsUpdate([aSubject]);
+      });
+    } else if (aTopic == "webnavigation-destroy") {
+      let webProgress = aSubject.QueryInterface(Ci.nsIInterfaceRequestor)
+                                .getInterface(Ci.nsIWebProgress);
+      this._notifyDocShellDestroy(webProgress);
+    }
+  },
+
+  _isRootDocShell: function (docShell) {
+    // Root docshells like top level xul windows don't have chromeEventHandler.
+    // Root docshells in child processes have one, it is TabChildGlobal,
+    // which isn't a DOM Element.
+    // Non-root docshell have a chromeEventHandler that is either
+    // xul:iframe, xul:browser or html:iframe.
+    return !docShell.chromeEventHandler ||
+           !(docShell.chromeEventHandler instanceof Ci.nsIDOMElement);
+  },
+
+  // Convert docShell list to windows objects list being sent to the client
+  _docShellsToWindows: function (docshells) {
+    return docshells.map(docShell => {
+      let window = docShell.DOMWindow;
+      let id = window.QueryInterface(Ci.nsIInterfaceRequestor)
+                     .getInterface(Ci.nsIDOMWindowUtils)
+                     .outerWindowID;
+      let parentID = undefined;
+      // Ignore the parent of the original document on non-e10s firefox,
+      // as we get the xul window as parent and don't care about it.
+      if (window.parent && window != this._originalWindow) {
+        parentID = window.parent
+                         .QueryInterface(Ci.nsIInterfaceRequestor)
+                         .getInterface(Ci.nsIDOMWindowUtils)
+                         .outerWindowID;
+      }
+      return {
+        id: id,
+        url: window.location.href,
+        title: window.title,
+        parentID: parentID
+      };
+    });
+  },
+
+  _notifyDocShellsUpdate: function (docshells) {
+    let windows = this._docShellsToWindows(docshells);
+    this.conn.send({ from: this.actorID,
+                     type: "frameUpdate",
+                     frames: windows
+                   });
+  },
+
+  _updateChildDocShells: function () {
+    this._notifyDocShellsUpdate(this.docShells);
+  },
+
+  _notifyDocShellDestroy: function (webProgress) {
+    let id = webProgress.DOMWindow
+                        .QueryInterface(Ci.nsIInterfaceRequestor)
+                        .getInterface(Ci.nsIDOMWindowUtils)
+                        .outerWindowID;
+    this.conn.send({ from: this.actorID,
+                     type: "frameUpdate",
+                     frames: [{
+                       id: id,
+                       destroy: true
+                     }]
+                   });
+
+    // Stop watching this docshell if it's a root one.
+    // (child processes spawn new root docshells)
+    webProgress.QueryInterface(Ci.nsIDocShell);
+    if (this._isRootDocShell(webProgress)) {
+      this._progressListener.unwatch(webProgress);
+    }
+
+    if (webProgress.DOMWindow == this._originalWindow) {
+      // If for some reason (typically during Firefox shutdown), the original
+      // document is destroyed, we detach the tab actor to unregister all listeners
+      // and prevent any exception.
+      this.exit();
+      return;
+    }
+
+    // If the currently targeted context is destroyed,
+    // and we aren't on the top-level document,
+    // we have to switch to the top-level one.
+    if (webProgress.DOMWindow == this.window &&
+        this.window != this._originalWindow) {
+      this._changeTopLevelDocument(this._originalWindow);
+    }
+  },
+
+  _notifyDocShellDestroyAll: function () {
+    this.conn.send({ from: this.actorID,
+                     type: "frameUpdate",
+                     destroyAll: true
+                   });
   },
 
   /**
@@ -785,6 +1026,13 @@ TabActor.prototype = {
     }
     this._progressListener.destroy();
     this._progressListener = null;
+    this._originalWindow = null;
+
+    // Removes the observers being set in _watchDocShells
+    if (Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT) {
+      Services.obs.removeObserver(this, "webnavigation-create", false);
+    }
+    Services.obs.removeObserver(this, "webnavigation-destroy", false);
 
     this._popContext();
 
@@ -834,6 +1082,11 @@ TabActor.prototype = {
     // Wait a tick so that the response packet can be dispatched before the
     // subsequent navigation event packet.
     Services.tm.currentThread.dispatch(DevToolsUtils.makeInfallible(() => {
+      // This won't work while the browser is shutting down and we don't really
+      // care.
+      if (Services.startup.shuttingDown) {
+        return;
+      }
       this.webNavigation.reload(force ? Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_CACHE
                                       : Ci.nsIWebNavigation.LOAD_FLAGS_NONE);
     }, "TabActor.prototype.onReload's delayed body"), 0);
@@ -972,17 +1225,64 @@ TabActor.prototype = {
     }
   },
 
+  _changeTopLevelDocument: function (window) {
+    // Fake a will-navigate on the previous document
+    // to let a chance to unregister it
+    this._willNavigate(this.window, window.location.href, null, true);
+
+    this._windowDestroyed(this.window);
+
+    DevToolsUtils.executeSoon(() => {
+      this._setWindow(window);
+
+      // Then fake window-ready and navigate on the given document
+      this._windowReady(window, true);
+      DevToolsUtils.executeSoon(() => {
+        this._navigate(window, true);
+      });
+    });
+  },
+
+  _setWindow: function (window) {
+    let docShell = window.QueryInterface(Ci.nsIInterfaceRequestor)
+                         .getInterface(Ci.nsIWebNavigation)
+                         .QueryInterface(Ci.nsIDocShell);
+    // Here is the very important call where we switch the currently
+    // targeted context (it will indirectly update this.window and
+    // many other attributes defined from docShell).
+    Object.defineProperty(this, "docShell", {
+      value: docShell,
+      enumerable: true,
+      configurable: true
+    });
+    events.emit(this, "changed-toplevel-document");
+    let id = window.QueryInterface(Ci.nsIInterfaceRequestor)
+                   .getInterface(Ci.nsIDOMWindowUtils)
+                   .outerWindowID;
+    this.conn.send({ from: this.actorID,
+                     type: "frameUpdate",
+                     selected: id
+                   });
+  },
+
   /**
    * Handle location changes, by clearing the previous debuggees and enabling
    * debugging, which may have been disabled temporarily by the
    * DebuggerProgressListener.
    */
-  _windowReady: function (window) {
+  _windowReady: function (window, isFrameSwitching = false) {
     let isTopLevel = window == this.window;
+
+    // We just reset iframe list on WillNavigate, so we now list all existing
+    // frames when we load a new document in the original window
+    if (window == this._originalWindow && !isFrameSwitching) {
+      this._updateChildDocShells();
+    }
 
     events.emit(this, "window-ready", {
       window: window,
-      isTopLevel: isTopLevel
+      isTopLevel: isTopLevel,
+      id: getWindowID(window)
     });
 
     // TODO bug 997119: move that code to ThreadActor by listening to window-ready
@@ -991,31 +1291,57 @@ TabActor.prototype = {
       threadActor.clearDebuggees();
       if (threadActor.dbg) {
         threadActor.dbg.enabled = true;
-        threadActor.global = window;
         threadActor.maybePauseOnExceptions();
       }
+      // Update the global no matter if the debugger is on or off,
+      // otherwise the global will be wrong when enabled later.
+      threadActor.global = window;
     }
+
+    for (let sheetActor of this._styleSheetActors.values()) {
+      this._tabPool.removeActor(sheetActor);
+    }
+    this._styleSheetActors.clear();
+
 
     // Refresh the debuggee list when a new window object appears (top window or
     // iframe).
     if (threadActor.attached) {
-      threadActor.findGlobals();
+      threadActor.dbg.addDebuggees();
     }
   },
 
-  _windowDestroyed: function (window) {
+  _windowDestroyed: function (window, id = null) {
     events.emit(this, "window-destroyed", {
       window: window,
-      isTopLevel: window == this.window
+      isTopLevel: window == this.window,
+      id: id || getWindowID(window)
     });
   },
 
   /**
-   * Start notifying server codebase and client about a new document
+   * Start notifying server and client about a new document
    * being loaded in the currently targeted context.
    */
-  _willNavigate: function (window, newURI, request) {
+  _willNavigate: function (window, newURI, request, isFrameSwitching = false) {
     let isTopLevel = window == this.window;
+    let reset = false;
+
+    if (window == this._originalWindow && !isFrameSwitching) {
+      // Clear the iframe list if the original top-level document changes.
+      this._notifyDocShellDestroyAll();
+
+      // If the top level document changes and we are targeting
+      // an iframe, we need to reset to the upcoming new top level document.
+      // But for this will-navigate event, we will dispatch on the old window.
+      // (The inspector codebase expect to receive will-navigate for the currently
+      // displayed document in order to cleanup the markup view)
+      if (this.window != this._originalWindow) {
+        reset=true;
+        window = this.window;
+        isTopLevel = true;
+      }
+    }
 
     // will-navigate event needs to be dispatched synchronously,
     // by calling the listeners in the order or registration.
@@ -1051,15 +1377,20 @@ TabActor.prototype = {
       type: "tabNavigated",
       url: newURI,
       nativeConsoleAPI: true,
-      state: "start"
+      state: "start",
+      isFrameSwitching: isFrameSwitching
     });
+
+    if (reset) {
+      this._setWindow(this._originalWindow);
+    }
   },
 
   /**
    * Notify server and client about a new document done loading in the current
    * targeted context.
    */
-  _navigate: function (window) {
+  _navigate: function (window, isFrameSwitching = false) {
     let isTopLevel = window == this.window;
 
     // navigate event needs to be dispatched synchronously,
@@ -1089,7 +1420,8 @@ TabActor.prototype = {
       url: this.url,
       title: this.title,
       nativeConsoleAPI: this.hasNativeConsoleAPI(this.window),
-      state: "stop"
+      state: "stop",
+      isFrameSwitching: isFrameSwitching
     });
   },
 
@@ -1112,6 +1444,28 @@ TabActor.prototype = {
     }
     catch (ex) { }
     return isNative;
+  },
+
+  /**
+   * Create or return the StyleSheetActor for a style sheet. This method
+   * is here because the Style Editor and Inspector share style sheet actors.
+   *
+   * @param DOMStyleSheet styleSheet
+   *        The style sheet to creat an actor for.
+   * @return StyleSheetActor actor
+   *         The actor for this style sheet.
+   *
+   */
+  createStyleSheetActor: function BTA_createStyleSheetActor(styleSheet) {
+    if (this._styleSheetActors.has(styleSheet)) {
+      return this._styleSheetActors.get(styleSheet);
+    }
+    let actor = new StyleSheetActor(styleSheet, this);
+    this._styleSheetActors.set(styleSheet, actor);
+
+    this._tabPool.addActor(actor);
+
+    return actor;
   }
 };
 
@@ -1123,7 +1477,9 @@ TabActor.prototype.requestTypes = {
   "detach": TabActor.prototype.onDetach,
   "reload": TabActor.prototype.onReload,
   "navigateTo": TabActor.prototype.onNavigateTo,
-  "reconfigure": TabActor.prototype.onReconfigure
+  "reconfigure": TabActor.prototype.onReconfigure,
+  "switchToFrame": TabActor.prototype.onSwitchToFrame,
+  "listFrames": TabActor.prototype.onListFrames
 };
 
 exports.TabActor = TabActor;
@@ -1159,7 +1515,7 @@ Object.defineProperty(BrowserTabActor.prototype, "docShell", {
     return null;
   },
   enumerable: true,
-  configurable: false
+  configurable: true
 });
 
 Object.defineProperty(BrowserTabActor.prototype, "title", {
@@ -1287,6 +1643,14 @@ function BrowserAddonActor(aConnection, aAddon) {
   this.conn.addActorPool(this._contextPool);
   this._threadActor = null;
   this._global = null;
+
+  this._shouldAddNewGlobalAsDebuggee = this._shouldAddNewGlobalAsDebuggee.bind(this);
+
+  this.makeDebugger = makeDebugger.bind(null, {
+    findDebuggees: this._findDebuggees.bind(this),
+    shouldAddNewGlobalAsDebuggee: this._shouldAddNewGlobalAsDebuggee
+  });
+
   AddonManager.addAddonListener(this);
 }
 
@@ -1373,8 +1737,7 @@ BrowserAddonActor.prototype = {
     }
 
     if (!this.attached) {
-      this._threadActor = new AddonThreadActor(this.conn, this,
-                                               this._addon.id);
+      this._threadActor = new AddonThreadActor(this.conn, this);
       this._contextPool.addActor(this._threadActor);
     }
 
@@ -1413,6 +1776,61 @@ BrowserAddonActor.prototype = {
       windowUtils.resumeTimeouts();
       windowUtils.suppressEventHandling(false);
     }
+  },
+
+  /**
+   * Return true if the given global is associated with this addon and should be
+   * added as a debuggee, false otherwise.
+   */
+  _shouldAddNewGlobalAsDebuggee: function (aGlobal) {
+    const global = unwrapDebuggerObjectGlobal(aGlobal);
+    try {
+      // This will fail for non-Sandbox objects, hence the try-catch block.
+      let metadata = Cu.getSandboxMetadata(global);
+      if (metadata) {
+        return metadata.addonID === this.id;
+      }
+    } catch (e) {}
+
+    if (global instanceof Ci.nsIDOMWindow) {
+      let id = {};
+      if (mapURIToAddonID(global.document.documentURIObject, id)) {
+        return id.value === this.id;
+      }
+      return false;
+    }
+
+    // Check the global for a __URI__ property and then try to map that to an
+    // add-on
+    let uridescriptor = aGlobal.getOwnPropertyDescriptor("__URI__");
+    if (uridescriptor && "value" in uridescriptor && uridescriptor.value) {
+      let uri;
+      try {
+        uri = Services.io.newURI(uridescriptor.value, null, null);
+      }
+      catch (e) {
+        DevToolsUtils.reportException(
+          "BrowserAddonActor.prototype._shouldAddNewGlobalAsDebuggee",
+          new Error("Invalid URI: " + uridescriptor.value)
+        );
+        return false;
+      }
+
+      let id = {};
+      if (mapURIToAddonID(uri, id)) {
+        return id.value === this.id;
+      }
+    }
+
+    return false;
+  },
+
+  /**
+   * Yield the current set of globals associated with this addon that should be
+   * added as debuggees.
+   */
+  _findDebuggees: function (dbg) {
+    return dbg.findAllGlobals().filter(this._shouldAddNewGlobalAsDebuggee);
   }
 };
 
@@ -1476,14 +1894,17 @@ DebuggerProgressListener.prototype = {
     // Dispatch the _windowReady event on the tabActor for pre-existing windows
     for (let win of this._getWindowsInDocShell(docShell)) {
       this._tabActor._windowReady(win);
-      this._knownWindowIDs.set(this._getWindowID(win), win);
+      this._knownWindowIDs.set(getWindowID(win), win);
     }
   },
 
   unwatch: function(docShell) {
     let webProgress = docShell.QueryInterface(Ci.nsIInterfaceRequestor)
                               .getInterface(Ci.nsIWebProgress);
-    webProgress.removeProgressListener(this);
+    // During process shutdown, the docshell may already be cleaned up and throw
+    try {
+      webProgress.removeProgressListener(this);
+    } catch(e) {}
 
     // TODO: fix docShell.chromeEventHandler in child processes!
     let handler = docShell.chromeEventHandler ||
@@ -1495,7 +1916,7 @@ DebuggerProgressListener.prototype = {
     handler.removeEventListener("pagehide", this._onWindowHidden, true);
 
     for (let win of this._getWindowsInDocShell(docShell)) {
-      this._knownWindowIDs.delete(this._getWindowID(win));
+      this._knownWindowIDs.delete(getWindowID(win));
     }
   },
 
@@ -1514,12 +1935,6 @@ DebuggerProgressListener.prototype = {
     return windows;
   },
 
-  _getWindowID: function(window) {
-    return window.QueryInterface(Ci.nsIInterfaceRequestor)
-                 .getInterface(Ci.nsIDOMWindowUtils)
-                 .currentInnerWindowID;
-  },
-
   onWindowCreated: DevToolsUtils.makeInfallible(function(evt) {
     if (!this._tabActor.attached) {
       return;
@@ -1536,7 +1951,7 @@ DebuggerProgressListener.prototype = {
     this._tabActor._windowReady(window);
 
     if (evt.type !== "pageshow") {
-      this._knownWindowIDs.set(this._getWindowID(window), window);
+      this._knownWindowIDs.set(getWindowID(window), window);
     }
   }, "DebuggerProgressListener.prototype.onWindowCreated"),
 
@@ -1569,7 +1984,7 @@ DebuggerProgressListener.prototype = {
     let window = this._knownWindowIDs.get(innerID);
     if (window) {
       this._knownWindowIDs.delete(innerID);
-      this._tabActor._windowDestroyed(window);
+      this._tabActor._windowDestroyed(window, innerID);
     }
   }, "DebuggerProgressListener.prototype.observe"),
 
@@ -1584,12 +1999,23 @@ DebuggerProgressListener.prototype = {
     let isDocument = aFlag & Ci.nsIWebProgressListener.STATE_IS_DOCUMENT;
     let isWindow = aFlag & Ci.nsIWebProgressListener.STATE_IS_WINDOW;
 
+    // Catch any iframe location change
+    if (isDocument && isStop) {
+      // Watch document stop to ensure having the new iframe url.
+      aProgress.QueryInterface(Ci.nsIDocShell);
+      this._tabActor._notifyDocShellsUpdate([aProgress]);
+    }
+
     let window = aProgress.DOMWindow;
     if (isDocument && isStart) {
+      // One of the earliest events that tells us a new URI
+      // is being loaded in this window.
       let newURI = aRequest instanceof Ci.nsIChannel ? aRequest.URI.spec : null;
       this._tabActor._willNavigate(window, newURI, aRequest);
     }
     if (isWindow && isStop) {
+      // Somewhat equivalent of load event.
+      // (window.document.readyState == complete)
       this._tabActor._navigate(window);
     }
   }, "DebuggerProgressListener.prototype.onStateChange")

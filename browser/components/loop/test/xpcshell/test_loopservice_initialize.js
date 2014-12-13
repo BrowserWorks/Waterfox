@@ -10,8 +10,9 @@ var startTimerCalled = false;
 add_task(function test_initialize_no_expiry() {
   startTimerCalled = false;
 
-  MozLoopService.initialize();
-
+  let initializedPromise = yield MozLoopService.initialize();
+  Assert.equal(initializedPromise, "registration not needed",
+               "Promise should be fulfilled");
   Assert.equal(startTimerCalled, false,
     "should not register when no expiry time is set");
 });
@@ -50,9 +51,11 @@ add_task(function test_initialize_starts_timer() {
 
 function run_test()
 {
+  setupFakeLoopServer();
+
   // Override MozLoopService's initializeTimer, so that we can verify the timeout is called
   // correctly.
-  MozLoopService._startInitializeTimer = function() {
+  MozLoopService.initializeTimerFunc = function() {
     startTimerCalled = true;
   };
 

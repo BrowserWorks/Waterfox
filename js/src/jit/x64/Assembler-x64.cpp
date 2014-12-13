@@ -30,8 +30,17 @@ ABIArgGenerator::next(MIRType type)
 #if defined(XP_WIN)
     JS_STATIC_ASSERT(NumIntArgRegs == NumFloatArgRegs);
     if (regIndex_ == NumIntArgRegs) {
-        current_ = ABIArg(stackOffset_);
-        stackOffset_ += sizeof(uint64_t);
+        if (IsSimdType(type)) {
+            // On Win64, >64 bit args need to be passed by reference, but asm.js
+            // doesn't allow passing SIMD values to FFIs. The only way to reach
+            // here is asm to asm calls, so we can break the ABI here.
+            stackOffset_ = AlignBytes(stackOffset_, SimdStackAlignment);
+            current_ = ABIArg(stackOffset_);
+            stackOffset_ += Simd128DataSize;
+        } else {
+            stackOffset_ += sizeof(uint64_t);
+            current_ = ABIArg(stackOffset_);
+        }
         return current_;
     }
     switch (type) {
@@ -43,8 +52,15 @@ ABIArgGenerator::next(MIRType type)
       case MIRType_Double:
         current_ = ABIArg(FloatArgRegs[regIndex_++]);
         break;
+      case MIRType_Int32x4:
+      case MIRType_Float32x4:
+        // On Win64, >64 bit args need to be passed by reference, but asm.js
+        // doesn't allow passing SIMD values to FFIs. The only way to reach
+        // here is asm to asm calls, so we can break the ABI here.
+        current_ = ABIArg(FloatArgRegs[regIndex_++]);
+        break;
       default:
-        MOZ_ASSUME_UNREACHABLE("Unexpected argument type");
+        MOZ_CRASH("Unexpected argument type");
     }
     return current_;
 #else
@@ -67,17 +83,29 @@ ABIArgGenerator::next(MIRType type)
         }
         current_ = ABIArg(FloatArgRegs[floatRegIndex_++]);
         break;
+      case MIRType_Int32x4:
+      case MIRType_Float32x4:
+        if (floatRegIndex_ == NumFloatArgRegs) {
+            stackOffset_ = AlignBytes(stackOffset_, SimdStackAlignment);
+            current_ = ABIArg(stackOffset_);
+            stackOffset_ += Simd128DataSize;
+            break;
+        }
+        current_ = ABIArg(FloatArgRegs[floatRegIndex_++]);
+        break;
       default:
-        MOZ_ASSUME_UNREACHABLE("Unexpected argument type");
+        MOZ_CRASH("Unexpected argument type");
     }
     return current_;
 #endif
 }
 
 // Avoid r11, which is the MacroAssembler's ScratchReg.
-const Register ABIArgGenerator::NonArgReturnVolatileReg0 = r10;
-const Register ABIArgGenerator::NonArgReturnVolatileReg1 = r12;
+const Register ABIArgGenerator::NonArgReturnReg0 = r10;
+const Register ABIArgGenerator::NonArgReturnReg1 = r12;
 const Register ABIArgGenerator::NonVolatileReg = r13;
+const Register ABIArgGenerator::NonArg_VolatileReg = rax;
+const Register ABIArgGenerator::NonReturn_VolatileReg0 = rcx;
 
 void
 Assembler::writeRelocation(JmpSrc src, Relocation::Kind reloc)
@@ -188,8 +216,8 @@ Assembler::executableCopy(uint8_t *buffer)
             // to jump to a different code block.
             continue;
         }
-        if (JSC::X86Assembler::canRelinkJump(src, rp.target)) {
-            JSC::X86Assembler::setRel32(src, rp.target);
+        if (X86Assembler::canRelinkJump(src, rp.target)) {
+            X86Assembler::setRel32(src, rp.target);
         } else {
             // An extended jump table must exist, and its offset must be in
             // range.
@@ -198,11 +226,11 @@ Assembler::executableCopy(uint8_t *buffer)
 
             // Patch the jump to go to the extended jump entry.
             uint8_t *entry = buffer + extendedJumpTable_ + i * SizeOfJumpTableEntry;
-            JSC::X86Assembler::setRel32(src, entry);
+            X86Assembler::setRel32(src, entry);
 
             // Now patch the pointer, note that we need to align it to
             // *after* the extended jump, i.e. after the 64-bit immedate.
-            JSC::X86Assembler::repatchPointer(entry + SizeOfExtendedJump, rp.target);
+            X86Assembler::repatchPointer(entry + SizeOfExtendedJump, rp.target);
         }
     }
 }
@@ -240,13 +268,13 @@ class RelocationIterator
 JitCode *
 Assembler::CodeFromJump(JitCode *code, uint8_t *jump)
 {
-    uint8_t *target = (uint8_t *)JSC::X86Assembler::getRel32Target(jump);
+    uint8_t *target = (uint8_t *)X86Assembler::getRel32Target(jump);
     if (target >= code->raw() && target < code->raw() + code->instructionsSize()) {
         // This jump is within the code buffer, so it has been redirected to
         // the extended jump table.
         JS_ASSERT(target + SizeOfJumpTableEntry <= code->raw() + code->instructionsSize());
 
-        target = (uint8_t *)JSC::X86Assembler::getPointer(target + SizeOfExtendedJump);
+        target = (uint8_t *)X86Assembler::getPointer(target + SizeOfExtendedJump);
     }
 
     return JitCode::FromExecutable(target);

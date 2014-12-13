@@ -10,6 +10,7 @@ EXPORTS.mozilla += [
 
 EXPORTS.mozilla.gfx += [
     '2D.h',
+    'BaseCoord.h',
     'BaseMargin.h',
     'BasePoint.h',
     'BasePoint3D.h',
@@ -18,6 +19,7 @@ EXPORTS.mozilla.gfx += [
     'BaseSize.h',
     'Blur.h',
     'BorrowedContext.h',
+    'Coord.h',
     'DataSurfaceHelpers.h',
     'Filters.h',
     'Helpers.h',
@@ -75,6 +77,9 @@ if CONFIG['MOZ_ENABLE_SKIA']:
     SOURCES += [
         'image_operations.cpp', # Uses _USE_MATH_DEFINES
     ]
+    EXPORTS.mozilla.gfx += [
+        'HelpersSkia.h',
+    ]
 
 # Are we targeting x86 or x64?  If so, build SSE2 files.
 if CONFIG['INTEL_ARCHITECTURE']:
@@ -97,7 +102,9 @@ UNIFIED_SOURCES += [
     'DataSourceSurface.cpp',
     'DataSurfaceHelpers.cpp',
     'DrawEventRecorder.cpp',
+    'DrawTarget.cpp',
     'DrawTargetCairo.cpp',
+    'DrawTargetCapture.cpp',
     'DrawTargetDual.cpp',
     'DrawTargetRecording.cpp',
     'DrawTargetTiled.cpp',
@@ -139,11 +146,11 @@ for var in ('USE_CAIRO', 'MOZ2D_HAS_MOZ_CAIRO'):
 if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk2', 'gtk3', 'gonk', 'qt'):
     DEFINES['MOZ_ENABLE_FREETYPE'] = True
 
-DEFINES['SK_A32_SHIFT'] = 24
-DEFINES['SK_R32_SHIFT'] = 16
-DEFINES['SK_G32_SHIFT'] = 8
-DEFINES['SK_B32_SHIFT'] = 0
-
 if CONFIG['MOZ_DEBUG']:
     DEFINES['GFX_LOG_DEBUG'] = True
     DEFINES['GFX_LOG_WARNING'] = True
+
+CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk2', 'gtk3', 'gonk', 'qt'):
+    CXXFLAGS += CONFIG['CAIRO_FT_CFLAGS']

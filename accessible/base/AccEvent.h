@@ -105,7 +105,8 @@ public:
     eTextSelChangeEvent,
     eSelectionChangeEvent,
     eTableChangeEvent,
-    eVirtualCursorChangeEvent
+    eVirtualCursorChangeEvent,
+    eObjectAttrChangedEvent
   };
 
   static const EventGroup kEventGroup = eGenericEvent;
@@ -291,7 +292,7 @@ public:
 class AccReorderEvent : public AccEvent
 {
 public:
-  AccReorderEvent(Accessible* aTarget) :
+  explicit AccReorderEvent(Accessible* aTarget) :
     AccEvent(::nsIAccessibleEvent::EVENT_REORDER, aTarget,
              eAutoDetect, eCoalesceReorder) { }
   virtual ~AccReorderEvent() { }
@@ -469,7 +470,8 @@ public:
   AccVCChangeEvent(Accessible* aAccessible,
                    nsIAccessible* aOldAccessible,
                    int32_t aOldStart, int32_t aOldEnd,
-                   int16_t aReason);
+                   int16_t aReason,
+                   EIsFromUserInput aIsFromUserInput = eFromUserInput);
 
   virtual ~AccVCChangeEvent() { }
 
@@ -494,12 +496,38 @@ private:
 };
 
 /**
+ * Accessible object attribute changed event.
+ */
+class AccObjectAttrChangedEvent: public AccEvent
+{
+public:
+  AccObjectAttrChangedEvent(Accessible* aAccessible, nsIAtom* aAttribute) :
+    AccEvent(::nsIAccessibleEvent::EVENT_OBJECT_ATTRIBUTE_CHANGED, aAccessible),
+    mAttribute(aAttribute) { }
+
+  // AccEvent
+  static const EventGroup kEventGroup = eObjectAttrChangedEvent;
+  virtual unsigned int GetEventGroups() const
+  {
+    return AccEvent::GetEventGroups() | (1U << eObjectAttrChangedEvent);
+  }
+
+  // AccObjectAttrChangedEvent
+  nsIAtom* GetAttribute() const { return mAttribute; }
+
+private:
+  nsCOMPtr<nsIAtom> mAttribute;
+
+  virtual ~AccObjectAttrChangedEvent() { }
+};
+
+/**
  * Downcast the generic accessible event object to derived type.
  */
 class downcast_accEvent
 {
 public:
-  downcast_accEvent(AccEvent* e) : mRawPtr(e) { }
+  explicit downcast_accEvent(AccEvent* e) : mRawPtr(e) { }
 
   template<class Destination>
   operator Destination*() {

@@ -32,7 +32,7 @@ using namespace mozilla::pkix;
 using namespace mozilla::pkix::test;
 
 // Creates a self-signed certificate with the given extension.
-static const SECItem*
+static Input
 CreateCert(PLArenaPool* arena, const char* subjectStr,
            SECItem const* const* extensions, // null-terminated array
            /*out*/ ScopedSECKEYPrivateKey& subjectKey)
@@ -41,29 +41,26 @@ CreateCert(PLArenaPool* arena, const char* subjectStr,
   ++serialNumberValue;
   const SECItem* serialNumber(CreateEncodedSerialNumber(arena,
                                                         serialNumberValue));
-  if (!serialNumber) {
-    return nullptr;
-  }
+  EXPECT_TRUE(serialNumber);
   const SECItem* issuerDER(ASCIIToDERName(arena, subjectStr));
-  if (!issuerDER) {
-    return nullptr;
-  }
+  EXPECT_TRUE(issuerDER);
   const SECItem* subjectDER(ASCIIToDERName(arena, subjectStr));
-  if (!subjectDER) {
-    return nullptr;
-  }
-
-  return CreateEncodedCertificate(arena, v3,
+  EXPECT_TRUE(subjectDER);
+  SECItem* cert = CreateEncodedCertificate(
+                                  arena, v3,
                                   SEC_OID_PKCS1_SHA256_WITH_RSA_ENCRYPTION,
                                   serialNumber, issuerDER,
-                                  PR_Now() - ONE_DAY,
-                                  PR_Now() + ONE_DAY,
+                                  oneDayBeforeNow, oneDayAfterNow,
                                   subjectDER, extensions,
                                   nullptr, SEC_OID_SHA256, subjectKey);
+  EXPECT_TRUE(cert);
+  Input result;
+  EXPECT_EQ(Success, result.Init(cert->data, cert->len));
+  return result;
 }
 
 // Creates a self-signed certificate with the given extension.
-static const SECItem*
+static Input
 CreateCert(PLArenaPool* arena, const char* subjectStr,
            const SECItem* extension,
            /*out*/ ScopedSECKEYPrivateKey& subjectKey)
@@ -76,23 +73,23 @@ class TrustEverythingTrustDomain : public TrustDomain
 {
 private:
   virtual Result GetCertTrust(EndEntityOrCA, const CertPolicyId&,
-                              const SECItem& candidateCert,
-                              /*out*/ TrustLevel* trustLevel)
+                              Input candidateCert,
+                              /*out*/ TrustLevel& trustLevel)
   {
-    *trustLevel = TrustLevel::TrustAnchor;
+    trustLevel = TrustLevel::TrustAnchor;
     return Success;
   }
 
-  virtual Result FindIssuer(const SECItem& /*encodedIssuerName*/,
-                            IssuerChecker& /*checker*/, PRTime /*time*/)
+  virtual Result FindIssuer(Input /*encodedIssuerName*/,
+                            IssuerChecker& /*checker*/, Time /*time*/)
   {
     ADD_FAILURE();
     return Result::FATAL_ERROR_LIBRARY_FAILURE;
   }
 
-  virtual Result CheckRevocation(EndEntityOrCA, const CertID&, PRTime,
-                                 /*optional*/ const SECItem*,
-                                 /*optional*/ const SECItem*)
+  virtual Result CheckRevocation(EndEntityOrCA, const CertID&, Time,
+                                 /*optional*/ const Input*,
+                                 /*optional*/ const Input*)
   {
     return Success;
   }
@@ -103,19 +100,19 @@ private:
   }
 
   virtual Result VerifySignedData(const SignedDataWithSignature& signedData,
-                                  const SECItem& subjectPublicKeyInfo)
+                                  Input subjectPublicKeyInfo)
   {
     return ::mozilla::pkix::VerifySignedData(signedData, subjectPublicKeyInfo,
                                              nullptr);
   }
 
-  virtual Result DigestBuf(const SECItem&, /*out*/ uint8_t*, size_t)
+  virtual Result DigestBuf(Input, /*out*/ uint8_t*, size_t)
   {
     ADD_FAILURE();
     return Result::FATAL_ERROR_LIBRARY_FAILURE;
   }
 
-  virtual Result CheckPublicKey(const SECItem& subjectPublicKeyInfo)
+  virtual Result CheckPublicKey(Input subjectPublicKeyInfo)
   {
     return ::mozilla::pkix::CheckPublicKey(subjectPublicKeyInfo);
   }
@@ -157,11 +154,10 @@ TEST_F(pkixcert_extension, UnknownCriticalExtension)
   const char* certCN = "CN=Cert With Unknown Critical Extension";
   ScopedSECKEYPrivateKey key;
   // cert is owned by the arena
-  const SECItem* cert(CreateCert(arena.get(), certCN,
-                                 &unknownCriticalExtension, key));
-  ASSERT_TRUE(cert);
+  Input cert(CreateCert(arena.get(), certCN,
+                              &unknownCriticalExtension, key));
   ASSERT_EQ(Result::ERROR_UNKNOWN_CRITICAL_EXTENSION,
-            BuildCertChain(trustDomain, *cert, now,
+            BuildCertChain(trustDomain, cert, Now(),
                            EndEntityOrCA::MustBeEndEntity,
                            KeyUsage::noParticularKeyUsageRequired,
                            KeyPurposeId::anyExtendedKeyUsage,
@@ -189,11 +185,10 @@ TEST_F(pkixcert_extension, UnknownNonCriticalExtension)
   const char* certCN = "CN=Cert With Unknown NonCritical Extension";
   ScopedSECKEYPrivateKey key;
   // cert is owned by the arena
-  const SECItem* cert(CreateCert(arena.get(), certCN,
-                                 &unknownNonCriticalExtension, key));
-  ASSERT_TRUE(cert);
+  Input cert(CreateCert(arena.get(), certCN,
+                              &unknownNonCriticalExtension, key));
   ASSERT_EQ(Success,
-            BuildCertChain(trustDomain, *cert, now,
+            BuildCertChain(trustDomain, cert, Now(),
                            EndEntityOrCA::MustBeEndEntity,
                            KeyUsage::noParticularKeyUsageRequired,
                            KeyPurposeId::anyExtendedKeyUsage,
@@ -222,11 +217,10 @@ TEST_F(pkixcert_extension, WrongOIDCriticalExtension)
   const char* certCN = "CN=Cert With Critical Wrong OID Extension";
   ScopedSECKEYPrivateKey key;
   // cert is owned by the arena
-  const SECItem* cert(CreateCert(arena.get(), certCN,
-                                 &wrongOIDCriticalExtension, key));
-  ASSERT_TRUE(cert);
+  Input cert(CreateCert(arena.get(), certCN,
+                              &wrongOIDCriticalExtension, key));
   ASSERT_EQ(Result::ERROR_UNKNOWN_CRITICAL_EXTENSION,
-            BuildCertChain(trustDomain, *cert, now,
+            BuildCertChain(trustDomain, cert, Now(),
                            EndEntityOrCA::MustBeEndEntity,
                            KeyUsage::noParticularKeyUsageRequired,
                            KeyPurposeId::anyExtendedKeyUsage,
@@ -257,11 +251,9 @@ TEST_F(pkixcert_extension, CriticalAIAExtension)
   const char* certCN = "CN=Cert With Critical AIA Extension";
   ScopedSECKEYPrivateKey key;
   // cert is owned by the arena
-  const SECItem* cert(CreateCert(arena.get(), certCN, &criticalAIAExtension,
-                                 key));
-  ASSERT_TRUE(cert);
+  Input cert(CreateCert(arena.get(), certCN, &criticalAIAExtension, key));
   ASSERT_EQ(Success,
-            BuildCertChain(trustDomain, *cert, now,
+            BuildCertChain(trustDomain, cert, Now(),
                            EndEntityOrCA::MustBeEndEntity,
                            KeyUsage::noParticularKeyUsageRequired,
                            KeyPurposeId::anyExtendedKeyUsage,
@@ -289,11 +281,10 @@ TEST_F(pkixcert_extension, UnknownCriticalCEExtension)
   const char* certCN = "CN=Cert With Unknown Critical id-ce Extension";
   ScopedSECKEYPrivateKey key;
   // cert is owned by the arena
-  const SECItem* cert(CreateCert(arena.get(), certCN,
-                                 &unknownCriticalCEExtension, key));
-  ASSERT_TRUE(cert);
+  Input cert(CreateCert(arena.get(), certCN,
+                              &unknownCriticalCEExtension, key));
   ASSERT_EQ(Result::ERROR_UNKNOWN_CRITICAL_EXTENSION,
-            BuildCertChain(trustDomain, *cert, now,
+            BuildCertChain(trustDomain, cert, Now(),
                            EndEntityOrCA::MustBeEndEntity,
                            KeyUsage::noParticularKeyUsageRequired,
                            KeyPurposeId::anyExtendedKeyUsage,
@@ -321,11 +312,9 @@ TEST_F(pkixcert_extension, KnownCriticalCEExtension)
   const char* certCN = "CN=Cert With Known Critical id-ce Extension";
   ScopedSECKEYPrivateKey key;
   // cert is owned by the arena
-  const SECItem* cert(CreateCert(arena.get(), certCN, &criticalCEExtension,
-                                 key));
-  ASSERT_TRUE(cert);
+  Input cert(CreateCert(arena.get(), certCN, &criticalCEExtension, key));
   ASSERT_EQ(Success,
-            BuildCertChain(trustDomain, *cert, now,
+            BuildCertChain(trustDomain, cert, Now(),
                            EndEntityOrCA::MustBeEndEntity,
                            KeyUsage::noParticularKeyUsageRequired,
                            KeyPurposeId::anyExtendedKeyUsage,
@@ -354,10 +343,9 @@ TEST_F(pkixcert_extension, DuplicateSubjectAltName)
   static const char* certCN = "CN=Cert With Duplicate subjectAltName";
   ScopedSECKEYPrivateKey key;
   // cert is owned by the arena
-  const SECItem* cert(CreateCert(arena.get(), certCN, extensions, key));
-  ASSERT_TRUE(cert);
+  Input cert(CreateCert(arena.get(), certCN, extensions, key));
   ASSERT_EQ(Result::ERROR_EXTENSION_VALUE_INVALID,
-            BuildCertChain(trustDomain, *cert, now,
+            BuildCertChain(trustDomain, cert, Now(),
                            EndEntityOrCA::MustBeEndEntity,
                            KeyUsage::noParticularKeyUsageRequired,
                            KeyPurposeId::anyExtendedKeyUsage,

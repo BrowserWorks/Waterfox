@@ -21,7 +21,7 @@
 #include "cubeb_resampler.h"
 #include <stdio.h>
 
-#if 0
+#if 1
 #  define LOG(...) do {         \
   fprintf(stderr, __VA_ARGS__); \
   fprintf(stderr, "\n");        \
@@ -68,6 +68,35 @@ void SafeRelease(T * ptr)
   }
 }
 
+struct auto_com {
+  auto_com()
+  : need_uninit(true) {
+    HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    // This is for information purposes only, in anycase, COM is initialized
+    // at the end of the constructor.
+    if (hr == RPC_E_CHANGED_MODE) {
+      // This is an error, COM was not initialized by this function, so it is
+      // not necessary to uninit it.
+      LOG("COM already initialized in STA.");
+      need_uninit = false;
+    } else if (hr == S_FALSE) {
+      // This is not an error. We are allowed to call CoInitializeEx more than
+      // once, as long as it is matches by an CoUninitialize call.
+      // We do that in the dtor which is guaranteed to be called.
+      LOG("COM already initialized in MTA");
+    } else if (hr == S_OK) {
+      LOG("COM initialized.");
+    }
+  }
+  ~auto_com() {
+    if (need_uninit) {
+      CoUninitialize();
+    }
+  }
+private:
+  bool need_uninit;
+};
+
 typedef HANDLE (WINAPI *set_mm_thread_characteristics_function)(
                                       const char* TaskName, LPDWORD TaskIndex);
 typedef BOOL (WINAPI *revert_mm_thread_characteristics_function)(HANDLE handle);
@@ -102,6 +131,8 @@ struct cubeb_stream
   IAudioRenderClient * render_client;
   /* Interface pointer to use the clock facilities. */
   IAudioClock * audio_clock;
+  /* Interface pointer to use the volume facilities. */
+  IAudioStreamVolume * audio_stream_volume;
   /* This event is set by the stream_stop and stream_destroy
    * function, so the render loop can exit properly. */
   HANDLE shutdown_event;
@@ -242,6 +273,7 @@ wasapi_stream_render_loop(LPVOID stream)
   HRESULT hr;
   bool first = true;
   DWORD mmcss_task_index = 0;
+  auto_com com;
 
   /* We could consider using "Pro Audio" here for WebAudio and
    * maybe WebRTC. */
@@ -252,11 +284,6 @@ wasapi_stream_render_loop(LPVOID stream)
     LOG("Unable to use mmcss to bump the render thread priority: %x", GetLastError());
   }
 
-  hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
-  if (FAILED(hr)) {
-    LOG("could not initialize COM in render thread: %x", hr);
-    return hr;
-  }
 
   while (is_playing) {
     DWORD waitResult = WaitForMultipleObjects(ARRAY_LENGTH(wait_array),
@@ -327,7 +354,6 @@ wasapi_stream_render_loop(LPVOID stream)
 
   stm->context->revert_mm_thread_characteristics(mmcss_handle);
 
-  CoUninitialize();
   return 0;
 }
 
@@ -374,12 +400,7 @@ extern "C" {
 int wasapi_init(cubeb ** context, char const * context_name)
 {
   HRESULT hr;
-
-  hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
-  if (FAILED(hr)) {
-    LOG("Could not init COM.");
-    return CUBEB_ERROR;
-  }
+  auto_com com;
 
   /* We don't use the device yet, but need to make sure we can initialize one
      so that this backend is not incorrectly enabled on platforms that don't
@@ -441,13 +462,15 @@ char const* wasapi_get_backend_id(cubeb * context)
 int
 wasapi_get_max_channel_count(cubeb * ctx, uint32_t * max_channels)
 {
+  HRESULT hr;
   IAudioClient * client;
   WAVEFORMATEX * mix_format;
+  auto_com com;
 
   assert(ctx && max_channels);
 
   IMMDevice * device;
-  HRESULT hr = get_default_endpoint(&device);
+  hr = get_default_endpoint(&device);
   if (FAILED(hr)) {
     return CUBEB_ERROR;
   }
@@ -480,10 +503,12 @@ wasapi_get_min_latency(cubeb * ctx, cubeb_stream_params params, uint32_t * laten
   HRESULT hr;
   IAudioClient * client;
   REFERENCE_TIME default_period;
+  auto_com com;
 
   IMMDevice * device;
   hr = get_default_endpoint(&device);
   if (FAILED(hr)) {
+    LOG("Could not get default endpoint:%x.", hr)
     return CUBEB_ERROR;
   }
 
@@ -492,6 +517,7 @@ wasapi_get_min_latency(cubeb * ctx, cubeb_stream_params params, uint32_t * laten
                         NULL, (void **)&client);
   SafeRelease(device);
   if (FAILED(hr)) {
+    LOG("Could not activate device for latency: %x.", hr)
     return CUBEB_ERROR;
   }
 
@@ -499,8 +525,11 @@ wasapi_get_min_latency(cubeb * ctx, cubeb_stream_params params, uint32_t * laten
   hr = client->GetDevicePeriod(&default_period, NULL);
   if (FAILED(hr)) {
     SafeRelease(client);
+    LOG("Could not get device period: %x.", hr)
     return CUBEB_ERROR;
   }
+
+  LOG("default device period: %ld", default_period)
 
   /* According to the docs, the best latency we can achieve is by synchronizing
    * the stream and the engine.
@@ -518,6 +547,7 @@ wasapi_get_preferred_sample_rate(cubeb * ctx, uint32_t * rate)
   HRESULT hr;
   IAudioClient * client;
   WAVEFORMATEX * mix_format;
+  auto_com com;
 
   IMMDevice * device;
   hr = get_default_endpoint(&device);
@@ -625,14 +655,9 @@ wasapi_stream_init(cubeb * context, cubeb_stream ** stream,
 {
   HRESULT hr;
   WAVEFORMATEX * mix_format;
+  auto_com com;
 
   assert(context && stream);
-
-  hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
-  if (FAILED(hr)) {
-    LOG("Could not initialize COM.");
-    return CUBEB_ERROR;
-  }
 
   cubeb_stream * stm = (cubeb_stream *)calloc(1, sizeof(cubeb_stream));
 
@@ -748,6 +773,14 @@ wasapi_stream_init(cubeb * context, cubeb_stream ** stream,
     return CUBEB_ERROR;
   }
 
+  hr = stm->client->GetService(__uuidof(IAudioStreamVolume),
+                               (void **)&stm->audio_stream_volume);
+  if (FAILED(hr)) {
+    LOG("Could not get the IAudioStreamVolume %x.", hr);
+    wasapi_stream_destroy(stm);
+    return CUBEB_ERROR;
+  }
+
   hr = stm->audio_clock->GetFrequency(&stm->clock_freq);
   if (FAILED(hr)) {
     LOG("failed to get audio clock frequency, %x", hr);
@@ -798,7 +831,6 @@ void wasapi_stream_destroy(cubeb_stream * stm)
 
   free(stm->mix_buffer);
   free(stm);
-  CoUninitialize();
 }
 
 int wasapi_stream_start(cubeb_stream * stm)
@@ -807,7 +839,7 @@ int wasapi_stream_start(cubeb_stream * stm)
 
   assert(stm);
 
-  stm->thread = (HANDLE) _beginthreadex(NULL, 64 * 1024, wasapi_stream_render_loop, stm, STACK_SIZE_PARAM_IS_A_RESERVATION, NULL);
+  stm->thread = (HANDLE) _beginthreadex(NULL, 256 * 1024, wasapi_stream_render_loop, stm, STACK_SIZE_PARAM_IS_A_RESERVATION, NULL);
   if (stm->thread == NULL) {
     LOG("could not create WASAPI render thread.");
     return CUBEB_ERROR;
@@ -882,6 +914,39 @@ int wasapi_stream_get_latency(cubeb_stream * stm, uint32_t * latency)
   return CUBEB_OK;
 }
 
+int wasapi_stream_set_volume(cubeb_stream * stm, float volume)
+{
+  HRESULT hr;
+  uint32_t channels;
+  /* up to 9.1 for now */
+  float volumes[10];
+
+  hr = stm->audio_stream_volume->GetChannelCount(&channels);
+  if (hr != S_OK) {
+    LOG("could not get the channel count: %x", hr);
+    return CUBEB_ERROR;
+  }
+
+  assert(channels <= 10 && "bump the array size");
+
+  for (uint32_t i = 0; i < channels; i++) {
+    volumes[i] = volume;
+  }
+
+  hr = stm->audio_stream_volume->SetAllVolumes(channels,  volumes);
+  if (hr != S_OK) {
+    LOG("coult not set the channels volume: %x", hr);
+    return CUBEB_ERROR;
+  }
+  return CUBEB_OK;
+}
+
+int wasapi_stream_set_panning(cubeb_stream * stream, float panning)
+{
+  assert(false && "not implemented");
+  return CUBEB_OK;
+}
+
 cubeb_ops const wasapi_ops = {
   /*.init =*/ wasapi_init,
   /*.get_backend_id =*/ wasapi_get_backend_id,
@@ -894,7 +959,12 @@ cubeb_ops const wasapi_ops = {
   /*.stream_start =*/ wasapi_stream_start,
   /*.stream_stop =*/ wasapi_stream_stop,
   /*.stream_get_position =*/ wasapi_stream_get_position,
-  /*.stream_get_latency =*/ wasapi_stream_get_latency
+  /*.stream_get_latency =*/ wasapi_stream_get_latency,
+  /*.stream_set_volume =*/ wasapi_stream_set_volume,
+  /*.stream_set_panning =*/ wasapi_stream_set_panning,
+  /*.stream_get_current_device =*/ NULL,
+  /*.stream_device_destroy =*/ NULL,
+  /*.stream_register_device_changed_callback =*/ NULL
  };
 } // namespace anonymous
 

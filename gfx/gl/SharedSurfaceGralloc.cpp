@@ -49,7 +49,7 @@ SurfaceFactory_Gralloc::SurfaceFactory_Gralloc(GLContext* prodGL,
     mAllocator = allocator;
 }
 
-SharedSurface_Gralloc*
+/*static*/ UniquePtr<SharedSurface_Gralloc>
 SharedSurface_Gralloc::Create(GLContext* prodGL,
                               const GLFormats& formats,
                               const gfx::IntSize& size,
@@ -59,10 +59,12 @@ SharedSurface_Gralloc::Create(GLContext* prodGL,
     GLLibraryEGL* egl = &sEGLLibrary;
     MOZ_ASSERT(egl);
 
+    UniquePtr<SharedSurface_Gralloc> ret;
+
     DEBUG_PRINT("SharedSurface_Gralloc::Create -------\n");
 
     if (!HasExtensions(egl, prodGL))
-        return nullptr;
+        return Move(ret);
 
     gfxContentType type = hasAlpha ? gfxContentType::COLOR_ALPHA
                                    : gfxContentType::COLOR;
@@ -78,7 +80,7 @@ SharedSurface_Gralloc::Create(GLContext* prodGL,
           layers::TextureFlags::DEFAULT);
 
     if (!grallocTC->AllocateForGLRendering(size)) {
-      return nullptr;
+      return Move(ret);
     }
 
     sp<GraphicBuffer> buffer = grallocTC->GetGraphicBuffer();
@@ -93,7 +95,7 @@ SharedSurface_Gralloc::Create(GLContext* prodGL,
                                        LOCAL_EGL_NATIVE_BUFFER_ANDROID,
                                        clientBuffer, attrs);
     if (!image) {
-        return nullptr;
+        return Move(ret);
     }
 
     prodGL->MakeCurrent();
@@ -110,11 +112,15 @@ SharedSurface_Gralloc::Create(GLContext* prodGL,
 
     egl->fDestroyImage(display, image);
 
-    SharedSurface_Gralloc *surf = new SharedSurface_Gralloc(prodGL, size, hasAlpha, egl, allocator, grallocTC, prodTex);
+    ret.reset( new SharedSurface_Gralloc(prodGL, size, hasAlpha, egl,
+                                         allocator, grallocTC,
+                                         prodTex) );
 
-    DEBUG_PRINT("SharedSurface_Gralloc::Create: success -- surface %p, GraphicBuffer %p.\n", surf, buffer.get());
+    DEBUG_PRINT("SharedSurface_Gralloc::Create: success -- surface %p,"
+                " GraphicBuffer %p.\n",
+                ret.get(), buffer.get());
 
-    return surf;
+    return Move(ret);
 }
 
 
@@ -242,6 +248,30 @@ SharedSurface_Gralloc::WaitSync()
                                           LOCAL_EGL_FOREVER);
 
     if (status != LOCAL_EGL_CONDITION_SATISFIED) {
+        return false;
+    }
+
+    MOZ_ALWAYS_TRUE( mEGL->fDestroySync(mEGL->Display(), mSync) );
+    mSync = 0;
+
+    return true;
+}
+
+bool
+SharedSurface_Gralloc::PollSync()
+{
+    if (!mSync) {
+        // We must not be needed.
+        return true;
+    }
+    MOZ_ASSERT(mEGL->IsExtensionSupported(GLLibraryEGL::KHR_fence_sync));
+
+    EGLint status = 0;
+    MOZ_ALWAYS_TRUE( mEGL->fGetSyncAttrib(mEGL->Display(),
+                                         mSync,
+                                         LOCAL_EGL_SYNC_STATUS_KHR,
+                                         &status) );
+    if (status != LOCAL_EGL_SIGNALED_KHR) {
         return false;
     }
 

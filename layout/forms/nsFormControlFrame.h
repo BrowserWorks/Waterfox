@@ -24,7 +24,7 @@ public:
     * @param aContent the content representing this frame
     * @param aParentFrame the parent frame
     */
-  nsFormControlFrame(nsStyleContext*);
+  explicit nsFormControlFrame(nsStyleContext*);
 
   virtual nsIAtom* GetType() const MOZ_OVERRIDE;
 
@@ -79,8 +79,8 @@ protected:
 
   virtual ~nsFormControlFrame();
 
-  virtual nscoord GetIntrinsicWidth() MOZ_OVERRIDE;
-  virtual nscoord GetIntrinsicHeight() MOZ_OVERRIDE;
+  virtual nscoord GetIntrinsicISize() MOZ_OVERRIDE;
+  virtual nscoord GetIntrinsicBSize() MOZ_OVERRIDE;
 
 //
 //-------------------------------------------------------------------------------------

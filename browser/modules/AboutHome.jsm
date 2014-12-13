@@ -97,6 +97,7 @@ let AboutHome = {
     "AboutHome:Settings",
     "AboutHome:RequestUpdate",
     "AboutHome:Search",
+    "AboutHome:OpenSearchPanel",
   ],
 
   init: function() {
@@ -203,6 +204,18 @@ let AboutHome = {
         });
 
         break;
+
+      case "AboutHome:OpenSearchPanel":
+        let panel = window.document.getElementById("abouthome-search-panel");
+        let anchor = aMessage.objects.anchor;
+        panel.hidden = false;
+        panel.openPopup(anchor);
+        anchor.setAttribute("active", "true");
+        panel.addEventListener("popuphidden", function onHidden() {
+          panel.removeEventListener("popuphidden", onHidden);
+          anchor.removeAttribute("active");
+        });
+        break;
     }
   },
 
@@ -251,4 +264,13 @@ let AboutHome = {
       Cu.reportError("Error in AboutHome.sendAboutHomeData: " + x);
     });
   },
+
+  /**
+   * Focuses the search input in the page with the given message manager.
+   * @param  messageManager
+   *         The MessageManager object of the selected browser.
+   */
+  focusInput: function (messageManager) {
+    messageManager.sendAsyncMessage("AboutHome:FocusInput");
+  }
 };

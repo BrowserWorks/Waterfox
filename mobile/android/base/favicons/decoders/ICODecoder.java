@@ -84,7 +84,7 @@ public class ICODecoder implements Iterable<Bitmap> {
     private int offset;
     private int len;
 
-    private IconDirectoryEntry[] iconDirectory;
+    /* inner-access */ IconDirectoryEntry[] iconDirectory;
     private boolean isValid;
     private boolean hasDecoded;
 
@@ -351,7 +351,7 @@ public class ICODecoder implements Iterable<Bitmap> {
      * Inner class to iterate over the elements in the ICO represented by the enclosing instance.
      */
     private class ICOIterator implements Iterator<Bitmap> {
-        private int mIndex = 0;
+        private int mIndex;
 
         @Override
         public boolean hasNext() {

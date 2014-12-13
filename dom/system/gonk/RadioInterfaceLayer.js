@@ -53,6 +53,8 @@ const RADIOINTERFACE_CID =
   Components.ID("{6a7c91f0-a2b3-4193-8562-8969296c0b54}");
 const RILNETWORKINTERFACE_CID =
   Components.ID("{3bdd52a9-3965-4130-b569-0ac5afed045e}");
+const ICCINFO_CID =
+  Components.ID("{52eec7f0-26a4-11e4-8c21-0800200c9a66}");
 const GSMICCINFO_CID =
   Components.ID("{d90c4261-a99d-47bc-8b05-b057bb7e8f8a}");
 const CDMAICCINFO_CID =
@@ -60,16 +62,15 @@ const CDMAICCINFO_CID =
 const NEIGHBORINGCELLINFO_CID =
   Components.ID("{f9dfe26a-851e-4a8b-a769-cbb1baae7ded}");
 const GSMCELLINFO_CID =
-    Components.ID("{41f6201e-7263-42e3-b31f-38a9dc8a280a}");
+  Components.ID("{41f6201e-7263-42e3-b31f-38a9dc8a280a}");
 const WCDMACELLINFO_CID =
-    Components.ID("{eeaaf307-df6e-4c98-b121-e3302b1fc468}");
+  Components.ID("{eeaaf307-df6e-4c98-b121-e3302b1fc468}");
 const CDMACELLINFO_CID =
-    Components.ID("{b497d6e4-4cb8-4d6e-b673-840c7d5ddf25}");
+  Components.ID("{b497d6e4-4cb8-4d6e-b673-840c7d5ddf25}");
 const LTECELLINFO_CID =
-    Components.ID("{c7e0a78a-4e99-42f5-9251-e6172c5ed8d8}");
+  Components.ID("{c7e0a78a-4e99-42f5-9251-e6172c5ed8d8}");
 
 const NS_XPCOM_SHUTDOWN_OBSERVER_ID      = "xpcom-shutdown";
-const kNetworkInterfaceStateChangedTopic = "network-interface-state-changed";
 const kNetworkConnStateChangedTopic      = "network-connection-state-changed";
 const kNetworkActiveChangedTopic         = "network-active-changed";
 const kSmsReceivedObserverTopic          = "sms-received";
@@ -811,12 +812,8 @@ XPCOMUtils.defineLazyGetter(this, "gDataConnectionManager", function () {
       let connHandler = this._connectionHandlers[this._currentDataClientId];
       if (connHandler.allDataDisconnected() &&
           typeof this._pendingDataCallRequest === "function") {
-        if (RILQUIRKS_DATA_REGISTRATION_ON_DEMAND) {
-          let radioInterface = connHandler.radioInterface;
-          radioInterface.setDataRegistration(false);
-        }
         if (DEBUG) {
-          this.debug("All data calls disconnected, setup pending data call.");
+          this.debug("All data calls disconnected, process pending data settings.");
         }
         this._pendingDataCallRequest();
         this._pendingDataCallRequest = null;
@@ -829,8 +826,8 @@ XPCOMUtils.defineLazyGetter(this, "gDataConnectionManager", function () {
       }
       this._dataDefaultClientId = newDefault;
 
+      // This is to handle boot up stage.
       if (this._currentDataClientId == -1) {
-        // This is to handle boot up stage.
         this._currentDataClientId = this._dataDefaultClientId;
         let connHandler = this._connectionHandlers[this._currentDataClientId];
         let radioInterface = connHandler.radioInterface;
@@ -854,35 +851,37 @@ XPCOMUtils.defineLazyGetter(this, "gDataConnectionManager", function () {
       let newIface = newConnHandler.radioInterface;
       let newSettings = newConnHandler.dataCallSettings;
 
-      if (!this._dataEnabled) {
+      let applyPendingDataSettings = (function() {
         if (RILQUIRKS_DATA_REGISTRATION_ON_DEMAND ||
             RILQUIRKS_SUBSCRIPTION_CONTROL) {
-          oldIface.setDataRegistration(false);
-          newIface.setDataRegistration(true);
+          oldIface.setDataRegistration(false)
+            .then(() => {
+              if (this._dataEnabled) {
+                newSettings.oldEnabled = newSettings.enabled;
+                newSettings.enabled = true;
+              }
+              this._currentDataClientId = this._dataDefaultClientId;
+              return newIface.setDataRegistration(true);
+            })
+            .then(() => newConnHandler.updateRILNetworkInterface());
+          return;
+        }
+
+        if (this._dataEnabled) {
+          newSettings.oldEnabled = newSettings.enabled;
+          newSettings.enabled = true;
         }
         this._currentDataClientId = this._dataDefaultClientId;
-        return;
+        newConnHandler.updateRILNetworkInterface();
+      }).bind(this);
+
+      if (this._dataEnabled) {
+        oldSettings.oldEnabled = oldSettings.enabled;
+        oldSettings.enabled = false;
       }
 
-      oldSettings.oldEnabled = oldSettings.enabled;
-      oldSettings.enabled = false;
-
       if (oldConnHandler.anyDataConnected()) {
-        this._pendingDataCallRequest = function () {
-          if (DEBUG) {
-            this.debug("Executing pending data call request.");
-          }
-          if (RILQUIRKS_DATA_REGISTRATION_ON_DEMAND ||
-              RILQUIRKS_SUBSCRIPTION_CONTROL) {
-            newIface.setDataRegistration(true);
-          }
-          newSettings.oldEnabled = newSettings.enabled;
-          newSettings.enabled = this._dataEnabled;
-
-          this._currentDataClientId = this._dataDefaultClientId;
-          newConnHandler.updateRILNetworkInterface();
-        };
-
+        this._pendingDataCallRequest = applyPendingDataSettings;
         if (DEBUG) {
           this.debug("_handleDataClientIdChange: existing data call(s) active" +
                      ", wait for them to get disconnected.");
@@ -891,16 +890,7 @@ XPCOMUtils.defineLazyGetter(this, "gDataConnectionManager", function () {
         return;
       }
 
-      newSettings.oldEnabled = newSettings.enabled;
-      newSettings.enabled = true;
-
-      this._currentDataClientId = this._dataDefaultClientId;
-      if (RILQUIRKS_DATA_REGISTRATION_ON_DEMAND ||
-          RILQUIRKS_SUBSCRIPTION_CONTROL) {
-        oldIface.setDataRegistration(false);
-        newIface.setDataRegistration(true);
-      }
-      newConnHandler.updateRILNetworkInterface();
+      applyPendingDataSettings();
     },
 
     _shutdown: function() {
@@ -1027,6 +1017,17 @@ try {
 
 function IccInfo() {}
 IccInfo.prototype = {
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIDOMMozIccInfo]),
+  classID: ICCINFO_CID,
+  classInfo: XPCOMUtils.generateCI({
+    classID:          ICCINFO_CID,
+    classDescription: "MozIccInfo",
+    flags:            Ci.nsIClassInfo.DOM_OBJECT,
+    interfaces:       [Ci.nsIDOMMozIccInfo]
+  }),
+
+  // nsIDOMMozIccInfo
+
   iccType: null,
   iccid: null,
   mcc: null,
@@ -2296,6 +2297,7 @@ RadioInterface.prototype = {
         break;
       case "cellbroadcast-received":
         message.timestamp = Date.now();
+        this.broadcastCbsSystemMessage(message);
         gMessageManager.sendCellBroadcastMessage("RIL:CellBroadcastReceived",
                                                  this.clientId, message);
         break;
@@ -2822,7 +2824,15 @@ RadioInterface.prototype = {
   },
 
   setDataRegistration: function(attach) {
-    this.workerMessenger.send("setDataRegistration", {attach: attach});
+    let deferred = Promise.defer();
+    this.workerMessenger.send("setDataRegistration",
+                              {attach: attach},
+                              (function(response) {
+      // Always resolve to proceed with the following steps.
+      deferred.resolve(response.errorMsg ? response.errorMsg : null);
+    }).bind(this));
+
+    return deferred.promise;
   },
 
   /**
@@ -3315,19 +3325,59 @@ RadioInterface.prototype = {
   },
 
   /**
+   * A helper to broadcast the system message to launch registered apps
+   * like CMAS app and etc.
+   *
+   * @param aName
+   *        The system message name.
+   * @param aMessage
+   *        The Cellbroadcast message received from ril_worker.
+   */
+  broadcastCbsSystemMessage: function(aMessage) {
+    // Create system message with the same structure of nsIDOMMozCellBroadcastMessage
+    // and nsIDOMMozCellBroadcastEtwsInfo.
+    let etws = (aMessage.etws != null)
+               ? {
+                    warningType: (aMessage.etws.warningType != null)
+                                 ? RIL.CB_ETWS_WARNING_TYPE_NAMES[aMessage.etws.warningType]
+                                 : null,
+                    emergencyUserAlert: aMessage.etws.emergencyUserAlert,
+                    popup: aMessage.etws.popup
+                 }
+               : null;
+
+    let systemMessage = {
+      serviceId: this.clientId,
+      gsmGeographicalScope: RIL.CB_GSM_GEOGRAPHICAL_SCOPE_NAMES[aMessage.geographicalScope],
+      messageCode: aMessage.messageCode,
+      messageId: aMessage.messageId,
+      language: aMessage.language,
+      body: aMessage.fullBody,
+      messageClass: aMessage.messageClass,
+      timestamp: aMessage.timestamp,
+      etws: etws,
+      cdmaServiceCategory: aMessage.serviceCategory
+    };
+
+    if (DEBUG) {
+      this.debug("CBS system message to be broadcasted: " + JSON.stringify(systemMessage));
+    }
+
+    gSystemMessenger.broadcastMessage("cellbroadcast-received", systemMessage);
+  },
+
+  /**
    * Set the setting value of "time.clock.automatic-update.available".
    */
   setClockAutoUpdateAvailable: function(value) {
-    gSettingsService.createLock().set(kSettingsClockAutoUpdateAvailable, value, null,
-                                      "fromInternalSetting");
+    gSettingsService.createLock().set(kSettingsClockAutoUpdateAvailable, value, null);
   },
 
   /**
    * Set the setting value of "time.timezone.automatic-update.available".
    */
   setTimezoneAutoUpdateAvailable: function(value) {
-    gSettingsService.createLock().set(kSettingsTimezoneAutoUpdateAvailable, value, null,
-                                      "fromInternalSetting");
+    gSettingsService.createLock().set(kSettingsTimezoneAutoUpdateAvailable, value, null);
   },
 
   /**
@@ -3411,15 +3461,17 @@ RadioInterface.prototype = {
   handleIccInfoChange: function(message) {
     let oldSpn = this.rilContext.iccInfo ? this.rilContext.iccInfo.spn : null;
 
-    if (!message || !message.iccType) {
+    if (!message || !message.iccid) {
       // Card is not detected, clear iccInfo to null.
       this.rilContext.iccInfo = null;
     } else {
       if (!this.rilContext.iccInfo) {
         if (message.iccType === "ruim" || message.iccType === "csim") {
           this.rilContext.iccInfo = new CdmaIccInfo();
-        } else {
+        } else if (message.iccType === "sim" || message.iccType === "usim") {
           this.rilContext.iccInfo = new GsmIccInfo();
+        } else {
+          this.rilContext.iccInfo = new IccInfo();
         }
       }
 
@@ -3434,7 +3486,7 @@ RadioInterface.prototype = {
     // when iccInfo has changed.
     gMessageManager.sendIccMessage("RIL:IccInfoChanged",
                                    this.clientId,
-                                   message.iccType ? message : null);
+                                   message.iccid ? message : null);
 
     // Update lastKnownSimMcc.
     if (message.mcc) {
@@ -3503,7 +3555,7 @@ RadioInterface.prototype = {
     switch (topic) {
       case kMozSettingsChangedObserverTopic:
         let setting = JSON.parse(data);
-        this.handleSettingsChange(setting.key, setting.value, setting.message);
+        this.handleSettingsChange(setting.key, setting.value, setting.isInternalChange);
         break;
       case kSysClockChangeObserverTopic:
         let offset = parseInt(data, 10);
@@ -3584,11 +3636,11 @@ RadioInterface.prototype = {
   // ICC's mcc-mnc.
   _lastKnownHomeNetwork: null,
 
-  handleSettingsChange: function(aName, aResult, aMessage) {
+  handleSettingsChange: function(aName, aResult, aIsInternalSetting) {
     // Don't allow any content processes to modify the setting
     // "time.clock.automatic-update.available" except for the chrome process.
     if (aName === kSettingsClockAutoUpdateAvailable &&
-        aMessage !== "fromInternalSetting") {
+        !aIsInternalSetting) {
       let isClockAutoUpdateAvailable = this._lastNitzMessage !== null ||
                                        this._sntp.isAvailable();
       if (aResult !== isClockAutoUpdateAvailable) {
@@ -3604,7 +3656,7 @@ RadioInterface.prototype = {
     // "time.timezone.automatic-update.available" except for the chrome
     // process.
     if (aName === kSettingsTimezoneAutoUpdateAvailable &&
-        aMessage !== "fromInternalSetting") {
+        !aIsInternalSetting) {
       let isTimezoneAutoUpdateAvailable = this._lastNitzMessage !== null;
       if (aResult !== isTimezoneAutoUpdateAvailable) {
         if (DEBUG) {
@@ -4241,11 +4293,9 @@ RadioInterface.prototype = {
       charsInLastSegment = 0;
     }
 
-    let result = gMobileMessageService
-                 .createSmsSegmentInfo(options.segmentMaxSeq,
-                                       options.segmentChars,
-                                       options.segmentChars - charsInLastSegment);
-    request.notifySegmentInfoForTextGot(result);
+    request.notifySegmentInfoForTextGot(options.segmentMaxSeq,
+                                        options.segmentChars,
+                                        options.segmentChars - charsInLastSegment);
   },
 
   getSmscAddress: function(request) {
@@ -4255,7 +4305,7 @@ RadioInterface.prototype = {
       if (!response.errorMsg) {
         request.notifyGetSmscAddress(response.smscAddress);
       } else {
-        request.notifyGetSmscAddressFailed(response.errorMsg);
+        request.notifyGetSmscAddressFailed(Ci.nsIMobileMessageCallback.NOT_FOUND_ERROR);
       }
     }).bind(this));
   },
@@ -5096,9 +5146,7 @@ RILNetworkInterface.prototype = {
                  this.state);
     }
 
-    Services.obs.notifyObservers(this,
-                                 kNetworkInterfaceStateChangedTopic,
-                                 null);
+    gNetworkManager.updateNetworkInterface(this);
   },
 
   connect: function() {

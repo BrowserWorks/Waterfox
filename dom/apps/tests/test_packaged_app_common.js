@@ -57,13 +57,20 @@ var PackagedTestHelper = (function PackagedTestHelper() {
     finish();
   }
 
-  function setAppVersion(aVersion, aCb, aDontUpdatePackage) {
+  function setAppVersion(aVersion, aCb, aDontUpdatePackage, aAllowCancel, aRole) {
     var xhr = new XMLHttpRequest();
     var dontUpdate = "";
+    var allowCancel = "";
     if (aDontUpdatePackage) {
       dontUpdate = "&dontUpdatePackage=1";
     }
-    var url = gSJS + "?setVersion=" + aVersion + dontUpdate;
+    if (aAllowCancel) {
+      allowCancel= "&allowCancel=1";
+    }
+    var url = gSJS + "?setVersion=" + aVersion + dontUpdate + allowCancel;
+    if (aRole) {
+      url += "&role=" + aRole;
+    }
     xhr.addEventListener("load", function() {
                            is(xhr.responseText, "OK", "setAppVersion OK");
                            aCb();
@@ -98,6 +105,7 @@ var PackagedTestHelper = (function PackagedTestHelper() {
       var aApp = evt.application;
       aApp.ondownloaderror = function(evt) {
         var error = aApp.downloadError.name;
+        ok(true, "Got downloaderror " + error);
         if (error == aExpectedError) {
           ok(true, "Got expected " + aExpectedError);
           var expected = {

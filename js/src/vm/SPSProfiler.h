@@ -179,9 +179,9 @@ class SPSProfiler
         }
     }
 
-    /* Enter a C++ function. */
-    void enterNative(const char *string, void *sp);
-    void exitNative() { pop(); }
+    /* Enter asm.js code */
+    void enterAsmJS(const char *string, void *sp);
+    void exitAsmJS() { pop(); }
 
     jsbytecode *ipToPC(JSScript *script, size_t ip) { return nullptr; }
 
@@ -208,7 +208,6 @@ class SPSProfiler
 class AutoSPSLock
 {
   public:
-#ifdef JS_THREADSAFE
     explicit AutoSPSLock(PRLock *lock)
     {
         MOZ_ASSERT(lock, "Parameter should not be null!");
@@ -216,12 +215,27 @@ class AutoSPSLock
         PR_Lock(lock);
     }
     ~AutoSPSLock() { PR_Unlock(lock_); }
-#else
-    explicit AutoSPSLock(PRLock *) {}
-#endif
 
   private:
     PRLock *lock_;
+};
+
+/*
+ * This class is used to suppress profiler sampling during
+ * critical sections where stack state is not valid.
+ */
+class AutoSuppressProfilerSampling
+{
+  public:
+    explicit AutoSuppressProfilerSampling(JSContext *cx MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
+    explicit AutoSuppressProfilerSampling(JSRuntime *rt MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
+
+    ~AutoSuppressProfilerSampling();
+
+  private:
+    JSRuntime *rt_;
+    bool previouslyEnabled_;
+    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 };
 
 inline size_t

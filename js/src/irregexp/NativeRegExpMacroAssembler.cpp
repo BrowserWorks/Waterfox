@@ -144,7 +144,7 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext *cx)
 #endif
 
     size_t frameSize = sizeof(FrameData) + num_registers_ * sizeof(void *);
-    frameSize = JS_ROUNDUP(frameSize + masm.framePushed(), StackAlignment) - masm.framePushed();
+    frameSize = JS_ROUNDUP(frameSize + masm.framePushed(), ABIStackAlignment) - masm.framePushed();
 
     // Actually emit code to start a new stack frame.
     masm.reserveStack(frameSize);
@@ -442,7 +442,7 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext *cx)
 
     Linker linker(masm);
     AutoFlushICache afc("RegExp");
-    JitCode *code = linker.newCode<NoGC>(cx, JSC::REGEXP_CODE);
+    JitCode *code = linker.newCode<NoGC>(cx, REGEXP_CODE);
     if (!code)
         return RegExpCode();
 

@@ -21,25 +21,61 @@ SOURCES += [
 ]
 
 if CONFIG['MOZ_WMF']:
-  PARALLEL_DIRS += [ 'wmf' ];
+    DIRS += [ 'wmf' ];
+
+if CONFIG['MOZ_EME']:
+    DIRS += ['eme']
 
 if CONFIG['MOZ_FFMPEG']:
+    EXPORTS += [
+        'ffmpeg/FFmpegRuntimeLinker.h',
+    ]
+    UNIFIED_SOURCES += [
+        'ffmpeg/FFmpegLog.cpp',
+        'ffmpeg/FFmpegRuntimeLinker.cpp',
+    ]
+    DIRS += [
+        'ffmpeg/libav53',
+        'ffmpeg/libav54',
+        'ffmpeg/libav55',
+    ]
+    LOCAL_INCLUDES += [
+        'ffmpeg',
+    ]
+
+if CONFIG['MOZ_APPLEMEDIA']:
   EXPORTS += [
-      'ffmpeg/FFmpegRuntimeLinker.h',
+      'apple/AppleDecoderModule.h',
   ]
   UNIFIED_SOURCES += [
-      'ffmpeg/FFmpegLog.cpp',
-      'ffmpeg/FFmpegRuntimeLinker.cpp',
+      'apple/AppleATDecoder.cpp',
+      'apple/AppleCMLinker.cpp',
+      'apple/AppleDecoderModule.cpp',
+      'apple/AppleUtils.cpp',
+      'apple/AppleVTDecoder.cpp',
+      'apple/AppleVTLinker.cpp',
   ]
-  PARALLEL_DIRS += [
-      'ffmpeg/libav53',
-      'ffmpeg/libav54',
-      'ffmpeg/libav55',
-  ]
-  LOCAL_INCLUDES += [
-      'ffmpeg',
+  OS_LIBS += [
+      '-framework AudioToolbox',
   ]
 
-FINAL_LIBRARY = 'gklayout'
+if CONFIG['ANDROID_VERSION'] >= '18'and CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
+    DEFINES['MOZ_GONK_MEDIACODEC'] = True
+    DIRS += ['gonk']
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
+    EXPORTS += [
+        'android/AndroidDecoderModule.h',
+    ]
+    UNIFIED_SOURCES += [
+        'android/AndroidDecoderModule.cpp',
+    ]
+
+FINAL_LIBRARY = 'xul'
 
 FAIL_ON_WARNINGS = True
+
+if CONFIG['OS_ARCH'] == 'WINNT':
+    DEFINES['NOMINMAX'] = True

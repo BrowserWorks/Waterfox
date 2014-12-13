@@ -1,0 +1,128 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* global loop:true */
+
+var loop = loop || {};
+loop.shared = loop.shared || {};
+loop.shared.utils = (function(mozL10n) {
+  "use strict";
+
+  /**
+   * Call types used for determining if a call is audio/video or audio-only.
+   */
+  var CALL_TYPES = {
+    AUDIO_VIDEO: "audio-video",
+    AUDIO_ONLY: "audio"
+  };
+
+  /**
+   * Format a given date into an l10n-friendly string.
+   *
+   * @param {Integer} The timestamp in seconds to format.
+   * @return {String} The formatted string.
+   */
+  function formatDate(timestamp) {
+    var date = (new Date(timestamp * 1000));
+    var options = {year: "numeric", month: "long", day: "numeric"};
+    return date.toLocaleDateString(navigator.language, options);
+  }
+
+  /**
+   * Used for adding different styles to the panel
+   * @returns {String} Corresponds to the client platform
+   * */
+  function getTargetPlatform() {
+    var platform="unknown_platform";
+
+    if (navigator.platform.indexOf("Win") !== -1) {
+      platform = "windows";
+    }
+    if (navigator.platform.indexOf("Mac") !== -1) {
+      platform = "mac";
+    }
+    if (navigator.platform.indexOf("Linux") !== -1) {
+      platform = "linux";
+    }
+
+    return platform;
+  }
+
+  /**
+   * Used for getting a boolean preference. It will either use the browser preferences
+   * (if navigator.mozLoop is defined) or try to get them from localStorage.
+   *
+   * @param {String} prefName The name of the preference. Note that mozLoop adds
+   *                          'loop.' to the start of the string.
+   *
+   * @return The value of the preference, or false if not available.
+   */
+  function getBoolPreference(prefName) {
+    if (navigator.mozLoop) {
+      return !!navigator.mozLoop.getLoopBoolPref(prefName);
+    }
+
+    return !!localStorage.getItem(prefName);
+  }
+
+  /**
+   * Helper for general things
+   */
+  function Helper() {
+    this._iOSRegex = /^(iPad|iPhone|iPod)/;
+  }
+
+  Helper.prototype = {
+    isFirefox: function(platform) {
+      return platform.indexOf("Firefox") !== -1;
+    },
+
+    isFirefoxOS: function(platform) {
+      // So far WebActivities are exposed only in FxOS, but they may be
+      // exposed in Firefox Desktop soon, so we check for its existence
+      // and also check if the UA belongs to a mobile platform.
+      // XXX WebActivities are also exposed in WebRT on Firefox for Android,
+      //     so we need a better check. Bug 1065403.
+      return !!window.MozActivity && /mobi/i.test(platform);
+    },
+
+    isIOS: function(platform) {
+      return this._iOSRegex.test(platform);
+    },
+
+    locationHash: function() {
+      return window.location.hash;
+    }
+  };
+
+  /**
+   * Generates and opens a mailto: url with call URL information prefilled.
+   * Note: This only works for Desktop.
+   *
+   * @param  {String} callUrl   The call URL.
+   * @param  {String} recipient The recipient email address (optional).
+   */
+  function composeCallUrlEmail(callUrl, recipient) {
+    if (typeof navigator.mozLoop === "undefined") {
+      console.warn("composeCallUrlEmail isn't available for Loop standalone.");
+      return;
+    }
+    navigator.mozLoop.composeEmail(
+      mozL10n.get("share_email_subject3"),
+      mozL10n.get("share_email_body3", {
+        callUrl: callUrl
+      }),
+      recipient
+    );
+  }
+
+  return {
+    CALL_TYPES: CALL_TYPES,
+    Helper: Helper,
+    composeCallUrlEmail: composeCallUrlEmail,
+    formatDate: formatDate,
+    getTargetPlatform: getTargetPlatform,
+    getBoolPreference: getBoolPreference
+  };
+})(document.mozL10n || navigator.mozL10n);

@@ -402,12 +402,16 @@
                 readonly="true"
                 onget="return this._contentWindow || (this._contentWindow = this.docShell.QueryInterface(Components.interfaces.nsIInterfaceRequestor).getInterface(Components.interfaces.nsIDOMWindow));"/>
 
+      <property name="contentWindowAsCPOW"
+                readonly="true"
+                onget="return this.contentWindow;"/>
+
       <property name="sessionHistory"
                 onget="return this.webNavigation.sessionHistory;"
                 readonly="true"/>
 
       <property name="markupDocumentViewer"
-                onget="return this.docShell.contentViewer.QueryInterface(Components.interfaces.nsIMarkupDocumentViewer);"
+                onget="return this.docShell.contentViewer;"
                 readonly="true"/>
 
       <property name="contentViewerEdit"
@@ -422,16 +426,28 @@
                 onget="return this.webNavigation.document;"
                 readonly="true"/>
 
+      <property name="contentDocumentAsCPOW"
+                onget="return this.contentDocument;"
+                readonly="true"/>
+
       <property name="contentTitle"
                 onget="return this.contentDocument.title;"
                 readonly="true"/>
 
       <property name="characterSet"
-                onget="return this.contentDocument.characterSet;"
+                onget="return this.docShell.charset;">
+        <setter><![CDATA[
+          this.docShell.charset = val;
+          this.docShell.gatherCharsetMenuTelemetry();
+        ]]></setter>
+      </property>
+
+      <property name="mayEnableCharacterEncodingMenu"
+                onget="return this.docShell.mayEnableCharacterEncodingMenu;"
                 readonly="true"/>
 
       <property name="contentPrincipal"
-                onget="return this.contentDocument.nodePrincipal;"
+                onget="return this.contentDocumentAsCPOW.nodePrincipal;"
                 readonly="true"/>
 
       <property name="showWindowResizer"

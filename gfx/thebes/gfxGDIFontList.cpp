@@ -572,7 +572,7 @@ GDIFontFamily::FindStyleVariations(FontInfoData *aFontInfoData)
  */
 
 gfxGDIFontList::gfxGDIFontList()
-    : mFontSubstitutes(50)
+    : mFontSubstitutes(32)
 {
 #ifdef MOZ_BUNDLED_FONTS
     ActivateBundledFonts();
@@ -839,7 +839,7 @@ gfxGDIFontList::MakePlatformFont(const gfxProxyFontEntry *aProxyEntry,
 }
 
 gfxFontFamily*
-gfxGDIFontList::FindFamily(const nsAString& aFamily)
+gfxGDIFontList::FindFamily(const nsAString& aFamily, bool aUseSystemFonts)
 {
     nsAutoString keyName(aFamily);
     BuildKeyNameFromFontName(keyName);

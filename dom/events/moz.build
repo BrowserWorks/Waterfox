@@ -126,16 +126,16 @@ MSVC_ENABLE_PGO = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
-FINAL_LIBRARY = 'gklayout'
+FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '/content/base/src',
     '/content/html/content/src',
-    '/content/xml/content/src',
     '/content/xul/content/src',
     '/dom/base',
     '/dom/settings',
-    '/dom/src/storage',
+    '/dom/storage',
     '/dom/workers',
+    '/dom/xml',
     '/js/xpconnect/wrappers',
     '/layout/generic',
     '/layout/xul',

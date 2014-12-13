@@ -146,7 +146,7 @@ public:
   virtual bool    IsSuspended() MOZ_OVERRIDE { return false; }
   virtual bool    IsTransportSeekable() MOZ_OVERRIDE { return true; }
   // dummy
-  virtual double  GetDownloadRate(bool* aIsReliable) MOZ_OVERRIDE { return 0; }
+  virtual double  GetDownloadRate(bool* aIsReliable) MOZ_OVERRIDE { *aIsReliable = false; return 0; }
 
   virtual int64_t GetLength() MOZ_OVERRIDE {
     if (mRealTime) {
@@ -206,7 +206,7 @@ public:
   {
     ~Listener() {}
   public:
-    Listener(RtspMediaResource* aResource) : mResource(aResource) {}
+    explicit Listener(RtspMediaResource* aResource) : mResource(aResource) {}
 
     NS_DECL_ISUPPORTS
     NS_DECL_NSIINTERFACEREQUESTOR
@@ -222,7 +222,11 @@ public:
 protected:
   // Main thread access only.
   // These are called on the main thread by Listener.
-  NS_DECL_NSISTREAMINGPROTOCOLLISTENER
+  nsresult OnMediaDataAvailable(uint8_t aIndex, const nsACString& aData,
+                                uint32_t aLength, uint32_t aOffset,
+                                nsIStreamingProtocolMetaData* aMeta);
+  nsresult OnConnected(uint8_t aIndex, nsIStreamingProtocolMetaData* aMeta);
+  nsresult OnDisconnected(uint8_t aIndex, nsresult aReason);
 
   nsRefPtr<Listener> mListener;
 

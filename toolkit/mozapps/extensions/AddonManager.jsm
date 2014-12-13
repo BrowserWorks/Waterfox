@@ -183,7 +183,7 @@ function safeCall(aCallback, ...aArgs) {
  * Report an exception thrown by a provider API method.
  */
 function reportProviderError(aProvider, aMethod, aError) {
-  let method = "provider " + providerName(aProvider) + "." + aMethod;
+  let method = `provider ${providerName(aProvider)}.${aMethod}`;
   AddonManagerPrivate.recordException("AMI", method, aError);
   logger.error("Exception calling " + method, aError);
 }
@@ -661,7 +661,7 @@ var AddonManagerInternal = {
   /**
    * Start up a provider, and register its shutdown hook if it has one
    */
-  _startProvider: function(aProvider, aAppChanged, aOldAppVersion, aOldPlatformVersion) {
+  _startProvider(aProvider, aAppChanged, aOldAppVersion, aOldPlatformVersion) {
     if (!gStarted)
       throw Components.Exception("AddonManager is not initialized",
                                  Cr.NS_ERROR_NOT_INITIALIZED);
@@ -975,7 +975,7 @@ var AddonManagerInternal = {
   /**
    * Report the current state of asynchronous shutdown
    */
-  shutdownState: function() {
+  shutdownState() {
     let state = [];
     if (gShutdownBarrier) {
       state.push({
@@ -1223,17 +1223,14 @@ var AddonManagerInternal = {
       throw Components.Exception("AddonManager is not initialized",
                                  Cr.NS_ERROR_NOT_INITIALIZED);
 
-    logger.debug("Background update check beginning");
-
-    return Task.spawn(function* backgroundUpdateTask() {
+    let buPromise = Task.spawn(function* backgroundUpdateTask() {
       let hotfixID = this.hotfixID;
 
       let checkHotfix = hotfixID &&
                         Services.prefs.getBoolPref(PREF_APP_UPDATE_ENABLED) &&
                         Services.prefs.getBoolPref(PREF_APP_UPDATE_AUTO);
 
-      if (!this.updateEnabled && !checkHotfix)
-        return;
+      logger.debug("Background update check beginning");
 
       Services.obs.notifyObservers(null, "addons-background-update-start", null);
 
@@ -1371,6 +1368,9 @@ var AddonManagerInternal = {
                                    "addons-background-update-complete",
                                    null);
     }.bind(this));
+    // Fork the promise chain so we can log the error and let our caller see it too.
+    buPromise.then(null, e => logger.warn("Error in background update", e));
+    return buPromise;
   },
 
   /**
@@ -2414,6 +2414,20 @@ this.AddonManagerPrivate = {
 
   backgroundUpdateCheck: function AMP_backgroundUpdateCheck() {
     return AddonManagerInternal.backgroundUpdateCheck();
+  },
+
+  backgroundUpdateTimerHandler() {
+    // Don't call through to the real update check if no checks are enabled.
+    let checkHotfix = AddonManagerInternal.hotfixID &&
+                      Services.prefs.getBoolPref(PREF_APP_UPDATE_ENABLED) &&
+                      Services.prefs.getBoolPref(PREF_APP_UPDATE_AUTO);
+
+    if (!AddonManagerInternal.updateEnabled && !checkHotfix) {
+      logger.info("Skipping background update check");
+      return;
+    }
+    // Don't return the promise here, since the caller doesn't care.
+    AddonManagerInternal.backgroundUpdateCheck();
   },
 
   addStartupChange: function AMP_addStartupChange(aType, aID) {

@@ -229,7 +229,8 @@ InitLog()
   }
 }
 
-enum nsAssertBehavior {
+enum nsAssertBehavior
+{
   NS_ASSERT_UNINITIALIZED,
   NS_ASSERT_WARN,
   NS_ASSERT_SUSPEND,
@@ -247,17 +248,7 @@ GetAssertBehavior()
     return gAssertBehavior;
   }
 
-#if defined(XP_WIN) && defined(MOZ_METRO)
-  if (IsRunningInWindowsMetro()) {
-    gAssertBehavior = NS_ASSERT_WARN;
-  } else {
-    gAssertBehavior = NS_ASSERT_TRAP;
-  }
-#elif defined(XP_WIN)
-  gAssertBehavior = NS_ASSERT_TRAP;
-#else
   gAssertBehavior = NS_ASSERT_WARN;
-#endif
 
   const char* assertString = PR_GetEnv("XPCOM_DEBUG_BREAK");
   if (!assertString || !*assertString) {
@@ -511,7 +502,8 @@ Break(const char* aMsg)
   static int ignoreDebugger;
   if (!ignoreDebugger) {
     const char* shouldIgnoreDebugger = getenv("XPCOM_DEBUG_DLG");
-    ignoreDebugger = 1 + (shouldIgnoreDebugger && !strcmp(shouldIgnoreDebugger, "1"));
+    ignoreDebugger =
+      1 + (shouldIgnoreDebugger && !strcmp(shouldIgnoreDebugger, "1"));
   }
   if ((ignoreDebugger == 2) || !::IsDebuggerPresent()) {
     DWORD code = IDRETRY;
@@ -587,8 +579,7 @@ nsDebugImpl::Create(nsISupports* aOuter, const nsIID& aIID, void** aInstancePtr)
     return NS_ERROR_NO_AGGREGATION;
   }
 
-  return const_cast<nsDebugImpl*>(&kImpl)->
-    QueryInterface(aIID, aInstancePtr);
+  return const_cast<nsDebugImpl*>(&kImpl)->QueryInterface(aIID, aInstancePtr);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

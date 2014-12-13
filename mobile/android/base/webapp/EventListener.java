@@ -14,6 +14,7 @@ import java.util.Set;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mozilla.gecko.ActivityHandlerHelper;
+import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.EventDispatcher;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoProfile;
@@ -31,8 +32,6 @@ import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
-import android.os.Environment;
 import android.util.Log;
 
 public class EventListener implements NativeEventListener  {
@@ -45,7 +44,7 @@ public class EventListener implements NativeEventListener  {
             "Webapps:InstallApk",
             "Webapps:UninstallApk",
             "Webapps:Postinstall",
-            "Webapps:Open",
+            "Webapps:Launch",
             "Webapps:Uninstall",
             "Webapps:GetApkVersions");
     }
@@ -56,7 +55,7 @@ public class EventListener implements NativeEventListener  {
             "Webapps:InstallApk",
             "Webapps:UninstallApk",
             "Webapps:Postinstall",
-            "Webapps:Open",
+            "Webapps:Launch",
             "Webapps:Uninstall",
             "Webapps:GetApkVersions");
     }
@@ -70,14 +69,8 @@ public class EventListener implements NativeEventListener  {
                 uninstallApk(GeckoAppShell.getGeckoInterface().getActivity(), message);
             } else if (event.equals("Webapps:Postinstall")) {
                 postInstallWebapp(message.getString("apkPackageName"), message.getString("origin"));
-            } else if (event.equals("Webapps:Open")) {
-                Intent intent = GeckoAppShell.getWebappIntent(message.getString("manifestURL"),
-                                                              message.getString("origin"),
-                                                              "", null);
-                if (intent == null) {
-                    return;
-                }
-                GeckoAppShell.getGeckoInterface().getActivity().startActivity(intent);
+            } else if (event.equals("Webapps:Launch")) {
+                launchWebapp(message.getString("packageName"));
             } else if (event.equals("Webapps:GetApkVersions")) {
                 JSONObject obj = new JSONObject();
                 obj.put("versions", getApkVersions(GeckoAppShell.getGeckoInterface().getActivity(),
@@ -93,6 +86,11 @@ public class EventListener implements NativeEventListener  {
         Allocator allocator = Allocator.getInstance(GeckoAppShell.getContext());
         int index = allocator.findOrAllocatePackage(aPackageName);
         allocator.putOrigin(index, aOrigin);
+    }
+
+    private void launchWebapp(String aPackageName) {
+        Intent intent = GeckoAppShell.getContext().getPackageManager().getLaunchIntentForPackage(aPackageName);
+        GeckoAppShell.getGeckoInterface().getActivity().startActivity(intent);
     }
 
     public static void uninstallWebapp(final String packageName) {
@@ -205,11 +203,11 @@ public class EventListener implements NativeEventListener  {
     }
 
     public static void uninstallApk(final Activity context, NativeJSObject message) {
-        String packageName = message.getString("apkPackageName");
-        Uri packageUri = Uri.parse("package:" + packageName);
+        final String packageName = message.getString("apkPackageName");
+        final Uri packageUri = Uri.parse("package:" + packageName);
 
-        Intent intent;
-        if (Build.VERSION.SDK_INT < 14) {
+        final Intent intent;
+        if (Versions.preICS) {
             intent = new Intent(Intent.ACTION_DELETE, packageUri);
         } else {
             intent = new Intent(Intent.ACTION_UNINSTALL_PACKAGE, packageUri);

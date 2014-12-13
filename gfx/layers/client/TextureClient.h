@@ -26,6 +26,7 @@
 #include "nsAutoPtr.h"                  // for nsRefPtr
 #include "nsCOMPtr.h"                   // for already_AddRefed
 #include "nsISupportsImpl.h"            // for TextureImage::AddRef, etc
+#include "GfxTexturesReporter.h"
 
 class gfxReusableSurfaceWrapper;
 class gfxImageSurface;
@@ -89,6 +90,27 @@ public:
 };
 
 /**
+ * This class may be used to asynchronously receive an update when the content
+ * drawn to this texture client is available for reading in CPU memory. This
+ * can only be used on texture clients that support draw target creation.
+ */
+class TextureReadbackSink
+{
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(TextureReadbackSink)
+public:
+  /**
+   * Callback function to implement in order to receive a DataSourceSurface
+   * containing the data read back from the texture client. This will always
+   * be called on the main thread, and this may not hold on to the
+   * DataSourceSurface beyond the execution of this function.
+   */
+  virtual void ProcessReadback(gfx::DataSourceSurface *aSourceSurface) = 0;
+
+protected:
+  virtual ~TextureReadbackSink() {}
+};
+
+/**
  * TextureClient is a thin abstraction over texture data that need to be shared
  * between the content process and the compositor process. It is the
  * content-side half of a TextureClient/TextureHost pair. A corresponding
@@ -115,18 +137,8 @@ class TextureClient
   : public AtomicRefCountedWithFinalize<TextureClient>
 {
 public:
-  TextureClient(TextureFlags aFlags = TextureFlags::DEFAULT);
+  explicit TextureClient(TextureFlags aFlags = TextureFlags::DEFAULT);
   virtual ~TextureClient();
-
-  // Creates a TextureClient that can be accessed through a raw pointer.
-  // XXX - this doesn't allocate the texture data.
-  // Prefer CreateForRawBufferAccess which returns a BufferTextureClient
-  // only if allocation suceeded.
-  static TemporaryRef<BufferTextureClient>
-  CreateBufferTextureClient(ISurfaceAllocator* aAllocator,
-                            gfx::SurfaceFormat aFormat,
-                            TextureFlags aTextureFlags,
-                            gfx::BackendType aMoz2dBackend);
 
   // Creates and allocates a TextureClient usable with Moz2D.
   static TemporaryRef<TextureClient>
@@ -154,6 +166,35 @@ public:
                            gfx::BackendType aMoz2dBackend,
                            TextureFlags aTextureFlags,
                            TextureAllocationFlags flags = ALLOC_DEFAULT);
+
+  // Creates and allocates a BufferTextureClient (can beaccessed through raw
+  // pointers) with a certain buffer size. It's unfortunate that we need this.
+  // providing format and sizes could let us do more optimization.
+  static TemporaryRef<BufferTextureClient>
+  CreateWithBufferSize(ISurfaceAllocator* aAllocator,
+                       gfx::SurfaceFormat aFormat,
+                       size_t aSize,
+                       TextureFlags aTextureFlags);
+
+  // Creates and allocates a TextureClient of the same type.
+  virtual TemporaryRef<TextureClient>
+  CreateSimilar(TextureFlags aFlags = TextureFlags::DEFAULT,
+                TextureAllocationFlags aAllocFlags = ALLOC_DEFAULT) const = 0;
+
+  /**
+   * Allocates for a given surface size, taking into account the pixel format
+   * which is part of the state of the TextureClient.
+   *
+   * Does not clear the surface by default, clearing the surface can be done
+   * by passing the CLEAR_BUFFER flag.
+   *
+   * TextureClients that can expose a DrawTarget should override this method.
+   */
+  virtual bool AllocateForSurface(gfx::IntSize aSize,
+                                  TextureAllocationFlags flags = ALLOC_DEFAULT)
+  {
+    return false;
+  }
 
   virtual TextureClientYCbCr* AsTextureClientYCbCr() { return nullptr; }
 
@@ -202,21 +243,6 @@ public:
   virtual gfx::SurfaceFormat GetFormat() const
   {
     return gfx::SurfaceFormat::UNKNOWN;
-  }
-
-  /**
-   * Allocates for a given surface size, taking into account the pixel format
-   * which is part of the state of the TextureClient.
-   *
-   * Does not clear the surface by default, clearing the surface can be done
-   * by passing the CLEAR_BUFFER flag.
-   *
-   * TextureClients that can expose a DrawTarget should override this method.
-   */
-  virtual bool AllocateForSurface(gfx::IntSize aSize,
-                                  TextureAllocationFlags flags = ALLOC_DEFAULT)
-  {
-    return false;
   }
 
   /**
@@ -360,6 +386,23 @@ public:
    */
   virtual void WaitForBufferOwnership() {}
 
+  /**
+   * Track how much of this texture is wasted.
+   * For example we might allocate a 256x256 tile but only use 10x10.
+   */
+   void SetWaste(int aWasteArea) {
+     mWasteTracker.Update(aWasteArea, BytesPerPixel(GetFormat()));
+   }
+
+   /**
+    * This sets the readback sink that this texture is to use. This will
+    * receive the data for this texture as soon as it becomes available after
+    * texture unlock.
+    */
+   virtual void SetReadbackSink(TextureReadbackSink* aReadbackSink) {
+     mReadbackSink = aReadbackSink;
+   }
+
 private:
   /**
    * Called once, just before the destructor.
@@ -402,10 +445,13 @@ protected:
   RefPtr<TextureChild> mActor;
   RefPtr<ISurfaceAllocator> mAllocator;
   TextureFlags mFlags;
-  bool mShared;
-  bool mValid;
   FenceHandle mReleaseFenceHandle;
   FenceHandle mAcquireFenceHandle;
+  gl::GfxTextureWasteTracker mWasteTracker;
+  bool mShared;
+  bool mValid;
+
+  RefPtr<TextureReadbackSink> mReadbackSink;
 
   friend class TextureChild;
   friend class RemoveTextureFromCompositableTracker;
@@ -419,7 +465,7 @@ protected:
 class TextureClientReleaseTask : public Task
 {
 public:
-    TextureClientReleaseTask(TextureClient* aClient)
+    explicit TextureClientReleaseTask(TextureClient* aClient)
         : mTextureClient(aClient) {
     }
 
@@ -488,6 +534,10 @@ public:
   virtual bool HasInternalBuffer() const MOZ_OVERRIDE { return true; }
 
   ISurfaceAllocator* GetAllocator() const;
+
+  virtual TemporaryRef<TextureClient>
+  CreateSimilar(TextureFlags aFlags = TextureFlags::DEFAULT,
+                TextureAllocationFlags aAllocFlags = ALLOC_DEFAULT) const MOZ_OVERRIDE;
 
 protected:
   RefPtr<gfx::DrawTarget> mDrawTarget;
@@ -570,7 +620,7 @@ protected:
 class StreamTextureClient : public TextureClient
 {
 public:
-  StreamTextureClient(TextureFlags aFlags);
+  explicit StreamTextureClient(TextureFlags aFlags);
 
 protected:
   ~StreamTextureClient();
@@ -597,6 +647,12 @@ public:
     return gfx::SurfaceFormat::UNKNOWN;
   }
 
+  // This TextureClient should not be used in a context where we use CreateSimilar
+  // (ex. component alpha) because the underlying texture data is always created by
+  // an external producer.
+  virtual TemporaryRef<TextureClient>
+  CreateSimilar(TextureFlags, TextureAllocationFlags) const MOZ_OVERRIDE { return nullptr; }
+
   virtual bool AllocateForSurface(gfx::IntSize aSize, TextureAllocationFlags aFlags) MOZ_OVERRIDE
   {
     MOZ_CRASH("Should never hit this.");
@@ -613,7 +669,7 @@ struct TextureClientAutoUnlock
 {
   TextureClient* mTexture;
 
-  TextureClientAutoUnlock(TextureClient* aTexture)
+  explicit TextureClientAutoUnlock(TextureClient* aTexture)
   : mTexture(aTexture) {}
 
   ~TextureClientAutoUnlock()
@@ -632,7 +688,7 @@ template<typename T>
 class TKeepAlive : public KeepAlive
 {
 public:
-  TKeepAlive(T* aData) : mData(aData) {}
+  explicit TKeepAlive(T* aData) : mData(aData) {}
 protected:
   RefPtr<T> mData;
 };

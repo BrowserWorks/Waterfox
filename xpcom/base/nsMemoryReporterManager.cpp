@@ -45,6 +45,9 @@ using namespace mozilla;
 
 #if defined(XP_LINUX)
 
+#include <string.h>
+#include <stdlib.h>
+
 static nsresult
 GetProcSelfStatmField(int aField, int64_t* aN)
 {
@@ -68,30 +71,54 @@ GetProcSelfStatmField(int aField, int64_t* aN)
 static nsresult
 GetProcSelfSmapsPrivate(int64_t* aN)
 {
-  // You might be tempted to calculate USS by subtracting the "shared"
-  // value from the "resident" value in /proc/<pid>/statm. But at least
-  // on Linux, statm's "shared" value actually counts pages backed by
-  // files, which has little to do with whether the pages are actually
-  // shared. /proc/self/smaps on the other hand appears to give us the
-  // correct information.
+  // You might be tempted to calculate USS by subtracting the "shared" value
+  // from the "resident" value in /proc/<pid>/statm. But at least on Linux,
+  // statm's "shared" value actually counts pages backed by files, which has
+  // little to do with whether the pages are actually shared. /proc/self/smaps
+  // on the other hand appears to give us the correct information.
 
   FILE* f = fopen("/proc/self/smaps", "r");
   if (NS_WARN_IF(!f)) {
     return NS_ERROR_UNEXPECTED;
   }
 
+  // We carry over the end of the buffer to the beginning to make sure we only
+  // interpret complete lines.
+  static const uint32_t carryOver = 32;
+  static const uint32_t readSize = 4096;
+
   int64_t amount = 0;
-  char line[256];
-  while (fgets(line, sizeof(line), f)) {
-    long long val = 0;
-    if (sscanf(line, "Private_Dirty: %lld kB", &val) == 1 ||
-        sscanf(line, "Private_Clean: %lld kB", &val) == 1) {
-      amount += val * 1024; // convert from kB to bytes
+  char buffer[carryOver + readSize + 1];
+
+  // Fill the beginning of the buffer with spaces, as a sentinel for the first
+  // iteration.
+  memset(buffer, ' ', carryOver);
+
+  for (;;) {
+    size_t bytes = fread(buffer + carryOver, sizeof(*buffer), readSize, f);
+    char* end = buffer + bytes;
+    char* ptr = buffer;
+    end[carryOver] = '\0';
+    // We are looking for lines like "Private_{Clean,Dirty}: 4 kB".
+    while ((ptr = strstr(ptr, "Private"))) {
+      if (ptr >= end) {
+        break;
+      }
+      ptr += sizeof("Private_Xxxxx:");
+      amount += strtol(ptr, nullptr, 10);
     }
+    if (bytes < readSize) {
+      // We do not expect any match within the end of the buffer.
+      MOZ_ASSERT(!strstr(end, "Private"));
+      break;
+    }
+    // Carry the end of the buffer over to the beginning.
+    memcpy(buffer, end, carryOver);
   }
 
   fclose(f);
-  *aN = amount;
+  // Convert from kB to bytes.
+  *aN = amount * 1024;
   return NS_OK;
 }
 
@@ -837,13 +864,52 @@ public:
   NS_METHOD CollectReports(nsIHandleReportCallback* aHandleReport,
                            nsISupports* aData, bool aAnonymize)
   {
-    return MOZ_COLLECT_REPORT(
-      "explicit/atom-tables", KIND_HEAP, UNITS_BYTES,
-      NS_SizeOfAtomTablesIncludingThis(MallocSizeOf),
-      "Memory used by the dynamic and static atoms tables.");
+    size_t Main, Static;
+    NS_SizeOfAtomTablesIncludingThis(MallocSizeOf, &Main, &Static);
+
+    nsresult rv;
+    rv = MOZ_COLLECT_REPORT(
+      "explicit/atom-tables/main", KIND_HEAP, UNITS_BYTES, Main,
+      "Memory used by the main atoms table.");
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = MOZ_COLLECT_REPORT(
+      "explicit/atom-tables/static", KIND_HEAP, UNITS_BYTES, Static,
+      "Memory used by the static atoms table.");
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    return NS_OK;
   }
 };
 NS_IMPL_ISUPPORTS(AtomTablesReporter, nsIMemoryReporter)
+
+#ifdef DEBUG
+
+// Ideally, this would be implemented in BlockingResourceBase.cpp.
+// However, this ends up breaking the linking step of various unit tests due
+// to adding a new dependency to libdmd for a commonly used feature (mutexes)
+// in  DMD  builds. So instead we do it here.
+class DeadlockDetectorReporter MOZ_FINAL : public nsIMemoryReporter
+{
+  MOZ_DEFINE_MALLOC_SIZE_OF(MallocSizeOf)
+
+  ~DeadlockDetectorReporter() {}
+
+public:
+  NS_DECL_ISUPPORTS
+
+  NS_METHOD CollectReports(nsIHandleReportCallback* aHandleReport,
+                           nsISupports* aData, bool aAnonymize)
+  {
+    return MOZ_COLLECT_REPORT(
+      "explicit/deadlock-detector", KIND_HEAP, UNITS_BYTES,
+      BlockingResourceBase::SizeOfDeadlockDetector(MallocSizeOf),
+      "Memory used by the deadlock detector.");
+  }
+};
+NS_IMPL_ISUPPORTS(DeadlockDetectorReporter, nsIMemoryReporter)
+
+#endif
 
 #ifdef MOZ_DMD
 
@@ -947,6 +1013,10 @@ nsMemoryReporterManager::Init()
 #endif
 
   RegisterStrongReporter(new AtomTablesReporter());
+
+#ifdef DEBUG
+  RegisterStrongReporter(new DeadlockDetectorReporter());
+#endif
 
 #ifdef MOZ_DMD
   RegisterStrongReporter(new mozilla::dmd::DMDReporter());
@@ -1103,7 +1173,8 @@ nsMemoryReporterManager::GetReportsExtended(
   }
 
   if (aMinimize) {
-    rv = MinimizeMemoryUsage(NS_NewRunnableMethod(this, &nsMemoryReporterManager::StartGettingReports));
+    rv = MinimizeMemoryUsage(NS_NewRunnableMethod(
+      this, &nsMemoryReporterManager::StartGettingReports));
   } else {
     rv = StartGettingReports();
   }
@@ -1116,7 +1187,7 @@ nsMemoryReporterManager::StartGettingReports()
   GetReportsState* s = mGetReportsState;
 
   // Get reports for this process.
-  FILE *parentDMDFile = nullptr;
+  FILE* parentDMDFile = nullptr;
 #ifdef MOZ_DMD
   nsresult rv = nsMemoryInfoDumper::OpenDMDFile(s->mDMDDumpIdent, getpid(),
                                                 &parentDMDFile);
@@ -1130,9 +1201,8 @@ nsMemoryReporterManager::StartGettingReports()
   s->mParentDone = true;
 
   // If there are no remaining child processes, we can finish up immediately.
-  return (s->mNumChildProcessesCompleted >= s->mNumChildProcesses)
-    ? FinishReporting()
-    : NS_OK;
+  return (s->mNumChildProcessesCompleted >= s->mNumChildProcesses) ?
+    FinishReporting() : NS_OK;
 }
 
 typedef nsCOMArray<nsIMemoryReporter> MemoryReporterArray;
@@ -1791,7 +1861,7 @@ namespace {
 class MinimizeMemoryUsageRunnable : public nsRunnable
 {
 public:
-  MinimizeMemoryUsageRunnable(nsIRunnable* aCallback)
+  explicit MinimizeMemoryUsageRunnable(nsIRunnable* aCallback)
     : mCallback(aCallback)
     , mRemainingIters(sNumIters)
   {

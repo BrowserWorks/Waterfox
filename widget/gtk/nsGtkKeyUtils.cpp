@@ -646,12 +646,12 @@ KeymapWrapper::InitInputEvent(WidgetInputEvent& aInputEvent,
          GetBoolName(aInputEvent.modifiers & MODIFIER_NUMLOCK),
          GetBoolName(aInputEvent.modifiers & MODIFIER_SCROLLLOCK)));
 
-    switch(aInputEvent.eventStructType) {
-        case NS_MOUSE_EVENT:
-        case NS_MOUSE_SCROLL_EVENT:
-        case NS_WHEEL_EVENT:
-        case NS_DRAG_EVENT:
-        case NS_SIMPLE_GESTURE_EVENT:
+    switch(aInputEvent.mClass) {
+        case eMouseEventClass:
+        case eMouseScrollEventClass:
+        case eWheelEventClass:
+        case eDragEventClass:
+        case eSimpleGestureEventClass:
             break;
         default:
             return;
@@ -1005,7 +1005,7 @@ KeymapWrapper::InitKeyEvent(WidgetKeyboardEvent& aKeyEvent,
     // so link to the GdkEvent (which will vanish soon after return from the
     // event callback) to give plugins access to hardware_keycode and state.
     // (An XEvent would be nice but the GdkEvent is good enough.)
-    aKeyEvent.pluginEvent = (void *)aGdkKeyEvent;
+    aKeyEvent.mPluginEvent.Copy(*aGdkKeyEvent);
     aKeyEvent.time = aGdkKeyEvent->time;
     aKeyEvent.mNativeKeyEvent = static_cast<void*>(aGdkKeyEvent);
     aKeyEvent.mIsRepeat = sRepeatState == REPEATING &&

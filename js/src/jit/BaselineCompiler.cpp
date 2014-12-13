@@ -13,6 +13,7 @@
 #include "jit/IonAnalysis.h"
 #include "jit/IonLinker.h"
 #include "jit/IonSpewer.h"
+#include "jit/JitcodeMap.h"
 #ifdef JS_ION_PERF
 # include "jit/PerfSpewer.h"
 #endif
@@ -108,7 +109,7 @@ BaselineCompiler::compile()
 
     Linker linker(masm);
     AutoFlushICache afc("Baseline");
-    JitCode *code = linker.newCode<CanGC>(cx, JSC::BASELINE_CODE);
+    JitCode *code = linker.newCode<CanGC>(cx, BASELINE_CODE);
     if (!code)
         return Method_Error;
 
@@ -177,7 +178,7 @@ BaselineCompiler::compile()
     // Note: There is an extra entry in the bytecode type map for the search hint, see below.
     size_t bytecodeTypeMapEntries = script->nTypeSets() + 1;
 
-    BaselineScript *baselineScript = BaselineScript::New(cx, prologueOffset_.offset(),
+    BaselineScript *baselineScript = BaselineScript::New(script, prologueOffset_.offset(),
                                                          epilogueOffset_.offset(),
                                                          spsPushToggleOffset_.offset(),
                                                          postDebugPrologueOffset_.offset(),
@@ -227,7 +228,7 @@ BaselineCompiler::compile()
         baselineScript->setModifiesArguments();
 
     // All barriers are emitted off-by-default, toggle them on if needed.
-    if (cx->zone()->needsBarrier())
+    if (cx->zone()->needsIncrementalBarrier())
         baselineScript->toggleBarriers(true);
 
     // All SPS instrumentation is emitted toggled off.  Toggle them on if needed.
@@ -243,6 +244,21 @@ BaselineCompiler::compile()
 
     if (script->compartment()->debugMode())
         baselineScript->setDebugMode();
+
+    // Register a native => bytecode mapping entry for this script if needed.
+    if (cx->runtime()->jitRuntime()->isNativeToBytecodeMapEnabled(cx->runtime())) {
+        IonSpew(IonSpew_Profiling, "Added JitcodeGlobalEntry for baseline script %s:%d (%p)",
+                    script->filename(), script->lineno(), baselineScript);
+        JitcodeGlobalEntry::BaselineEntry entry;
+        entry.init(code->raw(), code->raw() + code->instructionsSize(), script);
+
+        JitcodeGlobalTable *globalTable = cx->runtime()->jitRuntime()->getJitcodeGlobalTable();
+        if (!globalTable->addEntry(entry))
+            return Method_Error;
+
+        // Mark the jitcode as having a bytecode map.
+        code->setHasBytecodeMap();
+    }
 
     script->setBaselineScript(cx, baselineScript);
 
@@ -1263,6 +1279,23 @@ BaselineCompiler::emit_JSOP_OBJECT()
     return true;
 }
 
+bool
+BaselineCompiler::emit_JSOP_CALLSITEOBJ()
+{
+    RootedObject cso(cx, script->getObject(pc));
+    RootedObject raw(cx, script->getObject(GET_UINT32_INDEX(pc) + 1));
+    if (!cso || !raw)
+        return false;
+    RootedValue rawValue(cx);
+    rawValue.setObject(*raw);
+
+    if (!ProcessCallSiteObjOperation(cx, cso, raw, rawValue))
+        return false;
+
+    frame.push(ObjectValue(*cso));
+    return true;
+}
+
 typedef JSObject *(*CloneRegExpObjectFn)(JSContext *, JSObject *);
 static const VMFunction CloneRegExpObjectInfo =
     FunctionInfo<CloneRegExpObjectFn>(CloneRegExpObject);
@@ -1361,7 +1394,7 @@ BaselineCompiler::storeValue(const StackValue *source, const Address &dest,
         masm.storeValue(scratch, dest);
         break;
       default:
-        MOZ_ASSUME_UNREACHABLE("Invalid kind");
+        MOZ_CRASH("Invalid kind");
     }
 }
 
@@ -1612,6 +1645,32 @@ BaselineCompiler::emit_JSOP_NEWARRAY()
     if (!emitOpIC(stubCompiler.getStub(&stubSpace_)))
         return false;
 
+    frame.push(R0);
+    return true;
+}
+
+typedef JSObject *(*NewArrayCopyOnWriteFn)(JSContext *, HandleObject, gc::InitialHeap);
+const VMFunction jit::NewArrayCopyOnWriteInfo =
+    FunctionInfo<NewArrayCopyOnWriteFn>(js::NewDenseCopyOnWriteArray);
+
+bool
+BaselineCompiler::emit_JSOP_NEWARRAY_COPYONWRITE()
+{
+    RootedScript scriptRoot(cx, script);
+    JSObject *obj = types::GetOrFixupCopyOnWriteObject(cx, scriptRoot, pc);
+    if (!obj)
+        return false;
+
+    prepareVMCall();
+
+    pushArg(Imm32(gc::DefaultHeap));
+    pushArg(ImmGCPtr(obj));
+
+    if (!callVM(NewArrayCopyOnWriteInfo))
+        return false;
+
+    // Box and push return value.
+    masm.tagValue(JSVAL_TYPE_OBJECT, ReturnReg, R0);
     frame.push(R0);
     return true;
 }

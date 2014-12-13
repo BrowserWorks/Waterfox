@@ -6,6 +6,8 @@
 #include "GMPChild.h"
 #include "GMPVideoDecoderChild.h"
 #include "GMPVideoEncoderChild.h"
+#include "GMPAudioDecoderChild.h"
+#include "GMPDecryptorChild.h"
 #include "GMPVideoHost.h"
 #include "nsIFile.h"
 #include "nsXULAppAPI.h"
@@ -22,7 +24,7 @@ using mozilla::dom::CrashReporterChild;
 #include <unistd.h> // for _exit()
 #endif
 
-#if defined(XP_WIN)
+#if defined(MOZ_SANDBOX) && defined(XP_WIN)
 #define TARGET_SANDBOX_EXPORTS
 #include "mozilla/sandboxTarget.h"
 #elif defined (MOZ_GMP_SANDBOX)
@@ -35,7 +37,8 @@ namespace mozilla {
 namespace gmp {
 
 GMPChild::GMPChild()
-  : mLib(nullptr)
+  : mAsyncShutdown(nullptr)
+  , mLib(nullptr)
   , mGetAPIFunc(nullptr)
   , mGMPMessageLoop(MessageLoop::current())
 {
@@ -232,7 +235,7 @@ GMPChild::Init(const std::string& aPluginPath,
   return true;
 #endif
 
-#if defined(XP_WIN)
+#if defined(MOZ_SANDBOX) && defined(XP_WIN)
   mozilla::SandboxTarget::Instance()->StartSandbox();
 #endif
 
@@ -279,7 +282,7 @@ GMPChild::LoadPluginLibrary(const std::string& aPluginPath)
   }
 
   auto platformAPI = new GMPPlatformAPI();
-  InitPlatformAPI(*platformAPI);
+  InitPlatformAPI(*platformAPI, this);
 
   if (initFunc(platformAPI) != GMPNoErr) {
     return false;
@@ -288,6 +291,14 @@ GMPChild::LoadPluginLibrary(const std::string& aPluginPath)
   mGetAPIFunc = reinterpret_cast<GMPGetAPIFunc>(PR_FindFunctionSymbol(mLib, "GMPGetAPI"));
   if (!mGetAPIFunc) {
     return false;
+  }
+
+  void* sh = nullptr;
+  GMPAsyncShutdownHost* host = static_cast<GMPAsyncShutdownHost*>(this);
+  GMPErr err = mGetAPIFunc("async-shutdown", host, &sh);
+  if (err == GMPNoErr && sh) {
+    mAsyncShutdown = reinterpret_cast<GMPAsyncShutdown*>(sh);
+    SendAsyncShutdownRequired();
   }
 
   return true;
@@ -317,6 +328,7 @@ GMPChild::ActorDestroy(ActorDestroyReason aWhy)
   XRE_ShutdownChildProcess();
 }
 
+
 void
 GMPChild::ProcessingError(Result aWhat)
 {
@@ -338,6 +350,19 @@ GMPChild::ProcessingError(Result aWhat)
     default:
       MOZ_CRASH("not reached");
   }
+}
+
+PGMPAudioDecoderChild*
+GMPChild::AllocPGMPAudioDecoderChild()
+{
+  return new GMPAudioDecoderChild(this);
+}
+
+bool
+GMPChild::DeallocPGMPAudioDecoderChild(PGMPAudioDecoderChild* aActor)
+{
+  delete aActor;
+  return true;
 }
 
 mozilla::dom::PCrashReporterChild*
@@ -363,6 +388,35 @@ bool
 GMPChild::DeallocPGMPVideoDecoderChild(PGMPVideoDecoderChild* aActor)
 {
   delete aActor;
+  return true;
+}
+
+PGMPDecryptorChild*
+GMPChild::AllocPGMPDecryptorChild()
+{
+  return new GMPDecryptorChild(this);
+}
+
+bool
+GMPChild::DeallocPGMPDecryptorChild(PGMPDecryptorChild* aActor)
+{
+  delete aActor;
+  return true;
+}
+
+bool
+GMPChild::RecvPGMPAudioDecoderConstructor(PGMPAudioDecoderChild* aActor)
+{
+  auto vdc = static_cast<GMPAudioDecoderChild*>(aActor);
+
+  void* vd = nullptr;
+  GMPErr err = mGetAPIFunc("decode-audio", &vdc->Host(), &vd);
+  if (err != GMPNoErr || !vd) {
+    return false;
+  }
+
+  vdc->Init(static_cast<GMPAudioDecoder*>(vd));
+
   return true;
 }
 
@@ -412,10 +466,99 @@ GMPChild::RecvPGMPVideoEncoderConstructor(PGMPVideoEncoderChild* aActor)
 }
 
 bool
+GMPChild::RecvPGMPDecryptorConstructor(PGMPDecryptorChild* aActor)
+{
+  GMPDecryptorChild* child = static_cast<GMPDecryptorChild*>(aActor);
+  GMPDecryptorHost* host = static_cast<GMPDecryptorHost*>(child);
+
+  void* session = nullptr;
+  GMPErr err = mGetAPIFunc("eme-decrypt", host, &session);
+  if (err != GMPNoErr || !session) {
+    return false;
+  }
+
+  child->Init(static_cast<GMPDecryptor*>(session));
+
+  return true;
+}
+
+PGMPTimerChild*
+GMPChild::AllocPGMPTimerChild()
+{
+  return new GMPTimerChild(this);
+}
+
+bool
+GMPChild::DeallocPGMPTimerChild(PGMPTimerChild* aActor)
+{
+  MOZ_ASSERT(mTimerChild == static_cast<GMPTimerChild*>(aActor));
+  mTimerChild = nullptr;
+  return true;
+}
+
+GMPTimerChild*
+GMPChild::GetGMPTimers()
+{
+  if (!mTimerChild) {
+    PGMPTimerChild* sc = SendPGMPTimerConstructor();
+    if (!sc) {
+      return nullptr;
+    }
+    mTimerChild = static_cast<GMPTimerChild*>(sc);
+  }
+  return mTimerChild;
+}
+
+PGMPStorageChild*
+GMPChild::AllocPGMPStorageChild()
+{
+  return new GMPStorageChild(this);
+}
+
+bool
+GMPChild::DeallocPGMPStorageChild(PGMPStorageChild* aActor)
+{
+  mStorage = nullptr;
+  return true;
+}
+
+GMPStorageChild*
+GMPChild::GetGMPStorage()
+{
+  if (!mStorage) {
+    PGMPStorageChild* sc = SendPGMPStorageConstructor();
+    if (!sc) {
+      return nullptr;
+    }
+    mStorage = static_cast<GMPStorageChild*>(sc);
+  }
+  return mStorage;
+}
+
+bool
 GMPChild::RecvCrashPluginNow()
 {
   MOZ_CRASH();
   return true;
+}
+
+bool
+GMPChild::RecvBeginAsyncShutdown()
+{
+  MOZ_ASSERT(mGMPMessageLoop == MessageLoop::current());
+  if (mAsyncShutdown) {
+    mAsyncShutdown->BeginShutdown();
+  } else {
+    ShutdownComplete();
+  }
+  return true;
+}
+
+void
+GMPChild::ShutdownComplete()
+{
+  MOZ_ASSERT(mGMPMessageLoop == MessageLoop::current());
+  SendAsyncShutdownComplete();
 }
 
 } // namespace gmp

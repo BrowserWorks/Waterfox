@@ -8,9 +8,11 @@
 
 #include "mozilla/DebugOnly.h"
 
+#include "jit/CompactBuffer.h"
 #include "jit/IonCaches.h"
 #include "jit/IonMacroAssembler.h"
 #include "jit/IonSpewer.h"
+#include "jit/JitcodeMap.h"
 #include "jit/MIR.h"
 #include "jit/MIRGenerator.h"
 #include "jit/ParallelFunctions.h"
@@ -31,8 +33,8 @@ CodeGeneratorShared::ensureMasm(MacroAssembler *masmArg)
 {
     if (masmArg)
         return *masmArg;
-    maybeMasm_.construct();
-    return maybeMasm_.ref();
+    maybeMasm_.emplace();
+    return *maybeMasm_;
 }
 
 CodeGeneratorShared::CodeGeneratorShared(MIRGenerator *gen, LIRGraph *graph, MacroAssembler *masmArg)
@@ -49,29 +51,47 @@ CodeGeneratorShared::CodeGeneratorShared(MIRGenerator *gen, LIRGraph *graph, Mac
     pushedArgs_(0),
 #endif
     lastOsiPointOffset_(0),
+    nativeToBytecodeMap_(nullptr),
+    nativeToBytecodeMapSize_(0),
+    nativeToBytecodeTableOffset_(0),
+    nativeToBytecodeNumRegions_(0),
+    nativeToBytecodeScriptList_(nullptr),
+    nativeToBytecodeScriptListLength_(0),
     sps_(&GetIonContext()->runtime->spsProfiler(), &lastNotInlinedPC_),
     osrEntryOffset_(0),
     skipArgCheckEntryOffset_(0),
+#ifdef CHECK_OSIPOINT_REGISTERS
+    checkOsiPointRegisters(js_JitOptions.checkOsiPointRegisters),
+#endif
     frameDepth_(graph->paddedLocalSlotsSize() + graph->argumentsSize()),
     frameInitialAdjustment_(0)
 {
     if (!gen->compilingAsmJS())
         masm.setInstrumentation(&sps_);
 
-    // Since asm.js uses the system ABI which does not necessarily use a
-    // regular array where all slots are sizeof(Value), it maintains the max
-    // argument stack depth separately.
     if (gen->compilingAsmJS()) {
+        // Since asm.js uses the system ABI which does not necessarily use a
+        // regular array where all slots are sizeof(Value), it maintains the max
+        // argument stack depth separately.
         JS_ASSERT(graph->argumentSlotCount() == 0);
         frameDepth_ += gen->maxAsmJSStackArgBytes();
 
-        // An MAsmJSCall does not align the stack pointer at calls sites but instead
-        // relies on the a priori stack adjustment (in the prologue) on platforms
-        // (like x64) which require the stack to be aligned.
-        if (StackKeptAligned || gen->needsInitialStackAlignment()) {
-            unsigned alignmentAtCall = AsmJSFrameSize + frameDepth_;
-            if (unsigned rem = alignmentAtCall % StackAlignment)
-                frameDepth_ += StackAlignment - rem;
+        if (gen->usesSimd()) {
+            // If the function uses any SIMD then we may need to insert padding
+            // so that local slots are aligned for SIMD.
+            frameInitialAdjustment_ = ComputeByteAlignment(sizeof(AsmJSFrame),
+                                                           AsmJSStackAlignment);
+            frameDepth_ += frameInitialAdjustment_;
+            // Keep the stack aligned. Some SIMD sequences build values on the
+            // stack and need the stack aligned.
+            frameDepth_ += ComputeByteAlignment(sizeof(AsmJSFrame) + frameDepth_,
+                                                AsmJSStackAlignment);
+        } else if (gen->performsCall()) {
+            // An MAsmJSCall does not align the stack pointer at calls sites but
+            // instead relies on the a priori stack adjustment. This must be the
+            // last adjustment of frameDepth_.
+            frameDepth_ += ComputeByteAlignment(sizeof(AsmJSFrame) + frameDepth_,
+                                                AsmJSStackAlignment);
         }
 
         // FrameSizeClass is only used for bailing, which cannot happen in
@@ -87,6 +107,13 @@ CodeGeneratorShared::generateOutOfLineCode()
 {
     JSScript *topScript = sps_.getPushed();
     for (size_t i = 0; i < outOfLineCode_.length(); i++) {
+        // Add native => bytecode mapping entries for OOL sites.
+        // Not enabled on asm.js yet since asm doesn't contain bytecode mappings.
+        if (!gen->compilingAsmJS()) {
+            if (!addNativeToBytecodeEntry(outOfLineCode_[i]->bytecodeSite()))
+                return false;
+        }
+
         if (!gen->alloc().ensureBallast())
             return false;
 
@@ -111,18 +138,132 @@ CodeGeneratorShared::generateOutOfLineCode()
 }
 
 bool
-CodeGeneratorShared::addOutOfLineCode(OutOfLineCode *code)
+CodeGeneratorShared::addOutOfLineCode(OutOfLineCode *code, const MInstruction *mir)
+{
+    JS_ASSERT(mir);
+    return addOutOfLineCode(code, mir->trackedSite());
+}
+
+bool
+CodeGeneratorShared::addOutOfLineCode(OutOfLineCode *code, const BytecodeSite &site)
 {
     code->setFramePushed(masm.framePushed());
-    // If an OOL instruction adds another OOL instruction, then use the original
-    // instruction's script/pc instead of the basic block's that we're on
-    // because they're probably not relevant any more.
-    if (oolIns)
-        code->setSource(oolIns->script(), oolIns->pc());
-    else
-        code->setSource(current ? current->mir()->info().script() : nullptr, lastPC_);
-    JS_ASSERT_IF(code->script(), code->script()->containsPC(code->pc()));
+    code->setBytecodeSite(site);
+    JS_ASSERT_IF(!gen->compilingAsmJS(), code->script()->containsPC(code->pc()));
     return outOfLineCode_.append(code);
+}
+
+bool
+CodeGeneratorShared::addNativeToBytecodeEntry(const BytecodeSite &site)
+{
+    // Skip the table entirely if profiling is not enabled.
+    if (!isNativeToBytecodeMapEnabled())
+        return true;
+
+    JS_ASSERT(site.tree());
+    JS_ASSERT(site.pc());
+
+    InlineScriptTree *tree = site.tree();
+    jsbytecode *pc = site.pc();
+    uint32_t nativeOffset = masm.currentOffset();
+
+    JS_ASSERT_IF(nativeToBytecodeList_.empty(), nativeOffset == 0);
+
+    if (!nativeToBytecodeList_.empty()) {
+        size_t lastIdx = nativeToBytecodeList_.length() - 1;
+        NativeToBytecode &lastEntry = nativeToBytecodeList_[lastIdx];
+
+        JS_ASSERT(nativeOffset >= lastEntry.nativeOffset.offset());
+
+        // If the new entry is for the same inlineScriptTree and same
+        // bytecodeOffset, but the nativeOffset has changed, do nothing.
+        // The same site just generated some more code.
+        if (lastEntry.tree == tree && lastEntry.pc == pc) {
+            IonSpew(IonSpew_Profiling, " => In-place update [%u-%u]",
+                    lastEntry.nativeOffset.offset(), nativeOffset);
+            return true;
+        }
+
+        // If the new entry is for the same native offset, then update the
+        // previous entry with the new bytecode site, since the previous
+        // bytecode site did not generate any native code.
+        if (lastEntry.nativeOffset.offset() == nativeOffset) {
+            lastEntry.tree = tree;
+            lastEntry.pc = pc;
+            IonSpew(IonSpew_Profiling, " => Overwriting zero-length native region.");
+
+            // This overwrite might have made the entry merge-able with a
+            // previous one.  If so, merge it.
+            if (lastIdx > 0) {
+                NativeToBytecode &nextToLastEntry = nativeToBytecodeList_[lastIdx - 1];
+                if (nextToLastEntry.tree == lastEntry.tree && nextToLastEntry.pc == lastEntry.pc) {
+                    IonSpew(IonSpew_Profiling, " => Merging with previous region");
+                    nativeToBytecodeList_.erase(&lastEntry);
+                }
+            }
+
+            dumpNativeToBytecodeEntry(nativeToBytecodeList_.length() - 1);
+            return true;
+        }
+    }
+
+    // Otherwise, some native code was generated for the previous bytecode site.
+    // Add a new entry for code that is about to be generated.
+    NativeToBytecode entry;
+    entry.nativeOffset = CodeOffsetLabel(nativeOffset);
+    entry.tree = tree;
+    entry.pc = pc;
+    if (!nativeToBytecodeList_.append(entry))
+        return false;
+
+    IonSpew(IonSpew_Profiling, " => Push new entry.");
+    dumpNativeToBytecodeEntry(nativeToBytecodeList_.length() - 1);
+    return true;
+}
+
+void
+CodeGeneratorShared::dumpNativeToBytecodeEntries()
+{
+#ifdef DEBUG
+    InlineScriptTree *topTree = gen->info().inlineScriptTree();
+    IonSpewStart(IonSpew_Profiling, "Native To Bytecode Entries for %s:%d\n",
+                 topTree->script()->filename(), topTree->script()->lineno());
+    for (unsigned i = 0; i < nativeToBytecodeList_.length(); i++)
+        dumpNativeToBytecodeEntry(i);
+#endif
+}
+
+void
+CodeGeneratorShared::dumpNativeToBytecodeEntry(uint32_t idx)
+{
+#ifdef DEBUG
+    NativeToBytecode &ref = nativeToBytecodeList_[idx];
+    InlineScriptTree *tree = ref.tree;
+    JSScript *script = tree->script();
+    uint32_t nativeOffset = ref.nativeOffset.offset();
+    unsigned nativeDelta = 0;
+    unsigned pcDelta = 0;
+    if (idx + 1 < nativeToBytecodeList_.length()) {
+        NativeToBytecode *nextRef = &ref + 1;
+        nativeDelta = nextRef->nativeOffset.offset() - nativeOffset;
+        if (nextRef->tree == ref.tree)
+            pcDelta = nextRef->pc - ref.pc;
+    }
+    IonSpewStart(IonSpew_Profiling, "    %08x [+%-6d] => %-6d [%-4d] {%-10s} (%s:%d",
+                 ref.nativeOffset.offset(),
+                 nativeDelta,
+                 ref.pc - script->code(),
+                 pcDelta,
+                 js_CodeName[JSOp(*ref.pc)],
+                 script->filename(), script->lineno());
+
+    for (tree = tree->caller(); tree; tree = tree->caller()) {
+        IonSpewCont(IonSpew_Profiling, " <= %s:%d", tree->script()->filename(),
+                                                    tree->script()->lineno());
+    }
+    IonSpewCont(IonSpew_Profiling, ")");
+    IonSpewFin(IonSpew_Profiling);
+#endif
 }
 
 // see OffsetOfFrameSlot
@@ -380,6 +521,206 @@ CodeGeneratorShared::encodeSafepoints()
 }
 
 bool
+CodeGeneratorShared::createNativeToBytecodeScriptList(JSContext *cx)
+{
+    js::Vector<JSScript *, 0, SystemAllocPolicy> scriptList;
+    InlineScriptTree *tree = gen->info().inlineScriptTree();
+    for (;;) {
+        // Add script from current tree.
+        bool found = false;
+        for (uint32_t i = 0; i < scriptList.length(); i++) {
+            if (scriptList[i] == tree->script()) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            if (!scriptList.append(tree->script()))
+                return false;
+        }
+
+        // Process rest of tree
+
+        // If children exist, emit children.
+        if (tree->hasChildren()) {
+            tree = tree->firstChild();
+            continue;
+        }
+
+        // Otherwise, find the first tree up the chain (including this one)
+        // that contains a next sibling.
+        while (!tree->hasNextCallee() && tree->hasCaller())
+            tree = tree->caller();
+
+        // If we found a sibling, use it.
+        if (tree->hasNextCallee()) {
+            tree = tree->nextCallee();
+            continue;
+        }
+
+        // Otherwise, we must have reached the top without finding any siblings.
+        JS_ASSERT(tree->isOutermostCaller());
+        break;
+    }
+
+    // Allocate array for list.
+    JSScript **data = cx->runtime()->pod_malloc<JSScript *>(scriptList.length());
+    if (!data)
+        return false;
+
+    for (uint32_t i = 0; i < scriptList.length(); i++)
+        data[i] = scriptList[i];
+
+    // Success.
+    nativeToBytecodeScriptListLength_ = scriptList.length();
+    nativeToBytecodeScriptList_ = data;
+    return true;
+}
+
+bool
+CodeGeneratorShared::generateCompactNativeToBytecodeMap(JSContext *cx, JitCode *code)
+{
+    JS_ASSERT(nativeToBytecodeScriptListLength_ == 0);
+    JS_ASSERT(nativeToBytecodeScriptList_ == nullptr);
+    JS_ASSERT(nativeToBytecodeMap_ == nullptr);
+    JS_ASSERT(nativeToBytecodeMapSize_ == 0);
+    JS_ASSERT(nativeToBytecodeTableOffset_ == 0);
+    JS_ASSERT(nativeToBytecodeNumRegions_ == 0);
+
+    // Iterate through all nativeToBytecode entries, fix up their masm offsets.
+    for (unsigned i = 0; i < nativeToBytecodeList_.length(); i++) {
+        NativeToBytecode &entry = nativeToBytecodeList_[i];
+
+        // Fixup code offsets.
+        entry.nativeOffset = CodeOffsetLabel(masm.actualOffset(entry.nativeOffset.offset()));
+    }
+
+    if (!createNativeToBytecodeScriptList(cx))
+        return false;
+
+    JS_ASSERT(nativeToBytecodeScriptListLength_ > 0);
+    JS_ASSERT(nativeToBytecodeScriptList_ != nullptr);
+
+    CompactBufferWriter writer;
+    uint32_t tableOffset = 0;
+    uint32_t numRegions = 0;
+
+    if (!JitcodeIonTable::WriteIonTable(
+            writer, nativeToBytecodeScriptList_, nativeToBytecodeScriptListLength_,
+            &nativeToBytecodeList_[0],
+            &nativeToBytecodeList_[0] + nativeToBytecodeList_.length(),
+            &tableOffset, &numRegions))
+    {
+        return false;
+    }
+
+    JS_ASSERT(tableOffset > 0);
+    JS_ASSERT(numRegions > 0);
+
+    // Writer is done, copy it to sized buffer.
+    uint8_t *data = cx->runtime()->pod_malloc<uint8_t>(writer.length());
+    if (!data)
+        return false;
+
+    memcpy(data, writer.buffer(), writer.length());
+    nativeToBytecodeMap_ = data;
+    nativeToBytecodeMapSize_ = writer.length();
+    nativeToBytecodeTableOffset_ = tableOffset;
+    nativeToBytecodeNumRegions_ = numRegions;
+
+    verifyCompactNativeToBytecodeMap(code);
+
+    IonSpew(IonSpew_Profiling, "Compact Native To Bytecode Map [%p-%p]",
+            data, data + nativeToBytecodeMapSize_);
+
+    return true;
+}
+
+void
+CodeGeneratorShared::verifyCompactNativeToBytecodeMap(JitCode *code)
+{
+#ifdef DEBUG
+    JS_ASSERT(nativeToBytecodeScriptListLength_ > 0);
+    JS_ASSERT(nativeToBytecodeScriptList_ != nullptr);
+    JS_ASSERT(nativeToBytecodeMap_ != nullptr);
+    JS_ASSERT(nativeToBytecodeMapSize_ > 0);
+    JS_ASSERT(nativeToBytecodeTableOffset_ > 0);
+    JS_ASSERT(nativeToBytecodeNumRegions_ > 0);
+
+    // The pointer to the table must be 4-byte aligned
+    const uint8_t *tablePtr = nativeToBytecodeMap_ + nativeToBytecodeTableOffset_;
+    JS_ASSERT(uintptr_t(tablePtr) % sizeof(uint32_t) == 0);
+
+    // Verify that numRegions was encoded correctly.
+    const JitcodeIonTable *ionTable = reinterpret_cast<const JitcodeIonTable *>(tablePtr);
+    JS_ASSERT(ionTable->numRegions() == nativeToBytecodeNumRegions_);
+
+    // Region offset for first region should be at the start of the payload region.
+    // Since the offsets are backward from the start of the table, the first entry
+    // backoffset should be equal to the forward table offset from the start of the
+    // allocated data.
+    JS_ASSERT(ionTable->regionOffset(0) == nativeToBytecodeTableOffset_);
+
+    // Verify each region.
+    for (uint32_t i = 0; i < ionTable->numRegions(); i++) {
+        // Back-offset must point into the payload region preceding the table, not before it.
+        JS_ASSERT(ionTable->regionOffset(i) <= nativeToBytecodeTableOffset_);
+
+        // Back-offset must point to a later area in the payload region than previous
+        // back-offset.  This means that back-offsets decrease monotonically.
+        JS_ASSERT_IF(i > 0, ionTable->regionOffset(i) < ionTable->regionOffset(i - 1));
+
+        JitcodeRegionEntry entry = ionTable->regionEntry(i);
+
+        // Ensure native code offset for region falls within jitcode.
+        JS_ASSERT(entry.nativeOffset() <= code->instructionsSize());
+
+        // Read out script/pc stack and verify.
+        JitcodeRegionEntry::ScriptPcIterator scriptPcIter = entry.scriptPcIterator();
+        while (scriptPcIter.hasMore()) {
+            uint32_t scriptIdx = 0, pcOffset = 0;
+            scriptPcIter.readNext(&scriptIdx, &pcOffset);
+
+            // Ensure scriptIdx refers to a valid script in the list.
+            JS_ASSERT(scriptIdx < nativeToBytecodeScriptListLength_);
+            JSScript *script = nativeToBytecodeScriptList_[scriptIdx];
+
+            // Ensure pcOffset falls within the script.
+            JS_ASSERT(pcOffset < script->length());
+        }
+
+        // Obtain the original nativeOffset and pcOffset and script.
+        uint32_t curNativeOffset = entry.nativeOffset();
+        JSScript *script = nullptr;
+        uint32_t curPcOffset = 0;
+        {
+            uint32_t scriptIdx = 0;
+            scriptPcIter.reset();
+            scriptPcIter.readNext(&scriptIdx, &curPcOffset);
+            script = nativeToBytecodeScriptList_[scriptIdx];
+        }
+
+        // Read out nativeDeltas and pcDeltas and verify.
+        JitcodeRegionEntry::DeltaIterator deltaIter = entry.deltaIterator();
+        while (deltaIter.hasMore()) {
+            uint32_t nativeDelta = 0;
+            int32_t pcDelta = 0;
+            deltaIter.readNext(&nativeDelta, &pcDelta);
+
+            curNativeOffset += nativeDelta;
+            curPcOffset = uint32_t(int32_t(curPcOffset) + pcDelta);
+
+            // Ensure that nativeOffset still falls within jitcode after delta.
+            JS_ASSERT(curNativeOffset <= code->instructionsSize());
+
+            // Ensure that pcOffset still falls within bytecode after delta.
+            JS_ASSERT(curPcOffset < script->length());
+        }
+    }
+#endif // DEBUG
+}
+
+bool
 CodeGeneratorShared::markSafepoint(LInstruction *ins)
 {
     return markSafepointAt(masm.currentOffset(), ins);
@@ -480,7 +821,15 @@ class StoreOp
         masm.storePtr(reg, dump);
     }
     void operator()(FloatRegister reg, Address dump) {
+#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_MIPS)
+        if (reg.isDouble()) {
+            masm.storeDouble(reg, dump);
+        } else {
+            masm.storeFloat32(reg, dump);
+        }
+#else
         masm.storeDouble(reg, dump);
+#endif
     }
 };
 
@@ -521,16 +870,21 @@ class VerifyOp
     }
     void operator()(FloatRegister reg, Address dump) {
         FloatRegister scratch;
-#ifdef JS_CODEGEN_ARM
-        if (reg.isDouble())
+#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_MIPS)
+        if (reg.isDouble()) {
             scratch = ScratchDoubleReg;
-        else
+            masm.loadDouble(dump, scratch);
+            masm.branchDouble(Assembler::DoubleNotEqual, scratch, reg, failure_);
+        } else {
             scratch = ScratchFloat32Reg;
+            masm.loadFloat32(dump, scratch);
+            masm.branchFloat(Assembler::DoubleNotEqual, scratch, reg, failure_);
+        }
 #else
         scratch = ScratchFloat32Reg;
-#endif
         masm.loadDouble(dump, scratch);
         masm.branchDouble(Assembler::DoubleNotEqual, scratch, reg, failure_);
+#endif
     }
 };
 
@@ -600,7 +954,7 @@ CodeGeneratorShared::verifyOsiPointRegs(LSafepoint *safepoint)
 bool
 CodeGeneratorShared::shouldVerifyOsiPointRegs(LSafepoint *safepoint)
 {
-    if (!js_JitOptions.checkOsiPointRegisters)
+    if (!checkOsiPointRegisters)
         return false;
 
     if (gen->info().executionMode() != SequentialExecution)
@@ -646,7 +1000,7 @@ CodeGeneratorShared::callVM(const VMFunction &fun, LInstruction *ins, const Regi
     if (ins->mirRaw()) {
         JS_ASSERT(ins->mirRaw()->isInstruction());
         MInstruction *mir = ins->mirRaw()->toInstruction();
-        JS_ASSERT_IF(mir->isEffectful(), mir->resumePoint());
+        JS_ASSERT_IF(mir->needsResumePoint(), mir->resumePoint());
     }
 #endif
 
@@ -730,18 +1084,18 @@ class OutOfLineTruncateSlow : public OutOfLineCodeBase<CodeGeneratorShared>
 };
 
 OutOfLineCode *
-CodeGeneratorShared::oolTruncateDouble(FloatRegister src, Register dest)
+CodeGeneratorShared::oolTruncateDouble(FloatRegister src, Register dest, MInstruction *mir)
 {
     OutOfLineTruncateSlow *ool = new(alloc()) OutOfLineTruncateSlow(src, dest);
-    if (!addOutOfLineCode(ool))
+    if (!addOutOfLineCode(ool, mir))
         return nullptr;
     return ool;
 }
 
 bool
-CodeGeneratorShared::emitTruncateDouble(FloatRegister src, Register dest)
+CodeGeneratorShared::emitTruncateDouble(FloatRegister src, Register dest, MInstruction *mir)
 {
-    OutOfLineCode *ool = oolTruncateDouble(src, dest);
+    OutOfLineCode *ool = oolTruncateDouble(src, dest, mir);
     if (!ool)
         return false;
 
@@ -751,10 +1105,10 @@ CodeGeneratorShared::emitTruncateDouble(FloatRegister src, Register dest)
 }
 
 bool
-CodeGeneratorShared::emitTruncateFloat32(FloatRegister src, Register dest)
+CodeGeneratorShared::emitTruncateFloat32(FloatRegister src, Register dest, MInstruction *mir)
 {
     OutOfLineTruncateSlow *ool = new(alloc()) OutOfLineTruncateSlow(src, dest, true);
-    if (!addOutOfLineCode(ool))
+    if (!addOutOfLineCode(ool, mir))
         return false;
 
     masm.branchTruncateFloat32(src, dest, ool->entry());
@@ -811,21 +1165,21 @@ CodeGeneratorShared::omitOverRecursedCheck() const
 }
 
 void
-CodeGeneratorShared::emitPreBarrier(Register base, const LAllocation *index, MIRType type)
+CodeGeneratorShared::emitPreBarrier(Register base, const LAllocation *index)
 {
     if (index->isConstant()) {
         Address address(base, ToInt32(index) * sizeof(Value));
-        masm.patchableCallPreBarrier(address, type);
+        masm.patchableCallPreBarrier(address, MIRType_Value);
     } else {
         BaseIndex address(base, ToRegister(index), TimesEight);
-        masm.patchableCallPreBarrier(address, type);
+        masm.patchableCallPreBarrier(address, MIRType_Value);
     }
 }
 
 void
-CodeGeneratorShared::emitPreBarrier(Address address, MIRType type)
+CodeGeneratorShared::emitPreBarrier(Address address)
 {
-    masm.patchableCallPreBarrier(address, type);
+    masm.patchableCallPreBarrier(address, MIRType_Value);
 }
 
 void
@@ -884,7 +1238,7 @@ CodeGeneratorShared::jumpToBlock(MBasicBlock *mir)
         // Note: the backedge is initially a jump to the next instruction.
         // It will be patched to the target block's label during link().
         RepatchLabel rejoin;
-        CodeOffsetJump backedge = masm.jumpWithPatch(&rejoin);
+        CodeOffsetJump backedge = masm.backedgeJump(&rejoin);
         masm.bind(&rejoin);
 
         masm.propagateOOM(patchableBackedges_.append(PatchableBackedgeInfo(backedge, mir->lir()->label(), oolEntry)));
@@ -1005,16 +1359,22 @@ CodeGeneratorShared::computeDivisionConstants(int d) {
 bool
 CodeGeneratorShared::emitTracelogScript(bool isStart)
 {
+    Label done;
+
     RegisterSet regs = RegisterSet::Volatile();
     Register logger = regs.takeGeneral();
     Register script = regs.takeGeneral();
 
     masm.Push(logger);
-    masm.Push(script);
 
     CodeOffsetLabel patchLogger = masm.movWithPatch(ImmPtr(nullptr), logger);
     if (!patchableTraceLoggers_.append(patchLogger))
         return false;
+
+    Address enabledAddress(logger, TraceLogger::offsetOfEnabled());
+    masm.branch32(Assembler::Equal, enabledAddress, Imm32(0), &done);
+
+    masm.Push(script);
 
     CodeOffsetLabel patchScript = masm.movWithPatch(ImmWord(0), script);
     if (!patchableTLScripts_.append(patchScript))
@@ -1026,6 +1386,9 @@ CodeGeneratorShared::emitTracelogScript(bool isStart)
         masm.tracelogStop(logger, script);
 
     masm.Pop(script);
+
+    masm.bind(&done);
+
     masm.Pop(logger);
     return true;
 }
@@ -1036,6 +1399,7 @@ CodeGeneratorShared::emitTracelogTree(bool isStart, uint32_t textId)
     if (!TraceLogTextIdEnabled(textId))
         return true;
 
+    Label done;
     RegisterSet regs = RegisterSet::Volatile();
     Register logger = regs.takeGeneral();
 
@@ -1044,6 +1408,9 @@ CodeGeneratorShared::emitTracelogTree(bool isStart, uint32_t textId)
     CodeOffsetLabel patchLocation = masm.movWithPatch(ImmPtr(nullptr), logger);
     if (!patchableTraceLoggers_.append(patchLocation))
         return false;
+
+    Address enabledAddress(logger, TraceLogger::offsetOfEnabled());
+    masm.branch32(Assembler::Equal, enabledAddress, Imm32(0), &done);
 
     if (isStart) {
         masm.tracelogStart(logger, textId);
@@ -1054,6 +1421,8 @@ CodeGeneratorShared::emitTracelogTree(bool isStart, uint32_t textId)
         masm.tracelogStop(logger);
 #endif
     }
+
+    masm.bind(&done);
 
     masm.Pop(logger);
     return true;

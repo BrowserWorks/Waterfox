@@ -277,7 +277,8 @@ class MacroAssemblerARM : public Assembler
     // Division - depends on integer divide instructions being supported.
     void ma_sdiv(Register num, Register div, Register dest, Condition cond = Always);
     void ma_udiv(Register num, Register div, Register dest, Condition cond = Always);
-
+    // Misc operations
+    void ma_clz(Register src, Register dest, Condition cond = Always);
     // Memory:
     // Shortcut for when we know we're transferring 32 bits of data.
     void ma_dtr(LoadStore ls, Register rn, Imm32 offset, Register rt,
@@ -420,7 +421,7 @@ class MacroAssemblerARM : public Assembler
             return transferMultipleByRunsImpl
                 <FloatRegisterBackwardIterator>(set, ls, rm, mode, -1);
         }
-        MOZ_ASSUME_UNREACHABLE("Invalid data transfer addressing mode");
+        MOZ_CRASH("Invalid data transfer addressing mode");
     }
 
 private:
@@ -535,10 +536,10 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
         mov(ImmWord(uintptr_t(imm.value)), dest);
     }
     void mov(Register src, Address dest) {
-        MOZ_ASSUME_UNREACHABLE("NYI-IC");
+        MOZ_CRASH("NYI-IC");
     }
     void mov(Address src, Register dest) {
-        MOZ_ASSUME_UNREACHABLE("NYI-IC");
+        MOZ_CRASH("NYI-IC");
     }
 
     void call(const Register reg) {
@@ -599,6 +600,9 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void nop() {
         ma_nop();
     }
+    void shortJumpSizedNop() {
+        ma_nop();
+    }
     void ret() {
         ma_pop(pc);
     }
@@ -616,6 +620,9 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void push(ImmGCPtr imm) {
         ma_mov(imm, ScratchRegister);
         ma_push(ScratchRegister);
+    }
+    void push(ImmMaybeNurseryPtr imm) {
+        push(noteMaybeNurseryPtr(imm));
     }
     void push(const Address &address) {
         ma_ldr(Operand(address.base, address.offset), ScratchRegister);
@@ -1016,6 +1023,9 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void moveValue(const Value &val, Register type, Register data);
 
     CodeOffsetJump jumpWithPatch(RepatchLabel *label, Condition cond = Always);
+    CodeOffsetJump backedgeJump(RepatchLabel *label) {
+        return jumpWithPatch(label);
+    }
     template <typename T>
     CodeOffsetJump branchPtrWithPatch(Condition cond, Register reg, T ptr, RepatchLabel *label) {
         ma_cmp(reg, ptr);
@@ -1031,6 +1041,9 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
         ma_ldr(addr, secondScratchReg_);
         ma_cmp(secondScratchReg_, ptr);
         ma_b(label, cond);
+    }
+    void branchPtr(Condition cond, Address addr, ImmMaybeNurseryPtr ptr, Label *label) {
+        branchPtr(cond, addr, noteMaybeNurseryPtr(ptr), label);
     }
     void branchPtr(Condition cond, Address addr, ImmWord ptr, Label *label) {
         ma_ldr(addr, secondScratchReg_);
@@ -1154,7 +1167,7 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
         jsval_layout jv = JSVAL_TO_IMPL(val);
         push(Imm32(jv.s.tag));
         if (val.isMarkable())
-            push(ImmGCPtr(reinterpret_cast<gc::Cell *>(val.toGCThing())));
+            push(ImmMaybeNurseryPtr(reinterpret_cast<gc::Cell *>(val.toGCThing())));
         else
             push(Imm32(jv.s.payload.i32));
     }
@@ -1305,6 +1318,7 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void movePtr(ImmPtr imm, Register dest);
     void movePtr(AsmJSImmPtr imm, Register dest);
     void movePtr(ImmGCPtr imm, Register dest);
+    void movePtr(ImmMaybeNurseryPtr imm, Register dest);
 
     void load8SignExtend(const Address &address, Register dest);
     void load8SignExtend(const BaseIndex &src, Register dest);
@@ -1328,6 +1342,16 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void loadPtr(AsmJSAbsoluteAddress address, Register dest);
 
     void loadPrivate(const Address &address, Register dest);
+
+    void loadAlignedInt32x4(const Address &addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void storeAlignedInt32x4(FloatRegister src, Address addr) { MOZ_CRASH("NYI"); }
+    void loadUnalignedInt32x4(const Address &addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void storeUnalignedInt32x4(FloatRegister src, Address addr) { MOZ_CRASH("NYI"); }
+
+    void loadAlignedFloat32x4(const Address &addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void storeAlignedFloat32x4(FloatRegister src, Address addr) { MOZ_CRASH("NYI"); }
+    void loadUnalignedFloat32x4(const Address &addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void storeUnalignedFloat32x4(FloatRegister src, Address addr) { MOZ_CRASH("NYI"); }
 
     void loadDouble(const Address &addr, FloatRegister dest);
     void loadDouble(const BaseIndex &src, FloatRegister dest);
@@ -1354,6 +1378,8 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void store32(Register src, const BaseIndex &address);
     void store32(Imm32 src, const Address &address);
     void store32(Imm32 src, const BaseIndex &address);
+
+    void store32_NoSecondScratch(Imm32 src, const Address &address);
 
     void storePtr(ImmWord imm, const Address &address);
     void storePtr(ImmPtr imm, const Address &address);
@@ -1606,6 +1632,10 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void branchPtrInNurseryRange(Condition cond, Register ptr, Register temp, Label *label);
     void branchValueIsNurseryObject(Condition cond, ValueOperand value, Register temp, Label *label);
 #endif
+
+    void loadAsmJSActivation(Register dest) {
+        loadPtr(Address(GlobalReg, AsmJSActivationGlobalDataOffset - AsmJSGlobalRegBias), dest);
+    }
 };
 
 typedef MacroAssemblerARMCompat MacroAssemblerSpecific;

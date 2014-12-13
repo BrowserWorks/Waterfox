@@ -61,7 +61,8 @@ operator==(const gfxFontFaceSrc& a, const gfxFontFaceSrc& b)
 class gfxUserFontData {
 public:
     gfxUserFontData()
-        : mSrcIndex(0), mFormat(0), mMetaOrigLen(0), mPrivate(false)
+        : mSrcIndex(0), mFormat(0), mMetaOrigLen(0),
+          mCRC32(0), mLength(0), mPrivate(false)
     { }
     virtual ~gfxUserFontData() { }
 
@@ -73,6 +74,8 @@ public:
     uint32_t          mSrcIndex;  // index in the rule's source list
     uint32_t          mFormat;    // format hint for the source used, if any
     uint32_t          mMetaOrigLen; // length needed to decompress metadata
+    uint32_t          mCRC32;     // Checksum
+    uint32_t          mLength;    // Font length
     bool              mPrivate;   // whether font belongs to a private window
 };
 
@@ -83,7 +86,7 @@ class gfxMixedFontFamily : public gfxFontFamily {
 public:
     friend class gfxUserFontSet;
 
-    gfxMixedFontFamily(const nsAString& aName)
+    explicit gfxMixedFontFamily(const nsAString& aName)
         : gfxFontFamily(aName) { }
 
     virtual ~gfxMixedFontFamily() { }
@@ -153,9 +156,11 @@ public:
 };
 
 class gfxProxyFontEntry;
+class gfxOTSContext;
 
 class gfxUserFontSet {
     friend class gfxProxyFontEntry;
+    friend class gfxOTSContext;
 
 public:
 
@@ -179,20 +184,32 @@ public:
     };
 
 
-    // add in a font face
+    // creates a font face without adding it to a particular family
     // weight - [100, 900] (multiples of 100)
     // stretch = [NS_FONT_STRETCH_ULTRA_CONDENSED, NS_FONT_STRETCH_ULTRA_EXPANDED]
     // italic style = constants in gfxFontConstants.h, e.g. NS_FONT_STYLE_NORMAL
     // language override = result of calling gfxFontStyle::ParseFontLanguageOverride
     // TODO: support for unicode ranges not yet implemented
-    gfxFontEntry *AddFontFace(const nsAString& aFamilyName,
+    already_AddRefed<gfxProxyFontEntry> CreateFontFace(
                               const nsTArray<gfxFontFaceSrc>& aFontFaceSrcList,
                               uint32_t aWeight,
                               int32_t aStretch,
                               uint32_t aItalicStyle,
                               const nsTArray<gfxFontFeature>& aFeatureSettings,
                               uint32_t aLanguageOverride,
-                              gfxSparseBitSet *aUnicodeRanges = nullptr);
+                              gfxSparseBitSet* aUnicodeRanges);
+
+    // creates a font face for the specified family, or returns an existing
+    // matching entry on the family if there is one
+    already_AddRefed<gfxProxyFontEntry> FindOrCreateFontFace(
+                               const nsAString& aFamilyName,
+                               const nsTArray<gfxFontFaceSrc>& aFontFaceSrcList,
+                               uint32_t aWeight,
+                               int32_t aStretch,
+                               uint32_t aItalicStyle,
+                               const nsTArray<gfxFontFeature>& aFeatureSettings,
+                               uint32_t aLanguageOverride,
+                               gfxSparseBitSet* aUnicodeRanges);
 
     // add in a font face for which we have the gfxFontEntry already
     void AddFontFace(const nsAString& aFamilyName, gfxFontEntry* aFontEntry);
@@ -323,6 +340,8 @@ public:
             nsCOMPtr<nsIURI>        mURI;
             nsCOMPtr<nsIPrincipal>  mPrincipal; // use nullptr with data: URLs
             gfxFontEntry           *mFontEntry;
+            uint32_t                mCRC32;
+            uint32_t                mLength;
             bool                    mPrivate;
             EntryPersistence        mPersistence;
 
@@ -332,6 +351,20 @@ public:
                 : mURI(aURI),
                   mPrincipal(aPrincipal),
                   mFontEntry(aFontEntry),
+                  mCRC32(0),
+                  mLength(0),
+                  mPrivate(aPrivate),
+                  mPersistence(aPersistence)
+            { }
+
+            Key(uint32_t aCRC32, uint32_t aLength,
+                gfxFontEntry* aFontEntry, bool aPrivate,
+                EntryPersistence aPersistence = kDiscardable)
+                : mURI(nullptr),
+                  mPrincipal(nullptr),
+                  mFontEntry(aFontEntry),
+                  mCRC32(aCRC32),
+                  mLength(aLength),
                   mPrivate(aPrivate),
                   mPersistence(aPersistence)
             { }
@@ -342,9 +375,11 @@ public:
             typedef const Key& KeyType;
             typedef const Key* KeyTypePointer;
 
-            Entry(KeyTypePointer aKey)
+            explicit Entry(KeyTypePointer aKey)
                 : mURI(aKey->mURI),
                   mPrincipal(aKey->mPrincipal),
+                  mCRC32(aKey->mCRC32),
+                  mLength(aKey->mLength),
                   mFontEntry(aKey->mFontEntry),
                   mPrivate(aKey->mPrivate),
                   mPersistence(aKey->mPersistence)
@@ -353,6 +388,8 @@ public:
             Entry(const Entry& aOther)
                 : mURI(aOther.mURI),
                   mPrincipal(aOther.mPrincipal),
+                  mCRC32(aOther.mCRC32),
+                  mLength(aOther.mLength),
                   mFontEntry(aOther.mFontEntry),
                   mPrivate(aOther.mPrivate),
                   mPersistence(aOther.mPersistence)
@@ -365,6 +402,9 @@ public:
             static KeyTypePointer KeyToPointer(KeyType aKey) { return &aKey; }
 
             static PLDHashNumber HashKey(const KeyTypePointer aKey) {
+                if (aKey->mLength) {
+                    return aKey->mCRC32;
+                }
                 uint32_t principalHash = 0;
                 if (aKey->mPrincipal) {
                     aKey->mPrincipal->GetHashValue(&principalHash);
@@ -406,6 +446,9 @@ public:
             nsCOMPtr<nsIURI>       mURI;
             nsCOMPtr<nsIPrincipal> mPrincipal; // or nullptr for data: URLs
 
+            uint32_t               mCRC32;
+            uint32_t               mLength;
+
             // The "real" font entry corresponding to this downloaded font.
             // The font entry MUST notify the cache when it is destroyed
             // (by calling Forget()).
@@ -444,6 +487,17 @@ protected:
     // helper method for performing the actual userfont set rebuild
     virtual void DoRebuildUserFontSet() = 0;
 
+    // helper method for FindOrCreateFontFace
+    gfxProxyFontEntry* FindExistingProxyEntry(
+                                   gfxMixedFontFamily* aFamily,
+                                   const nsTArray<gfxFontFaceSrc>& aFontFaceSrcList,
+                                   uint32_t aWeight,
+                                   int32_t aStretch,
+                                   uint32_t aItalicStyle,
+                                   const nsTArray<gfxFontFeature>& aFeatureSettings,
+                                   uint32_t aLanguageOverride,
+                                   gfxSparseBitSet* aUnicodeRanges);
+
     // creates a new gfxMixedFontFamily in mFontFamilies, or returns an existing
     // family if there is one
     gfxMixedFontFamily* GetFamily(const nsAString& aFamilyName);
@@ -465,6 +519,7 @@ class gfxProxyFontEntry : public gfxFontEntry {
     friend class gfxUserFontSet;
     friend class nsUserFontSet;
     friend class nsFontFaceLoader;
+    friend class gfxOTSContext;
 
 public:
     enum LoadStatus {
@@ -523,8 +578,6 @@ protected:
                            const nsAString&   aOriginalName,
                            FallibleTArray<uint8_t>* aMetadata,
                            uint32_t           aMetaOrigLen);
-
-    static bool OTSMessage(void *aUserData, const char *format, ...);
 
     // note that code depends on the ordering of these values!
     enum LoadingState {

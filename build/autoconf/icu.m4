@@ -21,7 +21,7 @@ if test -n "$MOZ_NATIVE_ICU"; then
     MOZ_SHARED_ICU=1
 else
     MOZ_ICU_CFLAGS='-I$(topsrcdir)/intl/icu/source/common -I$(topsrcdir)/intl/icu/source/i18n'
-    AC_SUBST(MOZ_ICU_CFLAGS)
+    AC_SUBST_LIST(MOZ_ICU_CFLAGS)
 fi
 
 AC_SUBST(MOZ_NATIVE_ICU)
@@ -88,35 +88,19 @@ if test -n "$ENABLE_INTL_API"; then
                 if test -n "$MOZ_DEBUG" -a -z "$MOZ_NO_DEBUG_RTL"; then
                     MOZ_ICU_DBG_SUFFIX=d
                 fi
-                if test -n "$MOZ_SHARED_ICU"; then
-                    MOZ_ICU_LIBS='$(foreach lib,$(ICU_LIB_NAMES),$(DEPTH)/intl/icu/target/lib/$(LIB_PREFIX)$(lib)$(MOZ_ICU_DBG_SUFFIX).$(LIB_SUFFIX))'
-                fi
                 ;;
-            Darwin)
+            Darwin|Linux|DragonFly|FreeBSD|NetBSD|OpenBSD|GNU/kFreeBSD)
                 ICU_LIB_NAMES="icui18n icuuc icudata"
-                if test -n "$MOZ_SHARED_ICU"; then
-                   MOZ_ICU_LIBS='$(foreach lib,$(ICU_LIB_NAMES),$(DEPTH)/intl/icu/target/lib/$(DLL_PREFIX)$(lib).$(MOZ_ICU_VERSION)$(DLL_SUFFIX))'
-                fi
-                ;;
-            Linux|DragonFly|FreeBSD|NetBSD|OpenBSD|GNU/kFreeBSD)
-                ICU_LIB_NAMES="icui18n icuuc icudata"
-                if test -n "$MOZ_SHARED_ICU"; then
-                   MOZ_ICU_LIBS='$(foreach lib,$(ICU_LIB_NAMES),$(DEPTH)/intl/icu/target/lib/$(DLL_PREFIX)$(lib)$(DLL_SUFFIX).$(MOZ_ICU_VERSION))'
-                fi
                 ;;
             *)
                 AC_MSG_ERROR([ECMAScript Internationalization API is not yet supported on this platform])
         esac
-        if test -z "$MOZ_SHARED_ICU"; then
-            MOZ_ICU_LIBS='$(call EXPAND_LIBNAME_PATH,$(addsuffix $(MOZ_ICU_DBG_SUFFIX),$(ICU_LIB_NAMES)),$(DEPTH)/intl/icu/target/lib)'
-        fi
     fi
 fi
 
 AC_SUBST(MOZ_ICU_DBG_SUFFIX)
 AC_SUBST(ENABLE_INTL_API)
-AC_SUBST(ICU_LIB_NAMES)
-AC_SUBST(MOZ_ICU_LIBS)
+AC_SUBST_LIST(ICU_LIB_NAMES)
 
 if test -n "$ENABLE_INTL_API" -a -z "$MOZ_NATIVE_ICU"; then
     dnl We build ICU as a static library for non-shared js builds and as a shared library for shared js builds.
@@ -196,7 +180,7 @@ if test -z "$BUILDING_JS" -o -n "$JS_STANDALONE"; then
 
     	# --with-cross-build requires absolute path
     	ICU_HOST_PATH=`cd $_objdir/intl/icu/host && pwd`
-    	ICU_CROSS_BUILD_OPT="--with-cross-build=$ICU_HOST_PATH"
+    	ICU_CROSS_BUILD_OPT="--with-cross-build=$ICU_HOST_PATH --disable-tools"
     	ICU_TARGET_OPT="--build=$build --host=$target"
         else
     	# CROSS_COMPILE isn't set build and target are i386 and x86-64.

@@ -227,6 +227,15 @@ function startCustomizing(aWindow=window) {
   return deferred.promise;
 }
 
+function promiseObserverNotified(aTopic) {
+  let deferred = Promise.defer();
+  Services.obs.addObserver(function onNotification(aSubject, aTopic, aData) {
+    Services.obs.removeObserver(onNotification, aTopic);
+      deferred.resolve({subject: aSubject, data: aData});
+    }, aTopic, false);
+  return deferred.promise;
+}
+
 function openAndLoadWindow(aOptions, aWaitForDelayedStartup=false) {
   let deferred = Promise.defer();
   let win = OpenBrowserWindow(aOptions);
@@ -487,7 +496,7 @@ function checkContextMenu(aContextMenu, aExpectedEntries, aWindow=window) {
       }
 
       let selector = aExpectedEntries[i][0];
-      ok(menuitem.mozMatchesSelector(selector), "menuitem should match " + selector + " selector");
+      ok(menuitem.matches(selector), "menuitem should match " + selector + " selector");
       let commandValue = menuitem.getAttribute("command");
       let relatedCommand = commandValue ? aWindow.document.getElementById(commandValue) : null;
       let menuItemDisabled = relatedCommand ?

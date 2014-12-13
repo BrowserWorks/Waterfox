@@ -22,6 +22,7 @@
  * limitations under the License.
  */
 
+#include "cert.h"
 #include "nssgtest.h"
 #include "pkix/pkix.h"
 #include "pkix/pkixnss.h"
@@ -33,51 +34,50 @@
 using namespace mozilla::pkix;
 using namespace mozilla::pkix::test;
 
-static bool
+typedef ScopedPtr<CERTCertificate, CERT_DestroyCertificate>
+          ScopedCERTCertificate;
+typedef ScopedPtr<CERTCertList, CERT_DestroyCertList> ScopedCERTCertList;
+
+// The result is owned by the arena
+static Input
 CreateCert(PLArenaPool* arena, const char* issuerStr,
            const char* subjectStr, EndEntityOrCA endEntityOrCA,
            /*optional*/ SECKEYPrivateKey* issuerKey,
            /*out*/ ScopedSECKEYPrivateKey& subjectKey,
-           /*out*/ ScopedCERTCertificate& subjectCert)
+           /*out*/ ScopedCERTCertificate* subjectCert = nullptr)
 {
   static long serialNumberValue = 0;
   ++serialNumberValue;
   const SECItem* serialNumber(CreateEncodedSerialNumber(arena,
                                                         serialNumberValue));
-  if (!serialNumber) {
-    return false;
-  }
+  EXPECT_TRUE(serialNumber);
   const SECItem* issuerDER(ASCIIToDERName(arena, issuerStr));
-  if (!issuerDER) {
-    return false;
-  }
+  EXPECT_TRUE(issuerDER);
   const SECItem* subjectDER(ASCIIToDERName(arena, subjectStr));
-  if (!subjectDER) {
-    return false;
-  }
+  EXPECT_TRUE(subjectDER);
 
   const SECItem* extensions[2] = { nullptr, nullptr };
   if (endEntityOrCA == EndEntityOrCA::MustBeCA) {
     extensions[0] =
       CreateEncodedBasicConstraints(arena, true, nullptr,
                                     ExtensionCriticality::Critical);
-    if (!extensions[0]) {
-      return false;
-    }
+    EXPECT_TRUE(extensions[0]);
   }
 
   SECItem* certDER(CreateEncodedCertificate(
                      arena, v3, SEC_OID_PKCS1_SHA256_WITH_RSA_ENCRYPTION,
-                     serialNumber, issuerDER,
-                     PR_Now() - ONE_DAY, PR_Now() + ONE_DAY,
+                     serialNumber, issuerDER, oneDayBeforeNow, oneDayAfterNow,
                      subjectDER, extensions, issuerKey, SEC_OID_SHA256,
                      subjectKey));
-  if (!certDER) {
-    return false;
+  EXPECT_TRUE(certDER);
+  if (subjectCert) {
+    *subjectCert = CERT_NewTempCertificate(CERT_GetDefaultCertDB(), certDER,
+                                           nullptr, false, true);
+    EXPECT_TRUE(*subjectCert);
   }
-  subjectCert = CERT_NewTempCertificate(CERT_GetDefaultCertDB(), certDER,
-                                        nullptr, false, true);
-  return subjectCert.get() != nullptr;
+  Input result;
+  EXPECT_EQ(Success, result.Init(certDER->data, certDER->len));
+  return result;
 }
 
 class TestTrustDomain : public TrustDomain
@@ -93,7 +93,8 @@ public:
         "CN=CA7"
     };
 
-    static_assert(PR_ARRAY_SIZE(names) == PR_ARRAY_SIZE(certChainTail),
+    static_assert(MOZILLA_PKIX_ARRAY_LENGTH(names) ==
+                    MOZILLA_PKIX_ARRAY_LENGTH(certChainTail),
                   "mismatch in sizes of names and certChainTail arrays");
 
     ScopedPLArenaPool arena(PORT_NewArena(DER_DEFAULT_CHUNKSIZE));
@@ -101,14 +102,12 @@ public:
       return false;
     }
 
-    for (size_t i = 0; i < PR_ARRAY_SIZE(names); ++i) {
+    for (size_t i = 0; i < MOZILLA_PKIX_ARRAY_LENGTH(names); ++i) {
       const char* issuerName = i == 0 ? names[0]
                                       : certChainTail[i - 1]->subjectName;
-      if (!CreateCert(arena.get(), issuerName, names[i],
-                      EndEntityOrCA::MustBeCA, leafCAKey.get(), leafCAKey,
-                      certChainTail[i])) {
-        return false;
-      }
+      (void) CreateCert(arena.get(), issuerName, names[i],
+                 EndEntityOrCA::MustBeCA, leafCAKey.get(), leafCAKey,
+                 &certChainTail[i]);
     }
 
     return true;
@@ -116,30 +115,42 @@ public:
 
 private:
   virtual Result GetCertTrust(EndEntityOrCA, const CertPolicyId&,
-                              const SECItem& candidateCert,
-                              /*out*/ TrustLevel* trustLevel)
+                              Input candidateCert,
+                              /*out*/ TrustLevel& trustLevel)
   {
-    if (SECITEM_ItemsAreEqual(&candidateCert, &certChainTail[0]->derCert)) {
-      *trustLevel = TrustLevel::TrustAnchor;
+    Input rootDER;
+    Result rv = rootDER.Init(certChainTail[0]->derCert.data,
+                             certChainTail[0]->derCert.len);
+    EXPECT_EQ(Success, rv);
+    if (InputsAreEqual(candidateCert, rootDER)) {
+      trustLevel = TrustLevel::TrustAnchor;
     } else {
-      *trustLevel = TrustLevel::InheritsTrust;
+      trustLevel = TrustLevel::InheritsTrust;
     }
     return Success;
   }
 
-  virtual Result FindIssuer(const SECItem& encodedIssuerName,
-                            IssuerChecker& checker, PRTime time)
+  virtual Result FindIssuer(Input encodedIssuerName,
+                            IssuerChecker& checker, Time time)
   {
+    SECItem encodedIssuerNameSECItem =
+      UnsafeMapInputToSECItem(encodedIssuerName);
     ScopedCERTCertList
       candidates(CERT_CreateSubjectCertList(nullptr, CERT_GetDefaultCertDB(),
-                                            &encodedIssuerName, time, true));
+                                            &encodedIssuerNameSECItem, 0,
+                                            false));
     if (candidates) {
       for (CERTCertListNode* n = CERT_LIST_HEAD(candidates);
            !CERT_LIST_END(n, candidates); n = CERT_LIST_NEXT(n)) {
         bool keepGoing;
-        Result rv = checker.Check(n->cert->derCert,
-                                  nullptr/*additionalNameConstraints*/,
-                                  keepGoing);
+        Input derCert;
+        Result rv = derCert.Init(n->cert->derCert.data, n->cert->derCert.len);
+        EXPECT_EQ(Success, rv);
+        if (rv != Success) {
+          return rv;
+        }
+        rv = checker.Check(derCert, nullptr/*additionalNameConstraints*/,
+                           keepGoing);
         if (rv != Success) {
           return rv;
         }
@@ -152,9 +163,9 @@ private:
     return Success;
   }
 
-  virtual Result CheckRevocation(EndEntityOrCA, const CertID&, PRTime,
-                                 /*optional*/ const SECItem*,
-                                 /*optional*/ const SECItem*)
+  virtual Result CheckRevocation(EndEntityOrCA, const CertID&, Time,
+                                 /*optional*/ const Input*,
+                                 /*optional*/ const Input*)
   {
     return Success;
   }
@@ -165,20 +176,20 @@ private:
   }
 
   virtual Result VerifySignedData(const SignedDataWithSignature& signedData,
-                                  const SECItem& subjectPublicKeyInfo)
+                                  Input subjectPublicKeyInfo)
   {
     return ::mozilla::pkix::VerifySignedData(signedData, subjectPublicKeyInfo,
                                              nullptr);
   }
 
-  virtual Result DigestBuf(const SECItem& item, /*out*/ uint8_t* digestBuf,
+  virtual Result DigestBuf(Input item, /*out*/ uint8_t *digestBuf,
                            size_t digestBufLen)
   {
     ADD_FAILURE();
     return Result::FATAL_ERROR_LIBRARY_FAILURE;
   }
 
-  virtual Result CheckPublicKey(const SECItem& subjectPublicKeyInfo)
+  virtual Result CheckPublicKey(Input subjectPublicKeyInfo)
   {
     return ::mozilla::pkix::CheckPublicKey(subjectPublicKeyInfo);
   }
@@ -191,7 +202,7 @@ public:
   ScopedSECKEYPrivateKey leafCAKey;
   CERTCertificate* GetLeafCACert() const
   {
-    return certChainTail[PR_ARRAY_SIZE(certChainTail) - 1].get();
+    return certChainTail[MOZILLA_PKIX_ARRAY_LENGTH(certChainTail) - 1].get();
   }
 };
 
@@ -204,7 +215,7 @@ public:
     // Initialize the tail of the cert chains we'll be using once, to make the
     // tests run faster (generating the keys is slow).
     if (!trustDomain.SetUpCertChainTail()) {
-      PR_Abort();
+      abort();
     }
   }
 
@@ -216,60 +227,75 @@ protected:
 
 TEST_F(pkixbuild, MaxAcceptableCertChainLength)
 {
-  ASSERT_EQ(Success,
-            BuildCertChain(trustDomain, trustDomain.GetLeafCACert()->derCert,
-                           now, EndEntityOrCA::MustBeCA,
-                           KeyUsage::noParticularKeyUsageRequired,
-                           KeyPurposeId::id_kp_serverAuth,
-                           CertPolicyId::anyPolicy,
-                           nullptr/*stapledOCSPResponse*/));
+  {
+    Input certDER;
+    ASSERT_EQ(Success, certDER.Init(trustDomain.GetLeafCACert()->derCert.data,
+                                    trustDomain.GetLeafCACert()->derCert.len));
+    ASSERT_EQ(Success,
+              BuildCertChain(trustDomain, certDER, Now(),
+                             EndEntityOrCA::MustBeCA,
+                             KeyUsage::noParticularKeyUsageRequired,
+                             KeyPurposeId::id_kp_serverAuth,
+                             CertPolicyId::anyPolicy,
+                             nullptr/*stapledOCSPResponse*/));
+  }
 
-  ScopedSECKEYPrivateKey privateKey;
-  ScopedCERTCertificate cert;
-  ASSERT_TRUE(CreateCert(arena.get(),
-                         trustDomain.GetLeafCACert()->subjectName,
-                         "CN=Direct End-Entity",
-                         EndEntityOrCA::MustBeEndEntity,
-                         trustDomain.leafCAKey.get(), privateKey, cert));
-  ASSERT_EQ(Success,
-            BuildCertChain(trustDomain, cert->derCert, now,
-                           EndEntityOrCA::MustBeEndEntity,
-                           KeyUsage::noParticularKeyUsageRequired,
-                           KeyPurposeId::id_kp_serverAuth,
-                           CertPolicyId::anyPolicy,
-                           nullptr/*stapledOCSPResponse*/));
+  {
+    ScopedSECKEYPrivateKey privateKey;
+    ScopedCERTCertificate cert;
+    Input certDER(CreateCert(arena.get(),
+                             trustDomain.GetLeafCACert()->subjectName,
+                             "CN=Direct End-Entity",
+                             EndEntityOrCA::MustBeEndEntity,
+                             trustDomain.leafCAKey.get(), privateKey));
+    ASSERT_EQ(Success,
+              BuildCertChain(trustDomain, certDER, Now(),
+                             EndEntityOrCA::MustBeEndEntity,
+                             KeyUsage::noParticularKeyUsageRequired,
+                             KeyPurposeId::id_kp_serverAuth,
+                             CertPolicyId::anyPolicy,
+                             nullptr/*stapledOCSPResponse*/));
+  }
 }
 
 TEST_F(pkixbuild, BeyondMaxAcceptableCertChainLength)
 {
+  static char const* const caCertName = "CN=CA Too Far";
   ScopedSECKEYPrivateKey caPrivateKey;
-  ScopedCERTCertificate caCert;
-  ASSERT_TRUE(CreateCert(arena.get(),
-                         trustDomain.GetLeafCACert()->subjectName,
-                         "CN=CA Too Far", EndEntityOrCA::MustBeCA,
-                         trustDomain.leafCAKey.get(),
-                         caPrivateKey, caCert));
-  ASSERT_EQ(Result::ERROR_UNKNOWN_ISSUER,
-            BuildCertChain(trustDomain, caCert->derCert, now,
-                           EndEntityOrCA::MustBeCA,
-                           KeyUsage::noParticularKeyUsageRequired,
-                           KeyPurposeId::id_kp_serverAuth,
-                           CertPolicyId::anyPolicy,
-                           nullptr/*stapledOCSPResponse*/));
 
-  ScopedSECKEYPrivateKey privateKey;
-  ScopedCERTCertificate cert;
-  ASSERT_TRUE(CreateCert(arena.get(), caCert->subjectName,
-                         "CN=End-Entity Too Far",
-                         EndEntityOrCA::MustBeEndEntity,
-                         caPrivateKey.get(), privateKey, cert));
-  ASSERT_EQ(Result::ERROR_UNKNOWN_ISSUER,
-            BuildCertChain(trustDomain, cert->derCert, now,
-                           EndEntityOrCA::MustBeEndEntity,
-                           KeyUsage::noParticularKeyUsageRequired,
-                           KeyPurposeId::id_kp_serverAuth,
-                           CertPolicyId::anyPolicy,
-                           nullptr/*stapledOCSPResponse*/));
+  // We need a CERTCertificate for caCert so that the trustdomain's FindIssuer
+  // method can find it through the NSS cert DB.
+  ScopedCERTCertificate caCert;
+
+  {
+    Input cert(CreateCert(arena.get(),
+                          trustDomain.GetLeafCACert()->subjectName,
+                          caCertName, EndEntityOrCA::MustBeCA,
+                          trustDomain.leafCAKey.get(), caPrivateKey,
+                          &caCert));
+    ASSERT_EQ(Result::ERROR_UNKNOWN_ISSUER,
+              BuildCertChain(trustDomain, cert, Now(),
+                             EndEntityOrCA::MustBeCA,
+                             KeyUsage::noParticularKeyUsageRequired,
+                             KeyPurposeId::id_kp_serverAuth,
+                             CertPolicyId::anyPolicy,
+                             nullptr/*stapledOCSPResponse*/));
+  }
+
+  {
+    ScopedSECKEYPrivateKey privateKey;
+    Input cert(CreateCert(arena.get(), caCertName,
+                          "CN=End-Entity Too Far",
+                          EndEntityOrCA::MustBeEndEntity,
+                          caPrivateKey.get(), privateKey));
+    ASSERT_EQ(Result::ERROR_UNKNOWN_ISSUER,
+              BuildCertChain(trustDomain, cert, Now(),
+                             EndEntityOrCA::MustBeEndEntity,
+                             KeyUsage::noParticularKeyUsageRequired,
+                             KeyPurposeId::id_kp_serverAuth,
+                             CertPolicyId::anyPolicy,
+                             nullptr/*stapledOCSPResponse*/));
+  }
 }
 
 // A TrustDomain that explicitly fails if CheckRevocation is called.
@@ -287,30 +313,40 @@ public:
 
   // The CertPolicyId argument is unused because we don't care about EV.
   virtual Result GetCertTrust(EndEntityOrCA, const CertPolicyId&,
-                              const SECItem& candidateCert,
-                              /*out*/ TrustLevel* trustLevel)
+                              Input candidateCert,
+                              /*out*/ TrustLevel& trustLevel)
   {
-    if (SECITEM_ItemsAreEqual(&candidateCert, &rootCert->derCert)) {
-      *trustLevel = TrustLevel::TrustAnchor;
+    Input rootDER;
+    Result rv = rootDER.Init(rootCert->derCert.data,
+                             rootCert->derCert.len);
+    EXPECT_EQ(Success, rv);
+    if (InputsAreEqual(candidateCert, rootDER)) {
+      trustLevel = TrustLevel::TrustAnchor;
     } else {
-      *trustLevel = TrustLevel::InheritsTrust;
+      trustLevel = TrustLevel::InheritsTrust;
     }
     return Success;
   }
 
-  virtual Result FindIssuer(const SECItem& encodedIssuerName,
-                            IssuerChecker& checker, PRTime time)
+  virtual Result FindIssuer(Input encodedIssuerName,
+                            IssuerChecker& checker, Time time)
   {
+    Input derCert;
+    Result rv = derCert.Init(rootCert->derCert.data, rootCert->derCert.len);
+    EXPECT_EQ(Success, rv);
+    if (rv != Success) {
+      return rv;
+    }
     // keepGoing is an out parameter from IssuerChecker.Check. It would tell us
     // whether or not to continue attempting other potential issuers. We only
     // know of one potential issuer, however, so we ignore it.
     bool keepGoing;
-    return checker.Check(rootCert->derCert, nullptr, keepGoing);
+    return checker.Check(derCert, nullptr, keepGoing);
   }
 
-  virtual Result CheckRevocation(EndEntityOrCA, const CertID&, PRTime,
-                                 /*optional*/ const SECItem*,
-                                 /*optional*/ const SECItem*)
+  virtual Result CheckRevocation(EndEntityOrCA, const CertID&, Time,
+                                 /*optional*/ const Input*,
+                                 /*optional*/ const Input*)
   {
     ADD_FAILURE();
     return Result::FATAL_ERROR_LIBRARY_FAILURE;
@@ -322,19 +358,19 @@ public:
   }
 
   virtual Result VerifySignedData(const SignedDataWithSignature& signedData,
-                                  const SECItem& subjectPublicKeyInfo)
+                                  Input subjectPublicKeyInfo)
   {
     return ::mozilla::pkix::VerifySignedData(signedData, subjectPublicKeyInfo,
                                              nullptr);
   }
 
-  virtual Result DigestBuf(const SECItem&, /*out*/uint8_t*, size_t)
+  virtual Result DigestBuf(Input, uint8_t*, size_t)
   {
     ADD_FAILURE();
     return Result::FATAL_ERROR_LIBRARY_FAILURE;
   }
 
-  virtual Result CheckPublicKey(const SECItem& subjectPublicKeyInfo)
+  virtual Result CheckPublicKey(Input subjectPublicKeyInfo)
   {
     return ::mozilla::pkix::CheckPublicKey(subjectPublicKeyInfo);
   }
@@ -346,35 +382,37 @@ private:
 TEST_F(pkixbuild, NoRevocationCheckingForExpiredCert)
 {
   ScopedPLArenaPool arena(PORT_NewArena(DER_DEFAULT_CHUNKSIZE));
-  ASSERT_NE(nullptr, arena.get());
+  ASSERT_TRUE(arena.get());
 
   const char* rootCN = "CN=Root CA";
   ScopedSECKEYPrivateKey rootKey;
   ScopedCERTCertificate rootCert;
-  EXPECT_TRUE(CreateCert(arena.get(), rootCN, rootCN, EndEntityOrCA::MustBeCA,
-                         nullptr, rootKey, rootCert));
+  (void) CreateCert(arena.get(), rootCN, rootCN, EndEntityOrCA::MustBeCA,
+                    nullptr, rootKey, &rootCert);
   ExpiredCertTrustDomain expiredCertTrustDomain(rootCert.release());
 
   const SECItem* serialNumber(CreateEncodedSerialNumber(arena.get(), 100));
-  EXPECT_NE(nullptr, serialNumber);
+  EXPECT_TRUE(serialNumber);
   const SECItem* issuerDER(ASCIIToDERName(arena.get(), rootCN));
-  EXPECT_NE(nullptr, issuerDER);
+  EXPECT_TRUE(issuerDER);
   const SECItem* subjectDER(ASCIIToDERName(arena.get(), "CN=Expired End-Entity Cert"));
-  EXPECT_NE(nullptr, subjectDER);
+  EXPECT_TRUE(subjectDER);
   ScopedSECKEYPrivateKey unusedSubjectKey;
   SECItem* certDER(CreateEncodedCertificate(
                      arena.get(), v3,
                      SEC_OID_PKCS1_SHA256_WITH_RSA_ENCRYPTION,
                      serialNumber, issuerDER,
-                     PR_Now() - ONE_DAY - ONE_DAY,
-                     PR_Now() - ONE_DAY,
+                     oneDayBeforeNow - Time::ONE_DAY_IN_SECONDS,
+                     oneDayBeforeNow,
                      subjectDER, nullptr, rootKey.get(),
                      SEC_OID_SHA256,
                      unusedSubjectKey));
-  ASSERT_NE(nullptr, certDER);
+  EXPECT_TRUE(certDER);
+  Input certInput;
+  EXPECT_EQ(Success, certInput.Init(certDER->data, certDER->len));
   ASSERT_EQ(Result::ERROR_EXPIRED_CERTIFICATE,
-            BuildCertChain(expiredCertTrustDomain, *certDER,
-                           PR_Now(), EndEntityOrCA::MustBeEndEntity,
+            BuildCertChain(expiredCertTrustDomain, certInput,
+                           Now(), EndEntityOrCA::MustBeEndEntity,
                            KeyUsage::noParticularKeyUsageRequired,
                            KeyPurposeId::id_kp_serverAuth,
                            CertPolicyId::anyPolicy,

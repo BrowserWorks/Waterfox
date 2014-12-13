@@ -220,7 +220,7 @@ public:
   /**
    * Construct writing mode based on a style context
    */
-  WritingMode(const nsStyleVisibility* aStyleVisibility)
+  explicit WritingMode(const nsStyleVisibility* aStyleVisibility)
   {
     NS_ASSERTION(aStyleVisibility, "we need an nsStyleVisibility here");
 
@@ -278,6 +278,11 @@ public:
     return mWritingMode == aOther.mWritingMode;
   }
 
+  bool operator!=(const WritingMode& aOther) const
+  {
+    return mWritingMode != aOther.mWritingMode;
+  }
+
 private:
   friend class LogicalPoint;
   friend class LogicalSize;
@@ -296,7 +301,7 @@ private:
    * Constructing a WritingMode with an arbitrary value is a private operation
    * currently only used by the Unknown() static method.
    */
-  WritingMode(uint8_t aValue)
+  explicit WritingMode(uint8_t aValue)
     : mWritingMode(aValue)
   { }
 
@@ -360,7 +365,7 @@ private:
  */
 class LogicalPoint {
 public:
-  LogicalPoint(WritingMode aWritingMode)
+  explicit LogicalPoint(WritingMode aWritingMode)
     :
 #ifdef DEBUG
       mWritingMode(aWritingMode),
@@ -564,7 +569,7 @@ private:
  */
 class LogicalSize {
 public:
-  LogicalSize(WritingMode aWritingMode)
+  explicit LogicalSize(WritingMode aWritingMode)
     :
 #ifdef DEBUG
       mWritingMode(aWritingMode),
@@ -594,6 +599,12 @@ public:
     }
   }
 
+  void SizeTo(WritingMode aWritingMode, nscoord aISize, nscoord aBSize)
+  {
+    CHECK_WRITING_MODE(aWritingMode);
+    mSize.SizeTo(aISize, aBSize);
+  }
+
   /**
    * Dimensions in logical and physical terms
    */
@@ -620,7 +631,7 @@ public:
   }
 
   /**
-   * Writable references to the logical dimensions
+   * Writable references to the logical and physical dimensions
    */
   nscoord& ISize(WritingMode aWritingMode) // inline-size
   {
@@ -633,26 +644,15 @@ public:
     return mSize.height;
   }
 
-  /**
-   * Setters for the physical dimensions
-   */
-  void SetWidth(WritingMode aWritingMode, nscoord aWidth)
+  nscoord& Width(WritingMode aWritingMode)
   {
     CHECK_WRITING_MODE(aWritingMode);
-    if (aWritingMode.IsVertical()) {
-      BSize() = aWidth;
-    } else {
-      ISize() = aWidth;
-    }
+    return aWritingMode.IsVertical() ? BSize() : ISize();
   }
-  void SetHeight(WritingMode aWritingMode, nscoord aHeight)
+  nscoord& Height(WritingMode aWritingMode)
   {
     CHECK_WRITING_MODE(aWritingMode);
-    if (aWritingMode.IsVertical()) {
-      ISize() = aHeight;
-    } else {
-      BSize() = aHeight;
-    }
+    return aWritingMode.IsVertical() ? ISize() : BSize();
   }
 
   /**
@@ -673,6 +673,44 @@ public:
     CHECK_WRITING_MODE(aFromMode);
     return aToMode == aFromMode ?
       *this : LogicalSize(aToMode, GetPhysicalSize(aFromMode));
+  }
+
+  bool operator==(const LogicalSize& aOther) const
+  {
+    return mWritingMode == aOther.mWritingMode && mSize == aOther.mSize;
+  }
+
+  bool operator!=(const LogicalSize& aOther) const
+  {
+    return mWritingMode != aOther.mWritingMode || mSize != aOther.mSize;
+  }
+
+  LogicalSize operator+(const LogicalSize& aOther) const
+  {
+    CHECK_WRITING_MODE(aOther.GetWritingMode());
+    return LogicalSize(mWritingMode, ISize() + aOther.ISize(),
+                                     BSize() + aOther.BSize());
+  }
+  LogicalSize& operator+=(const LogicalSize& aOther)
+  {
+    CHECK_WRITING_MODE(aOther.GetWritingMode());
+    ISize() += aOther.ISize();
+    BSize() += aOther.BSize();
+    return *this;
+  }
+
+  LogicalSize operator-(const LogicalSize& aOther) const
+  {
+    CHECK_WRITING_MODE(aOther.GetWritingMode());
+    return LogicalSize(mWritingMode, ISize() - aOther.ISize(),
+                                     BSize() - aOther.BSize());
+  }
+  LogicalSize& operator-=(const LogicalSize& aOther)
+  {
+    CHECK_WRITING_MODE(aOther.GetWritingMode());
+    ISize() -= aOther.ISize();
+    BSize() -= aOther.BSize();
+    return *this;
   }
 
 private:
@@ -713,7 +751,7 @@ private:
  */
 class LogicalMargin {
 public:
-  LogicalMargin(WritingMode aWritingMode)
+  explicit LogicalMargin(WritingMode aWritingMode)
     :
 #ifdef DEBUG
       mWritingMode(aWritingMode),
@@ -815,6 +853,16 @@ public:
   {
     CHECK_WRITING_MODE(aWritingMode);
     return mMargin.TopBottom();
+  }
+
+  /**
+   * Return a LogicalSize representing the total size of the inline-
+   * and block-dimension margins.
+   */
+  LogicalSize Size(WritingMode aWritingMode) const
+  {
+    CHECK_WRITING_MODE(aWritingMode);
+    return LogicalSize(aWritingMode, IStartEnd(), BStartEnd());
   }
 
   /**
@@ -999,7 +1047,7 @@ private:
  */
 class LogicalRect {
 public:
-  LogicalRect(WritingMode aWritingMode)
+  explicit LogicalRect(WritingMode aWritingMode)
     :
 #ifdef DEBUG
       mWritingMode(aWritingMode),
@@ -1236,6 +1284,8 @@ public:
   {
     return (mRect.width == 0 && mRect.height == 0);
   }
+
+  void SetEmpty() { mRect.SetEmpty(); }
 
 /* XXX are these correct?
   nscoord ILeft(WritingMode aWritingMode) const

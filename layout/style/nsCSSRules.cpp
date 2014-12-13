@@ -138,7 +138,7 @@ Rule::SizeOfCOMArrayElementIncludingThis(css::Rule* aElement,
 class GroupRuleRuleList MOZ_FINAL : public dom::CSSRuleList
 {
 public:
-  GroupRuleRuleList(GroupRule *aGroupRule);
+  explicit GroupRuleRuleList(GroupRule *aGroupRule);
 
   virtual CSSStyleSheet* GetParentObject() MOZ_OVERRIDE;
 
@@ -184,7 +184,7 @@ GroupRuleRuleList::Length()
     return 0;
   }
 
-  return SafeCast<uint32_t>(mGroupRule->StyleRuleCount());
+  return AssertedCast<uint32_t>(mGroupRule->StyleRuleCount());
 }
 
 nsIDOMCSSRule*
@@ -2077,7 +2077,7 @@ nsCSSFontFeatureValuesRule::SetValueText(const nsAString& aValueText)
 }
 
 struct MakeFamilyArray {
-  MakeFamilyArray(nsTArray<nsString>& aFamilyArray)
+  explicit MakeFamilyArray(nsTArray<nsString>& aFamilyArray)
     : familyArray(aFamilyArray), hasGeneric(false)
   {}
 
@@ -3088,7 +3088,7 @@ nsCSSCounterStyleRule::nsCSSCounterStyleRule(const nsCSSCounterStyleRule& aCopy)
   , mName(aCopy.mName)
   , mGeneration(aCopy.mGeneration)
 {
-  for (size_t i = 0; i < eCSSCounterDesc_COUNT; i++) {
+  for (size_t i = 0; i < ArrayLength(mValues); ++i) {
     mValues[i] = aCopy.mValues[i];
   }
 }

@@ -15,9 +15,11 @@
 #include "nsChangeHint.h"
 #include "RestyleTracker.h"
 #include "nsPresContext.h"
+#include "nsRefreshDriver.h"
+#include "nsRefPtrHashtable.h"
+#include "nsCSSPseudoElements.h"
 
 class nsIFrame;
-class nsRefreshDriver;
 class nsStyleChangeList;
 struct TreeMatchContext;
 
@@ -35,12 +37,14 @@ public:
 
   typedef mozilla::dom::Element Element;
 
-  RestyleManager(nsPresContext* aPresContext);
+  explicit RestyleManager(nsPresContext* aPresContext);
 
 private:
   // Private destructor, to discourage deletion outside of Release():
   ~RestyleManager()
   {
+    MOZ_ASSERT(!mReframingStyleContexts,
+               "temporary member should be nulled out before destruction");
   }
 
 public:
@@ -97,6 +101,12 @@ public:
    */
   nsresult ReparentStyleContext(nsIFrame* aFrame);
 
+private:
+  void ComputeAndProcessStyleChange(nsIFrame* aFrame,
+                                    nsChangeHint aMinChange,
+                                    RestyleTracker& aRestyleTracker,
+                                    nsRestyleHint aRestyleHint);
+
   /**
    * Re-resolve the style contexts for a frame tree, building
    * aChangeList based on the resulting style changes, plus aMinChange
@@ -108,6 +118,8 @@ public:
                           nsChangeHint aMinChange,
                           RestyleTracker& aRestyleTracker,
                           nsRestyleHint aRestyleHint);
+
+public:
 
 #ifdef DEBUG
   /**
@@ -122,6 +134,79 @@ public:
   // If the caller wants that to happen synchronously, it needs to handle that
   // itself.
   nsresult ProcessRestyledFrames(nsStyleChangeList& aRestyleArray);
+
+  /**
+   * In order to start CSS transitions on elements that are being
+   * reframed, we need to stash their style contexts somewhere during
+   * the reframing process.
+   *
+   * In all cases, the content node in the hash table is the real
+   * content node, not the anonymous content node we create for ::before
+   * or ::after.  The content node passed to the Get and Put methods is,
+   * however, the content node to be associate with the frame's style
+   * context.
+   */
+  typedef nsRefPtrHashtable<nsRefPtrHashKey<nsIContent>, nsStyleContext>
+            ReframingStyleContextTable;
+  class ReframingStyleContexts {
+  public:
+    void Put(nsIContent* aContent, nsStyleContext* aStyleContext) {
+      MOZ_ASSERT(aContent);
+      nsCSSPseudoElements::Type pseudoType = aStyleContext->GetPseudoType();
+      if (pseudoType == nsCSSPseudoElements::ePseudo_NotPseudoElement) {
+        mElementContexts.Put(aContent, aStyleContext);
+      } else if (pseudoType == nsCSSPseudoElements::ePseudo_before) {
+        MOZ_ASSERT(aContent->Tag() == nsGkAtoms::mozgeneratedcontentbefore);
+        mBeforePseudoContexts.Put(aContent->GetParent(), aStyleContext);
+      } else if (pseudoType == nsCSSPseudoElements::ePseudo_after) {
+        MOZ_ASSERT(aContent->Tag() == nsGkAtoms::mozgeneratedcontentafter);
+        mAfterPseudoContexts.Put(aContent->GetParent(), aStyleContext);
+      }
+    }
+
+    nsStyleContext* Get(nsIContent* aContent,
+                        nsCSSPseudoElements::Type aPseudoType) {
+      MOZ_ASSERT(aContent);
+      if (aPseudoType == nsCSSPseudoElements::ePseudo_NotPseudoElement) {
+        return mElementContexts.GetWeak(aContent);
+      }
+      if (aPseudoType == nsCSSPseudoElements::ePseudo_before) {
+        MOZ_ASSERT(aContent->Tag() == nsGkAtoms::mozgeneratedcontentbefore);
+        return mBeforePseudoContexts.GetWeak(aContent->GetParent());
+      }
+      if (aPseudoType == nsCSSPseudoElements::ePseudo_after) {
+        MOZ_ASSERT(aContent->Tag() == nsGkAtoms::mozgeneratedcontentafter);
+        return mAfterPseudoContexts.GetWeak(aContent->GetParent());
+      }
+      MOZ_ASSERT(false, "unexpected aPseudoType");
+      return nullptr;
+    }
+  private:
+    ReframingStyleContextTable mElementContexts;
+    ReframingStyleContextTable mBeforePseudoContexts;
+    ReframingStyleContextTable mAfterPseudoContexts;
+  };
+
+  /**
+   * Return the current ReframingStyleContexts struct, or null if we're
+   * not currently in a restyling operation.
+   */
+  ReframingStyleContexts* GetReframingStyleContexts() {
+    return mReframingStyleContexts;
+  }
+
+  /**
+   * Try starting a transition for an element or a ::before or ::after
+   * pseudo-element, given an old and new style context.  This may
+   * change the new style context if a transition is started.
+   *
+   * For the pseudo-elements, aContent must be the anonymous content
+   * that we're creating for that pseudo-element, not the real element.
+   */
+  static void
+  TryStartingTransition(nsPresContext* aPresContext, nsIContent* aContent,
+                        nsStyleContext* aOldStyleContext,
+                        nsRefPtr<nsStyleContext>* aNewStyleContext /* inout */);
 
 private:
   void RestyleForEmptyChange(Element* aContainer);
@@ -160,6 +245,37 @@ public:
   void BeginProcessingRestyles();
   void EndProcessingRestyles();
 
+  // Update styles for animations that are running on the compositor and
+  // whose updating is suppressed on the main thread (to save
+  // unnecessary work), while leaving all other aspects of style
+  // out-of-date.
+  //
+  // Performs an animation-only style flush to make styles from
+  // throttled transitions up-to-date prior to processing an unrelated
+  // style change, so that any transitions triggered by that style
+  // change produce correct results.
+  //
+  // In more detail:  when we're able to run animations on the
+  // compositor, we sometimes "throttle" these animations by skipping
+  // updating style data on the main thread.  However, whenever we
+  // process a normal (non-animation) style change, any changes in
+  // computed style on elements that have transition-* properties set
+  // may need to trigger new transitions; this process requires knowing
+  // both the old and new values of the property.  To do this correctly,
+  // we need to have an up-to-date *old* value of the property on the
+  // primary frame.  So the purpose of the mini-flush is to update the
+  // style for all throttled transitions and animations to the current
+  // animation state without making any other updates, so that when we
+  // process the queued style updates we'll have correct old data to
+  // compare against.  When we do this, we don't bother touching frames
+  // other than primary frames.
+  void UpdateOnlyAnimationStyles();
+
+  bool ThrottledAnimationStyleIsUpToDate() const {
+    return mLastUpdateForThrottledAnimations ==
+             mPresContext->RefreshDriver()->MostRecentRefresh();
+  }
+
   // Rebuilds all style data by throwing out the old rule tree and
   // building a new one, and additionally applying aExtraHint (which
   // must not contain nsChangeHint_ReconstructFrame) to the root frame.
@@ -168,7 +284,8 @@ public:
   // Helper that does part of the work of RebuildAllStyleData, shared by
   // RestyleElement for 'rem' handling.
   void DoRebuildAllStyleData(RestyleTracker& aRestyleTracker,
-                             nsChangeHint aExtraHint);
+                             nsChangeHint aExtraHint,
+                             nsRestyleHint aRestyleHint);
 
   // See PostRestyleEventCommon below.
   void PostRestyleEvent(Element* aElement,
@@ -264,11 +381,15 @@ private:
   uint32_t mHoverGeneration;
   nsChangeHint mRebuildAllExtraHint;
 
+  mozilla::TimeStamp mLastUpdateForThrottledAnimations;
+
   OverflowChangedTracker mOverflowChangedTracker;
 
   // The total number of animation flushes by this frame constructor.
   // Used to keep the layer and animation manager in sync.
   uint64_t mAnimationGeneration;
+
+  ReframingStyleContexts* mReframingStyleContexts;
 
   RestyleTracker mPendingRestyles;
   RestyleTracker mPendingAnimationRestyles;
@@ -354,8 +475,8 @@ private:
    * Helpers for RestyleChildren().
    */
   void RestyleUndisplayedChildren(nsRestyleHint aChildRestyleHint);
-  void RestyleBeforePseudo();
-  void RestyleAfterPseudo(nsIFrame* aFrame);
+  void MaybeReframeForBeforePseudo();
+  void MaybeReframeForAfterPseudo(nsIFrame* aFrame);
   void RestyleContentChildren(nsIFrame* aParent,
                               nsRestyleHint aChildRestyleHint);
   void InitializeAccessibilityNotifications();

@@ -59,7 +59,7 @@ linkAndAllocate(JSContext *cx, js::jit::MacroAssembler *masm)
     using namespace js::jit;
     AutoFlushICache afc("test");
     Linker l(*masm);
-    return l.newCode<CanGC>(cx, JSC::ION_CODE);
+    return l.newCode<CanGC>(cx, ION_CODE);
 }
 
 BEGIN_TEST(testJitMoveEmitterCycles_simple)
@@ -69,7 +69,6 @@ BEGIN_TEST(testJitMoveEmitterCycles_simple)
     LifoAlloc lifo(LIFO_ALLOC_PRIMARY_CHUNK_SIZE);
     TempAllocator alloc(&lifo);
     IonContext ic(cx, &alloc);
-    JitRuntime *jrt = cx->runtime()->getJitRuntime(cx);
     rt->getJitRuntime(cx);
     MacroAssembler masm;
     MoveEmitter mover(masm);
@@ -111,7 +110,6 @@ BEGIN_TEST(testJitMoveEmitterCycles_autogen)
     LifoAlloc lifo(LIFO_ALLOC_PRIMARY_CHUNK_SIZE);
     TempAllocator alloc(&lifo);
     IonContext ic(cx, &alloc);
-    JitRuntime *jrt = cx->runtime()->getJitRuntime(cx);
     rt->getJitRuntime(cx);
     MacroAssembler masm;
     MoveEmitter mover(masm);
@@ -212,7 +210,6 @@ BEGIN_TEST(testJitMoveEmitterCycles_autogen2)
     LifoAlloc lifo(LIFO_ALLOC_PRIMARY_CHUNK_SIZE);
     TempAllocator alloc(&lifo);
     IonContext ic(cx, &alloc);
-    JitRuntime *jrt = cx->runtime()->getJitRuntime(cx);
     rt->getJitRuntime(cx);
     MacroAssembler masm;
     MoveEmitter mover(masm);
@@ -326,7 +323,6 @@ BEGIN_TEST(testJitMoveEmitterCycles_autogen3)
     LifoAlloc lifo(LIFO_ALLOC_PRIMARY_CHUNK_SIZE);
     TempAllocator alloc(&lifo);
     IonContext ic(cx, &alloc);
-    JitRuntime *jrt = cx->runtime()->getJitRuntime(cx);
     rt->getJitRuntime(cx);
     MacroAssembler masm;
     MoveEmitter mover(masm);

@@ -104,6 +104,7 @@ class ExpandArgs(list):
         '''Creates a clone of the |args| list and performs file expansion on
         each item it contains'''
         super(ExpandArgs, self).__init__()
+        self._descs = set()
         for arg in args:
             self += self._expand(arg)
 
@@ -124,22 +125,18 @@ class ExpandArgs(list):
 
     def _expand_desc(self, arg):
         '''Internal function taking care of lib descriptor expansion only'''
-        if os.path.exists(arg + conf.LIBS_DESC_SUFFIX):
-            with open(arg + conf.LIBS_DESC_SUFFIX, 'r') as f:
+        desc = os.path.abspath(arg + conf.LIBS_DESC_SUFFIX)
+        if os.path.exists(desc):
+            if desc in self._descs:
+                return []
+            self._descs.add(desc)
+            with open(desc, 'r') as f:
                 desc = LibDescriptor(f.readlines())
             objs = [relativize(o) for o in desc['OBJS']]
             for lib in desc['LIBS']:
                 objs += self._expand(lib)
             return objs
         return [arg]
-
-class ExpandLibsDeps(ExpandArgs):
-    '''Same as ExpandArgs, but also adds the library descriptor to the list'''
-    def _expand_desc(self, arg):
-        objs = super(ExpandLibsDeps, self)._expand_desc(arg)
-        if os.path.exists(arg + conf.LIBS_DESC_SUFFIX):
-            objs += [relativize(arg + conf.LIBS_DESC_SUFFIX)]
-        return objs
 
 if __name__ == '__main__':
     print " ".join(ExpandArgs(sys.argv[1:]))

@@ -10,6 +10,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/systemlibs.js");
+Cu.import("resource://gre/modules/Promise.jsm");
 
 const NETWORKMANAGER_CONTRACTID = "@mozilla.org/network/manager;1";
 const NETWORKMANAGER_CID =
@@ -33,7 +34,6 @@ XPCOMUtils.defineLazyServiceGetter(this, "gNetworkService",
                                    "@mozilla.org/network/service;1",
                                    "nsINetworkService");
 
-const TOPIC_INTERFACE_STATE_CHANGED  = "network-interface-state-changed";
 const TOPIC_INTERFACE_REGISTERED     = "network-interface-registered";
 const TOPIC_INTERFACE_UNREGISTERED   = "network-interface-unregistered";
 const TOPIC_ACTIVE_CHANGED           = "network-active-changed";
@@ -136,7 +136,6 @@ function defineLazyRegExp(obj, name, pattern) {
  */
 function NetworkManager() {
   this.networkInterfaces = {};
-  Services.obs.addObserver(this, TOPIC_INTERFACE_STATE_CHANGED, true);
   Services.obs.addObserver(this, TOPIC_XPCOM_SHUTDOWN, false);
   Services.obs.addObserver(this, TOPIC_MOZSETTINGS_CHANGED, false);
 
@@ -216,92 +215,6 @@ NetworkManager.prototype = {
 
   observe: function(subject, topic, data) {
     switch (topic) {
-      case TOPIC_INTERFACE_STATE_CHANGED:
-        let network = subject.QueryInterface(Ci.nsINetworkInterface);
-        debug("Network " + network.type + "/" + network.name +
-              " changed state to " + network.state);
-        switch (network.state) {
-          case Ci.nsINetworkInterface.NETWORK_STATE_CONNECTED:
-#ifdef MOZ_B2G_RIL
-            // Add host route for data calls
-            if (this.isNetworkTypeMobile(network.type)) {
-              gNetworkService.removeHostRoutes(network.name);
-              gNetworkService.addHostRoute(network);
-            }
-            // Dun type is a special case where we add the default route to a
-            // secondary table.
-            if (network.type == Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE_DUN) {
-              this.setSecondaryDefaultRoute(network);
-            }
-#endif
-            // Remove pre-created default route and let setAndConfigureActive()
-            // to set default route only on preferred network
-            gNetworkService.removeDefaultRoute(network);
-            this.setAndConfigureActive();
-#ifdef MOZ_B2G_RIL
-            // Resolve and add extra host route. For example, mms proxy or mmsc.
-            // IMPORTANT: The offline state of DNSService will be set implicitly in
-            //            setAndConfigureActive() by modifying Services.io.offline.
-            //            Always setExtraHostRoute() after setAndConfigureActive().
-            this.setExtraHostRoute(network);
-
-            // Update data connection when Wifi connected/disconnected
-            if (network.type == Ci.nsINetworkInterface.NETWORK_TYPE_WIFI) {
-              for (let i = 0; i < this.mRil.numRadioInterfaces; i++) {
-                this.mRil.getRadioInterface(i).updateRILNetworkInterface();
-              }
-            }
-#endif
-
-            this.onConnectionChanged(network);
-
-            // Probing the public network accessibility after routing table is ready
-            CaptivePortalDetectionHelper
-              .notify(CaptivePortalDetectionHelper.EVENT_CONNECT, this.active);
-            break;
-          case Ci.nsINetworkInterface.NETWORK_STATE_DISCONNECTED:
-#ifdef MOZ_B2G_RIL
-            // Remove host route for data calls
-            if (this.isNetworkTypeMobile(network.type)) {
-              gNetworkService.removeHostRoute(network);
-            }
-            // Remove extra host route. For example, mms proxy or mmsc.
-            this.removeExtraHostRoute(network);
-            // Remove secondary default route for dun.
-            if (network.type == Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE_DUN) {
-              this.removeSecondaryDefaultRoute(network);
-            }
-#endif
-            // Remove routing table in /proc/net/route
-            if (network.type == Ci.nsINetworkInterface.NETWORK_TYPE_WIFI) {
-              gNetworkService.resetRoutingTable(network);
-#ifdef MOZ_B2G_RIL
-            } else if (network.type == Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE) {
-              gNetworkService.removeDefaultRoute(network);
-#endif
-            }
-
-            // Abort ongoing captive portal detection on the wifi interface
-            CaptivePortalDetectionHelper
-              .notify(CaptivePortalDetectionHelper.EVENT_DISCONNECT, network);
-            this.setAndConfigureActive();
-#ifdef MOZ_B2G_RIL
-            // Update data connection when Wifi connected/disconnected
-            if (network.type == Ci.nsINetworkInterface.NETWORK_TYPE_WIFI) {
-              for (let i = 0; i < this.mRil.numRadioInterfaces; i++) {
-                this.mRil.getRadioInterface(i).updateRILNetworkInterface();
-              }
-            }
-#endif
-            break;
-        }
-#ifdef MOZ_B2G_RIL
-        // Notify outer modules like MmsService to start the transaction after
-        // the configuration of the network interface is done.
-        Services.obs.notifyObservers(network, TOPIC_CONNECTION_STATE_CHANGED,
-                                     this.convertConnectionType(network));
-#endif
-        break;
       case TOPIC_MOZSETTINGS_CHANGED:
         let setting = JSON.parse(data);
         this.handle(setting.key, setting.value);
@@ -314,7 +227,6 @@ NetworkManager.prototype = {
       case TOPIC_XPCOM_SHUTDOWN:
         Services.obs.removeObserver(this, TOPIC_XPCOM_SHUTDOWN);
         Services.obs.removeObserver(this, TOPIC_MOZSETTINGS_CHANGED);
-        Services.obs.removeObserver(this, TOPIC_INTERFACE_STATE_CHANGED);
 #ifdef MOZ_B2G_RIL
         this.dunConnectTimer.cancel();
         this.dunRetryTimer.cancel();
@@ -367,12 +279,9 @@ NetworkManager.prototype = {
   getNetworkId: function(network) {
     let id = "device";
 #ifdef MOZ_B2G_RIL
-    if (this.isNetworkTypeMobile(network.type)) {
-      if (!(network instanceof Ci.nsIRilNetworkInterface)) {
-        throw Components.Exception("Mobile network not an nsIRilNetworkInterface",
-                                   Cr.NS_ERROR_INVALID_ARG);
-      }
-      id = "ril" + network.serviceId;
+    if (network instanceof Ci.nsIRilNetworkInterface) {
+      let rilNetwork = network.QueryInterface(Ci.nsIRilNetworkInterface);
+      id = "ril" + rilNetwork.serviceId;
     }
 #endif
 
@@ -395,6 +304,94 @@ NetworkManager.prototype = {
 
     Services.obs.notifyObservers(network, TOPIC_INTERFACE_REGISTERED, null);
     debug("Network '" + networkId + "' registered.");
+  },
+
+  updateNetworkInterface: function(network) {
+    if (!(network instanceof Ci.nsINetworkInterface)) {
+      throw Components.Exception("Argument must be nsINetworkInterface.",
+                                 Cr.NS_ERROR_INVALID_ARG);
+    }
+    let networkId = this.getNetworkId(network);
+    if (!(networkId in this.networkInterfaces)) {
+      throw Components.Exception("No network with that type registered.",
+                                 Cr.NS_ERROR_INVALID_ARG);
+    }
+    debug("Network " + network.type + "/" + network.name +
+          " changed state to " + network.state);
+    switch (network.state) {
+      case Ci.nsINetworkInterface.NETWORK_STATE_CONNECTED:
+#ifdef MOZ_B2G_RIL
+        // Add host route for data calls
+        if (this.isNetworkTypeMobile(network.type)) {
+          gNetworkService.removeHostRoutes(network.name);
+          this.setHostRoutes(network);
+        }
+        // Dun type is a special case where we add the default route to a
+        // secondary table.
+        if (network.type == Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE_DUN) {
+          this.setSecondaryDefaultRoute(network);
+        }
+#endif
+        // Remove pre-created default route and let setAndConfigureActive()
+        // to set default route only on preferred network
+        gNetworkService.removeDefaultRoute(network);
+        this.setAndConfigureActive();
+#ifdef MOZ_B2G_RIL
+        // Update data connection when Wifi connected/disconnected
+        if (network.type == Ci.nsINetworkInterface.NETWORK_TYPE_WIFI) {
+          for (let i = 0; i < this.mRil.numRadioInterfaces; i++) {
+            this.mRil.getRadioInterface(i).updateRILNetworkInterface();
+          }
+        }
+#endif
+
+        this.onConnectionChanged(network);
+
+        // Probing the public network accessibility after routing table is ready
+        CaptivePortalDetectionHelper
+          .notify(CaptivePortalDetectionHelper.EVENT_CONNECT, this.active);
+        break;
+      case Ci.nsINetworkInterface.NETWORK_STATE_DISCONNECTED:
+#ifdef MOZ_B2G_RIL
+        // Remove host route for data calls
+        if (this.isNetworkTypeMobile(network.type)) {
+          this.removeHostRoutes(network);
+        }
+
+        // Remove secondary default route for dun.
+        if (network.type == Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE_DUN) {
+          this.removeSecondaryDefaultRoute(network);
+        }
+#endif
+        // Remove routing table in /proc/net/route
+        if (network.type == Ci.nsINetworkInterface.NETWORK_TYPE_WIFI) {
+          gNetworkService.resetRoutingTable(network);
+#ifdef MOZ_B2G_RIL
+        } else if (network.type == Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE) {
+          gNetworkService.removeDefaultRoute(network);
+#endif
+        }
+
+        // Abort ongoing captive portal detection on the wifi interface
+        CaptivePortalDetectionHelper
+          .notify(CaptivePortalDetectionHelper.EVENT_DISCONNECT, network);
+        this.setAndConfigureActive();
+#ifdef MOZ_B2G_RIL
+        // Update data connection when Wifi connected/disconnected
+        if (network.type == Ci.nsINetworkInterface.NETWORK_TYPE_WIFI) {
+          for (let i = 0; i < this.mRil.numRadioInterfaces; i++) {
+            this.mRil.getRadioInterface(i).updateRILNetworkInterface();
+          }
+        }
+#endif
+        break;
+    }
+#ifdef MOZ_B2G_RIL
+    // Notify outer modules like MmsService to start the transaction after
+    // the configuration of the network interface is done.
+    Services.obs.notifyObservers(network, TOPIC_CONNECTION_STATE_CHANGED,
+                                 this.convertConnectionType(network));
+#endif
   },
 
   unregisterNetworkInterface: function(network) {
@@ -448,6 +445,56 @@ NetworkManager.prototype = {
     this.setAndConfigureActive();
   },
 
+  _updateRoutes: function(doAdd, ipAddresses, networkName, gateways) {
+    let promises = [];
+
+    ipAddresses.forEach((aIpAddress) => {
+      let gateway = this.selectGateway(gateways, aIpAddress);
+      if (gateway) {
+        promises.push((doAdd)
+          ? gNetworkService.addHostRoute(networkName, gateway, aIpAddress)
+          : gNetworkService.removeHostRoute(networkName, gateway, aIpAddress));
+      }
+    });
+
+    return Promise.all(promises);
+  },
+
+  isValidatedNetwork: function(network) {
+    let isValid = false;
+    try {
+      isValid = (this.getNetworkId(network) in this.networkInterfaces);
+    } catch (e) {
+      debug("Invalid network interface: " + e);
+    }
+
+    return isValid;
+  },
+
+  addHostRoute: function(network, host) {
+    if (!this.isValidatedNetwork(network)) {
+      return Promise.reject("Invalid network interface.");
+    }
+
+    return this.resolveHostname(network, host)
+      .then((ipAddresses) => this._updateRoutes(true,
+                                                ipAddresses,
+                                                network.name,
+                                                network.getGateways()));
+  },
+
+  removeHostRoute: function(network, host) {
+    if (!this.isValidatedNetwork(network)) {
+      return Promise.reject("Invalid network interface.");
+    }
+
+    return this.resolveHostname(network, host)
+      .then((ipAddresses) => this._updateRoutes(false,
+                                                ipAddresses,
+                                                network.name,
+                                                network.getGateways()));
+  },
+
 #ifdef MOZ_B2G_RIL
   isNetworkTypeSecondaryMobile: function(type) {
     return (type == Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE_MMS ||
@@ -461,62 +508,31 @@ NetworkManager.prototype = {
             this.isNetworkTypeSecondaryMobile(type));
   },
 
-  setExtraHostRoute: function(network) {
-    if (network.type == Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE_MMS) {
-      if (!(network instanceof Ci.nsIRilNetworkInterface)) {
-        debug("Network for MMS must be an instance of nsIRilNetworkInterface");
-        return;
-      }
+  setHostRoutes: function(network) {
+    let hosts = network.getDnses().concat(network.httpProxyHost);
 
-      network = network.QueryInterface(Ci.nsIRilNetworkInterface);
-
-      debug("Adding mmsproxy and/or mmsc route for " + network.name);
-
-      let hostToResolve = network.mmsProxy;
-      // Workaround an xpconnect issue with undefined string objects.
-      // See bug 808220
-      if (!hostToResolve || hostToResolve === "undefined") {
-        hostToResolve = network.mmsc;
-      }
-
-      let mmsHosts = this.resolveHostname([hostToResolve]);
-      if (mmsHosts.length == 0) {
-        debug("No valid hostnames can be added. Stop adding host route.");
-        return;
-      }
-
-      gNetworkService.addHostRouteWithResolve(network, mmsHosts);
-    }
+    return this._updateRoutes(true, hosts, network.name, network.getGateways());
   },
 
-  removeExtraHostRoute: function(network) {
-    if (network.type == Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE_MMS) {
-      if (!(network instanceof Ci.nsIRilNetworkInterface)) {
-        debug("Network for MMS must be an instance of nsIRilNetworkInterface");
-        return;
+  removeHostRoutes: function(network) {
+    let hosts = network.getDnses().concat(network.httpProxyHost);
+
+    return this._updateRoutes(false, hosts, network.name, network.getGateways());
+  },
+#endif
+
+  selectGateway: function(gateways, host) {
+    for (let i = 0; i < gateways.length; i++) {
+      let gateway = gateways[i];
+      if (gateway.match(this.REGEXP_IPV4) && host.match(this.REGEXP_IPV4) ||
+          gateway.indexOf(":") != -1 && host.indexOf(":") != -1) {
+        return gateway;
       }
-
-      network = network.QueryInterface(Ci.nsIRilNetworkInterface);
-
-      debug("Removing mmsproxy and/or mmsc route for " + network.name);
-
-      let hostToResolve = network.mmsProxy;
-      // Workaround an xpconnect issue with undefined string objects.
-      // See bug 808220
-      if (!hostToResolve || hostToResolve === "undefined") {
-        hostToResolve = network.mmsc;
-      }
-
-      let mmsHosts = this.resolveHostname([hostToResolve]);
-      if (mmsHosts.length == 0) {
-        debug("No valid hostnames can be removed. Stop removing host route.");
-        return;
-      }
-
-      gNetworkService.removeHostRouteWithResolve(network, mmsHosts);
     }
+    return null;
   },
 
+#ifdef MOZ_B2G_RIL
   setSecondaryDefaultRoute: function(network) {
     let gateways = network.getGateways();
     for (let i = 0; i < gateways.length; i++) {
@@ -637,43 +653,56 @@ NetworkManager.prototype = {
     }
   },
 
-#ifdef MOZ_B2G_RIL
-  resolveHostname: function(hosts) {
-    let retval = [];
-
-    for (let hostname of hosts) {
-      // Sanity check for null, undefined and empty string... etc.
-      if (!hostname) {
-        continue;
-      }
-
-      try {
-        let uri = Services.io.newURI(hostname, null, null);
-        hostname = uri.host;
-      } catch (e) {}
-
-      // An extra check for hostnames that cannot be made by newURI(...).
-      // For example, an IP address like "10.1.1.1".
-      if (hostname.match(this.REGEXP_IPV4) ||
-          hostname.match(this.REGEXP_IPV6)) {
-        retval.push(hostname);
-        continue;
-      }
-
-      try {
-        let hostnameIps = gDNSService.resolve(hostname, 0);
-        while (hostnameIps.hasMore()) {
-          retval.push(hostnameIps.getNextAddrAsString());
-          debug("Found IP at: " + JSON.stringify(retval));
-        }
-      } catch (e) {
-        debug("Failed to resolve '" + hostname + "', exception: " + e);
-      }
+  resolveHostname: function(network, hostname) {
+    // Sanity check for null, undefined and empty string... etc.
+    if (!hostname) {
+      return Promise.reject(new Error("hostname is empty: " + hostname));
     }
 
-    return retval;
+    if (hostname.match(this.REGEXP_IPV4) ||
+        hostname.match(this.REGEXP_IPV6)) {
+      return Promise.resolve([hostname]);
+    }
+
+    let deferred = Promise.defer();
+    let onLookupComplete = (aRequest, aRecord, aStatus) => {
+      if (!Components.isSuccessCode(aStatus)) {
+        deferred.reject(new Error(
+          "Failed to resolve '" + hostname + "', with status: " + aStatus));
+        return;
+      }
+
+      let retval = [];
+      while (aRecord.hasMore()) {
+        retval.push(aRecord.getNextAddrAsString());
+      }
+
+      if (!retval.length) {
+        deferred.reject(new Error("No valid address after DNS lookup!"));
+        return;
+      }
+
+      if (DEBUG) debug("hostname is resolved: " + hostname);
+      if (DEBUG) debug("Addresses: " + JSON.stringify(retval));
+
+      deferred.resolve(retval);
+    };
+
+    // Bug 1058282 - Explicitly request ipv4 to get around 8.8.8.8 probe at
+    // http://androidxref.com/4.3_r2.1/xref/bionic/libc/netbsd/net/getaddrinfo.c#1923
+    //
+    // Whenever MMS connection is the only network interface, there is no
+    // default route so that any ip probe will fail.
+    let flags = 0;
+    if (network.type === Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE_MMS) {
+      flags |= Ci.nsIDNSService.RESOLVE_DISABLE_IPV6;
+    }
+
+    // TODO: Bug 992772 - Resolve the hostname with specified networkInterface.
+    gDNSService.asyncResolve(hostname, flags, onLookupComplete, Services.tm.mainThread);
+
+    return deferred.promise;
   },
-#endif
 
   convertConnectionType: function(network) {
     // If there is internal interface change (e.g., MOBILE_MMS, MOBILE_SUPL),
@@ -718,7 +747,7 @@ NetworkManager.prototype = {
 #endif
   },
 
-  _requestCount: 0,
+  _usbTetheringRequestCount: 0,
 
   handle: function(aName, aResult) {
     switch(aName) {
@@ -753,12 +782,17 @@ NetworkManager.prototype = {
 
         if (this._oldUsbTetheringEnabledState === this.tetheringSettings[SETTINGS_USB_ENABLED]) {
           debug("No changes for SETTINGS_USB_ENABLED flag. Nothing to do.");
+          this.handlePendingWifiTetheringRequest();
           break;
         }
 
-        this._requestCount++;
-        if (this._requestCount === 1) {
-          this.handleUSBTetheringToggle(aResult);
+        this._usbTetheringRequestCount++;
+        if (this._usbTetheringRequestCount === 1) {
+          if (this._wifiTetheringRequestOngoing) {
+            debug('USB tethering request is blocked by ongoing wifi tethering request.');
+          } else {
+            this.handleLastUsbTetheringRequest();
+          }
         }
         break;
     };
@@ -774,9 +808,11 @@ NetworkManager.prototype = {
     for each (let network in this.networkInterfaces) {
       if (network.type == type) {
 #ifdef MOZ_B2G_RIL
-        if (serviceId != undefined && this.isNetworkTypeMobile(network.type) &&
-            network.serviceId != serviceId) {
-          continue;
+        if (network instanceof Ci.nsIRilNetworkInterface) {
+          let rilNetwork = network.QueryInterface(Ci.nsIRilNetworkInterface);
+          if (rilNetwork.serviceId != serviceId) {
+            continue;
+          }
         }
 #endif
         return network;
@@ -794,23 +830,31 @@ NetworkManager.prototype = {
   // External and internal interface name.
   _tetheringInterface: null,
 
-  handleLastRequest: function() {
-    let count = this._requestCount;
-    this._requestCount = 0;
+  handleLastUsbTetheringRequest: function() {
+    debug('handleLastUsbTetheringRequest... ' + this._usbTetheringRequestCount);
 
-    if (count === 1) {
+    if (this._usbTetheringRequestCount === 0) {
       if (this.wantConnectionEvent) {
         if (this.tetheringSettings[SETTINGS_USB_ENABLED]) {
           this.wantConnectionEvent.call(this);
         }
         this.wantConnectionEvent = null;
       }
+      this.handlePendingWifiTetheringRequest();
       return;
     }
 
-    if (count > 1) {
-      this.handleUSBTetheringToggle(this.tetheringSettings[SETTINGS_USB_ENABLED]);
-      this.wantConnectionEvent = null;
+    // Cancel the accumlated count to 1 since we only care about the
+    // last state.
+    this._usbTetheringRequestCount = 1;
+    this.handleUSBTetheringToggle(this.tetheringSettings[SETTINGS_USB_ENABLED]);
+    this.wantConnectionEvent = null;
+  },
+
+  handlePendingWifiTetheringRequest: function() {
+    if (this._pendingWifiTetheringRequestArgs) {
+      this.setWifiTethering.apply(this, this._pendingWifiTetheringRequestArgs);
+      this._pendingWifiTetheringRequestArgs = null;
     }
   },
 
@@ -906,12 +950,16 @@ NetworkManager.prototype = {
         (this._usbTetheringAction === TETHERING_STATE_ONGOING ||
          this._usbTetheringAction === TETHERING_STATE_ACTIVE)) {
       debug("Usb tethering already connecting/connected.");
+      this._usbTetheringRequestCount = 0;
+      this.handlePendingWifiTetheringRequest();
       return;
     }
 
     if (!enable &&
         this._usbTetheringAction === TETHERING_STATE_IDLE) {
       debug("Usb tethering already disconnected.");
+      this._usbTetheringRequestCount = 0;
+      this.handlePendingWifiTetheringRequest();
       return;
     }
 
@@ -1006,16 +1054,21 @@ NetworkManager.prototype = {
     debug("setWifiTethering: " + (msg ? msg : "success"));
 
     if (callback) {
-      callback.wifiTetheringEnabledChange(msg);
+      // Callback asynchronously to avoid netsted toggling.
+      Services.tm.currentThread.dispatch(() => {
+        callback.wifiTetheringEnabledChange(msg);
+      }, Ci.nsIThread.DISPATCH_NORMAL);
     }
   },
 
+  _wifiTetheringRequestOngoing: false,
   enableWifiTethering: function(enable, config, callback) {
     // Fill in config's required fields.
     config.ifname         = this._tetheringInterface[TETHERING_TYPE_WIFI].internalInterface;
     config.internalIfname = this._tetheringInterface[TETHERING_TYPE_WIFI].internalInterface;
     config.externalIfname = this._tetheringInterface[TETHERING_TYPE_WIFI].externalInterface;
 
+    this._wifiTetheringRequestOngoing = true;
     gNetworkService.setWifiTethering(enable, config, (function(error) {
 #ifdef MOZ_B2G_RIL
       // Disconnect dun on error or when wifi tethering is disabled.
@@ -1025,10 +1078,17 @@ NetworkManager.prototype = {
       }
 #endif
       let resetSettings = error;
+      debug('gNetworkService.setWifiTethering finished');
       this.notifyError(resetSettings, callback, error);
+      this._wifiTetheringRequestOngoing = false;
+      if (this._usbTetheringRequestCount > 0) {
+        debug('Perform pending USB tethering requests.');
+        this.handleLastUsbTetheringRequest();
+      }
     }).bind(this));
   },
 
+  _pendingWifiTetheringRequestArgs: null,
   // Enable/disable WiFi tethering by sending commands to netd.
   setWifiTethering: function(enable, network, config, callback) {
     debug("setWifiTethering: " + enable);
@@ -1039,6 +1099,16 @@ NetworkManager.prototype = {
 
     if (!config) {
       this.notifyError(true, callback, "invalid configuration");
+      return;
+    }
+
+    if (this._usbTetheringRequestCount > 0) {
+      // If there's still pending usb tethering request, save
+      // the request params and redo |setWifiTethering| on
+      // usb tethering task complete.
+      debug('USB tethering request is being processed. Queue this wifi tethering request.');
+      this._pendingWifiTetheringRequestArgs = Array.prototype.slice.call(arguments);
+      debug('Pending args: ' + JSON.stringify(this._pendingWifiTetheringRequestArgs));
       return;
     }
 
@@ -1113,22 +1183,26 @@ NetworkManager.prototype = {
       }
       this.setUSBTethering(enable,
                            this._tetheringInterface[TETHERING_TYPE_USB],
-                           this.usbTetheringResultReport.bind(this));
+                           this.usbTetheringResultReport.bind(this, enable));
     } else {
-      this.usbTetheringResultReport("Failed to set usb function");
+      this.usbTetheringResultReport(enable, "enableUsbRndisResult failure");
       throw new Error("failed to set USB Function to adb");
     }
   },
 
-  usbTetheringResultReport: function(error) {
+  usbTetheringResultReport: function(enable, error) {
+    this._usbTetheringRequestCount--;
+
     let settingsLock = gSettingsService.createLock();
+
+    debug('usbTetheringResultReport callback. enable: ' + enable + ', error: ' + error);
 
     // Disable tethering settings when fail to enable it.
     if (error) {
       this.tetheringSettings[SETTINGS_USB_ENABLED] = false;
       settingsLock.set("tethering.usb.enabled", false, null);
       // Skip others request when we found an error.
-      this._requestCount = 0;
+      this._usbTetheringRequestCount = 0;
       this._usbTetheringAction = TETHERING_STATE_IDLE;
 #ifdef MOZ_B2G_RIL
       if (this.tetheringSettings[SETTINGS_DUN_REQUIRED]) {
@@ -1136,7 +1210,7 @@ NetworkManager.prototype = {
       }
 #endif
     } else {
-      if (this.tetheringSettings[SETTINGS_USB_ENABLED]) {
+      if (enable) {
         this._usbTetheringAction = TETHERING_STATE_ACTIVE;
       } else {
         this._usbTetheringAction = TETHERING_STATE_IDLE;
@@ -1146,7 +1220,8 @@ NetworkManager.prototype = {
         }
 #endif
       }
-      this.handleLastRequest();
+
+      this.handleLastUsbTetheringRequest();
     }
   },
 

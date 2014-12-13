@@ -337,7 +337,7 @@ class DirPickerRecursiveFileEnumerator MOZ_FINAL
 public:
   NS_DECL_ISUPPORTS
 
-  DirPickerRecursiveFileEnumerator(nsIFile* aTopDir)
+  explicit DirPickerRecursiveFileEnumerator(nsIFile* aTopDir)
     : mTopDir(aTopDir)
   {
     MOZ_ASSERT(!NS_IsMainThread(), "This class blocks on I/O!");
@@ -1128,6 +1128,7 @@ HTMLInputElement::HTMLInputElement(already_AddRefed<mozilla::dom::NodeInfo>& aNo
   , mNumberControlSpinnerIsSpinning(false)
   , mNumberControlSpinnerSpinsUp(false)
   , mPickerRunning(false)
+  , mSelectionCached(true)
 {
   // We are in a type=text so we now we currenty need a nsTextEditorState.
   mInputData.mState = new nsTextEditorState(this);
@@ -3187,7 +3188,7 @@ HTMLInputElement::Select()
 
   nsIFocusManager* fm = nsFocusManager::GetFocusManager();
 
-  nsRefPtr<nsPresContext> presContext = GetPresContext();
+  nsRefPtr<nsPresContext> presContext = GetPresContext(eForComposedDoc);
   if (state == eInactiveWindow) {
     if (fm)
       fm->SetFocus(this, nsIFocusManager::FLAG_NOSCROLL);
@@ -3250,7 +3251,7 @@ HTMLInputElement::NeedToInitializeEditorForEvent(
   // handled without the editor being initialized.  These events include:
   // mousein/move/out, overflow/underflow, and DOM mutation events.
   if (!IsSingleLineTextControl(false) ||
-      aVisitor.mEvent->eventStructType == NS_MUTATION_EVENT) {
+      aVisitor.mEvent->mClass == eMutationEventClass) {
     return false;
   }
 
@@ -3960,7 +3961,8 @@ HTMLInputElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
               fm->GetLastFocusMethod(document->GetWindow(), &lastFocusMethod);
               if (lastFocusMethod &
                   (nsIFocusManager::FLAG_BYKEY | nsIFocusManager::FLAG_BYMOVEFOCUS)) {
-                nsRefPtr<nsPresContext> presContext = GetPresContext();
+                nsRefPtr<nsPresContext> presContext =
+                  GetPresContext(eForComposedDoc);
                 if (DispatchSelectEvent(presContext)) {
                   SelectAll(presContext);
                 }
@@ -4268,9 +4270,9 @@ HTMLInputElement::PostHandleEventForRangeThumb(EventChainPostVisitor& aVisitor)
   MOZ_ASSERT(mType == NS_FORM_INPUT_RANGE);
 
   if (nsEventStatus_eConsumeNoDefault == aVisitor.mEventStatus ||
-      !(aVisitor.mEvent->eventStructType == NS_MOUSE_EVENT ||
-        aVisitor.mEvent->eventStructType == NS_TOUCH_EVENT ||
-        aVisitor.mEvent->eventStructType == NS_KEY_EVENT)) {
+      !(aVisitor.mEvent->mClass == eMouseEventClass ||
+        aVisitor.mEvent->mClass == eTouchEventClass ||
+        aVisitor.mEvent->mClass == eKeyboardEventClass)) {
     return;
   }
 

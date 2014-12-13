@@ -12,8 +12,6 @@ SOURCES += [
     'nsToolkitCompsModule.cpp',
 ]
 
-LIBRARY_NAME = 'toolkitcomps'
-
 FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [
@@ -22,7 +20,6 @@ LOCAL_INCLUDES += [
     '../downloads',
     '../feeds',
     '../find',
-    '../intl',
     '../jsdownloads/src',
     '../protobuf',
     '../startup',

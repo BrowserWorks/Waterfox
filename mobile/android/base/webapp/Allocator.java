@@ -31,7 +31,7 @@ public class Allocator {
     // The number of Webapp# and WEBAPP# activities/apps/intents
     private final static int MAX_WEB_APPS = 100;
 
-    protected static Allocator sInstance = null;
+    protected static Allocator sInstance;
     public static Allocator getInstance() {
         return getInstance(GeckoAppShell.getContext());
     }
@@ -108,10 +108,6 @@ public class Allocator {
 
     public synchronized int getIndexForApp(String packageName) {
         return findSlotForPrefix(PREFIX_PACKAGE_NAME, packageName);
-    }
-
-    public synchronized int getIndexForOrigin(String origin) {
-        return findSlotForPrefix(PREFIX_ORIGIN, origin);
     }
 
     protected int findSlotForPrefix(String prefix, String value) {

@@ -234,7 +234,7 @@ class nsCSSScanner {
   // which, for historical reasons, must make additional function
   // tokens behave like url().  Please do not add new uses to the
   // parser.
-  bool NextURL(nsCSSToken& aTokenResult);
+  void NextURL(nsCSSToken& aTokenResult);
 
   // This is exposed for use by nsCSSParser::ParsePseudoClassWithNthPairArg,
   // because "2n-1" is a single DIMENSION token, and "n-1" is a single
@@ -363,7 +363,7 @@ struct MOZ_STACK_CLASS nsCSSGridTemplateAreaToken {
 // Scanner for the grid-template-areas micro-syntax
 class nsCSSGridTemplateAreaScanner {
 public:
-  nsCSSGridTemplateAreaScanner(const nsAString& aBuffer);
+  explicit nsCSSGridTemplateAreaScanner(const nsAString& aBuffer);
 
   // Get the next token.  Return false on EOF.
   // aTokenResult is filled in with the data for the token.

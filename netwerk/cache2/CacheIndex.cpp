@@ -166,7 +166,7 @@ class FileOpenHelper : public CacheFileIOListener
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
 
-  FileOpenHelper(CacheIndex* aIndex)
+  explicit FileOpenHelper(CacheIndex* aIndex)
     : mIndex(aIndex)
     , mCanceled(false)
   {}
@@ -241,7 +241,7 @@ NS_INTERFACE_MAP_END_THREADSAFE
 
 
 CacheIndex::CacheIndex()
-  : mLock("CacheFile.mLock")
+  : mLock("CacheIndex.mLock")
   , mState(INITIAL)
   , mShuttingDown(false)
   , mIndexNeedsUpdate(false)
@@ -1148,6 +1148,8 @@ CacheIndex::GetEntryForEviction(SHA1Sum::Hash *aHash, uint32_t *aCnt)
   if (!index)
     return NS_ERROR_NOT_INITIALIZED;
 
+  MOZ_ASSERT(CacheFileIOManager::IsOnIOThread());
+
   CacheIndexAutoLock lock(index);
 
   if (!index->IsIndexUsable()) {
@@ -1160,28 +1162,85 @@ CacheIndex::GetEntryForEviction(SHA1Sum::Hash *aHash, uint32_t *aCnt)
   if (index->mExpirationArray.Length() == 0)
     return NS_ERROR_NOT_AVAILABLE;
 
+  SHA1Sum::Hash hash;
+  bool foundEntry = false;
+  uint32_t i = 0, j = 0;
   uint32_t now = PR_Now() / PR_USEC_PER_SEC;
-  if (index->mExpirationArray[0]->mExpirationTime < now) {
-    memcpy(aHash, &index->mExpirationArray[0]->mHash, sizeof(SHA1Sum::Hash));
-    *aCnt = index->mExpirationArray.Length();
+
+  // find the first expired, non-forced valid entry
+  for (i = 0; i < index->mExpirationArray.Length(); i++) {
+    if (index->mExpirationArray[i]->mExpirationTime < now) {
+      memcpy(&hash, &index->mExpirationArray[i]->mHash, sizeof(SHA1Sum::Hash));
+
+      if (!IsForcedValidEntry(&hash)) {
+        foundEntry = true;
+        break;
+      }
+
+    } else {
+      // all further entries have not expired yet
+      break;
+    }
+  }
+
+  if (foundEntry) {
+    *aCnt = index->mExpirationArray.Length() - i;
+
     LOG(("CacheIndex::GetEntryForEviction() - returning entry from expiration "
          "array [hash=%08x%08x%08x%08x%08x, cnt=%u, expTime=%u, now=%u, "
-         "frecency=%u]", LOGSHA1(aHash), *aCnt,
-         index->mExpirationArray[0]->mExpirationTime, now,
-         index->mExpirationArray[0]->mFrecency));
+         "frecency=%u]", LOGSHA1(&hash), *aCnt,
+         index->mExpirationArray[i]->mExpirationTime, now,
+         index->mExpirationArray[i]->mFrecency));
   }
   else {
-    memcpy(aHash, &index->mFrecencyArray[0]->mHash, sizeof(SHA1Sum::Hash));
-    *aCnt = index->mFrecencyArray.Length();
+    // check if we've already tried all the entries
+    if (i == index->mExpirationArray.Length())
+      return NS_ERROR_NOT_AVAILABLE;
+
+    // find first non-forced valid entry with the lowest frecency
+    for (j = 0; j < index->mFrecencyArray.Length(); j++) {
+      memcpy(&hash, &index->mFrecencyArray[j]->mHash, sizeof(SHA1Sum::Hash));
+
+      if (!IsForcedValidEntry(&hash)) {
+        foundEntry = true;
+        break;
+      }
+    }
+
+    if (!foundEntry)
+      return NS_ERROR_NOT_AVAILABLE;
+
+    // forced valid entries skipped in both arrays could overlap, just use max
+    *aCnt = index->mFrecencyArray.Length() - std::max(i, j);
+
     LOG(("CacheIndex::GetEntryForEviction() - returning entry from frecency "
          "array [hash=%08x%08x%08x%08x%08x, cnt=%u, expTime=%u, now=%u, "
-         "frecency=%u]", LOGSHA1(aHash), *aCnt,
-         index->mExpirationArray[0]->mExpirationTime, now,
-         index->mExpirationArray[0]->mFrecency));
+         "frecency=%u]", LOGSHA1(&hash), *aCnt,
+         index->mFrecencyArray[j]->mExpirationTime, now,
+         index->mFrecencyArray[j]->mFrecency));
   }
+
+  memcpy(aHash, &hash, sizeof(SHA1Sum::Hash));
 
   return NS_OK;
 }
+
+
+// static
+bool CacheIndex::IsForcedValidEntry(const SHA1Sum::Hash *aHash)
+{
+  nsRefPtr<CacheFileHandle> handle;
+
+  CacheFileIOManager::gInstance->mHandles.GetHandle(
+    aHash, false, getter_AddRefs(handle));
+
+  if (!handle)
+    return false;
+
+  nsCString hashKey = handle->Key();
+  return CacheStorageService::Self()->IsForcedValidEntry(hashKey);
+}
+
 
 // static
 nsresult
@@ -1762,7 +1821,7 @@ CacheIndex::RemoveIndexFromDisk()
 class WriteLogHelper
 {
 public:
-  WriteLogHelper(PRFileDesc *aFD)
+  explicit WriteLogHelper(PRFileDesc *aFD)
     : mStatus(NS_OK)
     , mFD(aFD)
     , mBufSize(kMaxBufSize)
@@ -3524,18 +3583,6 @@ CacheIndex::OnFileRenamed(CacheFileHandle *aHandle, nsresult aResult)
 
 // Memory reporting
 
-namespace { // anon
-
-size_t
-CollectIndexEntryMemory(CacheIndexEntry* aEntry,
-                        mozilla::MallocSizeOf mallocSizeOf,
-                        void *arg)
-{
-  return aEntry->SizeOfExcludingThis(mallocSizeOf);
-}
-
-} // anon
-
 size_t
 CacheIndex::SizeOfExcludingThisInternal(mozilla::MallocSizeOf mallocSizeOf) const
 {
@@ -3561,9 +3608,9 @@ CacheIndex::SizeOfExcludingThisInternal(mozilla::MallocSizeOf mallocSizeOf) cons
   n += mallocSizeOf(mRWBuf);
   n += mallocSizeOf(mRWHash);
 
-  n += mIndex.SizeOfExcludingThis(&CollectIndexEntryMemory, mallocSizeOf);
-  n += mPendingUpdates.SizeOfExcludingThis(&CollectIndexEntryMemory, mallocSizeOf);
-  n += mTmpJournal.SizeOfExcludingThis(&CollectIndexEntryMemory, mallocSizeOf);
+  n += mIndex.SizeOfExcludingThis(mallocSizeOf);
+  n += mPendingUpdates.SizeOfExcludingThis(mallocSizeOf);
+  n += mTmpJournal.SizeOfExcludingThis(mallocSizeOf);
 
   // mFrecencyArray and mExpirationArray items are reported by
   // mIndex/mPendingUpdates

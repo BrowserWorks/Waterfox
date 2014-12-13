@@ -77,7 +77,8 @@ nsDirectoryService::GetCurrentProcessDirectory(nsIFile** aFile)
 
   if (dirService) {
     nsCOMPtr <nsIFile> aLocalFile;
-    dirService->Get(NS_XPCOM_INIT_CURRENT_PROCESS_DIR, NS_GET_IID(nsIFile), getter_AddRefs(aLocalFile));
+    dirService->Get(NS_XPCOM_INIT_CURRENT_PROCESS_DIR, NS_GET_IID(nsIFile),
+                    getter_AddRefs(aLocalFile));
     if (aLocalFile) {
       *aFile = aLocalFile;
       NS_ADDREF(*aFile);
@@ -86,8 +87,9 @@ nsDirectoryService::GetCurrentProcessDirectory(nsIFile** aFile)
   }
 
   nsLocalFile* localFile = new nsLocalFile;
-  if (localFile == nullptr)
+  if (!localFile) {
     return NS_ERROR_OUT_OF_MEMORY;
+  }
   NS_ADDREF(localFile);
 
 #ifdef XP_WIN
@@ -200,7 +202,7 @@ nsDirectoryService::GetCurrentProcessDirectory(nsIFile** aFile)
 nsDirectoryService* nsDirectoryService::gService = nullptr;
 
 nsDirectoryService::nsDirectoryService()
-  : mHashtable(256)
+  : mHashtable(128)
 {
 }
 
@@ -474,7 +476,8 @@ nsDirectoryService::RegisterCategoryProviders()
     strings->GetNext(entry);
 
     nsXPIDLCString contractID;
-    catman->GetCategoryEntry(XPCOM_DIRECTORY_PROVIDER_CATEGORY, entry.get(), getter_Copies(contractID));
+    catman->GetCategoryEntry(XPCOM_DIRECTORY_PROVIDER_CATEGORY, entry.get(),
+                             getter_Copies(contractID));
 
     if (contractID) {
       nsCOMPtr<nsIDirectoryServiceProvider> provider = do_GetService(contractID.get());
@@ -522,7 +525,8 @@ nsDirectoryService::GetFile(const char* aProp, bool* aPersistent,
 
   // Unless otherwise set, the core pieces of the GRE exist
   // in the current process directory.
-  else if (inAtom == nsDirectoryService::sGRE_Directory) {
+  else if (inAtom == nsDirectoryService::sGRE_Directory ||
+           inAtom == nsDirectoryService::sGRE_BinDirectory) {
     rv = GetCurrentProcessDirectory(getter_AddRefs(localFile));
   } else if (inAtom == nsDirectoryService::sOS_DriveDirectory) {
     rv = GetSpecialSystemDirectory(OS_DriveDirectory, getter_AddRefs(localFile));

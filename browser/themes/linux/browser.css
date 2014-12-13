@@ -585,9 +585,9 @@ toolbarbutton[sdk-button="true"][cui-areatype="toolbar"] > .toolbarbutton-icon {
   -moz-padding-end: 5px;
 }
 
-:-moz-any(#TabsToolbar, #nav-bar) .toolbarbutton-1:not([disabled=true]) > .toolbarbutton-menubutton-button[open] + .toolbarbutton-menubutton-dropmarker > .dropmarker-icon,
-:-moz-any(#TabsToolbar, #nav-bar) .toolbarbutton-1:not([disabled=true]):hover > .toolbarbutton-menubutton-button > .toolbarbutton-icon,
-:-moz-any(#TabsToolbar, #nav-bar) .toolbarbutton-1:not([disabled=true]):hover > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon,
+:-moz-any(#TabsToolbar, #nav-bar) .toolbarbutton-1[open]:not([disabled=true]) > .toolbarbutton-menubutton-button > .toolbarbutton-icon,
+:-moz-any(#TabsToolbar, #nav-bar) .toolbarbutton-1:not([disabled=true]):not([open]):hover > .toolbarbutton-menubutton-button > .toolbarbutton-icon,
+:-moz-any(#TabsToolbar, #nav-bar) .toolbarbutton-1:not([disabled=true]):not([open]):hover > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon,
 :-moz-any(#TabsToolbar, #nav-bar) .toolbarbutton-1:not([disabled=true]):hover > .toolbarbutton-badge-container > .toolbarbutton-icon,
 :-moz-any(#TabsToolbar, #nav-bar) .toolbarbutton-1:not([disabled=true]):hover > .toolbarbutton-icon {
   background-color: hsla(0,0%,100%,.3);
@@ -768,42 +768,6 @@ toolbarbutton[sdk-button="true"][cui-areatype="toolbar"] > .toolbarbutton-icon {
   list-style-image: url(chrome://browser/skin/undoCloseTab.png);
 }
 
-#bookmarks-button {
-  -moz-image-region: rect(0px 72px 24px 48px);
-}
-
-#new-tab-button {
-  -moz-image-region: rect(0px 96px 24px 72px);
-}
-
-#new-window-button {
-  -moz-image-region: rect(0px 120px 24px 96px);
-}
-
-#sync-button {
-  -moz-image-region: rect(0px 144px 24px 120px);
-}
-#sync-button[cui-areatype="toolbar"][status="active"] {
-  list-style-image: url("chrome://browser/skin/syncProgress-toolbar.png");
-  -moz-image-region: rect(0px 18px 18px 0px);
-}
-#sync-button[cui-areatype="menu-panel"][status="active"] {
-  list-style-image: url("chrome://browser/skin/syncProgress-menuPanel.png");
-  -moz-image-region: rect(0px 32px 32px 0px);
-}
-
-#feed-button {
-  -moz-image-region: rect(0px 168px 24px 144px);
-}
-
-#feed-button[disabled] > .toolbarbutton-icon {
-  opacity: .4;
-}
-
-#webrtc-status-button {
-  -moz-image-region: rect(0px 192px 24px 168px);
-}
-
 .unified-nav-back[_moz-menuactive] {
   list-style-image: url("moz-icon://stock/gtk-go-back-ltr?size=menu") !important;
 }
@@ -917,7 +881,6 @@ toolbarbutton[sdk-button="true"][cui-areatype="toolbar"] > .toolbarbutton-icon {
 }
 
 .urlbar-icon {
-  cursor: pointer;
   padding: 0 3px;
 }
 
@@ -1217,8 +1180,8 @@ toolbarbutton[sdk-button="true"][cui-areatype="toolbar"] > .toolbarbutton-icon {
   list-style-image: url(chrome://global/skin/icons/webapps-64.png);
 }
 
-.popup-notification-icon[popupid="mixed-content-blocked"] {
-  list-style-image: url(chrome://browser/skin/mixed-content-blocked-64.png);
+.popup-notification-icon[popupid="bad-content"] {
+  list-style-image: url(chrome://browser/skin/bad-content-blocked-64.png);
 }
 
 .popup-notification-icon[popupid="webRTC-sharingDevices"],
@@ -1357,9 +1320,14 @@ toolbarbutton[sdk-button="true"][cui-areatype="toolbar"] > .toolbarbutton-icon {
   }
 }
 
-.mixed-content-blocked-notification-icon,
-#mixed-content-blocked-notification-icon {
-  list-style-image: url(chrome://browser/skin/mixed-content-blocked-16.png);
+.bad-content-blocked-notification-icon,
+#bad-content-blocked-notification-icon {
+  list-style-image: url(chrome://browser/skin/bad-content-blocked-16.png);
+}
+
+.bad-content-unblocked-notification-icon,
+#bad-content-unblocked-notification-icon {
+  list-style-image: url(chrome://browser/skin/bad-content-unblocked-16.png);
 }
 
 .webRTC-shareDevices-notification-icon,
@@ -1560,7 +1528,6 @@ richlistitem[type~="action"][actiontype="switchtab"] > .ac-url-box > .ac-action-
 #urlbar > toolbarbutton {
   -moz-appearance: none;
   padding: 0 2px;
-  cursor: pointer;
   list-style-image: url("chrome://browser/skin/reload-stop-go.png");
 }
 
@@ -1620,7 +1587,7 @@ richlistitem[type~="action"][actiontype="switchtab"] > .ac-url-box > .ac-action-
 }
 
 /* Loop */
-#loop-call-button {
+#loop-button-throttled {
   list-style-image: url("chrome://global/skin/loop/loop-call.png");
 }
 
@@ -2072,6 +2039,7 @@ toolbarbutton.chevron > .toolbarbutton-icon {
 %include ../shared/devtools/highlighter.inc.css
 %include ../shared/devtools/commandline.inc.css
 %include ../shared/plugin-doorhanger.inc.css
+%include ../shared/badcontent-doorhanger.inc.css
 
 %include downloads/indicator.css
 
@@ -2312,10 +2280,6 @@ chatbox {
 }
 
 %include ../shared/contextmenu.inc.css
-
-#context-navigation {
-  padding-top: 4px;
-}
 
 #context-navigation > .menuitem-iconic > .menu-iconic-left {
   visibility: visible;

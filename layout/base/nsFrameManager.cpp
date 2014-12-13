@@ -84,7 +84,7 @@ static const PLDHashTableOps PlaceholderMapOps = {
 
 class nsFrameManagerBase::UndisplayedMap {
 public:
-  UndisplayedMap(uint32_t aNumBuckets = 16);
+  explicit UndisplayedMap(uint32_t aNumBuckets = 16);
   ~UndisplayedMap(void);
 
   UndisplayedNode* GetFirstNode(nsIContent* aParentContent);
@@ -171,7 +171,7 @@ nsFrameManager::RegisterPlaceholderFrame(nsPlaceholderFrame* aPlaceholderFrame)
                   "unexpected frame type");
   if (!mPlaceholderMap.ops) {
     PL_DHashTableInit(&mPlaceholderMap, &PlaceholderMapOps, nullptr,
-                      sizeof(PlaceholderMapEntry), 16);
+                      sizeof(PlaceholderMapEntry));
   }
   PlaceholderMapEntry *entry = static_cast<PlaceholderMapEntry*>(PL_DHashTableOperate(&mPlaceholderMap,
                               aPlaceholderFrame->GetOutOfFlowFrame(),

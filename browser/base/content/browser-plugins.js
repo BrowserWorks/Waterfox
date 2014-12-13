@@ -106,8 +106,8 @@ var gPluginHandler = {
     let pluginRect = plugin.getBoundingClientRect();
     // XXX bug 446693. The text-shadow on the submitted-report text at
     //     the bottom causes scrollHeight to be larger than it should be.
-    let overflows = (overlay.scrollWidth > pluginRect.width) ||
-                    (overlay.scrollHeight - 5 > pluginRect.height);
+    let overflows = (overlay.scrollWidth > Math.ceil(pluginRect.width)) ||
+                    (overlay.scrollHeight - 5 > Math.ceil(pluginRect.height));
     if (overflows) {
       return false;
     }
@@ -504,8 +504,7 @@ var gPluginHandler = {
         keyVals.PluginContentURL = plugin.ownerDocument.URL;
     }
 
-    let pluginProcessType = Services.crashmanager.PROCESS_TYPE_PLUGIN;
-    this.CrashSubmit.submit(pluginDumpID, { processType: pluginProcessType,
+    this.CrashSubmit.submit(pluginDumpID, { recordSubmission: true,
                                             extraExtraKeyVals: keyVals });
     if (browserDumpID)
       this.CrashSubmit.submit(browserDumpID);
@@ -1223,13 +1222,15 @@ var gPluginHandler = {
       let observer = {
         QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
                                                Ci.nsISupportsWeakReference]),
-        observe : function(subject, topic, data) {
+        observe : (subject, topic, data) => {
           let propertyBag = subject;
           if (!(propertyBag instanceof Ci.nsIPropertyBag2))
             return;
           // Ignore notifications for other crashes.
           if (propertyBag.get("minidumpID") != pluginDumpID)
             return;
+
+          let statusDiv = this.getPluginUI(plugin, "submitStatus");
           statusDiv.setAttribute("status", data);
         },
 

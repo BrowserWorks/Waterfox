@@ -35,7 +35,6 @@ namespace types {
 inline jit::IonScript *
 CompilerOutput::ion() const
 {
-#ifdef JS_ION
     // Note: If type constraints are generated before compilation has finished
     // (i.e. after IonBuilder but before CodeGenerator::link) then a valid
     // CompilerOutput may not yet have an associated IonScript.
@@ -43,9 +42,6 @@ CompilerOutput::ion() const
     jit::IonScript *ion = jit::GetIonScript(script(), mode());
     JS_ASSERT(ion != ION_COMPILING_SCRIPT);
     return ion;
-#else
-    MOZ_CRASH("Invalid kind of CompilerOutput");
-#endif
 }
 
 inline CompilerOutput*
@@ -663,13 +659,9 @@ TypeScript::BytecodeTypes(JSScript *script, jsbytecode *pc, uint32_t *bytecodeMa
 TypeScript::BytecodeTypes(JSScript *script, jsbytecode *pc)
 {
     JS_ASSERT(CurrentThreadCanAccessRuntime(script->runtimeFromMainThread()));
-#ifdef JS_ION
     uint32_t *hint = script->baselineScript()->bytecodeTypeMap() + script->nTypeSets();
     return BytecodeTypes(script, pc, script->baselineScript()->bytecodeTypeMap(),
                          hint, script->types->typeArray());
-#else
-    MOZ_CRASH();
-#endif
 }
 
 struct AllocationSiteKey : public DefaultHasher<AllocationSiteKey> {
@@ -1116,6 +1108,16 @@ HeapTypeSet::setNonWritableProperty(ExclusiveContext *cx)
     newPropertyState(cx);
 }
 
+inline void
+HeapTypeSet::setNonConstantProperty(ExclusiveContext *cx)
+{
+    if (flags & TYPE_FLAG_NON_CONSTANT_PROPERTY)
+        return;
+
+    flags |= TYPE_FLAG_NON_CONSTANT_PROPERTY;
+    newPropertyState(cx);
+}
+
 inline unsigned
 TypeSet::getObjectCount() const
 {
@@ -1285,28 +1287,14 @@ TypeObject::getProperty(unsigned i)
 }
 
 inline void
-TypeObjectAddendum::writeBarrierPre(TypeObjectAddendum *type)
-{
-#ifdef JSGC_INCREMENTAL
-    if (!type)
-        return;
-
-    switch (type->kind) {
-      case NewScript:
-        return TypeNewScript::writeBarrierPre(type->asNewScript());
-    }
-#endif
-}
-
-inline void
 TypeNewScript::writeBarrierPre(TypeNewScript *newScript)
 {
 #ifdef JSGC_INCREMENTAL
-    if (!newScript || !newScript->fun->runtimeFromAnyThread()->needsBarrier())
+    if (!newScript || !newScript->fun->runtimeFromAnyThread()->needsIncrementalBarrier())
         return;
 
     JS::Zone *zone = newScript->fun->zoneFromAnyThread();
-    if (zone->needsBarrier()) {
+    if (zone->needsIncrementalBarrier()) {
         MarkObject(zone->barrierTracer(), &newScript->fun, "write barrier");
         MarkObject(zone->barrierTracer(), &newScript->templateObject, "write barrier");
     }

@@ -239,7 +239,11 @@ class MochiRemote(Mochitest):
         self.remoteLog = options.remoteLogFile
         self.localLog = options.logFile
         self._automation.deleteANRs()
+        self._automation.deleteTombstones()
         self.certdbNew = True
+        self.remoteNSPR = os.path.join(options.remoteTestRoot, "nspr")
+        self._dm.removeDir(self.remoteNSPR);
+        self._dm.mkDir(self.remoteNSPR);
 
     def cleanup(self, options):
         if self._dm.fileExists(self.remoteLog):
@@ -248,6 +252,9 @@ class MochiRemote(Mochitest):
         else:
             self.log.warning("Unable to retrieve log file (%s) from remote device" % self.remoteLog)
         self._dm.removeDir(self.remoteProfile)
+        blobberUploadDir = os.environ.get('MOZ_UPLOAD_DIR', None)
+        if blobberUploadDir:
+            self._dm.getDirectory(self.remoteNSPR, blobberUploadDir)
         Mochitest.cleanup(self, options)
 
     def findPath(self, paths, filename = None):
@@ -365,6 +372,7 @@ class MochiRemote(Mochitest):
     def buildURLOptions(self, options, env):
         self.localLog = options.logFile
         options.logFile = self.remoteLog
+        options.fileLevel = 'INFO'
         options.profilePath = self.localProfile
         env["MOZ_HIDE_RESULTS_TABLE"] = "1"
         retVal = Mochitest.buildURLOptions(self, options, env)
@@ -553,6 +561,9 @@ class MochiRemote(Mochitest):
 
     def buildBrowserEnv(self, options, debugger=False):
         browserEnv = Mochitest.buildBrowserEnv(self, options, debugger=debugger)
+        # override nsprLogs to avoid processing in Mochitest base class
+        self.nsprLogs = None
+        browserEnv["NSPR_LOG_FILE"] = os.path.join(self.remoteNSPR, self.nsprLogName)
         self.buildRobotiumConfig(options, browserEnv)
         return browserEnv
 
@@ -595,8 +606,7 @@ def main():
     mochitest = MochiRemote(auto, dm, options)
 
     log = mochitest.log
-    structured_logger = mochitest.structured_logger
-    message_logger.logger = mochitest.structured_logger
+    message_logger.logger = log
     mochitest.message_logger = message_logger
 
     if (options == None):
@@ -695,7 +705,7 @@ def main():
 
             active_tests.append(test)
 
-        structured_logger.suite_start([t['name'] for t in active_tests])
+        log.suite_start([t['name'] for t in active_tests])
 
         for test in active_tests:
             # When running in a loop, we need to create a fresh profile for each cycle
@@ -709,6 +719,7 @@ def main():
             options.browserArgs = ["instrument", "-w", "-e", "deviceroot", deviceRoot, "-e", "class"]
             options.browserArgs.append("org.mozilla.gecko.tests.%s" % test['name'])
             options.browserArgs.append("org.mozilla.roboexample.test/org.mozilla.gecko.FennecInstrumentationTestRunner")
+            mochitest.nsprLogName = "nspr-%s.log" % test['name']
 
             # If the test is for checking the import from bookmarks then make sure there is data to import
             if test['name'] == "testImportFromAndroid":
@@ -779,6 +790,7 @@ def main():
             if retVal == 0:
                 retVal = overallResult
     else:
+        mochitest.nsprLogName = "nspr.log"
         try:
             dm.recordLogcat()
             retVal = mochitest.runTests(options)

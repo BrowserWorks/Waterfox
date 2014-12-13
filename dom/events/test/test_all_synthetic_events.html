@@ -60,6 +60,10 @@ const kEventConstructors = {
                                                           return new BluetoothDiscoveryStateChangedEvent(aName, aProps);
                                                        },
                                              },
+  BluetoothPairingEvent:                     { create: function (aName, aProps) {
+                                                          return new BluetoothPairingEvent(aName, aProps);
+                                                       },
+                                             },
   BluetoothStatusChangedEvent:               { create: function (aName, aProps) {
                                                           return new BluetoothStatusChangedEvent(aName, aProps);
                                                        },
@@ -207,6 +211,10 @@ const kEventConstructors = {
                                                          return new MediaStreamEvent(aName, aProps);
                                                        },
                                              },
+  MediaStreamTrackEvent:                     { create: function (aName, aProps) {
+                                                         return new MediaStreamTrackEvent(aName, aProps);
+                                                       },
+                                             },
   MessageEvent:                              { create: function (aName, aProps) {
                                                          var e = new MessageEvent("messageevent", { bubbles: aProps.bubbles,
                                                              cancelable: aProps.cancelable, data: aProps.data, origin: aProps.origin,
@@ -257,12 +265,20 @@ const kEventConstructors = {
                                                          return new MozMmsEvent(aName, aProps);
                                                        },
                                              },
+  MozNFCPeerEvent:                           { create: function (aName, aProps) {
+                                                         return new MozNFCPeerEvent(aName, aProps);
+                                                       },
+                                             },
   MozOtaStatusEvent:                         { create: function (aName, aProps) {
                                                           return new MozOtaStatusEvent(aName, aProps);
                                                        },
                                              },
   MozSettingsEvent:                          { create: function (aName, aProps) {
                                                          return new MozSettingsEvent(aName, aProps);
+                                                       },
+                                             },
+  MozSettingsTransactionEvent:               { create: function (aName, aProps) {
+                                                         return new MozSettingsTransactionEvent(aName, aProps);
                                                        },
                                              },
   MozSmsEvent:                               { create: function (aName, aProps) {

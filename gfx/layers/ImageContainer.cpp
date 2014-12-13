@@ -6,7 +6,7 @@
 
 #include "ImageContainer.h"
 #include <string.h>                     // for memcpy, memset
-#include "SharedTextureImage.h"         // for SharedTextureImage
+#include "GLImages.h"                   // for SurfaceTextureImage
 #include "gfx2DGlue.h"
 #include "gfxPlatform.h"                // for gfxPlatform
 #include "gfxUtils.h"                   // for gfxUtils
@@ -56,6 +56,10 @@ ImageFactory::CreateImage(ImageFormat aFormat,
     img = new GrallocImage();
     return img.forget();
   }
+  if (aFormat == ImageFormat::OVERLAY_IMAGE) {
+    img = new OverlayImage();
+    return img.forget();
+  }
 #endif
   if (aFormat == ImageFormat::PLANAR_YCBCR) {
     img = new PlanarYCbCrImage(aRecycleBin);
@@ -65,8 +69,14 @@ ImageFactory::CreateImage(ImageFormat aFormat,
     img = new CairoImage();
     return img.forget();
   }
-  if (aFormat == ImageFormat::SHARED_TEXTURE) {
-    img = new SharedTextureImage();
+#ifdef MOZ_WIDGET_ANDROID
+  if (aFormat == ImageFormat::SURFACE_TEXTURE) {
+    img = new SurfaceTextureImage();
+    return img.forget();
+  }
+#endif
+  if (aFormat == ImageFormat::EGLIMAGE) {
+    img = new EGLImageImage();
     return img.forget();
   }
 #ifdef XP_MACOSX
@@ -146,6 +156,17 @@ ImageContainer::CreateImage(ImageFormat aFormat)
 {
   ReentrantMonitorAutoEnter mon(mReentrantMonitor);
 
+#ifdef MOZ_WIDGET_GONK
+  if (aFormat == ImageFormat::OVERLAY_IMAGE) {
+    if (mImageClient && mImageClient->GetTextureInfo().mCompositableType != CompositableType::IMAGE_OVERLAY) {
+      // If this ImageContainer is async but the image type mismatch, fix it here
+      if (ImageBridgeChild::IsCreated()) {
+        ImageBridgeChild::DispatchReleaseImageClient(mImageClient);
+        mImageClient = ImageBridgeChild::GetSingleton()->CreateImageClient(CompositableType::IMAGE_OVERLAY).drop();
+      }
+    }
+  }
+#endif
   if (mImageClient) {
     nsRefPtr<Image> img = mImageClient->CreateImage(aFormat);
     if (img) {
@@ -575,8 +596,7 @@ PlanarYCbCrImage::GetAsSourceSurface()
   }
 
   RefPtr<gfx::DataSourceSurface> surface = gfx::Factory::CreateDataSourceSurface(size, format);
-  if (!surface) {
-    NS_WARNING("Failed to create SourceSurface.");
+  if (NS_WARN_IF(!surface)) {
     return nullptr;
   }
 
@@ -594,8 +614,7 @@ RemoteBitmapImage::GetAsSourceSurface()
                          ? gfx::SurfaceFormat::B8G8R8X8
                          : gfx::SurfaceFormat::B8G8R8A8;
   RefPtr<gfx::DataSourceSurface> newSurf = gfx::Factory::CreateDataSourceSurface(mSize, fmt);
-  if (!newSurf) {
-    NS_WARNING("Failed to create SourceSurface.");
+  if (NS_WARN_IF(!newSurf)) {
     return nullptr;
   }
 

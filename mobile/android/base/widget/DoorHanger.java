@@ -65,9 +65,9 @@ public class DoorHanger extends LinearLayout {
     private List<PromptInput> mInputs;
     private CheckBox mCheckBox;
 
-    private int mPersistence = 0;
-    private boolean mPersistWhileVisible = false;
-    private long mTimeout = 0;
+    private int mPersistence;
+    private boolean mPersistWhileVisible;
+    private long mTimeout;
 
     // Color used for dividers above and between buttons.
     private int mDividerColor;
@@ -121,10 +121,10 @@ public class DoorHanger extends LinearLayout {
         if (theme == Theme.LIGHT) {
             // The default styles declared in doorhanger.xml are light-themed, so we just
             // need to set the divider color that we'll use in addButton.
-            mDividerColor = mResources.getColor(R.color.doorhanger_divider_light);
+            mDividerColor = mResources.getColor(R.color.divider_light);
 
         } else if (theme == Theme.DARK) {
-            mDividerColor = mResources.getColor(R.color.doorhanger_divider_dark);
+            mDividerColor = mResources.getColor(R.color.divider_dark);
 
             // Set a dark background, and use a smaller text size for dark-themed DoorHangers.
             setBackgroundColor(mResources.getColor(R.color.doorhanger_background_dark));

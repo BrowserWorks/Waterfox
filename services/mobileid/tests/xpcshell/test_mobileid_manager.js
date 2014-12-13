@@ -7,16 +7,6 @@ const Cm = Components.manager;
 
 Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-
-// We need to set the server url pref before importing MobileIdentityManager.
-// Otherwise, it won't be able to import it as getting the non existing pref
-// will throw.
-Services.prefs.setCharPref("services.mobileid.server.uri",
-                           "https://dummyurl.com");
-
-// Set do_printging on.
-Services.prefs.setCharPref("services.mobileid.loglevel", "do_print");
-
 Cu.import("resource://gre/modules/MobileIdentityManager.jsm");
 Cu.import("resource://gre/modules/MobileIdentityCommon.jsm");
 
@@ -39,9 +29,58 @@ const ANOTHER_PHONE_NUMBER = "+44123123123";
 const VERIFICATION_CODE = "123456";
 const SESSION_TOKEN = "aSessionToken";
 const ICC_ID = "aIccId";
+const ANOTHER_ICC_ID = "anotherIccId";
 const MNC = "aMnc";
-const MCC = 214;
+const ANOTHER_MNC = "anotherMnc";
+const MCC = "aMcc";
+const ANOTHER_MCC = "anotherMcc";
 const OPERATOR = "aOperator";
+const ANOTHER_OPERATOR = "anotherOperator";
+const RADIO_INTERFACE = {
+  rilContext: {
+    iccInfo: {
+      iccid: ICC_ID,
+      mcc: MCC,
+      mnc: MNC,
+      msisdn: PHONE_NUMBER,
+      operator: OPERATOR
+    }
+  },
+  voice: {
+    network: {
+      shortName: OPERATOR
+    },
+    roaming: false
+  },
+  data: {
+    network: {
+      shortName: OPERATOR
+    }
+  }
+};
+const ANOTHER_RADIO_INTERFACE = {
+  rilContext: {
+    iccInfo: {
+      iccid: ANOTHER_ICC_ID,
+      mcc: ANOTHER_MCC,
+      mnc: ANOTHER_MNC,
+      msisdn: ANOTHER_PHONE_NUMBER,
+      operator: ANOTHER_OPERATOR
+    }
+  },
+  voice: {
+    network: {
+      shortName: ANOTHER_OPERATOR
+    },
+    roaming: false
+  },
+  data: {
+    network: {
+      shortName: ANOTHER_OPERATOR
+    }
+  }
+};
+
 const CERTIFICATE = "eyJhbGciOiJEUzI1NiJ9.eyJsYXN0QXV0aEF0IjoxNDA0NDY5NzkyODc3LCJ2ZXJpZmllZE1TSVNETiI6IiszMTYxNzgxNTc1OCIsInB1YmxpYy1rZXkiOnsiYWxnb3JpdGhtIjoiRFMiLCJ5IjoiNGE5YzkzNDY3MWZhNzQ3YmM2ZjMyNjE0YTg1MzUyZjY5NDcwMDdhNTRkMDAxMDY4OWU5ZjJjZjc0ZGUwYTEwZTRlYjlmNDk1ZGFmZTA0NGVjZmVlNDlkN2YwOGU4ODQyMDJiOTE5OGRhNWZhZWE5MGUzZjRmNzE1YzZjNGY4Yjc3MGYxZTU4YWZhNDM0NzVhYmFiN2VlZGE1MmUyNjk2YzFmNTljNzMzYjFlYzBhNGNkOTM1YWIxYzkyNzAxYjNiYTA5ZDRhM2E2MzNjNTJmZjE2NGYxMWY3OTg1YzlmZjY3ZThmZDFlYzA2NDU3MTdkMjBiNDE4YmM5M2YzYzVkNCIsInAiOiJmZjYwMDQ4M2RiNmFiZmM1YjQ1ZWFiNzg1OTRiMzUzM2Q1NTBkOWYxYmYyYTk5MmE3YThkYWE2ZGMzNGY4MDQ1YWQ0ZTZlMGM0MjlkMzM0ZWVlYWFlZmQ3ZTIzZDQ4MTBiZTAwZTRjYzE0OTJjYmEzMjViYTgxZmYyZDVhNWIzMDVhOGQxN2ViM2JmNGEwNmEzNDlkMzkyZTAwZDMyOTc0NGE1MTc5MzgwMzQ0ZTgyYTE4YzQ3OTMzNDM4Zjg5MWUyMmFlZWY4MTJkNjljOGY3NWUzMjZjYjcwZWEwMDBjM2Y3NzZkZmRiZDYwNDYzOGMyZWY3MTdmYzI2ZDAyZTE3IiwicSI6ImUyMWUwNGY5MTFkMWVkNzk5MTAwOGVjYWFiM2JmNzc1OTg0MzA5YzMiLCJnIjoiYzUyYTRhMGZmM2I3ZTYxZmRmMTg2N2NlODQxMzgzNjlhNjE1NGY0YWZhOTI5NjZlM2M4MjdlMjVjZmE2Y2Y1MDhiOTBlNWRlNDE5ZTEzMzdlMDdhMmU5ZTJhM2NkNWRlYTcwNGQxNzVmOGViZjZhZjM5N2Q2OWUxMTBiOTZhZmIxN2M3YTAzMjU5MzI5ZTQ4MjliMGQwM2JiYzc4OTZiMTViNGFkZTUzZTEzMDg1OGNjMzRkOTYyNjlhYTg5MDQxZjQwOTEzNmM3MjQyYTM4ODk1YzlkNWJjY2FkNGYzODlhZjFkN2E0YmQxMzk4YmQwNzJkZmZhODk2MjMzMzk3YSJ9LCJwcmluY2lwYWwiOiIwMzgxOTgyYS0xZTgzLTI1NjYtNjgzZS05MDRmNDA0NGM1MGRAbXNpc2RuLWRldi5zdGFnZS5tb3phd3MubmV0IiwiaWF0IjoxNDA0NDY5NzgyODc3LCJleHAiOjE0MDQ0OTEzOTI4NzcsImlzcyI6Im1zaXNkbi1kZXYuc3RhZ2UubW96YXdzLm5ldCJ9."
 
 // === Helpers ===
@@ -138,7 +177,8 @@ MockUi.prototype = {
   __proto__: Mock.prototype,
 
   _startFlowResult: {
-    phoneNumber: PHONE_NUMBER
+    phoneNumber: PHONE_NUMBER,
+    mcc: MNC
   },
 
   _verifyCodePromptResult: {
@@ -362,7 +402,7 @@ function cleanup() {
   MobileIdentityManager.credStore = kMobileIdentityCredStore;
   MobileIdentityManager.client = kMobileIdentityClient;
   MobileIdentityManager.ui = null;
-  MobileIdentityManager.iccInfo = null;
+  MobileIdentityManager._iccInfo = [];
   removePermission(ORIGIN);
 }
 
@@ -393,6 +433,7 @@ add_test(function() {
   MobileIdentityManager.credStore = credStore;
   let client = new MockClient();
   MobileIdentityManager.client = client;
+  MobileIdentityManager._iccInfo = [];
 
   let promiseId = Date.now();
   let mm = {
@@ -416,7 +457,7 @@ add_test(function() {
       credStore._("add").call(1).arg(2, PHONE_NUMBER);
       credStore._("add").call(1).arg(3, ORIGIN);
       credStore._("add").call(1).arg(4, SESSION_TOKEN);
-      credStore._("add").call(1).arg(5, null);
+      credStore._("add").call(1).arg(5, []);
 
 
       // MockUI.
@@ -434,7 +475,9 @@ add_test(function() {
       client._("smsMtVerify").callsLength(1);
       client._("smsMtVerify").call(1).arg(1, SESSION_TOKEN);
       client._("smsMtVerify").call(1).arg(2, PHONE_NUMBER);
-      client._("smsMtVerify").call(1).arg(3, true);
+      client._("smsMtVerify").call(1).arg(3, MNC);
+      client._("smsMtVerify").call(1).arg(4, undefined);
+      client._("smsMtVerify").call(1).arg(5, true);
       client._("verifyCode").callsLength(1);
       client._("verifyCode").call(1).arg(1, SESSION_TOKEN);
       client._("verifyCode").call(1).arg(2, {
@@ -670,7 +713,9 @@ add_test(function() {
       client._("smsMtVerify").callsLength(1);
       client._("smsMtVerify").call(1).arg(1, _sessionToken);
       client._("smsMtVerify").call(1).arg(2, PHONE_NUMBER);
-      client._("smsMtVerify").call(1).arg(3, true);
+      client._("smsMtVerify").call(1).arg(3, MNC);
+      client._("smsMtVerify").call(1).arg(4, undefined);
+      client._("smsMtVerify").call(1).arg(5, true);
       client._("verifyCode").callsLength(1);
       client._("verifyCode").call(1).arg(1, _sessionToken);
       client._("verifyCode").call(1).arg(2, {
@@ -893,6 +938,8 @@ add_test(function() {
   let client = new MockClient();
   MobileIdentityManager.client = client;
 
+  MobileIdentityManager._iccInfo = [];
+
   let promiseId = Date.now();
   let mm = {
     sendAsyncMessage: function(aMsg, aData) {
@@ -913,10 +960,10 @@ add_test(function() {
       credStore._("add").call(1).arg(2, PHONE_NUMBER);
       credStore._("add").call(1).arg(3, ORIGIN);
       credStore._("add").call(1).arg(4, SESSION_TOKEN);
-      credStore._("add").call(1).arg(5, null);
+      credStore._("add").call(1).arg(5, []);
       credStore._("setDeviceIccIds").callsLength(1);
       credStore._("setDeviceIccIds").call(1).arg(1, PHONE_NUMBER);
-      credStore._("setDeviceIccIds").call(1).arg(2, null);
+      credStore._("setDeviceIccIds").call(1).arg(2, []);
 
       // MockUI.
       ui._("startFlow").callsLength(1);
@@ -983,6 +1030,8 @@ add_test(function() {
   });
   MobileIdentityManager.client = client;
 
+  MobileIdentityManager._iccInfo = [];
+
   let promiseId = Date.now();
   let mm = {
     sendAsyncMessage: function(aMsg, aData) {
@@ -1005,7 +1054,7 @@ add_test(function() {
       credStore._("add").call(1).arg(2, ANOTHER_PHONE_NUMBER);
       credStore._("add").call(1).arg(3, ORIGIN);
       credStore._("add").call(1).arg(4, _sessionToken);
-      credStore._("add").call(1).arg(5, null);
+      credStore._("add").call(1).arg(5, []);
       credStore._("setDeviceIccIds").callsLength(0);
       credStore._("removeOrigin").callsLength(1);
       credStore._("removeOrigin").call(1).arg(1, PHONE_NUMBER);
@@ -1090,7 +1139,7 @@ add_test(function() {
       credStore._("add").call(1).arg(2, PHONE_NUMBER);
       credStore._("add").call(1).arg(3, ORIGIN);
       credStore._("add").call(1).arg(4, _sessionToken);
-      credStore._("add").call(1).arg(5, null);
+      credStore._("add").call(1).arg(5, []);
       credStore._("setDeviceIccIds").callsLength(1);
       credStore._("removeOrigin").callsLength(0);
 
@@ -1180,7 +1229,7 @@ add_test(function() {
       credStore._("add").call(1).arg(2, ANOTHER_PHONE_NUMBER);
       credStore._("add").call(1).arg(3, ORIGIN);
       credStore._("add").call(1).arg(4, _sessionToken);
-      credStore._("add").call(1).arg(5, null);
+      credStore._("add").call(1).arg(5, []);
       credStore._("setDeviceIccIds").callsLength(0);
       credStore._("removeOrigin").callsLength(1);
       credStore._("removeOrigin").call(1).arg(1, PHONE_NUMBER);
@@ -1229,7 +1278,7 @@ add_test(function() {
     sessionToken: _sessionToken,
     msisdn: PHONE_NUMBER,
     origin: ORIGIN,
-    deviceIccIds: null
+    deviceIccIds: []
   };
 
   let ui = new MockUi({
@@ -1274,7 +1323,7 @@ add_test(function() {
       credStore._("add").call(1).arg(2, PHONE_NUMBER);
       credStore._("add").call(1).arg(3, ORIGIN);
       credStore._("add").call(1).arg(4, SESSION_TOKEN);
-      credStore._("add").call(1).arg(5, null);
+      credStore._("add").call(1).arg(5, []);
       credStore._("setDeviceIccIds").callsLength(0);
       credStore._("delete").callsLength(1);
       credStore._("delete").call(1).arg(1, PHONE_NUMBER);
@@ -1294,6 +1343,108 @@ add_test(function() {
       do_test_finished();
       run_next_test();
     }
+  };
+
+  addPermission(Ci.nsIPermissionManager.ALLOW_ACTION);
+
+  MobileIdentityManager.receiveMessage({
+    name: GET_ASSERTION_IPC_MSG,
+    principal: PRINCIPAL,
+    target: mm,
+    json: {
+      promiseId: promiseId,
+      options: {}
+    }
+  });
+});
+
+add_test(function() {
+  do_print("= ICC info change =");
+
+  do_register_cleanup(cleanup);
+
+  do_test_pending();
+
+  let _sessionToken = Date.now();
+
+  MobileIdentityManager._iccInfo = null;
+  MobileIdentityManager._iccIds = null;
+
+  MobileIdentityManager._ril = {
+    _interfaces: [RADIO_INTERFACE, ANOTHER_RADIO_INTERFACE],
+    get numRadioInterfaces() {
+      return this._interfaces.length;
+    },
+
+    getRadioInterface: function(aIndex) {
+      return this._interfaces[aIndex];
+    }
+  };
+
+  MobileIdentityManager._mobileConnectionService = {
+    _interfaces: [RADIO_INTERFACE, ANOTHER_RADIO_INTERFACE],
+    getItemByServiceId: function(aIndex) {
+      return this._interfaces[aIndex];
+    }
+  };
+
+  MobileIdentityManager._iccProvider = {
+    _listeners: [],
+    registerIccMsg: function(aClientId, aIccListener) {
+      this._listeners.push(aIccListener);
+    },
+    unregisterIccMsg: function() {
+      this._listeners.pop();
+    }
+  };
+
+  let ui = new MockUi();
+  ui.startFlow = function() {
+    // At this point we've already built the ICC cache.
+    let interfaces = MobileIdentityManager._ril._interfaces;
+    for (let i = 0; i < interfaces.length; i++) {
+      let interfaceIccInfo = interfaces[i].rilContext.iccInfo;
+      let mIdIccInfo = MobileIdentityManager._iccInfo[i];
+      do_check_eq(interfaceIccInfo.iccid, mIdIccInfo.iccId);
+      do_check_eq(interfaceIccInfo.mcc, mIdIccInfo.mcc);
+      do_check_eq(interfaceIccInfo.mnc, mIdIccInfo.mnc);
+      do_check_eq(interfaceIccInfo.msisdn, mIdIccInfo.msisdn);
+      do_check_eq(interfaceIccInfo.operator, mIdIccInfo.operator);
+    }
+
+    // We should have listeners for each valid icc.
+    do_check_eq(MobileIdentityManager._iccProvider._listeners.length, 2);
+
+    // We can mock an ICC change event at this point.
+    MobileIdentityManager._iccProvider._listeners[0].notifyIccInfoChanged();
+
+    // After the ICC change event the caches should be null.
+    do_check_null(MobileIdentityManager._iccInfo);
+    do_check_null(MobileIdentityManager._iccIds);
+
+    // And we should have unregistered all listeners for ICC change events.
+    do_check_eq(MobileIdentityManager._iccProvider._listeners.length, 0);
+
+    do_test_finished();
+    run_next_test();
+  };
+  MobileIdentityManager.ui = ui;
+
+  let credStore = new MockCredStore();
+  credStore.getByOrigin = function() {
+    // Initially the ICC caches should be null.
+    do_check_null(MobileIdentityManager._iccInfo);
+    do_check_null(MobileIdentityManager._iccIds);
+    return Promise.resolve(null);
+  };
+  MobileIdentityManager.credStore = credStore;
+
+  let client = new MockClient();
+  MobileIdentityManager.client = client;
+
+  let promiseId = Date.now();
+  let mm = {
+    sendAsyncMessage: function() {}
   };
 
   addPermission(Ci.nsIPermissionManager.ALLOW_ACTION);

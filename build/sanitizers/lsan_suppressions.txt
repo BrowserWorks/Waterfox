@@ -28,12 +28,23 @@ leak:GI___strdup
 
 
 ###
-### Many leaks only affect some test suites.  The suite annotations are not checked.
+### Bug 979928 - WebRTC leaks. m2, m3.
 ###
 
-# Bug 979928 - WebRTC is leaky. m2, m3
-leak:/media/mtransport/
-leak:/media/webrtc/signaling/
+# WebRTC leaks added for Mochitest 2.
+leak:NR_reg_init
+# nr_reg_local_init should be redundant with NR_reg_init, but with 34 on Aurora
+# we get less stack frames for some reason.
+leak:nr_reg_local_init
+leak:r_log_register
+leak:nr_reg_set
+
+# Additional WebRTC leak suppressions added for Mochitest 3.
+leak:mozilla::TransportLayerDtls::Setup
+
+###
+### Many leaks only affect some test suites.  The suite annotations are not checked.
+###
 
 # Bug 981195 - Small leak in the parser. m4
 leak:TypeCompartment::fixObjectType
@@ -58,9 +69,6 @@ leak:event_base_once
 
 # Bug 1021854 - nsFileStreamBase::DoOpen() leaking fds. bc1, oth
 leak:nsLocalFile::OpenNSPRFileDesc
-
-# Bug 1023585 - Leak of array buffer in JSStructuredCloneWriter::transferOwnership(). m1
-leak:AllocateArrayBufferContents
 
 # Bug 1022010 - Small leak under _render_glyph_outline. bc1
 leak:_render_glyph_outline

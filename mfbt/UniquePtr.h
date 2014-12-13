@@ -93,6 +93,10 @@ namespace mozilla {
  *   UniquePtr<int> b2(b1); // BAD: can't copy a UniquePtr
  *   UniquePtr<int> b3 = b1; // BAD: can't copy-assign a UniquePtr
  *
+ * (Note that changing a UniquePtr to store a direct |new| expression is
+ * permitted, but usually you should use MakeUnique, defined at the end of this
+ * header.)
+ *
  * A few miscellaneous notes:
  *
  * UniquePtr, when not instantiated for an array type, can be move-constructed
@@ -150,173 +154,180 @@ namespace mozilla {
 template<typename T, class D>
 class UniquePtr
 {
-  public:
-    typedef T* Pointer;
-    typedef T ElementType;
-    typedef D DeleterType;
+public:
+  typedef T* Pointer;
+  typedef T ElementType;
+  typedef D DeleterType;
 
-  private:
-    Pair<Pointer, DeleterType> tuple;
+private:
+  Pair<Pointer, DeleterType> mTuple;
 
-    Pointer& ptr() { return tuple.first(); }
-    const Pointer& ptr() const { return tuple.first(); }
+  Pointer& ptr() { return mTuple.first(); }
+  const Pointer& ptr() const { return mTuple.first(); }
 
-    DeleterType& del() { return tuple.second(); }
-    const DeleterType& del() const { return tuple.second(); }
+  DeleterType& del() { return mTuple.second(); }
+  const DeleterType& del() const { return mTuple.second(); }
 
-  public:
-    /**
-     * Construct a UniquePtr containing |nullptr|.
-     */
-    MOZ_CONSTEXPR UniquePtr()
-      : tuple(static_cast<Pointer>(nullptr), DeleterType())
-    {
-      static_assert(!IsPointer<D>::value, "must provide a deleter instance");
-      static_assert(!IsReference<D>::value, "must provide a deleter instance");
+public:
+  /**
+   * Construct a UniquePtr containing |nullptr|.
+   */
+  MOZ_CONSTEXPR UniquePtr()
+    : mTuple(static_cast<Pointer>(nullptr), DeleterType())
+  {
+    static_assert(!IsPointer<D>::value, "must provide a deleter instance");
+    static_assert(!IsReference<D>::value, "must provide a deleter instance");
+  }
+
+  /**
+   * Construct a UniquePtr containing |aPtr|.
+   */
+  explicit UniquePtr(Pointer aPtr)
+    : mTuple(aPtr, DeleterType())
+  {
+    static_assert(!IsPointer<D>::value, "must provide a deleter instance");
+    static_assert(!IsReference<D>::value, "must provide a deleter instance");
+  }
+
+  UniquePtr(Pointer aPtr,
+            typename Conditional<IsReference<D>::value,
+                                 D,
+                                 const D&>::Type aD1)
+    : mTuple(aPtr, aD1)
+  {}
+
+  // If you encounter an error with MSVC10 about RemoveReference below, along
+  // the lines that "more than one partial specialization matches the template
+  // argument list": don't use UniquePtr<T, reference to function>!  Ideally
+  // you should make deletion use the same function every time, using a
+  // deleter policy:
+  //
+  //   // BAD, won't compile with MSVC10, deleter doesn't need to be a
+  //   // variable at all
+  //   typedef void (&FreeSignature)(void*);
+  //   UniquePtr<int, FreeSignature> ptr((int*) malloc(sizeof(int)), free);
+  //
+  //   // GOOD, compiles with MSVC10, deletion behavior statically known and
+  //   // optimizable
+  //   struct DeleteByFreeing
+  //   {
+  //     void operator()(void* aPtr) { free(aPtr); }
+  //   };
+  //
+  // If deletion really, truly, must be a variable: you might be able to work
+  // around this with a deleter class that contains the function reference.
+  // But this workaround is untried and untested, because variable deletion
+  // behavior really isn't something you should use.
+  UniquePtr(Pointer aPtr,
+            typename RemoveReference<D>::Type&& aD2)
+    : mTuple(aPtr, Move(aD2))
+  {
+    static_assert(!IsReference<D>::value,
+                  "rvalue deleter can't be stored by reference");
+  }
+
+  UniquePtr(UniquePtr&& aOther)
+    : mTuple(aOther.release(), Forward<DeleterType>(aOther.getDeleter()))
+  {}
+
+  template<typename N>
+  UniquePtr(N,
+            typename EnableIf<IsNullPointer<N>::value, int>::Type aDummy = 0)
+    : mTuple(static_cast<Pointer>(nullptr), DeleterType())
+  {
+    static_assert(!IsPointer<D>::value, "must provide a deleter instance");
+    static_assert(!IsReference<D>::value, "must provide a deleter instance");
+  }
+
+  template<typename U, class E>
+  UniquePtr(UniquePtr<U, E>&& aOther,
+            typename EnableIf<IsConvertible<typename UniquePtr<U, E>::Pointer,
+                                            Pointer>::value &&
+                              !IsArray<U>::value &&
+                              (IsReference<D>::value
+                               ? IsSame<D, E>::value
+                               : IsConvertible<E, D>::value),
+                              int>::Type aDummy = 0)
+    : mTuple(aOther.release(), Forward<E>(aOther.getDeleter()))
+  {
+  }
+
+  ~UniquePtr() { reset(nullptr); }
+
+  UniquePtr& operator=(UniquePtr&& aOther)
+  {
+    reset(aOther.release());
+    getDeleter() = Forward<DeleterType>(aOther.getDeleter());
+    return *this;
+  }
+
+  template<typename U, typename E>
+  UniquePtr& operator=(UniquePtr<U, E>&& aOther)
+  {
+    static_assert(IsConvertible<typename UniquePtr<U, E>::Pointer,
+                                Pointer>::value,
+                  "incompatible UniquePtr pointees");
+    static_assert(!IsArray<U>::value,
+                  "can't assign from UniquePtr holding an array");
+
+    reset(aOther.release());
+    getDeleter() = Forward<E>(aOther.getDeleter());
+    return *this;
+  }
+
+  UniquePtr& operator=(NullptrT aNull)
+  {
+    MOZ_ASSERT(aNull == nullptr);
+    reset(nullptr);
+    return *this;
+  }
+
+  T& operator*() const { return *get(); }
+  Pointer operator->() const
+  {
+    MOZ_ASSERT(get(), "dereferencing a UniquePtr containing nullptr");
+    return get();
+  }
+
+  Pointer get() const { return ptr(); }
+
+  DeleterType& getDeleter() { return del(); }
+  const DeleterType& getDeleter() const { return del(); }
+
+private:
+  typedef void (UniquePtr::* ConvertibleToBool)(double, char);
+  void nonNull(double, char) {}
+
+public:
+  operator ConvertibleToBool() const
+  {
+    return get() != nullptr ? &UniquePtr::nonNull : nullptr;
+  }
+
+  Pointer release()
+  {
+    Pointer p = ptr();
+    ptr() = nullptr;
+    return p;
+  }
+
+  void reset(Pointer aPtr = Pointer())
+  {
+    Pointer old = ptr();
+    ptr() = aPtr;
+    if (old != nullptr) {
+      getDeleter()(old);
     }
+  }
 
-    /**
-     * Construct a UniquePtr containing |p|.
-     */
-    explicit UniquePtr(Pointer p)
-      : tuple(p, DeleterType())
-    {
-      static_assert(!IsPointer<D>::value, "must provide a deleter instance");
-      static_assert(!IsReference<D>::value, "must provide a deleter instance");
-    }
+  void swap(UniquePtr& aOther)
+  {
+    mTuple.swap(aOther.mTuple);
+  }
 
-    UniquePtr(Pointer p,
-              typename Conditional<IsReference<D>::value,
-                                   D,
-                                   const D&>::Type d1)
-      : tuple(p, d1)
-    {}
-
-    // If you encounter an error with MSVC10 about RemoveReference below, along
-    // the lines that "more than one partial specialization matches the template
-    // argument list": don't use UniquePtr<T, reference to function>!  Ideally
-    // you should make deletion use the same function every time, using a
-    // deleter policy:
-    //
-    //   // BAD, won't compile with MSVC10, deleter doesn't need to be a
-    //   // variable at all
-    //   typedef void (&FreeSignature)(void*);
-    //   UniquePtr<int, FreeSignature> ptr((int*) malloc(sizeof(int)), free);
-    //
-    //   // GOOD, compiles with MSVC10, deletion behavior statically known and
-    //   // optimizable
-    //   struct DeleteByFreeing
-    //   {
-    //     void operator()(void* ptr) { free(ptr); }
-    //   };
-    //
-    // If deletion really, truly, must be a variable: you might be able to work
-    // around this with a deleter class that contains the function reference.
-    // But this workaround is untried and untested, because variable deletion
-    // behavior really isn't something you should use.
-    UniquePtr(Pointer p,
-              typename RemoveReference<D>::Type&& d2)
-      : tuple(p, Move(d2))
-    {
-      static_assert(!IsReference<D>::value,
-                    "rvalue deleter can't be stored by reference");
-    }
-
-    UniquePtr(UniquePtr&& other)
-      : tuple(other.release(), Forward<DeleterType>(other.getDeleter()))
-    {}
-
-    template<typename N>
-    UniquePtr(N,
-              typename EnableIf<IsNullPointer<N>::value, int>::Type dummy = 0)
-      : tuple(static_cast<Pointer>(nullptr), DeleterType())
-    {
-      static_assert(!IsPointer<D>::value, "must provide a deleter instance");
-      static_assert(!IsReference<D>::value, "must provide a deleter instance");
-    }
-
-    template<typename U, class E>
-    UniquePtr(UniquePtr<U, E>&& other,
-              typename EnableIf<IsConvertible<typename UniquePtr<U, E>::Pointer,
-                                              Pointer>::value &&
-                                !IsArray<U>::value &&
-                                (IsReference<D>::value
-                                 ? IsSame<D, E>::value
-                                 : IsConvertible<E, D>::value),
-                                int>::Type dummy = 0)
-      : tuple(other.release(), Forward<E>(other.getDeleter()))
-    {
-    }
-
-    ~UniquePtr() {
-      reset(nullptr);
-    }
-
-    UniquePtr& operator=(UniquePtr&& other) {
-      reset(other.release());
-      getDeleter() = Forward<DeleterType>(other.getDeleter());
-      return *this;
-    }
-
-    template<typename U, typename E>
-    UniquePtr& operator=(UniquePtr<U, E>&& other)
-    {
-      static_assert(IsConvertible<typename UniquePtr<U, E>::Pointer, Pointer>::value,
-                    "incompatible UniquePtr pointees");
-      static_assert(!IsArray<U>::value,
-                    "can't assign from UniquePtr holding an array");
-
-      reset(other.release());
-      getDeleter() = Forward<E>(other.getDeleter());
-      return *this;
-    }
-
-    UniquePtr& operator=(NullptrT n) {
-      MOZ_ASSERT(n == nullptr);
-      reset(nullptr);
-      return *this;
-    }
-
-    T& operator*() const { return *get(); }
-    Pointer operator->() const {
-      MOZ_ASSERT(get(), "dereferencing a UniquePtr containing nullptr");
-      return get();
-    }
-
-    Pointer get() const { return ptr(); }
-
-    DeleterType& getDeleter() { return del(); }
-    const DeleterType& getDeleter() const { return del(); }
-
-  private:
-    typedef void (UniquePtr::* ConvertibleToBool)(double, char);
-    void nonNull(double, char) {}
-
-  public:
-    operator ConvertibleToBool() const {
-      return get() != nullptr ? &UniquePtr::nonNull : nullptr;
-    }
-
-    Pointer release() {
-      Pointer p = ptr();
-      ptr() = nullptr;
-      return p;
-    }
-
-    void reset(Pointer p = Pointer()) {
-      Pointer old = ptr();
-      ptr() = p;
-      if (old != nullptr)
-        getDeleter()(old);
-    }
-
-    void swap(UniquePtr& other) {
-      tuple.swap(other.tuple);
-    }
-
-  private:
-    UniquePtr(const UniquePtr& other) MOZ_DELETE; // construct using Move()!
-    void operator=(const UniquePtr& other) MOZ_DELETE; // assign using Move()!
+private:
+  UniquePtr(const UniquePtr& aOther) MOZ_DELETE; // construct using Move()!
+  void operator=(const UniquePtr& aOther) MOZ_DELETE; // assign using Move()!
 };
 
 // In case you didn't read the comment by the main definition (you should!): the
@@ -326,245 +337,249 @@ class UniquePtr
 template<typename T, class D>
 class UniquePtr<T[], D>
 {
-  public:
-    typedef T* Pointer;
-    typedef T ElementType;
-    typedef D DeleterType;
+public:
+  typedef T* Pointer;
+  typedef T ElementType;
+  typedef D DeleterType;
 
-  private:
-    Pair<Pointer, DeleterType> tuple;
+private:
+  Pair<Pointer, DeleterType> mTuple;
 
-  public:
-    /**
-     * Construct a UniquePtr containing nullptr.
-     */
-    MOZ_CONSTEXPR UniquePtr()
-      : tuple(static_cast<Pointer>(nullptr), DeleterType())
-    {
-      static_assert(!IsPointer<D>::value, "must provide a deleter instance");
-      static_assert(!IsReference<D>::value, "must provide a deleter instance");
+public:
+  /**
+   * Construct a UniquePtr containing nullptr.
+   */
+  MOZ_CONSTEXPR UniquePtr()
+    : mTuple(static_cast<Pointer>(nullptr), DeleterType())
+  {
+    static_assert(!IsPointer<D>::value, "must provide a deleter instance");
+    static_assert(!IsReference<D>::value, "must provide a deleter instance");
+  }
+
+  /**
+   * Construct a UniquePtr containing |aPtr|.
+   */
+  explicit UniquePtr(Pointer aPtr)
+    : mTuple(aPtr, DeleterType())
+  {
+    static_assert(!IsPointer<D>::value, "must provide a deleter instance");
+    static_assert(!IsReference<D>::value, "must provide a deleter instance");
+  }
+
+private:
+  // delete[] knows how to handle *only* an array of a single class type.  For
+  // delete[] to work correctly, it must know the size of each element, the
+  // fields and base classes of each element requiring destruction, and so on.
+  // So forbid all overloads which would end up invoking delete[] on a pointer
+  // of the wrong type.
+  template<typename U>
+  UniquePtr(U&& aU,
+            typename EnableIf<IsPointer<U>::value &&
+                              IsConvertible<U, Pointer>::value,
+                              int>::Type aDummy = 0)
+  MOZ_DELETE;
+
+public:
+  UniquePtr(Pointer aPtr,
+            typename Conditional<IsReference<D>::value,
+                                 D,
+                                 const D&>::Type aD1)
+    : mTuple(aPtr, aD1)
+  {}
+
+  // If you encounter an error with MSVC10 about RemoveReference below, along
+  // the lines that "more than one partial specialization matches the template
+  // argument list": don't use UniquePtr<T[], reference to function>!  See the
+  // comment by this constructor in the non-T[] specialization above.
+  UniquePtr(Pointer aPtr,
+            typename RemoveReference<D>::Type&& aD2)
+    : mTuple(aPtr, Move(aD2))
+  {
+    static_assert(!IsReference<D>::value,
+                  "rvalue deleter can't be stored by reference");
+  }
+
+private:
+  // Forbidden for the same reasons as stated above.
+  template<typename U, typename V>
+  UniquePtr(U&& aU, V&& aV,
+            typename EnableIf<IsPointer<U>::value &&
+                              IsConvertible<U, Pointer>::value,
+                              int>::Type aDummy = 0)
+  MOZ_DELETE;
+
+public:
+  UniquePtr(UniquePtr&& aOther)
+    : mTuple(aOther.release(), Forward<DeleterType>(aOther.getDeleter()))
+  {}
+
+  template<typename N>
+  UniquePtr(N,
+            typename EnableIf<IsNullPointer<N>::value, int>::Type aDummy = 0)
+    : mTuple(static_cast<Pointer>(nullptr), DeleterType())
+  {
+    static_assert(!IsPointer<D>::value, "must provide a deleter instance");
+    static_assert(!IsReference<D>::value, "must provide a deleter instance");
+  }
+
+  ~UniquePtr() { reset(nullptr); }
+
+  UniquePtr& operator=(UniquePtr&& aOther)
+  {
+    reset(aOther.release());
+    getDeleter() = Forward<DeleterType>(aOther.getDeleter());
+    return *this;
+  }
+
+  UniquePtr& operator=(NullptrT)
+  {
+    reset();
+    return *this;
+  }
+
+  T& operator[](decltype(sizeof(int)) aIndex) const { return get()[aIndex]; }
+  Pointer get() const { return mTuple.first(); }
+
+  DeleterType& getDeleter() { return mTuple.second(); }
+  const DeleterType& getDeleter() const { return mTuple.second(); }
+
+private:
+  typedef void (UniquePtr::* ConvertibleToBool)(double, char);
+  void nonNull(double, char) {}
+
+public:
+  operator ConvertibleToBool() const
+  {
+    return get() != nullptr ? &UniquePtr::nonNull : nullptr;
+  }
+
+  Pointer release()
+  {
+    Pointer p = mTuple.first();
+    mTuple.first() = nullptr;
+    return p;
+  }
+
+  void reset(Pointer aPtr = Pointer())
+  {
+    Pointer old = mTuple.first();
+    mTuple.first() = aPtr;
+    if (old != nullptr) {
+      mTuple.second()(old);
     }
+  }
 
-    /**
-     * Construct a UniquePtr containing |p|.
-     */
-    explicit UniquePtr(Pointer p)
-      : tuple(p, DeleterType())
-    {
-      static_assert(!IsPointer<D>::value, "must provide a deleter instance");
-      static_assert(!IsReference<D>::value, "must provide a deleter instance");
-    }
+private:
+  // Kill off all remaining overloads that aren't true nullptr (the overload
+  // above should handle that) or emulated nullptr (which acts like int/long
+  // on gcc 4.4/4.5).
+  template<typename U>
+  void reset(U,
+             typename EnableIf<!IsNullPointer<U>::value &&
+                               !IsSame<U,
+                                       Conditional<(sizeof(int) == sizeof(void*)),
+                                                   int,
+                                                   long>::Type>::value,
+                               int>::Type aDummy = 0)
+  MOZ_DELETE;
 
-  private:
-    // delete[] knows how to handle *only* an array of a single class type.  For
-    // delete[] to work correctly, it must know the size of each element, the
-    // fields and base classes of each element requiring destruction, and so on.
-    // So forbid all overloads which would end up invoking delete[] on a pointer
-    // of the wrong type.
-    template<typename U>
-    UniquePtr(U&& u,
-              typename EnableIf<IsPointer<U>::value &&
-                                IsConvertible<U, Pointer>::value,
-                                int>::Type dummy = 0)
-    MOZ_DELETE;
+public:
+  void swap(UniquePtr& aOther) { mTuple.swap(aOther.mTuple); }
 
-  public:
-    UniquePtr(Pointer p,
-              typename Conditional<IsReference<D>::value,
-                                   D,
-                                   const D&>::Type d1)
-      : tuple(p, d1)
-    {}
-
-    // If you encounter an error with MSVC10 about RemoveReference below, along
-    // the lines that "more than one partial specialization matches the template
-    // argument list": don't use UniquePtr<T[], reference to function>!  See the
-    // comment by this constructor in the non-T[] specialization above.
-    UniquePtr(Pointer p,
-              typename RemoveReference<D>::Type&& d2)
-      : tuple(p, Move(d2))
-    {
-      static_assert(!IsReference<D>::value,
-                    "rvalue deleter can't be stored by reference");
-    }
-
-  private:
-    // Forbidden for the same reasons as stated above.
-    template<typename U, typename V>
-    UniquePtr(U&& u, V&& v,
-              typename EnableIf<IsPointer<U>::value &&
-                                IsConvertible<U, Pointer>::value,
-                                int>::Type dummy = 0)
-    MOZ_DELETE;
-
-  public:
-    UniquePtr(UniquePtr&& other)
-      : tuple(other.release(), Forward<DeleterType>(other.getDeleter()))
-    {}
-
-    template<typename N>
-    UniquePtr(N,
-              typename EnableIf<IsNullPointer<N>::value, int>::Type dummy = 0)
-      : tuple(static_cast<Pointer>(nullptr), DeleterType())
-    {
-      static_assert(!IsPointer<D>::value, "must provide a deleter instance");
-      static_assert(!IsReference<D>::value, "must provide a deleter instance");
-    }
-
-    ~UniquePtr() {
-      reset(nullptr);
-    }
-
-    UniquePtr& operator=(UniquePtr&& other) {
-      reset(other.release());
-      getDeleter() = Forward<DeleterType>(other.getDeleter());
-      return *this;
-    }
-
-    UniquePtr& operator=(NullptrT) {
-      reset();
-      return *this;
-    }
-
-    T& operator[](decltype(sizeof(int)) i) const { return get()[i]; }
-    Pointer get() const { return tuple.first(); }
-
-    DeleterType& getDeleter() { return tuple.second(); }
-    const DeleterType& getDeleter() const { return tuple.second(); }
-
-  private:
-    typedef void (UniquePtr::* ConvertibleToBool)(double, char);
-    void nonNull(double, char) {}
-
-  public:
-    operator ConvertibleToBool() const {
-      return get() != nullptr ? &UniquePtr::nonNull : nullptr;
-    }
-
-    Pointer release() {
-      Pointer p = tuple.first();
-      tuple.first() = nullptr;
-      return p;
-    }
-
-    void reset(Pointer p = Pointer()) {
-      Pointer old = tuple.first();
-      tuple.first() = p;
-      if (old != nullptr)
-        tuple.second()(old);
-    }
-
-  private:
-    // Kill off all remaining overloads that aren't true nullptr (the overload
-    // above should handle that) or emulated nullptr (which acts like int/long
-    // on gcc 4.4/4.5).
-    template<typename U>
-    void reset(U,
-               typename EnableIf<!IsNullPointer<U>::value &&
-                                 !IsSame<U,
-                                         Conditional<(sizeof(int) == sizeof(void*)),
-                                                     int,
-                                                     long>::Type>::value,
-                                 int>::Type dummy = 0)
-    MOZ_DELETE;
-
-  public:
-    void swap(UniquePtr& other) {
-      tuple.swap(other.tuple);
-    }
-
-  private:
-    UniquePtr(const UniquePtr& other) MOZ_DELETE; // construct using Move()!
-    void operator=(const UniquePtr& other) MOZ_DELETE; // assign using Move()!
+private:
+  UniquePtr(const UniquePtr& aOther) MOZ_DELETE; // construct using Move()!
+  void operator=(const UniquePtr& aOther) MOZ_DELETE; // assign using Move()!
 };
 
 /** A default deletion policy using plain old operator delete. */
 template<typename T>
 class DefaultDelete
 {
-  public:
-    MOZ_CONSTEXPR DefaultDelete() {}
+public:
+  MOZ_CONSTEXPR DefaultDelete() {}
 
-    template<typename U>
-    DefaultDelete(const DefaultDelete<U>& other,
-                  typename EnableIf<mozilla::IsConvertible<U*, T*>::value,
-                                    int>::Type dummy = 0)
-    {}
+  template<typename U>
+  DefaultDelete(const DefaultDelete<U>& aOther,
+                typename EnableIf<mozilla::IsConvertible<U*, T*>::value,
+                                  int>::Type aDummy = 0)
+  {}
 
-    void operator()(T* ptr) const {
-      static_assert(sizeof(T) > 0, "T must be complete");
-      delete ptr;
-    }
+  void operator()(T* aPtr) const
+  {
+    static_assert(sizeof(T) > 0, "T must be complete");
+    delete aPtr;
+  }
 };
 
 /** A default deletion policy using operator delete[]. */
 template<typename T>
 class DefaultDelete<T[]>
 {
-  public:
-    MOZ_CONSTEXPR DefaultDelete() {}
+public:
+  MOZ_CONSTEXPR DefaultDelete() {}
 
-    void operator()(T* ptr) const {
-      static_assert(sizeof(T) > 0, "T must be complete");
-      delete[] ptr;
-    }
+  void operator()(T* aPtr) const
+  {
+    static_assert(sizeof(T) > 0, "T must be complete");
+    delete[] aPtr;
+  }
 
-  private:
-    template<typename U>
-    void operator()(U* ptr) const MOZ_DELETE;
+private:
+  template<typename U>
+  void operator()(U* aPtr) const MOZ_DELETE;
 };
 
 template<typename T, class D>
 void
-Swap(UniquePtr<T, D>& x, UniquePtr<T, D>& y)
+Swap(UniquePtr<T, D>& aX, UniquePtr<T, D>& aY)
 {
-  x.swap(y);
+  aX.swap(aY);
 }
 
 template<typename T, class D, typename U, class E>
 bool
-operator==(const UniquePtr<T, D>& x, const UniquePtr<U, E>& y)
+operator==(const UniquePtr<T, D>& aX, const UniquePtr<U, E>& aY)
 {
-  return x.get() == y.get();
+  return aX.get() == aY.get();
 }
 
 template<typename T, class D, typename U, class E>
 bool
-operator!=(const UniquePtr<T, D>& x, const UniquePtr<U, E>& y)
+operator!=(const UniquePtr<T, D>& aX, const UniquePtr<U, E>& aY)
 {
-  return x.get() != y.get();
+  return aX.get() != aY.get();
 }
 
 template<typename T, class D>
 bool
-operator==(const UniquePtr<T, D>& x, NullptrT n)
+operator==(const UniquePtr<T, D>& aX, NullptrT aNull)
 {
-  MOZ_ASSERT(n == nullptr);
-  return !x;
+  MOZ_ASSERT(aNull == nullptr);
+  return !aX;
 }
 
 template<typename T, class D>
 bool
-operator==(NullptrT n, const UniquePtr<T, D>& x)
+operator==(NullptrT aNull, const UniquePtr<T, D>& aX)
 {
-  MOZ_ASSERT(n == nullptr);
-  return !x;
+  MOZ_ASSERT(aNull == nullptr);
+  return !aX;
 }
 
 template<typename T, class D>
 bool
-operator!=(const UniquePtr<T, D>& x, NullptrT n)
+operator!=(const UniquePtr<T, D>& aX, NullptrT aNull)
 {
-  MOZ_ASSERT(n == nullptr);
-  return bool(x);
+  MOZ_ASSERT(aNull == nullptr);
+  return bool(aX);
 }
 
 template<typename T, class D>
 bool
-operator!=(NullptrT n, const UniquePtr<T, D>& x)
+operator!=(NullptrT aNull, const UniquePtr<T, D>& aX)
 {
-  MOZ_ASSERT(n == nullptr);
-  return bool(x);
+  MOZ_ASSERT(aNull == nullptr);
+  return bool(aX);
 }
 
 // No operator<, operator>, operator<=, operator>= for now because simplicity.
@@ -574,26 +589,81 @@ namespace detail {
 template<typename T>
 struct UniqueSelector
 {
-    typedef UniquePtr<T> SingleObject;
+  typedef UniquePtr<T> SingleObject;
 };
 
 template<typename T>
 struct UniqueSelector<T[]>
 {
-    typedef UniquePtr<T[]> UnknownBound;
+  typedef UniquePtr<T[]> UnknownBound;
 };
 
 template<typename T, decltype(sizeof(int)) N>
 struct UniqueSelector<T[N]>
 {
-    typedef UniquePtr<T[N]> KnownBound;
+  typedef UniquePtr<T[N]> KnownBound;
 };
 
 } // namespace detail
 
+/**
+ * MakeUnique is a helper function for allocating new'd objects and arrays,
+ * returning a UniquePtr containing the resulting pointer.  The semantics of
+ * MakeUnique<Type>(...) are as follows.
+ *
+ *   If Type is an array T[n]:
+ *     Disallowed, deleted, no overload for you!
+ *   If Type is an array T[]:
+ *     MakeUnique<T[]>(size_t) is the only valid overload.  The pointer returned
+ *     is as if by |new T[n]()|, which value-initializes each element.  (If T
+ *     isn't a class type, this will zero each element.  If T is a class type,
+ *     then roughly speaking, each element will be constructed using its default
+ *     constructor.  See C++11 [dcl.init]p7 for the full gory details.)
+ *   If Type is non-array T:
+ *     The arguments passed to MakeUnique<T>(...) are forwarded into a
+ *     |new T(...)| call, initializing the T as would happen if executing
+ *     |T(...)|.  (Note: literal nullptr must not be provided as an argument to
+ *     MakeUnique, because nullptr may be emulated.  See Move.h for details.)
+ *
+ * There are various benefits to using MakeUnique instead of |new| expressions.
+ *
+ * First, MakeUnique eliminates use of |new| from code entirely.  If objects are
+ * only created through UniquePtr, then (assuming all explicit release() calls
+ * are safe, including transitively, and no type-safety casting funniness)
+ * correctly maintained ownership of the UniquePtr guarantees no leaks are
+ * possible.  (This pays off best if a class is only ever created through a
+ * factory method on the class, using a private constructor.)
+ *
+ * Second, initializing a UniquePtr using a |new| expression requires renaming
+ * the new'd type, whereas MakeUnique in concert with the |auto| keyword names
+ * it only once:
+ *
+ *   UniquePtr<char> ptr1(new char()); // repetitive
+ *   auto ptr2 = MakeUnique<char>();   // shorter
+ *
+ * Of course this assumes the reader understands the operation MakeUnique
+ * performs.  In the long run this is probably a reasonable assumption.  In the
+ * short run you'll have to use your judgment about what readers can be expected
+ * to know, or to quickly look up.
+ *
+ * Third, a call to MakeUnique can be assigned directly to a UniquePtr.  In
+ * contrast you can't assign a pointer into a UniquePtr without using the
+ * cumbersome reset().
+ *
+ *   UniquePtr<char> p;
+ *   p = new char;           // ERROR
+ *   p.reset(new char);      // works, but fugly
+ *   p = MakeUnique<char>(); // preferred
+ *
+ * (And third, although not relevant to Mozilla: MakeUnique is exception-safe.
+ * An exception thrown after |new T| succeeds will leak that memory, unless the
+ * pointer is assigned to an object that will manage its ownership.  UniquePtr
+ * ably serves this function.)
+ */
+
 // We don't have variadic template support everywhere, so just hard-code arities
-// 0-4 for now.  If you need more arguments, feel free to add the extra
-// overloads.
+// 0-8 for now.  If you need more arguments, feel free to add the extra
+// overloads (and deletions for the T = E[N] case).
 //
 // Beware!  Due to lack of true nullptr support in gcc 4.4 and 4.5, passing
 // literal nullptr to MakeUnique will not work on some platforms.  See Move.h
@@ -608,45 +678,83 @@ MakeUnique()
 
 template<typename T, typename A1>
 typename detail::UniqueSelector<T>::SingleObject
-MakeUnique(A1&& a1)
+MakeUnique(A1&& aA1)
 {
-  return UniquePtr<T>(new T(Forward<A1>(a1)));
+  return UniquePtr<T>(new T(Forward<A1>(aA1)));
 }
 
 template<typename T, typename A1, typename A2>
 typename detail::UniqueSelector<T>::SingleObject
-MakeUnique(A1&& a1, A2&& a2)
+MakeUnique(A1&& aA1, A2&& aA2)
 {
-  return UniquePtr<T>(new T(Forward<A1>(a1), Forward<A2>(a2)));
+  return UniquePtr<T>(new T(Forward<A1>(aA1), Forward<A2>(aA2)));
 }
 
 template<typename T, typename A1, typename A2, typename A3>
 typename detail::UniqueSelector<T>::SingleObject
-MakeUnique(A1&& a1, A2&& a2, A3&& a3)
+MakeUnique(A1&& aA1, A2&& aA2, A3&& aA3)
 {
-  return UniquePtr<T>(new T(Forward<A1>(a1), Forward<A2>(a2), Forward<A3>(a3)));
+  return UniquePtr<T>(new T(Forward<A1>(aA1), Forward<A2>(aA2),
+                            Forward<A3>(aA3)));
 }
 
 template<typename T, typename A1, typename A2, typename A3, typename A4>
 typename detail::UniqueSelector<T>::SingleObject
-MakeUnique(A1&& a1, A2&& a2, A3&& a3, A4&& a4)
+MakeUnique(A1&& aA1, A2&& aA2, A3&& aA3, A4&& aA4)
 {
-  return UniquePtr<T>(new T(Forward<A1>(a1), Forward<A2>(a2), Forward<A3>(a3), Forward<A4>(a4)));
+  return UniquePtr<T>(new T(Forward<A1>(aA1), Forward<A2>(aA2),
+                            Forward<A3>(aA3), Forward<A4>(aA4)));
 }
 
-template<typename T, typename A1, typename A2, typename A3, typename A4, typename A5>
+template<typename T, typename A1, typename A2, typename A3, typename A4,
+         typename A5>
 typename detail::UniqueSelector<T>::SingleObject
-MakeUnique(A1&& a1, A2&& a2, A3&& a3, A4&& a4, A5&& a5)
+MakeUnique(A1&& aA1, A2&& aA2, A3&& aA3, A4&& aA4, A5&& aA5)
 {
-  return UniquePtr<T>(new T(Forward<A1>(a1), Forward<A2>(a2), Forward<A3>(a3), Forward<A4>(a4), Forward<A5>(a5)));
+  return UniquePtr<T>(new T(Forward<A1>(aA1), Forward<A2>(aA2),
+                            Forward<A3>(aA3), Forward<A4>(aA4),
+                            Forward<A5>(aA5)));
+}
+
+template<typename T, typename A1, typename A2, typename A3, typename A4,
+         typename A5, typename A6>
+typename detail::UniqueSelector<T>::SingleObject
+MakeUnique(A1&& a1, A2&& a2, A3&& a3, A4&& a4, A5&& a5, A6&& a6)
+{
+  return UniquePtr<T>(new T(Forward<A1>(a1), Forward<A2>(a2),
+                            Forward<A3>(a3), Forward<A4>(a4),
+                            Forward<A5>(a5), Forward<A6>(a6)));
+}
+
+template<typename T, typename A1, typename A2, typename A3, typename A4,
+         typename A5, typename A6, typename A7>
+typename detail::UniqueSelector<T>::SingleObject
+MakeUnique(A1&& a1, A2&& a2, A3&& a3, A4&& a4, A5&& a5, A6&& a6, A7&& a7)
+{
+  return UniquePtr<T>(new T(Forward<A1>(a1), Forward<A2>(a2),
+                            Forward<A3>(a3), Forward<A4>(a4),
+                            Forward<A5>(a5), Forward<A6>(a6),
+                            Forward<A7>(a7)));
+}
+
+template<typename T, typename A1, typename A2, typename A3, typename A4,
+         typename A5, typename A6, typename A7, typename A8>
+typename detail::UniqueSelector<T>::SingleObject
+MakeUnique(A1&& a1, A2&& a2, A3&& a3, A4&& a4, A5&& a5, A6&& a6, A7&& a7,
+           A8&& a8)
+{
+  return UniquePtr<T>(new T(Forward<A1>(a1), Forward<A2>(a2),
+                            Forward<A3>(a3), Forward<A4>(a4),
+                            Forward<A5>(a5), Forward<A6>(a6),
+                            Forward<A7>(a7), Forward<A8>(a8)));
 }
 
 template<typename T>
 typename detail::UniqueSelector<T>::UnknownBound
-MakeUnique(decltype(sizeof(int)) n)
+MakeUnique(decltype(sizeof(int)) aN)
 {
   typedef typename RemoveExtent<T>::Type ArrayType;
-  return UniquePtr<T>(new ArrayType[n]());
+  return UniquePtr<T>(new ArrayType[aN]());
 }
 
 template<typename T>
@@ -655,19 +763,42 @@ MakeUnique() MOZ_DELETE;
 
 template<typename T, typename A1>
 typename detail::UniqueSelector<T>::KnownBound
-MakeUnique(A1&& a1) MOZ_DELETE;
+MakeUnique(A1&& aA1) MOZ_DELETE;
 
 template<typename T, typename A1, typename A2>
 typename detail::UniqueSelector<T>::KnownBound
-MakeUnique(A1&& a1, A2&& a2) MOZ_DELETE;
+MakeUnique(A1&& aA1, A2&& aA2) MOZ_DELETE;
 
 template<typename T, typename A1, typename A2, typename A3>
 typename detail::UniqueSelector<T>::KnownBound
-MakeUnique(A1&& a1, A2&& a2, A3&& a3) MOZ_DELETE;
+MakeUnique(A1&& aA1, A2&& aA2, A3&& aA3) MOZ_DELETE;
 
 template<typename T, typename A1, typename A2, typename A3, typename A4>
 typename detail::UniqueSelector<T>::KnownBound
-MakeUnique(A1&& a1, A2&& a2, A3&& a3, A4&& a4) MOZ_DELETE;
+MakeUnique(A1&& aA1, A2&& aA2, A3&& aA3, A4&& aA4) MOZ_DELETE;
+
+template<typename T, typename A1, typename A2, typename A3, typename A4,
+         typename A5>
+typename detail::UniqueSelector<T>::KnownBound
+MakeUnique(A1&& aA1, A2&& aA2, A3&& aA3, A4&& aA4, A5&& aA5) MOZ_DELETE;
+
+template<typename T, typename A1, typename A2, typename A3, typename A4,
+         typename A5, typename A6>
+typename detail::UniqueSelector<T>::KnownBound
+MakeUnique(A1&& a1, A2&& a2, A3&& a3, A4&& a4, A5&& a5,
+           A6&& a6) MOZ_DELETE;
+
+template<typename T, typename A1, typename A2, typename A3, typename A4,
+         typename A5, typename A6, typename A7>
+typename detail::UniqueSelector<T>::KnownBound
+MakeUnique(A1&& a1, A2&& a2, A3&& a3, A4&& a4, A5&& a5, A6&& a6,
+           A7&& a7) MOZ_DELETE;
+
+template<typename T, typename A1, typename A2, typename A3, typename A4,
+         typename A5, typename A6, typename A7, typename A8>
+typename detail::UniqueSelector<T>::KnownBound
+MakeUnique(A1&& a1, A2&& a2, A3&& a3, A4&& a4, A5&& a5, A6&& a6,
+           A7&& a7, A8&& a8) MOZ_DELETE;
 
 } // namespace mozilla
 

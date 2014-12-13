@@ -25,7 +25,7 @@
 
 class AutoError {
 public:
-  AutoError(mozilla::dom::ImportLoader* loader, bool scriptsBlocked = true)
+  explicit AutoError(mozilla::dom::ImportLoader* loader, bool scriptsBlocked = true)
     : mLoader(loader)
     , mPassed(false)
     , mScriptsBlocked(scriptsBlocked)
@@ -209,7 +209,7 @@ ImportLoader::Open()
   nsIPrincipal* principal = Principal();
 
   int16_t shouldLoad = nsIContentPolicy::ACCEPT;
-  nsresult rv = NS_CheckContentLoadPolicy(nsIContentPolicy::TYPE_SCRIPT,
+  nsresult rv = NS_CheckContentLoadPolicy(nsIContentPolicy::TYPE_SUBDOCUMENT,
                                           mURI,
                                           principal,
                                           mImportParent,

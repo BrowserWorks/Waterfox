@@ -33,6 +33,27 @@ callback interface TestCallbackInterface {
   sequence<TestCallbackInterface?>? getNullableSequenceOfNullableCallbackInterfaces();
   MozMap<long> getMozMapOfLong();
   Dict? getDictionary();
+  void passArrayBuffer(ArrayBuffer arg);
+  void passNullableArrayBuffer(ArrayBuffer? arg);
+  void passOptionalArrayBuffer(optional ArrayBuffer arg);
+  void passOptionalNullableArrayBuffer(optional ArrayBuffer? arg);
+  void passOptionalNullableArrayBufferWithDefaultValue(optional ArrayBuffer? arg= null);
+  void passArrayBufferView(ArrayBufferView arg);
+  void passInt8Array(Int8Array arg);
+  void passInt16Array(Int16Array arg);
+  void passInt32Array(Int32Array arg);
+  void passUint8Array(Uint8Array arg);
+  void passUint16Array(Uint16Array arg);
+  void passUint32Array(Uint32Array arg);
+  void passUint8ClampedArray(Uint8ClampedArray arg);
+  void passFloat32Array(Float32Array arg);
+  void passFloat64Array(Float64Array arg);
+  void passSequenceOfArrayBuffers(sequence<ArrayBuffer> arg);
+  void passSequenceOfNullableArrayBuffers(sequence<ArrayBuffer?> arg);
+  void passVariadicTypedArray(Float32Array... arg);
+  void passVariadicNullableTypedArray(Float32Array?... arg);
+  Uint8Array receiveUint8Array();
+  attribute Uint8Array uint8ArrayAttr;
 };
 
 callback interface TestSingleOperationCallbackInterface {
@@ -137,6 +158,12 @@ interface TestInterface {
   [StoreInSlot, Pure]
   attribute byte cachedWritableByte;
 
+  [UnsafeInPrerendering]
+  void unsafePrerenderMethod();
+  [UnsafeInPrerendering]
+  attribute long unsafePrerenderWritable;
+  [UnsafeInPrerendering]
+  readonly attribute long unsafePrerenderReadonly;
   readonly attribute short readonlyShort;
   attribute short writableShort;
   void passShort(short arg);
@@ -414,6 +441,7 @@ interface TestInterface {
   void passVariadicTypedArray(Float32Array... arg);
   void passVariadicNullableTypedArray(Float32Array?... arg);
   Uint8Array receiveUint8Array();
+  attribute Uint8Array uint8ArrayAttr;
 
   // DOMString types
   void passString(DOMString arg);
@@ -423,6 +451,7 @@ interface TestInterface {
   void passOptionalNullableString(optional DOMString? arg);
   void passOptionalNullableStringWithDefaultValue(optional DOMString? arg = null);
   void passVariadicString(DOMString... arg);
+  DOMString receiveString();
 
   // ByteString types
   void passByteString(ByteString arg);
@@ -430,6 +459,16 @@ interface TestInterface {
   void passOptionalByteString(optional ByteString arg);
   void passOptionalNullableByteString(optional ByteString? arg);
   void passVariadicByteString(ByteString... arg);
+
+  // ScalarValueString types
+  void passSVS(ScalarValueString arg);
+  void passNullableSVS(ScalarValueString? arg);
+  void passOptionalSVS(optional ScalarValueString arg);
+  void passOptionalSVSWithDefaultValue(optional ScalarValueString arg = "abc");
+  void passOptionalNullableSVS(optional ScalarValueString? arg);
+  void passOptionalNullableSVSWithDefaultValue(optional ScalarValueString? arg = null);
+  void passVariadicSVS(ScalarValueString... arg);
+  ScalarValueString receiveSVS();
 
   // Enumerated types
   void passEnum(TestEnum arg);
@@ -533,6 +572,7 @@ interface TestInterface {
   void passUnionWithMozMap((MozMap<DOMString> or DOMString) arg);
   void passUnionWithMozMapAndSequence((MozMap<DOMString> or sequence<DOMString>) arg);
   void passUnionWithSequenceAndMozMap((sequence<DOMString> or MozMap<DOMString>) arg);
+  void passUnionWithSVS((ScalarValueString or long) arg);
 #endif
   void passUnionWithNullable((object? or long) arg);
   void passNullableUnion((object or long)? arg);
@@ -911,6 +951,9 @@ dictionary Dict : ParentDict {
   sequence<long>? seq5 = [];
 
   long dashed-name;
+
+  required long requiredLong;
+  required object requiredObject;
 };
 
 dictionary ParentDict : GrandparentDict {

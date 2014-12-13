@@ -10,8 +10,13 @@
 #include "nsNetCID.h"
 #include "nsIAppsService.h"
 #include "nsILoadInfo.h"
-#include "nsCxPusher.h"
 #include "nsXULAppAPI.h"
+#include "nsPrincipal.h"
+
+#include "mozilla/dom/ScriptSettings.h"
+#include "mozilla/Preferences.h"
+
+using namespace mozilla;
 
 /**
   * This dummy channel implementation only provides enough functionality
@@ -123,6 +128,11 @@ NS_IMETHODIMP DummyChannel::SetAppURI(nsIURI *aURI)
 }
 
 NS_IMETHODIMP DummyChannel::GetJarFile(nsIFile* *aFile)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP DummyChannel::GetZipEntry(nsIZipEntry* *aEntry)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -376,6 +386,23 @@ AppProtocolHandler::NewChannel(nsIURI* aUri, nsIChannel* *aResult)
   nsAutoCString host;
   nsresult rv = aUri->GetHost(host);
   NS_ENSURE_SUCCESS(rv, rv);
+
+  if (Preferences::GetBool("dom.mozApps.themable")) {
+    nsAutoCString origin;
+    nsPrincipal::GetOriginForURI(aUri, getter_Copies(origin));
+    nsAdoptingCString themeOrigin;
+    themeOrigin = Preferences::GetCString("b2g.theme.origin");
+    if (themeOrigin.Equals(origin)) {
+      // We are trying to load a theme resource. Check whether we have a
+      // package registered as a theme provider to override the file path.
+      nsAdoptingCString selectedTheme;
+      selectedTheme = Preferences::GetCString("dom.mozApps.selected_theme");
+      if (!selectedTheme.IsEmpty()) {
+        // Substitute the path with the actual theme.
+        host = selectedTheme;
+      }
+    }
+  }
 
   nsAutoCString fileSpec;
   nsCOMPtr<nsIURL> url = do_QueryInterface(aUri);

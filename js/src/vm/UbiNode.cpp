@@ -28,15 +28,18 @@ using JS::ubi::Node;
 using JS::ubi::TracerConcrete;
 
 // All operations on null ubi::Nodes crash.
-const jschar *Concrete<void>::typeName() const      { MOZ_CRASH("null ubi::Node"); }
-size_t Concrete<void>::size() const                 { MOZ_CRASH("null ubi::Node"); }
-EdgeRange *Concrete<void>::edges(JSContext *) const { MOZ_CRASH("null ubi::Node"); }
+const jschar *Concrete<void>::typeName() const            { MOZ_CRASH("null ubi::Node"); }
+size_t Concrete<void>::size() const                       { MOZ_CRASH("null ubi::Node"); }
+EdgeRange *Concrete<void>::edges(JSContext *, bool) const { MOZ_CRASH("null ubi::Node"); }
+JS::Zone *Concrete<void>::zone() const                    { MOZ_CRASH("null ubi::Node"); }
+JSCompartment *Concrete<void>::compartment() const        { MOZ_CRASH("null ubi::Node"); }
 
 Node::Node(JSGCTraceKind kind, void *ptr)
 {
     switch (kind) {
       case JSTRACE_OBJECT:      construct(static_cast<JSObject *>(ptr));              break;
       case JSTRACE_STRING:      construct(static_cast<JSString *>(ptr));              break;
+      case JSTRACE_SYMBOL:      construct(static_cast<JS::Symbol *>(ptr));            break;
       case JSTRACE_SCRIPT:      construct(static_cast<JSScript *>(ptr));              break;
       case JSTRACE_LAZY_SCRIPT: construct(static_cast<js::LazyScript *>(ptr));        break;
       case JSTRACE_JITCODE:     construct(static_cast<js::jit::JitCode *>(ptr));      break;
@@ -55,6 +58,8 @@ Node::Node(Value value)
         construct(&value.toObject());
     else if (value.isString())
         construct(value.toString());
+    else if (value.isSymbol())
+        construct(value.toSymbol());
     else
         construct<void>(nullptr);
 }
@@ -75,6 +80,8 @@ Node::exposeToJS() const
         }
     } else if (is<JSString>()) {
         v.setString(as<JSString>());
+    } else if (is<JS::Symbol>()) {
+        v.setSymbol(as<JS::Symbol>());
     } else {
         v.setUndefined();
     }
@@ -125,6 +132,9 @@ class SimpleEdgeVectorTracer : public JSTracer {
     // The vector to which we add SimpleEdges.
     SimpleEdgeVector *vec;
 
+    // True if we should populate the edge's names.
+    bool wantNames;
+
     static void staticCallback(JSTracer *trc, void **thingp, JSGCTraceKind kind) {
         static_cast<SimpleEdgeVectorTracer *>(trc)->callback(thingp, kind);
     }
@@ -133,21 +143,24 @@ class SimpleEdgeVectorTracer : public JSTracer {
         if (!okay)
             return;
 
-        // Ask the tracer to compute an edge name for us.
-        char buffer[1024];
-        const char *name = getTracingEdgeName(buffer, sizeof(buffer));
+        jschar *jsname = nullptr;
+        if (wantNames) {
+            // Ask the tracer to compute an edge name for us.
+            char buffer[1024];
+            const char *name = getTracingEdgeName(buffer, sizeof(buffer));
 
-        // Convert the name to jschars.
-        jschar *jsname = js_pod_malloc<jschar>(strlen(name) + 1);
-        if (!jsname) {
-            okay = false;
-            return;
+            // Convert the name to jschars.
+            jsname = js_pod_malloc<jschar>(strlen(name) + 1);
+            if (!jsname) {
+                okay = false;
+                return;
+            }
+
+            size_t i;
+            for (i = 0; name[i]; i++)
+                jsname[i] = name[i];
+            jsname[i] = '\0';
         }
-
-        size_t i;
-        for (i = 0; name[i]; i++)
-            jsname[i] = name[i];
-        jsname[i] = '\0';
 
         // The simplest code is correct! The temporary SimpleEdge takes
         // ownership of name; if the append succeeds, the vector element
@@ -163,9 +176,12 @@ class SimpleEdgeVectorTracer : public JSTracer {
     // True if no errors (OOM, say) have yet occurred.
     bool okay;
 
-    SimpleEdgeVectorTracer(JSContext *cx, SimpleEdgeVector *vec)
-        : JSTracer(JS_GetRuntime(cx), staticCallback), vec(vec), okay(true) {
-    }
+    SimpleEdgeVectorTracer(JSContext *cx, SimpleEdgeVector *vec, bool wantNames)
+      : JSTracer(JS_GetRuntime(cx), staticCallback),
+        vec(vec),
+        wantNames(wantNames),
+        okay(true)
+    { }
 };
 
 
@@ -180,10 +196,10 @@ class SimpleEdgeRange : public EdgeRange {
     }
 
   public:
-    SimpleEdgeRange(JSContext *cx) : edges(cx), i(0) { }
+    explicit SimpleEdgeRange(JSContext *cx) : edges(cx), i(0) { }
 
-    bool init(JSContext *cx, void *thing, JSGCTraceKind kind) {
-        SimpleEdgeVectorTracer tracer(cx, &edges);
+    bool init(JSContext *cx, void *thing, JSGCTraceKind kind, bool wantNames = true) {
+        SimpleEdgeVectorTracer tracer(cx, &edges, wantNames);
         JS_TraceChildren(&tracer, thing, kind);
         settle();
         return tracer.okay;
@@ -195,12 +211,12 @@ class SimpleEdgeRange : public EdgeRange {
 
 template<typename Referent>
 EdgeRange *
-TracerConcrete<Referent>::edges(JSContext *cx) const {
+TracerConcrete<Referent>::edges(JSContext *cx, bool wantNames) const {
     js::ScopedJSDeletePtr<SimpleEdgeRange> r(js_new<SimpleEdgeRange>(cx));
     if (!r)
         return nullptr;
 
-    if (!r->init(cx, ptr, ::js::gc::MapTypeToTraceKind<Referent>::kind))
+    if (!r->init(cx, ptr, ::js::gc::MapTypeToTraceKind<Referent>::kind, wantNames))
         return nullptr;
 
     return r.forget();
@@ -210,6 +226,8 @@ template<> const jschar TracerConcrete<JSObject>::concreteTypeName[] =
     MOZ_UTF16("JSObject");
 template<> const jschar TracerConcrete<JSString>::concreteTypeName[] =
     MOZ_UTF16("JSString");
+template<> const jschar TracerConcrete<JS::Symbol>::concreteTypeName[] =
+    MOZ_UTF16("JS::Symbol");
 template<> const jschar TracerConcrete<JSScript>::concreteTypeName[] =
     MOZ_UTF16("JSScript");
 template<> const jschar TracerConcrete<js::LazyScript>::concreteTypeName[] =

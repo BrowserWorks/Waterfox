@@ -347,6 +347,7 @@ nsWindow::nsWindow() : nsWindowBase()
   mUnicodeWidget        = true;
   mDisplayPanFeedback   = false;
   mTouchWindow          = false;
+  mFutureMarginsToUse   = false;
   mCustomNonClient      = false;
   mHideChrome           = false;
   mFullscreenMode       = false;
@@ -1540,7 +1541,7 @@ nsWindow::BeginResizeDrag(WidgetGUIEvent* aEvent,
 {
   NS_ENSURE_ARG_POINTER(aEvent);
 
-  if (aEvent->eventStructType != NS_MOUSE_EVENT) {
+  if (aEvent->mClass != eMouseEventClass) {
     // you can only begin a resize drag with a mouse event
     return NS_ERROR_INVALID_ARG;
   }
@@ -2288,9 +2289,15 @@ NS_IMETHODIMP
 nsWindow::SetNonClientMargins(nsIntMargin &margins)
 {
   if (!mIsTopWidgetWindow ||
-      mBorderStyle & eBorderStyle_none ||
-      mHideChrome)
+      mBorderStyle & eBorderStyle_none)
     return NS_ERROR_INVALID_ARG;
+
+  if (mHideChrome) {
+    mFutureMarginsOnceChromeShows = margins;
+    mFutureMarginsToUse = true;
+    return NS_OK;
+  }
+  mFutureMarginsToUse = false;
 
   // Request for a reset
   if (margins.top == -1 && margins.left == -1 &&
@@ -2762,6 +2769,9 @@ NS_IMETHODIMP nsWindow::HideWindowChrome(bool aShouldHide)
 
     style = mOldStyle;
     exStyle = mOldExStyle;
+    if (mFutureMarginsToUse) {
+      SetNonClientMargins(mFutureMarginsOnceChromeShows);
+    }
   }
 
   VERIFY_WINDOW_STYLE(style);
@@ -4002,7 +4012,7 @@ bool nsWindow::DispatchMouseEvent(uint32_t aEventType, WPARAM wParam,
   pluginEvent.wParam = wParam;     // plugins NEED raw OS event flags!
   pluginEvent.lParam = lParam;
 
-  event.pluginEvent = (void *)&pluginEvent;
+  event.mPluginEvent.Copy(pluginEvent);
 
   // call the event callback
   if (mWidgetListener) {
@@ -6746,13 +6756,12 @@ nsWindow::GetPreferredCompositorBackends(nsTArray<LayersBackend>& aHints)
     ID3D11Device* device = gfxWindowsPlatform::GetPlatform()->GetD3D11Device();
     if (device &&
         device->GetFeatureLevel() >= D3D_FEATURE_LEVEL_10_0 &&
-        !DoesD3D11DeviceSupportResourceSharing(device)) {
+        !DoesD3D11DeviceWork(device)) {
       // bug 1083071 - bad things - fall back to basic layers
       // This should not happen aside from driver bugs, and in particular
       // should not happen on our test machines, so let's NS_ERROR to ensure
       // that we would catch it as a test failure.
-      NS_ERROR("Can't use Direct3D 11 because of a driver bug "
-        "causing resource sharing to fail");
+      NS_ERROR("Can't use Direct3D 11 because of a driver bug");
     } else {
       if (!prefs.mPreferD3D9) {
         aHints.AppendElement(LayersBackend::LAYERS_D3D11);

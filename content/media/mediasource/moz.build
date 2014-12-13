@@ -3,9 +3,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-PARALLEL_DIRS += [
-    'test'
-]
+MOCHITEST_MANIFESTS += ['test/mochitest.ini']
 
 EXPORTS += [
     'AsyncEventRunner.h',
@@ -21,11 +19,14 @@ EXPORTS.mozilla.dom += [
 UNIFIED_SOURCES += [
     'MediaSource.cpp',
     'MediaSourceDecoder.cpp',
+    'MediaSourceReader.cpp',
+    'MediaSourceUtils.cpp',
     'SourceBuffer.cpp',
+    'SourceBufferDecoder.cpp',
     'SourceBufferList.cpp',
     'SourceBufferResource.cpp',
 ]
 
 FAIL_ON_WARNINGS = True
 
-FINAL_LIBRARY = 'gklayout'
+FINAL_LIBRARY = 'xul'

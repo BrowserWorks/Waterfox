@@ -43,7 +43,7 @@ public:
 
   // nsIAnonymousContentCreator
   virtual nsresult CreateAnonymousContent(nsTArray<ContentInfo>& aElements) MOZ_OVERRIDE;
-  virtual void AppendAnonymousContentTo(nsBaseContentList& aElements,
+  virtual void AppendAnonymousContentTo(nsTArray<nsIContent*>& aElements,
                                         uint32_t aFilter) MOZ_OVERRIDE;
 
   virtual bool IsFrameOfType(uint32_t aFlags) const MOZ_OVERRIDE
@@ -83,7 +83,7 @@ nsDocElementBoxFrame::DestroyFrom(nsIFrame* aDestructRoot)
 nsresult
 nsDocElementBoxFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
 {
-  nsIDocument* doc = mContent->GetDocument();
+  nsIDocument* doc = mContent->GetComposedDoc();
   if (!doc) {
     // The page is currently being torn down.  Why bother.
     return NS_ERROR_FAILURE;
@@ -123,11 +123,16 @@ nsDocElementBoxFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
 }
 
 void
-nsDocElementBoxFrame::AppendAnonymousContentTo(nsBaseContentList& aElements,
+nsDocElementBoxFrame::AppendAnonymousContentTo(nsTArray<nsIContent*>& aElements,
                                                uint32_t aFilter)
 {
-  aElements.MaybeAppendElement(mPopupgroupContent);
-  aElements.MaybeAppendElement(mTooltipContent);
+  if (mPopupgroupContent) {
+    aElements.AppendElement(mPopupgroupContent);
+  }
+
+  if (mTooltipContent) {
+    aElements.AppendElement(mTooltipContent);
+  }
 }
 
 NS_QUERYFRAME_HEAD(nsDocElementBoxFrame)

@@ -6,6 +6,10 @@
   -moz-binding: url("chrome://browser/content/tabbrowser.xml#tabbrowser-tabbox");
 }
 
+.tabbrowser-tabpanels {
+  -moz-binding: url("chrome://browser/content/tabbrowser.xml#tabbrowser-tabpanels");
+}
+
 .tabbrowser-arrowscrollbox {
   -moz-binding: url("chrome://browser/content/tabbrowser.xml#tabbrowser-arrowscrollbox");
 }
@@ -38,6 +42,13 @@ tabpanels {
 .tab-drop-indicator {
   position: relative;
   z-index: 2;
+}
+
+/* Apply crisp rendering for favicons at exactly 2dppx resolution */
+@media (resolution: 2dppx) {
+  .tab-icon-image {
+    image-rendering: -moz-crisp-edges;
+  }
 }
 
 .tab-icon-image:not([src]):not([pinned]),

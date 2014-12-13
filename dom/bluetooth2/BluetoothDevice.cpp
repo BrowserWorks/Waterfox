@@ -74,6 +74,7 @@ private:
 BluetoothDevice::BluetoothDevice(nsPIDOMWindow* aWindow,
                                  const BluetoothValue& aValue)
   : DOMEventTargetHelper(aWindow)
+  , mPaired(false)
 {
   MOZ_ASSERT(aWindow);
   MOZ_ASSERT(IsDOMBinding());
@@ -144,9 +145,7 @@ BluetoothDevice::FetchUuids(ErrorResult& aRv)
   }
 
   nsRefPtr<Promise> promise = Promise::Create(global, aRv);
-  if (aRv.Failed()) {
-    return nullptr;
-  }
+  NS_ENSURE_TRUE(!aRv.Failed(), nullptr);
 
   BluetoothService* bs = BluetoothService::Get();
   BT_ENSURE_TRUE_REJECT(bs, NS_ERROR_NOT_AVAILABLE);

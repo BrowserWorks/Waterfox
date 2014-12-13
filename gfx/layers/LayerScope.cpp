@@ -366,7 +366,7 @@ StaticAutoPtr<LayerScopeWebSocketManager> WebSocketHelper::sWebSocketManager;
  */
 class DebugGLData: public LinkedListElement<DebugGLData> {
 public:
-    DebugGLData(Packet::DataType aDataType)
+    explicit DebugGLData(Packet::DataType aDataType)
         : mDataType(aDataType)
     { }
 
@@ -381,9 +381,9 @@ public:
             return true;
 
         uint32_t size = aPacket.ByteSize();
-        nsAutoArrayPtr<uint8_t> data(new uint8_t[size]);
-        aPacket.SerializeToArray(data, size);
-        return WebSocketHelper::GetSocketManager()->WriteAll(data, size);
+        auto data = MakeUnique<uint8_t[]>(size);
+        aPacket.SerializeToArray(data.get(), size);
+        return WebSocketHelper::GetSocketManager()->WriteAll(data.get(), size);
     }
 
 protected:
@@ -399,7 +399,7 @@ public:
           mFrameStamp(aValue)
     { }
 
-    DebugGLFrameStatusData(Packet::DataType aDataType)
+    explicit DebugGLFrameStatusData(Packet::DataType aDataType)
         : DebugGLData(aDataType),
           mFrameStamp(0)
     { }
@@ -410,8 +410,8 @@ public:
         Packet packet;
         packet.set_type(mDataType);
 
-        FramePacket *fp = packet.mutable_frame();
-        fp->set_value(mFrameStamp);
+        FramePacket* fp = packet.mutable_frame();
+        fp->set_value(static_cast<uint64_t>(mFrameStamp));
 
         if (!WriteToStream(packet))
             return false;
@@ -459,7 +459,7 @@ private:
     void pack(DataSourceSurface* aImage) {
         mPacket.set_type(mDataType);
 
-        TexturePacket *tp = mPacket.mutable_texture();
+        TexturePacket* tp = mPacket.mutable_texture();
         tp->set_layerref(reinterpret_cast<uint64_t>(mLayerRef));
         tp->set_name(mName);
         tp->set_target(mTarget);
@@ -473,16 +473,15 @@ private:
 
             mDatasize = aImage->GetSize().height * aImage->Stride();
 
-            nsAutoArrayPtr<char> compresseddata(
-                new char[LZ4::maxCompressedSize(mDatasize)]);
-            if (compresseddata.get()) {
+            auto compresseddata = MakeUnique<char[]>(LZ4::maxCompressedSize(mDatasize));
+            if (compresseddata) {
                 int ndatasize = LZ4::compress((char*)aImage->GetData(),
                                               mDatasize,
-                                              compresseddata);
+                                              compresseddata.get());
                 if (ndatasize > 0) {
                     mDatasize = ndatasize;
                     tp->set_dataformat((1 << 16 | tp->dataformat()));
-                    tp->set_data(compresseddata, mDatasize);
+                    tp->set_data(compresseddata.get(), mDatasize);
                 } else {
                     NS_WARNING("Compress data failed");
                     tp->set_data(aImage->GetData(), mDatasize);
@@ -529,7 +528,7 @@ public:
         Packet packet;
         packet.set_type(mDataType);
 
-        ColorPacket *cp = packet.mutable_color();
+        ColorPacket* cp = packet.mutable_color();
         cp->set_layerref(reinterpret_cast<uint64_t>(mLayerRef));
         cp->set_color(mColor);
         cp->set_width(mSize.width);
@@ -541,9 +540,28 @@ public:
     }
 
 protected:
-    void *mLayerRef;
+    void* mLayerRef;
     uint32_t mColor;
     nsIntSize mSize;
+};
+
+class DebugGLLayersData : public DebugGLData {
+public:
+    explicit DebugGLLayersData(UniquePtr<Packet> aPacket)
+        : DebugGLData(Packet::LAYERS),
+          mPacket(Move(aPacket))
+    { }
+
+    virtual bool Write() MOZ_OVERRIDE {
+        mPacket->set_type(mDataType);
+
+        if (!WriteToStream(*mPacket))
+            return false;
+        return true;
+    }
+
+protected:
+    UniquePtr<Packet> mPacket;
 };
 
 class DebugListener : public nsIServerSocketListener
@@ -611,7 +629,7 @@ public:
         nsresult rv = NS_OK;
 
         while ((d = mList.popFirst()) != nullptr) {
-            nsAutoPtr<DebugGLData> cleaner(d);
+            UniquePtr<DebugGLData> cleaner(d);
             if (!d->Write()) {
                 rv = NS_ERROR_FAILURE;
                 break;
@@ -931,6 +949,17 @@ LayerScope::SendLayer(LayerComposite* aLayer,
         return;
     }
     SenderHelper::SendLayer(aLayer, aWidth, aHeight);
+}
+
+void
+LayerScope::SendLayerDump(UniquePtr<Packet> aPacket)
+{
+    // Protect this public function
+    if (!CheckSendable()) {
+        return;
+    }
+    WebSocketHelper::GetSocketManager()->AppendDebugData(
+        new DebugGLLayersData(Move(aPacket)));
 }
 
 bool

@@ -27,7 +27,7 @@ public class MediaCastingBar extends RelativeLayout implements View.OnClickListe
     private ImageButton mMediaPause;
     private ImageButton mMediaStop;
 
-    private boolean mInflated = false;
+    private boolean mInflated;
 
     public MediaCastingBar(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -48,7 +48,7 @@ public class MediaCastingBar extends RelativeLayout implements View.OnClickListe
         mMediaStop = (ImageButton) content.findViewById(R.id.media_stop);
         mMediaStop.setOnClickListener(this);
 
-        mCastingTo = (TextView) content.findViewById(R.id.media_casting_to);
+        mCastingTo = (TextView) content.findViewById(R.id.media_sending_to);
 
         // Capture clicks on the rest of the view to prevent them from
         // leaking into other views positioned below.

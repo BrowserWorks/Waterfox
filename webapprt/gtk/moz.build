@@ -21,4 +21,12 @@ LOCAL_INCLUDES += [
     '/xpcom/build',
 ]
 
+USE_LIBS += [
+    'xpcomglue',
+]
+
 DISABLE_STL_WRAPPING = True
+
+CXXFLAGS += CONFIG['TK_CFLAGS']
+
+OS_LIBS += CONFIG['TK_LIBS']

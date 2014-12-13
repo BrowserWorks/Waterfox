@@ -38,7 +38,6 @@ ThebesLayerComposite::ThebesLayerComposite(LayerManagerComposite *aManager)
   : ThebesLayer(aManager, nullptr)
   , LayerComposite(aManager)
   , mBuffer(nullptr)
-  , mRequiresTiledProperties(false)
 {
   MOZ_COUNT_CTOR(ThebesLayerComposite);
   mImplData = static_cast<LayerComposite*>(this);
@@ -118,6 +117,7 @@ ThebesLayerComposite::RenderLayer(const nsIntRect& aClipRect)
              mBuffer->GetLayer() == this,
              "buffer is corrupted");
 
+  const nsIntRegion& visibleRegion = GetEffectiveVisibleRegion();
   gfx::Rect clipRect(aClipRect.x, aClipRect.y, aClipRect.width, aClipRect.height);
 
 #ifdef MOZ_DUMP_PAINTING
@@ -133,15 +133,6 @@ ThebesLayerComposite::RenderLayer(const nsIntRect& aClipRect)
   LayerManagerComposite::AutoAddMaskEffect autoMaskEffect(mMaskLayer, effectChain);
   AddBlendModeEffect(effectChain);
 
-  const nsIntRegion& visibleRegion = GetEffectiveVisibleRegion();
-
-  TiledLayerProperties tiledLayerProps;
-  if (mRequiresTiledProperties) {
-    tiledLayerProps.mVisibleRegion = visibleRegion;
-    tiledLayerProps.mEffectiveResolution = GetEffectiveResolution();
-    tiledLayerProps.mValidRegion = mValidRegion;
-  }
-
   mBuffer->SetPaintWillResample(MayResample());
 
   mBuffer->Composite(effectChain,
@@ -149,14 +140,8 @@ ThebesLayerComposite::RenderLayer(const nsIntRect& aClipRect)
                      GetEffectiveTransform(),
                      GetEffectFilter(),
                      clipRect,
-                     &visibleRegion,
-                     mRequiresTiledProperties ? &tiledLayerProps
-                                              : nullptr);
+                     &visibleRegion);
   mBuffer->BumpFlashCounter();
-
-  if (mRequiresTiledProperties) {
-    mValidRegion = tiledLayerProps.mValidRegion;
-  }
 
   mCompositeManager->GetCompositor()->MakeCurrent();
 }
@@ -185,19 +170,6 @@ ThebesLayerComposite::GenEffectChain(EffectChain& aEffect)
 {
   aEffect.mLayerRef = this;
   aEffect.mPrimaryEffect = mBuffer->GenEffect(GetEffectFilter());
-}
-
-CSSToScreenScale
-ThebesLayerComposite::GetEffectiveResolution()
-{
-  for (ContainerLayer* parent = GetParent(); parent; parent = parent->GetParent()) {
-    const FrameMetrics& metrics = parent->GetFrameMetrics();
-    if (metrics.GetScrollId() != FrameMetrics::NULL_SCROLL_ID) {
-      return metrics.GetZoom();
-    }
-  }
-
-  return CSSToScreenScale(1.0);
 }
 
 void

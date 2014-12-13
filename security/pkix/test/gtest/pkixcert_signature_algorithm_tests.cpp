@@ -3,6 +3,7 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
+#include "cert.h"
 #include "nssgtest.h"
 #include "pkix/pkix.h"
 #include "pkixgtest.h"
@@ -10,6 +11,9 @@
 
 using namespace mozilla::pkix;
 using namespace mozilla::pkix::test;
+
+typedef ScopedPtr<CERTCertificate, CERT_DestroyCertificate>
+          ScopedCERTCertificate;
 
 static bool
 CreateCert(PLArenaPool* arena, const char* issuerCN,
@@ -57,8 +61,8 @@ CreateCert(PLArenaPool* arena, const char* issuerCN,
 
   SECItem* certDER(CreateEncodedCertificate(arena, v3, signatureAlgorithm,
                                             serialNumber, issuerDER,
-                                            PR_Now() - ONE_DAY,
-                                            PR_Now() + ONE_DAY,
+                                            oneDayBeforeNow,
+                                            oneDayAfterNow,
                                             subjectDER, extensions,
                                             issuerKey, signatureHashAlgorithm,
                                             subjectKey));
@@ -82,34 +86,55 @@ public:
 
 private:
   virtual Result GetCertTrust(EndEntityOrCA, const CertPolicyId&,
-                              const SECItem& candidateCert,
-                              /*out*/ TrustLevel* trustLevel)
+                              Input candidateCert,
+                              /*out*/ TrustLevel& trustLevel)
   {
-    if (SECITEM_ItemsAreEqual(&candidateCert, &rootCert->derCert)) {
-      *trustLevel = TrustLevel::TrustAnchor;
+    Input rootDER;
+    Result rv = rootDER.Init(rootCert->derCert.data,
+                             rootCert->derCert.len);
+    EXPECT_EQ(Success, rv);
+    if (InputsAreEqual(candidateCert, rootDER)) {
+      trustLevel = TrustLevel::TrustAnchor;
     } else {
-      *trustLevel = TrustLevel::InheritsTrust;
+      trustLevel = TrustLevel::InheritsTrust;
     }
     return Success;
   }
 
-  virtual Result FindIssuer(const SECItem& encodedIssuerName,
-                            IssuerChecker& checker, PRTime)
+  virtual Result FindIssuer(Input encodedIssuerName,
+                            IssuerChecker& checker, Time time)
   {
     bool keepGoing;
-    if (SECITEM_ItemsAreEqual(&encodedIssuerName, &rootCert->derSubject)) {
-      return checker.Check(rootCert->derCert, nullptr, keepGoing);
+    Input rootSubject;
+    Result rv = rootSubject.Init(rootCert->derSubject.data,
+                                 rootCert->derSubject.len);
+    EXPECT_EQ(Success, rv);
+    if (InputsAreEqual(encodedIssuerName, rootSubject)) {
+      Input rootDER;
+      rv = rootDER.Init(rootCert->derCert.data, rootCert->derCert.len);
+      EXPECT_EQ(Success, rv);
+      return checker.Check(rootDER, nullptr, keepGoing);
     }
-    if (SECITEM_ItemsAreEqual(&encodedIssuerName,
-                              &intermediateCert->derSubject)) {
-      return checker.Check(intermediateCert->derCert, nullptr, keepGoing);
+
+    Input intermediateSubject;
+    rv = intermediateSubject.Init(intermediateCert->derSubject.data,
+                                  intermediateCert->derSubject.len);
+    EXPECT_EQ(Success, rv);
+    if (InputsAreEqual(encodedIssuerName, intermediateSubject)) {
+      Input intermediateDER;
+      rv = intermediateDER.Init(intermediateCert->derCert.data,
+                                intermediateCert->derCert.len);
+      EXPECT_EQ(Success, rv);
+      return checker.Check(intermediateDER, nullptr, keepGoing);
     }
+
     // FindIssuer just returns success if it can't find a potential issuer.
     return Success;
   }
 
-  virtual Result CheckRevocation(EndEntityOrCA, const CertID&, PRTime,
-                                 const SECItem*, const SECItem*)
+  virtual Result CheckRevocation(EndEntityOrCA, const CertID&, Time,
+                                 /*optional*/ const Input*,
+                                 /*optional*/ const Input*)
   {
     return Success;
   }
@@ -120,20 +145,20 @@ private:
   }
 
   virtual Result VerifySignedData(const SignedDataWithSignature& signedData,
-                                  const SECItem& subjectPublicKeyInfo)
+                                  Input subjectPublicKeyInfo)
   {
     EXPECT_NE(SignatureAlgorithm::unsupported_algorithm, signedData.algorithm);
     return ::mozilla::pkix::VerifySignedData(signedData, subjectPublicKeyInfo,
                                              nullptr);
   }
 
-  virtual Result DigestBuf(const SECItem&, uint8_t*, size_t)
+  virtual Result DigestBuf(Input, uint8_t*, size_t)
   {
     ADD_FAILURE();
     return Result::FATAL_ERROR_LIBRARY_FAILURE;
   }
 
-  virtual Result CheckPublicKey(const SECItem& subjectPublicKeyInfo)
+  virtual Result CheckPublicKey(Input subjectPublicKeyInfo)
   {
     return ::mozilla::pkix::CheckPublicKey(subjectPublicKeyInfo);
   }
@@ -220,7 +245,7 @@ public:
 TEST_P(pkixcert_IsValidChainForAlgorithm, IsValidChainForAlgorithm)
 {
   ScopedPLArenaPool arena(PORT_NewArena(DER_DEFAULT_CHUNKSIZE));
-  ASSERT_NE(nullptr, arena.get());
+  ASSERT_TRUE(arena.get());
 
   const ChainValidity& chainValidity(GetParam());
   const char* rootCN = "CN=Root";
@@ -260,8 +285,11 @@ TEST_P(pkixcert_IsValidChainForAlgorithm, IsValidChainForAlgorithm)
   Result expectedResult = chainValidity.isValid
                         ? Success
                         : Result::ERROR_CERT_SIGNATURE_ALGORITHM_DISABLED;
+  Input endEntityDER;
+  EXPECT_EQ(Success, endEntityDER.Init(endEntityCert->derCert.data,
+                                       endEntityCert->derCert.len));
   ASSERT_EQ(expectedResult,
-            BuildCertChain(trustDomain, endEntityCert->derCert, PR_Now(),
+            BuildCertChain(trustDomain, endEntityDER, Now(),
                            EndEntityOrCA::MustBeEndEntity,
                            KeyUsage::noParticularKeyUsageRequired,
                            KeyPurposeId::id_kp_serverAuth,

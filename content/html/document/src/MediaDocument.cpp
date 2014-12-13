@@ -13,7 +13,6 @@
 #include "nsITextToSubURI.h"
 #include "nsIURL.h"
 #include "nsIContentViewer.h"
-#include "nsIMarkupDocumentViewer.h"
 #include "nsIDocShell.h"
 #include "nsCharsetSource.h" // kCharsetFrom* macro definition
 #include "nsNodeInfoManager.h"
@@ -22,6 +21,7 @@
 #include "mozilla/Services.h"
 #include "nsServiceManagerUtils.h"
 #include "nsIPrincipal.h"
+#include "nsIMultiPartChannel.h"
 
 namespace mozilla {
 namespace dom {
@@ -71,9 +71,16 @@ MediaDocumentStreamListener::OnStopRequest(nsIRequest* request,
     rv = mNextStream->OnStopRequest(request, ctxt, status);
   }
 
-  // No more need for our document so clear our reference and prevent leaks
-  mDocument = nullptr;
+  // Don't release mDocument here if we're in the middle of a multipart response.
+  bool lastPart = true;
+  nsCOMPtr<nsIMultiPartChannel> mpchan(do_QueryInterface(request));
+  if (mpchan) {
+    mpchan->GetIsLastPart(&lastPart);
+  }
 
+  if (lastPart) {
+    mDocument = nullptr;
+  }
   return rv;
 }
 

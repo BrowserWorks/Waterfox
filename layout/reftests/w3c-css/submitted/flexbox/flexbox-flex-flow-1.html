@@ -7,7 +7,7 @@
 <head>
   <title>CSS Test: Testing all the values of the "flex-flow" shorthand property, with 4 flex items in each container</title>
   <link rel="author" title="Daniel Holbert" href="mailto:dholbert@mozilla.com">
-  <link rel="help" href="http://www.w3.org/TR/css3-flexbox/#flex-flow-property">
+  <link rel="help" href="http://www.w3.org/TR/css-flexbox-1/#flex-flow-property">
   <link rel="match" href="flexbox-flex-flow-1-ref.html">
   <meta charset="utf-8">
   <style>
@@ -24,6 +24,12 @@
       border: 1px dotted gray;
       width: 28px;
       height: 28px;
+      /* Explicitly set min-width & min-height to 0, to prevent their "auto"
+         value from influencing the sizes of our flex items (particularly for
+         the single-line chunks of this testcase, whose items may be shrunk a
+         little below the numerals' intrinsic sizes): */
+      min-width:  0;
+      min-height: 0;
     }
   </style>
 </head>

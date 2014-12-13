@@ -14,6 +14,8 @@
 #include "nsError.h"
 #include "nsDOMString.h"
 #include "nsIDOMCSSPrimitiveValue.h"
+#include "nsIFrame.h"
+#include "nsIFrameInlines.h"
 #include "nsStyleContext.h"
 #include "nsIScrollableFrame.h"
 #include "nsContentUtils.h"
@@ -22,6 +24,7 @@
 #include "nsDOMCSSRect.h"
 #include "nsDOMCSSRGBColor.h"
 #include "nsDOMCSSValueList.h"
+#include "nsFlexContainerFrame.h"
 #include "nsGkAtoms.h"
 #include "nsHTMLReflowState.h"
 #include "nsStyleUtil.h"
@@ -523,11 +526,11 @@ nsComputedDOMStyle::GetAdjustedValuesForBoxSizing()
 nsIPresShell*
 nsComputedDOMStyle::GetPresShellForContent(nsIContent* aContent)
 {
-  nsIDocument* currentDoc = aContent->GetCurrentDoc();
-  if (!currentDoc)
+  nsIDocument* composedDoc = aContent->GetComposedDoc();
+  if (!composedDoc)
     return nullptr;
 
-  return currentDoc->GetShell();
+  return composedDoc->GetShell();
 }
 
 // nsDOMCSSDeclaration abstract methods which should never be called
@@ -791,7 +794,10 @@ nsComputedDOMStyle::IndexedGetter(uint32_t aIndex, bool& aFound,
   const nsStyleVariables* variables = StyleVariables();
   if (aIndex - length < variables->mVariables.Count()) {
     aFound = true;
-    variables->mVariables.GetVariableAt(aIndex - length, aPropName);
+    nsString varName;
+    variables->mVariables.GetVariableAt(aIndex - length, varName);
+    aPropName.AssignLiteral("--");
+    aPropName.Append(varName);
   } else {
     aFound = false;
   }
@@ -1464,16 +1470,6 @@ nsComputedDOMStyle::DoGetFontWeight()
 }
 
 CSSValue*
-nsComputedDOMStyle::DoGetFontVariant()
-{
-  nsROCSSPrimitiveValue* val = new nsROCSSPrimitiveValue;
-  val->SetIdent(
-    nsCSSProps::ValueToKeywordEnum(StyleFont()->mFont.variant,
-                                   nsCSSProps::kFontVariantKTable));
-  return val;
-}
-
-CSSValue*
 nsComputedDOMStyle::DoGetFontFeatureSettings()
 {
   nsROCSSPrimitiveValue* val = new nsROCSSPrimitiveValue;
@@ -1537,6 +1533,37 @@ nsComputedDOMStyle::DoGetFontSynthesis()
   return val;
 }
 
+// return a value *only* for valid longhand values from CSS 2.1, either
+// normal or small-caps only
+CSSValue*
+nsComputedDOMStyle::DoGetFontVariant()
+{
+  const nsFont& f = StyleFont()->mFont;
+
+  // if any of the other font-variant subproperties other than
+  // font-variant-caps are not normal then can't calculate a computed value
+  if (f.variantAlternates || f.variantEastAsian || f.variantLigatures ||
+      f.variantNumeric || f.variantPosition) {
+    return nullptr;
+  }
+
+  nsCSSKeyword keyword;
+  switch (f.variantCaps) {
+    case 0:
+      keyword = eCSSKeyword_normal;
+      break;
+    case NS_FONT_VARIANT_CAPS_SMALLCAPS:
+      keyword = eCSSKeyword_small_caps;
+      break;
+    default:
+      return nullptr;
+  }
+
+  nsROCSSPrimitiveValue* val = new nsROCSSPrimitiveValue;
+  val->SetIdent(keyword);
+  return val;
+}
+
 CSSValue*
 nsComputedDOMStyle::DoGetFontVariantAlternates()
 {
@@ -1566,7 +1593,6 @@ nsComputedDOMStyle::DoGetFontVariantAlternates()
   val->SetString(valueStr);
   return val;
 }
-
 
 CSSValue*
 nsComputedDOMStyle::DoGetFontVariantCaps()
@@ -1616,6 +1642,8 @@ nsComputedDOMStyle::DoGetFontVariantLigatures()
 
   if (0 == intValue) {
     val->SetIdent(eCSSKeyword_normal);
+  } else if (NS_FONT_VARIANT_LIGATURES_NONE == intValue) {
+    val->SetIdent(eCSSKeyword_none);
   } else {
     nsAutoString valueStr;
 
@@ -4103,7 +4131,17 @@ CSSValue*
 nsComputedDOMStyle::DoGetMinHeight()
 {
   nsROCSSPrimitiveValue *val = new nsROCSSPrimitiveValue;
-  SetValueToCoord(val, StylePosition()->mMinHeight, true,
+  nsStyleCoord minHeight = StylePosition()->mMinHeight;
+
+  if (eStyleUnit_Auto == minHeight.GetUnit()) {
+    // In non-flexbox contexts, "min-height: auto" means "min-height: 0"
+    // XXXdholbert For flex items, we should set |minHeight| to the
+    // -moz-min-content keyword, instead of 0, once we support -moz-min-content
+    // as a height value.
+    minHeight.SetCoordValue(0);
+  }
+
+  SetValueToCoord(val, minHeight, true,
                   &nsComputedDOMStyle::GetCBContentHeight);
   return val;
 }
@@ -4112,7 +4150,25 @@ CSSValue*
 nsComputedDOMStyle::DoGetMinWidth()
 {
   nsROCSSPrimitiveValue *val = new nsROCSSPrimitiveValue;
-  SetValueToCoord(val, StylePosition()->mMinWidth, true,
+
+  nsStyleCoord minWidth = StylePosition()->mMinWidth;
+
+  if (eStyleUnit_Auto == minWidth.GetUnit()) {
+    // "min-width: auto" means "0", unless we're a flex item in a horizontal
+    // flex container, in which case it means "min-content"
+    minWidth.SetCoordValue(0);
+    if (mOuterFrame && mOuterFrame->IsFlexItem()) {
+      nsIFrame* flexContainer = mOuterFrame->GetParent();
+      MOZ_ASSERT(flexContainer &&
+                 flexContainer->GetType() == nsGkAtoms::flexContainerFrame,
+                 "IsFlexItem() lied...?");
+
+      if (static_cast<nsFlexContainerFrame*>(flexContainer)->IsHorizontal()) {
+        minWidth.SetIntValue(NS_STYLE_WIDTH_MIN_CONTENT, eStyleUnit_Enumerated);
+      }
+    }
+  }
+  SetValueToCoord(val, minWidth, true,
                   &nsComputedDOMStyle::GetCBContentWidth,
                   nsCSSProps::kWidthKTable);
   return val;
@@ -4121,10 +4177,10 @@ nsComputedDOMStyle::DoGetMinWidth()
 CSSValue*
 nsComputedDOMStyle::DoGetMixBlendMode()
 {
-    nsROCSSPrimitiveValue* val = new nsROCSSPrimitiveValue;
-    val->SetIdent(nsCSSProps::ValueToKeywordEnum(StyleDisplay()->mMixBlendMode,
-                  nsCSSProps::kBlendModeKTable));
-    return val;
+  nsROCSSPrimitiveValue* val = new nsROCSSPrimitiveValue;
+  val->SetIdent(nsCSSProps::ValueToKeywordEnum(StyleDisplay()->mMixBlendMode,
+                                               nsCSSProps::kBlendModeKTable));
+  return val;
 }
 
 CSSValue*

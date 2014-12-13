@@ -10,6 +10,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.concurrent.SynchronousQueue;
 
+import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.gfx.InputConnectionHandler;
 import org.mozilla.gecko.util.Clipboard;
 import org.mozilla.gecko.util.GamepadUtils;
@@ -18,7 +19,6 @@ import org.mozilla.gecko.util.ThreadUtils.AssertBehavior;
 
 import android.R;
 import android.content.Context;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
@@ -517,7 +517,8 @@ class GeckoInputConnection
                     GeckoInputConnection.class.notify();
                 }
                 Looper.loop();
-                sBackgroundHandler = null;
+                // We should never be exiting the thread loop.
+                throw new IllegalThreadStateException("unreachable code");
             }
         }, LOGTAG);
         backgroundThread.setDaemon(true);
@@ -562,11 +563,7 @@ class GeckoInputConnection
         if (!canReturnCustomHandler()) {
             return defHandler;
         }
-        // getBackgroundHandler() is synchronized and requires locking,
-        // but if we already have our handler, we don't have to lock
-        final Handler newHandler = sBackgroundHandler != null
-                                 ? sBackgroundHandler
-                                 : getBackgroundHandler();
+        final Handler newHandler = getBackgroundHandler();
         if (mEditableClient.setInputConnectionHandler(newHandler)) {
             return newHandler;
         }
@@ -953,10 +950,10 @@ class GeckoInputConnection
         if (typeHint != null &&
             (typeHint.equalsIgnoreCase("date") ||
              typeHint.equalsIgnoreCase("time") ||
-             (Build.VERSION.SDK_INT >= 11 && (typeHint.equalsIgnoreCase("datetime") ||
-                                              typeHint.equalsIgnoreCase("month") ||
-                                              typeHint.equalsIgnoreCase("week") ||
-                                              typeHint.equalsIgnoreCase("datetime-local"))))) {
+             (Versions.feature11Plus && (typeHint.equalsIgnoreCase("datetime") ||
+                                         typeHint.equalsIgnoreCase("month") ||
+                                         typeHint.equalsIgnoreCase("week") ||
+                                         typeHint.equalsIgnoreCase("datetime-local"))))) {
             state = IME_STATE_DISABLED;
         }
 

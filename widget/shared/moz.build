@@ -5,7 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 if CONFIG['MOZ_X11']:
-    PARALLEL_DIRS += ['x11']
+    DIRS += ['x11']
 
 UNIFIED_SOURCES += [
     'nsShmImage.cpp',
@@ -17,4 +17,6 @@ include('/ipc/chromium/chromium-config.mozbuild')
 
 FAIL_ON_WARNINGS = True
 
-FINAL_LIBRARY = 'xpwidgets_s'
+FINAL_LIBRARY = 'xul'
+
+CXXFLAGS += CONFIG['TK_CFLAGS']

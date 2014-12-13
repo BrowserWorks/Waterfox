@@ -20,6 +20,7 @@
 #include "nsAutoPtr.h"                  // for nsRefPtr
 #include "nsCOMPtr.h"                   // for already_AddRefed
 #include "nsDebug.h"                    // for NS_ABORT_IF_FALSE
+#include "nsIObserver.h"                // for nsIObserver
 #include "nsISupportsImpl.h"            // for Layer::Release, etc
 #include "nsRect.h"                     // for nsIntRect
 #include "nsTArray.h"                   // for nsTArray
@@ -38,12 +39,12 @@ class PLayerChild;
 class TextureClientPool;
 class SimpleTextureClientPool;
 
-class ClientLayerManager : public LayerManager
+class ClientLayerManager MOZ_FINAL : public LayerManager
 {
   typedef nsTArray<nsRefPtr<Layer> > LayerRefArray;
 
 public:
-  ClientLayerManager(nsIWidget* aWidget);
+  explicit ClientLayerManager(nsIWidget* aWidget);
 
 protected:
   virtual ~ClientLayerManager();
@@ -88,6 +89,7 @@ public:
   virtual already_AddRefed<ContainerLayer> CreateContainerLayer();
   virtual already_AddRefed<ImageLayer> CreateImageLayer();
   virtual already_AddRefed<CanvasLayer> CreateCanvasLayer();
+  virtual already_AddRefed<ReadbackLayer> CreateReadbackLayer();
   virtual already_AddRefed<ColorLayer> CreateColorLayer();
   virtual already_AddRefed<RefLayer> CreateRefLayer();
 
@@ -118,9 +120,16 @@ public:
   TextureClientPool* GetTexturePool(gfx::SurfaceFormat aFormat);
   SimpleTextureClientPool* GetSimpleTileTexturePool(gfx::SurfaceFormat aFormat);
 
+  /// Utility methods for managing texture clients.
+  void ReturnTextureClientDeferred(TextureClient& aClient);
+  void ReturnTextureClient(TextureClient& aClient);
+  void ReportClientLost(TextureClient& aClient);
+
   // Drop cached resources and ask our shadow manager to do the same,
   // if we have one.
   virtual void ClearCachedResources(Layer* aSubtree = nullptr) MOZ_OVERRIDE;
+
+  void HandleMemoryPressure();
 
   void SetRepeatTransaction() { mRepeatTransaction = true; }
   bool GetRepeatTransaction() { return mRepeatTransaction; }
@@ -203,10 +212,8 @@ public:
   // Log APZ test data for a repaint request. The sequence number must be
   // passed in from outside, and APZTestData::StartNewRepaintRequest() needs
   // to be called from the outside as well when a new repaint request is started.
-  void StartNewRepaintRequest(SequenceNumber aSequenceNumber)
-  {
-    mApzTestData.StartNewRepaintRequest(aSequenceNumber);
-  }
+  void StartNewRepaintRequest(SequenceNumber aSequenceNumber);
+
   // TODO(botond): When we start using this and write a wrapper similar to
   // nsLayoutUtils::LogTestDataForPaint(), make sure that wrapper checks
   // gfxPrefs::APZTestLoggingEnabled().
@@ -236,6 +243,29 @@ protected:
   TransactionPhase mPhase;
 
 private:
+  // Listen memory-pressure event for ClientLayerManager
+  class MemoryPressureObserver MOZ_FINAL : public nsIObserver
+  {
+  public:
+    NS_DECL_ISUPPORTS
+    NS_DECL_NSIOBSERVER
+
+    MemoryPressureObserver(ClientLayerManager* aClientLayerManager)
+      : mClientLayerManager(aClientLayerManager)
+    {
+      RegisterMemoryPressureEvent();
+    }
+
+    void Destroy();
+
+  private:
+    virtual ~MemoryPressureObserver() {}
+    void RegisterMemoryPressureEvent();
+    void UnregisterMemoryPressureEvent();
+
+    ClientLayerManager* mClientLayerManager;
+  };
+
   /**
    * Forward transaction results to the parent context.
    */
@@ -252,9 +282,6 @@ private:
   bool EndTransactionInternal(DrawThebesLayerCallback aCallback,
                               void* aCallbackData,
                               EndTransactionFlags);
-
-  // The bounds of |mTarget| in device pixels.
-  nsIntRect mTargetBounds;
 
   LayerRefArray mKeepAlive;
 
@@ -301,9 +328,12 @@ private:
   RefPtr<ShadowLayerForwarder> mForwarder;
   nsAutoTArray<RefPtr<TextureClientPool>,2> mTexturePools;
   nsAutoTArray<dom::OverfillCallback*,0> mOverfillCallbacks;
+  mozilla::TimeStamp mTransactionStart;
 
   // indexed by gfx::SurfaceFormat
   nsTArray<RefPtr<SimpleTextureClientPool> > mSimpleTilePools;
+
+  nsRefPtr<MemoryPressureObserver> mMemoryPressureObserver;
 };
 
 class ClientLayer : public ShadowableLayer
@@ -335,6 +365,7 @@ public:
   virtual void ClearCachedResources() { }
 
   virtual void RenderLayer() = 0;
+  virtual void RenderLayerWithReadback(ReadbackProcessor *aReadback) { RenderLayer(); }
 
   virtual ClientThebesLayer* AsThebes() { return nullptr; }
 

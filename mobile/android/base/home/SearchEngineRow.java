@@ -58,7 +58,7 @@ class SearchEngineRow extends AnimatedHeightLayout {
     private OnEditSuggestionListener mEditSuggestionListener;
 
     // Selected suggestion view
-    private int mSelectedView = 0;
+    private int mSelectedView;
 
     public SearchEngineRow(Context context) {
         this(context, null);
@@ -79,7 +79,7 @@ class SearchEngineRow extends AnimatedHeightLayout {
                 // If we're not clicking the user-entered view (the first suggestion item)
                 // and the search matches a URL pattern, go to that URL. Otherwise, do a
                 // search for the term.
-                if (v != mUserEnteredView && !StringUtils.isSearchQuery(suggestion, false)) {
+                if (v != mUserEnteredView && !StringUtils.isSearchQuery(suggestion, true)) {
                     if (mUrlOpenListener != null) {
                         Telemetry.sendUIEvent(TelemetryContract.Event.LOAD_URL, TelemetryContract.Method.SUGGESTION, "url");
 
@@ -89,7 +89,8 @@ class SearchEngineRow extends AnimatedHeightLayout {
                     if (v == mUserEnteredView) {
                         Telemetry.sendUIEvent(TelemetryContract.Event.LOAD_URL, TelemetryContract.Method.SUGGESTION, "user");
                     } else {
-                        Telemetry.sendUIEvent(TelemetryContract.Event.LOAD_URL, TelemetryContract.Method.SUGGESTION, "engine");
+                        final String extras = "engine." + (String) v.getTag();
+                        Telemetry.sendUIEvent(TelemetryContract.Event.LOAD_URL, TelemetryContract.Method.SUGGESTION, extras);
                     }
                     mSearchListener.onSearch(mSearchEngine, suggestion);
                 }
@@ -197,6 +198,9 @@ class SearchEngineRow extends AnimatedHeightLayout {
 
                 suggestionItem.setOnClickListener(mClickListener);
                 suggestionItem.setOnLongClickListener(mLongClickListener);
+
+                // Store the position of the suggestion for telemetry.
+                suggestionItem.setTag(String.valueOf(suggestionCounter));
 
                 final ImageView magnifier =
                         (ImageView) suggestionItem.findViewById(R.id.suggestion_magnifier);

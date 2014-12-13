@@ -70,23 +70,25 @@ enum CSPDirective {
   CSP_CONNECT_SRC,
   CSP_REPORT_URI,
   CSP_FRAME_ANCESTORS,
+  CSP_REFLECTED_XSS,
   // CSP_LAST_DIRECTIVE_VALUE always needs to be the last element in the enum
   // because we use it to calculate the size for the char* array.
   CSP_LAST_DIRECTIVE_VALUE
 };
 
 static const char* CSPStrDirectives[] = {
-  "default-src",    // CSP_DEFAULT_SRC = 0
-  "script-src",     // CSP_SCRIPT_SRC
-  "object-src",     // CSP_OBJECT_SRC
-  "style-src",      // CSP_STYLE_SRC
-  "img-src",        // CSP_IMG_SRC
-  "media-src",      // CSP_MEDIA_SRC
-  "frame-src",      // CSP_FRAME_SRC
-  "font-src",       // CSP_FONT_SRC
-  "connect-src",    // CSP_CONNECT_SRC
-  "report-uri",     // CSP_REPORT_URI
-  "frame-ancestors" // CSP_FRAME_ANCESTORS
+  "default-src",     // CSP_DEFAULT_SRC = 0
+  "script-src",      // CSP_SCRIPT_SRC
+  "object-src",      // CSP_OBJECT_SRC
+  "style-src",       // CSP_STYLE_SRC
+  "img-src",         // CSP_IMG_SRC
+  "media-src",       // CSP_MEDIA_SRC
+  "frame-src",       // CSP_FRAME_SRC
+  "font-src",        // CSP_FONT_SRC
+  "connect-src",     // CSP_CONNECT_SRC
+  "report-uri",      // CSP_REPORT_URI
+  "frame-ancestors", // CSP_FRAME_ANCESTORS
+  "reflected-xss"    // CSP_REFLECTED_XSS
 };
 
 inline const char* CSP_EnumToDirective(enum CSPDirective aDir)
@@ -196,7 +198,7 @@ class nsCSPBaseSrc {
 
 class nsCSPSchemeSrc : public nsCSPBaseSrc {
   public:
-    nsCSPSchemeSrc(const nsAString& aScheme);
+    explicit nsCSPSchemeSrc(const nsAString& aScheme);
     virtual ~nsCSPSchemeSrc();
 
     bool permits(nsIURI* aUri, const nsAString& aNonce) const;
@@ -210,7 +212,7 @@ class nsCSPSchemeSrc : public nsCSPBaseSrc {
 
 class nsCSPHostSrc : public nsCSPBaseSrc {
   public:
-    nsCSPHostSrc(const nsAString& aHost);
+    explicit nsCSPHostSrc(const nsAString& aHost);
     virtual ~nsCSPHostSrc();
 
     bool permits(nsIURI* aUri, const nsAString& aNonce) const;
@@ -233,7 +235,7 @@ class nsCSPHostSrc : public nsCSPBaseSrc {
 
 class nsCSPKeywordSrc : public nsCSPBaseSrc {
   public:
-    nsCSPKeywordSrc(CSPKeyword aKeyword);
+    explicit nsCSPKeywordSrc(CSPKeyword aKeyword);
     virtual ~nsCSPKeywordSrc();
 
     bool allows(enum CSPKeyword aKeyword, const nsAString& aHashOrNonce) const;
@@ -247,7 +249,7 @@ class nsCSPKeywordSrc : public nsCSPBaseSrc {
 
 class nsCSPNonceSrc : public nsCSPBaseSrc {
   public:
-    nsCSPNonceSrc(const nsAString& aNonce);
+    explicit nsCSPNonceSrc(const nsAString& aNonce);
     virtual ~nsCSPNonceSrc();
 
     bool permits(nsIURI* aUri, const nsAString& aNonce) const;
@@ -277,7 +279,7 @@ class nsCSPHashSrc : public nsCSPBaseSrc {
 
 class nsCSPReportURI : public nsCSPBaseSrc {
   public:
-    nsCSPReportURI(nsIURI *aURI);
+    explicit nsCSPReportURI(nsIURI* aURI);
     virtual ~nsCSPReportURI();
 
     void toString(nsAString& outStr) const;
@@ -291,7 +293,7 @@ class nsCSPReportURI : public nsCSPBaseSrc {
 class nsCSPDirective {
   public:
     nsCSPDirective();
-    nsCSPDirective(enum CSPDirective aDirective);
+    explicit nsCSPDirective(enum CSPDirective aDirective);
     virtual ~nsCSPDirective();
 
     bool permits(nsIURI* aUri, const nsAString& aNonce) const;

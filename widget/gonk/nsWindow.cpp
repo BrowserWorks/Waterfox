@@ -25,7 +25,6 @@
 #include "mozilla/Services.h"
 #include "mozilla/FileUtils.h"
 #include "mozilla/ClearOnShutdown.h"
-#include "Framebuffer.h"
 #include "gfxContext.h"
 #include "gfxPlatform.h"
 #include "gfxUtils.h"
@@ -119,6 +118,7 @@ static StaticRefPtr<ScreenOnOffEvent> sScreenOffEvent;
 static void
 displayEnabledCallback(bool enabled)
 {
+    HwcComposer2D::GetInstance()->EnableVsync(enabled);
     NS_DispatchToMainThread(enabled ? sScreenOnEvent : sScreenOffEvent);
 }
 
@@ -126,47 +126,52 @@ displayEnabledCallback(bool enabled)
 
 nsWindow::nsWindow()
 {
-    if (!sScreenInitialized) {
-        sScreenOnEvent = new ScreenOnOffEvent(true);
-        ClearOnShutdown(&sScreenOnEvent);
-        sScreenOffEvent = new ScreenOnOffEvent(false);
-        ClearOnShutdown(&sScreenOffEvent);
-        GetGonkDisplay()->OnEnabled(displayEnabledCallback);
+    if (sScreenInitialized)
+        return;
 
-        nsIntSize screenSize;
-        bool gotFB = Framebuffer::GetSize(&screenSize);
-        if (!gotFB) {
-            NS_RUNTIMEABORT("Failed to get size from framebuffer, aborting...");
-        }
-        gScreenBounds = nsIntRect(nsIntPoint(0, 0), screenSize);
+    sScreenOnEvent = new ScreenOnOffEvent(true);
+    ClearOnShutdown(&sScreenOnEvent);
+    sScreenOffEvent = new ScreenOnOffEvent(false);
+    ClearOnShutdown(&sScreenOffEvent);
+    GetGonkDisplay()->OnEnabled(displayEnabledCallback);
 
-        char propValue[PROPERTY_VALUE_MAX];
-        property_get("ro.sf.hwrotation", propValue, "0");
-        sPhysicalScreenRotation = atoi(propValue) / 90;
+    nsIntSize screenSize;
 
-        sVirtualBounds = gScreenBounds;
+    ANativeWindow *win = GetGonkDisplay()->GetNativeWindow();
 
-        sScreenInitialized = true;
-
-        nsAppShell::NotifyScreenInitialized();
-
-        // This is a hack to force initialization of the compositor
-        // resources, if we're going to use omtc.
-        //
-        // NB: GetPlatform() will create the gfxPlatform, which wants
-        // to know the color depth, which asks our native window.
-        // This has to happen after other init has finished.
-        gfxPlatform::GetPlatform();
-        if (!ShouldUseOffMainThreadCompositing()) {
-            MOZ_CRASH("How can we render apps, then?");
-        }
-        //Update sUsingHwc whenever layers.composer2d.enabled changes
-        Preferences::AddBoolVarCache(&sUsingHwc, "layers.composer2d.enabled");
+    if (win->query(win, NATIVE_WINDOW_WIDTH, &screenSize.width) ||
+        win->query(win, NATIVE_WINDOW_HEIGHT, &screenSize.height)) {
+        NS_RUNTIMEABORT("Failed to get native window size, aborting...");
     }
+    gScreenBounds = nsIntRect(nsIntPoint(0, 0), screenSize);
+
+    char propValue[PROPERTY_VALUE_MAX];
+    property_get("ro.sf.hwrotation", propValue, "0");
+    sPhysicalScreenRotation = atoi(propValue) / 90;
+
+    sVirtualBounds = gScreenBounds;
+
+    sScreenInitialized = true;
+
+    nsAppShell::NotifyScreenInitialized();
+
+    // This is a hack to force initialization of the compositor
+    // resources, if we're going to use omtc.
+    //
+    // NB: GetPlatform() will create the gfxPlatform, which wants
+    // to know the color depth, which asks our native window.
+    // This has to happen after other init has finished.
+    gfxPlatform::GetPlatform();
+    if (!ShouldUseOffMainThreadCompositing()) {
+        MOZ_CRASH("How can we render apps, then?");
+    }
+    // Update sUsingHwc whenever layers.composer2d.enabled changes
+    Preferences::AddBoolVarCache(&sUsingHwc, "layers.composer2d.enabled");
 }
 
 nsWindow::~nsWindow()
 {
+    HwcComposer2D::GetInstance()->SetCompositorParent(nullptr);
 }
 
 void
@@ -525,6 +530,7 @@ nsWindow::GetLayerManager(PLayerTransactionChild* aShadowManager,
         uint64_t rootLayerTreeId = mCompositorParent->RootLayerTreeId();
         CompositorParent::SetControllerForLayerTree(rootLayerTreeId, new ParentProcessController());
         CompositorParent::GetAPZCTreeManager(rootLayerTreeId)->SetDPI(GetDPI());
+        HwcComposer2D::GetInstance()->SetCompositorParent(mCompositorParent);
     }
     MOZ_ASSERT(mLayerManager);
     return mLayerManager;

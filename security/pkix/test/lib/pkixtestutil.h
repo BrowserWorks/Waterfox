@@ -25,10 +25,9 @@
 #ifndef mozilla_pkix_test__pkixtestutils_h
 #define mozilla_pkix_test__pkixtestutils_h
 
+#include <ctime>
 #include <stdint.h>
-#include <stdio.h>
 
-#include "cert.h"
 #include "keyhi.h"
 #include "pkix/enumclass.h"
 #include "pkix/pkixtypes.h"
@@ -37,12 +36,32 @@
 
 namespace mozilla { namespace pkix { namespace test {
 
-namespace {
+// XXX: Ideally, we should define this instead:
+//
+//   template <typename T, std::size_t N>
+//   constexpr inline std::size_t
+//   ArrayLength(T (&)[N])
+//   {
+//     return N;
+//   }
+//
+// However, we don't because not all supported compilers support constexpr,
+// and we need to calculate array lengths in static_assert sometimes.
+//
+// XXX: Evaluates its argument twice
+#define MOZILLA_PKIX_ARRAY_LENGTH(x) (sizeof(x) / sizeof((x)[0]))
 
-inline void
-fclose_void(FILE* file) {
-  (void) fclose(file);
-}
+class TestInput : public Input
+{
+public:
+  template <size_t N>
+  explicit TestInput(const char (&valueString)[N])
+    : Input(reinterpret_cast<const uint8_t(&)[N-1]>(valueString))
+  {
+  }
+};
+
+namespace {
 
 inline void
 SECITEM_FreeItem_true(SECItem* item)
@@ -52,25 +71,18 @@ SECITEM_FreeItem_true(SECItem* item)
 
 } // unnamed namespace
 
-typedef ScopedPtr<CERTCertificate, CERT_DestroyCertificate> ScopedCERTCertificate;
-typedef ScopedPtr<CERTCertList, CERT_DestroyCertList> ScopedCERTCertList;
-typedef mozilla::pkix::ScopedPtr<FILE, fclose_void> ScopedFILE;
 typedef mozilla::pkix::ScopedPtr<SECItem, SECITEM_FreeItem_true> ScopedSECItem;
 typedef mozilla::pkix::ScopedPtr<SECKEYPublicKey, SECKEY_DestroyPublicKey>
   ScopedSECKEYPublicKey;
 typedef mozilla::pkix::ScopedPtr<SECKEYPrivateKey, SECKEY_DestroyPrivateKey>
   ScopedSECKEYPrivateKey;
 
-FILE* OpenFile(const char* dir, const char* filename, const char* mode);
-
-extern const PRTime ONE_DAY;
-
 // e.g. YMDHMS(2016, 12, 31, 1, 23, 45) => 2016-12-31:01:23:45 (GMT)
-PRTime YMDHMS(int16_t year, int16_t month, int16_t day,
-              int16_t hour, int16_t minutes, int16_t seconds);
+mozilla::pkix::Time YMDHMS(int16_t year, int16_t month, int16_t day,
+                           int16_t hour, int16_t minutes, int16_t seconds);
 
-SECStatus GenerateKeyPair(/*out*/ ScopedSECKEYPublicKey& publicKey,
-                          /*out*/ ScopedSECKEYPrivateKey& privateKey);
+Result GenerateKeyPair(/*out*/ ScopedSECKEYPublicKey& publicKey,
+                       /*out*/ ScopedSECKEYPrivateKey& privateKey);
 
 // The result will be owned by the arena
 const SECItem* ASCIIToDERName(PLArenaPool* arena, const char* cn);
@@ -82,8 +94,12 @@ const SECItem* ASCIIToDERName(PLArenaPool* arena, const char* cn);
 // The string to search for must be 8 or more bytes long so that it is
 // extremely unlikely that there will ever be any false positive matches
 // in digital signatures, keys, hashes, etc.
-SECStatus TamperOnce(SECItem& item, const uint8_t* from, size_t fromLen,
-                     const uint8_t* to, size_t toLen);
+//
+// Returns true on success, false on failure.
+Result TamperOnce(SECItem& item, const uint8_t* from, size_t fromLen,
+                  const uint8_t* to, size_t toLen);
+
+Result InitInputFromSECItem(const SECItem* secItem, /*out*/ Input& input);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Encode Certificates
@@ -106,7 +122,7 @@ SECItem* CreateEncodedCertificate(PLArenaPool* arena, long version,
                                   SECOidTag signature,
                                   const SECItem* serialNumber,
                                   const SECItem* issuerNameDER,
-                                  PRTime notBefore, PRTime notAfter,
+                                  std::time_t notBefore, std::time_t notAfter,
                                   const SECItem* subjectNameDER,
                      /*optional*/ SECItem const* const* extensions,
                      /*optional*/ SECKEYPrivateKey* issuerPrivateKey,
@@ -146,24 +162,13 @@ public:
 class OCSPResponseContext
 {
 public:
-  OCSPResponseContext(PLArenaPool* arena, const CertID& certID, PRTime time);
+  OCSPResponseContext(PLArenaPool* arena, const CertID& certID, std::time_t time);
 
   PLArenaPool* arena;
   const CertID& certID;
   // TODO(bug 980538): add a way to specify what certificates are included.
 
   // The fields below are in the order that they appear in an OCSP response.
-
-  // By directly using the issuer name & SPKI and signer name & private key,
-  // instead of extracting those things out of CERTCertificate objects, we
-  // avoid poor interactions with the NSS CERTCertificate caches. In
-  // particular, there are some tests in which it is important that we know
-  // that the issuer and/or signer certificates are NOT in the NSS caches
-  // because we ant to make sure that our path building logic will find them
-  // or we want to test what happens when those certificates cannot be found.
-  // This concern doesn't apply to |cert| above because our verification code
-  // for certificate chains and for OCSP responses take the end-entity cert
-  // as a CERTCertificate anyway.
 
   enum OCSPResponseStatus {
     successful = 0,
@@ -182,7 +187,7 @@ public:
                                 // form; otherwise responderID will use the
                                 // byKeyHash form.
 
-  PRTime producedAt;
+  std::time_t producedAt;
 
   OCSPResponseExtension* extensions;
   bool includeEmptyExtensions; // If true, include the extension wrapper
@@ -202,17 +207,14 @@ public:
     unknown = 2,
   };
   uint8_t certStatus; // CertStatus or an invalid value
-  PRTime revocationTime; // For certStatus == revoked
-  PRTime thisUpdate;
-  PRTime nextUpdate;
+  std::time_t revocationTime; // For certStatus == revoked
+  std::time_t thisUpdate;
+  std::time_t nextUpdate;
   bool includeNextUpdate;
 };
 
 // The return value, if non-null, is owned by the arena in the context
-// and MUST NOT be freed.
-// This function does its best to respect the NSPR error code convention
-// (that is, if it returns null, calling PR_GetError() will return the
-// error of the failed operation). However, this is not guaranteed.
+// and MUST NOT be freed. A null return value indicates an error occurred.
 SECItem* CreateEncodedOCSPResponse(OCSPResponseContext& context);
 
 } } } // namespace mozilla::pkix::test

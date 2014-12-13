@@ -7,6 +7,7 @@
 #define MOZILLA_TRACKUNIONSTREAM_H_
 
 #include "MediaStreamGraph.h"
+#include "MediaStreamGraphImpl.h"
 #include <algorithm>
 
 namespace mozilla {
@@ -24,10 +25,10 @@ namespace mozilla {
  */
 class TrackUnionStream : public ProcessedMediaStream {
 public:
-  TrackUnionStream(DOMMediaStream* aWrapper) :
+  explicit TrackUnionStream(DOMMediaStream* aWrapper) :
     ProcessedMediaStream(aWrapper),
-    mFilterCallback(nullptr),
-    mMaxTrackID(0) {}
+    mFilterCallback(nullptr)
+  {}
 
   virtual void RemoveInput(MediaInputPort* aPort) MOZ_OVERRIDE
   {
@@ -163,10 +164,24 @@ protected:
   uint32_t AddTrack(MediaInputPort* aPort, StreamBuffer::Track* aTrack,
                     GraphTime aFrom)
   {
-    // Use the ID of the source track if we can, otherwise allocate a new
-    // unique ID
-    TrackID id = std::max(mMaxTrackID + 1, aTrack->GetID());
-    mMaxTrackID = id;
+    // Use the ID of the source track if it's not already assigned to a track,
+    // otherwise allocate a new unique ID.
+    TrackID id = aTrack->GetID();
+    TrackID maxTrackID = 0;
+    for (uint32_t i = 0; i < mTrackMap.Length(); ++i) {
+      TrackID outID = mTrackMap[i].mOutputTrackID;
+      maxTrackID = std::max(maxTrackID, outID);
+    }
+    // Note: we might have removed it here, but it might still be in the
+    // StreamBuffer if the TrackUnionStream sees its input stream flip from
+    // A to B, where both A and B have a track with the same ID
+    while (1) {
+      // search until we find one not in use here, and not in mBuffer
+      if (!mBuffer.FindTrack(id)) {
+        break;
+      }
+      id = ++maxTrackID;
+    }
 
     TrackRate rate = aTrack->GetRate();
     // Round up the track start time so the track, if anything, starts a
@@ -234,24 +249,23 @@ protected:
       MediaInputPort::InputInterval interval = map->mInputPort->GetNextInputInterval(t);
       interval.mEnd = std::min(interval.mEnd, aTo);
       StreamTime inputEnd = source->GraphTimeToStreamTime(interval.mEnd);
-      TrackTicks inputTrackEndPoint = TRACK_TICKS_MAX;
+      TrackTicks inputTrackEndPoint = aInputTrack->GetEnd();
 
       if (aInputTrack->IsEnded() &&
           aInputTrack->GetEndTimeRoundDown() <= inputEnd) {
-        inputTrackEndPoint = aInputTrack->GetEnd();
         *aOutputTrackFinished = true;
       }
 
-      if (interval.mStart >= interval.mEnd)
+      if (interval.mStart >= interval.mEnd) {
         break;
+      }
       next = interval.mEnd;
 
       // Ticks >= startTicks and < endTicks are in the interval
       StreamTime outputEnd = GraphTimeToStreamTime(interval.mEnd);
       TrackTicks startTicks = outputTrack->GetEnd();
       StreamTime outputStart = GraphTimeToStreamTime(interval.mStart);
-      NS_WARN_IF_FALSE(startTicks == TimeToTicksRoundUp(rate, outputStart),
-                       "Samples missing");
+      MOZ_ASSERT(startTicks == TimeToTicksRoundUp(rate, outputStart), "Samples missing");
       TrackTicks endTicks = TimeToTicksRoundUp(rate, outputEnd);
       TrackTicks ticks = endTicks - startTicks;
       StreamTime inputStart = source->GraphTimeToStreamTime(interval.mStart);
@@ -285,6 +299,14 @@ protected:
         map->mEndOfConsumedInputTicks = inputEndTicks;
         map->mEndOfLastInputIntervalInInputStream = inputEnd;
         map->mEndOfLastInputIntervalInOutputStream = outputEnd;
+
+        if (GraphImpl()->mFlushSourcesNow) {
+          TrackTicks flushto = inputEndTicks;
+          STREAM_LOG(PR_LOG_DEBUG, ("TrackUnionStream %p flushing after %lld of %lld ticks of input data from track %d for track %d",
+              this, flushto, aInputTrack->GetSegment()->GetDuration(), aInputTrack->GetID(), outputTrack->GetID()));
+          aInputTrack->FlushAfter(flushto);
+          MOZ_ASSERT(inputTrackEndPoint >= aInputTrack->GetEnd());
+        }
         // Now we prove that the above properties hold:
         // Property #1: trivial by construction.
         // Property #3: trivial by construction. Between every two
@@ -312,6 +334,10 @@ protected:
         //   <= rate*aInputTrack->GetSegment()->GetDuration()/rate
         //   = aInputTrack->GetSegment()->GetDuration()
         // as required.
+        // Note that while the above proof appears to be generally right, if we are suffering
+        // from a lot of underrun, then in rare cases inputStartTicks >> inputTrackEndPoint.
+        // As such, we still need to verify the sanity of property #2 and use null data as
+        // appropriate.
 
         if (inputStartTicks < 0) {
           // Data before the start of the track is just null.
@@ -324,13 +350,20 @@ protected:
           inputStartTicks = 0;
         }
         if (inputEndTicks > inputStartTicks) {
-          segment->AppendSlice(*aInputTrack->GetSegment(),
-                               std::min(inputTrackEndPoint, inputStartTicks),
-                               std::min(inputTrackEndPoint, inputEndTicks));
+          if (inputEndTicks <= inputTrackEndPoint) {
+            segment->AppendSlice(*aInputTrack->GetSegment(), inputStartTicks, inputEndTicks);
+            STREAM_LOG(PR_LOG_DEBUG+1, ("TrackUnionStream %p appending %lld ticks of input data to track %d",
+                       this, ticks, outputTrack->GetID()));
+          } else {
+            if (inputStartTicks < inputTrackEndPoint) {
+              segment->AppendSlice(*aInputTrack->GetSegment(), inputStartTicks, inputTrackEndPoint);
+              ticks -= inputTrackEndPoint - inputStartTicks;
+            }
+            segment->AppendNullData(ticks);
+            STREAM_LOG(PR_LOG_DEBUG+1, ("TrackUnionStream %p appending %lld ticks of input data and %lld of null data to track %d",
+                       this, inputTrackEndPoint - inputStartTicks, ticks, outputTrack->GetID()));
+          }
         }
-        STREAM_LOG(PR_LOG_DEBUG+1, ("TrackUnionStream %p appending %lld ticks of input data to track %d",
-                   this, (long long)(std::min(inputTrackEndPoint, inputEndTicks) - std::min(inputTrackEndPoint, inputStartTicks)),
-                   outputTrack->GetID()));
       }
       ApplyTrackDisabling(outputTrack->GetID(), segment);
       for (uint32_t j = 0; j < mListeners.Length(); ++j) {
@@ -344,7 +377,6 @@ protected:
   }
 
   nsTArray<TrackMapEntry> mTrackMap;
-  TrackID mMaxTrackID;
 };
 
 }

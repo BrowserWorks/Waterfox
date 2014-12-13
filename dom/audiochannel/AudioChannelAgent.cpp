@@ -80,9 +80,6 @@ AudioChannelAgent::InitInternal(nsIDOMWindow* aWindow, int32_t aChannelType,
                                 nsIAudioChannelAgentCallback *aCallback,
                                 bool aUseWeakRef, bool aWithVideo)
 {
-  // We need the window only for IPC.
-  MOZ_ASSERT(aWindow || XRE_GetProcessType() == GeckoProcessType_Default);
-
   // We syncd the enum of channel type between nsIAudioChannelAgent.idl and
   // AudioChannelBinding.h the same.
   MOZ_ASSERT(int(AUDIO_AGENT_CHANNEL_NORMAL) == int(AudioChannel::Normal) &&
@@ -117,7 +114,7 @@ AudioChannelAgent::InitInternal(nsIDOMWindow* aWindow, int32_t aChannelType,
 /* boolean startPlaying (); */
 NS_IMETHODIMP AudioChannelAgent::StartPlaying(int32_t *_retval)
 {
-  AudioChannelService *service = AudioChannelService::GetAudioChannelService();
+  AudioChannelService *service = AudioChannelService::GetOrCreateAudioChannelService();
   if (mAudioChannelType == AUDIO_AGENT_CHANNEL_ERROR ||
       service == nullptr || mIsRegToService) {
     return NS_ERROR_FAILURE;
@@ -138,7 +135,7 @@ NS_IMETHODIMP AudioChannelAgent::StopPlaying(void)
     return NS_ERROR_FAILURE;
   }
 
-  AudioChannelService *service = AudioChannelService::GetAudioChannelService();
+  AudioChannelService *service = AudioChannelService::GetOrCreateAudioChannelService();
   service->UnregisterAudioChannelAgent(this);
   mIsRegToService = false;
   return NS_OK;
@@ -153,7 +150,7 @@ NS_IMETHODIMP AudioChannelAgent::SetVisibilityState(bool visible)
 
   mVisible = visible;
   if (mIsRegToService && oldVisibility != mVisible && callback) {
-    AudioChannelService *service = AudioChannelService::GetAudioChannelService();
+    AudioChannelService *service = AudioChannelService::GetOrCreateAudioChannelService();
     callback->CanPlayChanged(service->GetState(this, !mVisible));
   }
   return NS_OK;
@@ -163,7 +160,7 @@ void AudioChannelAgent::NotifyAudioChannelStateChanged()
 {
   nsCOMPtr<nsIAudioChannelAgentCallback> callback = GetCallback();
   if (callback) {
-    AudioChannelService *service = AudioChannelService::GetAudioChannelService();
+    AudioChannelService *service = AudioChannelService::GetOrCreateAudioChannelService();
     callback->CanPlayChanged(service->GetState(this, !mVisible));
   }
 }

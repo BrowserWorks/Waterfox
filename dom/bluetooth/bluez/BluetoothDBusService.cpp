@@ -37,6 +37,7 @@
 #include "nsDataHashtable.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Atomics.h"
+#include "mozilla/ClearOnShutdown.h"
 #include "mozilla/dom/bluetooth/BluetoothTypes.h"
 #include "mozilla/Hal.h"
 #include "mozilla/ipc/UnixSocket.h"
@@ -373,6 +374,7 @@ DispatchToBtThread(nsIRunnable* aRunnable)
     sBluetoothThread = new LazyIdleThread(BT_LAZY_THREAD_TIMEOUT_MS,
                                           NS_LITERAL_CSTRING("BluetoothDBusService"),
                                           LazyIdleThread::ManualShutdown);
+    ClearOnShutdown(&sBluetoothThread);
   }
   return sBluetoothThread->Dispatch(aRunnable, NS_DISPATCH_NORMAL);
 }
@@ -3455,20 +3457,21 @@ BluetoothDBusService::Disconnect(const nsAString& aDeviceAddress,
   ConnectDisconnect(false, aDeviceAddress, aRunnable, aServiceUuid);
 }
 
-bool
-BluetoothDBusService::IsConnected(const uint16_t aServiceUuid)
+void
+BluetoothDBusService::IsConnected(const uint16_t aServiceUuid,
+                                  BluetoothReplyRunnable* aRunnable)
 {
   MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(aRunnable);
 
   BluetoothProfileManagerBase* profile =
     BluetoothUuidHelper::GetBluetoothProfileManager(aServiceUuid);
-  if (!profile) {
-    BT_WARNING(ERR_UNKNOWN_PROFILE);
-    return false;
+  if (profile) {
+    DispatchBluetoothReply(aRunnable, profile->IsConnected(), EmptyString());
+  } else {
+    BT_WARNING("Can't find profile manager with uuid: %x", aServiceUuid);
+    DispatchBluetoothReply(aRunnable, false, EmptyString());
   }
-
-  NS_ENSURE_TRUE(profile, false);
-  return profile->IsConnected();
 }
 
 #ifdef MOZ_B2G_RIL

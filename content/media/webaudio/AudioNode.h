@@ -17,6 +17,7 @@
 #include "WebAudioUtils.h"
 #include "mozilla/MemoryReporting.h"
 #include "nsWeakReference.h"
+#include "SelfRef.h"
 
 namespace mozilla {
 
@@ -27,36 +28,6 @@ class AudioBufferSourceNode;
 class AudioParam;
 class AudioParamTimeline;
 struct ThreeDPoint;
-
-template<class T>
-class SelfReference {
-public:
-  SelfReference() : mHeld(false) {}
-  ~SelfReference()
-  {
-    NS_ASSERTION(!mHeld, "Forgot to drop the self reference?");
-  }
-
-  void Take(T* t)
-  {
-    if (!mHeld) {
-      mHeld = true;
-      t->AddRef();
-    }
-  }
-  void Drop(T* t)
-  {
-    if (mHeld) {
-      mHeld = false;
-      t->Release();
-    }
-  }
-
-  operator bool() const { return mHeld; }
-
-private:
-  bool mHeld;
-};
 
 /**
  * The DOM object representing a Web Audio AudioNode.
@@ -132,6 +103,9 @@ public:
   virtual uint16_t NumberOfOutputs() const { return 1; }
 
   uint32_t Id() const { return mId; }
+
+  bool PassThrough() const;
+  void SetPassThrough(bool aPassThrough);
 
   uint32_t ChannelCount() const { return mChannelCount; }
   virtual void SetChannelCount(uint32_t aChannelCount, ErrorResult& aRv)
@@ -267,6 +241,9 @@ private:
   ChannelCountMode mChannelCountMode;
   ChannelInterpretation mChannelInterpretation;
   const uint32_t mId;
+  // Whether the node just passes through its input.  This is a devtools API that
+  // only works for some node types.
+  bool mPassThrough;
 #ifdef DEBUG
   // In debug builds, check to make sure that the node demise notification has
   // been properly sent before the node is destroyed.

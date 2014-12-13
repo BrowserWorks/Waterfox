@@ -99,6 +99,13 @@ CloneRegExpObject(JSContext *cx, JSObject *obj);
  */
 class RegExpShared
 {
+  public:
+    enum ForceByteCodeEnum {
+        DontForceByteCode,
+        ForceByteCode
+    };
+
+  private:
     friend class RegExpCompartment;
     friend class RegExpStatics;
 
@@ -112,10 +119,8 @@ class RegExpShared
     bool               canStringMatch;
     bool               marked_;
 
-#ifdef JS_ION
     HeapPtrJitCode     jitCodeLatin1;
     HeapPtrJitCode     jitCodeTwoByte;
-#endif
     uint8_t            *byteCodeLatin1;
     uint8_t            *byteCodeTwoByte;
 
@@ -123,10 +128,12 @@ class RegExpShared
     Vector<uint8_t *, 0, SystemAllocPolicy> tables;
 
     /* Internal functions. */
-    bool compile(JSContext *cx, HandleLinearString input);
-    bool compile(JSContext *cx, HandleAtom pattern, HandleLinearString input);
+    bool compile(JSContext *cx, HandleLinearString input, ForceByteCodeEnum force);
+    bool compile(JSContext *cx, HandleAtom pattern, HandleLinearString input,
+                 ForceByteCodeEnum force);
 
-    bool compileIfNecessary(JSContext *cx, HandleLinearString input);
+    bool compileIfNecessary(JSContext *cx, HandleLinearString input,
+                            ForceByteCodeEnum force);
 
   public:
     RegExpShared(JSAtom *source, RegExpFlag flags);
@@ -159,18 +166,10 @@ class RegExpShared
     bool sticky() const                 { return flags & StickyFlag; }
 
     bool hasJitCodeLatin1() const {
-#ifdef JS_ION
         return jitCodeLatin1 != nullptr;
-#else
-        return false;
-#endif
     }
     bool hasJitCodeTwoByte() const {
-#ifdef JS_ION
         return jitCodeTwoByte != nullptr;
-#else
-        return false;
-#endif
     }
     bool hasByteCodeLatin1() const {
         return byteCodeLatin1 != nullptr;
@@ -182,10 +181,12 @@ class RegExpShared
         return latin1 ? byteCodeLatin1 : byteCodeTwoByte;
     }
 
-    bool isCompiled(bool latin1) const {
-        if (latin1)
-            return hasJitCodeLatin1() || hasByteCodeLatin1();
-        return hasJitCodeTwoByte() || hasByteCodeTwoByte();
+    bool isCompiled(bool latin1, ForceByteCodeEnum force = DontForceByteCode) const {
+        if (force == DontForceByteCode) {
+            if (latin1 ? hasJitCodeLatin1() : hasJitCodeTwoByte())
+                return true;
+        }
+        return latin1 ? hasByteCodeLatin1() : hasByteCodeTwoByte();
     }
     bool isCompiled() const {
         return isCompiled(true) || isCompiled(false);
@@ -369,6 +370,10 @@ class RegExpObject : public JSObject
         flags |= multiline() ? MultilineFlag : 0;
         flags |= sticky() ? StickyFlag : 0;
         return RegExpFlag(flags);
+    }
+
+    bool needUpdateLastIndex() const {
+        return sticky() || global();
     }
 
     /* Flags. */

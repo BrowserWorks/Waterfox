@@ -36,11 +36,12 @@ loop.CallConnectionWebSocket = (function() {
       throw new Error("No websocketToken in options");
     }
 
-    // Save the debug pref now, to avoid getting it each time.
-    if (navigator.mozLoop) {
-      this._debugWebSocket =
-        navigator.mozLoop.getLoopBoolPref("debug.websocket");
-    }
+    this._lastServerState = "init";
+
+    // Set loop.debug.sdk to true in the browser, or standalone:
+    // localStorage.setItem("debug.websocket", true);
+    this._debugWebSocket =
+      loop.shared.utils.getBoolPreference("debug.websocket");
 
     _.extend(this, Backbone.Events);
   };
@@ -79,6 +80,16 @@ loop.CallConnectionWebSocket = (function() {
       return promise;
     },
 
+    /**
+     * Closes the websocket. This shouldn't be the normal action as the server
+     * will normally close the socket. Only in bad error cases, or where we need
+     * to close the socket just before closing the window (to avoid an error)
+     * should we call this.
+     */
+    close: function() {
+      this.socket.close();
+    },
+
     _clearConnectionFlags: function() {
       clearTimeout(this.connectDetails.timeout);
       delete this.connectDetails;
@@ -88,10 +99,13 @@ loop.CallConnectionWebSocket = (function() {
      * Internal function called to resolve the connection promise.
      *
      * It will log an error if no promise is found.
+     *
+     * @param {String} progressState The current state of progress of the
+     *                               websocket.
      */
-    _completeConnection: function() {
+    _completeConnection: function(progressState) {
       if (this.connectDetails && this.connectDetails.resolve) {
-        this.connectDetails.resolve();
+        this.connectDetails.resolve(progressState);
         this._clearConnectionFlags();
         return;
       }
@@ -149,6 +163,29 @@ loop.CallConnectionWebSocket = (function() {
     },
 
     /**
+     * Notifies the server that the outgoing call is cancelled by the
+     * user.
+     */
+    cancel: function() {
+      this._send({
+        messageType: "action",
+        event: "terminate",
+        reason: "cancel"
+      });
+    },
+
+    /**
+     * Notifies the server that something failed during setup.
+     */
+    mediaFail: function() {
+      this._send({
+        messageType: "action",
+        event: "terminate",
+        reason: "media-fail"
+      });
+    },
+
+    /**
      * Sends data on the websocket.
      *
      * @param {Object} data The data to send.
@@ -199,14 +236,16 @@ loop.CallConnectionWebSocket = (function() {
 
       this._log("WS Receiving", event.data);
 
+      var previousState = this._lastServerState;
       this._lastServerState = msg.state;
 
       switch(msg.messageType) {
         case "hello":
-          this._completeConnection();
+          this._completeConnection(msg.state);
           break;
         case "progress":
-          this.trigger("progress", msg);
+          this.trigger("progress:" + msg.state);
+          this.trigger("progress", msg, previousState);
           break;
       }
     },

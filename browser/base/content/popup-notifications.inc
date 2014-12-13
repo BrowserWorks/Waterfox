@@ -21,8 +21,7 @@
 
       <popupnotificationcontent id="webRTC-selectWindowOrScreen" orient="vertical">
         <separator class="thin"/>
-        <label value="&getUserMedia.selectWindowOrScreen.label;"
-               accesskey="&getUserMedia.selectWindowOrScreen.accesskey;"
+        <label id="webRTC-selectWindow-label"
                control="webRTC-selectWindow-menulist"/>
         <menulist id="webRTC-selectWindow-menulist"
                   oncommand="gWebRTCUI.updateMainActionLabel(this);">
@@ -58,12 +57,5 @@
       <popupnotificationcontent orient="vertical" align="start">
         <separator class="thin"/>
         <label id="pointerLock-cancel" value="&pointerLock.notification.message;"/>
-      </popupnotificationcontent>
-    </popupnotification>
-
-    <popupnotification id="mixed-content-blocked-notification" hidden="true">
-      <popupnotificationcontent orient="vertical" align="start">
-        <separator/>
-        <description id="mixed-content-blocked-moreinfo">&mixedContentBlocked.moreinfo;</description>
       </popupnotificationcontent>
     </popupnotification>

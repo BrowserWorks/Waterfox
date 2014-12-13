@@ -192,31 +192,48 @@ SystemMessageInternal.prototype = {
     // clean it up from the pending message queue when apps receive it.
     let messageID = gUUIDGenerator.generateUUID().toString();
 
-    debug("Sending " + aType + " " + JSON.stringify(aMessage) +
-      " for " + aPageURI.spec + " @ " + aManifestURI.spec +
-      '; extra: ' + JSON.stringify(aExtra));
-
-    let result = this._sendMessageCommon(aType,
-                                         aMessage,
-                                         messageID,
-                                         aPageURI.spec,
-                                         aManifestURI.spec,
-                                         aExtra);
-    debug("Returned status of sending message: " + result);
-
-    // Don't need to open the pages and queue the system message
-    // which was not allowed to be sent.
-    if (result === MSG_SENT_FAILURE_PERM_DENIED) {
-      return;
+    let manifestURL = aManifestURI.spec;
+    let pageURLs = [];
+    if (aPageURI) {
+      pageURLs.push(aPageURI.spec);
+    } else {
+      // Send this message to all the registered pages of the app if |aPageURI|
+      // is not specified.
+      for (let i = 0; i < this._pages.length; i++) {
+        let page = this._pages[i];
+        if (page.type === aType && page.manifestURL === manifestURL) {
+          pageURLs.push(page.pageURL);
+        }
+      }
     }
 
-    let page = this._findPage(aType, aPageURI.spec, aManifestURI.spec);
-    if (page) {
-      // Queue this message in the corresponding pages.
-      this._queueMessage(page, aMessage, messageID);
+    pageURLs.forEach(function(aPageURL) {
+      debug("Sending " + aType + " " + JSON.stringify(aMessage) +
+        " for " + aPageURL + " @ " + manifestURL +
+        '; extra: ' + JSON.stringify(aExtra));
 
-      this._openAppPage(page, aMessage, aExtra, result);
-    }
+      let result = this._sendMessageCommon(aType,
+                                           aMessage,
+                                           messageID,
+                                           aPageURL,
+                                           manifestURL,
+                                           aExtra);
+      debug("Returned status of sending message: " + result);
+
+      // Don't need to open the pages and queue the system message
+      // which was not allowed to be sent.
+      if (result === MSG_SENT_FAILURE_PERM_DENIED) {
+        return;
+      }
+
+      let page = this._findPage(aType, aPageURL, manifestURL);
+      if (page) {
+        // Queue this message in the corresponding pages.
+        this._queueMessage(page, aMessage, messageID);
+
+        this._openAppPage(page, aMessage, aExtra, result);
+      }
+    }, this);
   },
 
   broadcastMessage: function(aType, aMessage, aExtra) {
@@ -236,9 +253,16 @@ SystemMessageInternal.prototype = {
 
     debug("Broadcasting " + aType + " " + JSON.stringify(aMessage) +
       '; extra = ' + JSON.stringify(aExtra));
+
+    let shouldDispatchFunc = this._getMessageConfigurator(aType).shouldDispatch;
+
     // Find pages that registered an handler for this type.
     this._pages.forEach(function(aPage) {
-      if (aPage.type == aType) {
+      if (aPage.type !== aType) {
+        return;
+      }
+
+      let doDispatch = () => {
         let result = this._sendMessageCommon(aType,
                                              aMessage,
                                              messageID,
@@ -258,7 +282,22 @@ SystemMessageInternal.prototype = {
         this._queueMessage(aPage, aMessage, messageID);
 
         this._openAppPage(aPage, aMessage, aExtra, result);
+      };
+
+      if ('function' !== typeof shouldDispatchFunc) {
+        // If the configurator has no 'shouldDispatch' defined,
+        // always dispatch this message.
+        doDispatch();
+        return;
       }
+
+      shouldDispatchFunc(aPage.manifestURL, aPage.pageURL, aType, aMessage, aExtra)
+        .then(aShouldDispatch => {
+          if (aShouldDispatch) {
+            doDispatch();
+          }
+        });
+
     }, this);
   },
 

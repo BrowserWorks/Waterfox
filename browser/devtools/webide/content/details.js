@@ -57,7 +57,7 @@ function updateUI() {
     return;
   }
 
-  if (project.type != "runtimeApp") {
+  if (project.type != "runtimeApp" && project.type != "mainProcess") {
     document.querySelector("#toolbar").classList.remove("hidden");
     document.querySelector("#locationHeader").classList.remove("hidden");
     document.querySelector("#location").textContent = project.location;
@@ -83,19 +83,21 @@ function updateUI() {
     document.querySelector("#type").classList.remove("hidden");
 
     if (project.type == "runtimeApp") {
-      let manifest = AppManager.getProjectManifestURL(project);
+      let manifestURL = AppManager.getProjectManifestURL(project);
       document.querySelector("#type").textContent = manifest.type || "web";
       document.querySelector("#manifestURLHeader").classList.remove("hidden");
-      document.querySelector("#manifestURL").textContent = manifest;
+      document.querySelector("#manifestURL").textContent = manifestURL;
+    } else if (project.type == "mainProcess") {
+      document.querySelector("#type").textContent = project.name;
     } else {
       document.querySelector("#type").textContent = project.type + " " + (manifest.type || "web");
     }
 
     if (project.type == "packaged") {
-      let manifest = AppManager.getProjectManifestURL(project);
-      if (manifest) {
+      let manifestURL = AppManager.getProjectManifestURL(project);
+      if (manifestURL) {
         document.querySelector("#manifestURLHeader").classList.remove("hidden");
-        document.querySelector("#manifestURL").textContent = manifest;
+        document.querySelector("#manifestURL").textContent = manifestURL;
       }
     }
   }

@@ -35,21 +35,26 @@
 #include "gmp-video-frame.h"
 #include "gmp-video-frame-encoded.h"
 #include "gmp-decryption.h"
+#include "mozilla/UniquePtr.h"
 #include "mozilla/ipc/Shmem.h"
+#include "mp4_demuxer/DecoderData.h"
 
 namespace mozilla {
 namespace gmp {
 
 class GMPVideoHostImpl;
 class GMPVideoEncodedFrameData;
+class GMPEncryptedBufferDataImpl;
 
 class GMPVideoEncodedFrameImpl: public GMPVideoEncodedFrame
 {
   friend struct IPC::ParamTraits<mozilla::gmp::GMPVideoEncodedFrameImpl>;
 public:
-  GMPVideoEncodedFrameImpl(GMPVideoHostImpl* aHost);
+  explicit GMPVideoEncodedFrameImpl(GMPVideoHostImpl* aHost);
   GMPVideoEncodedFrameImpl(const GMPVideoEncodedFrameData& aFrameData, GMPVideoHostImpl* aHost);
   virtual ~GMPVideoEncodedFrameImpl();
+
+  void InitCrypto(const mp4_demuxer::CryptoSample& aCrypto);
 
   // This is called during a normal destroy sequence, which is
   // when a consumer is finished or during XPCOM shutdown.
@@ -91,7 +96,7 @@ public:
   virtual uint8_t* Buffer() MOZ_OVERRIDE;
   virtual GMPBufferType BufferType() const MOZ_OVERRIDE;
   virtual void     SetBufferType(GMPBufferType aBufferType) MOZ_OVERRIDE;
-  virtual const    GMPEncryptedBufferData* GetDecryptionData() const MOZ_OVERRIDE;
+  virtual const    GMPEncryptedBufferMetadata* GetDecryptionData() const MOZ_OVERRIDE;
 
 private:
   void DestroyBuffer();
@@ -106,9 +111,20 @@ private:
   GMPVideoHostImpl* mHost;
   ipc::Shmem mBuffer;
   GMPBufferType mBufferType;
+  nsAutoPtr<GMPEncryptedBufferDataImpl> mCrypto;
 };
 
 } // namespace gmp
+
+template<>
+struct DefaultDelete<mozilla::gmp::GMPVideoEncodedFrameImpl>
+{
+  void operator()(mozilla::gmp::GMPVideoEncodedFrameImpl* aFrame) const
+  {
+    aFrame->Destroy();
+  }
+};
+
 } // namespace mozilla
 
 #endif // GMPVideoEncodedFrameImpl_h_

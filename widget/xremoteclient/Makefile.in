@@ -11,11 +11,6 @@ LIBCPPSRCS = XRemoteClient.cpp
 
 OBJS = $(LIBCPPSRCS:.cpp=.$(OBJ_SUFFIX))
 
-EXTRA_DSO_LDOPTS = \
-		$(XLIBS) $(XLDFLAGS)  \
-		$(MOZ_COMPONENT_LIBS) \
-		$(NULL)
-
 PROGCPPSRCS = \
   mozilla-xremote-client.cpp \
   XRemoteClient.cpp \
@@ -27,7 +22,3 @@ CPPSRCS += \
   $(filter-out $(LIBCPPSRCS),$(PROGCPPSRCS)) \
   $(LIBCPPSRCS) \
   $(NULL)
-
-LIBS            = \
-		$(NSPR_LIBS) \
-		$(XLDFLAGS) $(XLIBS)

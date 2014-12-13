@@ -116,7 +116,7 @@ using namespace mozilla::dom;
 class nsAutoFocusEvent : public nsRunnable
 {
 public:
-  nsAutoFocusEvent(nsGenericHTMLFormElement* aElement) : mElement(aElement) {}
+  explicit nsAutoFocusEvent(nsGenericHTMLFormElement* aElement) : mElement(aElement) {}
 
   NS_IMETHOD Run() {
     nsFocusManager* fm = nsFocusManager::GetFocusManager();
@@ -172,7 +172,7 @@ class nsGenericHTMLElementTearoff : public nsIDOMElementCSSInlineStyle
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
 
-  nsGenericHTMLElementTearoff(nsGenericHTMLElement *aElement)
+  explicit nsGenericHTMLElementTearoff(nsGenericHTMLElement* aElement)
     : mElement(aElement)
   {
   }
@@ -291,7 +291,8 @@ static const nsAttrValue::EnumTable kDirTable[] = {
 void
 nsGenericHTMLElement::GetAccessKeyLabel(nsString& aLabel)
 {
-  nsPresContext *presContext = GetPresContext();
+  //XXXsmaug We shouldn't need PresContext for this.
+  nsPresContext *presContext = GetPresContext(eForComposedDoc);
 
   if (presContext) {
     nsAutoString suffix;
@@ -1085,9 +1086,9 @@ nsGenericHTMLElement::GetAttributeMappingFunction() const
 nsIFormControlFrame*
 nsGenericHTMLElement::GetFormControlFrame(bool aFlushFrames)
 {
-  if (aFlushFrames && IsInDoc()) {
+  if (aFlushFrames && IsInComposedDoc()) {
     // Cause a flush of the frames, so we get up-to-date frame information
-    GetCurrentDoc()->FlushPendingNotifications(Flush_Frames);
+    GetComposedDoc()->FlushPendingNotifications(Flush_Frames);
   }
   nsIFrame* frame = GetPrimaryFrame();
   if (frame) {
@@ -1111,12 +1112,12 @@ nsGenericHTMLElement::GetFormControlFrame(bool aFlushFrames)
   return nullptr;
 }
 
-// XXX This creates a dependency between content and frames
 nsPresContext*
-nsGenericHTMLElement::GetPresContext()
+nsGenericHTMLElement::GetPresContext(PresContextFor aFor)
 {
   // Get the document
-  nsIDocument* doc = GetDocument();
+  nsIDocument* doc = (aFor == eForComposedDoc) ?
+    GetComposedDoc() : GetUncomposedDoc();
   if (doc) {
     // Get presentation shell.
     nsIPresShell *presShell = doc->GetShell();
@@ -2345,8 +2346,8 @@ nsGenericHTMLFormElement::IntrinsicState() const
 nsGenericHTMLFormElement::FocusTristate
 nsGenericHTMLFormElement::FocusState()
 {
-  // We can't be focused if we aren't in a document
-  nsIDocument* doc = GetCurrentDoc();
+  // We can't be focused if we aren't in a (composed) document
+  nsIDocument* doc = GetComposedDoc();
   if (!doc)
     return eUnfocusable;
 
@@ -2592,7 +2593,7 @@ nsGenericHTMLElement::Blur(mozilla::ErrorResult& aError)
     return;
   }
 
-  nsIDocument* doc = GetCurrentDoc();
+  nsIDocument* doc = GetComposedDoc();
   if (!doc) {
     return;
   }
@@ -2620,7 +2621,7 @@ nsGenericHTMLElement::Click()
     return;
 
   // Strong in case the event kills it
-  nsCOMPtr<nsIDocument> doc = GetCurrentDoc();
+  nsCOMPtr<nsIDocument> doc = GetComposedDoc();
 
   nsCOMPtr<nsIPresShell> shell;
   nsRefPtr<nsPresContext> context;
@@ -2650,7 +2651,7 @@ nsGenericHTMLElement::IsHTMLFocusable(bool aWithMouse,
                                       bool *aIsFocusable,
                                       int32_t *aTabIndex)
 {
-  nsIDocument *doc = GetCurrentDoc();
+  nsIDocument* doc = GetComposedDoc();
   if (!doc || doc->HasFlag(NODE_IS_EDITABLE)) {
     // In designMode documents we only allow focusing the document.
     if (aTabIndex) {
@@ -2709,7 +2710,7 @@ nsGenericHTMLElement::RegUnRegAccessKey(bool aDoReg)
   }
 
   // We have an access key, so get the ESM from the pres context.
-  nsPresContext *presContext = GetPresContext();
+  nsPresContext* presContext = GetPresContext(eForUncomposedDoc);
 
   if (presContext) {
     EventStateManager* esm = presContext->EventStateManager();
@@ -2727,7 +2728,7 @@ void
 nsGenericHTMLElement::PerformAccesskey(bool aKeyCausesActivation,
                                        bool aIsTrustedEvent)
 {
-  nsPresContext *presContext = GetPresContext();
+  nsPresContext* presContext = GetPresContext(eForUncomposedDoc);
   if (!presContext)
     return;
 
@@ -2941,7 +2942,7 @@ nsGenericHTMLFormElementWithState::GenerateStateKey()
     return NS_OK;
   }
 
-  nsIDocument* doc = GetDocument();
+  nsIDocument* doc = GetUncomposedDoc();
   if (!doc) {
     return NS_OK;
   }
@@ -2989,7 +2990,7 @@ nsGenericHTMLFormElementWithState::GetPrimaryPresState()
 already_AddRefed<nsILayoutHistoryState>
 nsGenericHTMLFormElementWithState::GetLayoutHistory(bool aRead)
 {
-  nsCOMPtr<nsIDocument> doc = GetDocument();
+  nsCOMPtr<nsIDocument> doc = GetUncomposedDoc();
   if (!doc) {
     return nullptr;
   }

@@ -25,6 +25,7 @@ class DebianBootstrapper(BaseBootstrapper):
         'libxt-dev',
         'mercurial',
         'mesa-common-dev',
+        'python-dbus',
         'python-dev',
         'python-setuptools',
         'unzip',
@@ -50,3 +51,4 @@ class DebianBootstrapper(BaseBootstrapper):
 
     def _update_package_manager(self):
         self.run_as_root(['apt-get', 'update'])
+

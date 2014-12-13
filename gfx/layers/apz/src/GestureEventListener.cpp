@@ -54,7 +54,9 @@ GestureEventListener::GestureEventListener(AsyncPanZoomController* aAsyncPanZoom
     mState(GESTURE_NONE),
     mSpanChange(0.0f),
     mPreviousSpan(0.0f),
-    mLastTouchInput(MultiTouchInput::MULTITOUCH_START, 0, TimeStamp(), 0)
+    mLastTouchInput(MultiTouchInput::MULTITOUCH_START, 0, TimeStamp(), 0),
+    mLongTapTimeoutTask(nullptr),
+    mMaxTapTimeoutTask(nullptr)
 {
 }
 
@@ -64,7 +66,7 @@ GestureEventListener::~GestureEventListener()
 
 nsEventStatus GestureEventListener::HandleInputEvent(const MultiTouchInput& aEvent)
 {
-  GEL_LOG("Receiving event type %d with %d touches in state %d\n", aEvent.mType, aEvent.mTouches.Length(), mState);
+  GEL_LOG("Receiving event type %d with %lu touches in state %d\n", aEvent.mType, aEvent.mTouches.Length(), mState);
 
   nsEventStatus rv = nsEventStatus_eIgnore;
 
@@ -248,6 +250,10 @@ nsEventStatus GestureEventListener::HandleInputTouchMove()
                                    mLastTouchInput.modifiers);
 
       rv = mAsyncPanZoomController->HandleGestureEvent(pinchEvent);
+    } else {
+      // Prevent APZC::OnTouchMove from processing a move event when two
+      // touches are active
+      rv = nsEventStatus_eConsumeNoDefault;
     }
 
     mPreviousSpan = currentSpan;
@@ -383,11 +389,15 @@ nsEventStatus GestureEventListener::HandleInputTouchEnd()
 nsEventStatus GestureEventListener::HandleInputTouchCancel()
 {
   SetState(GESTURE_NONE);
+  CancelMaxTapTimeoutTask();
+  CancelLongTapTimeoutTask();
   return nsEventStatus_eIgnore;
 }
 
 void GestureEventListener::HandleInputTimeoutLongTap()
 {
+  GEL_LOG("Running long-tap timeout task in state %d\n", mState);
+
   mLongTapTimeoutTask = nullptr;
 
   switch (mState) {
@@ -414,6 +424,8 @@ void GestureEventListener::HandleInputTimeoutLongTap()
 
 void GestureEventListener::HandleInputTimeoutMaxTap()
 {
+  GEL_LOG("Running max-tap timeout task in state %d\n", mState);
+
   mMaxTapTimeoutTask = nullptr;
 
   if (mState == GESTURE_FIRST_SINGLE_TOUCH_DOWN) {

@@ -342,9 +342,9 @@ private:
     MOZ_ASSERT(!mFlags.mHasHashedFrames);
     uint32_t count = GetChildCount();
     mFlags.mHasHashedFrames = 1;
-    uint32_t minSize =
-      std::max(kMinChildCountForHashtable, uint32_t(PL_DHASH_MIN_SIZE));
-    mFrames = new nsTHashtable< nsPtrHashKey<nsIFrame> >(std::max(count, minSize));
+    uint32_t minLength = std::max(kMinChildCountForHashtable,
+                                  uint32_t(PL_DHASH_DEFAULT_INITIAL_LENGTH));
+    mFrames = new nsTHashtable< nsPtrHashKey<nsIFrame> >(std::max(count, minLength));
     for (nsIFrame* f = mFirstChild; count-- > 0; f = f->GetNextSibling()) {
       mFrames->PutEntry(f);
     }
@@ -639,13 +639,13 @@ public:
   };
 
   struct ExtraData {
-    ExtraData(const nsRect& aBounds) : mOverflowAreas(aBounds, aBounds) {
+    explicit ExtraData(const nsRect& aBounds) : mOverflowAreas(aBounds, aBounds) {
     }
     nsOverflowAreas mOverflowAreas;
   };
 
   struct ExtraBlockData : public ExtraData {
-    ExtraBlockData(const nsRect& aBounds)
+    explicit ExtraBlockData(const nsRect& aBounds)
       : ExtraData(aBounds),
         mCarriedOutBEndMargin()
     {
@@ -654,7 +654,7 @@ public:
   };
 
   struct ExtraInlineData : public ExtraData {
-    ExtraInlineData(const nsRect& aBounds) : ExtraData(aBounds) {
+    explicit ExtraInlineData(const nsRect& aBounds) : ExtraData(aBounds) {
     }
     nsFloatCacheList mFloats;
   };

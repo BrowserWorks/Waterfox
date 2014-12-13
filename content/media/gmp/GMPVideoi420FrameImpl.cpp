@@ -101,6 +101,7 @@ GMPVideoi420FrameImpl::CheckDimensions(int32_t aWidth, int32_t aHeight,
   return true;
 }
 
+
 const GMPPlaneImpl*
 GMPVideoi420FrameImpl::GetPlane(GMPPlaneType aType) const {
   switch (aType) {

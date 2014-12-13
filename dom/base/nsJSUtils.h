@@ -32,10 +32,6 @@ public:
 
   static nsIScriptContext *GetStaticScriptContext(JSObject* aObj);
 
-  static nsIScriptGlobalObject *GetDynamicScriptGlobal(JSContext *aContext);
-
-  static nsIScriptContext *GetDynamicScriptContext(JSContext *aContext);
-
   /**
    * Retrieve the inner window ID based on the given JSContext.
    *
@@ -124,7 +120,7 @@ class MOZ_STACK_CLASS AutoDontReportUncaught {
   bool mWasSet;
 
 public:
-  AutoDontReportUncaught(JSContext* aContext) : mContext(aContext) {
+  explicit AutoDontReportUncaught(JSContext* aContext) : mContext(aContext) {
     MOZ_ASSERT(aContext);
     mWasSet = JS::ContextOptionsRef(mContext).dontReportUncaught();
     if (!mWasSet) {

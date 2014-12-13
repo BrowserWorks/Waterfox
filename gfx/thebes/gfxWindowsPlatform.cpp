@@ -24,6 +24,7 @@
 #include "nsIXULRuntime.h"
 
 #include "nsIGfxInfo.h"
+#include "GfxDriverInfo.h"
 
 #include "gfxCrashReporterUtils.h"
 
@@ -32,6 +33,7 @@
 
 #include "mozilla/layers/CompositorParent.h"   // for CompositorParent::IsInCompositorThread
 #include "DeviceManagerD3D9.h"
+#include "mozilla/layers/ReadbackManagerD3D11.h"
 
 #include "WinUtils.h"
 
@@ -66,6 +68,10 @@
 
 #include "SurfaceCache.h"
 #include "gfxPrefs.h"
+
+#if defined(MOZ_CRASHREPORTER)
+#include "nsExceptionHandler.h"
+#endif
 
 using namespace mozilla;
 using namespace mozilla::gfx;
@@ -291,7 +297,7 @@ NS_IMPL_ISUPPORTS(GPUAdapterReporter, nsIMemoryReporter)
 
 gfxWindowsPlatform::gfxWindowsPlatform()
   : mD3D11DeviceInitialized(false)
-  , mPrefFonts(50)
+  , mPrefFonts(32)
 {
     mUseClearTypeForDownloadableFonts = UNINITIALIZED_VALUE;
     mUseClearTypeAlways = UNINITIALIZED_VALUE;
@@ -389,7 +395,7 @@ gfxWindowsPlatform::UpdateRenderMode()
     if (isVistaOrHigher && !safeMode && tryD2D &&
         device &&
         device->GetFeatureLevel() >= D3D_FEATURE_LEVEL_10_0 &&
-        DoesD3D11DeviceSupportResourceSharing(device)) {
+        DoesD3D11DeviceWork(device)) {
 
         VerifyD2DDevice(d2dForceEnabled);
         if (mD2DDevice && GetD3D11Device()) {
@@ -1274,7 +1280,7 @@ gfxWindowsPlatform::SetupClearTypeParams()
         // For EnhancedContrast, we override the default if the user has not set it
         // in the registry (by using the ClearType Tuner).
         if (contrast >= 0.0 && contrast <= 10.0) {
-	    contrast = contrast;
+            contrast = contrast;
         } else {
             HKEY hKey;
             if (RegOpenKeyExA(ENHANCED_CONTRAST_REGISTRY_KEY,
@@ -1315,11 +1321,11 @@ gfxWindowsPlatform::SetupClearTypeParams()
         mRenderingParams[TEXT_RENDERING_NO_CLEARTYPE] = defaultRenderingParams;
 
         GetDWriteFactory()->CreateCustomRenderingParams(gamma, contrast, level,
-	    dwriteGeometry, renderMode,
+            dwriteGeometry, renderMode,
             getter_AddRefs(mRenderingParams[TEXT_RENDERING_NORMAL]));
 
         GetDWriteFactory()->CreateCustomRenderingParams(gamma, contrast, level,
-	    dwriteGeometry, DWRITE_RENDERING_MODE_CLEARTYPE_GDI_CLASSIC,
+            dwriteGeometry, DWRITE_RENDERING_MODE_CLEARTYPE_GDI_CLASSIC,
             getter_AddRefs(mRenderingParams[TEXT_RENDERING_GDI_CLASSIC]));
     }
 #endif
@@ -1403,9 +1409,12 @@ gfxWindowsPlatform::GetD3D11Device()
   HRESULT hr = E_INVALIDARG;
   __try {
     hr = d3d11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr,
-                                    D3D11_CREATE_DEVICE_BGRA_SUPPORT,
-                                    featureLevels.Elements(), featureLevels.Length(),
-                                    D3D11_SDK_VERSION, byRef(mD3D11Device), nullptr, nullptr);
+                           // Use
+                           // D3D11_CREATE_DEVICE_PREVENT_INTERNAL_THREADING_OPTIMIZATIONS
+                           // to prevent bug 1092260. IE 11 also uses this flag.
+                           D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_PREVENT_INTERNAL_THREADING_OPTIMIZATIONS,
+                           featureLevels.Elements(), featureLevels.Length(),
+                           D3D11_SDK_VERSION, byRef(mD3D11Device), nullptr, nullptr);
   } __except (EXCEPTION_EXECUTE_HANDLER) {
     mD3D11Device = nullptr;
     return nullptr;
@@ -1420,6 +1429,16 @@ gfxWindowsPlatform::GetD3D11Device()
   }
 
   return mD3D11Device;
+}
+
+ReadbackManagerD3D11*
+gfxWindowsPlatform::GetReadbackManager()
+{
+  if (!mD3D11ReadbackManager) {
+    mD3D11ReadbackManager = new ReadbackManagerD3D11();
+  }
+
+  return mD3D11ReadbackManager;
 }
 
 bool
@@ -1499,7 +1518,7 @@ gfxWindowsPlatform::GetDXGIAdapter()
 
 // See bug 1083071. On some drivers, Direct3D 11 CreateShaderResourceView fails
 // with E_OUTOFMEMORY.
-bool DoesD3D11DeviceSupportResourceSharing(ID3D11Device *device)
+bool DoesD3D11DeviceWork(ID3D11Device *device)
 {
   static bool checked;
   static bool result;
@@ -1507,6 +1526,47 @@ bool DoesD3D11DeviceSupportResourceSharing(ID3D11Device *device)
   if (checked)
       return result;
   checked = true;
+
+  if (gfxPrefs::Direct2DForceEnabled() ||
+      gfxPrefs::LayersAccelerationForceEnabled())
+  {
+    result = true;
+    return true;
+  }
+
+  if (GetModuleHandleW(L"dlumd32.dll") && GetModuleHandleW(L"igd10umd32.dll")) {
+    nsString displayLinkModuleVersionString;
+    gfxWindowsPlatform::GetDLLVersion(L"dlumd32.dll", displayLinkModuleVersionString);
+    uint64_t displayLinkModuleVersion;
+    if (!ParseDriverVersion(displayLinkModuleVersionString, &displayLinkModuleVersion)) {
+#if defined(MOZ_CRASHREPORTER)
+      CrashReporter::AppendAppNotesToCrashReport(NS_LITERAL_CSTRING("DisplayLink: could not parse version\n"));
+#endif
+      return false;
+    }
+    if (displayLinkModuleVersion <= V(8,6,1,36484)) {
+#if defined(MOZ_CRASHREPORTER)
+      CrashReporter::AppendAppNotesToCrashReport(NS_LITERAL_CSTRING("DisplayLink: too old version\n"));
+#endif
+      return false;
+    }
+  }
+
+  if (GetModuleHandleW(L"atidxx32.dll")) {
+    nsCOMPtr<nsIGfxInfo> gfxInfo = do_GetService("@mozilla.org/gfx/info;1");
+    if (gfxInfo) {
+      nsString vendorID, vendorID2;
+      gfxInfo->GetAdapterVendorID(vendorID);
+      gfxInfo->GetAdapterVendorID2(vendorID2);
+      if (vendorID.EqualsLiteral("0x8086") && vendorID2.IsEmpty()) {
+#if defined(MOZ_CRASHREPORTER)
+        CrashReporter::AppendAppNotesToCrashReport(NS_LITERAL_CSTRING("Unexpected Intel/AMD dual-GPU setup\n"));
+#endif
+        return false;
+      }
+    }
+  }
+
   RefPtr<ID3D11Texture2D> texture;
   D3D11_TEXTURE2D_DESC desc;
   desc.Width = 32;

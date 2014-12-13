@@ -49,6 +49,8 @@ let gSyncPane = {
   },
 
   init: function () {
+    this._setupEventListeners();
+
     // If the Service hasn't finished initializing, wait for it.
     let xps = Components.classes["@mozilla.org/weave/service;1"]
                                 .getService(Components.interfaces.nsISupports)
@@ -107,6 +109,91 @@ let gSyncPane = {
     this.updateWeavePrefs();
   },
 
+  _setupEventListeners: function() {
+    function setEventListener(aId, aEventType, aCallback)
+    {
+      document.getElementById(aId)
+              .addEventListener(aEventType, aCallback.bind(gSyncPane));
+    }
+
+    setEventListener("noAccountSetup", "click", function (aEvent) {
+      aEvent.stopPropagation();
+      gSyncPane.openSetup(null);
+    });
+    setEventListener("noAccountPair", "click", function (aEvent) {
+      aEvent.stopPropagation();
+      gSyncPane.openSetup('pair');
+    });
+    setEventListener("syncViewQuota", "command", gSyncPane.openQuotaDialog);
+    setEventListener("syncChangePassword", "command",
+      gSyncUtils.changePassword);
+    setEventListener("syncResetPassphrase", "command",
+      gSyncUtils.resetPassphrase);
+    setEventListener("syncReset", "command", gSyncPane.resetSync);
+    setEventListener("syncAddDeviceLabel", "click", function () {
+      gSyncPane.openAddDevice();
+      return false;
+    });
+    setEventListener("syncEnginesList", "select", function () {
+      if (this.selectedCount)
+        this.clearSelection();
+    });
+    setEventListener("syncComputerName", "change", function () {
+      gSyncUtils.changeName(this);
+    });
+    setEventListener("unlinkDevice", "click", function () {
+      gSyncPane.startOver(true);
+      return false;
+    });
+    setEventListener("tosPP-normal-ToS", "click", gSyncPane.openToS);
+    setEventListener("tosPP-normal-PP", "click", gSyncPane.openPrivacyPolicy);
+    setEventListener("loginErrorUpdatePass", "click", function () {
+      gSyncPane.updatePass();
+      return false;
+    });
+    setEventListener("loginErrorResetPass", "click", function () {
+      gSyncPane.resetPass();
+      return false;
+    });
+    setEventListener("loginErrorStartOver", "click", function () {
+      gSyncPane.startOver(true);
+      return false;
+    });
+    setEventListener("noFxaSignUp", "click", function () {
+      gSyncPane.signUp();
+      return false;
+    });
+    setEventListener("noFxaSignIn", "click", function () {
+      gSyncPane.signIn();
+      return false;
+    });
+    setEventListener("noFxaUseOldSync", "click", function () {
+      gSyncPane.openOldSyncSupportPage();
+      return false;
+    });
+    setEventListener("verifiedManage", "command",
+      gSyncPane.manageFirefoxAccount);
+    setEventListener("fxaUnlinkButton", "click", function () {
+      gSyncPane.unlinkFirefoxAccount(true);
+    });
+    setEventListener("verifyFxaAccount", "command",
+      gSyncPane.verifyFirefoxAccount);
+    setEventListener("unverifiedUnlinkFxaAccount", "click", function () {
+      /* no warning as account can't have previously synced */
+      gSyncPane.unlinkFirefoxAccount(false);
+    });
+    setEventListener("rejectReSignIn", "command",
+      gSyncPane.reSignIn);
+    setEventListener("rejectUnlinkFxaAccount", "click", function () {
+      gSyncPane.unlinkFirefoxAccount(true);
+    });
+    setEventListener("fxaSyncComputerName", "change", function () {
+      gSyncUtils.changeName(this);
+    });
+    setEventListener("tosPP-small-ToS", "click", gSyncPane.openToS);
+    setEventListener("tosPP-small-PP", "click", gSyncPane.openPrivacyPolicy);
+  },
+
   updateWeavePrefs: function () {
     let service = Components.classes["@mozilla.org/weave/service;1"]
                   .getService(Components.interfaces.nsISupports)
@@ -154,17 +241,6 @@ let gSyncPane = {
         for (let checkbox of engines.querySelectorAll("checkbox")) {
           checkbox.disabled = enginesListDisabled;
         }
-
-        let checkbox = document.getElementById("fxa-pweng-chk");
-        let help = document.getElementById("fxa-pweng-help");
-        let allowPasswordsEngine = service.allowPasswordsEngine;
-
-        if (!allowPasswordsEngine) {
-          checkbox.checked = false;
-        }
-
-        checkbox.disabled = !allowPasswordsEngine || enginesListDisabled;
-        help.hidden = allowPasswordsEngine || enginesListDisabled;
       });
     // If fxAccountEnabled is false and we are in a "not configured" state,
     // then fxAccounts is probably fully disabled rather than just unconfigured,
@@ -182,7 +258,7 @@ let gSyncPane = {
       this.page = PAGE_HAS_ACCOUNT;
       document.getElementById("accountName").textContent = Weave.Service.identity.account;
       document.getElementById("syncComputerName").value = Weave.Service.clientsEngine.localName;
-      document.getElementById("tosPP").hidden = this._usingCustomServer;
+      document.getElementById("tosPP-normal").hidden = this._usingCustomServer;
     }
   },
 
@@ -260,6 +336,17 @@ let gSyncPane = {
       return;
     }
     win.openUILinkIn(url, "tab");
+  },
+
+
+  openPrivacyPolicy: function(aEvent) {
+    aEvent.stopPropagation();
+    gSyncUtils.openPrivacyPolicy();
+  },
+
+  openToS: function(aEvent) {
+    aEvent.stopPropagation();
+    gSyncUtils.openToS();
   },
 
   signUp: function() {

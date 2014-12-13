@@ -1171,6 +1171,7 @@ SourceScripts.prototype = {
     // both in the editor and the breakpoints pane.
     DebuggerController.Breakpoints.updatePaneBreakpoints();
     DebuggerController.Breakpoints.updateEditorBreakpoints();
+    DebuggerController.HitCounts.updateEditorHitCounts();
 
     // Make sure the events listeners are up to date.
     if (DebuggerView.instrumentsPaneTab == "events-tab") {
@@ -1223,6 +1224,7 @@ SourceScripts.prototype = {
     // both in the editor and the breakpoints pane.
     DebuggerController.Breakpoints.updatePaneBreakpoints();
     DebuggerController.Breakpoints.updateEditorBreakpoints();
+    DebuggerController.HitCounts.updateEditorHitCounts();
 
     // Signal that sources have been added.
     window.emit(EVENTS.SOURCES_ADDED);
@@ -1234,11 +1236,7 @@ SourceScripts.prototype = {
   _onBlackBoxChange: function (aEvent, { url, isBlackBoxed }) {
     const item = DebuggerView.Sources.getItemByValue(url);
     if (item) {
-      if (isBlackBoxed) {
-        item.prebuiltNode.classList.add("black-boxed");
-      } else {
-        item.prebuiltNode.classList.remove("black-boxed");
-      }
+      item.prebuiltNode.classList.toggle("black-boxed", isBlackBoxed);
     }
     DebuggerView.Sources.updateToolbarButtonsState();
     DebuggerView.maybeShowBlackBoxMessage();
@@ -1492,6 +1490,7 @@ Tracer.prototype = {
     let fields = [
       "name",
       "location",
+      "hitCount",
       "parameterNames",
       "depth",
       "arguments",
@@ -1525,6 +1524,7 @@ Tracer.prototype = {
       }
 
       this._trace = null;
+      DebuggerController.HitCounts.clear();
       aCallback(aResponse);
     });
   },
@@ -1533,6 +1533,15 @@ Tracer.prototype = {
     const tracesLength = traces.length;
     let tracesToShow;
 
+    // Update hit counts.
+    for (let t of traces) {
+      if (t.type == "enteredFrame") {
+        DebuggerController.HitCounts.set(t.location, t.hitCount);
+      }
+    }
+    DebuggerController.HitCounts.updateEditorHitCounts();
+
+    // Limit number of traces to be shown in the log.
     if (tracesLength > TracerView.MAX_TRACES) {
       tracesToShow = traces.slice(tracesLength - TracerView.MAX_TRACES, tracesLength);
       this._stack.splice(0, this._stack.length);
@@ -1541,6 +1550,7 @@ Tracer.prototype = {
       tracesToShow = traces;
     }
 
+    // Show traces in the log.
     for (let t of tracesToShow) {
       if (t.type == "enteredFrame") {
         this._onCall(t);
@@ -1548,18 +1558,18 @@ Tracer.prototype = {
         this._onReturn(t);
       }
     }
-
     DebuggerView.Tracer.commit();
   },
 
   /**
    * Callback for handling a new call frame.
    */
-  _onCall: function({ name, location, parameterNames, depth, arguments: args }) {
+  _onCall: function({ name, location, blackBoxed, parameterNames, depth, arguments: args }) {
     const item = {
       name: name,
       location: location,
-      id: this._idCounter++
+      id: this._idCounter++,
+      blackBoxed
     };
 
     this._stack.push(item);
@@ -1570,7 +1580,8 @@ Tracer.prototype = {
       depth: depth,
       parameterNames: parameterNames,
       arguments: args,
-      frameId: item.id
+      frameId: item.id,
+      blackBoxed
     });
   },
 
@@ -1582,14 +1593,15 @@ Tracer.prototype = {
       return;
     }
 
-    const { name, id, location } = this._stack.pop();
+    const { name, id, location, blackBoxed } = this._stack.pop();
     DebuggerView.Tracer.addTrace({
       type: aPacket.why,
       name: name,
       location: location,
       depth: aPacket.depth,
       frameId: id,
-      returnVal: aPacket.return || aPacket.throw || aPacket.yield
+      returnVal: aPacket.return || aPacket.throw || aPacket.yield,
+      blackBoxed
     });
   },
 
@@ -2226,6 +2238,84 @@ Object.defineProperty(Breakpoints.prototype, "_addedOrDisabled", {
 });
 
 /**
+ * Handles Tracer's hit counts.
+ */
+function HitCounts() {
+  /**
+   * Storage of hit counts for every location
+   * hitCount = _locations[url][line][column]
+   */
+  this._hitCounts = Object.create(null);
+}
+
+HitCounts.prototype = {
+  set: function({url, line, column}, aHitCount) {
+    if (!this._hitCounts[url]) {
+      this._hitCounts[url] = Object.create(null);
+    }
+    if (!this._hitCounts[url][line]) {
+      this._hitCounts[url][line] = Object.create(null);
+    }
+    this._hitCounts[url][line][column] = aHitCount;
+  },
+
+  /**
+   * Update all the hit counts in the editor view. This is invoked when the
+   * selected script is changed, or when new sources are received via the
+   * _onNewSource and _onSourcesAdded event listeners.
+   */
+  updateEditorHitCounts: function() {
+    // First, remove all hit counters.
+    DebuggerView.editor.removeAllMarkers("hit-counts");
+
+    // Then, add new hit counts, just for the current source.
+    for (let url in this._hitCounts) {
+      for (let line in this._hitCounts[url]) {
+        for (let column in this._hitCounts[url][line]) {
+          this._updateEditorHitCount({url, line, column});
+        }
+      }
+    }
+  },
+
+  /**
+   * Update a hit counter on a certain line.
+   */
+  _updateEditorHitCount: function({url, line, column}) {
+    // Editor must be initialized.
+    if (!DebuggerView.editor) {
+      return;
+    }
+
+    // No need to do anything if the counter's source is not being shown in the
+    // editor.
+    if (DebuggerView.Sources.selectedValue != url) {
+      return;
+    }
+
+    // There might be more counters on the same line. We need to combine them
+    // into one.
+    let content = Object.keys(this._hitCounts[url][line])
+                    .sort() // Sort by key (column).
+                    .map(a => this._hitCounts[url][line][a]) // Extract values.
+                    .map(a => a + "\u00D7") // Format hit count (e.g. 146×).
+                    .join("|");
+
+    // CodeMirror's lines are indexed from 0, while traces start from 1
+    DebuggerView.editor.addContentMarker(line - 1, "hit-counts", "hit-count",
+                                         content);
+  },
+
+  /**
+   * Remove all hit couters and clear the storage
+   */
+  clear: function() {
+    DebuggerView.editor.removeAllMarkers("hit-counts");
+    this._hitCounts = Object.create(null);
+  }
+}
+
+/**
  * Localization convenience methods.
  */
 let L10N = new ViewHelpers.L10N(DBG_STRINGS_URI);
@@ -2266,6 +2356,7 @@ DebuggerController.SourceScripts = new SourceScripts();
 DebuggerController.Breakpoints = new Breakpoints();
 DebuggerController.Breakpoints.DOM = new EventListeners();
 DebuggerController.Tracer = new Tracer();
+DebuggerController.HitCounts = new HitCounts();
 
 /**
  * Export some properties to the global scope for easier access.

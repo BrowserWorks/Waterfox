@@ -20,6 +20,8 @@ XPCOMUtils.defineLazyModuleGetter(this, 'ContentControl',
   'resource://gre/modules/accessibility/ContentControl.jsm');
 XPCOMUtils.defineLazyModuleGetter(this, 'Roles',
   'resource://gre/modules/accessibility/Constants.jsm');
+XPCOMUtils.defineLazyModuleGetter(this, 'States',
+  'resource://gre/modules/accessibility/Constants.jsm');
 
 Logger.debug('content-script.js');
 
@@ -65,14 +67,10 @@ function forwardToChild(aMessage, aListener, aVCPosition) {
 }
 
 function activateContextMenu(aMessage) {
-  function sendContextMenuCoordinates(aAccessible) {
-    let bounds = Utils.getBounds(aAccessible);
-    sendAsyncMessage('AccessFu:ActivateContextMenu', {bounds: bounds});
-  }
-
   let position = Utils.getVirtualCursor(content.document).position;
   if (!forwardToChild(aMessage, activateContextMenu, position)) {
-    sendContextMenuCoordinates(position);
+    sendAsyncMessage('AccessFu:ActivateContextMenu',
+      { bounds: Utils.getBounds(position, true) });
   }
 }
 
@@ -85,16 +83,12 @@ function presentCaretChange(aText, aOldOffset, aNewOffset) {
 }
 
 function scroll(aMessage) {
-  function sendScrollCoordinates(aAccessible) {
-    let bounds = Utils.getBounds(aAccessible);
-    sendAsyncMessage('AccessFu:DoScroll',
-                     { bounds: bounds,
-                       page: aMessage.json.page,
-                       horizontal: aMessage.json.horizontal });
-  }
-
   let position = Utils.getVirtualCursor(content.document).position;
   if (!forwardToChild(aMessage, scroll, position)) {
+    sendAsyncMessage('AccessFu:DoScroll',
+                     { bounds: Utils.getBounds(position, true),
+                       page: aMessage.json.page,
+                       horizontal: aMessage.json.horizontal });
     sendScrollCoordinates(position);
   }
 }
@@ -148,9 +142,23 @@ addMessageListener(
     if (!eventManager) {
       eventManager = new EventManager(this, contentControl);
     }
+    eventManager.inTest = m.json.inTest;
     eventManager.start();
 
-    sendAsyncMessage('AccessFu:ContentStarted');
+    function contentStarted() {
+      let accDoc = Utils.AccRetrieval.getAccessibleFor(content.document);
+      if (accDoc && !Utils.getState(accDoc).contains(States.BUSY)) {
+        sendAsyncMessage('AccessFu:ContentStarted');
+      } else {
+        content.setTimeout(contentStarted, 0);
+      }
+    }
+
+    if (m.json.inTest) {
+      // During a test we want to wait for the document to finish loading for
+      // consistency.
+      contentStarted();
+    }
   });
 
 addMessageListener(

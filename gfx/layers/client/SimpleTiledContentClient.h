@@ -61,7 +61,7 @@ struct SimpleTiledLayerTile
   TileDescriptor GetTileDescriptor()
   {
     if (mTileBuffer)
-      return TexturedTileDescriptor(nullptr, mTileBuffer->GetIPDLActor(), 0);
+      return TexturedTileDescriptor(nullptr, mTileBuffer->GetIPDLActor(), null_t(), 0);
 
     NS_NOTREACHED("Unhandled SimpleTiledLayerTile type");
     return PlaceholderTileDescriptor();
@@ -130,6 +130,9 @@ private:
   void ReleaseTile(SimpleTiledLayerTile aTile) { aTile.Release(); }
 
   void SwapTiles(SimpleTiledLayerTile& aTileA, SimpleTiledLayerTile& aTileB) { std::swap(aTileA, aTileB); }
+
+  void PostValidate(const nsIntRegion& aPaintRegion) {}
+  void UnlockTile(SimpleTiledLayerTile aTile) {}
 };
 
 class SimpleTiledContentClient : public CompositableClient
@@ -160,8 +163,8 @@ class SimpleClientTiledThebesLayer : public ThebesLayer,
   typedef ThebesLayer Base;
 
 public:
-  SimpleClientTiledThebesLayer(ClientLayerManager* const aManager,
-                               ClientLayerManager::ThebesLayerCreationHint aCreationHint = LayerManager::NONE);
+  explicit SimpleClientTiledThebesLayer(ClientLayerManager* const aManager,
+                                        ClientLayerManager::ThebesLayerCreationHint aCreationHint = LayerManager::NONE);
 protected:
   ~SimpleClientTiledThebesLayer();
 

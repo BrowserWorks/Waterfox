@@ -97,6 +97,7 @@
   <string name="sync_text_redirect_to_set_up_sync">&sync.text.redirect.to.set.up.sync.label;</string>
   <string name="sync_text_tab_sent">&sync.text.tab.sent.label;</string>
   <string name="sync_text_tab_not_sent">&sync.text.tab.not.sent.label;</string>
+  <string name="sync_default_client_name">&sync.default.client.name;</string>
 
 <string name="browser_intent_package">@ANDROID_PACKAGE_NAME@</string>
 <string name="browser_intent_class">@ANDROID_PACKAGE_NAME@.App</string>
@@ -189,6 +190,7 @@
 <string name="fxaccount_status_legal">&fxaccount_status_legal;</string>
 <string name="fxaccount_status_linktos">&fxaccount_status_linktos;</string>
 <string name="fxaccount_status_linkprivacy">&fxaccount_status_linkprivacy;</string>
+<string name="fxaccount_status_more">&fxaccount_status_more;</string>
 
 <string name="fxaccount_label">&fxaccount_account_type_label;</string>
 
@@ -207,3 +209,9 @@
 
 <string name="fxaccount_sync_sign_in_error_notification_title">&fxaccount_sync_sign_in_error_notification_title2;</string>
 <string name="fxaccount_sync_sign_in_error_notification_text">&fxaccount_sync_sign_in_error_notification_text2;</string>
+
+<!-- Remove Account -->
+<string name="fxaccount_remove_account_dialog_title">&fxaccount_remove_account_dialog_title;</string>
+<string name="fxaccount_remove_account_dialog_message">&fxaccount_remove_account_dialog_message;</string>
+<string name="fxaccount_remove_account_toast">&fxaccount_remove_account_toast;</string>
+<string name="fxaccount_remove_account_menu_item">&fxaccount_remove_account_menu_item;</string>

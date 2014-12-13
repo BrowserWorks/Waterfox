@@ -4,63 +4,88 @@
 
 package org.mozilla.search;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.ProgressBar;
+
+import org.mozilla.gecko.AppConstants;
+import org.mozilla.gecko.Telemetry;
+import org.mozilla.gecko.TelemetryContract;
+import org.mozilla.search.providers.SearchEngine;
+import org.mozilla.search.providers.SearchEngineManager;
 
 public class PostSearchFragment extends Fragment {
 
-    private static final String LOGTAG = "PostSearchFragment";
+    private static final String LOG_TAG = "PostSearchFragment";
+
+    private ProgressBar progressBar;
+
+    private SearchEngineManager searchEngineManager;
     private WebView webview;
-
-    private static String HIDE_BANNER_SCRIPT = "javascript:(function(){var tag=document.createElement('style');" +
-            "tag.type='text/css';document.getElementsByTagName('head')[0].appendChild(tag);tag.innerText='#nav,#header{display:none}'})();";
-
-    public PostSearchFragment() {
-    }
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        final View mainView = inflater.inflate(R.layout.search_activity_detail, container, false);
+        View mainView = inflater.inflate(R.layout.search_fragment_post_search, container, false);
+
+        progressBar = (ProgressBar) mainView.findViewById(R.id.progress_bar);
 
         webview = (WebView) mainView.findViewById(R.id.webview);
+        webview.setWebChromeClient(new ChromeClient());
         webview.setWebViewClient(new LinkInterceptingClient());
-        webview.setWebChromeClient(new StyleInjectingClient());
+        // This is required for our greasemonkey terror script.
         webview.getSettings().setJavaScriptEnabled(true);
 
         return mainView;
     }
 
-    /**
-     * Test if a given URL is a page of search results.
-     * <p>
-     * Search results pages will be shown in the embedded view.  Other pages are
-     * opened in external browsers.
-     *
-     * @param url to test.
-     * @return true if <code>url</code> is a page of search results.
-     */
-    protected boolean isSearchResultsPage(String url) {
-        return url.contains(Constants.YAHOO_WEB_SEARCH_RESULTS_FILTER);
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        webview.setWebChromeClient(null);
+        webview.setWebViewClient(null);
+        webview = null;
+        progressBar = null;
     }
 
-    public void startSearch(String query) {
-        setUrl(Constants.YAHOO_WEB_SEARCH_BASE_URL + Uri.encode(query));
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        searchEngineManager = new SearchEngineManager(activity);
     }
 
-    public void setUrl(String url) {
-        webview.loadUrl(url);
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        searchEngineManager.destroy();
+        searchEngineManager = null;
     }
+
+    public void startSearch(final String query) {
+        searchEngineManager.getEngine(new SearchEngineManager.SearchEngineCallback() {
+            @Override
+            public void execute(SearchEngine engine) {
+                final String url = engine.resultsUriForQuery(query);
+                // Only load urls if the url is different than the webview's current url.
+                if (!TextUtils.equals(webview.getUrl(), url)) {
+                    webview.loadUrl(Constants.ABOUT_BLANK);
+                    webview.loadUrl(url);
+                }
+            }
+        });
+    }
+
 
     /**
      * A custom WebViewClient that intercepts every page load. This allows
@@ -70,32 +95,63 @@ public class PostSearchFragment extends Fragment {
     private class LinkInterceptingClient extends WebViewClient {
 
         @Override
-        public void onPageStarted(WebView view, String url, Bitmap favicon) {
-            if (isSearchResultsPage(url)) {
-                super.onPageStarted(view, url, favicon);
-            } else {
-                view.stopLoading();
-                Intent i = new Intent(Intent.ACTION_VIEW);
-                i.setData(Uri.parse(url));
-                startActivity(i);
-            }
+        public void onPageStarted(WebView view, final String url, Bitmap favicon) {
+            searchEngineManager.getEngine(new SearchEngineManager.SearchEngineCallback() {
+                @Override
+                public void execute(SearchEngine engine) {
+                    // We keep URLs in the webview that are either about:blank or a search engine result page.
+                    if (TextUtils.equals(url, Constants.ABOUT_BLANK) || engine.isSearchResultsPage(url)) {
+                        // Keeping the URL in the webview is a noop.
+                        return;
+                    }
+
+                    webview.stopLoading();
+
+                    Telemetry.sendUIEvent(TelemetryContract.Event.LOAD_URL,
+                            TelemetryContract.Method.CONTENT, "search-result");
+
+                    final Intent i = new Intent(Intent.ACTION_VIEW);
+
+                    // This sends the URL directly to fennec, rather than to Android.
+                    i.setClassName(AppConstants.ANDROID_PACKAGE_NAME, AppConstants.BROWSER_INTENT_CLASS_NAME);
+                    i.setData(Uri.parse(url));
+                    startActivity(i);
+                }
+            });
         }
     }
 
     /**
      * A custom WebChromeClient that allows us to inject CSS into
-     * the head of the HTML.
+     * the head of the HTML and to monitor pageload progress.
      *
      * We use the WebChromeClient because it provides a hook to the titleReceived
      * event. Once the title is available, the page will have started parsing the
      * head element. The script injects its CSS into the head element.
      */
-    private class StyleInjectingClient extends WebChromeClient {
+    private class ChromeClient extends WebChromeClient {
 
         @Override
-        public void onReceivedTitle(WebView view, String title) {
-            super.onReceivedTitle(view, title);
-            view.loadUrl(HIDE_BANNER_SCRIPT);
+        public void onReceivedTitle(final WebView view, String title) {
+
+            searchEngineManager.getEngine(new SearchEngineManager.SearchEngineCallback() {
+                @Override
+                public void execute(SearchEngine engine) {
+                    view.loadUrl(engine.getInjectableJs());
+                }
+            });
+        }
+
+        @Override
+        public void onProgressChanged(WebView view, int newProgress) {
+            if (newProgress < 100) {
+                if (progressBar.getVisibility() == View.INVISIBLE) {
+                    progressBar.setVisibility(View.VISIBLE);
+                }
+                progressBar.setProgress(newProgress);
+            } else {
+                progressBar.setVisibility(View.INVISIBLE);
+            }
         }
     }
 }

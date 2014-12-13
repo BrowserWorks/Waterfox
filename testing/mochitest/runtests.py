@@ -16,6 +16,7 @@ import ctypes
 import glob
 import json
 import mozcrash
+import mozdebug
 import mozinfo
 import mozprocess
 import mozrunner
@@ -32,7 +33,19 @@ import urllib2
 import zipfile
 import bisection
 
-from automationutils import environment, getDebuggerInfo, isURL, KeyValueParseError, parseKeyValue, processLeakLog, dumpScreen, ShutdownLeaks, printstatus, LSANLeaks
+from automationutils import (
+    environment,
+    isURL,
+    KeyValueParseError,
+    parseKeyValue,
+    processLeakLog,
+    dumpScreen,
+    ShutdownLeaks,
+    printstatus,
+    LSANLeaks,
+    setAutomationLog,
+)
+
 from datetime import datetime
 from manifestparser import TestManifest
 from mochitest_options import MochitestOptions
@@ -40,24 +53,11 @@ from mozprofile import Profile, Preferences
 from mozprofile.permissions import ServerLocations
 from urllib import quote_plus as encodeURIComponent
 from mozlog.structured.formatters import TbplFormatter
-from mozlog.structured.commandline import add_logging_group, setup_logging
-from mozlog.structured.handlers import StreamHandler
+from mozlog.structured import commandline
 
 # This should use the `which` module already in tree, but it is
 # not yet present in the mozharness environment
 from mozrunner.utils import findInPath as which
-
-
-# Necessary to set up the global logger in automationutils.py
-import logging
-log = logging.getLogger()
-def resetGlobalLog():
-   while log.handlers:
-       log.removeHandler(log.handlers[0])
-   handler = logging.StreamHandler(sys.stdout)
-   log.setLevel(logging.INFO)
-   log.addHandler(handler)
-resetGlobalLog()
 
 ###########################
 # Option for NSPR logging #
@@ -75,16 +75,29 @@ NSPR_LOG_MODULES = ""
 
 ### output processing
 class MochitestFormatter(TbplFormatter):
+    """
+    The purpose of this class is to maintain compatibility with legacy users.
+    Mozharness' summary parser expects the count prefix, and others expect python
+    logging to contain a line prefix picked up by TBPL (bug 1043420).
+    Those directly logging "TEST-UNEXPECTED" require no prefix to log output
+    in order to turn a build orange (bug 1044206).
+
+    Once updates are propagated to Mozharness, this class may be removed.
+    """
     log_num = 0
 
     def __init__(self):
         super(MochitestFormatter, self).__init__()
 
     def __call__(self, data):
-        tbpl_output = super(MochitestFormatter, self).__call__(data)
+        output = super(MochitestFormatter, self).__call__(data)
         log_level = data.get('level', 'info').upper()
-        output = '%d %s %s' % (MochitestFormatter.log_num, log_level, tbpl_output)
-        MochitestFormatter.log_num += 1
+
+        if 'js_source' in data or log_level == 'ERROR':
+            data.pop('js_source', None)
+            output = '%d %s %s' % (MochitestFormatter.log_num, log_level, output)
+            MochitestFormatter.log_num += 1
+
         return output
 
 ### output processing
@@ -228,7 +241,7 @@ def killPid(pid, log):
     log.info("Failed to kill process %d: %s" % (pid, str(e)))
 
 if mozinfo.isWin:
-  import ctypes, ctypes.wintypes, time, msvcrt
+  import ctypes.wintypes
 
   def isPidAlive(pid):
     STILL_ACTIVE = 259
@@ -377,7 +390,7 @@ class WebSocketServer(object):
     script = os.path.join(self._scriptdir, scriptPath)
 
     cmd = [sys.executable, script]
-    if self.debuggerInfo and self.debuggerInfo['interactive']:
+    if self.debuggerInfo and self.debuggerInfo.interactive:
         cmd += ['--interactive']
     cmd += ['-p', str(self.port), '-w', self._scriptdir, '-l',      \
            os.path.join(self._scriptdir, "websock.log"),            \
@@ -409,7 +422,7 @@ class MochitestUtilsMixin(object):
   TEST_PATH = "tests"
   CHROME_PATH = "redirect.html"
   urlOpts = []
-  structured_logger = None
+  log = None
 
   def __init__(self, logger_options):
     self.update_mozinfo()
@@ -417,20 +430,19 @@ class MochitestUtilsMixin(object):
     self.wsserver = None
     self.sslTunnel = None
     self._locations = None
-    # Structured logger
-    if self.structured_logger is None:
-        self.structured_logger = setup_logging('mochitest', logger_options, {})
-        # Add the tbpl logger if no handler is logging to stdout, to display formatted logs by default
-        has_stdout_logger = any(h.stream == sys.stdout for h in self.structured_logger.handlers)
-        if not has_stdout_logger:
-            handler = StreamHandler(sys.stdout, MochitestFormatter())
-            self.structured_logger.add_handler(handler)
-        MochitestUtilsMixin.structured_logger = self.structured_logger
 
-    self.message_logger = MessageLogger(logger=self.structured_logger)
+    if self.log is None:
+      commandline.log_formatters["tbpl"]  = (MochitestFormatter,
+                                             "Mochitest specific tbpl formatter")
+      self.log = commandline.setup_logging("mochitest",
+                                           logger_options,
+                                           {
+                                              "tbpl": sys.stdout
+                                           })
+      MochitestUtilsMixin.log = self.log
+      setAutomationLog(self.log)
 
-    # self.log should also be structured_logger, but to avoid regressions like bug 1044206 we're now logging with the stdlib's logger
-    self.log = log
+    self.message_logger = MessageLogger(logger=self.log)
 
   def update_mozinfo(self):
     """walk up directories to find mozinfo.json update the info"""
@@ -480,6 +492,11 @@ class MochitestUtilsMixin(object):
         timeout -- per-test timeout in seconds
         repeat -- How many times to repeat the test, ie: repeat=1 will run the test twice.
     """
+
+    if not hasattr(options, 'logFile'):
+        options.logFile = ""
+    if not hasattr(options, 'fileLevel'):
+        options.fileLevel = 'INFO'
 
     # allow relative paths for logFile
     if options.logFile:
@@ -1172,15 +1189,16 @@ class Mochitest(MochitestUtilsMixin):
     # This is fatal for desktop environments.
     raise EnvironmentError('Could not find gmp-fake')
 
-  def buildBrowserEnv(self, options, debugger=False):
+  def buildBrowserEnv(self, options, debugger=False, env=None):
     """build the environment variables for the specific test and operating system"""
     if mozinfo.info["asan"]:
       lsanPath = SCRIPT_DIR
     else:
       lsanPath = None
 
-    browserEnv = self.environment(xrePath=options.xrePath, debugger=debugger,
-                                  dmdPath=options.dmdPath, lsanPath=lsanPath)
+    browserEnv = self.environment(xrePath=options.xrePath, env=env,
+                                  debugger=debugger, dmdPath=options.dmdPath,
+                                  lsanPath=lsanPath)
 
     # These variables are necessary for correct application startup; change
     # via the commandline at your own risk.
@@ -1200,7 +1218,7 @@ class Mochitest(MochitestUtilsMixin):
       if gmp_path is not None:
           browserEnv["MOZ_GMP_PATH"] = gmp_path
     except EnvironmentError:
-      log.error('Could not find path to gmp-fake plugin!')
+      self.log.error('Could not find path to gmp-fake plugin!')
       return None
 
     if options.fatalAssertions:
@@ -1359,16 +1377,12 @@ class Mochitest(MochitestUtilsMixin):
     interactive = False
     debug_args = None
     if debuggerInfo:
-        interactive = debuggerInfo['interactive']
-        debug_args = [debuggerInfo['path']] + debuggerInfo['args']
+        interactive = debuggerInfo.interactive
+        debug_args = [debuggerInfo.path] + debuggerInfo.args
 
     # fix default timeout
     if timeout == -1:
       timeout = self.DEFAULT_TIMEOUT
-
-    # build parameters
-    is_test_build = mozinfo.info.get('tests_enabled', True)
-    bin_suffix = mozinfo.info.get('bin_suffix', '')
 
     # copy env so we don't munge the caller's environment
     env = env.copy()
@@ -1393,7 +1407,7 @@ class Mochitest(MochitestUtilsMixin):
       # https://bugzilla.mozilla.org/show_bug.cgi?id=916512
       args.append('-foreground')
       if testUrl:
-        if debuggerInfo and debuggerInfo['requiresEscapedArgs']:
+        if debuggerInfo and debuggerInfo.requiresEscapedArgs:
           testUrl = testUrl.replace("&", "\\&")
         args.append(testUrl)
 
@@ -1595,9 +1609,14 @@ class Mochitest(MochitestUtilsMixin):
     bisect = bisection.Bisect(self)
     finished = False
     status = 0
+    bisection_log = 0
     while not finished:
       if options.bisectChunk:
         testsToRun = bisect.pre_test(options, testsToRun, status)
+        # To inform that we are in the process of bisection, and to look for bleedthrough
+        if options.bisectChunk != "default" and not bisection_log:
+            log.info("TEST-UNEXPECTED-FAIL | Bisection | Please ignore repeats and look for 'Bleedthrough' (if any) at the end of the failure list")
+            bisection_log = 1
 
       result = self.doTests(options, onLaunch, testsToRun)
       if options.bisectChunk:
@@ -1668,7 +1687,7 @@ class Mochitest(MochitestUtilsMixin):
 
     return result
 
-  def doTests(self, options, onLaunch=None, testsToFilter = None):
+  def doTests(self, options, onLaunch=None, testsToFilter=None):
     # A call to initializeLooping method is required in case of --run-by-dir or --bisect-chunk
     # since we need to initialize variables for each loop.
     if options.bisectChunk or options.runByDir:
@@ -1680,10 +1699,10 @@ class Mochitest(MochitestUtilsMixin):
     #  'args': arguments to the debugger (list)
     # TODO: use mozrunner.local.debugger_arguments:
     # https://github.com/mozilla/mozbase/blob/master/mozrunner/mozrunner/local.py#L42
-    debuggerInfo = getDebuggerInfo(self.oldcwd,
-                                   options.debugger,
-                                   options.debuggerArgs,
-                                   options.debuggerInteractive)
+
+    debuggerInfo = mozdebug.get_debugger_info(options.debugger,
+                                              options.debuggerArgs,
+                                              options.debuggerInteractive)
 
     if options.useTestMediaDevices:
       devices = findTestMediaDevices(self.log)
@@ -1905,9 +1924,12 @@ class Mochitest(MochitestUtilsMixin):
         stackFixerCommand = [self.perl, os.path.join(self.utilityPath, "fix-linux-stack.pl")]
         stackFixerProcess = subprocess.Popen(stackFixerCommand, stdin=subprocess.PIPE,
                                              stdout=subprocess.PIPE)
-        def fixFunc(line):
-          stackFixerProcess.stdin.write(line + '\n')
-          return stackFixerProcess.stdout.readline().rstrip()
+        def fixFunc(lines):
+          out = []
+          for line in lines.split('\n'):
+            stackFixerProcess.stdin.write(line + '\n')
+            out.append(stackFixerProcess.stdout.readline().rstrip())
+          return '\n'.join(out)
 
         stackFixerFunction = fixFunc
 
@@ -2009,42 +2031,12 @@ class Mochitest(MochitestUtilsMixin):
     if "MOZ_HIDE_RESULTS_TABLE" in os.environ and os.environ["MOZ_HIDE_RESULTS_TABLE"] == "1":
       options.hideResultsTable = True
 
-    d = dict(options.__dict__)
+    d = dict((k, v) for k, v in options.__dict__.iteritems() if not k.startswith('log'))
     d['testRoot'] = self.testRoot
     content = json.dumps(d)
 
     with open(os.path.join(options.profilePath, "testConfig.js"), "w") as config:
       config.write(content)
-
-  def installExtensionFromPath(self, options, path, extensionID = None):
-    """install an extension to options.profilePath"""
-
-    # TODO: currently extensionID is unused; see
-    # https://bugzilla.mozilla.org/show_bug.cgi?id=914267
-    # [mozprofile] make extensionID a parameter to install_from_path
-    # https://github.com/mozilla/mozbase/blob/master/mozprofile/mozprofile/addons.py#L169
-
-    extensionPath = self.getFullPath(path)
-
-    log.info("runtests.py | Installing extension at %s to %s." %
-                (extensionPath, options.profilePath))
-
-    addons = AddonManager(options.profilePath)
-
-    # XXX: del the __del__
-    # hack can be removed when mozprofile is mirrored to m-c ; see
-    # https://bugzilla.mozilla.org/show_bug.cgi?id=911218 :
-    # [mozprofile] AddonManager should only cleanup on __del__ optionally:
-    # https://github.com/mozilla/mozbase/blob/master/mozprofile/mozprofile/addons.py#L266
-    if hasattr(addons, '__del__'):
-      del addons.__del__
-
-    addons.install_from_path(path)
-
-  def installExtensionsToProfile(self, options):
-    "Install special testing extensions, application distributed extensions, and specified on the command line ones to testing profile."
-    for path in self.getExtensionsToInstall(options):
-      self.installExtensionFromPath(options, path)
 
   def getTestManifest(self, options):
     if isinstance(options.manifestFile, TestManifest):
@@ -2083,7 +2075,7 @@ class Mochitest(MochitestUtilsMixin):
 def main():
   # parse command line options
   parser = MochitestOptions()
-  add_logging_group(parser)
+  commandline.add_logging_group(parser)
   options, args = parser.parse_args()
   if options is None:
     # parsing error

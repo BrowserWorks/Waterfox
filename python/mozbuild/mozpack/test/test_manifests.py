@@ -14,6 +14,7 @@ from mozpack.copier import (
 )
 from mozpack.manifests import (
     InstallManifest,
+    UnreadableInstallManifest,
 )
 from mozpack.test.test_files import TestWithTmpDir
 
@@ -22,6 +23,12 @@ class TestInstallManifest(TestWithTmpDir):
     def test_construct(self):
         m = InstallManifest()
         self.assertEqual(len(m), 0)
+
+    def test_malformed(self):
+        f = self.tmppath('manifest')
+        open(f, 'wb').write('junk\n')
+        with self.assertRaises(UnreadableInstallManifest):
+            m = InstallManifest(f)
 
     def test_adds(self):
         m = InstallManifest()
@@ -347,6 +354,14 @@ class TestInstallManifest(TestWithTmpDir):
 
         with open(destfile, 'rt') as fh:
             self.assertEqual(fh.read(), 'SOURCE\nINCLUDE MODIFIED\n')
+
+        # ORing an InstallManifest should copy file dependencies
+        m = InstallManifest()
+        m |= InstallManifest(path=manifest)
+        c = FileCopier()
+        m.populate_registry(c)
+        e = c._files['p_dest']
+        self.assertEqual(e.extra_depends, [manifest])
 
 if __name__ == '__main__':
     mozunit.main()

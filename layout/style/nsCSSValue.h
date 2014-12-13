@@ -200,6 +200,41 @@ private:
   operator=(const GridTemplateAreasValue& aOther) MOZ_DELETE;
 };
 
+class FontFamilyListRefCnt MOZ_FINAL : public FontFamilyList {
+public:
+    FontFamilyListRefCnt()
+        : FontFamilyList()
+    {
+        MOZ_COUNT_CTOR(FontFamilyListRefCnt);
+    }
+
+    explicit FontFamilyListRefCnt(FontFamilyType aGenericType)
+        : FontFamilyList(aGenericType)
+    {
+        MOZ_COUNT_CTOR(FontFamilyListRefCnt);
+    }
+
+    FontFamilyListRefCnt(const nsAString& aFamilyName,
+                         QuotedName aQuoted)
+        : FontFamilyList(aFamilyName, aQuoted)
+    {
+        MOZ_COUNT_CTOR(FontFamilyListRefCnt);
+    }
+
+    FontFamilyListRefCnt(const FontFamilyListRefCnt& aOther)
+        : FontFamilyList(aOther)
+    {
+        MOZ_COUNT_CTOR(FontFamilyListRefCnt);
+    }
+
+    NS_INLINE_DECL_REFCOUNTING(FontFamilyListRefCnt);
+
+private:
+    ~FontFamilyListRefCnt() {
+        MOZ_COUNT_DTOR(FontFamilyListRefCnt);
+    }
+};
+
 }
 }
 
@@ -371,7 +406,7 @@ public:
   explicit nsCSSValue(nsCSSValueGradient* aValue);
   explicit nsCSSValue(nsCSSValueTokenStream* aValue);
   explicit nsCSSValue(mozilla::css::GridTemplateAreasValue* aValue);
-  explicit nsCSSValue(mozilla::FontFamilyList* aValue);
+  explicit nsCSSValue(mozilla::css::FontFamilyListRefCnt* aValue);
   nsCSSValue(const nsCSSValue& aCopy);
   ~nsCSSValue() { Reset(); }
 
@@ -639,7 +674,7 @@ public:
   void SetGradientValue(nsCSSValueGradient* aGradient);
   void SetTokenStreamValue(nsCSSValueTokenStream* aTokenStream);
   void SetGridTemplateAreas(mozilla::css::GridTemplateAreasValue* aValue);
-  void SetFontFamilyListValue(mozilla::FontFamilyList* aFontListValue);
+  void SetFontFamilyListValue(mozilla::css::FontFamilyListRefCnt* aFontListValue);
   void SetPairValue(const nsCSSValuePair* aPair);
   void SetPairValue(const nsCSSValue& xValue, const nsCSSValue& yValue);
   void SetSharedListValue(nsCSSValueSharedList* aList);
@@ -707,7 +742,7 @@ protected:
     nsCSSValuePairList_heap* mPairList;
     nsCSSValuePairList* mPairListDependent;
     nsCSSValueFloatColor* mFloatColor;
-    mozilla::FontFamilyList* mFontFamilyList;
+    mozilla::css::FontFamilyListRefCnt* mFontFamilyList;
   } mValue;
 };
 
@@ -788,7 +823,7 @@ private:
   for (nsCSSValue *var = First() + 1, *var##_end = First() + mCount;          \
        var != var##_end; ++var)
 
-  Array(size_t aItemCount)
+  explicit Array(size_t aItemCount)
     : mRefCnt(0)
     , mCount(aItemCount)
   {
@@ -869,7 +904,7 @@ struct nsCSSValueSharedList MOZ_FINAL {
   }
 
   // Takes ownership of aList.
-  nsCSSValueSharedList(nsCSSValueList* aList)
+  explicit nsCSSValueSharedList(nsCSSValueList* aList)
     : mHead(aList)
   {
     MOZ_COUNT_CTOR(nsCSSValueSharedList);
@@ -1009,7 +1044,7 @@ struct nsCSSValuePair {
   {
     MOZ_COUNT_CTOR(nsCSSValuePair);
   }
-  nsCSSValuePair(nsCSSUnit aUnit)
+  explicit nsCSSValuePair(nsCSSUnit aUnit)
     : mXValue(aUnit), mYValue(aUnit)
   {
     MOZ_COUNT_CTOR(nsCSSValuePair);
@@ -1093,7 +1128,7 @@ struct nsCSSValueTriplet {
     {
         MOZ_COUNT_CTOR(nsCSSValueTriplet);
     }
-    nsCSSValueTriplet(nsCSSUnit aUnit)
+    explicit nsCSSValueTriplet(nsCSSUnit aUnit)
         : mXValue(aUnit), mYValue(aUnit), mZValue(aUnit)
     {
         MOZ_COUNT_CTOR(nsCSSValueTriplet);

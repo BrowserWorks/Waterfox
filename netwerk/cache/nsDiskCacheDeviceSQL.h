@@ -47,7 +47,7 @@ public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_MOZISTORAGEFUNCTION
 
-  nsOfflineCacheEvictionFunction(nsOfflineCacheDevice *device)
+  explicit nsOfflineCacheEvictionFunction(nsOfflineCacheDevice *device)
     : mDevice(device)
   {}
 
@@ -62,8 +62,8 @@ private:
 
 };
 
-class nsOfflineCacheDevice : public nsCacheDevice
-                           , public nsISupports
+class nsOfflineCacheDevice MOZ_FINAL : public nsCacheDevice
+                                     , public nsISupports
 {
 public:
   nsOfflineCacheDevice();

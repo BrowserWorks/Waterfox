@@ -10,14 +10,14 @@ SOURCES += [
     'TestComponent.cpp',
 ]
 
-LIBRARY_NAME = 'test656331'
-
-IS_COMPONENT = True
-
-FORCE_SHARED_LIB = True
+XPCOMBinaryComponent('test656331')
 
 DEFINES['LIBRARY_FILENAME'] = '%s%s%s' % (
     CONFIG['DLL_PREFIX'],
     LIBRARY_NAME,
     CONFIG['DLL_SUFFIX']
 )
+
+# Need to link with CoreFoundation on Mac
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+    OS_LIBS += CONFIG['TK_LIBS']

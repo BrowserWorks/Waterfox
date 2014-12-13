@@ -15,8 +15,20 @@ SIMPLE_PROGRAMS += [
     "%s" % (fyl[0:-4]) for fyl in SOURCES
 ]
 
-LOCAL_INCLUDES += [
-    '../public',
+USE_STATIC_LIBS = True
+
+USE_LIBS += [
+    'mozalloc',
+    'nspr',
+    'unicharutil_external_s',
+    'xul',
 ]
 
-USE_STATIC_LIBS = True
+if CONFIG['OS_ARCH'] == 'WINNT':
+    USE_LIBS += [
+        'xpcomglue_staticruntime_s',
+    ]
+else:
+    USE_LIBS += [
+        'xpcomglue_s',
+    ]

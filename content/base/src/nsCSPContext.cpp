@@ -25,7 +25,6 @@
 #include "nsIObjectOutputStream.h"
 #include "nsIObserver.h"
 #include "nsIObserverService.h"
-#include "nsIPrincipal.h"
 #include "nsIPropertyBag2.h"
 #include "nsIStringStream.h"
 #include "nsIUploadChannel.h"
@@ -184,8 +183,9 @@ nsCSPContext::ShouldLoad(nsContentPolicyType aContentType,
       // decision may be wrong due to the inability to get the nonce, and will
       // incorrectly fail the unit tests.
       if (!isPreload) {
+        nsCOMPtr<nsIURI> originalURI = do_QueryInterface(aExtra);
         this->AsyncReportViolation(aContentLocation,
-                                   mSelfURI,
+                                   originalURI,   /* in case of redirect originalURI is not null */
                                    violatedDirective,
                                    p,             /* policy index        */
                                    EmptyString(), /* no observer subject */
@@ -237,12 +237,6 @@ nsCSPContext::~nsCSPContext()
 }
 
 NS_IMETHODIMP
-nsCSPContext::GetIsInitialized(bool *outIsInitialized)
-{
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-NS_IMETHODIMP
 nsCSPContext::GetPolicy(uint32_t aIndex, nsAString& outStr)
 {
   if (aIndex >= mPolicies.Length()) {
@@ -273,16 +267,11 @@ nsCSPContext::RemovePolicy(uint32_t aIndex)
 
 NS_IMETHODIMP
 nsCSPContext::AppendPolicy(const nsAString& aPolicyString,
-                           nsIURI* aSelfURI,
                            bool aReportOnly)
 {
   CSPCONTEXTLOG(("nsCSPContext::AppendPolicy: %s",
                  NS_ConvertUTF16toUTF8(aPolicyString).get()));
 
-  if (aSelfURI) {
-    // aSelfURI will be disregarded since we will remove it with bug 991474
-    NS_WARNING("aSelfURI should be a nullptr in AppendPolicy and removed in bug 991474");
-  }
   // Use the mSelfURI from setRequestContext, see bug 991474
   NS_ASSERTION(mSelfURI, "mSelfURI required for AppendPolicy, but not set");
   nsCSPPolicy* policy = nsCSPParser::parseContentSecurityPolicy(aPolicyString, mSelfURI, aReportOnly, mInnerWindowID);
@@ -428,7 +417,7 @@ nsCSPContext::GetAllowsHash(const nsAString& aContent,
       mPolicies[p]->getDirectiveStringForContentType(                          \
                         nsIContentPolicy::TYPE_ ## contentPolicyType,          \
                         violatedDirective);                                    \
-      this->AsyncReportViolation(selfISupports, mSelfURI, violatedDirective, p, \
+      this->AsyncReportViolation(selfISupports, nullptr, violatedDirective, p, \
                                  NS_LITERAL_STRING(observerTopic),             \
                                  aSourceFile, aScriptSample, aLineNum);        \
     }                                                                          \
@@ -548,7 +537,6 @@ getInnerWindowID(nsIRequest* aRequest) {
 NS_IMETHODIMP
 nsCSPContext::SetRequestContext(nsIURI* aSelfURI,
                                 nsIURI* aReferrer,
-                                nsIPrincipal* aDocumentPrincipal,
                                 nsIChannel* aChannel)
 {
   NS_PRECONDITION(aSelfURI || aChannel, "Need aSelfURI or aChannel to set the context properly");
@@ -585,6 +573,23 @@ nsCSPContext::SetRequestContext(nsIURI* aSelfURI,
   return NS_OK;
 }
 
+/**
+ * Sends CSP violation reports to all sources listed under report-uri.
+ *
+ * @param aBlockedContentSource
+ *        Either a CSP Source (like 'self', as string) or nsIURI: the source
+ *        of the violation.
+ * @param aOriginalUri
+ *        The original URI if the blocked content is a redirect, else null
+ * @param aViolatedDirective
+ *        the directive that was violated (string).
+ * @param aSourceFile
+ *        name of the file containing the inline script violation
+ * @param aScriptSample
+ *        a sample of the violating inline script
+ * @param aLineNum
+ *        source line number of the violation (if available)
+ */
 nsresult
 nsCSPContext::SendReports(nsISupports* aBlockedContentSource,
                           nsIURI* aOriginalURI,
@@ -614,7 +619,15 @@ nsCSPContext::SendReports(nsISupports* aBlockedContentSource,
     nsCOMPtr<nsIURI> uri = do_QueryInterface(aBlockedContentSource);
     // could be a string or URI
     if (uri) {
-      uri->GetSpecIgnoringRef(reportBlockedURI);
+      // aOriginalURI will only be *not* null in case of a redirect in which
+      // case aOriginalURI is the uri before the redirect.
+      if (aOriginalURI) {
+        // do not report anything else than the origin in case of a redirect, see:
+        // http://www.w3.org/TR/CSP/#violation-reports
+        uri->GetPrePath(reportBlockedURI);
+      } else {
+        uri->GetSpecIgnoringRef(reportBlockedURI);
+      }
     } else {
       nsCOMPtr<nsISupportsCString> cstr = do_QueryInterface(aBlockedContentSource);
       if (cstr) {
@@ -630,11 +643,9 @@ nsCSPContext::SendReports(nsISupports* aBlockedContentSource,
   }
 
   // document-uri
-  if (aOriginalURI) {
-    nsAutoCString reportDocumentURI;
-    aOriginalURI->GetSpecIgnoringRef(reportDocumentURI);
-    report.mCsp_report.mDocument_uri = NS_ConvertUTF8toUTF16(reportDocumentURI);
-  }
+  nsAutoCString reportDocumentURI;
+  mSelfURI->GetSpecIgnoringRef(reportDocumentURI);
+  report.mCsp_report.mDocument_uri = NS_ConvertUTF8toUTF16(reportDocumentURI);
 
   // original-policy
   nsAutoString originalPolicy;
@@ -743,7 +754,7 @@ nsCSPContext::SendReports(nsISupports* aBlockedContentSource,
 
     rv = cp->ShouldLoad(nsIContentPolicy::TYPE_CSP_REPORT,
                         reportURI,
-                        aOriginalURI,
+                        mSelfURI,
                         nullptr,        // Context
                         EmptyCString(), // mime type
                         nullptr,        // Extra parameter
@@ -896,7 +907,7 @@ class CSPReportSenderRunnable MOZ_FINAL : public nsRunnable
     nsString                mScriptSample;
     uint32_t                mLineNum;
     uint64_t                mInnerWindowID;
-    nsCSPContext*           mCSPContext;
+    nsRefPtr<nsCSPContext>  mCSPContext;
 };
 
 /**
@@ -1056,7 +1067,7 @@ nsCSPContext::PermitsAncestry(nsIDocShell* aDocShell, bool* outPermitsAncestry)
         bool okToSendAncestor = NS_SecurityCompareURIs(ancestorsArray[a], mSelfURI, true);
 
         this->AsyncReportViolation((okToSendAncestor ? ancestorsArray[a] : nullptr),
-                                   mSelfURI,
+                                   nullptr,       /* originalURI in case of redirect */
                                    violatedDirective,
                                    i,             /* policy index        */
                                    EmptyString(), /* no observer subject */
@@ -1225,6 +1236,7 @@ nsCSPContext::Write(nsIObjectOutputStream* aStream)
 
   nsAutoString polStr;
   for (uint32_t p = 0; p < mPolicies.Length(); p++) {
+    polStr.Truncate();
     mPolicies[p]->toString(polStr);
     aStream->WriteWStringZ(polStr.get());
     aStream->WriteBoolean(mPolicies[p]->getReportOnlyFlag());

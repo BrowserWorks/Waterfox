@@ -47,6 +47,12 @@ const PREF_DIRECTORY_PING = "browser.newtabpage.directory.ping";
 // The preference that tells if newtab is enhanced
 const PREF_NEWTAB_ENHANCED = "browser.newtabpage.enhanced";
 
+// Only allow link urls that are http(s)
+const ALLOWED_LINK_SCHEMES = new Set(["http", "https"]);
+
+// Only allow link image urls that are https or data
+const ALLOWED_IMAGE_SCHEMES = new Set(["https", "data"]);
+
 // The frecency of a directory link
 const DIRECTORY_FRECENCY = 1000;
 
@@ -86,10 +92,6 @@ let DirectoryLinksProvider = {
   }),
 
   get _linksURL() {
-    if (!this.enabled) {
-      return "data:application/json,{}";
-    }
-
     if (!this.__linksURL) {
       try {
         this.__linksURL = Services.prefs.getCharPref(this._observedPrefs["linksURL"]);
@@ -187,6 +189,9 @@ let DirectoryLinksProvider = {
   },
 
   _fetchAndCacheLinks: function DirectoryLinksProvider_fetchAndCacheLinks(uri) {
+    // Replace with the same display locale used for selecting links data
+    uri = uri.replace("%LOCALE%", this.locale);
+
     let deferred = Promise.defer();
     let xmlHttp = new XMLHttpRequest();
 
@@ -210,14 +215,12 @@ let DirectoryLinksProvider = {
     };
 
     try {
-      xmlHttp.open('POST', uri);
+      xmlHttp.open("GET", uri);
       // Override the type so XHR doesn't complain about not well-formed XML
       xmlHttp.overrideMimeType(DIRECTORY_LINKS_TYPE);
       // Set the appropriate request type for servers that require correct types
       xmlHttp.setRequestHeader("Content-Type", DIRECTORY_LINKS_TYPE);
-      xmlHttp.send(JSON.stringify({
-        locale: this.locale,
-      }));
+      xmlHttp.send();
     } catch (e) {
       deferred.reject("Error fetching " + uri);
       Cu.reportError(e);
@@ -272,10 +275,6 @@ let DirectoryLinksProvider = {
    * @return a promise resolved to valid list of links or [] if read or parse fails
    */
   _readDirectoryLinksFile: function DirectoryLinksProvider_readDirectoryLinksFile() {
-    if (!this.enabled) {
-      return Promise.resolve([]);
-    }
-
     return OS.File.read(this._directoryFilePath).then(binaryData => {
       let output;
       try {
@@ -303,10 +302,6 @@ let DirectoryLinksProvider = {
    * @return download promise
    */
   reportSitesAction: function DirectoryLinksProvider_reportSitesAction(sites, action, triggeringSiteIndex) {
-    if (!this.enabled) {
-      return Promise.resolve();
-    }
-
     let newtabEnhanced = false;
     let pingEndPoint = "";
     try {
@@ -372,6 +367,24 @@ let DirectoryLinksProvider = {
   },
 
   /**
+   * Check if a url's scheme is in a Set of allowed schemes
+   */
+  isURLAllowed: function DirectoryLinksProvider_isURLAllowed(url, allowed) {
+    // Assume no url is an allowed url
+    if (!url) {
+      return true;
+    }
+
+    let scheme = "";
+    try {
+      // A malformed url will not be allowed
+      scheme = Services.io.newURI(url, null, null).scheme;
+    }
+    catch(ex) {}
+    return allowed.has(scheme);
+  },
+
+  /**
    * Gets the current set of directory links.
    * @param aCallback The function that the array of links is passed to.
    */
@@ -380,8 +393,12 @@ let DirectoryLinksProvider = {
       // Reset the cache of enhanced images for this new set of links
       this._enhancedLinks.clear();
 
-      // all directory links have a frecency of DIRECTORY_FRECENCY
-      return rawLinks.map((link, position) => {
+      return rawLinks.filter(link => {
+        // Make sure the link url is allowed and images too if they exist
+        return this.isURLAllowed(link.url, ALLOWED_LINK_SCHEMES) &&
+               this.isURLAllowed(link.imageURI, ALLOWED_IMAGE_SCHEMES) &&
+               this.isURLAllowed(link.enhancedImageURI, ALLOWED_IMAGE_SCHEMES);
+      }).map((link, position) => {
         // Stash the enhanced image for the site
         if (link.enhancedImageURI) {
           this._enhancedLinks.set(NewTabUtils.extractSite(link.url), link);
@@ -398,9 +415,6 @@ let DirectoryLinksProvider = {
   },
 
   init: function DirectoryLinksProvider_init() {
-    // Allow for overriding enabled to true for testing
-    this.enabled = this._testing && this.locale.search(/^(en|de|es|fr|ja|pl|pt|ru)/) == 0;
-
     this._setDefaultEnhanced();
     this._addPrefsObserver();
     // setup directory file path and last download timestamp

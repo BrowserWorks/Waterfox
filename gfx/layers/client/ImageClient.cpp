@@ -7,7 +7,7 @@
 #include <stdint.h>                     // for uint32_t
 #include "ImageContainer.h"             // for Image, PlanarYCbCrImage, etc
 #include "ImageTypes.h"                 // for ImageFormat::PLANAR_YCBCR, etc
-#include "SharedTextureImage.h"         // for SharedTextureImage::Data, etc
+#include "GLImages.h"                   // for SurfaceTextureImage::Data, etc
 #include "gfx2DGlue.h"                  // for ImageFormatToSurfaceFormat
 #include "gfxPlatform.h"                // for gfxPlatform
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT, etc
@@ -24,7 +24,7 @@
 #include "mozilla/layers/SharedPlanarYCbCrImage.h"
 #include "mozilla/layers/SharedRGBImage.h"
 #include "mozilla/layers/TextureClient.h"  // for TextureClient, etc
-#include "mozilla/layers/TextureClientOGL.h"  // for SharedTextureClientOGL
+#include "mozilla/layers/TextureClientOGL.h"  // for SurfaceTextureClient
 #include "mozilla/mozalloc.h"           // for operator delete, etc
 #include "nsAutoPtr.h"                  // for nsRefPtr
 #include "nsCOMPtr.h"                   // for already_AddRefed
@@ -61,6 +61,11 @@ ImageClient::CreateImageClient(CompositableType aCompositableHostType,
   case CompositableType::BUFFER_UNKNOWN:
     result = nullptr;
     break;
+#ifdef MOZ_WIDGET_GONK
+  case CompositableType::IMAGE_OVERLAY:
+    result = new ImageClientOverlay(aForwarder, aFlags);
+    break;
+#endif
   default:
     MOZ_CRASH("unhandled program type");
   }
@@ -209,11 +214,12 @@ ImageClientSingle::UpdateImageInternal(ImageContainer* aContainer,
 
     bool bufferCreated = false;
     if (!mFrontBuffer) {
-      mFrontBuffer = CreateBufferTextureClient(gfx::SurfaceFormat::YUV, TextureFlags::DEFAULT);
       gfx::IntSize ySize(data->mYSize.width, data->mYSize.height);
       gfx::IntSize cbCrSize(data->mCbCrSize.width, data->mCbCrSize.height);
-      if (!mFrontBuffer->AsTextureClientYCbCr()->AllocateForYCbCr(ySize, cbCrSize, data->mStereoMode)) {
-        mFrontBuffer = nullptr;
+      mFrontBuffer = TextureClient::CreateForYCbCr(GetForwarder(),
+                                                   ySize, cbCrSize, data->mStereoMode,
+                                                   TextureFlags::DEFAULT|mTextureFlags);
+      if (!mFrontBuffer) {
         return false;
       }
       bufferCreated = true;
@@ -241,9 +247,9 @@ ImageClientSingle::UpdateImageInternal(ImageContainer* aContainer,
       return false;
     }
 
-  } else if (image->GetFormat() == ImageFormat::SHARED_TEXTURE) {
-    SharedTextureImage* sharedImage = static_cast<SharedTextureImage*>(image);
-    const SharedTextureImage::Data *data = sharedImage->GetData();
+  } else if (image->GetFormat() == ImageFormat::SURFACE_TEXTURE ||
+             image->GetFormat() == ImageFormat::EGLIMAGE)
+  {
     gfx::IntSize size = gfx::IntSize(image->GetSize().width, image->GetSize().height);
 
     if (mFrontBuffer) {
@@ -251,8 +257,30 @@ ImageClientSingle::UpdateImageInternal(ImageContainer* aContainer,
       mFrontBuffer = nullptr;
     }
 
-    RefPtr<SharedTextureClientOGL> buffer = new SharedTextureClientOGL(mTextureFlags);
-    buffer->InitWith(data->mHandle, size, data->mShareType, data->mInverted);
+    RefPtr<TextureClient> buffer;
+
+    if (image->GetFormat() == ImageFormat::EGLIMAGE) {
+      EGLImageImage* typedImage = static_cast<EGLImageImage*>(image);
+      const EGLImageImage::Data* data = typedImage->GetData();
+
+      buffer = new EGLImageTextureClient(mTextureFlags,
+                                         data->mImage,
+                                         size,
+                                         data->mInverted);
+#ifdef MOZ_WIDGET_ANDROID
+    } else if (image->GetFormat() == ImageFormat::SURFACE_TEXTURE) {
+      SurfaceTextureImage* typedImage = static_cast<SurfaceTextureImage*>(image);
+      const SurfaceTextureImage::Data* data = typedImage->GetData();
+
+      buffer = new SurfaceTextureClient(mTextureFlags,
+                                        data->mSurfTex,
+                                        size,
+                                        data->mInverted);
+#endif
+    } else {
+      MOZ_ASSERT(false, "Bad ImageFormat.");
+    }
+
     mFrontBuffer = buffer;
     if (!AddTextureClient(mFrontBuffer)) {
       mFrontBuffer = nullptr;
@@ -260,6 +288,7 @@ ImageClientSingle::UpdateImageInternal(ImageContainer* aContainer,
     }
 
     GetForwarder()->UseTexture(this, mFrontBuffer);
+
   } else {
     RefPtr<gfx::SourceSurface> surface = image->GetAsSourceSurface();
     MOZ_ASSERT(surface);
@@ -422,5 +451,55 @@ ImageClientSingle::CreateImage(ImageFormat aFormat)
   }
 }
 
+#ifdef MOZ_WIDGET_GONK
+ImageClientOverlay::ImageClientOverlay(CompositableForwarder* aFwd,
+                                       TextureFlags aFlags)
+  : ImageClient(aFwd, aFlags, CompositableType::IMAGE_OVERLAY)
+{
+}
+
+bool
+ImageClientOverlay::UpdateImage(ImageContainer* aContainer, uint32_t aContentFlags)
+{
+  AutoLockImage autoLock(aContainer);
+
+  Image *image = autoLock.GetImage();
+  if (!image) {
+    return false;
+  }
+
+  if (mLastPaintedImageSerial == image->GetSerial()) {
+    return true;
+  }
+
+  AutoRemoveTexture autoRemoveTexture(this);
+  if (image->GetFormat() == ImageFormat::OVERLAY_IMAGE) {
+    OverlayImage* overlayImage = static_cast<OverlayImage*>(image);
+    uint32_t overlayId = overlayImage->GetOverlayId();
+    gfx::IntSize size = overlayImage->GetSize();
+
+    OverlaySource source;
+    source.handle() = OverlayHandle(overlayId);
+    source.size() = size;
+    GetForwarder()->UseOverlaySource(this, source);
+  }
+  UpdatePictureRect(image->GetPictureRect());
+  return true;
+}
+
+already_AddRefed<Image>
+ImageClientOverlay::CreateImage(ImageFormat aFormat)
+{
+  nsRefPtr<Image> img;
+  switch (aFormat) {
+    case ImageFormat::OVERLAY_IMAGE:
+      img = new OverlayImage();
+      return img.forget();
+    default:
+      return nullptr;
+  }
+}
+
+#endif
 }
 }

@@ -85,6 +85,10 @@ elif CONFIG['OS_ARCH'] in ('DragonFly', 'FreeBSD', 'NetBSD', 'OpenBSD'):
     UNIFIED_SOURCES += [
         'ProcessUtils_bsd.cpp'
     ]
+elif CONFIG['OS_ARCH'] in ('Darwin'):
+    UNIFIED_SOURCES += [
+        'ProcessUtils_mac.mm'
+    ]
 else:
     UNIFIED_SOURCES += [
         'ProcessUtils_none.cpp',
@@ -130,12 +134,14 @@ IPDL_SOURCES = [
     'PBackground.ipdl',
     'PBackgroundSharedTypes.ipdlh',
     'PBackgroundTest.ipdl',
+    'PProcLoader.ipdl',
     'ProtocolTypes.ipdlh',
     'URIParams.ipdlh',
 ]
 
 
 LOCAL_INCLUDES += [
+    '/toolkit/xre',
     '/xpcom/threads',
 ]
 

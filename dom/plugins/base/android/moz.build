@@ -27,13 +27,14 @@ FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
-FINAL_LIBRARY = 'gklayout'
+FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '/dom/plugins/base',
-    '/dom/plugins/base/android/include',
     '/gfx/gl',
     '/widget/android',
     '/widget/xpwidgets',
 ]
 
 DEFINES['MOZ_APP_NAME'] = '"%s"' % CONFIG['MOZ_APP_NAME']
+
+CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']

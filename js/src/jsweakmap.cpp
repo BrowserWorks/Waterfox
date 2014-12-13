@@ -68,6 +68,13 @@ WeakMapBase::unmarkCompartment(JSCompartment *c)
         m->marked = false;
 }
 
+void
+WeakMapBase::markAll(JSCompartment *c, JSTracer *tracer)
+{
+    for (WeakMapBase *m = c->gcWeakMapList; m; m = m->next)
+        m->markIteratively(tracer);
+}
+
 bool
 WeakMapBase::markCompartmentIteratively(JSCompartment *c, JSTracer *tracer)
 {
@@ -271,10 +278,6 @@ WeakMap_get_impl(JSContext *cx, CallArgs args)
 
     if (ObjectValueMap *map = args.thisv().toObject().as<WeakMapObject>().getMap()) {
         if (ObjectValueMap::Ptr ptr = map->lookup(key)) {
-            // Read barrier to prevent an incorrectly gray value from escaping the
-            // weak map. See the comment before UnmarkGrayChildren in gc/Marking.cpp
-            ExposeValueToActiveJS(ptr->value().get());
-
             args.rval().set(ptr->value());
             return true;
         }
@@ -365,7 +368,7 @@ WeakMapPostWriteBarrier(JSRuntime *rt, ObjectValueMap *weakMap, JSObject *key)
 #endif
 }
 
-MOZ_ALWAYS_INLINE bool
+static MOZ_ALWAYS_INLINE bool
 SetWeakMapEntryInternal(JSContext *cx, Handle<WeakMapObject*> mapObj,
                         HandleObject key, HandleValue value)
 {
@@ -450,6 +453,7 @@ JS_NondeterministicGetWeakMapKeys(JSContext *cx, HandleObject objArg, MutableHan
         // Prevent GC from mutating the weakmap while iterating.
         AutoSuppressGC suppress(cx);
         for (ObjectValueMap::Base::Range r = map->all(); !r.empty(); r.popFront()) {
+            JS::ExposeObjectToActiveJS(r.front().key());
             RootedObject key(cx, r.front().key());
             if (!cx->compartment()->wrap(cx, &key))
                 return false;

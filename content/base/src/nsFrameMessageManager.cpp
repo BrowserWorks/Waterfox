@@ -10,7 +10,6 @@
 #include "AppProcessChecker.h"
 #include "ContentChild.h"
 #include "nsContentUtils.h"
-#include "nsCxPusher.h"
 #include "nsError.h"
 #include "nsIXPConnect.h"
 #include "jsapi.h"
@@ -33,6 +32,7 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/dom/nsIContentParent.h"
 #include "mozilla/dom/PermissionMessageUtils.h"
+#include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/dom/StructuredCloneUtils.h"
 #include "mozilla/dom/PBlobChild.h"
 #include "mozilla/dom/PBlobParent.h"
@@ -803,6 +803,18 @@ nsFrameMessageManager::Atob(const nsAString& aAsciiString,
 
 // nsIProcessChecker
 
+NS_IMETHODIMP
+nsFrameMessageManager::KillChild(bool *aValid)
+{
+  if (!mCallback) {
+    *aValid = false;
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  *aValid = mCallback->KillChild();
+  return NS_OK;
+}
+
 nsresult
 nsFrameMessageManager::AssertProcessInternal(ProcessCheckerType aType,
                                              const nsAString& aCapability,
@@ -881,7 +893,7 @@ nsFrameMessageManager::AssertAppHasStatus(unsigned short aStatus,
 class MMListenerRemover
 {
 public:
-  MMListenerRemover(nsFrameMessageManager* aMM)
+  explicit MMListenerRemover(nsFrameMessageManager* aMM)
     : mWasHandlingMessage(aMM->mHandlingMessage)
     , mMM(aMM)
   {
@@ -1000,33 +1012,11 @@ nsFrameMessageManager::ReceiveMessage(nsISupports* aTarget,
         JS_DefineProperty(cx, param, "principal", JS::UndefinedHandleValue, JSPROP_ENUMERATE);
       }
 
-      // message.principal = { appId: <id>, origin: <origin>, isInBrowserElement: <something> }
+      // message.principal = the principal
       else {
-        JS::Rooted<JSObject*> principalObj(cx,
-          JS_NewObject(cx, nullptr, JS::NullPtr(), JS::NullPtr()));
-
-        uint32_t appId;
-        nsresult rv = aPrincipal->GetAppId(&appId);
-        NS_ENSURE_SUCCESS(rv, rv);
-
-        JS_DefineProperty(cx, principalObj, "appId", appId, JSPROP_ENUMERATE);
-
-        nsCString origin;
-        rv = aPrincipal->GetOrigin(getter_Copies(origin));
-        NS_ENSURE_SUCCESS(rv, rv);
-
-        JS::Rooted<JSString*> originStr(cx, JS_NewStringCopyN(cx, origin.get(), origin.Length()));
-        NS_ENSURE_TRUE(originStr, NS_ERROR_OUT_OF_MEMORY);
-        JS_DefineProperty(cx, principalObj, "origin", originStr, JSPROP_ENUMERATE);
-
-        bool browser;
-        rv = aPrincipal->GetIsInBrowserElement(&browser);
-        NS_ENSURE_SUCCESS(rv, rv);
-
-        JS::Rooted<JS::Value> browserValue(cx, JS::BooleanValue(browser));
-        JS_DefineProperty(cx, principalObj, "isInBrowserElement", browserValue, JSPROP_ENUMERATE);
-
-        JS_DefineProperty(cx, param, "principal", principalObj, JSPROP_ENUMERATE);
+        JS::Rooted<JS::Value> principalValue(cx);
+        rv = nsContentUtils::WrapNative(cx, aPrincipal, &NS_GET_IID(nsIPrincipal), &principalValue);
+        JS_DefineProperty(cx, param, "principal", principalValue, JSPROP_ENUMERATE);
       }
 
       JS::Rooted<JS::Value> thisValue(cx, JS::UndefinedValue());
@@ -1729,10 +1719,10 @@ public:
     }
     if (aIsSync) {
       return cc->SendSyncMessage(PromiseFlatString(aMessage), data, cpows,
-                                 aPrincipal, aJSONRetVal);
+                                 IPC::Principal(aPrincipal), aJSONRetVal);
     }
     return cc->CallRpcMessage(PromiseFlatString(aMessage), data, cpows,
-                              aPrincipal, aJSONRetVal);
+                              IPC::Principal(aPrincipal), aJSONRetVal);
   }
 
   virtual bool DoSendAsyncMessage(JSContext* aCx,
@@ -1755,7 +1745,7 @@ public:
       return false;
     }
     return cc->SendAsyncMessage(PromiseFlatString(aMessage), data, cpows,
-                                aPrincipal);
+                                IPC::Principal(aPrincipal));
   }
 
 };

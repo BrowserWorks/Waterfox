@@ -192,12 +192,7 @@ public:
 
   bool IsLoadingOrRunningTimeout() const
   {
-    const nsPIDOMWindow *win = GetCurrentInnerWindow();
-
-    if (!win) {
-      win = this;
-    }
-
+    const nsPIDOMWindow* win = IsInnerWindow() ? this : GetCurrentInnerWindow();
     return !win->mIsDocumentLoaded || win->mRunningTimeout;
   }
 
@@ -299,6 +294,7 @@ public:
 
   nsPIDOMWindow *GetCurrentInnerWindow() const
   {
+    MOZ_ASSERT(IsOuterWindow());
     return mInnerWindow;
   }
 
@@ -724,12 +720,24 @@ public:
   {
     return mMarkedCCGeneration;
   }
+
+  // Sets the condition that we send an NS_AFTER_REMOTE_PAINT message just before the next
+  // composite.  Used in non-e10s implementations.
+  void SetRequestNotifyAfterRemotePaint()
+  {
+    mSendAfterRemotePaint = true;
+  }
+
+  // Sends an NS_AFTER_REMOTE_PAINT message if requested by
+  // SetRequestNotifyAfterRemotePaint().
+  void SendAfterRemotePaintIfRequested();
+
 protected:
   // The nsPIDOMWindow constructor. The aOuterWindow argument should
   // be null if and only if the created window itself is an outer
   // window. In all other cases aOuterWindow should be the outer
   // window for the inner window that is being created.
-  nsPIDOMWindow(nsPIDOMWindow *aOuterWindow);
+  explicit nsPIDOMWindow(nsPIDOMWindow *aOuterWindow);
 
   ~nsPIDOMWindow();
 
@@ -815,6 +823,10 @@ protected:
   bool mHasNotifiedGlobalCreated;
 
   uint32_t mMarkedCCGeneration;
+
+  // If true, send an NS_AFTER_REMOTE_PAINT message before compositing in a
+  // non-e10s implementation.
+  bool mSendAfterRemotePaint;
 };
 
 
@@ -842,7 +854,7 @@ class NS_AUTO_POPUP_STATE_PUSHER
 {
 public:
 #ifdef MOZILLA_INTERNAL_API
-  NS_AUTO_POPUP_STATE_PUSHER(PopupControlState aState, bool aForce = false)
+  explicit NS_AUTO_POPUP_STATE_PUSHER(PopupControlState aState, bool aForce = false)
     : mOldState(::PushPopupControlState(aState, aForce))
   {
   }

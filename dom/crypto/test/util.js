@@ -3,14 +3,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 var util = {
-  // Compare the contents of two ArrayBufferViews
+  // Compare the contents of two ArrayBuffer(View)s
   memcmp: function util_memcmp(x, y) {
     if (!x || !y) { return false; }
 
+    var xb = new Uint8Array(x);
+    var yb = new Uint8Array(y);
     if (x.byteLength !== y.byteLength) { return false; }
 
-    var xb = new Uint8Array(x.buffer, x.byteOffset, x.byteLength);
-    var yb = new Uint8Array(y.buffer, y.byteOffset, y.byteLength);
     for (var i=0; i<xb.byteLength; ++i) {
       if (xb[i] !== yb[i]) {
         return false;
@@ -43,3 +43,35 @@ var util = {
     return abv;
   },
 };
+
+function exists(x) {
+  return (x !== undefined);
+}
+
+function hasFields(object, fields) {
+  return fields
+          .map(x => exists(object[x]))
+          .reduce((x,y) => (x && y));
+}
+
+function hasKeyFields(x) {
+  return hasFields(x, ["algorithm", "extractable", "type", "usages"]);
+}
+
+function hasBaseJwkFields(x) {
+  return hasFields(x, ["kty", "alg", "ext", "key_ops"]);
+}
+
+function shallowArrayEquals(x, y) {
+  if (x.length != y.length) {
+    return false;
+  }
+
+  for (i in x) {
+    if (x[i] != y[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}

@@ -5,8 +5,8 @@
 
 package org.mozilla.gecko.home;
 
-import org.json.JSONException;
 import org.json.JSONObject;
+import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.EventDispatcher;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoEvent;
@@ -21,19 +21,15 @@ import org.mozilla.gecko.widget.EllipsisTextView;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.text.Html;
-import android.text.Spanned;
 import android.text.TextUtils;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 public class HomeBanner extends LinearLayout
                         implements GeckoEventListener {
@@ -46,14 +42,14 @@ public class HomeBanner extends LinearLayout
     private boolean mSnapBannerToTop;
 
     // Tracks whether or not the banner should be shown on the current panel.
-    private boolean mActive = false;
+    private boolean mActive;
 
     // The user is currently swiping between HomePager pages
-    private boolean mScrollingPages = false;
+    private boolean mScrollingPages;
 
     // Tracks whether the user swiped the banner down, preventing us from autoshowing when the user
     // switches back to the default page.
-    private boolean mUserSwipedDown = false;
+    private boolean mUserSwipedDown;
 
     // We must use this custom TextView to address an issue on 2.3 and lower where ellipsized text
     // will not wrap more than 2 lines.
@@ -133,7 +129,7 @@ public class HomeBanner extends LinearLayout
     public void setVisibility(int visibility) {
         // On pre-Honeycomb devices, setting the visibility to GONE won't actually
         // hide the view unless we clear animations first.
-        if (Build.VERSION.SDK_INT < 11 && visibility == View.GONE) {
+        if (Versions.preHC && visibility == View.GONE) {
             clearAnimation();
         }
 

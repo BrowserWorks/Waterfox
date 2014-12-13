@@ -139,14 +139,14 @@ XPCOMUtils.defineLazyGetter(this, "Barriers", () => {
         // We are waiting for the connections to close. The interesting
         // status is therefore the list of connections still pending.
         return { description: "Waiting for connections to close",
-                 status: Barriers.connections.status };
+                 state: Barriers.connections.state };
       }
 
       // We are still in the first stage: waiting for the barrier
       // to be lifted. The interesting status is therefore that of
       // the barrier.
       return { description: "Waiting for the barrier to be lifted",
-               status: Barriers.shutdown.status };
+               state: Barriers.shutdown.state };
   });
 
   return Barriers;
@@ -731,13 +731,13 @@ function openConnection(options) {
 
   log.info("Opening database: " + path + " (" + identifier + ")");
   let deferred = Promise.defer();
-  let options = null;
+  let dbOptions = null;
   if (!sharedMemoryCache) {
-    options = Cc["@mozilla.org/hash-property-bag;1"].
+    dbOptions = Cc["@mozilla.org/hash-property-bag;1"].
       createInstance(Ci.nsIWritablePropertyBag);
-    options.setProperty("shared", false);
+    dbOptions.setProperty("shared", false);
   }
-  Services.storage.openAsyncDatabase(file, options, function(status, connection) {
+  Services.storage.openAsyncDatabase(file, dbOptions, function(status, connection) {
     if (!connection) {
       log.warn("Could not open connection: " + status);
       deferred.reject(new Error("Could not open connection: " + status));

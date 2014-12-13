@@ -58,18 +58,8 @@ interface BluetoothAdapter : EventTarget {
   readonly attribute boolean                discoverable;
   readonly attribute boolean                discovering;
 
-  // array of type BluetoothDevice[]
-  [GetterThrows]
-  readonly attribute any            devices;
-
-  // array of type DOMString[]
-  [GetterThrows]
-  readonly attribute any            uuids;
-
-           attribute EventHandler   ondevicefound;
-
-  // Fired when pairing process is completed
-           attribute EventHandler   onpairedstatuschanged;
+  [AvailableIn=CertifiedApps]
+  readonly attribute BluetoothPairingListener pairingReqs;
 
   // Fired when a2dp connection status changed
            attribute EventHandler   ona2dpstatuschanged;
@@ -86,6 +76,12 @@ interface BluetoothAdapter : EventTarget {
   // Fired when attributes of BluetoothAdapter changed
            attribute EventHandler   onattributechanged;
 
+  // Fired when a remote device gets paired with the adapter.
+           attribute EventHandler   ondevicepaired;
+
+  // Fired when a remote device gets unpaired from the adapter.
+           attribute EventHandler   ondeviceunpaired;
+
   /**
    * Enable/Disable a local bluetooth adapter by asynchronus methods and return
    * its result through a Promise.
@@ -94,41 +90,30 @@ interface BluetoothAdapter : EventTarget {
    * request, and the last one would indicate adapter.state becomes
    * enabled/disabled.
    */
-  // Promise<void>
   [NewObject, Throws]
-  Promise enable();
-  // Promise<void>
+  Promise<void> enable();
   [NewObject, Throws]
-  Promise disable();
-
-  // Promise<void>
-  [NewObject, Throws]
-  Promise setName(DOMString aName);
-  // Promise<void>
-  [NewObject, Throws]
-  Promise setDiscoverable(boolean aDiscoverable);
-
-  // Promise<BluetoothDiscoveryHandle>
-  [NewObject, Throws]
-  Promise startDiscovery();
-  // Promise<void>
-  [NewObject, Throws]
-  Promise stopDiscovery();
+  Promise<void> disable();
 
   [NewObject, Throws]
-  DOMRequest pair(DOMString deviceAddress);
+  Promise<void> setName(DOMString aName);
   [NewObject, Throws]
-  DOMRequest unpair(DOMString deviceAddress);
+  Promise<void> setDiscoverable(boolean aDiscoverable);
+
   [NewObject, Throws]
-  DOMRequest getPairedDevices();
+  Promise<BluetoothDiscoveryHandle> startDiscovery();
+  [NewObject, Throws]
+  Promise<void> stopDiscovery();
+
+  [NewObject, Throws]
+  Promise<void> pair(DOMString deviceAddress);
+  [NewObject, Throws]
+  Promise<void> unpair(DOMString deviceAddress);
+
+  sequence<BluetoothDevice> getPairedDevices();
+
   [NewObject, Throws]
   DOMRequest getConnectedDevices(unsigned short serviceUuid);
-  [NewObject, Throws]
-  DOMRequest setPinCode(DOMString deviceAddress, DOMString pinCode);
-  [NewObject, Throws]
-  DOMRequest setPasskey(DOMString deviceAddress, unsigned long passkey);
-  [NewObject, Throws]
-  DOMRequest setPairingConfirmation(DOMString deviceAddress, boolean confirmation);
 
   /**
    * Connect/Disconnect to a specific service of a target remote device.

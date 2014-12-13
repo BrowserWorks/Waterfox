@@ -139,17 +139,6 @@
 //   newspace won't be needed (if the parallel section is finished) or
 //   can be created empty (if the gc just needed to evacuate).
 //
-//
-// Style note:
-//
-// - Use js_memcpy, malloc_, realloc_, and js_free uniformly, do not
-//   use PodCopy or pod_malloc: the type information for the latter is
-//   not always correct and surrounding code usually operates in terms
-//   of bytes, anyhow.
-//
-//   With power comes responsibility, etc: code that used pod_malloc
-//   gets safe size computation built-in; here we must handle that
-//   manually.
 
 namespace js {
 namespace gc {
@@ -235,7 +224,7 @@ ForkJoinNursery::pjsCollection(int op)
     const unsigned currentNumActiveChunks_ = numActiveChunks_;
     const char *msg = "";
 
-    JS_ASSERT(!rt->needsBarrier());
+    JS_ASSERT(!rt->needsIncrementalBarrier());
 
     TIME_START(pjsCollection);
 
@@ -255,9 +244,7 @@ ForkJoinNursery::pjsCollection(int op)
     ForkJoinNurseryCollectionTracer trc(rt, this);
     forwardFromRoots(&trc);
     collectToFixedPoint(&trc);
-#ifdef JS_ION
     jit::UpdateJitActivationsForMinorGC<ForkJoinNursery>(TlsPerThreadData.get(), &trc);
-#endif
     freeFromspace();
 
     size_t live = movedSize_;
@@ -565,19 +552,19 @@ ForkJoinNursery::allocateSlots(JSObject *obj, uint32_t nslots)
 
     if (nslots & mozilla::tl::MulOverflowMask<sizeof(HeapSlot)>::value)
         return nullptr;
-    size_t size = nslots * sizeof(HeapSlot);
 
     if (!isInsideNewspace(obj))
-        return reinterpret_cast<HeapSlot *>(cx_->malloc_(size));
+        return obj->pod_malloc<HeapSlot>(nslots);
 
     if (nslots > MaxNurserySlots)
-        return allocateHugeSlots(nslots);
+        return allocateHugeSlots(obj, nslots);
 
+    size_t size = nslots * sizeof(HeapSlot);
     HeapSlot *slots = static_cast<HeapSlot *>(allocate(size));
     if (slots)
         return slots;
 
-    return allocateHugeSlots(nslots);
+    return allocateHugeSlots(obj, nslots);
 }
 
 HeapSlot *
@@ -587,16 +574,13 @@ ForkJoinNursery::reallocateSlots(JSObject *obj, HeapSlot *oldSlots,
     if (newCount & mozilla::tl::MulOverflowMask<sizeof(HeapSlot)>::value)
         return nullptr;
 
-    size_t oldSize = oldCount * sizeof(HeapSlot);
-    size_t newSize = newCount * sizeof(HeapSlot);
-
     if (!isInsideNewspace(obj)) {
         JS_ASSERT_IF(oldSlots, !isInsideNewspace(oldSlots));
-        return static_cast<HeapSlot *>(cx_->realloc_(oldSlots, oldSize, newSize));
+        return obj->pod_realloc<HeapSlot>(oldSlots, oldCount, newCount);
     }
 
     if (!isInsideNewspace(oldSlots))
-        return reallocateHugeSlots(oldSlots, oldSize, newSize);
+        return reallocateHugeSlots(obj, oldSlots, oldCount, newCount);
 
     // No-op if we're shrinking, we can't make use of the freed portion.
     if (newCount < oldCount)
@@ -606,6 +590,7 @@ ForkJoinNursery::reallocateSlots(JSObject *obj, HeapSlot *oldSlots,
     if (!newSlots)
         return nullptr;
 
+    size_t oldSize = oldCount * sizeof(HeapSlot);
     js_memcpy(newSlots, oldSlots, oldSize);
     return newSlots;
 }
@@ -636,13 +621,12 @@ ForkJoinNursery::freeSlots(HeapSlot *slots)
 }
 
 HeapSlot *
-ForkJoinNursery::allocateHugeSlots(size_t nslots)
+ForkJoinNursery::allocateHugeSlots(JSObject *obj, size_t nslots)
 {
     if (nslots & mozilla::tl::MulOverflowMask<sizeof(HeapSlot)>::value)
         return nullptr;
 
-    size_t size = nslots * sizeof(HeapSlot);
-    HeapSlot *slots = reinterpret_cast<HeapSlot *>(cx_->malloc_(size));
+    HeapSlot *slots = obj->pod_malloc<HeapSlot>(nslots);
     if (!slots)
         return slots;
 
@@ -652,9 +636,10 @@ ForkJoinNursery::allocateHugeSlots(size_t nslots)
 }
 
 HeapSlot *
-ForkJoinNursery::reallocateHugeSlots(HeapSlot *oldSlots, uint32_t oldSize, uint32_t newSize)
+ForkJoinNursery::reallocateHugeSlots(JSObject *obj, HeapSlot *oldSlots,
+                                     uint32_t oldCount, uint32_t newCount)
 {
-    HeapSlot *newSlots = static_cast<HeapSlot *>(cx_->realloc_(oldSlots, oldSize, newSize));
+    HeapSlot *newSlots = obj->pod_realloc<HeapSlot>(oldSlots, oldCount, newCount);
     if (!newSlots)
         return newSlots;
 
@@ -779,12 +764,13 @@ ForkJoinNursery::allocateInTospace(gc::AllocKind thingKind)
     return allocateInTospaceInfallible(thingSize);
 }
 
-void *
-ForkJoinNursery::allocateInTospace(size_t nelem, size_t elemSize)
+template <typename T>
+T *
+ForkJoinNursery::allocateInTospace(size_t nelem)
 {
     if (isEvacuating_)
-        return evacuationZone_->malloc_(nelem * elemSize);
-    return allocateInTospaceInfallible(nelem * elemSize);
+        return evacuationZone_->pod_malloc<T>(nelem);
+    return static_cast<T *>(allocateInTospaceInfallible(nelem * sizeof(T)));
 }
 
 MOZ_ALWAYS_INLINE void
@@ -852,7 +838,7 @@ ForkJoinNursery::copySlotsToTospace(JSObject *dst, JSObject *src, AllocKind dstK
     }
 
     size_t count = src->numDynamicSlots();
-    dst->slots = reinterpret_cast<HeapSlot *>(allocateInTospace(count, sizeof(HeapSlot)));
+    dst->slots = allocateInTospace<HeapSlot>(count);
     if (!dst->slots)
         CrashAtUnhandlableOOM("Failed to allocate slots while moving object.");
     js_memcpy(dst->slots, src->slots, count * sizeof(HeapSlot));
@@ -863,7 +849,7 @@ ForkJoinNursery::copySlotsToTospace(JSObject *dst, JSObject *src, AllocKind dstK
 size_t
 ForkJoinNursery::copyElementsToTospace(JSObject *dst, JSObject *src, AllocKind dstKind)
 {
-    if (src->hasEmptyElements())
+    if (src->hasEmptyElements() || src->denseElementsAreCopyOnWrite())
         return 0;
 
     ObjectElements *srcHeader = src->getElementsHeader();
@@ -891,7 +877,7 @@ ForkJoinNursery::copyElementsToTospace(JSObject *dst, JSObject *src, AllocKind d
     }
 
     JS_ASSERT(nslots >= 2);
-    dstHeader = reinterpret_cast<ObjectElements *>(allocateInTospace(nslots, sizeof(HeapSlot)));
+    dstHeader = reinterpret_cast<ObjectElements *>(allocateInTospace<HeapSlot>(nslots));
     if (!dstHeader)
         CrashAtUnhandlableOOM("Failed to allocate elements while moving object.");
     js_memcpy(dstHeader, srcHeader, nslots * sizeof(HeapSlot));

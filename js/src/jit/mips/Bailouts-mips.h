@@ -16,9 +16,9 @@ namespace jit {
 class BailoutStack
 {
     uintptr_t frameClassId_;
-    // This is pushed in the bailout handler.  Both entry points into the
+    // This is pushed in the bailout handler. Both entry points into the
     // handler inserts their own value int lr, which is then placed onto the
-    // stack along with frameClassId_ above.  This should be migrated to ip.
+    // stack along with frameClassId_ above. This should be migrated to ip.
   public:
     union {
         uintptr_t frameSize_;
@@ -26,7 +26,7 @@ class BailoutStack
     };
 
   protected:
-    mozilla::Array<double, FloatRegisters::Total> fpregs_;
+    mozilla::Array<double, FloatRegisters::TotalPhys> fpregs_;
     mozilla::Array<uintptr_t, Registers::Total> regs_;
 
     uintptr_t snapshotOffset_;

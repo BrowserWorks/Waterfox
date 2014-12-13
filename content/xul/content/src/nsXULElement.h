@@ -142,7 +142,7 @@ public:
     NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(nsXULPrototypeNode)
 
 protected:
-    nsXULPrototypeNode(Type aType)
+    explicit nsXULPrototypeNode(Type aType)
         : mType(aType) {}
     virtual ~nsXULPrototypeNode() {}
 };
@@ -264,7 +264,7 @@ public:
     void TraceScriptObject(JSTracer* aTrc)
     {
         if (mScriptObject) {
-            JS_CallHeapScriptTracer(aTrc, &mScriptObject, "active window XUL prototype script");
+            JS_CallScriptTracer(aTrc, &mScriptObject, "active window XUL prototype script");
         }
     }
 
@@ -369,7 +369,7 @@ class nsXULElement MOZ_FINAL : public nsStyledElement,
                                public nsIDOMXULElement
 {
 public:
-    nsXULElement(already_AddRefed<mozilla::dom::NodeInfo> aNodeInfo);
+    explicit nsXULElement(already_AddRefed<mozilla::dom::NodeInfo> aNodeInfo);
 
     static nsresult
     Create(nsXULPrototypeElement* aPrototype, nsIDocument* aDocument,

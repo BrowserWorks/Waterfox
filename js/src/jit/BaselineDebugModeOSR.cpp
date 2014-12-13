@@ -9,6 +9,8 @@
 #include "mozilla/DebugOnly.h"
 
 #include "jit/IonLinker.h"
+
+#include "jit/JitcodeMap.h"
 #include "jit/PerfSpewer.h"
 
 #include "jit/IonFrames-inl.h"
@@ -85,10 +87,10 @@ struct DebugModeOSREntry
     }
 
     bool needsRecompileInfo() const {
-        return (frameKind == ICEntry::Kind_CallVM ||
-                frameKind == ICEntry::Kind_DebugTrap ||
-                frameKind == ICEntry::Kind_DebugPrologue ||
-                frameKind == ICEntry::Kind_DebugEpilogue);
+        return frameKind == ICEntry::Kind_CallVM ||
+               frameKind == ICEntry::Kind_DebugTrap ||
+               frameKind == ICEntry::Kind_DebugPrologue ||
+               frameKind == ICEntry::Kind_DebugEpilogue;
     }
 
     bool recompiled() const {
@@ -131,7 +133,7 @@ class UniqueScriptOSREntryIter
     size_t index_;
 
   public:
-    UniqueScriptOSREntryIter(const DebugModeOSREntryVector &entries)
+    explicit UniqueScriptOSREntryIter(const DebugModeOSREntryVector &entries)
       : entries_(entries),
         index_(0)
     { }
@@ -251,7 +253,7 @@ ICEntryKindToString(ICEntry::Kind kind)
       case ICEntry::Kind_DebugEpilogue:
         return "debug epilogue";
       default:
-        MOZ_ASSUME_UNREACHABLE("bad ICEntry kind");
+        MOZ_CRASH("bad ICEntry kind");
     }
 }
 
@@ -610,7 +612,7 @@ CloneOldBaselineStub(JSContext *cx, DebugModeOSREntryVector &entries, size_t ent
 #undef CASE_KIND
 
       default:
-        MOZ_ASSUME_UNREACHABLE("Bad stub kind");
+        MOZ_CRASH("Bad stub kind");
     }
 
     if (!entry.newStub)
@@ -656,8 +658,13 @@ jit::RecompileOnStackBaselineScriptsForDebugMode(JSContext *cx, JSCompartment *c
 #ifdef JSGC_GENERATIONAL
     // Scripts can entrain nursery things. See note in js::ReleaseAllJITCode.
     if (!entries.empty())
-        MinorGC(cx->runtime(), JS::gcreason::EVICT_NURSERY);
+        cx->runtime()->gc.evictNursery();
 #endif
+
+    // When the profiler is enabled, we need to suppress sampling from here until
+    // the end of the function, since the basline jit scripts are in a state of
+    // flux.
+    AutoSuppressProfilerSampling suppressProfilerSampling(cx);
 
     // Try to recompile all the scripts. If we encounter an error, we need to
     // roll back as if none of the compilations happened, so that we don't
@@ -707,7 +714,7 @@ BaselineDebugModeOSRInfo::popValueInto(PCMappingSlotInfo::SlotLocation loc, Valu
       case PCMappingSlotInfo::SlotIgnore:
         break;
       default:
-        MOZ_ASSUME_UNREACHABLE("Bad slot location");
+        MOZ_CRASH("Bad slot location");
     }
 
     stackAdjust++;
@@ -798,9 +805,9 @@ JitRuntime::getBaselineDebugModeOSRHandlerAddress(JSContext *cx, bool popFrameRe
 {
     if (!getBaselineDebugModeOSRHandler(cx))
         return nullptr;
-    return (popFrameReg
-            ? baselineDebugModeOSRHandler_->raw()
-            : baselineDebugModeOSRHandlerNoFrameRegPopAddr_);
+    return popFrameReg
+           ? baselineDebugModeOSRHandler_->raw()
+           : baselineDebugModeOSRHandlerNoFrameRegPopAddr_;
 }
 
 JitCode *
@@ -868,7 +875,7 @@ JitRuntime::generateBaselineDebugModeOSRHandler(JSContext *cx, uint32_t *noFrame
 
     Linker linker(masm);
     AutoFlushICache afc("BaselineDebugModeOSRHandler");
-    JitCode *code = linker.newCode<NoGC>(cx, JSC::OTHER_CODE);
+    JitCode *code = linker.newCode<NoGC>(cx, OTHER_CODE);
     if (!code)
         return nullptr;
 

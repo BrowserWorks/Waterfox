@@ -25,6 +25,11 @@
 # define JSGC_TRACK_EXACT_ROOTS
 #endif
 
+#if (defined(JSGC_GENERATIONAL) && defined(JS_GC_ZEAL)) || \
+    (defined(JSGC_COMPACTING) && defined(DEBUG))
+# define JSGC_HASH_TABLE_CHECKS
+#endif
+
 namespace JS {
 
 class AutoIdVector;
@@ -144,11 +149,7 @@ class JS_PUBLIC_API(JSTracer);
 
 class JSFlatString;
 
-#ifdef JS_THREADSAFE
 typedef struct PRCallOnceType   JSCallOnceType;
-#else
-typedef bool                    JSCallOnceType;
-#endif
 typedef bool                    (*JSInitCallback)(void);
 
 /*
@@ -177,7 +178,7 @@ namespace shadow {
 struct Runtime
 {
     /* Restrict zone access during Minor GC. */
-    bool needsBarrier_;
+    bool needsIncrementalBarrier_;
 
 #ifdef JSGC_GENERATIONAL
   private:
@@ -190,14 +191,14 @@ struct Runtime
         js::gc::StoreBuffer *storeBuffer
 #endif
     )
-      : needsBarrier_(false)
+      : needsIncrementalBarrier_(false)
 #ifdef JSGC_GENERATIONAL
       , gcStoreBufferPtr_(storeBuffer)
 #endif
     {}
 
-    bool needsBarrier() const {
-        return needsBarrier_;
+    bool needsIncrementalBarrier() const {
+        return needsIncrementalBarrier_;
     }
 
 #ifdef JSGC_GENERATIONAL
@@ -301,15 +302,14 @@ class JS_PUBLIC_API(AutoGCRooter)
         NAMEVECTOR =  -17, /* js::AutoNameVector */
         HASHABLEVALUE=-18, /* js::HashableValue */
         IONMASM =     -19, /* js::jit::MacroAssembler */
-        IONALLOC =    -20, /* js::jit::AutoTempAllocatorRooter */
-        WRAPVECTOR =  -21, /* js::AutoWrapperVector */
-        WRAPPER =     -22, /* js::AutoWrapperRooter */
-        OBJOBJHASHMAP=-23, /* js::AutoObjectObjectHashMap */
-        OBJU32HASHMAP=-24, /* js::AutoObjectUnsigned32HashMap */
-        OBJHASHSET =  -25, /* js::AutoObjectHashSet */
-        JSONPARSER =  -26, /* js::JSONParser */
-        CUSTOM =      -27, /* js::CustomAutoRooter */
-        FUNVECTOR =   -28  /* js::AutoFunctionVector */
+        WRAPVECTOR =  -20, /* js::AutoWrapperVector */
+        WRAPPER =     -21, /* js::AutoWrapperRooter */
+        OBJOBJHASHMAP=-22, /* js::AutoObjectObjectHashMap */
+        OBJU32HASHMAP=-23, /* js::AutoObjectUnsigned32HashMap */
+        OBJHASHSET =  -24, /* js::AutoObjectHashSet */
+        JSONPARSER =  -25, /* js::JSONParser */
+        CUSTOM =      -26, /* js::CustomAutoRooter */
+        FUNVECTOR =   -27  /* js::AutoFunctionVector */
     };
 
   private:

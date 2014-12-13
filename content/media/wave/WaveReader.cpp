@@ -243,7 +243,8 @@ bool WaveReader::DecodeAudioData()
                                  static_cast<int64_t>(readSizeTime * USECS_PER_S),
                                  static_cast<int32_t>(frames),
                                  sampleBuffer.forget(),
-                                 mChannels));
+                                 mChannels,
+                                 mSampleRate));
 
   return true;
 }
@@ -550,7 +551,7 @@ WaveReader::LoadListChunk(uint32_t aChunkSize,
   static_assert(uint64_t(MAX_CHUNK_SIZE) < UINT_MAX / sizeof(char),
                 "MAX_CHUNK_SIZE too large for enumerator.");
 
-  if (aChunkSize > MAX_CHUNK_SIZE) {
+  if (aChunkSize > MAX_CHUNK_SIZE || aChunkSize < 4) {
     return false;
   }
 
@@ -560,7 +561,7 @@ WaveReader::LoadListChunk(uint32_t aChunkSize,
   }
 
   static const uint32_t INFO_LIST_MAGIC = 0x494e464f;
-  const char *p = chunk.get();
+  const char* p = chunk.get();
   if (ReadUint32BE(&p) != INFO_LIST_MAGIC) {
     return false;
   }

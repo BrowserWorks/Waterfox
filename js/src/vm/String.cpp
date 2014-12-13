@@ -150,30 +150,9 @@ JSString::equals(const char *s)
 }
 #endif /* DEBUG */
 
-void
-JSLinearString::debugUnsafeConvertToLatin1()
-{
-    // Temporary helper function to test changes for bug 998392.
-
-    MOZ_ASSERT(hasTwoByteChars());
-    MOZ_ASSERT(!hasBase());
-
-    size_t len = length();
-    const jschar *twoByteChars = rawTwoByteChars();
-    Latin1Char *latin1Chars = (Latin1Char *)twoByteChars;
-
-    for (size_t i = 0; i < len; i++) {
-        MOZ_ASSERT((twoByteChars[i] & 0xff00) == 0);
-        latin1Chars[i] = Latin1Char(twoByteChars[i]);
-    }
-
-    latin1Chars[len] = '\0';
-    d.u1.flags |= LATIN1_CHARS_BIT;
-}
-
 template <typename CharT>
 static MOZ_ALWAYS_INLINE bool
-AllocChars(ThreadSafeContext *maybecx, size_t length, CharT **chars, size_t *capacity)
+AllocChars(JSString *str, size_t length, CharT **chars, size_t *capacity)
 {
     /*
      * String length doesn't include the null char, so include it here before
@@ -194,8 +173,7 @@ AllocChars(ThreadSafeContext *maybecx, size_t length, CharT **chars, size_t *cap
     *capacity = numChars - 1;
 
     JS_STATIC_ASSERT(JSString::MAX_LENGTH * sizeof(CharT) < UINT32_MAX);
-    size_t bytes = numChars * sizeof(CharT);
-    *chars = (CharT *)(maybecx ? maybecx->malloc_(bytes) : js_malloc(bytes));
+    *chars = str->pod_malloc<CharT>(numChars);
     return *chars != nullptr;
 }
 
@@ -400,7 +378,7 @@ JSRope::flattenInternal(ExclusiveContext *maybecx)
         }
     }
 
-    if (!AllocChars(maybecx, wholeLength, &wholeChars, &wholeCapacity))
+    if (!AllocChars(this, wholeLength, &wholeChars, &wholeCapacity))
         return nullptr;
 
     pos = wholeChars;
@@ -477,7 +455,7 @@ JSFlatString *
 JSRope::flatten(ExclusiveContext *maybecx)
 {
 #ifdef JSGC_INCREMENTAL
-    if (zone()->needsBarrier())
+    if (zone()->needsIncrementalBarrier())
         return flattenInternal<WithIncrementalBarrier>(maybecx);
 #endif
     return flattenInternal<NoBarrier>(maybecx);
@@ -710,9 +688,9 @@ ScopedThreadSafeStringInspector::ensureChars(ThreadSafeContext *cx, const AutoCh
  * This is used when we generate our table of short strings, so the compiler is
  * happier if we use |c| as few times as possible.
  */
-#define FROM_SMALL_CHAR(c) jschar((c) + ((c) < 10 ? '0' :      \
-                                         (c) < 36 ? 'a' - 10 : \
-                                         'A' - 36))
+#define FROM_SMALL_CHAR(c) Latin1Char((c) + ((c) < 10 ? '0' :      \
+                                             (c) < 36 ? 'a' - 10 : \
+                                             'A' - 36))
 
 /*
  * Declare length-2 strings. We only store strings where both characters are
@@ -734,8 +712,11 @@ StaticStrings::init(JSContext *cx)
     AutoLockForExclusiveAccess lock(cx);
     AutoCompartment ac(cx, cx->runtime()->atomsCompartment());
 
+    static_assert(UNIT_STATIC_LIMIT - 1 <= JSString::MAX_LATIN1_CHAR,
+                  "Unit strings must fit in Latin1Char.");
+
     for (uint32_t i = 0; i < UNIT_STATIC_LIMIT; i++) {
-        jschar buffer[] = { jschar(i), '\0' };
+        Latin1Char buffer[] = { Latin1Char(i), '\0' };
         JSFlatString *s = NewStringCopyN<NoGC>(cx, buffer, 1);
         if (!s)
             return false;
@@ -743,7 +724,7 @@ StaticStrings::init(JSContext *cx)
     }
 
     for (uint32_t i = 0; i < NUM_SMALL_CHARS * NUM_SMALL_CHARS; i++) {
-        jschar buffer[] = { FROM_SMALL_CHAR(i >> 6), FROM_SMALL_CHAR(i & 0x3F), '\0' };
+        Latin1Char buffer[] = { FROM_SMALL_CHAR(i >> 6), FROM_SMALL_CHAR(i & 0x3F), '\0' };
         JSFlatString *s = NewStringCopyN<NoGC>(cx, buffer, 2);
         if (!s)
             return false;
@@ -758,10 +739,10 @@ StaticStrings::init(JSContext *cx)
                 TO_SMALL_CHAR((i % 10) + '0');
             intStaticTable[i] = length2StaticTable[index];
         } else {
-            jschar buffer[] = { jschar('0' + (i / 100)),
-                                jschar('0' + ((i / 10) % 10)),
-                                jschar('0' + (i % 10)),
-                                '\0' };
+            Latin1Char buffer[] = { Latin1Char('0' + (i / 100)),
+                                    Latin1Char('0' + ((i / 10) % 10)),
+                                    Latin1Char('0' + (i % 10)),
+                                    '\0' };
             JSFlatString *s = NewStringCopyN<NoGC>(cx, buffer, 3);
             if (!s)
                 return false;
@@ -885,8 +866,6 @@ AutoStableStringChars::initTwoByte(JSContext *cx, JSString *s)
     return true;
 }
 
-bool js::EnableLatin1Strings = true;
-
 #ifdef DEBUG
 void
 JSAtom::dump()
@@ -924,30 +903,9 @@ js::NewDependentString(JSContext *cx, JSString *baseArg, size_t start, size_t le
     return JSDependentString::new_(cx, base, start, length);
 }
 
-template <typename CharT>
-static void
-CopyCharsMaybeInflate(jschar *dest, const CharT *src, size_t len);
-
-template <>
-void
-CopyCharsMaybeInflate(jschar *dest, const jschar *src, size_t len)
-{
-    PodCopy(dest, src, len);
-}
-
-template <>
-void
-CopyCharsMaybeInflate(jschar *dest, const Latin1Char *src, size_t len)
-{
-    CopyAndInflateChars(dest, src, len);
-}
-
 static bool
 CanStoreCharsAsLatin1(const jschar *s, size_t length)
 {
-    if (!EnableLatin1Strings)
-        return false;
-
     for (const jschar *end = s + length; s < end; ++s) {
         if (*s > JSString::MAX_LATIN1_CHAR)
             return false;
@@ -966,8 +924,6 @@ template <AllowGC allowGC>
 static MOZ_ALWAYS_INLINE JSInlineString *
 NewFatInlineStringDeflated(ThreadSafeContext *cx, mozilla::Range<const jschar> chars)
 {
-    MOZ_ASSERT(EnableLatin1Strings);
-
     size_t len = chars.length();
     Latin1Char *storage;
     JSInlineString *str = AllocateFatInlineString<allowGC>(cx, len, &storage);
@@ -986,8 +942,6 @@ template <AllowGC allowGC>
 static JSFlatString *
 NewStringDeflated(ThreadSafeContext *cx, const jschar *s, size_t n)
 {
-    MOZ_ASSERT(EnableLatin1Strings);
-
     if (JSFatInlineString::latin1LengthFits(n))
         return NewFatInlineStringDeflated<allowGC>(cx, mozilla::Range<const jschar>(s, n));
 
@@ -1028,6 +982,16 @@ js::NewStringDontDeflate(ThreadSafeContext *cx, CharT *chars, size_t length)
             js_free(chars);
             return cx->staticStrings().getUnit(c);
         }
+    }
+
+    if (JSFatInlineString::lengthFits<CharT>(length)) {
+        JSInlineString *str =
+            NewFatInlineString<allowGC>(cx, mozilla::Range<const CharT>(chars, length));
+        if (!str)
+            return nullptr;
+
+        js_free(chars);
+        return str;
     }
 
     return JSFlatString::new_<allowGC>(cx, chars, length);
@@ -1088,33 +1052,14 @@ template <AllowGC allowGC, typename CharT>
 JSFlatString *
 NewStringCopyNDontDeflate(ThreadSafeContext *cx, const CharT *s, size_t n)
 {
-    if (EnableLatin1Strings) {
-        if (JSFatInlineString::lengthFits<CharT>(n))
-            return NewFatInlineString<allowGC>(cx, mozilla::Range<const CharT>(s, n));
-
-        ScopedJSFreePtr<CharT> news(cx->pod_malloc<CharT>(n + 1));
-        if (!news)
-            return nullptr;
-
-        PodCopy(news.get(), s, n);
-        news[n] = 0;
-
-        JSFlatString *str = JSFlatString::new_<allowGC>(cx, news.get(), n);
-        if (!str)
-            return nullptr;
-
-        news.forget();
-        return str;
-    }
-
-    if (JSFatInlineString::twoByteLengthFits(n))
+    if (JSFatInlineString::lengthFits<CharT>(n))
         return NewFatInlineString<allowGC>(cx, mozilla::Range<const CharT>(s, n));
 
-    ScopedJSFreePtr<jschar> news(cx->pod_malloc<jschar>(n + 1));
+    ScopedJSFreePtr<CharT> news(cx->pod_malloc<CharT>(n + 1));
     if (!news)
         return nullptr;
 
-    CopyCharsMaybeInflate(news.get(), s, n);
+    PodCopy(news.get(), s, n);
     news[n] = 0;
 
     JSFlatString *str = JSFlatString::new_<allowGC>(cx, news.get(), n);

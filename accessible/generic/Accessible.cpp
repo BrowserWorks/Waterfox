@@ -1287,7 +1287,7 @@ Accessible::NativeAttributes()
   // override properties on a widget they used in an iframe.
   nsIContent* startContent = mContent;
   while (startContent) {
-    nsIDocument* doc = startContent->GetDocument();
+    nsIDocument* doc = startContent->GetComposedDoc();
     if (!doc)
       break;
 
@@ -1592,8 +1592,9 @@ Accessible::ApplyARIAState(uint64_t* aState) const
   *aState |= mRoleMapEntry->state;
 
   if (aria::MapToState(mRoleMapEntry->attributeMap1, element, aState) &&
-      aria::MapToState(mRoleMapEntry->attributeMap2, element, aState))
-    aria::MapToState(mRoleMapEntry->attributeMap3, element, aState);
+      aria::MapToState(mRoleMapEntry->attributeMap2, element, aState) &&
+      aria::MapToState(mRoleMapEntry->attributeMap3, element, aState))
+    aria::MapToState(mRoleMapEntry->attributeMap4, element, aState);
 
   // ARIA gridcell inherits editable/readonly states from the grid until it's
   // overridden.

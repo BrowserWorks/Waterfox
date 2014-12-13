@@ -50,6 +50,7 @@
 namespace mozilla {
 namespace dom {
 class EventTarget;
+class URLSearchParams;
 }
 }
 
@@ -122,24 +123,24 @@ typedef enum {
 //***    nsDocShell
 //*****************************************************************************
 
-class nsDocShell : public nsDocLoader,
-                   public nsIDocShell,
-                   public nsIWebNavigation,
-                   public nsIBaseWindow, 
-                   public nsIScrollable, 
-                   public nsITextScroll, 
-                   public nsIDocCharset, 
-                   public nsIContentViewerContainer,
-                   public nsIRefreshURI,
-                   public nsIWebProgressListener,
-                   public nsIWebPageDescriptor,
-                   public nsIAuthPromptProvider,
-                   public nsILoadContext,
-                   public nsIWebShellServices,
-                   public nsILinkHandler,
-                   public nsIClipboardCommands,
-                   public nsIDOMStorageManager,
-                   public mozilla::SupportsWeakPtr<nsDocShell>
+class nsDocShell MOZ_FINAL : public nsDocLoader,
+                             public nsIDocShell,
+                             public nsIWebNavigation,
+                             public nsIBaseWindow,
+                             public nsIScrollable,
+                             public nsITextScroll,
+                             public nsIDocCharset,
+                             public nsIContentViewerContainer,
+                             public nsIRefreshURI,
+                             public nsIWebProgressListener,
+                             public nsIWebPageDescriptor,
+                             public nsIAuthPromptProvider,
+                             public nsILoadContext,
+                             public nsIWebShellServices,
+                             public nsILinkHandler,
+                             public nsIClipboardCommands,
+                             public nsIDOMStorageManager,
+                             public mozilla::SupportsWeakPtr<nsDocShell>
 {
     friend class nsDSURIContentListener;
 
@@ -242,6 +243,13 @@ public:
     }
 
     nsresult HistoryTransactionRemoved(int32_t aIndex);
+
+    // Notify Scroll observers when an async panning/zooming transform
+    // has started being applied
+    void NotifyAsyncPanZoomStarted();
+    // Notify Scroll observers when an async panning/zooming transform
+    // is no longer applied
+    void NotifyAsyncPanZoomStopped();
 protected:
     // Object Management
     virtual ~nsDocShell();
@@ -513,8 +521,9 @@ protected:
                              const char16_t *aDescription,
                              const char *aCSSClass,
                              nsIChannel* aFailedChannel);
-    bool IsNavigationAllowed(bool aDisplayPrintErrorDialog = true);
     bool IsPrintingOrPP(bool aDisplayErrorDialog = true);
+    bool IsNavigationAllowed(bool aDisplayPrintErrorDialog = true,
+                             bool aCheckIfUnloadFired = true);
 
     nsresult SetBaseUrlForWyciwyg(nsIContentViewer * aContentViewer);
 
@@ -640,6 +649,12 @@ protected:
 
     // Convenience method for getting our parent docshell.  Can return null
     already_AddRefed<nsDocShell> GetParentDocshell();
+
+    // Check if we have an app redirect registered for the URI and redirect if
+    // needed. Returns true if a redirect happened, false otherwise.
+    bool DoAppRedirectIfNeeded(nsIURI * aURI,
+                               nsIDocShellLoadInfo * aLoadInfo,
+                               bool aFirstParty);
 protected:
     nsresult GetCurScrollPos(int32_t scrollOrientation, int32_t * curPos);
     nsresult SetCurScrollPosEx(int32_t curHorizontalPos, int32_t curVerticalPos);
@@ -659,7 +674,7 @@ protected:
     class RestorePresentationEvent : public nsRunnable {
     public:
         NS_DECL_NSIRUNNABLE
-        RestorePresentationEvent(nsDocShell *ds) : mDocShell(ds) {}
+        explicit RestorePresentationEvent(nsDocShell *ds) : mDocShell(ds) {}
         void Revoke() { mDocShell = nullptr; }
     private:
         nsRefPtr<nsDocShell> mDocShell;
@@ -756,6 +771,9 @@ protected:
     nsCOMPtr<nsIURI>           mFailedURI;
     nsCOMPtr<nsIChannel>       mFailedChannel;
     uint32_t                   mFailedLoadType;
+
+    // window.location.searchParams is updated in sync with this object.
+    nsRefPtr<mozilla::dom::URLSearchParams> mURLSearchParams;
 
     // Set in DoURILoad when either the LOAD_RELOAD_ALLOW_MIXED_CONTENT flag or
     // the LOAD_NORMAL_ALLOW_MIXED_CONTENT flag is set.
@@ -922,7 +940,7 @@ private:
 public:
     class InterfaceRequestorProxy : public nsIInterfaceRequestor {
     public:
-        InterfaceRequestorProxy(nsIInterfaceRequestor* p);
+        explicit InterfaceRequestorProxy(nsIInterfaceRequestor* p);
         NS_DECL_THREADSAFE_ISUPPORTS
         NS_DECL_NSIINTERFACEREQUESTOR
  

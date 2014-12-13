@@ -15,7 +15,8 @@ Cu.import("resource://gre/modules/PermissionsTable.jsm");
 Cu.import("resource://gre/modules/PermissionSettings.jsm");
 
 this.EXPORTED_SYMBOLS = ["SystemMessagePermissionsChecker",
-                         "SystemMessagePermissionsTable"];
+                         "SystemMessagePermissionsTable",
+                         "SystemMessagePrefixPermissionsTable"];
 
 function debug(aStr) {
   // dump("SystemMessagePermissionsChecker.jsm: " + aStr + "\n");
@@ -54,6 +55,9 @@ this.SystemMessagePermissionsTable = {
   },
   "bluetooth-opp-transfer-start": {
     "bluetooth": []
+  },
+  "cellbroadcast-received": {
+    "cellbroadcast": []
   },
   "connection": { },
   "captive-portal": {
@@ -104,6 +108,9 @@ this.SystemMessagePermissionsTable = {
   "cdma-info-rec-received": {
     "mobileconnection": []
   },
+  "nfc-hci-event-transaction": {
+    "nfc-hci-events": []
+  },
   "nfc-manager-tech-discovered": {
     "nfc-manager": []
   },
@@ -120,6 +127,18 @@ this.SystemMessagePermissionsTable = {
   "first-run-with-sim": {
     "settings": ["read", "write"]
   }
+};
+
+// This table maps system message prefix to permission(s), indicating only
+// the system messages with specified prefixes granted by the page's permissions
+// are allowed to be registered or sent to that page. Note the empty permission
+// set means this type of system message is always permitted.
+//
+// Note that this table is only used when the permission checker can't find a
+// match in SystemMessagePermissionsTable listed above.
+
+this.SystemMessagePrefixPermissionsTable = {
+  "datastore-update-": { },
 };
 
 this.SystemMessagePermissionsChecker = {
@@ -140,16 +159,26 @@ this.SystemMessagePermissionsChecker = {
 
     let permNames = SystemMessagePermissionsTable[aSysMsgName];
     if (permNames === undefined) {
-      debug("'" + aSysMsgName + "' is not associated with permissions. " +
-            "Please add them to the SystemMessagePermissionsTable.");
-      return null;
+      // Try to look up in the prefix table.
+      for (let sysMsgPrefix in SystemMessagePrefixPermissionsTable) {
+        if (aSysMsgName.indexOf(sysMsgPrefix) === 0) {
+          permNames = SystemMessagePrefixPermissionsTable[sysMsgPrefix];
+          break;
+        }
+      }
+
+      if (permNames === undefined) {
+        debug("'" + aSysMsgName + "' is not associated with permissions. " +
+              "Please add them to the SystemMessage[Prefix]PermissionsTable.");
+        return null;
+      }
     }
 
     let object = { };
     for (let permName in permNames) {
       if (PermissionsTable[permName] === undefined) {
         debug("'" + permName + "' for '" + aSysMsgName + "' is invalid. " +
-              "Please correct it in the SystemMessagePermissionsTable.");
+              "Please correct it in the SystemMessage[Prefix]PermissionsTable.");
         return null;
       }
 
@@ -157,7 +186,7 @@ this.SystemMessagePermissionsChecker = {
       let access = permNames[permName];
       if (!access || !Array.isArray(access)) {
         debug("'" + permName + "' is not associated with access array. " +
-              "Please correct it in the SystemMessagePermissionsTable.");
+              "Please correct it in the SystemMessage[Prefix]PermissionsTable.");
         return null;
       }
       object[permName] = appendAccessToPermName(permName, access);
@@ -170,18 +199,20 @@ this.SystemMessagePermissionsChecker = {
    * app at start-up based on the permissions claimed in the app's manifest.
    * @param string aSysMsgName
    *        The system messsage name.
-   * @param string aOrigin
-   *        The app's origin.
+   * @param string aManifestURL
+   *        The app's manifest URL.
    * @param object aManifest
    *        The app's manifest.
    * @returns bool
    *        Is permitted or not.
    **/
   isSystemMessagePermittedToRegister:
-    function isSystemMessagePermittedToRegister(aSysMsgName, aOrigin, aManifest) {
+    function isSystemMessagePermittedToRegister(aSysMsgName,
+                                                aManifestURL,
+                                                aManifest) {
     debug("isSystemMessagePermittedToRegister(): " +
           "aSysMsgName: " + aSysMsgName + ", " +
-          "aOrigin: " + aOrigin + ", " +
+          "aManifestURL: " + aManifestURL + ", " +
           "aManifest: " + JSON.stringify(aManifest));
 
     let permNames = this.getSystemMessagePermissions(aSysMsgName);
@@ -200,6 +231,9 @@ this.SystemMessagePermissionsChecker = {
       break;
     case Ci.nsIPrincipal.APP_STATUS_INSTALLED:
       appStatus = "app";
+      if (aManifest.type == "trusted") {
+        appStatus = "trusted";
+      }
       break;
     default:
       throw new Error("SystemMessagePermissionsChecker.jsm: " +
@@ -207,20 +241,22 @@ this.SystemMessagePermissionsChecker = {
       break;
     }
 
-    let newManifest = new ManifestHelper(aManifest, aOrigin);
+    // It's ok here to not pass the origin to ManifestHelper since we only
+    // need the permission property and that doesn't depend on uri resolution.
+    let newManifest = new ManifestHelper(aManifest, aManifestURL, aManifestURL);
 
     for (let permName in permNames) {
       // The app doesn't claim valid permissions for this sytem message.
       if (!newManifest.permissions || !newManifest.permissions[permName]) {
         debug("'" + aSysMsgName + "' isn't permitted by '" + permName + "'. " +
-              "Please add the permission for app: '" + aOrigin + "'.");
+              "Please add the permission for app: '" + aManifestURL + "'.");
         return false;
       }
       let permValue = PermissionsTable[permName][appStatus];
       if (permValue != Ci.nsIPermissionManager.PROMPT_ACTION &&
           permValue != Ci.nsIPermissionManager.ALLOW_ACTION) {
         debug("'" + aSysMsgName + "' isn't permitted by '" + permName + "'. " +
-              "Please add the permission for app: '" + aOrigin + "'.");
+              "Please add the permission for app: '" + aManifestURL + "'.");
         return false;
       }
 

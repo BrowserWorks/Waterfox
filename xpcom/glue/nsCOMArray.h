@@ -18,12 +18,12 @@
 
 // a class that's nsISupports-specific, so that we can contain the
 // work of this class in the XPCOM dll
-class NS_COM_GLUE nsCOMArray_base
+class nsCOMArray_base
 {
   friend class nsArrayBase;
 protected:
   nsCOMArray_base() {}
-  nsCOMArray_base(int32_t aCount) : mArray(aCount) {}
+  explicit nsCOMArray_base(int32_t aCount) : mArray(aCount) {}
   nsCOMArray_base(const nsCOMArray_base& aOther);
   ~nsCOMArray_base();
 

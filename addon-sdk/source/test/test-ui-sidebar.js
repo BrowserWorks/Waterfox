@@ -22,6 +22,7 @@ const { URL } = require('sdk/url');
 const { once, off, emit } = require('sdk/event/core');
 const { defer, all } = require('sdk/core/promise');
 const { modelFor } = require('sdk/model/core');
+require('sdk/windows');
 
 const { BUILTIN_SIDEBAR_MENUITEMS, isSidebarShowing,
         getSidebarMenuitems, getExtraSidebarMenuitems, makeID, simulateCommand,
@@ -368,6 +369,48 @@ exports.testSidebarUnload = function(assert, done) {
 
   sidebar.show();
   assert.pass('showing the sidebar');
+}
+
+exports.testRelativeURL = function(assert, done) {
+  const { merge } = require('sdk/util/object');
+  const self = require('sdk/self');
+
+  let loader = Loader(module, null, null, {
+    modules: {
+      'sdk/self': merge({}, self, {
+        data: merge({}, self.data, require('./fixtures'))
+      })
+    }
+  });
+
+  const { Sidebar } = loader.require('sdk/ui/sidebar');
+
+  let testName = 'testRelativeURL';
+  let sidebar = Sidebar({
+    id: testName,
+    title: testName,
+    url: './test-sidebar-addon-global.html'
+  });
+
+  sidebar.on('attach', function(worker) {
+    assert.pass('sidebar was attached');
+    assert.ok(!!worker, 'attach event has worker');
+
+    worker.port.once('Y', function(msg) {
+      assert.equal(msg, '1', 'got event from worker');
+
+      worker.port.on('X', function(msg) {
+        assert.equal(msg, '123', 'the final message is correct');
+
+        sidebar.destroy();
+
+        done();
+      });
+      worker.port.emit('X', msg + '2');
+    })
+  });
+
+  sidebar.show();
 }
 
 exports.testRemoteContent = function(assert) {

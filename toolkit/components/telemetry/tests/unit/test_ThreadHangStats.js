@@ -24,21 +24,30 @@ function run_test() {
     // We use the rt_tgsigqueueinfo syscall on Linux which requires a
     // certain kernel version. It's not an error if the system running
     // the test is older than that.
-    let kernel = Services.sysinfo.kernel_version || Services.sysinfo.version;
+    let kernel = Services.sysinfo.get('kernel_version') ||
+                 Services.sysinfo.get('version');
     if (Services.vc.compare(kernel, '2.6.31') < 0) {
       ok("Hang reporting not supported for old kernel.");
       return;
     }
   }
 
-  // Run two events in the event loop:
-  // the first event causes a hang;
-  // the second event checks results from the first event.
+  // Run three events in the event loop:
+  // the first event causes a transient hang;
+  // the second event causes a permanent hang;
+  // the third event checks results from previous events.
 
   do_execute_soon(() => {
-    // Cause a hang lasting 1 second.
+    // Cause a hang lasting 1 second (transient hang).
     let startTime = Date.now();
     while ((Date.now() - startTime) < 1000) {
+    }
+  });
+
+  do_execute_soon(() => {
+    // Cause a hang lasting 10 seconds (permanent hang).
+    let startTime = Date.now();
+    while ((Date.now() - startTime) < 10000) {
     }
   });
 
@@ -77,6 +86,14 @@ function run_test() {
       ok(Array.isArray(endHangs.hangs[0].stack));
       notEqual(endHangs.hangs[0].stack.length, 0);
       equal(typeof endHangs.hangs[0].stack[0], "string");
+
+      // Make sure one of the hangs is a permanent
+      // hang containing a native stack.
+      ok(endHangs.hangs.some((hang) => (
+        Array.isArray(hang.nativeStack) &&
+        hang.nativeStack.length !== 0 &&
+        typeof hang.nativeStack[0] === "string"
+      )));
 
       check_histogram(endHangs.hangs[0].histogram);
 

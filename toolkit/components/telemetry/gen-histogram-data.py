@@ -60,11 +60,12 @@ def print_array_entry(histogram, name_index, exp_index):
     cpp_guard = histogram.cpp_guard()
     if cpp_guard:
         print "#if defined(%s)" % cpp_guard
-    print "  { %s, %s, %s, %s, %d, %d, %s }," \
+    print "  { %s, %s, %s, %s, %d, %d, %s, %s }," \
         % (histogram.low(), histogram.high(),
            histogram.n_buckets(), histogram.nsITelemetry_kind(),
            name_index, exp_index,
-           "true" if histogram.extended_statistics_ok() else "false")
+           "true" if histogram.extended_statistics_ok() else "false",
+           "true" if histogram.keyed() else "false")
     if cpp_guard:
         print "#endif"
 
@@ -95,6 +96,9 @@ def static_asserts_for_boolean(histogram):
     pass
 
 def static_asserts_for_flag(histogram):
+    pass
+
+def static_asserts_for_count(histogram):
     pass
 
 def static_asserts_for_enumerated(histogram):
@@ -128,6 +132,7 @@ def write_histogram_static_asserts(histograms):
     table = {
         'boolean' : static_asserts_for_boolean,
         'flag' : static_asserts_for_flag,
+        'count': static_asserts_for_count,
         'enumerated' : static_asserts_for_enumerated,
         'linear' : static_asserts_for_linear,
         'exponential' : static_asserts_for_exponential,

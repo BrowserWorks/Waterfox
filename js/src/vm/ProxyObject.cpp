@@ -67,6 +67,12 @@ ProxyObject::initCrossCompartmentPrivate(HandleValue priv)
 }
 
 void
+ProxyObject::setSameCompartmentPrivate(const Value &priv)
+{
+    setSlot(PRIVATE_SLOT, priv);
+}
+
+void
 ProxyObject::initHandler(const BaseProxyHandler *handler)
 {
     initSlot(HANDLER_SLOT, PrivateValue(const_cast<BaseProxyHandler*>(handler)));
@@ -75,14 +81,7 @@ ProxyObject::initHandler(const BaseProxyHandler *handler)
 static void
 NukeSlot(ProxyObject *proxy, uint32_t slot)
 {
-    Value old = proxy->getSlot(slot);
-    if (old.isMarkable()) {
-        Zone *zone = ZoneOfValue(old);
-        AutoMarkInDeadZone amd(zone);
-        proxy->setReservedSlot(slot, NullValue());
-    } else {
-        proxy->setReservedSlot(slot, NullValue());
-    }
+    proxy->setReservedSlot(slot, NullValue());
 }
 
 void

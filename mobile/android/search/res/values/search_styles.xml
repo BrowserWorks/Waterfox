@@ -5,12 +5,11 @@
 <resources>
 
     <!-- Base application theme. -->
-
     <style name="AppTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@color/global_background_color</item>
+        <item name="android:colorBackground">@color/global_background_color</item>
     </style>
 
-
-    <style name="BorderLessButton">
-    </style>
+    <style name="SettingsTheme" parent="@android:style/Theme.Light"/>
 
 </resources>

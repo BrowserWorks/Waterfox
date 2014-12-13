@@ -4,12 +4,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsFormControlFrame.h"
+
 #include "nsGkAtoms.h"
 #include "nsLayoutUtils.h"
 #include "nsIDOMHTMLInputElement.h"
 #include "mozilla/EventStateManager.h"
 #include "mozilla/LookAndFeel.h"
 #include "nsDeviceContext.h"
+#include "nsIContent.h"
 
 using namespace mozilla;
 
@@ -45,7 +47,7 @@ NS_QUERYFRAME_TAIL_INHERITING(nsLeafFrame)
 NS_IMPL_FRAMEARENA_HELPERS(nsFormControlFrame)
 
 nscoord
-nsFormControlFrame::GetIntrinsicWidth()
+nsFormControlFrame::GetIntrinsicISize()
 {
   // Provide a reasonable default for sites that use an "auto" height.
   // Note that if you change this, you should change the values in forms.css
@@ -54,7 +56,7 @@ nsFormControlFrame::GetIntrinsicWidth()
 }
 
 nscoord
-nsFormControlFrame::GetIntrinsicHeight()
+nsFormControlFrame::GetIntrinsicBSize()
 {
   // Provide a reasonable default for sites that use an "auto" height.
   // Note that if you change this, you should change the values in forms.css

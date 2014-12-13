@@ -17,6 +17,8 @@ let (commonFile = do_get_file("../head_common.js", false)) {
 
 // Put any other stuff relative to this test folder below.
 
+const TITLE_SEARCH_ENGINE_SEPARATOR = " \u00B7\u2013\u00B7 ";
+
 function run_test() {
   run_next_test();
 }
@@ -126,35 +128,44 @@ function* check_autocomplete(test) {
     deferred.resolve();
   }
 
+  let expectedSearches = 1;
+  if (test.incompleteSearch) {
+    controller.startSearch(test.incompleteSearch);
+    expectedSearches++;
+  }
   do_log_info("Searching for: '" + test.search + "'");
   controller.startSearch(test.search);
   yield deferred.promise;
 
-  // We should be running only one query.
-  Assert.equal(numSearchesStarted, 1, "Only one search started");
+  Assert.equal(numSearchesStarted, expectedSearches, "All searches started");
 
   // Check to see the expected uris and titles match up (in any order)
   if (test.matches) {
+    // Do not modify the test original matches.
+    let matches = test.matches.slice();
+
     for (let i = 0; i < controller.matchCount; i++) {
       let value = controller.getValueAt(i);
       let comment = controller.getCommentAt(i);
       do_log_info("Looking for '" + value + "', '" + comment + "' in expected results...");
       let j;
-      for (j = 0; j < test.matches.length; j++) {
+      for (j = 0; j < matches.length; j++) {
         // Skip processed expected results
-        if (test.matches[j] == undefined)
+        if (matches[j] == undefined)
           continue;
 
-        let { uri, title, tags } = test.matches[j];
+        let { uri, title, tags, searchEngine } = matches[j];
         if (tags)
           title += " \u2013 " + tags.sort().join(", ");
+        if (searchEngine)
+          title += TITLE_SEARCH_ENGINE_SEPARATOR + searchEngine;
 
         do_log_info("Checking against expected '" + uri.spec + "', '" + title + "'...");
         // Got a match on both uri and title?
         if (stripPrefix(uri.spec) == stripPrefix(value) && title == comment) {
           do_log_info("Got a match at index " + j + "!");
           // Make it undefined so we don't process it again
-          test.matches[j] = undefined;
+          matches[j] = undefined;
           if (uri.spec.startsWith("moz-action:")) {
             let style = controller.getStyleAt(i);
             Assert.ok(style.contains("action"));
@@ -164,15 +175,15 @@ function* check_autocomplete(test) {
       }
 
       // We didn't hit the break, so we must have not found it
-      if (j == test.matches.length)
+      if (j == matches.length)
         do_throw("Didn't find the current result ('" + value + "', '" + comment + "') in matches");
     }
 
-    Assert.equal(controller.matchCount, test.matches.length,
+    Assert.equal(controller.matchCount, matches.length,
                  "Got as many results as expected");
 
     // If we expect results, make sure we got matches.
-    do_check_eq(controller.searchStatus, test.matches.length ?
+    do_check_eq(controller.searchStatus, matches.length ?
                 Ci.nsIAutoCompleteController.STATUS_COMPLETE_MATCH :
                 Ci.nsIAutoCompleteController.STATUS_COMPLETE_NO_MATCH);
   }

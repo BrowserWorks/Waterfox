@@ -22,6 +22,7 @@ TestInterfaceJS.prototype = {
     this._anyArg = anyArg;
     this._objectArg = objectArg;
     this._dictionaryArg = dictionaryArg;
+    this._cachedAttr = 15;
   },
 
   get anyArg() { return this._anyArg; },
@@ -43,7 +44,18 @@ TestInterfaceJS.prototype = {
   anySequenceLength: function(seq) { return seq.length; },
 
 
-  getCallerPrincipal: function() { return Cu.getWebIDLCallerPrincipal().origin; }
+  getCallerPrincipal: function() { return Cu.getWebIDLCallerPrincipal().origin; },
+
+  convertSVS: function(svs) { return svs; },
+
+  pingPongUnion: function(x) { return x; },
+  pingPongUnionContainingNull: function(x) { return x; },
+  pingPongNullableUnion: function(x) { return x; },
+  returnBadUnion: function(x) { return 3; },
+
+  get cachedAttr() { return this._cachedAttr; },
+  setCachedAttr: function(n) { this._cachedAttr = n; },
+  clearCachedAttrCache: function () { this.__DOM_IMPL__._clearCachedCachedAttrValue(); },
 };
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory([TestInterfaceJS])

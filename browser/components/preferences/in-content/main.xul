@@ -17,6 +17,16 @@
                 name="browser.startup.homepage"
                 type="wstring"/>
 
+#ifdef HAVE_SHELL_SERVICE
+    <preference id="browser.shell.checkDefaultBrowser"
+                name="browser.shell.checkDefaultBrowser"
+                type="bool"/>
+
+    <preference id="pref.general.disable_button.default_browser"
+                name="pref.general.disable_button.default_browser"
+                type="bool"/>
+#endif
+
     <preference id="pref.browser.homepage.disable_button.current_page"
                 name="pref.browser.homepage.disable_button.current_page"
                 type="bool"/>
@@ -29,8 +39,7 @@
 
     <preference id="browser.privatebrowsing.autostart"
                 name="browser.privatebrowsing.autostart"
-                type="bool"
-                onchange="gMainPane.updateBrowserStartupLastSession();"/>
+                type="bool"/>
 
     <!-- Downloads -->
     <preference id="browser.download.useDownloadDir"
@@ -42,8 +51,7 @@
                 type="int"/>
     <preference id="browser.download.dir"
                 name="browser.download.dir"
-                type="file"
-                onchange="gMainPane.displayDownloadDirPref();"/>
+                type="file"/>
     <!-- Tab preferences 
     Preferences:
 
@@ -91,7 +99,6 @@
       class="header"
       hidden="true"
       data-category="paneGeneral">
-  <image class="header-icon"/>
   <label class="header-name">&paneGeneral.title;</label>
 </hbox>
 
@@ -101,6 +108,26 @@
           hidden="true">
   <caption><label>&startup.label;</label></caption>
 
+#ifdef HAVE_SHELL_SERVICE
+  <vbox id="defaultBrowserBox">
+    <hbox align="center">
+      <checkbox id="alwaysCheckDefault" preference="browser.shell.checkDefaultBrowser"
+                label="&alwaysCheckDefault.label;" accesskey="&alwaysCheckDefault2.accesskey;"/>
+    </hbox>
+    <deck id="setDefaultPane">
+      <hbox align="center" class="indent">
+        <label id="isNotDefaultLabel" flex="1">&isNotDefault.label;</label>
+        <button id="setDefaultButton"
+                label="&setAsMyDefaultBrowser.label;" accesskey="&setAsMyDefaultBrowser.accesskey;"
+                preference="pref.general.disable_button.default_browser"/>
+      </hbox>
+      <hbox align="center" class="indent">
+        <label id="isDefaultLabel" flex="1">&isDefault.label;</label>
+      </hbox>
+    </deck>
+    <separator class="thin"/>
+  </vbox>
+#endif
   <hbox align="center">
     <label accesskey="&startupPage.accesskey;"
            control="browserStartupPage">&startupPage.label;</label>
@@ -138,17 +165,14 @@
             accesskey="&useCurrentPage.accesskey;"
             label1="&useCurrentPage.label;"
             label2="&useMultiple.label;"
-            oncommand="gMainPane.setHomePageToCurrent();"
             id="useCurrent"
             preference="pref.browser.homepage.disable_button.current_page"/>
     <button label="&chooseBookmark.label;"
             accesskey="&chooseBookmark.accesskey;"
-            oncommand="gMainPane.setHomePageToBookmark();"
             id="useBookmark"
             preference="pref.browser.homepage.disable_button.bookmark_page"/>
     <button label="&restoreDefault.label;"
             accesskey="&restoreDefault.accesskey;"
-            oncommand="gMainPane.restoreDefaultHomePage();"
             id="restoreDefaultHomePage"
             preference="pref.browser.homepage.disable_button.restore_default"/>
   </hbox>
@@ -177,7 +201,6 @@
                  onsyncfrompreference="return gMainPane.displayDownloadDirPref();"
                  onsynctopreference="return gMainPane.getFolderListPref()"/>
       <button id="chooseFolder"
-              oncommand="gMainPane.chooseFolder();"
 #ifdef XP_MACOSX
               accesskey="&chooseFolderMac.accesskey;"
               label="&chooseFolderMac.label;"

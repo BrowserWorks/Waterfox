@@ -57,8 +57,8 @@ private:
 
 // Thread and type safe wrapper around nsDeque.
 class PacketQueueDeallocator : public nsDequeFunctor {
-  virtual void* operator() (void* anObject) {
-    delete static_cast<NesteggPacketHolder*>(anObject);
+  virtual void* operator() (void* aObject) {
+    delete static_cast<NesteggPacketHolder*>(aObject);
     return nullptr;
   }
 };
@@ -104,7 +104,7 @@ class WebMPacketQueue : private nsDeque {
 class WebMReader : public MediaDecoderReader
 {
 public:
-  WebMReader(AbstractMediaDecoder* aDecoder);
+  explicit WebMReader(AbstractMediaDecoder* aDecoder);
 
 protected:
   ~WebMReader();
@@ -137,6 +137,7 @@ public:
   virtual nsresult Seek(int64_t aTime, int64_t aStartTime, int64_t aEndTime, int64_t aCurrentTime);
   virtual nsresult GetBuffered(dom::TimeRanges* aBuffered, int64_t aStartTime);
   virtual void NotifyDataArrived(const char* aBuffer, uint32_t aLength, int64_t aOffset);
+  virtual int64_t GetEvictionOffset(double aTime);
 
   virtual bool IsMediaSeekable() MOZ_OVERRIDE;
 

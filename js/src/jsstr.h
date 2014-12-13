@@ -124,6 +124,9 @@ js_strncpy(jschar *dst, const jschar *src, size_t nelem)
 
 namespace js {
 
+extern mozilla::UniquePtr<char[], JS::FreePolicy>
+DuplicateString(ThreadSafeContext *cx, const char *s);
+
 extern mozilla::UniquePtr<jschar[], JS::FreePolicy>
 DuplicateString(ThreadSafeContext *cx, const jschar *s);
 
@@ -296,12 +299,6 @@ extern bool
 str_fromCharCode_one_arg(JSContext *cx, HandleValue code, MutableHandleValue rval);
 
 } /* namespace js */
-
-inline jschar *
-js_strdup(js::ThreadSafeContext *cx, const jschar *s)
-{
-    return js::DuplicateString(cx, s).release();
-}
 
 extern bool
 js_str_toString(JSContext *cx, unsigned argc, js::Value *vp);

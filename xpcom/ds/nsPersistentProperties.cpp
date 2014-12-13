@@ -82,7 +82,7 @@ enum EParserSpecial
 class nsPropertiesParser
 {
 public:
-  nsPropertiesParser(nsIPersistentProperties* aProps)
+  explicit nsPropertiesParser(nsIPersistentProperties* aProps)
     : mHaveMultiLine(false)
     , mState(eParserState_AwaitingKey)
     , mProps(aProps)
@@ -466,7 +466,7 @@ nsPersistentProperties::nsPersistentProperties()
   mSubclass = static_cast<nsIPersistentProperties*>(this);
 
   PL_DHashTableInit(&mTable, &property_HashTableOps, nullptr,
-                    sizeof(PropertyTableEntry), 20);
+                    sizeof(PropertyTableEntry), 16);
 
   PL_INIT_ARENA_POOL(&mArena, "PersistentPropertyArena", 2048);
 }
@@ -607,11 +607,11 @@ nsPersistentProperties::Enumerate(nsISimpleEnumerator** aResult)
   nsCOMArray<nsIPropertyElement> props;
 
   // We know the necessary size; we can avoid growing it while adding elements
-  props.SetCapacity(mTable.entryCount);
+  props.SetCapacity(mTable.EntryCount());
 
   // Step through hash entries populating a transient array
   uint32_t n = PL_DHashTableEnumerate(&mTable, AddElemToArray, (void*)&props);
-  if (n < mTable.entryCount) {
+  if (n < mTable.EntryCount()) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 

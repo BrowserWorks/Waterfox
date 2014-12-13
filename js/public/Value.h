@@ -1340,18 +1340,6 @@ class Value
 };
 
 inline bool
-IsPoisonedValue(const Value &v)
-{
-    if (v.isString())
-        return IsPoisonedPtr(v.toString());
-    if (v.isSymbol())
-        return IsPoisonedPtr(v.toSymbol());
-    if (v.isObject())
-        return IsPoisonedPtr(&v.toObject());
-    return false;
-}
-
-inline bool
 IsOptimizedPlaceholderMagicValue(const Value &v)
 {
     if (v.isMagic()) {
@@ -1365,7 +1353,7 @@ static MOZ_ALWAYS_INLINE void
 ExposeValueToActiveJS(const Value &v)
 {
     if (v.isMarkable())
-        ExposeGCThingToActiveJS(v.toGCThing(), v.gcKind());
+        js::gc::ExposeGCThingToActiveJS(v.toGCThing(), v.gcKind());
 }
 
 /************************************************************************/
@@ -1638,13 +1626,20 @@ namespace js {
 template <> struct GCMethods<const JS::Value>
 {
     static JS::Value initial() { return JS::UndefinedValue(); }
-    static bool poisoned(const JS::Value &v) { return JS::IsPoisonedValue(v); }
+    static bool poisoned(const JS::Value &v) {
+        return v.isMarkable() && JS::IsPoisonedPtr(v.toGCThing());
+    }
 };
 
 template <> struct GCMethods<JS::Value>
 {
     static JS::Value initial() { return JS::UndefinedValue(); }
-    static bool poisoned(const JS::Value &v) { return JS::IsPoisonedValue(v); }
+    static bool poisoned(const JS::Value &v) {
+        return v.isMarkable() && JS::IsPoisonedPtr(v.toGCThing());
+    }
+    static gc::Cell *asGCThingOrNull(const JS::Value &v) {
+        return v.isMarkable() ? v.toGCThing() : nullptr;
+    }
     static bool needsPostBarrier(const JS::Value &v) {
         return v.isObject() && gc::IsInsideNursery(reinterpret_cast<gc::Cell*>(&v.toObject()));
     }
@@ -1698,7 +1693,7 @@ class ValueOperations
     JS::Symbol *toSymbol() const { return value()->toSymbol(); }
     JSObject &toObject() const { return value()->toObject(); }
     JSObject *toObjectOrNull() const { return value()->toObjectOrNull(); }
-    void *toGCThing() const { return value()->toGCThing(); }
+    gc::Cell *toGCThing() const { return value()->toGCThing(); }
     uint64_t asRawBits() const { return value()->asRawBits(); }
 
     JSValueType extractNonDoubleType() const { return value()->extractNonDoubleType(); }
@@ -1864,6 +1859,12 @@ IMPL_TO_JSVAL(jsval_layout l)
 
 namespace JS {
 
+inline bool
+IsPoisonedValue(const Value &v)
+{
+    return js::GCMethods<Value>::poisoned(v);
+}
+
 #ifndef __GNUC__
 /*
  * The default assignment operator for |struct C| has the signature:
@@ -1944,9 +1945,9 @@ DOUBLE_TO_JSVAL(double d)
 static inline JS_VALUE_CONSTEXPR jsval
 UINT_TO_JSVAL(uint32_t i)
 {
-    return (i <= JSVAL_INT_MAX
-            ? INT_TO_JSVAL((int32_t)i)
-            : DOUBLE_TO_JSVAL((double)i));
+    return i <= JSVAL_INT_MAX
+           ? INT_TO_JSVAL((int32_t)i)
+           : DOUBLE_TO_JSVAL((double)i);
 }
 
 static inline jsval

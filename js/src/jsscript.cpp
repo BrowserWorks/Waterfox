@@ -1138,8 +1138,8 @@ JSScript::initScriptCounts(JSContext *cx)
     for (jsbytecode *pc = code(); pc < codeEnd(); pc += GetBytecodeLength(pc))
         n += PCCounts::numCounts(JSOp(*pc));
 
-    size_t bytes = (length() * sizeof(PCCounts)) + (n * sizeof(double));
-    char *base = (char *) cx->calloc_(bytes);
+    size_t nbytes = (length() * sizeof(PCCounts)) + (n * sizeof(double));
+    uint8_t *base = zone()->pod_calloc<uint8_t>(nbytes);
     if (!base)
         return false;
 
@@ -1155,7 +1155,7 @@ JSScript::initScriptCounts(JSContext *cx)
         compartment()->scriptCountsMap = map;
     }
 
-    char *cursor = base;
+    uint8_t *cursor = base;
 
     ScriptCounts scriptCounts;
     scriptCounts.pcCountsVector = (PCCounts *) cursor;
@@ -1177,7 +1177,7 @@ JSScript::initScriptCounts(JSContext *cx)
     }
     hasScriptCounts_ = true; // safe to set this;  we can't fail after this point
 
-    JS_ASSERT(size_t(cursor - base) == bytes);
+    JS_ASSERT(size_t(cursor - base) == nbytes);
 
     /* Enable interrupts in any interpreter frames running on this script. */
     for (ActivationIterator iter(cx->runtime()); !iter.done(); ++iter) {
@@ -1608,7 +1608,7 @@ ScriptSource::ensureOwnsSource(ExclusiveContext *cx)
     if (ownsUncompressedChars())
         return true;
 
-    jschar *uncompressed = (jschar *) cx->malloc_(sizeof(jschar) * Max<size_t>(length_, 1));
+    jschar *uncompressed = cx->zone()->pod_malloc<jschar>(Max<size_t>(length_, 1));
     if (!uncompressed)
         return false;
     PodCopy(uncompressed, uncompressedChars(), length_);
@@ -1649,13 +1649,10 @@ ScriptSource::setSourceCopy(ExclusiveContext *cx, SourceBufferHolder &srcBuf,
     //    thread (see HelperThreadState::canStartParseTask) which would cause a
     //    deadlock if there wasn't a second helper thread that could make
     //    progress on our compression task.
-#if defined(JS_THREADSAFE)
     bool canCompressOffThread =
         HelperThreadState().cpuCount > 1 &&
-        HelperThreadState().threadCount >= 2;
-#else
-    bool canCompressOffThread = false;
-#endif
+        HelperThreadState().threadCount >= 2 &&
+        CanUseExtraThreads();
     const size_t TINY_SCRIPT = 256;
     const size_t HUGE_SCRIPT = 5 * 1024 * 1024;
     if (TINY_SCRIPT <= srcBuf.length() && srcBuf.length() < HUGE_SCRIPT && canCompressOffThread) {
@@ -1755,9 +1752,6 @@ ScriptSource::~ScriptSource()
         break;
     }
 
-    if (introducerFilename_ != filename_)
-        js_free(introducerFilename_);
-    js_free(filename_);
     if (originPrincipals_)
         JS_DropPrincipals(TlsPerThreadData.get()->runtimeFromMainThread(), originPrincipals_);
 }
@@ -1770,7 +1764,9 @@ ScriptSource::addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf,
         info->uncompressed += mallocSizeOf(uncompressedChars());
     else if (dataType == DataCompressed)
         info->compressed += mallocSizeOf(compressedData());
-    info->misc += mallocSizeOf(this) + mallocSizeOf(filename_);
+    info->misc += mallocSizeOf(this) +
+                  mallocSizeOf(filename_.get()) +
+                  mallocSizeOf(introducerFilename_.get());
     info->numScripts++;
 }
 
@@ -1822,7 +1818,7 @@ ScriptSource::performXDR(XDRState<mode> *xdr)
 
         size_t byteLen = compressedLength ? compressedLength : (length_ * sizeof(jschar));
         if (mode == XDR_DECODE) {
-            void *p = xdr->cx()->malloc_(Max<size_t>(byteLen, 1));
+            uint8_t *p = xdr->cx()->template pod_malloc<uint8_t>(Max<size_t>(byteLen, 1));
             if (!p || !xdr->codeBytes(p, byteLen)) {
                 js_free(p);
                 return false;
@@ -1912,7 +1908,7 @@ ScriptSource::performXDR(XDRState<mode> *xdr)
     return true;
 }
 
-// Format and return a cx->malloc_'ed URL for a generated script like:
+// Format and return a cx->zone()->pod_malloc'ed URL for a generated script like:
 //   {filename} line {lineno} > {introducer}
 // For example:
 //   foo.js line 7 > eval
@@ -1937,7 +1933,7 @@ FormatIntroducedFilename(ExclusiveContext *cx, const char *filename, unsigned li
                  3 /* == strlen(" > ") */       +
                  introducerLen                  +
                  1 /* \0 */;
-    char *formatted = cx->pod_malloc<char>(len);
+    char *formatted = cx->zone()->pod_malloc<char>(len);
     if (!formatted)
         return nullptr;
     mozilla::DebugOnly<size_t> checkLen = JS_snprintf(formatted, len, "%s line %s > %s",
@@ -1967,18 +1963,16 @@ ScriptSource::initFromOptions(ExclusiveContext *cx, const ReadOnlyCompileOptions
                                                    options.introductionType);
         if (!formatted)
             return false;
-        filename_ = formatted;
+        filename_.reset(formatted);
     } else if (options.filename()) {
         if (!setFilename(cx, options.filename()))
             return false;
     }
 
     if (options.introducerFilename()) {
-        introducerFilename_ = js_strdup(cx, options.introducerFilename());
+        introducerFilename_ = DuplicateString(cx, options.introducerFilename());
         if (!introducerFilename_)
             return false;
-    } else {
-        introducerFilename_ = filename_;
     }
 
     return true;
@@ -1988,10 +1982,8 @@ bool
 ScriptSource::setFilename(ExclusiveContext *cx, const char *filename)
 {
     JS_ASSERT(!filename_);
-    filename_ = js_strdup(cx, filename);
-    if (!filename_)
-        return false;
-    return true;
+    filename_ = DuplicateString(cx, filename);
+    return filename_ != nullptr;
 }
 
 bool
@@ -2002,7 +1994,7 @@ ScriptSource::setDisplayURL(ExclusiveContext *cx, const jschar *displayURL)
         if (cx->isJSContext() &&
             !JS_ReportErrorFlagsAndNumber(cx->asJSContext(), JSREPORT_WARNING,
                                           js_GetErrorMessage, nullptr,
-                                          JSMSG_ALREADY_HAS_PRAGMA, filename_,
+                                          JSMSG_ALREADY_HAS_PRAGMA, filename_.get(),
                                           "//# sourceURL"))
         {
             return false;
@@ -2025,7 +2017,7 @@ ScriptSource::setSourceMapURL(ExclusiveContext *cx, const jschar *sourceMapURL)
         if (cx->isJSContext()) {
             JS_ReportErrorFlagsAndNumber(cx->asJSContext(), JSREPORT_WARNING,
                                          js_GetErrorMessage, nullptr,
-                                         JSMSG_ALREADY_HAS_PRAGMA, filename_,
+                                         JSMSG_ALREADY_HAS_PRAGMA, filename_.get(),
                                          "//# sourceMappingURL");
         }
 
@@ -2069,7 +2061,8 @@ js::SharedScriptData::new_(ExclusiveContext *cx, uint32_t codeLength,
     uint32_t padding = (pointerSize - ((baseLength + dataOffset) & pointerMask)) & pointerMask;
     uint32_t length = baseLength + padding + pointerSize * natoms;
 
-    SharedScriptData *entry = (SharedScriptData *)cx->malloc_(length + dataOffset);
+    SharedScriptData *entry = reinterpret_cast<SharedScriptData *>(
+            cx->zone()->pod_malloc<uint8_t>(length + dataOffset));
     if (!entry)
         return nullptr;
 
@@ -2366,14 +2359,15 @@ JSScript::Create(ExclusiveContext *cx, HandleObject enclosingScope, bool savedCa
 }
 
 static inline uint8_t *
-AllocScriptData(ExclusiveContext *cx, size_t size)
+AllocScriptData(JS::Zone *zone, size_t size)
 {
-    uint8_t *data = static_cast<uint8_t *>(cx->calloc_(JS_ROUNDUP(size, sizeof(Value))));
-    if (!data)
+    if (!size)
         return nullptr;
 
-    // All script data is optional, so size might be 0. In that case, we don't care about alignment.
-    JS_ASSERT(size == 0 || size_t(data) % sizeof(Value) == 0);
+    uint8_t *data = zone->pod_calloc<uint8_t>(JS_ROUNDUP(size, sizeof(Value)));
+    if (!data)
+        return nullptr;
+    JS_ASSERT(size_t(data) % sizeof(Value) == 0);
     return data;
 }
 
@@ -2384,13 +2378,9 @@ JSScript::partiallyInit(ExclusiveContext *cx, HandleScript script, uint32_t ncon
 {
     size_t size = ScriptDataSize(script->bindings.count(), nconsts, nobjects, nregexps, ntrynotes,
                                  nblockscopes);
-    if (size > 0) {
-        script->data = AllocScriptData(cx, size);
-        if (!script->data)
-            return false;
-    } else {
-        script->data = nullptr;
-    }
+    script->data = AllocScriptData(script->zone(), size);
+    if (size && !script->data)
+        return false;
     script->dataSize_ = size;
 
     JS_ASSERT(nTypeSets <= UINT16_MAX);
@@ -2628,15 +2618,12 @@ JSScript::finalize(FreeOp *fop)
     // JSScript::Create(), but not yet finished initializing it with
     // fullyInitFromEmitter() or fullyInitTrivial().
 
-    clearTraps(fop);
     fop->runtime()->spsProfiler.onScriptFinalized(this);
 
     if (types)
         types->destroy();
 
-#ifdef JS_ION
     jit::DestroyIonScripts(fop, this);
-#endif
 
     destroyScriptCounts(fop);
     destroyDebugScript(fop);
@@ -2901,8 +2888,8 @@ js::CloneScript(JSContext *cx, HandleObject enclosingScope, HandleFunction fun, 
     /* Script data */
 
     size_t size = src->dataSize();
-    uint8_t *data = AllocScriptData(cx, size);
-    if (!data)
+    uint8_t *data = AllocScriptData(cx->zone(), size);
+    if (size && !data)
         return nullptr;
 
     /* Bindings */
@@ -3149,7 +3136,6 @@ JSScript::destroyDebugScript(FreeOp *fop)
             if (BreakpointSite *site = getBreakpointSite(pc)) {
                 /* Breakpoints are swept before finalization. */
                 JS_ASSERT(site->firstBreakpoint() == nullptr);
-                site->clearTrap(fop, nullptr, nullptr);
                 JS_ASSERT(getBreakpointSite(pc) == nullptr);
             }
         }
@@ -3164,7 +3150,7 @@ JSScript::ensureHasDebugScript(JSContext *cx)
         return true;
 
     size_t nbytes = offsetof(DebugScript, breakpoints) + length() * sizeof(BreakpointSite*);
-    DebugScript *debug = (DebugScript *) cx->calloc_(nbytes);
+    DebugScript *debug = (DebugScript *) zone()->pod_calloc<uint8_t>(nbytes);
     if (!debug)
         return false;
 
@@ -3207,26 +3193,12 @@ JSScript::setNewStepMode(FreeOp *fop, uint32_t newValue)
     debug->stepMode = newValue;
 
     if (!prior != !newValue) {
-#ifdef JS_ION
         if (hasBaselineScript())
             baseline->toggleDebugTraps(this, nullptr);
-#endif
 
         if (!stepModeEnabled() && !debug->numSites)
             fop->free_(releaseDebugScript());
     }
-}
-
-bool
-JSScript::setStepModeFlag(JSContext *cx, bool step)
-{
-    if (!ensureHasDebugScript(cx))
-        return false;
-
-    setNewStepMode(cx->runtime()->defaultFreeOp(),
-                   (debugScript()->stepMode & stepCountMask) |
-                   (step ? stepFlagMask : 0));
-    return true;
 }
 
 bool
@@ -3239,12 +3211,8 @@ JSScript::incrementStepModeCount(JSContext *cx)
         return false;
 
     DebugScript *debug = debugScript();
-    uint32_t count = debug->stepMode & stepCountMask;
-    MOZ_ASSERT(((count + 1) & stepCountMask) == count + 1);
-
-    setNewStepMode(cx->runtime()->defaultFreeOp(),
-                   (debug->stepMode & stepFlagMask) |
-                   ((count + 1) & stepCountMask));
+    uint32_t count = debug->stepMode;
+    setNewStepMode(cx->runtime()->defaultFreeOp(), count + 1);
     return true;
 }
 
@@ -3252,11 +3220,9 @@ void
 JSScript::decrementStepModeCount(FreeOp *fop)
 {
     DebugScript *debug = debugScript();
-    uint32_t count = debug->stepMode & stepCountMask;
-
-    setNewStepMode(fop,
-                   (debug->stepMode & stepFlagMask) |
-                   ((count - 1) & stepCountMask));
+    uint32_t count = debug->stepMode;
+    JS_ASSERT(count > 0);
+    setNewStepMode(fop, count - 1);
 }
 
 BreakpointSite *
@@ -3320,20 +3286,7 @@ JSScript::hasBreakpointsAt(jsbytecode *pc)
     if (!site)
         return false;
 
-    return site->enabledCount > 0 || site->trapHandler;
-}
-
-void
-JSScript::clearTraps(FreeOp *fop)
-{
-    if (!hasAnyBreakpointsOrStepMode())
-        return;
-
-    for (jsbytecode *pc = code(); pc < codeEnd(); pc++) {
-        BreakpointSite *site = getBreakpointSite(pc);
-        if (site)
-            site->clearTrap(fop);
-    }
+    return site->enabledCount > 0;
 }
 
 void
@@ -3369,7 +3322,7 @@ JSScript::markChildren(JSTracer *trc)
     }
 
     if (sourceObject()) {
-        JS_ASSERT(sourceObject()->compartment() == compartment());
+        JS_ASSERT(MaybeForwarded(sourceObject())->compartment() == compartment());
         MarkObject(trc, &sourceObject_, "sourceObject");
     }
 
@@ -3391,17 +3344,7 @@ JSScript::markChildren(JSTracer *trc)
 
     bindings.trace(trc);
 
-    if (hasAnyBreakpointsOrStepMode()) {
-        for (unsigned i = 0; i < length(); i++) {
-            BreakpointSite *site = debugScript()->breakpoints[i];
-            if (site && site->trapHandler)
-                MarkValue(trc, &site->trapClosure, "trap closure");
-        }
-    }
-
-#ifdef JS_ION
     jit::TraceIonScripts(trc, this);
-#endif
 }
 
 void
@@ -3494,12 +3437,7 @@ void
 JSScript::setArgumentsHasVarBinding()
 {
     argsHasVarBinding_ = true;
-#ifdef JS_ION
     needsArgsAnalysis_ = true;
-#else
-    // The arguments analysis is performed by IonBuilder.
-    needsArgsObj_ = true;
-#endif
 }
 
 void
@@ -3565,7 +3503,6 @@ JSScript::argumentsOptimizationFailed(JSContext *cx, HandleScript script)
 
     script->needsArgsObj_ = true;
 
-#ifdef JS_ION
     /*
      * Since we can't invalidate baseline scripts, set a flag that's checked from
      * JIT code to indicate the arguments optimization failed and JSOP_ARGUMENTS
@@ -3573,7 +3510,6 @@ JSScript::argumentsOptimizationFailed(JSContext *cx, HandleScript script)
      */
     if (script->hasBaselineScript())
         script->baselineScript()->setNeedsArgsObj();
-#endif
 
     /*
      * By design, the arguments optimization is only made when there are no
@@ -3701,7 +3637,7 @@ LazyScript::CreateRaw(ExclusiveContext *cx, HandleFunction fun,
     size_t bytes = (p.numFreeVariables * sizeof(HeapPtrAtom))
                  + (p.numInnerFunctions * sizeof(HeapPtrFunction));
 
-    ScopedJSFreePtr<void> table(bytes ? cx->malloc_(bytes) : nullptr);
+    ScopedJSFreePtr<uint8_t> table(bytes ? fun->pod_malloc<uint8_t>(bytes) : nullptr);
     if (bytes && !table)
         return nullptr;
 
@@ -3813,7 +3749,6 @@ LazyScript::staticLevel(JSContext *cx) const
 void
 JSScript::updateBaselineOrIonRaw()
 {
-#ifdef JS_ION
     if (hasIonScript()) {
         baselineOrIonRaw = ion->method()->raw();
         baselineOrIonSkipArgCheck = ion->method()->raw() + ion->getSkipArgCheckEntryOffset();
@@ -3824,7 +3759,6 @@ JSScript::updateBaselineOrIonRaw()
         baselineOrIonRaw = nullptr;
         baselineOrIonSkipArgCheck = nullptr;
     }
-#endif
 }
 
 bool

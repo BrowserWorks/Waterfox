@@ -99,7 +99,7 @@
  * under gfx/layers/. To add a new backend, implement at least the following
  * interfaces:
  * - Compositor (ex. CompositorOGL)
- * - TextureHost (ex. SharedTextureHostOGL)
+ * - TextureHost (ex. SurfaceTextureHost)
  * Depending on the type of data that needs to be serialized, you may need to
  * add specific TextureClient implementations.
  */
@@ -197,7 +197,7 @@ protected:
 public:
   NS_INLINE_DECL_REFCOUNTING(Compositor)
 
-  Compositor(PCompositorParent* aParent = nullptr)
+  explicit Compositor(PCompositorParent* aParent = nullptr)
     : mCompositorID(0)
     , mDiagnosticTypes(DiagnosticTypes::NO_DIAGNOSTIC)
     , mParent(aParent)
@@ -342,7 +342,6 @@ public:
    */
   virtual void BeginFrame(const nsIntRegion& aInvalidRegion,
                           const gfx::Rect* aClipRectIn,
-                          const gfx::Matrix& aTransform,
                           const gfx::Rect& aRenderBounds,
                           gfx::Rect* aClipRectOut = nullptr,
                           gfx::Rect* aRenderBoundsOut = nullptr) = 0;
@@ -373,11 +372,8 @@ public:
    * target, usually the screen. Calling this method prepares the compositor to
    * render using a different viewport (that is, size and transform), usually
    * associated with a new render target.
-   * aWorldTransform is the transform from user space to the new viewport's
-   * coordinate space.
    */
-  virtual void PrepareViewport(const gfx::IntSize& aSize,
-                               const gfx::Matrix& aWorldTransform) = 0;
+  virtual void PrepareViewport(const gfx::IntSize& aSize) = 0;
 
   /**
    * Whether textures created by this compositor can receive partial updates.
@@ -490,15 +486,6 @@ public:
   void SetScreenRotation(ScreenRotation aRotation) {
     mScreenRotation = aRotation;
   }
-
-  // On b2g the clip rect is in the coordinate space of the physical screen
-  // independently of its rotation, while the coordinate space of the layers,
-  // on the other hand, depends on the screen orientation.
-  // This only applies to b2g as with other platforms, orientation is handled
-  // at the OS level rather than in Gecko.
-  // In addition, the clip rect needs to be offset by the rendering origin.
-  // This becomes important if intermediate surfaces are used.
-  gfx::Rect ClipRectInLayersCoordinates(gfx::Rect aClip) const;
 
 protected:
   void DrawDiagnosticsInternal(DiagnosticFlags aFlags,

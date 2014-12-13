@@ -3,11 +3,11 @@ manifestparser
 mozhttpd >= 0.5
 mozinfo >= 0.7
 mozprocess >= 0.9
-mozrunner >= 6.0
+mozrunner >= 6.2
 mozdevice >= 0.37
-mozlog >= 2.0
+mozlog >= 2.6
 moznetwork >= 0.21
 mozcrash >= 0.5
 mozprofile >= 0.7
-moztest >= 0.1
+moztest >= 0.7
 mozversion >= 0.2

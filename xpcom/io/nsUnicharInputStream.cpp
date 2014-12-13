@@ -26,7 +26,7 @@
 class StringUnicharInputStream MOZ_FINAL : public nsIUnicharInputStream
 {
 public:
-  StringUnicharInputStream(const nsAString& aString) :
+  explicit StringUnicharInputStream(const nsAString& aString) :
     mString(aString), mPos(0), mLen(aString.Length()) { }
 
   NS_DECL_ISUPPORTS
@@ -422,8 +422,9 @@ nsSimpleUnicharStreamFactory::CreateInstanceFromString(const nsAString& aString,
 }
 
 NS_IMETHODIMP
-nsSimpleUnicharStreamFactory::CreateInstanceFromUTF8Stream(nsIInputStream* aStreamToWrap,
-                                                           nsIUnicharInputStream** aResult)
+nsSimpleUnicharStreamFactory::CreateInstanceFromUTF8Stream(
+    nsIInputStream* aStreamToWrap,
+    nsIUnicharInputStream** aResult)
 {
   *aResult = nullptr;
 

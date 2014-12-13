@@ -17,13 +17,13 @@ namespace mozilla {
 namespace psm {
 
 static_assert(mozilla::pkix::ERROR_BASE ==
-                nsINSSErrorsService::PSM_ERROR_BASE,
-              "mozilla::pkix::ERROR_BASE and "
-                "nsINSSErrorsService::PSM_ERROR_BASE do not match.");
+                nsINSSErrorsService::MOZILLA_PKIX_ERROR_BASE,
+              "MOZILLA_PKIX_ERROR_BASE and "
+                "nsINSSErrorsService::MOZILLA_PKIX_ERROR_BASE do not match.");
 static_assert(mozilla::pkix::ERROR_LIMIT ==
-                nsINSSErrorsService::PSM_ERROR_LIMIT,
-              "PSM_ERROR_LIMIT and "
-                "nsINSSErrorsService::PSM_ERROR_LIMIT do not match.");
+                nsINSSErrorsService::MOZILLA_PKIX_ERROR_LIMIT,
+              "MOZILLA_PKIX_ERROR_LIMIT and "
+                "nsINSSErrorsService::MOZILLA_PKIX_ERROR_LIMIT do not match.");
 
 static bool
 IsPSMError(PRErrorCode error)
@@ -141,7 +141,9 @@ NSSErrorsService::GetErrorClass(nsresult aXPCOMErrorCode, uint32_t *aErrorClass)
     case SSL_ERROR_BAD_CERT_DOMAIN:
     case SEC_ERROR_EXPIRED_CERTIFICATE:
     case SEC_ERROR_CERT_SIGNATURE_ALGORITHM_DISABLED:
+    case SEC_ERROR_CA_CERT_INVALID:
     case mozilla::pkix::MOZILLA_PKIX_ERROR_CA_CERT_USED_AS_END_ENTITY:
+    case mozilla::pkix::MOZILLA_PKIX_ERROR_INADEQUATE_KEY_SIZE:
       *aErrorClass = ERROR_CLASS_BAD_CERT;
       break;
     // Non-overridable errors.

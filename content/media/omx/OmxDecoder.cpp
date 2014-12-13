@@ -419,14 +419,14 @@ static bool isInEmulator()
 
 bool OmxDecoder::AllocateMediaResources()
 {
-  // OMXClient::connect() always returns OK and abort's fatally if
-  // it can't connect.
-  OMXClient client;
-  DebugOnly<status_t> err = client.connect();
-  NS_ASSERTION(err == OK, "Failed to connect to OMX in mediaserver.");
-  sp<IOMX> omx = client.interface();
-
   if ((mVideoTrack != nullptr) && (mVideoSource == nullptr)) {
+    // OMXClient::connect() always returns OK and abort's fatally if
+    // it can't connect.
+    OMXClient client;
+    DebugOnly<status_t> err = client.connect();
+    NS_ASSERTION(err == OK, "Failed to connect to OMX in mediaserver.");
+    sp<IOMX> omx = client.interface();
+
     mNativeWindow = new GonkNativeWindow();
 #if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17
     mNativeWindowClient = new GonkNativeWindowClient(mNativeWindow->getBufferQueue());
@@ -468,6 +468,13 @@ bool OmxDecoder::AllocateMediaResources()
   }
 
   if ((mAudioTrack != nullptr) && (mAudioSource == nullptr)) {
+    // OMXClient::connect() always returns OK and abort's fatally if
+    // it can't connect.
+    OMXClient client;
+    DebugOnly<status_t> err = client.connect();
+    NS_ASSERTION(err == OK, "Failed to connect to OMX in mediaserver.");
+    sp<IOMX> omx = client.interface();
+
     const char *audioMime = nullptr;
     sp<MetaData> meta = mAudioTrack->getFormat();
     if (!meta->findCString(kKeyMIMEType, &audioMime)) {
@@ -511,14 +518,34 @@ bool OmxDecoder::AllocateMediaResources()
 
 
 void OmxDecoder::ReleaseMediaResources() {
+  ReleaseVideoBuffer();
+  ReleaseAudioBuffer();
+
+  {
+    Mutex::Autolock autoLock(mPendingVideoBuffersLock);
+    MOZ_ASSERT(mPendingRecycleTexutreClients.empty());
+    // Release all pending recycle TextureClients, if they are not recycled yet.
+    // This should not happen. See Bug 1042308.
+    if (!mPendingRecycleTexutreClients.empty()) {
+      printf_stderr("OmxDecoder::ReleaseMediaResources -- TextureClients are not recycled yet\n");
+      for (std::set<TextureClient*>::iterator it=mPendingRecycleTexutreClients.begin();
+           it!=mPendingRecycleTexutreClients.end(); it++)
+      {
+        GrallocTextureClientOGL* client = static_cast<GrallocTextureClientOGL*>(*it);
+        client->ClearRecycleCallback();
+        if (client->GetMediaBuffer()) {
+          mPendingVideoBuffers.push(BufferItem(client->GetMediaBuffer(), client->GetReleaseFenceHandle()));
+        }
+      }
+      mPendingRecycleTexutreClients.clear();
+    }
+  }
+
   {
     // Free all pending video buffers.
     Mutex::Autolock autoLock(mSeekLock);
     ReleaseAllPendingVideoBuffersLocked();
   }
-
-  ReleaseVideoBuffer();
-  ReleaseAudioBuffer();
 
   if (mVideoSource.get()) {
     mVideoSource->stop();
@@ -748,6 +775,8 @@ bool OmxDecoder::ReadVideo(VideoFrame *aFrame, int64_t aTimeUs,
     int32_t unreadable;
     int32_t keyFrame;
 
+    size_t length = mVideoBuffer->range_length();
+
     if (!mVideoBuffer->meta_data()->findInt64(kKeyTime, &timeUs) ) {
       NS_WARNING("OMX decoder did not return frame time");
       return false;
@@ -774,6 +803,12 @@ bool OmxDecoder::ReadVideo(VideoFrame *aFrame, int64_t aTimeUs,
       grallocClient->SetMediaBuffer(mVideoBuffer);
       // Set recycle callback for TextureClient
       textureClient->SetRecycleCallback(OmxDecoder::RecycleCallback, this);
+      {
+        Mutex::Autolock autoLock(mPendingVideoBuffersLock);
+        // Store pending recycle TextureClient.
+        MOZ_ASSERT(mPendingRecycleTexutreClients.find(textureClient) == mPendingRecycleTexutreClients.end());
+        mPendingRecycleTexutreClients.insert(textureClient);
+      }
 
       aFrame->mGraphicBuffer = textureClient;
       aFrame->mRotation = mVideoRotation;
@@ -784,9 +819,8 @@ bool OmxDecoder::ReadVideo(VideoFrame *aFrame, int64_t aTimeUs,
       // Release to hold video buffer in OmxDecoder more.
       // MediaBuffer's ref count is changed from 2 to 1.
       ReleaseVideoBuffer();
-    } else if (mVideoBuffer->range_length() > 0) {
+    } else if (length > 0) {
       char *data = static_cast<char *>(mVideoBuffer->data()) + mVideoBuffer->range_offset();
-      size_t length = mVideoBuffer->range_length();
 
       if (unreadable) {
         LOG(PR_LOG_DEBUG, "video frame is unreadable");
@@ -796,8 +830,8 @@ bool OmxDecoder::ReadVideo(VideoFrame *aFrame, int64_t aTimeUs,
         return false;
       }
     }
-
-    if (aKeyframeSkip && timeUs < aTimeUs) {
+    // Check if this frame is valid or not. If not, skip it.
+    if ((aKeyframeSkip && timeUs < aTimeUs) || length == 0) {
       aFrame->mShouldSkip = true;
     }
   }
@@ -1024,14 +1058,32 @@ void OmxDecoder::ReleaseAllPendingVideoBuffersLocked()
   releasingVideoBuffers.clear();
 }
 
+void OmxDecoder::RecycleCallbackImp(TextureClient* aClient)
+{
+  aClient->ClearRecycleCallback();
+  {
+    Mutex::Autolock autoLock(mPendingVideoBuffersLock);
+    if (mPendingRecycleTexutreClients.find(aClient) == mPendingRecycleTexutreClients.end()) {
+      printf_stderr("OmxDecoder::RecycleCallbackImp -- TextureClient is not pending recycle\n");
+      return;
+    }
+    mPendingRecycleTexutreClients.erase(aClient);
+    GrallocTextureClientOGL* client = static_cast<GrallocTextureClientOGL*>(aClient);
+    if (client->GetMediaBuffer()) {
+      mPendingVideoBuffers.push(BufferItem(client->GetMediaBuffer(), client->GetReleaseFenceHandle()));
+    }
+  }
+  sp<AMessage> notify =
+            new AMessage(kNotifyPostReleaseVideoBuffer, mReflector->id());
+  // post AMessage to OmxDecoder via ALooper.
+  notify->post();
+}
+
 /* static */ void
 OmxDecoder::RecycleCallback(TextureClient* aClient, void* aClosure)
 {
   OmxDecoder* decoder = static_cast<OmxDecoder*>(aClosure);
-  GrallocTextureClientOGL* client = static_cast<GrallocTextureClientOGL*>(aClient);
-
-  aClient->ClearRecycleCallback();
-  decoder->PostReleaseVideoBuffer(client->GetMediaBuffer(), client->GetReleaseFenceHandle());
+  decoder->RecycleCallbackImp(aClient);
 }
 
 int64_t OmxDecoder::ProcessCachedData(int64_t aOffset, bool aWaitForCompletion)

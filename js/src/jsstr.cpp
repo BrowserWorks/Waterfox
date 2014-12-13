@@ -4,17 +4,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/*
- * JS string type implementation.
- *
- * In order to avoid unnecessary js_LockGCThing/js_UnlockGCThing calls, these
- * native methods store strings (possibly newborn) converted from their 'this'
- * parameter and arguments on the stack: 'this' conversions at argv[-1], arg
- * conversions at their index (argv[0], argv[1]).  This is a legitimate method
- * of rooting things that might lose their newborn root due to subsequent GC
- * allocations in the same native method.
- */
-
 #include "jsstr.h"
 
 #include "mozilla/Attributes.h"
@@ -69,6 +58,7 @@ using namespace js::unicode;
 using JS::Symbol;
 using JS::SymbolCode;
 
+using mozilla::AssertedCast;
 using mozilla::CheckedInt;
 using mozilla::IsNaN;
 using mozilla::IsNegativeZero;
@@ -77,7 +67,6 @@ using mozilla::Move;
 using mozilla::PodCopy;
 using mozilla::PodEqual;
 using mozilla::RangedPtr;
-using mozilla::SafeCast;
 using mozilla::UniquePtr;
 
 using JS::AutoCheckCannotGC;
@@ -118,7 +107,7 @@ str_encodeURI_Component(JSContext *cx, unsigned argc, Value *vp);
 
 /* ES5 B.2.1 */
 template <typename CharT>
-static jschar *
+static Latin1Char *
 Escape(JSContext *cx, const CharT *chars, uint32_t length, uint32_t *newLengthOut)
 {
     static const uint8_t shouldPassThrough[128] = {
@@ -150,7 +139,7 @@ Escape(JSContext *cx, const CharT *chars, uint32_t length, uint32_t *newLengthOu
                       "newlength must not overflow");
     }
 
-    jschar *newChars = cx->pod_malloc<jschar>(newLength + 1);
+    Latin1Char *newChars = cx->pod_malloc<Latin1Char>(newLength + 1);
     if (!newChars)
         return nullptr;
 
@@ -190,8 +179,7 @@ str_escape(JSContext *cx, unsigned argc, Value *vp)
     if (!str)
         return false;
 
-    /* TODO: Once Latin1 strings are enabled, return a Latin1 string. */
-    ScopedJSFreePtr<jschar> newChars;
+    ScopedJSFreePtr<Latin1Char> newChars;
     uint32_t newLength;
     if (str->hasLatin1Chars()) {
         AutoCheckCannotGC nogc;
@@ -252,7 +240,7 @@ Unescape(StringBuffer &sb, const mozilla::Range<const CharT> chars)
      * comparisons without unsigned-underflow hazards.
      */
     static_assert(JSString::MAX_LENGTH <= INT_MAX, "String length must fit in a signed integer");
-    int length = SafeCast<int>(chars.length());
+    int length = AssertedCast<int>(chars.length());
 
     /*
      * Note that the spec algorithm has been optimized to avoid building
@@ -704,19 +692,36 @@ ToLowerCase(JSContext *cx, JSLinearString *str)
 {
     // Unlike toUpperCase, toLowerCase has the nice invariant that if the input
     // is a Latin1 string, the output is also a Latin1 string.
+    UniquePtr<CharT[], JS::FreePolicy> newChars;
     size_t length = str->length();
-    ScopedJSFreePtr<CharT> newChars(cx->pod_malloc<CharT>(length + 1));
-    if (!newChars)
-        return nullptr;
-
     {
         AutoCheckCannotGC nogc;
         const CharT *chars = str->chars<CharT>(nogc);
-        for (size_t i = 0; i < length; i++) {
+
+        // Look for the first upper case character.
+        size_t i = 0;
+        for (; i < length; i++) {
+            jschar c = chars[i];
+            if (unicode::ToLowerCase(c) != c)
+                break;
+        }
+
+        // If all characters are lower case, return the input string.
+        if (i == length)
+            return str;
+
+        newChars = cx->make_pod_array<CharT>(length + 1);
+        if (!newChars)
+            return nullptr;
+
+        PodCopy(newChars.get(), chars, i);
+
+        for (; i < length; i++) {
             jschar c = unicode::ToLowerCase(chars[i]);
-            MOZ_ASSERT_IF((IsSame<CharT, Latin1Char>::value), c <= 0xff);
+            MOZ_ASSERT_IF((IsSame<CharT, Latin1Char>::value), c <= JSString::MAX_LATIN1_CHAR);
             newChars[i] = c;
         }
+
         newChars[length] = 0;
     }
 
@@ -724,7 +729,7 @@ ToLowerCase(JSContext *cx, JSLinearString *str)
     if (!res)
         return nullptr;
 
-    newChars.forget();
+    newChars.release();
     return res;
 }
 
@@ -781,30 +786,101 @@ str_toLocaleLowerCase(JSContext *cx, unsigned argc, Value *vp)
     return ToLowerCaseHelper(cx, args);
 }
 
+template <typename DestChar, typename SrcChar>
+static void
+ToUpperCaseImpl(DestChar *destChars, const SrcChar *srcChars, size_t firstLowerCase, size_t length)
+{
+    MOZ_ASSERT(firstLowerCase < length);
+
+    for (size_t i = 0; i < firstLowerCase; i++)
+        destChars[i] = srcChars[i];
+
+    for (size_t i = firstLowerCase; i < length; i++) {
+        jschar c = unicode::ToUpperCase(srcChars[i]);
+        MOZ_ASSERT_IF((IsSame<DestChar, Latin1Char>::value), c <= JSString::MAX_LATIN1_CHAR);
+        destChars[i] = c;
+    }
+
+    destChars[length] = '\0';
+}
+
 template <typename CharT>
 static JSString *
 ToUpperCase(JSContext *cx, JSLinearString *str)
 {
-    // toUpperCase on a Latin1 string can yield a non-Latin1 string. For now,
-    // we use a TwoByte string for the result.
-    size_t length = str->length();
-    ScopedJSFreePtr<jschar> newChars(cx->pod_malloc<jschar>(length + 1));
-    if (!newChars)
-        return nullptr;
+    typedef UniquePtr<Latin1Char[], JS::FreePolicy> Latin1CharPtr;
+    typedef UniquePtr<jschar[], JS::FreePolicy> TwoByteCharPtr;
 
+    mozilla::MaybeOneOf<Latin1CharPtr, TwoByteCharPtr> newChars;
+    size_t length = str->length();
     {
         AutoCheckCannotGC nogc;
         const CharT *chars = str->chars<CharT>(nogc);
-        for (size_t i = 0; i < length; i++)
-            newChars[i] = unicode::ToUpperCase(chars[i]);
-        newChars[length] = 0;
+
+        // Look for the first lower case character.
+        size_t i = 0;
+        for (; i < length; i++) {
+            jschar c = chars[i];
+            if (unicode::ToUpperCase(c) != c)
+                break;
+        }
+
+        // If all characters are upper case, return the input string.
+        if (i == length)
+            return str;
+
+        // If the string is Latin1, check if it contains the MICRO SIGN (0xb5)
+        // or SMALL LETTER Y WITH DIAERESIS (0xff) character. The corresponding
+        // upper case characters are not in the Latin1 range.
+        bool resultIsLatin1;
+        if (IsSame<CharT, Latin1Char>::value) {
+            resultIsLatin1 = true;
+            for (size_t j = i; j < length; j++) {
+                Latin1Char c = chars[j];
+                if (c == 0xb5 || c == 0xff) {
+                    MOZ_ASSERT(unicode::ToUpperCase(c) > JSString::MAX_LATIN1_CHAR);
+                    resultIsLatin1 = false;
+                    break;
+                } else {
+                    MOZ_ASSERT(unicode::ToUpperCase(c) <= JSString::MAX_LATIN1_CHAR);
+                }
+            }
+        } else {
+            resultIsLatin1 = false;
+        }
+
+        if (resultIsLatin1) {
+            Latin1CharPtr buf = cx->make_pod_array<Latin1Char>(length + 1);
+            if (!buf)
+                return nullptr;
+
+            ToUpperCaseImpl(buf.get(), chars, i, length);
+            newChars.construct<Latin1CharPtr>(buf);
+        } else {
+            TwoByteCharPtr buf = cx->make_pod_array<jschar>(length + 1);
+            if (!buf)
+                return nullptr;
+
+            ToUpperCaseImpl(buf.get(), chars, i, length);
+            newChars.construct<TwoByteCharPtr>(buf);
+        }
     }
 
-    JSString *res = NewString<CanGC>(cx, newChars.get(), length);
-    if (!res)
-        return nullptr;
+    JSString *res;
+    if (newChars.constructed<Latin1CharPtr>()) {
+        res = NewStringDontDeflate<CanGC>(cx, newChars.ref<Latin1CharPtr>().get(), length);
+        if (!res)
+            return nullptr;
 
-    newChars.forget();
+        newChars.ref<Latin1CharPtr>().release();
+    } else {
+        res = NewStringDontDeflate<CanGC>(cx, newChars.ref<TwoByteCharPtr>().get(), length);
+        if (!res)
+            return nullptr;
+
+        newChars.ref<TwoByteCharPtr>().release();
+    }
+
     return res;
 }
 
@@ -938,7 +1014,7 @@ str_normalize(JSContext *cx, unsigned argc, Value *vp)
     static const size_t INLINE_CAPACITY = 32;
 
     const UChar *srcChars = JSCharToUChar(stableChars.twoByteRange().start().get());
-    int32_t srcLen = SafeCast<int32_t>(str->length());
+    int32_t srcLen = AssertedCast<int32_t>(str->length());
     Vector<jschar, INLINE_CAPACITY> chars(cx);
     if (!chars.resize(INLINE_CAPACITY))
         return false;
@@ -4210,6 +4286,7 @@ js::str_fromCharCode_one_arg(JSContext *cx, HandleValue code, MutableHandleValue
 static const JSFunctionSpec string_static_methods[] = {
     JS_FN("fromCharCode", js::str_fromCharCode, 1, 0),
     JS_SELF_HOSTED_FN("fromCodePoint", "String_static_fromCodePoint", 0,0),
+    JS_SELF_HOSTED_FN("raw", "String_static_raw", 2, 0),
 
     // This must be at the end because of bug 853075: functions listed after
     // self-hosted methods aren't available in self-hosted code.
@@ -4563,16 +4640,26 @@ js_strcmp(const jschar *lhs, const jschar *rhs)
     }
 }
 
+UniquePtr<char[], JS::FreePolicy>
+js::DuplicateString(js::ThreadSafeContext *cx, const char *s)
+{
+    size_t n = strlen(s) + 1;
+    auto ret = cx->make_pod_array<char>(n);
+    if (!ret)
+        return ret;
+    PodCopy(ret.get(), s, n);
+    return ret;
+}
+
 UniquePtr<jschar[], JS::FreePolicy>
 js::DuplicateString(js::ThreadSafeContext *cx, const jschar *s)
 {
-    size_t n = js_strlen(s);
-    auto ret = cx->make_pod_array<jschar>(n + 1);
+    size_t n = js_strlen(s) + 1;
+    auto ret = cx->make_pod_array<jschar>(n);
     if (!ret)
         return ret;
-    js_strncpy(ret.get(), s, n);
-    ret[n] = '\0';
-    return Move(ret);
+    PodCopy(ret.get(), s, n);
+    return ret;
 }
 
 template <typename CharT>

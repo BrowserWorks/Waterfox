@@ -47,6 +47,7 @@ UNIFIED_SOURCES += [
     'nsMIMEInputStream.cpp',
     'nsNetAddr.cpp',
     'nsNetStrings.cpp',
+    'nsNetUtil.cpp',
     'nsPACMan.cpp',
     'nsPreloadedStream.cpp',
     'nsProtocolProxyService.cpp',
@@ -114,7 +115,7 @@ MSVC_ENABLE_PGO = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
-FINAL_LIBRARY = 'necko'
+FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '/dom/base',
     '/netwerk/protocol/http'
@@ -133,3 +134,6 @@ if CONFIG['MOZ_ENABLE_QTNETWORK']:
 
 if CONFIG['ENABLE_TESTS']:
     DEFINES['PREDICTOR_TESTS'] = True
+
+if CONFIG['MOZ_ENABLE_QTNETWORK']:
+    CXXFLAGS += CONFIG['MOZ_QT_CFLAGS']

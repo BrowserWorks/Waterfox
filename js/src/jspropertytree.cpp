@@ -17,6 +17,7 @@
 #include "vm/Shape-inl.h"
 
 using namespace js;
+using namespace js::gc;
 
 inline HashNumber
 ShapeHasher::hash(const Lookup &l)
@@ -145,10 +146,10 @@ PropertyTree::getChild(ExclusiveContext *cx, Shape *parentArg, StackShape &unroo
     if (kidp->isShape()) {
         Shape *kid = kidp->toShape();
         if (kid->matches(unrootedChild))
-        existingShape = kid;
+            existingShape = kid;
     } else if (kidp->isHash()) {
         if (KidsHash::Ptr p = kidp->toHash()->lookup(unrootedChild))
-        existingShape = *p;
+            existingShape = *p;
     } else {
         /* If kidp->isNull(), we always insert. */
     }
@@ -156,7 +157,7 @@ PropertyTree::getChild(ExclusiveContext *cx, Shape *parentArg, StackShape &unroo
 #ifdef JSGC_INCREMENTAL
     if (existingShape) {
         JS::Zone *zone = existingShape->zone();
-        if (zone->needsBarrier()) {
+        if (zone->needsIncrementalBarrier()) {
             /*
              * We need a read barrier for the shape tree, since these are weak
              * pointers.
@@ -174,6 +175,8 @@ PropertyTree::getChild(ExclusiveContext *cx, Shape *parentArg, StackShape &unroo
             JS_ASSERT(parent->isMarked());
             parent->removeChild(existingShape);
             existingShape = nullptr;
+        } else if (existingShape->isMarked(gc::GRAY)) {
+            JS::UnmarkGrayGCThingRecursively(existingShape, JSTRACE_SHAPE);
         }
     }
 #endif
@@ -218,7 +221,7 @@ PropertyTree::lookupChild(ThreadSafeContext *cx, Shape *parent, const StackShape
 #if defined(JSGC_INCREMENTAL) && defined(DEBUG)
     if (shape) {
         JS::Zone *zone = shape->arenaHeader()->zone;
-        JS_ASSERT(!zone->needsBarrier());
+        JS_ASSERT(!zone->needsIncrementalBarrier());
         JS_ASSERT(!(zone->isGCSweeping() && !shape->isMarked() &&
                     !shape->arenaHeader()->allocatedDuringIncremental));
     }
@@ -266,6 +269,76 @@ Shape::finalize(FreeOp *fop)
         fop->delete_(kids.toHash());
 }
 
+#ifdef JSGC_COMPACTING
+
+void
+Shape::fixupDictionaryShapeAfterMovingGC()
+{
+    if (!listp)
+        return;
+
+    JS_ASSERT(!IsInsideNursery(reinterpret_cast<Cell *>(listp)));
+    AllocKind kind = reinterpret_cast<Cell *>(listp)->tenuredGetAllocKind();
+    JS_ASSERT(kind == FINALIZE_SHAPE || kind <= FINALIZE_OBJECT_LAST);
+    if (kind == FINALIZE_SHAPE) {
+        // listp points to the parent field of the next shape.
+        Shape *next = reinterpret_cast<Shape *>(uintptr_t(listp) -
+                                                offsetof(Shape, parent));
+        listp = &gc::MaybeForwarded(next)->parent;
+    } else {
+        // listp points to the shape_ field of an object.
+        JSObject *last = reinterpret_cast<JSObject *>(uintptr_t(listp) -
+                                                      offsetof(JSObject, shape_));
+        listp = &gc::MaybeForwarded(last)->shape_;
+    }
+}
+
+void
+Shape::fixupShapeTreeAfterMovingGC()
+{
+    if (kids.isNull())
+        return;
+
+    if (kids.isShape()) {
+        if (gc::IsForwarded(kids.toShape()))
+            kids.setShape(gc::Forwarded(kids.toShape()));
+        return;
+    }
+
+    JS_ASSERT(kids.isHash());
+    KidsHash *kh = kids.toHash();
+    for (KidsHash::Enum e(*kh); !e.empty(); e.popFront()) {
+        Shape *key = e.front();
+        if (!IsForwarded(key))
+            continue;
+
+        key = Forwarded(key);
+        BaseShape *base = key->base();
+        if (IsForwarded(base))
+            base = Forwarded(base);
+        UnownedBaseShape *unowned = base->unowned();
+        if (IsForwarded(unowned))
+            unowned = Forwarded(unowned);
+        StackShape lookup(unowned,
+                          const_cast<Shape *>(key)->propidRef(),
+                          key->slotInfo & Shape::SLOT_MASK,
+                          key->attrs,
+                          key->flags);
+        e.rekeyFront(lookup, key);
+    }
+}
+
+void
+Shape::fixupAfterMovingGC()
+{
+    if (inDictionary())
+        fixupDictionaryShapeAfterMovingGC();
+    else
+        fixupShapeTreeAfterMovingGC();
+}
+
+#endif // JSGC_COMPACTING
+
 #ifdef DEBUG
 
 void
@@ -293,18 +366,14 @@ Shape::dump(JSContext *cx, FILE *fp) const
 
     if (JSID_IS_INT(propid)) {
         fprintf(fp, "[%ld]", (long) JSID_TO_INT(propid));
+    } else if (JSID_IS_ATOM(propid)) {
+        if (JSLinearString *str = JSID_TO_ATOM(propid))
+            FileEscapedString(fp, str, '"');
+        else
+            fputs("<error>", fp);
     } else {
-        JSLinearString *str;
-        if (JSID_IS_ATOM(propid)) {
-            str = JSID_TO_ATOM(propid);
-            if (!str)
-                fputs("<error>", fp);
-            else
-                FileEscapedString(fp, str, '"');
-        } else {
-            JS_ASSERT(JSID_IS_SYMBOL(propid));
-            JSID_TO_SYMBOL(propid)->dump(fp);
-        }
+        JS_ASSERT(JSID_IS_SYMBOL(propid));
+        JSID_TO_SYMBOL(propid)->dump(fp);
     }
 
     fprintf(fp, " g/s %p/%p slot %d attrs %x ",

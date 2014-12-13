@@ -437,7 +437,7 @@ nsXULTemplateBuilder::Init(nsIContent* aElement)
     NS_ENSURE_TRUE(aElement, NS_ERROR_NULL_POINTER);
     mRoot = aElement;
 
-    nsCOMPtr<nsIDocument> doc = mRoot->GetDocument();
+    nsCOMPtr<nsIDocument> doc = mRoot->GetComposedDoc();
     NS_ASSERTION(doc, "element has no document");
     if (! doc)
         return NS_ERROR_UNEXPECTED;
@@ -695,7 +695,8 @@ nsXULTemplateBuilder::UpdateResultInContainer(nsIXULTemplateResult* aOldResult,
     // with a higher priority is active, the new match will override it, so
     // content will need to be generated for the new match and removed for
     // this existing active match.
-    nsTemplateMatch* replacedmatch = nullptr, * replacedmatchtodelete = nullptr;
+    nsTemplateMatch* replacedmatch = nullptr;
+    nsTemplateMatch* replacedmatchtodelete = nullptr;
 
     if (aOldResult) {
         nsTemplateMatch* firstmatch;
@@ -1370,7 +1371,7 @@ nsXULTemplateBuilder::InitHTMLTemplateRoot()
     // 'database' and 'builder' properties onto aElement.
     nsresult rv;
 
-    nsCOMPtr<nsIDocument> doc = mRoot->GetDocument();
+    nsCOMPtr<nsIDocument> doc = mRoot->GetComposedDoc();
     NS_ASSERTION(doc, "no document");
     if (! doc)
         return NS_ERROR_UNEXPECTED;
@@ -1634,7 +1635,7 @@ nsXULTemplateBuilder::GetTemplateRoot(nsIContent** aResult)
     mRoot->GetAttr(kNameSpaceID_None, nsGkAtoms::_template, templateID);
 
     if (! templateID.IsEmpty()) {
-        nsCOMPtr<nsIDOMDocument> domDoc = do_QueryInterface(mRoot->GetDocument());
+        nsCOMPtr<nsIDOMDocument> domDoc = do_QueryInterface(mRoot->GetComposedDoc());
         if (! domDoc)
             return NS_OK;
 

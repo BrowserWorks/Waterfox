@@ -257,6 +257,16 @@ interface CameraControl : MediaStream
   [Throws]
   void setPictureSize(optional CameraSize size);
 
+  /* if the image blob to be returned by takePicture() supports lossy
+     compression, this setting controls the quality-size trade-off;
+     valid values range from 0.0 for smallest size/worst quality to 1.0
+     for largest size/best quality. Note that depending on the range of
+     values supported by the underlying platform, this attribute may not
+     'get' the exact value that was previously 'set'. If this setting is
+     not supported, it is ignored. */
+  [Throws]
+  attribute double           pictureQuality;
+
   /* the size of the thumbnail to be included in the picture returned
      by a call to takePicture(), assuming the chosen fileFormat supports
      one; an object with 'height' and 'width' properties that corresponds
@@ -287,6 +297,10 @@ interface CameraControl : MediaStream
      invoked. */
   [Pref="camera.control.autofocus_moving_callback.enabled"]
   attribute CameraAutoFocusMovingCallback? onAutoFocusMoving;
+
+  /* this function is called whenever auto focus completes, due to continuous
+     autofocus or a solicited auto focus.  */
+  attribute CameraAutoFocusCallback? onAutoFocusCompleted;
 
   /* capture an image and return it as a blob to the 'onSuccess' callback;
      if the camera supports it, this may be invoked while the camera is

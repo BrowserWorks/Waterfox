@@ -67,7 +67,7 @@ sndio_mainloop(void *arg)
 #define MAXFDS 8
   struct pollfd pfds[MAXFDS];
   cubeb_stream *s = arg;
-  int n, nfds, revents, state;
+  int n, nfds, revents, state = CUBEB_STATE_STARTED;
   size_t start = 0, end = 0;
   long nfr;
 
@@ -271,7 +271,7 @@ static int
 sndio_get_min_latency(cubeb * ctx, cubeb_stream_params params, uint32_t * latency_ms)
 {
   // XXX Not yet implemented.
-  latency_ms = 40;
+  *latency_ms = 40;
 
   return CUBEB_OK;
 }
@@ -341,6 +341,13 @@ sndio_stream_get_latency(cubeb_stream * stm, uint32_t * latency)
   return CUBEB_OK;
 }
 
+int
+sndio_stream_set_panning(cubeb_stream * stm, float panning)
+{
+  assert(false && "not implemented");
+  return CUBEB_OK;
+}
+
 static struct cubeb_ops const sndio_ops = {
   .init = sndio_init,
   .get_backend_id = sndio_get_backend_id,
@@ -353,5 +360,10 @@ static struct cubeb_ops const sndio_ops = {
   .stream_start = sndio_stream_start,
   .stream_stop = sndio_stream_stop,
   .stream_get_position = sndio_stream_get_position,
-  .stream_get_latency = sndio_stream_get_latency
+  .stream_get_latency = sndio_stream_get_latency,
+  .stream_set_volume = sndio_stream_set_volume,
+  .stream_set_panning = sndio_stream_set_panning,
+  .stream_get_current_device = NULL,
+  .stream_device_destroy = NULL,
+  .stream_register_device_changed_callback = NULL
 };

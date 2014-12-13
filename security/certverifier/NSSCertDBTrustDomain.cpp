@@ -33,6 +33,8 @@ using namespace mozilla::pkix;
 extern PRLogModuleInfo* gCertVerifierLog;
 #endif
 
+static const uint64_t ServerFailureDelaySeconds = 5 * 60;
+
 namespace mozilla { namespace psm {
 
 const char BUILTIN_ROOTS_MODULE_DEFAULT_NAME[] = "Builtin Roots Module";
@@ -78,12 +80,6 @@ static const uint8_t ANSSI_SUBJECT_DATA[] =
                        "\x73\x67\x64\x6E\x2E\x70\x6D\x2E\x67\x6F\x75"
                        "\x76\x2E\x66\x72";
 
-static const SECItem ANSSI_SUBJECT = {
-  siBuffer,
-  const_cast<uint8_t*>(ANSSI_SUBJECT_DATA),
-  sizeof(ANSSI_SUBJECT_DATA) - 1
-};
-
 static const uint8_t PERMIT_FRANCE_GOV_NAME_CONSTRAINTS_DATA[] =
                        "\x30\x5D" // SEQUENCE (length=93)
                        "\xA0\x5B" // permittedSubtrees (length=91)
@@ -101,32 +97,46 @@ static const uint8_t PERMIT_FRANCE_GOV_NAME_CONSTRAINTS_DATA[] =
                        "\x30\x05\x82\x03" ".nc"
                        "\x30\x05\x82\x03" ".tf";
 
-static const SECItem PERMIT_FRANCE_GOV_NAME_CONSTRAINTS = {
-  siBuffer,
-  const_cast<uint8_t*>(PERMIT_FRANCE_GOV_NAME_CONSTRAINTS_DATA),
-  sizeof(PERMIT_FRANCE_GOV_NAME_CONSTRAINTS_DATA) - 1
-};
-
 Result
-NSSCertDBTrustDomain::FindIssuer(const SECItem& encodedIssuerName,
-                                 IssuerChecker& checker, PRTime time)
+NSSCertDBTrustDomain::FindIssuer(Input encodedIssuerName,
+                                 IssuerChecker& checker, Time)
 {
   // TODO: NSS seems to be ambiguous between "no potential issuers found" and
   // "there was an error trying to retrieve the potential issuers."
+  SECItem encodedIssuerNameSECItem = UnsafeMapInputToSECItem(encodedIssuerName);
   ScopedCERTCertList
     candidates(CERT_CreateSubjectCertList(nullptr, CERT_GetDefaultCertDB(),
-                                          &encodedIssuerName, time, true));
+                                          &encodedIssuerNameSECItem, 0,
+                                          false));
   if (candidates) {
     for (CERTCertListNode* n = CERT_LIST_HEAD(candidates);
          !CERT_LIST_END(n, candidates); n = CERT_LIST_NEXT(n)) {
-      const SECItem* additionalNameConstraints = nullptr;
-      // TODO: Use CERT_CompareName or equivalent
-      if (SECITEM_ItemsAreEqual(&encodedIssuerName, &ANSSI_SUBJECT)) {
-        additionalNameConstraints = &PERMIT_FRANCE_GOV_NAME_CONSTRAINTS;
+      Input certDER;
+      Result rv = certDER.Init(n->cert->derCert.data, n->cert->derCert.len);
+      if (rv != Success) {
+        continue; // probably too big
       }
+
       bool keepGoing;
-      Result rv = checker.Check(n->cert->derCert,
-                                additionalNameConstraints, keepGoing);
+      Input anssiSubject;
+      rv = anssiSubject.Init(ANSSI_SUBJECT_DATA,
+                             sizeof(ANSSI_SUBJECT_DATA) - 1);
+      if (rv != Success) {
+        return Result::FATAL_ERROR_LIBRARY_FAILURE;
+      }
+      // TODO: Use CERT_CompareName or equivalent
+      if (InputsAreEqual(encodedIssuerName, anssiSubject)) {
+        Input anssiNameConstraints;
+        if (anssiNameConstraints.Init(
+                PERMIT_FRANCE_GOV_NAME_CONSTRAINTS_DATA,
+                sizeof(PERMIT_FRANCE_GOV_NAME_CONSTRAINTS_DATA) - 1)
+              != Success) {
+          return Result::FATAL_ERROR_LIBRARY_FAILURE;
+        }
+        rv = checker.Check(certDER, &anssiNameConstraints, keepGoing);
+      } else {
+        rv = checker.Check(certDER, nullptr, keepGoing);
+      }
       if (rv != Success) {
         return rv;
       }
@@ -142,14 +152,9 @@ NSSCertDBTrustDomain::FindIssuer(const SECItem& encodedIssuerName,
 Result
 NSSCertDBTrustDomain::GetCertTrust(EndEntityOrCA endEntityOrCA,
                                    const CertPolicyId& policy,
-                                   const SECItem& candidateCertDER,
-                                   /*out*/ TrustLevel* trustLevel)
+                                   Input candidateCertDER,
+                                   /*out*/ TrustLevel& trustLevel)
 {
-  PR_ASSERT(trustLevel);
-  if (!trustLevel) {
-    return Result::FATAL_ERROR_INVALID_ARGS;
-  }
-
 #ifdef MOZ_NO_EV_CERTS
   if (!policy.IsAnyPolicy()) {
     return Result::ERROR_POLICY_VALIDATION_FAILED;
@@ -162,10 +167,10 @@ NSSCertDBTrustDomain::GetCertTrust(EndEntityOrCA endEntityOrCA,
   // CERT_NewTempCertificate to get a CERTCertificate shouldn't be a
   // performance problem because NSS will just find the existing
   // CERTCertificate in its in-memory cache and return it.
+  SECItem candidateCertDERSECItem = UnsafeMapInputToSECItem(candidateCertDER);
   ScopedCERTCertificate candidateCert(
-    CERT_NewTempCertificate(CERT_GetDefaultCertDB(),
-                            const_cast<SECItem*>(&candidateCertDER), nullptr,
-                            false, true));
+    CERT_NewTempCertificate(CERT_GetDefaultCertDB(), &candidateCertDERSECItem,
+                            nullptr, false, true));
   if (!candidateCert) {
     return MapPRErrorCodeToResult(PR_GetError());
   }
@@ -177,19 +182,19 @@ NSSCertDBTrustDomain::GetCertTrust(EndEntityOrCA endEntityOrCA,
   // "We have a trust record."
   CERTCertTrust trust;
   if (CERT_GetCertTrust(candidateCert.get(), &trust) == SECSuccess) {
-    PRUint32 flags = SEC_GET_TRUST_FLAGS(&trust, mCertDBTrustType);
+    uint32_t flags = SEC_GET_TRUST_FLAGS(&trust, mCertDBTrustType);
 
     // For DISTRUST, we use the CERTDB_TRUSTED or CERTDB_TRUSTED_CA bit,
     // because we can have active distrust for either type of cert. Note that
     // CERTDB_TERMINAL_RECORD means "stop trying to inherit trust" so if the
     // relevant trust bit isn't set then that means the cert must be considered
     // distrusted.
-    PRUint32 relevantTrustBit =
+    uint32_t relevantTrustBit =
       endEntityOrCA == EndEntityOrCA::MustBeCA ? CERTDB_TRUSTED_CA
                                                : CERTDB_TRUSTED;
     if (((flags & (relevantTrustBit|CERTDB_TERMINAL_RECORD)))
             == CERTDB_TERMINAL_RECORD) {
-      *trustLevel = TrustLevel::ActivelyDistrusted;
+      trustLevel = TrustLevel::ActivelyDistrusted;
       return Success;
     }
 
@@ -198,32 +203,32 @@ NSSCertDBTrustDomain::GetCertTrust(EndEntityOrCA endEntityOrCA,
     // Gecko implemented nsICertOverrideService.
     if (flags & CERTDB_TRUSTED_CA) {
       if (policy.IsAnyPolicy()) {
-        *trustLevel = TrustLevel::TrustAnchor;
+        trustLevel = TrustLevel::TrustAnchor;
         return Success;
       }
 #ifndef MOZ_NO_EV_CERTS
       if (CertIsAuthoritativeForEVPolicy(candidateCert.get(), policy)) {
-        *trustLevel = TrustLevel::TrustAnchor;
+        trustLevel = TrustLevel::TrustAnchor;
         return Success;
       }
 #endif
     }
   }
 
-  *trustLevel = TrustLevel::InheritsTrust;
+  trustLevel = TrustLevel::InheritsTrust;
   return Success;
 }
 
 Result
 NSSCertDBTrustDomain::VerifySignedData(const SignedDataWithSignature& signedData,
-                                       const SECItem& subjectPublicKeyInfo)
+                                       Input subjectPublicKeyInfo)
 {
   return ::mozilla::pkix::VerifySignedData(signedData, subjectPublicKeyInfo,
                                            mPinArg);
 }
 
 Result
-NSSCertDBTrustDomain::DigestBuf(const SECItem& item,
+NSSCertDBTrustDomain::DigestBuf(Input item,
                                 /*out*/ uint8_t* digestBuf, size_t digestBufLen)
 {
   return ::mozilla::pkix::DigestBuf(item, digestBuf, digestBufLen);
@@ -257,15 +262,13 @@ OCSPFetchingTypeToTimeoutTime(NSSCertDBTrustDomain::OCSPFetching ocspFetching)
 // by the arena.
 static Result
 GetOCSPAuthorityInfoAccessLocation(PLArenaPool* arena,
-                                   const SECItem& aiaExtension,
+                                   Input aiaExtension,
                                    /*out*/ char const*& url)
 {
   url = nullptr;
-
-  // TODO(bug 1028380): Remove the const_cast.
-  CERTAuthInfoAccess** aia = CERT_DecodeAuthInfoAccessExtension(
-                                arena,
-                                const_cast<SECItem*>(&aiaExtension));
+  SECItem aiaExtensionSECItem = UnsafeMapInputToSECItem(aiaExtension);
+  CERTAuthInfoAccess** aia =
+    CERT_DecodeAuthInfoAccessExtension(arena, &aiaExtensionSECItem);
   if (!aia) {
     return Result::ERROR_CERT_BAD_ACCESS_LOCATION;
   }
@@ -306,9 +309,9 @@ GetOCSPAuthorityInfoAccessLocation(PLArenaPool* arena,
 
 Result
 NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
-                                      const CertID& certID, PRTime time,
-                         /*optional*/ const SECItem* stapledOCSPResponse,
-                         /*optional*/ const SECItem* aiaExtension)
+                                      const CertID& certID, Time time,
+                         /*optional*/ const Input* stapledOCSPResponse,
+                         /*optional*/ const Input* aiaExtension)
 {
   // Actively distrusted certificates will have already been blocked by
   // GetCertTrust.
@@ -371,7 +374,7 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
   }
 
   Result cachedResponseResult = Success;
-  PRTime cachedResponseValidThrough = 0;
+  Time cachedResponseValidThrough(Time::uninitialized);
   bool cachedResponsePresent = mOCSPCache.Get(certID,
                                               cachedResponseResult,
                                               cachedResponseValidThrough);
@@ -484,7 +487,7 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
 
   // Only request a response if we didn't have a cached indication of failure
   // (don't keep requesting responses from a failing server).
-  const SECItem* response;
+  Input response;
   bool attemptedRequest;
   if (cachedResponseResult == Success ||
       cachedResponseResult == Result::ERROR_OCSP_UNKNOWN_CERT ||
@@ -501,25 +504,30 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
       ocspRequest,
       static_cast<unsigned int>(ocspRequestLength)
     };
-    response = DoOCSPRequest(arena.get(), url, &ocspRequestItem,
-                             OCSPFetchingTypeToTimeoutTime(mOCSPFetching),
-                             mOCSPGetConfig == CertVerifier::ocsp_get_enabled);
-    if (!response) {
+    // Owned by arena
+    const SECItem* responseSECItem =
+      DoOCSPRequest(arena.get(), url, &ocspRequestItem,
+                    OCSPFetchingTypeToTimeoutTime(mOCSPFetching),
+                    mOCSPGetConfig == CertVerifier::ocsp_get_enabled);
+    if (!responseSECItem) {
       rv = MapPRErrorCodeToResult(PR_GetError());
+    } else if (response.Init(responseSECItem->data, responseSECItem->len)
+                 != Success) {
+      rv = Result::ERROR_OCSP_MALFORMED_RESPONSE; // too big
     }
     attemptedRequest = true;
   } else {
     rv = cachedResponseResult;
-    response = nullptr;
     attemptedRequest = false;
   }
 
-  // If we don't have a response, either something went wrong when fetching it
-  // or we didn't attempt to fetch a response because of a failing responder.
-  if (!response) {
+  if (response.GetLength() == 0) {
     Result error = rv;
     if (attemptedRequest) {
-      PRTime timeout = time + ServerFailureDelay;
+      Time timeout(time);
+      if ( timeout.AddSeconds(ServerFailureDelaySeconds) != Success) {
+        return Result::FATAL_ERROR_LIBRARY_FAILURE; // integer overflow
+      }
       rv = mOCSPCache.Put(certID, error, time, timeout);
       if (rv != Success) {
         return rv;
@@ -556,7 +564,7 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
   bool expired;
   rv = VerifyAndMaybeCacheEncodedOCSPResponse(certID, time,
                                               maxOCSPLifetimeInDays,
-                                              *response, ResponseIsFromNetwork,
+                                              response, ResponseIsFromNetwork,
                                               expired);
   if (rv == Success || mOCSPFetching != FetchOCSPForDVSoftFail) {
     PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
@@ -583,12 +591,12 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
 
 Result
 NSSCertDBTrustDomain::VerifyAndMaybeCacheEncodedOCSPResponse(
-  const CertID& certID, PRTime time, uint16_t maxLifetimeInDays,
-  const SECItem& encodedResponse, EncodedResponseSource responseSource,
+  const CertID& certID, Time time, uint16_t maxLifetimeInDays,
+  Input encodedResponse, EncodedResponseSource responseSource,
   /*out*/ bool& expired)
 {
-  PRTime thisUpdate = 0;
-  PRTime validThrough = 0;
+  Time thisUpdate(Time::uninitialized);
+  Time validThrough(Time::uninitialized);
   Result rv = VerifyEncodedOCSPResponse(*this, certID, time,
                                         maxLifetimeInDays, encodedResponse,
                                         expired, &thisUpdate, &validThrough);
@@ -604,7 +612,10 @@ NSSCertDBTrustDomain::VerifyAndMaybeCacheEncodedOCSPResponse(
   // repeatedly requesting a response from a failing server).
   if (rv != Success && rv != Result::ERROR_REVOKED_CERTIFICATE &&
       rv != Result::ERROR_OCSP_UNKNOWN_CERT) {
-    validThrough = time + ServerFailureDelay;
+    validThrough = time;
+    if (validThrough.AddSeconds(ServerFailureDelaySeconds) != Success) {
+      return Result::FATAL_ERROR_LIBRARY_FAILURE; // integer overflow
+    }
   }
   if (responseSource == ResponseIsFromNetwork ||
       rv == Success ||
@@ -663,7 +674,7 @@ NSSCertDBTrustDomain::IsChainValid(const DERArray& certArray)
 }
 
 Result
-NSSCertDBTrustDomain::CheckPublicKey(const SECItem& subjectPublicKeyInfo)
+NSSCertDBTrustDomain::CheckPublicKey(Input subjectPublicKeyInfo)
 {
   return ::mozilla::pkix::CheckPublicKey(subjectPublicKeyInfo);
 }

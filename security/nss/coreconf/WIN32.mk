@@ -21,11 +21,11 @@ ifdef NS_USE_GCC
 	RC           = windres.exe -O coff --use-temp-file
 	LINK_DLL      = $(CC) $(OS_DLLFLAGS) $(DLLFLAGS)
 else
-	CC           = cl
-	CCC          = cl
-	LINK         = link
-	AR           = lib
-	AR          += -NOLOGO -OUT:$@
+	CC           = icl
+	CCC          = icl
+	LINK         = xilink
+	AR           = xilib
+	AR          += -NOLOGO -OUT:"$@"
 	RANLIB       = echo
 	BSDECHO      = echo
 	RC           = rc.exe
@@ -122,7 +122,7 @@ ifdef NS_USE_GCC
 	SPACE      := $(NULLSTRING) # end of the line
 	USERNAME   := $(subst $(SPACE),_,$(USERNAME))
 	USERNAME   := $(subst -,_,$(USERNAME))
-	DEFINES    += -DDEBUG -D_DEBUG -UNDEBUG
+	DEFINES    += -DDEBUG -D_DEBUG -UNDEBUG -DDEBUG_$(USERNAME)
     endif
 else # !NS_USE_GCC
     OS_CFLAGS += -W3 -nologo -D_CRT_SECURE_NO_WARNINGS \
@@ -178,7 +178,7 @@ else # !NS_USE_GCC
 	SPACE      := $(NULLSTRING) # end of the line
 	USERNAME   := $(subst $(SPACE),_,$(USERNAME))
 	USERNAME   := $(subst -,_,$(USERNAME))
-	DEFINES    += -DDEBUG -D_DEBUG -UNDEBUG
+	DEFINES    += -DDEBUG -D_DEBUG -UNDEBUG -DDEBUG_$(USERNAME)
 	DLLFLAGS   += -DEBUG -OUT:$@
 	LDFLAGS    += -DEBUG 
 ifeq ($(_MSC_VER),$(_MSC_VER_6))

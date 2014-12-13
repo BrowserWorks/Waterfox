@@ -14,7 +14,6 @@
 #include "gfxContext.h"                 // for GraphicsOperator
 #include "gfxTypes.h"
 #include "gfxColor.h"                   // for gfxRGBA
-#include "gfxMatrix.h"                  // for gfxMatrix
 #include "GraphicsFilter.h"             // for GraphicsFilter
 #include "gfxPoint.h"                   // for gfxPoint
 #include "gfxRect.h"                    // for gfxRect
@@ -53,6 +52,7 @@ extern uint8_t gLayerManagerLayerBuilder;
 
 namespace mozilla {
 
+class ComputedTimingFunction;
 class FrameLayerBuilder;
 class StyleAnimationValue;
 class WebGLContext;
@@ -64,10 +64,6 @@ class SurfaceStream;
 
 namespace gfx {
 class DrawTarget;
-}
-
-namespace css {
-class ComputedTimingFunction;
 }
 
 namespace dom {
@@ -82,6 +78,7 @@ class AsyncPanZoomController;
 class ClientLayerManager;
 class CommonLayerAttributes;
 class Layer;
+class LayerMetricsWrapper;
 class ThebesLayer;
 class ContainerLayer;
 class ImageLayer;
@@ -100,6 +97,10 @@ class SurfaceDescriptor;
 class Compositor;
 struct TextureFactoryIdentifier;
 struct EffectMask;
+
+namespace layerscope {
+class LayersPacket;
+}
 
 #define MOZ_LAYER_DECL_NAME(n, e)                           \
   virtual const char* Name() const { return n; }            \
@@ -336,14 +337,25 @@ public:
 
   /**
    * Does a breadth-first search from the root layer to find the first
-   * scrollable layer.
+   * scrollable layer, and returns its ViewID. Note that there may be
+   * other layers in the tree which share the same ViewID.
    * Can be called any time.
    */
-  Layer* GetPrimaryScrollableLayer();
+  FrameMetrics::ViewID GetRootScrollableLayerId();
+
+  /**
+   * Does a breadth-first search from the root layer to find the first
+   * scrollable layer, and returns all the layers that have that ViewID
+   * as the first scrollable metrics in their ancestor chain. If no
+   * scrollable layers are found it just returns the root of the tree if
+   * there is one.
+   */
+  void GetRootScrollableLayers(nsTArray<Layer*>& aArray);
 
   /**
    * Returns a list of all descendant layers for which
-   * GetFrameMetrics().IsScrollable() is true.
+   * GetFrameMetrics().IsScrollable() is true and that
+   * do not already have an ancestor in the return list.
    */
   void GetScrollableLayers(nsTArray<Layer*>& aArray);
 
@@ -574,22 +586,13 @@ public:
    * Dump information about just this layer manager itself to aStream
    */
   void DumpSelf(std::stringstream& aStream, const char* aPrefix="");
-  void Dump() {
-    std::stringstream ss;
-    Dump(ss);
-    char line[1024];
-    while (!ss.eof()) {
-      ss.getline(line, sizeof(line));
-      if (!ss.eof() || strlen(line) > 0) {
-        printf_stderr("%s\n", line);
-      }
-      if (ss.fail()) {
-        // line was too long, skip to next newline
-        ss.clear();
-        ss.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-      }
-    }
-  }
+  void Dump();
+
+  /**
+   * Dump information about this layer manager and its managed tree to
+   * layerscope packet.
+   */
+  void Dump(layerscope::LayersPacket* aPacket);
 
   /**
    * Log information about this layer manager and its managed tree to
@@ -679,6 +682,10 @@ protected:
   // used to implement Dump*() and Log*().
   virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix);
 
+  // Print interesting information about this into layerscope packet.
+  // Internally used to implement Dump().
+  virtual void DumpPacket(layerscope::LayersPacket* aPacket);
+
   static void InitLog();
   static PRLogModuleInfo* sLog;
   uint64_t mId;
@@ -709,7 +716,7 @@ typedef InfallibleTArray<Animation> AnimationArray;
 struct AnimData {
   InfallibleTArray<mozilla::StyleAnimationValue> mStartValues;
   InfallibleTArray<mozilla::StyleAnimationValue> mEndValues;
-  InfallibleTArray<nsAutoPtr<mozilla::css::ComputedTimingFunction> > mFunctions;
+  InfallibleTArray<nsAutoPtr<mozilla::ComputedTimingFunction> > mFunctions;
 };
 
 /**
@@ -796,6 +803,24 @@ public:
       Mutated();
     }
   }
+
+  /**
+   * CONSTRUCTION PHASE ONLY
+   * The union of the bounds of all the display item that got flattened
+   * into this layer. This is intended to be an approximation to the
+   * size of the layer if the nearest scrollable ancestor had an infinitely
+   * large displayport. Computing this more exactly is too expensive,
+   * but this approximation is sufficient for what we need to use it for.
+   */
+  virtual void SetLayerBounds(const nsIntRect& aLayerBounds)
+  {
+    if (!mLayerBounds.IsEqualEdges(aLayerBounds)) {
+      MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) LayerBounds", this));
+      mLayerBounds = aLayerBounds;
+      Mutated();
+    }
+  }
+
   /**
    * CONSTRUCTION PHASE ONLY
    * Tell this layer which region will be visible. The visible region
@@ -815,6 +840,51 @@ public:
       MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) VisibleRegion was %s is %s", this,
         mVisibleRegion.ToString().get(), aRegion.ToString().get()));
       mVisibleRegion = aRegion;
+      Mutated();
+    }
+  }
+
+  /**
+   * CONSTRUCTION PHASE ONLY
+   * Set the (sub)document metrics used to render the Layer subtree
+   * rooted at this. Note that a layer may have multiple FrameMetrics
+   * objects; calling this function will remove all of them and replace
+   * them with the provided FrameMetrics. See the documentation for
+   * SetFrameMetrics(const nsTArray<FrameMetrics>&) for more details.
+   */
+  void SetFrameMetrics(const FrameMetrics& aFrameMetrics)
+  {
+    if (mFrameMetrics.Length() != 1 || mFrameMetrics[0] != aFrameMetrics) {
+      MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) FrameMetrics", this));
+      mFrameMetrics.ReplaceElementsAt(0, mFrameMetrics.Length(), aFrameMetrics);
+      FrameMetricsChanged();
+      Mutated();
+    }
+  }
+
+  /**
+   * CONSTRUCTION PHASE ONLY
+   * Set the (sub)document metrics used to render the Layer subtree
+   * rooted at this. There might be multiple metrics on this layer
+   * because the layer may, for example, be contained inside multiple
+   * nested scrolling subdocuments. In general a Layer having multiple
+   * FrameMetrics objects is conceptually equivalent to having a stack
+   * of ContainerLayers that have been flattened into this Layer.
+   * See the documentation in LayerMetricsWrapper.h for a more detailed
+   * explanation of this conceptual equivalence.
+   *
+   * Note also that there is actually a many-to-many relationship between
+   * Layers and FrameMetrics, because multiple Layers may have identical
+   * FrameMetrics objects. This happens when those layers belong to the
+   * same scrolling subdocument and therefore end up with the same async
+   * transform when they are scrolled by the APZ code.
+   */
+  void SetFrameMetrics(const nsTArray<FrameMetrics>& aMetricsArray)
+  {
+    if (mFrameMetrics != aMetricsArray) {
+      MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) FrameMetrics", this));
+      mFrameMetrics = aMetricsArray;
+      FrameMetricsChanged();
       Mutated();
     }
   }
@@ -1124,7 +1194,13 @@ public:
   gfx::CompositionOp GetMixBlendMode() const { return mMixBlendMode; }
   const nsIntRect* GetClipRect() { return mUseClipRect ? &mClipRect : nullptr; }
   uint32_t GetContentFlags() { return mContentFlags; }
-  const nsIntRegion& GetVisibleRegion() { return mVisibleRegion; }
+  const nsIntRect& GetLayerBounds() const { return mLayerBounds; }
+  const nsIntRegion& GetVisibleRegion() const { return mVisibleRegion; }
+  const FrameMetrics& GetFrameMetrics(uint32_t aIndex) const;
+  uint32_t GetFrameMetricsCount() const { return mFrameMetrics.Length(); }
+  const nsTArray<FrameMetrics>& GetAllFrameMetrics() { return mFrameMetrics; }
+  bool HasScrollableFrameMetrics() const;
+  bool IsScrollInfoLayer() const;
   const EventRegions& GetEventRegions() const { return mEventRegions; }
   ContainerLayer* GetParent() { return mParent; }
   Layer* GetNextSibling() { return mNextSibling; }
@@ -1147,6 +1223,7 @@ public:
   FrameMetrics::ViewID GetScrollbarTargetContainerId() { return mScrollbarTargetId; }
   ScrollDirection GetScrollbarDirection() { return mScrollbarDirection; }
   Layer* GetMaskLayer() const { return mMaskLayer; }
+
 
   // Note that all lengths in animation data are either in CSS pixels or app
   // units and must be converted to device pixels by the compositor.
@@ -1332,12 +1409,8 @@ public:
    * nearest ancestor that has an intermediate surface, or relative to the root
    * viewport if no ancestor has an intermediate surface, corresponding to the
    * clip rect for this layer intersected with aCurrentScissorRect.
-   * If no ancestor has an intermediate surface, the clip rect is transformed
-   * by aWorldTransform before being combined with aCurrentScissorRect, if
-   * aWorldTransform is non-null.
    */
-  nsIntRect CalculateScissorRect(const nsIntRect& aCurrentScissorRect,
-                                 const gfx::Matrix* aWorldTransform);
+  RenderTargetIntRect CalculateScissorRect(const RenderTargetIntRect& aCurrentScissorRect);
 
   virtual const char* Name() const =0;
   virtual LayerType GetType() const =0;
@@ -1367,6 +1440,12 @@ public:
   void DumpSelf(std::stringstream& aStream, const char* aPrefix="");
 
   /**
+   * Dump information about this layer and its child & sibling layers to
+   * layerscope packet.
+   */
+  void Dump(layerscope::LayersPacket* aPacket, const void* aParent);
+
+  /**
    * Log information about this layer manager and its managed tree to
    * the NSPR log (if enabled for "Layers").
    */
@@ -1383,6 +1462,10 @@ public:
   // an implementation that first calls the base implementation then
   // appends additional info to aTo.
   virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix);
+
+  // Just like PrintInfo, but this function dump information into layerscope packet,
+  // instead of a StringStream. It is also internally used to implement Dump();
+  virtual void DumpPacket(layerscope::LayersPacket* aPacket, const void* aParent);
 
   static bool IsLogEnabled() { return LayerManager::IsLogEnabled(); }
 
@@ -1409,6 +1492,19 @@ public:
    */
   void ClearInvalidRect() { mInvalidRegion.SetEmpty(); }
 
+  // These functions allow attaching an AsyncPanZoomController to this layer,
+  // and can be used anytime.
+  // A layer has an APZC at index aIndex only-if GetFrameMetrics(aIndex).IsScrollable();
+  // attempting to get an APZC for a non-scrollable metrics will return null.
+  // The aIndex for these functions must be less than GetFrameMetricsCount().
+  void SetAsyncPanZoomController(uint32_t aIndex, AsyncPanZoomController *controller);
+  AsyncPanZoomController* GetAsyncPanZoomController(uint32_t aIndex) const;
+  // The FrameMetricsChanged function is used internally to ensure the APZC array length
+  // matches the frame metrics array length.
+private:
+  void FrameMetricsChanged();
+public:
+
   void ApplyPendingUpdatesForThisTransaction();
 
 #ifdef DEBUG
@@ -1418,13 +1514,42 @@ public:
 
   virtual LayerRenderState GetRenderState() { return LayerRenderState(); }
 
-
   void Mutated()
   {
     mManager->Mutated(this);
   }
 
   virtual int32_t GetMaxLayerSize() { return Manager()->GetMaxTextureSize(); }
+
+  /**
+   * Returns true if this layer's effective transform is not just
+   * a translation by integers, or if this layer or some ancestor layer
+   * is marked as having a transform that may change without a full layer
+   * transaction.
+   */
+  bool MayResample();
+
+  RenderTargetRect TransformRectToRenderTarget(const LayerIntRect& aRect);
+
+  /**
+   * Add debugging information to the layer dump.
+   */
+  void AddExtraDumpInfo(const nsACString& aStr)
+  {
+#ifdef MOZ_DUMP_PAINTING
+    mExtraDumpInfo.AppendElement(aStr);
+#endif
+  }
+
+  /**
+   * Clear debugging information. Useful for recycling.
+   */
+  void ClearExtraDumpInfo()
+  {
+#ifdef MOZ_DUMP_PAINTING
+     mExtraDumpInfo.Clear();
+#endif
+  }
 
 protected:
   Layer(LayerManager* aManager, void* aImplData);
@@ -1474,14 +1599,6 @@ protected:
                                const gfxRect& aSnapRect,
                                gfx::Matrix* aResidualTransform);
 
-  /**
-   * Returns true if this layer's effective transform is not just
-   * a translation by integers, or if this layer or some ancestor layer
-   * is marked as having a transform that may change without a full layer
-   * transaction.
-   */
-  bool MayResample();
-
   LayerManager* mManager;
   ContainerLayer* mParent;
   Layer* mNextSibling;
@@ -1489,7 +1606,9 @@ protected:
   void* mImplData;
   nsRefPtr<Layer> mMaskLayer;
   gfx::UserData mUserData;
+  nsIntRect mLayerBounds;
   nsIntRegion mVisibleRegion;
+  nsTArray<FrameMetrics> mFrameMetrics;
   EventRegions mEventRegions;
   gfx::Matrix4x4 mTransform;
   // A mutation of |mTransform| that we've queued to be applied at the
@@ -1509,6 +1628,7 @@ protected:
   nsIntRect mClipRect;
   nsIntRect mTileSourceRect;
   nsIntRegion mInvalidRegion;
+  nsTArray<nsRefPtr<AsyncPanZoomController> > mApzcs;
   uint32_t mContentFlags;
   bool mUseClipRect;
   bool mUseTileSourceRect;
@@ -1527,6 +1647,9 @@ protected:
   // If this layer is used for OMTA, then this counter is used to ensure we
   // stay in sync with the animation manager
   uint64_t mAnimationGeneration;
+#ifdef MOZ_DUMP_PAINTING
+  nsTArray<nsCString> mExtraDumpInfo;
+#endif
 };
 
 /**
@@ -1620,6 +1743,8 @@ protected:
 
   virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix);
 
+  virtual void DumpPacket(layerscope::LayersPacket* aPacket, const void* aParent);
+
   /**
    * ComputeEffectiveTransforms snaps the ideal transform to get mEffectiveTransform.
    * mResidualTranslation is the translation that should be applied *before*
@@ -1674,42 +1799,6 @@ public:
    */
   virtual bool RepositionChild(Layer* aChild, Layer* aAfter);
 
-  /**
-   * CONSTRUCTION PHASE ONLY
-   * Set the (sub)document metrics used to render the Layer subtree
-   * rooted at this.
-   */
-  void SetFrameMetrics(const FrameMetrics& aFrameMetrics)
-  {
-    if (mFrameMetrics != aFrameMetrics) {
-      MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) FrameMetrics", this));
-      mFrameMetrics = aFrameMetrics;
-      Mutated();
-    }
-  }
-
-  // These functions allow attaching an AsyncPanZoomController to this layer,
-  // and can be used anytime.
-  // A container layer has an APZC only-if GetFrameMetrics().IsScrollable()
-  void SetAsyncPanZoomController(AsyncPanZoomController *controller);
-  AsyncPanZoomController* GetAsyncPanZoomController() const;
-
-  /**
-   * CONSTRUCTION PHASE ONLY
-   * Set the ViewID of the ContainerLayer to which overscroll should be handed
-   * off. A value of NULL_SCROLL_ID means that the default handoff-parent-finding
-   * behaviour should be used (i.e. walk up the layer tree to find the next
-   * scrollable ancestor layer).
-   */
-  void SetScrollHandoffParentId(FrameMetrics::ViewID aScrollParentId)
-  {
-    if (mScrollHandoffParentId != aScrollParentId) {
-      MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) ScrollHandoffParentId", this));
-      mScrollHandoffParentId = aScrollParentId;
-      Mutated();
-    }
-  }
-
   void SetPreScale(float aXScale, float aYScale)
   {
     if (mPreXScale == aXScale && mPreYScale == aYScale) {
@@ -1734,17 +1823,6 @@ public:
     Mutated();
   }
 
-  void SetBackgroundColor(const gfxRGBA& aColor)
-  {
-    if (mBackgroundColor == aColor) {
-      return;
-    }
-
-    MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) BackgroundColor", this));
-    mBackgroundColor = aColor;
-    Mutated();
-  }
-
   virtual void FillSpecificAttributes(SpecificLayerAttributes& aAttrs);
 
   void SortChildrenBy3DZOrder(nsTArray<Layer*>& aArray);
@@ -1756,14 +1834,10 @@ public:
 
   virtual Layer* GetFirstChild() const { return mFirstChild; }
   virtual Layer* GetLastChild() const { return mLastChild; }
-  const FrameMetrics& GetFrameMetrics() const { return mFrameMetrics; }
-  FrameMetrics::ViewID GetScrollHandoffParentId() const { return mScrollHandoffParentId; }
   float GetPreXScale() const { return mPreXScale; }
   float GetPreYScale() const { return mPreYScale; }
   float GetInheritedXScale() const { return mInheritedXScale; }
   float GetInheritedYScale() const { return mInheritedYScale; }
-
-  gfxRGBA GetBackgroundColor() const { return mBackgroundColor; }
 
   MOZ_LAYER_DECL_NAME("ContainerLayer", TYPE_CONTAINER)
 
@@ -1785,12 +1859,15 @@ public:
 
   /**
    * Returns the rectangle covered by the intermediate surface,
-   * in this layer's coordinate system
+   * in this layer's coordinate system.
+   *
+   * NOTE: Since this layer has an intermediate surface it follows
+   *       that LayerPixel == RenderTargetPixel
    */
-  nsIntRect GetIntermediateSurfaceRect()
+  RenderTargetIntRect GetIntermediateSurfaceRect()
   {
     NS_ASSERTION(mUseIntermediateSurface, "Must have intermediate surface");
-    return mVisibleRegion.GetBounds();
+    return RenderTargetPixel::FromUntyped(mVisibleRegion.GetBounds());
   }
 
   /**
@@ -1839,21 +1916,16 @@ protected:
 
   virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix);
 
+  virtual void DumpPacket(layerscope::LayersPacket* aPacket, const void* aParent);
+
   Layer* mFirstChild;
   Layer* mLastChild;
-  FrameMetrics mFrameMetrics;
-  nsRefPtr<AsyncPanZoomController> mAPZC;
-  FrameMetrics::ViewID mScrollHandoffParentId;
   float mPreXScale;
   float mPreYScale;
   // The resolution scale inherited from the parent layer. This will already
   // be part of mTransform.
   float mInheritedXScale;
   float mInheritedYScale;
-  // This is currently set and used only for scrollable container layers.
-  // When multi-layer-apz (bug 967844) is implemented, this is likely to move
-  // elsewhere (e.g. to Layer).
-  gfxRGBA mBackgroundColor;
   bool mUseIntermediateSurface;
   bool mSupportsComponentAlphaChildren;
   bool mMayHaveReadbackChild;
@@ -1913,6 +1985,8 @@ protected:
   {}
 
   virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix);
+
+  virtual void DumpPacket(layerscope::LayersPacket* aPacket, const void* aParent);
 
   nsIntRect mBounds;
   gfxRGBA mColor;
@@ -2073,6 +2147,8 @@ protected:
 
   virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix);
 
+  virtual void DumpPacket(layerscope::LayersPacket* aPacket, const void* aParent);
+
   void FireDidTransactionCallback()
   {
     if (mPostTransCallback) {
@@ -2127,7 +2203,7 @@ private:
   virtual bool RepositionChild(Layer* aChild, Layer* aAfter)
   { MOZ_CRASH(); return false; }
 
-  using ContainerLayer::SetFrameMetrics;
+  using Layer::SetFrameMetrics;
 
 public:
   /**
@@ -2190,6 +2266,8 @@ protected:
 
   virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix);
 
+  virtual void DumpPacket(layerscope::LayersPacket* aPacket, const void* aParent);
+
   Layer* mTempReferent;
   // 0 is a special value that means "no ID".
   uint64_t mId;
@@ -2202,6 +2280,9 @@ void WriteSnapshotToDumpFile(Layer* aLayer, gfx::DataSourceSurface* aSurf);
 void WriteSnapshotToDumpFile(LayerManager* aManager, gfx::DataSourceSurface* aSurf);
 void WriteSnapshotToDumpFile(Compositor* aCompositor, gfx::DrawTarget* aTarget);
 #endif
+
+// A utility function used by different LayerManager implementations.
+nsIntRect ToOutsideIntRect(const gfxRect &aRect);
 
 }
 }

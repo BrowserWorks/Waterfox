@@ -158,9 +158,13 @@ SandboxFilterImplContent::Build() {
 #if SYSCALL_EXISTS(getuid32)
   Allow(SYSCALL(getuid32));
   Allow(SYSCALL(geteuid32));
+  Allow(SYSCALL(getgid32));
+  Allow(SYSCALL(getegid32));
 #else
   Allow(SYSCALL(getuid));
   Allow(SYSCALL(geteuid));
+  Allow(SYSCALL(getgid));
+  Allow(SYSCALL(getegid));
 #endif
   // Some newer archs (e.g., x64 and x32) have only rt_sigreturn, but
   // ARM has and uses both syscalls -- rt_sigreturn for SA_SIGINFO
@@ -187,6 +191,11 @@ SandboxFilterImplContent::Build() {
   Allow(SYSCALL(fsync));
   Allow(SYSCALL(msync));
 
+#if defined(ANDROID) && !defined(MOZ_MEMORY)
+  // Android's libc's realloc uses mremap.
+  Allow(SYSCALL(mremap));
+#endif
+
   /* Should remove all of the following in the future, if possible */
   Allow(SYSCALL(getpriority));
   Allow(SYSCALL(sched_get_priority_min));
@@ -210,6 +219,8 @@ SandboxFilterImplContent::Build() {
   Allow(SYSCALL(sched_yield));
   Allow(SYSCALL(sched_getscheduler));
   Allow(SYSCALL(sched_setscheduler));
+  Allow(SYSCALL(sched_getparam));
+  Allow(SYSCALL(sched_setparam));
   Allow(SYSCALL(sigaltstack));
 
   /* Always last and always OK calls */
@@ -267,7 +278,6 @@ SandboxFilterImplContent::Build() {
   Allow(SYSCALL(umask));
   Allow(SYSCALL(getresgid));
   Allow(SYSCALL(poll));
-  Allow(SYSCALL(getegid));
   Allow(SYSCALL(inotify_init1));
   Allow(SYSCALL(wait4));
   Allow(SYSVIPCCALL(shmctl, SHMCTL));
@@ -282,7 +292,6 @@ SandboxFilterImplContent::Build() {
   Allow(SYSCALL(inotify_add_watch));
   Allow(SYSCALL(rt_sigprocmask));
   Allow(SYSVIPCCALL(shmget, SHMGET));
-  Allow(SYSCALL(getgid));
 #if SYSCALL_EXISTS(utimes)
   Allow(SYSCALL(utimes));
 #else
@@ -372,6 +381,9 @@ void SandboxFilterImplGMP::Build() {
   // NSPR can call this when creating a thread, but it will accept a
   // polite "no".
   Deny(EACCES, SYSCALL(getpriority));
+  // But if thread creation races with sandbox startup, that call
+  // could succeed, and then we get one of these:
+  Deny(EACCES, SYSCALL(setpriority));
 
   // Stack bounds are obtained via pthread_getattr_np, which calls
   // this but doesn't actually need it:

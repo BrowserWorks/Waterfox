@@ -229,12 +229,13 @@ TabTarget.prototype = {
   },
 
   get name() {
-    return this._tab ? this._tab.linkedBrowser.contentDocument.title :
-                       this._form.title;
+    return this._tab && this._tab.linkedBrowser.contentDocument ?
+           this._tab.linkedBrowser.contentDocument.title :
+           this._form.title;
   },
 
   get url() {
-    return this._tab ? this._tab.linkedBrowser.contentDocument.location.href :
+    return this._tab ? this._tab.linkedBrowser.currentURI.spec :
                        this._form.url;
   },
 
@@ -298,17 +299,20 @@ TabTarget.prototype = {
         this._client.listTabs(aResponse => {
           this._root = aResponse;
 
-          let windowUtils = this.window
-            .QueryInterface(Ci.nsIInterfaceRequestor)
-            .getInterface(Ci.nsIDOMWindowUtils);
-          let outerWindow = windowUtils.outerWindowID;
-          aResponse.tabs.some((tab) => {
-            if (tab.outerWindowID === outerWindow) {
-              this._form = tab;
-              return true;
-            }
-            return false;
-          });
+          if (this.window) {
+            let windowUtils = this.window
+              .QueryInterface(Ci.nsIInterfaceRequestor)
+              .getInterface(Ci.nsIDOMWindowUtils);
+            let outerWindow = windowUtils.outerWindowID;
+            aResponse.tabs.some((tab) => {
+              if (tab.outerWindowID === outerWindow) {
+                this._form = tab;
+                return true;
+              }
+              return false;
+            });
+          }
+
           if (!this._form) {
             this._form = aResponse.tabs[aResponse.selected];
           }
@@ -370,6 +374,7 @@ TabTarget.prototype = {
       event.url = aPacket.url;
       event.title = aPacket.title;
       event.nativeConsoleAPI = aPacket.nativeConsoleAPI;
+      event.isFrameSwitching = aPacket.isFrameSwitching;
       // Send any stored event payload (DOMWindow or nsIRequest) for backwards
       // compatibility with non-remotable tools.
       if (aPacket.state == "start") {
@@ -383,6 +388,11 @@ TabTarget.prototype = {
       }
     };
     this.client.addListener("tabNavigated", this._onTabNavigated);
+
+    this._onFrameUpdate = (aType, aPacket) => {
+      this.emit("frame-update", aPacket);
+    };
+    this.client.addListener("frameUpdate", this._onFrameUpdate);
   },
 
   /**
@@ -392,6 +402,7 @@ TabTarget.prototype = {
     this.client.removeListener("closed", this.destroy);
     this.client.removeListener("tabNavigated", this._onTabNavigated);
     this.client.removeListener("tabDetached", this._onTabDetached);
+    this.client.removeListener("frameUpdate", this._onFrameUpdate);
   },
 
   /**

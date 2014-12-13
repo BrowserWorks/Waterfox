@@ -14,7 +14,7 @@
 #include "mozilla/IHistory.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/dom/URLSearchParams.h"
-#include "nsIContent.h"
+#include "nsIContent.h" // for nsLinkState
 
 namespace mozilla {
 
@@ -36,7 +36,7 @@ public:
   /**
    * aElement is the element pointer corresponding to this link.
    */
-  Link(Element* aElement);
+  explicit Link(Element* aElement);
   virtual void SetLinkState(nsLinkState aState);
 
   /**
@@ -115,7 +115,7 @@ public:
   bool ElementHasHref() const;
 
   // URLSearchParamsObserver
-  void URLSearchParamsUpdated() MOZ_OVERRIDE;
+  void URLSearchParamsUpdated(URLSearchParams* aSearchParams) MOZ_OVERRIDE;
 
 protected:
   virtual ~Link();

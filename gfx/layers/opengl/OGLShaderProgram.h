@@ -7,7 +7,6 @@
 #define GFX_OGLSHADERPROGRAM_H
 
 #include "GLContext.h"                  // for fast inlines of glUniform*
-#include "gfx3DMatrix.h"                // for gfx3DMatrix
 #include "gfxTypes.h"
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT, etc
 #include "mozilla/RefPtr.h"             // for RefPtr
@@ -47,6 +46,7 @@ enum ShaderFeatures {
 
 class KnownUniform {
 public:
+  // this needs to be kept in sync with strings in 'AddUniforms'
   enum KnownUniformName {
     NotAKnownUniform = -1,
 
@@ -68,6 +68,8 @@ public:
     RenderColor,
     TexCoordMultiplier,
     TexturePass2,
+    ColorMatrix,
+    ColorMatrixVector,
 
     KnownUniformCount
   };
@@ -369,6 +371,12 @@ public:
     SetUniform(KnownUniform::RenderColor, aColor);
   }
 
+  void SetColorMatrix(const gfx::Matrix5x4& aColorMatrix)
+  {
+    SetMatrixUniform(KnownUniform::ColorMatrix, &aColorMatrix._11);
+    SetUniform(KnownUniform::ColorMatrixVector, 4, &aColorMatrix._51);
+  }
+
   void SetTexCoordMultiplier(float aWidth, float aHeight) {
     float f[] = {aWidth, aHeight};
     SetUniform(KnownUniform::TexCoordMultiplier, 2, f);
@@ -432,7 +440,7 @@ protected:
     }
   }
 
-  void SetUniform(KnownUniform::KnownUniformName aKnownUniform, int aLength, float *aFloatValues)
+  void SetUniform(KnownUniform::KnownUniformName aKnownUniform, int aLength, const float *aFloatValues)
   {
     ASSERT_THIS_PROGRAM;
     NS_ASSERTION(aKnownUniform >= 0 && aKnownUniform < KnownUniform::KnownUniformCount, "Invalid known uniform");
@@ -469,10 +477,6 @@ protected:
     if (ku.UpdateUniform(16, aFloatValues)) {
       mGL->fUniformMatrix4fv(ku.mLocation, 1, false, ku.mValue.f16v);
     }
-  }
-
-  void SetMatrixUniform(KnownUniform::KnownUniformName aKnownUniform, const gfx3DMatrix& aMatrix) {
-    SetMatrixUniform(aKnownUniform, &aMatrix._11);
   }
 
   void SetMatrixUniform(KnownUniform::KnownUniformName aKnownUniform, const gfx::Matrix4x4& aMatrix) {

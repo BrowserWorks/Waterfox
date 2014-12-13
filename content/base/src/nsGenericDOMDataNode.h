@@ -20,8 +20,9 @@
 #include "nsCycleCollectionParticipant.h"
 
 #include "nsISMILAttr.h"
-#include "nsIDocument.h"
+#include "mozilla/dom/ShadowRoot.h"
 
+class nsIDocument;
 class nsIDOMAttr;
 class nsIDOMEventListener;
 class nsIDOMNodeList;
@@ -64,8 +65,8 @@ public:
 
   NS_DECL_SIZEOF_EXCLUDING_THIS
 
-  nsGenericDOMDataNode(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
-  nsGenericDOMDataNode(already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo);
+  explicit nsGenericDOMDataNode(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
+  explicit nsGenericDOMDataNode(already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo);
 
   virtual void GetNodeValueInternal(nsAString& aNodeValue) MOZ_OVERRIDE;
   virtual void SetNodeValueInternal(const nsAString& aNodeValue,

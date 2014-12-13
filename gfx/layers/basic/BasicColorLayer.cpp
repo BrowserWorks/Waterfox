@@ -26,7 +26,7 @@ namespace layers {
 
 class BasicColorLayer : public ColorLayer, public BasicImplData {
 public:
-  BasicColorLayer(BasicLayerManager* aLayerManager) :
+  explicit BasicColorLayer(BasicLayerManager* aLayerManager) :
     ColorLayer(aLayerManager,
                static_cast<BasicImplData*>(MOZ_THIS_IN_INITIALIZER_LIST()))
   {
@@ -62,9 +62,12 @@ public:
       snapped = mat.TransformBounds(snapped);
     }
 
+    // Clip drawing in case we're using (unbounded) operator source.
+    aDT->PushClipRect(snapped);
     FillRectWithMask(aDT, aDeviceOffset, snapped, ToColor(mColor),
                      DrawOptions(GetEffectiveOpacity(), GetEffectiveOperator(this)),
                      aMaskLayer);
+    aDT->PopClip();
   }
 
 protected:

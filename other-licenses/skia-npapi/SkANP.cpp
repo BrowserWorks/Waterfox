@@ -56,20 +56,23 @@ ANPRectF* SkANP::SetRect(ANPRectF* dst, const SkRect& src) {
 }
 
 SkBitmap* SkANP::SetBitmap(SkBitmap* dst, const ANPBitmap& src) {
-    SkBitmap::Config config = SkBitmap::kNo_Config;
-    
+    SkColorType colorType = kUnknown_SkColorType;
+
     switch (src.format) {
         case kRGBA_8888_ANPBitmapFormat:
-            config = SkBitmap::kARGB_8888_Config;
+            // Let Skia choose the correct colour type for us based on its
+            // endianness. This should be correct.
+            colorType = kN32_SkColorType;
             break;
         case kRGB_565_ANPBitmapFormat:
-            config = SkBitmap::kRGB_565_Config;
+            colorType = kRGB_565_SkColorType;
             break;
         default:
             break;
     }
-    
-    dst->setConfig(config, src.width, src.height, src.rowBytes);
+
+    SkImageInfo info = SkImageInfo::Make(src.width, src.height, colorType, kPremul_SkAlphaType);
+    dst->setInfo(info, src.rowBytes);
     dst->setPixels(src.baseAddr);
     return dst;
 }
@@ -80,18 +83,18 @@ bool SkANP::SetBitmap(ANPBitmap* dst, const SkBitmap& src) {
         return false;
     }
 
-    switch (src.config()) {
-        case SkBitmap::kARGB_8888_Config:
+    switch (src.colorType()) {
+        case SkColorType::kRGBA_8888_SkColorType:
             dst->format = kRGBA_8888_ANPBitmapFormat;
             break;
-        case SkBitmap::kRGB_565_Config:
+        case SkColorType::kRGB_565_SkColorType:
             dst->format = kRGB_565_ANPBitmapFormat;
             break;
         default:
-            SkDebugf("SkANP::SetBitmap - unsupported src.config %d\n", src.config());
+            SkDebugf("SkANP::SetBitmap - unsupported src.colorType %d\n", src.colorType());
             return false;
     }
-    
+
     dst->width    = src.width();
     dst->height   = src.height();
     dst->rowBytes = src.rowBytes();

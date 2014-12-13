@@ -309,6 +309,8 @@ function openLinkIn(url, where, params) {
   // result in a new frontmost window (e.g. "javascript:window.open('');").
   w.focus();
 
+  let newTab;
+
   switch (where) {
   case "current":
     let flags = Ci.nsIWebNavigation.LOAD_FLAGS_NONE;
@@ -331,23 +333,30 @@ function openLinkIn(url, where, params) {
     loadInBackground = !loadInBackground;
     // fall through
   case "tab":
-    let browser = w.gBrowser;
-    browser.loadOneTab(url, {
-                       referrerURI: aReferrerURI,
-                       charset: aCharset,
-                       postData: aPostData,
-                       inBackground: loadInBackground,
-                       allowThirdPartyFixup: aAllowThirdPartyFixup,
-                       relatedToCurrent: aRelatedToCurrent,
-                       skipAnimation: aSkipTabAnimation,
-                       allowMixedContent: aAllowMixedContent });
+    newTab = w.gBrowser.loadOneTab(url, {
+      referrerURI: aReferrerURI,
+      charset: aCharset,
+      postData: aPostData,
+      inBackground: loadInBackground,
+      allowThirdPartyFixup: aAllowThirdPartyFixup,
+      relatedToCurrent: aRelatedToCurrent,
+      skipAnimation: aSkipTabAnimation,
+      allowMixedContent: aAllowMixedContent
+    });
     break;
   }
 
   w.gBrowser.selectedBrowser.focus();
 
-  if (!loadInBackground && w.isBlankPageURL(url))
+  if (!loadInBackground && w.isBlankPageURL(url)) {
+    if (newTab && gMultiProcessBrowser) {
+      // Remote browsers are switched to asynchronously, and we need to
+      // ensure that the location bar remains focused in that case rather
+      // than the content area being focused.
+      newTab._skipContentFocus = true;
+    }
     w.focusAndSelectUrlBar();
+  }
 }
 
 // Used as an onclick handler for UI elements with link-like behavior.
@@ -703,8 +712,17 @@ function openPrefsHelp() {
 function trimURL(aURL) {
   // This function must not modify the given URL such that calling
   // nsIURIFixup::createFixupURI with the result will produce a different URI.
-  return aURL /* remove single trailing slash for http/https/ftp URLs */
-             .replace(/^((?:http|https|ftp):\/\/[^/]+)\/$/, "$1")
-              /* remove http:// unless the host starts with "ftp\d*\." or contains "@" */
-             .replace(/^http:\/\/((?!ftp\d*\.)[^\/@]+(?:\/|$))/, "$1");
+
+  // remove single trailing slash for http/https/ftp URLs
+  let rv = aURL.replace(/^((?:http|https|ftp):\/\/[^/]+)\/$/, "$1");
+
+  // Strip the leading http:// only if the host has at least one '.' or
+  // looks like an ipv6 ip:
+  let hostMatch = rv.match(/^http:\/\/([^\/]*)/);
+  let ipv6Regex = /\[[\da-f:]*\]/;
+  if (hostMatch && (hostMatch[1].contains(".") || ipv6Regex.test(hostMatch[1]))) {
+    /* remove http:// unless the host starts with "ftp\d*\." or contains "@" */
+    rv = rv.replace(/^http:\/\/((?!ftp\d*\.)[^\/@]+(?:\/|$))/, "$1");
+  }
+  return rv;
 }

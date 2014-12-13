@@ -5,9 +5,10 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 external_dirs = []
-if not CONFIG['MOZ_NATIVE_SQLITE']:
-    external_dirs += ['db/sqlite3/src']
 
+DIRS += [
+    'sqlite',
+]
 if not CONFIG['MOZ_NATIVE_JPEG']:
     external_dirs += ['media/libjpeg']
 
@@ -35,9 +36,6 @@ if CONFIG['MOZ_VPX'] and not CONFIG['MOZ_NATIVE_LIBVPX']:
 
 if not CONFIG['MOZ_NATIVE_PNG']:
     external_dirs += ['media/libpng']
-	
-if CONFIG['OS_ARCH'] == 'Darwin':
-	external_dirs += ['media/gstreamer']
 
 external_dirs += [
     'media/kiss_fft',
@@ -49,4 +47,4 @@ external_dirs += [
     'media/libsoundtouch',
 ]
 
-PARALLEL_DIRS += ['../../' + i for i in external_dirs]
+DIRS += ['../../' + i for i in external_dirs]

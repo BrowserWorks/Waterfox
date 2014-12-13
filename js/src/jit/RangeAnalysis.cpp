@@ -677,13 +677,13 @@ Range::or_(TempAllocator &alloc, const Range *lhs, const Range *rhs)
         if (lhs->lower() == 0)
             return new(alloc) Range(*rhs);
         if (lhs->lower() == -1)
-            return new(alloc) Range(*lhs);;
+            return new(alloc) Range(*lhs);
     }
     if (rhs->lower() == rhs->upper()) {
         if (rhs->lower() == 0)
             return new(alloc) Range(*lhs);
         if (rhs->lower() == -1)
-            return new(alloc) Range(*rhs);;
+            return new(alloc) Range(*rhs);
     }
 
     // The code below uses CountLeadingZeroes32, which has undefined behavior
@@ -1229,6 +1229,12 @@ MCeil::computeRange(TempAllocator &alloc)
 }
 
 void
+MClz::computeRange(TempAllocator &alloc)
+{
+    setRange(Range::NewUInt32Range(alloc, 0, 32));
+}
+
+void
 MMinMax::computeRange(TempAllocator &alloc)
 {
     if (specialization_ != MIRType_Int32 && specialization_ != MIRType_Double)
@@ -1520,11 +1526,11 @@ MStringLength::computeRange(TempAllocator &alloc)
 void
 MArgumentsLength::computeRange(TempAllocator &alloc)
 {
-    // This is is a conservative upper bound on what |TooManyArguments| checks.
-    // If exceeded, Ion will not be entered in the first place.
-    static_assert(SNAPSHOT_MAX_NARGS <= UINT32_MAX,
-                  "NewUInt32Range requires a uint32 value");
-    setRange(Range::NewUInt32Range(alloc, 0, SNAPSHOT_MAX_NARGS));
+    // This is is a conservative upper bound on what |TooManyActualArguments|
+    // checks.  If exceeded, Ion will not be entered in the first place.
+    MOZ_ASSERT(js_JitOptions.maxStackArgs <= UINT32_MAX,
+               "NewUInt32Range requires a uint32 value");
+    setRange(Range::NewUInt32Range(alloc, 0, js_JitOptions.maxStackArgs));
 }
 
 void
@@ -1626,11 +1632,14 @@ RangeAnalysis::analyzeLoop(MBasicBlock *header)
         return true;
     }
 
+    if (!loopIterationBounds.append(iterationBound))
+        return false;
+
 #ifdef DEBUG
     if (IonSpewEnabled(IonSpew_Range)) {
         Sprinter sp(GetIonContext()->cx);
         sp.init();
-        iterationBound->sum.print(sp);
+        iterationBound->boundSum.print(sp);
         IonSpew(IonSpew_Range, "computed symbolic bound on backedges: %s",
                 sp.string());
     }
@@ -1748,7 +1757,8 @@ RangeAnalysis::analyzeLoopIterationCount(MBasicBlock *header,
     if (lhsModified.term != lhs.term)
         return nullptr;
 
-    LinearSum bound(alloc());
+    LinearSum iterationBound(alloc());
+    LinearSum currentIteration(alloc());
 
     if (lhsModified.constant == 1 && !lessEqual) {
         // The value of lhs is 'initial(lhs) + iterCount' and this will end
@@ -1759,16 +1769,21 @@ RangeAnalysis::analyzeLoopIterationCount(MBasicBlock *header,
         // iterCount == rhsN - initial(lhs) - lhsN
 
         if (rhs) {
-            if (!bound.add(rhs, 1))
+            if (!iterationBound.add(rhs, 1))
                 return nullptr;
         }
-        if (!bound.add(lhsInitial, -1))
+        if (!iterationBound.add(lhsInitial, -1))
             return nullptr;
 
         int32_t lhsConstant;
         if (!SafeSub(0, lhs.constant, &lhsConstant))
             return nullptr;
-        if (!bound.add(lhsConstant))
+        if (!iterationBound.add(lhsConstant))
+            return nullptr;
+
+        if (!currentIteration.add(lhs.term, 1))
+            return nullptr;
+        if (!currentIteration.add(lhsInitial, -1))
             return nullptr;
     } else if (lhsModified.constant == -1 && lessEqual) {
         // The value of lhs is 'initial(lhs) - iterCount'. Similar to the above
@@ -1777,19 +1792,24 @@ RangeAnalysis::analyzeLoopIterationCount(MBasicBlock *header,
         // initial(lhs) - iterCount + lhsN == rhs
         // iterCount == initial(lhs) - rhs + lhsN
 
-        if (!bound.add(lhsInitial, 1))
+        if (!iterationBound.add(lhsInitial, 1))
             return nullptr;
         if (rhs) {
-            if (!bound.add(rhs, -1))
+            if (!iterationBound.add(rhs, -1))
                 return nullptr;
         }
-        if (!bound.add(lhs.constant))
+        if (!iterationBound.add(lhs.constant))
+            return nullptr;
+
+        if (!currentIteration.add(lhsInitial, 1))
+            return nullptr;
+        if (!currentIteration.add(lhs.term, -1))
             return nullptr;
     } else {
         return nullptr;
     }
 
-    return new(alloc()) LoopIterationBound(header, test, bound);
+    return new(alloc()) LoopIterationBound(header, test, iterationBound, currentIteration);
 }
 
 void
@@ -1836,7 +1856,7 @@ RangeAnalysis::analyzeLoopPhi(MBasicBlock *header, LoopIterationBound *loopBound
     // phi is initial(phi) + (loopBound - 1) * N, without requiring us to
     // ensure that loopBound >= 0.
 
-    LinearSum limitSum(loopBound->sum);
+    LinearSum limitSum(loopBound->boundSum);
     if (!limitSum.multiply(modified.constant) || !limitSum.add(initialSum))
         return;
 
@@ -1874,63 +1894,6 @@ SymbolicBoundIsValid(MBasicBlock *header, MBoundsCheck *ins, const SymbolicBound
     while (bb != header && bb != bound->loop->test->block())
         bb = bb->immediateDominator();
     return bb == bound->loop->test->block();
-}
-
-// Convert all components of a linear sum *except* its constant to a definition,
-// adding any necessary instructions to the end of block.
-static inline MDefinition *
-ConvertLinearSum(TempAllocator &alloc, MBasicBlock *block, const LinearSum &sum)
-{
-    MDefinition *def = nullptr;
-
-    for (size_t i = 0; i < sum.numTerms(); i++) {
-        LinearTerm term = sum.term(i);
-        JS_ASSERT(!term.term->isConstant());
-        if (term.scale == 1) {
-            if (def) {
-                def = MAdd::New(alloc, def, term.term);
-                def->toAdd()->setInt32();
-                block->insertBefore(block->lastIns(), def->toInstruction());
-                def->computeRange(alloc);
-            } else {
-                def = term.term;
-            }
-        } else if (term.scale == -1) {
-            if (!def) {
-                def = MConstant::New(alloc, Int32Value(0));
-                block->insertBefore(block->lastIns(), def->toInstruction());
-                def->computeRange(alloc);
-            }
-            def = MSub::New(alloc, def, term.term);
-            def->toSub()->setInt32();
-            block->insertBefore(block->lastIns(), def->toInstruction());
-            def->computeRange(alloc);
-        } else {
-            JS_ASSERT(term.scale != 0);
-            MConstant *factor = MConstant::New(alloc, Int32Value(term.scale));
-            block->insertBefore(block->lastIns(), factor);
-            MMul *mul = MMul::New(alloc, term.term, factor);
-            mul->setInt32();
-            block->insertBefore(block->lastIns(), mul);
-            mul->computeRange(alloc);
-            if (def) {
-                def = MAdd::New(alloc, def, mul);
-                def->toAdd()->setInt32();
-                block->insertBefore(block->lastIns(), def->toInstruction());
-                def->computeRange(alloc);
-            } else {
-                def = mul;
-            }
-        }
-    }
-
-    if (!def) {
-        def = MConstant::New(alloc, Int32Value(0));
-        block->insertBefore(block->lastIns(), def->toInstruction());
-        def->computeRange(alloc);
-    }
-
-    return def;
 }
 
 bool
@@ -2331,7 +2294,8 @@ MToDouble::truncate(TruncateKind kind)
 bool
 MLoadTypedArrayElementStatic::truncate(TruncateKind kind)
 {
-    setInfallible();
+    if (kind >= IndirectTruncate)
+        setInfallible();
     return false;
 }
 
@@ -2753,6 +2717,14 @@ MLoadElementHole::collectRangeInfoPreTrunc()
 }
 
 void
+MClz::collectRangeInfoPreTrunc()
+{
+    Range inputRange(input());
+    if (!inputRange.canBeZero())
+        operandIsNeverZero_ = true;
+}
+
+void
 MDiv::collectRangeInfoPreTrunc()
 {
     Range lhsRange(lhs());
@@ -2847,7 +2819,7 @@ MCompare::collectRangeInfoPreTrunc()
 void
 MNot::collectRangeInfoPreTrunc()
 {
-    if (!Range(operand()).canBeNaN())
+    if (!Range(input()).canBeNaN())
         operandIsNeverNaN_ = true;
 }
 

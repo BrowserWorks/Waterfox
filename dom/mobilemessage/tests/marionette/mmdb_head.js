@@ -235,6 +235,44 @@ function markMessageRead(aMmdb, aMessageId, aRead) {
 }
 
 /**
+ * A convenient function for calling |mmdb.deleteMessage(...)|.
+ *
+ * Fulfill params: array of deleted flags.
+ * Reject params: Ci.nsIMobileMessageCallback.FOO.
+ *
+ * @return A deferred promise.
+ */
+function deleteMessage(aMmdb, aMessageIds, aLength) {
+  let deferred = Promise.defer();
+
+  aMmdb.deleteMessage(aMessageIds, aLength, {
+    notifyDeleteMessageFailed: function(aRv) {
+      ok(true, "deleteMessage returns a unsuccessful code: " + aRv);
+      deferred.reject(aRv);
+    },
+
+    notifyMessageDeleted: function(aDeleted, aLength) {
+      ok(true, "deleteMessage successfully!");
+      deferred.resolve(aDeleted);
+    }
+  });
+
+  return deferred.promise;
+}
+
+/**
+ * A convenient function for calling |mmdb.saveSmsSegment(...)|.
+ *
+ * Fulfill params: [<Cr.NS_ERROR_FOO>, <completeMessage>].
+ * Reject params: same as fulfill params.
+ *
+ * @return A deferred promise.
+ */
+function saveSmsSegment(aMmdb, aSmsSegment) {
+  return callMmdbMethod(aMmdb, "saveSmsSegment", aSmsSegment);
+}
+
+/**
  * Utility function for calling cursor-based MMDB methods.
  *
  * Resolve when the target method notifies us with |notifyCursorDone|,
@@ -265,9 +303,9 @@ function createMmdbCursor(aMmdb, aMethodName) {
       deferred.reject([aRv, results]);
     },
 
-    notifyCursorResult: function(aResult) {
-      ok(true, "notifyCursorResult: " + aResult.id);
-      results.push(aResult);
+    notifyCursorResult: function(aResults, aSize) {
+      ok(true, "notifyCursorResult: " + aResults.map(function(aElement) { return aElement.id; }));
+      results = results.concat(aResults);
       cursor.handleContinue();
     },
 
@@ -290,8 +328,21 @@ function createMmdbCursor(aMmdb, aMethodName) {
  *
  * @return A deferred promise.
  */
-function createMessageCursor(aMmdb, aFilter, aReverse) {
-  return createMmdbCursor(aMmdb, "createMessageCursor", aFilter, aReverse);
+function createMessageCursor(aMmdb, aStartDate = null, aEndDate = null,
+                             aNumbers = null, aDelivery = null, aRead = null,
+                             aThreadId = null, aReverse = false) {
+  return createMmdbCursor(aMmdb, "createMessageCursor",
+                          aStartDate !== null,
+                          aStartDate || 0,
+                          aEndDate !== null,
+                          aEndDate || 0,
+                          aNumbers || null,
+                          aNumbers && aNumbers.length || 0,
+                          aDelivery || null,
+                          aRead !== null,
+                          aRead || false,
+                          aThreadId || 0,
+                          aReverse || false);
 }
 
 /**

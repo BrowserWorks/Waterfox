@@ -7,8 +7,6 @@
 #ifndef jit_BaselineCompiler_h
 #define jit_BaselineCompiler_h
 
-#ifdef JS_ION
-
 #include "jit/FixedList.h"
 #if defined(JS_CODEGEN_X86)
 # include "jit/x86/BaselineCompiler-x86.h"
@@ -18,6 +16,8 @@
 # include "jit/arm/BaselineCompiler-arm.h"
 #elif defined(JS_CODEGEN_MIPS)
 # include "jit/mips/BaselineCompiler-mips.h"
+#elif defined(JS_CODEGEN_NONE)
+# include "jit/none/BaselineCompiler-none.h"
 #else
 # error "Unknown architecture!"
 #endif
@@ -62,6 +62,7 @@ namespace jit {
     _(JSOP_DOUBLE)             \
     _(JSOP_STRING)             \
     _(JSOP_OBJECT)             \
+    _(JSOP_CALLSITEOBJ)        \
     _(JSOP_REGEXP)             \
     _(JSOP_LAMBDA)             \
     _(JSOP_LAMBDA_ARROW)       \
@@ -91,6 +92,7 @@ namespace jit {
     _(JSOP_BITNOT)             \
     _(JSOP_NEG)                \
     _(JSOP_NEWARRAY)           \
+    _(JSOP_NEWARRAY_COPYONWRITE) \
     _(JSOP_INITELEM_ARRAY)     \
     _(JSOP_NEWOBJECT)          \
     _(JSOP_NEWINIT)            \
@@ -272,9 +274,9 @@ class BaselineCompiler : public BaselineCompilerSpecific
     Address getScopeCoordinateAddress(Register reg);
 };
 
+extern const VMFunction NewArrayCopyOnWriteInfo;
+
 } // namespace jit
 } // namespace js
-
-#endif // JS_ION
 
 #endif /* jit_BaselineCompiler_h */

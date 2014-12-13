@@ -19,6 +19,7 @@
 #include "mozilla/layers/CompositorTypes.h"  // for TextureInfo, etc
 #include "mozilla/layers/Effects.h"     // for Texture Effect
 #include "mozilla/layers/LayersTypes.h"  // for LayerRenderState, etc
+#include "mozilla/layers/LayersMessages.h"
 #include "mozilla/layers/TextureHost.h" // for TextureHost
 #include "mozilla/mozalloc.h"           // for operator delete
 #include "nsCOMPtr.h"                   // for already_AddRefed
@@ -36,14 +37,6 @@ class DataSourceSurface;
 }
 
 namespace layers {
-
-// Some properties of a Layer required for tiling
-struct TiledLayerProperties
-{
-  nsIntRegion mVisibleRegion;
-  nsIntRegion mValidRegion;
-  CSSToScreenScale mEffectiveResolution;
-};
 
 class Layer;
 class SurfaceDescriptor;
@@ -96,7 +89,7 @@ protected:
 
 public:
   NS_INLINE_DECL_REFCOUNTING(CompositableHost)
-  CompositableHost(const TextureInfo& aTextureInfo);
+  explicit CompositableHost(const TextureInfo& aTextureInfo);
 
   static TemporaryRef<CompositableHost> Create(const TextureInfo& aTextureInfo);
 
@@ -121,8 +114,7 @@ public:
                          const gfx::Matrix4x4& aTransform,
                          const gfx::Filter& aFilter,
                          const gfx::Rect& aClipRect,
-                         const nsIntRegion* aVisibleRegion = nullptr,
-                         TiledLayerProperties* aLayerProperties = nullptr) = 0;
+                         const nsIntRegion* aVisibleRegion = nullptr) = 0;
 
   /**
    * Update the content host.
@@ -264,6 +256,7 @@ public:
   virtual void UseTextureHost(TextureHost* aTexture);
   virtual void UseComponentAlphaTextures(TextureHost* aTextureOnBlack,
                                          TextureHost* aTextureOnWhite);
+  virtual void UseOverlaySource(OverlaySource aOverlay) { }
 
   virtual void RemoveTextureHost(TextureHost* aTexture);
 
@@ -313,7 +306,7 @@ protected:
 class AutoLockCompositableHost MOZ_FINAL
 {
 public:
-  AutoLockCompositableHost(CompositableHost* aHost)
+  explicit AutoLockCompositableHost(CompositableHost* aHost)
     : mHost(aHost)
   {
     mSucceeded = mHost->Lock();

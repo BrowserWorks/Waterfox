@@ -93,7 +93,7 @@ extern const char kNrIceTransportTcp[];
 
 class NrIceStunServer {
  public:
-  NrIceStunServer(const PRNetAddr& addr) : has_addr_(true) {
+  explicit NrIceStunServer(const PRNetAddr& addr) : has_addr_(true) {
     memcpy(&addr_, &addr, sizeof(addr));
   }
 
@@ -292,6 +292,7 @@ class NrIceCtx {
                          int potential_ct);
   static int stream_ready(void *obj, nr_ice_media_stream *stream);
   static int stream_failed(void *obj, nr_ice_media_stream *stream);
+  static int ice_checking(void *obj, nr_ice_peer_ctx *pctx);
   static int ice_completed(void *obj, nr_ice_peer_ctx *pctx);
   static int msg_recvd(void *obj, nr_ice_peer_ctx *pctx,
                        nr_ice_media_stream *stream, int component_id,

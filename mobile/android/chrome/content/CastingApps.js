@@ -4,6 +4,9 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
+XPCOMUtils.defineLazyModuleGetter(this, "PageActions",
+                                  "resource://gre/modules/PageActions.jsm");
+
 // Define service targets. We should consider moving these to their respective
 // JSM files, but we left them here to allow for better lazy JSM loading.
 var rokuTarget = {
@@ -42,6 +45,8 @@ var mediaPlayerTarget = {
 
 var CastingApps = {
   _castMenuId: -1,
+  mirrorStartMenuId: -1,
+  mirrorStopMenuId: -1,
 
   init: function ca_init() {
     if (!this.isEnabled()) {
@@ -57,7 +62,7 @@ var CastingApps = {
     SimpleServiceDiscovery.search(120 * 1000);
 
     this._castMenuId = NativeWindow.contextmenus.add(
-      Strings.browser.GetStringFromName("contextmenu.castToScreen"),
+      Strings.browser.GetStringFromName("contextmenu.sendToDevice"),
       this.filterCast,
       this.handleContextMenu.bind(this)
     );
@@ -65,6 +70,9 @@ var CastingApps = {
     Services.obs.addObserver(this, "Casting:Play", false);
     Services.obs.addObserver(this, "Casting:Pause", false);
     Services.obs.addObserver(this, "Casting:Stop", false);
+    Services.obs.addObserver(this, "Casting:Mirror", false);
+    Services.obs.addObserver(this, "ssdp-service-found", false);
+    Services.obs.addObserver(this, "ssdp-service-lost", false);
 
     BrowserApp.deck.addEventListener("TabSelect", this, true);
     BrowserApp.deck.addEventListener("pageshow", this, true);
@@ -81,8 +89,61 @@ var CastingApps = {
     Services.obs.removeObserver(this, "Casting:Play");
     Services.obs.removeObserver(this, "Casting:Pause");
     Services.obs.removeObserver(this, "Casting:Stop");
+    Services.obs.removeObserver(this, "Casting:Mirror");
+    Services.obs.removeObserver(this, "ssdp-service-found");
+    Services.obs.removeObserver(this, "ssdp-service-lost");
 
     NativeWindow.contextmenus.remove(this._castMenuId);
+  },
+
+  serviceAdded: function(aService) {
+    if (aService.mirror && this.mirrorStartMenuId == -1) {
+      this.mirrorStartMenuId = NativeWindow.menu.add({
+        name: Strings.browser.GetStringFromName("casting.mirrorTab"),
+        callback: function() {
+          function callbackFunc(aService) {
+            let app = SimpleServiceDiscovery.findAppForService(aService);
+            if (app)
+              app.mirror(function() {
+              });
+          }
+
+          function filterFunc(aService) {
+            return aService.mirror == true;
+          }
+          this.prompt(callbackFunc, filterFunc);
+        }.bind(this),
+        parent: NativeWindow.menu.toolsMenuID
+      });
+
+      this.mirrorStopMenuId = NativeWindow.menu.add({
+        name: Strings.browser.GetStringFromName("casting.mirrorTabStop"),
+        callback: function() {
+          if (this.tabMirror) {
+            this.tabMirror.stop();
+            this.tabMirror = null;
+          }
+          NativeWindow.menu.update(this.mirrorStartMenuId, { visible: true });
+          NativeWindow.menu.update(this.mirrorStopMenuId, { visible: false });
+        }.bind(this),
+      });
+    }
+    NativeWindow.menu.update(this.mirrorStopMenuId, { visible: false });
+  },
+
+  serviceLost: function(aService) {
+    if (aService.mirror && this.mirrorStartMenuId != -1) {
+      let haveMirror = false;
+      SimpleServiceDiscovery.services.forEach(function(service) {
+        if (service.mirror) {
+          haveMirror = true;
+        }
+      });
+      if (!haveMirror) {
+        NativeWindow.menu.remove(this.mirrorStartMenuId);
+        this.mirrorStartMenuId = -1;
+      }
+    }
   },
 
   isEnabled: function isEnabled() {
@@ -106,6 +167,24 @@ var CastingApps = {
           this.closeExternal();
         }
         break;
+      case "Casting:Mirror":
+        {
+          Cu.import("resource://gre/modules/TabMirror.jsm");
+          this.tabMirror = new TabMirror(aData, window);
+          NativeWindow.menu.update(this.mirrorStartMenuId, { visible: false });
+          NativeWindow.menu.update(this.mirrorStopMenuId, { visible: true });
+        }
+        break;
+      case "ssdp-service-found":
+        {
+          this.serviceAdded(SimpleServiceDiscovery.findServiceForID(aData));
+          break;
+        }
+      case "ssdp-service-lost":
+        {
+          this.serviceLost(SimpleServiceDiscovery.findServiceForID(aData));
+          break;
+        }
     }
   },
 
@@ -327,7 +406,7 @@ var CastingApps = {
     // Remove any exising pageaction first, in case state changes or we don't have
     // a castable video
     if (this.pageAction.id) {
-      NativeWindow.pageactions.remove(this.pageAction.id);
+      PageActions.remove(this.pageAction.id);
       delete this.pageAction.id;
     }
 
@@ -348,15 +427,15 @@ var CastingApps = {
     // 2. The video is allowed to be cast and is currently playing
     // Both states have the same action: Show the cast page action
     if (aVideo.mozIsCasting) {
-      this.pageAction.id = NativeWindow.pageactions.add({
-        title: Strings.browser.GetStringFromName("contextmenu.castToScreen"),
+      this.pageAction.id = PageActions.add({
+        title: Strings.browser.GetStringFromName("contextmenu.sendToDevice"),
         icon: "drawable://casting_active",
         clickCallback: this.pageAction.click,
         important: true
       });
     } else if (aVideo.mozAllowCasting) {
-      this.pageAction.id = NativeWindow.pageactions.add({
-        title: Strings.browser.GetStringFromName("contextmenu.castToScreen"),
+      this.pageAction.id = PageActions.add({
+        title: Strings.browser.GetStringFromName("contextmenu.sendToDevice"),
         icon: "drawable://casting",
         clickCallback: this.pageAction.click,
         important: true
@@ -383,7 +462,7 @@ var CastingApps = {
     }
 
     let prompt = new Prompt({
-      title: Strings.browser.GetStringFromName("casting.prompt")
+      title: Strings.browser.GetStringFromName("casting.sendToDevice")
     }).setSingleChoiceItems(items).show(function(data) {
       let selected = data.button;
       let service = selected == -1 ? null : filteredServices[selected];

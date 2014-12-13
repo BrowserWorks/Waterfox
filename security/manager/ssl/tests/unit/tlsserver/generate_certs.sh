@@ -83,6 +83,13 @@ fi
 
 COMMON_ARGS="-v 360 -w -1 -2 -z $NOISE_FILE"
 
+function export_cert {
+  NICKNAME="${1}"
+  DERFILE="${2}"
+
+  $RUN_MOZILLA $CERTUTIL -d $DB_ARGUMENT -L -n $NICKNAME -r > $OUTPUT_DIR/$DERFILE
+}
+
 # Bash doesn't actually allow return values in a sane way, so just use a
 # global variable.
 function cert_already_exists {
@@ -108,7 +115,7 @@ function make_CA {
                                                    -s "$SUBJECT" \
                                                    -t "CT,," \
                                                    -x $COMMON_ARGS
-  $RUN_MOZILLA $CERTUTIL -d $DB_ARGUMENT -L -n $NICKNAME -r > $OUTPUT_DIR/$DERFILE
+  export_cert $NICKNAME $DERFILE
 }
 
 SERIALNO=$RANDOM
@@ -227,7 +234,8 @@ make_EE localhostAndExampleCom 'CN=Test End-entity' testCA "localhost,*.example.
 # Make an EE cert issued by otherCA
 make_EE otherIssuerEE 'CN=Wrong CA Pin Test End-Entity' otherCA "*.include-subdomains.pinning.example.com,*.exclude-subdomains.pinning.example.com,*.pinning.example.com"
 
-$RUN_MOZILLA $CERTUTIL -d $DB_ARGUMENT -L -n localhostAndExampleCom -r > $OUTPUT_DIR/default-ee.der
+export_cert localhostAndExampleCom default-ee.der
+
 # A cert that is like localhostAndExampleCom, but with a different serial number for
 # testing the "OCSP response is from the right issuer, but it is for the wrong cert"
 # case.
@@ -236,6 +244,7 @@ make_EE ocspOtherEndEntity 'CN=Other Cert' testCA "localhost,*.example.com"
 make_INT testINT 'CN=Test Intermediate' testCA
 make_EE ocspEEWithIntermediate 'CN=Test End-entity with Intermediate' testINT "localhost,*.example.com"
 make_EE expired 'CN=Expired Test End-entity' testCA "expired.example.com" "-w -400"
+export_cert expired expired-ee.der
 make_EE mismatch 'CN=Mismatch Test End-entity' testCA "doesntmatch.example.com"
 make_EE selfsigned 'CN=Self-signed Test End-entity' testCA "selfsigned.example.com" "-x"
 # If the certificate 'CN=Test Intermediate' isn't loaded into memory,
@@ -260,6 +269,7 @@ make_EE mismatch-untrusted-expired 'CN=Mismatch-Untrusted-Expired Test End-entit
 NSS_ALLOW_WEAK_SIGNATURE_ALG=1 make_EE md5signature-expired 'CN=Test MD5Signature-Expired End-entity' testCA "md5signature-expired.example.com" "-Z MD5" "-w -400"
 
 make_EE inadequatekeyusage 'CN=Inadequate Key Usage Test End-entity' testCA "inadequatekeyusage.example.com" "--keyUsage crlSigning"
+export_cert inadequatekeyusage inadequatekeyusage-ee.der
 make_EE selfsigned-inadequateEKU 'CN=Self-signed Inadequate EKU Test End-entity' unused "selfsigned-inadequateEKU.example.com" "--keyUsage keyEncipherment,dataEncipherment --extKeyUsage serverAuth" "-x"
 
 make_delegated delegatedSigner 'CN=Test Delegated Responder' testCA "--extKeyUsage ocspResponder"
@@ -272,6 +282,7 @@ make_INT self-signed-EE-with-cA-true 'CN=Test Self-signed End-entity with CA tru
 make_INT ca-used-as-end-entity 'CN=Test Intermediate used as End-Entity' testCA "-8 ca-used-as-end-entity.example.com"
 
 make_delegated badKeysizeDelegatedSigner 'CN=Bad Keysize Delegated Responder' testCA "--extKeyUsage ocspResponder -g 1008"
+make_EE inadequateKeySizeEE 'CN=Inadequate Key Size End-Entity' testINT "inadequate-key-size-ee.example.com" "-g 1008"
 
 make_EE_with_nsCertType nsCertTypeCritical 'CN=nsCertType Critical' testCA "localhost,*.example.com" "y"
 make_EE_with_nsCertType nsCertTypeNotCritical 'CN=nsCertType Not Critical' testCA "localhost,*.example.com" "n"

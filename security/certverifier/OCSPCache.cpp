@@ -62,17 +62,22 @@ CertIDHash(SHA384Buffer& buf, const CertID& certID)
   if (rv != SECSuccess) {
     return rv;
   }
-  rv = PK11_DigestOp(context.get(), certID.issuer.data, certID.issuer.len);
+  SECItem certIDIssuer = UnsafeMapInputToSECItem(certID.issuer);
+  rv = PK11_DigestOp(context.get(), certIDIssuer.data, certIDIssuer.len);
   if (rv != SECSuccess) {
     return rv;
   }
-  rv = PK11_DigestOp(context.get(), certID.issuerSubjectPublicKeyInfo.data,
-                     certID.issuerSubjectPublicKeyInfo.len);
+  SECItem certIDIssuerSubjectPublicKeyInfo =
+    UnsafeMapInputToSECItem(certID.issuerSubjectPublicKeyInfo);
+  rv = PK11_DigestOp(context.get(), certIDIssuerSubjectPublicKeyInfo.data,
+                     certIDIssuerSubjectPublicKeyInfo.len);
   if (rv != SECSuccess) {
     return rv;
   }
-  rv = PK11_DigestOp(context.get(), certID.serialNumber.data,
-                     certID.serialNumber.len);
+  SECItem certIDSerialNumber =
+    UnsafeMapInputToSECItem(certID.serialNumber);
+  rv = PK11_DigestOp(context.get(), certIDSerialNumber.data,
+                     certIDSerialNumber.len);
   if (rv != SECSuccess) {
     return rv;
   }
@@ -85,12 +90,8 @@ CertIDHash(SHA384Buffer& buf, const CertID& certID)
 }
 
 Result
-OCSPCache::Entry::Init(const CertID& aCertID, Result aResult,
-                       PRTime aThisUpdate, PRTime aValidThrough)
+OCSPCache::Entry::Init(const CertID& aCertID)
 {
-  mResult = aResult;
-  mThisUpdate = aThisUpdate;
-  mValidThrough = aValidThrough;
   SECStatus srv = CertIDHash(mIDHash, aCertID);
   if (srv != SECSuccess) {
     return MapPRErrorCodeToResult(PR_GetError());
@@ -154,7 +155,7 @@ OCSPCache::MakeMostRecentlyUsed(size_t aIndex,
 }
 
 bool
-OCSPCache::Get(const CertID& aCertID, Result& aResult, PRTime& aValidThrough)
+OCSPCache::Get(const CertID& aCertID, Result& aResult, Time& aValidThrough)
 {
   MutexAutoLock lock(mMutex);
 
@@ -172,7 +173,7 @@ OCSPCache::Get(const CertID& aCertID, Result& aResult, PRTime& aValidThrough)
 
 Result
 OCSPCache::Put(const CertID& aCertID, Result aResult,
-               PRTime aThisUpdate, PRTime aValidThrough)
+               Time aThisUpdate, Time aValidThrough)
 {
   MutexAutoLock lock(mMutex);
 
@@ -240,14 +241,15 @@ OCSPCache::Put(const CertID& aCertID, Result aResult,
     }
   }
 
-  Entry* newEntry = new (std::nothrow) Entry();
+  Entry* newEntry = new (std::nothrow) Entry(aResult, aThisUpdate,
+                                             aValidThrough);
   // Normally we don't have to do this in Gecko, because OOM is fatal.
   // However, if we want to embed this in another project, OOM might not
   // be fatal, so handle this case.
   if (!newEntry) {
     return Result::FATAL_ERROR_NO_MEMORY;
   }
-  Result rv = newEntry->Init(aCertID, aResult, aThisUpdate, aValidThrough);
+  Result rv = newEntry->Init(aCertID);
   if (rv != Success) {
     delete newEntry;
     return rv;

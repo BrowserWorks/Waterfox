@@ -26,10 +26,17 @@
 #     though this may change if we find a need for additional properties.
 #
 #     The Unicode data files listed above should be together in one directory.
+#
 #     We also require the file 
 #        http://www.unicode.org/Public/security/latest/xidmodifications.txt
 #     This file should be in a sub-directory "security" immediately below the
 #        directory containing the other Unicode data files.
+#
+#     We also require the latest data file for UTR50, currently revision-12:
+#        http://www.unicode.org/Public/vertical/revision-12/VerticalOrientation-12.txt
+#     This file should be in a sub-directory "vertical" immediately below the
+#        directory containing the other Unicode data files.
+#
 #
 # (2) Run this tool using a command line of the form
 #
@@ -197,36 +204,33 @@ my %scriptCode = (
   SHARADA => 100,
   SORA_SOMPENG => 101,
   TAKRI => 102,
-
-# Expected unicode 7.0 additions, not yet supported; re-check when enabling
-# by comparison with harfbuzz and with PangoScript values
-#  BASSA_VAH => 103,
-#  CAUCASIAN_ALBANIAN => 104,
-#  DUPLOYAN => 105,
-#  ELBASAN => 106,
-#  GRANTHA => 107,
-#  KHOJKI => 108,
-#  KHUDAWADI => 109,
-#  LINEAR_A => 110,
-#  MAHAJANI => 111,
-#  MANICHAEAN => 112,
-#  MENDE_KIKAKUI => 113,
-#  MODI => 114,
-#  MRO => 115,
-#  NABATAEAN => 116,
-#  OLD_NORTH_ARABIAN => 117,
-#  OLD_PERMIC => 118,
-#  PAHAWH_HMONG => 119,
-#  PALMYRENE => 120,
-#  PAU_CIN_HAU => 121,
-#  PSALTER_PAHLAVI => 122,
-#  SIDDHAM => 123,
-#  TIRHUTA => 124,
-#  WARANG_CITI => 125,
+# unicode 7.0 additions
+  BASSA_VAH => 103,
+  CAUCASIAN_ALBANIAN => 104,
+  DUPLOYAN => 105,
+  ELBASAN => 106,
+  GRANTHA => 107,
+  KHOJKI => 108,
+  KHUDAWADI => 109,
+  LINEAR_A => 110,
+  MAHAJANI => 111,
+  MANICHAEAN => 112,
+  MENDE_KIKAKUI => 113,
+  MODI => 114,
+  MRO => 115,
+  NABATAEAN => 116,
+  OLD_NORTH_ARABIAN => 117,
+  OLD_PERMIC => 118,
+  PAHAWH_HMONG => 119,
+  PALMYRENE => 120,
+  PAU_CIN_HAU => 121,
+  PSALTER_PAHLAVI => 122,
+  SIDDHAM => 123,
+  TIRHUTA => 124,
+  WARANG_CITI => 125,
 
 # additional "script" code, not from Unicode (but matches ISO 15924's Zmth tag)
-# XXX need to update this when the Unicode 7.0 scripts are enabled above
-  MATHEMATICAL_NOTATION => 103,
+  MATHEMATICAL_NOTATION => 126,
 );
 
 my $sc = -1;
@@ -304,6 +308,13 @@ my %bidicategoryCode = (
   "BN"  => "18"  # Boundary Neutral
 );
 
+my %verticalOrientationCode = (
+  'U' => 0,  #   U - Upright, the same orientation as in the code charts
+  'R' => 1,  #   R - Rotated 90 degrees clockwise compared to the code charts
+  'Tu' => 2, #   Tu - Transformed typographically, with fallback to Upright
+  'Tr' => 3  #   Tr - Transformed typographically, with fallback to Rotated
+);
+
 # initialize default properties
 my @script;
 my @category;
@@ -317,6 +328,7 @@ my @numericvalue;
 my @hanVariant;
 my @bidicategory;
 my @fullWidth;
+my @verticalOrientation;
 for (my $i = 0; $i < 0x110000; ++$i) {
     $script[$i] = $scriptCode{"UNKNOWN"};
     $category[$i] = $catCode{"UNASSIGNED"};
@@ -327,6 +339,7 @@ for (my $i = 0; $i < 0x110000; ++$i) {
     $hanVariant[$i] = 0;
     $bidicategory[$i] = $bidicategoryCode{"L"};
     $fullWidth[$i] = 0;
+    $verticalOrientation[$i] = 1; # default for unlisted codepoints is 'R'
 }
 
 # blocks where the default for bidi category is not L
@@ -631,6 +644,31 @@ while (<FH>) {
 }
 close FH;
 
+# read VerticalOrientation-12.txt
+open FH, "< $ARGV[1]/vertical/VerticalOrientation-12.txt" or die "can't open UTR50 data file VerticalOrientation-12.txt\n";
+push @versionInfo, "";
+while (<FH>) {
+    chomp;
+    push @versionInfo, $_;
+    last if /Date:/;
+}
+while (<FH>) {
+    chomp;
+    s/#.*//;
+    if (m/([0-9A-F]{4,6})(?:\.\.([0-9A-F]{4,6}))*\s*;\s*([^ ]+)/) {
+        my $vo = $3;
+        warn "unknown Vertical_Orientation code $vo"
+            unless exists $verticalOrientationCode{$vo};
+        $vo = $verticalOrientationCode{$vo};
+        my $start = hex "0x$1";
+        my $end = (defined $2) ? hex "0x$2" : $start;
+        for (my $i = $start; $i <= $end; ++$i) {
+            $verticalOrientation[$i] = $vo;
+        }
+    }
+}
+close FH;
+
 my $timestamp = gmtime();
 
 open DATA_TABLES, "> nsUnicodePropertyData.cpp" or die "unable to open nsUnicodePropertyData.cpp for output";
@@ -709,18 +747,35 @@ sub sprintCharProps1
   my $usv = shift;
   return sprintf("{%d,%d,%d}, ", $mirror[$usv], $hangul[$usv], $combining[$usv]);
 }
-&genTables("CharProp1", "struct nsCharProps1 {\n  unsigned char mMirrorOffsetIndex:5;\n  unsigned char mHangulType:3;\n  unsigned char mCombiningClass:8;\n};",
-           "nsCharProps1", 11, 5, \&sprintCharProps1, 1, 2, 1);
+my $type = q/
+struct nsCharProps1 {
+  unsigned char mMirrorOffsetIndex:5;
+  unsigned char mHangulType:3;
+  unsigned char mCombiningClass:8;
+};
+/;
+&genTables("CharProp1", $type, "nsCharProps1", 11, 5, \&sprintCharProps1, 1, 2, 1);
 
 sub sprintCharProps2
 {
   my $usv = shift;
-  return sprintf("{%d,%d,%d,%d,%d,%d},",
+  return sprintf("{%d,%d,%d,%d,%d,%d,%d},",
                  $script[$usv], $eaw[$usv], $category[$usv],
-                 $bidicategory[$usv], $xidmod[$usv], $numericvalue[$usv]);
+                 $bidicategory[$usv], $xidmod[$usv], $numericvalue[$usv],
+                 $verticalOrientation[$usv]);
 }
-&genTables("CharProp2", "struct nsCharProps2 {\n  unsigned char mScriptCode:8;\n  unsigned char mEAW:3;\n  unsigned char mCategory:5;\n  unsigned char mBidiCategory:5;\n  unsigned char mXidmod:4;\n  signed char mNumericValue:5;\n  unsigned char mHanVariant:2;\n};",
-           "nsCharProps2", 11, 5, \&sprintCharProps2, 16, 4, 1);
+$type = q/
+struct nsCharProps2 {
+  unsigned char mScriptCode:8;
+  unsigned char mEAW:3;
+  unsigned char mCategory:5;
+  unsigned char mBidiCategory:5;
+  unsigned char mXidmod:4;
+  signed char   mNumericValue:5;
+  unsigned char mVertOrient:2;
+};
+/;
+&genTables("CharProp2", $type, "nsCharProps2", 11, 5, \&sprintCharProps2, 16, 4, 1);
 
 print HEADER "#pragma pack()\n\n";
 

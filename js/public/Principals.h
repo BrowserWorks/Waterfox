@@ -17,16 +17,14 @@
 
 struct JSPrincipals {
     /* Don't call "destroy"; use reference counting macros below. */
-#ifdef JS_THREADSAFE
     mozilla::Atomic<int32_t> refcount;
-#else
-    int32_t refcount;
-#endif
 
 #ifdef JS_DEBUG
     /* A helper to facilitate principals debugging. */
     uint32_t    debugToken;
 #endif
+
+    JSPrincipals() : refcount(0) {}
 
     void setDebugToken(uint32_t token) {
 # ifdef JS_DEBUG

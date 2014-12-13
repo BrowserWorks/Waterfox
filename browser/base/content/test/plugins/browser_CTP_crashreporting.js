@@ -103,8 +103,21 @@ function onSubmitStatus(subj, topic, data) {
     if (data != "success" && data != "failed")
       return;
 
-    let extra = getPropertyBagValue(subj.QueryInterface(Ci.nsIPropertyBag),
-                                    "extra");
+    let propBag = subj.QueryInterface(Ci.nsIPropertyBag);
+    if (data == "success") {
+      let remoteID = getPropertyBagValue(propBag, "serverCrashID");
+      ok(!!remoteID, "serverCrashID should be set");
+
+      // Remove the submitted report file.
+      let file = Services.dirsvc.get("UAppData", Ci.nsILocalFile);
+      file.append("Crash Reports");
+      file.append("submitted");
+      file.append(remoteID + ".txt");
+      ok(file.exists(), "Submitted report file should exist");
+      file.remove(false);
+    }
+
+    let extra = getPropertyBagValue(propBag, "extra");
     ok(extra instanceof Ci.nsIPropertyBag, "Extra data should be property bag");
 
     let val = getPropertyBagValue(extra, "PluginUserComment");
@@ -114,6 +127,15 @@ function onSubmitStatus(subj, topic, data) {
     val = getPropertyBagValue(extra, "PluginContentURL");
     ok(val === undefined,
        "URL should be absent from extra data when opt-in not checked");
+
+    // Execute this later in case the event to change submitStatus has not
+    // have been dispatched yet.
+    executeSoon(function () {
+      let plugin = gBrowser.contentDocument.getElementById("test");
+      let elt = gPluginHandler.getPluginUI.bind(gPluginHandler, plugin);
+      is(elt("submitStatus").getAttribute("status"), data,
+         "submitStatus data should match");
+    });
   }
   catch (err) {
     failWithException(err);

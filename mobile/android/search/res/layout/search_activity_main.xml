@@ -5,31 +5,70 @@
 <merge
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <fragment
+    <org.mozilla.search.autocomplete.ClearableEditText
+        android:id="@+id/search_edit_text"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:name="org.mozilla.search.PostSearchFragment"
-        android:layout_marginTop="@dimen/search_bar_height"
+        android:layout_height="@dimen/search_bar_height"
+        android:paddingTop="@dimen/search_bar_padding_y"
+        android:paddingBottom="@dimen/search_bar_padding_y"
+        android:paddingLeft="@dimen/card_background_padding_x"
+        android:paddingRight="@dimen/card_background_padding_x"
+        android:layout_gravity="top"/>
+
+    <fragment
         android:id="@+id/postsearch"
-        />
-
-    <fragment
+        android:name="org.mozilla.search.PostSearchFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:name="org.mozilla.search.PreSearchFragment"
         android:layout_marginTop="@dimen/search_bar_height"
-        android:id="@+id/presearch"
-        />
+        android:layout_gravity="top"
+        android:visibility="invisible"/>
 
     <fragment
+        android:id="@+id/presearch"
+        android:name="org.mozilla.search.PreSearchFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:name="org.mozilla.search.autocomplete.SearchFragment"
-        android:id="@+id/search_fragment"/>
+        android:layout_marginTop="@dimen/search_bar_height"
+        android:layout_gravity="top"/>
+
+    <fragment
+        android:id="@+id/suggestions"
+        android:name="org.mozilla.search.autocomplete.SuggestionsFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="@dimen/search_bar_height"
+        android:layout_gravity="top"/>
+
+
+    <ImageButton
+        android:id="@+id/settings_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:padding="15dp"
+        android:src="@drawable/ic_action_settings"
+        android:layout_gravity="bottom|right"
+        android:contentDescription="@string/search_pref_button_content_description"/>
+
+    <View
+        android:id="@+id/animation_card"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="@dimen/search_bar_height"
+        android:background="@color/card_background"
+        android:visibility="invisible"
+        android:layout_gravity="top"/>
+
+    <TextView
+        android:id="@+id/animation_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/card_padding_x"
+        android:textSize="@dimen/query_text_size"
+        android:visibility="invisible"
+        android:layout_gravity="top"/>
 
 </merge>

@@ -5,7 +5,6 @@
 
 package org.mozilla.gecko;
 
-import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.util.Log;
@@ -52,7 +51,7 @@ public class GeckoScreenOrientation {
     }
 
     // Singleton instance.
-    private static GeckoScreenOrientation sInstance = null;
+    private static GeckoScreenOrientation sInstance;
     // Default screen orientation, used for initialization and unlocking.
     private static final ScreenOrientation DEFAULT_SCREEN_ORIENTATION = ScreenOrientation.DEFAULT;
     // Default rotation, used when device rotation is unknown.

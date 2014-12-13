@@ -9,7 +9,6 @@
 #include "mozilla/dom/ToJSValue.h"
 #include "nsXULAppAPI.h"
 #include "WifiUtils.h"
-#include "nsCxPusher.h"
 
 #ifdef MOZ_TASK_TRACER
 #include "GeckoTaskTracer.h"
@@ -239,11 +238,16 @@ WifiProxyService::Shutdown()
       mEventThreadList[i].mThread = nullptr;
     }
   }
+
   mEventThreadList.Clear();
+
   if (mControlThread) {
     mControlThread->Shutdown();
     mControlThread = nullptr;
   }
+
+  mListener = nullptr;
+
   return NS_OK;
 }
 

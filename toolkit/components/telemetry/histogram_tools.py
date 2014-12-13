@@ -55,7 +55,7 @@ def exponential_buckets(dmin, dmax, n_buckets):
         ret_array[bucket_index] = current
     return ret_array
 
-always_allowed_keys = ['kind', 'description', 'cpp_guard', 'expires_in_version']
+always_allowed_keys = ['kind', 'description', 'cpp_guard', 'expires_in_version', "alert_emails", 'keyed']
 
 class Histogram:
     """A class for representing a histogram definition."""
@@ -65,21 +65,24 @@ class Histogram:
 definition is a dict-like object that must contain at least the keys:
 
  - 'kind': The kind of histogram.  Must be one of 'boolean', 'flag',
-   'enumerated', 'linear', or 'exponential'.
+   'count', 'enumerated', 'linear', or 'exponential'.
  - 'description': A textual description of the histogram.
 
 The key 'cpp_guard' is optional; if present, it denotes a preprocessor
 symbol that should guard C/C++ definitions associated with the histogram."""
+        self.check_name(name)
         self.verify_attributes(name, definition)
         self._name = name
         self._description = definition['description']
         self._kind = definition['kind']
         self._cpp_guard = definition.get('cpp_guard')
+        self._keyed = definition.get('keyed', False)
         self._extended_statistics_ok = definition.get('extended_statistics_ok', False)
         self._expiration = definition.get('expires_in_version')
         self.compute_bucket_parameters(definition)
         table = { 'boolean': 'BOOLEAN',
                   'flag': 'FLAG',
+                  'count': 'COUNT',
                   'enumerated': 'LINEAR',
                   'linear': 'LINEAR',
                   'exponential': 'EXPONENTIAL' }
@@ -96,7 +99,7 @@ symbol that should guard C/C++ definitions associated with the histogram."""
 
     def kind(self):
         """Return the kind of the histogram.
-Will be one of 'boolean', 'flag', 'enumerated', 'linear', or 'exponential'."""
+Will be one of 'boolean', 'flag', 'count', 'enumerated', 'linear', or 'exponential'."""
         return self._kind
 
     def expiration(self):
@@ -128,6 +131,10 @@ the histogram."""
 associated with the histogram.  Returns None if no guarding is necessary."""
         return self._cpp_guard
 
+    def keyed(self):
+        """Returns True if this a keyed histogram, false otherwise."""
+        return self._keyed
+
     def extended_statistics_ok(self):
         """Return True if gathering extended statistics for this histogram
 is enabled."""
@@ -137,6 +144,7 @@ is enabled."""
         """Return an array of lower bounds for each bucket in the histogram."""
         table = { 'boolean': linear_buckets,
                   'flag': linear_buckets,
+                  'count': linear_buckets,
                   'enumerated': linear_buckets,
                   'linear': linear_buckets,
                   'exponential': exponential_buckets }
@@ -147,6 +155,7 @@ is enabled."""
         table = {
             'boolean': Histogram.boolean_flag_bucket_parameters,
             'flag': Histogram.boolean_flag_bucket_parameters,
+            'count': Histogram.boolean_flag_bucket_parameters,
             'enumerated': Histogram.enumerated_bucket_parameters,
             'linear': Histogram.linear_bucket_parameters,
             'exponential': Histogram.exponential_bucket_parameters
@@ -161,6 +170,7 @@ is enabled."""
         table = {
             'boolean': always_allowed_keys,
             'flag': always_allowed_keys,
+            'count': always_allowed_keys,
             'enumerated': always_allowed_keys + ['n_values'],
             'linear': general_keys,
             'exponential': general_keys + ['extended_statistics_ok']
@@ -169,6 +179,10 @@ is enabled."""
                        lambda allowed_keys: Histogram.check_keys(name, definition, allowed_keys))
 
         Histogram.check_expiration(name, definition)
+
+    def check_name(self, name):
+        if '#' in name:
+            raise ValueError, '"#" not permitted for %s' % (name)
 
     @staticmethod
     def check_expiration(name, definition):

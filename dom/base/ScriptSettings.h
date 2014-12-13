@@ -9,18 +9,52 @@
 #ifndef mozilla_dom_ScriptSettings_h
 #define mozilla_dom_ScriptSettings_h
 
-#include "nsCxPusher.h"
 #include "MainThreadUtils.h"
 #include "nsIGlobalObject.h"
 #include "nsIPrincipal.h"
 
 #include "mozilla/Maybe.h"
 
+#include "jsapi.h"
+
 class nsPIDOMWindow;
 class nsGlobalWindow;
+class nsIScriptContext;
+class nsIDocument;
 
 namespace mozilla {
 namespace dom {
+
+// For internal use only - use AutoJSAPI instead.
+namespace danger {
+
+/**
+ * Fundamental cx pushing class. All other cx pushing classes are implemented
+ * in terms of this class.
+ */
+class MOZ_STACK_CLASS AutoCxPusher
+{
+public:
+  explicit AutoCxPusher(JSContext *aCx, bool aAllowNull = false);
+  ~AutoCxPusher();
+
+  nsIScriptContext* GetScriptContext() { return mScx; }
+
+  // Returns true if this AutoCxPusher performed the push that is currently at
+  // the top of the cx stack.
+  bool IsStackTop() const;
+
+private:
+  mozilla::Maybe<JSAutoRequest> mAutoRequest;
+  nsCOMPtr<nsIScriptContext> mScx;
+  uint32_t mStackDepthAfterPush;
+#ifdef DEBUG
+  JSContext* mPushedContext;
+  unsigned mCompartmentDepthOnEntry;
+#endif
+};
+
+} /* namespace danger */
 
 /*
  * System-wide setup/teardown routines. Init and Destroy should be invoked
@@ -29,16 +63,56 @@ namespace dom {
 void InitScriptSettings();
 void DestroyScriptSettings();
 
-// This mostly gets the entry global, but doesn't entirely match the spec in
-// certain edge cases. It's good enough for some purposes, but not others. If
-// you want to call this function, ping bholley and describe your use-case.
-nsIGlobalObject* BrokenGetEntryGlobal();
+// To implement a web-compatible browser, it is often necessary to obtain the
+// global object that is "associated" with the currently-running code. This
+// process is made more complicated by the fact that, historically, different
+// algorithms have operated with different definitions of the "associated"
+// global.
+//
+// HTML5 formalizes this into two concepts: the "incumbent global" and the
+// "entry global". The incumbent global corresponds to the global of the
+// current script being executed, whereas the entry global corresponds to the
+// global of the script where the current JS execution began.
+//
+// There is also a potentially-distinct third global that is determined by the
+// current compartment. This roughly corresponds with the notion of Realms in
+// ECMAScript.
+//
+// Suppose some event triggers an event listener in window |A|, which invokes a
+// scripted function in window |B|, which invokes the |window.location.href|
+// setter in window |C|. The entry global would be |A|, the incumbent global
+// would be |B|, and the current compartment would be that of |C|.
+//
+// In general, it's best to use to use the most-closely-associated global
+// unless the spec says to do otherwise. In 95% of the cases, the global of
+// the current compartment (GetCurrentGlobal()) is the right thing. For
+// example, WebIDL constructors (new C.XMLHttpRequest()) are initialized with
+// the global of the current compartment (i.e. |C|).
+//
+// The incumbent global is very similar, but differs in a few edge cases. For
+// example, if window |B| does |C.location.href = "..."|, the incumbent global
+// used for the navigation algorithm is B, because no script from |C| was ever run.
+//
+// The entry global is used for various things like computing base URIs, mostly
+// for historical reasons.
+//
+// Note that all of these functions return bonafide global objects. This means
+// that, for Windows, they always return the inner.
 
-// Note: We don't yet expose GetEntryGlobal, because in order for it to be
-// correct, we first need to replace a bunch of explicit cx pushing in the
-// browser with AutoEntryScript. But GetIncumbentGlobal is simpler, because it
-// can mostly be inferred from the JS stack.
+// Returns the global associated with the top-most Candidate Entry Point on
+// the Script Settings Stack. See the HTML spec. This may be null.
+nsIGlobalObject* GetEntryGlobal();
+
+// If the entry global is a window, returns its extant document. Otherwise,
+// returns null.
+nsIDocument* GetEntryDocument();
+
+// Returns the global associated with the top-most entry of the the Script
+// Settings Stack. See the HTML spec. This may be null.
 nsIGlobalObject* GetIncumbentGlobal();
+
+// Returns the global associated with the current compartment. This may be null.
+nsIGlobalObject* GetCurrentGlobal();
 
 // JS-implemented WebIDL presents an interesting situation with respect to the
 // subject principal. A regular C++-implemented API can simply examine the
@@ -71,12 +145,13 @@ class ScriptSettingsStackEntry {
   friend class ScriptSettingsStack;
 
 public:
-  ScriptSettingsStackEntry(nsIGlobalObject *aGlobal, bool aCandidate);
   ~ScriptSettingsStackEntry();
 
   bool NoJSAPI() { return !mGlobalObject; }
 
 protected:
+  ScriptSettingsStackEntry(nsIGlobalObject *aGlobal, bool aCandidate);
+
   nsCOMPtr<nsIGlobalObject> mGlobalObject;
   bool mIsCandidateEntryPoint;
 
@@ -122,7 +197,7 @@ private:
  * fail. This prevents system code from accidentally triggering script
  * execution at inopportune moments via surreptitious getters and proxies.
  */
-class AutoJSAPI {
+class MOZ_STACK_CLASS AutoJSAPI {
 public:
   // Trivial constructor. One of the Init functions must be called before
   // accessing the JSContext through cx().
@@ -172,7 +247,7 @@ public:
     return mCx;
   }
 
-  bool CxPusherIsStackTop() const { return mCxPusher.ref().IsStackTop(); }
+  bool CxPusherIsStackTop() const { return mCxPusher->IsStackTop(); }
 
 protected:
   // Protected constructor, allowing subclasses to specify a particular cx to
@@ -183,7 +258,7 @@ protected:
   AutoJSAPI(nsIGlobalObject* aGlobalObject, bool aIsMainThread, JSContext* aCx);
 
 private:
-  mozilla::Maybe<AutoCxPusher> mCxPusher;
+  mozilla::Maybe<danger::AutoCxPusher> mCxPusher;
   mozilla::Maybe<JSAutoNullableCompartment> mAutoNullableCompartment;
   JSContext *mCx;
 
@@ -196,10 +271,12 @@ private:
 class AutoEntryScript : public AutoJSAPI,
                         protected ScriptSettingsStackEntry {
 public:
-  AutoEntryScript(nsIGlobalObject* aGlobalObject,
+  explicit AutoEntryScript(nsIGlobalObject* aGlobalObject,
                   bool aIsMainThread = NS_IsMainThread(),
                   // Note: aCx is mandatory off-main-thread.
                   JSContext* aCx = nullptr);
+
+  ~AutoEntryScript();
 
   void SetWebIDLCallerPrincipal(nsIPrincipal *aPrincipal) {
     mWebIDLCallerPrincipal = aPrincipal;
@@ -222,7 +299,7 @@ private:
  */
 class AutoIncumbentScript : protected ScriptSettingsStackEntry {
 public:
-  AutoIncumbentScript(nsIGlobalObject* aGlobalObject);
+  explicit AutoIncumbentScript(nsIGlobalObject* aGlobalObject);
 private:
   JS::AutoHideScriptedCaller mCallerOverride;
 };
@@ -237,12 +314,81 @@ private:
  */
 class AutoNoJSAPI : protected ScriptSettingsStackEntry {
 public:
-  AutoNoJSAPI(bool aIsMainThread = NS_IsMainThread());
+  explicit AutoNoJSAPI(bool aIsMainThread = NS_IsMainThread());
 private:
-  mozilla::Maybe<AutoCxPusher> mCxPusher;
+  mozilla::Maybe<danger::AutoCxPusher> mCxPusher;
 };
 
 } // namespace dom
+
+/**
+ * Use AutoJSContext when you need a JS context on the stack but don't have one
+ * passed as a parameter. AutoJSContext will take care of finding the most
+ * appropriate JS context and release it when leaving the stack.
+ */
+class MOZ_STACK_CLASS AutoJSContext {
+public:
+  explicit AutoJSContext(MOZ_GUARD_OBJECT_NOTIFIER_ONLY_PARAM);
+  operator JSContext*() const;
+
+protected:
+  explicit AutoJSContext(bool aSafe MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
+
+  // We need this Init() method because we can't use delegating constructor for
+  // the moment. It is a C++11 feature and we do not require C++11 to be
+  // supported to be able to compile Gecko.
+  void Init(bool aSafe MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
+
+  JSContext* mCx;
+  dom::AutoJSAPI mJSAPI;
+  MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
+};
+
+/**
+ * Use ThreadsafeAutoJSContext when you want an AutoJSContext but might be
+ * running on a worker thread.
+ */
+class MOZ_STACK_CLASS ThreadsafeAutoJSContext {
+public:
+  explicit ThreadsafeAutoJSContext(MOZ_GUARD_OBJECT_NOTIFIER_ONLY_PARAM);
+  operator JSContext*() const;
+
+private:
+  JSContext* mCx; // Used on workers.  Null means mainthread.
+  Maybe<JSAutoRequest> mRequest; // Used on workers.
+  Maybe<AutoJSContext> mAutoJSContext; // Used on main thread.
+  MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
+};
+
+/**
+ * AutoSafeJSContext is similar to AutoJSContext but will only return the safe
+ * JS context. That means it will never call nsContentUtils::GetCurrentJSContext().
+ *
+ * Note - This is deprecated. Please use AutoJSAPI instead.
+ */
+class MOZ_STACK_CLASS AutoSafeJSContext : public AutoJSContext {
+public:
+  explicit AutoSafeJSContext(MOZ_GUARD_OBJECT_NOTIFIER_ONLY_PARAM);
+private:
+  JSAutoCompartment mAc;
+};
+
+/**
+ * Like AutoSafeJSContext but can be used safely on worker threads.
+ */
+class MOZ_STACK_CLASS ThreadsafeAutoSafeJSContext {
+public:
+  explicit ThreadsafeAutoSafeJSContext(MOZ_GUARD_OBJECT_NOTIFIER_ONLY_PARAM);
+  operator JSContext*() const;
+
+private:
+  JSContext* mCx; // Used on workers.  Null means mainthread.
+  Maybe<JSAutoRequest> mRequest; // Used on workers.
+  Maybe<AutoSafeJSContext> mAutoSafeJSContext; // Used on main thread.
+  MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
+};
+
+
 } // namespace mozilla
 
 #endif // mozilla_dom_ScriptSettings_h

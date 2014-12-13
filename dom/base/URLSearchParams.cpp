@@ -5,6 +5,7 @@
 
 #include "URLSearchParams.h"
 #include "mozilla/dom/URLSearchParamsBinding.h"
+#include "mozilla/dom/EncodingUtils.h"
 
 namespace mozilla {
 namespace dom {
@@ -98,30 +99,31 @@ URLSearchParams::ParseInput(const nsACString& aInput,
       name.Assign(string);
     }
 
-    nsAutoCString decodedName;
+    nsAutoString decodedName;
     DecodeString(name, decodedName);
 
-    nsAutoCString decodedValue;
+    nsAutoString decodedValue;
     DecodeString(value, decodedValue);
 
-    AppendInternal(NS_ConvertUTF8toUTF16(decodedName),
-                   NS_ConvertUTF8toUTF16(decodedValue));
+    AppendInternal(decodedName, decodedValue);
   }
 
   NotifyObservers(aObserver);
 }
 
 void
-URLSearchParams::DecodeString(const nsACString& aInput, nsACString& aOutput)
+URLSearchParams::DecodeString(const nsACString& aInput, nsAString& aOutput)
 {
   nsACString::const_iterator start, end;
   aInput.BeginReading(start);
   aInput.EndReading(end);
 
+  nsCString unescaped;
+
   while (start != end) {
     // replace '+' with U+0020
     if (*start == '+') {
-      aOutput.Append(' ');
+      unescaped.Append(' ');
       ++start;
       continue;
     }
@@ -148,19 +150,60 @@ URLSearchParams::DecodeString(const nsACString& aInput, nsACString& aOutput)
 
       if (first != end && second != end &&
           ASCII_HEX_DIGIT(*first) && ASCII_HEX_DIGIT(*second)) {
-        aOutput.Append(HEX_DIGIT(first) * 16 + HEX_DIGIT(second));
+        unescaped.Append(HEX_DIGIT(first) * 16 + HEX_DIGIT(second));
         start = ++second;
         continue;
 
       } else {
-        aOutput.Append('%');
+        unescaped.Append('%');
         ++start;
         continue;
       }
     }
 
-    aOutput.Append(*start);
+    unescaped.Append(*start);
     ++start;
+  }
+
+  ConvertString(unescaped, aOutput);
+}
+
+void
+URLSearchParams::ConvertString(const nsACString& aInput, nsAString& aOutput)
+{
+  aOutput.Truncate();
+
+  if (!mDecoder) {
+    mDecoder = EncodingUtils::DecoderForEncoding("UTF-8");
+    if (!mDecoder) {
+      MOZ_ASSERT(mDecoder, "Failed to create a decoder.");
+      return;
+    }
+  }
+
+  int32_t inputLength = aInput.Length();
+  int32_t outputLength = 0;
+
+  nsresult rv = mDecoder->GetMaxLength(aInput.BeginReading(), inputLength,
+                                       &outputLength);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
+
+  if (!aOutput.SetLength(outputLength, fallible_t())) {
+    return;
+  }
+
+  int32_t newOutputLength = outputLength;
+  rv = mDecoder->Convert(aInput.BeginReading(), &inputLength,
+                         aOutput.BeginWriting(), &newOutputLength);
+  if (NS_FAILED(rv)) {
+    aOutput.Truncate();
+    return;
+  }
+
+  if (newOutputLength < outputLength) {
+    aOutput.Truncate(newOutputLength);
   }
 }
 
@@ -191,6 +234,12 @@ URLSearchParams::RemoveObserver(URLSearchParamsObserver* aObserver)
 {
   MOZ_ASSERT(aObserver);
   mObservers.RemoveElement(aObserver);
+}
+
+void
+URLSearchParams::RemoveObservers()
+{
+  mObservers.Clear();
 }
 
 void
@@ -343,7 +392,7 @@ URLSearchParams::NotifyObservers(URLSearchParamsObserver* aExceptObserver)
 {
   for (uint32_t i = 0; i < mObservers.Length(); ++i) {
     if (mObservers[i] != aExceptObserver) {
-      mObservers[i]->URLSearchParamsUpdated();
+      mObservers[i]->URLSearchParamsUpdated(this);
     }
   }
 }

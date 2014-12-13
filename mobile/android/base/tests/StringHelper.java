@@ -58,7 +58,7 @@ public class StringHelper {
         "Add to Home Screen"
     };
 
-    public static final String TITLE_PLACE_HOLDER = "Enter Search or Address";
+    public static final String TITLE_PLACE_HOLDER = "Search or enter address";
 
     // Robocop page urls
     // Note: please use getAbsoluteUrl(String url) on each robocop url to get the correct url
@@ -111,6 +111,7 @@ public class StringHelper {
     // Display
     public static final String TEXT_SIZE_LABEL = "Text size";
     public static final String TITLE_BAR_LABEL = "Title bar";
+    public static final String SCROLL_TITLE_BAR_LABEL="Full-screen browsing";
     public static final String TEXT_REFLOW_LABEL = "Text reflow";
     public static final String CHARACTER_ENCODING_LABEL = "Character encoding";
     public static final String PLUGINS_LABEL = "Plugins";

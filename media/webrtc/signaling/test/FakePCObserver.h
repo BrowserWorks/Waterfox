@@ -61,7 +61,7 @@ public:
   std::vector<mozilla::DOMMediaStream *> GetStreams() { return streams; }
 
   ResponseState state;
-  char *lastString;
+  std::string lastString;
   sipcc::PeerConnectionImpl::Error lastStatusCode;
   mozilla::dom::PCObserverStateType lastStateType;
   int addIceSuccessCount;
@@ -84,6 +84,8 @@ public:
   virtual NS_IMETHODIMP OnRemoveStream(ER&) = 0;
   virtual NS_IMETHODIMP OnAddTrack(ER&) = 0;
   virtual NS_IMETHODIMP OnRemoveTrack(ER&) = 0;
+  virtual NS_IMETHODIMP OnReplaceTrackSuccess(ER&) = 0;
+  virtual NS_IMETHODIMP OnReplaceTrackError(uint32_t code, const char *msg, ER&) = 0;
   virtual NS_IMETHODIMP OnAddIceCandidateSuccess(ER&) = 0;
   virtual NS_IMETHODIMP OnAddIceCandidateError(uint32_t code, const char *msg, ER&) = 0;
   virtual NS_IMETHODIMP OnIceCandidate(uint16_t level, const char *mid,

@@ -55,7 +55,7 @@ namespace {
 
 struct RandomNumberSource
 {
-  RandomNumberSource(int32_t aSeed) : mLast(SetupSeed(aSeed)) {}
+  explicit RandomNumberSource(int32_t aSeed) : mLast(SetupSeed(aSeed)) {}
   int32_t Next() { mLast = Random(mLast); return mLast; }
 
 private:
@@ -246,9 +246,9 @@ SVGTurbulenceRenderer<Type,Stitch,f32x4_t,i32x4_t,u8x16_t>::Noise2(Point aVec, c
   const f32x4_t* qvb = mGradient[(j + b1.y) & sBM];
 
   return BiMix(simd::WSumF32(qua[0], qua[1], r.x, r.y),
-               simd::WSumF32(qva[0], qva[1], r.x - 1, r.y),
-               simd::WSumF32(qub[0], qub[1], r.x, r.y - 1),
-               simd::WSumF32(qvb[0], qvb[1], r.x - 1, r.y - 1),
+               simd::WSumF32(qva[0], qva[1], r.x - 1.f, r.y),
+               simd::WSumF32(qub[0], qub[1], r.x, r.y - 1.f),
+               simd::WSumF32(qvb[0], qvb[1], r.x - 1.f, r.y - 1.f),
                SCurve(r));
 }
 

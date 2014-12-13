@@ -19,6 +19,8 @@
 # include "jit/arm/Lowering-arm.h"
 #elif defined(JS_CODEGEN_MIPS)
 # include "jit/mips/Lowering-mips.h"
+#elif defined(JS_CODEGEN_NONE)
+# include "jit/none/Lowering-none.h"
 #else
 # error "Unknown architecture!"
 #endif
@@ -68,6 +70,7 @@ class LIRGenerator : public LIRGeneratorSpecific
     bool visitGoto(MGoto *ins);
     bool visitTableSwitch(MTableSwitch *tableswitch);
     bool visitNewArray(MNewArray *ins);
+    bool visitNewArrayCopyOnWrite(MNewArrayCopyOnWrite *ins);
     bool visitNewObject(MNewObject *ins);
     bool visitNewDeclEnvObject(MNewDeclEnvObject *ins);
     bool visitNewCallObject(MNewCallObject *ins);
@@ -122,6 +125,7 @@ class LIRGenerator : public LIRGeneratorSpecific
     bool visitRound(MRound *ins);
     bool visitMinMax(MMinMax *ins);
     bool visitAbs(MAbs *ins);
+    bool visitClz(MClz *ins);
     bool visitSqrt(MSqrt *ins);
     bool visitAtan2(MAtan2 *ins);
     bool visitHypot(MHypot *ins);
@@ -164,6 +168,7 @@ class LIRGenerator : public LIRGeneratorSpecific
     bool visitConstantElements(MConstantElements *ins);
     bool visitConvertElementsToDoubles(MConvertElementsToDoubles *ins);
     bool visitMaybeToDoubleElement(MMaybeToDoubleElement *ins);
+    bool visitMaybeCopyElementsForWrite(MMaybeCopyElementsForWrite *ins);
     bool visitLoadSlot(MLoadSlot *ins);
     bool visitFunctionEnvironment(MFunctionEnvironment *ins);
     bool visitForkJoinContext(MForkJoinContext *ins);
@@ -197,6 +202,7 @@ class LIRGenerator : public LIRGeneratorSpecific
     bool visitArrayPopShift(MArrayPopShift *ins);
     bool visitArrayPush(MArrayPush *ins);
     bool visitArrayConcat(MArrayConcat *ins);
+    bool visitArrayJoin(MArrayJoin *ins);
     bool visitLoadTypedArrayElement(MLoadTypedArrayElement *ins);
     bool visitLoadTypedArrayElementHole(MLoadTypedArrayElementHole *ins);
     bool visitLoadTypedArrayElementStatic(MLoadTypedArrayElementStatic *ins);
@@ -261,6 +267,17 @@ class LIRGenerator : public LIRGeneratorSpecific
     bool visitGetDOMProperty(MGetDOMProperty *ins);
     bool visitGetDOMMember(MGetDOMMember *ins);
     bool visitRecompileCheck(MRecompileCheck *ins);
+    bool visitSimdExtractElement(MSimdExtractElement *ins);
+    bool visitSimdSignMask(MSimdSignMask *ins);
+    bool visitSimdBinaryComp(MSimdBinaryComp *ins);
+    bool visitSimdBinaryArith(MSimdBinaryArith *ins);
+    bool visitSimdBinaryBitwise(MSimdBinaryBitwise *ins);
+    bool visitSimdValueX4(MSimdValueX4 *ins);
+    bool visitSimdConstant(MSimdConstant *ins);
+    bool visitPhi(MPhi *ins);
+    bool visitBeta(MBeta *ins);
+    bool visitObjectState(MObjectState *ins);
+    bool visitArrayState(MArrayState *ins);
 };
 
 } // namespace jit

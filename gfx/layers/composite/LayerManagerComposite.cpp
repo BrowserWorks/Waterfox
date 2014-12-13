@@ -17,11 +17,11 @@
 #include "ImageLayerComposite.h"        // for ImageLayerComposite
 #include "Layers.h"                     // for Layer, ContainerLayer, etc
 #include "LayerScope.h"                 // for LayerScope Tool
+#include "protobuf/LayerScopePacket.pb.h" // for protobuf (LayerScope)
 #include "ThebesLayerComposite.h"       // for ThebesLayerComposite
 #include "TiledLayerBuffer.h"           // for TiledLayerComposer
 #include "Units.h"                      // for ScreenIntRect
 #include "gfx2DGlue.h"                  // for ToMatrix4x4
-#include "gfx3DMatrix.h"                // for gfx3DMatrix
 #include "gfxPrefs.h"                   // for gfxPrefs
 #ifdef XP_MACOSX
 #include "gfxPlatformMac.h"
@@ -38,6 +38,7 @@
 #include "mozilla/layers/Compositor.h"  // for Compositor
 #include "mozilla/layers/CompositorTypes.h"
 #include "mozilla/layers/Effects.h"     // for Effect, EffectChain, etc
+#include "mozilla/layers/LayerMetricsWrapper.h" // for LayerMetricsWrapper
 #include "mozilla/layers/LayersTypes.h"  // for etc
 #include "ipc/CompositorBench.h"        // for CompositorBench
 #include "ipc/ShadowLayerUtils.h"
@@ -102,7 +103,9 @@ LayerManagerComposite::ClearCachedResources(Layer* aSubtree)
  * LayerManagerComposite
  */
 LayerManagerComposite::LayerManagerComposite(Compositor* aCompositor)
-: mCompositor(aCompositor)
+: mWarningLevel(0.0f)
+, mUnusedApzTransformWarning(false)
+, mCompositor(aCompositor)
 , mInTransaction(false)
 , mIsCompositorReady(false)
 , mDebugOverlayWantsNextFrame(false)
@@ -338,13 +341,65 @@ LayerManagerComposite::RenderDebugOverlay(const Rect& aBounds)
   bool drawFrameCounter = gfxPrefs::DrawFrameCounter();
   bool drawFrameColorBars = gfxPrefs::CompositorDrawColorBars();
 
+  TimeStamp now = TimeStamp::Now();
+
   if (drawFps) {
     if (!mFPS) {
-      mFPS = new FPSState();
+      mFPS = MakeUnique<FPSState>();
     }
 
+    float alpha = 1;
+#ifdef ANDROID
+    // Draw a translation delay warning overlay
+    int width;
+    int border;
+    if ((now - mWarnTime).ToMilliseconds() < 150) {
+      printf_stderr("Draw\n");
+      EffectChain effects;
+
+      // Black blorder
+      border = 4;
+      width = 6;
+      effects.mPrimaryEffect = new EffectSolidColor(gfx::Color(0, 0, 0, 1));
+      mCompositor->DrawQuad(gfx::Rect(border, border, aBounds.width - 2 * border, width),
+                            aBounds, effects, alpha, gfx::Matrix4x4());
+      mCompositor->DrawQuad(gfx::Rect(border, aBounds.height - border - width, aBounds.width - 2 * border, width),
+                            aBounds, effects, alpha, gfx::Matrix4x4());
+      mCompositor->DrawQuad(gfx::Rect(border, border + width, width, aBounds.height - 2 * border - width * 2),
+                            aBounds, effects, alpha, gfx::Matrix4x4());
+      mCompositor->DrawQuad(gfx::Rect(aBounds.width - border - width, border + width, width, aBounds.height - 2 * border - 2 * width),
+                            aBounds, effects, alpha, gfx::Matrix4x4());
+
+      // Content
+      border = 5;
+      width = 4;
+      effects.mPrimaryEffect = new EffectSolidColor(gfx::Color(1, 1.f - mWarningLevel, 0, 1));
+      mCompositor->DrawQuad(gfx::Rect(border, border, aBounds.width - 2 * border, width),
+                            aBounds, effects, alpha, gfx::Matrix4x4());
+      mCompositor->DrawQuad(gfx::Rect(border, aBounds.height - border - width, aBounds.width - 2 * border, width),
+                            aBounds, effects, alpha, gfx::Matrix4x4());
+      mCompositor->DrawQuad(gfx::Rect(border, border + width, width, aBounds.height - 2 * border - width * 2),
+                            aBounds, effects, alpha, gfx::Matrix4x4());
+      mCompositor->DrawQuad(gfx::Rect(aBounds.width - border - width, border + width, width, aBounds.height - 2 * border - 2 * width),
+                            aBounds, effects, alpha, gfx::Matrix4x4());
+      SetDebugOverlayWantsNextFrame(true);
+    }
+#endif
+
     float fillRatio = mCompositor->GetFillRatio();
-    mFPS->DrawFPS(TimeStamp::Now(), drawFrameColorBars ? 10 : 0, 0, unsigned(fillRatio), mCompositor);
+    mFPS->DrawFPS(now, drawFrameColorBars ? 10 : 0, 0, unsigned(fillRatio), mCompositor);
+
+    if (mUnusedApzTransformWarning) {
+      // If we have an unused APZ transform on this composite, draw a 20x20 red box
+      // in the top-right corner
+      EffectChain effects;
+      effects.mPrimaryEffect = new EffectSolidColor(gfx::Color(1, 0, 0, 1));
+      mCompositor->DrawQuad(gfx::Rect(aBounds.width - 20, 0, aBounds.width, 20),
+                            aBounds, effects, alpha, gfx::Matrix4x4());
+
+      mUnusedApzTransformWarning = false;
+      SetDebugOverlayWantsNextFrame(true);
+    }
   } else {
     mFPS = nullptr;
   }
@@ -410,6 +465,94 @@ LayerManagerComposite::RenderDebugOverlay(const Rect& aBounds)
   }
 }
 
+RefPtr<CompositingRenderTarget>
+LayerManagerComposite::PushGroupForLayerEffects()
+{
+  // This is currently true, so just making sure that any new use of this
+  // method is flagged for investigation
+  MOZ_ASSERT(gfxPrefs::LayersEffectInvert() ||
+             gfxPrefs::LayersEffectGrayscale() ||
+             gfxPrefs::LayersEffectContrast() != 0.0);
+
+  RefPtr<CompositingRenderTarget> previousTarget = mCompositor->GetCurrentRenderTarget();
+  // make our render target the same size as the destination target
+  // so that we don't have to change size if the drawing area changes.
+  IntRect rect(previousTarget->GetOrigin(), previousTarget->GetSize());
+  // XXX: I'm not sure if this is true or not...
+  MOZ_ASSERT(rect.x == 0 && rect.y == 0);
+  if (!mTwoPassTmpTarget ||
+      mTwoPassTmpTarget->GetSize() != previousTarget->GetSize() ||
+      mTwoPassTmpTarget->GetOrigin() != previousTarget->GetOrigin()) {
+    mTwoPassTmpTarget = mCompositor->CreateRenderTarget(rect, INIT_MODE_NONE);
+  }
+  mCompositor->SetRenderTarget(mTwoPassTmpTarget);
+  return previousTarget;
+}
+void
+LayerManagerComposite::PopGroupForLayerEffects(RefPtr<CompositingRenderTarget> aPreviousTarget,
+                                               nsIntRect aClipRect,
+                                               bool aGrayscaleEffect,
+                                               bool aInvertEffect,
+                                               float aContrastEffect)
+{
+  MOZ_ASSERT(mTwoPassTmpTarget);
+
+  // This is currently true, so just making sure that any new use of this
+  // method is flagged for investigation
+  MOZ_ASSERT(aInvertEffect || aGrayscaleEffect || aContrastEffect != 0.0);
+
+  mCompositor->SetRenderTarget(aPreviousTarget);
+
+  EffectChain effectChain(RootLayer());
+  Matrix5x4 effectMatrix;
+  if (aGrayscaleEffect) {
+    // R' = G' = B' = luminance
+    // R' = 0.2126*R + 0.7152*G + 0.0722*B
+    // G' = 0.2126*R + 0.7152*G + 0.0722*B
+    // B' = 0.2126*R + 0.7152*G + 0.0722*B
+    Matrix5x4 grayscaleMatrix(0.2126f, 0.2126f, 0.2126f, 0,
+                              0.7152f, 0.7152f, 0.7152f, 0,
+                              0.0722f, 0.0722f, 0.0722f, 0,
+                              0,       0,       0,       1,
+                              0,       0,       0,       0);
+    effectMatrix = grayscaleMatrix;
+  }
+
+  if (aInvertEffect) {
+    // R' = 1 - R
+    // G' = 1 - G
+    // B' = 1 - B
+    Matrix5x4 colorInvertMatrix(-1,  0,  0, 0,
+                                 0, -1,  0, 0,
+                                 0,  0, -1, 0,
+                                 0,  0,  0, 1,
+                                 1,  1,  1, 0);
+    effectMatrix = effectMatrix * colorInvertMatrix;
+  }
+
+  if (aContrastEffect != 0.0) {
+    // Multiplying with:
+    // R' = (1 + c) * (R - 0.5) + 0.5
+    // G' = (1 + c) * (G - 0.5) + 0.5
+    // B' = (1 + c) * (B - 0.5) + 0.5
+    float cP1 = aContrastEffect + 1;
+    float hc = 0.5*aContrastEffect;
+    Matrix5x4 contrastMatrix( cP1,   0,   0, 0,
+                                0, cP1,   0, 0,
+                                0,   0, cP1, 0,
+                                0,   0,   0, 1,
+                              -hc, -hc, -hc, 0);
+    effectMatrix = effectMatrix * contrastMatrix;
+  }
+
+  effectChain.mPrimaryEffect = new EffectRenderTarget(mTwoPassTmpTarget);
+  effectChain.mSecondaryEffects[EffectTypes::COLOR_MATRIX] = new EffectColorMatrix(effectMatrix);
+
+  gfx::Rect clipRectF(aClipRect.x, aClipRect.y, aClipRect.width, aClipRect.height);
+  mCompositor->DrawQuad(Rect(Point(0, 0), Size(mTwoPassTmpTarget->GetSize())), clipRectF, effectChain, 1.,
+                        Matrix4x4());
+}
+
 void
 LayerManagerComposite::Render()
 {
@@ -421,24 +564,51 @@ LayerManagerComposite::Render()
     return;
   }
 
-  if (gfxPrefs::LayersDump()) {
-    this->Dump();
-  }
-
-  /** Our more efficient but less powerful alter ego, if one is available. */
-  nsRefPtr<Composer2D> composer2D = mCompositor->GetWidget()->GetComposer2D();
+  // At this time, it doesn't really matter if these preferences change
+  // during the execution of the function; we should be safe in all
+  // permutations. However, may as well just get the values onces and
+  // then use them, just in case the consistency becomes important in
+  // the future.
+  bool invertVal = gfxPrefs::LayersEffectInvert();
+  bool grayscaleVal = gfxPrefs::LayersEffectGrayscale();
+  float contrastVal = gfxPrefs::LayersEffectContrast();
+  bool haveLayerEffects = (invertVal || grayscaleVal || contrastVal != 0.0);
 
   // Set LayerScope begin/end frame
   LayerScopeAutoFrame frame(PR_Now());
 
-  if (!mTarget && composer2D && composer2D->TryRender(mRoot, mWorldMatrix, mGeometryChanged)) {
+  // Dump to console
+  if (gfxPrefs::LayersDump()) {
+    this->Dump();
+  }
+
+  // Dump to LayerScope Viewer
+  if (LayerScope::CheckSendable()) {
+    // Create a LayersPacket, dump Layers into it and transfer the
+    // packet('s ownership) to LayerScope.
+    auto packet = MakeUnique<layerscope::Packet>();
+    layerscope::LayersPacket* layersPacket = packet->mutable_layers();
+    this->Dump(layersPacket);
+    LayerScope::SendLayerDump(Move(packet));
+  }
+
+  /** Our more efficient but less powerful alter ego, if one is available. */
+  nsRefPtr<Composer2D> composer2D;
+
+  // We can't use composert2D if we have layer effects, so only get it
+  // when we don't have any effects.
+  if (!haveLayerEffects) {
+    composer2D = mCompositor->GetWidget()->GetComposer2D();
+  }
+
+  if (!mTarget && composer2D && composer2D->TryRender(mRoot, mGeometryChanged)) {
     if (mFPS) {
       double fps = mFPS->mCompositionFps.AddFrameAndGetFps(TimeStamp::Now());
       if (gfxPrefs::LayersDrawFPS()) {
         printf_stderr("HWComposer: FPS is %g\n", fps);
       }
     }
-    mCompositor->EndFrameForExternalComposition(mWorldMatrix);
+    mCompositor->EndFrameForExternalComposition(Matrix());
     // Reset the invalid region as compositing is done
     mInvalidRegion.SetEmpty();
     return;
@@ -470,12 +640,11 @@ LayerManagerComposite::Render()
 
   if (mRoot->GetClipRect()) {
     clipRect = *mRoot->GetClipRect();
-    WorldTransformRect(clipRect);
     Rect rect(clipRect.x, clipRect.y, clipRect.width, clipRect.height);
-    mCompositor->BeginFrame(invalid, &rect, mWorldMatrix, bounds, nullptr, &actualBounds);
+    mCompositor->BeginFrame(invalid, &rect, bounds, nullptr, &actualBounds);
   } else {
     gfx::Rect rect;
-    mCompositor->BeginFrame(invalid, nullptr, mWorldMatrix, bounds, &rect, &actualBounds);
+    mCompositor->BeginFrame(invalid, nullptr, bounds, &rect, &actualBounds);
     clipRect = nsIntRect(rect.x, rect.y, rect.width, rect.height);
   }
 
@@ -490,8 +659,15 @@ LayerManagerComposite::Render()
                                                                actualBounds.width,
                                                                actualBounds.height));
 
+  RefPtr<CompositingRenderTarget> previousTarget;
+  if (haveLayerEffects) {
+    previousTarget = PushGroupForLayerEffects();
+  } else {
+    mTwoPassTmpTarget = nullptr;
+  }
+
   // Render our layers.
-  RootLayer()->Prepare(clipRect);
+  RootLayer()->Prepare(RenderTargetPixel::FromUntyped(clipRect));
   RootLayer()->RenderLayer(clipRect);
 
   if (!mRegionToClear.IsEmpty()) {
@@ -500,6 +676,12 @@ LayerManagerComposite::Render()
     while ((r = iter.Next())) {
       mCompositor->ClearRect(Rect(r->x, r->y, r->width, r->height));
     }
+  }
+
+  if (mTwoPassTmpTarget) {
+    MOZ_ASSERT(haveLayerEffects);
+    PopGroupForLayerEffects(previousTarget, clipRect,
+                            grayscaleVal, invertVal, contrastVal);
   }
 
   // Allow widget to render a custom foreground.
@@ -524,35 +706,10 @@ LayerManagerComposite::Render()
   RecordFrame();
 }
 
-void
-LayerManagerComposite::SetWorldTransform(const gfx::Matrix& aMatrix)
-{
-  NS_ASSERTION(aMatrix.PreservesAxisAlignedRectangles(),
-               "SetWorldTransform only accepts matrices that satisfy PreservesAxisAlignedRectangles");
-  NS_ASSERTION(!aMatrix.HasNonIntegerScale(),
-               "SetWorldTransform only accepts matrices with integer scale");
-
-  mWorldMatrix = aMatrix;
-}
-
-gfx::Matrix&
-LayerManagerComposite::GetWorldTransform(void)
-{
-  return mWorldMatrix;
-}
-
-void
-LayerManagerComposite::WorldTransformRect(nsIntRect& aRect)
-{
-  gfx::Rect grect(aRect.x, aRect.y, aRect.width, aRect.height);
-  grect = mWorldMatrix.TransformBounds(grect);
-  aRect.SetRect(grect.X(), grect.Y(), grect.Width(), grect.Height());
-}
-
 static void
 SubtractTransformedRegion(nsIntRegion& aRegion,
                           const nsIntRegion& aRegionToSubtract,
-                          const gfx3DMatrix& aTransform)
+                          const Matrix4x4& aTransform)
 {
   if (aRegionToSubtract.IsEmpty()) {
     return;
@@ -562,7 +719,7 @@ SubtractTransformedRegion(nsIntRegion& aRegion,
   // subtract it from the screen region.
   nsIntRegionRectIterator it(aRegionToSubtract);
   while (const nsIntRect* rect = it.Next()) {
-    gfxRect incompleteRect = aTransform.TransformBounds(gfxRect(*rect));
+    Rect incompleteRect = aTransform.TransformBounds(ToRect(*rect));
     aRegion.Sub(aRegion, nsIntRect(incompleteRect.x,
                                    incompleteRect.y,
                                    incompleteRect.width,
@@ -574,7 +731,7 @@ SubtractTransformedRegion(nsIntRegion& aRegion,
 LayerManagerComposite::ComputeRenderIntegrityInternal(Layer* aLayer,
                                                       nsIntRegion& aScreenRegion,
                                                       nsIntRegion& aLowPrecisionScreenRegion,
-                                                      const gfx3DMatrix& aTransform)
+                                                      const Matrix4x4& aTransform)
 {
   if (aLayer->GetOpacity() <= 0.f ||
       (aScreenRegion.IsEmpty() && aLowPrecisionScreenRegion.IsEmpty())) {
@@ -585,10 +742,10 @@ LayerManagerComposite::ComputeRenderIntegrityInternal(Layer* aLayer,
   ContainerLayer* container = aLayer->AsContainerLayer();
   if (container) {
     // Accumulate the transform of intermediate surfaces
-    gfx3DMatrix transform = aTransform;
+    Matrix4x4 transform = aTransform;
     if (container->UseIntermediateSurface()) {
-      gfx::To3DMatrix(aLayer->GetEffectiveTransform(), transform);
-      transform.PreMultiply(aTransform);
+      transform = aLayer->GetEffectiveTransform();
+      transform = aTransform * transform;
     }
     for (Layer* child = aLayer->GetFirstChild(); child;
          child = child->GetNextSibling()) {
@@ -609,9 +766,8 @@ LayerManagerComposite::ComputeRenderIntegrityInternal(Layer* aLayer,
 
   if (!incompleteRegion.IsEmpty()) {
     // Calculate the transform to get between screen and layer space
-    gfx3DMatrix transformToScreen;
-    To3DMatrix(aLayer->GetEffectiveTransform(), transformToScreen);
-    transformToScreen.PreMultiply(aTransform);
+    Matrix4x4 transformToScreen = aLayer->GetEffectiveTransform();
+    transformToScreen = aTransform * transformToScreen;
 
     SubtractTransformedRegion(aScreenRegion, incompleteRegion, transformToScreen);
 
@@ -636,17 +792,15 @@ LayerManagerComposite::ComputeRenderIntegrityInternal(Layer* aLayer,
   }
 }
 
-#ifdef MOZ_ANDROID_OMTC
+#ifdef MOZ_WIDGET_ANDROID
 static float
 GetDisplayportCoverage(const CSSRect& aDisplayPort,
-                       const gfx3DMatrix& aTransformToScreen,
+                       const Matrix4x4& aTransformToScreen,
                        const nsIntRect& aScreenRect)
 {
-  gfxRect transformedDisplayport =
-    aTransformToScreen.TransformBounds(gfxRect(aDisplayPort.x,
-                                               aDisplayPort.y,
-                                               aDisplayPort.width,
-                                               aDisplayPort.height));
+  Rect transformedDisplayport =
+    aTransformToScreen.TransformBounds(aDisplayPort.ToUnknownRect());
+
   transformedDisplayport.RoundOut();
   nsIntRect displayport = nsIntRect(transformedDisplayport.x,
                                     transformedDisplayport.y,
@@ -660,7 +814,7 @@ GetDisplayportCoverage(const CSSRect& aDisplayPort,
 
   return 1.0f;
 }
-#endif // MOZ_ANDROID_OMTC
+#endif // MOZ_WIDGET_ANDROID
 
 float
 LayerManagerComposite::ComputeRenderIntegrity()
@@ -671,7 +825,13 @@ LayerManagerComposite::ComputeRenderIntegrity()
     return 1.f;
   }
 
-  const FrameMetrics& rootMetrics = root->AsContainerLayer()->GetFrameMetrics();
+  FrameMetrics rootMetrics = LayerMetricsWrapper::TopmostScrollableMetrics(root);
+  if (!rootMetrics.IsScrollable()) {
+    // The root may not have any scrollable metrics, in which case rootMetrics
+    // will just be an empty FrameMetrics. Instead use the actual metrics from
+    // the root layer.
+    rootMetrics = LayerMetricsWrapper(root).Metrics();
+  }
   ParentLayerIntRect bounds = RoundedToInt(rootMetrics.mCompositionBounds);
   nsIntRect screenRect(bounds.x,
                        bounds.y,
@@ -681,24 +841,25 @@ LayerManagerComposite::ComputeRenderIntegrity()
   float lowPrecisionMultiplier = 1.0f;
   float highPrecisionMultiplier = 1.0f;
 
-#ifdef MOZ_ANDROID_OMTC
+#ifdef MOZ_WIDGET_ANDROID
   // Use the transform on the primary scrollable layer and its FrameMetrics
   // to find out how much of the viewport the current displayport covers
-  Layer* primaryScrollable = GetPrimaryScrollableLayer();
-  if (primaryScrollable) {
+  nsTArray<Layer*> rootScrollableLayers;
+  GetRootScrollableLayers(rootScrollableLayers);
+  if (rootScrollableLayers.Length() > 0) {
     // This is derived from the code in
     // AsyncCompositionManager::TransformScrollableLayer
-    const FrameMetrics& metrics = primaryScrollable->AsContainerLayer()->GetFrameMetrics();
-    gfx3DMatrix transform;
-    gfx::To3DMatrix(primaryScrollable->GetEffectiveTransform(), transform);
+    Layer* rootScrollable = rootScrollableLayers[0];
+    const FrameMetrics& metrics = LayerMetricsWrapper::TopmostScrollableMetrics(rootScrollable);
+    Matrix4x4 transform = rootScrollable->GetEffectiveTransform();
     transform.ScalePost(metrics.mResolution.scale, metrics.mResolution.scale, 1);
 
     // Clip the screen rect to the document bounds
-    gfxRect documentBounds =
-      transform.TransformBounds(gfxRect(metrics.mScrollableRect.x - metrics.GetScrollOffset().x,
-                                        metrics.mScrollableRect.y - metrics.GetScrollOffset().y,
-                                        metrics.mScrollableRect.width,
-                                        metrics.mScrollableRect.height));
+    Rect documentBounds =
+      transform.TransformBounds(Rect(metrics.mScrollableRect.x - metrics.GetScrollOffset().x,
+                                     metrics.mScrollableRect.y - metrics.GetScrollOffset().y,
+                                     metrics.mScrollableRect.width,
+                                     metrics.mScrollableRect.height));
     documentBounds.RoundOut();
     screenRect = screenRect.Intersect(nsIntRect(documentBounds.x, documentBounds.y,
                                                 documentBounds.width, documentBounds.height));
@@ -733,11 +894,11 @@ LayerManagerComposite::ComputeRenderIntegrity()
   if (highPrecisionMultiplier <= 0.0f && lowPrecisionMultiplier <= 0.0f) {
     return 0.0f;
   }
-#endif // MOZ_ANDROID_OMTC
+#endif // MOZ_WIDGET_ANDROID
 
   nsIntRegion screenRegion(screenRect);
   nsIntRegion lowPrecisionScreenRegion(screenRect);
-  gfx3DMatrix transform;
+  Matrix4x4 transform;
   ComputeRenderIntegrityInternal(root, screenRegion,
                                  lowPrecisionScreenRegion, transform);
 
@@ -821,7 +982,7 @@ LayerManagerComposite::CreateRefLayerComposite()
 LayerManagerComposite::AutoAddMaskEffect::AutoAddMaskEffect(Layer* aMaskLayer,
                                                             EffectChain& aEffects,
                                                             bool aIs3D)
-  : mCompositable(nullptr)
+  : mCompositable(nullptr), mFailed(false)
 {
   if (!aMaskLayer) {
     return;
@@ -830,11 +991,13 @@ LayerManagerComposite::AutoAddMaskEffect::AutoAddMaskEffect(Layer* aMaskLayer,
   mCompositable = ToLayerComposite(aMaskLayer)->GetCompositableHost();
   if (!mCompositable) {
     NS_WARNING("Mask layer with no compositable host");
+    mFailed = true;
     return;
   }
 
   if (!mCompositable->AddMaskEffect(aEffects, aMaskLayer->GetEffectiveTransform(), aIs3D)) {
     mCompositable = nullptr;
+    mFailed = true;
   }
 }
 

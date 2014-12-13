@@ -12,6 +12,10 @@ let {getInplaceEditorForSpan: inplaceEditor} = devtools.require("devtools/shared
 // All test are asynchronous
 waitForExplicitFinish();
 
+// If a test times out we want to see the complete log and not just the last few
+// lines.
+SimpleTest.requestCompleteLog();
+
 // Uncomment this pref to dump all devtools emitted events to the console.
 // Services.prefs.setBoolPref("devtools.dump.emit", true);
 
@@ -434,4 +438,14 @@ function wait(ms) {
   let def = promise.defer();
   content.setTimeout(def.resolve, ms);
   return def.promise;
+}
+
+/**
+ * Wait for all current promises to be resolved. See this as executeSoon that
+ * can be used with yield.
+ */
+function promiseNextTick() {
+  let deferred = promise.defer();
+  executeSoon(deferred.resolve);
+  return deferred.promise;
 }

@@ -70,7 +70,7 @@ public class Tab {
     private ErrorType mErrorType = ErrorType.NONE;
     private static final int MAX_HISTORY_LIST_SIZE = 50;
     private volatile int mLoadProgress;
-    private volatile int mRecordingCount = 0;
+    private volatile int mRecordingCount;
     private String mMostRecentHomePanel;
 
     public static final int STATE_DELAYED = 0;
@@ -96,27 +96,14 @@ public class Tab {
     public Tab(Context context, int id, String url, boolean external, int parentId, String title) {
         mAppContext = context.getApplicationContext();
         mId = id;
-        mLastUsed = 0;
         mUrl = url;
         mBaseDomain = "";
         mUserSearch = "";
         mExternal = external;
         mParentId = parentId;
         mTitle = title == null ? "" : title;
-        mFavicon = null;
-        mFaviconUrl = null;
-        mFaviconSize = 0;
-        mHasFeeds = false;
-        mHasOpenSearch = false;
         mSiteIdentity = new SiteIdentity();
-        mReaderEnabled = false;
-        mEnteringReaderMode = false;
-        mThumbnail = null;
         mHistoryIndex = -1;
-        mHistorySize = 0;
-        mBookmark = false;
-        mReadingListItem = false;
-        mFaviconLoadId = 0;
         mContentType = "";
         mZoomConstraints = new ZoomConstraints(false);
         mPluginViews = new ArrayList<View>();

@@ -71,8 +71,8 @@ static float GetSampleRateForAudioContext(bool aIsOffline, float aSampleRate)
   if (aIsOffline) {
     return aSampleRate;
   } else {
-    AudioStream::InitPreferredSampleRate();
-    return static_cast<float>(AudioStream::PreferredSampleRate());
+    CubebUtils::InitPreferredSampleRate();
+    return static_cast<float>(CubebUtils::PreferredSampleRate());
   }
 }
 
@@ -96,9 +96,10 @@ AudioContext::AudioContext(nsPIDOMWindow* aWindow,
   // bound to the window.
   mDestination = new AudioDestinationNode(this, aIsOffline, aChannel,
                                           aNumberOfChannels, aLength, aSampleRate);
-  // We skip calling SetIsOnlyNodeForContext during mDestination's constructor,
-  // because we can only call SetIsOnlyNodeForContext after mDestination has
-  // been set up.
+  // We skip calling SetIsOnlyNodeForContext and the creation of the
+  // audioChannelAgent during mDestination's constructor, because we can only
+  // call them after mDestination has been set up.
+  mDestination->CreateAudioChannelAgent();
   mDestination->SetIsOnlyNodeForContext(true);
 }
 
@@ -517,7 +518,7 @@ AudioContext::UpdatePannerSource()
 uint32_t
 AudioContext::MaxChannelCount() const
 {
-  return mIsOffline ? mNumberOfChannels : AudioStream::MaxNumberOfChannels();
+  return mIsOffline ? mNumberOfChannels : CubebUtils::MaxNumberOfChannels();
 }
 
 MediaStreamGraph*
@@ -539,8 +540,8 @@ double
 AudioContext::CurrentTime() const
 {
   MediaStream* stream = Destination()->Stream();
-  return stream->StreamTimeToSeconds(stream->GetCurrentTime()) +
-      ExtraCurrentTime();
+  return StreamTimeToDOMTime(stream->
+                             StreamTimeToSeconds(stream->GetCurrentTime()));
 }
 
 void
@@ -651,6 +652,15 @@ void
 AudioContext::SetMozAudioChannelType(AudioChannel aValue, ErrorResult& aRv)
 {
   mDestination->SetMozAudioChannelType(aValue, aRv);
+}
+
+AudioChannel
+AudioContext::TestAudioChannelInAudioNodeStream()
+{
+  MediaStream* stream = mDestination->Stream();
+  MOZ_ASSERT(stream);
+
+  return stream->AudioChannelType();
 }
 
 size_t

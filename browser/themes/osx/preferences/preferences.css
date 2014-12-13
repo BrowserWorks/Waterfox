@@ -32,6 +32,12 @@ radio[pane=paneTabs] {
   -moz-image-region: rect(0px, 64px, 32px, 32px);
 }
 
+/* ----- SEARCH BUTTON ----- */
+
+radio[pane=paneSearch] {
+  list-style-image: url("chrome://browser/skin/search-pref.png");
+}
+
 /* ----- CONTENT BUTTON ----- */
 
 radio[pane=paneContent] {
@@ -167,22 +173,10 @@ caption {
   font: message-box !important;
 }
 
-/**
- * Privacy Pane
- */
+/* General Pane */
 
-html|a.inline-link {
-  color: -moz-nativehyperlinktext;
-  text-decoration: none;
-}
-
-html|a.inline-link:hover {
-  text-decoration: underline;
-}
-
-html|a.inline-link:-moz-focusring {
-  outline-width: 0;
-  box-shadow: @focusRingShadow@;
+#isNotDefaultLabel {
+  font-weight: bold;
 }
 
 /**
@@ -231,22 +225,6 @@ html|a.inline-link:-moz-focusring {
 
 #noFxaAccount > label:first-child {
   margin-bottom: 0.6em;
-}
-
-#fxa-pweng-help-link > label {
-  margin: 0;
-}
-
-#fxa-pweng-help-link > image {
-  width: 16px;
-  height: 16px;
-  list-style-image: url("chrome://global/skin/icons/question-16.png");
-}
-
-@media (min-resolution: 2dppx) {
-  #fxa-pweng-help-link > image {
-    list-style-image: url("chrome://global/skin/icons/question-32.png");
-  }
 }
 
 %endif

@@ -8,6 +8,7 @@
 #include "mp4_demuxer/DecoderData.h"
 #include "media/stagefright/MetaData.h"
 #include "media/stagefright/MediaBuffer.h"
+#include "media/stagefright/MediaDefs.h"
 #include "media/stagefright/Utils.h"
 #include "mozilla/ArrayUtils.h"
 #include "include/ESDS.h"
@@ -124,11 +125,19 @@ CryptoSample::Update(sp<MetaData>& aMetaData)
 }
 
 void
-AudioDecoderConfig::Update(sp<MetaData>& aMetaData, const char* aMimeType)
+TrackConfig::Update(sp<MetaData>& aMetaData, const char* aMimeType)
 {
   // aMimeType points to a string from MediaDefs.cpp so we don't need to copy it
   mime_type = aMimeType;
   duration = FindInt64(aMetaData, kKeyDuration);
+  mTrackId = FindInt32(aMetaData, kKeyTrackID);
+  crypto.Update(aMetaData);
+}
+
+void
+AudioDecoderConfig::Update(sp<MetaData>& aMetaData, const char* aMimeType)
+{
+  TrackConfig::Update(aMetaData, aMimeType);
   channel_count = FindInt32(aMetaData, kKeyChannelCount);
   bits_per_sample = FindInt32(aMetaData, kKeySampleSize);
   samples_per_second = FindInt32(aMetaData, kKeySampleRate);
@@ -145,23 +154,19 @@ AudioDecoderConfig::Update(sp<MetaData>& aMetaData, const char* aMimeType)
                                    size);
     }
   }
-
-  crypto.Update(aMetaData);
 }
 
 bool
 AudioDecoderConfig::IsValid()
 {
   return channel_count > 0 && samples_per_second > 0 && frequency_index > 0 &&
-         aac_profile > 0;
+         (mime_type != MEDIA_MIMETYPE_AUDIO_AAC || aac_profile > 0);
 }
 
 void
 VideoDecoderConfig::Update(sp<MetaData>& aMetaData, const char* aMimeType)
 {
-  // aMimeType points to a string from MediaDefs.cpp so we don't need to copy it
-  mime_type = aMimeType;
-  duration = FindInt64(aMetaData, kKeyDuration);
+  TrackConfig::Update(aMetaData, aMimeType);
   display_width = FindInt32(aMetaData, kKeyDisplayWidth);
   display_height = FindInt32(aMetaData, kKeyDisplayHeight);
 
@@ -171,8 +176,6 @@ VideoDecoderConfig::Update(sp<MetaData>& aMetaData, const char* aMimeType)
     extra_data[4] |= 3;
     annex_b = AnnexB::ConvertExtraDataToAnnexB(extra_data);
   }
-
-  crypto.Update(aMetaData);
 }
 
 bool
@@ -183,6 +186,7 @@ VideoDecoderConfig::IsValid()
 
 MP4Sample::MP4Sample()
   : mMediaBuffer(nullptr)
+  , decode_timestamp(0)
   , composition_timestamp(0)
   , duration(0)
   , byte_offset(0)
@@ -203,6 +207,7 @@ void
 MP4Sample::Update()
 {
   sp<MetaData> m = mMediaBuffer->meta_data();
+  decode_timestamp = FindInt64(m, kKeyDecodingTime);
   composition_timestamp = FindInt64(m, kKeyTime);
   duration = FindInt64(m, kKeyDuration);
   byte_offset = FindInt64(m, kKey64BitFileOffset);
@@ -216,8 +221,6 @@ MP4Sample::Update()
 void
 MP4Sample::Pad(size_t aPaddingBytes)
 {
-  MOZ_ASSERT(data == mMediaBuffer->data());
-
   size_t newSize = size + aPaddingBytes;
 
   // If the existing MediaBuffer has enough space then we just recycle it. If

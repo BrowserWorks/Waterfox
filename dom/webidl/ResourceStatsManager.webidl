@@ -73,7 +73,6 @@ dictionary ResourceStatsAlarmOptions
 [CheckPermissions="resourcestats-manage",
  Pref="dom.resource_stats.enabled",
  AvailableIn="CertifiedApps",
-// FeatureDetectible, // This should be specified after Bug 1009645 is resolved.
  JSImplementation="@mozilla.org/resourceStatsAlarm;1"]
 interface ResourceStatsAlarm
 {
@@ -117,7 +116,6 @@ interface ResourceStatsAlarm
  Pref="dom.resource_stats.enabled",
  Constructor(ResourceType type),
  AvailableIn="CertifiedApps",
-// FeatureDetectible, // This should be specified after Bug 1009645 is resolved.
  JSImplementation="@mozilla.org/resourceStatsManager;1"]
 interface ResourceStatsManager
 {
@@ -132,9 +130,9 @@ interface ResourceStatsManager
    *
    * If success, the fulfillment value is a ResourceStats object.
    */
-  Promise getStats(optional ResourceStatsOptions statsOptions,
-                   [EnforceRange] optional DOMTimeStamp? start = null,
-                   [EnforceRange] optional DOMTimeStamp? end = null);
+  Promise<ResourceStats> getStats(optional ResourceStatsOptions statsOptions,
+                                  [EnforceRange] optional DOMTimeStamp? start = null,
+                                  [EnforceRange] optional DOMTimeStamp? end = null);
 
   /**
    * Clear resource statistics stored in database.
@@ -145,14 +143,16 @@ interface ResourceStatsManager
    * If |start| is null or undefined, delete the stats since measurements.
    * If |end| is null or undefined. delete the stats until the current time.
    */
-  Promise clearStats(optional ResourceStatsOptions statsOptions,
-                     [EnforceRange] optional DOMTimeStamp? start = null,
-                     [EnforceRange] optional DOMTimeStamp? end = null);
+  // XXXbz What is this promise resolved with?
+  Promise<any> clearStats(optional ResourceStatsOptions statsOptions,
+                          [EnforceRange] optional DOMTimeStamp? start = null,
+                          [EnforceRange] optional DOMTimeStamp? end = null);
 
   /**
    * Clear all resource statistics stored in database.
    */
-  Promise clearAllStats();
+  // XXXbz What is this promise resolved with?
+  Promise<any> clearAllStats();
 
   /**
    * Install an alarm to monitor resource usage.
@@ -167,9 +167,9 @@ interface ResourceStatsManager
    *
    * If success, the fulfillment value is an alarm ID.
    */
-  Promise addAlarm([EnforceRange] unsigned long long threshold,
-                   optional ResourceStatsOptions statsOptions,
-                   optional ResourceStatsAlarmOptions alarmOptions);
+  Promise<unsigned long> addAlarm([EnforceRange] unsigned long long threshold,
+                                  optional ResourceStatsOptions statsOptions,
+                                  optional ResourceStatsAlarmOptions alarmOptions);
 
   /**
    * Obtain alarms.
@@ -180,26 +180,28 @@ interface ResourceStatsManager
    *
    * If success, the fulfillment value is an array of ResourceStatsAlarm.
    */
-  Promise getAlarms(optional ResourceStatsOptions statsOptions);
+  Promise<sequence<ResourceStatsAlarm>> getAlarms(optional ResourceStatsOptions statsOptions);
 
   /**
    * Remove the specified alarm.
    *
    * |alarmId| specifies the alarm to be removed.
    */
-  Promise removeAlarm([EnforceRange] unsigned long alarmId);
+  // XXXbz What is this promise resolved with?
+  Promise<any> removeAlarm([EnforceRange] unsigned long alarmId);
 
   /**
    * Remove all alarms.
    */
-  Promise removeAllAlarms();
+  // XXXbz What is this promise resolved with?
+  Promise<any> removeAllAlarms();
 
   /**
    * Enumerate components that have stored statistics in database.
    *
    * If success, the fulfillment value is an array of DOMString.
    */
-  Promise getAvailableComponents();
+  Promise<sequence<DOMString>> getAvailableComponents();
 
   /**
    * Return supporting resource statistics, i.e. ["Network", "Power"]

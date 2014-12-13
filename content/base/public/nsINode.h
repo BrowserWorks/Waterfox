@@ -74,6 +74,7 @@ class Element;
 class EventHandlerNonNull;
 class OnErrorEventHandlerNonNull;
 template<typename T> class Optional;
+class Text;
 class TextOrElementOrDocument;
 struct DOMPointInit;
 } // namespace dom
@@ -151,35 +152,33 @@ enum {
                                           NODE_HAS_EDGE_CHILD_SELECTOR |
                                           NODE_HAS_SLOW_SELECTOR_LATER_SIBLINGS,
 
-  NODE_ATTACH_BINDING_ON_POSTCREATE =     NODE_FLAG_BIT(14),
-
   // This node needs to go through frame construction to get a frame (or
   // undisplayed entry).
-  NODE_NEEDS_FRAME =                      NODE_FLAG_BIT(15),
+  NODE_NEEDS_FRAME =                      NODE_FLAG_BIT(14),
 
   // At least one descendant in the flattened tree has NODE_NEEDS_FRAME set.
   // This should be set on every node on the flattened tree path between the
   // node(s) with NODE_NEEDS_FRAME and the root content.
-  NODE_DESCENDANTS_NEED_FRAMES =          NODE_FLAG_BIT(16),
+  NODE_DESCENDANTS_NEED_FRAMES =          NODE_FLAG_BIT(15),
 
   // Set if the node has the accesskey attribute set.
-  NODE_HAS_ACCESSKEY =                    NODE_FLAG_BIT(17),
+  NODE_HAS_ACCESSKEY =                    NODE_FLAG_BIT(16),
 
   // Set if the node has right-to-left directionality
-  NODE_HAS_DIRECTION_RTL =                NODE_FLAG_BIT(18),
+  NODE_HAS_DIRECTION_RTL =                NODE_FLAG_BIT(17),
 
   // Set if the node has left-to-right directionality
-  NODE_HAS_DIRECTION_LTR =                NODE_FLAG_BIT(19),
+  NODE_HAS_DIRECTION_LTR =                NODE_FLAG_BIT(18),
 
   NODE_ALL_DIRECTION_FLAGS =              NODE_HAS_DIRECTION_LTR |
                                           NODE_HAS_DIRECTION_RTL,
 
-  NODE_CHROME_ONLY_ACCESS =               NODE_FLAG_BIT(20),
+  NODE_CHROME_ONLY_ACCESS =               NODE_FLAG_BIT(19),
 
-  NODE_IS_ROOT_OF_CHROME_ONLY_ACCESS =    NODE_FLAG_BIT(21),
+  NODE_IS_ROOT_OF_CHROME_ONLY_ACCESS =    NODE_FLAG_BIT(20),
 
   // Remaining bits are node type specific.
-  NODE_TYPE_SPECIFIC_BITS_OFFSET =        22
+  NODE_TYPE_SPECIFIC_BITS_OFFSET =        21
 };
 
 // Make sure we have space for our bits
@@ -194,44 +193,29 @@ ASSERT_NODE_FLAGS_SPACE(NODE_TYPE_SPECIFIC_BITS_OFFSET);
  * nsMutationGuard on the stack before unexpected mutations could occur.
  * You can then at any time call Mutated to check if any unexpected mutations
  * have occurred.
- *
- * When a guard is instantiated sMutationCount is set to 300. It is then
- * decremented by every mutation (capped at 0). This means that we can only
- * detect 300 mutations during the lifetime of a single guard, however that
- * should be more then we ever care about as we usually only care if more then
- * one mutation has occurred.
- *
- * When the guard goes out of scope it will adjust sMutationCount so that over
- * the lifetime of the guard the guard itself has not affected sMutationCount,
- * while mutations that happened while the guard was alive still will. This
- * allows a guard to be instantiated even if there is another guard higher up
- * on the callstack watching for mutations.
- *
- * The only thing that has to be avoided is for an outer guard to be used
- * while an inner guard is alive. This can be avoided by only ever
- * instantiating a single guard per scope and only using the guard in the
- * current scope.
  */
 class nsMutationGuard {
 public:
   nsMutationGuard()
   {
-    mDelta = eMaxMutations - sMutationCount;
-    sMutationCount = eMaxMutations;
-  }
-  ~nsMutationGuard()
-  {
-    sMutationCount =
-      mDelta > sMutationCount ? 0 : sMutationCount - mDelta;
+    mStartingGeneration = sGeneration;
   }
 
   /**
    * Returns true if any unexpected mutations have occurred. You can pass in
    * an 8-bit ignore count to ignore a number of expected mutations.
+   *
+   * We don't need to care about overflow because subtraction of uint64_t's is
+   * finding the difference between two elements of the group Z < 2^64.  Once
+   * we know the difference between two elements we only need to check that is
+   * less than the given number of mutations to know less than that many
+   * mutations occured.  Assuming constant 1ns mutations it would take 584
+   * years for sGeneration to fully wrap around so we can ignore a guard living
+   * through a full wrap around.
    */
   bool Mutated(uint8_t aIgnoreCount)
   {
-    return sMutationCount < static_cast<uint32_t>(eMaxMutations - aIgnoreCount);
+    return (sGeneration - mStartingGeneration) > aIgnoreCount;
   }
 
   // This function should be called whenever a mutation that we want to keep
@@ -239,26 +223,15 @@ public:
   // removed, but we might do it for attribute changes too in the future.
   static void DidMutate()
   {
-    if (sMutationCount) {
-      --sMutationCount;
-    }
+    sGeneration++;
   }
 
 private:
-  // mDelta is the amount sMutationCount was adjusted when the guard was
-  // initialized. It is needed so that we can undo that adjustment once
-  // the guard dies.
-  uint32_t mDelta;
+  // This is the value sGeneration had when the guard was constructed.
+  uint64_t mStartingGeneration;
 
-  // The value 300 is not important, as long as it is bigger then anything
-  // ever passed to Mutated().
-  enum { eMaxMutations = 300 };
-
-
-  // sMutationCount is a global mutation counter which is decreased by one at
-  // every mutation. It is capped at 0 to avoid wrapping.
-  // Its value is always between 0 and 300, inclusive.
-  static uint32_t sMutationCount;
+  // This value is incremented on every mutation, for the life of the process.
+  static uint64_t sGeneration;
 };
 
 // This should be used for any nsINode sub-class that has fields of its own
@@ -339,7 +312,7 @@ public:
   friend class nsAttrAndChildArray;
 
 #ifdef MOZILLA_INTERNAL_API
-  nsINode(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
+  explicit nsINode(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
   : mNodeInfo(aNodeInfo),
     mParent(nullptr),
     mBoolFlags(0),
@@ -453,6 +426,13 @@ public:
   {
     return const_cast<nsINode*>(this)->AsContent();
   }
+
+  /**
+   * Return this node as Text if it is one, otherwise null.  This is defined
+   * inline in Text.h.
+   */
+  mozilla::dom::Text* GetAsText();
+  const mozilla::dom::Text* GetAsText() const;
 
   virtual nsIDOMNode* AsDOMNode() = 0;
 
@@ -994,7 +974,6 @@ public:
     NS_ASSERTION(!(aFlagsToSet & (NODE_IS_ANONYMOUS_ROOT |
                                   NODE_IS_NATIVE_ANONYMOUS_ROOT |
                                   NODE_IS_IN_NATIVE_ANONYMOUS_SUBTREE |
-                                  NODE_ATTACH_BINDING_ON_POSTCREATE |
                                   NODE_DESCENDANTS_NEED_FRAMES |
                                   NODE_NEEDS_FRAME |
                                   NODE_CHROME_ONLY_ACCESS)) ||

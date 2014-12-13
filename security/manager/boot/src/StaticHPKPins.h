@@ -79,6 +79,10 @@ static const char kCybertrust_Global_RootFingerprint[] =
 static const char kDigiCert_Assured_ID_Root_CAFingerprint[] =
   "I/Lt/z7ekCWanjD0Cvj5EqXls2lOaThEA0H2Bg4BT/o=";
 
+/* DigiCert ECC Secure Server CA */
+static const char kDigiCert_ECC_Secure_Server_CAFingerprint[] =
+  "PZXN3lRAy+8tBKk2Ox6F7jIlnzr2Yzmwqc3JnyfXoCw=";
+
 /* DigiCert Global Root CA */
 static const char kDigiCert_Global_Root_CAFingerprint[] =
   "r/mIkG3eEpVdm+u/ko/cwxzOMo1bk4TyHIlByibiA5E=";
@@ -89,7 +93,7 @@ static const char kDigiCert_High_Assurance_EV_Root_CAFingerprint[] =
 
 /* End Entity Test Cert */
 static const char kEnd_Entity_Test_CertFingerprint[] =
-  "w3a2zMuMdmP9ed7H9HLExM+i+/0UxqHlKszZ5GQpHYM=";
+  "pVVgLk2kFI2WWRPwDMIX6YmzFhEW4DXQV/U5gP+feGA=";
 
 /* Entrust Root Certification Authority */
 static const char kEntrust_Root_Certification_AuthorityFingerprint[] =
@@ -363,6 +367,21 @@ struct StaticPinset {
 };
 
 /* PreloadedHPKPins.json pinsets */
+static const char* kPinset_facebook_sha256_Data[] = {
+  kDigiCert_ECC_Secure_Server_CAFingerprint,
+  kVerisign_Class_3_Public_Primary_Certification_Authority___G3Fingerprint,
+  kDigiCert_High_Assurance_EV_Root_CAFingerprint,
+};
+static const StaticFingerprints kPinset_facebook_sha256 = {
+  sizeof(kPinset_facebook_sha256_Data) / sizeof(const char*),
+  kPinset_facebook_sha256_Data
+};
+
+static const StaticPinset kPinset_facebook = {
+  nullptr,
+  &kPinset_facebook_sha256
+};
+
 static const char* kPinset_google_root_pems_sha256_Data[] = {
   kEquifax_Secure_CAFingerprint,
   kAmerica_Online_Root_Certification_Authority_2Fingerprint,
@@ -472,17 +491,17 @@ static const StaticPinset kPinset_mozilla = {
   &kPinset_mozilla_sha256
 };
 
-static const char* kPinset_mozilla_fxa_sha256_Data[] = {
+static const char* kPinset_mozilla_services_sha256_Data[] = {
   kDigiCert_Global_Root_CAFingerprint,
 };
-static const StaticFingerprints kPinset_mozilla_fxa_sha256 = {
-  sizeof(kPinset_mozilla_fxa_sha256_Data) / sizeof(const char*),
-  kPinset_mozilla_fxa_sha256_Data
+static const StaticFingerprints kPinset_mozilla_services_sha256 = {
+  sizeof(kPinset_mozilla_services_sha256_Data) / sizeof(const char*),
+  kPinset_mozilla_services_sha256_Data
 };
 
-static const StaticPinset kPinset_mozilla_fxa = {
+static const StaticPinset kPinset_mozilla_services = {
   nullptr,
-  &kPinset_mozilla_fxa_sha256
+  &kPinset_mozilla_services_sha256
 };
 
 static const char* kPinset_mozilla_test_sha256_Data[] = {
@@ -737,24 +756,24 @@ struct TransportSecurityPreload {
 /* Sort hostnames for binary search. */
 static const TransportSecurityPreload kPublicKeyPinningPreloadList[] = {
   { "2mdn.net", true, false, false, -1, &kPinset_google_root_pems },
-  { "accounts.firefox.com", true, false, false, 4, &kPinset_mozilla_fxa },
+  { "accounts.firefox.com", true, false, false, 4, &kPinset_mozilla_services },
   { "accounts.google.com", true, false, false, -1, &kPinset_google_root_pems },
   { "addons.mozilla.net", true, false, true, 2, &kPinset_mozilla },
   { "addons.mozilla.org", true, false, true, 1, &kPinset_mozilla },
   { "admin.google.com", true, false, false, -1, &kPinset_google_root_pems },
   { "android.com", true, false, false, -1, &kPinset_google_root_pems },
-  { "api.accounts.firefox.com", true, false, false, 5, &kPinset_mozilla_fxa },
+  { "api.accounts.firefox.com", true, false, false, 5, &kPinset_mozilla_services },
   { "api.twitter.com", true, false, false, -1, &kPinset_twitterCDN },
   { "apis.google.com", true, false, false, -1, &kPinset_google_root_pems },
   { "appengine.google.com", true, false, false, -1, &kPinset_google_root_pems },
   { "appspot.com", true, false, false, -1, &kPinset_google_root_pems },
   { "aus4.mozilla.org", true, true, true, 3, &kPinset_mozilla },
-  { "blog.torproject.org", true, true, false, -1, &kPinset_tor },
+  { "blog.torproject.org", true, false, false, -1, &kPinset_tor },
   { "business.twitter.com", true, false, false, -1, &kPinset_twitterCom },
   { "cdn.mozilla.net", true, false, true, -1, &kPinset_mozilla },
   { "cdn.mozilla.org", true, false, true, -1, &kPinset_mozilla },
   { "chart.apis.google.com", true, false, false, -1, &kPinset_google_root_pems },
-  { "check.torproject.org", true, true, false, -1, &kPinset_tor },
+  { "check.torproject.org", true, false, false, -1, &kPinset_tor },
   { "checkout.google.com", true, false, false, -1, &kPinset_google_root_pems },
   { "chrome-devtools-frontend.appspot.com", true, false, false, -1, &kPinset_google_root_pems },
   { "chrome.google.com", true, false, false, -1, &kPinset_google_root_pems },
@@ -765,15 +784,16 @@ static const TransportSecurityPreload kPublicKeyPinningPreloadList[] = {
   { "codereview.chromium.org", true, false, false, -1, &kPinset_google_root_pems },
   { "crypto.cat", false, true, false, -1, &kPinset_cryptoCat },
   { "dev.twitter.com", true, false, false, -1, &kPinset_twitterCom },
-  { "dist.torproject.org", true, true, false, -1, &kPinset_tor },
+  { "dist.torproject.org", true, false, false, -1, &kPinset_tor },
   { "dl.google.com", true, false, false, -1, &kPinset_google_root_pems },
   { "docs.google.com", true, false, false, -1, &kPinset_google_root_pems },
   { "domains.google.com", true, false, false, -1, &kPinset_google_root_pems },
   { "doubleclick.net", true, false, false, -1, &kPinset_google_root_pems },
   { "drive.google.com", true, false, false, -1, &kPinset_google_root_pems },
-  { "dropbox.com", false, true, false, -1, &kPinset_dropbox },
+  { "dropbox.com", false, false, false, -1, &kPinset_dropbox },
   { "encrypted.google.com", true, false, false, -1, &kPinset_google_root_pems },
   { "exclude-subdomains.pinning.example.com", false, false, false, 0, &kPinset_mozilla_test },
+  { "facebook.com", true, true, false, -1, &kPinset_facebook },
   { "g.co", true, false, false, -1, &kPinset_google_root_pems },
   { "glass.google.com", true, false, false, -1, &kPinset_google_root_pems },
   { "gmail.com", false, false, false, -1, &kPinset_google_root_pems },
@@ -1028,6 +1048,7 @@ static const TransportSecurityPreload kPublicKeyPinningPreloadList[] = {
   { "profiles.google.com", true, false, false, -1, &kPinset_google_root_pems },
   { "script.google.com", true, false, false, -1, &kPinset_google_root_pems },
   { "security.google.com", true, false, false, -1, &kPinset_google_root_pems },
+  { "services.mozilla.com", true, true, false, -1, &kPinset_mozilla_services },
   { "sites.google.com", true, false, false, -1, &kPinset_google_root_pems },
   { "spreadsheets.google.com", true, false, false, -1, &kPinset_google_root_pems },
   { "ssl.google-analytics.com", true, false, false, -1, &kPinset_google_root_pems },
@@ -1035,7 +1056,7 @@ static const TransportSecurityPreload kPublicKeyPinningPreloadList[] = {
   { "talkgadget.google.com", true, false, false, -1, &kPinset_google_root_pems },
   { "test-mode.pinning.example.com", true, true, false, -1, &kPinset_mozilla_test },
   { "tor2web.org", true, true, false, -1, &kPinset_tor2web },
-  { "torproject.org", false, true, false, -1, &kPinset_tor },
+  { "torproject.org", false, false, false, -1, &kPinset_tor },
   { "translate.googleapis.com", true, false, false, -1, &kPinset_google_root_pems },
   { "twimg.com", true, false, false, -1, &kPinset_twitterCDN },
   { "twitter.com", true, false, false, -1, &kPinset_twitterCDN },
@@ -1055,10 +1076,10 @@ static const TransportSecurityPreload kPublicKeyPinningPreloadList[] = {
   { "wf-training-hrd.appspot.com", true, false, false, -1, &kPinset_google_root_pems },
   { "wf-training-master.appspot.com", true, false, false, -1, &kPinset_google_root_pems },
   { "wf-trial-hrd.appspot.com", true, false, false, -1, &kPinset_google_root_pems },
-  { "www.dropbox.com", true, true, false, -1, &kPinset_dropbox },
+  { "www.dropbox.com", true, false, false, -1, &kPinset_dropbox },
   { "www.gmail.com", false, false, false, -1, &kPinset_google_root_pems },
   { "www.googlemail.com", false, false, false, -1, &kPinset_google_root_pems },
-  { "www.torproject.org", true, true, false, -1, &kPinset_tor },
+  { "www.torproject.org", true, false, false, -1, &kPinset_tor },
   { "www.twitter.com", true, false, false, -1, &kPinset_twitterCom },
   { "xbrlsuccess.appspot.com", true, false, false, -1, &kPinset_google_root_pems },
   { "youtu.be", true, false, false, -1, &kPinset_google_root_pems },
@@ -1067,8 +1088,8 @@ static const TransportSecurityPreload kPublicKeyPinningPreloadList[] = {
   { "ytimg.com", true, false, false, -1, &kPinset_google_root_pems },
 };
 
-// Pinning Preload List Length = 329;
+// Pinning Preload List Length = 331;
 
 static const int32_t kUnknownId = -1;
 
-static const PRTime kPreloadPKPinsExpirationTime = INT64_C(1417860603051000);
+static const PRTime kPreloadPKPinsExpirationTime = INT64_C(1421489410706000);

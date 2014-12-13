@@ -31,11 +31,11 @@ using namespace mozilla::pkix::test;
 
 namespace mozilla { namespace pkix {
 
-Result CheckValidity(const SECItem& encodedValidity, PRTime time);
+Result CheckValidity(const Input encodedValidity, Time time);
 
 } } // namespace mozilla::pkix
 
-static const PRTime PAST_TIME(YMDHMS(1998, 12, 31, 12, 23, 56));
+static const Time PAST_TIME(YMDHMS(1998, 12, 31, 12, 23, 56));
 
 #define OLDER_GENERALIZEDTIME \
   0x18, 15,                               /* tag, length */ \
@@ -47,7 +47,7 @@ static const PRTime PAST_TIME(YMDHMS(1998, 12, 31, 12, 23, 56));
   '9', '9', '0', '1', '0', '1',           /* (19)99-01-01 */ \
   '0', '0', '0', '0', '0', '0', 'Z'       /* 00:00:00Z */
 
-static const PRTime NOW(YMDHMS(2016, 12, 31, 12, 23, 56));
+static const Time NOW(YMDHMS(2016, 12, 31, 12, 23, 56));
 
 #define NEWER_GENERALIZEDTIME \
   0x18, 15,                               /* tag, length */ \
@@ -59,7 +59,7 @@ static const PRTime NOW(YMDHMS(2016, 12, 31, 12, 23, 56));
   '2', '1', '0', '1', '0', '1',           /* 2021-01-01 */ \
   '0', '0', '0', '0', '0', '0', 'Z'       /* 00:00:00Z */
 
-static const PRTime FUTURE_TIME(YMDHMS(2025, 12, 31, 12, 23, 56));
+static const Time FUTURE_TIME(YMDHMS(2025, 12, 31, 12, 23, 56));
 
 class pkixcheck_CheckValidity : public ::testing::Test { };
 
@@ -69,11 +69,7 @@ TEST_F(pkixcheck_CheckValidity, BothEmptyNull)
     0x17/*UTCTime*/, 0/*length*/,
     0x17/*UTCTime*/, 0/*length*/,
   };
-  static const SECItem validity = {
-    siBuffer,
-    const_cast<uint8_t*>(DER),
-    sizeof(DER)
-  };
+  static const Input validity(DER);
   ASSERT_EQ(Result::ERROR_EXPIRED_CERTIFICATE, CheckValidity(validity, NOW));
 }
 
@@ -83,11 +79,7 @@ TEST_F(pkixcheck_CheckValidity, NotBeforeEmptyNull)
     0x17/*UTCTime*/, 0x00/*length*/,
     NEWER_UTCTIME
   };
-  static const SECItem validity = {
-    siBuffer,
-    const_cast<uint8_t*>(DER),
-    sizeof(DER)
-  };
+  static const Input validity(DER);
   ASSERT_EQ(Result::ERROR_EXPIRED_CERTIFICATE, CheckValidity(validity, NOW));
 }
 
@@ -97,11 +89,7 @@ TEST_F(pkixcheck_CheckValidity, NotAfterEmptyNull)
     NEWER_UTCTIME,
     0x17/*UTCTime*/, 0x00/*length*/,
   };
-  static const SECItem validity = {
-    siBuffer,
-    const_cast<uint8_t*>(DER),
-    sizeof(DER)
-  };
+  static const Input validity(DER);
   ASSERT_EQ(Result::ERROR_EXPIRED_CERTIFICATE, CheckValidity(validity, NOW));
 }
 
@@ -109,11 +97,8 @@ static const uint8_t OLDER_UTCTIME_NEWER_UTCTIME_DATA[] = {
   OLDER_UTCTIME,
   NEWER_UTCTIME,
 };
-static const SECItem OLDER_UTCTIME_NEWER_UTCTIME = {
-  siBuffer,
-  const_cast<uint8_t*>(OLDER_UTCTIME_NEWER_UTCTIME_DATA),
-  sizeof(OLDER_UTCTIME_NEWER_UTCTIME_DATA)
-};
+static const Input
+OLDER_UTCTIME_NEWER_UTCTIME(OLDER_UTCTIME_NEWER_UTCTIME_DATA);
 
 TEST_F(pkixcheck_CheckValidity, Valid_UTCTIME_UTCTIME)
 {
@@ -126,11 +111,7 @@ TEST_F(pkixcheck_CheckValidity, Valid_GENERALIZEDTIME_GENERALIZEDTIME)
     OLDER_GENERALIZEDTIME,
     NEWER_GENERALIZEDTIME,
   };
-  static const SECItem validity = {
-    siBuffer,
-    const_cast<uint8_t*>(DER),
-    sizeof(DER)
-  };
+  static const Input validity(DER);
   ASSERT_EQ(Success, CheckValidity(validity, NOW));
 }
 
@@ -140,11 +121,7 @@ TEST_F(pkixcheck_CheckValidity, Valid_GENERALIZEDTIME_UTCTIME)
     OLDER_GENERALIZEDTIME,
     NEWER_UTCTIME,
   };
-  static const SECItem validity = {
-    siBuffer,
-    const_cast<uint8_t*>(DER),
-    sizeof(DER)
-  };
+  static const Input validity(DER);
   ASSERT_EQ(Success, CheckValidity(validity, NOW));
 }
 
@@ -154,11 +131,7 @@ TEST_F(pkixcheck_CheckValidity, Valid_UTCTIME_GENERALIZEDTIME)
     OLDER_UTCTIME,
     NEWER_GENERALIZEDTIME,
   };
-  static const SECItem validity = {
-    siBuffer,
-    const_cast<uint8_t*>(DER),
-    sizeof(DER)
-  };
+  static const Input validity(DER);
   ASSERT_EQ(Success, CheckValidity(validity, NOW));
 }
 
@@ -180,10 +153,6 @@ TEST_F(pkixcheck_CheckValidity, InvalidNotAfterBeforeNotBefore)
     NEWER_UTCTIME,
     OLDER_UTCTIME,
   };
-  static const SECItem validity = {
-    siBuffer,
-    const_cast<uint8_t*>(DER),
-    sizeof(DER)
-  };
+  static const Input validity(DER);
   ASSERT_EQ(Result::ERROR_EXPIRED_CERTIFICATE, CheckValidity(validity, NOW));
 }

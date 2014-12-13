@@ -31,7 +31,6 @@ SOURCES += [
     'user_environment.c',
     'user_mbuf.c',
     'user_recv_thread.c',
-    'user_sctp_timer_iterate.c',
     'user_socket.c',
 ]
 
@@ -44,7 +43,7 @@ LIBRARY_NAME = 'nksctp_s'
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
-FINAL_LIBRARY = 'necko'
+FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [
     '../../base/src',
@@ -90,3 +89,6 @@ if CONFIG['OS_TARGET'] == 'DragonFly':
     DEFINES['__DragonFly__'] = False
 
 NO_PGO = True # Don't PGO
+
+if CONFIG['GNU_CC']:
+    CFLAGS += ['-std=gnu99']

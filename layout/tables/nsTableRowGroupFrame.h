@@ -51,7 +51,7 @@ struct nsRowGroupReflowState {
  * @see nsTableFrame
  * @see nsTableRowFrame
  */
-class nsTableRowGroupFrame
+class nsTableRowGroupFrame MOZ_FINAL
   : public nsContainerFrame
   , public nsILineIterator
 {
@@ -328,7 +328,7 @@ public:
   virtual void InvalidateFrameForRemoval() MOZ_OVERRIDE { InvalidateFrameSubtree(); }
 
 protected:
-  nsTableRowGroupFrame(nsStyleContext* aContext);
+  explicit nsTableRowGroupFrame(nsStyleContext* aContext);
 
   void InitChildReflowState(nsPresContext&     aPresContext, 
                             bool               aBorderCollapse,

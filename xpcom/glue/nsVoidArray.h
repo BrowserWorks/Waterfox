@@ -26,11 +26,11 @@ typedef size_t (*nsVoidArraySizeOfElementIncludingThisFunc)(
   const void* aElement, mozilla::MallocSizeOf aMallocSizeOf, void* aData);
 
 /// A basic zero-based array of void*'s that manages its own memory
-class NS_COM_GLUE nsVoidArray
+class nsVoidArray
 {
 public:
   nsVoidArray();
-  nsVoidArray(int32_t aCount);  // initial count of aCount elements set to nullptr
+  explicit nsVoidArray(int32_t aCount);  // initial count of aCount elements set to nullptr
   ~nsVoidArray();
 
   nsVoidArray& operator=(const nsVoidArray& aOther);
@@ -177,7 +177,7 @@ private:
 // today, there should not be any virtualness to it to avoid the vtable
 // ptr overhead.
 
-class NS_COM_GLUE nsSmallVoidArray : private nsVoidArray
+class nsSmallVoidArray : private nsVoidArray
 {
 public:
   ~nsSmallVoidArray();

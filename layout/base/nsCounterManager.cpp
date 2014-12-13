@@ -199,7 +199,7 @@ nsCounterList::RecalcAll()
 }
 
 nsCounterManager::nsCounterManager()
-    : mNames(16)
+    : mNames()
 {
 }
 
@@ -312,7 +312,7 @@ nsCounterManager::SetAllCounterStylesDirty()
 }
 
 struct DestroyNodesData {
-    DestroyNodesData(nsIFrame *aFrame)
+    explicit DestroyNodesData(nsIFrame *aFrame)
         : mFrame(aFrame)
         , mDestroyedAny(false)
     {

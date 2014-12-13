@@ -27,15 +27,12 @@
 #include "AutoMounter.h"
 #include "TimeZoneSettingObserver.h"
 #include "AudioManager.h"
+#include "mozilla/dom/ScriptSettings.h"
 #ifdef MOZ_B2G_RIL
 #include "mozilla/ipc/Ril.h"
 #endif
-#ifdef MOZ_NFC
-#include "mozilla/ipc/Nfc.h"
-#endif
 #include "mozilla/ipc/KeyStore.h"
 #include "nsIObserverService.h"
-#include "nsCxPusher.h"
 #include "nsServiceManagerUtils.h"
 #include "nsThreadUtils.h"
 #include "nsRadioInterfaceLayer.h"
@@ -125,16 +122,17 @@ SystemWorkerManager::Shutdown()
   RilConsumer::Shutdown();
 #endif
 
-#ifdef MOZ_NFC
-  NfcConsumer::Shutdown();
-#endif
-
   nsCOMPtr<nsIWifi> wifi(do_QueryInterface(mWifiWorker));
   if (wifi) {
     wifi->Shutdown();
     wifi = nullptr;
   }
   mWifiWorker = nullptr;
+
+  if (mKeyStore) {
+    mKeyStore->CloseSocket();
+    mKeyStore = nullptr;
+  }
 
   nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
   if (obs) {
@@ -205,28 +203,6 @@ SystemWorkerManager::RegisterRilWorker(unsigned int aClientId,
 
   return RilConsumer::Register(aClientId, wctd);
 #endif // MOZ_B2G_RIL
-}
-
-nsresult
-SystemWorkerManager::RegisterNfcWorker(JS::Handle<JS::Value> aWorker,
-                                       JSContext* aCx)
-{
-#ifndef MOZ_NFC
-  return NS_ERROR_NOT_IMPLEMENTED;
-#else
-  NS_ENSURE_TRUE(aWorker.isObject(), NS_ERROR_UNEXPECTED);
-
-  JSAutoCompartment ac(aCx, &aWorker.toObject());
-
-  WorkerCrossThreadDispatcher* wctd =
-    GetWorkerCrossThreadDispatcher(aCx, aWorker);
-  if (!wctd) {
-    NS_WARNING("Failed to GetWorkerCrossThreadDispatcher for nfc");
-    return NS_ERROR_FAILURE;
-  }
-
-  return NfcConsumer::Register(wctd);
-#endif // MOZ_NFC
 }
 
 nsresult

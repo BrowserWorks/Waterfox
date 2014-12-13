@@ -122,12 +122,12 @@ class nsIdentifierMapEntry : public nsStringHashKey
 {
 public:
   typedef mozilla::dom::Element Element;
-  
-  nsIdentifierMapEntry(const nsAString& aKey) :
+
+  explicit nsIdentifierMapEntry(const nsAString& aKey) :
     nsStringHashKey(&aKey), mNameContentList(nullptr)
   {
   }
-  nsIdentifierMapEntry(const nsAString *aKey) :
+  explicit nsIdentifierMapEntry(const nsAString* aKey) :
     nsStringHashKey(aKey), mNameContentList(nullptr)
   {
   }
@@ -203,8 +203,8 @@ public:
     typedef const ChangeCallback KeyType;
     typedef const ChangeCallback* KeyTypePointer;
 
-    ChangeCallbackEntry(const ChangeCallback* key) :
-      mKey(*key) { }
+    explicit ChangeCallbackEntry(const ChangeCallback* aKey) :
+      mKey(*aKey) { }
     ChangeCallbackEntry(const ChangeCallbackEntry& toCopy) :
       mKey(toCopy.mKey) { }
 
@@ -221,13 +221,11 @@ public:
       return mozilla::HashGeneric(aKey->mCallback, aKey->mData);
     }
     enum { ALLOW_MEMMOVE = true };
-    
+
     ChangeCallback mKey;
   };
 
-  static size_t SizeOfExcludingThis(nsIdentifierMapEntry* aEntry,
-                                    mozilla::MallocSizeOf aMallocSizeOf,
-                                    void* aArg);
+  size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
 private:
   void FireChangeCallbacks(Element* aOldElement, Element* aNewElement,
@@ -254,7 +252,7 @@ public:
     : mNamespaceID(aNamespaceID),
       mAtom(aAtom)
   {}
-  CustomElementHashKey(const CustomElementHashKey *aKey)
+  explicit CustomElementHashKey(const CustomElementHashKey* aKey)
     : mNamespaceID(aKey->mNamespaceID),
       mAtom(aKey->mAtom)
   {}
@@ -328,7 +326,9 @@ private:
 // being created flag.
 struct CustomElementData
 {
-  CustomElementData(nsIAtom* aType);
+  NS_INLINE_DECL_REFCOUNTING(CustomElementData)
+
+  explicit CustomElementData(nsIAtom* aType);
   // Objects in this array are transient and empty after each microtask
   // checkpoint.
   nsTArray<nsAutoPtr<CustomElementCallback>> mCallbackQueue;
@@ -349,6 +349,9 @@ struct CustomElementData
 
   // Empties the callback queue.
   void RunCallbackQueue();
+
+private:
+  virtual ~CustomElementData() {}
 };
 
 // The required information for a custom element as defined in:
@@ -440,7 +443,7 @@ class nsDOMStyleSheetList : public mozilla::dom::StyleSheetList,
                             public nsStubDocumentObserver
 {
 public:
-  nsDOMStyleSheetList(nsIDocument *aDocument);
+  explicit nsDOMStyleSheetList(nsIDocument* aDocument);
 
   NS_DECL_ISUPPORTS_INHERITED
 
@@ -543,7 +546,7 @@ protected:
     ~PendingLoad() {}
 
   public:
-    PendingLoad(nsDocument* aDisplayDocument) :
+    explicit PendingLoad(nsDocument* aDisplayDocument) :
       mDisplayDocument(aDisplayDocument)
     {}
 
@@ -575,7 +578,7 @@ protected:
   {
     ~LoadgroupCallbacks() {}
   public:
-    LoadgroupCallbacks(nsIInterfaceRequestor* aOtherCallbacks)
+    explicit LoadgroupCallbacks(nsIInterfaceRequestor* aOtherCallbacks)
       : mCallbacks(aOtherCallbacks)
     {}
     NS_DECL_ISUPPORTS
@@ -938,6 +941,12 @@ public:
   nsRadioGroupStruct* GetOrCreateRadioGroup(const nsAString& aName);
 
   virtual nsViewportInfo GetViewportInfo(const mozilla::ScreenIntSize& aDisplaySize) MOZ_OVERRIDE;
+
+  /**
+   * Called when an app-theme-changed observer notification is
+   * received by this document.
+   */
+  void OnAppThemeChanged();
 
 private:
   void AddOnDemandBuiltInUASheet(mozilla::CSSStyleSheet* aSheet);
@@ -1408,6 +1417,10 @@ public:
 
   js::ExpandoAndGeneration mExpandoAndGeneration;
 
+#ifdef MOZ_EME
+  bool ContainsEMEContent();
+#endif
+
 protected:
   already_AddRefed<nsIPresShell> doCreateShell(nsPresContext* aContext,
                                                nsViewManager* aViewManager,
@@ -1439,7 +1452,7 @@ protected:
   void VerifyRootContentState();
 #endif
 
-  nsDocument(const char* aContentType);
+  explicit nsDocument(const char* aContentType);
   virtual ~nsDocument();
 
   void EnsureOnloadBlocker();
@@ -1490,7 +1503,7 @@ private:
   // CustomElementData in this array, separated by nullptr that
   // represent the boundaries of the items in the stack. The first
   // queue in the stack is the base element queue.
-  static mozilla::Maybe<nsTArray<mozilla::dom::CustomElementData*>> sProcessingStack;
+  static mozilla::Maybe<nsTArray<nsRefPtr<mozilla::dom::CustomElementData>>> sProcessingStack;
 
   // Flag to prevent re-entrance into base element queue as described in the
   // custom elements speicification.
@@ -1590,6 +1603,12 @@ public:
 
   bool mAsyncFullscreenPending:1;
 
+  // Whether we're observing the "app-theme-changed" observer service
+  // notification.  We need to keep track of this because we might get multiple
+  // OnPageShow notifications in a row without an OnPageHide in between, if
+  // we're getting document.open()/close() called on us.
+  bool mObservingAppThemeChanged:1;
+
   // Keeps track of whether we have a pending
   // 'style-sheet-applicable-state-changed' notification.
   bool mSSApplicableStateNotificationPending:1;
@@ -1628,6 +1647,7 @@ private:
   void DoUnblockOnload();
 
   nsresult CheckFrameOptions();
+  bool IsLoopDocument(nsIChannel* aChannel);
   nsresult InitCSP(nsIChannel* aChannel);
 
   void FlushCSPWebConsoleErrorQueue()
@@ -1755,7 +1775,7 @@ public:
 class nsDocumentOnStack
 {
 public:
-  nsDocumentOnStack(nsDocument* aDoc) : mDoc(aDoc)
+  explicit nsDocumentOnStack(nsDocument* aDoc) : mDoc(aDoc)
   {
     mDoc->IncreaseStackRefCnt();
   }

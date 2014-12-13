@@ -104,6 +104,7 @@ HTMLSelectElement::HTMLSelectElement(already_AddRefed<mozilla::dom::NodeInfo>& a
                                      FromParser aFromParser)
   : nsGenericHTMLFormElementWithState(aNodeInfo),
     mOptions(new HTMLOptionsCollection(MOZ_THIS_IN_INITIALIZER_LIST())),
+    mAutocompleteAttrState(nsContentUtils::eAutocompleteAttrState_Unknown),
     mIsDoneAddingChildren(!aFromParser),
     mDisabledChanged(false),
     mMutating(false),
@@ -175,6 +176,16 @@ HTMLSelectElement::SetCustomValidity(const nsAString& aError)
   UpdateState(true);
 
   return NS_OK;
+}
+
+void
+HTMLSelectElement::GetAutocomplete(DOMString& aValue)
+{
+  const nsAttrValue* attributeVal = GetParsedAttr(nsGkAtoms::autocomplete);
+
+  mAutocompleteAttrState =
+    nsContentUtils::SerializeAutocompleteAttribute(attributeVal, aValue,
+                                                   mAutocompleteAttrState);
 }
 
 NS_IMETHODIMP
@@ -962,8 +973,8 @@ HTMLSelectElement::SetOptionsSelectedByIndex(int32_t aStartIndex,
 
   if (aOptionsMask & IS_SELECTED) {
     // Setting selectedIndex to an out-of-bounds index means -1. (HTML5)
-    if (aStartIndex < 0 || SafeCast<uint32_t>(aStartIndex) >= numItems ||
-        aEndIndex < 0 || SafeCast<uint32_t>(aEndIndex) >= numItems) {
+    if (aStartIndex < 0 || AssertedCast<uint32_t>(aStartIndex) >= numItems ||
+        aEndIndex < 0 || AssertedCast<uint32_t>(aEndIndex) >= numItems) {
       aStartIndex = -1;
       aEndIndex = -1;
     }
@@ -993,8 +1004,8 @@ HTMLSelectElement::SetOptionsSelectedByIndex(int32_t aStartIndex,
       MOZ_ASSERT(aEndIndex >= 0);
       // Loop through the options and select them (if they are not disabled and
       // if they are not already selected).
-      for (uint32_t optIndex = SafeCast<uint32_t>(aStartIndex);
-           optIndex <= SafeCast<uint32_t>(aEndIndex);
+      for (uint32_t optIndex = AssertedCast<uint32_t>(aStartIndex);
+           optIndex <= AssertedCast<uint32_t>(aEndIndex);
            optIndex++) {
         nsRefPtr<HTMLOptionElement> option = Item(optIndex);
 
@@ -1029,7 +1040,7 @@ HTMLSelectElement::SetOptionsSelectedByIndex(int32_t aStartIndex,
        || ((aOptionsMask & CLEAR_ALL) && !allDisabled)
        || aStartIndex == -1)
        && previousSelectedIndex != -1) {
-      for (uint32_t optIndex = SafeCast<uint32_t>(previousSelectedIndex);
+      for (uint32_t optIndex = AssertedCast<uint32_t>(previousSelectedIndex);
            optIndex < numItems;
            optIndex++) {
         if (static_cast<int32_t>(optIndex) < aStartIndex ||
@@ -1333,6 +1344,9 @@ HTMLSelectElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
       UpdateBarredFromConstraintValidation();
     } else if (aName == nsGkAtoms::required) {
       UpdateValueMissingValidityState();
+    } else if (aName == nsGkAtoms::autocomplete) {
+      // Clear the cached @autocomplete attribute state
+      mAutocompleteAttrState = nsContentUtils::eAutocompleteAttrState_Unknown;
     }
 
     UpdateState(aNotify);
@@ -1420,8 +1434,13 @@ HTMLSelectElement::ParseAttribute(int32_t aNamespaceID,
                                   const nsAString& aValue,
                                   nsAttrValue& aResult)
 {
-  if (aAttribute == nsGkAtoms::size && kNameSpaceID_None == aNamespaceID) {
-    return aResult.ParsePositiveIntValue(aValue);
+  if (kNameSpaceID_None == aNamespaceID) {
+    if (aAttribute == nsGkAtoms::size) {
+      return aResult.ParsePositiveIntValue(aValue);
+    } else if (aAttribute == nsGkAtoms::autocomplete) {
+      aResult.ParseAtomArray(aValue);
+      return true;
+    }
   }
   return nsGenericHTMLElement::ParseAttribute(aNamespaceID, aAttribute, aValue,
                                               aResult);

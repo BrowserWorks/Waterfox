@@ -49,6 +49,7 @@
 #include "nsIDocument.h"
 #include "nsIDOMTouchEvent.h"
 #include "mozilla/dom/EventTarget.h"
+#include "mozilla/dom/WindowBinding.h"
 #include "Units.h"
 #include "nsComponentManagerUtils.h"
 
@@ -113,6 +114,7 @@ class External;
 class Function;
 class Gamepad;
 class MediaQueryList;
+class MozSelfSupport;
 class Navigator;
 class OwningExternalOrWindowProxy;
 class Selection;
@@ -512,6 +514,9 @@ public:
 
   static bool IsChromeWindow(JSContext* /* unused */, JSObject* aObj);
 
+  static bool IsShowModalDialogEnabled(JSContext* /* unused */ = nullptr,
+                                       JSObject* /* unused */ = nullptr);
+
   bool DoNewResolve(JSContext* aCx, JS::Handle<JSObject*> aObj,
                     JS::Handle<jsid> aId,
                     JS::MutableHandle<JSPropertyDescriptor> aDesc);
@@ -520,7 +525,7 @@ public:
                            mozilla::ErrorResult& aRv);
 
   // Object Management
-  nsGlobalWindow(nsGlobalWindow *aOuterWindow);
+  explicit nsGlobalWindow(nsGlobalWindow *aOuterWindow);
 
   static nsGlobalWindow *FromSupports(nsISupports *supports)
   {
@@ -596,6 +601,7 @@ public:
 
   nsGlobalWindow *GetCurrentInnerWindowInternal() const
   {
+    MOZ_ASSERT(IsOuterWindow());
     return static_cast<nsGlobalWindow *>(mInnerWindow);
   }
 
@@ -915,8 +921,8 @@ public:
             mozilla::ErrorResult& aError);
   void Btoa(const nsAString& aBinaryData, nsAString& aAsciiBase64String,
             mozilla::ErrorResult& aError);
-  nsIDOMStorage* GetSessionStorage(mozilla::ErrorResult& aError);
-  nsIDOMStorage* GetLocalStorage(mozilla::ErrorResult& aError);
+  mozilla::dom::DOMStorage* GetSessionStorage(mozilla::ErrorResult& aError);
+  mozilla::dom::DOMStorage* GetLocalStorage(mozilla::ErrorResult& aError);
   mozilla::dom::Selection* GetSelection(mozilla::ErrorResult& aError);
   mozilla::dom::indexedDB::IDBFactory* GetIndexedDB(mozilla::ErrorResult& aError);
   already_AddRefed<nsICSSDeclaration>
@@ -931,6 +937,16 @@ public:
                 mozilla::ErrorResult& aError);
   void ResizeBy(int32_t aWidthDif, int32_t aHeightDif,
                 mozilla::ErrorResult& aError);
+  void Scroll(double aXScroll, double aYScroll,
+              const mozilla::dom::ScrollOptions& aOptions);
+  void ScrollTo(double aXScroll, double aYScroll,
+                const mozilla::dom::ScrollOptions& aOptions);
+  void ScrollBy(double aXScrollDif, double aYScrollDif,
+                const mozilla::dom::ScrollOptions& aOptions);
+  void ScrollByLines(int32_t numLines,
+                     const mozilla::dom::ScrollOptions& aOptions);
+  void ScrollByPages(int32_t numPages,
+                     const mozilla::dom::ScrollOptions& aOptions);
   int32_t GetInnerWidth(mozilla::ErrorResult& aError);
   void SetInnerWidth(int32_t aInnerWidth, mozilla::ErrorResult& aError);
   int32_t GetInnerHeight(mozilla::ErrorResult& aError);
@@ -1001,6 +1017,9 @@ public:
             bool aWrapAround, bool aWholeWord, bool aSearchInFrames,
             bool aShowDialog, mozilla::ErrorResult& aError);
   uint64_t GetMozPaintCount(mozilla::ErrorResult& aError);
+
+  mozilla::dom::MozSelfSupport* GetMozSelfSupport(mozilla::ErrorResult& aError);
+
   already_AddRefed<nsIDOMWindow> OpenDialog(JSContext* aCx,
                                             const nsAString& aUrl,
                                             const nsAString& aName,
@@ -1308,7 +1327,8 @@ public:
                     mozilla::ErrorResult& aError);
   nsRect GetInnerScreenRect();
 
-  void ScrollTo(const mozilla::CSSIntPoint& aScroll);
+  void ScrollTo(const mozilla::CSSIntPoint& aScroll,
+                const mozilla::dom::ScrollOptions& aOptions);
 
   bool IsFrame()
   {
@@ -1383,7 +1403,8 @@ protected:
   // Inner windows only.
   already_AddRefed<mozilla::dom::StorageEvent>
   CloneStorageEvent(const nsAString& aType,
-                    const nsRefPtr<mozilla::dom::StorageEvent>& aEvent);
+                    const nsRefPtr<mozilla::dom::StorageEvent>& aEvent,
+                    mozilla::ErrorResult& aRv);
 
   // Outer windows only.
   nsDOMWindowList* GetWindowList();
@@ -1545,8 +1566,10 @@ protected:
   // it wouldn't see the ~External function's declaration.
   nsCOMPtr<nsISupports>         mExternal;
 
-  nsCOMPtr<nsIDOMStorage>      mLocalStorage;
-  nsCOMPtr<nsIDOMStorage>      mSessionStorage;
+  nsRefPtr<mozilla::dom::MozSelfSupport> mMozSelfSupport;
+
+  nsRefPtr<mozilla::dom::DOMStorage> mLocalStorage;
+  nsRefPtr<mozilla::dom::DOMStorage> mSessionStorage;
 
   // These member variable are used only on inner windows.
   nsRefPtr<mozilla::EventListenerManager> mListenerManager;
@@ -1663,7 +1686,7 @@ public:
   // nsIDOMChromeWindow interface
   NS_DECL_NSIDOMCHROMEWINDOW
 
-  nsGlobalChromeWindow(nsGlobalWindow *aOuterWindow)
+  explicit nsGlobalChromeWindow(nsGlobalWindow *aOuterWindow)
     : nsGlobalWindow(aOuterWindow),
       mGroupMessageManagers(1)
   {
@@ -1730,7 +1753,7 @@ class nsGlobalModalWindow : public nsGlobalWindow,
                             public nsIDOMModalContentWindow
 {
 public:
-  nsGlobalModalWindow(nsGlobalWindow *aOuterWindow)
+  explicit nsGlobalModalWindow(nsGlobalWindow *aOuterWindow)
     : nsGlobalWindow(aOuterWindow)
   {
     mIsModalContentWindow = true;

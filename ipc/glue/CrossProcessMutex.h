@@ -42,20 +42,20 @@ typedef mozilla::ipc::SharedMemoryBasic::Handle CrossProcessMutexHandle;
 typedef uintptr_t CrossProcessMutexHandle;
 #endif
 
-class NS_COM_GLUE CrossProcessMutex
+class CrossProcessMutex
 {
 public:
   /**
    * CrossProcessMutex
    * @param name A name which can reference this lock (currently unused)
    **/
-  CrossProcessMutex(const char* aName);
+  explicit CrossProcessMutex(const char* aName);
   /**
    * CrossProcessMutex
    * @param handle A handle of an existing cross process mutex that can be
    *               opened.
    */
-  CrossProcessMutex(CrossProcessMutexHandle aHandle);
+  explicit CrossProcessMutex(CrossProcessMutexHandle aHandle);
 
   /**
    * ~CrossProcessMutex

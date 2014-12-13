@@ -37,13 +37,13 @@ class nsComboboxDisplayFrame;
 class nsIDOMEventListener;
 class nsIScrollableFrame;
 
-class nsComboboxControlFrame : public nsBlockFrame,
-                               public nsIFormControlFrame,
-                               public nsIComboboxControlFrame,
-                               public nsIAnonymousContentCreator,
-                               public nsISelectControlFrame,
-                               public nsIRollupListener,
-                               public nsIStatefulFrame
+class nsComboboxControlFrame MOZ_FINAL : public nsBlockFrame,
+                                         public nsIFormControlFrame,
+                                         public nsIComboboxControlFrame,
+                                         public nsIAnonymousContentCreator,
+                                         public nsISelectControlFrame,
+                                         public nsIRollupListener,
+                                         public nsIStatefulFrame
 {
 public:
   friend nsContainerFrame* NS_NewComboboxControlFrame(nsIPresShell* aPresShell,
@@ -51,7 +51,7 @@ public:
                                                       nsFrameState aFlags);
   friend class nsComboboxDisplayFrame;
 
-  nsComboboxControlFrame(nsStyleContext* aContext);
+  explicit nsComboboxControlFrame(nsStyleContext* aContext);
   ~nsComboboxControlFrame();
 
   NS_DECL_QUERYFRAME
@@ -59,7 +59,7 @@ public:
 
   // nsIAnonymousContentCreator
   virtual nsresult CreateAnonymousContent(nsTArray<ContentInfo>& aElements) MOZ_OVERRIDE;
-  virtual void AppendAnonymousContentTo(nsBaseContentList& aElements,
+  virtual void AppendAnonymousContentTo(nsTArray<nsIContent*>& aElements,
                                         uint32_t aFilter) MOZ_OVERRIDE;
   virtual nsIFrame* CreateFrameFor(nsIContent* aContent) MOZ_OVERRIDE;
 
@@ -67,9 +67,9 @@ public:
   virtual mozilla::a11y::AccType AccessibleType() MOZ_OVERRIDE;
 #endif
 
-  virtual nscoord GetMinWidth(nsRenderingContext *aRenderingContext) MOZ_OVERRIDE;
+  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) MOZ_OVERRIDE;
 
-  virtual nscoord GetPrefWidth(nsRenderingContext *aRenderingContext) MOZ_OVERRIDE;
+  virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) MOZ_OVERRIDE;
 
   virtual void Reflow(nsPresContext*           aCX,
                       nsHTMLReflowMetrics&     aDesiredSize,
@@ -216,14 +216,14 @@ protected:
   };
   DropDownPositionState AbsolutelyPositionDropDown();
 
-  // Helper for GetMinWidth/GetPrefWidth
-  nscoord GetIntrinsicWidth(nsRenderingContext* aRenderingContext,
-                            nsLayoutUtils::IntrinsicWidthType aType);
+  // Helper for GetMinISize/GetPrefISize
+  nscoord GetIntrinsicISize(nsRenderingContext* aRenderingContext,
+                            nsLayoutUtils::IntrinsicISizeType aType);
 
   class RedisplayTextEvent : public nsRunnable {
   public:
     NS_DECL_NSIRUNNABLE
-    RedisplayTextEvent(nsComboboxControlFrame *c) : mControlFrame(c) {}
+    explicit RedisplayTextEvent(nsComboboxControlFrame *c) : mControlFrame(c) {}
     void Revoke() { mControlFrame = nullptr; }
   private:
     nsComboboxControlFrame *mControlFrame;

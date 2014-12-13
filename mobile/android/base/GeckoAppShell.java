@@ -27,28 +27,35 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Queue;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.favicons.OnFaviconLoadedListener;
 import org.mozilla.gecko.favicons.decoders.FaviconDecoder;
 import org.mozilla.gecko.gfx.BitmapUtils;
 import org.mozilla.gecko.gfx.LayerView;
 import org.mozilla.gecko.gfx.PanZoomController;
+import org.mozilla.gecko.mozglue.ContextUtils;
 import org.mozilla.gecko.mozglue.GeckoLoader;
 import org.mozilla.gecko.mozglue.JNITarget;
 import org.mozilla.gecko.mozglue.RobocopTarget;
 import org.mozilla.gecko.mozglue.generatorannotations.OptionalGeneratedParameter;
 import org.mozilla.gecko.mozglue.generatorannotations.WrapElementForJNI;
 import org.mozilla.gecko.prompts.PromptService;
+import org.mozilla.gecko.util.EventCallback;
+import org.mozilla.gecko.util.GeckoRequest;
 import org.mozilla.gecko.util.HardwareUtils;
+import org.mozilla.gecko.util.NativeEventListener;
 import org.mozilla.gecko.util.NativeJSContainer;
+import org.mozilla.gecko.util.NativeJSObject;
 import org.mozilla.gecko.util.ProxySelector;
-import org.mozilla.gecko.util.StringUtils;
 import org.mozilla.gecko.util.ThreadUtils;
-import org.mozilla.gecko.webapp.Allocator;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -89,12 +96,14 @@ import android.media.MediaScannerConnection.MediaScannerConnectionClient;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
-import android.os.Build;
+import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.MessageQueue;
 import android.os.SystemClock;
+import android.os.UserManager;
 import android.os.Vibrator;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
@@ -123,8 +132,8 @@ public class GeckoAppShell
     private GeckoAppShell() { }
 
     private static Thread.UncaughtExceptionHandler systemUncaughtHandler;
-    private static boolean restartScheduled = false;
-    private static GeckoEditableListener editableListener = null;
+    private static boolean restartScheduled;
+    private static GeckoEditableListener editableListener;
 
     private static final Queue<GeckoEvent> PENDING_EVENTS = new ConcurrentLinkedQueue<GeckoEvent>();
     private static final Map<String, String> ALERT_COOKIES = new ConcurrentHashMap<String, String>();
@@ -137,32 +146,28 @@ public class GeckoAppShell
     // See also HardwareUtils.LOW_MEMORY_THRESHOLD_MB.
     private static final int HIGH_MEMORY_DEVICE_THRESHOLD_MB = 768;
 
-    public static final String SHORTCUT_TYPE_WEBAPP = "webapp";
-    public static final String SHORTCUT_TYPE_BOOKMARK = "bookmark";
-
-    static private int sDensityDpi = 0;
-    static private int sScreenDepth = 0;
+    static private int sDensityDpi;
+    static private int sScreenDepth;
 
     /* Default colors. */
     private static final float[] DEFAULT_LAUNCHER_ICON_HSV = { 32.0f, 1.0f, 1.0f };
 
     /* Is the value in sVibrationEndTime valid? */
-    private static boolean sVibrationMaybePlaying = false;
+    private static boolean sVibrationMaybePlaying;
 
     /* Time (in System.nanoTime() units) when the currently-playing vibration
      * is scheduled to end.  This value is valid only when
      * sVibrationMaybePlaying is true. */
-    private static long sVibrationEndTime = 0;
+    private static long sVibrationEndTime;
 
-    /* Default value of how fast we should hint the Android sensors. */
-    private static int sDefaultSensorHint = 100;
+    private static Sensor gAccelerometerSensor;
+    private static Sensor gLinearAccelerometerSensor;
+    private static Sensor gGyroscopeSensor;
+    private static Sensor gOrientationSensor;
+    private static Sensor gProximitySensor;
+    private static Sensor gLightSensor;
 
-    private static Sensor gAccelerometerSensor = null;
-    private static Sensor gLinearAccelerometerSensor = null;
-    private static Sensor gGyroscopeSensor = null;
-    private static Sensor gOrientationSensor = null;
-    private static Sensor gProximitySensor = null;
-    private static Sensor gLightSensor = null;
+    private static final String GECKOREQUEST_RESPONSE_KEY = "response";
 
     /*
      * Keep in sync with constants found here:
@@ -188,6 +193,7 @@ public class GeckoAppShell
     /* The Android-side API: API methods that Android calls */
 
     // Initialization methods
+    public static native void registerJavaUiThread();
     public static native void nativeInit();
 
     // helper methods
@@ -205,7 +211,9 @@ public class GeckoAppShell
     public static native void dispatchMemoryPressure();
 
     public static void registerGlobalExceptionHandler() {
-        systemUncaughtHandler = Thread.getDefaultUncaughtExceptionHandler();
+        if (systemUncaughtHandler == null) {
+            systemUncaughtHandler = Thread.getDefaultUncaughtExceptionHandler();
+        }
 
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
@@ -258,7 +266,7 @@ public class GeckoAppShell
 
         @Override
         public void onFaviconLoaded(String pageUrl, String faviconURL, Bitmap favicon) {
-            GeckoAppShell.createShortcut(title, url, url, favicon, "");
+            GeckoAppShell.createShortcut(title, url, favicon);
         }
     }
 
@@ -411,6 +419,36 @@ public class GeckoAppShell
         PENDING_EVENTS.add(e);
     }
 
+    /**
+     * Sends an asynchronous request to Gecko.
+     *
+     * The response data will be passed to {@link GeckoRequest#onResponse(NativeJSObject)} if the
+     * request succeeds; otherwise, {@link GeckoRequest#onError()} will fire.
+     *
+     * This method follows the same queuing conditions as {@link #sendEventToGecko(GeckoEvent)}.
+     * It can be called from any thread. The GeckoRequest callbacks will be executed on the Gecko thread.
+     *
+     * @param request The request to dispatch. Cannot be null.
+     */
+    @RobocopTarget
+    public static void sendRequestToGecko(final GeckoRequest request) {
+        final String responseMessage = "Gecko:Request" + request.getId();
+
+        EventDispatcher.getInstance().registerGeckoThreadListener(new NativeEventListener() {
+            @Override
+            public void handleMessage(String event, NativeJSObject message, EventCallback callback) {
+                EventDispatcher.getInstance().unregisterGeckoThreadListener(this, event);
+                if (!message.has(GECKOREQUEST_RESPONSE_KEY)) {
+                    request.onError();
+                    return;
+                }
+                request.onResponse(message.getObject(GECKOREQUEST_RESPONSE_KEY));
+            }
+        }, responseMessage);
+
+        sendEventToGecko(GeckoEvent.createBroadcastEvent(request.getName(), request.getData()));
+    }
+
     // Tell the Gecko event loop that an event is available.
     public static native void notifyGeckoOfEvent(GeckoEvent event);
 
@@ -418,7 +456,7 @@ public class GeckoAppShell
      *  The Gecko-side API: API methods that Gecko calls
      */
 
-    @WrapElementForJNI(allowMultithread = true, generateStatic = true, noThrow = true)
+    @WrapElementForJNI(allowMultithread = true, noThrow = true)
     public static void handleUncaughtException(Thread thread, Throwable e) {
         if (GeckoThread.checkLaunchState(GeckoThread.LaunchState.GeckoExited)) {
             // We've called System.exit. All exceptions after this point are Android
@@ -470,14 +508,14 @@ public class GeckoAppShell
         }
     }
 
-    @WrapElementForJNI(generateStatic = true)
+    @WrapElementForJNI
     public static void notifyIME(int type) {
         if (editableListener != null) {
             editableListener.notifyIME(type);
         }
     }
 
-    @WrapElementForJNI(generateStatic = true)
+    @WrapElementForJNI
     public static void notifyIMEContext(int state, String typeHint,
                                         String modeHint, String actionHint) {
         if (editableListener != null) {
@@ -486,7 +524,7 @@ public class GeckoAppShell
         }
     }
 
-    @WrapElementForJNI(generateStatic = true)
+    @WrapElementForJNI
     public static void notifyIMEChange(String text, int start, int end, int newEnd) {
         if (newEnd < 0) { // Selection change
             editableListener.onSelectionChange(start, end);
@@ -536,6 +574,24 @@ public class GeckoAppShell
             sWaitingForEventAck = false;
             sEventAckLock.notifyAll();
         }
+    }
+
+    private static Runnable sCallbackRunnable = new Runnable() {
+        @Override
+        public void run() {
+            ThreadUtils.assertOnUiThread();
+            long nextDelay = runUiThreadCallback();
+            if (nextDelay >= 0) {
+                ThreadUtils.getUiHandler().postDelayed(this, nextDelay);
+            }
+        }
+    };
+
+    private static native long runUiThreadCallback();
+
+    @WrapElementForJNI(allowMultithread = true)
+    private static void requestUiThreadCallback(long delay) {
+        ThreadUtils.getUiHandler().postDelayed(sCallbackRunnable, delay);
     }
 
     private static float getLocationAccuracy(Location location) {
@@ -643,14 +699,14 @@ public class GeckoAppShell
             if(gOrientationSensor == null)
                 gOrientationSensor = sm.getDefaultSensor(Sensor.TYPE_ORIENTATION);
             if (gOrientationSensor != null) 
-                sm.registerListener(gi.getSensorEventListener(), gOrientationSensor, sDefaultSensorHint);
+                sm.registerListener(gi.getSensorEventListener(), gOrientationSensor, SensorManager.SENSOR_DELAY_GAME);
             break;
 
         case GeckoHalDefines.SENSOR_ACCELERATION:
             if(gAccelerometerSensor == null)
                 gAccelerometerSensor = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
             if (gAccelerometerSensor != null)
-                sm.registerListener(gi.getSensorEventListener(), gAccelerometerSensor, sDefaultSensorHint);
+                sm.registerListener(gi.getSensorEventListener(), gAccelerometerSensor, SensorManager.SENSOR_DELAY_GAME);
             break;
 
         case GeckoHalDefines.SENSOR_PROXIMITY:
@@ -671,14 +727,14 @@ public class GeckoAppShell
             if(gLinearAccelerometerSensor == null)
                 gLinearAccelerometerSensor = sm.getDefaultSensor(10 /* API Level 9 - TYPE_LINEAR_ACCELERATION */);
             if (gLinearAccelerometerSensor != null)
-                sm.registerListener(gi.getSensorEventListener(), gLinearAccelerometerSensor, sDefaultSensorHint);
+                sm.registerListener(gi.getSensorEventListener(), gLinearAccelerometerSensor, SensorManager.SENSOR_DELAY_GAME);
             break;
 
         case GeckoHalDefines.SENSOR_GYROSCOPE:
             if(gGyroscopeSensor == null)
                 gGyroscopeSensor = sm.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
             if (gGyroscopeSensor != null)
-                sm.registerListener(gi.getSensorEventListener(), gGyroscopeSensor, sDefaultSensorHint);
+                sm.registerListener(gi.getSensorEventListener(), gGyroscopeSensor, SensorManager.SENSOR_DELAY_GAME);
             break;
         default:
             Log.w(LOGTAG, "Error! Can't enable unknown SENSOR type " + aSensortype);
@@ -796,59 +852,25 @@ public class GeckoAppShell
         restartScheduled = true;
     }
 
-    public static Intent getWebappIntent(String aURI, String aOrigin, String aTitle, Bitmap aIcon) {
-        Intent intent;
-
-        Allocator slots = Allocator.getInstance(getContext());
-        int index = slots.getIndexForOrigin(aOrigin);
-
-        if (index == -1) {
-            return null;
-        }
-
-        String packageName = slots.getAppForIndex(index);
-        intent = getContext().getPackageManager().getLaunchIntentForPackage(packageName);
-        if (aURI != null) {
-            intent.setData(Uri.parse(aURI));
-        }
-
-        return intent;
-    }
-
-    // "Installs" an application by creating a shortcut
-    // This is the entry point from AndroidBridge.h
+    // Creates a homescreen shortcut for a web page.
+    // This is the entry point from nsIShellService.
     @WrapElementForJNI
-    static void createShortcut(String aTitle, String aURI, String aIconData, String aType) {
-        if ("webapp".equals(aType)) {
-            Log.w(LOGTAG, "createShortcut with no unique URI should not be used for aType = webapp!");
-        }
-
-        createShortcut(aTitle, aURI, aURI, aIconData, aType);
-    }
-
-    // For non-webapps.
-    public static void createShortcut(String aTitle, String aURI, Bitmap aBitmap, String aType) {
-        createShortcut(aTitle, aURI, aURI, aBitmap, aType);
-    }
-
-    // Internal, for webapps.
-    static void createShortcut(final String aTitle, final String aURI, final String aUniqueURI, final String aIconData, final String aType) {
+    static void createShortcut(final String aTitle, final String aURI, final String aIconData) {
         ThreadUtils.postToBackgroundThread(new Runnable() {
             @Override
             public void run() {
                 // TODO: use the cache. Bug 961600.
                 Bitmap icon = FaviconDecoder.getMostSuitableBitmapFromDataURI(aIconData, getPreferredIconSize());
-                GeckoAppShell.doCreateShortcut(aTitle, aURI, aURI, icon, aType);
+                GeckoAppShell.doCreateShortcut(aTitle, aURI, icon);
             }
         });
     }
 
-    public static void createShortcut(final String aTitle, final String aURI, final String aUniqueURI,
-                                      final Bitmap aIcon, final String aType) {
+    public static void createShortcut(final String aTitle, final String aURI, final Bitmap aBitmap) {
         ThreadUtils.postToBackgroundThread(new Runnable() {
             @Override
             public void run() {
-                GeckoAppShell.doCreateShortcut(aTitle, aURI, aUniqueURI, aIcon, aType);
+                GeckoAppShell.doCreateShortcut(aTitle, aURI, aBitmap);
             }
         });
     }
@@ -856,23 +878,17 @@ public class GeckoAppShell
     /**
      * Call this method only on the background thread.
      */
-    private static void doCreateShortcut(final String aTitle, final String aURI, final String aUniqueURI,
-                                         final Bitmap aIcon, final String aType) {
+    private static void doCreateShortcut(final String aTitle, final String aURI, final Bitmap aIcon) {
         // The intent to be launched by the shortcut.
-        Intent shortcutIntent;
-        if (aType.equalsIgnoreCase(SHORTCUT_TYPE_WEBAPP)) {
-            shortcutIntent = getWebappIntent(aURI, aUniqueURI, aTitle, aIcon);
-        } else {
-            shortcutIntent = new Intent();
-            shortcutIntent.setAction(GeckoApp.ACTION_HOMESCREEN_SHORTCUT);
-            shortcutIntent.setData(Uri.parse(aURI));
-            shortcutIntent.setClassName(AppConstants.ANDROID_PACKAGE_NAME,
-                                        AppConstants.BROWSER_INTENT_CLASS_NAME);
-        }
+        Intent shortcutIntent = new Intent();
+        shortcutIntent.setAction(GeckoApp.ACTION_HOMESCREEN_SHORTCUT);
+        shortcutIntent.setData(Uri.parse(aURI));
+        shortcutIntent.setClassName(AppConstants.ANDROID_PACKAGE_NAME,
+                                    AppConstants.BROWSER_INTENT_CLASS_NAME);
 
         Intent intent = new Intent();
         intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent);
-        intent.putExtra(Intent.EXTRA_SHORTCUT_ICON, getLauncherIcon(aIcon, aType));
+        intent.putExtra(Intent.EXTRA_SHORTCUT_ICON, getLauncherIcon(aIcon));
 
         if (aTitle != null) {
             intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, aTitle);
@@ -887,44 +903,9 @@ public class GeckoAppShell
         getContext().sendBroadcast(intent);
     }
 
-    public static void removeShortcut(final String aTitle, final String aURI, final String aType) {
-        removeShortcut(aTitle, aURI, null, aType);
-    }
-
-    public static void removeShortcut(final String aTitle, final String aURI, final String aUniqueURI, final String aType) {
-        ThreadUtils.postToBackgroundThread(new Runnable() {
-            @Override
-            public void run() {
-                // the intent to be launched by the shortcut
-                Intent shortcutIntent;
-                if (aType.equalsIgnoreCase(SHORTCUT_TYPE_WEBAPP)) {
-                    shortcutIntent = getWebappIntent(aURI, aUniqueURI, "", null);
-                    if (shortcutIntent == null)
-                        return;
-                } else {
-                    shortcutIntent = new Intent();
-                    shortcutIntent.setAction(GeckoApp.ACTION_HOMESCREEN_SHORTCUT);
-                    shortcutIntent.setClassName(AppConstants.ANDROID_PACKAGE_NAME,
-                                                AppConstants.BROWSER_INTENT_CLASS_NAME);
-                    shortcutIntent.setData(Uri.parse(aURI));
-                }
-        
-                Intent intent = new Intent();
-                intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent);
-                if (aTitle != null)
-                    intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, aTitle);
-                else
-                    intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, aURI);
-
-                intent.setAction("com.android.launcher.action.UNINSTALL_SHORTCUT");
-                getContext().sendBroadcast(intent);
-            }
-        });
-    }
-
     @JNITarget
     static public int getPreferredIconSize() {
-        if (android.os.Build.VERSION.SDK_INT >= 11) {
+        if (Versions.feature11Plus) {
             ActivityManager am = (ActivityManager)getContext().getSystemService(Context.ACTIVITY_SERVICE);
             return am.getLauncherLargeIconSize();
         } else {
@@ -940,7 +921,7 @@ public class GeckoAppShell
         }
     }
 
-    static private Bitmap getLauncherIcon(Bitmap aSource, String aType) {
+    static private Bitmap getLauncherIcon(Bitmap aSource) {
         final int kOffset = 6;
         final int kRadius = 5;
         int size = getPreferredIconSize();
@@ -956,8 +937,8 @@ public class GeckoAppShell
             // If we aren't drawing a favicon, just use an orange color.
             paint.setColor(Color.HSVToColor(DEFAULT_LAUNCHER_ICON_HSV));
             canvas.drawRoundRect(new RectF(kOffset, kOffset, size - kOffset, size - kOffset), kRadius, kRadius, paint);
-        } else if (aType.equalsIgnoreCase(SHORTCUT_TYPE_WEBAPP) || aSource.getWidth() >= insetSize || aSource.getHeight() >= insetSize) {
-            // otherwise, if this is a webapp or if the icons is lare enough, just draw it
+        } else if (aSource.getWidth() >= insetSize || aSource.getHeight() >= insetSize) {
+            // Otherwise, if the icon is large enough, just draw it.
             Rect iconBounds = new Rect(0, 0, size, size);
             canvas.drawBitmap(aSource, null, iconBounds, null);
             return bitmap;
@@ -1680,7 +1661,7 @@ public class GeckoAppShell
     public static boolean checkForGeckoProcs() {
 
         class GeckoPidCallback implements GeckoProcessesVisitor {
-            public boolean otherPidExist = false;
+            public boolean otherPidExist;
             @Override
             public boolean callback(int pid) {
                 if (pid != android.os.Process.myPid()) {
@@ -1967,7 +1948,7 @@ public class GeckoAppShell
             }
 
             // disable on KitKat (bug 957694)
-            if (Build.VERSION.SDK_INT >= 19) {
+            if (Versions.feature19Plus) {
                 Log.w(LOGTAG, "Blocking plugins because of Tegra (bug 957694)");
                 return null;
             }
@@ -2202,12 +2183,12 @@ public class GeckoAppShell
         sGeckoInterface = aGeckoInterface;
     }
 
-    public static android.hardware.Camera sCamera = null;
+    public static android.hardware.Camera sCamera;
 
     static native void cameraCallbackBridge(byte[] data);
 
     static int kPreferedFps = 25;
-    static byte[] sCameraBuffer = null;
+    static byte[] sCameraBuffer;
 
 
     @WrapElementForJNI(stubName = "InitCameraWrapper")
@@ -2410,12 +2391,12 @@ public class GeckoAppShell
     }
 
     @WrapElementForJNI(stubName = "CreateMessageListWrapper")
-    public static void createMessageList(long aStartDate, long aEndDate, String[] aNumbers, int aNumbersCount, int aDeliveryState, boolean aReverse, int aRequestId) {
+    public static void createMessageList(long aStartDate, long aEndDate, String[] aNumbers, int aNumbersCount, String aDelivery, boolean aHasRead, boolean aRead, long aThreadId, boolean aReverse, int aRequestId) {
         if (SmsManager.getInstance() == null) {
             return;
         }
 
-        SmsManager.getInstance().createMessageList(aStartDate, aEndDate, aNumbers, aNumbersCount, aDeliveryState, aReverse, aRequestId);
+        SmsManager.getInstance().createMessageList(aStartDate, aEndDate, aNumbers, aNumbersCount, aDelivery, aHasRead, aRead, aThreadId, aReverse, aRequestId);
     }
 
     @WrapElementForJNI(stubName = "GetNextMessageInListWrapper")
@@ -2458,12 +2439,22 @@ public class GeckoAppShell
 
     @WrapElementForJNI
     public static void enableNetworkNotifications() {
-        GeckoNetworkManager.getInstance().enableNotifications();
+        ThreadUtils.postToUiThread(new Runnable() {
+            @Override
+            public void run() {
+                GeckoNetworkManager.getInstance().enableNotifications();
+            }
+        });
     }
 
     @WrapElementForJNI
     public static void disableNetworkNotifications() {
-        GeckoNetworkManager.getInstance().disableNotifications();
+        ThreadUtils.postToUiThread(new Runnable() {
+            @Override
+            public void run() {
+                GeckoNetworkManager.getInstance().disableNotifications();
+            }
+        });
     }
 
     /**
@@ -2518,7 +2509,16 @@ public class GeckoAppShell
             Looper.myLooper().quit();
         else
             msg.getTarget().dispatchMessage(msg);
-        msg.recycle();
+
+        try {
+            // Bug 1055166 - this sometimes throws IllegalStateException on Android L.
+            // There appears to be no way to figure out if a message is in use or not, let
+            // alone receive a notification when it is no longer being used. Just catch
+            // the exception for now, and if a better solution comes along we can use it.
+            msg.recycle();
+        } catch (IllegalStateException e) {
+            // There is nothing we can do here so just eat it
+        }
         return true;
     }
 
@@ -2528,7 +2528,7 @@ public class GeckoAppShell
             getGeckoInterface().notifyWakeLockChanged(topic, state);
     }
 
-    @WrapElementForJNI
+    @WrapElementForJNI(allowMultithread = true)
     public static void registerSurfaceTextureFrameListener(Object surfaceTexture, final int id) {
         ((SurfaceTexture)surfaceTexture).setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
             @Override
@@ -2576,10 +2576,43 @@ public class GeckoAppShell
         return "DIRECT";
     }
 
+    @WrapElementForJNI
+    public static boolean isUserRestricted() {
+        if (Versions.preJBMR2) {
+            return false;
+        }
+
+        UserManager mgr = (UserManager)getContext().getSystemService(Context.USER_SERVICE);
+        Bundle restrictions = mgr.getUserRestrictions();
+
+        return !restrictions.isEmpty();
+    }
+
+    @WrapElementForJNI
+    public static String getUserRestrictions() {
+        if (Versions.preJBMR2) {
+            return "{}";
+        }
+
+        JSONObject json = new JSONObject();
+        UserManager mgr = (UserManager)getContext().getSystemService(Context.USER_SERVICE);
+        Bundle restrictions = mgr.getUserRestrictions();
+
+        Set<String> keys = restrictions.keySet();
+        for (String key : keys) {
+            try {
+                json.put(key, restrictions.get(key));
+            } catch (JSONException e) {
+            }
+        }
+
+        return json.toString();
+    }
+
     /* Downloads the URI pointed to by a share intent, and alters the intent to point to the locally stored file.
      */
     public static void downloadImageForIntent(final Intent intent) {
-        final String src = StringUtils.getStringExtra(intent, Intent.EXTRA_TEXT);
+        final String src = ContextUtils.getStringExtra(intent, Intent.EXTRA_TEXT);
         if (src == null) {
             showImageShareFailureToast();
             return;
@@ -2685,4 +2718,38 @@ public class GeckoAppShell
         return connection.getContentType();
     }
 
+    /**
+     * Retrieve the absolute path of an external storage directory.
+     *
+     * @param type The type of directory to return
+     * @return Absolute path of the specified directory or null on failure
+     */
+    @WrapElementForJNI
+    static String getExternalPublicDirectory(final String type) {
+        final String state = Environment.getExternalStorageState();
+        if (!Environment.MEDIA_MOUNTED.equals(state) &&
+            !Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+            // External storage is not available.
+            return null;
+        }
+
+        if ("sdcard".equals(type)) {
+            // SD card has a separate path.
+            return Environment.getExternalStorageDirectory().getAbsolutePath();
+        }
+
+        final String systemType;
+        if ("downloads".equals(type)) {
+            systemType = Environment.DIRECTORY_DOWNLOADS;
+        } else if ("pictures".equals(type)) {
+            systemType = Environment.DIRECTORY_PICTURES;
+        } else if ("videos".equals(type)) {
+            systemType = Environment.DIRECTORY_MOVIES;
+        } else if ("music".equals(type)) {
+            systemType = Environment.DIRECTORY_MUSIC;
+        } else {
+            return null;
+        }
+        return Environment.getExternalStoragePublicDirectory(systemType).getAbsolutePath();
+    }
 }

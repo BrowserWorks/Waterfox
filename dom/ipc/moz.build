@@ -4,11 +4,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-TEST_DIRS += ['tests']
-
 EXPORTS += [
     'nsICachedFileDescriptorListener.h',
-    'PCOMContentPermissionRequestChild.h',
 ]
 
 EXPORTS.mozilla.dom.ipc += [
@@ -103,10 +100,7 @@ include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
-    '../src/base',
-    '../src/geolocation',
-    '../src/storage',
-    '/chrome/src',
+    '/chrome',
     '/content/base/src',
     '/content/media/webspeech/synth/ipc',
     '/docshell/base',
@@ -116,9 +110,11 @@ LOCAL_INCLUDES += [
     '/dom/devicestorage',
     '/dom/filesystem',
     '/dom/fmradio/ipc',
+    '/dom/geolocation',
     '/dom/indexedDB',
     '/dom/indexedDB/ipc',
-    '/dom/mobilemessage/src/ipc',
+    '/dom/mobilemessage/ipc',
+    '/dom/storage',
     '/extensions/cookie',
     '/hal/sandbox',
     '/js/ipc',
@@ -140,10 +136,9 @@ for var in ('MOZ_PERMISSIONS', 'MOZ_CHILD_PERMISSIONS'):
     if CONFIG[var]:
         DEFINES[var] = True
 
-if CONFIG['ENABLE_TESTS']:
-    LOCAL_INCLUDES += [
-      'ipc/glue',
-    ]
-
 JAR_MANIFESTS += ['jar.mn']
 
+MOCHITEST_CHROME_MANIFESTS += ['tests/chrome.ini']
+MOCHITEST_MANIFESTS += ['tests/mochitest.ini']
+
+CXXFLAGS += CONFIG['TK_CFLAGS']

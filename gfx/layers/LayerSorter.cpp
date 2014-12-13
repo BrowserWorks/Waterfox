@@ -13,7 +13,6 @@
 #include "gfx3DMatrix.h"                // for gfx3DMatrix
 #include "gfxLineSegment.h"             // for gfxLineSegment
 #include "gfxPoint.h"                   // for gfxPoint
-#include "gfxPoint3D.h"                 // for gfxPoint3D
 #include "gfxQuad.h"                    // for gfxQuad
 #include "gfxRect.h"                    // for gfxRect
 #include "gfxTypes.h"                   // for gfxFloat
@@ -44,10 +43,10 @@ enum LayerSortOrder {
  */
 static gfxFloat RecoverZDepth(const gfx3DMatrix& aTransform, const gfxPoint& aPoint)
 {
-    const gfxPoint3D l(0, 0, 1);
-    gfxPoint3D l0 = gfxPoint3D(aPoint.x, aPoint.y, 0);
-    gfxPoint3D p0 = aTransform.Transform3D(gfxPoint3D(0, 0, 0));
-    gfxPoint3D normal = aTransform.GetNormalVector();
+    const Point3D l(0, 0, 1);
+    Point3D l0 = Point3D(aPoint.x, aPoint.y, 0);
+    Point3D p0 = aTransform.Transform3D(Point3D(0, 0, 0));
+    Point3D normal = aTransform.GetNormalVector();
 
     gfxFloat n = normal.DotProduct(p0 - l0); 
     gfxFloat d = normal.DotProduct(l);
@@ -80,10 +79,8 @@ static LayerSortOrder CompareDepth(Layer* aOne, Layer* aTwo) {
   gfxRect ourRect = aOne->GetEffectiveVisibleRegion().GetBounds();
   gfxRect otherRect = aTwo->GetEffectiveVisibleRegion().GetBounds();
 
-  gfx3DMatrix ourTransform;
-  To3DMatrix(aOne->GetTransform(), ourTransform);
-  gfx3DMatrix otherTransform;
-  To3DMatrix(aTwo->GetTransform(), otherTransform);
+  gfx3DMatrix ourTransform = To3DMatrix(aOne->GetTransform());
+  gfx3DMatrix otherTransform = To3DMatrix(aTwo->GetTransform());
 
   // Transform both rectangles and project into 2d space.
   gfxQuad ourTransformedRect = ourTransform.TransformRect(ourRect);

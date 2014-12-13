@@ -14,14 +14,8 @@ EXPORTS += [
 
 if CONFIG['MOZ_WEBRTC']:
     EXPORTS += ['AudioOutputObserver.h',
-                'LoadManager.h',
-                'LoadManagerFactory.h',
-                'LoadMonitor.h',
                 'MediaEngineWebRTC.h']
     UNIFIED_SOURCES += [
-        'LoadManager.cpp',
-        'LoadManagerFactory.cpp',
-        'LoadMonitor.cpp',
         'MediaEngineTabVideoSource.cpp',
         'MediaEngineWebRTCAudio.cpp',
         'MediaEngineWebRTCVideo.cpp',
@@ -54,7 +48,7 @@ EXPORTS.mozilla += [
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
-FINAL_LIBRARY = 'gklayout'
+FINAL_LIBRARY = 'xul'
 if CONFIG['OS_ARCH'] == 'WINNT':
     DEFINES['NOMINMAX'] = True
 

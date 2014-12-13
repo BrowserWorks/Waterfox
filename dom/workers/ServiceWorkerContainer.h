@@ -4,8 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef mozilla_dom_workers_serviceworkercontainer_h__
-#define mozilla_dom_workers_serviceworkercontainer_h__
+#ifndef mozilla_dom_serviceworkercontainer_h__
+#define mozilla_dom_serviceworkercontainer_h__
 
 #include "mozilla/DOMEventTargetHelper.h"
 
@@ -18,8 +18,8 @@ class Promise;
 struct RegistrationOptionList;
 
 namespace workers {
-
 class ServiceWorker;
+}
 
 // Lightweight serviceWorker APIs collection.
 class ServiceWorkerContainer MOZ_FINAL : public DOMEventTargetHelper
@@ -28,23 +28,11 @@ public:
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(ServiceWorkerContainer, DOMEventTargetHelper)
 
-  IMPL_EVENT_HANDLER(updatefound)
   IMPL_EVENT_HANDLER(controllerchange)
   IMPL_EVENT_HANDLER(reloadpage)
   IMPL_EVENT_HANDLER(error)
 
-  explicit ServiceWorkerContainer(nsPIDOMWindow* aWindow)
-    : mWindow(aWindow)
-  {
-    SetIsDOMBinding();
-    StartListeningForEvents();
-  }
-
-  nsPIDOMWindow*
-  GetParentObject() const
-  {
-    return mWindow;
-  }
+  explicit ServiceWorkerContainer(nsPIDOMWindow* aWindow);
 
   JSObject*
   WrapObject(JSContext* aCx);
@@ -54,32 +42,18 @@ public:
            const RegistrationOptionList& aOptions,
            ErrorResult& aRv);
 
-  already_AddRefed<Promise>
-  Unregister(const nsAString& scope, ErrorResult& aRv);
-
-  already_AddRefed<ServiceWorker>
-  GetInstalling();
-
-  already_AddRefed<ServiceWorker>
-  GetWaiting();
-
-  already_AddRefed<ServiceWorker>
-  GetActive();
-
-  already_AddRefed<ServiceWorker>
+  already_AddRefed<workers::ServiceWorker>
   GetController();
 
   already_AddRefed<Promise>
-  GetAll(ErrorResult& aRv);
+  GetRegistration(const nsAString& aDocumentURL,
+                  ErrorResult& aRv);
 
   already_AddRefed<Promise>
-  GetReady(ErrorResult& aRv);
+  GetRegistrations(ErrorResult& aRv);
 
-  nsIURI*
-  GetDocumentURI() const
-  {
-    return mWindow->GetDocumentURI();
-  }
+  Promise*
+  GetReady(ErrorResult& aRv);
 
   // Testing only.
   already_AddRefed<Promise>
@@ -94,22 +68,23 @@ public:
   GetControllingWorkerScriptURLForPath(const nsAString& aPath,
                                        nsString& aScriptURL,
                                        ErrorResult& aRv);
+
+  // DOMEventTargetHelper
+  void DisconnectFromOwner() MOZ_OVERRIDE;
+
 private:
-  ~ServiceWorkerContainer()
-  {
-    StopListeningForEvents();
-  }
+  ~ServiceWorkerContainer();
 
-  void
-  StartListeningForEvents();
+  void RemoveReadyPromise();
 
-  void
-  StopListeningForEvents();
+  // This only changes when a worker hijacks everything in its scope by calling
+  // replace().
+  // FIXME(nsm): Bug 982711. Provide API to let SWM invalidate this.
+  nsRefPtr<workers::ServiceWorker> mControllerWorker;
 
-  nsCOMPtr<nsPIDOMWindow> mWindow;
+  nsRefPtr<Promise> mReadyPromise;
 };
 
-} // namespace workers
 } // namespace dom
 } // namespace mozilla
 

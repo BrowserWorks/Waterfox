@@ -20,7 +20,8 @@
 #endif
 
 #include "mozilla/Atomics.h"
-#include "jit/AsmJS.h"
+
+#include "asmjs/AsmJSValidate.h"
 
 using namespace js;
 
@@ -71,27 +72,36 @@ MarkValidRegion(void *addr, size_t len)
 #endif
 }
 
+#ifdef JS_CODEGEN_X64
+// Since this SharedArrayBuffer will likely be used for asm.js code, prepare it
+// for asm.js by mapping the 4gb protected zone described in AsmJSValidate.h.
+// Since we want to put the SharedArrayBuffer header immediately before the
+// heap but keep the heap page-aligned, allocate an extra page before the heap.
+static const uint64_t SharedArrayMappedSize = AsmJSMappedSize + AsmJSPageSize;
+static_assert(sizeof(SharedArrayRawBuffer) < AsmJSPageSize, "Page size not big enough");
+#endif
+
 SharedArrayRawBuffer *
 SharedArrayRawBuffer::New(uint32_t length)
 {
     // Enforced by SharedArrayBufferObject constructor.
     JS_ASSERT(IsValidAsmJSHeapLength(length));
 
-#ifdef JS_CPU_X64
+#ifdef JS_CODEGEN_X64
     // Get the entire reserved region (with all pages inaccessible)
-    void *p = MapMemory(AsmJSMappedSize, false);
+    void *p = MapMemory(SharedArrayMappedSize, false);
     if (!p)
         return nullptr;
 
     size_t validLength = AsmJSPageSize + length;
     if (!MarkValidRegion(p, validLength)) {
-        UnmapMemory(p, AsmJSMappedSize);
+        UnmapMemory(p, SharedArrayMappedSize);
         return nullptr;
     }
 #   if defined(MOZ_VALGRIND) && defined(VALGRIND_DISABLE_ADDR_ERROR_REPORTING_IN_RANGE)
     // Tell Valgrind/Memcheck to not report accesses in the inaccessible region.
     VALGRIND_DISABLE_ADDR_ERROR_REPORTING_IN_RANGE((unsigned char*)p + validLength,
-                                                   AsmJSMappedSize-validLength);
+                                                   SharedArrayMappedSize-validLength);
 #   endif
 #else
     uint32_t allocSize = length + AsmJSPageSize;
@@ -124,15 +134,13 @@ SharedArrayRawBuffer::dropReference()
     if (refcount == 0) {
         uint8_t *p = this->dataPointer() - AsmJSPageSize;
         JS_ASSERT(uintptr_t(p) % AsmJSPageSize == 0);
-#ifdef JS_CPU_X64
-        UnmapMemory(p, AsmJSMappedSize);
+#ifdef JS_CODEGEN_X64
+        UnmapMemory(p, SharedArrayMappedSize);
 #       if defined(MOZ_VALGRIND) \
            && defined(VALGRIND_ENABLE_ADDR_ERROR_REPORTING_IN_RANGE)
         // Tell Valgrind/Memcheck to recommence reporting accesses in the
         // previously-inaccessible region.
-        if (AsmJSMappedSize > 0) {
-            VALGRIND_ENABLE_ADDR_ERROR_REPORTING_IN_RANGE(p, AsmJSMappedSize);
-        }
+        VALGRIND_ENABLE_ADDR_ERROR_REPORTING_IN_RANGE(p, SharedArrayMappedSize);
 #       endif
 #else
         UnmapMemory(p, this->length + AsmJSPageSize);
@@ -211,7 +219,7 @@ SharedArrayBufferObject::New(JSContext *cx, SharedArrayRawBuffer *buffer)
 
     JS_ASSERT(obj->getClass() == &class_);
 
-    obj->initialize(buffer->byteLength(), nullptr, DoesntOwnData);
+    obj->initialize(buffer->byteLength(), BufferContents::createUnowned(nullptr), DoesntOwnData);
 
     obj->acceptRawBuffer(buffer);
     obj->setIsSharedArrayBuffer();

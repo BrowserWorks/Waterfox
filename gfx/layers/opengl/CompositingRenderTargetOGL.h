@@ -67,7 +67,6 @@ public:
                              GLuint aTexure, GLuint aFBO)
     : CompositingRenderTarget(aOrigin)
     , mInitParams()
-    , mTransform()
     , mCompositor(aCompositor)
     , mGL(aCompositor->gl())
     , mTextureHandle(aTexure)
@@ -82,12 +81,10 @@ public:
    */
   static TemporaryRef<CompositingRenderTargetOGL>
   RenderTargetForWindow(CompositorOGL* aCompositor,
-                        const gfx::IntSize& aSize,
-                        const gfx::Matrix& aTransform)
+                        const gfx::IntSize& aSize)
   {
     RefPtr<CompositingRenderTargetOGL> result
-      = new CompositingRenderTargetOGL(aCompositor, gfx::IntPoint(0, 0), 0, 0);
-    result->mTransform = aTransform;
+      = new CompositingRenderTargetOGL(aCompositor, gfx::IntPoint(), 0, 0);
     result->mInitParams = InitParams(aSize, 0, INIT_MODE_NONE);
     result->mInitParams.mStatus = InitParams::INITIALIZED;
     return result.forget();
@@ -115,6 +112,8 @@ public:
    */
   void BindRenderTarget();
 
+  bool IsWindow() { return GetFBO() == 0; }
+
   GLuint GetFBO() const
   {
     MOZ_ASSERT(mInitParams.mStatus == InitParams::INITIALIZED);
@@ -136,9 +135,7 @@ public:
   }
   gfx::IntSize GetSize() const MOZ_OVERRIDE
   {
-    // XXX - Bug 900770
-    MOZ_ASSERT(false, "CompositingRenderTargetOGL should not be used as a TextureSource");
-    return gfx::IntSize(0, 0);
+    return mInitParams.mSize;
   }
 
   gfx::SurfaceFormat GetFormat() const MOZ_OVERRIDE
@@ -146,10 +143,6 @@ public:
     // XXX - Should it be implemented ? is the above assert true ?
     MOZ_ASSERT(false, "Not implemented");
     return gfx::SurfaceFormat::UNKNOWN;
-  }
-
-  const gfx::Matrix& GetTransform() {
-    return mTransform;
   }
 
 #ifdef MOZ_DUMP_PAINTING
@@ -164,7 +157,6 @@ private:
   void InitializeImpl();
 
   InitParams mInitParams;
-  gfx::Matrix mTransform;
   CompositorOGL* mCompositor;
   GLContext* mGL;
   GLuint mTextureHandle;

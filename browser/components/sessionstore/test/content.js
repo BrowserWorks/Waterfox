@@ -75,7 +75,7 @@ addEventListener("hashchange", function () {
 
 addEventListener("MozStorageChanged", function () {
   sendSyncMessage("ss-test:MozStorageChanged");
-});
+}, true);
 
 addMessageListener("ss-test:modifySessionStorage", function (msg) {
   for (let key of Object.keys(msg.data)) {
@@ -118,13 +118,13 @@ addMessageListener("ss-test:enableSubDocumentStyleSheetsForSet", function (msg) 
 
 addMessageListener("ss-test:getAuthorStyleDisabled", function (msg) {
   let {authorStyleDisabled} =
-    docShell.contentViewer.QueryInterface(Ci.nsIMarkupDocumentViewer);
+    docShell.contentViewer;
   sendSyncMessage("ss-test:getAuthorStyleDisabled", authorStyleDisabled);
 });
 
 addMessageListener("ss-test:setAuthorStyleDisabled", function (msg) {
   let markupDocumentViewer =
-    docShell.contentViewer.QueryInterface(Ci.nsIMarkupDocumentViewer);
+    docShell.contentViewer;
   markupDocumentViewer.authorStyleDisabled = msg.data;
   sendSyncMessage("ss-test:setAuthorStyleDisabled");
 });

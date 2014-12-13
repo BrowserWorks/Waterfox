@@ -21,7 +21,7 @@
 #include "nsCycleCollectionNoteChild.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsISupports.h"
-#include "nsStringGlue.h"
+#include "nsString.h"
 #include "nscore.h"
 
 class JSObject;
@@ -32,7 +32,7 @@ namespace mozilla {
 class ContainerParser;
 class ErrorResult;
 class SourceBufferResource;
-class SubBufferDecoder;
+class SourceBufferDecoder;
 template <typename T> class AsyncEventRunner;
 
 namespace dom {
@@ -89,7 +89,7 @@ public:
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(SourceBuffer, DOMEventTargetHelper)
 
-  static already_AddRefed<SourceBuffer> Create(MediaSource* aMediaSource, const nsACString& aType);
+  SourceBuffer(MediaSource* aMediaSource, const nsACString& aType);
 
   MediaSource* GetParentObject() const;
 
@@ -108,13 +108,11 @@ public:
   // Evict data in the source buffer in the given time range.
   void Evict(double aStart, double aEnd);
 
-  // Returns true if the data in the source buffer contains the given time.
-  bool ContainsTime(double aTime);
+  double GetBufferedStart();
+  double GetBufferedEnd();
 
 private:
   ~SourceBuffer();
-
-  SourceBuffer(MediaSource* aMediaSource, const nsACString& aType);
 
   friend class AsyncEventRunner<SourceBuffer>;
   void DispatchSimpleEvent(const char* aName);
@@ -135,17 +133,16 @@ private:
   // Shared implementation of AppendBuffer overloads.
   void AppendData(const uint8_t* aData, uint32_t aLength, ErrorResult& aRv);
 
-  // Provide the minimum start time and maximum end time that is available
-  // in the data buffered by this SourceBuffer.
-  void GetBufferedStartEndTime(double* aStart, double* aEnd);
-
   nsRefPtr<MediaSource> mMediaSource;
 
   const nsCString mType;
 
   nsAutoPtr<ContainerParser> mParser;
 
-  nsRefPtr<SubBufferDecoder> mDecoder;
+  double mLastParsedTimestamp;
+
+  nsRefPtr<SourceBufferDecoder> mDecoder;
+  nsTArray<nsRefPtr<SourceBufferDecoder>> mDecoders;
 
   double mAppendWindowStart;
   double mAppendWindowEnd;

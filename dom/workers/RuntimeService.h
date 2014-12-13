@@ -195,15 +195,10 @@ public:
   }
 
   static void
-  SetDefaultRuntimeAndContextOptions(
-                                    const JS::RuntimeOptions& aRuntimeOptions,
-                                    const JS::ContextOptions& aContentCxOptions,
-                                    const JS::ContextOptions& aChromeCxOptions)
+  SetDefaultRuntimeOptions(const JS::RuntimeOptions& aRuntimeOptions)
   {
     AssertIsOnMainThread();
     sDefaultJSSettings.runtimeOptions = aRuntimeOptions;
-    sDefaultJSSettings.content.contextOptions = aContentCxOptions;
-    sDefaultJSSettings.chrome.contextOptions = aChromeCxOptions;
   }
 
   void
@@ -216,7 +211,7 @@ public:
   UpdatePlatformOverridePreference(const nsAString& aValue);
 
   void
-  UpdateAllWorkerRuntimeAndContextOptions();
+  UpdateAllWorkerRuntimeOptions();
 
   void
   UpdateAllWorkerPreference(WorkerPreference aPref, bool aValue);

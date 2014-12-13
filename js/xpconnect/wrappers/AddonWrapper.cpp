@@ -67,16 +67,6 @@ Interpose(JSContext *cx, HandleObject target, const nsIID *iid, HandleId id,
 }
 
 template<typename Base>
-AddonWrapper<Base>::AddonWrapper(unsigned flags) : Base(flags)
-{
-}
-
-template<typename Base>
-AddonWrapper<Base>::~AddonWrapper()
-{
-}
-
-template<typename Base>
 bool
 AddonWrapper<Base>::getPropertyDescriptor(JSContext *cx, HandleObject wrapper,
                                           HandleId id, MutableHandle<JSPropertyDescriptor> desc) const
@@ -190,9 +180,9 @@ AddonWrapper<Base>::delete_(JSContext *cx, HandleObject wrapper, HandleId id, bo
 #define AddonWrapperXrayXPCWN AddonWrapper<PermissiveXrayXPCWN>
 #define AddonWrapperXrayDOM AddonWrapper<PermissiveXrayDOM>
 
-template<> AddonWrapperCC AddonWrapperCC::singleton(0);
-template<> AddonWrapperXrayXPCWN AddonWrapperXrayXPCWN::singleton(0);
-template<> AddonWrapperXrayDOM AddonWrapperXrayDOM::singleton(0);
+template<> const AddonWrapperCC AddonWrapperCC::singleton(0);
+template<> const AddonWrapperXrayXPCWN AddonWrapperXrayXPCWN::singleton(0);
+template<> const AddonWrapperXrayDOM AddonWrapperXrayDOM::singleton(0);
 
 template class AddonWrapperCC;
 template class AddonWrapperXrayXPCWN;

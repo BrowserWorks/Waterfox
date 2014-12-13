@@ -4,7 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-TEST_DIRS += ['test']
+BROWSER_CHROME_MANIFESTS += ['test/browser.ini']
+MOCHITEST_CHROME_MANIFESTS += ['test/chrome/chrome.ini']
+XPCSHELL_TESTS_MANIFESTS += ['test/unit/social/xpcshell.ini']
 
 EXTRA_JS_MODULES += [
     'BrowserNewTabPreloader.jsm',
@@ -15,6 +17,8 @@ EXTRA_JS_MODULES += [
     'ContentSearch.jsm',
     'CustomizationTabPreloader.jsm',
     'Feeds.jsm',
+    'FormSubmitObserver.jsm',
+    'FormValidationHandler.jsm',
     'NetworkPrioritizer.jsm',
     'offlineAppCache.jsm',
     'PanelFrame.jsm',
@@ -43,6 +47,10 @@ EXTRA_PP_JS_MODULES += [
     'RecentWindow.jsm',
     'UITour.jsm',
     'webrtcUI.jsm',
+]
+
+EXTRA_PP_COMPONENTS += [
+    'browsermodules.manifest',
 ]
 
 if CONFIG['MOZILLA_OFFICIAL']:

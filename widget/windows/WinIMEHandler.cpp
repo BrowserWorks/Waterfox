@@ -169,10 +169,12 @@ IMEHandler::NotifyIME(nsWindow* aWindow,
         return nsTextStore::OnTextChange(aIMENotification);
       case NOTIFY_IME_OF_FOCUS:
         return nsTextStore::OnFocusChange(true, aWindow,
-                 aWindow->GetInputContext().mIMEState.mEnabled);
+                 aWindow->GetInputContext().mIMEState);
       case NOTIFY_IME_OF_BLUR:
         return nsTextStore::OnFocusChange(false, aWindow,
-                 aWindow->GetInputContext().mIMEState.mEnabled);
+                 aWindow->GetInputContext().mIMEState);
+      case NOTIFY_IME_OF_MOUSE_BUTTON_EVENT:
+        return nsTextStore::OnMouseButtonEvent(aIMENotification);
       case REQUEST_TO_COMMIT_COMPOSITION:
         if (nsTextStore::IsComposingOn(aWindow)) {
           nsTextStore::CommitComposition(false);
@@ -208,7 +210,7 @@ IMEHandler::NotifyIME(nsWindow* aWindow,
       // the blur.
       if (nsTextStore::ThinksHavingFocus()) {
         return nsTextStore::OnFocusChange(false, aWindow,
-                 aWindow->GetInputContext().mIMEState.mEnabled);
+                                          aWindow->GetInputContext().mIMEState);
       }
       return NS_ERROR_NOT_IMPLEMENTED;
 #endif //NS_ENABLE_TSF

@@ -35,7 +35,7 @@ class Device(object):
         """
         remote_ini = self.app_ctx.remote_profiles_ini
         if not self.dm.fileExists(remote_ini):
-            raise Exception("Remote file '%s' not found" % remote_ini)
+            raise IOError("Remote file '%s' not found" % remote_ini)
 
         local_ini = tempfile.NamedTemporaryFile()
         self.dm.getFile(remote_ini, local_ini.name)
@@ -61,7 +61,8 @@ class Device(object):
         remote_dump_dir = posixpath.join(self.app_ctx.remote_profile, 'minidumps')
         local_dump_dir = tempfile.mkdtemp()
         self.dm.getDirectory(remote_dump_dir, local_dump_dir)
-        self.dm.removeDir(remote_dump_dir)
+        for f in self.dm.listFiles(remote_dump_dir):
+            self.dm.removeFile(posixpath.join(remote_dump_dir, f))
         return local_dump_dir
 
     def setup_profile(self, profile):
@@ -121,7 +122,14 @@ class Device(object):
         if self.connected:
             return
 
-        serial = self.serial or self._get_online_devices()[0]
+        if self.serial:
+            serial = self.serial
+        else:
+            online_devices = self._get_online_devices()
+            if not online_devices:
+                raise IOError("No devices connected. Ensure the device is on and remote debugging via adb is enabled in the settings.")
+            serial = online_devices[0]
+
         self.dm._deviceSerial = serial
         self.dm.connect()
         self.connected = True

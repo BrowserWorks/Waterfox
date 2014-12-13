@@ -2,14 +2,17 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import base64
 import ConfigParser
 import datetime
+import json
 import os
 import socket
 import StringIO
 import time
 import traceback
-import base64
+import warnings
+
 
 from application_cache import ApplicationCache
 from decorators import do_crash_check
@@ -124,7 +127,11 @@ class HTMLElement(object):
 
     def is_enabled(self):
         '''
-        Returns True if the element is enabled.
+        This command will return False if all the following criteria are met otherwise return True:
+
+        * A form control is disabled.
+        * A HtmlElement has a disabled boolean attribute.
+
         '''
         return self.marionette._send_message('isElementEnabled', 'value', id=self.id)
 
@@ -139,6 +146,8 @@ class HTMLElement(object):
         '''
         A dictionary with the size of the element.
         '''
+        warnings.warn("The size property has been deprecated and will be removed in a future version. \
+            Please use HTMLElement#rect", DeprecationWarning)
         return self.marionette._send_message('getElementSize', 'value', id=self.id)
 
     @property
@@ -159,7 +168,8 @@ class HTMLElement(object):
         :returns: a dictionary containing x and y as entries
 
         """
-
+        warnings.warn("The location property has been deprecated and will be removed in a future version. \
+            Please use HTMLElement#rect", DeprecationWarning)
         return self.marionette._send_message("getElementLocation", "value", id=self.id)
 
     @property
@@ -702,22 +712,89 @@ class Marionette(object):
                 raise errors.MarionetteException(message=message, status=status, stacktrace=stacktrace)
         raise errors.MarionetteException(message=response, status=500)
 
+    def _reset_timeouts(self):
+        if self.timeout is not None:
+            self.timeouts(self.TIMEOUT_SEARCH, self.timeout)
+            self.timeouts(self.TIMEOUT_SCRIPT, self.timeout)
+            self.timeouts(self.TIMEOUT_PAGE, self.timeout)
+        else:
+            self.timeouts(self.TIMEOUT_PAGE, 30000)
+
     def check_for_crash(self):
         returncode = None
         name = None
         crashed = False
         if self.runner:
-            if self.runner.check_for_crashes():
+            if self.runner.check_for_crashes(test_name=self.test_name):
                 returncode = self.emulator.proc.returncode
                 name = 'emulator'
                 crashed = True
         elif self.instance:
-            if self.instance.check_for_crashes():
+            if self.instance.runner.check_for_crashes(
+                    test_name=self.test_name):
                 crashed = True
         if returncode is not None:
             print ('PROCESS-CRASH | %s | abnormal termination with exit code %d' %
                 (name, returncode))
         return crashed
+
+    def enforce_gecko_prefs(self, prefs):
+        """
+        Checks if the running instance has the given prefs. If not, it will kill the
+        currently running instance, and spawn a new instance with the requested preferences.
+
+        : param prefs: A dictionary whose keys are preference names.
+        """
+        if not self.instance:
+            raise errors.MarionetteException("enforce_gecko_prefs can only be called " \
+                                             "on gecko instances launched by Marionette")
+        pref_exists = True
+        self.set_context(self.CONTEXT_CHROME)
+        for pref, value in prefs.iteritems():
+            if type(value) is not str:
+                value = json.dumps(value)
+            pref_exists = self.execute_script("""
+            let prefInterface = Components.classes["@mozilla.org/preferences-service;1"]
+                                          .getService(Components.interfaces.nsIPrefBranch);
+            let pref = '%s';
+            let value = '%s';
+            let type = prefInterface.getPrefType(pref);
+            switch(type) {
+                case prefInterface.PREF_STRING:
+                    return value == prefInterface.getCharPref(pref).toString();
+                case prefInterface.PREF_BOOL:
+                    return value == prefInterface.getBoolPref(pref).toString();
+                case prefInterface.PREF_INT:
+                    return value == prefInterface.getIntPref(pref).toString();
+                case prefInterface.PREF_INVALID:
+                    return false;
+            }
+            """ % (pref, value))
+            if not pref_exists:
+                break
+        self.set_context(self.CONTEXT_CONTENT)
+        if not pref_exists:
+            self.delete_session()
+            self.instance.restart(prefs)
+            assert(self.wait_for_port()), "Timed out waiting for port!"
+            self.start_session()
+            self._reset_timeouts()
+
+    def restart_with_clean_profile(self):
+        """
+        This will terminate the currently running instance, and spawn a new instance
+        with a clean profile.
+
+        : param prefs: A dictionary whose keys are preference names.
+        """
+        if not self.instance:
+            raise errors.MarionetteException("enforce_gecko_prefs can only be called " \
+                                             "on gecko instances launched by Marionette")
+        self.delete_session()
+        self.instance.restart()
+        assert(self.wait_for_port()), "Timed out waiting for port!"
+        self.start_session()
+        self._reset_timeouts()
 
     def absolute_url(self, relative_url):
         '''
@@ -735,11 +812,7 @@ class Marionette(object):
         :params desired_capabilities: An optional dict of desired
             capabilities.  This is currently ignored.
 
-        :returns: A dict of the capabilities offered.
-
-        """
-
-        # We are ignoring desired_capabilities, at least for now.
+        :returns: A dict of the capabilities offered."""
         self.session = self._send_message('newSession', 'value')
         self.b2g = 'b2g' in self.session
         return self.session
@@ -754,9 +827,7 @@ class Marionette(object):
             self._test_name = test_name
 
     def delete_session(self):
-        """
-        Close the current session and disconnect from the server.
-        """
+        """Close the current session and disconnect from the server."""
         response = self._send_message('deleteSession', 'ok')
         self.session = None
         self.window = None

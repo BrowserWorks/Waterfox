@@ -20,6 +20,7 @@ public class Constants {
     public static final String PRESEARCH_FRAGMENT = "org.mozilla.search.PRESEARCH_FRAGMENT";
     public static final String SEARCH_FRAGMENT = "org.mozilla.search.SEARCH_FRAGMENT";
 
-    public static final String YAHOO_WEB_SEARCH_BASE_URL = "https://search.yahoo.com/search?p=";
-    public static final String YAHOO_WEB_SEARCH_RESULTS_FILTER = "//search.yahoo.com";
+    public static final int SUGGESTION_MAX = 5;
+
+    public static final String ABOUT_BLANK = "about:blank";
 }

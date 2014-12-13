@@ -142,9 +142,6 @@ this.LightweightThemeManager = {
   },
 
   previewTheme: function LightweightThemeManager_previewTheme(aData) {
-    if (!aData)
-      return;
-
     let cancel = Cc["@mozilla.org/supports-PRBool;1"].createInstance(Ci.nsISupportsPRBool);
     cancel.data = false;
     Services.obs.notifyObservers(cancel, "lightweight-theme-preview-requested",
@@ -625,7 +622,7 @@ function _sanitizeTheme(aData, aBaseURI, aLocal) {
   if (!aData || typeof aData != "object")
     return null;
 
-  var resourceProtocols = ["http", "https"];
+  var resourceProtocols = ["http", "https", "resource"];
   if (aLocal)
     resourceProtocols.push("file");
   var resourceProtocolExp = new RegExp("^(" + resourceProtocols.join("|") + "):");
@@ -756,7 +753,7 @@ function _getLocalImageURI(localFileName) {
 }
 
 function _persistImage(sourceURL, localFileName, successCallback) {
-  if (/^file:/.test(sourceURL))
+  if (/^(file|resource):/.test(sourceURL))
     return;
 
   var targetURI = _getLocalImageURI(localFileName);

@@ -35,14 +35,10 @@ function do_crash(setup, callback, canReturnZero)
   // get current process filename (xpcshell)
   let ds = Components.classes["@mozilla.org/file/directory_service;1"]
     .getService(Components.interfaces.nsIProperties);
-  let bin = ds.get("CurProcD", Components.interfaces.nsILocalFile);
-  bin.append("xpcshell");
+  let bin = ds.get("XREExeF", Components.interfaces.nsILocalFile);
   if (!bin.exists()) {
-    bin.leafName = "xpcshell.exe";
-    do_check_true(bin.exists());
-    if (!bin.exists())
-      // weird, can't find xpcshell binary?
-      do_throw("Can't find xpcshell binary!");
+    // weird, can't find xpcshell binary?
+    do_throw("Can't find xpcshell binary!");
   }
   // get Gre dir (GreD)
   let greD = ds.get("GreD", Components.interfaces.nsILocalFile);
@@ -108,12 +104,17 @@ function handleMinidump(callback)
   let extrafile = minidump.clone();
   extrafile.leafName = extrafile.leafName.slice(0, -4) + ".extra";
 
+  let memoryfile = minidump.clone();
+  memoryfile.leafName = memoryfile.leafName.slice(0, -4) + ".memory.json.gz";
+
   // Just in case, don't let these files linger.
   do_register_cleanup(function() {
           if (minidump.exists())
               minidump.remove(false);
           if (extrafile.exists())
               extrafile.remove(false);
+          if (memoryfile.exists())
+              memoryfile.remove(false);
       });
   do_check_true(extrafile.exists());
   let extra = parseKeyValuePairsFromFile(extrafile);
@@ -125,6 +126,8 @@ function handleMinidump(callback)
     minidump.remove(false);
   if (extrafile.exists())
     extrafile.remove(false);
+  if (memoryfile.exists())
+    memoryfile.remove(false);
 }
 
 function do_content_crash(setup, callback)

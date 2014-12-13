@@ -131,21 +131,21 @@ class Nursery
     JSObject *allocateObject(JSContext *cx, size_t size, size_t numDynamic);
 
     /* Allocate a slots array for the given object. */
-    HeapSlot *allocateSlots(JSContext *cx, JSObject *obj, uint32_t nslots);
+    HeapSlot *allocateSlots(JSObject *obj, uint32_t nslots);
 
     /* Allocate an elements vector for the given object. */
-    ObjectElements *allocateElements(JSContext *cx, JSObject *obj, uint32_t nelems);
+    ObjectElements *allocateElements(JSObject *obj, uint32_t nelems);
 
     /* Resize an existing slots array. */
-    HeapSlot *reallocateSlots(JSContext *cx, JSObject *obj, HeapSlot *oldSlots,
+    HeapSlot *reallocateSlots(JSObject *obj, HeapSlot *oldSlots,
                               uint32_t oldCount, uint32_t newCount);
 
     /* Resize an existing elements vector. */
-    ObjectElements *reallocateElements(JSContext *cx, JSObject *obj, ObjectElements *oldHeader,
+    ObjectElements *reallocateElements(JSObject *obj, ObjectElements *oldHeader,
                                        uint32_t oldCount, uint32_t newCount);
 
     /* Free a slots array. */
-    void freeSlots(JSContext *cx, HeapSlot *slots);
+    void freeSlots(HeapSlot *slots);
 
     typedef Vector<types::TypeObject *, 0, SystemAllocPolicy> TypeObjectList;
 
@@ -233,6 +233,16 @@ class Nursery
     typedef HashSet<HeapSlot *, PointerHasher<HeapSlot *, 3>, SystemAllocPolicy> HugeSlotsSet;
     HugeSlotsSet hugeSlots;
 
+    /*
+     * During a collection most hoisted slot and element buffers indicate their
+     * new location with a forwarding pointer at the base. This does not work
+     * for buffers whose length is less than pointer width, or when different
+     * buffers might overlap each other. For these, an entry in the following
+     * table is used.
+     */
+    typedef HashMap<void *, void *, PointerHasher<void *, 1>, SystemAllocPolicy> ForwardedBufferMap;
+    ForwardedBufferMap forwardedBuffers;
+
     /* The maximum number of slots allowed to reside inline in the nursery. */
     static const size_t MaxNurserySlots = 128;
 
@@ -292,7 +302,7 @@ class Nursery
     JSRuntime *runtime() const { return runtime_; }
 
     /* Allocates and registers external slots with the nursery. */
-    HeapSlot *allocateHugeSlots(JSContext *cx, size_t nslots);
+    HeapSlot *allocateHugeSlots(JS::Zone *zone, size_t nslots);
 
     /* Allocates a new GC thing from the tenured generation during minor GC. */
     void *allocateFromTenured(JS::Zone *zone, gc::AllocKind thingKind);

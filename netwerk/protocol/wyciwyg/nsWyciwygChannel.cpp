@@ -31,7 +31,7 @@ typedef mozilla::net::LoadContextInfo LoadContextInfo;
 // Must release mChannel on the main thread
 class nsWyciwygAsyncEvent : public nsRunnable {
 public:
-  nsWyciwygAsyncEvent(nsWyciwygChannel *aChannel) : mChannel(aChannel) {}
+  explicit nsWyciwygAsyncEvent(nsWyciwygChannel *aChannel) : mChannel(aChannel) {}
 
   ~nsWyciwygAsyncEvent()
   {
@@ -49,7 +49,7 @@ protected:
 
 class nsWyciwygSetCharsetandSourceEvent : public nsWyciwygAsyncEvent {
 public:
-  nsWyciwygSetCharsetandSourceEvent(nsWyciwygChannel *aChannel)
+  explicit nsWyciwygSetCharsetandSourceEvent(nsWyciwygChannel *aChannel)
     : nsWyciwygAsyncEvent(aChannel) {}
 
   NS_IMETHOD Run()
@@ -699,9 +699,10 @@ nsWyciwygChannel::OnDataAvailable(nsIRequest *request, nsISupports *ctx,
   rv = mListener->OnDataAvailable(this, mListenerContext, input, offset, count);
 
   // XXX handle 64-bit stuff for real
-  if (mProgressSink && NS_SUCCEEDED(rv) && !(mLoadFlags & LOAD_BACKGROUND))
+  if (mProgressSink && NS_SUCCEEDED(rv)) {
     mProgressSink->OnProgress(this, nullptr, offset + count,
                               uint64_t(mContentLength));
+  }
 
   return rv; // let the pump cancel on failure
 }

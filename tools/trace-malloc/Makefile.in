@@ -21,36 +21,14 @@ CPPSRCS += $(EXTRACPPSRCS)
 
 include $(topsrcdir)/config/config.mk
 
-LIBS		+= \
+# This is the last use of EXTRA_LIBS, and it would be sad to not have an
+# error if it's used in other Makefiles just because of it. So hack around
+# the check.
+_DEPRECATED_VARIABLES := $(filter-out EXTRA_LIBS,$(_DEPRECATED_VARIABLES))
+EXTRA_LIBS	+= \
 		tmreader.$(OBJ_SUFFIX) \
 		adreader.$(OBJ_SUFFIX) \
-		$(XPCOM_GLUE_LDOPTS) \
-		$(NSPR_LIBS) \
 		$(NULL)
-
-ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
-LIBS += $(DIST)/bin/XUL
-endif
-
-ifdef HAVE_BOUTELL_GD
-ifeq ($(OS_ARCH),WINNT)
-LOCAL_INCLUDES	+= \
-		-I'$(HAVE_BOUTELL_GD)' \
-		$(NULL)
-LIBS		+= \
-		-lmozz_s \
-		'$(HAVE_BOUTELL_GD)/gd.lib' \
-		$(NULL)
-else
-LIBS		+= \
-		-lgd \
-		$(NULL)
-endif
-
-DEFINES		+= \
-		-DHAVE_BOUTELL_GD \
-		$(NULL)
-endif
 
 EXTRA_DEPS = $(EXTRACSRCS:.c=.$(OBJ_SUFFIX)) $(EXTRACPPSRCS:.cpp=.$(OBJ_SUFFIX))
 

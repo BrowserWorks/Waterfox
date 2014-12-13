@@ -18,7 +18,6 @@
 #include "mozilla/dom/FileSystemUtils.h"
 #include "mozilla/dom/ipc/Blob.h"
 #include "mozilla/dom/PBrowserChild.h"
-#include "mozilla/dom/PContentPermissionRequestChild.h"
 #include "mozilla/dom/PermissionMessageUtils.h"
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/ScriptSettings.h"
@@ -44,9 +43,7 @@
 #include "nsIPrincipal.h"
 #include "nsJSUtils.h"
 #include "nsContentUtils.h"
-#include "nsCxPusher.h"
 #include "nsXULAppAPI.h"
-#include "TabChild.h"
 #include "DeviceStorageFileDescriptor.h"
 #include "DeviceStorageRequestChild.h"
 #include "nsCRT.h"
@@ -65,6 +62,10 @@
 
 // Microsoft's API Name hackery sucks
 #undef CreateEvent
+
+#ifdef MOZ_WIDGET_ANDROID
+#include "AndroidBridge.h"
+#endif
 
 #ifdef MOZ_WIDGET_GONK
 #include "nsIVolume.h"
@@ -138,10 +139,10 @@ GetFreeBytes(const nsAString& aStorageName)
   // This function makes the assumption that the various types
   // are all stored on the same filesystem. So we use pictures.
 
-  DeviceStorageFile dsf(NS_LITERAL_STRING(DEVICESTORAGE_PICTURES),
-                        aStorageName);
+  nsRefPtr<DeviceStorageFile> dsf(new DeviceStorageFile(NS_LITERAL_STRING(DEVICESTORAGE_PICTURES),
+                                                        aStorageName));
   int64_t freeBytes = 0;
-  dsf.GetDiskFreeSpace(&freeBytes);
+  dsf->GetDiskFreeSpace(&freeBytes);
   return freeBytes;
 }
 
@@ -637,6 +638,7 @@ OverrideRootDir::GetSingleton()
 
   sSingleton = new OverrideRootDir();
   Preferences::AddStrongObserver(sSingleton, "device.storage.overrideRootDir");
+  Preferences::AddStrongObserver(sSingleton, "device.storage.testing");
   ClearOnShutdown(&sSingleton);
 
   return sSingleton;
@@ -645,6 +647,7 @@ OverrideRootDir::GetSingleton()
 OverrideRootDir::~OverrideRootDir()
 {
   Preferences::RemoveObserver(this, "device.storage.overrideRootDir");
+  Preferences::RemoveObserver(this, "device.storage.testing");
 }
 
 NS_IMETHODIMP
@@ -732,6 +735,8 @@ InitDirs()
 
 #if !defined(MOZ_WIDGET_GONK)
 
+// Keep MOZ_WIDGET_COCOA above XP_UNIX,
+// because both are defined in Darwin builds.
 #if defined (MOZ_WIDGET_COCOA)
   dirService->Get(NS_OSX_PICTURE_DOCUMENTS_DIR,
                   NS_GET_IID(nsIFile),
@@ -742,6 +747,32 @@ InitDirs()
   dirService->Get(NS_OSX_MUSIC_DOCUMENTS_DIR,
                   NS_GET_IID(nsIFile),
                   getter_AddRefs(sDirs->music));
+
+// Keep MOZ_WIDGET_ANDROID above XP_UNIX,
+// because both are defined in Android builds.
+#elif defined (MOZ_WIDGET_ANDROID)
+  nsAutoString path;
+  if (NS_SUCCEEDED(mozilla::AndroidBridge::GetExternalPublicDirectory(
+      NS_LITERAL_STRING(DEVICESTORAGE_PICTURES), path))) {
+    NS_NewLocalFile(path, /* aFollowLinks */ true,
+                    getter_AddRefs(sDirs->pictures));
+  }
+  if (NS_SUCCEEDED(mozilla::AndroidBridge::GetExternalPublicDirectory(
+      NS_LITERAL_STRING(DEVICESTORAGE_VIDEOS), path))) {
+    NS_NewLocalFile(path, /* aFollowLinks */ true,
+                    getter_AddRefs(sDirs->videos));
+  }
+  if (NS_SUCCEEDED(mozilla::AndroidBridge::GetExternalPublicDirectory(
+      NS_LITERAL_STRING(DEVICESTORAGE_MUSIC), path))) {
+    NS_NewLocalFile(path, /* aFollowLinks */ true,
+                    getter_AddRefs(sDirs->music));
+  }
+  if (NS_SUCCEEDED(mozilla::AndroidBridge::GetExternalPublicDirectory(
+      NS_LITERAL_STRING(DEVICESTORAGE_SDCARD), path))) {
+    NS_NewLocalFile(path, /* aFollowLinks */ true,
+                    getter_AddRefs(sDirs->sdcard));
+  }
+
 #elif defined (XP_UNIX)
   dirService->Get(NS_UNIX_XDG_PICTURES_DIR,
                   NS_GET_IID(nsIFile),
@@ -752,6 +783,7 @@ InitDirs()
   dirService->Get(NS_UNIX_XDG_MUSIC_DIR,
                   NS_GET_IID(nsIFile),
                   getter_AddRefs(sDirs->music));
+
 #elif defined (XP_WIN)
   dirService->Get(NS_WIN_PICTURES_DIR,
                   NS_GET_IID(nsIFile),
@@ -764,6 +796,7 @@ InitDirs()
                   getter_AddRefs(sDirs->music));
 #endif
 
+#ifndef MOZ_WIDGET_ANDROID
   // Eventually, on desktop, we want to do something smarter -- for example,
   // detect when an sdcard is inserted, and use that instead of this.
   dirService->Get(NS_APP_USER_PROFILE_50_DIR, NS_GET_IID(nsIFile),
@@ -771,6 +804,7 @@ InitDirs()
   if (sDirs->sdcard) {
     sDirs->sdcard->AppendRelativeNativePath(NS_LITERAL_CSTRING("fake-sdcard"));
   }
+#endif // !MOZ_WIDGET_ANDROID
 #endif // !MOZ_WIDGET_GONK
 
 #ifdef MOZ_WIDGET_GONK
@@ -1044,8 +1078,8 @@ DeviceStorageFile::CreateFileDescriptor(FileDescriptor& aFileDescriptor)
   // NOTE: The FileDescriptor::PlatformHandleType constructor returns a dup of
   //       the file descriptor, so we don't need the original fd after this.
   //       Our scoped file descriptor will automatically close fd.
-  aFileDescriptor =
-    FileDescriptor::PlatformHandleType(PR_FileDesc2NativeHandle(fd));
+  aFileDescriptor = FileDescriptor(
+    FileDescriptor::PlatformHandleType(PR_FileDesc2NativeHandle(fd)));
   return NS_OK;
 }
 
@@ -1585,6 +1619,13 @@ DeviceStorageFile::GetStatus(nsAString& aStatus)
     aStatus.AssignLiteral("unavailable");
     return;
   }
+  bool isUnmounting;
+  rv = vol->GetIsUnmounting(&isUnmounting);
+  NS_ENSURE_SUCCESS_VOID(rv);
+  if (isUnmounting) {
+    aStatus.AssignLiteral("unavailable");
+    return;
+  }
   int32_t volState;
   rv = vol->GetState(&volState);
   NS_ENSURE_SUCCESS_VOID(rv);
@@ -1748,7 +1789,6 @@ StringToJsval(nsPIDOMWindow* aWindow, nsAString& aString,
 
 class DeviceStorageCursorRequest MOZ_FINAL
   : public nsIContentPermissionRequest
-  , public PCOMContentPermissionRequestChild
 {
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -1759,24 +1799,6 @@ public:
 
   DeviceStorageCursorRequest(nsDOMDeviceStorageCursor* aCursor)
     : mCursor(aCursor) { }
-
-  bool Recv__delete__(const bool& allow,
-                      const InfallibleTArray<PermissionChoice>& choices)
-  {
-    MOZ_ASSERT(choices.IsEmpty(), "DeviceStorageCursor doesn't support permission choice");
-    if (allow) {
-      Allow(JS::UndefinedHandleValue);
-    }
-    else {
-      Cancel();
-    }
-    return true;
-  }
-
-  void IPDLRelease()
-  {
-    Release();
-  }
 
 private:
   ~DeviceStorageCursorRequest() {}
@@ -2012,10 +2034,10 @@ nsDOMDeviceStorageCursor::GetTypes(nsIArray** aTypes)
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsTArray<nsString> emptyOptions;
-  return CreatePermissionArray(type,
-                               NS_LITERAL_CSTRING("read"),
-                               emptyOptions,
-                               aTypes);
+  return nsContentPermissionUtils::CreatePermissionArray(type,
+                                                         NS_LITERAL_CSTRING("read"),
+                                                         emptyOptions,
+                                                         aTypes);
 }
 
 NS_IMETHODIMP
@@ -2098,27 +2120,6 @@ nsDOMDeviceStorageCursor::Continue(ErrorResult& aRv)
   event->Continue();
 
   mOkToCallContinue = false;
-}
-
-bool
-nsDOMDeviceStorageCursor::Recv__delete__(const bool& allow,
-                                         const InfallibleTArray<PermissionChoice>& choices)
-{
-  MOZ_ASSERT(choices.IsEmpty(), "DeviceStorageCursor doesn't support permission choice");
-
-  if (allow) {
-    Allow(JS::UndefinedHandleValue);
-  }
-  else {
-    Cancel();
-  }
-  return true;
-}
-
-void
-nsDOMDeviceStorageCursor::IPDLRelease()
-{
-  Release();
 }
 
 void
@@ -2669,7 +2670,6 @@ private:
 class DeviceStorageRequest MOZ_FINAL
   : public nsIContentPermissionRequest
   , public nsIRunnable
-  , public PCOMContentPermissionRequestChild
 {
 public:
 
@@ -2737,7 +2737,8 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(DeviceStorageRequest,
                                            nsIContentPermissionRequest)
 
-  NS_IMETHOD Run() {
+  NS_IMETHOD Run()
+  {
     MOZ_ASSERT(NS_IsMainThread());
 
     if (mozilla::Preferences::GetBool("device.storage.prompt.testing", false)) {
@@ -2745,48 +2746,7 @@ public:
       return NS_OK;
     }
 
-    if (XRE_GetProcessType() == GeckoProcessType_Content) {
-
-      // because owner implements nsITabChild, we can assume that it is
-      // the one and only TabChild.
-      TabChild* child = TabChild::GetFrom(mWindow->GetDocShell());
-      if (!child) {
-        return NS_OK;
-      }
-
-      // Retain a reference so the object isn't deleted without IPDL's
-      // knowledge. Corresponding release occurs in
-      // DeallocPContentPermissionRequest.
-      AddRef();
-
-      nsCString type;
-      nsresult rv = DeviceStorageTypeChecker::GetPermissionForType(
-        mFile->mStorageType, type);
-      if (NS_FAILED(rv)) {
-        return rv;
-      }
-      nsCString access;
-      rv = DeviceStorageTypeChecker::GetAccessForRequest(
-        DeviceStorageRequestType(mRequestType), access);
-      if (NS_FAILED(rv)) {
-        return rv;
-      }
-      nsTArray<PermissionRequest> permArray;
-      nsTArray<nsString> emptyOptions;
-      permArray.AppendElement(PermissionRequest(type, access, emptyOptions));
-      child->SendPContentPermissionRequestConstructor(
-        this, permArray, IPC::Principal(mPrincipal));
-
-      Sendprompt();
-      return NS_OK;
-    }
-
-    nsCOMPtr<nsIContentPermissionPrompt> prompt
-      = do_CreateInstance(NS_CONTENT_PERMISSION_PROMPT_CONTRACTID);
-    if (prompt) {
-      prompt->Prompt(this);
-    }
-    return NS_OK;
+    return nsContentPermissionUtils::AskPermission(this, mWindow);
   }
 
   NS_IMETHODIMP GetTypes(nsIArray** aTypes)
@@ -2806,7 +2766,7 @@ public:
     }
 
     nsTArray<nsString> emptyOptions;
-    return CreatePermissionArray(type, access, emptyOptions, aTypes);
+    return nsContentPermissionUtils::CreatePermissionArray(type, access, emptyOptions, aTypes);
   }
 
   NS_IMETHOD GetPrincipal(nsIPrincipal * *aRequestingPrincipal)
@@ -3171,25 +3131,6 @@ public:
     return NS_OK;
   }
 
-  bool Recv__delete__(const bool& allow,
-                      const InfallibleTArray<PermissionChoice>& choices)
-  {
-    MOZ_ASSERT(choices.IsEmpty(), "DeviceStorage doesn't support permission choice");
-
-    if (allow) {
-      Allow(JS::UndefinedHandleValue);
-    }
-    else {
-      Cancel();
-    }
-    return true;
-  }
-
-  void IPDLRelease()
-  {
-    Release();
-  }
-
 private:
   ~DeviceStorageRequest() {}
 
@@ -3537,8 +3478,8 @@ nsDOMDeviceStorage::GetDefaultStorageName(const nsAString& aStorageType,
 bool
 nsDOMDeviceStorage::IsAvailable()
 {
-  DeviceStorageFile dsf(mStorageType, mStorageName);
-  return dsf.IsAvailable();
+  nsRefPtr<DeviceStorageFile> dsf(new DeviceStorageFile(mStorageType, mStorageName));
+  return dsf->IsAvailable();
 }
 
 NS_IMETHODIMP
@@ -4195,42 +4136,7 @@ nsDOMDeviceStorage::EnumerateInternal(const nsAString& aPath,
     return cursor.forget();
   }
 
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
-    // because owner implements nsITabChild, we can assume that it is
-    // the one and only TabChild.
-    TabChild* child = TabChild::GetFrom(win->GetDocShell());
-    if (!child) {
-      return cursor.forget();
-    }
-
-    // Retain a reference so the object isn't deleted without IPDL's knowledge.
-    // Corresponding release occurs in DeallocPContentPermissionRequest.
-    r->AddRef();
-
-    nsCString type;
-    aRv = DeviceStorageTypeChecker::GetPermissionForType(mStorageType, type);
-    if (aRv.Failed()) {
-      return nullptr;
-    }
-    nsTArray<PermissionRequest> permArray;
-    nsTArray<nsString> emptyOptions;
-    permArray.AppendElement(PermissionRequest(type,
-                                              NS_LITERAL_CSTRING("read"),
-                                              emptyOptions));
-    child->SendPContentPermissionRequestConstructor(r,
-                                                    permArray,
-                                                    IPC::Principal(mPrincipal));
-
-    r->Sendprompt();
-
-    return cursor.forget();
-  }
-
-  nsCOMPtr<nsIContentPermissionPrompt> prompt
-    = do_CreateInstance(NS_CONTENT_PERMISSION_PROMPT_CONTRACTID);
-  if (prompt) {
-    prompt->Prompt(r);
-  }
+  nsContentPermissionUtils::AskPermission(r, win);
 
   return cursor.forget();
 }
@@ -4261,13 +4167,19 @@ nsDOMDeviceStorage::DispatchStatusChangeEvent(nsAString& aStatus)
 }
 
 void
-nsDOMDeviceStorage::DispatchStorageStatusChangeEvent(nsAString& aVolumeStatus)
+nsDOMDeviceStorage::DispatchStorageStatusChangeEvent(nsAString& aStorageStatus)
 {
+  if (aStorageStatus == mLastStorageStatus) {
+     // We've already sent this status, don't bother sending it again.
+    return;
+  }
+  mLastStorageStatus = aStorageStatus;
+
   DeviceStorageChangeEventInit init;
   init.mBubbles = true;
   init.mCancelable = false;
   init.mPath = mStorageName;
-  init.mReason = aVolumeStatus;
+  init.mReason = aStorageStatus;
 
   nsRefPtr<DeviceStorageChangeEvent> event =
     DeviceStorageChangeEvent::Constructor(this, NS_LITERAL_STRING("storage-state-change"),
@@ -4328,15 +4240,15 @@ nsDOMDeviceStorage::Observe(nsISupports *aSubject,
       return NS_OK;
     }
 
-    DeviceStorageFile dsf(mStorageType, mStorageName);
+    nsRefPtr<DeviceStorageFile> dsf(new DeviceStorageFile(mStorageType, mStorageName));
     nsString status, storageStatus;
 
     // Get Status (one of "available, unavailable, shared")
-    dsf.GetStatus(status);
+    dsf->GetStatus(status);
     DispatchStatusChangeEvent(status);
 
     // Get real volume status (defined in dom/system/gonk/nsIVolume.idl)
-    dsf.GetStorageStatus(storageStatus);
+    dsf->GetStorageStatus(storageStatus);
     DispatchStorageStatusChangeEvent(storageStatus);
     return NS_OK;
   }

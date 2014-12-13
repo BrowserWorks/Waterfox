@@ -11,7 +11,7 @@ const {DebuggerServer} = require("resource://gre/modules/devtools/dbg-server.jsm
 const discovery = require("devtools/toolkit/discovery/discovery");
 const promise = require("promise");
 
-const Strings = Services.strings.createBundle("chrome://webide/content/webide.properties");
+const Strings = Services.strings.createBundle("chrome://browser/locale/devtools/webide.properties");
 
 function USBRuntime(id) {
   this.id = id;
@@ -33,7 +33,24 @@ USBRuntime.prototype = {
     return this.id;
   },
   getName: function() {
-    return this.id;
+    return this._productModel || this.id;
+  },
+  updateNameFromADB: function() {
+    if (this._productModel) {
+      return promise.resolve();
+    }
+    let device = Devices.getByName(this.id);
+    let deferred = promise.defer();
+    if (device && device.shell) {
+      device.shell("getprop ro.product.model").then(stdout => {
+        this._productModel = stdout;
+        deferred.resolve();
+      }, () => {});
+    } else {
+      this._productModel = null;
+      deferred.reject();
+    }
+    return deferred.promise;
   },
 }
 
@@ -72,8 +89,10 @@ SimulatorRuntime.prototype = {
       return promise.reject("Can't find simulator: " + this.getName());
     }
     return simulator.launch({port: port}).then(() => {
+      connection.host = "localhost";
       connection.port = port;
       connection.keepConnecting = true;
+      connection.once(Connection.Events.DISCONNECTED, simulator.close);
       connection.connect();
     });
   },
@@ -91,8 +110,8 @@ let gLocalRuntime = {
       DebuggerServer.init();
       DebuggerServer.addBrowserActors();
     }
-    connection.port = null;
     connection.host = null; // Force Pipe transport
+    connection.port = null;
     connection.connect();
     return promise.resolve();
   },
@@ -108,11 +127,13 @@ let gRemoteRuntime = {
       return promise.reject();
     }
     let ret = {value: connection.host + ":" + connection.port};
-    Services.prompt.prompt(win,
-                           Strings.GetStringFromName("remote_runtime_promptTitle"),
-                           Strings.GetStringFromName("remote_runtime_promptMessage"),
-                           ret, null, {});
+    let title = Strings.GetStringFromName("remote_runtime_promptTitle");
+    let message = Strings.GetStringFromName("remote_runtime_promptMessage");
+    let ok = Services.prompt.prompt(win, title, message, ret, null, {});
     let [host,port] = ret.value.split(":");
+    if (!ok) {
+      return promise.reject({canceled: true});
+    }
     if (!host || !port) {
       return promise.reject();
     }

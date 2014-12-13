@@ -6,10 +6,6 @@
 # to dynamically link into our executable, as we copy it to arbitrary locations.
 MOZ_GLUE_LDFLAGS =
 
-LIBS = \
-  $(XPCOM_STANDALONE_STATICRUNTIME_GLUE_LDOPTS) \
-  $(NULL)
-
 ifndef MOZ_WINCONSOLE
 ifdef MOZ_DEBUG
 MOZ_WINCONSOLE = 1
@@ -25,8 +21,6 @@ CONFIG_DIR = instgen
 SFX_MODULE = $(topsrcdir)/other-licenses/7zstub/firefox/7zSD.sfx
 APP_VERSION := $(shell cat $(topsrcdir)/browser/config/version.txt)
 DEFINES += -DAPP_VERSION=$(APP_VERSION)
-
-OS_LIBS += $(call EXPAND_LIBNAME,shell32)
 
 # Uninstaller
 ifdef LOCALE_MERGEDIR

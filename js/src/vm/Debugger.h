@@ -14,14 +14,17 @@
 #include "jscntxt.h"
 #include "jscompartment.h"
 #include "jsweakmap.h"
+#include "jswrapper.h"
 
 #include "gc/Barrier.h"
 #include "js/HashTable.h"
 #include "vm/GlobalObject.h"
+#include "vm/SavedStacks.h"
 
 namespace js {
 
 class Breakpoint;
+class DebuggerMemory;
 
 /*
  * A weakmap that supports the keys being in different compartments to the
@@ -124,6 +127,9 @@ class DebuggerWeakMap : private WeakMap<Key, Value, DefaultHasher<Key> >
             if (gc::IsAboutToBeFinalized(&k)) {
                 e.removeFront();
                 decZoneCount(k->zone());
+            } else {
+                // markKeys() should have done any necessary relocation.
+                JS_ASSERT(k == e.front().key());
             }
         }
         Base::assertEntriesNotAboutToBeFinalized();
@@ -158,8 +164,10 @@ typedef JSObject Env;
 class Debugger : private mozilla::LinkedListElement<Debugger>
 {
     friend class Breakpoint;
+    friend class DebuggerMemory;
     friend class mozilla::LinkedListElement<Debugger>;
     friend bool (::JS_DefineDebuggerObject)(JSContext *cx, JS::HandleObject obj);
+    friend bool SavedStacksMetadataCallback(JSContext *cx, JSObject **pmetadata);
 
   public:
     enum Hook {
@@ -190,6 +198,23 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
     js::HeapPtrObject uncaughtExceptionHook; /* Strong reference. */
     bool enabled;
     JSCList breakpoints;                /* Circular list of all js::Breakpoints in this debugger */
+
+    struct AllocationSite : public mozilla::LinkedListElement<AllocationSite>
+    {
+        AllocationSite(HandleObject frame) : frame(frame) {
+            JS_ASSERT_IF(frame, UncheckedUnwrap(frame)->is<SavedFrame>());
+        };
+        RelocatablePtrObject frame;
+    };
+    typedef mozilla::LinkedList<AllocationSite> AllocationSiteList;
+
+    bool trackingAllocationSites;
+    AllocationSiteList allocationsLog;
+    size_t allocationsLogLength;
+    size_t maxAllocationsLogLength;
+    static const size_t DEFAULT_MAX_ALLOCATIONS_LOG_LENGTH = 5000;
+    bool appendAllocationSite(JSContext *cx, HandleSavedFrame frame);
+    void emptyAllocationsLog();
 
     /*
      * If this Debugger is enabled, and has a onNewGlobalObject handler, then
@@ -243,10 +268,10 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
                                             AutoDebugModeInvalidation &invalidate,
                                             GlobalObjectSet::Enum *compartmentEnum,
                                             GlobalObjectSet::Enum *debugEnu);
-    bool removeDebuggeeGlobal(JSContext *cx, GlobalObject *global,
+    bool removeDebuggeeGlobal(JSContext *cx, Handle<GlobalObject *> global,
                               GlobalObjectSet::Enum *compartmentEnum,
                               GlobalObjectSet::Enum *debugEnum);
-    bool removeDebuggeeGlobal(JSContext *cx, GlobalObject *global,
+    bool removeDebuggeeGlobal(JSContext *cx, Handle<GlobalObject *> global,
                               AutoDebugModeInvalidation &invalidate,
                               GlobalObjectSet::Enum *compartmentEnum,
                               GlobalObjectSet::Enum *debugEnum);
@@ -357,6 +382,8 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
     static void slowPathOnNewScript(JSContext *cx, HandleScript script,
                                     GlobalObject *compileAndGoGlobal);
     static void slowPathOnNewGlobalObject(JSContext *cx, Handle<GlobalObject *> global);
+    static bool slowPathOnLogAllocationSite(JSContext *cx, HandleSavedFrame frame,
+                                            GlobalObject::DebuggerVector &dbgs);
     static JSTrapStatus dispatchHook(JSContext *cx, MutableHandleValue vp, Hook which);
 
     JSTrapStatus fireDebuggerStatement(JSContext *cx, MutableHandleValue vp);
@@ -406,6 +433,9 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
     static inline Debugger *fromJSObject(JSObject *obj);
     static Debugger *fromChildJSObject(JSObject *obj);
 
+    bool hasMemory() const;
+    DebuggerMemory &memory() const;
+
     /*********************************** Methods for interaction with the GC. */
 
     /*
@@ -439,6 +469,7 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
     static inline void onNewScript(JSContext *cx, HandleScript script,
                                    GlobalObject *compileAndGoGlobal);
     static inline void onNewGlobalObject(JSContext *cx, Handle<GlobalObject *> global);
+    static inline bool onLogAllocationSite(JSContext *cx, HandleSavedFrame frame);
     static JSTrapStatus onTrap(JSContext *cx, MutableHandleValue vp);
     static JSTrapStatus onSingleStep(JSContext *cx, MutableHandleValue vp);
     static bool handleBaselineOsr(JSContext *cx, InterpreterFrame *from, jit::BaselineFrame *to);
@@ -599,8 +630,6 @@ class BreakpointSite {
   private:
     JSCList breakpoints;  /* cyclic list of all js::Breakpoints at this instruction */
     size_t enabledCount;  /* number of breakpoints in the list that are enabled */
-    JSTrapHandler trapHandler;  /* trap state */
-    HeapValue trapClosure;
 
     void recompile(FreeOp *fop);
 
@@ -608,12 +637,9 @@ class BreakpointSite {
     BreakpointSite(JSScript *script, jsbytecode *pc);
     Breakpoint *firstBreakpoint() const;
     bool hasBreakpoint(Breakpoint *bp);
-    bool hasTrap() const { return !!trapHandler; }
 
     void inc(FreeOp *fop);
     void dec(FreeOp *fop);
-    void setTrap(FreeOp *fop, JSTrapHandler handler, const Value &closure);
-    void clearTrap(FreeOp *fop, JSTrapHandler *handlerp = nullptr, Value *closurep = nullptr);
     void destroyIfEmpty(FreeOp *fop);
 };
 
@@ -761,11 +787,22 @@ Debugger::onNewGlobalObject(JSContext *cx, Handle<GlobalObject *> global)
         Debugger::slowPathOnNewGlobalObject(cx, global);
 }
 
+bool
+Debugger::onLogAllocationSite(JSContext *cx, HandleSavedFrame frame)
+{
+    GlobalObject::DebuggerVector *dbgs = cx->global()->getDebuggers();
+    if (!dbgs || dbgs->empty())
+        return true;
+    return Debugger::slowPathOnLogAllocationSite(cx, frame, *dbgs);
+}
+
 extern bool
 EvaluateInEnv(JSContext *cx, Handle<Env*> env, HandleValue thisv, AbstractFramePtr frame,
               mozilla::Range<const jschar> chars, const char *filename, unsigned lineno,
               MutableHandleValue rval);
 
-}
+bool ReportObjectRequired(JSContext *cx);
+
+} /* namespace js */
 
 #endif /* vm_Debugger_h */

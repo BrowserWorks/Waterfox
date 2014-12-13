@@ -18,9 +18,11 @@ let gIsWindows = ("@mozilla.org/windows-registry-key;1" in Cc);
 const isDebugBuild = Cc["@mozilla.org/xpcom/debug;1"]
                        .getService(Ci.nsIDebug2).isDebugBuild;
 
+const SSS_STATE_FILE_NAME = "SiteSecurityServiceState.txt";
+
 const SEC_ERROR_BASE = Ci.nsINSSErrorsService.NSS_SEC_ERROR_BASE;
 const SSL_ERROR_BASE = Ci.nsINSSErrorsService.NSS_SSL_ERROR_BASE;
-const MOZILLA_PKIX_ERROR_BASE = Ci.nsINSSErrorsService.PSM_ERROR_BASE;
+const MOZILLA_PKIX_ERROR_BASE = Ci.nsINSSErrorsService.MOZILLA_PKIX_ERROR_BASE;
 
 // Sort in numerical order
 const SEC_ERROR_INVALID_ARGS                            = SEC_ERROR_BASE +   5; // -8187
@@ -57,9 +59,11 @@ const SEC_ERROR_CERT_SIGNATURE_ALGORITHM_DISABLED       = SEC_ERROR_BASE + 176;
 const SEC_ERROR_APPLICATION_CALLBACK_ERROR              = SEC_ERROR_BASE + 178;
 
 const SSL_ERROR_BAD_CERT_DOMAIN                         = SSL_ERROR_BASE +  12;
+const SSL_ERROR_BAD_CERT_ALERT                          = SSL_ERROR_BASE +  17;
 
 const MOZILLA_PKIX_ERROR_KEY_PINNING_FAILURE            = MOZILLA_PKIX_ERROR_BASE +   0;
 const MOZILLA_PKIX_ERROR_CA_CERT_USED_AS_END_ENTITY     = MOZILLA_PKIX_ERROR_BASE +   1;
+const MOZILLA_PKIX_ERROR_INADEQUATE_KEY_SIZE            = MOZILLA_PKIX_ERROR_BASE +   2; // -16382
 
 // Supported Certificate Usages
 const certificateUsageSSLClient              = 0x0001;
@@ -132,7 +136,7 @@ function _getLibraryFunctionWithNoArguments(functionName, libraryName) {
   } catch(e) {
     // In case opening the library without a full path fails,
     // try again with a full path.
-    let file = Services.dirsvc.get("GreD", Ci.nsILocalFile);
+    let file = Services.dirsvc.get("GreBinD", Ci.nsILocalFile);
     file.append(path);
     nsslib = ctypes.open(file.path);
   }
@@ -203,7 +207,8 @@ function run_test() {
   add_connection_test("<test-name-1>.example.com",
                       getXPCOMStatusFromNSS(SEC_ERROR_xxx),
                       function() { ... },
-                      function(aTransportSecurityInfo) { ... });
+                      function(aTransportSecurityInfo) { ... },
+                      function(aTransport) { ... });
   [...]
   add_connection_test("<test-name-n>.example.com", Cr.NS_OK);
 
@@ -224,8 +229,11 @@ function add_tls_server_setup(serverBinName) {
 // called before the connection is attempted.
 // aWithSecurityInfo is a callback function that takes an
 // nsITransportSecurityInfo, which is called after the TLS handshake succeeds.
+// aAfterStreamOpen is a callback function that is called with the
+// nsISocketTransport once the output stream is ready.
 function add_connection_test(aHost, aExpectedResult,
-                             aBeforeConnect, aWithSecurityInfo) {
+                             aBeforeConnect, aWithSecurityInfo,
+                             aAfterStreamOpen) {
   const REMOTE_PORT = 8443;
 
   function Connection(aHost) {
@@ -269,6 +277,9 @@ function add_connection_test(aHost, aExpectedResult,
 
     // nsIOutputStreamCallback
     onOutputStreamReady: function(aStream) {
+      if (aAfterStreamOpen) {
+        aAfterStreamOpen(this.transport);
+      }
       let sslSocketControl = this.transport.securityInfo
                                .QueryInterface(Ci.nsISSLSocketControl);
       sslSocketControl.proxyStartSSL();
@@ -299,6 +310,7 @@ function add_connection_test(aHost, aExpectedResult,
       aBeforeConnect();
     }
     connectTo(aHost).then(function(conn) {
+      do_print("handling " + aHost);
       do_check_eq(conn.result, aExpectedResult);
       if (aWithSecurityInfo) {
         aWithSecurityInfo(conn.transport.securityInfo
@@ -348,9 +360,9 @@ function _setupTLSServerTest(serverBinName)
                            .getService(Ci.nsIProperties);
   let envSvc = Cc["@mozilla.org/process/environment;1"]
                  .getService(Ci.nsIEnvironment);
-  let greDir = directoryService.get("GreD", Ci.nsIFile);
-  envSvc.set("DYLD_LIBRARY_PATH", greDir.path);
-  envSvc.set("LD_LIBRARY_PATH", greDir.path);
+  let greBinDir = directoryService.get("GreBinD", Ci.nsIFile);
+  envSvc.set("DYLD_LIBRARY_PATH", greBinDir.path);
+  envSvc.set("LD_LIBRARY_PATH", greBinDir.path);
   envSvc.set("MOZ_TLS_SERVER_DEBUG_LEVEL", "3");
   envSvc.set("MOZ_TLS_SERVER_CALLBACK_PORT", CALLBACK_PORT);
 

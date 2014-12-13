@@ -81,6 +81,10 @@ private:
   void ClipContentDescendants(const nsRect& aRect,
                               const nscoord* aRadii,
                               DisplayItemClip& aClipOnStack);
+  void ClipContentDescendants(const nsRect& aRect,
+                              const nsRect& aRoundedRect,
+                              const nscoord* aRadii,
+                              DisplayItemClip& aClipOnStack);
 
   /**
    * Clips containing-block descendants to the frame's content-box,
@@ -127,7 +131,7 @@ private:
  */
 class DisplayListClipState::AutoSaveRestore {
 public:
-  AutoSaveRestore(nsDisplayListBuilder* aBuilder);
+  explicit AutoSaveRestore(nsDisplayListBuilder* aBuilder);
   void Restore()
   {
     mState = mSavedState;
@@ -166,6 +170,16 @@ public:
     NS_ASSERTION(!mClipUsed, "mClip already used");
     mClipUsed = true;
     mState.ClipContentDescendants(aRect, aRadii, mClip);
+  }
+
+  void ClipContentDescendants(const nsRect& aRect,
+                              const nsRect& aRoundedRect,
+                              const nscoord* aRadii = nullptr)
+  {
+    NS_ASSERTION(!mRestored, "Already restored!");
+    NS_ASSERTION(!mClipUsed, "mClip already used");
+    mClipUsed = true;
+    mState.ClipContentDescendants(aRect, aRoundedRect, aRadii, mClip);
   }
 
   /**
@@ -213,7 +227,7 @@ public:
  */
 class DisplayListClipState::AutoClipMultiple : public AutoSaveRestore {
 public:
-  AutoClipMultiple(nsDisplayListBuilder* aBuilder)
+  explicit AutoClipMultiple(nsDisplayListBuilder* aBuilder)
     : AutoSaveRestore(aBuilder)
     , mExtraClipUsed(false)
   {}

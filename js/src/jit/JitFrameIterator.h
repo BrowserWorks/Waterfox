@@ -7,8 +7,6 @@
 #ifndef jit_JitFrameIterator_h
 #define jit_JitFrameIterator_h
 
-#ifdef JS_ION
-
 #include "jsfun.h"
 #include "jsscript.h"
 #include "jstypes.h"
@@ -260,6 +258,12 @@ class JitFrameIterator
     void dump() const;
 
     inline BaselineFrame *baselineFrame() const;
+
+#ifdef DEBUG
+    bool verifyReturnAddressUsingNativeToBytecodeMap();
+#else
+    inline bool verifyReturnAddressUsingNativeToBytecodeMap() { return true; }
+#endif
 };
 
 class IonJSFrameLayout;
@@ -588,7 +592,7 @@ class InlineFrameIterator
                     parent_s.readCommonFrameSlots(nullptr, nullptr);
                     parent_s.readFunctionFrameArgs(argOp, nullptr, nullptr,
                                                    nformal, nactual, it.script(),
-                                                   unreadablePlaceholder);
+                                                   unreadablePlaceholder, silentFailure);
                 } else {
                     // There is no parent frame to this inlined frame, we can read
                     // from the frame's Value vector directly.
@@ -693,7 +697,5 @@ class InlineFrameIterator
 
 } // namespace jit
 } // namespace js
-
-#endif // JS_ION
 
 #endif /* jit_JitFrameIterator_h */

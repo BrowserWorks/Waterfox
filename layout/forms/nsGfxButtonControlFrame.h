@@ -22,7 +22,7 @@ class nsGfxButtonControlFrame : public nsHTMLButtonControlFrame,
 public:
   NS_DECL_FRAMEARENA_HELPERS
 
-  nsGfxButtonControlFrame(nsStyleContext* aContext);
+  explicit nsGfxButtonControlFrame(nsStyleContext* aContext);
 
   virtual void DestroyFrom(nsIFrame* aDestructRoot) MOZ_OVERRIDE;
 
@@ -40,7 +40,7 @@ public:
 
   // nsIAnonymousContentCreator
   virtual nsresult CreateAnonymousContent(nsTArray<ContentInfo>& aElements) MOZ_OVERRIDE;
-  virtual void AppendAnonymousContentTo(nsBaseContentList& aElements,
+  virtual void AppendAnonymousContentTo(nsTArray<nsIContent*>& aElements,
                                         uint32_t aFilter) MOZ_OVERRIDE;
   virtual nsIFrame* CreateFrameFor(nsIContent* aContent) MOZ_OVERRIDE;
 

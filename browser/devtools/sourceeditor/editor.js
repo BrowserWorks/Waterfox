@@ -131,8 +131,8 @@ Editor.modes = {
  * properties go to CodeMirror's documentation (see below).
  *
  * Other than that, it accepts one additional and optional
- * property contextMenu. This property should be an ID of
- * an element we can use as a context menu.
+ * property contextMenu. This property should be an element, or
+ * an ID of an element that we can use as a context menu.
  *
  * This object is also an event emitter.
  *
@@ -286,7 +286,9 @@ Editor.prototype = {
       cm.getWrapperElement().addEventListener("contextmenu", (ev) => {
         ev.preventDefault();
         if (!this.config.contextMenu) return;
-        let popup = el.ownerDocument.getElementById(this.config.contextMenu);
+        let popup = this.config.contextMenu;
+        if (typeof popup == "string")
+          popup = el.ownerDocument.getElementById(this.config.contextMenu);
         popup.openPopupAtScreen(ev.screenX, ev.screenY, true);
       }, false);
 
@@ -614,6 +616,32 @@ Editor.prototype = {
 
     let cm = editors.get(this);
     cm.lineInfo(line).gutterMarkers[gutterName].classList.remove(markerClass);
+  },
+
+  /**
+   * Adds a marker with a specified class and an HTML content to a line's
+   * gutter. If another marker exists on that line, it is overwritten by a new
+   * marker.
+   */
+  addContentMarker: function (line, gutterName, markerClass, content) {
+    let cm = editors.get(this);
+    let info = cm.lineInfo(line);
+    if (!info)
+      return;
+
+    let marker = cm.getWrapperElement().ownerDocument.createElement("div");
+    marker.className = markerClass;
+    marker.innerHTML = content;
+    cm.setGutterMarker(info.line, gutterName, marker);
+  },
+
+  /**
+   * The reverse of addContentMarker. Removes any line's markers in the
+   * specified gutter.
+   */
+  removeContentMarker: function (line, gutterName) {
+    let cm = editors.get(this);
+    cm.setGutterMarker(info.line, gutterName, null);
   },
 
   getMarker: function(line, gutterName) {

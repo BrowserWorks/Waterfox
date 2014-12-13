@@ -16,65 +16,242 @@
 #include <unistd.h>
 
 #include <cutils/properties.h>
+#include <private/android_filesystem_config.h>
 
+#include "base/message_loop.h"
+#include "DeviceStorage.h"
 #include "mozilla/FileUtils.h"
+#include "mozilla/LazyIdleThread.h"
 #include "mozilla/Scoped.h"
+#include "mozilla/Services.h"
+#include "mozilla/StaticPtr.h"
+#include "nsAutoPtr.h"
+#include "nsIObserver.h"
+#include "nsIObserverService.h"
+#include "nsISupportsImpl.h"
 #include "nsThreadUtils.h"
+#include "nsXULAppAPI.h"
+
+#include "Volume.h"
+
+#define DEFAULT_THREAD_TIMEOUT_MS 30000
 
 using namespace android;
 using namespace mozilla;
-USING_MTP_NAMESPACE
+BEGIN_MTP_NAMESPACE
 
-class MtpServerRunnable : public nsRunnable
+class FileWatcherUpdateRunnable MOZ_FINAL : public nsRunnable
 {
 public:
-  nsresult Run()
-  {
-    const char *mtpUsbFilename = "/dev/mtp_usb";
-    const char *productName = "FirefoxOS";
-    const char *storageDir = "/storage/sdcard";
+  FileWatcherUpdateRunnable(MozMtpDatabase* aMozMtpDatabase,
+                            RefCountedMtpServer* aMtpServer,
+                            DeviceStorageFile* aFile,
+                            const nsACString& aEventType)
+    : mMozMtpDatabase(aMozMtpDatabase),
+      mMtpServer(aMtpServer),
+      mFile(aFile),
+      mEventType(aEventType)
+  {}
 
-    mFd = open(mtpUsbFilename, O_RDWR);
-    if (mFd.get() < 0) {
-      MTP_LOG("open of '%s' failed", mtpUsbFilename);
+  NS_IMETHOD Run()
+  {
+    // Runs on the FileWatcherUpdate->mIOThread
+    MOZ_ASSERT(!NS_IsMainThread());
+
+    mMozMtpDatabase->FileWatcherUpdate(mMtpServer, mFile, mEventType);
+    return NS_OK;
+  }
+
+private:
+  nsRefPtr<MozMtpDatabase> mMozMtpDatabase;
+  nsRefPtr<RefCountedMtpServer> mMtpServer;
+  nsRefPtr<DeviceStorageFile> mFile;
+  nsCString mEventType;
+};
+
+// The FileWatcherUpdate class listens for file-watcher-update events
+// and tells the MtpServer about the changes.
+class FileWatcherUpdate MOZ_FINAL : public nsIObserver
+{
+public:
+  NS_DECL_THREADSAFE_ISUPPORTS
+
+  FileWatcherUpdate(MozMtpServer* aMozMtpServer)
+    : mMozMtpServer(aMozMtpServer)
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+
+    mIOThread = new LazyIdleThread(
+      DEFAULT_THREAD_TIMEOUT_MS,
+      NS_LITERAL_CSTRING("MTP FileWatcherUpdate"));
+
+    nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+    obs->AddObserver(this, "file-watcher-update", false);
+  }
+
+  ~FileWatcherUpdate()
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+
+    nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+    obs->RemoveObserver(this, "file-watcher-update");
+  }
+
+  NS_IMETHOD
+  Observe(nsISupports* aSubject, const char* aTopic, const char16_t* aData)
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+
+    if (strcmp(aTopic, "file-watcher-update")) {
+      // We're only interested in file-watcher-update events
       return NS_OK;
     }
 
-    MTP_LOG("MozMtpServer open done, fd: %d. Start reading.", mFd.get());
+    NS_ConvertUTF16toUTF8 eventType(aData);
+    if (!eventType.EqualsLiteral("modified") && !eventType.EqualsLiteral("deleted")) {
+      // Bug 1074604: Needn't handle "created" event, once file operation
+      // finished, it would trigger "modified" event.
+      return NS_OK;
+    }
 
-    ScopedDeletePtr<MozMtpDatabase> database;
-    ScopedDeletePtr<MtpServer> server;
-    ScopedDeletePtr<MtpStorage> storage;
+    DeviceStorageFile* file = static_cast<DeviceStorageFile*>(aSubject);
+    file->Dump("file-watcher-update");
+    MTP_LOG("file-watcher-update: file %s %s",
+            NS_LossyConvertUTF16toASCII(file->mPath).get(),
+            eventType.get());
 
-    database = new MozMtpDatabase(storageDir);
-    server = new MtpServer(mFd.get(), database, false, 1023, 0664, 0775);
-    storage = new MtpStorage(MTP_STORAGE_FIXED_RAM,       // id
-                             storageDir,                  // filePath
-                             productName,                 // description
-                             100uLL * 1024uLL * 1024uLL,  // reserveSpace
-                             false,                       // removable
-                             2uLL * 1024uLL * 1024uLL * 1024uLL); // maxFileSize
+    nsRefPtr<MozMtpDatabase> mozMtpDatabase = mMozMtpServer->GetMozMtpDatabase();
+    nsRefPtr<RefCountedMtpServer> mtpServer = mMozMtpServer->GetMtpServer();
 
-    server->addStorage(storage);
+    // We're not supposed to perform I/O on the main thread, so punt the
+    // notification (which will write to /dev/mtp_usb) to an I/O Thread.
 
-    MTP_LOG("MozMtpServer started");
-    server->run();
-    MTP_LOG("MozMtpServer finished");
+    nsRefPtr<FileWatcherUpdateRunnable> r =
+      new FileWatcherUpdateRunnable(mozMtpDatabase, mtpServer, file, eventType);
+    mIOThread->Dispatch(r, NS_DISPATCH_NORMAL);
 
     return NS_OK;
   }
 
 private:
-  ScopedClose mFd;
+  nsRefPtr<MozMtpServer> mMozMtpServer;
+  nsCOMPtr<nsIThread> mIOThread;
 };
+NS_IMPL_ISUPPORTS(FileWatcherUpdate, nsIObserver)
+static StaticRefPtr<FileWatcherUpdate> sFileWatcherUpdate;
+
+class AllocFileWatcherUpdateRunnable MOZ_FINAL : public nsRunnable
+{
+public:
+  AllocFileWatcherUpdateRunnable(MozMtpServer* aMozMtpServer)
+    : mMozMtpServer(aMozMtpServer)
+  {}
+
+  NS_IMETHOD Run()
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+
+    sFileWatcherUpdate = new FileWatcherUpdate(mMozMtpServer);
+    return NS_OK;
+  }
+private:
+  nsRefPtr<MozMtpServer> mMozMtpServer;
+};
+
+class FreeFileWatcherUpdateRunnable MOZ_FINAL : public nsRunnable
+{
+public:
+  FreeFileWatcherUpdateRunnable(MozMtpServer* aMozMtpServer)
+    : mMozMtpServer(aMozMtpServer)
+  {}
+
+  NS_IMETHOD Run()
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+
+    sFileWatcherUpdate = nullptr;
+    return NS_OK;
+  }
+private:
+  nsRefPtr<MozMtpServer> mMozMtpServer;
+};
+
+class MtpServerRunnable : public nsRunnable
+{
+public:
+  MtpServerRunnable(int aMtpUsbFd, MozMtpServer* aMozMtpServer)
+    : mMozMtpServer(aMozMtpServer),
+      mMtpUsbFd(aMtpUsbFd)
+  {
+  }
+
+  nsresult Run()
+  {
+    nsRefPtr<RefCountedMtpServer> server = mMozMtpServer->GetMtpServer();
+
+    DebugOnly<nsresult> rv =
+      NS_DispatchToMainThread(new AllocFileWatcherUpdateRunnable(mMozMtpServer));
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
+
+    MTP_LOG("MozMtpServer started");
+    server->run();
+    MTP_LOG("MozMtpServer finished");
+
+    // server->run will have closed the file descriptor.
+    mMtpUsbFd.forget();
+
+    rv = NS_DispatchToMainThread(new FreeFileWatcherUpdateRunnable(mMozMtpServer));
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
+
+    return NS_OK;
+  }
+
+private:
+  nsRefPtr<MozMtpServer> mMozMtpServer;
+  ScopedClose mMtpUsbFd; // We want to hold this open while the server runs
+};
+
+already_AddRefed<RefCountedMtpServer>
+MozMtpServer::GetMtpServer()
+{
+  nsRefPtr<RefCountedMtpServer> server = mMtpServer;
+  return server.forget();
+}
+
+already_AddRefed<MozMtpDatabase>
+MozMtpServer::GetMozMtpDatabase()
+{
+  nsRefPtr<MozMtpDatabase> db = mMozMtpDatabase;
+  return db.forget();
+}
 
 void
 MozMtpServer::Run()
 {
+  MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
+
+  const char *mtpUsbFilename = "/dev/mtp_usb";
+  ScopedClose mtpUsbFd(open(mtpUsbFilename, O_RDWR));
+  if (mtpUsbFd.get() < 0) {
+    MTP_ERR("open of '%s' failed", mtpUsbFilename);
+    return;
+  }
+  MTP_LOG("Opened '%s' fd %d", mtpUsbFilename, mtpUsbFd.get());
+
+  mMozMtpDatabase = new MozMtpDatabase();
+  mMtpServer = new RefCountedMtpServer(mtpUsbFd.get(),        // fd
+                                       mMozMtpDatabase.get(), // MtpDatabase
+                                       false,                 // ptp?
+                                       AID_MEDIA_RW,          // file group
+                                       0664,                  // file permissions
+                                       0775);                 // dir permissions
+
   nsresult rv = NS_NewNamedThread("MtpServer", getter_AddRefs(mServerThread));
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return;
   }
   MOZ_ASSERT(mServerThread);
-  mServerThread->Dispatch(new MtpServerRunnable(), 0);
+  mServerThread->Dispatch(new MtpServerRunnable(mtpUsbFd.forget(), this), NS_DISPATCH_NORMAL);
 }
+
+END_MTP_NAMESPACE

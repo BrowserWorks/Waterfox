@@ -25,6 +25,8 @@
 #ifndef mozilla_pkix__Result_h
 #define mozilla_pkix__Result_h
 
+#include <cassert>
+
 #include "pkix/enumclass.h"
 
 namespace mozilla { namespace pkix {
@@ -72,10 +74,11 @@ MOZILLA_PKIX_ENUM_CLASS Result
   ERROR_OCSP_FUTURE_RESPONSE = 34,
 
   ERROR_UNKNOWN_ERROR = 35,
-
   ERROR_INVALID_KEY = 36,
   ERROR_UNSUPPORTED_KEYALG = 37,
+  ERROR_EXPIRED_ISSUER_CERTIFICATE = 38,
   ERROR_CA_CERT_USED_AS_END_ENTITY = 39,
+  ERROR_INADEQUATE_KEY_SIZE = 40,
 
   // Keep this in sync with MAP_LIST in pkixnss.cpp
 
@@ -101,7 +104,14 @@ static const Result Success = Result::Success;
 inline bool
 IsFatalError(Result rv)
 {
-  return static_cast<unsigned int>(rv) & FATAL_ERROR_FLAG;
+  return (static_cast<unsigned int>(rv) & FATAL_ERROR_FLAG) != 0;
+}
+
+inline Result
+NotReached(const char* /*explanation*/, Result result)
+{
+  assert(false);
+  return result;
 }
 
 } } // namespace mozilla::pkix

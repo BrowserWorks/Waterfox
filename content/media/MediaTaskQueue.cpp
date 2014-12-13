@@ -15,6 +15,7 @@ MediaTaskQueue::MediaTaskQueue(TemporaryRef<SharedThreadPool> aPool)
   , mQueueMonitor("MediaTaskQueue::Queue")
   , mIsRunning(false)
   , mIsShutdown(false)
+  , mIsFlushing(false)
 {
   MOZ_COUNT_CTOR(MediaTaskQueue);
 }
@@ -30,6 +31,17 @@ nsresult
 MediaTaskQueue::Dispatch(TemporaryRef<nsIRunnable> aRunnable)
 {
   MonitorAutoLock mon(mQueueMonitor);
+  return DispatchLocked(aRunnable, AbortIfFlushing);
+}
+
+nsresult
+MediaTaskQueue::DispatchLocked(TemporaryRef<nsIRunnable> aRunnable,
+                               DispatchMode aMode)
+{
+  mQueueMonitor.AssertCurrentThreadOwns();
+  if (mIsFlushing && aMode == AbortIfFlushing) {
+    return NS_ERROR_ABORT;
+  }
   if (mIsShutdown) {
     return NS_ERROR_FAILURE;
   }
@@ -46,6 +58,46 @@ MediaTaskQueue::Dispatch(TemporaryRef<nsIRunnable> aRunnable)
   mIsRunning = true;
 
   return NS_OK;
+}
+
+class MediaTaskQueueSyncRunnable : public nsRunnable {
+public:
+  explicit MediaTaskQueueSyncRunnable(TemporaryRef<nsIRunnable> aRunnable)
+    : mRunnable(aRunnable)
+    , mMonitor("MediaTaskQueueSyncRunnable")
+    , mDone(false)
+  {
+  }
+
+  NS_IMETHOD Run() {
+    nsresult rv = mRunnable->Run();
+    {
+      MonitorAutoLock mon(mMonitor);
+      mDone = true;
+      mon.NotifyAll();
+    }
+    return rv;
+  }
+
+  nsresult WaitUntilDone() {
+    MonitorAutoLock mon(mMonitor);
+    while (!mDone) {
+      mon.Wait();
+    }
+    return NS_OK;
+  }
+private:
+  RefPtr<nsIRunnable> mRunnable;
+  Monitor mMonitor;
+  bool mDone;
+};
+
+nsresult
+MediaTaskQueue::SyncDispatch(TemporaryRef<nsIRunnable> aRunnable) {
+  RefPtr<MediaTaskQueueSyncRunnable> task(new MediaTaskQueueSyncRunnable(aRunnable));
+  nsresult rv = Dispatch(task);
+  NS_ENSURE_SUCCESS(rv, rv);
+  return task->WaitUntilDone();
 }
 
 void
@@ -73,10 +125,25 @@ MediaTaskQueue::Shutdown()
   AwaitIdleLocked();
 }
 
+nsresult
+MediaTaskQueue::FlushAndDispatch(TemporaryRef<nsIRunnable> aRunnable)
+{
+  MonitorAutoLock mon(mQueueMonitor);
+  AutoSetFlushing autoFlush(this);
+  while (!mTasks.empty()) {
+    mTasks.pop();
+  }
+  nsresult rv = DispatchLocked(aRunnable, IgnoreFlushing);
+  NS_ENSURE_SUCCESS(rv, rv);
+  AwaitIdleLocked();
+  return NS_OK;
+}
+
 void
 MediaTaskQueue::Flush()
 {
   MonitorAutoLock mon(mQueueMonitor);
+  AutoSetFlushing autoFlush(this);
   while (!mTasks.empty()) {
     mTasks.pop();
   }

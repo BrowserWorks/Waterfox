@@ -75,9 +75,9 @@ struct NativeFont {
  */
 struct DrawOptions {
   /// For constructor parameter description, see member data documentation.
-  DrawOptions(Float aAlpha = 1.0f,
-              CompositionOp aCompositionOp = CompositionOp::OP_OVER,
-              AntialiasMode aAntialiasMode = AntialiasMode::DEFAULT)
+  explicit DrawOptions(Float aAlpha = 1.0f,
+                       CompositionOp aCompositionOp = CompositionOp::OP_OVER,
+                       AntialiasMode aAntialiasMode = AntialiasMode::DEFAULT)
     : mAlpha(aAlpha)
     , mCompositionOp(aCompositionOp)
     , mAntialiasMode(aAntialiasMode)
@@ -97,13 +97,13 @@ struct DrawOptions {
  */
 struct StrokeOptions {
   /// For constructor parameter description, see member data documentation.
-  StrokeOptions(Float aLineWidth = 1.0f,
-                JoinStyle aLineJoin = JoinStyle::MITER_OR_BEVEL,
-                CapStyle aLineCap = CapStyle::BUTT,
-                Float aMiterLimit = 10.0f,
-                size_t aDashLength = 0,
-                const Float* aDashPattern = 0,
-                Float aDashOffset = 0.f)
+  explicit StrokeOptions(Float aLineWidth = 1.0f,
+                         JoinStyle aLineJoin = JoinStyle::MITER_OR_BEVEL,
+                         CapStyle aLineCap = CapStyle::BUTT,
+                         Float aMiterLimit = 10.0f,
+                         size_t aDashLength = 0,
+                         const Float* aDashPattern = 0,
+                         Float aDashOffset = 0.f)
     : mLineWidth(aLineWidth)
     , mMiterLimit(aMiterLimit)
     , mDashPattern(aDashLength > 0 ? aDashPattern : 0)
@@ -133,8 +133,8 @@ struct StrokeOptions {
  */
 struct DrawSurfaceOptions {
   /// For constructor parameter description, see member data documentation.
-  DrawSurfaceOptions(Filter aFilter = Filter::LINEAR,
-                     SamplingBounds aSamplingBounds = SamplingBounds::UNBOUNDED)
+  explicit DrawSurfaceOptions(Filter aFilter = Filter::LINEAR,
+                              SamplingBounds aSamplingBounds = SamplingBounds::UNBOUNDED)
     : mFilter(aFilter)
     , mSamplingBounds(aSamplingBounds)
   { }
@@ -185,7 +185,7 @@ protected:
 class ColorPattern : public Pattern
 {
 public:
-  ColorPattern(const Color &aColor)
+  explicit ColorPattern(const Color &aColor)
     : mColor(aColor)
   {}
 
@@ -288,6 +288,9 @@ public:
   Matrix mMatrix;                 //!< Transforms the pattern into user space
 };
 
+class StoredPattern;
+class DrawTargetCaptureImpl;
+
 /**
  * This is the base class for source surfaces. These objects are surfaces
  * which may be used as a source in a SurfacePattern or a DrawSurface call.
@@ -331,6 +334,15 @@ public:
   }
 
 protected:
+  friend class DrawTargetCaptureImpl;
+  friend class StoredPattern;
+
+  // This is for internal use, it ensures the SourceSurface's data remains
+  // valid during the lifetime of the SourceSurface.
+  // @todo XXX - We need something better here :(. But we may be able to get rid
+  // of CreateWrappingDataSourceSurface in the future.
+  virtual void GuaranteePersistance() {}
+
   UserData mUserData;
 };
 
@@ -395,6 +407,7 @@ public:
    */
   virtual TemporaryRef<DataSourceSurface> GetDataSurface();
 
+protected:
   bool mIsMapped;
 };
 
@@ -608,6 +621,8 @@ protected:
   GlyphRenderingOptions() {}
 };
 
+class DrawTargetCapture;
+
 /** This is the main class used for all the drawing. It is created through the
  * factory and accepts drawing commands. The results of drawing to a target
  * may be used either through a Snapshot or by flushing the target and directly
@@ -645,6 +660,15 @@ public:
    * this draw target outside of GFX 2D code.
    */
   virtual void Flush() = 0;
+
+  /**
+   * Realize a DrawTargetCapture onto the draw target.
+   *
+   * @param aSource Capture DrawTarget to draw
+   * @param aTransform Transform to apply when replaying commands
+   */
+  virtual void DrawCapturedDT(DrawTargetCapture *aCaptureDT,
+                              const Matrix& aTransform);
 
   /**
    * Draw a surface to the draw target. Possibly doing partial drawing or
@@ -882,6 +906,14 @@ public:
     CreateSimilarDrawTarget(const IntSize &aSize, SurfaceFormat aFormat) const = 0;
 
   /**
+   * Create a DrawTarget that captures the drawing commands and can be replayed
+   * onto a compatible DrawTarget afterwards.
+   *
+   * @param aSize Size of the area this DT will capture. 
+   */
+  virtual TemporaryRef<DrawTargetCapture> CreateCaptureDT(const IntSize& aSize);
+
+  /**
    * Create a draw target optimized for drawing a shadow.
    *
    * Note that aSigma is the blur radius that must be used when we draw the
@@ -944,7 +976,8 @@ public:
    */
   virtual void *GetNativeSurface(NativeSurfaceType aType) { return nullptr; }
 
-  virtual bool IsDualDrawTarget() { return false; }
+  virtual bool IsDualDrawTarget() const { return false; }
+  virtual bool IsTiledDrawTarget() const { return false; }
 
   void AddUserData(UserDataKey *key, void *userData, void (*destroy)(void*)) {
     mUserData.Add(key, userData, destroy);
@@ -991,6 +1024,10 @@ protected:
   bool mPermitSubpixelAA : 1;
 
   SurfaceFormat mFormat;
+};
+
+class DrawTargetCapture : public DrawTarget
+{
 };
 
 class DrawEventRecorder : public RefCounted<DrawEventRecorder>
@@ -1060,7 +1097,8 @@ public:
   /**
    * This creates a simple data source surface for a certain size. It allocates
    * new memory for the surface. This memory is freed when the surface is
-   * destroyed. The surface is not zeroed unless requested.
+   * destroyed.  The caller is responsible for handing the case where nullptr
+   * is returned. The surface is not zeroed unless requested.
    */
   static TemporaryRef<DataSourceSurface>
     CreateDataSourceSurface(const IntSize &aSize, SurfaceFormat aFormat, bool aZero = false);
@@ -1069,7 +1107,8 @@ public:
    * This creates a simple data source surface for a certain size with a
    * specific stride, which must be large enough to fit all pixels.
    * It allocates new memory for the surface. This memory is freed when
-   * the surface is destroyed. The surface is not zeroed unless requested.
+   * the surface is destroyed.  The caller is responsible for handling the case
+   * where nullptr is returned. The surface is not zeroed unless requested.
    */
   static TemporaryRef<DataSourceSurface>
     CreateDataSourceSurfaceWithStride(const IntSize &aSize, SurfaceFormat aFormat, int32_t aStride, bool aZero = false);

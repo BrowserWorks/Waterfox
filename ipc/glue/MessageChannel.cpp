@@ -13,6 +13,9 @@
 #include "mozilla/Move.h"
 #include "nsDebug.h"
 #include "nsISupportsImpl.h"
+#include "nsContentUtils.h"
+
+#include "prprf.h"
 
 // Undo the damage done by mozzconf.h
 #undef compress
@@ -188,8 +191,33 @@ private:
     CxxStackFrame& operator=(const CxxStackFrame&) MOZ_DELETE;
 };
 
+namespace {
+
+class MOZ_STACK_CLASS MaybeScriptBlocker {
+public:
+    explicit MaybeScriptBlocker(MessageChannel *aChannel
+                                MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
+        : mBlocked(aChannel->ShouldBlockScripts())
+    {
+        MOZ_GUARD_OBJECT_NOTIFIER_INIT;
+        if (mBlocked) {
+            nsContentUtils::AddScriptBlocker();
+        }
+    }
+    ~MaybeScriptBlocker() {
+        if (mBlocked) {
+            nsContentUtils::RemoveScriptBlocker();
+        }
+    }
+private:
+    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
+    bool mBlocked;
+};
+
+} /* namespace {} */
+
 MessageChannel::MessageChannel(MessageListener *aListener)
-  : mListener(aListener->asWeakPtr()),
+  : mListener(aListener),
     mChannelState(ChannelClosed),
     mSide(UnknownSide),
     mLink(nullptr),
@@ -208,6 +236,7 @@ MessageChannel::MessageChannel(MessageListener *aListener)
     mRemoteStackDepthGuess(false),
     mSawInterruptOutMsg(false),
     mAbortOnError(false),
+    mBlockScripts(false),
     mFlags(REQUIRE_DEFAULT),
     mPeerPidSet(false),
     mPeerPid(-1)
@@ -577,6 +606,9 @@ MessageChannel::OnMessageReceivedFromLink(const Message& aMsg)
 bool
 MessageChannel::Send(Message* aMsg, Message* aReply)
 {
+    // See comment in DispatchSyncMessage.
+    MaybeScriptBlocker scriptBlocker(this);
+
     // Sanity checks.
     AssertWorkerThread();
     mMonitor->AssertNotCurrentThreadOwns();
@@ -605,6 +637,9 @@ MessageChannel::Send(Message* aMsg, Message* aReply)
 bool
 MessageChannel::UrgentCall(Message* aMsg, Message* aReply)
 {
+    // See comment in DispatchUrgentMessage.
+    MaybeScriptBlocker scriptBlocker(this);
+
     AssertWorkerThread();
     mMonitor->AssertNotCurrentThreadOwns();
     IPC_ASSERT(mSide == ParentSide, "cannot send urgent requests from child");
@@ -634,6 +669,9 @@ MessageChannel::UrgentCall(Message* aMsg, Message* aReply)
 bool
 MessageChannel::RPCCall(Message* aMsg, Message* aReply)
 {
+    // See comment in DispatchUrgentMessage.
+    MaybeScriptBlocker scriptBlocker(this);
+
     AssertWorkerThread();
     mMonitor->AssertNotCurrentThreadOwns();
     IPC_ASSERT(mSide == ChildSide, "cannot send rpc messages from parent");
@@ -1082,14 +1120,13 @@ MessageChannel::DispatchSyncMessage(const Message& aMsg)
 {
     AssertWorkerThread();
 
-    Message *reply = nullptr;
+    nsAutoPtr<Message> reply;
 
     mDispatchingSyncMessage = true;
-    Result rv = mListener->OnMessageReceived(aMsg, reply);
+    Result rv = mListener->OnMessageReceived(aMsg, *getter_Transfers(reply));
     mDispatchingSyncMessage = false;
 
-    if (!MaybeHandleError(rv, "DispatchSyncMessage")) {
-        delete reply;
+    if (!MaybeHandleError(rv, aMsg, "DispatchSyncMessage")) {
         reply = new Message();
         reply->set_sync();
         reply->set_reply();
@@ -1098,8 +1135,9 @@ MessageChannel::DispatchSyncMessage(const Message& aMsg)
     reply->set_seqno(aMsg.seqno());
 
     MonitorAutoLock lock(*mMonitor);
-    if (ChannelConnected == mChannelState)
-        mLink->SendMessage(reply);
+    if (ChannelConnected == mChannelState) {
+        mLink->SendMessage(reply.forget());
+    }
 }
 
 void
@@ -1112,13 +1150,41 @@ MessageChannel::DispatchUrgentMessage(const Message& aMsg)
 
     MOZ_ASSERT(NS_IsMainThread());
 
+    // We don't want to run any code that might run a nested event loop here, so
+    // we avoid running event handlers. Once we've sent the response to the
+    // urgent message, it's okay to run event handlers again since the parent is
+    // no longer blocked.
+    //
+    // We also put script blockers at the start of every synchronous send
+    // call. That way we won't run any scripts while waiting for a response to
+    // another message. Running scripts could cause us to send more sync
+    // messages, and the other side wouldn't know what to do if it received a
+    // sync message while dispatching another sync message. (In practice, the
+    // other side would queue the second sync message, while we would need it to
+    // dispatch that message before sending the reply to the original sync
+    // message. Otherwise the replies would come out of order.)
+    //
+    // We omit the script blocker for InterruptCall since interrupt messages are
+    // designed to handle this sort of re-entry. (For example, if the child
+    // sends an intr message to the parent, the child will process any queued
+    // async messages from the parent while waiting for the intr response. In
+    // doing so, the child could trigger sync messages to be sent to the parent
+    // while the parent is still dispatching the intr message. If the parent
+    // sends an intr reply while the child is waiting for a sync response, the
+    // intr reply will be queued in mPending. Once the sync reply is received,
+    // InterruptCall will find the intr reply in mPending and run it.)  The
+    // situation where we run event handlers while waiting for an intr reply is
+    // no different than the one where we process async messages while waiting
+    // for an intr reply.
+    MaybeScriptBlocker scriptBlocker(this);
+
     gDispatchingUrgentMessageCount++;
     mDispatchingUrgentMessageCount++;
     Result rv = mListener->OnCallReceived(aMsg, reply);
     mDispatchingUrgentMessageCount--;
     gDispatchingUrgentMessageCount--;
 
-    if (!MaybeHandleError(rv, "DispatchUrgentMessage")) {
+    if (!MaybeHandleError(rv, aMsg, "DispatchUrgentMessage")) {
         delete reply;
         reply = new Message();
         reply->set_urgent();
@@ -1140,7 +1206,7 @@ MessageChannel::DispatchRPCMessage(const Message& aMsg)
 
     Message *reply = nullptr;
 
-    if (!MaybeHandleError(mListener->OnCallReceived(aMsg, reply), "DispatchRPCMessage")) {
+    if (!MaybeHandleError(mListener->OnCallReceived(aMsg, reply), aMsg, "DispatchRPCMessage")) {
         delete reply;
         reply = new Message();
         reply->set_rpc();
@@ -1164,7 +1230,7 @@ MessageChannel::DispatchAsyncMessage(const Message& aMsg)
         NS_RUNTIMEABORT("unhandled special message!");
     }
 
-    MaybeHandleError(mListener->OnMessageReceived(aMsg), "DispatchAsyncMessage");
+    MaybeHandleError(mListener->OnMessageReceived(aMsg), aMsg, "DispatchAsyncMessage");
 }
 
 void
@@ -1226,14 +1292,13 @@ MessageChannel::DispatchInterruptMessage(const Message& aMsg, size_t stackDepth)
     SyncStackFrame frame(this, true);
 #endif
 
-    Message* reply = nullptr;
+    nsAutoPtr<Message> reply;
 
     ++mRemoteStackDepthGuess;
-    Result rv = mListener->OnCallReceived(aMsg, reply);
+    Result rv = mListener->OnCallReceived(aMsg, *getter_Transfers(reply));
     --mRemoteStackDepthGuess;
 
-    if (!MaybeHandleError(rv, "DispatchInterruptMessage")) {
-        delete reply;
+    if (!MaybeHandleError(rv, aMsg, "DispatchInterruptMessage")) {
         reply = new Message();
         reply->set_interrupt();
         reply->set_reply();
@@ -1242,8 +1307,9 @@ MessageChannel::DispatchInterruptMessage(const Message& aMsg, size_t stackDepth)
     reply->set_seqno(aMsg.seqno());
 
     MonitorAutoLock lock(*mMonitor);
-    if (ChannelConnected == mChannelState)
-        mLink->SendMessage(reply);
+    if (ChannelConnected == mChannelState) {
+        mLink->SendMessage(reply.forget());
+    }
 }
 
 void
@@ -1492,7 +1558,7 @@ MessageChannel::ReportConnectionError(const char* aChannelName) const
 }
 
 bool
-MessageChannel::MaybeHandleError(Result code, const char* channelName)
+MessageChannel::MaybeHandleError(Result code, const Message& aMsg, const char* channelName)
 {
     if (MsgProcessed == code)
         return true;
@@ -1523,7 +1589,12 @@ MessageChannel::MaybeHandleError(Result code, const char* channelName)
         return false;
     }
 
-    PrintErrorMessage(mSide, channelName, errorMsg);
+    char printedMsg[512];
+    PR_snprintf(printedMsg, sizeof(printedMsg),
+                "(msgtype=0x%lX,name=%s) %s",
+                aMsg.type(), aMsg.name(), errorMsg);
+
+    PrintErrorMessage(mSide, channelName, printedMsg);
 
     mListener->OnProcessingError(code);
 
@@ -1656,6 +1727,13 @@ MessageChannel::CloseWithError()
 }
 
 void
+MessageChannel::BlockScripts()
+{
+    MOZ_ASSERT(NS_IsMainThread());
+    mBlockScripts = true;
+}
+
+void
 MessageChannel::Close()
 {
     AssertWorkerThread();
@@ -1727,13 +1805,13 @@ MessageChannel::DebugAbort(const char* file, int line, const char* cond,
                   reply ? "(reply)" : "");
     // technically we need the mutex for this, but we're dying anyway
     DumpInterruptStack("  ");
-    printf_stderr("  remote Interrupt stack guess: %lu\n",
+    printf_stderr("  remote Interrupt stack guess: %" PRIuSIZE "\n",
                   mRemoteStackDepthGuess);
-    printf_stderr("  deferred stack size: %lu\n",
+    printf_stderr("  deferred stack size: %" PRIuSIZE "\n",
                   mDeferred.size());
-    printf_stderr("  out-of-turn Interrupt replies stack size: %lu\n",
+    printf_stderr("  out-of-turn Interrupt replies stack size: %" PRIuSIZE "\n",
                   mOutOfTurnReplies.size());
-    printf_stderr("  Pending queue size: %lu, front to back:\n",
+    printf_stderr("  Pending queue size: %" PRIuSIZE ", front to back:\n",
                   mPending.size());
 
     MessageQueue pending = mPending;
@@ -1759,7 +1837,9 @@ MessageChannel::DumpInterruptStack(const char* const pfx) const
     // print a python-style backtrace, first frame to last
     for (uint32_t i = 0; i < mCxxStackFrames.length(); ++i) {
         int32_t id;
-        const char* dir, *sems, *name;
+        const char* dir;
+        const char* sems;
+        const char* name;
         mCxxStackFrames[i].Describe(&id, &dir, &sems, &name);
 
         printf_stderr("%s[(%u) %s %s %s(actor=%d) ]\n", pfx,

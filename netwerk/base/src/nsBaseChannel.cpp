@@ -27,7 +27,7 @@ CopyProperties(const nsAString &key, nsIVariant *data, void *closure)
 // This class is used to suspend a request across a function scope.
 class ScopedRequestSuspender {
 public:
-  ScopedRequestSuspender(nsIRequest *request)
+  explicit ScopedRequestSuspender(nsIRequest *request)
     : mRequest(request) {
     if (mRequest && NS_FAILED(mRequest->Suspend())) {
       NS_WARNING("Couldn't suspend pump");
@@ -641,27 +641,34 @@ nsBaseChannel::OnTransportStatus(nsITransport *transport, nsresult status,
 {
   // In some cases, we may wish to suppress transport-layer status events.
 
-  if (!mPump || NS_FAILED(mStatus) || HasLoadFlag(LOAD_BACKGROUND))
+  if (!mPump || NS_FAILED(mStatus)) {
     return NS_OK;
+  }
 
   SUSPEND_PUMP_FOR_SCOPE();
 
   // Lazily fetch mProgressSink
   if (!mProgressSink) {
-    if (mQueriedProgressSink)
+    if (mQueriedProgressSink) {
       return NS_OK;
+    }
     GetCallback(mProgressSink);
     mQueriedProgressSink = true;
-    if (!mProgressSink)
+    if (!mProgressSink) {
       return NS_OK;
+    }
   }
 
-  nsAutoString statusArg;
-  if (GetStatusArg(status, statusArg))
-    mProgressSink->OnStatus(this, mListenerContext, status, statusArg.get());
+  if (!HasLoadFlag(LOAD_BACKGROUND)) {
+    nsAutoString statusArg;
+    if (GetStatusArg(status, statusArg)) {
+      mProgressSink->OnStatus(this, mListenerContext, status, statusArg.get());
+    }
+  }
 
-  if (progress)
+  if (progress) {
     mProgressSink->OnProgress(this, mListenerContext, progress, progressMax);
+  }
 
   return NS_OK;
 }
@@ -712,15 +719,11 @@ nsBaseChannel::OnStartRequest(nsIRequest *request, nsISupports *ctxt)
 {
   MOZ_ASSERT(request == mPump);
 
-  // If our content type is unknown or if the content type is
-  // application/octet-stream and the caller requested it, use the content type
+  // If our content type is unknown, use the content type
   // sniffer. If the sniffer is not available for some reason, then we just keep
   // going as-is.
-  bool shouldSniff = mContentType.EqualsLiteral(UNKNOWN_CONTENT_TYPE) ||
-            ((mLoadFlags & LOAD_TREAT_APPLICATION_OCTET_STREAM_AS_UNKNOWN) &&
-            mContentType.EqualsLiteral(APPLICATION_OCTET_STREAM));
-
-  if (NS_SUCCEEDED(mStatus) && shouldSniff) {
+  if (NS_SUCCEEDED(mStatus) &&
+      mContentType.EqualsLiteral(UNKNOWN_CONTENT_TYPE)) {
     mPump->PeekStream(CallUnknownTypeSniffer, static_cast<nsIChannel*>(this));
   }
 

@@ -44,7 +44,7 @@
     let appchan = SpecialPowers.Services.io.newChannel(gManifestURL, null, null);
 
     try {
-      csp.setRequestContext(null, null, null, appchan);
+      csp.setRequestContext(null, null, appchan);
       ok(true, "setRequestContext hasn't thown");
     } catch(e) {
       ok(false, "setRequestContext throws");
@@ -54,10 +54,12 @@
   }
 
   function cleanup() {
-    let req = navigator.mozApps.mgmt.uninstall(app);
-    req.onsuccess = function () {
-      SimpleTest.finish();
-    };
+    SpecialPowers.autoConfirmAppUninstall(function () {
+      let req = navigator.mozApps.mgmt.uninstall(app);
+      req.onsuccess = function () {
+        SimpleTest.finish();
+      };
+    });
   }
 
   setupTest();

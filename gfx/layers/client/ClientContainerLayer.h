@@ -15,6 +15,8 @@
 #include "nsISupportsUtils.h"           // for NS_ADDREF, NS_RELEASE
 #include "nsRegion.h"                   // for nsIntRegion
 #include "nsTArray.h"                   // for nsAutoTArray
+#include "ReadbackProcessor.h"
+#include "ClientThebesLayer.h"
 
 namespace mozilla {
 namespace layers {
@@ -25,7 +27,7 @@ class ClientContainerLayer : public ContainerLayer,
                              public ClientLayer
 {
 public:
-  ClientContainerLayer(ClientLayerManager* aManager) :
+  explicit ClientContainerLayer(ClientLayerManager* aManager) :
     ContainerLayer(aManager,
                    static_cast<ClientLayer*>(MOZ_THIS_IN_INITIALIZER_LIST()))
   {
@@ -55,13 +57,16 @@ public:
     nsAutoTArray<Layer*, 12> children;
     SortChildrenBy3DZOrder(children);
 
+    ReadbackProcessor readback;
+    readback.BuildUpdates(this);
+
     for (uint32_t i = 0; i < children.Length(); i++) {
       Layer* child = children.ElementAt(i);
       if (child->GetEffectiveVisibleRegion().IsEmpty()) {
         continue;
       }
 
-      ToClientLayer(child)->RenderLayer();
+      ToClientLayer(child)->RenderLayerWithReadback(&readback);
 
       if (!ClientManager()->GetRepeatTransaction() &&
           !child->GetInvalidRegion().IsEmpty()) {
@@ -145,7 +150,7 @@ protected:
 class ClientRefLayer : public RefLayer,
                        public ClientLayer {
 public:
-  ClientRefLayer(ClientLayerManager* aManager) :
+  explicit ClientRefLayer(ClientLayerManager* aManager) :
     RefLayer(aManager,
              static_cast<ClientLayer*>(MOZ_THIS_IN_INITIALIZER_LIST()))
   {

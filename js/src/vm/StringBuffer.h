@@ -30,11 +30,11 @@ namespace js {
 class StringBuffer
 {
     /*
-     * The Vector's buffer is taken by the new string so use
-     * ContextAllocPolicy.
+     * The Vector's buffer may be either stolen or copied, so we need to use
+     * TempAllocPolicy and account for the memory manually when stealing.
      */
-    typedef Vector<Latin1Char, 64, ContextAllocPolicy> Latin1CharBuffer;
-    typedef Vector<jschar, 32, ContextAllocPolicy> TwoByteCharBuffer;
+    typedef Vector<Latin1Char, 64> Latin1CharBuffer;
+    typedef Vector<jschar, 32> TwoByteCharBuffer;
 
     ExclusiveContext *cx;
 
@@ -76,10 +76,7 @@ class StringBuffer
     explicit StringBuffer(ExclusiveContext *cx)
       : cx(cx), hasEnsuredTwoByteChars_(false), reserved_(0)
     {
-        if (EnableLatin1Strings)
-            cb.construct<Latin1CharBuffer>(cx);
-        else
-            cb.construct<TwoByteCharBuffer>(cx);
+        cb.construct<Latin1CharBuffer>(cx);
     }
 
     inline bool reserve(size_t len) {

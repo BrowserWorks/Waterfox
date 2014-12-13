@@ -58,7 +58,7 @@ class nsMenuFrame;
 class nsMenuTimerMediator MOZ_FINAL : public nsITimerCallback
 {
 public:
-  nsMenuTimerMediator(nsMenuFrame* aFrame);
+  explicit nsMenuTimerMediator(nsMenuFrame* aFrame);
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSITIMERCALLBACK
@@ -72,7 +72,7 @@ private:
   nsMenuFrame* mFrame;
 };
 
-class nsMenuFrame : public nsBoxFrame
+class nsMenuFrame MOZ_FINAL : public nsBoxFrame
 {
 public:
   nsMenuFrame(nsIPresShell* aShell, nsStyleContext* aContext);

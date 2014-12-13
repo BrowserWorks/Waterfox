@@ -7,6 +7,7 @@
 #define GMPVideoi420FrameImpl_h_
 
 #include "gmp-video-frame-i420.h"
+#include "mozilla/UniquePtr.h"
 #include "mozilla/ipc/Shmem.h"
 #include "GMPVideoPlaneImpl.h"
 
@@ -19,7 +20,7 @@ class GMPVideoi420FrameImpl : public GMPVideoi420Frame
 {
   friend struct IPC::ParamTraits<mozilla::gmp::GMPVideoi420FrameImpl>;
 public:
-  GMPVideoi420FrameImpl(GMPVideoHostImpl* aHost);
+  explicit GMPVideoi420FrameImpl(GMPVideoHostImpl* aHost);
   GMPVideoi420FrameImpl(const GMPVideoi420FrameData& aFrameData, GMPVideoHostImpl* aHost);
   virtual ~GMPVideoi420FrameImpl();
 
@@ -78,6 +79,16 @@ private:
 };
 
 } // namespace gmp
+
+template<>
+struct DefaultDelete<mozilla::gmp::GMPVideoi420FrameImpl>
+{
+  void operator()(mozilla::gmp::GMPVideoi420FrameImpl* aFrame) const
+  {
+    aFrame->Destroy();
+  }
+};
+
 } // namespace mozilla
 
 #endif // GMPVideoi420FrameImpl_h_

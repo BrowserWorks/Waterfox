@@ -20,6 +20,7 @@ EXPORTS += [
     'CopyableCanvasLayer.h',
     'D3D9SurfaceImage.h',
     'FrameMetrics.h',
+    'GLImages.h',
     'GrallocImages.h',
     'ImageContainer.h',
     'ImageLayers.h',
@@ -36,8 +37,8 @@ EXPORTS += [
     'opengl/Composer2D.h',
     'opengl/OGLShaderProgram.h',
     'opengl/TexturePoolOGL.h',
+    'protobuf/LayerScopePacket.pb.h',
     'ReadbackLayer.h',
-    'SharedTextureImage.h',
     'TiledLayerBuffer.h',
 ]
 
@@ -79,6 +80,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
         ]
         EXPORTS.mozilla.layers += [
             'd3d11/CompositorD3D11.h',
+            'd3d11/ReadbackManagerD3D11.h',
             'd3d11/TextureD3D11.h',
             'ipc/ShadowLayerUtilsD3D10.h',
         ]
@@ -95,6 +97,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
         ]
         SOURCES += [
             'd3d11/CompositorD3D11.cpp',
+            'd3d11/ReadbackManagerD3D11.cpp',
         ]
 
 EXPORTS.gfxipc += [
@@ -114,6 +117,8 @@ EXPORTS.mozilla.layers += [
     'apz/util/ActiveElementManager.h',
     'apz/util/APZCCallbackHelper.h',
     'AtomicRefCountedWithFinalize.h',
+    'AxisPhysicsModel.h',
+    'AxisPhysicsMSDModel.h',
     'basic/BasicCompositor.h',
     'basic/MacIOSurfaceTextureHostBasic.h',
     'basic/TextureHostBasic.h',
@@ -158,6 +163,7 @@ EXPORTS.mozilla.layers += [
     'ipc/SharedBufferManagerParent.h',
     'ipc/SharedPlanarYCbCrImage.h',
     'ipc/SharedRGBImage.h',
+    'LayerMetricsWrapper.h',
     'LayersTypes.h',
     'opengl/CompositingRenderTargetOGL.h',
     'opengl/CompositorOGL.h',
@@ -182,6 +188,7 @@ if CONFIG['MOZ_X11']:
     ]
     SOURCES += [
         'basic/TextureClientX11.cpp',
+        'basic/X11BasicCompositor.cpp',
         'basic/X11TextureSourceBasic.cpp',
         'composite/X11TextureHost.cpp',
         'ipc/ShadowLayerUtilsX11.cpp',
@@ -234,11 +241,14 @@ UNIFIED_SOURCES += [
     'apz/src/AsyncPanZoomController.cpp',
     'apz/src/Axis.cpp',
     'apz/src/GestureEventListener.cpp',
+    'apz/src/InputBlockState.cpp',
+    'apz/src/OverscrollHandoffState.cpp',
     'apz/src/TaskThrottler.cpp',
-    'apz/src/TouchBlockState.cpp',
     'apz/testutil/APZTestData.cpp',
     'apz/util/ActiveElementManager.cpp',
     'apz/util/APZCCallbackHelper.cpp',
+    'AxisPhysicsModel.cpp',
+    'AxisPhysicsMSDModel.cpp',
     'basic/BasicCanvasLayer.cpp',
     'basic/BasicColorLayer.cpp',
     'basic/BasicCompositor.cpp',
@@ -282,6 +292,7 @@ UNIFIED_SOURCES += [
     'Compositor.cpp',
     'CopyableCanvasLayer.cpp',
     'Effects.cpp',
+    'GLImages.cpp',
     'ImageDataSerializer.cpp',
     'ImageLayers.cpp',
     'ipc/AsyncTransactionTracker.cpp',
@@ -360,7 +371,7 @@ MSVC_ENABLE_PGO = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
-FINAL_LIBRARY = 'thebes'
+FINAL_LIBRARY = 'xul'
 
 if CONFIG['MOZ_DEBUG']:
     DEFINES['D3D_DEBUG_INFO'] = True
@@ -382,3 +393,6 @@ CXXFLAGS += [
 ]
 
 MOCHITEST_MANIFESTS += ['apz/test/mochitest.ini']
+
+CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
+CXXFLAGS += CONFIG['TK_CFLAGS']

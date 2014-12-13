@@ -12,11 +12,9 @@
 #include <map>
 
 #include "mozilla/layout/PRenderFrameParent.h"
-#include "mozilla/layers/ShadowLayersManager.h"
 #include "nsDisplayList.h"
 #include "RenderFrameUtils.h"
 
-class nsContentView;
 class nsFrameLoader;
 class nsSubDocumentFrame;
 
@@ -26,7 +24,6 @@ class InputEvent;
 
 namespace layers {
 class APZCTreeManager;
-class GestureEventListener;
 class TargetConfig;
 class LayerTransactionParent;
 struct TextureFactoryIdentifier;
@@ -37,8 +34,7 @@ namespace layout {
 
 class RemoteContentController;
 
-class RenderFrameParent : public PRenderFrameParent,
-                          public mozilla::layers::ShadowLayersManager
+class RenderFrameParent : public PRenderFrameParent
 {
   typedef mozilla::layers::FrameMetrics FrameMetrics;
   typedef mozilla::layers::ContainerLayer ContainerLayer;
@@ -53,7 +49,6 @@ class RenderFrameParent : public PRenderFrameParent,
   typedef FrameMetrics::ViewID ViewID;
 
 public:
-  typedef std::map<ViewID, nsRefPtr<nsContentView> > ViewMap;
 
 
   /**
@@ -68,22 +63,6 @@ public:
   virtual ~RenderFrameParent();
 
   void Destroy();
-
-  /**
-   * Helper functions for getting a non-owning reference to a scrollable.
-   * @param aId The ID of the frame.
-   */
-  nsContentView* GetContentView(ViewID aId);
-  nsContentView* GetRootContentView();
-
-  void ContentViewScaleChanged(nsContentView* aView);
-
-  virtual void ShadowLayersUpdated(LayerTransactionParent* aLayerTree,
-                                   const uint64_t& aTransactionId,
-                                   const TargetConfig& aTargetConfig,
-                                   bool aIsFirstPaint,
-                                   bool aScheduleComposite,
-                                   uint32_t aPaintSequenceNumber) MOZ_OVERRIDE;
 
   void BuildDisplayList(nsDisplayListBuilder* aBuilder,
                         nsSubDocumentFrame* aFrame,
@@ -132,17 +111,11 @@ protected:
 
   virtual bool RecvUpdateHitRegion(const nsRegion& aRegion) MOZ_OVERRIDE;
 
-  virtual PLayerTransactionParent* AllocPLayerTransactionParent() MOZ_OVERRIDE;
-  virtual bool DeallocPLayerTransactionParent(PLayerTransactionParent* aLayers) MOZ_OVERRIDE;
-
 private:
-  void BuildViewMap();
   void TriggerRepaint();
   void DispatchEventForPanZoomController(const InputEvent& aEvent);
 
-  LayerTransactionParent* GetShadowLayers() const;
   uint64_t GetLayerTreeId() const;
-  Layer* GetRootLayer() const;
 
   // When our child frame is pushing transactions directly to the
   // compositor, this is the ID of its layer tree in the compositor's
@@ -158,10 +131,6 @@ private:
   nsRefPtr<RemoteContentController> mContentController;
 
   layers::APZCTreeManager* GetApzcTreeManager();
-
-  // This contains the views for all the scrollable frames currently in the
-  // painted region of our remote content.
-  ViewMap mContentViews;
 
   // True after Destroy() has been called, which is triggered
   // originally by nsFrameLoader::Destroy().  After this point, we can
@@ -221,48 +190,5 @@ private:
   RenderFrameParent* mRemoteFrame;
 };
 
-/**
- * nsDisplayRemoteShadow is a way of adding display items for frames in a
- * separate process, for hit testing only. After being processed, the hit
- * test state will contain IDs for any remote frames that were hit.
- *
- * The frame should be its respective render frame parent.
- */
-class nsDisplayRemoteShadow : public nsDisplayItem
-{
-  typedef mozilla::layout::RenderFrameParent RenderFrameParent;
-  typedef mozilla::layers::FrameMetrics::ViewID ViewID;
-
-public:
-  nsDisplayRemoteShadow(nsDisplayListBuilder* aBuilder,
-                        nsIFrame* aFrame,
-                        nsRect aRect,
-                        ViewID aId)
-    : nsDisplayItem(aBuilder, aFrame)
-    , mRect(aRect)
-    , mId(aId)
-  {}
-
-  nsRect GetBounds(nsDisplayListBuilder* aBuilder, bool* aSnap) MOZ_OVERRIDE
-  {
-    *aSnap = false;
-    return mRect;
-  }
-
-  virtual uint32_t GetPerFrameKey() MOZ_OVERRIDE
-  {
-    NS_ABORT();
-    return 0;
-  }
-
-  void HitTest(nsDisplayListBuilder* aBuilder, const nsRect& aRect,
-               HitTestState* aState, nsTArray<nsIFrame*> *aOutFrames) MOZ_OVERRIDE;
-
-  NS_DISPLAY_DECL_NAME("Remote-Shadow", TYPE_REMOTE_SHADOW)
-
-private:
-  nsRect mRect;
-  ViewID mId;
-};
 
 #endif  // mozilla_layout_RenderFrameParent_h

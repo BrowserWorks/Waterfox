@@ -218,7 +218,7 @@ bool ParseFormat4(ots::OpenTypeFile *file, int platform, int encoding,
   // glyphs and that we don't access anything out-of-bounds.
   for (unsigned i = 0; i < segcount; ++i) {
     for (unsigned cp = ranges[i].start_range; cp <= ranges[i].end_range; ++cp) {
-      const uint16_t code_point = cp;
+      const uint16_t code_point = static_cast<uint16_t>(cp);
       if (ranges[i].id_range_offset == 0) {
         // this is explictly allowed to overflow in the spec
         const uint16_t glyph = code_point + ranges[i].id_delta;
@@ -748,6 +748,7 @@ bool ots_cmap_parse(OpenTypeFile *file, const uint8_t *data, size_t length) {
   // the UCS-4 table for non-BMP glyphs. We'll pass the following subtables:
   //   Platform ID   Encoding ID  Format
   //   0             0            4       (Unicode Default)
+  //   0             1            4       (Unicode 1.1)
   //   0             3            4       (Unicode BMP)
   //   0             3            12      (Unicode UCS-4)
   //   0             5            14      (Unicode Variation Sequences)
@@ -758,8 +759,8 @@ bool ots_cmap_parse(OpenTypeFile *file, const uint8_t *data, size_t length) {
   //   3             10           13      (MS UCS-4 Fallback mapping)
   //
   // Note:
-  //  * 0-0-4 table is (usually) written as a 3-1-4 table. If 3-1-4 table
-  //    also exists, the 0-0-4 table is ignored.
+  //  * 0-0-4 and 0-1-4 tables are (usually) written as a 3-1-4 table. If 3-1-4 table
+  //    also exists, the 0-0-4 or 0-1-4 tables are ignored.
   //  * Unlike 0-0-4 table, 0-3-4 table is written as a 0-3-4 table.
   //    Some fonts which include 0-5-14 table seems to be required 0-3-4
   //    table. The 0-3-4 table will be wriiten even if 3-1-4 table also exists.
@@ -771,9 +772,9 @@ bool ots_cmap_parse(OpenTypeFile *file, const uint8_t *data, size_t length) {
     if (subtable_headers[i].platform == 0) {
       // Unicode platform
 
-      if ((subtable_headers[i].encoding == 0) &&
+      if ((subtable_headers[i].encoding == 0 || subtable_headers[i].encoding == 1) &&
           (subtable_headers[i].format == 4)) {
-        // parse and output the 0-0-4 table as 3-1-4 table. Sometimes the 0-0-4
+        // parse and output the 0-0-4 and 0-1-4 tables as 3-1-4 table. Sometimes the 0-0-4
         // table actually points to MS symbol data and thus should be parsed as
         // 3-0-4 table (e.g., marqueem.ttf and quixotic.ttf). This error will be
         // recovered in ots_cmap_serialise().
@@ -865,19 +866,19 @@ bool ots_cmap_serialise(OTSStream *out, OpenTypeFile *file) {
   const bool have_314 = (!have_304) && file->cmap->subtable_3_1_4_data;
   const bool have_31012 = file->cmap->subtable_3_10_12.size() != 0;
   const bool have_31013 = file->cmap->subtable_3_10_13.size() != 0;
-  const unsigned num_subtables = static_cast<unsigned>(have_034) +
-                                 static_cast<unsigned>(have_0514) +
-                                 static_cast<unsigned>(have_100) +
-                                 static_cast<unsigned>(have_304) +
-                                 static_cast<unsigned>(have_314) +
-                                 static_cast<unsigned>(have_31012) +
-                                 static_cast<unsigned>(have_31013);
+  const uint16_t num_subtables = static_cast<uint16_t>(have_034) +
+                                 static_cast<uint16_t>(have_0514) +
+                                 static_cast<uint16_t>(have_100) +
+                                 static_cast<uint16_t>(have_304) +
+                                 static_cast<uint16_t>(have_314) +
+                                 static_cast<uint16_t>(have_31012) +
+                                 static_cast<uint16_t>(have_31013);
   const off_t table_start = out->Tell();
 
   // Some fonts don't have 3-0-4 MS Symbol nor 3-1-4 Unicode BMP tables
   // (e.g., old fonts for Mac). We don't support them.
   if (!have_304 && !have_314 && !have_034 && !have_31012 && !have_31013) {
-    return OTS_FAILURE();
+    return OTS_FAILURE_MSG("no supported subtables were found");
   }
 
   if (!out->WriteU16(0) ||
@@ -1005,8 +1006,8 @@ bool ots_cmap_serialise(OTSStream *out, OpenTypeFile *file) {
         = file->cmap->subtable_3_10_13;
     const unsigned num_groups = groups.size();
     if (!out->WriteU16(13) ||
-        !out->WriteU32(0) ||
-        !out->WriteU32(num_groups * 12 + 14) ||
+        !out->WriteU16(0) ||
+        !out->WriteU32(num_groups * 12 + 16) ||
         !out->WriteU32(0) ||
         !out->WriteU32(num_groups)) {
       return OTS_FAILURE();

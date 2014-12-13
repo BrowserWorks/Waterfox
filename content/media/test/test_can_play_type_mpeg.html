@@ -17,17 +17,98 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=799315
 <video id="v"></video>
 
 <pre id="test">
-<script src="can_play_type_mpeg.js"></script>
 <script>
 
+function check_mp4(v, enabled) {
+  function check(type, expected) {
+    var ex = enabled ? expected : "";
+    is(v.canPlayType(type), ex, type + "='" + ex + "'");
+  }
+
+  check("video/mp4", "maybe");
+  check("audio/mp4", "maybe");
+  check("audio/x-m4a", "maybe");
+
+  // Not the MIME type that other browsers respond to, so we won't either.
+  check("audio/m4a", "");
+  // Only Safari responds affirmatively to "audio/aac",
+  // so we'll let x-m4a cover aac support.
+  check("audio/aac", "");
+
+  // H.264 Constrained Baseline Profile Level 3.0, AAC-LC
+  check("video/mp4; codecs=\"avc1.42E01E, mp4a.40.2\"", "probably");
+
+  // H.264 Constrained Baseline Profile Level 3.0, mp3
+  check("video/mp4; codecs=\"avc1.42E01E, mp3\"", "probably");
+  
+  check("video/mp4; codecs=\"avc1.42001E, mp4a.40.2\"", "probably");
+  check("video/mp4; codecs=\"avc1.58A01E, mp4a.40.2\"", "probably");
+  
+  const ProbablyIfNotLinux = !IsLinuxGStreamer() ? "probably" : "";
+  const ProbablyIfMP4Reader = IsMP4ReaderAvailable() ? "probably" : "";
+  
+  // H.264 Main Profile Level 3.0, AAC-LC
+  check("video/mp4; codecs=\"avc1.4D401E, mp4a.40.2\"", "probably");
+  // H.264 Main Profile Level 3.1, AAC-LC
+  check("video/mp4; codecs=\"avc1.4D401F, mp4a.40.2\"", ProbablyIfNotLinux);
+  // H.264 Main Profile Level 4.0, AAC-LC
+  check("video/mp4; codecs=\"avc1.4D4028, mp4a.40.2\"", ProbablyIfNotLinux);
+  // H.264 High Profile Level 3.0, AAC-LC
+  check("video/mp4; codecs=\"avc1.64001E, mp4a.40.2\"", "probably");
+  // H.264 High Profile Level 3.1, AAC-LC
+  check("video/mp4; codecs=\"avc1.64001F, mp4a.40.2\"", "probably");
+
+  check("video/mp4; codecs=\"avc1.42E01E\"", "probably");
+  check("video/mp4; codecs=\"avc1.42001E\"", "probably");
+  check("video/mp4; codecs=\"avc1.58A01E\"", "probably");
+  check("video/mp4; codecs=\"avc1.4D401E\"", "probably");
+  check("video/mp4; codecs=\"avc1.64001F\"", "probably");
+
+  // AAC-LC
+  check("audio/mp4; codecs=\"mp4a.40.2\"", "probably");
+  check("audio/mp4; codecs=mp4a.40.2", "probably");
+  check("audio/x-m4a; codecs=\"mp4a.40.2\"", "probably");
+  check("audio/x-m4a; codecs=mp4a.40.2", "probably");
+
+  // HE-AAC v1
+  check("audio/mp4; codecs=\"mp4a.40.5\"", ProbablyIfMP4Reader);
+  check("audio/mp4; codecs=mp4a.40.5", ProbablyIfMP4Reader);
+  check("audio/x-m4a; codecs=\"mp4a.40.5\"", ProbablyIfMP4Reader);
+  check("audio/x-m4a; codecs=mp4a.40.5", ProbablyIfMP4Reader);
+  
+}
+
+function check_mp3(v, enabled) {
+  function check(type, expected) {
+    var ex = enabled ? expected : "";
+    is(v.canPlayType(type), ex, type + "='" + ex + "'");
+  }
+
+  check("audio/mpeg", "maybe");
+  check("audio/mp3", "maybe");
+
+  check("audio/mpeg; codecs=\"mp3\"", "probably");
+  check("audio/mpeg; codecs=mp3", "probably");
+
+  check("audio/mp3; codecs=\"mp3\"", "probably");
+  check("audio/mp3; codecs=mp3", "probably");
+}
+
 function IsWindowsVistaOrLater() {
-  var re = /Windows NT (\d.\d)/;
+  var re = /Windows NT (\d+\.\d)/;
   var winver = navigator.userAgent.match(re);
   return winver && winver.length == 2 && parseFloat(winver[1]) >= 6.0;
 }
 
-function IsWindows() {
-  return navigator.userAgent.match(/Windows/) != null;
+function IsMacOSSnowLeopardOrLater() {
+  var re = /Mac OS X (\d+)\.(\d+)/;
+  var ver = navigator.userAgent.match(re);
+  if (!ver || ver.length != 3) {
+    return false;
+  }
+  var major = ver[1] | 0;
+  var minor = ver[2] | 0;
+  return major == 10 && minor >= 6;
 }
 
 function getPref(name) {
@@ -38,9 +119,22 @@ function getPref(name) {
   return pref;
 }
 
+function IsLinuxGStreamer() {
+  return /Linux/.test(navigator.userAgent) &&
+         getPref("media.gstreamer.enabled");
+}
+
+// Check whether we should expect the new MP4Reader-based support to work.
+function IsMP4ReaderAvailable() {
+  var prefs = getPref("media.fragmented-mp4.enabled") &&
+              getPref("media.fragmented-mp4.exposed");
+  return prefs && (IsWindowsVistaOrLater() || IsMacOSSnowLeopardOrLater());
+}
+
 var haveMp4 = (getPref("media.windows-media-foundation.enabled") && IsWindowsVistaOrLater()) ||
                getPref("media.omx.enabled") ||
-               getPref("media.gstreamer.enabled");
+               getPref("media.gstreamer.enabled") ||
+               IsMP4ReaderAvailable();
 // TODO:  Add "getPref("media.plugins.enabled")" once MP4 works on Gingerbread.
              
 check_mp4(document.getElementById('v'), haveMp4);

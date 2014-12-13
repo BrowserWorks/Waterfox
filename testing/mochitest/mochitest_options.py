@@ -61,14 +61,6 @@ class MochitestOptions(optparse.OptionParser):
           "help": "absolute path to directory containing certificate store to use testing profile",
           "default": os.path.join(build_obj.topsrcdir, 'build', 'pgo', 'certs') if build_obj is not None else None,
         }],
-        [["--log-file"],
-        { "action": "store",
-          "type": "string",
-          "dest": "logFile",
-          "metavar": "FILE",
-          "help": "file to which logging occurs",
-          "default": "",
-        }],
         [["--autorun"],
         { "action": "store_true",
           "dest": "autorun",
@@ -120,17 +112,6 @@ class MochitestOptions(optparse.OptionParser):
           "help": "one of %s to determine the level of console "
                   "logging" % LEVEL_STRING,
           "default": None,
-        }],
-        [["--file-level"],
-        { "action": "store",
-          "type": "choice",
-          "dest": "fileLevel",
-          "choices": LOG_LEVELS,
-          "metavar": "LEVEL",
-          "help": "one of %s to determine the level of file "
-                 "logging if a file has been specified, defaulting "
-                 "to INFO" % LEVEL_STRING,
-          "default": "INFO",
         }],
         [["--chrome"],
         { "action": "store_true",
@@ -472,6 +453,8 @@ class MochitestOptions(optparse.OptionParser):
             # but only if an app path was explicitly provided
             if options.app != self.defaults['app']:
                 options.xrePath = os.path.dirname(options.app)
+                if mozinfo.isMac:
+                    options.xrePath = os.path.join(os.path.dirname(options.xrePath), "Resources")
             elif build_obj is not None:
                 # otherwise default to dist/bin
                 options.xrePath = build_obj.bindir
@@ -761,6 +744,8 @@ class B2GOptions(MochitestOptions):
         defaults["closeWhenDone"] = True
         defaults["testPath"] = ""
         defaults["extensionsToExclude"] = ["specialpowers"]
+        # See dependencies of bug 1038943.
+        defaults["leakThreshold"] = 5116
         self.set_defaults(**defaults)
 
     def verifyRemoteOptions(self, options):

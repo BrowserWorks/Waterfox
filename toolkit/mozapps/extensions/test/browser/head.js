@@ -65,6 +65,8 @@ var gRestorePrefs = [{name: PREF_LOGGING_ENABLED},
                      {name: "extensions.webservice.discoverURL"},
                      {name: "extensions.update.url"},
                      {name: "extensions.update.background.url"},
+                     {name: "extensions.update.enabled"},
+                     {name: "extensions.update.autoUpdateDefault"},
                      {name: "extensions.getAddons.get.url"},
                      {name: "extensions.getAddons.getWithPerformance.url"},
                      {name: "extensions.getAddons.search.browseURL"},
@@ -106,6 +108,41 @@ function checkOpenWindows(aWindowID) {
   }
   if (found)
     ok(false, "Found unexpected " + aWindowID + " window still open");
+}
+
+// Tools to disable and re-enable the background update and blocklist timers
+// so that tests can protect themselves from unwanted timer events.
+let gCatMan = Components.classes["@mozilla.org/categorymanager;1"]
+                           .getService(Components.interfaces.nsICategoryManager);
+// Default values from toolkit/mozapps/extensions/extensions.manifest, but disable*UpdateTimer()
+// records the actual value so we can put it back in enable*UpdateTimer()
+let backgroundUpdateConfig = "@mozilla.org/addons/integration;1,getService,addon-background-update-timer,extensions.update.interval,86400";
+let blocklistUpdateConfig = "@mozilla.org/extensions/blocklist;1,getService,blocklist-background-update-timer,extensions.blocklist.interval,86400";
+
+let UTIMER = "update-timer";
+let AMANAGER = "addonManager";
+let BLOCKLIST = "nsBlocklistService";
+
+function disableBackgroundUpdateTimer() {
+  info("Disabling " + UTIMER + " " + AMANAGER);
+  backgroundUpdateConfig = gCatMan.getCategoryEntry(UTIMER, AMANAGER);
+  gCatMan.deleteCategoryEntry(UTIMER, AMANAGER, true);
+}
+
+function enableBackgroundUpdateTimer() {
+  info("Enabling " + UTIMER + " " + AMANAGER);
+  gCatMan.addCategoryEntry(UTIMER, AMANAGER, backgroundUpdateConfig, false, true);
+}
+
+function disableBlocklistUpdateTimer() {
+  info("Disabling " + UTIMER + " " + BLOCKLIST);
+  blocklistUpdateConfig = gCatMan.getCategoryEntry(UTIMER, BLOCKLIST);
+  gCatMan.deleteCategoryEntry(UTIMER, BLOCKLIST, true);
+}
+
+function enableBlocklistUpdateTimer() {
+  info("Enabling " + UTIMER + " " + BLOCKLIST);
+  gCatMan.addCategoryEntry(UTIMER, BLOCKLIST, blocklistUpdateConfig, false, true);
 }
 
 registerCleanupFunction(function() {

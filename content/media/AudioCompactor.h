@@ -15,7 +15,7 @@ namespace mozilla {
 class AudioCompactor
 {
 public:
-  AudioCompactor(MediaQueue<AudioData>& aQueue)
+  explicit AudioCompactor(MediaQueue<AudioData>& aQueue)
     : mQueue(aQueue)
   { }
 
@@ -58,7 +58,8 @@ public:
                                 duration.value(),
                                 framesCopied,
                                 buffer.forget(),
-                                aChannels));
+                                aChannels,
+                                aSampleRate));
 
       // Remove the frames we just pushed into the queue and loop if there is
       // more to be done.

@@ -8,11 +8,12 @@
 #include "CertVerifier.h"
 #include "nsNSSComponent.h"
 #include "certt.h"
+#include "pkix/Time.h"
 
 class nsUsageArrayHelper
 {
 public:
-  nsUsageArrayHelper(CERTCertificate *aCert);
+  explicit nsUsageArrayHelper(CERTCertificate *aCert);
 
   nsresult GetUsagesArray(const char *suffix,
                bool localOnly,
@@ -33,7 +34,7 @@ private:
                  const char *suffix,
                  mozilla::psm::CertVerifier * certVerifier,
                  SECCertificateUsage aCertUsage,
-                 PRTime time,
+                 mozilla::pkix::Time time,
                  mozilla::psm::CertVerifier::Flags flags,
                  uint32_t &aCounter,
                  char16_t **outUsages);

@@ -572,7 +572,7 @@ HttpChannelParent::OnStartRequest(nsIRequest *aRequest, nsISupports *aContext)
   nsHttpRequestHead  *requestHead = chan->GetRequestHead();
   bool isFromCache = false;
   chan->IsFromCache(&isFromCache);
-  uint32_t expirationTime = nsICache::NO_EXPIRATION_TIME;
+  uint32_t expirationTime = nsICacheEntry::NO_EXPIRATION_TIME;
   chan->GetCacheTokenExpirationTime(&expirationTime);
   nsCString cachedCharset;
   chan->GetCacheTokenCachedCharset(cachedCharset);
@@ -705,9 +705,9 @@ HttpChannelParent::OnProgress(nsIRequest *aRequest,
     mStoredProgress = aProgress;
     mStoredProgressMax = aProgressMax;
   } else {
-    // Send to child now.  The only case I've observed that this handles (i.e.
-    // non-ODA status with progress > 0) is data upload progress notification
-    // (status == NS_NET_STATUS_SENDING_TO)
+    // Send OnProgress events to the child for data upload progress notifications
+    // (i.e. status == NS_NET_STATUS_SENDING_TO) or if the channel has
+    // LOAD_BACKGROUND set.
     if (mIPCClosed || !SendOnProgress(aProgress, aProgressMax))
       return NS_ERROR_UNEXPECTED;
   }

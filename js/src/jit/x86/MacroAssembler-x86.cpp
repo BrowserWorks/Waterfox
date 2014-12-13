@@ -110,6 +110,58 @@ MacroAssemblerX86::addConstantFloat32(float f, FloatRegister dest)
     flt->uses.setPrev(masm.size());
 }
 
+MacroAssemblerX86::SimdData *
+MacroAssemblerX86::getSimdData(const SimdConstant &v)
+{
+    if (!simdMap_.initialized()) {
+        enoughMemory_ &= simdMap_.init();
+        if (!enoughMemory_)
+            return nullptr;
+    }
+    size_t index;
+    SimdMap::AddPtr p = simdMap_.lookupForAdd(v);
+    if (p) {
+        index = p->value();
+    } else {
+        index = simds_.length();
+        enoughMemory_ &= simds_.append(SimdData(v));
+        enoughMemory_ &= simdMap_.add(p, v, index);
+        if (!enoughMemory_)
+            return nullptr;
+    }
+    SimdData &simd = simds_[index];
+    JS_ASSERT(!simd.uses.bound());
+    return &simd;
+}
+
+void
+MacroAssemblerX86::loadConstantInt32x4(const SimdConstant &v, FloatRegister dest)
+{
+    JS_ASSERT(v.type() == SimdConstant::Int32x4);
+    if (maybeInlineInt32x4(v, dest))
+        return;
+    SimdData *i4 = getSimdData(v);
+    if (!i4)
+        return;
+    JS_ASSERT(i4->type() == SimdConstant::Int32x4);
+    masm.movdqa_mr(reinterpret_cast<const void *>(i4->uses.prev()), dest.code());
+    i4->uses.setPrev(masm.size());
+}
+
+void
+MacroAssemblerX86::loadConstantFloat32x4(const SimdConstant &v, FloatRegister dest)
+{
+    JS_ASSERT(v.type() == SimdConstant::Float32x4);
+    if (maybeInlineFloat32x4(v, dest))
+        return;
+    SimdData *f4 = getSimdData(v);
+    if (!f4)
+        return;
+    JS_ASSERT(f4->type() == SimdConstant::Float32x4);
+    masm.movaps_mr(reinterpret_cast<const void *>(f4->uses.prev()), dest.code());
+    f4->uses.setPrev(masm.size());
+}
+
 void
 MacroAssemblerX86::finish()
 {
@@ -128,6 +180,22 @@ MacroAssemblerX86::finish()
     for (size_t i = 0; i < floats_.length(); i++) {
         CodeLabel cl(floats_[i].uses);
         writeFloatConstant(floats_[i].value, cl.src());
+        enoughMemory_ &= addCodeLabel(cl);
+        if (!enoughMemory_)
+            return;
+    }
+
+    // SIMD memory values must be suitably aligned.
+    if (!simds_.empty())
+        masm.align(SimdStackAlignment);
+    for (size_t i = 0; i < simds_.length(); i++) {
+        CodeLabel cl(simds_[i].uses);
+        SimdData &v = simds_[i];
+        switch (v.type()) {
+          case SimdConstant::Int32x4:   writeInt32x4Constant(v.value, cl.src());   break;
+          case SimdConstant::Float32x4: writeFloat32x4Constant(v.value, cl.src()); break;
+          default: MOZ_CRASH("unexpected SimdConstant type");
+        }
         enoughMemory_ &= addCodeLabel(cl);
         if (!enoughMemory_)
             return;
@@ -159,7 +227,7 @@ MacroAssemblerX86::setupUnalignedABICall(uint32_t args, Register scratch)
     dynamicAlignment_ = true;
 
     movl(esp, scratch);
-    andl(Imm32(~(StackAlignment - 1)), esp);
+    andl(Imm32(~(ABIStackAlignment - 1)), esp);
     push(scratch);
 }
 
@@ -173,7 +241,7 @@ MacroAssemblerX86::passABIArg(const MoveOperand &from, MoveOp::Type type)
       case MoveOp::DOUBLE:  stackForCall_ += sizeof(double); break;
       case MoveOp::INT32:   stackForCall_ += sizeof(int32_t); break;
       case MoveOp::GENERAL: stackForCall_ += sizeof(intptr_t); break;
-      default: MOZ_ASSUME_UNREACHABLE("Unexpected argument type");
+      default: MOZ_CRASH("Unexpected argument type");
     }
     enoughMemory_ &= moveResolver_.addMove(from, to, type);
 }
@@ -199,11 +267,11 @@ MacroAssemblerX86::callWithABIPre(uint32_t *stackAdjust)
     if (dynamicAlignment_) {
         *stackAdjust = stackForCall_
                      + ComputeByteAlignment(stackForCall_ + sizeof(intptr_t),
-                                            StackAlignment);
+                                            ABIStackAlignment);
     } else {
         *stackAdjust = stackForCall_
                      + ComputeByteAlignment(stackForCall_ + framePushed_,
-                                            StackAlignment);
+                                            ABIStackAlignment);
     }
 
     reserveStack(*stackAdjust);
@@ -223,7 +291,7 @@ MacroAssemblerX86::callWithABIPre(uint32_t *stackAdjust)
     {
         // Check call alignment.
         Label good;
-        testl(esp, Imm32(StackAlignment - 1));
+        testl(esp, Imm32(ABIStackAlignment - 1));
         j(Equal, &good);
         breakpoint();
         bind(&good);

@@ -20,6 +20,8 @@
 #include <limits>
 #include "mozilla/dom/network/NetUtils.h"
 
+#include <errno.h>
+#include <string.h>
 #include <sys/types.h>  // struct addrinfo
 #include <sys/socket.h> // getaddrinfo(), freeaddrinfo()
 #include <netdb.h>
@@ -76,6 +78,8 @@ static const char* NETD_MESSAGE_DELIMIT = " ";
 
 static const uint32_t BUF_SIZE = 1024;
 
+static const int32_t SUCCESS = 0;
+
 static uint32_t SDK_VERSION;
 
 struct IFProperties {
@@ -96,6 +100,8 @@ typedef Tuple3<NetdCommand*, CommandChain*, CommandCallback> QueueData;
 #define GET_CURRENT_CHAIN          (gCommandQueue.IsEmpty() ? nullptr : gCommandQueue[0].b)
 #define GET_CURRENT_CALLBACK       (gCommandQueue.IsEmpty() ? nullptr : gCommandQueue[0].c)
 #define GET_CURRENT_COMMAND        (gCommandQueue.IsEmpty() ? nullptr : gCommandQueue[0].a->mData)
+
+#define CNT_OF_ARRAY(a) (sizeof(a) / sizeof(a[0]))
 
 static NetworkUtils* gNetworkUtils;
 static nsTArray<QueueData> gCommandQueue;
@@ -209,12 +215,6 @@ CommandFunc NetworkUtils::sStartDhcpServerChain[] = {
 CommandFunc NetworkUtils::sStopDhcpServerChain[] = {
   NetworkUtils::stopTethering,
   NetworkUtils::setDhcpServerSuccess
-};
-
-CommandFunc NetworkUtils::sNetworkInterfaceStatsChain[] = {
-  NetworkUtils::getRxBytes,
-  NetworkUtils::getTxBytes,
-  NetworkUtils::networkInterfaceStatsSuccess
 };
 
 CommandFunc NetworkUtils::sNetworkInterfaceEnableAlarmChain[] = {
@@ -351,24 +351,6 @@ static int getIpType(const char *aIp) {
   freeaddrinfo(ip_info);
 
   return type;
-}
-
-/**
- * Helper function to find the best match gateway. For now, return
- * the gateway that matches the address family passed.
- */
-static uint32_t selectGateway(nsTArray<nsString>& gateways, int addrFamily)
-{
-  uint32_t length = gateways.Length();
-
-  for (uint32_t i = 0; i < length; i++) {
-    NS_ConvertUTF16toUTF8 autoGateway(gateways[i]);
-    if ((getIpType(autoGateway.get()) == AF_INET && addrFamily == AF_INET) ||
-        (getIpType(autoGateway.get()) == AF_INET6 && addrFamily == AF_INET6)) {
-      return i;
-    }
-  }
-  return length; // invalid index.
 }
 
 static void postMessage(NetworkResultOptions& aResult)
@@ -615,29 +597,6 @@ void NetworkUtils::clearWifiTetherParms(CommandChain* aChain,
   delete gWifiTetheringParms;
   gWifiTetheringParms = 0;
   next(aChain, false, aResult);
-}
-
-void NetworkUtils::getRxBytes(CommandChain* aChain,
-                              CommandCallback aCallback,
-                              NetworkResultOptions& aResult)
-{
-  char command[MAX_COMMAND_SIZE];
-  snprintf(command, MAX_COMMAND_SIZE - 1, "interface readrxcounter %s", GET_CHAR(mIfname));
-
-  doCommand(command, aChain, aCallback);
-}
-
-void NetworkUtils::getTxBytes(CommandChain* aChain,
-                              CommandCallback aCallback,
-                              NetworkResultOptions& aResult)
-{
-  NetworkParams& options = aChain->getParams();
-  options.mRxBytes = atof(NS_ConvertUTF16toUTF8(aResult.mResultReason).get());
-
-  char command[MAX_COMMAND_SIZE];
-  snprintf(command, MAX_COMMAND_SIZE - 1, "interface readtxcounter %s", GET_CHAR(mIfname));
-
-  doCommand(command, aChain, aCallback);
 }
 
 void NetworkUtils::enableAlarm(CommandChain* aChain,
@@ -992,20 +951,6 @@ void NetworkUtils::usbTetheringSuccess(CommandChain* aChain,
   postMessage(aChain->getParams(), aResult);
 }
 
-void NetworkUtils::networkInterfaceStatsFail(NetworkParams& aOptions, NetworkResultOptions& aResult)
-{
-  postMessage(aOptions, aResult);
-}
-
-void NetworkUtils::networkInterfaceStatsSuccess(CommandChain* aChain,
-                                                CommandCallback aCallback,
-                                                NetworkResultOptions& aResult)
-{
-  ASSIGN_FIELD(mRxBytes)
-  ASSIGN_FIELD_VALUE(mTxBytes, atof(NS_ConvertUTF16toUTF8(aResult.mResultReason).get()))
-  postMessage(aChain->getParams(), aResult);
-}
-
 void NetworkUtils::networkInterfaceAlarmFail(NetworkParams& aOptions, NetworkResultOptions& aResult)
 {
   postMessage(aOptions, aResult);
@@ -1087,54 +1032,72 @@ NetworkUtils::~NetworkUtils()
 
 void NetworkUtils::ExecuteCommand(NetworkParams aOptions)
 {
-  bool ret = true;
+  typedef int32_t (NetworkUtils::*CommandHandler)(NetworkParams&);
 
-  if (aOptions.mCmd.EqualsLiteral("removeNetworkRoute")) {
-    removeNetworkRoute(aOptions);
-  } else if (aOptions.mCmd.EqualsLiteral("setDNS")) {
-    setDNS(aOptions);
-  } else if (aOptions.mCmd.EqualsLiteral("setDefaultRouteAndDNS")) {
-    setDefaultRouteAndDNS(aOptions);
-  } else if (aOptions.mCmd.EqualsLiteral("removeDefaultRoute")) {
-    removeDefaultRoute(aOptions);
-  } else if (aOptions.mCmd.EqualsLiteral("addHostRoute")) {
-    addHostRoute(aOptions);
-  } else if (aOptions.mCmd.EqualsLiteral("removeHostRoute")) {
-    removeHostRoute(aOptions);
-  } else if (aOptions.mCmd.EqualsLiteral("removeHostRoutes")) {
-    removeHostRoutes(aOptions);
-  } else if (aOptions.mCmd.EqualsLiteral("addSecondaryRoute")) {
-    addSecondaryRoute(aOptions);
-  } else if (aOptions.mCmd.EqualsLiteral("removeSecondaryRoute")) {
-    removeSecondaryRoute(aOptions);
-  } else if (aOptions.mCmd.EqualsLiteral("getNetworkInterfaceStats")) {
-    getNetworkInterfaceStats(aOptions);
-  } else if (aOptions.mCmd.EqualsLiteral("setNetworkInterfaceAlarm")) {
-    setNetworkInterfaceAlarm(aOptions);
-  } else if (aOptions.mCmd.EqualsLiteral("enableNetworkInterfaceAlarm")) {
-    enableNetworkInterfaceAlarm(aOptions);
-  } else if (aOptions.mCmd.EqualsLiteral("disableNetworkInterfaceAlarm")) {
-    disableNetworkInterfaceAlarm(aOptions);
-  } else if (aOptions.mCmd.EqualsLiteral("setWifiOperationMode")) {
-    setWifiOperationMode(aOptions);
-  } else if (aOptions.mCmd.EqualsLiteral("setDhcpServer")) {
-    setDhcpServer(aOptions);
-  } else if (aOptions.mCmd.EqualsLiteral("setWifiTethering")) {
-    setWifiTethering(aOptions);
-  } else if (aOptions.mCmd.EqualsLiteral("setUSBTethering")) {
-    setUSBTethering(aOptions);
-  } else if (aOptions.mCmd.EqualsLiteral("enableUsbRndis")) {
-    enableUsbRndis(aOptions);
-  } else if (aOptions.mCmd.EqualsLiteral("updateUpStream")) {
-    updateUpStream(aOptions);
-  } else {
-    WARN("unknon message");
+  const static struct {
+    const char* mCommandName;
+    CommandHandler mCommandHandler;
+  } COMMAND_HANDLER_TABLE[] = {
+
+    // For command 'testCommand', BUILD_ENTRY(testCommand) will generate
+    // {"testCommand", NetworkUtils::testCommand}
+    #define BUILD_ENTRY(c) {#c, &NetworkUtils::c}
+
+    BUILD_ENTRY(removeNetworkRoute),
+    BUILD_ENTRY(setDNS),
+    BUILD_ENTRY(setDefaultRouteAndDNS),
+    BUILD_ENTRY(removeDefaultRoute),
+    BUILD_ENTRY(addHostRoute),
+    BUILD_ENTRY(removeHostRoute),
+    BUILD_ENTRY(removeHostRoutes),
+    BUILD_ENTRY(addSecondaryRoute),
+    BUILD_ENTRY(removeSecondaryRoute),
+    BUILD_ENTRY(setNetworkInterfaceAlarm),
+    BUILD_ENTRY(enableNetworkInterfaceAlarm),
+    BUILD_ENTRY(disableNetworkInterfaceAlarm),
+    BUILD_ENTRY(setWifiOperationMode),
+    BUILD_ENTRY(setDhcpServer),
+    BUILD_ENTRY(setWifiTethering),
+    BUILD_ENTRY(setUSBTethering),
+    BUILD_ENTRY(enableUsbRndis),
+    BUILD_ENTRY(updateUpStream),
+
+    #undef BUILD_ENTRY
+  };
+
+  // Loop until we find the command name which matches aOptions.mCmd.
+  CommandHandler handler = nullptr;
+  for (size_t i = 0; i < CNT_OF_ARRAY(COMMAND_HANDLER_TABLE); i++) {
+    if (aOptions.mCmd.EqualsASCII(COMMAND_HANDLER_TABLE[i].mCommandName)) {
+      handler = COMMAND_HANDLER_TABLE[i].mCommandHandler;
+      break;
+    }
+  }
+
+  if (!handler) {
+    // Command not found in COMMAND_HANDLER_TABLE.
+    WARN("unknown message: %s", NS_ConvertUTF16toUTF8(aOptions.mCmd).get());
     return;
   }
 
+  // Command matches! Dispatch to the handler.
+  int32_t ret = 0;
+  ret = (this->*handler)(aOptions);
+
   if (!aOptions.mIsAsync) {
+    // The requested command is synchronous, which implies the actual result
+    // from netd is not important to the client. So, just notify the
+    // registered callback.
     NetworkResultOptions result;
-    result.mRet = ret;
+    result.mError = ret == SUCCESS ? false : true;
+    result.mResultCode = ret;
+    if (ret != SUCCESS) {
+      // The returned value is sometimes negative, make sure we pass a positive
+      // error number to strerror.
+      result.mReason = NS_ConvertUTF8toUTF16(strerror(abs(ret)));
+    }
+
+    result.mRet = true;
     postMessage(aOptions, result);
   }
 }
@@ -1220,7 +1183,7 @@ void NetworkUtils::onNetdMessage(NetdCommand* aCommand)
 /**
  * Start/Stop DHCP server.
  */
-bool NetworkUtils::setDhcpServer(NetworkParams& aOptions)
+int32_t NetworkUtils::setDhcpServer(NetworkParams& aOptions)
 {
   if (aOptions.mEnabled) {
     aOptions.mWifiStartIp = aOptions.mStartIp;
@@ -1233,13 +1196,13 @@ bool NetworkUtils::setDhcpServer(NetworkParams& aOptions)
   } else {
     RUN_CHAIN(aOptions, sStopDhcpServerChain, setDhcpServerFail)
   }
-  return true;
+  return SUCCESS;
 }
 
 /**
  * Set DNS servers for given network interface.
  */
-bool NetworkUtils::setDNS(NetworkParams& aOptions)
+int32_t NetworkUtils::setDNS(NetworkParams& aOptions)
 {
   uint32_t length = aOptions.mDnses.Length();
 
@@ -1273,13 +1236,13 @@ bool NetworkUtils::setDNS(NetworkParams& aOptions)
     RUN_CHAIN(aOptions, sSetDnsChain, setDnsFail)
   }
 
-  return true;
+  return SUCCESS;
 }
 
 /**
  * Set default route and DNS servers for given network interface.
  */
-bool NetworkUtils::setDefaultRouteAndDNS(NetworkParams& aOptions)
+int32_t NetworkUtils::setDefaultRouteAndDNS(NetworkParams& aOptions)
 {
   NS_ConvertUTF16toUTF8 autoIfname(aOptions.mIfname);
 
@@ -1316,7 +1279,7 @@ bool NetworkUtils::setDefaultRouteAndDNS(NetworkParams& aOptions)
 
     int type = getIpType(gateway);
     if (type != AF_INET && type != AF_INET6) {
-      return false;
+      return EAFNOSUPPORT;
     }
 
     if (type == AF_INET6) {
@@ -1327,13 +1290,13 @@ bool NetworkUtils::setDefaultRouteAndDNS(NetworkParams& aOptions)
   }
 
   setDNS(aOptions);
-  return true;
+  return SUCCESS;
 }
 
 /**
  * Remove default route for given network interface.
  */
-bool NetworkUtils::removeDefaultRoute(NetworkParams& aOptions)
+int32_t NetworkUtils::removeDefaultRoute(NetworkParams& aOptions)
 {
   uint32_t length = aOptions.mGateways.Length();
   for (uint32_t i = 0; i < length; i++) {
@@ -1341,7 +1304,7 @@ bool NetworkUtils::removeDefaultRoute(NetworkParams& aOptions)
 
     int type = getIpType(autoGateway.get());
     if (type != AF_INET && type != AF_INET6) {
-      return false;
+      return EAFNOSUPPORT;
     }
 
     mNetUtils->do_ifc_remove_route(GET_CHAR(mIfname),
@@ -1349,86 +1312,73 @@ bool NetworkUtils::removeDefaultRoute(NetworkParams& aOptions)
                                    0, autoGateway.get());
   }
 
-  return true;
+  return SUCCESS;
 }
 
 /**
  * Add host route for given network interface.
  */
-bool NetworkUtils::addHostRoute(NetworkParams& aOptions)
+int32_t NetworkUtils::addHostRoute(NetworkParams& aOptions)
 {
   NS_ConvertUTF16toUTF8 autoIfname(aOptions.mIfname);
+  NS_ConvertUTF16toUTF8 autoHostname(aOptions.mIp);
+  NS_ConvertUTF16toUTF8 autoGateway(aOptions.mGateway);
   int type, prefix;
 
-  uint32_t length = aOptions.mHostnames.Length();
-  for (uint32_t i = 0; i < length; i++) {
-    NS_ConvertUTF16toUTF8 autoHostname(aOptions.mHostnames[i]);
-
-    type = getIpType(autoHostname.get());
-    if (type != AF_INET && type != AF_INET6) {
-      continue;
-    }
-
-    uint32_t index = selectGateway(aOptions.mGateways, type);
-    if (index >= aOptions.mGateways.Length()) {
-      continue;
-    }
-
-    NS_ConvertUTF16toUTF8 autoGateway(aOptions.mGateways[index]);
-    prefix = type == AF_INET ? 32 : 128;
-    mNetUtils->do_ifc_add_route(autoIfname.get(), autoHostname.get(), prefix,
-                                autoGateway.get());
+  type = getIpType(autoHostname.get());
+  if (type != AF_INET && type != AF_INET6) {
+    return EAFNOSUPPORT;
   }
-  return true;
+
+  if (type != getIpType(autoGateway.get())) {
+    return EINVAL;
+  }
+
+  prefix = type == AF_INET ? 32 : 128;
+  return mNetUtils->do_ifc_add_route(autoIfname.get(), autoHostname.get(),
+                                     prefix, autoGateway.get());
 }
 
 /**
  * Remove host route for given network interface.
  */
-bool NetworkUtils::removeHostRoute(NetworkParams& aOptions)
+int32_t NetworkUtils::removeHostRoute(NetworkParams& aOptions)
 {
   NS_ConvertUTF16toUTF8 autoIfname(aOptions.mIfname);
+  NS_ConvertUTF16toUTF8 autoHostname(aOptions.mIp);
+  NS_ConvertUTF16toUTF8 autoGateway(aOptions.mGateway);
   int type, prefix;
 
-  uint32_t length = aOptions.mHostnames.Length();
-  for (uint32_t i = 0; i < length; i++) {
-    NS_ConvertUTF16toUTF8 autoHostname(aOptions.mHostnames[i]);
-
-    type = getIpType(autoHostname.get());
-    if (type != AF_INET && type != AF_INET6) {
-      continue;
-    }
-
-    uint32_t index = selectGateway(aOptions.mGateways, type);
-    if (index >= aOptions.mGateways.Length()) {
-      continue;
-    }
-
-    NS_ConvertUTF16toUTF8 autoGateway(aOptions.mGateways[index]);
-    prefix = type == AF_INET ? 32 : 128;
-    mNetUtils->do_ifc_remove_route(autoIfname.get(), autoHostname.get(), prefix,
-                                   autoGateway.get());
+  type = getIpType(autoHostname.get());
+  if (type != AF_INET && type != AF_INET6) {
+    return EAFNOSUPPORT;
   }
-  return true;
+
+  if (type != getIpType(autoGateway.get())) {
+    return EINVAL;
+  }
+
+  prefix = type == AF_INET ? 32 : 128;
+  return mNetUtils->do_ifc_remove_route(autoIfname.get(), autoHostname.get(),
+                                        prefix, autoGateway.get());
 }
 
 /**
  * Remove the routes associated with the named interface.
  */
-bool NetworkUtils::removeHostRoutes(NetworkParams& aOptions)
+int32_t NetworkUtils::removeHostRoutes(NetworkParams& aOptions)
 {
-  mNetUtils->do_ifc_remove_host_routes(GET_CHAR(mIfname));
-  return true;
+  return mNetUtils->do_ifc_remove_host_routes(GET_CHAR(mIfname));
 }
 
-bool NetworkUtils::removeNetworkRoute(NetworkParams& aOptions)
+int32_t NetworkUtils::removeNetworkRoute(NetworkParams& aOptions)
 {
   NS_ConvertUTF16toUTF8 autoIfname(aOptions.mIfname);
   NS_ConvertUTF16toUTF8 autoIp(aOptions.mIp);
 
   int type = getIpType(autoIp.get());
   if (type != AF_INET && type != AF_INET6) {
-    return false;
+    return EAFNOSUPPORT;
   }
 
   uint32_t prefixLength = GET_FIELD(mPrefixLength);
@@ -1437,7 +1387,7 @@ bool NetworkUtils::removeNetworkRoute(NetworkParams& aOptions)
     // Calculate subnet.
     struct in6_addr in6;
     if (inet_pton(AF_INET6, autoIp.get(), &in6) != 1) {
-      return false;
+      return EINVAL;
     }
 
     uint32_t p, i, p1, mask;
@@ -1452,7 +1402,7 @@ bool NetworkUtils::removeNetworkRoute(NetworkParams& aOptions)
 
     char subnetStr[INET6_ADDRSTRLEN];
     if (!inet_ntop(AF_INET6, &in6, subnetStr, sizeof subnetStr)) {
-      return false;
+      return EINVAL;
     }
 
     // Remove default route.
@@ -1460,7 +1410,7 @@ bool NetworkUtils::removeNetworkRoute(NetworkParams& aOptions)
 
     // Remove subnet route.
     mNetUtils->do_ifc_remove_route(autoIfname.get(), subnetStr, prefixLength, NULL);
-    return true;
+    return SUCCESS;
   }
 
   /* type == AF_INET */
@@ -1474,10 +1424,10 @@ bool NetworkUtils::removeNetworkRoute(NetworkParams& aOptions)
 
   mNetUtils->do_ifc_remove_default_route(autoIfname.get());
   mNetUtils->do_ifc_remove_route(autoIfname.get(), dst, prefixLength, gateway);
-  return true;
+  return SUCCESS;
 }
 
-bool NetworkUtils::addSecondaryRoute(NetworkParams& aOptions)
+int32_t NetworkUtils::addSecondaryRoute(NetworkParams& aOptions)
 {
   char command[MAX_COMMAND_SIZE];
   snprintf(command, MAX_COMMAND_SIZE - 1,
@@ -1488,10 +1438,10 @@ bool NetworkUtils::addSecondaryRoute(NetworkParams& aOptions)
            GET_CHAR(mGateway));
 
   doCommand(command, nullptr, nullptr);
-  return true;
+  return SUCCESS;
 }
 
-bool NetworkUtils::removeSecondaryRoute(NetworkParams& aOptions)
+int32_t NetworkUtils::removeSecondaryRoute(NetworkParams& aOptions)
 {
   char command[MAX_COMMAND_SIZE];
   snprintf(command, MAX_COMMAND_SIZE - 1,
@@ -1502,54 +1452,44 @@ bool NetworkUtils::removeSecondaryRoute(NetworkParams& aOptions)
            GET_CHAR(mGateway));
 
   doCommand(command, nullptr, nullptr);
-  return true;
+  return SUCCESS;
 }
 
-bool NetworkUtils::getNetworkInterfaceStats(NetworkParams& aOptions)
-{
-  DEBUG("getNetworkInterfaceStats: %s", GET_CHAR(mIfname));
-  aOptions.mRxBytes = -1;
-  aOptions.mTxBytes = -1;
-
-  RUN_CHAIN(aOptions, sNetworkInterfaceStatsChain, networkInterfaceStatsFail);
-  return  true;
-}
-
-bool NetworkUtils::setNetworkInterfaceAlarm(NetworkParams& aOptions)
+int32_t NetworkUtils::setNetworkInterfaceAlarm(NetworkParams& aOptions)
 {
   DEBUG("setNetworkInterfaceAlarms: %s", GET_CHAR(mIfname));
   RUN_CHAIN(aOptions, sNetworkInterfaceSetAlarmChain, networkInterfaceAlarmFail);
-  return true;
+  return SUCCESS;
 }
 
-bool NetworkUtils::enableNetworkInterfaceAlarm(NetworkParams& aOptions)
+int32_t NetworkUtils::enableNetworkInterfaceAlarm(NetworkParams& aOptions)
 {
   DEBUG("enableNetworkInterfaceAlarm: %s", GET_CHAR(mIfname));
   RUN_CHAIN(aOptions, sNetworkInterfaceEnableAlarmChain, networkInterfaceAlarmFail);
-  return true;
+  return SUCCESS;
 }
 
-bool NetworkUtils::disableNetworkInterfaceAlarm(NetworkParams& aOptions)
+int32_t NetworkUtils::disableNetworkInterfaceAlarm(NetworkParams& aOptions)
 {
   DEBUG("disableNetworkInterfaceAlarms: %s", GET_CHAR(mIfname));
   RUN_CHAIN(aOptions, sNetworkInterfaceDisableAlarmChain, networkInterfaceAlarmFail);
-  return true;
+  return SUCCESS;
 }
 
 /**
  * handling main thread's reload Wifi firmware request
  */
-bool NetworkUtils::setWifiOperationMode(NetworkParams& aOptions)
+int32_t NetworkUtils::setWifiOperationMode(NetworkParams& aOptions)
 {
   DEBUG("setWifiOperationMode: %s %s", GET_CHAR(mIfname), GET_CHAR(mMode));
   RUN_CHAIN(aOptions, sWifiOperationModeChain, wifiOperationModeFail);
-  return true;
+  return SUCCESS;
 }
 
 /**
  * handling main thread's enable/disable WiFi Tethering request
  */
-bool NetworkUtils::setWifiTethering(NetworkParams& aOptions)
+int32_t NetworkUtils::setWifiTethering(NetworkParams& aOptions)
 {
   bool enable = aOptions.mEnable;
   IFProperties interfaceProperties;
@@ -1578,10 +1518,10 @@ bool NetworkUtils::setWifiTethering(NetworkParams& aOptions)
            GET_CHAR(mInternalIfname), GET_CHAR(mExternalIfname));
     RUN_CHAIN(aOptions, sWifiDisableChain, wifiTetheringFail)
   }
-  return true;
+  return SUCCESS;
 }
 
-bool NetworkUtils::setUSBTethering(NetworkParams& aOptions)
+int32_t NetworkUtils::setUSBTethering(NetworkParams& aOptions)
 {
   bool enable = aOptions.mEnable;
   IFProperties interfaceProperties;
@@ -1610,7 +1550,7 @@ bool NetworkUtils::setUSBTethering(NetworkParams& aOptions)
            GET_CHAR(mInternalIfname), GET_CHAR(mExternalIfname));
     RUN_CHAIN(aOptions, sUSBDisableChain, usbTetheringFail)
   }
-  return true;
+  return SUCCESS;
 }
 
 void NetworkUtils::escapeQuote(nsCString& aString)
@@ -1654,7 +1594,7 @@ void NetworkUtils::checkUsbRndisState(NetworkParams& aOptions)
 /**
  * Modify usb function's property to turn on USB RNDIS function
  */
-bool NetworkUtils::enableUsbRndis(NetworkParams& aOptions)
+int32_t NetworkUtils::enableUsbRndis(NetworkParams& aOptions)
 {
   bool report = aOptions.mReport;
 
@@ -1712,16 +1652,16 @@ bool NetworkUtils::enableUsbRndis(NetworkParams& aOptions)
     usleep(USB_FUNCTION_RETRY_INTERVAL * 1000);
     checkUsbRndisState(aOptions);
   }
-  return true;
+  return SUCCESS;
 }
 
 /**
  * handling upstream interface change event.
  */
-bool NetworkUtils::updateUpStream(NetworkParams& aOptions)
+int32_t NetworkUtils::updateUpStream(NetworkParams& aOptions)
 {
   RUN_CHAIN(aOptions, sUpdateUpStreamChain, updateUpStreamFail)
-  return true;
+  return SUCCESS;
 }
 
 void NetworkUtils::sendBroadcastMessage(uint32_t code, char* reason)

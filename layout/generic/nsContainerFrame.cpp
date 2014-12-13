@@ -784,15 +784,15 @@ static nscoord GetCoord(const nsStyleCoord& aCoord, nscoord aIfNotCoord)
 }
 
 void
-nsContainerFrame::DoInlineIntrinsicWidth(nsRenderingContext *aRenderingContext,
-                                         InlineIntrinsicWidthData *aData,
-                                         nsLayoutUtils::IntrinsicWidthType aType)
+nsContainerFrame::DoInlineIntrinsicISize(nsRenderingContext *aRenderingContext,
+                                         InlineIntrinsicISizeData *aData,
+                                         nsLayoutUtils::IntrinsicISizeType aType)
 {
   if (GetPrevInFlow())
     return; // Already added.
 
-  NS_PRECONDITION(aType == nsLayoutUtils::MIN_WIDTH ||
-                  aType == nsLayoutUtils::PREF_WIDTH, "bad type");
+  NS_PRECONDITION(aType == nsLayoutUtils::MIN_ISIZE ||
+                  aType == nsLayoutUtils::PREF_ISIZE, "bad type");
 
   mozilla::css::Side startSide, endSide;
   if (StyleVisibility()->mDirection == NS_STYLE_DIRECTION_LTR) {
@@ -852,12 +852,12 @@ nsContainerFrame::DoInlineIntrinsicWidth(nsRenderingContext *aRenderingContext,
     }
     for (nsIFrame *kid = nif->mFrames.FirstChild(); kid;
          kid = kid->GetNextSibling()) {
-      if (aType == nsLayoutUtils::MIN_WIDTH)
-        kid->AddInlineMinWidth(aRenderingContext,
-                               static_cast<InlineMinWidthData*>(aData));
+      if (aType == nsLayoutUtils::MIN_ISIZE)
+        kid->AddInlineMinISize(aRenderingContext,
+                               static_cast<InlineMinISizeData*>(aData));
       else
-        kid->AddInlinePrefWidth(aRenderingContext,
-                                static_cast<InlinePrefWidthData*>(aData));
+        kid->AddInlinePrefISize(aRenderingContext,
+                                static_cast<InlinePrefISizeData*>(aData));
     }
 
     // After we advance to our next-in-flow, the stored line and line container
@@ -883,23 +883,30 @@ nsContainerFrame::DoInlineIntrinsicWidth(nsRenderingContext *aRenderingContext,
   }
 }
 
-/* virtual */ nsSize
+/* virtual */
+LogicalSize
 nsContainerFrame::ComputeAutoSize(nsRenderingContext *aRenderingContext,
-                                  nsSize aCBSize, nscoord aAvailableWidth,
-                                  nsSize aMargin, nsSize aBorder,
-                                  nsSize aPadding, bool aShrinkWrap)
+                                  WritingMode aWM,
+                                  const LogicalSize& aCBSize,
+                                  nscoord aAvailableISize,
+                                  const LogicalSize& aMargin,
+                                  const LogicalSize& aBorder,
+                                  const LogicalSize& aPadding,
+                                  bool aShrinkWrap)
 {
-  nsSize result(0xdeadbeef, NS_UNCONSTRAINEDSIZE);
-  nscoord availBased = aAvailableWidth - aMargin.width - aBorder.width -
-                       aPadding.width;
+  LogicalSize result(aWM, 0xdeadbeef, NS_UNCONSTRAINEDSIZE);
+  nscoord availBased = aAvailableISize - aMargin.ISize(aWM) -
+                       aBorder.ISize(aWM) - aPadding.ISize(aWM);
   // replaced elements always shrink-wrap
   if (aShrinkWrap || IsFrameOfType(eReplaced)) {
     // don't bother setting it if the result won't be used
-    if (StylePosition()->mWidth.GetUnit() == eStyleUnit_Auto) {
-      result.width = ShrinkWidthToFit(aRenderingContext, availBased);
+    const nsStyleCoord& inlineStyleCoord =
+      aWM.IsVertical() ? StylePosition()->mHeight : StylePosition()->mWidth;
+    if (inlineStyleCoord.GetUnit() == eStyleUnit_Auto) {
+      result.ISize(aWM) = ShrinkWidthToFit(aRenderingContext, availBased);
     }
   } else {
-    result.width = availBased;
+    result.ISize(aWM) = availBased;
   }
   return result;
 }
@@ -1113,7 +1120,9 @@ nsContainerFrame::ReflowOverflowContainerChildren(nsPresContext*           aPres
       nsRect prevRect = prevInFlow->GetRect();
 
       // Initialize reflow params
-      nsSize availSpace(prevRect.width, aReflowState.AvailableHeight());
+      WritingMode wm = frame->GetWritingMode();
+      LogicalSize availSpace(wm, LogicalSize(wm, prevRect.Size()).ISize(wm),
+                             aReflowState.AvailableSize(wm).BSize(wm));
       nsHTMLReflowMetrics desiredSize(aReflowState);
       nsHTMLReflowState frameState(aPresContext, aReflowState,
                                    frame, availSpace);

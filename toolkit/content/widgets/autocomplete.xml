@@ -5,11 +5,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-<!DOCTYPE bindings [
-<!ENTITY % actionsDTD SYSTEM "chrome://global/locale/actions.dtd">
-%actionsDTD;
-]>
-
 <bindings id="autocompleteBindings"
           xmlns="http://www.mozilla.org/xbl"
           xmlns:html="http://www.w3.org/1999/xhtml"
@@ -19,6 +14,7 @@
   <binding id="autocomplete" role="xul:combobox"
            extends="chrome://global/content/bindings/textbox.xml#textbox">
     <resources>
+      <stylesheet src="chrome://global/content/autocomplete.css"/>
       <stylesheet src="chrome://global/skin/autocomplete.css"/>
     </resources>
 
@@ -598,6 +594,7 @@
 
   <binding id="autocomplete-result-popup" extends="chrome://global/content/bindings/autocomplete.xml#autocomplete-base-popup">
     <resources>
+      <stylesheet src="chrome://global/content/autocomplete.css"/>
       <stylesheet src="chrome://global/skin/tree.css"/>
       <stylesheet src="chrome://global/skin/autocomplete.css"/>
     </resources>
@@ -745,7 +742,7 @@
             var nav = aElement.ownerDocument.defaultView.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
                               .getInterface(Components.interfaces.nsIWebNavigation);
             var docShell = nav.QueryInterface(Components.interfaces.nsIDocShell);
-            var docViewer = docShell.contentViewer.QueryInterface(Components.interfaces.nsIMarkupDocumentViewer);
+            var docViewer = docShell.contentViewer;
             var width = (rect.right - rect.left) * docViewer.fullZoom;
             this.setAttribute("width", width > 100 ? width : 100);
 
@@ -929,6 +926,7 @@ extends="chrome://global/content/bindings/popup.xml#popup">
 
   <binding id="autocomplete-rich-result-popup" extends="chrome://global/content/bindings/autocomplete.xml#autocomplete-base-popup">
     <resources>
+      <stylesheet src="chrome://global/content/autocomplete.css"/>
       <stylesheet src="chrome://global/skin/autocomplete.css"/>
     </resources>
 
@@ -1077,6 +1075,21 @@ extends="chrome://global/content/bindings/popup.xml#popup">
         </body>
       </method>
 
+      <method name="_getImageURLForResolution">
+        <parameter name="aWin"/>
+        <parameter name="aURL"/>
+        <parameter name="aWidth"/>
+        <parameter name="aHeight"/>
+        <body>
+          <![CDATA[
+          let width  = Math.round(aWidth * aWin.devicePixelRatio);
+          let height = Math.round(aHeight * aWin.devicePixelRatio);
+          return aURL + (aURL.contains("#") ? "&" : "#") +
+                 "-moz-resolution=" + width + "," + height;
+          ]]>
+        </body>
+      </method>
+
       <method name="_appendCurrentResult">
         <body>
           <![CDATA[
@@ -1121,7 +1134,8 @@ extends="chrome://global/content/bindings/popup.xml#popup">
 
             // set these attributes before we set the class
             // so that we can use them from the constructor
-            item.setAttribute("image", controller.getImageAt(this._currentIndex));
+            let iconURI = this._getImageURLForResolution(window, controller.getImageAt(this._currentIndex), 16, 16);
+            item.setAttribute("image", iconURI);
             item.setAttribute("url", url);
             item.setAttribute("title", controller.getCommentAt(this._currentIndex));
             item.setAttribute("type", controller.getStyleAt(this._currentIndex));
@@ -1267,6 +1281,15 @@ extends="chrome://global/content/bindings/popup.xml#popup">
             return title + " " + url;
           ]]>
         </getter>
+      </property>
+
+      <property name="_stringBundle">
+        <getter><![CDATA[
+          if (!this.__stringBundle) {
+            this.__stringBundle = Services.strings.createBundle("chrome://global/locale/autocomplete.properties");
+          }
+          return this.__stringBundle;
+        ]]></getter>
       </property>
 
       <field name="_boundaryCutoff">null</field>
@@ -1427,12 +1450,26 @@ extends="chrome://global/content/bindings/popup.xml#popup">
             let [,action, param] = url.match(/^moz-action:([^,]+),(.*)$/);
             this.setAttribute("actiontype", action);
             url = param;
-            let desc = "]]>&action.switchToTab.label;<![CDATA[";
+            let desc = this._stringBundle.GetStringFromName("switchToTab");
             this._setUpDescription(this._action, desc, true);
 
             // Remove the "action" substring so that the correct style, if any,
             // is applied below.
             types.splice(actionIndex, 1);
+            type = types.join(" ");
+          }
+
+          // Check if we have a search engine name
+          let searchEngine = "";
+          let searchIndex = types.indexOf("search");
+          if (searchIndex >= 0) {
+            const TITLE_SEARCH_ENGINE_SEPARATOR = " \u00B7\u2013\u00B7 ";
+
+            [title, searchEngine] = title.split(TITLE_SEARCH_ENGINE_SEPARATOR);
+
+            // Remove the "search" substring so that the correct style, if any,
+            // is applied below.
+            types.splice(searchIndex, 1);
             type = types.join(" ");
           }
 
@@ -1496,7 +1533,14 @@ extends="chrome://global/content/bindings/popup.xml#popup">
 
           // Emphasize the matching search terms for the description
           this._setUpDescription(this._title, title);
-          this._setUpDescription(this._url, url);
+          if (!searchEngine) {
+            this._setUpDescription(this._url, url);
+          } else {
+            let desc = this._stringBundle.formatStringFromName("searchWithEngine", [searchEngine], 1);
+
+            // The search engine name, when present, is not emphasized.
+            this._setUpDescription(this._url, desc, true);
+          }
 
           // Set up overflow on a timeout because the contents of the box
           // might not have a width yet even though we just changed them

@@ -19,7 +19,6 @@ namespace gmp {
 // Compressed (encoded) data goes from the Decoder parent to the child;
 // pool there, and then return with Encoded() frames and goes into the parent
 // pool.
-
 bool
 GMPSharedMemManager::MgrAllocShmem(GMPSharedMem::GMPMemoryClasses aClass, size_t aSize,
                                    ipc::Shmem::SharedMemory::SharedMemoryType aType,

@@ -14,10 +14,44 @@ import android.os.Looper;
  * The standard {@link android.os.AsyncTask} only runs onPostExecute on the
  * thread it is constructed on, so this is a convenience class for creating
  * tasks off the UI thread.
+ *
+ * We use generics differently to Android's AsyncTask.
+ * Android uses a "Params" type parameter to represent the type of all the parameters to this task.
+ * It then uses arguments of type Params... to permit arbitrarily-many of these to be passed
+ * fluently.
+ * 
+ * Unfortunately, since Java does not support generic array types (and since varargs desugars to a
+ * single array parameter) that behaviour exposes a hole in the type system. See:
+ * http://docs.oracle.com/javase/tutorial/java/generics/nonReifiableVarargsType.html#vulnerabilities
+ *
+ * Instead, we equivalently have a single type parameter "Param". A UiAsyncTask may take exactly one
+ * parameter of type Param. Since Param can be an array type, this no more restrictive than the
+ * other approach, it just provides additional type safety.
  */
-public abstract class UiAsyncTask<Params, Progress, Result> {
-    private volatile boolean mCancelled = false;
-    private final Handler mBackgroundThreadHandler;
+public abstract class UIAsyncTask<Param, Result> {
+    /**
+     * Provide a convenient API for parameter-free UiAsyncTasks by wrapping parameter-taking methods
+     * from UiAsyncTask in parameterless equivalents.
+     */
+    public static abstract class WithoutParams<InnerResult> extends UIAsyncTask<Void, InnerResult> {
+        public WithoutParams(Handler backgroundThreadHandler) {
+            super(backgroundThreadHandler);
+        }
+
+        public void execute() {
+            execute(null);
+        }
+
+        @Override
+        protected InnerResult doInBackground(Void unused) {
+            return doInBackground();
+        }
+
+        protected abstract InnerResult doInBackground();
+    }
+
+    /* inner-access */ final Handler mBackgroundThreadHandler;
+    private volatile boolean mCancelled;
     private static Handler sHandler;
 
     /**
@@ -25,7 +59,7 @@ public abstract class UiAsyncTask<Params, Progress, Result> {
      *
      * @param backgroundThreadHandler the handler to execute the background task on
      */
-    public UiAsyncTask(Handler backgroundThreadHandler) {
+    public UIAsyncTask(Handler backgroundThreadHandler) {
         mBackgroundThreadHandler = backgroundThreadHandler;
     }
 
@@ -33,44 +67,45 @@ public abstract class UiAsyncTask<Params, Progress, Result> {
         if (sHandler == null) {
             sHandler = new Handler(Looper.getMainLooper());
         }
+
         return sHandler;
     }
 
     private final class BackgroundTaskRunnable implements Runnable {
-        private Params[] mParams;
+        private Param mParam;
 
-        public BackgroundTaskRunnable(Params... params) {
-            mParams = params;
+        public BackgroundTaskRunnable(Param param) {
+            mParam = param;
         }
 
         @Override
         public void run() {
-            final Result result = doInBackground(mParams);
+            final Result result = doInBackground(mParam);
 
             getUiHandler().post(new Runnable() {
                 @Override
                 public void run() {
-                    if (mCancelled)
+                    if (mCancelled) {
                         onCancelled();
-                    else
+                    } else {
                         onPostExecute(result);
+                    }
                 }
             });
         }
     }
 
-    public final void execute(final Params... params) {
+    protected void execute(final Param param) {
         getUiHandler().post(new Runnable() {
             @Override
             public void run() {
                 onPreExecute();
-                mBackgroundThreadHandler.post(new BackgroundTaskRunnable(params));
+                mBackgroundThreadHandler.post(new BackgroundTaskRunnable(param));
             }
         });
     }
 
-    @SuppressWarnings({"UnusedParameters"})
-    public final boolean cancel(boolean mayInterruptIfRunning) {
+    public final boolean cancel() {
         mCancelled = true;
         return mCancelled;
     }
@@ -82,5 +117,5 @@ public abstract class UiAsyncTask<Params, Progress, Result> {
     protected void onPreExecute() { }
     protected void onPostExecute(Result result) { }
     protected void onCancelled() { }
-    protected abstract Result doInBackground(Params... params);
+    protected abstract Result doInBackground(Param param);
 }

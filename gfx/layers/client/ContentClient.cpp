@@ -32,7 +32,15 @@
 #ifdef XP_WIN
 #include "gfxWindowsPlatform.h"
 #endif
+#ifdef MOZ_WIDGET_GTK
+#include "gfxPlatformGtk.h"
+#endif
 #include "gfx2DGlue.h"
+#include "ReadbackLayer.h"
+
+#include <vector>
+
+using namespace std;
 
 namespace mozilla {
 
@@ -73,6 +81,13 @@ ContentClient::CreateContentClient(CompositableForwarder* aForwarder)
     useDoubleBuffering = !!gfxWindowsPlatform::GetPlatform()->GetD2DDevice();
   } else
 #endif
+#ifdef MOZ_WIDGET_GTK
+  // We can't use double buffering when using image content with
+  // Xrender support on Linux, as ContentHostDoubleBuffered is not
+  // suited for direct uploads to the server.
+  if (!gfxPlatformGtk::GetPlatform()->UseImageOffscreenSurfaces() ||
+      !gfxPlatformGtk::GetPlatform()->UseXRender())
+#endif
   {
     useDoubleBuffering = (LayerManagerComposite::SupportsDirectTexturing() &&
                          backend != LayersBackend::LAYERS_D3D9) ||
@@ -91,7 +106,7 @@ ContentClient::CreateContentClient(CompositableForwarder* aForwarder)
 }
 
 void
-ContentClient::EndPaint()
+ContentClient::EndPaint(nsTArray<ReadbackProcessor::Update>* aReadbackUpdates)
 {
   // It is very important that this is called after any overridden EndPaint behaviour,
   // because destroying textures is a three stage process:
@@ -147,6 +162,64 @@ ContentClientRemoteBuffer::DestroyBuffers()
   DestroyFrontBuffer();
 }
 
+class RemoteBufferReadbackProcessor : public TextureReadbackSink
+{
+public:
+  RemoteBufferReadbackProcessor(nsTArray<ReadbackProcessor::Update>* aReadbackUpdates,
+                                const nsIntRect& aBufferRect, const nsIntPoint& aBufferRotation)
+    : mReadbackUpdates(*aReadbackUpdates)
+    , mBufferRect(aBufferRect)
+    , mBufferRotation(aBufferRotation)
+  {
+    for (uint32_t i = 0; i < mReadbackUpdates.Length(); ++i) {
+      mLayerRefs.push_back(mReadbackUpdates[i].mLayer);
+    }
+  }
+
+  virtual void ProcessReadback(gfx::DataSourceSurface *aSourceSurface)
+  {
+    SourceRotatedBuffer rotBuffer(aSourceSurface, nullptr, mBufferRect, mBufferRotation);
+
+    for (uint32_t i = 0; i < mReadbackUpdates.Length(); ++i) {
+      ReadbackProcessor::Update& update = mReadbackUpdates[i];
+      nsIntPoint offset = update.mLayer->GetBackgroundLayerOffset();
+
+      ReadbackSink* sink = update.mLayer->GetSink();
+
+      if (!sink) {
+        continue;
+      }
+
+      if (!aSourceSurface) {
+        sink->SetUnknown(update.mSequenceCounter);
+        continue;
+      }
+
+      nsRefPtr<gfxContext> ctx =
+        sink->BeginUpdate(update.mUpdateRect + offset, update.mSequenceCounter);
+
+      if (!ctx) {
+        continue;
+      }
+
+      DrawTarget* dt = ctx->GetDrawTarget();
+      dt->SetTransform(Matrix::Translation(offset.x, offset.y));
+
+      rotBuffer.DrawBufferWithRotation(dt, RotatedBuffer::BUFFER_BLACK);
+
+      update.mLayer->GetSink()->EndUpdate(ctx, update.mUpdateRect + offset);
+    }
+  }
+
+private:
+  nsTArray<ReadbackProcessor::Update> mReadbackUpdates;
+  // This array is used to keep the layers alive until the callback.
+  vector<RefPtr<Layer>> mLayerRefs;
+
+  nsIntRect mBufferRect;
+  nsIntPoint mBufferRotation;
+};
+
 void
 ContentClientRemoteBuffer::BeginPaint()
 {
@@ -163,8 +236,10 @@ ContentClientRemoteBuffer::BeginPaint()
 }
 
 void
-ContentClientRemoteBuffer::EndPaint()
+ContentClientRemoteBuffer::EndPaint(nsTArray<ReadbackProcessor::Update>* aReadbackUpdates)
 {
+  MOZ_ASSERT(!mTextureClientOnWhite || !aReadbackUpdates || aReadbackUpdates->Length() == 0);
+
   // XXX: We might still not have a texture client if PaintThebes
   // decided we didn't need one yet because the region to draw was empty.
   SetBufferProvider(nullptr);
@@ -177,44 +252,18 @@ ContentClientRemoteBuffer::EndPaint()
   mOldTextures.Clear();
 
   if (mTextureClient && mTextureClient->IsLocked()) {
+    if (aReadbackUpdates->Length() > 0) {
+      RefPtr<TextureReadbackSink> readbackSink = new RemoteBufferReadbackProcessor(aReadbackUpdates, mBufferRect, mBufferRotation);
+
+      mTextureClient->SetReadbackSink(readbackSink);
+    }
+
     mTextureClient->Unlock();
   }
   if (mTextureClientOnWhite && mTextureClientOnWhite->IsLocked()) {
     mTextureClientOnWhite->Unlock();
   }
-  ContentClientRemote::EndPaint();
-}
-
-bool
-ContentClientRemoteBuffer::CreateAndAllocateTextureClient(RefPtr<TextureClient>& aClient,
-                                                          TextureFlags aFlags)
-{
-  TextureAllocationFlags allocFlags = TextureAllocationFlags::ALLOC_CLEAR_BUFFER;
-  if (aFlags & TextureFlags::ON_WHITE) {
-    allocFlags = TextureAllocationFlags::ALLOC_CLEAR_BUFFER_WHITE;
-  }
-
-  // gfx::BackendType::NONE means fallback to the content backend
-  aClient = CreateTextureClientForDrawing(mSurfaceFormat, mSize,
-                                          gfx::BackendType::NONE,
-                                          mTextureInfo.mTextureFlags | aFlags,
-                                          allocFlags);
-  if (!aClient) {
-    // try with ALLOC_FALLBACK
-    aClient = CreateTextureClientForDrawing(mSurfaceFormat, mSize,
-                                            gfx::BackendType::NONE,
-                                            mTextureInfo.mTextureFlags
-                                            | TextureFlags::ALLOC_FALLBACK
-                                            | aFlags,
-                                            allocFlags);
-  }
-
-  if (!aClient) {
-    return false;
-  }
-
-  NS_WARN_IF_FALSE(aClient->IsValid(), "Created an invalid texture client");
-  return true;
+  ContentClientRemote::EndPaint(aReadbackUpdates);
 }
 
 void
@@ -249,14 +298,23 @@ ContentClientRemoteBuffer::BuildTextureClients(SurfaceFormat aFormat,
 void
 ContentClientRemoteBuffer::CreateBackBuffer(const nsIntRect& aBufferRect)
 {
-  if (!CreateAndAllocateTextureClient(mTextureClient, TextureFlags::ON_BLACK) ||
-    !AddTextureClient(mTextureClient)) {
+  // gfx::BackendType::NONE means fallback to the content backend
+  mTextureClient = CreateTextureClientForDrawing(
+    mSurfaceFormat, mSize, gfx::BackendType::NONE,
+    mTextureInfo.mTextureFlags,
+    TextureAllocationFlags::ALLOC_CLEAR_BUFFER
+  );
+  if (!mTextureClient || !AddTextureClient(mTextureClient)) {
     AbortTextureClientCreation();
     return;
   }
+
   if (mTextureInfo.mTextureFlags & TextureFlags::COMPONENT_ALPHA) {
-    if (!CreateAndAllocateTextureClient(mTextureClientOnWhite, TextureFlags::ON_WHITE) ||
-      !AddTextureClient(mTextureClientOnWhite)) {
+    mTextureClientOnWhite = mTextureClient->CreateSimilar(
+      mTextureInfo.mTextureFlags,
+      TextureAllocationFlags::ALLOC_CLEAR_BUFFER_WHITE
+    );
+    if (!mTextureClientOnWhite || !AddTextureClient(mTextureClientOnWhite)) {
       AbortTextureClientCreation();
       return;
     }
@@ -499,14 +557,14 @@ ContentClientDoubleBuffered::FinalizeFrame(const nsIntRegion& aRegionToDraw)
     // Restrict the DrawTargets and frontBuffer to a scope to make
     // sure there is no more external references to the DrawTargets
     // when we Unlock the TextureClients.
-    RefPtr<DrawTarget> dt = mFrontClient->BorrowDrawTarget();
-    RefPtr<DrawTarget> dtOnWhite = mFrontClientOnWhite
-      ? mFrontClientOnWhite->BorrowDrawTarget()
+    RefPtr<SourceSurface> surf = mFrontClient->BorrowDrawTarget()->Snapshot();
+    RefPtr<SourceSurface> surfOnWhite = mFrontClientOnWhite
+      ? mFrontClientOnWhite->BorrowDrawTarget()->Snapshot()
       : nullptr;
-    RotatedBuffer frontBuffer(dt,
-                              dtOnWhite,
-                              mFrontBufferRect,
-                              mFrontBufferRotation);
+    SourceRotatedBuffer frontBuffer(surf,
+                                    surfOnWhite,
+                                    mFrontBufferRect,
+                                    mFrontBufferRotation);
     UpdateDestinationFrom(frontBuffer, updateRegion);
   }
 

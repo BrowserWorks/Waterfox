@@ -138,6 +138,9 @@ class Configuration:
                 getter = lambda x: x.interface.isJSImplemented()
             elif key == 'isNavigatorProperty':
                 getter = lambda x: x.interface.getNavigatorProperty() != None
+            elif key == 'isExposedInAnyWorker':
+                getter = lambda x: (not x.interface.isExternal() and
+                                    x.interface.isExposedInAnyWorker())
             else:
                 # Have to watch out: just closing over "key" is not enough,
                 # since we're about to mutate its value
@@ -445,17 +448,27 @@ class Descriptor(DescriptorProvider):
                 if permissionsIndex is not None:
                     self.checkPermissionsIndicesForMembers[m.identifier.name] = permissionsIndex
 
-            self.featureDetectibleThings = set()
-            if self.interface.getExtendedAttribute("FeatureDetectible") is not None:
-                if self.interface.getNavigatorProperty():
-                    self.featureDetectibleThings.add("Navigator.%s" % self.interface.getNavigatorProperty())
-                else:
-                    assert(self.interface.ctor() is not None)
-                    self.featureDetectibleThings.add(self.interface.identifier.name)
+            def isTestInterface(iface):
+                return (iface.identifier.name in ["TestInterface",
+                                                  "TestJSImplInterface",
+                                                  "TestRenamedInterface"])
 
-            for m in self.interface.members:
-                if m.getExtendedAttribute("FeatureDetectible") is not None:
-                    self.featureDetectibleThings.add("%s.%s" % (self.interface.identifier.name, m.identifier.name))
+            self.featureDetectibleThings = set()
+            if not isTestInterface(self.interface):
+                if (self.interface.getExtendedAttribute("CheckPermissions") or
+                    self.interface.getExtendedAttribute("AvailableIn") == "PrivilegedApps"):
+                    if self.interface.getNavigatorProperty():
+                        self.featureDetectibleThings.add("Navigator.%s" % self.interface.getNavigatorProperty())
+                    else:
+                        iface = self.interface.identifier.name
+                        self.featureDetectibleThings.add(iface)
+                        for m in self.interface.members:
+                            self.featureDetectibleThings.add("%s.%s" % (iface, m.identifier.name))
+
+                for m in self.interface.members:
+                    if (m.getExtendedAttribute("CheckPermissions") or
+                        m.getExtendedAttribute("AvailableIn") == "PrivilegedApps"):
+                        self.featureDetectibleThings.add("%s.%s" % (self.interface.identifier.name, m.identifier.name))
 
         # Build the prototype chain.
         self.prototypeChain = []
@@ -532,12 +545,13 @@ class Descriptor(DescriptorProvider):
             any((m.isAttr() or m.isMethod()) and m.isStatic() for m
                 in self.interface.members))
 
+    def hasThreadChecks(self):
+        return ((not self.workers and not self.interface.isExposedInWindow()) or
+                (self.interface.isExposedInAnyWorker() and
+                 self.interface.isExposedOnlyInSomeWorkers()))
+
     def isExposedConditionally(self):
-        return (self.interface.getExtendedAttribute("Pref") or
-                self.interface.getExtendedAttribute("ChromeOnly") or
-                self.interface.getExtendedAttribute("Func") or
-                self.interface.getExtendedAttribute("AvailableIn") or
-                self.interface.getExtendedAttribute("CheckPermissions"))
+        return self.interface.isExposedConditionally() or self.hasThreadChecks()
 
     def needsXrayResolveHooks(self):
         """
@@ -562,6 +576,14 @@ class Descriptor(DescriptorProvider):
         object or if we need to coerce null/undefined to the global.
         """
         return self.hasXPConnectImpls or self.interface.isOnGlobalProtoChain()
+
+    def isGlobal(self):
+        """
+        Returns true if this is the primary interface for a global object
+        of some sort.
+        """
+        return (self.interface.getExtendedAttribute("Global") or
+                self.interface.getExtendedAttribute("PrimaryGlobal"))
 
 # Some utility methods
 def getTypesFromDescriptor(descriptor):

@@ -7,8 +7,6 @@
 #ifndef jit_IonFrames_h
 #define jit_IonFrames_h
 
-#ifdef JS_ION
-
 #include <stdint.h>
 
 #include "jscntxt.h"
@@ -71,7 +69,7 @@ ScriptFromCalleeToken(CalleeToken token)
       case CalleeToken_Function:
         return CalleeTokenToFunction(token)->nonLazyScript();
     }
-    MOZ_ASSUME_UNREACHABLE("invalid callee token tag");
+    MOZ_CRASH("invalid callee token tag");
 }
 
 // In between every two frames lies a small header describing both frames. This
@@ -869,7 +867,5 @@ MarkCalleeToken(JSTracer *trc, CalleeToken token);
 
 } /* namespace jit */
 } /* namespace js */
-
-#endif // JS_ION
 
 #endif /* jit_IonFrames_h */

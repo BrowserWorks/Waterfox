@@ -32,6 +32,7 @@ OptimizationInfo::initNormalOptimizationInfo()
     licm_ = true;
     uce_ = true;
     rangeAnalysis_ = true;
+    loopUnrolling_ = true;
     autoTruncate_ = true;
     registerAllocator_ = RegisterAllocator_LSRA;
 
@@ -119,7 +120,7 @@ OptimizationInfos::nextLevel(OptimizationLevel level) const
       case Optimization_DontCompile:
         return Optimization_Normal;
       default:
-        MOZ_ASSUME_UNREACHABLE("Unknown optimization level.");
+        MOZ_CRASH("Unknown optimization level.");
     }
 }
 

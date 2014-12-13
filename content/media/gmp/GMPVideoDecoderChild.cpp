@@ -97,6 +97,14 @@ GMPVideoDecoderChild::ResetComplete()
   SendResetComplete();
 }
 
+void
+GMPVideoDecoderChild::Error(GMPErr aError)
+{
+  MOZ_ASSERT(mPlugin->GMPMessageLoop() == MessageLoop::current());
+
+  SendError(aError);
+}
+
 bool
 GMPVideoDecoderChild::RecvInitDecode(const GMPVideoCodec& aCodecSettings,
                                      const nsTArray<uint8_t>& aCodecSpecific,

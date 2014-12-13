@@ -65,7 +65,7 @@
               </hbox>
               <hbox id="apply" align="center">
                 <button id="updateButton" align="start"
-                        label="&update.updateButton.label;"
+                        label="&update.updateButton.label2;"
                         accesskey="&update.updateButton.accesskey;"
                         oncommand="gAppUpdater.buttonRestartAfterDownload();"/>
                 <spacer flex="1"/>
@@ -121,14 +121,14 @@
 #endif
             </description>
             <description class="text-blurb" id="communityExperimentalDesc">
-              &community.exp.start;<label class="text-link" href="https://www.waterfoxproject.org/">&community.exp.mozillaLink;</label>&community.exp.middle;<label class="text-link" href="about:credits">&community.exp.creditsLink;</label>&community.exp.end;
+              &community.exp.start;<label class="text-link" href="http://www.waterfoxproject.org/">&community.exp.mozillaLink;</label>&community.exp.middle;<label class="text-link" href="about:credits">&community.exp.creditsLink;</label>&community.exp.end;
             </description>
           </vbox>
           <description class="text-blurb" id="communityDesc">
-            &community.start2;<label class="text-link" href="https://www.waterfoxproject.org/">&community.mozillaLink;</label>&community.middle2;<label class="text-link" href="about:credits">&community.creditsLink;</label>&community.end3;
+            &community.start2;<label class="text-link" href="http://www.waterfoxproject.org/">&community.mozillaLink;</label>&community.middle2;<label class="text-link" href="about:credits">&community.creditsLink;</label>&community.end3;
           </description>
           <description class="text-blurb" id="contributeDesc">
-            &contribute.start;<label class="text-link" href="https://www.waterfoxproject.org/">&contribute.getInvolvedLink;</label>&contribute.end;
+            &contribute.start;<label class="text-link" href="https://www.waterfoxproject.org">&contribute.getInvolvedLink;</label>&contribute.end;
           </description>
         </vbox>
       </vbox>

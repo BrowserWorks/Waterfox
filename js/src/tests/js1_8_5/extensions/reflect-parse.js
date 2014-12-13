@@ -92,7 +92,12 @@ function newExpr(callee, args) Pattern({ type: "NewExpression", callee: callee, 
 function callExpr(callee, args) Pattern({ type: "CallExpression", callee: callee, arguments: args })
 function arrExpr(elts) Pattern({ type: "ArrayExpression", elements: elts })
 function objExpr(elts) Pattern({ type: "ObjectExpression", properties: elts })
+function computedName(elts) Pattern({ type: "ComputedName", name: elts })
 function templateLit(elts) Pattern({ type: "TemplateLiteral", elements: elts })
+function taggedTemplate(tagPart, templatePart) Pattern({ type: "TaggedTemplate", callee: tagPart,
+                arguments : templatePart })
+function template(raw, cooked, ...args) Pattern([{ type: "CallSiteObject", raw: raw, cooked:
+cooked}, ...args])
 function compExpr(body, blocks, filter) Pattern({ type: "ComprehensionExpression", body: body, blocks: blocks, filter: filter })
 function genExpr(body, blocks, filter) Pattern({ type: "GeneratorExpression", body: body, blocks: blocks, filter: filter })
 function graphExpr(idx, body) Pattern({ type: "GraphExpression", index: idx, expression: body })
@@ -375,6 +380,36 @@ program([exprStmt(ident("f")),
                 funDecl(ident("f"), [], blockStmt([])),
                 null)]).assert(Reflect.parse("f; if (1) function f(){}"));
 
+// Bug 924688: computed property names
+assertExpr('a= {[field1]: "a", [field2=1]: "b"}',
+          aExpr("=", ident("a"),
+                objExpr([{ key: computedName(ident("field1")), value: lit("a")},
+                         { key: computedName(aExpr("=", ident("field2"), lit(1))),
+                           value: lit("b")}])));
+
+assertExpr('a= {["field1"]: "a", field2 : "b"}',
+          aExpr("=", ident("a"),
+                objExpr([{ key: computedName(lit("field1")), value: lit("a") },
+                         { key: ident("field2"), value: lit("b") }])));
+
+assertExpr('a= {[1]: 1, 2 : 2}',
+          aExpr("=", ident("a"),
+                objExpr([{ key: computedName(lit(1)), value: lit(1) },
+                         { key: lit(2), value: lit(2) }])));
+
+// Bug 924688: computed property names - location information
+var node = Reflect.parse("a = {[field1]: 5}");
+Pattern({ body: [ { expression: { right: { properties: [ {key: { loc:
+    { start: { line: 1, column: 5 }, end: { line: 1, column: 13 }}}}]}}}]}).match(node);
+
+// Bug 1048384 - Getter/setter syntax with computed names
+assertExpr("b = { get [meth]() { } }", aExpr("=", ident("b"),
+              objExpr([{ key: computedName(ident("meth")), value: funExpr(null, [], blockStmt([])),
+                method: false, kind: "get"}])));
+assertExpr("b = { set [meth](a) { } }", aExpr("=", ident("b"),
+              objExpr([{ key: computedName(ident("meth")), value: funExpr(null, [ident("a")],
+                blockStmt([])), method: false, kind: "set"}])));
+
 // statements
 
 assertStmt("throw 42", throwStmt(lit(42)));
@@ -403,15 +438,28 @@ assertStmt("if (foo) { throw 1; throw 2; throw 3; } else true;",
            ifStmt(ident("foo"),
                   blockStmt([throwStmt(lit(1)), throwStmt(lit(2)), throwStmt(lit(3))]),
                   exprStmt(lit(true))));
-var hasTemplateStrings = false;  try { eval("``"); hasTemplateStrings = true; } catch (exc) { }
-if (hasTemplateStrings == true) {
-    assertStringExpr("`hey there`", literal("hey there"));
-    assertStringExpr("`hey\nthere`", literal("hey\nthere"));
-    assertExpr("`hey${\"there\"}`", templateLit([lit("hey"), lit("there"), lit("")]));
-    assertExpr("`hey${\"there\"}mine`", templateLit([lit("hey"), lit("there"), lit("mine")]));
-    assertExpr("`hey${a == 5}mine`", templateLit([lit("hey"), binExpr("==", ident("a"), lit(5)), lit("mine")]));
-    assertExpr("`hey${`there${\"how\"}`}mine`", templateLit([lit("hey"), templateLit([lit("there"), lit("how"), lit("")]), lit("mine")]));
-}
+
+// template strings
+assertStringExpr("`hey there`", literal("hey there"));
+assertStringExpr("`hey\nthere`", literal("hey\nthere"));
+assertExpr("`hey${\"there\"}`", templateLit([lit("hey"), lit("there"), lit("")]));
+assertExpr("`hey${\"there\"}mine`", templateLit([lit("hey"), lit("there"), lit("mine")]));
+assertExpr("`hey${a == 5}mine`", templateLit([lit("hey"), binExpr("==", ident("a"), lit(5)), lit("mine")]));
+assertExpr("`hey${`there${\"how\"}`}mine`", templateLit([lit("hey"),
+           templateLit([lit("there"), lit("how"), lit("")]), lit("mine")]));
+assertExpr("func`hey`", taggedTemplate(ident("func"), template(["hey"], ["hey"])));
+assertExpr("func`hey${\"4\"}there`", taggedTemplate(ident("func"),
+           template(["hey", "there"], ["hey", "there"], lit("4"))));
+assertExpr("func`hey${\"4\"}there${5}`", taggedTemplate(ident("func"),
+           template(["hey", "there", ""], ["hey", "there", ""],
+                  lit("4"), lit(5))));
+assertExpr("func`hey\r\n`", taggedTemplate(ident("func"), template(["hey\n"], ["hey\n"])));
+assertExpr("func`hey${4}``${5}there``mine`",
+           taggedTemplate(taggedTemplate(taggedTemplate(
+               ident("func"), template(["hey", ""], ["hey", ""], lit(4))),
+               template(["", "there"], ["", "there"], lit(5))),
+               template(["mine"], ["mine"])));
+
 assertStringExpr("\"hey there\"", literal("hey there"));
 
 assertStmt("foo: for(;;) break foo;", labStmt(ident("foo"), forStmt(null, null, null, breakStmt(ident("foo")))));
@@ -460,6 +508,16 @@ assertStmt("try { } catch (e if foo) { } catch (e if bar) { } catch (e) { } fina
                      catchClause(ident("e"), ident("bar"), blockStmt([])) ],
                    catchClause(ident("e"), null, blockStmt([])),
                    blockStmt([])));
+
+
+// Bug 924672: Method definitions
+assertExpr("b = { a() { } }", aExpr("=", ident("b"),
+              objExpr([{ key: ident("a"), value: funExpr(ident("a"), [], blockStmt([])), method:
+              true}])));
+
+assertExpr("b = { *a() { } }", aExpr("=", ident("b"),
+              objExpr([{ key: ident("a"), value: genFunExpr(ident("a"), [], blockStmt([])), method:
+              true}])));
 
 // Bug 632028: yield outside of a function should throw
 (function() {
@@ -599,6 +657,9 @@ testParamPatternCombinations(function(n) ("{a" + n + ":x" + n + "," + "b" + n + 
 testParamPatternCombinations(function(n) ("[x" + n + "," + "y" + n + "," + "z" + n + "]"),
                              function(n) (arrPatt([ident("x" + n), ident("y" + n), ident("z" + n)])));
 
+testParamPatternCombinations(function(n) ("[a" + n + ", ..." + "b" + n + "]"),
+                             function(n) (arrPatt([ident("a" + n), spread(ident("b" + n))])));
+
 
 // destructuring variable declarations
 
@@ -634,6 +695,10 @@ testVarPatternCombinations(function (n) ("{a" + n + ":x" + n + "," + "b" + n + "
 
 testVarPatternCombinations(function(n) ("[x" + n + "," + "y" + n + "," + "z" + n + "] = 0"),
                            function(n) ({ id: arrPatt([ident("x" + n), ident("y" + n), ident("z" + n)]),
+                                          init: lit(0) }));
+
+testVarPatternCombinations(function(n) ("[a" + n + ", ..." + "b" + n + "] = 0"),
+                           function(n) ({ id: arrPatt([ident("a" + n), spread(ident("b" + n))]),
                                           init: lit(0) }));
 
 // destructuring assignment

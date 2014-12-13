@@ -23,6 +23,12 @@ XPCOMUtils.defineLazyModuleGetter(this, "TelemetryStopwatch",
   "resource://gre/modules/TelemetryStopwatch.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Deprecated",
   "resource://gre/modules/Deprecated.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "SearchStaticData",
+  "resource://gre/modules/SearchStaticData.jsm");
+
+XPCOMUtils.defineLazyServiceGetter(this, "gTextToSubURI",
+                                   "@mozilla.org/intl/texttosuburi;1",
+                                   "nsITextToSubURI");
 
 // A text encoder to UTF8, used whenever we commit the
 // engine metadata to disk.
@@ -30,9 +36,6 @@ XPCOMUtils.defineLazyGetter(this, "gEncoder",
                             function() {
                               return new TextEncoder();
                             });
-
-const PERMS_FILE      = 0644;
-const PERMS_DIRECTORY = 0755;
 
 const MODE_RDONLY   = 0x01;
 const MODE_WRONLY   = 0x02;
@@ -655,7 +658,7 @@ function getSanitizedFile(aName) {
   var fileName = sanitizeName(aName) + ".xml";
   var file = getDir(NS_APP_USER_SEARCH_DIR);
   file.append(fileName);
-  file.createUnique(Ci.nsIFile.NORMAL_FILE_TYPE, PERMS_FILE);
+  file.createUnique(Ci.nsIFile.NORMAL_FILE_TYPE, FileUtils.PERMS_FILE);
   return file;
 }
 
@@ -904,6 +907,11 @@ EngineURL.prototype = {
     return new Submission(makeURI(url), postData);
   },
 
+  _getTermsParameterName: function SRCH_EURL__getTermsParameterName() {
+    let queryParam = this.params.find(p => p.value == USER_DEFINED);
+    return queryParam ? queryParam.name : "";
+  },
+
   _hasRelation: function SRC_EURL__hasRelation(aRel)
     this.rels.some(function(e) e == aRel.toLowerCase()),
 
@@ -1119,6 +1127,8 @@ Engine.prototype = {
   _iconUpdateURL: null,
   /* Deferred serialization task. */
   _lazySerializeTask: null,
+  /* The extension ID if added by an extension. */
+  _extensionID: null,
 
   /**
    * Retrieves the data from the engine's file. If the engine's dataType is
@@ -1133,7 +1143,7 @@ Engine.prototype = {
     var fileInStream = Cc["@mozilla.org/network/file-input-stream;1"].
                        createInstance(Ci.nsIFileInputStream);
 
-    fileInStream.init(this._file, MODE_RDONLY, PERMS_FILE, false);
+    fileInStream.init(this._file, MODE_RDONLY, FileUtils.PERMS_FILE, false);
 
     if (this._dataType == SEARCH_DATA_XML) {
       var domParser = Cc["@mozilla.org/xmlextras/domparser;1"].
@@ -1573,7 +1583,7 @@ Engine.prototype = {
               "\" for engine: \"" + this.name + "\"");
           var chan = NetUtil.ioService.newChannelFromURI(uri);
 
-          function iconLoadCallback(aByteArray, aEngine) {
+          let iconLoadCallback = function (aByteArray, aEngine) {
             // This callback may run after we've already set a preferred icon,
             // so check again.
             if (aEngine._hasPreferredIcon && !aIsPreferred)
@@ -1665,7 +1675,7 @@ Engine.prototype = {
    */
   _initFromMetadata: function SRCH_ENG_initMetaData(aName, aIconURL, aAlias,
                                                     aDescription, aMethod,
-                                                    aTemplate) {
+                                                    aTemplate, aExtensionID) {
     ENSURE_WARN(!this._readOnly,
                 "Can't call _initFromMetaData on a readonly engine!",
                 Cr.NS_ERROR_FAILURE);
@@ -1676,6 +1686,7 @@ Engine.prototype = {
     this.alias = aAlias;
     this._description = aDescription;
     this._setIcon(aIconURL, true);
+    this._extensionID = aExtensionID;
 
     this._serializeToFile();
   },
@@ -1853,6 +1864,9 @@ Engine.prototype = {
         case "IconUpdateUrl":
           this._iconUpdateURL = child.textContent;
           break;
+        case "ExtensionID":
+          this._extensionID = child.textContent;
+          breakk;
       }
     }
     if (!this.name || (this._urls.length == 0))
@@ -2197,6 +2211,9 @@ Engine.prototype = {
       this._readOnly = false;
     this._iconURI = makeURI(aJson._iconURL);
     this._iconMapObj = aJson._iconMapObj;
+    if (aJson.extensionID) {
+      this._extensionID = aJson.extensionID;
+    }
     for (let i = 0; i < aJson._urls.length; ++i) {
       let url = aJson._urls[i];
       let engineURL = new EngineURL(url.type || URLTYPE_SEARCH_HTML,
@@ -2248,6 +2265,9 @@ Engine.prototype = {
       json._dataType = this._dataType;
     if (!this._readOnly || !aFilter)
       json._readOnly = this._readOnly;
+    if (this._extensionID) {
+      json.extensionID = this._extensionID;
+    }
 
     return json;
   },
@@ -2293,6 +2313,10 @@ Engine.prototype = {
     appendTextNode(MOZSEARCH_NS_10, "IconUpdateUrl", this._iconUpdateURL);
     appendTextNode(MOZSEARCH_NS_10, "SearchForm", this._searchForm);
 
+    if (this._extensionID) {
+      appendTextNode(MOZSEARCH_NS_10, "ExtensionID", this._extensionID);
+    }
+
     for (var i = 0; i < this._urls.length; ++i)
       this._urls[i]._serializeToElement(doc, docElem);
     docElem.appendChild(doc.createTextNode("\n"));
@@ -2328,7 +2352,7 @@ Engine.prototype = {
     // if this somehow fails.
     var doc = this._serializeToElement();
 
-    fos.init(file, (MODE_WRONLY | MODE_TRUNCATE), PERMS_FILE, 0);
+    fos.init(file, (MODE_WRONLY | MODE_TRUNCATE), FileUtils.PERMS_FILE, 0);
 
     try {
       var serializer = Cc["@mozilla.org/xmlextras/xmlserializer;1"].
@@ -2459,7 +2483,7 @@ Engine.prototype = {
     }
     return null;
   },
-    
+
   // The file that the plugin is loaded from is a unique identifier for it.  We
   // use this as the identifier to store data in the sqlite database
   __id: null,
@@ -2641,14 +2665,12 @@ Engine.prototype = {
     }
 
     LOG("getSubmission: In data: \"" + aData + "\"; Purpose: \"" + aPurpose + "\"");
-    var textToSubURI = Cc["@mozilla.org/intl/texttosuburi;1"].
-                       getService(Ci.nsITextToSubURI);
     var data = "";
     try {
-      data = textToSubURI.ConvertAndEscape(this.queryCharset, aData);
+      data = gTextToSubURI.ConvertAndEscape(this.queryCharset, aData);
     } catch (ex) {
       LOG("getSubmission: Falling back to default queryCharset!");
-      data = textToSubURI.ConvertAndEscape(DEFAULT_QUERY_CHARSET, aData);
+      data = gTextToSubURI.ConvertAndEscape(DEFAULT_QUERY_CHARSET, aData);
     }
     LOG("getSubmission: Out data: \"" + data + "\"");
     return url.getSubmission(data, this, aPurpose);
@@ -2676,6 +2698,36 @@ Engine.prototype = {
     if (url)
       return url.resultDomain;
     return "";
+  },
+
+  /**
+   * Returns URL parsing properties used by _buildParseSubmissionMap.
+   */
+  getURLParsingInfo: function () {
+#ifdef ANDROID
+    let responseType = this._defaultMobileResponseType;
+#else
+    let responseType = URLTYPE_SEARCH_HTML;
+#endif
+
+    LOG("getURLParsingInfo: responseType: \"" + responseType + "\"");
+
+    let url = this._getURLOfType(responseType);
+    if (!url || url.method != "GET") {
+      return null;
+    }
+
+    let termsParameterName = url._getTermsParameterName();
+    if (!termsParameterName) {
+      return null;
+    }
+
+    let templateUrl = NetUtil.newURI(url.template).QueryInterface(Ci.nsIURL);
+    return {
+      mainDomain: templateUrl.host,
+      path: templateUrl.filePath.toLowerCase(),
+      termsParameterName: termsParameterName,
+    };
   },
 
   // nsISupports
@@ -2788,6 +2840,24 @@ Submission.prototype = {
     throw Cr.NS_ERROR_NO_INTERFACE;
   }
 }
+
+// nsISearchParseSubmissionResult
+function ParseSubmissionResult(aEngine, aTerms) {
+  this._engine = aEngine;
+  this._terms = aTerms;
+}
+ParseSubmissionResult.prototype = {
+  get engine() {
+    return this._engine;
+  },
+  get terms() {
+    return this._terms;
+  },
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsISearchParseSubmissionResult]),
+}
+
+const gEmptyParseSubmissionResult =
+      Object.freeze(new ParseSubmissionResult(null, ""));
 
 function executeSoon(func) {
   Services.tm.mainThread.dispatch(func, Ci.nsIThread.DISPATCH_NORMAL);
@@ -3197,18 +3267,27 @@ SearchService.prototype = {
     // Clear the engines, too, so we don't stick with the stale ones.
     this._engines = {};
     this.__sortedEngines = null;
+    this._currentEngine = null;
+    this._defaultEngine = null;
 
-    // Typically we'll re-init as a result of a pref observer,
-    // so signal to 'callers' that we're done. 
-    return this._asyncLoadEngines()
-               .then(() => {
-                       Services.obs.notifyObservers(null, SEARCH_SERVICE_TOPIC, "reinit-complete");
-                       gInitialized = true;
-                     },
-                     (err) => {
-                       LOG("Reinit failed: " + err);
-                       Services.obs.notifyObservers(null, SEARCH_SERVICE_TOPIC, "reinit-failed");
-                     });
+    // Clear the metadata service.
+    engineMetadataService._initState = engineMetadataService._InitStates.NOT_STARTED;
+    engineMetadataService._initializer = null;
+
+    Task.spawn(function* () {
+      try {
+        yield engineMetadataService.init();
+        yield this._asyncLoadEngines();
+
+        // Typically we'll re-init as a result of a pref observer,
+        // so signal to 'callers' that we're done.
+        Services.obs.notifyObservers(null, SEARCH_SERVICE_TOPIC, "reinit-complete");
+        gInitialized = true;
+      } catch (err) {
+        LOG("Reinit failed: " + err);
+        Services.obs.notifyObservers(null, SEARCH_SERVICE_TOPIC, "reinit-failed");
+      }
+    }.bind(this));
   },
 
   _readCacheFile: function SRCH_SVC__readCacheFile(aFile) {
@@ -3217,7 +3296,7 @@ SearchService.prototype = {
     let json = Cc["@mozilla.org/dom/json;1"].createInstance(Ci.nsIJSON);
 
     try {
-      stream.init(aFile, MODE_RDONLY, PERMS_FILE, 0);
+      stream.init(aFile, MODE_RDONLY, FileUtils.PERMS_FILE, 0);
       return json.decodeFromStream(stream, stream.available());
     } catch (ex) {
       LOG("_readCacheFile: Error reading cache file: " + ex);
@@ -3313,7 +3392,7 @@ SearchService.prototype = {
       // Schedule the engine's next update, if it isn't already.
       if (!engineMetadataService.getAttr(aEngine, "updateexpir"))
         engineUpdateService.scheduleNextUpdate(aEngine);
-  
+
       // We need to save the engine's _dataType, if this is the first time the
       // engine is added to the dataStore, since ._dataType isn't persisted
       // and will change on the next startup (since the engine will then be
@@ -3533,7 +3612,7 @@ SearchService.prototype = {
 
       names.forEach(function (n) uris.push(root + n + ".xml"));
     });
-    
+
     return [chromeFiles, uris];
   },
 
@@ -3642,7 +3721,7 @@ SearchService.prototype = {
     if (getBoolPref(BROWSER_SEARCH_PREF + "useDBForOrder", false)) {
       LOG("_buildSortedEngineList: using db for order");
 
-      // Flag to keep track of whether or not we need to call _saveSortedEngineList. 
+      // Flag to keep track of whether or not we need to call _saveSortedEngineList.
       let needToSaveEngineList = false;
 
       for each (engine in this._engines) {
@@ -3700,7 +3779,7 @@ SearchService.prototype = {
         engine = this._engines[engineName];
         if (!engine || engine.name in addedEngines)
           continue;
-        
+
         this.__sortedEngines.push(engine);
         addedEngines[engine.name] = engine;
       }
@@ -3733,13 +3812,29 @@ SearchService.prototype = {
                                       });
   },
 
-  _setEngineByPref: function SRCH_SVC_setEngineByPref(aEngineType, aPref) {
-    this._ensureInitialized();
-    let newEngine = this.getEngineByName(getLocalizedPref(aPref, ""));
-    if (!newEngine)
-      FAIL("Can't find engine in store!", Cr.NS_ERROR_UNEXPECTED);
+  _getVerificationHash: function SRCH_SVC__getVerificationHash(aName) {
+    let disclaimer = "By modifying this file, I agree that I am doing so " +
+      "only within $appName itself, using official, user-driven search " +
+      "engine selection processes, and in a way which does not circumvent " +
+      "user consent. I acknowledge that any attempt to change this file " +
+      "from outside of $appName is a malicious act, and will be responded " +
+      "to accordingly."
 
-    this[aEngineType] = newEngine;
+    let salt = OS.Path.basename(OS.Constants.Path.profileDir) + aName +
+               disclaimer.replace(/\$appName/g, Services.appinfo.name);
+
+    let converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]
+                      .createInstance(Ci.nsIScriptableUnicodeConverter);
+    converter.charset = "UTF-8";
+
+    // Data is an array of bytes.
+    let data = converter.convertToByteArray(salt, {});
+    let hasher = Cc["@mozilla.org/security/hash;1"]
+                   .createInstance(Ci.nsICryptoHash);
+    hasher.init(hasher.SHA256);
+    hasher.update(data, data.length);
+
+    return hasher.finish(true);
   },
 
   // nsIBrowserSearchService
@@ -3874,7 +3969,7 @@ SearchService.prototype = {
 
   addEngineWithDetails: function SRCH_SVC_addEWD(aName, aIconURL, aAlias,
                                                  aDescription, aMethod,
-                                                 aTemplate) {
+                                                 aTemplate, aExtensionID) {
     this._ensureInitialized();
     if (!aName)
       FAIL("Invalid name passed to addEngineWithDetails!");
@@ -3887,10 +3982,8 @@ SearchService.prototype = {
 
     var engine = new Engine(getSanitizedFile(aName), SEARCH_DATA_XML, false);
     engine._initFromMetadata(aName, aIconURL, aAlias, aDescription,
-                             aMethod, aTemplate);
+                             aMethod, aTemplate, aExtensionID);
     this._addEngineToStore(engine);
-    this.batchTask.disarm();
-    this.batchTask.arm();
   },
 
   addEngine: function SRCH_SVC_addEngine(aEngineURL, aDataType, aIconURL,
@@ -4000,7 +4093,7 @@ SearchService.prototype = {
     // need to adjust aNewIndex accordingly. To do this, we count the number
     // of hidden engines in the list before the engine that we're taking the
     // place of. We do this by first finding newIndexEngine (the engine that
-    // we were supposed to replace) and then iterating through the complete 
+    // we were supposed to replace) and then iterating through the complete
     // engine list until we reach it, increasing aNewIndex for each hidden
     // engine we find on our way there.
     //
@@ -4070,9 +4163,6 @@ SearchService.prototype = {
 
     this._defaultEngine = newDefaultEngine;
 
-    // Set a flag to keep track that this setter was called properly, not by
-    // setting the pref alone.
-    this._changingDefaultEngine = true;
     let defPref = BROWSER_SEARCH_PREF + "defaultenginename";
     // If we change the default engine in the future, that change should impact
     // users who have switched away from and then back to the build's "default"
@@ -4085,7 +4175,6 @@ SearchService.prototype = {
     else {
       setLocalizedPref(defPref, this._defaultEngine.name);
     }
-    this._changingDefaultEngine = false;
 
     notifyAction(this._defaultEngine, SEARCH_ENGINE_DEFAULT);
   },
@@ -4093,13 +4182,16 @@ SearchService.prototype = {
   get currentEngine() {
     this._ensureInitialized();
     if (!this._currentEngine) {
-      let selectedEngine = getLocalizedPref(BROWSER_SEARCH_PREF +
-                                            "selectedEngine");
-      this._currentEngine = this.getEngineByName(selectedEngine);
+      let name = engineMetadataService.getGlobalAttr("current");
+      if (engineMetadataService.getGlobalAttr("hash") == this._getVerificationHash(name)) {
+        this._currentEngine = this.getEngineByName(name);
+      }
     }
 
     if (!this._currentEngine || this._currentEngine.hidden)
-      this._currentEngine = this.defaultEngine;
+      this._currentEngine = this._originalDefaultEngine;
+    if (!this._currentEngine || this._currentEngine.hidden)
+      this._currentEngine = this._getSortedEngines(false)[0];
     return this._currentEngine;
   },
 
@@ -4120,25 +4212,165 @@ SearchService.prototype = {
 
     this._currentEngine = newCurrentEngine;
 
-    var currentEnginePref = BROWSER_SEARCH_PREF + "selectedEngine";
-
-    // Set a flag to keep track that this setter was called properly, not by
-    // setting the pref alone.
-    this._changingCurrentEngine = true;
     // If we change the default engine in the future, that change should impact
     // users who have switched away from and then back to the build's "default"
     // engine. So clear the user pref when the currentEngine is set to the
     // build's default engine, so that the currentEngine getter falls back to
     // whatever the default is.
+    let newName = this._currentEngine.name;
     if (this._currentEngine == this._originalDefaultEngine) {
-      Services.prefs.clearUserPref(currentEnginePref);
+      newName = "";
     }
-    else {
-      setLocalizedPref(currentEnginePref, this._currentEngine.name);
-    }
-    this._changingCurrentEngine = false;
+
+    engineMetadataService.setGlobalAttr("current", newName);
+    engineMetadataService.setGlobalAttr("hash", this._getVerificationHash(newName));
 
     notifyAction(this._currentEngine, SEARCH_ENGINE_CURRENT);
+  },
+
+  /**
+   * This map is built lazily after the available search engines change.  It
+   * allows quick parsing of an URL representing a search submission into the
+   * search engine name and original terms.
+   *
+   * The keys are strings containing the domain name and lowercase path of the
+   * engine submission, for example "www.google.com/search".
+   *
+   * The values are objects with these properties:
+   * {
+   *   engine: The associated nsISearchEngine.
+   *   termsParameterName: Name of the URL parameter containing the search
+   *                       terms, for example "q".
+   * }
+   */
+  _parseSubmissionMap: null,
+
+  _buildParseSubmissionMap: function SRCH_SVC__buildParseSubmissionMap() {
+    LOG("_buildParseSubmissionMap");
+    this._parseSubmissionMap = new Map();
+
+    // Used only while building the map, indicates which entries do not refer to
+    // the main domain of the engine but to an alternate domain, for example
+    // "www.google.fr" for the "www.google.com" search engine.
+    let keysOfAlternates = new Set();
+
+    for (let engine of this._sortedEngines) {
+      LOG("Processing engine: " + engine.name);
+
+      if (engine.hidden) {
+        LOG("Engine is hidden.");
+        continue;
+      }
+
+      let urlParsingInfo = engine.getURLParsingInfo();
+      if (!urlParsingInfo) {
+        LOG("Engine does not support URL parsing.");
+        continue;
+      }
+
+      // Store the same object on each matching map key, as an optimization.
+      let mapValueForEngine = {
+        engine: engine,
+        termsParameterName: urlParsingInfo.termsParameterName,
+      };
+
+      let processDomain = (domain, isAlternate) => {
+        let key = domain + urlParsingInfo.path;
+
+        // Apply the logic for which main domains take priority over alternate
+        // domains, even if they are found later in the ordered engine list.
+        let existingEntry = this._parseSubmissionMap.get(key);
+        if (!existingEntry) {
+          LOG("Adding new entry: " + key);
+          if (isAlternate) {
+            keysOfAlternates.add(key);
+          }
+        } else if (!isAlternate && keysOfAlternates.has(key)) {
+          LOG("Overriding alternate entry: " + key +
+              " (" + existingEntry.engine.name + ")");
+          keysOfAlternates.delete(key);
+        } else {
+          LOG("Keeping existing entry: " + key +
+              " (" + existingEntry.engine.name + ")");
+          return;
+        }
+
+        this._parseSubmissionMap.set(key, mapValueForEngine);
+      };
+
+      processDomain(urlParsingInfo.mainDomain, false);
+      SearchStaticData.getAlternateDomains(urlParsingInfo.mainDomain)
+                      .forEach(d => processDomain(d, true));
+    }
+  },
+
+  parseSubmissionURL: function SRCH_SVC_parseSubmissionURL(aURL) {
+    this._ensureInitialized();
+    LOG("parseSubmissionURL: Parsing \"" + aURL + "\".");
+
+    if (!this._parseSubmissionMap) {
+      this._buildParseSubmissionMap();
+    }
+
+    // Extract the elements of the provided URL first.
+    let soughtKey, soughtQuery;
+    try {
+      let soughtUrl = NetUtil.newURI(aURL).QueryInterface(Ci.nsIURL);
+
+      // Exclude any URL that is not HTTP or HTTPS from the beginning.
+      if (soughtUrl.scheme != "http" && soughtUrl.scheme != "https") {
+        LOG("The URL scheme is not HTTP or HTTPS.");
+        return gEmptyParseSubmissionResult;
+      }
+
+      // Reading these URL properties may fail and raise an exception.
+      soughtKey = soughtUrl.host + soughtUrl.filePath.toLowerCase();
+      soughtQuery = soughtUrl.query;
+    } catch (ex) {
+      // Errors while parsing the URL or accessing the properties are not fatal.
+      LOG("The value does not look like a structured URL.");
+      return gEmptyParseSubmissionResult;
+    }
+
+    // Look up the domain and path in the map to identify the search engine.
+    let mapEntry = this._parseSubmissionMap.get(soughtKey);
+    if (!mapEntry) {
+      LOG("No engine associated with domain and path: " + soughtKey);
+      return gEmptyParseSubmissionResult;
+    }
+
+    // Extract the search terms from the parameter, for example "caff%C3%A8"
+    // from the URL "https://www.google.com/search?q=caff%C3%A8&client=firefox".
+    let encodedTerms = null;
+    for (let param of soughtQuery.split("&")) {
+      let equalPos = param.indexOf("=");
+      if (equalPos != -1 &&
+          param.substr(0, equalPos) == mapEntry.termsParameterName) {
+        // This is the parameter we are looking for.
+        encodedTerms = param.substr(equalPos + 1);
+        break;
+      }
+    }
+    if (encodedTerms === null) {
+      LOG("Missing terms parameter: " + mapEntry.termsParameterName);
+      return gEmptyParseSubmissionResult;
+    }
+
+    // Decode the terms using the charset defined in the search engine.
+    let terms;
+    try {
+      terms = gTextToSubURI.UnEscapeAndConvert(
+                                       mapEntry.engine.queryCharset,
+                                       encodedTerms.replace("+", " ", "g"));
+    } catch (ex) {
+      // Decoding errors will cause this match to be ignored.
+      LOG("Parameter decoding failed. Charset: " +
+          mapEntry.engine.queryCharset);
+      return gEmptyParseSubmissionResult;
+    }
+
+    LOG("Match found. Terms: " + terms);
+    return new ParseSubmissionResult(mapEntry.engine, terms);
   },
 
   // nsIObserver
@@ -4155,13 +4387,16 @@ SearchService.prototype = {
               LOG("nsSearchService::observe: setting current");
               this.currentEngine = aEngine;
             }
-            this.batchTask.disarm();
-            this.batchTask.arm();
+            // The addition of the engine to the store always triggers an ADDED
+            // or a CHANGED notification, that will trigger the task below.
             break;
+          case SEARCH_ENGINE_ADDED:
           case SEARCH_ENGINE_CHANGED:
           case SEARCH_ENGINE_REMOVED:
             this.batchTask.disarm();
             this.batchTask.arm();
+            // Invalidate the map used to parse URLs to search engines.
+            this._parseSubmissionMap = null;
             break;
         }
         break;
@@ -4171,26 +4406,12 @@ SearchService.prototype = {
         break;
 
       case "nsPref:changed":
-#ifdef MOZ_FENNEC
         if (aVerb == LOCALE_PREF) {
           // Locale changed. Re-init. We rely on observers, because we can't
           // return this promise to anyone.
           this._asyncReInit();
           break;
         }
-#endif
-
-        let currPref = BROWSER_SEARCH_PREF + "selectedEngine";
-        if (aVerb == currPref && !this._changingCurrentEngine) {
-          this._setEngineByPref("currentEngine", currPref);
-          break;
-        }
-
-        let defPref = BROWSER_SEARCH_PREF + "defaultenginename";
-        if (aVerb == defPref && !this._changingDefaultEngine) {
-          this._setEngineByPref("defaultEngine", defPref);
-        }
-        break;
     }
   },
 
@@ -4205,7 +4426,7 @@ SearchService.prototype = {
     // Therefore, we need to walk our engine-list, looking for expired engines
     var currentTime = Date.now();
     LOG("currentTime: " + currentTime);
-    for each (engine in this._engines) {
+    for each (let engine in this._engines) {
       engine = engine.wrappedJSObject;
       if (!engine._hasUpdates)
         continue;
@@ -4236,8 +4457,6 @@ SearchService.prototype = {
   _addObservers: function SRCH_SVC_addObservers() {
     Services.obs.addObserver(this, SEARCH_ENGINE_TOPIC, false);
     Services.obs.addObserver(this, QUIT_APPLICATION_TOPIC, false);
-    Services.prefs.addObserver(BROWSER_SEARCH_PREF + "defaultenginename", this, false);
-    Services.prefs.addObserver(BROWSER_SEARCH_PREF + "selectedEngine", this, false);
 
 #ifdef MOZ_FENNEC
     Services.prefs.addObserver(LOCALE_PREF, this, false);
@@ -4287,8 +4506,6 @@ SearchService.prototype = {
   _removeObservers: function SRCH_SVC_removeObservers() {
     Services.obs.removeObserver(this, SEARCH_ENGINE_TOPIC);
     Services.obs.removeObserver(this, QUIT_APPLICATION_TOPIC);
-    Services.prefs.removeObserver(BROWSER_SEARCH_PREF + "defaultenginename", this);
-    Services.prefs.removeObserver(BROWSER_SEARCH_PREF + "selectedEngine", this);
 
 #ifdef MOZ_FENNEC
     Services.prefs.removeObserver(LOCALE_PREF, this);
@@ -4448,6 +4665,11 @@ var engineMetadataService = {
     return record[aName];
   },
 
+  _globalFakeEngine: {_id: "[global]"},
+  getGlobalAttr: function epsGetGlobalAttr(name) {
+    return this.getAttr(this._globalFakeEngine, name);
+  },
+
   _setAttr: function epsSetAttr(engine, name, value) {
     // attr names must be lower case
     name = name.toLowerCase();
@@ -4479,6 +4701,10 @@ var engineMetadataService = {
     if (this._setAttr(engine, key, value)) {
       this._commit();
     }
+  },
+
+  setGlobalAttr: function epsGetGlobalAttr(key, value) {
+    this.setAttr(this._globalFakeEngine, key, value);
   },
 
   /**
@@ -4515,23 +4741,19 @@ var engineMetadataService = {
    * (= 100ms). If the function is called again before the expiration of
    * the delay, commits are merged and the function is again delayed by
    * the same amount of time.
-   *
-   * @param aStore is an optional parameter specifying the object to serialize.
-   *               If not specified, this._store is used.
    */
-  _commit: function epsCommit(aStore) {
+  _commit: function epsCommit() {
     LOG("metadata _commit: start");
-    let store = aStore || this._store;
-    if (!store) {
+    if (!this._store) {
       LOG("metadata _commit: nothing to do");
       return;
     }
 
     if (!this._lazyWriter) {
       LOG("metadata _commit: initializing lazy writer");
-      function writeCommit() {
+      let writeCommit = function () {
         LOG("metadata writeCommit: start");
-        let data = gEncoder.encode(JSON.stringify(store));
+        let data = gEncoder.encode(JSON.stringify(engineMetadataService._store));
         let path = engineMetadataService._jsonFile;
         LOG("metadata writeCommit: path " + path);
         let promise = OS.File.writeAtomic(path, data, { tmpPath: path + ".tmp" });
@@ -4591,7 +4813,7 @@ var engineUpdateService = {
 
     let testEngine = null;
     let updateURL = engine._getURLOfType(URLTYPE_OPENSEARCH);
-    let updateURI = (updateURL && updateURL._hasRelation("self")) ? 
+    let updateURI = (updateURL && updateURL._hasRelation("self")) ?
                      updateURL.getSubmission("", engine).uri :
                      makeURI(engine._updateURL);
     if (updateURI) {

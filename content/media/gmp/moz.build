@@ -29,8 +29,16 @@ EXPORTS += [
     'gmp-api/gmp-video-frame.h',
     'gmp-api/gmp-video-host.h',
     'gmp-api/gmp-video-plane.h',
+    'GMPAudioDecoderChild.h',
+    'GMPAudioDecoderParent.h',
+    'GMPAudioDecoderProxy.h',
+    'GMPAudioHost.h',
     'GMPCallbackBase.h',
     'GMPChild.h',
+    'GMPDecryptorChild.h',
+    'GMPDecryptorParent.h',
+    'GMPDecryptorProxy.h',
+    'GMPEncryptedBufferDataImpl.h',
     'GMPMessageUtils.h',
     'GMPParent.h',
     'GMPPlatform.h',
@@ -38,6 +46,10 @@ EXPORTS += [
     'GMPProcessParent.h',
     'GMPService.h',
     'GMPSharedMemManager.h',
+    'GMPStorageChild.h',
+    'GMPStorageParent.h',
+    'GMPTimerChild.h',
+    'GMPTimerParent.h',
     'GMPVideoDecoderChild.h',
     'GMPVideoDecoderParent.h',
     'GMPVideoDecoderProxy.h',
@@ -51,13 +63,23 @@ EXPORTS += [
 ]
 
 UNIFIED_SOURCES += [
+    'GMPAudioDecoderChild.cpp',
+    'GMPAudioDecoderParent.cpp',
+    'GMPAudioHost.cpp',
     'GMPChild.cpp',
+    'GMPDecryptorChild.cpp',
+    'GMPDecryptorParent.cpp',
+    'GMPEncryptedBufferDataImpl.cpp',
     'GMPParent.cpp',
     'GMPPlatform.cpp',
     'GMPProcessChild.cpp',
     'GMPProcessParent.cpp',
     'GMPService.cpp',
     'GMPSharedMemManager.cpp',
+    'GMPStorageChild.cpp',
+    'GMPStorageParent.cpp',
+    'GMPTimerChild.cpp',
+    'GMPTimerParent.cpp',
     'GMPVideoDecoderChild.cpp',
     'GMPVideoDecoderParent.cpp',
     'GMPVideoEncodedFrameImpl.cpp',
@@ -71,11 +93,13 @@ UNIFIED_SOURCES += [
 IPDL_SOURCES += [
   'GMPTypes.ipdlh',
   'PGMP.ipdl',
+  'PGMPAudioDecoder.ipdl',
+  'PGMPDecryptor.ipdl',
+  'PGMPStorage.ipdl',
+  'PGMPTimer.ipdl',
   'PGMPVideoDecoder.ipdl',
   'PGMPVideoEncoder.ipdl',
 ]
-
-LIBRARY_NAME = 'mozgmp'
 
 if CONFIG['GKMEDIAS_SHARED_LIBRARY']:
     NO_VISIBILITY_FLAGS = True
@@ -90,7 +114,6 @@ include('/ipc/chromium/chromium-config.mozbuild')
 FINAL_LIBRARY = 'xul'
 # media/mtransport so we work with --disable-webrtc
 LOCAL_INCLUDES += [
-    '../base',
     '/media/mtransport',
     '/xpcom/base',
     '/xpcom/build',

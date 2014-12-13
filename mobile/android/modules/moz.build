@@ -17,13 +17,16 @@ EXTRA_JS_MODULES += [
     'LightweightThemeConsumer.jsm',
     'MediaPlayerApp.jsm',
     'Messaging.jsm',
+    'NetErrorHelper.jsm',
     'Notifications.jsm',
     'OrderedBroadcast.jsm',
+    'PageActions.jsm',
     'Prompt.jsm',
     'Sanitizer.jsm',
     'SharedPreferences.jsm',
     'SimpleServiceDiscovery.jsm',
     'SSLExceptions.jsm',
+    'TabMirror.jsm',
     'WebappManagerWorker.js',
 ]
 

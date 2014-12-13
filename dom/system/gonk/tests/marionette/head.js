@@ -7,7 +7,6 @@ const SETTINGS_KEY_DATA_ENABLED = "ril.data.enabled";
 const SETTINGS_KEY_DATA_APN_SETTINGS  = "ril.data.apnSettings";
 
 const TOPIC_CONNECTION_STATE_CHANGED = "network-connection-state-changed";
-const TOPIC_INTERFACE_STATE_CHANGED = "network-interface-state-changed";
 const TOPIC_NETWORK_ACTIVE_CHANGED = "network-active-changed";
 
 let Promise = Cu.import("resource://gre/modules/Promise.jsm").Promise;
@@ -94,13 +93,20 @@ function getSettings(aKey, aAllowError) {
 function setSettings(aKey, aValue, aAllowError) {
   let settings = {};
   settings[aKey] = aValue;
-  let request = window.navigator.mozSettings.createLock().set(settings);
-  return wrapDomRequestAsPromise(request)
-    .then(function resolve() {
+  let lock = window.navigator.mozSettings.createLock();
+  let request = lock.set(settings);
+  let deferred = Promise.defer();
+  lock.onsettingstransactionsuccess = function () {
       log("setSettings(" + JSON.stringify(settings) + ") - success");
-    }, function reject() {
+    deferred.resolve();
+  };
+  lock.onsettingstransactionfailure = function () {
       ok(aAllowError, "setSettings(" + JSON.stringify(settings) + ") - error");
-    });
+    // We resolve even though we've thrown an error, since the ok()
+    // will do that.
+    deferred.resolve();
+  };
+  return deferred.promise;
 }
 
 /**

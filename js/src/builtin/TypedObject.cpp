@@ -27,9 +27,9 @@
 
 #include "vm/Shape-inl.h"
 
+using mozilla::AssertedCast;
 using mozilla::CheckedInt32;
 using mozilla::DebugOnly;
-using mozilla::SafeCast;
 
 using namespace js;
 
@@ -348,7 +348,7 @@ const JSFunctionSpec js::ReferenceTypeDescr::typeObjectMethods[] = {
     JS_FS_END
 };
 
-static int32_t ReferenceSizes[] = {
+static const int32_t ReferenceSizes[] = {
 #define REFERENCE_SIZE(_kind, _type, _name)                        \
     sizeof(_type),
     JS_FOR_EACH_REFERENCE_TYPE_REPR(REFERENCE_SIZE) 0
@@ -427,7 +427,7 @@ js::ReferenceTypeDescr::call(JSContext *cx, unsigned argc, Value *vp)
  * Note: these are partially defined in SIMD.cpp
  */
 
-static int32_t X4Sizes[] = {
+static const int32_t X4Sizes[] = {
 #define X4_SIZE(_kind, _type, _name)                        \
     sizeof(_type) * 4,
     JS_FOR_EACH_X4_TYPE_REPR(X4_SIZE) 0
@@ -1126,6 +1126,14 @@ StructTypeDescr::fieldCount() const
     return getReservedSlot(JS_DESCR_SLOT_STRUCT_FIELD_NAMES).toObject().getDenseInitializedLength();
 }
 
+size_t
+StructTypeDescr::maybeForwardedFieldCount() const
+{
+    JSObject *fieldNames =
+        MaybeForwarded(&getReservedSlot(JS_DESCR_SLOT_STRUCT_FIELD_NAMES).toObject());
+    return fieldNames->getDenseInitializedLength();
+}
+
 bool
 StructTypeDescr::fieldIndex(jsid id, size_t *out) const
 {
@@ -1154,7 +1162,16 @@ StructTypeDescr::fieldOffset(size_t index) const
     JSObject &fieldOffsets =
         getReservedSlot(JS_DESCR_SLOT_STRUCT_FIELD_OFFSETS).toObject();
     JS_ASSERT(index < fieldOffsets.getDenseInitializedLength());
-    return SafeCast<size_t>(fieldOffsets.getDenseElement(index).toInt32());
+    return AssertedCast<size_t>(fieldOffsets.getDenseElement(index).toInt32());
+}
+
+size_t
+StructTypeDescr::maybeForwardedFieldOffset(size_t index) const
+{
+    JSObject &fieldOffsets =
+        *MaybeForwarded(&getReservedSlot(JS_DESCR_SLOT_STRUCT_FIELD_OFFSETS).toObject());
+    JS_ASSERT(index < fieldOffsets.getDenseInitializedLength());
+    return AssertedCast<size_t>(fieldOffsets.getDenseElement(index).toInt32());
 }
 
 SizedTypeDescr&
@@ -1162,6 +1179,15 @@ StructTypeDescr::fieldDescr(size_t index) const
 {
     JSObject &fieldDescrs =
         getReservedSlot(JS_DESCR_SLOT_STRUCT_FIELD_TYPES).toObject();
+    JS_ASSERT(index < fieldDescrs.getDenseInitializedLength());
+    return fieldDescrs.getDenseElement(index).toObject().as<SizedTypeDescr>();
+}
+
+SizedTypeDescr&
+StructTypeDescr::maybeForwardedFieldDescr(size_t index) const
+{
+    JSObject &fieldDescrs =
+        *MaybeForwarded(&getReservedSlot(JS_DESCR_SLOT_STRUCT_FIELD_TYPES).toObject());
     JS_ASSERT(index < fieldDescrs.getDenseInitializedLength());
     return fieldDescrs.getDenseElement(index).toObject().as<SizedTypeDescr>();
 }
@@ -1630,7 +1656,11 @@ TypedObject::obj_trace(JSTracer *trace, JSObject *object)
 
     JS_ASSERT(object->is<TypedObject>());
     TypedObject &typedObj = object->as<TypedObject>();
-    TypeDescr &descr = typedObj.typeDescr();
+
+    // When this is called for compacting GC, the related objects we touch here
+    // may not have had their slots updated yet.
+    TypeDescr &descr = typedObj.maybeForwardedTypeDescr();
+
     if (descr.opaque()) {
         uint8_t *mem = typedObj.typedMem();
         if (!mem)
@@ -3092,7 +3122,7 @@ visitReferences(SizedTypeDescr &descr,
       case type::SizedArray:
       {
         SizedArrayTypeDescr &arrayDescr = descr.as<SizedArrayTypeDescr>();
-        SizedTypeDescr &elementDescr = arrayDescr.elementType();
+        SizedTypeDescr &elementDescr = arrayDescr.maybeForwardedElementType();
         for (int32_t i = 0; i < arrayDescr.length(); i++) {
             visitReferences(elementDescr, mem, visitor);
             mem += elementDescr.size();
@@ -3108,9 +3138,9 @@ visitReferences(SizedTypeDescr &descr,
       case type::Struct:
       {
         StructTypeDescr &structDescr = descr.as<StructTypeDescr>();
-        for (size_t i = 0; i < structDescr.fieldCount(); i++) {
-            SizedTypeDescr &descr = structDescr.fieldDescr(i);
-            size_t offset = structDescr.fieldOffset(i);
+        for (size_t i = 0; i < structDescr.maybeForwardedFieldCount(); i++) {
+            SizedTypeDescr &descr = structDescr.maybeForwardedFieldDescr(i);
+            size_t offset = structDescr.maybeForwardedFieldOffset(i);
             visitReferences(descr, mem + offset, visitor);
         }
         return;

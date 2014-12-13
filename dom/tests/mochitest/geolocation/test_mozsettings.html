@@ -14,24 +14,30 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=478911
 <a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=777594">Mozilla Bug 777594</a>
 <p id="display"></p>
 <div id="content" style="display: none">
-  
+
 </div>
 <pre id="test">
 <script class="testbody" type="text/javascript">
 
 SimpleTest.waitForExplicitFinish();
 
+var timeToWaitMs = 1000;
+
 resume_geolocationProvider(function() {
   force_prompt(true, test1);
 });
 
 if (SpecialPowers.isMainProcess()) {
-  SpecialPowers.Cu.import("resource://gre/modules/SettingsChangeNotifier.jsm");
+  SpecialPowers.Cu.import("resource://gre/modules/SettingsRequestManager.jsm");
 }
 
 function test1() {
   //This pushPermissions call is after pushPrefEnv call and pushPrefEnv calls follow after this
-  SpecialPowers.pushPermissions([{'type': 'settings-read', 'allow': true, 'context': document}, {'type': 'settings-write', 'allow': true, 'context': document}], test2);
+  SpecialPowers.pushPermissions([{'type': 'settings-read', 'allow': true, 'context': document},
+                                 {'type': 'settings-write', 'allow': true, 'context': document},
+                                 {'type': 'settings-api-write', 'allow': true, 'context': document},
+                                 {'type': 'settings-api-read', 'allow': true, 'context': document}
+  ], test2);
 }
 
 function test2() {
@@ -42,7 +48,7 @@ function test2() {
       setTimeout(function() {
 	  navigator.geolocation.getCurrentPosition(successCallbackAfterMozsettingOff,
                                                    failureCallbackAfterMozsettingOff);
-        }, 500); // need to wait a bit for all of these async callbacks to finish
+        }, timeToWaitMs); // need to wait a bit for all of these async callbacks to finish
   });
 }
 
@@ -54,7 +60,7 @@ function successCallbackAfterMozsettingOff(position) {
       setTimeout(function() {
          navigator.geolocation.getCurrentPosition(successCallbackAfterMozsettingOn,
                                                   failureCallbackAfterMozsettingOn);
-        }, 500); // need to wait a bit for all of these async callbacks to finish
+        }, timeToWaitMs); // need to wait a bit for all of these async callbacks to finish
     });
 }
 
@@ -66,7 +72,7 @@ function failureCallbackAfterMozsettingOff(error) {
       setTimeout(function() {
          navigator.geolocation.getCurrentPosition(successCallbackAfterMozsettingOn,
                                                   failureCallbackAfterMozsettingOn);
-        }, 500); // need to wait a bit for all of these async callbacks to finish
+        }, timeToWaitMs); // need to wait a bit for all of these async callbacks to finish
     });
 }
 

@@ -6,7 +6,7 @@
 if CONFIG['LIBXUL_SDK']:
     error('toolkit.mozbuild is not compatible with --enable-libxul-sdk=')
 
-if CONFIG['MOZ_CONTENT_SANDBOX'] or CONFIG['MOZ_GMP_SANDBOX']:
+if CONFIG['MOZ_SANDBOX']:
     add_tier_dir('sandbox', 'security/sandbox')
 
 # Depends on NSS and NSPR, and must be built after sandbox or else B2G emulator
@@ -26,8 +26,7 @@ if CONFIG['NS_TRACE_MALLOC']:
 if CONFIG['MOZ_DMD']:
     add_tier_dir('platform', 'memory/replace/dmd')
 
-if CONFIG['MOZ_TREE_FREETYPE']:
-    add_tier_dir('platform', 'modules/freetype2', static=True)
+add_tier_dir('platform', 'config/external/freetype2')
 
 add_tier_dir('platform', 'xpcom')
 
@@ -152,11 +151,7 @@ add_tier_dir('platform', 'other-licenses/snappy')
 if CONFIG['MOZ_GIO_COMPONENT']:
     add_tier_dir('platform', 'extensions/gio')
 
-# Applications can cheat and ask for code to be
-# built before libxul so it can be linked into libxul.
-add_tier_dir('platform', app_libxul_dirs)
-add_tier_dir('platform', app_libxul_static_dirs, static=True)
-
+add_tier_dir('platform', 'toolkit/library/StaticXULComponentsEnd')
 add_tier_dir('platform', 'toolkit/library')
 
 if CONFIG['MOZ_REPLACE_MALLOC']:

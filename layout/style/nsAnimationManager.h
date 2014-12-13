@@ -26,7 +26,7 @@ struct AnimationEventInfo {
   mozilla::InternalAnimationEvent mEvent;
 
   AnimationEventInfo(mozilla::dom::Element *aElement,
-                     const nsString& aAnimationName,
+                     const nsSubstring& aAnimationName,
                      uint32_t aMessage, mozilla::TimeDuration aElapsedTime,
                      const nsAString& aPseudoElement)
     : mElement(aElement), mEvent(true, aMessage)
@@ -52,13 +52,13 @@ class nsAnimationManager MOZ_FINAL
   : public mozilla::css::CommonAnimationManager
 {
 public:
-  nsAnimationManager(nsPresContext *aPresContext)
+  explicit nsAnimationManager(nsPresContext *aPresContext)
     : mozilla::css::CommonAnimationManager(aPresContext)
     , mObservingRefreshDriver(false)
   {
   }
 
-  static mozilla::ElementAnimationCollection*
+  static mozilla::AnimationPlayerCollection*
   GetAnimationsForCompositor(nsIContent* aContent, nsCSSProperty aProperty)
   {
     return mozilla::css::CommonAnimationManager::GetAnimationsForCompositor(
@@ -76,10 +76,10 @@ public:
     return false;
   }
 
-  void UpdateStyleAndEvents(mozilla::ElementAnimationCollection* aEA,
+  void UpdateStyleAndEvents(mozilla::AnimationPlayerCollection* aEA,
                             mozilla::TimeStamp aRefreshTime,
                             mozilla::EnsureStyleRuleFlags aFlags);
-  void GetEventsForCurrentTime(mozilla::ElementAnimationCollection* aEA,
+  void GetEventsForCurrentTime(mozilla::AnimationPlayerCollection* aEA,
                                EventArray &aEventsToDispatch);
 
   // nsIStyleRuleProcessor (parts)
@@ -127,13 +127,10 @@ public:
     }
   }
 
-  mozilla::ElementAnimationCollection*
-  GetElementAnimations(mozilla::dom::Element *aElement,
-                       nsCSSPseudoElements::Type aPseudoType,
-                       bool aCreateIfNeeded);
-
-  // Updates styles on throttled animations. See note on nsTransitionManager
-  void UpdateAllThrottledStyles();
+  mozilla::AnimationPlayerCollection*
+  GetAnimationPlayers(mozilla::dom::Element *aElement,
+                      nsCSSPseudoElements::Type aPseudoType,
+                      bool aCreateIfNeeded);
 
 protected:
   virtual void ElementCollectionRemoved() MOZ_OVERRIDE
@@ -141,7 +138,7 @@ protected:
     CheckNeedsRefresh();
   }
   virtual void
-  AddElementCollection(mozilla::ElementAnimationCollection* aData) MOZ_OVERRIDE;
+  AddElementCollection(mozilla::AnimationPlayerCollection* aData) MOZ_OVERRIDE;
 
   /**
    * Check to see if we should stop or start observing the refresh driver
@@ -151,7 +148,7 @@ protected:
 private:
   void BuildAnimations(nsStyleContext* aStyleContext,
                        mozilla::dom::AnimationTimeline* aTimeline,
-                       mozilla::ElementAnimationPtrArray& aAnimations);
+                       mozilla::AnimationPlayerPtrArray& aAnimations);
   bool BuildSegment(InfallibleTArray<mozilla::AnimationPropertySegment>&
                       aSegments,
                     nsCSSProperty aProperty,
@@ -161,14 +158,6 @@ private:
                     float aToKey, nsStyleContext* aToContext);
   nsIStyleRule* GetAnimationRule(mozilla::dom::Element* aElement,
                                  nsCSSPseudoElements::Type aPseudoType);
-
-  // Update the animated styles of an element and its descendants.
-  // If the element has an animation, it is flushed back to its primary frame.
-  // If the element does not have an animation, then its style is reparented.
-  void UpdateThrottledStylesForSubtree(nsIContent* aContent,
-                                       nsStyleContext* aParentStyle,
-                                       nsStyleChangeList &aChangeList);
-  void UpdateAllThrottledStylesInternal();
 
   // The guts of DispatchEvents
   void DoDispatchEvents();

@@ -32,10 +32,18 @@
   <!-- this script handles the "runapp" argument for desktop builds -->
   <script type="application/javascript;version=1.8"
           src="chrome://b2g/content/runapp.js"> </script>
+#else
+  <!-- this file is only loaded on Gonk to manage ADB state -->
+  <script type="application/javascript;version=1.8"
+          src="chrome://b2g/content/devtools/adb.js"> </script>
 #endif
+  <!-- manages DevTools server state -->
+  <script type="application/javascript;version=1.8"
+          src="chrome://b2g/content/devtools/debugger.js"> </script>
 </head>
   <body id="container">
 #ifdef FXOS_SIMULATOR
+#ifndef MOZ_MULET
     <!--
      Some additional buttons are displayed on desktop to fake hardware buttons.
     -->
@@ -43,6 +51,7 @@
       <button id="home-button"></button>
       <button id="rotate-button"></button>
     </footer>
+#endif
 #endif
 #ifdef MOZ_WIDGET_COCOA
     <!--

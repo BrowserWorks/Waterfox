@@ -5,7 +5,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 Cu.import('resource://gre/modules/ContactService.jsm');
-Cu.import('resource://gre/modules/SettingsChangeNotifier.jsm');
+Cu.import('resource://gre/modules/SettingsRequestManager.jsm');
 Cu.import('resource://gre/modules/DataStoreChangeNotifier.jsm');
 Cu.import('resource://gre/modules/AlarmService.jsm');
 Cu.import('resource://gre/modules/ActivitiesService.jsm');
@@ -50,11 +50,6 @@ XPCOMUtils.defineLazyServiceGetter(this, 'gSystemMessenger',
 XPCOMUtils.defineLazyServiceGetter(Services, 'fm',
                                    '@mozilla.org/focus-manager;1',
                                    'nsIFocusManager');
-
-XPCOMUtils.defineLazyGetter(this, 'DebuggerServer', function() {
-  Cu.import('resource://gre/modules/devtools/dbg-server.jsm');
-  return DebuggerServer;
-});
 
 XPCOMUtils.defineLazyGetter(this, "ppmm", function() {
   return Cc["@mozilla.org/parentprocessmessagemanager;1"]
@@ -336,6 +331,7 @@ var shell = {
     window.addEventListener('sizemodechange', this);
     window.addEventListener('unload', this);
     this.contentBrowser.addEventListener('mozbrowserloadstart', this, true);
+    this.contentBrowser.addEventListener('mozbrowserselectionchange', this, true);
 
     CustomEventManager.init();
     WebappsHelper.init();
@@ -362,6 +358,7 @@ var shell = {
     window.removeEventListener('mozfullscreenchange', this);
     window.removeEventListener('sizemodechange', this);
     this.contentBrowser.removeEventListener('mozbrowserloadstart', this, true);
+    this.contentBrowser.removeEventListener('mozbrowserselectionchange', this, true);
     ppmm.removeMessageListener("content-handler", this);
 
     UserAgentOverrides.uninit();
@@ -503,6 +500,30 @@ var shell = {
 
         this.notifyContentStart();
        break;
+
+      case 'mozbrowserselectionchange':
+        // The mozbrowserselectionchange event, may have crossed the chrome-content boundary.
+        // This event always dispatch to shell.js. But the offset we got from this event is
+        // based on tab's coordinate. So get the actual offsets between shell and evt.target.
+        let elt = evt.target;
+        let win = elt.ownerDocument.defaultView;
+        let offsetX = win.mozInnerScreenX - window.mozInnerScreenX;
+        let offsetY = win.mozInnerScreenY - window.mozInnerScreenY;
+
+        let rect = elt.getBoundingClientRect();
+        offsetX += rect.left;
+        offsetY += rect.top;
+
+        let data = evt.detail;
+        data.offsetX = offsetX;
+        data.offsetY = offsetY;
+
+        DoCommandHelper.setEvent(evt);
+        shell.sendChromeEvent({
+          type: 'selectionchange',
+          detail: data,
+        });
+        break;
 
       case 'MozApplicationManifest':
         try {
@@ -686,6 +707,8 @@ var CustomEventManager = {
     switch(detail.type) {
       case 'webapps-install-granted':
       case 'webapps-install-denied':
+      case 'webapps-uninstall-granted':
+      case 'webapps-uninstall-denied':
         WebappsHelper.handleEvent(detail);
         break;
       case 'select-choicechange':
@@ -694,15 +717,30 @@ var CustomEventManager = {
       case 'system-message-listener-ready':
         Services.obs.notifyObservers(null, 'system-message-listener-ready', null);
         break;
-      case 'remote-debugger-prompt':
-        RemoteDebugger.handleEvent(detail);
-        break;
       case 'captive-portal-login-cancel':
         CaptivePortalLoginHelper.handleEvent(detail);
         break;
       case 'inputmethod-update-layouts':
         KeyboardHelper.handleEvent(detail);
         break;
+      case 'do-command':
+        DoCommandHelper.handleEvent(detail.cmd);
+        break;
+    }
+  }
+}
+
+let DoCommandHelper = {
+  _event: null,
+  setEvent: function docommand_setEvent(evt) {
+    this._event = evt;
+  },
+
+  handleEvent: function docommand_handleEvent(cmd) {
+    if (this._event) {
+      Services.obs.notifyObservers({ wrappedJSObject: this._event.target },
+                                   'copypaste-docommand', cmd);
+      this._event = null;
     }
   }
 }
@@ -714,6 +752,7 @@ var WebappsHelper = {
   init: function webapps_init() {
     Services.obs.addObserver(this, "webapps-launch", false);
     Services.obs.addObserver(this, "webapps-ask-install", false);
+    Services.obs.addObserver(this, "webapps-ask-uninstall", false);
     Services.obs.addObserver(this, "webapps-close", false);
   },
 
@@ -736,6 +775,12 @@ var WebappsHelper = {
       case "webapps-install-denied":
         DOMApplicationRegistry.denyInstall(installer);
         break;
+      case "webapps-uninstall-granted":
+        DOMApplicationRegistry.confirmUninstall(installer);
+        break;
+      case "webapps-uninstall-denied":
+        DOMApplicationRegistry.denyUninstall(installer);
+        break;
     }
   },
 
@@ -743,13 +788,16 @@ var WebappsHelper = {
     let json = JSON.parse(data);
     json.mm = subject;
 
+    let id;
+
     switch(topic) {
       case "webapps-launch":
         DOMApplicationRegistry.getManifestFor(json.manifestURL).then((aManifest) => {
           if (!aManifest)
             return;
 
-          let manifest = new ManifestHelper(aManifest, json.origin);
+          let manifest = new ManifestHelper(aManifest, json.origin,
+                                            json.manifestURL);
           let payload = {
             timestamp: json.timestamp,
             url: manifest.fullLaunchPath(json.startPoint),
@@ -759,9 +807,17 @@ var WebappsHelper = {
         });
         break;
       case "webapps-ask-install":
-        let id = this.registerInstaller(json);
+        id = this.registerInstaller(json);
         shell.sendChromeEvent({
           type: "webapps-ask-install",
+          id: id,
+          app: json.app
+        });
+        break;
+      case "webapps-ask-uninstall":
+        id = this.registerInstaller(json);
+        shell.sendChromeEvent({
+          type: "webapps-ask-uninstall",
           id: id,
           app: json.app
         });
@@ -806,133 +862,6 @@ let IndexedDBPromptHelper = {
   }
 }
 
-let RemoteDebugger = {
-  _promptDone: false,
-  _promptAnswer: false,
-  _running: false,
-
-  prompt: function debugger_prompt() {
-    this._promptDone = false;
-
-    shell.sendChromeEvent({
-      "type": "remote-debugger-prompt"
-    });
-
-    while(!this._promptDone) {
-      Services.tm.currentThread.processNextEvent(true);
-    }
-
-    return this._promptAnswer;
-  },
-
-  handleEvent: function debugger_handleEvent(detail) {
-    this._promptAnswer = detail.value;
-    this._promptDone = true;
-  },
-
-  get isDebugging() {
-    if (!this._running) {
-      return false;
-    }
-
-    return DebuggerServer._connections &&
-           Object.keys(DebuggerServer._connections).length > 0;
-  },
-
-  // Start the debugger server.
-  start: function debugger_start() {
-    if (this._running) {
-      return;
-    }
-
-    if (!DebuggerServer.initialized) {
-      // Ask for remote connections.
-      DebuggerServer.init(this.prompt.bind(this));
-
-      // /!\ Be careful when adding a new actor, especially global actors.
-      // Any new global actor will be exposed and returned by the root actor.
-
-      // Add Firefox-specific actors, but prevent tab actors to be loaded in
-      // the parent process, unless we enable certified apps debugging.
-      let restrictPrivileges = Services.prefs.getBoolPref("devtools.debugger.forbid-certified-apps");
-      DebuggerServer.addBrowserActors("navigator:browser", restrictPrivileges);
-
-      /**
-       * Construct a root actor appropriate for use in a server running in B2G.
-       * The returned root actor respects the factories registered with
-       * DebuggerServer.addGlobalActor only if certified apps debugging is on,
-       * otherwise we used an explicit limited list of global actors
-       *
-       * * @param connection DebuggerServerConnection
-       *        The conection to the client.
-       */
-      DebuggerServer.createRootActor = function createRootActor(connection)
-      {
-        let { Promise: promise } = Cu.import("resource://gre/modules/Promise.jsm", {});
-        let parameters = {
-          // We do not expose browser tab actors yet,
-          // but we still have to define tabList.getList(),
-          // otherwise, client won't be able to fetch global actors
-          // from listTabs request!
-          tabList: {
-            getList: function() {
-              return promise.resolve([]);
-            }
-          },
-          // Use an explicit global actor list to prevent exposing
-          // unexpected actors
-          globalActorFactories: restrictPrivileges ? {
-            webappsActor: DebuggerServer.globalActorFactories.webappsActor,
-            deviceActor: DebuggerServer.globalActorFactories.deviceActor,
-          } : DebuggerServer.globalActorFactories
-        };
-        let devtools = Cu.import("resource://gre/modules/devtools/Loader.jsm", {}).devtools;
-        let { RootActor } = devtools.require("devtools/server/actors/root");
-        let root = new RootActor(connection, parameters);
-        root.applicationType = "operating-system";
-        return root;
-      };
-
-#ifdef MOZ_WIDGET_GONK
-      DebuggerServer.on("connectionchange", function() {
-        AdbController.updateState();
-      });
-#endif
-    }
-
-    let path = Services.prefs.getCharPref("devtools.debugger.unix-domain-socket") ||
-               "/data/local/debugger-socket";
-    try {
-      DebuggerServer.openListener(path);
-      // Temporary event, until bug 942756 lands and offers a way to know
-      // when the server is up and running.
-      Services.obs.notifyObservers(null, 'debugger-server-started', null);
-      this._running = true;
-    } catch (e) {
-      dump('Unable to start debugger server: ' + e + '\n');
-    }
-  },
-
-  stop: function debugger_stop() {
-    if (!this._running) {
-      return;
-    }
-
-    if (!DebuggerServer.initialized) {
-      // Can this really happen if we are running?
-      this._running = false;
-      return;
-    }
-
-    try {
-      DebuggerServer.closeAllListeners();
-    } catch (e) {
-      dump('Unable to stop debugger server: ' + e + '\n');
-    }
-    this._running = false;
-  }
-}
-
 let KeyboardHelper = {
   handleEvent: function keyboard_handleEvent(detail) {
     Keyboard.setLayouts(detail.layouts);
@@ -953,11 +882,15 @@ window.addEventListener('ContentStart', function ss_onContentStart() {
     try {
       var canvas = document.createElementNS('http://www.w3.org/1999/xhtml',
                                             'canvas');
-      var width = window.innerWidth;
-      var height = window.innerHeight;
+      var docRect = document.body.getBoundingClientRect();
+      var width = docRect.width;
+      var height = docRect.height;
+
+      // Convert width and height from CSS pixels (potentially fractional)
+      // to device pixels (integer).
       var scale = window.devicePixelRatio;
-      canvas.setAttribute('width', width * scale);
-      canvas.setAttribute('height', height * scale);
+      canvas.setAttribute('width', Math.round(width * scale));
+      canvas.setAttribute('height', Math.round(height * scale));
 
       var context = canvas.getContext('2d');
       var flags =
@@ -1292,8 +1225,7 @@ const kTransferContractId = "@mozilla.org/transfer;1";
 
 // Override Toolkit's nsITransfer implementation with the one from the
 // JavaScript API for downloads.  This will eventually be removed when
-// nsIDownloadManager will not be available anymore (bug 851471).  The
-// old code in this module will be removed in bug 899110.
+// nsIDownloadManager will not be available anymore (bug 851471).
 Components.manager.QueryInterface(Ci.nsIComponentRegistrar)
                   .registerFactory(kTransferCid, "",
                                    kTransferContractId, null);

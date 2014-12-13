@@ -10,7 +10,6 @@
 #include "nsError.h"
 #include "nsHtml5TreeOpExecutor.h"
 #include "nsScriptLoader.h"
-#include "nsIMarkupDocumentViewer.h"
 #include "nsIContentViewer.h"
 #include "nsIDocShellTreeItem.h"
 #include "nsIDocShell.h"
@@ -34,7 +33,7 @@
 using namespace mozilla;
 
 NS_INTERFACE_TABLE_HEAD_CYCLE_COLLECTION_INHERITED(nsHtml5TreeOpExecutor)
-  NS_INTERFACE_TABLE_INHERITED(nsHtml5TreeOpExecutor, 
+  NS_INTERFACE_TABLE_INHERITED(nsHtml5TreeOpExecutor,
                                nsIContentSink)
 NS_INTERFACE_TABLE_TAIL_INHERITING(nsHtml5DocumentBuilder)
 
@@ -47,7 +46,7 @@ class nsHtml5ExecutorReflusher : public nsRunnable
   private:
     nsRefPtr<nsHtml5TreeOpExecutor> mExecutor;
   public:
-    nsHtml5ExecutorReflusher(nsHtml5TreeOpExecutor* aExecutor)
+    explicit nsHtml5ExecutorReflusher(nsHtml5TreeOpExecutor* aExecutor)
       : mExecutor(aExecutor)
     {}
     NS_IMETHODIMP Run()
@@ -306,7 +305,7 @@ class nsHtml5FlushLoopGuard
     uint32_t mStartTime;
     #endif
   public:
-    nsHtml5FlushLoopGuard(nsHtml5TreeOpExecutor* aExecutor)
+    explicit nsHtml5FlushLoopGuard(nsHtml5TreeOpExecutor* aExecutor)
       : mExecutor(aExecutor)
     #ifdef DEBUG_NS_HTML5_TREE_OP_EXECUTOR_FLUSH
       , mStartTime(PR_IntervalToMilliseconds(PR_IntervalNow()))
@@ -413,7 +412,11 @@ nsHtml5TreeOpExecutor::RunFlushLoop()
         GetParser()->GetStreamParser();
       // Now parse content left in the document.write() buffer queue if any.
       // This may generate tree ops on its own or dequeue a speculation.
-      GetParser()->ParseUntilBlocked();
+      nsresult rv = GetParser()->ParseUntilBlocked();
+      if (NS_FAILED(rv)) {
+        MarkAsBroken(rv);
+        return;
+      }
     }
 
     if (mOpQueue.IsEmpty()) {
@@ -496,21 +499,24 @@ nsHtml5TreeOpExecutor::RunFlushLoop()
   }
 }
 
-void
+nsresult
 nsHtml5TreeOpExecutor::FlushDocumentWrite()
 {
+  nsresult rv = IsBroken();
+  NS_ENSURE_SUCCESS(rv, rv);
+
   FlushSpeculativeLoads(); // Make sure speculative loads never start after the
                 // corresponding normal loads for the same URLs.
 
   if (MOZ_UNLIKELY(!mParser)) {
     // The parse has ended.
     mOpQueue.Clear(); // clear in order to be able to assert in destructor
-    return;
+    return rv;
   }
   
   if (mFlushState != eNotFlushing) {
     // XXX Can this happen? In case it can, let's avoid crashing.
-    return;
+    return rv;
   }
 
   mFlushState = eInFlush;
@@ -543,7 +549,7 @@ nsHtml5TreeOpExecutor::FlushDocumentWrite()
     }
     NS_ASSERTION(mFlushState == eInDocUpdate, 
       "Tried to perform tree op outside update batch.");
-    nsresult rv = iter->Perform(this, &scriptElement);
+    rv = iter->Perform(this, &scriptElement);
     if (NS_FAILED(rv)) {
       MarkAsBroken(rv);
       break;
@@ -558,13 +564,14 @@ nsHtml5TreeOpExecutor::FlushDocumentWrite()
 
   if (MOZ_UNLIKELY(!mParser)) {
     // Ending the doc update caused a call to nsIParser::Terminate().
-    return;
+    return rv;
   }
 
   if (scriptElement) {
     // must be tail call when mFlushState is eNotFlushing
     RunScript(scriptElement);
   }
+  return rv;
 }
 
 // copied from HTML content sink

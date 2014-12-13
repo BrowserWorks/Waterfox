@@ -222,8 +222,11 @@ public:
    * ReadLock state, so that the locks can be adopted when recreating a
    * ClientTiledLayerBuffer locally. This lock will be retained until the buffer
    * has completed uploading.
+   *
+   * Returns false if a deserialization error happened, in which case we will
+   * have to kill the child process.
    */
-  virtual void UseTiledLayerBuffer(ISurfaceAllocator* aAllocator,
+  virtual bool UseTiledLayerBuffer(ISurfaceAllocator* aAllocator,
                                    const SurfaceDescriptorTiles& aTiledDescriptor) = 0;
 
   /**
@@ -507,6 +510,11 @@ TiledLayerBuffer<Derived, Tile>::Update(const nsIntRegion& aNewValidRegion,
     }
 
     x += width;
+  }
+
+  AsDerived().PostValidate(aPaintRegion);
+  for (unsigned int i = 0; i < newRetainedTiles.Length(); ++i) {
+    AsDerived().UnlockTile(newRetainedTiles[i]);
   }
 
   // At this point, oldTileCount should be zero

@@ -20,7 +20,7 @@ class nsSliderFrame;
 
 nsIFrame* NS_NewSliderFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
 
-class nsSliderMediator : public nsIDOMEventListener
+class nsSliderMediator MOZ_FINAL : public nsIDOMEventListener
 {
 public:
 
@@ -28,7 +28,7 @@ public:
 
   nsSliderFrame* mSlider;
 
-  nsSliderMediator(nsSliderFrame* aSlider) {  mSlider = aSlider; }
+  explicit nsSliderMediator(nsSliderFrame* aSlider) {  mSlider = aSlider; }
 
   virtual void SetSlider(nsSliderFrame* aSlider) { mSlider = aSlider; }
 
@@ -42,6 +42,8 @@ class nsSliderFrame : public nsBoxFrame
 {
 public:
   NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_QUERYFRAME_TARGET(nsSliderFrame)
+  NS_DECL_QUERYFRAME
 
   friend class nsSliderMediator;
 
@@ -97,6 +99,7 @@ public:
                            nsIFrame*       aOldFrame) MOZ_OVERRIDE;
 
   nsresult StartDrag(nsIDOMEvent* aEvent);
+  nsresult StopDrag();
 
   static int32_t GetCurrentPosition(nsIContent* content);
   static int32_t GetMinPosition(nsIContent* content);
@@ -160,6 +163,7 @@ private:
   static void Notify(void* aData) {
     (static_cast<nsSliderFrame*>(aData))->Notify();
   }
+  void PageScroll(nscoord aChange);
  
   nsPoint mDestinationPoint;
   nsRefPtr<nsSliderMediator> mMediator;
@@ -172,6 +176,8 @@ private:
   int32_t mCurPos;
 
   nscoord mChange;
+
+  bool mDragFinished;
 
   // true if an attribute change has been caused by the user manipulating the
   // slider. This allows notifications to tell how a slider's current position

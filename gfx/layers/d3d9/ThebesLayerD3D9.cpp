@@ -557,7 +557,6 @@ ThebesLayerD3D9::DrawRegion(nsIntRegion &aRegion, SurfaceMode aMode,
 
   // Release the cairo d3d9 surface before we try to composite it
   context = nullptr;
-  dt = nullptr;
 
   nsAutoTArray<IDirect3DTexture9*,2> srcTextures;
   nsAutoTArray<IDirect3DTexture9*,2> destTextures;

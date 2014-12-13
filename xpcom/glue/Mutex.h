@@ -34,7 +34,7 @@ namespace mozilla {
  * include leak checking.  Sometimes you want to intentionally "leak" a mutex
  * until shutdown; in these cases, OffTheBooksMutex is for you.
  */
-class NS_COM_GLUE OffTheBooksMutex : BlockingResourceBase
+class OffTheBooksMutex : BlockingResourceBase
 {
 public:
   /**
@@ -43,7 +43,7 @@ public:
    *          If success, a valid Mutex* which must be destroyed
    *          by Mutex::DestroyMutex()
    **/
-  OffTheBooksMutex(const char* aName)
+  explicit OffTheBooksMutex(const char* aName)
     : BlockingResourceBase(aName, eMutex)
   {
     mLock = PR_NewLock();
@@ -117,10 +117,10 @@ private:
  * When possible, use MutexAutoLock/MutexAutoUnlock to lock/unlock this
  * mutex within a scope, instead of calling Lock/Unlock directly.
  */
-class NS_COM_GLUE Mutex : public OffTheBooksMutex
+class Mutex : public OffTheBooksMutex
 {
 public:
-  Mutex(const char* aName)
+  explicit Mutex(const char* aName)
     : OffTheBooksMutex(aName)
   {
     MOZ_COUNT_CTOR(Mutex);
@@ -145,7 +145,7 @@ private:
  * MUCH PREFERRED to bare calls to Mutex.Lock and Unlock.
  */
 template<typename T>
-class NS_COM_GLUE MOZ_STACK_CLASS BaseAutoLock
+class MOZ_STACK_CLASS BaseAutoLock
 {
 public:
   /**
@@ -156,7 +156,7 @@ public:
    * @param aLock A valid mozilla::Mutex* returned by
    *              mozilla::Mutex::NewMutex.
    **/
-  BaseAutoLock(T& aLock MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
+  explicit BaseAutoLock(T& aLock MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
     : mLock(&aLock)
   {
     MOZ_GUARD_OBJECT_NOTIFIER_INIT;
@@ -191,10 +191,10 @@ typedef BaseAutoLock<OffTheBooksMutex> OffTheBooksMutexAutoLock;
  * MUCH PREFERRED to bare calls to Mutex.Unlock and Lock.
  */
 template<typename T>
-class NS_COM_GLUE MOZ_STACK_CLASS BaseAutoUnlock
+class MOZ_STACK_CLASS BaseAutoUnlock
 {
 public:
-  BaseAutoUnlock(T& aLock MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
+  explicit BaseAutoUnlock(T& aLock MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
     : mLock(&aLock)
   {
     MOZ_GUARD_OBJECT_NOTIFIER_INIT;

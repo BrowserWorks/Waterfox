@@ -23,7 +23,6 @@
 
 #ifdef MOZ_WIDGET_GONK
 #include "nsJSUtils.h"
-#include "nsCxPusher.h"
 #include "nsIAudioManager.h"
 #include "SpeakerManagerService.h"
 #define NS_AUDIOMANAGER_CONTRACTID "@mozilla.org/telephony/audiomanager;1"
@@ -59,6 +58,20 @@ AudioChannelService::GetAudioChannelService()
     return AudioChannelServiceChild::GetAudioChannelService();
   }
 
+  return gAudioChannelService;
+
+}
+
+// static
+AudioChannelService*
+AudioChannelService::GetOrCreateAudioChannelService()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  if (XRE_GetProcessType() != GeckoProcessType_Default) {
+    return AudioChannelServiceChild::GetOrCreateAudioChannelService();
+  }
+
   // If we already exist, exit early
   if (gAudioChannelService) {
     return gAudioChannelService;
@@ -66,7 +79,7 @@ AudioChannelService::GetAudioChannelService()
 
   // Create new instance, register, return
   nsRefPtr<AudioChannelService> service = new AudioChannelService();
-  NS_ENSURE_TRUE(service, nullptr);
+  MOZ_ASSERT(service);
 
   gAudioChannelService = service;
   return gAudioChannelService;
@@ -586,14 +599,18 @@ AudioChannelService::SendAudioChannelChangedNotification(uint64_t aChildID)
        kMozAudioChannelAttributeTable[index].value > higher &&
        kMozAudioChannelAttributeTable[index].value > (int16_t)AudioChannel::Normal;
        --index) {
-    if (kMozAudioChannelAttributeTable[index].value == (int16_t)AudioChannel::Content &&
-      mPlayableHiddenContentChildID != CONTENT_PROCESS_ID_UNKNOWN) {
-      higher = kMozAudioChannelAttributeTable[index].value;
-    }
-
     // Each channel type will be split to fg and bg for recording the state,
     // so here need to do a translation.
-    if (!mChannelCounters[index * 2 + 1].IsEmpty()) {
+    if (mChannelCounters[index * 2 + 1].IsEmpty()) {
+      continue;
+    }
+
+    if (kMozAudioChannelAttributeTable[index].value == (int16_t)AudioChannel::Content) {
+      if (mPlayableHiddenContentChildID != CONTENT_PROCESS_ID_UNKNOWN) {
+        higher = kMozAudioChannelAttributeTable[index].value;
+        break;
+      }
+    } else {
       higher = kMozAudioChannelAttributeTable[index].value;
       break;
     }
@@ -644,7 +661,7 @@ AudioChannelService::NotifyEnumerator(AudioChannelAgent* aAgent,
 class NotifyRunnable : public nsRunnable
 {
 public:
-  NotifyRunnable(AudioChannelService* aService)
+  explicit NotifyRunnable(AudioChannelService* aService)
     : mService(aService)
   {}
 
@@ -888,7 +905,7 @@ AudioChannelService::GetInternalType(AudioChannel aChannel,
 
 struct RefreshAgentsVolumeData
 {
-  RefreshAgentsVolumeData(nsPIDOMWindow* aWindow)
+  explicit RefreshAgentsVolumeData(nsPIDOMWindow* aWindow)
     : mWindow(aWindow)
   {}
 
@@ -929,7 +946,7 @@ AudioChannelService::RefreshAgentsVolume(nsPIDOMWindow* aWindow)
 
 struct CountWindowData
 {
-  CountWindowData(nsIDOMWindow* aWindow)
+  explicit CountWindowData(nsIDOMWindow* aWindow)
     : mWindow(aWindow)
     , mCount(0)
   {}

@@ -27,6 +27,7 @@ using namespace std;
 void
 AddUniforms(ProgramProfileOGL& aProfile)
 {
+    // This needs to be kept in sync with the KnownUniformName enum
     static const char *sKnownUniformNames[] = {
         "uLayerTransform",
         "uMaskTransform",
@@ -46,6 +47,8 @@ AddUniforms(ProgramProfileOGL& aProfile)
         "uRenderColor",
         "uTexCoordMultiplier",
         "uTexturePass2",
+        "uColorMatrix",
+        "uColorMatrixVector",
         nullptr
     };
 

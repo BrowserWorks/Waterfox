@@ -353,6 +353,9 @@ TLSFilterTransaction::WriteSegments(nsAHttpSegmentWriter *aWriter,
   if (NS_SUCCEEDED(rv) && NS_FAILED(mFilterReadCode) && !(*outCountWritten)) {
     // nsPipe turns failures into silent OK.. undo that!
     rv = mFilterReadCode;
+    if (mFilterReadCode == NS_BASE_STREAM_WOULD_BLOCK) {
+      Connection()->ResumeRecv();
+    }
   }
   LOG(("TLSFilterTransaction %p called trans->WriteSegments rv=%x %d\n",
        this, rv, *outCountWritten));
@@ -917,7 +920,7 @@ public:
   NS_DECL_NSITRANSPORT
   NS_DECL_NSISOCKETTRANSPORT
 
-  SocketTransportShim(nsISocketTransport *aWrapped)
+  explicit SocketTransportShim(nsISocketTransport *aWrapped)
     : mWrapped(aWrapped)
   {};
 
@@ -936,7 +939,7 @@ public:
 
   friend class SpdyConnectTransaction;
 
-  OutputStreamShim(SpdyConnectTransaction *aTrans)
+  explicit OutputStreamShim(SpdyConnectTransaction *aTrans)
     : mCallback(nullptr)
     , mStatus(NS_OK)
   {
@@ -960,7 +963,7 @@ public:
 
   friend class SpdyConnectTransaction;
 
-  InputStreamShim(SpdyConnectTransaction *aTrans)
+  explicit InputStreamShim(SpdyConnectTransaction *aTrans)
     : mCallback(nullptr)
     , mStatus(NS_OK)
   {

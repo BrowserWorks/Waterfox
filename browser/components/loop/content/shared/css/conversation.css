@@ -2,130 +2,211 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* Conversation window styles */
+/* Shared conversation window styles */
+.standalone .video-layout-wrapper,
+.conversation .media video {
+  background-color: #444;
+}
 
 .conversation {
   position: relative;
 }
 
-.conversation .controls {
-  position: absolute;
+.conversation-toolbar {
   z-index: 999; /* required to have it superimposed to the video element */
+  border: 1px solid #5a5a5a;
+  border-left: 0;
+  border-right: 0;
+  background: rgba(0,0,0,.70);
+}
+
+/* desktop version */
+.fx-embedded .conversation-toolbar {
+  position: absolute;
+  top: 0;
   left: 0;
   right: 0;
-  background: rgba(0, 0, 0, .70);
-  border: 1px solid #5a5a5a;
-  list-style-type: none;
-  margin: 0;
-  padding: 0;
+  height: 26px;
 }
 
-.conversation .controls li {
+/* standalone version */
+.standalone .conversation-toolbar {
+  padding: 20px;
+  height: 64px;
+}
+
+.conversation-toolbar li {
   float: left;
-  font-size: 10px;
+  font-size: 0; /* prevents vertical bottom padding added to buttons in google
+                   chrome */
 }
 
-.conversation .controls .btn {
-  width: 40px;
-  height: 30px;
-  background: transparent;
-  background-repeat: no-repeat;
-  background-position: 12px 8px;
-  background-size: 14px 14px;
+  .standalone .conversation-toolbar li {
+    /* XXX Might make sense to use relative units here.
+     */
+    margin-right: 16px;
+  }
+
+.conversation-toolbar-btn-box {
   border-right: 1px solid #5a5a5a;
-  border-radius: 0;
+}
+
+  .standalone .conversation-toolbar-btn-box {
+    /* overwrite the style for standalone
+     * because we reuse the same component */
+    border: none;
+  }
+
+.conversation-toolbar .btn {
+  /* dimensions according to spec
+   * https://people.mozilla.org/~dhenein/labs/loop-link-spec/#video-call */
+  width: 32px;
+  height: 24px;
+  background-position: center;
+  background-size: 40%;
+  background-repeat: no-repeat;
+}
+
+.standalone .media-control {
+  width: 36px;
+  background-position: center;
+  border-radius: 28px;
+}
+
+  .standalone-conversation-toolbar-media-btn:hover {
+    background-color: rgba(255,255,255,.35);
+  }
+
+.fx-embedded-answer-btn-text {
+  vertical-align: bottom;
+  /* don't stretch the button if the localized text is too big */
+  max-width: 80%;
+}
+
+.fx-embedded-btn-icon-video,
+.fx-embedded-btn-icon-audio {
+  display: inline-block;
+  vertical-align: top;
+  width: .8rem;
+  height: .8rem;
+  background-repeat: no-repeat;
   cursor: pointer;
 }
 
-.conversation .controls .btn:hover {
-  background-color: rgba(255, 255, 255, .35);
+.fx-embedded-btn-icon-video,
+.fx-embedded-btn-video-small,
+.fx-embedded-tiny-video-icon {
+  background-image: url("../img/video-inverse-14x14.png");
 }
 
-/* Hangup button */
-.conversation .controls .btn-hangup {
-  background-color: #D74345;
+.fx-embedded-btn-icon-audio,
+.fx-embedded-btn-audio-small,
+.fx-embedded-tiny-audio-icon {
+  background-image: url("../img/audio-inverse-14x14.png");
+}
+
+.fx-embedded-btn-audio-small,
+.fx-embedded-btn-video-small {
+  width: 26px;
+  height: 26px;
+  border-left: 1px solid rgba(255,255,255,.4);
+  border-top-right-radius: 2px;
+  border-bottom-right-radius: 2px;
+  background-color: #5bc0a4;
+  background-position: center;
+  background-size: 1rem;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+  .fx-embedded-btn-video-small:hover,
+  .fx-embedded-btn-audio-small:hover {
+    background-color: #6cb23e;
+  }
+
+@media (min-resolution: 2dppx) {
+  .fx-embedded-btn-audio-small {
+    background-image: url("../img/audio-inverse-14x14@2x.png");
+  }
+  .fx-embedded-btn-video-small {
+    background-image: url("../img/video-inverse-14x14@2x.png");
+  }
+}
+
+.standalone .btn-hangup {
+  width: auto;
+  font-size: 12px;
+  border-radius: 2px;
+  padding: 0 20px;
+}
+
+.fx-embedded .conversation-toolbar .btn-hangup {
   background-image: url(../img/hangup-inverse-14x14.png);
 }
-.conversation .controls .btn-hangup:hover {
-  background-color: #C53436;
-}
 @media (min-resolution: 2dppx) {
-  .conversation .controls .btn-hangup {
+  .fx-embedded .conversation-toolbar .btn-hangup {
     background-image: url(../img/hangup-inverse-14x14@2x.png);
   }
 }
 
 /* Common media control buttons behavior */
-.conversation .controls .media-control {
+.conversation-toolbar .media-control {
   background-color: transparent;
   opacity: 1;
 }
-.conversation .controls .media-control:hover {
+.conversation-toolbar .media-control:hover {
   background-color: rgba(255, 255, 255, .35);
   opacity: 1;
 }
-.conversation .controls .media-control.muted {
+.conversation-toolbar .media-control.muted {
   background-color: #0096DD;
   opacity: 1;
 }
 
 /* Audio mute button */
-.conversation .controls .local-media.btn-mute-audio {
+.btn-mute-audio {
   background-image: url(../img/audio-inverse-14x14.png);
 }
-.conversation .controls .local-media.btn-mute-audio.muted {
+.btn-mute-audio.muted {
   background-image: url(../img/mute-inverse-14x14.png);
 }
 @media (min-resolution: 2dppx) {
-  .conversation .controls .local-media.btn-mute-audio {
+  .btn-mute-audio {
     background-image: url(../img/audio-inverse-14x14@2x.png);
   }
-  .conversation .controls .local-media.btn-mute-audio.muted {
+  .btn-mute-audio.muted {
     background-image: url(../img/mute-inverse-14x14@2x.png);
   }
 }
 
 /* Video mute button */
-.conversation .controls .local-media.btn-mute-video {
+.btn-mute-video {
   background-image: url(../img/video-inverse-14x14.png);
 }
-.conversation .controls .local-media.btn-mute-video.muted {
+.btn-mute-video.muted {
   background-image: url(../img/facemute-14x14.png);
 }
 @media (min-resolution: 2dppx) {
-  .conversation .controls .local-media.btn-mute-video {
+  .btn-mute-video {
     background-image: url(../img/video-inverse-14x14@2x.png);
   }
-  .conversation .controls .local-media.btn-mute-video.muted {
+  .btn-mute-video.muted {
     background-image: url(../img/facemute-14x14@2x.png);
   }
 }
 
-/* Video elements */
-
-.conversation .media video {
-  background: #eee;
-}
-
-/* Nested video elements */
-
-.conversation .media.nested {
-  position: relative;
-}
-
-.conversation .media.nested .remote {
-  display: inline-block;
-  background: #000;
-  width: 100%;
-  min-height: 154px;
-}
-
-.conversation .media.nested .local {
+.fx-embedded .remote_wrapper {
   position: absolute;
-  bottom: 4px;
-  right: 0;
-  width: 30%;
-  max-width: 140px;
+  top: 0px;
+  right: 0px;
+  bottom: 0px;
+  left: 0px;
+}
+
+.standalone .local-stream {
+  /* required to have it superimposed to the control toolbar */
+  z-index: 1001;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 /* Side by side video elements */
@@ -135,17 +216,8 @@
   float: left;
 }
 
-.conversation .media.side-by-side .local {
+.conversation .media.side-by-side .local-stream {
   width: 50%;
-}
-
-/**
- * Overriden SDK styles; .OT_video-container is using absolute positioning
- * therefore moves the video elements it contains outside of the current
- * viewport.
- */
-.conversation .OT_video-container {
-  position: inherit;
 }
 
 /* Call ended view */
@@ -153,23 +225,449 @@
   text-align: center;
 }
 
-/* Incoming call */
+/* General Call (incoming or outgoing). */
 
 /*
  * Height matches the height of the docked window
  * but the UI breaks when you pop out
  * Bug 1040985
  */
-.incoming-call {
+.call-window {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  min-height: 264px;
+  min-height: 230px;
 }
 
-.incoming-call h2 {
+.call-window > .btn-label {
+  text-align: center;
+}
+
+.call-window > .error {
+  text-align: center;
+  color: #f00;
+  font-size: 90%;
+}
+
+.call-action-group {
+  display: flex;
+  padding: 2.5em 4px 0 4px;
+  width: 100%;
+}
+
+.call-action-group > .btn {
+  height: 26px;
+  border-radius: 2px;
+  margin: 0 4px;
+  min-width: 64px;
+}
+
+.call-action-group .btn-group-chevron,
+.call-action-group .btn-group {
+  width: 100%;
+}
+
+/* XXX Once we get the incoming call avatar, bug 1047435, the H2 should
+ * disappear from our markup, and we should remove this rule entirely.
+ */
+.call-window h2 {
   font-size: 1.5em;
   font-weight: normal;
+
+  /* compensate for reset.css overriding this; values borrowed from
+     Firefox Mac html.css */
+  margin: 0.83em 0;
+}
+
+.fx-embedded-call-button-spacer {
+  display: flex;
+  flex: 1;
+}
+
+/* Expired call url page */
+
+.expired-url-info {
+  width: 400px;
+  margin: 0 auto;
+}
+
+.promote-firefox {
+  text-align: center;
+  font-size: 18px;
+  line-height: 24px;
+  margin: 2em 0;
+}
+
+.promote-firefox h3 {
+  font-weight: 300;
+}
+
+/*
+ * Dropdown menu hidden behind a chevron
+ *
+ * .native-dropdown-menu[-large-parent] Generic class, contains common styles
+ * .standalone-dropdown-menu Initiate call dropdown menu
+ * .conversation-window-dropdown Dropdown menu for answer/decline/block options
+ */
+
+.native-dropdown-menu,
+.native-dropdown-large-parent {
+  /* Should match a native select menu */
+  padding: 0;
+  position: absolute; /* element can be wider than the parent */
+  background: #fff;
+  margin: 0;
+  box-shadow: 0 4px 5px rgba(30, 30, 30, .3);
+  border-style: solid;
+  border-width: 1px 1px 1px 2px;
+  border-color: #aaa #111 #111 #aaa;
+}
+
+  /*
+   * If the component is smaller than the parent
+   * we need it to display block to occupy full width
+   * Same as above but overrides apropriate styles
+   */
+  .native-dropdown-large-parent {
+    position: relative;
+    display: block;
+  }
+
+  .native-dropdown-menu li,
+  .native-dropdown-large-parent li {
+    list-style: none;
+    cursor: pointer;
+    color: #000;
+  }
+
+  .native-dropdown-menu li:hover,
+  .native-dropdown-large-parent li:hover,
+  .native-dropdown-large-parent li:hover button {
+    color: #fff;
+    background-color: #111;
+  }
+
+.conversation-window-dropdown li {
+  padding: 2px;
+  font-size: .9em;
+}
+
+/* Expired call url page */
+
+.expired-url-info {
+  width: 400px;
+  margin: 0 auto;
+}
+
+.promote-firefox {
+  text-align: center;
+  font-size: 18px;
+  line-height: 24px;
+  margin: 2em 0;
+}
+
+.promote-firefox h3 {
+  font-weight: 300;
+}
+
+/* Feedback form */
+
+.feedback {
+  padding: 14px;
+}
+
+.feedback p {
+  margin: 0px;
+}
+
+.feedback h3 {
+  color: #666;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 1em 0;
+}
+
+.feedback .faces {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+.feedback .face {
+  border: 1px solid transparent;
+  box-shadow: 0 1px 2px #CCC;
+  cursor: pointer;
+  border-radius: 4px;
+  margin: 0 10px;
+  width: 80px;
+  height: 80px;
+  background-color: #fbfbfb;
+  background-size: 60px auto;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+.feedback .face:hover {
+  border: 1px solid #DDD;
+  background-color: #FEFEFE;
+}
+
+.feedback .face.face-happy {
+  background-image: url("../img/happy.png");
+}
+
+.feedback .face.face-sad {
+  background-image: url("../img/sad.png");
+}
+
+.fx-embedded-btn-back {
+  margin-bottom: 1rem;
+  padding: .2rem .8rem;
+  border: 1px solid #aaa;
+  border-radius: 2px;
+  background: transparent;
+  color: #777;
+  cursor: pointer;
+}
+
+.feedback label {
+  display: block;
+  line-height: 1.5em;
+}
+
+.feedback form input[type="radio"] {
+  margin-right: .5em;
+}
+
+.feedback form button[type="submit"],
+.feedback form input[type="text"] {
+  width: 100%;
+  margin-top: 14px;
+}
+
+.feedback .info {
+  display: block;
+  font-size: 10px;
+  color: #CCC;
+  text-align: center;
+}
+
+.fx-embedded .local-stream {
+  position: absolute;
+  right: 3px;
+  bottom: 5px;
+  /* next two lines are workaround for lack of object-fit; see bug 1020445 */
+  max-width: 140px;
+  width: 30%;
+  height: 28%;
+  max-height: 105px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.conversation .media.nested .remote {
+  display: inline-block;
+  position: absolute; /* workaround for lack of object-fit; see bug 1020445 */
+  width: 100%;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+/*
+ * XXX this approach is fragile because it makes assumptions
+ * about the generated OT markup, any change will break it
+ */
+.local-stream.local-stream-audio,
+.standalone .OT_subscriber .OT_video-poster,
+.fx-embedded .OT_video-container .OT_video-poster,
+.local-stream-audio .OT_publisher .OT_video-poster {
+  background-image: url("../img/audio-call-avatar.svg");
+  background-repeat: no-repeat;
+  background-color: #4BA6E7;
+  background-size: contain;
+  background-position: center;
+}
+
+.fx-embedded .media.nested {
+  min-height: 200px;
+}
+
+.fx-embedded-call-identifier {
+  display: inline;
+  width: 100%;
+  padding: 1.2em;
+}
+
+.fx-embedded-call-identifier-item {
+  height: 50px;
+}
+
+.fx-embedded-call-identifier-avatar {
+  max-width: 50px;
+  min-width: 50px;
+  background: #ccc;
+  border-radius: 50%;
+  background-image: url("../img/audio-call-avatar.svg");
+  background-repeat: no-repeat;
+  background-color: #4ba6e7;
+  background-size: contain;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+  float: left;
+  -moz-margin-end: 1em;
+}
+
+.fx-embedded-call-identifier-text {
+  font-weight: bold;
+}
+
+.fx-embedded-call-identifier-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  -moz-margin-start: 1em;
+}
+
+.fx-embedded-conversation-timestamp {
+  font-size: .6rem;
+  line-height: 17px;
+  display: inline-block;
+  vertical-align: top;
+}
+
+.fx-embedded-call-detail {
+  padding-top: 1.2em;
+}
+
+.fx-embedded-tiny-video-icon {
+  margin: 0 0.8em;
+}
+
+.fx-embedded-tiny-audio-icon,
+.fx-embedded-tiny-video-icon {
+  width: 18px;
+  height: 18px;
+  background-size: 12px 12px;
+  background-color: #4ba6e7;
+  display: inline-block;
+  background-repeat: no-repeat;
+  background-position: center;
+  border-radius: 50%;
+}
+
+  .fx-embedded-tiny-video-icon.muted {
+    background-color: rgba(0,0,0,.2)
+  }
+
+@media screen and (min-width:640px) {
+
+  /* Force full height on all parents up to the video elements
+   * this way we can ensure the aspect ratio and use height 100%
+   * on the video element
+   * */
+  html, body, #main,
+  .video-layout-wrapper,
+  .conversation {
+    height: 100%;
+  }
+
+  .standalone .conversation-toolbar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+
+  .fx-embedded .local-stream {
+    position: fixed;
+  }
+
+  .standalone .local-stream {
+    position: absolute;
+    right: 15px;
+    bottom: 15px;
+    width: 20%;
+    height: 20%;
+    max-width: 400px;
+    max-height: 300px;
+  }
+
+  /* Nested video elements */
+  .conversation .media.nested {
+    position: relative;
+    height: 100%;
+  }
+
+  .standalone .remote_wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .standalone {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+}
+
+@media screen and (max-width:640px) {
+  .standalone .video-layout-wrapper,
+  .standalone .conversation {
+    height: 100%;
+  }
+
+  .standalone .media {
+    height: 90%;
+  }
+
+  .standalone .OT_subscriber {
+    height: 100%;
+    width: auto;
+  }
+
+  .standalone .media.nested {
+    min-height: 500px;
+  }
+
+  .standalone .local-stream {
+    flex: 1;
+    min-width: 120px;
+    min-height: 150px;
+    width: 100%;
+    box-shadow: none;
+  }
+
+  /* Nested video elements */
+  .conversation .media.nested {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 0%;
+  }
+
+  .standalone .video_wrapper.remote_wrapper {
+    /* Because of OT markup we need to set a high flex value
+     * Flex rule assures remote and local streams stack on top of eachother
+     * Computed width is not 100% unless the `width` rule */
+    flex: 2;
+    width: 100%;
+    position: relative;
+  }
+}
+
+@media screen and (max-width:420px) {
+  /* Restore video height so that we get
+   * vertical centering for free on a small screen
+   **/
+  .standalone .conversation .media video {
+    height: 100%;
+  }
 }
 

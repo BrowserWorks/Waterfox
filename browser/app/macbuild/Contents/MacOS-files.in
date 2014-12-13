@@ -1,0 +1,9 @@
+/*.app/***
+/*.dylib
+/certutil
+/firefox-bin
+/gtest/***
+/pk12util
+/ssltunnel
+/xpcshell
+/XUL

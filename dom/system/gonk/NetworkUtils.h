@@ -34,7 +34,6 @@ public:
     mDomain = aOther.mDomain;
     mGateway = aOther.mGateway;
     mGateways = aOther.mGateways;
-    mHostnames = aOther.mHostnames;
     mId = aOther.mId;
     mIfname = aOther.mIfname;
     mPrefixLength = aOther.mPrefixLength;
@@ -60,9 +59,6 @@ public:
     mDns1 = aOther.mDns1;
     mDns2 = aOther.mDns2;
     mDnses = aOther.mDnses;
-    mRxBytes = aOther.mRxBytes;
-    mTxBytes = aOther.mTxBytes;
-    mDate = aOther.mDate;
     mStartIp = aOther.mStartIp;
     mEndIp = aOther.mEndIp;
     mServerIp = aOther.mServerIp;
@@ -110,14 +106,13 @@ public:
     COPY_OPT_STRING_FIELD(mDomain, EmptyString())
     COPY_OPT_STRING_FIELD(mGateway, EmptyString())
     COPY_SEQUENCE_FIELD(mGateways, nsString)
-    COPY_SEQUENCE_FIELD(mHostnames, nsString)
     COPY_OPT_STRING_FIELD(mIfname, EmptyString())
     COPY_OPT_STRING_FIELD(mIp, EmptyString())
     COPY_OPT_FIELD(mPrefixLength, 0)
     COPY_OPT_STRING_FIELD(mOldIfname, EmptyString())
     COPY_OPT_STRING_FIELD(mMode, EmptyString())
     COPY_OPT_FIELD(mReport, false)
-    COPY_OPT_FIELD(mIsAsync, true)
+    COPY_OPT_FIELD(mIsAsync, false)
     COPY_OPT_FIELD(mEnabled, false)
     COPY_OPT_STRING_FIELD(mWifictrlinterfacename, EmptyString())
     COPY_OPT_STRING_FIELD(mInternalIfname, EmptyString())
@@ -136,9 +131,6 @@ public:
     COPY_OPT_STRING_FIELD(mDns1, EmptyString())
     COPY_OPT_STRING_FIELD(mDns2, EmptyString())
     COPY_SEQUENCE_FIELD(mDnses, nsString)
-    COPY_OPT_FIELD(mRxBytes, -1)
-    COPY_OPT_FIELD(mTxBytes, -1)
-    COPY_OPT_STRING_FIELD(mDate, EmptyString())
     COPY_OPT_STRING_FIELD(mStartIp, EmptyString())
     COPY_OPT_STRING_FIELD(mEndIp, EmptyString())
     COPY_OPT_STRING_FIELD(mServerIp, EmptyString())
@@ -160,7 +152,6 @@ public:
   nsString mDomain;
   nsString mGateway;
   nsTArray<nsString> mGateways;
-  nsTArray<nsString> mHostnames;
   nsString mIfname;
   nsString mIp;
   uint32_t mPrefixLength;
@@ -186,9 +177,6 @@ public:
   nsString mDns1;
   nsString mDns2;
   nsTArray<nsString> mDnses;
-  float mRxBytes;
-  float mTxBytes;
-  nsString mDate;
   nsString mStartIp;
   nsString mEndIp;
   nsString mServerIp;
@@ -262,25 +250,24 @@ private:
   /**
    * Commands supported by NetworkUtils.
    */
-  bool setDNS(NetworkParams& aOptions);
-  bool setDefaultRouteAndDNS(NetworkParams& aOptions);
-  bool addHostRoute(NetworkParams& aOptions);
-  bool removeDefaultRoute(NetworkParams& aOptions);
-  bool removeHostRoute(NetworkParams& aOptions);
-  bool removeHostRoutes(NetworkParams& aOptions);
-  bool removeNetworkRoute(NetworkParams& aOptions);
-  bool addSecondaryRoute(NetworkParams& aOptions);
-  bool removeSecondaryRoute(NetworkParams& aOptions);
-  bool getNetworkInterfaceStats(NetworkParams& aOptions);
-  bool setNetworkInterfaceAlarm(NetworkParams& aOptions);
-  bool enableNetworkInterfaceAlarm(NetworkParams& aOptions);
-  bool disableNetworkInterfaceAlarm(NetworkParams& aOptions);
-  bool setWifiOperationMode(NetworkParams& aOptions);
-  bool setDhcpServer(NetworkParams& aOptions);
-  bool setWifiTethering(NetworkParams& aOptions);
-  bool setUSBTethering(NetworkParams& aOptions);
-  bool enableUsbRndis(NetworkParams& aOptions);
-  bool updateUpStream(NetworkParams& aOptions);
+  int32_t setDNS(NetworkParams& aOptions);
+  int32_t setDefaultRouteAndDNS(NetworkParams& aOptions);
+  int32_t addHostRoute(NetworkParams& aOptions);
+  int32_t removeDefaultRoute(NetworkParams& aOptions);
+  int32_t removeHostRoute(NetworkParams& aOptions);
+  int32_t removeHostRoutes(NetworkParams& aOptions);
+  int32_t removeNetworkRoute(NetworkParams& aOptions);
+  int32_t addSecondaryRoute(NetworkParams& aOptions);
+  int32_t removeSecondaryRoute(NetworkParams& aOptions);
+  int32_t setNetworkInterfaceAlarm(NetworkParams& aOptions);
+  int32_t enableNetworkInterfaceAlarm(NetworkParams& aOptions);
+  int32_t disableNetworkInterfaceAlarm(NetworkParams& aOptions);
+  int32_t setWifiOperationMode(NetworkParams& aOptions);
+  int32_t setDhcpServer(NetworkParams& aOptions);
+  int32_t setWifiTethering(NetworkParams& aOptions);
+  int32_t setUSBTethering(NetworkParams& aOptions);
+  int32_t enableUsbRndis(NetworkParams& aOptions);
+  int32_t updateUpStream(NetworkParams& aOptions);
 
   /**
    * function pointer array holds all netd commands should be executed
@@ -297,7 +284,6 @@ private:
   static CommandFunc sUpdateUpStreamChain[];
   static CommandFunc sStartDhcpServerChain[];
   static CommandFunc sStopDhcpServerChain[];
-  static CommandFunc sNetworkInterfaceStatsChain[];
   static CommandFunc sNetworkInterfaceEnableAlarmChain[];
   static CommandFunc sNetworkInterfaceDisableAlarmChain[];
   static CommandFunc sNetworkInterfaceSetAlarmChain[];
@@ -317,8 +303,6 @@ private:
   static void startSoftAP(PARAMS);
   static void stopSoftAP(PARAMS);
   static void clearWifiTetherParms(PARAMS);
-  static void getRxBytes(PARAMS);
-  static void getTxBytes(PARAMS);
   static void enableAlarm(PARAMS);
   static void disableAlarm(PARAMS);
   static void setQuota(PARAMS);
@@ -340,7 +324,6 @@ private:
   static void setInterfaceDns(PARAMS);
   static void wifiTetheringSuccess(PARAMS);
   static void usbTetheringSuccess(PARAMS);
-  static void networkInterfaceStatsSuccess(PARAMS);
   static void networkInterfaceAlarmSuccess(PARAMS);
   static void updateUpStreamSuccess(PARAMS);
   static void setDhcpServerSuccess(PARAMS);
@@ -357,7 +340,6 @@ private:
   static void usbTetheringFail(PARAMS);
   static void updateUpStreamFail(PARAMS);
   static void setDhcpServerFail(PARAMS);
-  static void networkInterfaceStatsFail(PARAMS);
   static void networkInterfaceAlarmFail(PARAMS);
   static void setDnsFail(PARAMS);
 #undef PARAMS

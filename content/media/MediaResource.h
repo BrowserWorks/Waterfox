@@ -17,6 +17,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/TimeStamp.h"
 #include "nsThreadUtils.h"
+#include <algorithm>
 
 // For HTTP seeking, if number of bytes needing to be
 // seeked forward is less than this value then a read is
@@ -55,7 +56,7 @@ class MediaChannelStatistics {
 public:
   MediaChannelStatistics() { Reset(); }
 
-  MediaChannelStatistics(MediaChannelStatistics * aCopyFrom)
+  explicit MediaChannelStatistics(MediaChannelStatistics * aCopyFrom)
   {
     MOZ_ASSERT(aCopyFrom);
     mAccumulatedBytes = aCopyFrom->mAccumulatedBytes;
@@ -135,10 +136,14 @@ public:
     NS_ASSERTION(mStart < mEnd, "Range should end after start!");
   }
 
-  MediaByteRange(TimestampedMediaByteRange& aByteRange);
+  explicit MediaByteRange(TimestampedMediaByteRange& aByteRange);
 
   bool IsNull() const {
     return mStart == 0 && mEnd == 0;
+  }
+
+  bool operator==(const MediaByteRange& aRange) const {
+    return mStart == aRange.mStart && mEnd == aRange.mEnd;
   }
 
   // Clears byte range values.
@@ -149,6 +154,15 @@ public:
 
   bool Contains(const MediaByteRange& aByteRange) const {
     return aByteRange.mStart >= mStart && aByteRange.mEnd <= mEnd;
+  }
+
+  MediaByteRange Extents(const MediaByteRange& aByteRange) const
+  {
+    if (IsNull()) {
+      return aByteRange;
+    }
+    return MediaByteRange(std::min(mStart, aByteRange.mStart),
+                          std::max(mEnd, aByteRange.mEnd));
   }
 
   int64_t mStart, mEnd;
@@ -614,7 +628,7 @@ public:
   {
     ~Listener() {}
   public:
-    Listener(ChannelMediaResource* aResource) : mResource(aResource) {}
+    explicit Listener(ChannelMediaResource* aResource) : mResource(aResource) {}
 
     NS_DECL_ISUPPORTS
     NS_DECL_NSIREQUESTOBSERVER

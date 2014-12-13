@@ -4,6 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "DrawTargetTiled.h"
+#include "Logging.h"
 
 using namespace std;
 
@@ -21,12 +22,14 @@ DrawTargetTiled::Init(const TileSet& aTiles)
     return false;
   }
 
-  mTiles.resize(aTiles.mTileCount);
-  memcpy(&mTiles.front(), aTiles.mTiles, aTiles.mTileCount * sizeof(Tile));
-
-  for (size_t i = 0; i < mTiles.size(); i++) {
-    if (mTiles[0].mDrawTarget->GetFormat() != mTiles[i].mDrawTarget->GetFormat() ||
-        mTiles[0].mDrawTarget->GetBackendType() != mTiles[i].mDrawTarget->GetBackendType()) {
+  mTiles.reserve(aTiles.mTileCount);
+  for (size_t i = 0; i < aTiles.mTileCount; ++i) {
+    mTiles.push_back(aTiles.mTiles[i]);
+    if (!aTiles.mTiles[i].mDrawTarget) {
+      return false;
+    }
+    if (mTiles[0].mDrawTarget->GetFormat() != mTiles.back().mDrawTarget->GetFormat() ||
+        mTiles[0].mDrawTarget->GetBackendType() != mTiles.back().mDrawTarget->GetBackendType()) {
       return false;
     }
     uint32_t newXMost = max(mRect.XMost(),
@@ -38,6 +41,7 @@ DrawTargetTiled::Init(const TileSet& aTiles)
     mRect.width = newXMost - mRect.x;
     mRect.height = newYMost - mRect.y;
   }
+  mFormat = mTiles[0].mDrawTarget->GetFormat();
   return true;
 }
 
@@ -60,6 +64,9 @@ public:
   virtual TemporaryRef<DataSourceSurface> GetDataSurface()
   {
     RefPtr<DataSourceSurface> surf = Factory::CreateDataSourceSurface(GetSize(), GetFormat());
+    if (MOZ2D_WARN_IF(!surf)) {
+      return nullptr;
+    }
 
     DataSourceSurface::MappedSurface mappedSurf;
     surf->Map(DataSourceSurface::MapType::WRITE, &mappedSurf);

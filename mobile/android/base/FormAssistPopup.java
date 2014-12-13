@@ -38,8 +38,8 @@ import java.util.Arrays;
 import java.util.Collection;
 
 public class FormAssistPopup extends RelativeLayout implements GeckoEventListener {
-    private Context mContext;
-    private Animation mAnimation;
+    private final Context mContext;
+    private final Animation mAnimation;
 
     private ListView mAutoCompleteList;
     private RelativeLayout mValidationMessage;
@@ -58,10 +58,10 @@ public class FormAssistPopup extends RelativeLayout implements GeckoEventListene
     }
     private PopupType mPopupType;
 
-    private static int sAutoCompleteMinWidth = 0;
-    private static int sAutoCompleteRowHeight = 0;
-    private static int sValidationMessageHeight = 0;
-    private static int sValidationTextMarginTop = 0;
+    private static int sAutoCompleteMinWidth;
+    private static int sAutoCompleteRowHeight;
+    private static int sValidationMessageHeight;
+    private static int sValidationTextMarginTop;
     private static RelativeLayout.LayoutParams sValidationTextLayoutNormal;
     private static RelativeLayout.LayoutParams sValidationTextLayoutInverted;
 
@@ -186,7 +186,7 @@ public class FormAssistPopup extends RelativeLayout implements GeckoEventListene
             sValidationTextLayoutNormal = new RelativeLayout.LayoutParams(mValidationMessageText.getLayoutParams());
             sValidationTextLayoutNormal.setMargins(0, sValidationTextMarginTop, 0, 0);
 
-            sValidationTextLayoutInverted = new RelativeLayout.LayoutParams(sValidationTextLayoutNormal);
+            sValidationTextLayoutInverted = new RelativeLayout.LayoutParams((ViewGroup.MarginLayoutParams) sValidationTextLayoutNormal);
             sValidationTextLayoutInverted.setMargins(0, 0, 0, 0);
 
             mValidationMessageArrow = (ImageView) mValidationMessage.findViewById(R.id.validation_message_arrow);
@@ -363,7 +363,7 @@ public class FormAssistPopup extends RelativeLayout implements GeckoEventListene
         public AutoCompleteListAdapter(Context context, int textViewResourceId) {
             super(context, textViewResourceId);
 
-            mInflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             mTextViewResourceId = textViewResourceId;
         }
 

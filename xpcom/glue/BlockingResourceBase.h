@@ -16,12 +16,18 @@
 #include "nsISupportsImpl.h"
 
 #ifdef DEBUG
+
+// NB: Comment this out to enable callstack tracking.
+#define MOZ_CALLSTACK_DISABLED
+
 #include "prinit.h"
-#include "prthread.h"
 
 #include "nsStringGlue.h"
 
-#include "mozilla/DeadlockDetector.h"
+#ifndef MOZ_CALLSTACK_DISABLED
+#include "nsTArray.h"
+#endif
+
 #include "nsXPCOM.h"
 #endif
 
@@ -31,13 +37,16 @@
 
 namespace mozilla {
 
+#ifdef DEBUG
+template <class T> class DeadlockDetector;
+#endif
 
 /**
  * BlockingResourceBase
  * Base class of resources that might block clients trying to acquire them.
  * Does debugging and deadlock detection in DEBUG builds.
  **/
-class NS_COM_GLUE BlockingResourceBase
+class BlockingResourceBase
 {
 public:
   // Needs to be kept in sync with kResourceTypeNames.
@@ -52,77 +61,48 @@ public:
 
 #ifdef DEBUG
 
-private:
-  // forward declaration for the following typedef
-  struct DeadlockDetectorEntry;
-
-  // ``DDT'' = ``Deadlock Detector Type''
-  typedef DeadlockDetector<DeadlockDetectorEntry> DDT;
+  static size_t
+  SizeOfDeadlockDetector(MallocSizeOf aMallocSizeOf);
 
   /**
-   * DeadlockDetectorEntry
-   * We free BlockingResources, but we never free entries in the
-   * deadlock detector.  This struct outlives its BlockingResource
-   * and preserves all the state needed to print subsequent
-   * error messages.
+   * Print
+   * Write a description of this blocking resource to |aOut|.  If
+   * the resource appears to be currently acquired, the current
+   * acquisition context is printed and true is returned.
+   * Otherwise, we print the context from |aFirstSeen|, the
+   * first acquisition from which the code calling |Print()|
+   * became interested in us, and return false.
    *
-   * These objects are owned by the deadlock detector.
+   * *NOT* thread safe.  Reads |mAcquisitionContext| without
+   * synchronization, but this will not cause correctness
+   * problems.
+   *
+   * FIXME bug 456272: hack alert: because we can't write call
+   * contexts into strings, all info is written to stderr, but
+   * only some info is written into |aOut|
    */
-  struct DeadlockDetectorEntry
+  bool Print(nsACString& aOut) const;
+
+  size_t
+  SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
   {
-    DeadlockDetectorEntry(const char* aName,
-                          BlockingResourceType aType)
-      : mName(aName)
-      , mType(aType)
-      , mAcquisitionContext(CallStack::kNone)
-    {
-      NS_ABORT_IF_FALSE(mName, "Name must be nonnull");
-    }
+    // NB: |mName| is not reported as it's expected to be a static string.
+    //     If we switch to a nsString it should be added to the tally.
+    //     |mChainPrev| is not reported because its memory is not owned.
+    size_t n = aMallocSizeOf(this);
+    return n;
+  }
 
-    /**
-     * Print
-     * Write a description of this blocking resource to |aOut|.  If
-     * the resource appears to be currently acquired, the current
-     * acquisition context is printed and true is returned.
-     * Otherwise, we print the context from |aFirstSeen|, the
-     * first acquisition from which the code calling |Print()|
-     * became interested in us, and return false.  |Print()| can
-     * be forced to print the context from |aFirstSeen| regardless
-     * by passing |aPrintFirstSeenCx=true|.
-     *
-     * *NOT* thread safe.  Reads |mAcquisitionContext| without
-     * synchronization, but this will not cause correctness
-     * problems.
-     *
-     * FIXME bug 456272: hack alert: because we can't write call
-     * contexts into strings, all info is written to stderr, but
-     * only some info is written into |aOut|
-     */
-    bool Print(const DDT::ResourceAcquisition& aFirstSeen,
-               nsACString& aOut,
-               bool aPrintFirstSeenCx = false) const;
-
-    /**
-     * mName
-     * A descriptive name for this resource.  Used in error
-     * messages etc.
-     */
-    const char* mName;
-    /**
-     * mType
-     * The more specific type of this resource.  Used to implement
-     * special semantics (e.g., reentrancy of monitors).
-     **/
-    BlockingResourceType mType;
-    /**
-     * mAcquisitionContext
-     * The calling context from which this resource was acquired, or
-     * |CallStack::kNone| if it is currently free (or freed).
-     */
-    CallStack mAcquisitionContext;
-  };
+  // ``DDT'' = ``Deadlock Detector Type''
+  typedef DeadlockDetector<BlockingResourceBase> DDT;
 
 protected:
+#ifdef MOZ_CALLSTACK_DISABLED
+  typedef bool AcquisitionState;
+#else
+  typedef nsAutoTArray<void*, 24> AcquisitionState;
+#endif
+
   /**
    * BlockingResourceBase
    * Initialize this blocking resource.  Also hooks the resource into
@@ -142,21 +122,15 @@ protected:
    * CheckAcquire
    *
    * Thread safe.
-   *
-   * @param aCallContext the client's calling context from which the
-   *        original acquisition request was made.
    **/
-  void CheckAcquire(const CallStack& aCallContext);
+  void CheckAcquire();
 
   /**
    * Acquire
    *
    * *NOT* thread safe.  Requires ownership of underlying resource.
-   *
-   * @param aCallContext the client's calling context from which the
-   *        original acquisition request was made.
    **/
-  void Acquire(const CallStack& aCallContext); //NS_NEEDS_RESOURCE(this)
+  void Acquire(); //NS_NEEDS_RESOURCE(this)
 
   /**
    * Release
@@ -168,23 +142,6 @@ protected:
    * *NOT* thread safe.  Requires ownership of underlying resource.
    **/
   void Release();             //NS_NEEDS_RESOURCE(this)
-
-  /**
-   * PrintCycle
-   * Append to |aOut| detailed information about the circular
-   * dependency in |aCycle|.  Returns true if it *appears* that this
-   * cycle may represent an imminent deadlock, but this is merely a
-   * heuristic; the value returned may be a false positive or false
-   * negative.
-   *
-   * *NOT* thread safe.  Calls |Print()|.
-   *
-   * FIXME bug 456272 hack alert: because we can't write call
-   * contexts into strings, all info is written to stderr, but only
-   * some info is written into |aOut|
-   */
-  static bool PrintCycle(const DDT::ResourceAcquisitionArray* aCycle,
-                         nsACString& aOut);
 
   /**
    * ResourceChainFront
@@ -237,26 +194,55 @@ protected:
   } //NS_NEEDS_RESOURCE(this)
 
   /**
-   * GetAcquisitionContext
-   * Return the calling context from which this resource was acquired,
-   * or CallStack::kNone if it's currently free.
+   * GetAcquisitionState
+   * Return whether or not this resource was acquired.
    *
    * *NOT* thread safe.  Requires ownership of underlying resource.
    */
-  CallStack GetAcquisitionContext()
+  AcquisitionState GetAcquisitionState()
   {
-    return mDDEntry->mAcquisitionContext;
+    return mAcquired;
   }
 
   /**
-   * SetAcquisitionContext
-   * Set the calling context from which this resource was acquired.
+   * SetAcquisitionState
+   * Set whether or not this resource was acquired.
    *
    * *NOT* thread safe.  Requires ownership of underlying resource.
    */
-  void SetAcquisitionContext(CallStack aAcquisitionContext)
+  void SetAcquisitionState(const AcquisitionState& aAcquisitionState)
   {
-    mDDEntry->mAcquisitionContext = aAcquisitionContext;
+    mAcquired = aAcquisitionState;
+  }
+
+  /**
+   * ClearAcquisitionState
+   * Indicate this resource is not acquired.
+   *
+   * *NOT* thread safe.  Requires ownership of underlying resource.
+   */
+  void ClearAcquisitionState()
+  {
+#ifdef MOZ_CALLSTACK_DISABLED
+    mAcquired = false;
+#else
+    mAcquired.Clear();
+#endif
+  }
+
+  /**
+   * IsAcquired
+   * Indicates if this resource is acquired.
+   *
+   * *NOT* thread safe.  Requires ownership of underlying resource.
+   */
+  bool IsAcquired() const
+  {
+#ifdef MOZ_CALLSTACK_DISABLED
+    return mAcquired;
+#else
+    return !mAcquired.IsEmpty();
+#endif
   }
 
   /**
@@ -269,10 +255,32 @@ protected:
 
 private:
   /**
-   * mDDEntry
-   * The key for this BlockingResourceBase in the deadlock detector.
+   * mName
+   * A descriptive name for this resource.  Used in error
+   * messages etc.
    */
-  DeadlockDetectorEntry* mDDEntry;
+  const char* mName;
+
+  /**
+   * mType
+   * The more specific type of this resource.  Used to implement
+   * special semantics (e.g., reentrancy of monitors).
+   **/
+  BlockingResourceType mType;
+
+  /**
+   * mAcquired
+   * Indicates if this resource is currently acquired.
+   */
+  AcquisitionState mAcquired;
+
+#ifndef MOZ_CALLSTACK_DISABLED
+  /**
+   * mFirstSeen
+   * Inidicates where this resource was first acquired.
+   */
+  AcquisitionState mFirstSeen;
+#endif
 
   /**
    * sCallOnce
@@ -301,15 +309,7 @@ private:
    *
    * *NOT* thread safe.
    */
-  static PRStatus InitStatics()
-  {
-    PR_NewThreadPrivateIndex(&sResourceAcqnChainFrontTPI, 0);
-    sDeadlockDetector = new DDT();
-    if (!sDeadlockDetector) {
-      NS_RUNTIMEABORT("can't allocate deadlock detector");
-    }
-    return PR_SUCCESS;
-  }
+  static PRStatus InitStatics();
 
   /**
    * Shutdown
@@ -317,11 +317,10 @@ private:
    *
    * *NOT* thread safe.
    */
-  static void Shutdown()
-  {
-    delete sDeadlockDetector;
-    sDeadlockDetector = 0;
-  }
+  static void Shutdown();
+
+  static void StackWalkCallback(void* aPc, void* aSp, void* aClosure);
+  static void GetStackTrace(AcquisitionState& aState);
 
 #  ifdef MOZILLA_INTERNAL_API
   // so it can call BlockingResourceBase::Shutdown()

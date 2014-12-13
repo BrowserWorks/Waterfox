@@ -18,4 +18,6 @@ EXTRA_PP_COMPONENTS += [
     'gtkqticonsconverter.js',
 ]
 
-FINAL_LIBRARY = 'imgicon'
+FINAL_LIBRARY = 'xul'
+
+CXXFLAGS += CONFIG['MOZ_QT_CFLAGS']

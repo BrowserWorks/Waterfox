@@ -27,10 +27,10 @@ class nsSHistoryObserver;
 class nsISHEntry;
 class nsISHTransaction;
 
-class nsSHistory: public PRCList,
-                  public nsISHistory,
-                  public nsISHistoryInternal,
-                  public nsIWebNavigation
+class nsSHistory MOZ_FINAL : public PRCList,
+                             public nsISHistory,
+                             public nsISHistoryInternal,
+                             public nsIWebNavigation
 {
 public:
   nsSHistory();
@@ -108,7 +108,7 @@ public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSISIMPLEENUMERATOR
 
-  nsSHEnumerator(nsSHistory *  aHistory);
+  explicit nsSHEnumerator(nsSHistory *  aHistory);
   
 protected:
   friend class nsSHistory;

@@ -105,6 +105,8 @@ public:
 
   void StopScreenWindowSharing();
 
+  void StopTrack(TrackID aID, bool aIsAudio);
+
   // mVideo/AudioSource are set by Activate(), so we assume they're capturing
   // if set and represent a real capture device.
   bool CapturingVideo()
@@ -133,6 +135,12 @@ public:
     NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
     return mVideoSource && !mStopped && !mVideoSource->IsAvailable() &&
            mVideoSource->GetMediaSource() == MediaSourceType::Window;
+  }
+  bool CapturingApplication()
+  {
+    NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
+    return mVideoSource && !mStopped && !mVideoSource->IsAvailable() &&
+           mVideoSource->GetMediaSource() == MediaSourceType::Application;
   }
 
   void SetStopped()
@@ -495,7 +503,7 @@ public:
 
 protected:
   virtual ~MediaDevice() {}
-  MediaDevice(MediaEngineSource* aSource);
+  explicit MediaDevice(MediaEngineSource* aSource);
   nsString mName;
   nsString mID;
   bool mHasFacingMode;
@@ -507,7 +515,7 @@ protected:
 class VideoDevice : public MediaDevice
 {
 public:
-  VideoDevice(MediaEngineVideoSource* aSource);
+  explicit VideoDevice(MediaEngineVideoSource* aSource);
   NS_IMETHOD GetType(nsAString& aType);
   MediaEngineVideoSource* GetSource();
 };
@@ -515,7 +523,7 @@ public:
 class AudioDevice : public MediaDevice
 {
 public:
-  AudioDevice(MediaEngineAudioSource* aSource);
+  explicit AudioDevice(MediaEngineAudioSource* aSource);
   NS_IMETHOD GetType(nsAString& aType);
   MediaEngineAudioSource* GetSource();
 };

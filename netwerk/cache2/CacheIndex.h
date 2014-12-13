@@ -87,7 +87,7 @@ public:
   typedef const SHA1Sum::Hash& KeyType;
   typedef const SHA1Sum::Hash* KeyTypePointer;
 
-  CacheIndexEntry(KeyTypePointer aKey)
+  explicit CacheIndexEntry(KeyTypePointer aKey)
   {
     MOZ_COUNT_CTOR(CacheIndexEntry);
     mRec = new CacheIndexRecord();
@@ -561,8 +561,14 @@ public:
 
   // Returns a hash of the least important entry that should be evicted if the
   // cache size is over limit and also returns a total number of all entries in
-  // the index.
+  // the index minus the number of forced valid entries that we encounter
+  // when searching (see below)
   static nsresult GetEntryForEviction(SHA1Sum::Hash *aHash, uint32_t *aCnt);
+
+  // Checks if a cache entry is currently forced valid. Used to prevent an entry
+  // (that has been forced valid) from being evicted when the cache size reaches
+  // its limit.
+  static bool IsForcedValidEntry(const SHA1Sum::Hash *aHash);
 
   // Returns cache size in kB.
   static nsresult GetCacheSize(uint32_t *_retval);
@@ -964,7 +970,7 @@ private:
     }
 
   private:
-    DiskConsumptionObserver(nsWeakPtr const &aWeakObserver)
+    explicit DiskConsumptionObserver(nsWeakPtr const &aWeakObserver)
       : mObserver(aWeakObserver) { }
     virtual ~DiskConsumptionObserver() { }
 
@@ -992,7 +998,7 @@ private:
 
 class CacheIndexAutoLock {
 public:
-  CacheIndexAutoLock(CacheIndex *aIndex)
+  explicit CacheIndexAutoLock(CacheIndex *aIndex)
     : mIndex(aIndex)
     , mLocked(true)
   {
@@ -1024,7 +1030,7 @@ private:
 
 class CacheIndexAutoUnlock {
 public:
-  CacheIndexAutoUnlock(CacheIndex *aIndex)
+  explicit CacheIndexAutoUnlock(CacheIndex *aIndex)
     : mIndex(aIndex)
     , mLocked(false)
   {

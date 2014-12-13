@@ -7,6 +7,7 @@
 #ifndef ds_LifoAlloc_h
 #define ds_LifoAlloc_h
 
+#include "mozilla/Attributes.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/MemoryChecking.h"
@@ -147,7 +148,7 @@ class BumpChunk
 
 } // namespace detail
 
-void
+MOZ_NORETURN void
 CrashAtUnhandlableOOM(const char *reason);
 
 // LIFO bump allocator: used for phase-oriented and fast LIFO allocations.
@@ -391,7 +392,7 @@ class LifoAlloc
     // Doesn't perform construction; useful for lazily-initialized POD types.
     template <typename T>
     MOZ_ALWAYS_INLINE
-    T *newPod() {
+    T *pod_malloc() {
         return static_cast<T *>(alloc(sizeof(T)));
     }
 
@@ -516,21 +517,29 @@ class LifoAllocPolicy
     MOZ_IMPLICIT LifoAllocPolicy(LifoAlloc &alloc)
       : alloc_(alloc)
     {}
-    void *malloc_(size_t bytes) {
-        return fb == Fallible ? alloc_.alloc(bytes) : alloc_.allocInfallible(bytes);
+    template <typename T>
+    T *pod_malloc(size_t numElems) {
+        if (numElems & mozilla::tl::MulOverflowMask<sizeof(T)>::value)
+            return nullptr;
+        size_t bytes = numElems * sizeof(T);
+        void *p = fb == Fallible ? alloc_.alloc(bytes) : alloc_.allocInfallible(bytes);
+        return static_cast<T *>(p);
     }
-    void *calloc_(size_t bytes) {
-        void *p = malloc_(bytes);
+    template <typename T>
+    T *pod_calloc(size_t numElems) {
+        T *p = pod_malloc<T>(numElems);
         if (fb == Fallible && !p)
             return nullptr;
-        memset(p, 0, bytes);
+        memset(p, 0, numElems * sizeof(T));
         return p;
     }
-    void *realloc_(void *p, size_t oldBytes, size_t bytes) {
-        void *n = malloc_(bytes);
+    template <typename T>
+    T *pod_realloc(T *p, size_t oldSize, size_t newSize) {
+        T *n = pod_malloc<T>(newSize);
         if (fb == Fallible && !n)
             return nullptr;
-        memcpy(n, p, Min(oldBytes, bytes));
+        JS_ASSERT(!(oldSize & mozilla::tl::MulOverflowMask<sizeof(T)>::value));
+        memcpy(n, p, Min(oldSize * sizeof(T), newSize * sizeof(T)));
         return n;
     }
     void free_(void *p) {

@@ -19,9 +19,7 @@ dictionary NetworkCommandOptions
   sequence<DOMString> dnses;          // for "setDNS", "setDefaultRouteAndDNS".
   DOMString oldIfname;                // for "setDefaultRouteAndDNS".
   DOMString gateway;                  // for "addSecondaryRoute", "removeSecondaryRoute".
-  sequence<DOMString> gateways;       // for "setDefaultRouteAndDNS", "removeDefaultRoute",
-                                      //     "addHostRoute", "removeHostRoute".
-  sequence<DOMString> hostnames;      // for "addHostRoute", "removeHostRoute".
+  sequence<DOMString> gateways;       // for "setDefaultRouteAndDNS", "removeDefaultRoute".
   DOMString mode;                     // for "setWifiOperationMode".
   boolean report;                     // for "setWifiOperationMode".
   boolean isAsync;                    // for "setWifiOperationMode".
@@ -42,9 +40,6 @@ dictionary NetworkCommandOptions
   DOMString usbEndIp;                 // for "setWifiTethering".
   DOMString dns1;                     // for "setWifiTethering".
   DOMString dns2;                     // for "setWifiTethering".
-  float rxBytes;                      // for "getNetworkInterfaceStats".
-  float txBytes;                      // for "getNetworkInterfaceStats".
-  DOMString date;                     // for "getNetworkInterfaceStats".
   long threshold;                     // for "setNetworkInterfaceAlarm",
                                       //     "enableNetworkInterfaceAlarm".
   DOMString startIp;                  // for "setDhcpServer".
@@ -72,9 +67,6 @@ dictionary NetworkResultOptions
   DOMString resultReason = "";        // for all commands.
   boolean error = false;              // for all commands.
 
-  float rxBytes = -1;                 // for "getNetworkInterfaceStats".
-  float txBytes = -1;                 // for "getNetworkInterfaceStats".
-  DOMString date = "";                // for "getNetworkInterfaceStats".
   boolean enable = false;             // for "setWifiTethering", "setUSBTethering"
                                       //     "enableUsbRndis".
   boolean result = false;             // for "enableUsbRndis".

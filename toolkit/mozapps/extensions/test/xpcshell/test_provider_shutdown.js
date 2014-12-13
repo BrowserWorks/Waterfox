@@ -20,7 +20,7 @@ function mockAddonProvider(aName) {
 
     get name() aName,
 
-    shutdown: function() {
+    shutdown() {
       this.shutdownResolve();
       return this.donePromise;
     },

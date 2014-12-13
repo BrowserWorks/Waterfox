@@ -41,6 +41,12 @@
   <string name="no_space_to_start_error">&no_space_to_start_error;</string>
   <string name="error_loading_file">&error_loading_file;</string>
 
+  <string name="onboard_start_message">&onboard_start_message;</string>
+  <string name="onboard_start_subtext">&onboard_start_subtext;</string>
+  <string name="onboard_start_button_account">&onboard_start_button_account;</string>
+  <string name="onboard_start_button_browser">&onboard_start_button_browser;</string>
+  <string name="onboard_empty_contentDescription"></string>
+
   <string name="bookmarks_title">&bookmarks_title;</string>
   <string name="history_title">&history_title;</string>
   <string name="reading_list_title">&reading_list_title;</string>
@@ -67,7 +73,7 @@
 
   <string name="choose_file">&choose_file;</string>
 
-  <string name="url_bar_default_text">&url_bar_default_text;</string>
+  <string name="url_bar_default_text">&url_bar_default_text2;</string>
 
   <!-- https://support.mozilla.org/1/mobile/%VERSION%/%OS%/%LOCALE%/ -->
   <string name="help_link">https://support.mozilla.org/1/mobile/&formatS1;/&formatS2;/&formatS3;/</string>
@@ -99,10 +105,19 @@
   <string name="find_next">&find_next;</string>
   <string name="find_close">&find_close;</string>
 
-  <string name="media_casting_to">&media_casting_to;</string>
+  <string name="media_sending_to">&media_sending_to;</string>
   <string name="media_play">&media_play;</string>
   <string name="media_pause">&media_pause;</string>
   <string name="media_stop">&media_stop;</string>
+
+  <string name="overlay_share_send_other">&overlay_share_send_other;</string>
+  <string name="overlay_share_label">&overlay_share_label;</string>
+  <string name="overlay_share_bookmark_btn_label">&overlay_share_bookmark_btn_label;</string>
+  <string name="overlay_share_reading_list_btn_label">&overlay_share_reading_list_btn_label;</string>
+  <string name="overlay_share_send_tab_btn_label">&overlay_share_send_tab_btn_label;</string>
+  <string name="overlay_share_no_url">&overlay_share_no_url;</string>
+  <string name="overlay_share_retry">&overlay_share_retry;</string>
+  <string name="overlay_share_select_device">&overlay_share_select_device;</string>
 
   <string name="settings">&settings;</string>
   <string name="settings_title">&settings_title;</string>
@@ -169,7 +184,7 @@
   <string name="pref_clear_private_data">&pref_clear_private_data2;</string>
   <string name="pref_clear_private_data_category">&pref_clear_private_data_category;</string>
   <string name="pref_clear_on_exit_title">&pref_clear_on_exit_title;</string>
-  <string name="pref_clear_on_exit_summary">&pref_clear_on_exit_summary;</string>
+  <string name="pref_clear_on_exit_summary2">&pref_clear_on_exit_summary2;</string>
   <string name="pref_clear_on_exit_dialog_title">&pref_clear_on_exit_dialog_title;</string>
   <string name="pref_plugins">&pref_plugins;</string>
   <string name="pref_plugins_enabled">&pref_plugins_enabled;</string>
@@ -188,7 +203,6 @@
   <string name="pref_restore">&pref_restore;</string>
   <string name="pref_restore_always">&pref_restore_always;</string>
   <string name="pref_restore_quit">&pref_restore_quit;</string>
-  <string name="pref_show_product_announcements">&pref_show_product_announcements;</string>
   <string name="pref_sync">&pref_sync;</string>
   <string name="pref_search_suggestions">&pref_search_suggestions;</string>
   <string name="pref_private_data_history2">&pref_private_data_history2;</string>
@@ -297,7 +311,8 @@
   <string name="pref_titlebar_mode_title">&pref_titlebar_mode_title;</string>
   <string name="pref_titlebar_mode_url">&pref_titlebar_mode_url;</string>
 
-  <string name="pref_scroll_title_bar">&pref_scroll_title_bar;</string>
+  <string name="pref_scroll_title_bar2">&pref_scroll_title_bar2;</string>
+  <string name="pref_scroll_title_bar_summary">&pref_scroll_title_bar_summary;</string>
 
   <string name="page_removed">&page_removed;</string>
 
@@ -416,7 +431,7 @@
   <string name="set_image_chooser_title">&set_image_chooser_title;</string>
 
   <!-- Contacts API -->
-  <string name="contacts_account_chooser_dialog_title">Share contacts from...</string>
+  <string name="contacts_account_chooser_dialog_title2">Share contacts from…</string>
 
 
   <!-- Guest mode -->
@@ -435,6 +450,8 @@
 
   <!-- Miscellaneous -->
   <string name="ellipsis">&ellipsis;</string>
+
+  <string name="colon">&colon;</string>
 
   <string name="remote_tabs_last_synced">&remote_tabs_last_synced;</string>
 </resources>

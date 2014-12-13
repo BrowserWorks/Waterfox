@@ -20,6 +20,8 @@ const { ViewHelpers } = Cu.import("resource:///modules/devtools/ViewHelpers.jsm"
 const { DOMHelpers } = Cu.import("resource:///modules/devtools/DOMHelpers.jsm");
 const { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
 const ITCHPAD_URL = "chrome://browser/content/devtools/projecteditor.xul";
+const { confirm } = require("projecteditor/helpers/prompts");
+const { getLocalizedString } = require("projecteditor/helpers/l10n");
 
 // Enabled Plugins
 require("projecteditor/plugins/dirty/dirty");
@@ -175,6 +177,12 @@ var ProjectEditor = Class({
 
   _buildMenubar: function() {
 
+    this.contextMenuPopup = this.document.getElementById("context-menu-popup");
+    this.contextMenuPopup.addEventListener("popupshowing", this._updateContextMenuItems);
+
+    this.textEditorContextMenuPopup = this.document.getElementById("texteditor-context-popup");
+    this.textEditorContextMenuPopup.addEventListener("popupshowing", this._updateMenuItems);
+
     this.editMenu = this.document.getElementById("edit-menu");
     this.fileMenu = this.document.getElementById("file-menu");
 
@@ -191,6 +199,7 @@ var ProjectEditor = Class({
       body.appendChild(this.editorCommandset);
       body.appendChild(this.editorKeyset);
       body.appendChild(this.contextMenuPopup);
+      body.appendChild(this.textEditorContextMenuPopup);
 
       let index = this.menuindex || 0;
       this.menubar.insertBefore(this.editMenu, this.menubar.children[index]);
@@ -231,9 +240,6 @@ var ProjectEditor = Class({
 
     this.editorCommandset = this.document.getElementById("editMenuCommands");
     this.editorKeyset = this.document.getElementById("editMenuKeys");
-
-    this.contextMenuPopup = this.document.getElementById("context-menu-popup");
-    this.contextMenuPopup.addEventListener("popupshowing", this._updateContextMenuItems);
 
     this.projectEditorCommandset.addEventListener("command", (evt) => {
       evt.stopPropagation();
@@ -313,6 +319,7 @@ var ProjectEditor = Class({
     this.editorCommandset.remove();
     this.editorKeyset.remove();
     this.contextMenuPopup.remove();
+    this.textEditorContextMenuPopup.remove();
     this.editMenu.remove();
     this.fileMenu.remove();
 
@@ -386,8 +393,9 @@ var ProjectEditor = Class({
    *                 The file to be opened.
    */
   openResource: function(resource) {
-    this.shells.open(resource);
+    let shell = this.shells.open(resource);
     this.projectTree.selectResource(resource);
+    shell.editor.focus();
   },
 
   /**
@@ -546,6 +554,10 @@ var ProjectEditor = Class({
     this._editorListenAndDispatch(editor, "cursorActivity", "onEditorCursorActivity");
     this._editorListenAndDispatch(editor, "load", "onEditorLoad");
     this._editorListenAndDispatch(editor, "save", "onEditorSave");
+
+    editor.on("focus", () => {
+      this.projectTree.selectResource(this.resourceFor(editor));
+    });
   },
 
   /**
@@ -584,8 +596,6 @@ var ProjectEditor = Class({
    *                All remaining parameters are passed into the handler.
    */
   pluginDispatch: function(handler, ...args) {
-    // XXX: Memory leak when console.log an Editor here
-    // console.log("DISPATCHING EVENT TO PLUGIN", handler, args);
     emit(this, handler, ...args);
     this.plugins.forEach(plugin => {
       try {
@@ -608,8 +618,6 @@ var ProjectEditor = Class({
    *               Which plugin method to call
    */
   _editorListenAndDispatch: function(editor, event, handler) {
-    /// XXX: Uncommenting this line also causes memory leak.
-    // console.log("Binding listen and dispatch", editor);
     editor.on(event, (...args) => {
       this.pluginDispatch(handler, editor, this.resourceFor(editor), ...args);
     });
@@ -722,7 +730,37 @@ var ProjectEditor = Class({
 
   get menuEnabled() {
     return this._menuEnabled;
+  },
+
+  /**
+   * Are there any unsaved resources in the Project?
+   */
+  get hasUnsavedResources() {
+    return this.project.allResources().some(resource=> {
+      let editor = this.editorFor(resource);
+      return editor && !editor.isClean();
+    });
+  },
+
+  /**
+   * Check with the user about navigating away with unsaved changes.
+   *
+   * @returns Boolean
+   *          True if there are no unsaved changes
+   *          Otherwise, ask the user to confirm and return the outcome.
+   */
+  confirmUnsaved: function() {
+
+    if (this.hasUnsavedResources) {
+      return confirm(
+        getLocalizedString("projecteditor.confirmUnsavedTitle"),
+        getLocalizedString("projecteditor.confirmUnsavedLabel")
+      );
+    }
+
+    return true;
   }
+
 });
 
 

@@ -5,3 +5,12 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 BROWSER_CHROME_MANIFESTS += ['test/browser.ini']
+
+EXTRA_JS_MODULES.devtools.webconsole += [
+    'console-commands.js',
+    'console-output.js',
+    'hudservice.js',
+    'network-panel.js',
+    'panel.js',
+    'webconsole.js',
+]

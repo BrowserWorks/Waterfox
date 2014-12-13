@@ -410,6 +410,8 @@ int nr_ice_media_stream_start_checks(nr_ice_peer_ctx *pctx, nr_ice_media_stream 
       nr_ice_media_stream_check_timer_cb(0,0,stream);
     }
 
+    nr_ice_peer_ctx_stream_started_checks(pctx, stream);
+
     _status=0;
   abort:
     return(_status);
@@ -538,7 +540,7 @@ int nr_ice_media_stream_unfreeze_pairs_foundation(nr_ice_media_stream *stream, c
       str=STAILQ_NEXT(str,entry);
     }
 
-//    nr_ice_media_stream_dump_state(stream->pctx,stream,stderr);
+/*    nr_ice_media_stream_dump_state(stream->pctx,stream,stderr); */
 
 
     _status=0;
@@ -551,7 +553,7 @@ int nr_ice_media_stream_dump_state(nr_ice_peer_ctx *pctx, nr_ice_media_stream *s
   {
     nr_ice_cand_pair *pair;
 
-    //r_log(LOG_ICE,LOG_DEBUG,"MEDIA-STREAM(%s): state dump", stream->label);
+    /* r_log(LOG_ICE,LOG_DEBUG,"MEDIA-STREAM(%s): state dump", stream->label); */
     pair=TAILQ_FIRST(&stream->check_list);
     while(pair){
       nr_ice_candidate_pair_dump_state(pair,out);
@@ -872,5 +874,17 @@ int nr_ice_media_stream_disable_component(nr_ice_media_stream *stream, int compo
     _status=0;
  abort:
     return(_status);
+  }
+
+void nr_ice_media_stream_role_change(nr_ice_media_stream *stream)
+  {
+    nr_ice_cand_pair *pair;
+    assert(stream->ice_state != NR_ICE_MEDIA_STREAM_UNPAIRED);
+
+    pair=TAILQ_FIRST(&stream->check_list);
+    while(pair){
+      nr_ice_candidate_pair_role_change(pair);
+      pair=TAILQ_NEXT(pair,entry);
+    }
   }
 

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Loop UI Components Showcase</title>
+    <link rel="stylesheet" type="text/css" href="../content/shared/css/reset.css">
+    <link rel="stylesheet" type="text/css" href="../content/shared/css/common.css">
+    <link rel="stylesheet" type="text/css" href="../content/shared/css/conversation.css">
+    <link rel="stylesheet" type="text/css" href="../content/shared/css/panel.css">
+    <link rel="stylesheet" type="text/css" href="../content/shared/css/contacts.css">
+    <link rel="stylesheet" type="text/css" href="../standalone/content/css/webapp.css">
+    <link rel="stylesheet" type="text/css" href="ui-showcase.css">
+ </head>
+  <body>
+    <div id="main"></div>
+    <script src="fake-mozLoop.js"></script>
+    <script src="fake-l10n.js"></script>
+    <script>
+      window.OTProperties = {
+        cdnURL: '../content/shared/libs/'
+      };
+      window.OTProperties.assetURL = window.OTProperties.cdnURL + 'sdk-content/';
+      window.OTProperties.configURL = window.OTProperties.assetURL + 'js/dynamic_config.min.js';
+      window.OTProperties.cssURL = window.OTProperties.assetURL + 'css/ot.css';
+    </script>
+    <script src="../content/shared/libs/sdk.js"></script>
+    <script src="../content/shared/libs/react-0.11.1.js"></script>
+    <script src="../content/shared/libs/jquery-2.1.0.js"></script>
+    <script src="../content/shared/libs/lodash-2.4.1.js"></script>
+    <script src="../content/shared/libs/backbone-1.1.2.js"></script>
+    <script src="../content/shared/js/feedbackApiClient.js"></script>
+    <script src="../content/shared/js/actions.js"></script>
+    <script src="../content/shared/js/utils.js"></script>
+    <script src="../content/shared/js/models.js"></script>
+    <script src="../content/shared/js/mixins.js"></script>
+    <script src="../content/shared/js/views.js"></script>
+    <script src="../content/shared/js/websocket.js"></script>
+    <script src="../content/shared/js/conversationStore.js"></script>
+    <script src="../content/js/conversationViews.js"></script>
+    <script src="../content/js/client.js"></script>
+    <script src="../standalone/content/js/webapp.js"></script>
+    <script type="text/javascript;version=1.8" src="../content/js/contacts.js"></script>
+    <script>
+      if (!loop.contacts) {
+        // For browsers that don't support ES6 without special flags (all but Fx
+        // at the moment), we shim the contacts namespace with its most barebone
+        // implementation.
+        loop.contacts = {
+          ContactsList: React.createClass({render: function() {
+            return React.DOM.div();
+          }}),
+          ContactDetailsForm: React.createClass({render: function() {
+            return React.DOM.div();
+          }})
+        };
+      }
+    </script>
+    <script src="../content/js/panel.js"></script>
+    <script src="../content/js/conversation.js"></script>
+    <script src="ui-showcase.js"></script>
+  </body>
+</html>

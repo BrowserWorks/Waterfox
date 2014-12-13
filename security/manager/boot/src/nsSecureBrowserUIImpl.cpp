@@ -97,7 +97,7 @@ static const PLDHashTableOps gMapOps = {
 #ifdef DEBUG
 class nsAutoAtomic {
   public:
-    nsAutoAtomic(Atomic<int32_t> &i)
+    explicit nsAutoAtomic(Atomic<int32_t> &i)
     :mI(i) {
       mI++;
     }
@@ -302,6 +302,13 @@ nsSecureBrowserUIImpl::MapInternalToExternalState(uint32_t* aState, lockIconStat
   if (docShell->GetHasMixedDisplayContentBlocked())
     *aState |= nsIWebProgressListener::STATE_BLOCKED_MIXED_DISPLAY_CONTENT;
 
+  // Has Tracking Content been Blocked?
+  if (docShell->GetHasTrackingContentBlocked())
+    *aState |= nsIWebProgressListener::STATE_BLOCKED_TRACKING_CONTENT;
+
+  if (docShell->GetHasTrackingContentLoaded())
+    *aState |= nsIWebProgressListener::STATE_LOADED_TRACKING_CONTENT;
+
   return NS_OK;
 }
 
@@ -397,7 +404,7 @@ nsSecureBrowserUIImpl::Notify(nsIDOMHTMLFormElement* aDOMForm,
   
   nsCOMPtr<nsIContent> formNode = do_QueryInterface(aDOMForm);
 
-  nsCOMPtr<nsIDocument> document = formNode->GetDocument();
+  nsCOMPtr<nsIDocument> document = formNode->GetComposedDoc();
   if (!document) return NS_OK;
 
   nsIPrincipal *principal = formNode->NodePrincipal();
@@ -474,7 +481,7 @@ void nsSecureBrowserUIImpl::ResetStateTracking()
     mTransferringRequests.ops = nullptr;
   }
   PL_DHashTableInit(&mTransferringRequests, &gMapOps, nullptr,
-                    sizeof(RequestHashEntry), 16);
+                    sizeof(RequestHashEntry));
 }
 
 nsresult
@@ -1638,7 +1645,7 @@ public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIINTERFACEREQUESTOR
 
-  nsUIContext(nsIDOMWindow *window);
+  explicit nsUIContext(nsIDOMWindow *window);
 
 protected:
   virtual ~nsUIContext();

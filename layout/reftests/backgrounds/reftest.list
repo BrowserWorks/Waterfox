@@ -88,7 +88,7 @@ fails-if(smallScreen&&Android) != background-size-body-contain-no-repeat.html ba
 == background-size-contain-clip-padding-origin-border-padding.html background-size-contain-clip-padding-origin-border-padding-ref.html
 
 skip-if(B2G) == background-layers-1a.html background-layers-1-ref.html # bug 773482
-== background-layers-1b.html background-layers-1-ref.html
+fuzzy-if(OSX,1,324) == background-layers-1b.html background-layers-1-ref.html
 
 # box-decoration-break's effect on backgrounds is touchy and hard to test due to stretching
 # artifacts and the difficulty of covering exact lines, so just make sure
@@ -161,3 +161,5 @@ fails-if(Android&&AndroidVersion==15) fuzzy-if(!Android||(Android&&AndroidVersio
 
 == background-multiple-with-border-radius.html background-multiple-with-border-radius-ref.html
 == background-repeat-large-area.html background-repeat-large-area-ref.html
+
+fuzzy(30,474) == background-tiling-zoom-1.html background-tiling-zoom-1-ref.html

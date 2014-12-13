@@ -164,6 +164,8 @@ private:
    * to indicate the first binding in a document.
    * XBLBinding_Serialize_ChromeOnlyContent indicates that
    * nsXBLPrototypeBinding::mChromeOnlyContent should be true.
+   * XBLBinding_Serialize_BindToUntrustedContent indicates that
+   * nsXBLPrototypeBinding::mBindToUntrustedContent should be true.
    */
 public:
   static nsresult ReadNewBinding(nsIObjectInputStream* aStream,
@@ -257,6 +259,7 @@ public:
                              nsIContent* aTemplChild);
 
   bool ChromeOnlyContent() { return mChromeOnlyContent; }
+  bool BindToUntrustedContent() { return mBindToUntrustedContent; }
 
   typedef nsClassHashtable<nsISupportsHashKey, nsXBLAttributeEntry> InnerAttributeTable;
 
@@ -291,6 +294,7 @@ protected:
   bool mCheckedBaseProto;
   bool mKeyHandlersRegistered;
   bool mChromeOnlyContent;
+  bool mBindToUntrustedContent;
 
   nsAutoPtr<nsXBLPrototypeResources> mResources; // If we have any resources, this will be non-null.
 
@@ -307,7 +311,7 @@ protected:
     typedef const nsIID& KeyType;
     typedef const nsIID* KeyTypePointer;
 
-    IIDHashKey(const nsIID* aKey)
+    explicit IIDHashKey(const nsIID* aKey)
       : mKey(*aKey)
     {}
     IIDHashKey(const IIDHashKey& aOther)

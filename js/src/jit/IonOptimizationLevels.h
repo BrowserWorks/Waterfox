@@ -24,8 +24,6 @@ enum OptimizationLevel
     Optimization_Count
 };
 
-#ifdef JS_ION
-
 #ifdef DEBUG
 inline const char *
 OptimizationLevelString(OptimizationLevel level)
@@ -38,7 +36,7 @@ OptimizationLevelString(OptimizationLevel level)
       case Optimization_AsmJS:
         return "Optimization_AsmJS";
       default:
-        MOZ_ASSUME_UNREACHABLE("Invalid OptimizationLevel");
+        MOZ_CRASH("Invalid OptimizationLevel");
     }
 }
 #endif
@@ -74,6 +72,9 @@ class OptimizationInfo
 
     // Toggles whether Range Analysis is used.
     bool rangeAnalysis_;
+
+    // Toggles whether loop unrolling is performed.
+    bool loopUnrolling_;
 
     // Toggles whether Truncation based on Range Analysis is used.
     bool autoTruncate_;
@@ -144,6 +145,10 @@ class OptimizationInfo
 
     bool rangeAnalysisEnabled() const {
         return rangeAnalysis_ && !js_JitOptions.disableRangeAnalysis;
+    }
+
+    bool loopUnrollingEnabled() const {
+        return loopUnrolling_ && !js_JitOptions.disableLoopUnrolling;
     }
 
     bool autoTruncateEnabled() const {
@@ -220,8 +225,6 @@ class OptimizationInfos
 };
 
 extern OptimizationInfos js_IonOptimizations;
-
-#endif // JS_ION
 
 } // namespace jit
 } // namespace js

@@ -104,7 +104,7 @@ class CounterStyleManager MOZ_FINAL
 private:
   ~CounterStyleManager();
 public:
-  CounterStyleManager(nsPresContext* aPresContext);
+  explicit CounterStyleManager(nsPresContext* aPresContext);
 
   static void InitializeBuiltinCounterStyles();
 
@@ -133,6 +133,8 @@ public:
   // if any counter style is changed, false elsewise. This method should
   // be called when any counter style may be affected.
   bool NotifyRuleChanged();
+
+  nsPresContext* PresContext() const { return mPresContext; }
 
   NS_INLINE_DECL_REFCOUNTING(CounterStyleManager)
 

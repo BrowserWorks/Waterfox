@@ -32,8 +32,6 @@ if CONFIG['NS_PRINTING']:
         'nsPrintSettingsQt.cpp',
     ]
 
-LIBRARY_NAME = 'widget_qt'
-
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
@@ -60,3 +58,8 @@ if CONFIG['OS_ARCH'] == 'SunOS' and not CONFIG['GNU_CC']:
     # line 29: Error: Multiple declaration for std::tm.
     # So, this gets around the problem.
     DEFINES['_TIME_H'] = 1
+
+CXXFLAGS += CONFIG['MOZ_QT_CFLAGS']
+CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
+CFLAGS += CONFIG['MOZ_QT_CFLAGS']
+CFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']

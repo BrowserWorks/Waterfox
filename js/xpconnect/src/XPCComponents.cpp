@@ -95,7 +95,7 @@ xpc::CheckAccessList(const char16_t *wideName, const char *const list[])
 /***************************************************************************/
 
 
-class nsXPCComponents_Interfaces :
+class nsXPCComponents_Interfaces MOZ_FINAL :
             public nsIXPCComponents_Interfaces,
             public nsIXPCScriptable,
             public nsIClassInfo
@@ -346,7 +346,7 @@ nsXPCComponents_Interfaces::NewResolve(nsIXPConnectWrappedNative *wrapper,
 /***************************************************************************/
 /***************************************************************************/
 
-class nsXPCComponents_InterfacesByID :
+class nsXPCComponents_InterfacesByID MOZ_FINAL :
             public nsIXPCComponents_InterfacesByID,
             public nsIXPCScriptable,
             public nsIClassInfo
@@ -603,7 +603,7 @@ nsXPCComponents_InterfacesByID::NewResolve(nsIXPConnectWrappedNative *wrapper,
 
 
 
-class nsXPCComponents_Classes :
+class nsXPCComponents_Classes MOZ_FINAL :
   public nsIXPCComponents_Classes,
   public nsIXPCScriptable,
   public nsIClassInfo
@@ -844,7 +844,7 @@ nsXPCComponents_Classes::NewResolve(nsIXPConnectWrappedNative *wrapper,
 /***************************************************************************/
 /***************************************************************************/
 
-class nsXPCComponents_ClassesByID :
+class nsXPCComponents_ClassesByID MOZ_FINAL :
   public nsIXPCComponents_ClassesByID,
   public nsIXPCScriptable,
   public nsIClassInfo
@@ -1107,7 +1107,7 @@ nsXPCComponents_ClassesByID::NewResolve(nsIXPConnectWrappedNative *wrapper,
 // Currently the possible results do not change at runtime, so they are only
 // cached once (unlike ContractIDs, CLSIDs, and IIDs)
 
-class nsXPCComponents_Results :
+class nsXPCComponents_Results MOZ_FINAL :
   public nsIXPCComponents_Results,
   public nsIXPCScriptable,
   public nsIClassInfo
@@ -1327,7 +1327,7 @@ nsXPCComponents_Results::NewResolve(nsIXPConnectWrappedNative *wrapper,
 /***************************************************************************/
 // JavaScript Constructor for nsIJSID objects (Components.ID)
 
-class nsXPCComponents_ID :
+class nsXPCComponents_ID MOZ_FINAL :
   public nsIXPCComponents_ID,
   public nsIXPCScriptable,
   public nsIClassInfo
@@ -1544,7 +1544,7 @@ nsXPCComponents_ID::HasInstance(nsIXPConnectWrappedNative *wrapper,
 /***************************************************************************/
 // JavaScript Constructor for nsIXPCException objects (Components.Exception)
 
-class nsXPCComponents_Exception :
+class nsXPCComponents_Exception MOZ_FINAL :
   public nsIXPCComponents_Exception,
   public nsIXPCScriptable,
   public nsIClassInfo
@@ -2190,7 +2190,7 @@ nsXPCConstructor::CallOrConstruct(nsIXPConnectWrappedNative *wrapper,JSContext *
 /*******************************************************/
 // JavaScript Constructor for nsIXPCConstructor objects (Components.Constructor)
 
-class nsXPCComponents_Constructor :
+class nsXPCComponents_Constructor MOZ_FINAL :
   public nsIXPCComponents_Constructor,
   public nsIXPCScriptable,
   public nsIClassInfo
@@ -2505,7 +2505,7 @@ nsXPCComponents_Constructor::HasInstance(nsIXPConnectWrappedNative *wrapper,
     return NS_OK;
 }
 
-class nsXPCComponents_Utils :
+class nsXPCComponents_Utils MOZ_FINAL :
             public nsIXPCComponents_Utils,
             public nsIXPCScriptable
 {
@@ -2782,7 +2782,7 @@ nsXPCComponents_Utils::ImportGlobalProperties(HandleValue aPropertyList,
 {
     RootedObject global(cx, CurrentGlobalOrNull(cx));
     MOZ_ASSERT(global);
-    GlobalProperties options(false);
+    GlobalProperties options;
     NS_ENSURE_TRUE(aPropertyList.isObject(), NS_ERROR_INVALID_ARG);
     RootedObject propertyList(cx, &aPropertyList.toObject());
     NS_ENSURE_TRUE(JS_IsArrayObject(cx, propertyList), NS_ERROR_INVALID_ARG);
@@ -3008,20 +3008,6 @@ nsXPCComponents_Utils::IsProxy(HandleValue vobj, JSContext *cx, bool *rval)
     return NS_OK;
 }
 
-/* jsval evalInWindow(in string source, in jsval window); */
-NS_IMETHODIMP
-nsXPCComponents_Utils::EvalInWindow(const nsAString &source, HandleValue window,
-                                    JSContext *cx, MutableHandleValue rval)
-{
-    if (!window.isObject())
-        return NS_ERROR_INVALID_ARG;
-
-    RootedObject rwindow(cx, &window.toObject());
-    if (!xpc::EvalInWindow(cx, source, rwindow, rval))
-        return NS_ERROR_FAILURE;
-    return NS_OK;
-}
-
 /* jsval exportFunction(in jsval vfunction, in jsval vscope, in jsval voptions); */
 NS_IMETHODIMP
 nsXPCComponents_Utils::ExportFunction(HandleValue vfunction, HandleValue vscope,
@@ -3085,7 +3071,8 @@ nsXPCComponents_Utils::MakeObjectPropsNormal(HandleValue vobj, JSContext *cx)
         if (!js::IsWrapper(propobj) || !JS_ObjectIsCallable(cx, propobj))
             continue;
 
-        if (!NewNonCloningFunctionForwarder(cx, id, propobj, &v) ||
+        FunctionForwarderOptions forwarderOptions;
+        if (!NewFunctionForwarder(cx, id, propobj, forwarderOptions, &v) ||
             !JS_SetPropertyById(cx, obj, id, v))
             return NS_ERROR_FAILURE;
     }
@@ -3205,7 +3192,7 @@ nsXPCComponents_Utils::Dispatch(HandleValue runnableArg, HandleValue scope,
         JSObject *scopeObj = js::UncheckedUnwrap(&scope.toObject());
         if (!scopeObj)
             return NS_ERROR_FAILURE;
-        ac.construct(cx, scopeObj);
+        ac.emplace(cx, scopeObj);
         if (!JS_WrapValue(cx, &runnable))
             return NS_ERROR_FAILURE;
     }
@@ -3253,7 +3240,7 @@ nsXPCComponents_Utils::Dispatch(HandleValue runnableArg, HandleValue scope,
         return NS_OK;                                                   \
     }
 
-GENERATE_JSCONTEXTOPTION_GETTER_SETTER(Strict, extraWarnings, setExtraWarnings)
+GENERATE_JSRUNTIMEOPTION_GETTER_SETTER(Strict, extraWarnings, setExtraWarnings)
 GENERATE_JSRUNTIMEOPTION_GETTER_SETTER(Werror, werror, setWerror)
 GENERATE_JSRUNTIMEOPTION_GETTER_SETTER(Strict_mode, strictMode, setStrictMode)
 GENERATE_JSRUNTIMEOPTION_GETTER_SETTER(Ion, ion, setIon)
@@ -3712,7 +3699,7 @@ NS_IMETHODIMP nsXPCComponents::ReportError(HandleValue error, JSContext *cx)
 class ComponentsSH : public nsIXPCScriptable
 {
 public:
-    ComponentsSH(unsigned dummy)
+    explicit ComponentsSH(unsigned dummy)
     {
     }
 

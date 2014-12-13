@@ -20,7 +20,10 @@ class CxxCodeGen(CodePrinter, Visitor):
         self.write(ws.ws)
 
     def visitCppDirective(self, cd):
-        self.println('#%s %s'% (cd.directive, cd.rest))
+        if cd.rest:
+            self.println('#%s %s'% (cd.directive, cd.rest))
+        else:
+            self.println('#%s'% (cd.directive))
 
     def visitNamespace(self, ns):
         self.println('namespace '+ ns.name +' {')
@@ -234,6 +237,8 @@ class CxxCodeGen(CodePrinter, Visitor):
     def visitConstructorDecl(self, cd):
         if cd.explicit:
             self.write('explicit ')
+        else:
+            self.write('MOZ_IMPLICIT ')
         self.visitMethodDecl(cd)
 
     def visitConstructorDefn(self, cd):

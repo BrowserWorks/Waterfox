@@ -73,6 +73,8 @@ public:
   virtual void Encoded(GMPVideoEncodedFrame* aEncodedFrame,
                        const nsTArray<uint8_t>& aCodecSpecificInfo) MOZ_OVERRIDE;
 
+  virtual void Error(GMPErr aError) MOZ_OVERRIDE {
+  }
 
 private:
   virtual int32_t InitEncode_g(const webrtc::VideoCodec* aCodecSettings,
@@ -145,6 +147,9 @@ public:
 
   virtual void ResetComplete() MOZ_OVERRIDE {
     MOZ_CRASH();
+  }
+
+  virtual void Error(GMPErr aError) MOZ_OVERRIDE {
   }
 
 private:

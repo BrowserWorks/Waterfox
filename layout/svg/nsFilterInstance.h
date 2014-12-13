@@ -27,7 +27,7 @@ class nsSVGFilterPaintCallback;
 
 /**
  * This class performs all filter processing.
- * 
+ *
  * We build a graph of the filter image data flow, essentially
  * converting the filter graph to SSA. This lets us easily propagate
  * analysis data (such as bounding-boxes) over the filter primitive graph.
@@ -220,6 +220,11 @@ private:
   void ComputeNeededBoxes();
 
   /**
+   * Returns the output bounds of the final FilterPrimitiveDescription.
+   */
+  nsIntRect OutputFilterSpaceBounds() const;
+
+  /**
    * Compute the scale factors between user space and filter space.
    */
   nsresult ComputeUserSpaceToFilterSpaceScale();
@@ -268,6 +273,11 @@ private:
   gfxRect                 mTargetBBox;
 
   /**
+   * The SVG bbox of the element that is being filtered, in filter space.
+   */
+  nsIntRect               mTargetBBoxInFilterSpace;
+
+  /**
    * The transform from filter space to outer-<svg> device space.
    */
   gfxMatrix               mFilterSpaceToDeviceSpaceTransform;
@@ -277,12 +287,6 @@ private:
    */
   gfxMatrix               mFilterSpaceToFrameSpaceInCSSPxTransform;
   gfxMatrix               mFrameSpaceInCSSPxToFilterSpaceTransform;
-
-  /**
-   * The "filter region", in the filtered element's user space.
-   */
-  gfxRect                 mUserSpaceBounds;
-  nsIntRect               mFilterSpaceBounds;
 
   /**
    * The scale factors between user space and filter space.

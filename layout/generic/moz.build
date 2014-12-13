@@ -25,7 +25,6 @@ EXPORTS += [
     'nsIObjectFrame.h',
     'nsIPageSequenceFrame.h',
     'nsIScrollableFrame.h',
-    'nsIScrollbarOwner.h',
     'nsIScrollPositionListener.h',
     'nsIStatefulFrame.h',
     'nsObjectFrame.h',
@@ -81,6 +80,11 @@ UNIFIED_SOURCES += [
     'nsPageContentFrame.cpp',
     'nsPageFrame.cpp',
     'nsPlaceholderFrame.cpp',
+    'nsRubyBaseContainerFrame.cpp',
+    'nsRubyBaseFrame.cpp',
+    'nsRubyFrame.cpp',
+    'nsRubyTextContainerFrame.cpp',
+    'nsRubyTextFrame.cpp',
     'nsSelection.cpp',
     'nsSimplePageSequenceFrame.cpp',
     'nsSplittableFrame.cpp',
@@ -113,7 +117,7 @@ MSVC_ENABLE_PGO = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
-FINAL_LIBRARY = 'gklayout'
+FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [
     '../../content/base/src',
@@ -137,3 +141,11 @@ RESOURCE_FILES.html = [
 
 MOCHITEST_MANIFESTS += ['test/mochitest.ini']
 MOCHITEST_CHROME_MANIFESTS += ['test/chrome.ini']
+
+CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
+
+if CONFIG['MOZ_WIDGET_GTK']:
+    CXXFLAGS += CONFIG['TK_CFLAGS']
+
+if CONFIG['MOZ_ENABLE_QT']:
+    CXXFLAGS += CONFIG['MOZ_QT_CFLAGS']

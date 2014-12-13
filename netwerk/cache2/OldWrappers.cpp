@@ -39,7 +39,7 @@ namespace { // anon
 class DoomCallbackSynchronizer : public nsRunnable
 {
 public:
-  DoomCallbackSynchronizer(nsICacheEntryDoomCallback* cb) : mCB(cb)
+  explicit DoomCallbackSynchronizer(nsICacheEntryDoomCallback* cb) : mCB(cb)
   {
     MOZ_COUNT_CTOR(DoomCallbackSynchronizer);
   }
@@ -92,7 +92,7 @@ class DoomCallbackWrapper : public nsICacheListener
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSICACHELISTENER
 
-  DoomCallbackWrapper(nsICacheEntryDoomCallback* cb) : mCB(cb)
+  explicit DoomCallbackWrapper(nsICacheEntryDoomCallback* cb) : mCB(cb)
   {
     MOZ_COUNT_CTOR(DoomCallbackWrapper);
   }
@@ -366,6 +366,18 @@ _OldCacheEntryWrapper::~_OldCacheEntryWrapper()
   LOG(("Destroying _OldCacheEntryWrapper %p for descriptor %p", this, mOldInfo.get()));
 }
 
+NS_IMETHODIMP _OldCacheEntryWrapper::GetIsForcedValid(bool *aIsForcedValid)
+{
+  // Unused stub
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP _OldCacheEntryWrapper::ForceValidFor(uint32_t aSecondsToTheFuture)
+{
+  // Unused stub
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
 NS_IMPL_ISUPPORTS(_OldCacheEntryWrapper, nsICacheEntry)
 
 NS_IMETHODIMP _OldCacheEntryWrapper::AsyncDoom(nsICacheEntryDoomCallback* listener)
@@ -486,7 +498,7 @@ class MetaDataVisitorWrapper : public nsICacheMetaDataVisitor
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSICACHEMETADATAVISITOR
-  MetaDataVisitorWrapper(nsICacheEntryMetaDataVisitor* cb) : mCB(cb) {}
+  explicit MetaDataVisitorWrapper(nsICacheEntryMetaDataVisitor* cb) : mCB(cb) {}
   nsCOMPtr<nsICacheEntryMetaDataVisitor> mCB;
 };
 

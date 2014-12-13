@@ -17,24 +17,24 @@ a {
 
 .message {
   display: flex;
-  flex: 0 0 auto;
+  flex: none;
   padding: 0 7px;
   width: 100%;
   box-sizing: border-box;
 }
 
 .message > .timestamp {
-  flex: 0 0 auto;
+  flex: none;
   color: GrayText;
   margin: 4px 6px 0 0;
 }
 
 .message > .indent {
-  flex: 0 0 auto;
+  flex: none;
 }
 
 .message > .icon {
-  flex: 0 0 auto;
+  flex: none;
   margin: 3px 6px 0 0;
   padding: 0 4px;
   height: 1em;
@@ -63,10 +63,14 @@ a {
   margin: 3px;
 }
 
+.message-body-wrapper .table-widget-body {
+  overflow: visible;
+}
+
 /* The red bubble that shows the number of times a message is repeated */
 .message-repeats {
   -moz-user-select: none;
-  flex: 0 0 auto;
+  flex: none;
   margin: 2px 6px;
   padding: 0 6px;
   height: 1.25em;
@@ -84,7 +88,7 @@ a {
 
 .message-location {
   display: flex;
-  flex: 0 0 auto;
+  flex: none;
   align-self: flex-start;
   justify-content: flex-end;
   width: 10em;
@@ -106,7 +110,7 @@ a {
 }
 
 .message-location > .line-number {
-  flex: 0 0 auto;
+  flex: none;
 }
 
 .message-flex-body {
@@ -223,6 +227,13 @@ a {
   color: hsl(24,85%,39%);
 }
 
+.theme-selected .console-string,
+.theme-selected .cm-number,
+.theme-selected .cm-variable,
+.theme-selected .kind-ArrayLike {
+  color: #f5f7fa !important; /* Selection Text Color */
+}
+
 .message[category=network] > .indent {
   -moz-border-end: solid #000 6px;
 }
@@ -236,7 +247,7 @@ a {
 }
 
 .message[category=network] .method {
-  flex: 0 0 auto;
+  flex: none;
 }
 
 .message[category=network]:not(.navigation-marker) .url {
@@ -250,7 +261,7 @@ a {
 }
 
 .message[category=network] .status {
-  flex: 0 0 auto;
+  flex: none;
   -moz-margin-start: 6px;
 }
 
@@ -427,6 +438,10 @@ a {
   overflow-y: auto;
   border: 1px solid rgb(200,200,200);
   border-radius: 3px;
+}
+
+.consoletable {
+  margin: 5px 0 0 0;
 }
 
 .theme-light .message[severity=error] .stacktrace {

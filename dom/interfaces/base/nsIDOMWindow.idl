@@ -10,7 +10,6 @@ interface nsIControllers;
 interface nsIDOMBlob;
 interface nsIDOMLocation;
 interface nsIDOMOfflineResourceList;
-interface nsIDOMStorage;
 interface nsIPrompt;
 interface nsISelection;
 interface nsIVariant;
@@ -24,7 +23,7 @@ interface nsIVariant;
  * @see <http://www.whatwg.org/html/#window>
  */
 
-[scriptable, uuid(d4316591-d16e-405c-8093-b441cbef3230)]
+[scriptable, uuid(ed7cc4e4-cf5b-42af-9c2e-8df074a01470)]
 interface nsIDOMWindow : nsISupports
 {
   // the current browsing context
@@ -241,15 +240,17 @@ interface nsIDOMWindow : nsISupports
   // WindowSessionStorage
   /**
    * Session storage for the current browsing context.
+   * This attribute is a DOMStorage
    */
-  readonly attribute nsIDOMStorage sessionStorage;
+  readonly attribute nsISupports sessionStorage;
 
 
   // WindowLocalStorage
   /**
    * Local storage for the current browsing context.
+   * This attribute is a DOMStorage
    */
-  readonly attribute nsIDOMStorage localStorage;
+  readonly attribute nsISupports localStorage;
 
 
   // IndexedDB
@@ -425,7 +426,9 @@ interface nsIDOMWindow : nsISupports
                                        in nsISupports aExtraArgument);
 
   // XXX Should this be in nsIDOMChromeWindow?
-  void                      updateCommands(in DOMString action);
+  void                      updateCommands(in DOMString action,
+                                           [optional] in nsISelection sel,
+                                           [optional] in short reason);
 
   /* Find in page.
    * @param str: the search pattern

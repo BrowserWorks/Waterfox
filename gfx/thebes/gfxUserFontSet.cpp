@@ -12,8 +12,10 @@
 #include "gfxPlatform.h"
 #include "nsUnicharUtils.h"
 #include "nsNetUtil.h"
+#include "nsIJARChannel.h"
 #include "nsIProtocolHandler.h"
 #include "nsIPrincipal.h"
+#include "nsIZipReader.h"
 #include "gfxFontConstants.h"
 #include "mozilla/Services.h"
 #include "mozilla/gfx/2D.h"
@@ -170,46 +172,53 @@ gfxProxyFontEntry::CreateFontInstance(const gfxFontStyle *aFontStyle, bool aNeed
     return nullptr;
 }
 
-static ots::TableAction
-OTSTableAction(uint32_t aTag, void *aUserData)
-{
-    // preserve Graphite, color glyph and SVG tables
-    if (aTag == TRUETYPE_TAG('S', 'i', 'l', 'f') ||
-        aTag == TRUETYPE_TAG('S', 'i', 'l', 'l') ||
-        aTag == TRUETYPE_TAG('G', 'l', 'o', 'c') ||
-        aTag == TRUETYPE_TAG('G', 'l', 'a', 't') ||
-        aTag == TRUETYPE_TAG('F', 'e', 'a', 't') ||
-        aTag == TRUETYPE_TAG('S', 'V', 'G', ' ') ||
-        aTag == TRUETYPE_TAG('C', 'O', 'L', 'R') ||
-        aTag == TRUETYPE_TAG('C', 'P', 'A', 'L')) {
-        return ots::TABLE_ACTION_PASSTHRU;
-    }
-    return ots::TABLE_ACTION_DEFAULT;
-}
+class gfxOTSContext : public ots::OTSContext {
+public:
+    gfxOTSContext(gfxMixedFontFamily *aFamily, gfxProxyFontEntry  *aProxy)
+        : mFamily(aFamily), mProxy(aProxy) {}
 
-struct OTSCallbackUserData {
+    virtual ots::TableAction GetTableAction(uint32_t aTag) MOZ_OVERRIDE {
+        // preserve Graphite, color glyph and SVG tables
+        if (aTag == TRUETYPE_TAG('S', 'i', 'l', 'f') ||
+            aTag == TRUETYPE_TAG('S', 'i', 'l', 'l') ||
+            aTag == TRUETYPE_TAG('G', 'l', 'o', 'c') ||
+            aTag == TRUETYPE_TAG('G', 'l', 'a', 't') ||
+            aTag == TRUETYPE_TAG('F', 'e', 'a', 't') ||
+            aTag == TRUETYPE_TAG('S', 'V', 'G', ' ') ||
+            aTag == TRUETYPE_TAG('C', 'O', 'L', 'R') ||
+            aTag == TRUETYPE_TAG('C', 'P', 'A', 'L')) {
+            return ots::TABLE_ACTION_PASSTHRU;
+        }
+        return ots::TABLE_ACTION_DEFAULT;
+    }
+
+    virtual void Message(int level, const char* format,
+                         ...) MSGFUNC_FMT_ATTR MOZ_OVERRIDE {
+        va_list va;
+        va_start(va, format);
+
+        nsCString msg;
+        msg.AppendPrintf(format, va);
+
+        va_end(va);
+
+        if (level > 0) {
+            // For warnings (rather than errors that cause the font to fail),
+            // we only report the first instance of any given message.
+            if (mWarningsIssued.Contains(msg)) {
+                return;
+            }
+            mWarningsIssued.PutEntry(msg);
+        }
+
+        mProxy->mFontSet->LogMessage(mFamily, mProxy, msg.get());
+    }
+
+private:
     gfxMixedFontFamily *mFamily;
     gfxProxyFontEntry  *mProxy;
+    nsTHashtable<nsCStringHashKey> mWarningsIssued;
 };
-
-/* static */ bool
-gfxProxyFontEntry::OTSMessage(void *aUserData, const char *format, ...)
-{
-    va_list va;
-    va_start(va, format);
-
-    // buf should be more than adequate for any message OTS generates,
-    // so we don't worry about checking the result of vsnprintf()
-    char buf[512];
-    (void)vsnprintf(buf, sizeof(buf), format, va);
-
-    va_end(va);
-
-    OTSCallbackUserData *d = static_cast<OTSCallbackUserData*>(aUserData);
-    d->mProxy->mFontSet->LogMessage(d->mFamily, d->mProxy, buf);
-
-    return false;
-}
 
 // Call the OTS library to sanitize an sfnt before attempting to use it.
 // Returns a newly-allocated block, or nullptr in case of fatal errors.
@@ -224,13 +233,7 @@ gfxProxyFontEntry::SanitizeOpenTypeData(gfxMixedFontFamily *aFamily,
     ExpandingMemoryStream output(aIsCompressed ? aLength * 2 : aLength,
                                  1024 * 1024 * 256);
 
-    OTSCallbackUserData userData;
-    userData.mFamily = aFamily;
-    userData.mProxy = this;
-
-    ots::OTSContext otsContext;
-    otsContext.SetTableActionCallback(&OTSTableAction, nullptr);
-    otsContext.SetMessageCallback(&OTSMessage, &userData);
+    gfxOTSContext otsContext(aFamily, this);
 
     if (otsContext.Process(&output, aData, aLength)) {
         aSaneLength = output.Tell();
@@ -565,7 +568,7 @@ gfxProxyFontEntry::LoadFont(gfxMixedFontFamily *aFamily,
 }
 
 gfxUserFontSet::gfxUserFontSet()
-    : mFontFamilies(5), mLocalRulesUsed(false)
+    : mFontFamilies(4), mLocalRulesUsed(false)
 {
     IncrementGeneration();
     gfxPlatformFontList *fp = gfxPlatformFontList::PlatformFontList();
@@ -582,22 +585,18 @@ gfxUserFontSet::~gfxUserFontSet()
     }
 }
 
-gfxFontEntry*
-gfxUserFontSet::AddFontFace(const nsAString& aFamilyName,
-                            const nsTArray<gfxFontFaceSrc>& aFontFaceSrcList,
-                            uint32_t aWeight,
-                            int32_t aStretch,
-                            uint32_t aItalicStyle,
-                            const nsTArray<gfxFontFeature>& aFeatureSettings,
-                            uint32_t aLanguageOverride,
-                            gfxSparseBitSet *aUnicodeRanges)
+already_AddRefed<gfxProxyFontEntry>
+gfxUserFontSet::FindOrCreateFontFace(
+                               const nsAString& aFamilyName,
+                               const nsTArray<gfxFontFaceSrc>& aFontFaceSrcList,
+                               uint32_t aWeight,
+                               int32_t aStretch,
+                               uint32_t aItalicStyle,
+                               const nsTArray<gfxFontFeature>& aFeatureSettings,
+                               uint32_t aLanguageOverride,
+                               gfxSparseBitSet* aUnicodeRanges)
 {
-    MOZ_ASSERT(aWeight != 0,
-               "aWeight must not be 0; use NS_FONT_WEIGHT_NORMAL instead");
-
-    // stretch, italic/oblique ==> zero implies normal
-
-    gfxMixedFontFamily* family = GetFamily(aFamilyName);
+    nsRefPtr<gfxProxyFontEntry> entry;
 
     // If there's already a proxy in the family whose descriptors all match,
     // we can just move it to the end of the list instead of adding a new
@@ -605,13 +604,75 @@ gfxUserFontSet::AddFontFace(const nsAString& aFamilyName,
     // Note that we can't do this for "real" (non-proxy) entries, even if the
     // style descriptors match, as they might have had a different source list,
     // but we no longer have the old source list available to check.
-    nsTArray<nsRefPtr<gfxFontEntry> >& fontList = family->GetFontList();
-    for (uint32_t i = 0, count = fontList.Length(); i < count; i++) {
+    gfxMixedFontFamily* family = LookupFamily(aFamilyName);
+    if (family) {
+        entry = FindExistingProxyEntry(family, aFontFaceSrcList, aWeight,
+                                       aStretch, aItalicStyle, aFeatureSettings,
+                                       aLanguageOverride, aUnicodeRanges);
+    }
+
+    if (!entry) {
+      entry = CreateFontFace(aFontFaceSrcList, aWeight, aStretch,
+                             aItalicStyle, aFeatureSettings, aLanguageOverride,
+                             aUnicodeRanges);
+      entry->mFamilyName = aFamilyName;
+
+#ifdef PR_LOGGING
+      if (LOG_ENABLED()) {
+          LOG(("userfonts (%p) created \"%s\" (%p) with style: %s weight: %d "
+               "stretch: %d",
+               this, NS_ConvertUTF16toUTF8(aFamilyName).get(), entry.get(),
+               (aItalicStyle & NS_FONT_STYLE_ITALIC ? "italic" :
+                   (aItalicStyle & NS_FONT_STYLE_OBLIQUE ? "oblique" : "normal")),
+               aWeight, aStretch));
+      }
+#endif
+    }
+
+    return entry.forget();
+}
+
+already_AddRefed<gfxProxyFontEntry>
+gfxUserFontSet::CreateFontFace(const nsTArray<gfxFontFaceSrc>& aFontFaceSrcList,
+                               uint32_t aWeight,
+                               int32_t aStretch,
+                               uint32_t aItalicStyle,
+                               const nsTArray<gfxFontFeature>& aFeatureSettings,
+                               uint32_t aLanguageOverride,
+                               gfxSparseBitSet* aUnicodeRanges)
+{
+    MOZ_ASSERT(aWeight != 0,
+               "aWeight must not be 0; use NS_FONT_WEIGHT_NORMAL instead");
+
+    nsRefPtr<gfxProxyFontEntry> proxyEntry =
+        new gfxProxyFontEntry(this, aFontFaceSrcList, aWeight,
+                              aStretch, aItalicStyle, aFeatureSettings,
+                              aLanguageOverride, aUnicodeRanges);
+    return proxyEntry.forget();
+}
+
+gfxProxyFontEntry*
+gfxUserFontSet::FindExistingProxyEntry(
+                               gfxMixedFontFamily* aFamily,
+                               const nsTArray<gfxFontFaceSrc>& aFontFaceSrcList,
+                               uint32_t aWeight,
+                               int32_t aStretch,
+                               uint32_t aItalicStyle,
+                               const nsTArray<gfxFontFeature>& aFeatureSettings,
+                               uint32_t aLanguageOverride,
+                               gfxSparseBitSet* aUnicodeRanges)
+{
+    MOZ_ASSERT(aWeight != 0,
+               "aWeight must not be 0; use NS_FONT_WEIGHT_NORMAL instead");
+
+    nsTArray<nsRefPtr<gfxFontEntry>>& fontList = aFamily->GetFontList();
+
+    for (size_t i = 0, count = fontList.Length(); i < count; i++) {
         if (!fontList[i]->mIsProxy) {
             continue;
         }
 
-        gfxProxyFontEntry *existingProxyEntry =
+        gfxProxyFontEntry* existingProxyEntry =
             static_cast<gfxProxyFontEntry*>(fontList[i].get());
         if (!existingProxyEntry->Matches(aFontFaceSrcList,
                                          aWeight, aStretch, aItalicStyle,
@@ -620,34 +681,10 @@ gfxUserFontSet::AddFontFace(const nsAString& aFamilyName,
             continue;
         }
 
-        // We've found an entry that matches the new face exactly, so just add
-        // it to the end of the list. gfxMixedFontFamily::AddFontEntry() will
-        // automatically remove any earlier occurrence of the same proxy.
-        family->AddFontEntry(existingProxyEntry);
         return existingProxyEntry;
     }
 
-    // construct a new face and add it into the family
-    gfxProxyFontEntry *proxyEntry =
-        new gfxProxyFontEntry(this, aFontFaceSrcList,
-                              aWeight, aStretch,
-                              aItalicStyle,
-                              aFeatureSettings,
-                              aLanguageOverride,
-                              aUnicodeRanges);
-    proxyEntry->mFamilyName = aFamilyName;
-    family->AddFontEntry(proxyEntry);
-#ifdef PR_LOGGING
-    if (LOG_ENABLED()) {
-        LOG(("userfonts (%p) added (%s) with style: %s weight: %d stretch: %d",
-             this, NS_ConvertUTF16toUTF8(aFamilyName).get(),
-             (aItalicStyle & NS_FONT_STYLE_ITALIC ? "italic" :
-                 (aItalicStyle & NS_FONT_STYLE_OBLIQUE ? "oblique" : "normal")),
-             aWeight, aStretch));
-    }
-#endif
-
-    return proxyEntry;
+    return nullptr;
 }
 
 void
@@ -656,6 +693,13 @@ gfxUserFontSet::AddFontFace(const nsAString& aFamilyName,
 {
     gfxMixedFontFamily* family = GetFamily(aFamilyName);
     family->AddFontEntry(aFontEntry);
+
+#ifdef PR_LOGGING
+    if (LOG_ENABLED()) {
+        LOG(("userfonts (%p) added \"%s\" (%p)",
+             this, NS_ConvertUTF16toUTF8(aFamilyName).get(), aFontEntry));
+    }
+#endif
 }
 
 gfxFontEntry*
@@ -904,25 +948,34 @@ IgnorePrincipal(nsIURI *aURI)
 bool
 gfxUserFontSet::UserFontCache::Entry::KeyEquals(const KeyTypePointer aKey) const
 {
-    bool result;
-    if (NS_FAILED(mURI->Equals(aKey->mURI, &result)) || !result) {
-        return false;
-    }
+    const gfxFontEntry *fe = aKey->mFontEntry;
+    // CRC32 checking mode
+    if (mLength || aKey->mLength) {
+        if (aKey->mLength != mLength ||
+            aKey->mCRC32 != mCRC32) {
+            return false;
+        }
+    } else {
+        bool result;
+        if (NS_FAILED(mURI->Equals(aKey->mURI, &result)) || !result) {
+            return false;
+        }
 
-    // For data: URIs, we don't care about the principal; otherwise, check it.
-    if (!IgnorePrincipal(mURI)) {
-        NS_ASSERTION(mPrincipal && aKey->mPrincipal,
-                     "only data: URIs are allowed to omit the principal");
-        if (NS_FAILED(mPrincipal->Equals(aKey->mPrincipal, &result)) || !result) {
+        // For data: URIs, we don't care about the principal; otherwise, check it.
+        if (!IgnorePrincipal(mURI)) {
+            NS_ASSERTION(mPrincipal && aKey->mPrincipal,
+                         "only data: URIs are allowed to omit the principal");
+            if (NS_FAILED(mPrincipal->Equals(aKey->mPrincipal, &result)) ||
+                !result) {
+                return false;
+            }
+        }
+
+        if (mPrivate != aKey->mPrivate) {
             return false;
         }
     }
 
-    if (mPrivate != aKey->mPrivate) {
-        return false;
-    }
-
-    const gfxFontEntry *fe = aKey->mFontEntry;
     if (mFontEntry->mItalic           != fe->mItalic          ||
         mFontEntry->mWeight           != fe->mWeight          ||
         mFontEntry->mStretch          != fe->mStretch         ||
@@ -956,17 +1009,25 @@ gfxUserFontSet::UserFontCache::CacheFont(gfxFontEntry *aFontEntry,
     }
 
     gfxUserFontData *data = aFontEntry->mUserFontData;
-    // For data: URIs, the principal is ignored; anyone who has the same
-    // data: URI is able to load it and get an equivalent font.
-    // Otherwise, the principal is used as part of the cache key.
-    nsIPrincipal *principal;
-    if (IgnorePrincipal(data->mURI)) {
-        principal = nullptr;
+    if (data->mLength) {
+        MOZ_ASSERT(aPersistence == kPersistent);
+        MOZ_ASSERT(!data->mPrivate);
+        sUserFonts->PutEntry(Key(data->mCRC32, data->mLength, aFontEntry,
+                                 data->mPrivate, aPersistence));
     } else {
-        principal = data->mPrincipal;
+        MOZ_ASSERT(aPersistence == kDiscardable);
+        // For data: URIs, the principal is ignored; anyone who has the same
+        // data: URI is able to load it and get an equivalent font.
+        // Otherwise, the principal is used as part of the cache key.
+        nsIPrincipal *principal;
+        if (IgnorePrincipal(data->mURI)) {
+            principal = nullptr;
+        } else {
+            principal = data->mPrincipal;
+        }
+        sUserFonts->PutEntry(Key(data->mURI, principal, aFontEntry,
+                                 data->mPrivate, aPersistence));
     }
-    sUserFonts->PutEntry(Key(data->mURI, principal, aFontEntry,
-                             data->mPrivate, aPersistence));
 
 #ifdef DEBUG_USERFONT_CACHE
     printf("userfontcache added fontentry: %p\n", aFontEntry);
@@ -1015,6 +1076,30 @@ gfxUserFontSet::UserFontCache::GetFont(nsIURI            *aSrcURI,
 
     Entry* entry = sUserFonts->GetEntry(Key(aSrcURI, principal, aProxy,
                                             aPrivate));
+    if (entry) {
+        return entry->GetFontEntry();
+    }
+
+    nsCOMPtr<nsIChannel> chan;
+    if (NS_FAILED(NS_NewChannel(getter_AddRefs(chan), aSrcURI))) {
+        return nullptr;
+    }
+
+    nsCOMPtr<nsIJARChannel> jarchan = do_QueryInterface(chan);
+    if (!jarchan) {
+        return nullptr;
+    }
+
+    nsCOMPtr<nsIZipEntry> zipentry;
+    if (NS_FAILED(jarchan->GetZipEntry(getter_AddRefs(zipentry)))) {
+        return nullptr;
+    }
+
+    uint32_t crc32, length;
+    zipentry->GetCRC32(&crc32);
+    zipentry->GetRealSize(&length);
+
+    entry = sUserFonts->GetEntry(Key(crc32, length, aProxy, aPrivate));
     if (entry) {
         return entry->GetFontEntry();
     }

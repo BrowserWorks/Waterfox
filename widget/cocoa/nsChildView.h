@@ -26,6 +26,7 @@
 #include "mozilla/Mutex.h"
 #include "nsRegion.h"
 #include "mozilla/MouseEvents.h"
+#include "mozilla/UniquePtr.h"
 
 #include "nsString.h"
 #include "nsIDragService.h"
@@ -93,6 +94,7 @@ class RectTextureImage;
 }
 
 namespace mozilla {
+class VibrancyManager;
 namespace layers {
 class GLManager;
 class APZCTreeManager;
@@ -138,6 +140,15 @@ class APZCTreeManager;
 // marked as needing redisplay.  This method has been present in the same
 // format since at least OS X 10.5.
 - (void)_tileTitlebarAndRedisplay:(BOOL)redisplay;
+
+// The following undocumented methods are used to work around bug 1069658,
+// which is an Apple bug or design flaw that effects Yosemite.  None of them
+// were present prior to Yosemite (OS X 10.10).
+- (NSView *)titlebarView; // Method of NSThemeFrame
+- (NSView *)titlebarContainerView; // Method of NSThemeFrame
+- (BOOL)transparent; // Method of NSTitlebarView and NSTitlebarContainerView
+- (void)setTransparent:(BOOL)transparent; // Method of NSTitlebarView and
+                                          // NSTitlebarContainerView
 
 @end
 
@@ -329,6 +340,8 @@ typedef NSInteger NSEventGestureAxis;
 
 - (BOOL)isCoveringTitlebar;
 
+- (NSColor*)vibrancyFillColorForWidgetType:(uint8_t)aWidgetType;
+
 // Simple gestures support
 //
 // XXX - The swipeWithEvent, beginGestureWithEvent, magnifyWithEvent,
@@ -444,7 +457,7 @@ public:
   // will be 2.0 (and might potentially other values as screen resolutions
   // evolve). This gives the relationship between what Gecko calls "device
   // pixels" and the Cocoa "points" coordinate system.
-  CGFloat                 BackingScaleFactor();
+  CGFloat                 BackingScaleFactor() const;
 
   // Call if the window's backing scale factor changes - i.e., it is moved
   // between HiDPI and non-HiDPI screens
@@ -569,21 +582,23 @@ public:
   }
 
   void              NotifyDirtyRegion(const nsIntRegion& aDirtyRegion);
+  void              ClearVibrantAreas();
+  NSColor*          VibrancyFillColorForWidgetType(uint8_t aWidgetType);
 
   // unit conversion convenience functions
-  int32_t           CocoaPointsToDevPixels(CGFloat aPts) {
+  int32_t           CocoaPointsToDevPixels(CGFloat aPts) const {
     return nsCocoaUtils::CocoaPointsToDevPixels(aPts, BackingScaleFactor());
   }
-  nsIntPoint        CocoaPointsToDevPixels(const NSPoint& aPt) {
+  nsIntPoint        CocoaPointsToDevPixels(const NSPoint& aPt) const {
     return nsCocoaUtils::CocoaPointsToDevPixels(aPt, BackingScaleFactor());
   }
-  nsIntRect         CocoaPointsToDevPixels(const NSRect& aRect) {
+  nsIntRect         CocoaPointsToDevPixels(const NSRect& aRect) const {
     return nsCocoaUtils::CocoaPointsToDevPixels(aRect, BackingScaleFactor());
   }
-  CGFloat           DevPixelsToCocoaPoints(int32_t aPixels) {
+  CGFloat           DevPixelsToCocoaPoints(int32_t aPixels) const {
     return nsCocoaUtils::DevPixelsToCocoaPoints(aPixels, BackingScaleFactor());
   }
-  NSRect            DevPixelsToCocoaPoints(const nsIntRect& aRect) {
+  NSRect            DevPixelsToCocoaPoints(const nsIntRect& aRect) const {
     return nsCocoaUtils::DevPixelsToCocoaPoints(aRect, BackingScaleFactor());
   }
 
@@ -625,6 +640,8 @@ protected:
   void UpdateTitlebarCGContext();
 
   nsIntRect RectContainingTitlebarControls();
+  void UpdateVibrancy(const nsTArray<ThemeGeometry>& aThemeGeometries);
+  mozilla::VibrancyManager& EnsureVibrancyManager();
 
   nsIWidget* GetWidgetForListenerEvents();
 
@@ -678,7 +695,7 @@ protected:
   // messages (respondsToSelector, backingScaleFactor) every time we need to
   // use it.
   // ** We'll need to reinitialize this if the backing resolution changes. **
-  CGFloat               mBackingScaleFactor;
+  mutable CGFloat       mBackingScaleFactor;
 
   bool                  mVisible;
   bool                  mDrawing;
@@ -693,6 +710,8 @@ protected:
   nsAutoPtr<GLPresenter> mGLPresenter;
 
   nsRefPtr<APZCTreeManager> mAPZCTreeManager;
+
+  mozilla::UniquePtr<mozilla::VibrancyManager> mVibrancyManager;
 
   static uint32_t sLastInputEventCount;
 

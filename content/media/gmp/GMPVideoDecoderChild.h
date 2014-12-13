@@ -23,7 +23,7 @@ class GMPVideoDecoderChild : public PGMPVideoDecoderChild,
                              public GMPSharedMemManager
 {
 public:
-  GMPVideoDecoderChild(GMPChild* aPlugin);
+  explicit GMPVideoDecoderChild(GMPChild* aPlugin);
   virtual ~GMPVideoDecoderChild();
 
   void Init(GMPVideoDecoder* aDecoder);
@@ -36,6 +36,7 @@ public:
   virtual void InputDataExhausted() MOZ_OVERRIDE;
   virtual void DrainComplete() MOZ_OVERRIDE;
   virtual void ResetComplete() MOZ_OVERRIDE;
+  virtual void Error(GMPErr aError) MOZ_OVERRIDE;
 
   // GMPSharedMemManager
   virtual bool Alloc(size_t aSize, Shmem::SharedMemory::SharedMemoryType aType, Shmem* aMem) MOZ_OVERRIDE

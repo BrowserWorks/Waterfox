@@ -10,8 +10,9 @@
 // While not explicitly restricted to ServiceWorkerGlobalScope, it probably
 // should be. https://github.com/slightlyoff/ServiceWorker/issues/254
 [Constructor(DOMString type, optional EventInit eventInitDict),
- Func="mozilla::dom::workers::ServiceWorkerEventsVisible"]
+ Func="mozilla::dom::workers::ServiceWorkerEventsVisible",
+ Exposed=(ServiceWorker,Window)]
 interface InstallPhaseEvent : Event {
   // https://github.com/slightlyoff/ServiceWorker/issues/261
-  void waitUntil(Promise p);
+  void waitUntil(Promise<any> p);
 };

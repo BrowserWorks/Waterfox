@@ -107,7 +107,7 @@ class MessageLink
   public:
     typedef IPC::Message Message;
 
-    MessageLink(MessageChannel *aChan);
+    explicit MessageLink(MessageChannel *aChan);
     virtual ~MessageLink();
 
     // n.b.: These methods all require that the channel monitor is
@@ -139,8 +139,16 @@ class ProcessLink
     }
 
   public:
-    ProcessLink(MessageChannel *chan);
+    explicit ProcessLink(MessageChannel *chan);
     virtual ~ProcessLink();
+
+    // The ProcessLink will register itself as the IPC::Channel::Listener on the
+    // transport passed here. If the transport already has a listener registered
+    // then a listener chain will be established (the ProcessLink listener
+    // methods will be called first and may call some methods on the original
+    // listener as well). Once the channel is closed (either via normal shutdown
+    // or a pipe error) the chain will be destroyed and the original listener
+    // will again be registered.
     void Open(Transport* aTransport, MessageLoop *aIOLoop, Side aSide);
     
     // Run on the I/O thread, only when using inter-process link.

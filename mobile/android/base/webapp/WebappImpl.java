@@ -18,6 +18,7 @@ import org.mozilla.gecko.GeckoThread;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Tab;
 import org.mozilla.gecko.Tabs;
+import org.mozilla.gecko.mozglue.ContextUtils.SafeIntent;
 import org.mozilla.gecko.util.NativeJSObject;
 import org.mozilla.gecko.webapp.InstallHelper.InstallCallback;
 
@@ -40,10 +41,11 @@ public class WebappImpl extends GeckoApp implements InstallCallback {
     private static final String LOGTAG = "GeckoWebappImpl";
 
     private URI mOrigin;
-    private TextView mTitlebarText = null;
-    private View mTitlebar = null;
+    private TextView mTitlebarText;
+    private View mTitlebar;
 
-    private View mSplashscreen;
+    // Must only be accessed from the UI thread.
+    /* inner-access */ View mSplashscreen;
 
     private boolean mIsApk = true;
     private ApkResources mApkResources;
@@ -156,7 +158,7 @@ public class WebappImpl extends GeckoApp implements InstallCallback {
     }
 
     @Override
-    protected String getURIFromIntent(Intent intent) {
+    protected String getURIFromIntent(SafeIntent intent) {
         String uri = super.getURIFromIntent(intent);
         if (uri != null) {
             return uri;

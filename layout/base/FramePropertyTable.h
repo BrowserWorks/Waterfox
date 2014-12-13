@@ -192,18 +192,19 @@ protected:
   class Entry : public nsPtrHashKey<nsIFrame>
   {
   public:
-    Entry(KeyTypePointer aKey) : nsPtrHashKey<nsIFrame>(aKey) {}
+    explicit Entry(KeyTypePointer aKey) : nsPtrHashKey<nsIFrame>(aKey) {}
     Entry(const Entry &toCopy) :
       nsPtrHashKey<nsIFrame>(toCopy), mProp(toCopy.mProp) {}
+
+    size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) {
+      return mProp.SizeOfExcludingThis(aMallocSizeOf);
+    }
 
     PropertyValue mProp;
   };
 
   static void DeleteAllForEntry(Entry* aEntry);
   static PLDHashOperator DeleteEnumerator(Entry* aEntry, void* aArg);
-
-  static size_t SizeOfPropertyTableEntryExcludingThis(Entry* aEntry,
-                  mozilla::MallocSizeOf aMallocSizeOf, void *);
 
   nsTHashtable<Entry> mEntries;
   nsIFrame* mLastFrame;

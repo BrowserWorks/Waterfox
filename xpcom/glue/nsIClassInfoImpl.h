@@ -84,7 +84,7 @@
  * as a singleton.
  */
 
-class NS_COM_GLUE GenericClassInfo : public nsIClassInfo
+class GenericClassInfo : public nsIClassInfo
 {
 public:
   struct ClassInfoData
@@ -103,7 +103,7 @@ public:
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSICLASSINFO
 
-  GenericClassInfo(const ClassInfoData* aData) : mData(aData) {}
+  explicit GenericClassInfo(const ClassInfoData* aData) : mData(aData) {}
 
 private:
   const ClassInfoData* mData;

@@ -14,7 +14,7 @@ Cc["@mozilla.org/moz/jssubscript-loader;1"]
   .getService(Ci.mozIJSSubScriptLoader)
   .loadSubScript("chrome://browser/content/sanitize.js", tmp);
 Cu.import("resource://gre/modules/Timer.jsm", tmp);
-let {Promise, NewTabUtils, Sanitizer, clearTimeout, DirectoryLinksProvider} = tmp;
+let {Promise, NewTabUtils, Sanitizer, clearTimeout, setTimeout, DirectoryLinksProvider} = tmp;
 
 let uri = Services.io.newURI("about:newtab", null, null);
 let principal = Services.scriptSecurityManager.getNoAppCodebasePrincipal(uri);
@@ -23,9 +23,6 @@ let isMac = ("nsILocalFileMac" in Ci);
 let isLinux = ("@mozilla.org/gnome-gconf-service;1" in Cc);
 let isWindows = ("@mozilla.org/windows-registry-key;1" in Cc);
 let gWindow = window;
-
-// Override with enabled for testing (except for individual tests that turn off)
-DirectoryLinksProvider.enabled = true;
 
 // Default to dummy/empty directory links
 let gDirectorySource = 'data:application/json,{"test":1}';

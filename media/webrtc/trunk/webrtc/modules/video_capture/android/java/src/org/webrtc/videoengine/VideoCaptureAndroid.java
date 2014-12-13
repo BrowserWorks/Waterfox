@@ -38,29 +38,31 @@ import org.mozilla.gecko.mozglue.WebRTCJNITarget;
 // a performance bottleneck because only onPreviewFrame() is called more than
 // once (and is called serially on a single thread), so the lock should be
 // uncontended.
-public class VideoCaptureAndroid implements PreviewCallback, Callback {
+public class VideoCaptureAndroid implements PreviewCallback, Callback, AppStateListener {
   private final static String TAG = "WEBRTC-JC";
 
-  private Camera camera;  // Only non-null while capturing.
-  private Camera.CameraInfo info = null;
+  // Only non-null while capturing, accessed exclusively from synchronized methods.
+  /* inner-access */ Camera camera;
+  private Camera.CameraInfo info;
   private final int id;
   private final long native_capturer;  // |VideoCaptureAndroid*| in C++.
   private SurfaceHolder localPreview;
   private SurfaceTexture dummySurfaceTexture;
+
   // Arbitrary queue depth.  Higher number means more memory allocated & held,
   // lower number means more sensitivity to processing time in the client (and
   // potentially stalling the capturer if it runs out of buffers to write to).
   private final int numCaptureBuffers = 3;
+
   // Needed to start/stop/rotate camera.
-  private AppStateListener mAppStateListener = null;
-  private int mCaptureRotation = 0;
-  private int mCaptureWidth = 0;
-  private int mCaptureHeight = 0;
-  private int mCaptureMinFPS = 0;
-  private int mCaptureMaxFPS = 0;
+  /* inner-access */ volatile int mCaptureRotation;
+  /* inner-access */ int mCaptureWidth;
+  /* inner-access */ int mCaptureHeight;
+  /* inner-access */ int mCaptureMinFPS;
+  /* inner-access */ int mCaptureMaxFPS;
   // Are we being told to start/stop the camera, or just suspending/resuming
   // due to the application being backgrounded.
-  private boolean mResumeCapture = false;
+  /* inner-access */ boolean mResumeCapture;
 
   @WebRTCJNITarget
   public VideoCaptureAndroid(int id, long native_capturer) {
@@ -73,32 +75,25 @@ public class VideoCaptureAndroid implements PreviewCallback, Callback {
     mCaptureRotation = GetRotateAmount();
   }
 
-  private void LinkAppStateListener() {
-    mAppStateListener = new AppStateListener() {
-      @Override
-      public void onPause() {
-        if (camera != null) {
-          mResumeCapture = true;
-          stopCapture();
-        }
-      }
-      @Override
-      public void onResume() {
-        if (mResumeCapture) {
-          startCapture(mCaptureWidth, mCaptureHeight, mCaptureMinFPS, mCaptureMaxFPS);
-          mResumeCapture = false;
-        }
-      }
-      @Override
-      public void onOrientationChanged() {
-        mCaptureRotation = GetRotateAmount();
-      }
-    };
-    GeckoAppShell.getGeckoInterface().addAppStateListener(mAppStateListener);
+  @Override
+  public synchronized void onPause() {
+    if (camera != null) {
+      mResumeCapture = true;
+      stopCapture();
+    }
   }
 
-  private void RemoveAppStateListener() {
-      GeckoAppShell.getGeckoInterface().removeAppStateListener(mAppStateListener);
+  @Override
+  public synchronized void onResume() {
+    if (mResumeCapture) {
+      startCapture(mCaptureWidth, mCaptureHeight, mCaptureMinFPS, mCaptureMaxFPS);
+      mResumeCapture = false;
+    }
+  }
+
+  @Override
+  public void onOrientationChanged() {
+    mCaptureRotation = GetRotateAmount();
   }
 
   public int GetRotateAmount() {
@@ -212,7 +207,7 @@ public class VideoCaptureAndroid implements PreviewCallback, Callback {
       mCaptureMaxFPS = max_mfps;
       // If we are resuming a paused capture, the listener is already active.
       if (!mResumeCapture) {
-        LinkAppStateListener();
+        GeckoAppShell.getGeckoInterface().addAppStateListener(this);
       }
       return true;
     } catch (IOException e) {
@@ -232,6 +227,12 @@ public class VideoCaptureAndroid implements PreviewCallback, Callback {
   private synchronized boolean stopCapture() {
     Log.d(TAG, "stopCapture");
     if (camera == null) {
+      if (mResumeCapture == true) {
+        // We already got onPause, but now the native code wants us to stop.
+        // Do not resume capturing when resuming the app.
+        mResumeCapture = false;
+        return true;
+      }
       throw new RuntimeException("Camera is already stopped!");
     }
     Throwable error = null;
@@ -250,7 +251,7 @@ public class VideoCaptureAndroid implements PreviewCallback, Callback {
       camera = null;
       // If we want to resume after onResume, keep the listener in place.
       if (!mResumeCapture) {
-        RemoveAppStateListener();
+        GeckoAppShell.getGeckoInterface().removeAppStateListener(this);
         ViERenderer.DestroyLocalRenderer();
       }
       return true;

@@ -25,15 +25,17 @@
 #include "pkixtestutil.h"
 
 #include <cerrno>
+#include <cstdio>
 #include <limits>
 #include <new>
 
+#include "cert.h"
 #include "cryptohi.h"
 #include "hasht.h"
 #include "pk11pub.h"
-#include "pkixcheck.h"
+#include "pkix/pkixnss.h"
 #include "pkixder.h"
-#include "prerror.h"
+#include "pkixutil.h"
 #include "prinit.h"
 #include "prprf.h"
 #include "secder.h"
@@ -43,8 +45,6 @@ using namespace std;
 
 namespace mozilla { namespace pkix { namespace test {
 
-const PRTime ONE_DAY = PRTime(24) * PRTime(60) * PRTime(60) * PR_USEC_PER_SEC;
-
 namespace {
 
 inline void
@@ -53,20 +53,24 @@ deleteCharArray(char* chars)
   delete[] chars;
 }
 
-} // unnamed namespace
+inline void
+fclose_void(FILE* file) {
+  (void) fclose(file);
+}
+
+typedef mozilla::pkix::ScopedPtr<FILE, fclose_void> ScopedFILE;
 
 FILE*
 OpenFile(const char* dir, const char* filename, const char* mode)
 {
-  PR_ASSERT(dir);
-  PR_ASSERT(*dir);
-  PR_ASSERT(filename);
-  PR_ASSERT(*filename);
+  assert(dir);
+  assert(*dir);
+  assert(filename);
+  assert(*filename);
 
   ScopedPtr<char, deleteCharArray>
     path(new (nothrow) char[strlen(dir) + 1 + strlen(filename) + 1]);
   if (!path) {
-    PR_SetError(SEC_ERROR_NO_MEMORY, 0);
     return nullptr;
   }
   strcpy(path.get(), dir);
@@ -80,36 +84,29 @@ OpenFile(const char* dir, const char* filename, const char* mode)
     errno_t error = fopen_s(&rawFile, path.get(), mode);
     if (error) {
       // TODO: map error to NSPR error code
-      PR_SetError(PR_FILE_NOT_FOUND_ERROR, error);
       rawFile = nullptr;
     }
     file = rawFile;
   }
 #else
   file = fopen(path.get(), mode);
-  if (!file) {
-    // TODO: map errno to NSPR error code
-    PR_SetError(PR_FILE_NOT_FOUND_ERROR, errno);
-  }
 #endif
   return file.release();
 }
 
-SECStatus
+} // unnamed namespace
+
+Result
 TamperOnce(SECItem& item,
            const uint8_t* from, size_t fromLen,
            const uint8_t* to, size_t toLen)
 {
   if (!item.data || !from || !to || fromLen != toLen) {
-    PR_NOT_REACHED("invalid args to TamperOnce");
-    PR_SetError(SEC_ERROR_INVALID_ARGS, 0);
-    return SECFailure;
+    return Result::FATAL_ERROR_INVALID_ARGS;
   }
 
   if (fromLen < 8) {
-    PR_NOT_REACHED("invalid parameter to TamperOnce; fromLen must be at least 8");
-    PR_SetError(SEC_ERROR_INVALID_ARGS, 0);
-    return SECFailure;
+    return Result::FATAL_ERROR_INVALID_ARGS;
   }
 
   uint8_t* p = item.data;
@@ -120,23 +117,20 @@ TamperOnce(SECItem& item,
                                                            remaining));
     if (!foundFirstByte) {
       if (alreadyFoundMatch) {
-        return SECSuccess;
+        return Success;
       }
-      PR_SetError(SEC_ERROR_BAD_DATA, 0);
-      return SECFailure;
+      return Result::FATAL_ERROR_INVALID_ARGS;
     }
     remaining -= (foundFirstByte - p);
     if (remaining < fromLen) {
       if (alreadyFoundMatch) {
-        return SECSuccess;
+        return Success;
       }
-      PR_SetError(SEC_ERROR_BAD_DATA, 0);
-      return SECFailure;
+      return Result::FATAL_ERROR_INVALID_ARGS;
     }
     if (!memcmp(foundFirstByte, from, fromLen)) {
       if (alreadyFoundMatch) {
-        PR_SetError(SEC_ERROR_BAD_DATA, 0);
-        return SECFailure;
+        return Result::FATAL_ERROR_INVALID_ARGS;
       }
       alreadyFoundMatch = true;
       memmove(foundFirstByte, to, toLen);
@@ -147,6 +141,15 @@ TamperOnce(SECItem& item,
       --remaining;
     }
   }
+}
+
+Result
+InitInputFromSECItem(const SECItem* secItem, /*out*/ Input& input)
+{
+  if (!secItem) {
+    return Result::FATAL_ERROR_INVALID_ARGS;
+  }
+  return input.Init(secItem->data, secItem->len);
 }
 
 class Output
@@ -162,8 +165,8 @@ public:
   // lifetime that extends at least to where Squash is called.
   Result Add(const SECItem* item)
   {
-    PR_ASSERT(item);
-    PR_ASSERT(item->data);
+    assert(item);
+    assert(item->data);
 
     if (numItems >= MaxSequenceItems) {
       return Result::FATAL_ERROR_INVALID_ARGS;
@@ -180,7 +183,7 @@ public:
 
   SECItem* Squash(PLArenaPool* arena, uint8_t tag)
   {
-    PR_ASSERT(arena);
+    assert(arena);
 
     size_t lengthLength = length < 128 ? 1
                         : length < 256 ? 2
@@ -219,8 +222,7 @@ private:
         data[2] = length % 256;
         break;
       default:
-        PR_NOT_REACHED("EncodeLength: bad lengthLength");
-        PR_Abort();
+        abort();
     }
   }
 
@@ -234,7 +236,7 @@ private:
 };
 
 OCSPResponseContext::OCSPResponseContext(PLArenaPool* arena,
-                                         const CertID& certID, PRTime time)
+                                         const CertID& certID, time_t time)
   : arena(arena)
   , certID(certID)
   , responseStatus(successful)
@@ -251,7 +253,7 @@ OCSPResponseContext::OCSPResponseContext(PLArenaPool* arena,
   , certStatus(good)
   , revocationTime(0)
   , thisUpdate(time)
-  , nextUpdate(time + 10 * PR_USEC_PER_SEC)
+  , nextUpdate(time + 10)
   , includeNextUpdate(true)
 {
 }
@@ -290,8 +292,7 @@ HashAlgorithmToLength(SECOidTag hashAlg)
     case SEC_OID_SHA512:
       return SHA512_LENGTH;
     default:
-      PR_NOT_REACHED("HashAlgorithmToLength: bad hashAlg");
-      PR_Abort();
+      abort();
   }
   return 0;
 }
@@ -359,7 +360,7 @@ BitString(PLArenaPool* arena, const SECItem* rawBytes, bool corrupt)
   prefixed->data[0] = 0;
   memcpy(prefixed->data + 1, rawBytes->data, rawBytes->len);
   if (corrupt) {
-    PR_ASSERT(prefixed->len > 8);
+    assert(prefixed->len > 8);
     prefixed->data[8]++;
   }
   return EncodeNested(arena, der::BIT_STRING, prefixed);
@@ -368,7 +369,7 @@ BitString(PLArenaPool* arena, const SECItem* rawBytes, bool corrupt)
 static SECItem*
 Boolean(PLArenaPool* arena, bool value)
 {
-  PR_ASSERT(arena);
+  assert(arena);
   SECItem* result(SECITEM_AllocItem(arena, nullptr, 3));
   if (!result) {
     return nullptr;
@@ -384,7 +385,6 @@ Integer(PLArenaPool* arena, long value)
 {
   if (value < 0 || value > 127) {
     // TODO: add encoding of larger values
-    PR_SetError(PR_NOT_IMPLEMENTED_ERROR, 0);
     return nullptr;
   }
 
@@ -410,24 +410,43 @@ OID(PLArenaPool* arena, SECOidTag tag)
 
 enum TimeEncoding { UTCTime = 0, GeneralizedTime = 1 };
 
+// Windows doesn't provide gmtime_r, but it provides something very similar.
+#ifdef WIN32
+static tm*
+gmtime_r(const time_t* t, /*out*/ tm* exploded)
+{
+  if (gmtime_s(exploded, t) != 0) {
+    return nullptr;
+  }
+  return exploded;
+}
+#endif
+
 // http://tools.ietf.org/html/rfc5280#section-4.1.2.5
 // UTCTime:           YYMMDDHHMMSSZ (years 1950-2049 only)
 // GeneralizedTime: YYYYMMDDHHMMSSZ
+//
+// This assumes that time/time_t are POSIX-compliant in that time() returns
+// the number of seconds since the Unix epoch.
 static SECItem*
-PRTimeToEncodedTime(PLArenaPool* arena, PRTime time, TimeEncoding encoding)
+TimeToEncodedTime(PLArenaPool* arena, time_t time, TimeEncoding encoding)
 {
-  PR_ASSERT(encoding == UTCTime || encoding == GeneralizedTime);
+  assert(encoding == UTCTime || encoding == GeneralizedTime);
 
-  PRExplodedTime exploded;
-  PR_ExplodeTime(time, PR_GMTParameters, &exploded);
+  tm exploded;
+  if (!gmtime_r(&time, &exploded)) {
+    return nullptr;
+  }
+
   if (exploded.tm_sec >= 60) {
     // round down for leap seconds
     exploded.tm_sec = 59;
   }
 
-  if (encoding == UTCTime &&
-      (exploded.tm_year < 1950 || exploded.tm_year >= 2050)) {
-    PR_SetError(SEC_ERROR_INVALID_ARGS, 0);
+  // exploded.tm_year is the year offset by 1900.
+  int year = exploded.tm_year + 1900;
+
+  if (encoding == UTCTime && (year < 1950 || year >= 2050)) {
     return nullptr;
   }
 
@@ -443,14 +462,14 @@ PRTimeToEncodedTime(PLArenaPool* arena, PRTime time, TimeEncoding encoding)
   derTime->data[i++] = static_cast<uint8_t>(derTime->len - 2); // length
 
   if (encoding == GeneralizedTime) {
-    derTime->data[i++] = '0' + (exploded.tm_year / 1000);
-    derTime->data[i++] = '0' + ((exploded.tm_year % 1000) / 100);
+    derTime->data[i++] = '0' + (year / 1000);
+    derTime->data[i++] = '0' + ((year % 1000) / 100);
   }
 
-  derTime->data[i++] = '0' + ((exploded.tm_year % 100) / 10);
-  derTime->data[i++] = '0' + (exploded.tm_year % 10);
-  derTime->data[i++] = '0' + ((exploded.tm_month + 1) / 10);
-  derTime->data[i++] = '0' + ((exploded.tm_month + 1) % 10);
+  derTime->data[i++] = '0' + ((year % 100) / 10);
+  derTime->data[i++] = '0' + (year % 10);
+  derTime->data[i++] = '0' + ((exploded.tm_mon + 1) / 10);
+  derTime->data[i++] = '0' + ((exploded.tm_mon + 1) % 10);
   derTime->data[i++] = '0' + (exploded.tm_mday / 10);
   derTime->data[i++] = '0' + (exploded.tm_mday % 10);
   derTime->data[i++] = '0' + (exploded.tm_hour / 10);
@@ -465,9 +484,9 @@ PRTimeToEncodedTime(PLArenaPool* arena, PRTime time, TimeEncoding encoding)
 }
 
 static SECItem*
-PRTimeToGeneralizedTime(PLArenaPool* arena, PRTime time)
+TimeToGeneralizedTime(PLArenaPool* arena, time_t time)
 {
-  return PRTimeToEncodedTime(arena, time, GeneralizedTime);
+  return TimeToEncodedTime(arena, time, GeneralizedTime);
 }
 
 // http://tools.ietf.org/html/rfc5280#section-4.1.2.5: "CAs conforming to this
@@ -476,30 +495,66 @@ PRTimeToGeneralizedTime(PLArenaPool* arena, PRTime time)
 // GeneralizedTime." (This is a special case of the rule that we must always
 // use the shortest possible encoding.)
 static SECItem*
-PRTimeToTimeChoice(PLArenaPool* arena, PRTime time)
+TimeToTimeChoice(PLArenaPool* arena, time_t time)
 {
-  PRExplodedTime exploded;
-  PR_ExplodeTime(time, PR_GMTParameters, &exploded);
-  return PRTimeToEncodedTime(arena, time,
-    (exploded.tm_year >= 1950 && exploded.tm_year < 2050) ? UTCTime
-                                                          : GeneralizedTime);
+  tm exploded;
+  if (!gmtime_r(&time, &exploded)) {
+    return nullptr;
+  }
+  TimeEncoding encoding = (exploded.tm_year + 1900 >= 1950 &&
+                           exploded.tm_year + 1900 < 2050)
+                        ? UTCTime
+                        : GeneralizedTime;
+
+  return TimeToEncodedTime(arena, time, encoding);
 }
 
-PRTime
+Time
 YMDHMS(int16_t year, int16_t month, int16_t day,
        int16_t hour, int16_t minutes, int16_t seconds)
 {
-  PRExplodedTime tm;
-  tm.tm_usec = 0;
-  tm.tm_sec = seconds;
-  tm.tm_min = minutes;
-  tm.tm_hour = hour;
-  tm.tm_mday = day;
-  tm.tm_month = month - 1; // tm_month is zero-based
-  tm.tm_year = year;
-  tm.tm_params.tp_gmt_offset = 0;
-  tm.tm_params.tp_dst_offset = 0;
-  return PR_ImplodeTime(&tm);
+  assert(year <= 9999);
+  assert(month >= 1);
+  assert(month <= 12);
+  assert(day >= 1);
+  assert(hour >= 0);
+  assert(hour < 24);
+  assert(minutes >= 0);
+  assert(minutes < 60);
+  assert(seconds >= 0);
+  assert(seconds < 60);
+
+  uint64_t days = DaysBeforeYear(year);
+
+  {
+    static const int16_t DAYS_IN_MONTH[] = {
+      31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+    };
+
+    int16_t i = 1;
+    for (;;) {
+      int16_t daysInMonth = DAYS_IN_MONTH[i - 1];
+      if (i == 2 &&
+          ((year % 4 == 0) && ((year % 100 != 0) || (year % 400 == 0)))) {
+        // Add leap day
+        ++daysInMonth;
+      }
+      if (i == month) {
+        assert(day <= daysInMonth);
+        break;
+      }
+      days += daysInMonth;
+      ++i;
+    }
+  }
+
+  days += (day - 1);
+
+  uint64_t totalSeconds = days * Time::ONE_DAY_IN_SECONDS;
+  totalSeconds += hour * 60 * 60;
+  totalSeconds += minutes * 60;
+  totalSeconds += seconds;
+  return TimeFromElapsedSecondsAD(totalSeconds);
 }
 
 static SECItem*
@@ -507,11 +562,10 @@ SignedData(PLArenaPool* arena, const SECItem* tbsData,
            SECKEYPrivateKey* privKey, SECOidTag hashAlg,
            bool corrupt, /*optional*/ SECItem const* const* certs)
 {
-  PR_ASSERT(arena);
-  PR_ASSERT(tbsData);
-  PR_ASSERT(privKey);
+  assert(arena);
+  assert(tbsData);
+  assert(privKey);
   if (!arena || !tbsData || !privKey) {
-    PR_SetError(SEC_ERROR_INVALID_ARGS, 0);
     return nullptr;
   }
 
@@ -590,9 +644,8 @@ static SECItem*
 Extension(PLArenaPool* arena, SECOidTag extnIDTag,
           ExtensionCriticality criticality, Output& value)
 {
-  PR_ASSERT(arena);
+  assert(arena);
   if (!arena) {
-    PR_SetError(SEC_ERROR_INVALID_ARGS, 0);
     return nullptr;
   }
 
@@ -631,7 +684,7 @@ Extension(PLArenaPool* arena, SECOidTag extnIDTag,
 SECItem*
 MaybeLogOutput(SECItem* result, const char* suffix)
 {
-  PR_ASSERT(suffix);
+  assert(suffix);
 
   if (!result) {
     return nullptr;
@@ -660,13 +713,13 @@ MaybeLogOutput(SECItem* result, const char* suffix)
 ///////////////////////////////////////////////////////////////////////////////
 // Key Pairs
 
-SECStatus
+Result
 GenerateKeyPair(/*out*/ ScopedSECKEYPublicKey& publicKey,
                 /*out*/ ScopedSECKEYPrivateKey& privateKey)
 {
   ScopedPtr<PK11SlotInfo, PK11_FreeSlot> slot(PK11_GetInternalSlot());
   if (!slot) {
-    return SECFailure;
+    return MapPRErrorCodeToResult(PR_GetError());
   }
 
   // Bug 1012786: PK11_GenerateKeyPair can fail if there is insufficient
@@ -682,22 +735,27 @@ GenerateKeyPair(/*out*/ ScopedSECKEYPublicKey& publicKey,
                                       nullptr);
     if (privateKey) {
       publicKey = publicKeyTemp;
-      PR_ASSERT(publicKey);
-      return SECSuccess;
+      assert(publicKey);
+      return Success;
     }
 
-    PR_ASSERT(!publicKeyTemp);
+    assert(!publicKeyTemp);
 
     if (PR_GetError() != SEC_ERROR_PKCS11_FUNCTION_FAILED) {
-      return SECFailure;
+      break;
     }
 
-    PRTime now = PR_Now();
-    if (PK11_RandomUpdate(&now, sizeof(PRTime)) != SECSuccess) {
-      return SECFailure;
+    // Since these keys are only for testing, we don't need them to be good,
+    // random keys.
+    // https://xkcd.com/221/
+    static const uint8_t RANDOM_NUMBER[] = { 4, 4, 4, 4, 4, 4, 4, 4 };
+    if (PK11_RandomUpdate((void*) &RANDOM_NUMBER,
+                          sizeof(RANDOM_NUMBER)) != SECSuccess) {
+      break;
     }
   }
-  return SECFailure;
+
+  return MapPRErrorCodeToResult(PR_GetError());
 }
 
 
@@ -706,8 +764,8 @@ GenerateKeyPair(/*out*/ ScopedSECKEYPublicKey& publicKey,
 
 static SECItem* TBSCertificate(PLArenaPool* arena, long version,
                                const SECItem* serialNumber, SECOidTag signature,
-                               const SECItem* issuer, PRTime notBefore,
-                               PRTime notAfter, const SECItem* subject,
+                               const SECItem* issuer, time_t notBefore,
+                               time_t notAfter, const SECItem* subject,
                                const SECKEYPublicKey* subjectPublicKey,
                                /*optional*/ SECItem const* const* extensions);
 
@@ -718,18 +776,17 @@ static SECItem* TBSCertificate(PLArenaPool* arena, long version,
 SECItem*
 CreateEncodedCertificate(PLArenaPool* arena, long version,
                          SECOidTag signature, const SECItem* serialNumber,
-                         const SECItem* issuerNameDER, PRTime notBefore,
-                         PRTime notAfter, const SECItem* subjectNameDER,
+                         const SECItem* issuerNameDER, time_t notBefore,
+                         time_t notAfter, const SECItem* subjectNameDER,
                          /*optional*/ SECItem const* const* extensions,
                          /*optional*/ SECKEYPrivateKey* issuerPrivateKey,
                          SECOidTag signatureHashAlg,
                          /*out*/ ScopedSECKEYPrivateKey& privateKeyResult)
 {
-  PR_ASSERT(arena);
-  PR_ASSERT(issuerNameDER);
-  PR_ASSERT(subjectNameDER);
+  assert(arena);
+  assert(issuerNameDER);
+  assert(subjectNameDER);
   if (!arena || !issuerNameDER || !subjectNameDER) {
-    PR_SetError(SEC_ERROR_INVALID_ARGS, 0);
     return nullptr;
   }
 
@@ -738,7 +795,7 @@ CreateEncodedCertificate(PLArenaPool* arena, long version,
   // privateKeyResult until after we're done with issuerPrivateKey.
   ScopedSECKEYPublicKey publicKey;
   ScopedSECKEYPrivateKey privateKeyTemp;
-  if (GenerateKeyPair(publicKey, privateKeyTemp) != SECSuccess) {
+  if (GenerateKeyPair(publicKey, privateKeyTemp) != Success) {
     return nullptr;
   }
 
@@ -780,17 +837,16 @@ CreateEncodedCertificate(PLArenaPool* arena, long version,
 static SECItem*
 TBSCertificate(PLArenaPool* arena, long versionValue,
                const SECItem* serialNumber, SECOidTag signatureOidTag,
-               const SECItem* issuer, PRTime notBeforeTime,
-               PRTime notAfterTime, const SECItem* subject,
+               const SECItem* issuer, time_t notBeforeTime,
+               time_t notAfterTime, const SECItem* subject,
                const SECKEYPublicKey* subjectPublicKey,
                /*optional*/ SECItem const* const* extensions)
 {
-  PR_ASSERT(arena);
-  PR_ASSERT(issuer);
-  PR_ASSERT(subject);
-  PR_ASSERT(subjectPublicKey);
+  assert(arena);
+  assert(issuer);
+  assert(subject);
+  assert(subjectPublicKey);
   if (!arena || !issuer || !subject || !subjectPublicKey) {
-    PR_SetError(SEC_ERROR_INVALID_ARGS, 0);
     return nullptr;
   }
 
@@ -833,11 +889,11 @@ TBSCertificate(PLArenaPool* arena, long versionValue,
   //       notAfter       Time }
   SECItem* validity;
   {
-    SECItem* notBefore(PRTimeToTimeChoice(arena, notBeforeTime));
+    SECItem* notBefore(TimeToTimeChoice(arena, notBeforeTime));
     if (!notBefore) {
       return nullptr;
     }
-    SECItem* notAfter(PRTimeToTimeChoice(arena, notAfterTime));
+    SECItem* notAfter(TimeToTimeChoice(arena, notAfterTime));
     if (!notAfter) {
       return nullptr;
     }
@@ -924,9 +980,8 @@ CreateEncodedBasicConstraints(PLArenaPool* arena, bool isCA,
                               /*optional*/ long* pathLenConstraintValue,
                               ExtensionCriticality criticality)
 {
-  PR_ASSERT(arena);
+  assert(arena);
   if (!arena) {
-    PR_SetError(SEC_ERROR_INVALID_ARGS, 0);
     return nullptr;
   }
 
@@ -957,10 +1012,9 @@ SECItem*
 CreateEncodedEKUExtension(PLArenaPool* arena, SECOidTag const* ekus,
                           size_t ekusCount, ExtensionCriticality criticality)
 {
-  PR_ASSERT(arena);
-  PR_ASSERT(ekus);
+  assert(arena);
+  assert(ekus);
   if (!arena || (!ekus && ekusCount != 0)) {
-    PR_SetError(SEC_ERROR_INVALID_ARGS, 0);
     return nullptr;
   }
 
@@ -985,13 +1039,11 @@ SECItem*
 CreateEncodedOCSPResponse(OCSPResponseContext& context)
 {
   if (!context.arena) {
-    PR_SetError(SEC_ERROR_INVALID_ARGS, 0);
     return nullptr;
   }
 
   if (!context.skipResponseBytes) {
     if (!context.signerPrivateKey) {
-      PR_SetError(SEC_ERROR_INVALID_ARGS, 0);
       return nullptr;
     }
   }
@@ -1058,7 +1110,7 @@ ResponseBytes(OCSPResponseContext& context)
   SECItem id_pkix_ocsp_basic = {
     siBuffer,
     const_cast<uint8_t*>(id_pkix_ocsp_basic_encoded),
-    PR_ARRAY_SIZE(id_pkix_ocsp_basic_encoded)
+    sizeof(id_pkix_ocsp_basic_encoded)
   };
   SECItem* response = BasicOCSPResponse(context);
   if (!response) {
@@ -1117,7 +1169,7 @@ OCSPExtension(OCSPResponseContext& context, OCSPResponseExtension* extension)
     SECItem critical = {
       siBuffer,
       const_cast<uint8_t*>(trueEncoded),
-      PR_ARRAY_SIZE(trueEncoded)
+      sizeof(trueEncoded)
     };
     if (output.Add(&critical) != Success) {
       return nullptr;
@@ -1175,8 +1227,8 @@ ResponseData(OCSPResponseContext& context)
   if (!responderID) {
     return nullptr;
   }
-  SECItem* producedAtEncoded = PRTimeToGeneralizedTime(context.arena,
-                                                       context.producedAt);
+  SECItem* producedAtEncoded = TimeToGeneralizedTime(context.arena,
+                                                     context.producedAt);
   if (!producedAtEncoded) {
     return nullptr;
   }
@@ -1277,15 +1329,15 @@ SingleResponse(OCSPResponseContext& context)
   if (!certStatus) {
     return nullptr;
   }
-  SECItem* thisUpdateEncoded = PRTimeToGeneralizedTime(context.arena,
-                                                       context.thisUpdate);
+  SECItem* thisUpdateEncoded = TimeToGeneralizedTime(context.arena,
+                                                     context.thisUpdate);
   if (!thisUpdateEncoded) {
     return nullptr;
   }
   SECItem* nextUpdateEncodedNested = nullptr;
   if (context.includeNextUpdate) {
-    SECItem* nextUpdateEncoded = PRTimeToGeneralizedTime(context.arena,
-                                                         context.nextUpdate);
+    SECItem* nextUpdateEncoded = TimeToGeneralizedTime(context.arena,
+                                                       context.nextUpdate);
     if (!nextUpdateEncoded) {
       return nullptr;
     }
@@ -1330,16 +1382,18 @@ CertID(OCSPResponseContext& context)
   if (!hashAlgorithm) {
     return nullptr;
   }
-  SECItem* issuerNameHash = HashedOctetString(context.arena,
-                                              context.certID.issuer,
+  SECItem issuerSECItem = UnsafeMapInputToSECItem(context.certID.issuer);
+  SECItem* issuerNameHash = HashedOctetString(context.arena, issuerSECItem,
                                               context.certIDHashAlg);
   if (!issuerNameHash) {
     return nullptr;
   }
 
+  SECItem issuerSubjectPublicKeyInfoSECItem =
+    UnsafeMapInputToSECItem(context.certID.issuerSubjectPublicKeyInfo);
   ScopedPtr<CERTSubjectPublicKeyInfo, SECKEY_DestroySubjectPublicKeyInfo>
     spki(SECKEY_DecodeDERSubjectPublicKeyInfo(
-          &context.certID.issuerSubjectPublicKeyInfo));
+           &issuerSubjectPublicKeyInfoSECItem));
   if (!spki) {
     return nullptr;
   }
@@ -1352,8 +1406,10 @@ CertID(OCSPResponseContext& context)
     { SEC_ASN1_INTEGER, 0 },
     { 0 }
   };
+  SECItem serialNumberSECItem =
+    UnsafeMapInputToSECItem(context.certID.serialNumber);
   SECItem* serialNumber = SEC_ASN1EncodeItem(context.arena, nullptr,
-                                             &context.certID.serialNumber,
+                                             &serialNumberSECItem,
                                              serialTemplate);
   if (!serialNumber) {
     return nullptr;
@@ -1405,8 +1461,8 @@ CertStatus(OCSPResponseContext& context)
     }
     case 1:
     {
-      SECItem* revocationTime = PRTimeToGeneralizedTime(context.arena,
-                                                        context.revocationTime);
+      SECItem* revocationTime = TimeToGeneralizedTime(context.arena,
+                                                      context.revocationTime);
       if (!revocationTime) {
         return nullptr;
       }
@@ -1416,8 +1472,8 @@ CertStatus(OCSPResponseContext& context)
                           revocationTime);
     }
     default:
-      PR_NOT_REACHED("CertStatus: bad context.certStatus");
-      PR_Abort();
+      assert(false);
+      // fall through
   }
   return nullptr;
 }

@@ -15,6 +15,15 @@ SOURCES += [
     'workmonitor.cpp',
 ]
 
+if CONFIG['OS_ARCH'] == 'WINNT':
+    USE_LIBS += [
+        'updatecommon-standalone',
+    ]
+else:
+    USE_LIBS += [
+        'updatecommon',
+    ]
+
 # For debugging purposes only
 #DEFINES['DISABLE_UPDATER_AUTHENTICODE_CHECK'] = True
 
@@ -36,3 +45,9 @@ if CONFIG['_MSC_VER']:
 RCINCLUDE = 'maintenanceservice.rc'
 
 DISABLE_STL_WRAPPING = True
+
+OS_LIBS += [
+    'comctl32',
+    'ws2_32',
+    'shell32',
+]

@@ -13,7 +13,6 @@
 #include "mozilla/gfx/2D.h"
 
 class gfxASurface;
-class gfxImageSurface;
 class gfxContext;
 class gfxPattern;
 
@@ -25,7 +24,7 @@ class gfxPattern;
 class gfxDrawable {
     NS_INLINE_DECL_REFCOUNTING(gfxDrawable)
 public:
-    gfxDrawable(const gfxIntSize aSize)
+    explicit gfxDrawable(const gfxIntSize aSize)
      : mSize(aSize) {}
 
     /**
@@ -39,8 +38,8 @@ public:
                         const gfxRect& aFillRect,
                         bool aRepeat,
                         const GraphicsFilter& aFilter,
+                        gfxFloat aOpacity = 1.0,
                         const gfxMatrix& aTransform = gfxMatrix()) = 0;
-    virtual already_AddRefed<gfxImageSurface> GetAsImageSurface() { return nullptr; }
     virtual gfxIntSize Size() { return mSize; }
 
 protected:
@@ -56,10 +55,6 @@ protected:
  */
 class gfxSurfaceDrawable : public gfxDrawable {
 public:
-    gfxSurfaceDrawable(gfxASurface* aSurface, const gfxIntSize aSize,
-                       const gfxMatrix aTransform = gfxMatrix());
-    gfxSurfaceDrawable(mozilla::gfx::DrawTarget* aDT, const gfxIntSize aSize,
-                       const gfxMatrix aTransform = gfxMatrix());
     gfxSurfaceDrawable(mozilla::gfx::SourceSurface* aSurface, const gfxIntSize aSize,
                        const gfxMatrix aTransform = gfxMatrix());
     virtual ~gfxSurfaceDrawable() {}
@@ -68,13 +63,10 @@ public:
                         const gfxRect& aFillRect,
                         bool aRepeat,
                         const GraphicsFilter& aFilter,
+                        gfxFloat aOpacity = 1.0,
                         const gfxMatrix& aTransform = gfxMatrix());
     
-    virtual already_AddRefed<gfxImageSurface> GetAsImageSurface();
-
 protected:
-    nsRefPtr<gfxASurface> mSurface;
-    mozilla::RefPtr<mozilla::gfx::DrawTarget> mDrawTarget;
     mozilla::RefPtr<mozilla::gfx::SourceSurface> mSourceSurface;
     const gfxMatrix mTransform;
 };
@@ -117,6 +109,7 @@ public:
                         const gfxRect& aFillRect,
                         bool aRepeat,
                         const GraphicsFilter& aFilter,
+                        gfxFloat aOpacity = 1.0,
                         const gfxMatrix& aTransform = gfxMatrix());
 
 protected:
@@ -140,6 +133,7 @@ public:
                         const gfxRect& aFillRect,
                         bool aRepeat,
                         const GraphicsFilter& aFilter,
+                        gfxFloat aOpacity = 1.0,
                         const gfxMatrix& aTransform = gfxMatrix());
 
 protected:

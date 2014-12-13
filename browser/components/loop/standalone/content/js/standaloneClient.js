@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* global loop:true, hawk, deriveHawkCredentials */
+/* global loop:true */
 
 var loop = loop || {};
 loop.StandaloneClient = (function($) {
@@ -46,7 +46,7 @@ loop.StandaloneClient = (function($) {
         }
       });
 
-      if (properties.length == 1) {
+      if (properties.length === 1) {
         return data[properties[0]];
       }
 
@@ -62,26 +62,38 @@ loop.StandaloneClient = (function($) {
      * @param errorThrown See jQuery docs
      */
     _failureHandler: function(cb, jqXHR, textStatus, errorThrown) {
-      var error = "Unknown error.",
-          jsonRes = jqXHR && jqXHR.responseJSON || {};
-      // Received error response format:
-      // { "status": "errors",
-      //   "errors": [{
-      //      "location": "url",
-      //      "name": "token",
-      //      "description": "invalid token"
-      // }]}
-      if (jsonRes.status === "errors" && Array.isArray(jsonRes.errors)) {
-        error = "Details: " + jsonRes.errors.map(function(err) {
-          return Object.keys(err).map(function(field) {
-            return field + ": " + err[field];
-          }).join(", ");
-        }).join("; ");
+      var jsonErr = jqXHR && jqXHR.responseJSON || {};
+      var message = "HTTP " + jqXHR.status + " " + errorThrown;
+
+      // Logging the technical error to the console
+      console.error("Server error", message, jsonErr);
+
+      // Create an error with server error `errno` code attached as a property
+      var err = new Error(message);
+      err.errno = jsonErr.errno;
+
+      cb(err);
+    },
+
+   /**
+    * Makes a request for url creation date for standalone UI
+    *
+    * @param {String} loopToken The loopToken representing the call
+    * @param {Function} cb Callback(err, callUrlInfo)
+    *
+    **/
+    requestCallUrlInfo: function(loopToken, cb) {
+      if (!loopToken) {
+        throw new Error("Missing required parameter loopToken");
       }
-      var message = "HTTP " + jqXHR.status + " " + errorThrown +
-          "; " + error;
-      console.error(message);
-      cb(new Error(message));
+      if (!cb) {
+        throw new Error("Missing required callback function");
+      }
+
+      $.get(this.settings.baseServerUrl + "/calls/" + loopToken)
+        .done(function(callUrlInfo) {
+          cb(null, callUrlInfo);
+        }).fail(this._failureHandler.bind(this, cb));
     },
 
     /**
@@ -103,14 +115,14 @@ loop.StandaloneClient = (function($) {
         method:      "POST",
         contentType: "application/json",
         dataType:    "json",
-        data: JSON.stringify({callType: callType})
+        data: JSON.stringify({callType: callType, channel: "standalone"})
       });
 
       req.done(function(sessionData) {
         try {
           cb(null, this._validate(sessionData, expectedCallsProperties));
         } catch (err) {
-          console.log("Error requesting call info", err);
+          console.error("Error requesting call info", err.message);
           cb(err);
         }
       }.bind(this));

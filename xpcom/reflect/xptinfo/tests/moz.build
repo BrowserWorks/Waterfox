@@ -11,3 +11,10 @@ SOURCES += [
 SIMPLE_PROGRAMS += [
     'TestInterfaceInfo'
 ]
+
+USE_LIBS += [
+    'mozalloc',
+    'nspr',
+    'xpcomglue_s',
+    'xul',
+]

@@ -5,23 +5,22 @@
 
 package org.mozilla.gecko.gfx;
 
+import org.json.JSONObject;
+import org.mozilla.gecko.AppConstants.Versions;
+import org.mozilla.gecko.EventDispatcher;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.PrefsHelper;
 import org.mozilla.gecko.Tab;
 import org.mozilla.gecko.Tabs;
 import org.mozilla.gecko.ZoomConstraints;
-import org.mozilla.gecko.EventDispatcher;
 import org.mozilla.gecko.util.FloatUtils;
 import org.mozilla.gecko.util.GamepadUtils;
 import org.mozilla.gecko.util.GeckoEventListener;
 import org.mozilla.gecko.util.ThreadUtils;
 
-import org.json.JSONObject;
-
 import android.graphics.PointF;
 import android.graphics.RectF;
-import android.os.Build;
 import android.util.FloatMath;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -156,7 +155,6 @@ class JavaPanZoomController
         String[] prefs = { "ui.scrolling.axis_lock_mode",
                            "ui.scrolling.negate_wheel_scrollY",
                            "ui.scrolling.gamepad_dead_zone" };
-        mNegateWheelScrollY = false;
         PrefsHelper.getPrefs(prefs, new PrefsHelper.PrefHandlerBase() {
             @Override public void prefValue(String pref, String value) {
                 if (pref.equals("ui.scrolling.axis_lock_mode")) {
@@ -294,7 +292,7 @@ class JavaPanZoomController
     /** This function MUST be called on the UI thread */
     @Override
     public boolean onKeyEvent(KeyEvent event) {
-        if (Build.VERSION.SDK_INT <= 11) {
+        if (Versions.preHCMR1) {
             return false;
         }
 
@@ -314,7 +312,7 @@ class JavaPanZoomController
     /** This function MUST be called on the UI thread */
     @Override
     public boolean onMotionEvent(MotionEvent event) {
-        if (Build.VERSION.SDK_INT <= 11) {
+        if (Versions.preHCMR1) {
             return false;
         }
 
@@ -1346,7 +1344,8 @@ class JavaPanZoomController
 
     @Override
     public void onLongPress(MotionEvent motionEvent) {
-        sendPointToGecko("Gesture:LongPress", motionEvent);
+        GeckoEvent e = GeckoEvent.createLongPressEvent(motionEvent);
+        GeckoAppShell.sendEventToGecko(e);
     }
 
     @Override

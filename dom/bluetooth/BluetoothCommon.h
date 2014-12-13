@@ -132,11 +132,198 @@ extern bool gBluetoothDebugFlag;
 
 BEGIN_BLUETOOTH_NAMESPACE
 
+enum BluetoothStatus {
+  STATUS_SUCCESS,
+  STATUS_FAIL,
+  STATUS_NOT_READY,
+  STATUS_NOMEM,
+  STATUS_BUSY,
+  STATUS_DONE,
+  STATUS_UNSUPPORTED,
+  STATUS_PARM_INVALID,
+  STATUS_UNHANDLED,
+  STATUS_AUTH_FAILURE,
+  STATUS_RMT_DEV_DOWN
+};
+
+enum BluetoothBondState {
+  BOND_STATE_NONE,
+  BOND_STATE_BONDING,
+  BOND_STATE_BONDED
+};
+
+enum BluetoothDeviceType {
+  DEVICE_TYPE_BREDR,
+  DEVICE_TYPE_BLE,
+  DEVICE_TYPE_DUAL
+};
+
+enum BluetoothPropertyType {
+  PROPERTY_UNKNOWN,
+  PROPERTY_BDNAME,
+  PROPERTY_BDADDR,
+  PROPERTY_UUIDS,
+  PROPERTY_CLASS_OF_DEVICE,
+  PROPERTY_TYPE_OF_DEVICE,
+  PROPERTY_SERVICE_RECORD,
+  PROPERTY_ADAPTER_SCAN_MODE,
+  PROPERTY_ADAPTER_BONDED_DEVICES,
+  PROPERTY_ADAPTER_DISCOVERY_TIMEOUT,
+  PROPERTY_REMOTE_FRIENDLY_NAME,
+  PROPERTY_REMOTE_RSSI,
+  PROPERTY_REMOTE_VERSION_INFO,
+  PROPERTY_REMOTE_DEVICE_TIMESTAMP
+};
+
+enum BluetoothScanMode {
+  SCAN_MODE_NONE,
+  SCAN_MODE_CONNECTABLE,
+  SCAN_MODE_CONNECTABLE_DISCOVERABLE
+};
+
+struct BluetoothUuid {
+  uint8_t mUuid[16];
+};
+
+struct BluetoothServiceRecord {
+  BluetoothUuid mUuid;
+  uint16_t mChannel;
+  char mName[256];
+};
+
+struct BluetoothRemoteInfo {
+  int mVerMajor;
+  int mVerMinor;
+  int mManufacturer;
+};
+
+struct BluetoothProperty {
+  /* Type */
+  BluetoothPropertyType mType;
+
+  /* Value
+   */
+
+  /* PROPERTY_BDNAME
+     PROPERTY_BDADDR
+     PROPERTY_REMOTE_FRIENDLY_NAME */
+  nsString mString;
+
+  /* PROPERTY_UUIDS */
+  nsTArray<BluetoothUuid> mUuidArray;
+
+  /* PROPERTY_ADAPTER_BONDED_DEVICES */
+  nsTArray<nsString> mStringArray;
+
+  /* PROPERTY_CLASS_OF_DEVICE
+     PROPERTY_ADAPTER_DISCOVERY_TIMEOUT */
+  uint32_t mUint32;
+
+  /* PROPERTY_RSSI_VALUE */
+  int32_t mInt32;
+
+  /* PROPERTY_DEVICE_TYPE */
+  BluetoothDeviceType mDeviceType;
+
+  /* PROPERTY_SERVICE_RECORD */
+  BluetoothServiceRecord mServiceRecord;
+
+  /* PROPERTY_SCAN_MODE */
+  BluetoothScanMode mScanMode;
+
+  /* PROPERTY_REMOTE_VERSION_INFO */
+  BluetoothRemoteInfo mRemoteInfo;
+};
+
 enum BluetoothSocketType {
   RFCOMM = 1,
   SCO    = 2,
   L2CAP  = 3,
   EL2CAP = 4
+};
+
+enum BluetoothHandsfreeAtResponse {
+  HFP_AT_RESPONSE_ERROR,
+  HFP_AT_RESPONSE_OK
+};
+
+enum BluetoothHandsfreeAudioState {
+  HFP_AUDIO_STATE_DISCONNECTED,
+  HFP_AUDIO_STATE_CONNECTING,
+  HFP_AUDIO_STATE_CONNECTED,
+  HFP_AUDIO_STATE_DISCONNECTING,
+};
+
+enum BluetoothHandsfreeCallAddressType {
+  HFP_CALL_ADDRESS_TYPE_UNKNOWN,
+  HFP_CALL_ADDRESS_TYPE_INTERNATIONAL
+};
+
+enum BluetoothHandsfreeCallDirection {
+  HFP_CALL_DIRECTION_OUTGOING,
+  HFP_CALL_DIRECTION_INCOMING
+};
+
+enum BluetoothHandsfreeCallHoldType {
+  HFP_CALL_HOLD_RELEASEHELD,
+  HFP_CALL_HOLD_RELEASEACTIVE_ACCEPTHELD,
+  HFP_CALL_HOLD_HOLDACTIVE_ACCEPTHELD,
+  HFP_CALL_HOLD_ADDHELDTOCONF
+};
+
+enum BluetoothHandsfreeCallMode {
+  HFP_CALL_MODE_VOICE,
+  HFP_CALL_MODE_DATA,
+  HFP_CALL_MODE_FAX
+};
+
+enum BluetoothHandsfreeCallMptyType {
+  HFP_CALL_MPTY_TYPE_SINGLE,
+  HFP_CALL_MPTY_TYPE_MULTI
+};
+
+enum BluetoothHandsfreeCallState {
+  HFP_CALL_STATE_ACTIVE,
+  HFP_CALL_STATE_HELD,
+  HFP_CALL_STATE_DIALING,
+  HFP_CALL_STATE_ALERTING,
+  HFP_CALL_STATE_INCOMING,
+  HFP_CALL_STATE_WAITING,
+  HFP_CALL_STATE_IDLE
+};
+
+enum BluetoothHandsfreeConnectionState
+{
+  HFP_CONNECTION_STATE_DISCONNECTED,
+  HFP_CONNECTION_STATE_CONNECTING,
+  HFP_CONNECTION_STATE_CONNECTED,
+  HFP_CONNECTION_STATE_SLC_CONNECTED,
+  HFP_CONNECTION_STATE_DISCONNECTING
+};
+
+enum BluetoothHandsfreeNetworkState {
+  HFP_NETWORK_STATE_NOT_AVAILABLE,
+  HFP_NETWORK_STATE_AVAILABLE
+};
+
+enum BluetoothHandsfreeNRECState {
+  HFP_NREC_STOPPED,
+  HFP_NREC_STARTED
+};
+
+enum BluetoothHandsfreeServiceType {
+  HFP_SERVICE_TYPE_HOME,
+  HFP_SERVICE_TYPE_ROAMING
+};
+
+enum BluetoothHandsfreeVoiceRecognitionState {
+  HFP_VOICE_RECOGNITION_STOPPED,
+  HFP_VOICE_RECOGNITION_STARTED
+};
+
+enum BluetoothHandsfreeVolumeType {
+  HFP_VOLUME_TYPE_SPEAKER,
+  HFP_VOLUME_TYPE_MICROPHONE
 };
 
 class BluetoothSignal;
@@ -153,6 +340,19 @@ enum BluetoothObjectType {
   TYPE_INVALID
 };
 
+enum BluetoothA2dpAudioState {
+  A2DP_AUDIO_STATE_REMOTE_SUSPEND,
+  A2DP_AUDIO_STATE_STOPPED,
+  A2DP_AUDIO_STATE_STARTED,
+};
+
+enum BluetoothA2dpConnectionState {
+  A2DP_CONNECTION_STATE_DISCONNECTED,
+  A2DP_CONNECTION_STATE_CONNECTING,
+  A2DP_CONNECTION_STATE_CONNECTED,
+  A2DP_CONNECTION_STATE_DISCONNECTING
+};
+
 enum ControlPlayStatus {
   PLAYSTATUS_STOPPED  = 0x00,
   PLAYSTATUS_PLAYING  = 0x01,
@@ -161,6 +361,72 @@ enum ControlPlayStatus {
   PLAYSTATUS_REV_SEEK = 0x04,
   PLAYSTATUS_UNKNOWN,
   PLAYSTATUS_ERROR    = 0xFF,
+};
+
+enum BluetoothAvrcpMediaAttribute {
+  AVRCP_MEDIA_ATTRIBUTE_TITLE,
+  AVRCP_MEDIA_ATTRIBUTE_ARTIST,
+  AVRCP_MEDIA_ATTRIBUTE_ALBUM,
+  AVRCP_MEDIA_ATTRIBUTE_TRACK_NUM,
+  AVRCP_MEDIA_ATTRIBUTE_NUM_TRACKS,
+  AVRCP_MEDIA_ATTRIBUTE_GENRE,
+  AVRCP_MEDIA_ATTRIBUTE_PLAYING_TIME
+};
+
+enum BluetoothAvrcpPlayerAttribute {
+  AVRCP_PLAYER_ATTRIBUTE_EQUALIZER,
+  AVRCP_PLAYER_ATTRIBUTE_REPEAT,
+  AVRCP_PLAYER_ATTRIBUTE_SHUFFLE,
+  AVRCP_PLAYER_ATTRIBUTE_SCAN
+};
+
+enum BluetoothAvrcpStatus {
+  AVRCP_STATUS_BAD_COMMAND,
+  AVRCP_STATUS_BAD_PARAMETER,
+  AVRCP_STATUS_NOT_FOUND,
+  AVRCP_STATUS_INTERNAL_ERROR,
+  AVRCP_STATUS_SUCCESS
+};
+
+enum BluetoothAvrcpEvent {
+  AVRCP_EVENT_PLAY_STATUS_CHANGED,
+  AVRCP_EVENT_TRACK_CHANGE,
+  AVRCP_EVENT_TRACK_REACHED_END,
+  AVRCP_EVENT_TRACK_REACHED_START,
+  AVRCP_EVENT_PLAY_POS_CHANGED,
+  AVRCP_EVENT_APP_SETTINGS_CHANGED
+};
+
+enum BluetoothAvrcpNotification {
+  AVRCP_NTF_INTERIM,
+  AVRCP_NTF_CHANGED
+};
+
+enum BluetoothAvrcpRemoteFeature {
+  AVRCP_REMOTE_FEATURE_NONE,
+  AVRCP_REMOTE_FEATURE_METADATA,
+  AVRCP_REMOTE_FEATURE_ABSOLUTE_VOLUME,
+  AVRCP_REMOTE_FEATURE_BROWSE
+};
+
+struct BluetoothAvrcpElementAttribute {
+  uint32_t mId;
+  nsString mValue;
+};
+
+struct BluetoothAvrcpNotificationParam {
+  ControlPlayStatus mPlayStatus;
+  uint8_t mTrack[8];
+  uint32_t mSongPos;
+  uint8_t mNumAttr;
+  uint8_t mIds[256];
+  uint8_t mValues[256];
+};
+
+struct BluetoothAvrcpPlayerSettings {
+  uint8_t mNumAttr;
+  uint8_t mIds[256];
+  uint8_t mValues[256];
 };
 
 END_BLUETOOTH_NAMESPACE

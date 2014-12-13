@@ -19,6 +19,10 @@
 //   name: (string) the DNS name of the host in question
 //   include_subdomains: (optional bool) whether subdomains of |name| are also covered
 //   pins: (string) the |name| member of an object in |pinsets|
+//
+// "extra_certs" is a list of base64-encoded certificates. These are used in
+// pinsets that reference certificates not in our root program (for example,
+// Facebook).
 
 // equifax -> aus3
 // Geotrust Primary -> www.mozilla.org
@@ -37,6 +41,9 @@
     "production_domains": [
       // Chrome's test domain.
       "pinningtest.appspot.com",
+      // Dropbox
+      "dropbox.com",
+      "www.dropbox.com",
       // Twitter
       "api.twitter.com",
       "business.twitter.com",
@@ -45,7 +52,13 @@
       "oauth.twitter.com",
       "platform.twitter.com",
       "twimg.com",
-      "www.twitter.com"
+      "www.twitter.com",
+      // Tor
+      "torproject.org",
+      "blog.torproject.org",
+      "check.torproject.org",
+      "dist.torproject.org",
+      "www.torproject.org"
     ],
     "exclude_domains" : [
       // Chrome's entry for twitter.com doesn't include subdomains, so replace
@@ -85,7 +98,7 @@
       ]
     },
     {
-      "name": "mozilla_fxa",
+      "name": "mozilla_services",
       "sha256_hashes": [
         "DigiCert Global Root CA"
       ]
@@ -176,6 +189,14 @@
         "VeriSign Universal Root Certification Authority",
         "XRamp Global CA Root"
       ]
+    },
+    {
+      "name": "facebook",
+      "sha256_hashes": [
+        "Verisign Class 3 Public Primary Certification Authority - G3",
+        "DigiCert High Assurance EV Root CA",
+        "DigiCert ECC Secure Server CA"
+      ]
     }
   ],
 
@@ -189,15 +210,17 @@
     { "name": "aus4.mozilla.org", "include_subdomains": true,
       "pins": "mozilla", "test_mode": true, "id": 3 },
     { "name": "accounts.firefox.com", "include_subdomains": true,
-      "pins": "mozilla_fxa", "test_mode": false, "id": 4 },
+      "pins": "mozilla_services", "test_mode": false, "id": 4 },
     { "name": "api.accounts.firefox.com", "include_subdomains": true,
-      "pins": "mozilla_fxa", "test_mode": false, "id": 5 },
+      "pins": "mozilla_services", "test_mode": false, "id": 5 },
     { "name": "cdn.mozilla.net", "include_subdomains": true,
       "pins": "mozilla", "test_mode": false },
     { "name": "cdn.mozilla.org", "include_subdomains": true,
       "pins": "mozilla", "test_mode": false },
     { "name": "media.mozilla.com", "include_subdomains": true,
       "pins": "mozilla", "test_mode": false },
+    { "name": "services.mozilla.com", "include_subdomains": true,
+      "pins": "mozilla_services", "test_mode": true },
     { "name": "include-subdomains.pinning.example.com",
       "include_subdomains": true, "pins": "mozilla_test",
       "test_mode": false },
@@ -211,6 +234,14 @@
     // twitterCDN. More specific rules take precedence because we search for
     // exact domain name first.
     { "name": "twitter.com", "include_subdomains": true,
-      "pins": "twitterCDN", "test_mode": false }
+      "pins": "twitterCDN", "test_mode": false },
+    // Facebook (not pinned by Chrome)
+    { "name": "facebook.com", "include_subdomains": true,
+      "pins": "facebook", "test_mode": true }
+  ],
+
+  "extra_certificates": [
+     // DigiCert ECC Secure Server CA (for Facebook)
+     "MIIDrDCCApSgAwIBAgIQCssoukZe5TkIdnRw883GEjANBgkqhkiG9w0BAQwFADBhMQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3d3cuZGlnaWNlcnQuY29tMSAwHgYDVQQDExdEaWdpQ2VydCBHbG9iYWwgUm9vdCBDQTAeFw0xMzAzMDgxMjAwMDBaFw0yMzAzMDgxMjAwMDBaMEwxCzAJBgNVBAYTAlVTMRUwEwYDVQQKEwxEaWdpQ2VydCBJbmMxJjAkBgNVBAMTHURpZ2lDZXJ0IEVDQyBTZWN1cmUgU2VydmVyIENBMHYwEAYHKoZIzj0CAQYFK4EEACIDYgAE4ghC6nfYJN6gLGSkE85AnCNyqQIKDjc/ITa4jVMU9tWRlUvzlgKNcR7E2Munn17voOZ/WpIRllNv68DLP679Wz9HJOeaBy6Wvqgvu1cYr3GkvXg6HuhbPGtkESvMNCuMo4IBITCCAR0wEgYDVR0TAQH/BAgwBgEB/wIBADAOBgNVHQ8BAf8EBAMCAYYwNAYIKwYBBQUHAQEEKDAmMCQGCCsGAQUFBzABhhhodHRwOi8vb2NzcC5kaWdpY2VydC5jb20wQgYDVR0fBDswOTA3oDWgM4YxaHR0cDovL2NybDMuZGlnaWNlcnQuY29tL0RpZ2lDZXJ0R2xvYmFsUm9vdENBLmNybDA9BgNVHSAENjA0MDIGBFUdIAAwKjAoBggrBgEFBQcCARYcaHR0cHM6Ly93d3cuZGlnaWNlcnQuY29tL0NQUzAdBgNVHQ4EFgQUo53mH/naOU/AbuiRy5Wl2jHiCp8wHwYDVR0jBBgwFoAUA95QNVbRTLtm8KPiGxvDl7I90VUwDQYJKoZIhvcNAQEMBQADggEBAMeKoENL7HTJxavVHzA1Nm6YVntIrAVjrnuaVyRXzG/63qttnMe2uuzO58pzZNvfBDcKAEmzP58mrZGMIOgfiA4q+2Y3yDDo0sIkp0VILeoBUEoxlBPfjV/aKrtJPGHzecicZpIalir0ezZYoyxBEHQa0+1IttK7igZFcTMQMHp6mCHdJLnsnLWSB62DxsRq+HfmNb4TDydkskO/g+l3VtsIh5RHFPVfKK+jaEyDj2D3loB5hWp2Jp2VDCADjT7ueihlZGak2YPqmXTNbk19HOuNssWvFhtOyPNV6og4ETQdEa8/B6hPatJ0ES8q/HO3X8IVQwVs1n3aAr0im0/T+Xc="
   ]
 }

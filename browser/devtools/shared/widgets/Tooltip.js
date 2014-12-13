@@ -465,6 +465,9 @@ Tooltip.prototype = {
 
     this.empty();
     this.panel.removeAttribute("clamped-dimensions");
+    this.panel.removeAttribute("clamped-dimensions-no-min-height");
+    this.panel.removeAttribute("clamped-dimensions-no-max-or-min-height");
+    this.panel.removeAttribute("wide");
 
     if (content) {
       this.panel.appendChild(content);
@@ -887,6 +890,18 @@ SwatchBasedEditorTooltip.prototype = {
   show: function() {
     if (this.activeSwatch) {
       this.tooltip.show(this.activeSwatch, "topcenter bottomleft");
+
+      // When the tooltip is closed by clicking outside the panel we want to
+      // commit any changes. Because the "hidden" event destroys the tooltip we
+      // need to do this before the tooltip is destroyed (in the "hiding" event).
+      this.tooltip.once("hiding", () => {
+        if (!this._reverted && !this.eyedropperOpen) {
+          this.commit();
+        }
+        this._reverted = false;
+      });
+
+      // Once the tooltip is hidden we need to clean up any remaining objects.
       this.tooltip.once("hidden", () => {
         if (!this.eyedropperOpen) {
           this.activeSwatch = null;
@@ -962,6 +977,7 @@ SwatchBasedEditorTooltip.prototype = {
     if (this.activeSwatch) {
       let swatch = this.swatches.get(this.activeSwatch);
       swatch.callbacks.onRevert();
+      this._reverted = true;
     }
   },
 
@@ -1015,7 +1031,6 @@ SwatchColorPickerTooltip.prototype = Heritage.extend(SwatchBasedEditorTooltip.pr
     // Then set spectrum's color and listen to color changes to preview them
     if (this.activeSwatch) {
       this.currentSwatchColor = this.activeSwatch.nextSibling;
-      let swatch = this.swatches.get(this.activeSwatch);
       let color = this.activeSwatch.style.backgroundColor;
       this.spectrum.then(spectrum => {
         spectrum.off("changed", this._onSpectrumColorChange);
@@ -1038,8 +1053,14 @@ SwatchColorPickerTooltip.prototype = Heritage.extend(SwatchBasedEditorTooltip.pr
     if (this.activeSwatch) {
       this.activeSwatch.style.backgroundColor = color;
       this.activeSwatch.parentNode.dataset.color = color;
+
+      color = this._toDefaultType(color);
       this.currentSwatchColor.textContent = color;
       this.preview(color);
+
+      if (this.eyedropperOpen) {
+        this.commit();
+      }
     }
   },
 
@@ -1082,6 +1103,11 @@ SwatchColorPickerTooltip.prototype = Heritage.extend(SwatchBasedEditorTooltip.pr
     color = new colorUtils.CssColor(color);
     let rgba = color._getRGBATuple();
     return [rgba.r, rgba.g, rgba.b, rgba.a];
+  },
+
+  _toDefaultType: function(color) {
+    let colorObj = new colorUtils.CssColor(color);
+    return colorObj.toString();
   },
 
   destroy: function() {
@@ -1132,44 +1158,73 @@ EventTooltip.prototype = {
       header.className = "event-header devtools-toolbar";
       container.appendChild(header);
 
-      let debuggerIcon = doc.createElement("image");
-      debuggerIcon.className = "event-tooltip-debugger-icon";
-      debuggerIcon.setAttribute("src", "chrome://browser/skin/devtools/tool-debugger.svg");
-      let openInDebugger = l10n.strings.GetStringFromName("eventsTooltip.openInDebugger");
-      debuggerIcon.setAttribute("tooltiptext", openInDebugger);
-      header.appendChild(debuggerIcon);
+      if (!listener.hide.debugger) {
+        let debuggerIcon = doc.createElement("image");
+        debuggerIcon.className = "event-tooltip-debugger-icon";
+        debuggerIcon.setAttribute("src", "chrome://browser/skin/devtools/tool-debugger.svg");
+        let openInDebugger = l10n.strings.GetStringFromName("eventsTooltip.openInDebugger");
+        debuggerIcon.setAttribute("tooltiptext", openInDebugger);
+        header.appendChild(debuggerIcon);
+      }
 
-      let eventTypeLabel = doc.createElement("label");
-      eventTypeLabel.className = "event-tooltip-event-type";
-      eventTypeLabel.setAttribute("value", listener.type);
-      eventTypeLabel.setAttribute("tooltiptext", listener.type);
-      header.appendChild(eventTypeLabel);
+      if (!listener.hide.type) {
+        let eventTypeLabel = doc.createElement("label");
+        eventTypeLabel.className = "event-tooltip-event-type";
+        eventTypeLabel.setAttribute("value", listener.type);
+        eventTypeLabel.setAttribute("tooltiptext", listener.type);
+        header.appendChild(eventTypeLabel);
+      }
 
-      let filename = doc.createElement("label");
-      filename.className = "event-tooltip-filename devtools-monospace";
-      filename.setAttribute("value", listener.origin);
-      filename.setAttribute("tooltiptext", listener.origin);
-      filename.setAttribute("crop", "left");
-      header.appendChild(filename);
+      if (!listener.hide.filename) {
+        let filename = doc.createElement("label");
+        filename.className = "event-tooltip-filename devtools-monospace";
+        filename.setAttribute("value", listener.origin);
+        filename.setAttribute("tooltiptext", listener.origin);
+        filename.setAttribute("crop", "left");
+        header.appendChild(filename);
+      }
 
-      let attributesBox = doc.createElement("box");
-      attributesBox.setAttribute("class", "event-tooltip-attributes-container");
-      header.appendChild(attributesBox);
+      let attributesContainer = doc.createElement("hbox");
+      attributesContainer.setAttribute("class", "event-tooltip-attributes-container");
+      header.appendChild(attributesContainer);
 
-      let capturing = doc.createElement("label");
-      capturing.className = "event-tooltip-attributes";
-      capturing.setAttribute("value", phase);
-      capturing.setAttribute("tooltiptext", phase);
-      attributesBox.appendChild(capturing);
+      if (!listener.hide.capturing) {
+        let attributesBox = doc.createElement("box");
+        attributesBox.setAttribute("class", "event-tooltip-attributes-box");
+        attributesContainer.appendChild(attributesBox);
 
-      let attributesBox2 = attributesBox.cloneNode(false);
-      header.appendChild(attributesBox2);
+        let capturing = doc.createElement("label");
+        capturing.className = "event-tooltip-attributes";
+        capturing.setAttribute("value", phase);
+        capturing.setAttribute("tooltiptext", phase);
+        attributesBox.appendChild(capturing);
+      }
 
-      let dom0 = doc.createElement("label");
-      dom0.className = "event-tooltip-attributes";
-      dom0.setAttribute("value", level);
-      dom0.setAttribute("tooltiptext", level);
-      attributesBox2.appendChild(dom0);
+      if (listener.tags) {
+        for (let tag of listener.tags.split(",")) {
+          let attributesBox = doc.createElement("box");
+          attributesBox.setAttribute("class", "event-tooltip-attributes-box");
+          attributesContainer.appendChild(attributesBox);
+
+          let tagBox = doc.createElement("label");
+          tagBox.className = "event-tooltip-attributes";
+          tagBox.setAttribute("value", tag);
+          tagBox.setAttribute("tooltiptext", tag);
+          attributesBox.appendChild(tagBox);
+        }
+      }
+
+      if (!listener.hide.dom0) {
+        let attributesBox = doc.createElement("box");
+        attributesBox.setAttribute("class", "event-tooltip-attributes-box");
+        attributesContainer.appendChild(attributesBox);
+
+        let dom0 = doc.createElement("label");
+        dom0.className = "event-tooltip-attributes";
+        dom0.setAttribute("value", level);
+        dom0.setAttribute("tooltiptext", level);
+        attributesBox.appendChild(dom0);
+      }
 
       // Content
       let content = doc.createElement("box");
@@ -1190,7 +1245,8 @@ EventTooltip.prototype = {
     }
 
     this._tooltip.content = container;
-    this._tooltip.panel.setAttribute("clamped-dimensions-no-min-height", "");
+    this._tooltip.panel.setAttribute("clamped-dimensions-no-max-or-min-height", "");
+    this._tooltip.panel.setAttribute("wide", "");
 
     this._tooltip.panel.addEventListener("popuphiding", () => {
       this.destroy(container);
@@ -1204,6 +1260,8 @@ EventTooltip.prototype = {
   _headerClicked: function(event) {
     if (event.target.classList.contains("event-tooltip-debugger-icon")) {
       this._debugClicked(event);
+      event.stopPropagation();
+      return;
     }
 
     let doc = this._tooltip.doc;
@@ -1240,6 +1298,14 @@ EventTooltip.prototype = {
         editor.setText(tidied);
 
         eventEditors.appended = true;
+
+        let container = header.parentElement.getBoundingClientRect();
+        if (header.getBoundingClientRect().top < container.top) {
+          header.scrollIntoView(true);
+        } else if (content.getBoundingClientRect().bottom > container.bottom) {
+          content.scrollIntoView(false);
+        }
+
         this._tooltip.emit("event-tooltip-ready");
       });
     }
@@ -1331,7 +1397,7 @@ EventTooltip.prototype = {
       node.removeEventListener("click", this._debugClicked);
     }
 
-    this._tooltip = this._eventListenerInfos =  this._toolbox = null;
+    this._eventListenerInfos = this._toolbox = this._tooltip = null;
   }
 };
 

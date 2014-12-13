@@ -22,7 +22,7 @@ class GMPVideoEncoderChild : public PGMPVideoEncoderChild,
                              public GMPSharedMemManager
 {
 public:
-  GMPVideoEncoderChild(GMPChild* aPlugin);
+  explicit GMPVideoEncoderChild(GMPChild* aPlugin);
   virtual ~GMPVideoEncoderChild();
 
   void Init(GMPVideoEncoder* aEncoder);
@@ -32,6 +32,7 @@ public:
   virtual void Encoded(GMPVideoEncodedFrame* aEncodedFrame,
                        const uint8_t* aCodecSpecificInfo,
                        uint32_t aCodecSpecificInfoLength) MOZ_OVERRIDE;
+  virtual void Error(GMPErr aError) MOZ_OVERRIDE;
 
   // GMPSharedMemManager
   virtual bool Alloc(size_t aSize, Shmem::SharedMemory::SharedMemoryType aType, Shmem* aMem) MOZ_OVERRIDE

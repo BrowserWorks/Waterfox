@@ -66,8 +66,8 @@ public:
 
   uint16_t mState;
   nsString mNumber;
-  bthf_call_direction_t mDirection; // 0: outgoing call; 1: incoming call
-  bthf_call_addrtype_t mType;
+  BluetoothHandsfreeCallDirection mDirection;
+  BluetoothHandsfreeCallAddressType mType;
 };
 
 class BluetoothHfpManager : public BluetoothHfpManagerBase
@@ -75,6 +75,10 @@ class BluetoothHfpManager : public BluetoothHfpManagerBase
 {
 public:
   BT_DECL_HFP_MGR_BASE
+
+  void OnConnectError();
+  void OnDisconnectError();
+
   virtual void GetName(nsACString& aName)
   {
     aName.AssignLiteral("HFP/HSP");
@@ -82,8 +86,8 @@ public:
 
   static BluetoothHfpManager* Get();
   virtual ~BluetoothHfpManager();
-  static void InitHfpInterface();
-  static void DeinitHfpInterface();
+  static void InitHfpInterface(BluetoothProfileResultHandler* aRes);
+  static void DeinitHfpInterface(BluetoothProfileResultHandler* aRes);
 
   bool ConnectSco();
   bool DisconnectSco();
@@ -148,21 +152,22 @@ private:
   uint32_t GetNumberOfCalls(uint16_t aState);
   uint16_t GetCallSetupState();
   bool IsTransitionState(uint16_t aCallState, bool aIsConference);
-  bthf_call_state_t ConvertToBthfCallState(int aCallState);
+  BluetoothHandsfreeCallState
+    ConvertToBluetoothHandsfreeCallState(int aCallState) const;
 
   void UpdatePhoneCIND(uint32_t aCallIndex);
   void UpdateDeviceCIND();
   void SendCLCC(Call& aCall, int aIndex);
   void SendLine(const char* aMessage);
-  void SendResponse(bthf_at_response_t aResponseCode);
+  void SendResponse(BluetoothHandsfreeAtResponse aResponseCode);
 
   int mConnectionState;
   int mPrevConnectionState;
   int mAudioState;
   // Device CIND
   int mBattChg;
-  int mService;
-  int mRoam;
+  BluetoothHandsfreeNetworkState mService;
+  BluetoothHandsfreeServiceType mRoam;
   int mSignal;
 
   int mCurrentVgs;

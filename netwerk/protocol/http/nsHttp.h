@@ -36,13 +36,14 @@ namespace net {
         // 26 was http/2-draft08 and http/2-draft07 (they were the same)
         // 27 was http/2-draft09, h2-10, and h2-11
         // 28 was http/2-draft12
-        HTTP2_VERSION_DRAFT13 = 29
+        // 29 was http/2-draft13
+        HTTP2_VERSION_DRAFT14 = 30
     };
 
 typedef uint8_t nsHttpVersion;
 
-#define NS_HTTP2_DRAFT_VERSION HTTP2_VERSION_DRAFT13
-#define NS_HTTP2_DRAFT_TOKEN "h2-13"
+#define NS_HTTP2_DRAFT_VERSION HTTP2_VERSION_DRAFT14
+#define NS_HTTP2_DRAFT_TOKEN "h2-14"
 
 //-----------------------------------------------------------------------------
 // http connection capabilities
@@ -129,10 +130,14 @@ struct nsHttp
     // section 2.2
     static bool IsValidToken(const char *start, const char *end);
 
-    static inline bool IsValidToken(const nsCString &s) {
-        const char *start = s.get();
-        return IsValidToken(start, start + s.Length());
+    static inline bool IsValidToken(const nsACString &s) {
+        return IsValidToken(s.BeginReading(), s.EndReading());
     }
+
+    // Returns true if the specified value is reasonable given the defintion
+    // in RFC 2616 section 4.2.  Full strict validation is not performed
+    // currently as it would require full parsing of the value.
+    static bool IsReasonableHeaderValue(const nsACString &s);
 
     // find the first instance (case-insensitive comparison) of the given
     // |token| in the |input| string.  the |token| is bounded by elements of

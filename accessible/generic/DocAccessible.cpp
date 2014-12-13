@@ -78,8 +78,8 @@ DocAccessible::
                   nsIPresShell* aPresShell) :
   HyperTextAccessibleWrap(aRootContent, this),
   // XXX aaronl should we use an algorithm for the initial cache size?
-  mAccessibleCache(kDefaultCacheSize),
-  mNodeToAccessibleMap(kDefaultCacheSize),
+  mAccessibleCache(kDefaultCacheLength),
+  mNodeToAccessibleMap(kDefaultCacheLength),
   mDocumentNode(aDocument),
   mScrollPositionChangedTicks(0),
   mLoadState(eTreeConstructionPending), mDocFlags(0), mLoadEventType(0),
@@ -816,11 +816,12 @@ NS_IMETHODIMP
 DocAccessible::OnPivotChanged(nsIAccessiblePivot* aPivot,
                               nsIAccessible* aOldAccessible,
                               int32_t aOldStart, int32_t aOldEnd,
-                              PivotMoveReason aReason)
+                              PivotMoveReason aReason,
+                              bool aIsFromUserInput)
 {
-  nsRefPtr<AccEvent> event = new AccVCChangeEvent(this, aOldAccessible,
-                                                  aOldStart, aOldEnd,
-                                                  aReason);
+  nsRefPtr<AccEvent> event = new AccVCChangeEvent(
+    this, aOldAccessible, aOldStart, aOldEnd, aReason,
+    aIsFromUserInput ? eFromUserInput : eNoUserInput);
   nsEventShell::FireEvent(event);
 
   return NS_OK;
@@ -1093,9 +1094,11 @@ DocAccessible::ARIAAttributeChanged(Accessible* aAccessible, nsIAtom* aAttribute
   // For aria attributes like drag and drop changes we fire a generic attribute
   // change event; at least until native API comes up with a more meaningful event.
   uint8_t attrFlags = aria::AttrCharacteristicsFor(aAttribute);
-  if (!(attrFlags & ATTR_BYPASSOBJ))
-    FireDelayedEvent(nsIAccessibleEvent::EVENT_OBJECT_ATTRIBUTE_CHANGED,
-                     aAccessible);
+  if (!(attrFlags & ATTR_BYPASSOBJ)) {
+    nsRefPtr<AccEvent> event =
+      new AccObjectAttrChangedEvent(aAccessible, aAttribute);
+    FireDelayedEvent(event);
+  }
 
   nsIContent* elm = aAccessible->GetContent();
 
@@ -1308,8 +1311,22 @@ DocAccessible::GetAccessibleOrContainer(nsINode* aNode) const
 
   nsINode* currNode = aNode;
   Accessible* accessible = nullptr;
-  while (!(accessible = GetAccessible(currNode)) &&
-         (currNode = currNode->GetParentNode()));
+  while (!(accessible = GetAccessible(currNode))) {
+    nsINode* parent = nullptr;
+
+    // If this is a content node, try to get a flattened parent content node.
+    // This will smartly skip from the shadow root to the host element,
+    // over parentless document fragment
+    if (currNode->IsContent())
+      parent = currNode->AsContent()->GetFlattenedTreeParent();
+
+    // Fallback to just get parent node, in case there is no parent content
+    // node. Or current node is not a content node.
+    if (!parent)
+      parent = currNode->GetParentNode();
+
+    if (!(currNode = parent)) break;
+  }
 
   return accessible;
 }

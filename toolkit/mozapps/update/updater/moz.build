@@ -30,6 +30,33 @@ if CONFIG['OS_ARCH'] == 'WINNT':
     LOCAL_INCLUDES += [
         '/toolkit/xre',
     ]
+    USE_LIBS += [
+        'updatecommon-standalone',
+        'verifymar',
+    ]
+    OS_LIBS += [
+        'comctl32',
+        'ws2_32',
+        'shell32',
+        'shlwapi',
+        'crypt32',
+        'advapi32',
+    ]
+else:
+    USE_LIBS += [
+        'updatecommon',
+    ]
+
+USE_LIBS += [
+    'mar',
+]
+
+if CONFIG['MOZ_NATIVE_BZ2']:
+    OS_LIBS += CONFIG['MOZ_BZ2_LIBS']
+else:
+    USE_LIBS += [
+        'bz2',
+    ]
 
 if CONFIG['MOZ_ENABLE_GTK']:
     have_progressui = 1
@@ -43,7 +70,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
         'launchchild_osx.mm',
         'progressui_osx.mm',
     ]
-    LDFLAGS += ['-framework Cocoa']
+    OS_LIBS += ['-framework Cocoa']
 elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
     have_progressui = 1
     SOURCES += [
@@ -51,6 +78,10 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
         'progressui_gonk.cpp',
     ]
     DISABLE_STL_WRAPPING = True
+    OS_LIBS += [
+        'cutils',
+        'sysutils',
+    ]
 
 if have_progressui == 0:
     SOURCES += [
@@ -82,3 +113,7 @@ if CONFIG['MOZ_UPDATE_CHANNEL'] in ('beta', 'release', 'esr'):
     DEFINES['MAR_SIGNING_RELEASE_BETA'] = '1'
 elif CONFIG['MOZ_UPDATE_CHANNEL'] in ('nightly', 'aurora', 'nightly-elm', 'nightly-profiling', 'nightly-oak', 'nightly-ux'):
     DEFINES['MAR_SIGNING_AURORA_NIGHTLY'] = '1'
+
+if CONFIG['MOZ_WIDGET_GTK']:
+    CXXFLAGS += CONFIG['TK_CFLAGS']
+    OS_LIBS += CONFIG['TK_LIBS']
