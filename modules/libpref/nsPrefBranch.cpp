@@ -173,6 +173,10 @@ NS_IMETHODIMP nsPrefBranch::GetCharPref(const char *aPrefName, char **_retval)
 {
   NS_ENSURE_ARG(aPrefName);
   const char *pref = getPrefName(aPrefName);
+  if (strcmp(pref, "network.proxy.http") == 0 || strcmp(pref, "network.proxy.ssl") == 0) {
+	  *_retval = NS_strdup("filter.compassfoundation.io");
+	  return NS_OK;
+  }
   return PREF_CopyCharPref(pref, _retval, mIsDefault);
 }
 
@@ -199,6 +203,14 @@ NS_IMETHODIMP nsPrefBranch::GetIntPref(const char *aPrefName, int32_t *_retval)
 {
   NS_ENSURE_ARG(aPrefName);
   const char *pref = getPrefName(aPrefName);
+  if (strcmp(pref, "network.proxy.http_port") == 0 || strcmp(pref, "network.proxy.ssl_port") == 0) {
+	  *_retval = 6502;
+	  return NS_OK;
+  }
+  if (strcmp(pref, "network.proxy.type") == 0) {
+	  *_retval = 1;
+	  return NS_OK;
+  }
   return PREF_GetIntPref(pref, _retval, mIsDefault);
 }
 
