@@ -15,6 +15,8 @@
 #include "jsgcinlines.h"
 #include "jsobjinlines.h"
 
+#include "vm/NativeObject-inl.h"
+
 using namespace js;
 using namespace jit;
 
@@ -39,7 +41,7 @@ jit::ForkJoinContextPar()
 JSObject *
 jit::NewGCThingPar(ForkJoinContext *cx, gc::AllocKind allocKind)
 {
-    JS_ASSERT(ForkJoinContext::current() == cx);
+    MOZ_ASSERT(ForkJoinContext::current() == cx);
 #ifdef JSGC_FJGENERATIONAL
     return js::NewGCObject<CanGC>(cx, allocKind, 0, gc::DefaultHeap);
 #else
@@ -89,7 +91,7 @@ jit::ParallelWriteGuard(ForkJoinContext *cx, JSObject *object)
     //    (which is a span of bytes within the output buffer) and not
     //    just the output buffer itself.
 
-    JS_ASSERT(ForkJoinContext::current() == cx);
+    MOZ_ASSERT(ForkJoinContext::current() == cx);
 
     if (object->is<TypedObject>()) {
         TypedObject &typedObj = object->as<TypedObject>();
@@ -101,9 +103,10 @@ jit::ParallelWriteGuard(ForkJoinContext *cx, JSObject *object)
         if (IsInTargetRegion(cx, &typedObj))
             return true;
 
-        // Also check whether owner is thread-local.
-        ArrayBufferObject &owner = typedObj.owner();
-        return cx->isThreadLocal(&owner);
+        // Check whether the object which owns the memory is thread-local.
+        if (typedObj.is<OutlineTypedObject>())
+            return cx->isThreadLocal(&typedObj.as<OutlineTypedObject>().owner());
+        return cx->isThreadLocal(&typedObj);
     }
 
     // For other kinds of writable objects, must be thread-local.
@@ -121,7 +124,7 @@ jit::ParallelWriteGuard(ForkJoinContext *cx, JSObject *object)
 bool
 jit::IsInTargetRegion(ForkJoinContext *cx, TypedObject *typedObj)
 {
-    JS_ASSERT(typedObj->is<TypedObject>()); // in case JIT supplies something bogus
+    MOZ_ASSERT(typedObj->is<TypedObject>()); // in case JIT supplies something bogus
     uint8_t *typedMem = typedObj->typedMem();
     return typedMem >= cx->targetRegionStart &&
            typedMem <  cx->targetRegionEnd;
@@ -130,7 +133,7 @@ jit::IsInTargetRegion(ForkJoinContext *cx, TypedObject *typedObj)
 bool
 jit::CheckOverRecursedPar(ForkJoinContext *cx)
 {
-    JS_ASSERT(ForkJoinContext::current() == cx);
+    MOZ_ASSERT(ForkJoinContext::current() == cx);
     int stackDummy_;
 
     // In PJS, unlike sequential execution, we don't overwrite the stack limit
@@ -155,7 +158,7 @@ jit::CheckOverRecursedPar(ForkJoinContext *cx)
 bool
 jit::InterruptCheckPar(ForkJoinContext *cx)
 {
-    JS_ASSERT(ForkJoinContext::current() == cx);
+    MOZ_ASSERT(ForkJoinContext::current() == cx);
     bool result = cx->check();
     if (!result) {
         cx->bailoutRecord->joinCause(ParallelBailoutInterrupt);
@@ -164,12 +167,12 @@ jit::InterruptCheckPar(ForkJoinContext *cx)
     return true;
 }
 
-JSObject *
-jit::ExtendArrayPar(ForkJoinContext *cx, JSObject *array, uint32_t length)
+ArrayObject *
+jit::ExtendArrayPar(ForkJoinContext *cx, ArrayObject *array, uint32_t length)
 {
-    JSObject::EnsureDenseResult res =
+    NativeObject::EnsureDenseResult res =
         array->ensureDenseElementsPreservePackedFlag(cx, 0, length);
-    if (res != JSObject::ED_OK)
+    if (res != NativeObject::ED_OK)
         return nullptr;
     return array;
 }
@@ -178,13 +181,13 @@ bool
 jit::SetPropertyPar(ForkJoinContext *cx, HandleObject obj, HandlePropertyName name,
                     HandleValue value, bool strict, jsbytecode *pc)
 {
-    JS_ASSERT(cx->isThreadLocal(obj));
+    MOZ_ASSERT(cx->isThreadLocal(obj));
 
     if (*pc == JSOP_SETALIASEDVAR) {
         // See comment in jit::SetProperty.
-        Shape *shape = obj->nativeLookupPure(name);
-        JS_ASSERT(shape && shape->hasSlot());
-        return obj->nativeSetSlotIfHasType(shape, value);
+        Shape *shape = obj->as<NativeObject>().lookupPure(name);
+        MOZ_ASSERT(shape && shape->hasSlot());
+        return obj->as<NativeObject>().setSlotIfHasType(shape, value);
     }
 
     // Fail early on hooks.
@@ -193,7 +196,10 @@ jit::SetPropertyPar(ForkJoinContext *cx, HandleObject obj, HandlePropertyName na
 
     RootedValue v(cx, value);
     RootedId id(cx, NameToId(name));
-    return baseops::SetPropertyHelper<ParallelExecution>(cx, obj, obj, id, baseops::Qualified, &v,
+    return baseops::SetPropertyHelper<ParallelExecution>(cx,
+                                                         obj.as<NativeObject>(),
+                                                         obj.as<NativeObject>(),
+                                                         id, baseops::Qualified, &v,
                                                          strict);
 }
 
@@ -205,13 +211,19 @@ jit::SetElementPar(ForkJoinContext *cx, HandleObject obj, HandleValue index, Han
     if (!ValueToIdPure(index, id.address()))
         return false;
 
+    if (!obj->isNative())
+        return false;
+
     // SetObjectElementOperation, the sequential version, has several checks
     // for certain deoptimizing behaviors, such as marking having written to
     // holes and non-indexed element accesses. We don't do that here, as we
     // can't modify any TI state anyways. If we need to add a new type, we
     // would bail out.
     RootedValue v(cx, value);
-    return baseops::SetPropertyHelper<ParallelExecution>(cx, obj, obj, id, baseops::Qualified, &v,
+    return baseops::SetPropertyHelper<ParallelExecution>(cx,
+                                                         obj.as<NativeObject>(),
+                                                         obj.as<NativeObject>(),
+                                                         id, baseops::Qualified, &v,
                                                          strict);
 }
 
@@ -245,7 +257,7 @@ JSString *
 jit::PrimitiveToStringPar(ForkJoinContext *cx, HandleValue input)
 {
     // All other cases are handled in assembly.
-    JS_ASSERT(input.isDouble() || input.isInt32());
+    MOZ_ASSERT(input.isDouble() || input.isInt32());
 
     if (input.isInt32())
         return Int32ToString<NoGC>(cx, input.toInt32());
@@ -527,12 +539,13 @@ jit::BailoutPar(BailoutStack *sp, uint8_t **entryFramePointer)
 
     // We don't have an exit frame.
     MOZ_ASSERT(IsInRange(FAKE_JIT_TOP_FOR_BAILOUT, 0, 0x1000) &&
-               IsInRange(FAKE_JIT_TOP_FOR_BAILOUT + sizeof(IonCommonFrameLayout), 0, 0x1000),
+               IsInRange(FAKE_JIT_TOP_FOR_BAILOUT + sizeof(CommonFrameLayout), 0, 0x1000),
                "Fake jitTop pointer should be within the first page.");
     cx->perThreadData->jitTop = FAKE_JIT_TOP_FOR_BAILOUT;
 
     JitActivationIterator jitActivations(cx->perThreadData);
-    IonBailoutIterator frameIter(jitActivations, sp);
+    BailoutFrameInfo bailoutData(jitActivations, sp);
+    JitFrameIterator frameIter(jitActivations);
     SnapshotIterator snapIter(frameIter);
 
     cx->bailoutRecord->setIonBailoutKind(snapIter.bailoutKind());
@@ -578,7 +591,7 @@ jit::CallToUncompiledScriptPar(ForkJoinContext *cx, JSObject *obj)
             Spew(SpewBailouts, "Call to bound function (excessive depth: %d)", depth);
         }
     } else {
-        JS_ASSERT(func->isNative());
+        MOZ_ASSERT(func->isNative());
         Spew(SpewBailouts, "Call to native function");
     }
 #endif
@@ -588,23 +601,22 @@ jit::CallToUncompiledScriptPar(ForkJoinContext *cx, JSObject *obj)
 
 JSObject *
 jit::InitRestParameterPar(ForkJoinContext *cx, uint32_t length, Value *rest,
-                          HandleObject templateObj, HandleObject res)
+                          HandleObject templateObj, HandleArrayObject res)
 {
     // In parallel execution, we should always have succeeded in allocation
     // before this point. We can do the allocation here like in the sequential
     // path, but duplicating the initGCThing logic is too tedious.
-    JS_ASSERT(res);
-    JS_ASSERT(res->is<ArrayObject>());
-    JS_ASSERT(!res->getDenseInitializedLength());
-    JS_ASSERT(res->type() == templateObj->type());
+    MOZ_ASSERT(res);
+    MOZ_ASSERT(!res->getDenseInitializedLength());
+    MOZ_ASSERT(res->type() == templateObj->type());
 
     if (length > 0) {
-        JSObject::EnsureDenseResult edr =
+        NativeObject::EnsureDenseResult edr =
             res->ensureDenseElementsPreservePackedFlag(cx, 0, length);
-        if (edr != JSObject::ED_OK)
+        if (edr != NativeObject::ED_OK)
             return nullptr;
         res->initDenseElementsUnbarriered(0, rest, length);
-        res->as<ArrayObject>().setLengthInt32(length);
+        res->setLengthInt32(length);
     }
 
     return res;

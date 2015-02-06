@@ -72,11 +72,16 @@ nsresult DownloadPlatform::DownloadDone(nsIURI* aSource, nsIFile* aTarget,
 #if defined(XP_WIN) || defined(XP_MACOSX) || defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_GTK)
   nsAutoString path;
   if (aTarget && NS_SUCCEEDED(aTarget->GetPath(path))) {
-#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
+#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK) || defined(MOZ_WIDGET_ANDROID)
     // On Windows and Gtk, add the download to the system's "recent documents"
     // list, with a pref to disable.
     {
       bool addToRecentDocs = Preferences::GetBool(PREF_BDM_ADDTORECENTDOCS);
+#ifdef MOZ_WIDGET_ANDROID
+      if (addToRecentDocs) {
+        mozilla::widget::android::DownloadsIntegration::ScanMedia(path, NS_ConvertUTF8toUTF16(aContentType));
+      }
+#else
       if (addToRecentDocs && !aIsPrivate) {
 #ifdef XP_WIN
         ::SHAddToRecentDocs(SHARD_PATHW, path.get());
@@ -91,6 +96,7 @@ nsresult DownloadPlatform::DownloadDone(nsIURI* aSource, nsIFile* aTarget,
         }
 #endif
       }
+#endif
 #ifdef MOZ_ENABLE_GIO
       // Use GIO to store the source URI for later display in the file manager.
       GFile* gio_file = g_file_new_for_path(NS_ConvertUTF16toUTF8(path).get());
@@ -108,6 +114,7 @@ nsresult DownloadPlatform::DownloadDone(nsIURI* aSource, nsIFile* aTarget,
 #endif
     }
 #endif
+
 #ifdef XP_MACOSX
     // On OS X, make the downloads stack bounce.
     CFStringRef observedObject = ::CFStringCreateWithCString(kCFAllocatorDefault,
@@ -117,11 +124,6 @@ nsresult DownloadPlatform::DownloadDone(nsIURI* aSource, nsIFile* aTarget,
     ::CFNotificationCenterPostNotification(center, CFSTR("com.apple.DownloadFileFinished"),
                                            observedObject, nullptr, TRUE);
     ::CFRelease(observedObject);
-#endif
-#ifdef MOZ_WIDGET_ANDROID
-    if (!aContentType.IsEmpty()) {
-      mozilla::widget::android::GeckoAppShell::ScanMedia(path, NS_ConvertUTF8toUTF16(aContentType));
-    }
 #endif
   }
 

@@ -53,8 +53,7 @@ function runTests()
 
     // input first character
     composingString = "\u306B";
-    synthesizeComposition({ type: "compositionupdate", data: composingString });
-    synthesizeText(
+    synthesizeCompositionChange(
       { "composition":
         { "string": composingString,
           "clauses":
@@ -67,8 +66,7 @@ function runTests()
 
     // input second character
     composingString = "\u306B\u3085";
-    synthesizeComposition({ type: "compositionupdate", data: composingString });
-    synthesizeText(
+    synthesizeCompositionChange(
       { "composition":
         { "string": composingString,
           "clauses":
@@ -80,7 +78,7 @@ function runTests()
       });
 
     // convert them
-    synthesizeText(
+    synthesizeCompositionChange(
       { "composition":
         { "string": composingString,
           "clauses":
@@ -93,7 +91,7 @@ function runTests()
       });
 
     // commit
-    synthesizeText(
+    synthesizeCompositionChange(
       { "composition":
         { "string": composingString,
           "clauses":

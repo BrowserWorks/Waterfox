@@ -11,6 +11,7 @@
 #include "JavaScriptShared.h"
 #include "mozilla/ipc/ProtocolUtils.h"
 #include "js/Class.h"
+#include "jsproxy.h"
 
 #ifdef XP_WIN
 #undef GetClassName
@@ -39,7 +40,7 @@ class WrapperOwner : public virtual JavaScriptShared
                                   JS::MutableHandle<JSPropertyDescriptor> desc);
     bool defineProperty(JSContext *cx, JS::HandleObject proxy, JS::HandleId id,
                         JS::MutableHandle<JSPropertyDescriptor> desc);
-    bool getOwnPropertyNames(JSContext *cx, JS::HandleObject proxy, JS::AutoIdVector &props);
+    bool ownPropertyKeys(JSContext *cx, JS::HandleObject proxy, JS::AutoIdVector &props);
     bool delete_(JSContext *cx, JS::HandleObject proxy, JS::HandleId id, bool *bp);
     bool enumerate(JSContext *cx, JS::HandleObject proxy, JS::AutoIdVector &props);
 
@@ -55,10 +56,14 @@ class WrapperOwner : public virtual JavaScriptShared
 
     // SpiderMonkey Extensions.
     bool isExtensible(JSContext *cx, JS::HandleObject proxy, bool *extensible);
+    bool regexp_toShared(JSContext *cx, JS::HandleObject proxy, js::RegExpGuard *g);
     bool callOrConstruct(JSContext *cx, JS::HandleObject proxy, const JS::CallArgs &args,
                          bool construct);
+    bool hasInstance(JSContext *cx, JS::HandleObject proxy, JS::MutableHandleValue v, bool *bp);
     bool objectClassIs(JSContext *cx, JS::HandleObject obj, js::ESClassValue classValue);
     const char* className(JSContext *cx, JS::HandleObject proxy);
+    bool isCallable(JSObject *obj);
+    bool isConstructor(JSObject *obj);
 
     nsresult instanceOf(JSObject *obj, const nsID *id, bool *bp);
 
@@ -73,6 +78,7 @@ class WrapperOwner : public virtual JavaScriptShared
     bool active() { return !inactive_; }
 
     void drop(JSObject *obj);
+    void updatePointer(JSObject *obj, const JSObject *old);
 
     virtual void ActorDestroy(ActorDestroyReason why);
 
@@ -85,8 +91,10 @@ class WrapperOwner : public virtual JavaScriptShared
     ObjectId idOf(JSObject *obj);
 
   private:
-    bool getPropertyNames(JSContext *cx, JS::HandleObject proxy, uint32_t flags,
-                          JS::AutoIdVector &props);
+    ObjectId idOfUnchecked(JSObject *obj);
+
+    bool getPropertyKeys(JSContext *cx, JS::HandleObject proxy, uint32_t flags,
+                         JS::AutoIdVector &props);
 
     // Catastrophic IPC failure.
     bool ipcfail(JSContext *cx);
@@ -99,46 +107,53 @@ class WrapperOwner : public virtual JavaScriptShared
     /*** Dummy call handlers ***/
   public:
     virtual bool SendDropObject(const ObjectId &objId) = 0;
-    virtual bool CallPreventExtensions(const ObjectId &objId, ReturnStatus *rs) = 0;
-    virtual bool CallGetPropertyDescriptor(const ObjectId &objId, const nsString &id,
+    virtual bool SendPreventExtensions(const ObjectId &objId, ReturnStatus *rs) = 0;
+    virtual bool SendGetPropertyDescriptor(const ObjectId &objId, const JSIDVariant &id,
                                            ReturnStatus *rs,
                                            PPropertyDescriptor *out) = 0;
-    virtual bool CallGetOwnPropertyDescriptor(const ObjectId &objId,
-                                              const nsString &id,
+    virtual bool SendGetOwnPropertyDescriptor(const ObjectId &objId,
+                                              const JSIDVariant &id,
                                               ReturnStatus *rs,
                                               PPropertyDescriptor *out) = 0;
-    virtual bool CallDefineProperty(const ObjectId &objId, const nsString &id,
+    virtual bool SendDefineProperty(const ObjectId &objId, const JSIDVariant &id,
                                     const PPropertyDescriptor &flags,
                                     ReturnStatus *rs) = 0;
-    virtual bool CallDelete(const ObjectId &objId, const nsString &id,
+    virtual bool SendDelete(const ObjectId &objId, const JSIDVariant &id,
                             ReturnStatus *rs, bool *success) = 0;
 
-    virtual bool CallHas(const ObjectId &objId, const nsString &id,
+    virtual bool SendHas(const ObjectId &objId, const JSIDVariant &id,
                          ReturnStatus *rs, bool *bp) = 0;
-    virtual bool CallHasOwn(const ObjectId &objId, const nsString &id,
+    virtual bool SendHasOwn(const ObjectId &objId, const JSIDVariant &id,
                             ReturnStatus *rs, bool *bp) = 0;
-    virtual bool CallGet(const ObjectId &objId, const ObjectVariant &receiverVar,
-                         const nsString &id,
+    virtual bool SendGet(const ObjectId &objId, const ObjectVariant &receiverVar,
+                         const JSIDVariant &id,
                          ReturnStatus *rs, JSVariant *result) = 0;
-    virtual bool CallSet(const ObjectId &objId, const ObjectVariant &receiverVar,
-                         const nsString &id, const bool &strict,
+    virtual bool SendSet(const ObjectId &objId, const ObjectVariant &receiverVar,
+                         const JSIDVariant &id, const bool &strict,
                          const JSVariant &value, ReturnStatus *rs, JSVariant *result) = 0;
 
-    virtual bool CallIsExtensible(const ObjectId &objId, ReturnStatus *rs,
+    virtual bool SendIsExtensible(const ObjectId &objId, ReturnStatus *rs,
                                   bool *result) = 0;
-    virtual bool CallCallOrConstruct(const ObjectId &objId, const nsTArray<JSParam> &argv,
+    virtual bool SendCallOrConstruct(const ObjectId &objId, const nsTArray<JSParam> &argv,
                                      const bool &construct, ReturnStatus *rs, JSVariant *result,
                                      nsTArray<JSParam> *outparams) = 0;
-    virtual bool CallObjectClassIs(const ObjectId &objId, const uint32_t &classValue,
+    virtual bool SendHasInstance(const ObjectId &objId, const JSVariant &v,
+                                 ReturnStatus *rs, bool *bp) = 0;
+    virtual bool SendObjectClassIs(const ObjectId &objId, const uint32_t &classValue,
                                    bool *result) = 0;
-    virtual bool CallClassName(const ObjectId &objId, nsString *result) = 0;
+    virtual bool SendClassName(const ObjectId &objId, nsString *result) = 0;
+    virtual bool SendRegExpToShared(const ObjectId &objId, ReturnStatus *rs, nsString *source,
+                                    uint32_t *flags) = 0;
 
-    virtual bool CallGetPropertyNames(const ObjectId &objId, const uint32_t &flags,
-                                      ReturnStatus *rs, nsTArray<nsString> *names) = 0;
-    virtual bool CallInstanceOf(const ObjectId &objId, const JSIID &iid,
+    virtual bool SendGetPropertyKeys(const ObjectId &objId, const uint32_t &flags,
+                                     ReturnStatus *rs, nsTArray<nsString> *names) = 0;
+    virtual bool SendInstanceOf(const ObjectId &objId, const JSIID &iid,
                                 ReturnStatus *rs, bool *instanceof) = 0;
-    virtual bool CallDOMInstanceOf(const ObjectId &objId, const int &prototypeID, const int &depth,
+    virtual bool SendDOMInstanceOf(const ObjectId &objId, const int &prototypeID, const int &depth,
                                    ReturnStatus *rs, bool *instanceof) = 0;
+
+    virtual bool SendIsCallable(const ObjectId &objId, bool *result) = 0;
+    virtual bool SendIsConstructor(const ObjectId &objId, bool *result) = 0;
 };
 
 bool

@@ -23,6 +23,16 @@ prefpane {
   line-height: 22px;
 }
 
+* {
+  -moz-user-select: text;
+}
+
+button,
+treecol {
+  /* override the * rule */
+  -moz-user-select: none;
+}
+
 /* Category List */
 
 .category-icon {
@@ -34,7 +44,7 @@ prefpane {
 }
 
 #category-search > .category-icon {
-  -moz-image-region: rect(0, 194px, 24px, 168px);
+  -moz-image-region: rect(0, 192px, 24px, 168px);
 }
 
 #category-content > .category-icon {
@@ -107,6 +117,15 @@ prefpane {
 }
 
 /* General Pane */
+
+#useFirefoxSync  {
+  font-size: 90%;
+  -moz-margin-end: 8px !important;
+}
+
+#getStarted {
+  font-size: 90%;
+}
 
 #isNotDefaultLabel {
   font-weight: bold;

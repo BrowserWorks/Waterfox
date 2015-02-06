@@ -5,6 +5,10 @@
 
 <resources>
 
+    <style name="UrlBar.ImageButton.NewTablet">
+        <item name="android:layout_width">@dimen/new_tablet_browser_toolbar_menu_item_width</item>
+    </style>
+
     <style name="UrlBar.ImageButton.Forward">
         <item name="android:contentDescription">@string/forward</item>
         <item name="android:layout_width">45dip</item>
@@ -21,7 +25,25 @@
         <item name="android:layout_marginLeft">@dimen/forward_default_offset</item>
     </style>
 
-   <style name="UrlBar.Button.Container">
+    <style name="UrlBar.ImageButton.Forward.NewTablet">
+        <item name="android:layout_marginLeft">@dimen/new_tablet_forward_default_offset</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
+        <item name="android:layout_marginTop">11.5dp</item>
+        <item name="android:layout_marginBottom">11.5dp</item>
+        <item name="android:src">@drawable/new_tablet_ic_menu_forward</item>
+        <item name="android:background">@drawable/new_tablet_url_bar_nav_button</item>
+    </style>
+
+    <style name="UrlBar.ImageButton.TabCount.NewTablet">
+        <item name="android:background">@drawable/new_tablet_tabs_count</item>
+
+        <!-- From UrlBar.ImageButton.NewTablet because we can't inherit directly. -->
+        <item name="android:layout_width">@dimen/new_tablet_browser_toolbar_menu_item_width</item>
+    </style>
+
+    <style name="UrlBar.Button.Container">
         <item name="android:layout_marginTop">6dp</item>
         <item name="android:layout_marginBottom">6dp</item>
         <!-- Start with forward hidden -->
@@ -51,17 +73,31 @@
     <style name="Widget.MenuItemActionBar">
         <item name="android:layout_width">@dimen/browser_toolbar_height</item>
         <item name="android:layout_height">@dimen/browser_toolbar_height</item>
-        <item name="android:padding">@dimen/browser_toolbar_button_padding</item>
         <item name="android:background">@drawable/action_bar_button</item>
         <item name="android:scaleType">fitCenter</item>
+
+        <!-- We split up padding* because we can't override it in *.NewTablet otherwise. -->
+        <item name="android:paddingTop">@dimen/browser_toolbar_button_padding</item>
+        <item name="android:paddingBottom">@dimen/browser_toolbar_button_padding</item>
+        <item name="android:paddingLeft">@dimen/browser_toolbar_button_padding</item>
+        <item name="android:paddingRight">@dimen/browser_toolbar_button_padding</item>
+    </style>
+
+    <style name="Widget.MenuItemActionBar.NewTablet">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:scaleType">center</item>
+        <item name="android:background">@drawable/new_tablet_action_bar_button</item>
+
+        <!-- layout_* doesn't work here, likely because it's an ImageButton, so we use padding instead. -->
+        <item name="android:paddingTop">@dimen/new_tablet_browser_toolbar_menu_item_padding_vertical</item>
+        <item name="android:paddingBottom">@dimen/new_tablet_browser_toolbar_menu_item_padding_vertical</item>
+        <item name="android:paddingLeft">@dimen/new_tablet_browser_toolbar_menu_item_padding_horizontal</item>
+        <item name="android:paddingRight">@dimen/new_tablet_browser_toolbar_menu_item_padding_horizontal</item>
     </style>
 
     <style name="Widget.BookmarksListView" parent="Widget.HomeListView">
-        <item name="android:paddingTop">30dp</item>
-        <item name="android:paddingLeft">32dp</item>
-        <item name="android:paddingRight">32dp</item>
         <item name="android:scrollbarStyle">outsideOverlay</item>
-        <item name="topDivider">true</item>
     </style>
 
     <style name="Widget.TopSitesGridView" parent="Widget.GridView">
@@ -73,21 +109,13 @@
     </style>
 
     <style name="Widget.TopSitesListView" parent="Widget.BookmarksListView">
+        <item name="android:paddingTop">30dp</item>
+        <item name="android:paddingLeft">32dp</item>
+        <item name="android:paddingRight">32dp</item>
         <item name="topDivider">false</item>
     </style>
 
     <style name="Widget.ReadingListView" parent="Widget.BookmarksListView"/>
-
-    <style name="Widget.Home.HistoryPanelTitle" parent="Widget.Home.HistoryTabIndicator">
-        <item name="android:layout_marginLeft">32dp</item>
-        <item name="android:layout_marginRight">32dp</item>
-    </style>
-
-    <style name="Widget.Home.HistoryListView">
-        <item name="android:paddingLeft">32dp</item>
-        <item name="android:paddingRight">32dp</item>
-        <item name="android:scrollbarStyle">outsideOverlay</item>
-    </style>
 
     <style name="Widget.HomeBanner">
         <item name="android:paddingLeft">32dp</item>

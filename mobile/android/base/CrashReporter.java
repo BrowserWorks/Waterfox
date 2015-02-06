@@ -139,7 +139,7 @@ public class CrashReporter extends Activity
         SharedPreferences.Editor editor = prefs.edit();
         editor.putBoolean(GeckoApp.PREFS_WAS_STOPPED, true);
         editor.putBoolean(GeckoApp.PREFS_CRASHED, true);
-        editor.commit();
+        editor.apply();
 
         final CheckBox allowContactCheckBox = (CheckBox) findViewById(R.id.allow_contact);
         final CheckBox includeUrlCheckBox = (CheckBox) findViewById(R.id.include_url);
@@ -284,8 +284,8 @@ public class CrashReporter extends Activity
 
     private String generateBoundary() {
         // Generate some random numbers to fill out the boundary
-        int r0 = (int)((double)Integer.MAX_VALUE * Math.random());
-        int r1 = (int)((double)Integer.MAX_VALUE * Math.random());
+        int r0 = (int)(Integer.MAX_VALUE * Math.random());
+        int r1 = (int)(Integer.MAX_VALUE * Math.random());
         return String.format("---------------------------%08X%08X", r0, r1);
     }
 

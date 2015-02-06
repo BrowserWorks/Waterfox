@@ -28,30 +28,16 @@
 #include <cstdio>
 #include <limits>
 #include <new>
+#include <sstream>
 
-#include "cert.h"
-#include "cryptohi.h"
-#include "hasht.h"
-#include "pk11pub.h"
-#include "pkix/pkixnss.h"
 #include "pkixder.h"
 #include "pkixutil.h"
-#include "prinit.h"
-#include "prprf.h"
-#include "secder.h"
-#include "secerr.h"
 
 using namespace std;
 
 namespace mozilla { namespace pkix { namespace test {
 
 namespace {
-
-inline void
-deleteCharArray(char* chars)
-{
-  delete[] chars;
-}
 
 inline void
 fclose_void(FILE* file) {
@@ -61,27 +47,15 @@ fclose_void(FILE* file) {
 typedef mozilla::pkix::ScopedPtr<FILE, fclose_void> ScopedFILE;
 
 FILE*
-OpenFile(const char* dir, const char* filename, const char* mode)
+OpenFile(const string& dir, const string& filename, const string& mode)
 {
-  assert(dir);
-  assert(*dir);
-  assert(filename);
-  assert(*filename);
-
-  ScopedPtr<char, deleteCharArray>
-    path(new (nothrow) char[strlen(dir) + 1 + strlen(filename) + 1]);
-  if (!path) {
-    return nullptr;
-  }
-  strcpy(path.get(), dir);
-  strcat(path.get(), "/");
-  strcat(path.get(), filename);
+  string path = dir + '/' + filename;
 
   ScopedFILE file;
 #ifdef _MSC_VER
   {
     FILE* rawFile;
-    errno_t error = fopen_s(&rawFile, path.get(), mode);
+    errno_t error = fopen_s(&rawFile, path.c_str(), mode.c_str());
     if (error) {
       // TODO: map error to NSPR error code
       rawFile = nullptr;
@@ -89,323 +63,147 @@ OpenFile(const char* dir, const char* filename, const char* mode)
     file = rawFile;
   }
 #else
-  file = fopen(path.get(), mode);
+  file = fopen(path.c_str(), mode.c_str());
 #endif
   return file.release();
 }
 
 } // unnamed namespace
 
-Result
-TamperOnce(SECItem& item,
-           const uint8_t* from, size_t fromLen,
-           const uint8_t* to, size_t toLen)
+bool
+InputEqualsByteString(Input input, const ByteString& bs)
 {
-  if (!item.data || !from || !to || fromLen != toLen) {
-    return Result::FATAL_ERROR_INVALID_ARGS;
+  Input bsInput;
+  if (bsInput.Init(bs.data(), bs.length()) != Success) {
+    // Init can only fail if it is given a bad pointer or if the input is too
+    // long, which won't ever happen. Plus, if it does, it is ok to call abort
+    // since this is only test code.
+    abort();
   }
-
-  if (fromLen < 8) {
-    return Result::FATAL_ERROR_INVALID_ARGS;
-  }
-
-  uint8_t* p = item.data;
-  size_t remaining = item.len;
-  bool alreadyFoundMatch = false;
-  for (;;) {
-    uint8_t* foundFirstByte = static_cast<uint8_t*>(memchr(p, from[0],
-                                                           remaining));
-    if (!foundFirstByte) {
-      if (alreadyFoundMatch) {
-        return Success;
-      }
-      return Result::FATAL_ERROR_INVALID_ARGS;
-    }
-    remaining -= (foundFirstByte - p);
-    if (remaining < fromLen) {
-      if (alreadyFoundMatch) {
-        return Success;
-      }
-      return Result::FATAL_ERROR_INVALID_ARGS;
-    }
-    if (!memcmp(foundFirstByte, from, fromLen)) {
-      if (alreadyFoundMatch) {
-        return Result::FATAL_ERROR_INVALID_ARGS;
-      }
-      alreadyFoundMatch = true;
-      memmove(foundFirstByte, to, toLen);
-      p = foundFirstByte + toLen;
-      remaining -= toLen;
-    } else {
-      p = foundFirstByte + 1;
-      --remaining;
-    }
-  }
+  return InputsAreEqual(input, bsInput);
 }
 
 Result
-InitInputFromSECItem(const SECItem* secItem, /*out*/ Input& input)
+TamperOnce(/*in/out*/ ByteString& item, const ByteString& from,
+           const ByteString& to)
 {
-  if (!secItem) {
+  if (from.length() < 8) {
     return Result::FATAL_ERROR_INVALID_ARGS;
   }
-  return input.Init(secItem->data, secItem->len);
+  if (from.length() != to.length()) {
+    return Result::FATAL_ERROR_INVALID_ARGS;
+  }
+  size_t pos = item.find(from);
+  if (pos == string::npos) {
+    return Result::FATAL_ERROR_INVALID_ARGS; // No matches.
+  }
+  if (item.find(from, pos + from.length()) != string::npos) {
+    return Result::FATAL_ERROR_INVALID_ARGS; // More than once match.
+  }
+  item.replace(pos, from.length(), to);
+  return Success;
 }
 
-class Output
+// Given a tag and a value, generates a DER-encoded tag-length-value item.
+ByteString
+TLV(uint8_t tag, const ByteString& value)
 {
-public:
-  Output()
-    : numItems(0)
-    , length(0)
-  {
+  ByteString result;
+  result.push_back(tag);
+
+  if (value.length() < 128) {
+    result.push_back(value.length());
+  } else if (value.length() < 256) {
+    result.push_back(0x81u);
+    result.push_back(value.length());
+  } else if (value.length() < 65536) {
+    result.push_back(0x82u);
+    result.push_back(static_cast<uint8_t>(value.length() / 256));
+    result.push_back(static_cast<uint8_t>(value.length() % 256));
+  } else {
+    // It is MUCH more convenient for TLV to be infallible than for it to have
+    // "proper" error handling.
+    abort();
   }
+  result.append(value);
+  return result;
+}
 
-  // Makes a shallow copy of the input item. All input items must have a
-  // lifetime that extends at least to where Squash is called.
-  Result Add(const SECItem* item)
-  {
-    assert(item);
-    assert(item->data);
-
-    if (numItems >= MaxSequenceItems) {
-      return Result::FATAL_ERROR_INVALID_ARGS;
-    }
-    if (length + item->len > 65535) {
-      return Result::FATAL_ERROR_INVALID_ARGS;
-    }
-
-    contents[numItems] = item;
-    numItems++;
-    length += item->len;
-    return Success;
-  }
-
-  SECItem* Squash(PLArenaPool* arena, uint8_t tag)
-  {
-    assert(arena);
-
-    size_t lengthLength = length < 128 ? 1
-                        : length < 256 ? 2
-                                       : 3;
-    size_t totalLength = 1 + lengthLength + length;
-    SECItem* output = SECITEM_AllocItem(arena, nullptr, totalLength);
-    if (!output) {
-      return nullptr;
-    }
-    uint8_t* d = output->data;
-    *d++ = tag;
-    EncodeLength(d, length, lengthLength);
-    d += lengthLength;
-    for (size_t i = 0; i < numItems; i++) {
-      memcpy(d, contents[i]->data, contents[i]->len);
-      d += contents[i]->len;
-    }
-    return output;
-  }
-
-private:
-  void
-  EncodeLength(uint8_t* data, size_t length, size_t lengthLength)
-  {
-    switch (lengthLength) {
-      case 1:
-        data[0] = length;
-        break;
-      case 2:
-        data[0] = 0x81;
-        data[1] = length;
-        break;
-      case 3:
-        data[0] = 0x82;
-        data[1] = length / 256;
-        data[2] = length % 256;
-        break;
-      default:
-        abort();
-    }
-  }
-
-  static const size_t MaxSequenceItems = 10;
-  const SECItem* contents[MaxSequenceItems];
-  size_t numItems;
-  size_t length;
-
-  Output(const Output&) /* = delete */;
-  void operator=(const Output&) /* = delete */;
-};
-
-OCSPResponseContext::OCSPResponseContext(PLArenaPool* arena,
-                                         const CertID& certID, time_t time)
-  : arena(arena)
-  , certID(certID)
+OCSPResponseContext::OCSPResponseContext(const CertID& certID, time_t time)
+  : certID(certID)
   , responseStatus(successful)
   , skipResponseBytes(false)
-  , signerNameDER(nullptr)
   , producedAt(time)
   , extensions(nullptr)
   , includeEmptyExtensions(false)
-  , signatureHashAlgorithm(SEC_OID_SHA1)
+  , signatureAlgorithm(sha256WithRSAEncryption)
   , badSignature(false)
   , certs(nullptr)
 
-  , certIDHashAlg(SEC_OID_SHA1)
   , certStatus(good)
   , revocationTime(0)
   , thisUpdate(time)
-  , nextUpdate(time + 10)
+  , nextUpdate(time + Time::ONE_DAY_IN_SECONDS)
   , includeNextUpdate(true)
 {
 }
 
-static SECItem* ResponseBytes(OCSPResponseContext& context);
-static SECItem* BasicOCSPResponse(OCSPResponseContext& context);
-static SECItem* ResponseData(OCSPResponseContext& context);
-static SECItem* ResponderID(OCSPResponseContext& context);
-static SECItem* KeyHash(OCSPResponseContext& context);
-static SECItem* SingleResponse(OCSPResponseContext& context);
-static SECItem* CertID(OCSPResponseContext& context);
-static SECItem* CertStatus(OCSPResponseContext& context);
+static ByteString ResponseBytes(OCSPResponseContext& context);
+static ByteString BasicOCSPResponse(OCSPResponseContext& context);
+static ByteString ResponseData(OCSPResponseContext& context);
+static ByteString ResponderID(OCSPResponseContext& context);
+static ByteString KeyHash(const ByteString& subjectPublicKeyInfo);
+static ByteString SingleResponse(OCSPResponseContext& context);
+static ByteString CertID(OCSPResponseContext& context);
+static ByteString CertStatus(OCSPResponseContext& context);
 
-static SECItem*
-EncodeNested(PLArenaPool* arena, uint8_t tag, const SECItem* inner)
+static ByteString
+HashedOctetString(const ByteString& bytes)
 {
-  Output output;
-  if (output.Add(inner) != Success) {
-    return nullptr;
+  ByteString digest(SHA1(bytes));
+  if (ENCODING_FAILED(digest)) {
+    return ByteString();
   }
-  return output.Squash(arena, tag);
+  return TLV(der::OCTET_STRING, digest);
 }
 
-// A return value of 0 is an error, but this should never happen in practice
-// because this function aborts in that case.
-static size_t
-HashAlgorithmToLength(SECOidTag hashAlg)
+static ByteString
+BitString(const ByteString& rawBytes, bool corrupt)
 {
-  switch (hashAlg) {
-    case SEC_OID_SHA1:
-      return SHA1_LENGTH;
-    case SEC_OID_SHA256:
-      return SHA256_LENGTH;
-    case SEC_OID_SHA384:
-      return SHA384_LENGTH;
-    case SEC_OID_SHA512:
-      return SHA512_LENGTH;
-    default:
-      abort();
-  }
-  return 0;
-}
-
-static SECItem*
-HashedOctetString(PLArenaPool* arena, const SECItem& bytes, SECOidTag hashAlg)
-{
-  size_t hashLen = HashAlgorithmToLength(hashAlg);
-  if (hashLen == 0) {
-    return nullptr;
-  }
-  SECItem* hashBuf = SECITEM_AllocItem(arena, nullptr, hashLen);
-  if (!hashBuf) {
-    return nullptr;
-  }
-  if (PK11_HashBuf(hashAlg, hashBuf->data, bytes.data, bytes.len)
-        != SECSuccess) {
-    return nullptr;
-  }
-
-  return EncodeNested(arena, der::OCTET_STRING, hashBuf);
-}
-
-static SECItem*
-KeyHashHelper(PLArenaPool* arena, const CERTSubjectPublicKeyInfo* spki)
-{
-  // We only need a shallow copy here.
-  SECItem spk = spki->subjectPublicKey;
-  DER_ConvertBitString(&spk); // bits to bytes
-  return HashedOctetString(arena, spk, SEC_OID_SHA1);
-}
-
-static SECItem*
-AlgorithmIdentifier(PLArenaPool* arena, SECOidTag algTag)
-{
-  SECAlgorithmIDStr aid;
-  aid.algorithm.data = nullptr;
-  aid.algorithm.len = 0;
-  aid.parameters.data = nullptr;
-  aid.parameters.len = 0;
-  if (SECOID_SetAlgorithmID(arena, &aid, algTag, nullptr) != SECSuccess) {
-    return nullptr;
-  }
-  static const SEC_ASN1Template algorithmIDTemplate[] = {
-    { SEC_ASN1_SEQUENCE, 0, NULL, sizeof(SECAlgorithmID) },
-    { SEC_ASN1_OBJECT_ID, offsetof(SECAlgorithmID, algorithm) },
-    { SEC_ASN1_OPTIONAL | SEC_ASN1_ANY, offsetof(SECAlgorithmID, parameters) },
-    { 0 }
-  };
-  SECItem* algorithmID = SEC_ASN1EncodeItem(arena, nullptr, &aid,
-                                            algorithmIDTemplate);
-  return algorithmID;
-}
-
-static SECItem*
-BitString(PLArenaPool* arena, const SECItem* rawBytes, bool corrupt)
-{
+  ByteString prefixed;
   // We have to add a byte at the beginning indicating no unused bits.
   // TODO: add ability to have bit strings of bit length not divisible by 8,
   // resulting in unused bits in the bitstring encoding
-  SECItem* prefixed = SECITEM_AllocItem(arena, nullptr, rawBytes->len + 1);
-  if (!prefixed) {
-    return nullptr;
-  }
-  prefixed->data[0] = 0;
-  memcpy(prefixed->data + 1, rawBytes->data, rawBytes->len);
+  prefixed.push_back(0);
+  prefixed.append(rawBytes);
   if (corrupt) {
-    assert(prefixed->len > 8);
-    prefixed->data[8]++;
+    assert(prefixed.length() > 8);
+    prefixed[8]++;
   }
-  return EncodeNested(arena, der::BIT_STRING, prefixed);
+  return TLV(der::BIT_STRING, prefixed);
 }
 
-static SECItem*
-Boolean(PLArenaPool* arena, bool value)
+ByteString
+Boolean(bool value)
 {
-  assert(arena);
-  SECItem* result(SECITEM_AllocItem(arena, nullptr, 3));
-  if (!result) {
-    return nullptr;
-  }
-  result->data[0] = der::BOOLEAN;
-  result->data[1] = 1; // length
-  result->data[2] = value ? 0xff : 0x00;
-  return result;
+  ByteString encodedValue;
+  encodedValue.push_back(value ? 0xff : 0x00);
+  return TLV(der::BOOLEAN, encodedValue);
 }
 
-static SECItem*
-Integer(PLArenaPool* arena, long value)
+ByteString
+Integer(long value)
 {
   if (value < 0 || value > 127) {
     // TODO: add encoding of larger values
-    return nullptr;
+    // It is MUCH more convenient for Integer to be infallible than for it to
+    // have "proper" error handling.
+    abort();
   }
 
-  SECItem* encoded = SECITEM_AllocItem(arena, nullptr, 3);
-  if (!encoded) {
-    return nullptr;
-  }
-  encoded->data[0] = der::INTEGER;
-  encoded->data[1] = 1; // length
-  encoded->data[2] = value;
-  return encoded;
-}
-
-static SECItem*
-OID(PLArenaPool* arena, SECOidTag tag)
-{
-  const SECOidData* extnIDData(SECOID_FindOIDByTag(tag));
-  if (!extnIDData) {
-    return nullptr;
-  }
-  return EncodeNested(arena, der::OIDTag, &extnIDData->oid);
+  ByteString encodedValue;
+  encodedValue.push_back(static_cast<uint8_t>(value));
+  return TLV(der::INTEGER, encodedValue);
 }
 
 enum TimeEncoding { UTCTime = 0, GeneralizedTime = 1 };
@@ -428,14 +226,14 @@ gmtime_r(const time_t* t, /*out*/ tm* exploded)
 //
 // This assumes that time/time_t are POSIX-compliant in that time() returns
 // the number of seconds since the Unix epoch.
-static SECItem*
-TimeToEncodedTime(PLArenaPool* arena, time_t time, TimeEncoding encoding)
+static ByteString
+TimeToEncodedTime(time_t time, TimeEncoding encoding)
 {
   assert(encoding == UTCTime || encoding == GeneralizedTime);
 
   tm exploded;
   if (!gmtime_r(&time, &exploded)) {
-    return nullptr;
+    return ByteString();
   }
 
   if (exploded.tm_sec >= 60) {
@@ -447,46 +245,38 @@ TimeToEncodedTime(PLArenaPool* arena, time_t time, TimeEncoding encoding)
   int year = exploded.tm_year + 1900;
 
   if (encoding == UTCTime && (year < 1950 || year >= 2050)) {
-    return nullptr;
+    return ByteString();
   }
 
-  SECItem* derTime = SECITEM_AllocItem(arena, nullptr,
-                                       encoding == UTCTime ? 15 : 17);
-  if (!derTime) {
-    return nullptr;
-  }
-
-  size_t i = 0;
-
-  derTime->data[i++] = encoding == GeneralizedTime ? 0x18 : 0x17; // tag
-  derTime->data[i++] = static_cast<uint8_t>(derTime->len - 2); // length
+  ByteString value;
 
   if (encoding == GeneralizedTime) {
-    derTime->data[i++] = '0' + (year / 1000);
-    derTime->data[i++] = '0' + ((year % 1000) / 100);
+    value.push_back('0' + (year / 1000));
+    value.push_back('0' + ((year % 1000) / 100));
   }
 
-  derTime->data[i++] = '0' + ((year % 100) / 10);
-  derTime->data[i++] = '0' + (year % 10);
-  derTime->data[i++] = '0' + ((exploded.tm_mon + 1) / 10);
-  derTime->data[i++] = '0' + ((exploded.tm_mon + 1) % 10);
-  derTime->data[i++] = '0' + (exploded.tm_mday / 10);
-  derTime->data[i++] = '0' + (exploded.tm_mday % 10);
-  derTime->data[i++] = '0' + (exploded.tm_hour / 10);
-  derTime->data[i++] = '0' + (exploded.tm_hour % 10);
-  derTime->data[i++] = '0' + (exploded.tm_min / 10);
-  derTime->data[i++] = '0' + (exploded.tm_min % 10);
-  derTime->data[i++] = '0' + (exploded.tm_sec / 10);
-  derTime->data[i++] = '0' + (exploded.tm_sec % 10);
-  derTime->data[i++] = 'Z';
+  value.push_back('0' + ((year % 100) / 10));
+  value.push_back('0' + (year % 10));
+  value.push_back('0' + ((exploded.tm_mon + 1) / 10));
+  value.push_back('0' + ((exploded.tm_mon + 1) % 10));
+  value.push_back('0' + (exploded.tm_mday / 10));
+  value.push_back('0' + (exploded.tm_mday % 10));
+  value.push_back('0' + (exploded.tm_hour / 10));
+  value.push_back('0' + (exploded.tm_hour % 10));
+  value.push_back('0' + (exploded.tm_min / 10));
+  value.push_back('0' + (exploded.tm_min % 10));
+  value.push_back('0' + (exploded.tm_sec / 10));
+  value.push_back('0' + (exploded.tm_sec % 10));
+  value.push_back('Z');
 
-  return derTime;
+  return TLV(encoding == GeneralizedTime ? der::GENERALIZED_TIME : der::UTCTime,
+             value);
 }
 
-static SECItem*
-TimeToGeneralizedTime(PLArenaPool* arena, time_t time)
+static ByteString
+TimeToGeneralizedTime(time_t time)
 {
-  return TimeToEncodedTime(arena, time, GeneralizedTime);
+  return TimeToEncodedTime(time, GeneralizedTime);
 }
 
 // http://tools.ietf.org/html/rfc5280#section-4.1.2.5: "CAs conforming to this
@@ -494,19 +284,19 @@ TimeToGeneralizedTime(PLArenaPool* arena, time_t time)
 // as UTCTime; certificate validity dates in 2050 or later MUST be encoded as
 // GeneralizedTime." (This is a special case of the rule that we must always
 // use the shortest possible encoding.)
-static SECItem*
-TimeToTimeChoice(PLArenaPool* arena, time_t time)
+static ByteString
+TimeToTimeChoice(time_t time)
 {
   tm exploded;
   if (!gmtime_r(&time, &exploded)) {
-    return nullptr;
+    return ByteString();
   }
   TimeEncoding encoding = (exploded.tm_year + 1900 >= 1950 &&
                            exploded.tm_year + 1900 < 2050)
                         ? UTCTime
                         : GeneralizedTime;
 
-  return TimeToEncodedTime(arena, time, encoding);
+  return TimeToEncodedTime(time, encoding);
 }
 
 Time
@@ -557,79 +347,42 @@ YMDHMS(int16_t year, int16_t month, int16_t day,
   return TimeFromElapsedSecondsAD(totalSeconds);
 }
 
-static SECItem*
-SignedData(PLArenaPool* arena, const SECItem* tbsData,
-           SECKEYPrivateKey* privKey, SECOidTag hashAlg,
-           bool corrupt, /*optional*/ SECItem const* const* certs)
+static ByteString
+SignedData(const ByteString& tbsData,
+           const TestKeyPair& keyPair,
+           const ByteString& signatureAlgorithm,
+           bool corrupt, /*optional*/ const ByteString* certs)
 {
-  assert(arena);
-  assert(tbsData);
-  assert(privKey);
-  if (!arena || !tbsData || !privKey) {
-    return nullptr;
+  ByteString signature;
+  if (keyPair.SignData(tbsData, signatureAlgorithm, signature) != Success) {
+    return ByteString();
   }
 
-  SECOidTag signatureAlgTag = SEC_GetSignatureAlgorithmOidTag(privKey->keyType,
-                                                              hashAlg);
-  if (signatureAlgTag == SEC_OID_UNKNOWN) {
-    return nullptr;
-  }
-  SECItem* signatureAlgorithm = AlgorithmIdentifier(arena, signatureAlgTag);
-  if (!signatureAlgorithm) {
-    return nullptr;
-  }
-
-  // SEC_SignData doesn't take an arena parameter, so we have to manage
-  // the memory allocated in signature.
-  SECItem signature;
-  if (SEC_SignData(&signature, tbsData->data, tbsData->len, privKey,
-                   signatureAlgTag) != SECSuccess)
-  {
-    return nullptr;
-  }
   // TODO: add ability to have signatures of bit length not divisible by 8,
   // resulting in unused bits in the bitstring encoding
-  SECItem* signatureNested = BitString(arena, &signature, corrupt);
-  SECITEM_FreeItem(&signature, false);
-  if (!signatureNested) {
-    return nullptr;
+  ByteString signatureNested(BitString(signature, corrupt));
+  if (ENCODING_FAILED(signatureNested)) {
+    return ByteString();
   }
 
-  SECItem* certsNested = nullptr;
+  ByteString certsNested;
   if (certs) {
-    Output certsOutput;
-    while (*certs) {
-      certsOutput.Add(*certs);
+    ByteString certsSequenceValue;
+    while (!(*certs).empty()) {
+      certsSequenceValue.append(*certs);
       ++certs;
     }
-    SECItem* certsSequence = certsOutput.Squash(arena, der::SEQUENCE);
-    if (!certsSequence) {
-      return nullptr;
-    }
-    certsNested = EncodeNested(arena,
-                               der::CONTEXT_SPECIFIC | der::CONSTRUCTED | 0,
-                               certsSequence);
-    if (!certsNested) {
-      return nullptr;
-    }
+    ByteString certsSequence(TLV(der::SEQUENCE, certsSequenceValue));
+    certsNested = TLV(der::CONTEXT_SPECIFIC | der::CONSTRUCTED | 0,
+                      certsSequence);
   }
 
-  Output output;
-  if (output.Add(tbsData) != Success) {
-    return nullptr;
-  }
-  if (output.Add(signatureAlgorithm) != Success) {
-    return nullptr;
-  }
-  if (output.Add(signatureNested) != Success) {
-    return nullptr;
-  }
-  if (certsNested) {
-    if (output.Add(certsNested) != Success) {
-      return nullptr;
-    }
-  }
-  return output.Squash(arena, der::SEQUENCE);
+  ByteString value;
+  value.append(tbsData);
+  value.append(signatureAlgorithm);
+  value.append(signatureNested);
+  value.append(certsNested);
+  return TLV(der::SEQUENCE, value);
 }
 
 // Extension  ::=  SEQUENCE  {
@@ -640,55 +393,29 @@ SignedData(PLArenaPool* arena, const SECItem* tbsData,
 //                  -- corresponding to the extension type identified
 //                  -- by extnID
 //      }
-static SECItem*
-Extension(PLArenaPool* arena, SECOidTag extnIDTag,
-          ExtensionCriticality criticality, Output& value)
+static ByteString
+Extension(Input extnID, ExtensionCriticality criticality,
+          const ByteString& extnValueBytes)
 {
-  assert(arena);
-  if (!arena) {
-    return nullptr;
-  }
+  ByteString encoded;
 
-  Output output;
-
-  const SECItem* extnID(OID(arena, extnIDTag));
-  if (!extnID) {
-    return nullptr;
-  }
-  if (output.Add(extnID) != Success) {
-    return nullptr;
-  }
+  encoded.append(ByteString(extnID.UnsafeGetData(), extnID.GetLength()));
 
   if (criticality == ExtensionCriticality::Critical) {
-    SECItem* critical(Boolean(arena, true));
-    if (output.Add(critical) != Success) {
-      return nullptr;
-    }
+    ByteString critical(Boolean(true));
+    encoded.append(critical);
   }
 
-  SECItem* extnValueBytes(value.Squash(arena, der::SEQUENCE));
-  if (!extnValueBytes) {
-    return nullptr;
-  }
-  SECItem* extnValue(EncodeNested(arena, der::OCTET_STRING, extnValueBytes));
-  if (!extnValue) {
-    return nullptr;
-  }
-  if (output.Add(extnValue) != Success) {
-    return nullptr;
-  }
-
-  return output.Squash(arena, der::SEQUENCE);
+  ByteString extnValueSequence(TLV(der::SEQUENCE, extnValueBytes));
+  ByteString extnValue(TLV(der::OCTET_STRING, extnValueSequence));
+  encoded.append(extnValue);
+  return TLV(der::SEQUENCE, encoded);
 }
 
-SECItem*
-MaybeLogOutput(SECItem* result, const char* suffix)
+void
+MaybeLogOutput(const ByteString& result, const char* suffix)
 {
   assert(suffix);
-
-  if (!result) {
-    return nullptr;
-  }
 
   // This allows us to more easily debug the generated output, by creating a
   // file in the directory given by MOZILLA_PKIX_TEST_LOG_DIR for each
@@ -696,127 +423,66 @@ MaybeLogOutput(SECItem* result, const char* suffix)
   const char* logPath = getenv("MOZILLA_PKIX_TEST_LOG_DIR");
   if (logPath) {
     static int counter = 0;
-    ScopedPtr<char, PR_smprintf_free>
-      filename(PR_smprintf("%u-%s.der", counter, suffix));
+
+    std::ostringstream counterStream;
+    counterStream << counter;
+    if (!counterStream) {
+      assert(false);
+      return;
+    }
+    string filename = counterStream.str() + '-' + suffix + ".der";
+
     ++counter;
-    if (filename) {
-      ScopedFILE file(OpenFile(logPath, filename.get(), "wb"));
-      if (file) {
-        (void) fwrite(result->data, result->len, 1, file.get());
-      }
+    ScopedFILE file(OpenFile(logPath, filename, "wb"));
+    if (file) {
+      (void) fwrite(result.data(), result.length(), 1, file.get());
     }
   }
-
-  return result;
 }
-
-///////////////////////////////////////////////////////////////////////////////
-// Key Pairs
-
-Result
-GenerateKeyPair(/*out*/ ScopedSECKEYPublicKey& publicKey,
-                /*out*/ ScopedSECKEYPrivateKey& privateKey)
-{
-  ScopedPtr<PK11SlotInfo, PK11_FreeSlot> slot(PK11_GetInternalSlot());
-  if (!slot) {
-    return MapPRErrorCodeToResult(PR_GetError());
-  }
-
-  // Bug 1012786: PK11_GenerateKeyPair can fail if there is insufficient
-  // entropy to generate a random key. Attempting to add some entropy and
-  // retrying appears to solve this issue.
-  for (uint32_t retries = 0; retries < 10; retries++) {
-    PK11RSAGenParams params;
-    params.keySizeInBits = 2048;
-    params.pe = 3;
-    SECKEYPublicKey* publicKeyTemp = nullptr;
-    privateKey = PK11_GenerateKeyPair(slot.get(), CKM_RSA_PKCS_KEY_PAIR_GEN,
-                                      &params, &publicKeyTemp, false, true,
-                                      nullptr);
-    if (privateKey) {
-      publicKey = publicKeyTemp;
-      assert(publicKey);
-      return Success;
-    }
-
-    assert(!publicKeyTemp);
-
-    if (PR_GetError() != SEC_ERROR_PKCS11_FUNCTION_FAILED) {
-      break;
-    }
-
-    // Since these keys are only for testing, we don't need them to be good,
-    // random keys.
-    // https://xkcd.com/221/
-    static const uint8_t RANDOM_NUMBER[] = { 4, 4, 4, 4, 4, 4, 4, 4 };
-    if (PK11_RandomUpdate((void*) &RANDOM_NUMBER,
-                          sizeof(RANDOM_NUMBER)) != SECSuccess) {
-      break;
-    }
-  }
-
-  return MapPRErrorCodeToResult(PR_GetError());
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Certificates
 
-static SECItem* TBSCertificate(PLArenaPool* arena, long version,
-                               const SECItem* serialNumber, SECOidTag signature,
-                               const SECItem* issuer, time_t notBefore,
-                               time_t notAfter, const SECItem* subject,
-                               const SECKEYPublicKey* subjectPublicKey,
-                               /*optional*/ SECItem const* const* extensions);
+static ByteString TBSCertificate(long version, const ByteString& serialNumber,
+                                 const ByteString& signature,
+                                 const ByteString& issuer,
+                                 time_t notBefore, time_t notAfter,
+                                 const ByteString& subject,
+                                 const ByteString& subjectPublicKeyInfo,
+                                 /*optional*/ const ByteString* extensions);
 
 // Certificate  ::=  SEQUENCE  {
 //         tbsCertificate       TBSCertificate,
 //         signatureAlgorithm   AlgorithmIdentifier,
 //         signatureValue       BIT STRING  }
-SECItem*
-CreateEncodedCertificate(PLArenaPool* arena, long version,
-                         SECOidTag signature, const SECItem* serialNumber,
-                         const SECItem* issuerNameDER, time_t notBefore,
-                         time_t notAfter, const SECItem* subjectNameDER,
-                         /*optional*/ SECItem const* const* extensions,
-                         /*optional*/ SECKEYPrivateKey* issuerPrivateKey,
-                         SECOidTag signatureHashAlg,
-                         /*out*/ ScopedSECKEYPrivateKey& privateKeyResult)
+ByteString
+CreateEncodedCertificate(long version, const ByteString& signature,
+                         const ByteString& serialNumber,
+                         const ByteString& issuerNameDER,
+                         time_t notBefore, time_t notAfter,
+                         const ByteString& subjectNameDER,
+                         const TestKeyPair& subjectKeyPair,
+                         /*optional*/ const ByteString* extensions,
+                         const TestKeyPair& issuerKeyPair,
+                         const ByteString& signatureAlgorithm)
 {
-  assert(arena);
-  assert(issuerNameDER);
-  assert(subjectNameDER);
-  if (!arena || !issuerNameDER || !subjectNameDER) {
-    return nullptr;
+  ByteString tbsCertificate(TBSCertificate(version, serialNumber,
+                                           signature, issuerNameDER, notBefore,
+                                           notAfter, subjectNameDER,
+                                           subjectKeyPair.subjectPublicKeyInfo,
+                                           extensions));
+  if (ENCODING_FAILED(tbsCertificate)) {
+    return ByteString();
   }
 
-  // It may be the case that privateKeyResult refers to the
-  // ScopedSECKEYPrivateKey that owns issuerPrivateKey; thus, we can't set
-  // privateKeyResult until after we're done with issuerPrivateKey.
-  ScopedSECKEYPublicKey publicKey;
-  ScopedSECKEYPrivateKey privateKeyTemp;
-  if (GenerateKeyPair(publicKey, privateKeyTemp) != Success) {
-    return nullptr;
+  ByteString result(SignedData(tbsCertificate, issuerKeyPair,
+                               signatureAlgorithm, false, nullptr));
+  if (ENCODING_FAILED(result)) {
+    return ByteString();
   }
 
-  SECItem* tbsCertificate(TBSCertificate(arena, version, serialNumber,
-                                         signature, issuerNameDER, notBefore,
-                                         notAfter, subjectNameDER,
-                                         publicKey.get(), extensions));
-  if (!tbsCertificate) {
-    return nullptr;
-  }
+  MaybeLogOutput(result, "cert");
 
-  SECItem*
-    result(MaybeLogOutput(SignedData(arena, tbsCertificate,
-                                     issuerPrivateKey ? issuerPrivateKey
-                                                      : privateKeyTemp.get(),
-                                     signatureHashAlg, false, nullptr),
-                          "cert"));
-  if (!result) {
-    return nullptr;
-  }
-  privateKeyResult = privateKeyTemp.release();
   return result;
 }
 
@@ -834,217 +500,177 @@ CreateEncodedCertificate(PLArenaPool* arena, long version,
 //                           -- If present, version MUST be v2 or v3
 //      extensions      [3]  Extensions OPTIONAL
 //                           -- If present, version MUST be v3 --  }
-static SECItem*
-TBSCertificate(PLArenaPool* arena, long versionValue,
-               const SECItem* serialNumber, SECOidTag signatureOidTag,
-               const SECItem* issuer, time_t notBeforeTime,
-               time_t notAfterTime, const SECItem* subject,
-               const SECKEYPublicKey* subjectPublicKey,
-               /*optional*/ SECItem const* const* extensions)
+static ByteString
+TBSCertificate(long versionValue,
+               const ByteString& serialNumber, const ByteString& signature,
+               const ByteString& issuer, time_t notBeforeTime,
+               time_t notAfterTime, const ByteString& subject,
+               const ByteString& subjectPublicKeyInfo,
+               /*optional*/ const ByteString* extensions)
 {
-  assert(arena);
-  assert(issuer);
-  assert(subject);
-  assert(subjectPublicKey);
-  if (!arena || !issuer || !subject || !subjectPublicKey) {
-    return nullptr;
-  }
-
-  Output output;
+  ByteString value;
 
   if (versionValue != static_cast<long>(der::Version::v1)) {
-    SECItem* versionInteger(Integer(arena, versionValue));
-    if (!versionInteger) {
-      return nullptr;
-    }
-    SECItem* version(EncodeNested(arena,
-                                  der::CONTEXT_SPECIFIC | der::CONSTRUCTED | 0,
-                                  versionInteger));
-    if (!version) {
-      return nullptr;
-    }
-    if (output.Add(version) != Success) {
-      return nullptr;
-    }
+    ByteString versionInteger(Integer(versionValue));
+    ByteString version(TLV(der::CONTEXT_SPECIFIC | der::CONSTRUCTED | 0,
+                           versionInteger));
+    value.append(version);
   }
 
-  if (output.Add(serialNumber) != Success) {
-    return nullptr;
-  }
-
-  SECItem* signature(AlgorithmIdentifier(arena, signatureOidTag));
-  if (!signature) {
-    return nullptr;
-  }
-  if (output.Add(signature) != Success) {
-    return nullptr;
-  }
-
-  if (output.Add(issuer) != Success) {
-    return nullptr;
-  }
+  value.append(serialNumber);
+  value.append(signature);
+  value.append(issuer);
 
   // Validity ::= SEQUENCE {
   //       notBefore      Time,
   //       notAfter       Time }
-  SECItem* validity;
+  ByteString validity;
   {
-    SECItem* notBefore(TimeToTimeChoice(arena, notBeforeTime));
-    if (!notBefore) {
-      return nullptr;
+    ByteString notBefore(TimeToTimeChoice(notBeforeTime));
+    if (ENCODING_FAILED(notBefore)) {
+      return ByteString();
     }
-    SECItem* notAfter(TimeToTimeChoice(arena, notAfterTime));
-    if (!notAfter) {
-      return nullptr;
+    ByteString notAfter(TimeToTimeChoice(notAfterTime));
+    if (ENCODING_FAILED(notAfter)) {
+      return ByteString();
     }
-    Output validityOutput;
-    if (validityOutput.Add(notBefore) != Success) {
-      return nullptr;
-    }
-    if (validityOutput.Add(notAfter) != Success) {
-      return nullptr;
-    }
-    validity = validityOutput.Squash(arena, der::SEQUENCE);
-    if (!validity) {
-      return nullptr;
+    ByteString validityValue;
+    validityValue.append(notBefore);
+    validityValue.append(notAfter);
+    validity = TLV(der::SEQUENCE, validityValue);
+    if (ENCODING_FAILED(validity)) {
+      return ByteString();
     }
   }
-  if (output.Add(validity) != Success) {
-    return nullptr;
-  }
+  value.append(validity);
 
-  if (output.Add(subject) != Success) {
-    return nullptr;
-  }
+  value.append(subject);
 
-  // SubjectPublicKeyInfo  ::=  SEQUENCE  {
-  //       algorithm            AlgorithmIdentifier,
-  //       subjectPublicKey     BIT STRING  }
-  ScopedSECItem subjectPublicKeyInfo(
-    SECKEY_EncodeDERSubjectPublicKeyInfo(subjectPublicKey));
-  if (!subjectPublicKeyInfo) {
-    return nullptr;
-  }
-  if (output.Add(subjectPublicKeyInfo.get()) != Success) {
-    return nullptr;
-  }
+  value.append(subjectPublicKeyInfo);
 
   if (extensions) {
-    Output extensionsOutput;
-    while (*extensions) {
-      if (extensionsOutput.Add(*extensions) != Success) {
-        return nullptr;
-      }
+    ByteString extensionsValue;
+    while (!(*extensions).empty()) {
+      extensionsValue.append(*extensions);
       ++extensions;
     }
-    SECItem* allExtensions(extensionsOutput.Squash(arena, der::SEQUENCE));
-    if (!allExtensions) {
-      return nullptr;
+    ByteString extensionsSequence(TLV(der::SEQUENCE, extensionsValue));
+    if (ENCODING_FAILED(extensionsSequence)) {
+      return ByteString();
     }
-    SECItem* extensionsWrapped(
-      EncodeNested(arena, der::CONTEXT_SPECIFIC | der::CONSTRUCTED | 3,
-                   allExtensions));
-    if (!extensions) {
-      return nullptr;
+    ByteString extensionsWrapped(
+      TLV(der::CONTEXT_SPECIFIC | der::CONSTRUCTED | 3, extensionsSequence));
+    if (ENCODING_FAILED(extensionsWrapped)) {
+      return ByteString();
     }
-    if (output.Add(extensionsWrapped) != Success) {
-      return nullptr;
-    }
+    value.append(extensionsWrapped);
   }
 
-  return output.Squash(arena, der::SEQUENCE);
+  return TLV(der::SEQUENCE, value);
 }
 
-const SECItem*
-ASCIIToDERName(PLArenaPool* arena, const char* cn)
+ByteString
+CNToDERName(const char* cn)
 {
-  ScopedPtr<CERTName, CERT_DestroyName> certName(CERT_AsciiToName(cn));
-  if (!certName) {
-    return nullptr;
-  }
-  return SEC_ASN1EncodeItem(arena, nullptr, certName.get(),
-                            SEC_ASN1_GET(CERT_NameTemplate));
+  // Name ::= CHOICE { -- only one possibility for now --
+  //   rdnSequence  RDNSequence }
+  //
+  // RDNSequence ::= SEQUENCE OF RelativeDistinguishedName
+  //
+  // RelativeDistinguishedName ::=
+  //   SET SIZE (1..MAX) OF AttributeTypeAndValue
+  //
+  // AttributeTypeAndValue ::= SEQUENCE {
+  //   type     AttributeType,
+  //   value    AttributeValue }
+  //
+  // AttributeType ::= OBJECT IDENTIFIER
+  //
+  // AttributeValue ::= ANY -- DEFINED BY AttributeType
+  //
+  // DirectoryString ::= CHOICE {
+  //       teletexString           TeletexString (SIZE (1..MAX)),
+  //       printableString         PrintableString (SIZE (1..MAX)),
+  //       universalString         UniversalString (SIZE (1..MAX)),
+  //       utf8String              UTF8String (SIZE (1..MAX)),
+  //       bmpString               BMPString (SIZE (1..MAX)) }
+  //
+  // id-at OBJECT IDENTIFIER ::= { joint-iso-ccitt(2) ds(5) 4 }
+  // id-at-commonName        AttributeType ::= { id-at 3 }
+
+  // python DottedOIDToCode.py --tlv id-at-commonName 2.5.4.3
+  static const uint8_t tlv_id_at_commonName[] = {
+    0x06, 0x03, 0x55, 0x04, 0x03
+  };
+
+  ByteString value(reinterpret_cast<const ByteString::value_type*>(cn));
+  value = TLV(der::UTF8String, value);
+
+  ByteString ava;
+  ava.append(tlv_id_at_commonName, sizeof(tlv_id_at_commonName));
+  ava.append(value);
+  ava = TLV(der::SEQUENCE, ava);
+  ByteString rdn(TLV(der::SET, ava));
+  return TLV(der::SEQUENCE, rdn);
 }
 
-SECItem*
-CreateEncodedSerialNumber(PLArenaPool* arena, long serialNumberValue)
+ByteString
+CreateEncodedSerialNumber(long serialNumberValue)
 {
-  return Integer(arena, serialNumberValue);
+  return Integer(serialNumberValue);
 }
 
 // BasicConstraints ::= SEQUENCE {
 //         cA                      BOOLEAN DEFAULT FALSE,
 //         pathLenConstraint       INTEGER (0..MAX) OPTIONAL }
-SECItem*
-CreateEncodedBasicConstraints(PLArenaPool* arena, bool isCA,
+ByteString
+CreateEncodedBasicConstraints(bool isCA,
                               /*optional*/ long* pathLenConstraintValue,
                               ExtensionCriticality criticality)
 {
-  assert(arena);
-  if (!arena) {
-    return nullptr;
-  }
-
-  Output value;
+  ByteString value;
 
   if (isCA) {
-    if (value.Add(Boolean(arena, true)) != Success) {
-      return nullptr;
-    }
+    ByteString cA(Boolean(true));
+    value.append(cA);
   }
 
   if (pathLenConstraintValue) {
-    SECItem* pathLenConstraint(Integer(arena, *pathLenConstraintValue));
-    if (!pathLenConstraint) {
-      return nullptr;
-    }
-    if (value.Add(pathLenConstraint) != Success) {
-      return nullptr;
-    }
+    ByteString pathLenConstraint(Integer(*pathLenConstraintValue));
+    value.append(pathLenConstraint);
   }
 
-  return Extension(arena, SEC_OID_X509_BASIC_CONSTRAINTS, criticality, value);
+  // python DottedOIDToCode.py --tlv id-ce-basicConstraints 2.5.29.19
+  static const uint8_t tlv_id_ce_basicConstraints[] = {
+    0x06, 0x03, 0x55, 0x1d, 0x13
+  };
+  return Extension(Input(tlv_id_ce_basicConstraints), criticality, value);
 }
 
 // ExtKeyUsageSyntax ::= SEQUENCE SIZE (1..MAX) OF KeyPurposeId
 // KeyPurposeId ::= OBJECT IDENTIFIER
-SECItem*
-CreateEncodedEKUExtension(PLArenaPool* arena, SECOidTag const* ekus,
-                          size_t ekusCount, ExtensionCriticality criticality)
+ByteString
+CreateEncodedEKUExtension(Input ekuOID, ExtensionCriticality criticality)
 {
-  assert(arena);
-  assert(ekus);
-  if (!arena || (!ekus && ekusCount != 0)) {
-    return nullptr;
-  }
+  ByteString value(ekuOID.UnsafeGetData(), ekuOID.GetLength());
 
-  Output value;
-  for (size_t i = 0; i < ekusCount; ++i) {
-    SECItem* encodedEKUOID = OID(arena, ekus[i]);
-    if (!encodedEKUOID) {
-      return nullptr;
-    }
-    if (value.Add(encodedEKUOID) != Success) {
-      return nullptr;
-    }
-  }
+  // python DottedOIDToCode.py --tlv id-ce-extKeyUsage 2.5.29.37
+  static const uint8_t tlv_id_ce_extKeyUsage[] = {
+    0x06, 0x03, 0x55, 0x1d, 0x25
+  };
 
-  return Extension(arena, SEC_OID_X509_EXT_KEY_USAGE, criticality, value);
+  return Extension(Input(tlv_id_ce_extKeyUsage), criticality, value);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // OCSP responses
 
-SECItem*
+ByteString
 CreateEncodedOCSPResponse(OCSPResponseContext& context)
 {
-  if (!context.arena) {
-    return nullptr;
-  }
-
   if (!context.skipResponseBytes) {
-    if (!context.signerPrivateKey) {
-      return nullptr;
+    if (!context.signerKeyPair) {
+      return ByteString();
     }
   }
 
@@ -1061,75 +687,52 @@ CreateEncodedOCSPResponse(OCSPResponseContext& context)
   //    sigRequired         (5),  -- Must sign the request
   //    unauthorized        (6)   -- Request unauthorized
   // }
-  SECItem* responseStatus = SECITEM_AllocItem(context.arena, nullptr, 3);
-  if (!responseStatus) {
-    return nullptr;
-  }
-  responseStatus->data[0] = der::ENUMERATED;
-  responseStatus->data[1] = 1;
-  responseStatus->data[2] = context.responseStatus;
+  ByteString reponseStatusValue;
+  reponseStatusValue.push_back(context.responseStatus);
+  ByteString responseStatus(TLV(der::ENUMERATED, reponseStatusValue));
 
-  SECItem* responseBytesNested = nullptr;
+  ByteString responseBytesNested;
   if (!context.skipResponseBytes) {
-    SECItem* responseBytes = ResponseBytes(context);
-    if (!responseBytes) {
-      return nullptr;
+    ByteString responseBytes(ResponseBytes(context));
+    if (ENCODING_FAILED(responseBytes)) {
+      return ByteString();
     }
 
-    responseBytesNested = EncodeNested(context.arena,
-                                       der::CONSTRUCTED |
-                                       der::CONTEXT_SPECIFIC,
-                                       responseBytes);
-    if (!responseBytesNested) {
-      return nullptr;
-    }
+    responseBytesNested = TLV(der::CONSTRUCTED | der::CONTEXT_SPECIFIC,
+                              responseBytes);
   }
 
-  Output output;
-  if (output.Add(responseStatus) != Success) {
-    return nullptr;
-  }
-  if (responseBytesNested) {
-    if (output.Add(responseBytesNested) != Success) {
-      return nullptr;
-    }
-  }
-  return MaybeLogOutput(output.Squash(context.arena, der::SEQUENCE), "ocsp");
+  ByteString value;
+  value.append(responseStatus);
+  value.append(responseBytesNested);
+  ByteString result(TLV(der::SEQUENCE, value));
+
+  MaybeLogOutput(result, "ocsp");
+
+  return result;
 }
 
 // ResponseBytes ::= SEQUENCE {
 //    responseType            OBJECT IDENTIFIER,
 //    response                OCTET STRING }
-SECItem*
+ByteString
 ResponseBytes(OCSPResponseContext& context)
 {
   // Includes tag and length
   static const uint8_t id_pkix_ocsp_basic_encoded[] = {
     0x06, 0x09, 0x2B, 0x06, 0x01, 0x05, 0x05, 0x07, 0x30, 0x01, 0x01
   };
-  SECItem id_pkix_ocsp_basic = {
-    siBuffer,
-    const_cast<uint8_t*>(id_pkix_ocsp_basic_encoded),
-    sizeof(id_pkix_ocsp_basic_encoded)
-  };
-  SECItem* response = BasicOCSPResponse(context);
-  if (!response) {
-    return nullptr;
+  ByteString response(BasicOCSPResponse(context));
+  if (ENCODING_FAILED(response)) {
+    return ByteString();
   }
-  SECItem* responseNested = EncodeNested(context.arena, der::OCTET_STRING,
-                                         response);
-  if (!responseNested) {
-    return nullptr;
-  }
+  ByteString responseNested = TLV(der::OCTET_STRING, response);
 
-  Output output;
-  if (output.Add(&id_pkix_ocsp_basic) != Success) {
-    return nullptr;
-  }
-  if (output.Add(responseNested) != Success) {
-    return nullptr;
-  }
-  return output.Squash(context.arena, der::SEQUENCE);
+  ByteString value;
+  value.append(id_pkix_ocsp_basic_encoded,
+               sizeof(id_pkix_ocsp_basic_encoded));
+  value.append(responseNested);
+  return TLV(der::SEQUENCE, value);
 }
 
 // BasicOCSPResponse ::= SEQUENCE {
@@ -1137,19 +740,17 @@ ResponseBytes(OCSPResponseContext& context)
 //   signatureAlgorithm       AlgorithmIdentifier,
 //   signature                BIT STRING,
 //   certs                [0] EXPLICIT SEQUENCE OF Certificate OPTIONAL }
-SECItem*
+ByteString
 BasicOCSPResponse(OCSPResponseContext& context)
 {
-  SECItem* tbsResponseData = ResponseData(context);
-  if (!tbsResponseData) {
-    return nullptr;
+  ByteString tbsResponseData(ResponseData(context));
+  if (ENCODING_FAILED(tbsResponseData)) {
+    return ByteString();
   }
 
-  // TODO(bug 980538): certs
-  return SignedData(context.arena, tbsResponseData,
-                    context.signerPrivateKey.get(),
-                    context.signatureHashAlgorithm,
-                    context.badSignature, context.certs);
+  return SignedData(tbsResponseData, *context.signerKeyPair,
+                    context.signatureAlgorithm, context.badSignature,
+                    context.certs);
 }
 
 // Extension ::= SEQUENCE {
@@ -1157,61 +758,37 @@ BasicOCSPResponse(OCSPResponseContext& context)
 //   critical         BOOLEAN DEFAULT FALSE
 //   value            OCTET STRING
 // }
-static SECItem*
-OCSPExtension(OCSPResponseContext& context, OCSPResponseExtension* extension)
+static ByteString
+OCSPExtension(OCSPResponseContext& context, OCSPResponseExtension& extension)
 {
-  Output output;
-  if (output.Add(&extension->id) != Success) {
-    return nullptr;
+  ByteString encoded;
+  encoded.append(extension.id);
+  if (extension.critical) {
+    ByteString critical(Boolean(true));
+    encoded.append(critical);
   }
-  if (extension->critical) {
-    static const uint8_t trueEncoded[3] = { 0x01, 0x01, 0xFF };
-    SECItem critical = {
-      siBuffer,
-      const_cast<uint8_t*>(trueEncoded),
-      sizeof(trueEncoded)
-    };
-    if (output.Add(&critical) != Success) {
-      return nullptr;
-    }
-  }
-  SECItem* value = EncodeNested(context.arena, der::OCTET_STRING,
-                                &extension->value);
-  if (!value) {
-    return nullptr;
-  }
-  if (output.Add(value) != Success) {
-    return nullptr;
-  }
-  return output.Squash(context.arena, der::SEQUENCE);
+  ByteString value(TLV(der::OCTET_STRING, extension.value));
+  encoded.append(value);
+  return TLV(der::SEQUENCE, encoded);
 }
 
 // Extensions ::= [1] {
 //   SEQUENCE OF Extension
 // }
-static SECItem*
+static ByteString
 Extensions(OCSPResponseContext& context)
 {
-  Output output;
+  ByteString value;
   for (OCSPResponseExtension* extension = context.extensions;
        extension; extension = extension->next) {
-    SECItem* extensionEncoded = OCSPExtension(context, extension);
-    if (!extensionEncoded) {
-      return nullptr;
+    ByteString extensionEncoded(OCSPExtension(context, *extension));
+    if (ENCODING_FAILED(extensionEncoded)) {
+      return ByteString();
     }
-    if (output.Add(extensionEncoded) != Success) {
-      return nullptr;
-    }
+    value.append(extensionEncoded);
   }
-  SECItem* extensionsEncoded = output.Squash(context.arena, der::SEQUENCE);
-  if (!extensionsEncoded) {
-    return nullptr;
-  }
-  return EncodeNested(context.arena,
-                      der::CONSTRUCTED |
-                      der::CONTEXT_SPECIFIC |
-                      1,
-                      extensionsEncoded);
+  ByteString sequence(TLV(der::SEQUENCE, value));
+  return TLV(der::CONSTRUCTED | der::CONTEXT_SPECIFIC | 1, sequence);
 }
 
 // ResponseData ::= SEQUENCE {
@@ -1220,75 +797,57 @@ Extensions(OCSPResponseContext& context)
 //    producedAt              GeneralizedTime,
 //    responses               SEQUENCE OF SingleResponse,
 //    responseExtensions  [1] EXPLICIT Extensions OPTIONAL }
-SECItem*
+ByteString
 ResponseData(OCSPResponseContext& context)
 {
-  SECItem* responderID = ResponderID(context);
-  if (!responderID) {
-    return nullptr;
+  ByteString responderID(ResponderID(context));
+  if (ENCODING_FAILED(responderID)) {
+    return ByteString();
   }
-  SECItem* producedAtEncoded = TimeToGeneralizedTime(context.arena,
-                                                     context.producedAt);
-  if (!producedAtEncoded) {
-    return nullptr;
+  ByteString producedAtEncoded(TimeToGeneralizedTime(context.producedAt));
+  if (ENCODING_FAILED(producedAtEncoded)) {
+    return ByteString();
   }
-  SECItem* responses = SingleResponse(context);
-  if (!responses) {
-    return nullptr;
+  ByteString response(SingleResponse(context));
+  if (ENCODING_FAILED(response)) {
+    return ByteString();
   }
-  SECItem* responsesNested = EncodeNested(context.arena, der::SEQUENCE,
-                                          responses);
-  if (!responsesNested) {
-    return nullptr;
-  }
-  SECItem* responseExtensions = nullptr;
+  ByteString responses(TLV(der::SEQUENCE, response));
+  ByteString responseExtensions;
   if (context.extensions || context.includeEmptyExtensions) {
     responseExtensions = Extensions(context);
   }
 
-  Output output;
-  if (output.Add(responderID) != Success) {
-    return nullptr;
-  }
-  if (output.Add(producedAtEncoded) != Success) {
-    return nullptr;
-  }
-  if (output.Add(responsesNested) != Success) {
-    return nullptr;
-  }
-  if (responseExtensions) {
-    if (output.Add(responseExtensions) != Success) {
-      return nullptr;
-    }
-  }
-  return output.Squash(context.arena, der::SEQUENCE);
+  ByteString value;
+  value.append(responderID);
+  value.append(producedAtEncoded);
+  value.append(responses);
+  value.append(responseExtensions);
+  return TLV(der::SEQUENCE, value);
 }
 
 // ResponderID ::= CHOICE {
 //    byName              [1] Name,
 //    byKey               [2] KeyHash }
 // }
-SECItem*
+ByteString
 ResponderID(OCSPResponseContext& context)
 {
-  const SECItem* contents;
+  ByteString contents;
   uint8_t responderIDType;
-  if (context.signerNameDER) {
+  if (!context.signerNameDER.empty()) {
     contents = context.signerNameDER;
     responderIDType = 1; // byName
   } else {
-    contents = KeyHash(context);
+    contents = KeyHash(context.signerKeyPair->subjectPublicKey);
+    if (ENCODING_FAILED(contents)) {
+      return ByteString();
+    }
     responderIDType = 2; // byKey
   }
-  if (!contents) {
-    return nullptr;
-  }
 
-  return EncodeNested(context.arena,
-                      der::CONSTRUCTED |
-                      der::CONTEXT_SPECIFIC |
-                      responderIDType,
-                      contents);
+  return TLV(der::CONSTRUCTED | der::CONTEXT_SPECIFIC | responderIDType,
+             contents);
 }
 
 // KeyHash ::= OCTET STRING -- SHA-1 hash of responder's public key
@@ -1296,20 +855,10 @@ ResponderID(OCSPResponseContext& context)
 //                          -- BIT STRING subjectPublicKey [excluding
 //                          -- the tag, length, and number of unused
 //                          -- bits] in the responder's certificate)
-SECItem*
-KeyHash(OCSPResponseContext& context)
+ByteString
+KeyHash(const ByteString& subjectPublicKey)
 {
-  ScopedSECKEYPublicKey
-    signerPublicKey(SECKEY_ConvertToPublicKey(context.signerPrivateKey.get()));
-  if (!signerPublicKey) {
-    return nullptr;
-  }
-  ScopedPtr<CERTSubjectPublicKeyInfo, SECKEY_DestroySubjectPublicKeyInfo>
-    signerSPKI(SECKEY_CreateSubjectPublicKeyInfo(signerPublicKey.get()));
-  if (!signerSPKI) {
-    return nullptr;
-  }
-  return KeyHashHelper(context.arena, signerSPKI.get());
+  return HashedOctetString(subjectPublicKey);
 }
 
 // SingleResponse ::= SEQUENCE {
@@ -1318,55 +867,37 @@ KeyHash(OCSPResponseContext& context)
 //    thisUpdate              GeneralizedTime,
 //    nextUpdate          [0] EXPLICIT GeneralizedTime OPTIONAL,
 //    singleExtensions    [1] EXPLICIT Extensions OPTIONAL }
-SECItem*
+ByteString
 SingleResponse(OCSPResponseContext& context)
 {
-  SECItem* certID = CertID(context);
-  if (!certID) {
-    return nullptr;
+  ByteString certID(CertID(context));
+  if (ENCODING_FAILED(certID)) {
+    return ByteString();
   }
-  SECItem* certStatus = CertStatus(context);
-  if (!certStatus) {
-    return nullptr;
+  ByteString certStatus(CertStatus(context));
+  if (ENCODING_FAILED(certStatus)) {
+    return ByteString();
   }
-  SECItem* thisUpdateEncoded = TimeToGeneralizedTime(context.arena,
-                                                     context.thisUpdate);
-  if (!thisUpdateEncoded) {
-    return nullptr;
+  ByteString thisUpdateEncoded(TimeToGeneralizedTime(context.thisUpdate));
+  if (ENCODING_FAILED(thisUpdateEncoded)) {
+    return ByteString();
   }
-  SECItem* nextUpdateEncodedNested = nullptr;
+  ByteString nextUpdateEncodedNested;
   if (context.includeNextUpdate) {
-    SECItem* nextUpdateEncoded = TimeToGeneralizedTime(context.arena,
-                                                       context.nextUpdate);
-    if (!nextUpdateEncoded) {
-      return nullptr;
+    ByteString nextUpdateEncoded(TimeToGeneralizedTime(context.nextUpdate));
+    if (ENCODING_FAILED(nextUpdateEncoded)) {
+      return ByteString();
     }
-    nextUpdateEncodedNested = EncodeNested(context.arena,
-                                           der::CONSTRUCTED |
-                                           der::CONTEXT_SPECIFIC |
-                                           0,
-                                           nextUpdateEncoded);
-    if (!nextUpdateEncodedNested) {
-      return nullptr;
-    }
+    nextUpdateEncodedNested = TLV(der::CONSTRUCTED | der::CONTEXT_SPECIFIC | 0,
+                                  nextUpdateEncoded);
   }
 
-  Output output;
-  if (output.Add(certID) != Success) {
-    return nullptr;
-  }
-  if (output.Add(certStatus) != Success) {
-    return nullptr;
-  }
-  if (output.Add(thisUpdateEncoded) != Success) {
-    return nullptr;
-  }
-  if (nextUpdateEncodedNested) {
-    if (output.Add(nextUpdateEncodedNested) != Success) {
-      return nullptr;
-    }
-  }
-  return output.Squash(context.arena, der::SEQUENCE);
+  ByteString value;
+  value.append(certID);
+  value.append(certStatus);
+  value.append(thisUpdateEncoded);
+  value.append(nextUpdateEncodedNested);
+  return TLV(der::SEQUENCE, value);
 }
 
 // CertID          ::=     SEQUENCE {
@@ -1374,61 +905,57 @@ SingleResponse(OCSPResponseContext& context)
 //        issuerNameHash      OCTET STRING, -- Hash of issuer's DN
 //        issuerKeyHash       OCTET STRING, -- Hash of issuer's public key
 //        serialNumber        CertificateSerialNumber }
-SECItem*
+ByteString
 CertID(OCSPResponseContext& context)
 {
-  SECItem* hashAlgorithm = AlgorithmIdentifier(context.arena,
-                                               context.certIDHashAlg);
-  if (!hashAlgorithm) {
-    return nullptr;
-  }
-  SECItem issuerSECItem = UnsafeMapInputToSECItem(context.certID.issuer);
-  SECItem* issuerNameHash = HashedOctetString(context.arena, issuerSECItem,
-                                              context.certIDHashAlg);
-  if (!issuerNameHash) {
-    return nullptr;
+  ByteString issuerName(context.certID.issuer.UnsafeGetData(),
+                        context.certID.issuer.GetLength());
+  ByteString issuerNameHash(HashedOctetString(issuerName));
+  if (ENCODING_FAILED(issuerNameHash)) {
+    return ByteString();
   }
 
-  SECItem issuerSubjectPublicKeyInfoSECItem =
-    UnsafeMapInputToSECItem(context.certID.issuerSubjectPublicKeyInfo);
-  ScopedPtr<CERTSubjectPublicKeyInfo, SECKEY_DestroySubjectPublicKeyInfo>
-    spki(SECKEY_DecodeDERSubjectPublicKeyInfo(
-           &issuerSubjectPublicKeyInfoSECItem));
-  if (!spki) {
-    return nullptr;
-  }
-  SECItem* issuerKeyHash(KeyHashHelper(context.arena, spki.get()));
-  if (!issuerKeyHash) {
-    return nullptr;
+  ByteString issuerKeyHash;
+  {
+    // context.certID.issuerSubjectPublicKeyInfo is the entire
+    // SubjectPublicKeyInfo structure, but we need just the subjectPublicKey
+    // part.
+    Reader input(context.certID.issuerSubjectPublicKeyInfo);
+    Reader contents;
+    if (der::ExpectTagAndGetValue(input, der::SEQUENCE, contents) != Success) {
+      return ByteString();
+    }
+    // Skip AlgorithmIdentifier
+    if (der::ExpectTagAndSkipValue(contents, der::SEQUENCE) != Success) {
+      return ByteString();
+    }
+    Input subjectPublicKey;
+    if (der::BitStringWithNoUnusedBits(contents, subjectPublicKey)
+          != Success) {
+      return ByteString();
+    }
+    issuerKeyHash = KeyHash(ByteString(subjectPublicKey.UnsafeGetData(),
+                                       subjectPublicKey.GetLength()));
+    if (ENCODING_FAILED(issuerKeyHash)) {
+      return ByteString();
+    }
   }
 
-  static const SEC_ASN1Template serialTemplate[] = {
-    { SEC_ASN1_INTEGER, 0 },
-    { 0 }
+  ByteString serialNumberValue(context.certID.serialNumber.UnsafeGetData(),
+                               context.certID.serialNumber.GetLength());
+  ByteString serialNumber(TLV(der::INTEGER, serialNumberValue));
+
+  // python DottedOIDToCode.py --alg id-sha1 1.3.14.3.2.26
+  static const uint8_t alg_id_sha1[] = {
+    0x30, 0x07, 0x06, 0x05, 0x2b, 0x0e, 0x03, 0x02, 0x1a
   };
-  SECItem serialNumberSECItem =
-    UnsafeMapInputToSECItem(context.certID.serialNumber);
-  SECItem* serialNumber = SEC_ASN1EncodeItem(context.arena, nullptr,
-                                             &serialNumberSECItem,
-                                             serialTemplate);
-  if (!serialNumber) {
-    return nullptr;
-  }
 
-  Output output;
-  if (output.Add(hashAlgorithm) != Success) {
-    return nullptr;
-  }
-  if (output.Add(issuerNameHash) != Success) {
-    return nullptr;
-  }
-  if (output.Add(issuerKeyHash) != Success) {
-    return nullptr;
-  }
-  if (output.Add(serialNumber) != Success) {
-    return nullptr;
-  }
-  return output.Squash(context.arena, der::SEQUENCE);
+  ByteString value;
+  value.append(alg_id_sha1, sizeof(alg_id_sha1));
+  value.append(issuerNameHash);
+  value.append(issuerKeyHash);
+  value.append(serialNumber);
+  return TLV(der::SEQUENCE, value);
 }
 
 // CertStatus ::= CHOICE {
@@ -1442,7 +969,7 @@ CertID(OCSPResponseContext& context)
 //
 // UnknownInfo ::= NULL
 //
-SECItem*
+ByteString
 CertStatus(OCSPResponseContext& context)
 {
   switch (context.certStatus) {
@@ -1451,31 +978,22 @@ CertStatus(OCSPResponseContext& context)
     case 0:
     case 2:
     {
-      SECItem* status = SECITEM_AllocItem(context.arena, nullptr, 2);
-      if (!status) {
-        return nullptr;
-      }
-      status->data[0] = der::CONTEXT_SPECIFIC | context.certStatus;
-      status->data[1] = 0;
-      return status;
+      return TLV(der::CONTEXT_SPECIFIC | context.certStatus, ByteString());
     }
     case 1:
     {
-      SECItem* revocationTime = TimeToGeneralizedTime(context.arena,
-                                                      context.revocationTime);
-      if (!revocationTime) {
-        return nullptr;
+      ByteString revocationTime(TimeToGeneralizedTime(context.revocationTime));
+      if (ENCODING_FAILED(revocationTime)) {
+        return ByteString();
       }
       // TODO(bug 980536): add support for revocationReason
-      return EncodeNested(context.arena,
-                          der::CONTEXT_SPECIFIC | der::CONSTRUCTED | 1,
-                          revocationTime);
+      return TLV(der::CONTEXT_SPECIFIC | der::CONSTRUCTED | 1, revocationTime);
     }
     default:
       assert(false);
       // fall through
   }
-  return nullptr;
+  return ByteString();
 }
 
 } } } // namespace mozilla::pkix::test

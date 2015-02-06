@@ -456,7 +456,7 @@ nsEditorEventListener::HandleEvent(nsIDOMEvent* aEvent)
     case NS_BLUR_CONTENT:
       return Blur(aEvent);
     // text
-    case NS_TEXT_TEXT:
+    case NS_COMPOSITION_CHANGE:
       return HandleText(aEvent);
     // compositionstart
     case NS_COMPOSITION_START:
@@ -1100,7 +1100,8 @@ nsEditorEventListener::Focus(nsIDOMEvent* aEvent)
   nsCOMPtr<nsIPresShell> ps = GetPresShell();
   NS_ENSURE_TRUE(ps, NS_OK);
   nsCOMPtr<nsIContent> focusedContent = mEditor->GetFocusedContentForIME();
-  IMEStateManager::OnFocusInEditor(ps->GetPresContext(), focusedContent);
+  IMEStateManager::OnFocusInEditor(ps->GetPresContext(), focusedContent,
+                                   mEditor);
 
   return NS_OK;
 }

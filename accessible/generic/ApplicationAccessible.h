@@ -9,7 +9,7 @@
 #define mozilla_a11y_ApplicationAccessible_h__
 
 #include "AccessibleWrap.h"
-#include "nsIAccessibleApplication.h"
+#include "xpcAccessibleApplication.h"
 
 #include "nsIMutableArray.h"
 #include "nsIXULAppInfo.h"
@@ -28,7 +28,7 @@ namespace a11y {
  */
 
 class ApplicationAccessible : public AccessibleWrap,
-                              public nsIAccessibleApplication
+                              public xpcAccessibleApplication
 {
 public:
 
@@ -37,37 +37,18 @@ public:
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
 
-  // nsIAccessible
-  NS_IMETHOD GetRootDocument(nsIAccessibleDocument** aRootDocument);
-  NS_IMETHOD ScrollTo(uint32_t aScrollType);
-  NS_IMETHOD ScrollToPoint(uint32_t aCoordinateType, int32_t aX, int32_t aY);
-  NS_IMETHOD GetLanguage(nsAString& aLanguage);
-  NS_IMETHOD GetParent(nsIAccessible **aParent);
-  NS_IMETHOD GetNextSibling(nsIAccessible **aNextSibling);
-  NS_IMETHOD GetPreviousSibling(nsIAccessible **aPreviousSibling);
-  NS_IMETHOD GetBounds(int32_t *aX, int32_t *aY,
-                       int32_t *aWidth, int32_t *aHeight);
-  NS_IMETHOD SetSelected(bool aIsSelected);
-  NS_IMETHOD TakeSelection();
-  NS_IMETHOD TakeFocus();
-  NS_IMETHOD GetActionName(uint8_t aIndex, nsAString &aName);
-  NS_IMETHOD GetActionDescription(uint8_t aIndex, nsAString &aDescription);
-  NS_IMETHOD DoAction(uint8_t aIndex);
-
-  // nsIAccessibleApplication
-  NS_DECL_NSIACCESSIBLEAPPLICATION
-
   // Accessible
   virtual void Shutdown();
+  virtual nsIntRect Bounds() const MOZ_OVERRIDE;
   virtual already_AddRefed<nsIPersistentProperties> NativeAttributes() MOZ_OVERRIDE;
   virtual GroupPos GroupPosition();
   virtual ENameValueFlag Name(nsString& aName);
   virtual void ApplyARIAState(uint64_t* aState) const;
   virtual void Description(nsString& aDescription);
   virtual void Value(nsString& aValue);
-  virtual mozilla::a11y::role NativeRole();
-  virtual uint64_t State();
-  virtual uint64_t NativeState();
+  virtual mozilla::a11y::role NativeRole() MOZ_OVERRIDE;
+  virtual uint64_t State() MOZ_OVERRIDE;
+  virtual uint64_t NativeState() MOZ_OVERRIDE;
   virtual Relation RelationByType(RelationType aType) MOZ_OVERRIDE;
 
   virtual Accessible* ChildAtPoint(int32_t aX, int32_t aY,
@@ -77,8 +58,34 @@ public:
   virtual void InvalidateChildren();
 
   // ActionAccessible
-  virtual uint8_t ActionCount();
   virtual KeyBinding AccessKey() const;
+
+  // ApplicationAccessible
+  void AppName(nsAString& aName) const
+  {
+    nsAutoCString cname;
+    mAppInfo->GetName(cname);
+    AppendUTF8toUTF16(cname, aName);
+  }
+
+  void AppVersion(nsAString& aVersion) const
+  {
+    nsAutoCString cversion;
+    mAppInfo->GetVersion(cversion);
+    AppendUTF8toUTF16(cversion, aVersion);
+  }
+
+  void PlatformName(nsAString& aName) const
+  {
+    aName.AssignLiteral("Gecko");
+  }
+
+  void PlatformVersion(nsAString& aVersion) const
+  {
+    nsAutoCString cversion;
+    mAppInfo->GetPlatformVersion(cversion);
+    AppendUTF8toUTF16(cversion, aVersion);
+  }
 
 protected:
   virtual ~ApplicationAccessible() {}

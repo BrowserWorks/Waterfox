@@ -10,8 +10,8 @@ MOZ_PHOENIX=1
 
 if test "$OS_ARCH" = "WINNT"; then
   MOZ_MAINTENANCE_SERVICE=1
+  MOZ_VERIFY_MAR_SIGNATURE=1
   if ! test "$HAVE_64BIT_BUILD"; then
-    MOZ_VERIFY_MAR_SIGNATURE=1
     if test "$MOZ_UPDATE_CHANNEL" = "nightly" -o \
             "$MOZ_UPDATE_CHANNEL" = "aurora" -o \
             "$MOZ_UPDATE_CHANNEL" = "beta" -o \
@@ -55,9 +55,6 @@ MOZ_PROFILE_MIGRATOR=1
 MOZ_APP_STATIC_INI=1
 MOZ_WEBAPP_RUNTIME=1
 MOZ_MEDIA_NAVIGATOR=1
-if test "$OS_TARGET" = "WINNT" -o "$OS_TARGET" = "Darwin"; then
-  MOZ_FOLD_LIBS=1
-fi
 MOZ_WEBGL_CONFORMANT=1
 # Enable navigator.mozPay
 MOZ_PAY=1

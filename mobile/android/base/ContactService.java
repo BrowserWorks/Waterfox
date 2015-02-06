@@ -90,8 +90,8 @@ public class ContactService implements GeckoEventListener {
     private HashMap<String, Integer> mWebsiteTypesMap;
     private HashMap<String, Integer> mImTypesMap;
 
-    private ContentResolver mContentResolver;
-    private GeckoApp mActivity;
+    private final ContentResolver mContentResolver;
+    private final GeckoApp mActivity;
 
     ContactService(EventDispatcher eventDispatcher, GeckoApp activity) {
         mEventDispatcher = eventDispatcher;
@@ -247,9 +247,7 @@ public class ContactService implements GeckoEventListener {
                 // Truncate the raw contacts IDs array if necessary
                 if (filterLimit > 0 && allRawContactIds.length > filterLimit) {
                     long[] truncatedRawContactIds = new long[filterLimit];
-                    for (int i = 0; i < filterLimit; i++) {
-                        truncatedRawContactIds[i] = allRawContactIds[i];
-                    }
+                    System.arraycopy(allRawContactIds, 0, truncatedRawContactIds, 0, filterLimit);
                     return truncatedRawContactIds;
                 }
                 return allRawContactIds;
@@ -402,41 +400,47 @@ public class ContactService implements GeckoEventListener {
         filterValue = filterValue.toLowerCase();
         databaseValue = databaseValue.toLowerCase();
 
-        if ("match".equals(filterOp)) {
-            // If substring matching is a positive number, only pay attention to the last X characters
-            // of both the filter and database values
-            if (substringMatching > 0) {
-                databaseValue = substringStartFromEnd(cleanPhoneNumber(databaseValue), substringMatching);
-                filterValue = substringStartFromEnd(cleanPhoneNumber(filterValue), substringMatching);
-                return databaseValue.startsWith(filterValue);
-            }
-            return databaseValue.equals(filterValue);
-        } else if ("equals".equals(filterOp)) {
-            if (isPhone) {
-                return PhoneNumberUtils.compare(filterValue, databaseValue);
-            }
-            return databaseValue.equals(filterValue);
-        } else if ("contains".equals(filterOp)) {
-            if (isPhone) {
-                filterValue = cleanPhoneNumber(filterValue);
-                databaseValue = cleanPhoneNumber(databaseValue);
-            }
-            return databaseValue.contains(filterValue);
-        } else if ("startsWith".equals(filterOp)) {
-            // If a phone number, remove non-dialable characters and then only pay attention to
-            // the last X digits given by the substring matching values (see bug 877302)
-            if (isPhone) {
-                String cleanedDatabasePhone = cleanPhoneNumber(databaseValue);
+        switch (filterOp) {
+            case "match":
+                // If substring matching is a positive number, only pay attention to the last X characters
+                // of both the filter and database values
                 if (substringMatching > 0) {
-                    cleanedDatabasePhone = substringStartFromEnd(cleanedDatabasePhone, substringMatching);
+                    databaseValue = substringStartFromEnd(cleanPhoneNumber(databaseValue), substringMatching);
+                    filterValue = substringStartFromEnd(cleanPhoneNumber(filterValue), substringMatching);
+                    return databaseValue.startsWith(filterValue);
                 }
 
-                if (cleanedDatabasePhone.startsWith(filterValue)) {
-                    return true;
+                return databaseValue.equals(filterValue);
+            case "equals":
+                if (isPhone) {
+                    return PhoneNumberUtils.compare(filterValue, databaseValue);
                 }
-            }
-            return databaseValue.startsWith(filterValue);
+
+                return databaseValue.equals(filterValue);
+            case "contains":
+                if (isPhone) {
+                    filterValue = cleanPhoneNumber(filterValue);
+                    databaseValue = cleanPhoneNumber(databaseValue);
+                }
+
+                return databaseValue.contains(filterValue);
+            case "startsWith":
+                // If a phone number, remove non-dialable characters and then only pay attention to
+                // the last X digits given by the substring matching values (see bug 877302)
+                if (isPhone) {
+                    String cleanedDatabasePhone = cleanPhoneNumber(databaseValue);
+                    if (substringMatching > 0) {
+                        cleanedDatabasePhone = substringStartFromEnd(cleanedDatabasePhone, substringMatching);
+                    }
+
+                    if (cleanedDatabasePhone.startsWith(filterValue)) {
+                        return true;
+                    }
+                }
+
+                return databaseValue.startsWith(filterValue);
         }
+
         return false;
     }
 
@@ -659,7 +663,7 @@ public class ContactService implements GeckoEventListener {
     }
 
     private boolean bool(int integer) {
-        return integer != 0 ? true : false;
+        return integer != 0;
     }
 
     private void getGenericDataAsJSONObject(Cursor cursor, JSONArray array, final String dataColumn,
@@ -671,7 +675,7 @@ public class ContactService implements GeckoEventListener {
         if (typeConstant == BaseTypes.TYPE_CUSTOM) {
             type = cursor.getString(cursor.getColumnIndex(typeLabelColumn));
         } else {
-            type = getKeyFromMapValue(typeMap, Integer.valueOf(typeConstant));
+            type = getKeyFromMapValue(typeMap, typeConstant);
         }
 
         // Since an object may have multiple types, it may have already been added,
@@ -712,7 +716,7 @@ public class ContactService implements GeckoEventListener {
         if (typeConstant == Phone.TYPE_CUSTOM) {
             type = cursor.getString(cursor.getColumnIndex(Phone.LABEL));
         } else {
-            type = getKeyFromMapValue(mPhoneTypesMap, Integer.valueOf(typeConstant));
+            type = getKeyFromMapValue(mPhoneTypesMap, typeConstant);
         }
 
         // Since a phone may have multiple types, it may have already been added,
@@ -759,7 +763,7 @@ public class ContactService implements GeckoEventListener {
         if (typeConstant == StructuredPostal.TYPE_CUSTOM) {
             type = cursor.getString(cursor.getColumnIndex(StructuredPostal.LABEL));
         } else {
-            type = getKeyFromMapValue(mAddressTypesMap, Integer.valueOf(typeConstant));
+            type = getKeyFromMapValue(mAddressTypesMap, typeConstant);
         }
 
         // Since an email may have multiple types, it may have already been added,
@@ -984,7 +988,7 @@ public class ContactService implements GeckoEventListener {
         }
 
         String returnStatus = "KO";
-        Long newRawContactId = new Long(-1);
+        Long newRawContactId = -1L;
 
         // Insert the contact!
         ContentProviderResult[] insertResults = applyBatch(newContactOptions);
@@ -1476,7 +1480,7 @@ public class ContactService implements GeckoEventListener {
 
     private void getContactsCount(final String requestID) {
         Cursor cursor = getAllRawContactIdsCursor();
-        Integer numContacts = Integer.valueOf(cursor.getCount());
+        Integer numContacts = cursor.getCount();
         cursor.close();
 
         sendCallbackToJavascript("Android:Contacts:Count", requestID, new String[] {"count"},
@@ -1558,6 +1562,7 @@ public class ContactService implements GeckoEventListener {
             });
 
         mActivity.runOnUiThread(new Runnable() {
+            @Override
             public void run() {
                 builder.show();
             }
@@ -1823,7 +1828,7 @@ public class ContactService implements GeckoEventListener {
         }
     }
 
-    private static String getKeyFromMapValue(final HashMap<String, Integer> map, Integer value) {
+    private static String getKeyFromMapValue(final HashMap<String, Integer> map, int value) {
         for (Entry<String, Integer> entry : map.entrySet()) {
             if (value == entry.getValue()) {
                 return entry.getKey();
@@ -1898,7 +1903,7 @@ public class ContactService implements GeckoEventListener {
     private int getAddressType(String addressType) {
         initAddressTypesMap();
         Integer type = mAddressTypesMap.get(addressType.toLowerCase());
-        return (type != null ? Integer.valueOf(type) : StructuredPostal.TYPE_CUSTOM);
+        return type != null ? type : StructuredPostal.TYPE_CUSTOM;
     }
 
     private void initAddressTypesMap() {
@@ -1914,7 +1919,7 @@ public class ContactService implements GeckoEventListener {
     private int getPhoneType(String phoneType) {
         initPhoneTypesMap();
         Integer type = mPhoneTypesMap.get(phoneType.toLowerCase());
-        return (type != null ? Integer.valueOf(type) : Phone.TYPE_CUSTOM);
+        return type != null ? type : Phone.TYPE_CUSTOM;
     }
 
     private void initPhoneTypesMap() {
@@ -1949,7 +1954,7 @@ public class ContactService implements GeckoEventListener {
     private int getEmailType(String emailType) {
         initEmailTypesMap();
         Integer type = mEmailTypesMap.get(emailType.toLowerCase());
-        return (type != null ? Integer.valueOf(type) : Email.TYPE_CUSTOM);
+        return type != null ? type : Email.TYPE_CUSTOM;
     }
 
     private void initEmailTypesMap() {
@@ -1966,7 +1971,7 @@ public class ContactService implements GeckoEventListener {
     private int getWebsiteType(String webisteType) {
         initWebsiteTypesMap();
         Integer type = mWebsiteTypesMap.get(webisteType.toLowerCase());
-        return (type != null ? Integer.valueOf(type) : Website.TYPE_CUSTOM);
+        return type != null ? type : Website.TYPE_CUSTOM;
     }
 
     private void initWebsiteTypesMap() {
@@ -1986,7 +1991,7 @@ public class ContactService implements GeckoEventListener {
     private int getImType(String imType) {
         initImTypesMap();
         Integer type = mImTypesMap.get(imType.toLowerCase());
-        return (type != null ? Integer.valueOf(type) : Im.TYPE_CUSTOM);
+        return type != null ? type : Im.TYPE_CUSTOM;
     }
 
     private void initImTypesMap() {

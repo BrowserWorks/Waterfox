@@ -50,12 +50,12 @@ import android.widget.FrameLayout;
  * Note that LayerView is accessed by Robocop via reflection.
  */
 public class LayerView extends FrameLayout implements Tabs.OnTabsChangedListener {
-    private static String LOGTAG = "GeckoLayerView";
+    private static final String LOGTAG = "GeckoLayerView";
 
     private GeckoLayerClient mLayerClient;
     private PanZoomController mPanZoomController;
     private LayerMarginsAnimator mMarginsAnimator;
-    private GLController mGLController;
+    private final GLController mGLController;
     private InputConnectionHandler mInputConnectionHandler;
     private LayerRenderer mRenderer;
     /* Must be a PAINT_xxx constant */
@@ -321,7 +321,6 @@ public class LayerView extends FrameLayout implements Tabs.OnTabsChangedListener
 
     public void setInputConnectionHandler(InputConnectionHandler inputConnectionHandler) {
         mInputConnectionHandler = inputConnectionHandler;
-        mLayerClient.forceRedraw(null);
     }
 
     @Override
@@ -476,13 +475,8 @@ public class LayerView extends FrameLayout implements Tabs.OnTabsChangedListener
      * TextureView instead of a SurfaceView, the first phase is skipped.
      */
     private void onSizeChanged(int width, int height) {
-        if (!mGLController.isCompositorCreated()) {
-            return;
-        }
-
-        surfaceChanged(width, height);
-
-        if (mSurfaceView == null) {
+        if (!mGLController.isServerSurfaceValid() || mSurfaceView == null) {
+            surfaceChanged(width, height);
             return;
         }
 

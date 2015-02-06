@@ -12,8 +12,37 @@
 #include "nsStyleChangeList.h"
 #include "RestyleManager.h"
 #include "GeckoProfiler.h"
+#include "nsIDocument.h"
+#include "RestyleTrackerInlines.h"
 
 namespace mozilla {
+
+#ifdef RESTYLE_LOGGING
+static nsCString
+GetDocumentURI(nsIDocument* aDocument)
+{
+  nsCString result;
+  nsString url;
+  aDocument->GetDocumentURI(url);
+  result.Append(NS_ConvertUTF16toUTF8(url).get());
+  return result;
+}
+
+static nsCString
+FrameTagToString(dom::Element* aElement)
+{
+  nsCString result;
+  nsIFrame* frame = aElement->GetPrimaryFrame();
+  if (frame) {
+    nsFrame::ListTag(result, frame);
+  } else {
+    nsAutoString buf;
+    aElement->Tag()->ToString(buf);
+    result.AppendPrintf("(%s@%p)", NS_ConvertUTF16toUTF8(buf).get(), aElement);
+  }
+  return result;
+}
+#endif
 
 inline nsIDocument*
 RestyleTracker::Document() const {
@@ -29,7 +58,7 @@ struct LaterSiblingCollector {
 
 static PLDHashOperator
 CollectLaterSiblings(nsISupports* aElement,
-                     RestyleTracker::RestyleData& aData,
+                     nsAutoPtr<RestyleTracker::RestyleData>& aData,
                      void* aSiblingCollector)
 {
   dom::Element* element =
@@ -42,21 +71,28 @@ CollectLaterSiblings(nsISupports* aElement,
   // document.
   if (element->GetCrossShadowCurrentDoc() == collector->tracker->Document() &&
       element->HasFlag(collector->tracker->RestyleBit()) &&
-      (aData.mRestyleHint & eRestyle_LaterSiblings)) {
+      (aData->mRestyleHint & eRestyle_LaterSiblings)) {
     collector->elements->AppendElement(element);
   }
 
   return PL_DHASH_NEXT;
 }
 
+struct RestyleEnumerateData : RestyleTracker::Hints {
+  nsRefPtr<dom::Element> mElement;
+};
+
 struct RestyleCollector {
   RestyleTracker* tracker;
-  RestyleTracker::RestyleEnumerateData** restyleArrayPtr;
+  RestyleEnumerateData** restyleArrayPtr;
+#ifdef RESTYLE_LOGGING
+  uint32_t count;
+#endif
 };
 
 static PLDHashOperator
 CollectRestyles(nsISupports* aElement,
-                RestyleTracker::RestyleData& aData,
+                nsAutoPtr<RestyleTracker::RestyleData>& aData,
                 void* aRestyleCollector)
 {
   dom::Element* element =
@@ -69,6 +105,9 @@ CollectRestyles(nsISupports* aElement,
   // document.
   if (element->GetCrossShadowCurrentDoc() != collector->tracker->Document() ||
       !element->HasFlag(collector->tracker->RestyleBit())) {
+    LOG_RESTYLE_IF(collector->tracker, true,
+                   "skipping pending restyle %s, already restyled or no longer "
+                   "in the document", FrameTagToString(element).get());
     return PL_DHASH_NEXT;
   }
 
@@ -83,7 +122,7 @@ CollectRestyles(nsISupports* aElement,
                // the bit, since any descendants that didn't get added
                // to the roots list because we had the bits will be
                // completely restyled in a moment.
-               (aData.mChangeHint & nsChangeHint_ReconstructFrame),
+               (aData->mChangeHint & nsChangeHint_ReconstructFrame),
                "Why did this not get handled while processing mRestyleRoots?");
 
   // Unset the restyle bits now, so if they get readded later as we
@@ -91,13 +130,15 @@ CollectRestyles(nsISupports* aElement,
   element->UnsetFlags(collector->tracker->RestyleBit() |
                       collector->tracker->RootBit());
 
-  RestyleTracker::RestyleEnumerateData** restyleArrayPtr =
-    collector->restyleArrayPtr;
-  RestyleTracker::RestyleEnumerateData* currentRestyle =
-    *restyleArrayPtr;
+  RestyleEnumerateData** restyleArrayPtr = collector->restyleArrayPtr;
+  RestyleEnumerateData* currentRestyle = *restyleArrayPtr;
   currentRestyle->mElement = element;
-  currentRestyle->mRestyleHint = aData.mRestyleHint;
-  currentRestyle->mChangeHint = aData.mChangeHint;
+  currentRestyle->mRestyleHint = aData->mRestyleHint;
+  currentRestyle->mChangeHint = aData->mChangeHint;
+
+#ifdef RESTYLE_LOGGING
+  collector->count++;
+#endif
 
   // Increment to the next slot in the array
   *restyleArrayPtr = currentRestyle + 1;
@@ -116,8 +157,22 @@ RestyleTracker::ProcessOneRestyle(Element* aElement,
   NS_PRECONDITION(aElement->GetCrossShadowCurrentDoc() == Document(),
                   "Element has unexpected document");
 
+  LOG_RESTYLE("aRestyleHint = %s, aChangeHint = %s",
+              RestyleManager::RestyleHintToString(aRestyleHint).get(),
+              RestyleManager::ChangeHintToString(aChangeHint).get());
+
   nsIFrame* primaryFrame = aElement->GetPrimaryFrame();
+
   if (aRestyleHint & ~eRestyle_LaterSiblings) {
+#ifdef RESTYLE_LOGGING
+    if (ShouldLogRestyle() && primaryFrame &&
+        RestyleManager::StructsToLog() != 0) {
+      LOG_RESTYLE("style context tree before restyle:");
+      LOG_RESTYLE_INDENT();
+      primaryFrame->StyleContext()->LogStyleContextTree(
+          LoggingDepth(), RestyleManager::StructsToLog());
+    }
+#endif
     mRestyleManager->RestyleElement(aElement, primaryFrame, aChangeHint,
                                     *this, aRestyleHint);
   } else if (aChangeHint &&
@@ -138,6 +193,14 @@ RestyleTracker::DoProcessRestyles()
 
   mRestyleManager->BeginProcessingRestyles();
 
+  LOG_RESTYLE("Processing %d pending %srestyles with %d restyle roots for %s",
+              mPendingRestyles.Count(),
+              mRestyleManager->IsProcessingAnimationStyleChange()
+                ? (const char*) "animation " : (const char*) "",
+              static_cast<int>(mRestyleRoots.Length()),
+              GetDocumentURI(Document()).get());
+  LOG_RESTYLE_INDENT();
+
   // loop so that we process any restyle events generated by processing
   while (mPendingRestyles.Count()) {
     if (mHaveLaterSiblingRestyles) {
@@ -150,12 +213,17 @@ RestyleTracker::DoProcessRestyles()
         for (nsIContent* sibling = element->GetNextSibling();
              sibling;
              sibling = sibling->GetNextSibling()) {
-          if (sibling->IsElement() &&
-              AddPendingRestyle(sibling->AsElement(), eRestyle_Subtree,
-                                NS_STYLE_HINT_NONE)) {
-              // Nothing else to do here; we'll handle the following
-              // siblings when we get to |sibling| in laterSiblingArr.
-            break;
+          if (sibling->IsElement()) {
+            LOG_RESTYLE("adding pending restyle for %s due to "
+                        "eRestyle_LaterSiblings hint on %s",
+                        FrameTagToString(sibling->AsElement()).get(),
+                        FrameTagToString(element->AsElement()).get());
+            if (AddPendingRestyle(sibling->AsElement(), eRestyle_Subtree,
+                                  NS_STYLE_HINT_NONE)) {
+                // Nothing else to do here; we'll handle the following
+                // siblings when we get to |sibling| in laterSiblingArr.
+              break;
+            }
           }
         }
       }
@@ -164,17 +232,18 @@ RestyleTracker::DoProcessRestyles()
       for (uint32_t i = 0; i < laterSiblingArr.Length(); ++i) {
         Element* element = laterSiblingArr[i];
         NS_ASSERTION(element->HasFlag(RestyleBit()), "How did that happen?");
-        RestyleData data;
+        RestyleData* data;
 #ifdef DEBUG
         bool found =
 #endif
           mPendingRestyles.Get(element, &data);
         NS_ASSERTION(found, "Where did our entry go?");
-        data.mRestyleHint =
-          nsRestyleHint(data.mRestyleHint & ~eRestyle_LaterSiblings);
-
-        mPendingRestyles.Put(element, data);
+        data->mRestyleHint =
+          nsRestyleHint(data->mRestyleHint & ~eRestyle_LaterSiblings);
       }
+
+      LOG_RESTYLE("%d pending restyles after expanding out "
+                  "eRestyle_LaterSiblings", mPendingRestyles.Count());
 
       mHaveLaterSiblingRestyles = false;
     }
@@ -188,21 +257,28 @@ RestyleTracker::DoProcessRestyles()
       element.swap(mRestyleRoots[rootCount - 1]);
       mRestyleRoots.RemoveElementAt(rootCount - 1);
 
+      LOG_RESTYLE("processing style root %s at index %d",
+                  FrameTagToString(element).get(), rootCount - 1);
+      LOG_RESTYLE_INDENT();
+
       // Do the document check before calling GetRestyleData, since we
       // don't want to do the sibling-processing GetRestyleData does if
       // the node is no longer relevant.
       if (element->GetCrossShadowCurrentDoc() != Document()) {
         // Content node has been removed from our document; nothing else
         // to do here
+        LOG_RESTYLE("skipping, no longer in the document");
         continue;
       }
 
-      RestyleData data;
-      if (!GetRestyleData(element, &data)) {
+      nsAutoPtr<RestyleData> data;
+      if (!GetRestyleData(element, data)) {
+        LOG_RESTYLE("skipping, already restyled");
         continue;
       }
 
-      ProcessOneRestyle(element, data.mRestyleHint, data.mChangeHint);
+      ProcessOneRestyle(element, data->mRestyleHint, data->mChangeHint);
+      AddRestyleRootsIfAwaitingRestyle(data->mDescendants);
     }
 
     if (mHaveLaterSiblingRestyles) {
@@ -226,9 +302,16 @@ RestyleTracker::DoProcessRestyles()
       // Clear the hashtable now that we don't need it anymore
       mPendingRestyles.Clear();
 
+#ifdef RESTYLE_LOGGING
+      uint32_t index = 0;
+#endif
       for (RestyleEnumerateData* currentRestyle = restylesToProcess;
            currentRestyle != lastRestyle;
            ++currentRestyle) {
+        LOG_RESTYLE("processing pending restyle %s at index %d/%d",
+                    FrameTagToString(currentRestyle->mElement).get(),
+                    index++, collector.count);
+        LOG_RESTYLE_INDENT();
         ProcessOneRestyle(currentRestyle->mElement,
                           currentRestyle->mRestyleHint,
                           currentRestyle->mChangeHint);
@@ -240,7 +323,7 @@ RestyleTracker::DoProcessRestyles()
 }
 
 bool
-RestyleTracker::GetRestyleData(Element* aElement, RestyleData* aData)
+RestyleTracker::GetRestyleData(Element* aElement, nsAutoPtr<RestyleData>& aData)
 {
   NS_PRECONDITION(aElement->GetCrossShadowCurrentDoc() == Document(),
                   "Unexpected document; this will lead to incorrect behavior!");
@@ -250,31 +333,55 @@ RestyleTracker::GetRestyleData(Element* aElement, RestyleData* aData)
     return false;
   }
 
-#ifdef DEBUG
-  bool gotData =
-#endif
-  mPendingRestyles.Get(aElement, aData);
-  NS_ASSERTION(gotData, "Must have data if restyle bit is set");
+  mPendingRestyles.RemoveAndForget(aElement, aData);
+  NS_ASSERTION(aData.get(), "Must have data if restyle bit is set");
 
   if (aData->mRestyleHint & eRestyle_LaterSiblings) {
     // Someone readded the eRestyle_LaterSiblings hint for this
     // element.  Leave it around for now, but remove the other restyle
     // hints and the change hint for it.  Also unset its root bit,
     // since it's no longer a root with the new restyle data.
-    RestyleData newData;
-    newData.mChangeHint = nsChangeHint(0);
-    newData.mRestyleHint = eRestyle_LaterSiblings;
+    NS_ASSERTION(aData->mDescendants.IsEmpty(),
+                 "expected descendants to be handled by now");
+    RestyleData* newData = new RestyleData;
+    newData->mChangeHint = nsChangeHint(0);
+    newData->mRestyleHint = eRestyle_LaterSiblings;
     mPendingRestyles.Put(aElement, newData);
     aElement->UnsetFlags(RootBit());
     aData->mRestyleHint =
       nsRestyleHint(aData->mRestyleHint & ~eRestyle_LaterSiblings);
   } else {
-    mPendingRestyles.Remove(aElement);
     aElement->UnsetFlags(mRestyleBits);
   }
 
   return true;
 }
 
-} // namespace mozilla
+void
+RestyleTracker::AddRestyleRootsIfAwaitingRestyle(
+                                   const nsTArray<nsRefPtr<Element>>& aElements)
+{
+  // The RestyleData for a given element has stored in mDescendants
+  // the list of descendants we need to end up restyling.  Since we
+  // won't necessarily end up restyling them, due to the restyle
+  // process finishing early (see how eRestyleResult_Stop is handled
+  // in ElementRestyler::Restyle), we add them to the list of restyle
+  // roots to handle the next time around the
+  // RestyleTracker::DoProcessRestyles loop.
+  //
+  // Note that aElements must maintain the same invariant
+  // that mRestyleRoots does, i.e. that ancestors appear after descendants.
+  // Since we call AddRestyleRootsIfAwaitingRestyle only after we have
+  // removed the restyle root we are currently processing from the end of
+  // mRestyleRoots, and the only elements we get here in aElements are
+  // descendants of that restyle root, we are safe to simply append to the
+  // end of mRestyleRoots to maintain its invariant.
+  for (size_t i = 0; i < aElements.Length(); i++) {
+    Element* element = aElements[i];
+    if (element->HasFlag(RestyleBit())) {
+      mRestyleRoots.AppendElement(element);
+    }
+  }
+}
 
+} // namespace mozilla

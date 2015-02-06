@@ -7,8 +7,6 @@
 %{C++
 
 namespace mozilla {
-// Simple C++ getter for nsIXULRuntime::browserTabsRemote
-bool BrowserTabsRemote();
 // Simple C++ getter for nsIXULRuntime::browserTabsRemoteAutostart
 // This getter is a temporary function that checks for special
 // conditions in which e10s support is not great yet, and should
@@ -25,7 +23,7 @@ bool BrowserTabsRemoteAutostart();
  *                    stable/frozen, please contact Benjamin Smedberg.
  */
 
-[scriptable, uuid(e652d3b8-c77c-4601-a84d-b0716d2b32c0)]
+[scriptable, uuid(15b0e6cf-83da-4672-814e-cfa0b06ba31b)]
 interface nsIXULRuntime : nsISupports
 {
   /**
@@ -88,16 +86,22 @@ interface nsIXULRuntime : nsISupports
   readonly attribute unsigned long processID;
 
   /**
-   * If true, browser tabs may be opened in a different process from the main
-   * browser UI.
-   */
-  readonly attribute boolean browserTabsRemote;
-
-  /**
    * If true, browser tabs may be opened by default in a different process
    * from the main browser UI.
    */
   readonly attribute boolean browserTabsRemoteAutostart;
+
+  /**
+   * If true, the accessibility service is running.
+   */
+  readonly attribute boolean accessibilityEnabled;
+
+  /**
+   * This returns a very rough approximation of whether IME is likely
+   * to be used for the browser session. DO NOT USE! This is temporary
+   * and will be removed.
+   */
+  readonly attribute boolean keyboardMayHaveIME;
 
   /**
    * Signal the apprunner to invalidate caches on the next restart.
@@ -147,4 +151,9 @@ interface nsIXULRuntime : nsISupports
    * The distribution ID for this build (MOZ_DISTRIBUTION_ID).
    */
   readonly attribute AUTF8String distributionID;
+
+  /**
+   * True if this is an official build (MOZILLA_OFFICIAL).
+   */
+  readonly attribute boolean isOfficial;
 };

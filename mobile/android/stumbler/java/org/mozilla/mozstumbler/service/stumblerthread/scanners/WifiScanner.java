@@ -40,7 +40,7 @@ public class WifiScanner extends BroadcastReceiver {
     public static final int STATUS_ACTIVE = 1;
     public static final int STATUS_WIFI_DISABLED = -1;
 
-    private static final String LOG_TAG = AppGlobals.LOG_PREFIX + WifiScanner.class.getSimpleName();
+    private static final String LOG_TAG = AppGlobals.makeLogTag(WifiScanner.class.getSimpleName());
     private static final long WIFI_MIN_UPDATE_TIME = 5000; // milliseconds
 
     private boolean mStarted;
@@ -48,7 +48,7 @@ public class WifiScanner extends BroadcastReceiver {
     private WifiLock mWifiLock;
     private Timer mWifiScanTimer;
     private final Set<String> mAPs = Collections.synchronizedSet(new HashSet<String>());
-    private AtomicInteger mVisibleAPs = new AtomicInteger();
+    private final AtomicInteger mVisibleAPs = new AtomicInteger();
 
     /* Testing */
     public static boolean sIsTestMode;
@@ -65,17 +65,22 @@ public class WifiScanner extends BroadcastReceiver {
     }
 
     private List<ScanResult> getScanResults() {
-        return (sIsTestMode)? mTestModeFakeScanResults : getWifiManager().getScanResults();
+        WifiManager manager = getWifiManager();
+        if (manager == null) {
+            return null;
+        }
+        return getWifiManager().getScanResults();
     }
 
 
     public synchronized void start(final ActiveOrPassiveStumbling stumblingMode) {
-        if (mStarted) {
+        Prefs prefs = Prefs.getInstanceWithoutContext();
+        if (mStarted || prefs == null) {
             return;
         }
         mStarted = true;
 
-        boolean scanAlways = Prefs.getInstance().getWifiScanAlways();
+        boolean scanAlways = prefs.getWifiScanAlways();
 
         if (scanAlways || isWifiEnabled()) {
             activatePeriodicScan(stumblingMode);
@@ -94,6 +99,7 @@ public class WifiScanner extends BroadcastReceiver {
         mStarted = false;
     }
 
+    @Override
     public void onReceive(Context c, Intent intent) {
         String action = intent.getAction();
 
@@ -104,8 +110,12 @@ public class WifiScanner extends BroadcastReceiver {
                 deactivatePeriodicScan();
             }
         } else if (WifiManager.SCAN_RESULTS_AVAILABLE_ACTION.equals(action)) {
-            ArrayList<ScanResult> scanResults = new ArrayList<ScanResult>();
-            for (ScanResult scanResult : getScanResults()) {
+            final List<ScanResult> scanResultList = getScanResults();
+            if (scanResultList == null) {
+                return;
+            }
+            final ArrayList<ScanResult> scanResults = new ArrayList<ScanResult>();
+            for (ScanResult scanResult : scanResultList) {
                 scanResult.BSSID = BSSIDBlockList.canonicalizeBSSID(scanResult.BSSID);
                 if (shouldLog(scanResult)) {
                     scanResults.add(scanResult);
@@ -193,11 +203,9 @@ public class WifiScanner extends BroadcastReceiver {
 
     public static boolean shouldLog(ScanResult scanResult) {
         if (BSSIDBlockList.contains(scanResult)) {
-            Log.w(LOG_TAG, "Blocked BSSID: " + scanResult);
             return false;
         }
         if (SSIDBlockList.contains(scanResult)) {
-            Log.w(LOG_TAG, "Blocked SSID: " + scanResult);
             return false;
         }
         return true;

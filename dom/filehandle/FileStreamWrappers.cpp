@@ -8,13 +8,19 @@
 
 #include "FileHelper.h"
 #include "MainThreadUtils.h"
+#include "mozilla/Assertions.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/ipc/InputStreamParams.h"
 #include "MutableFile.h"
 #include "nsDebug.h"
 #include "nsError.h"
 #include "nsIRunnable.h"
 #include "nsISeekableStream.h"
 #include "nsThreadUtils.h"
+
+#ifdef DEBUG
+#include "nsXULAppAPI.h"
+#endif
 
 namespace mozilla {
 namespace dom {
@@ -50,7 +56,7 @@ public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIRUNNABLE
 
-  CloseRunnable(FileHelper* aFileHelper)
+  explicit CloseRunnable(FileHelper* aFileHelper)
   : mFileHelper(aFileHelper)
   { }
 
@@ -66,7 +72,7 @@ public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIRUNNABLE
 
-  DestroyRunnable(FileHelper* aFileHelper)
+  explicit DestroyRunnable(FileHelper* aFileHelper)
   : mFileHelper(aFileHelper)
   { }
 
@@ -127,7 +133,8 @@ FileInputStreamWrapper::FileInputStreamWrapper(nsISupports* aFileStream,
 
 NS_IMPL_ISUPPORTS_INHERITED(FileInputStreamWrapper,
                             FileStreamWrapper,
-                            nsIInputStream)
+                            nsIInputStream,
+                            nsIIPCSerializableInputStream)
 
 NS_IMETHODIMP
 FileInputStreamWrapper::Close()
@@ -228,6 +235,26 @@ FileInputStreamWrapper::IsNonBlocking(bool* _retval)
 {
   *_retval = false;
   return NS_OK;
+}
+
+void
+FileInputStreamWrapper::Serialize(InputStreamParams& aParams,
+                                  FileDescriptorArray& /* aFDs */)
+{
+  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(NS_IsMainThread());
+
+  nsCOMPtr<nsIInputStream> thisStream = do_QueryObject(this);
+
+  aParams = mozilla::ipc::SameProcessInputStreamParams(
+    reinterpret_cast<intptr_t>(thisStream.forget().take()));
+}
+
+bool
+FileInputStreamWrapper::Deserialize(const InputStreamParams& /* aParams */,
+                                    const FileDescriptorArray& /* aFDs */)
+{
+  MOZ_CRASH("Should never get here!");
 }
 
 FileOutputStreamWrapper::FileOutputStreamWrapper(nsISupports* aFileStream,

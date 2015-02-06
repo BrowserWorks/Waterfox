@@ -42,8 +42,6 @@
 #endif
 
 class AsyncVerifyRedirectCallbackForwarder;
-class BlobSet;
-class nsDOMFile;
 class nsFormData;
 class nsIJARChannel;
 class nsILoadGroup;
@@ -53,7 +51,8 @@ class nsIJSID;
 namespace mozilla {
 
 namespace dom {
-class DOMFile;
+class BlobSet;
+class File;
 }
 
 // A helper for building up an ArrayBuffer object's data
@@ -351,9 +350,9 @@ private:
     {
       mValue.mArrayBufferView = aArrayBufferView;
     }
-    explicit RequestBody(nsIDOMBlob* aBlob) : mType(Blob)
+    explicit RequestBody(mozilla::dom::File& aBlob) : mType(Blob)
     {
-      mValue.mBlob = aBlob;
+      mValue.mBlob = &aBlob;
     }
     explicit RequestBody(nsIDocument* aDocument) : mType(Document)
     {
@@ -385,7 +384,7 @@ private:
     union Value {
       const mozilla::dom::ArrayBuffer* mArrayBuffer;
       const mozilla::dom::ArrayBufferView* mArrayBufferView;
-      nsIDOMBlob* mBlob;
+      mozilla::dom::File* mBlob;
       nsIDocument* mDocument;
       const nsAString* mString;
       nsFormData* mFormData;
@@ -444,9 +443,8 @@ public:
   {
     aRv = Send(RequestBody(&aArrayBufferView));
   }
-  void Send(JSContext* /*aCx*/, nsIDOMBlob* aBlob, ErrorResult& aRv)
+  void Send(JSContext* /*aCx*/, mozilla::dom::File& aBlob, ErrorResult& aRv)
   {
-    NS_ASSERTION(aBlob, "Null should go to string version");
     aRv = Send(RequestBody(aBlob));
   }
   void Send(JSContext* /*aCx*/, nsIDocument& aDoc, ErrorResult& aRv)
@@ -693,13 +691,13 @@ protected:
 
   // It is either a cached blob-response from the last call to GetResponse,
   // but is also explicitly set in OnStopRequest.
-  nsCOMPtr<nsIDOMBlob> mResponseBlob;
+  nsRefPtr<mozilla::dom::File> mResponseBlob;
   // Non-null only when we are able to get a os-file representation of the
   // response, i.e. when loading from a file.
-  nsRefPtr<mozilla::dom::DOMFile> mDOMFile;
+  nsRefPtr<mozilla::dom::File> mDOMFile;
   // We stream data to mBlobSet when response type is "blob" or "moz-blob"
   // and mDOMFile is null.
-  nsAutoPtr<BlobSet> mBlobSet;
+  nsAutoPtr<mozilla::dom::BlobSet> mBlobSet;
 
   nsString mOverrideMimeType;
 

@@ -9,6 +9,13 @@
 #include "JSStreamWriter.h"
 #include "mozilla/TimeStamp.h"
 #include "nsAutoPtr.h"
+#include "Units.h"    // For ScreenIntPoint
+
+namespace mozilla {
+namespace layers {
+class Layer;
+} // layers
+} // mozilla
 
 /**
  * This is an abstract object that can be implied to supply
@@ -28,7 +35,7 @@ public:
   /**
    * ProfilerMarkerPayload takes ownership of aStack
    */
-  ProfilerMarkerPayload(ProfilerBacktrace* aStack = nullptr);
+  explicit ProfilerMarkerPayload(ProfilerBacktrace* aStack = nullptr);
   ProfilerMarkerPayload(const mozilla::TimeStamp& aStartTime,
                         const mozilla::TimeStamp& aEndTime,
                         ProfilerBacktrace* aStack = nullptr);
@@ -91,7 +98,7 @@ private:
 class ProfilerMarkerImagePayload : public ProfilerMarkerPayload
 {
 public:
-  ProfilerMarkerImagePayload(gfxASurface *aImg);
+  explicit ProfilerMarkerImagePayload(gfxASurface *aImg);
 
 protected:
   virtual void
@@ -120,6 +127,63 @@ private:
 
   const char* mSource;
   char* mFilename;
+};
+
+/**
+ * Contains the translation applied to a 2d layer so we can
+ * track the layer position at each frame.
+ */
+class LayerTranslationPayload : public ProfilerMarkerPayload
+{
+public:
+  LayerTranslationPayload(mozilla::layers::Layer* aLayer,
+                          mozilla::gfx::Point aPoint);
+
+protected:
+  virtual void
+  streamPayload(JSStreamWriter& b) { return streamPayloadImpl(b); }
+
+private:
+  void streamPayloadImpl(JSStreamWriter& b);
+  mozilla::layers::Layer* mLayer;
+  mozilla::gfx::Point mPoint;
+};
+
+/**
+ * Tracks when touch events are processed by gecko, not when
+ * the touch actually occured in gonk/android.
+ */
+class TouchDataPayload : public ProfilerMarkerPayload
+{
+public:
+  explicit TouchDataPayload(const mozilla::ScreenIntPoint& aPoint);
+  virtual ~TouchDataPayload() {}
+
+protected:
+  virtual void
+  streamPayload(JSStreamWriter& b) { return streamPayloadImpl(b); }
+
+private:
+  void streamPayloadImpl(JSStreamWriter& b);
+  mozilla::ScreenIntPoint mPoint;
+};
+
+/**
+ * Tracks when a vsync occurs according to the HardwareComposer.
+ */
+class VsyncPayload : public ProfilerMarkerPayload
+{
+public:
+  explicit VsyncPayload(mozilla::TimeStamp aVsyncTimestamp);
+  virtual ~VsyncPayload() {}
+
+protected:
+  virtual void
+  streamPayload(JSStreamWriter& b) { return streamPayloadImpl(b); }
+
+private:
+  void streamPayloadImpl(JSStreamWriter& b);
+  mozilla::TimeStamp mVsyncTimestamp;
 };
 
 #endif // PROFILER_MARKERS_H

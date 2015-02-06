@@ -42,6 +42,14 @@ class LIRGeneratorNone : public LIRGeneratorShared
     bool lowerForALU(T, MDefinition *, MDefinition *, MDefinition *v = nullptr) { MOZ_CRASH(); }
     template <typename T>
     bool lowerForFPU(T, MDefinition *, MDefinition *, MDefinition *v = nullptr) { MOZ_CRASH(); }
+    bool lowerForCompIx4(LSimdBinaryCompIx4 *ins, MSimdBinaryComp *mir,
+                         MDefinition *lhs, MDefinition *rhs) {
+        MOZ_CRASH();
+    }
+    bool lowerForCompFx4(LSimdBinaryCompFx4 *ins, MSimdBinaryComp *mir,
+                         MDefinition *lhs, MDefinition *rhs) {
+        MOZ_CRASH();
+    }
     bool lowerForBitAndAndBranch(LBitAndAndBranch *, MInstruction *,
                                  MDefinition *, MDefinition *) {
         MOZ_CRASH();
@@ -73,7 +81,9 @@ class LIRGeneratorNone : public LIRGeneratorShared
 
     LTableSwitch *newLTableSwitch(LAllocation, LDefinition, MTableSwitch *) { MOZ_CRASH(); }
     LTableSwitchV *newLTableSwitchV(MTableSwitch *) { MOZ_CRASH(); }
+    bool visitSimdTernaryBitwise(MSimdTernaryBitwise *ins) { MOZ_CRASH(); }
     bool visitSimdSplatX4(MSimdSplatX4 *ins) { MOZ_CRASH(); }
+    bool visitSimdValueX4(MSimdValueX4 *lir) { MOZ_CRASH(); }
 };
 
 typedef LIRGeneratorNone LIRGeneratorSpecific;

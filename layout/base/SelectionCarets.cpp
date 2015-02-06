@@ -24,6 +24,7 @@
 #include "nsView.h"
 #include "mozilla/dom/DOMRect.h"
 #include "mozilla/dom/Element.h"
+#include "mozilla/dom/ScrollViewChangeEvent.h"
 #include "mozilla/dom/Selection.h"
 #include "mozilla/dom/TreeWalker.h"
 #include "mozilla/Preferences.h"
@@ -32,6 +33,7 @@
 #include "nsFrameSelection.h"
 
 using namespace mozilla;
+using namespace mozilla::dom;
 
 // We treat mouse/touch move as "REAL" move event once its move distance
 // exceed this value, in CSS pixel.
@@ -50,9 +52,10 @@ SelectionCarets::SelectionCarets(nsIPresShell *aPresShell)
   : mActiveTouchId(-1)
   , mCaretCenterToDownPointOffsetY(0)
   , mDragMode(NONE)
-  , mVisible(false)
-  , mStartCaretVisible(false)
+  , mAPZenabled(false)
   , mEndCaretVisible(false)
+  , mStartCaretVisible(false)
+  , mVisible(false)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -81,17 +84,6 @@ SelectionCarets::~SelectionCarets()
   }
 
   mPresShell = nullptr;
-}
-
-static bool
-IsOnRect(const nsRect& aRect,
-         const nsPoint& aPoint,
-         int32_t aInflateSize)
-{
-  // Check if the click was in the bounding box of the selection caret
-  nsRect rect = aRect;
-  rect.Inflate(aInflateSize);
-  return rect.Contains(aPoint);
 }
 
 nsEventStatus
@@ -146,14 +138,13 @@ SelectionCarets::HandleEvent(WidgetEvent* aEvent)
 
     mActiveTouchId = nowTouchId;
     mDownPoint = ptInCanvas;
-    int32_t inflateSize = SelectionCaretsInflateSize();
-    if (mVisible && IsOnRect(GetStartFrameRect(), ptInCanvas, inflateSize)) {
+    if (IsOnStartFrame(ptInCanvas)) {
       mDragMode = START_FRAME;
       mCaretCenterToDownPointOffsetY = GetCaretYCenterPosition() - ptInCanvas.y;
       SetSelectionDirection(false);
       SetSelectionDragState(true);
       return nsEventStatus_eConsumeNoDefault;
-    } else if (mVisible && IsOnRect(GetEndFrameRect(), ptInCanvas, inflateSize)) {
+    } else if (IsOnEndFrame(ptInCanvas)) {
       mDragMode = END_FRAME;
       mCaretCenterToDownPointOffsetY = GetCaretYCenterPosition() - ptInCanvas.y;
       SetSelectionDirection(true);
@@ -788,42 +779,36 @@ SelectionCarets::SetEndFramePos(const nsPoint& aPosition)
   SetFramePos(mPresShell->GetSelectionCaretsEndElement(), aPosition);
 }
 
+bool
+SelectionCarets::IsOnStartFrame(const nsPoint& aPosition)
+{
+  return mVisible &&
+    nsLayoutUtils::ContainsPoint(GetStartFrameRect(), aPosition,
+                                 SelectionCaretsInflateSize());
+}
+
+bool
+SelectionCarets::IsOnEndFrame(const nsPoint& aPosition)
+{
+  return mVisible &&
+    nsLayoutUtils::ContainsPoint(GetEndFrameRect(), aPosition,
+                                 SelectionCaretsInflateSize());
+}
+
 nsRect
 SelectionCarets::GetStartFrameRect()
 {
-  nsIFrame* canvasFrame = mPresShell->GetCanvasFrame();
   dom::Element* element = mPresShell->GetSelectionCaretsStartElement();
-  if (!element) {
-    return nsRect();
-  }
-
-  nsIFrame* frame = element->GetPrimaryFrame();
-  if (!frame) {
-    return nsRect();
-  }
-
-  nsRect frameRect = frame->GetRectRelativeToSelf();
-  nsLayoutUtils::TransformRect(frame, canvasFrame, frameRect);
-  return frameRect;
+  nsIFrame* canvasFrame = mPresShell->GetCanvasFrame();
+  return nsLayoutUtils::GetRectRelativeToFrame(element, canvasFrame);
 }
 
 nsRect
 SelectionCarets::GetEndFrameRect()
 {
-  nsIFrame* canvasFrame = mPresShell->GetCanvasFrame();
   dom::Element* element = mPresShell->GetSelectionCaretsEndElement();
-  if (!element) {
-    return nsRect();
-  }
-
-  nsIFrame* frame = element->GetPrimaryFrame();
-  if (!frame) {
-    return nsRect();
-  }
-
-  nsRect frameRect = frame->GetRectRelativeToSelf();
-  nsLayoutUtils::TransformRect(frame, canvasFrame, frameRect);
-  return frameRect;
+  nsIFrame* canvasFrame = mPresShell->GetCanvasFrame();
+  return nsLayoutUtils::GetRectRelativeToFrame(element, canvasFrame);
 }
 
 nsIFrame*
@@ -879,11 +864,52 @@ SelectionCarets::NotifySelectionChanged(nsIDOMDocument* aDoc,
   return NS_OK;
 }
 
+static void
+DispatchScrollViewChangeEvent(nsIPresShell *aPresShell, const dom::ScrollState aState, const mozilla::CSSIntPoint aScrollPos)
+{
+  nsCOMPtr<nsIDocument> doc = aPresShell->GetDocument();
+  if (doc) {
+    bool ret;
+    ScrollViewChangeEventInit detail;
+    detail.mBubbles = true;
+    detail.mCancelable = false;
+    detail.mState = aState;
+    detail.mScrollX = aScrollPos.x;
+    detail.mScrollY = aScrollPos.y;
+    nsRefPtr<ScrollViewChangeEvent> event =
+      ScrollViewChangeEvent::Constructor(doc, NS_LITERAL_STRING("scrollviewchange"), detail);
+
+    event->SetTrusted(true);
+    event->GetInternalNSEvent()->mFlags.mOnlyChromeDispatch = true;
+    doc->DispatchEvent(event, &ret);
+  }
+}
+
+void
+SelectionCarets::AsyncPanZoomStarted(const mozilla::CSSIntPoint aScrollPos)
+{
+  // Receives the notifications from AsyncPanZoom, sets mAPZenabled as true here
+  // to bypass the notifications from ScrollPositionChanged callbacks
+  mAPZenabled = true;
+  SetVisibility(false);
+  DispatchScrollViewChangeEvent(mPresShell, dom::ScrollState::Started, aScrollPos);
+}
+
+void
+SelectionCarets::AsyncPanZoomStopped(const mozilla::CSSIntPoint aScrollPos)
+{
+  UpdateSelectionCarets();
+  DispatchScrollViewChangeEvent(mPresShell, dom::ScrollState::Stopped, aScrollPos);
+}
+
 void
 SelectionCarets::ScrollPositionChanged()
 {
-  SetVisibility(false);
-  LaunchScrollEndDetector();
+  if (!mAPZenabled) {
+    SetVisibility(false);
+    //TODO: handling scrolling for selection bubble when APZ is off
+    LaunchScrollEndDetector();
+  }
 }
 
 void

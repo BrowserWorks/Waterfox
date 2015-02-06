@@ -413,7 +413,7 @@ WebappsApplication.prototype = {
   },
 
   get receipts() {
-    return this._proxy.receipts;
+    return this._proxy.receipts || [];
   },
 
   get downloadError() {
@@ -612,7 +612,7 @@ WebappsApplication.prototype = {
       case "Webapps:Connect:Return:OK":
         this.removeMessageListeners(["Webapps:Connect:Return:OK",
                                      "Webapps:Connect:Return:KO"]);
-        let messagePorts = [];
+        let messagePorts = new this._window.Array();
         msg.messagePortIDs.forEach((aPortID) => {
           let port = new this._window.MozInterAppMessagePort(aPortID);
           messagePorts.push(port);
@@ -626,7 +626,7 @@ WebappsApplication.prototype = {
         break;
       case "Webapps:GetConnections:Return:OK":
         this.removeMessageListeners(aMessage.name);
-        let connections = [];
+        let connections = new this._window.Array();
         msg.connections.forEach((aConnection) => {
           let connection =
             new this._window.MozInterAppConnection(aConnection.keyword,
@@ -639,6 +639,7 @@ WebappsApplication.prototype = {
       case "Webapps:AddReceipt:Return:OK":
         this.removeMessageListeners(["Webapps:AddReceipt:Return:OK",
                                      "Webapps:AddReceipt:Return:KO"]);
+        this.__DOM_IMPL__._clearCachedReceiptsValue();
         this._proxy.receipts = msg.receipts;
         Services.DOMRequest.fireSuccess(req, null);
         break;
@@ -650,6 +651,7 @@ WebappsApplication.prototype = {
       case "Webapps:RemoveReceipt:Return:OK":
         this.removeMessageListeners(["Webapps:RemoveReceipt:Return:OK",
                                      "Webapps:RemoveReceipt:Return:KO"]);
+        this.__DOM_IMPL__._clearCachedReceiptsValue();
         this._proxy.receipts = msg.receipts;
         Services.DOMRequest.fireSuccess(req, null);
         break;
@@ -661,6 +663,7 @@ WebappsApplication.prototype = {
       case "Webapps:ReplaceReceipt:Return:OK":
         this.removeMessageListeners(["Webapps:ReplaceReceipt:Return:OK",
                                      "Webapps:ReplaceReceipt:Return:KO"]);
+        this.__DOM_IMPL__._clearCachedReceiptsValue();
         this._proxy.receipts = msg.receipts;
         Services.DOMRequest.fireSuccess(req, null);
         break;

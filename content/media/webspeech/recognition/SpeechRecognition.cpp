@@ -57,6 +57,36 @@ GetSpeechRecognitionLog()
 #define SR_LOG(...)
 #endif
 
+already_AddRefed<nsISpeechRecognitionService>
+GetSpeechRecognitionService()
+{
+  nsAutoCString speechRecognitionServiceCID;
+
+  nsAdoptingCString prefValue =
+  Preferences::GetCString(PREFERENCE_DEFAULT_RECOGNITION_SERVICE);
+  nsAutoCString speechRecognitionService;
+
+  if (!prefValue.get() || prefValue.IsEmpty()) {
+    speechRecognitionService = DEFAULT_RECOGNITION_SERVICE;
+  } else {
+    speechRecognitionService = prefValue;
+  }
+
+  if (!SpeechRecognition::mTestConfig.mFakeRecognitionService){
+    speechRecognitionServiceCID =
+      NS_LITERAL_CSTRING(NS_SPEECH_RECOGNITION_SERVICE_CONTRACTID_PREFIX) +
+      speechRecognitionService;
+  } else {
+    speechRecognitionServiceCID =
+      NS_SPEECH_RECOGNITION_SERVICE_CONTRACTID_PREFIX "fake";
+  }
+
+  nsresult aRv;
+  nsCOMPtr<nsISpeechRecognitionService> recognitionService;
+  recognitionService = do_GetService(speechRecognitionServiceCID.get(), &aRv);
+  return recognitionService.forget();
+}
+
 NS_INTERFACE_MAP_BEGIN(SpeechRecognition)
   NS_INTERFACE_MAP_ENTRY(nsIObserver)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
@@ -313,7 +343,7 @@ SpeechRecognition::Transition(SpeechEvent* aEvent)
  * Returns the number of samples that were processed.
  */
 uint32_t
-SpeechRecognition::ProcessAudioSegment(AudioSegment* aSegment)
+SpeechRecognition::ProcessAudioSegment(AudioSegment* aSegment, TrackRate aTrackRate)
 {
   AudioSegment::ChunkIterator iterator(*aSegment);
   uint32_t samples = 0;
@@ -324,35 +354,8 @@ SpeechRecognition::ProcessAudioSegment(AudioSegment* aSegment)
     iterator.Next();
   }
 
-  mRecognitionService->ProcessAudioSegment(aSegment);
+  mRecognitionService->ProcessAudioSegment(aSegment, aTrackRate);
   return samples;
-}
-
-void
-SpeechRecognition::GetRecognitionServiceCID(nsACString& aResultCID)
-{
-  if (mTestConfig.mFakeRecognitionService) {
-    aResultCID =
-      NS_SPEECH_RECOGNITION_SERVICE_CONTRACTID_PREFIX "fake";
-
-    return;
-  }
-
-  nsAdoptingCString prefValue =
-    Preferences::GetCString(PREFERENCE_DEFAULT_RECOGNITION_SERVICE);
-
-  nsAutoCString speechRecognitionService;
-  if (!prefValue.get() || prefValue.IsEmpty()) {
-    speechRecognitionService = DEFAULT_RECOGNITION_SERVICE;
-  } else {
-    speechRecognitionService = prefValue;
-  }
-
-  aResultCID =
-    NS_LITERAL_CSTRING(NS_SPEECH_RECOGNITION_SERVICE_CONTRACTID_PREFIX) +
-    speechRecognitionService;
-
-  return;
 }
 
 /****************************************************************************
@@ -400,7 +403,7 @@ SpeechRecognition::StartedAudioCapture(SpeechEvent* aEvent)
   SetState(STATE_ESTIMATING);
 
   mEndpointer.SetEnvironmentEstimationMode();
-  mEstimationSamples += ProcessAudioSegment(aEvent->mAudioSegment);
+  mEstimationSamples += ProcessAudioSegment(aEvent->mAudioSegment, aEvent->mTrackRate);
 
   DispatchTrustedEvent(NS_LITERAL_STRING("audiostart"));
   if (mCurrentState == STATE_ESTIMATING) {
@@ -424,7 +427,7 @@ SpeechRecognition::WaitForEstimation(SpeechEvent* aEvent)
 {
   SetState(STATE_ESTIMATING);
 
-  mEstimationSamples += ProcessAudioSegment(aEvent->mAudioSegment);
+  mEstimationSamples += ProcessAudioSegment(aEvent->mAudioSegment, aEvent->mTrackRate);
   if (mEstimationSamples > kESTIMATION_SAMPLES) {
     mEndpointer.SetUserInputMode();
     SetState(STATE_WAITING_FOR_SPEECH);
@@ -436,7 +439,7 @@ SpeechRecognition::DetectSpeech(SpeechEvent* aEvent)
 {
   SetState(STATE_WAITING_FOR_SPEECH);
 
-  ProcessAudioSegment(aEvent->mAudioSegment);
+  ProcessAudioSegment(aEvent->mAudioSegment, aEvent->mTrackRate);
   if (mEndpointer.DidStartReceivingSpeech()) {
     mSpeechDetectionTimer->Cancel();
     SetState(STATE_RECOGNIZING);
@@ -449,7 +452,7 @@ SpeechRecognition::WaitForSpeechEnd(SpeechEvent* aEvent)
 {
   SetState(STATE_RECOGNIZING);
 
-  ProcessAudioSegment(aEvent->mAudioSegment);
+  ProcessAudioSegment(aEvent->mAudioSegment, aEvent->mTrackRate);
   if (mEndpointer.speech_input_complete()) {
     DispatchTrustedEvent(NS_LITERAL_STRING("speechend"));
 
@@ -691,13 +694,10 @@ SpeechRecognition::Start(const Optional<NonNull<DOMMediaStream>>& aStream, Error
     return;
   }
 
-  nsAutoCString speechRecognitionServiceCID;
-  GetRecognitionServiceCID(speechRecognitionServiceCID);
+  mRecognitionService = GetSpeechRecognitionService();
+  NS_ENSURE_TRUE_VOID(mRecognitionService);
 
   nsresult rv;
-  mRecognitionService = do_GetService(speechRecognitionServiceCID.get(), &rv);
-  NS_ENSURE_SUCCESS_VOID(rv);
-
   rv = mRecognitionService->Initialize(this);
   NS_ENSURE_SUCCESS_VOID(rv);
 
@@ -708,8 +708,7 @@ SpeechRecognition::Start(const Optional<NonNull<DOMMediaStream>>& aStream, Error
     StartRecording(&aStream.Value());
   } else {
     MediaManager* manager = MediaManager::Get();
-    manager->GetUserMedia(false,
-                          GetOwner(),
+    manager->GetUserMedia(GetOwner(),
                           constraints,
                           new GetUserMediaSuccessCallback(this),
                           new GetUserMediaErrorCallback(this));
@@ -802,7 +801,7 @@ SpeechRecognition::SplitSamplesBuffer(const int16_t* aSamplesBuffer,
     memcpy(chunk->Data(), aSamplesBuffer + chunkStart,
            mAudioSamplesPerChunk * sizeof(int16_t));
 
-    aResult.AppendElement(chunk);
+    aResult.AppendElement(chunk.forget());
     chunkStart += mAudioSamplesPerChunk;
   }
 
@@ -828,7 +827,7 @@ SpeechRecognition::CreateAudioSegment(nsTArray<nsRefPtr<SharedBuffer>>& aChunks)
 void
 SpeechRecognition::FeedAudioData(already_AddRefed<SharedBuffer> aSamples,
                                  uint32_t aDuration,
-                                 MediaStreamListener* aProvider)
+                                 MediaStreamListener* aProvider, TrackRate aTrackRate)
 {
   NS_ASSERTION(!NS_IsMainThread(),
                "FeedAudioData should not be called in the main thread");
@@ -851,8 +850,7 @@ SpeechRecognition::FeedAudioData(already_AddRefed<SharedBuffer> aSamples,
     samplesIndex += FillSamplesBuffer(samples, aDuration);
 
     if (mBufferedSamples == mAudioSamplesPerChunk) {
-      chunksToSend.AppendElement(mAudioSamplesBuffer);
-      mAudioSamplesBuffer = nullptr;
+      chunksToSend.AppendElement(mAudioSamplesBuffer.forget());
       mBufferedSamples = 0;
     }
   }
@@ -877,6 +875,7 @@ SpeechRecognition::FeedAudioData(already_AddRefed<SharedBuffer> aSamples,
   nsRefPtr<SpeechEvent> event = new SpeechEvent(this, EVENT_AUDIO_DATA);
   event->mAudioSegment = segment;
   event->mProvider = aProvider;
+  event->mTrackRate = aTrackRate;
   NS_DispatchToMainThread(event);
 
   return;
@@ -935,8 +934,11 @@ NS_IMPL_ISUPPORTS(SpeechRecognition::GetUserMediaSuccessCallback, nsIDOMGetUserM
 NS_IMETHODIMP
 SpeechRecognition::GetUserMediaSuccessCallback::OnSuccess(nsISupports* aStream)
 {
-  nsCOMPtr<nsIDOMLocalMediaStream> localStream = do_QueryInterface(aStream);
-  mRecognition->StartRecording(static_cast<DOMLocalMediaStream*>(localStream.get()));
+  DOMLocalMediaStream *localStream = nullptr;
+  nsresult rv = CallQueryInterface(aStream, &localStream);
+  if (NS_SUCCEEDED(rv)) {
+    mRecognition->StartRecording(localStream);
+  }
   return NS_OK;
 }
 

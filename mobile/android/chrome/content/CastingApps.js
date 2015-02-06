@@ -7,33 +7,37 @@
 XPCOMUtils.defineLazyModuleGetter(this, "PageActions",
                                   "resource://gre/modules/PageActions.jsm");
 
-// Define service targets. We should consider moving these to their respective
+// Define service devices. We should consider moving these to their respective
 // JSM files, but we left them here to allow for better lazy JSM loading.
-var rokuTarget = {
+var rokuDevice = {
+  id: "roku:ecp",
   target: "roku:ecp",
   factory: function(aService) {
     Cu.import("resource://gre/modules/RokuApp.jsm");
     return new RokuApp(aService);
   },
+  mirror: Services.prefs.getBoolPref("browser.mirroring.enabled.roku"),
   types: ["video/mp4"],
   extensions: ["mp4"]
 };
 
-var fireflyTarget = {
+var matchstickDevice = {
+  id: "matchstick:dial",
   target: "urn:dial-multiscreen-org:service:dial:1",
   filters: {
     server: null,
     modelName: "Eureka Dongle"
   },
   factory: function(aService) {
-    Cu.import("resource://gre/modules/FireflyApp.jsm");
-    return new FireflyApp(aService);
+    Cu.import("resource://gre/modules/MatchstickApp.jsm");
+    return new MatchstickApp(aService);
   },
   types: ["video/mp4", "video/webm"],
   extensions: ["mp4", "webm"]
 };
 
-var mediaPlayerTarget = {
+var mediaPlayerDevice = {
+  id: "media:router",
   target: "media:router",
   factory: function(aService) {
     Cu.import("resource://gre/modules/MediaPlayerApp.jsm");
@@ -49,14 +53,14 @@ var CastingApps = {
   mirrorStopMenuId: -1,
 
   init: function ca_init() {
-    if (!this.isEnabled()) {
+    if (!this.isCastingEnabled()) {
       return;
     }
 
     // Register targets
-    SimpleServiceDiscovery.registerTarget(rokuTarget);
-    SimpleServiceDiscovery.registerTarget(fireflyTarget);
-    SimpleServiceDiscovery.registerTarget(mediaPlayerTarget);
+    SimpleServiceDiscovery.registerDevice(rokuDevice);
+    SimpleServiceDiscovery.registerDevice(matchstickDevice);
+    SimpleServiceDiscovery.registerDevice(mediaPlayerDevice);
 
     // Search for devices continuously every 120 seconds
     SimpleServiceDiscovery.search(120 * 1000);
@@ -96,22 +100,25 @@ var CastingApps = {
     NativeWindow.contextmenus.remove(this._castMenuId);
   },
 
+  _mirrorStarted: function(stopMirrorCallback) {
+    this.stopMirrorCallback = stopMirrorCallback;
+    NativeWindow.menu.update(this.mirrorStartMenuId, { visible: false });
+    NativeWindow.menu.update(this.mirrorStopMenuId, { visible: true });
+  },
+
   serviceAdded: function(aService) {
-    if (aService.mirror && this.mirrorStartMenuId == -1) {
+    if (this.isMirroringEnabled() && aService.mirror && this.mirrorStartMenuId == -1) {
       this.mirrorStartMenuId = NativeWindow.menu.add({
         name: Strings.browser.GetStringFromName("casting.mirrorTab"),
         callback: function() {
-          function callbackFunc(aService) {
+          let callbackFunc = function(aService) {
             let app = SimpleServiceDiscovery.findAppForService(aService);
-            if (app)
-              app.mirror(function() {
-              });
-          }
+            if (app) {
+              app.mirror(function() {}, window, BrowserApp.selectedTab.getViewport(), this._mirrorStarted.bind(this));
+            }
+          }.bind(this);
 
-          function filterFunc(aService) {
-            return aService.mirror == true;
-          }
-          this.prompt(callbackFunc, filterFunc);
+          this.prompt(callbackFunc, aService => aService.mirror);
         }.bind(this),
         parent: NativeWindow.menu.toolsMenuID
       });
@@ -122,13 +129,18 @@ var CastingApps = {
           if (this.tabMirror) {
             this.tabMirror.stop();
             this.tabMirror = null;
+          } else if (this.stopMirrorCallback) {
+            this.stopMirrorCallback();
+            this.stopMirrorCallback = null;
           }
           NativeWindow.menu.update(this.mirrorStartMenuId, { visible: true });
           NativeWindow.menu.update(this.mirrorStopMenuId, { visible: false });
         }.bind(this),
       });
     }
-    NativeWindow.menu.update(this.mirrorStopMenuId, { visible: false });
+    if (this.mirrorStartMenuId != -1) {
+      NativeWindow.menu.update(this.mirrorStopMenuId, { visible: false });
+    }
   },
 
   serviceLost: function(aService) {
@@ -146,8 +158,12 @@ var CastingApps = {
     }
   },
 
-  isEnabled: function isEnabled() {
+  isCastingEnabled: function isCastingEnabled() {
     return Services.prefs.getBoolPref("browser.casting.enabled");
+  },
+
+  isMirroringEnabled: function isMirroringEnabled() {
+    return Services.prefs.getBoolPref("browser.mirroring.enabled");
   },
 
   observe: function (aSubject, aTopic, aData) {
@@ -562,7 +578,7 @@ var CastingApps = {
     }
 
     aRemoteMedia.load(this.session.data);
-    sendMessageToJava({ type: "Casting:Started", device: this.session.service.friendlyName });
+    Messaging.sendRequest({ type: "Casting:Started", device: this.session.service.friendlyName });
 
     let video = this.session.videoRef.get();
     if (video) {
@@ -572,7 +588,7 @@ var CastingApps = {
   },
 
   onRemoteMediaStop: function(aRemoteMedia) {
-    sendMessageToJava({ type: "Casting:Stopped" });
+    Messaging.sendRequest({ type: "Casting:Stopped" });
     this._shutdown();
   },
 

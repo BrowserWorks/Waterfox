@@ -17,6 +17,7 @@ EXPORTS.mozilla.dom += [
 ]
 
 UNIFIED_SOURCES += [
+    'ContainerParser.cpp',
     'MediaSource.cpp',
     'MediaSourceDecoder.cpp',
     'MediaSourceReader.cpp',
@@ -25,6 +26,7 @@ UNIFIED_SOURCES += [
     'SourceBufferDecoder.cpp',
     'SourceBufferList.cpp',
     'SourceBufferResource.cpp',
+    'TrackBuffer.cpp',
 ]
 
 FAIL_ON_WARNINGS = True

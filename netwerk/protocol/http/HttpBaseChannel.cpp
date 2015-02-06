@@ -31,6 +31,9 @@
 #include "nsContentUtils.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsIObserverService.h"
+#include "nsProxyRelease.h"
+#include "nsPIDOMWindow.h"
+#include "nsPerformance.h"
 
 #include <algorithm>
 
@@ -65,6 +68,7 @@ HttpBaseChannel::HttpBaseChannel()
   , mLoadUnblocked(false)
   , mResponseTimeoutEnabled(true)
   , mAllRedirectsSameOrigin(true)
+  , mAllRedirectsPassTimingAllowCheck(true)
   , mSuspendCount(0)
   , mProxyResolveFlags(0)
   , mContentDispositionHint(UINT32_MAX)
@@ -82,6 +86,15 @@ HttpBaseChannel::HttpBaseChannel()
 HttpBaseChannel::~HttpBaseChannel()
 {
   LOG(("Destroying HttpBaseChannel @%x\n", this));
+
+  if (mLoadInfo) {
+    nsCOMPtr<nsIThread> mainThread;
+    NS_GetMainThread(getter_AddRefs(mainThread));
+    
+    nsILoadInfo *forgetableLoadInfo;
+    mLoadInfo.forget(&forgetableLoadInfo);
+    NS_ProxyRelease(mainThread, forgetableLoadInfo, false);
+  }
 
   // Make sure we don't leak
   CleanRedirectCacheChainIfNecessary();
@@ -1738,7 +1751,7 @@ HttpBaseChannel::GetPrincipal(bool requireAppId)
       return nullptr;
   }
 
-  securityManager->GetChannelPrincipal(this, getter_AddRefs(mPrincipal));
+  securityManager->GetChannelResultPrincipal(this, getter_AddRefs(mPrincipal));
   if (!mPrincipal) {
       LOG(("HttpBaseChannel::GetPrincipal: No channel principal [this=%p]",
            this));
@@ -2028,8 +2041,10 @@ HttpBaseChannel::SetupReplacementChannel(nsIURI       *newURI,
       nsCOMPtr<nsIURI> uri;
       mRedirects[i]->GetURI(getter_AddRefs(uri));
       nsCString spec;
-      uri->GetSpec(spec);
-      LOG(("HttpBaseChannel::SetupReplacementChannel adding redirect %s "
+      if (uri) {
+        uri->GetSpec(spec);
+      }
+      LOG(("HttpBaseChannel::SetupReplacementChannel adding redirect \'%s\' "
            "[this=%p]", spec.get(), this));
 #endif
       httpInternal->AddRedirect(mRedirects[i]);
@@ -2087,6 +2102,17 @@ HttpBaseChannel::SetupReplacementChannel(nsIURI       *newURI,
     // Check whether or not this was a cross-domain redirect.
     newTimedChannel->SetAllRedirectsSameOrigin(
         mAllRedirectsSameOrigin && SameOriginWithOriginalUri(newURI));
+
+    // Execute the timing allow check to determine whether
+    // to report the redirect timing info
+    nsCOMPtr<nsILoadInfo> loadInfo;
+    GetLoadInfo(getter_AddRefs(loadInfo));
+    if (loadInfo) {
+      nsCOMPtr<nsIPrincipal> principal = loadInfo->LoadingPrincipal();
+      newTimedChannel->SetAllRedirectsPassTimingAllowCheck(
+        mAllRedirectsPassTimingAllowCheck &&
+        oldTimedChannel->TimingAllowCheck(principal));
+    }
   }
 
   // This channel has been redirected. Don't report timing info.
@@ -2194,6 +2220,63 @@ HttpBaseChannel::SetAllRedirectsSameOrigin(bool aAllRedirectsSameOrigin)
 }
 
 NS_IMETHODIMP
+HttpBaseChannel::GetAllRedirectsPassTimingAllowCheck(bool *aPassesCheck)
+{
+  *aPassesCheck = mAllRedirectsPassTimingAllowCheck;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+HttpBaseChannel::SetAllRedirectsPassTimingAllowCheck(bool aPassesCheck)
+{
+  mAllRedirectsPassTimingAllowCheck = aPassesCheck;
+  return NS_OK;
+}
+
+// http://www.w3.org/TR/resource-timing/#timing-allow-check
+NS_IMETHODIMP
+HttpBaseChannel::TimingAllowCheck(nsIPrincipal *aOrigin, bool *_retval)
+{
+  nsIScriptSecurityManager* ssm = nsContentUtils::GetSecurityManager();
+  nsCOMPtr<nsIPrincipal> resourcePrincipal;
+  nsresult rv = ssm->GetChannelURIPrincipal(this, getter_AddRefs(resourcePrincipal));
+  if (NS_FAILED(rv) || !resourcePrincipal || !aOrigin) {
+    *_retval = false;
+    return NS_OK;
+  }
+
+  bool sameOrigin = false;
+  rv = resourcePrincipal->Equals(aOrigin, &sameOrigin);
+  if (NS_SUCCEEDED(rv) && sameOrigin) {
+    *_retval = true;
+    return NS_OK;
+  }
+
+  nsAutoCString headerValue;
+  rv = GetResponseHeader(NS_LITERAL_CSTRING("Timing-Allow-Origin"), headerValue);
+  if (NS_FAILED(rv)) {
+    *_retval = false;
+    return NS_OK;
+  }
+
+  if (headerValue == "*") {
+    *_retval = true;
+    return NS_OK;
+  }
+
+  nsAutoCString origin;
+  nsContentUtils::GetASCIIOrigin(aOrigin, origin);
+
+  if (headerValue == origin) {
+    *_retval = true;
+    return NS_OK;
+  }
+
+  *_retval = false;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 HttpBaseChannel::GetDomainLookupStart(TimeStamp* _retval) {
   *_retval = mTransactionTimings.domainLookupStart;
   return NS_OK;
@@ -2291,6 +2374,45 @@ IMPL_TIMING_ATTR(RedirectEnd)
 
 #undef IMPL_TIMING_ATTR
 
+nsPerformance*
+HttpBaseChannel::GetPerformance()
+{
+    // If performance timing is disabled, there is no need for the nsPerformance
+    // object anymore.
+    if (!mTimingEnabled) {
+        return nullptr;
+    }
+    nsCOMPtr<nsILoadContext> loadContext;
+    NS_QueryNotificationCallbacks(this, loadContext);
+    if (!loadContext) {
+        return nullptr;
+    }
+    nsCOMPtr<nsIDOMWindow> domWindow;
+    loadContext->GetAssociatedWindow(getter_AddRefs(domWindow));
+    if (!domWindow) {
+        return nullptr;
+    }
+    nsCOMPtr<nsPIDOMWindow> pDomWindow = do_QueryInterface(domWindow);
+    if (!pDomWindow) {
+        return nullptr;
+    }
+    if (!pDomWindow->IsInnerWindow()) {
+        pDomWindow = pDomWindow->GetCurrentInnerWindow();
+        if (!pDomWindow) {
+            return nullptr;
+        }
+    }
+
+    nsPerformance* docPerformance = pDomWindow->GetPerformance();
+    if (!docPerformance) {
+      return nullptr;
+    }
+    // iframes should be added to the parent's entries list.
+    if (mLoadFlags & LOAD_DOCUMENT_URI) {
+      return docPerformance->GetParentPerformance();
+    }
+    return docPerformance;
+}
 
 //------------------------------------------------------------------------------
 

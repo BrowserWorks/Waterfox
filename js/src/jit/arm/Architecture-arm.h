@@ -250,7 +250,7 @@ class FloatRegisters
     }
 
     static const char *GetName(uint32_t i) {
-        JS_ASSERT(i < Total);
+        MOZ_ASSERT(i < Total);
         return GetName(Code(i));
     }
 
@@ -361,8 +361,8 @@ class VFPRegister
       : kind(Double), code_(id), _isInvalid(false), _isMissing(false)
     { }
     bool operator==(const VFPRegister &other) const {
-        JS_ASSERT(!isInvalid());
-        JS_ASSERT(!other.isInvalid());
+        MOZ_ASSERT(!isInvalid());
+        MOZ_ASSERT(!other.isInvalid());
         return kind == other.kind && code_ == other.code_;
     }
     bool isDouble() const { return kind == Double; }
@@ -395,16 +395,16 @@ class VFPRegister
         VFPRegIndexSplit(uint32_t block_, uint32_t bit_)
           : block(block_), bit(bit_)
         {
-            JS_ASSERT(block == block_);
-            JS_ASSERT(bit == bit_);
+            MOZ_ASSERT(block == block_);
+            MOZ_ASSERT(bit == bit_);
         }
     };
 
     Code code() const {
-        JS_ASSERT(!_isInvalid && !_isMissing);
+        MOZ_ASSERT(!_isInvalid && !_isMissing);
         // This should only be used in areas where we only have doubles and
         // singles.
-        JS_ASSERT(isFloat());
+        MOZ_ASSERT(isFloat());
         return Code(code_ | (kind << 5));
     }
     uint32_t id() const {
@@ -451,12 +451,12 @@ class VFPRegister
             return;
         }
         if (isDouble()) {
-            JS_ASSERT(code_ < NumAliasedDoubles);
-            JS_ASSERT(aliasIdx <= 2);
+            MOZ_ASSERT(code_ < NumAliasedDoubles);
+            MOZ_ASSERT(aliasIdx <= 2);
             *ret = singleOverlay(aliasIdx - 1);
             return;
         }
-        JS_ASSERT(aliasIdx == 1);
+        MOZ_ASSERT(aliasIdx == 1);
         *ret = doubleOverlay(aliasIdx - 1);
     }
     uint32_t numAlignedAliased() const {
@@ -479,13 +479,13 @@ class VFPRegister
             *ret = *this;
             return;
         }
-        JS_ASSERT(aliasIdx == 1);
+        MOZ_ASSERT(aliasIdx == 1);
         if (isDouble()) {
-            JS_ASSERT(code_ < NumAliasedDoubles);
+            MOZ_ASSERT(code_ < NumAliasedDoubles);
             *ret = singleOverlay(aliasIdx - 1);
             return;
         }
-        JS_ASSERT((code_ & 1) == 0);
+        MOZ_ASSERT((code_ & 1) == 0);
         *ret = doubleOverlay(aliasIdx - 1);
         return;
     }
@@ -515,11 +515,37 @@ typedef VFPRegister FloatRegister;
 
 uint32_t GetARMFlags();
 bool HasMOVWT();
+bool HasLDSTREXBHD();           // {LD,ST}REX{B,H,D}
+bool HasDMBDSBISB();            // DMB, DSB, and ISB
 bool HasVFPv3();
 bool HasVFP();
 bool Has32DP();
 bool HasIDIV();
-bool HasAlignmentFault();
+
+extern volatile uint32_t armHwCapFlags;
+
+// Not part of the HWCAP flag, but we need to know these and these bits are not
+// used. Define these here so that their use can be inlined by the simulator.
+
+// A bit to flag when the flags are uninitialized, so they can be atomically set.
+#define HWCAP_UNINITIALIZED (1 << 25)
+
+// A bit to flag when alignment faults are enabled and signal.
+#define HWCAP_ALIGNMENT_FAULT (1 << 26)
+
+// A bit to flag the use of the hardfp ABI.
+#define HWCAP_USE_HARDFP_ABI (1 << 27)
+
+// A bit to flag the use of the ARMv7 arch, otherwise ARMv6.
+#define HWCAP_ARMv7 (1 << 28)
+
+// Returns true when cpu alignment faults are enabled and signaled, and thus we
+// should ensure loads and stores are aligned.
+inline bool HasAlignmentFault()
+{
+    MOZ_ASSERT(armHwCapFlags != HWCAP_UNINITIALIZED);
+    return armHwCapFlags & HWCAP_ALIGNMENT_FAULT;
+}
 
 // Arm/D32 has double registers that can NOT be treated as float32 and this
 // requires some dances in lowering.

@@ -31,7 +31,7 @@ typedef any Transferable;
    CrossOriginReadable] readonly attribute WindowProxy window;
   [Replaceable, Throws,
    CrossOriginReadable] readonly attribute WindowProxy self;
-  [Unforgeable, StoreInSlot, Pure, Func="nsGlobalWindow::WindowOnWebIDL"] readonly attribute Document? document;
+  [Unforgeable, StoreInSlot, Pure] readonly attribute Document? document;
   [Throws] attribute DOMString name; 
   [PutForwards=href, Unforgeable, Throws,
    CrossOriginReadable, CrossOriginWritable] readonly attribute Location? location;
@@ -63,7 +63,7 @@ typedef any Transferable;
   // We think the indexed getter is a bug in the spec, it actually needs to live
   // on the WindowProxy
   //getter WindowProxy (unsigned long index);
-  //getter object (DOMString name);
+  getter object (DOMString name);
 
   // the user agent
   [Throws] readonly attribute Navigator navigator; 
@@ -218,7 +218,7 @@ callback FrameRequestCallback = void (DOMHighResTimeStamp time);
 
 // https://dvcs.w3.org/hg/webperf/raw-file/tip/specs/NavigationTiming/Overview.html
 partial interface Window {
-  [Replaceable, Throws] readonly attribute Performance? performance;
+  [Replaceable, Pure, StoreInSlot] readonly attribute Performance? performance;
 };
 
 // https://dvcs.w3.org/hg/webcrypto-api/raw-file/tip/spec/Overview.html
@@ -465,3 +465,4 @@ interface ChromeWindow {
 };
 
 Window implements ChromeWindow;
+Window implements GlobalFetch;

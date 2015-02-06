@@ -85,7 +85,7 @@ static const int kLineTerminatorRangeCount = ArrayLength(kLineTerminatorRanges);
 static const unsigned kMaxOneByteCharCode = 0xff;
 static const int kMaxUtf16CodeUnit = 0xffff;
 
-static jschar
+static char16_t
 MaximumCharacter(bool ascii)
 {
     return ascii ? kMaxOneByteCharCode : kMaxUtf16CodeUnit;
@@ -96,9 +96,9 @@ AddClass(const int* elmv, int elmc,
          CharacterRangeVector *ranges)
 {
     elmc--;
-    JS_ASSERT(elmv[elmc] == 0x10000);
+    MOZ_ASSERT(elmv[elmc] == 0x10000);
     for (int i = 0; i < elmc; i += 2) {
-        JS_ASSERT(elmv[i] < elmv[i + 1]);
+        MOZ_ASSERT(elmv[i] < elmv[i + 1]);
         ranges->append(CharacterRange(elmv[i], elmv[i + 1] - 1));
     }
 }
@@ -109,13 +109,13 @@ AddClassNegated(const int *elmv,
                 CharacterRangeVector *ranges)
 {
     elmc--;
-    JS_ASSERT(elmv[elmc] == 0x10000);
-    JS_ASSERT(elmv[0] != 0x0000);
-    JS_ASSERT(elmv[elmc-1] != kMaxUtf16CodeUnit);
-    jschar last = 0x0000;
+    MOZ_ASSERT(elmv[elmc] == 0x10000);
+    MOZ_ASSERT(elmv[0] != 0x0000);
+    MOZ_ASSERT(elmv[elmc-1] != kMaxUtf16CodeUnit);
+    char16_t last = 0x0000;
     for (int i = 0; i < elmc; i += 2) {
-        JS_ASSERT(last <= elmv[i] - 1);
-        JS_ASSERT(elmv[i] < elmv[i + 1]);
+        MOZ_ASSERT(last <= elmv[i] - 1);
+        MOZ_ASSERT(elmv[i] < elmv[i + 1]);
         ranges->append(CharacterRange(last, elmv[i] - 1));
         last = elmv[i + 1];
     }
@@ -123,7 +123,7 @@ AddClassNegated(const int *elmv,
 }
 
 void
-CharacterRange::AddClassEscape(LifoAlloc *alloc, jschar type,
+CharacterRange::AddClassEscape(LifoAlloc *alloc, char16_t type,
 			       CharacterRangeVector *ranges)
 {
     switch (type) {
@@ -188,11 +188,11 @@ static const size_t kEcma262UnCanonicalizeMaxWidth = 4;
 // Returns the number of characters in the equivalence class, omitting those
 // that cannot occur in the source string if it is a one byte string.
 static int
-GetCaseIndependentLetters(jschar character,
+GetCaseIndependentLetters(char16_t character,
                           bool ascii_subject,
-                          jschar *letters)
+                          char16_t *letters)
 {
-    jschar choices[] = {
+    const char16_t choices[] = {
         character,
         unicode::ToLowerCase(character),
         unicode::ToUpperCase(character)
@@ -200,7 +200,7 @@ GetCaseIndependentLetters(jschar character,
 
     size_t count = 0;
     for (size_t i = 0; i < ArrayLength(choices); i++) {
-        jschar c = choices[i];
+        char16_t c = choices[i];
 
         // The standard requires that non-ASCII characters cannot have ASCII
         // character codes in their equivalence class, even though this
@@ -230,10 +230,10 @@ GetCaseIndependentLetters(jschar character,
     return count;
 }
 
-static jschar
-ConvertNonLatin1ToLatin1(jschar c)
+static char16_t
+ConvertNonLatin1ToLatin1(char16_t c)
 {
-    JS_ASSERT(c > kMaxOneByteCharCode);
+    MOZ_ASSERT(c > kMaxOneByteCharCode);
     switch (c) {
       // This are equivalent characters in unicode.
       case 0x39c:
@@ -250,8 +250,8 @@ ConvertNonLatin1ToLatin1(jschar c)
 void
 CharacterRange::AddCaseEquivalents(bool is_ascii, CharacterRangeVector *ranges)
 {
-    jschar bottom = from();
-    jschar top = to();
+    char16_t bottom = from();
+    char16_t top = to();
 
     if (is_ascii && !RangeContainsLatin1Equivalents(*this)) {
         if (bottom > kMaxOneByteCharCode)
@@ -260,12 +260,12 @@ CharacterRange::AddCaseEquivalents(bool is_ascii, CharacterRangeVector *ranges)
             top = kMaxOneByteCharCode;
     }
 
-    for (jschar c = bottom;; c++) {
-        jschar chars[kEcma262UnCanonicalizeMaxWidth];
+    for (char16_t c = bottom;; c++) {
+        char16_t chars[kEcma262UnCanonicalizeMaxWidth];
         size_t length = GetCaseIndependentLetters(c, is_ascii, chars);
 
         for (size_t i = 0; i < length; i++) {
-            jschar other = chars[i];
+            char16_t other = chars[i];
             if (other == c)
                 continue;
 
@@ -300,10 +300,10 @@ static bool
 CompareInverseRanges(const CharacterRangeVector &ranges, const int *special_class, size_t length)
 {
     length--;  // Remove final 0x10000.
-    JS_ASSERT(special_class[length] == 0x10000);
-    JS_ASSERT(ranges.length() != 0);
-    JS_ASSERT(length != 0);
-    JS_ASSERT(special_class[0] != 0);
+    MOZ_ASSERT(special_class[length] == 0x10000);
+    MOZ_ASSERT(ranges.length() != 0);
+    MOZ_ASSERT(length != 0);
+    MOZ_ASSERT(special_class[0] != 0);
     if (ranges.length() != (length >> 1) + 1)
         return false;
     CharacterRange range = ranges[0];
@@ -325,7 +325,7 @@ static bool
 CompareRanges(const CharacterRangeVector &ranges, const int *special_class, size_t length)
 {
     length--;  // Remove final 0x10000.
-    JS_ASSERT(special_class[length] == 0x10000);
+    MOZ_ASSERT(special_class[length] == 0x10000);
     if (ranges.length() * 2 != length)
         return false;
     for (size_t i = 0; i < length; i += 2) {
@@ -418,8 +418,8 @@ InsertRangeInCanonicalList(CharacterRangeVector &list,
     // list[0..count] for the result. Returns the number of resulting
     // canonicalized ranges. Inserting a range may collapse existing ranges into
     // fewer ranges, so the return value can be anything in the range 1..count+1.
-    jschar from = insert.from();
-    jschar to = insert.to();
+    char16_t from = insert.from();
+    char16_t to = insert.to();
     int start_pos = 0;
     int end_pos = count;
     for (int i = count - 1; i >= 0; i--) {
@@ -504,7 +504,7 @@ CharacterRange::Canonicalize(CharacterRangeVector &character_ranges)
     while (character_ranges.length() > num_canonical)
         character_ranges.popBack();
 
-    JS_ASSERT(CharacterRange::IsCanonical(character_ranges));
+    MOZ_ASSERT(CharacterRange::IsCanonical(character_ranges));
 }
 
 // -------------------------------------------------------------------
@@ -516,7 +516,7 @@ class VisitMarker
     explicit VisitMarker(NodeInfo* info)
       : info_(info)
     {
-        JS_ASSERT(!info->visited);
+        MOZ_ASSERT(!info->visited);
         info->visited = true;
     }
     ~VisitMarker() {
@@ -550,7 +550,7 @@ SeqRegExpNode::FilterASCII(int depth, bool ignore_case)
     if (depth < 0)
         return this;
 
-    JS_ASSERT(!info()->visited);
+    MOZ_ASSERT(!info()->visited);
     VisitMarker marker(info());
     return FilterSuccessor(depth - 1, ignore_case);
 }
@@ -709,7 +709,7 @@ TextNode::FilterASCII(int depth, bool ignore_case)
     if (depth < 0)
         return this;
 
-    JS_ASSERT(!info()->visited);
+    MOZ_ASSERT(!info()->visited);
     VisitMarker marker(info());
     int element_count = elements().length();
     for (int i = 0; i < element_count; i++) {
@@ -725,7 +725,7 @@ TextNode::FilterASCII(int depth, bool ignore_case)
 
                 // Here, we need to check for characters whose upper and lower cases
                 // are outside the Latin-1 range.
-                jschar converted = ConvertNonLatin1ToLatin1(c);
+                char16_t converted = ConvertNonLatin1ToLatin1(c);
                 if (converted == 0) {
                     // Character is outside Latin-1 completely
                     return set_replacement(nullptr);
@@ -735,7 +735,7 @@ TextNode::FilterASCII(int depth, bool ignore_case)
                 quarks[j] = converted;
             }
         } else {
-            JS_ASSERT(elm.text_type() == TextElement::CHAR_CLASS);
+            MOZ_ASSERT(elm.text_type() == TextElement::CHAR_CLASS);
             RegExpCharacterClass* cc = elm.char_class();
 
             CharacterRangeVector &ranges = cc->ranges(alloc());
@@ -907,7 +907,7 @@ ChoiceNode::GetQuickCheckDetails(QuickCheckDetails* details,
 {
     not_at_start = (not_at_start || not_at_start_);
     int choice_count = alternatives().length();
-    JS_ASSERT(choice_count > 0);
+    MOZ_ASSERT(choice_count > 0);
     alternatives()[0].node()->GetQuickCheckDetails(details,
                                                    compiler,
                                                    characters_filled_in,
@@ -974,7 +974,7 @@ ChoiceNode::FilterASCII(int depth, bool ignore_case)
         GuardedAlternative alternative = alternatives()[i];
         RegExpNode* replacement =
             alternative.node()->FilterASCII(depth - 1, ignore_case);
-        JS_ASSERT(replacement != this);  // No missing EMPTY_MATCH_CHECK.
+        MOZ_ASSERT(replacement != this);  // No missing EMPTY_MATCH_CHECK.
         if (replacement != nullptr) {
             alternatives()[i].set_node(replacement);
             surviving++;
@@ -1095,7 +1095,7 @@ GuardedAlternative::AddGuard(LifoAlloc *alloc, Guard *guard)
 void
 LoopChoiceNode::AddLoopAlternative(GuardedAlternative alt)
 {
-    JS_ASSERT(loop_node_ == nullptr);
+    MOZ_ASSERT(loop_node_ == nullptr);
     AddAlternative(alt);
     loop_node_ = alt.node();
 }
@@ -1104,7 +1104,7 @@ LoopChoiceNode::AddLoopAlternative(GuardedAlternative alt)
 void
 LoopChoiceNode::AddContinueAlternative(GuardedAlternative alt)
 {
-    JS_ASSERT(continue_node_ == nullptr);
+    MOZ_ASSERT(continue_node_ == nullptr);
     AddAlternative(alt);
     continue_node_ = alt.node();
 }
@@ -1460,7 +1460,7 @@ class FrequencyCollator
     // Does not measure in percent, but rather per-128 (the table size from the
     // regexp macro assembler).
     int Frequency(int in_character) {
-        JS_ASSERT((in_character & RegExpMacroAssembler::kTableMask) == in_character);
+        MOZ_ASSERT((in_character & RegExpMacroAssembler::kTableMask) == in_character);
         if (total_samples_ < 1) return 1;  // Division by zero.
         int freq_in_per128 =
             (frequencies_[in_character].counter() * 128) / total_samples_;
@@ -1492,7 +1492,8 @@ class FrequencyCollator
 class irregexp::RegExpCompiler
 {
   public:
-    RegExpCompiler(JSContext *cx, LifoAlloc *alloc, int capture_count, bool ignore_case, bool is_ascii);
+    RegExpCompiler(JSContext *cx, LifoAlloc *alloc, int capture_count,
+                   bool ignore_case, bool is_ascii, bool match_only);
 
     int AllocateRegister() {
         if (next_register_ >= RegExpMacroAssembler::kMaxRegister) {
@@ -1548,6 +1549,7 @@ class irregexp::RegExpCompiler
     RegExpMacroAssembler* macro_assembler_;
     bool ignore_case_;
     bool ascii_;
+    bool match_only_;
     bool reg_exp_too_big_;
     int current_expansion_factor_;
     FrequencyCollator frequency_collator_;
@@ -1569,11 +1571,13 @@ class RecursionCheck
 
 // Attempts to compile the regexp using an Irregexp code generator.  Returns
 // a fixed array or a null handle depending on whether it succeeded.
-RegExpCompiler::RegExpCompiler(JSContext *cx, LifoAlloc *alloc, int capture_count, bool ignore_case, bool ascii)
+RegExpCompiler::RegExpCompiler(JSContext *cx, LifoAlloc *alloc, int capture_count,
+                               bool ignore_case, bool ascii, bool match_only)
   : next_register_(2 * (capture_count + 1)),
     recursion_depth_(0),
     ignore_case_(ignore_case),
     ascii_(ascii),
+    match_only_(match_only),
     reg_exp_too_big_(false),
     current_expansion_factor_(1),
     frequency_collator_(),
@@ -1581,7 +1585,7 @@ RegExpCompiler::RegExpCompiler(JSContext *cx, LifoAlloc *alloc, int capture_coun
     alloc_(alloc)
 {
     accept_ = alloc->newInfallible<EndNode>(alloc, EndNode::ACCEPT);
-    JS_ASSERT(next_register_ - 1 <= RegExpMacroAssembler::kMaxRegister);
+    MOZ_ASSERT(next_register_ - 1 <= RegExpMacroAssembler::kMaxRegister);
 }
 
 RegExpCode
@@ -1603,7 +1607,7 @@ RegExpCompiler::Assemble(JSContext *cx,
     while (!work_list_.empty())
         work_list_.popCopy()->Emit(this, &new_trace);
 
-    RegExpCode code = macro_assembler_->GenerateCode(cx);
+    RegExpCode code = macro_assembler_->GenerateCode(cx, match_only_);
     if (code.empty())
         return RegExpCode();
 
@@ -1646,7 +1650,7 @@ IsNativeRegExpEnabled(JSContext *cx)
 RegExpCode
 irregexp::CompilePattern(JSContext *cx, RegExpShared *shared, RegExpCompileData *data,
                          HandleLinearString sample, bool is_global, bool ignore_case,
-                         bool is_ascii, bool force_bytecode)
+                         bool is_ascii, bool match_only, bool force_bytecode)
 {
     if ((data->capture_count + 1) * 2 - 1 > RegExpMacroAssembler::kMaxRegister) {
         JS_ReportError(cx, "regexp too big");
@@ -1654,7 +1658,7 @@ irregexp::CompilePattern(JSContext *cx, RegExpShared *shared, RegExpCompileData 
     }
 
     LifoAlloc &alloc = cx->tempLifoAlloc();
-    RegExpCompiler compiler(cx, &alloc, data->capture_count, ignore_case, is_ascii);
+    RegExpCompiler compiler(cx, &alloc, data->capture_count, ignore_case, is_ascii, match_only);
 
     // Sample some characters from the middle of the string.
     if (sample->hasLatin1Chars()) {
@@ -1718,7 +1722,7 @@ irregexp::CompilePattern(JSContext *cx, RegExpShared *shared, RegExpCompileData 
         return RegExpCode();
     }
 
-    Maybe<jit::IonContext> ctx;
+    Maybe<jit::JitContext> ctx;
     Maybe<NativeRegExpMacroAssembler> native_assembler;
     Maybe<InterpretedRegExpMacroAssembler> interpreted_assembler;
 
@@ -1726,7 +1730,7 @@ irregexp::CompilePattern(JSContext *cx, RegExpShared *shared, RegExpCompileData 
     if (IsNativeRegExpEnabled(cx) && !force_bytecode) {
         NativeRegExpMacroAssembler::Mode mode =
             is_ascii ? NativeRegExpMacroAssembler::ASCII
-                     : NativeRegExpMacroAssembler::JSCHAR;
+                     : NativeRegExpMacroAssembler::CHAR16;
 
         ctx.emplace(cx, (jit::TempAllocator *) nullptr);
         native_assembler.emplace(&alloc, shared, cx->runtime(), mode, (data->capture_count + 1) * 2);
@@ -1778,7 +1782,7 @@ irregexp::ExecuteCode(JSContext *cx, jit::JitCode *codeBlock, const Latin1Char *
                       size_t length, MatchPairs *matches);
 
 template RegExpRunStatus
-irregexp::ExecuteCode(JSContext *cx, jit::JitCode *codeBlock, const jschar *chars, size_t start,
+irregexp::ExecuteCode(JSContext *cx, jit::JitCode *codeBlock, const char16_t *chars, size_t start,
                       size_t length, MatchPairs *matches);
 
 // -------------------------------------------------------------------
@@ -1840,7 +1844,7 @@ class RegExpExpansionLimiter
         saved_expansion_factor_(compiler->current_expansion_factor()),
         ok_to_expand_(saved_expansion_factor_ <= kMaxExpansionFactor)
     {
-        JS_ASSERT(factor > 0);
+        MOZ_ASSERT(factor > 0);
         if (ok_to_expand_) {
             if (factor > kMaxExpansionFactor) {
                 // Avoid integer overflow of the current expansion factor.
@@ -1928,7 +1932,7 @@ RegExpQuantifier::ToNode(int min,
             }
         }
         if (max <= kMaxUnrolledMaxMatches && min == 0) {
-            JS_ASSERT(max > 0);  // Due to the 'if' above.
+            MOZ_ASSERT(max > 0);  // Due to the 'if' above.
             RegExpExpansionLimiter limiter(compiler, max);
             if (limiter.ok_to_expand()) {
                 // Unroll the optional matches up to max.
@@ -2160,8 +2164,8 @@ irregexp::AddRange(ContainedInLattice containment,
                    int ranges_length,
                    Interval new_range)
 {
-    JS_ASSERT((ranges_length & 1) == 1);
-    JS_ASSERT(ranges[ranges_length - 1] == kMaxUtf16CodeUnit + 1);
+    MOZ_ASSERT((ranges_length & 1) == 1);
+    MOZ_ASSERT(ranges[ranges_length - 1] == kMaxUtf16CodeUnit + 1);
     if (containment == kLatticeUnknown) return containment;
     bool inside = false;
     int last = 0;
@@ -2395,7 +2399,7 @@ BoyerMooreLookahead::EmitSkipInstructions(RegExpMacroAssembler* masm)
         CrashAtUnhandlableOOM("Table malloc");
 
     int skip_distance = GetSkipTable(min_lookahead, max_lookahead, boolean_skip_table);
-    JS_ASSERT(skip_distance != 0);
+    MOZ_ASSERT(skip_distance != 0);
 
     jit::Label cont, again;
     masm->Bind(&again);
@@ -2439,7 +2443,7 @@ bool Trace::mentions_reg(int reg)
 bool
 Trace::GetStoredPosition(int reg, int* cp_offset)
 {
-    JS_ASSERT(0 == *cp_offset);
+    MOZ_ASSERT(0 == *cp_offset);
     for (DeferredAction* action = actions_; action != nullptr; action = action->next()) {
         if (action->Mentions(reg)) {
             if (action->action_type() == ActionNode::STORE_POSITION) {
@@ -2540,16 +2544,16 @@ Trace::PerformDeferredActions(LifoAlloc *alloc,
                     // we can set undo_action to IGNORE if we know there is no value to
                     // restore.
                     undo_action = DEFER_RESTORE;
-                    JS_ASSERT(store_position == -1);
-                    JS_ASSERT(!clear);
+                    MOZ_ASSERT(store_position == -1);
+                    MOZ_ASSERT(!clear);
                     break;
                   }
                   case ActionNode::INCREMENT_REGISTER:
                     if (!absolute) {
                         value++;
                     }
-                    JS_ASSERT(store_position == -1);
-                    JS_ASSERT(!clear);
+                    MOZ_ASSERT(store_position == -1);
+                    MOZ_ASSERT(!clear);
                     undo_action = DEFER_RESTORE;
                     break;
                   case ActionNode::STORE_POSITION: {
@@ -2571,8 +2575,8 @@ Trace::PerformDeferredActions(LifoAlloc *alloc,
                     } else {
                         undo_action = pc->is_capture() ? DEFER_CLEAR : DEFER_RESTORE;
                     }
-                    JS_ASSERT(!absolute);
-                    JS_ASSERT(value == 0);
+                    MOZ_ASSERT(!absolute);
+                    MOZ_ASSERT(value == 0);
                     break;
                   }
                   case ActionNode::CLEAR_CAPTURES: {
@@ -2583,8 +2587,8 @@ Trace::PerformDeferredActions(LifoAlloc *alloc,
                         clear = true;
                     }
                     undo_action = DEFER_RESTORE;
-                    JS_ASSERT(!absolute);
-                    JS_ASSERT(value == 0);
+                    MOZ_ASSERT(!absolute);
+                    MOZ_ASSERT(value == 0);
                     break;
                   }
                   default:
@@ -2628,7 +2632,7 @@ void Trace::Flush(RegExpCompiler* compiler, RegExpNode* successor)
 {
     RegExpMacroAssembler* assembler = compiler->macro_assembler();
 
-    JS_ASSERT(!is_trivial());
+    MOZ_ASSERT(!is_trivial());
 
     if (actions_ == nullptr && backtrack() == nullptr) {
         // Here we just have some deferred cp advances to fix and we are back to
@@ -2692,7 +2696,7 @@ Trace::InvalidateCurrentCharacter()
 void
 Trace::AdvanceCurrentPositionInTrace(int by, RegExpCompiler* compiler)
 {
-    JS_ASSERT(by > 0);
+    MOZ_ASSERT(by > 0);
     // We don't have an instruction for shifting the current character register
     // down or for using a shifted value for anything so lets just forget that
     // we preloaded any characters into it.
@@ -2905,7 +2909,7 @@ AssertionNode::EmitBoundaryCheck(RegExpCompiler* compiler, Trace* trace)
     } else if (next_is_word_character == Trace::TRUE_VALUE) {
         BacktrackIfPrevious(compiler, trace, at_boundary ? kIsWord : kIsNonWord);
     } else {
-        JS_ASSERT(next_is_word_character == Trace::FALSE_VALUE);
+        MOZ_ASSERT(next_is_word_character == Trace::FALSE_VALUE);
         BacktrackIfPrevious(compiler, trace, at_boundary ? kIsNonWord : kIsWord);
     }
 }
@@ -3066,8 +3070,8 @@ EmitUseLookupTable(RegExpMacroAssembler* masm,
 
     // Assert that everything is on one kTableSize page.
     for (int i = start_index; i <= end_index; i++)
-        JS_ASSERT((ranges[i] & ~kMask) == base);
-    JS_ASSERT(start_index == 0 || (ranges[start_index - 1] & ~kMask) <= base);
+        MOZ_ASSERT((ranges[i] & ~kMask) == base);
+    MOZ_ASSERT(start_index == 0 || (ranges[start_index - 1] & ~kMask) <= base);
 
     char templ[kSize];
     jit::Label* on_bit_set;
@@ -3127,7 +3131,7 @@ CutOutRange(RegExpMacroAssembler* masm,
                            &dummy,
                            in_range_label,
                            &dummy);
-    JS_ASSERT(!dummy.used());
+    MOZ_ASSERT(!dummy.used());
     // Cut out the single range by rewriting the array.  This creates a new
     // range that is a merger of the two ranges on either side of the one we
     // are cutting out.  The oddity of the labels is preserved.
@@ -3195,7 +3199,7 @@ SplitSearchSpace(RangeBoundaryVector &ranges,
         }
     }
 
-    JS_ASSERT(*new_start_index > start_index);
+    MOZ_ASSERT(*new_start_index > start_index);
     *new_end_index = *new_start_index - 1;
     if (ranges[*new_end_index] == *border)
         (*new_end_index)--;
@@ -3217,8 +3221,8 @@ GenerateBranches(RegExpMacroAssembler* masm,
                  RangeBoundaryVector &ranges,
                  int start_index,
                  int end_index,
-                 jschar min_char,
-                 jschar max_char,
+                 char16_t min_char,
+                 char16_t max_char,
                  jit::Label* fall_through,
                  jit::Label* even_label,
                  jit::Label* odd_label)
@@ -3226,7 +3230,7 @@ GenerateBranches(RegExpMacroAssembler* masm,
     int first = ranges[start_index];
     int last = ranges[end_index] - 1;
 
-    JS_ASSERT(min_char < first);
+    MOZ_ASSERT(min_char < first);
 
     // Just need to test if the character is before or on-or-after
     // a particular character.
@@ -3257,7 +3261,7 @@ GenerateBranches(RegExpMacroAssembler* masm,
         }
         if (cut == kNoCutIndex) cut = start_index;
         CutOutRange(masm, ranges, start_index, end_index, cut, even_label, odd_label);
-        JS_ASSERT(end_index - start_index >= 2);
+        MOZ_ASSERT(end_index - start_index >= 2);
         GenerateBranches(masm,
                          ranges,
                          start_index + 1,
@@ -3317,25 +3321,25 @@ GenerateBranches(RegExpMacroAssembler* masm,
         // We didn't find any section that started after the limit, so everything
         // above the border is one of the terminal labels.
         above = (end_index & 1) != (start_index & 1) ? odd_label : even_label;
-        JS_ASSERT(new_end_index == end_index - 1);
+        MOZ_ASSERT(new_end_index == end_index - 1);
     }
 
-    JS_ASSERT(start_index <= new_end_index);
-    JS_ASSERT(new_start_index <= end_index);
-    JS_ASSERT(start_index < new_start_index);
-    JS_ASSERT(new_end_index < end_index);
-    JS_ASSERT(new_end_index + 1 == new_start_index ||
-              (new_end_index + 2 == new_start_index &&
-               border == ranges[new_end_index + 1]));
-    JS_ASSERT(min_char < border - 1);
-    JS_ASSERT(border < max_char);
-    JS_ASSERT(ranges[new_end_index] < border);
-    JS_ASSERT(border < ranges[new_start_index] ||
-              (border == ranges[new_start_index] &&
-               new_start_index == end_index &&
-               new_end_index == end_index - 1 &&
-               border == last + 1));
-    JS_ASSERT(new_start_index == 0 || border >= ranges[new_start_index - 1]);
+    MOZ_ASSERT(start_index <= new_end_index);
+    MOZ_ASSERT(new_start_index <= end_index);
+    MOZ_ASSERT(start_index < new_start_index);
+    MOZ_ASSERT(new_end_index < end_index);
+    MOZ_ASSERT(new_end_index + 1 == new_start_index ||
+               (new_end_index + 2 == new_start_index &&
+                border == ranges[new_end_index + 1]));
+    MOZ_ASSERT(min_char < border - 1);
+    MOZ_ASSERT(border < max_char);
+    MOZ_ASSERT(ranges[new_end_index] < border);
+    MOZ_ASSERT(border < ranges[new_start_index] ||
+               (border == ranges[new_start_index] &&
+                new_start_index == end_index &&
+                new_end_index == end_index - 1 &&
+                border == last + 1));
+    MOZ_ASSERT(new_start_index == 0 || border >= ranges[new_start_index - 1]);
 
     masm->CheckCharacterGT(border - 1, above);
     jit::Label dummy;
@@ -3447,7 +3451,7 @@ EmitCharClass(LifoAlloc *alloc,
     for (int i = 0; i <= last_valid_range; i++) {
         CharacterRange& range = ranges[i];
         if (range.from() == 0) {
-            JS_ASSERT(i == 0);
+            MOZ_ASSERT(i == 0);
             zeroth_entry_is_failure = !zeroth_entry_is_failure;
         } else {
             range_boundaries->append(range.from());
@@ -3472,7 +3476,7 @@ EmitCharClass(LifoAlloc *alloc,
 }
 
 typedef bool EmitCharacterFunction(RegExpCompiler* compiler,
-                                   jschar c,
+                                   char16_t c,
                                    jit::Label* on_failure,
                                    int cp_offset,
                                    bool check,
@@ -3480,7 +3484,7 @@ typedef bool EmitCharacterFunction(RegExpCompiler* compiler,
 
 static inline bool
 EmitSimpleCharacter(RegExpCompiler* compiler,
-                    jschar c,
+                    char16_t c,
                     jit::Label* on_failure,
                     int cp_offset,
                     bool check,
@@ -3500,7 +3504,7 @@ EmitSimpleCharacter(RegExpCompiler* compiler,
 // independent matches.
 static inline bool
 EmitAtomNonLetter(RegExpCompiler* compiler,
-                  jschar c,
+                  char16_t c,
                   jit::Label* on_failure,
                   int cp_offset,
                   bool check,
@@ -3508,7 +3512,7 @@ EmitAtomNonLetter(RegExpCompiler* compiler,
 {
     RegExpMacroAssembler* macro_assembler = compiler->macro_assembler();
     bool ascii = compiler->ascii();
-    jschar chars[kEcma262UnCanonicalizeMaxWidth];
+    char16_t chars[kEcma262UnCanonicalizeMaxWidth];
     int length = GetCaseIndependentLetters(c, ascii, chars);
     if (length < 1) {
         // This can't match.  Must be an ASCII subject and a non-ASCII character.
@@ -3534,35 +3538,35 @@ EmitAtomNonLetter(RegExpCompiler* compiler,
 static bool
 ShortCutEmitCharacterPair(RegExpMacroAssembler* macro_assembler,
                           bool ascii,
-                          jschar c1,
-                          jschar c2,
+                          char16_t c1,
+                          char16_t c2,
                           jit::Label* on_failure)
 {
-    jschar char_mask = MaximumCharacter(ascii);
+    char16_t char_mask = MaximumCharacter(ascii);
 
-    JS_ASSERT(c1 != c2);
+    MOZ_ASSERT(c1 != c2);
     if (c1 > c2) {
-        jschar tmp = c1;
+        char16_t tmp = c1;
         c1 = c2;
         c2 = tmp;
     }
 
-    jschar exor = c1 ^ c2;
+    char16_t exor = c1 ^ c2;
     // Check whether exor has only one bit set.
     if (((exor - 1) & exor) == 0) {
         // If c1 and c2 differ only by one bit.
-        jschar mask = char_mask ^ exor;
+        char16_t mask = char_mask ^ exor;
         macro_assembler->CheckNotCharacterAfterAnd(c1, mask, on_failure);
         return true;
     }
 
-    jschar diff = c2 - c1;
+    char16_t diff = c2 - c1;
     if (((diff - 1) & diff) == 0 && c1 >= diff) {
         // If the characters differ by 2^n but don't differ by one bit then
         // subtract the difference from the found character, then do the or
         // trick.  We avoid the theoretical case where negative numbers are
         // involved in order to simplify code generation.
-        jschar mask = char_mask ^ diff;
+        char16_t mask = char_mask ^ diff;
         macro_assembler->CheckNotCharacterAfterMinusAnd(c1 - diff,
                                                         diff,
                                                         mask,
@@ -3576,7 +3580,7 @@ ShortCutEmitCharacterPair(RegExpMacroAssembler* macro_assembler,
 // matches.
 static inline bool
 EmitAtomLetter(RegExpCompiler* compiler,
-               jschar c,
+               char16_t c,
                jit::Label* on_failure,
                int cp_offset,
                bool check,
@@ -3584,7 +3588,7 @@ EmitAtomLetter(RegExpCompiler* compiler,
 {
     RegExpMacroAssembler* macro_assembler = compiler->macro_assembler();
     bool ascii = compiler->ascii();
-    jschar chars[kEcma262UnCanonicalizeMaxWidth];
+    char16_t chars[kEcma262UnCanonicalizeMaxWidth];
     int length = GetCaseIndependentLetters(c, ascii, chars);
     if (length <= 1) return false;
     // We may not need to check against the end of the input string
@@ -3592,7 +3596,7 @@ EmitAtomLetter(RegExpCompiler* compiler,
     if (!preloaded)
         macro_assembler->LoadCurrentCharacter(cp_offset, on_failure, check);
     jit::Label ok;
-    JS_ASSERT(kEcma262UnCanonicalizeMaxWidth == 4);
+    MOZ_ASSERT(kEcma262UnCanonicalizeMaxWidth == 4);
     switch (length) {
       case 2: {
         if (ShortCutEmitCharacterPair(macro_assembler,
@@ -3675,7 +3679,7 @@ TextNode::TextEmitPass(RegExpCompiler* compiler,
                 EmitCharacterFunction* emit_function = nullptr;
                 switch (pass) {
                   case NON_ASCII_MATCH:
-                    JS_ASSERT(ascii);
+                    MOZ_ASSERT(ascii);
                     if (quarks[j] > kMaxOneByteCharCode) {
                         assembler->JumpOrBacktrack(backtrack);
                         return;
@@ -3704,7 +3708,7 @@ TextNode::TextEmitPass(RegExpCompiler* compiler,
                 }
             }
         } else {
-            JS_ASSERT(TextElement::CHAR_CLASS == elm.text_type());
+            MOZ_ASSERT(TextElement::CHAR_CLASS == elm.text_type());
             if (pass == CHARACTER_CLASS_MATCH) {
                 if (first_element_checked && i == 0) continue;
                 if (DeterminedAlready(quick_check, elm.cp_offset())) continue;
@@ -3727,7 +3731,7 @@ int
 TextNode::Length()
 {
     TextElement elm = elements()[elements().length() - 1];
-    JS_ASSERT(elm.cp_offset() >= 0);
+    MOZ_ASSERT(elm.cp_offset() >= 0);
     return elm.cp_offset() + elm.length();
 }
 
@@ -3751,7 +3755,7 @@ TextNode::Emit(RegExpCompiler* compiler, Trace* trace)
 {
     LimitResult limit_result = LimitVersions(compiler, trace);
     if (limit_result == DONE) return;
-    JS_ASSERT(limit_result == CONTINUE);
+    MOZ_ASSERT(limit_result == CONTINUE);
 
     if (trace->cp_offset() + Length() > RegExpMacroAssembler::kMaxCPOffset) {
         compiler->SetRegExpTooBig();
@@ -3808,15 +3812,15 @@ LoopChoiceNode::Emit(RegExpCompiler* compiler, Trace* trace)
     if (trace->stop_node() == this) {
         int text_length =
             GreedyLoopTextLengthForAlternative(&alternatives()[0]);
-        JS_ASSERT(text_length != kNodeIsTooComplexForGreedyLoops);
+        MOZ_ASSERT(text_length != kNodeIsTooComplexForGreedyLoops);
         // Update the counter-based backtracking info on the stack.  This is an
         // optimization for greedy loops (see below).
-        JS_ASSERT(trace->cp_offset() == text_length);
+        MOZ_ASSERT(trace->cp_offset() == text_length);
         macro_assembler->AdvanceCurrentPosition(text_length);
         macro_assembler->JumpOrBacktrack(trace->loop_label());
         return;
     }
-    JS_ASSERT(trace->stop_node() == nullptr);
+    MOZ_ASSERT(trace->stop_node() == nullptr);
     if (!trace->is_trivial()) {
         trace->Flush(compiler, this);
         return;
@@ -3926,13 +3930,13 @@ ChoiceNode::GenerateGuard(RegExpMacroAssembler* macro_assembler,
 {
     switch (guard->op()) {
       case Guard::LT:
-        JS_ASSERT(!trace->mentions_reg(guard->reg()));
+        MOZ_ASSERT(!trace->mentions_reg(guard->reg()));
         macro_assembler->IfRegisterGE(guard->reg(),
                                       guard->value(),
                                       trace->backtrack());
         break;
       case Guard::GEQ:
-        JS_ASSERT(!trace->mentions_reg(guard->reg()));
+        MOZ_ASSERT(!trace->mentions_reg(guard->reg()));
         macro_assembler->IfRegisterLT(guard->reg(),
                                       guard->value(),
                                       trace->backtrack());
@@ -4061,14 +4065,14 @@ ChoiceNode::Emit(RegExpCompiler* compiler, Trace* trace)
         const GuardVector *guards = alternative.guards();
         if (guards) {
             for (size_t j = 0; j < guards->length(); j++)
-                JS_ASSERT(!trace->mentions_reg((*guards)[j]->reg()));
+                MOZ_ASSERT(!trace->mentions_reg((*guards)[j]->reg()));
         }
     }
 #endif
 
     LimitResult limit_result = LimitVersions(compiler, trace);
     if (limit_result == DONE) return;
-    JS_ASSERT(limit_result == CONTINUE);
+    MOZ_ASSERT(limit_result == CONTINUE);
 
     int new_flush_budget = trace->flush_budget() / choice_count;
     if (trace->flush_budget() == 0 && trace->actions() != nullptr) {
@@ -4096,7 +4100,7 @@ ChoiceNode::Emit(RegExpCompiler* compiler, Trace* trace)
         // information for each iteration of the loop, which could take up a lot of
         // space.
         greedy_loop = true;
-        JS_ASSERT(trace->stop_node() == nullptr);
+        MOZ_ASSERT(trace->stop_node() == nullptr);
         macro_assembler->PushCurrentPosition();
         current_trace = &counter_backtrack_trace;
         jit::Label greedy_match_failed;
@@ -4134,7 +4138,7 @@ ChoiceNode::Emit(RegExpCompiler* compiler, Trace* trace)
                 // and step forwards 3 if the character is not one of abc.  Abc need
                 // not be atoms, they can be any reasonably limited character class or
                 // small alternation.
-                JS_ASSERT(trace->is_trivial());  // This is the case on LoopChoiceNodes.
+                MOZ_ASSERT(trace->is_trivial());  // This is the case on LoopChoiceNodes.
                 BoyerMooreLookahead* lookahead = bm_info(not_at_start);
                 if (lookahead == nullptr) {
                     eats_at_least = Min(kMaxLookaheadForBoyerMoore,
@@ -4319,7 +4323,7 @@ ActionNode::Emit(RegExpCompiler* compiler, Trace* trace)
     RegExpMacroAssembler* assembler = compiler->macro_assembler();
     LimitResult limit_result = LimitVersions(compiler, trace);
     if (limit_result == DONE) return;
-    JS_ASSERT(limit_result == CONTINUE);
+    MOZ_ASSERT(limit_result == CONTINUE);
 
     RecursionCheck rc(compiler);
 
@@ -4423,7 +4427,7 @@ ActionNode::Emit(RegExpCompiler* compiler, Trace* trace)
         int clear_registers_to = clear_registers_from + clear_register_count - 1;
         assembler->ClearRegisters(clear_registers_from, clear_registers_to);
 
-        JS_ASSERT(trace->backtrack() == nullptr);
+        MOZ_ASSERT(trace->backtrack() == nullptr);
         assembler->Backtrack();
         return;
       }
@@ -4443,11 +4447,11 @@ BackReferenceNode::Emit(RegExpCompiler* compiler, Trace* trace)
 
     LimitResult limit_result = LimitVersions(compiler, trace);
     if (limit_result == DONE) return;
-    JS_ASSERT(limit_result == CONTINUE);
+    MOZ_ASSERT(limit_result == CONTINUE);
 
     RecursionCheck rc(compiler);
 
-    JS_ASSERT(start_reg_ + 1 == end_reg_);
+    MOZ_ASSERT(start_reg_ + 1 == end_reg_);
     if (compiler->ignore_case()) {
         assembler->CheckNotBackReferenceIgnoreCase(start_reg_,
                                                    trace->backtrack());
@@ -4512,8 +4516,8 @@ RegExpNode::EmitQuickCheck(RegExpCompiler* compiler,
                          details, compiler, 0, trace->at_start() == Trace::FALSE_VALUE);
     if (details->cannot_match()) return false;
     if (!details->Rationalize(compiler->ascii())) return false;
-    JS_ASSERT(details->characters() == 1 ||
-              compiler->macro_assembler()->CanReadUnaligned());
+    MOZ_ASSERT(details->characters() == 1 ||
+               compiler->macro_assembler()->CanReadUnaligned());
     uint32_t mask = details->mask();
     uint32_t value = details->value();
 
@@ -4591,9 +4595,9 @@ TextNode::FillInBMInfo(int initial_offset,
                         set_bm_info(not_at_start, bm);
                     return true;
                 }
-                jschar character = atom->data()[j];
+                char16_t character = atom->data()[j];
                 if (bm->compiler()->ignore_case()) {
-                    jschar chars[kEcma262UnCanonicalizeMaxWidth];
+                    char16_t chars[kEcma262UnCanonicalizeMaxWidth];
                     int length = GetCaseIndependentLetters(character,
                                                            bm->max_char() == kMaxOneByteCharCode,
                                                            chars);
@@ -4604,7 +4608,7 @@ TextNode::FillInBMInfo(int initial_offset,
                 }
             }
         } else {
-            JS_ASSERT(TextElement::CHAR_CLASS == text.text_type());
+            MOZ_ASSERT(TextElement::CHAR_CLASS == text.text_type());
             RegExpCharacterClass* char_class = text.char_class();
             const CharacterRangeVector &ranges = char_class->ranges(alloc());
             if (char_class->is_negated()) {
@@ -4664,7 +4668,7 @@ TextNode::GetQuickCheckDetails(QuickCheckDetails* details,
                                int characters_filled_in,
                                bool not_at_start)
 {
-    JS_ASSERT(characters_filled_in < details->characters());
+    MOZ_ASSERT(characters_filled_in < details->characters());
     int characters = details->characters();
     int char_mask = MaximumCharacter(compiler->ascii());
 
@@ -4675,7 +4679,7 @@ TextNode::GetQuickCheckDetails(QuickCheckDetails* details,
             for (size_t i = 0; i < (size_t) characters && i < quarks.length(); i++) {
                 QuickCheckDetails::Position* pos =
                     details->positions(characters_filled_in);
-                jschar c = quarks[i];
+                char16_t c = quarks[i];
                 if (c > char_mask) {
                     // If we expect a non-ASCII character from an ASCII string,
                     // there is no way we can match. Not even case independent
@@ -4686,9 +4690,9 @@ TextNode::GetQuickCheckDetails(QuickCheckDetails* details,
                     return;
                 }
                 if (compiler->ignore_case()) {
-                    jschar chars[kEcma262UnCanonicalizeMaxWidth];
+                    char16_t chars[kEcma262UnCanonicalizeMaxWidth];
                     size_t length = GetCaseIndependentLetters(c, compiler->ascii(), chars);
-                    JS_ASSERT(length != 0);  // Can only happen if c > char_mask (see above).
+                    MOZ_ASSERT(length != 0);  // Can only happen if c > char_mask (see above).
                     if (length == 1) {
                         // This letter has no case equivalents, so it's nice and simple
                         // and the mask-compare will determine definitely whether we have
@@ -4724,7 +4728,7 @@ TextNode::GetQuickCheckDetails(QuickCheckDetails* details,
                     pos->determines_perfectly = true;
                 }
                 characters_filled_in++;
-                JS_ASSERT(characters_filled_in <= details->characters());
+                MOZ_ASSERT(characters_filled_in <= details->characters());
                 if (characters_filled_in == details->characters()) {
                     return;
                 }
@@ -4752,8 +4756,8 @@ TextNode::GetQuickCheckDetails(QuickCheckDetails* details,
                     }
                 }
                 CharacterRange range = ranges[first_range];
-                jschar from = range.from();
-                jschar to = range.to();
+                char16_t from = range.from();
+                char16_t to = range.to();
                 if (to > char_mask) {
                     to = char_mask;
                 }
@@ -4768,8 +4772,8 @@ TextNode::GetQuickCheckDetails(QuickCheckDetails* details,
                 uint32_t bits = (from & common_bits);
                 for (size_t i = first_range + 1; i < ranges.length(); i++) {
                     CharacterRange range = ranges[i];
-                    jschar from = range.from();
-                    jschar to = range.to();
+                    char16_t from = range.from();
+                    char16_t to = range.to();
                     if (from > char_mask) continue;
                     if (to > char_mask) to = char_mask;
                     // Here we are combining more ranges into the mask and compare
@@ -4790,13 +4794,13 @@ TextNode::GetQuickCheckDetails(QuickCheckDetails* details,
                 pos->value = bits;
             }
             characters_filled_in++;
-            JS_ASSERT(characters_filled_in <= details->characters());
+            MOZ_ASSERT(characters_filled_in <= details->characters());
             if (characters_filled_in == details->characters()) {
                 return;
             }
         }
     }
-    JS_ASSERT(characters_filled_in != details->characters());
+    MOZ_ASSERT(characters_filled_in != details->characters());
     if (!details->cannot_match()) {
         on_success()-> GetQuickCheckDetails(details,
                                             compiler,
@@ -4819,7 +4823,7 @@ QuickCheckDetails::Clear()
 void
 QuickCheckDetails::Advance(int by, bool ascii)
 {
-    JS_ASSERT(by >= 0);
+    MOZ_ASSERT(by >= 0);
     if (by >= characters_) {
         Clear();
         return;
@@ -4860,7 +4864,7 @@ QuickCheckDetails::Rationalize(bool is_ascii)
 
 void QuickCheckDetails::Merge(QuickCheckDetails* other, int from_index)
 {
-    JS_ASSERT(characters_ == other->characters_);
+    MOZ_ASSERT(characters_ == other->characters_);
     if (other->cannot_match_)
         return;
     if (cannot_match_) {
@@ -4880,7 +4884,7 @@ void QuickCheckDetails::Merge(QuickCheckDetails* other, int from_index)
         pos->mask &= other_pos->mask;
         pos->value &= pos->mask;
         other_pos->value &= pos->mask;
-        jschar differing_bits = (pos->value ^ other_pos->value);
+        char16_t differing_bits = (pos->value ^ other_pos->value);
         pos->mask &= ~differing_bits;
         pos->value &= pos->mask;
     }

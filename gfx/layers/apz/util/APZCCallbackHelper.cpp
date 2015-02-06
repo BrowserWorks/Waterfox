@@ -4,8 +4,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "APZCCallbackHelper.h"
-#include "gfxPrefs.h" // For gfxPrefs::LayersTilesEnabled, LayersTileWidth/Height
-#include "mozilla/Preferences.h"
+#include "gfxPlatform.h" // For gfxPlatform::UseTiling
+#include "gfxPrefs.h"    // For gfxPrefs::LayersTileWidth/Height
 #include "nsIScrollableFrame.h"
 #include "nsLayoutUtils.h"
 #include "nsIDOMElement.h"
@@ -86,8 +86,10 @@ ScrollFrameTo(nsIScrollableFrame* aFrame, const CSSPoint& aPoint, bool& aSuccess
   // Also if the scrollable frame got a scroll request from something other than us
   // since the last layers update, then we don't want to push our scroll request
   // because we'll clobber that one, which is bad.
-  if (!aFrame->IsProcessingAsyncScroll() &&
-     (!aFrame->OriginOfLastScroll() || aFrame->OriginOfLastScroll() == nsGkAtoms::apz)) {
+  bool scrollInProgress = aFrame->IsProcessingAsyncScroll()
+      || (aFrame->LastScrollOrigin() && aFrame->LastScrollOrigin() != nsGkAtoms::apz)
+      || aFrame->LastSmoothScrollOrigin();
+  if (!scrollInProgress) {
     aFrame->ScrollToCSSPixelsApproximate(targetScrollPosition, nsGkAtoms::apz);
     geckoScrollPosition = CSSPoint::FromAppUnits(aFrame->GetScrollPosition());
     aSuccessOut = true;
@@ -165,7 +167,7 @@ APZCCallbackHelper::UpdateRootFrame(nsIDOMWindowUtils* aUtils,
         return;
     }
 
-    gfx::IntSize alignment = gfxPrefs::LayersTilesEnabled()
+    gfx::IntSize alignment = gfxPlatform::GetPlatform()->UseTiling()
         ? gfx::IntSize(gfxPrefs::LayersTileWidth(), gfxPrefs::LayersTileHeight()) :
           gfx::IntSize(0, 0);
     LayerMargin margins = aMetrics.GetDisplayPortMargins();
@@ -214,7 +216,7 @@ APZCCallbackHelper::UpdateSubFrame(nsIContent* aContent,
         } else {
             RecenterDisplayPort(aMetrics);
         }
-        gfx::IntSize alignment = gfxPrefs::LayersTilesEnabled()
+        gfx::IntSize alignment = gfxPlatform::GetPlatform()->UseTiling()
             ? gfx::IntSize(gfxPrefs::LayersTileWidth(), gfxPrefs::LayersTileHeight()) :
               gfx::IntSize(0, 0);
         LayerMargin margins = aMetrics.GetDisplayPortMargins();
@@ -287,7 +289,7 @@ public:
 
         nsIScrollableFrame* sf = nsLayoutUtils::FindScrollableFrameFor(mScrollId);
         if (sf) {
-            sf->ResetOriginIfScrollAtGeneration(mScrollGeneration);
+            sf->ResetScrollInfoIfGeneration(mScrollGeneration);
         }
 
         // Since the APZ and content are in sync, we need to clear any callback transform

@@ -133,8 +133,8 @@ class DestinationInsertionPointList;
 
 // IID for the dom::Element interface
 #define NS_ELEMENT_IID \
-{ 0xb0135f9d, 0xa476, 0x4711, \
-  { 0x8b, 0xb9, 0xca, 0xe5, 0x2a, 0x05, 0xf9, 0xbe } }
+{ 0xaa79cb98, 0xc785, 0x44c5, \
+  { 0x80, 0x80, 0x2e, 0x5f, 0x0c, 0xa5, 0xbd, 0x63 } }
 
 class Element : public FragmentOrElement
 {
@@ -646,6 +646,12 @@ public:
   }
   bool HasAttributeNS(const nsAString& aNamespaceURI,
                       const nsAString& aLocalName) const;
+  bool HasAttributes() const
+  {
+    return HasAttrs();
+  }
+  Element* Closest(const nsAString& aSelector,
+                   ErrorResult& aResult);
   bool Matches(const nsAString& aSelector,
                ErrorResult& aError);
   already_AddRefed<nsIHTMLCollection>
@@ -680,11 +686,16 @@ public:
       aError.Throw(NS_ERROR_DOM_INVALID_POINTER_ERR);
       return;
     }
-
-    // Ignoring ReleasePointerCapture call on incorrect element (on element
-    // that didn't have capture before).
-    if (nsIPresShell::GetPointerCapturingContent(aPointerId) == this) {
-      nsIPresShell::ReleasePointerCapturingContent(aPointerId, this);
+    nsIPresShell::PointerCaptureInfo* pointerCaptureInfo = nullptr;
+    if (nsIPresShell::gPointerCaptureList->Get(aPointerId, &pointerCaptureInfo) && pointerCaptureInfo) {
+      // Call ReleasePointerCapture only on correct element
+      // (on element that have status pointer capture override
+      // or on element that have status pending pointer capture)
+      if (pointerCaptureInfo->mOverrideContent == this) {
+        nsIPresShell::ReleasePointerCapturingContent(aPointerId, this);
+      } else if (pointerCaptureInfo->mPendingContent == this) {
+        nsIPresShell::ReleasePointerCapturingContent(aPointerId, this);
+      }
     }
   }
   void SetCapture(bool aRetargetToElement)
@@ -984,6 +995,62 @@ public:
   nsresult SetBoolAttr(nsIAtom* aAttr, bool aValue);
 
   /**
+   * Helper method for NS_IMPL_ENUM_ATTR_DEFAULT_VALUE.
+   * Gets the enum value string of an attribute and using a default value if
+   * the attribute is missing or the string is an invalid enum value.
+   *
+   * @param aType     the name of the attribute.
+   * @param aDefault  the default value if the attribute is missing or invalid.
+   * @param aResult   string corresponding to the value [out].
+   */
+  void GetEnumAttr(nsIAtom* aAttr,
+                   const char* aDefault,
+                   nsAString& aResult) const;
+
+  /**
+   * Helper method for NS_IMPL_ENUM_ATTR_DEFAULT_MISSING_INVALID_VALUES.
+   * Gets the enum value string of an attribute and using the default missing
+   * value if the attribute is missing or the default invalid value if the
+   * string is an invalid enum value.
+   *
+   * @param aType            the name of the attribute.
+   * @param aDefaultMissing  the default value if the attribute is missing.  If
+                             null and the attribute is missing, aResult will be
+                             set to the null DOMString; this only matters for
+                             cases in which we're reflecting a nullable string.
+   * @param aDefaultInvalid  the default value if the attribute is invalid.
+   * @param aResult          string corresponding to the value [out].
+   */
+  void GetEnumAttr(nsIAtom* aAttr,
+                   const char* aDefaultMissing,
+                   const char* aDefaultInvalid,
+                   nsAString& aResult) const;
+
+  /**
+   * Unset an attribute.
+   */
+  void UnsetAttr(nsIAtom* aAttr, ErrorResult& aError)
+  {
+    aError = UnsetAttr(kNameSpaceID_None, aAttr, true);
+  }
+
+  /**
+   * Set an attribute in the simplest way possible.
+   */
+  void SetAttr(nsIAtom* aAttr, const nsAString& aValue, ErrorResult& aError)
+  {
+    aError = SetAttr(kNameSpaceID_None, aAttr, aValue, true);
+  }
+
+  /**
+   * Set a content attribute via a reflecting nullable string IDL
+   * attribute (e.g. a CORS attribute).  If DOMStringIsNull(aValue),
+   * this will actually remove the content attribute.
+   */
+  void SetOrRemoveNullableStringAttr(nsIAtom* aName, const nsAString& aValue,
+                                     ErrorResult& aError);
+
+  /**
    * Retrieve the ratio of font-size-inflated text font size to computed font
    * size for this element. This will query the element for its primary frame,
    * and then use this to get font size inflation information about the frame.
@@ -1208,6 +1275,21 @@ private:
   EventStates mState;
 };
 
+class RemoveFromBindingManagerRunnable : public nsRunnable
+{
+public:
+  RemoveFromBindingManagerRunnable(nsBindingManager* aManager,
+                                   nsIContent* aContent,
+                                   nsIDocument* aDoc);
+
+  NS_IMETHOD Run();
+private:
+  virtual ~RemoveFromBindingManagerRunnable();
+  nsRefPtr<nsBindingManager> mManager;
+  nsRefPtr<nsIContent> mContent;
+  nsCOMPtr<nsIDocument> mDoc;
+};
+
 class DestinationInsertionPointList : public nsINodeList
 {
 public:
@@ -1284,11 +1366,6 @@ inline const mozilla::dom::Element* nsINode::AsElement() const
 {
   MOZ_ASSERT(IsElement());
   return static_cast<const mozilla::dom::Element*>(this);
-}
-
-inline bool nsINode::HasAttributes() const
-{
-  return IsElement() && AsElement()->HasAttrs();
 }
 
 /**
@@ -1472,6 +1549,11 @@ NS_IMETHOD HasAttributeNS(const nsAString& namespaceURI,                      \
                           bool* _retval) MOZ_FINAL                            \
 {                                                                             \
   *_retval = Element::HasAttributeNS(namespaceURI, localName);                \
+  return NS_OK;                                                               \
+}                                                                             \
+NS_IMETHOD HasAttributes(bool* _retval) MOZ_FINAL                             \
+{                                                                             \
+  *_retval = Element::HasAttributes();                                        \
   return NS_OK;                                                               \
 }                                                                             \
 NS_IMETHOD GetAttributeNode(const nsAString& name,                            \

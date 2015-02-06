@@ -29,18 +29,34 @@ struct JSIID
 
 struct LocalObject
 {
-    uint64_t id;
+    uint64_t serializedId;
 };
 
 struct RemoteObject
 {
-    uint64_t id;
+    uint64_t serializedId;
 };
 
 union ObjectVariant
 {
     LocalObject;
     RemoteObject;
+};
+
+struct WellKnownSymbol
+{
+    uint32_t which;
+};
+
+struct RegisteredSymbol
+{
+    nsString key;
+};
+
+union SymbolVariant
+{
+    WellKnownSymbol;
+    RegisteredSymbol;
 };
 
 struct UndefinedVariant {};
@@ -51,10 +67,18 @@ union JSVariant
     UndefinedVariant;
     NullVariant;
     ObjectVariant;
+    SymbolVariant;
     nsString;   /* StringValue(x) */
     double;     /* NumberValue(x) */
     bool;       /* BooleanValue(x) */
     JSIID;      /* XPC nsIID */
+};
+
+union JSIDVariant
+{
+    SymbolVariant;
+    nsString;
+    int32_t;
 };
 
 struct ReturnSuccess
@@ -101,8 +125,7 @@ struct PPropertyDescriptor
     //
     //  0 - NULL
     //  1 - Default getter or setter.
-    //  2 - js_GetterOnlyPropertyStub (setter only)
-    //  3 - Unknown
+    //  2 - Unknown
     GetterSetter getter;
     GetterSetter setter;
 };

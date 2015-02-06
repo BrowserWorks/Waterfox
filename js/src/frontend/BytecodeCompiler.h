@@ -29,12 +29,17 @@ CompileScript(ExclusiveContext *cx, LifoAlloc *alloc,
               SourceCompressionTask *extraSct = nullptr);
 
 bool
-CompileLazyFunction(JSContext *cx, Handle<LazyScript*> lazy, const jschar *chars, size_t length);
+CompileLazyFunction(JSContext *cx, Handle<LazyScript*> lazy, const char16_t *chars, size_t length);
 
+/*
+ * enclosingStaticScope is a static enclosing scope (e.g. a StaticWithObject).
+ * Must be null if the enclosing scope is a global.
+ */
 bool
 CompileFunctionBody(JSContext *cx, MutableHandleFunction fun,
                     const ReadOnlyCompileOptions &options,
-                    const AutoNameVector &formals, JS::SourceBufferHolder &srcBuf);
+                    const AutoNameVector &formals, JS::SourceBufferHolder &srcBuf,
+                    HandleObject enclosingStaticScope);
 bool
 CompileStarGeneratorBody(JSContext *cx, MutableHandleFunction fun,
                          const ReadOnlyCompileOptions &options,

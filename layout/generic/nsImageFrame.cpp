@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* rendering object for replaced elements with bitmap image data */
+/* rendering object for replaced elements with image data */
 
 #include "nsImageFrame.h"
 
@@ -85,6 +85,7 @@ using namespace mozilla;
 
 using namespace mozilla::layers;
 using namespace mozilla::dom;
+using namespace mozilla::gfx;
 
 // static icon information
 nsImageFrame::IconLoad* nsImageFrame::gIconLoad = nullptr;
@@ -730,7 +731,7 @@ nsImageFrame::FrameChanged(imgIRequest *aRequest,
 }
 
 void
-nsImageFrame::EnsureIntrinsicSizeAndRatio(nsPresContext* aPresContext)
+nsImageFrame::EnsureIntrinsicSizeAndRatio()
 {
   // If mIntrinsicSize.width and height are 0, then we need to update from the
   // image container.
@@ -770,8 +771,7 @@ nsImageFrame::ComputeSize(nsRenderingContext *aRenderingContext,
                           const LogicalSize& aPadding,
                           uint32_t aFlags)
 {
-  nsPresContext *presContext = PresContext();
-  EnsureIntrinsicSizeAndRatio(presContext);
+  EnsureIntrinsicSizeAndRatio();
 
   nsCOMPtr<nsIImageLoadingContent> imageLoader = do_QueryInterface(mContent);
   NS_ASSERTION(imageLoader, "No content node??");
@@ -811,10 +811,12 @@ nsImageFrame::ComputeSize(nsRenderingContext *aRenderingContext,
                             aPadding);
 }
 
+// XXXdholbert This function's clients should probably just be calling
+// GetContentRectRelativeToSelf() directly.
 nsRect 
 nsImageFrame::GetInnerArea() const
 {
-  return GetContentRect() - GetPosition();
+  return GetContentRectRelativeToSelf();
 }
 
 Element*
@@ -846,8 +848,7 @@ nsImageFrame::GetMinISize(nsRenderingContext *aRenderingContext)
   // min-height, and max-height properties.
   DebugOnly<nscoord> result;
   DISPLAY_MIN_WIDTH(this, result);
-  nsPresContext *presContext = PresContext();
-  EnsureIntrinsicSizeAndRatio(presContext);
+  EnsureIntrinsicSizeAndRatio();
   return mIntrinsicSize.width.GetUnit() == eStyleUnit_Coord ?
     mIntrinsicSize.width.GetCoordValue() : 0;
 }
@@ -859,8 +860,7 @@ nsImageFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
   // min-height, and max-height properties.
   DebugOnly<nscoord> result;
   DISPLAY_PREF_WIDTH(this, result);
-  nsPresContext *presContext = PresContext();
-  EnsureIntrinsicSizeAndRatio(presContext);
+  EnsureIntrinsicSizeAndRatio();
   // convert from normal twips to scaled twips (printing...)
   return mIntrinsicSize.width.GetUnit() == eStyleUnit_Coord ?
     mIntrinsicSize.width.GetCoordValue() : 0;
@@ -1218,7 +1218,7 @@ nsImageFrame::DisplayAltFeedback(nsRenderingContext& aRenderingContext,
   }
 
   // Clip so we don't render outside the inner rect
-  aRenderingContext.PushState();
+  aRenderingContext.ThebesContext()->Save();
   aRenderingContext.IntersectClip(inner);
 
   // Check if we should display image placeholders
@@ -1261,11 +1261,11 @@ nsImageFrame::DisplayAltFeedback(nsRenderingContext& aRenderingContext,
                          inner.XMost() - size : inner.x;
       nscoord twoPX = nsPresContext::CSSPixelsToAppUnits(2);
       aRenderingContext.DrawRect(iconXPos, inner.y,size,size);
-      aRenderingContext.PushState();
+      aRenderingContext.ThebesContext()->Save();
       aRenderingContext.SetColor(NS_RGB(0xFF,0,0));
       aRenderingContext.FillEllipse(size/2 + iconXPos, size/2 + inner.y,
                                     size/2 - twoPX, size/2 - twoPX);
-      aRenderingContext.PopState();
+      aRenderingContext.ThebesContext()->Restore();
     }
 
     // Reduce the inner rect by the width of the icon, and leave an
@@ -1287,7 +1287,7 @@ nsImageFrame::DisplayAltFeedback(nsRenderingContext& aRenderingContext,
     }
   }
 
-  aRenderingContext.PopState();
+  aRenderingContext.ThebesContext()->Restore();
 }
 
 #ifdef DEBUG
@@ -1297,10 +1297,14 @@ static void PaintDebugImageMap(nsIFrame* aFrame, nsRenderingContext* aCtx,
   nsRect inner = f->GetInnerArea() + aPt;
 
   aCtx->SetColor(NS_RGB(0, 0, 0));
-  aCtx->PushState();
-  aCtx->Translate(inner.TopLeft());
+  aCtx->ThebesContext()->Save();
+  gfxPoint devPixelOffset =
+    nsLayoutUtils::PointToGfxPoint(inner.TopLeft(),
+                                   aFrame->PresContext()->AppUnitsPerDevPixel());
+  aCtx->ThebesContext()->SetMatrix(
+    aCtx->ThebesContext()->CurrentMatrix().Translate(devPixelOffset));
   f->GetImageMap()->Draw(aFrame, *aCtx);
-  aCtx->PopState();
+  aCtx->ThebesContext()->Restore();
 }
 #endif
 
@@ -1345,11 +1349,11 @@ gfxRect
 nsDisplayImage::GetDestRect()
 {
   int32_t factor = mFrame->PresContext()->AppUnitsPerDevPixel();
-  nsImageFrame* imageFrame = static_cast<nsImageFrame*>(mFrame);
 
-  nsRect dest = imageFrame->GetInnerArea() + ToReferenceFrame();
+  bool snap;
+  nsRect dest = GetBounds(&snap);
   gfxRect destRect(dest.x, dest.y, dest.width, dest.height);
-  destRect.ScaleInverse(factor); 
+  destRect.ScaleInverse(factor);
 
   return destRect;
 }
@@ -1442,11 +1446,10 @@ nsDisplayImage::ConfigureLayer(ImageLayer *aLayer, const nsIntPoint& aOffset)
 
   const gfxRect destRect = GetDestRect();
 
-  gfx::Matrix transform;
   gfxPoint p = destRect.TopLeft() + aOffset;
-  transform.Translate(p.x, p.y);
-  transform.Scale(destRect.Width()/imageWidth,
-                  destRect.Height()/imageHeight);
+  Matrix transform = Matrix::Translation(p.x, p.y);
+  transform.PreScale(destRect.Width() / imageWidth,
+                     destRect.Height() / imageHeight);
   aLayer->SetBaseTransform(gfx::Matrix4x4::From2D(transform));
 }
 
@@ -1468,15 +1471,19 @@ nsImageFrame::PaintImage(nsRenderingContext& aRenderingContext, nsPoint aPt,
 
   nsImageMap* map = GetImageMap();
   if (nullptr != map) {
-    aRenderingContext.PushState();
-    aRenderingContext.Translate(inner.TopLeft());
+    aRenderingContext.ThebesContext()->Save();
+    gfxPoint devPixelOffset =
+      nsLayoutUtils::PointToGfxPoint(inner.TopLeft(),
+                                     PresContext()->AppUnitsPerDevPixel());
+    aRenderingContext.ThebesContext()->SetMatrix(
+      aRenderingContext.ThebesContext()->CurrentMatrix().Translate(devPixelOffset));
     aRenderingContext.SetColor(NS_RGB(255, 255, 255));
     aRenderingContext.SetLineStyle(nsLineStyle_kSolid);
     map->Draw(this, aRenderingContext);
     aRenderingContext.SetColor(NS_RGB(0, 0, 0));
     aRenderingContext.SetLineStyle(nsLineStyle_kDotted);
     map->Draw(this, aRenderingContext);
-    aRenderingContext.PopState();
+    aRenderingContext.ThebesContext()->Restore();
   }
 }
 

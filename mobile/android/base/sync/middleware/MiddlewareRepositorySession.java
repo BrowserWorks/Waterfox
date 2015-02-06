@@ -32,8 +32,8 @@ public abstract class MiddlewareRepositorySession extends RepositorySession {
 
   public class MiddlewareRepositorySessionBeginDelegate implements RepositorySessionBeginDelegate {
 
-    private MiddlewareRepositorySession outerSession;
-    private RepositorySessionBeginDelegate next;
+    private final MiddlewareRepositorySession outerSession;
+    private final RepositorySessionBeginDelegate next;
 
     public MiddlewareRepositorySessionBeginDelegate(MiddlewareRepositorySession outerSession, RepositorySessionBeginDelegate next) {
       this.outerSession = outerSession;
@@ -75,6 +75,7 @@ public abstract class MiddlewareRepositorySession extends RepositorySession {
     }
   }
 
+  @Override
   public void begin(RepositorySessionBeginDelegate delegate) throws InvalidSessionTransitionException {
     inner.begin(new MiddlewareRepositorySessionBeginDelegate(this, delegate));
   }

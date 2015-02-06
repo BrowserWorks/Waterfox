@@ -16,8 +16,12 @@
 
 #include "jit/BaselineJIT.h"
 #include "jit/BaselineRegisters.h"
+#include "vm/ArrayObject.h"
 
 namespace js {
+
+class TypedArrayLayout;
+
 namespace jit {
 
 //
@@ -28,7 +32,7 @@ namespace jit {
 // specific to that site.  These stubs are composed of a |StubData|
 // structure that stores parametrization information (e.g.
 // the shape pointer for a shape-check-and-property-get stub), any
-// dynamic information (e.g. use counts), a pointer to the stub code,
+// dynamic information (e.g. warm-up counters), a pointer to the stub code,
 // and a pointer to the next stub state in the linked list.
 //
 // Every BaselineScript keeps an table of |CacheDescriptor| data
@@ -255,14 +259,14 @@ class ICEntry
     }
 
     void setReturnOffset(CodeOffsetLabel offset) {
-        JS_ASSERT(offset.offset() <= (size_t) UINT32_MAX);
+        MOZ_ASSERT(offset.offset() <= (size_t) UINT32_MAX);
         returnOffset_ = (uint32_t) offset.offset();
     }
 
     void fixupReturnOffset(MacroAssembler &masm) {
         CodeOffsetLabel offset = returnOffset();
         offset.fixup(&masm);
-        JS_ASSERT(offset.offset() <= UINT32_MAX);
+        MOZ_ASSERT(offset.offset() <= UINT32_MAX);
         returnOffset_ = (uint32_t) offset.offset();
     }
 
@@ -295,7 +299,7 @@ class ICEntry
         return firstStub_ != nullptr;
     }
     ICStub *firstStub() const {
-        JS_ASSERT(hasStub());
+        MOZ_ASSERT(hasStub());
         return firstStub_;
     }
 
@@ -316,7 +320,7 @@ class ICEntry
 
 // List of baseline IC stub kinds.
 #define IC_STUB_KIND_LIST(_)    \
-    _(UseCount_Fallback)        \
+    _(WarmUpCounter_Fallback)   \
                                 \
     _(Profiler_Fallback)        \
     _(Profiler_PushFunction)    \
@@ -374,6 +378,7 @@ class ICEntry
     _(Call_ScriptedApplyArray)  \
     _(Call_ScriptedApplyArguments) \
     _(Call_ScriptedFunCall)     \
+    _(Call_StringSplit)         \
                                 \
     _(GetElem_Fallback)         \
     _(GetElem_NativeSlot)       \
@@ -422,6 +427,7 @@ class ICEntry
     _(GetProp_DOMProxyShadowed) \
     _(GetProp_ArgumentsLength)  \
     _(GetProp_ArgumentsCallee)  \
+    _(GetProp_Generic)          \
                                 \
     _(SetProp_Fallback)         \
     _(SetProp_Native)           \
@@ -434,8 +440,6 @@ class ICEntry
     _(IteratorNew_Fallback)     \
     _(IteratorMore_Fallback)    \
     _(IteratorMore_Native)      \
-    _(IteratorNext_Fallback)    \
-    _(IteratorNext_Native)      \
     _(IteratorClose_Fallback)   \
                                 \
     _(InstanceOf_Fallback)      \
@@ -497,12 +501,12 @@ class ICStubConstIterator
     }
 
     ICStub *operator *() const {
-        JS_ASSERT(currentStub_);
+        MOZ_ASSERT(currentStub_);
         return currentStub_;
     }
 
     ICStub *operator ->() const {
-        JS_ASSERT(currentStub_);
+        MOZ_ASSERT(currentStub_);
         return currentStub_;
     }
 
@@ -538,8 +542,8 @@ class ICStubIterator
 
     bool operator ==(const ICStubIterator &other) const {
         // == should only ever be called on stubs from the same chain.
-        JS_ASSERT(icEntry_ == other.icEntry_);
-        JS_ASSERT(fallbackStub_ == other.fallbackStub_);
+        MOZ_ASSERT(icEntry_ == other.icEntry_);
+        MOZ_ASSERT(fallbackStub_ == other.fallbackStub_);
         return currentStub_ == other.currentStub_;
     }
     bool operator !=(const ICStubIterator &other) const {
@@ -635,7 +639,7 @@ class ICStub
         trait_(Regular),
         kind_(kind)
     {
-        JS_ASSERT(stubCode != nullptr);
+        MOZ_ASSERT(stubCode != nullptr);
     }
 
     inline ICStub(Kind kind, Trait trait, JitCode *stubCode)
@@ -645,7 +649,7 @@ class ICStub
         trait_(trait),
         kind_(kind)
     {
-        JS_ASSERT(stubCode != nullptr);
+        MOZ_ASSERT(stubCode != nullptr);
     }
 
     inline Trait trait() const {
@@ -676,53 +680,53 @@ class ICStub
     }
 
     inline const ICFallbackStub *toFallbackStub() const {
-        JS_ASSERT(isFallback());
+        MOZ_ASSERT(isFallback());
         return reinterpret_cast<const ICFallbackStub *>(this);
     }
 
     inline ICFallbackStub *toFallbackStub() {
-        JS_ASSERT(isFallback());
+        MOZ_ASSERT(isFallback());
         return reinterpret_cast<ICFallbackStub *>(this);
     }
 
     inline const ICMonitoredStub *toMonitoredStub() const {
-        JS_ASSERT(isMonitored());
+        MOZ_ASSERT(isMonitored());
         return reinterpret_cast<const ICMonitoredStub *>(this);
     }
 
     inline ICMonitoredStub *toMonitoredStub() {
-        JS_ASSERT(isMonitored());
+        MOZ_ASSERT(isMonitored());
         return reinterpret_cast<ICMonitoredStub *>(this);
     }
 
     inline const ICMonitoredFallbackStub *toMonitoredFallbackStub() const {
-        JS_ASSERT(isMonitoredFallback());
+        MOZ_ASSERT(isMonitoredFallback());
         return reinterpret_cast<const ICMonitoredFallbackStub *>(this);
     }
 
     inline ICMonitoredFallbackStub *toMonitoredFallbackStub() {
-        JS_ASSERT(isMonitoredFallback());
+        MOZ_ASSERT(isMonitoredFallback());
         return reinterpret_cast<ICMonitoredFallbackStub *>(this);
     }
 
     inline const ICUpdatedStub *toUpdatedStub() const {
-        JS_ASSERT(isUpdated());
+        MOZ_ASSERT(isUpdated());
         return reinterpret_cast<const ICUpdatedStub *>(this);
     }
 
     inline ICUpdatedStub *toUpdatedStub() {
-        JS_ASSERT(isUpdated());
+        MOZ_ASSERT(isUpdated());
         return reinterpret_cast<ICUpdatedStub *>(this);
     }
 
 #define KIND_METHODS(kindName)   \
     inline bool is##kindName() const { return kind() == kindName; } \
     inline const IC##kindName *to##kindName() const { \
-        JS_ASSERT(is##kindName()); \
+        MOZ_ASSERT(is##kindName()); \
         return reinterpret_cast<const IC##kindName *>(this); \
     } \
     inline IC##kindName *to##kindName() { \
-        JS_ASSERT(is##kindName()); \
+        MOZ_ASSERT(is##kindName()); \
         return reinterpret_cast<IC##kindName *>(this); \
     }
     IC_STUB_KIND_LIST(KIND_METHODS)
@@ -759,7 +763,7 @@ class ICStub
         ICStub *lastStub = this;
         while (lastStub->next_)
             lastStub = lastStub->next_;
-        JS_ASSERT(lastStub->isFallback());
+        MOZ_ASSERT(lastStub->isFallback());
         return lastStub->toFallbackStub();
     }
 
@@ -780,7 +784,7 @@ class ICStub
     }
 
     static bool CanMakeCalls(ICStub::Kind kind) {
-        JS_ASSERT(IsValidKind(kind));
+        MOZ_ASSERT(IsValidKind(kind));
         switch (kind) {
           case Call_Fallback:
           case Call_Scripted:
@@ -789,7 +793,8 @@ class ICStub
           case Call_ScriptedApplyArray:
           case Call_ScriptedApplyArguments:
           case Call_ScriptedFunCall:
-          case UseCount_Fallback:
+          case Call_StringSplit:
+          case WarmUpCounter_Fallback:
           case GetElem_NativeSlot:
           case GetElem_NativePrototypeSlot:
           case GetElem_NativePrototypeCallNative:
@@ -800,6 +805,7 @@ class ICStub
           case GetProp_CallDOMProxyNative:
           case GetProp_CallDOMProxyWithGenerationNative:
           case GetProp_DOMProxyShadowed:
+          case GetProp_Generic:
           case SetProp_CallScripted:
           case SetProp_CallNative:
           case RetSub_Fallback:
@@ -825,7 +831,7 @@ class ICStub
     // that these do not get purged, all stubs that can make calls are allocated
     // in the fallback stub space.
     bool allocatedInFallbackSpace() const {
-        JS_ASSERT(next());
+        MOZ_ASSERT(next());
         return CanMakeCalls(kind());
     }
 };
@@ -862,8 +868,8 @@ class ICFallbackStub : public ICStub
         numOptimizedStubs_(0),
         lastStubPtrAddr_(nullptr)
     {
-        JS_ASSERT(trait == ICStub::Fallback ||
-                  trait == ICStub::MonitoredFallback);
+        MOZ_ASSERT(trait == ICStub::Fallback ||
+                   trait == ICStub::MonitoredFallback);
     }
 
   public:
@@ -880,16 +886,16 @@ class ICFallbackStub : public ICStub
     // address until after compile when the BaselineScript is created.  This method
     // allows these fields to be fixed up at that point.
     void fixupICEntry(ICEntry *icEntry) {
-        JS_ASSERT(icEntry_ == nullptr);
-        JS_ASSERT(lastStubPtrAddr_ == nullptr);
+        MOZ_ASSERT(icEntry_ == nullptr);
+        MOZ_ASSERT(lastStubPtrAddr_ == nullptr);
         icEntry_ = icEntry;
         lastStubPtrAddr_ = icEntry_->addressOfFirstStub();
     }
 
     // Add a new stub to the IC chain terminated by this fallback stub.
     void addNewStub(ICStub *stub) {
-        JS_ASSERT(*lastStubPtrAddr_ == this);
-        JS_ASSERT(stub->next() == nullptr);
+        MOZ_ASSERT(*lastStubPtrAddr_ == this);
+        MOZ_ASSERT(stub->next() == nullptr);
         stub->setNext(this);
         *lastStubPtrAddr_ = stub;
         lastStubPtrAddr_ = stub->addressOfNext();
@@ -939,11 +945,11 @@ class ICMonitoredStub : public ICStub
     inline void updateFirstMonitorStub(ICStub *monitorStub) {
         // This should only be called once: when the first optimized monitor stub
         // is added to the type monitor IC chain.
-        JS_ASSERT(firstMonitorStub_ && firstMonitorStub_->isTypeMonitor_Fallback());
+        MOZ_ASSERT(firstMonitorStub_ && firstMonitorStub_->isTypeMonitor_Fallback());
         firstMonitorStub_ = monitorStub;
     }
     inline void resetFirstMonitorStub(ICStub *monitorFallback) {
-        JS_ASSERT(monitorFallback->isTypeMonitor_Fallback());
+        MOZ_ASSERT(monitorFallback->isTypeMonitor_Fallback());
         firstMonitorStub_ = monitorFallback;
     }
     inline ICStub *firstMonitorStub() const {
@@ -1008,10 +1014,10 @@ class ICUpdatedStub : public ICStub
             firstUpdateStub_ = stub;
         } else {
             ICStub *iter = firstUpdateStub_;
-            JS_ASSERT(iter->next() != nullptr);
+            MOZ_ASSERT(iter->next() != nullptr);
             while (!iter->next()->isTypeUpdate_Fallback())
                 iter = iter->next();
-            JS_ASSERT(iter->next()->next() == nullptr);
+            MOZ_ASSERT(iter->next()->next() == nullptr);
             stub->setNext(iter->next());
             iter->setNext(stub);
         }
@@ -1104,13 +1110,13 @@ class ICStubCompiler
 
     inline GeneralRegisterSet availableGeneralRegs(size_t numInputs) const {
         GeneralRegisterSet regs(GeneralRegisterSet::All());
-        JS_ASSERT(!regs.has(BaselineStackReg));
+        MOZ_ASSERT(!regs.has(BaselineStackReg));
 #if defined(JS_CODEGEN_ARM)
-        JS_ASSERT(!regs.has(BaselineTailCallReg));
+        MOZ_ASSERT(!regs.has(BaselineTailCallReg));
         regs.take(BaselineSecondScratchReg);
 #elif defined(JS_CODEGEN_MIPS)
-        JS_ASSERT(!regs.has(BaselineTailCallReg));
-        JS_ASSERT(!regs.has(BaselineSecondScratchReg));
+        MOZ_ASSERT(!regs.has(BaselineTailCallReg));
+        MOZ_ASSERT(!regs.has(BaselineSecondScratchReg));
 #endif
         regs.take(BaselineFrameReg);
         regs.take(BaselineStubReg);
@@ -1172,22 +1178,22 @@ class ICMultiStubCompiler : public ICStubCompiler
       : ICStubCompiler(cx, kind), op(op) {}
 };
 
-// UseCount_Fallback
+// WarmUpCounter_Fallback
 
-// A UseCount IC chain has only the fallback stub.
-class ICUseCount_Fallback : public ICFallbackStub
+// A WarmUpCounter IC chain has only the fallback stub.
+class ICWarmUpCounter_Fallback : public ICFallbackStub
 {
     friend class ICStubSpace;
 
-    explicit ICUseCount_Fallback(JitCode *stubCode)
-      : ICFallbackStub(ICStub::UseCount_Fallback, stubCode)
+    explicit ICWarmUpCounter_Fallback(JitCode *stubCode)
+      : ICFallbackStub(ICStub::WarmUpCounter_Fallback, stubCode)
     { }
 
   public:
-    static inline ICUseCount_Fallback *New(ICStubSpace *space, JitCode *code) {
+    static inline ICWarmUpCounter_Fallback *New(ICStubSpace *space, JitCode *code) {
         if (!code)
             return nullptr;
-        return space->allocate<ICUseCount_Fallback>(code);
+        return space->allocate<ICWarmUpCounter_Fallback>(code);
     }
 
     // Compiler for this stub kind.
@@ -1197,11 +1203,11 @@ class ICUseCount_Fallback : public ICFallbackStub
 
       public:
         explicit Compiler(JSContext *cx)
-          : ICStubCompiler(cx, ICStub::UseCount_Fallback)
+          : ICStubCompiler(cx, ICStub::WarmUpCounter_Fallback)
         { }
 
-        ICUseCount_Fallback *getStub(ICStubSpace *space) {
-            return ICUseCount_Fallback::New(space, getStubCode());
+        ICWarmUpCounter_Fallback *getStub(ICStubSpace *space) {
+            return ICWarmUpCounter_Fallback::New(space, getStubCode());
         }
     };
 };
@@ -1311,13 +1317,13 @@ class TypeCheckPrimitiveSetStub : public ICStub
     TypeCheckPrimitiveSetStub(Kind kind, JitCode *stubCode, uint16_t flags)
         : ICStub(kind, stubCode)
     {
-        JS_ASSERT(kind == TypeMonitor_PrimitiveSet || kind == TypeUpdate_PrimitiveSet);
-        JS_ASSERT(flags && !(flags & ~ValidFlags()));
+        MOZ_ASSERT(kind == TypeMonitor_PrimitiveSet || kind == TypeUpdate_PrimitiveSet);
+        MOZ_ASSERT(flags && !(flags & ~ValidFlags()));
         extra_ = flags;
     }
 
     TypeCheckPrimitiveSetStub *updateTypesAndCode(uint16_t flags, JitCode *code) {
-        JS_ASSERT(flags && !(flags & ~ValidFlags()));
+        MOZ_ASSERT(flags && !(flags & ~ValidFlags()));
         if (!code)
             return nullptr;
         extra_ = flags;
@@ -1331,8 +1337,8 @@ class TypeCheckPrimitiveSetStub : public ICStub
     }
 
     bool containsType(JSValueType type) const {
-        JS_ASSERT(type <= JSVAL_TYPE_OBJECT);
-        JS_ASSERT(type != JSVAL_TYPE_MAGIC);
+        MOZ_ASSERT(type <= JSVAL_TYPE_OBJECT);
+        MOZ_ASSERT(type != JSVAL_TYPE_MAGIC);
         return extra_ & TypeToFlag(type);
     }
 
@@ -1360,11 +1366,11 @@ class TypeCheckPrimitiveSetStub : public ICStub
             existingStub_(existingStub),
             flags_((existingStub ? existingStub->typeFlags() : 0) | TypeToFlag(type))
         {
-            JS_ASSERT_IF(existingStub_, flags_ != existingStub_->typeFlags());
+            MOZ_ASSERT_IF(existingStub_, flags_ != existingStub_->typeFlags());
         }
 
         TypeCheckPrimitiveSetStub *updateStub() {
-            JS_ASSERT(existingStub_);
+            MOZ_ASSERT(existingStub_);
             return existingStub_->updateTypesAndCode(flags_, getStubCode());
         }
     };
@@ -1429,17 +1435,17 @@ class ICTypeMonitor_Fallback : public ICStub
     void addOptimizedMonitorStub(ICStub *stub) {
         stub->setNext(this);
 
-        JS_ASSERT((lastMonitorStubPtrAddr_ != nullptr) ==
-                  (numOptimizedMonitorStubs_ || !hasFallbackStub_));
+        MOZ_ASSERT((lastMonitorStubPtrAddr_ != nullptr) ==
+                   (numOptimizedMonitorStubs_ || !hasFallbackStub_));
 
         if (lastMonitorStubPtrAddr_)
             *lastMonitorStubPtrAddr_ = stub;
 
         if (numOptimizedMonitorStubs_ == 0) {
-            JS_ASSERT(firstMonitorStub_ == this);
+            MOZ_ASSERT(firstMonitorStub_ == this);
             firstMonitorStub_ = stub;
         } else {
-            JS_ASSERT(firstMonitorStub_ != nullptr);
+            MOZ_ASSERT(firstMonitorStub_ != nullptr);
         }
 
         lastMonitorStubPtrAddr_ = stub->addressOfNext();
@@ -1469,7 +1475,7 @@ class ICTypeMonitor_Fallback : public ICStub
     }
 
     inline ICFallbackStub *mainFallbackStub() const {
-        JS_ASSERT(hasFallbackStub_);
+        MOZ_ASSERT(hasFallbackStub_);
         return mainFallbackStub_;
     }
 
@@ -1507,9 +1513,9 @@ class ICTypeMonitor_Fallback : public ICStub
 
     // Fixup the IC entry as for a normal fallback stub, for this/arguments.
     void fixupICEntry(ICEntry *icEntry) {
-        JS_ASSERT(!hasFallbackStub_);
-        JS_ASSERT(icEntry_ == nullptr);
-        JS_ASSERT(lastMonitorStubPtrAddr_ == nullptr);
+        MOZ_ASSERT(!hasFallbackStub_);
+        MOZ_ASSERT(icEntry_ == nullptr);
+        MOZ_ASSERT(lastMonitorStubPtrAddr_ == nullptr);
         icEntry_ = icEntry;
         lastMonitorStubPtrAddr_ = icEntry_->addressOfFirstStub();
     }
@@ -1583,7 +1589,7 @@ class ICTypeMonitor_PrimitiveSet : public TypeCheckPrimitiveSetStub
         }
 
         ICTypeMonitor_PrimitiveSet *getStub(ICStubSpace *space) {
-            JS_ASSERT(!existingStub_);
+            MOZ_ASSERT(!existingStub_);
             return ICTypeMonitor_PrimitiveSet::New(space, getStubCode(), flags_);
         }
     };
@@ -1745,7 +1751,7 @@ class ICTypeUpdate_PrimitiveSet : public TypeCheckPrimitiveSetStub
         }
 
         ICTypeUpdate_PrimitiveSet *getStub(ICStubSpace *space) {
-            JS_ASSERT(!existingStub_);
+            MOZ_ASSERT(!existingStub_);
             return ICTypeUpdate_PrimitiveSet::New(space, getStubCode(), flags_);
         }
     };
@@ -1873,26 +1879,26 @@ class ICNewArray_Fallback : public ICFallbackStub
 {
     friend class ICStubSpace;
 
-    HeapPtrObject templateObject_;
+    HeapPtrArrayObject templateObject_;
 
-    ICNewArray_Fallback(JitCode *stubCode, JSObject *templateObject)
+    ICNewArray_Fallback(JitCode *stubCode, ArrayObject *templateObject)
       : ICFallbackStub(ICStub::NewArray_Fallback, stubCode), templateObject_(templateObject)
     {}
 
   public:
     static inline ICNewArray_Fallback *New(ICStubSpace *space, JitCode *code,
-                                           JSObject *templateObject) {
+                                           ArrayObject *templateObject) {
         if (!code)
             return nullptr;
         return space->allocate<ICNewArray_Fallback>(code, templateObject);
     }
 
     class Compiler : public ICStubCompiler {
-        RootedObject templateObject;
+        RootedArrayObject templateObject;
         bool generateStubCode(MacroAssembler &masm);
 
       public:
-        Compiler(JSContext *cx, JSObject *templateObject)
+        Compiler(JSContext *cx, ArrayObject *templateObject)
           : ICStubCompiler(cx, ICStub::NewArray_Fallback),
             templateObject(cx, templateObject)
         {}
@@ -1902,7 +1908,7 @@ class ICNewArray_Fallback : public ICFallbackStub
         }
     };
 
-    HeapPtrObject &templateObject() {
+    HeapPtrArrayObject &templateObject() {
         return templateObject_;
     }
 };
@@ -1911,26 +1917,26 @@ class ICNewObject_Fallback : public ICFallbackStub
 {
     friend class ICStubSpace;
 
-    HeapPtrObject templateObject_;
+    HeapPtrNativeObject templateObject_;
 
-    ICNewObject_Fallback(JitCode *stubCode, JSObject *templateObject)
+    ICNewObject_Fallback(JitCode *stubCode, NativeObject *templateObject)
       : ICFallbackStub(ICStub::NewObject_Fallback, stubCode), templateObject_(templateObject)
     {}
 
   public:
     static inline ICNewObject_Fallback *New(ICStubSpace *space, JitCode *code,
-                                            JSObject *templateObject) {
+                                            NativeObject *templateObject) {
         if (!code)
             return nullptr;
         return space->allocate<ICNewObject_Fallback>(code, templateObject);
     }
 
     class Compiler : public ICStubCompiler {
-        RootedObject templateObject;
+        RootedNativeObject templateObject;
         bool generateStubCode(MacroAssembler &masm);
 
       public:
-        Compiler(JSContext *cx, JSObject *templateObject)
+        Compiler(JSContext *cx, NativeObject *templateObject)
           : ICStubCompiler(cx, ICStub::NewObject_Fallback),
             templateObject(cx, templateObject)
         {}
@@ -1940,7 +1946,7 @@ class ICNewObject_Fallback : public ICFallbackStub
         }
     };
 
-    HeapPtrObject &templateObject() {
+    HeapPtrNativeObject &templateObject() {
         return templateObject_;
     }
 };
@@ -2693,7 +2699,7 @@ class ICBinaryArith_BooleanWithInt32 : public ICStub
     ICBinaryArith_BooleanWithInt32(JitCode *stubCode, bool lhsIsBool, bool rhsIsBool)
       : ICStub(BinaryArith_BooleanWithInt32, stubCode)
     {
-        JS_ASSERT(lhsIsBool || rhsIsBool);
+        MOZ_ASSERT(lhsIsBool || rhsIsBool);
         extra_ = 0;
         if (lhsIsBool)
             extra_ |= 1;
@@ -2735,9 +2741,9 @@ class ICBinaryArith_BooleanWithInt32 : public ICStub
           : ICStubCompiler(cx, ICStub::BinaryArith_BooleanWithInt32),
             op_(op), lhsIsBool_(lhsIsBool), rhsIsBool_(rhsIsBool)
         {
-            JS_ASSERT(op_ == JSOP_ADD || op_ == JSOP_SUB || op_ == JSOP_BITOR ||
-                      op_ == JSOP_BITAND || op_ == JSOP_BITXOR);
-            JS_ASSERT(lhsIsBool_ || rhsIsBool_);
+            MOZ_ASSERT(op_ == JSOP_ADD || op_ == JSOP_SUB || op_ == JSOP_BITOR ||
+                       op_ == JSOP_BITAND || op_ == JSOP_BITXOR);
+            MOZ_ASSERT(lhsIsBool_ || rhsIsBool_);
         }
 
         ICStub *getStub(ICStubSpace *space) {
@@ -3011,8 +3017,8 @@ class ICGetElemNativeSlotStub : public ICGetElemNativeStub
       : ICGetElemNativeStub(kind, stubCode, firstMonitorStub, shape, name, acctype, needsAtomize),
         offset_(offset)
     {
-        JS_ASSERT(kind == GetElem_NativeSlot || kind == GetElem_NativePrototypeSlot);
-        JS_ASSERT(acctype == FixedSlot || acctype == DynamicSlot);
+        MOZ_ASSERT(kind == GetElem_NativeSlot || kind == GetElem_NativePrototypeSlot);
+        MOZ_ASSERT(acctype == FixedSlot || acctype == DynamicSlot);
     }
 
   public:
@@ -3279,13 +3285,13 @@ class ICGetElemNativeCompiler : public ICStubCompiler
     ICStub *getStub(ICStubSpace *space) {
         RootedShape shape(cx, obj_->lastProperty());
         if (kind == ICStub::GetElem_NativeSlot) {
-            JS_ASSERT(obj_ == holder_);
+            MOZ_ASSERT(obj_ == holder_);
             return ICGetElem_NativeSlot::New(
                     space, getStubCode(), firstMonitorStub_, shape, name_, acctype_, needsAtomize_,
                     offset_);
         }
 
-        JS_ASSERT(obj_ != holder_);
+        MOZ_ASSERT(obj_ != holder_);
         RootedShape holderShape(cx, holder_->lastProperty());
         if (kind == ICStub::GetElem_NativePrototypeSlot) {
             return ICGetElem_NativePrototypeSlot::New(
@@ -3299,7 +3305,7 @@ class ICGetElemNativeCompiler : public ICStubCompiler
                     getter_, pcOffset_, holder_, holderShape);
         }
 
-        JS_ASSERT(kind == ICStub::GetElem_NativePrototypeCallScripted);
+        MOZ_ASSERT(kind == ICStub::GetElem_NativePrototypeCallScripted);
         if (kind == ICStub::GetElem_NativePrototypeCallScripted) {
             return ICGetElem_NativePrototypeCallScripted::New(
                     space, getStubCode(), firstMonitorStub_, shape, name_, acctype_, needsAtomize_,
@@ -3643,7 +3649,7 @@ class ICSetElem_DenseAdd : public ICUpdatedStub
 
     template <size_t ProtoChainDepth>
     ICSetElem_DenseAddImpl<ProtoChainDepth> *toImpl() {
-        JS_ASSERT(ProtoChainDepth == protoChainDepth());
+        MOZ_ASSERT(ProtoChainDepth == protoChainDepth());
         return toImplUnchecked<ProtoChainDepth>();
     }
 };
@@ -3660,7 +3666,7 @@ class ICSetElem_DenseAddImpl : public ICSetElem_DenseAdd
                            const AutoShapeVector *shapes)
       : ICSetElem_DenseAdd(stubCode, type, ProtoChainDepth)
     {
-        JS_ASSERT(shapes->length() == NumShapes);
+        MOZ_ASSERT(shapes->length() == NumShapes);
         for (size_t i = 0; i < NumShapes; i++)
             shapes_[i].init((*shapes)[i]);
     }
@@ -3680,7 +3686,7 @@ class ICSetElem_DenseAddImpl : public ICSetElem_DenseAdd
             MarkShape(trc, &shapes_[i], "baseline-setelem-denseadd-stub-shape");
     }
     Shape *shape(size_t i) const {
-        JS_ASSERT(i < NumShapes);
+        MOZ_ASSERT(i < NumShapes);
         return shapes_[i];
     }
     static size_t offsetOfShape(size_t idx) {
@@ -3934,7 +3940,7 @@ class ICGetName_Scope : public ICMonitoredStub
     }
 
     static size_t offsetOfShape(size_t index) {
-        JS_ASSERT(index <= NumHops);
+        MOZ_ASSERT(index <= NumHops);
         return offsetof(ICGetName_Scope, shapes_) + (index * sizeof(HeapPtrShape));
     }
     static size_t offsetOfOffset() {
@@ -4091,7 +4097,7 @@ class ICGetProp_Fallback : public ICMonitoredFallbackStub
     { }
 
   public:
-    static const uint32_t MAX_OPTIMIZED_STUBS = 8;
+    static const uint32_t MAX_OPTIMIZED_STUBS = 16;
 
     static inline ICGetProp_Fallback *New(ICStubSpace *space, JitCode *code) {
         if (!code)
@@ -4132,6 +4138,39 @@ class ICGetProp_Fallback : public ICMonitoredFallbackStub
             if (!stub || !stub->initMonitoringChain(cx, space))
                 return nullptr;
             return stub;
+        }
+    };
+};
+
+// Stub for sites, which are too polymorphic (i.e. MAX_OPTIMIZED_STUBS was reached)
+class ICGetProp_Generic : public ICMonitoredStub
+{
+    friend class ICStubSpace;
+
+  protected:
+    explicit ICGetProp_Generic(JitCode *stubCode, ICStub *firstMonitorStub)
+      : ICMonitoredStub(ICStub::GetProp_Generic, stubCode, firstMonitorStub) {}
+
+  public:
+    static inline ICGetProp_Generic *New(ICStubSpace *space, JitCode *code, ICStub *firstMonitorStub)
+    {
+        if(!code)
+            return nullptr;
+        return space->allocate<ICGetProp_Generic>(code, firstMonitorStub);
+    }
+
+    class Compiler : public ICStubCompiler {
+      protected:
+        bool generateStubCode(MacroAssembler &masm);
+        ICStub *firstMonitorStub_;
+      public:
+        explicit Compiler(JSContext *cx, ICStub *firstMonitorStub)
+          : ICStubCompiler(cx, ICStub::GetProp_Generic),
+            firstMonitorStub_(firstMonitorStub)
+        {}
+
+        ICStub *getStub(ICStubSpace *space) {
+            return ICGetProp_Generic::New(space, getStubCode(), firstMonitorStub_);
         }
     };
 };
@@ -4287,6 +4326,12 @@ class ICGetPropNativeStub : public ICMonitoredStub
     uint32_t offset() const {
         return offset_;
     }
+    void notePreliminaryObject() {
+        extra_ = 1;
+    }
+    bool hasPreliminaryObject() const {
+        return extra_;
+    }
     static size_t offsetOfShape() {
         return offsetof(ICGetPropNativeStub, shape_);
     }
@@ -4404,15 +4449,15 @@ class ICGetPropNativeCompiler : public ICStubCompiler
         offset_(offset)
     {}
 
-    ICStub *getStub(ICStubSpace *space) {
+    ICGetPropNativeStub *getStub(ICStubSpace *space) {
         RootedShape shape(cx, obj_->lastProperty());
         if (kind == ICStub::GetProp_Native) {
-            JS_ASSERT(obj_ == holder_);
+            MOZ_ASSERT(obj_ == holder_);
             return ICGetProp_Native::New(space, getStubCode(), firstMonitorStub_, shape, offset_);
         }
 
-        JS_ASSERT(obj_ != holder_);
-        JS_ASSERT(kind == ICStub::GetProp_NativePrototype);
+        MOZ_ASSERT(obj_ != holder_);
+        MOZ_ASSERT(kind == ICStub::GetProp_NativePrototype);
         RootedShape holderShape(cx, holder_->lastProperty());
         return ICGetProp_NativePrototype::New(space, getStubCode(), firstMonitorStub_, shape,
                                               offset_, holder_, holderShape);
@@ -4577,9 +4622,9 @@ class ICGetPropCallGetter : public ICMonitoredStub
             getter_(cx, getter),
             pcOffset_(pcOffset)
         {
-            JS_ASSERT(kind == ICStub::GetProp_CallScripted ||
-                      kind == ICStub::GetProp_CallNative ||
-                      kind == ICStub::GetProp_CallNativePrototype);
+            MOZ_ASSERT(kind == ICStub::GetProp_CallScripted ||
+                       kind == ICStub::GetProp_CallNative ||
+                       kind == ICStub::GetProp_CallNativePrototype);
         }
     };
 };
@@ -4618,8 +4663,8 @@ class ICGetPropCallPrototypeGetter : public ICGetPropCallGetter
           : ICGetPropCallGetter::Compiler(cx, kind, firstMonitorStub, holder, getter, pcOffset),
             receiver_(cx, obj)
         {
-            JS_ASSERT(kind == ICStub::GetProp_CallScripted ||
-                      kind == ICStub::GetProp_CallNativePrototype);
+            MOZ_ASSERT(kind == ICStub::GetProp_CallScripted ||
+                       kind == ICStub::GetProp_CallNativePrototype);
         }
     };
 };
@@ -5182,6 +5227,12 @@ class ICSetProp_Native : public ICUpdatedStub
     HeapPtrShape &shape() {
         return shape_;
     }
+    void notePreliminaryObject() {
+        extra_ = 1;
+    }
+    bool hasPreliminaryObject() const {
+        return extra_;
+    }
     static size_t offsetOfType() {
         return offsetof(ICSetProp_Native, type_);
     }
@@ -5212,7 +5263,7 @@ class ICSetProp_Native : public ICUpdatedStub
             offset_(offset)
         {}
 
-        ICUpdatedStub *getStub(ICStubSpace *space);
+        ICSetProp_Native *getStub(ICStubSpace *space);
     };
 };
 
@@ -5227,10 +5278,11 @@ class ICSetProp_NativeAdd : public ICUpdatedStub
   protected: // Protected to silence Clang warning.
     HeapPtrTypeObject type_;
     HeapPtrShape newShape_;
+    HeapPtrTypeObject newType_;
     uint32_t offset_;
 
     ICSetProp_NativeAdd(JitCode *stubCode, HandleTypeObject type, size_t protoChainDepth,
-                        HandleShape newShape, uint32_t offset);
+                        HandleShape newShape, HandleTypeObject newType, uint32_t offset);
 
   public:
     size_t protoChainDepth() const {
@@ -5242,10 +5294,13 @@ class ICSetProp_NativeAdd : public ICUpdatedStub
     HeapPtrShape &newShape() {
         return newShape_;
     }
+    HeapPtrTypeObject &newType() {
+        return newType_;
+    }
 
     template <size_t ProtoChainDepth>
     ICSetProp_NativeAddImpl<ProtoChainDepth> *toImpl() {
-        JS_ASSERT(ProtoChainDepth == protoChainDepth());
+        MOZ_ASSERT(ProtoChainDepth == protoChainDepth());
         return static_cast<ICSetProp_NativeAddImpl<ProtoChainDepth> *>(this);
     }
 
@@ -5254,6 +5309,9 @@ class ICSetProp_NativeAdd : public ICUpdatedStub
     }
     static size_t offsetOfNewShape() {
         return offsetof(ICSetProp_NativeAdd, newShape_);
+    }
+    static size_t offsetOfNewType() {
+        return offsetof(ICSetProp_NativeAdd, newType_);
     }
     static size_t offsetOfOffset() {
         return offsetof(ICSetProp_NativeAdd, offset_);
@@ -5270,17 +5328,18 @@ class ICSetProp_NativeAddImpl : public ICSetProp_NativeAdd
 
     ICSetProp_NativeAddImpl(JitCode *stubCode, HandleTypeObject type,
                             const AutoShapeVector *shapes,
-                            HandleShape newShape, uint32_t offset);
+                            HandleShape newShape, HandleTypeObject newType, uint32_t offset);
 
   public:
     static inline ICSetProp_NativeAddImpl *New(
             ICStubSpace *space, JitCode *code, HandleTypeObject type,
-            const AutoShapeVector *shapes, HandleShape newShape, uint32_t offset)
+            const AutoShapeVector *shapes, HandleShape newShape,
+            HandleTypeObject newType, uint32_t offset)
     {
         if (!code)
             return nullptr;
         return space->allocate<ICSetProp_NativeAddImpl<ProtoChainDepth> >(
-                            code, type, shapes, newShape, offset);
+                            code, type, shapes, newShape, newType, offset);
     }
 
     void traceShapes(JSTracer *trc) {
@@ -5297,6 +5356,7 @@ class ICSetPropNativeAddCompiler : public ICStubCompiler
 {
     RootedObject obj_;
     RootedShape oldShape_;
+    RootedTypeObject oldType_;
     size_t protoChainDepth_;
     bool isFixedSlot_;
     uint32_t offset_;
@@ -5310,20 +5370,27 @@ class ICSetPropNativeAddCompiler : public ICStubCompiler
     bool generateStubCode(MacroAssembler &masm);
 
   public:
-    ICSetPropNativeAddCompiler(JSContext *cx, HandleObject obj, HandleShape oldShape,
+    ICSetPropNativeAddCompiler(JSContext *cx, HandleObject obj,
+                               HandleShape oldShape, HandleTypeObject oldType,
                                size_t protoChainDepth, bool isFixedSlot, uint32_t offset);
 
     template <size_t ProtoChainDepth>
     ICUpdatedStub *getStubSpecific(ICStubSpace *space, const AutoShapeVector *shapes)
     {
-        RootedTypeObject type(cx, obj_->getType(cx));
-        if (!type)
+        RootedTypeObject newType(cx, obj_->getType(cx));
+        if (!newType)
             return nullptr;
+
+        // Only specify newType when the object's type changes due to the
+        // object becoming fully initialized per the acquired properties
+        // analysis.
+        if (newType == oldType_)
+            newType = nullptr;
 
         RootedShape newShape(cx, obj_->lastProperty());
 
         return ICSetProp_NativeAddImpl<ProtoChainDepth>::New(
-                    space, getStubCode(), type, shapes, newShape, offset_);
+                    space, getStubCode(), oldType_, shapes, newShape, newType, offset_);
     }
 
     ICUpdatedStub *getStub(ICStubSpace *space);
@@ -5397,7 +5464,7 @@ class ICSetPropCallSetter : public ICStub
             setter_(cx, setter),
             pcOffset_(pcOffset)
         {
-            JS_ASSERT(kind == ICStub::SetProp_CallScripted || kind == ICStub::SetProp_CallNative);
+            MOZ_ASSERT(kind == ICStub::SetProp_CallScripted || kind == ICStub::SetProp_CallNative);
         }
     };
 };
@@ -5613,17 +5680,17 @@ class ICCall_Scripted : public ICMonitoredStub
 
   protected:
     HeapPtrScript calleeScript_;
-    HeapPtrObject templateObject_;
+    HeapPtrNativeObject templateObject_;
     uint32_t pcOffset_;
 
     ICCall_Scripted(JitCode *stubCode, ICStub *firstMonitorStub,
-                    HandleScript calleeScript, HandleObject templateObject,
+                    HandleScript calleeScript, HandleNativeObject templateObject,
                     uint32_t pcOffset);
 
   public:
     static inline ICCall_Scripted *New(
             ICStubSpace *space, JitCode *code, ICStub *firstMonitorStub,
-            HandleScript calleeScript, HandleObject templateObject,
+            HandleScript calleeScript, HandleNativeObject templateObject,
             uint32_t pcOffset)
     {
         if (!code)
@@ -5638,7 +5705,7 @@ class ICCall_Scripted : public ICMonitoredStub
     HeapPtrScript &calleeScript() {
         return calleeScript_;
     }
-    HeapPtrObject &templateObject() {
+    HeapPtrNativeObject &templateObject() {
         return templateObject_;
     }
 
@@ -5686,7 +5753,7 @@ class ICCallScriptedCompiler : public ICCallStubCompiler {
     bool isConstructing_;
     bool isSpread_;
     RootedScript calleeScript_;
-    RootedObject templateObject_;
+    RootedNativeObject templateObject_;
     uint32_t pcOffset_;
     bool generateStubCode(MacroAssembler &masm);
 
@@ -5697,7 +5764,7 @@ class ICCallScriptedCompiler : public ICCallStubCompiler {
 
   public:
     ICCallScriptedCompiler(JSContext *cx, ICStub *firstMonitorStub,
-                           HandleScript calleeScript, HandleObject templateObject,
+                           HandleScript calleeScript, HandleNativeObject templateObject,
                            bool isConstructing, bool isSpread, uint32_t pcOffset)
       : ICCallStubCompiler(cx, ICStub::Call_Scripted),
         firstMonitorStub_(firstMonitorStub),
@@ -5735,7 +5802,7 @@ class ICCall_Native : public ICMonitoredStub
 
   protected:
     HeapPtrFunction callee_;
-    HeapPtrObject templateObject_;
+    HeapPtrNativeObject templateObject_;
     uint32_t pcOffset_;
 
 #if defined(JS_ARM_SIMULATOR) || defined(JS_MIPS_SIMULATOR)
@@ -5743,12 +5810,12 @@ class ICCall_Native : public ICMonitoredStub
 #endif
 
     ICCall_Native(JitCode *stubCode, ICStub *firstMonitorStub,
-                  HandleFunction callee, HandleObject templateObject,
+                  HandleFunction callee, HandleNativeObject templateObject,
                   uint32_t pcOffset);
 
   public:
     static inline ICCall_Native *New(ICStubSpace *space, JitCode *code, ICStub *firstMonitorStub,
-                                     HandleFunction callee, HandleObject templateObject,
+                                     HandleFunction callee, HandleNativeObject templateObject,
                                      uint32_t pcOffset)
     {
         if (!code)
@@ -5763,7 +5830,7 @@ class ICCall_Native : public ICMonitoredStub
     HeapPtrFunction &callee() {
         return callee_;
     }
-    HeapPtrObject &templateObject() {
+    HeapPtrNativeObject &templateObject() {
         return templateObject_;
     }
 
@@ -5787,7 +5854,7 @@ class ICCall_Native : public ICMonitoredStub
         bool isConstructing_;
         bool isSpread_;
         RootedFunction callee_;
-        RootedObject templateObject_;
+        RootedNativeObject templateObject_;
         uint32_t pcOffset_;
         bool generateStubCode(MacroAssembler &masm);
 
@@ -5798,7 +5865,7 @@ class ICCall_Native : public ICMonitoredStub
 
       public:
         Compiler(JSContext *cx, ICStub *firstMonitorStub,
-                 HandleFunction callee, HandleObject templateObject,
+                 HandleFunction callee, HandleNativeObject templateObject,
                  bool isConstructing, bool isSpread, uint32_t pcOffset)
           : ICCallStubCompiler(cx, ICStub::Call_Native),
             firstMonitorStub_(firstMonitorStub),
@@ -5983,6 +6050,91 @@ class ICCall_ScriptedFunCall : public ICMonitoredStub
     };
 };
 
+class ICCall_StringSplit : public ICMonitoredStub
+{
+    friend class ICStubSpace;
+
+  protected:
+    uint32_t pcOffset_;
+    HeapPtrString expectedThis_;
+    HeapPtrString expectedArg_;
+    HeapPtrNativeObject templateObject_;
+
+    ICCall_StringSplit(JitCode *stubCode, ICStub *firstMonitorStub, uint32_t pcOffset, HandleString thisString,
+                       HandleString argString, HandleNativeObject templateObject)
+      : ICMonitoredStub(ICStub::Call_StringSplit, stubCode, firstMonitorStub),
+        pcOffset_(pcOffset), expectedThis_(thisString), expectedArg_(argString),
+        templateObject_(templateObject)
+    { }
+
+  public:
+    static inline ICCall_StringSplit *New(ICStubSpace *space, JitCode *code,
+                                          ICStub *firstMonitorStub, uint32_t pcOffset, HandleString thisString,
+                                          HandleString argString, HandleNativeObject templateObject)
+    {
+        if (!code)
+            return nullptr;
+        return space->allocate<ICCall_StringSplit>(code, firstMonitorStub, pcOffset, thisString,
+                                                   argString, templateObject);
+    }
+
+    static size_t offsetOfExpectedThis() {
+        return offsetof(ICCall_StringSplit, expectedThis_);
+    }
+
+    static size_t offsetOfExpectedArg() {
+        return offsetof(ICCall_StringSplit, expectedArg_);
+    }
+
+    static size_t offsetOfTemplateObject() {
+        return offsetof(ICCall_StringSplit, templateObject_);
+    }
+
+    HeapPtrString &expectedThis() {
+        return expectedThis_;
+    }
+
+    HeapPtrString &expectedArg() {
+        return expectedArg_;
+    }
+
+    HeapPtrNativeObject &templateObject() {
+        return templateObject_;
+    }
+
+    class Compiler : public ICCallStubCompiler {
+      protected:
+        ICStub *firstMonitorStub_;
+        uint32_t pcOffset_;
+        RootedString expectedThis_;
+        RootedString expectedArg_;
+        RootedNativeObject templateObject_;
+
+        bool generateStubCode(MacroAssembler &masm);
+
+        virtual int32_t getKey() const {
+            return static_cast<int32_t>(kind);
+        }
+
+      public:
+        Compiler(JSContext *cx, ICStub *firstMonitorStub, uint32_t pcOffset, HandleString thisString,
+                 HandleString argString, HandleValue templateObject)
+          : ICCallStubCompiler(cx, ICStub::Call_StringSplit),
+            firstMonitorStub_(firstMonitorStub),
+            pcOffset_(pcOffset),
+            expectedThis_(cx, thisString),
+            expectedArg_(cx, argString),
+            templateObject_(cx, &templateObject.toObject().as<NativeObject>())
+        { }
+
+        ICStub *getStub(ICStubSpace *space) {
+            return ICCall_StringSplit::New(space, getStubCode(), firstMonitorStub_,
+                                           pcOffset_, expectedThis_, expectedArg_,
+                                           templateObject_);
+        }
+   };
+};
+
 // Stub for performing a TableSwitch, updating the IC's return address to jump
 // to whatever point the switch is branching to.
 class ICTableSwitch : public ICStub
@@ -6072,6 +6224,14 @@ class ICIteratorMore_Fallback : public ICFallbackStub
         return space->allocate<ICIteratorMore_Fallback>(code);
     }
 
+    void setHasNonStringResult() {
+        extra_ = 1;
+    }
+    bool hasNonStringResult() const {
+        MOZ_ASSERT(extra_ <= 1);
+        return extra_;
+    }
+
     class Compiler : public ICStubCompiler {
       protected:
         bool generateStubCode(MacroAssembler &masm);
@@ -6114,76 +6274,6 @@ class ICIteratorMore_Native : public ICStub
 
         ICStub *getStub(ICStubSpace *space) {
             return ICIteratorMore_Native::New(space, getStubCode());
-        }
-    };
-};
-
-// IC for getting the next value in an iterator.
-class ICIteratorNext_Fallback : public ICFallbackStub
-{
-    friend class ICStubSpace;
-
-    explicit ICIteratorNext_Fallback(JitCode *stubCode)
-      : ICFallbackStub(ICStub::IteratorNext_Fallback, stubCode)
-    { }
-
-  public:
-    static inline ICIteratorNext_Fallback *New(ICStubSpace *space, JitCode *code) {
-        if (!code)
-            return nullptr;
-        return space->allocate<ICIteratorNext_Fallback>(code);
-    }
-
-    void setHasNonStringResult() {
-        JS_ASSERT(extra_ == 0);
-        extra_ = 1;
-    }
-    bool hasNonStringResult() const {
-        return extra_;
-    }
-
-    class Compiler : public ICStubCompiler {
-      protected:
-        bool generateStubCode(MacroAssembler &masm);
-
-      public:
-        explicit Compiler(JSContext *cx)
-          : ICStubCompiler(cx, ICStub::IteratorNext_Fallback)
-        { }
-
-        ICStub *getStub(ICStubSpace *space) {
-            return ICIteratorNext_Fallback::New(space, getStubCode());
-        }
-    };
-};
-
-// IC for getting the next value in a native iterator.
-class ICIteratorNext_Native : public ICStub
-{
-    friend class ICStubSpace;
-
-    explicit ICIteratorNext_Native(JitCode *stubCode)
-      : ICStub(ICStub::IteratorNext_Native, stubCode)
-    { }
-
-  public:
-    static inline ICIteratorNext_Native *New(ICStubSpace *space, JitCode *code) {
-        if (!code)
-            return nullptr;
-        return space->allocate<ICIteratorNext_Native>(code);
-    }
-
-    class Compiler : public ICStubCompiler {
-      protected:
-        bool generateStubCode(MacroAssembler &masm);
-
-      public:
-        explicit Compiler(JSContext *cx)
-          : ICStubCompiler(cx, ICStub::IteratorNext_Native)
-        { }
-
-        ICStub *getStub(ICStubSpace *space) {
-            return ICIteratorNext_Native::New(space, getStubCode());
         }
     };
 };
@@ -6292,7 +6382,7 @@ class ICTypeOf_Typed : public ICFallbackStub
       : ICFallbackStub(ICStub::TypeOf_Typed, stubCode)
     {
         extra_ = uint16_t(type);
-        JS_ASSERT(JSType(extra_) == type);
+        MOZ_ASSERT(JSType(extra_) == type);
     }
 
   public:
@@ -6333,9 +6423,9 @@ class ICRest_Fallback : public ICFallbackStub
 {
     friend class ICStubSpace;
 
-    HeapPtrObject templateObject_;
+    HeapPtrArrayObject templateObject_;
 
-    ICRest_Fallback(JitCode *stubCode, JSObject *templateObject)
+    ICRest_Fallback(JitCode *stubCode, ArrayObject *templateObject)
       : ICFallbackStub(ICStub::Rest_Fallback, stubCode), templateObject_(templateObject)
     { }
 
@@ -6343,23 +6433,23 @@ class ICRest_Fallback : public ICFallbackStub
     static const uint32_t MAX_OPTIMIZED_STUBS = 8;
 
     static inline ICRest_Fallback *New(ICStubSpace *space, JitCode *code,
-                                       JSObject *templateObject) {
+                                       ArrayObject *templateObject) {
         if (!code)
             return nullptr;
         return space->allocate<ICRest_Fallback>(code, templateObject);
     }
 
-    HeapPtrObject &templateObject() {
+    HeapPtrArrayObject &templateObject() {
         return templateObject_;
     }
 
     class Compiler : public ICStubCompiler {
       protected:
-        RootedObject templateObject;
+        RootedArrayObject templateObject;
         bool generateStubCode(MacroAssembler &masm);
 
       public:
-        Compiler(JSContext *cx, JSObject *templateObject)
+        Compiler(JSContext *cx, ArrayObject *templateObject)
           : ICStubCompiler(cx, ICStub::Rest_Fallback),
             templateObject(cx, templateObject)
         { }
@@ -6464,7 +6554,7 @@ IsCacheableDOMProxy(JSObject *obj)
     if (handler->family() != GetDOMProxyHandlerFamily())
         return false;
 
-    if (obj->numFixedSlots() <= GetDOMProxyExpandoSlot())
+    if (obj->fakeNativeNumFixedSlots() <= GetDOMProxyExpandoSlot())
         return false;
 
     return true;

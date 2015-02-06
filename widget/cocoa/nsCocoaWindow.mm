@@ -238,7 +238,7 @@ static void FitRectToVisibleAreaForScreen(nsIntRect &aRect, NSScreen *aScreen,
   }
 }
 
-// Some applications like Camino use native popup windows
+// Some applications use native popup windows
 // (native context menus, native tooltips)
 static bool UseNativePopupWindows()
 {
@@ -2000,6 +2000,16 @@ nsCocoaWindow::SetDrawsTitle(bool aDrawTitle)
   NS_OBJC_END_TRY_ABORT_BLOCK;
 }
 
+void
+nsCocoaWindow::SetUseBrightTitlebarForeground(bool aBrightForeground)
+{
+  NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
+
+  [mWindow setUseBrightTitlebarForeground:aBrightForeground];
+
+  NS_OBJC_END_TRY_ABORT_BLOCK;
+}
+
 NS_IMETHODIMP nsCocoaWindow::SetNonClientMargins(nsIntMargin &margins)
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
@@ -2630,8 +2640,10 @@ static NSMutableSet *gSwizzledFrameViewClasses = nil;
   mDisabledNeedsDisplay = NO;
   mDPI = GetDPI(self);
   mTrackingArea = nil;
+  mDirtyRect = NSZeroRect;
   mBeingShown = NO;
   mDrawTitle = NO;
+  mBrightTitlebarForeground = NO;
   [self updateTrackingArea];
 
   return self;
@@ -2728,6 +2740,17 @@ static const NSString* kStateShowsToolbarButton = @"showsToolbarButton";
 - (BOOL)wantsTitleDrawn
 {
   return mDrawTitle;
+}
+
+- (void)setUseBrightTitlebarForeground:(BOOL)aBrightForeground
+{
+  mBrightTitlebarForeground = aBrightForeground;
+  [[self standardWindowButton:NSWindowFullScreenButton] setNeedsDisplay:YES];
+}
+
+- (BOOL)useBrightTitlebarForeground
+{
+  return mBrightTitlebarForeground;
 }
 
 // Pass nil here to get the default appearance.
@@ -2839,7 +2862,15 @@ static const NSString* kStateShowsToolbarButton = @"showsToolbarButton";
     // it's available and don't need to check whether our superclass responds
     // to the selector.
     [super _setNeedsDisplayInRect:aRect];
+    mDirtyRect = NSUnionRect(mDirtyRect, aRect);
   }
+}
+
+- (NSRect)getAndResetNativeDirtyRect
+{
+  NSRect dirtyRect = mDirtyRect;
+  mDirtyRect = NSZeroRect;
+  return dirtyRect;
 }
 
 - (void)updateContentViewSize

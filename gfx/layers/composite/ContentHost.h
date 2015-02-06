@@ -47,7 +47,7 @@ class TextureImageTextureSourceOGL;
 struct TexturedEffect;
 
 /**
- * ContentHosts are used for compositing Thebes layers, always matched by a
+ * ContentHosts are used for compositing Painted layers, always matched by a
  * ContentClient of the same type.
  *
  * ContentHosts support only UpdateThebes(), not Update().
@@ -103,8 +103,8 @@ public:
                          const gfx::Rect& aClipRect,
                          const nsIntRegion* aVisibleRegion = nullptr);
 
-  virtual NewTextureSource* GetTextureSource() = 0;
-  virtual NewTextureSource* GetTextureSourceOnWhite() = 0;
+  virtual TextureSource* GetTextureSource() = 0;
+  virtual TextureSource* GetTextureSourceOnWhite() = 0;
 
   virtual TemporaryRef<TexturedEffect> GenEffect(const gfx::Filter& aFilter) MOZ_OVERRIDE;
 
@@ -173,11 +173,11 @@ public:
     mLocked = false;
   }
 
-  virtual NewTextureSource* GetTextureSource() MOZ_OVERRIDE {
+  virtual TextureSource* GetTextureSource() MOZ_OVERRIDE {
     MOZ_ASSERT(mLocked);
     return mTextureHost->GetTextureSources();
   }
-  virtual NewTextureSource* GetTextureSourceOnWhite() MOZ_OVERRIDE {
+  virtual TextureSource* GetTextureSourceOnWhite() MOZ_OVERRIDE {
     MOZ_ASSERT(mLocked);
     if (mTextureHostOnWhite) {
       return mTextureHostOnWhite->GetTextureSources();
@@ -291,8 +291,8 @@ public:
     mLocked = false;
   }
 
-  virtual NewTextureSource* GetTextureSource() MOZ_OVERRIDE;
-  virtual NewTextureSource* GetTextureSourceOnWhite() MOZ_OVERRIDE;
+  virtual TextureSource* GetTextureSource() MOZ_OVERRIDE;
+  virtual TextureSource* GetTextureSourceOnWhite() MOZ_OVERRIDE;
 
 private:
 

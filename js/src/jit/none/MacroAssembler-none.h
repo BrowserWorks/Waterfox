@@ -188,7 +188,7 @@ class MacroAssemblerNone : public Assembler
     void callWithExitFrame(JitCode *) { MOZ_CRASH(); }
     void callWithExitFrame(JitCode *, Register) { MOZ_CRASH(); }
 
-    void callIon(Register callee) { MOZ_CRASH(); }
+    void callJit(Register callee) { MOZ_CRASH(); }
     void callIonFromAsmJS(Register callee) { MOZ_CRASH(); }
 
     void nop() { MOZ_CRASH(); }
@@ -213,6 +213,7 @@ class MacroAssemblerNone : public Assembler
     template <typename T, typename S> void pushValue(T, S) { MOZ_CRASH(); }
     void popValue(ValueOperand) { MOZ_CRASH(); }
     void tagValue(JSValueType, Register, ValueOperand) { MOZ_CRASH(); }
+    void retn(Imm32 n) { MOZ_CRASH(); }
     template <typename T> void push(T) { MOZ_CRASH(); }
     template <typename T> void Push(T) { MOZ_CRASH(); }
     template <typename T> void pop(T) { MOZ_CRASH(); }
@@ -386,6 +387,7 @@ class MacroAssemblerNone : public Assembler
     bool buildFakeExitFrame(Register, uint32_t *) { MOZ_CRASH(); }
     bool buildOOLFakeExitFrame(void *) { MOZ_CRASH(); }
     void loadAsmJSActivation(Register) { MOZ_CRASH(); }
+    void loadAsmJSHeapRegisterFromGlobalData() { MOZ_CRASH(); }
     void memIntToValue(Address, Address) { MOZ_CRASH(); }
 
     void setPrinter(Sprinter *) { MOZ_CRASH(); }

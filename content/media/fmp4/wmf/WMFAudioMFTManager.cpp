@@ -316,4 +316,10 @@ WMFAudioMFTManager::Output(int64_t aStreamOffset,
   return S_OK;
 }
 
+void
+WMFAudioMFTManager::Shutdown()
+{
+  mDecoder = nullptr;
+}
+
 } // namespace mozilla

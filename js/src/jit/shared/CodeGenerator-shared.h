@@ -9,9 +9,9 @@
 
 #include "mozilla/Alignment.h"
 
-#include "jit/IonFrames.h"
-#include "jit/IonMacroAssembler.h"
+#include "jit/JitFrames.h"
 #include "jit/LIR.h"
+#include "jit/MacroAssembler.h"
 #include "jit/MIRGenerator.h"
 #include "jit/MIRGraph.h"
 #include "jit/Safepoints.h"
@@ -48,7 +48,7 @@ struct ReciprocalMulConstants {
     int32_t shiftAmount;
 };
 
-class CodeGeneratorShared : public LInstructionVisitor
+class CodeGeneratorShared : public LElementVisitor
 {
     js::Vector<OutOfLineCode *, 0, SystemAllocPolicy> outOfLineCode_;
     OutOfLineCode *oolIns;
@@ -133,7 +133,7 @@ class CodeGeneratorShared : public LInstructionVisitor
     }
 
     inline void setOsrEntryOffset(size_t offset) {
-        JS_ASSERT(osrEntryOffset_ == 0);
+        MOZ_ASSERT(osrEntryOffset_ == 0);
         osrEntryOffset_ = offset;
     }
     inline size_t getOsrEntryOffset() const {
@@ -145,7 +145,7 @@ class CodeGeneratorShared : public LInstructionVisitor
     size_t skipArgCheckEntryOffset_;
 
     inline void setSkipArgCheckEntryOffset(size_t offset) {
-        JS_ASSERT(skipArgCheckEntryOffset_ == 0);
+        MOZ_ASSERT(skipArgCheckEntryOffset_ == 0);
         skipArgCheckEntryOffset_ = offset;
     }
     inline size_t getSkipArgCheckEntryOffset() const {
@@ -181,19 +181,19 @@ class CodeGeneratorShared : public LInstructionVisitor
     // For arguments to the current function.
     inline int32_t ArgToStackOffset(int32_t slot) const {
         return masm.framePushed() +
-               (gen->compilingAsmJS() ? sizeof(AsmJSFrame) : sizeof(IonJSFrameLayout)) +
+               (gen->compilingAsmJS() ? sizeof(AsmJSFrame) : sizeof(JitFrameLayout)) +
                slot;
     }
 
     // For the callee of the current function.
     inline int32_t CalleeStackOffset() const {
-        return masm.framePushed() + IonJSFrameLayout::offsetOfCalleeToken();
+        return masm.framePushed() + JitFrameLayout::offsetOfCalleeToken();
     }
 
     inline int32_t SlotToStackOffset(int32_t slot) const {
-        JS_ASSERT(slot > 0 && slot <= int32_t(graph.localSlotCount()));
+        MOZ_ASSERT(slot > 0 && slot <= int32_t(graph.localSlotCount()));
         int32_t offset = masm.framePushed() - frameInitialAdjustment_ - slot;
-        JS_ASSERT(offset >= 0);
+        MOZ_ASSERT(offset >= 0);
         return offset;
     }
     inline int32_t StackOffsetToSlot(int32_t offset) const {
@@ -209,7 +209,7 @@ class CodeGeneratorShared : public LInstructionVisitor
     // For argument construction for calls. Argslots are Value-sized.
     inline int32_t StackOffsetOfPassedArg(int32_t slot) const {
         // A slot of 0 is permitted only to calculate %esp offset for calls.
-        JS_ASSERT(slot >= 0 && slot <= int32_t(graph.argumentSlotCount()));
+        MOZ_ASSERT(slot >= 0 && slot <= int32_t(graph.argumentSlotCount()));
         int32_t offset = masm.framePushed() -
                        graph.paddedLocalSlotsSize() -
                        (slot * sizeof(Value));
@@ -220,8 +220,8 @@ class CodeGeneratorShared : public LInstructionVisitor
         // by sizeof(Value) is desirable since everything on the stack is a Value.
         // Note that paddedLocalSlotCount() aligns to at least a Value boundary
         // specifically to support this.
-        JS_ASSERT(offset >= 0);
-        JS_ASSERT(offset % sizeof(Value) == 0);
+        MOZ_ASSERT(offset >= 0);
+        MOZ_ASSERT(offset % sizeof(Value) == 0);
         return offset;
     }
 
@@ -288,7 +288,7 @@ class CodeGeneratorShared : public LInstructionVisitor
   protected:
 
     size_t allocateData(size_t size) {
-        JS_ASSERT(size % sizeof(void *) == 0);
+        MOZ_ASSERT(size % sizeof(void *) == 0);
         size_t dataOffset = runtimeData_.length();
         masm.propagateOOM(runtimeData_.appendN(0, size));
         return dataOffset;
@@ -300,7 +300,7 @@ class CodeGeneratorShared : public LInstructionVisitor
         if (masm.oom())
             return SIZE_MAX;
         // Use the copy constructor on the allocated space.
-        JS_ASSERT(index == cacheList_.back());
+        MOZ_ASSERT(index == cacheList_.back());
         new (&runtimeData_[index]) T(cache);
         return index;
     }
@@ -348,6 +348,8 @@ class CodeGeneratorShared : public LInstructionVisitor
     bool emitTruncateDouble(FloatRegister src, Register dest, MInstruction *mir);
     bool emitTruncateFloat32(FloatRegister src, Register dest, MInstruction *mir);
 
+    void emitAsmJSCall(LAsmJSCall *ins);
+
     void emitPreBarrier(Register base, const LAllocation *index);
     void emitPreBarrier(Address address);
 
@@ -356,7 +358,7 @@ class CodeGeneratorShared : public LInstructionVisitor
     // actually branch directly to.
     MBasicBlock *skipTrivialBlocks(MBasicBlock *block) {
         while (block->lir()->isTrivial()) {
-            JS_ASSERT(block->lir()->rbegin()->numSuccessors() == 1);
+            MOZ_ASSERT(block->lir()->rbegin()->numSuccessors() == 1);
             block = block->lir()->rbegin()->getSuccessor(0);
         }
         return block;
@@ -765,8 +767,8 @@ inline OutOfLineCode *
 CodeGeneratorShared::oolCallVM(const VMFunction &fun, LInstruction *lir, const ArgSeq &args,
                                const StoreOutputTo &out)
 {
-    JS_ASSERT(lir->mirRaw());
-    JS_ASSERT(lir->mirRaw()->isInstruction());
+    MOZ_ASSERT(lir->mirRaw());
+    MOZ_ASSERT(lir->mirRaw()->isInstruction());
 
     OutOfLineCode *ool = new(alloc()) OutOfLineCallVM<ArgSeq, StoreOutputTo>(lir, fun, args, out);
     if (!addOutOfLineCode(ool, lir->mirRaw()->toInstruction()))

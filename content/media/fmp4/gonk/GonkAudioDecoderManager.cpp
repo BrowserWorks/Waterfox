@@ -100,17 +100,12 @@ GonkAudioDecoderManager::Init(MediaDataDecoderCallback* aCallback)
 
 nsresult
 GonkAudioDecoderManager::CreateAudioData(int64_t aStreamOffset, AudioData **v) {
-
-  void *data;
-  size_t dataOffset;
-  size_t size;
-  int64_t timeUs;
-
   if (!(mAudioBuffer != nullptr && mAudioBuffer->data() != nullptr)) {
     ALOG("Audio Buffer is not valid!");
     return NS_ERROR_UNEXPECTED;
   }
 
+  int64_t timeUs;
   if (!mAudioBuffer->meta_data()->findInt64(kKeyTime, &timeUs)) {
     return NS_ERROR_UNEXPECTED;
   }
@@ -122,11 +117,11 @@ GonkAudioDecoderManager::CreateAudioData(int64_t aStreamOffset, AudioData **v) {
     return NS_ERROR_NOT_AVAILABLE;
   }
 
-  data = mAudioBuffer->data();
-  dataOffset = mAudioBuffer->range_offset();
-  size = mAudioBuffer->range_length();
+  const uint8_t *data = static_cast<const uint8_t*>(mAudioBuffer->data());
+  size_t dataOffset = mAudioBuffer->range_offset();
+  size_t size = mAudioBuffer->range_length();
 
-  nsAutoArrayPtr<AudioDataValue> buffer(new AudioDataValue[size/2] );
+  nsAutoArrayPtr<AudioDataValue> buffer(new AudioDataValue[size/2]);
   memcpy(buffer.get(), data+dataOffset, size);
   uint32_t frames = size / (2 * mAudioChannels);
 
@@ -159,7 +154,7 @@ GonkAudioDecoderManager::Output(int64_t aStreamOffset,
       AudioData* data = nullptr;
       nsresult rv = CreateAudioData(aStreamOffset, &data);
       if (rv == NS_ERROR_NOT_AVAILABLE) {
-	// Decoder outputs a empty video buffer, try again
+        // Decoder outputs an empty video buffer, try again
         return NS_ERROR_NOT_AVAILABLE;
       } else if (rv != NS_OK || data == nullptr) {
         return NS_ERROR_UNEXPECTED;

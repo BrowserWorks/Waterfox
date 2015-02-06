@@ -22,12 +22,15 @@ from mozbuild.frontend.data import (
     ReaderSummary,
     Resources,
     SimpleProgram,
+    StaticLibrary,
+    TestHarnessFiles,
     TestManifest,
     VariablePassthru,
 )
 from mozbuild.frontend.emitter import TreeMetadataEmitter
 from mozbuild.frontend.reader import (
     BuildReader,
+    BuildReaderError,
     SandboxValidationError,
 )
 
@@ -88,7 +91,6 @@ class TestEmitterBasic(unittest.TestCase):
         for o in objs:
             self.assertIsInstance(o, DirectoryTraversal)
             self.assertEqual(o.test_dirs, [])
-            self.assertEqual(len(o.tier_dirs), 0)
             self.assertTrue(os.path.isabs(o.context_main_path))
             self.assertEqual(len(o.context_all_paths), 1)
 
@@ -96,7 +98,13 @@ class TestEmitterBasic(unittest.TestCase):
         self.assertEqual(reldirs, ['', 'foo', 'foo/biz', 'bar'])
 
         dirs = [o.dirs for o in objs]
-        self.assertEqual(dirs, [['foo', 'bar'], ['biz'], [], []])
+        self.assertEqual(dirs, [
+            [
+                mozpath.join(reader.config.topsrcdir, 'foo'),
+                mozpath.join(reader.config.topsrcdir, 'bar')
+            ], [
+                mozpath.join(reader.config.topsrcdir, 'foo', 'biz')
+            ], [], []])
 
     def test_traversal_all_vars(self):
         reader = self.reader('traversal-all-vars')
@@ -113,17 +121,10 @@ class TestEmitterBasic(unittest.TestCase):
             reldir = o.relativedir
 
             if reldir == '':
-                self.assertEqual(o.dirs, ['regular'])
-                self.assertEqual(o.test_dirs, ['test'])
-
-    def test_tier_simple(self):
-        reader = self.reader('traversal-tier-simple')
-        objs = self.read_topsrcdir(reader, filter_common=False)
-        self.assertEqual(len(objs), 6)
-
-        reldirs = [o.relativedir for o in objs]
-        self.assertEqual(reldirs, ['', 'foo', 'foo/biz', 'foo_static', 'bar',
-            'baz'])
+                self.assertEqual(o.dirs, [
+                    mozpath.join(reader.config.topsrcdir, 'regular')])
+                self.assertEqual(o.test_dirs, [
+                    mozpath.join(reader.config.topsrcdir, 'test')])
 
     def test_config_file_substitution(self):
         reader = self.reader('config-file-substitution')
@@ -187,34 +188,42 @@ class TestEmitterBasic(unittest.TestCase):
         self.assertEqual(len(objs), 1)
         self.assertIsInstance(objs[0], Exports)
 
-        exports = objs[0].exports
-        self.assertEqual(exports.get_strings(), ['foo.h', 'bar.h', 'baz.h'])
+        expected = [
+            ('', ['foo.h', 'bar.h', 'baz.h']),
+            ('mozilla', ['mozilla1.h', 'mozilla2.h']),
+            ('mozilla/dom', ['dom1.h', 'dom2.h', 'dom3.h']),
+            ('mozilla/gfx', ['gfx.h']),
+            ('nspr/private', ['pprio.h', 'pprthred.h']),
+            ('overwrite', ['new.h']),
+            ('vpx', ['mem.h', 'mem2.h']),
+        ]
+        for (expect_path, expect_headers), (actual_path, actual_headers) in \
+                zip(expected, [(path, list(seq)) for path, seq in objs[0].exports.walk()]):
+            self.assertEqual(expect_path, actual_path)
+            self.assertEqual(expect_headers, actual_headers)
 
-        self.assertIn('mozilla', exports._children)
-        mozilla = exports._children['mozilla']
-        self.assertEqual(mozilla.get_strings(), ['mozilla1.h', 'mozilla2.h'])
+    def test_test_harness_files(self):
+        reader = self.reader('test-harness-files')
+        objs = self.read_topsrcdir(reader)
 
-        self.assertIn('dom', mozilla._children)
-        dom = mozilla._children['dom']
-        self.assertEqual(dom.get_strings(), ['dom1.h', 'dom2.h', 'dom3.h'])
+        self.assertEqual(len(objs), 1)
+        self.assertIsInstance(objs[0], TestHarnessFiles)
 
-        self.assertIn('gfx', mozilla._children)
-        gfx = mozilla._children['gfx']
-        self.assertEqual(gfx.get_strings(), ['gfx.h'])
+        expected = {
+            'mochitest': ['runtests.py', 'utils.py'],
+            'testing/mochitest': ['mochitest.py', 'mochitest.ini'],
+        }
 
-        self.assertIn('vpx', exports._children)
-        vpx = exports._children['vpx']
-        self.assertEqual(vpx.get_strings(), ['mem.h', 'mem2.h'])
+        for path, strings in objs[0].srcdir_files.iteritems():
+            self.assertTrue(path in expected)
+            basenames = sorted(mozpath.basename(s) for s in strings)
+            self.assertEqual(sorted(expected[path]), basenames)
 
-        self.assertIn('nspr', exports._children)
-        nspr = exports._children['nspr']
-        self.assertIn('private', nspr._children)
-        private = nspr._children['private']
-        self.assertEqual(private.get_strings(), ['pprio.h', 'pprthred.h'])
-
-        self.assertIn('overwrite', exports._children)
-        overwrite = exports._children['overwrite']
-        self.assertEqual(overwrite.get_strings(), ['new.h'])
+    def test_test_harness_files_root(self):
+        reader = self.reader('test-harness-files-root')
+        with self.assertRaisesRegexp(SandboxValidationError,
+            'Cannot install files to the root of TEST_HARNESS_FILES'):
+            objs = self.read_topsrcdir(reader)
 
     def test_resources(self):
         reader = self.reader('resources')
@@ -233,8 +242,8 @@ class TestEmitterBasic(unittest.TestCase):
         self.assertEqual(objs[1].defines, expected_defines)
 
         resources = objs[1].resources
-        self.assertEqual(resources.get_strings(), ['foo.res', 'bar.res', 'baz.res',
-                                                   'foo_p.res.in', 'bar_p.res.in', 'baz_p.res.in'])
+        self.assertEqual(resources._strings, ['foo.res', 'bar.res', 'baz.res',
+                                              'foo_p.res.in', 'bar_p.res.in', 'baz_p.res.in'])
         self.assertFalse(resources['foo.res'].preprocess)
         self.assertFalse(resources['bar.res'].preprocess)
         self.assertFalse(resources['baz.res'].preprocess)
@@ -244,8 +253,8 @@ class TestEmitterBasic(unittest.TestCase):
 
         self.assertIn('mozilla', resources._children)
         mozilla = resources._children['mozilla']
-        self.assertEqual(mozilla.get_strings(), ['mozilla1.res', 'mozilla2.res',
-                                                 'mozilla1_p.res.in', 'mozilla2_p.res.in'])
+        self.assertEqual(mozilla._strings, ['mozilla1.res', 'mozilla2.res',
+                                            'mozilla1_p.res.in', 'mozilla2_p.res.in'])
         self.assertFalse(mozilla['mozilla1.res'].preprocess)
         self.assertFalse(mozilla['mozilla2.res'].preprocess)
         self.assertTrue(mozilla['mozilla1_p.res.in'].preprocess)
@@ -253,25 +262,25 @@ class TestEmitterBasic(unittest.TestCase):
 
         self.assertIn('dom', mozilla._children)
         dom = mozilla._children['dom']
-        self.assertEqual(dom.get_strings(), ['dom1.res', 'dom2.res', 'dom3.res'])
+        self.assertEqual(dom._strings, ['dom1.res', 'dom2.res', 'dom3.res'])
 
         self.assertIn('gfx', mozilla._children)
         gfx = mozilla._children['gfx']
-        self.assertEqual(gfx.get_strings(), ['gfx.res'])
+        self.assertEqual(gfx._strings, ['gfx.res'])
 
         self.assertIn('vpx', resources._children)
         vpx = resources._children['vpx']
-        self.assertEqual(vpx.get_strings(), ['mem.res', 'mem2.res'])
+        self.assertEqual(vpx._strings, ['mem.res', 'mem2.res'])
 
         self.assertIn('nspr', resources._children)
         nspr = resources._children['nspr']
         self.assertIn('private', nspr._children)
         private = nspr._children['private']
-        self.assertEqual(private.get_strings(), ['pprio.res', 'pprthred.res'])
+        self.assertEqual(private._strings, ['pprio.res', 'pprthred.res'])
 
         self.assertIn('overwrite', resources._children)
         overwrite = resources._children['overwrite']
-        self.assertEqual(overwrite.get_strings(), ['new.res'])
+        self.assertEqual(overwrite._strings, ['new.res'])
 
     def test_program(self):
         reader = self.reader('program')
@@ -490,6 +499,14 @@ class TestEmitterBasic(unittest.TestCase):
             'lists test that does not exist: test_missing.html'):
             self.read_topsrcdir(reader)
 
+    def test_test_manifest_missing_test_error_unfiltered(self):
+        """Missing test files should result in error, even when the test list is not filtered."""
+        reader = self.reader('test-manifest-missing-test-file-unfiltered')
+
+        with self.assertRaisesRegexp(SandboxValidationError,
+            'lists test that does not exist: missing.js'):
+            self.read_topsrcdir(reader)
+
     def test_ipdl_sources(self):
         reader = self.reader('ipdl_sources')
         objs = self.read_topsrcdir(reader)
@@ -580,6 +597,23 @@ class TestEmitterBasic(unittest.TestCase):
             'LOCAL_INCLUDES does not exist'):
             reader = self.reader('missing-local-includes')
             self.read_topsrcdir(reader)
+
+    def test_library_defines(self):
+        """Test that LIBRARY_DEFINES is propagated properly."""
+        reader = self.reader('library-defines')
+        objs = self.read_topsrcdir(reader)
+
+        libraries = [o for o in objs if isinstance(o,StaticLibrary)]
+        expected = {
+            'liba': '-DIN_LIBA',
+            'libb': '-DIN_LIBA -DIN_LIBB',
+            'libc': '-DIN_LIBA -DIN_LIBB',
+            'libd': ''
+        }
+        defines = {}
+        for lib in libraries:
+            defines[lib.basename] = ' '.join(lib.defines.get_defines())
+        self.assertEqual(expected, defines)
 
 if __name__ == '__main__':
     main()

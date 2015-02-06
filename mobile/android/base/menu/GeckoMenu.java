@@ -88,13 +88,13 @@ public class GeckoMenu extends ListView
     protected static final int NO_ID = 0;
 
     // List of all menu items.
-    private List<GeckoMenuItem> mItems;
+    private final List<GeckoMenuItem> mItems;
 
     // Map of "always" action-items in action-bar and their views.
-    private Map<GeckoMenuItem, View> mPrimaryActionItems;
+    private final Map<GeckoMenuItem, View> mPrimaryActionItems;
 
     // Map of "ifRoom" action-items in action-bar and their views.
-    private Map<GeckoMenuItem, View> mSecondaryActionItems;
+    private final Map<GeckoMenuItem, View> mSecondaryActionItems;
 
     // Reference to a callback for menu events.
     private Callback mCallback;
@@ -109,10 +109,10 @@ public class GeckoMenu extends ListView
     private final ActionItemBarPresenter mSecondaryActionItemBar;
 
     // Adapter to hold the list of menu items.
-    private MenuItemsAdapter mAdapter;
+    private final MenuItemsAdapter mAdapter;
 
     // Show/hide icons in the list.
-    /* inner-access */ boolean mShowIcons;
+    boolean mShowIcons;
 
     public GeckoMenu(Context context) {
         this(context, null);
@@ -550,7 +550,7 @@ public class GeckoMenu extends ListView
         handleMenuItemClick(item);
     }
 
-    /* inner-access */ void handleMenuItemClick(GeckoMenuItem item) {
+    void handleMenuItemClick(GeckoMenuItem item) {
         if (!item.isEnabled())
             return;
 
@@ -575,7 +575,7 @@ public class GeckoMenu extends ListView
         }
     }
 
-    /* inner-access */ void handleMenuItemLongClick(GeckoMenuItem item) {
+    void handleMenuItemLongClick(GeckoMenuItem item) {
         if(!item.isEnabled()) {
             return;
         }
@@ -686,7 +686,7 @@ public class GeckoMenu extends ListView
         private static final int VIEW_TYPE_DEFAULT = 0;
         private static final int VIEW_TYPE_ACTION_MODE = 1;
 
-        private List<GeckoMenuItem> mItems;
+        private final List<GeckoMenuItem> mItems;
 
         public MenuItemsAdapter() {
             mItems = new ArrayList<GeckoMenuItem>();

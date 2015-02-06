@@ -7,6 +7,7 @@
 #include "nsString.h"
 #include "gfxContext.h"
 #include "gfxFontConstants.h"
+#include "gfxTextRun.h"
 
 #include "graphite2/Font.h"
 #include "graphite2/Segment.h"
@@ -88,6 +89,7 @@ gfxGraphiteShaper::ShapeText(gfxContext      *aContext,
                              uint32_t         aOffset,
                              uint32_t         aLength,
                              int32_t          aScript,
+                             bool             aVertical,
                              gfxShapedText   *aShapedText)
 {
     // some font back-ends require this in order to get proper hinted metrics
@@ -142,7 +144,7 @@ gfxGraphiteShaper::ShapeText(gfxContext      *aContext,
         grLang = MakeGraphiteLangTag(style->languageOverride);
     } else if (entry->mLanguageOverride) {
         grLang = MakeGraphiteLangTag(entry->mLanguageOverride);
-    } else {
+    } else if (style->explicitLanguage) {
         nsAutoCString langString;
         style->language->ToUTF8String(langString);
         grLang = GetGraphiteTagForLang(langString);

@@ -296,6 +296,9 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   // WARNING: This destroys the object!
   void SelfDestruct();
 
+  // Configure the ability to use localhost.
+  void SetAllowIceLoopback(bool val) { mAllowIceLoopback = val; }
+
   mozilla::RefPtr<mozilla::NrIceCtx> ice_ctx() const { return mIceCtx; }
 
   mozilla::RefPtr<mozilla::NrIceMediaStream> ice_media_stream(size_t i) const {
@@ -312,11 +315,11 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   }
 
   // Add a stream (main thread only)
-  nsresult AddStream(nsIDOMMediaStream* aMediaStream, uint32_t hints,
+  nsresult AddStream(DOMMediaStream* aMediaStream, uint32_t hints,
                      uint32_t *stream_id);
 
   // Remove a stream (main thread only)
-  nsresult RemoveStream(nsIDOMMediaStream* aMediaStream,
+  nsresult RemoveStream(DOMMediaStream* aMediaStream,
                         uint32_t hints,
                         uint32_t *stream_id);
 
@@ -442,6 +445,9 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   // A list of streams provided by the other side
   // This is only accessed on the main thread (with one special exception)
   nsTArray<nsRefPtr<RemoteSourceStreamInfo> > mRemoteSourceStreams;
+
+  // Allow loopback for ICE.
+  bool mAllowIceLoopback;
 
   // ICE objects
   mozilla::RefPtr<mozilla::NrIceCtx> mIceCtx;

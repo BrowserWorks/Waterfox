@@ -39,8 +39,8 @@ JS::Zone::Zone(JSRuntime *rt)
     jitUsingBarriers_(false)
 {
     /* Ensure that there are no vtables to mess us up here. */
-    JS_ASSERT(reinterpret_cast<JS::shadow::Zone *>(this) ==
-              static_cast<JS::shadow::Zone *>(this));
+    MOZ_ASSERT(reinterpret_cast<JS::shadow::Zone *>(this) ==
+               static_cast<JS::shadow::Zone *>(this));
 
     threshold.updateAfterGC(8192, GC_NORMAL, rt->gc.tunables, rt->gc.schedulingState);
     setGCMaxMallocBytes(rt->gc.maxMallocBytesAllocated() * 0.9);
@@ -70,9 +70,9 @@ Zone::setNeedsIncrementalBarrier(bool needs, ShouldUpdateJit updateJit)
     }
 
     if (needs && runtimeFromMainThread()->isAtomsZone(this))
-        JS_ASSERT(!runtimeFromMainThread()->exclusiveThreadsPresent());
+        MOZ_ASSERT(!runtimeFromMainThread()->exclusiveThreadsPresent());
 
-    JS_ASSERT_IF(needs, canCollect());
+    MOZ_ASSERT_IF(needs, canCollect());
     needsIncrementalBarrier_ = needs;
 }
 
@@ -104,49 +104,49 @@ Zone::onTooMuchMalloc()
 }
 
 void
-Zone::sweep(FreeOp *fop, bool releaseTypes, bool *oom)
+Zone::sweepAnalysis(FreeOp *fop, bool releaseTypes)
 {
-    /*
-     * Periodically release observed types for all scripts. This is safe to
-     * do when there are no frames for the zone on the stack.
-     */
+    // Periodically release observed types for all scripts. This is safe to
+    // do when there are no frames for the zone on the stack.
     if (active)
         releaseTypes = false;
 
-    GCRuntime &gc = fop->runtime()->gc;
+    bool oom = false;
+    types.sweep(fop, releaseTypes, &oom);
 
-    {
-        gcstats::MaybeAutoPhase ap(gc.stats, !gc.isHeapCompacting(),
-                                   gcstats::PHASE_DISCARD_ANALYSIS);
-        types.sweep(fop, releaseTypes, oom);
-    }
-
-    if (!fop->runtime()->debuggerList.isEmpty()) {
-        gcstats::MaybeAutoPhase ap1(gc.stats, !gc.isHeapCompacting(),
-                                    gcstats::PHASE_SWEEP_TABLES);
-        gcstats::MaybeAutoPhase ap2(gc.stats, !gc.isHeapCompacting(),
-                                    gcstats::PHASE_SWEEP_TABLES_BREAKPOINT);
-        sweepBreakpoints(fop);
+    // If there was an OOM while sweeping types, the type information needs to
+    // be deoptimized so that it will still correct (i.e.  overapproximates the
+    // possible types in the zone), but the constraints might not have been
+    // triggered on the deoptimization or even copied over completely. In this
+    // case, destroy all JIT code and new script information in the zone, the
+    // only things whose correctness depends on the type constraints.
+    if (oom) {
+        setPreservingCode(false);
+        discardJitCode(fop);
+        types.clearAllNewScriptsOnOOM();
     }
 }
 
 void
 Zone::sweepBreakpoints(FreeOp *fop)
 {
+    if (fop->runtime()->debuggerList.isEmpty())
+        return;
+
     /*
      * Sweep all compartments in a zone at the same time, since there is no way
      * to iterate over the scripts belonging to a single compartment in a zone.
      */
 
-    JS_ASSERT(isGCSweepingOrCompacting());
+    MOZ_ASSERT(isGCSweepingOrCompacting());
     for (ZoneCellIterUnderGC i(this, FINALIZE_SCRIPT); !i.done(); i.next()) {
         JSScript *script = i.get<JSScript>();
-        JS_ASSERT_IF(isGCSweeping(), script->zone()->isGCSweeping());
+        MOZ_ASSERT_IF(isGCSweeping(), script->zone()->isGCSweeping());
         if (!script->hasAnyBreakpointsOrStepMode())
             continue;
 
         bool scriptGone = IsScriptAboutToBeFinalized(&script);
-        JS_ASSERT(script == i.get<JSScript>());
+        MOZ_ASSERT(script == i.get<JSScript>());
         for (unsigned i = 0; i < script->length(); i++) {
             BreakpointSite *site = script->getBreakpointSite(script->offsetToPC(i));
             if (!site)
@@ -155,11 +155,11 @@ Zone::sweepBreakpoints(FreeOp *fop)
             Breakpoint *nextbp;
             for (Breakpoint *bp = site->firstBreakpoint(); bp; bp = nextbp) {
                 nextbp = bp->nextInSite();
-                HeapPtrObject &dbgobj = bp->debugger->toJSObjectRef();
-                JS_ASSERT_IF(isGCSweeping() && dbgobj->zone()->isCollecting(),
-                             dbgobj->zone()->isGCSweeping());
+                HeapPtrNativeObject &dbgobj = bp->debugger->toJSObjectRef();
+                MOZ_ASSERT_IF(isGCSweeping() && dbgobj->zone()->isCollecting(),
+                              dbgobj->zone()->isGCSweeping());
                 bool dying = scriptGone || IsObjectAboutToBeFinalized(&dbgobj);
-                JS_ASSERT_IF(!dying, !IsAboutToBeFinalized(&bp->getHandlerRef()));
+                MOZ_ASSERT_IF(!dying, !IsAboutToBeFinalized(&bp->getHandlerRef()));
                 if (dying)
                     bp->destroy(fop);
             }
@@ -181,7 +181,7 @@ Zone::discardJitCode(FreeOp *fop)
         /* Assert no baseline scripts are marked as active. */
         for (ZoneCellIterUnderGC i(this, FINALIZE_SCRIPT); !i.done(); i.next()) {
             JSScript *script = i.get<JSScript>();
-            JS_ASSERT_IF(script->hasBaselineScript(), !script->baselineScript()->active());
+            MOZ_ASSERT_IF(script->hasBaselineScript(), !script->baselineScript()->active());
         }
 #endif
 
@@ -203,11 +203,11 @@ Zone::discardJitCode(FreeOp *fop)
             jit::FinishDiscardBaselineScript(fop, script);
 
             /*
-             * Use counts for scripts are reset on GC. After discarding code we
+             * Warm-up counter for scripts are reset on GC. After discarding code we
              * need to let it warm back up to get information such as which
              * opcodes are setting array holes or accessing getter properties.
              */
-            script->resetUseCount();
+            script->resetWarmUpCounter();
         }
 
         jitZone()->optimizedStubSpace()->free();
@@ -265,10 +265,10 @@ Zone::canCollect()
 JS::Zone *
 js::ZoneOfValue(const JS::Value &value)
 {
-    JS_ASSERT(value.isMarkable());
+    MOZ_ASSERT(value.isMarkable());
     if (value.isObject())
         return value.toObject().zone();
-    return static_cast<js::gc::Cell *>(value.toGCThing())->tenuredZone();
+    return js::gc::TenuredCell::fromPointer(value.toGCThing())->zone();
 }
 
 bool

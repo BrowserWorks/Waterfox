@@ -9,9 +9,8 @@
 
 #include "mozilla/MemoryReporting.h"
 
-#include "jsobj.h"
-
 #include "gc/Barrier.h"
+#include "vm/NativeObject.h"
 
 namespace js {
 
@@ -19,7 +18,7 @@ class AbstractFramePtr;
 class ScriptFrameIter;
 
 namespace jit {
-class IonJSFrameLayout;
+class JitFrameLayout;
 }
 
 /*
@@ -108,7 +107,7 @@ static const unsigned ARGS_LENGTH_MAX = 500 * 1000;
  *   DATA_SLOT
  *     Stores an ArgumentsData*, described above.
  */
-class ArgumentsObject : public JSObject
+class ArgumentsObject : public NativeObject
 {
   protected:
     static const uint32_t INITIAL_LENGTH_SLOT = 0;
@@ -143,7 +142,7 @@ class ArgumentsObject : public JSObject
      */
     static ArgumentsObject *createUnexpected(JSContext *cx, ScriptFrameIter &iter);
     static ArgumentsObject *createUnexpected(JSContext *cx, AbstractFramePtr frame);
-    static ArgumentsObject *createForIon(JSContext *cx, jit::IonJSFrameLayout *frame,
+    static ArgumentsObject *createForIon(JSContext *cx, jit::JitFrameLayout *frame,
                                          HandleObject scopeChain);
 
     /*
@@ -152,7 +151,7 @@ class ArgumentsObject : public JSObject
      */
     uint32_t initialLength() const {
         uint32_t argc = uint32_t(getFixedSlot(INITIAL_LENGTH_SLOT).toInt32()) >> PACKED_BITS_COUNT;
-        JS_ASSERT(argc <= ARGS_LENGTH_MAX);
+        MOZ_ASSERT(argc <= ARGS_LENGTH_MAX);
         return argc;
     }
 
@@ -187,7 +186,7 @@ class ArgumentsObject : public JSObject
      * ArgumentsData::slots.
      */
     bool isElementDeleted(uint32_t i) const {
-        JS_ASSERT(i < data()->numArgs);
+        MOZ_ASSERT(i < data()->numArgs);
         if (i >= initialLength())
             return false;
         return IsBitArrayElementSet(data()->deletedBits, initialLength(), i);
@@ -221,16 +220,16 @@ class ArgumentsObject : public JSObject
     inline void setElement(JSContext *cx, uint32_t i, const Value &v);
 
     const Value &arg(unsigned i) const {
-        JS_ASSERT(i < data()->numArgs);
+        MOZ_ASSERT(i < data()->numArgs);
         const Value &v = data()->args[i];
-        JS_ASSERT(!v.isMagic());
+        MOZ_ASSERT(!v.isMagic());
         return v;
     }
 
     void setArg(unsigned i, const Value &v) {
-        JS_ASSERT(i < data()->numArgs);
+        MOZ_ASSERT(i < data()->numArgs);
         HeapValue &lhs = data()->args[i];
-        JS_ASSERT(!lhs.isMagic());
+        MOZ_ASSERT(!lhs.isMagic());
         lhs = v;
     }
 
@@ -271,9 +270,10 @@ class ArgumentsObject : public JSObject
         return getFixedSlotOffset(INITIAL_LENGTH_SLOT);
     }
 
-    static void MaybeForwardToCallObject(AbstractFramePtr frame, JSObject *obj, ArgumentsData *data);
-    static void MaybeForwardToCallObject(jit::IonJSFrameLayout *frame, HandleObject callObj,
-                                         JSObject *obj, ArgumentsData *data);
+    static void MaybeForwardToCallObject(AbstractFramePtr frame, ArgumentsObject *obj,
+                                         ArgumentsData *data);
+    static void MaybeForwardToCallObject(jit::JitFrameLayout *frame, HandleObject callObj,
+                                         ArgumentsObject *obj, ArgumentsData *data);
 };
 
 class NormalArgumentsObject : public ArgumentsObject

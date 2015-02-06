@@ -67,16 +67,16 @@ class StaticScopeIter
       : obj(cx, obj), onNamedLambda(false)
     {
         JS_STATIC_ASSERT(allowGC == CanGC);
-        JS_ASSERT_IF(obj, obj->is<StaticBlockObject>() || obj->is<StaticWithObject>() ||
-                     obj->is<JSFunction>());
+        MOZ_ASSERT_IF(obj, obj->is<StaticBlockObject>() || obj->is<StaticWithObject>() ||
+                      obj->is<JSFunction>());
     }
 
     explicit StaticScopeIter(JSObject *obj)
       : obj((ExclusiveContext *) nullptr, obj), onNamedLambda(false)
     {
         JS_STATIC_ASSERT(allowGC == NoGC);
-        JS_ASSERT_IF(obj, obj->is<StaticBlockObject>() || obj->is<StaticWithObject>() ||
-                     obj->is<JSFunction>());
+        MOZ_ASSERT_IF(obj, obj->is<StaticBlockObject>() || obj->is<StaticWithObject>() ||
+                      obj->is<JSFunction>());
     }
 
     bool done() const;
@@ -120,16 +120,20 @@ class ScopeCoordinate
     explicit inline ScopeCoordinate(jsbytecode *pc)
       : hops_(GET_SCOPECOORD_HOPS(pc)), slot_(GET_SCOPECOORD_SLOT(pc + SCOPECOORD_HOPS_LEN))
     {
-        JS_ASSERT(JOF_OPTYPE(*pc) == JOF_SCOPECOORD);
+        MOZ_ASSERT(JOF_OPTYPE(*pc) == JOF_SCOPECOORD);
     }
 
     inline ScopeCoordinate() {}
 
-    void setHops(uint32_t hops) { JS_ASSERT(hops < SCOPECOORD_HOPS_LIMIT); hops_ = hops; }
-    void setSlot(uint32_t slot) { JS_ASSERT(slot < SCOPECOORD_SLOT_LIMIT); slot_ = slot; }
+    void setHops(uint32_t hops) { MOZ_ASSERT(hops < SCOPECOORD_HOPS_LIMIT); hops_ = hops; }
+    void setSlot(uint32_t slot) { MOZ_ASSERT(slot < SCOPECOORD_SLOT_LIMIT); slot_ = slot; }
 
-    uint32_t hops() const { JS_ASSERT(hops_ < SCOPECOORD_HOPS_LIMIT); return hops_; }
-    uint32_t slot() const { JS_ASSERT(slot_ < SCOPECOORD_SLOT_LIMIT); return slot_; }
+    uint32_t hops() const { MOZ_ASSERT(hops_ < SCOPECOORD_HOPS_LIMIT); return hops_; }
+    uint32_t slot() const { MOZ_ASSERT(slot_ < SCOPECOORD_SLOT_LIMIT); return slot_; }
+
+    bool operator==(const ScopeCoordinate &rhs) const {
+        return hops() == rhs.hops() && slot() == rhs.slot();
+    }
 };
 
 /*
@@ -189,7 +193,7 @@ ScopeCoordinateFunctionScript(JSScript *script, jsbytecode *pc);
  * See also "Debug scope objects" below.
  */
 
-class ScopeObject : public JSObject
+class ScopeObject : public NativeObject
 {
   protected:
     static const uint32_t SCOPE_CHAIN_SLOT = 0;
@@ -233,6 +237,9 @@ class CallObject : public ScopeObject
     static CallObject *
     create(JSContext *cx, HandleScript script, HandleObject enclosing, HandleFunction callee);
 
+    inline void initRemainingSlotsToUninitializedLexicals(uint32_t begin);
+    inline void initAliasedLexicalsToThrowOnTouch(JSScript *script);
+
   public:
     static const Class class_;
 
@@ -243,14 +250,14 @@ class CallObject : public ScopeObject
      * type.  The call object must be further initialized to be usable.
      */
     static CallObject *
-    create(JSContext *cx, HandleShape shape, HandleTypeObject type);
+    create(JSContext *cx, HandleShape shape, HandleTypeObject type, uint32_t lexicalBegin);
 
     /*
      * Construct a bare-bones call object given a shape and make it have
      * singleton type.  The call object must be initialized to be usable.
      */
     static CallObject *
-    createSingleton(JSContext *cx, HandleShape shape);
+    createSingleton(JSContext *cx, HandleShape shape, uint32_t lexicalBegin);
 
     static CallObject *
     createTemplateObject(JSContext *cx, HandleScript script, gc::InitialHeap heap);
@@ -264,9 +271,9 @@ class CallObject : public ScopeObject
 
     /* True if this is for a strict mode eval frame. */
     bool isForEval() const {
-        JS_ASSERT(getFixedSlot(CALLEE_SLOT).isObjectOrNull());
-        JS_ASSERT_IF(getFixedSlot(CALLEE_SLOT).isObject(),
-                     getFixedSlot(CALLEE_SLOT).toObject().is<JSFunction>());
+        MOZ_ASSERT(getFixedSlot(CALLEE_SLOT).isObjectOrNull());
+        MOZ_ASSERT_IF(getFixedSlot(CALLEE_SLOT).isObject(),
+                      getFixedSlot(CALLEE_SLOT).toObject().is<JSFunction>());
         return getFixedSlot(CALLEE_SLOT).isNull();
     }
 
@@ -344,7 +351,7 @@ class NestedScopeObject : public ScopeObject
 
     // Return the static scope corresponding to this scope chain object.
     inline NestedScopeObject* staticScope() {
-        JS_ASSERT(!isStatic());
+        MOZ_ASSERT(!isStatic());
         return &getProto()->as<NestedScopeObject>();
     }
 
@@ -354,7 +361,7 @@ class NestedScopeObject : public ScopeObject
     }
 
     void initEnclosingNestedScope(JSObject *obj) {
-        JS_ASSERT(getReservedSlot(SCOPE_CHAIN_SLOT).isUndefined());
+        MOZ_ASSERT(getReservedSlot(SCOPE_CHAIN_SLOT).isUndefined());
         setReservedSlot(SCOPE_CHAIN_SLOT, ObjectOrNullValue(obj));
     }
 
@@ -475,7 +482,7 @@ class StaticBlockObject : public BlockObject
      */
     uint32_t shapeToIndex(const Shape &shape) {
         uint32_t slot = shape.slot();
-        JS_ASSERT(slot - RESERVED_SLOTS < numVariables());
+        MOZ_ASSERT(slot - RESERVED_SLOTS < numVariables());
         return slot - RESERVED_SLOTS;
     }
 
@@ -492,7 +499,7 @@ class StaticBlockObject : public BlockObject
     // Return the local corresponding to the 'var'th binding where 'var' is in the
     // range [0, numVariables()).
     uint32_t blockIndexToLocalIndex(uint32_t index) {
-        JS_ASSERT(index < numVariables());
+        MOZ_ASSERT(index < numVariables());
         return getReservedSlot(LOCAL_OFFSET_SLOT).toPrivateUint32() + index;
     }
 
@@ -500,9 +507,9 @@ class StaticBlockObject : public BlockObject
     // in the range [localOffset(), localOffset() + numVariables()).  The result is
     // in the range [RESERVED_SLOTS, RESERVED_SLOTS + numVariables()).
     uint32_t localIndexToSlot(uint32_t local) {
-        JS_ASSERT(local >= localOffset());
+        MOZ_ASSERT(local >= localOffset());
         local -= localOffset();
-        JS_ASSERT(local < numVariables());
+        MOZ_ASSERT(local < numVariables());
         return RESERVED_SLOTS + local;
     }
 
@@ -526,16 +533,16 @@ class StaticBlockObject : public BlockObject
 
     /* Initialization functions for above fields. */
     void setAliased(unsigned i, bool aliased) {
-        JS_ASSERT_IF(i > 0, slotValue(i-1).isBoolean());
+        MOZ_ASSERT_IF(i > 0, slotValue(i-1).isBoolean());
         setSlotValue(i, BooleanValue(aliased));
         if (aliased && !needsClone()) {
             setSlotValue(0, MagicValue(JS_BLOCK_NEEDS_CLONE));
-            JS_ASSERT(needsClone());
+            MOZ_ASSERT(needsClone());
         }
     }
 
     void setLocalOffset(uint32_t offset) {
-        JS_ASSERT(getReservedSlot(LOCAL_OFFSET_SLOT).isUndefined());
+        MOZ_ASSERT(getReservedSlot(LOCAL_OFFSET_SLOT).isUndefined());
         initReservedSlot(LOCAL_OFFSET_SLOT, PrivateUint32Value(offset));
     }
 
@@ -544,7 +551,7 @@ class StaticBlockObject : public BlockObject
      * a let var to its associated Definition parse node.
      */
     void setDefinitionParseNode(unsigned i, frontend::Definition *def) {
-        JS_ASSERT(slotValue(i).isUndefined());
+        MOZ_ASSERT(slotValue(i).isUndefined());
         setSlotValue(i, PrivateValue(def));
     }
 
@@ -578,12 +585,12 @@ class ClonedBlockObject : public BlockObject
 
     /* Assuming 'put' has been called, return the value of the ith let var. */
     const Value &var(unsigned i, MaybeCheckAliasing checkAliasing = CHECK_ALIASING) {
-        JS_ASSERT_IF(checkAliasing, staticBlock().isAliased(i));
+        MOZ_ASSERT_IF(checkAliasing, staticBlock().isAliased(i));
         return slotValue(i);
     }
 
     void setVar(unsigned i, const Value &v, MaybeCheckAliasing checkAliasing = CHECK_ALIASING) {
-        JS_ASSERT_IF(checkAliasing, staticBlock().isAliased(i));
+        MOZ_ASSERT_IF(checkAliasing, staticBlock().isAliased(i));
         setSlotValue(i, v);
     }
 
@@ -591,15 +598,42 @@ class ClonedBlockObject : public BlockObject
     void copyUnaliasedValues(AbstractFramePtr frame);
 };
 
+// Internal scope object used by JSOP_BINDNAME upon encountering an
+// uninitialized lexical slot.
+//
+// ES6 lexical bindings cannot be accessed in any way (throwing
+// ReferenceErrors) until initialized. Normally, NAME operations
+// unconditionally check for uninitialized lexical slots. When getting or
+// looking up names, this can be done without slowing down normal operations
+// on the return value. When setting names, however, we do not want to pollute
+// all set-property paths with uninitialized lexical checks. For setting names
+// (i.e. JSOP_SETNAME), we emit an accompanying, preceding JSOP_BINDNAME which
+// finds the right scope on which to set the name. Moreover, when the name on
+// the scope is an uninitialized lexical, we cannot throw eagerly, as the spec
+// demands that the error be thrown after evaluating the RHS of
+// assignments. Instead, this sentinel scope object is pushed on the stack.
+// Attempting to access anything on this scope throws the appropriate
+// ReferenceError.
+class UninitializedLexicalObject : public ScopeObject
+{
+  public:
+    static const unsigned RESERVED_SLOTS = 1;
+    static const gc::AllocKind FINALIZE_KIND = gc::FINALIZE_OBJECT2_BACKGROUND;
+
+    static const Class class_;
+
+    static UninitializedLexicalObject *create(JSContext *cx, HandleObject enclosing);
+};
+
 template<XDRMode mode>
 bool
 XDRStaticBlockObject(XDRState<mode> *xdr, HandleObject enclosingScope,
-                     StaticBlockObject **objp);
+                     MutableHandle<StaticBlockObject*> objp);
 
 template<XDRMode mode>
 bool
 XDRStaticWithObject(XDRState<mode> *xdr, HandleObject enclosingScope,
-                    StaticWithObject **objp);
+                    MutableHandle<StaticWithObject*> objp);
 
 extern JSObject *
 CloneNestedScopeObject(JSContext *cx, HandleObject enclosingScope, Handle<NestedScopeObject*> src);
@@ -669,20 +703,20 @@ class ScopeIter
 
     /* If done(): */
 
-    JSObject &enclosingScope() const { JS_ASSERT(done()); return *cur_; }
+    JSObject &enclosingScope() const { MOZ_ASSERT(done()); return *cur_; }
 
     /* If !done(): */
 
     ScopeIter &operator++();
 
-    AbstractFramePtr frame() const { JS_ASSERT(!done()); return frame_; }
-    Type type() const { JS_ASSERT(!done()); return type_; }
-    bool hasScopeObject() const { JS_ASSERT(!done()); return hasScopeObject_; }
+    AbstractFramePtr frame() const { MOZ_ASSERT(!done()); return frame_; }
+    Type type() const { MOZ_ASSERT(!done()); return type_; }
+    bool hasScopeObject() const { MOZ_ASSERT(!done()); return hasScopeObject_; }
     ScopeObject &scope() const;
     NestedScopeObject* staticScope() const { return staticScope_; }
 
     StaticBlockObject &staticBlock() const {
-        JS_ASSERT(type() == Block);
+        MOZ_ASSERT(type() == Block);
         return staticScope_->as<StaticBlockObject>();
     }
 
@@ -808,8 +842,8 @@ class DebugScopeObject : public ProxyObject
     JSObject &enclosingScope() const;
 
     /* May only be called for proxies to function call objects. */
-    JSObject *maybeSnapshot() const;
-    void initSnapshot(JSObject &snapshot);
+    ArrayObject *maybeSnapshot() const;
+    void initSnapshot(ArrayObject &snapshot);
 
     /* Currently, the 'declarative' scopes are Call and Block. */
     bool isForDeclarative() const;
@@ -904,7 +938,8 @@ template<>
 inline bool
 JSObject::is<js::ScopeObject>() const
 {
-    return is<js::CallObject>() || is<js::DeclEnvObject>() || is<js::NestedScopeObject>();
+    return is<js::CallObject>() || is<js::DeclEnvObject>() || is<js::NestedScopeObject>() ||
+           is<js::UninitializedLexicalObject>();
 }
 
 template<>
@@ -914,7 +949,7 @@ JSObject::is<js::DebugScopeObject>() const
     extern bool js_IsDebugScopeSlow(js::ProxyObject *proxy);
 
     // Note: don't use is<ProxyObject>() here -- it also matches subclasses!
-    return hasClass(&js::ProxyObject::uncallableClass_) &&
+    return hasClass(&js::ProxyObject::class_) &&
            js_IsDebugScopeSlow(&const_cast<JSObject*>(this)->as<js::ProxyObject>());
 }
 
@@ -947,7 +982,7 @@ namespace js {
 inline const Value &
 ScopeObject::aliasedVar(ScopeCoordinate sc)
 {
-    JS_ASSERT(is<CallObject>() || is<ClonedBlockObject>());
+    MOZ_ASSERT(is<CallObject>() || is<ClonedBlockObject>());
     return getSlot(sc.slot());
 }
 

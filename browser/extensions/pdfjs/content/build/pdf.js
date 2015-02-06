@@ -1,4 +1,4 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /* Copyright 2012 Mozilla Foundation
  *
@@ -22,8 +22,8 @@ if (typeof PDFJS === 'undefined') {
   (typeof window !== 'undefined' ? window : this).PDFJS = {};
 }
 
-PDFJS.version = '1.0.712';
-PDFJS.build = '6969ed4';
+PDFJS.version = '1.0.907';
+PDFJS.build = 'e9072ac';
 
 (function pdfjsWrapper() {
   // Use strict in our context only - users might not want it
@@ -373,6 +373,7 @@ var PasswordException = (function PasswordExceptionClosure() {
 
   return PasswordException;
 })();
+PDFJS.PasswordException = PasswordException;
 
 var UnknownErrorException = (function UnknownErrorExceptionClosure() {
   function UnknownErrorException(msg, details) {
@@ -386,6 +387,7 @@ var UnknownErrorException = (function UnknownErrorExceptionClosure() {
 
   return UnknownErrorException;
 })();
+PDFJS.UnknownErrorException = UnknownErrorException;
 
 var InvalidPDFException = (function InvalidPDFExceptionClosure() {
   function InvalidPDFException(msg) {
@@ -398,6 +400,7 @@ var InvalidPDFException = (function InvalidPDFExceptionClosure() {
 
   return InvalidPDFException;
 })();
+PDFJS.InvalidPDFException = InvalidPDFException;
 
 var MissingPDFException = (function MissingPDFExceptionClosure() {
   function MissingPDFException(msg) {
@@ -410,6 +413,22 @@ var MissingPDFException = (function MissingPDFExceptionClosure() {
 
   return MissingPDFException;
 })();
+PDFJS.MissingPDFException = MissingPDFException;
+
+var UnexpectedResponseException =
+    (function UnexpectedResponseExceptionClosure() {
+  function UnexpectedResponseException(msg, status) {
+    this.name = 'UnexpectedResponseException';
+    this.message = msg;
+    this.status = status;
+  }
+
+  UnexpectedResponseException.prototype = new Error();
+  UnexpectedResponseException.constructor = UnexpectedResponseException;
+
+  return UnexpectedResponseException;
+})();
+PDFJS.UnexpectedResponseException = UnexpectedResponseException;
 
 var NotImplementedException = (function NotImplementedExceptionClosure() {
   function NotImplementedException(msg) {
@@ -1344,6 +1363,14 @@ PDFJS.disableRange = (PDFJS.disableRange === undefined ?
                       false : PDFJS.disableRange);
 
 /**
+ * Disable streaming of PDF file data. By default PDF.js attempts to load PDF
+ * in chunks. This default behavior can be disabled.
+ * @var {boolean}
+ */
+PDFJS.disableStream = (PDFJS.disableStream === undefined ?
+                       false : PDFJS.disableStream);
+
+/**
  * Disable pre-fetching of PDF file data. When range requests are enabled PDF.js
  * will automatically keep fetching more data even if it isn't needed to display
  * the current page. This default behavior can be disabled.
@@ -1448,6 +1475,11 @@ PDFJS.maxCanvasPixels = (PDFJS.maxCanvasPixels === undefined ?
  * parameters: function that needs to be called with new password and reason
  * (see {PasswordResponses}).
  *
+ * @param {function} progressCallback is optional. It is used to be able to
+ * monitor the loading progress of the PDF file (necessary to implement e.g.
+ * a loading bar). The callback receives an {Object} with the properties:
+ * {number} loaded and {number} total.
+ *
  * @return {Promise} A promise that is resolved with {@link PDFDocumentProxy}
  *   object.
  */
@@ -1536,9 +1568,19 @@ var PDFDocumentProxy = (function PDFDocumentProxyClosure() {
     /**
      * @return {Promise} A promise that is resolved with a lookup table for
      * mapping named destinations to reference numbers.
+     *
+     * This can be slow for large documents: use getDestination instead
      */
     getDestinations: function PDFDocumentProxy_getDestinations() {
       return this.transport.getDestinations();
+    },
+    /**
+     * @param {string} id The named destination to get.
+     * @return {Promise} A promise that is resolved with all information
+     * of the given named destination.
+     */
+    getDestination: function PDFDocumentProxy_getDestination(id) {
+      return this.transport.getDestination(id);
     },
     /**
      * @return {Promise} A promise that is resolved with a lookup table for
@@ -2093,6 +2135,12 @@ var WorkerTransport = (function WorkerTransportClosure() {
           });
         });
 
+        pdfDataRangeTransport.addProgressiveReadListener(function(chunk) {
+          messageHandler.send('OnDataRange', {
+            chunk: chunk
+          });
+        });
+
         messageHandler.on('RequestDataRange',
           function transportDataRange(data) {
             pdfDataRangeTransport.requestDataRange(data.begin, data.end);
@@ -2107,40 +2155,56 @@ var WorkerTransport = (function WorkerTransportClosure() {
         this.workerReadyCapability.resolve(pdfDocument);
       }, this);
 
-      messageHandler.on('NeedPassword', function transportPassword(data) {
+      messageHandler.on('NeedPassword',
+                        function transportNeedPassword(exception) {
         if (this.passwordCallback) {
           return this.passwordCallback(updatePassword,
                                        PasswordResponses.NEED_PASSWORD);
         }
-        this.workerReadyCapability.reject(data.exception.message,
-                                          data.exception);
+        this.workerReadyCapability.reject(
+          new PasswordException(exception.message, exception.code));
       }, this);
 
-      messageHandler.on('IncorrectPassword', function transportBadPass(data) {
+      messageHandler.on('IncorrectPassword',
+                        function transportIncorrectPassword(exception) {
         if (this.passwordCallback) {
           return this.passwordCallback(updatePassword,
                                        PasswordResponses.INCORRECT_PASSWORD);
         }
-        this.workerReadyCapability.reject(data.exception.message,
-                                          data.exception);
+        this.workerReadyCapability.reject(
+          new PasswordException(exception.message, exception.code));
       }, this);
 
-      messageHandler.on('InvalidPDF', function transportInvalidPDF(data) {
-        this.workerReadyCapability.reject(data.exception.name, data.exception);
+      messageHandler.on('InvalidPDF', function transportInvalidPDF(exception) {
+        this.workerReadyCapability.reject(
+          new InvalidPDFException(exception.message));
       }, this);
 
-      messageHandler.on('MissingPDF', function transportMissingPDF(data) {
-        this.workerReadyCapability.reject(data.exception.message,
-                                          data.exception);
+      messageHandler.on('MissingPDF', function transportMissingPDF(exception) {
+        this.workerReadyCapability.reject(
+          new MissingPDFException(exception.message));
       }, this);
 
-      messageHandler.on('UnknownError', function transportUnknownError(data) {
-        this.workerReadyCapability.reject(data.exception.message,
-                                          data.exception);
+      messageHandler.on('UnexpectedResponse',
+                        function transportUnexpectedResponse(exception) {
+        this.workerReadyCapability.reject(
+          new UnexpectedResponseException(exception.message, exception.status));
+      }, this);
+
+      messageHandler.on('UnknownError',
+                        function transportUnknownError(exception) {
+        this.workerReadyCapability.reject(
+          new UnknownErrorException(exception.message, exception.details));
       }, this);
 
       messageHandler.on('DataLoaded', function transportPage(data) {
         this.downloadInfoCapability.resolve(data);
+      }, this);
+
+      messageHandler.on('PDFManagerReady', function transportPage(data) {
+        if (this.pdfDataRangeTransport) {
+          this.pdfDataRangeTransport.transportReady();
+        }
       }, this);
 
       messageHandler.on('StartRenderPage', function transportRender(data) {
@@ -2174,7 +2238,7 @@ var WorkerTransport = (function WorkerTransportClosure() {
               this.commonObjs.resolve(id, error);
               break;
             } else {
-              font = new FontFace(exportedData);
+              font = new FontFaceObject(exportedData);
             }
 
             FontLoader.bind(
@@ -2232,10 +2296,6 @@ var WorkerTransport = (function WorkerTransportClosure() {
         }
       }, this);
 
-      messageHandler.on('DocError', function transportDocError(data) {
-        this.workerReadyCapability.reject(data);
-      }, this);
-
       messageHandler.on('PageError', function transportError(data) {
         var page = this.pageCache[data.pageNum - 1];
         var intentState = page.intentStates[data.intent];
@@ -2291,6 +2351,7 @@ var WorkerTransport = (function WorkerTransportClosure() {
 
     fetchDocument: function WorkerTransport_fetchDocument(source) {
       source.disableAutoFetch = PDFJS.disableAutoFetch;
+      source.disableStream = PDFJS.disableStream;
       source.chunkedViewerLoading = !!this.pdfDataRangeTransport;
       this.messageHandler.send('GetDocRequest', {
         source: source,
@@ -2340,6 +2401,10 @@ var WorkerTransport = (function WorkerTransportClosure() {
 
     getDestinations: function WorkerTransport_getDestinations() {
       return this.messageHandler.sendWithPromise('GetDestinations', null);
+    },
+
+    getDestination: function WorkerTransport_getDestination(id) {
+      return this.messageHandler.sendWithPromise('GetDestination', { id: id } );
     },
 
     getAttachments: function WorkerTransport_getAttachments() {
@@ -5701,8 +5766,8 @@ var FontLoader = {
   }
 };
 
-var FontFace = (function FontFaceClosure() {
-  function FontFace(name, file, properties) {
+var FontFaceObject = (function FontFaceObjectClosure() {
+  function FontFaceObject(name, file, properties) {
     this.compiledGlyphs = {};
     if (arguments.length === 1) {
       // importing translated data
@@ -5713,8 +5778,9 @@ var FontFace = (function FontFaceClosure() {
       return;
     }
   }
-  FontFace.prototype = {
-    bindDOM: function FontFace_bindDOM() {
+  FontFaceObject.prototype = {
+
+    bindDOM: function FontFaceObject_bindDOM() {
       if (!this.data) {
         return null;
       }
@@ -5741,7 +5807,7 @@ var FontFace = (function FontFaceClosure() {
       return rule;
     },
 
-    getPathGenerator: function (objs, character) {
+    getPathGenerator: function FontLoader_getPathGenerator(objs, character) {
       if (!(character in this.compiledGlyphs)) {
         var js = objs.get(this.loadedName + '_path_' + character);
         /*jshint -W054 */
@@ -5750,7 +5816,7 @@ var FontFace = (function FontFaceClosure() {
       return this.compiledGlyphs[character];
     }
   };
-  return FontFace;
+  return FontFaceObject;
 })();
 
 

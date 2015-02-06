@@ -75,9 +75,6 @@ SVGForeignObjectElement::Height()
 SVGForeignObjectElement::PrependLocalTransformsTo(const gfxMatrix &aMatrix,
                                                   TransformTypes aWhich) const
 {
-  NS_ABORT_IF_FALSE(aWhich != eChildToUserSpace || aMatrix.IsIdentity(),
-                    "Skipping eUserSpaceToParent transforms makes no sense");
-
   // 'transform' attribute:
   gfxMatrix fromUserSpace =
     SVGGraphicsElement::PrependLocalTransformsTo(aMatrix, aWhich);
@@ -88,9 +85,9 @@ SVGForeignObjectElement::PrependLocalTransformsTo(const gfxMatrix &aMatrix,
   float x, y;
   const_cast<SVGForeignObjectElement*>(this)->
     GetAnimatedLengthValues(&x, &y, nullptr);
-  gfxMatrix toUserSpace = gfxMatrix().Translate(gfxPoint(x, y));
+  gfxMatrix toUserSpace = gfxMatrix::Translation(x, y);
   if (aWhich == eChildToUserSpace) {
-    return toUserSpace;
+    return toUserSpace * aMatrix;
   }
   NS_ABORT_IF_FALSE(aWhich == eAllTransforms, "Unknown TransformTypes");
   return toUserSpace * fromUserSpace;
@@ -119,7 +116,8 @@ SVGForeignObjectElement::BindToTree(nsIDocument* aDocument,
                                                aCompileEventHandlers);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (aDocument && aDocument->IsSVG()) {
+  nsIDocument* doc = GetComposedDoc();
+  if (doc && doc->IsSVG()) {
     // We assume that we're going to have HTML content, so we ensure that the
     // UA style sheets that nsDocumentViewer::CreateStyleSet skipped when
     // it saw the document was an SVG document are loaded.
@@ -127,7 +125,7 @@ SVGForeignObjectElement::BindToTree(nsIDocument* aDocument,
     // We setup these style sheets during binding, not element construction,
     // because elements can be moved from the document that creates them to
     // another document.
-    aDocument->AsSVGDocument()->EnsureNonSVGUserAgentStyleSheetsLoaded();
+    doc->AsSVGDocument()->EnsureNonSVGUserAgentStyleSheetsLoaded();
   }
 
   return rv;

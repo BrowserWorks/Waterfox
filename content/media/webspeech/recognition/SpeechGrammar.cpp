@@ -23,18 +23,19 @@ NS_INTERFACE_MAP_END
 SpeechGrammar::SpeechGrammar(nsISupports* aParent)
   : mParent(aParent)
 {
-  SetIsDOMBinding();
 }
 
 SpeechGrammar::~SpeechGrammar()
 {
 }
 
-SpeechGrammar*
+already_AddRefed<SpeechGrammar>
 SpeechGrammar::Constructor(const GlobalObject& aGlobal,
                            ErrorResult& aRv)
 {
-  return new SpeechGrammar(aGlobal.GetAsSupports());
+  nsRefPtr<SpeechGrammar> speechGrammar =
+    new SpeechGrammar(aGlobal.GetAsSupports());
+  return speechGrammar.forget();
 }
 
 nsISupports*

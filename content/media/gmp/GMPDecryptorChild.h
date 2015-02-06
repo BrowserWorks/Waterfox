@@ -10,6 +10,7 @@
 #include "gmp-decryption.h"
 #include "mozilla/gmp/GMPTypes.h"
 #include "GMPEncryptedBufferDataImpl.h"
+#include <string>
 
 namespace mozilla {
 namespace gmp {
@@ -21,8 +22,9 @@ class GMPDecryptorChild : public GMPDecryptorCallback
                         , public PGMPDecryptorChild
 {
 public:
-  explicit GMPDecryptorChild(GMPChild* aPlugin);
-  ~GMPDecryptorChild();
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(GMPDecryptorChild);
+
+  explicit GMPDecryptorChild(GMPChild* aPlugin, const std::string& aNodeId);
 
   void Init(GMPDecryptor* aSession);
 
@@ -30,6 +32,8 @@ public:
   virtual void ResolveNewSessionPromise(uint32_t aPromiseId,
                                         const char* aSessionId,
                                         uint32_t aSessionIdLength) MOZ_OVERRIDE;
+  virtual void ResolveLoadSessionPromise(uint32_t aPromiseId,
+                                         bool aSuccess) MOZ_OVERRIDE;
   virtual void ResolvePromise(uint32_t aPromiseId) MOZ_OVERRIDE;
 
   virtual void RejectPromise(uint32_t aPromiseId,
@@ -82,6 +86,7 @@ public:
   virtual void GetPluginVoucher(const uint8_t** aVoucher,
                                 uint8_t* aVoucherLength) MOZ_OVERRIDE;
 private:
+  ~GMPDecryptorChild();
 
   // GMPDecryptorChild
   virtual bool RecvInit() MOZ_OVERRIDE;
@@ -117,10 +122,9 @@ private:
   // GMP's GMPDecryptor implementation.
   // Only call into this on the (GMP process) main thread.
   GMPDecryptor* mSession;
-
-#ifdef DEBUG
   GMPChild* mPlugin;
-#endif
+
+  const std::string mNodeId;
 };
 
 } // namespace gmp

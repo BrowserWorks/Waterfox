@@ -13,23 +13,21 @@
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/Preferences.h"
 #include "nsString.h"
+#include "mozilla/dom/ipc/BlobChild.h"
 
 using namespace mozilla::dom;
 using namespace mozilla::dom::mobilemessage;
 
 namespace {
 
-const char* kPrefRilNumRadioInterfaces = "ril.numRadioInterfaces";
 #define kPrefMmsDefaultServiceId "dom.mms.defaultServiceId"
 #define kPrefSmsDefaultServiceId "dom.sms.defaultServiceId"
-const char* kObservedPrefs[] = {
-  kPrefMmsDefaultServiceId,
-  kPrefSmsDefaultServiceId,
-  nullptr
-};
 
 // TODO: Bug 767082 - WebSMS: sSmsChild leaks at shutdown
 PSmsChild* gSmsChild;
+
+// SmsIPCService is owned by nsLayoutModule.
+SmsIPCService* sSingleton = nullptr;
 
 PSmsChild*
 GetSmsChild()
@@ -83,6 +81,7 @@ SendCursorRequest(const IPCMobileMessageCursor& aRequest,
 uint32_t
 getDefaultServiceId(const char* aPrefKey)
 {
+  static const char* kPrefRilNumRadioInterfaces = "ril.numRadioInterfaces";
   int32_t id = mozilla::Preferences::GetInt(aPrefKey, 0);
   int32_t numRil = mozilla::Preferences::GetInt(kPrefRilNumRadioInterfaces, 1);
 
@@ -101,11 +100,34 @@ NS_IMPL_ISUPPORTS(SmsIPCService,
                   nsIMobileMessageDatabaseService,
                   nsIObserver)
 
+/* static */ already_AddRefed<SmsIPCService>
+SmsIPCService::GetSingleton()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  if (!sSingleton) {
+    sSingleton = new SmsIPCService();
+  }
+
+  nsRefPtr<SmsIPCService> service = sSingleton;
+  return service.forget();
+}
+
 SmsIPCService::SmsIPCService()
 {
+  static const char* kObservedPrefs[] = {
+    kPrefMmsDefaultServiceId,
+    kPrefSmsDefaultServiceId,
+    nullptr
+  };
   Preferences::AddStrongObservers(this, kObservedPrefs);
   mMmsDefaultServiceId = getDefaultServiceId(kPrefMmsDefaultServiceId);
   mSmsDefaultServiceId = getDefaultServiceId(kPrefSmsDefaultServiceId);
+}
+
+SmsIPCService::~SmsIPCService()
+{
+  sSingleton = nullptr;
 }
 
 /*

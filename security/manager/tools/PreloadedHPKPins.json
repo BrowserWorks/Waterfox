@@ -29,8 +29,8 @@
 // Geotrust Global -> *. addons.mozilla.org
 {
   "chromium_data" : {
-    "cert_file_url": "https://src.chromium.org/chrome/trunk/src/net/http/transport_security_state_static.certs",
-    "json_file_url": "https://src.chromium.org/chrome/trunk/src/net/http/transport_security_state_static.json",
+    "cert_file_url": "https://chromium.googlesource.com/chromium/src/net/+/master/http/transport_security_state_static.certs?format=TEXT",
+    "json_file_url": "https://chromium.googlesource.com/chromium/src/net/+/master/http/transport_security_state_static.json?format=TEXT",
     "substitute_pinsets": {
       // Use the larger google_root_pems pinset instead of google
       "google": "google_root_pems"
@@ -217,10 +217,8 @@
       "pins": "mozilla", "test_mode": false },
     { "name": "cdn.mozilla.org", "include_subdomains": true,
       "pins": "mozilla", "test_mode": false },
-    { "name": "media.mozilla.com", "include_subdomains": true,
-      "pins": "mozilla", "test_mode": false },
     { "name": "services.mozilla.com", "include_subdomains": true,
-      "pins": "mozilla_services", "test_mode": true },
+      "pins": "mozilla_services", "test_mode": false, "id": 6 },
     { "name": "include-subdomains.pinning.example.com",
       "include_subdomains": true, "pins": "mozilla_test",
       "test_mode": false },

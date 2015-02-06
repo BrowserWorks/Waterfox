@@ -6,16 +6,13 @@
 
 FAIL_ON_WARNINGS = True
 
-LIBRARY_NAME = 'mozsandbox'
-FORCE_SHARED_LIB = True
+SharedLibrary('mozsandbox')
 
 EXPORTS.mozilla += [
     'Sandbox.h',
 ]
 
 SOURCES += [
-    # Bug 1059038 workaround:
-    '../../../xpcom/glue/unused.cpp',
     '../chromium/base/shim/base/logging.cpp',
     '../chromium/sandbox/linux/seccomp-bpf/basicblock.cc',
     '../chromium/sandbox/linux/seccomp-bpf/codegen.cc',
@@ -25,6 +22,12 @@ SOURCES += [
     'SandboxAssembler.cpp',
     'SandboxFilter.cpp',
 ]
+
+# gcc lto likes to put the top level asm in syscall.cc in a different partition
+# from the function using it which breaks the build.  Work around that by
+# forcing there to be only one partition.
+if '-flto' in CONFIG['OS_CXXFLAGS'] and not CONFIG['CLANG_CXX']:
+    LDFLAGS += ['--param lto-partitions=1']
 
 DEFINES['NS_NO_XPCOM'] = True
 DISABLE_STL_WRAPPING = True

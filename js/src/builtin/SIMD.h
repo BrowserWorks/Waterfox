@@ -23,14 +23,14 @@
 
 #define FLOAT32X4_UNARY_FUNCTION_LIST(V)                                            \
   V(abs, (UnaryFunc<Float32x4, Abs, Float32x4>), 1, 0)                              \
+  V(fromInt32x4, (FuncConvert<Int32x4, Float32x4> ), 1, 0)                          \
   V(fromInt32x4Bits, (FuncConvertBits<Int32x4, Float32x4>), 1, 0)                   \
   V(neg, (UnaryFunc<Float32x4, Neg, Float32x4>), 1, 0)                              \
   V(not, (CoercedUnaryFunc<Float32x4, Int32x4, Not, Float32x4>), 1, 0)              \
   V(reciprocal, (UnaryFunc<Float32x4, Rec, Float32x4>), 1, 0)                       \
   V(reciprocalSqrt, (UnaryFunc<Float32x4, RecSqrt, Float32x4>), 1, 0)               \
   V(splat, (FuncSplat<Float32x4>), 1, 0)                                            \
-  V(sqrt, (UnaryFunc<Float32x4, Sqrt, Float32x4>), 1, 0)                            \
-  V(fromInt32x4, (FuncConvert<Int32x4, Float32x4> ), 1, 0)
+  V(sqrt, (UnaryFunc<Float32x4, Sqrt, Float32x4>), 1, 0)
 
 #define FLOAT32X4_BINARY_FUNCTION_LIST(V)                                           \
   V(add, (BinaryFunc<Float32x4, Add, Float32x4>), 2, 0)                             \
@@ -57,6 +57,7 @@
 
 #define FLOAT32X4_TERNARY_FUNCTION_LIST(V)                                          \
   V(clamp, Float32x4Clamp, 3, 0)                                                    \
+  V(select, Float32x4Select, 3, 0)                                                  \
   V(shuffleMix, FuncShuffle<Float32x4>, 3, 0)
 
 #define FLOAT32X4_FUNCTION_LIST(V)                                                  \
@@ -69,11 +70,11 @@
   V(zero, (FuncZero<Int32x4>), 0, 0)
 
 #define INT32X4_UNARY_FUNCTION_LIST(V)                                              \
+  V(fromFloat32x4, (FuncConvert<Float32x4, Int32x4>), 1, 0)                         \
   V(fromFloat32x4Bits, (FuncConvertBits<Float32x4, Int32x4>), 1, 0)                 \
   V(neg, (UnaryFunc<Int32x4, Neg, Int32x4>), 1, 0)                                  \
   V(not, (UnaryFunc<Int32x4, Not, Int32x4>), 1, 0)                                  \
-  V(splat, (FuncSplat<Int32x4>), 0, 0)                                              \
-  V(fromFloat32x4, (FuncConvert<Float32x4, Int32x4>), 1, 0)
+  V(splat, (FuncSplat<Int32x4>), 0, 0)
 
 #define INT32X4_BINARY_FUNCTION_LIST(V)                                             \
   V(add, (BinaryFunc<Int32x4, Add, Int32x4>), 2, 0)                                 \
@@ -112,6 +113,48 @@
   INT32X4_TERNARY_FUNCTION_LIST(V)                                                  \
   INT32X4_QUARTERNARY_FUNCTION_LIST(V)
 
+#define FOREACH_INT32X4_SIMD_OP(_)   \
+    _(fromFloat32x4)                 \
+    _(fromFloat32x4Bits)             \
+    _(shiftLeft)                     \
+    _(shiftRight)                    \
+    _(shiftRightLogical)
+#define FOREACH_FLOAT32X4_SIMD_OP(_) \
+    _(abs)                           \
+    _(sqrt)                          \
+    _(reciprocal)                    \
+    _(reciprocalSqrt)                \
+    _(fromInt32x4)                   \
+    _(fromInt32x4Bits)               \
+    _(mul)                           \
+    _(div)                           \
+    _(max)                           \
+    _(min)                           \
+    _(lessThanOrEqual)               \
+    _(notEqual)                      \
+    _(greaterThanOrEqual)
+#define FOREACH_COMMONX4_SIMD_OP(_)  \
+    _(add)                           \
+    _(sub)                           \
+    _(lessThan)                      \
+    _(equal)                         \
+    _(greaterThan)                   \
+    _(and)                           \
+    _(or)                            \
+    _(xor)                           \
+    _(select)                        \
+    _(splat)                         \
+    _(withX)                         \
+    _(withY)                         \
+    _(withZ)                         \
+    _(withW)                         \
+    _(not)                           \
+    _(neg)
+#define FORALL_SIMD_OP(_)            \
+    FOREACH_INT32X4_SIMD_OP(_)       \
+    FOREACH_FLOAT32X4_SIMD_OP(_)     \
+    FOREACH_COMMONX4_SIMD_OP(_)
+
 namespace js {
 
 class SIMDObject : public JSObject
@@ -127,7 +170,7 @@ class SIMDObject : public JSObject
 struct Float32x4 {
     typedef float Elem;
     static const unsigned lanes = 4;
-    static const X4TypeDescr::Type type = X4TypeDescr::TYPE_FLOAT32;
+    static const SimdTypeDescr::Type type = SimdTypeDescr::TYPE_FLOAT32;
 
     static TypeDescr &GetTypeDescr(GlobalObject &global) {
         return global.float32x4TypeDescr().as<TypeDescr>();
@@ -147,7 +190,7 @@ struct Float32x4 {
 struct Int32x4 {
     typedef int32_t Elem;
     static const unsigned lanes = 4;
-    static const X4TypeDescr::Type type = X4TypeDescr::TYPE_INT32;
+    static const SimdTypeDescr::Type type = SimdTypeDescr::TYPE_INT32;
 
     static TypeDescr &GetTypeDescr(GlobalObject &global) {
         return global.int32x4TypeDescr().as<TypeDescr>();

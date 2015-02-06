@@ -46,6 +46,9 @@ function handleRequest(request, response) {
     case "/profile/profile":
       profile(request, response);
       return;
+    case "/push-server-config":
+      push_server(request, response);
+      return;
   }
   response.setStatusLine(request.httpVersion, 404, "Not Found");
 }
@@ -65,6 +68,7 @@ function setup_params(request, response) {
   if (request.method == "DELETE") {
     setSharedState("/fxa-oauth/params", "");
     setSharedState("/registration", "");
+    setSharedState("/fxa-oauth/token", "");
     response.write("Params deleted");
     return;
   }
@@ -166,13 +170,14 @@ function token(request, response) {
     return;
   }
 
-  let tokenData = {
-    access_token: payload.code + "_access_token",
-    scope: "profile",
-    token_type: "bearer",
-  };
+  let tokenData = JSON.stringify(
+    {access_token: payload.code + "_access_token",
+     scope: "profile",
+     token_type: "bearer"},
+    null, 2);
+  setSharedState("/fxa-oauth/token", tokenData);
   response.setHeader("Content-Type", "application/json; charset=utf-8", false);
-  response.write(JSON.stringify(tokenData, null, 2));
+  response.write(tokenData);
 }
 
 /**
@@ -189,20 +194,44 @@ function profile(request, response) {
 }
 
 /**
+ * GET /push-server-config
+ *
+ */
+function push_server(request, response) {
+  response.setHeader("Content-Type", "application/json; charset=utf-8", false);
+  let msg = {
+    pushServerURI: "ws://localhost/"
+  };
+  response.write(JSON.stringify(msg, null, 2));
+}
+
+/**
  * POST /registration
  *
  * Mock Loop registration endpoint. Hawk Authorization headers are expected only for FxA sessions.
  */
 function registration(request, response) {
+  let isFxARequest = function(payload) {
+    return (payload.simplePushURL == "https://localhost/pushUrl/fxa" ||
+            payload.simplePushURLs.calls == "https://localhost/pushUrl/fxa-calls" ||
+            payload.simplePushURLs.rooms == "https://localhost/pushUrl/fxa-rooms");
+  };
+
   let body = NetUtil.readInputStreamToString(request.bodyInputStream,
                                              request.bodyInputStream.available());
   let payload = JSON.parse(body);
-  if (payload.simplePushURL == "https://localhost/pushUrl/fxa" &&
-       (!request.hasHeader("Authorization") ||
-        !request.getHeader("Authorization").startsWith("Hawk"))) {
-    response.setStatusLine(request.httpVersion, 401, "Missing Hawk");
-    response.write("401 Missing Hawk Authorization header");
-    return;
+  if (isFxARequest(payload)) {
+    if (!request.hasHeader("Authorization") ||
+        !request.getHeader("Authorization").startsWith("Hawk")) {
+      response.setStatusLine(request.httpVersion, 401, "Missing Hawk");
+      response.write("401 Missing Hawk Authorization header");
+      return;
+    }
+    if (!getSharedState("/fxa-oauth/token")) {
+      response.setStatusLine(request.httpVersion, 409, "Wrong State");
+      response.write("409 complete OAuth before attempting registration");
+      return;
+    }
   }
   setSharedState("/registration", body);
 }
@@ -224,11 +253,14 @@ function delete_registration(request, response) {
   // making the path become a query parameter. This is because we aren't actually
   // registering endpoints at the root of the hostname e.g. /registration.
   let url = new URL(request.queryString.replace(/%3F.*/,""), "http://www.example.com");
-  let registration = JSON.parse(getSharedState("/registration"));
-  if (registration.simplePushURL == url.searchParams.get("simplePushURL")) {
-    setSharedState("/registration", "");
-  } else {
-    response.setStatusLine(request.httpVersion, 400, "Bad Request");
+  let state = getSharedState("/registration");
+  if (state != "") { //Already set to empty value on a successful channel unregsitration.
+    let registration = JSON.parse(state);
+    if (registration.simplePushURLs.calls == url.searchParams.get("simplePushURL")) {
+      setSharedState("/registration", "");
+    } else {
+      response.setStatusLine(request.httpVersion, 400, "Bad Request");
+    }
   }
 }
 

@@ -324,38 +324,83 @@ CssHtmlTree.prototype = {
    * returns null of the node isn't anything we care about
    */
   getNodeInfo: function(node) {
-    let type, value;
+    if (!node) {
+      return null;
+    }
+
     let classes = node.classList;
 
-    if (classes.contains("property-name") ||
-        classes.contains("property-value") ||
-        (classes.contains("theme-link") && !classes.contains("link"))) {
-      // Go up to the common parent to find the property and value
-      let parent = node.parentNode;
-      while (!parent.classList.contains("property-view")) {
-        parent = parent.parentNode;
+    // Check if the node isn't a selector first since this doesn't require
+    // walking the DOM
+    if (classes.contains("matched") ||
+        classes.contains("bestmatch") ||
+        classes.contains("parentmatch")) {
+      let selectorText = "";
+      for (let child of node.childNodes) {
+        if (child.nodeType === node.TEXT_NODE) {
+          selectorText += child.textContent;
+        }
       }
+      return {
+        type: overlays.VIEW_NODE_SELECTOR_TYPE,
+        value: selectorText.trim()
+      }
+    }
+
+    // Walk up the nodes to find out where node is
+    let propertyView;
+    let propertyContent;
+    let parent = node;
+    while (parent.parentNode) {
+      if (parent.classList.contains("property-view")) {
+        propertyView = parent;
+        break;
+      }
+      if (parent.classList.contains("property-content")) {
+        propertyContent = parent;
+        break;
+      }
+      parent = parent.parentNode;
+    }
+    if (!propertyView && !propertyContent) {
+      return null;
+    }
+
+    let value, type;
+
+    // Get the property and value for a node that's a property name or value
+    let isHref = classes.contains("theme-link") && !classes.contains("link");
+    if (propertyView && (classes.contains("property-name") ||
+                         classes.contains("property-value") ||
+                         isHref)) {
       value = {
         property: parent.querySelector(".property-name").textContent,
         value: parent.querySelector(".property-value").textContent
       };
     }
+    if (propertyContent && (classes.contains("other-property-value") ||
+                            isHref)) {
+      let view = propertyContent.previousSibling;
+      value = {
+        property: view.querySelector(".property-name").textContent,
+        value: node.textContent
+      };
+    }
 
+    // Get the type
     if (classes.contains("property-name")) {
       type = overlays.VIEW_NODE_PROPERTY_TYPE;
-    } else if (classes.contains("property-value")) {
+    } else if (classes.contains("property-value") ||
+               classes.contains("other-property-value")) {
       type = overlays.VIEW_NODE_VALUE_TYPE;
-    } else if (classes.contains("theme-link")) {
+    } else if (isHref) {
       type = overlays.VIEW_NODE_IMAGE_URL_TYPE;
       value.url = node.href;
     } else {
       return null;
     }
 
-    return {
-      type: type,
-      value: value
-    };
+    return {type, value};
   },
 
   _createPropertyViews: function()
@@ -600,7 +645,8 @@ CssHtmlTree.prototype = {
     this.menuitemSources= createMenuItem(this._contextmenu, {
       label: "ruleView.contextmenu.showOrigSources",
       accesskey: "ruleView.contextmenu.showOrigSources.accessKey",
-      command: this._onToggleOrigSources
+      command: this._onToggleOrigSources,
+      type: "checkbox"
     });
 
     let popupset = doc.documentElement.querySelector("popupset");
@@ -621,16 +667,8 @@ CssHtmlTree.prototype = {
     let disable = win.getSelection().isCollapsed;
     this.menuitemCopy.disabled = disable;
 
-    let label = "ruleView.contextmenu.showOrigSources";
-    if (Services.prefs.getBoolPref(PREF_ORIG_SOURCES)) {
-      label = "ruleView.contextmenu.showCSSSources";
-    }
-    this.menuitemSources.setAttribute("label",
-                                      CssHtmlTree.l10n(label));
-
-    let accessKey = label + ".accessKey";
-    this.menuitemSources.setAttribute("accesskey",
-                                      CssHtmlTree.l10n(accessKey));
+    let showOrig = Services.prefs.getBoolPref(PREF_ORIG_SOURCES);
+    this.menuitemSources.setAttribute("checked", showOrig);
 
     this.menuitemCopyColor.hidden = !this._isColorPopup();
   },

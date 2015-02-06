@@ -8,7 +8,7 @@
 #define jit_TypedObjectPrediction_h
 
 #include "builtin/TypedObject.h"
-#include "jit/IonAllocPolicy.h"
+#include "jit/JitAllocPolicy.h"
 
 namespace js {
 namespace jit {
@@ -96,17 +96,17 @@ class TypedObjectPrediction {
     }
 
     const TypedProto &proto() const {
-        JS_ASSERT(predictionKind() == Proto);
+        MOZ_ASSERT(predictionKind() == Proto);
         return *data_.proto;
     }
 
     const TypeDescr &descr() const {
-        JS_ASSERT(predictionKind() == Descr);
+        MOZ_ASSERT(predictionKind() == Descr);
         return *data_.descr;
     }
 
     const PrefixData &prefix() const {
-        JS_ASSERT(predictionKind() == Prefix);
+        MOZ_ASSERT(predictionKind() == Prefix);
         return data_.prefix;
     }
 
@@ -200,7 +200,7 @@ class TypedObjectPrediction {
 
     ScalarTypeDescr::Type scalarType() const;
     ReferenceTypeDescr::Type referenceType() const;
-    X4TypeDescr::Type x4Type() const;
+    SimdTypeDescr::Type simdType() const;
 
     ///////////////////////////////////////////////////////////////////////////
     // Queries valid only for arrays.

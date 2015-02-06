@@ -22,7 +22,7 @@
 #include "nsString.h"
 #include "nsTArray.h"
 #include "nsThreadUtils.h"
-#include "StructuredCloneTags.h"
+#include "mozilla/dom/StructuredCloneTags.h"
 
 #include "Queue.h"
 #include "WorkerFeature.h"
@@ -396,6 +396,9 @@ public:
   void
   UpdateRuntimeOptions(JSContext* aCx,
                        const JS::RuntimeOptions& aRuntimeOptions);
+
+  void
+  UpdateLanguages(JSContext* aCx, const nsTArray<nsString>& aLanguages);
 
   void
   UpdatePreference(JSContext* aCx, WorkerPreference aPref, bool aValue);
@@ -936,6 +939,9 @@ public:
   UpdateRuntimeOptionsInternal(JSContext* aCx, const JS::RuntimeOptions& aRuntimeOptions);
 
   void
+  UpdateLanguagesInternal(JSContext* aCx, const nsTArray<nsString>& aLanguages);
+
+  void
   UpdatePreferenceInternal(JSContext* aCx, WorkerPreference aPref, bool aValue);
 
   void
@@ -1219,8 +1225,7 @@ GetCurrentThreadJSContext();
 
 enum WorkerStructuredDataType
 {
-  DOMWORKER_SCTAG_FILE = SCTAG_DOM_MAX,
-  DOMWORKER_SCTAG_BLOB,
+  DOMWORKER_SCTAG_BLOB = SCTAG_DOM_MAX,
 
   DOMWORKER_SCTAG_END
 };

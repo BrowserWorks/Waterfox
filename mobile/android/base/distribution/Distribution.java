@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Scanner;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
@@ -42,6 +41,7 @@ import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.mozglue.RobocopTarget;
+import org.mozilla.gecko.util.FileUtils;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import android.app.Activity;
@@ -63,8 +63,8 @@ public class Distribution {
     private static final int STATE_SET = 2;
 
     private static final String FETCH_PROTOCOL = "https";
-    private static final String FETCH_HOSTNAME = "distro-download.cdn.mozilla.net";
-    private static final String FETCH_PATH = "/android/1/";
+    private static final String FETCH_HOSTNAME = "mobile.cdn.mozilla.net";
+    private static final String FETCH_PATH = "/distributions/1/";
     private static final String FETCH_EXTENSION = ".jar";
 
     private static final String EXPECTED_CONTENT_TYPE = "application/java-archive";
@@ -104,6 +104,8 @@ public class Distribution {
     // Corresponds to the high value in Histograms.json.
     private static final long MAX_DOWNLOAD_TIME_MSEC = 40000;    // 40 seconds.
 
+    // Wait just a little while for the system to send a referrer intent after install.
+    private static final long DELAY_WAIT_FOR_REFERRER_MSEC = 400;
 
 
     /**
@@ -286,7 +288,7 @@ public class Distribution {
         }
 
         try {
-            JSONObject all = new JSONObject(getFileContents(descFile));
+            JSONObject all = new JSONObject(FileUtils.getFileContents(descFile));
 
             if (!all.has("Global")) {
                 Log.e(LOGTAG, "Distribution preferences.json has no Global entry!");
@@ -314,7 +316,7 @@ public class Distribution {
         }
 
         try {
-            return new JSONArray(getFileContents(bookmarks));
+            return new JSONArray(FileUtils.getFileContents(bookmarks));
         } catch (IOException e) {
             Log.e(LOGTAG, "Error getting bookmarks", e);
             Telemetry.HistogramAdd(HISTOGRAM_CODE_CATEGORY, CODE_CATEGORY_MALFORMED_DISTRIBUTION);
@@ -371,7 +373,7 @@ public class Distribution {
                 checkSystemDistribution();
 
         this.state = distributionSet ? STATE_SET : STATE_NONE;
-        settings.edit().putInt(keyName, this.state).commit();
+        settings.edit().putInt(keyName, this.state).apply();
 
         runReadyQueue();
         return distributionSet;
@@ -385,7 +387,16 @@ public class Distribution {
      */
     private boolean checkIntentDistribution() {
         if (referrer == null) {
-            return false;
+            // Wait a predetermined time and try again.
+            // Just block the thread, because it's the simplest solution.
+            try {
+                Thread.sleep(DELAY_WAIT_FOR_REFERRER_MSEC);
+            } catch (InterruptedException e) {
+                // Good enough.
+            }
+            if (referrer == null) {
+                return false;
+            }
         }
 
         URI uri = getReferredDistribution(referrer);
@@ -737,19 +748,6 @@ public class Distribution {
             return this.distributionDir = system;
         }
         return null;
-    }
-
-    // Shortcut to slurp a file without messing around with streams.
-    private String getFileContents(File file) throws IOException {
-        Scanner scanner = null;
-        try {
-            scanner = new Scanner(file, "UTF-8");
-            return scanner.useDelimiter("\\A").next();
-        } finally {
-            if (scanner != null) {
-                scanner.close();
-            }
-        }
     }
 
     private String getDataDir() {

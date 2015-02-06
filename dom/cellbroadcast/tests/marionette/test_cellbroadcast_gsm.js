@@ -22,7 +22,9 @@ function testReceiving_GSM_MessageAttributes() {
       ok(aMessage.etws.emergencyUserAlert != null, "aMessage.etws.emergencyUserAlert");
       ok(aMessage.etws.popup != null, "aMessage.etws.popup");
     }
-    ok(aMessage.cdmaServiceCategory != null, "aMessage.cdmaServiceCategory");
+
+    // cdmaServiceCategory shall always be unavailable in GMS/UMTS CB message.
+    ok(aMessage.cdmaServiceCategory == null, "aMessage.cdmaServiceCategory");
   };
 
   // Here we use a simple GSM message for test.
@@ -114,7 +116,7 @@ function testReceiving_GSM_Language_and_Body() {
   let promise = Promise.resolve();
 
   let testDcs = [];
-  dcs = 0;
+  let dcs = 0;
   while (dcs <= 0xFF) {
     try {
       let dcsInfo = { dcs: dcs };
@@ -123,7 +125,7 @@ function testReceiving_GSM_Language_and_Body() {
       testDcs.push(dcsInfo);
     } catch (e) {
       // Unsupported coding group, skip.
-      let dcs = (dcs & PDU_DCS_CODING_GROUP_BITS) + 0x10;
+      dcs = (dcs & PDU_DCS_CODING_GROUP_BITS) + 0x10;
     }
     dcs++;
   }
@@ -296,20 +298,6 @@ function testReceiving_GSM_Multipart() {
   return promise;
 }
 
-function testReceiving_GSM_ServiceCategory() {
-  log("Test receiving GSM Cell Broadcast - Service Category");
-
-  let verifyCBMessage = (aMessage) => {
-    // Bug 910091
-    // "Service Category" is not defined in GSM.  We should always get '0' here.
-    is(aMessage.cdmaServiceCategory, 0, "aMessage.cdmaServiceCategory");
-  };
-
-  let pdu = buildHexStr(0, CB_MESSAGE_SIZE_GSM * 2);
-  return sendMultipleRawCbsToEmulatorAndWait([pdu])
-    .then((aMessage) => verifyCBMessage(aMessage));
-}
-
 function testReceiving_GSM_PaddingCharacters() {
   log("Test receiving GSM Cell Broadcast - Padding Characters <CR>");
 
@@ -369,6 +357,5 @@ startTestCommon(function testCaseMain() {
     .then(() => testReceiving_GSM_EmergencyUserAlert())
     .then(() => testReceiving_GSM_Popup())
     .then(() => testReceiving_GSM_Multipart())
-    .then(() => testReceiving_GSM_ServiceCategory())
     .then(() => testReceiving_GSM_PaddingCharacters());
 });

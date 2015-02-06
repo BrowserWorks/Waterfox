@@ -28,11 +28,10 @@ describe("loop.Client", function() {
     callback = sinon.spy();
     fakeToken = "fakeTokenText";
     mozLoop = {
-      getLoopCharPref: sandbox.stub()
+      getLoopPref: sandbox.stub()
         .returns(null)
         .withArgs("hawk-session-token")
         .returns(fakeToken),
-      ensureRegistered: sinon.stub().callsArgWith(0, null),
       noteCallUrlExpiry: sinon.spy(),
       hawkRequest: sinon.stub(),
       LOOP_SESSION_TYPE: {
@@ -55,21 +54,6 @@ describe("loop.Client", function() {
 
   describe("loop.Client", function() {
     describe("#deleteCallUrl", function() {
-      it("should ensure loop is registered", function() {
-        client.deleteCallUrl("fakeToken", mozLoop.LOOP_SESSION_TYPE.FXA, callback);
-
-        sinon.assert.calledOnce(mozLoop.ensureRegistered);
-      });
-
-      it("should send an error when registration fails", function() {
-        mozLoop.ensureRegistered.callsArgWith(0, "offline");
-
-        client.deleteCallUrl("fakeToken", mozLoop.LOOP_SESSION_TYPE.FXA, callback);
-
-        sinon.assert.calledOnce(callback);
-        sinon.assert.calledWithExactly(callback, "offline");
-      });
-
       it("should make a delete call to /call-url/{fakeToken}", function() {
         client.deleteCallUrl(fakeToken, mozLoop.LOOP_SESSION_TYPE.GUEST, callback);
 
@@ -106,21 +90,6 @@ describe("loop.Client", function() {
     });
 
     describe("#requestCallUrl", function() {
-      it("should ensure loop is registered", function() {
-        client.requestCallUrl("foo", callback);
-
-        sinon.assert.calledOnce(mozLoop.ensureRegistered);
-      });
-
-      it("should send an error when registration fails", function() {
-        mozLoop.ensureRegistered.callsArgWith(0, "offline");
-
-        client.requestCallUrl("foo", callback);
-
-        sinon.assert.calledOnce(callback);
-        sinon.assert.calledWithExactly(callback, "offline");
-      });
-
       it("should post to /call-url/", function() {
         client.requestCallUrl("foo", callback);
 

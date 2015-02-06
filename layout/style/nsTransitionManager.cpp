@@ -175,7 +175,9 @@ nsTransitionManager::StyleContextChanged(dom::Element *aElement,
   }
 
 
-  if (aNewStyleContext->PresContext()->IsProcessingAnimationStyleChange()) {
+  // FIXME (bug 960465): This test should go away.
+  if (aNewStyleContext->PresContext()->RestyleManager()->
+        IsProcessingAnimationStyleChange()) {
     return nullptr;
   }
 
@@ -515,7 +517,8 @@ nsTransitionManager::ConsiderStartingTransition(
   timing.mFillMode = NS_STYLE_ANIMATION_FILL_MODE_BACKWARDS;
 
   nsRefPtr<ElementPropertyTransition> pt =
-    new ElementPropertyTransition(aElement->OwnerDoc(), timing);
+    new ElementPropertyTransition(aElement->OwnerDoc(), aElement,
+                                  aNewStyleContext->GetPseudoType(), timing);
   pt->mStartForReversingTest = startForReversingTest;
   pt->mReversePortion = reversePortion;
 
@@ -599,8 +602,7 @@ nsTransitionManager::GetElementTransitions(
     static_cast<AnimationPlayerCollection*>(aElement->GetProperty(propName));
   if (!collection && aCreateIfNeeded) {
     // FIXME: Consider arena-allocating?
-    collection = new AnimationPlayerCollection(aElement, propName, this,
-      mPresContext->RefreshDriver()->MostRecentRefresh());
+    collection = new AnimationPlayerCollection(aElement, propName, this);
     nsresult rv =
       aElement->SetProperty(propName, collection,
                             &AnimationPlayerCollection::PropertyDtor, false);
@@ -639,16 +641,18 @@ nsTransitionManager::WalkTransitionRule(
     return;
   }
 
-  if (aData->mPresContext->IsProcessingRestyles() &&
-      !aData->mPresContext->IsProcessingAnimationStyleChange()) {
+  RestyleManager* restyleManager = aData->mPresContext->RestyleManager();
+  if (restyleManager->SkipAnimationRules()) {
     // If we're processing a normal style change rather than one from
     // animation, don't add the transition rule.  This allows us to
     // compute the new style value rather than having the transition
     // override it, so that we can start transitioning differently.
 
-    // We need to immediately restyle with animation
-    // after doing this.
-    collection->PostRestyleForAnimation(mPresContext);
+    if (restyleManager->PostAnimationRestyles()) {
+      // We need to immediately restyle with animation
+      // after doing this.
+      collection->PostRestyleForAnimation(mPresContext);
+    }
     return;
   }
 

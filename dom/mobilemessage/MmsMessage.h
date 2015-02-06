@@ -16,6 +16,8 @@
 namespace mozilla {
 namespace dom {
 
+class File;
+
 namespace mobilemessage {
 class MmsMessageData;
 } // namespace mobilemessage
@@ -31,7 +33,7 @@ public:
   // If this is changed, change the WebIDL dictionary as well.
   struct Attachment MOZ_FINAL
   {
-    nsCOMPtr<nsIDOMBlob> content;
+    nsRefPtr<File> content;
     nsString id;
     nsString location;
 
@@ -58,7 +60,7 @@ public:
              uint64_t aExpiryDate,
              bool aReadReportRequested);
 
-  MmsMessage(const mobilemessage::MmsMessageData& aData);
+  explicit MmsMessage(const mobilemessage::MmsMessageData& aData);
 
   static nsresult Create(int32_t aId,
                          uint64_t aThreadId,

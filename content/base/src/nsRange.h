@@ -57,7 +57,6 @@ public:
     , mAssertNextInsertOrAppendNode(nullptr)
 #endif
   {
-    SetIsDOMBinding();
     MOZ_ASSERT(aNode, "range isn't in a document!");
     mOwner = aNode->OwnerDoc();
   }
@@ -263,6 +262,19 @@ public:
                                  nsINode* aStartParent, int32_t aStartOffset,
                                  nsINode* aEndParent, int32_t aEndOffset,
                                  bool aClampToEdge, bool aFlushLayout);
+
+  /**
+   * Scan this range for -moz-user-select:none nodes and split it up into
+   * multiple ranges to exclude those nodes.  The resulting ranges are put
+   * in aOutRanges.  If no -moz-user-select:none node is found in the range
+   * then |this| is unmodified and is the only range in aOutRanges.
+   * Otherwise, |this| will be modified so that it ends before the first
+   * -moz-user-select:none node and additional ranges may also be created.
+   * If all nodes in the range are -moz-user-select:none then aOutRanges
+   * will be empty.
+   * @param aOutRanges the resulting set of ranges
+   */
+  void ExcludeNonSelectableNodes(nsTArray<nsRefPtr<nsRange>>* aOutRanges);
 
   typedef nsTHashtable<nsPtrHashKey<nsRange> > RangeHashTable;
 protected:

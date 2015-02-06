@@ -67,28 +67,19 @@ class InlineForwardList : protected InlineForwardListNode<T>
     iterator end() const {
         return iterator(nullptr);
     }
-    iterator removeAt(iterator &where) {
+    void removeAt(iterator where) {
         iterator iter(where);
         iter++;
-        iter.prev = where.prev;
 #ifdef DEBUG
         iter.modifyCount_++;
 #endif
-
-        // Once the element 'where' points at has been removed, it is no longer
-        // safe to do any operations that would touch 'iter', as the element
-        // may be added to another list, etc. This nullptr ensures that any
-        // improper uses of this function will fail quickly and loudly.
         removeAfter(where.prev, where.iter);
-        where.prev = where.iter = nullptr;
-
-        return iter;
     }
     void pushFront(Node *t) {
         insertAfter(this, t);
     }
     void pushBack(Node *t) {
-        JS_ASSERT(t->next == nullptr);
+        MOZ_ASSERT(t->next == nullptr);
 #ifdef DEBUG
         modifyCount_++;
 #endif
@@ -96,17 +87,17 @@ class InlineForwardList : protected InlineForwardListNode<T>
         tail_ = t;
     }
     T *popFront() {
-        JS_ASSERT(!empty());
+        MOZ_ASSERT(!empty());
         T* result = static_cast<T *>(this->next);
         removeAfter(this, result);
         return result;
     }
     T *back() {
-        JS_ASSERT(!empty());
+        MOZ_ASSERT(!empty());
         return static_cast<T *>(tail_);
     }
     void insertAfter(Node *at, Node *item) {
-        JS_ASSERT(item->next == nullptr);
+        MOZ_ASSERT(item->next == nullptr);
 #ifdef DEBUG
         modifyCount_++;
 #endif
@@ -121,12 +112,12 @@ class InlineForwardList : protected InlineForwardListNode<T>
 #endif
         if (item == tail_)
             tail_ = at;
-        JS_ASSERT(at->next == item);
+        MOZ_ASSERT(at->next == item);
         at->next = item->next;
         item->next = nullptr;
     }
     void splitAfter(Node *at, InlineForwardList<T> *to) {
-        JS_ASSERT(to->empty());
+        MOZ_ASSERT(to->empty());
         if (!at)
             at = this;
         if (at == tail_)
@@ -170,7 +161,7 @@ private:
 
 public:
     InlineForwardListIterator<T> & operator ++() {
-        JS_ASSERT(modifyCount_ == owner_->modifyCount_);
+        MOZ_ASSERT(modifyCount_ == owner_->modifyCount_);
         prev = iter;
         iter = iter->next;
         return *this;
@@ -181,11 +172,11 @@ public:
         return old;
     }
     T * operator *() const {
-        JS_ASSERT(modifyCount_ == owner_->modifyCount_);
+        MOZ_ASSERT(modifyCount_ == owner_->modifyCount_);
         return static_cast<T *>(iter);
     }
     T * operator ->() const {
-        JS_ASSERT(modifyCount_ == owner_->modifyCount_);
+        MOZ_ASSERT(modifyCount_ == owner_->modifyCount_);
         return static_cast<T *>(iter);
     }
     bool operator !=(const InlineForwardListIterator<T> &where) const {
@@ -220,7 +211,26 @@ class InlineListNode : public InlineForwardListNode<T>
         prev(p)
     { }
 
+    // Move constructor. Nodes may be moved without being removed from their
+    // containing lists. For example, this allows list nodes to be safely
+    // stored in a resizable Vector -- when the Vector resizes, the new storage
+    // is initialized by this move constructor. |other| is a reference to the
+    // old node which the |this| node here is replacing.
+    InlineListNode(InlineListNode<T> &&other)
+      : InlineForwardListNode<T>(other.next)
+    {
+        InlineListNode<T> *newNext = static_cast<InlineListNode<T> *>(other.next);
+        InlineListNode<T> *newPrev = other.prev;
+        prev = newPrev;
+
+        // Update the pointers in the adjacent nodes to point to this node's new
+        // location.
+        newNext->prev = this;
+        newPrev->next = this;
+    }
+
     InlineListNode(const InlineListNode<T> &) MOZ_DELETE;
+    void operator=(const InlineListNode<T> &) MOZ_DELETE;
 
   protected:
     friend class InlineList<T>;
@@ -262,20 +272,6 @@ class InlineList : protected InlineListNode<T>
     reverse_iterator rend() const {
         return reverse_iterator(this);
     }
-    template <typename itertype>
-    itertype removeAt(itertype &where) {
-        itertype iter(where);
-        iter++;
-
-        // Once the element 'where' points at has been removed, it is no longer
-        // safe to do any operations that would touch 'iter', as the element
-        // may be added to another list, etc. This nullptr ensures that any
-        // improper uses of this function will fail quickly and loudly.
-        remove(where.iter);
-        where.iter = nullptr;
-
-        return iter;
-    }
     void pushFront(Node *t) {
         insertAfter(this, t);
     }
@@ -289,13 +285,13 @@ class InlineList : protected InlineListNode<T>
         insertBeforeUnchecked(this, t);
     }
     T *popFront() {
-        JS_ASSERT(!empty());
+        MOZ_ASSERT(!empty());
         T *t = static_cast<T *>(this->next);
         remove(t);
         return t;
     }
     T *popBack() {
-        JS_ASSERT(!empty());
+        MOZ_ASSERT(!empty());
         T *t = static_cast<T *>(this->prev);
         remove(t);
         return t;
@@ -306,8 +302,8 @@ class InlineList : protected InlineListNode<T>
         return *iter;
     }
     void insertBefore(Node *at, Node *item) {
-        JS_ASSERT(item->prev == nullptr);
-        JS_ASSERT(item->next == nullptr);
+        MOZ_ASSERT(item->prev == nullptr);
+        MOZ_ASSERT(item->next == nullptr);
         insertBeforeUnchecked(at, item);
     }
     void insertBeforeUnchecked(Node *at, Node *item) {
@@ -318,8 +314,8 @@ class InlineList : protected InlineListNode<T>
         at->prev = item;
     }
     void insertAfter(Node *at, Node *item) {
-        JS_ASSERT(item->prev == nullptr);
-        JS_ASSERT(item->next == nullptr);
+        MOZ_ASSERT(item->prev == nullptr);
+        MOZ_ASSERT(item->next == nullptr);
         insertAfterUnchecked(at, item);
     }
     void insertAfterUnchecked(Node *at, Node *item) {
@@ -336,6 +332,18 @@ class InlineList : protected InlineListNode<T>
         tNext->prev = tPrev;
         t->next = nullptr;
         t->prev = nullptr;
+    }
+    // Remove |old| from the list and insert |now| in its place.
+    void replace(Node *old, Node *now) {
+        MOZ_ASSERT(now->next == nullptr && now->prev == nullptr);
+        Node *listNext = static_cast<Node *>(old->next);
+        Node *listPrev = old->prev;
+        listPrev->next = now;
+        listNext->prev = now;
+        now->next = listNext;
+        now->prev = listPrev;
+        old->next = nullptr;
+        old->prev = nullptr;
     }
     void clear() {
         this->next = this->prev = this;
@@ -481,10 +489,10 @@ class InlineConcatList
 
     void append(InlineConcatList<T> *adding)
     {
-        JS_ASSERT(tail);
-        JS_ASSERT(!tail->next);
-        JS_ASSERT(adding->tail);
-        JS_ASSERT(!adding->tail->next);
+        MOZ_ASSERT(tail);
+        MOZ_ASSERT(!tail->next);
+        MOZ_ASSERT(adding->tail);
+        MOZ_ASSERT(!adding->tail->next);
 
         tail->next = adding;
         tail = adding->tail;

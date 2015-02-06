@@ -82,35 +82,42 @@ ClockResolutionNs()
 namespace mozilla {
 
 double
-TimeDuration::ToSeconds() const
+BaseTimeDurationPlatformUtils::ToSeconds(int64_t aTicks)
 {
   NS_ABORT_IF_FALSE(gInitialized, "calling TimeDuration too early");
-  return (mValue * sNsPerTick) / kNsPerSecd;
+  return (aTicks * sNsPerTick) / kNsPerSecd;
 }
 
 double
-TimeDuration::ToSecondsSigDigits() const
+BaseTimeDurationPlatformUtils::ToSecondsSigDigits(int64_t aTicks)
 {
   NS_ABORT_IF_FALSE(gInitialized, "calling TimeDuration too early");
   // don't report a value < mResolution ...
-  int64_t valueSigDigs = sResolution * (mValue / sResolution);
+  int64_t valueSigDigs = sResolution * (aTicks / sResolution);
   // and chop off insignificant digits
   valueSigDigs = sResolutionSigDigs * (valueSigDigs / sResolutionSigDigs);
   return (valueSigDigs * sNsPerTick) / kNsPerSecd;
 }
 
-TimeDuration
-TimeDuration::FromMilliseconds(double aMilliseconds)
+int64_t
+BaseTimeDurationPlatformUtils::TicksFromMilliseconds(double aMilliseconds)
 {
   NS_ABORT_IF_FALSE(gInitialized, "calling TimeDuration too early");
-  return TimeDuration::FromTicks((aMilliseconds * kNsPerMsd) / sNsPerTick);
+  double result = (aMilliseconds * kNsPerMsd) / sNsPerTick;
+  if (result > INT64_MAX) {
+    return INT64_MAX;
+  } else if (result < INT64_MIN) {
+    return INT64_MIN;
+  }
+
+  return result;
 }
 
-TimeDuration
-TimeDuration::Resolution()
+int64_t
+BaseTimeDurationPlatformUtils::ResolutionInTicks()
 {
   NS_ABORT_IF_FALSE(gInitialized, "calling TimeDuration too early");
-  return TimeDuration::FromTicks(int64_t(sResolution));
+  return static_cast<int64_t>(sResolution);
 }
 
 nsresult

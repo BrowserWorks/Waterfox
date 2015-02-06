@@ -48,11 +48,11 @@
 #include "nsComputedDOMStyle.h"
 #include "nsIPresShell.h"
 #include "nsCSSProps.h"
-#include "nsDOMFile.h"
 #include "nsTArrayHelpers.h"
 #include "nsIDocShell.h"
 #include "nsIContentViewer.h"
 #include "mozilla/StyleAnimationValue.h"
+#include "mozilla/dom/File.h"
 #include "mozilla/dom/DOMRect.h"
 #include <algorithm>
 
@@ -74,7 +74,6 @@
 #include "mozilla/dom/PermissionMessageUtils.h"
 #include "mozilla/dom/quota/PersistenceType.h"
 #include "mozilla/dom/quota/QuotaManager.h"
-#include "nsDOMBlobBuilder.h"
 #include "nsPrintfCString.h"
 #include "nsViewportInfo.h"
 #include "nsIFormControl.h"
@@ -100,6 +99,7 @@
 
 using namespace mozilla;
 using namespace mozilla::dom;
+using namespace mozilla::ipc;
 using namespace mozilla::layers;
 using namespace mozilla::widget;
 using namespace mozilla::gfx;
@@ -2116,7 +2116,14 @@ nsDOMWindowUtils::SendCompositionEvent(const nsAString& aType,
   } else if (aType.EqualsLiteral("compositionend")) {
     msg = NS_COMPOSITION_END;
   } else if (aType.EqualsLiteral("compositionupdate")) {
-    msg = NS_COMPOSITION_UPDATE;
+    // Now we don't support manually dispatching composition update with this
+    // API.  A compositionupdate is dispatched when a DOM text event modifies
+    // composition string automatically.  For backward compatibility, this
+    // shouldn't return error in this case.
+    NS_WARNING("Don't call nsIDOMWindowUtils.sendCompositionEvent() for "
+               "compositionupdate since it's ignored and the event is "
+               "fired automatically when it's necessary");
+    return NS_OK;
   } else {
     return NS_ERROR_FAILURE;
   }
@@ -2124,7 +2131,7 @@ nsDOMWindowUtils::SendCompositionEvent(const nsAString& aType,
   WidgetCompositionEvent compositionEvent(true, msg, widget);
   InitEvent(compositionEvent);
   if (msg != NS_COMPOSITION_START) {
-    compositionEvent.data = aData;
+    compositionEvent.mData = aData;
   }
 
   compositionEvent.mFlags.mIsSynthesizedForTests = true;
@@ -2845,7 +2852,15 @@ nsDOMWindowUtils::WrapDOMFile(nsIFile *aFile,
     return NS_ERROR_FAILURE;
   }
 
-  nsRefPtr<DOMFile> file = DOMFile::CreateFromFile(aFile);
+  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  NS_ENSURE_STATE(window);
+
+  nsPIDOMWindow* innerWindow = window->GetCurrentInnerWindow();
+  if (!innerWindow) {
+    return NS_ERROR_FAILURE;
+  }
+
+  nsRefPtr<File> file = File::CreateFromFile(innerWindow, aFile);
   file.forget(aDOMFile);
   return NS_OK;
 }
@@ -3004,30 +3019,65 @@ nsDOMWindowUtils::AreDialogsEnabled(bool* aResult)
 
 NS_IMETHODIMP
 nsDOMWindowUtils::GetFileId(JS::Handle<JS::Value> aFile, JSContext* aCx,
-                            int64_t* aResult)
+                            int64_t* _retval)
 {
   MOZ_RELEASE_ASSERT(nsContentUtils::IsCallerChrome());
 
-  if (!aFile.isPrimitive()) {
-    JSObject* obj = aFile.toObjectOrNull();
-
-    indexedDB::IDBMutableFile* mutableFile = nullptr;
-    if (NS_SUCCEEDED(UNWRAP_OBJECT(IDBMutableFile, obj, mutableFile))) {
-      *aResult = mutableFile->GetFileId();
-      return NS_OK;
-    }
-
-    nsISupports* nativeObj =
-      nsContentUtils::XPConnect()->GetNativeOfWrapper(aCx, obj);
-
-    nsCOMPtr<nsIDOMBlob> blob = do_QueryInterface(nativeObj);
-    if (blob) {
-      *aResult = blob->GetFileId();
-      return NS_OK;
-    }
+  if (aFile.isPrimitive()) {
+    *_retval = -1;
+    return NS_OK;
   }
 
-  *aResult = -1;
+  JSObject* obj = aFile.toObjectOrNull();
+
+  indexedDB::IDBMutableFile* mutableFile = nullptr;
+  if (NS_SUCCEEDED(UNWRAP_OBJECT(IDBMutableFile, obj, mutableFile))) {
+    *_retval = mutableFile->GetFileId();
+    return NS_OK;
+  }
+
+  nsISupports* nativeObj =
+    nsContentUtils::XPConnect()->GetNativeOfWrapper(aCx, obj);
+
+  nsCOMPtr<nsIDOMBlob> blob = do_QueryInterface(nativeObj);
+  if (blob) {
+    *_retval = blob->GetFileId();
+    return NS_OK;
+  }
+
+  *_retval = -1;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDOMWindowUtils::GetFilePath(JS::HandleValue aFile, JSContext* aCx,
+                              nsAString& _retval)
+{
+  MOZ_RELEASE_ASSERT(nsContentUtils::IsCallerChrome());
+
+  if (aFile.isPrimitive()) {
+    _retval.Truncate();
+    return NS_OK;
+  }
+
+  JSObject* obj = aFile.toObjectOrNull();
+
+  nsISupports* nativeObj =
+    nsContentUtils::XPConnect()->GetNativeOfWrapper(aCx, obj);
+
+  nsCOMPtr<nsIDOMFile> file = do_QueryInterface(nativeObj);
+  if (file) {
+    nsString filePath;
+    nsresult rv = file->GetMozFullPathInternal(filePath);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    _retval = filePath;
+    return NS_OK;
+  }
+
+  _retval.Truncate();
   return NS_OK;
 }
 
@@ -3043,13 +3093,6 @@ nsDOMWindowUtils::GetFileReferences(const nsAString& aDatabaseName, int64_t aId,
   nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
   NS_ENSURE_TRUE(window, NS_ERROR_FAILURE);
 
-  nsCString origin;
-  quota::PersistenceType defaultPersistenceType;
-  nsresult rv =
-    quota::QuotaManager::GetInfoFromWindow(window, nullptr, &origin, nullptr,
-                                           &defaultPersistenceType);
-  NS_ENSURE_SUCCESS(rv, rv);
-
   IDBOpenDBOptions options;
   JS::Rooted<JS::Value> optionsVal(aCx, aOptions);
   if (!options.Init(aCx, optionsVal)) {
@@ -3057,7 +3100,13 @@ nsDOMWindowUtils::GetFileReferences(const nsAString& aDatabaseName, int64_t aId,
   }
 
   quota::PersistenceType persistenceType =
-    quota::PersistenceTypeFromStorage(options.mStorage, defaultPersistenceType);
+    quota::PersistenceTypeFromStorage(options.mStorage);
+
+  nsCString origin;
+  nsresult rv =
+    quota::QuotaManager::GetInfoFromWindow(window, persistenceType, nullptr,
+                                           &origin, nullptr, nullptr, nullptr);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   nsRefPtr<indexedDB::IndexedDatabaseManager> mgr =
     indexedDB::IndexedDatabaseManager::Get();
@@ -3610,6 +3659,23 @@ nsDOMWindowUtils::RunBeforeNextEvent(nsIRunnable *runnable)
   }
 
   return appShell->RunBeforeNextEvent(runnable);
+}
+
+NS_IMETHODIMP
+nsDOMWindowUtils::RequestCompositorProperty(const nsAString& property,
+                                            float* aResult)
+{
+  MOZ_RELEASE_ASSERT(nsContentUtils::IsCallerChrome());
+
+  if (nsIWidget* widget = GetWidget()) {
+    mozilla::layers::LayerManager* manager = widget->GetLayerManager();
+    if (manager) {
+      *aResult = manager->RequestProperty(property);
+      return NS_OK;
+    }
+  }
+
+  return NS_ERROR_NOT_AVAILABLE;
 }
 
 NS_IMETHODIMP

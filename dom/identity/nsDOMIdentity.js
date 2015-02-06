@@ -646,7 +646,7 @@ nsDOMIdentity.prototype = {
   // nsIObserver
   observe: function nsDOMIdentityInternal_observe(aSubject, aTopic, aData) {
     let window = aSubject.QueryInterface(Ci.nsIDOMWindow);
-    if(window != this._window) {
+    if (window != this._window) {
       return;
     }
 
@@ -691,7 +691,6 @@ nsDOMIdentity.prototype = {
     // XXX Bug 869182 - use a combination of child process id and
     // innerwindow id to construct the unique id.
     this._id = uuidgen.generateUUID().toString();
-    this._innerWindowID = util.currentInnerWindowID;
     this._window = aWindow;
 
     // nsDOMIdentity needs to know our _id, so this goes after

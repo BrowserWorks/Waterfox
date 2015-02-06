@@ -56,7 +56,6 @@ public class LayerRenderer implements Tabs.OnTabsChangedListener {
     private static final int NANOS_PER_SECOND = 1000000000;
 
     private final LayerView mView;
-    private TextLayer mFrameRateLayer;
     private final ScrollbarLayer mHorizScrollLayer;
     private final ScrollbarLayer mVertScrollLayer;
     private final FadeRunnable mFadeRunnable;
@@ -70,10 +69,10 @@ public class LayerRenderer implements Tabs.OnTabsChangedListener {
     private long mLastFrameTime;
     private final CopyOnWriteArrayList<RenderTask> mTasks;
 
-    private CopyOnWriteArrayList<Layer> mExtraLayers = new CopyOnWriteArrayList<Layer>();
+    private final CopyOnWriteArrayList<Layer> mExtraLayers = new CopyOnWriteArrayList<Layer>();
 
     // Dropped frames display
-    private int[] mFrameTimings;
+    private final int[] mFrameTimings;
     private int mCurrentFrame, mFrameTimingsSum, mDroppedFrames;
 
     // Render profiling output
@@ -185,9 +184,6 @@ public class LayerRenderer implements Tabs.OnTabsChangedListener {
         mCoordBuffer = null;
         mHorizScrollLayer.destroy();
         mVertScrollLayer.destroy();
-        if (mFrameRateLayer != null) {
-            mFrameRateLayer.destroy();
-        }
         Tabs.unregisterOnTabsChangedListener(this);
     }
 
@@ -359,43 +355,10 @@ public class LayerRenderer implements Tabs.OnTabsChangedListener {
         mCurrentFrame = (mCurrentFrame + 1) % mFrameTimings.length;
 
         int averageTime = mFrameTimingsSum / mFrameTimings.length;
-        mFrameRateLayer.beginTransaction();     // called on compositor thread
-        try {
-            mFrameRateLayer.setText(averageTime + " ms/" + mDroppedFrames);
-        } finally {
-            mFrameRateLayer.endTransaction();
-        }
-    }
-
-    /* Given the new dimensions for the surface, moves the frame rate layer appropriately. */
-    private void moveFrameRateLayer(int width, int height) {
-        mFrameRateLayer.beginTransaction();     // called on compositor thread
-        try {
-            Rect position = new Rect(width - FRAME_RATE_METER_WIDTH - 8,
-                                    height - FRAME_RATE_METER_HEIGHT + 8,
-                                    width - 8,
-                                    height + 8);
-            mFrameRateLayer.setPosition(position);
-        } finally {
-            mFrameRateLayer.endTransaction();
-        }
     }
 
     void checkMonitoringEnabled() {
-        /* Do this I/O off the main thread to minimize its impact on startup time. */
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Context context = mView.getContext();
-                SharedPreferences preferences = context.getSharedPreferences("GeckoApp", 0);
-                if (preferences.getBoolean("showFrameRate", false)) {
-                    IntSize frameRateLayerSize = new IntSize(FRAME_RATE_METER_WIDTH, FRAME_RATE_METER_HEIGHT);
-                    mFrameRateLayer = TextLayer.create(frameRateLayerSize, "-- ms/--");
-                    moveFrameRateLayer(mView.getWidth(), mView.getHeight());
-                }
-                mProfileRender = Log.isLoggable(PROFTAG, Log.DEBUG);
-            }
-        }).start();
+        mProfileRender = Log.isLoggable(PROFTAG, Log.DEBUG);
     }
 
     /*
@@ -454,9 +417,9 @@ public class LayerRenderer implements Tabs.OnTabsChangedListener {
         // The timestamp recording the start of this frame.
         private long mFrameStartTime;
         // A fixed snapshot of the viewport metrics that this frame is using to render content.
-        private ImmutableViewportMetrics mFrameMetrics;
+        private final ImmutableViewportMetrics mFrameMetrics;
         // A rendering context for page-positioned layers, and one for screen-positioned layers.
-        private RenderContext mPageContext, mScreenContext;
+        private final RenderContext mPageContext, mScreenContext;
         // Whether a layer was updated.
         private boolean mUpdated;
         private final Rect mPageRect;
@@ -537,11 +500,6 @@ public class LayerRenderer implements Tabs.OnTabsChangedListener {
             if (rootLayer != null) {
                 // Called on compositor thread.
                 mUpdated &= rootLayer.update(mPageContext);
-            }
-
-            if (mFrameRateLayer != null) {
-                // Called on compositor thread.
-                mUpdated &= mFrameRateLayer.update(mScreenContext);
             }
 
             mUpdated &= mVertScrollLayer.update(mPageContext);  // called on compositor thread
@@ -626,14 +584,6 @@ public class LayerRenderer implements Tabs.OnTabsChangedListener {
 
             runRenderTasks(mTasks, true, mFrameStartTime);
 
-            /* Draw the FPS. */
-            if (mFrameRateLayer != null) {
-                updateDroppedFrames(mFrameStartTime);
-
-                GLES20.glEnable(GLES20.GL_BLEND);
-                GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-                mFrameRateLayer.draw(mScreenContext);
-            }
         }
 
         /** This function is invoked via JNI; be careful when modifying signature. */

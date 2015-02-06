@@ -12,7 +12,6 @@ MOCHITEST_CHROME_MANIFESTS += ['tests/chrome/chrome.ini']
 SPHINX_TREES['toolkit_modules'] = 'docs'
 
 EXTRA_JS_MODULES += [
-    'AsyncShutdown.jsm',
     'Battery.jsm',
     'BinarySearch.jsm',
     'BrowserUtils.jsm',
@@ -21,12 +20,12 @@ EXTRA_JS_MODULES += [
     'DeferredTask.jsm',
     'Deprecated.jsm',
     'Dict.jsm',
-    'DirectoryLinksProvider.jsm',
     'FileUtils.jsm',
     'Finder.jsm',
     'Geometry.jsm',
     'Http.jsm',
     'InlineSpellChecker.jsm',
+    'InlineSpellCheckerContent.jsm',
     'LoadContextInfo.jsm',
     'Log.jsm',
     'NewTabUtils.jsm',
@@ -61,8 +60,9 @@ EXTRA_JS_MODULES += [
 
 EXTRA_PP_JS_MODULES += [
     'CertUtils.jsm',
-    'GMPInstallManager.jsm',
     'ResetProfile.jsm',
+    'secondscreen/RokuApp.jsm',
+    'secondscreen/SimpleServiceDiscovery.jsm',
     'Services.jsm',
     'Troubleshoot.jsm',
     'UpdateChannel.jsm',
@@ -72,8 +72,11 @@ EXTRA_PP_JS_MODULES += [
 
 if 'Android' != CONFIG['OS_TARGET']:
     EXTRA_PP_JS_MODULES += [
+        'GMPInstallManager.jsm',
         'LightweightThemeConsumer.jsm',
     ]
+else:
+    DEFINES['ANDROID'] = True
 
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':

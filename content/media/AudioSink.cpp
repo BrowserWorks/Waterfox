@@ -25,6 +25,9 @@ extern PRLogModuleInfo* gMediaDecoderLog;
 #define SINK_LOG_V(msg, ...)
 #endif
 
+// The amount of audio frames that is used to fuzz rounding errors.
+static const int64_t AUDIO_FUZZ_FRAMES = 1;
+
 AudioSink::AudioSink(MediaDecoderStateMachine* aStateMachine,
                      int64_t aStartTime, AudioInfo aInfo, dom::AudioChannel aChannel)
   : mStateMachine(aStateMachine)
@@ -52,10 +55,18 @@ AudioSink::Init()
                                   nullptr,
                                   MEDIA_THREAD_STACK_SIZE);
   if (NS_FAILED(rv)) {
+    mStateMachine->OnAudioSinkError();
     return rv;
   }
+
   nsCOMPtr<nsIRunnable> event = NS_NewRunnableMethod(this, &AudioSink::AudioLoop);
-  return mThread->Dispatch(event, NS_DISPATCH_NORMAL);
+  rv =  mThread->Dispatch(event, NS_DISPATCH_NORMAL);
+  if (NS_FAILED(rv)) {
+    mStateMachine->OnAudioSinkError();
+    return rv;
+  }
+
+  return NS_OK;
 }
 
 int64_t
@@ -135,6 +146,8 @@ AudioSink::AudioLoop()
 
   if (NS_FAILED(InitializeAudioStream())) {
     NS_WARNING("Initializing AudioStream failed.");
+    ReentrantMonitorAutoEnter mon(GetReentrantMonitor());
+    mStateMachine->OnAudioSinkError();
     return;
   }
 
@@ -162,7 +175,7 @@ AudioSink::AudioLoop()
       break;
     }
 
-    if (missingFrames.value() > 0) {
+    if (missingFrames.value() > AUDIO_FUZZ_FRAMES) {
       // The next audio chunk begins some time after the end of the last chunk
       // we pushed to the audio hardware. We must push silence into the audio
       // hardware so that the next audio chunk begins playback at the correct
@@ -194,10 +207,13 @@ AudioSink::InitializeAudioStream()
   // circumstances, so we take care to drop the decoder monitor while
   // initializing.
   RefPtr<AudioStream> audioStream(new AudioStream());
-  audioStream->Init(mInfo.mChannels, mInfo.mRate,
-                    mChannel, AudioStream::HighLatency);
-  // TODO: Check Init's return value and bail on error.  Unfortunately this
-  // causes some tests to fail due to playback failing.
+  nsresult rv = audioStream->Init(mInfo.mChannels, mInfo.mRate,
+                                  mChannel, AudioStream::HighLatency);
+  if (NS_FAILED(rv)) {
+    audioStream->Shutdown();
+    return rv;
+  }
+
   ReentrantMonitorAutoEnter mon(GetReentrantMonitor());
   mAudioStream = audioStream;
   UpdateStreamSettings();
@@ -294,13 +310,7 @@ AudioSink::PlayFromAudioQueue()
   AssertOnAudioThread();
   NS_ASSERTION(!mAudioStream->IsPaused(), "Don't play when paused");
   nsAutoPtr<AudioData> audio(AudioQueue().PopFront());
-  {
-    ReentrantMonitorAutoEnter mon(GetReentrantMonitor());
-    NS_WARN_IF_FALSE(mPlaying, "Should be playing");
-    // Awaken the decode loop if it's waiting for space to free up in the
-    // audio queue.
-    GetReentrantMonitor().NotifyAll();
-  }
+
   SINK_LOG_V("playing %u frames of audio at time %lld",
              audio->mFrames, audio->mTime);
   mAudioStream->Write(audio->mAudioData, audio->mFrames);

@@ -24,11 +24,7 @@
     </style>
 
     <style name="Widget.BookmarksListView" parent="Widget.HomeListView">
-        <item name="android:paddingTop">30dp</item>
-        <item name="android:paddingLeft">120dp</item>
-        <item name="android:paddingRight">120dp</item>
         <item name="android:scrollbarStyle">outsideOverlay</item>
-        <item name="topDivider">true</item>
     </style>
 
     <style name="Widget.TopSitesGridView" parent="Widget.GridView">
@@ -37,21 +33,6 @@
         <item name="android:paddingBottom">30dp</item>
         <item name="android:horizontalSpacing">20dp</item>
         <item name="android:verticalSpacing">20dp</item>
-    </style>
-
-    <style name="Widget.Home.HistoryListView">
-        <item name="android:paddingLeft">50dp</item>
-        <item name="android:paddingRight">100dp</item>
-        <item name="android:paddingTop">30dp</item>
-        <item name="android:scrollbarStyle">outsideOverlay</item>
-        <item name="topDivider">true</item>
-    </style>
-
-    <style name="Widget.Home.HistoryTabWidget">
-        <item name="android:showDividers">beginning|middle|end</item>
-        <item name="android:dividerPadding">0dp</item>
-        <item name="android:paddingLeft">100dp</item>
-        <item name="android:paddingTop">30dp</item>
     </style>
 
     <!-- Tabs panel -->

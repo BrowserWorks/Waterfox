@@ -194,6 +194,24 @@ SettingsListener.observe('devtools.overlay', false, (value) => {
   }
 });
 
+#ifdef MOZ_WIDGET_GONK
+let LogShake;
+SettingsListener.observe('devtools.logshake', false, (value) => {
+  if (value) {
+    if (!LogShake) {
+      let scope = {};
+      Cu.import('resource://gre/modules/LogShake.jsm', scope);
+      LogShake = scope.LogShake;
+    }
+    LogShake.init();
+  } else {
+    if (LogShake) {
+      LogShake.uninit();
+    }
+  }
+});
+#endif
+
 // =================== Device Storage ====================
 SettingsListener.observe('device.storage.writable.name', 'sdcard', function(value) {
   if (Services.prefs.getPrefType('device.storage.writable.name') != Ci.nsIPrefBranch.PREF_STRING) {
@@ -307,6 +325,9 @@ setUpdateTrackingId();
 (function setupAccessibility() {
   let accessibilityScope = {};
   SettingsListener.observe("accessibility.screenreader", false, function(value) {
+    if (!value) {
+      return;
+    }
     if (!('AccessFu' in accessibilityScope)) {
       Cu.import('resource://gre/modules/accessibility/AccessFu.jsm',
                 accessibilityScope);
@@ -465,11 +486,11 @@ let settingsToObserve = {
     resetToPref: true
   },
   'dom.mozApps.use_reviewer_certs': false,
+  'dom.mozApps.signed_apps_installable_from': 'https://marketplace.firefox.com',
   'layers.draw-borders': false,
   'layers.draw-tile-borders': false,
   'layers.dump': false,
   'layers.enable-tiles': true,
-  'layers.simple-tiles': false,
   'layers.effect.invert': false,
   'layers.effect.grayscale': false,
   'layers.effect.contrast': "0.0",

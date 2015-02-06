@@ -55,7 +55,6 @@ nsLocation::nsLocation(nsPIDOMWindow* aWindow, nsIDocShell *aDocShell)
 {
   MOZ_ASSERT(aDocShell);
   MOZ_ASSERT(mInnerWindow->IsInnerWindow());
-  SetIsDOMBinding();
 
   mDocShell = do_GetWeakReference(aDocShell);
 }
@@ -924,7 +923,7 @@ nsLocation::Reload(bool aForceget)
     nsIPresShell *shell;
     nsPresContext *pcx;
     if (doc && (shell = doc->GetShell()) && (pcx = shell->GetPresContext())) {
-      pcx->RebuildAllStyleData(NS_STYLE_HINT_REFLOW);
+      pcx->RebuildAllStyleData(NS_STYLE_HINT_REFLOW, eRestyle_Subtree);
     }
 
     return NS_OK;

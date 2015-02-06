@@ -18,6 +18,9 @@
 #include "nsIObserverService.h"
 #include "GMPTimerParent.h"
 #include "runnable_utils.h"
+#if defined(XP_LINUX) && defined(MOZ_GMP_SANDBOX)
+#include "mozilla/Sandbox.h"
+#endif
 
 #include "mozilla/dom/CrashReporterParent.h"
 using mozilla::dom::CrashReporterParent;
@@ -26,6 +29,8 @@ using mozilla::dom::CrashReporterParent;
 using CrashReporter::AnnotationTable;
 using CrashReporter::GetIDFromMinidump;
 #endif
+
+#include "mozilla/Telemetry.h"
 
 namespace mozilla {
 
@@ -147,6 +152,22 @@ GMPParent::LoadProcess()
       return NS_ERROR_FAILURE;
     }
     LOGD(("%s::%s: Created new process %p", __CLASS__, __FUNCTION__, (void *)mProcess));
+
+    bool ok = SendSetNodeId(mNodeId);
+    if (!ok) {
+      mProcess->Delete();
+      mProcess = nullptr;
+      return NS_ERROR_FAILURE;
+    }
+    LOGD(("%s::%s: Failed to send node id %p", __CLASS__, __FUNCTION__, (void *)mProcess));
+
+    ok = SendStartPlugin();
+    if (!ok) {
+      mProcess->Delete();
+      mProcess = nullptr;
+      return NS_ERROR_FAILURE;
+    }
+    LOGD(("%s::%s: Failed to send start %p", __CLASS__, __FUNCTION__, (void *)mProcess));
   }
 
   mState = GMPStateLoaded;
@@ -555,6 +576,8 @@ GMPParent::ActorDestroy(ActorDestroyReason aWhy)
   LOGD(("%s::%s: %p (%d)", __CLASS__, __FUNCTION__, this, (int) aWhy));
 #ifdef MOZ_CRASHREPORTER
   if (AbnormalShutdown == aWhy) {
+    Telemetry::Accumulate(Telemetry::SUBPROCESS_ABNORMAL_ABORT,
+                          NS_LITERAL_CSTRING("gmplugin"), 1);
     nsString dumpID;
     GetCrashID(dumpID);
     nsString id;
@@ -677,7 +700,7 @@ GMPParent::DeallocPGMPAudioDecoderParent(PGMPAudioDecoderParent* aActor)
 PGMPStorageParent*
 GMPParent::AllocPGMPStorageParent()
 {
-  GMPStorageParent* p = new GMPStorageParent(mOrigin, this);
+  GMPStorageParent* p = new GMPStorageParent(mNodeId, this);
   mStorage.AppendElement(p); // Addrefs, released in DeallocPGMPStorageParent.
   return p;
 }
@@ -692,8 +715,12 @@ GMPParent::DeallocPGMPStorageParent(PGMPStorageParent* aActor)
 }
 
 bool
-GMPParent::RecvPGMPStorageConstructor(PGMPStorageParent* actor)
+GMPParent::RecvPGMPStorageConstructor(PGMPStorageParent* aActor)
 {
+  GMPStorageParent* p  = (GMPStorageParent*)aActor;
+  if (NS_WARN_IF(NS_FAILED(p->Init()))) {
+    return false;
+  }
   return true;
 }
 
@@ -852,6 +879,17 @@ GMPParent::ReadGMPMetaData()
       }
     }
 
+#if defined(XP_LINUX) && defined(MOZ_GMP_SANDBOX)
+    if (cap->mAPIName.EqualsLiteral("eme-decrypt") &&
+        !mozilla::CanSandboxMediaPlugin()) {
+      printf_stderr("GMPParent::ReadGMPMetaData: Plugin \"%s\" is an EME CDM"
+                    " but this system can't sandbox it; not loading.\n",
+                    mDisplayName.get());
+      delete cap;
+      return NS_ERROR_FAILURE;
+    }
+#endif
+
     mCapabilities.AppendElement(cap);
   }
 
@@ -863,24 +901,24 @@ GMPParent::ReadGMPMetaData()
 }
 
 bool
-GMPParent::CanBeSharedCrossOrigin() const
+GMPParent::CanBeSharedCrossNodeIds() const
 {
-  return mOrigin.IsEmpty();
+  return mNodeId.IsEmpty();
 }
 
 bool
-GMPParent::CanBeUsedFrom(const nsAString& aOrigin) const
+GMPParent::CanBeUsedFrom(const nsACString& aNodeId) const
 {
-  return (mOrigin.IsEmpty() && State() == GMPStateNotLoaded) ||
-         mOrigin.Equals(aOrigin);
+  return (mNodeId.IsEmpty() && State() == GMPStateNotLoaded) ||
+         mNodeId == aNodeId;
 }
 
 void
-GMPParent::SetOrigin(const nsAString& aOrigin)
+GMPParent::SetNodeId(const nsACString& aNodeId)
 {
-  MOZ_ASSERT(!aOrigin.IsEmpty());
-  MOZ_ASSERT(CanBeUsedFrom(aOrigin));
-  mOrigin = aOrigin;
+  MOZ_ASSERT(!aNodeId.IsEmpty());
+  MOZ_ASSERT(CanBeUsedFrom(aNodeId));
+  mNodeId = aNodeId;
 }
 
 bool

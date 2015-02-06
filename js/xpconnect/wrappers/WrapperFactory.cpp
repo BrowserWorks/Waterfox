@@ -114,16 +114,17 @@ static bool
 ForceCOWBehavior(JSObject *obj)
 {
     JSProtoKey key = IdentifyStandardInstanceOrPrototype(obj);
+    if (key == JSProto_Function && GetXrayType(obj) == XrayForDOMObject) {
+        // This means that we've got a DOM constructor, which we never want to
+        // expose COW-style.
+        return false;
+    }
     if (key == JSProto_Object || key == JSProto_Array || key == JSProto_Function) {
         MOZ_ASSERT(GetXrayType(obj) == XrayForJSObject,
                    "We should use XrayWrappers for standard ES Object, Array, and Function "
                    "instances modulo this hack");
         return true;
     }
-    // Proxies get OpaqueXrayTraits, but we still need COWs to them for now to
-    // let the SpecialPowers wrapper work.
-    if (key == JSProto_Proxy)
-        return true;
 
     return false;
 }
@@ -600,13 +601,6 @@ WrapperFactory::WaiveXrayAndWrap(JSContext *cx, MutableHandleObject argObj)
     return true;
 }
 
-bool
-WrapperFactory::XrayWrapperNotShadowing(JSObject *wrapper, jsid id)
-{
-    ResolvingId *rid = ResolvingId::getResolvingIdFromWrapper(wrapper);
-    return rid->isXrayShadowing(id);
-}
-
 /*
  * Calls to JS_TransplantObject* should go through these helpers here so that
  * waivers get fixed up properly.
@@ -655,9 +649,9 @@ TransplantObject(JSContext *cx, JS::HandleObject origobj, JS::HandleObject targe
 }
 
 nsIGlobalObject *
-GetNativeForGlobal(JSObject *obj)
+NativeGlobal(JSObject *obj)
 {
-    MOZ_ASSERT(JS_IsGlobalObject(obj));
+    obj = js::GetGlobalForObjectCrossCompartment(obj);
 
     // Every global needs to hold a native as its private or be a
     // WebIDL object with an nsISupports DOM object.

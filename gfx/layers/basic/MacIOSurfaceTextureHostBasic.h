@@ -6,6 +6,7 @@
 #ifndef MOZILLA_GFX_MACIOSURFACETEXTUREHOST_BASIC_H
 #define MOZILLA_GFX_MACIOSURFACETEXTUREHOST_BASIC_H
 
+#include "mozilla/layers/BasicCompositor.h"
 #include "mozilla/layers/TextureHostBasic.h"
 
 class MacIOSurface;
@@ -23,7 +24,7 @@ class BasicCompositor;
  */
 class MacIOSurfaceTextureSourceBasic
   : public TextureSourceBasic,
-    public NewTextureSource
+    public TextureSource
 {
 public:
   MacIOSurfaceTextureSourceBasic(BasicCompositor* aCompositor,
@@ -41,7 +42,7 @@ public:
   virtual void SetCompositor(Compositor* aCompositor) MOZ_OVERRIDE;
 
 protected:
-  BasicCompositor* mCompositor;
+  RefPtr<BasicCompositor> mCompositor;
   RefPtr<MacIOSurface> mSurface;
   RefPtr<gfx::SourceSurface> mSourceSurface;
 };
@@ -63,7 +64,7 @@ public:
 
   virtual gfx::SurfaceFormat GetFormat() const MOZ_OVERRIDE;
 
-  virtual NewTextureSource* GetTextureSources() MOZ_OVERRIDE
+  virtual TextureSource* GetTextureSources() MOZ_OVERRIDE
   {
     return mTextureSource;
   }
@@ -80,7 +81,7 @@ public:
 #endif
 
 protected:
-  BasicCompositor* mCompositor;
+  RefPtr<BasicCompositor> mCompositor;
   RefPtr<MacIOSurfaceTextureSourceBasic> mTextureSource;
   RefPtr<MacIOSurface> mSurface;
 };

@@ -134,6 +134,13 @@ GrallocImage::SetData(const Data& aData)
     }
   }
   graphicBuffer->unlock();
+  // Initialze the channels' addresses.
+  // Do not cache the addresses when gralloc buffer is not locked.
+  // gralloc hal could map gralloc buffer only when the buffer is locked,
+  // though some gralloc hals implementation maps it when it is allocated.
+  mData.mYChannel     = nullptr;
+  mData.mCrChannel    = nullptr;
+  mData.mCbChannel    = nullptr;
 }
 
 void GrallocImage::SetData(const GrallocData& aData)
@@ -330,11 +337,17 @@ ConvertOmxYUVFormatToRGB565(android::sp<GraphicBuffer>& aBuffer,
       ycbcrData.mCbSkip       = 0;
       ycbcrData.mCbCrSize     = aSurface->GetSize() / 2;
       ycbcrData.mPicSize      = aSurface->GetSize();
-      ycbcrData.mCrChannel    = buffer + ycbcrData.mYStride * ycbcrData.mYSize.height;
+      ycbcrData.mCrChannel    = buffer + ycbcrData.mYStride * aBuffer->getHeight();
       ycbcrData.mCrSkip       = 0;
       // Align to 16 bytes boundary
-      ycbcrData.mCbCrStride   = ((ycbcrData.mYStride / 2) + 15) & ~0x0F;
-      ycbcrData.mCbChannel    = ycbcrData.mCrChannel + (ycbcrData.mCbCrStride * ycbcrData.mCbCrSize.height);
+      ycbcrData.mCbCrStride   = ALIGN(ycbcrData.mYStride / 2, 16);
+      ycbcrData.mCbChannel    = ycbcrData.mCrChannel + (ycbcrData.mCbCrStride * aBuffer->getHeight() / 2);
+    } else {
+      // Update channels' address.
+      // Gralloc buffer could map gralloc buffer only when the buffer is locked.
+      ycbcrData.mYChannel     = buffer;
+      ycbcrData.mCrChannel    = buffer + ycbcrData.mYStride * aBuffer->getHeight();
+      ycbcrData.mCbChannel    = ycbcrData.mCrChannel + (ycbcrData.mCbCrStride * aBuffer->getHeight() / 2);
     }
     gfx::ConvertYCbCrToRGB(ycbcrData,
                            aSurface->GetFormat(),
@@ -351,9 +364,10 @@ ConvertOmxYUVFormatToRGB565(android::sp<GraphicBuffer>& aBuffer,
     return BAD_VALUE;
   }
 
+  uint32_t pixelStride = aMappedSurface->mStride/gfx::BytesPerPixel(gfx::SurfaceFormat::R5G6B5);
   rv = colorConverter.convert(buffer, width, height,
                               0, 0, width - 1, height - 1 /* source crop */,
-                              aMappedSurface->mData, width, height,
+                              aMappedSurface->mData, pixelStride, height,
                               0, 0, width - 1, height - 1 /* dest crop */);
   if (rv) {
     NS_WARNING("OMX color conversion failed");

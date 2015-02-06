@@ -21,6 +21,7 @@
 #include "mozilla/dom/ScriptSettings.h"
 
 using namespace mozilla;
+using namespace mozilla::dom;
 
 nsXBLProtoImplMethod::nsXBLProtoImplMethod(const char16_t* aName) :
   nsXBLProtoImplMember(aName),
@@ -115,7 +116,7 @@ nsXBLProtoImplMethod::InstallMember(JSContext* aCx,
     NS_ENSURE_TRUE(method, NS_ERROR_OUT_OF_MEMORY);
 
     if (!::JS_DefineUCProperty(aCx, aTargetClassObject,
-                               static_cast<const jschar*>(mName),
+                               static_cast<const char16_t*>(mName),
                                name.Length(), method,
                                JSPROP_ENUMERATE)) {
       return NS_ERROR_OUT_OF_MEMORY;
@@ -125,7 +126,7 @@ nsXBLProtoImplMethod::InstallMember(JSContext* aCx,
 }
 
 nsresult
-nsXBLProtoImplMethod::CompileMember(const nsCString& aClassStr,
+nsXBLProtoImplMethod::CompileMember(AutoJSAPI& jsapi, const nsCString& aClassStr,
                                     JS::Handle<JSObject*> aClassObject)
 {
   AssertInCompilationScope();
@@ -188,14 +189,16 @@ nsXBLProtoImplMethod::CompileMember(const nsCString& aClassStr,
     functionUri.Truncate(hash);
   }
 
-  AutoJSContext cx;
+  JSContext *cx = jsapi.cx();
   JSAutoCompartment ac(cx, aClassObject);
   JS::CompileOptions options(cx);
   options.setFileAndLine(functionUri.get(),
                          uncompiledMethod->mBodyText.GetLineNumber())
-         .setVersion(JSVERSION_LATEST);
+         .setVersion(JSVERSION_LATEST)
+         .setDefineOnScope(false);
   JS::Rooted<JSObject*> methodObject(cx);
-  nsresult rv = nsJSUtils::CompileFunction(cx, JS::NullPtr(), options, cname,
+  JS::AutoObjectVector emptyVector(cx);
+  nsresult rv = nsJSUtils::CompileFunction(jsapi, emptyVector, options, cname,
                                            paramCount,
                                            const_cast<const char**>(args),
                                            body, methodObject.address());

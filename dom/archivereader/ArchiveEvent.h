@@ -9,9 +9,9 @@
 
 #include "ArchiveReader.h"
 
+#include "mozilla/dom/File.h"
 #include "nsISeekableStream.h"
 #include "nsIMIMEService.h"
-#include "nsDOMFile.h"
 
 #include "ArchiveReaderCommon.h"
 
@@ -35,7 +35,7 @@ public:
   // Getter for the filename
   virtual nsresult GetFilename(nsString& aFilename) = 0;
 
-  // Generate a DOMFile
+  // Generate a File
   virtual nsIDOMFile* File(ArchiveReader* aArchiveReader) = 0;
 
 protected:
@@ -54,7 +54,7 @@ class ArchiveReaderEvent : public nsRunnable
 public:
   NS_DECL_NSIRUNNABLE
 
-  ArchiveReaderEvent(ArchiveReader* aArchiveReader);
+  explicit ArchiveReaderEvent(ArchiveReader* aArchiveReader);
 
 protected:
   virtual ~ArchiveReaderEvent();

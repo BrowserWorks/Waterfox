@@ -21,8 +21,7 @@
 #include "FFmpegRuntimeLinker.h"
 #endif
 #ifdef MOZ_APPLEMEDIA
-#include "apple/AppleCMLinker.h"
-#include "apple/AppleVTLinker.h"
+#include "apple/AppleDecoderModule.h"
 #endif
 #ifdef MOZ_WIDGET_ANDROID
 #include "AndroidBridge.h"
@@ -154,17 +153,7 @@ IsAppleAvailable()
     // Disabled by preference.
     return false;
   }
-  // Attempt to load the required frameworks.
-  bool haveCoreMedia = AppleCMLinker::Link();
-  if (!haveCoreMedia) {
-    return false;
-  }
-  bool haveVideoToolbox = AppleVTLinker::Link();
-  if (!haveVideoToolbox) {
-    return false;
-  }
-  // All hurdles cleared!
-  return true;
+  return NS_SUCCEEDED(AppleDecoderModule::CanDecode());
 #endif
 }
 
@@ -183,8 +172,8 @@ HavePlatformMPEGDecoders()
          IsVistaOrLater() ||
 #endif
 #ifdef MOZ_WIDGET_ANDROID
-         // Works on 16 and higher, but restrict to 21 (Lollipop) and higher
-         (AndroidBridge::Bridge()->GetAPIVersion() >= 21) ||
+         // We need android.media.MediaCodec which exists in API level 16 and higher.
+         (AndroidBridge::Bridge()->GetAPIVersion() >= 16) ||
 #endif
          IsFFmpegAvailable() ||
          IsAppleAvailable() ||

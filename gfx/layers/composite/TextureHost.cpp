@@ -80,8 +80,6 @@ public:
 
   void CompositorRecycle();
 
-  void SendFenceHandleIfPresent();
-
   virtual bool RecvClientRecycle() MOZ_OVERRIDE;
 
   virtual bool RecvClearTextureHostSync() MOZ_OVERRIDE;
@@ -145,14 +143,6 @@ PTextureParent*
 TextureHost::GetIPDLActor()
 {
   return mActor;
-}
-
-// static
-void
-TextureHost::SendFenceHandleIfPresent(PTextureParent* actor)
-{
-  TextureParent* parent = static_cast<TextureParent*>(actor);
-  parent->SendFenceHandleIfPresent();
 }
 
 FenceHandle
@@ -291,9 +281,14 @@ TextureHost::CompositorRecycle()
 void
 TextureHost::SetCompositableBackendSpecificData(CompositableBackendSpecificData* aBackendData)
 {
-    mCompositableBackendData = aBackendData;
+  mCompositableBackendData = aBackendData;
 }
 
+void
+TextureHost::UnsetCompositableBackendSpecificData(CompositableBackendSpecificData* aBackendData)
+{
+  mCompositableBackendData = nullptr;
+}
 
 TextureHost::TextureHost(TextureFlags aFlags)
     : mActor(nullptr)
@@ -325,12 +320,6 @@ TextureHost::PrintInfo(std::stringstream& aStream, const char* aPrefix)
     Unlock();
   }
   AppendToString(aStream, mFlags, " [flags=", "]");
-}
-
-void
-TextureSource::SetCompositableBackendSpecificData(CompositableBackendSpecificData* aBackendData)
-{
-    mCompositableBackendData = aBackendData;
 }
 
 TextureSource::TextureSource()
@@ -378,7 +367,7 @@ BufferTextureHost::SetCompositor(Compositor* aCompositor)
   if (mCompositor == aCompositor) {
     return;
   }
-  RefPtr<NewTextureSource> it = mFirstSource;
+  RefPtr<TextureSource> it = mFirstSource;
   while (it) {
     it->SetCompositor(aCompositor);
     it = it->GetNextSibling();
@@ -389,7 +378,7 @@ BufferTextureHost::SetCompositor(Compositor* aCompositor)
 void
 BufferTextureHost::DeallocateDeviceData()
 {
-  RefPtr<NewTextureSource> it = mFirstSource;
+  RefPtr<TextureSource> it = mFirstSource;
   while (it) {
     it->DeallocateDeviceData();
     it = it->GetNextSibling();
@@ -414,7 +403,7 @@ BufferTextureHost::Unlock()
   mLocked = false;
 }
 
-NewTextureSource*
+TextureSource*
 BufferTextureHost::GetTextureSources()
 {
   MOZ_ASSERT(mLocked);
@@ -533,7 +522,10 @@ BufferTextureHost::Upload(nsIntRegion *aRegion)
                                                     gfx::SurfaceFormat::A8);
     // We don't support partial updates for Y U V textures
     NS_ASSERTION(!aRegion, "Unsupported partial updates for YCbCr textures");
-    if (!srcY->Update(tempY) ||
+    if (!tempY ||
+        !tempCb ||
+        !tempCr ||
+        !srcY->Update(tempY) ||
         !srcU->Update(tempCb) ||
         !srcV->Update(tempCr)) {
       NS_WARNING("failed to update the DataTextureSource");
@@ -715,7 +707,6 @@ void
 TextureParent::CompositorRecycle()
 {
   mTextureHost->ClearRecycleCallback();
-  SendFenceHandleIfPresent();
 
   if (mTextureHost->GetFlags() & TextureFlags::RECYCLE) {
     mozilla::unused << SendCompositorRecycle();
@@ -723,28 +714,6 @@ TextureParent::CompositorRecycle()
     // if TextureClient request it.
     mWaitForClientRecycle = mTextureHost;
   }
-}
-
-void
-TextureParent::SendFenceHandleIfPresent()
-{
-#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17
-  if (mTextureHost) {
-    TextureHostOGL* hostOGL = mTextureHost->AsHostOGL();
-    if (!hostOGL) {
-      return;
-    }
-    android::sp<android::Fence> fence = hostOGL->GetAndResetReleaseFence();
-    if (fence.get() && fence->isValid()) {
-      // HWC might not provide Fence.
-      // In this case, HWC implicitly handles buffer's fence.
-
-      FenceHandle handle = FenceHandle(fence);
-      RefPtr<FenceDeliveryTracker> tracker = new FenceDeliveryTracker(handle);
-      mCompositableManager->SendFenceHandle(tracker, this, handle);
-    }
-  }
-#endif
 }
 
 bool
@@ -899,7 +868,7 @@ StreamTextureHost::Lock()
       break;
   }
 
-  RefPtr<NewTextureSource> newTexSource;
+  RefPtr<TextureSource> newTexSource;
   if (compositorSupportsShSurfType) {
     gfx::SurfaceFormat format = abstractSurf->mHasAlpha ? gfx::SurfaceFormat::R8G8B8A8
                                                         : gfx::SurfaceFormat::R8G8B8X8;
@@ -921,7 +890,7 @@ StreamTextureHost::Lock()
         gl::SharedSurface_GLTexture* surf = gl::SharedSurface_GLTexture::Cast(abstractSurf);
 
         MOZ_ASSERT(mCompositor->GetBackendType() == LayersBackend::LAYERS_OPENGL);
-        CompositorOGL* compositorOGL = static_cast<CompositorOGL*>(mCompositor);
+        CompositorOGL* compositorOGL = static_cast<CompositorOGL*>(mCompositor.get());
         gl::GLContext* gl = compositorOGL->gl();
 
         GLenum target = surf->ConsTextureTarget();
@@ -939,7 +908,7 @@ StreamTextureHost::Lock()
         HANDLE shareHandle = surf->GetShareHandle();
 
         MOZ_ASSERT(mCompositor->GetBackendType() == LayersBackend::LAYERS_D3D11);
-        CompositorD3D11* compositorD3D11 = static_cast<CompositorD3D11*>(mCompositor);
+        CompositorD3D11* compositorD3D11 = static_cast<CompositorD3D11*>(mCompositor.get());
         ID3D11Device* d3d = compositorD3D11->GetDevice();
 
         nsRefPtr<ID3D11Texture2D> tex;
@@ -958,7 +927,7 @@ StreamTextureHost::Lock()
         gl::SharedSurface_EGLImage* surf = gl::SharedSurface_EGLImage::Cast(abstractSurf);
 
         MOZ_ASSERT(mCompositor->GetBackendType() == LayersBackend::LAYERS_OPENGL);
-        CompositorOGL* compositorOGL = static_cast<CompositorOGL*>(mCompositor);
+        CompositorOGL* compositorOGL = static_cast<CompositorOGL*>(mCompositor.get());
         gl::GLContext* gl = compositorOGL->gl();
         MOZ_ASSERT(gl->IsCurrent());
 
@@ -983,7 +952,7 @@ StreamTextureHost::Lock()
         MacIOSurface* ioSurf = surf->GetIOSurface();
 
         MOZ_ASSERT(mCompositor->GetBackendType() == LayersBackend::LAYERS_OPENGL);
-        CompositorOGL* compositorOGL = static_cast<CompositorOGL*>(mCompositor);
+        CompositorOGL* compositorOGL = static_cast<CompositorOGL*>(mCompositor.get());
 
         newTexSource = new MacIOSurfaceTextureSourceOGL(compositorOGL,
                                                         ioSurf);

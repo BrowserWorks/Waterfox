@@ -40,17 +40,18 @@ let WebProgressListener = {
     webProgress.addProgressListener(this, Ci.nsIWebProgress.NOTIFY_ALL);
   },
 
-  _requestSpec: function (aRequest) {
+  _requestSpec: function (aRequest, aPropertyName) {
     if (!aRequest || !(aRequest instanceof Ci.nsIChannel))
       return null;
-    return aRequest.QueryInterface(Ci.nsIChannel).URI.spec;
+    return aRequest.QueryInterface(Ci.nsIChannel)[aPropertyName].spec;
   },
 
   _setupJSON: function setupJSON(aWebProgress, aRequest) {
     return {
       isTopLevel: aWebProgress.isTopLevel,
       isLoadingDocument: aWebProgress.isLoadingDocument,
-      requestURI: this._requestSpec(aRequest),
+      requestURI: this._requestSpec(aRequest, "URI"),
+      originalRequestURI: this._requestSpec(aRequest, "originalURI"),
       loadType: aWebProgress.loadType,
       documentContentType: content.document && content.document.contentType
     };
@@ -92,6 +93,7 @@ let WebProgressListener = {
       json.documentURI = content.document.documentURIObject.spec;
       json.charset = content.document.characterSet;
       json.mayEnableCharacterEncodingMenu = docShell.mayEnableCharacterEncodingMenu;
+      json.principal = content.document.nodePrincipal;
     }
 
     sendAsyncMessage("Content:LocationChange", json, objects);
@@ -373,6 +375,10 @@ if (Services.appinfo.browserTabsRemoteAutostart) {
   // Currently, the addon shims are only supported when autostarting
   // with remote tabs.
   AddonsChild = RemoteAddonsChild.init(this);
+
+  addEventListener("unload", () => {
+    RemoteAddonsChild.uninit(AddonsChild);
+  });
 }
 
 addMessageListener("NetworkPrioritizer:AdjustPriority", (msg) => {

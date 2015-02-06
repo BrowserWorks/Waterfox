@@ -2,6 +2,13 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+///////////////////
+//
+// Whitelisting this test.
+// As part of bug 1077403, the leaking uncaught rejection should be fixed. 
+//
+thisTestLeaksUncaughtRejectionsAndShouldBeFixed("Error: Unknown sheet source");
+
 const TESTCASE_URI = TEST_BASE + "simple.html";
 
 let TESTCASE_CSS_SOURCE = "body{background-color:red;";
@@ -73,7 +80,7 @@ function testInitialState(aEditor) {
 
   ok(aEditor.sourceEditor.hasFocus(), "new editor has focus");
 
-  let summary = aEditor.summary;
+  summary = aEditor.summary;
   let ruleCount = summary.querySelector(".stylesheet-rule-count").textContent;
   is(parseInt(ruleCount), 0,
      "new editor initially shows 0 rules");

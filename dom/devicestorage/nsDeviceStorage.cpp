@@ -16,7 +16,7 @@
 #include "mozilla/dom/devicestorage/PDeviceStorageRequestChild.h"
 #include "mozilla/dom/Directory.h"
 #include "mozilla/dom/FileSystemUtils.h"
-#include "mozilla/dom/ipc/Blob.h"
+#include "mozilla/dom/ipc/BlobChild.h"
 #include "mozilla/dom/PBrowserChild.h"
 #include "mozilla/dom/PermissionMessageUtils.h"
 #include "mozilla/dom/Promise.h"
@@ -36,8 +36,6 @@
 #include "nsIDirectoryEnumerator.h"
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsDirectoryServiceDefs.h"
-#include "nsIDOMFile.h"
-#include "nsDOMBlobBuilder.h"
 #include "nsNetUtil.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsIPrincipal.h"
@@ -302,7 +300,9 @@ DeviceStorageTypeChecker::Check(const nsAString& aType, nsIDOMBlob* aBlob)
 bool
 DeviceStorageTypeChecker::Check(const nsAString& aType, nsIFile* aFile)
 {
-  MOZ_ASSERT(aFile);
+  if (!aFile) {
+    return false;
+  }
 
   if (aType.EqualsLiteral(DEVICESTORAGE_APPS) ||
       aType.EqualsLiteral(DEVICESTORAGE_SDCARD) ||
@@ -869,13 +869,17 @@ DeviceStorageFile::GetRootDirectoryForType(const nsAString& aStorageType,
   InitDirs();
 
 #ifdef MOZ_WIDGET_GONK
+  nsresult rv;
   nsString volMountPoint;
   if (DeviceStorageTypeChecker::IsVolumeBased(aStorageType)) {
     nsCOMPtr<nsIVolumeService> vs = do_GetService(NS_VOLUMESERVICE_CONTRACTID);
     NS_ENSURE_TRUE_VOID(vs);
-    nsresult rv;
     nsCOMPtr<nsIVolume> vol;
     rv = vs->GetVolumeByName(aStorageName, getter_AddRefs(vol));
+    if(NS_FAILED(rv)) {
+      printf_stderr("##### DeviceStorage: GetVolumeByName('%s') failed\n",
+                    NS_LossyConvertUTF16toASCII(aStorageName).get());
+    }
     NS_ENSURE_SUCCESS_VOID(rv);
     vol->GetMountPoint(volMountPoint);
   }
@@ -884,7 +888,12 @@ DeviceStorageFile::GetRootDirectoryForType(const nsAString& aStorageType,
   // Picture directory
   if (aStorageType.EqualsLiteral(DEVICESTORAGE_PICTURES)) {
 #ifdef MOZ_WIDGET_GONK
-    NS_NewLocalFile(volMountPoint, false, getter_AddRefs(f));
+    rv = NS_NewLocalFile(volMountPoint, false, getter_AddRefs(f));
+    if(NS_FAILED(rv)) {
+      printf_stderr("##### DeviceStorage: NS_NewLocalFile failed StorageType: '%s' path '%s'\n",
+                    NS_LossyConvertUTF16toASCII(volMountPoint).get(),
+                    NS_LossyConvertUTF16toASCII(aStorageType).get());
+    }
 #else
     f = sDirs->pictures;
 #endif
@@ -893,7 +902,12 @@ DeviceStorageFile::GetRootDirectoryForType(const nsAString& aStorageType,
   // Video directory
   else if (aStorageType.EqualsLiteral(DEVICESTORAGE_VIDEOS)) {
 #ifdef MOZ_WIDGET_GONK
-    NS_NewLocalFile(volMountPoint, false, getter_AddRefs(f));
+    rv = NS_NewLocalFile(volMountPoint, false, getter_AddRefs(f));
+    if(NS_FAILED(rv)) {
+      printf_stderr("##### DeviceStorage: NS_NewLocalFile failed StorageType: '%s' path '%s'\n",
+                    NS_LossyConvertUTF16toASCII(volMountPoint).get(),
+                    NS_LossyConvertUTF16toASCII(aStorageType).get());
+    }
 #else
     f = sDirs->videos;
 #endif
@@ -902,7 +916,12 @@ DeviceStorageFile::GetRootDirectoryForType(const nsAString& aStorageType,
   // Music directory
   else if (aStorageType.EqualsLiteral(DEVICESTORAGE_MUSIC)) {
 #ifdef MOZ_WIDGET_GONK
-    NS_NewLocalFile(volMountPoint, false, getter_AddRefs(f));
+    rv = NS_NewLocalFile(volMountPoint, false, getter_AddRefs(f));
+    if(NS_FAILED(rv)) {
+      printf_stderr("##### DeviceStorage: NS_NewLocalFile failed StorageType: '%s' path '%s'\n",
+                    NS_LossyConvertUTF16toASCII(volMountPoint).get(),
+                    NS_LossyConvertUTF16toASCII(aStorageType).get());
+    }
 #else
     f = sDirs->music;
 #endif
@@ -917,7 +936,12 @@ DeviceStorageFile::GetRootDirectoryForType(const nsAString& aStorageType,
    // default SDCard
    else if (aStorageType.EqualsLiteral(DEVICESTORAGE_SDCARD)) {
 #ifdef MOZ_WIDGET_GONK
-     NS_NewLocalFile(volMountPoint, false, getter_AddRefs(f));
+     rv = NS_NewLocalFile(volMountPoint, false, getter_AddRefs(f));
+     if(NS_FAILED(rv)) {
+       printf_stderr("##### DeviceStorage: NS_NewLocalFile failed StorageType: '%s' path '%s'\n",
+                     NS_LossyConvertUTF16toASCII(volMountPoint).get(),
+                     NS_LossyConvertUTF16toASCII(aStorageType).get());
+     }
 #else
      f = sDirs->sdcard;
 #endif
@@ -943,6 +967,12 @@ DeviceStorageFile::GetRootDirectoryForType(const nsAString& aStorageType,
 
   if (f) {
     f->Clone(aFile);
+  } else {
+    // This should never happen unless something is severely wrong. So
+    // scream a little.
+    printf_stderr("##### GetRootDirectoryForType('%s', '%s') failed #####",
+                  NS_LossyConvertUTF16toASCII(aStorageType).get(),
+                  NS_LossyConvertUTF16toASCII(aStorageName).get());
   }
 }
 
@@ -1070,6 +1100,9 @@ DeviceStorageFile::AppendRelativePath(const nsAString& aPath) {
 nsresult
 DeviceStorageFile::CreateFileDescriptor(FileDescriptor& aFileDescriptor)
 {
+  if (!mFile) {
+    return NS_ERROR_FAILURE;
+  }
   ScopedPRFileDesc fd;
   nsresult rv = mFile->OpenNSPRFileDesc(PR_RDWR | PR_CREATE_FILE,
                                         0660, &fd.rwget());
@@ -1241,6 +1274,9 @@ DeviceStorageFile::CalculateMimeType()
 {
   MOZ_ASSERT(NS_IsMainThread());
 
+  if (!mFile) {
+    return NS_ERROR_FAILURE;
+  }
   nsAutoCString mimeType;
   nsCOMPtr<nsIMIMEService> mimeService =
     do_GetService(NS_MIMESERVICE_CONTRACTID);
@@ -1261,6 +1297,10 @@ DeviceStorageFile::CalculateSizeAndModifiedDate()
 {
   MOZ_ASSERT(!NS_IsMainThread());
 
+  if (!mFile) {
+    return NS_ERROR_FAILURE;
+  }
+
   int64_t fileSize;
   nsresult rv = mFile->GetFileSize(&fileSize);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -1279,6 +1319,9 @@ void
 DeviceStorageFile::CollectFiles(nsTArray<nsRefPtr<DeviceStorageFile> > &aFiles,
                                 PRTime aSince)
 {
+  if (!mFile) {
+    return;
+  }
   nsString fullRootPath;
   mFile->GetPath(fullRootPath);
   collectFilesInternal(aFiles, aSince, fullRootPath);
@@ -1489,7 +1532,7 @@ DeviceStorageFile::DoFormat(nsAString& aStatus)
 {
   DeviceStorageTypeChecker* typeChecker
     = DeviceStorageTypeChecker::CreateOrGet();
-  if (!typeChecker) {
+  if (!typeChecker || !mFile) {
     return;
   }
   if (!typeChecker->IsVolumeBased(mStorageType)) {
@@ -1519,7 +1562,7 @@ DeviceStorageFile::DoMount(nsAString& aStatus)
 {
   DeviceStorageTypeChecker* typeChecker
     = DeviceStorageTypeChecker::CreateOrGet();
-  if (!typeChecker) {
+  if (!typeChecker || !mFile) {
     return;
   }
   if (!typeChecker->IsVolumeBased(mStorageType)) {
@@ -1549,7 +1592,7 @@ DeviceStorageFile::DoUnmount(nsAString& aStatus)
 {
   DeviceStorageTypeChecker* typeChecker
     = DeviceStorageTypeChecker::CreateOrGet();
-  if (!typeChecker) {
+  if (!typeChecker || !mFile) {
     return;
   }
   if (!typeChecker->IsVolumeBased(mStorageType)) {
@@ -1581,7 +1624,7 @@ DeviceStorageFile::GetStatus(nsAString& aStatus)
 
   DeviceStorageTypeChecker* typeChecker
     = DeviceStorageTypeChecker::CreateOrGet();
-  if (!typeChecker) {
+  if (!typeChecker || !mFile) {
     return;
   }
   if (!typeChecker->IsVolumeBased(mStorageType)) {
@@ -1642,7 +1685,7 @@ DeviceStorageFile::GetStorageStatus(nsAString& aStatus)
 
   DeviceStorageTypeChecker* typeChecker
     = DeviceStorageTypeChecker::CreateOrGet();
-  if (!typeChecker) {
+  if (!typeChecker || !mFile) {
     return;
   }
   if (!typeChecker->IsVolumeBased(mStorageType)) {
@@ -1760,10 +1803,10 @@ nsIFileToJsval(nsPIDOMWindow* aWindow, DeviceStorageFile* aFile)
   MOZ_ASSERT(aFile->mLength != UINT64_MAX);
   MOZ_ASSERT(aFile->mLastModifiedDate != UINT64_MAX);
 
-  nsCOMPtr<nsIDOMBlob> blob = new DOMFile(
-    new DOMFileImplFile(fullPath, aFile->mMimeType,
-                        aFile->mLength, aFile->mFile,
-                        aFile->mLastModifiedDate));
+  nsCOMPtr<nsIDOMBlob> blob = new File(aWindow,
+    new FileImplFile(fullPath, aFile->mMimeType,
+                     aFile->mLength, aFile->mFile,
+                     aFile->mLastModifiedDate));
   return InterfaceToJsval(aWindow, blob, &NS_GET_IID(nsIDOMBlob));
 }
 
@@ -1797,7 +1840,7 @@ public:
 
   NS_FORWARD_NSICONTENTPERMISSIONREQUEST(mCursor->);
 
-  DeviceStorageCursorRequest(nsDOMDeviceStorageCursor* aCursor)
+  explicit DeviceStorageCursorRequest(nsDOMDeviceStorageCursor* aCursor)
     : mCursor(aCursor) { }
 
 private:
@@ -2389,6 +2432,8 @@ public:
     , mRequest(aRequest)
   {
     MOZ_ASSERT(mDSFileDescriptor);
+    MOZ_ASSERT(mDSFileDescriptor->mDSFile);
+    MOZ_ASSERT(mDSFileDescriptor->mDSFile->mFile);
     MOZ_ASSERT(mRequest);
   }
 
@@ -2397,7 +2442,6 @@ public:
     MOZ_ASSERT(!NS_IsMainThread());
 
     DeviceStorageFile* dsFile = mDSFileDescriptor->mDSFile;
-    MOZ_ASSERT(dsFile);
 
     nsString fullPath;
     dsFile->GetFullPath(fullPath);
@@ -2434,7 +2478,7 @@ private:
 class WriteFileEvent : public nsRunnable
 {
 public:
-  WriteFileEvent(DOMFileImpl* aBlobImpl,
+  WriteFileEvent(FileImpl* aBlobImpl,
                  DeviceStorageFile *aFile,
                  already_AddRefed<DOMRequest> aRequest,
                  int32_t aRequestType)
@@ -2444,6 +2488,7 @@ public:
     , mRequestType(aRequestType)
   {
     MOZ_ASSERT(mFile);
+    MOZ_ASSERT(mFile->mFile);
     MOZ_ASSERT(mRequest);
     MOZ_ASSERT(mRequestType);
   }
@@ -2499,7 +2544,7 @@ public:
   }
 
 private:
-  nsRefPtr<DOMFileImpl> mBlobImpl;
+  nsRefPtr<FileImpl> mBlobImpl;
   nsRefPtr<DeviceStorageFile> mFile;
   nsRefPtr<DOMRequest> mRequest;
   int32_t mRequestType;
@@ -2867,7 +2912,8 @@ public:
 
         if (XRE_GetProcessType() != GeckoProcessType_Default) {
           BlobChild* actor
-            = ContentChild::GetSingleton()->GetOrCreateActorForBlob(mBlob);
+            = ContentChild::GetSingleton()->GetOrCreateActorForBlob(
+              static_cast<File*>(mBlob.get()));
           if (!actor) {
             return NS_ERROR_FAILURE;
           }
@@ -2885,7 +2931,7 @@ public:
           return NS_OK;
         }
 
-        DOMFile* blob = static_cast<DOMFile*>(mBlob.get());
+        File* blob = static_cast<File*>(mBlob.get());
         r = new WriteFileEvent(blob->Impl(), mFile, mRequest.forget(),
                                mRequestType);
         break;
@@ -2912,7 +2958,8 @@ public:
 
         if (XRE_GetProcessType() != GeckoProcessType_Default) {
           BlobChild* actor
-            = ContentChild::GetSingleton()->GetOrCreateActorForBlob(mBlob);
+            = ContentChild::GetSingleton()->GetOrCreateActorForBlob(
+              static_cast<File*>(mBlob.get()));
           if (!actor) {
             return NS_ERROR_FAILURE;
           }
@@ -2930,7 +2977,7 @@ public:
           return NS_OK;
         }
 
-        DOMFile* blob = static_cast<DOMFile*>(mBlob.get());
+        File* blob = static_cast<File*>(mBlob.get());
         r = new WriteFileEvent(blob->Impl(), mFile, mRequest.forget(),
                                mRequestType);
         break;

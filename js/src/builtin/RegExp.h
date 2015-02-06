@@ -25,7 +25,7 @@ enum RegExpStaticsUpdate { UpdateRegExpStatics, DontUpdateRegExpStatics };
 
 RegExpRunStatus
 ExecuteRegExp(JSContext *cx, HandleObject regexp, HandleString string,
-              MatchPairs &matches, RegExpStaticsUpdate staticsUpdate);
+              MatchPairs *matches, RegExpStaticsUpdate staticsUpdate);
 
 /*
  * Legacy behavior of ExecuteRegExp(), which is baked into the JSAPI.
@@ -45,7 +45,8 @@ CreateRegExpMatchResult(JSContext *cx, HandleString input, const MatchPairs &mat
                         MutableHandleValue rval);
 
 extern bool
-regexp_exec_raw(JSContext *cx, HandleObject regexp, HandleString input, MutableHandleValue output);
+regexp_exec_raw(JSContext *cx, HandleObject regexp, HandleString input, MatchPairs *maybeMatches,
+                MutableHandleValue output);
 
 extern bool
 regexp_exec(JSContext *cx, unsigned argc, Value *vp);

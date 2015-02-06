@@ -7,6 +7,7 @@
 #include "imgFrame.h"
 #include "ImageRegion.h"
 #include "DiscardTracker.h"
+#include "ShutdownTracker.h"
 
 #include "prenv.h"
 
@@ -120,8 +121,10 @@ imgFrame::imgFrame() :
   mBlendMethod(1), /* imgIContainer::kBlendOver */
   mSinglePixel(false),
   mCompositingFailed(false),
+  mHasNoAlpha(false),
   mNonPremult(false),
   mDiscardable(false),
+  mOptimizable(false),
   mInformedDiscardTracker(false)
 {
   static bool hasCheckedOptimize = false;
@@ -143,17 +146,20 @@ imgFrame::~imgFrame()
   }
 }
 
-nsresult imgFrame::Init(int32_t aX, int32_t aY, int32_t aWidth, int32_t aHeight,
-                        SurfaceFormat aFormat, uint8_t aPaletteDepth /* = 0 */)
+nsresult
+imgFrame::InitForDecoder(const nsIntRect& aRect,
+                         SurfaceFormat aFormat,
+                         uint8_t aPaletteDepth /* = 0 */)
 {
-  // assert for properties that should be verified by decoders, warn for properties related to bad content
-  if (!AllowedImageSize(aWidth, aHeight)) {
+  // Assert for properties that should be verified by decoders,
+  // warn for properties related to bad content.
+  if (!AllowedImageSize(aRect.width, aRect.height)) {
     NS_WARNING("Should have legal image size");
     return NS_ERROR_FAILURE;
   }
 
-  mOffset.MoveTo(aX, aY);
-  mSize.SizeTo(aWidth, aHeight);
+  mOffset.MoveTo(aRect.x, aRect.y);
+  mSize.SizeTo(aRect.width, aRect.height);
 
   mFormat = aFormat;
   mPaletteDepth = aPaletteDepth;
@@ -172,32 +178,121 @@ nsresult imgFrame::Init(int32_t aX, int32_t aY, int32_t aWidth, int32_t aHeight,
       NS_WARNING("moz_malloc for paletted image data should succeed");
     NS_ENSURE_TRUE(mPalettedImageData, NS_ERROR_OUT_OF_MEMORY);
   } else {
+    MOZ_ASSERT(!mImageSurface, "Called imgFrame::InitForDecoder() twice?");
+
     // Inform the discard tracker that we are going to allocate some memory.
-    if (!DiscardTracker::TryAllocation(4 * mSize.width * mSize.height)) {
-      NS_WARNING("Exceed the hard limit of decode image size");
+    mInformedDiscardTracker =
+      DiscardTracker::TryAllocation(4 * mSize.width * mSize.height);
+    if (!mInformedDiscardTracker) {
+      NS_WARNING("Exceeded the image decode size hard limit");
       return NS_ERROR_OUT_OF_MEMORY;
     }
-    if (!mImageSurface) {
-      mVBuf = AllocateBufferForImage(mSize, mFormat);
-      if (!mVBuf) {
-        return NS_ERROR_OUT_OF_MEMORY;
-      }
-      if (mVBuf->OnHeap()) {
-        int32_t stride = VolatileSurfaceStride(mSize, mFormat);
-        VolatileBufferPtr<uint8_t> ptr(mVBuf);
-        memset(ptr, 0, stride * mSize.height);
-      }
-      mImageSurface = CreateLockedSurface(mVBuf, mSize, mFormat);
+    mVBuf = AllocateBufferForImage(mSize, mFormat);
+    if (!mVBuf) {
+      return NS_ERROR_OUT_OF_MEMORY;
     }
+    if (mVBuf->OnHeap()) {
+      int32_t stride = VolatileSurfaceStride(mSize, mFormat);
+      VolatileBufferPtr<uint8_t> ptr(mVBuf);
+      memset(ptr, 0, stride * mSize.height);
+    }
+    mImageSurface = CreateLockedSurface(mVBuf, mSize, mFormat);
 
     if (!mImageSurface) {
       NS_WARNING("Failed to create VolatileDataSourceSurface");
-      // Image surface allocation is failed, need to return
-      // the booked buffer size.
-      DiscardTracker::InformDeallocation(4 * mSize.width * mSize.height);
       return NS_ERROR_OUT_OF_MEMORY;
     }
-    mInformedDiscardTracker = true;
+  }
+
+  return NS_OK;
+}
+
+nsresult
+imgFrame::InitWithDrawable(gfxDrawable* aDrawable,
+                           const nsIntSize& aSize,
+                           const SurfaceFormat aFormat,
+                           GraphicsFilter aFilter,
+                           uint32_t aImageFlags)
+{
+  // Assert for properties that should be verified by decoders,
+  // warn for properties related to bad content.
+  if (!AllowedImageSize(aSize.width, aSize.height)) {
+    NS_WARNING("Should have legal image size");
+    return NS_ERROR_FAILURE;
+  }
+
+  mOffset.MoveTo(0, 0);
+  mSize.SizeTo(aSize.width, aSize.height);
+
+  mFormat = aFormat;
+  mPaletteDepth = 0;
+
+  // Inform the discard tracker that we are going to allocate some memory.
+  mInformedDiscardTracker =
+    DiscardTracker::TryAllocation(4 * mSize.width * mSize.height);
+  if (!mInformedDiscardTracker) {
+    NS_WARNING("Exceed the image decode size hard limit");
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+
+  RefPtr<DrawTarget> target;
+
+  bool canUseDataSurface =
+    gfxPlatform::GetPlatform()->CanRenderContentToDataSurface();
+
+  if (canUseDataSurface) {
+    // It's safe to use data surfaces for content on this platform, so we can
+    // get away with using volatile buffers.
+    MOZ_ASSERT(!mImageSurface, "Called imgFrame::InitWithDrawable() twice?");
+
+    mVBuf = AllocateBufferForImage(mSize, mFormat);
+    if (!mVBuf) {
+      return NS_ERROR_OUT_OF_MEMORY;
+    }
+
+    int32_t stride = VolatileSurfaceStride(mSize, mFormat);
+    VolatileBufferPtr<uint8_t> ptr(mVBuf);
+    if (!ptr) {
+      return NS_ERROR_OUT_OF_MEMORY;
+    }
+    if (mVBuf->OnHeap()) {
+      memset(ptr, 0, stride * mSize.height);
+    }
+    mImageSurface = CreateLockedSurface(mVBuf, mSize, mFormat);
+
+    target = gfxPlatform::GetPlatform()->
+      CreateDrawTargetForData(ptr, mSize, stride, mFormat);
+  } else {
+    // We can't use data surfaces for content, so we'll create an offscreen
+    // surface instead.  This means if someone later calls RawAccessRef(), we
+    // may have to do an expensive readback, but we warned callers about that in
+    // the documentation for this method.
+    MOZ_ASSERT(!mOptSurface, "Called imgFrame::InitWithDrawable() twice?");
+
+    target = gfxPlatform::GetPlatform()->
+        CreateOffscreenContentDrawTarget(mSize, mFormat);
+  }
+
+  if (!target) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+
+  // Draw using the drawable the caller provided.
+  nsIntRect imageRect(0, 0, mSize.width, mSize.height);
+  nsRefPtr<gfxContext> ctx = new gfxContext(target);
+  gfxUtils::DrawPixelSnapped(ctx, aDrawable, ThebesIntSize(mSize),
+                             ImageRegion::Create(imageRect),
+                             mFormat, aFilter, aImageFlags);
+
+  if (canUseDataSurface && !mImageSurface) {
+    NS_WARNING("Failed to create VolatileDataSourceSurface");
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+
+  if (!canUseDataSurface) {
+    // We used an offscreen surface, which is an "optimized" surface from
+    // imgFrame's perspective.
+    mOptSurface = target->Snapshot();
   }
 
   return NS_OK;
@@ -206,8 +301,14 @@ nsresult imgFrame::Init(int32_t aX, int32_t aY, int32_t aWidth, int32_t aHeight,
 nsresult imgFrame::Optimize()
 {
   MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(mLockCount == 1,
+             "Should only optimize when holding the lock exclusively");
 
-  if (gDisableOptimize)
+  // Don't optimize during shutdown because gfxPlatform may not be available.
+  if (ShutdownTracker::ShutdownHasStarted())
+    return NS_OK;
+
+  if (!mOptimizable || gDisableOptimize)
     return NS_OK;
 
   if (mPalettedImageData || mOptSurface || mSinglePixel)
@@ -309,7 +410,29 @@ nsresult imgFrame::Optimize()
     mImageSurface = nullptr;
   }
 
+#ifdef MOZ_WIDGET_ANDROID
+  // On Android, free mImageSurface unconditionally if we're discardable. This
+  // allows the operating system to free our volatile buffer.
+  // XXX(seth): We'd eventually like to do this on all platforms, but right now
+  // converting raw memory to a SourceSurface is expensive on some backends.
+  if (mDiscardable) {
+    mImageSurface = nullptr;
+  }
+#endif
+
   return NS_OK;
+}
+
+DrawableFrameRef
+imgFrame::DrawableRef()
+{
+  return DrawableFrameRef(this);
+}
+
+RawAccessFrameRef
+imgFrame::RawAccessRef()
+{
+  return RawAccessFrameRef(this);
 }
 
 imgFrame::SurfaceWithFormat
@@ -622,42 +745,48 @@ nsresult imgFrame::UnlockImageData()
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  NS_ABORT_IF_FALSE(mLockCount != 0, "Unlocking an unlocked image!");
-  if (mLockCount == 0) {
+  MOZ_ASSERT(mLockCount > 0, "Unlocking an unlocked image!");
+  if (mLockCount <= 0) {
     return NS_ERROR_FAILURE;
+  }
+
+  // If we're about to become unlocked, we don't need to hold on to our data
+  // surface anymore. (But we don't need to do anything for paletted images,
+  // which don't have surfaces.)
+  if (mLockCount == 1 && !mPalettedImageData) {
+    // If we're using a surface format with alpha but the image has no alpha,
+    // change the format. This doesn't change the underlying data at all, but
+    // allows DrawTargets to avoid blending when drawing known opaque images.
+    if (mHasNoAlpha && mFormat == SurfaceFormat::B8G8R8A8 && mImageSurface) {
+      mFormat = SurfaceFormat::B8G8R8X8;
+      mImageSurface = CreateLockedSurface(mVBuf, mSize, mFormat);
+    }
+
+    // Convert the data surface to a GPU surface or a single color if possible.
+    // This will also release mImageSurface if possible.
+    Optimize();
+    
+    // Allow the OS to release our data surface.
+    mVBufPtr = nullptr;
   }
 
   mLockCount--;
 
-  NS_ABORT_IF_FALSE(mLockCount >= 0, "Unbalanced locks and unlocks");
-  if (mLockCount < 0) {
-    return NS_ERROR_FAILURE;
-  }
-
-  // If we are not the last lock, there's nothing to do.
-  if (mLockCount != 0) {
-    return NS_OK;
-  }
-
-  // Paletted images don't have surfaces, so there's nothing to do.
-  if (mPalettedImageData)
-    return NS_OK;
-
-  mVBufPtr = nullptr;
-  if (mVBuf && mDiscardable) {
-    mImageSurface = nullptr;
-  }
-
   return NS_OK;
 }
 
-void imgFrame::SetDiscardable()
+void
+imgFrame::SetDiscardable()
 {
   MOZ_ASSERT(mLockCount, "Expected to be locked when SetDiscardable is called");
-  // Disabled elsewhere due to the cost of calling GetSourceSurfaceForSurface.
-#ifdef MOZ_WIDGET_ANDROID
   mDiscardable = true;
-#endif
+}
+
+void
+imgFrame::SetOptimizable()
+{
+  MOZ_ASSERT(mLockCount, "Expected to be locked when SetOptimizable is called");
+  mOptimizable = true;
 }
 
 TemporaryRef<SourceSurface>
@@ -738,16 +867,11 @@ bool imgFrame::ImageComplete() const
 }
 
 // A hint from the image decoders that this image has no alpha, even
-// though we created is ARGB32.  This changes our format to RGB24,
-// which in turn will cause us to Optimize() to RGB24.  Has no effect
-// after Optimize() is called, though in all cases it will be just a
-// performance win -- the pixels are still correct and have the A byte
-// set to 0xff.
+// though we're decoding it as B8G8R8A8. 
 void imgFrame::SetHasNoAlpha()
 {
-  if (mFormat == SurfaceFormat::B8G8R8A8) {
-    mFormat = SurfaceFormat::B8G8R8X8;
-  }
+  MOZ_ASSERT(mLockCount, "Expected to be locked when SetHasNoAlpha is called");
+  mHasNoAlpha = true;
 }
 
 void imgFrame::SetAsNonPremult(bool aIsNonPremult)

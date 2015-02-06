@@ -5,8 +5,9 @@
 /* global loop:true */
 
 var loop = loop || {};
-loop.store = (function() {
+loop.store = loop.store || {};
 
+loop.store.ConversationStore = (function() {
   var sharedActions = loop.shared.actions;
   var CALL_TYPES = loop.shared.utils.CALL_TYPES;
 
@@ -14,7 +15,7 @@ loop.store = (function() {
    * Websocket states taken from:
    * https://docs.services.mozilla.com/loop/apis.html#call-progress-state-change-progress
    */
-  var WS_STATES = {
+  var WS_STATES = loop.store.WS_STATES = {
     // The call is starting, and the remote party is not yet being alerted.
     INIT: "init",
     // The called party is being alerted.
@@ -31,7 +32,7 @@ loop.store = (function() {
     CONNECTED: "connected"
   };
 
-  var CALL_STATES = {
+  var CALL_STATES = loop.store.CALL_STATES = {
     // The initial state of the view.
     INIT: "cs-init",
     // The store is gathering the call data from the server.
@@ -52,9 +53,11 @@ loop.store = (function() {
     TERMINATED: "cs-terminated"
   };
 
-
+  // XXX this needs to migrate to use loop.store.createStore
   var ConversationStore = Backbone.Model.extend({
     defaults: {
+      // The id of the window. Currently used for getting the window id.
+      windowId: undefined,
       // The current state of the call
       callState: CALL_STATES.INIT,
       // The reason if a call was terminated
@@ -118,18 +121,12 @@ loop.store = (function() {
       this.dispatcher = options.dispatcher;
       this.sdkDriver = options.sdkDriver;
 
+      // XXX Further actions are registered in setupWindowData when
+      // we know what window type this is. At some stage, we might want to
+      // consider store mixins or some alternative which means the stores
+      // would only be created when we want them.
       this.dispatcher.register(this, [
-        "connectionFailure",
-        "connectionProgress",
-        "gatherCallData",
-        "connectCall",
-        "hangupCall",
-        "peerHungupCall",
-        "cancelCall",
-        "retryCall",
-        "mediaConnected",
-        "setMute",
-        "fetchEmailLink"
+        "setupWindowData"
       ]);
     },
 
@@ -173,6 +170,9 @@ loop.store = (function() {
             sessionId: this.get("sessionId"),
             sessionToken: this.get("sessionToken")
           });
+          navigator.mozLoop.addConversationContext(this.get("windowId"),
+                                                   this.get("sessionId"),
+                                                   this.get("callId"));
           this.set({callState: CALL_STATES.ONGOING});
           break;
         }
@@ -188,36 +188,35 @@ loop.store = (function() {
       }
     },
 
-    /**
-     * Handles the gather call data action, setting the state
-     * and starting to get the appropriate data for the type of call.
-     *
-     * @param {sharedActions.GatherCallData} actionData The action data.
-     */
-    gatherCallData: function(actionData) {
-      if (!actionData.outgoing) {
-        // XXX Other types aren't supported yet, but set the state for the
-        // view selection.
-        this.set({outgoing: false});
+    setupWindowData: function(actionData) {
+      var windowType = actionData.type;
+      if (windowType !== "outgoing" &&
+          windowType !== "incoming") {
+        // Not for this store, don't do anything.
         return;
       }
 
-      var callData = navigator.mozLoop.getCallData(actionData.callId);
-      if (!callData) {
-        console.error("Failed to get the call data");
-        this.set({callState: CALL_STATES.TERMINATED});
-        return;
-      }
+      this.dispatcher.register(this, [
+        "connectionFailure",
+        "connectionProgress",
+        "connectCall",
+        "hangupCall",
+        "remotePeerDisconnected",
+        "cancelCall",
+        "retryCall",
+        "mediaConnected",
+        "setMute",
+        "fetchRoomEmailLink"
+      ]);
 
       this.set({
-        contact: callData.contact,
-        outgoing: actionData.outgoing,
-        callId: actionData.callId,
-        callType: callData.callType,
-        callState: CALL_STATES.GATHER
+        contact: actionData.contact,
+        outgoing: windowType === "outgoing",
+        windowId: actionData.windowId,
+        callType: actionData.callType,
+        callState: CALL_STATES.GATHER,
+        videoMuted: actionData.callType === CALL_TYPES.AUDIO_ONLY
       });
-
-      this.set({videoMuted: this.get("callType") === CALL_TYPES.AUDIO_ONLY});
 
       if (this.get("outgoing")) {
         this._setupOutgoingCall();
@@ -250,11 +249,23 @@ loop.store = (function() {
     },
 
     /**
-     * The peer hungup the call.
+     * The remote peer disconnected from the session.
+     *
+     * @param {sharedActions.RemotePeerDisconnected} actionData
      */
-    peerHungupCall: function() {
+    remotePeerDisconnected: function(actionData) {
       this._endSession();
-      this.set({callState: CALL_STATES.FINISHED});
+
+      // If the peer hungup, we end normally, otherwise
+      // we treat this as a call failure.
+      if (actionData.peerHungup) {
+        this.set({callState: CALL_STATES.FINISHED});
+      } else {
+        this.set({
+          callState: CALL_STATES.TERMINATED,
+          callStateReason: "peerNetworkDisconnected"
+        });
+      }
     },
 
     /**
@@ -307,18 +318,21 @@ loop.store = (function() {
     },
 
     /**
-     * Fetches a new call URL intended to be sent over email when a contact
+     * Fetches a new room URL intended to be sent over email when a contact
      * can't be reached.
      */
-    fetchEmailLink: function() {
-      // XXX This is an empty string as a conversation identifier. Bug 1015938 implements
-      // a user-set string.
-      this.client.requestCallUrl("", function(err, callUrlData) {
+    fetchRoomEmailLink: function(actionData) {
+      navigator.mozLoop.rooms.create({
+        roomName: actionData.roomName,
+        roomOwner: actionData.roomOwner,
+        maxSize:   loop.store.MAX_ROOM_CREATION_SIZE,
+        expiresIn: loop.store.DEFAULT_EXPIRES_IN
+      }, function(err, createdRoomData) {
         if (err) {
           this.trigger("error:emailLink");
           return;
         }
-        this.set("emailLink", callUrlData.callUrl);
+        this.set("emailLink", createdRoomData.roomUrl);
       }.bind(this));
     },
 
@@ -329,6 +343,8 @@ loop.store = (function() {
     _setupOutgoingCall: function() {
       var contactAddresses = [];
       var contact = this.get("contact");
+
+      navigator.mozLoop.calls.setCallInProgress(this.get("windowId"));
 
       function appendContactValues(property, strip) {
         if (contact.hasOwnProperty(property)) {
@@ -409,11 +425,7 @@ loop.store = (function() {
         delete this._websocket;
       }
 
-      // XXX: The internal callId is different from
-      // this.get("callId"), see bug 1084228 for more info.
-      var locationHash = new loop.shared.utils.Helper().locationHash();
-      var callId = locationHash.match(/\#outgoing\/(.*)/)[1];
-      navigator.mozLoop.releaseCallData(callId);
+      navigator.mozLoop.calls.clearCallInProgress(this.get("windowId"));
     },
 
     /**
@@ -442,9 +454,5 @@ loop.store = (function() {
     }
   });
 
-  return {
-    CALL_STATES: CALL_STATES,
-    ConversationStore: ConversationStore,
-    WS_STATES: WS_STATES
-  };
+  return ConversationStore;
 })();

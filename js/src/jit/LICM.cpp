@@ -7,7 +7,7 @@
 #include "jit/LICM.h"
 
 #include "jit/IonAnalysis.h"
-#include "jit/IonSpewer.h"
+#include "jit/JitSpewer.h"
 #include "jit/MIRGenerator.h"
 #include "jit/MIRGraph.h"
 
@@ -27,7 +27,9 @@ LoopContainsPossibleCall(MIRGraph &graph, MBasicBlock *header, MBasicBlock *back
         for (auto insIter(block->begin()), insEnd(block->end()); insIter != insEnd; ++insIter) {
             MInstruction *ins = *insIter;
             if (ins->possiblyCalls()) {
-                IonSpew(IonSpew_LICM, "    Possile call found at %s%u", ins->opName(), ins->id());
+#ifdef DEBUG
+                JitSpew(JitSpew_LICM, "    Possile call found at %s%u", ins->opName(), ins->id());
+#endif
                 return true;
             }
         }
@@ -121,7 +123,7 @@ static bool
 HasDependencyInLoop(MInstruction *ins, MBasicBlock *header)
 {
     // Don't hoist if this instruction depends on a store inside the loop.
-    if (MDefinition *dep = ins->dependency())
+    if (MInstruction *dep = ins->dependency())
         return !IsBeforeLoop(dep, header);
     return false;
 }
@@ -152,8 +154,10 @@ MoveDeferredOperands(MInstruction *ins, MInstruction *hoistPoint, bool hasCalls)
         // because we require RequiresHoistedUse to be set at each level.
         MoveDeferredOperands(opIns, hoistPoint, hasCalls);
 
-        IonSpew(IonSpew_LICM, "    Hoisting %s%u (now that a user will be hoisted)",
+#ifdef DEBUG
+        JitSpew(JitSpew_LICM, "    Hoisting %s%u (now that a user will be hoisted)",
                 opIns->opName(), opIns->id());
+#endif
 
         opIns->block()->moveBefore(hoistPoint, opIns);
     }
@@ -168,7 +172,7 @@ VisitLoopBlock(MBasicBlock *block, MBasicBlock *header, MInstruction *hoistPoint
         if (!IsHoistable(ins, header, hasCalls)) {
 #ifdef DEBUG
             if (IsHoistableIgnoringDependency(ins, hasCalls)) {
-                IonSpew(IonSpew_LICM, "    %s%u isn't hoistable due to dependency on %s%u",
+                JitSpew(JitSpew_LICM, "    %s%u isn't hoistable due to dependency on %s%u",
                         ins->opName(), ins->id(),
                         ins->dependency()->opName(), ins->dependency()->id());
             }
@@ -180,15 +184,19 @@ VisitLoopBlock(MBasicBlock *block, MBasicBlock *header, MInstruction *hoistPoint
         // its uses. We want those instructions as close as possible to their
         // use, to minimize register pressure.
         if (RequiresHoistedUse(ins, hasCalls)) {
-            IonSpew(IonSpew_LICM, "    %s%u will be hoisted only if its users are",
+#ifdef DEBUG
+            JitSpew(JitSpew_LICM, "    %s%u will be hoisted only if its users are",
                     ins->opName(), ins->id());
+#endif
             continue;
         }
 
         // Hoist operands which were too cheap to hoist on their own.
         MoveDeferredOperands(ins, hoistPoint, hasCalls);
 
-        IonSpew(IonSpew_LICM, "    Hoisting %s%u", ins->opName(), ins->id());
+#ifdef DEBUG
+        JitSpew(JitSpew_LICM, "    Hoisting %s%u", ins->opName(), ins->id());
+#endif
 
         // Move the instruction to the hoistPoint.
         block->moveBefore(hoistPoint, ins);
@@ -200,8 +208,10 @@ VisitLoop(MIRGraph &graph, MBasicBlock *header)
 {
     MInstruction *hoistPoint = header->loopPredecessor()->lastIns();
 
-    IonSpew(IonSpew_LICM, "  Visiting loop with header block%u, hoisting to %s%u",
+#ifdef DEBUG
+    JitSpew(JitSpew_LICM, "  Visiting loop with header block%u, hoisting to %s%u",
             header->id(), hoistPoint->opName(), hoistPoint->id());
+#endif
 
     MBasicBlock *backedge = header->backedge();
 
@@ -227,7 +237,7 @@ VisitLoop(MIRGraph &graph, MBasicBlock *header)
 bool
 jit::LICM(MIRGenerator *mir, MIRGraph &graph)
 {
-    IonSpew(IonSpew_LICM, "Beginning LICM pass");
+    JitSpew(JitSpew_LICM, "Beginning LICM pass");
 
     // Iterate in RPO to visit outer loops before inner loops. We'd hoist the
     // same things either way, but outer first means we do a little less work.
@@ -237,7 +247,12 @@ jit::LICM(MIRGenerator *mir, MIRGraph &graph)
             continue;
 
         bool canOsr;
-        MarkLoopBlocks(graph, header, &canOsr);
+        size_t numBlocks = MarkLoopBlocks(graph, header, &canOsr);
+
+        if (numBlocks == 0) {
+            JitSpew(JitSpew_LICM, "  Loop with header block%u isn't actually a loop", header->id());
+            continue;
+        }
 
         // Hoisting out of a loop that has an entry from the OSR block in
         // addition to its normal entry is tricky. In theory we could clone
@@ -245,7 +260,7 @@ jit::LICM(MIRGenerator *mir, MIRGraph &graph)
         if (!canOsr)
             VisitLoop(graph, header);
         else
-            IonSpew(IonSpew_LICM, "  Skipping loop with header block%u due to OSR", header->id());
+            JitSpew(JitSpew_LICM, "  Skipping loop with header block%u due to OSR", header->id());
 
         UnmarkLoopBlocks(graph, header);
 

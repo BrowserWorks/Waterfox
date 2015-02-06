@@ -53,6 +53,7 @@ EXPORTS.mozilla.dom += [
     'DOMError.h',
     'DOMException.h',
     'DOMRequest.h',
+    'ImageEncoder.h',
     'MessageChannel.h',
     'MessagePort.h',
     'MessagePortList.h',
@@ -79,6 +80,7 @@ UNIFIED_SOURCES += [
     'DOMError.cpp',
     'DOMException.cpp',
     'DOMRequest.cpp',
+    'ImageEncoder.cpp',
     'MessageChannel.cpp',
     'MessagePortList.cpp',
     'Navigator.cpp',
@@ -92,6 +94,7 @@ UNIFIED_SOURCES += [
     'nsGlobalWindowCommands.cpp',
     'nsHistory.cpp',
     'nsIGlobalObject.cpp',
+    'nsJSEnvironment.cpp',
     'nsJSTimeoutHandler.cpp',
     'nsJSUtils.cpp',
     'nsLocation.cpp',
@@ -121,8 +124,6 @@ SOURCES += [
     'nsDOMWindowUtils.cpp',
     # This file has a #error "Never include windows.h in this file!"
     'nsGlobalWindow.cpp',
-    # This file forces NSPR logging.
-    'nsJSEnvironment.cpp',
     # nsPluginArray.cpp includes npapi.h indirectly, and that includes a lot of system headers
     'nsPluginArray.cpp',
 ]

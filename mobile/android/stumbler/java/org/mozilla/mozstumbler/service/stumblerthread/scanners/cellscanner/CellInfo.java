@@ -19,7 +19,7 @@ import org.json.JSONObject;
 import org.mozilla.mozstumbler.service.AppGlobals;
 
 public class CellInfo implements Parcelable {
-    private static final String LOG_TAG = AppGlobals.LOG_PREFIX + CellInfo.class.getSimpleName();
+    private static final String LOG_TAG = AppGlobals.makeLogTag(CellInfo.class.getSimpleName());
 
     public static final String RADIO_GSM = "gsm";
     public static final String RADIO_CDMA = "cdma";
@@ -35,10 +35,12 @@ public class CellInfo implements Parcelable {
 
     public static final Parcelable.Creator<CellInfo> CREATOR
             = new Parcelable.Creator<CellInfo>() {
+        @Override
         public CellInfo createFromParcel(Parcel in) {
             return new CellInfo(in);
         }
 
+        @Override
         public CellInfo[] newArray(int size) {
             return new CellInfo[size];
         }

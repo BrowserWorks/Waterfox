@@ -11,7 +11,7 @@
 #include "vm/Debugger.h"
 #include "vm/ScopeObject.h"
 
-#include "jit/IonFrames-inl.h"
+#include "jit/JitFrames-inl.h"
 #include "vm/Stack-inl.h"
 
 using namespace js;
@@ -57,7 +57,7 @@ BaselineFrame::trace(JSTracer *trc, JitFrameIterator &frameIterator)
     // Mark locals and stack values.
     JSScript *script = this->script();
     size_t nfixed = script->nfixed();
-    size_t nlivefixed = script->nfixedvars();
+    size_t nlivefixed = script->nbodyfixed();
 
     if (nfixed != nlivefixed) {
         jsbytecode *pc;
@@ -74,15 +74,15 @@ BaselineFrame::trace(JSTracer *trc, JitFrameIterator &frameIterator)
         }
     }
 
-    JS_ASSERT(nlivefixed <= nfixed);
-    JS_ASSERT(nlivefixed >= script->nfixedvars());
+    MOZ_ASSERT(nlivefixed <= nfixed);
+    MOZ_ASSERT(nlivefixed >= script->nbodyfixed());
 
     // NB: It is possible that numValueSlots() could be zero, even if nfixed is
     // nonzero.  This is the case if the function has an early stack check.
     if (numValueSlots() == 0)
         return;
 
-    JS_ASSERT(nfixed <= numValueSlots());
+    MOZ_ASSERT(nfixed <= numValueSlots());
 
     if (nfixed == nlivefixed) {
         // All locals are live.
@@ -91,9 +91,9 @@ BaselineFrame::trace(JSTracer *trc, JitFrameIterator &frameIterator)
         // Mark operand stack.
         MarkLocals(this, trc, nfixed, numValueSlots());
 
-        // Clear dead locals.
+        // Clear dead block-scoped locals.
         while (nfixed > nlivefixed)
-            unaliasedLocal(--nfixed, DONT_CHECK_ALIASING).setUndefined();
+            unaliasedLocal(--nfixed, DONT_CHECK_ALIASING).setMagic(JS_UNINITIALIZED_LEXICAL);
 
         // Mark live locals.
         MarkLocals(this, trc, 0, nlivefixed);
@@ -118,7 +118,7 @@ BaselineFrame::copyRawFrameSlots(AutoValueVector *vec) const
 bool
 BaselineFrame::strictEvalPrologue(JSContext *cx)
 {
-    JS_ASSERT(isStrictEvalFrame());
+    MOZ_ASSERT(isStrictEvalFrame());
 
     CallObject *callobj = CallObject::createForStrictEval(cx, this);
     if (!callobj)
@@ -138,8 +138,8 @@ BaselineFrame::heavyweightFunPrologue(JSContext *cx)
 bool
 BaselineFrame::initFunctionScopeObjects(JSContext *cx)
 {
-    JS_ASSERT(isNonEvalFunctionFrame());
-    JS_ASSERT(fun()->isHeavyweight());
+    MOZ_ASSERT(isNonEvalFunctionFrame());
+    MOZ_ASSERT(fun()->isHeavyweight());
 
     CallObject *callobj = CallObject::createForFunction(cx, this);
     if (!callobj)
@@ -190,7 +190,7 @@ BaselineFrame::initForOsr(InterpreterFrame *fp, uint32_t numStackValues)
         BaselineFrame::Size() +
         numStackValues * sizeof(Value);
 
-    JS_ASSERT(numValueSlots() == numStackValues);
+    MOZ_ASSERT(numValueSlots() == numStackValues);
 
     for (uint32_t i = 0; i < numStackValues; i++)
         *valueSlot(i) = fp->slots()[i];
@@ -204,7 +204,7 @@ BaselineFrame::initForOsr(InterpreterFrame *fp, uint32_t numStackValues)
         // In debug mode there's always at least 1 ICEntry (since there are always
         // debug prologue/epilogue calls).
         JitFrameIterator iter(cx);
-        JS_ASSERT(iter.returnAddress() == nullptr);
+        MOZ_ASSERT(iter.returnAddress() == nullptr);
         BaselineScript *baseline = fp->script()->baselineScript();
         iter.current()->setReturnAddress(baseline->returnAddressForIC(baseline->icEntry(0)));
 

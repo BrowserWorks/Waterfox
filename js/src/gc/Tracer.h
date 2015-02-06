@@ -14,8 +14,8 @@
 #include "js/TracingAPI.h"
 
 namespace js {
+class NativeObject;
 class GCMarker;
-class ObjectImpl;
 namespace gc {
 struct ArenaHeader;
 }
@@ -87,7 +87,7 @@ class MarkStack
             if (!enlarge(1))
                 return false;
         }
-        JS_ASSERT(tos_ < end_);
+        MOZ_ASSERT(tos_ < end_);
         *tos_++ = item;
         return true;
     }
@@ -99,7 +99,7 @@ class MarkStack
                 return false;
             nextTos = tos_ + 3;
         }
-        JS_ASSERT(nextTos <= end_);
+        MOZ_ASSERT(nextTos <= end_);
         tos_[0] = item1;
         tos_[1] = item2;
         tos_[2] = item3;
@@ -112,7 +112,7 @@ class MarkStack
     }
 
     uintptr_t pop() {
-        JS_ASSERT(!isEmpty());
+        MOZ_ASSERT(!isEmpty());
         return *--tos_;
     }
 
@@ -139,7 +139,7 @@ class GCMarker : public JSTracer
     void stop();
     void reset();
 
-    void pushObject(ObjectImpl *obj) {
+    void pushObject(JSObject *obj) {
         pushTaggedPtr(ObjectTag, obj);
     }
 
@@ -163,14 +163,14 @@ class GCMarker : public JSTracer
      * objects that are still reachable.
      */
     void setMarkColorGray() {
-        JS_ASSERT(isDrained());
-        JS_ASSERT(color == gc::BLACK);
+        MOZ_ASSERT(isDrained());
+        MOZ_ASSERT(color == gc::BLACK);
         color = gc::GRAY;
     }
 
     void setMarkColorBlack() {
-        JS_ASSERT(isDrained());
-        JS_ASSERT(color == gc::GRAY);
+        MOZ_ASSERT(isDrained());
+        MOZ_ASSERT(color == gc::GRAY);
         color = gc::BLACK;
     }
 
@@ -245,7 +245,7 @@ class GCMarker : public JSTracer
     void pushTaggedPtr(StackTag tag, void *ptr) {
         checkZone(ptr);
         uintptr_t addr = reinterpret_cast<uintptr_t>(ptr);
-        JS_ASSERT(!(addr & StackTagMask));
+        MOZ_ASSERT(!(addr & StackTagMask));
         if (!stack.push(addr | uintptr_t(tag)))
             delayMarkingChildren(ptr);
     }
@@ -253,7 +253,7 @@ class GCMarker : public JSTracer
     void pushValueArray(JSObject *obj, void *start, void *end) {
         checkZone(obj);
 
-        JS_ASSERT(start <= end);
+        MOZ_ASSERT(start <= end);
         uintptr_t tagged = reinterpret_cast<uintptr_t>(obj) | GCMarker::ValueArrayTag;
         uintptr_t startAddr = reinterpret_cast<uintptr_t>(start);
         uintptr_t endAddr = reinterpret_cast<uintptr_t>(end);
@@ -270,7 +270,7 @@ class GCMarker : public JSTracer
         return stack.isEmpty();
     }
 
-    bool restoreValueArray(JSObject *obj, void **vpp, void **endp);
+    bool restoreValueArray(NativeObject *obj, void **vpp, void **endp);
     void saveValueRanges();
     inline void processMarkStackTop(SliceBudget &budget);
     void processMarkStackOther(uintptr_t tag, uintptr_t addr);

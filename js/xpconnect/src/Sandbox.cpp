@@ -11,7 +11,6 @@
 #include "AccessCheck.h"
 #include "jsfriendapi.h"
 #include "jsproxy.h"
-#include "js/OldDebugAPI.h"
 #include "js/StructuredClone.h"
 #include "nsContentUtils.h"
 #include "nsGlobalWindow.h"
@@ -30,8 +29,10 @@
 #include "XPCWrapper.h"
 #include "XrayWrapper.h"
 #include "mozilla/dom/BindingUtils.h"
+#include "mozilla/dom/BlobBinding.h"
 #include "mozilla/dom/CSSBinding.h"
 #include "mozilla/dom/indexedDB/IndexedDatabaseManager.h"
+#include "mozilla/dom/FileBinding.h"
 #include "mozilla/dom/PromiseBinding.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/dom/TextDecoderBinding.h"
@@ -406,10 +407,31 @@ sandbox_addProperty(JSContext *cx, HandleObject obj, HandleId id, MutableHandleV
     // After bug 1015790 is fixed, we should be able to remove this unwrapping.
     RootedObject unwrappedProto(cx, js::UncheckedUnwrap(proto, /* stopAtOuter = */ false));
 
-    if (!JS_CopyPropertyFrom(cx, id, unwrappedProto, obj))
+    Rooted<JSPropertyDescriptor> pd(cx);
+    if (!JS_GetPropertyDescriptorById(cx, proto, id, &pd))
         return false;
 
-    Rooted<JSPropertyDescriptor> pd(cx);
+    // This is a little icky. If the property exists and is not configurable,
+    // then JS_CopyPropertyFrom will throw an exception when we try to do a
+    // normal assignment since it will think we're trying to remove the
+    // non-configurability. So we do JS_SetPropertyById in that case.
+    //
+    // However, in the case of |const x = 3|, we get called once for
+    // JSOP_DEFCONST and once for JSOP_SETCONST. The first one creates the
+    // property as readonly and configurable. The second one changes the
+    // attributes to readonly and not configurable. If we use JS_SetPropertyById
+    // for the second call, it will throw an exception because the property is
+    // readonly. We have to use JS_CopyPropertyFrom since it ignores the
+    // readonly attribute (as it calls JSObject::defineProperty). See bug
+    // 1019181.
+    if (pd.object() && pd.isPermanent()) {
+        if (!JS_SetPropertyById(cx, proto, id, vp))
+            return false;
+    } else {
+        if (!JS_CopyPropertyFrom(cx, id, unwrappedProto, obj))
+            return false;
+    }
+
     if (!JS_GetPropertyDescriptorById(cx, obj, id, &pd))
         return false;
     unsigned attrs = pd.attributes() & ~(JSPROP_GETTER | JSPROP_SETTER);
@@ -551,9 +573,9 @@ const xpc::SandboxCallableProxyHandler xpc::sandboxCallableProxyHandler;
  * "this" we will instead call it with newThisObj as the this.
  */
 static JSObject*
-WrapCallable(JSContext *cx, JSObject *callable, JSObject *sandboxProtoProxy)
+WrapCallable(JSContext *cx, HandleObject callable, HandleObject sandboxProtoProxy)
 {
-    MOZ_ASSERT(JS_ObjectIsCallable(cx, callable));
+    MOZ_ASSERT(JS::IsCallable(callable));
     // Our proxy is wrapping the callable.  So we need to use the
     // callable as the private.  We use the given sandboxProtoProxy as
     // the parent, and our call() hook depends on that.
@@ -562,11 +584,9 @@ WrapCallable(JSContext *cx, JSObject *callable, JSObject *sandboxProtoProxy)
                  &xpc::sandboxProxyHandler);
 
     RootedValue priv(cx, ObjectValue(*callable));
-    js::ProxyOptions options;
-    options.selectDefaultClass(true);
     return js::NewProxyObject(cx, &xpc::sandboxCallableProxyHandler,
                               priv, nullptr,
-                              sandboxProtoProxy, options);
+                              sandboxProtoProxy);
 }
 
 template<typename Op>
@@ -618,27 +638,19 @@ xpc::SandboxProxyHandler::getPropertyDescriptor(JSContext *cx,
     if (!desc.object())
         return true; // No property, nothing to do
 
-    // Now fix up the getter/setter/value as needed to be bound to desc->obj
-    // Don't mess with holder_get and holder_set, though, because those rely on
-    // the "vp is prefilled with the value in the slot" behavior that property
-    // ops can in theory rely on, but our property op forwarder doesn't know how
-    // to make that happen.  Since we really only need to rebind the DOM methods
-    // here, not rebindings holder_get and holder_set is OK.
+    // Now fix up the getter/setter/value as needed to be bound to desc->obj.
     //
-    // Similarly, don't mess with XPC_WN_Helper_GetProperty and
-    // XPC_WN_Helper_SetProperty, for the same reasons: that could confuse our
-    // access to expandos when we're not doing Xrays.
-    if (desc.getter() != xpc::holder_get &&
-        desc.getter() != XPC_WN_Helper_GetProperty &&
+    // Don't mess with XPC_WN_Helper_GetProperty and XPC_WN_Helper_SetProperty,
+    // because that could confuse our access to expandos.
+    if (desc.getter() != XPC_WN_Helper_GetProperty &&
         !BindPropertyOp(cx, desc.getter(), desc.address(), id, JSPROP_GETTER, proxy))
         return false;
-    if (desc.setter() != xpc::holder_set &&
-        desc.setter() != XPC_WN_Helper_SetProperty &&
+    if (desc.setter() != XPC_WN_Helper_SetProperty &&
         !BindPropertyOp(cx, desc.setter(), desc.address(), id, JSPROP_SETTER, proxy))
         return false;
     if (desc.value().isObject()) {
-        JSObject* val = &desc.value().toObject();
-        if (JS_ObjectIsCallable(cx, val)) {
+        RootedObject val (cx, &desc.value().toObject());
+        if (JS::IsCallable(val)) {
             val = WrapCallable(cx, val, proxy);
             if (!val)
                 return false;
@@ -754,6 +766,10 @@ xpc::GlobalProperties::Parse(JSContext *cx, JS::HandleObject obj)
             atob = true;
         } else if (!strcmp(name.ptr(), "btoa")) {
             btoa = true;
+        } else if (!strcmp(name.ptr(), "Blob")) {
+            Blob = true;
+        } else if (!strcmp(name.ptr(), "File")) {
+            File = true;
         } else {
             JS_ReportError(cx, "Unknown property name: %s", name.ptr());
             return false;
@@ -801,6 +817,14 @@ xpc::GlobalProperties::Define(JSContext *cx, JS::HandleObject obj)
 
     if (btoa &&
         !JS_DefineFunction(cx, obj, "btoa", Btoa, 1, 0))
+        return false;
+
+    if (Blob &&
+        !dom::BlobBinding::GetConstructorObject(cx, obj))
+        return false;
+
+    if (File &&
+        !dom::FileBinding::GetConstructorObject(cx, obj))
         return false;
 
     return true;

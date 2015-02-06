@@ -144,6 +144,8 @@ function BrowserElementParent(frameLoader, hasRemoteFrame, isPendingFrame) {
 
   defineMethod('addNextPaintListener', this._addNextPaintListener);
   defineMethod('removeNextPaintListener', this._removeNextPaintListener);
+  defineNoReturnMethod('setActive', this._setActive);
+  defineMethod('getActive', 'this._getActive');
 
   let principal = this._frameElement.ownerDocument.nodePrincipal;
   let perm = Services.perms
@@ -210,10 +212,15 @@ BrowserElementParent.prototype = {
     let appManifestURL =
           this._frameElement.QueryInterface(Ci.nsIMozBrowserFrame).appManifestURL;
     if (appManifestURL) {
-      let appId =
-            DOMApplicationRegistry.getAppLocalIdByManifestURL(appManifestURL);
-      if (appId != Ci.nsIScriptSecurityManager.NO_APP_ID) {
-        DOMApplicationRegistry.registerBrowserElementParentForApp(this, appId);
+      let inParent = Cc["@mozilla.org/xre/app-info;1"]
+                       .getService(Ci.nsIXULRuntime)
+                       .processType == Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT;
+      if (inParent) {
+        DOMApplicationRegistry.registerBrowserElementParentForApp(
+          { manifestURL: appManifestURL }, this._mm);
+      } else {
+        this._mm.sendAsyncMessage("Webapps:RegisterBEP",
+                                  { manifestURL: appManifestURL });
       }
     }
   },
@@ -250,7 +257,8 @@ BrowserElementParent.prototype = {
       "got-visible": this._gotDOMRequestResult,
       "visibilitychange": this._childVisibilityChange,
       "got-set-input-method-active": this._gotDOMRequestResult,
-      "selectionchange": this._handleSelectionChange
+      "selectionchange": this._handleSelectionChange,
+      "scrollviewchange": this._handleScrollViewChange
     };
 
     let mmSecuritySensitiveCalls = {
@@ -381,7 +389,8 @@ BrowserElementParent.prototype = {
       name: this._frameElement.getAttribute('name'),
       fullscreenAllowed:
         this._frameElement.hasAttribute('allowfullscreen') ||
-        this._frameElement.hasAttribute('mozallowfullscreen')
+        this._frameElement.hasAttribute('mozallowfullscreen'),
+      isPrivate: this._frameElement.hasAttribute('mozprivatebrowsing')
     };
   },
 
@@ -491,6 +500,12 @@ BrowserElementParent.prototype = {
     this._frameElement.dispatchEvent(evt);
   },
 
+  _handleScrollViewChange: function(data) {
+    let evt = this._createEvent("scrollviewchange", data.json,
+                                /* cancelable = */ false);
+    this._frameElement.dispatchEvent(evt);
+  },
+
   _createEvent: function(evtName, detail, cancelable) {
     // This will have to change if we ever want to send a CustomEvent with null
     // detail.  For now, it's OK.
@@ -566,13 +581,22 @@ BrowserElementParent.prototype = {
     }
     else {
       debug("Got error in gotDOMRequestResult.");
-      Services.DOMRequest.fireErrorAsync(req, data.json.errorMsg);
+      Services.DOMRequest.fireErrorAsync(req,
+        Cu.cloneInto(data.json.errorMsg, this._window));
     }
   },
 
   _setVisible: function(visible) {
     this._sendAsyncMsg('set-visible', {visible: visible});
     this._frameLoader.visible = visible;
+  },
+
+  _setActive: function(active) {
+    this._frameLoader.visible = active;
+  },
+
+  _getActive: function() {
+    return this._frameLoader.visible;
   },
 
   _sendMouseEvent: function(type, x, y, button, clickCount, modifiers) {

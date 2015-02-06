@@ -51,7 +51,7 @@ static const int32_t kBoundaryAppUnits = 61;
 
 NS_IMPL_ISUPPORTS(TouchCaret, nsISelectionListener)
 
-/*static*/ int32_t TouchCaret::sTouchCaretMaxDistance = 0;
+/*static*/ int32_t TouchCaret::sTouchCaretInflateSize = 0;
 /*static*/ int32_t TouchCaret::sTouchCaretExpirationTime = 0;
 
 TouchCaret::TouchCaret(nsIPresShell* aPresShell)
@@ -65,8 +65,8 @@ TouchCaret::TouchCaret(nsIPresShell* aPresShell)
 
   static bool addedTouchCaretPref = false;
   if (!addedTouchCaretPref) {
-    Preferences::AddIntVarCache(&sTouchCaretMaxDistance,
-                                "touchcaret.distance.threshold");
+    Preferences::AddIntVarCache(&sTouchCaretInflateSize,
+                                "touchcaret.inflatesize.threshold");
     Preferences::AddIntVarCache(&sTouchCaretExpirationTime,
                                 "touchcaret.expiration.time");
     addedTouchCaretPref = true;
@@ -86,6 +86,29 @@ TouchCaret::~TouchCaret()
     mTouchCaretExpirationTimer->Cancel();
     mTouchCaretExpirationTimer = nullptr;
   }
+}
+
+nsIFrame*
+TouchCaret::GetCaretFocusFrame(nsRect* aOutRect)
+{
+  nsCOMPtr<nsIPresShell> presShell = do_QueryReferent(mPresShell);
+  if (!presShell) {
+    return nullptr;
+  }
+
+  nsRefPtr<nsCaret> caret = presShell->GetCaret();
+  if (!caret) {
+    return nullptr;
+  }
+
+  nsRect rect;
+  nsIFrame* frame = caret->GetGeometry(&rect);
+
+  if (aOutRect) {
+    *aOutRect = rect;
+  }
+
+  return frame;
 }
 
 nsIFrame*
@@ -145,32 +168,18 @@ TouchCaret::GetTouchFrameRect()
   }
 
   dom::Element* touchCaretElement = presShell->GetTouchCaretElement();
-  if (!touchCaretElement) {
-    return nsRect();
-  }
-
-  // Get touch caret position relative to canvas frame.
-  nsIFrame* touchCaretFrame = touchCaretElement->GetPrimaryFrame();
-  nsRect tcRect = touchCaretFrame->GetRectRelativeToSelf();
   nsIFrame* canvasFrame = GetCanvasFrame();
-
-  nsLayoutUtils::TransformResult rv =
-    nsLayoutUtils::TransformRect(touchCaretFrame, canvasFrame, tcRect);
-  return rv == nsLayoutUtils::TRANSFORM_SUCCEEDED ? tcRect : nsRect();
+  return nsLayoutUtils::GetRectRelativeToFrame(touchCaretElement, canvasFrame);
 }
 
 nsRect
 TouchCaret::GetContentBoundary()
 {
-  nsCOMPtr<nsIPresShell> presShell = do_QueryReferent(mPresShell);
-  if (!presShell) {
+  nsIFrame* focusFrame = GetCaretFocusFrame();
+  nsIFrame* canvasFrame = GetCanvasFrame();
+  if (!focusFrame || !canvasFrame) {
     return nsRect();
   }
-
-  nsRefPtr<nsCaret> caret = presShell->GetCaret();
-  nsRect focusRect;
-  nsIFrame* focusFrame = caret->GetGeometry(&focusRect);
-  nsIFrame* canvasFrame = GetCanvasFrame();
 
   // Get the editing host to determine the touch caret dragable boundary.
   dom::Element* editingHost = focusFrame->GetContent()->GetEditingHost();
@@ -206,16 +215,10 @@ TouchCaret::GetContentBoundary()
 nscoord
 TouchCaret::GetCaretYCenterPosition()
 {
-  nsCOMPtr<nsIPresShell> presShell = do_QueryReferent(mPresShell);
-  if (!presShell) {
-    return 0;
-  }
+  nsRect caretRect;
+  nsIFrame* focusFrame = GetCaretFocusFrame(&caretRect);
+  nsIFrame* canvasFrame = GetCanvasFrame();
 
-  nsRefPtr<nsCaret> caret = presShell->GetCaret();
-  nsRect focusRect;
-  nsIFrame* focusFrame = caret->GetGeometry(&focusRect);
-  nsRect caretRect = focusFrame->GetRectRelativeToSelf();
-  nsIFrame *canvasFrame = GetCanvasFrame();
   nsLayoutUtils::TransformRect(focusFrame, canvasFrame, caretRect);
 
   return (caretRect.y + caretRect.height / 2);
@@ -255,23 +258,16 @@ TouchCaret::SetTouchFramePos(const nsPoint& aOrigin)
 void
 TouchCaret::MoveCaret(const nsPoint& movePoint)
 {
-  nsCOMPtr<nsIPresShell> presShell = do_QueryReferent(mPresShell);
-  if (!presShell) {
+  nsIFrame* focusFrame = GetCaretFocusFrame();
+  nsIFrame* canvasFrame = GetCanvasFrame();
+  if (!focusFrame && !canvasFrame) {
     return;
   }
 
-  // Get scrollable frame.
-  nsRefPtr<nsCaret> caret = presShell->GetCaret();
-  nsRect focusRect;
-  nsIFrame* focusFrame = caret->GetGeometry(&focusRect);
   nsIFrame* scrollable =
     nsLayoutUtils::GetClosestFrameOfType(focusFrame, nsGkAtoms::scrollFrame);
 
   // Convert touch/mouse position to frame coordinates.
-  nsIFrame* canvasFrame = GetCanvasFrame();
-  if (!canvasFrame) {
-    return;
-  }
   nsPoint offsetToCanvasFrame = nsPoint(0,0);
   nsLayoutUtils::TransformPoint(scrollable, canvasFrame, offsetToCanvasFrame);
   nsPoint pt = movePoint - offsetToCanvasFrame;
@@ -305,27 +301,8 @@ TouchCaret::MoveCaret(const nsPoint& movePoint)
 bool
 TouchCaret::IsOnTouchCaret(const nsPoint& aPoint)
 {
-  // Return false if touch caret is not visible.
-  if (!mVisible) {
-    return false;
-  }
-
-  nsRect tcRect = GetTouchFrameRect();
-
-  // Check if the click was in the bounding box of the touch caret.
-  int32_t distance;
-  if (tcRect.Contains(aPoint.x, aPoint.y)) {
-    distance = 0;
-  } else {
-    // If click is outside the bounding box of the touch caret, check the
-    // distance to the center of the touch caret.
-    int32_t posX = (tcRect.x + (tcRect.width / 2));
-    int32_t posY = (tcRect.y + (tcRect.height / 2));
-    int32_t dx = Abs(aPoint.x - posX);
-    int32_t dy = Abs(aPoint.y - posY);
-    distance = dx + dy;
-  }
-  return (distance <= TouchCaretMaxDistance());
+  return mVisible && nsLayoutUtils::ContainsPoint(GetTouchFrameRect(), aPoint,
+                                                  TouchCaretInflateSize());
 }
 
 nsresult
@@ -444,16 +421,11 @@ TouchCaret::UpdatePosition()
 {
   MOZ_ASSERT(mVisible);
 
-  nsCOMPtr<nsIPresShell> presShell = do_QueryReferent(mPresShell);
-  if (!presShell) {
-    return;
-  }
-  nsRefPtr<nsCaret> caret = presShell->GetCaret();
-
-  // Caret is visible and shown, update touch caret.
   nsRect focusRect;
-  nsIFrame* focusFrame = caret->GetGeometry(&focusRect);
-  if (!focusFrame || focusRect.IsEmpty()) {
+  nsIFrame* focusFrame = GetCaretFocusFrame(&focusRect);
+  nsIFrame* canvasFrame = GetCanvasFrame();
+
+  if (!focusFrame || !canvasFrame || focusRect.IsEmpty()) {
     return;
   }
 
@@ -462,10 +434,6 @@ TouchCaret::UpdatePosition()
                         focusRect.y + focusRect.height);
 
   // Transform the position to make it relative to canvas frame.
-  nsIFrame* canvasFrame = GetCanvasFrame();
-  if (!canvasFrame) {
-    return;
-  }
   nsLayoutUtils::TransformPoint(focusFrame, canvasFrame, pos);
 
   // Clamp the touch caret position to the scrollframe boundary.
@@ -527,14 +495,11 @@ TouchCaret::CancelExpirationTimer()
 void
 TouchCaret::SetSelectionDragState(bool aState)
 {
-  nsCOMPtr<nsIPresShell> presShell = do_QueryReferent(mPresShell);
-  if (!presShell) {
+  nsIFrame* caretFocusFrame = GetCaretFocusFrame();
+  if (!caretFocusFrame) {
     return;
   }
 
-  nsRefPtr<nsCaret> caret = presShell->GetCaret();
-  nsRect focusRect;
-  nsIFrame* caretFocusFrame = caret->GetGeometry(&focusRect);
   nsRefPtr<nsFrameSelection> fs = caretFocusFrame->GetFrameSelection();
   fs->SetDragState(aState);
 }

@@ -11,12 +11,10 @@ import subprocess
 import sys
 
 # determine the platform-specific invocation of `ps`
-if mozinfo.isMac:
-    psarg = '-Acj'
-elif mozinfo.isLinux:
-    psarg = 'axwww'
+if mozinfo.isWin:
+    psarg='ax'
 else:
-    psarg = 'ax'
+    psarg = 'axwww'
 
 def ps(arg=psarg):
     """
@@ -64,9 +62,8 @@ def running_processes(name, psarg=psarg, defunct=True):
         if 'STAT' in process and not defunct:
             if process['STAT'] == 'Z+':
                 continue
-        prog = command[0]
-        basename = os.path.basename(prog)
-        if basename == name:
+        command = subprocess.list2cmdline(command)
+        if name in command:
             retval.append((int(process['PID']), command))
     return retval
 

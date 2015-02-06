@@ -139,8 +139,18 @@ public:
   }
 
   uint16_t GetRedirectCount() const;
-  bool IsSameOriginAsReferral() const;
-  void CheckRedirectCrossOrigin(nsIHttpChannel* aResourceChannel);
+  // Checks if the resource is either same origin as the page that started
+  // the load, or if the response contains the Timing-Allow-Origin header
+  // with a value of * or matching the domain of the loading Principal
+  bool CheckAllowedOrigin(nsIHttpChannel* aResourceChannel, nsITimedChannel* aChannel);
+  // Cached result of CheckAllowedOrigin. If false, security sensitive
+  // attributes of the resourceTiming object will be set to 0
+  bool TimingAllowed() const;
+
+  // If this is false the values of redirectStart/End will be 0
+  // This is false if no redirects occured, or if any of the responses failed
+  // the timing-allow-origin check in HttpBaseChannel::TimingAllowCheck
+  bool ShouldReportCrossOriginRedirect() const;
 
   // High resolution (used by resource timing)
   DOMHighResTimeStamp FetchStartHighRes();
@@ -212,15 +222,36 @@ public:
 private:
   ~nsPerformanceTiming();
   bool IsInitialized() const;
+  void InitializeTimingInfo(nsITimedChannel* aChannel);
   nsRefPtr<nsPerformance> mPerformance;
-  nsCOMPtr<nsITimedChannel> mChannel;
   DOMHighResTimeStamp mFetchStart;
   // This is an offset that will be added to each timing ([ms] resolution).
   // There are only 2 possible values: (1) logicaly equal to navigationStart
   // TimeStamp (results are absolute timstamps - wallclock); (2) "0" (results
   // are relative to the navigation start).
   DOMHighResTimeStamp mZeroTime;
-  bool mReportCrossOriginResources;
+
+  TimeStamp mAsyncOpen;
+  TimeStamp mRedirectStart;
+  TimeStamp mRedirectEnd;
+  TimeStamp mDomainLookupStart;
+  TimeStamp mDomainLookupEnd;
+  TimeStamp mConnectStart;
+  TimeStamp mConnectEnd;
+  TimeStamp mRequestStart;
+  TimeStamp mResponseStart;
+  TimeStamp mCacheReadStart;
+  TimeStamp mResponseEnd;
+  TimeStamp mCacheReadEnd;
+  uint16_t mRedirectCount;
+  bool mTimingAllowed;
+  bool mAllRedirectsSameOrigin;
+  bool mInitialized;
+
+  // If the resourceTiming object should have non-zero redirectStart and
+  // redirectEnd attributes. It is false if there were no redirects, or if
+  // any of the responses didn't pass the timing-allow-check
+  bool mReportCrossOriginRedirect;
 };
 
 // Script "performance.navigation" object

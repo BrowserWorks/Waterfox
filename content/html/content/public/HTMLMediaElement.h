@@ -162,15 +162,9 @@ public:
   virtual void MetadataLoaded(const MediaInfo* aInfo,
                               const MetadataTags* aTags) MOZ_FINAL MOZ_OVERRIDE;
 
-  // Called by the video decoder object, on the main thread,
-  // when it has read the first frame of the video
-  // aResourceFullyLoaded should be true if the resource has been
-  // fully loaded and the caller will call ResourceLoaded next.
-  virtual void FirstFrameLoaded(bool aResourceFullyLoaded) MOZ_FINAL MOZ_OVERRIDE;
-
-  // Called by the video decoder object, on the main thread,
-  // when the resource has completed downloading.
-  virtual void ResourceLoaded() MOZ_FINAL MOZ_OVERRIDE;
+  // Called by the decoder object, on the main thread,
+  // when it has read the first frame of the video or audio.
+  virtual void FirstFrameLoaded() MOZ_FINAL MOZ_OVERRIDE;
 
   // Called by the video decoder object, on the main thread,
   // when the resource has a network error during loading.
@@ -210,6 +204,9 @@ public:
   // ongoing.
   virtual void DownloadResumed(bool aForceNetworkLoading = false) MOZ_FINAL MOZ_OVERRIDE;
 
+  // Called to indicate the download is progressing.
+  virtual void DownloadProgressed() MOZ_FINAL MOZ_OVERRIDE;
+
   // Called by the media decoder to indicate that the download has stalled
   // (no data has arrived for a while).
   virtual void DownloadStalled() MOZ_FINAL MOZ_OVERRIDE;
@@ -237,10 +234,6 @@ public:
   // decide whether to set the ready state to HAVE_CURRENT_DATA,
   // HAVE_FUTURE_DATA or HAVE_ENOUGH_DATA.
   virtual void UpdateReadyStateForData(MediaDecoderOwner::NextFrameStatus aNextFrame) MOZ_FINAL MOZ_OVERRIDE;
-
-  // Use this method to change the mReadyState member, so required
-  // events can be fired.
-  void ChangeReadyState(nsMediaReadyState aState);
 
   // Return true if we can activate autoplay assuming enough data has arrived.
   bool CanActivateAutoplay();
@@ -363,10 +356,16 @@ public:
 
   // XPCOM GetCurrentSrc() is OK
 
-  // XPCOM GetCrossorigin() is OK
-  void SetCrossOrigin(const nsAString& aValue, ErrorResult& aRv)
+  void GetCrossOrigin(nsAString& aResult)
   {
-    SetHTMLAttr(nsGkAtoms::crossorigin, aValue, aRv);
+    // Null for both missing and invalid defaults is ok, since we
+    // always parse to an enum value, so we don't need an invalid
+    // default, and we _want_ the missing default to be null.
+    GetEnumAttr(nsGkAtoms::crossorigin, nullptr, aResult);
+  }
+  void SetCrossOrigin(const nsAString& aCrossOrigin, ErrorResult& aError)
+  {
+    SetOrRemoveNullableStringAttr(nsGkAtoms::crossorigin, aCrossOrigin, aError);
   }
 
   uint16_t NetworkState() const
@@ -521,6 +520,7 @@ public:
   already_AddRefed<DOMMediaStream> GetMozSrcObject() const;
 
   void SetMozSrcObject(DOMMediaStream& aValue);
+  void SetMozSrcObject(DOMMediaStream* aValue);
 
   bool MozPreservesPitch() const
   {
@@ -534,7 +534,7 @@ public:
 
   already_AddRefed<Promise> SetMediaKeys(MediaKeys* mediaKeys,
                                          ErrorResult& aRv);
-  
+
   MediaWaitingFor WaitingFor() const;
 
   mozilla::dom::EventHandlerNonNull* GetOnencrypted();
@@ -545,6 +545,11 @@ public:
 
 
   bool IsEventAttributeName(nsIAtom* aName) MOZ_OVERRIDE;
+
+  // Returns the principal of the "top level" document; the origin displayed
+  // in the URL bar of the browser window.
+  already_AddRefed<nsIPrincipal> GetTopLevelPrincipal();
+
 #endif // MOZ_EME
 
   bool MozAutoplayEnabled() const
@@ -641,6 +646,17 @@ protected:
     HTMLMediaElement* mOuter;
     nsCOMPtr<nsITimer> mTimer;
   };
+
+  /** Use this method to change the mReadyState member, so required
+   * events can be fired.
+   */
+  void ChangeReadyState(nsMediaReadyState aState);
+
+  /**
+   * Use this method to change the mNetworkState member, so required
+   * actions will be taken during the transition.
+   */
+  void ChangeNetworkState(nsMediaNetworkState aState);
 
   /**
    * These two methods are called by the WakeLockBoolWrapper when the wakelock
@@ -927,7 +943,7 @@ protected:
   // desired, and we'll seek to the sync point (keyframe and/or start of the
   // next block of audio samples) preceeding seek target.
   void Seek(double aTime, SeekTarget::Type aSeekType, ErrorResult& aRv);
-  
+
   // Update the audio channel playing state
   void UpdateAudioChannelPlayingState();
 
@@ -1098,9 +1114,8 @@ protected:
   // Set to false when completed, or not yet started.
   bool mBegun;
 
-  // True when the decoder has loaded enough data to display the
-  // first frame of the content.
-  bool mLoadedFirstFrame;
+  // True if loadeddata has been fired.
+  bool mLoadedDataFired;
 
   // Indicates whether current playback is a result of user action
   // (ie. calling of the Play method), or automatic playback due to
@@ -1221,6 +1236,9 @@ protected:
   // True if the media has an audio track
   bool mHasAudio;
 
+  // True if the media has a video track
+  bool mHasVideo;
+
   // True if the media's channel's download has been suspended.
   bool mDownloadSuspendedByCache;
 
@@ -1248,6 +1266,19 @@ protected:
   nsRefPtr<VideoTrackList> mVideoTrackList;
 
   MediaWaitingFor mWaitingFor;
+
+  enum ElementInTreeState {
+    // The MediaElement is not in the DOM tree now.
+    ELEMENT_NOT_INTREE,
+    // The MediaElement is in the DOM tree now.
+    ELEMENT_INTREE,
+    // The MediaElement is not in the DOM tree now but had been binded to the
+    // tree before.
+    ELEMENT_NOT_INTREE_HAD_INTREE
+  };
+
+  ElementInTreeState mElementInTreeState;
+
 };
 
 } // namespace dom

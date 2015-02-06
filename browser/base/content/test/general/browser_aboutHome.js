@@ -2,6 +2,14 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
+///////////////////
+//
+// Whitelisting this test.
+// As part of bug 1077403, the leaking uncaught rejection should be fixed.
+//
+thisTestLeaksUncaughtRejectionsAndShouldBeFixed("TypeError: Assert is null");
+
+
 XPCOMUtils.defineLazyModuleGetter(this, "Promise",
   "resource://gre/modules/Promise.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Task",
@@ -408,7 +416,18 @@ let gTests = [
     is(searchInput, doc.activeElement, "Search bar should be the active element.");
   })
 },
+{
+  desc: "Sync button should open about:accounts page with `abouthome` entrypoint",
+  setup: function () {},
+  run: Task.async(function* () {
+    let syncButton = gBrowser.selectedTab.linkedBrowser.contentDocument.getElementById("sync");
+    yield EventUtils.synthesizeMouseAtCenter(syncButton, {}, gBrowser.contentWindow);
 
+    yield promiseTabLoadEvent(gBrowser.selectedTab, null, "load");
+    is(gBrowser.currentURI.spec, "about:accounts?entrypoint=abouthome",
+      "Entry point should be `abouthome`.");
+  })
+},
 {
   desc: "Clicking the icon should open the popup",
   setup: function () {},

@@ -23,7 +23,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "ContentClick",
                                   "resource:///modules/ContentClick.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "DirectoryLinksProvider",
-                                  "resource://gre/modules/DirectoryLinksProvider.jsm");
+                                  "resource:///modules/DirectoryLinksProvider.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                   "resource://gre/modules/NetUtil.jsm");
@@ -107,6 +107,11 @@ XPCOMUtils.defineLazyModuleGetter(this, "SignInToWebsiteUX",
 XPCOMUtils.defineLazyModuleGetter(this, "ContentSearch",
                                   "resource:///modules/ContentSearch.jsm");
 
+#ifdef E10S_TESTING_ONLY
+XPCOMUtils.defineLazyModuleGetter(this, "UpdateChannel",
+                                  "resource://gre/modules/UpdateChannel.jsm");
+#endif
+
 XPCOMUtils.defineLazyGetter(this, "ShellService", function() {
   try {
     return Cc["@mozilla.org/browser/shell-service;1"].
@@ -119,6 +124,9 @@ XPCOMUtils.defineLazyGetter(this, "ShellService", function() {
 
 XPCOMUtils.defineLazyModuleGetter(this, "FormValidationHandler",
                                   "resource:///modules/FormValidationHandler.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "WebChannel",
+                                  "resource://gre/modules/WebChannel.jsm");
 
 const PREF_PLUGINS_NOTIFYUSER = "plugins.update.notifyUser";
 const PREF_PLUGINS_UPDATEURL  = "plugins.update.url";
@@ -515,13 +523,11 @@ BrowserGlue.prototype = {
     NewTabUtils.init();
     DirectoryLinksProvider.init();
     NewTabUtils.links.addProvider(DirectoryLinksProvider);
-    BrowserNewTabPreloader.init();
 #ifdef NIGHTLY_BUILD
     if (Services.prefs.getBoolPref("dom.identity.enabled")) {
       SignInToWebsiteUX.init();
     }
 #endif
-    PdfJs.init();
 #ifdef NIGHTLY_BUILD
     ShumwayUtils.init();
 #endif
@@ -647,8 +653,8 @@ BrowserGlue.prototype = {
     let message = resetBundle.formatStringFromName("resetUnusedProfile.message", [productName], 1);
     let buttons = [
       {
-        label:     resetBundle.formatStringFromName("resetProfile.resetButton.label", [productName], 1),
-        accessKey: resetBundle.GetStringFromName("resetProfile.resetButton.accesskey"),
+        label:     resetBundle.formatStringFromName("refreshProfile.resetButton.label", [productName], 1),
+        accessKey: resetBundle.GetStringFromName("refreshProfile.resetButton.accesskey"),
         callback: function () {
           ResetProfile.openConfirmationDialog(win);
         }
@@ -679,6 +685,19 @@ BrowserGlue.prototype = {
 
   // the first browser window has finished initializing
   _onFirstWindowLoaded: function BG__onFirstWindowLoaded(aWindow) {
+    // Initialize PdfJs when running in-process and remote. This only
+    // happens once since PdfJs registers global hooks. If the PdfJs
+    // extension is installed the init method below will be overridden
+    // leaving initialization to the extension.
+    // parent only: configure default prefs, set up pref observers, register
+    // pdf content handler, and initializes parent side message manager
+    // shim for privileged api access.
+    PdfJs.init(true);
+    // child only: similar to the call above for parent - register content
+    // handler and init message manager child shim for privileged api access.
+    // With older versions of the extension installed, this load will fail
+    // passively.
+    aWindow.messageManager.loadFrameScript("resource://pdf.js/pdfjschildbootstrap.js", true);
 #ifdef XP_WIN
     // For windows seven, initialize the jump list module.
     const WINTASKBAR_CONTRACTID = "@mozilla.org/windows-taskbar;1";
@@ -689,6 +708,21 @@ BrowserGlue.prototype = {
       temp.WinTaskbarJumpList.startup();
     }
 #endif
+
+    // A channel for "remote troubleshooting" code...
+    let channel = new WebChannel("remote-troubleshooting", "remote-troubleshooting");
+    channel.listen((id, data, target) => {
+      if (data.command == "request") {
+        let {Troubleshoot} = Cu.import("resource://gre/modules/Troubleshoot.jsm", {});
+        Troubleshoot.snapshot(data => {
+          // for privacy we remove crash IDs and all preferences (but bug 1091944
+          // exists to expose prefs once we are confident of privacy implications)
+          delete data.crashes;
+          delete data.modifiedPreferences;
+          channel.send(data, target);
+        });
+      }
+    });
 
     this._trackSlowStartup();
 
@@ -741,6 +775,10 @@ BrowserGlue.prototype = {
 
   // All initial windows have opened.
   _onWindowsRestored: function BG__onWindowsRestored() {
+#ifdef MOZ_DEV_EDITION
+    this._createExtraDefaultProfile();
+#endif
+
     // Show update notification, if needed.
     if (Services.prefs.prefHasUserValue("app.update.postupdate"))
       this._showUpdateNotification();
@@ -804,7 +842,44 @@ BrowserGlue.prototype = {
         }.bind(this), Ci.nsIThread.DISPATCH_NORMAL);
       }
     }
+
+#ifdef E10S_TESTING_ONLY
+    E10SUINotification.checkStatus();
+#endif
   },
+
+#ifdef MOZ_DEV_EDITION
+  _createExtraDefaultProfile: function () {
+    // If Developer Edition is the only installed Firefox version and no other
+    // profiles are present, create a second one for use by other versions.
+    // This helps Firefox versions earlier than 35 avoid accidentally using the
+    // unsuitable Developer Edition profile.
+    let profileService = Cc["@mozilla.org/toolkit/profile-service;1"]
+                         .getService(Ci.nsIToolkitProfileService);
+    let profileCount = profileService.profileCount;
+    if (profileCount == 1 && profileService.selectedProfile.name != "default") {
+      let newProfile;
+      try {
+        newProfile = profileService.createProfile(null, "default");
+        profileService.defaultProfile = newProfile;
+        profileService.flush();
+      } catch (e) {
+        Cu.reportError("Could not create profile 'default': " + e);
+      }
+      if (newProfile) {
+        // We don't want a default profile with Developer Edition settings, an
+        // empty profile directory will do. The profile service of the other
+        // Firefox will populate it with its own stuff.
+        let newProfilePath = newProfile.rootDir.path;
+        OS.File.removeDir(newProfilePath).then(() => {
+          return OS.File.makeDir(newProfilePath);
+        }).then(null, e => {
+          Cu.reportError("Could not empty profile 'default': " + e);
+        });
+      }
+    }
+  },
+#endif
 
   _onQuitRequest: function BG__onQuitRequest(aCancelQuit, aQuitType) {
     // If user has already dismissed quit request, then do nothing
@@ -1472,14 +1547,6 @@ BrowserGlue.prototype = {
           xulStore.setValue(BROWSER_DOCURL, "nav-bar", "currentset", currentset);
         }
       }
-    }
-
-    if (currentUIVersion < 13) {
-      try {
-        if (Services.prefs.getBoolPref("plugins.hide_infobar_for_missing_plugin"))
-          Services.prefs.setBoolPref("plugins.notifyMissingFlash", false);
-      }
-      catch (ex) {}
     }
 
     if (currentUIVersion < 14) {
@@ -2198,6 +2265,229 @@ let DefaultBrowserCheck = {
     }
   },
 };
+
+#ifdef E10S_TESTING_ONLY
+let E10SUINotification = {
+  // Increase this number each time we want to roll out an
+  // e10s testing period to Nightly users.
+  CURRENT_NOTICE_COUNT: 1,
+  CURRENT_PROMPT_PREF: "browser.displayedE10SPrompt.1",
+  PREVIOUS_PROMPT_PREF: "browser.displayedE10SPrompt",
+
+  checkStatus: function() {
+    let skipE10sChecks = false;
+    try {
+      skipE10sChecks = (UpdateChannel.get() != "nightly") ||
+                       Services.prefs.getBoolPref("browser.tabs.remote.autostart.disabled-because-using-a11y");
+    } catch(e) {}
+
+    if (skipE10sChecks) {
+      return;
+    }
+
+    if (Services.appinfo.browserTabsRemoteAutostart) {
+      let notice = 0;
+      try {
+        notice = Services.prefs.getIntPref("browser.displayedE10SNotice");
+      } catch(e) {}
+      let activationNoticeShown = notice >= this.CURRENT_NOTICE_COUNT;
+
+      if (!activationNoticeShown) {
+        this._showE10sActivatedNotice();
+      }
+
+      // e10s doesn't work with accessibility, so we prompt to disable
+      // e10s if a11y is enabled, now or in the future.
+      Services.obs.addObserver(this, "a11y-init-or-shutdown", true);
+      if (Services.appinfo.accessibilityEnabled) {
+        this._showE10sAccessibilityWarning();
+      }
+    } else {
+      let displayFeedbackRequest = false;
+      try {
+        displayFeedbackRequest = Services.prefs.getBoolPref("browser.requestE10sFeedback");
+      } catch (e) {}
+
+      if (displayFeedbackRequest) {
+        let win = RecentWindow.getMostRecentBrowserWindow();
+        if (!win) {
+          return;
+        }
+
+        Services.prefs.clearUserPref("browser.requestE10sFeedback");
+        let url = Services.urlFormatter.formatURLPref("app.feedback.baseURL");
+        url += "?utm_source=tab&utm_campaign=e10sfeedback";
+
+        win.openUILinkIn(url, "tab");
+        return;
+      }
+
+      let e10sPromptShownCount = 0;
+      try {
+        e10sPromptShownCount = Services.prefs.getIntPref(this.CURRENT_PROMPT_PREF);
+      } catch(e) {}
+
+      let isHardwareAccelerated = true;
+      try {
+        let win = RecentWindow.getMostRecentBrowserWindow();
+        let winutils = win.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
+        isHardwareAccelerated = winutils.layerManagerType != "Basic";
+      } catch (e) {}
+
+      if (!Services.appinfo.inSafeMode &&
+          !Services.appinfo.accessibilityEnabled &&
+          !Services.appinfo.keyboardMayHaveIME &&
+          isHardwareAccelerated &&
+          e10sPromptShownCount < 5) {
+        Services.tm.mainThread.dispatch(() => {
+          try {
+            this._showE10SPrompt();
+            Services.prefs.setIntPref(this.CURRENT_PROMPT_PREF, e10sPromptShownCount + 1);
+            Services.prefs.clearUserPref(this.PREVIOUS_PROMPT_PREF);
+          } catch (ex) {
+            Cu.reportError("Failed to show e10s prompt: " + ex);
+          }
+        }, Ci.nsIThread.DISPATCH_NORMAL);
+      }
+    }
+  },
+
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference]),
+
+  observe: function(subject, topic, data) {
+    if (topic == "a11y-init-or-shutdown" && data == "1") {
+      this._showE10sAccessibilityWarning();
+    }
+  },
+
+  _showE10sActivatedNotice: function() {
+    let win = RecentWindow.getMostRecentBrowserWindow();
+    if (!win)
+      return;
+
+    Services.prefs.setIntPref("browser.displayedE10SNotice", this.CURRENT_NOTICE_COUNT);
+
+    let nb = win.document.getElementById("high-priority-global-notificationbox");
+    let message = "Thanks for helping to test multiprocess Firefox (e10s). Some functions might not work yet."
+    let buttons = [
+      {
+        label: "Learn More",
+        accessKey: "L",
+        callback: function () {
+          win.openUILinkIn("https://wiki.mozilla.org/Electrolysis", "tab");
+        }
+      }
+    ];
+    nb.appendNotification(message, "e10s-activated-noticed",
+                          null, nb.PRIORITY_WARNING_MEDIUM, buttons);
+
+  },
+
+  _showE10SPrompt: function BG__showE10SPrompt() {
+    let win = RecentWindow.getMostRecentBrowserWindow();
+    if (!win)
+      return;
+
+    let browser = win.gBrowser.selectedBrowser;
+
+    let promptMessage = "Would you like to help us test multiprocess Nightly (e10s)? You can also enable e10s in Nightly preferences. Notable fixes:";
+    let mainAction = {
+      label: "Enable and Restart",
+      accessKey: "E",
+      callback: function () {
+        Services.prefs.setBoolPref("browser.tabs.remote.autostart", true);
+        Services.prefs.setBoolPref("browser.enabledE10SFromPrompt", true);
+        // Restart the app
+        let cancelQuit = Cc["@mozilla.org/supports-PRBool;1"].createInstance(Ci.nsISupportsPRBool);
+        Services.obs.notifyObservers(cancelQuit, "quit-application-requested", "restart");
+        if (cancelQuit.data)
+          return; // somebody canceled our quit request
+        Services.startup.quit(Services.startup.eAttemptQuit | Services.startup.eRestart);
+      }
+    };
+    let secondaryActions = [
+      {
+        label: "No thanks",
+        accessKey: "N",
+        callback: function () {
+          Services.prefs.setIntPref(E10SUINotification.CURRENT_PROMPT_PREF, 5);
+        }
+      }
+    ];
+    let options = {
+      popupIconURL: "chrome://browser/skin/e10s-64@2x.png",
+      learnMoreURL: "https://wiki.mozilla.org/Electrolysis",
+      persistWhileVisible: true
+    };
+
+    win.PopupNotifications.show(browser, "enable-e10s", promptMessage, null, mainAction, secondaryActions, options);
+
+    let highlights = [
+      "Less crashing!",
+      "Improved add-on compatibility and DevTools",
+      "PDF.js, Web Console, Spellchecking, WebRTC now work"
+    ];
+
+    let doorhangerExtraContent = win.document.getElementById("enable-e10s-notification")
+                                             .querySelector("popupnotificationcontent");
+    for (let highlight of highlights) {
+      let highlightLabel = win.document.createElement("label");
+      highlightLabel.setAttribute("value", highlight);
+      doorhangerExtraContent.appendChild(highlightLabel);
+    }
+  },
+
+  _warnedAboutAccessibility: false,
+
+  _showE10sAccessibilityWarning: function() {
+    Services.prefs.setBoolPref("browser.tabs.remote.autostart.disabled-because-using-a11y", true);
+
+    if (this._warnedAboutAccessibility) {
+      return;
+    }
+    this._warnedAboutAccessibility = true;
+
+    let win = RecentWindow.getMostRecentBrowserWindow();
+    if (!win) {
+      // Just restart immediately.
+      Services.startup.quit(Services.startup.eAttemptQuit | Services.startup.eRestart);
+      return;
+    }
+
+    let browser = win.gBrowser.selectedBrowser;
+
+    let promptMessage = "Multiprocess Nightly (e10s) does not yet support accessibility features. Multiprocessing will be disabled if you restart Firefox. Would you like to restart?";
+    let mainAction = {
+      label: "Disable and Restart",
+      accessKey: "R",
+      callback: function () {
+        // Restart the app
+        let cancelQuit = Cc["@mozilla.org/supports-PRBool;1"].createInstance(Ci.nsISupportsPRBool);
+        Services.obs.notifyObservers(cancelQuit, "quit-application-requested", "restart");
+        if (cancelQuit.data)
+          return; // somebody canceled our quit request
+        Services.startup.quit(Services.startup.eAttemptQuit | Services.startup.eRestart);
+      }
+    };
+    let secondaryActions = [
+      {
+        label: "Don't Disable",
+        accessKey: "D",
+        callback: function () {
+          Services.prefs.setBoolPref("browser.tabs.remote.autostart.disabled-because-using-a11y", false);
+        }
+      }
+    ];
+    let options = {
+      popupIconURL: "chrome://browser/skin/e10s-64@2x.png",
+      learnMoreURL: "https://wiki.mozilla.org/Electrolysis",
+      persistWhileVisible: true
+    };
+
+    win.PopupNotifications.show(browser, "a11y_enabled_with_e10s", promptMessage, null, mainAction, secondaryActions, options);
+  },
+};
+#endif
 
 var components = [BrowserGlue, ContentPermissionPrompt];
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory(components);

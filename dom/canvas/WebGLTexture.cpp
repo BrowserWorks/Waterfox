@@ -23,7 +23,7 @@ WebGLTexture::WrapObject(JSContext *cx) {
 }
 
 WebGLTexture::WebGLTexture(WebGLContext *context)
-    : WebGLBindableName()
+    : WebGLBindableName<TexTarget>()
     , WebGLContextBoundObject(context)
     , mMinFilter(LOCAL_GL_NEAREST_MIPMAP_LINEAR)
     , mMagFilter(LOCAL_GL_LINEAR)
@@ -32,9 +32,9 @@ WebGLTexture::WebGLTexture(WebGLContext *context)
     , mFacesCount(0)
     , mMaxLevelWithCustomImages(0)
     , mHaveGeneratedMipmap(false)
+    , mImmutable(false)
     , mFakeBlackStatus(WebGLTextureFakeBlackStatus::IncompleteTexture)
 {
-    SetIsDOMBinding();
     mContext->MakeContextCurrent();
     mContext->gl->fGenTextures(1, &mGLName);
     mContext->mTextures.insertBack(this);
@@ -52,7 +52,7 @@ int64_t
 WebGLTexture::ImageInfo::MemoryUsage() const {
     if (mImageDataStatus == WebGLImageDataStatus::NoImageData)
         return 0;
-    int64_t bitsPerTexel = WebGLContext::GetBitsPerTexel(mWebGLFormat, mWebGLType);
+    int64_t bitsPerTexel = GetBitsPerTexel(mEffectiveInternalFormat);
     return int64_t(mWidth) * int64_t(mHeight) * bitsPerTexel/8;
 }
 
@@ -76,7 +76,7 @@ WebGLTexture::MemoryUsage() const {
 }
 
 bool
-WebGLTexture::DoesTexture2DMipmapHaveAllLevelsConsistentlyDefined(GLenum texImageTarget) const {
+WebGLTexture::DoesTexture2DMipmapHaveAllLevelsConsistentlyDefined(TexImageTarget texImageTarget) const {
     if (mHaveGeneratedMipmap)
         return true;
 
@@ -103,15 +103,15 @@ WebGLTexture::DoesTexture2DMipmapHaveAllLevelsConsistentlyDefined(GLenum texImag
 }
 
 void
-WebGLTexture::Bind(GLenum aTarget) {
+WebGLTexture::Bind(TexTarget aTexTarget) {
     // this function should only be called by bindTexture().
     // it assumes that the GL context is already current.
 
     bool firstTimeThisTextureIsBound = !HasEverBeenBound();
 
     if (firstTimeThisTextureIsBound) {
-        BindTo(aTarget);
-    } else if (aTarget != Target()) {
+        BindTo(aTexTarget);
+    } else if (aTexTarget != Target()) {
         mContext->ErrorInvalidOperation("bindTexture: this texture has already been bound to a different target");
         // very important to return here before modifying texture state! This was the place when I lost a whole day figuring
         // very strange 'invalid write' crashes.
@@ -119,12 +119,11 @@ WebGLTexture::Bind(GLenum aTarget) {
     }
 
     GLuint name = GLName();
-    GLenum target = Target();
 
-    mContext->gl->fBindTexture(target, name);
+    mContext->gl->fBindTexture(aTexTarget.get(), name);
 
     if (firstTimeThisTextureIsBound) {
-        mFacesCount = (mTarget == LOCAL_GL_TEXTURE_2D) ? 1 : 6;
+        mFacesCount = (aTexTarget == LOCAL_GL_TEXTURE_2D) ? 1 : 6;
         EnsureMaxLevelWithCustomImagesAtLeast(0);
         SetFakeBlackStatus(WebGLTextureFakeBlackStatus::Unknown);
 
@@ -132,27 +131,22 @@ WebGLTexture::Bind(GLenum aTarget) {
         // present in GLES 2, but is present in GL and it seems as if for cube maps
         // we need to set it to GL_CLAMP_TO_EDGE to get the expected GLES behavior.
         if (mTarget == LOCAL_GL_TEXTURE_CUBE_MAP && !mContext->gl->IsGLES())
-            mContext->gl->fTexParameteri(mTarget, LOCAL_GL_TEXTURE_WRAP_R, LOCAL_GL_CLAMP_TO_EDGE);
+            mContext->gl->fTexParameteri(aTexTarget.get(), LOCAL_GL_TEXTURE_WRAP_R, LOCAL_GL_CLAMP_TO_EDGE);
     }
 }
 
 void
-WebGLTexture::SetImageInfo(GLenum aTarget, GLint aLevel,
-                  GLsizei aWidth, GLsizei aHeight,
-                  GLenum aFormat, GLenum aType, WebGLImageDataStatus aStatus)
+WebGLTexture::SetImageInfo(TexImageTarget aTexImageTarget, GLint aLevel,
+                           GLsizei aWidth, GLsizei aHeight,
+                           TexInternalFormat aEffectiveInternalFormat, WebGLImageDataStatus aStatus)
 {
-    // TODO(djg): I suspected the following ASSERT and check are
-    //            trying to express more than they're saying, probably
-    //            to do with cubemap targets. We should do this
-    //            properly. https://bugzilla.mozilla.org/show_bug.cgi?id=1006908
-    MOZ_ASSERT((aTarget == LOCAL_GL_TEXTURE_2D) == (mTarget == LOCAL_GL_TEXTURE_2D));
-    if ((aTarget == LOCAL_GL_TEXTURE_2D) != (mTarget == LOCAL_GL_TEXTURE_2D)) {
+    MOZ_ASSERT(TexImageTargetToTexTarget(aTexImageTarget) == mTarget);
+    if (TexImageTargetToTexTarget(aTexImageTarget) != mTarget)
         return;
-    }
 
     EnsureMaxLevelWithCustomImagesAtLeast(aLevel);
 
-    ImageInfoAt(aTarget, aLevel) = ImageInfo(aWidth, aHeight, aFormat, aType, aStatus);
+    ImageInfoAt(aTexImageTarget, aLevel) = ImageInfo(aWidth, aHeight, aEffectiveInternalFormat, aStatus);
 
     if (aLevel > 0)
         SetCustomMipmap();
@@ -232,21 +226,12 @@ WebGLTexture::IsCubeComplete() const {
     return AreAllLevel0ImageInfosEqual();
 }
 
-static GLenum
-GLCubeMapFaceById(int id)
-{
-    GLenum result = LOCAL_GL_TEXTURE_CUBE_MAP_POSITIVE_X + id;
-    MOZ_ASSERT(result >= LOCAL_GL_TEXTURE_CUBE_MAP_POSITIVE_X &&
-               result <= LOCAL_GL_TEXTURE_CUBE_MAP_NEGATIVE_Z);
-    return result;
-}
-
 bool
 WebGLTexture::IsMipmapCubeComplete() const {
     if (!IsCubeComplete()) // in particular, this checks that this is a cube map
         return false;
     for (int i = 0; i < 6; i++) {
-        GLenum face = GLCubeMapFaceById(i);
+        const TexImageTarget face = TexImageTargetForTargetAndFace(LOCAL_GL_TEXTURE_CUBE_MAP, i);
         if (!DoesTexture2DMipmapHaveAllLevelsConsistentlyDefined(face))
             return false;
     }
@@ -284,7 +269,7 @@ WebGLTexture::ResolvedFakeBlackStatus() {
                     ("%s is a 2D texture, with a minification filter requiring a mipmap, "
                       "and is not mipmap complete (as defined in section 3.7.10).", msg_rendering_as_black);
                 mFakeBlackStatus = WebGLTextureFakeBlackStatus::IncompleteTexture;
-            } else if (!ImageInfoAt(mTarget, 0).IsPowerOfTwo()) {
+            } else if (!ImageInfoBase().IsPowerOfTwo()) {
                 mContext->GenerateWarning
                     ("%s is a 2D texture, with a minification filter requiring a mipmap, "
                       "and either its width or height is not a power of two.", msg_rendering_as_black);
@@ -293,12 +278,12 @@ WebGLTexture::ResolvedFakeBlackStatus() {
         }
         else // no mipmap required
         {
-            if (!ImageInfoAt(mTarget, 0).IsPositive()) {
+            if (!ImageInfoBase().IsPositive()) {
                 mContext->GenerateWarning
                     ("%s is a 2D texture and its width or height is equal to zero.",
                       msg_rendering_as_black);
                 mFakeBlackStatus = WebGLTextureFakeBlackStatus::IncompleteTexture;
-            } else if (!AreBothWrapModesClampToEdge() && !ImageInfoAt(mTarget, 0).IsPowerOfTwo()) {
+            } else if (!AreBothWrapModesClampToEdge() && !ImageInfoBase().IsPowerOfTwo()) {
                 mContext->GenerateWarning
                     ("%s is a 2D texture, with a minification filter not requiring a mipmap, "
                       "with its width or height not a power of two, and with a wrap mode "
@@ -343,7 +328,9 @@ WebGLTexture::ResolvedFakeBlackStatus() {
         }
     }
 
-    if (ImageInfoBase().mWebGLType == LOCAL_GL_FLOAT &&
+    TexType type = TypeFromInternalFormat(ImageInfoBase().mEffectiveInternalFormat);
+
+    if (type == LOCAL_GL_FLOAT &&
         !Context()->IsExtensionEnabled(WebGLExtensionID::OES_texture_float_linear))
     {
         if (mMinFilter == LOCAL_GL_LINEAR ||
@@ -363,7 +350,7 @@ WebGLTexture::ResolvedFakeBlackStatus() {
                                       "Try enabling the OES_texture_float_linear extension if supported.", msg_rendering_as_black);
             mFakeBlackStatus = WebGLTextureFakeBlackStatus::IncompleteTexture;
         }
-    } else if (ImageInfoBase().mWebGLType == LOCAL_GL_HALF_FLOAT_OES &&
+    } else if (type == LOCAL_GL_HALF_FLOAT &&
                !Context()->IsExtensionEnabled(WebGLExtensionID::OES_texture_half_float_linear))
     {
         if (mMinFilter == LOCAL_GL_LINEAR ||
@@ -416,9 +403,7 @@ WebGLTexture::ResolvedFakeBlackStatus() {
             // glTexImage2D is able to upload data to images.
             for (size_t level = 0; level <= mMaxLevelWithCustomImages; ++level) {
                 for (size_t face = 0; face < mFacesCount; ++face) {
-                    GLenum imageTarget = mTarget == LOCAL_GL_TEXTURE_2D
-                                         ? LOCAL_GL_TEXTURE_2D
-                                         : LOCAL_GL_TEXTURE_CUBE_MAP_POSITIVE_X + face;
+                    TexImageTarget imageTarget = TexImageTargetForTargetAndFace(mTarget, face);
                     const ImageInfo& imageInfo = ImageInfoAt(imageTarget, level);
                     if (imageInfo.mImageDataStatus == WebGLImageDataStatus::UninitializedImageData) {
                         DoDeferredImageInitialization(imageTarget, level);
@@ -466,8 +451,8 @@ ClearByMask(WebGLContext* context, GLbitfield mask)
 // `mask` from glClear.
 static bool
 ClearWithTempFB(WebGLContext* context, GLuint tex,
-                GLenum texImageTarget, GLint level,
-                GLenum baseInternalFormat,
+                TexImageTarget texImageTarget, GLint level,
+                TexInternalFormat baseInternalFormat,
                 GLsizei width, GLsizei height)
 {
     if (texImageTarget != LOCAL_GL_TEXTURE_2D)
@@ -480,7 +465,7 @@ ClearWithTempFB(WebGLContext* context, GLuint tex,
     gl::ScopedBindFramebuffer autoFB(gl, fb.FB());
     GLbitfield mask = 0;
 
-    switch (baseInternalFormat) {
+    switch (baseInternalFormat.get()) {
     case LOCAL_GL_LUMINANCE:
     case LOCAL_GL_LUMINANCE_ALPHA:
     case LOCAL_GL_ALPHA:
@@ -490,22 +475,22 @@ ClearWithTempFB(WebGLContext* context, GLuint tex,
     case LOCAL_GL_BGRA:
         mask = LOCAL_GL_COLOR_BUFFER_BIT;
         gl->fFramebufferTexture2D(LOCAL_GL_FRAMEBUFFER, LOCAL_GL_COLOR_ATTACHMENT0,
-                                  texImageTarget, tex, level);
+                                  texImageTarget.get(), tex, level);
         break;
 
     case LOCAL_GL_DEPTH_COMPONENT:
         mask = LOCAL_GL_DEPTH_BUFFER_BIT;
         gl->fFramebufferTexture2D(LOCAL_GL_FRAMEBUFFER, LOCAL_GL_DEPTH_ATTACHMENT,
-                                  texImageTarget, tex, level);
+                                  texImageTarget.get(), tex, level);
         break;
 
     case LOCAL_GL_DEPTH_STENCIL:
         mask = LOCAL_GL_DEPTH_BUFFER_BIT |
                LOCAL_GL_STENCIL_BUFFER_BIT;
         gl->fFramebufferTexture2D(LOCAL_GL_FRAMEBUFFER, LOCAL_GL_DEPTH_ATTACHMENT,
-                                  texImageTarget, tex, level);
+                                  texImageTarget.get(), tex, level);
         gl->fFramebufferTexture2D(LOCAL_GL_FRAMEBUFFER, LOCAL_GL_STENCIL_ATTACHMENT,
-                                  texImageTarget, tex, level);
+                                  texImageTarget.get(), tex, level);
         break;
 
     default:
@@ -542,7 +527,7 @@ ClearWithTempFB(WebGLContext* context, GLuint tex,
 
 
 void
-WebGLTexture::DoDeferredImageInitialization(GLenum imageTarget, GLint level)
+WebGLTexture::DoDeferredImageInitialization(TexImageTarget imageTarget, GLint level)
 {
     const ImageInfo& imageInfo = ImageInfoAt(imageTarget, level);
     MOZ_ASSERT(imageInfo.mImageDataStatus == WebGLImageDataStatus::UninitializedImageData);
@@ -550,43 +535,52 @@ WebGLTexture::DoDeferredImageInitialization(GLenum imageTarget, GLint level)
     mContext->MakeContextCurrent();
 
     // Try to clear with glCLear.
-    GLenum format = imageInfo.mWebGLFormat;
-    GLenum type = imageInfo.mWebGLType;
-    WebGLTexelFormat texelformat = GetWebGLTexelFormat(format, type);
 
     bool cleared = ClearWithTempFB(mContext, GLName(),
                                    imageTarget, level,
-                                   format, imageInfo.mHeight, imageInfo.mWidth);
+                                   imageInfo.mEffectiveInternalFormat,
+                                   imageInfo.mHeight, imageInfo.mWidth);
     if (cleared) {
         SetImageDataStatus(imageTarget, level, WebGLImageDataStatus::InitializedImageData);
         return;
     }
 
     // That didn't work. Try uploading zeros then.
-    gl::ScopedBindTexture autoBindTex(mContext->gl, GLName(), mTarget);
+    gl::ScopedBindTexture autoBindTex(mContext->gl, GLName(), mTarget.get());
 
-    uint32_t texelsize = WebGLTexelConversions::TexelBytesForFormat(texelformat);
+    size_t bitspertexel = GetBitsPerTexel(imageInfo.mEffectiveInternalFormat);
+    MOZ_ASSERT((bitspertexel % 8) == 0); // that would only happen for compressed images, which
+                                         // cannot use deferred initialization.
+    size_t bytespertexel = bitspertexel / 8;
     CheckedUint32 checked_byteLength
         = WebGLContext::GetImageSize(
                         imageInfo.mHeight,
                         imageInfo.mWidth,
-                        texelsize,
+                        bytespertexel,
                         mContext->mPixelStoreUnpackAlignment);
     MOZ_ASSERT(checked_byteLength.isValid()); // should have been checked earlier
 
     UniquePtr<uint8_t> zeros((uint8_t*)moz_xcalloc(1, checked_byteLength.value())); // Infallible for now.
 
     gl::GLContext* gl = mContext->gl;
-    GLenum driverType = DriverTypeFromType(gl, type);
     GLenum driverInternalFormat = LOCAL_GL_NONE;
     GLenum driverFormat = LOCAL_GL_NONE;
-    DriverFormatsFromFormatAndType(gl, format, type, &driverInternalFormat, &driverFormat);
+    GLenum driverType = LOCAL_GL_NONE;
+    DriverFormatsFromEffectiveInternalFormat(gl, imageInfo.mEffectiveInternalFormat,
+                                             &driverInternalFormat, &driverFormat, &driverType);
 
     mContext->GetAndFlushUnderlyingGLErrors();
-    gl->fTexImage2D(imageTarget, level, driverInternalFormat,
-                    imageInfo.mWidth, imageInfo.mHeight,
-                    0, driverFormat, driverType,
-                    zeros.get());
+    if (mImmutable) {
+        gl->fTexSubImage2D(imageTarget.get(), level, 0, 0,
+                           imageInfo.mWidth, imageInfo.mHeight,
+                           driverFormat, driverType,
+                           zeros.get());
+    } else {
+        gl->fTexImage2D(imageTarget.get(), level, driverInternalFormat,
+                        imageInfo.mWidth, imageInfo.mHeight,
+                        0, driverFormat, driverType,
+                        zeros.get());
+    }
     GLenum error = mContext->GetAndFlushUnderlyingGLErrors();
     if (error) {
         // Should only be OUT_OF_MEMORY. Anyway, there's no good way to recover from this here.

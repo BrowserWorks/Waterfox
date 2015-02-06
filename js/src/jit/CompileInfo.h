@@ -104,7 +104,7 @@ class InlineScriptTree {
         return children_ != nullptr;
     }
     InlineScriptTree *firstChild() const {
-        JS_ASSERT(hasChildren());
+        MOZ_ASSERT(hasChildren());
         return children_;
     }
 
@@ -112,7 +112,7 @@ class InlineScriptTree {
         return nextCallee_ != nullptr;
     }
     InlineScriptTree *nextCallee() const {
-        JS_ASSERT(hasNextCallee());
+        MOZ_ASSERT(hasNextCallee());
         return nextCallee_;
     }
 
@@ -138,8 +138,8 @@ class BytecodeSite {
     BytecodeSite(InlineScriptTree *tree, jsbytecode *pc)
       : tree_(tree), pc_(pc)
     {
-        JS_ASSERT(tree_ != nullptr);
-        JS_ASSERT(pc_ != nullptr);
+        MOZ_ASSERT(tree_ != nullptr);
+        MOZ_ASSERT(pc_ != nullptr);
     }
 
     bool hasTree() const {
@@ -171,7 +171,7 @@ class CompileInfo
         executionMode_(executionMode), scriptNeedsArgsObj_(scriptNeedsArgsObj),
         inlineScriptTree_(inlineScriptTree)
     {
-        JS_ASSERT_IF(osrPc, JSOp(*osrPc) == JSOP_LOOPENTRY);
+        MOZ_ASSERT_IF(osrPc, JSOp(*osrPc) == JSOP_LOOPENTRY);
 
         // The function here can flow in from anywhere so look up the canonical
         // function to ensure that we do not try to embed a nursery pointer in
@@ -179,7 +179,7 @@ class CompileInfo
         // guaranteed to be non-lazy. Hence, don't access its script!
         if (fun_) {
             fun_ = fun_->nonLazyScript()->functionNonDelazifying();
-            JS_ASSERT(fun_->isTenured());
+            MOZ_ASSERT(fun_->isTenured());
         }
 
         osrStaticScope_ = osrPc ? script->getStaticScope(osrPc) : nullptr;
@@ -187,8 +187,9 @@ class CompileInfo
         nimplicit_ = StartArgSlot(script)                   /* scope chain and argument obj */
                    + (fun ? 1 : 0);                         /* this */
         nargs_ = fun ? fun->nargs() : 0;
-        nfixedvars_ = script->nfixedvars();
+        nbodyfixed_ = script->nbodyfixed();
         nlocals_ = script->nfixed();
+        fixedLexicalBegin_ = script->fixedLexicalBegin();
         nstack_ = script->nslots() - script->nfixed();
         nslots_ = nimplicit_ + nargs_ + nlocals_ + nstack_;
     }
@@ -200,10 +201,11 @@ class CompileInfo
     {
         nimplicit_ = 0;
         nargs_ = 0;
-        nfixedvars_ = 0;
+        nbodyfixed_ = 0;
         nlocals_ = nlocals;
         nstack_ = 1;  /* For FunctionCompiler::pushPhiInput/popPhiOutput */
         nslots_ = nlocals_ + nstack_;
+        fixedLexicalBegin_ = nlocals;
     }
 
     JSScript *script() const {
@@ -229,7 +231,7 @@ class CompileInfo
     }
 
     bool hasOsrAt(jsbytecode *pc) {
-        JS_ASSERT(JSOp(*pc) == JSOP_LOOPENTRY);
+        MOZ_ASSERT(JSOp(*pc) == JSOP_LOOPENTRY);
         return pc == osrPc();
     }
 
@@ -291,10 +293,10 @@ class CompileInfo
     unsigned nargs() const {
         return nargs_;
     }
-    // Number of slots needed for "fixed vars".  Note that this is only non-zero
-    // for function code.
-    unsigned nfixedvars() const {
-        return nfixedvars_;
+    // Number of slots needed for fixed body-level bindings.  Note that this
+    // is only non-zero for function code.
+    unsigned nbodyfixed() const {
+        return nbodyfixed_;
     }
     // Number of slots needed for all local variables.  This includes "fixed
     // vars" (see above) and also block-scoped locals.
@@ -304,22 +306,26 @@ class CompileInfo
     unsigned ninvoke() const {
         return nslots_ - nstack_;
     }
+    // The slot number at which fixed lexicals begin.
+    unsigned fixedLexicalBegin() const {
+        return fixedLexicalBegin_;
+    }
 
     uint32_t scopeChainSlot() const {
-        JS_ASSERT(script());
+        MOZ_ASSERT(script());
         return 0;
     }
     uint32_t returnValueSlot() const {
-        JS_ASSERT(script());
+        MOZ_ASSERT(script());
         return 1;
     }
     uint32_t argsObjSlot() const {
-        JS_ASSERT(hasArguments());
+        MOZ_ASSERT(hasArguments());
         return 2;
     }
     uint32_t thisSlot() const {
-        JS_ASSERT(funMaybeLazy());
-        JS_ASSERT(nimplicit_ > 0);
+        MOZ_ASSERT(funMaybeLazy());
+        MOZ_ASSERT(nimplicit_ > 0);
         return nimplicit_ - 1;
     }
     uint32_t firstArgSlot() const {
@@ -328,14 +334,14 @@ class CompileInfo
     uint32_t argSlotUnchecked(uint32_t i) const {
         // During initialization, some routines need to get at arg
         // slots regardless of how regular argument access is done.
-        JS_ASSERT(i < nargs_);
+        MOZ_ASSERT(i < nargs_);
         return nimplicit_ + i;
     }
     uint32_t argSlot(uint32_t i) const {
         // This should only be accessed when compiling functions for
         // which argument accesses don't need to go through the
         // argument object.
-        JS_ASSERT(!argsObjAliasesFormals());
+        MOZ_ASSERT(!argsObjAliasesFormals());
         return argSlotUnchecked(i);
     }
     uint32_t firstLocalSlot() const {
@@ -352,21 +358,21 @@ class CompileInfo
     }
 
     uint32_t startArgSlot() const {
-        JS_ASSERT(script());
+        MOZ_ASSERT(script());
         return StartArgSlot(script());
     }
     uint32_t endArgSlot() const {
-        JS_ASSERT(script());
+        MOZ_ASSERT(script());
         return CountArgSlots(script(), funMaybeLazy());
     }
 
     uint32_t totalSlots() const {
-        JS_ASSERT(script() && funMaybeLazy());
+        MOZ_ASSERT(script() && funMaybeLazy());
         return nimplicit() + nargs() + nlocals();
     }
 
     bool isSlotAliased(uint32_t index, NestedScopeObject *staticScope) const {
-        JS_ASSERT(index >= startArgSlot());
+        MOZ_ASSERT(index >= startArgSlot());
 
         if (funMaybeLazy() && index == thisSlot())
             return false;
@@ -377,9 +383,9 @@ class CompileInfo
 
         uint32_t local = index - firstLocalSlot();
         if (local < nlocals()) {
-            // First, check if this local is a var.
-            if (local < nfixedvars())
-                return script()->varIsAliased(local);
+            // First, check if this local is body-level.
+            if (local < nbodyfixed())
+                return script()->bodyLevelLocalIsAliased(local);
 
             // Otherwise, it might be part of a block scope.
             for (; staticScope; staticScope = staticScope->enclosingNestedScope()) {
@@ -397,7 +403,7 @@ class CompileInfo
             return false;
         }
 
-        JS_ASSERT(index >= firstStackSlot());
+        MOZ_ASSERT(index >= firstStackSlot());
         return false;
     }
 
@@ -438,6 +444,16 @@ class CompileInfo
     // would have to be executed and that they cannot be removed even if they
     // are unused.
     bool isObservableSlot(uint32_t slot) const {
+        if (isObservableFrameSlot(slot))
+            return true;
+
+        if (isObservableArgumentSlot(slot))
+            return true;
+
+        return false;
+    }
+
+    bool isObservableFrameSlot(uint32_t slot) const {
         if (!funMaybeLazy())
             return false;
 
@@ -452,6 +468,13 @@ class CompileInfo
         if (hasArguments() && (slot == scopeChainSlot() || slot == argsObjSlot()))
             return true;
 
+        return false;
+    }
+
+    bool isObservableArgumentSlot(uint32_t slot) const {
+        if (!funMaybeLazy())
+            return false;
+
         // Function.arguments can be used to access all arguments in non-strict
         // scripts, so we can't optimize out any arguments.
         if ((hasArguments() || !script()->strict()) &&
@@ -463,13 +486,37 @@ class CompileInfo
         return false;
     }
 
+    // Returns true if a slot can be recovered before or during a bailout.  A
+    // definition which can be observed and recovered, implies that this
+    // definition can be optimized away as long as we can compute its values.
+    bool isRecoverableOperand(uint32_t slot) const {
+        // If this script is not a function, then none of the slots are
+        // obserbavle.  If it this |slot| is not observable, thus we can always
+        // recover it.
+        if (!funMaybeLazy())
+            return true;
+
+        // The |this| can be recovered.
+        if (slot == thisSlot())
+            return true;
+
+        if (isObservableFrameSlot(slot))
+            return false;
+
+        if (needsArgsObj() && isObservableArgumentSlot(slot))
+            return false;
+
+        return true;
+    }
+
   private:
     unsigned nimplicit_;
     unsigned nargs_;
-    unsigned nfixedvars_;
+    unsigned nbodyfixed_;
     unsigned nlocals_;
     unsigned nstack_;
     unsigned nslots_;
+    unsigned fixedLexicalBegin_;
     JSScript *script_;
     JSFunction *fun_;
     jsbytecode *osrPc_;

@@ -9,7 +9,7 @@
 #include "mozilla/MathAlgorithms.h"
 
 #include "jit/BitSet.h"
-#include "jit/IonSpewer.h"
+#include "jit/JitSpewer.h"
 #include "jit/LIR.h"
 
 using namespace js;
@@ -30,7 +30,7 @@ SafepointWriter::init(TempAllocator &alloc, uint32_t slotCount)
 uint32_t
 SafepointWriter::startEntry()
 {
-    IonSpew(IonSpew_Safepoints, "Encoding safepoint (position %d):", stream_.length());
+    JitSpew(JitSpew_Safepoints, "Encoding safepoint (position %d):", stream_.length());
     return uint32_t(stream_.length());
 }
 
@@ -65,7 +65,7 @@ WriteFloatRegisterMask(CompactBufferWriter &stream, uint64_t bits)
     } else if (sizeof(FloatRegisters::SetType) == 4) {
         stream.writeUnsigned(bits);
     } else {
-        JS_ASSERT(sizeof(FloatRegisters::SetType) == 8);
+        MOZ_ASSERT(sizeof(FloatRegisters::SetType) == 8);
         stream.writeUnsigned(bits & 0xffffffff);
         stream.writeUnsigned(bits >> 32);
     }
@@ -78,7 +78,7 @@ ReadFloatRegisterMask(CompactBufferReader &stream)
         return stream.readByte();
     if (sizeof(FloatRegisters::SetType) <= 4)
         return stream.readUnsigned();
-    JS_ASSERT(sizeof(FloatRegisters::SetType) == 8);
+    MOZ_ASSERT(sizeof(FloatRegisters::SetType) == 8);
     uint64_t ret = stream.readUnsigned();
     ret |= uint64_t(stream.readUnsigned()) << 32;
     return ret;
@@ -105,13 +105,13 @@ SafepointWriter::writeGcRegs(LSafepoint *safepoint)
     }
 
     // GC registers are a subset of the spilled registers.
-    JS_ASSERT((valueRegs.bits() & ~spilledGpr.bits()) == 0);
-    JS_ASSERT((gc.bits() & ~spilledGpr.bits()) == 0);
+    MOZ_ASSERT((valueRegs.bits() & ~spilledGpr.bits()) == 0);
+    MOZ_ASSERT((gc.bits() & ~spilledGpr.bits()) == 0);
 
     WriteFloatRegisterMask(stream_, spilledFloat.bits());
 
 #ifdef DEBUG
-    if (IonSpewEnabled(IonSpew_Safepoints)) {
+    if (JitSpewEnabled(JitSpew_Safepoints)) {
         for (GeneralRegisterForwardIterator iter(spilledGpr); iter.more(); iter++) {
             const char *type = gc.has(*iter)
                                ? "gc"
@@ -120,10 +120,10 @@ SafepointWriter::writeGcRegs(LSafepoint *safepoint)
                                  : valueRegs.has(*iter)
                                    ? "value"
                                    : "any";
-            IonSpew(IonSpew_Safepoints, "    %s reg: %s", type, (*iter).name());
+            JitSpew(JitSpew_Safepoints, "    %s reg: %s", type, (*iter).name());
         }
         for (FloatRegisterForwardIterator iter(spilledFloat); iter.more(); iter++)
-            IonSpew(IonSpew_Safepoints, "    float reg: %s", (*iter).name());
+            JitSpew(JitSpew_Safepoints, "    float reg: %s", (*iter).name());
     }
 #endif
 }
@@ -138,8 +138,8 @@ MapSlotsToBitset(BitSet *set, CompactBufferWriter &stream, uint32_t nslots, uint
         // pointer size, since we only care about pointer-sized/aligned slots
         // here. Since the stack grows down, this means slots start at index 1,
         // so we subtract 1 to pack the bitset.
-        JS_ASSERT(slots[i] % sizeof(intptr_t) == 0);
-        JS_ASSERT(slots[i] / sizeof(intptr_t) > 0);
+        MOZ_ASSERT(slots[i] % sizeof(intptr_t) == 0);
+        MOZ_ASSERT(slots[i] / sizeof(intptr_t) > 0);
         set->insert(slots[i] / sizeof(intptr_t) - 1);
     }
 
@@ -156,7 +156,7 @@ SafepointWriter::writeGcSlots(LSafepoint *safepoint)
 
 #ifdef DEBUG
     for (uint32_t i = 0; i < slots.length(); i++)
-        IonSpew(IonSpew_Safepoints, "    gc slot: %d", slots[i]);
+        JitSpew(JitSpew_Safepoints, "    gc slot: %d", slots[i]);
 #endif
 
     MapSlotsToBitset(frameSlots_,
@@ -174,7 +174,7 @@ SafepointWriter::writeSlotsOrElementsSlots(LSafepoint *safepoint)
 
     for (uint32_t i = 0; i < slots.length(); i++) {
 #ifdef DEBUG
-        IonSpew(IonSpew_Safepoints, "    slots/elements slot: %d", slots[i]);
+        JitSpew(JitSpew_Safepoints, "    slots/elements slot: %d", slots[i]);
 #endif
         stream_.writeUnsigned(slots[i]);
     }
@@ -187,7 +187,7 @@ SafepointWriter::writeValueSlots(LSafepoint *safepoint)
 
 #ifdef DEBUG
     for (uint32_t i = 0; i < slots.length(); i++)
-        IonSpew(IonSpew_Safepoints, "    gc value: %d", slots[i]);
+        JitSpew(JitSpew_Safepoints, "    gc value: %d", slots[i]);
 #endif
 
     MapSlotsToBitset(frameSlots_, stream_, slots.length(), slots.begin());
@@ -198,11 +198,11 @@ static void
 DumpNunboxPart(const LAllocation &a)
 {
     if (a.isStackSlot()) {
-        fprintf(IonSpewFile, "stack %d", a.toStackSlot()->slot());
+        fprintf(JitSpewFile, "stack %d", a.toStackSlot()->slot());
     } else if (a.isArgument()) {
-        fprintf(IonSpewFile, "arg %d", a.toArgument()->index());
+        fprintf(JitSpewFile, "arg %d", a.toArgument()->index());
     } else {
-        fprintf(IonSpewFile, "reg %s", a.toGeneralReg()->reg().name());
+        fprintf(JitSpewFile, "reg %s", a.toGeneralReg()->reg().name());
     }
 }
 #endif // DEBUG
@@ -251,7 +251,7 @@ AllocationToPartKind(const LAllocation &a)
         return Part_Reg;
     if (a.isStackSlot())
         return Part_Stack;
-    JS_ASSERT(a.isArgument());
+    MOZ_ASSERT(a.isArgument());
     return Part_Arg;
 }
 
@@ -281,17 +281,17 @@ SafepointWriter::writeNunboxParts(LSafepoint *safepoint)
     LSafepoint::NunboxList &entries = safepoint->nunboxParts();
 
 # ifdef DEBUG
-    if (IonSpewEnabled(IonSpew_Safepoints)) {
+    if (JitSpewEnabled(JitSpew_Safepoints)) {
         for (uint32_t i = 0; i < entries.length(); i++) {
             SafepointNunboxEntry &entry = entries[i];
             if (entry.type.isUse() || entry.payload.isUse())
                 continue;
-            IonSpewHeader(IonSpew_Safepoints);
-            fprintf(IonSpewFile, "    nunbox (type in ");
+            JitSpewHeader(JitSpew_Safepoints);
+            fprintf(JitSpewFile, "    nunbox (type in ");
             DumpNunboxPart(entry.type);
-            fprintf(IonSpewFile, ", payload in ");
+            fprintf(JitSpewFile, ", payload in ");
             DumpNunboxPart(entry.payload);
-            fprintf(IonSpewFile, ")\n");
+            fprintf(JitSpewFile, ")\n");
         }
     }
 # endif
@@ -337,7 +337,7 @@ SafepointWriter::writeNunboxParts(LSafepoint *safepoint)
             stream_.writeUnsigned(payloadVal);
     }
 
-    JS_ASSERT(partials == 0);
+    MOZ_ASSERT(partials == 0);
 }
 #endif
 
@@ -346,7 +346,7 @@ SafepointWriter::encode(LSafepoint *safepoint)
 {
     uint32_t safepointOffset = startEntry();
 
-    JS_ASSERT(safepoint->osiCallPointOffset());
+    MOZ_ASSERT(safepoint->osiCallPointOffset());
 
     writeOsiCallPointOffset(safepoint->osiCallPointOffset());
     writeGcRegs(safepoint);
@@ -366,7 +366,7 @@ SafepointWriter::encode(LSafepoint *safepoint)
 void
 SafepointWriter::endEntry()
 {
-    IonSpew(IonSpew_Safepoints, "    -- entry ended at %d", uint32_t(stream_.length()));
+    JitSpew(JitSpew_Safepoints, "    -- entry ended at %d", uint32_t(stream_.length()));
 }
 
 SafepointReader::SafepointReader(IonScript *script, const SafepointIndex *si)
@@ -489,7 +489,7 @@ PartFromStream(CompactBufferReader &stream, NunboxPartKind kind, uint32_t info)
     if (kind == Part_Stack)
         return LStackSlot(info);
 
-    JS_ASSERT(kind == Part_Arg);
+    MOZ_ASSERT(kind == Part_Arg);
     return LArgument(info);
 }
 

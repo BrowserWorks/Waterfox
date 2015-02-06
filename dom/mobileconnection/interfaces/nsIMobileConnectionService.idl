@@ -1,0 +1,760 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIMobileCallForwardingOptions;
+interface nsIMobileConnection;
+interface nsIMobileConnectionInfo;
+interface nsIMobileNetworkInfo;
+interface nsIVariant;
+
+[scriptable, uuid(823d935e-8262-47ed-8429-8203096b2ff4)]
+interface nsIMobileConnectionListener : nsISupports
+{
+  /**
+   * Notify when voice info is changed.
+   */
+  void notifyVoiceChanged();
+
+  /**
+   * Notify when data info is changed.
+   */
+  void notifyDataChanged();
+
+  /**
+   * Notify when ussd is received.
+   *
+   * @param message
+   *        The ussd request in string format.
+   * @param sessionEnded
+   *        Indicates whether the session is ended.
+   */
+  void notifyUssdReceived(in DOMString message,
+                          in boolean sessionEnded);
+
+  /**
+   * Notify when data call is failed to establish.
+   *
+   * @param message
+   *        Error message from RIL.
+   */
+  void notifyDataError(in DOMString message);
+
+  /**
+   * Notify when call forwarding state is changed.
+   *
+   * @param success
+   *        Indicates whether the set call forwarding request is success.
+   * @param action
+   *        One of the nsIMobileConnection.CALL_FORWARD_ACTION_* values.
+   * @param reason
+   *        One of the nsIMobileConnection.CALL_FORWARD_REASON_* values.
+   * @param number
+   *        Phone number of forwarding address.
+   * @param timeSeconds
+   *        The time in seconds should wait before call is forwarded.
+   * @param serviceClass
+   *        One of the nsIMobileConnection.ICC_SERVICE_CLASS_* values.
+   */
+  void notifyCFStateChanged(in boolean success,
+                            in unsigned short action,
+                            in unsigned short reason,
+                            in DOMString number,
+                            in unsigned short timeSeconds,
+                            in unsigned short serviceClass);
+
+  /**
+   * Notify when emergency callback mode is changed.
+   *
+   * @param active
+   *        Indicates whether the emergency callback mode is activated.
+   * @param timeoutMs
+   *        The timeout in millisecond for emergency callback mode.
+   */
+  void notifyEmergencyCbModeChanged(in boolean active,
+                                    in unsigned long timeoutMs);
+
+  /**
+   * Notify when ota status is changed.
+   *
+   * @param status
+   *        Ota status. Possible values: 'spl_unlocked', 'spc_retries_exceeded',
+   *        'a_key_exchanged', 'ssd_updated', 'nam_downloaded', 'mdn_downloaded',
+   *        'imsi_downloaded', 'prl_downloaded', 'committed', 'otapa_started',
+   *        'otapa_stopped', 'otapa_aborted'.
+   */
+  void notifyOtaStatusChanged(in DOMString status);
+
+  /**
+   * Notify when icc id is changed.
+   */
+  void notifyIccChanged();
+
+  /**
+   * Notify when radio state is changed.
+   */
+  void notifyRadioStateChanged();
+
+  /**
+   * Notify when clir mode is changed.
+   *
+   * @param mode
+   *        One of the nsIMobileConnection.CLIR_* values.
+   */
+  void notifyClirModeChanged(in unsigned long mode);
+
+  /**
+   * Notify when last known network is changed.
+   */
+  void notifyLastKnownNetworkChanged();
+
+  /**
+   * Notify when last known home network is changed.
+   */
+  void notifyLastKnownHomeNetworkChanged();
+
+  /**
+   * Notify when network selection mode is changed.
+   */
+  void notifyNetworkSelectionModeChanged();
+};
+
+%{C++
+#define NO_ADDITIONAL_INFORMATION 0
+%}
+
+[scriptable, builtinclass, uuid(05568ae9-9873-46c6-9acd-0f6994cde756)]
+interface nsIMobileConnectionCallback : nsISupports
+{
+  /**
+   * notify*Success*() will be called, when request is succeed.
+   */
+  void notifySuccess();
+
+  void notifySuccessWithString(in DOMString result);
+
+  void notifySuccessWithBoolean(in boolean result);
+
+  void notifyGetNetworksSuccess(in uint32_t count,
+                                [array, size_is(count)] in nsIMobileNetworkInfo networks);
+
+  void notifySendCancelMmiSuccess(in DOMString aServiceCode,
+                                  in DOMString aStatusMessage);
+
+  void notifySendCancelMmiSuccessWithInteger(in DOMString aServiceCode,
+                                             in DOMString aStatusMessage,
+                                             in unsigned short aAdditionalInformation);
+
+  void notifySendCancelMmiSuccessWithStrings(in DOMString aServiceCode,
+                                             in DOMString aStatusMessage,
+                                             in unsigned long aLength,
+                                             [array, size_is(aLength)] in wstring aAdditionalInformation);
+
+  void notifySendCancelMmiSuccessWithCallForwardingOptions(in DOMString aServiceCode,
+                                                           in DOMString aStatusMessage,
+                                                           in unsigned long aLength,
+                                                           [array, size_is(aLength)] in nsIMobileCallForwardingOptions aAdditionalInformation);
+
+  void notifyGetCallForwardingSuccess(in uint32_t count,
+                                      [array, size_is(count)] in nsIMobileCallForwardingOptions results);
+
+
+  void notifyGetCallBarringSuccess(in unsigned short program,
+                                   in boolean enabled,
+                                   in unsigned short serviceClass);
+
+  void notifyGetClirStatusSuccess(in unsigned short n, in unsigned short m);
+
+  /**
+   * notifyError() will be called, when request is failed.
+   */
+  [optional_argc]
+  void notifyError(in DOMString name,
+                   [optional] in DOMString message,
+                   [optional] in DOMString serviceCode,
+                   [optional] in unsigned short additionalInformation);
+
+%{C++
+  // non-virtual so it won't affect the vtable
+  inline nsresult NotifyError(const nsAString& aName)
+  {
+    return NotifyError(aName, EmptyString(), EmptyString(),
+                       NO_ADDITIONAL_INFORMATION, 0 /* ARGC = 0 */);
+  }
+  // non-virtual so it won't affect the vtable
+  inline nsresult NotifyError(const nsAString& aName,
+                              const nsAString& aMessage)
+  {
+    return NotifyError(aName, aMessage, EmptyString(), NO_ADDITIONAL_INFORMATION,
+                       1 /* ARGC = 1 */);
+  }
+  // non-virtual so it won't affect the vtable
+  inline nsresult NotifyError(const nsAString& aName,
+                              const nsAString& aMessage,
+                              const nsAString& aServiceCode)
+  {
+    return NotifyError(aName, aMessage, aServiceCode, NO_ADDITIONAL_INFORMATION,
+                       2 /* ARGC = 2 */);
+  }
+  // non-virtual so it won't affect the vtable
+  inline nsresult NotifyError(const nsAString& aName,
+                              const nsAString& aMessage,
+                              const nsAString& aServiceCode,
+                              uint16_t aAdditionInformation)
+  {
+    return NotifyError(aName, aMessage, aServiceCode, aAdditionInformation,
+                       3 /* ARGC = 3 */);
+  }
+%}
+
+};
+
+%{C++
+#define NS_MOBILE_CONNECTION_SERVICE_CID \
+  { 0xc6f229d4, 0x16e2, 0x4600, \
+    { 0x87, 0x2a, 0x3d, 0x3d, 0xc5, 0xb8, 0x55, 0x41 } }
+#define NS_MOBILE_CONNECTION_SERVICE_CONTRACTID \
+  "@mozilla.org/mobileconnection/mobileconnectionservice;1"
+%}
+
+[scriptable, uuid(eaba3c4a-0dd5-4919-b1a2-7812e49dbbcb)]
+interface nsIMobileConnectionService : nsISupports
+{
+  readonly attribute unsigned long numItems;
+
+  nsIMobileConnection getItemByServiceId(in unsigned long serviceId);
+};
+
+%{C++
+template<typename T> struct already_AddRefed;
+
+already_AddRefed<nsIMobileConnectionService>
+NS_CreateMobileConnectionService();
+%}
+
+[scriptable, uuid(1b76ccbf-dbc2-4b74-a62a-73ea91599afa)]
+interface nsIMobileConnection : nsISupports
+{
+  /*
+   * ICC service class.
+   */
+  const long ICC_SERVICE_CLASS_NONE       = 0; // not available
+  const long ICC_SERVICE_CLASS_VOICE      = (1 << 0);
+  const long ICC_SERVICE_CLASS_DATA       = (1 << 1);
+  const long ICC_SERVICE_CLASS_FAX        = (1 << 2);
+  const long ICC_SERVICE_CLASS_SMS        = (1 << 3);
+  const long ICC_SERVICE_CLASS_DATA_SYNC  = (1 << 4);
+  const long ICC_SERVICE_CLASS_DATA_ASYNC = (1 << 5);
+  const long ICC_SERVICE_CLASS_PACKET     = (1 << 6);
+  const long ICC_SERVICE_CLASS_PAD        = (1 << 7);
+  const long ICC_SERVICE_CLASS_MAX        = (1 << 7);
+
+  /**
+   * Call forwarding action.
+   *
+   * @see 3GPP TS 27.007 7.11 "mode".
+   */
+  const long CALL_FORWARD_ACTION_UNKNOWN      = -1; // not available
+  const long CALL_FORWARD_ACTION_DISABLE      = 0;
+  const long CALL_FORWARD_ACTION_ENABLE       = 1;
+  const long CALL_FORWARD_ACTION_QUERY_STATUS = 2;
+  const long CALL_FORWARD_ACTION_REGISTRATION = 3;
+  const long CALL_FORWARD_ACTION_ERASURE      = 4;
+
+  /**
+   * Call forwarding reason.
+   *
+   * @see 3GPP TS 27.007 7.11 "reason".
+   */
+  const long CALL_FORWARD_REASON_UNKNOWN                         = -1; // not available
+  const long CALL_FORWARD_REASON_UNCONDITIONAL                   = 0;
+  const long CALL_FORWARD_REASON_MOBILE_BUSY                     = 1;
+  const long CALL_FORWARD_REASON_NO_REPLY                        = 2;
+  const long CALL_FORWARD_REASON_NOT_REACHABLE                   = 3;
+  const long CALL_FORWARD_REASON_ALL_CALL_FORWARDING             = 4;
+  const long CALL_FORWARD_REASON_ALL_CONDITIONAL_CALL_FORWARDING = 5;
+
+  /**
+   * Call barring program.
+   */
+  const long CALL_BARRING_PROGRAM_UNKNOWN                            = -1; // not available
+  const long CALL_BARRING_PROGRAM_ALL_OUTGOING                       = 0;
+  const long CALL_BARRING_PROGRAM_OUTGOING_INTERNATIONAL             = 1;
+  const long CALL_BARRING_PROGRAM_OUTGOING_INTERNATIONAL_EXCEPT_HOME = 2;
+  const long CALL_BARRING_PROGRAM_ALL_INCOMING                       = 3;
+  const long CALL_BARRING_PROGRAM_INCOMING_ROAMING                   = 4;
+
+  /**
+   * Calling line identification restriction constants.
+   *
+   * @see 3GPP TS 27.007 7.7 Defined values.
+   */
+  const long CLIR_DEFAULT     = 0;
+  const long CLIR_INVOCATION  = 1;
+  const long CLIR_SUPPRESSION = 2;
+
+  readonly attribute unsigned long serviceId;
+
+  /**
+   * Called when any one who is interested in receiving unsolicited messages
+   * from this nsIMobileConnection instance.
+   */
+  void registerListener(in nsIMobileConnectionListener listener);
+  void unregisterListener(in nsIMobileConnectionListener listener);
+
+  /**
+   * String of format '<mcc>-<mnc>'. When changed, listener method
+   * 'notifyLastKnownNetworkChanged' is called.
+   */
+  readonly attribute DOMString lastKnownNetwork;
+
+  /**
+   * String of format '<mcc>-<mnc>[-<spn>]'. When changed, listener method
+   * 'notifyLastKnownHomeNetworkChanged' is called.
+   */
+  readonly attribute DOMString lastKnownHomeNetwork;
+
+  /**
+   * Connection information about the voice.
+   */
+  readonly attribute nsIMobileConnectionInfo voice;
+
+  /**
+   * Connection information about the data.
+   */
+  readonly attribute nsIMobileConnectionInfo data;
+
+  /**
+   * The integrated circuit card identifier of the SIM.
+   */
+  readonly attribute DOMString iccId;
+
+  /**
+   * The selection mode of the voice and data networks. Possible values are
+   * 'automatic', 'manual', null (unknown).
+   */
+  readonly attribute DOMString networkSelectionMode;
+
+  /**
+   * Current radio state. Possible values are 'enabling', 'enabled',
+   * 'disabling', 'disabled', null (unknown).
+   */
+  readonly attribute DOMString radioState;
+
+  /**
+   * The network types supported by this radio.
+   *
+   * @return an array of DOMString
+   *         Possible values: 'gsm', 'wcdma', 'cdma', 'evdo', 'lte'.
+   */
+  void getSupportedNetworkTypes([array, size_is(length)] out wstring types,
+                                [retval] out unsigned long length);
+
+  /**
+   * Search for available networks.
+   *
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifyGetNetworksSuccess() will be called. And the
+   * result will be an array of nsIMobileNetworkInfo.
+   *
+   * Otherwise, the notifyError() will be called, and the error will be either
+   * 'RadioNotAvailable', 'RequestNotSupported', 'IllegalSIMorME', or
+   * 'GenericFailure'.
+   */
+  void getNetworks(in nsIMobileConnectionCallback requestCallback);
+
+  /**
+   * Manually selects the passed in network, overriding the radio's current
+   * selection.
+   *
+   * @param network
+   *        The manually selecting network.
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifySuccess() will be called.
+   *
+   * Otherwise, the notifyError() will be called, and the error will be either
+   * 'RadioNotAvailable', 'RequestNotSupported', 'IllegalSIMorME', or
+   * 'GenericFailure'.
+   */
+  void selectNetwork(in nsIMobileNetworkInfo network,
+                     in nsIMobileConnectionCallback requestCallback);
+
+  /**
+   * Tell the radio to automatically select a network.
+   *
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifySuccess() will be called.
+   *
+   * Otherwise, the notifyError() will be called, and the error will be either
+   * 'RadioNotAvailable', 'RequestNotSupported', 'IllegalSIMorME', or
+   * 'GenericFailure'.
+   */
+  void selectNetworkAutomatically(in nsIMobileConnectionCallback requestCallback);
+
+  /**
+   * Set preferred network type.
+   *
+   * @param type
+   *        DOMString indicates the desired preferred network type.
+   *        Possible values: 'wcdma/gsm', 'gsm', 'wcdma', 'wcdma/gsm-auto',
+   *        'cdma/evdo', 'cdma', 'evdo', 'wcdma/gsm/cdma/evdo',
+   *        'lte/cdma/evdo', 'lte/wcdma/gsm', 'lte/wcdma/gsm/cdma/evdo' or
+   *        'lte'.
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifySuccess() will be called.
+   *
+   * Otherwise, the notifyError() will be called, and the error will be either
+   * 'RadioNotAvailable', 'RequestNotSupported', 'InvalidParameter',
+   * 'IllegalSIMorME', or 'GenericFailure'.
+   */
+  void setPreferredNetworkType(in DOMString type,
+                               in nsIMobileConnectionCallback requestCallback);
+
+  /**
+   * Query current preferred network type.
+   *
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifySuccessString() will be called. And the result
+   * will be a string indicating the current preferred network type. The value
+   * will be either 'wcdma/gsm', 'gsm', 'wcdma', 'wcdma/gsm-auto', 'cdma/evdo',
+   * 'cdma', 'evdo', 'wcdma/gsm/cdma/evdo', 'lte/cdma/evdo', 'lte/wcdma/gsm',
+   * 'lte/wcdma/gsm/cdma/evdo' or 'lte'.
+   *
+   * Otherwise, the notifyError() will be called, and the error will be either
+   * 'RadioNotAvailable', 'RequestNotSupported', 'IllegalSIMorME', or
+   * 'GenericFailure'.
+   */
+  void getPreferredNetworkType(in nsIMobileConnectionCallback requestCallback);
+
+  /**
+   * Set roaming preference.
+   *
+   * @param mode
+   *        DOMString indicates the desired roaming preference.
+   *        Possible values: 'home', 'affiliated', or 'any'.
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifySuccess() will be called.
+   *
+   * Otherwise, the notifyError() will be called, and the error will be either
+   * 'RadioNotAvailable', 'RequestNotSupported', InvalidParameter',
+   * 'IllegalSIMorME', or 'GenericFailure'.
+   */
+  void setRoamingPreference(in DOMString mode,
+                            in nsIMobileConnectionCallback requestCallback);
+
+  /**
+   * Query current roaming preference.
+   *
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifySuccessWithString() will be called. And the result
+   * will be a string indicating the current roaming preference. The value will
+   * be either 'home', 'affiliated', or 'any'.
+   *
+   * Otherwise, the notifyError() will be called, and the error will be either
+   * 'RadioNotAvailable', 'RequestNotSupported', 'IllegalSIMorME', or
+   * 'GenericFailure'.
+   */
+  void getRoamingPreference(in nsIMobileConnectionCallback requestCallback);
+
+  /**
+   * Set voice privacy preference.
+   *
+   * @param enabled
+   *        Boolean indicates the preferred voice privacy mode used in voice
+   *        scrambling in CDMA networks. 'True' means the enhanced voice security
+   *        is required.
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifySuccess() will be called.
+   *
+   * Otherwise, the notifyError() will be called, and the error will be either
+   * 'RadioNotAvailable', 'RequestNotSupported', 'IllegalSIMorME', or
+   * 'GenericFailure'.
+   */
+  void setVoicePrivacyMode(in bool enabled,
+                           in nsIMobileConnectionCallback requestCallback);
+
+  /**
+   * Query current voice privacy mode.
+   *
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifySuccessWithBoolean() will be called. And the result
+   * will be a boolean indicating the current voice privacy mode.
+   *
+   * Otherwise, the notifyError() will be called, and the error will be either
+   * 'RadioNotAvailable', 'RequestNotSupported', 'IllegalSIMorME', or
+   * 'GenericFailure'.
+   */
+  void getVoicePrivacyMode(in nsIMobileConnectionCallback requestCallback);
+
+  /**
+   * Send a MMI message.
+   *
+   * @param mmi
+   *        DOMString containing an MMI string that can be associated to a
+   *        USSD request or other RIL functionality.
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifySendCancelMmiSuccess*() will be called. And the
+   * result will contain the information about the mmi operation.
+   *
+   * Otherwise, the notifyError() will be called.
+   */
+  void sendMMI(in DOMString mmi,
+               in nsIMobileConnectionCallback requestCallback);
+
+  /**
+   * Cancel the current MMI request if one exists.
+   *
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifySendCancelMmiSuccess*() will be called. And the
+   * result will contain the information about the mmi operation.
+   *
+   * Otherwise, the notifyError() will be called.
+   */
+  void cancelMMI(in nsIMobileConnectionCallback requestCallback);
+
+  /**
+   * Queries current call forwarding options.
+   *
+   * @param reason
+   *        Indicates the reason the call is being forwarded. It shall be one of
+   *        the nsIMobileConnectionService.CALL_FORWARD_REASON_* values.
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifyGetCallForwardingSuccess() will be called. And the
+   * result will be an array of nsIMobileCallForwardingOptions.
+   * @see nsIMobileCallForwardingOptions for the detail of result.
+   *
+   * Otherwise, the notifyError() will be called, and the error will be either
+   * 'RadioNotAvailable', 'RequestNotSupported', 'InvalidParameter',
+   * 'IllegalSIMorME', or 'GenericFailure'.
+   */
+  void getCallForwarding(in unsigned short reason,
+                         in nsIMobileConnectionCallback requestCallback);
+
+  /**
+   * Configures call forwarding options.
+   *
+   * @param action
+   *        One of the nsIMobileConnection.CALL_FORWARD_ACTION_* values.
+   * @param reason
+   *        One of the nsIMobileConnection.CALL_FORWARD_REASON_* values.
+   * @param number
+   *        Phone number of forwarding address.
+   * @param timeSeconds
+   *        When "no reply" is enabled or queried, this gives the time in
+   *        seconds to wait before call is forwarded.
+   * @param serviceClass
+   *        One of the nsIMobileConnection.ICC_SERVICE_CLASS_* values.
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifySuccess() will be called.
+   *
+   * Otherwise, the notifyError() will be called, and the error will be either
+   * 'RadioNotAvailable', 'RequestNotSupported', 'InvalidParameter',
+   * 'IllegalSIMorME', or 'GenericFailure'.
+   */
+  void setCallForwarding(in unsigned short action,
+                         in unsigned short reason,
+                         in DOMString number,
+                         in unsigned short timeSeconds,
+                         in unsigned short serviceClass,
+                         in nsIMobileConnectionCallback requestCallback);
+
+  /**
+   * Queries current call barring status.
+   *
+   * @param program
+   *        One of the nsIMobileConnection.CALL_BARRING_PROGRAM_* values.
+   * @param password
+   *        Call barring password. Use "" if no password specified.
+   * @param serviceClass
+   *        One of the nsIMobileConnection.ICC_SERVICE_CLASS_* values.
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifyGetCallBarringSuccess() will be called. And the
+   * result will contain correct 'enabled' property indicating the status of
+   * this rule.
+   *
+   * Otherwise, the notifyError() will be called, and the error will be either
+   * 'RadioNotAvailable', 'RequestNotSupported', 'InvalidParameter',
+   * 'IllegalSIMorME', or 'GenericFailure'.
+   */
+  void getCallBarring(in unsigned short program,
+                      in DOMString password,
+                      in unsigned short serviceClass,
+                      in nsIMobileConnectionCallback requestCallback);
+
+  /**
+   * Configures call barring option.
+   *
+   * @param program
+   *        One of the nsIMobileConnection.CALL_BARRING_PROGRAM_* values.
+   * @param enabled
+   *        Enable or disable the call barring program.
+   * @param password
+   *        Call barring password. Use "" if no password specified.
+   * @param serviceClass
+   *        One of the nsIMobileConnection.ICC_SERVICE_CLASS_* values.
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifySuccess() will be called.
+   *
+   * Otherwise, the notifyError() will be called, and the error will be either
+   * 'RadioNotAvailable', 'RequestNotSupported', 'InvalidParameter',
+   * 'IllegalSIMorME', or 'GenericFailure'.
+   */
+  void setCallBarring(in unsigned short program,
+                      in bool enabled,
+                      in DOMString password,
+                      in unsigned short serviceClass,
+                      in nsIMobileConnectionCallback requestCallback);
+
+  /**
+   * Change call barring facility password.
+   *
+   * @param pin
+   *        Old call barring password.
+   * @param newPin
+   *        New call barring password.
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifySuccess() will be called.
+   *
+   * Otherwise, the notifyError() will be called, and the error will be either
+   * 'RadioNotAvailable', 'RequestNotSupported', 'InvalidParameter',
+   * 'IllegalSIMorME', or 'GenericFailure'.
+   */
+  void changeCallBarringPassword(in DOMString pin,
+                                 in DOMString newPin,
+                                 in nsIMobileConnectionCallback requestCallback);
+
+  /**
+   * Configures call waiting options.
+   *
+   * @param enabled
+   *        Boolean indicates the desired call waiting status.
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifySuccess() will be called.
+   *
+   * Otherwise, the notifyError() will be called, and the error will be either
+   * 'RadioNotAvailable', 'RequestNotSupported', 'IllegalSIMorME', or
+   * 'GenericFailure'.
+   */
+  void setCallWaiting(in bool enabled,
+                      in nsIMobileConnectionCallback requestCallback);
+
+  /**
+   * Queries current call waiting options.
+   *
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifySuccessWithBoolean() will be called. And the result
+   * will be a boolean indicating the call waiting status.
+   *
+   * Otherwise, the notifyError() will be called, and the error will be either
+   * 'RadioNotAvailable', 'RequestNotSupported', 'IllegalSIMorME', or
+   * 'GenericFailure'.
+   */
+  void getCallWaiting(in nsIMobileConnectionCallback requestCallback);
+
+  /**
+   * Enables or disables the presentation of the calling line identity (CLI) to
+   * the called party when originating a call.
+   *
+   * @param clirMode
+   *        One of the nsIMobileConnection.CLIR_* values.
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifySuccess() will be called.
+   *
+   * Otherwise, the notifyError() will be called, and the error will be either
+   * 'RadioNotAvailable', 'RequestNotSupported', 'InvalidParameter',
+   * 'IllegalSIMorME', or 'GenericFailure'.
+   */
+  void setCallingLineIdRestriction(in unsigned short clirMode,
+                                   in nsIMobileConnectionCallback requestCallback);
+
+  /**
+   * Queries current CLIR status.
+   *
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifyGetClirStatusSuccess() will be called. And the
+   * result will be a an object containing CLIR 'n' and 'm' parameter.
+   * @see MozClirStatus for the detail of result.
+   *
+   * Otherwise, the notifyError() will be called, and the error will be either
+   * 'RadioNotAvailable', 'RequestNotSupported', 'IllegalSIMorME', or
+   * 'GenericFailure'.
+   */
+  void getCallingLineIdRestriction(in nsIMobileConnectionCallback requestCallback);
+
+  /**
+   * Exit emergency callback mode.
+   *
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifySuccess() will be called.
+   *
+   * Otherwise, the notifyError() will be called, and the error will be either
+   * 'RadioNotAvailable', 'RequestNotSupported', 'IllegalSIMorME', or
+   * 'GenericFailure'.
+   */
+  void exitEmergencyCbMode(in nsIMobileConnectionCallback requestCallback);
+
+  /**
+   * Set radio enabled/disabled.
+   *
+   * @param enabled
+   *        Boolean indicates the desired radio power. True to enable the radio.
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifySuccess() will be called.
+   *
+   * Otherwise, the notifyError() will be called, and the error will be either
+   * 'InvalidStateError', 'RadioNotAvailable', 'IllegalSIMorME', or
+   * 'GenericFailure'.
+   *
+   * Note: Request is not available when radioState is null, 'enabling', or
+   * 'disabling'. Calling the function in above conditions will receive
+   * 'InvalidStateError' error.
+   */
+  void setRadioEnabled(in bool enabled,
+                       in nsIMobileConnectionCallback requestCallback);
+};

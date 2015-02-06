@@ -233,6 +233,22 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=753984
           expectedBraille: [[{"string": "entryAbbr"}, "I am required"],
                             ["I am required", {"string": "entryAbbr"}]]
         }, {
+          // test unavailable state utterance on inputs
+          accOrElmOrID: "readonlyInput",
+          expectedUtterance: [[{"string": "stateReadonly"}, {"string": "entry"},
+            "No edits"], ["No edits", {"string": "stateReadonly"},
+            {"string": "entry"}]],
+          expectedBraille: [[{"string": "entryAbbr"}, "No edits"],
+                            ["No edits", {"string": "entryAbbr"}]]
+        }, {
+          // test unavailable state utterance on textareas
+          accOrElmOrID: "readonlyTextarea",
+          expectedUtterance: [[{"string": "stateReadonly"}, {"string": "textarea"},
+            "No editing"], ["No editing", {"string": "stateReadonly"},
+            {"string": "textarea"}]],
+          expectedBraille: [[{"string": "textareaAbbr"}, "No editing"],
+                            ["No editing", {"string": "textareaAbbr"}]]
+        }, {
           // test has popup state utterance
           accOrElmOrID: "hasPopupButton",
           expectedUtterance: [[{"string": "stateHasPopup"},
@@ -395,6 +411,41 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=753984
                               ["555-12345", {"string": "listboxoption"}]],
           expectedBraille: [[{"string": "listboxoptionAbbr"}, "555-12345"],
                             ["555-12345", {"string": "listboxoptionAbbr"}]]
+        }, {
+          accOrElmOrID: "columnheader",
+          oldAccOrElmOrID: "grid",
+          expectedUtterance: [[{"string": "columnInfo", "args": [1]},
+            {"string": "rowInfo", "args" :[1]}, "Sunday"], ["Sunday",
+            {"string": "columnInfo", "args": [1]},
+            {"string": "rowInfo", "args" :[1]}]],
+          expectedBraille: [[{"string": "cellInfoAbbr", "args": [1, 1]},
+            "Sunday"], ["Sunday", {"string": "cellInfoAbbr", "args": [1, 1]}]]
+        }, {
+          accOrElmOrID: "rowheader",
+          oldAccOrElmOrID: "grid",
+          expectedUtterance: [[{"string": "columnInfo", "args": [1]},
+            {"string": "rowInfo", "args": [2]}, "Sunday", "Week 1"], ["Week 1",
+            {"string": "columnInfo", "args": [1]},
+            {"string": "rowInfo", "args": [2]}, "Sunday"]],
+          expectedBraille: [[{"string": "cellInfoAbbr", "args": [1, 2]},
+            "Sunday", "Week 1"], ["Week 1",
+            {"string": "cellInfoAbbr", "args": [1, 2]}, "Sunday"]]
+        }, {
+          accOrElmOrID: "gridcell1",
+          oldAccOrElmOrID: "grid",
+          expectedUtterance: [["3"], ["3"]],
+          expectedBraille: [["3"], ["3"]]
+        }, {
+          accOrElmOrID: "gridcell2",
+          oldAccOrElmOrID: "grid",
+          expectedUtterance: [["4", "7"], ["4", "7"]],
+          expectedBraille: [["4", "7"], ["4", "7"]]
+        }, {
+          accOrElmOrID: "gridcell3",
+          oldAccOrElmOrID: "grid",
+          expectedUtterance: [[{"string": "stateSelected"}, "5"],
+                              ["5", {"string": "stateSelected"}]],
+          expectedBraille: [["5"], ["5"]],
         }];
 
         // Test all possible utterance order preference values.
@@ -486,6 +537,8 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=753984
       <button id="expandedButton" aria-expanded="true">I am expanded</button>
       <button id="collapsedButton" aria-expanded="false">I am collapsed</button>
       <input id="requiredInput" required placeholder="I am required" />
+      <input id="readonlyInput" readonly value="No edits" />
+      <textarea id="readonlyTextarea" readonly>No editing</textarea>
       <button id="hasPopupButton" aria-haspopup="true">I have a popup</button>
       <div role="tablist">
         <a id="tab1" href="#" role="tab" aria-selected="true">Account</a>
@@ -521,6 +574,23 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=753984
           555-12345
         </li>
       </ul>
+      <section id="grid" role="grid">
+        <ol role="row">
+          <li role="presentation"></li>
+          <li id="columnheader" role="columnheader" aria-label="Sunday">S</li>
+          <li role="columnheader">M</li>
+        </ol>
+        <ol role="row">
+          <li id="rowheader" role="rowheader" aria-label="Week 1">1</li>
+          <li id="gridcell1" role="gridcell"><span>3</span><div></div></li>
+          <li id="gridcell2" role="gridcell"><span>4</span><div>7</div></li>
+        </ol>
+        <ol role="row">
+          <li role="rowheader">2</li>
+          <li id="gridcell3" aria-selected="true" role="gridcell">5</li>
+          <li role="gridcell">6</li>
+        </ol>
+      </section>
     </div>
   </body>
 </html>

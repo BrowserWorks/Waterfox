@@ -18,7 +18,7 @@ include svg-filter-chains/reftest.list
 == dynamic-filter-invalidation-01.svg pass.svg
 == dynamic-filter-invalidation-02.svg pass.svg
 
-== feBlend-1.svg feBlend-1-ref.svg
+fuzzy(1,40000) == feBlend-1.svg feBlend-1-ref.svg
 == feBlend-2.svg feBlend-2-ref.svg
 
 fuzzy-if(d2d,1,6400) == feColorMatrix-1.svg feColorMatrix-1-ref.svg
@@ -45,8 +45,10 @@ fuzzy(1,6400) == feGaussianBlur-1.svg feGaussianBlur-1-ref.svg
 == feGaussianBlur-4.svg feGaussianBlur-4-ref.svg
 == feGaussianBlur-5.svg feGaussianBlur-5-ref.svg
 == feGaussianBlur-6.svg feGaussianBlur-6-ref.svg
+skip-if(d2d) pref(layers.acceleration.disabled,true) == feGaussianBlur-cap-large-directional-radius-on-software.html feGaussianBlur-cap-large-directional-radius-on-software-ref.html
 
 == feImage-1.svg feImage-1-ref.svg
+== feImage-scale-to-primitive-subregion.html feImage-scale-to-primitive-subregion-ref.html
 
 == feMerge-1.svg feMerge-1-ref.svg
 == feMerge-2.svg feMerge-2-ref.svg

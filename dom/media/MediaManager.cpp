@@ -13,7 +13,6 @@
 #ifdef MOZ_WIDGET_GONK
 #include "nsIAudioManager.h"
 #endif
-#include "nsIDOMFile.h"
 #include "nsIEventTarget.h"
 #include "nsIUUIDGenerator.h"
 #include "nsIScriptGlobalObject.h"
@@ -29,6 +28,7 @@
 #include "mozilla/Types.h"
 #include "mozilla/PeerIdentity.h"
 #include "mozilla/dom/ContentChild.h"
+#include "mozilla/dom/File.h"
 #include "mozilla/dom/MediaStreamBinding.h"
 #include "mozilla/dom/MediaStreamTrackBinding.h"
 #include "mozilla/dom/GetUserMediaRequestBinding.h"
@@ -41,7 +41,6 @@
 #include "prprf.h"
 
 #include "nsJSUtils.h"
-#include "nsDOMFile.h"
 #include "nsGlobalWindow.h"
 
 /* Using WebRTC backend on Desktops (Mac, Windows, Linux), otherwise default */
@@ -169,7 +168,7 @@ HostHasPermission(nsIURI &docURI)
   /*
      Test each domain name in the comma separated list
      after converting from UTF8 to ASCII. Each domain
-     must match exactly: no wildcards are used.
+     must match exactly or have a single leading '*.' wildcard
   */
   do {
     end = domainWhiteList.FindChar(',', begin);
@@ -515,15 +514,18 @@ public:
       (aVideoSource ? DOMMediaStream::HINT_CONTENTS_VIDEO : 0);
 
     nsRefPtr<nsDOMUserMediaStream> stream = new nsDOMUserMediaStream(aListener,
-                                                                     aAudioSource);
+                                                                     aAudioSource,
+                                                                     aVideoSource);
     stream->InitTrackUnionStream(aWindow, hints);
     return stream.forget();
   }
 
   nsDOMUserMediaStream(GetUserMediaCallbackMediaStreamListener* aListener,
-                       MediaEngineSource *aAudioSource) :
+                       MediaEngineSource *aAudioSource,
+                       MediaEngineSource *aVideoSource) :
     mListener(aListener),
     mAudioSource(aAudioSource),
+    mVideoSource(aVideoSource),
     mEchoOn(true),
     mAgcOn(false),
     mNoiseOn(true),
@@ -635,12 +637,32 @@ public:
     GetStream()->AsProcessedStream()->ForwardTrackEnabled(aID, aEnabled);
   }
 
+  virtual DOMLocalMediaStream* AsDOMLocalMediaStream()
+  {
+    return this;
+  }
+
+  virtual MediaEngineSource* GetMediaEngine(TrackID aTrackID)
+  {
+    // MediaEngine supports only one video and on video track now and TrackID is
+    // fixed in MediaEngine.
+    if (aTrackID == kVideoTrack) {
+      return mVideoSource;
+    }
+    else if (aTrackID == kAudioTrack) {
+      return mAudioSource;
+    }
+
+    return nullptr;
+  }
+
   // The actual MediaStream is a TrackUnionStream. But these resources need to be
   // explicitly destroyed too.
   nsRefPtr<SourceMediaStream> mSourceStream;
   nsRefPtr<MediaInputPort> mPort;
   nsRefPtr<GetUserMediaCallbackMediaStreamListener> mListener;
   nsRefPtr<MediaEngineSource> mAudioSource; // so we can turn on AEC
+  nsRefPtr<MediaEngineSource> mVideoSource;
   bool mEchoOn;
   bool mAgcOn;
   bool mNoiseOn;
@@ -1019,8 +1041,7 @@ static SourceSet *
 /**
  * Runs on a seperate thread and is responsible for enumerating devices.
  * Depending on whether a picture or stream was asked for, either
- * ProcessGetUserMedia or ProcessGetUserMediaSnapshot is called, and the results
- * are sent back to the DOM.
+ * ProcessGetUserMedia is called, and the results are sent back to the DOM.
  *
  * Do not run this on the main thread. The success and error callbacks *MUST*
  * be dispatched on the main thread!
@@ -1102,18 +1123,6 @@ public:
       }
     }
 
-    // It is an error if audio or video are requested along with picture.
-    if (mConstraints.mPicture &&
-        (IsOn(mConstraints.mAudio) || IsOn(mConstraints.mVideo))) {
-      Fail(NS_LITERAL_STRING("NOT_SUPPORTED_ERR"));
-      return;
-    }
-
-    if (mConstraints.mPicture) {
-      ProcessGetUserMediaSnapshot(mVideoDevice->GetSource(), 0);
-      return;
-    }
-
     // There's a bug in the permission code that can leave us with mAudio but no audio device
     ProcessGetUserMedia(((IsOn(mConstraints.mAudio) && mAudioDevice) ?
                          mAudioDevice->GetSource() : nullptr),
@@ -1182,7 +1191,7 @@ public:
   {
     MOZ_ASSERT(mSuccess);
     MOZ_ASSERT(mError);
-    if (mConstraints.mPicture || IsOn(mConstraints.mVideo)) {
+    if (IsOn(mConstraints.mVideo)) {
       VideoTrackConstraintsN constraints(GetInvariant(mConstraints.mVideo));
       ScopedDeletePtr<SourceSet> sources(GetSources(backend, constraints,
                                &MediaEngine::EnumerateVideoDevices));
@@ -1251,38 +1260,6 @@ public:
     NS_DispatchToMainThread(new GetUserMediaStreamRunnable(
       mSuccess, mError, mWindowID, mListener, aAudioSource, aVideoSource,
       peerIdentity
-    ));
-
-    MOZ_ASSERT(!mSuccess);
-    MOZ_ASSERT(!mError);
-
-    return;
-  }
-
-  /**
-   * Allocates a video device, takes a snapshot and returns a DOMFile via
-   * a SuccessRunnable or an error via the ErrorRunnable. Off the main thread.
-   */
-  void
-  ProcessGetUserMediaSnapshot(MediaEngineVideoSource* aSource, int aDuration)
-  {
-    MOZ_ASSERT(mSuccess);
-    MOZ_ASSERT(mError);
-    nsresult rv = aSource->Allocate(GetInvariant(mConstraints.mVideo), mPrefs);
-    if (NS_FAILED(rv)) {
-      Fail(NS_LITERAL_STRING("HARDWARE_UNAVAILABLE"));
-      return;
-    }
-
-    /**
-     * Display picture capture UI here before calling Snapshot() - Bug 748835.
-     */
-    nsCOMPtr<nsIDOMFile> file;
-    aSource->Snapshot(aDuration, getter_AddRefs(file));
-    aSource->Deallocate();
-
-    NS_DispatchToMainThread(new SuccessCallbackRunnable(
-      mSuccess, mError, file, mWindowID
     ));
 
     MOZ_ASSERT(!mSuccess);
@@ -1554,7 +1531,7 @@ MediaManager::NotifyRecordingStatusChange(nsPIDOMWindow* aWindow,
  * for handling all incoming getUserMedia calls from every window.
  */
 nsresult
-MediaManager::GetUserMedia(bool aPrivileged,
+MediaManager::GetUserMedia(
   nsPIDOMWindow* aWindow, const MediaStreamConstraints& aConstraints,
   nsIDOMGetUserMediaSuccessCallback* aOnSuccess,
   nsIDOMGetUserMediaErrorCallback* aOnError)
@@ -1565,39 +1542,12 @@ MediaManager::GetUserMedia(bool aPrivileged,
   NS_ENSURE_TRUE(aOnError, NS_ERROR_NULL_POINTER);
   NS_ENSURE_TRUE(aOnSuccess, NS_ERROR_NULL_POINTER);
 
+  bool privileged = nsContentUtils::IsChromeDoc(aWindow->GetExtantDoc());
+
   nsCOMPtr<nsIDOMGetUserMediaSuccessCallback> onSuccess(aOnSuccess);
   nsCOMPtr<nsIDOMGetUserMediaErrorCallback> onError(aOnError);
 
   MediaStreamConstraints c(aConstraints); // copy
-
-  /**
-   * If we were asked to get a picture, before getting a snapshot, we check if
-   * the calling page is allowed to open a popup. We do this because
-   * {picture:true} will open a new "window" to let the user preview or select
-   * an image, on Android. The desktop UI for {picture:true} is TBD, at which
-   * may point we can decide whether to extend this test there as well.
-   */
-#if !defined(MOZ_WEBRTC)
-  if (c.mPicture && !aPrivileged) {
-    if (aWindow->GetPopupControlState() > openControlled) {
-      nsCOMPtr<nsIPopupWindowManager> pm =
-        do_GetService(NS_POPUPWINDOWMANAGER_CONTRACTID);
-      if (!pm) {
-        return NS_OK;
-      }
-      uint32_t permission;
-      nsCOMPtr<nsIDocument> doc = aWindow->GetExtantDoc();
-      if (doc) {
-        pm->TestPermission(doc->NodePrincipal(), &permission);
-        if (permission == nsIPopupWindowManager::DENY_POPUP) {
-          aWindow->FirePopupBlockedEvent(doc, nullptr, EmptyString(),
-                                         EmptyString());
-          return NS_OK;
-        }
-      }
-    }
-  }
-#endif
 
   static bool created = false;
   if (!created) {
@@ -1630,7 +1580,7 @@ MediaManager::GetUserMedia(bool aPrivileged,
 
   // Developer preference for turning off permission check.
   if (Preferences::GetBool("media.navigator.permission.disabled", false)) {
-    aPrivileged = true;
+    privileged = true;
   }
   if (!Preferences::GetBool("media.navigator.video.enabled", true)) {
     c.mVideo.SetAsBoolean() = false;
@@ -1658,7 +1608,7 @@ MediaManager::GetUserMedia(bool aPrivileged,
   }
 #endif
 
-  if (c.mVideo.IsMediaTrackConstraints() && !aPrivileged) {
+  if (c.mVideo.IsMediaTrackConstraints() && !privileged) {
     auto& tc = c.mVideo.GetAsMediaTrackConstraints();
     // only allow privileged content to set the window id
     if (tc.mBrowserWindow.WasPassed()) {
@@ -1715,7 +1665,7 @@ MediaManager::GetUserMedia(bool aPrivileged,
 #endif
            ) ||
 #endif
-          (!aPrivileged && !HostHasPermission(*docURI))) {
+          (!privileged && !HostHasPermission(*docURI))) {
         return task->Denied(NS_LITERAL_STRING("PERMISSION_DENIED"));
       }
     }
@@ -1727,15 +1677,6 @@ MediaManager::GetUserMedia(bool aPrivileged,
   }
 #endif
 
-#if defined(ANDROID) && !defined(MOZ_WIDGET_GONK)
-  if (c.mPicture) {
-    // ShowFilePickerForMimeType() must run on the Main Thread! (on Android)
-    // Note, GetUserMediaRunnableWrapper takes ownership of task.
-    NS_DispatchToMainThread(new GetUserMediaRunnableWrapper(task.forget()));
-    return NS_OK;
-  }
-#endif
-
   bool isLoop = false;
   nsCOMPtr<nsIURI> loopURI;
   nsresult rv = NS_NewURI(getter_AddRefs(loopURI), "about:loopconversation");
@@ -1744,11 +1685,11 @@ MediaManager::GetUserMedia(bool aPrivileged,
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (isLoop) {
-    aPrivileged = true;
+    privileged = true;
   }
 
   // XXX No full support for picture in Desktop yet (needs proper UI)
-  if (aPrivileged ||
+  if (privileged ||
       (c.mFake && !Preferences::GetBool("media.navigator.permission.fake"))) {
     MediaManager::GetMessageLoop()->PostTask(FROM_HERE, task.forget());
   } else {
@@ -2376,6 +2317,8 @@ GetUserMediaCallbackMediaStreamListener::AudioConfig(bool aEchoOn,
       NewRunnableMethod(mAudioSource.get(), &MediaEngineSource::Config,
                         aEchoOn, aEcho, aAgcOn, aAGC, aNoiseOn,
                         aNoise, aPlayoutDelay));
+#else
+    unused << mMediaThread;
 #endif
   }
 }

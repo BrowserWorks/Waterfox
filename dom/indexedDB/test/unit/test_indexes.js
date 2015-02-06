@@ -97,7 +97,7 @@ function testSteps()
     is(found, true, "objectStore has our index");
     let index = objectStore.index(indexData[i].name);
     is(index.name, indexData[i].name, "Correct name");
-    is(index.storeName, objectStore.name, "Correct store name");
+    is(index.objectStore.name, objectStore.name, "Correct store name");
     is(index.keyPath, indexData[i].keyPath, "Correct keyPath");
     is(index.unique, indexData[i].options.unique ? true : false,
        "Correct unique value");
@@ -252,7 +252,7 @@ function testSteps()
   ok(true, "Test group 5");
 
   keyIndex = 2;
-  let keyRange = IDBKeyRange.bound("Bob", "Ron", true);
+  keyRange = IDBKeyRange.bound("Bob", "Ron", true);
 
   request = objectStore.index("name").openKeyCursor(keyRange);
   request.onerror = errorHandler;
@@ -278,7 +278,7 @@ function testSteps()
   ok(true, "Test group 6");
 
   keyIndex = 1;
-  let keyRange = IDBKeyRange.bound("Bob", "Ron", false, true);
+  keyRange = IDBKeyRange.bound("Bob", "Ron", false, true);
 
   request = objectStore.index("name").openKeyCursor(keyRange);
   request.onerror = errorHandler;

@@ -23,7 +23,7 @@
 #include "mozilla/layers/LayersTypes.h"  // for MOZ_LAYERS_LOG
 #include "mozilla/layers/TextureHost.h"  // for TextureHost
 #include "mozilla/layers/TextureHostOGL.h"  // for TextureHostOGL
-#include "mozilla/layers/ThebesLayerComposite.h"
+#include "mozilla/layers/PaintedLayerComposite.h"
 #include "mozilla/mozalloc.h"           // for operator delete
 #include "mozilla/unused.h"
 #include "nsDebug.h"                    // for NS_WARNING, NS_ASSERTION
@@ -88,15 +88,15 @@ CompositableParentManager::ReceiveCompositableUpdate(const CompositableOperation
       break;
     }
     case CompositableOperation::TOpPaintTextureRegion: {
-      MOZ_LAYERS_LOG(("[ParentSide] Paint ThebesLayer"));
+      MOZ_LAYERS_LOG(("[ParentSide] Paint PaintedLayer"));
 
       const OpPaintTextureRegion& op = aEdit.get_OpPaintTextureRegion();
       CompositableHost* compositable = AsCompositable(op);
       Layer* layer = compositable->GetLayer();
-      if (!layer || layer->GetType() != Layer::TYPE_THEBES) {
+      if (!layer || layer->GetType() != Layer::TYPE_PAINTED) {
         return false;
       }
-      ThebesLayerComposite* thebes = static_cast<ThebesLayerComposite*>(layer);
+      PaintedLayerComposite* thebes = static_cast<PaintedLayerComposite*>(layer);
 
       const ThebesBufferData& bufferData = op.bufferData();
 
@@ -117,7 +117,7 @@ CompositableParentManager::ReceiveCompositableUpdate(const CompositableOperation
       break;
     }
     case CompositableOperation::TOpPaintTextureIncremental: {
-      MOZ_LAYERS_LOG(("[ParentSide] Paint ThebesLayer"));
+      MOZ_LAYERS_LOG(("[ParentSide] Paint PaintedLayer"));
 
       const OpPaintTextureIncremental& op = aEdit.get_OpPaintTextureIncremental();
 
@@ -162,7 +162,7 @@ CompositableParentManager::ReceiveCompositableUpdate(const CompositableOperation
       MOZ_ASSERT(tex.get());
       compositable->RemoveTextureHost(tex);
       // send FenceHandle if present.
-      TextureHost::SendFenceHandleIfPresent(op.textureParent());
+      SendFenceHandleIfPresent(op.textureParent(), compositable);
       break;
     }
     case CompositableOperation::TOpRemoveTextureAsync: {
@@ -179,7 +179,8 @@ CompositableParentManager::ReceiveCompositableUpdate(const CompositableOperation
                              GetChildProcessId(),
                              op.holderId(),
                              op.transactionId(),
-                             op.textureParent());
+                             op.textureParent(),
+                             compositable);
 
         // If the message is recievied via PLayerTransaction,
         // Send message back via PImageBridge.
@@ -190,7 +191,7 @@ CompositableParentManager::ReceiveCompositableUpdate(const CompositableOperation
                                                   op.transactionId()));
       } else {
         // send FenceHandle if present.
-        TextureHost::SendFenceHandleIfPresent(op.textureParent());
+        SendFenceHandleIfPresent(op.textureParent(), compositable);
 
         ReplyRemoveTexture(OpReplyRemoveTexture(false, // isMain
                                                 op.holderId(),
@@ -256,6 +257,42 @@ CompositableParentManager::ReceiveCompositableUpdate(const CompositableOperation
   }
 
   return true;
+}
+
+void
+CompositableParentManager::SendPendingAsyncMessges()
+{
+  if (mPendingAsyncMessage.empty()) {
+    return;
+  }
+
+  // Some type of AsyncParentMessageData message could have
+  // one file descriptor (e.g. OpDeliverFence).
+  // A number of file descriptors per gecko ipc message have a limitation
+  // on OS_POSIX (MACOSX or LINUX).
+#if defined(OS_POSIX)
+  static const uint32_t kMaxMessageNumber = FileDescriptorSet::MAX_DESCRIPTORS_PER_MESSAGE;
+#else
+  // default number that works everywhere else
+  static const uint32_t kMaxMessageNumber = 250;
+#endif
+
+  InfallibleTArray<AsyncParentMessageData> messages;
+  messages.SetCapacity(mPendingAsyncMessage.size());
+  for (size_t i = 0; i < mPendingAsyncMessage.size(); i++) {
+    messages.AppendElement(mPendingAsyncMessage[i]);
+    // Limit maximum number of messages.
+    if (messages.Length() >= kMaxMessageNumber) {
+      SendAsyncMessage(messages);
+      // Initialize Messages.
+      messages.Clear();
+    }
+  }
+
+  if (messages.Length() > 0) {
+    SendAsyncMessage(messages);
+  }
+  mPendingAsyncMessage.clear();
 }
 
 } // namespace

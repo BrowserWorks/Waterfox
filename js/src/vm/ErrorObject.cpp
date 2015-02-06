@@ -13,6 +13,7 @@
 
 #include "jsobjinlines.h"
 
+#include "vm/NativeObject-inl.h"
 #include "vm/Shape-inl.h"
 
 using namespace js;
@@ -21,7 +22,7 @@ using mozilla::PodZero;
 /* static */ Shape *
 js::ErrorObject::assignInitialShape(ExclusiveContext *cx, Handle<ErrorObject*> obj)
 {
-    MOZ_ASSERT(obj->nativeEmpty());
+    MOZ_ASSERT(obj->empty());
 
     if (!obj->addDataProperty(cx, cx->names().fileName, FILENAME_SLOT, 0))
         return nullptr;
@@ -56,13 +57,13 @@ js::ErrorObject::init(JSContext *cx, Handle<ErrorObject*> obj, JSExnType type,
         MOZ_ASSERT(messageShape->slot() == MESSAGE_SLOT);
     }
 
-    MOZ_ASSERT(obj->nativeLookupPure(NameToId(cx->names().fileName))->slot() == FILENAME_SLOT);
-    MOZ_ASSERT(obj->nativeLookupPure(NameToId(cx->names().lineNumber))->slot() == LINENUMBER_SLOT);
-    MOZ_ASSERT(obj->nativeLookupPure(NameToId(cx->names().columnNumber))->slot() ==
+    MOZ_ASSERT(obj->lookupPure(NameToId(cx->names().fileName))->slot() == FILENAME_SLOT);
+    MOZ_ASSERT(obj->lookupPure(NameToId(cx->names().lineNumber))->slot() == LINENUMBER_SLOT);
+    MOZ_ASSERT(obj->lookupPure(NameToId(cx->names().columnNumber))->slot() ==
                COLUMNNUMBER_SLOT);
-    MOZ_ASSERT(obj->nativeLookupPure(NameToId(cx->names().stack))->slot() == STACK_SLOT);
+    MOZ_ASSERT(obj->lookupPure(NameToId(cx->names().stack))->slot() == STACK_SLOT);
     MOZ_ASSERT_IF(message,
-                  obj->nativeLookupPure(NameToId(cx->names().message))->slot() == MESSAGE_SLOT);
+                  obj->lookupPure(NameToId(cx->names().message))->slot() == MESSAGE_SLOT);
 
     MOZ_ASSERT(JSEXN_ERR <= type && type < JSEXN_LIMIT);
 
@@ -74,10 +75,7 @@ js::ErrorObject::init(JSContext *cx, Handle<ErrorObject*> obj, JSExnType type,
     obj->initReservedSlot(COLUMNNUMBER_SLOT, Int32Value(columnNumber));
     obj->initReservedSlot(STACK_SLOT, StringValue(stack));
     if (message)
-        obj->nativeSetSlotWithType(cx, messageShape, StringValue(message));
-
-    if (report && report->originPrincipals)
-        JS_HoldPrincipals(report->originPrincipals);
+        obj->setSlotWithType(cx, messageShape, StringValue(message));
 
     return true;
 }
@@ -93,7 +91,8 @@ js::ErrorObject::create(JSContext *cx, JSExnType errorType, HandleString stack,
 
     Rooted<ErrorObject*> errObject(cx);
     {
-        JSObject* obj = NewObjectWithGivenProto(cx, &ErrorObject::class_, proto, nullptr);
+        const Class *clasp = ErrorObject::classForType(errorType);
+        JSObject* obj = NewObjectWithGivenProto(cx, clasp, proto, nullptr);
         if (!obj)
             return nullptr;
         errObject = &obj->as<ErrorObject>();

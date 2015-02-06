@@ -47,6 +47,8 @@ class GlobalHelperThreadState
     typedef Vector<ParseTask*, 0, SystemAllocPolicy> ParseTaskVector;
     typedef Vector<SourceCompressionTask*, 0, SystemAllocPolicy> SourceCompressionTaskVector;
     typedef Vector<GCHelperState *, 0, SystemAllocPolicy> GCHelperStateVector;
+    typedef Vector<GCParallelTask *, 0, SystemAllocPolicy> GCParallelTaskVector;
+    typedef mozilla::LinkedList<jit::IonBuilder> IonBuilderList;
 
     // List of available threads, or null if the thread state has not been initialized.
     HelperThread *threads;
@@ -56,6 +58,9 @@ class GlobalHelperThreadState
 
     // Ion compilation worklist and finished jobs.
     IonBuilderVector ionWorklist_, ionFinishedList_;
+
+    // List of IonBuilders using lazy linking pending to get linked.
+    IonBuilderList ionLazyLinkList_;
 
     // AsmJS worklist and finished jobs.
     //
@@ -82,6 +87,9 @@ class GlobalHelperThreadState
 
     // Runtimes which have sweeping / allocating work to do.
     GCHelperStateVector gcHelperWorklist_;
+
+    // GC tasks needing to be done in parallel.
+    GCParallelTaskVector gcParallelWorklist_;
 
   public:
     size_t maxIonCompilationThreads() const {
@@ -130,44 +138,53 @@ class GlobalHelperThreadState
     }
 
     IonBuilderVector &ionWorklist() {
-        JS_ASSERT(isLocked());
+        MOZ_ASSERT(isLocked());
         return ionWorklist_;
     }
     IonBuilderVector &ionFinishedList() {
-        JS_ASSERT(isLocked());
+        MOZ_ASSERT(isLocked());
         return ionFinishedList_;
+    }
+    IonBuilderList &ionLazyLinkList() {
+        MOZ_ASSERT(isLocked());
+        return ionLazyLinkList_;
     }
 
     AsmJSParallelTaskVector &asmJSWorklist() {
-        JS_ASSERT(isLocked());
+        MOZ_ASSERT(isLocked());
         return asmJSWorklist_;
     }
     AsmJSParallelTaskVector &asmJSFinishedList() {
-        JS_ASSERT(isLocked());
+        MOZ_ASSERT(isLocked());
         return asmJSFinishedList_;
     }
 
     ParseTaskVector &parseWorklist() {
-        JS_ASSERT(isLocked());
+        MOZ_ASSERT(isLocked());
         return parseWorklist_;
     }
     ParseTaskVector &parseFinishedList() {
-        JS_ASSERT(isLocked());
+        MOZ_ASSERT(isLocked());
         return parseFinishedList_;
     }
     ParseTaskVector &parseWaitingOnGC() {
-        JS_ASSERT(isLocked());
+        MOZ_ASSERT(isLocked());
         return parseWaitingOnGC_;
     }
 
     SourceCompressionTaskVector &compressionWorklist() {
-        JS_ASSERT(isLocked());
+        MOZ_ASSERT(isLocked());
         return compressionWorklist_;
     }
 
     GCHelperStateVector &gcHelperWorklist() {
-        JS_ASSERT(isLocked());
+        MOZ_ASSERT(isLocked());
         return gcHelperWorklist_;
+    }
+
+    GCParallelTaskVector &gcParallelWorklist() {
+        MOZ_ASSERT(isLocked());
+        return gcParallelWorklist_;
     }
 
     bool canStartAsmJSCompile();
@@ -175,6 +192,7 @@ class GlobalHelperThreadState
     bool canStartParseTask();
     bool canStartCompressionTask();
     bool canStartGCHelperTask();
+    bool canStartGCParallelTask();
 
     // Unlike the methods above, the value returned by this method can change
     // over time, even if the helper thread state lock is held throughout.
@@ -185,14 +203,14 @@ class GlobalHelperThreadState
     HelperThread *highestPriorityPausedIonCompile();
 
     uint32_t harvestFailedAsmJSJobs() {
-        JS_ASSERT(isLocked());
+        MOZ_ASSERT(isLocked());
         uint32_t n = numAsmJSFailedJobs;
         numAsmJSFailedJobs = 0;
         return n;
     }
     void noteAsmJSFailure(void *func) {
         // Be mindful to signal the main thread after calling this function.
-        JS_ASSERT(isLocked());
+        MOZ_ASSERT(isLocked());
         if (!asmJSFailedFunction)
             asmJSFailedFunction = func;
         numAsmJSFailedJobs++;
@@ -253,8 +271,10 @@ class GlobalHelperThreadState
 static inline GlobalHelperThreadState &
 HelperThreadState()
 {
-    extern GlobalHelperThreadState gHelperThreadState;
-    return gHelperThreadState;
+    extern GlobalHelperThreadState *gHelperThreadState;
+
+    MOZ_ASSERT(gHelperThreadState);
+    return *gHelperThreadState;
 }
 
 /* Individual helper thread, one allocated per core. */
@@ -291,8 +311,16 @@ struct HelperThread
     /* Any GC state for background sweeping or allocating being performed. */
     GCHelperState *gcHelperState;
 
+    /* State required to perform a GC parallel task. */
+    GCParallelTask *gcParallelTask;
+
     bool idle() const {
-        return !ionBuilder && !asmData && !parseTask && !compressionTask && !gcHelperState;
+        return !ionBuilder &&
+               !asmData &&
+               !parseTask &&
+               !compressionTask &&
+               !gcHelperState &&
+               !gcParallelTask;
     }
 
     void destroy();
@@ -302,6 +330,7 @@ struct HelperThread
     void handleParseWorkload();
     void handleCompressionWorkload();
     void handleGCHelperWorkload();
+    void handleGCParallelWorkload();
 
     static void ThreadMain(void *arg);
     void threadLoop();
@@ -309,9 +338,17 @@ struct HelperThread
 
 /* Methods for interacting with helper threads. */
 
+// Create data structures used by helper threads.
+bool
+CreateHelperThreadsState();
+
+// Destroy data structures used by helper threads.
+void
+DestroyHelperThreadsState();
+
 // Initialize helper threads unless already initialized.
 void
-EnsureHelperThreadsInitialized(ExclusiveContext *cx);
+EnsureHelperThreadsInitialized();
 
 // This allows the JS shell to override GetCPUCount() when passed the
 // --thread-count=N option.
@@ -350,7 +387,7 @@ CancelOffThreadParses(JSRuntime *runtime);
  */
 bool
 StartOffThreadParseScript(JSContext *cx, const ReadOnlyCompileOptions &options,
-                          const jschar *chars, size_t length,
+                          const char16_t *chars, size_t length,
                           JS::OffThreadCompileCallback callback, void *callbackData);
 
 /*
@@ -423,7 +460,7 @@ struct ParseTask
 {
     ExclusiveContext *cx;
     OwningCompileOptions options;
-    const jschar *chars;
+    const char16_t *chars;
     size_t length;
     LifoAlloc alloc;
 
@@ -453,7 +490,7 @@ struct ParseTask
     bool overRecursed;
 
     ParseTask(ExclusiveContext *cx, JSObject *exclusiveContextGlobal,
-              JSContext *initCx, const jschar *chars, size_t length,
+              JSContext *initCx, const char16_t *chars, size_t length,
               JS::OffThreadCompileCallback callback, void *callbackData);
     bool init(JSContext *cx, const ReadOnlyCompileOptions &options);
 

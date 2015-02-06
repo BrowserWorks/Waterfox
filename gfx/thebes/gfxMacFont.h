@@ -24,10 +24,6 @@ public:
     CGFontRef GetCGFontRef() const { return mCGFont; }
 
     /* overrides for the pure virtual methods in gfxFont */
-    virtual const gfxFont::Metrics& GetMetrics() {
-        return mMetrics;
-    }
-
     virtual uint32_t GetSpaceGlyph() {
         return mSpaceGlyph;
     }
@@ -51,12 +47,17 @@ public:
     virtual FontType GetType() const { return FONT_TYPE_MAC; }
 
 protected:
+    virtual const Metrics& GetHorizontalMetrics() {
+        return mMetrics;
+    }
+
     // override to prefer CoreText shaping with fonts that depend on AAT
     virtual bool ShapeText(gfxContext     *aContext,
                            const char16_t *aText,
                            uint32_t        aOffset,
                            uint32_t        aLength,
                            int32_t         aScript,
+                           bool            aVertical,
                            gfxShapedText  *aShapedText);
 
     void InitMetrics();

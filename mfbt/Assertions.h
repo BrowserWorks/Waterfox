@@ -332,7 +332,7 @@ struct IsFunction<R(A...)>
 };
 
 template<typename T>
-void ValidateAssertConditionType()
+struct AssertionConditionType
 {
   typedef typename RemoveReference<T>::Type ValueT;
   static_assert(!IsArray<ValueT>::value,
@@ -347,12 +347,15 @@ void ValidateAssertConditionType()
                 "fail. Shouldn't your code gracefully handle this case instead "
                 "of asserting? Anyway, if you really want to do that, write an "
                 "explicit boolean condition, like !!x or x!=0.");
-}
+
+  static const bool isValid = true;
+};
 
 } // namespace detail
 } // namespace mozilla
 #  define MOZ_VALIDATE_ASSERT_CONDITION_TYPE(x) \
-     mozilla::detail::ValidateAssertConditionType<decltype(x)>()
+     static_assert(mozilla::detail::AssertionConditionType<decltype(x)>::isValid, \
+                   "invalid assertion condition")
 #else
 #  define MOZ_VALIDATE_ASSERT_CONDITION_TYPE(x)
 #endif
@@ -387,16 +390,6 @@ void ValidateAssertConditionType()
 #else
 #  define MOZ_ASSERT(...) do { } while (0)
 #endif /* DEBUG */
-
-/*
- * MOZ_NIGHTLY_ASSERT is defined for both debug and release builds on the
- * Nightly channel, but only debug builds on Aurora, Beta, and Release.
- */
-#if defined(NIGHTLY_BUILD)
-#  define MOZ_NIGHTLY_ASSERT(...) MOZ_RELEASE_ASSERT(__VA_ARGS__)
-#else
-#  define MOZ_NIGHTLY_ASSERT(...) MOZ_ASSERT(__VA_ARGS__)
-#endif
 
 /*
  * MOZ_ASSERT_IF(cond1, cond2) is equivalent to MOZ_ASSERT(cond2) if cond1 is
@@ -494,26 +487,17 @@ void ValidateAssertConditionType()
  */
 
 /*
- * Assert in all debug builds plus the Nightly channel's release builds. Take
- * this extra testing precaution because hitting MOZ_ASSUME_UNREACHABLE_MARKER
- * could trigger exploitable undefined behavior.
+ * Unconditional assert in debug builds for (assumed) unreachable code paths
+ * that have a safe return without crashing in release builds.
  */
 #define MOZ_ASSERT_UNREACHABLE(reason) \
-   MOZ_NIGHTLY_ASSERT(false, "MOZ_ASSERT_UNREACHABLE: " reason)
+   MOZ_ASSERT(false, "MOZ_ASSERT_UNREACHABLE: " reason)
 
 #define MOZ_MAKE_COMPILER_ASSUME_IS_UNREACHABLE(reason) \
    do { \
      MOZ_ASSERT_UNREACHABLE(reason); \
      MOZ_ASSUME_UNREACHABLE_MARKER(); \
    } while (0)
-
-/*
- * TODO: Bug 990764: Audit all MOZ_ASSUME_UNREACHABLE calls and replace them
- * with MOZ_ASSERT_UNREACHABLE, MOZ_MAKE_COMPILER_ASSUME_IS_UNREACHABLE, or
- * MOZ_CRASH. For now, preserve the macro's same meaning of unreachable.
- */
-#define MOZ_ASSUME_UNREACHABLE(reason) \
-   MOZ_MAKE_COMPILER_ASSUME_IS_UNREACHABLE(reason)
 
 /*
  * MOZ_ALWAYS_TRUE(expr) and MOZ_ALWAYS_FALSE(expr) always evaluate the provided

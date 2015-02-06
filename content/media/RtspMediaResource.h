@@ -7,6 +7,8 @@
 #define RtspMediaResource_h_
 
 #include "MediaResource.h"
+#include "mozilla/Monitor.h"
+#include "nsITimer.h"
 
 namespace mozilla {
 
@@ -112,6 +114,12 @@ public:
   // Seek to the given time offset
   nsresult SeekTime(int64_t aOffset);
 
+  // The idea of playout delay is to hold frames in the playout buffer
+  // (RtspTrackBuffer) for a period of time in order to smooth timing variations
+  // caused by the network.
+  void EnablePlayoutDelay();
+  void DisablePlayoutDelay();
+
   // dummy
   virtual nsresult ReadAt(int64_t aOffset, char* aBuffer,
                           uint32_t aCount, uint32_t* aBytes)  MOZ_OVERRIDE{
@@ -130,10 +138,6 @@ public:
   virtual nsresult Seek(int32_t aWhence, int64_t aOffset) MOZ_OVERRIDE {
     return NS_OK;
   }
-  // dummy
-  virtual void     StartSeekingForMetadata() MOZ_OVERRIDE {}
-  // dummy
-  virtual void     EndSeekingForMetadata() MOZ_OVERRIDE {}
   // dummy
   virtual int64_t  Tell() MOZ_OVERRIDE { return 0; }
 

@@ -83,7 +83,17 @@ namespace gl
 #define UNUSED_ASSERTION_VARIABLE(variable) ((void)variable)
 #endif
 
+#ifndef ANGLE_ENABLE_TRACE
+#define UNUSED_TRACE_VARIABLE(variable) ((void)variable)
+#else
+#define UNUSED_TRACE_VARIABLE(variable)
+#endif
+
 // A macro to indicate unimplemented functionality
+
+#if defined (ANGLE_TEST_CONFIG)
+#define NOASSERT_UNIMPLEMENTED 1
+#endif
 
 // Define NOASSERT_UNIMPLEMENTED to non zero to skip the assert fail in the unimplemented checks
 // This will allow us to test with some automated test suites (eg dEQP) without crashing
@@ -118,7 +128,7 @@ namespace gl
 #endif
 
 // A macro functioning as a compile-time assert to validate constant conditions
-#if defined(_MSC_VER) && _MSC_VER >= 1600
+#if (defined(_MSC_VER) && _MSC_VER >= 1600) || (defined(__GNUC__) && (__GNUC__ > 4 || __GNUC_MINOR__ >= 3))
 #define META_ASSERT_MSG(condition, msg) static_assert(condition, msg)
 #else
 #define META_ASSERT_CONCAT(a, b) a ## b

@@ -39,6 +39,8 @@ public:
     return true;
   }
 
+  virtual void SendPing() = 0;
+
   const static uint32_t kSendingChunkSize = 4095;
   const static uint32_t kTCPSendBufferSize = 131072;
 
@@ -72,7 +74,7 @@ public:
   SpdyInformation();
   ~SpdyInformation() {}
 
-  static const uint32_t kCount = 3;
+  static const uint32_t kCount = 4;
 
   // determine the index (0..kCount-1) of the spdy information that
   // correlates to the npn string. NS_FAILED() if no match is found.

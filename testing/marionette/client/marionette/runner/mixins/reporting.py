@@ -11,6 +11,7 @@ import pkg_resources
 import sys
 import time
 
+from mozlog.structured.structuredlog import get_default_logger
 import mozversion
 from xmlgen import html
 from xmlgen import raw
@@ -155,6 +156,7 @@ class HTMLReportingTestRunnerMixin(object):
             time.strftime(date_format, time.localtime(
                 int(version.get('gaia_date')))),
             'Device identifier': version.get('device_id'),
+            'Device firmware (base)': version.get('device_firmware_version_base'),
             'Device firmware (date)': version.get('device_firmware_date') and
             time.strftime(date_format, time.localtime(
                 int(version.get('device_firmware_date')))),
@@ -246,9 +248,9 @@ class HTMLReportingTestResultMixin(object):
     def gather_debug(self):
         debug = {}
         try:
-            # TODO make screenshot consistant size by using full viewport
-            # Bug 883294 - Add ability to take full viewport screenshots
+            self.marionette.set_context(self.marionette.CONTEXT_CHROME)
             debug['screenshot'] = self.marionette.screenshot()
+            self.marionette.set_context(self.marionette.CONTEXT_CONTENT)
             debug['source'] = self.marionette.page_source
             self.marionette.switch_to_frame()
             debug['settings'] = json.dumps(self.marionette.execute_async_script("""
@@ -259,6 +261,7 @@ req.onsuccess = function() {
   marionetteScriptFinished(req.result);
 }""", special_powers=True), sort_keys=True, indent=4, separators=(',', ': '))
         except:
-            pass
+            logger = get_default_logger()
+            logger.warning('Failed to gather test failure debug.', exc_info=True)
         return debug
 

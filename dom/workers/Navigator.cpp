@@ -279,6 +279,13 @@ WorkerNavigator::GetDataStores(JSContext* aCx,
 }
 
 void
+WorkerNavigator::SetLanguages(const nsTArray<nsString>& aLanguages)
+{
+  WorkerNavigatorBinding_workers::ClearCachedLanguagesValue(this);
+  mProperties.mLanguages = aLanguages;
+}
+
+void
 WorkerNavigator::GetAppName(nsString& aAppName) const
 {
   WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();

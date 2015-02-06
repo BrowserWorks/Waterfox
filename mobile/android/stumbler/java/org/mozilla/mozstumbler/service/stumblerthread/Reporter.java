@@ -30,8 +30,9 @@ import org.mozilla.mozstumbler.service.stumblerthread.scanners.GPSScanner;
 import org.mozilla.mozstumbler.service.stumblerthread.scanners.WifiScanner;
 
 public final class Reporter extends BroadcastReceiver {
-    private static final String LOG_TAG = AppGlobals.LOG_PREFIX + Reporter.class.getSimpleName();
+    private static final String LOG_TAG = AppGlobals.makeLogTag(Reporter.class.getSimpleName());
     public static final String ACTION_FLUSH_TO_BUNDLE = AppGlobals.ACTION_NAMESPACE + ".FLUSH";
+    public static final String ACTION_NEW_BUNDLE = AppGlobals.ACTION_NAMESPACE + ".NEW_BUNDLE";
     private boolean mIsStarted;
 
     /* The maximum number of Wi-Fi access points in a single observation. */
@@ -62,7 +63,12 @@ public final class Reporter extends BroadcastReceiver {
 
         mContext = context.getApplicationContext();
         TelephonyManager tm = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
-        mPhoneType = tm.getPhoneType();
+        if (tm != null) {
+            mPhoneType = tm.getPhoneType();
+        } else {
+            Log.d(LOG_TAG, "No telephony manager.");
+            mPhoneType = TelephonyManager.PHONE_TYPE_NONE;
+        }
 
         mIsStarted = true;
 
@@ -111,16 +117,20 @@ public final class Reporter extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
 
-        if (action.equals(ACTION_FLUSH_TO_BUNDLE)) {
-            flush();
-            return;
-        } else if (action.equals(WifiScanner.ACTION_WIFIS_SCANNED)) {
-            receivedWifiMessage(intent);
-        } else if (action.equals(CellScanner.ACTION_CELLS_SCANNED)) {
-            receivedCellMessage(intent);
-        } else if (action.equals(GPSScanner.ACTION_GPS_UPDATED)) {
-            // Calls reportCollectedLocation, this is the ideal case
-            receivedGpsMessage(intent);
+        switch (action) {
+            case ACTION_FLUSH_TO_BUNDLE:
+                flush();
+                return;
+            case WifiScanner.ACTION_WIFIS_SCANNED:
+                receivedWifiMessage(intent);
+                break;
+            case CellScanner.ACTION_CELLS_SCANNED:
+                receivedCellMessage(intent);
+                break;
+            case GPSScanner.ACTION_GPS_UPDATED:
+                // Calls reportCollectedLocation, this is the ideal case
+                receivedGpsMessage(intent);
+                break;
         }
 
         if (mBundle != null &&
@@ -138,6 +148,10 @@ public final class Reporter extends BroadcastReceiver {
 
         Map<String, ScanResult> currentWifiData = mBundle.getWifiData();
         for (ScanResult result : results) {
+            if (currentWifiData.size() > MAX_WIFIS_PER_LOCATION) {
+                return;
+            }
+
             String key = result.BSSID;
             if (!currentWifiData.containsKey(key)) {
                 currentWifiData.put(key, result);
@@ -152,6 +166,9 @@ public final class Reporter extends BroadcastReceiver {
 
         Map<String, CellInfo> currentCellData = mBundle.getCellData();
         for (CellInfo result : cells) {
+            if (currentCellData.size() > MAX_CELLS_PER_LOCATION) {
+                return;
+            }
             String key = result.getCellIdentity();
             if (!currentCellData.containsKey(key)) {
                 currentCellData.put(key, result);
@@ -184,10 +201,13 @@ public final class Reporter extends BroadcastReceiver {
         }
 
         if (AppGlobals.isDebug) {
-            Log.d(LOG_TAG, "Received bundle: " + mlsObj.toString());
+            // PII: do not log the bundle without obfuscating it
+            Log.d(LOG_TAG, "Received bundle");
         }
 
-        AppGlobals.guiLogInfo(mlsObj.toString());
+        if (wifiCount + cellCount < 1) {
+            return;
+        }
 
         try {
             DataStorageManager.getInstance().insert(mlsObj.toString(), wifiCount, cellCount);

@@ -13,7 +13,6 @@
 #include "mozilla/dom/MessageEvent.h"
 #include "mozilla/dom/ScriptSettings.h"
 
-#include "js/OldDebugAPI.h"
 #include "nsNetUtil.h"
 #include "nsMimeTypes.h"
 #include "nsIPromptFactory.h"
@@ -369,18 +368,6 @@ EventSource::OnStartRequest(nsIRequest *aRequest,
     DispatchFailConnection();
     return NS_ERROR_ABORT;
   }
-
-  nsCOMPtr<nsIPrincipal> principal = mPrincipal;
-  if (nsContentUtils::IsSystemPrincipal(principal)) {
-    // Don't give this channel the system principal.
-    principal = do_CreateInstance("@mozilla.org/nullprincipal;1", &rv);
-    NS_ENSURE_SUCCESS(rv, rv);
-  }
-  nsCOMPtr<nsILoadInfo> loadInfo =
-    new LoadInfo(principal, LoadInfo::eInheritPrincipal,
-                 LoadInfo::eNotSandboxed);
-  rv = httpChannel->SetLoadInfo(loadInfo);
-  NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIRunnable> event =
     NS_NewRunnableMethod(this, &EventSource::AnnounceConnection);
@@ -761,9 +748,35 @@ EventSource::InitChannelAndRequestEventSource()
     channelPolicy->SetLoadType(nsIContentPolicy::TYPE_DATAREQUEST);
   }
 
+  nsIScriptContext* sc = GetContextForEventHandlers(&rv);
+  nsCOMPtr<nsIDocument> doc =
+    nsContentUtils::GetDocumentFromScriptContext(sc);
+
   nsCOMPtr<nsIChannel> channel;
-  rv = NS_NewChannel(getter_AddRefs(channel), mSrc, nullptr, mLoadGroup,
-                     nullptr, loadFlags, channelPolicy);
+  // If we have the document, use it
+  if (doc) {
+    rv = NS_NewChannel(getter_AddRefs(channel),
+                       mSrc,
+                       doc,
+                       nsILoadInfo::SEC_FORCE_INHERIT_PRINCIPAL,
+                       nsIContentPolicy::TYPE_DATAREQUEST,
+                       channelPolicy,    // aChannelPolicy
+                       mLoadGroup,       // loadGroup
+                       nullptr,          // aCallbacks
+                       loadFlags);       // aLoadFlags
+  } else {
+    // otherwise use the principal
+    rv = NS_NewChannel(getter_AddRefs(channel),
+                       mSrc,
+                       mPrincipal,
+                       nsILoadInfo::SEC_FORCE_INHERIT_PRINCIPAL,
+                       nsIContentPolicy::TYPE_DATAREQUEST,
+                       channelPolicy,    // aChannelPolicy
+                       mLoadGroup,       // loadGroup
+                       nullptr,          // aCallbacks
+                       loadFlags);       // aLoadFlags
+  }
+
   NS_ENSURE_SUCCESS(rv, rv);
 
   mHttpChannel = do_QueryInterface(channel);

@@ -1657,8 +1657,8 @@ nsLineLayout::VerticalAlignFrames(PerSpanData* psd)
   if ((emptyContinuation ||
        mPresContext->CompatibilityMode() != eCompatibility_FullStandards) &&
       ((psd == mRootSpan) ||
-       (spanFramePFD->mBorderPadding.IsEmpty() &&
-        spanFramePFD->mMargin.IsEmpty()))) {
+       (spanFramePFD->mBorderPadding.IsAllZero() &&
+        spanFramePFD->mMargin.IsAllZero()))) {
     // This code handles an issue with compatibility with non-css
     // conformant browsers. In particular, there are some cases
     // where the font-size and line-height for a span must be
@@ -2598,19 +2598,21 @@ nsLineLayout::TextAlignLine(nsLineBox* aLine,
     }
   }
 
-  if (dx) {
+  if (mPresContext->BidiEnabled() &&
+      (!mPresContext->IsVisualMode() || !lineWM.IsBidiLTR())) {
+    nsBidiPresUtils::ReorderFrames(psd->mFirstFrame->mFrame,
+                                   aLine->GetChildCount(),
+                                   lineWM, mContainerWidth,
+                                   psd->mIStart + mTextIndent + dx);
+    if (dx) {
+      aLine->IndentBy(dx, mContainerWidth);
+    }
+  } else if (dx) {
     for (PerFrameData* pfd = psd->mFirstFrame; pfd; pfd = pfd->mNext) {
       pfd->mBounds.IStart(lineWM) += dx;
       pfd->mFrame->SetRect(lineWM, pfd->mBounds, mContainerWidth);
     }
     aLine->IndentBy(dx, mContainerWidth);
-  }
-
-  if (mPresContext->BidiEnabled() &&
-      (!mPresContext->IsVisualMode() || !lineWM.IsBidiLTR())) {
-    nsBidiPresUtils::ReorderFrames(psd->mFirstFrame->mFrame,
-                                   aLine->GetChildCount(),
-                                   lineWM, mContainerWidth);
   }
 }
 

@@ -13,6 +13,7 @@
 #include "mozilla/net/NeckoParent.h"
 #include "nsIParentChannel.h"
 #include "nsIInterfaceRequestor.h"
+#include "OfflineObserver.h"
 
 class nsFtpChannel;
 class nsILoadContext;
@@ -25,6 +26,7 @@ class FTPChannelParent : public PFTPChannelParent
                        , public nsIInterfaceRequestor
                        , public ADivertableParentChannel
                        , public nsIChannelEventSink
+                       , public DisconnectableParent
 {
 public:
   NS_DECL_ISUPPORTS
@@ -62,7 +64,10 @@ protected:
 
   bool DoAsyncOpen(const URIParams& aURI, const uint64_t& aStartPos,
                    const nsCString& aEntityID,
-                   const OptionalInputStreamParams& aUploadStream);
+                   const OptionalInputStreamParams& aUploadStream,
+                   const ipc::PrincipalInfo& aRequestingPrincipalInfo,
+                   const uint32_t& aSecurityFlags,
+                   const uint32_t& aContentPolicyType);
 
   // used to connect redirected-to channel in parent with just created
   // ChildChannel.  Used during HTTP->FTP redirects.
@@ -78,6 +83,9 @@ protected:
   virtual bool RecvDivertComplete() MOZ_OVERRIDE;
 
   virtual void ActorDestroy(ActorDestroyReason why) MOZ_OVERRIDE;
+
+  void OfflineDisconnect() MOZ_OVERRIDE;
+  uint32_t GetAppId() MOZ_OVERRIDE;
 
   // if configured to use HTTP proxy for FTP, this can an an HTTP channel.
   nsCOMPtr<nsIChannel> mChannel;
@@ -103,6 +111,7 @@ protected:
   // Set if we successfully suspended the nsHttpChannel for diversion. Unset
   // when we call ResumeForDiversion.
   bool mSuspendedForDiversion;
+  nsRefPtr<OfflineObserver> mObserver;
 };
 
 } // namespace net

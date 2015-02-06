@@ -194,8 +194,7 @@ function runUndoRedoTest()
   synthesizeComposition({ type: "compositionstart" });
 
   // input raw characters
-  synthesizeComposition({ type: "compositionupdate", data: "\u306D" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u306D",
         "clauses":
@@ -206,8 +205,7 @@ function runUndoRedoTest()
       "caret": { "start": 1, "length": 0 }
     });
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u306D\u3053" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u306D\u3053",
         "clauses":
@@ -219,8 +217,7 @@ function runUndoRedoTest()
     });
 
   // convert
-  synthesizeComposition({ type: "compositionupdate", data: "\u732B" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u732B",
         "clauses":
@@ -233,7 +230,7 @@ function runUndoRedoTest()
     });
 
   // commit
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u732B",
         "clauses":
@@ -251,8 +248,7 @@ function runUndoRedoTest()
   synthesizeComposition({ type: "compositionstart" });
 
   // input raw characters
-  synthesizeComposition({ type: "compositionupdate", data: "\u307E" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u307E",
         "clauses":
@@ -264,8 +260,7 @@ function runUndoRedoTest()
     });
 
   // cancel the composition
-  synthesizeComposition({ type: "compositionupdate", data: "" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "",
         "clauses":
@@ -283,8 +278,7 @@ function runUndoRedoTest()
   synthesizeComposition({ type: "compositionstart" });
 
   // input raw characters
-  synthesizeComposition({ type: "compositionupdate", data: "\u3080" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3080",
         "clauses":
@@ -295,8 +289,7 @@ function runUndoRedoTest()
       "caret": { "start": 1, "length": 0 }
     });
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u3080\u3059" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3080\u3059",
         "clauses":
@@ -307,9 +300,7 @@ function runUndoRedoTest()
       "caret": { "start": 2, "length": 0 }
     });
 
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u3080\u3059\u3081" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3080\u3059\u3081",
         "clauses":
@@ -321,8 +312,7 @@ function runUndoRedoTest()
     });
 
   // convert
-  synthesizeComposition({ type: "compositionupdate", data: "\u5A18" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u5A18",
         "clauses":
@@ -335,7 +325,7 @@ function runUndoRedoTest()
     });
 
   // commit
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u5A18",
         "clauses":
@@ -386,8 +376,7 @@ function runUndoRedoTest()
   synthesizeComposition({ type: "compositionstart" });
 
   // input raw characters
-  synthesizeComposition({ type: "compositionupdate", data: "\u3088" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3088",
         "clauses":
@@ -398,8 +387,7 @@ function runUndoRedoTest()
       "caret": { "start": 1, "length": 0 }
     });
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u3088\u3046" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3088\u3046",
         "clauses":
@@ -410,9 +398,7 @@ function runUndoRedoTest()
       "caret": { "start": 2, "length": 0 }
     });
 
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u3088\u3046\u304b" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3088\u3046\u304b",
         "clauses":
@@ -423,9 +409,7 @@ function runUndoRedoTest()
       "caret": { "start": 3, "length": 0 }
     });
 
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u3088\u3046\u304b\u3044" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3088\u3046\u304b\u3044",
         "clauses":
@@ -437,8 +421,7 @@ function runUndoRedoTest()
     });
 
   // convert
-  synthesizeComposition({ type: "compositionupdate", data: "\u5996\u602a" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u5996\u602a",
         "clauses":
@@ -450,7 +433,7 @@ function runUndoRedoTest()
     });
 
   // commit
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u5996\u602a",
         "clauses":
@@ -648,8 +631,7 @@ function runCompositionTest()
   synthesizeComposition({ type: "compositionstart" });
 
   // input first character
-  synthesizeComposition({ type: "compositionupdate", data: "\u3089" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089",
         "clauses":
@@ -673,8 +655,7 @@ function runCompositionTest()
   caretRects[1] = caretRect;
 
   // input second character
-  synthesizeComposition({ type: "compositionupdate", data: "\u3089\u30FC" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089\u30FC",
         "clauses":
@@ -707,9 +688,7 @@ function runCompositionTest()
      "runCompositionTest: caret width is wrong (#1-2)");
 
   // input third character
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u3089\u30FC\u3081" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089\u30FC\u3081",
         "clauses":
@@ -742,7 +721,7 @@ function runCompositionTest()
      "runCompositionTest: caret height is wrong (#1-3)");
 
   // moves the caret left
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089\u30FC\u3081",
         "clauses":
@@ -776,7 +755,7 @@ function runCompositionTest()
      "runCompositionTest: caret rects are different (#1-3-1, height)");
 
   // moves the caret left
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089\u30FC\u3081",
         "clauses":
@@ -809,9 +788,7 @@ function runCompositionTest()
   is(caretRect.height, caretRects[1].height,
      "runCompositionTest: caret rects are different (#1-3-2, height)");
 
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u3089\u30FC\u3081\u3093" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089\u30FC\u3081\u3093",
         "clauses":
@@ -829,9 +806,7 @@ function runCompositionTest()
 
 
   // backspace
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u3089\u30FC\u3081" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089\u30FC\u3081",
         "clauses":
@@ -848,9 +823,7 @@ function runCompositionTest()
   }
 
   // re-input
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u3089\u30FC\u3081\u3093" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089\u30FC\u3081\u3093",
         "clauses":
@@ -866,9 +839,7 @@ function runCompositionTest()
     return;
   }
 
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u3089\u30FC\u3081\u3093\u3055" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089\u30FC\u3081\u3093\u3055",
         "clauses":
@@ -884,9 +855,7 @@ function runCompositionTest()
     return;
   }
 
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u3089\u30FC\u3081\u3093\u3055\u3044" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089\u30FC\u3081\u3093\u3055\u3044",
         "clauses":
@@ -902,9 +871,7 @@ function runCompositionTest()
     return;
   }
 
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u3089\u30FC\u3081\u3093\u3055\u3044\u3053" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089\u30FC\u3081\u3093\u3055\u3044\u3053",
         "clauses":
@@ -920,9 +887,7 @@ function runCompositionTest()
     return;
   }
 
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u3089\u30FC\u3081\u3093\u3055\u3044\u3053\u3046" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089\u30FC\u3081\u3093\u3055\u3044\u3053\u3046",
         "clauses":
@@ -940,9 +905,7 @@ function runCompositionTest()
   }
 
   // convert
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u30E9\u30FC\u30E1\u30F3\u6700\u9AD8" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u30E9\u30FC\u30E1\u30F3\u6700\u9AD8",
         "clauses":
@@ -963,7 +926,7 @@ function runCompositionTest()
   }
 
   // change the selected clause
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u30E9\u30FC\u30E1\u30F3\u6700\u9AD8",
         "clauses":
@@ -984,9 +947,7 @@ function runCompositionTest()
   }
 
   // reset clauses
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u30E9\u30FC\u30E1\u30F3\u3055\u884C\u3053\u3046" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u30E9\u30FC\u30E1\u30F3\u3055\u884C\u3053\u3046",
         "clauses":
@@ -1017,7 +978,7 @@ function runCompositionTest()
   }
 
   // commit the composition string
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u30E9\u30FC\u30E1\u30F3\u3055\u884C\u3053\u3046",
         "clauses":
@@ -1054,8 +1015,7 @@ function runCompositionTest()
   synthesizeComposition({ type: "compositionstart" });
 
   // input characters
-  synthesizeComposition({ type: "compositionupdate", data: "\u3057" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3057",
         "clauses":
@@ -1072,8 +1032,7 @@ function runCompositionTest()
     return;
   }
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u3058" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3058",
         "clauses":
@@ -1090,8 +1049,7 @@ function runCompositionTest()
     return;
   }
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u3058\u3087" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3058\u3087",
         "clauses":
@@ -1108,9 +1066,7 @@ function runCompositionTest()
     return;
   }
 
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u3058\u3087\u3046" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3058\u3087\u3046",
         "clauses":
@@ -1128,7 +1084,7 @@ function runCompositionTest()
   }
 
   // commit the composition string
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3058\u3087\u3046",
         "clauses":
@@ -1158,8 +1114,7 @@ function runCompositionTest()
   // start composition with selection
   synthesizeComposition({ type: "compositionstart" });
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u304A" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u304A",
         "clauses":
@@ -1177,8 +1132,7 @@ function runCompositionTest()
   }
 
   // remove the composition string
-  synthesizeComposition({ type: "compositionupdate", data: "" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "",
         "clauses":
@@ -1196,8 +1150,7 @@ function runCompositionTest()
   }
 
   // re-input the composition string
-  synthesizeComposition({ type: "compositionupdate", data: "\u3046" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3046",
         "clauses":
@@ -1215,8 +1168,7 @@ function runCompositionTest()
   }
 
   // cancel the composition
-  synthesizeComposition({ type: "compositionupdate", data: "" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "",
         "clauses":
@@ -1240,7 +1192,7 @@ function runCompositionTest()
   // its candidate window.
   synthesizeComposition({ type: "compositionstart" });
 
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "",
         "clauses":
@@ -1257,7 +1209,7 @@ function runCompositionTest()
     return;
   }
 
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "",
         "clauses":
@@ -1274,8 +1226,7 @@ function runCompositionTest()
     return;
   }
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u6700" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u6700",
         "clauses":
@@ -1303,7 +1254,7 @@ function runCompositionTest()
   // testing the canceling case
   synthesizeComposition({ type: "compositionstart" });
 
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "",
         "clauses":
@@ -1320,7 +1271,7 @@ function runCompositionTest()
     return;
   }
 
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "",
         "clauses":
@@ -1350,7 +1301,7 @@ function runCompositionTest()
 
   synthesizeComposition({ type: "compositionstart" });
 
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "",
         "clauses":
@@ -1367,8 +1318,7 @@ function runCompositionTest()
     return;
   }
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u9AD8" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u9AD8",
         "clauses":
@@ -1404,8 +1354,7 @@ function runCompositionTest()
   // twice at canceling composition.
   synthesizeComposition({ type: "compositionstart" });
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u6700" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u6700",
         "clauses":
@@ -1422,8 +1371,7 @@ function runCompositionTest()
     return;
   }
 
-  synthesizeComposition({ type: "compositionupdate", data: "" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "",
         "clauses":
@@ -1440,7 +1388,7 @@ function runCompositionTest()
     return;
   }
 
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "",
         "clauses":
@@ -1596,8 +1544,7 @@ function runCompositionEventTest()
   initResults();
 
   synthesizeComposition({ type: "compositionstart" });
-  synthesizeComposition({ type: "compositionupdate", data: "\u3089" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089",
         "clauses":
@@ -1648,8 +1595,7 @@ function runCompositionEventTest()
   is(inputEventData["input"], "\u3089",
      kDescription + "value of input element wasn't modified (input) #1");
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u3089\u30FC" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089\u30FC",
         "clauses":
@@ -1693,7 +1639,7 @@ function runCompositionEventTest()
      kDescription + "value of input element wasn't modified (input) #2");
 
   // text event shouldn't cause composition update, e.g., at committing.
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089\u30FC",
         "clauses":
@@ -1745,8 +1691,7 @@ function runCompositionEventTest()
 
   synthesizeComposition({ type: "compositionstart" });
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u3089" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089",
         "clauses":
@@ -1757,7 +1702,7 @@ function runCompositionEventTest()
       "caret": { "start": 1, "length": 0 }
     });
 
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089",
         "clauses":
@@ -1826,8 +1771,7 @@ function runCompositionEventTest()
 
   synthesizeComposition({ type: "compositionstart" });
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u306D" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u306D",
         "clauses":
@@ -1838,7 +1782,7 @@ function runCompositionEventTest()
       "caret": { "start": 1, "length": 0 }
     });
 
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u306D",
         "clauses":
@@ -1909,8 +1853,7 @@ function runCompositionEventTest()
 
   synthesizeComposition({ type: "compositionstart" });
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u306E" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
@@ -1921,7 +1864,7 @@ function runCompositionEventTest()
       "caret": { "start": 1, "length": 0 }
     });
 
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
@@ -2295,8 +2238,7 @@ function runForceCommitTest()
   events = [];
   synthesizeComposition({ type: "compositionstart" });
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u306E" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
@@ -2349,8 +2291,7 @@ function runForceCommitTest()
 
   synthesizeComposition({ type: "compositionstart" });
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u306E" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
@@ -2395,8 +2336,7 @@ function runForceCommitTest()
 
   synthesizeComposition({ type: "compositionstart" });
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u306E" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
@@ -2438,8 +2378,7 @@ function runForceCommitTest()
 
   synthesizeComposition({ type: "compositionstart" });
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u306E" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
@@ -2485,8 +2424,7 @@ function runForceCommitTest()
 
   synthesizeComposition({ type: "compositionstart" });
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u306E" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
@@ -2532,8 +2470,7 @@ function runForceCommitTest()
 
   synthesizeComposition({ type: "compositionstart" });
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u306E" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
@@ -2580,8 +2517,7 @@ function runForceCommitTest()
 
   synthesizeComposition({ type: "compositionstart" });
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u306E" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
@@ -2627,8 +2563,7 @@ function runForceCommitTest()
 
   synthesizeComposition({ type: "compositionstart" }, iframe2.contentWindow);
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u306E" }, iframe2.contentWindow);
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
@@ -2672,8 +2607,7 @@ function runForceCommitTest()
 
   synthesizeComposition({ type: "compositionstart" }, iframe2.contentWindow);
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u306E" }, iframe2.contentWindow);
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
@@ -2722,8 +2656,7 @@ function runForceCommitTest()
 
   synthesizeComposition({ type: "compositionstart" }, iframe2.contentWindow);
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u306E" }, iframe2.contentWindow);
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
@@ -2826,8 +2759,7 @@ function runIsComposingTest()
   synthesizeComposition({ type: "compositionstart" });
   expectedIsComposing = true;
   description = "events after dispatching compositionstart";
-  synthesizeComposition({ type: "compositionupdate", data: "\u3042" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3042",
         "clauses":
@@ -2844,7 +2776,7 @@ function runIsComposingTest()
 
   description = "events for committing composition string";
   synthesizeKey("VK_RETURN", { type: "keydown" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3042",
         "clauses":
@@ -2888,8 +2820,7 @@ function runRemoveContentTest(aCallback)
 
   synthesizeComposition({ type: "compositionstart" });
 
-  synthesizeComposition({ type: "compositionupdate", data: "\u306E" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
@@ -2988,9 +2919,7 @@ function runTestOnAnotherContext(aPanelOrFrame, aFocusedEditor, aTestName)
   synthesizeComposition({ type: "compositionstart" });
 
   // input characters
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u3078\u3093\u3057\u3093" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3078\u3093\u3057\u3093",
         "clauses":
@@ -3007,8 +2936,7 @@ function runTestOnAnotherContext(aPanelOrFrame, aFocusedEditor, aTestName)
   }
 
   // convert them #1
-  synthesizeComposition({ type: "compositionupdate", data: "\u8FD4\u4FE1" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u8FD4\u4FE1",
         "clauses":
@@ -3026,8 +2954,7 @@ function runTestOnAnotherContext(aPanelOrFrame, aFocusedEditor, aTestName)
   }
 
   // convert them #2
-  synthesizeComposition({ type: "compositionupdate", data: "\u5909\u8EAB" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u5909\u8EAB",
         "clauses":
@@ -3045,7 +2972,7 @@ function runTestOnAnotherContext(aPanelOrFrame, aFocusedEditor, aTestName)
   }
 
   // commit them
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u5909\u8EAB",
         "clauses":
@@ -3145,8 +3072,7 @@ function runMaxLengthTest()
   synthesizeComposition({ type: "compositionstart" });
 
   // input first character
-  synthesizeComposition({ type: "compositionupdate", data: "\u3089" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089",
         "clauses":
@@ -3163,8 +3089,7 @@ function runMaxLengthTest()
   }
 
   // input second character
-  synthesizeComposition({ type: "compositionupdate", data: "\u3089\u30FC" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089\u30FC",
         "clauses":
@@ -3181,9 +3106,7 @@ function runMaxLengthTest()
   }
 
   // input third character
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u3089\u30FC\u3081" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089\u30FC\u3081",
         "clauses":
@@ -3200,9 +3123,7 @@ function runMaxLengthTest()
   }
 
   // input fourth character
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u3089\u30FC\u3081\u3093" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089\u30FC\u3081\u3093",
         "clauses":
@@ -3220,9 +3141,7 @@ function runMaxLengthTest()
 
 
   // backspace
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u3089\u30FC\u3081" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089\u30FC\u3081",
         "clauses":
@@ -3239,9 +3158,7 @@ function runMaxLengthTest()
   }
 
   // re-input
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u3089\u30FC\u3081\u3093" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089\u30FC\u3081\u3093",
         "clauses":
@@ -3257,9 +3174,7 @@ function runMaxLengthTest()
     return;
   }
 
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u3089\u30FC\u3081\u3093\u3055" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089\u30FC\u3081\u3093\u3055",
         "clauses":
@@ -3275,9 +3190,7 @@ function runMaxLengthTest()
     return;
   }
 
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u3089\u30FC\u3081\u3093\u3055\u3044" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089\u30FC\u3081\u3093\u3055\u3044",
         "clauses":
@@ -3293,9 +3206,7 @@ function runMaxLengthTest()
     return;
   }
 
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u3089\u30FC\u3081\u3093\u3055\u3044\u3053" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089\u30FC\u3081\u3093\u3055\u3044\u3053",
         "clauses":
@@ -3312,9 +3223,7 @@ function runMaxLengthTest()
     return;
   }
 
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u3089\u30FC\u3081\u3093\u3055\u3044\u3053\u3046" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089\u30FC\u3081\u3093\u3055\u3044\u3053\u3046",
         "clauses":
@@ -3332,9 +3241,7 @@ function runMaxLengthTest()
   }
 
   // convert
-  synthesizeComposition({ type: "compositionupdate",
-                          data: "\u30E9\u30FC\u30E1\u30F3\u6700\u9AD8" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u30E9\u30FC\u30E1\u30F3\u6700\u9AD8",
         "clauses":
@@ -3354,7 +3261,7 @@ function runMaxLengthTest()
   }
 
   // commit the composition string
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u30E9\u30FC\u30E1\u30F3\u6700\u9AD8",
         "clauses":
@@ -3377,8 +3284,7 @@ function runMaxLengthTest()
   synthesizeComposition({ type: "compositionstart" });
 
   // input characters
-  synthesizeComposition({ type: "compositionupdate", data: "\u3057" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3057",
         "clauses":
@@ -3395,8 +3301,7 @@ function runMaxLengthTest()
   }
 
   // commit the composition string
-  synthesizeComposition({ type: "compositionupdate", data: "\u3058" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u3058",
         "clauses":
@@ -3453,8 +3358,7 @@ function runMaxLengthTest()
   synthesizeComposition({ type: "compositionstart" });
 
   // input characters
-  synthesizeComposition({ type: "compositionupdate", data: "\u9B54" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u9B54",
         "clauses":
@@ -3471,8 +3375,7 @@ function runMaxLengthTest()
   }
 
   // commit the composition string
-  synthesizeComposition({ type: "compositionupdate", data: "\u9B54" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u9B54",
         "clauses":
@@ -3496,8 +3399,7 @@ function runMaxLengthTest()
   synthesizeComposition({ type: "compositionstart" });
 
   // input characters
-  synthesizeComposition({ type: "compositionupdate", data: "\u9B54\u6CD5" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u9B54\u6CD5",
         "clauses":
@@ -3514,8 +3416,7 @@ function runMaxLengthTest()
   }
 
   // commit the composition string
-  synthesizeComposition({ type: "compositionupdate", data: "\u9B54\u6CD5" });
-  synthesizeText(
+  synthesizeCompositionChange(
     { "composition":
       { "string": "\u9B54\u6CD5",
         "clauses":

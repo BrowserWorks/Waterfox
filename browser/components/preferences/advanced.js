@@ -383,6 +383,7 @@ var gAdvancedPane = {
       cache.clear();
     } catch(ex) {}
     this.updateActualCacheSize();
+    Services.obs.notifyObservers(null, "clear-private-data", null);
   },
 
   /**
@@ -395,6 +396,7 @@ var gAdvancedPane = {
 
     this.updateActualAppCacheSize();
     this.updateOfflineApps();
+    Services.obs.notifyObservers(null, "clear-private-data", null);
   },
 
   readOfflineNotify: function()
@@ -659,7 +661,7 @@ var gAdvancedPane = {
     }
     try {
       const DRIVE_FIXED = 3;
-      const LPCWSTR = ctypes.jschar.ptr;
+      const LPCWSTR = ctypes.char16_t.ptr;
       const UINT = ctypes.uint32_t;
       let kernel32 = ctypes.open("kernel32");
       let GetDriveType = kernel32.declare("GetDriveTypeW", ctypes.default_abi, UINT, LPCWSTR);

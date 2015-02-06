@@ -67,9 +67,6 @@ class OptimizationInfo
     // Toggles whether loop invariant code motion is performed.
     bool licm_;
 
-    // Toggles whether Unreachable Code Elimination is performed.
-    bool uce_;
-
     // Toggles whether Range Analysis is used.
     bool rangeAnalysis_;
 
@@ -105,11 +102,11 @@ class OptimizationInfo
 
     // How many invocations or loop iterations are needed before functions
     // are compiled.
-    uint32_t usesBeforeCompile_;
+    uint32_t compilerWarmUpThreshold_;
 
     // How many invocations or loop iterations are needed before calls
-    // are inlined, as a fraction of usesBeforeCompile.
-    double usesBeforeInliningFactor_;
+    // are inlined, as a fraction of compilerWarmUpThreshold.
+    double inliningWarmUpThresholdFactor_;
 
     OptimizationInfo()
     { }
@@ -129,7 +126,7 @@ class OptimizationInfo
         return inlineNative_ && !js_JitOptions.disableInlining;
     }
 
-    uint32_t usesBeforeCompile(JSScript *script, jsbytecode *pc = nullptr) const;
+    uint32_t compilerWarmUpThreshold(JSScript *script, jsbytecode *pc = nullptr) const;
 
     bool gvnEnabled() const {
         return gvn_ && !js_JitOptions.disableGvn;
@@ -137,10 +134,6 @@ class OptimizationInfo
 
     bool licmEnabled() const {
         return licm_ && !js_JitOptions.disableLicm;
-    }
-
-    bool uceEnabled() const {
-        return uce_ && !js_JitOptions.disableUce;
     }
 
     bool rangeAnalysisEnabled() const {
@@ -195,11 +188,11 @@ class OptimizationInfo
         return inlineMaxTotalBytecodeLength_;
     }
 
-    uint32_t usesBeforeInlining() const {
-        uint32_t usesBeforeCompile = usesBeforeCompile_;
-        if (js_JitOptions.forceDefaultIonUsesBeforeCompile)
-            usesBeforeCompile = js_JitOptions.forcedDefaultIonUsesBeforeCompile;
-        return usesBeforeCompile * usesBeforeInliningFactor_;
+    uint32_t inliningWarmUpThreshold() const {
+        uint32_t compilerWarmUpThreshold = compilerWarmUpThreshold_;
+        if (js_JitOptions.forceDefaultIonWarmUpThreshold)
+            compilerWarmUpThreshold = js_JitOptions.forcedDefaultIonWarmUpThreshold;
+        return compilerWarmUpThreshold * inliningWarmUpThresholdFactor_;
     }
 };
 
@@ -212,8 +205,8 @@ class OptimizationInfos
     OptimizationInfos();
 
     const OptimizationInfo *get(OptimizationLevel level) const {
-        JS_ASSERT(level < Optimization_Count);
-        JS_ASSERT(level != Optimization_DontCompile);
+        MOZ_ASSERT(level < Optimization_Count);
+        MOZ_ASSERT(level != Optimization_DontCompile);
 
         return &infos_[level - 1];
     }

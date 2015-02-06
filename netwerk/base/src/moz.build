@@ -9,6 +9,7 @@ EXPORTS += [
     'nsMIMEInputStream.h',
     'nsTemporaryFileInputStream.h',
     'nsURLHelper.h',
+    'nsURLParsers.h',
 ]
 
 EXPORTS.mozilla.net += [
@@ -16,6 +17,7 @@ EXPORTS.mozilla.net += [
     'ChannelDiverterParent.h',
     'Dashboard.h',
     'DashboardTypes.h',
+    'OfflineObserver.h',
 ]
 
 UNIFIED_SOURCES += [
@@ -27,6 +29,7 @@ UNIFIED_SOURCES += [
     'EventTokenBucket.cpp',
     'LoadContextInfo.cpp',
     'NetworkActivityMonitor.cpp',
+    'nsAsyncRedirectVerifyHelper.cpp',
     'nsAsyncStreamCopier.cpp',
     'nsAuthInformationHolder.cpp',
     'nsBase64Encoder.cpp',
@@ -58,6 +61,8 @@ UNIFIED_SOURCES += [
     'nsSimpleNestedURI.cpp',
     'nsSimpleStreamListener.cpp',
     'nsSimpleURI.cpp',
+    'nsSocketTransport2.cpp',
+    'nsSocketTransportService2.cpp',
     'nsStandardURL.cpp',
     'nsStreamListenerTee.cpp',
     'nsStreamListenerWrapper.cpp',
@@ -71,18 +76,13 @@ UNIFIED_SOURCES += [
     'nsURIChecker.cpp',
     'nsURLHelper.cpp',
     'nsURLParsers.cpp',
+    'OfflineObserver.cpp',
     'Predictor.cpp',
     'ProxyAutoConfig.cpp',
     'RedirectChannelRegistrar.cpp',
     'StreamingProtocolService.cpp',
     'Tickler.cpp',
-]
-
-# These files cannot be built in unified mode because they force NSPR logging.
-SOURCES += [
-    'nsAsyncRedirectVerifyHelper.cpp',
-    'nsSocketTransport2.cpp',
-    'nsSocketTransportService2.cpp',
+    'TLSServerSocket.cpp',
 ]
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':

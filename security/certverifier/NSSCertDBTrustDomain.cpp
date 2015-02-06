@@ -13,7 +13,6 @@
 #include "NSSErrorsService.h"
 #include "OCSPRequestor.h"
 #include "certdb.h"
-#include "mozilla/Telemetry.h"
 #include "nss.h"
 #include "pk11pub.h"
 #include "pkix/pkix.h"
@@ -52,15 +51,18 @@ NSSCertDBTrustDomain::NSSCertDBTrustDomain(SECTrustType certDBTrustType,
                                            OCSPCache& ocspCache,
              /*optional but shouldn't be*/ void* pinArg,
                                            CertVerifier::ocsp_get_config ocspGETConfig,
-                              /*optional*/ CERTChainVerifyCallback* checkChainCallback,
+                                           CertVerifier::PinningMode pinningMode,
+                              /*optional*/ const char* hostname,
                               /*optional*/ ScopedCERTCertList* builtChain)
   : mCertDBTrustType(certDBTrustType)
   , mOCSPFetching(ocspFetching)
   , mOCSPCache(ocspCache)
   , mPinArg(pinArg)
   , mOCSPGetConfig(ocspGETConfig)
-  , mCheckChainCallback(checkChainCallback)
+  , mPinningMode(pinningMode)
+  , mHostname(hostname)
   , mBuiltChain(builtChain)
+  , mOCSPStaplingStatus(CertVerifier::OCSP_STAPLING_NEVER_CHECKED)
 {
 }
 
@@ -337,6 +339,10 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
   // are known to serve expired responses due to bugs.
   // We keep track of the result of verifying the stapled response but don't
   // immediately return failure if the response has expired.
+  //
+  // We only set the OCSP stapling status if we're validating the end-entity
+  // certificate. Non-end-entity certificates would always be
+  // OCSP_STAPLING_NONE unless/until we implement multi-stapling.
   Result stapledOCSPResponseResult = Success;
   if (stapledOCSPResponse) {
     PR_ASSERT(endEntityOrCA == EndEntityOrCA::MustBeEndEntity);
@@ -348,7 +354,7 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
                                              ResponseWasStapled, expired);
     if (stapledOCSPResponseResult == Success) {
       // stapled OCSP response present and good
-      Telemetry::Accumulate(Telemetry::SSL_OCSP_STAPLING, 1);
+      mOCSPStaplingStatus = CertVerifier::OCSP_STAPLING_GOOD;
       PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
              ("NSSCertDBTrustDomain: stapled OCSP response: good"));
       return Success;
@@ -356,19 +362,19 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
     if (stapledOCSPResponseResult == Result::ERROR_OCSP_OLD_RESPONSE ||
         expired) {
       // stapled OCSP response present but expired
-      Telemetry::Accumulate(Telemetry::SSL_OCSP_STAPLING, 3);
+      mOCSPStaplingStatus = CertVerifier::OCSP_STAPLING_EXPIRED;
       PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
              ("NSSCertDBTrustDomain: expired stapled OCSP response"));
     } else {
       // stapled OCSP response present but invalid for some reason
-      Telemetry::Accumulate(Telemetry::SSL_OCSP_STAPLING, 4);
+      mOCSPStaplingStatus = CertVerifier::OCSP_STAPLING_INVALID;
       PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
              ("NSSCertDBTrustDomain: stapled OCSP response: failure"));
       return stapledOCSPResponseResult;
     }
-  } else {
+  } else if (endEntityOrCA == EndEntityOrCA::MustBeEndEntity) {
     // no stapled OCSP response
-    Telemetry::Accumulate(Telemetry::SSL_OCSP_STAPLING, 2);
+    mOCSPStaplingStatus = CertVerifier::OCSP_STAPLING_NONE;
     PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
            ("NSSCertDBTrustDomain: no stapled OCSP response"));
   }
@@ -633,16 +639,10 @@ NSSCertDBTrustDomain::VerifyAndMaybeCacheEncodedOCSPResponse(
 }
 
 Result
-NSSCertDBTrustDomain::IsChainValid(const DERArray& certArray)
+NSSCertDBTrustDomain::IsChainValid(const DERArray& certArray, Time time)
 {
   PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
-      ("NSSCertDBTrustDomain: Top of IsChainValid mCheckChainCallback=%p",
-       mCheckChainCallback));
-
-  if (!mBuiltChain && !mCheckChainCallback) {
-    // No need to create a CERTCertList, and nothing else to do.
-    return Success;
-  }
+         ("NSSCertDBTrustDomain: IsChainValid"));
 
   ScopedCERTCertList certList;
   SECStatus srv = ConstructCERTCertListFromReversedDERArray(certArray,
@@ -651,19 +651,10 @@ NSSCertDBTrustDomain::IsChainValid(const DERArray& certArray)
     return MapPRErrorCodeToResult(PR_GetError());
   }
 
-  if (mCheckChainCallback) {
-    if (!mCheckChainCallback->isChainValid) {
-      return Result::FATAL_ERROR_INVALID_ARGS;
-    }
-    PRBool chainOK;
-    srv = (mCheckChainCallback->isChainValid)(
-            mCheckChainCallback->isChainValidArg, certList.get(), &chainOK);
-    if (srv != SECSuccess) {
-      return MapPRErrorCodeToResult(PR_GetError());
-    }
-    if (!chainOK) {
-      return Result::ERROR_KEY_PINNING_FAILURE;
-    }
+  Result result = CertListContainsExpectedKeys(certList, mHostname, time,
+                                               mPinningMode);
+  if (result != Success) {
+    return result;
   }
 
   if (mBuiltChain) {

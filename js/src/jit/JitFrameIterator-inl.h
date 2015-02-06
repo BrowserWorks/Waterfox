@@ -11,7 +11,7 @@
 
 #include "jit/Bailouts.h"
 #include "jit/BaselineFrame.h"
-#include "jit/IonFrames.h"
+#include "jit/JitFrames.h"
 
 namespace js {
 namespace jit {
@@ -19,7 +19,7 @@ namespace jit {
 inline BaselineFrame *
 JitFrameIterator::baselineFrame() const
 {
-    JS_ASSERT(isBaselineJS());
+    MOZ_ASSERT(isBaselineJS());
     return (BaselineFrame *)(fp() - BaselineFrame::FramePointerOffset - BaselineFrame::Size());
 }
 

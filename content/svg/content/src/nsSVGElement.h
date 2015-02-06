@@ -33,6 +33,7 @@ class nsSVGIntegerPair;
 class nsSVGLength2;
 class nsSVGNumber2;
 class nsSVGNumberPair;
+class nsSVGPathGeometryElement;
 class nsSVGString;
 class nsSVGViewBox;
 
@@ -113,6 +114,7 @@ public:
   virtual bool IsNodeOfType(uint32_t aFlags) const MOZ_OVERRIDE;
 
   NS_IMETHOD WalkContentStyleRules(nsRuleWalker* aRuleWalker) MOZ_OVERRIDE;
+  void WalkAnimatedContentStyleRules(nsRuleWalker* aRuleWalker);
 
   NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const MOZ_OVERRIDE;
 
@@ -312,6 +314,7 @@ public:
     return mClassAnimAttr;
   }
 
+  virtual void ClearAnyCachedPath() {}
   virtual nsIDOMNode* AsDOMNode() MOZ_FINAL MOZ_OVERRIDE { return this; }
   virtual bool IsTransformable() { return false; }
 

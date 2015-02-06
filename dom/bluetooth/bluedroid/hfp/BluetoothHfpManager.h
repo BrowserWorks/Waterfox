@@ -149,7 +149,7 @@ private:
   void Cleanup();
 
   void HandleShutdown();
-  void HandleVolumeChanged(const nsAString& aData);
+  void HandleVolumeChanged(nsISupports* aSubject);
   void Notify(const hal::BatteryInformation& aBatteryInfo);
 
   void NotifyConnectionStateChanged(const nsAString& aType);
@@ -170,9 +170,9 @@ private:
   void SendLine(const char* aMessage);
   void SendResponse(BluetoothHandsfreeAtResponse aResponseCode);
 
-  int mConnectionState;
-  int mPrevConnectionState;
-  int mAudioState;
+  BluetoothHandsfreeConnectionState mConnectionState;
+  BluetoothHandsfreeConnectionState mPrevConnectionState;
+  BluetoothHandsfreeAudioState mAudioState;
   // Device CIND
   int mBattChg;
   BluetoothHandsfreeNetworkState mService;

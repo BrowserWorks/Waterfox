@@ -155,12 +155,19 @@ namespace X86Registers {
     }
 
     inline RegisterID getSubregH(RegisterID reg) {
-        JS_ASSERT(hasSubregH(reg));
+        MOZ_ASSERT(hasSubregH(reg));
         return RegisterID(reg + 4);
     }
 
 } /* namespace X86Registers */
 
+// Byte operand register spl & above require a REX prefix (to prevent
+// the 'H' registers be accessed).
+static inline bool
+ByteRegRequiresRex(int reg)
+{
+    return (reg >= X86Registers::esp);
+}
 
 class X86Assembler : public GenericAssembler {
 public:
@@ -296,6 +303,7 @@ private:
         OP2_UCOMISD_VsdWsd  = 0x2E,
         OP2_MOVMSKPD_EdVd   = 0x50,
         OP2_ANDPS_VpsWps    = 0x54,
+        OP2_ANDNPS_VpsWps   = 0x55,
         OP2_ORPS_VpsWps     = 0x56,
         OP2_XORPS_VpsWps    = 0x57,
         OP2_ADDSD_VsdWsd    = 0x58,
@@ -304,14 +312,23 @@ private:
         OP2_MULPS_VpsWps    = 0x59,
         OP2_CVTSS2SD_VsdEd  = 0x5A,
         OP2_CVTSD2SS_VsdEd  = 0x5A,
+        OP2_CVTTPS2DQ_VdqWps = 0x5B,
+        OP2_CVTDQ2PS_VpsWdq = 0x5B,
         OP2_SUBSD_VsdWsd    = 0x5C,
         OP2_SUBPS_VpsWps    = 0x5C,
         OP2_MINSD_VsdWsd    = 0x5D,
+        OP2_MINSS_VssWss    = 0x5D,
+        OP2_MINPS_VpsWps    = 0x5D,
         OP2_DIVSD_VsdWsd    = 0x5E,
         OP2_DIVPS_VpsWps    = 0x5E,
         OP2_MAXSD_VsdWsd    = 0x5F,
+        OP2_MAXSS_VssWss    = 0x5F,
+        OP2_MAXPS_VpsWps    = 0x5F,
         OP2_SQRTSD_VsdWsd   = 0x51,
         OP2_SQRTSS_VssWss   = 0x51,
+        OP2_SQRTPS_VpsWps   = 0x51,
+        OP2_RSQRTPS_VpsWps  = 0x52,
+        OP2_RCPPS_VpsWps    = 0x53,
         OP2_ANDPD_VpdWpd    = 0x54,
         OP2_ORPD_VpdWpd     = 0x56,
         OP2_XORPD_VpdWpd    = 0x57,
@@ -320,6 +337,9 @@ private:
         OP2_MOVDQ_VsdWsd    = 0x6F,
         OP2_MOVDQ_VdqWdq    = 0x6F,
         OP2_PSHUFD_VdqWdqIb = 0x70,
+        OP2_PSLLD_UdqIb     = 0x72,
+        OP2_PSRAD_UdqIb     = 0x72,
+        OP2_PSRLD_UdqIb     = 0x72,
         OP2_PSRLDQ_Vd       = 0x73,
         OP2_PCMPEQW         = 0x75,
         OP2_PCMPEQD_VdqWdq  = 0x76,
@@ -338,7 +358,10 @@ private:
         OP2_CMPPS_VpsWps    = 0xC2,
         OP2_PEXTRW_GdUdIb   = 0xC5,
         OP2_SHUFPS_VpsWpsIb = 0xC6,
+        OP2_PSRLD_VdqWdq    = 0xD2,
+        OP2_PSRAD_VdqWdq    = 0xE2,
         OP2_PXORDQ_VdqWdq   = 0xEF,
+        OP2_PSLLD_VdqWdq    = 0xF2,
         OP2_PSUBD_VdqWdq    = 0xFA,
         OP2_PADDD_VdqWdq    = 0xFE
     } TwoByteOpcodeID;
@@ -347,13 +370,15 @@ private:
         OP3_ROUNDSS_VsdWsd  = 0x0A,
         OP3_ROUNDSD_VsdWsd  = 0x0B,
         OP3_PTEST_VdVd      = 0x17,
-        OP3_PINSRD_VsdWsd   = 0x22
+        OP3_INSERTPS_VpsUps = 0x21,
+        OP3_PINSRD_VdqEdIb  = 0x22
     } ThreeByteOpcodeID;
 
     typedef enum {
         ESCAPE_PTEST        = 0x38,
         ESCAPE_PINSRD       = 0x3A,
-        ESCAPE_ROUNDSD      = 0x3A
+        ESCAPE_ROUNDSD      = 0x3A,
+        ESCAPE_INSERTPS     = 0x3A
     } ThreeByteEscape;
 
     TwoByteOpcodeID jccRel32(Condition cond)
@@ -789,6 +814,44 @@ public:
         spew("divps      %p, %s",
              address, nameFPReg(dst));
         m_formatter.twoByteOp(OP2_DIVPS_VpsWps, (RegisterID)dst, address);
+    }
+
+    void maxps_rr(XMMRegisterID src, XMMRegisterID dst)
+    {
+        spew("maxps      %s, %s",
+             nameFPReg(src), nameFPReg(dst));
+        m_formatter.twoByteOp(OP2_MAXPS_VpsWps, (RegisterID)dst, (RegisterID)src);
+    }
+    void maxps_mr(int offset, RegisterID base, XMMRegisterID dst)
+    {
+        spew("maxps      %s0x%x(%s), %s",
+             PRETTY_PRINT_OFFSET(offset), nameIReg(base), nameFPReg(dst));
+        m_formatter.twoByteOp(OP2_MAXPS_VpsWps, (RegisterID)dst, base, offset);
+    }
+    void maxps_mr(const void* address, XMMRegisterID dst)
+    {
+        spew("maxps      %p, %s",
+             address, nameFPReg(dst));
+        m_formatter.twoByteOp(OP2_MAXPS_VpsWps, (RegisterID)dst, address);
+    }
+
+    void minps_rr(XMMRegisterID src, XMMRegisterID dst)
+    {
+        spew("minps      %s, %s",
+             nameFPReg(src), nameFPReg(dst));
+        m_formatter.twoByteOp(OP2_MINPS_VpsWps, (RegisterID)dst, (RegisterID)src);
+    }
+    void minps_mr(int offset, RegisterID base, XMMRegisterID dst)
+    {
+        spew("minps      %s0x%x(%s), %s",
+             PRETTY_PRINT_OFFSET(offset), nameIReg(base), nameFPReg(dst));
+        m_formatter.twoByteOp(OP2_MINPS_VpsWps, (RegisterID)dst, base, offset);
+    }
+    void minps_mr(const void* address, XMMRegisterID dst)
+    {
+        spew("minps      %p, %s",
+             address, nameFPReg(dst));
+        m_formatter.twoByteOp(OP2_MINPS_VpsWps, (RegisterID)dst, address);
     }
 
     void andl_rr(RegisterID src, RegisterID dst)
@@ -1830,15 +1893,13 @@ public:
         m_formatter.oneByteOp(OP_MOV_EvGv, src, base, index, scale, offset);
     }
 
-#ifdef JS_CODEGEN_X86
     void movw_rm(RegisterID src, const void* addr)
     {
         spew("movw       %s, %p",
              nameIReg(2, src), addr);
         m_formatter.prefix(PRE_OPERAND_SIZE);
-        m_formatter.oneByteOp(OP_MOV_EvGv, src, addr);
+        m_formatter.oneByteOp_disp32(OP_MOV_EvGv, src, addr);
     }
-#endif
 
     void movl_rm(RegisterID src, int offset, RegisterID base)
     {
@@ -1938,12 +1999,27 @@ public:
         m_formatter.immediate8(imm);
     }
 
+    void movb_i8m(int imm, const void* addr)
+    {
+        spew("movb       %d, %p", imm, addr);
+        m_formatter.oneByteOp_disp32(OP_GROUP11_EvIb, GROUP11_MOV, addr);
+        m_formatter.immediate8(imm);
+    }
+
     void movw_i16m(int imm, int offset, RegisterID base)
     {
         spew("movw       $0x%x, %s0x%x(%s)",
              imm, PRETTY_PRINT_OFFSET(offset), nameIReg(base));
         m_formatter.prefix(PRE_OPERAND_SIZE);
         m_formatter.oneByteOp(OP_GROUP11_EvIz, GROUP11_MOV, base, offset);
+        m_formatter.immediate16(imm);
+    }
+
+    void movw_i16m(int imm, const void* addr)
+    {
+        spew("movw       %d, %p", imm, addr);
+        m_formatter.prefix(PRE_OPERAND_SIZE);
+        m_formatter.oneByteOp_disp32(OP_GROUP11_EvIz, GROUP11_MOV, addr);
         m_formatter.immediate16(imm);
     }
 
@@ -2190,14 +2266,12 @@ public:
         m_formatter.oneByteOp8(OP_MOV_EbGv, src, base, index, scale, offset);
     }
 
-#ifdef JS_CODEGEN_X86
     void movb_rm(RegisterID src, const void* addr)
     {
         spew("movb       %s, %p",
              nameIReg(1, src), addr);
-        m_formatter.oneByteOp(OP_MOV_EbGv, src, addr);
+        m_formatter.oneByteOp8(OP_MOV_EbGv, src, addr);
     }
-#endif
 
     void movzbl_mr(int offset, RegisterID base, RegisterID dst)
     {
@@ -2220,14 +2294,12 @@ public:
         m_formatter.twoByteOp(OP2_MOVZX_GvEb, dst, base, index, scale, offset);
     }
 
-#ifdef JS_CODEGEN_X86
     void movzbl_mr(const void* addr, RegisterID dst)
     {
         spew("movzbl     %p, %s",
              addr, nameIReg(dst));
         m_formatter.twoByteOp(OP2_MOVZX_GvEb, dst, addr);
     }
-#endif
 
     void movsbl_mr(int offset, RegisterID base, RegisterID dst)
     {
@@ -2250,14 +2322,12 @@ public:
         m_formatter.twoByteOp(OP2_MOVSX_GvEb, dst, base, index, scale, offset);
     }
 
-#ifdef JS_CODEGEN_X86
     void movsbl_mr(const void* addr, RegisterID dst)
     {
         spew("movsbl     %p, %s",
              addr, nameIReg(4, dst));
         m_formatter.twoByteOp(OP2_MOVSX_GvEb, dst, addr);
     }
-#endif
 
     void movzwl_rr(RegisterID src, RegisterID dst)
     {
@@ -2287,14 +2357,12 @@ public:
         m_formatter.twoByteOp(OP2_MOVZX_GvEw, dst, base, index, scale, offset);
     }
 
-#ifdef JS_CODEGEN_X86
     void movzwl_mr(const void* addr, RegisterID dst)
     {
         spew("movzwl     %p, %s",
              addr, nameIReg(4, dst));
         m_formatter.twoByteOp(OP2_MOVZX_GvEw, dst, addr);
     }
-#endif
 
     void movswl_mr(int offset, RegisterID base, RegisterID dst)
     {
@@ -2317,14 +2385,12 @@ public:
         m_formatter.twoByteOp(OP2_MOVSX_GvEw, dst, base, index, scale, offset);
     }
 
-#ifdef JS_CODEGEN_X86
     void movswl_mr(const void* addr, RegisterID dst)
     {
         spew("movswl     %p, %s",
              addr, nameIReg(4, dst));
         m_formatter.twoByteOp(OP2_MOVSX_GvEw, dst, addr);
     }
-#endif
 
     void movzbl_rr(RegisterID src, RegisterID dst)
     {
@@ -2611,6 +2677,56 @@ public:
         m_formatter.immediate8(order);
     }
 
+    void rcpps_rr(XMMRegisterID src, XMMRegisterID dst){
+        spew("rcpps      %s, %s",
+             nameFPReg(src), nameFPReg(dst));
+        m_formatter.twoByteOp(OP2_RCPPS_VpsWps, (RegisterID)dst, (RegisterID)src);
+    }
+    void rcpps_mr(int offset, RegisterID base, XMMRegisterID dst){
+        spew("rcpps      %s0x%x(%s), %s",
+             PRETTY_PRINT_OFFSET(offset), nameIReg(base), nameFPReg(dst));
+        m_formatter.twoByteOp(OP2_RCPPS_VpsWps, (RegisterID)dst, base, offset);
+    }
+    void rcpps_mr(const void* address, XMMRegisterID dst){
+        spew("rcpps      %p, %s",
+             address, nameFPReg(dst));
+        m_formatter.twoByteOp(OP2_RCPPS_VpsWps, (RegisterID)dst, address);
+    }
+
+    void rsqrtps_rr(XMMRegisterID src, XMMRegisterID dst){
+        spew("rsqrtps    %s, %s",
+             nameFPReg(src), nameFPReg(dst));
+        m_formatter.twoByteOp(OP2_RSQRTPS_VpsWps, (RegisterID)dst, (RegisterID)src);
+    }
+    void rsqrtps_mr(int offset, RegisterID base, XMMRegisterID dst){
+        spew("rsqrtps    %s0x%x(%s), %s",
+             PRETTY_PRINT_OFFSET(offset), nameIReg(base), nameFPReg(dst));
+        m_formatter.twoByteOp(OP2_RSQRTPS_VpsWps, (RegisterID)dst, base, offset);
+    }
+    void rsqrtps_mr(const void* address, XMMRegisterID dst){
+        spew("rsqrtps    %p, %s",
+             address, nameFPReg(dst));
+        m_formatter.twoByteOp(OP2_RSQRTPS_VpsWps, (RegisterID)dst, address);
+    }
+
+    void sqrtps_rr(XMMRegisterID src, XMMRegisterID dst){
+        spew("sqrtps    %s, %s",
+             nameFPReg(src), nameFPReg(dst));
+        m_formatter.twoByteOp(OP2_SQRTPS_VpsWps, (RegisterID)dst, (RegisterID)src);
+    }
+
+    void sqrtps_mr(int offset, RegisterID base, XMMRegisterID dst){
+        spew("sqrtps    %s0x%x(%s), %s",
+             PRETTY_PRINT_OFFSET(offset), nameIReg(base), nameFPReg(dst));
+        m_formatter.twoByteOp(OP2_SQRTPS_VpsWps, (RegisterID)dst, base, offset);
+    }
+
+    void sqrtps_mr(const void* address, XMMRegisterID dst){
+        spew("sqrtps    %p, %s",
+             address, nameFPReg(dst));
+        m_formatter.twoByteOp(OP2_SQRTPS_VpsWps, (RegisterID)dst, address);
+    }
+
     void addsd_rr(XMMRegisterID src, XMMRegisterID dst)
     {
         spew("addsd      %s, %s",
@@ -2688,6 +2804,21 @@ public:
              nameIReg(src), nameFPReg(dst));
         m_formatter.prefix(PRE_SSE_F2);
         m_formatter.twoByteOp(OP2_CVTSI2SD_VsdEd, (RegisterID)dst, src);
+    }
+
+    void cvttps2dq_rr(XMMRegisterID src, XMMRegisterID dst)
+    {
+        spew("cvttps2dq   %s, %s",
+             nameFPReg(src), nameFPReg(dst));
+        m_formatter.prefix(PRE_SSE_F3);
+        m_formatter.twoByteOp(OP2_CVTTPS2DQ_VdqWps, (RegisterID)dst, (RegisterID)src);
+    }
+
+    void cvtdq2ps_rr(XMMRegisterID src, XMMRegisterID dst)
+    {
+        spew("cvtdq2ps   %s, %s",
+             nameFPReg(src), nameFPReg(dst));
+        m_formatter.twoByteOp(OP2_CVTDQ2PS_VpsWdq, (RegisterID)dst, (RegisterID)src);
     }
 
 #ifdef JS_CODEGEN_X64
@@ -2808,7 +2939,7 @@ public:
 
     void pshufd_irr(uint32_t mask, XMMRegisterID src, XMMRegisterID dst)
     {
-        JS_ASSERT(mask < 256);
+        MOZ_ASSERT(mask < 256);
         spew("pshufd      0x%x, %s, %s",
              mask, nameFPReg(src), nameFPReg(dst));
         m_formatter.prefix(PRE_SSE_66);
@@ -2818,7 +2949,7 @@ public:
 
     void shufps_irr(uint32_t mask, XMMRegisterID src, XMMRegisterID dst)
     {
-        JS_ASSERT(mask < 256);
+        MOZ_ASSERT(mask < 256);
         spew("shufps     0x%x, %s, %s",
              mask, nameFPReg(src), nameFPReg(dst));
         m_formatter.twoByteOp(OP2_SHUFPS_VpsWpsIb, (RegisterID)dst, (RegisterID)src);
@@ -2857,6 +2988,57 @@ public:
         m_formatter.prefix(PRE_SSE_66);
         m_formatter.twoByteOp(OP2_PSRLDQ_Vd, (RegisterID)2, (RegisterID)dest);
         m_formatter.immediate8(shift);
+    }
+
+    void pslld_rr(XMMRegisterID src, XMMRegisterID dst)
+    {
+        spew("pslld      %s, %s",
+             nameFPReg(src), nameFPReg(dst));
+        m_formatter.prefix(PRE_SSE_66);
+        m_formatter.twoByteOp(OP2_PSLLD_VdqWdq, (RegisterID)dst, (RegisterID)src);
+    }
+
+    void pslld_ir(int32_t count, XMMRegisterID dst)
+    {
+        spew("pslld      $%d, %s",
+             count, nameFPReg(dst));
+        m_formatter.prefix(PRE_SSE_66);
+        m_formatter.twoByteOp(OP2_PSLLD_UdqIb, (RegisterID)6, (RegisterID)dst);
+        m_formatter.immediate8(int8_t(count));
+    }
+
+    void psrad_rr(XMMRegisterID src, XMMRegisterID dst)
+    {
+        spew("psrad      %s, %s",
+             nameFPReg(src), nameFPReg(dst));
+        m_formatter.prefix(PRE_SSE_66);
+        m_formatter.twoByteOp(OP2_PSRAD_VdqWdq, (RegisterID)dst, (RegisterID)src);
+    }
+
+    void psrad_ir(int32_t count, XMMRegisterID dst)
+    {
+        spew("psrad      $%d, %s",
+             count, nameFPReg(dst));
+        m_formatter.prefix(PRE_SSE_66);
+        m_formatter.twoByteOp(OP2_PSRAD_UdqIb, (RegisterID)4, (RegisterID)dst);
+        m_formatter.immediate8(int8_t(count));
+    }
+
+    void psrld_rr(XMMRegisterID src, XMMRegisterID dst)
+    {
+        spew("psrld      %s, %s",
+             nameFPReg(src), nameFPReg(dst));
+        m_formatter.prefix(PRE_SSE_66);
+        m_formatter.twoByteOp(OP2_PSRLD_VdqWdq, (RegisterID)dst, (RegisterID)src);
+    }
+
+    void psrld_ir(int32_t count, XMMRegisterID dst)
+    {
+        spew("psrld      $%d, %s",
+             count, nameFPReg(dst));
+        m_formatter.prefix(PRE_SSE_66);
+        m_formatter.twoByteOp(OP2_PSRLD_UdqIb, (RegisterID)2, (RegisterID)dst);
+        m_formatter.immediate8(int8_t(count));
     }
 
     void movmskpd_rr(XMMRegisterID src, RegisterID dst)
@@ -3024,7 +3206,6 @@ public:
         m_formatter.twoByteOp(OP2_MOVSD_VsdWsd, (RegisterID)dst, (RegisterID)src);
     }
 
-#ifdef JS_CODEGEN_X86
     void movsd_mr(const void* address, XMMRegisterID dst)
     {
         spew("movsd      %p, %s",
@@ -3071,7 +3252,7 @@ public:
              nameFPReg(src), address);
         m_formatter.twoByteOp(OP2_MOVPS_WpsVps, (RegisterID)src, address);
     }
-#else
+#ifdef JS_CODEGEN_X64
     JmpSrc movsd_ripr(XMMRegisterID dst)
     {
         spew("movsd      ?(%%rip), %s",
@@ -3464,6 +3645,27 @@ public:
         m_formatter.twoByteOp(OP2_ANDPS_VpsWps, (RegisterID)dst, address);
     }
 
+    void andnps_rr(XMMRegisterID src, XMMRegisterID dst)
+    {
+        spew("andnps     %s, %s",
+             nameFPReg(src), nameFPReg(dst));
+        m_formatter.twoByteOp(OP2_ANDNPS_VpsWps, (RegisterID)dst, (RegisterID)src);
+    }
+
+    void andnps_mr(int offset, RegisterID base, XMMRegisterID dst)
+    {
+        spew("andnps     %s0x%x(%s), %s",
+             PRETTY_PRINT_OFFSET(offset), nameIReg(base), nameFPReg(dst));
+        m_formatter.twoByteOp(OP2_ANDNPS_VpsWps, (RegisterID)dst, base, offset);
+    }
+
+    void andnps_mr(const void* address, XMMRegisterID dst)
+    {
+        spew("andnps     %p, %s",
+             address, nameFPReg(dst));
+        m_formatter.twoByteOp(OP2_ANDPS_VpsWps, (RegisterID)dst, address);
+    }
+
     void orps_rr(XMMRegisterID src, XMMRegisterID dst)
     {
         spew("orps      %s, %s",
@@ -3540,23 +3742,35 @@ public:
         m_formatter.immediate8(mode); // modes are the same for roundsd and roundss
     }
 
-    void pinsrd_rr(RegisterID src, XMMRegisterID dst)
+    void insertps_irr(unsigned mask, XMMRegisterID src, XMMRegisterID dst)
     {
-        spew("pinsrd     $1, %s, %s",
-             nameIReg(src), nameFPReg(dst));
+        MOZ_ASSERT(mask < 256);
+        spew("insertps     $%u, %s, %s",
+             mask, nameFPReg(src), nameFPReg(dst));
         m_formatter.prefix(PRE_SSE_66);
-        m_formatter.threeByteOp(OP3_PINSRD_VsdWsd, ESCAPE_PINSRD, (RegisterID)dst, (RegisterID)src);
-        m_formatter.immediate8(0x01); // the $1
+        m_formatter.threeByteOp(OP3_INSERTPS_VpsUps, ESCAPE_INSERTPS, (RegisterID)dst, (RegisterID)src);
+        m_formatter.immediate8(uint8_t(mask));
     }
 
-    void pinsrd_mr(int offset, RegisterID base, XMMRegisterID dst)
+    void pinsrd_irr(unsigned lane, RegisterID src, XMMRegisterID dst)
     {
-        spew("pinsrd     $1, %s0x%x(%s), %s",
-             PRETTY_PRINT_OFFSET(offset),
+        MOZ_ASSERT(lane < 4);
+        spew("pinsrd     $%u, %s, %s",
+             lane, nameIReg(src), nameFPReg(dst));
+        m_formatter.prefix(PRE_SSE_66);
+        m_formatter.threeByteOp(OP3_PINSRD_VdqEdIb, ESCAPE_PINSRD, (RegisterID)dst, (RegisterID)src);
+        m_formatter.immediate8(uint8_t(lane));
+    }
+
+    void pinsrd_imr(unsigned lane, int offset, RegisterID base, XMMRegisterID dst)
+    {
+        MOZ_ASSERT(lane < 4);
+        spew("pinsrd     $%u, %s0x%x(%s), %s",
+             lane, PRETTY_PRINT_OFFSET(offset),
              nameIReg(base), nameFPReg(dst));
         m_formatter.prefix(PRE_SSE_66);
-        m_formatter.threeByteOp(OP3_PINSRD_VsdWsd, ESCAPE_PINSRD, (RegisterID)dst, base, offset);
-        m_formatter.immediate8(0x01); // the $1
+        m_formatter.threeByteOp(OP3_PINSRD_VdqEdIb, ESCAPE_PINSRD, (RegisterID)dst, base, offset);
+        m_formatter.immediate8(uint8_t(lane));
     }
 
     void minsd_rr(XMMRegisterID src, XMMRegisterID dst)
@@ -3575,6 +3789,14 @@ public:
         m_formatter.twoByteOp(OP2_MINSD_VsdWsd, (RegisterID)dst, base, offset);
     }
 
+    void minss_rr(XMMRegisterID src, XMMRegisterID dst)
+    {
+        spew("minss      %s, %s",
+             nameFPReg(src), nameFPReg(dst));
+        m_formatter.prefix(PRE_SSE_F3);
+        m_formatter.twoByteOp(OP2_MINSS_VssWss, (RegisterID)dst, (RegisterID)src);
+    }
+
     void maxsd_rr(XMMRegisterID src, XMMRegisterID dst)
     {
         spew("maxsd      %s, %s",
@@ -3589,6 +3811,14 @@ public:
              PRETTY_PRINT_OFFSET(offset), nameIReg(base), nameFPReg(dst));
         m_formatter.prefix(PRE_SSE_F2);
         m_formatter.twoByteOp(OP2_MAXSD_VsdWsd, (RegisterID)dst, base, offset);
+    }
+
+    void maxss_rr(XMMRegisterID src, XMMRegisterID dst)
+    {
+        spew("maxss      %s, %s",
+             nameFPReg(src), nameFPReg(dst));
+        m_formatter.prefix(PRE_SSE_F3);
+        m_formatter.twoByteOp(OP2_MAXSS_VssWss, (RegisterID)dst, (RegisterID)src);
     }
 
     // Misc instructions:
@@ -3704,15 +3934,16 @@ public:
 
     // Linking & patching:
     //
-    // 'link' and 'patch' methods are for use on unprotected code - such as the code
-    // within the AssemblerBuffer, and code being patched by the patch buffer.  Once
-    // code has been finalized it is (platform support permitting) within a non-
-    // writable region of memory; to modify the code in an execute-only execuable
-    // pool the 'repatch' and 'relink' methods should be used.
+    // 'link' and 'patch' methods are for use on unprotected code - such as the
+    // code within the AssemblerBuffer, and code being patched by the patch
+    // buffer.  Once code has been finalized it is (platform support permitting)
+    // within a non- writable region of memory; to modify the code in an
+    // execute-only execuable pool the 'repatch' and 'relink' methods should be
+    // used.
 
     // Like Lua's emitter, we thread jump lists through the unpatched target
-    // field, which will get fixed up when the label (which has a pointer to
-    // the head of the jump list) is bound.
+    // field, which will get fixed up when the label (which has a pointer to the
+    // head of the jump list) is bound.
     bool nextJump(const JmpSrc& from, JmpSrc* next)
     {
         // Sanity check - if the assembler has OOM'd, it will start overwriting
@@ -3819,8 +4050,8 @@ public:
                    where);
 
 #ifdef JS_CODEGEN_X64
-        // On x86-64 pointer memory accesses require a 64-bit operand, and as such a REX prefix.
-        // Skip over the prefix byte.
+        // On x86-64 pointer memory accesses require a 64-bit operand, and as
+        // such a REX prefix.  Skip over the prefix byte.
         where = reinterpret_cast<char*>(where) + 1;
 #endif
         *reinterpret_cast<unsigned char*>(where) = static_cast<unsigned char>(OP_LEA);
@@ -3831,8 +4062,8 @@ public:
         staticSpew("##repatchLEAToLoadPtr ((where=%p))",
                    where);
 #ifdef JS_CODEGEN_X64
-        // On x86-64 pointer memory accesses require a 64-bit operand, and as such a REX prefix.
-        // Skip over the prefix byte.
+        // On x86-64 pointer memory accesses require a 64-bit operand, and as
+        // such a REX prefix.  Skip over the prefix byte.
         where = reinterpret_cast<char*>(where) + 1;
 #endif
         *reinterpret_cast<unsigned char*>(where) = static_cast<unsigned char>(OP_MOV_GvEv);
@@ -3920,17 +4151,17 @@ public:
     }
 
     // Test whether the given address will fit in an address immediate field.
-    // This is always true on x86, but on x64 it's only true for addreses
-    // which fit in the 32-bit immediate field.
+    // This is always true on x86, but on x64 it's only true for addreses which
+    // fit in the 32-bit immediate field.
     static bool isAddressImmediate(const void *address) {
         intptr_t value = reinterpret_cast<intptr_t>(address);
         int32_t immediate = static_cast<int32_t>(value);
         return value == immediate;
     }
 
-    // Convert the given address to a 32-bit immediate field value. This is
-    // a no-op on x86, but on x64 it asserts that the address is actually
-    // a valid address immediate.
+    // Convert the given address to a 32-bit immediate field value. This is a
+    // no-op on x86, but on x64 it asserts that the address is actually a valid
+    // address immediate.
     static int32_t addressImmediate(const void *address) {
 #ifdef JS_CODEGEN_X64
         // x64's 64-bit addresses don't all fit in the 32-bit immediate.
@@ -3975,10 +4206,12 @@ private:
         //   * Three argument ModRM - a register, and a register and an offset describing a memory operand.
         //   * Five argument ModRM - a register, and a base register, an index, scale, and offset describing a memory operand.
         //
-        // For 32-bit x86 targets, the address operand may also be provided as a void*.
-        // On 64-bit targets REX prefixes will be planted as necessary, where high numbered registers are used.
+        // For 32-bit x86 targets, the address operand may also be provided as a
+        // void*.  On 64-bit targets REX prefixes will be planted as necessary,
+        // where high numbered registers are used.
         //
-        // The twoByteOp methods plant two-byte Intel instructions sequences (first opcode byte 0x0F).
+        // The twoByteOp methods plant two-byte Intel instructions sequences
+        // (first opcode byte 0x0F).
 
         void oneByteOp(OneByteOpcodeID opcode)
         {
@@ -4036,13 +4269,15 @@ private:
         void oneByteOp(OneByteOpcodeID opcode, int reg, const void* address)
         {
             m_buffer.ensureSpace(maxInstructionSize);
+            emitRexIfNeeded(reg, 0, 0);
             m_buffer.putByteUnchecked(opcode);
-            memoryModRM(reg, address);
+            memoryModRM_disp32(reg, address);
         }
 
         void oneByteOp_disp32(OneByteOpcodeID opcode, int reg, const void* address)
         {
             m_buffer.ensureSpace(maxInstructionSize);
+            emitRexIfNeeded(reg, 0, 0);
             m_buffer.putByteUnchecked(opcode);
             memoryModRM_disp32(reg, address);
         }
@@ -4122,6 +4357,7 @@ private:
         void twoByteOp(TwoByteOpcodeID opcode, int reg, const void* address)
         {
             m_buffer.ensureSpace(maxInstructionSize);
+            emitRexIfNeeded(reg, 0, 0);
             m_buffer.putByteUnchecked(OP_2BYTE_ESCAPE);
             m_buffer.putByteUnchecked(opcode);
             memoryModRM(reg, address);
@@ -4150,9 +4386,9 @@ private:
 #ifdef JS_CODEGEN_X64
         // Quad-word-sized operands:
         //
-        // Used to format 64-bit operantions, planting a REX.w prefix.
-        // When planting d64 or f64 instructions, not requiring a REX.w prefix,
-        // the normal (non-'64'-postfixed) formatters should be used.
+        // Used to format 64-bit operantions, planting a REX.w prefix.  When
+        // planting d64 or f64 instructions, not requiring a REX.w prefix, the
+        // normal (non-'64'-postfixed) formatters should be used.
 
         void oneByteOp64(OneByteOpcodeID opcode)
         {
@@ -4220,24 +4456,27 @@ private:
 
         // Byte-operands:
         //
-        // These methods format byte operations.  Byte operations differ from the normal
-        // formatters in the circumstances under which they will decide to emit REX prefixes.
-        // These should be used where any register operand signifies a byte register.
+        // These methods format byte operations.  Byte operations differ from
+        // the normal formatters in the circumstances under which they will
+        // decide to emit REX prefixes.  These should be used where any register
+        // operand signifies a byte register.
         //
-        // The disctinction is due to the handling of register numbers in the range 4..7 on
-        // x86-64.  These register numbers may either represent the second byte of the first
-        // four registers (ah..bh) or the first byte of the second four registers (spl..dil).
+        // The disctinction is due to the handling of register numbers in the
+        // range 4..7 on x86-64.  These register numbers may either represent
+        // the second byte of the first four registers (ah..bh) or the first
+        // byte of the second four registers (spl..dil).
         //
-        // Address operands should still be checked using regRequiresRex(), while byteRegRequiresRex()
-        // is provided to check byte register operands.
+        // Address operands should still be checked using regRequiresRex(),
+        // while ByteRegRequiresRex() is provided to check byte register
+        // operands.
 
         void oneByteOp8(OneByteOpcodeID opcode, GroupOpcodeID groupOp, RegisterID rm)
         {
 #ifdef JS_CODEGEN_X86
-            MOZ_ASSERT(!byteRegRequiresRex(rm));
+            MOZ_ASSERT(!ByteRegRequiresRex(rm));
 #endif
             m_buffer.ensureSpace(maxInstructionSize);
-            emitRexIf(byteRegRequiresRex(rm), 0, 0, rm);
+            emitRexIf(ByteRegRequiresRex(rm), 0, 0, rm);
             m_buffer.putByteUnchecked(opcode);
             registerModRM(groupOp, rm);
         }
@@ -4254,10 +4493,10 @@ private:
         void oneByteOp8(OneByteOpcodeID opcode, int reg, RegisterID base, int offset)
         {
 #ifdef JS_CODEGEN_X86
-            MOZ_ASSERT(!byteRegRequiresRex(reg));
+            MOZ_ASSERT(!ByteRegRequiresRex(reg));
 #endif
             m_buffer.ensureSpace(maxInstructionSize);
-            emitRexIf(byteRegRequiresRex(reg), reg, 0, base);
+            emitRexIf(ByteRegRequiresRex(reg), reg, 0, base);
             m_buffer.putByteUnchecked(opcode);
             memoryModRM(reg, base, offset);
         }
@@ -4265,10 +4504,10 @@ private:
         void oneByteOp8_disp32(OneByteOpcodeID opcode, int reg, RegisterID base, int offset)
         {
 #ifdef JS_CODEGEN_X86
-            MOZ_ASSERT(!byteRegRequiresRex(reg));
+            MOZ_ASSERT(!ByteRegRequiresRex(reg));
 #endif
             m_buffer.ensureSpace(maxInstructionSize);
-            emitRexIf(byteRegRequiresRex(reg), reg, 0, base);
+            emitRexIf(ByteRegRequiresRex(reg), reg, 0, base);
             m_buffer.putByteUnchecked(opcode);
             memoryModRM_disp32(reg, base, offset);
         }
@@ -4276,18 +4515,29 @@ private:
         void oneByteOp8(OneByteOpcodeID opcode, int reg, RegisterID base, RegisterID index, int scale, int offset)
         {
 #ifdef JS_CODEGEN_X86
-            MOZ_ASSERT(!byteRegRequiresRex(reg));
+            MOZ_ASSERT(!ByteRegRequiresRex(reg));
 #endif
             m_buffer.ensureSpace(maxInstructionSize);
-            emitRexIf(byteRegRequiresRex(reg), reg, index, base);
+            emitRexIf(ByteRegRequiresRex(reg), reg, index, base);
             m_buffer.putByteUnchecked(opcode);
             memoryModRM(reg, base, index, scale, offset);
+        }
+
+        void oneByteOp8(OneByteOpcodeID opcode, int reg, const void* address)
+        {
+#ifdef JS_CODEGEN_X86
+            MOZ_ASSERT(!ByteRegRequiresRex(reg));
+#endif
+            m_buffer.ensureSpace(maxInstructionSize);
+            emitRexIf(ByteRegRequiresRex(reg), reg, 0, 0);
+            m_buffer.putByteUnchecked(opcode);
+            memoryModRM_disp32(reg, address);
         }
 
         void twoByteOp8(TwoByteOpcodeID opcode, RegisterID reg, RegisterID rm)
         {
             m_buffer.ensureSpace(maxInstructionSize);
-            emitRexIf(byteRegRequiresRex(reg)|byteRegRequiresRex(rm), reg, 0, rm);
+            emitRexIf(ByteRegRequiresRex(reg)|ByteRegRequiresRex(rm), reg, 0, rm);
             m_buffer.putByteUnchecked(OP_2BYTE_ESCAPE);
             m_buffer.putByteUnchecked(opcode);
             registerModRM(reg, rm);
@@ -4300,7 +4550,7 @@ private:
         void twoByteOp8_movx(TwoByteOpcodeID opcode, RegisterID reg, RegisterID rm)
         {
             m_buffer.ensureSpace(maxInstructionSize);
-            emitRexIf(regRequiresRex(reg)|byteRegRequiresRex(rm), reg, 0, rm);
+            emitRexIf(regRequiresRex(reg)|ByteRegRequiresRex(rm), reg, 0, rm);
             m_buffer.putByteUnchecked(OP_2BYTE_ESCAPE);
             m_buffer.putByteUnchecked(opcode);
             registerModRM(reg, rm);
@@ -4309,7 +4559,7 @@ private:
         void twoByteOp8(TwoByteOpcodeID opcode, GroupOpcodeID groupOp, RegisterID rm)
         {
             m_buffer.ensureSpace(maxInstructionSize);
-            emitRexIf(byteRegRequiresRex(rm), 0, 0, rm);
+            emitRexIf(ByteRegRequiresRex(rm), 0, 0, rm);
             m_buffer.putByteUnchecked(OP_2BYTE_ESCAPE);
             m_buffer.putByteUnchecked(opcode);
             registerModRM(groupOp, rm);
@@ -4317,8 +4567,9 @@ private:
 
         // Immediates:
         //
-        // An immedaite should be appended where appropriate after an op has been emitted.
-        // The writes are unchecked since the opcode formatters above will have ensured space.
+        // An immedaite should be appended where appropriate after an op has
+        // been emitted.  The writes are unchecked since the opcode formatters
+        // above will have ensured space.
 
         void immediate8(int imm)
         {
@@ -4421,12 +4672,6 @@ private:
 
         // Internals; ModRm and REX formatters.
 
-        // Byte operand register spl & above require a REX prefix (to prevent the 'H' registers be accessed).
-        inline bool byteRegRequiresRex(int reg)
-        {
-            return (reg >= X86Registers::esp);
-        }
-
         static const RegisterID noBase = X86Registers::ebp;
         static const RegisterID hasSib = X86Registers::esp;
         static const RegisterID noIndex = X86Registers::esp;
@@ -4452,19 +4697,21 @@ private:
             emitRex(true, r, x, b);
         }
 
-        // Used for operations with byte operands - use byteRegRequiresRex() to check register operands,
-        // regRequiresRex() to check other registers (i.e. address base & index).
+        // Used for operations with byte operands - use ByteRegRequiresRex() to
+        // check register operands, regRequiresRex() to check other registers
+        // (i.e. address base & index).
         //
-        // NB: WebKit's use of emitRexIf() is limited such that the reqRequiresRex() checks are
-        // not needed. SpiderMonkey extends oneByteOp8 functionality such that r, x, and b can
-        // all be used.
+        // NB: WebKit's use of emitRexIf() is limited such that the
+        // reqRequiresRex() checks are not needed. SpiderMonkey extends
+        // oneByteOp8 functionality such that r, x, and b can all be used.
         inline void emitRexIf(bool condition, int r, int x, int b)
         {
             if (condition || regRequiresRex(r) || regRequiresRex(x) || regRequiresRex(b))
                 emitRex(false, r, x, b);
         }
 
-        // Used for word sized operations, will plant a REX prefix if necessary (if any register is r8 or above).
+        // Used for word sized operations, will plant a REX prefix if necessary
+        // (if any register is r8 or above).
         inline void emitRexIfNeeded(int r, int x, int b)
         {
             emitRexIf(regRequiresRex(r) || regRequiresRex(x) || regRequiresRex(b), r, x, b);
@@ -4503,7 +4750,8 @@ private:
 
         void memoryModRM(int reg, RegisterID base, int offset)
         {
-            // A base of esp or r12 would be interpreted as a sib, so force a sib with no index & put the base in there.
+            // A base of esp or r12 would be interpreted as a sib, so force a
+            // sib with no index & put the base in there.
 #ifdef JS_CODEGEN_X64
             if ((base == hasSib) || (base == hasSib2))
 #else
@@ -4538,7 +4786,8 @@ private:
 
         void memoryModRM_disp32(int reg, RegisterID base, int offset)
         {
-            // A base of esp or r12 would be interpreted as a sib, so force a sib with no index & put the base in there.
+            // A base of esp or r12 would be interpreted as a sib, so force a
+            // sib with no index & put the base in there.
 #ifdef JS_CODEGEN_X64
             if ((base == hasSib) || (base == hasSib2))
 #else

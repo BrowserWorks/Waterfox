@@ -29,11 +29,11 @@ static float ClampFactor(float aFactor)
 }
 
 nsCSSFilterInstance::nsCSSFilterInstance(const nsStyleFilter& aFilter,
-                                         nsIFrame *aTargetFrame,
+                                         nscolor aShadowFallbackColor,
                                          const nsIntRect& aTargetBBoxInFilterSpace,
                                          const gfxMatrix& aFrameSpaceInCSSPxToFilterSpaceTransform)
   : mFilter(aFilter)
-  , mTargetFrame(aTargetFrame)
+  , mShadowFallbackColor(aShadowFallbackColor)
   , mTargetBBoxInFilterSpace(aTargetBBoxInFilterSpace)
   , mFrameSpaceInCSSPxToFilterSpaceTransform(aFrameSpaceInCSSPxToFilterSpaceTransform)
 {
@@ -201,8 +201,7 @@ nsCSSFilterInstance::SetAttributesForDropShadow(FilterPrimitiveDescription& aDes
   aDescr.Attributes().Set(eDropShadowOffset, offsetInFilterSpace);
 
   // Set color. If unspecified, use the CSS color property.
-  nscolor shadowColor = shadow->mHasColor ?
-    shadow->mColor : mTargetFrame->StyleColor()->mColor;
+  nscolor shadowColor = shadow->mHasColor ? shadow->mColor : mShadowFallbackColor;
   aDescr.Attributes().Set(eDropShadowColor, ToAttributeColor(shadowColor));
 
   return NS_OK;
@@ -382,7 +381,8 @@ nsCSSFilterInstance::GetLastResultIndex(const nsTArray<FilterPrimitiveDescriptio
 
 void
 nsCSSFilterInstance::SetBounds(FilterPrimitiveDescription& aDescr,
-                               const nsTArray<FilterPrimitiveDescription>& aPrimitiveDescrs) {
+                               const nsTArray<FilterPrimitiveDescription>& aPrimitiveDescrs)
+{
   int32_t inputIndex = GetLastResultIndex(aPrimitiveDescrs);
   nsIntRect inputBounds = (inputIndex < 0) ?
     mTargetBBoxInFilterSpace : ThebesIntRect(aPrimitiveDescrs[inputIndex].PrimitiveSubregion());

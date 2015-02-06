@@ -28,6 +28,7 @@
 #include "jstypes.h"
 #include "jsutil.h"
 
+#include "asmjs/AsmJSModule.h"
 #include "frontend/BytecodeCompiler.h"
 #include "frontend/SourceNotes.h"
 #include "js/CharacterEncoding.h"
@@ -90,7 +91,7 @@ size_t
 js_GetVariableBytecodeLength(jsbytecode *pc)
 {
     JSOp op = JSOp(*pc);
-    JS_ASSERT(js_CodeSpec[op].length == -1);
+    MOZ_ASSERT(js_CodeSpec[op].length == -1);
     switch (op) {
       case JSOP_TABLESWITCH: {
         /* Structure: default-jump case-low case-high case1-jump ... */
@@ -114,14 +115,14 @@ js::StackUses(JSScript *script, jsbytecode *pc)
     if (cs.nuses >= 0)
         return cs.nuses;
 
-    JS_ASSERT(js_CodeSpec[op].nuses == -1);
+    MOZ_ASSERT(js_CodeSpec[op].nuses == -1);
     switch (op) {
       case JSOP_POPN:
         return GET_UINT16(pc);
       default:
         /* stack: fun, this, [argc arguments] */
-        JS_ASSERT(op == JSOP_NEW || op == JSOP_CALL || op == JSOP_EVAL ||
-                  op == JSOP_FUNCALL || op == JSOP_FUNAPPLY);
+        MOZ_ASSERT(op == JSOP_NEW || op == JSOP_CALL || op == JSOP_EVAL ||
+                   op == JSOP_FUNCALL || op == JSOP_FUNAPPLY);
         return 2 + GET_ARGC(pc);
     }
 }
@@ -131,7 +132,7 @@ js::StackDefs(JSScript *script, jsbytecode *pc)
 {
     JSOp op = (JSOp) *pc;
     const JSCodeSpec &cs = js_CodeSpec[op];
-    JS_ASSERT (cs.ndefs >= 0);
+    MOZ_ASSERT(cs.ndefs >= 0);
     return cs.ndefs;
 }
 
@@ -197,7 +198,7 @@ JS_STATIC_ASSERT(JS_ARRAY_LENGTH(countBaseNames) +
 /* static */ const char *
 PCCounts::countName(JSOp op, size_t which)
 {
-    JS_ASSERT(which < numCounts(op));
+    MOZ_ASSERT(which < numCounts(op));
 
     if (which < BASE_LIMIT)
         return countBaseNames[which];
@@ -237,7 +238,7 @@ js::DumpIonScriptCounts(Sprinter *sp, jit::IonScriptCounts *ionCounts)
 void
 js_DumpPCCounts(JSContext *cx, HandleScript script, js::Sprinter *sp)
 {
-    JS_ASSERT(script->hasScriptCounts());
+    MOZ_ASSERT(script->hasScriptCounts());
 
 #ifdef DEBUG
     jsbytecode *pc = script->code();
@@ -273,6 +274,53 @@ js_DumpPCCounts(JSContext *cx, HandleScript script, js::Sprinter *sp)
     while (ionCounts) {
         DumpIonScriptCounts(sp, ionCounts);
         ionCounts = ionCounts->previous();
+    }
+}
+
+void
+js::DumpCompartmentPCCounts(JSContext *cx)
+{
+    for (ZoneCellIter i(cx->zone(), gc::FINALIZE_SCRIPT); !i.done(); i.next()) {
+        RootedScript script(cx, i.get<JSScript>());
+        if (script->compartment() != cx->compartment())
+            continue;
+
+        if (script->hasScriptCounts()) {
+            Sprinter sprinter(cx);
+            if (!sprinter.init())
+                return;
+
+            fprintf(stdout, "--- SCRIPT %s:%d ---\n", script->filename(), (int) script->lineno());
+            js_DumpPCCounts(cx, script, &sprinter);
+            fputs(sprinter.string(), stdout);
+            fprintf(stdout, "--- END SCRIPT %s:%d ---\n", script->filename(), (int) script->lineno());
+        }
+    }
+
+    for (unsigned thingKind = FINALIZE_OBJECT0; thingKind < FINALIZE_OBJECT_LIMIT; thingKind++) {
+        for (ZoneCellIter i(cx->zone(), (AllocKind) thingKind); !i.done(); i.next()) {
+            JSObject *obj = i.get<JSObject>();
+            if (obj->compartment() != cx->compartment())
+                continue;
+
+            if (obj->is<AsmJSModuleObject>()) {
+                AsmJSModule &module = obj->as<AsmJSModuleObject>().module();
+
+                Sprinter sprinter(cx);
+                if (!sprinter.init())
+                    return;
+
+                fprintf(stdout, "--- Asm.js Module ---\n");
+
+                for (size_t i = 0; i < module.numFunctionCounts(); i++) {
+                    jit::IonScriptCounts *counts = module.functionCounts(i);
+                    DumpIonScriptCounts(&sprinter, counts);
+                }
+
+                fputs(sprinter.string(), stdout);
+                fprintf(stdout, "--- END Asm.js Module ---\n");
+            }
+        }
     }
 }
 
@@ -320,7 +368,7 @@ class BytecodeParser
         // -- for that you would have to iterate to a fixed point -- but there
         // shouldn't be operands on the stack at a loop back-edge anyway.
         void mergeOffsetStack(const uint32_t *stack, uint32_t depth) {
-            JS_ASSERT(depth == stackDepth);
+            MOZ_ASSERT(depth == stackDepth);
             for (uint32_t n = 0; n < stackDepth; n++)
                 if (offsetStack[n] != stack[n])
                     offsetStack[n] = UINT32_MAX;
@@ -359,9 +407,9 @@ class BytecodeParser
         Bytecode &code = getCode(offset);
         if (operand < 0) {
             operand += code.stackDepth;
-            JS_ASSERT(operand >= 0);
+            MOZ_ASSERT(operand >= 0);
         }
-        JS_ASSERT(uint32_t(operand) < code.stackDepth);
+        MOZ_ASSERT(uint32_t(operand) < code.stackDepth);
         return code.offsetStack[operand];
     }
     jsbytecode *pcForStackOperand(jsbytecode *pc, int operand) {
@@ -391,14 +439,14 @@ class BytecodeParser
     }
 
     Bytecode& getCode(uint32_t offset) {
-        JS_ASSERT(offset < script_->length());
-        JS_ASSERT(codeArray_[offset]);
+        MOZ_ASSERT(offset < script_->length());
+        MOZ_ASSERT(codeArray_[offset]);
         return *codeArray_[offset];
     }
     Bytecode& getCode(const jsbytecode *pc) { return getCode(script_->pcToOffset(pc)); }
 
     Bytecode* maybeCode(uint32_t offset) {
-        JS_ASSERT(offset < script_->length());
+        MOZ_ASSERT(offset < script_->length());
         return codeArray_[offset];
     }
     Bytecode* maybeCode(const jsbytecode *pc) { return maybeCode(script_->pcToOffset(pc)); }
@@ -417,9 +465,9 @@ BytecodeParser::simulateOp(JSOp op, uint32_t offset, uint32_t *offsetStack, uint
     uint32_t nuses = GetUseCount(script_, offset);
     uint32_t ndefs = GetDefCount(script_, offset);
 
-    JS_ASSERT(stackDepth >= nuses);
+    MOZ_ASSERT(stackDepth >= nuses);
     stackDepth -= nuses;
-    JS_ASSERT(stackDepth + ndefs <= maximumStackDepth());
+    MOZ_ASSERT(stackDepth + ndefs <= maximumStackDepth());
 
     // Mark the current offset as defining its values on the offset stack,
     // unless it just reshuffles the stack.  In that case we want to preserve
@@ -432,17 +480,17 @@ BytecodeParser::simulateOp(JSOp op, uint32_t offset, uint32_t *offsetStack, uint
 
       case JSOP_CASE:
         /* Keep the switch value. */
-        JS_ASSERT(ndefs == 1);
+        MOZ_ASSERT(ndefs == 1);
         break;
 
       case JSOP_DUP:
-        JS_ASSERT(ndefs == 2);
+        MOZ_ASSERT(ndefs == 2);
         if (offsetStack)
             offsetStack[stackDepth + 1] = offsetStack[stackDepth];
         break;
 
       case JSOP_DUP2:
-        JS_ASSERT(ndefs == 4);
+        MOZ_ASSERT(ndefs == 4);
         if (offsetStack) {
             offsetStack[stackDepth + 2] = offsetStack[stackDepth];
             offsetStack[stackDepth + 3] = offsetStack[stackDepth + 1];
@@ -450,17 +498,17 @@ BytecodeParser::simulateOp(JSOp op, uint32_t offset, uint32_t *offsetStack, uint
         break;
 
       case JSOP_DUPAT: {
-        JS_ASSERT(ndefs == 1);
+        MOZ_ASSERT(ndefs == 1);
         jsbytecode *pc = script_->offsetToPC(offset);
         unsigned n = GET_UINT24(pc);
-        JS_ASSERT(n < stackDepth);
+        MOZ_ASSERT(n < stackDepth);
         if (offsetStack)
             offsetStack[stackDepth] = offsetStack[stackDepth - 1 - n];
         break;
       }
 
       case JSOP_SWAP:
-        JS_ASSERT(ndefs == 2);
+        MOZ_ASSERT(ndefs == 2);
         if (offsetStack) {
             uint32_t tmp = offsetStack[stackDepth + 1];
             offsetStack[stackDepth + 1] = offsetStack[stackDepth];
@@ -476,7 +524,7 @@ bool
 BytecodeParser::addJump(uint32_t offset, uint32_t *currentOffset,
                         uint32_t stackDepth, const uint32_t *offsetStack)
 {
-    JS_ASSERT(offset < script_->length());
+    MOZ_ASSERT(offset < script_->length());
 
     Bytecode *&code = codeArray_[offset];
     if (!code) {
@@ -504,7 +552,7 @@ BytecodeParser::addJump(uint32_t offset, uint32_t *currentOffset,
 bool
 BytecodeParser::parse()
 {
-    JS_ASSERT(!codeArray_);
+    MOZ_ASSERT(!codeArray_);
 
     uint32_t length = script_->length();
     codeArray_ = alloc().newArray<Bytecode*>(length);
@@ -541,7 +589,7 @@ BytecodeParser::parse()
         jsbytecode *pc = script_->offsetToPC(offset);
 
         JSOp op = (JSOp)*pc;
-        JS_ASSERT(op < JSOP_LIMIT);
+        MOZ_ASSERT(op < JSOP_LIMIT);
 
         // Immediate successor of this bytecode.
         uint32_t successorOffset = offset + GetBytecodeLength(pc);
@@ -625,7 +673,7 @@ BytecodeParser::parse()
 
         // Handle any fallthrough from this opcode.
         if (BytecodeFallsThrough(op)) {
-            JS_ASSERT(successorOffset < script_->length());
+            MOZ_ASSERT(successorOffset < script_->length());
 
             Bytecode *&nextcode = codeArray_[successorOffset];
 
@@ -718,7 +766,7 @@ js_DisassembleAtPC(JSContext *cx, JSScript *scriptArg, bool lines,
         if (showAll) {
             jssrcnote *sn = js_GetSrcNote(cx, script, next);
             if (sn) {
-                JS_ASSERT(!SN_IS_TERMINATOR(sn));
+                MOZ_ASSERT(!SN_IS_TERMINATOR(sn));
                 jssrcnote *next = SN_NEXT(sn);
                 while (!SN_IS_TERMINATOR(next) && SN_DELTA(next) == 0) {
                     Sprint(sp, "%02u\n    ", SN_TYPE(sn));
@@ -792,7 +840,7 @@ js_DumpScriptDepth(JSContext *cx, JSScript *scriptArg, jsbytecode *pc)
 }
 
 static char *
-QuoteString(Sprinter *sp, JSString *str, jschar quote);
+QuoteString(Sprinter *sp, JSString *str, char16_t quote);
 
 static bool
 ToDisassemblySource(JSContext *cx, HandleValue v, JSAutoByteString *bytes)
@@ -868,7 +916,6 @@ ToDisassemblySource(JSContext *cx, HandleValue v, JSAutoByteString *bytes)
             JSString *source = obj.as<RegExpObject>().toString(cx);
             if (!source)
                 return false;
-            JS::Anchor<JSString *> anchor(source);
             return bytes->encodeLatin1(cx, source);
         }
     }
@@ -893,7 +940,7 @@ js_Disassemble1(JSContext *cx, HandleScript script, jsbytecode *pc,
     ptrdiff_t len = (ptrdiff_t) cs->length;
     Sprint(sp, "%05u:", loc);
     if (lines)
-        Sprint(sp, "%4u", JS_PCToLineNumber(cx, script, pc));
+        Sprint(sp, "%4u", PCToLineNumber(script, pc));
     Sprint(sp, "  %s", js_CodeName[op]);
 
     switch (JOF_TYPE(cs->format)) {
@@ -1016,8 +1063,8 @@ js_Disassemble1(JSContext *cx, HandleScript script, jsbytecode *pc,
         goto print_int;
 
       case JOF_UINT24:
-        JS_ASSERT(op == JSOP_UINT24 || op == JSOP_NEWARRAY || op == JSOP_INITELEM_ARRAY ||
-                  op == JSOP_DUPAT);
+        MOZ_ASSERT(op == JSOP_UINT24 || op == JSOP_NEWARRAY || op == JSOP_INITELEM_ARRAY ||
+                   op == JSOP_DUPAT);
         i = (int)GET_UINT24(pc);
         goto print_int;
 
@@ -1030,7 +1077,7 @@ js_Disassemble1(JSContext *cx, HandleScript script, jsbytecode *pc,
         goto print_int;
 
       case JOF_INT32:
-        JS_ASSERT(op == JSOP_INT32);
+        MOZ_ASSERT(op == JSOP_INT32);
         i = GET_INT32(pc);
       print_int:
         Sprint(sp, " %d", i);
@@ -1058,7 +1105,7 @@ const size_t Sprinter::DefaultSize = 64;
 bool
 Sprinter::realloc_(size_t newSize)
 {
-    JS_ASSERT(newSize > (size_t) offset);
+    MOZ_ASSERT(newSize > (size_t) offset);
     char *newBuf = (char *) js_realloc(base, newSize);
     if (!newBuf) {
         reportOutOfMemory();
@@ -1090,7 +1137,7 @@ Sprinter::~Sprinter()
 bool
 Sprinter::init()
 {
-    JS_ASSERT(!initialized);
+    MOZ_ASSERT(!initialized);
     base = (char *) js_malloc(DefaultSize);
     if (!base) {
         reportOutOfMemory();
@@ -1108,9 +1155,9 @@ Sprinter::init()
 void
 Sprinter::checkInvariants() const
 {
-    JS_ASSERT(initialized);
-    JS_ASSERT((size_t) offset < size);
-    JS_ASSERT(base[size - 1] == 0);
+    MOZ_ASSERT(initialized);
+    MOZ_ASSERT((size_t) offset < size);
+    MOZ_ASSERT(base[size - 1] == 0);
 }
 
 const char *
@@ -1128,14 +1175,14 @@ Sprinter::stringEnd() const
 char *
 Sprinter::stringAt(ptrdiff_t off) const
 {
-    JS_ASSERT(off >= 0 && (size_t) off < size);
+    MOZ_ASSERT(off >= 0 && (size_t) off < size);
     return base + off;
 }
 
 char &
 Sprinter::operator[](size_t off)
 {
-    JS_ASSERT(off < size);
+    MOZ_ASSERT(off < size);
     return *(base + off);
 }
 
@@ -1290,7 +1337,7 @@ const char js_EscapeMap[] = {
 
 template <typename CharT>
 static char *
-QuoteString(Sprinter *sp, const CharT *s, size_t length, jschar quote)
+QuoteString(Sprinter *sp, const CharT *s, size_t length, char16_t quote)
 {
     /* Sample off first for later return value pointer computation. */
     ptrdiff_t offset = sp->getOffset();
@@ -1303,7 +1350,7 @@ QuoteString(Sprinter *sp, const CharT *s, size_t length, jschar quote)
     /* Loop control variables: end points at end of string sentinel. */
     for (const CharT *t = s; t < end; s = ++t) {
         /* Move t forward from s past un-quote-worthy characters. */
-        jschar c = *t;
+        char16_t c = *t;
         while (c < 127 && isprint(c) && c != quote && c != '\\' && c != '\t') {
             c = *++t;
             if (t == end)
@@ -1355,7 +1402,7 @@ QuoteString(Sprinter *sp, const CharT *s, size_t length, jschar quote)
 }
 
 static char *
-QuoteString(Sprinter *sp, JSString *str, jschar quote)
+QuoteString(Sprinter *sp, JSString *str, char16_t quote)
 {
     JSLinearString *linear = str->ensureLinear(sp->context);
     if (!linear)
@@ -1368,7 +1415,7 @@ QuoteString(Sprinter *sp, JSString *str, jschar quote)
 }
 
 JSString *
-js_QuoteString(ExclusiveContext *cx, JSString *str, jschar quote)
+js_QuoteString(ExclusiveContext *cx, JSString *str, char16_t quote)
 {
     Sprinter sprinter(cx);
     if (!sprinter.init())
@@ -1456,7 +1503,7 @@ ExpressionDecompiler::decompilePCForStackOperand(jsbytecode *pc, int i)
 bool
 ExpressionDecompiler::decompilePC(jsbytecode *pc)
 {
-    JS_ASSERT(script->containsPC(pc));
+    MOZ_ASSERT(script->containsPC(pc));
 
     JSOp op = (JSOp)*pc;
 
@@ -1503,7 +1550,7 @@ ExpressionDecompiler::decompilePC(jsbytecode *pc)
       }
       case JSOP_GETALIASEDVAR: {
         JSAtom *atom = ScopeCoordinateName(cx->runtime()->scopeCoordinateNameCache, script, pc);
-        JS_ASSERT(atom);
+        MOZ_ASSERT(atom);
         return write(atom);
       }
       case JSOP_LENGTH:
@@ -1627,19 +1674,19 @@ ExpressionDecompiler::loadAtom(jsbytecode *pc)
 JSAtom *
 ExpressionDecompiler::getArg(unsigned slot)
 {
-    JS_ASSERT(fun);
-    JS_ASSERT(slot < script->bindings.count());
+    MOZ_ASSERT(fun);
+    MOZ_ASSERT(slot < script->bindings.count());
     return (*localNames)[slot].name();
 }
 
 JSAtom *
 ExpressionDecompiler::getLocal(uint32_t local, jsbytecode *pc)
 {
-    JS_ASSERT(local < script->nfixed());
-    if (local < script->nfixedvars()) {
-        JS_ASSERT(fun);
+    MOZ_ASSERT(local < script->nfixed());
+    if (local < script->nbodyfixed()) {
+        MOZ_ASSERT(fun);
         uint32_t slot = local + fun->nargs();
-        JS_ASSERT(slot < script->bindings.count());
+        MOZ_ASSERT(slot < script->bindings.count());
         return (*localNames)[slot].name();
     }
     for (NestedScopeObject *chain = script->getStaticScope(pc);
@@ -1704,7 +1751,7 @@ FindStartPC(JSContext *cx, const FrameIter &iter, int spindex, int skipStackHits
 
     if (spindex == JSDVG_SEARCH_STACK) {
         size_t index = iter.numFrameSlots();
-        JS_ASSERT(index >= size_t(parser.stackDepthAtPC(current)));
+        MOZ_ASSERT(index >= size_t(parser.stackDepthAtPC(current)));
 
         // We search from fp->sp to base to find the most recently calculated
         // value matching v under assumption that it is the value that caused
@@ -1734,9 +1781,9 @@ FindStartPC(JSContext *cx, const FrameIter &iter, int spindex, int skipStackHits
 static bool
 DecompileExpressionFromStack(JSContext *cx, int spindex, int skipStackHits, HandleValue v, char **res)
 {
-    JS_ASSERT(spindex < 0 ||
-              spindex == JSDVG_IGNORE_STACK ||
-              spindex == JSDVG_SEARCH_STACK);
+    MOZ_ASSERT(spindex < 0 ||
+               spindex == JSDVG_IGNORE_STACK ||
+               spindex == JSDVG_SEARCH_STACK);
 
     *res = nullptr;
 
@@ -1761,7 +1808,7 @@ DecompileExpressionFromStack(JSContext *cx, int spindex, int skipStackHits, Hand
                            ? frameIter.callee()
                            : nullptr);
 
-    JS_ASSERT(script->containsPC(valuepc));
+    MOZ_ASSERT(script->containsPC(valuepc));
 
     // Give up if in prologue.
     if (valuepc < script->main())
@@ -1810,7 +1857,7 @@ js::DecompileValueGenerator(JSContext *cx, int spindex, HandleValue v,
 static bool
 DecompileArgumentFromStack(JSContext *cx, int formalIndex, char **res)
 {
-    JS_ASSERT(formalIndex >= 0);
+    MOZ_ASSERT(formalIndex >= 0);
 
     *res = nullptr;
 
@@ -1824,7 +1871,7 @@ DecompileArgumentFromStack(JSContext *cx, int formalIndex, char **res)
      * called the intrinsic.
      */
     FrameIter frameIter(cx);
-    JS_ASSERT(!frameIter.done());
+    MOZ_ASSERT(!frameIter.done());
 
     /*
      * Get the second-to-top frame, the caller of the builtin that called the
@@ -1841,7 +1888,7 @@ DecompileArgumentFromStack(JSContext *cx, int formalIndex, char **res)
                        ? frameIter.callee()
                        : nullptr);
 
-    JS_ASSERT(script->containsPC(current));
+    MOZ_ASSERT(script->containsPC(current));
 
     if (current < script->main())
         return true;
@@ -1855,7 +1902,7 @@ DecompileArgumentFromStack(JSContext *cx, int formalIndex, char **res)
         return false;
 
     int formalStackIndex = parser.stackDepthAtPC(current) - GET_ARGC(current) + formalIndex;
-    JS_ASSERT(formalStackIndex >= 0);
+    MOZ_ASSERT(formalStackIndex >= 0);
     if (uint32_t(formalStackIndex) >= parser.stackDepthAtPC(current))
         return true;
 
@@ -1959,7 +2006,7 @@ static void
 ReleaseScriptCounts(FreeOp *fop)
 {
     JSRuntime *rt = fop->runtime();
-    JS_ASSERT(rt->scriptAndCountsVector);
+    MOZ_ASSERT(rt->scriptAndCountsVector);
 
     ScriptAndCountsVector &vec = *rt->scriptAndCountsVector;
 
@@ -1993,7 +2040,7 @@ js::StopPCCountProfiling(JSContext *cx)
 
     if (!rt->profilingScripts)
         return;
-    JS_ASSERT(!rt->scriptAndCountsVector);
+    MOZ_ASSERT(!rt->scriptAndCountsVector);
 
     ReleaseAllJITCode(rt->defaultFreeOp());
 
@@ -2025,7 +2072,7 @@ js::PurgePCCounts(JSContext *cx)
 
     if (!rt->scriptAndCountsVector)
         return;
-    JS_ASSERT(!rt->profilingScripts);
+    MOZ_ASSERT(!rt->profilingScripts);
 
     ReleaseScriptCounts(rt->defaultFreeOp());
 }

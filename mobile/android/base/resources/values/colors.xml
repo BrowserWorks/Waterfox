@@ -13,6 +13,12 @@
   <color name="highlight_dark">#33FFFFFF</color>
   <color name="highlight_dark_focused">#1AFFFFFF</color>
 
+  <!-- (bug 1077195) Focused state values are temporary. -->
+  <color name="new_tablet_highlight">#D7D7DC</color>
+  <color name="new_tablet_highlight_focused">#C0C9D0</color>
+  <color name="new_tablet_highlight_pb">#222222</color>
+  <color name="new_tablet_highlight_focused_pb">#363B40</color>
+
   <!-- highlight on shaped button: 20% white over background_tabs -->
   <color name="highlight_shaped">#FF696D71</color>
 
@@ -44,15 +50,19 @@
   <color name="text_color_tertiary">#9198A1</color>
 
   <!-- Default inverse colors -->
-  <color name="text_color_primary_inverse">#FFFFFF</color>
+  <color name="text_color_primary_inverse">#F5F5F5</color>
   <color name="text_color_secondary_inverse">#DDDDDD</color>
   <color name="text_color_tertiary_inverse">#A4A7A9</color>
 
   <!-- Colour used for share overlay button labels -->
   <color name="text_color_overlaybtn">#666666</color>
+  <color name="text_color_overlaybtn_disabled">#AFB1B3</color>
 
-  <!-- Colour used for share overlay button background -->
-  <color name="overlay_share_background_colour">#FFD0CECB</color>
+  <color name="overlay_share_header_background">#FFFFFFFF</color>
+
+  <!-- Colours used for share overlay button background -->
+  <color name="overlay_share_background">#FFEBEBF0</color>
+  <color name="overlay_share_selected">#FFF5F5F5</color>
 
   <!-- Disabled colors -->
   <color name="text_color_primary_disable_only">#999999</color>
@@ -101,6 +111,10 @@
   <color name="url_bar_shadow">#12000000</color>
 
   <color name="home_button_bar_bg">#FFF5F7F9</color>
+
+  <!-- Colour used for share overlay button labels -->
+  <color name="home_text_color">@color/text_color_primary</color>
+  <color name="home_text_color_disabled">#AFB1B3</color>
 
   <color name="panel_image_item_background">#D1D9E1</color>
 

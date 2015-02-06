@@ -13,6 +13,7 @@
 #include "nsSVGAnimatedTransformList.h"
 #include "nsSVGAttrTearoffTable.h"
 #include "mozilla/DebugOnly.h"
+#include "mozilla/FloatingPoint.h"
 
 namespace {
   const double kRadPerDegree = 2.0 * M_PI / 360.0;
@@ -111,7 +112,6 @@ SVGTransform::SVGTransform(DOMSVGTransformList *aList,
   , mIsAnimValItem(aIsAnimValItem)
   , mTransform(nullptr)
 {
-  SetIsDOMBinding();
   // These shifts are in sync with the members in the header.
   NS_ABORT_IF_FALSE(aList &&
                     aListIndex <= MaxListIndex(), "bad arg");
@@ -127,7 +127,6 @@ SVGTransform::SVGTransform()
                                      // initialises to matrix type with identity
                                      // matrix
 {
-  SetIsDOMBinding();
 }
 
 SVGTransform::SVGTransform(const gfxMatrix &aMatrix)
@@ -136,7 +135,6 @@ SVGTransform::SVGTransform(const gfxMatrix &aMatrix)
   , mIsAnimValItem(false)
   , mTransform(new nsSVGTransform(aMatrix))
 {
-  SetIsDOMBinding();
 }
 
 SVGTransform::SVGTransform(const nsSVGTransform &aTransform)
@@ -145,7 +143,6 @@ SVGTransform::SVGTransform(const nsSVGTransform &aTransform)
   , mIsAnimValItem(false)
   , mTransform(new nsSVGTransform(aTransform))
 {
-  SetIsDOMBinding();
 }
 
 SVGTransform::~SVGTransform()
@@ -263,7 +260,7 @@ SVGTransform::SetSkewX(float angle, ErrorResult& rv)
     return;
   }
 
-  if (!NS_finite(tan(angle * kRadPerDegree))) {
+  if (!IsFinite(tan(angle * kRadPerDegree))) {
     rv.Throw(NS_ERROR_RANGE_ERR);
     return;
   }
@@ -286,7 +283,7 @@ SVGTransform::SetSkewY(float angle, ErrorResult& rv)
     return;
   }
 
-  if (!NS_finite(tan(angle * kRadPerDegree))) {
+  if (!IsFinite(tan(angle * kRadPerDegree))) {
     rv.Throw(NS_ERROR_RANGE_ERR);
     return;
   }

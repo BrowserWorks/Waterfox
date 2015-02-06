@@ -7,9 +7,11 @@
 
 #include "JavaScriptShared.h"
 #include "mozilla/dom/BindingUtils.h"
+#include "mozilla/dom/CPOWManagerGetter.h"
 #include "mozilla/dom/TabChild.h"
 #include "jsfriendapi.h"
 #include "xpcprivate.h"
+#include "WrapperFactory.h"
 #include "mozilla/Preferences.h"
 
 using namespace js;
@@ -36,19 +38,17 @@ IdToObjectMap::trace(JSTracer *trc)
     for (Table::Range r(table_.all()); !r.empty(); r.popFront()) {
         DebugOnly<JSObject *> prior = r.front().value().get();
         JS_CallObjectTracer(trc, &r.front().value(), "ipc-object");
-        MOZ_ASSERT(r.front().value() == prior);
     }
 }
 
 void
-IdToObjectMap::finalize(JSFreeOp *fop)
+IdToObjectMap::sweep()
 {
     for (Table::Enum e(table_); !e.empty(); e.popFront()) {
-        DebugOnly<JSObject *> prior = e.front().value().get();
-        if (JS_IsAboutToBeFinalized(&e.front().value()))
+        JS::Heap<JSObject *> *objp = &e.front().value();
+        JS_UpdateWeakPointerAfterGC(objp);
+        if (!*objp)
             e.removeFront();
-        else
-            MOZ_ASSERT(e.front().value() == prior);
     }
 }
 
@@ -97,14 +97,26 @@ ObjectToIdMap::init()
 }
 
 void
-ObjectToIdMap::finalize(JSFreeOp *fop)
+ObjectToIdMap::trace(JSTracer *trc)
 {
     for (Table::Enum e(*table_); !e.empty(); e.popFront()) {
         JSObject *obj = e.front().key();
-        if (JS_IsAboutToBeFinalizedUnbarriered(&obj))
+        JS_CallUnbarrieredObjectTracer(trc, &obj, "ipc-object");
+        if (obj != e.front().key())
+            e.rekeyFront(obj);
+    }
+}
+
+void
+ObjectToIdMap::sweep()
+{
+    for (Table::Enum e(*table_); !e.empty(); e.popFront()) {
+        JSObject *obj = e.front().key();
+        JS_UpdateWeakPointerAfterGCUnbarriered(&obj);
+        if (!obj)
             e.removeFront();
-        else
-            MOZ_ASSERT(obj == e.front().key());
+        else if (obj != e.front().key())
+            e.rekeyFront(obj);
     }
 }
 
@@ -113,7 +125,7 @@ ObjectToIdMap::find(JSObject *obj)
 {
     Table::Ptr p = table_->lookup(obj);
     if (!p)
-        return 0;
+        return ObjectId::nullId();
     return p->value();
 }
 
@@ -152,7 +164,7 @@ bool JavaScriptShared::sStackLoggingEnabled;
 JavaScriptShared::JavaScriptShared(JSRuntime *rt)
   : rt_(rt),
     refcount_(1),
-    lastId_(0)
+    nextSerialNumber_(1)
 {
     if (!sLoggingInitialized) {
         sLoggingInitialized = true;
@@ -176,7 +188,9 @@ JavaScriptShared::init()
         return false;
     if (!cpows_.init())
         return false;
-    if (!objectIds_.init())
+    if (!unwaivedObjectIds_.init())
+        return false;
+    if (!waivedObjectIds_.init())
         return false;
 
     return true;
@@ -253,6 +267,17 @@ JavaScriptShared::toVariant(JSContext *cx, JS::HandleValue from, JSVariant *to)
         return true;
       }
 
+      case JSTYPE_SYMBOL:
+      {
+        RootedSymbol sym(cx, from.toSymbol());
+
+        SymbolVariant symVar;
+        if (!toSymbolVariant(cx, sym, &symVar))
+            return false;
+        *to = symVar;
+        return true;
+      }
+
       case JSTYPE_STRING:
       {
         nsAutoJSString autoStr;
@@ -300,6 +325,15 @@ JavaScriptShared::fromVariant(JSContext *cx, const JSVariant &from, MutableHandl
           return true;
         }
 
+        case JSVariant::TSymbolVariant:
+        {
+          Symbol *sym = fromSymbolVariant(cx, from.get_SymbolVariant());
+          if (!sym)
+              return false;
+          to.setSymbol(sym);
+          return true;
+        }
+
         case JSVariant::Tdouble:
           to.set(JS_NumberValue(from.get_double()));
           return true;
@@ -334,7 +368,104 @@ JavaScriptShared::fromVariant(JSContext *cx, const JSVariant &from, MutableHandl
         }
 
         default:
+          MOZ_CRASH("NYI");
           return false;
+    }
+}
+
+bool
+JavaScriptShared::toJSIDVariant(JSContext *cx, HandleId from, JSIDVariant *to)
+{
+    if (JSID_IS_STRING(from)) {
+        nsAutoJSString autoStr;
+        if (!autoStr.init(cx, JSID_TO_STRING(from)))
+            return false;
+        *to = autoStr;
+        return true;
+    }
+    if (JSID_IS_INT(from)) {
+        *to = JSID_TO_INT(from);
+        return true;
+    }
+    if (JSID_IS_SYMBOL(from)) {
+        SymbolVariant symVar;
+        if (!toSymbolVariant(cx, JSID_TO_SYMBOL(from), &symVar))
+            return false;
+        *to = symVar;
+        return true;
+    }
+    MOZ_ASSERT(false);
+    return false;
+}
+
+bool
+JavaScriptShared::fromJSIDVariant(JSContext *cx, const JSIDVariant &from, MutableHandleId to)
+{
+    switch (from.type()) {
+      case JSIDVariant::TSymbolVariant: {
+        Symbol *sym = fromSymbolVariant(cx, from.get_SymbolVariant());
+        if (!sym)
+            return false;
+        to.set(SYMBOL_TO_JSID(sym));
+        return true;
+      }
+
+      case JSIDVariant::TnsString:
+        return convertGeckoStringToId(cx, from.get_nsString(), to);
+
+      case JSIDVariant::Tint32_t:
+        to.set(INT_TO_JSID(from.get_int32_t()));
+        return true;
+
+      default:
+        return false;
+    }
+}
+
+bool
+JavaScriptShared::toSymbolVariant(JSContext *cx, JS::Symbol *symArg, SymbolVariant *symVarp)
+{
+    RootedSymbol sym(cx, symArg);
+    MOZ_ASSERT(sym);
+
+    SymbolCode code = GetSymbolCode(sym);
+    if (static_cast<uint32_t>(code) < WellKnownSymbolLimit) {
+        *symVarp = WellKnownSymbol(static_cast<uint32_t>(code));
+        return true;
+    }
+    if (code == SymbolCode::InSymbolRegistry) {
+        nsAutoJSString autoStr;
+        if (!autoStr.init(cx, GetSymbolDescription(sym)))
+            return false;
+        *symVarp = RegisteredSymbol(autoStr);
+        return true;
+    }
+    MOZ_CRASH("unique symbols not yet implemented");
+    return false;
+}
+
+JS::Symbol *
+JavaScriptShared::fromSymbolVariant(JSContext *cx, SymbolVariant symVar)
+{
+    switch (symVar.type()) {
+      case SymbolVariant::TWellKnownSymbol: {
+        uint32_t which = symVar.get_WellKnownSymbol().which();
+        if (which < WellKnownSymbolLimit)
+            return GetWellKnownSymbol(cx, static_cast<SymbolCode>(which));
+        MOZ_ASSERT(false, "bad child data");
+        return nullptr;
+      }
+
+      case SymbolVariant::TRegisteredSymbol: {
+        nsString key = symVar.get_RegisteredSymbol().key();
+        RootedString str(cx, JS_NewUCStringCopyN(cx, key.get(), key.Length()));
+        if (!str)
+            return nullptr;
+        return GetSymbolFor(cx, str);
+      }
+
+      default:
+        return nullptr;
     }
 }
 
@@ -371,47 +502,31 @@ JavaScriptShared::ConvertID(const JSIID &from, nsID *to)
 }
 
 JSObject *
-JavaScriptShared::findObjectById(JSContext *cx, uint32_t objId)
+JavaScriptShared::findObjectById(JSContext *cx, const ObjectId &objId)
 {
-    RootedObject obj(cx, findObjectById(objId));
+    RootedObject obj(cx, objects_.find(objId));
     if (!obj) {
         JS_ReportError(cx, "operation not possible on dead CPOW");
         return nullptr;
     }
 
-    // Objects are stored in objects_ unwrapped. We want to wrap the object
-    // before returning it so that all operations happen on Xray wrappers. If
-    // the object is a DOM element, we try to obtain the corresponding
-    // TabChildGlobal and wrap in that.
-    RootedObject global(cx, GetGlobalForObjectCrossCompartment(obj));
-    nsCOMPtr<nsIGlobalObject> nativeGlobal = xpc::GetNativeForGlobal(global);
-    nsCOMPtr<nsIDOMWindow> window = do_QueryInterface(nativeGlobal);
-    if (window) {
-        dom::TabChild *tabChild = dom::TabChild::GetFrom(window);
-        if (tabChild) {
-            nsCOMPtr<nsIContentFrameMessageManager> mm;
-            tabChild->GetMessageManager(getter_AddRefs(mm));
-            nsCOMPtr<nsIGlobalObject> tabChildNativeGlobal = do_QueryInterface(mm);
-            RootedObject tabChildGlobal(cx, tabChildNativeGlobal->GetGlobalJSObject());
-            JSAutoCompartment ac(cx, tabChildGlobal);
-            if (!JS_WrapObject(cx, &obj))
-                return nullptr;
-            return obj;
-        }
+    // Each process has a dedicated compartment for CPOW targets. All CPOWs
+    // from the other process point to objects in this scope. From there, they
+    // can access objects in other compartments using cross-compartment
+    // wrappers.
+    JSAutoCompartment ac(cx, scopeForTargetObjects());
+    if (objId.hasXrayWaiver()) {
+        if (!xpc::WrapperFactory::WaiveXrayAndWrap(cx, &obj))
+            return nullptr;
+    } else {
+        if (!JS_WrapObject(cx, &obj))
+            return nullptr;
     }
-
-    // If there's no TabChildGlobal, we use the junk scope. In the parent we use
-    // the unprivileged junk scope to prevent security vulnerabilities. In the
-    // child we use the privileged junk scope.
-    JSAutoCompartment ac(cx, defaultScope());
-    if (!JS_WrapObject(cx, &obj))
-        return nullptr;
     return obj;
 }
 
 static const uint64_t DefaultPropertyOp = 1;
-static const uint64_t GetterOnlyPropertyStub = 2;
-static const uint64_t UnknownPropertyOp = 3;
+static const uint64_t UnknownPropertyOp = 2;
 
 bool
 JavaScriptShared::fromDescriptor(JSContext *cx, Handle<JSPropertyDescriptor> desc,
@@ -421,7 +536,7 @@ JavaScriptShared::fromDescriptor(JSContext *cx, Handle<JSPropertyDescriptor> des
     if (!toVariant(cx, desc.value(), &out->value()))
         return false;
 
-    JS_ASSERT(desc.object());
+    MOZ_ASSERT(desc.object());
     if (!toObjectVariant(cx, desc.object(), &out->obj()))
         return false;
 
@@ -451,8 +566,6 @@ JavaScriptShared::fromDescriptor(JSContext *cx, Handle<JSPropertyDescriptor> des
     } else {
         if (desc.setter() == JS_StrictPropertyStub)
             out->setter() = DefaultPropertyOp;
-        else if (desc.setter() == js_GetterOnlyPropertyStub)
-            out->setter() = GetterOnlyPropertyStub;
         else
             out->setter() = UnknownPropertyOp;
     }
@@ -513,8 +626,6 @@ JavaScriptShared::toDescriptor(JSContext *cx, const PPropertyDescriptor &in,
     } else {
         if (in.setter().get_uint64_t() == DefaultPropertyOp)
             out.setSetter(JS_StrictPropertyStub);
-        else if (in.setter().get_uint64_t() == GetterOnlyPropertyStub)
-            out.setSetter(js_GetterOnlyPropertyStub);
         else
             out.setSetter(UnknownStrictPropertyStub);
     }
@@ -522,9 +633,21 @@ JavaScriptShared::toDescriptor(JSContext *cx, const PPropertyDescriptor &in,
     return true;
 }
 
+CpowIdHolder::CpowIdHolder(dom::CPOWManagerGetter *managerGetter, const InfallibleTArray<CpowEntry> &cpows)
+  : js_(nullptr),
+    cpows_(cpows)
+{
+    // Only instantiate the CPOW manager if we might need it later.
+    if (cpows.Length())
+        js_ = managerGetter->GetCPOWManager();
+}
+
 bool
 CpowIdHolder::ToObject(JSContext *cx, JS::MutableHandleObject objp)
 {
+    if (!cpows_.Length())
+        return true;
+
     return js_->Unwrap(cx, cpows_, objp);
 }
 
@@ -595,4 +718,3 @@ JavaScriptShared::Wrap(JSContext *cx, HandleObject aObj, InfallibleTArray<CpowEn
 
     return true;
 }
-

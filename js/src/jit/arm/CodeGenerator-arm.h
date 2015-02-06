@@ -102,6 +102,7 @@ class CodeGeneratorARM : public CodeGeneratorShared
   public:
     // Instruction visitors.
     virtual bool visitMinMaxD(LMinMaxD *ins);
+    virtual bool visitMinMaxF(LMinMaxF *ins);
     virtual bool visitAbsD(LAbsD *ins);
     virtual bool visitAbsF(LAbsF *ins);
     virtual bool visitSqrtD(LSqrtD *ins);
@@ -194,6 +195,7 @@ class CodeGeneratorARM : public CodeGeneratorShared
     bool visitNegF(LNegF *lir);
     bool visitLoadTypedArrayElementStatic(LLoadTypedArrayElementStatic *ins);
     bool visitStoreTypedArrayElementStatic(LStoreTypedArrayElementStatic *ins);
+    bool visitAsmJSCall(LAsmJSCall *ins);
     bool visitAsmJSLoadHeap(LAsmJSLoadHeap *ins);
     bool visitAsmJSStoreHeap(LAsmJSStoreHeap *ins);
     bool visitAsmJSLoadGlobalVar(LAsmJSLoadGlobalVar *ins);
@@ -205,23 +207,8 @@ class CodeGeneratorARM : public CodeGeneratorShared
     bool visitForkJoinGetSlice(LForkJoinGetSlice *ins);
 
     bool generateInvalidateEpilogue();
-  protected:
-    void postAsmJSCall(LAsmJSCall *lir) {
-        if (!UseHardFpABI() && lir->mir()->callee().which() == MAsmJSCall::Callee::Builtin) {
-            switch (lir->mir()->type()) {
-              case MIRType_Double:
-                masm.ma_vxfer(r0, r1, d0);
-                break;
-              case MIRType_Float32:
-                masm.as_vxfer(r0, InvalidReg, VFPRegister(d0).singleOverlay(),
-                              Assembler::CoreToFloat);
-                break;
-              default:
-                break;
-            }
-        }
-    }
 
+  protected:
     bool visitEffectiveAddress(LEffectiveAddress *ins);
     bool visitUDiv(LUDiv *ins);
     bool visitUMod(LUMod *ins);
@@ -229,7 +216,6 @@ class CodeGeneratorARM : public CodeGeneratorShared
 
   public:
     // Unimplemented SIMD instructions
-    bool visitSimdValueX4(LSimdValueX4 *lir) { MOZ_CRASH("NYI"); }
     bool visitSimdSplatX4(LSimdSplatX4 *lir) { MOZ_CRASH("NYI"); }
     bool visitInt32x4(LInt32x4 *ins) { MOZ_CRASH("NYI"); }
     bool visitFloat32x4(LFloat32x4 *ins) { MOZ_CRASH("NYI"); }

@@ -13,8 +13,8 @@
 #include "jsnum.h"
 
 #include "jit/CodeGenerator.h"
-#include "jit/IonFrames.h"
 #include "jit/JitCompartment.h"
+#include "jit/JitFrames.h"
 #include "jit/MIR.h"
 #include "jit/MIRGraph.h"
 #include "vm/Shape.h"
@@ -63,7 +63,7 @@ CodeGeneratorMIPS::generateEpilogue()
 #endif
 
     masm.freeStack(frameSize());
-    JS_ASSERT(masm.framePushed() == 0);
+    MOZ_ASSERT(masm.framePushed() == 0);
     masm.ret();
     return true;
 }
@@ -271,6 +271,54 @@ CodeGeneratorMIPS::visitMinMaxD(LMinMaxD *ins)
 
     masm.bind(&returnSecond);
     masm.moveDouble(second, output);
+
+    masm.bind(&done);
+    return true;
+}
+
+bool
+CodeGeneratorMIPS::visitMinMaxF(LMinMaxF *ins)
+{
+    FloatRegister first = ToFloatRegister(ins->first());
+    FloatRegister second = ToFloatRegister(ins->second());
+    FloatRegister output = ToFloatRegister(ins->output());
+
+    MOZ_ASSERT(first == output);
+
+    Assembler::DoubleCondition cond = ins->mir()->isMax()
+                                      ? Assembler::DoubleLessThanOrEqual
+                                      : Assembler::DoubleGreaterThanOrEqual;
+    Label nan, equal, returnSecond, done;
+
+    // First or second is NaN, result is NaN.
+    masm.ma_bc1s(first, second, &nan, Assembler::DoubleUnordered, ShortJump);
+    // Make sure we handle -0 and 0 right.
+    masm.ma_bc1s(first, second, &equal, Assembler::DoubleEqual, ShortJump);
+    masm.ma_bc1s(first, second, &returnSecond, cond, ShortJump);
+    masm.ma_b(&done, ShortJump);
+
+    // Check for zero.
+    masm.bind(&equal);
+    masm.loadConstantFloat32(0.0, ScratchFloat32Reg);
+    // First wasn't 0 or -0, so just return it.
+    masm.ma_bc1s(first, ScratchFloat32Reg, &done, Assembler::DoubleNotEqualOrUnordered, ShortJump);
+
+    // So now both operands are either -0 or 0.
+    if (ins->mir()->isMax()) {
+        // -0 + -0 = -0 and -0 + 0 = 0.
+        masm.as_adds(first, first, second);
+    } else {
+        masm.as_negs(first, first);
+        masm.as_subs(first, first, second);
+        masm.as_negs(first, first);
+    }
+    masm.ma_b(&done, ShortJump);
+
+    masm.bind(&nan);
+    masm.loadConstantFloat32(GenericNaN(), output);
+    masm.ma_b(&done, ShortJump);
+    masm.bind(&returnSecond);
+    masm.as_movs(output, second);
 
     masm.bind(&done);
     return true;
@@ -1887,6 +1935,13 @@ bool
 CodeGeneratorMIPS::visitStoreTypedArrayElementStatic(LStoreTypedArrayElementStatic *ins)
 {
     MOZ_CRASH("NYI");
+}
+
+bool
+CodeGeneratorMIPS::visitAsmJSCall(LAsmJSCall *ins)
+{
+    emitAsmJSCall(ins);
+    return true;
 }
 
 bool

@@ -407,10 +407,10 @@ CreateSamplingRestrictedDrawable(gfxDrawable* aDrawable,
     nsRefPtr<gfxContext> tmpCtx = new gfxContext(target);
     tmpCtx->SetOperator(OptimalFillOperator());
     aDrawable->Draw(tmpCtx, needed - needed.TopLeft(), true,
-                    GraphicsFilter::FILTER_FAST, 1.0, gfxMatrix().Translate(needed.TopLeft()));
+                    GraphicsFilter::FILTER_FAST, 1.0, gfxMatrix::Translation(needed.TopLeft()));
     RefPtr<SourceSurface> surface = target->Snapshot();
 
-    nsRefPtr<gfxDrawable> drawable = new gfxSurfaceDrawable(surface, size, gfxMatrix().Translate(-needed.TopLeft()));
+    nsRefPtr<gfxDrawable> drawable = new gfxSurfaceDrawable(surface, size, gfxMatrix::Translation(-needed.TopLeft()));
     return drawable.forget();
 }
 #endif // !MOZ_GFX_OPTIMIZE_MOBILE
@@ -450,7 +450,7 @@ struct MOZ_STACK_CLASS AutoCairoPixmanBugWorkaround
         // Clip the rounded-out-to-device-pixels bounds of the
         // transformed fill area. This is the area for the group we
         // want to push.
-        mContext->IdentityMatrix();
+        mContext->SetMatrix(gfxMatrix());
         gfxRect bounds = currentMatrix.TransformBounds(aFill);
         bounds.RoundOut();
         mContext->Clip(bounds);
@@ -593,10 +593,6 @@ gfxUtils::DrawPixelSnapped(gfxContext*         aContext,
                                      imageRect.Width(), imageRect.Height(),
                                      region.Width(), region.Height());
 
-    // On Mobile, we don't ever want to do this; it has the potential for
-    // allocating very large temporary surfaces, especially since we'll
-    // do full-page snapshots often (see bug 749426).
-#ifndef MOZ_GFX_OPTIMIZE_MOBILE
     // OK now, the hard part left is to account for the subimage sampling
     // restriction. If all the transforms involved are just integer
     // translations, then we assume no resampling will occur so there's
@@ -604,19 +600,29 @@ gfxUtils::DrawPixelSnapped(gfxContext*         aContext,
     // XXX if only we had source-clipping in cairo!
     if (aContext->CurrentMatrix().HasNonIntegerTranslation()) {
         if (doTile || !aRegion.RestrictionContains(imageRect)) {
+            if (drawable->DrawWithSamplingRect(aContext, aRegion.Rect(), aRegion.Restriction(),
+                                               doTile, aFilter, aOpacity)) {
+              return;
+            }
+
+            // On Mobile, we don't ever want to do this; it has the potential for
+            // allocating very large temporary surfaces, especially since we'll
+            // do full-page snapshots often (see bug 749426).
+#ifndef MOZ_GFX_OPTIMIZE_MOBILE
             nsRefPtr<gfxDrawable> restrictedDrawable =
               CreateSamplingRestrictedDrawable(aDrawable, aContext,
                                                aRegion, aFormat);
             if (restrictedDrawable) {
                 drawable.swap(restrictedDrawable);
             }
-        }
-        // We no longer need to tile: Either we never needed to, or we already
-        // filled a surface with the tiled pattern; this surface can now be
-        // drawn without tiling.
-        doTile = false;
-    }
+
+            // We no longer need to tile: Either we never needed to, or we already
+            // filled a surface with the tiled pattern; this surface can now be
+            // drawn without tiling.
+            doTile = false;
 #endif
+        }
+    }
 
     drawable->Draw(aContext, aRegion.Rect(), doTile, aFilter, aOpacity);
 }
@@ -658,50 +664,25 @@ ClipToRegionInternal(gfxContext* aContext, const nsIntRegion& aRegion,
 }
 
 static TemporaryRef<Path>
-PathFromRegionInternal(DrawTarget* aTarget, const nsIntRegion& aRegion,
-                       bool aSnap)
+PathFromRegionInternal(DrawTarget* aTarget, const nsIntRegion& aRegion)
 {
-  Matrix mat = aTarget->GetTransform();
-  const gfxFloat epsilon = 0.000001;
-#define WITHIN_E(a,b) (fabs((a)-(b)) < epsilon)
-  // We're essentially duplicating the logic in UserToDevicePixelSnapped here.
-  bool shouldNotSnap = !aSnap || (WITHIN_E(mat._11,1.0) &&
-                                  WITHIN_E(mat._22,1.0) &&
-                                  WITHIN_E(mat._12,0.0) &&
-                                  WITHIN_E(mat._21,0.0));
-#undef WITHIN_E
-
   RefPtr<PathBuilder> pb = aTarget->CreatePathBuilder();
   nsIntRegionRectIterator iter(aRegion);
 
   const nsIntRect* r;
-  if (shouldNotSnap) {
-    while ((r = iter.Next()) != nullptr) {
-      pb->MoveTo(Point(r->x, r->y));
-      pb->LineTo(Point(r->XMost(), r->y));
-      pb->LineTo(Point(r->XMost(), r->YMost()));
-      pb->LineTo(Point(r->x, r->YMost()));
-      pb->Close();
-    }
-  } else {
-    while ((r = iter.Next()) != nullptr) {
-      Rect rect(r->x, r->y, r->width, r->height);
-
-      rect.Round();
-      pb->MoveTo(rect.TopLeft());
-      pb->LineTo(rect.TopRight());
-      pb->LineTo(rect.BottomRight());
-      pb->LineTo(rect.BottomLeft());
-      pb->Close();
-    }
+  while ((r = iter.Next()) != nullptr) {
+    pb->MoveTo(Point(r->x, r->y));
+    pb->LineTo(Point(r->XMost(), r->y));
+    pb->LineTo(Point(r->XMost(), r->YMost()));
+    pb->LineTo(Point(r->x, r->YMost()));
+    pb->Close();
   }
   RefPtr<Path> path = pb->Finish();
   return path;
 }
 
 static void
-ClipToRegionInternal(DrawTarget* aTarget, const nsIntRegion& aRegion,
-                     bool aSnap)
+ClipToRegionInternal(DrawTarget* aTarget, const nsIntRegion& aRegion)
 {
   if (!aRegion.IsComplex()) {
     nsIntRect rect = aRegion.GetBounds();
@@ -709,7 +690,7 @@ ClipToRegionInternal(DrawTarget* aTarget, const nsIntRegion& aRegion,
     return;
   }
 
-  RefPtr<Path> path = PathFromRegionInternal(aTarget, aRegion, aSnap);
+  RefPtr<Path> path = PathFromRegionInternal(aTarget, aRegion);
   aTarget->PushClip(path);
 }
 
@@ -722,19 +703,13 @@ gfxUtils::ClipToRegion(gfxContext* aContext, const nsIntRegion& aRegion)
 /*static*/ void
 gfxUtils::ClipToRegion(DrawTarget* aTarget, const nsIntRegion& aRegion)
 {
-  ClipToRegionInternal(aTarget, aRegion, false);
+  ClipToRegionInternal(aTarget, aRegion);
 }
 
 /*static*/ void
 gfxUtils::ClipToRegionSnapped(gfxContext* aContext, const nsIntRegion& aRegion)
 {
   ClipToRegionInternal(aContext, aRegion, true);
-}
-
-/*static*/ void
-gfxUtils::ClipToRegionSnapped(DrawTarget* aTarget, const nsIntRegion& aRegion)
-{
-  ClipToRegionInternal(aTarget, aRegion, true);
 }
 
 /*static*/ gfxFloat
@@ -1200,6 +1175,9 @@ gfxUtils::EncodeSourceSurface(SourceSurface* aSurface,
                                bufSize - imgSize,
                                &numReadThisTime)) == NS_OK && numReadThisTime > 0)
   {
+    // Update the length of the vector without overwriting the new data.
+    imgData.growByUninitialized(numReadThisTime);
+
     imgSize += numReadThisTime;
     if (imgSize == bufSize) {
       // need a bigger buffer, just double

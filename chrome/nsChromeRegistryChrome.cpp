@@ -453,17 +453,21 @@ nsChromeRegistryChrome::SendRegisteredChrome(
   };
   mPackagesHash.EnumerateRead(CollectPackages, &args);
 
-  nsCOMPtr<nsIIOService> io (do_GetIOService());
-  NS_ENSURE_TRUE_VOID(io);
+  // If we were passed a parent then a new child process has been created and
+  // has requested all of the chrome so send it the resources too. Otherwise
+  // resource mappings are sent by the resource protocol handler dynamically.
+  if (aParent) {
+    nsCOMPtr<nsIIOService> io (do_GetIOService());
+    NS_ENSURE_TRUE_VOID(io);
 
-  nsCOMPtr<nsIProtocolHandler> ph;
-  nsresult rv = io->GetProtocolHandler("resource", getter_AddRefs(ph));
-  NS_ENSURE_SUCCESS_VOID(rv);
+    nsCOMPtr<nsIProtocolHandler> ph;
+    nsresult rv = io->GetProtocolHandler("resource", getter_AddRefs(ph));
+    NS_ENSURE_SUCCESS_VOID(rv);
 
-  //FIXME: Some substitutions are set up lazily and might not exist yet
-  nsCOMPtr<nsIResProtocolHandler> irph (do_QueryInterface(ph));
-  nsResProtocolHandler* rph = static_cast<nsResProtocolHandler*>(irph.get());
-  rph->CollectSubstitutions(resources);
+    nsCOMPtr<nsIResProtocolHandler> irph (do_QueryInterface(ph));
+    nsResProtocolHandler* rph = static_cast<nsResProtocolHandler*>(irph.get());
+    rph->CollectSubstitutions(resources);
+  }
 
   mOverrideTable.EnumerateRead(&EnumerateOverride, &overrides);
 
@@ -681,7 +685,11 @@ NS_IMETHODIMP
 nsChromeRegistryChrome::GetStyleOverlays(nsIURI *aChromeURL,
                                          nsISimpleEnumerator **aResult)
 {
-  const nsCOMArray<nsIURI>* parray = mStyleHash.GetArray(aChromeURL);
+  nsCOMPtr<nsIURI> chromeURLWithoutHash;
+  if (aChromeURL) {
+    aChromeURL->CloneIgnoringRef(getter_AddRefs(chromeURLWithoutHash));
+  }
+  const nsCOMArray<nsIURI>* parray = mStyleHash.GetArray(chromeURLWithoutHash);
   if (!parray)
     return NS_NewEmptyEnumerator(aResult);
 
@@ -692,7 +700,11 @@ NS_IMETHODIMP
 nsChromeRegistryChrome::GetXULOverlays(nsIURI *aChromeURL,
                                        nsISimpleEnumerator **aResult)
 {
-  const nsCOMArray<nsIURI>* parray = mOverlayHash.GetArray(aChromeURL);
+  nsCOMPtr<nsIURI> chromeURLWithoutHash;
+  if (aChromeURL) {
+    aChromeURL->CloneIgnoringRef(getter_AddRefs(chromeURLWithoutHash));
+  }
+  const nsCOMArray<nsIURI>* parray = mOverlayHash.GetArray(chromeURLWithoutHash);
   if (!parray)
     return NS_NewEmptyEnumerator(aResult);
 
@@ -895,7 +907,10 @@ nsChromeRegistryChrome::ManifestOverlay(ManifestProcessingContext& cx, int linen
     return;
   }
 
-  mOverlayHash.Add(baseuri, overlayuri);
+  nsCOMPtr<nsIURI> baseuriWithoutHash;
+  baseuri->CloneIgnoringRef(getter_AddRefs(baseuriWithoutHash));
+
+  mOverlayHash.Add(baseuriWithoutHash, overlayuri);
 }
 
 void
@@ -920,7 +935,10 @@ nsChromeRegistryChrome::ManifestStyle(ManifestProcessingContext& cx, int lineno,
     return;
   }
 
-  mStyleHash.Add(baseuri, overlayuri);
+  nsCOMPtr<nsIURI> baseuriWithoutHash;
+  baseuri->CloneIgnoringRef(getter_AddRefs(baseuriWithoutHash));
+
+  mStyleHash.Add(baseuriWithoutHash, overlayuri);
 }
 
 void
@@ -981,14 +999,6 @@ nsChromeRegistryChrome::ManifestResource(ManifestProcessingContext& cx, int line
     return;
 
   nsCOMPtr<nsIResProtocolHandler> rph = do_QueryInterface(ph);
-
-  bool exists = false;
-  rv = rph->HasSubstitution(host, &exists);
-  if (exists) {
-    LogMessageWithContext(cx.GetManifestURI(), lineno, nsIScriptError::warningFlag,
-                          "Duplicate resource declaration for '%s' ignored.", package);
-    return;
-  }
 
   nsCOMPtr<nsIURI> resolved = cx.ResolveURI(uri);
   if (!resolved) {

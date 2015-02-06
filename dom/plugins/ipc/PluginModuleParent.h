@@ -25,6 +25,8 @@
 #include "nsExceptionHandler.h"
 #endif
 
+class nsPluginTag;
+
 namespace mozilla {
 namespace dom {
 class PCrashReporterParent;
@@ -87,7 +89,7 @@ protected:
 
 public:
     // aFilePath is UTF8, not native!
-    PluginModuleParent(const char* aFilePath);
+    explicit PluginModuleParent(const char* aFilePath);
     virtual ~PluginModuleParent();
 
     virtual void SetPlugin(nsNPAPIPlugin* plugin) MOZ_OVERRIDE
@@ -103,7 +105,7 @@ public:
      * This may or may not launch a plugin child process,
      * and may or may not be very expensive.
      */
-    static PluginLibrary* LoadModule(const char* aFilePath);
+    static PluginLibrary* LoadModule(const char* aFilePath, nsPluginTag* aPluginTag);
 
     const NPNetscapeFuncs* GetNetscapeFuncs() {
         return mNPNIface;

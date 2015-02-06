@@ -386,9 +386,11 @@ nsresult PeerConnectionCtx::Initialize() {
   //codecMask |= VCM_CODEC_RESOURCE_H263;
 
 #ifdef MOZILLA_INTERNAL_API
+#ifdef MOZ_WEBRTC_OMX
   if (Preferences::GetBool("media.peerconnection.video.h264_enabled")) {
     codecMask |= VCM_CODEC_RESOURCE_H264;
   }
+#endif
 #else
   // Outside MOZILLA_INTERNAL_API ensures H.264 available in unit tests
   codecMask |= VCM_CODEC_RESOURCE_H264;
@@ -523,17 +525,6 @@ void PeerConnectionCtx::onDeviceEvent(ccapi_device_event_e aDeviceEvent,
       CSFLogDebug(logTag, "%s: Ignoring event: %s\n",__FUNCTION__,
                   device_event_getname(aDeviceEvent));
   }
-}
-
-void PeerConnectionCtx::onCallEvent(ccapi_call_event_e aCallEvent,
-                                    CSF::CC_CallPtr aCall,
-                                    CSF::CC_CallInfoPtr aInfo) {
-  CSFLogDebug(logTag, "onCallEvent()");
-  PeerConnectionWrapper pc(aCall->getPeerConnection());
-  if (!pc.impl())  // This must be an event on a dead PC. Ignore
-    return;
-  CSFLogDebug(logTag, "Calling PC");
-  pc.impl()->onCallEvent(OnCallEventArgs(aCallEvent, aInfo));
 }
 
 }  // namespace sipcc

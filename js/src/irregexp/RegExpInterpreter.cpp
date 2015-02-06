@@ -70,23 +70,23 @@ class MOZ_STACK_CLASS RegExpStackCursor
     }
 
     int32_t pop() {
-        JS_ASSERT(cursor > base());
+        MOZ_ASSERT(cursor > base());
         return *--cursor;
     }
 
     int32_t peek() {
-        JS_ASSERT(cursor > base());
+        MOZ_ASSERT(cursor > base());
         return *(cursor - 1);
     }
 
     int32_t position() {
-        JS_ASSERT(cursor >= base());
+        MOZ_ASSERT(cursor >= base());
         return cursor - base();
     }
 
     void setPosition(int32_t position) {
         cursor = base() + position;
-        JS_ASSERT(cursor < stack.limit());
+        MOZ_ASSERT(cursor < stack.limit());
     }
 
   private:
@@ -101,14 +101,14 @@ class MOZ_STACK_CLASS RegExpStackCursor
 static int32_t
 Load32Aligned(const uint8_t* pc)
 {
-    JS_ASSERT((reinterpret_cast<uintptr_t>(pc) & 3) == 0);
+    MOZ_ASSERT((reinterpret_cast<uintptr_t>(pc) & 3) == 0);
     return *reinterpret_cast<const int32_t *>(pc);
 }
 
 static int32_t
 Load16Aligned(const uint8_t* pc)
 {
-    JS_ASSERT((reinterpret_cast<uintptr_t>(pc) & 1) == 0);
+    MOZ_ASSERT((reinterpret_cast<uintptr_t>(pc) & 1) == 0);
     return *reinterpret_cast<const uint16_t *>(pc);
 }
 
@@ -134,7 +134,7 @@ irregexp::InterpretCode(JSContext *cx, const uint8_t *byteCode, const CharT *cha
     Vector<int32_t, 0, SystemAllocPolicy> registers;
     if (!registers.growByUninitialized(numRegisters))
         return RegExpRunStatus_Error;
-    for (size_t i = 0; i < matches->length() * 2; i++)
+    for (size_t i = 0; i < (size_t) numRegisters; i++)
         registers[i] = -1;
 
     while (true) {
@@ -197,7 +197,8 @@ irregexp::InterpretCode(JSContext *cx, const uint8_t *byteCode, const CharT *cha
           BYTECODE(FAIL)
             return RegExpRunStatus_Success_NotFound;
           BYTECODE(SUCCEED)
-            memcpy(matches->pairsRaw(), registers.begin(), matches->length() * 2 * sizeof(int32_t));
+            if (matches)
+                memcpy(matches->pairsRaw(), registers.begin(), matches->length() * 2 * sizeof(int32_t));
             return RegExpRunStatus_Success;
           BYTECODE(ADVANCE_CP)
             current += insn >> BYTECODE_SHIFT;
@@ -247,8 +248,8 @@ irregexp::InterpretCode(JSContext *cx, const uint8_t *byteCode, const CharT *cha
           }
           BYTECODE(LOAD_2_CURRENT_CHARS_UNCHECKED) {
             int pos = current + (insn >> BYTECODE_SHIFT);
-            jschar next = chars[pos + 1];
-            current_char = (chars[pos] | (next << (kBitsPerByte * sizeof(jschar))));
+            char16_t next = chars[pos + 1];
+            current_char = (chars[pos] | (next << (kBitsPerByte * sizeof(char16_t))));
             pc += BC_LOAD_2_CURRENT_CHARS_UNCHECKED_LENGTH;
             break;
           }
@@ -473,5 +474,5 @@ irregexp::InterpretCode(JSContext *cx, const uint8_t *byteCode, const Latin1Char
                         size_t length, MatchPairs *matches);
 
 template RegExpRunStatus
-irregexp::InterpretCode(JSContext *cx, const uint8_t *byteCode, const jschar *chars, size_t current,
+irregexp::InterpretCode(JSContext *cx, const uint8_t *byteCode, const char16_t *chars, size_t current,
                         size_t length, MatchPairs *matches);

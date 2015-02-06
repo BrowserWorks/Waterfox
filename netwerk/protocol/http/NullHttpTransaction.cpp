@@ -23,10 +23,10 @@ NullHttpTransaction::NullHttpTransaction(nsHttpConnectionInfo *ci,
   : mStatus(NS_OK)
   , mCaps(caps | NS_HTTP_ALLOW_KEEPALIVE)
   , mCapsToClear(0)
-  , mCallbacks(callbacks)
-  , mConnectionInfo(ci)
   , mRequestHead(nullptr)
   , mIsDone(false)
+  , mCallbacks(callbacks)
+  , mConnectionInfo(ci)
 {
 }
 
@@ -135,7 +135,7 @@ NullHttpTransaction::RequestHead()
     // CONNECT tunnels may also want Proxy-Authorization but that is a lot
     // harder to determine, so for now we will let those connections fail in
     // the NullHttpTransaction and let them be retried from the pending queue
-    // with a bound transcation
+    // with a bound transaction
   }
 
   return mRequestHead;

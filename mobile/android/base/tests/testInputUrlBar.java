@@ -19,7 +19,7 @@ public final class testInputUrlBar extends BaseTest {
         blockForGeckoReady();
 
         startEditingMode();
-        assertUrlBarText("about:home");
+        assertUrlBarText(StringHelper.ABOUT_HOME_URL);
 
         // Avoid any auto domain completion by using a prefix that matches
         //  nothing, including about: pages
@@ -45,6 +45,7 @@ public final class testInputUrlBar extends BaseTest {
 
         final EditText editText = mUrlBarEditView;
         runOnUiThreadSync(new Runnable() {
+            @Override
             public void run() {
                 // Select "ef"
                 editText.setSelection(2);
@@ -54,6 +55,7 @@ public final class testInputUrlBar extends BaseTest {
         assertUrlBarText("zyopefcghd");
 
         runOnUiThreadSync(new Runnable() {
+            @Override
             public void run() {
                 // Select "cg"
                 editText.setSelection(6, 8);
@@ -63,6 +65,7 @@ public final class testInputUrlBar extends BaseTest {
         assertUrlBarText("zyopefqrhd");
 
         runOnUiThreadSync(new Runnable() {
+            @Override
             public void run() {
                 // Select "op"
                 editText.setSelection(4,2);
@@ -72,6 +75,7 @@ public final class testInputUrlBar extends BaseTest {
         assertUrlBarText("zystefqrhd");
 
         runOnUiThreadSync(new Runnable() {
+            @Override
             public void run() {
                 editText.selectAll();
             }
@@ -85,11 +89,11 @@ public final class testInputUrlBar extends BaseTest {
         // Dismiss editing mode
         mActions.sendSpecialKey(Actions.SpecialKey.BACK);
 
-        waitForText("Enter Search or Address");
+        waitForText(StringHelper.TITLE_PLACE_HOLDER);
 
         // URL bar should have forgotten about "uv" text.
         startEditingMode();
-        assertUrlBarText("about:home");
+        assertUrlBarText(StringHelper.ABOUT_HOME_URL);
 
         int width = mDriver.getGeckoWidth() / 2;
         int y = mDriver.getGeckoHeight() / 2;

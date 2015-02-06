@@ -13,6 +13,7 @@
 #include "WebGLBindableName.h"
 #include "WebGLObjectModel.h"
 #include "WebGLTypes.h"
+#include "WebGLStrongTypes.h"
 
 namespace mozilla {
 
@@ -20,13 +21,13 @@ class WebGLElementArrayCache;
 
 class WebGLBuffer MOZ_FINAL
     : public nsWrapperCache
-    , public WebGLBindableName
+    , public WebGLBindableName<BufferBinding>
     , public WebGLRefCountedObject<WebGLBuffer>
     , public LinkedListElement<WebGLBuffer>
     , public WebGLContextBoundObject
 {
 public:
-    WebGLBuffer(WebGLContext *context);
+    explicit WebGLBuffer(WebGLContext* aContext);
 
     void Delete();
 

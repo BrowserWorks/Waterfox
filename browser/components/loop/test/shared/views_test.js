@@ -15,7 +15,7 @@ describe("loop.shared.views", function() {
   var sharedModels = loop.shared.models,
       sharedViews = loop.shared.views,
       getReactElementByClass = TestUtils.findRenderedDOMComponentWithClass,
-      sandbox;
+      sandbox, fakeAudioXHR;
 
   beforeEach(function() {
     sandbox = sinon.sandbox.create();
@@ -23,6 +23,18 @@ describe("loop.shared.views", function() {
     sandbox.stub(l10n, "get", function(x) {
       return "translated:" + x;
     });
+    fakeAudioXHR = {
+      open: sinon.spy(),
+      send: function() {},
+      abort: function() {},
+      getResponseHeader: function(header) {
+        if (header === "Content-Type")
+          return "audio/ogg";
+      },
+      responseType: null,
+      response: new ArrayBuffer(10),
+      onload: null
+    };
   });
 
   afterEach(function() {
@@ -87,6 +99,28 @@ describe("loop.shared.views", function() {
     beforeEach(function() {
       hangup = sandbox.stub();
       publishStream = sandbox.stub();
+    });
+
+    it("should accept a hangupButtonLabel optional prop", function() {
+      var comp = mountTestComponent({
+        hangupButtonLabel: "foo",
+        hangup: hangup,
+        publishStream: publishStream
+      });
+
+      expect(comp.getDOMNode().querySelector("button.btn-hangup").textContent)
+            .eql("foo");
+    });
+
+    it("should accept a enableHangup optional prop", function() {
+      var comp = mountTestComponent({
+        enableHangup: false,
+        hangup: hangup,
+        publishStream: publishStream
+      });
+
+      expect(comp.getDOMNode().querySelector("button.btn-hangup").disabled)
+            .eql(true);
     });
 
     it("should hangup when hangup button is clicked", function() {
@@ -161,13 +195,20 @@ describe("loop.shared.views", function() {
   });
 
   describe("ConversationView", function() {
-    var fakeSDK, fakeSessionData, fakeSession, fakePublisher, model;
+    var fakeSDK, fakeSessionData, fakeSession, fakePublisher, model, fakeAudio;
 
     function mountTestComponent(props) {
       return TestUtils.renderIntoDocument(sharedViews.ConversationView(props));
     }
 
     beforeEach(function() {
+      fakeAudio = {
+        play: sinon.spy(),
+        pause: sinon.spy(),
+        removeAttribute: sinon.spy()
+      };
+      sandbox.stub(window, "Audio").returns(fakeAudio);
+
       fakeSessionData = {
         sessionId:    "sessionId",
         sessionToken: "sessionToken",
@@ -350,46 +391,108 @@ describe("loop.shared.views", function() {
       });
 
       describe("Model events", function() {
-        it("should start streaming on session:connected", function() {
-          model.trigger("session:connected");
 
-          sinon.assert.calledOnce(fakeSDK.initPublisher);
-        });
+        describe("for standalone", function() {
 
-        it("should publish remote stream on session:stream-created",
-          function() {
-            var s1 = {connection: {connectionId: 42}};
-
-            model.trigger("session:stream-created", {stream: s1});
-
-            sinon.assert.calledOnce(fakeSession.subscribe);
-            sinon.assert.calledWith(fakeSession.subscribe, s1);
+          beforeEach(function() {
+            // In standalone, navigator.mozLoop does not exists
+            if (navigator.hasOwnProperty("mozLoop"))
+              sandbox.stub(navigator, "mozLoop", undefined);
           });
 
-        it("should unpublish local stream on session:ended", function() {
-          comp.startPublishing();
+          it("should play a connected sound, once, on session:connected",
+             function() {
+               var url = "shared/sounds/connected.ogg";
+               sandbox.stub(window, "XMLHttpRequest").returns(fakeAudioXHR);
+               model.trigger("session:connected");
 
-          model.trigger("session:ended");
+               fakeAudioXHR.onload();
 
-          sinon.assert.calledOnce(fakeSession.unpublish);
+               sinon.assert.called(fakeAudioXHR.open);
+               sinon.assert.calledWithExactly(fakeAudioXHR.open, "GET", url, true);
+
+               sinon.assert.calledOnce(fakeAudio.play);
+               expect(fakeAudio.loop).to.not.equal(true);
+             });
         });
 
-        it("should unpublish local stream on session:peer-hungup", function() {
-          comp.startPublishing();
+        describe("for desktop", function() {
+          var origMozLoop;
 
-          model.trigger("session:peer-hungup");
+          beforeEach(function() {
+            origMozLoop = navigator.mozLoop;
+            navigator.mozLoop = {
+              getAudioBlob: sinon.spy(function(name, callback) {
+                var data = new ArrayBuffer(10);
+                callback(null, new Blob([data], {type: "audio/ogg"}));
+              })
+            };
+          });
 
-          sinon.assert.calledOnce(fakeSession.unpublish);
+          afterEach(function() {
+            navigator.mozLoop = origMozLoop;
+          });
+
+          it("should play a connected sound, once, on session:connected",
+             function() {
+               var url = "chrome://browser/content/loop/shared/sounds/connected.ogg";
+               model.trigger("session:connected");
+
+               sinon.assert.calledOnce(navigator.mozLoop.getAudioBlob);
+               sinon.assert.calledWithExactly(navigator.mozLoop.getAudioBlob,
+                                              "connected", sinon.match.func);
+               sinon.assert.calledOnce(fakeAudio.play);
+               expect(fakeAudio.loop).to.not.equal(true);
+             });
         });
 
-        it("should unpublish local stream on session:network-disconnected",
-          function() {
+        describe("for both (standalone and desktop)", function() {
+          beforeEach(function() {
+            sandbox.stub(window, "XMLHttpRequest").returns(fakeAudioXHR);
+          });
+
+          it("should start streaming on session:connected", function() {
+            model.trigger("session:connected");
+
+            sinon.assert.calledOnce(fakeSDK.initPublisher);
+          });
+
+          it("should publish remote stream on session:stream-created",
+             function() {
+               var s1 = {connection: {connectionId: 42}};
+
+               model.trigger("session:stream-created", {stream: s1});
+
+               sinon.assert.calledOnce(fakeSession.subscribe);
+               sinon.assert.calledWith(fakeSession.subscribe, s1);
+             });
+
+          it("should unpublish local stream on session:ended", function() {
             comp.startPublishing();
 
-            model.trigger("session:network-disconnected");
+            model.trigger("session:ended");
 
             sinon.assert.calledOnce(fakeSession.unpublish);
           });
+
+          it("should unpublish local stream on session:peer-hungup", function() {
+            comp.startPublishing();
+
+            model.trigger("session:peer-hungup");
+
+            sinon.assert.calledOnce(fakeSession.unpublish);
+          });
+
+          it("should unpublish local stream on session:network-disconnected",
+             function() {
+               comp.startPublishing();
+
+               model.trigger("session:network-disconnected");
+
+               sinon.assert.calledOnce(fakeSession.unpublish);
+             });
+        });
+
       });
 
       describe("Publisher events", function() {
@@ -419,176 +522,6 @@ describe("loop.shared.views", function() {
           expect(comp.state.audio.enabled).eql(false);
           expect(comp.state.video.enabled).eql(false);
         });
-      });
-    });
-  });
-
-  describe("FeedbackView", function() {
-    var comp, fakeFeedbackApiClient;
-
-    beforeEach(function() {
-      fakeFeedbackApiClient = {send: sandbox.stub()};
-      comp = TestUtils.renderIntoDocument(sharedViews.FeedbackView({
-        feedbackApiClient: fakeFeedbackApiClient
-      }));
-    });
-
-    // local test helpers
-    function clickHappyFace(comp) {
-      var happyFace = comp.getDOMNode().querySelector(".face-happy");
-      TestUtils.Simulate.click(happyFace);
-    }
-
-    function clickSadFace(comp) {
-      var sadFace = comp.getDOMNode().querySelector(".face-sad");
-      TestUtils.Simulate.click(sadFace);
-    }
-
-    function fillSadFeedbackForm(comp, category, text) {
-      TestUtils.Simulate.change(
-        comp.getDOMNode().querySelector("[value='" + category + "']"));
-
-      if (text) {
-        TestUtils.Simulate.change(
-          comp.getDOMNode().querySelector("[name='description']"), {
-            target: {value: "fake reason"}
-          });
-      }
-    }
-
-    function submitSadFeedbackForm(comp, category, text) {
-      TestUtils.Simulate.submit(comp.getDOMNode().querySelector("form"));
-    }
-
-    describe("Happy feedback", function() {
-      it("should send feedback data when clicking on the happy face",
-        function() {
-          clickHappyFace(comp);
-
-          sinon.assert.calledOnce(fakeFeedbackApiClient.send);
-          sinon.assert.calledWith(fakeFeedbackApiClient.send, {happy: true});
-        });
-
-      it("should thank the user once happy feedback data is sent", function() {
-        fakeFeedbackApiClient.send = function(data, cb) {
-          cb();
-        };
-
-        clickHappyFace(comp);
-
-        expect(comp.getDOMNode()
-                   .querySelectorAll(".feedback .thank-you").length).eql(1);
-        expect(comp.getDOMNode().querySelector("button.back")).to.be.a("null");
-      });
-    });
-
-    describe("Sad feedback", function() {
-      it("should bring the user to feedback form when clicking on the sad face",
-        function() {
-          clickSadFace(comp);
-
-          expect(comp.getDOMNode().querySelectorAll("form").length).eql(1);
-        });
-
-      it("should disable the form submit button when no category is chosen",
-        function() {
-          clickSadFace(comp);
-
-          expect(comp.getDOMNode()
-                     .querySelector("form button").disabled).eql(true);
-        });
-
-      it("should disable the form submit button when the 'other' category is " +
-         "chosen but no description has been entered yet",
-        function() {
-          clickSadFace(comp);
-          fillSadFeedbackForm(comp, "other");
-
-          expect(comp.getDOMNode()
-                     .querySelector("form button").disabled).eql(true);
-        });
-
-      it("should enable the form submit button when the 'other' category is " +
-         "chosen and a description is entered",
-        function() {
-          clickSadFace(comp);
-          fillSadFeedbackForm(comp, "other", "fake");
-
-          expect(comp.getDOMNode()
-                     .querySelector("form button").disabled).eql(false);
-        });
-
-      it("should empty the description field when a predefined category is " +
-         "chosen",
-        function() {
-          clickSadFace(comp);
-
-          fillSadFeedbackForm(comp, "confusing");
-
-          expect(comp.getDOMNode()
-                     .querySelector("form input[type='text']").value).eql("");
-        });
-
-      it("should enable the form submit button once a predefined category is " +
-         "chosen",
-        function() {
-          clickSadFace(comp);
-
-          fillSadFeedbackForm(comp, "confusing");
-
-          expect(comp.getDOMNode()
-                     .querySelector("form button").disabled).eql(false);
-        });
-
-      it("should disable the form submit button once the form is submitted",
-        function() {
-          clickSadFace(comp);
-          fillSadFeedbackForm(comp, "confusing");
-
-          submitSadFeedbackForm(comp);
-
-          expect(comp.getDOMNode()
-                     .querySelector("form button").disabled).eql(true);
-        });
-
-      it("should send feedback data when the form is submitted", function() {
-        clickSadFace(comp);
-        fillSadFeedbackForm(comp, "confusing");
-
-        submitSadFeedbackForm(comp);
-
-        sinon.assert.calledOnce(fakeFeedbackApiClient.send);
-        sinon.assert.calledWithMatch(fakeFeedbackApiClient.send, {
-          happy: false,
-          category: "confusing"
-        });
-      });
-
-      it("should send feedback data when user has entered a custom description",
-        function() {
-          clickSadFace(comp);
-
-          fillSadFeedbackForm(comp, "other", "fake reason");
-          submitSadFeedbackForm(comp);
-
-          sinon.assert.calledOnce(fakeFeedbackApiClient.send);
-          sinon.assert.calledWith(fakeFeedbackApiClient.send, {
-            happy: false,
-            category: "other",
-            description: "fake reason"
-          });
-        });
-
-      it("should thank the user when feedback data has been sent", function() {
-        fakeFeedbackApiClient.send = function(data, cb) {
-          cb();
-        };
-        clickSadFace(comp);
-        fillSadFeedbackForm(comp, "confusing");
-        submitSadFeedbackForm(comp);
-
-        expect(comp.getDOMNode()
-                   .querySelectorAll(".feedback .thank-you").length).eql(1);
       });
     });
   });

@@ -27,7 +27,8 @@ struct AnimationEventInfo {
 
   AnimationEventInfo(mozilla::dom::Element *aElement,
                      const nsSubstring& aAnimationName,
-                     uint32_t aMessage, mozilla::TimeDuration aElapsedTime,
+                     uint32_t aMessage,
+                     const mozilla::StickyTimeDuration& aElapsedTime,
                      const nsAString& aPseudoElement)
     : mElement(aElement), mEvent(true, aMessage)
   {
@@ -147,6 +148,7 @@ protected:
 
 private:
   void BuildAnimations(nsStyleContext* aStyleContext,
+                       mozilla::dom::Element* aTarget,
                        mozilla::dom::AnimationTimeline* aTimeline,
                        mozilla::AnimationPlayerPtrArray& aAnimations);
   bool BuildSegment(InfallibleTArray<mozilla::AnimationPropertySegment>&

@@ -264,11 +264,13 @@ WifiGeoPositionProvider.prototype = {
     }
 
     try {
-      let setting = JSON.parse(aData);
-      if (setting.key == SETTINGS_DEBUG_ENABLED) {
-        gLoggingEnabled = setting.value;
-      } else if (setting.key == SETTINGS_WIFI_ENABLED) {
-        gWifiScanningEnabled = setting.value;
+      if ("wrappedJSObject" in aSubject) {
+        aSubject = aSubject.wrappedJSObject;
+      }
+      if (aSubject.key == SETTINGS_DEBUG_ENABLED) {
+        gLoggingEnabled = aSubject.value;
+      } else if (aSubject.key == SETTINGS_WIFI_ENABLED) {
+        gWifiScanningEnabled = aSubject.value;
       }
     } catch (e) {
     }
@@ -409,24 +411,41 @@ WifiGeoPositionProvider.prototype = {
     try {
       let radioService = Cc["@mozilla.org/ril;1"]
                     .getService(Ci.nsIRadioInterfaceLayer);
-      let numInterfaces = radioService.numRadioInterfaces;
-      let result = [];
-      for (let i = 0; i < numInterfaces; i++) {
-        LOG("Looking for SIM in slot:" + i + " of " + numInterfaces);
-        let radio = radioService.getRadioInterface(i);
-        let iccInfo = radio.rilContext.iccInfo;
-        let cell = radio.rilContext.voice.cell;
-        let type = radio.rilContext.voice.type;
+      let service = Cc["@mozilla.org/mobileconnection/mobileconnectionservice;1"]
+                    .getService(Ci.nsIMobileConnectionService);
 
-        if (iccInfo && cell && type) {
-          if (type === "gsm" || type === "gprs" || type === "edge") {
-            type = "gsm";
-          } else {
-            type = "wcdma";
-          }
-          result.push({ radio: type,
-                      mobileCountryCode: iccInfo.mcc,
-                      mobileNetworkCode: iccInfo.mnc,
+      let result = [];
+      for (let i = 0; i < service.numItems; i++) {
+        LOG("Looking for SIM in slot:" + i + " of " + service.numItems);
+        let connection = service.getItemByServiceId(i);
+        let voice = connection && connection.voice;
+        let cell = voice && voice.cell;
+        let type = voice && voice.type;
+        let network = voice && voice.network;
+
+        if (network && cell && type) {
+          let radioTechFamily;
+          switch (type) {
+            case "gsm":
+            case "gprs":
+            case "edge":
+              radioTechFamily = "gsm";
+              break;
+            case "umts":
+            case "hsdpa":
+            case "hsupa":
+            case "hspa":
+            case "hspa+":
+              radioTechFamily = "wcdma";
+              break;
+            case "lte":
+              radioTechFamily = "lte";
+              break;
+            // CDMA cases to be handled in bug 1010282
+          };
+          result.push({ radio: radioTechFamily,
+                      mobileCountryCode: voice.network.mcc,
+                      mobileNetworkCode: voice.network.mnc,
                       locationAreaCode: cell.gsmLocationAreaCode,
                       cellId: cell.gsmCellId });
         }

@@ -180,6 +180,7 @@ this.FxAccountsManager = {
    * See the latter method for possible (error code, errno) pairs.
    */
   _handleGetAssertionError: function(reason, aAudience, aPrincipal) {
+    log.debug("FxAccountsManager._handleGetAssertionError()");
     let errno = (reason ? reason.errno : NaN) || NaN;
     // If the previously valid email/password pair is no longer valid ...
     if (errno == ERRNO_INVALID_AUTH_TOKEN) {
@@ -196,20 +197,19 @@ this.FxAccountsManager = {
               }
             );
           }
-        }
-      );
-
-      // Otherwise, the account was deleted, so ask for Sign In/Up
-      return this._localSignOut().then(
-        () => {
-          return this._uiRequest(UI_REQUEST_SIGN_IN_FLOW, aAudience,
-                                 aPrincipal);
-        },
-        (reason) => {
-          // reject primary problem, not signout failure
-          log.error("Signing out in response to server error threw: " +
-                    reason);
-          return this._error(reason);
+          // ... otherwise, the account was deleted, so ask for Sign In/Up
+          return this._localSignOut().then(
+            () => {
+              return this._uiRequest(UI_REQUEST_SIGN_IN_FLOW, aAudience,
+                                     aPrincipal);
+            },
+            (reason) => {
+              // reject primary problem, not signout failure
+              log.error("Signing out in response to server error threw: " +
+                        reason);
+              return this._error(reason);
+            }
+          );
         }
       );
     }
@@ -307,6 +307,9 @@ this.FxAccountsManager = {
   },
 
   _uiRequest: function(aRequest, aAudience, aPrincipal, aParams) {
+    if (Services.io.offline) {
+      return this._error(ERROR_OFFLINE);
+    }
     let ui = Cc["@mozilla.org/fxaccounts/fxaccounts-ui-glue;1"]
                .createInstance(Ci.nsIFxAccountsUIGlue);
     if (!ui[aRequest]) {
@@ -388,11 +391,9 @@ this.FxAccountsManager = {
     if (this._activeSession) {
       // If our cache says that the account is not yet verified,
       // we kick off verification before returning what we have.
-      if (this._activeSession && !this._activeSession.verified &&
-          !Services.io.offline) {
+      if (!this._activeSession.verified) {
         this.verificationStatus(this._activeSession);
       }
-
       log.debug("Account " + JSON.stringify(this._user));
       return Promise.resolve(this._user);
     }
@@ -408,8 +409,7 @@ this.FxAccountsManager = {
         this._activeSession = user;
         // If we get a stored information of a not yet verified account,
         // we kick off verification before returning what we have.
-        if (!user.verified && !Services.io.offline) {
-          log.debug("Unverified account");
+        if (!user.verified) {
           this.verificationStatus(user);
         }
 
@@ -462,7 +462,8 @@ this.FxAccountsManager = {
     }
 
     if (Services.io.offline) {
-      this._error(ERROR_OFFLINE);
+      log.warn("Offline; skipping verification.");
+      return;
     }
 
     let client = this._getFxAccountsClient();
@@ -508,13 +509,13 @@ this.FxAccountsManager = {
     if (!aAudience) {
       return this._error(ERROR_INVALID_AUDIENCE);
     }
-    if (Services.io.offline) {
-      return this._error(ERROR_OFFLINE);
-    }
 
     let secMan = Cc["@mozilla.org/scriptsecuritymanager;1"]
                    .getService(Ci.nsIScriptSecurityManager);
     let uri = Services.io.newURI(aPrincipal.origin, null, null);
+    log.debug("FxAccountsManager.getAssertion() aPrincipal: ",
+              aPrincipal.origin, aPrincipal.appId,
+              aPrincipal.isInBrowserElement);
     let principal = secMan.getAppCodebasePrincipal(uri,
       aPrincipal.appId, aPrincipal.isInBrowserElement);
 

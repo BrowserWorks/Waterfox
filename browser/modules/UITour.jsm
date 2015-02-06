@@ -15,8 +15,8 @@ Cu.import("resource://gre/modules/Task.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "LightweightThemeManager",
   "resource://gre/modules/LightweightThemeManager.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "PermissionsUtils",
-  "resource://gre/modules/PermissionsUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "ResetProfile",
+  "resource://gre/modules/ResetProfile.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "CustomizableUI",
   "resource:///modules/CustomizableUI.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "UITelemetry",
@@ -27,7 +27,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "Metrics",
   "resource://gre/modules/Metrics.jsm");
 
 const UITOUR_PERMISSION   = "uitour";
-const PREF_PERM_BRANCH    = "browser.uitour.";
+// See LOG_LEVELS in Console.jsm. Common examples: "All", "Info", "Warn", & "Error".
+const PREF_LOG_LEVEL      = "browser.uitour.loglevel";
+const PREF_TEST_WHITELIST = "browser.uitour.testingOrigins";
 const PREF_SEENPAGEIDS    = "browser.uitour.seenPageIDs";
 const MAX_BUTTONS         = 4;
 
@@ -45,6 +47,16 @@ const SEENPAGEID_EXPIRY  = 8 * 7 * 24 * 60 * 60 * 1000; // 8 weeks.
 // Prefix for any target matching a search engine.
 const TARGET_SEARCHENGINE_PREFIX = "searchEngine-";
 
+// Create a new instance of the ConsoleAPI so we can control the maxLogLevel with a pref.
+XPCOMUtils.defineLazyGetter(this, "log", () => {
+  let ConsoleAPI = Cu.import("resource://gre/modules/devtools/Console.jsm", {}).ConsoleAPI;
+  let consoleOptions = {
+    // toLowerCase is because the loglevel values use title case to be compatible with Log.jsm.
+    maxLogLevel: Services.prefs.getCharPref(PREF_LOG_LEVEL).toLowerCase(),
+    prefix: "UITour",
+  };
+  return new ConsoleAPI(consoleOptions);
+});
 
 this.UITour = {
   url: null,
@@ -101,16 +113,69 @@ this.UITour = {
       },
       widgetName: "PanelUI-customize",
     }],
+    ["devtools",    {query: "#developer-button"}],
     ["help",        {query: "#PanelUI-help"}],
     ["home",        {query: "#home-button"}],
-    ["loop",        {query: "#loop-button-throttled"}],
     ["forget", {
       query: "#panic-button",
       widgetName: "panic-button",
-      allowAdd: true }],
+      allowAdd: true,
+    }],
+    ["loop",        {query: "#loop-button-throttled"}],
+    ["loop-newRoom", {
+      infoPanelPosition: "leftcenter topright",
+      query: (aDocument) => {
+        let loopBrowser = aDocument.querySelector("#loop-notification-panel > #loop");
+        if (!loopBrowser) {
+          return null;
+        }
+        // Use the parentElement full-width container of the button so our arrow
+        // doesn't overlap the panel contents much.
+        return loopBrowser.contentDocument.querySelector(".new-room-button").parentElement;
+      },
+    }],
+    ["loop-roomList", {
+      infoPanelPosition: "leftcenter topright",
+      query: (aDocument) => {
+        let loopBrowser = aDocument.querySelector("#loop-notification-panel > #loop");
+        if (!loopBrowser) {
+          return null;
+        }
+        return loopBrowser.contentDocument.querySelector(".room-list");
+      },
+    }],
+    ["loop-selectedRoomButtons", {
+      infoPanelOffsetY: -20,
+      infoPanelPosition: "start_after",
+      query: (aDocument) => {
+        let chatbox = aDocument.querySelector("chatbox[src^='about\:loopconversation'][selected]");
+
+        // Check that the real target actually exists
+        if (!chatbox || !chatbox.contentDocument ||
+            !chatbox.contentDocument.querySelector(".call-action-group")) {
+          return null;
+        }
+
+        // But anchor on the <browser> in the chatbox so the panel doesn't jump to undefined
+        // positions when the copy/email buttons disappear e.g. when the feedback form opens or
+        // somebody else joins the room.
+        return chatbox.content;
+      },
+    }],
+    ["loop-signInUpLink", {
+      query: (aDocument) => {
+        let loopBrowser = aDocument.querySelector("#loop-notification-panel > #loop");        if (!loopBrowser) {
+          return null;
+        }
+        return loopBrowser.contentDocument.querySelector(".signin-link");
+      },
+    }],
+
     ["privateWindow",  {query: "#privatebrowsing-button"}],
     ["quit",        {query: "#PanelUI-quit"}],
     ["search",      {
+      infoPanelOffsetX: 18,
+      infoPanelPosition: "after_start",
       query: "#searchbar",
       widgetName: "search-container",
     }],
@@ -176,9 +241,11 @@ this.UITour = {
       query: "#urlbar",
       widgetName: "urlbar-container",
     }],
+    ["webide",      {query: "#webide-button"}],
   ]),
 
   init: function() {
+    log.debug("Initializing UITour");
     // Lazy getter is initialized here so it can be replicated any time
     // in a test.
     delete this.seenPageIDs;
@@ -273,16 +340,24 @@ this.UITour = {
     if (!this.ensureTrustedOrigin(contentDocument))
       return false;
 
-    if (typeof aEvent.detail != "object")
+    log.debug("onPageEvent:", aEvent.detail);
+
+    if (typeof aEvent.detail != "object") {
+      log.warn("Malformed event - detail not an object");
       return false;
+    }
 
     let action = aEvent.detail.action;
-    if (typeof action != "string" || !action)
+    if (typeof action != "string" || !action) {
+      log.warn("Action not defined");
       return false;
+    }
 
     let data = aEvent.detail.data;
-    if (typeof data != "object")
+    if (typeof data != "object") {
+      log.warn("Malformed event - data not an object");
       return false;
+    }
 
     let window = this.getChromeWindow(contentDocument);
     // Do this before bailing if there's no tab, so later we can pick up the pieces:
@@ -291,50 +366,55 @@ this.UITour = {
     if (!tab) {
       // This should only happen while detaching a tab:
       if (this._detachingTab) {
+        log.debug("Got event while detatching a tab");
         this._queuedEvents.push(aEvent);
         this._pendingDoc = Cu.getWeakReference(contentDocument);
         return;
       }
-      Cu.reportError("Discarding tabless UITour event (" + action + ") while not detaching a tab." +
-                     "This shouldn't happen!");
+      log.error("Discarding tabless UITour event (" + action + ") while not detaching a tab. " +
+                "This shouldn't happen!");
       return;
     }
 
     switch (action) {
       case "registerPageID": {
         // This is only relevant if Telemtry is enabled.
-        if (!UITelemetry.enabled)
+        if (!UITelemetry.enabled) {
+          log.debug("registerPageID: Telemery disabled, not doing anything");
           break;
+        }
 
         // We don't want to allow BrowserUITelemetry.BUCKET_SEPARATOR in the
         // pageID, as it could make parsing the telemetry bucket name difficult.
-        if (typeof data.pageID == "string" &&
-            !data.pageID.contains(BrowserUITelemetry.BUCKET_SEPARATOR)) {
-          this.addSeenPageID(data.pageID);
-
-          // Store tabs and windows separately so we don't need to loop over all
-          // tabs when a window is closed.
-          this.pageIDSourceTabs.set(tab, data.pageID);
-          this.pageIDSourceWindows.set(window, data.pageID);
-
-          this.setTelemetryBucket(data.pageID);
+        if (typeof data.pageID != "string" ||
+            data.pageID.contains(BrowserUITelemetry.BUCKET_SEPARATOR)) {
+          log.warn("registerPageID: Invalid page ID specified");
+          break;
         }
-        break;
+
+        this.addSeenPageID(data.pageID);
+
+        // Store tabs and windows separately so we don't need to loop over all
+        // tabs when a window is closed.
+        this.pageIDSourceTabs.set(tab, data.pageID);
+        this.pageIDSourceWindows.set(window, data.pageID);
+
+        this.setTelemetryBucket(data.pageID);
       }
 
       case "showHighlight": {
         let targetPromise = this.getTarget(window, data.target);
         targetPromise.then(target => {
           if (!target.node) {
-            Cu.reportError("UITour: Target could not be resolved: " + data.target);
+            log.error("UITour: Target could not be resolved: " + data.target);
             return;
           }
           let effect = undefined;
           if (this.highlightEffects.indexOf(data.effect) !== -1) {
             effect = data.effect;
           }
-          this.showHighlight(target, effect);
-        }).then(null, Cu.reportError);
+          this.showHighlight(window, target, effect);
+        }).catch(log.error);
         break;
       }
 
@@ -347,7 +427,7 @@ this.UITour = {
         let targetPromise = this.getTarget(window, data.target, true);
         targetPromise.then(target => {
           if (!target.node) {
-            Cu.reportError("UITour: Target could not be resolved: " + data.target);
+            log.error("UITour: Target could not be resolved: ", data.target);
             return;
           }
 
@@ -374,8 +454,10 @@ this.UITour = {
 
                 buttons.push(button);
 
-                if (buttons.length == MAX_BUTTONS)
+                if (buttons.length == MAX_BUTTONS) {
+                  log.warn("showInfo: Reached limit of allowed number of buttons");
                   break;
+                }
               }
             }
           }
@@ -387,8 +469,8 @@ this.UITour = {
           if (typeof data.targetCallbackID == "string")
             infoOptions.targetCallbackID = data.targetCallbackID;
 
-          this.showInfo(contentDocument, target, data.title, data.text, iconURL, buttons, infoOptions);
-        }).then(null, Cu.reportError);
+          this.showInfo(window, contentDocument, target, data.title, data.text, iconURL, buttons, infoOptions);
+        }).catch(log.error);
         break;
       }
 
@@ -433,6 +515,7 @@ this.UITour = {
       case "startUrlbarCapture": {
         if (typeof data.text != "string" || !data.text ||
             typeof data.url != "string" || !data.url) {
+          log.warn("startUrlbarCapture: Text or URL not specified");
           return false;
         }
 
@@ -440,6 +523,7 @@ this.UITour = {
         try {
           uri = Services.io.newURI(data.url, null, null);
         } catch (e) {
+          log.warn("startUrlbarCapture: Malformed URL specified");
           return false;
         }
 
@@ -449,6 +533,7 @@ this.UITour = {
         try {
           secman.checkLoadURIWithPrincipal(principal, uri, flags);
         } catch (e) {
+          log.warn("startUrlbarCapture: Orginating page doesn't have permission to open specified URL");
           return false;
         }
 
@@ -463,6 +548,7 @@ this.UITour = {
 
       case "getConfiguration": {
         if (typeof data.configuration != "string") {
+          log.warn("getConfiguration: No configuration option specified");
           return false;
         }
 
@@ -470,11 +556,27 @@ this.UITour = {
         break;
       }
 
+      case "setConfiguration": {
+        if (typeof data.configuration != "string") {
+          log.warn("setConfiguration: No configuration option specified");
+          return false;
+        }
+
+        this.setConfiguration(data.configuration, data.value);
+        break;
+      }
+
       case "showFirefoxAccounts": {
         // 'signup' is the only action that makes sense currently, so we don't
         // accept arbitrary actions just to be safe...
         // We want to replace the current tab.
-        contentDocument.location.href = "about:accounts?action=signup";
+        contentDocument.location.href = "about:accounts?action=signup&entrypoint=uitour";
+        break;
+      }
+
+      case "resetFirefox": {
+        // Open a reset profile dialog window.
+        ResetProfile.openConfirmationDialog(window);
         break;
       }
 
@@ -483,7 +585,7 @@ this.UITour = {
         let targetPromise = this.getTarget(window, data.name);
         targetPromise.then(target => {
           this.addNavBarWidget(target, contentDocument, data.callbackID);
-        }).then(null, Cu.reportError);
+        }).catch(log.error);
         break;
       }
 
@@ -542,6 +644,16 @@ this.UITour = {
             searchbar.openSuggestionsPanel();
           }
         }).then(null, Cu.reportError);
+        break;
+      }
+
+      case "ping": {
+        if (typeof data.callbackID == "string") {
+          // We don't do this synchoronously since we need to update originTabs below before the
+          // callback has a chance to do another action.
+          let callback = () => this.sendPageCallback(contentDocument, data.callbackID);
+          Services.tm.currentThread.dispatch(callback, Ci.nsIThread.DISPATCH_NORMAL);
+        }
         break;
       }
     }
@@ -619,7 +731,7 @@ this.UITour = {
               try {
                 this.onPageEvent(this._queuedEvents.shift());
               } catch (ex) {
-                Cu.reportError(ex);
+                log.error(ex);
               }
             }
             break;
@@ -673,9 +785,8 @@ this.UITour = {
   },
 
   teardownTour: function(aWindow, aWindowClosing = false) {
+    log.debug("teardownTour: aWindowClosing = " + aWindowClosing);
     aWindow.gBrowser.tabContainer.removeEventListener("TabSelect", this);
-    aWindow.PanelUI.panel.removeEventListener("popuphiding", this.hidePanelAnnotations);
-    aWindow.PanelUI.panel.removeEventListener("ViewShowing", this.hidePanelAnnotations);
     aWindow.removeEventListener("SSWindowClosing", this);
 
     let originTabs = this.originTabs.get(aWindow);
@@ -692,7 +803,16 @@ this.UITour = {
       this.hideInfo(aWindow);
       // Ensure the menu panel is hidden before calling recreatePopup so popup events occur.
       this.hideMenu(aWindow, "appMenu");
+      this.hideMenu(aWindow, "loop");
     }
+
+    // Clean up panel listeners after we may have called hideMenu above.
+    aWindow.PanelUI.panel.removeEventListener("popuphiding", this.hideAppMenuAnnotations);
+    aWindow.PanelUI.panel.removeEventListener("ViewShowing", this.hideAppMenuAnnotations);
+    aWindow.PanelUI.panel.removeEventListener("popuphidden", this.onPanelHidden);
+    let loopPanel = aWindow.document.getElementById("loop-notification-panel");
+    loopPanel.removeEventListener("popuphidden", this.onPanelHidden);
+    loopPanel.removeEventListener("popuphiding", this.hideLoopPanelAnnotations);
 
     this.endUrlbarCapture(aWindow);
     this.removePinnedTab(aWindow);
@@ -711,12 +831,23 @@ this.UITour = {
                            .wrappedJSObject;
   },
 
-  importPermissions: function() {
-    try {
-      PermissionsUtils.importFromPrefs(PREF_PERM_BRANCH, UITOUR_PERMISSION);
-    } catch (e) {
-      Cu.reportError(e);
+  isTestingOrigin: function(aURI) {
+    if (Services.prefs.getPrefType(PREF_TEST_WHITELIST) != Services.prefs.PREF_STRING) {
+      return false;
     }
+
+    // Add any testing origins (comma-seperated) to the whitelist for the session.
+    for (let origin of Services.prefs.getCharPref(PREF_TEST_WHITELIST).split(",")) {
+      try {
+        let testingURI = Services.io.newURI(origin, null, null);
+        if (aURI.prePath == testingURI.prePath) {
+          return true;
+        }
+      } catch (ex) {
+        Cu.reportError(ex);
+      }
+    }
+    return false;
   },
 
   ensureTrustedOrigin: function(aDocument) {
@@ -731,9 +862,11 @@ this.UITour = {
     if (!this.isSafeScheme(uri))
       return false;
 
-    this.importPermissions();
     let permission = Services.perms.testPermission(uri, UITOUR_PERMISSION);
-    return permission == Services.perms.ALLOW_ACTION;
+    if (permission == Services.perms.ALLOW_ACTION)
+      return true;
+
+    return this.isTestingOrigin(uri);
   },
 
   isSafeScheme: function(aURI) {
@@ -741,8 +874,10 @@ this.UITour = {
     if (!Services.prefs.getBoolPref("browser.uitour.requireSecure"))
       allowedSchemes.add("http");
 
-    if (!allowedSchemes.has(aURI.scheme))
+    if (!allowedSchemes.has(aURI.scheme)) {
+      log.error("Unsafe scheme:", aURI.scheme);
       return false;
+    }
 
     return true;
   },
@@ -761,10 +896,19 @@ this.UITour = {
   },
 
   sendPageCallback: function(aDocument, aCallbackID, aData = {}) {
-
     let detail = {data: aData, callbackID: aCallbackID};
-    detail = Cu.cloneInto(detail, aDocument.defaultView);
-    let event = new aDocument.defaultView.CustomEvent("mozUITourResponse", {
+    this.sendPageEvent(aDocument, "Response", detail);
+  },
+
+  sendPageNotification: function(aDocument, aData = {}) {
+    this.sendPageEvent(aDocument, "Notification", aData);
+  },
+
+  sendPageEvent: function(aDocument, aType, aDetails = {}) {
+    log.debug("sendPageEvent", aDetails);
+    let detail = Cu.cloneInto(aDetails, aDocument.defaultView);
+    let eventName = "mozUITour" + aType;
+    let event = new aDocument.defaultView.CustomEvent(eventName, {
       bubbles: true,
       detail: detail
     });
@@ -774,12 +918,16 @@ this.UITour = {
 
   isElementVisible: function(aElement) {
     let targetStyle = aElement.ownerDocument.defaultView.getComputedStyle(aElement);
-    return (targetStyle.display != "none" && targetStyle.visibility == "visible");
+    return !aElement.ownerDocument.hidden &&
+             targetStyle.display != "none" &&
+             targetStyle.visibility == "visible";
   },
 
   getTarget: function(aWindow, aTargetName, aSticky = false) {
+    log.debug("getTarget:", aTargetName);
     let deferred = Promise.defer();
     if (typeof aTargetName != "string" || !aTargetName) {
+      log.warn("getTarget: Invalid target name specified");
       deferred.reject("Invalid target name specified");
       return deferred.promise;
     }
@@ -799,6 +947,7 @@ this.UITour = {
 
     let targetObject = this.targets.get(aTargetName);
     if (!targetObject) {
+      log.warn("getTarget: The specified target name is not in the allowed set");
       deferred.reject("The specified target name is not in the allowed set");
       return deferred.promise;
     }
@@ -810,6 +959,7 @@ this.UITour = {
         try {
           node = targetQuery(aWindow.document);
         } catch (ex) {
+          log.warn("getTarget: Error running target query:", ex);
           node = null;
         }
       } else {
@@ -818,13 +968,16 @@ this.UITour = {
 
       deferred.resolve({
         addTargetListener: targetObject.addTargetListener,
+        infoPanelOffsetX: targetObject.infoPanelOffsetX,
+        infoPanelOffsetY: targetObject.infoPanelOffsetY,
+        infoPanelPosition: targetObject.infoPanelPosition,
         node: node,
         removeTargetListener: targetObject.removeTargetListener,
         targetName: aTargetName,
         widgetName: targetObject.widgetName,
         allowAdd: targetObject.allowAdd,
       });
-    }).then(null, Cu.reportError);
+    }).catch(log.error);
     return deferred.promise;
   },
 
@@ -850,9 +1003,13 @@ this.UITour = {
    * we need to open or close the appMenu to see the annotation's anchor.
    */
   _setAppMenuStateForAnnotation: function(aWindow, aAnnotationType, aShouldOpenForHighlight, aCallback = null) {
+    log.debug("_setAppMenuStateForAnnotation:", aAnnotationType);
+    log.debug("_setAppMenuStateForAnnotation: Menu is expected to be:", aShouldOpenForHighlight ? "open" : "closed");
+
     // If the panel is in the desired state, we're done.
     let panelIsOpen = aWindow.PanelUI.panel.state != "closed";
     if (aShouldOpenForHighlight == panelIsOpen) {
+      log.debug("_setAppMenuStateForAnnotation: Panel already in expected state");
       if (aCallback)
         aCallback();
       return;
@@ -860,6 +1017,7 @@ this.UITour = {
 
     // Don't close the menu if it wasn't opened by us (e.g. via showmenu instead).
     if (!aShouldOpenForHighlight && !this.appMenuOpenForAnnotation.has(aAnnotationType)) {
+      log.debug("_setAppMenuStateForAnnotation: Menu not opened by us, not closing");
       if (aCallback)
         aCallback();
       return;
@@ -873,8 +1031,10 @@ this.UITour = {
 
     // Actually show or hide the menu
     if (this.appMenuOpenForAnnotation.size) {
+      log.debug("_setAppMenuStateForAnnotation: Opening the menu");
       this.showMenu(aWindow, "appMenu", aCallback);
     } else {
+      log.debug("_setAppMenuStateForAnnotation: Closing the menu");
       this.hideMenu(aWindow, "appMenu");
       if (aCallback)
         aCallback();
@@ -924,27 +1084,28 @@ this.UITour = {
   },
 
   /**
+   * @param aChromeWindow The chrome window that the highlight is in. Necessary since some targets
+   *                      are in a sub-frame so the defaultView is not the same as the chrome
+   *                      window.
    * @param aTarget    The element to highlight.
    * @param aEffect    (optional) The effect to use from UITour.highlightEffects or "none".
    * @see UITour.highlightEffects
    */
-  showHighlight: function(aTarget, aEffect = "none") {
-    let window = aTarget.node.ownerDocument.defaultView;
-
+  showHighlight: function(aChromeWindow, aTarget, aEffect = "none") {
     function showHighlightPanel() {
       if (aTarget.targetName.startsWith(TARGET_SEARCHENGINE_PREFIX)) {
         // This won't affect normal higlights done via the panel, so we need to
         // manually hide those.
-        this.hideHighlight(window);
+        this.hideHighlight(aChromeWindow);
         aTarget.node.setAttribute("_moz-menuactive", true);
         return;
       }
 
       // Conversely, highlights for search engines are highlighted via CSS
       // rather than a panel, so need to be manually removed.
-      this._hideSearchEngineHighlight(window);
+      this._hideSearchEngineHighlight(aChromeWindow);
 
-      let highlighter = aTarget.node.ownerDocument.getElementById("UITourHighlight");
+      let highlighter = aChromeWindow.document.getElementById("UITourHighlight");
 
       let effect = aEffect;
       if (effect == "random") {
@@ -956,7 +1117,7 @@ this.UITour = {
       }
       // Toggle the effect attribute to "none" and flush layout before setting it so the effect plays.
       highlighter.setAttribute("active", "none");
-      aTarget.node.ownerDocument.defaultView.getComputedStyle(highlighter).animationName;
+      aChromeWindow.getComputedStyle(highlighter).animationName;
       highlighter.setAttribute("active", effect);
       highlighter.parentElement.setAttribute("targetName", aTarget.targetName);
       highlighter.parentElement.hidden = false;
@@ -991,11 +1152,12 @@ this.UITour = {
 
       // Close a previous highlight so we can relocate the panel.
       if (highlighter.parentElement.state == "showing" || highlighter.parentElement.state == "open") {
+        log.debug("showHighlight: Closing previous highlight first");
         highlighter.parentElement.hidePopup();
       }
       /* The "overlap" position anchors from the top-left but we want to centre highlights at their
          minimum size. */
-      let highlightWindow = aTarget.node.ownerDocument.defaultView;
+      let highlightWindow = aChromeWindow;
       let containerStyle = highlightWindow.getComputedStyle(highlighter.parentElement);
       let paddingTopPx = 0 - parseFloat(containerStyle.paddingTop);
       let paddingLeftPx = 0 - parseFloat(containerStyle.paddingLeft);
@@ -1011,10 +1173,12 @@ this.UITour = {
     }
 
     // Prevent showing a panel at an undefined position.
-    if (!this.isElementVisible(aTarget.node))
+    if (!this.isElementVisible(aTarget.node)) {
+      log.warn("showHighlight: Not showing a highlight since the target isn't visible", aTarget);
       return;
+    }
 
-    this._setAppMenuStateForAnnotation(aTarget.node.ownerDocument.defaultView, "highlight",
+    this._setAppMenuStateForAnnotation(aChromeWindow, "highlight",
                                        this.targetIsInAppMenu(aTarget),
                                        showHighlightPanel.bind(this));
   },
@@ -1053,6 +1217,7 @@ this.UITour = {
   /**
    * Show an info panel.
    *
+   * @param {ChromeWindow} aChromeWindow
    * @param {Document} aContentDocument
    * @param {Node}     aAnchor
    * @param {String}   [aTitle=""]
@@ -1062,16 +1227,17 @@ this.UITour = {
    * @param {Object}   [aOptions={}]
    * @param {String}   [aOptions.closeButtonCallbackID]
    */
-  showInfo: function(aContentDocument, aAnchor, aTitle = "", aDescription = "", aIconURL = "",
+  showInfo: function(aChromeWindow, aContentDocument, aAnchor, aTitle = "", aDescription = "", aIconURL = "",
                      aButtons = [], aOptions = {}) {
     function showInfoPanel(aAnchorEl) {
       aAnchorEl.focus();
 
-      let document = aAnchorEl.ownerDocument;
+      let document = aChromeWindow.document;
       let tooltip = document.getElementById("UITourTooltip");
       let tooltipTitle = document.getElementById("UITourTooltipTitle");
       let tooltipDesc = document.getElementById("UITourTooltipDescription");
       let tooltipIcon = document.getElementById("UITourTooltipIcon");
+      let tooltipIconContainer = document.getElementById("UITourTooltipIconContainer");
       let tooltipButtons = document.getElementById("UITourTooltipButtons");
 
       if (tooltip.state == "showing" || tooltip.state == "open") {
@@ -1081,7 +1247,7 @@ this.UITour = {
       tooltipTitle.textContent = aTitle || "";
       tooltipDesc.textContent = aDescription || "";
       tooltipIcon.src = aIconURL || "";
-      tooltipIcon.hidden = !aIconURL;
+      tooltipIconContainer.hidden = !aIconURL;
 
       while (tooltipButtons.firstChild)
         tooltipButtons.firstChild.remove();
@@ -1138,26 +1304,35 @@ this.UITour = {
 
       tooltip.setAttribute("targetName", aAnchor.targetName);
       tooltip.hidden = false;
-      let xOffset = 0, yOffset = 0;
       let alignment = "bottomcenter topright";
-      if (aAnchor.targetName == "search") {
-        alignment = "after_start";
-        xOffset = 18;
+      if (aAnchor.infoPanelPosition) {
+        alignment = aAnchor.infoPanelPosition;
       }
+
+      let { infoPanelOffsetX: xOffset, infoPanelOffsetY: yOffset } = aAnchor;
+
       this._addAnnotationPanelMutationObserver(tooltip);
-      tooltip.openPopup(aAnchorEl, alignment, xOffset, yOffset);
+      tooltip.openPopup(aAnchorEl, alignment, xOffset || 0, yOffset || 0);
+      if (tooltip.state == "closed") {
+        document.defaultView.addEventListener("endmodalstate", function endModalStateHandler() {
+          document.defaultView.removeEventListener("endmodalstate", endModalStateHandler);
+          tooltip.openPopup(aAnchorEl, alignment);
+        }, false);
+      }
     }
 
     // Prevent showing a panel at an undefined position.
-    if (!this.isElementVisible(aAnchor.node))
+    if (!this.isElementVisible(aAnchor.node)) {
+      log.warn("showInfo: Not showing since the target isn't visible", aAnchor);
       return;
+    }
 
     // Due to a platform limitation, we can't anchor a panel to an element in a
     // <menupopup>. So we can't support showing info panels for search engines.
     if (aAnchor.targetName.startsWith(TARGET_SEARCHENGINE_PREFIX))
       return;
 
-    this._setAppMenuStateForAnnotation(aAnchor.node.ownerDocument.defaultView, "info",
+    this._setAppMenuStateForAnnotation(aChromeWindow, "info",
                                        this.targetIsInAppMenu(aAnchor),
                                        showInfoPanel.bind(this, aAnchor.node));
   },
@@ -1197,8 +1372,9 @@ this.UITour = {
       if (aWindow.PanelUI.panel.state != "open") {
         this.recreatePopup(aWindow.PanelUI.panel);
       }
-      aWindow.PanelUI.panel.addEventListener("popuphiding", this.hidePanelAnnotations);
-      aWindow.PanelUI.panel.addEventListener("ViewShowing", this.hidePanelAnnotations);
+      aWindow.PanelUI.panel.addEventListener("popuphiding", this.hideAppMenuAnnotations);
+      aWindow.PanelUI.panel.addEventListener("ViewShowing", this.hideAppMenuAnnotations);
+      aWindow.PanelUI.panel.addEventListener("popuphidden", this.onPanelHidden);
       if (aOpenCallback) {
         aWindow.PanelUI.panel.addEventListener("popupshown", onPopupShown);
       }
@@ -1206,10 +1382,35 @@ this.UITour = {
     } else if (aMenuName == "bookmarks") {
       let menuBtn = aWindow.document.getElementById("bookmarks-menu-button");
       openMenuButton(menuBtn);
+    } else if (aMenuName == "loop") {
+      let toolbarButton = aWindow.LoopUI.toolbarButton;
+      // It's possible to have a node that isn't placed anywhere
+      if (!toolbarButton || !toolbarButton.node ||
+          !CustomizableUI.getPlacementOfWidget(toolbarButton.node.id)) {
+        log.debug("Can't show the Loop menu since the toolbarButton isn't placed");
+        return;
+      }
+
+      let panel = aWindow.document.getElementById("loop-notification-panel");
+      panel.setAttribute("noautohide", true);
+      if (panel.state != "open") {
+        this.recreatePopup(panel);
+        this.availableTargetsCache.clear();
+      }
+
+      // An event object is expected but we don't want to toggle the panel with a click if the panel
+      // is already open.
+      aWindow.LoopUI.openCallPanel({ target: toolbarButton.node, }, "rooms").then(() => {
+        if (aOpenCallback) {
+          aOpenCallback();
+        }
+      });
+      panel.addEventListener("popuphidden", this.onPanelHidden);
+      panel.addEventListener("popuphiding", this.hideLoopPanelAnnotations);
     } else if (aMenuName == "searchEngines") {
       this.getTarget(aWindow, "searchProvider").then(target => {
         openMenuButton(target.node);
-      }).catch(Cu.reportError);
+      }).catch(log.error);
     }
   },
 
@@ -1220,19 +1421,20 @@ this.UITour = {
     }
 
     if (aMenuName == "appMenu") {
-      aWindow.PanelUI.panel.removeAttribute("noautohide");
       aWindow.PanelUI.hide();
-      this.recreatePopup(aWindow.PanelUI.panel);
     } else if (aMenuName == "bookmarks") {
       let menuBtn = aWindow.document.getElementById("bookmarks-menu-button");
       closeMenuButton(menuBtn);
+    } else if (aMenuName == "loop") {
+      let panel = aWindow.document.getElementById("loop-notification-panel");
+      panel.hidePopup();
     } else if (aMenuName == "searchEngines") {
       let menuBtn = this.targets.get("searchProvider").query(aWindow.document);
       closeMenuButton(menuBtn);
     }
   },
 
-  hidePanelAnnotations: function(aEvent) {
+  hideAnnotationsForPanel: function(aEvent, aTargetPositionCallback) {
     let win = aEvent.target.ownerDocument.defaultView;
     let annotationElements = new Map([
       // [annotationElement (panel), method to hide the annotation]
@@ -1247,14 +1449,29 @@ this.UITour = {
           // changed since it may have just moved to somewhere outside of the app menu.
           if (annotationElement.getAttribute("targetName") != aTarget.targetName ||
               annotationElement.state == "closed" ||
-              !UITour.targetIsInAppMenu(aTarget)) {
+              !aTargetPositionCallback(aTarget)) {
             return;
           }
           hideMethod(win);
-        }).then(null, Cu.reportError);
+        }).catch(log.error);
       }
     });
     UITour.appMenuOpenForAnnotation.clear();
+  },
+
+  hideAppMenuAnnotations: function(aEvent) {
+    UITour.hideAnnotationsForPanel(aEvent, UITour.targetIsInAppMenu);
+  },
+
+  hideLoopPanelAnnotations: function(aEvent) {
+    UITour.hideAnnotationsForPanel(aEvent, (aTarget) => {
+      return aTarget.targetName.startsWith("loop-") && aTarget.targetName != "loop-selectedRoomButtons";
+    });
+  },
+
+  onPanelHidden: function(aEvent) {
+    aEvent.target.removeAttribute("noautohide");
+    UITour.recreatePopup(aEvent.target);
   },
 
   recreatePopup: function(aPanel) {
@@ -1316,6 +1533,12 @@ this.UITour = {
           setup: Services.prefs.prefHasUserValue("services.sync.username"),
         });
         break;
+      case "appinfo":
+        let props = ["defaultUpdateChannel", "version"];
+        let appinfo = {};
+        props.forEach(property => appinfo[property] = Services.appinfo[property]);
+        this.sendPageCallback(aContentDocument, aCallbackID, appinfo);
+        break;
       case "selectedSearchEngine":
         Services.search.init(rv => {
           let engine;
@@ -1330,7 +1553,19 @@ this.UITour = {
         });
         break;
       default:
-        Cu.reportError("getConfiguration: Unknown configuration requested: " + aConfiguration);
+        log.error("getConfiguration: Unknown configuration requested: " + aConfiguration);
+        break;
+    }
+  },
+
+  setConfiguration: function(aConfiguration, aValue) {
+    switch (aConfiguration) {
+      case "Loop:ResumeTourOnFirstJoin":
+        // Ignore aValue in this case to avoid accidentally setting it to false.
+        Services.prefs.setBoolPref("loop.gettingStarted.resumeOnFirstJoin", true);
+        break;
+      default:
+        log.error("setConfiguration: Unknown configuration requested: " + aConfiguration);
         break;
     }
   },
@@ -1340,6 +1575,7 @@ this.UITour = {
       let window = this.getChromeWindow(aContentDocument);
       let data = this.availableTargetsCache.get(window);
       if (data) {
+        log.debug("getAvailableTargets: Using cached targets list", data.targets.join(","));
         this.sendPageCallback(aContentDocument, aCallbackID, data);
         return;
       }
@@ -1369,7 +1605,7 @@ this.UITour = {
       this.availableTargetsCache.set(window, data);
       this.sendPageCallback(aContentDocument, aCallbackID, data);
     }.bind(this)).catch(err => {
-      Cu.reportError(err);
+      log.error(err);
       this.sendPageCallback(aContentDocument, aCallbackID, {
         targets: [],
       });
@@ -1378,15 +1614,15 @@ this.UITour = {
 
   addNavBarWidget: function (aTarget, aContentDocument, aCallbackID) {
     if (aTarget.node) {
-      Cu.reportError("UITour: can't add a widget already present: " + data.target);
+      log.error("addNavBarWidget: can't add a widget already present:", aTarget);
       return;
     }
     if (!aTarget.allowAdd) {
-      Cu.reportError("UITour: not allowed to add this widget: " + data.target);
+      log.error("addNavBarWidget: not allowed to add this widget:", aTarget);
       return;
     }
     if (!aTarget.widgetName) {
-      Cu.reportError("UITour: can't add a widget without a widgetName property: " + data.target);
+      log.error("addNavBarWidget: can't add a widget without a widgetName property:", aTarget);
       return;
     }
 
@@ -1502,7 +1738,29 @@ this.UITour = {
         reject("Search engine not available");
       });
     });
-  }
+  },
+
+  notify(eventName, params) {
+    let winEnum = Services.wm.getEnumerator("navigator:browser");
+    while (winEnum.hasMoreElements()) {
+      let window = winEnum.getNext();
+      if (window.closed)
+        continue;
+
+      let originTabs = this.originTabs.get(window);
+      if (!originTabs)
+        continue;
+
+      for (let tab of originTabs) {
+        let document = tab.linkedBrowser.contentDocument;
+        let detail = {
+          event: eventName,
+          params: params,
+        };
+        this.sendPageNotification(document, detail);
+      }
+    }
+  },
 };
 
 this.UITour.init();

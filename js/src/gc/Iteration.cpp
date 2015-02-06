@@ -20,7 +20,7 @@ using namespace js::gc;
 void
 js::TraceRuntime(JSTracer *trc)
 {
-    JS_ASSERT(!IS_GC_MARKING_TRACER(trc));
+    MOZ_ASSERT(!IS_GC_MARKING_TRACER(trc));
 
     JSRuntime *rt = trc->runtime();
     rt->gc.evictNursery();
@@ -119,7 +119,7 @@ js::IterateGrayObjects(Zone *zone, GCThingCallback cellCallback, void *data)
     for (size_t finalizeKind = 0; finalizeKind <= FINALIZE_OBJECT_LAST; finalizeKind++) {
         for (ZoneCellIterUnderGC i(zone, AllocKind(finalizeKind)); !i.done(); i.next()) {
             JSObject *obj = i.get<JSObject>();
-            if (obj->isMarked(GRAY))
+            if (obj->asTenured().isMarked(GRAY))
                 cellCallback(data, obj);
         }
     }
@@ -129,7 +129,7 @@ JS_PUBLIC_API(void)
 JS_IterateCompartments(JSRuntime *rt, void *data,
                        JSIterateCompartmentCallback compartmentCallback)
 {
-    JS_ASSERT(!rt->isHeapBusy());
+    MOZ_ASSERT(!rt->isHeapBusy());
 
     AutoTraceSession session(rt);
 

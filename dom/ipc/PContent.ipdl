@@ -9,6 +9,7 @@ include protocol PBackground;
 include protocol PBlob;
 include protocol PBluetooth;
 include protocol PBrowser;
+include protocol PCellBroadcast;
 include protocol PCompositor;
 include protocol PContentBridge;
 include protocol PCycleCollectWithLogs;
@@ -20,8 +21,8 @@ include protocol PFMRadio;
 include protocol PFileSystemRequest;
 include protocol PHal;
 include protocol PImageBridge;
-include protocol PIndexedDB;
 include protocol PMemoryReportRequest;
+include protocol PMobileConnection;
 include protocol PNecko;
 include protocol PScreenManager;
 include protocol PSharedBufferManager;
@@ -30,6 +31,7 @@ include protocol PSpeechSynthesis;
 include protocol PStorage;
 include protocol PTelephony;
 include protocol PTestShell;
+include protocol PVoicemail;
 include protocol PJavaScript;
 include protocol PRemoteSpellcheckEngine;
 include DOMTypes;
@@ -38,6 +40,13 @@ include InputStreamParams;
 include PTabContext;
 include URIParams;
 include ProtocolTypes;
+
+// Workaround to prevent error if PContentChild.cpp & PContentBridgeParent.cpp
+// are put into different UnifiedProtocolsXX.cpp files.
+// XXX Remove this once bug 1069073 is fixed
+include "mozilla/dom/PContentBridgeParent.h";
+
+include "mozilla/dom/indexedDB/SerializationHelpers.h";
 
 using GeoPosition from "nsGeoPositionIPCSerialiser.h";
 
@@ -54,6 +63,7 @@ using mozilla::dom::asmjscache::WriteParams from "mozilla/dom/asmjscache/AsmJSCa
 using mozilla::dom::AudioChannel from "mozilla/dom/AudioChannelBinding.h";
 using mozilla::dom::AudioChannelState from "AudioChannelCommon.h";
 using mozilla::dom::NativeThreadId from "mozilla/dom/TabMessageUtils.h";
+using mozilla::dom::quota::PersistenceType from "mozilla/dom/quota/PersistenceType.h";
 using mozilla::hal::ProcessPriority from "mozilla/HalTypes.h";
 using gfxIntSize from "nsSize.h";
 
@@ -61,6 +71,7 @@ union ChromeRegistryItem
 {
     ChromePackage;
     OverrideMapping;
+    ResourceMapping;
 };
 
 namespace mozilla {
@@ -303,7 +314,12 @@ struct VolumeInfo {
   bool isUnmounting;
 };
 
-intr protocol PContent
+union MaybeFileDesc {
+    FileDescriptor;
+    void_t;
+};
+
+prio(normal upto high) intr protocol PContent
 {
     parent opens PCompositor;
     parent opens PSharedBufferManager;
@@ -314,6 +330,7 @@ intr protocol PContent
     manages PBlob;
     manages PBluetooth;
     manages PBrowser;
+    manages PCellBroadcast;
     manages PCrashReporter;
     manages PCycleCollectWithLogs;
     manages PDeviceStorageRequest;
@@ -322,8 +339,8 @@ intr protocol PContent
     manages PFileDescriptorSet;
     manages PFMRadio;
     manages PHal;
-    manages PIndexedDB;
     manages PMemoryReportRequest;
+    manages PMobileConnection;
     manages PNecko;
     manages PScreenManager;
     manages PSms;
@@ -331,6 +348,7 @@ intr protocol PContent
     manages PStorage;
     manages PTelephony;
     manages PTestShell;
+    manages PVoicemail;
     manages PJavaScript;
     manages PRemoteSpellcheckEngine;
 
@@ -376,7 +394,7 @@ child:
     async SetProcessSandbox();
 
     PMemoryReportRequest(uint32_t generation, bool anonymize,
-                         bool minimizeMemoryUsage, FileDescriptor DMDFile);
+                         bool minimizeMemoryUsage, MaybeFileDesc DMDFile);
 
     /**
      * Notify the AudioChannelService in the child processes.
@@ -416,6 +434,8 @@ child:
 
     GeolocationUpdate(GeoPosition somewhere);
 
+    UpdateDictionaryList(nsString[] dictionaries);
+
     // nsIPermissionManager messages
     AddPermission(Permission permission);
 
@@ -425,13 +445,14 @@ child:
 
     GarbageCollect();
     CycleCollect();
-    
+
     /**
      * Start accessibility engine in content process.
      */
     ActivateA11y();
 
-    AppInfo(nsCString version, nsCString buildID, nsCString name, nsCString UAName);
+    AppInfo(nsCString version, nsCString buildID, nsCString name, nsCString UAName,
+            nsCString ID, nsCString vendor);
 
     // Notify child that last-pb-context-exited notification was observed
     LastPrivateDocShellDestroyed();
@@ -486,7 +507,7 @@ parent:
     sync GetProcessAttributes()
         returns (uint64_t id, bool isForApp, bool isForBrowser);
     sync GetXPCOMProcessAttributes()
-        returns (bool isOffline);
+        returns (bool isOffline, nsString[] dictionaries);
 
     sync CreateChildProcess(IPCTabContext context,
                             ProcessPriority priority)
@@ -512,14 +533,16 @@ parent:
 
     PHal();
 
-    PIndexedDB();
+    PMobileConnection(uint32_t clientId);
 
     PNecko();
 
-    rpc PScreenManager()
+    prio(high) sync PScreenManager()
         returns (uint32_t numberOfScreens,
                  float systemDefaultScale,
                  bool success);
+
+    PCellBroadcast();
 
     PSms();
 
@@ -528,6 +551,8 @@ parent:
     PStorage();
 
     PTelephony();
+
+    PVoicemail();
 
     PBluetooth();
 
@@ -552,8 +577,8 @@ parent:
                      CpowEntry[] aCpows, Principal aPrincipal)
       returns (nsString[] retval);
 
-    rpc RpcMessage(nsString aMessage, ClonedMessageData aData,
-                   CpowEntry[] aCpows, Principal aPrincipal)
+    prio(high) sync RpcMessage(nsString aMessage, ClonedMessageData aData,
+                               CpowEntry[] aCpows, Principal aPrincipal)
       returns (nsString[] retval);
 
     ShowAlertNotification(nsString imageUrl,
@@ -569,11 +594,11 @@ parent:
 
     CloseAlert(nsString name, Principal principal);
 
-    PExternalHelperApp(OptionalURIParams uri, 
+    PExternalHelperApp(OptionalURIParams uri,
                        nsCString aMimeContentType,
-                       nsCString aContentDisposition, 
-                       uint32_t aContentDispositionHint, 
-                       nsString aContentDispositionFilename, 
+                       nsCString aContentDisposition,
+                       uint32_t aContentDispositionHint,
+                       nsString aContentDispositionFilename,
                        bool aForceSave,
                        int64_t aContentLength,
                        OptionalURIParams aReferrer,
@@ -586,7 +611,7 @@ parent:
     ConsoleMessage(nsString message);
     ScriptError(nsString message, nsString sourceName, nsString sourceLine,
                 uint32_t lineNumber, uint32_t colNumber, uint32_t flags,
-                nsCString category); 
+                nsCString category);
 
     // nsIPermissionManager messages
     sync ReadPermissions() returns (Permission[] permissions);
@@ -648,7 +673,9 @@ parent:
     async SetFakeVolumeState(nsString fsName, int32_t fsState);
 
     sync KeywordToURI(nsCString keyword)
-        returns (OptionalInputStreamParams postData, OptionalURIParams uri);
+        returns (nsString providerName, OptionalInputStreamParams postData, OptionalURIParams uri);
+
+    sync NotifyKeywordSearchLoading(nsString providerName, nsString keyword);
 
     // Tell the compositor to allocate a layer tree id for nested remote mozbrowsers.
     sync AllocateLayerTreeId()
@@ -691,6 +718,14 @@ parent:
     BackUpXResources(FileDescriptor aXSocketFd);
 
     sync OpenAnonymousTemporaryFile() returns (FileDescriptor aFD);
+
+    // Use only for testing!
+    sync GetFileReferences(PersistenceType persistenceType,
+                           nsCString origin,
+                           nsString databaseName,
+                           int64_t fileId)
+      returns (int32_t refCnt, int32_t dBRefCnt, int32_t sliceRefCnt,
+               bool result);
 
 both:
      AsyncMessage(nsString aMessage, ClonedMessageData aData,

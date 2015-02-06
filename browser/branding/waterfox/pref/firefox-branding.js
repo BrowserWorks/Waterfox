@@ -26,15 +26,15 @@ pref("app.update.silent", false);
 
 // Update service URL:
 // You do not need to use all the %VAR% parameters. Use what you need, %PRODUCT%,%VERSION%,%BUILD_ID%,%CHANNEL% for example
-pref("app.update.url", "https://www.waterfoxproject.org/update/osx64/%VERSION%/%LOCALE%/%CHANNEL%/update.xml");
+pref("app.update.url", "https://www.waterfoxproject.org/update/win64/%VERSION%/%LOCALE%/%CHANNEL%/update.xml");
 
 // URL user can browse to manually if for some reason all update installation
 // attempts fail.
-pref("app.update.url.manual", "https://www.waterfoxproject.org/downloads.html");
+pref("app.update.url.manual", "https://www.waterfoxproject.org/");
 
 // A default value for the "More information about this update" link
 // supplied in the "An update is available" page of the update wizard.
-pref("app.update.url.details", "https://www.waterfoxproject.org/blog/waterfox-34.0-release-download");
+pref("app.update.url.details", "https://www.waterfoxproject.org/releases/%VERSION%/notes.html");
 
 // Interval: Time between checks for a new version (in seconds)
 //           default=12 hours
@@ -65,8 +65,7 @@ pref("app.update.incompatible.mode", 0);
 //Set compatibility with Firefox add-ons and extensions!
 pref("general.useragent.compatMode.firefox", true);
 
-//Enable media extensions
-pref("media.mediasource.enabled", true);
+pref("browser.preferences.inContent", false);
 
 pref("browser.aboutHomeSnippets.updateUrl", "");
 

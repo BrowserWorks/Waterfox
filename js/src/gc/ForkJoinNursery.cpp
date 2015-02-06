@@ -14,14 +14,14 @@
 #include "prmjtime.h"
 
 #include "gc/Heap.h"
-#include "jit/IonFrames.h"
+#include "jit/JitFrames.h"
 #include "jit/RematerializedFrame.h"
 #include "vm/ArrayObject.h"
 #include "vm/ForkJoin.h"
 
 #include "jsgcinlines.h"
 #include "gc/Nursery-inl.h"
-#include "vm/ObjectImpl-inl.h"
+#include "vm/NativeObject-inl.h"
 
 // The ForkJoinNursery provides an object nursery for movable object
 // types for one ForkJoin worker thread.  There is a one-to-one
@@ -210,21 +210,21 @@ ForkJoinNursery::evacuatingGC()
 void
 ForkJoinNursery::pjsCollection(int op)
 {
-    JS_ASSERT((op & Collect) != (op & Evacuate));
+    MOZ_ASSERT((op & Collect) != (op & Evacuate));
 
     bool evacuate = op & Evacuate;
     bool recreate = op & Recreate;
 
-    JS_ASSERT(!isEvacuating_);
-    JS_ASSERT(!evacuationZone_);
-    JS_ASSERT(!head_);
-    JS_ASSERT(tail_ == &head_);
+    MOZ_ASSERT(!isEvacuating_);
+    MOZ_ASSERT(!evacuationZone_);
+    MOZ_ASSERT(!head_);
+    MOZ_ASSERT(tail_ == &head_);
 
     JSRuntime *const rt = shared_->runtime();
     const unsigned currentNumActiveChunks_ = numActiveChunks_;
     const char *msg = "";
 
-    JS_ASSERT(!rt->needsIncrementalBarrier());
+    MOZ_ASSERT(!rt->needsIncrementalBarrier());
 
     TIME_START(pjsCollection);
 
@@ -251,8 +251,8 @@ ForkJoinNursery::pjsCollection(int op)
     computeNurserySizeAfterGC(live, &msg);
 
     sweepHugeSlots();
-    JS_ASSERT(hugeSlots[hugeSlotsFrom].empty());
-    JS_ASSERT_IF(isEvacuating_, hugeSlots[hugeSlotsNew].empty());
+    MOZ_ASSERT(hugeSlots[hugeSlotsFrom].empty());
+    MOZ_ASSERT_IF(isEvacuating_, hugeSlots[hugeSlotsNew].empty());
 
     isEvacuating_ = false;
     evacuationZone_ = nullptr;
@@ -325,7 +325,7 @@ ForkJoinNursery::flip()
     hugeSlotsNew = hugeSlotsFrom;
     hugeSlotsFrom = tmp;
 
-    JS_ASSERT(hugeSlots[hugeSlotsNew].empty());
+    MOZ_ASSERT(hugeSlots[hugeSlotsNew].empty());
 }
 
 void
@@ -341,8 +341,8 @@ ForkJoinNursery::freeFromspace()
 bool
 ForkJoinNursery::initNewspace()
 {
-    JS_ASSERT(newspace[0] == nullptr);
-    JS_ASSERT(numActiveChunks_ == 0);
+    MOZ_ASSERT(newspace[0] == nullptr);
+    MOZ_ASSERT(numActiveChunks_ == 0);
 
     numActiveChunks_ = 1;
     return setCurrentChunk(0);
@@ -361,8 +361,8 @@ ForkJoinNursery::shouldMoveObject(void **thingp)
     // The main reason for that restriction is so that we can call a
     // method here that can check the chunk trailer for the cell (a
     // future optimization).
-    Cell *cell = static_cast<Cell *>(*thingp);
-    return isInsideFromspace(cell) && !getForwardedPointer(thingp);
+    Cell **cellp = reinterpret_cast<Cell **>(thingp);
+    return isInsideFromspace(*cellp) && !getForwardedPointer(cellp);
 }
 
 /* static */ void
@@ -373,7 +373,7 @@ ForkJoinNursery::MinorGCCallback(JSTracer *trcArg, void **thingp, JSGCTraceKind 
     if (nursery->shouldMoveObject(thingp)) {
         // When other types of objects become nursery-allocable then the static_cast
         // to JSObject * will no longer be valid.
-        JS_ASSERT(traceKind == JSTRACE_OBJECT);
+        MOZ_ASSERT(traceKind == JSTRACE_OBJECT);
         *thingp = nursery->moveObjectToTospace(static_cast<JSObject *>(*thingp));
     }
 }
@@ -415,14 +415,14 @@ ForkJoinNursery::forwardFromTenured(ForkJoinNurseryCollectionTracer *trc)
         // When non-JSObject types become nursery-allocable the assumptions in the
         // loops below will no longer hold; other types than JSObject must be
         // handled.
-        JS_ASSERT(kind <= FINALIZE_OBJECT_LAST);
+        MOZ_ASSERT(kind <= FINALIZE_OBJECT_LAST);
 
         // Clear the free list that we're currently allocating out of.
         lists.purge(kind);
 
         // Since we only purge once, there must not currently be any partially
         // full arenas left to allocate out of, or we would break out early.
-        JS_ASSERT(!lists.getArenaAfterCursor(kind));
+        MOZ_ASSERT(!lists.getArenaAfterCursor(kind));
 
         ArenaIter ai;
         ai.init(const_cast<Allocator *>(tenured_), kind);
@@ -463,7 +463,7 @@ ForkJoinNursery::forwardBufferPointer(JSTracer *trc, HeapSlot **pSlotsElems)
     // abuts the end of the allocable area. Thus, it is always safe to read the
     // first word of |old| here.
     *pSlotsElems = *reinterpret_cast<HeapSlot **>(old);
-    JS_ASSERT(!nursery->isInsideFromspace(*pSlotsElems));
+    MOZ_ASSERT(!nursery->isInsideFromspace(*pSlotsElems));
 }
 
 void
@@ -476,8 +476,8 @@ ForkJoinNursery::collectToFixedPoint(ForkJoinNurseryCollectionTracer *trc)
 inline bool
 ForkJoinNursery::setCurrentChunk(int index)
 {
-    JS_ASSERT((size_t)index < numActiveChunks_);
-    JS_ASSERT(!newspace[index]);
+    MOZ_ASSERT((size_t)index < numActiveChunks_);
+    MOZ_ASSERT(!newspace[index]);
 
     currentChunk_ = index;
     ForkJoinNurseryChunk *c = shared_->allocateNurseryChunk();
@@ -496,7 +496,7 @@ ForkJoinNursery::setCurrentChunk(int index)
 void *
 ForkJoinNursery::allocate(size_t size)
 {
-    JS_ASSERT(position_ >= currentStart_);
+    MOZ_ASSERT(position_ >= currentStart_);
 
     if (currentEnd_ - position_ < size) {
         if (currentChunk_ + 1 == numActiveChunks_)
@@ -523,7 +523,7 @@ JSObject *
 ForkJoinNursery::allocateObject(size_t baseSize, size_t numDynamic, bool& tooLarge)
 {
     // Ensure there's enough space to replace the contents with a RelocationOverlay.
-    JS_ASSERT(baseSize >= sizeof(js::gc::RelocationOverlay));
+    MOZ_ASSERT(baseSize >= sizeof(js::gc::RelocationOverlay));
 
     // Too-large slot arrays cannot be accomodated.
     if (numDynamic > MaxNurserySlots) {
@@ -538,23 +538,23 @@ ForkJoinNursery::allocateObject(size_t baseSize, size_t numDynamic, bool& tooLar
         tooLarge = false;
         return nullptr;
     }
-    obj->setInitialSlots(numDynamic
-                         ? reinterpret_cast<HeapSlot *>(size_t(obj) + baseSize)
-                         : nullptr);
+    obj->fakeNativeSetInitialSlots(numDynamic
+                                   ? reinterpret_cast<HeapSlot *>(size_t(obj) + baseSize)
+                                   : nullptr);
     return obj;
 }
 
 HeapSlot *
 ForkJoinNursery::allocateSlots(JSObject *obj, uint32_t nslots)
 {
-    JS_ASSERT(obj);
-    JS_ASSERT(nslots > 0);
+    MOZ_ASSERT(obj);
+    MOZ_ASSERT(nslots > 0);
 
     if (nslots & mozilla::tl::MulOverflowMask<sizeof(HeapSlot)>::value)
         return nullptr;
 
     if (!isInsideNewspace(obj))
-        return obj->pod_malloc<HeapSlot>(nslots);
+        return obj->zone()->pod_malloc<HeapSlot>(nslots);
 
     if (nslots > MaxNurserySlots)
         return allocateHugeSlots(obj, nslots);
@@ -575,8 +575,8 @@ ForkJoinNursery::reallocateSlots(JSObject *obj, HeapSlot *oldSlots,
         return nullptr;
 
     if (!isInsideNewspace(obj)) {
-        JS_ASSERT_IF(oldSlots, !isInsideNewspace(oldSlots));
-        return obj->pod_realloc<HeapSlot>(oldSlots, oldCount, newCount);
+        MOZ_ASSERT_IF(oldSlots, !isInsideNewspace(oldSlots));
+        return obj->zone()->pod_realloc<HeapSlot>(oldSlots, oldCount, newCount);
     }
 
     if (!isInsideNewspace(oldSlots))
@@ -598,7 +598,7 @@ ForkJoinNursery::reallocateSlots(JSObject *obj, HeapSlot *oldSlots,
 ObjectElements *
 ForkJoinNursery::allocateElements(JSObject *obj, uint32_t nelems)
 {
-    JS_ASSERT(nelems >= ObjectElements::VALUES_PER_HEADER);
+    MOZ_ASSERT(nelems >= ObjectElements::VALUES_PER_HEADER);
     return reinterpret_cast<ObjectElements *>(allocateSlots(obj, nelems));
 }
 
@@ -626,7 +626,7 @@ ForkJoinNursery::allocateHugeSlots(JSObject *obj, size_t nslots)
     if (nslots & mozilla::tl::MulOverflowMask<sizeof(HeapSlot)>::value)
         return nullptr;
 
-    HeapSlot *slots = obj->pod_malloc<HeapSlot>(nslots);
+    HeapSlot *slots = obj->zone()->pod_malloc<HeapSlot>(nslots);
     if (!slots)
         return slots;
 
@@ -639,7 +639,7 @@ HeapSlot *
 ForkJoinNursery::reallocateHugeSlots(JSObject *obj, HeapSlot *oldSlots,
                                      uint32_t oldCount, uint32_t newCount)
 {
-    HeapSlot *newSlots = obj->pod_realloc<HeapSlot>(oldSlots, oldCount, newCount);
+    HeapSlot *newSlots = obj->zone()->pod_realloc<HeapSlot>(oldSlots, oldCount, newCount);
     if (!newSlots)
         return newSlots;
 
@@ -668,12 +668,13 @@ ForkJoinNursery::traceObject(ForkJoinNurseryCollectionTracer *trc, JSObject *obj
 
     if (!obj->isNative())
         return;
+    NativeObject *nobj = &obj->as<NativeObject>();
 
-    if (!obj->hasEmptyElements())
-        markSlots(obj->getDenseElements(), obj->getDenseInitializedLength());
+    if (!nobj->hasEmptyElements())
+        markSlots(nobj->getDenseElements(), nobj->getDenseInitializedLength());
 
     HeapSlot *fixedStart, *fixedEnd, *dynStart, *dynEnd;
-    obj->getSlotRange(0, obj->slotSpan(), &fixedStart, &fixedEnd, &dynStart, &dynEnd);
+    nobj->getSlotRange(0, nobj->slotSpan(), &fixedStart, &fixedEnd, &dynStart, &dynEnd);
     markSlots(fixedStart, fixedEnd);
     markSlots(dynStart, dynEnd);
 }
@@ -714,22 +715,23 @@ AllocKind
 ForkJoinNursery::getObjectAllocKind(JSObject *obj)
 {
     if (obj->is<ArrayObject>()) {
-        JS_ASSERT(obj->numFixedSlots() == 0);
+        ArrayObject *aobj = &obj->as<ArrayObject>();
+        MOZ_ASSERT(aobj->numFixedSlots() == 0);
 
         // Use minimal size object if we are just going to copy the pointer.
-        if (!isInsideFromspace((void *)obj->getElementsHeader()))
+        if (!isInsideFromspace((void *)aobj->getElementsHeader()))
             return FINALIZE_OBJECT0_BACKGROUND;
 
-        size_t nelements = obj->getDenseCapacity();
+        size_t nelements = aobj->getDenseCapacity();
         return GetBackgroundAllocKind(GetGCArrayKind(nelements));
     }
 
     if (obj->is<JSFunction>())
         return obj->as<JSFunction>().getAllocKind();
 
-    AllocKind kind = GetGCObjectFixedSlotsKind(obj->numFixedSlots());
-    JS_ASSERT(!IsBackgroundFinalized(kind));
-    JS_ASSERT(CanBeFinalizedInBackground(kind, obj->getClass()));
+    AllocKind kind = GetGCObjectFixedSlotsKind(obj->fakeNativeNumFixedSlots());
+    MOZ_ASSERT(!IsBackgroundFinalized(kind));
+    MOZ_ASSERT(CanBeFinalizedInBackground(kind, obj->getClass()));
     return GetBackgroundAllocKind(kind);
 }
 
@@ -791,7 +793,7 @@ ForkJoinNursery::moveObjectToTospace(JSObject *src)
 
     movedSize_ += copyObjectToTospace(dst, src, dstKind);
 
-    RelocationOverlay *overlay = reinterpret_cast<RelocationOverlay *>(src);
+    RelocationOverlay *overlay = RelocationOverlay::fromCell(src);
     overlay->forwardTo(dst);
     insertIntoFixupList(overlay);
 
@@ -808,7 +810,7 @@ ForkJoinNursery::copyObjectToTospace(JSObject *dst, JSObject *src, AllocKind dst
     // We deal with this by copying elements manually, possibly re-inlining
     // them if there is adequate room inline in dst.
     if (src->is<ArrayObject>())
-        srcSize = movedSize = sizeof(ObjectImpl);
+        srcSize = movedSize = sizeof(NativeObject);
 
     js_memcpy(dst, src, srcSize);
     movedSize += copySlotsToTospace(dst, src, dstKind);
@@ -816,7 +818,7 @@ ForkJoinNursery::copyObjectToTospace(JSObject *dst, JSObject *src, AllocKind dst
 
     // The shape's list head may point into the old object.
     if (&src->shape_ == dst->shape_->listp) {
-        JS_ASSERT(cx_->isThreadLocal(dst->shape_.get()));
+        MOZ_ASSERT(cx_->isThreadLocal(dst->shape_.get()));
         dst->shape_->listp = &dst->shape_;
     }
 
@@ -827,38 +829,38 @@ size_t
 ForkJoinNursery::copySlotsToTospace(JSObject *dst, JSObject *src, AllocKind dstKind)
 {
     // Fixed slots have already been copied over.
-    if (!src->hasDynamicSlots())
+    if (!src->fakeNativeHasDynamicSlots())
         return 0;
 
-    if (!isInsideFromspace(src->slots)) {
-        hugeSlots[hugeSlotsFrom].remove(src->slots);
+    if (!isInsideFromspace(src->fakeNativeSlots())) {
+        hugeSlots[hugeSlotsFrom].remove(src->fakeNativeSlots());
         if (!isEvacuating_)
-            hugeSlots[hugeSlotsNew].put(src->slots);
+            hugeSlots[hugeSlotsNew].put(src->fakeNativeSlots());
         return 0;
     }
 
-    size_t count = src->numDynamicSlots();
-    dst->slots = allocateInTospace<HeapSlot>(count);
-    if (!dst->slots)
+    size_t count = src->fakeNativeNumDynamicSlots();
+    dst->fakeNativeSlots() = allocateInTospace<HeapSlot>(count);
+    if (!dst->fakeNativeSlots())
         CrashAtUnhandlableOOM("Failed to allocate slots while moving object.");
-    js_memcpy(dst->slots, src->slots, count * sizeof(HeapSlot));
-    setSlotsForwardingPointer(src->slots, dst->slots, count);
+    js_memcpy(dst->fakeNativeSlots(), src->fakeNativeSlots(), count * sizeof(HeapSlot));
+    setSlotsForwardingPointer(src->fakeNativeSlots(), dst->fakeNativeSlots(), count);
     return count * sizeof(HeapSlot);
 }
 
 size_t
 ForkJoinNursery::copyElementsToTospace(JSObject *dst, JSObject *src, AllocKind dstKind)
 {
-    if (src->hasEmptyElements() || src->denseElementsAreCopyOnWrite())
+    if (src->fakeNativeHasEmptyElements() || src->fakeNativeDenseElementsAreCopyOnWrite())
         return 0;
 
-    ObjectElements *srcHeader = src->getElementsHeader();
+    ObjectElements *srcHeader = src->fakeNativeGetElementsHeader();
     ObjectElements *dstHeader;
 
     // TODO Bug 874151: Prefer to put element data inline if we have space.
     // (Note, not a correctness issue.)
     if (!isInsideFromspace(srcHeader)) {
-        JS_ASSERT(src->elements == dst->elements);
+        MOZ_ASSERT(src->fakeNativeElements() == dst->fakeNativeElements());
         hugeSlots[hugeSlotsFrom].remove(reinterpret_cast<HeapSlot*>(srcHeader));
         if (!isEvacuating_)
             hugeSlots[hugeSlotsNew].put(reinterpret_cast<HeapSlot*>(srcHeader));
@@ -869,29 +871,29 @@ ForkJoinNursery::copyElementsToTospace(JSObject *dst, JSObject *src, AllocKind d
 
     // Unlike other objects, Arrays can have fixed elements.
     if (src->is<ArrayObject>() && nslots <= GetGCKindSlots(dstKind)) {
-        dst->setFixedElements();
-        dstHeader = dst->getElementsHeader();
+        dst->as<ArrayObject>().setFixedElements();
+        dstHeader = dst->as<ArrayObject>().getElementsHeader();
         js_memcpy(dstHeader, srcHeader, nslots * sizeof(HeapSlot));
         setElementsForwardingPointer(srcHeader, dstHeader, nslots);
         return nslots * sizeof(HeapSlot);
     }
 
-    JS_ASSERT(nslots >= 2);
+    MOZ_ASSERT(nslots >= 2);
     dstHeader = reinterpret_cast<ObjectElements *>(allocateInTospace<HeapSlot>(nslots));
     if (!dstHeader)
         CrashAtUnhandlableOOM("Failed to allocate elements while moving object.");
     js_memcpy(dstHeader, srcHeader, nslots * sizeof(HeapSlot));
     setElementsForwardingPointer(srcHeader, dstHeader, nslots);
-    dst->elements = dstHeader->elements();
+    dst->fakeNativeElements() = dstHeader->elements();
     return nslots * sizeof(HeapSlot);
 }
 
 void
 ForkJoinNursery::setSlotsForwardingPointer(HeapSlot *oldSlots, HeapSlot *newSlots, uint32_t nslots)
 {
-    JS_ASSERT(nslots > 0);
-    JS_ASSERT(isInsideFromspace(oldSlots));
-    JS_ASSERT(!isInsideFromspace(newSlots));
+    MOZ_ASSERT(nslots > 0);
+    MOZ_ASSERT(isInsideFromspace(oldSlots));
+    MOZ_ASSERT(!isInsideFromspace(newSlots));
     *reinterpret_cast<HeapSlot **>(oldSlots) = newSlots;
 }
 
@@ -903,8 +905,8 @@ ForkJoinNursery::setElementsForwardingPointer(ObjectElements *oldHeader, ObjectE
     // relocate it because reads and writes to/from this pointer are invalid.
     if (nelems - ObjectElements::VALUES_PER_HEADER < 1)
         return;
-    JS_ASSERT(isInsideFromspace(oldHeader));
-    JS_ASSERT(!isInsideFromspace(newHeader));
+    MOZ_ASSERT(isInsideFromspace(oldHeader));
+    MOZ_ASSERT(!isInsideFromspace(newHeader));
     *reinterpret_cast<HeapSlot **>(oldHeader->elements()) = newHeader->elements();
 }
 
@@ -913,8 +915,8 @@ ForkJoinNurseryCollectionTracer::ForkJoinNurseryCollectionTracer(JSRuntime *rt,
   : JSTracer(rt, ForkJoinNursery::MinorGCCallback, TraceWeakMapKeysValues)
   , nursery_(nursery)
 {
-    JS_ASSERT(rt);
-    JS_ASSERT(nursery);
+    MOZ_ASSERT(rt);
+    MOZ_ASSERT(nursery);
 }
 
 } // namespace gc

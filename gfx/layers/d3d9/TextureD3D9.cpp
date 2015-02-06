@@ -631,6 +631,10 @@ void
 CairoTextureClientD3D9::Unlock()
 {
   MOZ_ASSERT(mIsLocked, "Unlocked called while the texture is not locked!");
+  if (!mIsLocked) {
+    return;
+  }
+
   if (mDrawTarget) {
     mDrawTarget->Flush();
     mDrawTarget = nullptr;
@@ -885,7 +889,7 @@ TextureHostD3D9::SetCompositor(Compositor* aCompositor)
   }
 }
 
-NewTextureSource*
+TextureSource*
 TextureHostD3D9::GetTextureSources()
 {
   MOZ_ASSERT(mIsLocked);
@@ -961,7 +965,7 @@ DXGITextureHostD3D9::OpenSharedHandle()
   return;
 }
 
-NewTextureSource*
+TextureSource*
 DXGITextureHostD3D9::GetTextureSources()
 {
   MOZ_ASSERT(mIsLocked);

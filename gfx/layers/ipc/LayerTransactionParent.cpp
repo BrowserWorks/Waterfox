@@ -18,6 +18,7 @@
 #include "mozilla/layers/ColorLayerComposite.h"
 #include "mozilla/layers/Compositor.h"  // for Compositor
 #include "mozilla/layers/ContainerLayerComposite.h"
+#include "mozilla/layers/ImageBridgeParent.h" // for ImageBridgeParent
 #include "mozilla/layers/ImageLayerComposite.h"
 #include "mozilla/layers/LayerManagerComposite.h"
 #include "mozilla/layers/LayersMessages.h"  // for EditReply, etc
@@ -26,7 +27,7 @@
 #include "mozilla/layers/PCompositableParent.h"
 #include "mozilla/layers/PLayerParent.h"  // for PLayerParent
 #include "mozilla/layers/TextureHostOGL.h"  // for TextureHostOGL
-#include "mozilla/layers/ThebesLayerComposite.h"
+#include "mozilla/layers/PaintedLayerComposite.h"
 #include "mozilla/mozalloc.h"           // for operator delete, etc
 #include "mozilla/unused.h"
 #include "nsCoord.h"                    // for NSAppUnitsToFloatPixels
@@ -192,6 +193,21 @@ LayerTransactionParent::RecvUpdateNoSwap(const InfallibleTArray<Edit>& cset,
       aTransactionStart, nullptr);
 }
 
+class MOZ_STACK_CLASS AutoLayerTransactionParentAsyncMessageSender
+{
+public:
+  explicit AutoLayerTransactionParentAsyncMessageSender(LayerTransactionParent* aLayerTransaction)
+    : mLayerTransaction(aLayerTransaction) {}
+
+  ~AutoLayerTransactionParentAsyncMessageSender()
+  {
+    mLayerTransaction->SendPendingAsyncMessges();
+    ImageBridgeParent::SendPendingAsyncMessges(mLayerTransaction->GetChildProcessId());
+  }
+private:
+  LayerTransactionParent* mLayerTransaction;
+};
+
 bool
 LayerTransactionParent::RecvUpdate(const InfallibleTArray<Edit>& cset,
                                    const uint64_t& aTransactionId,
@@ -203,7 +219,7 @@ LayerTransactionParent::RecvUpdate(const InfallibleTArray<Edit>& cset,
                                    const mozilla::TimeStamp& aTransactionStart,
                                    InfallibleTArray<EditReply>* reply)
 {
-  profiler_tracing("Paint", "Composite", TRACING_INTERVAL_START);
+  profiler_tracing("Paint", "LayerTransaction", TRACING_INTERVAL_START);
   PROFILER_LABEL("LayerTransactionParent", "RecvUpdate",
     js::ProfileEntry::Category::GRAPHICS);
 
@@ -223,6 +239,7 @@ LayerTransactionParent::RecvUpdate(const InfallibleTArray<Edit>& cset,
   }
 
   EditReplyVector replyv;
+  AutoLayerTransactionParentAsyncMessageSender autoAsyncMessageSender(this);
 
   {
     AutoResolveRefLayers resolve(mShadowLayersManager->GetCompositionManager(this));
@@ -234,12 +251,12 @@ LayerTransactionParent::RecvUpdate(const InfallibleTArray<Edit>& cset,
 
     switch (edit.type()) {
     // Create* ops
-    case Edit::TOpCreateThebesLayer: {
-      MOZ_LAYERS_LOG(("[ParentSide] CreateThebesLayer"));
+    case Edit::TOpCreatePaintedLayer: {
+      MOZ_LAYERS_LOG(("[ParentSide] CreatePaintedLayer"));
 
-      nsRefPtr<ThebesLayerComposite> layer =
-        layer_manager()->CreateThebesLayerComposite();
-      AsLayerComposite(edit.get_OpCreateThebesLayer())->Bind(layer);
+      nsRefPtr<PaintedLayerComposite> layer =
+        layer_manager()->CreatePaintedLayerComposite();
+      AsLayerComposite(edit.get_OpCreatePaintedLayer())->Bind(layer);
       break;
     }
     case Edit::TOpCreateContainerLayer: {
@@ -329,17 +346,17 @@ LayerTransactionParent::RecvUpdate(const InfallibleTArray<Edit>& cset,
       case Specific::Tnull_t:
         break;
 
-      case Specific::TThebesLayerAttributes: {
-        MOZ_LAYERS_LOG(("[ParentSide]   thebes layer"));
+      case Specific::TPaintedLayerAttributes: {
+        MOZ_LAYERS_LOG(("[ParentSide]   painted layer"));
 
-        ThebesLayerComposite* thebesLayer = layerParent->AsThebesLayerComposite();
-        if (!thebesLayer) {
+        PaintedLayerComposite* paintedLayer = layerParent->AsPaintedLayerComposite();
+        if (!paintedLayer) {
           return false;
         }
-        const ThebesLayerAttributes& attrs =
-          specific.get_ThebesLayerAttributes();
+        const PaintedLayerAttributes& attrs =
+          specific.get_PaintedLayerAttributes();
 
-        thebesLayer->SetValidRegion(attrs.validRegion());
+        paintedLayer->SetValidRegion(attrs.validRegion());
 
         break;
       }
@@ -572,14 +589,16 @@ LayerTransactionParent::RecvUpdate(const InfallibleTArray<Edit>& cset,
 
   TimeDuration latency = TimeStamp::Now() - aTransactionStart;
   // Theshold is 200ms to trigger, 1000ms to hit red
-  if (latency > TimeDuration::FromMilliseconds(200)) {
-    float severity = (latency - TimeDuration::FromMilliseconds(200)).ToMilliseconds() / 800;
+  if (latency > TimeDuration::FromMilliseconds(kVisualWarningTrigger)) {
+    float severity = (latency - TimeDuration::FromMilliseconds(kVisualWarningTrigger)).ToMilliseconds() /
+                       (kVisualWarningMax - kVisualWarningTrigger);
     if (severity > 1.f) {
       severity = 1.f;
     }
     mLayerManager->VisualFrameWarning(severity);
   }
 
+  profiler_tracing("Paint", "LayerTransaction", TRACING_INTERVAL_END);
   return true;
 }
 
@@ -732,6 +751,20 @@ LayerTransactionParent::RecvGetAPZTestData(APZTestData* aOutData)
 }
 
 bool
+LayerTransactionParent::RecvRequestProperty(const nsString& aProperty, float* aValue)
+{
+  if (aProperty.Equals(NS_LITERAL_STRING("overdraw"))) {
+    *aValue = layer_manager()->GetCompositor()->GetFillRatio();
+  } else if (aProperty.Equals(NS_LITERAL_STRING("missed_hwc"))) {
+    *aValue = layer_manager()->LastFrameMissedHWC() ? 1 : 0;
+  } else {
+    *aValue = -1;
+  }
+  return true;
+}
+
+
+bool
 LayerTransactionParent::Attach(ShadowLayerParent* aLayerParent,
                                CompositableHost* aCompositable,
                                bool aIsAsync)
@@ -825,6 +858,8 @@ LayerTransactionParent::DeallocPTextureParent(PTextureParent* actor)
 bool
 LayerTransactionParent::RecvChildAsyncMessages(const InfallibleTArray<AsyncChildMessageData>& aMessages)
 {
+  AutoLayerTransactionParentAsyncMessageSender autoAsyncMessageSender(this);
+
   for (AsyncChildMessageArray::index_type i = 0; i < aMessages.Length(); ++i) {
     const AsyncChildMessageData& message = aMessages[i];
 
@@ -855,6 +890,30 @@ LayerTransactionParent::RecvChildAsyncMessages(const InfallibleTArray<AsyncChild
         TransactionCompleteted(op.transactionId());
         break;
       }
+      case AsyncChildMessageData::TOpRemoveTextureAsync: {
+        const OpRemoveTextureAsync& op = message.get_OpRemoveTextureAsync();
+        CompositableHost* compositable = CompositableHost::FromIPDLActor(op.compositableParent());
+        RefPtr<TextureHost> tex = TextureHost::AsTextureHost(op.textureParent());
+
+        MOZ_ASSERT(tex.get());
+        compositable->RemoveTextureHost(tex);
+
+        // send FenceHandle if present via ImageBridge.
+        ImageBridgeParent::SendFenceHandleToTrackerIfPresent(
+                             GetChildProcessId(),
+                             op.holderId(),
+                             op.transactionId(),
+                             op.textureParent(),
+                             compositable);
+
+        // Send message back via PImageBridge.
+        ImageBridgeParent::ReplyRemoveTexture(
+                             GetChildProcessId(),
+                             OpReplyRemoveTexture(true, // isMain
+                                                  op.holderId(),
+                                                  op.transactionId()));
+        break;
+      }
       default:
         NS_ERROR("unknown AsyncChildMessageData type");
         return false;
@@ -872,6 +931,38 @@ LayerTransactionParent::ActorDestroy(ActorDestroyReason why)
 bool LayerTransactionParent::IsSameProcess() const
 {
   return OtherProcess() == ipc::kInvalidProcessHandle;
+}
+
+void
+LayerTransactionParent::SendFenceHandleIfPresent(PTextureParent* aTexture,
+                                                 CompositableHost* aCompositableHost)
+{
+  RefPtr<TextureHost> texture = TextureHost::AsTextureHost(aTexture);
+  if (!texture) {
+    return;
+  }
+
+  // Send a ReleaseFence of CompositorOGL.
+  if (aCompositableHost && aCompositableHost->GetCompositor()) {
+    FenceHandle fence = aCompositableHost->GetCompositor()->GetReleaseFence();
+    if (fence.IsValid()) {
+      RefPtr<FenceDeliveryTracker> tracker = new FenceDeliveryTracker(fence);
+      HoldUntilComplete(tracker);
+      mPendingAsyncMessage.push_back(OpDeliverFence(tracker->GetId(),
+                                                    aTexture, nullptr,
+                                                    fence));
+    }
+  }
+
+  // Send a ReleaseFence that is set by HwcComposer2D.
+  FenceHandle fence = texture->GetAndResetReleaseFenceHandle();
+  if (fence.IsValid()) {
+    RefPtr<FenceDeliveryTracker> tracker = new FenceDeliveryTracker(fence);
+    HoldUntilComplete(tracker);
+    mPendingAsyncMessage.push_back(OpDeliverFence(tracker->GetId(),
+                                                  aTexture, nullptr,
+                                                  fence));
+  }
 }
 
 void

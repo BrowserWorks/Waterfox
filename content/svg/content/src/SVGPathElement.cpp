@@ -22,8 +22,6 @@
 #include "nsStyleStruct.h"
 #include "SVGContentUtils.h"
 
-class gfxContext;
-
 NS_IMPL_NS_NEW_NAMESPACED_SVG_ELEMENT(Path)
 
 using namespace mozilla::gfx;
@@ -72,14 +70,14 @@ SVGPathElement::PathLength()
 float
 SVGPathElement::GetTotalLength()
 {
-  RefPtr<Path> flat = GetPathForLengthOrPositionMeasuring();
+  RefPtr<Path> flat = GetOrBuildPathForMeasuring();
   return flat ? flat->ComputeLength() : 0.f;
 }
 
 already_AddRefed<nsISVGPoint>
 SVGPathElement::GetPointAtLength(float distance, ErrorResult& rv)
 {
-  RefPtr<Path> path = GetPathForLengthOrPositionMeasuring();
+  RefPtr<Path> path = GetOrBuildPathForMeasuring();
   if (!path) {
     rv.Throw(NS_ERROR_FAILURE);
     return nullptr;
@@ -307,9 +305,9 @@ SVGPathElement::IsAttributeMapped(const nsIAtom* name) const
 }
 
 TemporaryRef<Path>
-SVGPathElement::GetPathForLengthOrPositionMeasuring()
+SVGPathElement::GetOrBuildPathForMeasuring()
 {
-  return mD.GetAnimValue().ToPathForLengthOrPositionMeasuring();
+  return mD.GetAnimValue().BuildPathForMeasuring();
 }
 
 //----------------------------------------------------------------------
@@ -334,12 +332,6 @@ SVGPathElement::GetMarkPoints(nsTArray<nsSVGMark> *aMarks)
   mD.GetAnimValue().GetMarkerPositioningData(aMarks);
 }
 
-void
-SVGPathElement::ConstructPath(gfxContext *aCtx)
-{
-  mD.GetAnimValue().ConstructPath(aCtx);
-}
-
 float
 SVGPathElement::GetPathLengthScale(PathLengthScaleForType aFor)
 {
@@ -348,7 +340,7 @@ SVGPathElement::GetPathLengthScale(PathLengthScaleForType aFor)
   if (mPathLength.IsExplicitlySet()) {
     float authorsPathLengthEstimate = mPathLength.GetAnimValue();
     if (authorsPathLengthEstimate > 0) {
-      RefPtr<Path> path = GetPathForLengthOrPositionMeasuring();
+      RefPtr<Path> path = GetOrBuildPathForMeasuring();
       if (!path) {
         // The path is empty or invalid so its length must be zero and
         // we know that 0 / authorsPathLengthEstimate = 0.
@@ -392,30 +384,13 @@ SVGPathElement::BuildPath(PathBuilder* aBuilder)
     // exposes hit-testing of strokes that are not actually painted. For that
     // reason we do not check for eStyleSVGPaintType_None or check the stroke
     // opacity here.
-    if (style->mStrokeLinecap == NS_STYLE_STROKE_LINECAP_SQUARE) {
+    if (style->mStrokeLinecap != NS_STYLE_STROKE_LINECAP_BUTT) {
       strokeLineCap = style->mStrokeLinecap;
       strokeWidth = SVGContentUtils::GetStrokeWidth(this, styleContext, nullptr);
     }
   }
 
-  RefPtr<PathBuilder> builder;
-  if (aBuilder) {
-    builder = aBuilder;
-  } else {
-    RefPtr<DrawTarget> drawTarget =
-      gfxPlatform::GetPlatform()->ScreenReferenceDrawTarget();
-    // The fill rule that we pass must be the current computed value of our
-    // CSS 'fill-rule' property if the path that we return will be used for
-    // painting or hit-testing. For all other uses (bounds calculatons, length
-    // measurement, position-at-offset calculations) the fill rule that we pass
-    // doesn't matter. As a result we can just pass the current computed value
-    // regardless of who's calling us, or what they're going to do with the
-    // path that we return.
-    RefPtr<PathBuilder> builder =
-      drawTarget->CreatePathBuilder(GetFillRule());
-  }
-
-  return mD.GetAnimValue().BuildPath(builder, strokeLineCap, strokeWidth);
+  return mD.GetAnimValue().BuildPath(aBuilder, strokeLineCap, strokeWidth);
 }
 
 } // namespace dom

@@ -37,6 +37,7 @@ class Tickler;
 class nsHttpConnection;
 class nsHttpConnectionInfo;
 class nsHttpTransaction;
+class AltSvcMapping;
 
 //-----------------------------------------------------------------------------
 // nsHttpHandler - protocol handler for HTTP and HTTPS
@@ -79,6 +80,7 @@ public:
       return mResponseTimeoutEnabled ? mResponseTimeout : 0;
     }
     PRIntervalTime ResponseTimeoutEnabled()  { return mResponseTimeoutEnabled; }
+    uint32_t       NetworkChangedTimeout()   { return mNetworkChangedTimeout; }
     uint16_t       MaxRequestAttempts()      { return mMaxRequestAttempts; }
     const char    *DefaultSocketType()       { return mDefaultSocketType.get(); /* ok to return null */ }
     uint32_t       PhishyUserPassLength()    { return mPhishyUserPassLength; }
@@ -97,6 +99,7 @@ public:
     bool           IsSpdyV3Enabled() { return mSpdyV3; }
     bool           IsSpdyV31Enabled() { return mSpdyV31; }
     bool           IsHttp2DraftEnabled() { return mHttp2DraftEnabled; }
+    bool           IsHttp2Enabled() { return mHttp2DraftEnabled && mHttp2Enabled; }
     bool           EnforceHttp2TlsProfile() { return mEnforceHttp2TlsProfile; }
     bool           CoalesceSpdy() { return mCoalesceSpdy; }
     bool           UseSpdyPersistentSettings() { return mSpdyPersistentSettings; }
@@ -106,6 +109,8 @@ public:
     PRIntervalTime SpdyPingThreshold() { return mSpdyPingThreshold; }
     PRIntervalTime SpdyPingTimeout() { return mSpdyPingTimeout; }
     bool           AllowPush()   { return mAllowPush; }
+    bool           AllowAltSvc() { return mEnableAltSvc; }
+    bool           AllowAltSvcOE() { return mEnableAltSvcOE; }
     uint32_t       ConnectTimeout()  { return mConnectTimeout; }
     uint32_t       ParallelSpeculativeConnectLimit() { return mParallelSpeculativeConnectLimit; }
     bool           CriticalRequestPrioritization() { return mCriticalRequestPrioritization; }
@@ -218,6 +223,22 @@ public:
     {
         TickleWifi(callbacks);
         return mConnMgr->SpeculativeConnect(ci, callbacks, caps);
+    }
+
+    // Alternate Services Maps are main thread only
+    void UpdateAltServiceMapping(AltSvcMapping *map,
+                                 nsProxyInfo *proxyInfo,
+                                 nsIInterfaceRequestor *callbacks,
+                                 uint32_t caps)
+    {
+        mConnMgr->UpdateAltServiceMapping(map, proxyInfo, callbacks, caps);
+    }
+
+    AltSvcMapping *GetAltServiceMapping(const nsACString &scheme,
+                                        const nsACString &host,
+                                        int32_t port, bool pb)
+    {
+        return mConnMgr->GetAltServiceMapping(scheme, host, port, pb);
     }
 
     //
@@ -360,7 +381,7 @@ private:
     PRIntervalTime mSpdyTimeout;
     PRIntervalTime mResponseTimeout;
     bool mResponseTimeoutEnabled;
-
+    uint32_t mNetworkChangedTimeout; // milliseconds
     uint16_t mMaxRequestAttempts;
     uint16_t mMaxRequestDelay;
     uint16_t mIdleSynTimeout;
@@ -450,10 +471,13 @@ private:
     uint32_t           mSpdyV3 : 1;
     uint32_t           mSpdyV31 : 1;
     uint32_t           mHttp2DraftEnabled : 1;
+    uint32_t           mHttp2Enabled : 1;
     uint32_t           mEnforceHttp2TlsProfile : 1;
     uint32_t           mCoalesceSpdy : 1;
     uint32_t           mSpdyPersistentSettings : 1;
     uint32_t           mAllowPush : 1;
+    uint32_t           mEnableAltSvc : 1;
+    uint32_t           mEnableAltSvcOE : 1;
 
     // Try to use SPDY features instead of HTTP/1.1 over SSL
     SpdyInformation    mSpdyInfo;

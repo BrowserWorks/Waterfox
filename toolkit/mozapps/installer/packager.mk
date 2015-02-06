@@ -162,7 +162,7 @@ endif
 ifeq ($(MOZ_PKG_FORMAT),ZIP)
 ifdef MOZ_EXTERNAL_SIGNING_FORMAT
 # We can't use signcode on zip files
-MOZ_EXTERNAL_SIGNING_FORMAT := $(filter-out signcode,$(MOZ_EXTERNAL_SIGNING_FORMAT))
+MOZ_EXTERNAL_SIGNING_FORMAT := $(filter-out osslsigncode signcode,$(MOZ_EXTERNAL_SIGNING_FORMAT))
 endif
 PKG_SUFFIX	= .zip
 INNER_MAKE_PACKAGE	= $(ZIP) -r9D $(PACKAGE) $(MOZ_PKG_DIR) \
@@ -277,14 +277,6 @@ ifeq ($(MOZ_PKG_FORMAT),APK)
 JAVA_CLASSPATH = $(ANDROID_SDK)/android.jar
 include $(MOZILLA_DIR)/config/android-common.mk
 
-# DEBUG_JARSIGNER is defined by android-common.mk and always debug
-# signs.  We want to release sign if possible.
-ifdef MOZ_SIGN_CMD
-RELEASE_JARSIGNER := $(MOZ_SIGN_CMD) -f jar
-else
-RELEASE_JARSIGNER := $(DEBUG_JARSIGNER)
-endif
-
 DIST_FILES =
 
 # Place the files in the order they are going to be opened by the linker
@@ -344,7 +336,6 @@ GECKO_APP_AP_PATH = $(abspath $(DEPTH)/mobile/android/base)
 
 ifdef ENABLE_TESTS
 INNER_ROBOCOP_PACKAGE=echo
-INNER_BACKGROUND_TESTS_PACKAGE=echo
 ifeq ($(MOZ_BUILD_APP),mobile/android)
 UPLOAD_EXTRA_FILES += robocop.apk
 UPLOAD_EXTRA_FILES += fennec_ids.txt
@@ -355,14 +346,6 @@ UPLOAD_EXTRA_FILES += ../embedding/android/geckoview_example/geckoview_example.a
 # Robocop/Robotium tests, Android Background tests, and Fennec need to
 # be signed with the same key, which means release signing them all.
 
-# $(1) is the full path to input:  foo-debug-unsigned-unaligned.apk.
-# $(2) is the full path to output: foo.apk.
-RELEASE_SIGN_ANDROID_APK = \
-  cp $(1) $(2)-unaligned.apk && \
-  $(RELEASE_JARSIGNER) $(2)-unaligned.apk && \
-  $(ZIPALIGN) -f -v 4 $(2)-unaligned.apk $(2) && \
-  $(RM) $(2)-unaligned.apk
-
 ROBOCOP_PATH = $(abspath $(_ABS_DIST)/../build/mobile/robocop)
 # Normally, $(NSINSTALL) would be used instead of cp, but INNER_ROBOCOP_PACKAGE
 # is used in a series of commands that run under a "cd something", while
@@ -370,19 +353,9 @@ ROBOCOP_PATH = $(abspath $(_ABS_DIST)/../build/mobile/robocop)
 INNER_ROBOCOP_PACKAGE= \
   cp $(GECKO_APP_AP_PATH)/fennec_ids.txt $(_ABS_DIST) && \
   $(call RELEASE_SIGN_ANDROID_APK,$(ROBOCOP_PATH)/robocop-debug-unsigned-unaligned.apk,$(_ABS_DIST)/robocop.apk)
-
-BACKGROUND_TESTS_PATH = $(abspath $(_ABS_DIST)/../mobile/android/tests/background/junit3)
-INNER_BACKGROUND_TESTS_PACKAGE= \
-  $(call RELEASE_SIGN_ANDROID_APK,$(BACKGROUND_TESTS_PATH)/background-junit3-debug-unsigned-unaligned.apk,$(_ABS_DIST)/background-junit3.apk)
-
-BROWSER_TESTS_PATH = $(abspath $(_ABS_DIST)/../mobile/android/tests/browser/junit3)
-INNER_BROWSER_TESTS_PACKAGE= \
-  $(call RELEASE_SIGN_ANDROID_APK,$(BROWSER_TESTS_PATH)/browser-junit3-debug-unsigned-unaligned.apk,$(_ABS_DIST)/browser-junit3.apk)
 endif
 else
 INNER_ROBOCOP_PACKAGE=echo 'Testing is disabled - No Android Robocop for you'
-INNER_BACKGROUND_TESTS_PACKAGE=echo 'Testing is disabled - No Android Background JUnit 3 tests for you'
-INNER_BROWSER_TESTS_PACKAGE=echo 'Testing is disabled - No Android Browser JUnit 3tests for you'
 endif
 
 # Create geckoview_library/geckoview_{assets,library}.zip for third-party GeckoView consumers.
@@ -403,7 +376,7 @@ endif
 
 ifdef MOZ_OMX_PLUGIN
 DIST_FILES += libomxplugin.so libomxplugingb.so libomxplugingb235.so \
-              libomxpluginhc.so libomxpluginfroyo.so libomxpluginkk.so
+              libomxpluginhc.so libomxpluginkk.so
 endif
 
 SO_LIBRARIES := $(filter %.so,$(DIST_FILES))
@@ -462,8 +435,6 @@ INNER_MAKE_PACKAGE	= \
     diff $(GECKO_APP_AP_PATH)/R.txt $(GECKO_APP_AP_PATH)/gecko-nodeps/R.txt >/dev/null || \
     (echo "*** Error: The R.txt that was built and the R.txt that is being packaged are not the same. Rebuild mobile/android/base and re-package." && exit 1)) && \
   ( cd $(STAGEPATH)$(MOZ_PKG_DIR)$(_BINPATH) && \
-    mkdir -p lib/$(ANDROID_CPU_ARCH) && \
-    mv libmozglue.so $(MOZ_CHILD_PROCESS_NAME) lib/$(ANDROID_CPU_ARCH) && \
     unzip -o $(_ABS_DIST)/gecko.ap_ && \
     rm $(_ABS_DIST)/gecko.ap_ && \
     $(ZIP) $(if $(MOZ_ENABLE_SZIP),-0 )$(_ABS_DIST)/gecko.ap_ $(ASSET_SO_LIBRARIES) && \
@@ -478,8 +449,6 @@ INNER_MAKE_PACKAGE	= \
   $(RELEASE_JARSIGNER) $(_ABS_DIST)/gecko.apk && \
   $(ZIPALIGN) -f -v 4 $(_ABS_DIST)/gecko.apk $(PACKAGE) && \
   $(INNER_ROBOCOP_PACKAGE) && \
-  $(INNER_BACKGROUND_TESTS_PACKAGE) && \
-  $(INNER_BROWSER_TESTS_PACKAGE) && \
   $(INNER_MAKE_GECKOVIEW_LIBRARY) && \
   $(INNER_MAKE_GECKOVIEW_EXAMPLE)
 
@@ -493,9 +462,6 @@ INNER_UNMAKE_PACKAGE	= \
   mkdir $(MOZ_PKG_DIR) && \
   ( cd $(MOZ_PKG_DIR) && \
     $(UNZIP) $(UNPACKAGE) && \
-    mv lib/$(ANDROID_CPU_ARCH)/libmozglue.so . && \
-    mv lib/$(ANDROID_CPU_ARCH)/*plugin-container* $(MOZ_CHILD_PROCESS_NAME) && \
-    rm -rf lib/$(ANDROID_CPU_ARCH) && \
     rm -rf res \
     $(if $(filter-out ./,$(OMNIJAR_DIR)), \
       && mv $(OMNIJAR_DIR)$(OMNIJAR_NAME) $(OMNIJAR_NAME)) )
@@ -762,7 +728,7 @@ endif # Darwin
 
 prepare-package: stage-package
 
-make-package-internal: prepare-package make-sourcestamp-file make-buildinfo-file
+make-package-internal: prepare-package make-sourcestamp-file make-buildinfo-file make-mozinfo-file
 	@echo 'Compressing...'
 	cd $(DIST) && $(MAKE_PACKAGE)
 
@@ -787,6 +753,10 @@ make-buildinfo-file:
 		$(addprefix MOZ_SOURCE_REPO=,MOZ_SOURCE_REPO=$(MOZ_SOURCE_REPO)) \
 		MOZ_SOURCE_STAMP=$(MOZ_SOURCE_STAMP) \
 		MOZ_PKG_PLATFORM=$(MOZ_PKG_PLATFORM)
+
+.PHONY: make-mozinfo-file
+make-mozinfo-file:
+	cp $(DEPTH)/mozinfo.json $(MOZ_MOZINFO_FILE)
 
 # The install target will install the application to prefix/lib/appname-version
 # In addition if INSTALL_SDK is set, it will install the development headers,
@@ -901,6 +871,7 @@ UPLOAD_FILES= \
   $(call QUOTED_WILDCARD,$(DIST)/$(SDK)) \
   $(call QUOTED_WILDCARD,$(MOZ_SOURCESTAMP_FILE)) \
   $(call QUOTED_WILDCARD,$(MOZ_BUILDINFO_FILE)) \
+  $(call QUOTED_WILDCARD,$(MOZ_MOZINFO_FILE)) \
   $(call QUOTED_WILDCARD,$(PKG_JSSHELL)) \
   $(if $(UPLOAD_EXTRA_FILES), $(foreach f, $(UPLOAD_EXTRA_FILES), $(wildcard $(DIST)/$(f))))
 

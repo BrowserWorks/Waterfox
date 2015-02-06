@@ -38,6 +38,10 @@ partial interface WorkerGlobalScope {
 
 WorkerGlobalScope implements WindowTimers;
 WorkerGlobalScope implements WindowBase64;
+WorkerGlobalScope implements GlobalFetch;
+
+// Not implemented yet: bug 1072107.
+// WorkerGlobalScope implements FontFaceSource;
 
 // Mozilla extensions
 partial interface WorkerGlobalScope {

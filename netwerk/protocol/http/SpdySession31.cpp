@@ -75,6 +75,7 @@ SpdySession31::SpdySession31(nsISocketTransport *aSocketTransport)
   , mLastReadEpoch(PR_IntervalNow())
   , mPingSentEpoch(0)
   , mNextPingID(1)
+  , mPreviousUsed(false)
 {
   MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
 
@@ -227,8 +228,14 @@ SpdySession31::ReadTimeoutTick(PRIntervalTime now)
 
   if ((now - mLastReadEpoch) < mPingThreshold) {
     // recent activity means ping is not an issue
-    if (mPingSentEpoch)
+    if (mPingSentEpoch) {
       mPingSentEpoch = 0;
+      if (mPreviousUsed) {
+        // restore the former value
+        mPingThreshold = mPreviousPingThreshold;
+        mPreviousUsed = false;
+      }
+    }
 
     return PR_IntervalToSeconds(mPingThreshold) -
       PR_IntervalToSeconds(now - mLastReadEpoch);
@@ -382,7 +389,8 @@ SpdySession31::AddStream(nsAHttpTransaction *aHttpTransaction,
     mQueuedStreams.Push(stream);
   }
 
-  if (!(aHttpTransaction->Caps() & NS_HTTP_ALLOW_KEEPALIVE)) {
+  if (!(aHttpTransaction->Caps() & NS_HTTP_ALLOW_KEEPALIVE) &&
+      !aHttpTransaction->IsNullTransaction()) {
     LOG3(("SpdySession31::AddStream %p transaction %p forces keep-alive off.\n",
           this, aHttpTransaction));
     DontReuse();
@@ -398,12 +406,16 @@ SpdySession31::ActivateStream(SpdyStream31 *stream)
   MOZ_ASSERT(!stream->StreamID() || (stream->StreamID() & 1),
              "Do not activate pushed streams");
 
-  ++mConcurrent;
-  if (mConcurrent > mConcurrentHighWater)
-    mConcurrentHighWater = mConcurrent;
-  LOG3(("SpdySession31::AddStream %p activating stream %p Currently %d "
-        "streams in session, high water mark is %d",
-        this, stream, mConcurrent, mConcurrentHighWater));
+  nsAHttpTransaction *trans = stream->Transaction();
+  if (!trans || !trans->IsNullTransaction() || trans->QuerySpdyConnectTransaction()) {
+    ++mConcurrent;
+    if (mConcurrent > mConcurrentHighWater) {
+      mConcurrentHighWater = mConcurrent;
+    }
+    LOG3(("SpdySession31::AddStream %p activating stream %p Currently %d "
+          "streams in session, high water mark is %d",
+          this, stream, mConcurrent, mConcurrentHighWater));
+  }
 
   mReadyForWrite.Push(stream);
   SetWriteCallbacks();
@@ -1820,10 +1832,17 @@ SpdySession31::ReadSegments(nsAHttpSegmentReader *reader,
   }
 
   if (NS_FAILED(rv)) {
-    LOG3(("SpdySession31::ReadSegments %p returning FAIL code %X",
+    LOG3(("SpdySession31::ReadSegments %p may return FAIL code %X",
           this, rv));
-    if (rv != NS_BASE_STREAM_WOULD_BLOCK)
-      CleanupStream(stream, rv, RST_CANCEL);
+    if (rv == NS_BASE_STREAM_WOULD_BLOCK) {
+      return rv;
+    }
+
+    CleanupStream(stream, rv, RST_CANCEL);
+    if (SoftStreamError(rv)) {
+      LOG3(("SpdySession31::ReadSegments %p soft error override\n", this));
+      rv = NS_OK;
+    }
     return rv;
   }
 
@@ -2398,7 +2417,7 @@ SpdySession31::CloseTransaction(nsAHttpTransaction *aTransaction,
           this, aTransaction, aResult));
     return;
   }
-  LOG3(("SpdySession31::CloseTranscation probably a cancel. "
+  LOG3(("SpdySession31::CloseTransaction probably a cancel. "
         "this=%p, trans=%p, result=%x, streamID=0x%X stream=%p",
         this, aTransaction, aResult, stream->StreamID(), stream));
   CleanupStream(stream, aResult, RST_CANCEL);
@@ -2955,6 +2974,34 @@ nsresult
 SpdySession31::PushBack(const char *buf, uint32_t len)
 {
   return mConnection->PushBack(buf, len);
+}
+
+void
+SpdySession31::SendPing()
+{
+  MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
+
+  if (mPreviousUsed) {
+    // alredy in progress, get out
+    return;
+  }
+
+  mPingSentEpoch = PR_IntervalNow();
+  if (!mPingSentEpoch) {
+    mPingSentEpoch = 1; // avoid the 0 sentinel value
+  }
+  if (!mPingThreshold ||
+      (mPingThreshold >  gHttpHandler->NetworkChangedTimeout())) {
+    mPreviousPingThreshold = mPingThreshold;
+    mPreviousUsed = true;
+    mPingThreshold = gHttpHandler->NetworkChangedTimeout();
+  }
+
+  GeneratePing(mNextPingID);
+  mNextPingID += 2;
+  ResumeRecv();
+
+  gHttpHandler->ConnMgr()->ActivateTimeoutTick();
 }
 
 } // namespace mozilla::net

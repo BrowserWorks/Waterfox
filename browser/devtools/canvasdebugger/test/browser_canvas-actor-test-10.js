@@ -7,7 +7,9 @@
  */
 
 function ifTestingSupported() {
-  let [target, debuggee, front] = yield initCanavsDebuggerBackend(WEBGL_BINDINGS_URL);
+  let { target, front } = yield initCanvasDebuggerBackend(WEBGL_BINDINGS_URL);
+  // XXX - use of |debuggee| here is incompatible with e10s - bug 1058879.
+  let debuggee = target.window.wrappedJSObject
 
   let navigated = once(target, "navigate");
 
@@ -73,7 +75,7 @@ function ifTestingSupported() {
   is(new Uint8Array(secondScreenshot.pixels.buffer)[3], 255,
     "The second screenshot has the correct alpha component.");
 
-  let gl = debuggee.gl;
+  gl = debuggee.gl;
   is(gl.getParameter(gl.FRAMEBUFFER_BINDING), debuggee.customFramebuffer,
     "The debuggee's gl context framebuffer still wasn't changed.");
   is(gl.getParameter(gl.RENDERBUFFER_BINDING), debuggee.customRenderbuffer,

@@ -173,6 +173,13 @@ CompositorOGL::CleanupResources()
     mQuadVBO = 0;
   }
 
+  // On the main thread the Widget will be destroyed soon and calling MakeCurrent
+  // after that could cause a crash (at least with GLX, see bug 1059793), unless
+  // context is marked as destroyed.
+  // There may be some textures still alive that will try to call MakeCurrent on
+  // the context so let's make sure it is marked destroyed now.
+  mGLContext->MarkDestroyed();
+
   mGLContext = nullptr;
 }
 
@@ -578,19 +585,19 @@ CompositorOGL::PrepareViewport(const gfx::IntSize& aSize)
   Matrix viewMatrix;
   if (mGLContext->IsOffscreen()) {
     // In case of rendering via GL Offscreen context, disable Y-Flipping
-    viewMatrix.Translate(-1.0, -1.0);
-    viewMatrix.Scale(2.0f / float(aSize.width), 2.0f / float(aSize.height));
+    viewMatrix.PreTranslate(-1.0, -1.0);
+    viewMatrix.PreScale(2.0f / float(aSize.width), 2.0f / float(aSize.height));
   } else {
-    viewMatrix.Translate(-1.0, 1.0);
-    viewMatrix.Scale(2.0f / float(aSize.width), 2.0f / float(aSize.height));
-    viewMatrix.Scale(1.0f, -1.0f);
+    viewMatrix.PreTranslate(-1.0, 1.0);
+    viewMatrix.PreScale(2.0f / float(aSize.width), 2.0f / float(aSize.height));
+    viewMatrix.PreScale(1.0f, -1.0f);
   }
 
   MOZ_ASSERT(mCurrentRenderTarget, "No destination");
   // If we're drawing directly to the window then we want to offset
   // drawing by the render offset.
   if (!mTarget && mCurrentRenderTarget->IsWindow()) {
-    viewMatrix.Translate(mRenderOffset.x, mRenderOffset.y);
+    viewMatrix.PreTranslate(mRenderOffset.x, mRenderOffset.y);
   }
 
   Matrix4x4 matrix3d = Matrix4x4::From2D(viewMatrix);
@@ -602,6 +609,12 @@ CompositorOGL::PrepareViewport(const gfx::IntSize& aSize)
 TemporaryRef<CompositingRenderTarget>
 CompositorOGL::CreateRenderTarget(const IntRect &aRect, SurfaceInitMode aInit)
 {
+  MOZ_ASSERT(aRect.width != 0 && aRect.height != 0, "Trying to create a render target of invalid size");
+
+  if (aRect.width * aRect.height == 0) {
+    return nullptr;
+  }
+
   GLuint tex = 0;
   GLuint fbo = 0;
   CreateFBOWithTexture(aRect, false, 0, &fbo, &tex);
@@ -616,6 +629,12 @@ CompositorOGL::CreateRenderTargetFromSource(const IntRect &aRect,
                                             const CompositingRenderTarget *aSource,
                                             const IntPoint &aSourcePoint)
 {
+  MOZ_ASSERT(aRect.width != 0 && aRect.height != 0, "Trying to create a render target of invalid size");
+
+  if (aRect.width * aRect.height == 0) {
+    return nullptr;
+  }
+
   GLuint tex = 0;
   GLuint fbo = 0;
   const CompositingRenderTargetOGL* sourceSurface
@@ -711,15 +730,6 @@ CompositorOGL::BeginFrame(const nsIntRegion& aInvalidRegion,
     rect = gfx::Rect(0, 0, mSurfaceSize.width, mSurfaceSize.height);
   } else {
     rect = gfx::Rect(aRenderBounds.x, aRenderBounds.y, aRenderBounds.width, aRenderBounds.height);
-    // If render bounds is not updated explicitly, try to infer it from widget
-    if (rect.width == 0 || rect.height == 0) {
-      // FIXME/bug XXXXXX this races with rotation changes on the main
-      // thread, and undoes all the care we take with layers txns being
-      // sent atomically with rotation changes
-      nsIntRect intRect;
-      mWidget->GetClientBounds(intRect);
-      rect = gfx::Rect(0, 0, intRect.width, intRect.height);
-    }
   }
 
   if (aRenderBoundsOut) {
@@ -1214,8 +1224,8 @@ CompositorOGL::DrawQuad(const Rect& aRect,
       // Drawing is always flipped, but when copying between surfaces we want to avoid
       // this, so apply a flip here to cancel the other one out.
       Matrix transform;
-      transform.Translate(0.0, 1.0);
-      transform.Scale(1.0f, -1.0f);
+      transform.PreTranslate(0.0, 1.0);
+      transform.PreScale(1.0f, -1.0f);
       program->SetTextureTransform(Matrix4x4::From2D(transform));
       program->SetTextureUnit(0);
 
@@ -1282,7 +1292,9 @@ CompositorOGL::DrawQuad(const Rect& aRect,
         // won't pick up the TexturePass2 uniform change below if we don't do
         // something to force it. Re-activating the shader seems to be one way
         // of achieving that.
-        program->Activate();
+        GLint program;
+        mGLContext->fGetIntegerv(LOCAL_GL_CURRENT_PROGRAM, &program);
+        mGLContext->fUseProgram(program);
       }
 #endif
 
@@ -1386,46 +1398,32 @@ CompositorOGL::SetFBAcquireFence(Layer* aLayer)
     return;
   }
 
-  const nsIntRegion& visibleRegion = aLayer->GetEffectiveVisibleRegion();
-  if (visibleRegion.IsEmpty()) {
-      return;
+  android::sp<android::Fence> fence = new android::Fence(GetGonkDisplay()->GetPrevFBAcquireFd());
+  if (fence.get() && fence->isValid()) {
+    FenceHandle handle = FenceHandle(fence);
+    mReleaseFenceHandle.Merge(handle);
   }
-
-  // Set FBAcquireFence on ContainerLayer's childs
-  ContainerLayer* container = aLayer->AsContainerLayer();
-  if (container) {
-    for (Layer* child = container->GetFirstChild(); child; child = child->GetNextSibling()) {
-      SetFBAcquireFence(child);
-    }
-    return;
-  }
-
-  // Set FBAcquireFence as tiles' ReleaseFence on TiledLayerComposer.
-  TiledLayerComposer* composer = nullptr;
-  LayerComposite* shadow = aLayer->AsLayerComposite();
-  if (shadow) {
-    composer = shadow->GetTiledLayerComposer();
-    if (composer) {
-      composer->SetReleaseFence(new android::Fence(GetGonkDisplay()->GetPrevFBAcquireFd()));
-      return;
-    }
-  }
-
-  // Set FBAcquireFence as layer buffer's ReleaseFence
-  LayerRenderState state = aLayer->GetRenderState();
-  if (!state.mTexture) {
-    return;
-  }
-  TextureHostOGL* texture = state.mTexture->AsHostOGL();
-  if (!texture) {
-    return;
-  }
-  texture->SetReleaseFence(new android::Fence(GetGonkDisplay()->GetPrevFBAcquireFd()));
 }
+
+FenceHandle
+CompositorOGL::GetReleaseFence()
+{
+  if (!mReleaseFenceHandle.IsValid()) {
+    return FenceHandle();
+  }
+  return FenceHandle(new android::Fence(mReleaseFenceHandle.mFence->dup()));
+}
+
 #else
 void
 CompositorOGL::SetFBAcquireFence(Layer* aLayer)
 {
+}
+
+FenceHandle
+CompositorOGL::GetReleaseFence()
+{
+  return FenceHandle();
 }
 #endif
 
@@ -1498,8 +1496,8 @@ CompositorOGL::CopyToTarget(DrawTarget* aTarget, const nsIntPoint& aTopLeft, con
   // Map from GL space to Cairo space and reverse the world transform.
   Matrix glToCairoTransform = aTransform;
   glToCairoTransform.Invert();
-  glToCairoTransform.Scale(1.0, -1.0);
-  glToCairoTransform.Translate(0.0, -height);
+  glToCairoTransform.PreScale(1.0, -1.0);
+  glToCairoTransform.PreTranslate(0.0, -height);
 
   glToCairoTransform.PostTranslate(-aTopLeft.x, -aTopLeft.y);
 

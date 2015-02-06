@@ -11,10 +11,11 @@
 #include "mozilla/MemoryReporting.h"
 
 #include "jscntxt.h"
-#include "jsproxy.h"
 
 #include "gc/Marking.h"
 #include "gc/Zone.h"
+#include "proxy/Proxy.h"
+#include "vm/ArrayObject.h"
 #include "vm/Shape.h"
 
 /*
@@ -100,6 +101,11 @@ CloneRegExpObject(JSContext *cx, JSObject *obj);
 class RegExpShared
 {
   public:
+    enum CompilationMode {
+        Normal,
+        MatchOnly
+    };
+
     enum ForceByteCodeEnum {
         DontForceByteCode,
         ForceByteCode
@@ -111,6 +117,19 @@ class RegExpShared
 
     typedef frontend::TokenStream TokenStream;
 
+    struct RegExpCompilation
+    {
+        HeapPtrJitCode jitCode;
+        uint8_t *byteCode;
+
+        RegExpCompilation() : byteCode(nullptr) {}
+        ~RegExpCompilation() { js_free(byteCode); }
+
+        bool compiled(ForceByteCodeEnum force = DontForceByteCode) const {
+            return byteCode || (force == DontForceByteCode && jitCode);
+        }
+    };
+
     /* Source to the RegExp, for lazy compilation. */
     HeapPtrAtom        source;
 
@@ -119,29 +138,44 @@ class RegExpShared
     bool               canStringMatch;
     bool               marked_;
 
-    HeapPtrJitCode     jitCodeLatin1;
-    HeapPtrJitCode     jitCodeTwoByte;
-    uint8_t            *byteCodeLatin1;
-    uint8_t            *byteCodeTwoByte;
+    RegExpCompilation  compilationArray[4];
+
+    static int CompilationIndex(CompilationMode mode, bool latin1) {
+        switch (mode) {
+          case Normal:    return latin1 ? 0 : 1;
+          case MatchOnly: return latin1 ? 2 : 3;
+        }
+        MOZ_CRASH();
+    }
 
     // Tables referenced by JIT code.
     Vector<uint8_t *, 0, SystemAllocPolicy> tables;
 
     /* Internal functions. */
-    bool compile(JSContext *cx, HandleLinearString input, ForceByteCodeEnum force);
+    bool compile(JSContext *cx, HandleLinearString input,
+                 CompilationMode mode, ForceByteCodeEnum force);
     bool compile(JSContext *cx, HandleAtom pattern, HandleLinearString input,
-                 ForceByteCodeEnum force);
+                 CompilationMode mode, ForceByteCodeEnum force);
 
     bool compileIfNecessary(JSContext *cx, HandleLinearString input,
-                            ForceByteCodeEnum force);
+                            CompilationMode mode, ForceByteCodeEnum force);
+
+    const RegExpCompilation &compilation(CompilationMode mode, bool latin1) const {
+        return compilationArray[CompilationIndex(mode, latin1)];
+    }
+
+    RegExpCompilation &compilation(CompilationMode mode, bool latin1) {
+        return compilationArray[CompilationIndex(mode, latin1)];
+    }
 
   public:
     RegExpShared(JSAtom *source, RegExpFlag flags);
     ~RegExpShared();
 
-    /* Primary interface: run this regular expression on the given string. */
-    RegExpRunStatus execute(JSContext *cx, HandleLinearString input, size_t *lastIndex,
-                            MatchPairs &matches);
+    // Execute this RegExp on input starting from searchIndex, filling in
+    // matches if specified and otherwise only determining if there is a match.
+    RegExpRunStatus execute(JSContext *cx, HandleLinearString input, size_t searchIndex,
+                            MatchPairs *matches);
 
     // Register a table with this RegExpShared, and take ownership.
     bool addTable(uint8_t *table) {
@@ -151,7 +185,7 @@ class RegExpShared
     /* Accessors */
 
     size_t getParenCount() const {
-        JS_ASSERT(isCompiled() || canStringMatch);
+        MOZ_ASSERT(isCompiled() || canStringMatch);
         return parenCount;
     }
 
@@ -165,37 +199,37 @@ class RegExpShared
     bool multiline() const              { return flags & MultilineFlag; }
     bool sticky() const                 { return flags & StickyFlag; }
 
-    bool hasJitCodeLatin1() const {
-        return jitCodeLatin1 != nullptr;
-    }
-    bool hasJitCodeTwoByte() const {
-        return jitCodeTwoByte != nullptr;
-    }
-    bool hasByteCodeLatin1() const {
-        return byteCodeLatin1 != nullptr;
-    }
-    bool hasByteCodeTwoByte() const {
-        return byteCodeTwoByte != nullptr;
-    }
-    uint8_t *maybeByteCode(bool latin1) const {
-        return latin1 ? byteCodeLatin1 : byteCodeTwoByte;
-    }
-
-    bool isCompiled(bool latin1, ForceByteCodeEnum force = DontForceByteCode) const {
-        if (force == DontForceByteCode) {
-            if (latin1 ? hasJitCodeLatin1() : hasJitCodeTwoByte())
-                return true;
-        }
-        return latin1 ? hasByteCodeLatin1() : hasByteCodeTwoByte();
+    bool isCompiled(CompilationMode mode, bool latin1,
+                    ForceByteCodeEnum force = DontForceByteCode) const {
+        return compilation(mode, latin1).compiled(force);
     }
     bool isCompiled() const {
-        return isCompiled(true) || isCompiled(false);
+        return isCompiled(Normal, true) || isCompiled(Normal, false)
+            || isCompiled(MatchOnly, true) || isCompiled(MatchOnly, false);
     }
 
     void trace(JSTracer *trc);
 
     bool marked() const { return marked_; }
-    void clearMarked() { JS_ASSERT(marked_); marked_ = false; }
+    void clearMarked() { marked_ = false; }
+
+    static size_t offsetOfSource() {
+        return offsetof(RegExpShared, source);
+    }
+
+    static size_t offsetOfFlags() {
+        return offsetof(RegExpShared, flags);
+    }
+
+    static size_t offsetOfParenCount() {
+        return offsetof(RegExpShared, parenCount);
+    }
+
+    static size_t offsetOfJitCode(CompilationMode mode, bool latin1) {
+        return offsetof(RegExpShared, compilationArray)
+             + (CompilationIndex(mode, latin1) * sizeof(RegExpCompilation))
+             + offsetof(RegExpCompilation, jitCode);
+    }
 
     size_t sizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf);
 };
@@ -228,7 +262,7 @@ class RegExpGuard : public JS::CustomAutoRooter
 
   public:
     void init(RegExpShared &re) {
-        JS_ASSERT(!initialized());
+        MOZ_ASSERT(!initialized());
         re_ = &re;
     }
 
@@ -242,7 +276,7 @@ class RegExpGuard : public JS::CustomAutoRooter
     }
 
     bool initialized() const { return !!re_; }
-    RegExpShared *re() const { JS_ASSERT(initialized()); return re_; }
+    RegExpShared *re() const { MOZ_ASSERT(initialized()); return re_; }
     RegExpShared *operator->() { return re(); }
     RegExpShared &operator*() { return *re(); }
 };
@@ -282,9 +316,9 @@ class RegExpCompartment
      * if there is a result. This is used in CreateRegExpMatchResult to set
      * the input/index properties faster.
      */
-    ReadBarrieredObject matchResultTemplateObject_;
+    ReadBarriered<ArrayObject *> matchResultTemplateObject_;
 
-    JSObject *createMatchResultTemplateObject(JSContext *cx);
+    ArrayObject *createMatchResultTemplateObject(JSContext *cx);
 
   public:
     explicit RegExpCompartment(JSRuntime *rt);
@@ -301,7 +335,7 @@ class RegExpCompartment
     bool get(JSContext *cx, HandleAtom source, JSString *maybeOpt, RegExpGuard *g);
 
     /* Get or create template object used to base the result of .exec() on. */
-    JSObject *getOrCreateMatchResultTemplateObject(JSContext *cx) {
+    ArrayObject *getOrCreateMatchResultTemplateObject(JSContext *cx) {
         if (matchResultTemplateObject_)
             return matchResultTemplateObject_;
         return createMatchResultTemplateObject(cx);
@@ -310,7 +344,7 @@ class RegExpCompartment
     size_t sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf);
 };
 
-class RegExpObject : public JSObject
+class RegExpObject : public NativeObject
 {
     static const unsigned LAST_INDEX_SLOT          = 0;
     static const unsigned SOURCE_SLOT              = 1;
@@ -321,6 +355,7 @@ class RegExpObject : public JSObject
 
   public:
     static const unsigned RESERVED_SLOTS = 6;
+    static const unsigned PRIVATE_SLOT = 7;
 
     static const Class class_;
 
@@ -330,11 +365,11 @@ class RegExpObject : public JSObject
      * execution, as opposed to during something like XDR.
      */
     static RegExpObject *
-    create(ExclusiveContext *cx, RegExpStatics *res, const jschar *chars, size_t length,
+    create(ExclusiveContext *cx, RegExpStatics *res, const char16_t *chars, size_t length,
            RegExpFlag flags, frontend::TokenStream *ts, LifoAlloc &alloc);
 
     static RegExpObject *
-    createNoStatics(ExclusiveContext *cx, const jschar *chars, size_t length, RegExpFlag flags,
+    createNoStatics(ExclusiveContext *cx, const char16_t *chars, size_t length, RegExpFlag flags,
                     frontend::TokenStream *ts, LifoAlloc &alloc);
 
     static RegExpObject *
@@ -402,8 +437,8 @@ class RegExpObject : public JSObject
     bool getShared(JSContext *cx, RegExpGuard *g);
 
     void setShared(RegExpShared &shared) {
-        JS_ASSERT(!maybeShared());
-        JSObject::setPrivate(&shared);
+        MOZ_ASSERT(!maybeShared());
+        NativeObject::setPrivate(&shared);
     }
 
     static void trace(JSTracer *trc, JSObject *obj);
@@ -432,7 +467,7 @@ class RegExpObject : public JSObject
      */
     bool createShared(JSContext *cx, RegExpGuard *g);
     RegExpShared *maybeShared() const {
-        return static_cast<RegExpShared *>(JSObject::getPrivate());
+        return static_cast<RegExpShared *>(NativeObject::getPrivate(PRIVATE_SLOT));
     }
 
     /* Call setShared in preference to setPrivate. */
@@ -459,7 +494,7 @@ RegExpToShared(JSContext *cx, HandleObject obj, RegExpGuard *g)
 
 template<XDRMode mode>
 bool
-XDRScriptRegExpObject(XDRState<mode> *xdr, HeapPtrObject *objp);
+XDRScriptRegExpObject(XDRState<mode> *xdr, MutableHandle<RegExpObject*> objp);
 
 extern JSObject *
 CloneScriptRegExpObject(JSContext *cx, RegExpObject &re);

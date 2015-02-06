@@ -6,6 +6,7 @@
 
 #include "nsHTMLDocument.h"
 
+#include "nsIContentPolicy.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/dom/HTMLAllCollection.h"
 #include "nsCOMPtr.h"
@@ -1118,7 +1119,7 @@ bool
 nsHTMLDocument::MatchLinks(nsIContent *aContent, int32_t aNamespaceID,
                            nsIAtom* aAtom, void* aData)
 {
-  nsIDocument* doc = aContent->GetCurrentDoc();
+  nsIDocument* doc = aContent->GetUncomposedDoc();
 
   if (doc) {
     NS_ASSERTION(aContent->IsInDoc(),
@@ -1127,7 +1128,7 @@ nsHTMLDocument::MatchLinks(nsIContent *aContent, int32_t aNamespaceID,
 #ifdef DEBUG
     {
       nsCOMPtr<nsIHTMLDocument> htmldoc =
-        do_QueryInterface(aContent->GetCurrentDoc());
+        do_QueryInterface(aContent->GetUncomposedDoc());
       NS_ASSERTION(htmldoc,
                    "Huh, how did this happen? This should only be used with "
                    "HTML documents!");
@@ -1172,7 +1173,7 @@ nsHTMLDocument::MatchAnchors(nsIContent *aContent, int32_t aNamespaceID,
 #ifdef DEBUG
   {
     nsCOMPtr<nsIHTMLDocument> htmldoc =
-      do_QueryInterface(aContent->GetCurrentDoc());
+      do_QueryInterface(aContent->GetUncomposedDoc());
     NS_ASSERTION(htmldoc,
                  "Huh, how did this happen? This should only be used with "
                  "HTML documents!");
@@ -1510,8 +1511,13 @@ nsHTMLDocument::Open(JSContext* cx,
   // So we reset the document and create a new one.
   nsCOMPtr<nsIChannel> channel;
   nsCOMPtr<nsILoadGroup> group = do_QueryReferent(mDocumentLoadGroup);
-
-  rv = NS_NewChannel(getter_AddRefs(channel), uri, nullptr, group);
+  rv = NS_NewChannel(getter_AddRefs(channel),
+                     uri,
+                     callerDoc,
+                     nsILoadInfo::SEC_FORCE_INHERIT_PRINCIPAL,
+                     nsIContentPolicy::TYPE_OTHER,
+                     nullptr,   // aChannelPolicy
+                     group);
 
   if (rv.Failed()) {
     return nullptr;
@@ -1520,12 +1526,6 @@ nsHTMLDocument::Open(JSContext* cx,
   // We can't depend on channels implementing property bags, so do our
   // base URI manually after reset.
 
-  // Set the caller principal, if any, on the channel so that we'll
-  // make sure to use it when we reset.
-  nsCOMPtr<nsILoadInfo> loadInfo =
-    new LoadInfo(callerPrincipal, LoadInfo::eInheritPrincipal,
-                 LoadInfo::eNotSandboxed);
-  rv = channel->SetLoadInfo(loadInfo);
   if (rv.Failed()) {
     return nullptr;
   }
@@ -1998,8 +1998,7 @@ static void* CreateTokens(nsINode* aRootNode, const nsString* types)
       ++iter;
     } while (iter != end && !nsContentUtils::IsHTMLWhitespace(*iter));
 
-    nsCOMPtr<nsIAtom> token = do_GetAtom(Substring(start, iter));
-    tokens->AppendElement(token);
+    tokens->AppendElement(do_GetAtom(Substring(start, iter)));
 
     // skip whitespace
     while (iter != end && nsContentUtils::IsHTMLWhitespace(*iter)) {
@@ -2374,7 +2373,12 @@ nsHTMLDocument::CreateAndAddWyciwygChannel(void)
   // document.write() script to cache
   nsCOMPtr<nsIChannel> channel;
   // Create a wyciwyg Channel
-  rv = NS_NewChannel(getter_AddRefs(channel), wcwgURI);
+  rv = NS_NewChannel(getter_AddRefs(channel),
+                     wcwgURI,
+                     NodePrincipal(),
+                     nsILoadInfo::SEC_FORCE_INHERIT_PRINCIPAL,
+                     nsIContentPolicy::TYPE_OTHER);
+
   NS_ENSURE_SUCCESS(rv, rv);
 
   mWyciwygChannel = do_QueryInterface(channel);
@@ -2386,12 +2390,6 @@ nsHTMLDocument::CreateAndAddWyciwygChannel(void)
   SetDocumentCharacterSetSource(kCharsetFromHintPrevDoc);
   mWyciwygChannel->SetCharsetAndSource(kCharsetFromHintPrevDoc,
                                        GetDocumentCharacterSet());
-
-  // Use our new principal
-  nsCOMPtr<nsILoadInfo> loadInfo =
-    new LoadInfo(NodePrincipal(), LoadInfo::eInheritPrincipal,
-                 LoadInfo::eNotSandboxed);
-  channel->SetLoadInfo(loadInfo);
 
   // Inherit load flags from the original document's channel
   channel->SetLoadFlags(mLoadFlags);

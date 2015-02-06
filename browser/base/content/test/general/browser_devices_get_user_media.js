@@ -127,6 +127,12 @@ function promiseNoPopupNotification(aName) {
   return deferred.promise;
 }
 
+function enableDevice(aType, aEnabled) {
+  let menulist = document.getElementById("webRTC-select" + aType + "-menulist");
+  let menupopup = document.getElementById("webRTC-select" + aType + "-menupopup");
+  menulist.value = aEnabled ? menupopup.firstChild.getAttribute("value") : "-1";
+}
+
 const kActionAlways = 1;
 const kActionDeny = 2;
 const kActionNever = 3;
@@ -172,7 +178,7 @@ function getMediaCaptureState() {
   return "none";
 }
 
-function closeStream(aAlreadyClosed) {
+function* closeStream(aAlreadyClosed) {
   expectNoObserverCalled();
 
   info("closing the stream");
@@ -185,7 +191,7 @@ function closeStream(aAlreadyClosed) {
   if (!aAlreadyClosed)
     expectObserverCalled("recording-window-ended");
 
-  assertWebRTCIndicatorStatus(null);
+  yield* assertWebRTCIndicatorStatus(null);
 }
 
 function checkDeviceSelectors(aAudio, aVideo) {
@@ -202,19 +208,19 @@ function checkDeviceSelectors(aAudio, aVideo) {
     ok(cameraSelector.hidden, "camera selector hidden");
 }
 
-function checkSharingUI(aExpected) {
+function* checkSharingUI(aExpected) {
   yield promisePopupNotification("webRTC-sharingDevices");
 
-  assertWebRTCIndicatorStatus(aExpected);
+  yield* assertWebRTCIndicatorStatus(aExpected);
 }
 
-function checkNotSharing() {
+function* checkNotSharing() {
   is(getMediaCaptureState(), "none", "expected nothing to be shared");
 
   ok(!PopupNotifications.getNotification("webRTC-sharingDevices"),
      "no webRTC-sharingDevices popup notification");
 
-  assertWebRTCIndicatorStatus(null);
+  yield* assertWebRTCIndicatorStatus(null);
 }
 
 let gTests = [
@@ -312,14 +318,14 @@ let gTests = [
     checkDeviceSelectors(true, true);
 
     // disable the camera
-    document.getElementById("webRTC-selectCamera-menulist").value = -1;
+    enableDevice("Camera", false);
 
     yield promiseMessage("ok", () => {
       PopupNotifications.panel.firstChild.button.click();
     });
 
     // reset the menuitem to have no impact on the following tests.
-    document.getElementById("webRTC-selectCamera-menulist").value = 0;
+    enableDevice("Camera", true);
 
     expectObserverCalled("getUserMedia:response:allow");
     expectObserverCalled("recording-device-events");
@@ -342,14 +348,14 @@ let gTests = [
     checkDeviceSelectors(true, true);
 
     // disable the microphone
-    document.getElementById("webRTC-selectMicrophone-menulist").value = -1;
+    enableDevice("Microphone", false);
 
     yield promiseMessage("ok", () => {
       PopupNotifications.panel.firstChild.button.click();
     });
 
     // reset the menuitem to have no impact on the following tests.
-    document.getElementById("webRTC-selectMicrophone-menulist").value = 0;
+    enableDevice("Microphone", true);
 
     expectObserverCalled("getUserMedia:response:allow");
     expectObserverCalled("recording-device-events");
@@ -372,20 +378,20 @@ let gTests = [
     checkDeviceSelectors(true, true);
 
     // disable the camera and microphone
-    document.getElementById("webRTC-selectCamera-menulist").value = -1;
-    document.getElementById("webRTC-selectMicrophone-menulist").value = -1;
+    enableDevice("Camera", false);
+    enableDevice("Microphone", false);
 
     yield promiseMessage("error: PERMISSION_DENIED", () => {
       PopupNotifications.panel.firstChild.button.click();
     });
 
     // reset the menuitems to have no impact on the following tests.
-    document.getElementById("webRTC-selectCamera-menulist").value = 0;
-    document.getElementById("webRTC-selectMicrophone-menulist").value = 0;
+    enableDevice("Camera", true);
+    enableDevice("Microphone", true);
 
     expectObserverCalled("getUserMedia:response:deny");
     expectObserverCalled("recording-window-ended");
-    checkNotSharing();
+    yield checkNotSharing();
   }
 },
 
@@ -405,7 +411,7 @@ let gTests = [
 
     expectObserverCalled("getUserMedia:response:deny");
     expectObserverCalled("recording-window-ended");
-    checkNotSharing();
+    yield checkNotSharing();
   }
 },
 
@@ -444,7 +450,7 @@ let gTests = [
     }
 
     expectNoObserverCalled();
-    checkNotSharing();
+    yield checkNotSharing();
 
     // the stream is already closed, but this will do some cleanup anyway
     yield closeStream(true);
@@ -467,13 +473,13 @@ let gTests = [
       is(elt("webRTC-selectMicrophone").hidden, noAudio,
          "microphone selector expected to be " + (noAudio ? "hidden" : "visible"));
       if (!noAudio)
-        elt("webRTC-selectMicrophone-menulist").value = (aAllowAudio || aNever) ? 0 : -1;
+        enableDevice("Microphone", aAllowAudio || aNever);
 
       let noVideo = aAllowVideo === undefined;
       is(elt("webRTC-selectCamera").hidden, noVideo,
          "camera selector expected to be " + (noVideo ? "hidden" : "visible"));
       if (!noVideo)
-        elt("webRTC-selectCamera-menulist").value = (aAllowVideo || aNever) ? 0 : -1;
+        enableDevice("Camera", aAllowVideo || aNever);
 
       let expectedMessage =
         (aAllowVideo || aAllowAudio) ? "ok" : "error: PERMISSION_DENIED";
@@ -550,8 +556,8 @@ let gTests = [
     yield checkPerm(true, true, false, true, false, true);
 
     // reset the menuitems to have no impact on the following tests.
-    elt("webRTC-selectMicrophone-menulist").value = 0;
-    elt("webRTC-selectCamera-menulist").value = 0;
+    enableDevice("Microphone", true);
+    enableDevice("Camera", true);
   }
 },
 

@@ -35,6 +35,10 @@ class SplayTree
     LifoAlloc *alloc;
     Node *root, *freeList;
 
+#ifdef DEBUG
+    bool enableCheckCoherency;
+#endif
+
     SplayTree(const SplayTree &) MOZ_DELETE;
     SplayTree &operator=(const SplayTree &) MOZ_DELETE;
 
@@ -42,10 +46,19 @@ class SplayTree
 
     explicit SplayTree(LifoAlloc *alloc = nullptr)
       : alloc(alloc), root(nullptr), freeList(nullptr)
+#ifdef DEBUG
+      , enableCheckCoherency(true)
+#endif
     {}
 
     void setAllocator(LifoAlloc *alloc) {
         this->alloc = alloc;
+    }
+
+    void disableCheckCoherency() {
+#ifdef DEBUG
+        enableCheckCoherency = false;
+#endif
     }
 
     bool empty() const {
@@ -80,10 +93,10 @@ class SplayTree
         int cmp = C::compare(v, last->item);
 
         // Don't tolerate duplicate elements.
-        JS_ASSERT(cmp);
+        MOZ_ASSERT(cmp);
 
         Node *&parentPointer = (cmp < 0) ? last->left : last->right;
-        JS_ASSERT(!parentPointer);
+        MOZ_ASSERT(!parentPointer);
         parentPointer = element;
         element->parent = last;
 
@@ -95,10 +108,10 @@ class SplayTree
     void remove(const T &v)
     {
         Node *last = lookup(v);
-        JS_ASSERT(last && C::compare(v, last->item) == 0);
+        MOZ_ASSERT(last && C::compare(v, last->item) == 0);
 
         splay(last);
-        JS_ASSERT(last == root);
+        MOZ_ASSERT(last == root);
 
         // Find another node which can be swapped in for the root: either the
         // rightmost child of the root's left, or the leftmost child of the
@@ -145,7 +158,7 @@ class SplayTree
 
     Node *lookup(const T &v)
     {
-        JS_ASSERT(root);
+        MOZ_ASSERT(root);
         Node *node = root, *parent;
         do {
             parent = node;
@@ -182,13 +195,13 @@ class SplayTree
         // Rotate the element until it is at the root of the tree. Performing
         // the rotations in this fashion preserves the amortized balancing of
         // the tree.
-        JS_ASSERT(node);
+        MOZ_ASSERT(node);
         while (node != root) {
             Node *parent = node->parent;
             if (parent == root) {
                 // Zig rotation.
                 rotate(node);
-                JS_ASSERT(node == root);
+                MOZ_ASSERT(node == root);
                 return;
             }
             Node *grandparent = parent->parent;
@@ -218,7 +231,7 @@ class SplayTree
                 node->right->parent = parent;
             node->right = parent;
         } else {
-            JS_ASSERT(parent->right == node);
+            MOZ_ASSERT(parent->right == node);
             //   x             y
             //  a  y   ==>   x  c
             //    b c       a b
@@ -253,19 +266,21 @@ class SplayTree
     Node *checkCoherency(Node *node, Node *minimum)
     {
 #ifdef DEBUG
+        if (!enableCheckCoherency)
+            return nullptr;
         if (!node) {
-            JS_ASSERT(!root);
+            MOZ_ASSERT(!root);
             return nullptr;
         }
-        JS_ASSERT_IF(!node->parent, node == root);
-        JS_ASSERT_IF(minimum, C::compare(minimum->item, node->item) < 0);
+        MOZ_ASSERT_IF(!node->parent, node == root);
+        MOZ_ASSERT_IF(minimum, C::compare(minimum->item, node->item) < 0);
         if (node->left) {
-            JS_ASSERT(node->left->parent == node);
+            MOZ_ASSERT(node->left->parent == node);
             Node *leftMaximum = checkCoherency(node->left, minimum);
-            JS_ASSERT(C::compare(leftMaximum->item, node->item) < 0);
+            MOZ_ASSERT(C::compare(leftMaximum->item, node->item) < 0);
         }
         if (node->right) {
-            JS_ASSERT(node->right->parent == node);
+            MOZ_ASSERT(node->right->parent == node);
             return checkCoherency(node->right, node);
         }
         return node;

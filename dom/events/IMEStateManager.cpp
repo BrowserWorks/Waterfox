@@ -25,6 +25,7 @@
 #include "nsIContent.h"
 #include "nsIDocument.h"
 #include "nsIDOMMouseEvent.h"
+#include "nsIEditor.h"
 #include "nsIForm.h"
 #include "nsIFormControl.h"
 #include "nsINode.h"
@@ -131,19 +132,6 @@ GetIMEStateSetOpenName(IMEState::Open aOpen)
 }
 
 static const char*
-GetEventClassIDName(EventClassID aEventClassID)
-{
-  switch (aEventClassID) {
-    case eCompositionEventClass:
-      return "eCompositionEventClass";
-    case eTextEventClass:
-      return "eTextEventClass";
-    default:
-      return "unacceptable event struct type";
-  }
-}
-
-static const char*
 GetEventMessageName(uint32_t aMessage)
 {
   switch (aMessage) {
@@ -153,8 +141,8 @@ GetEventMessageName(uint32_t aMessage)
       return "NS_COMPOSITION_END";
     case NS_COMPOSITION_UPDATE:
       return "NS_COMPOSITION_UPDATE";
-    case NS_TEXT_TEXT:
-      return "NS_TEXT_TEXT";
+    case NS_COMPOSITION_CHANGE:
+      return "NS_COMPOSITION_CHANGE";
     default:
       return "unacceptable event message";
   }
@@ -164,8 +152,6 @@ static const char*
 GetNotifyIMEMessageName(IMEMessage aMessage)
 {
   switch (aMessage) {
-    case NOTIFY_IME_OF_CURSOR_POS_CHANGED:
-      return "NOTIFY_IME_OF_CURSOR_POS_CHANGED";
     case NOTIFY_IME_OF_FOCUS:
       return "NOTIFY_IME_OF_FOCUS";
     case NOTIFY_IME_OF_BLUR:
@@ -298,27 +284,12 @@ IMEStateManager::OnRemoveContent(nsPresContext* aPresContext,
       // composition events which are caused by following APIs are ignored due
       // to unsafe to run script (in PresShell::HandleEvent()).
       nsCOMPtr<nsIWidget> widget = aPresContext->GetRootWidget();
-      if (widget) {
-        nsresult rv =
-          compositionInContent->NotifyIME(REQUEST_TO_CANCEL_COMPOSITION);
-        if (NS_FAILED(rv)) {
-          compositionInContent->NotifyIME(REQUEST_TO_COMMIT_COMPOSITION);
-        }
-        // By calling the APIs, the composition may have been finished normally.
-        compositionInContent =
-          sTextCompositions->GetCompositionFor(
-                               compositionInContent->GetPresContext(),
-                               compositionInContent->GetEventTargetNode());
+      MOZ_ASSERT(widget, "Why is there no widget?");
+      nsresult rv =
+        compositionInContent->NotifyIME(REQUEST_TO_CANCEL_COMPOSITION);
+      if (NS_FAILED(rv)) {
+        compositionInContent->NotifyIME(REQUEST_TO_COMMIT_COMPOSITION);
       }
-    }
-
-    // If the compositionInContent is still available, we should finish the
-    // composition just on the content forcibly.
-    if (compositionInContent) {
-      PR_LOG(sISMLog, PR_LOG_DEBUG,
-        ("ISM:   IMEStateManager::OnRemoveContent(), "
-         "composition in the content still alive, committing it forcibly..."));
-      compositionInContent->SynthesizeCommit(true);
     }
   }
 
@@ -589,12 +560,14 @@ IMEStateManager::OnClickInEditor(nsPresContext* aPresContext,
 // static
 void
 IMEStateManager::OnFocusInEditor(nsPresContext* aPresContext,
-                                 nsIContent* aContent)
+                                 nsIContent* aContent,
+                                 nsIEditor* aEditor)
 {
   PR_LOG(sISMLog, PR_LOG_ALWAYS,
-    ("ISM: IMEStateManager::OnFocusInEditor(aPresContext=0x%p, aContent=0x%p), "
-     "sPresContext=0x%p, sContent=0x%p, sActiveIMEContentObserver=0x%p",
-     aPresContext, aContent, sPresContext, sContent,
+    ("ISM: IMEStateManager::OnFocusInEditor(aPresContext=0x%p, aContent=0x%p, "
+     "aEditor=0x%p), sPresContext=0x%p, sContent=0x%p, "
+     "sActiveIMEContentObserver=0x%p",
+     aPresContext, aContent, aEditor, sPresContext, sContent,
      sActiveIMEContentObserver));
 
   if (sPresContext != aPresContext || sContent != aContent) {
@@ -616,21 +589,22 @@ IMEStateManager::OnFocusInEditor(nsPresContext* aPresContext,
     DestroyIMEContentObserver();
   }
 
-  CreateIMEContentObserver();
+  CreateIMEContentObserver(aEditor);
 }
 
 // static
 void
 IMEStateManager::UpdateIMEState(const IMEState& aNewIMEState,
-                                nsIContent* aContent)
+                                nsIContent* aContent,
+                                nsIEditor* aEditor)
 {
   PR_LOG(sISMLog, PR_LOG_ALWAYS,
     ("ISM: IMEStateManager::UpdateIMEState(aNewIMEState={ mEnabled=%s, "
-     "mOpen=%s }, aContent=0x%p), "
+     "mOpen=%s }, aContent=0x%p, aEditor=0x%p), "
      "sPresContext=0x%p, sContent=0x%p, sActiveIMEContentObserver=0x%p, "
      "sIsGettingNewIMEState=%s",
      GetIMEStateEnabledName(aNewIMEState.mEnabled),
-     GetIMEStateSetOpenName(aNewIMEState.mOpen), aContent,
+     GetIMEStateSetOpenName(aNewIMEState.mOpen), aContent, aEditor,
      sPresContext, sContent, sActiveIMEContentObserver,
      GetBoolName(sIsGettingNewIMEState)));
 
@@ -681,7 +655,7 @@ IMEStateManager::UpdateIMEState(const IMEState& aNewIMEState,
   }
 
   if (createTextStateManager) {
-    CreateIMEContentObserver();
+    CreateIMEContentObserver(aEditor);
   }
 }
 
@@ -746,7 +720,7 @@ IMEStateManager::GetNewIMEState(nsPresContext* aPresContext,
 // Helper class, used for IME enabled state change notification
 class IMEEnabledStateChangedEvent : public nsRunnable {
 public:
-  IMEEnabledStateChangedEvent(uint32_t aState)
+  explicit IMEEnabledStateChangedEvent(uint32_t aState)
     : mState(aState)
   {
   }
@@ -900,57 +874,78 @@ IMEStateManager::EnsureTextCompositionArray()
 
 // static
 void
-IMEStateManager::DispatchCompositionEvent(nsINode* aEventTargetNode,
-                                          nsPresContext* aPresContext,
-                                          WidgetEvent* aEvent,
-                                          nsEventStatus* aStatus,
-                                          EventDispatchingCallback* aCallBack)
+IMEStateManager::DispatchCompositionEvent(
+                   nsINode* aEventTargetNode,
+                   nsPresContext* aPresContext,
+                   WidgetCompositionEvent* aCompositionEvent,
+                   nsEventStatus* aStatus,
+                   EventDispatchingCallback* aCallBack,
+                   bool aIsSynthesized)
 {
   PR_LOG(sISMLog, PR_LOG_ALWAYS,
     ("ISM: IMEStateManager::DispatchCompositionEvent(aNode=0x%p, "
-     "aPresContext=0x%p, aEvent={ mClass=%s, message=%s, "
-     " mFlags={ mIsTrusted=%s, mPropagationStopped=%s } })",
+     "aPresContext=0x%p, aCompositionEvent={ message=%s, "
+     "mFlags={ mIsTrusted=%s, mPropagationStopped=%s } }, "
+     "aIsSynthesized=%s)",
      aEventTargetNode, aPresContext,
-     GetEventClassIDName(aEvent->mClass),
-     GetEventMessageName(aEvent->message),
-     GetBoolName(aEvent->mFlags.mIsTrusted),
-     GetBoolName(aEvent->mFlags.mPropagationStopped)));
+     GetEventMessageName(aCompositionEvent->message),
+     GetBoolName(aCompositionEvent->mFlags.mIsTrusted),
+     GetBoolName(aCompositionEvent->mFlags.mPropagationStopped),
+     GetBoolName(aIsSynthesized)));
 
-  MOZ_ASSERT(aEvent->mClass == eCompositionEventClass ||
-             aEvent->mClass == eTextEventClass);
-  if (!aEvent->mFlags.mIsTrusted || aEvent->mFlags.mPropagationStopped) {
+  if (!aCompositionEvent->mFlags.mIsTrusted ||
+      aCompositionEvent->mFlags.mPropagationStopped) {
     return;
   }
 
+  MOZ_ASSERT(aCompositionEvent->message != NS_COMPOSITION_UPDATE,
+             "compositionupdate event shouldn't be dispatched manually");
+
   EnsureTextCompositionArray();
 
-  WidgetGUIEvent* GUIEvent = aEvent->AsGUIEvent();
-
   nsRefPtr<TextComposition> composition =
-    sTextCompositions->GetCompositionFor(GUIEvent->widget);
+    sTextCompositions->GetCompositionFor(aCompositionEvent->widget);
   if (!composition) {
+    // If synthesized event comes after delayed native composition events
+    // for request of commit or cancel, we should ignore it.
+    if (NS_WARN_IF(aIsSynthesized)) {
+      return;
+    }
     PR_LOG(sISMLog, PR_LOG_DEBUG,
       ("ISM:   IMEStateManager::DispatchCompositionEvent(), "
        "adding new TextComposition to the array"));
-    MOZ_ASSERT(GUIEvent->message == NS_COMPOSITION_START);
-    composition = new TextComposition(aPresContext, aEventTargetNode, GUIEvent);
+    MOZ_ASSERT(aCompositionEvent->message == NS_COMPOSITION_START);
+    composition =
+      new TextComposition(aPresContext, aEventTargetNode, aCompositionEvent);
     sTextCompositions->AppendElement(composition);
   }
 #ifdef DEBUG
   else {
-    MOZ_ASSERT(GUIEvent->message != NS_COMPOSITION_START);
+    MOZ_ASSERT(aCompositionEvent->message != NS_COMPOSITION_START);
   }
 #endif // #ifdef DEBUG
 
   // Dispatch the event on composing target.
-  composition->DispatchEvent(GUIEvent, aStatus, aCallBack);
+  composition->DispatchCompositionEvent(aCompositionEvent, aStatus, aCallBack,
+                                        aIsSynthesized);
 
   // WARNING: the |composition| might have been destroyed already.
 
   // Remove the ended composition from the array.
-  if (aEvent->message == NS_COMPOSITION_END) {
+  // NOTE: When TextComposition is synthesizing compositionend event for
+  //       emulating a commit, the instance shouldn't be removed from the array
+  //       because IME may perform it later.  Then, we need to ignore the
+  //       following commit events in TextComposition::DispatchEvent().
+  //       However, if commit or cancel for a request is performed synchronously
+  //       during not safe to dispatch events, PresShell must have discarded
+  //       compositionend event.  Then, the synthesized compositionend event is
+  //       the last event for the composition.  In this case, we need to
+  //       destroy the TextComposition with synthesized compositionend event.
+  if ((!aIsSynthesized ||
+       composition->WasNativeCompositionEndEventDiscarded()) &&
+      aCompositionEvent->message == NS_COMPOSITION_END) {
     TextCompositionArray::index_type i =
-      sTextCompositions->IndexOf(GUIEvent->widget);
+      sTextCompositions->IndexOf(aCompositionEvent->widget);
     if (i != TextCompositionArray::NoIndex) {
       PR_LOG(sISMLog, PR_LOG_DEBUG,
         ("ISM:   IMEStateManager::DispatchCompositionEvent(), "
@@ -963,6 +958,45 @@ IMEStateManager::DispatchCompositionEvent(nsINode* aEventTargetNode,
 }
 
 // static
+void
+IMEStateManager::OnCompositionEventDiscarded(
+                   const WidgetCompositionEvent* aCompositionEvent)
+{
+  // Note that this method is never called for synthesized events for emulating
+  // commit or cancel composition.
+
+  PR_LOG(sISMLog, PR_LOG_ALWAYS,
+    ("ISM: IMEStateManager::OnCompositionEventDiscarded(aCompositionEvent={ "
+     "message=%s, mFlags={ mIsTrusted=%s } })",
+     GetEventMessageName(aCompositionEvent->message),
+     GetBoolName(aCompositionEvent->mFlags.mIsTrusted)));
+
+  if (!aCompositionEvent->mFlags.mIsTrusted) {
+    return;
+  }
+
+  // Ignore compositionstart for now because sTextCompositions may not have
+  // been created yet.
+  if (aCompositionEvent->message == NS_COMPOSITION_START) {
+    return;
+  }
+
+  nsRefPtr<TextComposition> composition =
+    sTextCompositions->GetCompositionFor(aCompositionEvent->widget);
+  if (!composition) {
+    // If the PresShell has been being destroyed during composition,
+    // a TextComposition instance for the composition was already removed from
+    // the array and destroyed in OnDestroyPresContext().  Therefore, we may
+    // fail to retrieve a TextComposition instance here.
+    PR_LOG(sISMLog, PR_LOG_ALWAYS,
+      ("ISM:   IMEStateManager::OnCompositionEventDiscarded(), "
+       "TextComposition instance for the widget has already gone"));
+    return;
+  }
+  composition->OnCompositionEventDiscarded(aCompositionEvent);
+}
+
+// static
 nsresult
 IMEStateManager::NotifyIME(IMEMessage aMessage,
                            nsIWidget* aWidget)
@@ -972,11 +1006,14 @@ IMEStateManager::NotifyIME(IMEMessage aMessage,
     composition = sTextCompositions->GetCompositionFor(aWidget);
   }
 
+  bool isSynthesizedForTests =
+    composition && composition->IsSynthesizedForTests();
+
   PR_LOG(sISMLog, PR_LOG_ALWAYS,
     ("ISM: IMEStateManager::NotifyIME(aMessage=%s, aWidget=0x%p), "
      "composition=0x%p, composition->IsSynthesizedForTests()=%s",
      GetNotifyIMEMessageName(aMessage), aWidget, composition.get(),
-     GetBoolName(composition ? composition->IsSynthesizedForTests() : false)));
+     GetBoolName(isSynthesizedForTests)));
 
   if (NS_WARN_IF(!aWidget)) {
     PR_LOG(sISMLog, PR_LOG_ERROR,
@@ -984,80 +1021,22 @@ IMEStateManager::NotifyIME(IMEMessage aMessage,
     return NS_ERROR_INVALID_ARG;
   }
 
-  if (!composition || !composition->IsSynthesizedForTests()) {
-    switch (aMessage) {
-      case NOTIFY_IME_OF_CURSOR_POS_CHANGED:
-        return aWidget->NotifyIME(IMENotification(aMessage));
-      case REQUEST_TO_COMMIT_COMPOSITION:
-      case REQUEST_TO_CANCEL_COMPOSITION:
-      case NOTIFY_IME_OF_COMPOSITION_UPDATE:
-        return composition ?
-          aWidget->NotifyIME(IMENotification(aMessage)) : NS_OK;
-      default:
-        MOZ_CRASH("Unsupported notification");
-    }
-    MOZ_CRASH(
-      "Failed to handle the notification for non-synthesized composition");
-  }
-
-  // If the composition is synthesized events for automated tests, we should
-  // dispatch composition events for emulating the native composition behavior.
-  // NOTE: The dispatched events are discarded if it's not safe to run script.
   switch (aMessage) {
-    case REQUEST_TO_COMMIT_COMPOSITION: {
-      nsCOMPtr<nsIWidget> widget(aWidget);
-      nsEventStatus status = nsEventStatus_eIgnore;
-      if (!composition->LastData().IsEmpty()) {
-        WidgetTextEvent textEvent(true, NS_TEXT_TEXT, widget);
-        textEvent.theText = composition->LastData();
-        textEvent.mFlags.mIsSynthesizedForTests = true;
-        widget->DispatchEvent(&textEvent, status);
-        if (widget->Destroyed()) {
-          return NS_OK;
-        }
-      }
-
-      status = nsEventStatus_eIgnore;
-      WidgetCompositionEvent endEvent(true, NS_COMPOSITION_END, widget);
-      endEvent.data = composition->LastData();
-      endEvent.mFlags.mIsSynthesizedForTests = true;
-      widget->DispatchEvent(&endEvent, status);
-
-      return NS_OK;
-    }
-    case REQUEST_TO_CANCEL_COMPOSITION: {
-      nsCOMPtr<nsIWidget> widget(aWidget);
-      nsEventStatus status = nsEventStatus_eIgnore;
-      if (!composition->LastData().IsEmpty()) {
-        WidgetCompositionEvent updateEvent(true, NS_COMPOSITION_UPDATE, widget);
-        updateEvent.data = composition->LastData();
-        updateEvent.mFlags.mIsSynthesizedForTests = true;
-        widget->DispatchEvent(&updateEvent, status);
-        if (widget->Destroyed()) {
-          return NS_OK;
-        }
-
-        status = nsEventStatus_eIgnore;
-        WidgetTextEvent textEvent(true, NS_TEXT_TEXT, widget);
-        textEvent.theText = composition->LastData();
-        textEvent.mFlags.mIsSynthesizedForTests = true;
-        widget->DispatchEvent(&textEvent, status);
-        if (widget->Destroyed()) {
-          return NS_OK;
-        }
-      }
-
-      status = nsEventStatus_eIgnore;
-      WidgetCompositionEvent endEvent(true, NS_COMPOSITION_END, widget);
-      endEvent.data = composition->LastData();
-      endEvent.mFlags.mIsSynthesizedForTests = true;
-      widget->DispatchEvent(&endEvent, status);
-
-      return NS_OK;
-    }
+    case REQUEST_TO_COMMIT_COMPOSITION:
+      return composition ?
+        composition->RequestToCommit(aWidget, false) : NS_OK;
+    case REQUEST_TO_CANCEL_COMPOSITION:
+      return composition ?
+        composition->RequestToCommit(aWidget, true) : NS_OK;
+    case NOTIFY_IME_OF_COMPOSITION_UPDATE:
+      return composition && !isSynthesizedForTests ?
+        aWidget->NotifyIME(IMENotification(aMessage)) : NS_OK;
     default:
-      return NS_OK;
+      MOZ_CRASH("Unsupported notification");
   }
+  MOZ_CRASH(
+    "Failed to handle the notification for non-synthesized composition");
+  return NS_ERROR_FAILURE;
 }
 
 // static
@@ -1105,6 +1084,16 @@ IMEStateManager::GetRootEditableNode(nsPresContext* aPresContext,
     nsINode* root = nullptr;
     nsINode* node = aContent;
     while (node && IsEditable(node)) {
+      // If the node has independent selection like <input type="text"> or
+      // <textarea>, the node should be the root editable node for aContent.
+      // FYI: <select> element also has independent selection but IsEditable()
+      //      returns false.
+      // XXX: If somebody adds new editable element which has independent
+      //      selection but doesn't own editor, we'll need more checks here.
+      if (node->IsContent() &&
+          node->AsContent()->HasIndependentSelection()) {
+        return node;
+      }
       root = node;
       node = node->GetParentNode();
     }
@@ -1160,13 +1149,13 @@ IMEStateManager::DestroyIMEContentObserver()
 
 // static
 void
-IMEStateManager::CreateIMEContentObserver()
+IMEStateManager::CreateIMEContentObserver(nsIEditor* aEditor)
 {
   PR_LOG(sISMLog, PR_LOG_ALWAYS,
-    ("ISM: IMEStateManager::CreateIMEContentObserver(), "
+    ("ISM: IMEStateManager::CreateIMEContentObserver(aEditor=0x%p), "
      "sPresContext=0x%p, sContent=0x%p, sActiveIMEContentObserver=0x%p, "
      "sActiveIMEContentObserver->IsManaging(sPresContext, sContent)=%s",
-     sPresContext, sContent, sActiveIMEContentObserver,
+     aEditor, sPresContext, sContent, sActiveIMEContentObserver,
      GetBoolName(sActiveIMEContentObserver ?
        sActiveIMEContentObserver->IsManaging(sPresContext, sContent) : false)));
 
@@ -1210,7 +1199,7 @@ IMEStateManager::CreateIMEContentObserver()
   // instance.  So, sActiveIMEContentObserver would be replaced with new one.
   // We should hold the current instance here.
   nsRefPtr<IMEContentObserver> kungFuDeathGrip(sActiveIMEContentObserver);
-  sActiveIMEContentObserver->Init(widget, sPresContext, sContent);
+  sActiveIMEContentObserver->Init(widget, sPresContext, sContent, aEditor);
 }
 
 // static
@@ -1239,13 +1228,11 @@ IMEStateManager::GetTextCompositionFor(nsIWidget* aWidget)
 
 // static
 already_AddRefed<TextComposition>
-IMEStateManager::GetTextCompositionFor(WidgetGUIEvent* aEvent)
+IMEStateManager::GetTextCompositionFor(WidgetGUIEvent* aGUIEvent)
 {
-  MOZ_ASSERT(aEvent->AsCompositionEvent() || aEvent->AsTextEvent() ||
-             aEvent->AsKeyboardEvent(),
-             "aEvent has to be WidgetCompositionEvent, WidgetTextEvent or "
-             "WidgetKeyboardEvent");
-  return GetTextCompositionFor(aEvent->widget);
+  MOZ_ASSERT(aGUIEvent->AsCompositionEvent() || aGUIEvent->AsKeyboardEvent(),
+    "aGUIEvent has to be WidgetCompositionEvent or WidgetKeyboardEvent");
+  return GetTextCompositionFor(aGUIEvent->widget);
 }
 
 } // namespace mozilla

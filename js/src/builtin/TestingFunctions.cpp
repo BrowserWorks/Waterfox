@@ -14,9 +14,7 @@
 #include "jsfriendapi.h"
 #include "jsgc.h"
 #include "jsobj.h"
-#ifndef JS_MORE_DETERMINISTIC
 #include "jsprf.h"
-#endif
 #include "jswrapper.h"
 
 #include "asmjs/AsmJSLink.h"
@@ -35,6 +33,8 @@
 
 #include "jscntxtinlines.h"
 #include "jsobjinlines.h"
+
+#include "vm/NativeObject-inl.h"
 
 using namespace js;
 using namespace JS;
@@ -55,18 +55,13 @@ GetBuildConfiguration(JSContext *cx, unsigned argc, jsval *vp)
     if (!info)
         return false;
 
-    RootedValue value(cx, BooleanValue(false));
-    if (!JS_SetProperty(cx, info, "rooting-analysis", value))
+    if (!JS_SetProperty(cx, info, "rooting-analysis", FalseHandleValue))
         return false;
 
-#ifdef JSGC_USE_EXACT_ROOTING
-    value = BooleanValue(true);
-#else
-    value = BooleanValue(false);
-#endif
-    if (!JS_SetProperty(cx, info, "exact-rooting", value))
+    if (!JS_SetProperty(cx, info, "exact-rooting", TrueHandleValue))
         return false;
 
+    RootedValue value(cx);
 #ifdef DEBUG
     value = BooleanValue(true);
 #else
@@ -227,7 +222,7 @@ GC(JSContext *cx, unsigned argc, jsval *vp)
      * scheduled for GC). Otherwise, we collect all compartments.
      */
     bool compartment = false;
-    if (args.length() == 1) {
+    if (args.length() >= 1) {
         Value arg = args[0];
         if (arg.isString()) {
             if (!JS_StringEqualsAscii(cx, arg.toString(), "compartment", &compartment))
@@ -235,6 +230,15 @@ GC(JSContext *cx, unsigned argc, jsval *vp)
         } else if (arg.isObject()) {
             PrepareZoneForGC(UncheckedUnwrap(&arg.toObject())->zone());
             compartment = true;
+        }
+    }
+
+    bool shrinking = false;
+    if (args.length() >= 2) {
+        Value arg = args[1];
+        if (arg.isString()) {
+            if (!JS_StringEqualsAscii(cx, arg.toString(), "shrinking", &shrinking))
+                return false;
         }
     }
 
@@ -246,7 +250,11 @@ GC(JSContext *cx, unsigned argc, jsval *vp)
         PrepareForDebugGC(cx->runtime());
     else
         PrepareForFullGC(cx->runtime());
-    GCForReason(cx->runtime(), gcreason::API);
+
+    if (shrinking)
+        ShrinkingGC(cx->runtime(), gcreason::API);
+    else
+        GCForReason(cx->runtime(), gcreason::API);
 
     char buf[256] = { '\0' };
 #ifndef JS_MORE_DETERMINISTIC
@@ -718,7 +726,7 @@ class CountHeapTracer
 static void
 CountHeapNotify(JSTracer *trc, void **thingp, JSGCTraceKind kind)
 {
-    JS_ASSERT(trc->callback == CountHeapNotify);
+    MOZ_ASSERT(trc->callback == CountHeapNotify);
 
     CountHeapTracer *countTracer = (CountHeapTracer *)trc;
     void *thing = *thingp;
@@ -859,6 +867,25 @@ CountHeap(JSContext *cx, unsigned argc, jsval *vp)
     }
 
     args.rval().setNumber(double(counter));
+    return true;
+}
+
+// Stolen from jsmath.cpp
+static const uint64_t RNG_MULTIPLIER = 0x5DEECE66DLL;
+static const uint64_t RNG_MASK = (1LL << 48) - 1;
+
+static bool
+SetSavedStacksRNGState(JSContext *cx, unsigned argc, jsval *vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+    if (!args.requireAtLeast(cx, "setSavedStacksRNGState", 1))
+        return false;
+
+    int32_t seed;
+    if (!ToInt32(cx, args[0], &seed))
+        return false;
+
+    cx->compartment()->savedStacks().setRNGState((seed ^ RNG_MULTIPLIER) & RNG_MASK);
     return true;
 }
 
@@ -1137,7 +1164,7 @@ js::testingFunc_inParallelSection(JSContext *cx, unsigned argc, jsval *vp)
 
     // If we were actually *in* a parallel section, then this function
     // would be inlined to TRUE in ion-generated code.
-    JS_ASSERT(!InParallelSection());
+    MOZ_ASSERT(!InParallelSection());
     args.rval().setBoolean(false);
     return true;
 }
@@ -1290,6 +1317,18 @@ SetJitCompilerOption(JSContext *cx, unsigned argc, jsval *vp)
     if (number < 0)
         number = -1;
 
+    // Throw if disabling the JITs and there's JIT code on the stack, to avoid
+    // assertion failures.
+    if ((opt == JSJITCOMPILER_BASELINE_ENABLE || opt == JSJITCOMPILER_ION_ENABLE) &&
+        number == 0)
+    {
+        js::jit::JitActivationIterator iter(cx->runtime());
+        if (!iter.done()) {
+            JS_ReportError(cx, "Can't turn off JITs with JIT code on the stack.");
+            return false;
+        }
+    }
+
     JS_SetGlobalJitCompilerOption(cx->runtime(), opt, uint32_t(number));
 
     args.rval().setUndefined();
@@ -1330,7 +1369,7 @@ SetIonCheckGraphCoherency(JSContext *cx, unsigned argc, jsval *vp)
     return true;
 }
 
-class CloneBufferObject : public JSObject {
+class CloneBufferObject : public NativeObject {
     static const JSPropertySpec props_[2];
     static const size_t DATA_SLOT   = 0;
     static const size_t LENGTH_SLOT = 1;
@@ -1343,8 +1382,8 @@ class CloneBufferObject : public JSObject {
         RootedObject obj(cx, JS_NewObject(cx, Jsvalify(&class_), JS::NullPtr(), JS::NullPtr()));
         if (!obj)
             return nullptr;
-        obj->setReservedSlot(DATA_SLOT, PrivateValue(nullptr));
-        obj->setReservedSlot(LENGTH_SLOT, Int32Value(0));
+        obj->as<CloneBufferObject>().setReservedSlot(DATA_SLOT, PrivateValue(nullptr));
+        obj->as<CloneBufferObject>().setReservedSlot(LENGTH_SLOT, Int32Value(0));
 
         if (!JS_DefineProperties(cx, obj, props_))
             return nullptr;
@@ -1369,7 +1408,7 @@ class CloneBufferObject : public JSObject {
     }
 
     void setData(uint64_t *aData) {
-        JS_ASSERT(!data());
+        MOZ_ASSERT(!data());
         setReservedSlot(DATA_SLOT, PrivateValue(aData));
     }
 
@@ -1378,7 +1417,7 @@ class CloneBufferObject : public JSObject {
     }
 
     void setNBytes(size_t nbytes) {
-        JS_ASSERT(nbytes <= UINT32_MAX);
+        MOZ_ASSERT(nbytes <= UINT32_MAX);
         setReservedSlot(LENGTH_SLOT, Int32Value(nbytes));
     }
 
@@ -1433,7 +1472,7 @@ class CloneBufferObject : public JSObject {
     static bool
     getCloneBuffer_impl(JSContext* cx, CallArgs args) {
         Rooted<CloneBufferObject*> obj(cx, &args.thisv().toObject().as<CloneBufferObject>());
-        JS_ASSERT(args.length() == 0);
+        MOZ_ASSERT(args.length() == 0);
 
         if (!obj->data()) {
             args.rval().setUndefined();
@@ -1595,10 +1634,15 @@ static bool
 HelperThreadCount(JSContext *cx, unsigned argc, jsval *vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
+#ifdef JS_MORE_DETERMINISTIC
+    // Always return 0 to get consistent output with and without --no-threads.
+    args.rval().setInt32(0);
+#else
     if (CanUseExtraThreads())
         args.rval().setInt32(HelperThreadState().threadCount);
     else
         args.rval().setInt32(0);
+#endif
     return true;
 }
 
@@ -1643,6 +1687,39 @@ DumpObject(JSContext *cx, unsigned argc, jsval *vp)
     js_DumpObject(obj);
 
     args.rval().setUndefined();
+    return true;
+}
+#endif
+
+#ifdef NIGHTLY_BUILD
+static bool
+ObjectAddress(JSContext *cx, unsigned argc, jsval *vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+    if (args.length() != 1) {
+        RootedObject callee(cx, &args.callee());
+        ReportUsageError(cx, callee, "Wrong number of arguments");
+        return false;
+    }
+    if (!args[0].isObject()) {
+        RootedObject callee(cx, &args.callee());
+        ReportUsageError(cx, callee, "Expected object");
+        return false;
+    }
+
+#ifdef JS_MORE_DETERMINISTIC
+    args.rval().setInt32(0);
+#else
+    char buffer[64];
+    JS_snprintf(buffer, sizeof(buffer), "%p", &args[0].toObject());
+
+    JSString *str = JS_NewStringCopyZ(cx, buffer);
+    if (!str)
+        return false;
+
+    args.rval().setString(str);
+#endif
+
     return true;
 }
 #endif
@@ -1722,7 +1799,7 @@ ReportLargeAllocationFailure(JSContext *cx, unsigned argc, jsval *vp)
 
 namespace heaptools {
 
-typedef UniquePtr<jschar[], JS::FreePolicy> EdgeName;
+typedef UniquePtr<char16_t[], JS::FreePolicy> EdgeName;
 
 // An edge to a node from its predecessor in a path through the graph.
 class BackEdge {
@@ -1899,7 +1976,7 @@ FindPath(JSContext *cx, unsigned argc, jsval *vp)
     //
     //   { node: undefined, edge: <string> }
     size_t length = nodes.length();
-    RootedObject result(cx, NewDenseAllocatedArray(cx, length));
+    RootedArrayObject result(cx, NewDenseFullyAllocatedArray(cx, length));
     if (!result)
         return false;
     result->ensureDenseInitializedLength(cx, 0, length);
@@ -1946,9 +2023,9 @@ EvalReturningScope(JSContext *cx, unsigned argc, jsval *vp)
     if (!strChars.initTwoByte(cx, str))
         return false;
 
-    mozilla::Range<const jschar> chars = strChars.twoByteRange();
+    mozilla::Range<const char16_t> chars = strChars.twoByteRange();
     size_t srclen = chars.length();
-    const jschar *src = chars.start().get();
+    const char16_t *src = chars.start().get();
 
     JS::AutoFilename filename;
     unsigned lineno;
@@ -1987,12 +2064,27 @@ IsSimdAvailable(JSContext *cx, unsigned argc, Value *vp)
     return true;
 }
 
+static bool
+ByteSize(JSContext *cx, unsigned argc, Value *vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+    mozilla::MallocSizeOf mallocSizeOf = cx->runtime()->debuggerMallocSizeOf;
+    JS::ubi::Node node = args.get(0);
+    if (node)
+        args.rval().set(NumberValue(node.size(mallocSizeOf)));
+    else
+        args.rval().setUndefined();
+    return true;
+}
+
 static const JSFunctionSpecWithHelp TestingFunctions[] = {
     JS_FN_HELP("gc", ::GC, 0, 0,
-"gc([obj] | 'compartment')",
+"gc([obj] | 'compartment' [, 'shrinking'])",
 "  Run the garbage collector. When obj is given, GC only its compartment.\n"
 "  If 'compartment' is given, GC any compartments that were scheduled for\n"
-"  GC via schedulegc."),
+"  GC via schedulegc.\n"
+"  If 'shrinking' is passes as the optional second argument, perform a\n"
+"  shrinking GC rather than a normal GC."),
 
     JS_FN_HELP("minorgc", ::MinorGC, 0, 0,
 "minorgc([aboutToOverflow])",
@@ -2016,6 +2108,10 @@ static const JSFunctionSpecWithHelp TestingFunctions[] = {
 "  to count only things of that kind. If kind is the string 'specific',\n"
 "  then you can provide an extra argument with some specific traceable\n"
 "  thing to count.\n"),
+
+    JS_FN_HELP("setSavedStacksRNGState", SetSavedStacksRNGState, 1, 0,
+"setSavedStacksRNGState(seed)",
+"  Set this compartment's SavedStacks' RNG state.\n"),
 
     JS_FN_HELP("getSavedFrameCount", GetSavedFrameCount, 0, 0,
 "getSavedFrameCount()",
@@ -2291,6 +2387,13 @@ static const JSFunctionSpecWithHelp TestingFunctions[] = {
 "  Dump an internal representation of an object."),
 #endif
 
+#ifdef NIGHTLY_BUILD
+    JS_FN_HELP("objectAddress", ObjectAddress, 1, 0,
+"objectAddress(obj)",
+"  Return the current address of the object. For debugging only--this\n"
+"  address may change during a moving GC."),
+#endif
+
     JS_FN_HELP("evalReturningScope", EvalReturningScope, 1, 0,
 "evalReturningScope(scriptStr)",
 "  Evaluate the script in a new scope and return the scope."),
@@ -2306,6 +2409,11 @@ static const JSFunctionSpecWithHelp TestingFunctions[] = {
 "    options.args - show arguments to each function\n"
 "    options.locals - show local variables in each frame\n"
 "    options.thisprops - show the properties of the 'this' object of each frame\n"),
+
+    JS_FN_HELP("byteSize", ByteSize, 1, 0,
+"byteSize(value)",
+"  Return the size in bytes occupied by |value|, or |undefined| if value\n"
+"  is not allocated in memory.\n"),
 
     JS_FS_HELP_END
 };

@@ -59,13 +59,13 @@ public:
 NS_DEFINE_STATIC_IID_ACCESSOR(nsICDocShellTreeOwner,
                               NS_ICDOCSHELLTREEOWNER_IID)
 
-class nsDocShellTreeOwner : public nsIDocShellTreeOwner,
-                            public nsIBaseWindow,
-                            public nsIInterfaceRequestor,
-                            public nsIWebProgressListener,
-                            public nsIDOMEventListener,
-                            public nsICDocShellTreeOwner,
-                            public nsSupportsWeakReference
+class nsDocShellTreeOwner MOZ_FINAL : public nsIDocShellTreeOwner,
+                                      public nsIBaseWindow,
+                                      public nsIInterfaceRequestor,
+                                      public nsIWebProgressListener,
+                                      public nsIDOMEventListener,
+                                      public nsICDocShellTreeOwner,
+                                      public nsSupportsWeakReference
 {
 friend class nsWebBrowser;
 friend class nsCommandHandler;
@@ -144,7 +144,7 @@ protected:
 // with the DOM with AddChromeListeners() and removing itself with
 // RemoveChromeListeners().
 //
-class ChromeTooltipListener : public nsIDOMEventListener
+class ChromeTooltipListener MOZ_FINAL : public nsIDOMEventListener
 {
 protected:
   virtual ~ChromeTooltipListener ( ) ;
@@ -166,7 +166,8 @@ private:
 
     // various delays for tooltips
   enum {
-    kTooltipAutoHideTime = 5000        // 5000ms = 5 seconds
+    kTooltipAutoHideTime = 5000,       // 5000ms = 5 seconds
+    kTooltipMouseMoveTolerance = 7     // 7 pixel tolerance for mousemove event
   };
 
   NS_IMETHOD AddTooltipListener();
@@ -192,11 +193,7 @@ private:
   int32_t mMouseClientX, mMouseClientY;       // mouse coordinates for last mousemove event we saw
   int32_t mMouseScreenX, mMouseScreenY;       // mouse coordinates for tooltip event
   bool mShowingTooltip;
-
-    // a timer for auto-hiding the tooltip after a certain delay
-  nsCOMPtr<nsITimer> mAutoHideTimer;
-  static void sAutoHideCallback ( nsITimer* aTimer, void* aListener ) ;
-  void CreateAutoHideTimer ( ) ;
+  bool mTooltipShownOnce;
 
     // The node hovered over that fired the timer. This may turn into the node that
     // triggered the tooltip, but only if the timer ever gets around to firing.

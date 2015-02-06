@@ -14,6 +14,9 @@
         <attr name="menuItemActionBarStyle" format="reference"/>
 
         <!-- Style for MenuItemActionBar -->
+        <attr name="menuItemActionBarStyleNewTablet" format="reference"/>
+
+        <!-- Style for MenuItemActionBar -->
         <attr name="menuItemActionModeStyle" format="reference"/>
 
         <!-- Style for MenuItemActionView -->
@@ -36,6 +39,9 @@
 
         <!-- Style for the PanelGridView -->
         <attr name="panelGridViewStyle" format="reference" />
+
+        <!-- Style for the TabsGridLayout -->
+        <attr name="tabGridLayoutViewStyle" format="reference" />
 
         <!-- Default style for the TopSitesGridView -->
         <attr name="topSitesGridViewStyle" format="reference" />

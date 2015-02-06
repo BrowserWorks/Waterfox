@@ -16,6 +16,7 @@
 #include "mozilla/gfx/Rect.h"           // for Rect
 #include "mozilla/gfx/Types.h"          // for Filter
 #include "mozilla/ipc/ProtocolUtils.h"
+#include "mozilla/layers/Compositor.h"  // for Compositor
 #include "mozilla/layers/CompositorTypes.h"  // for TextureInfo, etc
 #include "mozilla/layers/Effects.h"     // for Texture Effect
 #include "mozilla/layers/LayersTypes.h"  // for LayerRenderState, etc
@@ -54,18 +55,34 @@ struct EffectChain;
 class CompositableBackendSpecificData
 {
 protected:
-  virtual ~CompositableBackendSpecificData() { }
+  virtual ~CompositableBackendSpecificData() {}
 
 public:
   NS_INLINE_DECL_REFCOUNTING(CompositableBackendSpecificData)
 
-  CompositableBackendSpecificData()
+  CompositableBackendSpecificData();
+
+  virtual void ClearData() {}
+  virtual void SetCompositor(Compositor* aCompositor) {}
+
+  bool IsAllowingSharingTextureHost()
   {
+    return mAllowSharingTextureHost;
   }
 
-  virtual void SetCompositor(Compositor* aCompositor) {}
-  virtual void ClearData() {}
+  void SetAllowSharingTextureHost(bool aAllow)
+  {
+    mAllowSharingTextureHost = aAllow;
+  }
 
+  uint64_t GetId()
+  {
+    return mId;
+  }
+
+public:
+  bool mAllowSharingTextureHost;
+  uint64_t mId;
 };
 
 /**
@@ -295,7 +312,7 @@ protected:
   TextureInfo mTextureInfo;
   uint64_t mAsyncID;
   uint64_t mCompositorID;
-  Compositor* mCompositor;
+  RefPtr<Compositor> mCompositor;
   Layer* mLayer;
   RefPtr<CompositableBackendSpecificData> mBackendData;
   uint32_t mFlashCounter; // used when the pref "layers.flash-borders" is true.

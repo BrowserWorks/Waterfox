@@ -168,6 +168,10 @@ public:
    */
   static void DeInterleaveTrackData(AudioDataValue* aInput, int32_t aDuration,
                                     int32_t aChannels, AudioDataValue* aOutput);
+  /**
+  * Measure size of mRawSegment
+  */
+  size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
 protected:
   /**
@@ -241,6 +245,10 @@ public:
                                 TrackTicks aTrackOffset,
                                 uint32_t aTrackEvents,
                                 const MediaSegment& aQueuedMedia) MOZ_OVERRIDE;
+  /**
+  * Measure size of mRawSegment
+  */
+  size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
 protected:
   /**
@@ -265,12 +273,6 @@ protected:
    * Called on the MediaStreamGraph thread.
    */
   virtual void NotifyEndOfStream() MOZ_OVERRIDE;
-
-  /**
-   * Create a buffer of black image in format of YUV:420. Called on the worker
-   * thread.
-   */
-  void CreateMutedFrame(nsTArray<uint8_t>* aOutputBuffer);
 
   /**
    * The width of source video frame, ceiled if the source width is odd.

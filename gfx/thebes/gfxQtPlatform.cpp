@@ -131,18 +131,26 @@ gfxQtPlatform::CreateFontGroup(const FontFamilyList& aFontFamilyList,
 }
 
 gfxFontEntry*
-gfxQtPlatform::LookupLocalFont(const gfxProxyFontEntry *aProxyEntry,
-                                const nsAString& aFontName)
+gfxQtPlatform::LookupLocalFont(const nsAString& aFontName,
+                               uint16_t aWeight,
+                               int16_t aStretch,
+                               bool aItalic)
 {
-    return gfxPangoFontGroup::NewFontEntry(*aProxyEntry, aFontName);
+    return gfxPangoFontGroup::NewFontEntry(aFontName, aWeight,
+                                           aStretch, aItalic);
 }
 
 gfxFontEntry*
-gfxQtPlatform::MakePlatformFont(const gfxProxyFontEntry *aProxyEntry,
-                                 const uint8_t *aFontData, uint32_t aLength)
+gfxQtPlatform::MakePlatformFont(const nsAString& aFontName,
+                                uint16_t aWeight,
+                                int16_t aStretch,
+                                bool aItalic,
+                                const uint8_t* aFontData,
+                                uint32_t aLength)
 {
     // passing ownership of the font data to the new font entry
-    return gfxPangoFontGroup::NewFontEntry(*aProxyEntry,
+    return gfxPangoFontGroup::NewFontEntry(aFontName, aWeight,
+                                           aStretch, aItalic,
                                            aFontData, aLength);
 }
 
@@ -157,9 +165,7 @@ gfxQtPlatform::IsFontFormatSupported(nsIURI *aFontURI, uint32_t aFormatFlags)
     // Pango doesn't apply features from AAT TrueType extensions.
     // Assume that if this is the only SFNT format specified,
     // then AAT extensions are required for complex script support.
-    if (aFormatFlags & (gfxUserFontSet::FLAG_FORMAT_WOFF     |
-                        gfxUserFontSet::FLAG_FORMAT_OPENTYPE |
-                        gfxUserFontSet::FLAG_FORMAT_TRUETYPE)) {
+    if (aFormatFlags & gfxUserFontSet::FLAG_FORMATS_COMMON) {
         return true;
     }
 

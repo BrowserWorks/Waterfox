@@ -9,7 +9,7 @@
 #include "mozilla/Vector.h"
 
 #include "jit/IonAnalysis.h"
-#include "jit/IonSpewer.h"
+#include "jit/JitSpewer.h"
 #include "jit/MIR.h"
 #include "jit/MIRGenerator.h"
 #include "jit/MIRGraph.h"
@@ -137,7 +137,13 @@ static bool
 IsObjectEscaped(MInstruction *ins)
 {
     MOZ_ASSERT(ins->type() == MIRType_Object);
-    MOZ_ASSERT(ins->isNewObject() || ins->isGuardShape());
+    MOZ_ASSERT(ins->isNewObject() || ins->isGuardShape() || ins->isCreateThisWithTemplate());
+
+    JSObject *obj = nullptr;
+    if (ins->isNewObject())
+        obj = ins->toNewObject()->templateObject();
+    else if (ins->isCreateThisWithTemplate())
+        obj = ins->toCreateThisWithTemplate()->templateObject();
 
     // Check if the object is escaped. If the object is not the first argument
     // of either a known Store / Load, then we consider it as escaped. This is a
@@ -146,8 +152,8 @@ IsObjectEscaped(MInstruction *ins)
         MNode *consumer = (*i)->consumer();
         if (!consumer->isDefinition()) {
             // Cannot optimize if it is observable from fun.arguments or others.
-            if (consumer->toResumePoint()->isObservableOperand(*i)) {
-                IonSpewDef(IonSpew_Escape, "Object is observable\n", ins);
+            if (!consumer->toResumePoint()->isRecoverableOperand(*i)) {
+                JitSpewDef(JitSpew_Escape, "Observable object cannot be recovered\n", ins);
                 return true;
             }
             continue;
@@ -161,8 +167,8 @@ IsObjectEscaped(MInstruction *ins)
             if (def->indexOf(*i) == 0)
                 break;
 
-            IonSpewDef(IonSpew_Escape, "Object ", ins);
-            IonSpewDef(IonSpew_Escape, "  is escaped by\n", def);
+            JitSpewDef(JitSpew_Escape, "Object ", ins);
+            JitSpewDef(JitSpew_Escape, "  is escaped by\n", def);
             return true;
 
           case MDefinition::Op_Slots: {
@@ -184,9 +190,9 @@ IsObjectEscaped(MInstruction *ins)
           case MDefinition::Op_GuardShape: {
             MGuardShape *guard = def->toGuardShape();
             MOZ_ASSERT(!ins->isGuardShape());
-            if (ins->toNewObject()->templateObject()->lastProperty() != guard->shape()) {
-                IonSpewDef(IonSpew_Escape, "Object ", ins);
-                IonSpewDef(IonSpew_Escape, "  has a non-matching guard shape\n", guard);
+            if (obj->lastProperty() != guard->shape()) {
+                JitSpewDef(JitSpew_Escape, "Object ", ins);
+                JitSpewDef(JitSpew_Escape, "  has a non-matching guard shape\n", guard);
                 return true;
             }
             if (IsObjectEscaped(def->toInstruction()))
@@ -194,13 +200,13 @@ IsObjectEscaped(MInstruction *ins)
             break;
           }
           default:
-            IonSpewDef(IonSpew_Escape, "Object ", ins);
-            IonSpewDef(IonSpew_Escape, "  is escaped by\n", def);
+            JitSpewDef(JitSpew_Escape, "Object ", ins);
+            JitSpewDef(JitSpew_Escape, "  is escaped by\n", def);
             return true;
         }
     }
 
-    IonSpewDef(IonSpew_Escape, "Object is not escaped\n", ins);
+    JitSpewDef(JitSpew_Escape, "Object is not escaped\n", ins);
     return false;
 }
 
@@ -333,7 +339,8 @@ ObjectMemoryView::mergeIntoSuccessorState(MBasicBlock *curr, MBasicBlock *succ,
         *pSuccState = succState;
     }
 
-    if (succ->numPredecessors() > 1 && succState->numSlots()) {
+    MOZ_ASSERT_IF(succ == startBlock_, startBlock_->isLoopHeader());
+    if (succ->numPredecessors() > 1 && succState->numSlots() && succ != startBlock_) {
         // We need to re-compute successorWithPhis as the previous EliminatePhis
         // phase might have removed all the Phis from the successor block.
         size_t currIndex;
@@ -508,13 +515,13 @@ IsArrayEscaped(MInstruction *ins)
 
     // The array is probably too large to be represented efficiently with
     // MArrayState, and we do not want to make huge allocations during bailouts.
-    if (!ins->toNewArray()->isAllocating()) {
-        IonSpewDef(IonSpew_Escape, "Array is not allocated\n", ins);
+    if (ins->toNewArray()->allocatingBehaviour() == NewArray_Unallocating) {
+        JitSpewDef(JitSpew_Escape, "Array is not allocated\n", ins);
         return true;
     }
 
     if (count >= 16) {
-        IonSpewDef(IonSpew_Escape, "Array has too many elements\n", ins);
+        JitSpewDef(JitSpew_Escape, "Array has too many elements\n", ins);
         return true;
     }
 
@@ -525,8 +532,8 @@ IsArrayEscaped(MInstruction *ins)
         MNode *consumer = (*i)->consumer();
         if (!consumer->isDefinition()) {
             // Cannot optimize if it is observable from fun.arguments or others.
-            if (consumer->toResumePoint()->isObservableOperand(*i)) {
-                IonSpewDef(IonSpew_Escape, "Array is observable\n", ins);
+            if (!consumer->toResumePoint()->isRecoverableOperand(*i)) {
+                JitSpewDef(JitSpew_Escape, "Observable array cannot be recovered\n", ins);
                 return true;
             }
             continue;
@@ -551,8 +558,8 @@ IsArrayEscaped(MInstruction *ins)
                     // which are not reflected by the alias set, is we are
                     // bailing on holes.
                     if (access->toLoadElement()->needsHoleCheck()) {
-                        IonSpewDef(IonSpew_Escape, "Array ", ins);
-                        IonSpewDef(IonSpew_Escape,
+                        JitSpewDef(JitSpew_Escape, "Array ", ins);
+                        JitSpewDef(JitSpew_Escape,
                                    "  has a load element which needs hole check\n", access);
                         return true;
                     }
@@ -561,14 +568,14 @@ IsArrayEscaped(MInstruction *ins)
                     // all others. We do not handle this case.
                     int32_t index;
                     if (!IndexOf(access, &index)) {
-                        IonSpewDef(IonSpew_Escape, "Array ", ins);
-                        IonSpewDef(IonSpew_Escape,
+                        JitSpewDef(JitSpew_Escape, "Array ", ins);
+                        JitSpewDef(JitSpew_Escape,
                                    "  has a load element with a non-trivial index\n", access);
                         return true;
                     }
                     if (index < 0 || count <= uint32_t(index)) {
-                        IonSpewDef(IonSpew_Escape, "Array ", ins);
-                        IonSpewDef(IonSpew_Escape,
+                        JitSpewDef(JitSpew_Escape, "Array ", ins);
+                        JitSpewDef(JitSpew_Escape,
                                    "  has a load element with an out-of-bound index\n", access);
                         return true;
                     }
@@ -590,20 +597,20 @@ IsArrayEscaped(MInstruction *ins)
                     // all others. We do not handle this case.
                     int32_t index;
                     if (!IndexOf(access, &index)) {
-                        IonSpewDef(IonSpew_Escape, "Array ", ins);
-                        IonSpewDef(IonSpew_Escape, "  has a store element with a non-trivial index\n", access);
+                        JitSpewDef(JitSpew_Escape, "Array ", ins);
+                        JitSpewDef(JitSpew_Escape, "  has a store element with a non-trivial index\n", access);
                         return true;
                     }
                     if (index < 0 || count <= uint32_t(index)) {
-                        IonSpewDef(IonSpew_Escape, "Array ", ins);
-                        IonSpewDef(IonSpew_Escape, "  has a store element with an out-of-bound index\n", access);
+                        JitSpewDef(JitSpew_Escape, "Array ", ins);
+                        JitSpewDef(JitSpew_Escape, "  has a store element with an out-of-bound index\n", access);
                         return true;
                     }
 
                     // We are not yet encoding magic hole constants in resume points.
                     if (access->toStoreElement()->value()->type() == MIRType_MagicHole) {
-                        IonSpewDef(IonSpew_Escape, "Array ", ins);
-                        IonSpewDef(IonSpew_Escape, "  has a store element with an magic-hole constant\n", access);
+                        JitSpewDef(JitSpew_Escape, "Array ", ins);
+                        JitSpewDef(JitSpew_Escape, "  has a store element with an magic-hole constant\n", access);
                         return true;
                     }
                     break;
@@ -622,8 +629,8 @@ IsArrayEscaped(MInstruction *ins)
                     break;
 
                   default:
-                    IonSpewDef(IonSpew_Escape, "Array's element ", ins);
-                    IonSpewDef(IonSpew_Escape, "  is escaped by\n", def);
+                    JitSpewDef(JitSpew_Escape, "Array's element ", ins);
+                    JitSpewDef(JitSpew_Escape, "  is escaped by\n", def);
                     return true;
                 }
             }
@@ -632,13 +639,13 @@ IsArrayEscaped(MInstruction *ins)
           }
 
           default:
-            IonSpewDef(IonSpew_Escape, "Array ", ins);
-            IonSpewDef(IonSpew_Escape, "  is escaped by\n", def);
+            JitSpewDef(JitSpew_Escape, "Array ", ins);
+            JitSpewDef(JitSpew_Escape, "  is escaped by\n", def);
             return true;
         }
     }
 
-    IonSpewDef(IonSpew_Escape, "Array is not escaped\n", ins);
+    JitSpewDef(JitSpew_Escape, "Array is not escaped\n", ins);
     return false;
 }
 
@@ -787,7 +794,8 @@ ArrayMemoryView::mergeIntoSuccessorState(MBasicBlock *curr, MBasicBlock *succ,
         *pSuccState = succState;
     }
 
-    if (succ->numPredecessors() > 1 && succState->numElements()) {
+    MOZ_ASSERT_IF(succ == startBlock_, startBlock_->isLoopHeader());
+    if (succ->numPredecessors() > 1 && succState->numElements() && succ != startBlock_) {
         // We need to re-compute successorWithPhis as the previous EliminatePhis
         // phase might have removed all the Phis from the successor block.
         size_t currIndex;
@@ -952,7 +960,7 @@ ScalarReplacement(MIRGenerator *mir, MIRGraph &graph)
             return false;
 
         for (MInstructionIterator ins = block->begin(); ins != block->end(); ins++) {
-            if (ins->isNewObject() && !IsObjectEscaped(*ins)) {
+            if ((ins->isNewObject() || ins->isCreateThisWithTemplate()) && !IsObjectEscaped(*ins)) {
                 ObjectMemoryView view(graph.alloc(), *ins);
                 if (!replaceObject.run(view))
                     return false;

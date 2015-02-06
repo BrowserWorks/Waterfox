@@ -36,7 +36,6 @@ public:
   explicit DOMRectReadOnly(nsISupports* aParent)
     : mParent(aParent)
   {
-    SetIsDOMBinding();
   }
 
   nsISupports* GetParentObject() const
@@ -142,6 +141,9 @@ public:
 
 protected:
   double mX, mY, mWidth, mHeight;
+
+private:
+  ~DOMRect() {};
 };
 
 class DOMRectList MOZ_FINAL : public nsIDOMClientRectList,
@@ -152,7 +154,6 @@ class DOMRectList MOZ_FINAL : public nsIDOMClientRectList,
 public:
   explicit DOMRectList(nsISupports *aParent) : mParent(aParent)
   {
-    SetIsDOMBinding();
   }
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -209,12 +210,6 @@ protected:
 };
 
 }
-
-template<>
-struct HasDangerousPublicDestructor<dom::DOMRect>
-{
-  static const bool value = true;
-};
 
 }
 

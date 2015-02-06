@@ -109,11 +109,7 @@ var SelectionHandler = {
         break;
 
       case "Gesture:SingleTap": {
-        if (this._activeType == this.TYPE_SELECTION) {
-          let data = JSON.parse(aData);
-          if (!this._pointInSelection(data.x, data.y))
-            this._closeSelection();
-        } else if (this._activeType == this.TYPE_CURSOR) {
+        if (this._activeType == this.TYPE_CURSOR) {
           // attachCaret() is called in the "Gesture:SingleTap" handler in BrowserEventHandler
           // We're guaranteed to call this first, because this observer was added last
           this._deactivate();
@@ -198,7 +194,7 @@ var SelectionHandler = {
       }
 
       case "TextSelection:Get":
-        sendMessageToJava({
+        Messaging.sendRequest({
           type: "TextSelection:Data",
           requestId: aData,
           text: this._getSelectedText()
@@ -212,7 +208,7 @@ var SelectionHandler = {
   _startDraggingHandles: function sh_startDraggingHandles() {
     if (!this._draggingHandles) {
       this._draggingHandles = true;
-      sendMessageToJava({ type: "TextSelection:DraggingHandle", dragging: true });
+      Messaging.sendRequest({ type: "TextSelection:DraggingHandle", dragging: true });
     }
   },
 
@@ -221,7 +217,7 @@ var SelectionHandler = {
   _stopDraggingHandles: function sh_stopDraggingHandles() {
     if (this._draggingHandles) {
       this._draggingHandles = false;
-      sendMessageToJava({ type: "TextSelection:DraggingHandle", dragging: false });
+      Messaging.sendRequest({ type: "TextSelection:DraggingHandle", dragging: false });
     }
   },
 
@@ -305,6 +301,10 @@ var SelectionHandler = {
     // Clear out any existing active selection
     this._closeSelection();
 
+    if (this._isNonTextInputElement(aElement)) {
+      return false;
+    }
+
     this._initTargetInfo(aElement, this.TYPE_SELECTION);
 
     // Perform the appropriate selection method, if we can't determine method, or it fails, return
@@ -341,7 +341,7 @@ var SelectionHandler = {
 
     // Determine position and show handles, open actionbar
     this._positionHandles(positions);
-    sendMessageToJava({
+    Messaging.sendRequest({
       type: "TextSelection:ShowHandles",
       handles: [this.HANDLE_TYPE_START, this.HANDLE_TYPE_END]
     });
@@ -546,7 +546,7 @@ var SelectionHandler = {
 
     actions.sort((a, b) => b.order - a.order);
 
-    sendMessageToJava({
+    Messaging.sendRequest({
       type: "TextSelection:Update",
       actions: actions
     });
@@ -652,6 +652,10 @@ var SelectionHandler = {
       },
       selector: {
         matches: function() {
+          if (!ParentalControls.isAllowed(ParentalControls.SHARE)) {
+            return false;
+          }
+
           return SelectionHandler.isSelectionActive();
         }
       }
@@ -717,7 +721,7 @@ var SelectionHandler = {
 
     // Determine position and show caret, open actionbar
     this._positionHandles();
-    sendMessageToJava({
+    Messaging.sendRequest({
       type: "TextSelection:ShowHandles",
       handles: [this.HANDLE_TYPE_MIDDLE]
     });
@@ -797,8 +801,12 @@ var SelectionHandler = {
   },
 
   isElementEditableText: function (aElement) {
-    return ((aElement instanceof HTMLInputElement && aElement.mozIsTextField(false)) ||
-            (aElement instanceof HTMLTextAreaElement));
+    return (((aElement instanceof HTMLInputElement && aElement.mozIsTextField(false)) ||
+            (aElement instanceof HTMLTextAreaElement)) && !aElement.readOnly);
+  },
+
+  _isNonTextInputElement: function(aElement) {
+    return (aElement instanceof HTMLInputElement && !aElement.mozIsTextField(false));
   },
 
   /*
@@ -931,7 +939,7 @@ var SelectionHandler = {
   shareSelection: function sh_shareSelection() {
     let selectedText = this._getSelectedText();
     if (selectedText.length) {
-      sendMessageToJava({
+      Messaging.sendRequest({
         type: "Share:Text",
         text: selectedText
       });
@@ -944,7 +952,7 @@ var SelectionHandler = {
     if (selectedText.length) {
       let req = Services.search.defaultEngine.getSubmission(selectedText);
       let parent = BrowserApp.selectedTab;
-      let isPrivate = PrivateBrowsingUtils.isWindowPrivate(parent.browser.contentWindow);
+      let isPrivate = PrivateBrowsingUtils.isBrowserPrivate(parent.browser);
       // Set current tab as parent of new tab, and set new tab as private if the parent is.
       BrowserApp.addTab(req.uri.spec, {parentId: parent.id,
                                        selected: true,
@@ -1000,7 +1008,7 @@ var SelectionHandler = {
   _deactivate: function sh_deactivate() {
     this._stopDraggingHandles();
     // Hide handle/caret, close actionbar
-    sendMessageToJava({ type: "TextSelection:HideHandles" });
+    Messaging.sendRequest({ type: "TextSelection:HideHandles" });
 
     this._removeObservers();
 
@@ -1037,16 +1045,6 @@ var SelectionHandler = {
     }
 
     return offset;
-  },
-
-  _pointInSelection: function sh_pointInSelection(aX, aY) {
-    let offset = this._getViewOffset();
-    let rangeRect = this._getSelection().getRangeAt(0).getBoundingClientRect();
-    let radius = ElementTouchHelper.getTouchRadius();
-    return (aX - offset.x > rangeRect.left - radius.left &&
-            aX - offset.x < rangeRect.right + radius.right &&
-            aY - offset.y > rangeRect.top - radius.top &&
-            aY - offset.y < rangeRect.bottom + radius.bottom);
   },
 
   // Returns true if the selection has been reversed. Takes optional aIsStartHandle
@@ -1156,7 +1154,7 @@ var SelectionHandler = {
     if (!positions) {
       positions = this._getHandlePositions(this._getScrollPos());
     }
-    sendMessageToJava({
+    Messaging.sendRequest({
       type: "TextSelection:PositionHandles",
       positions: positions,
       rtl: this._isRTL

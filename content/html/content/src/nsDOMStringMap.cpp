@@ -55,8 +55,6 @@ nsDOMStringMap::nsDOMStringMap(nsGenericHTMLElement* aElement)
   : mElement(aElement),
     mRemovingProp(false)
 {
-  SetIsDOMBinding();
-
   mElement->AddMutationObserver(this);
 }
 
@@ -128,11 +126,13 @@ nsDOMStringMap::NamedDeleter(const nsAString& aProp, bool& found)
 {
   // Currently removing property, attribute is already removed.
   if (mRemovingProp) {
+    found = false;
     return;
   }
   
   nsAutoString attr;
   if (!DataPropToAttr(aProp, attr)) {
+    found = false;
     return;
   }
 

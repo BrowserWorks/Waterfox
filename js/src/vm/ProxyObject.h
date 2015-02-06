@@ -7,8 +7,9 @@
 #ifndef vm_ProxyObject_h
 #define vm_ProxyObject_h
 
-#include "jsobj.h"
 #include "jsproxy.h"
+
+#include "vm/NativeObject.h"
 
 namespace js {
 
@@ -35,15 +36,16 @@ class ProxyObject : public JSObject
     void setSameCompartmentPrivate(const Value &priv);
 
     HeapSlot *slotOfPrivate() {
-        return &getReservedSlotRef(PRIVATE_SLOT);
+        return &fakeNativeGetReservedSlotRef(PRIVATE_SLOT);
     }
 
     JSObject *target() const {
         return const_cast<ProxyObject*>(this)->private_().toObjectOrNull();
     }
 
-    const BaseProxyHandler *handler() {
-        return static_cast<const BaseProxyHandler*>(GetReservedSlot(this, HANDLER_SLOT).toPrivate());
+    const BaseProxyHandler *handler() const {
+        return static_cast<const BaseProxyHandler*>(
+            GetReservedSlot(const_cast<ProxyObject*>(this), HANDLER_SLOT).toPrivate());
     }
 
     void initHandler(const BaseProxyHandler *handler);
@@ -53,29 +55,31 @@ class ProxyObject : public JSObject
     }
 
     static size_t offsetOfHandler() {
-        return getFixedSlotOffset(HANDLER_SLOT);
+        // FIXME Bug 1073842: this is temporary until non-native objects can
+        // access non-slot storage.
+        return NativeObject::getFixedSlotOffset(HANDLER_SLOT);
     }
 
     const Value &extra(size_t n) const {
-        JS_ASSERT(n == 0 || n == 1);
+        MOZ_ASSERT(n == 0 || n == 1);
         return GetReservedSlot(const_cast<ProxyObject*>(this), EXTRA_SLOT + n);
     }
 
     void setExtra(size_t n, const Value &extra) {
-        JS_ASSERT(n == 0 || n == 1);
+        MOZ_ASSERT(n == 0 || n == 1);
         SetReservedSlot(this, EXTRA_SLOT + n, extra);
     }
 
   private:
     HeapSlot *slotOfExtra(size_t n) {
-        JS_ASSERT(n == 0 || n == 1);
-        return &getReservedSlotRef(EXTRA_SLOT + n);
+        MOZ_ASSERT(n == 0 || n == 1);
+        return &fakeNativeGetReservedSlotRef(EXTRA_SLOT + n);
     }
 
     HeapSlot *slotOfClassSpecific(size_t n) {
-        JS_ASSERT(n >= PROXY_MINIMUM_SLOTS);
-        JS_ASSERT(n < JSCLASS_RESERVED_SLOTS(getClass()));
-        return &getReservedSlotRef(n);
+        MOZ_ASSERT(n >= PROXY_MINIMUM_SLOTS);
+        MOZ_ASSERT(n < JSCLASS_RESERVED_SLOTS(getClass()));
+        return &fakeNativeGetReservedSlotRef(n);
     }
 
     static bool isValidProxyClass(const Class *clasp) {
@@ -85,9 +89,13 @@ class ProxyObject : public JSObject
 
         // proxy_Trace is just a trivial wrapper around ProxyObject::trace for
         // friend api exposure.
+
+        // Proxy classes are not allowed to have call or construct hooks directly. Their
+        // callability is instead decided by a trap call
         return clasp->isProxy() &&
                (clasp->flags & JSCLASS_IMPLEMENTS_BARRIERS) &&
                clasp->trace == proxy_Trace &&
+               !clasp->call && !clasp->construct &&
                JSCLASS_RESERVED_SLOTS(clasp) >= PROXY_MINIMUM_SLOTS;
     }
 
@@ -100,8 +108,7 @@ class ProxyObject : public JSObject
 
     void nuke(const BaseProxyHandler *handler);
 
-    static const Class callableClass_;
-    static const Class uncallableClass_;
+    static const Class class_;
 };
 
 } // namespace js

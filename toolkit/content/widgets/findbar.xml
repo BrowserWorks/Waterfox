@@ -187,7 +187,7 @@
                          label="&caseSensitive.label;"
                          accesskey="&caseSensitive.accesskey;"
                          tooltiptext="&caseSensitive.tooltiptext;"
-                         oncommand="_setCaseSensitivity(this.checked);"
+                         oncommand="_setCaseSensitivity(this.checked ? 1 : 0);"
                          type="checkbox"
                          xbl:inherits="accesskey=matchcaseaccesskey"/>
       <xul:label anonid="match-case-status" class="findbar-find-fast"/>
@@ -305,10 +305,7 @@
               this._self._typeAheadLinksOnly = prefsvc.getBoolPref(aPrefName);
               break;
             case "accessibility.typeaheadfind.casesensitive":
-              this._self._typeAheadCaseSensitive = prefsvc.getIntPref(aPrefName);
-              this._self._updateCaseSensitivity();
-              if (this._self.getElement("highlight").checked)
-                this._self._setHighlightTimeout();
+              this._self._setCaseSensitivity(prefsvc.getIntPref(aPrefName));
               break;
           }
         }
@@ -451,40 +448,24 @@
         ]]></getter>
       </property>
 
-      <method name="_updateMatchesCountWorker">
-        <parameter name="aRes"/>
-        <body><![CDATA[
-          let word = this._findField.value;
-          if (aRes == this.nsITypeAheadFind.FIND_NOTFOUND || !word) {
-            this._foundMatches.hidden = true;
-            this._foundMatches.value = "";
-          } else {
-            let matchesCount = this.browser.finder.requestMatchesCount(
-              word, this._matchesCountLimit, this._findMode == this.FIND_LINKS);
-            window.clearTimeout(this._updateMatchesCountTimeout);
-            this._updateMatchesCountTimeout = null;
-          }
-        ]]></body>
-      </method>
-
       <!--
         - Updates the search match count after each find operation on a new string.
         - @param aRes
         -        the result of the find operation
         -->
       <method name="_updateMatchesCount">
-        <parameter name="aRes"/>
         <body><![CDATA[
           if (this._matchesCountLimit == 0 || !this._dispatchFindEvent("matchescount"))
             return;
 
           if (this._updateMatchesCountTimeout) {
             window.clearTimeout(this._updateMatchesCountTimeout);
-            this._updateMatchesCountTimeout = null;
           }
           this._updateMatchesCountTimeout =
-            window.setTimeout(() => this._updateMatchesCountWorker(aRes),
-                              this._matchesCountTimeoutLength);
+            window.setTimeout(() => {
+              this.browser.finder.requestMatchesCount(this._findField.value, this._matchesCountLimit,
+                  this._findMode == this.FIND_LINKS);
+            }, this._matchesCountTimeoutLength);
         ]]></body>
       </method>
 
@@ -546,19 +527,21 @@
 
       <!--
         - Sets the findbar case-sensitivity mode
-        - @param aCaseSensitive (boolean)
-        -        Whether or not case-sensitivity should be turned on.
+        - @param aCaseSensitivity (int)
+        -   0 - case insensitive
+        -   1 - case sensitive
+        -   2 - auto = case sensitive iff match string contains upper case letters
+        -   @see _shouldBeCaseSensitive
         -->
       <method name="_setCaseSensitivity">
-        <parameter name="aCaseSensitive"/>
+        <parameter name="aCaseSensitivity"/>
         <body><![CDATA[
-          let prefsvc =
-            Components.classes["@mozilla.org/preferences-service;1"]
-                      .getService(Components.interfaces.nsIPrefBranch);
-
-          // Just set the pref; our observer will change the find bar behavior
-          prefsvc.setIntPref("accessibility.typeaheadfind.casesensitive",
-                             aCaseSensitive ? 1 : 0);
+          this._typeAheadCaseSensitive = aCaseSensitivity;
+          this._updateCaseSensitivity();
+          this._findFailedString = null;
+          this._find();
+          if (this.getElement("highlight").checked)
+            this._setHighlightTimeout();
 
           this._dispatchFindEvent("casesensitivitychange");
         ]]></body>

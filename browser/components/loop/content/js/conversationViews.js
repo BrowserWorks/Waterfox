@@ -14,6 +14,7 @@ loop.conversationViews = (function(mozL10n) {
   var sharedActions = loop.shared.actions;
   var sharedUtils = loop.shared.utils;
   var sharedViews = loop.shared.views;
+  var sharedMixins = loop.shared.mixins;
 
   // This duplicates a similar function in contacts.jsx that isn't used in the
   // conversation window. If we get too many of these, we might want to consider
@@ -24,6 +25,13 @@ loop.conversationViews = (function(mozL10n) {
       return { value: "" };
     }
     return contact.email.find(e => e.pref) || contact.email[0];
+  }
+
+  function _getContactDisplayName(contact) {
+    if (contact.name && contact.name[0]) {
+      return contact.name[0];
+    }
+    return _getPreferredEmail(contact).value;
   }
 
   /**
@@ -106,14 +114,7 @@ loop.conversationViews = (function(mozL10n) {
     },
 
     render: function() {
-      var contactName;
-
-      if (this.props.contact.name &&
-          this.props.contact.name[0]) {
-        contactName = this.props.contact.name[0];
-      } else {
-        contactName = _getPreferredEmail(this.props.contact).value;
-      }
+      var contactName = _getContactDisplayName(this.props.contact);
 
       document.title = contactName;
 
@@ -133,6 +134,8 @@ loop.conversationViews = (function(mozL10n) {
    * pending/ringing strings.
    */
   var PendingConversationView = React.createClass({displayName: 'PendingConversationView',
+    mixins: [sharedMixins.AudioMixin],
+
     propTypes: {
       dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired,
       callState: React.PropTypes.string,
@@ -144,6 +147,10 @@ loop.conversationViews = (function(mozL10n) {
       return {
         enableCancelButton: false
       };
+    },
+
+    componentDidMount: function() {
+      this.play("ringtone", {loop: true});
     },
 
     cancelCall: function() {
@@ -186,7 +193,7 @@ loop.conversationViews = (function(mozL10n) {
    * Call failed view. Displayed when a call fails.
    */
   var CallFailedView = React.createClass({displayName: 'CallFailedView',
-    mixins: [Backbone.Events],
+    mixins: [Backbone.Events, sharedMixins.AudioMixin],
 
     propTypes: {
       dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired,
@@ -205,6 +212,7 @@ loop.conversationViews = (function(mozL10n) {
     },
 
     componentDidMount: function() {
+      this.play("failure");
       this.listenTo(this.props.store, "change:emailLink",
                     this._onEmailLinkReceived);
       this.listenTo(this.props.store, "error:emailLink",
@@ -250,7 +258,10 @@ loop.conversationViews = (function(mozL10n) {
         emailLinkButtonDisabled: true
       });
 
-      this.props.dispatcher.dispatch(new sharedActions.FetchEmailLink());
+      this.props.dispatcher.dispatch(new sharedActions.FetchRoomEmailLink({
+        roomOwner: navigator.mozLoop.userProfile.email,
+        roomName: _getContactDisplayName(this.props.contact)
+      }));
     },
 
     render: function() {
@@ -274,7 +285,7 @@ loop.conversationViews = (function(mozL10n) {
             React.DOM.button({className: "btn btn-info btn-email", 
                     onClick: this.emailLink, 
                     disabled: this.state.emailLinkButtonDisabled}, 
-              mozL10n.get("share_button")
+              mozL10n.get("share_button2")
             )
           )
         )
@@ -348,7 +359,7 @@ loop.conversationViews = (function(mozL10n) {
           nameDisplayMode: "off",
           videoDisabledDisplayMode: "off"
         }
-      }
+      };
     },
 
     /**
@@ -420,10 +431,13 @@ loop.conversationViews = (function(mozL10n) {
    * the different views that need displaying.
    */
   var OutgoingConversationView = React.createClass({displayName: 'OutgoingConversationView',
+    mixins: [sharedMixins.AudioMixin],
+
     propTypes: {
       dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired,
       store: React.PropTypes.instanceOf(
-        loop.store.ConversationStore).isRequired
+        loop.store.ConversationStore).isRequired,
+      feedbackStore: React.PropTypes.instanceOf(loop.store.FeedbackStore)
     },
 
     getInitialState: function() {
@@ -454,22 +468,9 @@ loop.conversationViews = (function(mozL10n) {
     _renderFeedbackView: function() {
       document.title = mozL10n.get("conversation_has_ended");
 
-      // XXX Bug 1076754 Feedback view should be redone in the Flux style.
-      var feebackAPIBaseUrl = navigator.mozLoop.getLoopCharPref(
-        "feedback.baseUrl");
-
-      var appVersionInfo = navigator.mozLoop.appVersionInfo;
-
-      var feedbackClient = new loop.FeedbackAPIClient(feebackAPIBaseUrl, {
-        product: navigator.mozLoop.getLoopCharPref("feedback.product"),
-        platform: appVersionInfo.OS,
-        channel: appVersionInfo.channel,
-        version: appVersionInfo.version
-      });
-
       return (
         sharedViews.FeedbackView({
-          feedbackApiClient: feedbackClient, 
+          feedbackStore: this.props.feedbackStore, 
           onAfterFeedbackReceived: this._closeWindow.bind(this)}
         )
       );
@@ -497,7 +498,12 @@ loop.conversationViews = (function(mozL10n) {
           );
         }
         case CALL_STATES.FINISHED: {
+          this.play("terminated");
           return this._renderFeedbackView();
+        }
+        case CALL_STATES.INIT: {
+          // We know what we are, but we haven't got the data yet.
+          return null;
         }
         default: {
           return (PendingConversationView({

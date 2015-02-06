@@ -10,6 +10,7 @@
 #include <algorithm>
 #include "gfxDWriteFontList.h"
 #include "gfxContext.h"
+#include "gfxTextRun.h"
 #include <dwrite.h>
 
 #include "harfbuzz/hb.h"
@@ -125,7 +126,7 @@ gfxDWriteFont::CopyWithAntialiasOption(AntialiasOption anAAOption)
 }
 
 const gfxFont::Metrics&
-gfxDWriteFont::GetMetrics()
+gfxDWriteFont::GetHorizontalMetrics()
 {
     return *mMetrics;
 }
@@ -218,9 +219,10 @@ gfxDWriteFont::ComputeMetrics(AntialiasOption anAAOption)
                                       TRUETYPE_TAG('h','h','e','a'));
     if (hheaTable) {
         uint32_t len;
-        const HheaTable* hhea =
-            reinterpret_cast<const HheaTable*>(hb_blob_get_data(hheaTable, &len));
-        if (len >= sizeof(HheaTable)) {
+        const MetricsHeader* hhea =
+            reinterpret_cast<const MetricsHeader*>
+                (hb_blob_get_data(hheaTable, &len));
+        if (len >= sizeof(MetricsHeader)) {
             mMetrics->maxAdvance =
                 uint16_t(hhea->advanceWidthMax) * mFUnitsConvFactor;
         }

@@ -9,9 +9,13 @@ import org.mozilla.gecko.AppConstants.Versions;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.view.View;
 import android.widget.EdgeEffect;
 
+import java.lang.reflect.Field;
 
 public class OverscrollEdgeEffect implements Overscroll {
     // Used to index particular edges in the edges array
@@ -27,13 +31,35 @@ public class OverscrollEdgeEffect implements Overscroll {
     private final View mView;
 
     public OverscrollEdgeEffect(final View v) {
+        Field paintField = null;
+        if (Versions.feature21Plus) {
+            try {
+                paintField = EdgeEffect.class.getDeclaredField("mPaint");
+                paintField.setAccessible(true);
+            } catch (NoSuchFieldException e) {
+            }
+        }
+
         mView = v;
         Context context = v.getContext();
         for (int i = 0; i < 4; i++) {
             mEdges[i] = new EdgeEffect(context);
+
+            try {
+                if (paintField != null) {
+                    final Paint p = (Paint) paintField.get(mEdges[i]);
+
+                    // The Android EdgeEffect class uses a mode of SRC_ATOP here, which means it will only
+                    // draw the effect where there are non-transparent pixels in the destination. Since the LayerView
+                    // itself is fully transparent, it doesn't display at all. We need to use SRC instead.
+                    p.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC));
+                }
+            } catch (IllegalAccessException e) {
+            }
         }
     }
 
+    @Override
     public void setSize(final int width, final int height) {
         mEdges[LEFT].setSize(height, width);
         mEdges[RIGHT].setSize(height, width);
@@ -65,6 +91,7 @@ public class OverscrollEdgeEffect implements Overscroll {
         }
     }
 
+    @Override
     public void setVelocity(final float velocity, final Axis axis) {
         final EdgeEffect edge = getEdgeForAxisAndSide(axis, velocity);
 
@@ -79,6 +106,7 @@ public class OverscrollEdgeEffect implements Overscroll {
         invalidate();
     }
 
+    @Override
     public void setDistance(final float distance, final Axis axis) {
         // The first overscroll event often has zero distance. Throw it out
         if (distance == 0.0f) {
@@ -90,6 +118,7 @@ public class OverscrollEdgeEffect implements Overscroll {
         invalidate();
     }
 
+    @Override
     public void draw(final Canvas canvas, final ImmutableViewportMetrics metrics) {
         if (metrics == null) {
             return;

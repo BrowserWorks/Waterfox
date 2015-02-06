@@ -48,6 +48,7 @@ GARBAGE += \
   classes.dex  \
   gecko.ap_  \
   res/values/strings.xml \
+  res/raw/browsersearch.json \
   res/raw/suggestedsites.json \
   .aapt.deps \
   fennec_ids.txt \
@@ -59,14 +60,20 @@ GARBAGE += \
 
 GARBAGE_DIRS += classes db jars res sync services generated
 
-JAVA_BOOTCLASSPATH = \
+# The bootclasspath is functionally identical to the classpath, but allows the
+# classes given to redefine classes in core packages, such as java.lang.
+# android.jar is here as it provides Android's definition of the Java Standard
+# Library. The compatability lib here tweaks a few of the core classes to paint
+# over changes in behaviour between versions.
+JAVA_BOOTCLASSPATH := \
     $(ANDROID_SDK)/android.jar \
     $(ANDROID_COMPAT_LIB) \
     $(NULL)
 
 JAVA_BOOTCLASSPATH := $(subst $(NULL) ,:,$(strip $(JAVA_BOOTCLASSPATH)))
 
-# If native devices are enabled, add Google Play Services and some of the v7 compat libraries
+# If native devices are enabled, add Google Play Services and some of the v7
+# compat libraries.
 ifdef MOZ_NATIVE_DEVICES
     JAVA_CLASSPATH += \
         $(GOOGLE_PLAY_SERVICES_LIB) \
@@ -77,15 +84,31 @@ endif
 
 JAVA_CLASSPATH := $(subst $(NULL) ,:,$(strip $(JAVA_CLASSPATH)))
 
+# Library jars that we're bundling: these are subject to Proguard before inclusion
+# into classes.dex.
+java_bundled_libs := \
+    $(ANDROID_COMPAT_LIB) \
+    $(NULL)
+
+ifdef MOZ_NATIVE_DEVICES
+    java_bundled_libs += \
+        $(GOOGLE_PLAY_SERVICES_LIB) \
+        $(ANDROID_MEDIAROUTER_LIB) \
+        $(ANDROID_APPCOMPAT_LIB) \
+        $(NULL)
+endif
+
+java_bundled_libs := $(subst $(NULL) ,:,$(strip $(java_bundled_libs)))
+
+# All the jars we're compiling from source. (not to be confused with
+# java_bundled_libs, which holds the jars which we're including as binaries).
 ALL_JARS = \
   gecko-R.jar \
   gecko-browser.jar \
   gecko-mozglue.jar \
+  gecko-thirdparty.jar \
   gecko-util.jar \
-  nineoldandroids.jar \
-  squareup-picasso.jar \
   sync-thirdparty.jar \
-  websockets.jar \
   $(NULL)
 
 ifdef MOZ_WEBRTC
@@ -93,9 +116,7 @@ ALL_JARS += webrtc.jar
 endif
 
 ifdef MOZ_ANDROID_SEARCH_ACTIVITY
-extra_packages += org.mozilla.search
 ALL_JARS += search-activity.jar
-generated/org/mozilla/search/R.java: .aapt.deps ;
 endif
 
 ifdef MOZ_ANDROID_MLS_STUMBLER
@@ -104,24 +125,20 @@ ALL_JARS += ../stumbler/stumbler.jar
 generated/org/mozilla/mozstumbler/R.java: .aapt.deps ;
 endif
 
+# The list of jars in Java classpath notation (colon-separated).
+all_jars_classpath := $(subst $(NULL) ,:,$(strip $(ALL_JARS)))
+
 include $(topsrcdir)/config/config.mk
 
-# Note that we're going to set up a dependency directly between embed_android.dex and the java files
-# Instead of on the .class files, since more than one .class file might be produced per .java file
-# Sync dependencies are provided in a single jar. Sync classes themselves are delivered as source,
-# because Android resource classes must be compiled together in order to avoid overlapping resource
-# indices.
-
-library_jars = \
-    $(JAVA_CLASSPATH) \
-    $(JAVA_BOOTCLASSPATH) \
+library_jars := \
+    $(ANDROID_SDK)/android.jar \
     $(NULL)
 
 library_jars := $(subst $(NULL) ,:,$(strip $(library_jars)))
 
 classes.dex: .proguard.deps
 	$(REPORT_BUILD)
-	$(DX) --dex --output=classes.dex jars-proguarded $(subst :, ,$(ANDROID_COMPAT_LIB):$(JAVA_CLASSPATH))
+	$(DX) --dex --output=classes.dex jars-proguarded
 
 ifdef MOZ_DISABLE_PROGUARD
   PROGUARD_PASSES=0
@@ -137,17 +154,43 @@ else
   endif
 endif
 
+proguard_config_dir=$(topsrcdir)/mobile/android/config/proguard
+
+# First, we delete debugging information from libraries. Having line-number
+# information for libraries for which we lack the source isn't useful, so this
+# saves us a bit of space. Importantly, Proguard has a bug causing it to
+# sometimes corrupt this information if present (which it does for some of the
+# included libraries). This corruption prevents dex from completing, so we need
+# to get rid of it.  This prevents us from seeing line numbers in stack traces
+# for stack frames inside libraries.
+#
+# This step can occur much earlier than the main Proguard pass: it needs only
+# gecko-R.jar to have been compiled (as that's where the library R.java files
+# end up), but it does block the main Proguard pass.
+.bundled.proguard.deps: gecko-R.jar $(proguard_config_dir)/strip-libs.cfg
+	$(REPORT_BUILD)
+	@$(TOUCH) $@
+	java \
+		-Xmx512m -Xms128m \
+		-jar $(ANDROID_SDK_ROOT)/tools/proguard/lib/proguard.jar \
+		@$(proguard_config_dir)/strip-libs.cfg \
+		-injars $(subst ::,:,$(java_bundled_libs))\
+		-outjars bundled-jars-nodebug \
+		-libraryjars $(library_jars):gecko-R.jar
+
 # We touch the target file before invoking Proguard so that Proguard's
 # outputs are fresher than the target, preventing a subsequent
 # invocation from thinking Proguard's outputs are stale.  This is safe
 # because Make removes the target file if any recipe command fails.
-.proguard.deps: $(ALL_JARS)
+.proguard.deps: .bundled.proguard.deps $(ALL_JARS) $(proguard_config_dir)/proguard.cfg
 	$(REPORT_BUILD)
 	@$(TOUCH) $@
-	java -jar $(ANDROID_SDK_ROOT)/tools/proguard/lib/proguard.jar \
-		@$(topsrcdir)/mobile/android/config/proguard.cfg \
+	java \
+		-Xmx512m -Xms128m \
+		-jar $(ANDROID_SDK_ROOT)/tools/proguard/lib/proguard.jar \
+		@$(proguard_config_dir)/proguard.cfg \
 		-optimizationpasses $(PROGUARD_PASSES) \
-		-injars $(subst ::,:,$(subst $(NULL) ,:,$(strip $(ALL_JARS)))) \
+		-injars $(subst ::,:,$(all_jars_classpath)):bundled-jars-nodebug \
 		-outjars jars-proguarded \
 		-libraryjars $(library_jars)
 
@@ -202,6 +245,7 @@ preprocessed := $(addsuffix .in,$(subst generated/org/mozilla/gecko/,,$(filter g
 
 preprocessed_PATH := generated/org/mozilla/gecko
 preprocessed_KEEP_PATH := 1
+preprocessed_FLAGS := --marker='//\\\#'
 
 PP_TARGETS += preprocessed
 
@@ -215,6 +259,7 @@ preprocessed_package := $(addsuffix .in,$(subst $(android_package_dir)/,,$(filte
 
 preprocessed_package_PATH := $(android_package_dir)
 preprocessed_package_KEEP_PATH := 1
+preprocessed_package_FLAGS := --marker='//\\\#'
 
 PP_TARGETS += preprocessed_package
 
@@ -259,11 +304,12 @@ $(ANDROID_GENERATED_RESFILES): $(call mkdir_deps,$(sort $(dir $(ANDROID_GENERATE
 
 
 # This .deps pattern saves an invocation of the sub-Make: the single
-# invocation generates both strings.xml and suggestedsites.json. The
-# trailing semi-colon defines an empty recipe: defining no recipe at
-# all causes Make to treat the target differently, in a way that
-# defeats our dependencies.
+# invocation generates strings.xml, browsersearch.json, and
+# suggestedsites.json. The trailing semi-colon defines an empty
+# recipe: defining no recipe at all causes Make to treat the target
+# differently, in a way that defeats our dependencies.
 res/values/strings.xml: .locales.deps ;
+res/raw/browsersearch.json: .locales.deps ;
 res/raw/suggestedsites.json: .locales.deps ;
 
 all_resources = \
@@ -353,12 +399,14 @@ extra_packages := $(subst $(NULL) ,:,$(strip $(extra_packages)))
 # are fresher than the target, preventing a subsequent invocation from
 # thinking aapt's outputs are stale.  This is safe because Make
 # removes the target file if any recipe command fails.
+
 define aapt_command
 $(1): $$(call mkdir_deps,$(filter-out ./,$(dir $(3) $(4) $(5)))) $(2)
 	@$$(TOUCH) $$@
 	$$(AAPT) package -f -m \
 		-M AndroidManifest.xml \
 		-I $(ANDROID_SDK)/android.jar \
+		$(if $(MOZ_ANDROID_MAX_SDK_VERSION),--max-res-version $(MOZ_ANDROID_MAX_SDK_VERSION),) \
 		--auto-add-overlay \
 		$$(addprefix -S ,$$(ANDROID_RES_DIRS)) \
 		$(if $(extra_res_dirs),$$(addprefix -S ,$$(extra_res_dirs)),) \
@@ -368,6 +416,7 @@ $(1): $$(call mkdir_deps,$(filter-out ./,$(dir $(3) $(4) $(5)))) $(2)
 		-F $(3) \
 		-J $(4) \
 		--output-text-symbols $(5) \
+		$(if $(MOZ_ANDROID_RESOURCE_CONSTRAINED),-c hdpi,) \
 		--ignore-assets "$$(ANDROID_AAPT_IGNORE)"
 endef
 

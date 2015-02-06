@@ -117,7 +117,7 @@ describe("loop.shared.utils", function() {
     describe("mozLoop set", function() {
       beforeEach(function() {
         navigator.mozLoop = {
-          getLoopBoolPref: function(prefName) {
+          getLoopPref: function(prefName) {
             return prefName === "test.true";
           }
         };
@@ -150,13 +150,13 @@ describe("loop.shared.utils", function() {
       // fake mozL10n
       sandbox.stub(navigator.mozL10n, "get", function(id) {
         switch(id) {
-          case "share_email_subject3": return "subject";
-          case "share_email_body3":    return "body";
+          case "share_email_subject4": return "subject";
+          case "share_email_body4":    return "body";
         }
       });
       composeEmail = sandbox.spy();
       navigator.mozLoop = {
-        getLoopCharPref: sandbox.spy(),
+        getLoopPref: sandbox.spy(),
         composeEmail: composeEmail
       };
     });

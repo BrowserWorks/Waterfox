@@ -1,4 +1,3 @@
-#include "precompiled.h"
 //
 // Copyright (c) 2013 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
@@ -7,17 +6,17 @@
 
 // copyimage.cpp: Defines image copying functions
 
-#include "libGLESv2/renderer/copyImage.h"
+#include "libGLESv2/renderer/copyimage.h"
 
 namespace rx
 {
 
-void CopyBGRAUByteToRGBAUByte(const void *source, void *dest)
+void CopyBGRA8ToRGBA8(const uint8_t *source, uint8_t *dest)
 {
-    unsigned int argb = *(unsigned int*)source;
-    *(unsigned int*)dest = (argb & 0xFF00FF00) |       // Keep alpha and green
-                           (argb & 0x00FF0000) >> 16 | // Move red to blue
-                           (argb & 0x000000FF) << 16;  // Move blue to red
+    uint32_t argb = *reinterpret_cast<const uint32_t*>(source);
+    *reinterpret_cast<uint32_t*>(dest) = (argb & 0xFF00FF00) |       // Keep alpha and green
+                                         (argb & 0x00FF0000) >> 16 | // Move red to blue
+                                         (argb & 0x000000FF) << 16;  // Move blue to red
 }
 
 }

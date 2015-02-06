@@ -817,7 +817,7 @@ var AddonManagerInternal = {
       gShutdownBarrier = new AsyncShutdown.Barrier("AddonManager: Waiting for providers to shut down.");
       AsyncShutdown.profileBeforeChange.addBlocker("AddonManager: shutting down.",
                                                    this.shutdownManager.bind(this),
-                                                   this.shutdownState.bind(this));
+                                                   {fetchState: this.shutdownState.bind(this)});
 
       // Once we start calling providers we must allow all normal methods to work.
       gStarted = true;
@@ -979,7 +979,7 @@ var AddonManagerInternal = {
     let state = [];
     if (gShutdownBarrier) {
       state.push({
-        name: gShutdownBarrier._name,
+        name: gShutdownBarrier.client.name,
         state: gShutdownBarrier.state
       });
     }
@@ -2511,9 +2511,9 @@ this.AddonManagerPrivate = {
   // Start a timer, record a simple measure of the time interval when
   // timer.done() is called
   simpleTimer: function(aName) {
-    let startTime = Date.now();
+    let startTime = Cu.now();
     return {
-      done: () => this.recordSimpleMeasure(aName, Date.now() - startTime)
+      done: () => this.recordSimpleMeasure(aName, Math.round(Cu.now() - startTime))
     };
   },
 

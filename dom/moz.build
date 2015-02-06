@@ -46,6 +46,7 @@ DIRS += [
     'battery',
     'browser-element',
     'canvas',
+    'cellbroadcast',
     'contacts',
     'crypto',
     'phonenumberutils',
@@ -65,6 +66,7 @@ DIRS += [
     'mathml',
     'media',
     'messages',
+    'mobileconnection',
     'notification',
     'offline',
     'power',
@@ -89,6 +91,7 @@ DIRS += [
     'promise',
     'smil',
     'telephony',
+    'voicemail',
     'inputmethod',
     'webidl',
     'xbl',
@@ -110,9 +113,6 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
 if CONFIG['MOZ_B2G_RIL']:
     DIRS += [
         'icc',
-        'cellbroadcast',
-        'mobileconnection',
-        'voicemail',
         'wappush',
     ]
 
@@ -128,7 +128,8 @@ if CONFIG['MOZ_NFC']:
 if CONFIG['MOZ_B2G']:
     DIRS += [
         'downloads',
-        'mobileid'
+        'mobileid',
+        'engineeringmode'
     ]
 
 if CONFIG['MOZ_B2G_BT_API_V2']:

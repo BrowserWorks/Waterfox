@@ -778,12 +778,6 @@ protected:
   // our <body> background and scrollbars.
   nsCOMPtr<nsITimer>        mPaintSuppressionTimer;
 
-  // At least on Win32 and Mac after interupting a reflow we need to post
-  // the resume reflow event off a timer to avoid event starvation because
-  // posted messages are processed before other messages when the modal
-  // moving/sizing loop is running, see bug 491700 for details.
-  nsCOMPtr<nsITimer>        mReflowContinueTimer;
-
   nsCOMPtr<nsITimer>        mDelayedPaintTimer;
 
   // The `performance.now()` value when we last started to process reflows.
@@ -827,6 +821,8 @@ protected:
   bool                      mImageVisibilityVisited : 1;
 
   bool                      mNextPaintCompressed : 1;
+
+  bool                      mHasCSSBackgroundColor : 1;
 
   static bool               sDisableNonTestMouseEvents;
 };

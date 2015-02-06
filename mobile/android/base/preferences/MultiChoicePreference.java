@@ -192,9 +192,9 @@ class MultiChoicePreference extends DialogPreference implements DialogInterface.
             // user cancelled; reset checkbox values to their previous state
             mValues = mPrevValues.clone();
             return;
-        } else {
-            mPrevValues = mValues.clone();
         }
+
+        mPrevValues = mValues.clone();
 
         if (!callChangeListener(getValues())) {
             return;
@@ -219,7 +219,7 @@ class MultiChoicePreference extends DialogPreference implements DialogInterface.
     protected boolean persist(SharedPreferences.Editor edit) {
         if (isPersistent()) {
             Set<String> vals = getValues();
-            PrefUtils.putStringSet(edit, getKey(), vals);
+            PrefUtils.putStringSet(edit, getKey(), vals).apply();;
             return true;
         }
 

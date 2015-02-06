@@ -1,4 +1,0 @@
-include $(topsrcdir)/config/rules.mk
-
-intermOut.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-Initialize.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)

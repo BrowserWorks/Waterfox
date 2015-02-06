@@ -214,6 +214,8 @@ nsDragService::InvokeDragSession(nsIDOMNode *aDOMNode,
       anArrayTransferables->GetElementAt(i, getter_AddRefs(supports));
       nsCOMPtr<nsITransferable> trans(do_QueryInterface(supports));
       if (trans) {
+        // set the requestingNode on the transferable
+        trans->SetRequestingNode(aDOMNode);
         nsRefPtr<IDataObject> dataObj;
         rv = nsClipboard::CreateNativeDataObject(trans,
                                                  getter_AddRefs(dataObj), uri);
@@ -231,6 +233,8 @@ nsDragService::InvokeDragSession(nsIDOMNode *aDOMNode,
     anArrayTransferables->GetElementAt(0, getter_AddRefs(supports));
     nsCOMPtr<nsITransferable> trans(do_QueryInterface(supports));
     if (trans) {
+      // set the requestingNode on the transferable
+      trans->SetRequestingNode(aDOMNode);
       rv = nsClipboard::CreateNativeDataObject(trans,
                                                getter_AddRefs(itemToDrag),
                                                uri);
@@ -424,7 +428,7 @@ nsDragService::GetData(nsITransferable * aTransferable, uint32_t anItem)
     // multiple items, use |anItem| as an index into our collection
     nsDataObjCollection * dataObjCol = GetDataObjCollection(mDataObject);
     uint32_t cnt = dataObjCol->GetNumDataObjects();
-    if (anItem >= 0 && anItem < cnt) {
+    if (anItem < cnt) {
       IDataObject * dataObj = dataObjCol->GetDataObjectAt(anItem);
       dataFound = nsClipboard::GetDataFromDataObject(dataObj, 0, nullptr,
                                                      aTransferable);

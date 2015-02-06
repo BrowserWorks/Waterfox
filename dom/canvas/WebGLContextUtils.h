@@ -7,17 +7,51 @@
 #define WEBGLCONTEXTUTILS_H_
 
 #include "WebGLContext.h"
+#include "WebGLStrongTypes.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/dom/BindingUtils.h"
 
 namespace mozilla {
 
-bool IsGLDepthFormat(GLenum webGLFormat);
-bool IsGLDepthStencilFormat(GLenum webGLFormat);
-bool FormatHasAlpha(GLenum webGLFormat);
-void DriverFormatsFromFormatAndType(gl::GLContext* gl, GLenum webGLFormat, GLenum webGLType,
-                                    GLenum* out_driverInternalFormat, GLenum* out_driverFormat);
-GLenum DriverTypeFromType(gl::GLContext* gl, GLenum webGLType);
+bool IsGLDepthFormat(TexInternalFormat webGLFormat);
+bool IsGLDepthStencilFormat(TexInternalFormat webGLFormat);
+bool FormatHasAlpha(TexInternalFormat webGLFormat);
+void
+DriverFormatsFromEffectiveInternalFormat(gl::GLContext* gl,
+                                         TexInternalFormat internalformat,
+                                         GLenum* out_driverInternalFormat,
+                                         GLenum* out_driverFormat,
+                                         GLenum* out_driverType);
+TexInternalFormat
+EffectiveInternalFormatFromInternalFormatAndType(TexInternalFormat internalformat,
+                                                 TexType type);
+TexInternalFormat
+EffectiveInternalFormatFromUnsizedInternalFormatAndType(TexInternalFormat internalformat,
+                                                        TexType type);
+void
+UnsizedInternalFormatAndTypeFromEffectiveInternalFormat(TexInternalFormat effectiveinternalformat,
+                                                        TexInternalFormat* out_internalformat,
+                                                        TexType* out_type);
+TexType
+TypeFromInternalFormat(TexInternalFormat internalformat);
+TexInternalFormat
+UnsizedInternalFormatFromInternalFormat(TexInternalFormat internalformat);
+size_t
+GetBitsPerTexel(TexInternalFormat effectiveinternalformat);
+
+// For use with the different texture calls, i.e.
+//   TexImage2D, CopyTex[Sub]Image2D, ...
+// that take a "target" parameter. This parameter is not always the same as
+// the texture binding location, like GL_TEXTURE_2D or GL_TEXTURE_CUBE_MAP.
+// For example, cube maps would pass GL_TEXTURE_CUBE_MAP_[POS|NEG]_[X|Y|Z]
+// instead of just GL_TEXTURE_CUBE_MAP.
+//
+// This function converts the texture image target to the texture target a.k.a.
+// binding location. The returned binding location can be used to check that
+// the currently bound texture is appropriate for this texImageTarget.
+//
+// Returns GL_NONE if passed an invalid texture image target
+TexTarget TexImageTargetToTexTarget(TexImageTarget texImageTarget);
 
 struct GLComponents
 {
@@ -36,7 +70,7 @@ struct GLComponents
         : mComponents(0)
     { }
 
-    GLComponents(GLenum format);
+    explicit GLComponents(TexInternalFormat aFormat);
 
     // Returns true iff other has all (or more) of
     // the components present in this GLComponents

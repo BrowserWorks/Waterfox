@@ -83,8 +83,8 @@ struct VisitData {
     title.SetIsVoid(true);
   }
 
-  VisitData(nsIURI* aURI,
-            nsIURI* aReferrer = nullptr)
+  explicit VisitData(nsIURI* aURI,
+                     nsIURI* aReferrer = nullptr)
   : placeId(0)
   , visitId(0)
   , hidden(true)
@@ -185,33 +185,69 @@ struct RemoveVisitsFilter {
 
 class PlaceHashKey : public nsCStringHashKey
 {
-  public:
-    PlaceHashKey(const nsACString& aSpec)
+public:
+  explicit PlaceHashKey(const nsACString& aSpec)
     : nsCStringHashKey(&aSpec)
-    , visitCount(-1)
-    , bookmarked(-1)
-    {
-    }
+    , mVisitCount(0)
+    , mBookmarked(false)
+#ifdef DEBUG
+    , mIsInitialized(false)
+#endif
+  {
+  }
 
-    PlaceHashKey(const nsACString* aSpec)
+  explicit PlaceHashKey(const nsACString* aSpec)
     : nsCStringHashKey(aSpec)
-    , visitCount(-1)
-    , bookmarked(-1)
-    {
-    }
+    , mVisitCount(0)
+    , mBookmarked(false)
+#ifdef DEBUG
+    , mIsInitialized(false)
+#endif
+  {
+  }
 
-    PlaceHashKey(const PlaceHashKey& aOther)
+  PlaceHashKey(const PlaceHashKey& aOther)
     : nsCStringHashKey(&aOther.GetKey())
-    {
-      MOZ_ASSERT(false, "Do not call me!");
-    }
+  {
+    MOZ_ASSERT(false, "Do not call me!");
+  }
 
-    // Visit count for this place.
-    int32_t visitCount;
-    // Whether this place is bookmarked.
-    int32_t bookmarked;
-    // Array of VisitData objects.
-    nsTArray<VisitData> visits;
+  void SetProperties(uint32_t aVisitCount, bool aBookmarked)
+  {
+    mVisitCount = aVisitCount;
+    mBookmarked = aBookmarked;
+#ifdef DEBUG
+    mIsInitialized = true;
+#endif
+  }
+
+  uint32_t VisitCount() const
+  {
+#ifdef DEBUG
+    MOZ_ASSERT(mIsInitialized, "PlaceHashKey::mVisitCount not set");
+#endif
+    return mVisitCount;
+  }
+
+  bool IsBookmarked() const
+  {
+#ifdef DEBUG
+    MOZ_ASSERT(mIsInitialized, "PlaceHashKey::mBookmarked not set");
+#endif
+    return mBookmarked;
+  }
+
+  // Array of VisitData objects.
+  nsTArray<VisitData> mVisits;
+private:
+  // Visit count for this place.
+  uint32_t mVisitCount;
+  // Whether this place is bookmarked.
+  bool mBookmarked;
+#ifdef DEBUG
+  // Whether previous attributes are set.
+  bool mIsInitialized;
+#endif
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -441,27 +477,30 @@ public:
   {
     NS_PRECONDITION(aURI, "Null URI");
 
-  // If we are a content process, always remote the request to the
-  // parent process.
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
-    URIParams uri;
-    SerializeURI(aURI, uri);
+    // If we are a content process, always remote the request to the
+    // parent process.
+    if (XRE_GetProcessType() == GeckoProcessType_Content) {
+      URIParams uri;
+      SerializeURI(aURI, uri);
 
-    mozilla::dom::ContentChild* cpc =
-      mozilla::dom::ContentChild::GetSingleton();
-    NS_ASSERTION(cpc, "Content Protocol is NULL!");
-    (void)cpc->SendStartVisitedQuery(uri);
-    return NS_OK;
-  }
+      mozilla::dom::ContentChild* cpc =
+        mozilla::dom::ContentChild::GetSingleton();
+      NS_ASSERTION(cpc, "Content Protocol is NULL!");
+      (void)cpc->SendStartVisitedQuery(uri);
+      return NS_OK;
+    }
+
+    nsMainThreadPtrHandle<mozIVisitedStatusCallback>
+      callback(new nsMainThreadPtrHolder<mozIVisitedStatusCallback>(aCallback));
 
     nsNavHistory* navHistory = nsNavHistory::GetHistoryService();
     NS_ENSURE_STATE(navHistory);
     if (navHistory->hasEmbedVisit(aURI)) {
-      nsRefPtr<VisitedQuery> callback = new VisitedQuery(aURI, aCallback, true);
-      NS_ENSURE_TRUE(callback, NS_ERROR_OUT_OF_MEMORY);
+      nsRefPtr<VisitedQuery> cb = new VisitedQuery(aURI, callback, true);
+      NS_ENSURE_TRUE(cb, NS_ERROR_OUT_OF_MEMORY);
       // As per IHistory contract, we must notify asynchronously.
       nsCOMPtr<nsIRunnable> event =
-        NS_NewRunnableMethod(callback, &VisitedQuery::NotifyVisitedStatus);
+        NS_NewRunnableMethod(cb, &VisitedQuery::NotifyVisitedStatus);
       NS_DispatchToMainThread(event);
 
       return NS_OK;
@@ -469,9 +508,9 @@ public:
 
     History* history = History::GetService();
     NS_ENSURE_STATE(history);
-    nsRefPtr<VisitedQuery> callback = new VisitedQuery(aURI, aCallback);
-    NS_ENSURE_TRUE(callback, NS_ERROR_OUT_OF_MEMORY);
-    nsresult rv = history->GetIsVisitedStatement(callback);
+    nsRefPtr<VisitedQuery> cb = new VisitedQuery(aURI, callback);
+    NS_ENSURE_TRUE(cb, NS_ERROR_OUT_OF_MEMORY);
+    nsresult rv = history->GetIsVisitedStatement(cb);
     NS_ENSURE_SUCCESS(rv, rv);
 
     return NS_OK;
@@ -521,7 +560,7 @@ public:
   nsresult NotifyVisitedStatus()
   {
     // If an external handling callback is provided, just notify through it.
-    if (mCallback) {
+    if (!!mCallback) {
       mCallback->IsVisited(mURI, mIsVisited);
       return NS_OK;
     }
@@ -551,9 +590,9 @@ public:
   }
 
 private:
-  VisitedQuery(nsIURI* aURI,
-               mozIVisitedStatusCallback *aCallback=nullptr,
-               bool aIsVisited=false)
+  explicit VisitedQuery(nsIURI* aURI,
+                        const nsMainThreadPtrHandle<mozIVisitedStatusCallback>& aCallback,
+                        bool aIsVisited=false)
   : mURI(aURI)
   , mCallback(aCallback)
   , mIsVisited(aIsVisited)
@@ -565,7 +604,7 @@ private:
   }
 
   nsCOMPtr<nsIURI> mURI;
-  nsCOMPtr<mozIVisitedStatusCallback> mCallback;
+  nsMainThreadPtrHandle<mozIVisitedStatusCallback> mCallback;
   bool mIsVisited;
 };
 
@@ -685,7 +724,7 @@ private:
 class NotifyPlaceInfoCallback : public nsRunnable
 {
 public:
-  NotifyPlaceInfoCallback(mozIVisitInfoCallback* aCallback,
+  NotifyPlaceInfoCallback(const nsMainThreadPtrHandle<mozIVisitInfoCallback>& aCallback,
                           const VisitData& aPlace,
                           bool aIsSingleVisit,
                           nsresult aResult)
@@ -741,12 +780,7 @@ public:
   }
 
 private:
-  /**
-   * Callers MUST hold a strong reference to this that outlives us because we
-   * may be created off of the main thread, and therefore cannot call AddRef on
-   * this object (and therefore cannot hold a strong reference to it).
-   */
-  mozIVisitInfoCallback* mCallback;
+  nsMainThreadPtrHandle<mozIVisitInfoCallback> mCallback;
   VisitData mPlace;
   const nsresult mResult;
   bool mIsSingleVisit;
@@ -758,7 +792,7 @@ private:
 class NotifyCompletion : public nsRunnable
 {
 public:
-  NotifyCompletion(mozIVisitInfoCallback* aCallback)
+  explicit NotifyCompletion(const nsMainThreadPtrHandle<mozIVisitInfoCallback>& aCallback)
   : mCallback(aCallback)
   {
     MOZ_ASSERT(aCallback, "Must pass a non-null callback!");
@@ -771,23 +805,12 @@ public:
     }
     else {
       (void)NS_DispatchToMainThread(this);
-
-      // Also dispatch an event to release the reference to the callback after
-      // we have run.
-      nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
-      (void)NS_ProxyRelease(mainThread, mCallback, true);
     }
     return NS_OK;
   }
 
 private:
-  /**
-   * Callers MUST hold a strong reference to this because we may be created
-   * off of the main thread, and therefore cannot call AddRef on this object
-   * (and therefore cannot hold a strong reference to it). If invoked from a
-   * background thread, NotifyCompletion will release the reference to this.
-   */
-  mozIVisitInfoCallback* mCallback;
+  nsMainThreadPtrHandle<mozIVisitInfoCallback> mCallback;
 };
 
 /**
@@ -807,6 +830,7 @@ CanAddURI(nsIURI* aURI,
           const nsCString& aGUID = EmptyCString(),
           mozIVisitInfoCallback* aCallback = nullptr)
 {
+  MOZ_ASSERT(NS_IsMainThread());
   nsNavHistory* navHistory = nsNavHistory::GetHistoryService();
   NS_ENSURE_TRUE(navHistory, false);
 
@@ -818,21 +842,13 @@ CanAddURI(nsIURI* aURI,
 
   // We cannot add the URI.  Notify the callback, if we were given one.
   if (aCallback) {
-    // NotifyPlaceInfoCallback does not hold a strong reference to the callback, so we
-    // have to manage it by AddRefing now and then releasing it after the event
-    // has run.
-    NS_ADDREF(aCallback);
-
     VisitData place(aURI);
     place.guid = aGUID;
+    nsMainThreadPtrHandle<mozIVisitInfoCallback>
+      callback(new nsMainThreadPtrHolder<mozIVisitInfoCallback>(aCallback));
     nsCOMPtr<nsIRunnable> event =
-      new NotifyPlaceInfoCallback(aCallback, place, true, NS_ERROR_INVALID_ARG);
+      new NotifyPlaceInfoCallback(callback, place, true, NS_ERROR_INVALID_ARG);
     (void)NS_DispatchToMainThread(event);
-
-    // Also dispatch an event to release our reference to the callback after
-    // NotifyPlaceInfoCallback has run.
-    nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
-    (void)NS_ProxyRelease(mainThread, aCallback, true);
   }
 
   return false;
@@ -841,7 +857,7 @@ CanAddURI(nsIURI* aURI,
 /**
  * Adds a visit to the database.
  */
-class InsertVisitedURIs : public nsRunnable
+class InsertVisitedURIs MOZ_FINAL: public nsRunnable
 {
 public:
   /**
@@ -868,8 +884,10 @@ public:
       return NS_ERROR_FAILURE;
     }
 
+    nsMainThreadPtrHandle<mozIVisitInfoCallback>
+      callback(new nsMainThreadPtrHolder<mozIVisitInfoCallback>(aCallback));
     nsRefPtr<InsertVisitedURIs> event =
-      new InsertVisitedURIs(aConnection, aPlaces, aCallback);
+      new InsertVisitedURIs(aConnection, aPlaces, callback);
 
     // Get the target thread, and then start the work!
     nsCOMPtr<nsIEventTarget> target = do_GetInterface(aConnection);
@@ -905,7 +923,7 @@ public:
       if (!known) {
         nsresult rv = mHistory->FetchPageInfo(place, &known);
         if (NS_FAILED(rv)) {
-          if (mCallback) {
+          if (!!mCallback) {
             nsCOMPtr<nsIRunnable> event =
               new NotifyPlaceInfoCallback(mCallback, place, true, rv);
             return NS_DispatchToMainThread(event);
@@ -917,7 +935,7 @@ public:
       FetchReferrerInfo(referrer, place);
 
       nsresult rv = DoDatabaseInserts(known, place, referrer);
-      if (mCallback) {
+      if (!!mCallback) {
         nsCOMPtr<nsIRunnable> event =
           new NotifyPlaceInfoCallback(mCallback, place, true, rv);
         nsresult rv2 = NS_DispatchToMainThread(event);
@@ -947,7 +965,7 @@ public:
 private:
   InsertVisitedURIs(mozIStorageConnection* aConnection,
                     nsTArray<VisitData>& aPlaces,
-                    mozIVisitInfoCallback* aCallback)
+                    const nsMainThreadPtrHandle<mozIVisitInfoCallback>& aCallback)
   : mDBConn(aConnection)
   , mCallback(aCallback)
   , mHistory(History::GetService())
@@ -966,14 +984,6 @@ private:
       NS_ASSERTION(CanAddURI(uri),
                    "Passed a VisitData with a URI we cannot add to history!");
 #endif
-    }
-  }
-
-  virtual ~InsertVisitedURIs()
-  {
-    if (mCallback) {
-      nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
-      (void)NS_ProxyRelease(mainThread, mCallback, true);
     }
   }
 
@@ -1009,7 +1019,7 @@ private:
       // We need the place id and guid of the page we just inserted when we
       // have a callback or when the GUID isn't known.  No point in doing the
       // disk I/O if we do not need it.
-      if (mCallback || aPlace.guid.IsEmpty()) {
+      if (!!mCallback || aPlace.guid.IsEmpty()) {
         bool exists;
         rv = mHistory->FetchPageInfo(aPlace, &exists);
         NS_ENSURE_SUCCESS(rv, rv);
@@ -1273,7 +1283,7 @@ private:
   nsTArray<VisitData> mPlaces;
   nsTArray<VisitData> mReferrers;
 
-  nsCOMPtr<mozIVisitInfoCallback> mCallback;
+  nsMainThreadPtrHandle<mozIVisitInfoCallback> mCallback;
 
   /**
    * Strong reference to the History object because we do not want it to
@@ -1292,7 +1302,9 @@ public:
                         mozIVisitInfoCallback* aCallback) {
     MOZ_ASSERT(NS_IsMainThread(), "This should be called on the main thread");
 
-    nsRefPtr<GetPlaceInfo> event = new GetPlaceInfo(aPlace, aCallback);
+    nsMainThreadPtrHandle<mozIVisitInfoCallback>
+      callback(new nsMainThreadPtrHolder<mozIVisitInfoCallback>(aCallback));
+    nsRefPtr<GetPlaceInfo> event = new GetPlaceInfo(aPlace, callback);
 
     // Get the target thread, and then start the work!
     nsCOMPtr<nsIEventTarget> target = do_GetInterface(aConnection);
@@ -1324,7 +1336,7 @@ public:
   }
 private:
   GetPlaceInfo(VisitData& aPlace,
-               mozIVisitInfoCallback* aCallback)
+               const nsMainThreadPtrHandle<mozIVisitInfoCallback>& aCallback)
   : mPlace(aPlace)
   , mCallback(aCallback)
   , mHistory(History::GetService())
@@ -1332,16 +1344,8 @@ private:
     MOZ_ASSERT(NS_IsMainThread(), "This should be called on the main thread");
   }
 
-  virtual ~GetPlaceInfo()
-  {
-    if (mCallback) {
-      nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
-      (void)NS_ProxyRelease(mainThread, mCallback, true);
-    }
-  }
-
   VisitData mPlace;
-  nsCOMPtr<mozIVisitInfoCallback> mCallback;
+  nsMainThreadPtrHandle<mozIVisitInfoCallback> mCallback;
   nsRefPtr<History> mHistory;
 };
 
@@ -1462,7 +1466,7 @@ class SetDownloadAnnotations MOZ_FINAL : public mozIVisitInfoCallback
 public:
   NS_DECL_ISUPPORTS
 
-  SetDownloadAnnotations(nsIURI* aDestination)
+  explicit SetDownloadAnnotations(nsIURI* aDestination)
   : mDestination(aDestination)
   , mHistory(History::GetService())
   {
@@ -1568,9 +1572,8 @@ static PLDHashOperator TransferHashEntries(PlaceHashKey* aEntry,
   nsTHashtable<PlaceHashKey>* hash =
     static_cast<nsTHashtable<PlaceHashKey> *>(aHash);
   PlaceHashKey* copy = hash->PutEntry(aEntry->GetKey());
-  copy->visitCount = aEntry->visitCount;
-  copy->bookmarked = aEntry->bookmarked;
-  aEntry->visits.SwapElements(copy->visits);
+  copy->SetProperties(aEntry->VisitCount(), aEntry->IsBookmarked());
+  aEntry->mVisits.SwapElements(copy->mVisits);
   return PL_DHASH_NEXT;
 }
 
@@ -1581,13 +1584,12 @@ static PLDHashOperator NotifyVisitRemoval(PlaceHashKey* aEntry,
                                           void* aHistory)
 {
   nsNavHistory* history = static_cast<nsNavHistory *>(aHistory);
-  const nsTArray<VisitData>& visits = aEntry->visits;
+  const nsTArray<VisitData>& visits = aEntry->mVisits;
   nsCOMPtr<nsIURI> uri;
   (void)NS_NewURI(getter_AddRefs(uri), visits[0].spec);
-  // XXX visitCount should really just be unsigned (bug 1049812)
   bool removingPage =
-    visits.Length() == static_cast<size_t>(aEntry->visitCount) &&
-    !aEntry->bookmarked;
+    visits.Length() == aEntry->VisitCount() &&
+    !aEntry->IsBookmarked();
   // FindRemovableVisits only sets the transition type on the VisitData objects
   // it collects if the visits were filtered by transition type.
   // RemoveVisitsFilter currently only supports filtering by transition type, so
@@ -1611,7 +1613,7 @@ class NotifyRemoveVisits : public nsRunnable
 {
 public:
 
-  NotifyRemoveVisits(nsTHashtable<PlaceHashKey>& aPlaces)
+  explicit NotifyRemoveVisits(nsTHashtable<PlaceHashKey>& aPlaces)
     : mPlaces(VISITS_REMOVAL_INITIAL_HASH_LENGTH)
     , mHistory(History::GetService())
   {
@@ -1662,11 +1664,10 @@ private:
 static PLDHashOperator ListToBeRemovedPlaceIds(PlaceHashKey* aEntry,
                                                void* aIdsList)
 {
-  const nsTArray<VisitData>& visits = aEntry->visits;
+  const nsTArray<VisitData>& visits = aEntry->mVisits;
   // Only orphan ids should be listed.
-  // XXX visitCount should really just be unsigned (bug 1049812)
-  if (visits.Length() == static_cast<size_t>(aEntry->visitCount) &&
-      !aEntry->bookmarked) {
+  if (visits.Length() == aEntry->VisitCount() &&
+      !aEntry->IsBookmarked()) {
     nsCString* list = static_cast<nsCString*>(aIdsList);
     if (!list->IsEmpty())
       list->Append(',');
@@ -1770,6 +1771,11 @@ private:
     }
   }
 
+  /**
+   * Find the list of entries that may be removed from `moz_places`.
+   *
+   * Calling this method makes sense only if we are not clearing the entire history.
+   */
   nsresult
   FindRemovableVisits(nsTHashtable<PlaceHashKey>& aPlaces)
   {
@@ -1815,9 +1821,8 @@ private:
       if (!entry) {
         entry = aPlaces.PutEntry(visit.spec);
       }
-      entry->visitCount = visitCount;
-      entry->bookmarked = bookmarked;
-      entry->visits.AppendElement(visit);
+      entry->SetProperties(static_cast<uint32_t>(visitCount), static_cast<bool>(bookmarked));
+      entry->mVisits.AppendElement(visit);
     }
     NS_ENSURE_SUCCESS(rv, rv);
 
@@ -1921,19 +1926,12 @@ StoreAndNotifyEmbedVisit(VisitData& aPlace,
 
   navHistory->registerEmbedVisit(uri, aPlace.visitTime);
 
-  if (aCallback) {
-    // NotifyPlaceInfoCallback does not hold a strong reference to the callback,
-    // so we have to manage it by AddRefing now and then releasing it after the
-    // event has run.
-    NS_ADDREF(aCallback);
+  if (!!aCallback) {
+    nsMainThreadPtrHandle<mozIVisitInfoCallback>
+      callback(new nsMainThreadPtrHolder<mozIVisitInfoCallback>(aCallback));
     nsCOMPtr<nsIRunnable> event =
-      new NotifyPlaceInfoCallback(aCallback, aPlace, true, NS_OK);
+      new NotifyPlaceInfoCallback(callback, aPlace, true, NS_OK);
     (void)NS_DispatchToMainThread(event);
-
-    // Also dispatch an event to release our reference to the callback after
-    // NotifyPlaceInfoCallback has run.
-    nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
-    (void)NS_ProxyRelease(mainThread, aCallback, true);
   }
 
   VisitData noReferrer;
@@ -2029,7 +2027,7 @@ class ConcurrentStatementsHolder MOZ_FINAL : public mozIStorageCompletionCallbac
 public:
   NS_DECL_ISUPPORTS
 
-  ConcurrentStatementsHolder(mozIStorageConnection* aDBConn)
+  explicit ConcurrentStatementsHolder(mozIStorageConnection* aDBConn)
   {
     DebugOnly<nsresult> rv = aDBConn->AsyncClone(true, this);
     MOZ_ASSERT(NS_SUCCEEDED(rv));
@@ -2726,9 +2724,10 @@ History::AddDownload(nsIURI* aSource, nsIURI* aReferrer,
   mozIStorageConnection* dbConn = GetDBConn();
   NS_ENSURE_STATE(dbConn);
 
-  nsCOMPtr<mozIVisitInfoCallback> callback = aDestination
-                                  ? new SetDownloadAnnotations(aDestination)
-                                  : nullptr;
+  nsMainThreadPtrHandle<mozIVisitInfoCallback> callback;
+  if (aDestination) {
+    callback = new nsMainThreadPtrHolder<mozIVisitInfoCallback>(new SetDownloadAnnotations(aDestination));
+  }
 
   rv = InsertVisitedURIs::Start(dbConn, placeArray, callback);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -2833,15 +2832,11 @@ History::GetPlacesInfo(JS::Handle<JS::Value> aPlaceIdentifiers,
   // main thread from there to make sure that all database notifications
   // and all embed or canAddURI notifications have finished.
   if (aCallback) {
-    // NotifyCompletion does not hold a strong reference to the callback,
-    // so we have to manage it by AddRefing now. NotifyCompletion will
-    // release it for us once it has dispatched the callback to the main
-    // thread.
-    NS_ADDREF(aCallback);
-
+    nsMainThreadPtrHandle<mozIVisitInfoCallback>
+      callback(new nsMainThreadPtrHolder<mozIVisitInfoCallback>(aCallback));
     nsCOMPtr<nsIEventTarget> backgroundThread = do_GetInterface(dbConn);
     NS_ENSURE_TRUE(backgroundThread, NS_ERROR_UNEXPECTED);
-    nsCOMPtr<nsIRunnable> event = new NotifyCompletion(aCallback);
+    nsCOMPtr<nsIRunnable> event = new NotifyCompletion(callback);
     return backgroundThread->Dispatch(event, NS_DISPATCH_NORMAL);
   }
 
@@ -2957,11 +2952,14 @@ History::UpdatePlaces(JS::Handle<JS::Value> aPlaceInfos,
   mozIStorageConnection* dbConn = GetDBConn();
   NS_ENSURE_STATE(dbConn);
 
+  nsMainThreadPtrHandle<mozIVisitInfoCallback>
+    callback(new nsMainThreadPtrHolder<mozIVisitInfoCallback>(aCallback));
+
   // It is possible that all of the visits we were passed were dissallowed by
   // CanAddURI, which isn't an error.  If we have no visits to add, however,
   // we should not call InsertVisitedURIs::Start.
   if (visitData.Length()) {
-    nsresult rv = InsertVisitedURIs::Start(dbConn, visitData, aCallback);
+    nsresult rv = InsertVisitedURIs::Start(dbConn, visitData, callback);
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
@@ -2970,15 +2968,9 @@ History::UpdatePlaces(JS::Handle<JS::Value> aPlaceInfos,
   // main thread from there to make sure that all database notifications
   // and all embed or canAddURI notifications have finished.
   if (aCallback) {
-    // NotifyCompletion does not hold a strong reference to the callback,
-    // so we have to manage it by AddRefing now. NotifyCompletion will
-    // release it for us once it has dispatched the callback to the main
-    // thread.
-    NS_ADDREF(aCallback);
-
     nsCOMPtr<nsIEventTarget> backgroundThread = do_GetInterface(dbConn);
     NS_ENSURE_TRUE(backgroundThread, NS_ERROR_UNEXPECTED);
-    nsCOMPtr<nsIRunnable> event = new NotifyCompletion(aCallback);
+    nsCOMPtr<nsIRunnable> event = new NotifyCompletion(callback);
     return backgroundThread->Dispatch(event, NS_DISPATCH_NORMAL);
   }
 

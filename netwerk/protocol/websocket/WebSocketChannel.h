@@ -14,9 +14,11 @@
 #include "nsIAsyncOutputStream.h"
 #include "nsITimer.h"
 #include "nsIDNSListener.h"
+#include "nsIObserver.h"
 #include "nsIProtocolProxyCallback.h"
 #include "nsIChannelEventSink.h"
 #include "nsIHttpChannelInternal.h"
+#include "nsIStringStream.h"
 #include "BaseWebSocketChannel.h"
 
 #ifdef MOZ_WIDGET_GONK
@@ -62,6 +64,7 @@ class WebSocketChannel : public BaseWebSocketChannel,
                          public nsIOutputStreamCallback,
                          public nsITimerCallback,
                          public nsIDNSListener,
+                         public nsIObserver,
                          public nsIProtocolProxyCallback,
                          public nsIInterfaceRequestor,
                          public nsIChannelEventSink
@@ -78,6 +81,7 @@ public:
   NS_DECL_NSIPROTOCOLPROXYCALLBACK
   NS_DECL_NSIINTERFACEREQUESTOR
   NS_DECL_NSICHANNELEVENTSINK
+  NS_DECL_NSIOBSERVER
 
   // nsIWebSocketChannel methods BaseWebSocketChannel didn't implement for us
   //
@@ -93,6 +97,11 @@ public:
 
   WebSocketChannel();
   static void Shutdown();
+  bool IsOnTargetThread();
+
+  // Off main thread URI access.
+  void GetEffectiveURL(nsAString& aEffectiveURL) const MOZ_OVERRIDE;
+  bool IsEncrypted() const MOZ_OVERRIDE;
 
   enum {
     // Non Control Frames
@@ -160,8 +169,8 @@ private:
 
   inline void ResetPingTimer()
   {
+    mPingOutstanding = 0;
     if (mPingTimer) {
-      mPingOutstanding = 0;
       mPingTimer->SetDelay(mPingInterval);
     }
   }
@@ -182,6 +191,7 @@ private:
 
   // Used for off main thread access to the URI string.
   nsCString                       mHost;
+  nsString                        mEffectiveURL;
 
   nsCOMPtr<nsISocketTransport>    mTransport;
   nsCOMPtr<nsIAsyncInputStream>   mSocketIn;

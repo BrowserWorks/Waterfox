@@ -122,10 +122,44 @@ ScriptSettingsStackEntry::~ScriptSettingsStackEntry()
   ScriptSettingsStack::Pop(this);
 }
 
+// If the entry or incumbent global ends up being something that the subject
+// principal doesn't subsume, we don't want to use it. This never happens on
+// the web, but can happen with asymmetric privilege relationships (i.e.
+// nsExpandedPrincipal and System Principal).
+//
+// The most correct thing to use instead would be the topmost global on the
+// callstack whose principal is subsumed by the subject principal. But that's
+// hard to compute, so we just substitute the global of the current
+// compartment. In practice, this is fine.
+//
+// Note that in particular things like:
+//
+// |SpecialPowers.wrap(crossOriginWindow).eval(open())|
+//
+// trigger this case. Although both the entry global and the current global
+// have normal principals, the use of Gecko-specific System-Principaled JS
+// puts the code from two different origins on the callstack at once, which
+// doesn't happen normally on the web.
+static nsIGlobalObject*
+ClampToSubject(nsIGlobalObject* aGlobalOrNull)
+{
+  if (!aGlobalOrNull || !NS_IsMainThread()) {
+    return aGlobalOrNull;
+  }
+
+  nsIPrincipal* globalPrin = aGlobalOrNull->PrincipalOrNull();
+  NS_ENSURE_TRUE(globalPrin, GetCurrentGlobal());
+  if (!nsContentUtils::SubjectPrincipal()->SubsumesConsideringDomain(globalPrin)) {
+    return GetCurrentGlobal();
+  }
+
+  return aGlobalOrNull;
+}
+
 nsIGlobalObject*
 GetEntryGlobal()
 {
-  return ScriptSettingsStack::EntryGlobal();
+  return ClampToSubject(ScriptSettingsStack::EntryGlobal());
 }
 
 nsIDocument*
@@ -154,12 +188,12 @@ GetIncumbentGlobal()
   // there's nothing on the JS stack, which will cause us to check the
   // incumbent script stack below.
   if (JSObject *global = JS::GetScriptedCallerGlobal(cx)) {
-    return xpc::GetNativeForGlobal(global);
+    return ClampToSubject(xpc::NativeGlobal(global));
   }
 
   // Ok, nothing from the JS engine. Let's use whatever's on the
   // explicit stack.
-  return ScriptSettingsStack::IncumbentGlobal();
+  return ClampToSubject(ScriptSettingsStack::IncumbentGlobal());
 }
 
 nsIGlobalObject*
@@ -175,7 +209,7 @@ GetCurrentGlobal()
     return nullptr;
   }
 
-  return xpc::GetNativeForGlobal(global);
+  return xpc::NativeGlobal(global);
 }
 
 nsIPrincipal*
@@ -234,7 +268,50 @@ FindJSContext(nsIGlobalObject* aGlobalObject)
 
 AutoJSAPI::AutoJSAPI()
   : mCx(nullptr)
+  , mOwnErrorReporting(false)
+  , mOldDontReportUncaught(false)
 {
+}
+
+AutoJSAPI::~AutoJSAPI()
+{
+  if (mOwnErrorReporting) {
+    MOZ_ASSERT(NS_IsMainThread(), "See corresponding assertion in TakeOwnershipOfErrorReporting()");
+    JS::ContextOptionsRef(cx()).setDontReportUncaught(mOldDontReportUncaught);
+
+    if (HasException()) {
+
+      // AutoJSAPI uses a JSAutoNullableCompartment, and may be in a null
+      // compartment when the destructor is called. However, the JS engine
+      // requires us to be in a compartment when we fetch the pending exception.
+      // In this case, we enter the privileged junk scope and don't dispatch any
+      // error events.
+      JS::Rooted<JSObject*> errorGlobal(cx(), JS::CurrentGlobalOrNull(cx()));
+      if (!errorGlobal)
+        errorGlobal = xpc::PrivilegedJunkScope();
+      JSAutoCompartment ac(cx(), errorGlobal);
+      nsCOMPtr<nsPIDOMWindow> win = xpc::WindowGlobalOrNull(errorGlobal);
+      JS::Rooted<JS::Value> exn(cx());
+      js::ErrorReport jsReport(cx());
+      if (StealException(&exn) && jsReport.init(cx(), exn)) {
+        nsRefPtr<xpc::ErrorReport> xpcReport = new xpc::ErrorReport();
+        xpcReport->Init(jsReport.report(), jsReport.message(),
+                        nsContentUtils::IsCallerChrome(),
+                        win ? win->WindowID() : 0);
+        if (win) {
+          DispatchScriptErrorEvent(win, JS_GetRuntime(cx()), xpcReport, exn);
+        } else {
+          xpcReport->LogToConsole();
+        }
+      } else {
+        NS_WARNING("OOMed while acquiring uncaught exception from JSAPI");
+      }
+    }
+  }
+
+  if (mOldErrorReporter.isSome()) {
+    JS_SetErrorReporter(JS_GetRuntime(cx()), mOldErrorReporter.value());
+  }
 }
 
 void
@@ -253,11 +330,19 @@ AutoJSAPI::InitInternal(JSObject* aGlobal, JSContext* aCx, bool aIsMainThread)
   } else {
     mAutoNullableCompartment.emplace(mCx, aGlobal);
   }
+
+  if (aIsMainThread) {
+    JSRuntime* rt = JS_GetRuntime(aCx);
+    mOldErrorReporter.emplace(JS_GetErrorReporter(rt));
+    JS_SetErrorReporter(rt, xpc::SystemErrorReporter);
+  }
 }
 
 AutoJSAPI::AutoJSAPI(nsIGlobalObject* aGlobalObject,
                      bool aIsMainThread,
                      JSContext* aCx)
+  : mOwnErrorReporting(false)
+  , mOldDontReportUncaught(false)
 {
   MOZ_ASSERT(aGlobalObject);
   MOZ_ASSERT(aGlobalObject->GetGlobalJSObject(), "Must have a JS global");
@@ -300,6 +385,12 @@ bool
 AutoJSAPI::Init(nsIGlobalObject* aGlobalObject)
 {
   return Init(aGlobalObject, nsContentUtils::GetDefaultJSContextForThread());
+}
+
+bool
+AutoJSAPI::Init(JSObject* aObject)
+{
+  return Init(xpc::NativeGlobal(aObject));
 }
 
 bool
@@ -346,6 +437,48 @@ AutoJSAPI::InitWithLegacyErrorReporting(nsGlobalWindow* aWindow)
   return InitWithLegacyErrorReporting(static_cast<nsIGlobalObject*>(aWindow));
 }
 
+// Even with dontReportUncaught, the JS engine still sends warning reports
+// to the JSErrorReporter as soon as they are generated. These go directly to
+// the console, so we can handle them easily here.
+//
+// Eventually, SpiderMonkey will have a special-purpose callback for warnings only.
+void
+WarningOnlyErrorReporter(JSContext* aCx, const char* aMessage, JSErrorReport* aRep)
+{
+  MOZ_ASSERT(JSREPORT_IS_WARNING(aRep->flags));
+  nsRefPtr<xpc::ErrorReport> xpcReport = new xpc::ErrorReport();
+  nsPIDOMWindow* win = xpc::WindowGlobalOrNull(JS::CurrentGlobalOrNull(aCx));
+  xpcReport->Init(aRep, aMessage, nsContentUtils::IsCallerChrome(),
+                  win ? win->WindowID() : 0);
+  xpcReport->LogToConsole();
+}
+
+void
+AutoJSAPI::TakeOwnershipOfErrorReporting()
+{
+  MOZ_ASSERT(NS_IsMainThread(), "Can't own error reporting off-main-thread yet");
+  MOZ_ASSERT(!mOwnErrorReporting);
+  mOwnErrorReporting = true;
+
+  JSRuntime *rt = JS_GetRuntime(cx());
+  mOldDontReportUncaught = JS::ContextOptionsRef(cx()).dontReportUncaught();
+  JS::ContextOptionsRef(cx()).setDontReportUncaught(true);
+  JS_SetErrorReporter(rt, WarningOnlyErrorReporter);
+}
+
+bool
+AutoJSAPI::StealException(JS::MutableHandle<JS::Value> aVal)
+{
+    MOZ_ASSERT(CxPusherIsStackTop());
+    MOZ_ASSERT(HasException());
+    MOZ_ASSERT(js::GetContextCompartment(cx()));
+    if (!JS_GetPendingException(cx(), aVal)) {
+      return false;
+    }
+    JS_ClearPendingException(cx());
+    return true;
+}
+
 AutoEntryScript::AutoEntryScript(nsIGlobalObject* aGlobalObject,
                                  bool aIsMainThread,
                                  JSContext* aCx)
@@ -376,8 +509,6 @@ AutoIncumbentScript::AutoIncumbentScript(nsIGlobalObject* aGlobalObject)
 AutoNoJSAPI::AutoNoJSAPI(bool aIsMainThread)
   : ScriptSettingsStackEntry()
 {
-  MOZ_ASSERT_IF(nsContentUtils::GetCurrentJSContextForThread(),
-                !JS_IsExceptionPending(nsContentUtils::GetCurrentJSContextForThread()));
   if (aIsMainThread) {
     mCxPusher.emplace(static_cast<JSContext*>(nullptr),
                       /* aAllowNull = */ true);

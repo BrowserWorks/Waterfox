@@ -9,6 +9,7 @@ var NotificationTest = (function () {
     SimpleTest.waitForExplicitFinish();
     // turn on testing pref (used by notification.cpp, and mock the alerts
     SpecialPowers.setBoolPref("notification.prompt.testing", true);
+    SpecialPowers.setAllAppsLaunchable(true);
   }
 
   function teardown_testing_env() {
@@ -94,6 +95,14 @@ var NotificationTest = (function () {
 
     clickNotification: function (notification) {
       // TODO: how??
+    },
+
+    fireCloseEvent: function (title) {
+      window.dispatchEvent(new CustomEvent("mock-notification-close-event", {
+        detail: {
+          title: title
+        }
+      }));
     },
 
     info: info,

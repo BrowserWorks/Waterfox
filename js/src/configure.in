@@ -202,7 +202,7 @@ if test -n "$gonkdir" ; then
     STRIP="$gonk_toolchain_prefix"strip
     OBJCOPY="$gonk_toolchain_prefix"objcopy
 
-    STLPORT_CPPFLAGS="-I$gonkdir/external/stlport/stlport"
+    STLPORT_CPPFLAGS="-I$_topsrcdir/build/stlport/stlport -I$gonkdir/ndk/sources/cxx-stl/system/include"
     STLPORT_LIBS="-lstlport"
 
     case "$target_cpu" in
@@ -426,11 +426,11 @@ case "$target" in
         changequote([,])
 
         # Determine compiler version
-        _CC_MAJOR_VERSION=`echo ${CC_VERSION} | cut -c 1-2`
+        _CC_MAJOR_VERSION=17
         _CC_MINOR_VERSION=`echo ${CC_VERSION} | cut -c 3-4`
         _MSC_VER=${CC_VERSION}
 
-        _CXX_MAJOR_VERSION=`echo ${CXX_VERSION} | cut -c 1-2`
+        _CXX_MAJOR_VERSION=17
 
         if test "$_CC_MAJOR_VERSION" != "$_CXX_MAJOR_VERSION"; then
             AC_MSG_ERROR([The major versions of \$CC and \$CXX do not match.])
@@ -1077,6 +1077,22 @@ if test -n "$MOZ_ASAN"; then
     MOZ_PATH_PROG(LLVM_SYMBOLIZER, llvm-symbolizer)
 fi
 AC_SUBST(MOZ_ASAN)
+
+dnl ========================================================
+dnl = Use Memory Sanitizer
+dnl ========================================================
+MOZ_ARG_ENABLE_BOOL(memory-sanitizer,
+[  --enable-memory-sanitizer       Enable Memory Sanitizer (default=no)],
+    MOZ_MSAN=1,
+    MOZ_MSAN= )
+if test -n "$MOZ_MSAN"; then
+    MOZ_LLVM_HACKS=1
+    AC_DEFINE(MOZ_MSAN)
+    MOZ_PATH_PROG(LLVM_SYMBOLIZER, llvm-symbolizer)
+fi
+AC_SUBST(MOZ_MSAN)
+
+# The LLVM symbolizer is used by all sanitizers
 AC_SUBST(LLVM_SYMBOLIZER)
 
 dnl ========================================================
@@ -1148,22 +1164,62 @@ if test "$GNU_CC"; then
                   AC_MSG_RESULT([no])
                   LDFLAGS=$_SAVE_LDFLAGS)
 
-    # Turn on GNU-specific warnings:
-    # -Wall - turn on a lot of warnings
-    # -Wpointer-arith - good to have
-    # -Wdeclaration-after-statement - MSVC doesn't like these
-    # -Werror=return-type - catches missing returns, zero false positives
-    # -Werror=int-to-pointer-cast - catches cast to pointer from integer of different size
-    # -Wtype-limits - catches overflow bugs, few false positives
-    # -Wempty-body - catches bugs, e.g. "if (c); foo();", few false positives
-    # -Wsign-compare - catches comparison of signed and unsigned types
+    # Turn on gcc/clang warnings:
+    # https://gcc.gnu.org/onlinedocs/gcc-4.4.0/gcc/Warning-Options.html
     #
-    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Wall -Wpointer-arith -Wdeclaration-after-statement"
-    MOZ_C_SUPPORTS_WARNING(-W, error=return-type, ac_c_has_werror_return_type)
-    MOZ_C_SUPPORTS_WARNING(-W, error=int-to-pointer-cast, ac_c_has_werror_int_to_pointer_cast)
-    MOZ_C_SUPPORTS_WARNING(-W, type-limits, ac_c_has_wtype_limits)
-    MOZ_C_SUPPORTS_WARNING(-W, empty-body, ac_c_has_wempty_body)
-    MOZ_C_SUPPORTS_WARNING(-W, sign-compare, ac_c_has_sign_compare)
+    # -Wall - turn on a lot of warnings
+    # -Waddress - catches suspicious uses of memory addresses
+    # -Wchar-subscripts - catches array index using signed char
+    # -Wcomment - catches nested comments
+    # -Wdeclaration-after-statement - MSVC doesn't like these
+    # -Wempty-body - catches bugs, e.g. "if (c); foo();", few false positives
+    # -Wendif-labels - catches `#else FOO` and `#endif FOO` not in comment
+    # -Wenum-compare - catches comparison of different enum types
+    # -Wignored-qualifiers - catches returns types with qualifiers like const
+    # -Wimplicit-function-declaration - catches missing C function prototypes
+    # -Wint-to-pointer-cast - catches cast to pointer from integer of different size
+    # -Wmissing-braces - catches aggregate initializers missing nested braces
+    # -Wmultichar - catches multicharacter integer constants like 'THIS'
+    # -Wnonnull - catches NULL used with functions arguments marked as non-null
+    # -Wpointer-arith - catches pointer arithmetic using NULL or sizeof(void)
+    # -Wpointer-sign - catches mixing pointers to signed and unsigned types
+    # -Wpointer-to-int-cast - catches casts from pointer to different sized int
+    # -Wreturn-type - catches missing returns, zero false positives
+    # -Wsequence-point - catches undefined order behavior like `a = a++`
+    # -Wsign-compare - catches comparison of signed and unsigned types
+    # -Wswitch - catches switches without all enum cases or default case
+    # -Wtrigraphs - catches unlikely use of trigraphs
+    # -Wtype-limits - catches overflow bugs, few false positives
+    # -Wunknown-pragmas - catches unexpected #pragma directives
+    # -Wwrite-strings - catches non-const char* pointers to string literals
+    #
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Wall"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Wdeclaration-after-statement"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Wsign-compare"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Wtype-limits"
+
+    # Treat some warnings as errors:
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=address"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=char-subscripts"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=comment"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=empty-body"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=endif-labels"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=enum-compare"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=ignored-qualifiers"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=implicit-function-declaration"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=int-to-pointer-cast"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=missing-braces"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=multichar"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=nonnull"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=pointer-arith"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=pointer-sign"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=pointer-to-int-cast"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=return-type"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=sequence-point"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=switch"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=trigraphs"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=unknown-pragmas"
+    _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=write-strings"
 
     # Turn off the following warnings that -Wall turns on:
     # -Wno-unused - lots of violations in third-party code
@@ -1210,29 +1266,63 @@ else
 fi
 
 if test "$GNU_CXX"; then
-    # Turn on GNU-specific warnings:
-    # -Wall - turn on a lot of warnings
-    # -Wpointer-arith - good to have
-    # -Woverloaded-virtual - ???
-    # -Werror=return-type - catches missing returns, zero false positives
-    # -Werror=int-to-pointer-cast - catches cast to pointer from integer of different size
-    # -Wtype-limits - catches overflow bugs, few false positives
-    # -Wempty-body - catches bugs, e.g. "if (c); foo();", few false positives
-    # -Werror=conversion-null - catches conversions between NULL and non-pointer types
-    # -Wsign-compare - catches comparison of signed and unsigned types
+    # Turn on gcc/clang warnings:
+    # https://gcc.gnu.org/onlinedocs/gcc-4.4.0/gcc/Warning-Options.html
     #
-    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Wall -Wpointer-arith -Woverloaded-virtual"
-    MOZ_CXX_SUPPORTS_WARNING(-W, error=return-type, ac_cxx_has_werror_return_type)
-    MOZ_CXX_SUPPORTS_WARNING(-W, error=int-to-pointer-cast, ac_cxx_has_werror_int_to_pointer_cast)
-    MOZ_CXX_SUPPORTS_WARNING(-W, type-limits, ac_cxx_has_wtype_limits)
-    MOZ_CXX_SUPPORTS_WARNING(-W, empty-body, ac_cxx_has_wempty_body)
-    MOZ_CXX_SUPPORTS_WARNING(-W, error=conversion-null, ac_cxx_has_werror_conversion_null)
-    MOZ_CXX_SUPPORTS_WARNING(-W, sign-compare, ac_cxx_has_sign_compare)
+    # -Wall - turn on a lot of warnings
+    # -Wchar-subscripts - catches array index using signed char
+    # -Wcomment - catches nested comments
+    # -Wconversion-null - catches conversions between NULL and non-pointer types
+    # -Wempty-body - catches bugs, e.g. "if (c); foo();", few false positives
+    # -Wendif-labels - catches `#else FOO` and `#endif FOO` not in comment
+    # -Wignored-qualifiers - catches returns types with qualifiers like const
+    # -Wint-to-pointer-cast - catches cast to pointer from integer of different size
+    # -Wmissing-braces - catches aggregate initializers missing nested braces
+    # -Woverloaded-virtual - function declaration hides virtual function from base class
+    # -Wpointer-arith - catches pointer arithmetic using NULL or sizeof(void)
+    # -Wpointer-to-int-cast - catches casts from pointer to different sized int
+    # -Wreorder - catches ctor initializer list not matching class definition order
+    # -Wreturn-type - catches missing returns, zero false positives
+    # -Wsequence-point - catches undefined order behavior like `a = a++`
+    # -Wsign-compare - catches comparison of signed and unsigned types
+    # -Wswitch - catches switches without all enum cases or default case
+    # -Wtrigraphs - catches unlikely use of trigraphs
+    # -Wtype-limits - catches overflow bugs, few false positives
+    # -Wunknown-pragmas - catches unexpected #pragma directives
+    # -Wunused-label - catches unused goto labels
+    # -Wunused-value - catches unused expression results
+    # -Wwrite-strings - catches non-const char* pointers to string literals
+    #
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Wall"
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Wignored-qualifiers"
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Wsign-compare"
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Wtype-limits"
+
+    # Treat some warnings as errors:
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=char-subscripts"
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=comment"
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=empty-body"
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=endif-labels"
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=int-to-pointer-cast"
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=missing-braces"
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=overloaded-virtual"
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=pointer-arith"
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=reorder"
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=return-type"
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=sequence-point"
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=switch"
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=trigraphs"
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=unknown-pragmas"
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=unused-label"
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=unused-value"
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=write-strings"
+
+    MOZ_CXX_SUPPORTS_WARNING(-Werror=, conversion-null, ac_cxx_has_werror_conversion_null)
 
     # Turn off the following warnings that -Wall turns on:
     # -Wno-invalid-offsetof - we use offsetof on non-POD types frequently
     #
-    MOZ_CXX_SUPPORTS_WARNING(-Wno-, invalid-offsetof, ac_cxx_has_wno_invalid_offsetof)
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Wno-invalid-offsetof"
 
     if test -z "$INTEL_CXX" -a -z "$CLANG_CXX"; then
        # Don't use -Wcast-align with ICC or clang
@@ -1362,7 +1452,7 @@ case "$host" in
         ;;
     x86_64)
         if test -n "$_WIN32_MSVC"; then
-            HOST_LDFLAGS="$HOST_LDFLAGS -MACHINE:X64"
+            HOST_LDFLAGS="$HOST_LDFLAGS -MACHINE:X64 tbbmalloc_proxy.lib -INCLUDE:__TBB_malloc_proxy"
         fi
         HOST_CFLAGS="$HOST_CFLAGS -D_AMD64_"
         ;;
@@ -1620,7 +1710,7 @@ ia64*-hpux*)
         LIBS="$LIBS -lgdi32 -lwinmm -lwsock32 -lpsapi"
         MOZ_FIX_LINK_PATHS=
         DLL_PREFIX=
-        IMPORT_LIB_SUFFIX=dll.a
+        IMPORT_LIB_SUFFIX=a
 
         WIN32_CONSOLE_EXE_LDFLAGS=-mconsole
         WIN32_GUI_EXE_LDFLAGS=-mwindows
@@ -1677,19 +1767,19 @@ ia64*-hpux*)
         if test "$_CC_SUITE" -ge "12"; then
             dnl VS2013+ requires -FS when parallel building by make -jN.
             dnl If nothing, compiler sometimes causes C1041 error.
-            dnl
-            dnl Visual Studio 2013 supports -Gw flags
-            dnl http://blogs.msdn.com/b/vcblog/archive/2013/09/11/introducing-gw-compiler-switch.aspx
-            CFLAGS="$CFLAGS -FS -Gw"
-            CXXFLAGS="$CXXFLAGS -FS -Gw"
+            CFLAGS="$CFLAGS -FS"
+            CXXFLAGS="$CXXFLAGS -FS"
         fi
         # khuey says we can safely ignore MSVC warning C4251
         # MSVC warning C4244 (implicit type conversion may lose data) warns
         # and requires workarounds for perfectly valid code.  Also, GCC/clang
         # don't warn about it by default. So for consistency/sanity, we turn
         # it off on MSVC, too.
-        CFLAGS="$CFLAGS -wd4244"
-        CXXFLAGS="$CXXFLAGS -wd4244 -wd4251"
+        # MSVC warning C4267 warns for narrowing type conversions from size_t
+        # to 32-bit integer types on 64-bit platforms.  Since this is virtually
+        # the same thing as C4244, we disable C4267, too.
+        CFLAGS="$CFLAGS -wd4244 -wd4267"
+        CXXFLAGS="$CXXFLAGS -wd4244 -wd4267 -wd4251"
         # make 'foo == bar;' error out
         CFLAGS="$CFLAGS -we4553"
         CXXFLAGS="$CXXFLAGS -we4553"
@@ -1723,6 +1813,7 @@ ia64*-hpux*)
         LDFLAGS="$LDFLAGS -DYNAMICBASE"
     fi
     AC_DEFINE(HAVE_SNPRINTF)
+    AC_DEFINE(HAVE__MSIZE)
     AC_DEFINE(_WINDOWS)
     AC_DEFINE(WIN32)
     AC_DEFINE(XP_WIN)
@@ -1787,7 +1878,7 @@ ia64*-hpux*)
 	;;
     x86_64-*)
         if test -n "$_WIN32_MSVC"; then
-            DSO_LDOPTS="$DSO_LDOPTS -MACHINE:X64"
+            DSO_LDOPTS="$DSO_LDOPTS -MACHINE:X64 tbbmalloc_proxy.lib -INCLUDE:__TBB_malloc_proxy"
         fi
         AC_DEFINE(_AMD64_)
         ;;
@@ -3103,21 +3194,6 @@ JSGC_GENERATIONAL_CONFIGURED=$JSGC_GENERATIONAL
 AC_SUBST(JSGC_GENERATIONAL_CONFIGURED)
 
 dnl ========================================================
-dnl = Use exact stack rooting for GC
-dnl ========================================================
-dnl Use exact rooting by default in all shell builds. The top-level mozilla
-dnl configure.in will configure SpiderMonkey with --disable-exact-rooting as
-dnl needed on a per-platform basis.
-JSGC_USE_EXACT_ROOTING=1
-MOZ_ARG_DISABLE_BOOL(exact-rooting,
-[  --disable-exact-rooting  Enable use of conservative stack scanning for GC],
-    JSGC_USE_EXACT_ROOTING= ,
-    JSGC_USE_EXACT_ROOTING=1 )
-if test -n "$JSGC_USE_EXACT_ROOTING"; then
-    AC_DEFINE(JSGC_USE_EXACT_ROOTING)
-fi
-
-dnl ========================================================
 dnl = Use compacting GC
 dnl ========================================================
 dnl Compact the heap by moving GC things when doing a shrinking colletion.
@@ -3389,18 +3465,7 @@ dnl ========================================================
 dnl = Enable using the clang plugin to build
 dnl ========================================================
 
-MOZ_ARG_ENABLE_BOOL(clang-plugin,
-[  --enable-clang-plugin   Enable building with the mozilla clang plugin ],
-   ENABLE_CLANG_PLUGIN=1,
-   ENABLE_CLANG_PLUGIN= )
-if test -n "$ENABLE_CLANG_PLUGIN"; then
-    if test -z "$CLANG_CC"; then
-        AC_MSG_ERROR([Can't use clang plugin without clang.])
-    fi
-    AC_DEFINE(MOZ_CLANG_PLUGIN)
-fi
-
-AC_SUBST(ENABLE_CLANG_PLUGIN)
+MOZ_CONFIG_CLANG_PLUGIN
 
 dnl ========================================================
 dnl = Enable static checking using sixgill
@@ -3925,8 +3990,18 @@ dnl ========================================================
 dnl JavaScript shell
 dnl ========================================================
 
-AC_HAVE_FUNCS(setlocale)
-AC_HAVE_FUNCS(localeconv)
+MALLOC_HEADERS="malloc.h malloc_np.h malloc/malloc.h sys/malloc.h"
+MALLOC_H=
+
+for file in $MALLOC_HEADERS; do
+  MOZ_CHECK_HEADER($file, [MALLOC_H=$file])
+  if test "$MALLOC_H" != ""; then
+    AC_DEFINE_UNQUOTED(MALLOC_H, <$MALLOC_H>)
+    break
+  fi
+done
+
+AC_CHECK_FUNCS(setlocale localeconv malloc_size malloc_usable_size)
 
 AC_SUBST(MOZILLA_VERSION)
 

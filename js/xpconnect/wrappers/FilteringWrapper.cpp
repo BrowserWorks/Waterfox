@@ -92,11 +92,11 @@ FilteringWrapper<Base, Policy>::getOwnPropertyDescriptor(JSContext *cx, HandleOb
 
 template <typename Base, typename Policy>
 bool
-FilteringWrapper<Base, Policy>::getOwnPropertyNames(JSContext *cx, HandleObject wrapper,
-                                                    AutoIdVector &props) const
+FilteringWrapper<Base, Policy>::ownPropertyKeys(JSContext *cx, HandleObject wrapper,
+                                                AutoIdVector &props) const
 {
     assertEnteredPolicy(cx, wrapper, JSID_VOID, BaseProxyHandler::ENUMERATE);
-    return Base::getOwnPropertyNames(cx, wrapper, props) &&
+    return Base::ownPropertyKeys(cx, wrapper, props) &&
            Filter<Policy>(cx, wrapper, props);
 }
 
@@ -156,22 +156,6 @@ bool
 FilteringWrapper<Base, Policy>::enter(JSContext *cx, HandleObject wrapper,
                                       HandleId id, Wrapper::Action act, bool *bp) const
 {
-    // This is a super ugly hacky to get around Xray Resolve wonkiness.
-    //
-    // Basically, XPCWN Xrays sometimes call into the Resolve hook of the
-    // scriptable helper, and pass the wrapper itself as the object upon which
-    // the resolve is happening. Then, special handling happens in
-    // XrayWrapper::defineProperty to detect the resolve and redefine the
-    // property on the holder. Really, we should just pass the holder itself to
-    // NewResolve, but there's too much code in nsDOMClassInfo that assumes this
-    // isn't the case (in particular, code expects to be able to look up
-    // properties on the object, which doesn't work for the holder). Given that
-    // these hooks are going away eventually with the new DOM bindings, let's
-    // just hack around this for now.
-    if (XrayUtils::IsXrayResolving(cx, wrapper, id)) {
-        *bp = true;
-        return true;
-    }
     if (!Policy::check(cx, wrapper, id, act)) {
         *bp = JS_IsExceptionPending(cx) ? false : Policy::deny(act, id);
         return false;
@@ -226,8 +210,8 @@ CrossOriginXrayWrapper::getPrototypeOf(JSContext *cx, JS::HandleObject wrapper,
 }
 
 bool
-CrossOriginXrayWrapper::getOwnPropertyNames(JSContext *cx, JS::Handle<JSObject*> wrapper,
-                                            JS::AutoIdVector &props) const
+CrossOriginXrayWrapper::ownPropertyKeys(JSContext *cx, JS::Handle<JSObject*> wrapper,
+                                        JS::AutoIdVector &props) const
 {
     // All properties on cross-origin objects are supposed |own|, despite what
     // the underlying native object may report. Override the inherited trap to
@@ -240,11 +224,6 @@ CrossOriginXrayWrapper::defineProperty(JSContext *cx, JS::Handle<JSObject*> wrap
                                        JS::Handle<jsid> id,
                                        JS::MutableHandle<JSPropertyDescriptor> desc) const
 {
-    // Until XPCWN Xrays go away, we'll have native resolves looping back
-    // through here.
-    if (XrayUtils::IsXrayResolving(cx, wrapper, id))
-        return SecurityXrayDOM::defineProperty(cx, wrapper, id, desc);
-
     JS_ReportError(cx, "Permission denied to define property on cross-origin object");
     return false;
 }

@@ -15,12 +15,11 @@ module.metadata = {
 const { getMostRecentBrowserWindow, windows: getWindows } = require('../window/utils');
 const { ignoreWindow } = require('../private-browsing/utils');
 const { isPrivateBrowsingSupported } = require('../self');
-const { isGlobalPBSupported } = require('../private-browsing/utils');
 
 function getWindow(anchor) {
   let window;
   let windows = getWindows("navigator:browser", {
-    includePrivate: isPrivateBrowsingSupported || isGlobalPBSupported
+    includePrivate: isPrivateBrowsingSupported
   });
 
   if (anchor) {
@@ -36,10 +35,14 @@ function getWindow(anchor) {
       }
 
       // Check if the anchor is in a browser tab in this browser window.
-      let browser = enumWindow.gBrowser.getBrowserForDocument(anchorDocument);
-      if (browser) {
-        window = enumWindow;
-        break;
+      try {
+        let browser = enumWindow.gBrowser.getBrowserForDocument(anchorDocument);
+        if (browser) {
+          window = enumWindow;
+          break;
+        }
+      }
+      catch (e) {
       }
 
       // Look in other subdocuments (sidebar, etc.)?

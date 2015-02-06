@@ -1,13 +1,20 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+///////////////////
+//
+// Whitelisting this test.
+// As part of bug 1077403, the leaking uncaught rejection should be fixed. 
+//
+thisTestLeaksUncaughtRejectionsAndShouldBeFixed("Error: Shader Editor is still waiting for a WebGL context to be created.");
+
 /**
  * Tests if compile or linkage errors are emitted when a shader source
  * gets malformed after being edited.
  */
 
 function ifWebGLSupported() {
-  let [target, debuggee, panel] = yield initShaderEditor(SIMPLE_CANVAS_URL);
+  let { target, panel } = yield initShaderEditor(SIMPLE_CANVAS_URL);
   let { gFront, EVENTS, ShadersEditorsView } = panel.panelWin;
 
   reload(target);
@@ -36,7 +43,7 @@ function ifWebGLSupported() {
     "An assignment error is contained in the linkage status.");
 
   fsEditor.replaceText("vec4", { line: 2, ch: 14 }, { line: 2, ch: 18 });
-  let [, error] = yield onceSpread(panel.panelWin, EVENTS.SHADER_COMPILED);
+  [, error] = yield onceSpread(panel.panelWin, EVENTS.SHADER_COMPILED);
 
   ok(error,
     "The new fragment shader source was compiled with errors.");
@@ -53,11 +60,11 @@ function ifWebGLSupported() {
   yield ensurePixelIs(gFront, { x: 511, y: 511 }, { r: 0, g: 255, b: 0, a: 255 }, true);
 
   vsEditor.replaceText("vec4", { line: 7, ch: 22 }, { line: 7, ch: 26 });
-  let [, error] = yield onceSpread(panel.panelWin, EVENTS.SHADER_COMPILED);
+  [, error] = yield onceSpread(panel.panelWin, EVENTS.SHADER_COMPILED);
   ok(!error, "The new vertex shader source was compiled successfully.");
 
   fsEditor.replaceText("vec3", { line: 2, ch: 14 }, { line: 2, ch: 18 });
-  let [, error] = yield onceSpread(panel.panelWin, EVENTS.SHADER_COMPILED);
+  [, error] = yield onceSpread(panel.panelWin, EVENTS.SHADER_COMPILED);
   ok(!error, "The new fragment shader source was compiled successfully.");
 
   yield ensurePixelIs(gFront, { x: 0, y: 0 }, { r: 255, g: 0, b: 0, a: 255 }, true);

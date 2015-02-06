@@ -151,25 +151,25 @@ function test_flag_histogram()
   var h = Telemetry.newHistogram("test::flag histogram", "never", Telemetry.HISTOGRAM_FLAG);
   var r = h.snapshot().ranges;
   // Flag histograms ignore numeric parameters.
-  do_check_eq(uneval(r), uneval([0, 1, 2]))
+  do_check_eq(uneval(r), uneval([0, 1, 2]));
   // Should already have a 0 counted.
   var c = h.snapshot().counts;
   var s = h.snapshot().sum;
   do_check_eq(uneval(c), uneval([1, 0, 0]));
-  do_check_eq(s, 1);
+  do_check_eq(s, 0);
   // Should switch counts.
-  h.add(2);
+  h.add(1);
   var c2 = h.snapshot().counts;
   var s2 = h.snapshot().sum;
   do_check_eq(uneval(c2), uneval([0, 1, 0]));
-  do_check_eq(s, 1);
+  do_check_eq(s2, 1);
   // Should only switch counts once.
-  h.add(3);
+  h.add(1);
   var c3 = h.snapshot().counts;
   var s3 = h.snapshot().sum;
   do_check_eq(uneval(c3), uneval([0, 1, 0]));
   do_check_eq(s3, 1);
-  do_check_eq(h.snapshot().histogram_type, Telemetry.FLAG_HISTOGRAM);
+  do_check_eq(h.snapshot().histogram_type, Telemetry.HISTOGRAM_FLAG);
 }
 
 function test_count_histogram()
@@ -582,6 +582,7 @@ function run_test()
   do_check_false("NEWTAB_PAGE_PINNED_SITES_COUNT" in Telemetry.histogramSnapshots);
 
   test_boolean_histogram();
+  test_flag_histogram();
   test_count_histogram();
   test_getHistogramById();
   test_histogramFrom();

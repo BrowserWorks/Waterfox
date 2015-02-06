@@ -20,6 +20,7 @@ class MediaResource;
 class MediaDecoderStateMachine;
 class MediaSourceReader;
 class SourceBufferDecoder;
+class TrackBuffer;
 
 namespace dom {
 
@@ -46,16 +47,21 @@ public:
   void DetachMediaSource();
 
   already_AddRefed<SourceBufferDecoder> CreateSubDecoder(const nsACString& aType);
+  void AddTrackBuffer(TrackBuffer* aTrackBuffer);
+  void RemoveTrackBuffer(TrackBuffer* aTrackBuffer);
+  void OnTrackBufferConfigured(TrackBuffer* aTrackBuffer, const MediaInfo& aInfo);
 
   void Ended();
 
   void SetMediaSourceDuration(double aDuration);
 
-  // Provide a mechanism for MediaSourceReader to block waiting on data from a SourceBuffer.
-  void WaitForData();
+  // Called whenever a TrackBuffer has new data appended or a new decoder
+  // initializes.  Safe to call from any thread.
+  void NotifyTimeRangesChanged();
 
-  // Called whenever a SourceBuffer has new data appended.
-  void NotifyGotData();
+  // Indicates the point in time at which the reader should consider
+  // registered TrackBuffers essential for initialization.
+  void PrepareReaderInitialization();
 
 private:
   // The owning MediaSource holds a strong reference to this decoder, and

@@ -162,6 +162,7 @@ class CodeGeneratorMIPS : public CodeGeneratorShared
   public:
     // Instruction visitors.
     virtual bool visitMinMaxD(LMinMaxD *ins);
+    virtual bool visitMinMaxF(LMinMaxF *ins);
     virtual bool visitAbsD(LAbsD *ins);
     virtual bool visitAbsF(LAbsF *ins);
     virtual bool visitSqrtD(LSqrtD *ins);
@@ -247,6 +248,7 @@ class CodeGeneratorMIPS : public CodeGeneratorShared
     bool visitNegF(LNegF *lir);
     bool visitLoadTypedArrayElementStatic(LLoadTypedArrayElementStatic *ins);
     bool visitStoreTypedArrayElementStatic(LStoreTypedArrayElementStatic *ins);
+    bool visitAsmJSCall(LAsmJSCall *ins);
     bool visitAsmJSLoadHeap(LAsmJSLoadHeap *ins);
     bool visitAsmJSStoreHeap(LAsmJSStoreHeap *ins);
     bool visitAsmJSLoadGlobalVar(LAsmJSLoadGlobalVar *ins);
@@ -259,12 +261,25 @@ class CodeGeneratorMIPS : public CodeGeneratorShared
     bool visitForkJoinGetSlice(LForkJoinGetSlice *ins);
 
     bool generateInvalidateEpilogue();
-  protected:
-    void postAsmJSCall(LAsmJSCall *lir) {}
 
+  protected:
     bool visitEffectiveAddress(LEffectiveAddress *ins);
     bool visitUDiv(LUDiv *ins);
     bool visitUMod(LUMod *ins);
+
+  public:
+    // Unimplemented SIMD instructions
+    bool visitSimdSplatX4(LSimdSplatX4 *lir) { MOZ_CRASH("NYI"); }
+    bool visitInt32x4(LInt32x4 *ins) { MOZ_CRASH("NYI"); }
+    bool visitFloat32x4(LFloat32x4 *ins) { MOZ_CRASH("NYI"); }
+    bool visitSimdExtractElementI(LSimdExtractElementI *ins) { MOZ_CRASH("NYI"); }
+    bool visitSimdExtractElementF(LSimdExtractElementF *ins) { MOZ_CRASH("NYI"); }
+    bool visitSimdSignMaskX4(LSimdSignMaskX4 *ins) { MOZ_CRASH("NYI"); }
+    bool visitSimdBinaryCompIx4(LSimdBinaryCompIx4 *lir) { MOZ_CRASH("NYI"); }
+    bool visitSimdBinaryCompFx4(LSimdBinaryCompFx4 *lir) { MOZ_CRASH("NYI"); }
+    bool visitSimdBinaryArithIx4(LSimdBinaryArithIx4 *lir) { MOZ_CRASH("NYI"); }
+    bool visitSimdBinaryArithFx4(LSimdBinaryArithFx4 *lir) { MOZ_CRASH("NYI"); }
+    bool visitSimdBinaryBitwiseX4(LSimdBinaryBitwiseX4 *lir) { MOZ_CRASH("NYI"); }
 };
 
 typedef CodeGeneratorMIPS CodeGeneratorSpecific;

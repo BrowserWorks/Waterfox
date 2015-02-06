@@ -173,6 +173,12 @@ AudioTrackEncoder::DeInterleaveTrackData(AudioDataValue* aInput,
   }
 }
 
+size_t
+AudioTrackEncoder::SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
+{
+  return mRawSegment.SizeOfExcludingThis(aMallocSizeOf);
+}
+
 void
 VideoTrackEncoder::NotifyQueuedTrackChanges(MediaStreamGraph* aGraph,
                                             TrackID aID,
@@ -199,14 +205,6 @@ VideoTrackEncoder::NotifyQueuedTrackChanges(MediaStreamGraph* aGraph,
       if (!chunk.IsNull()) {
         gfx::IntSize imgsize = chunk.mFrame.GetImage()->GetSize();
         gfxIntSize intrinsicSize = chunk.mFrame.GetIntrinsicSize();
-#ifdef MOZ_WIDGET_GONK
-        // Block the video frames come from video source.
-        if (chunk.mFrame.GetImage()->GetFormat() != ImageFormat::PLANAR_YCBCR) {
-          LOG("Can't encode this ImageFormat %x", chunk.mFrame.GetImage()->GetFormat());
-          NotifyCancel();
-          break;
-        }
-#endif
         nsresult rv = Init(imgsize.width, imgsize.height,
                            intrinsicSize.width, intrinsicSize.height,
                            aTrackRate);
@@ -271,21 +269,10 @@ VideoTrackEncoder::NotifyEndOfStream()
   mReentrantMonitor.NotifyAll();
 }
 
-void
-VideoTrackEncoder::CreateMutedFrame(nsTArray<uint8_t>* aOutputBuffer)
+size_t
+VideoTrackEncoder::SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
 {
-  NS_ENSURE_TRUE_VOID(aOutputBuffer);
-
-  // Supports YUV420 image format only.
-  int yPlaneLen = mFrameWidth * mFrameHeight;
-  int cbcrPlaneLen = yPlaneLen / 2;
-  int frameLen = yPlaneLen + cbcrPlaneLen;
-
-  aOutputBuffer->SetLength(frameLen);
-  // Fill Y plane.
-  memset(aOutputBuffer->Elements(), 0x10, yPlaneLen);
-  // Fill Cb/Cr planes.
-  memset(aOutputBuffer->Elements() + yPlaneLen, 0x80, cbcrPlaneLen);
+  return mRawSegment.SizeOfExcludingThis(aMallocSizeOf);
 }
 
 }

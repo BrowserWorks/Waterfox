@@ -189,12 +189,6 @@ MediaEngineTabVideoSource::Start(mozilla::SourceMediaStream* aStream, mozilla::T
   return NS_OK;
 }
 
-nsresult
-MediaEngineTabVideoSource::Snapshot(uint32_t, nsIDOMFile**)
-{
-  return NS_OK;
-}
-
 void
 MediaEngineTabVideoSource::
 NotifyPull(MediaStreamGraph*, SourceMediaStream* aSource, mozilla::TrackID aID, mozilla::StreamTime aDesiredTime, mozilla::TrackTicks& aLastEndTime)
@@ -307,9 +301,9 @@ MediaEngineTabVideoSource::Draw() {
     return;
   }
   nsRefPtr<gfxContext> context = new gfxContext(dt);
-  gfxPoint pt(0, 0);
-  context->Translate(pt);
-  context->Scale(scale * size.width / srcW, scale * size.height / srcH);
+  context->SetMatrix(
+    context->CurrentMatrix().Scale(scale * size.width / srcW,
+                                   scale * size.height / srcH));
   rv = presShell->RenderDocument(r, renderDocFlags, bgColor, context);
 
   NS_ENSURE_SUCCESS_VOID(rv);

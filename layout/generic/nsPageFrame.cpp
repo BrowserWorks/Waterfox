@@ -373,11 +373,11 @@ nsPageFrame::DrawHeaderFooter(nsRenderingContext& aRenderingContext,
     }
 
     // set up new clip and draw the text
-    aRenderingContext.PushState();
+    aRenderingContext.ThebesContext()->Save();
     aRenderingContext.SetColor(NS_RGB(0,0,0));
     aRenderingContext.IntersectClip(aRect);
     nsLayoutUtils::DrawString(this, &aRenderingContext, str.get(), str.Length(), nsPoint(x, y + aAscent));
-    aRenderingContext.PopState();
+    aRenderingContext.ThebesContext()->Restore();
   }
 }
 
@@ -463,7 +463,7 @@ static void PaintHeaderFooter(nsIFrame* aFrame, nsRenderingContext* aCtx,
 static gfx::Matrix4x4 ComputePageTransform(nsIFrame* aFrame, float aAppUnitsPerPixel)
 {
   float scale = aFrame->PresContext()->GetPageScale();
-  return gfx::Matrix4x4().Scale(scale, scale, 1);
+  return gfx::Matrix4x4::Scaling(scale, scale, 1);
 }
 
 //------------------------------------------------------------------------------
@@ -582,7 +582,8 @@ nsPageFrame::PaintHeaderFooter(nsRenderingContext& aRenderingContext,
 
   // Get the FontMetrics to determine width.height of strings
   nsRefPtr<nsFontMetrics> fontMet;
-  pc->DeviceContext()->GetMetricsFor(mPD->mHeadFootFont, nullptr,
+  pc->DeviceContext()->GetMetricsFor(mPD->mHeadFootFont, nullptr, false,
+                                     gfxFont::eHorizontal,
                                      pc->GetUserFontSet(),
                                      pc->GetTextPerfMetrics(),
                                      *getter_AddRefs(fontMet));

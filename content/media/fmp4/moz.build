@@ -12,11 +12,11 @@ EXPORTS += [
 
 UNIFIED_SOURCES += [
     'BlankDecoderModule.cpp',
+    'MP4Decoder.cpp',
     'PlatformDecoderModule.cpp',
 ]
 
 SOURCES += [
-    'MP4Decoder.cpp',
     'MP4Reader.cpp',
 ]
 
@@ -52,6 +52,8 @@ if CONFIG['MOZ_APPLEMEDIA']:
       'apple/AppleCMLinker.cpp',
       'apple/AppleDecoderModule.cpp',
       'apple/AppleUtils.cpp',
+      'apple/AppleVDADecoder.cpp',
+      'apple/AppleVDALinker.cpp',
       'apple/AppleVTDecoder.cpp',
       'apple/AppleVTLinker.cpp',
   ]

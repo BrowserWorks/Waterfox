@@ -51,7 +51,7 @@ interface nsITranslationNodeList;
 interface nsIJSRAIIHelper;
 interface nsIContentPermissionRequest;
 
-[scriptable, uuid(11911980-607c-4efd-aacc-de3b9005c058)]
+[scriptable, uuid(ed12c067-506b-4b10-9853-d4bba5c1bb6c)]
 interface nsIDOMWindowUtils : nsISupports {
 
   /**
@@ -261,7 +261,7 @@ interface nsIDOMWindowUtils : nsISupports {
 
   /** Synthesize a mouse event. The event types supported are:
    *    mousedown, mouseup, mousemove, mouseover, mouseout, contextmenu,
-   *    MozMouseHitTest
+   *    MozMouseHittest
    *
    * Events are sent in coordinates offset by aX and aY from the window.
    *
@@ -1463,7 +1463,7 @@ interface nsIDOMWindowUtils : nsISupports {
   readonly attribute boolean mayHaveTouchEventListeners;
  
   /**
-   * Check if any ThebesLayer painting has been done for this element,
+   * Check if any PaintedLayer painting has been done for this element,
    * clears the painted flags if they have.
    */
   boolean checkAndClearPaintedState(in nsIDOMElement aElement);
@@ -1472,6 +1472,13 @@ interface nsIDOMWindowUtils : nsISupports {
    * Get internal id of the stored blob, file or file handle.
    */
   [implicit_jscontext] long long getFileId(in jsval aFile);
+
+  /**
+   * Get internal file path of the stored file or file handle.
+   *
+   * TODO: File handle objects are actually not supported at the moment.
+   */
+  [implicit_jscontext] AString getFilePath(in jsval aFile);
 
   /**
    * Get file ref count info for given database and file id.
@@ -1672,6 +1679,18 @@ interface nsIDOMWindowUtils : nsISupports {
     * returns an empty string.
     */
    AString getOMTAStyle(in nsIDOMElement aElement, in AString aProperty);
+
+   /**
+    * Special function that gets a property syncronously from the last composite
+    * that occured.
+    *
+    * Supported properties:
+    *   "overdraw": Report a percentage between 0 and 999 indicate how many times
+    *               each pixels on the destination window have been touched.
+    *   "missed_hwc": Report a bool if hardware composer is supported but was
+    *                 not used for the last frame.
+    */
+   float requestCompositorProperty(in AString aProperty);
 
    /**
     * If aHandlingInput is true, this informs the event state manager that

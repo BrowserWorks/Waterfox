@@ -10,6 +10,7 @@
 
 #include "jsobjinlines.h"
 
+#include "vm/NativeObject-inl.h"
 #include "vm/Symbol-inl.h"
 
 using JS::Symbol;
@@ -185,35 +186,19 @@ IsSymbol(HandleValue v)
     return v.isSymbol() || (v.isObject() && v.toObject().is<SymbolObject>());
 }
 
-//ES6 rev 24 (2014 Apr 27) 19.4.3.2
+// ES6 rev 27 (2014 Aug 24) 19.4.3.2
 bool
 SymbolObject::toString_impl(JSContext *cx, CallArgs args)
 {
     // steps 1-3
     HandleValue thisv = args.thisv();
-    JS_ASSERT(IsSymbol(thisv));
+    MOZ_ASSERT(IsSymbol(thisv));
     Rooted<Symbol*> sym(cx, thisv.isSymbol()
                             ? thisv.toSymbol()
                             : thisv.toObject().as<SymbolObject>().unbox());
 
-    // steps 4-7
-    StringBuffer sb(cx);
-    if (!sb.append("Symbol("))
-        return false;
-    RootedString str(cx, sym->description());
-    if (str) {
-        if (!sb.append(str))
-            return false;
-    }
-    if (!sb.append(')'))
-        return false;
-
-    // step 8
-    str = sb.finishString();
-    if (!str)
-        return false;
-    args.rval().setString(str);
-    return true;
+    // step 4
+    return SymbolDescriptiveString(cx, sym, args.rval());
 }
 
 bool

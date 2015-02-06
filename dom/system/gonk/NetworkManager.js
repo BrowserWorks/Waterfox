@@ -34,6 +34,10 @@ XPCOMUtils.defineLazyServiceGetter(this, "gNetworkService",
                                    "@mozilla.org/network/service;1",
                                    "nsINetworkService");
 
+XPCOMUtils.defineLazyServiceGetter(this, "gMobileConnectionService",
+                                   "@mozilla.org/mobileconnection/mobileconnectionservice;1",
+                                   "nsIMobileConnectionService");
+
 const TOPIC_INTERFACE_REGISTERED     = "network-interface-registered";
 const TOPIC_INTERFACE_UNREGISTERED   = "network-interface-unregistered";
 const TOPIC_ACTIVE_CHANGED           = "network-active-changed";
@@ -216,8 +220,10 @@ NetworkManager.prototype = {
   observe: function(subject, topic, data) {
     switch (topic) {
       case TOPIC_MOZSETTINGS_CHANGED:
-        let setting = JSON.parse(data);
-        this.handle(setting.key, setting.value);
+        if ("wrappedJSObject" in subject) {
+          subject = subject.wrappedJSObject;
+        }
+        this.handle(subject.key, subject.value);
         break;
       case TOPIC_PREF_CHANGED:
         this._manageOfflineStatus =
@@ -588,7 +594,7 @@ NetworkManager.prototype = {
       // The override was just set, so reconfigure the network.
       if (this.active != this._overriddenActive) {
         this.active = this._overriddenActive;
-        gNetworkService.setDefaultRouteAndDNS(this.active, oldActive);
+        this._setDefaultRouteAndDNS(this.active, oldActive);
         Services.obs.notifyObservers(this.active, TOPIC_ACTIVE_CHANGED, null);
       }
       return;
@@ -599,7 +605,7 @@ NetworkManager.prototype = {
         this.active.state == Ci.nsINetworkInterface.NETWORK_STATE_CONNECTED &&
         this.active.type == this._preferredNetworkType) {
       debug("Active network is already our preferred type.");
-      gNetworkService.setDefaultRouteAndDNS(this.active, oldActive);
+      this._setDefaultRouteAndDNS(this.active, oldActive);
       return;
     }
 
@@ -635,10 +641,10 @@ NetworkManager.prototype = {
       }
       // Don't set default route on secondary APN
       if (this.isNetworkTypeSecondaryMobile(this.active.type)) {
-        gNetworkService.setDNS(this.active);
+        gNetworkService.setDNS(this.active, function() {});
       } else {
 #endif // MOZ_B2G_RIL
-        gNetworkService.setDefaultRouteAndDNS(this.active, oldActive);
+        this._setDefaultRouteAndDNS(this.active, oldActive);
 #ifdef MOZ_B2G_RIL
       }
 #endif
@@ -877,10 +883,10 @@ NetworkManager.prototype = {
   dunRetryTimer: Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer),
   setupDunConnection: function() {
     this.dunRetryTimer.cancel();
-    let ril = this.mRil.getRadioInterface(this._dataDefaultServiceId);
-
-    if (ril.rilContext && ril.rilContext.data &&
-        ril.rilContext.data.state === "registered") {
+    let connection =
+      gMobileConnectionService.getItemByServiceId(this._dataDefaultServiceId);
+    let data = connection && connection.data;
+    if (data && data.state === "registered") {
       this.dunRetryTimes = 0;
       ril.setupDataCallByType("dun");
       this.dunConnectTimer.cancel();
@@ -1301,7 +1307,15 @@ NetworkManager.prototype = {
     this.wantConnectionEvent = null;
 
     callback.call(this);
-  }
+  },
+
+  _setDefaultRouteAndDNS: function(network, oldInterface) {
+    gNetworkService.setDefaultRoute(network, oldInterface, function(success) {
+      gNetworkService.setDNS(network, function(result) {
+        gNetworkService.setNetworkProxy(network);
+      });
+    });
+  },
 };
 
 let CaptivePortalDetectionHelper = (function() {

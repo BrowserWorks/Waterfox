@@ -16,6 +16,7 @@
 #include "mozilla/ReentrantMonitor.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/Attributes.h"
+#include "AlternateServices.h"
 
 #include "nsIObserver.h"
 #include "nsITimer.h"
@@ -25,11 +26,13 @@ class nsIHttpUpgradeListener;
 namespace mozilla {
 namespace net {
 class EventTokenBucket;
+class NullHttpTransaction;
 struct HttpRetParams;
 
 //-----------------------------------------------------------------------------
 
 class nsHttpConnectionMgr : public nsIObserver
+                          , public AltSvcCache
 {
 public:
     NS_DECL_THREADSAFE_ISUPPORTS
@@ -90,6 +93,14 @@ public:
     // connections.
     nsresult PruneDeadConnections();
 
+    // called to close active connections with no registered "traffic"
+    nsresult PruneNoTraffic();
+
+    // "VerifyTraffic" means marking connections now, and then check again in
+    // N seconds to see if there's been any traffic and if not, kill
+    // that connection.
+    nsresult VerifyTraffic();
+
     // Close all idle persistent connections and prevent any active connections
     // from being reused. Optional connection info resets CI specific
     // information such as Happy Eyeballs history.
@@ -107,7 +118,8 @@ public:
     // real transaction for this connectionInfo.
     nsresult SpeculativeConnect(nsHttpConnectionInfo *,
                                 nsIInterfaceRequestor *,
-                                uint32_t caps = 0);
+                                uint32_t caps = 0,
+                                NullHttpTransaction * = nullptr);
 
     // called when a connection is done processing a transaction.  if the
     // connection can be reused then it will be added to the idle list, else
@@ -242,6 +254,9 @@ public:
     void ResetIPFamilyPreference(nsHttpConnectionInfo *);
 
     uint16_t MaxRequestDelay() { return mMaxRequestDelay; }
+
+    // public, so that the SPDY/http2 seesions can activate
+    void ActivateTimeoutTick();
 
 private:
     virtual ~nsHttpConnectionMgr();
@@ -454,6 +469,9 @@ private:
         bool IsFromPredictor() { return mIsFromPredictor; }
         void SetIsFromPredictor(bool val) { mIsFromPredictor = val; }
 
+        bool Allow1918() { return mAllow1918; }
+        void SetAllow1918(bool val) { mAllow1918 = val; }
+
         bool HasConnected() { return mHasConnected; }
 
         void PrintDiagnostics(nsCString &log);
@@ -478,6 +496,8 @@ private:
         // Predictor. It is used to gather telemetry data on used speculative
         // connections from the predictor.
         bool                           mIsFromPredictor;
+
+        bool                           mAllow1918;
 
         TimeStamp             mPrimarySynStarted;
         TimeStamp             mBackupSynStarted;
@@ -525,6 +545,8 @@ private:
     static PLDHashOperator PurgeExcessIdleConnectionsCB(const nsACString &, nsAutoPtr<nsConnectionEntry> &, void *);
     static PLDHashOperator PurgeExcessSpdyConnectionsCB(const nsACString &, nsAutoPtr<nsConnectionEntry> &, void *);
     static PLDHashOperator ClosePersistentConnectionsCB(const nsACString &, nsAutoPtr<nsConnectionEntry> &, void *);
+    static PLDHashOperator VerifyTrafficCB(const nsACString &, nsAutoPtr<nsConnectionEntry> &, void *);
+    static PLDHashOperator PruneNoTrafficCB(const nsACString &, nsAutoPtr<nsConnectionEntry> &, void *);
     bool     ProcessPendingQForEntry(nsConnectionEntry *, bool considerAll);
     bool     IsUnderPressure(nsConnectionEntry *ent,
                              nsHttpTransaction::Classifier classification);
@@ -549,7 +571,7 @@ private:
     void     ClosePersistentConnections(nsConnectionEntry *ent);
     void     ReportProxyTelemetry(nsConnectionEntry *ent);
     nsresult CreateTransport(nsConnectionEntry *, nsAHttpTransaction *,
-                             uint32_t, bool, bool = false);
+                             uint32_t, bool, bool, bool);
     void     AddActiveConn(nsHttpConnection *, nsConnectionEntry *);
     void     DecrementActiveConnCount(nsHttpConnection *);
     void     StartedConnect();
@@ -643,6 +665,8 @@ private:
     void OnMsgProcessFeedback      (int32_t, void *);
     void OnMsgProcessAllSpdyPendingQ (int32_t, void *);
     void OnMsgUpdateRequestTokenBucket (int32_t, void *);
+    void OnMsgVerifyTraffic (int32_t, void *);
+    void OnMsgPruneNoTraffic (int32_t, void *);
 
     // Total number of active connections in all of the ConnectionEntry objects
     // that are accessed from mCT connection table.
@@ -660,6 +684,9 @@ private:
     uint64_t mTimeOfNextWakeUp;
     // Timer for next pruning of dead connections.
     nsCOMPtr<nsITimer> mTimer;
+    // Timer for pruning stalled connections after changed network.
+    nsCOMPtr<nsITimer> mTrafficTimer;
+    bool mPruningNoTraffic;
 
     // A 1s tick to call nsHttpConnection::ReadTimeoutTick on
     // active http/1 connections and check for orphaned half opens.
@@ -685,7 +712,6 @@ private:
         void *aArg);
 
     // Read Timeout Tick handlers
-    void ActivateTimeoutTick();
     void TimeoutTick();
     static PLDHashOperator TimeoutTickCB(const nsACString &key,
                                          nsAutoPtr<nsConnectionEntry> &ent,

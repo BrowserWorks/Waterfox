@@ -7,15 +7,17 @@
 #ifndef vm_ArrayObject_h
 #define vm_ArrayObject_h
 
-#include "jsobj.h"
+#include "vm/NativeObject.h"
 
 namespace js {
 
-class ArrayObject : public JSObject
+class ArrayObject : public NativeObject
 {
   public:
-    // Array(x) eagerly allocates dense elements if x <= this value.
-    static const uint32_t EagerAllocationMaxLength = 2048;
+    // Array(x) eagerly allocates dense elements if x <= this value. Without
+    // the subtraction the max would roll over to the next power-of-two (4096)
+    // due to the way that growElements() and goodAllocated() work.
+    static const uint32_t EagerAllocationMaxLength = 2048 - ObjectElements::VALUES_PER_HEADER;
 
     static const Class class_;
 
@@ -31,10 +33,47 @@ class ArrayObject : public JSObject
 
     // Variant of setLength for use on arrays where the length cannot overflow int32_t.
     void setLengthInt32(uint32_t length) {
-        JS_ASSERT(lengthIsWritable());
-        JS_ASSERT(length <= INT32_MAX);
+        MOZ_ASSERT(lengthIsWritable());
+        MOZ_ASSERT(length <= INT32_MAX);
         getElementsHeader()->length = length;
     }
+
+    // Make an array object with the specified initial state.
+    static inline ArrayObject *
+    createArray(ExclusiveContext *cx,
+                gc::AllocKind kind,
+                gc::InitialHeap heap,
+                HandleShape shape,
+                HandleTypeObject type,
+                uint32_t length);
+
+    // Make an array object with the specified initial state and elements.
+    static inline ArrayObject *
+    createArray(ExclusiveContext *cx,
+                gc::InitialHeap heap,
+                HandleShape shape,
+                HandleTypeObject type,
+                HeapSlot *elements);
+
+    // Make a copy-on-write array object which shares the elements of an
+    // existing object.
+    static inline ArrayObject *
+    createCopyOnWriteArray(ExclusiveContext *cx,
+                           gc::InitialHeap heap,
+                           HandleShape shape,
+                           HandleNativeObject sharedElementsOwner);
+
+  private:
+    // Helper for the above methods.
+    static inline ArrayObject *
+    createArrayInternal(ExclusiveContext *cx,
+                        gc::AllocKind kind,
+                        gc::InitialHeap heap,
+                        HandleShape shape,
+                        HandleTypeObject type);
+
+    static inline ArrayObject *
+    finishCreateArray(ArrayObject *obj, HandleShape shape);
 };
 
 } // namespace js

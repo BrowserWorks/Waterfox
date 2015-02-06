@@ -10,7 +10,7 @@
 #define js_Class_h
 
 #include "mozilla/NullPtr.h"
- 
+
 #include "jstypes.h"
 
 #include "js/CallArgs.h"
@@ -152,7 +152,7 @@ typedef void
 
 // Finalizes external strings created by JS_NewExternalString.
 struct JSStringFinalizer {
-    void (*finalize)(const JSStringFinalizer *fin, jschar *chars);
+    void (*finalize)(const JSStringFinalizer *fin, char16_t *chars);
 };
 
 // Check whether v is an instance of obj.  Return false on error or exception,
@@ -184,6 +184,9 @@ typedef JSObject *
 
 typedef JSObject *
 (* JSWeakmapKeyDelegateOp)(JSObject *obj);
+
+typedef void
+(* JSObjectMovedOp)(JSObject *obj, const JSObject *old);
 
 /* js::Class operation signatures. */
 
@@ -283,6 +286,8 @@ typedef JSObject *(*ClassObjectCreationOp)(JSContext *cx, JSProtoKey key);
 typedef bool (*FinishClassInitOp)(JSContext *cx, JS::HandleObject ctor,
                                   JS::HandleObject proto);
 
+const size_t JSCLASS_CACHED_PROTO_WIDTH = 6;
+
 struct ClassSpec
 {
     ClassObjectCreationOp createConstructor;
@@ -291,7 +296,29 @@ struct ClassSpec
     const JSFunctionSpec *prototypeFunctions;
     const JSPropertySpec *prototypeProperties;
     FinishClassInitOp finishInit;
+    uintptr_t flags;
+
+    static const size_t ParentKeyWidth = JSCLASS_CACHED_PROTO_WIDTH;
+
+    static const uintptr_t ParentKeyMask = (1 << ParentKeyWidth) - 1;
+    static const uintptr_t DontDefineConstructor = 1 << ParentKeyWidth;
+
     bool defined() const { return !!createConstructor; }
+
+    bool dependent() const {
+        MOZ_ASSERT(defined());
+        return (flags & ParentKeyMask);
+    }
+
+    JSProtoKey parentKey() const {
+        static_assert(JSProto_Null == 0, "zeroed key must be null");
+        return JSProtoKey(flags & ParentKeyMask);
+    }
+
+    bool shouldDefineConstructor() const {
+        MOZ_ASSERT(defined());
+        return !(flags & DontDefineConstructor);
+    }
 };
 
 struct ClassExtension
@@ -318,10 +345,19 @@ struct ClassExtension
      * wrapped object is collected.
      */
     JSWeakmapKeyDelegateOp weakmapKeyDelegateOp;
+
+    /*
+     * Optional hook called when an object is moved by a compacting GC.
+     *
+     * There may exist weak pointers to an object that are not traced through
+     * when the normal trace APIs are used, for example objects in the wrapper
+     * cache.  This hook allows these pointers to be updated.
+     */
+    JSObjectMovedOp objectMovedOp;
 };
 
 #define JS_NULL_CLASS_SPEC  {nullptr,nullptr,nullptr,nullptr,nullptr,nullptr}
-#define JS_NULL_CLASS_EXT   {nullptr,nullptr,nullptr,false,nullptr}
+#define JS_NULL_CLASS_EXT   {nullptr,nullptr,nullptr,false,nullptr,nullptr}
 
 struct ObjectOps
 {
@@ -361,7 +397,7 @@ typedef void (*JSClassInternal)();
 struct JSClass {
     JS_CLASS_MEMBERS(JSFinalizeOp);
 
-    void                *reserved[31];
+    void                *reserved[33];
 };
 
 #define JSCLASS_HAS_PRIVATE             (1<<0)  // objects have private slot
@@ -434,7 +470,6 @@ struct JSClass {
 
 // Fast access to the original value of each standard class's prototype.
 #define JSCLASS_CACHED_PROTO_SHIFT      (JSCLASS_HIGH_FLAGS_SHIFT + 10)
-#define JSCLASS_CACHED_PROTO_WIDTH      6
 #define JSCLASS_CACHED_PROTO_MASK       JS_BITMASK(JSCLASS_CACHED_PROTO_WIDTH)
 #define JSCLASS_HAS_CACHED_PROTO(key)   (uint32_t(key) << JSCLASS_CACHED_PROTO_SHIFT)
 #define JSCLASS_CACHED_PROTO_KEY(clasp) ((JSProtoKey)                         \
@@ -474,7 +509,8 @@ struct Class
         return this == js::FunctionClassPtr;
     }
 
-    bool isCallable() const {
+    bool nonProxyCallable() const {
+        MOZ_ASSERT(!isProxy());
         return isJSFunction() || call;
     }
 
@@ -523,8 +559,8 @@ Valueify(const JSClass *c)
  */
 enum ESClassValue {
     ESClass_Object, ESClass_Array, ESClass_Number, ESClass_String,
-    ESClass_Boolean, ESClass_RegExp, ESClass_ArrayBuffer, ESClass_Date,
-    ESClass_Set, ESClass_Map
+    ESClass_Boolean, ESClass_RegExp, ESClass_ArrayBuffer, ESClass_SharedArrayBuffer,
+    ESClass_Date, ESClass_Set, ESClass_Map
 };
 
 /*
@@ -543,6 +579,12 @@ IsObjectWithClass(const JS::Value &v, ESClassValue classValue, JSContext *cx);
 /* Fills |vp| with the unboxed value for boxed types, or undefined otherwise. */
 inline bool
 Unbox(JSContext *cx, JS::HandleObject obj, JS::MutableHandleValue vp);
+
+/* Check whether the object's class supplies objectMovedOp for non-global objects. */
+#ifdef DEBUG
+JS_FRIEND_API(bool)
+HasObjectMovedOpIfRequired(JSObject *obj);
+#endif
 
 }  /* namespace js */
 

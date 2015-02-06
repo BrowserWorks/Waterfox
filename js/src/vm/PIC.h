@@ -41,7 +41,7 @@ class PICStub
 
     PICStub() : next_(nullptr) {}
     explicit PICStub(const CatStub *next) : next_(next) {
-        JS_ASSERT(next_);
+        MOZ_ASSERT(next_);
     }
     explicit PICStub(const CatStub &other) : next_(other.next_) {}
 
@@ -52,8 +52,8 @@ class PICStub
 
   protected:
     void append(CatStub *stub) {
-        JS_ASSERT(!next_);
-        JS_ASSERT(!stub->next_);
+        MOZ_ASSERT(!next_);
+        MOZ_ASSERT(!stub->next_);
         next_ = stub;
     }
 };
@@ -81,8 +81,8 @@ class PICChain
     }
 
     void addStub(CatStub *stub) {
-        JS_ASSERT(stub);
-        JS_ASSERT(!stub->next());
+        MOZ_ASSERT(stub);
+        MOZ_ASSERT(!stub->next());
         if (!stubs_) {
             stubs_ = stub;
             return;
@@ -103,10 +103,10 @@ class PICChain
 
     void removeStub(CatStub *stub, CatStub *previous) {
         if (previous) {
-            JS_ASSERT(previous->next() == stub);
+            MOZ_ASSERT(previous->next() == stub);
             previous->next_ = stub->next();
         } else {
-            JS_ASSERT(stub == stubs_);
+            MOZ_ASSERT(stub == stubs_);
             stubs_ = stub->next();
         }
         js_delete(stub);
@@ -143,7 +143,7 @@ struct ForOfPIC
           : BaseStub(),
             shape_(shape)
         {
-            JS_ASSERT(shape_);
+            MOZ_ASSERT(shape_);
         }
 
         Shape *shape() {
@@ -178,8 +178,8 @@ struct ForOfPIC
     {
       private:
         // Pointer to canonical Array.prototype and ArrayIterator.prototype
-        HeapPtrObject arrayProto_;
-        HeapPtrObject arrayIteratorProto_;
+        HeapPtrNativeObject arrayProto_;
+        HeapPtrNativeObject arrayIteratorProto_;
 
         // Shape of matching Array.prototype object, and slot containing
         // the '@@iterator' for it, and the canonical value.
@@ -223,7 +223,7 @@ struct ForOfPIC
         Stub *isArrayOptimized(ArrayObject *obj);
 
         // Try to optimize this chain for an object.
-        bool tryOptimizeArray(JSContext *cx, HandleObject array, bool *optimized);
+        bool tryOptimizeArray(JSContext *cx, HandleArrayObject array, bool *optimized);
 
         // Check if the global array-related objects have not been messed with
         // in a way that would disable this PIC.
@@ -255,14 +255,14 @@ struct ForOfPIC
     // Class for object that holds ForOfPIC chain.
     static const Class jsclass;
 
-    static JSObject *createForOfPICObject(JSContext *cx, Handle<GlobalObject *> global);
+    static NativeObject *createForOfPICObject(JSContext *cx, Handle<GlobalObject *> global);
 
-    static inline Chain *fromJSObject(JSObject *obj) {
-        JS_ASSERT(js::GetObjectClass(obj) == &ForOfPIC::jsclass);
+    static inline Chain *fromJSObject(NativeObject *obj) {
+        MOZ_ASSERT(js::GetObjectClass(obj) == &ForOfPIC::jsclass);
         return (ForOfPIC::Chain *) obj->getPrivate();
     }
     static inline Chain *getOrCreate(JSContext *cx) {
-        JSObject *obj = cx->global()->getForOfPICObject();
+        NativeObject *obj = cx->global()->getForOfPICObject();
         if (obj)
             return fromJSObject(obj);
         return create(cx);

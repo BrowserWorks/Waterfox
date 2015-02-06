@@ -10,6 +10,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -174,7 +175,7 @@ public class GlobalSession implements HttpResponseObserver {
   }
 
   protected void prepareStages() {
-    HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>();
+    Map<Stage, GlobalSyncStage> stages = new EnumMap<Stage, GlobalSyncStage>(Stage.class);
 
     stages.put(Stage.checkPreconditions,      new CheckPreconditionsStage());
     stages.put(Stage.ensureClusterURL,        new EnsureClusterURLStage(nodeAssignmentCallback));
@@ -1013,7 +1014,7 @@ public class GlobalSession implements HttpResponseObserver {
         if (version == null) {
           continue; // Don't want this stage to be included in meta/global.
         }
-        engineSettings = new EngineSettings(Utils.generateGuid(), version.intValue());
+        engineSettings = new EngineSettings(Utils.generateGuid(), version);
       } catch (NoSuchStageException e) {
         // No trouble; Android Sync might not recognize this engine yet.
         // By default, version 0.  Other clients will see the 0 version and reset/wipe accordingly.

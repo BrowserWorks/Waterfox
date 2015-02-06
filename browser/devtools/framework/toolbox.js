@@ -59,7 +59,8 @@ const ToolboxButtons = [
       !target.isAddon && target.activeTab && target.activeTab.traits.frames
     )
   },
-  { id: "command-button-splitconsole" },
+  { id: "command-button-splitconsole",
+    isTargetSupported: target => !target.isAddon },
   { id: "command-button-responsive" },
   { id: "command-button-paintflashing" },
   { id: "command-button-tilt" },
@@ -623,11 +624,6 @@ Toolbox.prototype = {
       this._buildPickerButton();
     }
 
-    if (!this.target.isLocalTab) {
-      this.setToolboxButtonsVisibility();
-      return Promise.resolve();
-    }
-
     let spec = CommandUtils.getCommandbarSpec("devtools.toolbox.toolbarSpec");
     let environment = CommandUtils.createEnvironment(this, '_target');
     return CommandUtils.createRequisition(environment).then(requisition => {
@@ -635,7 +631,11 @@ Toolbox.prototype = {
       return CommandUtils.createButtons(spec, this.target, this.doc,
                                         requisition).then(buttons => {
         let container = this.doc.getElementById("toolbox-buttons");
-        buttons.forEach(container.appendChild.bind(container));
+        buttons.forEach(button=> {
+          if (button) {
+            container.appendChild(button);
+          }
+        });
         this.setToolboxButtonsVisibility();
       });
     });
@@ -879,18 +879,66 @@ Toolbox.prototype = {
     iframe.tooltip = "aHTMLTooltip";
     iframe.style.visibility = "hidden";
 
-    let vbox = this.doc.getElementById("toolbox-panel-" + id);
-    vbox.appendChild(iframe);
+    gDevTools.emit(id + "-init", this, iframe);
+    this.emit(id + "-init", iframe);
+
+    // If no parent yet, append the frame into default location.
+    if (!iframe.parentNode) {
+      let vbox = this.doc.getElementById("toolbox-panel-" + id);
+      vbox.appendChild(iframe);
+    }
 
     let onLoad = () => {
       // Prevent flicker while loading by waiting to make visible until now.
       iframe.style.visibility = "visible";
 
+      // The build method should return a panel instance, so events can
+      // be fired with the panel as an argument. However, in order to keep
+      // backward compatibility with existing extensions do a check
+      // for a promise return value.
       let built = definition.build(iframe.contentWindow, this);
+      if (!(built instanceof Promise)) {
+        let panel = built;
+        iframe.panel = panel;
+
+        // The panel instance is expected to fire (and listen to) various
+        // framework events, so make sure it's properly decorated with
+        // appropriate API (on, off, once, emit).
+        // In this case we decorate panel instances directly returned by
+        // the tool definition 'build' method.
+        if (typeof panel.emit == "undefined") {
+          EventEmitter.decorate(panel);
+        }
+
+        gDevTools.emit(id + "-build", this, panel);
+        this.emit(id + "-build", panel);
+
+        // The panel can implement an 'open' method for asynchronous
+        // initialization sequence.
+        if (typeof panel.open == "function") {
+          built = panel.open();
+        } else {
+          let deferred = promise.defer();
+          deferred.resolve(panel);
+          built = deferred.promise;
+        }
+      }
+
+      // Wait till the panel is fully ready and fire 'ready' events.
       promise.resolve(built).then((panel) => {
         this._toolPanels.set(id, panel);
-        this.emit(id + "-ready", panel);
+
+        // Make sure to decorate panel object with event API also in case
+        // where the tool definition 'build' method returns only a promise
+        // and the actual panel instance is available as soon as the
+        // promise is resolved.
+        if (typeof panel.emit == "undefined") {
+          EventEmitter.decorate(panel);
+        }
+
         gDevTools.emit(id + "-ready", this, panel);
+        this.emit(id + "-ready", panel);
+
         deferred.resolve(panel);
       }, console.error);
     };
@@ -1472,6 +1520,8 @@ Toolbox.prototype = {
       return this._destroyer;
     }
 
+    this.emit("destroy");
+
     this._target.off("navigate", this._refreshHostTitle);
     this._target.off("frame-update", this._updateFrames);
     this.off("select", this._refreshHostTitle);
@@ -1493,6 +1543,9 @@ Toolbox.prototype = {
     let outstanding = [];
     for (let [id, panel] of this._toolPanels) {
       try {
+        gDevTools.emit(id + "-destroy", this, panel);
+        this.emit(id + "-destroy", panel);
+
         outstanding.push(panel.destroy());
       } catch (e) {
         // We don't want to stop here if any panel fail to close.
@@ -1515,16 +1568,21 @@ Toolbox.prototype = {
       }
     }));
 
+    // We need to grab a reference to win before this._host is destroyed.
+    let win = this.frame.ownerGlobal;
+
     // Remove the host UI
     outstanding.push(this.destroyHost());
 
-    if (this.target.isLocalTab) {
+    if (this._requisition) {
       this._requisition.destroy();
     }
     this._telemetry.toolClosed("toolbox");
     this._telemetry.destroy();
 
-    return this._destroyer = promise.all(outstanding).then(() => {
+    // Finish all outstanding tasks (successfully or not) before destroying the
+    // target.
+    this._destroyer = promise.all(outstanding).then(null, console.error).then(() => {
       // Targets need to be notified that the toolbox is being torn down.
       // This is done after other destruction tasks since it may tear down
       // fronts and the debugger transport which earlier destroy methods may
@@ -1537,11 +1595,8 @@ Toolbox.prototype = {
       this.highlighterUtils.release();
       target.off("close", this.destroy);
       return target.destroy();
-    }).then(() => {
+    }, console.error).then(() => {
       this.emit("destroyed");
-
-      // We need to grab a reference to win before this._host is destroyed.
-      let win = this.frame.ownerGlobal;
 
       // Free _host after the call to destroyed in order to let a chance
       // to destroyed listeners to still query toolbox attributes
@@ -1556,6 +1611,20 @@ Toolbox.prototype = {
            .garbageCollect();
       }
     }).then(null, console.error);
+
+    let leakCheckObserver = ({wrappedJSObject: barrier}) => {
+      // Make the leak detector wait until this toolbox is properly destroyed.
+      barrier.client.addBlocker("DevTools: Wait until toolbox is destroyed",
+                                this._destroyer);
+    };
+
+    let topic = "shutdown-leaks-before-check";
+    Services.obs.addObserver(leakCheckObserver, topic, false);
+    this._destroyer.then(() => {
+      Services.obs.removeObserver(leakCheckObserver, topic);
+    });
+
+    return this._destroyer;
   },
 
   _highlighterReady: function() {

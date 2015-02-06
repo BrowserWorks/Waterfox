@@ -14,7 +14,7 @@
 
 namespace js {
 
-class StringObject : public JSObject
+class StringObject : public NativeObject
 {
     static const unsigned PRIMITIVE_VALUE_SLOT = 0;
     static const unsigned LENGTH_SLOT = 1;
@@ -50,7 +50,7 @@ class StringObject : public JSObject
     inline bool init(JSContext *cx, HandleString str);
 
     void setStringThis(JSString *str) {
-        JS_ASSERT(getReservedSlot(PRIMITIVE_VALUE_SLOT).isUndefined());
+        MOZ_ASSERT(getReservedSlot(PRIMITIVE_VALUE_SLOT).isUndefined());
         setFixedSlot(PRIMITIVE_VALUE_SLOT, StringValue(str));
         setFixedSlot(LENGTH_SLOT, Int32Value(int32_t(str->length())));
     }

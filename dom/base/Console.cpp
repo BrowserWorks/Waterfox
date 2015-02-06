@@ -560,7 +560,6 @@ Console::Console(nsPIDOMWindow* aWindow)
     }
   }
 
-  SetIsDOMBinding();
   mozilla::HoldJSObjects(this);
 }
 
@@ -764,6 +763,12 @@ StackFrameToStackEntry(nsIStackFrame* aStackFrame,
 
   aStackEntry.mLineNumber = lineNumber;
 
+  int32_t columnNumber;
+  rv = aStackFrame->GetColumnNumber(&columnNumber);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  aStackEntry.mColumnNumber = columnNumber;
+
   rv = aStackFrame->GetName(aStackEntry.mFunctionName);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -911,9 +916,8 @@ Console::Method(JSContext* aCx, MethodName aMethodName,
       nsGlobalWindow *win = static_cast<nsGlobalWindow*>(mWindow.get());
       MOZ_ASSERT(win);
 
-      ErrorResult rv;
-      nsRefPtr<nsPerformance> performance = win->GetPerformance(rv);
-      if (rv.Failed() || !performance) {
+      nsRefPtr<nsPerformance> performance = win->GetPerformance();
+      if (!performance) {
         return;
       }
 
@@ -1063,6 +1067,7 @@ Console::ProcessCallData(ConsoleCallData* aData)
   event.mLevel = aData->mMethodString;
   event.mFilename = frame.mFilename;
   event.mLineNumber = frame.mLineNumber;
+  event.mColumnNumber = frame.mColumnNumber;
   event.mFunctionName = frame.mFunctionName;
   event.mTimeStamp = aData->mTimeStamp;
   event.mPrivate = aData->mPrivate;

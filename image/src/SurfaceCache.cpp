@@ -12,14 +12,15 @@
 #include <algorithm>
 #include "mozilla/Attributes.h"  // for MOZ_THIS_IN_INITIALIZER_LIST
 #include "mozilla/DebugOnly.h"
-#include "mozilla/Preferences.h"
+#include "mozilla/Move.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/StaticPtr.h"
 #include "nsIMemoryReporter.h"
 #include "gfx2DGlue.h"
 #include "gfxPattern.h"  // Workaround for flaw in bug 921753 part 2.
-#include "gfxDrawable.h"
 #include "gfxPlatform.h"
+#include "gfxPrefs.h"
+#include "imgFrame.h"
 #include "nsAutoPtr.h"
 #include "nsExpirationTracker.h"
 #include "nsHashKeys.h"
@@ -117,7 +118,7 @@ class CachedSurface
 public:
   NS_INLINE_DECL_REFCOUNTING(CachedSurface)
 
-  CachedSurface(SourceSurface*    aSurface,
+  CachedSurface(imgFrame*         aSurface,
                 const IntSize     aTargetSize,
                 const Cost        aCost,
                 const ImageKey    aImageKey,
@@ -132,11 +133,9 @@ public:
     MOZ_ASSERT(mImageKey, "Must have a valid image key");
   }
 
-  already_AddRefed<gfxDrawable> Drawable() const
+  DrawableFrameRef DrawableRef() const
   {
-    nsRefPtr<gfxDrawable> drawable =
-      new gfxSurfaceDrawable(mSurface, ThebesIntSize(mTargetSize));
-    return drawable.forget();
+    return mSurface->DrawableRef();
   }
 
   ImageKey GetImageKey() const { return mImageKey; }
@@ -145,12 +144,12 @@ public:
   nsExpirationState* GetExpirationState() { return &mExpirationState; }
 
 private:
-  nsExpirationState       mExpirationState;
-  nsRefPtr<SourceSurface> mSurface;
-  const IntSize           mTargetSize;
-  const Cost              mCost;
-  const ImageKey          mImageKey;
-  const SurfaceKey        mSurfaceKey;
+  nsExpirationState  mExpirationState;
+  nsRefPtr<imgFrame> mSurface;
+  const IntSize      mTargetSize;
+  const Cost         mCost;
+  const ImageKey     mImageKey;
+  const SurfaceKey   mSurfaceKey;
 };
 
 /*
@@ -240,14 +239,14 @@ public:
     RegisterWeakMemoryReporter(this);
   }
 
-  void Insert(SourceSurface*    aSurface,
+  void Insert(imgFrame*         aSurface,
               IntSize           aTargetSize,
               const Cost        aCost,
               const ImageKey    aImageKey,
               const SurfaceKey& aSurfaceKey)
   {
-    MOZ_ASSERT(!Lookup(aImageKey, aSurfaceKey).take(),
-               "Inserting a duplicate drawable into the SurfaceCache");
+    MOZ_ASSERT(!Lookup(aImageKey, aSurfaceKey),
+               "Inserting a duplicate surface into the SurfaceCache");
 
     // If this is bigger than the maximum cache size, refuse to cache it.
     if (!CanHold(aCost))
@@ -317,19 +316,41 @@ public:
     MOZ_ASSERT(mAvailableCost <= mMaxCost, "More available cost than we started with");
   }
 
-  already_AddRefed<gfxDrawable> Lookup(const ImageKey    aImageKey,
-                                       const SurfaceKey& aSurfaceKey)
+  DrawableFrameRef Lookup(const ImageKey    aImageKey,
+                          const SurfaceKey& aSurfaceKey)
   {
     nsRefPtr<ImageSurfaceCache> cache = GetImageCache(aImageKey);
     if (!cache)
-      return nullptr;  // No cached surfaces for this image.
-    
+      return DrawableFrameRef();  // No cached surfaces for this image.
+
     nsRefPtr<CachedSurface> surface = cache->Lookup(aSurfaceKey);
     if (!surface)
-      return nullptr;  // Lookup in the per-image cache missed.
-    
+      return DrawableFrameRef();  // Lookup in the per-image cache missed.
+
+    DrawableFrameRef ref = surface->DrawableRef();
+    if (!ref) {
+      // The surface was released by the operating system. Remove the cache
+      // entry as well.
+      Remove(surface);
+      return DrawableFrameRef();
+    }
+
     mExpirationTracker.MarkUsed(surface);
-    return surface->Drawable();
+    return ref;
+  }
+
+  void RemoveIfPresent(const ImageKey    aImageKey,
+                       const SurfaceKey& aSurfaceKey)
+  {
+    nsRefPtr<ImageSurfaceCache> cache = GetImageCache(aImageKey);
+    if (!cache)
+      return;  // No cached surfaces for this image.
+
+    nsRefPtr<CachedSurface> surface = cache->Lookup(aSurfaceKey);
+    if (!surface)
+      return;  // Lookup in the per-image cache missed.
+
+    Remove(surface);
   }
 
   bool CanHold(const Cost aCost) const
@@ -455,25 +476,22 @@ SurfaceCache::Initialize()
   // Initialize preferences.
   MOZ_ASSERT(!sInstance, "Shouldn't initialize more than once");
 
+  // See gfxPrefs for the default values
+
   // Length of time before an unused surface is removed from the cache, in milliseconds.
-  // The default value gives an expiration time of 1 minute.
-  uint32_t surfaceCacheExpirationTimeMS =
-    Preferences::GetUint("image.mem.surfacecache.min_expiration_ms", 60 * 1000);
+  uint32_t surfaceCacheExpirationTimeMS = gfxPrefs::ImageMemSurfaceCacheMinExpirationMS();
 
   // Maximum size of the surface cache, in kilobytes.
-  // The default is 100MB. (But we may override this for e.g. B2G.)
-  uint32_t surfaceCacheMaxSizeKB =
-    Preferences::GetUint("image.mem.surfacecache.max_size_kb", 100 * 1024);
+  uint32_t surfaceCacheMaxSizeKB = gfxPrefs::ImageMemSurfaceCacheMaxSizeKB();
 
   // A knob determining the actual size of the surface cache. Currently the
   // cache is (size of main memory) / (surface cache size factor) KB
   // or (surface cache max size) KB, whichever is smaller. The formula
   // may change in the future, though.
-  // The default value is 64, which yields a 64MB cache on a 4GB machine.
+  // For example, a value of 64 would yield a 64MB cache on a 4GB machine.
   // The smallest machines we are likely to run this code on have 256MB
   // of memory, which would yield a 4MB cache on the default setting.
-  uint32_t surfaceCacheSizeFactor =
-    Preferences::GetUint("image.mem.surfacecache.size_factor", 64);
+  uint32_t surfaceCacheSizeFactor = gfxPrefs::ImageMemSurfaceCacheSizeFactor();
 
   // Clamp to avoid division by zero below.
   surfaceCacheSizeFactor = max(surfaceCacheSizeFactor, 1u);
@@ -497,57 +515,69 @@ SurfaceCache::Shutdown()
   sInstance = nullptr;
 }
 
-/* static */ already_AddRefed<gfxDrawable>
+/* static */ DrawableFrameRef
 SurfaceCache::Lookup(const ImageKey    aImageKey,
                      const SurfaceKey& aSurfaceKey)
 {
-  MOZ_ASSERT(sInstance, "Should be initialized");
   MOZ_ASSERT(NS_IsMainThread());
+  if (!sInstance) {
+    return DrawableFrameRef();
+  }
 
   return sInstance->Lookup(aImageKey, aSurfaceKey);
 }
 
 /* static */ void
-SurfaceCache::Insert(SourceSurface*    aSurface,
+SurfaceCache::Insert(imgFrame*         aSurface,
                      const ImageKey    aImageKey,
                      const SurfaceKey& aSurfaceKey)
 {
-  MOZ_ASSERT(sInstance, "Should be initialized");
   MOZ_ASSERT(NS_IsMainThread());
-
-  Cost cost = ComputeCost(aSurfaceKey.Size());
-  return sInstance->Insert(aSurface, aSurfaceKey.Size(), cost, aImageKey,
-                           aSurfaceKey);
+  if (sInstance) {
+    Cost cost = ComputeCost(aSurfaceKey.Size());
+    sInstance->Insert(aSurface, aSurfaceKey.Size(), cost, aImageKey,
+                      aSurfaceKey);
+  }
 }
 
 /* static */ bool
 SurfaceCache::CanHold(const IntSize& aSize)
 {
-  MOZ_ASSERT(sInstance, "Should be initialized");
   MOZ_ASSERT(NS_IsMainThread());
+  if (!sInstance) {
+    return false;
+  }
 
   Cost cost = ComputeCost(aSize);
   return sInstance->CanHold(cost);
 }
 
 /* static */ void
+SurfaceCache::RemoveIfPresent(const ImageKey    aImageKey,
+                              const SurfaceKey& aSurfaceKey)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  if (sInstance) {
+    sInstance->RemoveIfPresent(aImageKey, aSurfaceKey);
+  }
+}
+
+/* static */ void
 SurfaceCache::Discard(Image* aImageKey)
 {
-  MOZ_ASSERT(sInstance, "Should be initialized");
   MOZ_ASSERT(NS_IsMainThread());
-
-  return sInstance->Discard(aImageKey);
+  if (sInstance) {
+    sInstance->Discard(aImageKey);
+  }
 }
 
 /* static */ void
 SurfaceCache::DiscardAll()
 {
   MOZ_ASSERT(NS_IsMainThread());
-
   if (sInstance) {
     sInstance->DiscardAll();
   }
-  // nothing to discard
 }
 
 } // namespace image

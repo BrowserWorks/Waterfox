@@ -73,9 +73,9 @@
 #include "nsIRadioGroupContainer.h"
 
 // input type=file
+#include "mozilla/dom/File.h"
 #include "nsIFile.h"
 #include "nsNetUtil.h"
-#include "nsDOMFile.h"
 #include "nsDirectoryServiceDefs.h"
 #include "nsIContentPrefService.h"
 #include "nsIMIMEService.h"
@@ -236,11 +236,11 @@ class HTMLInputElementState MOZ_FINAL : public nsISupports
       mValue = aValue;
     }
 
-    const nsTArray<nsCOMPtr<nsIDOMFile> >& GetFiles() {
+    const nsTArray<nsRefPtr<File>>& GetFiles() {
       return mFiles;
     }
 
-    void SetFiles(const nsTArray<nsCOMPtr<nsIDOMFile> >& aFiles) {
+    void SetFiles(const nsTArray<nsRefPtr<File>>& aFiles) {
       mFiles.Clear();
       mFiles.AppendElements(aFiles);
     }
@@ -255,7 +255,7 @@ class HTMLInputElementState MOZ_FINAL : public nsISupports
     ~HTMLInputElementState() {}
 
     nsString mValue;
-    nsTArray<nsCOMPtr<nsIDOMFile> > mFiles;
+    nsTArray<nsRefPtr<File>> mFiles;
     bool mChecked;
     bool mCheckedSet;
 };
@@ -316,7 +316,7 @@ UploadLastDir::ContentPrefCallback::HandleError(nsresult error)
 namespace {
 
 /**
- * This enumerator returns nsDOMFileFile objects after wrapping a single
+ * This enumerator returns File objects after wrapping a single
  * nsIFile representing a directory. It enumerates the files under that
  * directory and its subdirectories as a flat list of files, ignoring/skipping
  * over symbolic links.
@@ -374,7 +374,9 @@ public:
     if (!mNextFile) {
       return NS_ERROR_FAILURE;
     }
-    nsRefPtr<DOMFile> domFile = DOMFile::CreateFromFile(mNextFile);
+
+    // The parent for this object will be set on the main thread.
+    nsRefPtr<File> domFile = File::CreateFromFile(nullptr, mNextFile);
     nsCString relDescriptor;
     nsresult rv =
       mNextFile->GetRelativeDescriptor(mTopDirsParent, relDescriptor);
@@ -387,8 +389,7 @@ public:
     MOZ_ASSERT(length >= 0);
     if (length > 0) {
       // Note that we leave the trailing "/" on the path.
-      DOMFileImplFile* fileImpl =
-        static_cast<DOMFileImplFile*>(domFile->Impl());
+      FileImplFile* fileImpl = static_cast<FileImplFile*>(domFile->Impl());
       MOZ_ASSERT(fileImpl);
       fileImpl->SetPath(Substring(path, 0, uint32_t(length)));
     }
@@ -512,7 +513,7 @@ public:
 
   NS_IMETHOD Run() {
     if (!NS_IsMainThread()) {
-      // Build up list of nsDOMFileFile objects on this dedicated thread:
+      // Build up list of File objects on this dedicated thread:
       nsCOMPtr<nsISimpleEnumerator> iter =
         new DirPickerRecursiveFileEnumerator(mTopDir);
       bool hasMore = true;
@@ -521,7 +522,7 @@ public:
         iter->GetNext(getter_AddRefs(tmp));
         nsCOMPtr<nsIDOMFile> domFile = do_QueryInterface(tmp);
         MOZ_ASSERT(domFile);
-        mFileList.AppendElement(domFile);
+        mFileList.AppendElement(static_cast<File*>(domFile.get()));
         mFileListLength = mFileList.Length();
         if (mCanceled) {
           MOZ_ASSERT(!mInput, "This is bad - how did this happen?");
@@ -549,6 +550,13 @@ public:
 
     if (mCanceled) { // The last progress event may have canceled us
       return NS_OK;
+    }
+
+    // Recreate File with the correct parent object.
+    nsCOMPtr<nsIGlobalObject> global = mInput->OwnerDoc()->GetScopeObject();
+    for (uint32_t i = 0; i < mFileList.Length(); ++i) {
+      MOZ_ASSERT(!mFileList[i]->GetParentObject());
+      mFileList[i] = new File(global, mFileList[i]->Impl());
     }
 
     // The text control frame (if there is one) isn't going to send a change
@@ -594,7 +602,7 @@ public:
 private:
   nsRefPtr<HTMLInputElement> mInput;
   nsCOMPtr<nsIFile> mTopDir;
-  nsTArray<nsCOMPtr<nsIDOMFile> > mFileList;
+  nsTArray<nsRefPtr<File>> mFileList;
 
   // We access the list length on both threads, so we need the indirection of
   // this atomic member to make the access thread safe:
@@ -620,7 +628,7 @@ HTMLInputElement::nsFilePickerShownCallback::Done(int16_t aResult)
 
   if (mode == static_cast<int16_t>(nsIFilePicker::modeGetFolder)) {
     // Directory picking is different, since we still need to do more I/O to
-    // build up the list of nsDOMFileFile objects. Since this may block for a
+    // build up the list of File objects. Since this may block for a
     // long time, we need to build the list off on another dedicated thread to
     // avoid blocking any other activities that the browser is carrying out.
 
@@ -655,7 +663,7 @@ HTMLInputElement::nsFilePickerShownCallback::Done(int16_t aResult)
   }
 
   // Collect new selected filenames
-  nsTArray<nsCOMPtr<nsIDOMFile> > newFiles;
+  nsTArray<nsRefPtr<File>> newFiles;
   if (mode == static_cast<int16_t>(nsIFilePicker::modeOpenMultiple)) {
     nsCOMPtr<nsISimpleEnumerator> iter;
     nsresult rv = mFilePicker->GetDomfiles(getter_AddRefs(iter));
@@ -671,8 +679,11 @@ HTMLInputElement::nsFilePickerShownCallback::Done(int16_t aResult)
     while (NS_SUCCEEDED(iter->HasMoreElements(&hasMore)) && hasMore) {
       iter->GetNext(getter_AddRefs(tmp));
       nsCOMPtr<nsIDOMFile> domFile = do_QueryInterface(tmp);
-      MOZ_ASSERT(domFile);
-      newFiles.AppendElement(domFile);
+      NS_WARN_IF_FALSE(domFile,
+                       "Null file object from FilePicker's file enumerator?");
+      if (domFile) {
+        newFiles.AppendElement(static_cast<File*>(domFile.get()));
+      }
     }
   } else {
     MOZ_ASSERT(mode == static_cast<int16_t>(nsIFilePicker::modeOpen));
@@ -680,7 +691,7 @@ HTMLInputElement::nsFilePickerShownCallback::Done(int16_t aResult)
     nsresult rv = mFilePicker->GetDomfile(getter_AddRefs(domFile));
     NS_ENSURE_SUCCESS(rv, rv);
     if (domFile) {
-      newFiles.AppendElement(domFile);
+      newFiles.AppendElement(static_cast<File*>(domFile.get()));
     }
   }
 
@@ -936,7 +947,7 @@ HTMLInputElement::InitFilePicker(FilePickerType aType)
   // Set default directry and filename
   nsAutoString defaultName;
 
-  const nsTArray<nsCOMPtr<nsIDOMFile> >& oldFiles = GetFilesInternal();
+  const nsTArray<nsRefPtr<File>>& oldFiles = GetFilesInternal();
 
   nsCOMPtr<nsIFilePickerShownCallback> callback =
     new HTMLInputElement::nsFilePickerShownCallback(this, filePicker);
@@ -1528,6 +1539,10 @@ NS_IMPL_ENUM_ATTR_DEFAULT_VALUE(HTMLInputElement, Type, type,
 NS_IMETHODIMP
 HTMLInputElement::GetAutocomplete(nsAString& aValue)
 {
+  if (!DoesAutocompleteApply()) {
+    return NS_OK;
+  }
+
   aValue.Truncate(0);
   const nsAttrValue* attributeVal = GetParsedAttr(nsGkAtoms::autocomplete);
 
@@ -1544,11 +1559,16 @@ HTMLInputElement::SetAutocomplete(const nsAString& aValue)
 }
 
 void
-HTMLInputElement::GetAutocompleteInfo(AutocompleteInfo& aInfo)
+HTMLInputElement::GetAutocompleteInfo(Nullable<AutocompleteInfo>& aInfo)
 {
+  if (!DoesAutocompleteApply()) {
+    aInfo.SetNull();
+    return;
+  }
+
   const nsAttrValue* attributeVal = GetParsedAttr(nsGkAtoms::autocomplete);
   mAutocompleteAttrState =
-    nsContentUtils::SerializeAutocompleteAttribute(attributeVal, aInfo,
+    nsContentUtils::SerializeAutocompleteAttribute(attributeVal, aInfo.SetValue(),
                                                    mAutocompleteAttrState);
 }
 
@@ -1707,7 +1727,7 @@ HTMLInputElement::IsValueEmpty() const
 void
 HTMLInputElement::ClearFiles(bool aSetValueChanged)
 {
-  nsTArray<nsCOMPtr<nsIDOMFile> > files;
+  nsTArray<nsRefPtr<File>> files;
   SetFiles(files, aSetValueChanged);
 }
 
@@ -1849,7 +1869,8 @@ HTMLInputElement::GetList() const
     return nullptr;
   }
 
-  nsIDocument* doc = GetCurrentDoc();
+  //XXXsmaug How should this all work in case input element is in Shadow DOM.
+  nsIDocument* doc = GetUncomposedDoc();
   if (!doc) {
     return nullptr;
   }
@@ -2253,8 +2274,8 @@ HTMLInputElement::StepUp(int32_t n, uint8_t optional_argc)
 void
 HTMLInputElement::FlushFrames()
 {
-  if (GetCurrentDoc()) {
-    GetCurrentDoc()->FlushPendingNotifications(Flush_Frames);
+  if (GetComposedDoc()) {
+    GetComposedDoc()->FlushPendingNotifications(Flush_Frames);
   }
 }
 
@@ -2300,7 +2321,7 @@ HTMLInputElement::MozGetFileNameArray(uint32_t* aLength, char16_t*** aFileNames)
 void
 HTMLInputElement::MozSetFileNameArray(const Sequence< nsString >& aFileNames)
 {
-  nsTArray<nsCOMPtr<nsIDOMFile> > files;
+  nsTArray<nsRefPtr<File>> files;
   for (uint32_t i = 0; i < aFileNames.Length(); ++i) {
     nsCOMPtr<nsIFile> file;
 
@@ -2318,7 +2339,8 @@ HTMLInputElement::MozSetFileNameArray(const Sequence< nsString >& aFileNames)
     }
 
     if (file) {
-      nsCOMPtr<nsIDOMFile> domFile = DOMFile::CreateFromFile(file);
+      nsCOMPtr<nsIGlobalObject> global = OwnerDoc()->GetScopeObject();
+      nsRefPtr<File> domFile = File::CreateFromFile(global, file);
       files.AppendElement(domFile);
     } else {
       continue; // Not much we can do if the file doesn't exist
@@ -2554,7 +2576,7 @@ HTMLInputElement::GetDisplayFileName(nsAString& aValue) const
 }
 
 void
-HTMLInputElement::SetFiles(const nsTArray<nsCOMPtr<nsIDOMFile> >& aFiles,
+HTMLInputElement::SetFiles(const nsTArray<nsRefPtr<File>>& aFiles,
                            bool aSetValueChanged)
 {
   mFiles.Clear();
@@ -2567,14 +2589,14 @@ void
 HTMLInputElement::SetFiles(nsIDOMFileList* aFiles,
                            bool aSetValueChanged)
 {
+  nsRefPtr<FileList> files = static_cast<FileList*>(aFiles);
   mFiles.Clear();
 
   if (aFiles) {
     uint32_t listLength;
     aFiles->GetLength(&listLength);
     for (uint32_t i = 0; i < listLength; i++) {
-      nsCOMPtr<nsIDOMFile> file;
-      aFiles->Item(i, getter_AddRefs(file));
+      nsRefPtr<File> file = files->Item(i);
       mFiles.AppendElement(file);
     }
   }
@@ -2622,7 +2644,7 @@ HTMLInputElement::FireChangeEventIfNeeded()
                                        false);
 }
 
-nsDOMFileList*
+FileList*
 HTMLInputElement::GetFiles()
 {
   if (mType != NS_FORM_INPUT_FILE) {
@@ -2630,7 +2652,7 @@ HTMLInputElement::GetFiles()
   }
 
   if (!mFileList) {
-    mFileList = new nsDOMFileList(static_cast<nsIContent*>(this));
+    mFileList = new FileList(static_cast<nsIContent*>(this));
     UpdateFileList();
   }
 
@@ -2774,7 +2796,7 @@ HTMLInputElement::UpdateFileList()
   if (mFileList) {
     mFileList->Clear();
 
-    const nsTArray<nsCOMPtr<nsIDOMFile> >& files = GetFilesInternal();
+    const nsTArray<nsRefPtr<File>>& files = GetFilesInternal();
     for (uint32_t i = 0; i < files.Length(); ++i) {
       if (!mFileList->Append(files[i])) {
         return NS_ERROR_FAILURE;
@@ -3020,7 +3042,8 @@ HTMLInputElement::GetRadioGroupContainer() const
     return mForm;
   }
 
-  return static_cast<nsDocument*>(GetCurrentDoc());
+  //XXXsmaug It isn't clear how this should work in Shadow DOM.
+  return static_cast<nsDocument*>(GetUncomposedDoc());
 }
 
 already_AddRefed<nsIDOMHTMLInputElement>
@@ -3955,7 +3978,7 @@ HTMLInputElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
           if (fm && IsSingleLineTextControl(false) &&
               !aVisitor.mEvent->AsFocusEvent()->fromRaise &&
               SelectTextFieldOnFocus()) {
-            nsIDocument* document = GetCurrentDoc();
+            nsIDocument* document = GetComposedDoc();
             if (document) {
               uint32_t lastFocusMethod;
               fm->GetLastFocusMethod(document->GetWindow(), &lastFocusMethod);
@@ -5356,7 +5379,7 @@ HTMLInputElement::SetSelectionEnd(int32_t aSelectionEnd)
 NS_IMETHODIMP
 HTMLInputElement::GetFiles(nsIDOMFileList** aFileList)
 {
-  nsRefPtr<nsDOMFileList> list = GetFiles();
+  nsRefPtr<FileList> list = GetFiles();
   list.forget(aFileList);
   return NS_OK;
 }
@@ -5623,7 +5646,7 @@ HTMLInputElement::SubmitNamesValues(nsFormSubmission* aFormSubmission)
   if (mType == NS_FORM_INPUT_FILE) {
     // Submit files
 
-    const nsTArray<nsCOMPtr<nsIDOMFile> >& files = GetFilesInternal();
+    const nsTArray<nsRefPtr<File>>& files = GetFilesInternal();
 
     for (uint32_t i = 0; i < files.Length(); ++i) {
       aFormSubmission->AddNameFilePair(name, files[i], NullString());
@@ -5871,7 +5894,7 @@ HTMLInputElement::RestoreState(nsPresState* aState)
         break;
       case VALUE_MODE_FILENAME:
         {
-          const nsTArray<nsCOMPtr<nsIDOMFile> >& files = inputState->GetFiles();
+          const nsTArray<nsRefPtr<File>>& files = inputState->GetFiles();
           SetFiles(files, true);
         }
         break;
@@ -6265,6 +6288,43 @@ HTMLInputElement::DoesMinMaxApply() const
   }
 }
 
+bool
+HTMLInputElement::DoesAutocompleteApply() const
+{
+  switch (mType)
+  {
+    case NS_FORM_INPUT_HIDDEN:
+    case NS_FORM_INPUT_TEXT:
+    case NS_FORM_INPUT_SEARCH:
+    case NS_FORM_INPUT_URL:
+    case NS_FORM_INPUT_TEL:
+    case NS_FORM_INPUT_EMAIL:
+    case NS_FORM_INPUT_PASSWORD:
+    case NS_FORM_INPUT_DATE:
+    case NS_FORM_INPUT_TIME:
+    case NS_FORM_INPUT_NUMBER:
+    case NS_FORM_INPUT_RANGE:
+    case NS_FORM_INPUT_COLOR:
+      return true;
+#ifdef DEBUG
+    case NS_FORM_INPUT_RESET:
+    case NS_FORM_INPUT_SUBMIT:
+    case NS_FORM_INPUT_IMAGE:
+    case NS_FORM_INPUT_BUTTON:
+    case NS_FORM_INPUT_RADIO:
+    case NS_FORM_INPUT_CHECKBOX:
+    case NS_FORM_INPUT_FILE:
+      return false;
+    default:
+      NS_NOTYETIMPLEMENTED("Unexpected input type in DoesAutocompleteApply()");
+      return false;
+#else // DEBUG
+    default:
+      return false;
+#endif // DEBUG
+  }
+}
+
 Decimal
 HTMLInputElement::GetStep() const
 {
@@ -6344,7 +6404,7 @@ HTMLInputElement::IsValueMissing() const
       return IsValueEmpty();
     case VALUE_MODE_FILENAME:
     {
-      const nsTArray<nsCOMPtr<nsIDOMFile> >& files = GetFilesInternal();
+      const nsTArray<nsRefPtr<File>>& files = GetFilesInternal();
       return files.IsEmpty();
     }
     case VALUE_MODE_DEFAULT_ON:

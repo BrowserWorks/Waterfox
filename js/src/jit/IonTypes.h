@@ -284,6 +284,11 @@ class SimdConstant {
         cst.fillInt32x4(array[0], array[1], array[2], array[3]);
         return cst;
     }
+    static SimdConstant SplatX4(int32_t v) {
+        SimdConstant cst;
+        cst.fillInt32x4(v, v, v, v);
+        return cst;
+    }
     static SimdConstant CreateX4(float x, float y, float z, float w) {
         SimdConstant cst;
         cst.fillFloat32x4(x, y, z, w);
@@ -294,9 +299,14 @@ class SimdConstant {
         cst.fillFloat32x4(array[0], array[1], array[2], array[3]);
         return cst;
     }
+    static SimdConstant SplatX4(float v) {
+        SimdConstant cst;
+        cst.fillFloat32x4(v, v, v, v);
+        return cst;
+    }
 
     uint32_t length() const {
-        JS_ASSERT(defined());
+        MOZ_ASSERT(defined());
         switch(type_) {
           case Int32x4:
           case Float32x4:
@@ -308,21 +318,21 @@ class SimdConstant {
     }
 
     Type type() const {
-        JS_ASSERT(defined());
+        MOZ_ASSERT(defined());
         return type_;
     }
 
     const int32_t *asInt32x4() const {
-        JS_ASSERT(defined() && type_ == Int32x4);
+        MOZ_ASSERT(defined() && type_ == Int32x4);
         return u.i32x4;
     }
     const float *asFloat32x4() const {
-        JS_ASSERT(defined() && type_ == Float32x4);
+        MOZ_ASSERT(defined() && type_ == Float32x4);
         return u.f32x4;
     }
 
     bool operator==(const SimdConstant &rhs) const {
-        JS_ASSERT(defined() && rhs.defined());
+        MOZ_ASSERT(defined() && rhs.defined());
         if (type() != rhs.type())
             return false;
         return memcmp(&u, &rhs.u, sizeof(u)) == 0;
@@ -331,7 +341,8 @@ class SimdConstant {
     // SimdConstant is a HashPolicy
     typedef SimdConstant Lookup;
     static HashNumber hash(const SimdConstant &val) {
-        return mozilla::HashBytes(&val.u, sizeof(SimdConstant));
+        uint32_t hash = mozilla::HashBytes(&val.u, sizeof(val.u));
+        return mozilla::AddToHash(hash, val.type_);
     }
     static bool match(const SimdConstant &lhs, const SimdConstant &rhs) {
         return lhs == rhs;
@@ -352,18 +363,19 @@ enum MIRType
     MIRType_String,
     MIRType_Symbol,
     MIRType_Object,
-    MIRType_MagicOptimizedArguments, // JS_OPTIMIZED_ARGUMENTS magic value.
-    MIRType_MagicOptimizedOut,       // JS_OPTIMIZED_OUT magic value.
-    MIRType_MagicHole,               // JS_ELEMENTS_HOLE magic value.
-    MIRType_MagicIsConstructing,     // JS_IS_CONSTRUCTING magic value.
+    MIRType_MagicOptimizedArguments,   // JS_OPTIMIZED_ARGUMENTS magic value.
+    MIRType_MagicOptimizedOut,         // JS_OPTIMIZED_OUT magic value.
+    MIRType_MagicHole,                 // JS_ELEMENTS_HOLE magic value.
+    MIRType_MagicIsConstructing,       // JS_IS_CONSTRUCTING magic value.
+    MIRType_MagicUninitializedLexical, // JS_UNINITIALIZED_LEXICAL magic value.
     MIRType_Value,
-    MIRType_None,                    // Invalid, used as a placeholder.
-    MIRType_Slots,                   // A slots vector
-    MIRType_Elements,                // An elements vector
-    MIRType_Pointer,                 // An opaque pointer that receives no special treatment
-    MIRType_Shape,                   // A Shape pointer.
-    MIRType_TypeObject,              // A TypeObject pointer.
-    MIRType_ForkJoinContext,         // js::ForkJoinContext*
+    MIRType_None,                      // Invalid, used as a placeholder.
+    MIRType_Slots,                     // A slots vector
+    MIRType_Elements,                  // An elements vector
+    MIRType_Pointer,                   // An opaque pointer that receives no special treatment
+    MIRType_Shape,                     // A Shape pointer.
+    MIRType_TypeObject,                // A TypeObject pointer.
+    MIRType_ForkJoinContext,           // js::ForkJoinContext*
     MIRType_Last = MIRType_ForkJoinContext,
     MIRType_Float32x4 = MIRType_Float32 | (2 << VECTOR_SCALE_SHIFT),
     MIRType_Int32x4   = MIRType_Int32   | (2 << VECTOR_SCALE_SHIFT),
@@ -435,9 +447,10 @@ ValueTypeFromMIRType(MIRType type)
     case MIRType_MagicOptimizedOut:
     case MIRType_MagicHole:
     case MIRType_MagicIsConstructing:
+    case MIRType_MagicUninitializedLexical:
       return JSVAL_TYPE_MAGIC;
     default:
-      JS_ASSERT(type == MIRType_Object);
+      MOZ_ASSERT(type == MIRType_Object);
       return JSVAL_TYPE_OBJECT;
   }
 }
@@ -478,6 +491,8 @@ StringFromMIRType(MIRType type)
       return "MagicHole";
     case MIRType_MagicIsConstructing:
       return "MagicIsConstructing";
+    case MIRType_MagicUninitializedLexical:
+      return "MagicUninitializedLexical";
     case MIRType_Value:
       return "Value";
     case MIRType_None:
@@ -529,12 +544,22 @@ IsSimdType(MIRType type)
     return type == MIRType_Int32x4 || type == MIRType_Float32x4;
 };
 
+static inline bool
+IsMagicType(MIRType type)
+{
+    return type == MIRType_MagicHole ||
+           type == MIRType_MagicOptimizedOut ||
+           type == MIRType_MagicIsConstructing ||
+           type == MIRType_MagicOptimizedArguments ||
+           type == MIRType_MagicUninitializedLexical;
+}
+
 // Returns the number of vector elements (hereby called "length") for a given
 // SIMD kind. It is the Y part of the name "Foo x Y".
 static inline unsigned
 SimdTypeToLength(MIRType type)
 {
-    JS_ASSERT(IsSimdType(type));
+    MOZ_ASSERT(IsSimdType(type));
     switch (type) {
       case MIRType_Int32x4:
       case MIRType_Float32x4:
@@ -547,7 +572,7 @@ SimdTypeToLength(MIRType type)
 static inline MIRType
 SimdTypeToScalarType(MIRType type)
 {
-    JS_ASSERT(IsSimdType(type));
+    MOZ_ASSERT(IsSimdType(type));
     switch (type) {
       case MIRType_Int32x4:
         return MIRType_Int32;

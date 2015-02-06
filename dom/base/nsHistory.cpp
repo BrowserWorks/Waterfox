@@ -46,7 +46,6 @@ NS_INTERFACE_MAP_END
 nsHistory::nsHistory(nsPIDOMWindow* aInnerWindow)
   : mInnerWindow(do_GetWeakReference(aInnerWindow))
 {
-  SetIsDOMBinding();
 }
 
 nsHistory::~nsHistory()
@@ -168,7 +167,7 @@ nsHistory::Go(int32_t aDelta, ErrorResult& aRv)
       nsIPresShell *shell;
       nsPresContext *pcx;
       if (doc && (shell = doc->GetShell()) && (pcx = shell->GetPresContext())) {
-        pcx->RebuildAllStyleData(NS_STYLE_HINT_REFLOW);
+        pcx->RebuildAllStyleData(NS_STYLE_HINT_REFLOW, eRestyle_Subtree);
       }
 
       return;

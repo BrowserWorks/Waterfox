@@ -21,7 +21,7 @@
 
 namespace JS {
 
-class Symbol : public js::gc::BarrieredCell<Symbol>
+class Symbol : public js::gc::TenuredCell
 {
   private:
     SymbolCode code_;
@@ -106,6 +106,14 @@ class SymbolRegistry : public SymbolHashSet
     SymbolRegistry() : SymbolHashSet() {}
     void sweep();
 };
+
+} /* namespace js */
+
+namespace js {
+
+// ES6 rev 27 (2014 Aug 24) 19.4.3.3
+bool
+SymbolDescriptiveString(JSContext *cx, JS::Symbol *sym, JS::MutableHandleValue result);
 
 } /* namespace js */
 

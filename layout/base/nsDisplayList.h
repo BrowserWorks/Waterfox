@@ -271,6 +271,11 @@ public:
   void SetAccurateVisibleRegions() { mAccurateVisibleRegions = true; }
   bool GetAccurateVisibleRegions() { return mAccurateVisibleRegions; }
   /**
+   * @return Returns true if we should include the caret in any display lists
+   * that we make.
+   */
+  bool IsBuildingCaret() { return mBuildCaret; }
+  /**
    * Allows callers to selectively override the regular paint suppression checks,
    * so that methods like GetFrameForPoint work when painting is suppressed.
    */
@@ -318,9 +323,7 @@ public:
   }
   bool IsBuildingLayerEventRegions()
   {
-    // Disable for now.
-    return false;
-    // return mMode == PAINTING;
+    return (gfxPrefs::LayoutEventRegionsEnabled() && mMode == PAINTING);
   }
 
   bool GetAncestorHasTouchEventHandler() { return mAncestorHasTouchEventHandler; }
@@ -367,10 +370,9 @@ public:
   nsCaret* GetCaret();
   /**
    * Notify the display list builder that we're entering a presshell.
-   * aReferenceFrame should be a frame in the new presshell and aDirtyRect
-   * should be the current dirty rect in aReferenceFrame's coordinate space.
+   * aReferenceFrame should be a frame in the new presshell.
    */
-  void EnterPresShell(nsIFrame* aReferenceFrame, const nsRect& aDirtyRect);
+  void EnterPresShell(nsIFrame* aReferenceFrame);
   /**
    * For print-preview documents, we sometimes need to build display items for
    * the same frames multiple times in the same presentation, with different
@@ -382,7 +384,7 @@ public:
   /**
    * Notify the display list builder that we're leaving a presshell.
    */
-  void LeavePresShell(nsIFrame* aReferenceFrame, const nsRect& aDirtyRect);
+  void LeavePresShell(nsIFrame* aReferenceFrame);
 
   /**
    * Returns true if we're currently building a display list that's
@@ -729,7 +731,6 @@ private:
     nsIPresShell* mPresShell;
     nsIFrame*     mCaretFrame;
     nsRect        mCaretRect;
-    nsRect        mPrevDirtyRect;
     uint32_t      mFirstFrameMarkedForDisplay;
     bool          mIsBackgroundOnly;
   };
@@ -1099,14 +1100,14 @@ public:
    * Return LAYER_INACTIVE if there is a layer --- BuildLayer will
    * not return null (unless there's an error) --- but the layer contents
    * are not changing frequently. In this case it makes sense to composite
-   * the layer into a ThebesLayer with other content, so we don't have to
+   * the layer into a PaintedLayer with other content, so we don't have to
    * recomposite it every time we paint.
    * Note: GetLayerState is only allowed to return LAYER_INACTIVE if all
    * descendant display items returned LAYER_INACTIVE or LAYER_NONE. Also,
    * all descendant display item frames must have an active scrolled root
    * that's either the same as this item's frame's active scrolled root, or
    * a descendant of this item's frame. This ensures that the entire
-   * set of display items can be collapsed onto a single ThebesLayer.
+   * set of display items can be collapsed onto a single PaintedLayer.
    * Return LAYER_ACTIVE if the layer is active, that is, its contents are
    * changing frequently. In this case it makes sense to keep the layer
    * as a separate buffer in VRAM and composite it into the destination
@@ -1134,7 +1135,7 @@ public:
 
 #ifdef MOZ_DUMP_PAINTING
   /**
-   * Mark this display item as being painted via FrameLayerBuilder::DrawThebesLayer.
+   * Mark this display item as being painted via FrameLayerBuilder::DrawPaintedLayer.
    */
   bool Painted() { return mPainted; }
 
@@ -1381,7 +1382,7 @@ class nsDisplayList {
 public:
   typedef mozilla::layers::Layer Layer;
   typedef mozilla::layers::LayerManager LayerManager;
-  typedef mozilla::layers::ThebesLayer ThebesLayer;
+  typedef mozilla::layers::PaintedLayer PaintedLayer;
 
   /**
    * Create an empty list.
@@ -1541,7 +1542,7 @@ public:
    * been removed from aVisibleRegion when we return.
    * This does not remove any items from the list, so we can recompute
    * visiblity with different regions later (see
-   * FrameLayerBuilder::DrawThebesLayer).
+   * FrameLayerBuilder::DrawPaintedLayer).
    * This method needs to be idempotent.
    * 
    * @param aVisibleRegion the area that is visible, relative to the
@@ -2498,14 +2499,14 @@ public:
  * One of these is created for each stacking context and pseudo-stacking-context.
  * It accumulates regions for event targets contributed by the border-boxes of
  * frames in its (pseudo) stacking context. A nsDisplayLayerEventRegions
- * eventually contributes its regions to the ThebesLayer it is placed in by
+ * eventually contributes its regions to the PaintedLayer it is placed in by
  * FrameLayerBuilder. (We don't create a display item for every frame that
  * could be an event target (i.e. almost all frames), because that would be
  * high overhead.)
  *
- * We always make leaf layers other than ThebesLayers transparent to events.
+ * We always make leaf layers other than PaintedLayers transparent to events.
  * For example, an event targeting a canvas or video will actually target the
- * background of that element, which is logically in the ThebesLayer behind the
+ * background of that element, which is logically in the PaintedLayer behind the
  * CanvasFrame or ImageFrame. We only need to create a
  * nsDisplayLayerEventRegions when an element's background could be in front
  * of a lower z-order element with its own layer.
@@ -2648,6 +2649,8 @@ public:
   }
 
   void SetVisibleRect(const nsRect& aRect);
+
+  void SetReferenceFrame(const nsIFrame* aFrame);
 
   /**
    * This creates a copy of this item, but wrapping aItem instead of
@@ -2845,7 +2848,7 @@ public:
    * for this layer are send to our nsPresContext.
    * GENERATE_SCROLLABLE_LAYER : only valid on nsDisplaySubDocument (and
    * subclasses), indicates this layer is to be a scrollable layer, so call
-   * RecordFrameMetrics, etc.
+   * ComputeFrameMetrics, etc.
    * @param aScrollTarget when VERTICAL_SCROLLBAR or HORIZONTAL_SCROLLBAR
    * is set in the flags, this parameter should be the ViewID of the
    * scrollable content this scrollbar is for.

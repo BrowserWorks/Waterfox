@@ -190,6 +190,15 @@ toolbar[brighttext] #sync-button[status="active"]:hover:active:not([disabled="tr
   transform: scaleX(-1);
 }
 
+#web-apps-button[cui-areatype="toolbar"] {
+  -moz-image-region: rect(0, 720px, 18px, 702px);
+}
+
+%ifdef XP_MACOSX
+#web-apps-button[cui-areatype="toolbar"]:hover:active:not([disabled="true"]) {
+  -moz-image-region: rect(18px, 720px, 36px, 702px);
+}
+%endif
 
 #loop-button-throttled > .toolbarbutton-badge-container {
   list-style-image: url(chrome://browser/skin/loop/toolbar.png);
@@ -223,4 +232,8 @@ toolbar[brighttext] #loop-button-throttled > .toolbarbutton-badge-container {
 
 #loop-button-throttled:not([disabled="true"])[state="active"]:-moz-any(:hover,:hover:active,[open]) > .toolbarbutton-badge-container {
   -moz-image-region: rect(0, 126px, 18px, 108px);
+}
+
+#webide-button[cui-areatype="toolbar"] {
+  -moz-image-region: rect(0, 738px, 18px, 720px);
 }

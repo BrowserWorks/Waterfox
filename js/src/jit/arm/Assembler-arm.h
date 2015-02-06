@@ -398,7 +398,7 @@ struct Imm8mData
     uint32_t invalid : 1;
 
     uint32_t encode() {
-        JS_ASSERT(!invalid);
+        MOZ_ASSERT(!invalid);
         return data | rot << 8;
     };
 
@@ -410,8 +410,8 @@ struct Imm8mData
     Imm8mData(uint32_t data_, uint32_t rot_)
       : data(data_), rot(rot_), invalid(0)
     {
-        JS_ASSERT(data == data_);
-        JS_ASSERT(rot == rot_);
+        MOZ_ASSERT(data == data_);
+        MOZ_ASSERT(rot == rot_);
     }
 };
 
@@ -427,7 +427,7 @@ struct Imm8Data
         return imm4L | (imm4H << 8);
     };
     Imm8Data(uint32_t imm) : imm4L(imm & 0xf), imm4H(imm >> 4) {
-        JS_ASSERT(imm <= 0xff);
+        MOZ_ASSERT(imm <= 0xff);
     }
 };
 
@@ -442,7 +442,7 @@ struct Imm8VFPOffData
         return data;
     };
     Imm8VFPOffData(uint32_t imm) : data (imm) {
-        JS_ASSERT((imm & ~(0xff)) == 0);
+        MOZ_ASSERT((imm & ~(0xff)) == 0);
     }
 };
 
@@ -450,26 +450,23 @@ struct Imm8VFPOffData
 // register.
 struct Imm8VFPImmData
 {
-  private:
+    // This structure's members are public and it has no constructor to
+    // initialize them, for a very special reason. Were this structure to
+    // have a constructor, the initialization for DoubleEncoder's internal
+    // table (see below) would require a rather large static constructor on
+    // some of our supported compilers. The known solution to this is to mark
+    // the constructor MOZ_CONSTEXPR, but, again, some of our supported
+    // compilers don't support MOZ_CONSTEXPR! So we are reduced to public
+    // members and eschewing a constructor in hopes that the initialization
+    // of DoubleEncoder's table is correct.
     uint32_t imm4L : 4;
-    uint32_t pad : 12;
     uint32_t imm4H : 4;
-    int32_t isInvalid : 12;
-
-  public:
-    Imm8VFPImmData()
-      : imm4L(-1U & 0xf), imm4H(-1U & 0xf), isInvalid(-1)
-    { }
-
-    Imm8VFPImmData(uint32_t imm)
-      : imm4L(imm&0xf), imm4H(imm >> 4), isInvalid(0)
-    {
-        JS_ASSERT(imm <= 0xff);
-    }
+    int32_t isInvalid : 24;
 
     uint32_t encode() {
-        if (isInvalid != 0)
-            return -1;
+        // This assert is an attempting at ensuring that we don't create random
+        // instances of this structure and then asking to encode() it.
+        MOZ_ASSERT(isInvalid == 0);
         return imm4L | (imm4H << 16);
     };
 };
@@ -484,7 +481,7 @@ struct Imm12Data
     Imm12Data(uint32_t imm)
       : data(imm)
     {
-        JS_ASSERT(data == imm);
+        MOZ_ASSERT(data == imm);
     }
 
 };
@@ -499,7 +496,7 @@ struct RIS
     RIS(uint32_t imm)
       : ShiftAmount(imm)
     {
-        JS_ASSERT(ShiftAmount == imm);
+        MOZ_ASSERT(ShiftAmount == imm);
     }
     explicit RIS(Reg r) : ShiftAmount(r.ShiftAmount) {}
 };
@@ -513,7 +510,7 @@ struct RRS
     RRS(uint32_t rs)
       : RS(rs)
     {
-        JS_ASSERT(rs == RS);
+        MOZ_ASSERT(rs == RS);
     }
 
     uint32_t encode () {
@@ -712,7 +709,7 @@ class DtrOffImm : public DtrOff
     DtrOffImm(int32_t imm)
       : DtrOff(datastore::Imm12Data(mozilla::Abs(imm)), imm >= 0 ? IsUp : IsDown)
     {
-        JS_ASSERT(mozilla::Abs(imm) < 4096);
+        MOZ_ASSERT(mozilla::Abs(imm) < 4096);
     }
 };
 
@@ -797,7 +794,7 @@ class EDtrOffImm : public EDtrOff
     EDtrOffImm(int32_t imm)
       : EDtrOff(datastore::Imm8Data(mozilla::Abs(imm)), (imm >= 0) ? IsUp : IsDown)
     {
-        JS_ASSERT(mozilla::Abs(imm) < 256);
+        MOZ_ASSERT(mozilla::Abs(imm) < 256);
     }
 };
 
@@ -846,7 +843,7 @@ class VFPOffImm : public VFPOff
     VFPOffImm(int32_t imm)
       : VFPOff(datastore::Imm8VFPOffData(mozilla::Abs(imm) / 4), imm < 0 ? IsDown : IsUp)
     {
-        JS_ASSERT(mozilla::Abs(imm) <= 255 * 4);
+        MOZ_ASSERT(mozilla::Abs(imm) <= 255 * 4);
     }
 };
 class VFPAddr
@@ -904,7 +901,7 @@ class BOffImm
     explicit BOffImm(int offset)
       : data ((offset - 8) >> 2 & 0x00ffffff)
     {
-        JS_ASSERT((offset & 0x3) == 0);
+        MOZ_ASSERT((offset & 0x3) == 0);
         if (!IsInRange(offset))
             CrashAtUnhandlableOOM("BOffImm");
     }
@@ -1001,17 +998,17 @@ class Operand
     }
 
     Operand2 toOp2() const {
-        JS_ASSERT(Tag == OP2);
+        MOZ_ASSERT(Tag == OP2);
         return O2Reg(Register::FromCode(reg));
     }
 
     Register toReg() const {
-        JS_ASSERT(Tag == OP2);
+        MOZ_ASSERT(Tag == OP2);
         return Register::FromCode(reg);
     }
 
     void toAddr(Register *r, Imm32 *dest) const {
-        JS_ASSERT(Tag == MEM);
+        MOZ_ASSERT(Tag == MEM);
         *r = Register::FromCode(reg);
         *dest = Imm32(offset);
     }
@@ -1019,12 +1016,12 @@ class Operand
         return Address(Register::FromCode(reg), offset);
     }
     int32_t disp() const {
-        JS_ASSERT(Tag == MEM);
+        MOZ_ASSERT(Tag == MEM);
         return offset;
     }
 
     int32_t base() const {
-        JS_ASSERT(Tag == MEM);
+        MOZ_ASSERT(Tag == MEM);
         return reg;
     }
     Register baseReg() const {
@@ -1133,9 +1130,14 @@ class Assembler : public AssemblerShared
         return (Condition) (0xf0000000 & inst);
     }
     static inline Condition ConditionFromDoubleCondition(DoubleCondition cond) {
-        JS_ASSERT(!(cond & DoubleConditionBitSpecial));
+        MOZ_ASSERT(!(cond & DoubleConditionBitSpecial));
         return static_cast<Condition>(cond);
     }
+
+    enum BarrierOption {
+        BarrierSY = 15,         // Full system barrier
+        BarrierST = 14          // StoreStore barrier
+    };
 
     // This should be protected, but since CodeGenerator wants to use it, it
     // needs to go out here :(
@@ -1212,8 +1214,8 @@ class Assembler : public AssemblerShared
     {
     }
 
-    // We need to wait until an AutoIonContextAlloc is created by the
-    // IonMacroAssembler, before allocating any space.
+    // We need to wait until an AutoJitContextAlloc is created by the
+    // MacroAssembler, before allocating any space.
     void initWithAllocator() {
         m_buffer.initWithAllocator();
     }
@@ -1348,8 +1350,13 @@ class Assembler : public AssemblerShared
                 Condition c = Always);
     BufferOffset as_tst(Register src1, Operand2 op2,
                 Condition c = Always);
+    // Sign extension operations:
+    BufferOffset as_sxtb(Register dest, Register src, int rotate, Condition c = Always);
+    BufferOffset as_sxth(Register dest, Register src, int rotate, Condition c = Always);
+    BufferOffset as_uxtb(Register dest, Register src, int rotate, Condition c = Always);
+    BufferOffset as_uxth(Register dest, Register src, int rotate, Condition c = Always);
 
-    // Not quite ALU worthy, but useful none the less: These also have the isue
+    // Not quite ALU worthy, but useful none the less: These also have the issue
     // of these being formatted completly differently from the standard ALU
     // operations.
     BufferOffset as_movw(Register dest, Imm16 imm, Condition c = Always, Instruction *pos = nullptr);
@@ -1400,6 +1407,36 @@ class Assembler : public AssemblerShared
     BufferOffset as_FImm64Pool(VFPRegister dest, double value, Condition c = Always);
     // Load a 32 bit floating point immediate from a pool into a register.
     BufferOffset as_FImm32Pool(VFPRegister dest, float value, Condition c = Always);
+
+    // Atomic instructions: ldrex, ldrexh, ldrexb, strex, strexh, strexb.
+    //
+    // The halfword and byte versions are available from ARMv6K forward.
+    //
+    // The word versions are available from ARMv6 forward and can be used to
+    // implement the halfword and byte versions on older systems.
+
+    // LDREX rt, [rn]
+    BufferOffset as_ldrex(Register rt, Register rn, Condition c = Always);
+    BufferOffset as_ldrexh(Register rt, Register rn, Condition c = Always);
+    BufferOffset as_ldrexb(Register rt, Register rn, Condition c = Always);
+
+    // STREX rd, rt, [rn]
+    BufferOffset as_strex(Register rd, Register rt, Register rn, Condition c = Always);
+    BufferOffset as_strexh(Register rd, Register rt, Register rn, Condition c = Always);
+    BufferOffset as_strexb(Register rd, Register rt, Register rn, Condition c = Always);
+
+    // Memory synchronization: dmb, dsb, isb.
+    //
+    // These are available from ARMv7 forward.
+
+    BufferOffset as_dmb(BarrierOption option = BarrierSY);
+    BufferOffset as_dsb(BarrierOption option = BarrierSY);
+    BufferOffset as_isb();
+
+    // Memory synchronization for architectures before ARMv7.
+    BufferOffset as_dsb_trap();
+    BufferOffset as_dmb_trap();
+    BufferOffset as_isb_trap();
 
     // Control flow stuff:
 
@@ -1568,7 +1605,7 @@ class Assembler : public AssemblerShared
     // The buffer is about to be linked, make sure any constant pools or excess
     // bookkeeping has been flushed to the instruction stream.
     void flush() {
-        JS_ASSERT(!isFinished);
+        MOZ_ASSERT(!isFinished);
         m_buffer.flushPool();
         return;
     }
@@ -1585,7 +1622,7 @@ class Assembler : public AssemblerShared
                             DTMMode mode, DTMWriteBack update = NoWriteBack,
                             Condition c = Always)
     {
-        JS_ASSERT(!dtmActive);
+        MOZ_ASSERT(!dtmActive);
         dtmUpdate = update;
         dtmBase = rm;
         dtmLoadStore = ls;
@@ -1597,8 +1634,8 @@ class Assembler : public AssemblerShared
     }
 
     void transferReg(Register rn) {
-        JS_ASSERT(dtmActive);
-        JS_ASSERT(rn.code() > dtmLastReg);
+        MOZ_ASSERT(dtmActive);
+        MOZ_ASSERT(rn.code() > dtmLastReg);
         dtmRegBitField |= 1 << rn.code();
         if (dtmLoadStore == IsLoad && rn.code() == 13 && dtmBase.code() == 13) {
             MOZ_CRASH("ARM Spec says this is invalid");
@@ -1613,7 +1650,7 @@ class Assembler : public AssemblerShared
                              DTMMode mode, DTMWriteBack update = NoWriteBack,
                              Condition c = Always)
     {
-        JS_ASSERT(!dtmActive);
+        MOZ_ASSERT(!dtmActive);
         dtmActive = true;
         dtmUpdate = update;
         dtmLoadStore = ls;
@@ -1630,18 +1667,18 @@ class Assembler : public AssemblerShared
         } else {
             if (dtmDelta == 0) {
                 dtmDelta = rn.code() - dtmLastReg;
-                JS_ASSERT(dtmDelta == 1 || dtmDelta == -1);
+                MOZ_ASSERT(dtmDelta == 1 || dtmDelta == -1);
             }
-            JS_ASSERT(dtmLastReg >= 0);
-            JS_ASSERT(rn.code() == unsigned(dtmLastReg) + dtmDelta);
+            MOZ_ASSERT(dtmLastReg >= 0);
+            MOZ_ASSERT(rn.code() == unsigned(dtmLastReg) + dtmDelta);
         }
 
         dtmLastReg = rn.code();
     }
     void finishFloatTransfer() {
-        JS_ASSERT(dtmActive);
+        MOZ_ASSERT(dtmActive);
         dtmActive = false;
-        JS_ASSERT(dtmLastReg != -1);
+        MOZ_ASSERT(dtmLastReg != -1);
         dtmDelta = dtmDelta ? dtmDelta : 1;
         // The operand for the vstr/vldr instruction is the lowest register in the range.
         int low = Min(dtmLastReg, vdtmFirstReg);
@@ -1650,7 +1687,7 @@ class Assembler : public AssemblerShared
         int len = high - low + 1;
         // vdtm can only transfer 16 registers at once.  If we need to transfer more,
         // then either hoops are necessary, or we need to be updating the register.
-        JS_ASSERT_IF(len > 16, dtmUpdate == WriteBack);
+        MOZ_ASSERT_IF(len > 16, dtmUpdate == WriteBack);
 
         int adjustLow = dtmLoadStore == IsStore ? 0 : 1;
         int adjustHigh = dtmLoadStore == IsStore ? -1 : 0;
@@ -1765,11 +1802,11 @@ class Instruction
     // cannot be made conditional, and have the usually invalid 4b1111 cond
     // field.
     Instruction (uint32_t data_, bool fake = false) : data(data_ | 0xf0000000) {
-        JS_ASSERT (fake || ((data_ & 0xf0000000) == 0));
+        MOZ_ASSERT(fake || ((data_ & 0xf0000000) == 0));
     }
     // Standard constructor.
     Instruction (uint32_t data_, Assembler::Condition c) : data(data_ | (uint32_t) c) {
-        JS_ASSERT ((data_ & 0xf0000000) == 0);
+        MOZ_ASSERT((data_ & 0xf0000000) == 0);
     }
     // You should never create an instruction directly. You should create a more
     // specific instruction which will eventually call one of these constructors
@@ -2076,8 +2113,8 @@ GetTempRegForIntArg(uint32_t usedIntArgs, uint32_t usedFloatArgs, Register *out)
 static inline uint32_t
 GetArgStackDisp(uint32_t arg)
 {
-    JS_ASSERT(!UseHardFpABI());
-    JS_ASSERT(arg >= NumIntArgRegs);
+    MOZ_ASSERT(!UseHardFpABI());
+    MOZ_ASSERT(arg >= NumIntArgRegs);
     return (arg - NumIntArgRegs) * sizeof(intptr_t);
 }
 
@@ -2089,7 +2126,7 @@ GetArgStackDisp(uint32_t arg)
 static inline bool
 GetFloat32ArgReg(uint32_t usedIntArgs, uint32_t usedFloatArgs, FloatRegister *out)
 {
-    JS_ASSERT(UseHardFpABI());
+    MOZ_ASSERT(UseHardFpABI());
     if (usedFloatArgs >= NumFloatArgRegs)
         return false;
     *out = VFPRegister(usedFloatArgs, VFPRegister::Single);
@@ -2098,8 +2135,8 @@ GetFloat32ArgReg(uint32_t usedIntArgs, uint32_t usedFloatArgs, FloatRegister *ou
 static inline bool
 GetDoubleArgReg(uint32_t usedIntArgs, uint32_t usedFloatArgs, FloatRegister *out)
 {
-    JS_ASSERT(UseHardFpABI());
-    JS_ASSERT((usedFloatArgs % 2) == 0);
+    MOZ_ASSERT(UseHardFpABI());
+    MOZ_ASSERT((usedFloatArgs % 2) == 0);
     if (usedFloatArgs >= NumFloatArgRegs)
         return false;
     *out = VFPRegister(usedFloatArgs>>1, VFPRegister::Double);
@@ -2109,8 +2146,8 @@ GetDoubleArgReg(uint32_t usedIntArgs, uint32_t usedFloatArgs, FloatRegister *out
 static inline uint32_t
 GetIntArgStackDisp(uint32_t usedIntArgs, uint32_t usedFloatArgs, uint32_t *padding)
 {
-    JS_ASSERT(UseHardFpABI());
-    JS_ASSERT(usedIntArgs >= NumIntArgRegs);
+    MOZ_ASSERT(UseHardFpABI());
+    MOZ_ASSERT(usedIntArgs >= NumIntArgRegs);
     uint32_t doubleSlots = Max(0, (int32_t)usedFloatArgs - (int32_t)NumFloatArgRegs);
     doubleSlots *= 2;
     int intSlots = usedIntArgs - NumIntArgRegs;
@@ -2120,8 +2157,8 @@ GetIntArgStackDisp(uint32_t usedIntArgs, uint32_t usedFloatArgs, uint32_t *paddi
 static inline uint32_t
 GetFloat32ArgStackDisp(uint32_t usedIntArgs, uint32_t usedFloatArgs, uint32_t *padding)
 {
-    JS_ASSERT(UseHardFpABI());
-    JS_ASSERT(usedFloatArgs >= NumFloatArgRegs);
+    MOZ_ASSERT(UseHardFpABI());
+    MOZ_ASSERT(usedFloatArgs >= NumFloatArgRegs);
     uint32_t intSlots = 0;
     if (usedIntArgs > NumIntArgRegs)
         intSlots = usedIntArgs - NumIntArgRegs;
@@ -2132,8 +2169,8 @@ GetFloat32ArgStackDisp(uint32_t usedIntArgs, uint32_t usedFloatArgs, uint32_t *p
 static inline uint32_t
 GetDoubleArgStackDisp(uint32_t usedIntArgs, uint32_t usedFloatArgs, uint32_t *padding)
 {
-    JS_ASSERT(UseHardFpABI());
-    JS_ASSERT(usedFloatArgs >= NumFloatArgRegs);
+    MOZ_ASSERT(UseHardFpABI());
+    MOZ_ASSERT(usedFloatArgs >= NumFloatArgRegs);
     uint32_t intSlots = 0;
     if (usedIntArgs > NumIntArgRegs) {
         intSlots = usedIntArgs - NumIntArgRegs;
@@ -2150,50 +2187,15 @@ GetDoubleArgStackDisp(uint32_t usedIntArgs, uint32_t usedFloatArgs, uint32_t *pa
 
 
 class DoubleEncoder {
-    uint32_t rep(bool b, uint32_t count) {
-        uint32_t ret = 0;
-        for (uint32_t i = 0; i < count; i++)
-            ret = (ret << 1) | b;
-        return ret;
-    }
-
-    uint32_t encode(uint8_t value) {
-        // ARM ARM "VFP modified immediate constants"
-        //  aBbbbbbb bbcdefgh 000...
-        // We want to return the top 32 bits of the double the rest are 0.
-        bool a = value >> 7;
-        bool b = value >> 6 & 1;
-        bool B = !b;
-        uint32_t cdefgh = value & 0x3f;
-        return         a << 31 |
-                       B << 30 |
-               rep(b, 8) << 22 |
-                  cdefgh << 16;
-    }
-
     struct DoubleEntry
     {
         uint32_t dblTop;
         datastore::Imm8VFPImmData data;
-
-        DoubleEntry()
-          : dblTop(-1)
-        { }
-        DoubleEntry(uint32_t dblTop_, datastore::Imm8VFPImmData data_)
-          : dblTop(dblTop_), data(data_)
-        { }
     };
 
-    mozilla::Array<DoubleEntry, 256> table;
+    static const DoubleEntry table[256];
 
   public:
-    DoubleEncoder()
-    {
-        for (int i = 0; i < 256; i++) {
-            table[i] = DoubleEntry(encode(i), datastore::Imm8VFPImmData(i));
-        }
-    }
-
     bool lookup(uint32_t top, datastore::Imm8VFPImmData *ret) {
         for (int i = 0; i < 256; i++) {
             if (table[i].dblTop == top) {

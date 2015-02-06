@@ -152,17 +152,22 @@ public:
   // Note: RTSP requires a custom extractor because it doesn't have a container.
   bool Init(sp<MediaExtractor>& extractor);
 
-  bool TryLoad();
   bool IsDormantNeeded();
+
+  // Called after resources(video/audio codec) are allocated, set the
+  // mDurationUs and video/audio metadata.
+  bool EnsureMetadata();
+
+  // Only called by MediaOmxDecoder, do not call this function arbitrarily.
+  // See bug 1050667.
   bool IsWaitingMediaResources();
+
   bool AllocateMediaResources();
   void ReleaseMediaResources();
   bool SetVideoFormat();
   bool SetAudioFormat();
 
   void ReleaseDecoder();
-
-  bool NotifyDataArrived(const char* aBuffer, uint32_t aLength, int64_t aOffset);
 
   void GetDuration(int64_t *durationUs) {
     *durationUs = mDurationUs;

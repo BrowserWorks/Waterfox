@@ -128,7 +128,7 @@ LIRGeneratorMIPS::visitUnbox(MUnbox *unbox)
     // a payload. Unlike most instructions consuming a box, we ask for the type
     // second, so that the result can re-use the first input.
     MDefinition *inner = unbox->getOperand(0);
-    JS_ASSERT(inner->type() == MIRType_Value);
+    MOZ_ASSERT(inner->type() == MIRType_Value);
 
     if (!ensureDefined(inner))
         return false;
@@ -532,7 +532,19 @@ LIRGeneratorMIPS::visitForkJoinGetSlice(MForkJoinGetSlice *ins)
 }
 
 bool
+LIRGeneratorMIPS::visitSimdTernaryBitwise(MSimdTernaryBitwise *ins)
+{
+    MOZ_CRASH("NYI");
+}
+
+bool
 LIRGeneratorMIPS::visitSimdSplatX4(MSimdSplatX4 *ins)
+{
+    MOZ_CRASH("NYI");
+}
+
+bool
+LIRGeneratorMIPS::visitSimdValueX4(MSimdValueX4 *ins)
 {
     MOZ_CRASH("NYI");
 }

@@ -27,6 +27,8 @@
 #define WEBCRYPTO_ALG_RSASSA_PKCS1  "RSASSA-PKCS1-v1_5"
 #define WEBCRYPTO_ALG_RSA_OAEP      "RSA-OAEP"
 #define WEBCRYPTO_ALG_ECDH          "ECDH"
+#define WEBCRYPTO_ALG_ECDSA         "ECDSA"
+#define WEBCRYPTO_ALG_DH            "DH"
 
 // WebCrypto key formats
 #define WEBCRYPTO_KEY_FORMAT_RAW    "raw"
@@ -84,6 +86,9 @@
 #define JWK_ALG_RSA_OAEP_256        "RSA-OAEP-256"
 #define JWK_ALG_RSA_OAEP_384        "RSA-OAEP-384"
 #define JWK_ALG_RSA_OAEP_512        "RSA-OAEP-512"
+#define JWK_ALG_ECDSA_P_256         "ES256"
+#define JWK_ALG_ECDSA_P_384         "ES384"
+#define JWK_ALG_ECDSA_P_521         "ES521"
 
 // JWK usages
 #define JWK_USE_ENC                 "enc"
@@ -96,6 +101,14 @@
 static const uint8_t id_ecDH[] = { 0x2b, 0x81, 0x04, 0x70 };
 const SECItem SEC_OID_DATA_EC_DH = { siBuffer, (unsigned char*)id_ecDH,
                                      PR_ARRAY_SIZE(id_ecDH) };
+
+// python security/pkix/tools/DottedOIDToCode.py dhKeyAgreement 1.2.840.113549.1.3.1
+static const uint8_t dhKeyAgreement[] = {
+  0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x03, 0x01
+};
+const SECItem SEC_OID_DATA_DH_KEY_AGREEMENT = { siBuffer,
+                                                (unsigned char*)dhKeyAgreement,
+                                                PR_ARRAY_SIZE(dhKeyAgreement) };
 
 namespace mozilla {
 namespace dom {
@@ -187,6 +200,8 @@ MapAlgorithmNameToMechanism(const nsString& aName)
     mechanism = CKM_RSA_PKCS_OAEP;
   } else if (aName.EqualsLiteral(WEBCRYPTO_ALG_ECDH)) {
     mechanism = CKM_ECDH1_DERIVE;
+  } else if (aName.EqualsLiteral(WEBCRYPTO_ALG_DH)) {
+    mechanism = CKM_DH_PKCS_DERIVE;
   }
 
   return mechanism;
@@ -225,6 +240,10 @@ NormalizeToken(const nsString& aName, nsString& aDest)
     aDest.AssignLiteral(WEBCRYPTO_ALG_RSA_OAEP);
   } else if (NORMALIZED_EQUALS(aName, WEBCRYPTO_ALG_ECDH)) {
     aDest.AssignLiteral(WEBCRYPTO_ALG_ECDH);
+  } else if (NORMALIZED_EQUALS(aName, WEBCRYPTO_ALG_ECDSA)) {
+    aDest.AssignLiteral(WEBCRYPTO_ALG_ECDSA);
+  } else if (NORMALIZED_EQUALS(aName, WEBCRYPTO_ALG_DH)) {
+    aDest.AssignLiteral(WEBCRYPTO_ALG_DH);
   // Named curve values
   } else if (NORMALIZED_EQUALS(aName, WEBCRYPTO_NAMED_CURVE_P256)) {
     aDest.AssignLiteral(WEBCRYPTO_NAMED_CURVE_P256);

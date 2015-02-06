@@ -8,11 +8,14 @@
 
 #include "nsAutoPtr.h"
 #include "nsCycleCollectionParticipant.h"
+#include "nsCSSPseudoElements.h"
 #include "nsIDocument.h"
 #include "nsWrapperCache.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/StickyTimeDuration.h"
 #include "mozilla/StyleAnimationValue.h"
 #include "mozilla/TimeStamp.h"
+#include "mozilla/dom/Element.h"
 #include "mozilla/dom/Nullable.h"
 #include "nsSMILKeySpline.h"
 #include "nsStyleStruct.h" // for nsTimingFunction
@@ -61,8 +64,9 @@ struct ComputedTiming
   static const double kNullTimeFraction;
 
   // The total duration of the animation including all iterations.
-  // Will equal TimeDuration::Forever() if the animation repeats indefinitely.
-  TimeDuration mActiveDuration;
+  // Will equal StickyTimeDuration::Forever() if the animation repeats
+  // indefinitely.
+  StickyTimeDuration mActiveDuration;
 
   // Will be kNullTimeFraction if the animation is neither animating nor
   // filling at the sampled time.
@@ -126,15 +130,19 @@ class Animation : public nsWrapperCache
 {
 public:
   Animation(nsIDocument* aDocument,
+            Element* aTarget,
+            nsCSSPseudoElements::Type aPseudoType,
             const AnimationTiming &aTiming,
             const nsSubstring& aName)
     : mDocument(aDocument)
+    , mTarget(aTarget)
     , mTiming(aTiming)
     , mName(aName)
     , mIsFinishedTransition(false)
     , mLastNotification(LAST_NOTIFICATION_NONE)
+    , mPseudoType(aPseudoType)
   {
-    SetIsDOMBinding();
+    MOZ_ASSERT(aTarget, "null animation target is not yet supported");
   }
 
   NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(Animation)
@@ -155,6 +163,15 @@ public:
   // This currently returns a new object each time when used from C++ but is
   // cached when used from JS.
   already_AddRefed<AnimationEffect> GetEffect();
+  Element* GetTarget() const {
+    // Currently we only implement Element.getAnimationPlayers() which only
+    // returns animations targetting Elements so we should this should never
+    // be called for an animation that targets a pseudo-element.
+    MOZ_ASSERT(mPseudoType == nsCSSPseudoElements::ePseudo_NotPseudoElement,
+               "Requesting the target of an Animation that targets a"
+               " pseudo-element is not yet supported.");
+    return mTarget;
+  }
 
   void SetParentTime(Nullable<TimeDuration> aParentTime);
 
@@ -205,7 +222,8 @@ public:
   }
 
   // Return the duration of the active interval for the given timing parameters.
-  static TimeDuration ActiveDuration(const AnimationTiming& aTiming);
+  static StickyTimeDuration
+  ActiveDuration(const AnimationTiming& aTiming);
 
   // After transitions finish they need to be retained for one throttle-able
   // cycle (for reasons see explanation in
@@ -221,15 +239,8 @@ public:
     mIsFinishedTransition = true;
   }
 
-  bool IsCurrent() const {
-    if (IsFinishedTransition()) {
-      return false;
-    }
-
-    ComputedTiming computedTiming = GetComputedTiming();
-    return computedTiming.mPhase == ComputedTiming::AnimationPhase_Before ||
-           computedTiming.mPhase == ComputedTiming::AnimationPhase_Active;
-  }
+  bool IsCurrent() const;
+  bool IsInEffect() const;
 
   enum {
     LAST_NOTIFICATION_NONE = uint64_t(-1),
@@ -253,7 +264,8 @@ protected:
 
   // We use a document for a parent object since the other likely candidate,
   // the target element, can be empty.
-  nsRefPtr<nsIDocument> mDocument;
+  nsCOMPtr<nsIDocument> mDocument;
+  nsCOMPtr<Element> mTarget;
   Nullable<TimeDuration> mParentTime;
 
   AnimationTiming mTiming;
@@ -264,6 +276,7 @@ protected:
   // One of the LAST_NOTIFICATION_* constants, or an integer for the iteration
   // whose start we last notified on.
   uint64_t mLastNotification;
+  nsCSSPseudoElements::Type mPseudoType;
 
   InfallibleTArray<AnimationProperty> mProperties;
 };

@@ -35,6 +35,10 @@
 #include "nsTArray.h"                   // for nsAutoTArray
 #include "TextRenderer.h"               // for TextRenderer
 #include <vector>
+#include "GeckoProfiler.h"              // for GeckoProfiler
+#ifdef MOZ_ENABLE_PROFILER_SPS
+#include "ProfilerMarkers.h"            // for ProfilerMarkers
+#endif
 
 #define CULLING_LOG(...)
 // #define CULLING_LOG(...) printf_stderr("CULLING: " __VA_ARGS__)
@@ -71,7 +75,7 @@ GetOpaqueRect(Layer* aLayer)
 {
   nsIntRect result;
   gfx::Matrix matrix;
-  bool is2D = aLayer->GetBaseTransform().Is2D(&matrix);
+  bool is2D = aLayer->AsLayerComposite()->GetShadowTransform().Is2D(&matrix);
 
   // Just bail if there's anything difficult to handle.
   if (!is2D || aLayer->GetMaskLayer() ||
@@ -133,7 +137,10 @@ static void DrawLayerInfo(const RenderTargetIntRect& aClipRect,
 
 static void PrintUniformityInfo(Layer* aLayer)
 {
-  static TimeStamp t0 = TimeStamp::Now();
+#ifdef MOZ_ENABLE_PROFILER_SPS
+  if (!profiler_is_active()) {
+    return;
+  }
 
   // Don't want to print a log for smaller layers
   if (aLayer->GetEffectiveVisibleRegion().GetBounds().width < 300 ||
@@ -145,10 +152,11 @@ static void PrintUniformityInfo(Layer* aLayer)
   if (!transform.Is2D()) {
     return;
   }
+
   Point translation = transform.As2D().GetTranslation();
-  printf_stderr("UniformityInfo Layer_Move %llu %p %s\n",
-      (unsigned long long)(TimeStamp::Now() - t0).ToMilliseconds(), aLayer,
-      ToString(translation).c_str());
+  LayerTranslationPayload* payload = new LayerTranslationPayload(aLayer, translation);
+  PROFILER_MARKER_PAYLOAD("LayerTranslation", payload);
+#endif
 }
 
 /* all of the per-layer prepared data we need to maintain */
@@ -277,7 +285,7 @@ RenderLayers(ContainerT* aContainer,
     if (LayerHasCheckerboardingAPZC(layer, &color)) {
       // Ideally we would want to intersect the checkerboard region from the APZ with the layer bounds
       // and only fill in that area. However the layer bounds takes into account the base translation
-      // for the thebes layer whereas the checkerboard region does not. One does not simply
+      // for the painted layer whereas the checkerboard region does not. One does not simply
       // intersect areas in different coordinate spaces. So we do this a little more permissively
       // and only fill in the background when we know there is checkerboard, which in theory
       // should only occur transiently.

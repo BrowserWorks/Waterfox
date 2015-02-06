@@ -376,6 +376,9 @@ pref("urlclassifier.alternate_error_page", "blocked");
 // The number of random entries to send with a gethash request.
 pref("urlclassifier.gethashnoise", 4);
 
+// Gethash timeout for Safebrowsing.
+pref("urlclassifier.gethash.timeout_ms", 5000);
+
 // If an urlclassifier table has not been updated in this number of seconds,
 // a gethash request will be forced to check that the result is still in
 // the database.
@@ -744,14 +747,14 @@ pref("hal.processPriorityManager.gonk.LowCPUNice", 18);
 // priority can be enabled by setting this pref to a value between 1 and 99.
 // Note that audio processing currently runs at RT priority 2 or 3 at most.
 //
-// If RT priority is disabled, then the compositor nice value is used.  The
-// code will default to ANDROID_PRIORITY_URGENT_DISPLAY which is -8.  Per gfx
-// request we are keeping the compositor at nice level 0 until we can complete
-// the investigation in bug 982972.
+// If RT priority is disabled, then the compositor nice value is used. We prefer
+// to use a nice value of -4, which matches Android's preferences. Setting a preference
+// of RT priority 1 would mean it is higher than audio, which is -16. The compositor
+// priority must be below the audio thread.
 //
 // Do not change these values without gfx team review.
 pref("hal.gonk.COMPOSITOR.rt_priority", 0);
-pref("hal.gonk.COMPOSITOR.nice", 0);
+pref("hal.gonk.COMPOSITOR.nice", -4);
 
 // Fire a memory pressure event when the system has less than Xmb of memory
 // remaining.  You should probably set this just above Y.KillUnderKB for
@@ -825,7 +828,10 @@ pref("network.gonk.manage-offline-status", true);
 // On Firefox Mulet, we can't enable shared JSM scope
 // as it breaks most Firefox JSMs (see bug 961777)
 #ifndef MOZ_MULET
+// Break any JSMs or JS components that rely on shared scope
+#ifndef DEBUG
 pref("jsloader.reuseGlobal", true);
+#endif
 #endif
 
 // Enable font inflation for browser tab content.
@@ -984,17 +990,17 @@ pref("apz.x_stationary_size_multiplier", "1.5");
 pref("apz.y_stationary_size_multiplier", "1.8");
 pref("apz.enlarge_displayport_when_clipped", true);
 // Use "sticky" axis locking
-pref("apz.axis_lock_mode", 2);
+pref("apz.axis_lock.mode", 2);
 pref("apz.subframe.enabled", true);
 
 // Overscroll-related settings
 pref("apz.overscroll.enabled", true);
-pref("apz.overscroll.fling_friction", "0.02");
+pref("apz.overscroll.fling_friction", "0.05");
 pref("apz.overscroll.fling_stopped_threshold", "0.4");
 pref("apz.overscroll.stretch_factor", "0.5");
-pref("apz.overscroll.snap_back.spring_stiffness", "0.6");
+pref("apz.overscroll.snap_back.spring_stiffness", "0.05");
 pref("apz.overscroll.snap_back.spring_friction", "0.1");
-pref("apz.overscroll.snap_back.mass", "1200");
+pref("apz.overscroll.snap_back.mass", "100");
 
 // This preference allows FirefoxOS apps (and content, I think) to force
 // the use of software (instead of hardware accelerated) 2D canvases by
@@ -1013,8 +1019,8 @@ pref("browser.autofocus", false);
 // Enable wakelock
 pref("dom.wakelock.enabled", true);
 
-// Disable touch caret by default
-pref("touchcaret.enabled", false);
+// Enable touch caret by default
+pref("touchcaret.enabled", true);
 
 // Disable selection caret by default
 pref("selectioncaret.enabled", false);

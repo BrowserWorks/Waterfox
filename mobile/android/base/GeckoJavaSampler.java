@@ -62,7 +62,7 @@ public class GeckoJavaSampler {
         private boolean mPauseSampler;
         private boolean mStopSampler;
 
-        private SparseArray<Sample[]> mSamples = new SparseArray<Sample[]>();
+        private final SparseArray<Sample[]> mSamples = new SparseArray<Sample[]>();
         private int mSamplePos;
 
         public SamplingThread(final int aInterval, final int aSampleCount) {
@@ -71,6 +71,7 @@ public class GeckoJavaSampler {
             mSampleCount = aSampleCount;
         }
 
+        @Override
         public void run() {
             synchronized (GeckoJavaSampler.class) {
                 mSamples.put(0, new Sample[mSampleCount]);
@@ -142,7 +143,7 @@ public class GeckoJavaSampler {
         Sample sample = getSample(aThreadId, aSampleId);
         if (sample != null) {
             if (sample.mJavaTime != 0) {
-                return (double)(sample.mJavaTime -
+                return (sample.mJavaTime -
                     SystemClock.elapsedRealtime()) + getProfilerTime();
             }
             System.out.println("Sample: " + sample.mTime);

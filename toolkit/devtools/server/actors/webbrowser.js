@@ -43,6 +43,11 @@ function getWindowID(window) {
  * Browser-specific actors.
  */
 
+function getInnerId(window) {
+  return window.QueryInterface(Ci.nsIInterfaceRequestor).
+                getInterface(Ci.nsIDOMWindowUtils).currentInnerWindowID;
+};
+
 /**
  * Yield all windows of type |aWindowType|, from the oldest window to the
  * youngest, using nsIWindowMediator::getEnumerator. We're usually
@@ -91,15 +96,21 @@ exports.sendShutdownEvent = sendShutdownEvent;
  *          failed.
  */
 const unwrapDebuggerObjectGlobal = wrappedGlobal => {
-  let global;
   try {
-    global = wrappedGlobal.unsafeDereference();
+    // Because of bug 991399 we sometimes get nuked window references here. We
+    // just bail out in that case.
+    //
+    // Note that addon sandboxes have a DOMWindow as their prototype. So make
+    // sure that we can touch the prototype too (whatever it is), in case _it_
+    // is it a nuked window reference. We force stringification to make sure
+    // that any dead object proxies make themselves known.
+    let global = wrappedGlobal.unsafeDereference();
+    Object.getPrototypeOf(global) + "";
+    return global;
   }
   catch (e) {
-    // Because of bug 991399 we sometimes get bad objects here. If we
-    // can't dereference them then they won't be useful to us.
+    return undefined;
   }
-  return global;
 };
 
 /**
@@ -652,6 +663,34 @@ TabActor.prototype = {
   },
 
   /**
+   * Getter for the original docShell the tabActor got attached to in the first
+   * place.
+   * Note that your actor should normally *not* rely on this top level docShell
+   * if you want it to show information relative to the iframe that's currently
+   * being inspected in the toolbox.
+   */
+  get originalDocShell() {
+    if (!this._originalWindow) {
+      return this.docShell;
+    }
+
+    return this._originalWindow.QueryInterface(Ci.nsIInterfaceRequestor)
+                               .getInterface(Ci.nsIWebNavigation)
+                               .QueryInterface(Ci.nsIDocShell);
+  },
+
+  /**
+   * Getter for the original window the tabActor got attached to in the first
+   * place.
+   * Note that your actor should normally *not* rely on this top level window if
+   * you want it to show information relative to the iframe that's currently
+   * being inspected in the toolbox.
+   */
+  get originalWindow() {
+    return this._originalWindow || this.window;
+  },
+
+  /**
    * Getter for the nsIWebProgress for watching this window.
    */
   get webProgress() {
@@ -784,7 +823,9 @@ TabActor.prototype = {
       metadata = Cu.getSandboxMetadata(global);
     }
     catch (e) {}
-    if (metadata["inner-window-id"] && metadata["inner-window-id"] == id) {
+    if (metadata
+        && metadata["inner-window-id"]
+        && metadata["inner-window-id"] == id) {
       return true;
     }
 
@@ -1230,7 +1271,7 @@ TabActor.prototype = {
     // to let a chance to unregister it
     this._willNavigate(this.window, window.location.href, null, true);
 
-    this._windowDestroyed(this.window);
+    this._windowDestroyed(this.window, null, true);
 
     DevToolsUtils.executeSoon(() => {
       this._setWindow(window);
@@ -1311,11 +1352,12 @@ TabActor.prototype = {
     }
   },
 
-  _windowDestroyed: function (window, id = null) {
+  _windowDestroyed: function (window, id = null, isFrozen = false) {
     events.emit(this, "window-destroyed", {
       window: window,
       isTopLevel: window == this.window,
-      id: id || getWindowID(window)
+      id: id || getWindowID(window),
+      isFrozen: isFrozen
     });
   },
 
@@ -1969,7 +2011,7 @@ DebuggerProgressListener.prototype = {
     }
 
     let window = evt.target.defaultView;
-    this._tabActor._windowDestroyed(window);
+    this._tabActor._windowDestroyed(window, null, true);
   }, "DebuggerProgressListener.prototype.onWindowHidden"),
 
   observe: DevToolsUtils.makeInfallible(function(subject, topic) {

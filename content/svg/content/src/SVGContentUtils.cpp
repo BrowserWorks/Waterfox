@@ -25,6 +25,7 @@
 #include "nsContentUtils.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/Types.h"
+#include "mozilla/FloatingPoint.h"
 #include "nsStyleContext.h"
 #include "nsSVGPathDataParser.h"
 #include "SVGPathData.h"
@@ -122,9 +123,20 @@ GetStrokeDashData(SVGContentUtils::AutoStrokeOptions* aStrokeOptions,
     }
   }
 
-  // Now that aStrokeOptions.mDashPattern is fully initialized we can safely
-  // set mDashLength:
+  // Now that aStrokeOptions.mDashPattern is fully initialized (we didn't
+  // return early above) we can safely set mDashLength:
   aStrokeOptions->mDashLength = dashArrayLength;
+
+  if ((dashArrayLength % 2) == 1) {
+    // If we have a dash pattern with an odd number of lengths the pattern
+    // repeats a second time, per the SVG spec., and as implemented by Moz2D.
+    // When deciding whether to return eNoStroke or eContinuousStroke below we
+    // need to take into account that in the repeat pattern the dashes become
+    // gaps, and the gaps become dashes.
+    Float origTotalLengthOfDashes = totalLengthOfDashes;
+    totalLengthOfDashes += totalLengthOfGaps;
+    totalLengthOfGaps += origTotalLengthOfDashes;
+  }
 
   if (totalLengthOfDashes <= 0 || totalLengthOfGaps <= 0) {
     if (totalLengthOfGaps > 0 && totalLengthOfDashes <= 0) {
@@ -147,7 +159,8 @@ void
 SVGContentUtils::GetStrokeOptions(AutoStrokeOptions* aStrokeOptions,
                                   nsSVGElement* aElement,
                                   nsStyleContext* aStyleContext,
-                                  gfxTextContextPaint *aContextPaint)
+                                  gfxTextContextPaint *aContextPaint,
+                                  StrokeOptionFlags aFlags)
 {
   nsRefPtr<nsStyleContext> styleContext;
   if (aStyleContext) {
@@ -164,17 +177,19 @@ SVGContentUtils::GetStrokeOptions(AutoStrokeOptions* aStrokeOptions,
 
   const nsStyleSVG* styleSVG = styleContext->StyleSVG();
 
-  DashState dashState =
-    GetStrokeDashData(aStrokeOptions, aElement, styleSVG, aContextPaint);
+  if (aFlags != eIgnoreStrokeDashing) {
+    DashState dashState =
+      GetStrokeDashData(aStrokeOptions, aElement, styleSVG, aContextPaint);
 
-  if (dashState == eNoStroke) {
-    // Hopefully this will shortcircuit any stroke operations:
-    aStrokeOptions->mLineWidth = 0;
-    return;
-  }
-  if (dashState == eContinuousStroke) {
-    // Prevent our caller from wasting time looking at the dash array:
-    aStrokeOptions->mDashLength = 0;
+    if (dashState == eNoStroke) {
+      // Hopefully this will shortcircuit any stroke operations:
+      aStrokeOptions->mLineWidth = 0;
+      return;
+    }
+    if (dashState == eContinuousStroke && aStrokeOptions->mDashPattern) {
+      // Prevent our caller from wasting time looking at a pattern without gaps:
+      aStrokeOptions->DiscardDashPattern();
+    }
   }
 
   aStrokeOptions->mLineWidth =
@@ -411,7 +426,7 @@ GetCTMInternal(nsSVGElement *aElement, bool aScreenCTM, bool aHaveRecursed)
 
   // XXX this does not take into account CSS transform, or that the non-SVG
   // content that we've hit may itself be inside an SVG foreignObject higher up
-  nsIDocument* currentDoc = aElement->GetCurrentDoc();
+  nsIDocument* currentDoc = aElement->GetComposedDoc();
   float x = 0.0f, y = 0.0f;
   if (currentDoc && element->NodeInfo()->Equals(nsGkAtoms::svg, kNameSpaceID_SVG)) {
     nsIPresShell *presShell = currentDoc->GetShell();
@@ -425,7 +440,7 @@ GetCTMInternal(nsSVGElement *aElement, bool aScreenCTM, bool aHaveRecursed)
       }
     }
   }
-  return gfx::ToMatrix(matrix) * gfx::Matrix().Translate(x, y);
+  return ToMatrix(matrix).PostTranslate(x, y);
 }
 
 gfx::Matrix
@@ -653,7 +668,7 @@ SVGContentUtils::ParseNumber(RangedPtr<const char16_t>& aIter,
     return false;
   }
   floatType floatValue = floatType(value);
-  if (!NS_finite(floatValue)) {
+  if (!IsFinite(floatValue)) {
     return false;
   }
   aValue = floatValue;

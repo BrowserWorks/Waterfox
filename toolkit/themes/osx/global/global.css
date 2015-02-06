@@ -10,13 +10,8 @@
 
 /* ::::: XBL bindings ::::: */
 
-menulist > menupopup,
-.menulist-menupopup {
+menulist > menupopup {
   -moz-binding: url("chrome://global/content/bindings/popup.xml#popup-scrollbars");
-}
-
-.menulist-compact {
-  -moz-binding: url("chrome://global/content/bindings/menulist.xml#menulist-compact");
 }
 
 /* ::::: draggable elements ::::: */
@@ -312,6 +307,7 @@ notification > button > .button-box > .button-text {
 .popup-internal-box > autorepeatbutton {
   height: 15px;
   position: relative;
+  list-style-image: none;
   /* Here we're using a little magic.
    * The arrow button is supposed to overlay the scrollbox, blocking
    * everything under it from reaching the screen. However, the menu background
@@ -325,11 +321,21 @@ notification > button > .button-box > .button-text {
 }
 
 .popup-internal-box > .autorepeatbutton-up {
+  padding-top: 1px; /* 4px padding-top from the .popup-internal-box. */
   margin-bottom: -15px;
 }
 
+.popup-internal-box > .autorepeatbutton-up > .autorepeatbutton-icon {
+  -moz-appearance: button-arrow-up;
+}
+
 .popup-internal-box > .autorepeatbutton-down {
+  padding-top: 5px;
   margin-top: -15px;
+}
+
+.popup-internal-box > .autorepeatbutton-down > .autorepeatbutton-icon {
+  -moz-appearance: button-arrow-down;
 }
 
 .popup-internal-box > autorepeatbutton[disabled="true"] {

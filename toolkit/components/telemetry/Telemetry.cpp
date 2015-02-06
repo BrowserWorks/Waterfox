@@ -95,7 +95,7 @@ template<class EntryType>
 class AutoHashtable : public nsTHashtable<EntryType>
 {
 public:
-  AutoHashtable(uint32_t initLength = PL_DHASH_DEFAULT_INITIAL_LENGTH);
+  explicit AutoHashtable(uint32_t initLength = PL_DHASH_DEFAULT_INITIAL_LENGTH);
   typedef bool (*ReflectEntryFunc)(EntryType *entry, JSContext *cx, JS::Handle<JSObject*> obj);
   bool ReflectIntoJS(ReflectEntryFunc entryFunc, JSContext *cx, JS::Handle<JSObject*> obj);
 private:
@@ -324,7 +324,7 @@ class TelemetryIOInterposeObserver : public IOInterposeObserver
   };
 
 public:
-  TelemetryIOInterposeObserver(nsIFile* aXreDir);
+  explicit TelemetryIOInterposeObserver(nsIFile* aXreDir);
 
   /**
    * An implementation of Observe that records statistics of all
@@ -579,6 +579,7 @@ public:
                  uint32_t histogramType, uint32_t min, uint32_t max,
                  uint32_t bucketCount);
   nsresult GetHistogram(const nsCString& name, Histogram** histogram);
+  Histogram* GetHistogram(const nsCString& name);
   uint32_t GetHistogramType() const { return mHistogramType; }
   nsresult GetJSKeys(JSContext* cx, JS::CallArgs& args);
   nsresult GetJSSnapshot(JSContext* cx, JS::Handle<JSObject*> obj);
@@ -654,6 +655,16 @@ KeyedHistogram::GetHistogram(const nsCString& key, Histogram** histogram)
 
   entry->mData = h;
   return NS_OK;
+}
+
+Histogram*
+KeyedHistogram::GetHistogram(const nsCString& key)
+{
+  Histogram* h = nullptr;
+  if (NS_FAILED(GetHistogram(key, &h))) {
+    return nullptr;
+  }
+  return h;
 }
 
 /* static */
@@ -775,6 +786,8 @@ public:
     struct Stat otherThreads;
   };
   typedef nsBaseHashtableET<nsCStringHashKey, StmtStats> SlowSQLEntryType;
+
+  static KeyedHistogram* GetKeyedHistogramById(const nsACString &id);
 
 private:
   TelemetryImpl();
@@ -910,7 +923,8 @@ bool
 IsExpired(const char *expiration){
   static Version current_version = Version(MOZ_APP_VERSION);
   MOZ_ASSERT(expiration);
-  return strcmp(expiration, "never") && (mozilla::Version(expiration) <= current_version);
+  return strcmp(expiration, "never") && strcmp(expiration, "default") &&
+    (mozilla::Version(expiration) <= current_version);
 }
 
 bool
@@ -2813,6 +2827,19 @@ TelemetryImpl::GetKeyedHistogramById(const nsACString &name, JSContext *cx,
   return WrapAndReturnKeyedHistogram(keyed, cx, ret);
 }
 
+/* static */
+KeyedHistogram*
+TelemetryImpl::GetKeyedHistogramById(const nsACString &name)
+{
+  if (!sTelemetry) {
+    return nullptr;
+  }
+
+  KeyedHistogram* keyed = nullptr;
+  sTelemetry->mKeyedHistograms.Get(name, &keyed);
+  return keyed;
+}
+
 NS_IMETHODIMP
 TelemetryImpl::GetCanRecord(bool *ret) {
   *ret = mCanRecord;
@@ -3250,6 +3277,23 @@ Accumulate(ID aHistogram, uint32_t aSample)
   nsresult rv = GetHistogramByEnumId(aHistogram, &h);
   if (NS_SUCCEEDED(rv))
     h->Add(aSample);
+}
+
+void
+Accumulate(ID aID, const nsCString& aKey, uint32_t aSample)
+{
+  if (!TelemetryImpl::CanRecord()) {
+    return;
+  }
+
+  const TelemetryHistogram& th = gHistograms[aID];
+  KeyedHistogram* keyed = TelemetryImpl::GetKeyedHistogramById(nsDependentCString(th.id()));
+  MOZ_ASSERT(keyed);
+
+  Histogram* histogram = keyed->GetHistogram(aKey);
+  if (histogram) {
+    histogram->Add(aSample);
+  }
 }
 
 void

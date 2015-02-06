@@ -30,6 +30,7 @@
 #include "nsTArray.h"
 #include "nsIMutableArray.h"
 #include "nsIFormAutofillContentService.h"
+#include "mozilla/BinarySearch.h"
 
 // form submission
 #include "nsIFormSubmitObserver.h"
@@ -445,7 +446,7 @@ CollectOrphans(nsINode* aRemovalRoot,
 void
 HTMLFormElement::UnbindFromTree(bool aDeep, bool aNullParent)
 {
-  nsCOMPtr<nsIHTMLDocument> oldDocument = do_QueryInterface(GetCurrentDoc());
+  nsCOMPtr<nsIHTMLDocument> oldDocument = do_QueryInterface(GetUncomposedDoc());
 
   // Mark all of our controls as maybe being orphans
   MarkOrphans(mControls->mElements);
@@ -582,7 +583,7 @@ HTMLFormElement::DoSubmitOrReset(WidgetEvent* aEvent,
                                  int32_t aMessage)
 {
   // Make sure the presentation is up-to-date
-  nsIDocument* doc = GetCurrentDoc();
+  nsIDocument* doc = GetComposedDoc();
   if (doc) {
     doc->FlushPendingNotifications(Flush_ContentAndNotify);
   }
@@ -632,7 +633,7 @@ HTMLFormElement::DoReset()
 nsresult
 HTMLFormElement::DoSubmit(WidgetEvent* aEvent)
 {
-  NS_ASSERTION(GetCurrentDoc(), "Should never get here without a current doc");
+  NS_ASSERTION(GetComposedDoc(), "Should never get here without a current doc");
 
   if (mIsSubmitting) {
     NS_WARNING("Preventing double form submission");
@@ -740,7 +741,7 @@ HTMLFormElement::SubmitSubmission(nsFormSubmission* aFormSubmission)
   }
 
   // If there is no link handler, then we won't actually be able to submit.
-  nsIDocument* doc = GetCurrentDoc();
+  nsIDocument* doc = GetComposedDoc();
   nsCOMPtr<nsISupports> container = doc ? doc->GetContainer() : nullptr;
   nsCOMPtr<nsILinkHandler> linkHandler(do_QueryInterface(container));
   if (!linkHandler || IsEditable()) {
@@ -1071,6 +1072,21 @@ HTMLFormElement::PostPasswordEvent()
   mFormPasswordEventDispatcher->PostDOMEvent();
 }
 
+namespace {
+
+struct FormComparator
+{
+  Element* const mChild;
+  HTMLFormElement* const mForm;
+  FormComparator(Element* aChild, HTMLFormElement* aForm)
+    : mChild(aChild), mForm(aForm) {}
+  int operator()(Element* aElement) const {
+    return HTMLFormElement::CompareFormControlPosition(mChild, aElement, mForm);
+  }
+};
+
+} // namespace
+
 // This function return true if the element, once appended, is the last one in
 // the array.
 template<typename ElementType>
@@ -1081,7 +1097,7 @@ AddElementToList(nsTArray<ElementType*>& aList, ElementType* aChild,
   NS_ASSERTION(aList.IndexOf(aChild) == aList.NoIndex,
                "aChild already in aList");
 
-  uint32_t count = aList.Length();
+  const uint32_t count = aList.Length();
   ElementType* element;
   bool lastElement = false;
 
@@ -1102,23 +1118,11 @@ AddElementToList(nsTArray<ElementType*>& aList, ElementType* aChild,
     lastElement = true;
   }
   else {
-    int32_t low = 0, mid, high;
-    high = count - 1;
-
-    while (low <= high) {
-      mid = (low + high) / 2;
-
-      element = aList[mid];
-      position =
-        HTMLFormElement::CompareFormControlPosition(aChild, element, aForm);
-      if (position >= 0)
-        low = mid + 1;
-      else
-        high = mid - 1;
-    }
+    size_t idx;
+    BinarySearchIf(aList, 0, count, FormComparator(aChild, aForm), &idx);
 
     // WEAK - don't addref
-    aList.InsertElementAt(low, aChild);
+    aList.InsertElementAt(idx, aChild);
   }
 
   return lastElement;
@@ -1797,7 +1801,7 @@ HTMLFormElement::CheckValidFormSubmission()
   // Don't do validation for a form submit done by a sandboxed document that
   // doesn't have 'allow-forms', the submit will have been blocked and the
   // HTML5 spec says we shouldn't validate in this case.
-  nsIDocument* doc = GetCurrentDoc();
+  nsIDocument* doc = GetComposedDoc();
   if (doc && (doc->GetSandboxFlags() & SANDBOXED_FORMS)) {
     return true;
   }
@@ -2063,14 +2067,15 @@ HTMLFormElement::GetNextRadioButton(const nsAString& aName,
       index = 0;
     }
     radio = HTMLInputElement::FromContentOrNull(radioGroup->Item(index));
-    if (!radio)
+    isRadio = radio && radio->GetType() == NS_FORM_INPUT_RADIO;
+    if (!isRadio) {
       continue;
+    }
 
-    isRadio = radio->GetType() == NS_FORM_INPUT_RADIO;
-    if (!isRadio)
-      continue;
-
-  } while ((radio->Disabled() && radio != currentRadio) || !isRadio);
+    nsAutoString name;
+    radio->GetName(name);
+    isRadio = aName.Equals(name);
+  } while (!isRadio || (radio->Disabled() && radio != currentRadio));
 
   NS_IF_ADDREF(*aRadioOut = radio);
   return NS_OK;
@@ -2234,6 +2239,35 @@ HTMLFormElement::Clear()
   mPastNameLookupTable.Clear();
 }
 
+namespace {
+
+struct PositionComparator
+{
+  nsIContent* const mElement;
+  explicit PositionComparator(nsIContent* const aElement) : mElement(aElement) {}
+
+  int operator()(nsIContent* aElement) const {
+    if (mElement == aElement) {
+      return 0;
+    }
+    if (nsContentUtils::PositionIsBefore(mElement, aElement)) {
+      return -1;
+    }
+    return 1;
+  }
+};
+
+struct NodeListAdaptor
+{
+  nsINodeList* const mList;
+  explicit NodeListAdaptor(nsINodeList* aList) : mList(aList) {}
+  nsIContent* operator[](size_t aIdx) const {
+    return mList->Item(aIdx);
+  }
+};
+
+} // namespace
+
 nsresult
 HTMLFormElement::AddElementToTableInternal(
   nsInterfaceHashtable<nsStringHashKey,nsISupports>& aTable,
@@ -2305,24 +2339,13 @@ HTMLFormElement::AddElementToTableInternal(
       if (list->IndexOf(aChild) != -1) {
         return NS_OK;
       }
-      
-      // first is the first possible insertion index, last is the last possible
-      // insertion index
-      uint32_t first = 0;
-      uint32_t last = list->Length() - 1;
-      uint32_t mid;
-      
-      // Stop when there is only one index in our range
-      while (last != first) {
-        mid = (first + last) / 2;
-          
-        if (nsContentUtils::PositionIsBefore(aChild, list->Item(mid)))
-          last = mid;
-        else
-          first = mid + 1;
-      }
 
-      list->InsertElementAt(aChild, first);
+      size_t idx;
+      DebugOnly<bool> found = BinarySearchIf(NodeListAdaptor(list), 0, list->Length(),
+                                             PositionComparator(aChild), &idx);
+      MOZ_ASSERT(!found, "should not have found an element");
+
+      list->InsertElementAt(aChild, idx);
     }
   }
 

@@ -24,7 +24,6 @@ PeriodicWave::PeriodicWave(AudioContext* aContext,
   : mContext(aContext)
 {
   MOZ_ASSERT(aContext);
-  SetIsDOMBinding();
 
   // Caller should have checked this and thrown.
   MOZ_ASSERT(aLength > 0);
@@ -39,9 +38,9 @@ PeriodicWave::PeriodicWave(AudioContext* aContext,
     return;
   }
   PodCopy(buffer, aRealData, aLength);
-  mCoefficients->SetData(0, buffer, buffer);
+  mCoefficients->SetData(0, buffer, free, buffer);
   PodCopy(buffer+aLength, aImagData, aLength);
-  mCoefficients->SetData(1, nullptr, buffer+aLength);
+  mCoefficients->SetData(1, nullptr, free, buffer+aLength);
 }
 
 size_t

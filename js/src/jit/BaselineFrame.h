@@ -7,7 +7,7 @@
 #ifndef jit_BaselineFrame_h
 #define jit_BaselineFrame_h
 
-#include "jit/IonFrames.h"
+#include "jit/JitFrames.h"
 #include "vm/Stack.h"
 
 namespace js {
@@ -18,7 +18,7 @@ struct BaselineDebugModeOSRInfo;
 // The stack looks like this, fp is the frame pointer:
 //
 // fp+y   arguments
-// fp+x   IonJSFrameLayout (frame header)
+// fp+x   JitFrameLayout (frame header)
 // fp  => saved frame pointer
 // fp-x   BaselineFrame
 //        locals
@@ -134,6 +134,9 @@ class BaselineFrame
         uint8_t *pointer = (uint8_t *)this + Size() + offsetOfCalleeToken();
         *(CalleeToken *)pointer = token;
     }
+    bool isConstructing() const {
+        return CalleeTokenIsConstructing(calleeToken());
+    }
     JSScript *script() const {
         if (isEvalFrame())
             return evalScript();
@@ -154,39 +157,39 @@ class BaselineFrame
     size_t numValueSlots() const {
         size_t size = frameSize();
 
-        JS_ASSERT(size >= BaselineFrame::FramePointerOffset + BaselineFrame::Size());
+        MOZ_ASSERT(size >= BaselineFrame::FramePointerOffset + BaselineFrame::Size());
         size -= BaselineFrame::FramePointerOffset + BaselineFrame::Size();
 
-        JS_ASSERT((size % sizeof(Value)) == 0);
+        MOZ_ASSERT((size % sizeof(Value)) == 0);
         return size / sizeof(Value);
     }
     Value *valueSlot(size_t slot) const {
-        JS_ASSERT(slot < numValueSlots());
+        MOZ_ASSERT(slot < numValueSlots());
         return (Value *)this - (slot + 1);
     }
 
     Value &unaliasedVar(uint32_t i, MaybeCheckAliasing checkAliasing = CHECK_ALIASING) const {
-        JS_ASSERT(i < script()->nfixedvars());
-        JS_ASSERT_IF(checkAliasing, !script()->varIsAliased(i));
+        MOZ_ASSERT(i < script()->nfixedvars());
+        MOZ_ASSERT_IF(checkAliasing, !script()->varIsAliased(i));
         return *valueSlot(i);
     }
 
     Value &unaliasedFormal(unsigned i, MaybeCheckAliasing checkAliasing = CHECK_ALIASING) const {
-        JS_ASSERT(i < numFormalArgs());
-        JS_ASSERT_IF(checkAliasing, !script()->argsObjAliasesFormals() &&
-                                    !script()->formalIsAliased(i));
+        MOZ_ASSERT(i < numFormalArgs());
+        MOZ_ASSERT_IF(checkAliasing, !script()->argsObjAliasesFormals() &&
+                                     !script()->formalIsAliased(i));
         return argv()[i];
     }
 
     Value &unaliasedActual(unsigned i, MaybeCheckAliasing checkAliasing = CHECK_ALIASING) const {
-        JS_ASSERT(i < numActualArgs());
-        JS_ASSERT_IF(checkAliasing, !script()->argsObjAliasesFormals());
-        JS_ASSERT_IF(checkAliasing && i < numFormalArgs(), !script()->formalIsAliased(i));
+        MOZ_ASSERT(i < numActualArgs());
+        MOZ_ASSERT_IF(checkAliasing, !script()->argsObjAliasesFormals());
+        MOZ_ASSERT_IF(checkAliasing && i < numFormalArgs(), !script()->formalIsAliased(i));
         return argv()[i];
     }
 
     Value &unaliasedLocal(uint32_t i, MaybeCheckAliasing checkAliasing = CHECK_ALIASING) const {
-        JS_ASSERT(i < script()->nfixed());
+        MOZ_ASSERT(i < script()->nfixed());
 #ifdef DEBUG
         CheckLocalUnaliased(checkAliasing, script(), i);
 #endif
@@ -255,15 +258,15 @@ class BaselineFrame
         argsObj_ = &argsobj;
     }
     void initArgsObj(ArgumentsObject &argsobj) {
-        JS_ASSERT(script()->needsArgsObj());
+        MOZ_ASSERT(script()->needsArgsObj());
         initArgsObjUnchecked(argsobj);
     }
     bool hasArgsObj() const {
         return flags_ & HAS_ARGS_OBJ;
     }
     ArgumentsObject &argsObj() const {
-        JS_ASSERT(hasArgsObj());
-        JS_ASSERT(script()->needsArgsObj());
+        MOZ_ASSERT(hasArgsObj());
+        MOZ_ASSERT(script()->needsArgsObj());
         return *argsObj_;
     }
 
@@ -275,7 +278,7 @@ class BaselineFrame
     }
 
     JSScript *evalScript() const {
-        JS_ASSERT(isEvalFrame());
+        MOZ_ASSERT(isEvalFrame());
         return evalScript_;
     }
 
@@ -366,23 +369,23 @@ class BaselineFrame
         return false;
     }
 
-    IonJSFrameLayout *framePrefix() const {
+    JitFrameLayout *framePrefix() const {
         uint8_t *fp = (uint8_t *)this + Size() + FramePointerOffset;
-        return (IonJSFrameLayout *)fp;
+        return (JitFrameLayout *)fp;
     }
 
     // Methods below are used by the compiler.
     static size_t offsetOfCalleeToken() {
-        return FramePointerOffset + js::jit::IonJSFrameLayout::offsetOfCalleeToken();
+        return FramePointerOffset + js::jit::JitFrameLayout::offsetOfCalleeToken();
     }
     static size_t offsetOfThis() {
-        return FramePointerOffset + js::jit::IonJSFrameLayout::offsetOfThis();
+        return FramePointerOffset + js::jit::JitFrameLayout::offsetOfThis();
     }
     static size_t offsetOfArg(size_t index) {
-        return FramePointerOffset + js::jit::IonJSFrameLayout::offsetOfActualArg(index);
+        return FramePointerOffset + js::jit::JitFrameLayout::offsetOfActualArg(index);
     }
     static size_t offsetOfNumActualArgs() {
-        return FramePointerOffset + js::jit::IonJSFrameLayout::offsetOfNumActualArgs();
+        return FramePointerOffset + js::jit::JitFrameLayout::offsetOfNumActualArgs();
     }
     static size_t Size() {
         return sizeof(BaselineFrame);

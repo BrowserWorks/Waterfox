@@ -293,7 +293,8 @@ nsDisplayCanvasBackgroundImage::Paint(nsDisplayListBuilder* aBuilder,
     dt = destDT->CreateSimilarDrawTarget(IntSize(ceil(destRect.width), ceil(destRect.height)), SurfaceFormat::B8G8R8A8);
     if (dt) {
       nsRefPtr<gfxContext> ctx = new gfxContext(dt);
-      ctx->Translate(-gfxPoint(destRect.x, destRect.y));
+      ctx->SetMatrix(
+        ctx->CurrentMatrix().Translate(-destRect.x, -destRect.y));
       context = new nsRenderingContext();
       context->Init(aCtx->DeviceContext(), ctx);
     }
@@ -415,6 +416,11 @@ nsCanvasFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
 
   nsIFrame* kid;
   for (kid = GetFirstPrincipalChild(); kid; kid = kid->GetNextSibling()) {
+    // Skip touch caret frame if we do not build caret.
+    if (!aBuilder->IsBuildingCaret() && kid->GetContent() == mTouchCaretElement) {
+      continue;
+    }
+
     // Put our child into its own pseudo-stack.
     BuildDisplayListForChild(aBuilder, kid, aDirtyRect, aLists);
   }

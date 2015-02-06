@@ -77,6 +77,16 @@ public:
     aRetval = mIconUrl;
   }
 
+  void SetStoredState(bool val)
+  {
+    mIsStored = val;
+  }
+
+  bool IsStored()
+  {
+    return mIsStored;
+  }
+
   nsIStructuredCloneContainer* GetDataCloneContainer();
 
   static void RequestPermission(const GlobalObject& aGlobal,
@@ -104,11 +114,12 @@ public:
   void InitFromJSVal(JSContext* aCx, JS::Handle<JS::Value> aData, ErrorResult& aRv);
 
   void InitFromBase64(JSContext* aCx, const nsAString& aData, ErrorResult& aRv);
+
 protected:
   Notification(const nsAString& aID, const nsAString& aTitle, const nsAString& aBody,
                NotificationDirection aDir, const nsAString& aLang,
                const nsAString& aTag, const nsAString& aIconUrl,
-               nsPIDOMWindow* aWindow);
+               const NotificationBehavior& aBehavior, nsPIDOMWindow* aWindow);
 
   static already_AddRefed<Notification> CreateInternal(nsPIDOMWindow* aWindow,
                                                        const nsAString& aID,
@@ -159,6 +170,7 @@ protected:
   nsString mTag;
   nsString mIconUrl;
   nsCOMPtr<nsIStructuredCloneContainer> mDataObjectContainer;
+  NotificationBehavior mBehavior;
 
   // It's null until GetData is first called
   nsCOMPtr<nsIVariant> mData;
@@ -166,6 +178,12 @@ protected:
   nsString mAlertName;
 
   bool mIsClosed;
+
+  // We need to make a distinction between the notification being closed i.e.
+  // removed from any pending or active lists, and the notification being
+  // removed from the database. NotificationDB might fail when trying to remove
+  // the notification.
+  bool mIsStored;
 
   static uint32_t sCount;
 

@@ -48,7 +48,6 @@ AudioBuffer::AudioBuffer(AudioContext* aContext, uint32_t aNumberOfChannels,
     mSampleRate(aSampleRate)
 {
   mJSChannels.SetCapacity(aNumberOfChannels);
-  SetIsDOMBinding();
   mozilla::HoldJSObjects(this);
 }
 
@@ -116,7 +115,8 @@ AudioBuffer::RestoreJSChannelData(JSContext* aJSContext)
       if (!array) {
         return false;
       }
-      memcpy(JS_GetFloat32ArrayData(array), data, sizeof(float)*mLength);
+      JS::AutoCheckCannotGC nogc;
+      mozilla::PodCopy(JS_GetFloat32ArrayData(array, nogc), data, mLength);
       mJSChannels[i] = array;
     }
 
@@ -147,9 +147,10 @@ AudioBuffer::CopyFromChannel(const Float32Array& aDestination, uint32_t aChannel
     return;
   }
 
+  JS::AutoCheckCannotGC nogc;
   const float* sourceData = mSharedChannels ?
     mSharedChannels->GetData(aChannelNumber) :
-    JS_GetFloat32ArrayData(mJSChannels[aChannelNumber]);
+    JS_GetFloat32ArrayData(mJSChannels[aChannelNumber], nogc);
   PodMove(aDestination.Data(), sourceData + aStartInChannel, length);
 }
 
@@ -180,7 +181,8 @@ AudioBuffer::CopyToChannel(JSContext* aJSContext, const Float32Array& aSource,
     return;
   }
 
-  PodMove(JS_GetFloat32ArrayData(mJSChannels[aChannelNumber]) + aStartInChannel,
+  JS::AutoCheckCannotGC nogc;
+  PodMove(JS_GetFloat32ArrayData(mJSChannels[aChannelNumber], nogc) + aStartInChannel,
           aSource.Data(), length);
 }
 
@@ -189,7 +191,8 @@ AudioBuffer::SetRawChannelContents(uint32_t aChannel, float* aContents)
 {
   MOZ_ASSERT(!GetWrapperPreserveColor() && !mSharedChannels,
              "The AudioBuffer object should not have been handed to JS or have C++ callers neuter its typed array");
-  PodCopy(JS_GetFloat32ArrayData(mJSChannels[aChannel]), aContents, mLength);
+  JS::AutoCheckCannotGC nogc;
+  PodCopy(JS_GetFloat32ArrayData(mJSChannels[aChannel], nogc), aContents, mLength);
 }
 
 void
@@ -227,7 +230,7 @@ StealJSArrayDataIntoThreadSharedFloatArrayBufferList(JSContext* aJSContext,
                           ? (uint8_t*) JS_StealArrayBufferContents(aJSContext, arrayBuffer)
                           : nullptr;
     if (stolenData) {
-      result->SetData(i, stolenData, reinterpret_cast<float*>(stolenData));
+      result->SetData(i, stolenData, js_free, reinterpret_cast<float*>(stolenData));
     } else {
       return nullptr;
     }

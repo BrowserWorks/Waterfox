@@ -8,7 +8,7 @@
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/PromiseNativeHandler.h"
 
-#include "js/OldDebugAPI.h"
+#include "jsapi.h"
 
 namespace mozilla {
 namespace dom {
@@ -20,13 +20,7 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(PromiseCallback)
   NS_INTERFACE_MAP_ENTRY(nsISupports)
 NS_INTERFACE_MAP_END
 
-NS_IMPL_CYCLE_COLLECTION_CLASS(PromiseCallback)
-
-NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(PromiseCallback)
-NS_IMPL_CYCLE_COLLECTION_UNLINK_END
-
-NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(PromiseCallback)
-NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
+NS_IMPL_CYCLE_COLLECTION_0(PromiseCallback)
 
 PromiseCallback::PromiseCallback()
 {
@@ -209,13 +203,13 @@ WrapperPromiseCallback::Call(JSContext* aCx,
 
   ErrorResult rv;
 
-  // If invoking callback threw an exception, run resolver's reject with the
-  // thrown exception as argument and the synchronous flag set.
+  // PromiseReactionTask step 6
   JS::Rooted<JS::Value> retValue(aCx);
   mCallback->Call(value, &retValue, rv, CallbackObject::eRethrowExceptions);
 
   rv.WouldReportJSException();
 
+  // PromiseReactionTask step 7
   if (rv.Failed() && rv.IsJSException()) {
     JS::Rooted<JS::Value> value(aCx);
     rv.StealJSException(aCx, &value);
@@ -225,7 +219,7 @@ WrapperPromiseCallback::Call(JSContext* aCx,
       return;
     }
 
-    mNextPromise->RejectInternal(aCx, value, Promise::SyncTask);
+    mNextPromise->RejectInternal(aCx, value);
     return;
   }
 
@@ -290,14 +284,13 @@ WrapperPromiseCallback::Call(JSContext* aCx,
     }
   }
 
-  // Otherwise, run resolver's resolve with value and the synchronous flag
-  // set.
+  // Otherwise, run resolver's resolve with value.
   if (!JS_WrapValue(aCx, &retValue)) {
     NS_WARNING("Failed to wrap value into the right compartment.");
     return;
   }
 
-  mNextPromise->ResolveInternal(aCx, retValue, Promise::SyncTask);
+  mNextPromise->ResolveInternal(aCx, retValue);
 }
 
 // NativePromiseCallback

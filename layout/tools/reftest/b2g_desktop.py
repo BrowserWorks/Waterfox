@@ -110,7 +110,6 @@ class B2GDesktopReftest(RefTest):
         prefs["browser.firstrun.show.localepicker"] = False
         prefs["b2g.system_startup_url"] = "app://test-container.gaiamobile.org/index.html"
         prefs["b2g.system_manifest_url"] = "app://test-container.gaiamobile.org/manifest.webapp"
-        prefs["browser.tabs.remote"] = False
         prefs["dom.ipc.tabs.disabled"] = False
         prefs["dom.mozBrowserFramesEnabled"] = True
         prefs["font.size.inflation.emPerLine"] = 0
@@ -170,6 +169,9 @@ def run_desktop_reftests(parser, options, args):
     if options.app[-4:] != '-bin':
         if os.path.isfile("%s-bin" % options.app):
             options.app = "%s-bin" % options.app
+
+    if options.xrePath is None:
+        options.xrePath = os.path.dirname(options.app)
 
     if options.desktop and not options.profile:
         raise Exception("must specify --profile when specifying --desktop")

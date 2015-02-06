@@ -37,9 +37,6 @@
 #undef LOG
 #ifdef MOZ_LOGGING
 
-// make sure that logging is enabled before including prlog.h
-#define FORCE_PR_LOG
-
 #include "prlog.h"
 #include "nsTArray.h"
 
@@ -264,6 +261,7 @@ public:
     NS_IMETHOD_(void) SetInputContext(const InputContext& aContext,
                                       const InputContextAction& aAction);
     NS_IMETHOD_(InputContext) GetInputContext();
+    virtual nsIMEUpdatePreference GetIMEUpdatePreference();
     NS_IMETHOD_(bool) ExecuteNativeKeyBinding(
                         NativeKeyBindingsType aType,
                         const mozilla::WidgetKeyboardEvent& aEvent,

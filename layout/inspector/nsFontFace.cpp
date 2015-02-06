@@ -5,11 +5,16 @@
 #include "nsFontFace.h"
 #include "nsIDOMCSSFontFaceRule.h"
 #include "nsCSSRules.h"
-#include "gfxFont.h"
+#include "gfxTextRun.h"
 #include "gfxUserFontSet.h"
 #include "nsFontFaceLoader.h"
 #include "mozilla/gfx/2D.h"
+#include "decode.h"
 #include "zlib.h"
+#include "mozilla/dom/FontFaceSet.h"
+
+using namespace mozilla;
+using namespace mozilla::dom;
 
 nsFontFace::nsFontFace(gfxFontEntry*      aFontEntry,
                        gfxFontGroup*      aFontGroup,
@@ -88,10 +93,13 @@ nsFontFace::GetRule(nsIDOMCSSFontFaceRule **aRule)
   // in the relevant font group's user font set
   nsCSSFontFaceRule* rule = nullptr;
   if (mFontEntry->IsUserFont()) {
-    nsUserFontSet* fontSet =
-      static_cast<nsUserFontSet*>(mFontGroup->GetUserFontSet());
+    FontFaceSet::UserFontSet* fontSet =
+      static_cast<FontFaceSet::UserFontSet*>(mFontGroup->GetUserFontSet());
     if (fontSet) {
-      rule = fontSet->FindRuleForEntry(mFontEntry);
+      FontFaceSet* fontFaceSet = fontSet->GetFontFaceSet();
+      if (fontFaceSet) {
+        rule = fontFaceSet->FindRuleForEntry(mFontEntry);
+      }
     }
   }
 
@@ -176,6 +184,9 @@ nsFontFace::GetFormat(nsAString & aFormat)
     if (formatFlags & gfxUserFontSet::FLAG_FORMAT_WOFF) {
       AppendToFormat(aFormat, "woff");
     }
+    if (formatFlags & gfxUserFontSet::FLAG_FORMAT_WOFF2) {
+      AppendToFormat(aFormat, "woff2");
+    }
   }
   return NS_OK;
 }
@@ -192,13 +203,30 @@ nsFontFace::GetMetadata(nsAString & aMetadata)
       nsAutoCString str;
       str.SetLength(userFontData->mMetaOrigLen);
       if (str.Length() == userFontData->mMetaOrigLen) {
-        uLongf destLen = userFontData->mMetaOrigLen;
-        if (uncompress((Bytef *)(str.BeginWriting()), &destLen,
-                       (const Bytef *)(userFontData->mMetadata.Elements()),
-                       userFontData->mMetadata.Length()) == Z_OK &&
-            destLen == userFontData->mMetaOrigLen)
-        {
-          AppendUTF8toUTF16(str, aMetadata);
+        switch (userFontData->mCompression) {
+        case gfxUserFontData::kZlibCompression:
+          {
+            uLongf destLen = userFontData->mMetaOrigLen;
+            if (uncompress((Bytef *)(str.BeginWriting()), &destLen,
+                           (const Bytef *)(userFontData->mMetadata.Elements()),
+                           userFontData->mMetadata.Length()) == Z_OK &&
+                destLen == userFontData->mMetaOrigLen) {
+              AppendUTF8toUTF16(str, aMetadata);
+            }
+          }
+          break;
+        case gfxUserFontData::kBrotliCompression:
+          {
+            size_t decodedSize = userFontData->mMetaOrigLen;
+            if (BrotliDecompressBuffer(userFontData->mMetadata.Length(),
+                                       userFontData->mMetadata.Elements(),
+                                       &decodedSize,
+                                       (uint8_t*)str.BeginWriting()) == 1 &&
+                decodedSize == userFontData->mMetaOrigLen) {
+              AppendUTF8toUTF16(str, aMetadata);
+            }
+          }
+          break;
         }
       }
     }

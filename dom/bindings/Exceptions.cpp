@@ -6,7 +6,6 @@
 #include "mozilla/dom/Exceptions.h"
 
 #include "js/GCAPI.h"
-#include "js/OldDebugAPI.h"
 #include "jsapi.h"
 #include "jsprf.h"
 #include "mozilla/CycleCollectedJSRuntime.h"
@@ -204,6 +203,7 @@ public:
 
   StackFrame()
     : mLineno(0)
+    , mColNo(0)
     , mLanguage(nsIProgrammingLanguage::UNKNOWN)
   {
   }
@@ -228,10 +228,17 @@ protected:
     return NS_OK;
   }
 
+  virtual nsresult GetColNo(int32_t* aColNo)
+  {
+    *aColNo = mColNo;
+    return NS_OK;
+  }
+
   nsCOMPtr<nsIStackFrame> mCaller;
   nsString mFilename;
   nsString mFunname;
   int32_t mLineno;
+  int32_t mColNo;
   uint32_t mLanguage;
 };
 
@@ -269,7 +276,7 @@ public:
                                                          StackFrame)
 
   // aStack must not be null.
-  JSStackFrame(JS::Handle<JSObject*> aStack);
+  explicit JSStackFrame(JS::Handle<JSObject*> aStack);
 
   static already_AddRefed<nsIStackFrame>
   CreateStack(JSContext* aCx, int32_t aMaxDepth = -1);
@@ -286,6 +293,7 @@ protected:
   }
 
   virtual nsresult GetLineno(int32_t* aLineNo) MOZ_OVERRIDE;
+  virtual nsresult GetColNo(int32_t* aColNo) MOZ_OVERRIDE;
 
 private:
   virtual ~JSStackFrame();
@@ -296,6 +304,7 @@ private:
   bool mFilenameInitialized;
   bool mFunnameInitialized;
   bool mLinenoInitialized;
+  bool mColNoInitialized;
   bool mCallerInitialized;
   bool mFormattedStackInitialized;
 };
@@ -305,6 +314,7 @@ JSStackFrame::JSStackFrame(JS::Handle<JSObject*> aStack)
   , mFilenameInitialized(false)
   , mFunnameInitialized(false)
   , mLinenoInitialized(false)
+  , mColNoInitialized(false)
   , mCallerInitialized(false)
   , mFormattedStackInitialized(false)
 {
@@ -463,6 +473,35 @@ JSStackFrame::GetLineno(int32_t* aLineNo)
 NS_IMETHODIMP StackFrame::GetLineNumber(int32_t* aLineNumber)
 {
   return GetLineno(aLineNumber);
+}
+
+// virtual
+nsresult
+JSStackFrame::GetColNo(int32_t* aColNo)
+{
+  // We can get called after unlink; in that case we can't do much
+  // about producing a useful value.
+  if (!mColNoInitialized && mStack) {
+    ThreadsafeAutoJSContext cx;
+    JS::Rooted<JSObject*> stack(cx, mStack);
+    JS::ExposeObjectToActiveJS(mStack);
+    JSAutoCompartment ac(cx, stack);
+    JS::Rooted<JS::Value> colVal(cx);
+    if (!JS_GetProperty(cx, stack, "column", &colVal) ||
+        !colVal.isNumber()) {
+      return NS_ERROR_UNEXPECTED;
+    }
+    mColNo = colVal.toNumber();
+    mColNoInitialized = true;
+  }
+
+  return StackFrame::GetColNo(aColNo);
+}
+
+/* readonly attribute int32_t columnNumber; */
+NS_IMETHODIMP StackFrame::GetColumnNumber(int32_t* aColumnNumber)
+{
+  return GetColNo(aColumnNumber);
 }
 
 /* readonly attribute AUTF8String sourceLine; */

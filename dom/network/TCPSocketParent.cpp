@@ -14,6 +14,7 @@
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/dom/TabParent.h"
+#include "mozilla/HoldDropJSObjects.h"
 #include "nsIScriptSecurityManager.h"
 
 namespace IPC {
@@ -38,23 +39,88 @@ FireInteralError(mozilla::net::PTCPSocketParent* aActor, uint32_t aLineNo)
                            NS_LITERAL_STRING("connecting"));
 }
 
-NS_IMPL_CYCLE_COLLECTION(TCPSocketParentBase, mSocket, mIntermediary)
-NS_IMPL_CYCLE_COLLECTING_ADDREF(TCPSocketParentBase)
-NS_IMPL_CYCLE_COLLECTING_RELEASE(TCPSocketParentBase)
+NS_IMPL_CYCLE_COLLECTION_CLASS(TCPSocketParentBase)
+
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(TCPSocketParentBase)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mSocket)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mIntermediary)
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
+
+NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(TCPSocketParentBase)
+  tmp->mIntermediaryObj = nullptr;
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mSocket)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mIntermediary)
+NS_IMPL_CYCLE_COLLECTION_UNLINK_END
+
+NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(TCPSocketParentBase)
+  NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mIntermediaryObj)
+NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(TCPSocketParentBase)
   NS_INTERFACE_MAP_ENTRY(nsITCPSocketParent)
   NS_INTERFACE_MAP_ENTRY(nsISupports)
 NS_INTERFACE_MAP_END
 
+NS_IMPL_CYCLE_COLLECTING_ADDREF(TCPSocketParentBase)
+NS_IMPL_CYCLE_COLLECTING_RELEASE(TCPSocketParentBase)
+
 TCPSocketParentBase::TCPSocketParentBase()
 : mIPCOpen(false)
 {
+  mObserver = new mozilla::net::OfflineObserver(this);
+  mozilla::HoldJSObjects(this);
 }
 
 TCPSocketParentBase::~TCPSocketParentBase()
 {
+  if (mObserver) {
+    mObserver->RemoveObserver();
+  }
+  mozilla::DropJSObjects(this);
 }
+
+uint32_t
+TCPSocketParent::GetAppId()
+{
+  uint32_t appId = nsIScriptSecurityManager::UNKNOWN_APP_ID;
+  const PContentParent *content = Manager()->Manager();
+  const InfallibleTArray<PBrowserParent*>& browsers = content->ManagedPBrowserParent();
+  if (browsers.Length() > 0) {
+    TabParent *tab = static_cast<TabParent*>(browsers[0]);
+    appId = tab->OwnAppId();
+  }
+  return appId;
+};
+
+nsresult
+TCPSocketParent::OfflineNotification(nsISupports *aSubject)
+{
+  nsCOMPtr<nsIAppOfflineInfo> info(do_QueryInterface(aSubject));
+  if (!info) {
+    return NS_OK;
+  }
+
+  uint32_t targetAppId = nsIScriptSecurityManager::UNKNOWN_APP_ID;
+  info->GetAppId(&targetAppId);
+
+  // Obtain App ID
+  uint32_t appId = GetAppId();
+  if (appId != targetAppId) {
+    return NS_OK;
+  }
+
+  // If the app is offline, close the socket
+  if (mSocket && NS_IsAppOffline(appId)) {
+    mSocket->Close();
+    mSocket = nullptr;
+    mIntermediaryObj = nullptr;
+    mIntermediary = nullptr;
+  }
+
+  return NS_OK;
+}
+
 
 void
 TCPSocketParentBase::ReleaseIPDLReference()
@@ -95,12 +161,12 @@ TCPSocketParent::RecvOpen(const nsString& aHost, const uint16_t& aPort, const bo
   }
 
   // Obtain App ID
-  uint32_t appId = nsIScriptSecurityManager::NO_APP_ID;
-  const PContentParent *content = Manager()->Manager();
-  const InfallibleTArray<PBrowserParent*>& browsers = content->ManagedPBrowserParent();
-  if (browsers.Length() > 0) {
-    TabParent *tab = static_cast<TabParent*>(browsers[0]);
-    appId = tab->OwnAppId();
+  uint32_t appId = GetAppId();
+
+  if (NS_IsAppOffline(appId)) {
+    NS_ERROR("Can't open socket because app is offline");
+    FireInteralError(this, __LINE__);
+    return true;
   }
 
   nsresult rv;
@@ -219,17 +285,27 @@ TCPSocketParent::SendEvent(const nsAString& aType, JS::Handle<JS::Value> aDataVa
   } else if (aDataVal.isObject()) {
     JS::Rooted<JSObject *> obj(aCx, &aDataVal.toObject());
     if (JS_IsArrayBufferObject(obj)) {
-      uint32_t nbytes = JS_GetArrayBufferByteLength(obj);
-      uint8_t* buffer = JS_GetArrayBufferData(obj);
-      if (!buffer) {
-        FireInteralError(this, __LINE__);
-        return NS_ERROR_OUT_OF_MEMORY;
-      }
       FallibleTArray<uint8_t> fallibleArr;
-      if (!fallibleArr.InsertElementsAt(0, buffer, nbytes)) {
-        FireInteralError(this, __LINE__);
-        return NS_ERROR_OUT_OF_MEMORY;
+      uint32_t errLine = 0;
+      do {
+          JS::AutoCheckCannotGC nogc;
+          uint32_t nbytes = JS_GetArrayBufferByteLength(obj);
+          uint8_t* buffer = JS_GetArrayBufferData(obj, nogc);
+          if (!buffer) {
+              errLine = __LINE__;
+              break;
+          }
+          if (!fallibleArr.InsertElementsAt(0, buffer, nbytes)) {
+              errLine = __LINE__;
+              break;
+          }
+      } while (false);
+
+      if (errLine) {
+          FireInteralError(this, errLine);
+          return NS_ERROR_OUT_OF_MEMORY;
       }
+
       InfallibleTArray<uint8_t> arr;
       arr.SwapElements(fallibleArr);
       data = SendableData(arr);

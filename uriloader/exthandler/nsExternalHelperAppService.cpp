@@ -4,10 +4,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifdef MOZ_LOGGING
-#define FORCE_PR_LOG
-#endif
-
 #include "base/basictypes.h"
 
 /* This must occur *after* base/basictypes.h to avoid typedefs conflicts. */
@@ -549,6 +545,7 @@ static nsExtraMimeTypeEntry extraMimeEntries [] =
   { AUDIO_OGG, "opus", "Opus Audio" },
 #ifdef MOZ_WIDGET_GONK
   { AUDIO_AMR, "amr", "Adaptive Multi-Rate Audio" },
+  { AUDIO_3GPP, "3gpp,3gp", "3GPP Audio" },
 #endif
   { VIDEO_WEBM, "webm", "Web Media Video" },
   { AUDIO_WEBM, "webm", "Web Media Audio" },
@@ -1453,7 +1450,7 @@ nsresult nsExternalAppHandler::SetUpTempFile(nsIChannel * aChannel)
   rv = mTempFile->Append(NS_ConvertUTF8toUTF16(tempLeafName));
   // make this file unique!!!
   NS_ENSURE_SUCCESS(rv, rv);
-  rv = mTempFile->CreateUnique(nsIFile::NORMAL_FILE_TYPE, 0644);
+  rv = mTempFile->CreateUnique(nsIFile::NORMAL_FILE_TYPE, 0600);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Now save the temp leaf name, minus the ".part" bit, so we can use it later.
@@ -2383,7 +2380,7 @@ NS_IMETHODIMP nsExternalAppHandler::LaunchWithApplication(nsIFile * aApplication
   fileToUse->Append(mSuggestedFileName);  
 #endif
 
-  nsresult rv = fileToUse->CreateUnique(nsIFile::NORMAL_FILE_TYPE, 0644);
+  nsresult rv = fileToUse->CreateUnique(nsIFile::NORMAL_FILE_TYPE, 0600);
   if(NS_SUCCEEDED(rv)) {
     mFinalFileDestination = do_QueryInterface(fileToUse);
     // launch the progress window now that the user has picked the desired action.

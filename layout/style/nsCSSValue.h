@@ -265,7 +265,8 @@ enum nsCSSUnit {
   eCSSUnit_Counters     = 22,     // (nsCSSValue::Array*) a counters(string,string[,string]) value
   eCSSUnit_Cubic_Bezier = 23,     // (nsCSSValue::Array*) a list of float values
   eCSSUnit_Steps        = 24,     // (nsCSSValue::Array*) a list of (integer, enumerated)
-  eCSSUnit_Function     = 25,     // (nsCSSValue::Array*) a function with
+  eCSSUnit_Symbols      = 25,     // (nsCSSValue::Array*) a symbols(enumerated, symbols) value
+  eCSSUnit_Function     = 26,     // (nsCSSValue::Array*) a function with
                                   //  parameters.  First elem of array is name,
                                   //  an nsCSSKeyword as eCSSUnit_Enumerated,
                                   //  the rest of the values are arguments.
@@ -718,6 +719,9 @@ private:
     return static_cast<char16_t*>(aBuffer->Data());
   }
 
+  void AppendPolygonToString(nsCSSProperty aProperty, nsAString& aResult,
+                             Serialization aValueSerialization) const;
+
 protected:
   nsCSSUnit mUnit;
   union {
@@ -855,7 +859,7 @@ struct nsCSSValueList {
   nsCSSValueList() : mNext(nullptr) { MOZ_COUNT_CTOR(nsCSSValueList); }
   ~nsCSSValueList();
 
-  nsCSSValueList* Clone() const;  // makes a deep copy
+  nsCSSValueList* Clone() const;  // makes a deep copy. Infallible.
   void CloneInto(nsCSSValueList* aList) const; // makes a deep copy into aList
   void AppendToString(nsCSSProperty aProperty, nsAString& aResult,
                       nsCSSValue::Serialization aValueSerialization) const;
@@ -1249,7 +1253,7 @@ struct nsCSSValuePairList {
   nsCSSValuePairList() : mNext(nullptr) { MOZ_COUNT_CTOR(nsCSSValuePairList); }
   ~nsCSSValuePairList();
 
-  nsCSSValuePairList* Clone() const; // makes a deep copy
+  nsCSSValuePairList* Clone() const; // makes a deep copy. Infallible.
   void AppendToString(nsCSSProperty aProperty, nsAString& aResult,
                       nsCSSValue::Serialization aValueSerialization) const;
 

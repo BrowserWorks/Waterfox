@@ -54,7 +54,7 @@ interface nsITabParent;
  
 typedef unsigned long nsLoadFlags;
 
-[scriptable, builtinclass, uuid(3646c915-df79-4500-8b57-c65ab9c3b39f)]
+[scriptable, builtinclass, uuid(23157a63-26fd-44a0-a0f9-fdc64dcc004c)]
 interface nsIDocShell : nsIDocShellTreeItem
 {
   /**
@@ -668,6 +668,17 @@ interface nsIDocShell : nsIDocShellTreeItem
     out nsIPrincipal parentCharsetPrincipal);
 
   /**
+   * Whether the docShell records profile timeline markers at the moment
+   */
+  [infallible] attribute boolean recordProfileTimelineMarkers;
+
+  /**
+   * Returns and flushes the profile timeline markers gathered by the docShell
+   */
+  [implicit_jscontext]
+  jsval popProfileTimelineMarkers();
+
+  /**
    * Add an observer to the list of parties to be notified when this docshell's
    * private browsing status is changed. |obs| must support weak references.
    */
@@ -1006,4 +1017,11 @@ interface nsIDocShell : nsIDocShellTreeItem
 
   // URLSearchParams for the window.location is owned by the docShell.
   [noscript,notxpcom] URLSearchParams getURLSearchParams();
+
+  /**
+   * This attribute determines whether a document which is not about:blank has
+   * already be loaded by this docShell.
+   */
+  [infallible] readonly attribute boolean hasLoadedNonBlankURI;
+
 };

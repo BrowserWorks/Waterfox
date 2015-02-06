@@ -192,6 +192,12 @@ using namespace mozilla::gfx;
 using namespace mozilla::layers;
 using namespace mozilla::widget;
 
+namespace mozilla {
+namespace widget {
+  extern int32_t IsTouchDeviceSupportPresent();
+}
+}
+
 /**************************************************************
  **************************************************************
  **
@@ -3622,7 +3628,7 @@ nsWindow::UpdateThemeGeometries(const nsTArray<ThemeGeometry>& aThemeGeometries)
 uint32_t
 nsWindow::GetMaxTouchPoints() const
 {
-  if (IsWin7OrLater()) {
+  if (IsWin7OrLater() && IsTouchDeviceSupportPresent()) {
     return GetSystemMetrics(SM_MAXIMUMTOUCHES);
   }
   return 0;
@@ -4306,7 +4312,6 @@ DisplaySystemMenu(HWND hWnd, nsSizeMode sizeMode, bool isRtl, int32_t x, int32_t
     mii.fState = MF_GRAYED;
     switch(sizeMode) {
       case nsSizeMode_Fullscreen:
-        SetMenuItemInfo(hMenu, SC_RESTORE, FALSE, &mii);
         // intentional fall through
       case nsSizeMode_Maximized:
         SetMenuItemInfo(hMenu, SC_SIZE, FALSE, &mii);
@@ -4353,7 +4358,7 @@ inline static mozilla::HangMonitor::ActivityType ActivityTypeForMessage(UINT msg
 // and http://msdn.microsoft.com/en-us/library/ms633573%28VS.85%29.aspx
 LRESULT CALLBACK nsWindow::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-  MOZ_RELEASE_ASSERT(!ipc::ProcessingUrgentMessages());
+  MOZ_RELEASE_ASSERT(!ipc::ParentProcessIsBlocked());
 
   HangMonitor::NotifyActivity(ActivityTypeForMessage(msg));
 
@@ -5255,6 +5260,11 @@ nsWindow::ProcessMessage(UINT msg, WPARAM& wParam, LPARAM& lParam,
       // prevent Windows from trimming the working set. bug 76831
       if (!sTrimOnMinimize && filteredWParam == SC_MINIMIZE) {
         ::ShowWindow(mWnd, SW_SHOWMINIMIZED);
+        result = true;
+      }
+	  
+      if (mSizeMode == nsSizeMode_Fullscreen && filteredWParam == SC_RESTORE) {
+        MakeFullScreen(false);
         result = true;
       }
 

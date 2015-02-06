@@ -76,6 +76,7 @@ MediaSourceDecoder::GetSeekable(dom::TimeRanges* aSeekable)
   if (!mMediaSource) {
     return NS_ERROR_FAILURE;
   }
+
   double duration = mMediaSource->Duration();
   if (IsNaN(duration)) {
     // Return empty range.
@@ -133,6 +134,27 @@ MediaSourceDecoder::CreateSubDecoder(const nsACString& aType)
 }
 
 void
+MediaSourceDecoder::AddTrackBuffer(TrackBuffer* aTrackBuffer)
+{
+  MOZ_ASSERT(mReader);
+  mReader->AddTrackBuffer(aTrackBuffer);
+}
+
+void
+MediaSourceDecoder::RemoveTrackBuffer(TrackBuffer* aTrackBuffer)
+{
+  MOZ_ASSERT(mReader);
+  mReader->RemoveTrackBuffer(aTrackBuffer);
+}
+
+void
+MediaSourceDecoder::OnTrackBufferConfigured(TrackBuffer* aTrackBuffer, const MediaInfo& aInfo)
+{
+  MOZ_ASSERT(mReader);
+  mReader->OnTrackBufferConfigured(aTrackBuffer, aInfo);
+}
+
+void
 MediaSourceDecoder::Ended()
 {
   ReentrantMonitorAutoEnter mon(GetReentrantMonitor());
@@ -148,23 +170,21 @@ MediaSourceDecoder::SetMediaSourceDuration(double aDuration)
     return;
   }
   ErrorResult dummy;
-  mMediaSource->SetDuration(aDuration, dummy);
+  mMediaSource->DurationChange(aDuration, dummy);
 }
 
 void
-MediaSourceDecoder::WaitForData()
+MediaSourceDecoder::NotifyTimeRangesChanged()
 {
-  MSE_DEBUG("MediaSourceDecoder(%p)::WaitForData()", this);
-  ReentrantMonitorAutoEnter mon(GetReentrantMonitor());
-  mon.Wait();
-}
-
-void
-MediaSourceDecoder::NotifyGotData()
-{
-  MSE_DEBUG("MediaSourceDecoder(%p)::NotifyGotData()", this);
   ReentrantMonitorAutoEnter mon(GetReentrantMonitor());
   mon.NotifyAll();
+}
+
+void
+MediaSourceDecoder::PrepareReaderInitialization()
+{
+  MOZ_ASSERT(mReader);
+  mReader->PrepareInitialization();
 }
 
 } // namespace mozilla

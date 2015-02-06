@@ -37,7 +37,9 @@ template <typename T> class FallibleTArray;
  * as opposed to app units.
  */
 class gfxContext MOZ_FINAL {
+    typedef mozilla::gfx::FillRule FillRule;
     typedef mozilla::gfx::Path Path;
+    typedef mozilla::gfx::Pattern Pattern;
 
     NS_INLINE_DECL_REFCOUNTING(gfxContext)
 
@@ -83,11 +85,6 @@ public:
     mozilla::gfx::DrawTarget *GetDrawTarget() { return mDT; }
 
     /**
-     * Returns true if the cairo context is in an error state.
-     */
-    bool HasError();
-
-    /**
      ** State
      **/
     // XXX document exactly what bits are saved
@@ -106,12 +103,14 @@ public:
      * Does not consume the current path.
      */
     void Stroke();
+    void Stroke(const Pattern& aPattern);
     /**
      * Fill the current path according to the current settings.
      *
      * Does not consume the current path.
      */
     void Fill();
+    void Fill(const Pattern& aPattern);
 
     /**
      * Fill the current path according to the current settings and
@@ -120,6 +119,7 @@ public:
      * Does not consume the current path.
      */
     void FillWithOpacity(gfxFloat aOpacity);
+    void FillWithOpacity(const Pattern& aPattern, gfxFloat aOpacity);
 
     /**
      * Forgets the current path.
@@ -240,37 +240,11 @@ public:
      **/
 
     /**
-     * Adds a translation to the current matrix. This translation takes place
-     * before the previously set transformations.
-     */
-    void Translate(const gfxPoint& pt);
-
-    /**
-     * Adds a scale to the current matrix. This scaling takes place before the
-     * previously set transformations.
-     */
-    void Scale(gfxFloat x, gfxFloat y);
-
-    /**
-     * Adds a rotation around the origin to the current matrix. This rotation
-     * takes place before the previously set transformations.
-     *
-     * @param angle The angle in radians.
-     */
-    void Rotate(gfxFloat angle);
-
-    /**
      * Post-multiplies 'other' onto the current CTM, i.e. this
      * matrix's transformation will take place before the previously set
      * transformations.
      */
     void Multiply(const gfxMatrix& other);
-    /**
-     * As "Multiply", but also nudges any entries in the resulting matrix that
-     * are close to an integer to that integer, to correct for
-     * compounded rounding errors.
-     */
-    void MultiplyAndNudgeToIntegers(const gfxMatrix& other);
 
     /**
      * Replaces the current transformation matrix with matrix.
@@ -278,21 +252,9 @@ public:
     void SetMatrix(const gfxMatrix& matrix);
 
     /**
-     * Sets the transformation matrix to the identity matrix.
-     */
-    void IdentityMatrix();
-
-    /**
      * Returns the current transformation matrix.
      */
     gfxMatrix CurrentMatrix() const;
-
-    /**
-     * Snap components of the current matrix that are close to integers
-     * to integers. In particular, components that are integral when
-     * converted to single precision are set to those integers.
-     */
-    void NudgeCurrentMatrixToIntegers();
 
     /**
      * Converts a point from device to user coordinates using the inverse
@@ -426,7 +388,7 @@ public:
      * Like Paint, except that it only draws the source where pattern is
      * non-transparent.
      */
-    void Mask(gfxPattern *pattern);
+    void Mask(mozilla::gfx::SourceSurface *aSurface, const mozilla::gfx::Matrix& aTransform);
 
     /**
      * Shorthand for creating a pattern and calling the pattern-taking
@@ -507,10 +469,6 @@ public:
      ** Fill Properties
      **/
 
-    enum FillRule {
-        FILL_RULE_WINDING,
-        FILL_RULE_EVEN_ODD
-    };
     void SetFillRule(FillRule rule);
     FillRule CurrentFillRule() const;
 
@@ -567,17 +525,8 @@ public:
     void SetOperator(GraphicsOperator op);
     GraphicsOperator CurrentOperator() const;
 
-    /**
-     * MODE_ALIASED means that only pixels whose centers are in the drawn area
-     * should be modified, and they should be modified to take the value drawn
-     * at the pixel center.
-     */
-    enum AntialiasMode {
-        MODE_ALIASED,
-        MODE_COVERAGE
-    };
-    void SetAntialiasMode(AntialiasMode mode);
-    AntialiasMode CurrentAntialiasMode() const;
+    void SetAntialiasMode(mozilla::gfx::AntialiasMode mode);
+    mozilla::gfx::AntialiasMode CurrentAntialiasMode() const;
 
     /**
      ** Clipping
@@ -639,18 +588,8 @@ public:
     already_AddRefed<gfxPattern> PopGroup();
     void PopGroupToSource();
 
-    /**
-     ** Hit Testing - check if given point is in the current path
-     **/
-    bool PointInFill(const gfxPoint& pt);
-    bool PointInStroke(const gfxPoint& pt);
-
-    /**
-     ** Extents - returns user space extent of current path
-     **/
-    gfxRect GetUserPathExtent();
-    gfxRect GetUserFillExtent();
-    gfxRect GetUserStrokeExtent();
+    mozilla::TemporaryRef<mozilla::gfx::SourceSurface>
+    PopGroupToSurface(mozilla::gfx::Matrix* aMatrix);
 
     mozilla::gfx::Point GetDeviceOffset() const;
 
@@ -715,7 +654,7 @@ public:
 private:
     ~gfxContext();
 
-  friend class GeneralPattern;
+  friend class PatternFromState;
   friend class GlyphBufferAzure;
 
   typedef mozilla::gfx::Matrix Matrix;
@@ -771,7 +710,7 @@ private:
   void EnsurePath();
   // This ensures mPathBuilder contains a valid PathBuilder (in user space!)
   void EnsurePathBuilder();
-  void FillAzure(mozilla::gfx::Float aOpacity);
+  void FillAzure(const Pattern& aPattern, mozilla::gfx::Float aOpacity);
   void PushClipsToDT(mozilla::gfx::DrawTarget *aDT);
   CompositionOp GetOp();
   void ChangeTransform(const mozilla::gfx::Matrix &aNewMatrix, bool aUpdatePatternTransform = true);

@@ -8,11 +8,10 @@
 
 #include "jit/Ion.h"
 #include "jit/IonAnalysis.h"
-#include "jit/IonSpewer.h"
+#include "jit/JitSpewer.h"
 #include "jit/MIR.h"
 #include "jit/MIRGenerator.h"
 #include "jit/MIRGraph.h"
-#include "jit/UnreachableCodeElimination.h"
 
 #include "jsinferinlines.h"
 #include "jsobjinlines.h"
@@ -73,7 +72,7 @@ class ParallelSafetyVisitor : public MDefinitionVisitor
 
     bool insertWriteGuard(MInstruction *writeInstruction, MDefinition *valueBeingWritten);
 
-    bool replaceWithNewPar(MInstruction *newInstruction, JSObject *templateObject);
+    bool replaceWithNewPar(MInstruction *newInstruction, NativeObject *templateObject);
     bool replace(MInstruction *oldInstruction, MInstruction *replacementInstruction);
 
     bool visitSpecializedInstruction(MInstruction *ins, MIRType spec, uint32_t flags);
@@ -82,7 +81,7 @@ class ParallelSafetyVisitor : public MDefinitionVisitor
     // markUnsafe()".  Sets the unsafe flag and returns true (since
     // this does not indicate an unrecoverable compilation failure).
     bool markUnsafe() {
-        JS_ASSERT(!unsafe_);
+        MOZ_ASSERT(!unsafe_);
         unsafe_ = true;
         return true;
     }
@@ -115,17 +114,25 @@ class ParallelSafetyVisitor : public MDefinitionVisitor
     SAFE_OP(SimdValueX4)
     SAFE_OP(SimdSplatX4)
     SAFE_OP(SimdConstant)
+    SAFE_OP(SimdConvert)
+    SAFE_OP(SimdReinterpretCast)
     SAFE_OP(SimdExtractElement)
+    SAFE_OP(SimdInsertElement)
     SAFE_OP(SimdSignMask)
+    SAFE_OP(SimdUnaryArith)
     SAFE_OP(SimdBinaryComp)
     SAFE_OP(SimdBinaryArith)
     SAFE_OP(SimdBinaryBitwise)
+    SAFE_OP(SimdShift)
+    SAFE_OP(SimdTernaryBitwise)
     UNSAFE_OP(CloneLiteral)
     SAFE_OP(Parameter)
     SAFE_OP(Callee)
+    SAFE_OP(IsConstructing)
     SAFE_OP(TableSwitch)
     SAFE_OP(Goto)
     SAFE_OP(Test)
+    SAFE_OP(GotoWithFake)
     SAFE_OP(Compare)
     SAFE_OP(Phi)
     SAFE_OP(Beta)
@@ -273,8 +280,8 @@ class ParallelSafetyVisitor : public MDefinitionVisitor
     UNSAFE_OP(DeleteElement)
     WRITE_GUARDED_OP(SetPropertyCache, object)
     UNSAFE_OP(IteratorStart)
-    UNSAFE_OP(IteratorNext)
     UNSAFE_OP(IteratorMore)
+    UNSAFE_OP(IsNoIter)
     UNSAFE_OP(IteratorEnd)
     SAFE_OP(StringLength)
     SAFE_OP(ArgumentsLength)
@@ -339,6 +346,9 @@ class ParallelSafetyVisitor : public MDefinitionVisitor
     UNSAFE_OP(AsmJSParameter)
     UNSAFE_OP(AsmJSCall)
     DROP_OP(RecompileCheck)
+    UNSAFE_OP(UnknownValue)
+    UNSAFE_OP(LexicalCheck)
+    UNSAFE_OP(ThrowUninitializedLexical)
 
     // It looks like this could easily be made safe:
     UNSAFE_OP(ConvertElementsToDoubles)
@@ -426,8 +436,9 @@ ParallelSafetyAnalysis::analyze()
     Spew(SpewCompile, "Safe");
     IonSpewPass("ParallelSafetyAnalysis");
 
-    UnreachableCodeElimination uce(mir_, graph_);
-    if (!uce.removeUnmarkedBlocks(marked))
+    // Sweep away any unmarked blocks. Note that this doesn't preserve
+    // AliasAnalysis dependencies, but we're not expected to at this point.
+    if (!RemoveUnmarkedBlocks(mir_, graph_, marked))
         return false;
     IonSpewPass("UCEAfterParallelSafetyAnalysis");
     AssertExtendedGraphCoherency(graph_);
@@ -441,8 +452,8 @@ ParallelSafetyVisitor::convertToBailout(MInstructionIterator &iter)
     // We expect iter to be settled on the unsafe instruction.
     MInstruction *ins = *iter;
     MBasicBlock *block = ins->block();
-    JS_ASSERT(unsafe()); // `block` must have contained unsafe items
-    JS_ASSERT(block->isMarked()); // `block` must have been reachable to get here
+    MOZ_ASSERT(unsafe()); // `block` must have contained unsafe items
+    MOZ_ASSERT(block->isMarked()); // `block` must have been reachable to get here
 
     clearUnsafe();
 
@@ -575,7 +586,7 @@ ParallelSafetyVisitor::visitToString(MToString *ins)
 
 bool
 ParallelSafetyVisitor::replaceWithNewPar(MInstruction *newInstruction,
-                                         JSObject *templateObject)
+                                         NativeObject *templateObject)
 {
     return replace(newInstruction, MNewPar::New(alloc(), ForkJoinContext(), templateObject));
 }
@@ -601,7 +612,7 @@ ParallelSafetyVisitor::replace(MInstruction *oldInstruction,
     {
         replacementInstruction->trySpecializeFloat32(alloc());
     }
-    JS_ASSERT(oldInstruction->type() == replacementInstruction->type());
+    MOZ_ASSERT(oldInstruction->type() == replacementInstruction->type());
 
     return true;
 }
@@ -685,7 +696,7 @@ ParallelSafetyVisitor::insertWriteGuard(MInstruction *writeInstruction,
     MGuardThreadExclusive *writeGuard =
         MGuardThreadExclusive::New(alloc(), ForkJoinContext(), object);
     block->insertBefore(writeInstruction, writeGuard);
-    writeGuard->adjustInputs(alloc(), writeGuard);
+    writeGuard->typePolicy()->adjustInputs(alloc(), writeGuard);
     return true;
 }
 
@@ -770,7 +781,7 @@ bool
 ParallelSafetyVisitor::visitThrow(MThrow *thr)
 {
     MBasicBlock *block = thr->block();
-    JS_ASSERT(block->lastIns() == thr);
+    MOZ_ASSERT(block->lastIns() == thr);
     MBail *bail = MBail::New(alloc(), Bailout_ParallelUnsafe);
     TransplantResumePoint(thr, bail);
     block->discardLastIns();
@@ -804,7 +815,7 @@ jit::AddPossibleCallees(JSContext *cx, MIRGraph &graph, CallTargetVector &target
 
             RootedFunction target(cx, callIns->getSingleTarget());
             if (target) {
-                JS_ASSERT_IF(!target->isInterpreted(), target->hasParallelNative());
+                MOZ_ASSERT_IF(!target->isInterpreted(), target->hasParallelNative());
 
                 if (target->isInterpreted()) {
                     RootedScript script(cx, target->getOrCreateScript(cx));

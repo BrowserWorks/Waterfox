@@ -217,12 +217,19 @@ SetPaintPattern(SkPaint& aPaint, const Pattern& aPattern, TempBitmap& aTmpBitmap
     case PatternType::SURFACE: {
       const SurfacePattern& pat = static_cast<const SurfacePattern&>(aPattern);
       aTmpBitmap = GetBitmapForSurface(pat.mSurface);
-      const SkBitmap& bitmap = aTmpBitmap.mBitmap;
+      SkBitmap& bitmap = aTmpBitmap.mBitmap;
+
+      SkMatrix mat;
+      GfxMatrixToSkiaMatrix(pat.mMatrix, mat);
+
+      if (!pat.mSamplingRect.IsEmpty()) {
+        SkIRect rect = IntRectToSkIRect(pat.mSamplingRect);
+        bitmap.extractSubset(&bitmap, rect);
+        mat.preTranslate(rect.x(), rect.y());
+      }
 
       SkShader::TileMode mode = ExtendModeToTileMode(pat.mExtendMode);
       SkShader* shader = SkShader::CreateBitmapShader(bitmap, mode, mode);
-      SkMatrix mat;
-      GfxMatrixToSkiaMatrix(pat.mMatrix, mat);
       SkShader* matrixShader = SkShader::CreateLocalMatrixShader(shader, mat);
       SkSafeUnref(shader);
       SkSafeUnref(aPaint.setShader(matrixShader));
@@ -585,7 +592,7 @@ DrawTargetSkia::MaskSurface(const Pattern &aSource,
     SkMatrix transform = maskPaint.getShader()->getLocalMatrix();
     transform.postTranslate(SkFloatToScalar(aOffset.x), SkFloatToScalar(aOffset.y));
     SkShader* matrixShader = SkShader::CreateLocalMatrixShader(maskPaint.getShader(), transform);
-    maskPaint.setShader(matrixShader);
+    SkSafeUnref(maskPaint.setShader(matrixShader));
 
     SkLayerRasterizer::Builder builder;
     builder.addLayer(maskPaint);

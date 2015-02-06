@@ -10,6 +10,7 @@ import java.io.IOException;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.mozilla.gecko.Assert;
 import org.mozilla.gecko.GeckoThread;
 
 import android.content.BroadcastReceiver;
@@ -21,18 +22,18 @@ import android.util.Log;
 
 public class InstallListener extends BroadcastReceiver {
 
-    private static String LOGTAG = "GeckoWebappInstallListener";
-    private JSONObject mData;
-    private String mManifestUrl;
+    private static final String LOGTAG = "GeckoWebappInstallListener";
+    private final JSONObject mData;
+    private final String mManifestUrl;
     private boolean mReceived;
-    private File mApkFile;
+    private final File mApkFile;
 
     public InstallListener(String manifestUrl, JSONObject data, File apkFile) {
         mData = data;
         mApkFile = apkFile;
         mManifestUrl = manifestUrl;
-        assert mManifestUrl != null;
-        assert mApkFile != null && mApkFile.exists();
+        Assert.isNotNull(mManifestUrl);
+        Assert.isTrue(mApkFile != null && mApkFile.exists());
     }
 
     public boolean isReceived() {
@@ -60,7 +61,8 @@ public class InstallListener extends BroadcastReceiver {
         if (TextUtils.isEmpty(manifestUrl)) {
             Log.i(LOGTAG, "No manifest URL present in metadata");
             return;
-        } else if (!isCorrectManifest(manifestUrl)) {
+        }
+        if (!isCorrectManifest(manifestUrl)) {
             // This happens when the updater triggers installation of multiple
             // APK updates simultaneously.  If we're the receiver for another
             // update, then simply ignore this intent by returning early.

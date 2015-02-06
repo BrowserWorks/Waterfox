@@ -1,4 +1,3 @@
-#include "precompiled.h"
 //
 // Copyright (c) 2002-2014 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
@@ -10,185 +9,120 @@
 // [OpenGL ES 2.0.24] section 2.9 page 21.
 
 #include "libGLESv2/Buffer.h"
-
-#include "libGLESv2/renderer/VertexBuffer.h"
-#include "libGLESv2/renderer/IndexBuffer.h"
-#include "libGLESv2/renderer/BufferStorage.h"
+#include "libGLESv2/renderer/BufferImpl.h"
 #include "libGLESv2/renderer/Renderer.h"
 
 namespace gl
 {
 
-Buffer::Buffer(rx::Renderer *renderer, GLuint id)
+Buffer::Buffer(rx::BufferImpl *impl, GLuint id)
     : RefCountObject(id),
-      mRenderer(renderer),
+      mBuffer(impl),
       mUsage(GL_DYNAMIC_DRAW),
+      mSize(0),
       mAccessFlags(0),
       mMapped(GL_FALSE),
       mMapPointer(NULL),
       mMapOffset(0),
-      mMapLength(0),
-      mBufferStorage(NULL),
-      mStaticVertexBuffer(NULL),
-      mStaticIndexBuffer(NULL),
-      mUnmodifiedDataUse(0)
+      mMapLength(0)
 {
-    mBufferStorage = renderer->createBufferStorage();
 }
 
 Buffer::~Buffer()
 {
-    delete mBufferStorage;
-    delete mStaticVertexBuffer;
-    delete mStaticIndexBuffer;
+    SafeDelete(mBuffer);
 }
 
-void Buffer::bufferData(const void *data, GLsizeiptr size, GLenum usage)
+Error Buffer::bufferData(const void *data, GLsizeiptr size, GLenum usage)
 {
-    mBufferStorage->clear();
-    mIndexRangeCache.clear();
-    mBufferStorage->setData(data, size, 0);
-
-    mUsage = usage;
-
-    invalidateStaticData();
-
-    if (usage == GL_STATIC_DRAW)
+    gl::Error error = mBuffer->setData(data, size, usage);
+    if (error.isError())
     {
-        mStaticVertexBuffer = new rx::StaticVertexBufferInterface(mRenderer);
-        mStaticIndexBuffer = new rx::StaticIndexBufferInterface(mRenderer);
+        return error;
     }
+
+    mIndexRangeCache.clear();
+    mUsage = usage;
+    mSize = size;
+
+    return error;
 }
 
-void Buffer::bufferSubData(const void *data, GLsizeiptr size, GLintptr offset)
+Error Buffer::bufferSubData(const void *data, GLsizeiptr size, GLintptr offset)
 {
-    mBufferStorage->setData(data, size, offset);
+    gl::Error error = mBuffer->setSubData(data, size, offset);
+    if (error.isError())
+    {
+        return error;
+    }
+
     mIndexRangeCache.invalidateRange(offset, size);
-    invalidateStaticData();
+
+    return error;
 }
 
-void Buffer::copyBufferSubData(Buffer* source, GLintptr sourceOffset, GLintptr destOffset, GLsizeiptr size)
+Error Buffer::copyBufferSubData(Buffer* source, GLintptr sourceOffset, GLintptr destOffset, GLsizeiptr size)
 {
-    mBufferStorage->copyData(source->mBufferStorage, size, sourceOffset, destOffset);
-    invalidateStaticData();
+    gl::Error error = mBuffer->copySubData(source->getImplementation(), sourceOffset, destOffset, size);
+    if (error.isError())
+    {
+        return error;
+    }
+
+    mIndexRangeCache.invalidateRange(destOffset, size);
+
+    return error;
 }
 
-GLvoid *Buffer::mapRange(GLintptr offset, GLsizeiptr length, GLbitfield access)
+Error Buffer::mapRange(GLintptr offset, GLsizeiptr length, GLbitfield access)
 {
     ASSERT(!mMapped);
+    ASSERT(offset + length <= mSize);
 
-    void *dataPointer = mBufferStorage->map(access);
+    Error error = mBuffer->map(offset, length, access, &mMapPointer);
+    if (error.isError())
+    {
+        mMapPointer = NULL;
+        return error;
+    }
 
     mMapped = GL_TRUE;
-    mMapPointer = static_cast<GLvoid*>(static_cast<GLubyte*>(dataPointer) + offset);
     mMapOffset = static_cast<GLint64>(offset);
     mMapLength = static_cast<GLint64>(length);
     mAccessFlags = static_cast<GLint>(access);
 
-    return mMapPointer;
+    if ((access & GL_MAP_WRITE_BIT) > 0)
+    {
+        mIndexRangeCache.invalidateRange(offset, length);
+    }
+
+    return error;
 }
 
-void Buffer::unmap()
+Error Buffer::unmap()
 {
     ASSERT(mMapped);
 
-    mBufferStorage->unmap();
+    Error error = mBuffer->unmap();
+    if (error.isError())
+    {
+        return error;
+    }
 
     mMapped = GL_FALSE;
     mMapPointer = NULL;
     mMapOffset = 0;
     mMapLength = 0;
     mAccessFlags = 0;
-}
 
-rx::BufferStorage *Buffer::getStorage() const
-{
-    return mBufferStorage;
-}
-
-GLint64 Buffer::size() const
-{
-    return static_cast<GLint64>(mBufferStorage->getSize());
-}
-
-GLenum Buffer::usage() const
-{
-    return mUsage;
-}
-
-GLint Buffer::accessFlags() const
-{
-    return mAccessFlags;
-}
-
-GLboolean Buffer::mapped() const
-{
-    return mMapped;
-}
-
-GLvoid *Buffer::mapPointer() const
-{
-    return mMapPointer;
-}
-
-GLint64 Buffer::mapOffset() const
-{
-    return mMapOffset;
-}
-
-GLint64 Buffer::mapLength() const
-{
-    return mMapLength;
+    return error;
 }
 
 void Buffer::markTransformFeedbackUsage()
 {
-    mBufferStorage->markTransformFeedbackUsage();
-    invalidateStaticData();
-}
-
-rx::StaticVertexBufferInterface *Buffer::getStaticVertexBuffer()
-{
-    return mStaticVertexBuffer;
-}
-
-rx::StaticIndexBufferInterface *Buffer::getStaticIndexBuffer()
-{
-    return mStaticIndexBuffer;
-}
-
-void Buffer::invalidateStaticData()
-{
-    if ((mStaticVertexBuffer && mStaticVertexBuffer->getBufferSize() != 0) || (mStaticIndexBuffer && mStaticIndexBuffer->getBufferSize() != 0))
-    {
-        delete mStaticVertexBuffer;
-        mStaticVertexBuffer = NULL;
-
-        delete mStaticIndexBuffer;
-        mStaticIndexBuffer = NULL;
-    }
-
-    mUnmodifiedDataUse = 0;
-}
-
-// Creates static buffers if sufficient used data has been left unmodified
-void Buffer::promoteStaticUsage(int dataSize)
-{
-    if (!mStaticVertexBuffer && !mStaticIndexBuffer)
-    {
-        mUnmodifiedDataUse += dataSize;
-
-        if (mUnmodifiedDataUse > 3 * mBufferStorage->getSize())
-        {
-            mStaticVertexBuffer = new rx::StaticVertexBufferInterface(mRenderer);
-            mStaticIndexBuffer = new rx::StaticIndexBufferInterface(mRenderer);
-        }
-    }
-}
-
-rx::IndexRangeCache *Buffer::getIndexRangeCache()
-{
-    return &mIndexRangeCache;
+    // TODO: Only used by the DX11 backend. Refactor to a more appropriate place.
+    mBuffer->markTransformFeedbackUsage();
+    mIndexRangeCache.clear();
 }
 
 }

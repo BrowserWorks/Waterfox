@@ -45,7 +45,7 @@ public class HomePager extends ViewPager {
     private final OnAddPanelListener mAddPanelListener;
 
     private final HomeConfig mConfig;
-    private ConfigLoaderCallbacks mConfigLoaderCallbacks;
+    private final ConfigLoaderCallbacks mConfigLoaderCallbacks;
 
     private String mInitialPanelId;
 
@@ -70,6 +70,7 @@ public class HomePager extends ViewPager {
     public static final String LIST_TAG_TOP_SITES = "top_sites";
     public static final String LIST_TAG_RECENT_TABS = "recent_tabs";
     public static final String LIST_TAG_BROWSER_SEARCH = "browser_search";
+    public static final String LIST_TAG_REMOTE_TABS = "remote_tabs";
 
     public interface OnUrlOpenListener {
         public enum Flags {
@@ -141,8 +142,8 @@ public class HomePager extends ViewPager {
         LOADED
     }
 
-    static final String CAN_LOAD_ARG = "canLoad";
-    static final String PANEL_CONFIG_ARG = "panelConfig";
+    public static final String CAN_LOAD_ARG = "canLoad";
+    public static final String PANEL_CONFIG_ARG = "panelConfig";
 
     public HomePager(Context context) {
         this(context, null);

@@ -24,11 +24,11 @@ import org.mozilla.mozstumbler.service.utils.NetworkUtils;
 * preferences, do not call any code that isn't thread-safe. You will cause suffering.
 * An exception is made for AppGlobals.isDebug, a false reading is of no consequence. */
 public class AsyncUploader extends AsyncTask<Void, Void, SyncSummary> {
-    private static final String LOG_TAG = AppGlobals.LOG_PREFIX + AsyncUploader.class.getSimpleName();
+    private static final String LOG_TAG = AppGlobals.makeLogTag(AsyncUploader.class.getSimpleName());
     private final UploadSettings mSettings;
     private final Object mListenerLock = new Object();
     private AsyncUploaderListener mListener;
-    private static AtomicBoolean sIsUploading = new AtomicBoolean();
+    private static final AtomicBoolean sIsUploading = new AtomicBoolean();
     private String mNickname;
 
     public interface AsyncUploaderListener {
@@ -111,10 +111,6 @@ public class AsyncUploader extends AsyncTask<Void, Void, SyncSummary> {
 
     private class Submitter extends AbstractCommunicator {
         private static final String SUBMIT_URL = "https://location.services.mozilla.com/v1/submit";
-
-        public Submitter() {
-            super(Prefs.getInstance().getUserAgent());
-        }
 
         @Override
         public String getUrlString() {

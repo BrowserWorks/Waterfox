@@ -4,10 +4,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifdef MOZ_LOGGING
-#define FORCE_PR_LOG 1
-#endif
-
 #include "nsNSSComponent.h"
 
 #include "ExtendedValidation.h"
@@ -23,7 +19,7 @@
 #include "mozilla/PublicSSL.h"
 #include "mozilla/StaticPtr.h"
 
-#ifndef MOZ_DISABLE_CRYPTOLEGACY
+#ifndef MOZ_NO_SMART_CARDS
 #include "nsSmartCardMonitor.h"
 #endif
 
@@ -213,7 +209,7 @@ GetOCSPBehaviorFromPrefs(/*out*/ CertVerifier::ocsp_download_config* odc,
 nsNSSComponent::nsNSSComponent()
   :mutex("nsNSSComponent.mutex"),
    mNSSInitialized(false),
-#ifndef MOZ_DISABLE_CRYPTOLEGACY
+#ifndef MOZ_NO_SMART_CARDS
    mThreadList(nullptr),
 #endif
    mCertVerificationThread(nullptr)
@@ -357,7 +353,7 @@ nsNSSComponent::GetNSSBundleString(const char* name, nsAString& outString)
   return rv;
 }
 
-#ifndef MOZ_DISABLE_CRYPTOLEGACY
+#ifndef MOZ_NO_SMART_CARDS
 void
 nsNSSComponent::LaunchSmartCardThreads()
 {
@@ -413,7 +409,7 @@ nsNSSComponent::ShutdownSmartCardThreads()
   delete mThreadList;
   mThreadList = nullptr;
 }
-#endif // MOZ_DISABLE_CRYPTOLEGACY
+#endif // MOZ_NO_SMART_CARDS
 
 void
 nsNSSComponent::LoadLoadableRoots()
@@ -703,6 +699,15 @@ static const bool FALSE_START_ENABLED_DEFAULT = true;
 static const bool NPN_ENABLED_DEFAULT = true;
 static const bool ALPN_ENABLED_DEFAULT = false;
 
+static void
+ConfigureTLSSessionIdentifiers()
+{
+  bool disableSessionIdentifiers =
+    Preferences::GetBool("security.ssl.disable_session_identifiers", false);
+  SSL_OptionSetDefault(SSL_ENABLE_SESSION_TICKETS, !disableSessionIdentifiers);
+  SSL_OptionSetDefault(SSL_NO_CACHE, disableSessionIdentifiers);
+}
+
 namespace {
 
 class CipherSuiteChangeObserver : public nsIObserver
@@ -808,14 +813,12 @@ void nsNSSComponent::setValidationOptions(bool isInitialSetting,
   PublicSSLState()->SetOCSPStaplingEnabled(ocspStaplingEnabled);
   PrivateSSLState()->SetOCSPStaplingEnabled(ocspStaplingEnabled);
 
-  // Default pinning enforcement level is disabled.
-  CertVerifier::pinning_enforcement_config
-    pinningEnforcementLevel =
-      static_cast<CertVerifier::pinning_enforcement_config>
-        (Preferences::GetInt("security.cert_pinning.enforcement_level",
-                             CertVerifier::pinningDisabled));
-  if (pinningEnforcementLevel > CertVerifier::pinningEnforceTestMode) {
-    pinningEnforcementLevel = CertVerifier::pinningDisabled;
+  CertVerifier::PinningMode pinningMode =
+    static_cast<CertVerifier::PinningMode>
+      (Preferences::GetInt("security.cert_pinning.enforcement_level",
+                           CertVerifier::pinningDisabled));
+  if (pinningMode > CertVerifier::pinningEnforceTestMode) {
+    pinningMode = CertVerifier::pinningDisabled;
   }
 
   CertVerifier::ocsp_download_config odc;
@@ -823,8 +826,7 @@ void nsNSSComponent::setValidationOptions(bool isInitialSetting,
   CertVerifier::ocsp_get_config ogc;
 
   GetOCSPBehaviorFromPrefs(&odc, &osc, &ogc, lock);
-  mDefaultCertVerifier = new SharedCertVerifier(odc, osc, ogc,
-                                                pinningEnforcementLevel);
+  mDefaultCertVerifier = new SharedCertVerifier(odc, osc, ogc, pinningMode);
 }
 
 // Enable the TLS versions given in the prefs, defaulting to TLS 1.0 (min) and
@@ -993,7 +995,7 @@ nsNSSComponent::InitializeNSS()
   InitCertVerifierLog();
   LoadLoadableRoots();
 
-  SSL_OptionSetDefault(SSL_ENABLE_SESSION_TICKETS, true);
+  ConfigureTLSSessionIdentifiers();
 
   bool requireSafeNegotiation =
     Preferences::GetBool("security.ssl.require_safe_negotiation",
@@ -1033,7 +1035,7 @@ nsNSSComponent::InitializeNSS()
 
   mHttpForNSS.initTable();
 
-#ifndef MOZ_DISABLE_CRYPTOLEGACY
+#ifndef MOZ_NO_SMART_CARDS
   LaunchSmartCardThreads();
 #endif
 
@@ -1072,7 +1074,7 @@ nsNSSComponent::ShutdownNSS()
       PR_LOG(gPIPNSSLog, PR_LOG_ERROR, ("nsNSSComponent::ShutdownNSS cannot stop observing cipher suite change\n"));
     }
 
-#ifndef MOZ_DISABLE_CRYPTOLEGACY
+#ifndef MOZ_NO_SMART_CARDS
     ShutdownSmartCardThreads();
 #endif
     SSL_ClearSessionCache();
@@ -1303,6 +1305,8 @@ nsNSSComponent::Observe(nsISupports* aSubject, const char* aTopic,
       SSL_OptionSetDefault(SSL_ENABLE_ALPN,
                            Preferences::GetBool("security.ssl.enable_alpn",
                                                 ALPN_ENABLED_DEFAULT));
+    } else if (prefName.Equals("security.ssl.disable_session_identifiers")) {
+      ConfigureTLSSessionIdentifiers();
     } else if (prefName.EqualsLiteral("security.OCSP.enabled") ||
                prefName.EqualsLiteral("security.OCSP.require") ||
                prefName.EqualsLiteral("security.OCSP.GET.enabled") ||

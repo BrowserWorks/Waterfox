@@ -415,8 +415,8 @@ var WifiManager = (function() {
         // and routing table is changed but still cannot connect to network
         // so the workaround here is disable interface the enable again to
         // trigger network reconnect with static ip.
-        netUtil.disableInterface(manager.ifname, function (ok) {
-          netUtil.enableInterface(manager.ifname, function (ok) {
+        gNetworkService.disableInterface(manager.ifname, function (ok) {
+          gNetworkService.enableInterface(manager.ifname, function (ok) {
           });
         });
       }
@@ -442,12 +442,12 @@ var WifiManager = (function() {
     }
 
     // Set ip, mask length, gateway, dns to network interface
-    netUtil.configureInterface( { ifname: ifname,
-                                  ipaddr: staticIpInfo.ipaddr,
-                                  mask: staticIpInfo.maskLength,
-                                  gateway: staticIpInfo.gateway,
-                                  dns1: staticIpInfo.dns1,
-                                  dns2: staticIpInfo.dns2 }, function (data) {
+    gNetworkService.configureInterface( { ifname: ifname,
+                                          ipaddr: staticIpInfo.ipaddr,
+                                          mask: staticIpInfo.maskLength,
+                                          gateway: staticIpInfo.gateway,
+                                          dns1: staticIpInfo.dns1,
+                                          dns2: staticIpInfo.dns2 }, function (data) {
       netUtil.runIpConfig(ifname, staticIpInfo, function(data) {
         dhcpInfo = data.info;
         notify("networkconnected", data);
@@ -587,17 +587,17 @@ var WifiManager = (function() {
 
   manager.connectionDropped = function(callback) {
     // Reset network interface when connection drop
-    netUtil.configureInterface( { ifname: manager.ifname,
-                                  ipaddr: 0,
-                                  mask: 0,
-                                  gateway: 0,
-                                  dns1: 0,
-                                  dns2: 0 }, function (data) {
+    gNetworkService.configureInterface( { ifname: manager.ifname,
+                                          ipaddr: 0,
+                                          mask: 0,
+                                          gateway: 0,
+                                          dns1: 0,
+                                          dns2: 0 }, function (data) {
     });
 
     // If we got disconnected, kill the DHCP client in preparation for
     // reconnection.
-    netUtil.resetConnections(manager.ifname, function() {
+    gNetworkService.resetConnections(manager.ifname, function() {
       netUtil.stopDhcp(manager.ifname, function() {
         callback();
       });
@@ -889,7 +889,7 @@ var WifiManager = (function() {
       }
       suppressEvents = true;
       wifiCommand.killSupplicant(function() {
-        netUtil.disableInterface(manager.ifname, function (ok) {
+        gNetworkService.disableInterface(manager.ifname, function (ok) {
           suppressEvents = false;
           callback();
         });
@@ -996,7 +996,7 @@ var WifiManager = (function() {
                 }
 
                 manager.supplicantStarted = true;
-                netUtil.enableInterface(manager.ifname, function (ok) {
+                gNetworkService.enableInterface(manager.ifname, function (ok) {
                   callback(ok ? 0 : -1);
                 });
               });
@@ -1040,7 +1040,7 @@ var WifiManager = (function() {
             wifiCommand.closeSupplicantConnection(function() {
               manager.connectToSupplicant = false;
               manager.state = "UNINITIALIZED";
-              netUtil.disableInterface(manager.ifname, function (ok) {
+              gNetworkService.disableInterface(manager.ifname, function (ok) {
                 unloadDriver(WIFI_FIRMWARE_STATION, callback);
               });
             });
@@ -1842,6 +1842,9 @@ function WifiWorker() {
   // Given a connection status network, takes a network from
   // self.configuredNetworks and prepares it for the DOM.
   netToDOM = function(net) {
+    if (!net) {
+      return null;
+    }
     var ssid = dequote(net.ssid);
     var security = (net.key_mgmt === "NONE" && net.wep_key0) ? ["WEP"] :
                    (net.key_mgmt && net.key_mgmt !== "NONE") ? [net.key_mgmt.split(" ")[0]] :
@@ -2026,7 +2029,7 @@ function WifiWorker() {
         WifiManager.disableNetwork(netId, function() {});
       }
     });
-    self._fireEvent("onconnectingfailed", {network: self.currentNetwork});
+    self._fireEvent("onconnectingfailed", {network: netToDOM(self.currentNetwork)});
   }
 
   WifiManager.onstatechange = function() {
@@ -2069,7 +2072,10 @@ function WifiWorker() {
         }
 
         self.currentNetwork.netId = this.id;
-        WifiManager.getNetworkConfiguration(self.currentNetwork, function (){});
+        WifiManager.getNetworkConfiguration(self.currentNetwork, function (){
+          // Notify again because we get complete network information.
+          self._fireEvent("onconnecting", { network: netToDOM(self.currentNetwork) });
+        });
         break;
       case "COMPLETED":
         // Now that we've successfully completed the connection, re-enable the
@@ -2082,27 +2088,32 @@ function WifiWorker() {
           self._needToEnableNetworks = false;
         }
 
+        var _oncompleted = function() {
+          // Update http proxy when connected to network.
+          let netConnect = WifiManager.getHttpProxyNetwork(self.currentNetwork);
+          if (netConnect)
+            WifiManager.setHttpProxy(netConnect);
+
+          // The full authentication process is completed, reset the count.
+          WifiManager.authenticationFailuresCount = 0;
+          WifiManager.loopDetectionCount = 0;
+          self._startConnectionInfoTimer();
+          self._fireEvent("onassociate", { network: netToDOM(self.currentNetwork) });
+        };
+
         // We get the ASSOCIATED event when we've associated but not connected, so
         // wait until the handshake is complete.
         if (this.fromStatus || !self.currentNetwork) {
           // In this case, we connected to an already-connected wpa_supplicant,
           // because of that we need to gather information about the current
           // network here.
-          self.currentNetwork = { ssid: quote(WifiManager.connectionInfo.ssid),
+          self.currentNetwork = { bssid: WifiManager.connectionInfo.bssid,
+                                  ssid: quote(WifiManager.connectionInfo.ssid),
                                   netId: WifiManager.connectionInfo.id };
-          WifiManager.getNetworkConfiguration(self.currentNetwork, function(){});
+          WifiManager.getNetworkConfiguration(self.currentNetwork, _oncompleted);
+        } else {
+          _oncompleted();
         }
-
-        // Update http proxy when connected to network.
-        let netConnect = WifiManager.getHttpProxyNetwork(self.currentNetwork);
-        if (netConnect)
-          WifiManager.setHttpProxy(netConnect);
-
-        // The full authentication process is completed, reset the count.
-        WifiManager.authenticationFailuresCount = 0;
-        WifiManager.loopDetectionCount = 0;
-        self._startConnectionInfoTimer();
-        self._fireEvent("onassociate", { network: netToDOM(self.currentNetwork) });
         break;
       case "CONNECTED":
         // BSSID is read after connected, update it.
@@ -2121,7 +2132,7 @@ function WifiWorker() {
           return;
         }
 
-        self._fireEvent("ondisconnect", {});
+        self._fireEvent("ondisconnect", {network: netToDOM(self.currentNetwork)});
 
         // When disconnected, clear the http proxy setting if it exists.
         // Temporarily set http proxy to empty and restore user setting after setHttpProxy.
@@ -3637,17 +3648,16 @@ WifiWorker.prototype = {
   observe: function observe(subject, topic, data) {
     switch (topic) {
     case kMozSettingsChangedObserverTopic:
-      // The string we're interested in will be a JSON string that looks like:
-      // {"key":"wifi.enabled","value":"true"}.
-
-      let setting = JSON.parse(data);
       // To avoid WifiWorker setting the wifi again, don't need to deal with
       // the "mozsettings-changed" event fired from internal setting.
-      if (setting.isInternalChange) {
+      if ("wrappedJSObject" in subject) {
+        subject = subject.wrappedJSObject;
+      }
+      if (subject.isInternalChange) {
         return;
       }
 
-      this.handle(setting.key, setting.value);
+      this.handle(subject.key, subject.value);
       break;
 
     case "xpcom-shutdown":

@@ -1,15 +1,11 @@
 package org.mozilla.gecko.tests;
 
+import org.json.JSONObject;
+import org.mozilla.gecko.Actions;
 import org.mozilla.gecko.tests.helpers.JavascriptBridge;
 import org.mozilla.gecko.tests.helpers.JavascriptMessageParser;
 
 import android.util.Log;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.json.JSONObject;
-import org.mozilla.gecko.Actions;
-import org.mozilla.gecko.Assert;
 
 public class JavascriptTest extends BaseTest {
     private static final String LOGTAG = "JavascriptTest";
@@ -25,15 +21,17 @@ public class JavascriptTest extends BaseTest {
     public void testJavascript() throws Exception {
         blockForGeckoReady();
 
+        doTestJavascript();
+    }
+
+    protected void doTestJavascript() throws Exception {
         // We want to be waiting for Robocop messages before the page is loaded
         // because the test harness runs each test in the suite (and possibly
         // completes testing) before the page load event is fired.
-        final Actions.EventExpecter expecter =
-            mActions.expectGeckoEvent(EVENT_TYPE);
+        final Actions.EventExpecter expecter = mActions.expectGeckoEvent(EVENT_TYPE);
         mAsserter.dumpLog("Registered listener for " + EVENT_TYPE);
 
-        final String url = getAbsoluteUrl(StringHelper.ROBOCOP_JS_HARNESS_URL +
-                                          "?path=" + javascriptUrl);
+        final String url = getAbsoluteUrl(StringHelper.getHarnessUrlForJavascript(javascriptUrl));
         mAsserter.dumpLog("Loading JavaScript test from " + url);
         loadUrl(url);
 

@@ -15,32 +15,30 @@
 #include "nsAutoPtr.h"
 #include "nsCOMPtr.h"
 #include "nsCycleCollectionParticipant.h"
-#include "nsIInterfaceRequestor.h"
-#include "nsIObserver.h"
-#include "nsIRequest.h"
 #include "nsISupports.h"
 #include "nsISupportsUtils.h"
-#include "nsIWebSocketChannel.h"
-#include "nsIWebSocketListener.h"
 #include "nsString.h"
-#include "nsWeakReference.h"
 #include "nsWrapperCache.h"
 
 #define DEFAULT_WS_SCHEME_PORT  80
 #define DEFAULT_WSS_SCHEME_PORT 443
 
+class nsIInputStream;
+
 namespace mozilla {
 namespace dom {
 
-class WebSocket MOZ_FINAL : public DOMEventTargetHelper,
-                            public nsIInterfaceRequestor,
-                            public nsIWebSocketListener,
-                            public nsIObserver,
-                            public nsSupportsWeakReference,
-                            public nsIRequest
+namespace workers {
+class WorkerPrivate;
+}
+
+class File;
+
+class WebSocketImpl;
+
+class WebSocket MOZ_FINAL : public DOMEventTargetHelper
 {
-friend class CallDispatchConnectionCloseEvents;
-friend class nsAutoCloseWS;
+  friend class WebSocketImpl;
 
 public:
   enum {
@@ -54,10 +52,6 @@ public:
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_SKIPPABLE_SCRIPT_HOLDER_CLASS_INHERITED(
     WebSocket, DOMEventTargetHelper)
-  NS_DECL_NSIINTERFACEREQUESTOR
-  NS_DECL_NSIWEBSOCKETLISTENER
-  NS_DECL_NSIOBSERVER
-  NS_DECL_NSIREQUEST
 
   // EventTarget
   virtual void EventListenerAdded(nsIAtom* aType) MOZ_OVERRIDE;
@@ -68,7 +62,7 @@ public:
   // nsWrapperCache
   nsPIDOMWindow* GetParentObject() { return GetOwner(); }
 
-  virtual JSObject* WrapObject(JSContext *cx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* cx) MOZ_OVERRIDE;
 
 public: // static helpers:
 
@@ -96,10 +90,10 @@ public: // WebIDL interface:
   void GetUrl(nsAString& aResult);
 
   // webIDL: readonly attribute unsigned short readyState;
-  uint16_t ReadyState() const { return mReadyState; }
+  uint16_t ReadyState();
 
   // webIDL: readonly attribute unsigned long bufferedAmount;
-  uint32_t BufferedAmount() const { return mOutgoingBufferedAmount; }
+  uint32_t BufferedAmount() const;
 
   // webIDL: attribute Function? onopen;
   IMPL_EVENT_HANDLER(open)
@@ -125,13 +119,13 @@ public: // WebIDL interface:
   IMPL_EVENT_HANDLER(message)
 
   // webIDL: attribute DOMString binaryType;
-  dom::BinaryType BinaryType() const { return mBinaryType; }
-  void SetBinaryType(dom::BinaryType aData) { mBinaryType = aData; }
+  dom::BinaryType BinaryType() const;
+  void SetBinaryType(dom::BinaryType aData);
 
   // webIDL: void send(DOMString|Blob|ArrayBufferView data);
   void Send(const nsAString& aData,
             ErrorResult& aRv);
-  void Send(nsIDOMBlob* aData,
+  void Send(File& aData,
             ErrorResult& aRv);
   void Send(const ArrayBuffer& aData,
             ErrorResult& aRv);
@@ -142,54 +136,18 @@ private: // constructor && distructor
   explicit WebSocket(nsPIDOMWindow* aOwnerWindow);
   virtual ~WebSocket();
 
-protected:
-  nsresult Init(JSContext* aCx,
-                nsIPrincipal* aPrincipal,
-                const nsAString& aURL,
-                nsTArray<nsString>& aProtocolArray);
-
-  void Send(nsIInputStream* aMsgStream,
-            const nsACString& aMsgString,
-            uint32_t aMsgLength,
-            bool aIsBinary,
-            ErrorResult& aRv);
-
-  nsresult ParseURL(const nsString& aURL);
-  nsresult EstablishConnection();
-
-  // These methods when called can release the WebSocket object
-  void FailConnection(uint16_t reasonCode,
-                      const nsACString& aReasonString = EmptyCString());
-  nsresult CloseConnection(uint16_t reasonCode,
-                           const nsACString& aReasonString = EmptyCString());
-  nsresult Disconnect();
-
-  nsresult ConsoleError();
-  nsresult PrintErrorOnConsole(const char* aBundleURI,
-                               const char16_t* aError,
-                               const char16_t** aFormatStrings,
-                               uint32_t aFormatStringsLen);
-
-  nsresult DoOnMessageAvailable(const nsACString& aMsg,
-                                bool isBinary);
-
-  // ConnectionCloseEvents: 'error' event if needed, then 'close' event.
-  // - These must not be dispatched while we are still within an incoming call
-  //   from JS (ex: close()).  Set 'sync' to false in that case to dispatch in a
-  //   separate new event.
-  nsresult ScheduleConnectionCloseEvents(nsISupports* aContext,
-                                         nsresult aStatusCode,
-                                         bool sync);
-  // 2nd half of ScheduleConnectionCloseEvents, sometimes run in its own event.
-  void DispatchConnectionCloseEvents();
+  void SetReadyState(uint16_t aReadyState);
 
   // These methods actually do the dispatch for various events.
-  nsresult CreateAndDispatchSimpleEvent(const nsString& aName);
+  nsresult CreateAndDispatchSimpleEvent(const nsAString& aName);
   nsresult CreateAndDispatchMessageEvent(const nsACString& aData,
-                                         bool isBinary);
+                                         bool aIsBinary);
+  nsresult CreateAndDispatchMessageEvent(JSContext* aCx,
+                                         const nsACString& aData,
+                                         bool aIsBinary);
   nsresult CreateAndDispatchCloseEvent(bool aWasClean,
                                        uint16_t aCode,
-                                       const nsString& aReason);
+                                       const nsAString& aReason);
 
   // if there are "strong event listeners" (see comment in WebSocket.cpp) or
   // outgoing not sent messages then this method keeps the object alive
@@ -199,60 +157,43 @@ protected:
   // (and possibly collected).
   void DontKeepAliveAnyMore();
 
-  nsresult UpdateURI();
+private:
+  WebSocket(const WebSocket& x) MOZ_DELETE;   // prevent bad usage
+  WebSocket& operator=(const WebSocket& x) MOZ_DELETE;
 
-protected: //data
+  void Send(nsIInputStream* aMsgStream,
+            const nsACString& aMsgString,
+            uint32_t aMsgLength,
+            bool aIsBinary,
+            ErrorResult& aRv);
 
-  nsCOMPtr<nsIWebSocketChannel> mChannel;
+  void AssertIsOnTargetThread() const;
+
+  // Raw pointer because this WebSocketImpl is created, managed and destroyed by
+  // WebSocket.
+  WebSocketImpl* mImpl;
+
+  bool mIsMainThread;
+
+  bool mKeepingAlive;
+  bool mCheckMustKeepAlive;
+
+  uint32_t mOutgoingBufferedAmount;
 
   // related to the WebSocket constructor steps
   nsString mOriginalURL;
   nsString mEffectiveURL;   // after redirects
-  bool mSecure; // if true it is using SSL and the wss scheme,
-                // otherwise it is using the ws scheme with no SSL
-
-  bool mKeepingAlive;
-  bool mCheckMustKeepAlive;
-  bool mOnCloseScheduled;
-  bool mFailed;
-  bool mDisconnected;
-
-  // Set attributes of DOM 'onclose' message
-  bool      mCloseEventWasClean;
-  nsString  mCloseEventReason;
-  uint16_t  mCloseEventCode;
-
-  nsCString mAsciiHost;  // hostname
-  uint32_t  mPort;
-  nsCString mResource; // [filepath[?query]]
-  nsString  mUTF16Origin;
-
-  nsCOMPtr<nsIURI> mURI;
-  nsCString mRequestedProtocolList;
-  nsCString mEstablishedProtocol;
   nsCString mEstablishedExtensions;
-
-  uint16_t mReadyState;
-
-  nsCOMPtr<nsIPrincipal> mPrincipal;
-
-  uint32_t mOutgoingBufferedAmount;
+  nsCString mEstablishedProtocol;
 
   dom::BinaryType mBinaryType;
 
-  // Web Socket owner information:
-  // - the script file name, UTF8 encoded.
-  // - source code line number where the Web Socket object was constructed.
-  // - the ID of the inner window where the script lives. Note that this may not
-  //   be the same as the Web Socket owner window.
-  // These attributes are used for error reporting.
-  nsCString mScriptFile;
-  uint32_t mScriptLine;
-  uint64_t mInnerWindowID;
+  // This mutex protects mReadyState that is the only variable that is used in
+  // different threads.
+  mozilla::Mutex mMutex;
 
-private:
-  WebSocket(const WebSocket& x) MOZ_DELETE;   // prevent bad usage
-  WebSocket& operator=(const WebSocket& x) MOZ_DELETE;
+  // This value should not be used directly but use ReadyState() instead.
+  uint16_t mReadyState;
 };
 
 } //namespace dom

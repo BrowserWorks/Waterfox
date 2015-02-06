@@ -49,8 +49,8 @@ ContentHostBase::Composite(EffectChain& aEffectChain,
     return;
   }
 
-  RefPtr<NewTextureSource> source = GetTextureSource();
-  RefPtr<NewTextureSource> sourceOnWhite = GetTextureSourceOnWhite();
+  RefPtr<TextureSource> source = GetTextureSource();
+  RefPtr<TextureSource> sourceOnWhite = GetTextureSourceOnWhite();
 
   if (!source) {
     return;
@@ -201,15 +201,15 @@ ContentHostBase::Composite(EffectChain& aEffectChain,
   if (iterOnWhite) {
     diagnostics |= DiagnosticFlags::COMPONENT_ALPHA;
   }
-  GetCompositor()->DrawDiagnostics(diagnostics, *aVisibleRegion, aClipRect,
+  GetCompositor()->DrawDiagnostics(diagnostics, nsIntRegion(mBufferRect), aClipRect,
                                    aTransform, mFlashCounter);
 }
 
 TemporaryRef<TexturedEffect>
 ContentHostBase::GenEffect(const gfx::Filter& aFilter)
 {
-  RefPtr<NewTextureSource> source = GetTextureSource();
-  RefPtr<NewTextureSource> sourceOnWhite = GetTextureSourceOnWhite();
+  RefPtr<TextureSource> source = GetTextureSource();
+  RefPtr<TextureSource> sourceOnWhite = GetTextureSourceOnWhite();
   if (!source) {
     return nullptr;
   }
@@ -439,14 +439,14 @@ ContentHostIncremental::ProcessTextureUpdates()
   mUpdateList.Clear();
 }
 
-NewTextureSource*
+TextureSource*
 ContentHostIncremental::GetTextureSource()
 {
   MOZ_ASSERT(mLocked);
   return mSource;
 }
 
-NewTextureSource*
+TextureSource*
 ContentHostIncremental::GetTextureSourceOnWhite()
 {
   MOZ_ASSERT(mLocked);

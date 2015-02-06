@@ -1,0 +1,95 @@
+% This Source Code Form is subject to the terms of the Mozilla Public
+% License, v. 2.0. If a copy of the MPL was not distributed with this
+% file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+%include ../shared/devedition.inc.css
+
+/* Use forward-facing magnifying glasses for the search box */
+:root[devtoolstheme="dark"] {
+  --search-button-image: url("chrome://browser/skin/devedition/search.svg#search-icon-mac-inverted");
+}
+:root[devtoolstheme="light"] {
+  --search-button-image: url("chrome://browser/skin/devedition/search.svg#search-icon-mac");
+}
+
+/* Use only 1px separator between nav toolbox and page content */
+#navigator-toolbox::after {
+  background: linear-gradient(to top, var(--chrome-navigator-toolbox-separator-color), var(--chrome-navigator-toolbox-separator-color) 1px, transparent 1px);
+}
+
+/* Include extra space on left/right for dragging since there is no space above
+   the tabs */
+#main-window[tabsintitlebar] #TabsToolbar {
+  padding-left: 50px;
+  padding-right: 50px;
+  margin-bottom: 0; /* Don't overlap the inner highlight at the top of the nav-bar */
+}
+
+/* Get rid of 1px bright strip at the top of window */
+#main-window[tabsintitlebar] #titlebar-content {
+  background: var(--chrome-background-color);
+}
+
+/* Resize things so that the native titlebar is in line with the tabs */
+#main-window[tabsintitlebar] > #titlebar > #titlebar-content > #titlebar-buttonbox-container,
+#main-window[tabsintitlebar] > #titlebar > #titlebar-content > #titlebar-secondary-buttonbox > #titlebar-fullscreen-button {
+  margin-top: 6px;
+}
+
+/* Square back and forward buttons.  Need !important on these because there
+   are a lot of more specific selectors sprinkled around elsewhere for changing
+   background / shadows for different states */
+#back-button,
+#forward-button {
+  height: 22px !important;
+  box-shadow: none !important;
+  border: none !important;
+  background: var(--chrome-nav-buttons-background) !important;
+}
+
+#back-button:hover:not([disabled="true"]),
+#forward-button:hover:not([disabled="true"]) {
+  background: var(--chrome-nav-buttons-hover-background) !important;
+}
+
+#back-button {
+  border-radius: 3px 0 0 3px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+#back-button:hover:active:not([disabled="true"]) {
+  -moz-image-region: rect(18px, 54px, 36px, 36px);
+}
+
+/* Use smaller back button icon */
+@media (min-resolution: 2dppx) {
+  #back-button {
+    -moz-image-region: rect(0, 108px, 36px, 72px);
+  }
+
+  #back-button:hover:active:not([disabled="true"]) {
+    -moz-image-region: rect(36px, 108px, 72px, 72px);
+  }
+}
+
+#forward-button:hover:active:not(:-moz-lwtheme) {
+  background-image: none;
+  box-shadow: none;
+}
+
+/* Don't use the default background for tabs toolbar */
+#TabsToolbar {
+  -moz-appearance: none !important;
+}
+
+/* Tab styling - make sure to use an inverted icon for the selected tab
+   (brighttext only covers the unselected tabs) */
+.tab-close-button[selected=true]:not(:hover) {
+  -moz-image-region: rect(0, 64px, 16px, 48px);
+}
+@media (min-resolution: 2dppx) {
+  .tab-close-button[selected=true]:not(:hover) {
+    -moz-image-region: rect(0, 128px, 32px, 96px);
+  }
+}

@@ -28,7 +28,7 @@ namespace jit {
 struct VirtualRegisterGroup : public TempObject
 {
     // All virtual registers in the group.
-    Vector<uint32_t, 2, IonAllocPolicy> registers;
+    Vector<uint32_t, 2, JitAllocPolicy> registers;
 
     // Desired physical register to use for registers in the group.
     LAllocation allocation;
@@ -78,7 +78,7 @@ class BacktrackingVirtualRegister : public VirtualRegister
     }
 
     void setCanonicalSpill(LAllocation alloc) {
-        JS_ASSERT(!alloc.isUse());
+        MOZ_ASSERT(!alloc.isUse());
         canonicalSpill_ = alloc;
     }
     const LAllocation *canonicalSpill() const {
@@ -92,7 +92,7 @@ class BacktrackingVirtualRegister : public VirtualRegister
         return canonicalSpillExclude_.bits() != 0;
     }
     CodePosition canonicalSpillExclude() const {
-        JS_ASSERT(hasCanonicalSpillExclude());
+        MOZ_ASSERT(hasCanonicalSpillExclude());
         return canonicalSpillExclude_;
     }
 
@@ -207,8 +207,8 @@ class BacktrackingAllocator
     bool requeueIntervals(const LiveIntervalVector &newIntervals);
     void spill(LiveInterval *interval);
 
-    bool isReusedInput(LUse *use, LInstruction *ins, bool considerCopy);
-    bool isRegisterUse(LUse *use, LInstruction *ins, bool considerCopy = false);
+    bool isReusedInput(LUse *use, LNode *ins, bool considerCopy);
+    bool isRegisterUse(LUse *use, LNode *ins, bool considerCopy = false);
     bool isRegisterDefinition(LiveInterval *interval);
     bool addLiveInterval(LiveIntervalVector &intervals, uint32_t vreg,
                          LiveInterval *spillInterval,
@@ -224,8 +224,8 @@ class BacktrackingAllocator
 
     struct PrintLiveIntervalRange;
 
-    bool minimalDef(const LiveInterval *interval, LInstruction *ins);
-    bool minimalUse(const LiveInterval *interval, LInstruction *ins);
+    bool minimalDef(const LiveInterval *interval, LNode *ins);
+    bool minimalUse(const LiveInterval *interval, LNode *ins);
     bool minimalInterval(const LiveInterval *interval, bool *pfixed = nullptr);
 
     // Heuristic methods.

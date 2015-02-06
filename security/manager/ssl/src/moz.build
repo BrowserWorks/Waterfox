@@ -6,20 +6,25 @@
 
 EXPORTS += [
     'CryptoTask.h',
+    'nsClientAuthRemember.h',
     'nsCrypto.h',
+    'nsNSSCallbacks.h',
+    'nsNSSCertificate.h',
+    'nsNSSComponent.h',
+    'nsNSSHelper.h',
     'nsNSSShutDown.h',
     'nsRandomGenerator.h',
     'NSSErrorsService.h',
     'ScopedNSSTypes.h',
+    'SharedCertVerifier.h',
 ]
 
 EXPORTS.mozilla += [
     'PublicSSL.h',
 ]
 
-SOURCES += [
+UNIFIED_SOURCES += [
     'CryptoTask.cpp',
-    'nsCertificatePrincipal.cpp',
     'nsCertOverrideService.cpp',
     'nsCertPicker.cpp',
     'nsCertVerificationThread.cpp',
@@ -37,7 +42,6 @@ SOURCES += [
     'nsNSSCertificateFakeTransport.cpp',
     'nsNSSCertTrust.cpp',
     'nsNSSCertValidity.cpp',
-    'nsNSSCleaner.cpp',
     'nsNSSErrors.cpp',
     'nsNSSIOLayer.cpp',
     'nsNSSModule.cpp',
@@ -73,17 +77,17 @@ SOURCES += [
     'PSMContentListener.cpp',
 ]
 
-if not CONFIG['MOZ_DISABLE_CRYPTOLEGACY']:
-    SOURCES += [
+if not CONFIG['MOZ_NO_SMART_CARDS']:
+    UNIFIED_SOURCES += [
         'nsSmartCardMonitor.cpp',
     ]
 
 if CONFIG['MOZ_XUL']:
-    SOURCES += [
+    UNIFIED_SOURCES += [
         'nsCertTree.cpp',
     ]
 
-SOURCES += [
+UNIFIED_SOURCES += [
     'md4.c',
 ]
 

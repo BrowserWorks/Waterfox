@@ -46,13 +46,13 @@ public class PropertyAnimator implements Runnable {
         public void onPropertyAnimationEnd();
     }
 
-    private Interpolator mInterpolator;
+    private final Interpolator mInterpolator;
     private long mStartTime;
-    private long mDuration;
-    private float mDurationReciprocal;
-    private List<ElementHolder> mElementsList;
+    private final long mDuration;
+    private final float mDurationReciprocal;
+    private final List<ElementHolder> mElementsList;
     private List<PropertyAnimationListener> mListeners;
-    /* inner-access */ FramePoster mFramePoster;
+    FramePoster mFramePoster;
     private boolean mUseHardwareLayer;
 
     public PropertyAnimator(long duration) {
@@ -61,7 +61,7 @@ public class PropertyAnimator implements Runnable {
 
     public PropertyAnimator(long duration, Interpolator interpolator) {
         mDuration = duration;
-        mDurationReciprocal = 1.0f / (float) mDuration;
+        mDurationReciprocal = 1.0f / mDuration;
         mInterpolator = interpolator;
         mElementsList = new ArrayList<ElementHolder>();
         mFramePoster = FramePoster.create(this);
@@ -159,22 +159,24 @@ public class PropertyAnimator implements Runnable {
             treeObserver = null;
         }
 
+        final ViewTreeObserver.OnPreDrawListener preDrawListener = new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                if (treeObserver.isAlive()) {
+                    treeObserver.removeOnPreDrawListener(this);
+                }
+
+                mFramePoster.postFirstAnimationFrame();
+                return true;
+            }
+        };
+
         // Try to start animation after any on-going layout round
         // in the current view tree. OnPreDrawListener seems broken
         // on pre-Honeycomb devices, start animation immediatelly
         // in this case.
         if (Versions.feature11Plus && treeObserver != null && treeObserver.isAlive()) {
-            treeObserver.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-                @Override
-                public boolean onPreDraw() {
-                    if (treeObserver.isAlive()) {
-                        treeObserver.removeOnPreDrawListener(this);
-                    }
-
-                    mFramePoster.postFirstAnimationFrame();
-                    return true;
-                }
-            });
+            treeObserver.addOnPreDrawListener(preDrawListener);
         } else {
             mFramePoster.postFirstAnimationFrame();
         }

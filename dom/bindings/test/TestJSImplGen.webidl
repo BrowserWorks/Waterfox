@@ -10,8 +10,6 @@ typedef TestJSImplInterface? NullableTestJSImplInterface;
 
 callback MyTestCallback = void();
 
-TestInterface implements ImplementedInterface;
-
 enum MyTestEnum {
   "a",
   "b"
@@ -136,9 +134,8 @@ interface TestJSImplInterface {
   TestJSImplInterface receiveSelf();
   TestJSImplInterface? receiveNullableSelf();
 
-  // Callback interface ignores 'resultNotAddRefed'. See bug 843272.
-  //TestJSImplInterface receiveWeakSelf();
-  //TestJSImplInterface? receiveWeakNullableSelf();
+  TestJSImplInterface receiveWeakSelf();
+  TestJSImplInterface? receiveWeakNullableSelf();
 
   // A version to test for casting to TestJSImplInterface&
   void passSelf(TestJSImplInterface arg);
@@ -170,9 +167,8 @@ interface TestJSImplInterface {
   // Non-castable interface types
   IndirectlyImplementedInterface receiveOther();
   IndirectlyImplementedInterface? receiveNullableOther();
-  // Callback interface ignores 'resultNotAddRefed'. See bug 843272.
-  //IndirectlyImplementedInterface receiveWeakOther();
-  //IndirectlyImplementedInterface? receiveWeakNullableOther();
+  IndirectlyImplementedInterface receiveWeakOther();
+  IndirectlyImplementedInterface? receiveWeakNullableOther();
 
   void passOther(IndirectlyImplementedInterface arg);
   void passNullableOther(IndirectlyImplementedInterface? arg);
@@ -186,9 +182,8 @@ interface TestJSImplInterface {
   // External interface types
   TestExternalInterface receiveExternal();
   TestExternalInterface? receiveNullableExternal();
-  // Callback interface ignores 'resultNotAddRefed'. See bug 843272.
-  //TestExternalInterface receiveWeakExternal();
-  //TestExternalInterface? receiveWeakNullableExternal();
+  TestExternalInterface receiveWeakExternal();
+  TestExternalInterface? receiveWeakNullableExternal();
   void passExternal(TestExternalInterface arg);
   void passNullableExternal(TestExternalInterface? arg);
   attribute TestExternalInterface nonNullExternal;
@@ -201,9 +196,8 @@ interface TestJSImplInterface {
   // Callback interface types
   TestCallbackInterface receiveCallbackInterface();
   TestCallbackInterface? receiveNullableCallbackInterface();
-  // Callback interface ignores 'resultNotAddRefed'. See bug 843272.
-  //TestCallbackInterface receiveWeakCallbackInterface();
-  //TestCallbackInterface? receiveWeakNullableCallbackInterface();
+  TestCallbackInterface receiveWeakCallbackInterface();
+  TestCallbackInterface? receiveWeakNullableCallbackInterface();
   void passCallbackInterface(TestCallbackInterface arg);
   void passNullableCallbackInterface(TestCallbackInterface? arg);
   attribute TestCallbackInterface nonNullCallbackInterface;
@@ -451,6 +445,12 @@ interface TestJSImplInterface {
   void passUnion20(optional (sequence<object> or long) arg = []);
   void passUnion21((MozMap<long> or long) arg);
   void passUnion22((MozMap<object> or long) arg);
+  void passUnion23((sequence<ImageData> or long) arg);
+  void passUnion24((sequence<ImageData?> or long) arg);
+  void passUnion25((sequence<sequence<ImageData>> or long) arg);
+  void passUnion26((sequence<sequence<ImageData?>> or long) arg);
+  void passUnion27(optional (sequence<DOMString> or EventInit) arg);
+  void passUnion28(optional (EventInit or sequence<DOMString>) arg);
   void passUnionWithCallback((EventHandler or long) arg);
   void passUnionWithByteString((ByteString or long) arg);
   void passUnionWithMozMap((MozMap<DOMString> or DOMString) arg);
@@ -536,9 +536,13 @@ interface TestJSImplInterface {
 
   // binaryNames tests
   void methodRenamedFrom();
+  [BinaryName="otherMethodRenamedTo"]
+  void otherMethodRenamedFrom();
   void methodRenamedFrom(byte argument);
   readonly attribute byte attributeGetterRenamedFrom;
   attribute byte attributeRenamedFrom;
+  [BinaryName="otherAttributeRenamedTo"]
+  attribute byte otherAttributeRenamedFrom;
 
   void passDictionary(optional Dict x);
   [Cached, Pure]
@@ -566,6 +570,7 @@ interface TestJSImplInterface {
   void passDictContainingDict(optional DictContainingDict arg);
   void passDictContainingSequence(optional DictContainingSequence arg);
   DictContainingSequence receiveDictContainingSequence();
+  void passVariadicDictionary(Dict... arg);
 
   // EnforceRange/Clamp tests
   void dontEnforceRangeOrClamp(byte arg);
@@ -628,6 +633,14 @@ interface TestJSImplInterface {
   void overload15(optional TestInterface arg);
   void overload16(long arg);
   void overload16(optional TestInterface? arg);
+  void overload17(sequence<long> arg);
+  void overload17(MozMap<long> arg);
+  void overload18(MozMap<DOMString> arg);
+  void overload18(sequence<DOMString> arg);
+  void overload19(sequence<long> arg);
+  void overload19(optional Dict arg);
+  void overload20(optional Dict arg);
+  void overload20(sequence<long> arg);
 
   // Variadic handling
   void passVariadicThirdArg(DOMString arg1, long arg2, TestJSImplInterface... arg3);
@@ -710,6 +723,9 @@ interface TestJSImplInterface {
   attribute TestParentInterface jsonifierShouldSkipThis2;
   attribute TestCallbackInterface jsonifierShouldSkipThis3;
   jsonifier;
+
+  attribute byte dashed-attribute;
+  void dashed-method();
 
   // If you add things here, add them to TestCodeGen as well
 };

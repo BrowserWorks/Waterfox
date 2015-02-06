@@ -141,6 +141,7 @@ function MarionetteServerConnection(aPrefix, aTransport, aServer)
   this.currentFrameElement = null;
   this.testName = null;
   this.mozBrowserClose = null;
+  this.oopFrameId = null; // frame ID of current remote frame, used for mozbrowserclose events
 }
 
 MarionetteServerConnection.prototype = {
@@ -371,6 +372,21 @@ MarionetteServerConnection.prototype = {
       type = 'navigator:browser';
     }
     return Services.wm.getEnumerator(type);
+  },
+
+  /**
+  */
+  addFrameCloseListener: function MDA_addFrameCloseListener(action) {
+    let curWindow = this.getCurrentWindow();
+    let self = this;
+    this.mozBrowserClose = function(e) {
+      if (e.target.id == self.oopFrameId) {
+        curWindow.removeEventListener('mozbrowserclose', self.mozBrowserClose, true);
+        self.switchToGlobalMessageManager();
+        self.sendError("The frame closed during the " + action +  ", recovering to allow further communications", 500, null, self.command_id);
+      }
+    };
+    curWindow.addEventListener('mozbrowserclose', this.mozBrowserClose, true);
   },
 
   /**
@@ -966,7 +982,6 @@ MarionetteServerConnection.prototype = {
 
     let curWindow = this.getCurrentWindow();
     let original_onerror = curWindow.onerror;
-    let that = this;
     that.timeout = timeout;
     let marionette = new Marionette(this, curWindow, "chrome",
                                     this.marionetteLog,
@@ -1127,12 +1142,21 @@ MarionetteServerConnection.prototype = {
    * of the current resource.
    */
   getCurrentUrl: function MDA_getCurrentUrl() {
+    let isB2G = appName == "B2G";
     this.command_id = this.getCommandId();
-    if (this.context == "chrome") {
+    if (this.context === "chrome") {
       this.sendResponse(this.getCurrentWindow().location.href, this.command_id);
     }
     else {
-      this.sendAsync("getCurrentUrl", {}, this.command_id);
+      if (isB2G) {
+        this.sendAsync("getCurrentUrl", {}, this.command_id);
+      }
+      else {
+        this.sendResponse(this.curBrowser
+                              .tab
+                              .linkedBrowser
+                              .contentWindow.location.href, this.command_id);
+      }
     }
   },
 
@@ -1245,6 +1269,45 @@ MarionetteServerConnection.prototype = {
       res.push(winId);
     }
     this.sendResponse(res, this.command_id);
+  },
+
+  /**
+   * Get the current window position.
+   */
+  getWindowPosition: function MDA_getWindowPosition() {
+    this.command_id = this.getCommandId();
+    let curWindow = this.getCurrentWindow();
+    this.sendResponse({ x: curWindow.screenX, y: curWindow.screenY}, this.command_id);
+  },
+
+  /**
+  * Set the window position of the browser on the OS Window Manager
+  *
+  * @param object aRequest
+  *        'x': the x co-ordinate of the top/left of the window that
+  *             it will be moved to
+  *        'y': the y co-ordinate of the top/left of the window that
+  *             it will be moved to
+  */
+  setWindowPosition: function MDA_setWindowPosition(aRequest) {
+    let command_id = this.command_id = this.getCommandId();
+    if (appName !== "Firefox") {
+      this.sendError("Unable to set the window position on mobile", 61, null,
+                      command_id);
+
+    }
+    else {
+      let x = parseInt(aRequest.parameters.x);;
+      let y  = parseInt(aRequest.parameters.y);
+
+      if (isNaN(x) || isNaN(y)) {
+        this.sendError("x and y arguments should be integers", 13, null, command_id);
+        return;
+      }
+      let curWindow = this.getCurrentWindow();
+      curWindow.moveTo(x, y);
+      this.sendOk(command_id);
+    }
   },
 
   /**
@@ -1479,6 +1542,7 @@ MarionetteServerConnection.prototype = {
       this.sendError("Command 'singleTap' is not available in chrome context", 500, null, this.command_id);
     }
     else {
+      this.addFrameCloseListener("tap");
       this.sendAsync("singleTap",
                      {
                        id: serId,
@@ -1501,6 +1565,7 @@ MarionetteServerConnection.prototype = {
       this.sendError("Command 'actionChain' is not available in chrome context", 500, null, this.command_id);
     }
     else {
+      this.addFrameCloseListener("action chain");
       this.sendAsync("actionChain",
                      {
                        chain: aRequest.parameters.chain,
@@ -1525,6 +1590,7 @@ MarionetteServerConnection.prototype = {
        this.sendError("Command 'multiAction' is not available in chrome context", 500, null, this.command_id);
     }
     else {
+      this.addFrameCloseListener("multi action chain");
       this.sendAsync("multiAction",
                      {
                        value: aRequest.parameters.value,
@@ -1575,6 +1641,26 @@ MarionetteServerConnection.prototype = {
   },
 
   /**
+   * Find element using the indicated search strategy
+   * starting from a known element. Used for WebDriver Compatibility only.
+   * @param  {object} aRequest
+   *         'using' member indicates which search method to use
+   *         'value' member is the value the client is looking for
+   *         'id' member is the value of the element to start from
+   */
+  findChildElement: function MDA_findChildElement(aRequest) {
+    let command_id = this.command_id = this.getCommandId();
+    this.sendAsync("findElementContent",
+                    {
+                       value: aRequest.parameters.value,
+                       using: aRequest.parameters.using,
+                       element: aRequest.parameters.id,
+                       searchTimeout: this.searchTimeout
+                     },
+                     command_id);
+  },
+
+  /**
    * Find elements using the indicated search strategy.
    *
    * @param object aRequest
@@ -1614,6 +1700,26 @@ MarionetteServerConnection.prototype = {
   },
 
   /**
+   * Find elements using the indicated search strategy
+   * starting from a known element. Used for WebDriver Compatibility only.
+   * @param  {object} aRequest
+   *         'using' member indicates which search method to use
+   *         'value' member is the value the client is looking for
+   *         'id' member is the value of the element to start from
+   */
+  findChildElements: function MDA_findChildElement(aRequest) {
+    let command_id = this.command_id = this.getCommandId();
+    this.sendAsync("findElementsContent",
+                    {
+                       value: aRequest.parameters.value,
+                       using: aRequest.parameters.using,
+                       element: aRequest.parameters.id,
+                       searchTimeout: this.searchTimeout
+                     },
+                     command_id);
+  },
+
+  /**
    * Return the active element on the page
    */
   getActiveElement: function MDA_getActiveElement(){
@@ -1647,14 +1753,7 @@ MarionetteServerConnection.prototype = {
       // This fires the mozbrowserclose event when it closes so we need to
       // listen for it and then just send an error back. The person making the
       // call should be aware something isnt right and handle accordingly
-      let curWindow = this.getCurrentWindow();
-      let self = this;
-      this.mozBrowserClose = function() {
-        curWindow.removeEventListener('mozbrowserclose', self.mozBrowserClose, true);
-        self.switchToGlobalMessageManager();
-        self.sendError("The frame closed during the click, recovering to allow further communications", 500, null, command_id);
-      };
-      curWindow.addEventListener('mozbrowserclose', this.mozBrowserClose, true);
+      this.addFrameCloseListener("click");
       this.sendAsync("clickElement",
                      { id: aRequest.parameters.id },
                      command_id);
@@ -2128,6 +2227,7 @@ MarionetteServerConnection.prototype = {
       while (winEnum.hasMoreElements()) {
         winEnum.getNext().messageManager.removeDelayedFrameScript(FRAME_SCRIPT);
       }
+      this.curBrowser.frameManager.removeSpecialPowers();
       this.curBrowser.frameManager.removeMessageManagerListeners(this.globalMessageManager);
     }
     this.switchToGlobalMessageManager();
@@ -2274,26 +2374,70 @@ MarionetteServerConnection.prototype = {
   },
 
   /**
-   * Takes a screenshot of a web element or the current frame.
+   * Takes a screenshot of a web element, current frame, or viewport.
    *
    * The screen capture is returned as a lossless PNG image encoded as
-   * a base 64 string.  If the <code>id</code> argument is not null
-   * and refers to a present and visible web element's ID, the capture
-   * area will be limited to the bounding box of that element.
-   * Otherwise, the capture area will be the bounding box of the
-   * current frame.
+   * a base 64 string.
    *
-   * @param id an optional reference to a web element
-   * @param highlights an optional list of web elements to draw a red
-   *                   box around in the returned capture
-   * @return PNG image encoded as base 64 string
-    */
+   * If called in the content context, the <code>id</code> argument is not null
+   * and refers to a present and visible web element's ID, the capture area
+   * will be limited to the bounding box of that element. Otherwise, the
+   * capture area will be the bounding box of the current frame.
+   *
+   * If called in the chrome context, the screenshot will always represent the
+   * entire viewport.
+   *
+   * @param {string} [id] Reference to a web element.
+   * @param {string} [highlights] List of web elements to highlight.
+   * @return {string} PNG image encoded as base 64 string.
+   */
   takeScreenshot: function MDA_takeScreenshot(aRequest) {
     this.command_id = this.getCommandId();
-    this.sendAsync("takeScreenshot",
+    if (this.context == "chrome") {
+      var win = this.getCurrentWindow();
+      var canvas = win.document.createElementNS("http://www.w3.org/1999/xhtml", "canvas");
+      var doc;
+      if (appName == "B2G") {
+        doc = win.document.body;
+      } else {
+        doc = win.document.getElementsByTagName('window')[0];
+      }
+      var docRect = doc.getBoundingClientRect();
+      var width = docRect.width;
+      var height = docRect.height;
+
+      // Convert width and height from CSS pixels (potentially fractional)
+      // to device pixels (integer).
+      var scale = win.devicePixelRatio;
+      canvas.setAttribute("width", Math.round(width * scale));
+      canvas.setAttribute("height", Math.round(height * scale));
+
+      var context = canvas.getContext("2d");
+      var flags;
+      if (appName == "B2G") {
+        flags =
+          context.DRAWWINDOW_DRAW_CARET |
+          context.DRAWWINDOW_DRAW_VIEW |
+          context.DRAWWINDOW_USE_WIDGET_LAYERS;
+      } else {
+        // Bug 1075168 - CanvasRenderingContext2D image is distorted
+        // when using certain flags in chrome context.
+        flags =
+          context.DRAWWINDOW_DRAW_VIEW |
+          context.DRAWWINDOW_USE_WIDGET_LAYERS;
+      }
+      context.scale(scale, scale);
+      context.drawWindow(win, 0, 0, width, height, "rgb(255,255,255)", flags);
+      var dataUrl = canvas.toDataURL("image/png", "");
+      var data = dataUrl.substring(dataUrl.indexOf(",") + 1);
+      this.sendResponse(data, this.command_id);
+    }
+    else {
+      this.sendAsync("takeScreenshot",
                    {id: aRequest.parameters.id,
                     highlights: aRequest.parameters.highlights},
                    this.command_id);
+    }
   },
 
   /**
@@ -2345,6 +2489,78 @@ MarionetteServerConnection.prototype = {
   },
 
   /**
+   * Get the size of the browser window currently in focus.
+   *
+   * Will return the current browser window size in pixels. Refers to
+   * window outerWidth and outerHeight values, which include scroll bars,
+   * title bars, etc.
+   *
+   */
+  getWindowSize: function MDA_getWindowSize(aRequest) {
+    this.command_id = this.getCommandId();
+    let curWindow = this.getCurrentWindow();
+    let curWidth = curWindow.outerWidth;
+    let curHeight = curWindow.outerHeight;
+    this.sendResponse({width: curWidth, height: curHeight}, this.command_id);
+  },
+
+  /**
+   * Set the size of the browser window currently in focus.
+   *
+   * Not supported on B2G. The supplied width and height values refer to
+   * the window outerWidth and outerHeight values, which include scroll
+   * bars, title bars, etc.
+   *
+   * An error will be returned if the requested window size would result
+   * in the window being in the maximized state.
+   */
+  setWindowSize: function MDA_setWindowSize(aRequest) {
+    this.command_id = this.getCommandId();
+
+    if (appName !== "Firefox") {
+      this.sendError("Not supported on mobile", 405, null, this.command_id);
+      return;
+    }
+
+    try {
+      var width = parseInt(aRequest.parameters.width);
+      var height = parseInt(aRequest.parameters.height);
+    }
+    catch(e) {
+      this.sendError(e.message, e.code, e.stack, this.command_id);
+      return;
+    }
+
+    let curWindow = this.getCurrentWindow();
+    if (width >= curWindow.screen.availWidth && height >= curWindow.screen.availHeight) {
+      this.sendError("Invalid requested size, cannot maximize", 405, null, this.command_id);
+      return;
+    }
+
+    curWindow.resizeTo(width, height);
+    this.sendOk(this.command_id);
+  },
+
+  /**
+   * Maximizes the Browser Window as if the user pressed the maximise button
+   *
+   * Not Supported on B2G or Fennec
+   */
+  maximizeWindow: function MDA_maximizeWindow (aRequest) {
+    this.command_id = this.getCommandId();
+
+    if (appName !== "Firefox") {
+      this.sendError("Not supported for mobile", 405, null, this.command_id);
+      return;
+    }
+
+    let curWindow = this.getCurrentWindow();
+    curWindow.moveTo(0,0);
+    curWindow.resizeTo(curWindow.screen.availWidth, curWindow.screen.availHeight);
+    this.sendOk(this.command_id);
+  },
+
+  /**
    * Helper function to convert an outerWindowID into a UID that Marionette
    * tracks.
    */
@@ -2389,7 +2605,7 @@ MarionetteServerConnection.prototype = {
         this.sendToClient(message.json, -1);
         break;
       case "Marionette:switchToFrame":
-        this.curBrowser.frameManager.switchToFrame(message);
+        this.oopFrameId = this.curBrowser.frameManager.switchToFrame(message);
         this.messageManager = this.curBrowser.frameManager.currentRemoteFrame.messageManager.get();
         break;
       case "Marionette:switchToModalOrigin":
@@ -2496,7 +2712,9 @@ MarionetteServerConnection.prototype.requestTypes = {
   "executeJSScript": MarionetteServerConnection.prototype.executeJSScript,
   "setSearchTimeout": MarionetteServerConnection.prototype.setSearchTimeout,
   "findElement": MarionetteServerConnection.prototype.findElement,
+  "findChildElement": MarionetteServerConnection.prototype.findChildElements, // Needed for WebDriver compat
   "findElements": MarionetteServerConnection.prototype.findElements,
+  "findChildElements":MarionetteServerConnection.prototype.findChildElements, // Needed for WebDriver compat
   "clickElement": MarionetteServerConnection.prototype.clickElement,
   "getElementAttribute": MarionetteServerConnection.prototype.getElementAttribute,
   "getElementText": MarionetteServerConnection.prototype.getElementText,
@@ -2528,6 +2746,8 @@ MarionetteServerConnection.prototype.requestTypes = {
   "getWindowHandles": MarionetteServerConnection.prototype.getWindowHandles,
   "getCurrentWindowHandles": MarionetteServerConnection.prototype.getWindowHandles,  // Selenium 2 compat
   "getWindows":  MarionetteServerConnection.prototype.getWindowHandles,  // deprecated
+  "getWindowPosition": MarionetteServerConnection.prototype.getWindowPosition,
+  "setWindowPosition": MarionetteServerConnection.prototype.setWindowPosition,
   "getActiveFrame": MarionetteServerConnection.prototype.getActiveFrame,
   "switchToFrame": MarionetteServerConnection.prototype.switchToFrame,
   "switchToWindow": MarionetteServerConnection.prototype.switchToWindow,
@@ -2549,7 +2769,10 @@ MarionetteServerConnection.prototype.requestTypes = {
   "deleteCookie": MarionetteServerConnection.prototype.deleteCookie,
   "getActiveElement": MarionetteServerConnection.prototype.getActiveElement,
   "getScreenOrientation": MarionetteServerConnection.prototype.getScreenOrientation,
-  "setScreenOrientation": MarionetteServerConnection.prototype.setScreenOrientation
+  "setScreenOrientation": MarionetteServerConnection.prototype.setScreenOrientation,
+  "getWindowSize": MarionetteServerConnection.prototype.getWindowSize,
+  "setWindowSize": MarionetteServerConnection.prototype.setWindowSize,
+  "maximizeWindow": MarionetteServerConnection.prototype.maximizeWindow
 };
 
 /**

@@ -24,6 +24,14 @@ namespace layers {
 
 class Compositor;
 
+CompositableBackendSpecificData::CompositableBackendSpecificData()
+  : mAllowSharingTextureHost(false)
+{
+  static uint64_t sNextID = 1;
+  ++sNextID;
+  mId = sNextID;
+}
+
 /**
  * IPDL actor used by CompositableHost to match with its corresponding
  * CompositableClient on the content side.
@@ -131,7 +139,7 @@ void
 CompositableHost::RemoveTextureHost(TextureHost* aTexture)
 {
   // Clear strong refrence to CompositableBackendSpecificData
-  aTexture->SetCompositableBackendSpecificData(nullptr);
+  aTexture->UnsetCompositableBackendSpecificData(GetCompositableBackendSpecificData());
 }
 
 void
@@ -192,7 +200,7 @@ CompositableHost::Create(const TextureInfo& aTextureInfo)
 {
   RefPtr<CompositableHost> result;
   switch (aTextureInfo.mCompositableType) {
-  case CompositableType::BUFFER_BRIDGE:
+  case CompositableType::IMAGE_BRIDGE:
     NS_ERROR("Cannot create an image bridge compositable this way");
     break;
   case CompositableType::BUFFER_CONTENT_INC:

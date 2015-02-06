@@ -27,15 +27,16 @@
 #include "nsIScriptSecurityManager.h"
 #include "nsIJSRuntimeService.h"
 #include "nsIDOMClassInfo.h"
-#include "nsIDOMFile.h"
 #include "xpcpublic.h"
+#include "mozilla/CycleCollectedJSRuntime.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/dom/File.h"
 #include "mozilla/dom/nsIContentParent.h"
 #include "mozilla/dom/PermissionMessageUtils.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/dom/StructuredCloneUtils.h"
-#include "mozilla/dom/PBlobChild.h"
-#include "mozilla/dom/PBlobParent.h"
+#include "mozilla/dom/ipc/BlobChild.h"
+#include "mozilla/dom/ipc/BlobParent.h"
 #include "JavaScriptChild.h"
 #include "JavaScriptParent.h"
 #include "mozilla/dom/DOMStringList.h"
@@ -203,7 +204,7 @@ BuildClonedMessageData(typename BlobTraits<Flavor>::ConcreteContentManagerType* 
   SerializedStructuredCloneBuffer& buffer = aClonedData.data();
   buffer.data = aData.mData;
   buffer.dataLength = aData.mDataLength;
-  const nsTArray<nsCOMPtr<nsIDOMBlob> >& blobs = aData.mClosure.mBlobs;
+  const nsTArray<nsRefPtr<File>>& blobs = aData.mClosure.mBlobs;
   if (!blobs.IsEmpty()) {
     typedef typename BlobTraits<Flavor>::ProtocolType ProtocolType;
     InfallibleTArray<ProtocolType*>& blobList = DataBlobs<Flavor>::Blobs(aClonedData);
@@ -254,8 +255,13 @@ UnpackClonedMessageData(const ClonedMessageData& aData)
       auto* blob =
         static_cast<typename BlobTraits<Flavor>::BlobType*>(blobs[i]);
       MOZ_ASSERT(blob);
-      nsCOMPtr<nsIDOMBlob> domBlob = blob->GetBlob();
-      MOZ_ASSERT(domBlob);
+
+      nsRefPtr<FileImpl> blobImpl = blob->GetBlobImpl();
+      MOZ_ASSERT(blobImpl);
+
+      // This object will be duplicated with a correct parent before being
+      // exposed to JS.
+      nsRefPtr<File> domBlob = new File(nullptr, blobImpl);
       cloneData.mClosure.mBlobs.AppendElement(domBlob);
     }
   }
@@ -512,7 +518,7 @@ nsFrameMessageManager::GetDelayedFrameScripts(JSContext* aCx, JS::MutableHandle<
 }
 
 static bool
-JSONCreator(const jschar* aBuf, uint32_t aLen, void* aData)
+JSONCreator(const char16_t* aBuf, uint32_t aLen, void* aData)
 {
   nsAString* result = static_cast<nsAString*>(aData);
   result->Append(static_cast<const char16_t*>(aBuf),
@@ -542,7 +548,7 @@ GetParamsForMessage(JSContext* aCx,
   NS_ENSURE_TRUE(!json.IsEmpty(), false);
 
   JS::Rooted<JS::Value> val(aCx, JS::NullValue());
-  NS_ENSURE_TRUE(JS_ParseJSON(aCx, static_cast<const jschar*>(json.get()),
+  NS_ENSURE_TRUE(JS_ParseJSON(aCx, static_cast<const char16_t*>(json.get()),
                               json.Length(), &val), false);
 
   return WriteStructuredClone(aCx, val, aBuffer, aClosure);
@@ -638,7 +644,7 @@ nsFrameMessageManager::SendMessage(const nsAString& aMessageName,
     }
 
     JS::Rooted<JS::Value> ret(aCx);
-    if (!JS_ParseJSON(aCx, static_cast<const jschar*>(retval[i].get()),
+    if (!JS_ParseJSON(aCx, static_cast<const char16_t*>(retval[i].get()),
                       retval[i].Length(), &ret)) {
       return NS_ERROR_UNEXPECTED;
     }
@@ -925,7 +931,6 @@ nsFrameMessageManager::ReceiveMessage(nsISupports* aTarget,
                                       nsIPrincipal* aPrincipal,
                                       InfallibleTArray<nsString>* aJSONRetVal)
 {
-  AutoSafeJSContext cx;
   nsAutoTObserverArray<nsMessageListenerInfo, 1>* listeners =
     mListeners.Get(aMessage);
   if (listeners) {
@@ -956,11 +961,23 @@ nsFrameMessageManager::ReceiveMessage(nsISupports* aTarget,
       if (!wrappedJS) {
         continue;
       }
-      JS::Rooted<JSObject*> object(cx, wrappedJS->GetJSObject());
-      if (!object) {
+
+      if (!wrappedJS->GetJSObject()) {
         continue;
       }
-      JSAutoCompartment ac(cx, object);
+
+      // Note - The ergonomics here will get a lot better with bug 971673:
+      //
+      // AutoEntryScript aes;
+      // if (!aes.Init(wrappedJS->GetJSObject())) {
+      //   continue;
+      // }
+      // JSContext* cx = aes.cx();
+      nsIGlobalObject* nativeGlobal =
+        xpc::NativeGlobal(js::GetGlobalForObjectCrossCompartment(wrappedJS->GetJSObject()));
+      AutoEntryScript aes(nativeGlobal);
+      JSContext* cx = aes.cx();
+      JS::Rooted<JSObject*> object(cx, wrappedJS->GetJSObject());
 
       // The parameter for the listener function.
       JS::Rooted<JSObject*> param(cx,
@@ -996,7 +1013,7 @@ nsFrameMessageManager::ReceiveMessage(nsISupports* aTarget,
       }
       JS::Rooted<JSString*> jsMessage(cx,
         JS_NewUCStringCopyN(cx,
-                            static_cast<const jschar*>(aMessage.BeginReading()),
+                            static_cast<const char16_t*>(aMessage.BeginReading()),
                             aMessage.Length()));
       NS_ENSURE_TRUE(jsMessage, NS_ERROR_OUT_OF_MEMORY);
       JS::Rooted<JS::Value> syncv(cx, JS::BooleanValue(aIsSync));
@@ -1022,7 +1039,7 @@ nsFrameMessageManager::ReceiveMessage(nsISupports* aTarget,
       JS::Rooted<JS::Value> thisValue(cx, JS::UndefinedValue());
 
       JS::Rooted<JS::Value> funval(cx);
-      if (JS_ObjectIsCallable(cx, object)) {
+      if (JS::IsCallable(object)) {
         // If the listener is a JS function:
         funval.setObject(*object);
 
@@ -1044,7 +1061,7 @@ nsFrameMessageManager::ReceiveMessage(nsISupports* aTarget,
           return NS_ERROR_UNEXPECTED;
 
         // Check if the object is even callable.
-        NS_ENSURE_STATE(JS_ObjectIsCallable(cx, &funval.toObject()));
+        NS_ENSURE_STATE(JS::IsCallable(&funval.toObject()));
         thisValue.setObject(*object);
       }
 
@@ -1421,8 +1438,8 @@ nsFrameScriptExecutor::LoadFrameScriptInternal(const nsAString& aURL,
     return;
   }
 
-  AutoSafeJSContext cx;
-  JS::Rooted<JSScript*> script(cx);
+  JSRuntime* rt = CycleCollectedJSRuntime::Get()->Runtime();
+  JS::Rooted<JSScript*> script(rt);
 
   nsFrameScriptObjectExecutorHolder* holder = sCachedScripts->Get(aURL);
   if (holder && holder->WillRunInGlobalScope() == aRunInGlobalScope) {
@@ -1435,25 +1452,22 @@ nsFrameScriptExecutor::LoadFrameScriptInternal(const nsAString& aURL,
                                  shouldCache, &script);
   }
 
-  JS::Rooted<JSObject*> global(cx, mGlobal->GetJSObject());
+  JS::Rooted<JSObject*> global(rt, mGlobal->GetJSObject());
   if (global) {
-    JSAutoCompartment ac(cx, global);
-    bool ok = true;
+    AutoEntryScript aes(xpc::NativeGlobal(global));
+    aes.TakeOwnershipOfErrorReporting();
+    JSContext* cx = aes.cx();
     if (script) {
       if (aRunInGlobalScope) {
-        ok = JS::CloneAndExecuteScript(cx, global, script);
+        JS::CloneAndExecuteScript(cx, global, script);
       } else {
         JS::Rooted<JSObject*> scope(cx);
-        ok = js::ExecuteInGlobalAndReturnScope(cx, global, script, &scope);
-        if (ok){
+        bool ok = js::ExecuteInGlobalAndReturnScope(cx, global, script, &scope);
+        if (ok) {
           // Force the scope to stay alive.
           mAnonymousGlobalScopes.AppendElement(scope);
         }
       }
-    }
-
-    if (!ok) {
-      nsJSUtils::ReportPendingException(cx);
     }
   }
 }
@@ -1481,7 +1495,12 @@ nsFrameScriptExecutor::TryCacheLoadAndCompileScript(const nsAString& aURL,
   }
 
   nsCOMPtr<nsIChannel> channel;
-  NS_NewChannel(getter_AddRefs(channel), uri);
+  NS_NewChannel(getter_AddRefs(channel),
+                uri,
+                nsContentUtils::GetSystemPrincipal(),
+                nsILoadInfo::SEC_NORMAL,
+                nsIContentPolicy::TYPE_OTHER);
+
   if (!channel) {
     return;
   }
@@ -1489,7 +1508,7 @@ nsFrameScriptExecutor::TryCacheLoadAndCompileScript(const nsAString& aURL,
   nsCOMPtr<nsIInputStream> input;
   channel->Open(getter_AddRefs(input));
   nsString dataString;
-  jschar* dataStringBuf = nullptr;
+  char16_t* dataStringBuf = nullptr;
   size_t dataStringLength = 0;
   uint64_t avail64 = 0;
   if (input && NS_SUCCEEDED(input->Available(&avail64)) && avail64) {
@@ -1714,14 +1733,14 @@ public:
       return false;
     }
     InfallibleTArray<mozilla::jsipc::CpowEntry> cpows;
-    if (!cc->GetCPOWManager()->Wrap(aCx, aCpows, &cpows)) {
+    if (aCpows && !cc->GetCPOWManager()->Wrap(aCx, aCpows, &cpows)) {
       return false;
     }
     if (aIsSync) {
       return cc->SendSyncMessage(PromiseFlatString(aMessage), data, cpows,
                                  IPC::Principal(aPrincipal), aJSONRetVal);
     }
-    return cc->CallRpcMessage(PromiseFlatString(aMessage), data, cpows,
+    return cc->SendRpcMessage(PromiseFlatString(aMessage), data, cpows,
                               IPC::Principal(aPrincipal), aJSONRetVal);
   }
 
@@ -1741,7 +1760,7 @@ public:
       return false;
     }
     InfallibleTArray<mozilla::jsipc::CpowEntry> cpows;
-    if (!cc->GetCPOWManager()->Wrap(aCx, aCpows, &cpows)) {
+    if (aCpows && !cc->GetCPOWManager()->Wrap(aCx, aCpows, &cpows)) {
       return false;
     }
     return cc->SendAsyncMessage(PromiseFlatString(aMessage), data, cpows,

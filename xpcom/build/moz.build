@@ -51,9 +51,9 @@ UNIFIED_SOURCES += [
     'IOInterposer.cpp',
     'LateWriteChecks.cpp',
     'MainThreadIOLogger.cpp',
-    'nsXPComInit.cpp',
     'nsXPCOMStrings.cpp',
     'Services.cpp',
+    'XPCOMInit.cpp',
 ]
 
 if CONFIG['OS_ARCH'] != 'WINNT':
@@ -76,9 +76,6 @@ FINAL_LIBRARY = 'xul'
 
 DEFINES['_IMPL_NS_STRINGAPI'] = True
 DEFINES['OMNIJAR_NAME'] = CONFIG['OMNIJAR_NAME']
-
-if CONFIG['MOZ_OPTIMIZE']:
-    DEFINES['MOZ_OPTIMIZE'] = True
 
 GENERATED_INCLUDES += ['..']
 LOCAL_INCLUDES += [

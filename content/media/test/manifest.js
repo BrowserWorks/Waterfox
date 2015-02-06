@@ -187,6 +187,7 @@ var gPlayTests = [
   { name:"detodos.opus", type:"audio/ogg; codecs=opus", duration:2.9135 },
   // Opus data in a webm container
   { name:"detodos.webm", type:"audio/webm; codecs=opus", duration:2.9135 },
+  { name:"bug1066943.webm", type:"audio/webm; codecs=opus", duration:1.383 },
 
   // Multichannel Opus in an ogg container
   { name:"test-1-mono.opus", type:"audio/ogg; codecs=opus", duration:1.044 },
@@ -249,6 +250,77 @@ var gInvalidTests = [
   { name:"invalid-cmap-s1c2.opus", type:"audio/ogg; codecs=opus"},
   { name:"invalid-preskip.webm", type:"audio/webm; codecs=opus"},
 ];
+
+var gInvalidPlayTests = [
+  { name:"invalid-excess_discard.webm", type:"audio/webm; codecs=opus"},
+  { name:"invalid-excess_neg_discard.webm", type:"audio/webm; codecs=opus"},
+  { name:"invalid-neg_discard.webm", type:"audio/webm; codecs=opus"},
+  { name:"invalid-discard_on_multi_blocks.webm", type:"audio/webm; codecs=opus"},
+];
+
+// Files to check different cases of ogg skeleton information.
+// sample-fisbone-skeleton4.ogv
+// - Skeleton v4, w/ Content-Type,Role,Name,Language,Title for both theora/vorbis
+// sample-fisbone-wrong-header.ogv
+// - Skeleton v4, wrong message field sequence for vorbis
+// multiple-bos-more-header-fields.ogg
+// - Skeleton v3, w/ Content-Type,Role,Name,Language,Title for both theora/vorbis
+// seek.ogv
+// - No skeleton, but theora
+// audio-overhang.ogg
+// - No skeleton, but vorbis
+var gMultitrackInfoOggPlayList = [
+  { name:"sample-fisbone-skeleton4.ogv", type:"video/ogg", duration:5.049 },
+  { name:"sample-fisbone-wrong-header.ogv", type:"video/ogg", duration:5.049 },
+  { name:"multiple-bos-more-header-fileds.ogg", type:"video/ogg", duration:0.431 },
+  { name:"seek.ogv", type:"video/ogg", duration:3.996 },
+  { name:"audio-gaps.ogg", type:"audio/ogg", duration:2.208 }
+];
+// Pre-parsed results of gMultitrackInfoOggPlayList.
+var gOggTrackInfoResults = {
+  "sample-fisbone-skeleton4.ogv" : {
+    "audio_id":" audio_1",
+    "audio_kind":"main",
+    "audio_language":" en-US",
+    "audio_label":" Audio track for test",
+    "video_id":" video_1",
+    "video_kind":"main",
+    "video_language":" fr",
+    "video_label":" Video track for test"
+  },
+  "sample-fisbone-wrong-header.ogv" : {
+    "audio_id":"1",
+    "audio_kind":"main",
+    "audio_language":"",
+    "audio_label":"",
+    "video_id":" video_1",
+    "video_kind":"main",
+    "video_language":" fr",
+    "video_label":" Video track for test"
+  },
+  "multiple-bos-more-header-fileds.ogg" : {
+    "audio_id":"1",
+    "audio_kind":"main",
+    "audio_language":"",
+    "audio_label":"",
+    "video_id":"2",
+    "video_kind":"main",
+    "video_language":"",
+    "video_label":""
+  },
+  "seek.ogv" : {
+    "video_id":"2",
+    "video_kind":"main",
+    "video_language":"",
+    "video_label":""
+  },
+  "audio-gaps.ogg" : {
+    "audio_id":"1",
+    "audio_kind":"main",
+    "audio_language":"",
+    "audio_label":""
+  }
+};
 
 // Converts a path/filename to a file:// URI which we can load from disk.
 // Optionally checks whether the file actually exists on disk at the location
@@ -564,6 +636,20 @@ var gMetadataTests = [
   },
 ];
 
+// Test files for Encrypted Media Extensions
+var gEMETests = [
+  {
+    name:"short-cenc.mp4",
+    type:"video/mp4",
+    keys: {
+      // "keyid" : "key"
+      "7e571d017e571d017e571d017e571d01" : "7e5711117e5711117e5711117e571111",
+      "7e571d027e571d027e571d027e571d02" : "7e5722227e5722227e5722227e572222",
+    },
+    sessionType:"temporary",
+  },
+];
+
 function checkMetadata(msg, e, test) {
   if (test.width) {
     is(e.videoWidth, test.width, msg + " video width");
@@ -604,9 +690,11 @@ function getMajorMimeType(mimetype) {
   }
 }
 
+// Force releasing decoder to avoid timeout in waiting for decoding resource.
 function removeNodeAndSource(n) {
   n.remove();
-  // force release of underlying decoder
+  // reset |mozSrcObject| first since it takes precedence over |src|.
+  n.mozSrcObject = null;
   n.src = "";
   while (n.firstChild) {
     n.removeChild(n.firstChild);
@@ -705,51 +793,48 @@ function MediaTestManager() {
   // Starts the next batch of tests, or finishes if they're all done.
   // Don't call this directly, call finished(token) when you're done.
   this.nextTest = function() {
-    // Force an exact  GC after every completed testcase. This ensures that any
-    // decoders with live threads waiting for the GC are killed promptly, to free
-    // up the thread stacks' address space, and destroy decoder resources.
-    SpecialPowers.exactGC(window, function(){
-      while (this.testNum < this.tests.length && this.tokens.length < PARALLEL_TESTS) {
-        var test = this.tests[this.testNum];
-        var token = (test.name ? (test.name + "-"): "") + this.testNum;
-        this.testNum++;
+    while (this.testNum < this.tests.length && this.tokens.length < PARALLEL_TESTS) {
+      var test = this.tests[this.testNum];
+      var token = (test.name ? (test.name + "-"): "") + this.testNum;
+      this.testNum++;
 
-        if (DEBUG_TEST_LOOP_FOREVER && this.testNum == this.tests.length) {
-          this.testNum = 0;
-        }
-
-        // Ensure we can play the resource type.
-        if (test.type && !document.createElement('video').canPlayType(test.type))
-          continue;
-
-        // Do the init. This should start the test.
-        this.startTest(test, token);
+      if (DEBUG_TEST_LOOP_FOREVER && this.testNum == this.tests.length) {
+        this.testNum = 0;
       }
 
-      if (this.testNum == this.tests.length &&
-          !DEBUG_TEST_LOOP_FOREVER &&
-          this.tokens.length == 0 &&
-          !this.isShutdown)
-      {
-        this.isShutdown = true;
-        if (this.onFinished) {
-          this.onFinished();
-        }
-        mediaTestCleanup();
+      // Ensure we can play the resource type.
+      if (test.type && !document.createElement('video').canPlayType(test.type))
+        continue;
+
+      // Do the init. This should start the test.
+      this.startTest(test, token);
+    }
+
+    if (this.testNum == this.tests.length &&
+        !DEBUG_TEST_LOOP_FOREVER &&
+        this.tokens.length == 0 &&
+        !this.isShutdown)
+    {
+      this.isShutdown = true;
+      if (this.onFinished) {
+        this.onFinished();
+      }
+      var onCleanup = function() {
         var end = new Date();
         SimpleTest.info("Finished at " + end + " (" + (end.getTime() / 1000) + "s)");
         SimpleTest.info("Running time: " + (end.getTime() - this.startTime.getTime())/1000 + "s");
         SimpleTest.finish();
-        return;
-      }
-    }.bind(this));
+      }.bind(this);
+      mediaTestCleanup(onCleanup);
+      return;
+    }
   }
 }
 
 // Ensures we've got no active video or audio elements in the document, and
 // forces a GC to release the address space reserved by the decoders' threads'
 // stacks.
-function mediaTestCleanup() {
+function mediaTestCleanup(callback) {
     var V = document.getElementsByTagName("video");
     for (i=0; i<V.length; i++) {
       removeNodeAndSource(V[i]);
@@ -760,7 +845,12 @@ function mediaTestCleanup() {
       removeNodeAndSource(A[i]);
       A[i] = null;
     }
-    SpecialPowers.forceGC();
+    var cb = function() {
+      if (callback) {
+        callback();
+      }
+    }
+    SpecialPowers.exactGC(window, cb);
 }
 
 (function() {

@@ -7,7 +7,7 @@
  */
 
 function ifTestingSupported() {
-  let [target, debuggee, panel] = yield initCanavsDebuggerFrontend(SIMPLE_CANVAS_URL);
+  let { target, panel } = yield initCanvasDebuggerFrontend(SIMPLE_CANVAS_URL);
   let { window, $, EVENTS, SnapshotsListView, CallsListView } = panel.panelWin;
 
   yield reload(target);
@@ -53,7 +53,7 @@ function ifTestingSupported() {
     "The first draw call should now be selected in the snapshot.");
 
   let firstSnapshotTarget = SnapshotsListView.getItemAtIndex(0).target;
-  let snapshotSelected = waitForSnapshotSelection();
+  snapshotSelected = waitForSnapshotSelection();
   EventUtils.sendMouseEvent({ type: "mousedown" }, firstSnapshotTarget, window);
 
   yield snapshotSelected;

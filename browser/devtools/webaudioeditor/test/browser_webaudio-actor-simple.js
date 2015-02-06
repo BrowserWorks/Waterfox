@@ -6,7 +6,7 @@
  */
 
 function spawnTest () {
-  let [target, debuggee, front] = yield initBackend(SIMPLE_CONTEXT_URL);
+  let { target, front } = yield initBackend(SIMPLE_CONTEXT_URL);
   let [_, __, [destNode, oscNode, gainNode], [connect1, connect2]] = yield Promise.all([
     front.setup({ reload: true }),
     once(front, "start-context"),
@@ -26,7 +26,7 @@ function spawnTest () {
   is(source.actorID, oscNode.actorID, "WebAudioActor:connect-node returns correct actor with ID on source (osc->gain)");
   is(dest.actorID, gainNode.actorID, "WebAudioActor:connect-node returns correct actor with ID on dest (osc->gain)");
 
-  let { source, dest } = connect2;
+  ({ source, dest } = connect2);
   is(source.actorID, gainNode.actorID, "WebAudioActor:connect-node returns correct actor with ID on source (gain->dest)");
   is(dest.actorID, destNode.actorID, "WebAudioActor:connect-node returns correct actor with ID on dest (gain->dest)");
 

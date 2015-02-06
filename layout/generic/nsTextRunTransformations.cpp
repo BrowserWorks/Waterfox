@@ -133,7 +133,7 @@ MergeCharactersInTextRun(gfxTextRun* aDest, gfxTextRun* aSrc,
   while (iter.NextRun()) {
     gfxTextRun::GlyphRun* run = iter.GetGlyphRun();
     nsresult rv = aDest->AddGlyphRun(run->mFont, run->mMatchType,
-                                     offset, false);
+                                     offset, false, run->mOrientation);
     if (NS_FAILED(rv))
       return;
 
@@ -311,8 +311,11 @@ nsCaseTransformTextRunFactory::TransformString(
       style = aAllUppercase ? NS_STYLE_TEXT_TRANSFORM_UPPERCASE :
         styleContext->StyleText()->mTextTransform;
 
-      if (lang != styleContext->StyleFont()->mLanguage) {
-        lang = styleContext->StyleFont()->mLanguage;
+      const nsStyleFont* styleFont = styleContext->StyleFont();
+      nsIAtom* newLang = styleFont->mExplicitLanguage
+                         ? styleFont->mLanguage : nullptr;
+      if (lang != newLang) {
+        lang = newLang;
         languageSpecificCasing = GetCasingFor(lang);
         greekState.Reset();
         irishState.Reset();

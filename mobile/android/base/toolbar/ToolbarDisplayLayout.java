@@ -12,13 +12,14 @@ import java.util.List;
 import org.mozilla.gecko.AboutPages;
 import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.BrowserApp;
+import org.mozilla.gecko.NewTabletUI;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.SiteIdentity;
 import org.mozilla.gecko.SiteIdentity.SecurityMode;
 import org.mozilla.gecko.Tab;
 import org.mozilla.gecko.animation.PropertyAnimator;
 import org.mozilla.gecko.animation.ViewHelper;
-import org.mozilla.gecko.toolbar.BrowserToolbar.ForwardButtonAnimation;
+import org.mozilla.gecko.toolbar.BrowserToolbarTabletBase.ForwardButtonAnimation;
 import org.mozilla.gecko.util.StringUtils;
 import org.mozilla.gecko.widget.ThemedLinearLayout;
 import org.mozilla.gecko.widget.ThemedTextView;
@@ -40,6 +41,7 @@ import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 
 /**
 * {@code ToolbarDisplayLayout} is the UI for when the toolbar is in
@@ -95,29 +97,29 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
 
     private boolean mIsAttached;
 
-    private ThemedTextView mTitle;
-    private int mTitlePadding;
+    private final ThemedTextView mTitle;
+    private final int mTitlePadding;
     private ToolbarPrefs mPrefs;
     private OnTitleChangeListener mTitleChangeListener;
 
-    private ImageButton mSiteSecurity;
+    private final ImageButton mSiteSecurity;
     private boolean mSiteSecurityVisible;
 
     // To de-bounce sets.
     private Bitmap mLastFavicon;
-    private ImageButton mFavicon;
+    private final ImageButton mFavicon;
     private int mFaviconSize;
 
-    private ImageButton mStop;
+    private final ImageButton mStop;
     private OnStopListener mStopListener;
 
-    private PageActionLayout mPageActionLayout;
+    private final PageActionLayout mPageActionLayout;
 
     private AlphaAnimation mLockFadeIn;
     private TranslateAnimation mTitleSlideLeft;
     private TranslateAnimation mTitleSlideRight;
 
-    private SiteIdentityPopup mSiteIdentityPopup;
+    private final SiteIdentityPopup mSiteIdentityPopup;
     private SecurityMode mSecurityMode;
 
     private PropertyAnimator mForwardAnim;
@@ -146,12 +148,39 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
         mPrivateDomainColor = new ForegroundColorSpan(res.getColor(R.color.url_bar_domaintext_private));
 
         mFavicon = (ImageButton) findViewById(R.id.favicon);
-        if (Versions.feature16Plus) {
-            mFavicon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        }
-        mFaviconSize = Math.round(res.getDimension(R.dimen.browser_toolbar_favicon_size));
-
         mSiteSecurity = (ImageButton) findViewById(R.id.site_security);
+
+        if (NewTabletUI.isEnabled(context)) {
+            mSiteSecurity.setVisibility(View.VISIBLE);
+            // TODO: Rename this resource and remove this call when new tablet is default.
+            mSiteSecurity.setImageResource(R.drawable.new_tablet_site_security_level);
+
+            // TODO: This can likely be set statically in resources when new tablet is default.
+            // Dynamically update parameters for new tablet.
+            final LinearLayout.LayoutParams lp =
+                    (LinearLayout.LayoutParams) mSiteSecurity.getLayoutParams();
+            lp.height = res.getDimensionPixelSize(R.dimen.new_tablet_site_security_height);
+            lp.width = res.getDimensionPixelSize(R.dimen.new_tablet_site_security_width);
+            // TODO: Override a common static value when new tablet is standard.
+            lp.rightMargin = res.getDimensionPixelSize(R.dimen.new_tablet_site_security_right_margin);
+            mSiteSecurity.setLayoutParams(lp);
+            final int siteSecurityVerticalPadding =
+                    res.getDimensionPixelSize(R.dimen.new_tablet_site_security_padding_vertical);
+            final int siteSecurityHorizontalPadding =
+                    res.getDimensionPixelSize(R.dimen.new_tablet_site_security_padding_horizontal);
+            mSiteSecurity.setPadding(siteSecurityHorizontalPadding, siteSecurityVerticalPadding,
+                    siteSecurityHorizontalPadding, siteSecurityVerticalPadding);
+
+            // We don't show favicons in the toolbar on new tablet. Note that while we could
+            // null the favicon reference, we don't do so to avoid excessive null-checking.
+            removeView(mFavicon);
+        } else {
+            if (Versions.feature16Plus) {
+                mFavicon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+            }
+            mFaviconSize = Math.round(res.getDimension(R.dimen.browser_toolbar_favicon_size));
+        }
+
         mSiteSecurityVisible = (mSiteSecurity.getVisibility() == View.VISIBLE);
 
         mSiteIdentityPopup = new SiteIdentityPopup(mActivity);
@@ -193,7 +222,7 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
             }
         });
 
-        float slideWidth = getResources().getDimension(R.dimen.browser_toolbar_lock_width);
+        float slideWidth = getResources().getDimension(R.dimen.browser_toolbar_site_security_width);
 
         LayoutParams siteSecParams = (LayoutParams) mSiteSecurity.getLayoutParams();
         final float scale = getResources().getDisplayMetrics().density;
@@ -323,7 +352,7 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
         }
 
         // If the pref to show the URL isn't set, just use the tab's display title.
-        if (!mPrefs.shouldShowUrl() || url == null) {
+        if (!mPrefs.shouldShowUrl(mActivity) || url == null) {
             setTitle(tab.getDisplayTitle());
             return;
         }
@@ -351,6 +380,11 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
     }
 
     private void updateFavicon(Tab tab) {
+        if (NewTabletUI.isEnabled(getContext())) {
+            // We don't display favicons in the toolbar for the new Tablet UI.
+            return;
+        }
+
         if (tab == null) {
             mFavicon.setImageDrawable(null);
             return;
@@ -444,7 +478,8 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
     }
 
     private void setSiteSecurityVisibility(boolean visible, EnumSet<UpdateFlags> flags) {
-        if (visible == mSiteSecurityVisible) {
+        // We don't hide site security on new tablets.
+        if (visible == mSiteSecurityVisible || NewTabletUI.isEnabled(getContext())) {
             return;
         }
 
@@ -489,7 +524,11 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
     }
 
     View getDoorHangerAnchor() {
-        return mFavicon;
+        if (!NewTabletUI.isEnabled(getContext())) {
+            return mFavicon;
+        } else {
+            return mSiteSecurity;
+        }
     }
 
     void prepareForwardAnimation(PropertyAnimator anim, ForwardButtonAnimation animation, int width) {

@@ -14,6 +14,7 @@
 #include "mozilla/NullPtr.h"
 #include "mozilla/Scoped.h"
 #include "mozilla/TemplateLib.h"
+#include "mozilla/UniquePtr.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -49,9 +50,6 @@ namespace js {}
 #define JS_SWEPT_CODE_PATTERN 0x3b
 #define JS_SWEPT_FRAME_PATTERN 0x5b
 #define JS_POISONED_FORKJOIN_CHUNK 0xBD
-
-#define JS_ASSERT(expr)           MOZ_ASSERT(expr)
-#define JS_ASSERT_IF(cond, expr)  MOZ_ASSERT_IF(cond, expr)
 
 #define JS_STATIC_ASSERT(cond)           static_assert(cond, "JS_STATIC_ASSERT")
 #define JS_STATIC_ASSERT_IF(cond, expr)  MOZ_STATIC_ASSERT_IF(cond, expr, "JS_STATIC_ASSERT_IF")
@@ -121,6 +119,12 @@ static inline void* js_realloc(void* p, size_t bytes)
 static inline void js_free(void* p)
 {
     free(p);
+}
+
+static inline char* js_strdup(const char* s)
+{
+    JS_OOM_POSSIBLY_FAIL();
+    return strdup(s);
 }
 #endif/* JS_USE_CUSTOM_ALLOCATOR */
 
@@ -625,6 +629,13 @@ namespace js {
 /* Integral types for all hash functions. */
 typedef uint32_t HashNumber;
 const unsigned HashNumberSizeBits = 32;
+
+typedef mozilla::UniquePtr<char, JS::FreePolicy> UniqueChars;
+
+static inline UniqueChars make_string_copy(const char* str)
+{
+    return UniqueChars(js_strdup(str));
+}
 
 namespace detail {
 

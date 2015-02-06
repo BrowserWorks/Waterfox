@@ -6,10 +6,6 @@
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/MemoryReporting.h"
 
-#ifdef MOZ_LOGGING
-#define FORCE_PR_LOG /* Allow logging in the release build */
-#endif /* MOZ_LOGGING */
-
 #include "gfxDWriteFontList.h"
 #include "gfxDWriteFonts.h"
 #include "nsUnicharUtils.h"
@@ -751,12 +747,14 @@ gfxDWriteFontList::GetDefaultFont(const gfxFontStyle *aStyle)
 }
 
 gfxFontEntry *
-gfxDWriteFontList::LookupLocalFont(const gfxProxyFontEntry *aProxyEntry,
-                                   const nsAString& aFullname)
+gfxDWriteFontList::LookupLocalFont(const nsAString& aFontName,
+                                   uint16_t aWeight,
+                                   int16_t aStretch,
+                                   bool aItalic)
 {
     gfxFontEntry *lookup;
 
-    lookup = LookupInFaceNameLists(aFullname);
+    lookup = LookupInFaceNameLists(aFontName);
     if (!lookup) {
         return nullptr;
     }
@@ -765,16 +763,19 @@ gfxDWriteFontList::LookupLocalFont(const gfxProxyFontEntry *aProxyEntry,
     gfxDWriteFontEntry *fe =
         new gfxDWriteFontEntry(lookup->Name(),
                                dwriteLookup->mFont,
-                               aProxyEntry->Weight(),
-                               aProxyEntry->Stretch(),
-                               aProxyEntry->IsItalic());
+                               aWeight,
+                               aStretch,
+                               aItalic);
     fe->SetForceGDIClassic(dwriteLookup->GetForceGDIClassic());
     return fe;
 }
 
 gfxFontEntry *
-gfxDWriteFontList::MakePlatformFont(const gfxProxyFontEntry *aProxyEntry,
-                                    const uint8_t *aFontData,
+gfxDWriteFontList::MakePlatformFont(const nsAString& aFontName,
+                                    uint16_t aWeight,
+                                    int16_t aStretch,
+                                    bool aItalic,
+                                    const uint8_t* aFontData,
                                     uint32_t aLength)
 {
     nsresult rv;
@@ -836,9 +837,9 @@ gfxDWriteFontList::MakePlatformFont(const gfxProxyFontEntry *aProxyEntry,
     gfxDWriteFontEntry *entry = 
         new gfxDWriteFontEntry(uniqueName, 
                                fontFile,
-                               aProxyEntry->Weight(),
-                               aProxyEntry->Stretch(),
-                               aProxyEntry->IsItalic());
+                               aWeight,
+                               aStretch,
+                               aItalic);
 
     fontFile->Analyze(&isSupported, &fileType, &entry->mFaceType, &numFaces);
     if (!isSupported || numFaces > 1) {

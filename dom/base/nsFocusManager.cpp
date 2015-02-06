@@ -12,6 +12,7 @@
 #include "nsContentUtils.h"
 #include "nsIDocument.h"
 #include "nsIDOMWindow.h"
+#include "nsIEditor.h"
 #include "nsPIDOMWindow.h"
 #include "nsIDOMElement.h"
 #include "nsIDOMDocument.h"
@@ -119,6 +120,24 @@ struct nsDelayedBlurOrFocusEvent
   nsCOMPtr<EventTarget> mTarget;
 };
 
+inline void ImplCycleCollectionUnlink(nsDelayedBlurOrFocusEvent& aField)
+{
+  aField.mPresShell = nullptr;
+  aField.mDocument = nullptr;
+  aField.mTarget = nullptr;
+}
+
+inline void
+ImplCycleCollectionTraverse(nsCycleCollectionTraversalCallback& aCallback,
+                            nsDelayedBlurOrFocusEvent& aField,
+                            const char* aName,
+                            uint32_t aFlags = 0)
+{
+  CycleCollectionNoteChild(aCallback, aField.mPresShell.get(), aName, aFlags);
+  CycleCollectionNoteChild(aCallback, aField.mDocument.get(), aName, aFlags);
+  CycleCollectionNoteChild(aCallback, aField.mTarget.get(), aName, aFlags);
+}
+
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(nsFocusManager)
   NS_INTERFACE_MAP_ENTRY(nsIFocusManager)
   NS_INTERFACE_MAP_ENTRY(nsIObserver)
@@ -135,7 +154,9 @@ NS_IMPL_CYCLE_COLLECTION(nsFocusManager,
                          mFocusedContent,
                          mFirstBlurEvent,
                          mFirstFocusEvent,
-                         mWindowBeingLowered)
+                         mWindowBeingLowered,
+                         mDelayedBlurFocusEvents,
+                         mMouseButtonEventHandlingDocument)
 
 nsFocusManager* nsFocusManager::sInstance = nullptr;
 bool nsFocusManager::sMouseFocusesFormControl = false;
@@ -794,8 +815,7 @@ nsFocusManager::ContentRemoved(nsIDocument* aDocument, nsIContent* aContent)
     // element as well, but don't fire any events.
     if (window == mFocusedWindow) {
       mFocusedContent = nullptr;
-    }
-    else {
+    } else {
       // Check if the node that was focused is an iframe or similar by looking
       // if it has a subdocument. This would indicate that this focused iframe
       // and its descendants will be going away. We will need to move the
@@ -808,6 +828,27 @@ nsFocusManager::ContentRemoved(nsIDocument* aDocument, nsIContent* aContent)
           nsCOMPtr<nsPIDOMWindow> childWindow = docShell->GetWindow();
           if (childWindow && IsSameOrAncestor(childWindow, mFocusedWindow)) {
             ClearFocus(mActiveWindow);
+          }
+        }
+      }
+    }
+
+    // Notify the editor in case we removed its ancestor limiter.
+    if (content->IsEditable()) {
+      nsCOMPtr<nsIDocShell> docShell = aDocument->GetDocShell();
+      if (docShell) {
+        nsCOMPtr<nsIEditor> editor;
+        docShell->GetEditor(getter_AddRefs(editor));
+        if (editor) {
+          nsCOMPtr<nsISelection> s;
+          editor->GetSelection(getter_AddRefs(s));
+          nsCOMPtr<nsISelectionPrivate> selection = do_QueryInterface(s);
+          if (selection) {
+            nsCOMPtr<nsIContent> limiter;
+            selection->GetAncestorLimiter(getter_AddRefs(limiter));
+            if (limiter == content) {
+              editor->FinalizeSelection();
+            }
           }
         }
       }
@@ -1571,12 +1612,12 @@ nsFocusManager::Blur(nsPIDOMWindow* aWindowToClear,
             widget->SetFocus(false);
         }
       }
+    }
 
       // if the object being blurred is a remote browser, deactivate remote content
-      if (TabParent* remote = TabParent::GetFrom(content)) {
-        remote->Deactivate();
-        LOGFOCUS(("Remote browser deactivated"));
-      }
+    if (TabParent* remote = TabParent::GetFrom(content)) {
+      remote->Deactivate();
+      LOGFOCUS(("Remote browser deactivated"));
     }
   }
 

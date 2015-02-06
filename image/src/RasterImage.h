@@ -35,6 +35,7 @@
 #include "mozilla/TimeStamp.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/WeakPtr.h"
+#include "mozilla/UniquePtr.h"
 #ifdef DEBUG
   #include "imgIContainerDebug.h"
 #endif
@@ -131,9 +132,9 @@ class Image;
 
 namespace image {
 
-class ScaleRequest;
 class Decoder;
 class FrameAnimator;
+class ScaleRunner;
 
 class RasterImage MOZ_FINAL : public ImageResource
                             , public nsIProperties
@@ -167,10 +168,6 @@ public:
                                       const char* aFromRawSegment,
                                       uint32_t aToOffset, uint32_t aCount,
                                       uint32_t* aWriteCount);
-
-  /* The index of the current frame that would be drawn if the image was to be
-   * drawn now. */
-  uint32_t GetCurrentFrameIndex();
 
   /* The total number of frames in this image. */
   uint32_t GetNumFrames() const;
@@ -301,23 +298,6 @@ public:
   // Called from module startup. Sets up RasterImage to be used.
   static void Initialize();
 
-  enum ScaleStatus
-  {
-    SCALE_INVALID,
-    SCALE_PENDING,
-    SCALE_DONE
-  };
-
-  // Call this with a new ScaleRequest to mark this RasterImage's scale result
-  // as waiting for the results of this request. You call to ScalingDone before
-  // request is destroyed!
-  void ScalingStart(ScaleRequest* request);
-
-  // Call this with a finished ScaleRequest to set this RasterImage's scale
-  // result. Give it a ScaleStatus of SCALE_DONE if everything succeeded, and
-  // SCALE_INVALID otherwise.
-  void ScalingDone(ScaleRequest* request, ScaleStatus status);
-
   // Decoder shutdown
   enum eShutdownIntent {
     eShutdownIntent_Done        = 0,
@@ -329,9 +309,6 @@ public:
   // Decode strategy
 
 private:
-  // Initiates an HQ scale for the given frame, if possible.
-  void RequestScale(imgFrame* aFrame, nsIntSize aScale);
-
   already_AddRefed<imgStatusTracker> CurrentStatusTracker()
   {
     mDecodingMonitor.AssertCurrentThreadIn();
@@ -350,7 +327,7 @@ private:
    */
   struct DecodeRequest
   {
-    DecodeRequest(RasterImage* aImage)
+    explicit DecodeRequest(RasterImage* aImage)
       : mImage(aImage)
       , mBytesToDecode(0)
       , mRequestStatus(REQUEST_INACTIVE)
@@ -546,7 +523,7 @@ private:
     NS_IMETHOD Run();
 
   private: /* methods */
-    FrameNeededWorker(RasterImage* image);
+    explicit FrameNeededWorker(RasterImage* image);
 
   private: /* members */
 
@@ -556,31 +533,24 @@ private:
   nsresult FinishedSomeDecoding(eShutdownIntent intent = eShutdownIntent_Done,
                                 DecodeRequest* request = nullptr);
 
-  bool DrawWithPreDownscaleIfNeeded(imgFrame *aFrame,
-                                    gfxContext *aContext,
+  void DrawWithPreDownscaleIfNeeded(DrawableFrameRef&& aFrameRef,
+                                    gfxContext* aContext,
                                     const nsIntSize& aSize,
                                     const ImageRegion& aRegion,
                                     GraphicsFilter aFilter,
                                     uint32_t aFlags);
 
   TemporaryRef<gfx::SourceSurface> CopyFrame(uint32_t aWhichFrame,
-                                             uint32_t aFlags);
+                                             uint32_t aFlags,
+                                             bool aShouldSyncNotify = true);
+  TemporaryRef<gfx::SourceSurface> GetFrameInternal(uint32_t aWhichFrame,
+                                                    uint32_t aFlags,
+                                                    bool aShouldSyncNotify = true);
 
-  /**
-   * Deletes and nulls out the frame in mFrames[framenum].
-   *
-   * Does not change the size of mFrames.
-   *
-   * @param framenum The index of the frame to be deleted.
-   *                 Must lie in [0, mFrames.Length() )
-   */
-  void DeleteImgFrame(uint32_t framenum);
-
-  already_AddRefed<imgFrame> GetImgFrameNoDecode(uint32_t framenum);
-  already_AddRefed<imgFrame> GetImgFrame(uint32_t framenum);
-  already_AddRefed<imgFrame> GetDrawableImgFrame(uint32_t framenum);
-  already_AddRefed<imgFrame> GetCurrentImgFrame();
-  uint32_t GetCurrentImgFrameIndex() const;
+  already_AddRefed<imgFrame> LookupFrameNoDecode(uint32_t aFrameNum);
+  DrawableFrameRef LookupFrame(uint32_t aFrameNum, uint32_t aFlags, bool aShouldSyncNotify = true);
+  uint32_t GetCurrentFrameIndex() const;
+  uint32_t GetRequestedFrameIndex(uint32_t aWhichFrame) const;
 
   size_t SizeOfDecodedWithComputedFallbackIfHeap(gfxMemoryLocation aLocation,
                                                  MallocSizeOf aMallocSizeOf) const;
@@ -644,7 +614,7 @@ private: // data
   // IMPORTANT: if you use mAnim in a method, call EnsureImageIsDecoded() first to ensure
   // that the frames actually exist (they may have been discarded to save memory, or
   // we maybe decoding on draw).
-  FrameAnimator* mAnim;
+  UniquePtr<FrameAnimator> mAnim;
 
   // Discard members
   uint32_t                   mLockCount;
@@ -730,7 +700,7 @@ private: // data
                                  eShutdownIntent aIntent,
                                  bool aDone,
                                  bool aWasSize);
-  nsresult WantDecodedFrames();
+  nsresult WantDecodedFrames(uint32_t aFlags, bool aShouldSyncNotify);
   nsresult SyncDecode();
   nsresult InitDecoder(bool aDoSizeDecode);
   nsresult WriteToDecoder(const char *aBuffer, uint32_t aCount, DecodeStrategy aStrategy);
@@ -738,31 +708,27 @@ private: // data
   bool     IsDecodeFinished();
   TimeStamp mDrawStartTime;
 
-  inline bool CanQualityScale(const gfx::Size& scale);
-  inline bool CanScale(GraphicsFilter aFilter, gfx::Size aScale, uint32_t aFlags);
-
-  struct ScaleResult
-  {
-    ScaleResult()
-     : status(SCALE_INVALID)
-    {}
-
-    nsIntSize scaledSize;
-    nsRefPtr<imgFrame> frame;
-    ScaleStatus status;
-  };
-
-  ScaleResult mScaleResult;
-
-  // We hold on to a bare pointer to a ScaleRequest while it's outstanding so
-  // we can mark it as stopped if necessary. The ScaleWorker/DrawWorker duo
-  // will inform us when to let go of this pointer.
-  ScaleRequest* mScaleRequest;
-
   // Initializes imgStatusTracker and resets it on RasterImage destruction.
   nsAutoPtr<imgStatusTrackerInit> mStatusTrackerInit;
 
   nsresult ShutdownDecoder(eShutdownIntent aIntent);
+
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Scaling.
+  //////////////////////////////////////////////////////////////////////////////
+
+  // Initiates an HQ scale for the given frame, if possible.
+  void RequestScale(imgFrame* aFrame, uint32_t aFlags, const nsIntSize& aSize);
+
+  // Determines whether we can perform an HQ scale with the given parameters.
+  bool CanScale(GraphicsFilter aFilter, const nsIntSize& aSize, uint32_t aFlags);
+
+  // Called by the HQ scaler when a new scaled frame is ready.
+  void NotifyNewScaledFrame();
+
+  friend class ScaleRunner;
+
 
   // Error handling.
   void DoError();
@@ -780,7 +746,7 @@ private: // data
     NS_IMETHOD Run();
 
   private:
-    HandleErrorWorker(RasterImage* aImage);
+    explicit HandleErrorWorker(RasterImage* aImage);
 
     nsRefPtr<RasterImage> mImage;
   };
@@ -793,8 +759,8 @@ private: // data
   bool StoringSourceData() const;
 
 protected:
-  RasterImage(imgStatusTracker* aStatusTracker = nullptr,
-              ImageURL* aURI = nullptr);
+  explicit RasterImage(imgStatusTracker* aStatusTracker = nullptr,
+                       ImageURL* aURI = nullptr);
 
   bool ShouldAnimate();
 
@@ -814,7 +780,7 @@ inline NS_IMETHODIMP RasterImage::GetAnimationMode(uint16_t *aAnimationMode) {
 class imgDecodeRequestor : public nsRunnable
 {
   public:
-    imgDecodeRequestor(RasterImage &aContainer) {
+    explicit imgDecodeRequestor(RasterImage &aContainer) {
       mContainer = &aContainer;
     }
     NS_IMETHOD Run() {

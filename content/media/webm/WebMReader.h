@@ -71,20 +71,20 @@ class WebMPacketQueue : private nsDeque {
    WebMPacketQueue()
      : nsDeque(new PacketQueueDeallocator())
    {}
-  
+
   ~WebMPacketQueue() {
     Reset();
   }
 
-  inline int32_t GetSize() { 
+  inline int32_t GetSize() {
     return nsDeque::GetSize();
   }
-  
+
   inline void Push(NesteggPacketHolder* aItem) {
     NS_ASSERTION(aItem, "NULL pushed to WebMPacketQueue");
     nsDeque::Push(aItem);
   }
-  
+
   inline void PushFront(NesteggPacketHolder* aItem) {
     NS_ASSERTION(aItem, "NULL pushed to WebMPacketQueue");
     nsDeque::PushFront(aItem);
@@ -93,7 +93,7 @@ class WebMPacketQueue : private nsDeque {
   inline NesteggPacketHolder* PopFront() {
     return static_cast<NesteggPacketHolder*>(nsDeque::PopFront());
   }
-  
+
   void Reset() {
     while (GetSize() > 0) {
       delete PopFront();
@@ -116,7 +116,7 @@ public:
 
   // If the Theora granulepos has not been captured, it may read several packets
   // until one with a granulepos has been captured, to ensure that all packets
-  // read have valid time info.  
+  // read have valid time info.
   virtual bool DecodeVideoFrame(bool &aKeyframeSkip,
                                   int64_t aTimeThreshold);
 
@@ -134,9 +134,11 @@ public:
 
   virtual nsresult ReadMetadata(MediaInfo* aInfo,
                                 MetadataTags** aTags);
-  virtual nsresult Seek(int64_t aTime, int64_t aStartTime, int64_t aEndTime, int64_t aCurrentTime);
+  virtual nsresult Seek(int64_t aTime, int64_t aStartTime, int64_t aEndTime,
+                        int64_t aCurrentTime);
   virtual nsresult GetBuffered(dom::TimeRanges* aBuffered, int64_t aStartTime);
-  virtual void NotifyDataArrived(const char* aBuffer, uint32_t aLength, int64_t aOffset);
+  virtual void NotifyDataArrived(const char* aBuffer, uint32_t aLength,
+                                 int64_t aOffset);
   virtual int64_t GetEvictionOffset(double aTime);
 
   virtual bool IsMediaSeekable() MOZ_OVERRIDE;
@@ -157,13 +159,6 @@ protected:
   // Pushes a packet to the front of the video packet queue.
   virtual void PushVideoPacket(NesteggPacketHolder* aItem);
 
-  // Returns an initialized ogg packet with data obtained from the WebM container.
-  ogg_packet InitOggPacket(unsigned char* aData,
-                           size_t aLength,
-                           bool aBOS,
-                           bool aEOS,
-                           int64_t aGranulepos);
-
 #ifdef MOZ_OPUS
   // Setup opus decoder
   bool InitOpusDecoder();
@@ -176,6 +171,14 @@ protected:
   // must be held during this call. The caller is responsible for freeing
   // aPacket.
   bool DecodeAudioPacket(nestegg_packet* aPacket, int64_t aOffset);
+  bool DecodeVorbis(const unsigned char* aData, size_t aLength,
+                    int64_t aOffset, uint64_t aTstampUsecs,
+                    int32_t* aTotalFrames);
+#ifdef MOZ_OPUS
+  bool DecodeOpus(const unsigned char* aData, size_t aLength,
+                  int64_t aOffset, uint64_t aTstampUsecs,
+                  nestegg_packet* aPacket);
+#endif
 
   // Release context and set to null. Called when an error occurs during
   // reading metadata or destruction of the reader itself.
@@ -194,16 +197,14 @@ private:
   vorbis_comment mVorbisComment;
   vorbis_dsp_state mVorbisDsp;
   vorbis_block mVorbisBlock;
-  uint32_t mPacketCount;
-  uint32_t mChannels;
-
+  int64_t mPacketCount;
 
 #ifdef MOZ_OPUS
   // Opus decoder state
   nsAutoPtr<OpusParser> mOpusParser;
   OpusMSDecoder *mOpusDecoder;
-  int mSkip;        // Number of samples left to trim before playback.
-  uint64_t mSeekPreroll; // Number of nanoseconds that must be discarded after seeking.
+  uint16_t mSkip;        // Samples left to trim before playback.
+  uint64_t mSeekPreroll; // Nanoseconds to discard after seeking.
 #endif
 
   // Queue of video and audio packets that have been read but not decoded. These
@@ -224,6 +225,10 @@ private:
   // Number of microseconds that must be discarded from the start of the Stream.
   uint64_t mCodecDelay;
 
+  // Calculate the frame duration from the last decodeable frame using the
+  // previous frame's timestamp.  In NS.
+  uint64_t mLastVideoFrameTime;
+
   // Parser state and computed offset-time mappings.  Shared by multiple
   // readers when decoder has been cloned.  Main thread only.
   nsRefPtr<WebMBufferedState> mBufferedState;
@@ -243,6 +248,13 @@ private:
   // Booleans to indicate if we have audio and/or video data
   bool mHasVideo;
   bool mHasAudio;
+
+#ifdef MOZ_OPUS
+  // Opus padding should only be discarded on the final packet.  Once this
+  // is set to true, if the reader attempts to decode any further packets it
+  // will raise an error so we can indicate that the file is invalid.
+  bool mPaddingDiscarded;
+#endif
 };
 
 } // namespace mozilla

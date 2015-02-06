@@ -230,7 +230,8 @@ enum {
   kWindowsVista = 0x60000,
   kWindows7 = 0x60001,
   kWindows8 = 0x60002,
-  kWindows8_1 = 0x60003
+  kWindows8_1 = 0x60003,
+  kWindows10 = 0x60004
 };
 
 static int32_t
@@ -866,6 +867,26 @@ GfxInfo::GetGfxDriverInfo()
       (nsAString&) GfxDriverInfo::GetDeviceVendor(VendorAMD), GfxDriverInfo::allDevices,
       GfxDriverInfo::allFeatures, nsIGfxInfo::FEATURE_BLOCKED_DRIVER_VERSION,
       DRIVER_LESS_THAN, V(8,62,0,0), "9.6" );
+	  
+	  
+    /* Bug 1089183: on some old ATI driver versions, at least 8.653 and 8.682,
+     * so both in the 8.600's range, we are very slow with OMTC D3D11 layers.
+     * Just disabling D2D is not enough (comment 16) but if we also fall back
+     * to D3D9 layers, it's apparently enough to avert the problem (comment 18).
+     *
+     * This blacklist rule is not fully understood and should hopefully not
+     * prevent deeper investigation of this bug! It's just a band-aid to avoid
+     * losing users for now.
+     */
+    APPEND_TO_DRIVER_BLOCKLIST(DRIVER_OS_ALL,
+      (nsAString&)GfxDriverInfo::GetDeviceVendor(VendorATI), GfxDriverInfo::allDevices,
+      nsIGfxInfo::FEATURE_DIRECT2D, nsIGfxInfo::FEATURE_BLOCKED_DRIVER_VERSION,
+      DRIVER_LESS_THAN, V(8, 700, 0, 0), "8.700.0.0");
+    APPEND_TO_DRIVER_BLOCKLIST(DRIVER_OS_ALL,
+      (nsAString&)GfxDriverInfo::GetDeviceVendor(VendorATI), GfxDriverInfo::allDevices,
+      nsIGfxInfo::FEATURE_DIRECT3D_11_LAYERS, nsIGfxInfo::FEATURE_BLOCKED_DRIVER_VERSION,
+      DRIVER_LESS_THAN, V(8, 700, 0, 0), "8.700.0.0");
+
 
     /*
      * Bug 783517 - crashes in AMD driver on Windows 8
@@ -1018,6 +1039,14 @@ GfxInfo::GetGfxDriverInfo()
         (nsAString&) GfxDriverInfo::GetDeviceVendor(VendorAMD), GfxDriverInfo::allDevices,
       nsIGfxInfo::FEATURE_DIRECT2D, nsIGfxInfo::FEATURE_BLOCKED_DRIVER_VERSION,
       DRIVER_BETWEEN_INCLUSIVE_START, V(14,1,0,0), V(14,2,0,0), "ATI Catalyst 14.6+");
+	  
+	  
+    // Disable D2D on some ATI drivers which don't support dxgi keyed mutex correctly (bug 1089183)
+    APPEND_TO_DRIVER_BLOCKLIST_RANGE( DRIVER_OS_ALL,
+        (nsAString&) GfxDriverInfo::GetDeviceVendor(VendorATI), GfxDriverInfo::allDevices,
+      nsIGfxInfo::FEATURE_DIRECT2D, nsIGfxInfo::FEATURE_BLOCKED_DRIVER_VERSION,
+      DRIVER_BETWEEN_INCLUSIVE_START, V(8,653,0,0), V(8,691,0,0), "ATI Catalyst 14.6+");
+
 
     /* Disable D3D9 layers on NVIDIA 6100/6150/6200 series due to glitches
      * whilst scrolling. See bugs: 612007, 644787 & 645872.

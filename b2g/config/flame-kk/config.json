@@ -22,19 +22,23 @@
         "{workdir}/flash.sh",
         "{workdir}/load-config.sh",
         "{workdir}/.config",
-        "{workdir}/sources.xml"
+        "{workdir}/sources.xml",
+        "{workdir}/profile.sh",
+        ["{workdir}/gecko/tools/profiler/merge-profiles.py", "gecko/tools/profiler/"],
+        ["{workdir}/scripts/profile-symbolicate.py", "scripts/"],
+        ["{workdir}/gecko/tools/rb/fix_stack_using_bpsyms.py", "gecko/tools/rb/"]
     ],
     "env": {
         "VARIANT": "user",
         "MOZILLA_OFFICIAL": "1",
         "MOZ_TELEMETRY_REPORTING": "1",
-        "B2G_UPDATE_CHANNEL": "aurora",
+        "B2G_UPDATE_CHANNEL": "nightly",
         "GAIA_KEYBOARD_LAYOUTS": "en,pt-BR,es,de,fr,pl,zh-Hans-Pinyin,zh-Hant-Zhuyin,en-Dvorak"
     },
     "b2g_manifest": "flame-kk.xml",
     "b2g_manifest_intree": true,
     "additional_source_tarballs": ["backup-flame.tar.xz"],
-    "gecko_l10n_root": "https://hg.mozilla.org/releases/l10n/mozilla-aurora",
+    "gecko_l10n_root": "https://hg.mozilla.org/l10n-central",
     "gaia": {
         "l10n": {
             "vcs": "hgtool",

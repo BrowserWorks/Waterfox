@@ -43,6 +43,9 @@ class OutOfLineLoadTypedArray;
 class OutOfLineNewGCThingPar;
 class OutOfLineUpdateCache;
 class OutOfLineCallPostWriteBarrier;
+class OutOfLineIsCallable;
+class OutOfLineRegExpExec;
+class OutOfLineRegExpTest;
 
 class CodeGenerator : public CodeGeneratorSpecific
 {
@@ -67,6 +70,7 @@ class CodeGenerator : public CodeGeneratorSpecific
     bool visitCloneLiteral(LCloneLiteral *lir);
     bool visitParameter(LParameter *lir);
     bool visitCallee(LCallee *lir);
+    bool visitIsConstructing(LIsConstructing *lir);
     bool visitStart(LStart *lir);
     bool visitReturn(LReturn *ret);
     bool visitDefVar(LDefVar *lir);
@@ -99,7 +103,9 @@ class CodeGenerator : public CodeGeneratorSpecific
     bool visitInteger(LInteger *lir);
     bool visitRegExp(LRegExp *lir);
     bool visitRegExpExec(LRegExpExec *lir);
+    bool visitOutOfLineRegExpExec(OutOfLineRegExpExec *ool);
     bool visitRegExpTest(LRegExpTest *lir);
+    bool visitOutOfLineRegExpTest(OutOfLineRegExpTest *ool);
     bool visitRegExpReplace(LRegExpReplace *lir);
     bool visitStringReplace(LStringReplace *lir);
     bool visitLambda(LLambda *lir);
@@ -263,8 +269,8 @@ class CodeGenerator : public CodeGeneratorSpecific
     bool visitClampVToUint8(LClampVToUint8 *lir);
     bool visitCallIteratorStart(LCallIteratorStart *lir);
     bool visitIteratorStart(LIteratorStart *lir);
-    bool visitIteratorNext(LIteratorNext *lir);
     bool visitIteratorMore(LIteratorMore *lir);
+    bool visitIsNoIterAndBranch(LIsNoIterAndBranch *lir);
     bool visitIteratorEnd(LIteratorEnd *lir);
     bool visitArgumentsLength(LArgumentsLength *lir);
     bool visitGetFrameArgument(LGetFrameArgument *lir);
@@ -295,13 +301,15 @@ class CodeGenerator : public CodeGeneratorSpecific
     bool visitCallDOMNative(LCallDOMNative *lir);
     bool visitCallGetIntrinsicValue(LCallGetIntrinsicValue *lir);
     bool visitIsCallable(LIsCallable *lir);
+    bool visitOutOfLineIsCallable(OutOfLineIsCallable *ool);
     bool visitIsObject(LIsObject *lir);
     bool visitHaveSameClass(LHaveSameClass *lir);
     bool visitHasClass(LHasClass *lir);
-    bool visitAsmJSCall(LAsmJSCall *lir);
     bool visitAsmJSParameter(LAsmJSParameter *lir);
     bool visitAsmJSReturn(LAsmJSReturn *ret);
     bool visitAsmJSVoidReturn(LAsmJSVoidReturn *ret);
+    bool visitLexicalCheck(LLexicalCheck *ins);
+    bool visitThrowUninitializedLexical(LThrowUninitializedLexical *ins);
 
     bool visitCheckOverRecursed(LCheckOverRecursed *lir);
     bool visitCheckOverRecursedFailure(CheckOverRecursedFailure *ool);
@@ -384,7 +392,7 @@ class CodeGenerator : public CodeGeneratorSpecific
 
     bool emitAllocateGCThingPar(LInstruction *lir, Register objReg, Register cxReg,
                                 Register tempReg1, Register tempReg2,
-                                JSObject *templateObj);
+                                NativeObject *templateObj);
 
     bool emitCallToUncompiledScriptPar(LInstruction *lir, Register calleeReg);
 
@@ -461,7 +469,7 @@ class CodeGenerator : public CodeGeneratorSpecific
     bool emitAssertRangeI(const Range *r, Register input);
     bool emitAssertRangeD(const Range *r, FloatRegister input, FloatRegister temp);
 
-    Vector<CodeOffsetLabel, 0, IonAllocPolicy> ionScriptLabels_;
+    Vector<CodeOffsetLabel, 0, JitAllocPolicy> ionScriptLabels_;
 #ifdef DEBUG
     bool branchIfInvalidated(Register temp, Label *invalidated);
 

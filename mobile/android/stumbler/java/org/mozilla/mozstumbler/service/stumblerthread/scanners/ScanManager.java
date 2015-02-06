@@ -23,7 +23,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class ScanManager {
-    private static final String LOG_TAG = AppGlobals.LOG_PREFIX + ScanManager.class.getSimpleName();
+    private static final String LOG_TAG = AppGlobals.makeLogTag(ScanManager.class.getSimpleName());
     private Timer mPassiveModeFlushTimer;
     private Context mContext;
     private boolean mIsScanning;
@@ -98,6 +98,11 @@ public class ScanManager {
         }
 
         mContext = context.getApplicationContext();
+        if (mContext == null) {
+            Log.w(LOG_TAG, "No app context available.");
+            return;
+        }
+
         if (mGPSScanner == null) {
             mGPSScanner = new GPSScanner(context, this);
             mWifiScanner = new WifiScanner(context);
@@ -156,10 +161,6 @@ public class ScanManager {
 
     public int getCellInfoCount() {
         return (mCellScanner == null)? 0 :mCellScanner.getCellInfoCount();
-    }
-
-    public int getCurrentCellInfoCount() {
-        return (mCellScanner == null)? 0 :mCellScanner.getCurrentCellInfoCount();
     }
 
     public int getLocationCount() {

@@ -49,6 +49,7 @@
 #include "nsSandboxFlags.h"
 #include "nsContentTypeParser.h"
 #include "nsINetworkPredictor.h"
+#include "ImportManager.h"
 #include "mozilla/dom/EncodingUtils.h"
 
 #include "mozilla/CORSMode.h"
@@ -109,7 +110,7 @@ public:
   bool mIsInline;         // Is the script inline or loaded?
   bool mHasSourceMapURL;  // Does the HTTP header have a source map url?
   nsString mSourceMapURL; // Holds source map url for loaded scripts
-  jschar* mScriptTextBuf;   // Holds script text for non-inline scripts. Don't
+  char16_t* mScriptTextBuf; // Holds script text for non-inline scripts. Don't
   size_t mScriptTextLength; // use nsString so we can give ownership to jsapi.
   uint32_t mJSVersion;
   nsCOMPtr<nsIURI> mURI;
@@ -319,9 +320,16 @@ nsScriptLoader::StartLoad(nsScriptLoadRequest *aRequest, const nsAString &aType,
 
   nsCOMPtr<nsIChannel> channel;
   rv = NS_NewChannel(getter_AddRefs(channel),
-                     aRequest->mURI, nullptr, loadGroup, prompter,
-                     nsIRequest::LOAD_NORMAL | nsIChannel::LOAD_CLASSIFY_URI,
-                     channelPolicy);
+                     aRequest->mURI,
+                     mDocument,
+                     nsILoadInfo::SEC_NORMAL,
+                     nsIContentPolicy::TYPE_SCRIPT,
+                     channelPolicy,
+                     loadGroup,
+                     prompter,
+                     nsIRequest::LOAD_NORMAL |
+                     nsIChannel::LOAD_CLASSIFY_URI);
+
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsIScriptElement *script = aRequest->mElement;
@@ -816,7 +824,12 @@ NotifyOffThreadScriptLoadCompletedRunnable::Run()
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  nsresult rv = mLoader->ProcessOffThreadRequest(mRequest, &mToken);
+  // We want these to be dropped on the main thread, once we return from this
+  // function.
+  nsRefPtr<nsScriptLoadRequest> request = mRequest.forget();
+  nsRefPtr<nsScriptLoader> loader = mLoader.forget();
+
+  nsresult rv = loader->ProcessOffThreadRequest(request, &mToken);
 
   if (mToken) {
     // The result of the off thread parse was not actually needed to process
@@ -898,7 +911,7 @@ nsScriptLoader::ProcessRequest(nsScriptLoadRequest* aRequest, void **aOffThreadT
 
   NS_ENSURE_ARG(aRequest);
   nsAutoString textData;
-  const jschar* scriptBuf = nullptr;
+  const char16_t* scriptBuf = nullptr;
   size_t scriptLength = 0;
   JS::SourceBufferHolder::Ownership giveScriptOwnership =
     JS::SourceBufferHolder::NoOwnership;
@@ -1050,7 +1063,9 @@ nsScriptLoader::FillCompileOptionsForRequest(const AutoJSAPI &jsapi,
     aOptions->setSourceMapURL(aRequest->mSourceMapURL.get());
   }
   if (aRequest->mOriginPrincipal) {
-    aOptions->setOriginPrincipals(nsJSPrincipals::get(aRequest->mOriginPrincipal));
+    nsIPrincipal* scriptPrin = nsContentUtils::ObjectPrincipal(aScopeChain);
+    bool subsumes = scriptPrin->Subsumes(aRequest->mOriginPrincipal);
+    aOptions->setMutedErrors(!subsumes);
   }
 
   JSContext* cx = jsapi.cx();
@@ -1227,7 +1242,7 @@ nsScriptLoader::ReadyToExecuteScripts()
   if (!SelfReadyToExecuteScripts()) {
     return false;
   }
-  
+
   for (nsIDocument* doc = mDocument; doc; doc = doc->GetParentDocument()) {
     nsScriptLoader* ancestor = doc->ScriptLoader();
     if (!ancestor->SelfReadyToExecuteScripts() &&
@@ -1237,9 +1252,43 @@ nsScriptLoader::ReadyToExecuteScripts()
     }
   }
 
+  if (mDocument && !mDocument->IsMasterDocument()) {
+    nsRefPtr<ImportManager> im = mDocument->ImportManager();
+    nsRefPtr<ImportLoader> loader = im->Find(mDocument);
+    MOZ_ASSERT(loader, "How can we have an import document without a loader?");
+
+    // The referring link that counts in the execution order calculation
+    // (in spec: flagged as branch)
+    nsCOMPtr<nsINode> referrer = loader->GetMainReferrer();
+    MOZ_ASSERT(referrer, "There has to be a main referring link for each imports");
+
+    // Import documents are blocked by their import predecessors. We need to
+    // wait with script execution until all the predecessors are done.
+    // Technically it means we have to wait for the last one to finish,
+    // which is the neares one to us in the order.
+    nsRefPtr<ImportLoader> lastPred = im->GetNearestPredecessor(referrer);
+    if (!lastPred) {
+      // If there is no predecessor we can run.
+      return true;
+    }
+
+    nsCOMPtr<nsIDocument> doc = lastPred->GetDocument();
+    if (lastPred->IsBlocking() || !doc || (doc && !doc->ScriptLoader()->SelfReadyToExecuteScripts())) {
+      // Document has not been created yet or it was created but not ready.
+      // Either case we are blocked by it. The ImportLoader will take care
+      // of blocking us, and adding the pending child loader to the blocking
+      // ScriptLoader when it's possible (at this point the blocking loader
+      // might not have created the document/ScriptLoader)
+      lastPred->AddBlockedScriptLoader(this);
+      // As more imports are parsed, this can change, let's cache what we
+      // blocked, so it can be later updated if needed (see: ImportLoader::Updater).
+      loader->SetBlockingPredecessor(lastPred);
+      return false;
+    }
+  }
+
   return true;
 }
-
 
 // This function was copied from nsParser.cpp. It was simplified a bit.
 static bool
@@ -1278,7 +1327,7 @@ DetectByteOrderMark(const unsigned char* aBytes, int32_t aLen, nsCString& oChars
 nsScriptLoader::ConvertToUTF16(nsIChannel* aChannel, const uint8_t* aData,
                                uint32_t aLength, const nsAString& aHintCharset,
                                nsIDocument* aDocument,
-                               jschar*& aBufOut, size_t& aLengthOut)
+                               char16_t*& aBufOut, size_t& aLengthOut)
 {
   if (!aLength) {
     aBufOut = nullptr;
@@ -1335,7 +1384,7 @@ nsScriptLoader::ConvertToUTF16(nsIChannel* aChannel, const uint8_t* aData,
                                  aLength, &unicodeLength);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  aBufOut = static_cast<jschar*>(js_malloc(unicodeLength * sizeof(jschar)));
+  aBufOut = static_cast<char16_t*>(js_malloc(unicodeLength * sizeof(char16_t)));
   if (!aBufOut) {
     aLengthOut = 0;
     return NS_ERROR_OUT_OF_MEMORY;
@@ -1461,7 +1510,7 @@ nsScriptLoader::PrepareLoadedRequest(nsScriptLoadRequest* aRequest,
   // principal as the origin principal
   if (aRequest->mCORSMode == CORS_NONE) {
     rv = nsContentUtils::GetSecurityManager()->
-      GetChannelPrincipal(channel, getter_AddRefs(aRequest->mOriginPrincipal));
+      GetChannelResultPrincipal(channel, getter_AddRefs(aRequest->mOriginPrincipal));
     NS_ENSURE_SUCCESS(rv, rv);
   }
 

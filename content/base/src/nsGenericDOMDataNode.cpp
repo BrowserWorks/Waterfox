@@ -24,7 +24,6 @@
 #include "nsIDOMText.h"
 #include "nsCOMPtr.h"
 #include "nsDOMString.h"
-#include "nsIDOMUserDataHandler.h"
 #include "nsChangeHint.h"
 #include "nsCOMArray.h"
 #include "nsNodeUtils.h"
@@ -298,7 +297,7 @@ nsGenericDOMDataNode::SetTextInternal(uint32_t aOffset, uint32_t aCount,
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
-  nsIDocument *document = GetCurrentDoc();
+  nsIDocument *document = GetComposedDoc();
   mozAutoDocUpdate updateBatch(document, UPDATE_CONTENT_MODEL, aNotify);
 
   bool haveMutationListeners = aNotify &&
@@ -466,9 +465,9 @@ nsGenericDOMDataNode::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
   NS_PRECONDITION(aParent || aDocument, "Must have document if no parent!");
   NS_PRECONDITION(NODE_FROM(aParent, aDocument)->OwnerDoc() == OwnerDoc(),
                   "Must have the same owner document");
-  NS_PRECONDITION(!aParent || aDocument == aParent->GetCurrentDoc(),
+  NS_PRECONDITION(!aParent || aDocument == aParent->GetUncomposedDoc(),
                   "aDocument must be current doc of aParent");
-  NS_PRECONDITION(!GetCurrentDoc() && !IsInDoc(),
+  NS_PRECONDITION(!GetUncomposedDoc() && !IsInDoc(),
                   "Already have a document.  Unbind first!");
   // Note that as we recurse into the kids, they'll have a non-null parent.  So
   // only assert if our parent is _changing_ while we have a parent.
@@ -551,7 +550,7 @@ nsGenericDOMDataNode::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
 
   UpdateEditableState(false);
 
-  NS_POSTCONDITION(aDocument == GetCurrentDoc(), "Bound to wrong document");
+  NS_POSTCONDITION(aDocument == GetUncomposedDoc(), "Bound to wrong document");
   NS_POSTCONDITION(aParent == GetParent(), "Bound to wrong parent");
   NS_POSTCONDITION(aBindingParent == GetBindingParent(),
                    "Bound to wrong binding parent");
@@ -565,14 +564,10 @@ nsGenericDOMDataNode::UnbindFromTree(bool aDeep, bool aNullParent)
   // Unset frame flags; if we need them again later, they'll get set again.
   UnsetFlags(NS_CREATE_FRAME_IF_NON_WHITESPACE |
              NS_REFRAME_IF_WHITESPACE);
-  
-  nsIDocument *document = GetCurrentDoc();
-  if (document) {
-    // Notify XBL- & nsIAnonymousContentCreator-generated
-    // anonymous content that the document is changing.
-    // This is needed to update the insertion point.
-    document->BindingManager()->RemovedFromDocument(this, document);
-  }
+
+  nsIDocument* document =
+    HasFlag(NODE_FORCE_XBL_BINDINGS) || IsInShadowTree() ?
+      OwnerDoc() : GetUncomposedDoc();
 
   if (aNullParent) {
     if (GetParent()) {
@@ -583,15 +578,32 @@ nsGenericDOMDataNode::UnbindFromTree(bool aDeep, bool aNullParent)
     SetParentIsContent(false);
   }
   ClearInDocument();
-  UnsetFlags(NODE_IS_IN_SHADOW_TREE);
 
-  // Begin keeping track of our subtree root.
-  SetSubtreeRootPointer(aNullParent ? this : mParent->SubtreeRoot());
+  if (aNullParent || !mParent->IsInShadowTree()) {
+    UnsetFlags(NODE_IS_IN_SHADOW_TREE);
+
+    // Begin keeping track of our subtree root.
+    SetSubtreeRootPointer(aNullParent ? this : mParent->SubtreeRoot());
+  }
+
+  if (document && !GetContainingShadow()) {
+    // Notify XBL- & nsIAnonymousContentCreator-generated
+    // anonymous content that the document is changing.
+    // Unlike XBL, bindings for web components shadow DOM
+    // do not get uninstalled.
+    if (HasFlag(NODE_MAY_BE_IN_BINDING_MNGR)) {
+      nsContentUtils::AddScriptRunner(
+        new RemoveFromBindingManagerRunnable(document->BindingManager(), this,
+                                             document));
+    }
+  }
 
   nsDataSlots *slots = GetExistingDataSlots();
   if (slots) {
     slots->mBindingParent = nullptr;
-    slots->mContainingShadow = nullptr;
+    if (aNullParent || !mParent->IsInShadowTree()) {
+      slots->mContainingShadow = nullptr;
+    }
   }
 
   nsNodeUtils::ParentChainChanged(this);
@@ -851,7 +863,7 @@ nsGenericDOMDataNode::SplitData(uint32_t aOffset, nsIContent** aReturn,
     return rv;
   }
 
-  nsIDocument* document = GetCurrentDoc();
+  nsIDocument* document = GetComposedDoc();
   mozAutoDocUpdate updateBatch(document, UPDATE_CONTENT_MODEL, true);
 
   // Use Clone for creating the new node so that the new node is of same class

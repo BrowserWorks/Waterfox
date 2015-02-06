@@ -3,6 +3,13 @@
 http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
 
+///////////////////
+//
+// Whitelisting this test.
+// As part of bug 1077403, the leaking uncaught rejection should be fixed.
+//
+thisTestLeaksUncaughtRejectionsAndShouldBeFixed("TypeError: jsterm.focusInput is not a function");
+
 // Test context menu functionality:
 // 1) menu items are disabled/enabled depending on the clicked node
 // 2) actions triggered by the items work correctly
@@ -80,11 +87,12 @@ registerCleanupFunction(() => {
 });
 
 let test = asyncTest(function* () {
-  let { inspector } = yield openInspectorForURL(TEST_URL);
+  let { inspector, toolbox } = yield openInspectorForURL(TEST_URL);
 
   yield testMenuItemSensitivity();
   yield testPasteOuterHTMLMenuItemSensitivity();
   yield testCopyMenuItems();
+  yield testShowDOMProperties();
   yield testPasteOuterHTMLMenu();
   yield testDeleteNode();
   yield testDeleteRootNode();
@@ -154,6 +162,27 @@ let test = asyncTest(function* () {
     }
   }
 
+  function* testShowDOMProperties() {
+    info("Testing 'Show DOM Properties' menu item.");
+    let showDOMPropertiesNode = inspector.panelDoc.getElementById("node-menu-showdomproperties");
+    ok(showDOMPropertiesNode, "the popup menu has a show dom properties item");
+
+    let consoleOpened = toolbox.once("webconsole-ready");
+
+    info("Triggering 'Show DOM Properties' and waiting for inspector open");
+    dispatchCommandEvent(showDOMPropertiesNode);
+    yield consoleOpened;
+
+    let webconsoleUI = toolbox.getPanel("webconsole").hud.ui;
+    let messagesAdded = webconsoleUI.once("new-messages");
+    yield messagesAdded;
+
+    info("Checking if 'inspect($0)' was evaluated");
+    ok(webconsoleUI.jsterm.history[0] === 'inspect($0)');
+
+    yield toolbox.toggleSplitConsole();
+  }
+
   function* testPasteOuterHTMLMenu() {
     info("Testing that 'Paste Outer HTML' menu item works.");
     clipboard.set("this was pasted");
@@ -163,11 +192,12 @@ let test = asyncTest(function* () {
 
     contextMenuClick(getContainerForRawNode(inspector.markup, node).tagLine);
 
+    let onNodeReselected = inspector.markup.once("reselectedonremoved");
     let menu = inspector.panelDoc.getElementById("node-menu-pasteouterhtml");
     dispatchCommandEvent(menu);
 
     info("Waiting for inspector selection to update");
-    yield inspector.selection.once("new-node");
+    yield onNodeReselected;
 
     ok(content.document.body.outerHTML.contains(clipboard.get()),
        "Clipboard content was pasted into the node's outer HTML.");
@@ -176,6 +206,8 @@ let test = asyncTest(function* () {
 
   function* testDeleteNode() {
     info("Testing 'Delete Node' menu item for normal elements.");
+
+    yield selectNode("p", inspector);
     let deleteNode = inspector.panelDoc.getElementById("node-menu-delete");
     ok(deleteNode, "the popup menu has a delete menu item");
 

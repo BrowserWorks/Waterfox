@@ -10,12 +10,13 @@
 #include <unistd.h>
 #endif
 #include "mozilla/ArrayUtils.h"
+#include "mozilla/dom/BlobSet.h"
+#include "mozilla/dom/File.h"
 #include "mozilla/dom/XMLHttpRequestUploadBinding.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/EventListenerManager.h"
 #include "mozilla/LoadInfo.h"
 #include "mozilla/MemoryReporting.h"
-#include "nsDOMBlobBuilder.h"
 #include "nsIDOMDocument.h"
 #include "mozilla/dom/ProgressEvent.h"
 #include "nsIJARChannel.h"
@@ -56,7 +57,6 @@
 #include "nsIContentSecurityPolicy.h"
 #include "nsAsyncRedirectVerifyHelper.h"
 #include "nsStringBuffer.h"
-#include "nsDOMFile.h"
 #include "nsIFileChannel.h"
 #include "mozilla/Telemetry.h"
 #include "jsfriendapi.h"
@@ -307,7 +307,6 @@ nsXMLHttpRequest::nsXMLHttpRequest()
     mIsMappedArrayBuffer(false),
     mXPCOMifier(nullptr)
 {
-  SetIsDOMBinding();
 #ifdef DEBUG
   StaticAssertions();
 #endif
@@ -352,7 +351,7 @@ nsXMLHttpRequest::Init()
   // Instead of grabbing some random global from the context stack,
   // let's use the default one (junk scope) for now.
   // We should move away from this Init...
-  Construct(subjectPrincipal, xpc::GetNativeForGlobal(xpc::PrivilegedJunkScope()));
+  Construct(subjectPrincipal, xpc::NativeGlobal(xpc::PrivilegedJunkScope()));
   return NS_OK;
 }
 
@@ -475,6 +474,10 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(nsXMLHttpRequest,
 
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mXMLParserStreamListener)
 
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mResponseBlob)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mDOMFile)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mNotificationCallbacks)
+
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mChannelEventSink)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mProgressEventSink)
 
@@ -492,6 +495,10 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(nsXMLHttpRequest,
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mCORSPreflightChannel)
 
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mXMLParserStreamListener)
+
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mResponseBlob)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mDOMFile)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mNotificationCallbacks)
 
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mChannelEventSink)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mProgressEventSink)
@@ -766,7 +773,7 @@ nsXMLHttpRequest::CreateResponseParsedJSON(JSContext* aCx)
   // The Unicode converter has already zapped the BOM if there was one
   JS::Rooted<JS::Value> value(aCx);
   if (!JS_ParseJSON(aCx,
-                    static_cast<const jschar*>(mResponseText.get()), mResponseText.Length(),
+                    static_cast<const char16_t*>(mResponseText.get()), mResponseText.Length(),
                     &value)) {
     return NS_ERROR_FAILURE;
   }
@@ -785,8 +792,9 @@ nsXMLHttpRequest::CreatePartialBlob()
     if (mLoadTotal == mLoadTransferred) {
       mResponseBlob = mDOMFile;
     } else {
-      mResponseBlob =
-        mDOMFile->CreateSlice(0, mDataAvailable, EmptyString());
+      ErrorResult rv;
+      mResponseBlob = mDOMFile->CreateSlice(0, mDataAvailable,
+                                            EmptyString(), rv);
     }
     return;
   }
@@ -801,7 +809,7 @@ nsXMLHttpRequest::CreatePartialBlob()
     mChannel->GetContentType(contentType);
   }
 
-  mResponseBlob = mBlobSet->GetBlobInternal(contentType);
+  mResponseBlob = mBlobSet->GetBlobInternal(GetOwner(), contentType);
 }
 
 /* attribute AString responseType; */
@@ -1008,7 +1016,7 @@ nsXMLHttpRequest::GetResponse(JSContext* aCx,
       return;
     }
 
-    aRv = nsContentUtils::WrapNative(aCx, mResponseBlob, aResponse);
+    WrapNewBindingObject(aCx, mResponseBlob, aResponse);
     return;
   }
   case XML_HTTP_RESPONSE_TYPE_DOCUMENT:
@@ -1090,7 +1098,7 @@ nsXMLHttpRequest::GetResponseURL(nsAString& aUrl)
   }
 
   nsAutoCString temp;
-  responseUrl->GetSpec(temp);
+  responseUrl->GetSpecIgnoringRef(temp);
   CopyUTF8toUTF16(temp, aUrl);
 }
 
@@ -1111,8 +1119,7 @@ nsXMLHttpRequest::Status()
     return 0;
   }
 
-  uint16_t readyState;
-  GetReadyState(&readyState);
+  uint16_t readyState = ReadyState();
   if (readyState == UNSENT || readyState == OPENED) {
     return 0;
   }
@@ -1136,14 +1143,8 @@ nsXMLHttpRequest::Status()
 
   nsCOMPtr<nsIHttpChannel> httpChannel = GetCurrentHttpChannel();
   if (!httpChannel) {
-
-    // Let's simulate the http protocol for jar/app requests:
-    nsCOMPtr<nsIJARChannel> jarChannel = GetCurrentJARChannel();
-    if (jarChannel) {
-      return 200; // Ok
-    }
-
-    return 0;
+    // Pretend like we got a 200 response, since our load was successful
+    return 200;
   }
 
   uint32_t status;
@@ -1159,13 +1160,8 @@ IMPL_CSTRING_GETTER(GetStatusText)
 void
 nsXMLHttpRequest::GetStatusText(nsCString& aStatusText)
 {
-  nsCOMPtr<nsIHttpChannel> httpChannel = GetCurrentHttpChannel();
-
+  // Return an empty status text on all error loads.
   aStatusText.Truncate();
-
-  if (!httpChannel) {
-    return;
-  }
 
   // Make sure we don't leak status information from denied cross-site
   // requests.
@@ -1173,18 +1169,25 @@ nsXMLHttpRequest::GetStatusText(nsCString& aStatusText)
     return;
   }
 
-
   // Check the current XHR state to see if it is valid to obtain the statusText
   // value.  This check is to prevent the status text for redirects from being
   // available before all the redirects have been followed and HTTP headers have
   // been received.
-  uint16_t readyState;
-  GetReadyState(&readyState);
-  if (readyState != OPENED && readyState != UNSENT) {
-    httpChannel->GetResponseStatusText(aStatusText);
+  uint16_t readyState = ReadyState();
+  if (readyState == UNSENT || readyState == OPENED) {
+    return;
   }
 
+  if (mErrorLoad) {
+    return;
+  }
 
+  nsCOMPtr<nsIHttpChannel> httpChannel = GetCurrentHttpChannel();
+  if (httpChannel) {
+    httpChannel->GetResponseStatusText(aStatusText);
+  } else {
+    aStatusText.AssignLiteral("OK");
+  }
 }
 
 void
@@ -1739,13 +1742,43 @@ nsXMLHttpRequest::Open(const nsACString& inMethod, const nsACString& url,
     channelPolicy->SetContentSecurityPolicy(csp);
     channelPolicy->SetLoadType(nsIContentPolicy::TYPE_XMLHTTPREQUEST);
   }
-  rv = NS_NewChannel(getter_AddRefs(mChannel),
-                     uri,
-                     nullptr,                    // ioService
-                     loadGroup,
-                     nullptr,                    // callbacks
-                     nsIRequest::LOAD_BACKGROUND,
-                     channelPolicy);
+
+  nsSecurityFlags secFlags = nsILoadInfo::SEC_NORMAL;
+  if (IsSystemXHR()) {
+    // Don't give this document the system principal.  We need to keep track of
+    // mPrincipal being system because we use it for various security checks
+    // that should be passing, but the document data shouldn't get a system
+    // principal.  Hence we set the sandbox flag in loadinfo, so that 
+    // GetChannelResultPrincipal will give us the nullprincipal.
+    secFlags |= nsILoadInfo::SEC_SANDBOXED;
+  } else {
+    secFlags |= nsILoadInfo::SEC_FORCE_INHERIT_PRINCIPAL;
+  }
+
+  // If we have the document, use it
+  if (doc) {
+    rv = NS_NewChannel(getter_AddRefs(mChannel),
+                       uri,
+                       doc,
+                       secFlags,
+                       nsIContentPolicy::TYPE_XMLHTTPREQUEST,
+                       channelPolicy,
+                       loadGroup,
+                       nullptr,   // aCallbacks
+                       nsIRequest::LOAD_BACKGROUND);
+  } else {
+    //otherwise use the principal
+    rv = NS_NewChannel(getter_AddRefs(mChannel),
+                       uri,
+                       mPrincipal,
+                       secFlags,
+                       nsIContentPolicy::TYPE_XMLHTTPREQUEST,
+                       channelPolicy,
+                       loadGroup,
+                       nullptr,   // aCallbacks
+                       nsIRequest::LOAD_BACKGROUND);
+  }
+
   if (NS_FAILED(rv)) return rv;
 
   mState &= ~(XML_HTTP_REQUEST_USE_XSITE_AC |
@@ -1873,9 +1906,8 @@ bool nsXMLHttpRequest::CreateDOMFile(nsIRequest *request)
   nsAutoCString contentType;
   mChannel->GetContentType(contentType);
 
-  mDOMFile =
-    DOMFile::CreateFromFile(file, EmptyString(),
-                            NS_ConvertASCIItoUTF16(contentType));
+  mDOMFile = File::CreateFromFile(GetOwner(), file, EmptyString(),
+                                  NS_ConvertASCIItoUTF16(contentType));
 
   mBlobSet = nullptr;
   NS_ASSERTION(mResponseBody.IsEmpty(), "mResponseBody should be empty");
@@ -1961,24 +1993,6 @@ nsXMLHttpRequest::OnStartRequest(nsIRequest *request, nsISupports *ctxt)
 
   nsCOMPtr<nsIChannel> channel(do_QueryInterface(request));
   NS_ENSURE_TRUE(channel, NS_ERROR_UNEXPECTED);
-
-  nsCOMPtr<nsIPrincipal> documentPrincipal;
-  if (IsSystemXHR()) {
-    // Don't give this document the system principal.  We need to keep track of
-    // mPrincipal being system because we use it for various security checks
-    // that should be passing, but the document data shouldn't get a system
-    // principal.
-    nsresult rv;
-    documentPrincipal = do_CreateInstance("@mozilla.org/nullprincipal;1", &rv);
-    NS_ENSURE_SUCCESS(rv, rv);
-  } else {
-    documentPrincipal = mPrincipal;
-  }
-
-  nsCOMPtr<nsILoadInfo> loadInfo =
-    new LoadInfo(documentPrincipal, LoadInfo::eInheritPrincipal,
-                 LoadInfo::eNotSandboxed);
-  channel->SetLoadInfo(loadInfo);
 
   nsresult status;
   request->GetStatus(&status);
@@ -2117,21 +2131,23 @@ nsXMLHttpRequest::OnStartRequest(nsIRequest *request, nsISupports *ctxt)
       chromeXHRDocBaseURI = doc->GetBaseURI();
     }
 
-    // Create an empty document from it.  Here we have to cheat a little bit...
-    // Setting the base URI to |baseURI| won't work if the document has a null
-    // principal, so use mPrincipal when creating the document, then reset the
-    // principal.
+    // Create an empty document from it.
     const nsAString& emptyStr = EmptyString();
     nsCOMPtr<nsIDOMDocument> responseDoc;
     nsIGlobalObject* global = DOMEventTargetHelper::GetParentObject();
+
+    nsCOMPtr<nsIPrincipal> requestingPrincipal;
+    rv = nsContentUtils::GetSecurityManager()->
+       GetChannelResultPrincipal(channel, getter_AddRefs(requestingPrincipal));
+    NS_ENSURE_SUCCESS(rv, rv);
+
     rv = NS_NewDOMDocument(getter_AddRefs(responseDoc),
                            emptyStr, emptyStr, nullptr, docURI,
-                           baseURI, mPrincipal, true, global,
+                           baseURI, requestingPrincipal, true, global,
                            mIsHtml ? DocumentFlavorHTML :
                                      DocumentFlavorLegacyGuess);
     NS_ENSURE_SUCCESS(rv, rv);
     mResponseXML = do_QueryInterface(responseDoc);
-    mResponseXML->SetPrincipal(documentPrincipal);
     mResponseXML->SetChromeXHRDocURI(chromeXHRDocURI);
     mResponseXML->SetChromeXHRDocBaseURI(chromeXHRDocBaseURI);
 
@@ -2235,7 +2251,7 @@ nsXMLHttpRequest::OnStopRequest(nsIRequest *request, nsISupports *ctxt, nsresult
       // Also, no-store response cannot be written in persistent cache.
       nsAutoCString contentType;
       mChannel->GetContentType(contentType);
-      mResponseBlob = mBlobSet->GetBlobInternal(contentType);
+      mResponseBlob = mBlobSet->GetBlobInternal(GetOwner(), contentType);
       mBlobSet = nullptr;
     }
     NS_ASSERTION(mResponseBody.IsEmpty(), "mResponseBody should be empty");
@@ -2610,7 +2626,8 @@ nsXMLHttpRequest::GetRequestBody(nsIVariant* aVariant,
     case nsXMLHttpRequest::RequestBody::Blob:
     {
       nsresult rv;
-      nsCOMPtr<nsIXHRSendable> sendable = do_QueryInterface(value.mBlob, &rv);
+      nsCOMPtr<nsIDOMBlob> blob = value.mBlob;
+      nsCOMPtr<nsIXHRSendable> sendable = do_QueryInterface(blob, &rv);
       NS_ENSURE_SUCCESS(rv, rv);
 
       return ::GetRequestBody(sendable, aResult, aContentLength, aContentType, aCharset);
@@ -3971,7 +3988,7 @@ ArrayBufferBuilder::setCapacity(uint32_t aNewCap)
 {
   MOZ_ASSERT(!mMapPtr);
 
-  uint8_t *newdata = (uint8_t *) realloc(mDataPtr, aNewCap);
+  uint8_t *newdata = (uint8_t *) js_realloc(mDataPtr, aNewCap);
   if (!newdata) {
     return false;
   }

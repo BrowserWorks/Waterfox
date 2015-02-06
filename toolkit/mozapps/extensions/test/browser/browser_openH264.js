@@ -197,6 +197,21 @@ add_task(function* testInstalledDetails() {
   el = doc.getElementById("detail-warning");
   is_element_hidden(el, "Warning notification is hidden.");
   el = doc.getElementsByTagName("setting")[0];
+
+  let contextMenu = doc.getElementById("addonitem-popup");
+  let deferred = Promise.defer();
+  let listener = () => {
+    contextMenu.removeEventListener("popupshown", listener, false);
+    deferred.resolve();
+  };
+  contextMenu.addEventListener("popupshown", listener, false);
+  el = doc.getElementsByClassName("detail-view-container")[0];
+  EventUtils.synthesizeMouse(el, 4, 4, { }, gManagerWindow);
+  EventUtils.synthesizeMouse(el, 4, 4, { type: "contextmenu", button: 2 }, gManagerWindow);
+  yield deferred.promise;
+  let menuSep = doc.getElementById("addonitem-menuseparator");
+  is_element_hidden(menuSep, "Menu separator is hidden.");
+  contextMenu.hidePopup();
 });
 
 add_task(function* testPreferencesButton() {
@@ -249,7 +264,7 @@ add_task(function* testUpdateButton() {
   wait_for_view_load(gManagerWindow, deferred.resolve);
   yield deferred.promise;
 
-  let button = doc.getElementById("detail-findUpdates-btn");
+  button = doc.getElementById("detail-findUpdates-btn");
   Assert.ok(button != null, "Got detail-findUpdates-btn");
   EventUtils.synthesizeMouseAtCenter(button, { clickCount: 1 }, gManagerWindow);
   yield gInstallDeferred.promise;

@@ -6,7 +6,6 @@
 #include "mozilla/dom/SVGCircleElement.h"
 #include "mozilla/gfx/2D.h"
 #include "nsGkAtoms.h"
-#include "gfxContext.h"
 #include "mozilla/dom/SVGCircleElementBinding.h"
 
 NS_IMPL_NS_NEW_NAMESPACED_SVG_ELEMENT(Circle)
@@ -82,17 +81,6 @@ SVGCircleElement::GetLengthInfo()
 //----------------------------------------------------------------------
 // nsSVGPathGeometryElement methods
 
-void
-SVGCircleElement::ConstructPath(gfxContext *aCtx)
-{
-  float x, y, r;
-
-  GetAnimatedLengthValues(&x, &y, &r, nullptr);
-
-  if (r > 0.0f)
-    aCtx->Arc(gfxPoint(x, y), r, 0, 2*M_PI);
-}
-
 TemporaryRef<Path>
 SVGCircleElement::BuildPath(PathBuilder* aBuilder)
 {
@@ -103,11 +91,9 @@ SVGCircleElement::BuildPath(PathBuilder* aBuilder)
     return nullptr;
   }
 
-  RefPtr<PathBuilder> pathBuilder = aBuilder ? aBuilder : CreatePathBuilder();
+  aBuilder->Arc(Point(x, y), r, 0, Float(2*M_PI));
 
-  pathBuilder->Arc(Point(x, y), r, 0, Float(2*M_PI));
-
-  return pathBuilder->Finish();
+  return aBuilder->Finish();
 }
 
 } // namespace dom

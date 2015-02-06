@@ -61,16 +61,16 @@ DocAccessibleWrap::get_accValue(VARIANT aVarChild, BSTR __RPC_FAR* aValue)
 
   // If document is being used to create a widget, don't use the URL hack
   roles::Role role = Role();
-  if (role != roles::DOCUMENT && role != roles::APPLICATION && 
-      role != roles::DIALOG && role != roles::ALERT) 
+  if (role != roles::DOCUMENT && role != roles::APPLICATION &&
+      role != roles::DIALOG && role != roles::ALERT)
     return hr;
 
-  nsAutoString URL;
-  nsresult rv = GetURL(URL);
-  if (URL.IsEmpty())
+  nsAutoString url;
+  URL(url);
+  if (url.IsEmpty())
     return S_FALSE;
 
-  *aValue = ::SysAllocStringLen(URL.get(), URL.Length());
+  *aValue = ::SysAllocStringLen(url.get(), url.Length());
   return *aValue ? S_OK : E_OUTOFMEMORY;
 
   A11Y_TRYBLOCK_END
@@ -129,13 +129,12 @@ DocAccessibleWrap::DoInitialUpdate()
           rootDocument->GetNativeWindow());
 
       bool isActive = true;
-      int32_t x = CW_USEDEFAULT, y = CW_USEDEFAULT, width = 0, height = 0;
+      nsIntRect rect(CW_USEDEFAULT, CW_USEDEFAULT, 0, 0);
       if (Compatibility::IsDolphin()) {
-        GetBounds(&x, &y, &width, &height);
-        int32_t rootX = 0, rootY = 0, rootWidth = 0, rootHeight = 0;
-        rootDocument->GetBounds(&rootX, &rootY, &rootWidth, &rootHeight);
-        x = rootX - x;
-        y -= rootY;
+        rect = Bounds();
+        nsIntRect rootRect = rootDocument->Bounds();
+        rect.x = rootRect.x - rect.x;
+        rect.y -= rootRect.y;
 
         nsCOMPtr<nsISupports> container = mDocumentNode->GetContainer();
         nsCOMPtr<nsIDocShell> docShell = do_QueryInterface(container);
@@ -144,7 +143,8 @@ DocAccessibleWrap::DoInitialUpdate()
 
       HWND parentWnd = reinterpret_cast<HWND>(nativeData);
       mHWND = nsWinUtils::CreateNativeWindow(kClassNameTabContent, parentWnd,
-                                             x, y, width, height, isActive);
+                                             rect.x, rect.y,
+                                             rect.width, rect.height, isActive);
 
       nsWinUtils::sHWNDCache->Put(mHWND, this);
 

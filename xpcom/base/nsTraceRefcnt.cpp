@@ -69,10 +69,6 @@ NS_MeanAndStdDev(double aNumberOfValues,
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#if !defined(XP_WIN) || (!defined(MOZ_OPTIMIZE) || defined(MOZ_PROFILING) || defined(DEBUG))
-#define STACKWALKING_AVAILABLE
-#endif
-
 #define NS_IMPL_REFCNT_LOGGING
 
 #ifdef NS_IMPL_REFCNT_LOGGING
@@ -209,7 +205,7 @@ static const PLHashAllocOps typesToLogHashAllocOps = {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifdef STACKWALKING_AVAILABLE
+#ifdef MOZ_STACKWALKING
 
 class CodeAddressServiceStringTable MOZ_FINAL
 {
@@ -238,26 +234,6 @@ struct CodeAddressServiceStringAlloc MOZ_FINAL
   static void free(char* aPtr) { ::free(aPtr); }
 };
 
-class CodeAddressServiceWriter MOZ_FINAL
-{
-public:
-  explicit CodeAddressServiceWriter(FILE* aFile)
-    : mFile(aFile)
-  {
-  }
-
-  void Write(const char* aFmt, ...) const
-  {
-    va_list ap;
-    va_start(ap, aFmt);
-    vfprintf(mFile, aFmt, ap);
-    va_end(ap);
-  }
-
-private:
-  FILE* mFile;
-};
-
 // WalkTheStack does not hold any locks needed by NS_DescribeCodeAddress, so
 // this class does not need to do anything.
 struct CodeAddressServiceLock MOZ_FINAL
@@ -269,12 +245,11 @@ struct CodeAddressServiceLock MOZ_FINAL
 
 typedef mozilla::CodeAddressService<CodeAddressServiceStringTable,
                                     CodeAddressServiceStringAlloc,
-                                    CodeAddressServiceWriter,
                                     CodeAddressServiceLock> WalkTheStackCodeAddressService;
 
 mozilla::StaticAutoPtr<WalkTheStackCodeAddressService> gCodeAddressService;
 
-#endif // STACKWALKING_AVAILABLE
+#endif // MOZ_STACKWALKING
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -952,24 +927,30 @@ InitTraceLog()
 
 extern "C" {
 
-#ifdef STACKWALKING_AVAILABLE
+#ifdef MOZ_STACKWALKING
 static void
-PrintStackFrame(void* aPC, void* aSP, void* aClosure)
+PrintStackFrame(uint32_t aFrameNumber, void* aPC, void* aSP, void* aClosure)
 {
   FILE* stream = (FILE*)aClosure;
   nsCodeAddressDetails details;
   char buf[1024];
 
   NS_DescribeCodeAddress(aPC, &details);
-  NS_FormatCodeAddressDetails(aPC, &details, buf, sizeof(buf));
-  fputs(buf, stream);
+  NS_FormatCodeAddressDetails(buf, sizeof(buf), aFrameNumber, aPC, &details);
+  fprintf(stream, "%s\n", buf);
+  fflush(stream);
 }
 
 static void
-PrintStackFrameCached(void* aPC, void* aSP, void* aClosure)
+PrintStackFrameCached(uint32_t aFrameNumber, void* aPC, void* aSP,
+                      void* aClosure)
 {
-  auto writer = static_cast<CodeAddressServiceWriter*>(aClosure);
-  gCodeAddressService->WriteLocation(*writer, aPC);
+  auto stream = static_cast<FILE*>(aClosure);
+  static const size_t buflen = 1024;
+  char buf[buflen];
+  gCodeAddressService->GetLocation(aFrameNumber, aPC, buf, buflen);
+  fprintf(stream, "    %s\n", buf);
+  fflush(stream);
 }
 #endif
 
@@ -978,7 +959,7 @@ PrintStackFrameCached(void* aPC, void* aSP, void* aClosure)
 void
 nsTraceRefcnt::WalkTheStack(FILE* aStream)
 {
-#ifdef STACKWALKING_AVAILABLE
+#ifdef MOZ_STACKWALKING
   NS_StackWalk(PrintStackFrame, /* skipFrames */ 2, /* maxFrames */ 0, aStream,
                0, nullptr);
 #endif
@@ -987,13 +968,12 @@ nsTraceRefcnt::WalkTheStack(FILE* aStream)
 void
 nsTraceRefcnt::WalkTheStackCached(FILE* aStream)
 {
-#ifdef STACKWALKING_AVAILABLE
+#ifdef MOZ_STACKWALKING
   if (!gCodeAddressService) {
     gCodeAddressService = new WalkTheStackCodeAddressService();
   }
-  CodeAddressServiceWriter writer(aStream);
   NS_StackWalk(PrintStackFrameCached, /* skipFrames */ 2, /* maxFrames */ 0,
-               &writer, 0, nullptr);
+               aStream, 0, nullptr);
 #endif
 }
 
@@ -1037,7 +1017,7 @@ NS_LogInit()
   NS_SetMainThread();
 
   // FIXME: This is called multiple times, we should probably not allow that.
-#ifdef STACKWALKING_AVAILABLE
+#ifdef MOZ_STACKWALKING
   StackWalkInitCriticalAddress();
 #endif
 #ifdef NS_IMPL_REFCNT_LOGGING
@@ -1387,7 +1367,7 @@ void
 nsTraceRefcnt::Shutdown()
 {
 #ifdef NS_IMPL_REFCNT_LOGGING
-#ifdef STACKWALKING_AVAILABLE
+#ifdef MOZ_STACKWALKING
   gCodeAddressService = nullptr;
 #endif
   if (gBloatView) {

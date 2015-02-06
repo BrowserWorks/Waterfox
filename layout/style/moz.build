@@ -68,6 +68,8 @@ EXPORTS.mozilla.dom += [
     'CSS.h',
     'CSSRuleList.h',
     'CSSValue.h',
+    'FontFace.h',
+    'FontFaceSet.h',
     'MediaQueryList.h',
 ]
 
@@ -94,6 +96,7 @@ UNIFIED_SOURCES += [
     'CSSVariableValues.cpp',
     'Declaration.cpp',
     'ErrorReporter.cpp',
+    'FontFace.cpp',
     'ImageLoader.cpp',
     'Loader.cpp',
     'MediaQueryList.cpp',
@@ -114,6 +117,7 @@ UNIFIED_SOURCES += [
     'nsDOMCSSRect.cpp',
     'nsDOMCSSRGBColor.cpp',
     'nsDOMCSSValueList.cpp',
+    'nsFontFaceLoader.cpp',
     'nsHTMLCSSStyleSheet.cpp',
     'nsHTMLStyleSheet.cpp',
     'nsLayoutStylesheetCache.cpp',
@@ -131,13 +135,14 @@ UNIFIED_SOURCES += [
     'nsTransitionManager.cpp',
     'StyleAnimationValue.cpp',
     'StyleRule.cpp',
+    'SVGAttrAnimationRuleProcessor.cpp',
 ]
 
+# FontFaceSet.cpp needs to be built separately because it redefines LOG.
 # nsCSSRuleProcessor.cpp needs to be built separately because it uses plarena.h.
-# nsFontFaceLoader.cpp needs to be built separately because it forces NSPR logging.
 SOURCES += [
+    'FontFaceSet.cpp',
     'nsCSSRuleProcessor.cpp',
-    'nsFontFaceLoader.cpp',
 ]
 
 FAIL_ON_WARNINGS = True
@@ -168,3 +173,7 @@ RESOURCE_FILES += [
     'TopLevelImageDocument.css',
     'TopLevelVideoDocument.css',
 ]
+
+if CONFIG['GNU_CC']:
+    CFLAGS += ['-Wshadow']
+    CXXFLAGS += ['-Wshadow']

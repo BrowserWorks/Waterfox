@@ -4,13 +4,13 @@
 
 #include "chrome/common/ipc_sync_channel.h"
 
-#include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/thread_local.h"
 #include "base/message_loop.h"
 #include "base/waitable_event.h"
 #include "base/waitable_event_watcher.h"
 #include "chrome/common/ipc_sync_message.h"
+#include "nsISupportsImpl.h"
 
 using base::TimeDelta;
 using base::TimeTicks;
@@ -34,24 +34,27 @@ namespace IPC {
 // SyncChannel objects on the same thread (since one object can receive a
 // sync message while another one is blocked).
 
-class SyncChannel::ReceivedSyncMsgQueue :
-    public base::RefCountedThreadSafe<ReceivedSyncMsgQueue> {
+class SyncChannel::ReceivedSyncMsgQueue {
  public:
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(SyncChannel::ReceivedSyncMsgQueue)
+
+  static base::ThreadLocalPointer<ReceivedSyncMsgQueue>& get_tls_ptr() {
+    static base::ThreadLocalPointer<ReceivedSyncMsgQueue> tls_ptr;
+    return tls_ptr;
+  }
+
   // Returns the ReceivedSyncMsgQueue instance for this thread, creating one
   // if necessary.  Call RemoveContext on the same thread when done.
   static ReceivedSyncMsgQueue* AddContext() {
     // We want one ReceivedSyncMsgQueue per listener thread (i.e. since multiple
     // SyncChannel objects can block the same thread).
-    ReceivedSyncMsgQueue* rv = lazy_tls_ptr_.Pointer()->Get();
+    ReceivedSyncMsgQueue* rv = get_tls_ptr().Get();
     if (!rv) {
       rv = new ReceivedSyncMsgQueue();
-      ReceivedSyncMsgQueue::lazy_tls_ptr_.Pointer()->Set(rv);
+      get_tls_ptr().Set(rv);
     }
     rv->listener_count_++;
     return rv;
-  }
-
-  ~ReceivedSyncMsgQueue() {
   }
 
   // Called on IPC thread when a synchronous message or reply arrives.
@@ -92,7 +95,7 @@ class SyncChannel::ReceivedSyncMsgQueue :
   void DispatchMessages() {
     while (true) {
       Message* message;
-      scoped_refptr<SyncChannel::SyncContext> context;
+      nsRefPtr<SyncChannel::SyncContext> context;
       {
         AutoLock auto_lock(message_lock_);
         if (message_queue_.empty())
@@ -123,17 +126,13 @@ class SyncChannel::ReceivedSyncMsgQueue :
     }
 
     if (--listener_count_ == 0) {
-      DCHECK(lazy_tls_ptr_.Pointer()->Get());
-      lazy_tls_ptr_.Pointer()->Set(NULL);
+      DCHECK(get_tls_ptr().Get());
+      get_tls_ptr().Set(NULL);
     }
   }
 
   WaitableEvent* dispatch_event() { return &dispatch_event_; }
   MessageLoop* listener_message_loop() { return listener_message_loop_; }
-
-  // Holds a pointer to the per-thread ReceivedSyncMsgQueue object.
-  static base::LazyInstance<base::ThreadLocalPointer<ReceivedSyncMsgQueue> >
-      lazy_tls_ptr_;
 
   // Called on the ipc thread to check if we can unblock any current Send()
   // calls based on a queued reply.
@@ -147,6 +146,9 @@ class SyncChannel::ReceivedSyncMsgQueue :
       }
     }
   }
+
+ protected:
+  ~ReceivedSyncMsgQueue() {}
 
  private:
   // See the comment in SyncChannel::SyncChannel for why this event is created
@@ -162,7 +164,7 @@ class SyncChannel::ReceivedSyncMsgQueue :
   struct QueuedMessage {
     QueuedMessage(Message* m, SyncContext* c) : message(m), context(c) { }
     Message* message;
-    scoped_refptr<SyncChannel::SyncContext> context;
+    nsRefPtr<SyncChannel::SyncContext> context;
   };
 
   typedef std::deque<QueuedMessage> SyncMessageQueue;
@@ -179,9 +181,6 @@ class SyncChannel::ReceivedSyncMsgQueue :
   bool task_pending_;
   int listener_count_;
 };
-
-base::LazyInstance<base::ThreadLocalPointer<SyncChannel::ReceivedSyncMsgQueue> >
-  SyncChannel::ReceivedSyncMsgQueue::lazy_tls_ptr_ = LAZY_INSTANCE_INITIALIZER;
 
 SyncChannel::SyncContext::SyncContext(
     Channel::Listener* listener,
@@ -368,7 +367,7 @@ bool SyncChannel::SendWithTimeout(Message* message, int timeout_ms) {
   }
 
   // *this* might get deleted in WaitForReply.
-  scoped_refptr<SyncContext> context(sync_context());
+  nsRefPtr<SyncContext> context(sync_context());
   if (context->shutdown_event()->IsSignaled()) {
     delete message;
     return false;

@@ -17,8 +17,8 @@ function dumpStack()
     stack = new Error().stack
 }
 
-setJitCompilerOption("ion.usecount.trigger", 10);
-setJitCompilerOption("baseline.usecount.trigger", 0);
+setJitCompilerOption("ion.warmup.trigger", 10);
+setJitCompilerOption("baseline.warmup.trigger", 0);
 setJitCompilerOption("offthread-compilation.enable", 0);
 setCachingEnabled(true);
 
@@ -65,7 +65,7 @@ assertEq(caught, true);
 
 var caught = false;
 try {
-    callFFI(null, {ffi:Object.preventExtensions})();
+    callFFI(null, {ffi:Object.defineProperty})();
 } catch (e) {
     caught = true;
 }

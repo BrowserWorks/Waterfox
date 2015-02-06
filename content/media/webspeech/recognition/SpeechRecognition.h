@@ -53,6 +53,8 @@ PRLogModuleInfo* GetSpeechRecognitionLog();
 #define SR_LOG(...)
 #endif
 
+already_AddRefed<nsISpeechRecognitionService> GetSpeechRecognitionService();
+
 class SpeechRecognition MOZ_FINAL : public DOMEventTargetHelper,
                                     public nsIObserver,
                                     public SupportsWeakPtr<SpeechRecognition>
@@ -130,7 +132,7 @@ public:
   uint32_t FillSamplesBuffer(const int16_t* aSamples, uint32_t aSampleCount);
   uint32_t SplitSamplesBuffer(const int16_t* aSamplesBuffer, uint32_t aSampleCount, nsTArray<nsRefPtr<SharedBuffer>>& aResult);
   AudioSegment* CreateAudioSegment(nsTArray<nsRefPtr<SharedBuffer>>& aChunks);
-  void FeedAudioData(already_AddRefed<SharedBuffer> aSamples, uint32_t aDuration, MediaStreamListener* aProvider);
+  void FeedAudioData(already_AddRefed<SharedBuffer> aSamples, uint32_t aDuration, MediaStreamListener* aProvider, TrackRate aTrackRate);
 
   static struct TestConfig
   {
@@ -211,7 +213,7 @@ private:
   NS_IMETHOD StartRecording(DOMMediaStream* aDOMStream);
   NS_IMETHOD StopRecording();
 
-  uint32_t ProcessAudioSegment(AudioSegment* aSegment);
+  uint32_t ProcessAudioSegment(AudioSegment* aSegment, TrackRate aTrackRate);
   void NotifyError(SpeechEvent* aEvent);
 
   void ProcessEvent(SpeechEvent* aEvent);
@@ -233,8 +235,6 @@ private:
   nsRefPtr<DOMMediaStream> mDOMStream;
   nsRefPtr<SpeechStreamListener> mSpeechListener;
   nsCOMPtr<nsISpeechRecognitionService> mRecognitionService;
-
-  void GetRecognitionServiceCID(nsACString& aResultCID);
 
   FSMState mCurrentState;
 
@@ -266,6 +266,7 @@ public:
   , mError(0)
   , mRecognition(aRecognition)
   , mType(aType)
+  , mTrackRate(0)
   {
   }
 
@@ -286,6 +287,7 @@ private:
   // event gets processed.
   nsRefPtr<MediaStreamListener> mProvider;
   SpeechRecognition::EventType mType;
+  TrackRate mTrackRate;
 };
 
 } // namespace dom

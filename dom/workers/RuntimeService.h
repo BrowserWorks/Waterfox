@@ -78,7 +78,7 @@ private:
     WorkerPrivate* mWorkerPrivate;
     SharedWorkerInfo* mSharedWorkerInfo;
 
-    MatchSharedWorkerInfo(WorkerPrivate* aWorkerPrivate)
+    explicit MatchSharedWorkerInfo(WorkerPrivate* aWorkerPrivate)
     : mWorkerPrivate(aWorkerPrivate), mSharedWorkerInfo(nullptr)
     { }
   };
@@ -110,6 +110,7 @@ public:
     nsString mAppVersionOverridden;
     nsString mPlatform;
     nsString mPlatformOverridden;
+    nsTArray<nsString> mLanguages;
   };
 
 private:
@@ -212,6 +213,9 @@ public:
 
   void
   UpdateAllWorkerRuntimeOptions();
+
+  void
+  UpdateAllWorkerLanguages(const nsTArray<nsString>& aLanguages);
 
   void
   UpdateAllWorkerPreference(WorkerPreference aPref, bool aValue);

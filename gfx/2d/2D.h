@@ -37,6 +37,7 @@ typedef _cairo_scaled_font cairo_scaled_font_t;
 
 struct ID3D10Device1;
 struct ID3D10Texture2D;
+struct ID3D11Texture2D;
 struct ID3D11Device;
 struct ID2D1Device;
 struct IDWriteRenderingParams;
@@ -56,6 +57,7 @@ class DataSourceSurface;
 class DrawTarget;
 class DrawEventRecorder;
 class FilterNode;
+class LogForwarder;
 
 struct NativeSurface {
   NativeSurfaceType mType;
@@ -272,11 +274,13 @@ class SurfacePattern : public Pattern
 public:
   /// For constructor parameter description, see member data documentation.
   SurfacePattern(SourceSurface *aSourceSurface, ExtendMode aExtendMode,
-                 const Matrix &aMatrix = Matrix(), Filter aFilter = Filter::GOOD)
+                 const Matrix &aMatrix = Matrix(), Filter aFilter = Filter::GOOD,
+                 const IntRect &aSamplingRect = IntRect())
     : mSurface(aSourceSurface)
     , mExtendMode(aExtendMode)
     , mFilter(aFilter)
     , mMatrix(aMatrix)
+    , mSamplingRect(aSamplingRect)
   {}
 
   virtual PatternType GetType() const { return PatternType::SURFACE; }
@@ -286,6 +290,9 @@ public:
                                        outside the bounds of the image */
   Filter mFilter;                 //!< Resampling filter for resampling the image.
   Matrix mMatrix;                 //!< Transforms the pattern into user space
+
+  IntRect mSamplingRect;          /**< Rect that must not be sampled outside of,
+                                       or an empty rect if none has been specified. */
 };
 
 class StoredPattern;
@@ -528,6 +535,8 @@ public:
    * drawing. Future use of the builder results in a crash!
    */
   virtual TemporaryRef<Path> Finish() = 0;
+
+  virtual BackendType GetBackendType() const = 0;
 };
 
 struct Glyph
@@ -960,16 +969,32 @@ public:
    */
   virtual TemporaryRef<FilterNode> CreateFilter(FilterType aType) = 0;
 
-  const Matrix &GetTransform() const { return mTransform; }
+  Matrix GetTransform() const { return mTransform; }
 
   /**
    * Set a transform on the surface, this transform is applied at drawing time
    * to both the mask and source of the operation.
+   *
+   * Performance note: For some backends it is expensive to change the current
+   * transform (because transforms affect a lot of the parts of the pipeline,
+   * so new transform change can result in a pipeline flush).  To get around
+   * this, DrawTarget implementations buffer transform changes and try to only
+   * set the current transform on the backend when required.  That tracking has
+   * its own performance impact though, and ideally callers would be smart
+   * enough not to require it.  At a future date this method may stop this
+   * doing transform buffering so, if you're a consumer, please try to be smart
+   * about calling this method as little as possible.  For example, instead of
+   * concatenating a translation onto the current transform then calling
+   * FillRect, try to integrate the translation into FillRect's aRect
+   * argument's x/y offset.
    */
   virtual void SetTransform(const Matrix &aTransform)
     { mTransform = aTransform; mTransformDirty = true; }
 
-  SurfaceFormat GetFormat() { return mFormat; }
+  inline void ConcatTransform(const Matrix &aTransform)
+    { SetTransform(aTransform * Matrix(GetTransform())); }
+
+  SurfaceFormat GetFormat() const { return mFormat; }
 
   /** Tries to get a native surface for a DrawTarget, this may fail if the
    * draw target cannot convert to this surface type.
@@ -984,6 +1009,9 @@ public:
   }
   void *GetUserData(UserDataKey *key) {
     return mUserData.Get(key);
+  }
+  void *RemoveUserData(UserDataKey *key) {
+    return mUserData.Remove(key);
   }
 
   /** Within this rectangle all pixels will be opaque by the time the result of
@@ -1128,6 +1156,15 @@ public:
 
   static void SetGlobalEventRecorder(DrawEventRecorder *aRecorder);
 
+  // This is a little hacky at the moment, but we want to have this data. Bug 1068613.
+  static void SetLogForwarder(LogForwarder* aLogFwd);
+
+  static LogForwarder* GetLogForwarder() { return mLogForwarder; }
+
+private:
+  static LogForwarder* mLogForwarder;
+public:
+
 #ifdef USE_SKIA_GPU
   static TemporaryRef<DrawTarget>
     CreateDrawTargetSkiaWithGrContext(GrContext* aGrContext,
@@ -1166,9 +1203,12 @@ public:
   static void SetDirect3D10Device(ID3D10Device1 *aDevice);
   static ID3D10Device1 *GetDirect3D10Device();
 #ifdef USE_D2D1_1
+  static TemporaryRef<DrawTarget> CreateDrawTargetForD3D11Texture(ID3D11Texture2D *aTexture, SurfaceFormat aFormat);
+
   static void SetDirect3D11Device(ID3D11Device *aDevice);
   static ID3D11Device *GetDirect3D11Device();
   static ID2D1Device *GetD2D1Device();
+  static bool SupportsD2D1();
 #endif
 
   static TemporaryRef<GlyphRenderingOptions>

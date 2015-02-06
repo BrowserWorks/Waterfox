@@ -3,6 +3,7 @@ var Cu = Components.utils;
 Cu.import("resource://gre/modules/devtools/Loader.jsm");
 Cu.import("resource://gre/modules/devtools/dbg-client.jsm");
 Cu.import("resource://gre/modules/devtools/dbg-server.jsm");
+Cu.import("resource://gre/modules/Task.jsm");
 
 const Services = devtools.require("Services");
 const {_documentWalker} = devtools.require("devtools/server/actors/inspector");
@@ -166,7 +167,7 @@ function checkMissing(client, actorID) {
   let front = client.getActor(actorID);
   ok(!front, "Front shouldn't be accessible from the client for actorID: " + actorID);
 
-  let deferred = promise.defer();
+  deferred = promise.defer();
   client.request({
     to: actorID,
     type: "request",
@@ -183,7 +184,7 @@ function checkAvailable(client, actorID) {
   let front = client.getActor(actorID);
   ok(front, "Front should be accessible from the client for actorID: " + actorID);
 
-  let deferred = promise.defer();
+  deferred = promise.defer();
   client.request({
     to: actorID,
     type: "garbageAvailableTest",
@@ -288,6 +289,10 @@ function waitForMutation(walker, test, mutations=[]) {
 var _tests = [];
 function addTest(test) {
   _tests.push(test);
+}
+
+function addAsyncTest(generator) {
+  _tests.push(() => Task.spawn(generator).then(null, ok.bind(null, false)));
 }
 
 function runNextTest() {

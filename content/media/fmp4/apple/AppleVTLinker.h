@@ -22,6 +22,7 @@ class AppleVTLinker
 public:
   static bool Link();
   static void Unlink();
+  static CFStringRef skPropHWAccel;
 
 private:
   static void* sLink;
@@ -32,6 +33,8 @@ private:
     LinkStatus_FAILED,
     LinkStatus_SUCCEEDED
   } sLinkStatus;
+
+  static CFStringRef GetIOConst(const char* symbol);
 };
 
 #define LINK_FUNC(func) extern typeof(func)* func;

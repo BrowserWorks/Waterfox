@@ -11,7 +11,7 @@
     <link rel="stylesheet" type="text/css" href="../content/shared/css/conversation.css">
     <link rel="stylesheet" type="text/css" href="../content/shared/css/panel.css">
     <link rel="stylesheet" type="text/css" href="../content/shared/css/contacts.css">
-    <link rel="stylesheet" type="text/css" href="../standalone/content/css/webapp.css">
+    <link rel="stylesheet" type="text/css" href="../content/css/webapp.css">
     <link rel="stylesheet" type="text/css" href="ui-showcase.css">
  </head>
   <body>
@@ -26,8 +26,9 @@
       window.OTProperties.configURL = window.OTProperties.assetURL + 'js/dynamic_config.min.js';
       window.OTProperties.cssURL = window.OTProperties.assetURL + 'css/ot.css';
     </script>
+    <script src="../content/js/multiplexGum.js"></script>
     <script src="../content/shared/libs/sdk.js"></script>
-    <script src="../content/shared/libs/react-0.11.1.js"></script>
+    <script src="../content/shared/libs/react-0.11.2.js"></script>
     <script src="../content/shared/libs/jquery-2.1.0.js"></script>
     <script src="../content/shared/libs/lodash-2.4.1.js"></script>
     <script src="../content/shared/libs/backbone-1.1.2.js"></script>
@@ -38,10 +39,19 @@
     <script src="../content/shared/js/mixins.js"></script>
     <script src="../content/shared/js/views.js"></script>
     <script src="../content/shared/js/websocket.js"></script>
+    <script src="../content/shared/js/validate.js"></script>
+    <script src="../content/shared/js/dispatcher.js"></script>
+    <script src="../content/shared/js/store.js"></script>
+    <script src="../content/shared/js/roomStore.js"></script>
     <script src="../content/shared/js/conversationStore.js"></script>
+    <script src="../content/shared/js/activeRoomStore.js"></script>
+    <script src="../content/shared/js/feedbackStore.js"></script>
+    <script src="../content/shared/js/feedbackViews.js"></script>
+    <script src="../content/js/roomViews.js"></script>
     <script src="../content/js/conversationViews.js"></script>
     <script src="../content/js/client.js"></script>
-    <script src="../standalone/content/js/webapp.js"></script>
+    <script src="../content/js/webapp.js"></script>
+    <script src="../content/js/standaloneRoomViews.js"></script>
     <script type="text/javascript;version=1.8" src="../content/js/contacts.js"></script>
     <script>
       if (!loop.contacts) {

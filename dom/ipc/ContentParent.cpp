@@ -26,36 +26,39 @@
 
 #include "AppProcessChecker.h"
 #include "AudioChannelService.h"
+#include "BlobParent.h"
 #include "CrashReporterParent.h"
 #include "IHistory.h"
-#include "IDBFactory.h"
-#include "IndexedDBParent.h"
-#include "IndexedDatabaseManager.h"
 #include "mozIApplication.h"
 #include "mozilla/ClearOnShutdown.h"
-#include "mozilla/dom/asmjscache/AsmJSCache.h"
-#include "mozilla/dom/Element.h"
 #include "mozilla/dom/DataStoreService.h"
-#include "mozilla/dom/ExternalHelperAppParent.h"
-#include "mozilla/dom/PContentBridgeParent.h"
-#include "mozilla/dom/PFileDescriptorSetParent.h"
-#include "mozilla/dom/PCycleCollectWithLogsParent.h"
-#include "mozilla/dom/PMemoryReportRequestParent.h"
-#include "mozilla/dom/power/PowerManagerService.h"
 #include "mozilla/dom/DOMStorageIPC.h"
-#include "mozilla/dom/bluetooth/PBluetoothParent.h"
-#include "mozilla/dom/PFMRadioParent.h"
-#include "mozilla/dom/devicestorage/DeviceStorageRequestParent.h"
+#include "mozilla/dom/Element.h"
+#include "mozilla/dom/File.h"
+#include "mozilla/dom/ExternalHelperAppParent.h"
 #include "mozilla/dom/FileSystemRequestParent.h"
 #include "mozilla/dom/GeolocationBinding.h"
-#include "mozilla/dom/FileDescriptorSetParent.h"
+#include "mozilla/dom/PContentBridgeParent.h"
+#include "mozilla/dom/PCycleCollectWithLogsParent.h"
+#include "mozilla/dom/PFMRadioParent.h"
+#include "mozilla/dom/PMemoryReportRequestParent.h"
+#include "mozilla/dom/asmjscache/AsmJSCache.h"
+#include "mozilla/dom/bluetooth/PBluetoothParent.h"
+#include "mozilla/dom/cellbroadcast/CellBroadcastParent.h"
+#include "mozilla/dom/devicestorage/DeviceStorageRequestParent.h"
+#include "mozilla/dom/mobileconnection/MobileConnectionParent.h"
+#include "mozilla/dom/mobilemessage/SmsParent.h"
+#include "mozilla/dom/power/PowerManagerService.h"
+#include "mozilla/dom/quota/QuotaManager.h"
 #include "mozilla/dom/telephony/TelephonyParent.h"
 #include "mozilla/dom/time/DateCacheCleaner.h"
-#include "SmsParent.h"
+#include "mozilla/dom/voicemail/VoicemailParent.h"
 #include "mozilla/hal_sandbox/PHalParent.h"
 #include "mozilla/ipc/BackgroundChild.h"
 #include "mozilla/ipc/BackgroundParent.h"
+#include "mozilla/ipc/FileDescriptorSetParent.h"
 #include "mozilla/ipc/FileDescriptorUtils.h"
+#include "mozilla/ipc/PFileDescriptorSetParent.h"
 #include "mozilla/ipc/TestShellParent.h"
 #include "mozilla/ipc/InputStreamUtils.h"
 #include "mozilla/layers/CompositorParent.h"
@@ -65,6 +68,7 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
 #include "mozilla/StaticPtr.h"
+#include "mozilla/Telemetry.h"
 #include "mozilla/unused.h"
 #include "nsAnonymousTemporaryFile.h"
 #include "nsAppRunner.h"
@@ -76,13 +80,13 @@
 #include "nsConsoleMessage.h"
 #include "nsConsoleService.h"
 #include "nsDebugImpl.h"
-#include "nsDOMFile.h"
 #include "nsFrameMessageManager.h"
 #include "nsHashPropertyBag.h"
 #include "nsIAlertsService.h"
 #include "nsIAppsService.h"
 #include "nsIClipboard.h"
 #include "nsICycleCollectorListener.h"
+#include "nsIDocument.h"
 #include "nsIDOMGeoGeolocation.h"
 #include "mozilla/dom/WakeLock.h"
 #include "nsIDOMWindow.h"
@@ -96,9 +100,9 @@
 #include "nsIMutable.h"
 #include "nsIObserverService.h"
 #include "nsIPresShell.h"
-#include "nsIRemoteBlob.h"
 #include "nsIScriptError.h"
 #include "nsISiteSecurityService.h"
+#include "nsISpellChecker.h"
 #include "nsIStyleSheet.h"
 #include "nsISupportsPrimitives.h"
 #include "nsIURIFixup.h"
@@ -178,8 +182,13 @@ using namespace mozilla::system;
 #include "nsIIPCBackgroundChildCreateCallback.h"
 #endif
 
+
 #if defined(MOZ_CONTENT_SANDBOX) && defined(XP_LINUX)
 #include "mozilla/Sandbox.h"
+#endif
+
+#ifdef MOZ_TOOLKIT_SEARCH
+#include "nsIBrowserSearchService.h"
 #endif
 
 static NS_DEFINE_CID(kCClipboardCID, NS_CLIPBOARD_CID);
@@ -188,11 +197,14 @@ static const char* sClipboardTextFlavors[] = { kUnicodeMime };
 using base::ChildPrivileges;
 using base::KillProcess;
 using namespace mozilla::dom::bluetooth;
+using namespace mozilla::dom::cellbroadcast;
 using namespace mozilla::dom::devicestorage;
 using namespace mozilla::dom::indexedDB;
 using namespace mozilla::dom::power;
+using namespace mozilla::dom::mobileconnection;
 using namespace mozilla::dom::mobilemessage;
 using namespace mozilla::dom::telephony;
+using namespace mozilla::dom::voicemail;
 using namespace mozilla::hal;
 using namespace mozilla::ipc;
 using namespace mozilla::layers;
@@ -336,6 +348,7 @@ namespace mozilla {
 namespace dom {
 
 #ifdef MOZ_NUWA_PROCESS
+int32_t ContentParent::sNuwaPid = 0;
 bool ContentParent::sNuwaReady = false;
 #endif
 
@@ -581,6 +594,7 @@ ContentParent::RunNuwaProcess()
                           /* aIsNuwaProcess = */ true);
     nuwaProcess->Init();
 #ifdef MOZ_NUWA_PROCESS
+    sNuwaPid = nuwaProcess->Pid();
     sNuwaReady = false;
 #endif
     return nuwaProcess.forget();
@@ -623,7 +637,8 @@ ContentParent::GetNewOrPreallocatedAppProcess(mozIApplication* aApp,
                 NS_ERROR("Failed to get manifest URL");
                 return nullptr;
             }
-            process->TransformPreallocatedIntoApp(manifestURL);
+            process->TransformPreallocatedIntoApp(aOpener,
+                                                  manifestURL);
             if (aTookPreAllocated) {
                 *aTookPreAllocated = true;
             }
@@ -676,6 +691,8 @@ ContentParent::StartUp()
     RegisterStrongMemoryReporter(new ContentParentsMemoryReporter());
 
     mozilla::dom::time::InitializeDateCacheCleaner();
+
+    BlobParent::Startup(BlobParent::FriendKey());
 
     BackgroundChild::Startup();
 
@@ -771,7 +788,7 @@ ContentParent::GetNewOrUsedBrowserProcess(bool aForBrowserElement,
     // Try to take and transform the preallocated process into browser.
     nsRefPtr<ContentParent> p = PreallocatedProcessManager::Take();
     if (p) {
-        p->TransformPreallocatedIntoBrowser();
+        p->TransformPreallocatedIntoBrowser(aOpener);
     } else {
       // Failed in using the preallocated process: fork from the chrome process.
         p = new ContentParent(/* app = */ nullptr,
@@ -864,7 +881,10 @@ ContentParent::RecvCreateChildProcess(const IPCTabContext& aContext,
     }
 
     if (!cp) {
-        return false;
+        *aId = 0;
+        *aIsForApp = false;
+        *aIsForBrowser = false;
+        return true;
     }
 
     *aId = cp->ChildID();
@@ -914,13 +934,15 @@ ContentParent::CreateBrowserOrApp(const TabContext& aContext,
         nsRefPtr<nsIContentParent> constructorSender;
         if (isInContentProcess) {
             MOZ_ASSERT(aContext.IsBrowserElement());
-            constructorSender = CreateContentBridgeParent(aContext, initialPriority);
+            constructorSender =
+                CreateContentBridgeParent(aContext, initialPriority);
         } else {
           if (aOpenerContentParent) {
             constructorSender = aOpenerContentParent;
           } else {
-            constructorSender = GetNewOrUsedBrowserProcess(aContext.IsBrowserElement(),
-                                                                    initialPriority);
+            constructorSender =
+                GetNewOrUsedBrowserProcess(aContext.IsBrowserElement(),
+                                           initialPriority);
           }
         }
         if (constructorSender) {
@@ -1113,6 +1135,9 @@ ContentParent::CreateContentBridgeParent(const TabContext& aContext,
                                        &id,
                                        &isForApp,
                                        &isForBrowser)) {
+        return nullptr;
+    }
+    if (id == 0) {
         return nullptr;
     }
     if (!child->CallBridgeToChildProcess(id)) {
@@ -1347,17 +1372,20 @@ TryGetNameFromManifestURL(const nsAString& aManifestURL,
 }
 
 void
-ContentParent::TransformPreallocatedIntoApp(const nsAString& aAppManifestURL)
+ContentParent::TransformPreallocatedIntoApp(ContentParent* aOpener,
+                                            const nsAString& aAppManifestURL)
 {
     MOZ_ASSERT(IsPreallocated());
+    mOpener = aOpener;
     mAppManifestURL = aAppManifestURL;
     TryGetNameFromManifestURL(aAppManifestURL, mAppName);
 }
 
 void
-ContentParent::TransformPreallocatedIntoBrowser()
+ContentParent::TransformPreallocatedIntoBrowser(ContentParent* aOpener)
 {
     // Reset mAppManifestURL, mIsForBrowser and mOSPrivileges for browser.
+    mOpener = aOpener;
     mAppManifestURL.Truncate();
     mIsForBrowser = true;
 }
@@ -1365,10 +1393,10 @@ ContentParent::TransformPreallocatedIntoBrowser()
 void
 ContentParent::ShutDownProcess(bool aCloseWithError)
 {
-    const InfallibleTArray<PIndexedDBParent*>& idbParents =
-        ManagedPIndexedDBParent();
-    for (uint32_t i = 0; i < idbParents.Length(); ++i) {
-        static_cast<IndexedDBParent*>(idbParents[i])->Disconnect();
+    using mozilla::dom::quota::QuotaManager;
+
+    if (QuotaManager* quotaManager = QuotaManager::Get()) {
+        quotaManager->AbortCloseStoragesForProcess(this);
     }
 
     // If Close() fails with an error, we'll end up back in this function, but
@@ -1636,6 +1664,9 @@ ContentParent::ActorDestroy(ActorDestroyReason why)
         props->SetPropertyAsUint64(NS_LITERAL_STRING("childID"), mChildID);
 
         if (AbnormalShutdown == why) {
+            Telemetry::Accumulate(Telemetry::SUBPROCESS_ABNORMAL_ABORT,
+                                  NS_LITERAL_CSTRING("content"), 1);
+
             props->SetPropertyAsBool(NS_LITERAL_STRING("abnormal"), true);
 
 #ifdef MOZ_CRASHREPORTER
@@ -1750,7 +1781,7 @@ ContentParent::NotifyTabDestroyed(PBrowserParent* aTab,
     }
 }
 
-jsipc::JavaScriptParent*
+jsipc::JavaScriptShared*
 ContentParent::GetCPOWManager()
 {
     if (ManagedPJavaScriptParent().Length()) {
@@ -1970,6 +2001,7 @@ ContentParent::~ContentParent()
 #ifdef MOZ_NUWA_PROCESS
     if (IsNuwaProcess()) {
         sNuwaReady = false;
+        sNuwaPid = 0;
     }
 #endif
 }
@@ -2029,9 +2061,11 @@ ContentParent::InitInternal(ProcessPriority aInitialPriority,
         nsCString buildID(gAppData->buildID);
         nsCString name(gAppData->name);
         nsCString UAName(gAppData->UAName);
+        nsCString ID(gAppData->ID);
+        nsCString vendor(gAppData->vendor);
 
         // Sending all information to content process.
-        unused << SendAppInfo(version, buildID, name, UAName);
+        unused << SendAppInfo(version, buildID, name, UAName, ID, vendor);
     }
 
     nsStyleSheetService *sheetService = nsStyleSheetService::GetInstance();
@@ -2467,7 +2501,8 @@ ContentParent::RecvAddNewProcess(const uint32_t& aPid,
 
     // Update offline settings.
     bool isOffline;
-    RecvGetXPCOMProcessAttributes(&isOffline);
+    InfallibleTArray<nsString> unusedDictionaries;
+    RecvGetXPCOMProcessAttributes(&isOffline, &unusedDictionaries);
     content->SendSetOffline(isOffline);
 
     PreallocatedProcessManager::PublishSpareProcess(content);
@@ -2576,18 +2611,20 @@ ContentParent::Observe(nsISupports* aSubject,
             // The pre-%n part of the string should be all ASCII, so the byte
             // offset in identOffset should be correct as a char offset.
             MOZ_ASSERT(cmsg[identOffset - 1] == '=');
-            FileDescriptor dmdFileDesc;
+            MaybeFileDesc dmdFileDesc = void_t();
 #ifdef MOZ_DMD
-            FILE *dmdFile;
             nsAutoString dmdIdent(Substring(msg, identOffset));
-            nsresult rv = nsMemoryInfoDumper::OpenDMDFile(dmdIdent, Pid(), &dmdFile);
-            if (NS_WARN_IF(NS_FAILED(rv))) {
-                // Proceed with the memory report as if DMD were disabled.
-                dmdFile = nullptr;
-            }
-            if (dmdFile) {
-                dmdFileDesc = FILEToFileDescriptor(dmdFile);
-                fclose(dmdFile);
+            if (!dmdIdent.IsEmpty()) {
+                FILE *dmdFile = nullptr;
+                nsresult rv = nsMemoryInfoDumper::OpenDMDFile(dmdIdent, Pid(), &dmdFile);
+                if (NS_WARN_IF(NS_FAILED(rv))) {
+                    // Proceed with the memory report as if DMD were disabled.
+                    dmdFile = nullptr;
+                }
+                if (dmdFile) {
+                    dmdFileDesc = FILEToFileDescriptor(dmdFile);
+                    fclose(dmdFile);
+                }
             }
 #endif
             unused << SendPMemoryReportRequestConstructor(
@@ -2713,12 +2750,18 @@ ContentParent::RecvGetProcessAttributes(uint64_t* aId,
 }
 
 bool
-ContentParent::RecvGetXPCOMProcessAttributes(bool* aIsOffline)
+ContentParent::RecvGetXPCOMProcessAttributes(bool* aIsOffline,
+                                             InfallibleTArray<nsString>* dictionaries)
 {
     nsCOMPtr<nsIIOService> io(do_GetIOService());
-    NS_ASSERTION(io, "No IO service?");
+    MOZ_ASSERT(io, "No IO service?");
     DebugOnly<nsresult> rv = io->GetOffline(aIsOffline);
-    NS_ASSERTION(NS_SUCCEEDED(rv), "Failed getting offline?");
+    MOZ_ASSERT(NS_SUCCEEDED(rv), "Failed getting offline?");
+
+    nsCOMPtr<nsISpellChecker> spellChecker(do_GetService(NS_SPELLCHECKER_CONTRACTID));
+    MOZ_ASSERT(spellChecker, "No spell checker?");
+
+    spellChecker->GetDictionaryList(dictionaries);
 
     return true;
 }
@@ -2802,8 +2845,7 @@ ContentParent::AllocPBlobParent(const BlobConstructorParams& aParams)
 bool
 ContentParent::DeallocPBlobParent(PBlobParent* aActor)
 {
-    delete aActor;
-    return true;
+    return nsIContentParent::DeallocPBlobParent(aActor);
 }
 
 mozilla::PRemoteSpellcheckEngineParent *
@@ -2843,7 +2885,7 @@ ContentParent::KillHard()
         FROM_HERE,
         NewRunnableFunction(&ProcessWatcher::EnsureProcessTerminated,
                             OtherProcess(), /*force=*/true));
-    //We do clean-up here 
+    //We do clean-up here
     MessageLoop::current()->PostDelayedTask(
         FROM_HERE,
         NewRunnableMethod(this, &ContentParent::ShutDownProcess,
@@ -2925,47 +2967,11 @@ ContentParent::DeallocPHalParent(hal_sandbox::PHalParent* aHal)
     return true;
 }
 
-PIndexedDBParent*
-ContentParent::AllocPIndexedDBParent()
-{
-    return new IndexedDBParent(this);
-}
-
-bool
-ContentParent::DeallocPIndexedDBParent(PIndexedDBParent* aActor)
-{
-    delete aActor;
-    return true;
-}
-
-bool
-ContentParent::RecvPIndexedDBConstructor(PIndexedDBParent* aActor)
-{
-    nsRefPtr<IndexedDatabaseManager> mgr = IndexedDatabaseManager::GetOrCreate();
-    NS_ENSURE_TRUE(mgr, false);
-
-    if (!IndexedDatabaseManager::IsMainProcess()) {
-        NS_RUNTIMEABORT("Not supported yet!");
-    }
-
-    nsRefPtr<IDBFactory> factory;
-    nsresult rv = IDBFactory::Create(this, getter_AddRefs(factory));
-    NS_ENSURE_SUCCESS(rv, false);
-
-    NS_ASSERTION(factory, "This should never be null!");
-
-    IndexedDBParent* actor = static_cast<IndexedDBParent*>(aActor);
-    actor->mFactory = factory;
-    actor->mASCIIOrigin = factory->GetASCIIOrigin();
-
-    return true;
-}
-
 PMemoryReportRequestParent*
 ContentParent::AllocPMemoryReportRequestParent(const uint32_t& aGeneration,
                                                const bool &aAnonymize,
                                                const bool &aMinimizeMemoryUsage,
-                                               const FileDescriptor &aDMDFile)
+                                               const MaybeFileDesc &aDMDFile)
 {
     MemoryReportRequestParent* parent = new MemoryReportRequestParent();
     return parent;
@@ -3017,6 +3023,32 @@ ContentParent::DeallocPTestShellParent(PTestShellParent* shell)
     return true;
 }
 
+PMobileConnectionParent*
+ContentParent::AllocPMobileConnectionParent(const uint32_t& aClientId)
+{
+#ifdef MOZ_B2G_RIL
+    nsRefPtr<MobileConnectionParent> parent = new MobileConnectionParent(aClientId);
+    // We release this ref in DeallocPMobileConnectionParent().
+    parent->AddRef();
+
+    return parent;
+#else
+    MOZ_CRASH("No support for mobileconnection on this platform!");
+#endif
+}
+
+bool
+ContentParent::DeallocPMobileConnectionParent(PMobileConnectionParent* aActor)
+{
+#ifdef MOZ_B2G_RIL
+    // MobileConnectionParent is refcounted, must not be freed manually.
+    static_cast<MobileConnectionParent*>(aActor)->Release();
+    return true;
+#else
+    MOZ_CRASH("No support for mobileconnection on this platform!");
+#endif
+}
+
 PNeckoParent*
 ContentParent::AllocPNeckoParent()
 {
@@ -3058,13 +3090,13 @@ ContentParent::AllocPExternalHelperAppParent(const OptionalURIParams& uri,
 {
     ExternalHelperAppParent *parent = new ExternalHelperAppParent(uri, aContentLength);
     parent->AddRef();
-    parent->Init(this, 
-                 aMimeContentType, 
+    parent->Init(this,
+                 aMimeContentType,
                  aContentDisposition,
                  aContentDispositionHint,
                  aContentDispositionFilename,
-                 aForceSave, 
-                 aReferrer, 
+                 aForceSave,
+                 aReferrer,
                  aBrowser);
     return parent;
 }
@@ -3075,6 +3107,31 @@ ContentParent::DeallocPExternalHelperAppParent(PExternalHelperAppParent* aServic
     ExternalHelperAppParent *parent = static_cast<ExternalHelperAppParent *>(aService);
     parent->Release();
     return true;
+}
+
+PCellBroadcastParent*
+ContentParent::AllocPCellBroadcastParent()
+{
+    if (!AssertAppProcessPermission(this, "cellbroadcast")) {
+        return nullptr;
+    }
+
+    CellBroadcastParent* actor = new CellBroadcastParent();
+    actor->AddRef();
+    return actor;
+}
+
+bool
+ContentParent::DeallocPCellBroadcastParent(PCellBroadcastParent* aActor)
+{
+    static_cast<CellBroadcastParent*>(aActor)->Release();
+    return true;
+}
+
+bool
+ContentParent::RecvPCellBroadcastConstructor(PCellBroadcastParent* aActor)
+{
+    return static_cast<CellBroadcastParent*>(aActor)->Init();
 }
 
 PSmsParent*
@@ -3112,6 +3169,31 @@ bool
 ContentParent::DeallocPTelephonyParent(PTelephonyParent* aActor)
 {
     static_cast<TelephonyParent*>(aActor)->Release();
+    return true;
+}
+
+PVoicemailParent*
+ContentParent::AllocPVoicemailParent()
+{
+    if (!AssertAppProcessPermission(this, "voicemail")) {
+        return nullptr;
+    }
+
+    VoicemailParent* actor = new VoicemailParent();
+    actor->AddRef();
+    return actor;
+}
+
+bool
+ContentParent::RecvPVoicemailConstructor(PVoicemailParent* aActor)
+{
+    return static_cast<VoicemailParent*>(aActor)->Init();
+}
+
+bool
+ContentParent::DeallocPVoicemailParent(PVoicemailParent* aActor)
+{
+    static_cast<VoicemailParent*>(aActor)->Release();
     return true;
 }
 
@@ -3439,14 +3521,14 @@ ContentParent::RecvSyncMessage(const nsString& aMsg,
 }
 
 bool
-ContentParent::AnswerRpcMessage(const nsString& aMsg,
-                                const ClonedMessageData& aData,
-                                const InfallibleTArray<CpowEntry>& aCpows,
-                                const IPC::Principal& aPrincipal,
-                                InfallibleTArray<nsString>* aRetvals)
+ContentParent::RecvRpcMessage(const nsString& aMsg,
+                              const ClonedMessageData& aData,
+                              const InfallibleTArray<CpowEntry>& aCpows,
+                              const IPC::Principal& aPrincipal,
+                              InfallibleTArray<nsString>* aRetvals)
 {
-    return nsIContentParent::AnswerRpcMessage(aMsg, aData, aCpows, aPrincipal,
-                                              aRetvals);
+    return nsIContentParent::RecvRpcMessage(aMsg, aData, aCpows, aPrincipal,
+                                            aRetvals);
 }
 
 bool
@@ -3636,6 +3718,12 @@ ContentParent::DoSendAsyncMessage(JSContext* aCx,
     if (aCpows && !GetCPOWManager()->Wrap(aCx, aCpows, &cpows)) {
         return false;
     }
+#ifdef MOZ_NUWA_PROCESS
+    if (IsNuwaProcess() && IsNuwaReady()) {
+        // Nuwa won't receive frame messages after it is frozen.
+        return true;
+    }
+#endif
     return SendAsyncMessage(nsString(aMessage), data, cpows, Principal(aPrincipal));
 }
 
@@ -3733,7 +3821,9 @@ ContentParent::RecvSetFakeVolumeState(const nsString& fsName, const int32_t& fsS
 }
 
 bool
-ContentParent::RecvKeywordToURI(const nsCString& aKeyword, OptionalInputStreamParams* aPostData,
+ContentParent::RecvKeywordToURI(const nsCString& aKeyword,
+                                nsString* aProviderName,
+                                OptionalInputStreamParams* aPostData,
                                 OptionalURIParams* aURI)
 {
     nsCOMPtr<nsIURIFixup> fixup = do_GetService(NS_URIFIXUP_CONTRACTID);
@@ -3742,26 +3832,48 @@ ContentParent::RecvKeywordToURI(const nsCString& aKeyword, OptionalInputStreamPa
     }
 
     nsCOMPtr<nsIInputStream> postData;
-    nsCOMPtr<nsIURI> uri;
+    nsCOMPtr<nsIURIFixupInfo> info;
+
     if (NS_FAILED(fixup->KeywordToURI(aKeyword, getter_AddRefs(postData),
-                                      getter_AddRefs(uri)))) {
+                                      getter_AddRefs(info)))) {
         return true;
     }
+    info->GetKeywordProviderName(*aProviderName);
 
     nsTArray<mozilla::ipc::FileDescriptor> fds;
     SerializeInputStream(postData, *aPostData, fds);
     MOZ_ASSERT(fds.IsEmpty());
 
+    nsCOMPtr<nsIURI> uri;
+    info->GetPreferredURI(getter_AddRefs(uri));
     SerializeURI(uri, *aURI);
+    return true;
+}
+
+bool
+ContentParent::RecvNotifyKeywordSearchLoading(const nsString &aProvider,
+                                              const nsString &aKeyword) {
+#ifdef MOZ_TOOLKIT_SEARCH
+    nsCOMPtr<nsIBrowserSearchService> searchSvc = do_GetService("@mozilla.org/browser/search-service;1");
+    if (searchSvc) {
+        nsCOMPtr<nsISearchEngine> searchEngine;
+        searchSvc->GetEngineByName(aProvider, getter_AddRefs(searchEngine));
+        if (searchEngine) {
+            nsCOMPtr<nsIObserverService> obsSvc = mozilla::services::GetObserverService();
+            if (obsSvc) {
+                // Note that "keyword-search" refers to a search via the url
+                // bar, not a bookmarks keyword search.
+                obsSvc->NotifyObservers(searchEngine, "keyword-search", aKeyword.get());
+            }
+        }
+    }
+#endif
     return true;
 }
 
 bool
 ContentParent::ShouldContinueFromReplyTimeout()
 {
-    // The only time ContentParent sends blocking messages is for CPOWs, so
-    // timeouts should only ever occur in electrolysis-enabled sessions.
-    MOZ_ASSERT(BrowserTabsRemote());
     return false;
 }
 
@@ -3884,6 +3996,63 @@ ContentParent::DeallocPFileDescriptorSetParent(PFileDescriptorSetParent* aActor)
 }
 
 bool
+ContentParent::RecvGetFileReferences(const PersistenceType& aPersistenceType,
+                                     const nsCString& aOrigin,
+                                     const nsString& aDatabaseName,
+                                     const int64_t& aFileId,
+                                     int32_t* aRefCnt,
+                                     int32_t* aDBRefCnt,
+                                     int32_t* aSliceRefCnt,
+                                     bool* aResult)
+{
+    MOZ_ASSERT(aRefCnt);
+    MOZ_ASSERT(aDBRefCnt);
+    MOZ_ASSERT(aSliceRefCnt);
+    MOZ_ASSERT(aResult);
+
+    if (NS_WARN_IF(aPersistenceType != quota::PERSISTENCE_TYPE_PERSISTENT &&
+                   aPersistenceType != quota::PERSISTENCE_TYPE_TEMPORARY)) {
+        return false;
+    }
+
+    if (NS_WARN_IF(aOrigin.IsEmpty())) {
+        return false;
+    }
+
+    if (NS_WARN_IF(aDatabaseName.IsEmpty())) {
+        return false;
+    }
+
+    if (NS_WARN_IF(aFileId < 1)) {
+        return false;
+    }
+
+    nsRefPtr<IndexedDatabaseManager> mgr = IndexedDatabaseManager::Get();
+    if (NS_WARN_IF(!mgr)) {
+        return false;
+    }
+
+    if (NS_WARN_IF(!mgr->IsMainProcess())) {
+        return false;
+    }
+
+    nsresult rv =
+        mgr->BlockAndGetFileReferences(aPersistenceType,
+                                       aOrigin,
+                                       aDatabaseName,
+                                       aFileId,
+                                       aRefCnt,
+                                       aDBRefCnt,
+                                       aSliceRefCnt,
+                                       aResult);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return false;
+    }
+
+    return true;
+}
+
+bool
 ContentParent::IgnoreIPCPrincipal()
 {
   static bool sDidAddVarCache = false;
@@ -3894,6 +4063,23 @@ ContentParent::IgnoreIPCPrincipal()
                                  "dom.testing.ignore_ipc_principal", false);
   }
   return sIgnoreIPCPrincipal;
+}
+
+void
+ContentParent::NotifyUpdatedDictionaries()
+{
+    nsAutoTArray<ContentParent*, 8> processes;
+    GetAll(processes);
+
+    nsCOMPtr<nsISpellChecker> spellChecker(do_GetService(NS_SPELLCHECKER_CONTRACTID));
+    MOZ_ASSERT(spellChecker, "No spell checker?");
+
+    InfallibleTArray<nsString> dictionaries;
+    spellChecker->GetDictionaryList(&dictionaries);
+
+    for (size_t i = 0; i < processes.Length(); ++i) {
+        unused << processes[i]->SendUpdateDictionaryList(dictionaries);
+    }
 }
 
 } // namespace dom

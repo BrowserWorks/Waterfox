@@ -22,6 +22,7 @@ loop.shared.models = (function(l10n) {
       sessionToken: undefined,     // OT session token
       sessionType:  undefined,     // Hawk session type
       apiKey:       undefined,     // OT api key
+      windowId:     undefined,     // The window id
       callId:       undefined,     // The callId on the server
       progressURL:  undefined,     // The websocket url to use for progress
       websocketToken: undefined,   // The token to use for websocket auth, this is
@@ -56,6 +57,7 @@ loop.shared.models = (function(l10n) {
      * Constructor.
      *
      * Options:
+     * - {OT} mozLoop: browser mozLoop service object.
      *
      * Required:
      * - {OT} sdk: OT SDK object.
@@ -65,6 +67,7 @@ loop.shared.models = (function(l10n) {
      */
     initialize: function(attributes, options) {
       options = options || {};
+      this.mozLoop = options.mozLoop;
       if (!options.sdk) {
         throw new Error("missing required sdk");
       }
@@ -94,6 +97,13 @@ loop.shared.models = (function(l10n) {
       if (selectedCallType) {
         this.set("selectedCallType", selectedCallType);
       }
+      this.trigger("call:outgoing:get-media-privs");
+    },
+
+    /**
+     * Used to indicate that media privileges have been accepted.
+     */
+    gotMediaPrivs: function() {
       this.trigger("call:outgoing:setup");
     },
 
@@ -165,16 +175,26 @@ loop.shared.models = (function(l10n) {
       if (!this.isSessionReady()) {
         throw new Error("Can't start session as it's not ready");
       }
+      this.set({
+        publishedStream: false,
+        subscribedStream: false
+      });
+
       this.session = this.sdk.initSession(this.get("sessionId"));
       this.listenTo(this.session, "streamCreated", this._streamCreated);
       this.listenTo(this.session, "connectionDestroyed",
                                   this._connectionDestroyed);
       this.listenTo(this.session, "sessionDisconnected",
                                   this._sessionDisconnected);
-      this.listenTo(this.session, "networkDisconnected",
-                                  this._networkDisconnected);
       this.session.connect(this.get("apiKey"), this.get("sessionToken"),
                            this._onConnectCompletion.bind(this));
+
+      // We store the call credentials for debugging purposes.
+      if (this.mozLoop) {
+        this.mozLoop.addConversationContext(this.get("windowId"),
+                                            this.get("sessionId"),
+                                            this.get("callId"));
+      }
     },
 
     /**
@@ -182,8 +202,11 @@ loop.shared.models = (function(l10n) {
      */
     endSession: function() {
       this.session.disconnect();
-      this.set("ongoing", false)
-          .once("session:ended", this.stopListening, this);
+      this.set({
+        publishedStream: false,
+        subscribedStream: false,
+        ongoing: false
+      }).once("session:ended", this.stopListening, this);
     },
 
     /**
@@ -314,9 +337,17 @@ loop.shared.models = (function(l10n) {
      * @param  {SessionDisconnectEvent} event
      */
     _sessionDisconnected: function(event) {
+      if(event.reason === "networkDisconnected") {
+        this._signalEnd("session:network-disconnected", event);
+      } else {
+        this._signalEnd("session:ended", event);
+      }
+    },
+
+    _signalEnd: function(eventName, event) {
       this.set("connected", false)
           .set("ongoing", false)
-          .trigger("session:ended");
+          .trigger(eventName, event);
     },
 
     /**
@@ -326,24 +357,11 @@ loop.shared.models = (function(l10n) {
      * @param  {ConnectionEvent} event
      */
     _connectionDestroyed: function(event) {
-      this.set("connected", false)
-          .set("ongoing", false)
-          .trigger("session:peer-hungup", {
-            connectionId: event.connection.connectionId
-          });
-      this.endSession();
-    },
-
-    /**
-     * Network was disconnected.
-     * http://tokbox.com/opentok/libraries/client/js/reference/ConnectionEvent.html
-     *
-     * @param {ConnectionEvent} event
-     */
-    _networkDisconnected: function(event) {
-      this.set("connected", false)
-          .set("ongoing", false)
-          .trigger("session:network-disconnected");
+      if (event.reason === "networkDisconnected") {
+        this._signalEnd("session:network-disconnected", event);
+      } else {
+        this._signalEnd("session:peer-hungup", event);
+      }
       this.endSession();
     },
   });
@@ -355,6 +373,7 @@ loop.shared.models = (function(l10n) {
     defaults: {
       details: "",
       detailsButtonLabel: "",
+      detailsButtonCallback: null,
       level: "info",
       message: ""
     }

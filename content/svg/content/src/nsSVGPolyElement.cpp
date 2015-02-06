@@ -5,7 +5,6 @@
 
 #include "nsSVGPolyElement.h"
 #include "DOMSVGPointList.h"
-#include "gfxContext.h"
 #include "mozilla/gfx/2D.h"
 #include "SVGContentUtils.h"
 
@@ -121,35 +120,36 @@ nsSVGPolyElement::GetMarkPoints(nsTArray<nsSVGMark> *aMarks)
   aMarks->LastElement().type = nsSVGMark::eEnd;
 }
 
-void
-nsSVGPolyElement::ConstructPath(gfxContext *aCtx)
+bool
+nsSVGPolyElement::GetGeometryBounds(Rect* aBounds, Float aStrokeWidth,
+                                    const Matrix& aTransform)
 {
   const SVGPointList &points = mPoints.GetAnimValue();
 
-  if (!points.Length())
-    return;
-
-  aCtx->MoveTo(points[0]);
-  for (uint32_t i = 1; i < points.Length(); ++i) {
-    aCtx->LineTo(points[i]);
-  }
-}
-
-TemporaryRef<Path>
-nsSVGPolyElement::BuildPath(PathBuilder* aBuilder)
-{
-  const SVGPointList &points = mPoints.GetAnimValue();
-
-  if (points.IsEmpty()) {
-    return nullptr;
+  if (!points.Length()) {
+    // Rendering of the element is disabled
+    aBounds->SetEmpty();
+    return true;
   }
 
-  RefPtr<PathBuilder> pathBuilder = aBuilder ? aBuilder : CreatePathBuilder();
-
-  pathBuilder->MoveTo(points[0]);
-  for (uint32_t i = 1; i < points.Length(); ++i) {
-    pathBuilder->LineTo(points[i]);
+  if (aStrokeWidth > 0) {
+    // We don't handle stroke-miterlimit etc. yet
+    return false;
   }
 
-  return pathBuilder->Finish();
+  if (aTransform.IsRectilinear()) {
+    // We can avoid transforming each point and just transform the result.
+    // Important for large point lists.
+    Rect bounds(points[0], Size());
+    for (uint32_t i = 1; i < points.Length(); ++i) {
+      bounds.ExpandToEnclose(points[i]);
+    }
+    *aBounds = aTransform.TransformBounds(bounds);
+  } else {
+    *aBounds = Rect(aTransform * points[0], Size());
+    for (uint32_t i = 1; i < points.Length(); ++i) {
+      aBounds->ExpandToEnclose(aTransform * points[i]);
+    }
+  }
+  return true;
 }

@@ -24,6 +24,7 @@ BaseWebSocketChannel::BaseWebSocketChannel()
   , mWasOpened(0)
   , mClientSetPingInterval(0)
   , mClientSetPingTimeout(0)
+  , mPingForced(0)
   , mPingInterval(0)
   , mPingResponseTimeout(10000)
 {
@@ -93,6 +94,20 @@ BaseWebSocketChannel::SetLoadGroup(nsILoadGroup *aLoadGroup)
 {
   LOG(("BaseWebSocketChannel::SetLoadGroup() %p\n", this));
   mLoadGroup = aLoadGroup;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+BaseWebSocketChannel::SetLoadInfo(nsILoadInfo* aLoadInfo)
+{
+  mLoadInfo = aLoadInfo;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+BaseWebSocketChannel::GetLoadInfo(nsILoadInfo** aLoadInfo)
+{
+  NS_IF_ADDREF(*aLoadInfo = mLoadInfo);
   return NS_OK;
 }
 

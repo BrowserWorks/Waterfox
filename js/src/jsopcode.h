@@ -211,13 +211,13 @@ SET_UINT32_INDEX(jsbytecode *pc, uint32_t index)
 static inline unsigned
 LoopEntryDepthHint(jsbytecode *pc)
 {
-    JS_ASSERT(*pc == JSOP_LOOPENTRY);
+    MOZ_ASSERT(*pc == JSOP_LOOPENTRY);
     return GET_UINT8(pc) & 0x7f;
 }
 static inline bool
 LoopEntryCanIonOsr(jsbytecode *pc)
 {
-    JS_ASSERT(*pc == JSOP_LOOPENTRY);
+    MOZ_ASSERT(*pc == JSOP_LOOPENTRY);
     return GET_UINT8(pc) & 0x80;
 }
 static inline uint8_t
@@ -274,7 +274,7 @@ extern const char       js_EscapeMap[];
  * with the quote character at the beginning and end of the result string.
  */
 extern JSString *
-js_QuoteString(js::ExclusiveContext *cx, JSString *str, jschar quote);
+js_QuoteString(js::ExclusiveContext *cx, JSString *str, char16_t quote);
 
 namespace js {
 
@@ -349,10 +349,10 @@ public:
     void advanceTo(ptrdiff_t relpc) {
         // Must always advance! If the same or an earlier PC is erroneously
         // passed in, we will already be past the relevant src notes
-        JS_ASSERT_IF(offset > 0, relpc > offset);
+        MOZ_ASSERT_IF(offset > 0, relpc > offset);
 
         // Next src note should be for after the current offset
-        JS_ASSERT_IF(offset > 0, SN_IS_TERMINATOR(sn) || SN_DELTA(sn) > 0);
+        MOZ_ASSERT_IF(offset > 0, SN_IS_TERMINATOR(sn) || SN_DELTA(sn) > 0);
 
         // The first PC requested is always considered to be a line header
         lineHeader = (offset == 0);
@@ -539,7 +539,7 @@ GetDecomposeLength(jsbytecode *pc, size_t len)
      * The last byte of a DECOMPOSE op stores the decomposed length.  This is a
      * constant: perhaps we should just hardcode values instead?
      */
-    JS_ASSERT(size_t(js_CodeSpec[*pc].length) == len);
+    MOZ_ASSERT(size_t(js_CodeSpec[*pc].length) == len);
     return (unsigned) pc[len - 1];
 }
 
@@ -547,7 +547,7 @@ static inline unsigned
 GetBytecodeLength(jsbytecode *pc)
 {
     JSOp op = (JSOp)*pc;
-    JS_ASSERT(op < JSOP_LIMIT);
+    MOZ_ASSERT(op < JSOP_LIMIT);
 
     if (js_CodeSpec[op].length != -1)
         return js_CodeSpec[op].length;
@@ -798,7 +798,7 @@ class PCCounts
     double *rawCounts() const { return counts; }
 
     double& get(size_t which) {
-        JS_ASSERT(which < capacity);
+        MOZ_ASSERT(which < capacity);
         return counts[which];
     }
 
@@ -839,6 +839,9 @@ namespace js {
 namespace jit { struct IonScriptCounts; }
 void
 DumpIonScriptCounts(js::Sprinter *sp, jit::IonScriptCounts *ionCounts);
+
+void
+DumpCompartmentPCCounts(JSContext *cx);
 }
 
 #endif /* jsopcode_h */

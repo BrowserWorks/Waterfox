@@ -96,6 +96,7 @@ XPCOMUtils.defineLazyGetter(this, "PALETTE_ITEMS", function() {
     "email-link-button",
     "sync-button",
     "tabview-button",
+    "web-apps-button",
   ];
 
   let panelPlacements = DEFAULT_AREA_PLACEMENTS["PanelUI-contents"];
@@ -183,6 +184,7 @@ this.BrowserUITelemetry = {
 
     Services.obs.addObserver(this, "sessionstore-windows-restored", false);
     Services.obs.addObserver(this, "browser-delayed-startup-finished", false);
+    Services.obs.addObserver(this, "autocomplete-did-enter-text", false);
     CustomizableUI.addListener(this);
   },
 
@@ -193,6 +195,13 @@ this.BrowserUITelemetry = {
         break;
       case "browser-delayed-startup-finished":
         this._registerWindow(aSubject);
+        break;
+      case "autocomplete-did-enter-text":
+        let input = aSubject.QueryInterface(Ci.nsIAutoCompleteInput);
+        if (input && input.id == "urlbar" && !input.inPrivateContext &&
+            input.popup.selectedIndex != -1) {
+          this._logAwesomeBarSearchResult(input.textValue);
+        }
         break;
     }
   },
@@ -558,10 +567,24 @@ this.BrowserUITelemetry = {
     this._countEvent(["customize", aEventType]);
   },
 
-  countSearchEvent: function(source, query) {
+  countSearchEvent: function(source, query, selection) {
     this._countEvent(["search", source]);
     if ((/^[a-zA-Z]+:[^\/\\]/).test(query)) {
       this._countEvent(["search", "urlbar-keyword"]);
+    }
+    if (selection) {
+      this._countEvent(["search", "selection", source, selection.index, selection.kind]);
+    }
+  },
+
+  _logAwesomeBarSearchResult: function (url) {
+    let spec = Services.search.parseSubmissionURL(url);
+    if (spec.engine) {
+      let matchedEngine = "default";
+      if (spec.engine.name !== Services.search.currentEngine.name) {
+        matchedEngine = "other";
+      }
+      this.countSearchEvent("autocomplete-" + matchedEngine);
     }
   },
 

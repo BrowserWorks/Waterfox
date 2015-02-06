@@ -30,7 +30,7 @@ CompileRuntime::onMainThread()
 js::PerThreadData *
 CompileRuntime::mainThread()
 {
-    JS_ASSERT(onMainThread());
+    MOZ_ASSERT(onMainThread());
     return &runtime()->mainThread;
 }
 
@@ -130,6 +130,12 @@ const JSAtomState &
 CompileRuntime::names()
 {
     return *runtime()->commonNames;
+}
+
+const PropertyName *
+CompileRuntime::emptyString()
+{
+    return runtime()->emptyString;
 }
 
 const StaticStrings &

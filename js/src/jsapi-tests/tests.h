@@ -68,9 +68,9 @@ class JSAPITest
     }
 
     virtual ~JSAPITest() {
-        JS_ASSERT(!rt);
-        JS_ASSERT(!cx);
-        JS_ASSERT(!global);
+        MOZ_ASSERT(!rt);
+        MOZ_ASSERT(!cx);
+        MOZ_ASSERT(!global);
     }
 
     virtual bool init();
@@ -283,14 +283,15 @@ class JSAPITest
         JSRuntime *rt = JS_NewRuntime(8L * 1024 * 1024);
         if (!rt)
             return nullptr;
+        JS_SetErrorReporter(rt, &reportError);
         setNativeStackQuota(rt);
         JS::RuntimeOptionsRef(rt).setVarObjFix(true);
         return rt;
     }
 
     virtual void destroyRuntime() {
-        JS_ASSERT(!cx);
-        JS_ASSERT(rt);
+        MOZ_ASSERT(!cx);
+        MOZ_ASSERT(rt);
         JS_DestroyRuntime(rt);
     }
 
@@ -302,11 +303,7 @@ class JSAPITest
     }
 
     virtual JSContext * createContext() {
-        JSContext *cx = JS_NewContext(rt, 8192);
-        if (!cx)
-            return nullptr;
-        JS_SetErrorReporter(cx, &reportError);
-        return cx;
+        return JS_NewContext(rt, 8192);
     }
 
     virtual const JSClass * getGlobalClass() {

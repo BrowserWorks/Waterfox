@@ -65,6 +65,22 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 #define NS_STYLE_BOX_SIZING_PADDING       1
 #define NS_STYLE_BOX_SIZING_BORDER        2
 
+// clip-path sizing
+#define NS_STYLE_CLIP_SHAPE_SIZING_NOBOX   0
+#define NS_STYLE_CLIP_SHAPE_SIZING_CONTENT 1
+#define NS_STYLE_CLIP_SHAPE_SIZING_PADDING 2
+#define NS_STYLE_CLIP_SHAPE_SIZING_BORDER  3
+#define NS_STYLE_CLIP_SHAPE_SIZING_MARGIN  4
+#define NS_STYLE_CLIP_SHAPE_SIZING_FILL    5
+#define NS_STYLE_CLIP_SHAPE_SIZING_STROKE  6
+#define NS_STYLE_CLIP_SHAPE_SIZING_VIEW    7
+
+// Basic Shapes
+#define NS_STYLE_BASIC_SHAPE_POLYGON       0
+//#define NS_STYLE_BASIC_SHAPE_CIRCLE      1
+//#define NS_STYLE_BASIC_SHAPE_ELLIPSE     2
+//#define NS_STYLE_BASIC_SHAPE_INSET       3
+
 // box-shadow
 #define NS_STYLE_BOX_SHADOW_INSET         0
 
@@ -474,6 +490,12 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 #define NS_STYLE_FLOAT_LEFT                     1
 #define NS_STYLE_FLOAT_RIGHT                    2
 
+// See nsStyleClipPath
+#define NS_STYLE_CLIP_PATH_NONE                 0
+#define NS_STYLE_CLIP_PATH_URL                  1
+#define NS_STYLE_CLIP_PATH_SHAPE                2
+#define NS_STYLE_CLIP_PATH_BOX                  3
+
 // See nsStyleFilter
 #define NS_STYLE_FILTER_NONE                    0
 #define NS_STYLE_FILTER_URL                     1
@@ -685,6 +707,13 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 #define NS_STYLE_IMAGE_ORIENTATION_FLIP         0
 #define NS_STYLE_IMAGE_ORIENTATION_FROM_IMAGE   1
 
+// See nsStylePosition.mObjectFit
+#define NS_STYLE_OBJECT_FIT_FILL                0
+#define NS_STYLE_OBJECT_FIT_CONTAIN             1
+#define NS_STYLE_OBJECT_FIT_COVER               2
+#define NS_STYLE_OBJECT_FIT_NONE                3
+#define NS_STYLE_OBJECT_FIT_SCALE_DOWN          4
+
 // See nsStyleDisplay
 #define NS_STYLE_RESIZE_NONE                    0
 #define NS_STYLE_RESIZE_BOTH                    1
@@ -808,9 +837,11 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 #define NS_STYLE_TEXT_SIZE_ADJUST_AUTO          1
 
 // See nsStyleText
-#define NS_STYLE_TEXT_ORIENTATION_AUTO          0
-#define NS_STYLE_TEXT_ORIENTATION_UPRIGHT       1
-#define NS_STYLE_TEXT_ORIENTATION_SIDEWAYS      2
+#define NS_STYLE_TEXT_ORIENTATION_MIXED          0
+#define NS_STYLE_TEXT_ORIENTATION_UPRIGHT        1
+#define NS_STYLE_TEXT_ORIENTATION_SIDEWAYS_RIGHT 2
+#define NS_STYLE_TEXT_ORIENTATION_SIDEWAYS_LEFT  3 /* placeholder, not yet parsed */
+#define NS_STYLE_TEXT_ORIENTATION_SIDEWAYS       4 /* placeholder, not yet parsed */
 
 // See nsStyleText
 #define NS_STYLE_TEXT_COMBINE_UPRIGHT_NONE        0

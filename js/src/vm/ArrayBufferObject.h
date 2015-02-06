@@ -22,7 +22,8 @@ class ArrayBufferViewObject;
 // is as follows.
 //
 // - JSObject
-//   - ArrayBufferObject
+//   - ArrayBufferObjectMaybeShared
+//     - ArrayBufferObject
 //     - SharedArrayBufferObject
 //   - ArrayBufferViewObject
 //     - DataViewObject
@@ -32,11 +33,47 @@ class ArrayBufferViewObject;
 //         - Uint8ArrayObject
 //         - ...
 //     - TypedObject (declared in builtin/TypedObject.h)
+//   - SharedTypedArrayObject (declared in vm/SharedTypedArrayObject.h)
+//     - SharedTypedArrayObjectTemplate
+//       - SharedInt8ArrayObject
+//       - SharedUint8ArrayObject
+//       - ...
 //
 // Note that |TypedArrayObjectTemplate| is just an implementation
 // detail that makes implementing its various subclasses easier.
+// Note that |TypedArrayObjectTemplate| and |SharedTypedArrayObjectTemplate| are
+// just implementation details that make implementing their various subclasses easier.
+//
+// ArrayBufferObject and SharedArrayBufferObject are unrelated data types:
+// the racy memory of the latter cannot substitute for the non-racy memory of
+// the former; the non-racy memory of the former cannot be used with the atomics;
+// the former can be neutered and the latter not; and they have different
+// method suites.  Hence they have been separated completely.
+//
+// Most APIs will only accept ArrayBufferObject.  ArrayBufferObjectMaybeShared exists
+// as a join point to allow APIs that can take or use either, notably AsmJS.
+//
+// As ArrayBufferObject and SharedArrayBufferObject are separated, so are the
+// TypedArray hierarchies below the two.  However, the TypedArrays have the
+// same layout (see TypedArrayObject.h), so there is little code duplication.
 
-typedef Vector<ArrayBufferObject *, 0, SystemAllocPolicy> ArrayBufferVector;
+class ArrayBufferObjectMaybeShared;
+
+uint32_t AnyArrayBufferByteLength(const ArrayBufferObjectMaybeShared *buf);
+uint8_t *AnyArrayBufferDataPointer(const ArrayBufferObjectMaybeShared *buf);
+ArrayBufferObjectMaybeShared &AsAnyArrayBuffer(HandleValue val);
+
+class ArrayBufferObjectMaybeShared : public NativeObject
+{
+  public:
+    uint32_t byteLength() {
+        return AnyArrayBufferByteLength(this);
+    }
+
+    uint8_t *dataPointer() {
+        return AnyArrayBufferDataPointer(this);
+    }
+};
 
 /*
  * ArrayBufferObject
@@ -46,8 +83,11 @@ typedef Vector<ArrayBufferObject *, 0, SystemAllocPolicy> ArrayBufferVector;
  * access. It can be created explicitly and passed to an ArrayBufferViewObject
  * subclass, or can be created implicitly by constructing a TypedArrayObject
  * with a size.
+ *
+ * ArrayBufferObject (or really the underlying memory) /is not racy/: the
+ * memory is private to a single worker.
  */
-class ArrayBufferObject : public JSObject
+class ArrayBufferObject : public ArrayBufferObjectMaybeShared
 {
     static bool byteLengthGetterImpl(JSContext *cx, CallArgs args);
     static bool fun_slice_impl(JSContext *cx, CallArgs args);
@@ -55,7 +95,7 @@ class ArrayBufferObject : public JSObject
   public:
     static const uint8_t DATA_SLOT = 0;
     static const uint8_t BYTE_LENGTH_SLOT = 1;
-    static const uint8_t VIEW_LIST_SLOT = 2;
+    static const uint8_t FIRST_VIEW_SLOT = 2;
     static const uint8_t FLAGS_SLOT = 3;
 
     static const uint8_t RESERVED_SLOTS = 4;
@@ -67,9 +107,8 @@ class ArrayBufferObject : public JSObject
     enum BufferKind {
         PLAIN_BUFFER        =   0, // malloced or inline data
         ASMJS_BUFFER        = 0x1,
-        SHARED_BUFFER       = 0x2,
-        MAPPED_BUFFER       = 0x4,
-        KIND_MASK           = ASMJS_BUFFER | SHARED_BUFFER | MAPPED_BUFFER
+        MAPPED_BUFFER       = 0x2,
+        KIND_MASK           = ASMJS_BUFFER | MAPPED_BUFFER
     };
 
   protected:
@@ -78,16 +117,13 @@ class ArrayBufferObject : public JSObject
         // The flags also store the BufferKind
         BUFFER_KIND_MASK    = BufferKind::KIND_MASK,
 
-        NEUTERED_BUFFER     = 0x8,
-
-        // In the gcLiveArrayBuffers list.
-        IN_LIVE_LIST        =  0x10,
+        NEUTERED_BUFFER     = 0x4,
 
         // The dataPointer() is owned by this buffer and should be released
         // when no longer in use. Releasing the pointer may be done by either
         // freeing or unmapping it, and how to do this is determined by the
         // buffer's other flags.
-        OWNS_DATA           =  0x20,
+        OWNS_DATA           = 0x8,
     };
 
   public:
@@ -156,17 +192,11 @@ class ArrayBufferObject : public JSObject
     template<typename T>
     static bool createTypedArrayFromBuffer(JSContext *cx, unsigned argc, Value *vp);
 
-    static void obj_trace(JSTracer *trc, JSObject *obj);
+    static void objectMoved(JSObject *obj, const JSObject *old);
 
-    static void sweep(JSCompartment *rt);
-
-    static void fixupDataPointerAfterMovingGC(const ArrayBufferObject &src, ArrayBufferObject &dst);
-
-    static void resetArrayBufferList(JSCompartment *rt);
-    static bool saveArrayBufferList(JSCompartment *c, ArrayBufferVector &vector);
-    static void restoreArrayBufferLists(ArrayBufferVector &vector);
-
-    static BufferContents stealContents(JSContext *cx, Handle<ArrayBufferObject*> buffer);
+    static BufferContents stealContents(JSContext *cx,
+                                        Handle<ArrayBufferObject*> buffer,
+                                        bool hasStealableContents);
 
     bool hasStealableContents() const {
         // Inline elements strictly adhere to the corresponding buffer.
@@ -189,7 +219,14 @@ class ArrayBufferObject : public JSObject
     static void addSizeOfExcludingThis(JSObject *obj, mozilla::MallocSizeOf mallocSizeOf,
                                        JS::ClassInfo *info);
 
-    void addView(ArrayBufferViewObject *view);
+    // ArrayBufferObjects (strongly) store the first view added to them, while
+    // later views are (weakly) stored in the compartment's InnerViewTable
+    // below. Buffers typically have at least one view, so this slot optimizes
+    // for the common case. Avoid entries in the InnerViewTable saves memory
+    // and non-incrementalized sweep time.
+    ArrayBufferViewObject *firstView();
+
+    bool addView(JSContext *cx, JSObject *view);
 
     void setNewOwnedData(FreeOp* fop, BufferContents newContents);
     void changeContents(JSContext *cx, BufferContents newContents);
@@ -205,10 +242,23 @@ class ArrayBufferObject : public JSObject
     /* Neuter this buffer and all its views. */
     static void neuter(JSContext *cx, Handle<ArrayBufferObject*> buffer, BufferContents newContents);
 
+  private:
+    void neuterView(JSContext *cx, ArrayBufferViewObject *view,
+                    BufferContents newContents);
+    void changeViewContents(JSContext *cx, ArrayBufferViewObject *view,
+                            uint8_t *oldDataPointer, BufferContents newContents);
+    void setFirstView(ArrayBufferViewObject *view);
+
+    uint8_t *inlineDataPointer() const;
+
+  public:
     uint8_t *dataPointer() const;
     size_t byteLength() const;
     BufferContents contents() const {
         return BufferContents(dataPointer(), bufferKind());
+    }
+    bool hasInlineData() const {
+        return dataPointer() == inlineDataPointer();
     }
 
     void releaseData(FreeOp *fop);
@@ -223,7 +273,6 @@ class ArrayBufferObject : public JSObject
 
     BufferKind bufferKind() const { return BufferKind(flags() & BUFFER_KIND_MASK); }
     bool isAsmJSArrayBuffer() const { return flags() & ASMJS_BUFFER; }
-    bool isSharedArrayBuffer() const { return flags() & SHARED_BUFFER; }
     bool isMappedArrayBuffer() const { return flags() & MAPPED_BUFFER; }
     bool isNeutered() const { return flags() & NEUTERED_BUFFER; }
 
@@ -236,8 +285,11 @@ class ArrayBufferObject : public JSObject
 
     static BufferContents createMappedContents(int fd, size_t offset, size_t length);
 
-    static size_t flagsOffset() {
+    static size_t offsetOfFlagsSlot() {
         return getFixedSlotOffset(FLAGS_SLOT);
+    }
+    static size_t offsetOfDataSlot() {
+        return getFixedSlotOffset(DATA_SLOT);
     }
 
     static uint32_t neuteredFlag() { return NEUTERED_BUFFER; }
@@ -251,17 +303,8 @@ class ArrayBufferObject : public JSObject
     void setDataPointer(BufferContents contents, OwnsState ownsState);
     void setByteLength(size_t length);
 
-    ArrayBufferViewObject *viewList() const;
-    void setViewList(ArrayBufferViewObject *viewsHead);
-    void setViewListNoBarrier(ArrayBufferViewObject *viewsHead);
-
     uint32_t flags() const;
     void setFlags(uint32_t flags);
-
-    bool inLiveList() const { return flags() & IN_LIVE_LIST; }
-    void setInLiveList(bool value) {
-        setFlags(value ? (flags() | IN_LIVE_LIST) : (flags() & ~IN_LIVE_LIST));
-    }
 
     bool ownsData() const { return flags() & OWNS_DATA; }
     void setOwnsData(OwnsState owns) {
@@ -269,14 +312,13 @@ class ArrayBufferObject : public JSObject
     }
 
     void setIsAsmJSArrayBuffer() { setFlags(flags() | ASMJS_BUFFER); }
-    void setIsSharedArrayBuffer() { setFlags(flags() | SHARED_BUFFER); }
     void setIsMappedArrayBuffer() { setFlags(flags() | MAPPED_BUFFER); }
     void setIsNeutered() { setFlags(flags() | NEUTERED_BUFFER); }
 
     void initialize(size_t byteLength, BufferContents contents, OwnsState ownsState) {
         setByteLength(byteLength);
         setFlags(0);
-        setViewListNoBarrier(nullptr);
+        setFirstView(nullptr);
         setDataPointer(contents, ownsState);
     }
 
@@ -288,40 +330,19 @@ class ArrayBufferObject : public JSObject
 /*
  * ArrayBufferViewObject
  *
- * Common definitions shared by all ArrayBufferViews.
+ * Common definitions shared by all array buffer views.
  */
 
 class ArrayBufferViewObject : public JSObject
 {
-  protected:
-    /* Offset of view in underlying ArrayBufferObject */
-    static const size_t BYTEOFFSET_SLOT  = JS_BUFVIEW_SLOT_BYTEOFFSET;
-
-    /* Byte length of view */
-    static const size_t LENGTH_SLOT      = JS_BUFVIEW_SLOT_LENGTH;
-
-    /* Underlying ArrayBufferObject */
-    static const size_t BUFFER_SLOT      = JS_BUFVIEW_SLOT_OWNER;
-
-    /* ArrayBufferObjects point to a linked list of views, chained through this slot */
-    static const size_t NEXT_VIEW_SLOT   = JS_BUFVIEW_SLOT_NEXT_VIEW;
-
   public:
     static ArrayBufferObject *bufferObject(JSContext *cx, Handle<ArrayBufferViewObject *> obj);
 
-    ArrayBufferViewObject *nextView() const {
-        return static_cast<ArrayBufferViewObject*>(getFixedSlot(NEXT_VIEW_SLOT).toPrivate());
-    }
-
-    inline void setNextView(ArrayBufferViewObject *view);
-
     void neuter(void *newData);
 
-    static void trace(JSTracer *trc, JSObject *obj);
+    uint8_t *dataPointer();
 
-    uint8_t *dataPointer() {
-        return static_cast<uint8_t *>(getPrivate());
-    }
+    static void trace(JSTracer *trc, JSObject *obj);
 };
 
 bool
@@ -331,7 +352,7 @@ inline void
 PostBarrierTypedArrayObject(JSObject *obj)
 {
 #ifdef JSGC_GENERATIONAL
-    JS_ASSERT(obj);
+    MOZ_ASSERT(obj);
     JSRuntime *rt = obj->runtimeFromMainThread();
     if (!rt->isHeapBusy() && !IsInsideNursery(JS::AsCell(obj)))
         rt->gc.storeBuffer.putWholeCellFromMainThread(obj);
@@ -339,35 +360,27 @@ PostBarrierTypedArrayObject(JSObject *obj)
 }
 
 inline void
-InitArrayBufferViewDataPointer(ArrayBufferViewObject *obj, ArrayBufferObject *buffer, size_t byteOffset)
+InitArrayBufferViewDataPointer(JSObject *obj, ArrayBufferObject *buffer, size_t byteOffset)
 {
     /*
      * N.B. The base of the array's data is stored in the object's
-     * private data rather than a slot to avoid alignment restrictions
-     * on private Values.
+     * private data rather than a slot to avoid the restriction that
+     * private Values that are pointers must have the low bits clear.
      */
     MOZ_ASSERT(buffer->dataPointer() != nullptr);
-    obj->initPrivate(buffer->dataPointer() + byteOffset);
+    obj->as<NativeObject>().initPrivate(buffer->dataPointer() + byteOffset);
 
     PostBarrierTypedArrayObject(obj);
 }
 
 /*
- * Tests for either ArrayBufferObject or SharedArrayBufferObject.
- * For specific class testing, use e.g., obj->is<ArrayBufferObject>().
+ * Tests for ArrayBufferObject, like obj->is<ArrayBufferObject>().
  */
 bool IsArrayBuffer(HandleValue v);
 bool IsArrayBuffer(HandleObject obj);
 bool IsArrayBuffer(JSObject *obj);
 ArrayBufferObject &AsArrayBuffer(HandleObject obj);
 ArrayBufferObject &AsArrayBuffer(JSObject *obj);
-
-inline void
-ArrayBufferViewObject::setNextView(ArrayBufferViewObject *view)
-{
-    setFixedSlot(NEXT_VIEW_SLOT, PrivateValue(view));
-    PostBarrierTypedArrayObject(this);
-}
 
 extern uint32_t JS_FASTCALL
 ClampDoubleToUint8(const double x);
@@ -455,6 +468,60 @@ template<> inline bool TypeIsUnsigned<uint8_t>() { return true; }
 template<> inline bool TypeIsUnsigned<uint16_t>() { return true; }
 template<> inline bool TypeIsUnsigned<uint32_t>() { return true; }
 
+// Per-compartment table that manages the relationship between array buffers
+// and the views that use their storage.
+class InnerViewTable
+{
+  public:
+    typedef Vector<ArrayBufferViewObject *, 1, SystemAllocPolicy> ViewVector;
+
+    friend class ArrayBufferObject;
+
+  private:
+    typedef HashMap<JSObject *,
+                    ViewVector,
+                    DefaultHasher<JSObject *>,
+                    SystemAllocPolicy> Map;
+
+    // For all objects sharing their storage with some other view, this maps
+    // the object to the list of such views. All entries in this map are weak.
+    Map map;
+
+    // List of keys from innerViews where either the source or at least one
+    // target is in the nursery.
+    Vector<JSObject *, 0, SystemAllocPolicy> nurseryKeys;
+
+    // Whether nurseryKeys is a complete list.
+    bool nurseryKeysValid;
+
+    // Sweep an entry during GC, returning whether the entry should be removed.
+    bool sweepEntry(JSObject **pkey, ViewVector &views);
+
+    bool addView(JSContext *cx, ArrayBufferObject *obj, ArrayBufferViewObject *view);
+    ViewVector *maybeViewsUnbarriered(ArrayBufferObject *obj);
+    void removeViews(ArrayBufferObject *obj);
+
+  public:
+    InnerViewTable()
+      : nurseryKeysValid(true)
+    {}
+
+    // Remove references to dead objects in the table and update table entries
+    // to reflect moved objects.
+    void sweep(JSRuntime *rt);
+    void sweepAfterMinorGC(JSRuntime *rt);
+
+    bool needsSweepAfterMinorGC() {
+        return !nurseryKeys.empty() || !nurseryKeysValid;
+    }
+
+    size_t sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf);
+};
+
 } // namespace js
+
+template <>
+bool
+JSObject::is<js::ArrayBufferViewObject>() const;
 
 #endif // vm_ArrayBufferObject_h

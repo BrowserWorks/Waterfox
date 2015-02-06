@@ -500,7 +500,7 @@ nsXULElement::GetElementsByAttributeNS(const nsAString& aNamespaceURI,
 EventListenerManager*
 nsXULElement::GetEventListenerManagerForAttr(nsIAtom* aAttrName, bool* aDefer)
 {
-    // XXXbz sXBL/XBL2 issue: should we instead use GetCurrentDoc()
+    // XXXbz sXBL/XBL2 issue: should we instead use GetComposedDoc()
     // here, override BindToTree for those classes and munge event
     // listeners there?
     nsIDocument* doc = OwnerDoc();
@@ -637,8 +637,10 @@ nsXULElement::PerformAccesskey(bool aKeyCausesActivation,
         nsAutoString control;
         GetAttr(kNameSpaceID_None, nsGkAtoms::control, control);
         if (!control.IsEmpty()) {
+            //XXXsmaug Should we use ShadowRoot::GetElementById in case
+            //         content is in Shadow DOM?
             nsCOMPtr<nsIDOMDocument> domDocument =
-                do_QueryInterface(content->GetCurrentDoc());
+                do_QueryInterface(content->GetUncomposedDoc());
             if (domDocument)
                 domDocument->GetElementById(control, getter_AddRefs(element));
         }
@@ -839,9 +841,10 @@ nsXULElement::BindToTree(nsIDocument* aDocument,
                                             aCompileEventHandlers);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (aDocument &&
-      !aDocument->LoadsFullXULStyleSheetUpFront() &&
-      !aDocument->IsUnstyledDocument()) {
+  nsIDocument* doc = GetComposedDoc();
+  if (doc &&
+      !doc->LoadsFullXULStyleSheetUpFront() &&
+      !doc->IsUnstyledDocument()) {
 
     // To save CPU cycles and memory, non-XUL documents only load the user
     // agent style sheet rules for a minimal set of XUL elements such as
@@ -854,7 +857,7 @@ nsXULElement::BindToTree(nsIDocument* aDocument,
     // can be moved from the document that creates them to another document.
 
     if (!XULElementsRulesInMinimalXULSheet(Tag())) {
-      aDocument->EnsureOnDemandBuiltInUASheet(nsLayoutStylesheetCache::XULSheet());
+      doc->EnsureOnDemandBuiltInUASheet(nsLayoutStylesheetCache::XULSheet());
       // To keep memory usage down it is important that we try and avoid
       // pulling xul.css into non-XUL documents. That should be very rare, and
       // for HTML we currently should only pull it in if the document contains
@@ -1002,7 +1005,7 @@ nsXULElement::RemoveChildAt(uint32_t aIndex, bool aNotify)
     }
 
     nsIDocument* doc;
-    if (fireSelectionHandler && (doc = GetCurrentDoc())) {
+    if (fireSelectionHandler && (doc = GetComposedDoc())) {
       nsContentUtils::DispatchTrustedEvent(doc,
                                            static_cast<nsIContent*>(this),
                                            NS_LITERAL_STRING("select"),
@@ -1016,7 +1019,7 @@ nsXULElement::UnregisterAccessKey(const nsAString& aOldValue)
 {
     // If someone changes the accesskey, unregister the old one
     //
-    nsIDocument* doc = GetCurrentDoc();
+    nsIDocument* doc = GetComposedDoc();
     if (doc && !aOldValue.IsEmpty()) {
         nsIPresShell *shell = doc->GetShell();
 
@@ -1097,7 +1100,7 @@ nsXULElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                 }
             }
     
-            nsIDocument *document = GetCurrentDoc();
+            nsIDocument* document = GetUncomposedDoc();
 
             // Hide chrome if needed
             if (mNodeInfo->Equals(nsGkAtoms::window)) {
@@ -1155,7 +1158,11 @@ nsXULElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                     nsCOMPtr<nsIXULDocument> xuldoc = do_QueryInterface(document);
                     if (xuldoc) {
                         xuldoc->ResetDocumentLWTheme();
+                        UpdateBrightTitlebarForeground(document);
                     }
+                }
+                else if (aName == nsGkAtoms::brighttitlebarforeground) {
+                    UpdateBrightTitlebarForeground(document);
                 }
             }
     
@@ -1172,7 +1179,7 @@ nsXULElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                 }
             }
     
-            nsIDocument* doc = GetCurrentDoc();
+            nsIDocument* doc = GetUncomposedDoc();
             if (doc && doc->GetRootElement() == this) {
                 if ((aName == nsGkAtoms::activetitlebarcolor ||
                      aName == nsGkAtoms::inactivetitlebarcolor)) {
@@ -1192,7 +1199,11 @@ nsXULElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                     nsCOMPtr<nsIXULDocument> xuldoc = do_QueryInterface(doc);
                     if (xuldoc) {
                         xuldoc->ResetDocumentLWTheme();
+                        UpdateBrightTitlebarForeground(doc);
                     }
+                }
+                else if (aName == nsGkAtoms::brighttitlebarforeground) {
+                    UpdateBrightTitlebarForeground(doc);
                 }
                 else if (aName == nsGkAtoms::drawintitlebar) {
                     SetDrawsInTitlebar(false);
@@ -1308,7 +1319,7 @@ nsXULElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
             aVisitor.mAutomaticChromeDispatch = false;
 
             // XXX sXBL/XBL2 issue! Owner or current document?
-            nsCOMPtr<nsIDOMDocument> domDoc(do_QueryInterface(GetCurrentDoc()));
+            nsCOMPtr<nsIDOMDocument> domDoc(do_QueryInterface(GetUncomposedDoc()));
             NS_ENSURE_STATE(domDoc);
             nsCOMPtr<nsIDOMElement> commandElt;
             domDoc->GetElementById(command, getter_AddRefs(commandElt));
@@ -1412,7 +1423,7 @@ already_AddRefed<nsIXULTemplateBuilder>
 nsXULElement::GetBuilder()
 {
     // XXX sXBL/XBL2 issue! Owner or current document?
-    nsCOMPtr<nsIXULDocument> xuldoc = do_QueryInterface(GetCurrentDoc());
+    nsCOMPtr<nsIXULDocument> xuldoc = do_QueryInterface(GetUncomposedDoc());
     if (!xuldoc) {
         return nullptr;
     }
@@ -1702,7 +1713,7 @@ nsXULElement::Blur(ErrorResult& rv)
     if (!ShouldBlur(this))
       return;
 
-    nsIDocument* doc = GetCurrentDoc();
+    nsIDocument* doc = GetComposedDoc();
     if (!doc)
       return;
 
@@ -1731,7 +1742,7 @@ nsXULElement::ClickWithInputSource(uint16_t aInputSource)
     if (BoolAttrIsTrue(nsGkAtoms::disabled))
         return NS_OK;
 
-    nsCOMPtr<nsIDocument> doc = GetCurrentDoc(); // Strong just in case
+    nsCOMPtr<nsIDocument> doc = GetComposedDoc(); // Strong just in case
     if (doc) {
         nsCOMPtr<nsIPresShell> shell = doc->GetShell();
         if (shell) {
@@ -1773,7 +1784,7 @@ nsXULElement::ClickWithInputSource(uint16_t aInputSource)
 NS_IMETHODIMP
 nsXULElement::DoCommand()
 {
-    nsCOMPtr<nsIDocument> doc = GetCurrentDoc(); // strong just in case
+    nsCOMPtr<nsIDocument> doc = GetComposedDoc(); // strong just in case
     if (doc) {
         nsContentUtils::DispatchXULCommand(this, true);
     }
@@ -1885,7 +1896,7 @@ nsXULElement::MakeHeavyweight(nsXULPrototypeElement* aPrototype)
 nsresult
 nsXULElement::HideWindowChrome(bool aShouldHide)
 {
-    nsIDocument* doc = GetCurrentDoc();
+    nsIDocument* doc = GetUncomposedDoc();
     if (!doc || doc->GetRootElement() != this)
       return NS_ERROR_UNEXPECTED;
 
@@ -1917,7 +1928,7 @@ nsXULElement::HideWindowChrome(bool aShouldHide)
 nsIWidget*
 nsXULElement::GetWindowWidget()
 {
-    nsIDocument* doc = GetCurrentDoc();
+    nsIDocument* doc = GetComposedDoc();
 
     // only top level chrome documents can set the titlebar color
     if (doc && doc->IsRootDisplayDocument()) {
@@ -1978,6 +1989,22 @@ nsXULElement::SetDrawsTitle(bool aState)
         // We can do this synchronously because SetDrawsTitle doesn't have any
         // synchronous effects apart from a harmless invalidation.
         mainWidget->SetDrawsTitle(aState);
+    }
+}
+
+void
+nsXULElement::UpdateBrightTitlebarForeground(nsIDocument* aDoc)
+{
+    nsIWidget* mainWidget = GetWindowWidget();
+    if (mainWidget) {
+        // We can do this synchronously because SetBrightTitlebarForeground doesn't have any
+        // synchronous effects apart from a harmless invalidation.
+        mainWidget->SetUseBrightTitlebarForeground(
+          aDoc->GetDocumentLWTheme() == nsIDocument::Doc_Theme_Bright ||
+          aDoc->GetRootElement()->AttrValueIs(kNameSpaceID_None,
+                                              nsGkAtoms::brighttitlebarforeground,
+                                              NS_LITERAL_STRING("true"),
+                                              eCaseMatters));
     }
 }
 

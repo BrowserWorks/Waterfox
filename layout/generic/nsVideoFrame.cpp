@@ -57,7 +57,7 @@ NS_QUERYFRAME_TAIL_INHERITING(nsContainerFrame)
 nsresult
 nsVideoFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
 {
-  nsNodeInfoManager *nodeInfoManager = GetContent()->GetCurrentDoc()->NodeInfoManager();
+  nsNodeInfoManager *nodeInfoManager = GetContent()->GetComposedDoc()->NodeInfoManager();
   nsRefPtr<NodeInfo> nodeInfo;
   Element *element;
 
@@ -174,7 +174,7 @@ nsVideoFrame::BuildLayer(nsDisplayListBuilder* aBuilder,
                          nsDisplayItem* aItem,
                          const ContainerLayerParameters& aContainerParameters)
 {
-  nsRect area = GetContentRect() - GetPosition() + aItem->ToReferenceFrame();
+  nsRect area = GetContentRectRelativeToSelf() + aItem->ToReferenceFrame();
   HTMLVideoElement* element = static_cast<HTMLVideoElement*>(GetContent());
   nsIntSize videoSize;
   if (NS_FAILED(element->GetVideoSize(&videoSize)) || area.IsEmpty()) {
@@ -220,14 +220,11 @@ nsVideoFrame::BuildLayer(nsDisplayListBuilder* aBuilder,
 
   layer->SetContainer(container);
   layer->SetFilter(nsLayoutUtils::GetGraphicsFilterForFrame(this));
-#ifdef MOZ_B2G
-  layer->SetContentFlags(Layer::CONTENT_OPAQUE);
-#endif
   // Set a transform on the layer to draw the video in the right place
-  gfx::Matrix transform;
   gfxPoint p = r.TopLeft() + aContainerParameters.mOffset;
-  transform.Translate(p.x, p.y);
-  transform.Scale(r.Width()/frameSize.width, r.Height()/frameSize.height);
+  Matrix transform = Matrix::Translation(p.x, p.y);
+  transform.PreScale(r.Width() / frameSize.width,
+                     r.Height() / frameSize.height);
   layer->SetBaseTransform(gfx::Matrix4x4::From2D(transform));
   nsRefPtr<Layer> result = layer.forget();
   return result.forget();
@@ -395,7 +392,7 @@ public:
   {
     *aSnap = true;
     nsIFrame* f = Frame();
-    return f->GetContentRect() - f->GetPosition() + ToReferenceFrame();
+    return f->GetContentRectRelativeToSelf() + ToReferenceFrame();
   }
 
   virtual already_AddRefed<Layer> BuildLayer(nsDisplayListBuilder* aBuilder,

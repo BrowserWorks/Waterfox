@@ -81,9 +81,12 @@ public class SuggestedSites {
     private static final String[] COLUMNS = new String[] {
         BrowserContract.SuggestedSites._ID,
         BrowserContract.SuggestedSites.URL,
-        BrowserContract.SuggestedSites.TITLE
+        BrowserContract.SuggestedSites.TITLE,
     };
 
+    public static final int TRACKING_ID_NONE = -1;
+
+    private static final String JSON_KEY_TRACKING_ID = "trackingid";
     private static final String JSON_KEY_URL = "url";
     private static final String JSON_KEY_TITLE = "title";
     private static final String JSON_KEY_IMAGE_URL = "imageurl";
@@ -94,8 +97,10 @@ public class SuggestedSites {
         public final String title;
         public final String imageUrl;
         public final String bgColor;
+        public final int trackingId;
 
         public Site(JSONObject json) throws JSONException {
+            this.trackingId = json.isNull(JSON_KEY_TRACKING_ID) ? TRACKING_ID_NONE : json.getInt(JSON_KEY_TRACKING_ID);
             this.url = json.getString(JSON_KEY_URL);
             this.title = json.getString(JSON_KEY_TITLE);
             this.imageUrl = json.getString(JSON_KEY_IMAGE_URL);
@@ -104,7 +109,8 @@ public class SuggestedSites {
             validate();
         }
 
-        public Site(String url, String title, String imageUrl, String bgColor) {
+        public Site(int trackingId, String url, String title, String imageUrl, String bgColor) {
+            this.trackingId = trackingId;
             this.url = url;
             this.title = title;
             this.imageUrl = imageUrl;
@@ -114,7 +120,7 @@ public class SuggestedSites {
         }
 
         private void validate() {
-            // Site instances must have non-empty values for all properties.
+            // Site instances must have non-empty values for all properties except IDs.
             if (TextUtils.isEmpty(url) ||
                 TextUtils.isEmpty(title) ||
                 TextUtils.isEmpty(imageUrl) ||
@@ -126,7 +132,8 @@ public class SuggestedSites {
 
         @Override
         public String toString() {
-            return "{ url = " + url + "\n" +
+            return "{ trackingId = " + trackingId + "\n" +
+                     "url = " + url + "\n" +
                      "title = " + title + "\n" +
                      "imageUrl = " + imageUrl + "\n" +
                      "bgColor = " + bgColor + " }";
@@ -134,6 +141,10 @@ public class SuggestedSites {
 
         public JSONObject toJSON() throws JSONException {
             final JSONObject json = new JSONObject();
+
+            if (trackingId >= 0) {
+                json.put(JSON_KEY_TRACKING_ID, trackingId);
+            }
 
             json.put(JSON_KEY_URL, url);
             json.put(JSON_KEY_TITLE, title);
@@ -144,9 +155,9 @@ public class SuggestedSites {
         }
     }
 
-    /* inner-access */ final Context context;
-    /* inner-access */ final Distribution distribution;
-    /* inner-access */ final File file;
+    final Context context;
+    final Distribution distribution;
+    private File cachedFile;
     private Map<String, Site> cachedSites;
     private Set<String> cachedBlacklist;
 
@@ -155,14 +166,20 @@ public class SuggestedSites {
     }
 
     public SuggestedSites(Context appContext, Distribution distribution) {
-        this(appContext, distribution,
-             GeckoProfile.get(appContext).getFile(FILENAME));
+        this(appContext, distribution, null);
     }
 
     public SuggestedSites(Context appContext, Distribution distribution, File file) {
         this.context = appContext;
         this.distribution = distribution;
-        this.file = file;
+        this.cachedFile = file;
+    }
+
+    synchronized File getFile() {
+        if (cachedFile == null) {
+            cachedFile = GeckoProfile.get(context).getFile(FILENAME);
+        }
+        return cachedFile;
     }
 
     private static boolean isNewLocale(Context context, Locale requestedLocale) {
@@ -235,7 +252,7 @@ public class SuggestedSites {
      * Saves suggested sites file to disk. Access to this method should
      * be synchronized on 'file'.
      */
-    /* inner-access */ static void saveSites(File f, Map<String, Site> sites) {
+    static void saveSites(File f, Map<String, Site> sites) {
         ThreadUtils.assertNotOnUiThread();
 
         if (sites == null || sites.isEmpty()) {
@@ -295,6 +312,7 @@ public class SuggestedSites {
                 setCachedSites(sites);
 
                 // Save the result to disk.
+                final File file = getFile();
                 synchronized (file) {
                     saveSites(file, sites);
                 }
@@ -313,7 +331,7 @@ public class SuggestedSites {
      * It's assumed that the given distribution instance is ready to be
      * used and exists.
      */
-    /* inner-access */ static Map<String, Site> loadFromDistribution(Distribution dist) {
+    static Map<String, Site> loadFromDistribution(Distribution dist) {
         for (Locale locale : getAcceptableLocales()) {
             try {
                 final String languageTag = BrowserLocaleManager.getLanguageTag(locale);
@@ -338,6 +356,7 @@ public class SuggestedSites {
 
     private Map<String, Site> loadFromProfile() {
         try {
+            final File file = getFile();
             synchronized (file) {
                 return loadSites(file);
             }
@@ -350,7 +369,7 @@ public class SuggestedSites {
         return null;
     }
 
-    /* inner-access */ Map<String, Site> loadFromResource() {
+    Map<String, Site> loadFromResource() {
         try {
             return loadSites(RawResource.getAsString(context, R.raw.suggestedsites));
         } catch (IOException e) {
@@ -385,7 +404,7 @@ public class SuggestedSites {
     private static void updateSuggestedSitesLocale(Context context) {
         final Editor editor = GeckoSharedPrefs.forProfile(context).edit();
         editor.putString(PREF_SUGGESTED_SITES_LOCALE, Locale.getDefault().toString());
-        editor.commit();
+        editor.apply();
     }
 
     private boolean isEnabled() {
@@ -451,7 +470,7 @@ public class SuggestedSites {
         // Force the suggested sites file in profile dir to be re-generated
         // if the locale has changed.
         if (isNewLocale) {
-            file.delete();
+            getFile().delete();
         }
 
         if (cachedSites == null || isNewLocale) {
@@ -504,6 +523,11 @@ public class SuggestedSites {
     public String getBackgroundColorForUrl(String url) {
         final Site site = getSiteForUrl(url);
         return (site != null ? site.bgColor : null);
+    }
+
+    public int getTrackingIdForUrl(String url) {
+        final Site site = getSiteForUrl(url);
+        return (site != null ? site.trackingId : TRACKING_ID_NONE);
     }
 
     private Set<String> loadBlacklist() {
@@ -582,6 +606,6 @@ public class SuggestedSites {
         final SharedPreferences prefs = GeckoSharedPrefs.forProfile(context);
         final String prefString = prefs.getString(PREF_SUGGESTED_SITES_HIDDEN, "");
         final String siteString = prefString.concat(" " + Uri.encode(url));
-        prefs.edit().putString(PREF_SUGGESTED_SITES_HIDDEN, siteString).commit();
+        prefs.edit().putString(PREF_SUGGESTED_SITES_HIDDEN, siteString).apply();
     }
 }

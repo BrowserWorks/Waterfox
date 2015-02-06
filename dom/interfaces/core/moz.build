@@ -21,9 +21,7 @@ XPIDL_SOURCES += [
     'nsIDOMNSEditableElement.idl',
     'nsIDOMProcessingInstruction.idl',
     'nsIDOMText.idl',
-    'nsIDOMUserDataHandler.idl',
     'nsIDOMXMLDocument.idl',
-    'nsIInlineEventHandlers.idl',
 ]
 
 XPIDL_MODULE = 'dom_core'

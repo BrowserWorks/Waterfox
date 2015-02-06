@@ -61,10 +61,10 @@
 #include "nsIStreamConverterService.h"
 #include "nsISiteSecurityService.h"
 #include "nsCRT.h"
-#include "nsPIDOMWindow.h"
 #include "nsPerformance.h"
 #include "CacheObserver.h"
 #include "mozilla/Telemetry.h"
+#include "AlternateServices.h"
 
 namespace mozilla { namespace net {
 
@@ -208,6 +208,7 @@ nsHttpChannel::nsHttpChannel()
     , mOfflineCacheLastModifiedTime(0)
     , mCachedContentIsValid(false)
     , mCachedContentIsPartial(false)
+    , mCacheOnlyMetadata(false)
     , mTransactionReplaced(false)
     , mAuthRetryPending(false)
     , mProxyAuthPending(false)
@@ -277,11 +278,11 @@ nsHttpChannel::Connect()
     // data (it is read-only).
     // if the connection is not using SSL and either the exact host matches or
     // a superdomain wants to force HTTPS, do it.
-    bool usingSSL = false;
-    rv = mURI->SchemeIs("https", &usingSSL);
+    bool isHttps = false;
+    rv = mURI->SchemeIs("https", &isHttps);
     NS_ENSURE_SUCCESS(rv,rv);
 
-    if (mAllowSTS && !usingSSL) {
+    if (mAllowSTS && !isHttps) {
         // enforce Strict-Transport-Security
         nsISiteSecurityService* sss = gHttpHandler->GetSSService();
         NS_ENSURE_TRUE(sss, NS_ERROR_OUT_OF_MEMORY);
@@ -325,7 +326,7 @@ nsHttpChannel::Connect()
     }
 
     // open a cache entry for this channel...
-    rv = OpenCacheEntry(usingSSL);
+    rv = OpenCacheEntry(isHttps);
 
     // do not continue if asyncOpenCacheEntry is in progress
     if (mCacheEntriesToWaitFor) {
@@ -1042,6 +1043,66 @@ nsHttpChannel::ProcessFailedProxyConnect(uint32_t httpStatus)
 }
 
 /**
+ * Process a single security header. Only two types are suported HSTS and HPKP.
+ */
+nsresult
+nsHttpChannel::ProcessSingleSecurityHeader(uint32_t aType,
+                                           nsISSLStatus *aSSLStatus,
+                                           uint32_t aFlags)
+{
+    nsHttpAtom atom;
+    switch (aType) {
+        case nsISiteSecurityService::HEADER_HSTS:
+            atom = nsHttp::ResolveAtom("Strict-Transport-Security");
+            break;
+        case nsISiteSecurityService::HEADER_HPKP:
+            atom = nsHttp::ResolveAtom("Public-Key-Pins");
+            break;
+        default:
+            NS_NOTREACHED("Invalid security header type");
+            return NS_ERROR_FAILURE;
+    }
+
+    nsAutoCString securityHeader;
+    nsresult rv = mResponseHead->GetHeader(atom, securityHeader);
+    if (NS_SUCCEEDED(rv)) {
+        nsISiteSecurityService* sss = gHttpHandler->GetSSService();
+        NS_ENSURE_TRUE(sss, NS_ERROR_OUT_OF_MEMORY);
+        // Process header will now discard the headers itself if the channel
+        // wasn't secure (whereas before it had to be checked manually)
+        rv = sss->ProcessHeader(aType, mURI, securityHeader.get(), aSSLStatus,
+                                aFlags, nullptr, nullptr);
+        if (NS_FAILED(rv)) {
+            nsAutoString consoleErrorCategory;
+            nsAutoString consoleErrorTag;
+            switch (aType) {
+                case nsISiteSecurityService::HEADER_HSTS:
+                    consoleErrorTag = NS_LITERAL_STRING("InvalidSTSHeaders");
+                    consoleErrorCategory = NS_LITERAL_STRING("Invalid HSTS Headers");
+                    break;
+                case nsISiteSecurityService::HEADER_HPKP:
+                    consoleErrorTag = NS_LITERAL_STRING("InvalidPKPHeaders");
+                    consoleErrorCategory = NS_LITERAL_STRING("Invalid HPKP Headers");
+                    break;
+                default:
+                    return NS_ERROR_FAILURE;
+            }
+            AddSecurityMessage(consoleErrorTag, consoleErrorCategory);
+            LOG(("nsHttpChannel: Failed to parse %s header, continuing load.\n",
+                 atom.get()));
+        }
+    } else {
+        if (rv != NS_ERROR_NOT_AVAILABLE) {
+            // All other errors are fatal
+            NS_ENSURE_SUCCESS(rv, rv);
+        }
+        LOG(("nsHttpChannel: No %s header, continuing load.\n",
+             atom.get()));
+    }
+    return NS_OK;
+}
+
+/**
  * Decide whether or not to remember Strict-Transport-Security, and whether
  * or not to enforce channel integrity.
  *
@@ -1049,15 +1110,16 @@ nsHttpChannel::ProcessFailedProxyConnect(uint32_t httpStatus)
  *             it's an HTTPS connection.
  */
 nsresult
-nsHttpChannel::ProcessSTSHeader()
+nsHttpChannel::ProcessSecurityHeaders()
 {
     nsresult rv;
     bool isHttps = false;
     rv = mURI->SchemeIs("https", &isHttps);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    // If this channel is not loading securely, STS doesn't do anything.
-    // The upgrade to HTTPS takes place earlier in the channel load process.
+    // If this channel is not loading securely, STS or PKP doesn't do anything.
+    // In the case of HSTS, the upgrade to HTTPS takes place earlier in the
+    // channel load process.
     if (!isHttps)
         return NS_OK;
 
@@ -1065,71 +1127,35 @@ nsHttpChannel::ProcessSTSHeader()
     rv = mURI->GetAsciiHost(asciiHost);
     NS_ENSURE_SUCCESS(rv, NS_OK);
 
-    // If the channel is not a hostname, but rather an IP, STS doesn't do
-    // anything.
+    // If the channel is not a hostname, but rather an IP, do not process STS
+    // or PKP headers
     PRNetAddr hostAddr;
     if (PR_SUCCESS == PR_StringToNetAddr(asciiHost.get(), &hostAddr))
         return NS_OK;
 
-    nsISiteSecurityService* sss = gHttpHandler->GetSSService();
-    NS_ENSURE_TRUE(sss, NS_ERROR_OUT_OF_MEMORY);
-
     // mSecurityInfo may not always be present, and if it's not then it is okay
-    // to just disregard any STS headers since we know nothing about the
+    // to just disregard any security headers since we know nothing about the
     // security of the connection.
     NS_ENSURE_TRUE(mSecurityInfo, NS_OK);
 
-    // Check the trustworthiness of the channel (are there any cert errors?)
-    // If there are certificate errors, we still load the data, we just ignore
-    // any STS headers that are present.
-    bool tlsIsBroken = false;
-    rv = sss->ShouldIgnoreHeaders(mSecurityInfo, &tlsIsBroken);
-    NS_ENSURE_SUCCESS(rv, NS_OK);
-
-    // If this was already an STS host, the connection should have been aborted
-    // by the bad cert handler in the case of cert errors.  If it didn't abort the connection,
-    // there's probably something funny going on.
-    // If this wasn't an STS host, errors are allowed, but no more STS processing
-    // will happen during the session.
-    bool wasAlreadySTSHost;
     uint32_t flags =
       NS_UsePrivateBrowsing(this) ? nsISocketProvider::NO_PERMANENT_STORAGE : 0;
-    rv = sss->IsSecureURI(nsISiteSecurityService::HEADER_HSTS, mURI, flags,
-                          &wasAlreadySTSHost);
-    // Failure here means STS is broken.  Don't prevent the load, but this
-    // shouldn't fail.
-    NS_ENSURE_SUCCESS(rv, NS_OK);
-    MOZ_ASSERT(!(wasAlreadySTSHost && tlsIsBroken),
-               "connection should have been aborted by nss-bad-cert-handler");
 
-    // Any STS header is ignored if the channel is not trusted due to
-    // certificate errors (STS Spec 7.1) -- there is nothing else to do, and
-    // the load may progress.
-    if (tlsIsBroken) {
-        LOG(("STS: Transport layer is not trustworthy, ignoring "
-             "STS headers and continuing load\n"));
-        return NS_OK;
-    }
+    // Get the SSLStatus
+    nsCOMPtr<nsISSLStatusProvider> sslprov = do_QueryInterface(mSecurityInfo);
+    NS_ENSURE_TRUE(sslprov, NS_ERROR_FAILURE);
+    nsCOMPtr<nsISSLStatus> sslStatus;
+    rv = sslprov->GetSSLStatus(getter_AddRefs(sslStatus));
+    NS_ENSURE_SUCCESS(rv, rv);
+    NS_ENSURE_TRUE(sslStatus, NS_ERROR_FAILURE);
 
-    // If there's a STS header, process it (STS Spec 7.1).  At this point in
-    // processing, the channel is trusted, so the header should not be ignored.
-    const nsHttpAtom atom = nsHttp::ResolveAtom("Strict-Transport-Security");
-    nsAutoCString stsHeader;
-    rv = mResponseHead->GetHeader(atom, stsHeader);
-    if (rv == NS_ERROR_NOT_AVAILABLE) {
-        LOG(("STS: No STS header, continuing load.\n"));
-        return NS_OK;
-    }
-    // All other failures are fatal.
+    rv = ProcessSingleSecurityHeader(nsISiteSecurityService::HEADER_HSTS,
+                                     sslStatus, flags);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    rv = sss->ProcessHeader(nsISiteSecurityService::HEADER_HSTS, mURI,
-                            stsHeader.get(), flags, nullptr, nullptr);
-    if (NS_FAILED(rv)) {
-        AddSecurityMessage(NS_LITERAL_STRING("InvalidSTSHeaders"),
-                NS_LITERAL_STRING("Invalid HSTS Headers"));
-        LOG(("STS: Failed to parse STS header, continuing load.\n"));
-    }
+    rv = ProcessSingleSecurityHeader(nsISiteSecurityService::HEADER_HPKP,
+                                     sslStatus, flags);
+    NS_ENSURE_SUCCESS(rv, rv);
 
     return NS_OK;
 }
@@ -1204,6 +1230,127 @@ nsHttpChannel::ProcessSSLInformation()
     }
 }
 
+void
+nsHttpChannel::ProcessAltService()
+{
+    // e.g. Alt-Svc: h2=":443"; ma=60
+    // e.g. Alt-Svc: h2="otherhost:443"
+    // Alt-Svc       = 1#( alternative *( OWS ";" OWS parameter ) )
+    // alternative   = protocol-id "=" alt-authority
+    // protocol-id   = token ; percent-encoded ALPN protocol identifier
+    // alt-authority = quoted-string ;  containing [ uri-host ] ":" port
+
+    if (!gHttpHandler->AllowAltSvc()) {
+        return;
+    }
+
+    nsAutoCString scheme;
+    mURI->GetScheme(scheme);
+    bool isHttp = scheme.Equals(NS_LITERAL_CSTRING("http"));
+    if (!isHttp && !scheme.Equals(NS_LITERAL_CSTRING("https"))) {
+        return;
+    }
+
+    if (isHttp && !gHttpHandler->AllowAltSvcOE()) {
+        return;
+    }
+
+    const char *altSvc;
+    if (!(altSvc = mResponseHead->PeekHeader(nsHttp::Alternate_Service))) {
+        return;
+    }
+
+    LOG(("nsHttpChannel %p Alt-Svc Response Header %s\n", this, altSvc));
+
+    nsCString buf(altSvc);
+    if (!nsHttp::IsReasonableHeaderValue(buf)) {
+        LOG(("Alt-Svc Response Header seems unreasonable - skipping\n"));
+        return;
+    }
+
+    ParsedHeaderValueListList parsedAltSvc(buf);
+    nsRefPtr<AltSvcMapping> mapping;
+
+    nsAutoCString originHost;
+    int32_t originPort = 80;
+    mURI->GetPort(&originPort);
+    if (NS_FAILED(mURI->GetHost(originHost))) {
+        return;
+    }
+    uint32_t now = NowInSeconds(), currentAge = 0;
+    mResponseHead->ComputeCurrentAge(now, mRequestTime, &currentAge);
+
+    for (uint32_t index = 0; index < parsedAltSvc.mValues.Length(); ++index) {
+        uint32_t maxage = 86400; // default
+        nsAutoCString hostname; // Always empty in the header form
+        nsAutoCString npnToken;
+        int32_t portno = originPort;
+
+        for (uint32_t pairIndex = 0;
+             pairIndex < parsedAltSvc.mValues[index].mValues.Length();
+             ++pairIndex) {
+            nsDependentCSubstring &currentName =
+                parsedAltSvc.mValues[index].mValues[pairIndex].mName;
+            nsDependentCSubstring &currentValue =
+                parsedAltSvc.mValues[index].mValues[pairIndex].mValue;
+
+            if (!pairIndex) {
+                // h2=:443
+                npnToken = currentName;
+                int32_t colonIndex = currentValue.FindChar(':');
+                if (colonIndex >= 0) {
+                    portno =
+                        atoi(PromiseFlatCString(currentValue).get() + colonIndex + 1);
+                } else {
+                    colonIndex = 0;
+                }
+                hostname.Assign(currentValue.BeginReading(), colonIndex);
+            } else if (currentName.Equals(NS_LITERAL_CSTRING("ma"))) {
+                maxage = atoi(PromiseFlatCString(currentValue).get());
+                break;
+            }
+        }
+
+        // unescape modifies a c string in place, so afterwards
+        // update nsCString length
+        nsUnescape(npnToken.BeginWriting());
+        npnToken.SetLength(strlen(npnToken.BeginReading()));
+
+        uint32_t spdyIndex;
+        SpdyInformation *spdyInfo = gHttpHandler->SpdyInfo();
+        if (!(NS_SUCCEEDED(spdyInfo->GetNPNIndex(npnToken, &spdyIndex)) &&
+              spdyInfo->ProtocolEnabled(spdyIndex))) {
+            LOG(("Alt Svc %p unknown protocol %s, ignoring", this, npnToken.get()));
+            continue;
+        }
+
+        mapping = new AltSvcMapping(scheme,
+                                    originHost, originPort,
+                                    mUsername, mPrivateBrowsing,
+                                    NowInSeconds() + maxage,
+                                    hostname, portno, npnToken);
+        if (!mapping) {
+            continue;
+        }
+
+        nsCOMPtr<nsIInterfaceRequestor> callbacks;
+        NS_NewNotificationCallbacksAggregation(mCallbacks, mLoadGroup,
+                                               getter_AddRefs(callbacks));
+        if (!callbacks) {
+            return;
+        }
+
+        nsCOMPtr<nsProxyInfo> proxyInfo;
+        if (mProxyInfo) {
+            proxyInfo = do_QueryInterface(mProxyInfo);
+        }
+
+        gHttpHandler->
+            UpdateAltServiceMapping(mapping, proxyInfo, callbacks,
+                                    mCaps & (NS_HTTP_ALLOW_RSA_FALSESTART | NS_HTTP_DISALLOW_SPDY));
+    }
+}
+
 nsresult
 nsHttpChannel::ProcessResponse()
 {
@@ -1229,8 +1376,9 @@ nsHttpChannel::ProcessResponse()
         // If proxy CONNECT response needs to complete, wait to process connection
         // for Strict-Transport-Security.
     } else {
-        // Given a successful connection, process any STS data that's relevant.
-        rv = ProcessSTSHeader();
+        // Given a successful connection, process any STS or PKP data that's
+        // relevant.
+        rv = ProcessSecurityHeaders();
         MOZ_ASSERT(NS_SUCCEEDED(rv), "ProcessSTSHeader failed, continuing load.");
     }
 
@@ -1241,7 +1389,15 @@ nsHttpChannel::ProcessResponse()
     // notify "http-on-examine-response" observers
     gHttpHandler->OnExamineResponse(this);
 
-    SetCookie(mResponseHead->PeekHeader(nsHttp::Set_Cookie));
+    // Cookies and Alt-Service should not be handled on proxy failure either.
+    // This would be consolidated with ProcessSecurityHeaders but it should
+    // happen after OnExamineResponse.
+    if (!mTransaction->ProxyConnectFailed() && (httpStatus != 407)) {
+        SetCookie(mResponseHead->PeekHeader(nsHttp::Set_Cookie));
+        if (httpStatus < 500) {
+            ProcessAltService();
+        }
+    }
 
     // handle unused username and password in url (see bug 232567)
     if (httpStatus != 401 && httpStatus != 407) {
@@ -2486,7 +2642,7 @@ IsSubRangeRequest(nsHttpRequestHead &aRequestHead)
 }
 
 nsresult
-nsHttpChannel::OpenCacheEntry(bool usingSSL)
+nsHttpChannel::OpenCacheEntry(bool isHttps)
 {
     MOZ_EVENT_TRACER_EXEC(this, "net::http::OpenCacheEntry");
 
@@ -2558,8 +2714,16 @@ nsHttpChannel::OpenCacheEntry(bool usingSSL)
         openURI = mURI;
     }
 
+    uint32_t appId = info->AppId();
+    bool appOffline = false;
+
+    if (appId != NECKO_NO_APP_ID) {
+        gIOService->IsAppOffline(appId, &appOffline);
+        LOG(("nsHttpChannel::OpenCacheEntry appId: %u, offline: %d\n", appId, appOffline));
+    }
+
     uint32_t cacheEntryOpenFlags;
-    bool offline = gIOService->IsOffline();
+    bool offline = gIOService->IsOffline() || appOffline;
     if (offline || (mLoadFlags & INHIBIT_CACHING)) {
         if (BYPASS_LOCAL_CACHE(mLoadFlags) && !offline) {
             goto bypassCacheEntryOpen;
@@ -2800,13 +2964,21 @@ nsHttpChannel::OnCacheEntryCheck(nsICacheEntry* entry, nsIApplicationCache* appC
             if (mCachedContentIsPartial) {
                 rv = OpenCacheInputStream(entry, false, !!appCache);
                 *aResult = ENTRY_NEEDS_REVALIDATION;
+                return rv;
+            } else if (size == 0 && mCacheOnlyMetadata) {
+                // Don't break cache entry load when the entry's data size
+                // is 0 and mCacheOnlyMetadata flag is set. In that case we
+                // want to proceed since the LOAD_ONLY_IF_MODIFIED flag is
+                // also set.
+                MOZ_ASSERT(mLoadFlags & LOAD_ONLY_IF_MODIFIED);
+            } else {
+                return rv;
             }
-            return rv;
         }
     }
 
-    bool usingSSL = false;
-    rv = mURI->SchemeIs("https", &usingSSL);
+    bool isHttps = false;
+    rv = mURI->SchemeIs("https", &isHttps);
     NS_ENSURE_SUCCESS(rv,rv);
 
     bool doValidation = false;
@@ -2845,7 +3017,7 @@ nsHttpChannel::OnCacheEntryCheck(nsICacheEntry* entry, nsIApplicationCache* appC
         // if no-store or if no-cache and ssl, validate cached response (see
         // bug 112564 for an explanation of this logic)
         if (mCachedResponseHead->NoStore() ||
-           (mCachedResponseHead->NoCache() && usingSSL)) {
+           (mCachedResponseHead->NoCache() && isHttps)) {
             LOG(("Validating based on (no-store || (no-cache && ssl)) logic\n"));
             doValidation = true;
         }
@@ -3400,11 +3572,11 @@ nsHttpChannel::OpenCacheInputStream(nsICacheEntry* cacheEntry, bool startBufferi
 {
     nsresult rv;
 
-    bool usingSSL = false;
-    rv = mURI->SchemeIs("https", &usingSSL);
+    bool isHttps = false;
+    rv = mURI->SchemeIs("https", &isHttps);
     NS_ENSURE_SUCCESS(rv,rv);
 
-    if (usingSSL) {
+    if (isHttps) {
         rv = cacheEntry->GetSecurityInfo(
                                       getter_AddRefs(mCachedSecurityInfo));
         if (NS_FAILED(rv)) {
@@ -3760,9 +3932,11 @@ nsHttpChannel::UpdateInhibitPersistentCachingFlag()
         mLoadFlags |= INHIBIT_PERSISTENT_CACHING;
 
     // Only cache SSL content on disk if the pref is set
+    bool isHttps;
     if (!gHttpHandler->IsPersistentHttpsCachingEnabled() &&
-        mConnectionInfo->EndToEndSSL())
+        NS_SUCCEEDED(mURI->SchemeIs("https", &isHttps)) && isHttps) {
         mLoadFlags |= INHIBIT_PERSISTENT_CACHING;
+    }
 }
 
 nsresult
@@ -3979,13 +4153,23 @@ nsHttpChannel::InstallCacheListener(int64_t offset)
     nsCOMPtr<nsIOutputStream> out;
     rv = mCacheEntry->OpenOutputStream(offset, getter_AddRefs(out));
     if (rv == NS_ERROR_NOT_AVAILABLE) {
-      LOG(("  entry doomed, not writing it [channel=%p]", this));
-      // Entry is already doomed.
-      // This may happen when expiration time is set to past and the entry
-      // has been removed by the background eviction logic.
-      return NS_OK;
+        LOG(("  entry doomed, not writing it [channel=%p]", this));
+        // Entry is already doomed.
+        // This may happen when expiration time is set to past and the entry
+        // has been removed by the background eviction logic.
+        return NS_OK;
     }
     if (NS_FAILED(rv)) return rv;
+
+    if (mCacheOnlyMetadata) {
+        LOG(("Not storing content, cacheOnlyMetadata set"));
+        // We must open and then close the output stream of the cache entry.
+        // This way we indicate the content has been written (despite with zero
+        // length) and the entry is now in the ready state with "having data".
+
+        out->Close();
+        return NS_OK;
+    }
 
     // XXX disk cache does not support overlapped i/o yet
 #if 0
@@ -4523,17 +4707,19 @@ nsHttpChannel::BeginConnect()
 
     // Construct connection info object
     nsAutoCString host;
+    nsAutoCString scheme;
     int32_t port = -1;
-    nsAutoCString username;
-    bool usingSSL = false;
+    bool isHttps = false;
 
-    rv = mURI->SchemeIs("https", &usingSSL);
+    rv = mURI->GetScheme(scheme);
+    if (NS_SUCCEEDED(rv))
+        rv = mURI->SchemeIs("https", &isHttps);
     if (NS_SUCCEEDED(rv))
         rv = mURI->GetAsciiHost(host);
     if (NS_SUCCEEDED(rv))
         rv = mURI->GetPort(&port);
     if (NS_SUCCEEDED(rv))
-        mURI->GetUsername(username);
+        mURI->GetUsername(mUsername);
     if (NS_SUCCEEDED(rv))
         rv = mURI->GetAsciiSpec(mSpec);
     if (NS_FAILED(rv))
@@ -4549,8 +4735,47 @@ nsHttpChannel::BeginConnect()
     if (mProxyInfo)
         proxyInfo = do_QueryInterface(mProxyInfo);
 
-    mConnectionInfo = new nsHttpConnectionInfo(host, port, username, proxyInfo, usingSSL);
-    mRequestHead.SetHTTPS(usingSSL);
+    mRequestHead.SetHTTPS(isHttps);
+    mRequestHead.SetOrigin(scheme, host, port);
+
+    nsRefPtr<AltSvcMapping> mapping;
+    if ((scheme.Equals(NS_LITERAL_CSTRING("http")) ||
+         scheme.Equals(NS_LITERAL_CSTRING("https"))) &&
+        (mapping = gHttpHandler->GetAltServiceMapping(scheme,
+                                                      host, port,
+                                                      mPrivateBrowsing))) {
+        LOG(("nsHttpChannel %p Alt Service Mapping Found %s://%s:%d\n", this,
+             scheme.get(), mapping->AlternateHost().get(),
+             mapping->AlternatePort()));
+        mRequestHead.SetHeader(nsHttp::Alternate_Service_Used, NS_LITERAL_CSTRING("1"));
+
+        nsCOMPtr<nsIConsoleService> consoleService =
+            do_GetService(NS_CONSOLESERVICE_CONTRACTID);
+        if (consoleService) {
+            nsAutoString message(NS_LITERAL_STRING("Alternate Service Mapping found: "));
+            AppendASCIItoUTF16(scheme.get(), message);
+            message.Append(NS_LITERAL_STRING("://"));
+            AppendASCIItoUTF16(host.get(), message);
+            message.Append(NS_LITERAL_STRING(":"));
+            message.AppendInt(port);
+            message.Append(NS_LITERAL_STRING(" to "));
+            AppendASCIItoUTF16(scheme.get(), message);
+            message.Append(NS_LITERAL_STRING("://"));
+            AppendASCIItoUTF16(mapping->AlternateHost().get(), message);
+            message.Append(NS_LITERAL_STRING(":"));
+            message.AppendInt(mapping->AlternatePort());
+            consoleService->LogStringMessage(message.get());
+        }
+
+        LOG(("nsHttpChannel %p Using connection info from altsvc mapping", this));
+        mapping->GetConnectionInfo(getter_AddRefs(mConnectionInfo), proxyInfo);
+        Telemetry::Accumulate(Telemetry::HTTP_TRANSACTION_USE_ALTSVC, true);
+        Telemetry::Accumulate(Telemetry::HTTP_TRANSACTION_USE_ALTSVC_OE, !isHttps);
+    } else {
+        LOG(("nsHttpChannel %p Using default connection info", this));
+        mConnectionInfo = new nsHttpConnectionInfo(host, port, EmptyCString(), mUsername, proxyInfo, isHttps);
+        Telemetry::Accumulate(Telemetry::HTTP_TRANSACTION_USE_ALTSVC, false);
+    }
 
     mAuthProvider =
         do_CreateInstance("@mozilla.org/network/http-channel-auth-provider;1",
@@ -4825,8 +5050,10 @@ nsHttpChannel::GetResponseEnd(TimeStamp* _retval) {
 NS_IMETHODIMP
 nsHttpChannel::GetIsSSL(bool *aIsSSL)
 {
-    *aIsSSL = mConnectionInfo->EndToEndSSL();
-    return NS_OK;
+    // this attribute is really misnamed - it wants to know if
+    // https:// is being used. SSL might be used to cover http://
+    // in some circumstances (proxies, http/2, etc..)
+    return mURI->SchemeIs("https", aIsSSL);
 }
 
 NS_IMETHODIMP
@@ -5692,6 +5919,30 @@ nsHttpChannel::SetCacheKey(nsISupports *key)
     return NS_OK;
 }
 
+NS_IMETHODIMP
+nsHttpChannel::GetCacheOnlyMetadata(bool *aOnlyMetadata)
+{
+    NS_ENSURE_ARG(aOnlyMetadata);
+    *aOnlyMetadata = mCacheOnlyMetadata;
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+nsHttpChannel::SetCacheOnlyMetadata(bool aOnlyMetadata)
+{
+    LOG(("nsHttpChannel::SetCacheOnlyMetadata [this=%p only-metadata=%d]\n",
+        this, aOnlyMetadata));
+
+    ENSURE_CALLED_BEFORE_ASYNC_OPEN();
+
+    mCacheOnlyMetadata = aOnlyMetadata;
+    if (aOnlyMetadata) {
+        mLoadFlags |= LOAD_ONLY_IF_MODIFIED;
+    }
+
+    return NS_OK;
+}
+
 //-----------------------------------------------------------------------------
 // nsHttpChannel::nsIResumableChannel
 //-----------------------------------------------------------------------------
@@ -6173,46 +6424,6 @@ nsHttpChannel::SetNotificationCallbacks(nsIInterfaceRequestor *aCallbacks)
         UpdateAggregateCallbacks();
     }
     return rv;
-}
-
-nsPerformance*
-nsHttpChannel::GetPerformance()
-{
-    // If performance timing is disabled, there is no need for the nsPerformance
-    // object anymore.
-    if (!mTimingEnabled) {
-        return nullptr;
-    }
-    nsCOMPtr<nsILoadContext> loadContext;
-    NS_QueryNotificationCallbacks(this, loadContext);
-    if (!loadContext) {
-        return nullptr;
-    }
-    nsCOMPtr<nsIDOMWindow> domWindow;
-    loadContext->GetAssociatedWindow(getter_AddRefs(domWindow));
-    if (!domWindow) {
-        return nullptr;
-    }
-    nsCOMPtr<nsPIDOMWindow> pDomWindow = do_QueryInterface(domWindow);
-    if (!pDomWindow) {
-        return nullptr;
-    }
-    if (!pDomWindow->IsInnerWindow()) {
-        pDomWindow = pDomWindow->GetCurrentInnerWindow();
-        if (!pDomWindow) {
-            return nullptr;
-        }
-    }
-
-    nsPerformance* docPerformance = pDomWindow->GetPerformance();
-    if (!docPerformance) {
-      return nullptr;
-    }
-    // iframes should be added to the parent's entries list.
-    if (mLoadFlags & LOAD_DOCUMENT_URI) {
-      return docPerformance->GetParentPerformance();
-    }
-    return docPerformance;
 }
 
 } } // namespace mozilla::net

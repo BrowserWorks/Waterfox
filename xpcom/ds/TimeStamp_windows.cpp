@@ -339,10 +339,6 @@ TimeStampValue::CheckQPC(const TimeStampValue& aOther) const
     return deltaQPC;
   }
 
-  if (!sUseQPC) { // QPC globally disabled
-    return deltaGTC;
-  }
-
   // Check QPC is sane before using it.
   int64_t diff = DeprecatedAbs(int64_t(deltaQPC) - int64_t(deltaGTC));
   if (diff <= sGTCResulutionThreshold) {
@@ -357,10 +353,15 @@ TimeStampValue::CheckQPC(const TimeStampValue& aOther) const
        mt2ms(duration), mt2ms_f(overflow)));
 
   if (overflow <= sFailureThreshold) {  // We are in the limit, let go.
-    return deltaQPC;  // XXX Should we return GTC here?
+    return deltaQPC;
   }
 
   // QPC deviates, don't use it, since now this method may only return deltaGTC.
+
+  if (!sUseQPC) { // QPC already disabled, no need to run the fault tolerance algorithm.
+    return deltaGTC;
+  }
+
   LOG(("TimeStamp: QPC jittered over failure threshold"));
 
   if (duration < sHardFailureLimit) {
@@ -412,34 +413,41 @@ TimeStampValue::operator-(const TimeStampValue& aOther) const
 // ----------------------------------------------------------------------------
 
 double
-TimeDuration::ToSeconds() const
+BaseTimeDurationPlatformUtils::ToSeconds(int64_t aTicks)
 {
   // Converting before arithmetic avoids blocked store forward
-  return double(mValue) / (double(sFrequencyPerSec) * 1000.0);
+  return double(aTicks) / (double(sFrequencyPerSec) * 1000.0);
 }
 
 double
-TimeDuration::ToSecondsSigDigits() const
+BaseTimeDurationPlatformUtils::ToSecondsSigDigits(int64_t aTicks)
 {
   // don't report a value < mResolution ...
   LONGLONG resolution = sResolution;
   LONGLONG resolutionSigDigs = sResolutionSigDigs;
-  LONGLONG valueSigDigs = resolution * (mValue / resolution);
+  LONGLONG valueSigDigs = resolution * (aTicks / resolution);
   // and chop off insignificant digits
   valueSigDigs = resolutionSigDigs * (valueSigDigs / resolutionSigDigs);
   return double(valueSigDigs) / kNsPerSecd;
 }
 
-TimeDuration
-TimeDuration::FromMilliseconds(double aMilliseconds)
+int64_t
+BaseTimeDurationPlatformUtils::TicksFromMilliseconds(double aMilliseconds)
 {
-  return TimeDuration::FromTicks(ms2mt(aMilliseconds));
+  double result = ms2mt(aMilliseconds);
+  if (result > INT64_MAX) {
+    return INT64_MAX;
+  } else if (result < INT64_MIN) {
+    return INT64_MIN;
+  }
+
+  return result;
 }
 
-TimeDuration
-TimeDuration::Resolution()
+int64_t
+BaseTimeDurationPlatformUtils::ResolutionInTicks()
 {
-  return TimeDuration::FromTicks(int64_t(sResolution));
+  return static_cast<int64_t>(sResolution);
 }
 
 static bool

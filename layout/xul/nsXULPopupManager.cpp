@@ -17,6 +17,7 @@
 #include "nsIXULDocument.h"
 #include "nsIXULTemplateBuilder.h"
 #include "nsCSSFrameConstructor.h"
+#include "nsGlobalWindow.h"
 #include "nsLayoutUtils.h"
 #include "nsViewManager.h"
 #include "nsIComponentManager.h"
@@ -844,7 +845,7 @@ nsXULPopupManager::HidePopup(nsIContent* aPopup,
                              bool aHideChain,
                              bool aDeselectMenu,
                              bool aAsynchronous,
-                             bool aIsRollup,
+                             bool aIsCancel,
                              nsIContent* aLastPopup)
 {
   // if the popup is on the nohide panels list, remove it but don't close any
@@ -937,12 +938,12 @@ nsXULPopupManager::HidePopup(nsIContent* aPopup,
     if (aAsynchronous) {
       nsCOMPtr<nsIRunnable> event =
         new nsXULPopupHidingEvent(popupToHide, nextPopup, lastPopup,
-                                  type, deselectMenu, aIsRollup);
+                                  type, deselectMenu, aIsCancel);
         NS_DispatchToCurrentThread(event);
     }
     else {
       FirePopupHidingEvent(popupToHide, nextPopup, lastPopup,
-                           popupFrame->PresContext(), type, deselectMenu, aIsRollup);
+                           popupFrame->PresContext(), type, deselectMenu, aIsCancel);
     }
   }
 }
@@ -1354,7 +1355,7 @@ nsXULPopupManager::FirePopupHidingEvent(nsIContent* aPopup,
                                         nsPresContext *aPresContext,
                                         nsPopupType aPopupType,
                                         bool aDeselectMenu,
-                                        bool aIsRollup)
+                                        bool aIsCancel)
 {
   nsCOMPtr<nsIPresShell> presShell = aPresContext->PresShell();
 
@@ -1413,7 +1414,7 @@ nsXULPopupManager::FirePopupHidingEvent(nsIContent* aPopup,
         aPopup->GetAttr(kNameSpaceID_None, nsGkAtoms::animate, animate);
 
         if (!animate.EqualsLiteral("false") &&
-            (!animate.EqualsLiteral("cancel") || aIsRollup)) {
+            (!animate.EqualsLiteral("cancel") || aIsCancel)) {
           presShell->FlushPendingNotifications(Flush_Layout);
 
           // Get the frame again in case the flush caused it to go away
@@ -1421,7 +1422,8 @@ nsXULPopupManager::FirePopupHidingEvent(nsIContent* aPopup,
           if (!popupFrame)
             return;
 
-          if (nsLayoutUtils::HasCurrentAnimations(aPopup, nsGkAtoms::transitionsProperty, aPresContext)) {
+          if (nsLayoutUtils::HasCurrentAnimations(aPopup,
+                nsGkAtoms::transitionsProperty)) {
             nsRefPtr<TransitionEnder> ender = new TransitionEnder(aPopup, aDeselectMenu);
             aPopup->AddSystemEventListener(NS_LITERAL_STRING("transitionend"),
                                            ender, false, false);
@@ -1594,18 +1596,18 @@ nsXULPopupManager::MayShowPopup(nsMenuPopupFrame* aPopup)
   if (!baseWin)
     return false;
 
+  nsCOMPtr<nsIDocShellTreeItem> root;
+  dsti->GetRootTreeItem(getter_AddRefs(root));
+  if (!root) {
+    return false;
+  }
+
+  nsCOMPtr<nsIDOMWindow> rootWin = root->GetWindow();
+
   // chrome shells can always open popups, but other types of shells can only
   // open popups when they are focused and visible
   if (dsti->ItemType() != nsIDocShellTreeItem::typeChrome) {
     // only allow popups in active windows
-    nsCOMPtr<nsIDocShellTreeItem> root;
-    dsti->GetRootTreeItem(getter_AddRefs(root));
-    if (!root) {
-      return false;
-    }
-
-    nsCOMPtr<nsIDOMWindow> rootWin = root->GetWindow();
-
     nsIFocusManager* fm = nsFocusManager::GetFocusManager();
     if (!fm || !rootWin)
       return false;
@@ -1629,6 +1631,15 @@ nsXULPopupManager::MayShowPopup(nsMenuPopupFrame* aPopup)
   if (mainWidget && mainWidget->SizeMode() == nsSizeMode_Minimized) {
     return false;
   }
+
+#ifdef XP_MACOSX
+  if (rootWin) {
+    nsGlobalWindow *globalWin = static_cast<nsGlobalWindow *>(rootWin.get());
+    if (globalWin->IsInModalState()) {
+      return false;
+    }
+  }
+#endif
 
   // cannot open a popup that is a submenu of a menupopup that isn't open.
   nsMenuFrame* menuFrame = do_QueryFrame(aPopup->GetParent());

@@ -35,7 +35,6 @@
 #include "jsfriendapi.h"
 #include "jsprf.h"
 #include "js/MemoryMetrics.h"
-#include "js/OldDebugAPI.h"
 #include "mozilla/dom/GeneratedAtomList.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/Element.h"
@@ -561,19 +560,9 @@ WindowOrNull(JSObject *aObj)
     MOZ_ASSERT(aObj);
     MOZ_ASSERT(!js::IsWrapper(aObj));
 
-    // This will always return null until we have Window on WebIDL bindings,
-    // at which point it will do the right thing.
-    if (!IS_WN_CLASS(js::GetObjectClass(aObj))) {
-        nsGlobalWindow* win = nullptr;
-        UNWRAP_OBJECT(Window, aObj, win);
-        return win;
-    }
-
-    nsISupports* supports = XPCWrappedNative::Get(aObj)->GetIdentityObject();
-    nsCOMPtr<nsPIDOMWindow> piWin = do_QueryInterface(supports);
-    if (!piWin)
-        return nullptr;
-    return static_cast<nsGlobalWindow*>(piWin.get());
+    nsGlobalWindow* win = nullptr;
+    UNWRAP_OBJECT(Window, aObj, win);
+    return win;
 }
 
 nsGlobalWindow*
@@ -583,6 +572,26 @@ WindowGlobalOrNull(JSObject *aObj)
     JSObject *glob = js::GetGlobalForObjectCrossCompartment(aObj);
 
     return WindowOrNull(glob);
+}
+
+nsGlobalWindow*
+AddonWindowOrNull(JSObject *aObj)
+{
+    if (!IsInAddonScope(aObj))
+        return nullptr;
+
+    JSObject *global = js::GetGlobalForObjectCrossCompartment(aObj);
+    JSObject *proto = js::GetPrototypeNoProxy(global);
+
+    // Addons could theoretically change the prototype of the addon scope, but
+    // we pretty much just want to crash if that happens so that we find out
+    // about it and get them to change their code.
+    MOZ_RELEASE_ASSERT(js::IsCrossCompartmentWrapper(proto) ||
+                       xpc::IsSandboxPrototypeProxy(proto));
+    JSObject *mainGlobal = js::UncheckedUnwrap(proto, /* stopAtOuter = */ false);
+    MOZ_RELEASE_ASSERT(JS_IsGlobalObject(mainGlobal));
+
+    return WindowOrNull(mainGlobal);
 }
 
 }
@@ -779,20 +788,6 @@ XPCJSRuntime::FinalizeCallback(JSFreeOp *fop,
             MOZ_ASSERT(!self->mGCIsRunning, "bad state");
             self->mGCIsRunning = true;
 
-            nsTArray<nsXPCWrappedJS*>* dyingWrappedJSArray =
-                &self->mWrappedJSToReleaseArray;
-
-            // Add any wrappers whose JSObjects are to be finalized to
-            // this array. Note that we do not want to be changing the
-            // refcount of these wrappers.
-            // We add them to the array now and Release the array members
-            // later to avoid the posibility of doing any JS GCThing
-            // allocations during the gc cycle.
-            self->mWrappedJSMap->FindDyingJSObjects(dyingWrappedJSArray);
-
-            // Find dying scopes.
-            XPCWrappedNativeScope::StartFinalizationPhaseOfGC(fop, self);
-
             self->mDoingFinalization = true;
             break;
         }
@@ -806,7 +801,7 @@ XPCJSRuntime::FinalizeCallback(JSFreeOp *fop,
             DoDeferredRelease(self->mWrappedJSToReleaseArray);
 
             // Sweep scopes needing cleanup
-            XPCWrappedNativeScope::FinishedFinalizationPhaseOfGC();
+            XPCWrappedNativeScope::KillDyingScopes();
 
             MOZ_ASSERT(self->mGCIsRunning, "bad state");
             self->mGCIsRunning = false;
@@ -959,6 +954,19 @@ XPCJSRuntime::FinalizeCallback(JSFreeOp *fop,
             break;
         }
     }
+}
+
+/* static */ void
+XPCJSRuntime::WeakPointerCallback(JSRuntime *rt, void *data)
+{
+    // Called to remove any weak pointers to GC things that are about to be
+    // finalized and fixup any pointers that may have been moved.
+
+    XPCJSRuntime *self = static_cast<XPCJSRuntime *>(data);
+
+    self->mWrappedJSMap->UpdateWeakPointersAfterGC(self);
+
+    XPCWrappedNativeScope::UpdateWeakPointersAfterGC(self);
 }
 
 static void WatchdogMain(void *arg);
@@ -1546,9 +1554,9 @@ ReloadPrefsCallback(const char *pref, void *data)
 
     JS_SetParallelParsingEnabled(rt, parallelParsing);
     JS_SetOffthreadIonCompilationEnabled(rt, offthreadIonCompilation);
-    JS_SetGlobalJitCompilerOption(rt, JSJITCOMPILER_BASELINE_USECOUNT_TRIGGER,
+    JS_SetGlobalJitCompilerOption(rt, JSJITCOMPILER_BASELINE_WARMUP_TRIGGER,
                                   useBaselineEager ? 0 : -1);
-    JS_SetGlobalJitCompilerOption(rt, JSJITCOMPILER_ION_USECOUNT_TRIGGER,
+    JS_SetGlobalJitCompilerOption(rt, JSJITCOMPILER_ION_WARMUP_TRIGGER,
                                   useIonEager ? 0 : -1);
 }
 
@@ -1560,6 +1568,7 @@ XPCJSRuntime::~XPCJSRuntime()
     // callback if we aren't careful. Null out the relevant callbacks.
     js::SetActivityCallback(Runtime(), nullptr, nullptr);
     JS_RemoveFinalizeCallback(Runtime(), FinalizeCallback);
+    JS_RemoveWeakPointerCallback(Runtime(), WeakPointerCallback);
 
     // Clear any pending exception.  It might be an XPCWrappedJS, and if we try
     // to destroy it later we will crash.
@@ -2265,6 +2274,10 @@ ReportCompartmentStats(const JS::CompartmentStats &cStats,
         cStats.compartmentTables,
         "Compartment-wide tables storing shape and type object information.");
 
+    ZCREPORT_BYTES(cJSPathPrefix + NS_LITERAL_CSTRING("inner-views"),
+        cStats.innerViewsTable,
+        "The table for array buffer inner views.");
+
     ZCREPORT_BYTES(cJSPathPrefix + NS_LITERAL_CSTRING("cross-compartment-wrapper-table"),
         cStats.crossCompartmentWrappersTable,
         "The cross-compartment wrapper table.");
@@ -2272,10 +2285,6 @@ ReportCompartmentStats(const JS::CompartmentStats &cStats,
     ZCREPORT_BYTES(cJSPathPrefix + NS_LITERAL_CSTRING("regexp-compartment"),
         cStats.regexpCompartment,
         "The regexp compartment and regexp data.");
-
-    ZCREPORT_BYTES(cJSPathPrefix + NS_LITERAL_CSTRING("debuggees-set"),
-        cStats.debuggeesSet,
-        "The debuggees set.");
 
     if (sundriesGCHeap > 0) {
         // We deliberately don't use ZCREPORT_GC_BYTES here.
@@ -3037,7 +3046,7 @@ PreserveWrapper(JSContext *cx, JSObject *obj)
 }
 
 static nsresult
-ReadSourceFromFilename(JSContext *cx, const char *filename, jschar **src, size_t *len)
+ReadSourceFromFilename(JSContext *cx, const char *filename, char16_t **src, size_t *len)
 {
     nsresult rv;
 
@@ -3053,7 +3062,11 @@ ReadSourceFromFilename(JSContext *cx, const char *filename, jschar **src, size_t
     NS_ENSURE_SUCCESS(rv, rv);
 
     nsCOMPtr<nsIChannel> scriptChannel;
-    rv = NS_NewChannel(getter_AddRefs(scriptChannel), uri);
+    rv = NS_NewChannel(getter_AddRefs(scriptChannel),
+                       uri,
+                       nsContentUtils::GetSystemPrincipal(),
+                       nsILoadInfo::SEC_NORMAL,
+                       nsIContentPolicy::TYPE_OTHER);
     NS_ENSURE_SUCCESS(rv, rv);
 
     // Only allow local reading.
@@ -3116,7 +3129,7 @@ ReadSourceFromFilename(JSContext *cx, const char *filename, jschar **src, size_t
 // the source for a chrome JS function. See the comment in the XPCJSRuntime
 // constructor.
 class XPCJSSourceHook: public js::SourceHook {
-    bool load(JSContext *cx, const char *filename, jschar **src, size_t *length) {
+    bool load(JSContext *cx, const char *filename, char16_t **src, size_t *length) {
         *src = nullptr;
         *length = 0;
 
@@ -3267,10 +3280,12 @@ XPCJSRuntime::XPCJSRuntime(nsXPConnect* aXPConnect)
                            kStackQuota - kSystemCodeBuffer,
                            kStackQuota - kSystemCodeBuffer - kTrustedScriptBuffer);
 
+    JS_SetErrorReporter(runtime, xpc::SystemErrorReporter);
     JS_SetDestroyCompartmentCallback(runtime, CompartmentDestroyedCallback);
     JS_SetCompartmentNameCallback(runtime, CompartmentNameCallback);
     mPrevGCSliceCallback = JS::SetGCSliceCallback(runtime, GCSliceCallback);
     JS_AddFinalizeCallback(runtime, FinalizeCallback, nullptr);
+    JS_AddWeakPointerCallback(runtime, WeakPointerCallback, this);
     JS_SetWrapObjectCallbacks(runtime, &WrapObjectCallbacks);
     js::SetPreserveWrapperCallback(runtime, PreserveWrapper);
 #ifdef MOZ_CRASHREPORTER

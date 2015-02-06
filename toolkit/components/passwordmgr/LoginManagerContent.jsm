@@ -248,7 +248,7 @@ var LoginManagerContent = {
 
     loginsFound: function({ form, loginsFound }) {
         let doc = form.ownerDocument;
-        let autofillForm = gAutofillForms && !PrivateBrowsingUtils.isWindowPrivate(doc.defaultView);
+        let autofillForm = gAutofillForms && !PrivateBrowsingUtils.isContentWindowPrivate(doc.defaultView);
 
         this._fillForm(form, autofillForm, false, false, false, loginsFound);
     },
@@ -481,7 +481,7 @@ var LoginManagerContent = {
         var doc = form.ownerDocument;
         var win = doc.defaultView;
 
-        if (PrivateBrowsingUtils.isWindowPrivate(win)) {
+        if (PrivateBrowsingUtils.isContentWindowPrivate(win)) {
             // We won't do anything in private browsing mode anyway,
             // so there's no need to perform further checks.
             log("(form submission ignored in private browsing mode)");
@@ -541,13 +541,17 @@ var LoginManagerContent = {
                                   value: oldPasswordField.value } :
                                 null;
 
+        // Make sure to pass the opener's top in case it was in a frame.
+        let opener = win.opener ? win.opener.top : null;
+
         let messageManager = messageManagerFromWindow(win);
         messageManager.sendAsyncMessage("RemoteLogins:onFormSubmit",
                                         { hostname: hostname,
                                           formSubmitURL: formSubmitURL,
                                           usernameField: mockUsername,
                                           newPasswordField: mockPassword,
-                                          oldPasswordField: mockOldPassword });
+                                          oldPasswordField: mockOldPassword },
+                                        { openerWin: opener });
     },
 
     /*

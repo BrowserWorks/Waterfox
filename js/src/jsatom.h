@@ -64,7 +64,7 @@ class AtomStateEntry
     AtomStateEntry(JSAtom *ptr, bool tagged)
       : bits(uintptr_t(ptr) | uintptr_t(tagged))
     {
-        JS_ASSERT((uintptr_t(ptr) & 0x1) == 0);
+        MOZ_ASSERT((uintptr_t(ptr) & 0x1) == 0);
     }
 
     bool isTagged() const {
@@ -88,7 +88,7 @@ struct AtomHasher
     {
         union {
             const JS::Latin1Char *latin1Chars;
-            const jschar *twoByteChars;
+            const char16_t *twoByteChars;
         };
         bool isLatin1;
         size_t length;
@@ -97,7 +97,7 @@ struct AtomHasher
 
         HashNumber hash;
 
-        Lookup(const jschar *chars, size_t length)
+        Lookup(const char16_t *chars, size_t length)
           : twoByteChars(chars), isLatin1(false), length(length), atom(nullptr)
         {
             hash = mozilla::HashString(chars, length);
@@ -206,10 +206,6 @@ AtomizeChars(ExclusiveContext *cx, const CharT *chars, size_t length,
 
 extern JSAtom *
 AtomizeString(ExclusiveContext *cx, JSString *str, js::InternBehavior ib = js::DoNotInternAtom);
-
-extern JSAtom *
-AtomizeSubstring(ExclusiveContext *cx, JSString *str, size_t start, size_t length,
-                 InternBehavior ib = DoNotInternAtom);
 
 template <AllowGC allowGC>
 extern JSAtom *

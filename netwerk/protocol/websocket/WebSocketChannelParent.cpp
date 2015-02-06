@@ -10,6 +10,9 @@
 #include "mozilla/ipc/InputStreamUtils.h"
 #include "mozilla/ipc/URIUtils.h"
 #include "SerializedLoadContext.h"
+#include "nsIOService.h"
+#include "mozilla/net/NeckoCommon.h"
+#include "mozilla/net/WebSocketChannel.h"
 
 using namespace mozilla::ipc;
 
@@ -33,8 +36,15 @@ WebSocketChannelParent::WebSocketChannelParent(nsIAuthPromptProvider* aAuthProvi
   if (!webSocketLog)
     webSocketLog = PR_NewLogModule("nsWebSocket");
 #endif
+  mObserver = new OfflineObserver(this);
 }
 
+WebSocketChannelParent::~WebSocketChannelParent()
+{
+  if (mObserver) {
+    mObserver->RemoveObserver();
+  }
+}
 //-----------------------------------------------------------------------------
 // WebSocketChannelParent::PWebSocketChannelParent
 //-----------------------------------------------------------------------------
@@ -62,6 +72,17 @@ WebSocketChannelParent::RecvAsyncOpen(const URIParams& aURI,
 
   nsresult rv;
   nsCOMPtr<nsIURI> uri;
+
+
+  bool appOffline = false;
+  uint32_t appId = GetAppId();
+  if (appId != NECKO_UNKNOWN_APP_ID &&
+      appId != NECKO_NO_APP_ID) {
+    gIOService->IsAppOffline(appId, &appOffline);
+    if (appOffline) {
+      goto fail;
+    }
+  }
 
   if (aSecure) {
     mChannel =
@@ -117,6 +138,7 @@ WebSocketChannelParent::RecvClose(const uint16_t& code, const nsCString& reason)
     nsresult rv = mChannel->Close(code, reason);
     NS_ENSURE_SUCCESS(rv, true);
   }
+
   return true;
 }
 
@@ -168,11 +190,20 @@ WebSocketChannelParent::OnStart(nsISupports *aContext)
 {
   LOG(("WebSocketChannelParent::OnStart() %p\n", this));
   nsAutoCString protocol, extensions;
+  nsString effectiveURL;
+  bool encrypted = false;
   if (mChannel) {
     mChannel->GetProtocol(protocol);
     mChannel->GetExtensions(extensions);
+
+    nsRefPtr<WebSocketChannel> channel;
+    channel = static_cast<WebSocketChannel*>(mChannel.get());
+    MOZ_ASSERT(channel);
+
+    channel->GetEffectiveURL(effectiveURL);
+    encrypted = channel->IsEncrypted();
   }
-  if (!mIPCOpen || !SendOnStart(protocol, extensions)) {
+  if (!mIPCOpen || !SendOnStart(protocol, extensions, effectiveURL, encrypted)) {
     return NS_ERROR_FAILURE;
   }
   return NS_OK;
@@ -258,6 +289,24 @@ WebSocketChannelParent::GetInterface(const nsIID & iid, void **result)
   return QueryInterface(iid, result);
 }
 
+void
+WebSocketChannelParent::OfflineDisconnect()
+{
+  if (mChannel) {
+    mChannel->Close(nsIWebSocketChannel::CLOSE_GOING_AWAY,
+                    nsCString("App is offline"));
+  }
+}
+
+uint32_t
+WebSocketChannelParent::GetAppId()
+{
+  uint32_t appId = NECKO_UNKNOWN_APP_ID;
+  if (mLoadContext) {
+    mLoadContext->GetAppId(&appId);
+  }
+  return appId;
+}
 
 } // namespace net
 } // namespace mozilla

@@ -26,6 +26,8 @@ AppleCMLinker::sLinkStatus = LinkStatus_INIT;
 
 void* AppleCMLinker::sLink = nullptr;
 nsrefcnt AppleCMLinker::sRefCount = 0;
+CFStringRef AppleCMLinker::skPropExtensionAtoms = nullptr;
+CFStringRef AppleCMLinker::skPropFullRangeVideo = nullptr;
 
 #define LINK_FUNC(func) typeof(CM ## func) CM ## func;
 #include "AppleCMFunctions.h"
@@ -70,6 +72,13 @@ AppleCMLinker::Link()
 #include "AppleCMFunctions.h"
 #undef LINK_FUNC
 #undef LINK_FUNC2
+
+    skPropExtensionAtoms =
+      GetIOConst("kCMFormatDescriptionExtension_SampleDescriptionExtensionAtoms");
+
+    skPropFullRangeVideo =
+      GetIOConst("kCMFormatDescriptionExtension_FullRangeVideo");
+
   } else {
 #define LINK_FUNC2(cm, fig)                                    \
   cm = (typeof(cm))dlsym(sLink, #fig);                         \
@@ -81,6 +90,13 @@ AppleCMLinker::Link()
 #include "AppleCMFunctions.h"
 #undef LINK_FUNC
 #undef LINK_FUNC2
+
+    skPropExtensionAtoms =
+      GetIOConst("kFigFormatDescriptionExtension_SampleDescriptionExtensionAtoms");
+  }
+
+  if (!skPropExtensionAtoms) {
+    goto fail;
   }
 
   LOG("Loaded CoreMedia framework.");
@@ -104,7 +120,19 @@ AppleCMLinker::Unlink()
     LOG("Unlinking CoreMedia framework.");
     dlclose(sLink);
     sLink = nullptr;
+    sLinkStatus = LinkStatus_INIT;
   }
+}
+
+/* static */ CFStringRef
+AppleCMLinker::GetIOConst(const char* symbol)
+{
+  CFStringRef* address = (CFStringRef*)dlsym(sLink, symbol);
+  if (!address) {
+    return nullptr;
+  }
+
+  return *address;
 }
 
 } // namespace mozilla

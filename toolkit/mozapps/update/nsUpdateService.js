@@ -353,7 +353,7 @@ XPCOMUtils.defineLazyGetter(this, "gOSVersion", function aus_gOSVersion() {
     const BYTE = ctypes.uint8_t;
     const WORD = ctypes.uint16_t;
     const DWORD = ctypes.uint32_t;
-    const WCHAR = ctypes.jschar;
+    const WCHAR = ctypes.char16_t;
     const BOOL = ctypes.int;
 
     // This structure is described at:
@@ -523,7 +523,7 @@ function createMutex(aName, aAllowExisting) {
                                  ctypes.void_t.ptr, /* return handle */
                                  ctypes.void_t.ptr, /* security attributes */
                                  ctypes.int32_t, /* initial owner */
-                                 ctypes.jschar.ptr); /* name */
+                                 ctypes.char16_t.ptr); /* name */
 
   var handle = CreateMutexW(null, INITIAL_OWN, aName);
   var alreadyExists = ctypes.winLastError == ERROR_ALREADY_EXISTS;
@@ -2088,6 +2088,14 @@ UpdateService.prototype = {
       Services.obs.removeObserver(this, topic);
       Services.prefs.removeObserver(PREF_APP_UPDATE_LOG, this);
 
+#ifdef XP_WIN
+      // If we hold the update mutex, let it go!
+      // The OS would clean this up sometime after shutdown,
+      // but that would have no guarantee on timing.
+      if (gUpdateMutexHandle) {
+        closeHandle(gUpdateMutexHandle);
+      }
+#endif
       if (this._retryTimer) {
         this._retryTimer.cancel();
       }

@@ -22,8 +22,6 @@ XPCOMUtils.defineLazyServiceGetter(this,
                                    "appsService",
                                    "@mozilla.org/AppsService;1",
                                    "nsIAppsService");
-const NFC_PEER_EVENT_READY = 0x01;
-const NFC_PEER_EVENT_LOST  = 0x02;
 
 /**
  * NFCTag
@@ -140,7 +138,7 @@ function mozNfc() {
     debug("No NFC support.")
   }
 
-  this._nfcContentHelper.registerPeerEventListener(this);
+  this._nfcContentHelper.registerEventTarget(this);
 }
 mozNfc.prototype = {
   _nfcContentHelper: null,
@@ -226,9 +224,8 @@ mozNfc.prototype = {
     this.__DOM_IMPL__.setEventHandler("onpeerlost", handler);
   },
 
-  eventListenerWasAdded: function(evt) {
-    let eventType = this.getEventType(evt);
-    if (eventType != NFC_PEER_EVENT_READY) {
+  eventListenerWasAdded: function(eventType) {
+    if (eventType !== "peerready") {
       return;
     }
 
@@ -236,9 +233,8 @@ mozNfc.prototype = {
     this._nfcContentHelper.registerTargetForPeerReady(this._window, appId);
   },
 
-  eventListenerWasRemoved: function(evt) {
-    let eventType = this.getEventType(evt);
-    if (eventType != NFC_PEER_EVENT_READY) {
+  eventListenerWasRemoved: function(eventType) {
+    if (eventType !== "peerready") {
       return;
     }
 
@@ -285,21 +281,6 @@ mozNfc.prototype = {
     this.__DOM_IMPL__.dispatchEvent(event);
   },
 
-  getEventType: function getEventType(evt) {
-    let eventType = -1;
-    switch (evt) {
-      case 'peerready':
-        eventType = NFC_PEER_EVENT_READY;
-        break;
-      case 'peerlost':
-        eventType = NFC_PEER_EVENT_LOST;
-        break;
-      default:
-        break;
-    }
-    return eventType;
-  },
-
   hasDeadWrapper: function hasDeadWrapper() {
     return Cu.isDeadWrapper(this._window) || Cu.isDeadWrapper(this.__DOM_IMPL__);
   },
@@ -308,7 +289,7 @@ mozNfc.prototype = {
   contractID: "@mozilla.org/navigatorNfc;1",
   QueryInterface: XPCOMUtils.generateQI([Ci.nsISupports,
                                          Ci.nsIDOMGlobalPropertyInitializer,
-                                         Ci.nsINfcPeerEventListener]),
+                                         Ci.nsINfcDOMEventTarget]),
 };
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory([MozNFCTag, MozNFCPeer, mozNfc]);

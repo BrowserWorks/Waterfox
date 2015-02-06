@@ -50,7 +50,7 @@ interface NavigatorID {
   boolean taintEnabled(); // constant false
 };
 
-[NoInterfaceObject]
+[NoInterfaceObject, Exposed=(Window,Worker)]
 interface NavigatorLanguage {
 
   // These 2 values are cached. They are updated when pref
@@ -256,12 +256,6 @@ partial interface Navigator {
 partial interface Navigator {
   [Throws, Pref="notification.feature.enabled"]
   readonly attribute DesktopNotificationCenter mozNotification;
-};
-
-// nsIDOMClientInformation
-partial interface Navigator {
-  [Throws]
-  boolean mozIsLocallyAvailable(DOMString uri, boolean whenOffline);
 };
 
 #ifdef MOZ_WEBSMS_BACKEND

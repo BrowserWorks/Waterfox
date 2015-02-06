@@ -8,7 +8,7 @@
 
 #include <stdint.h>                     // for uint32_t
 #include <sys/types.h>                  // for int32_t
-#include "gfxFont.h"                    // for gfxFont, gfxFontGroup
+#include "gfxTextRun.h"                 // for gfxFont, gfxFontGroup
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT_HELPER2
 #include "nsAutoPtr.h"                  // for nsRefPtr
 #include "nsCOMPtr.h"                   // for nsCOMPtr
@@ -56,7 +56,9 @@ public:
      *
      * @see nsDeviceContext#GetMetricsFor()
      */
-    nsresult Init(const nsFont& aFont, nsIAtom* aLanguage,
+    nsresult Init(const nsFont& aFont,
+                  nsIAtom* aLanguage, bool aExplicitLanguage,
+                  gfxFont::Orientation aOrientation,
                   nsDeviceContext *aContext,
                   gfxUserFontSet *aUserFontSet,
                   gfxTextPerfMetrics *aTextPerf);
@@ -174,6 +176,11 @@ public:
      */
     nsIAtom* Language() { return mLanguage; }
 
+    /**
+     * Returns the orientation (horizontal/vertical) of these metrics.
+     */
+    gfxFont::Orientation Orientation() { return mOrientation; }
+
     int32_t GetMaxStringLength();
 
     // Get the width for this string.  aWidth will be updated with the
@@ -223,6 +230,7 @@ private:
     nsDeviceContext *mDeviceContext;
     int32_t mP2A;
     bool mTextRunRTL;
+    gfxFont::Orientation mOrientation;
 };
 
 #endif /* NSFONTMETRICS__H__ */

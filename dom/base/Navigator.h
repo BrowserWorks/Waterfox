@@ -25,7 +25,6 @@ class nsPIDOMWindow;
 class nsIDOMNavigatorSystemMessages;
 class nsDOMCameraManager;
 class nsDOMDeviceStorage;
-class nsIDOMBlob;
 class nsIPrincipal;
 class nsIURI;
 
@@ -85,14 +84,14 @@ class BluetoothManager;
 #endif // MOZ_B2G_BT
 
 #ifdef MOZ_B2G_RIL
-class CellBroadcast;
 class IccManager;
 class MobileConnectionArray;
-class Voicemail;
 #endif
 
 class PowerManager;
+class CellBroadcast;
 class Telephony;
+class Voicemail;
 
 namespace time {
 class TimeManager;
@@ -219,10 +218,10 @@ public:
                          nsTArray<nsRefPtr<nsDOMDeviceStorage> >& aStores,
                          ErrorResult& aRv);
   DesktopNotificationCenter* GetMozNotification(ErrorResult& aRv);
-  bool MozIsLocallyAvailable(const nsAString& aURI, bool aWhenOffline,
-                             ErrorResult& aRv);
+  CellBroadcast* GetMozCellBroadcast(ErrorResult& aRv);
   MobileMessageManager* GetMozMobileMessage();
   Telephony* GetMozTelephony(ErrorResult& aRv);
+  Voicemail* GetMozVoicemail(ErrorResult& aRv);
   network::Connection* GetConnection(ErrorResult& aRv);
   nsDOMCameraManager* GetMozCameras(ErrorResult& aRv);
   void MozSetMessageHandler(const nsAString& aType,
@@ -235,8 +234,6 @@ public:
 #endif
 #ifdef MOZ_B2G_RIL
   MobileConnectionArray* GetMozMobileConnections(ErrorResult& aRv);
-  CellBroadcast* GetMozCellBroadcast(ErrorResult& aRv);
-  Voicemail* GetMozVoicemail(ErrorResult& aRv);
   IccManager* GetMozIccManager(ErrorResult& aRv);
 #endif // MOZ_B2G_RIL
 #ifdef MOZ_GAMEPAD
@@ -279,7 +276,8 @@ public:
   void GetOwnPropertyNames(JSContext* aCx, nsTArray<nsString>& aNames,
                            ErrorResult& aRv);
   void GetLanguages(nsTArray<nsString>& aLanguages);
-  void GetAcceptLanguages(nsTArray<nsString>& aLanguages);
+
+  static void GetAcceptLanguages(nsTArray<nsString>& aLanguages);
 
   // WebIDL helper methods
   static bool HasWakeLockSupport(JSContext* /* unused*/, JSObject* /*unused */);
@@ -330,14 +328,14 @@ private:
   nsRefPtr<FMRadio> mFMRadio;
 #endif
   nsRefPtr<PowerManager> mPowerManager;
+  nsRefPtr<CellBroadcast> mCellBroadcast;
   nsRefPtr<MobileMessageManager> mMobileMessageManager;
   nsRefPtr<Telephony> mTelephony;
+  nsRefPtr<Voicemail> mVoicemail;
   nsRefPtr<network::Connection> mConnection;
 #ifdef MOZ_B2G_RIL
   nsRefPtr<MobileConnectionArray> mMobileConnections;
-  nsRefPtr<CellBroadcast> mCellBroadcast;
   nsRefPtr<IccManager> mIccManager;
-  nsRefPtr<Voicemail> mVoicemail;
 #endif
 #ifdef MOZ_B2G_BT
   nsRefPtr<bluetooth::BluetoothManager> mBluetooth;

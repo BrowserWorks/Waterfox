@@ -21,7 +21,7 @@ add_task(function session_storage() {
   yield promiseBrowserLoaded(browser);
 
   // Flush to make sure chrome received all data.
-  SyncHandlers.get(browser).flush();
+  TabState.flush(browser);
 
   let {storage} = JSON.parse(ss.getTabState(tab));
   is(storage["http://example.com"].test, INNER_VALUE,
@@ -29,12 +29,22 @@ add_task(function session_storage() {
   is(storage["http://mochi.test:8888"].test, OUTER_VALUE,
     "sessionStorage data for mochi.test has been serialized correctly");
 
-  // Ensure that modifying sessionStore values works.
+  // Ensure that modifying sessionStore values works for the inner frame only.
+  yield modifySessionStorage2(browser, {test: "modified1"});
+  TabState.flush(browser);
+
+  ({storage} = JSON.parse(ss.getTabState(tab)));
+  is(storage["http://example.com"].test, "modified1",
+    "sessionStorage data for example.com has been serialized correctly");
+  is(storage["http://mochi.test:8888"].test, OUTER_VALUE,
+    "sessionStorage data for mochi.test has been serialized correctly");
+
+  // Ensure that modifying sessionStore values works for both frames.
   yield modifySessionStorage(browser, {test: "modified"});
   yield modifySessionStorage2(browser, {test: "modified2"});
-  SyncHandlers.get(browser).flush();
+  TabState.flush(browser);
 
-  let {storage} = JSON.parse(ss.getTabState(tab));
+  ({storage} = JSON.parse(ss.getTabState(tab)));
   is(storage["http://example.com"].test, "modified2",
     "sessionStorage data for example.com has been serialized correctly");
   is(storage["http://mochi.test:8888"].test, "modified",
@@ -46,9 +56,9 @@ add_task(function session_storage() {
   yield promiseTabRestored(tab2);
 
   // Flush to make sure chrome received all data.
-  SyncHandlers.get(browser2).flush();
+  TabState.flush(browser2);
 
-  let {storage} = JSON.parse(ss.getTabState(tab2));
+  ({storage} = JSON.parse(ss.getTabState(tab2)));
   is(storage["http://example.com"].test, "modified2",
     "sessionStorage data for example.com has been duplicated correctly");
   is(storage["http://mochi.test:8888"].test, "modified",
@@ -57,9 +67,9 @@ add_task(function session_storage() {
   // Ensure that the content script retains restored data
   // (by e.g. duplicateTab) and sends it along with new data.
   yield modifySessionStorage(browser2, {test: "modified3"});
-  SyncHandlers.get(browser2).flush();
+  TabState.flush(browser2);
 
-  let {storage} = JSON.parse(ss.getTabState(tab2));
+  ({storage} = JSON.parse(ss.getTabState(tab2)));
   is(storage["http://example.com"].test, "modified2",
     "sessionStorage data for example.com has been duplicated correctly");
   is(storage["http://mochi.test:8888"].test, "modified3",
@@ -68,9 +78,9 @@ add_task(function session_storage() {
   // Check that loading a new URL discards data.
   browser2.loadURI("http://mochi.test:8888/");
   yield promiseBrowserLoaded(browser2);
-  SyncHandlers.get(browser2).flush();
+  TabState.flush(browser2);
 
-  let {storage} = JSON.parse(ss.getTabState(tab2));
+  ({storage} = JSON.parse(ss.getTabState(tab2)));
   is(storage["http://mochi.test:8888"].test, "modified3",
     "navigating retains correct storage data");
   ok(!storage["http://example.com"], "storage data was discarded");
@@ -78,7 +88,7 @@ add_task(function session_storage() {
   // Check that loading a new URL discards data.
   browser2.loadURI("about:mozilla");
   yield promiseBrowserLoaded(browser2);
-  SyncHandlers.get(browser2).flush();
+  TabState.flush(browser2);
 
   let state = JSON.parse(ss.getTabState(tab2));
   ok(!state.hasOwnProperty("storage"), "storage data was discarded");
@@ -101,7 +111,7 @@ add_task(function purge_domain() {
   yield purgeDomainData(browser, "mochi.test");
 
   // Flush to make sure chrome received all data.
-  SyncHandlers.get(browser).flush();
+  TabState.flush(browser);
 
   let {storage} = JSON.parse(ss.getTabState(tab));
   ok(!storage["http://mochi.test:8888"],
@@ -130,11 +140,11 @@ add_task(function respect_privacy_level() {
   // Disable saving data for encrypted sites.
   Services.prefs.setIntPref("browser.sessionstore.privacy_level", 1);
 
-  let tab = gBrowser.addTab(URL + "&secure");
+  tab = gBrowser.addTab(URL + "&secure");
   yield promiseBrowserLoaded(tab.linkedBrowser);
   gBrowser.removeTab(tab);
 
-  let [{state: {storage}}] = JSON.parse(ss.getClosedTabData(window));
+  [{state: {storage}}] = JSON.parse(ss.getClosedTabData(window));
   is(storage["http://mochi.test:8888"].test, OUTER_VALUE,
     "http sessionStorage data has been saved");
   ok(!storage["https://example.com"],
@@ -144,14 +154,14 @@ add_task(function respect_privacy_level() {
   Services.prefs.setIntPref("browser.sessionstore.privacy_level", 2);
 
   // Check that duplicating a tab copies all private data.
-  let tab = gBrowser.addTab(URL + "&secure");
+  tab = gBrowser.addTab(URL + "&secure");
   yield promiseBrowserLoaded(tab.linkedBrowser);
   let tab2 = gBrowser.duplicateTab(tab);
   yield promiseTabRestored(tab2);
   gBrowser.removeTab(tab);
 
   // With privacy_level=2 the |tab| shouldn't have any sessionStorage data.
-  let [{state: {storage}}] = JSON.parse(ss.getClosedTabData(window));
+  [{state: {storage}}] = JSON.parse(ss.getClosedTabData(window));
   ok(!storage, "sessionStorage data has *not* been saved");
 
   // Restore the default privacy level and close the duplicated tab.
@@ -159,7 +169,7 @@ add_task(function respect_privacy_level() {
   gBrowser.removeTab(tab2);
 
   // With privacy_level=0 the duplicated |tab2| should persist all data.
-  let [{state: {storage}}] = JSON.parse(ss.getClosedTabData(window));
+  [{state: {storage}}] = JSON.parse(ss.getClosedTabData(window));
   is(storage["http://mochi.test:8888"].test, OUTER_VALUE,
     "http sessionStorage data has been saved");
   is(storage["https://example.com"].test, INNER_VALUE,

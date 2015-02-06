@@ -553,7 +553,10 @@ struct PostTable {
     AutoSwap_PRUint32    maxMemType1;
 };
 
-struct HheaTable {
+// This structure is used for both 'hhea' and 'vhea' tables.
+// The field names here are those of the horizontal version; the
+// vertical table just exchanges vertical and horizontal coordinates.
+struct MetricsHeader {
     AutoSwap_PRUint32    version;
     AutoSwap_PRInt16     ascender;
     AutoSwap_PRInt16     descender;
@@ -570,7 +573,7 @@ struct HheaTable {
     AutoSwap_PRInt16     reserved3;
     AutoSwap_PRInt16     reserved4;
     AutoSwap_PRInt16     metricDataFormat;
-    AutoSwap_PRUint16    numOfLongHorMetrics;
+    AutoSwap_PRUint16    numOfLongMetrics;
 };
 
 struct MaxpTableHeader {
@@ -652,8 +655,10 @@ enum gfxUserFontType {
     GFX_USERFONT_UNKNOWN = 0,
     GFX_USERFONT_OPENTYPE = 1,
     GFX_USERFONT_SVG = 2,
-    GFX_USERFONT_WOFF = 3
+    GFX_USERFONT_WOFF = 3,
+    GFX_USERFONT_WOFF2 = 4
 };
+#define GFX_PREF_WOFF2_ENABLED "gfx.downloadable_fonts.woff2.enabled"
 
 extern const uint8_t sCJKCompatSVSTable[];
 
@@ -771,6 +776,10 @@ public:
     }
 
     static nsresult
+    ReadCMAPTableFormat10(const uint8_t *aBuf, uint32_t aLength,
+                          gfxSparseBitSet& aCharacterMap);
+
+    static nsresult
     ReadCMAPTableFormat12(const uint8_t *aBuf, uint32_t aLength, 
                           gfxSparseBitSet& aCharacterMap);
 
@@ -795,6 +804,9 @@ public:
 
     static uint32_t
     MapCharToGlyphFormat4(const uint8_t *aBuf, char16_t aCh);
+
+    static uint32_t
+    MapCharToGlyphFormat10(const uint8_t *aBuf, uint32_t aCh);
 
     static uint32_t
     MapCharToGlyphFormat12(const uint8_t *aBuf, uint32_t aCh);
@@ -960,6 +972,8 @@ public:
                                     nsTArray<mozilla::gfx::Color> &aColors);
 
 protected:
+    friend struct MacCharsetMappingComparator;
+
     static nsresult
     ReadNames(const char *aNameData, uint32_t aDataLen, uint32_t aNameID,
               int32_t aLangID, int32_t aPlatformID, nsTArray<nsString>& aNames);

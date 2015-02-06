@@ -13,6 +13,7 @@
 #include "mozilla/gfx/Rect.h"           // for Rect, IntRect
 #include "mozilla/gfx/Types.h"          // for Float
 #include "mozilla/layers/CompositorTypes.h"  // for DiagnosticTypes, etc
+#include "mozilla/layers/FenceUtils.h"  // for FenceHandle
 #include "mozilla/layers/LayersTypes.h"  // for LayersBackend
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 #include "nsRegion.h"
@@ -122,7 +123,7 @@ struct EffectChain;
 class Image;
 class ISurfaceAllocator;
 class Layer;
-class NewTextureSource;
+class TextureSource;
 class DataTextureSource;
 class CompositingRenderTarget;
 class PCompositorParent;
@@ -352,6 +353,11 @@ public:
   virtual void EndFrame() = 0;
 
   virtual void SetFBAcquireFence(Layer* aLayer) {}
+
+  virtual FenceHandle GetReleaseFence()
+  {
+    return FenceHandle();
+  }
 
   /**
    * Post-rendering stuff if the rendering is done outside of this Compositor

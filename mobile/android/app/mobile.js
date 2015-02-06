@@ -26,8 +26,6 @@ pref("toolkit.browser.contentViewExpire", 3000);
 pref("toolkit.defaultChromeURI", "chrome://browser/content/browser.xul");
 pref("browser.chromeURL", "chrome://browser/content/");
 
-pref("browser.tabs.remote", false);
-
 // If a tab has not been active for this long (seconds), then it may be
 // turned into a zombie tab to preemptively free up memory. -1 disables time-based
 // expiration (but low-memory conditions may still require the tab to be zombified).
@@ -144,6 +142,7 @@ pref("browser.download.manager.openDelay", 0);
 pref("browser.download.manager.focusWhenStarting", false);
 pref("browser.download.manager.flashCount", 2);
 pref("browser.download.manager.displayedHistoryDays", 7);
+pref("browser.download.manager.addToRecentDocs", true);
 
 /* download helper */
 pref("browser.helperApps.deleteTempFileOnExit", false);
@@ -280,8 +279,15 @@ pref("browser.search.noCurrentEngine", true);
 pref("browser.search.official", true);
 #endif
 
-// Control media casting feature
+// Control media casting & mirroring features
 pref("browser.casting.enabled", true);
+pref("browser.mirroring.enabled", true);
+#ifdef RELEASE_BUILD
+// Roku does not yet support mirroring in production
+pref("browser.mirroring.enabled.roku", false);
+#else
+pref("browser.mirroring.enabled.roku", true);
+#endif
 
 // Enable sparse localization by setting a few package locale overrides
 pref("chrome.override_package.global", "browser");
@@ -402,7 +408,6 @@ pref("privacy.item.syncAccount", true);
 
 // enable geo
 pref("geo.enabled", true);
-pref("app.geo.reportdata", 0);
 
 // content sink control -- controls responsiveness during page load
 // see https://bugzilla.mozilla.org/show_bug.cgi?id=481566#c9
@@ -440,19 +445,29 @@ pref("dom.max_script_run_time", 20);
 
 // JS error console
 pref("devtools.errorconsole.enabled", false);
+// Absolute path to the devtools unix domain socket file used
+// to communicate with a usb cable via adb forward.
+pref("devtools.debugger.unix-domain-socket", "/data/data/@ANDROID_PACKAGE_NAME@/firefox-debugger-socket");
 
 pref("font.size.inflation.minTwips", 120);
 
 // When true, zooming will be enabled on all sites, even ones that declare user-scalable=no.
 pref("browser.ui.zoom.force-user-scalable", false);
 
-// Touch radius (area around the touch location to look for target elements),
-// in 1/240-inch pixels:
-pref("browser.ui.touch.left", 32);
-pref("browser.ui.touch.right", 32);
-pref("browser.ui.touch.top", 48);
-pref("browser.ui.touch.bottom", 16);
-pref("browser.ui.touch.weight.visited", 120); // percentage
+pref("ui.touch.radius.enabled", false);
+pref("ui.touch.radius.leftmm", 3);
+pref("ui.touch.radius.topmm", 5);
+pref("ui.touch.radius.rightmm", 3);
+pref("ui.touch.radius.bottommm", 2);
+pref("ui.touch.radius.visitedWeight", 120);
+
+pref("ui.mouse.radius.enabled", true);
+pref("ui.mouse.radius.leftmm", 3);
+pref("ui.mouse.radius.topmm", 5);
+pref("ui.mouse.radius.rightmm", 3);
+pref("ui.mouse.radius.bottommm", 2);
+pref("ui.mouse.radius.visitedWeight", 120);
+pref("ui.mouse.radius.reposition", true);
 
 // The percentage of the screen that needs to be scrolled before margins are exposed.
 pref("browser.ui.show-margins-threshold", 10);
@@ -476,7 +491,7 @@ pref("plugin.default.state", 1);
 pref("breakpad.reportURL", "https://crash-stats.mozilla.com/report/index/");
 pref("app.support.baseURL", "http://support.mozilla.org/1/mobile/%VERSION%/%OS%/%LOCALE%/");
 // Used to submit data to input from about:feedback
-pref("app.feedback.postURL", "https://input.mozilla.org/%LOCALE%/feedback");
+pref("app.feedback.postURL", "https://input.mozilla.org/api/v1/feedback/");
 pref("app.privacyURL", "https://www.mozilla.org/privacy/firefox/");
 pref("app.creditsURL", "http://www.mozilla.org/credits/");
 pref("app.channelURL", "http://www.mozilla.org/%LOCALE%/firefox/channel/");
@@ -549,7 +564,7 @@ pref("app.update.enabled", false);
 pref("app.update.channel", "@MOZ_UPDATE_CHANNEL@");
 
 // If you are looking for app.update.url, we no longer use it.
-// See mobile/android/base/UpdateServiceHelper.java.in
+// See mobile/android/base/updater/UpdateServiceHelper.java
 #endif
 
 // replace newlines with spaces on paste into single-line text boxes
@@ -639,10 +654,18 @@ pref("urlclassifier.alternate_error_page", "blocked");
 // The number of random entries to send with a gethash request.
 pref("urlclassifier.gethashnoise", 4);
 
+// Gethash timeout for Safebrowsing.
+pref("urlclassifier.gethash.timeout_ms", 5000);
+
 // If an urlclassifier table has not been updated in this number of seconds,
 // a gethash request will be forced to check that the result is still in
 // the database.
 pref("urlclassifier.max-complete-age", 2700);
+#endif
+
+// URL for posting tiles metrics.
+#ifdef RELEASE_BUILD
+pref("browser.tiles.reportURL", "https://tiles.services.mozilla.com/v2/links/click");
 #endif
 
 // True if this is the first time we are showing about:firstrun

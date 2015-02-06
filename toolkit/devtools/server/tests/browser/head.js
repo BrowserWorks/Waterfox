@@ -1,38 +1,123 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-let tempScope = {};
-Cu.import("resource://gre/modules/devtools/Loader.jsm", tempScope);
-Cu.import("resource://gre/modules/devtools/Console.jsm", tempScope);
-const require = tempScope.devtools.require;
-const console = tempScope.console;
-tempScope = null;
+
+const Cc = Components.classes;
+const Ci = Components.interfaces;
+const Cu = Components.utils;
+
+Cu.import("resource://gre/modules/Services.jsm");
+const {console} = Cu.import("resource://gre/modules/devtools/Console.jsm", {});
+const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
+const {devtools: {require}} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+const {DebuggerClient} = Cu.import("resource://gre/modules/devtools/dbg-client.jsm", {});
+const {DebuggerServer} = Cu.import("resource://gre/modules/devtools/dbg-server.jsm", {});
+
 const PATH = "browser/toolkit/devtools/server/tests/browser/";
 const MAIN_DOMAIN = "http://test1.example.org/" + PATH;
 const ALT_DOMAIN = "http://sectest1.example.org/" + PATH;
 const ALT_DOMAIN_SECURED = "https://sectest1.example.org:443/" + PATH;
 
+// All tests are asynchronous.
+waitForExplicitFinish();
+
 /**
- * Open a new tab at a URL and call a callback on load
+ * Define an async test based on a generator function.
  */
-function addTab(aURL, aCallback) {
-  waitForExplicitFinish();
+function asyncTest(generator) {
+  return () => Task.spawn(generator).then(null, ok.bind(null, false)).then(finish);
+}
 
-  gBrowser.selectedTab = gBrowser.addTab();
-  content.location = aURL;
+/**
+ * Add a new test tab in the browser and load the given url.
+ * @param {String} url The url to be loaded in the new tab
+ * @return a promise that resolves to the document when the url is loaded
+ */
+let addTab = Task.async(function* (url) {
+  info("Adding a new tab with URL: '" + url + "'");
+  let tab = gBrowser.selectedTab = gBrowser.addTab();
+  let loaded = once(gBrowser.selectedBrowser, "load", true);
 
-  let tab = gBrowser.selectedTab;
-  let browser = gBrowser.getBrowserForTab(tab);
+  content.location = url;
+  yield loaded;
 
-  function onTabLoad(event) {
-    if (event.originalTarget.location.href != aURL) {
-      return;
+  info("URL '" + url + "' loading complete");
+
+  let def = promise.defer();
+  let isBlank = url == "about:blank";
+  waitForFocus(def.resolve, content, isBlank);
+
+  yield def.promise;
+
+  return tab.linkedBrowser.contentWindow.document;
+});
+
+function initDebuggerServer() {
+  try {
+    // Sometimes debugger server does not get destroyed correctly by previous
+    // tests.
+    DebuggerServer.destroy();
+  } catch (ex) { }
+  DebuggerServer.init(() => true);
+  DebuggerServer.addBrowserActors();
+}
+
+/**
+ * Connect a debugger client.
+ * @param {DebuggerClient}
+ * @return {Promise} Resolves to the selected tabActor form when the client is
+ * connected.
+ */
+function connectDebuggerClient(client) {
+  let def = promise.defer();
+  client.connect(() => {
+    client.listTabs(tabs => {
+      def.resolve(tabs.tabs[tabs.selected]);
+    });
+  });
+  return def.promise;
+}
+
+/**
+ * Close a debugger client's connection.
+ * @param {DebuggerClient}
+ * @return {Promise} Resolves when the connection is closed.
+ */
+function closeDebuggerClient(client) {
+  let def = promise.defer();
+  client.close(def.resolve);
+  return def.promise;
+}
+
+/**
+ * Wait for eventName on target.
+ * @param {Object} target An observable object that either supports on/off or
+ * addEventListener/removeEventListener
+ * @param {String} eventName
+ * @param {Boolean} useCapture Optional, for addEventListener/removeEventListener
+ * @return A promise that resolves when the event has been handled
+ */
+function once(target, eventName, useCapture=false) {
+  info("Waiting for event: '" + eventName + "' on " + target + ".");
+
+  let deferred = promise.defer();
+
+  for (let [add, remove] of [
+    ["addEventListener", "removeEventListener"],
+    ["addListener", "removeListener"],
+    ["on", "off"]
+  ]) {
+    if ((add in target) && (remove in target)) {
+      target[add](eventName, function onEvent(...aArgs) {
+        info("Got event: '" + eventName + "' on " + target + ".");
+        target[remove](eventName, onEvent, useCapture);
+        deferred.resolve.apply(deferred, aArgs);
+      }, useCapture);
+      break;
     }
-    browser.removeEventListener("load", onTabLoad, true);
-    aCallback(browser.contentDocument);
   }
 
-  browser.addEventListener("load", onTabLoad, true);
+  return deferred.promise;
 }
 
 /**

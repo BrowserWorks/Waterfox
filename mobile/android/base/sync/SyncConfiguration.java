@@ -26,7 +26,7 @@ public class SyncConfiguration {
 
   public class EditorBranch implements Editor {
 
-    private String prefix;
+    private final String prefix;
     private Editor editor;
 
     public EditorBranch(SyncConfiguration config, String prefix) {
@@ -37,6 +37,7 @@ public class SyncConfiguration {
       this.editor = config.getEditor();
     }
 
+    @Override
     public void apply() {
       // Android <=r8 SharedPreferences.Editor does not contain apply() for overriding.
       this.editor.commit();
@@ -85,6 +86,7 @@ public class SyncConfiguration {
 
     // Not marking as Override, because Android <= 10 doesn't have
     // putStringSet. Neither can we implement it.
+    @Override
     public Editor putStringSet(String key, Set<String> value) {
       throw new RuntimeException("putStringSet not available.");
     }
@@ -105,8 +107,8 @@ public class SyncConfiguration {
    */
   public class ConfigurationBranch implements SharedPreferences {
 
-    private SyncConfiguration config;
-    private String prefix;                // Including trailing period.
+    private final SyncConfiguration config;
+    private final String prefix;                // Including trailing period.
 
     public ConfigurationBranch(SyncConfiguration syncConfiguration,
         String prefix) {
@@ -160,6 +162,7 @@ public class SyncConfiguration {
 
     // Not marking as Override, because Android <= 10 doesn't have
     // getStringSet. Neither can we implement it.
+    @Override
     public Set<String> getStringSet(String key, Set<String> defValue) {
       throw new RuntimeException("getStringSet not available.");
     }
@@ -408,8 +411,8 @@ public class SyncConfiguration {
 
     // Our history checkbox drives form history, too.
     // We don't need to do this for enablement: that's done at retrieval time.
-    if (selectedEngines.containsKey("history") && !selectedEngines.get("history").booleanValue()) {
-        declined.add("forms");
+    if (selectedEngines.containsKey("history") && !selectedEngines.get("history")) {
+      declined.add("forms");
     }
 
     String json = jObj.toJSONString();

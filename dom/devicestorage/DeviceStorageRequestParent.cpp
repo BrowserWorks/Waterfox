@@ -4,11 +4,11 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "DeviceStorageRequestParent.h"
-#include "nsDOMFile.h"
 #include "nsIMIMEService.h"
 #include "nsCExternalHandlerService.h"
 #include "mozilla/unused.h"
-#include "mozilla/dom/ipc/Blob.h"
+#include "mozilla/dom/File.h"
+#include "mozilla/dom/ipc/BlobParent.h"
 #include "ContentParent.h"
 #include "nsProxyRelease.h"
 #include "AppProcessChecker.h"
@@ -44,10 +44,10 @@ DeviceStorageRequestParent::Dispatch()
         new DeviceStorageFile(p.type(), p.storageName(), p.relpath());
 
       BlobParent* bp = static_cast<BlobParent*>(p.blobParent());
-      nsCOMPtr<nsIDOMBlob> blob = bp->GetBlob();
+      nsRefPtr<FileImpl> blobImpl = bp->GetBlobImpl();
 
       nsCOMPtr<nsIInputStream> stream;
-      blob->GetInternalStream(getter_AddRefs(stream));
+      blobImpl->GetInternalStream(getter_AddRefs(stream));
 
       nsRefPtr<CancelableRunnable> r = new WriteFileEvent(this, dsf, stream,
                                                           DEVICE_STORAGE_REQUEST_CREATE);
@@ -67,10 +67,10 @@ DeviceStorageRequestParent::Dispatch()
         new DeviceStorageFile(p.type(), p.storageName(), p.relpath());
 
       BlobParent* bp = static_cast<BlobParent*>(p.blobParent());
-      nsCOMPtr<nsIDOMBlob> blob = bp->GetBlob();
+      nsRefPtr<FileImpl> blobImpl = bp->GetBlobImpl();
 
       nsCOMPtr<nsIInputStream> stream;
-      blob->GetInternalStream(getter_AddRefs(stream));
+      blobImpl->GetInternalStream(getter_AddRefs(stream));
 
       nsRefPtr<CancelableRunnable> r = new WriteFileEvent(this, dsf, stream,
                                                           DEVICE_STORAGE_REQUEST_APPEND);
@@ -522,9 +522,9 @@ DeviceStorageRequestParent::PostBlobSuccessEvent::CancelableRun() {
 
   nsString fullPath;
   mFile->GetFullPath(fullPath);
-  nsCOMPtr<nsIDOMBlob> blob = new DOMFile(
-    new DOMFileImplFile(fullPath, mime, mLength, mFile->mFile,
-                        mLastModificationDate));
+  nsRefPtr<File> blob = new File(nullptr,
+    new FileImplFile(fullPath, mime, mLength, mFile->mFile,
+                     mLastModificationDate));
 
   ContentParent* cp = static_cast<ContentParent*>(mParent->Manager());
   BlobParent* actor = cp->GetOrCreateActorForBlob(blob);
@@ -584,6 +584,10 @@ DeviceStorageRequestParent::CreateFdEvent::CancelableRun()
 
   nsCOMPtr<nsIRunnable> r;
 
+  if (!mFile->mFile) {
+    r = new PostErrorEvent(mParent, POST_ERROR_EVENT_UNKNOWN);
+    return NS_DispatchToMainThread(r);
+  }
   bool check = false;
   mFile->mFile->Exists(&check);
   if (check) {
@@ -628,7 +632,7 @@ DeviceStorageRequestParent::WriteFileEvent::CancelableRun()
 
   nsCOMPtr<nsIRunnable> r;
 
-  if (!mInputStream) {
+  if (!mInputStream || !mFile->mFile) {
     r = new PostErrorEvent(mParent, POST_ERROR_EVENT_UNKNOWN);
     return NS_DispatchToMainThread(r);
   }
@@ -684,6 +688,10 @@ DeviceStorageRequestParent::DeleteFileEvent::CancelableRun()
 
   nsCOMPtr<nsIRunnable> r;
 
+  if (!mFile->mFile) {
+    r = new PostErrorEvent(mParent, POST_ERROR_EVENT_UNKNOWN);
+    return NS_DispatchToMainThread(r);
+  }
   bool check = false;
   mFile->mFile->Exists(&check);
   if (check) {
@@ -784,6 +792,11 @@ DeviceStorageRequestParent::ReadFileEvent::CancelableRun()
   MOZ_ASSERT(!NS_IsMainThread());
 
   nsCOMPtr<nsIRunnable> r;
+
+  if (!mFile->mFile) {
+    r = new PostErrorEvent(mParent, POST_ERROR_EVENT_UNKNOWN);
+    return NS_DispatchToMainThread(r);
+  }
   bool check = false;
   mFile->mFile->Exists(&check);
 

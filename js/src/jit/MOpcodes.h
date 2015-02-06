@@ -15,17 +15,25 @@ namespace jit {
     _(SimdValueX4)                                                          \
     _(SimdSplatX4)                                                          \
     _(SimdConstant)                                                         \
+    _(SimdConvert)                                                          \
+    _(SimdReinterpretCast)                                                  \
     _(SimdExtractElement)                                                   \
+    _(SimdInsertElement)                                                    \
     _(SimdSignMask)                                                         \
+    _(SimdUnaryArith)                                                       \
     _(SimdBinaryComp)                                                       \
     _(SimdBinaryArith)                                                      \
     _(SimdBinaryBitwise)                                                    \
+    _(SimdShift)                                                            \
+    _(SimdTernaryBitwise)                                                   \
     _(CloneLiteral)                                                         \
     _(Parameter)                                                            \
     _(Callee)                                                               \
+    _(IsConstructing)                                                       \
     _(TableSwitch)                                                          \
     _(Goto)                                                                 \
     _(Test)                                                                 \
+    _(GotoWithFake)                                                         \
     _(TypeObjectDispatch)                                                   \
     _(FunctionDispatch)                                                     \
     _(Compare)                                                              \
@@ -190,8 +198,8 @@ namespace jit {
     _(DeleteElement)                                                        \
     _(SetPropertyCache)                                                     \
     _(IteratorStart)                                                        \
-    _(IteratorNext)                                                         \
     _(IteratorMore)                                                         \
+    _(IsNoIter)                                                             \
     _(IteratorEnd)                                                          \
     _(StringLength)                                                         \
     _(ArgumentsLength)                                                      \
@@ -240,7 +248,10 @@ namespace jit {
     _(ForkJoinGetSlice)                                                     \
     _(GuardThreadExclusive)                                                 \
     _(InterruptCheckPar)                                                    \
-    _(RecompileCheck)
+    _(RecompileCheck)                                                       \
+    _(UnknownValue)                                                         \
+    _(LexicalCheck)                                                         \
+    _(ThrowUninitializedLexical)
 
 // Forward declarations of MIR types.
 #define FORWARD_DECLARE(op) class M##op;

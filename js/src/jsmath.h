@@ -94,6 +94,20 @@ js_InitMathClass(JSContext *cx, js::HandleObject obj);
 
 namespace js {
 
+extern void
+random_initState(uint64_t *rngState);
+
+extern uint64_t
+random_next(uint64_t *rngState, int bits);
+
+static const double RNG_DSCALE = double(1LL << 53);
+
+inline double
+random_nextDouble(uint64_t *rng)
+{
+    return double((random_next(rng, 26) << 27) + random_next(rng, 27)) / RNG_DSCALE;
+}
+
 extern double
 math_random_no_outparam(JSContext *cx);
 
@@ -293,6 +307,9 @@ math_floor(JSContext *cx, unsigned argc, Value *vp);
 
 extern double
 math_floor_impl(double x);
+
+template<typename T>
+extern T GetBiggestNumberLessThan(T x);
 
 extern bool
 math_round_handle(JSContext *cx, HandleValue arg, MutableHandleValue res);

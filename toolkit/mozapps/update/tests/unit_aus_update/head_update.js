@@ -1266,11 +1266,11 @@ function getSpecialFolderDir(aCSIDL) {
                                            ctypes.winapi_abi,
                                            ctypes.bool, /* bool(return) */
                                            ctypes.int32_t, /* HWND hwndOwner */
-                                           ctypes.jschar.ptr, /* LPTSTR lpszPath */
+                                           ctypes.char16_t.ptr, /* LPTSTR lpszPath */
                                            ctypes.int32_t, /* int csidl */
                                            ctypes.bool /* BOOL fCreate */);
 
-  let aryPath = ctypes.jschar.array()(260);
+  let aryPath = ctypes.char16_t.array()(260);
   let rv = SHGetSpecialFolderPath(0, aryPath, aCSIDL, false);
   lib.close();
 

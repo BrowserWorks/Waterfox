@@ -40,6 +40,10 @@ namespace layout {
 class RenderFrameParent;
 }
 
+namespace widget {
+struct IMENotification;
+}
+
 namespace dom {
 
 class ClonedMessageData;
@@ -143,11 +147,11 @@ public:
                                  const InfallibleTArray<CpowEntry>& aCpows,
                                  const IPC::Principal& aPrincipal,
                                  InfallibleTArray<nsString>* aJSONRetVal) MOZ_OVERRIDE;
-    virtual bool AnswerRpcMessage(const nsString& aMessage,
-                                  const ClonedMessageData& aData,
-                                  const InfallibleTArray<CpowEntry>& aCpows,
-                                  const IPC::Principal& aPrincipal,
-                                  InfallibleTArray<nsString>* aJSONRetVal) MOZ_OVERRIDE;
+    virtual bool RecvRpcMessage(const nsString& aMessage,
+                                const ClonedMessageData& aData,
+                                const InfallibleTArray<CpowEntry>& aCpows,
+                                const IPC::Principal& aPrincipal,
+                                InfallibleTArray<nsString>* aJSONRetVal) MOZ_OVERRIDE;
     virtual bool RecvAsyncMessage(const nsString& aMessage,
                                   const ClonedMessageData& aData,
                                   const InfallibleTArray<CpowEntry>& aCpows,
@@ -159,14 +163,18 @@ public:
                                          const uint32_t& aEnd,
                                          const uint32_t& aNewEnd,
                                          const bool& aCausedByComposition) MOZ_OVERRIDE;
-    virtual bool RecvNotifyIMESelectedCompositionRect(const uint32_t& aOffset,
-                                                      const nsIntRect& aRect,
-                                                      const nsIntRect& aCaretRect) MOZ_OVERRIDE;
+    virtual bool RecvNotifyIMESelectedCompositionRect(
+                   const uint32_t& aOffset,
+                   const InfallibleTArray<nsIntRect>& aRects,
+                   const uint32_t& aCaretOffset,
+                   const nsIntRect& aCaretRect) MOZ_OVERRIDE;
     virtual bool RecvNotifyIMESelection(const uint32_t& aSeqno,
                                         const uint32_t& aAnchor,
                                         const uint32_t& aFocus,
                                         const bool& aCausedByComposition) MOZ_OVERRIDE;
     virtual bool RecvNotifyIMETextHint(const nsString& aText) MOZ_OVERRIDE;
+    virtual bool RecvNotifyIMEMouseButtonEvent(const widget::IMENotification& aEventMessage,
+                                               bool* aConsumedByIME) MOZ_OVERRIDE;
     virtual bool RecvEndIMEComposition(const bool& aCancel,
                                        nsString* aComposition) MOZ_OVERRIDE;
     virtual bool RecvGetInputContext(int32_t* aIMEEnabled,
@@ -272,6 +280,21 @@ public:
                            const int16_t& aMode) MOZ_OVERRIDE;
     virtual bool DeallocPFilePickerParent(PFilePickerParent* actor) MOZ_OVERRIDE;
 
+    virtual PIndexedDBPermissionRequestParent*
+    AllocPIndexedDBPermissionRequestParent(const Principal& aPrincipal)
+                                           MOZ_OVERRIDE;
+
+    virtual bool
+    RecvPIndexedDBPermissionRequestConstructor(
+                                      PIndexedDBPermissionRequestParent* aActor,
+                                      const Principal& aPrincipal)
+                                      MOZ_OVERRIDE;
+
+    virtual bool
+    DeallocPIndexedDBPermissionRequestParent(
+                                      PIndexedDBPermissionRequestParent* aActor)
+                                      MOZ_OVERRIDE;
+
     virtual POfflineCacheUpdateParent*
     AllocPOfflineCacheUpdateParent(const URIParams& aManifestURI,
                                    const URIParams& aDocumentURI,
@@ -295,7 +318,6 @@ public:
     static TabParent *GetIMETabParent() { return mIMETabParent; }
     bool HandleQueryContentEvent(mozilla::WidgetQueryContentEvent& aEvent);
     bool SendCompositionEvent(mozilla::WidgetCompositionEvent& event);
-    bool SendTextEvent(mozilla::WidgetTextEvent& event);
     bool SendSelectionEvent(mozilla::WidgetSelectionEvent& event);
 
     static TabParent* GetFrom(nsFrameLoader* aFrameLoader);
@@ -327,19 +349,6 @@ protected:
 
     virtual void ActorDestroy(ActorDestroyReason why) MOZ_OVERRIDE;
 
-    virtual PIndexedDBParent* AllocPIndexedDBParent(
-                                                  const nsCString& aGroup,
-                                                  const nsCString& aASCIIOrigin,
-                                                  bool* /* aAllowed */) MOZ_OVERRIDE;
-
-    virtual bool DeallocPIndexedDBParent(PIndexedDBParent* aActor) MOZ_OVERRIDE;
-
-    virtual bool
-    RecvPIndexedDBConstructor(PIndexedDBParent* aActor,
-                              const nsCString& aGroup,
-                              const nsCString& aASCIIOrigin,
-                              bool* aAllowed) MOZ_OVERRIDE;
-
     Element* mFrameElement;
     nsCOMPtr<nsIBrowserDOMWindow> mBrowserDOMWindow;
 
@@ -353,6 +362,8 @@ protected:
     virtual bool DeallocPRenderFrameParent(PRenderFrameParent* aFrame) MOZ_OVERRIDE;
 
     virtual bool RecvRemotePaintIsReady() MOZ_OVERRIDE;
+
+    bool SendCompositionChangeEvent(mozilla::WidgetCompositionEvent& event);
 
     // IME
     static TabParent *mIMETabParent;
@@ -368,7 +379,8 @@ protected:
     uint32_t mIMESeqno;
 
     uint32_t mIMECompositionRectOffset;
-    nsIntRect mIMECompositionRect;
+    InfallibleTArray<nsIntRect> mIMECompositionRects;
+    uint32_t mIMECaretOffset;
     nsIntRect mIMECaretRect;
 
     // The number of event series we're currently capturing.
@@ -415,6 +427,10 @@ private:
     bool mIsDestroyed;
     // Whether we have already sent a FileDescriptor for the app package.
     bool mAppPackageFileDescriptorSent;
+
+    // Whether we need to send the offline status to the TabChild
+    // This is true, until the first call of LoadURL
+    bool mSendOfflineStatus;
 
     uint32_t mChromeFlags;
 

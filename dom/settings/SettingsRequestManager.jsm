@@ -582,7 +582,7 @@ let SettingsRequestManager = {
       if (lock.finalizing) {
         // We should really never get to this point, but if we do,
         // fail every task that happens.
-        Cu.reportError("Settings lock " + aLockID + " trying to run task '" + currentTask.operation + "' after finalizing. Ignoring tasks, but this is bad. Lock: " + aLockID);
+        Cu.reportError("Settings lock trying to run more tasks after finalizing. Ignoring tasks, but this is bad. Lock: " + aLockID);
         currentTask.defer.reject("Cannot call new task after finalizing");
       } else {
       let p;
@@ -666,12 +666,13 @@ let SettingsRequestManager = {
   sendSettingsChange: function(aKey, aValue, aIsServiceLock) {
     this.broadcastMessage("Settings:Change:Return:OK",
       { key: aKey, value: aValue });
-    Services.obs.notifyObservers(this, kMozSettingsChangedObserverTopic,
-      JSON.stringify({
-        key: aKey,
-        value: aValue,
-        isInternalChange: aIsServiceLock
-      }));
+    var setting = {
+      key: aKey,
+      value: aValue,
+      isInternalChange: aIsServiceLock
+    };
+    setting.wrappedJSObject = setting;
+    Services.obs.notifyObservers(setting, kMozSettingsChangedObserverTopic, "");
   },
 
   broadcastMessage: function broadcastMessage(aMsgName, aContent) {
@@ -710,15 +711,7 @@ let SettingsRequestManager = {
       this.children.splice(index, 1);
       this.mmPrincipals.delete(aMsgMgr);
     }
-    if (DEBUG) {
-      // Make sure we're not leaking since Map requires management by
-      // hand.
-      let i = 0;
-      for (let it of this.mmPrincipals.keys()) {
-        i = i + 1;
-      }
-      debug("Principal/MessageManager pairs left: " + i);
-    }
+    if (DEBUG) debug("Principal/MessageManager pairs left: " + this.mmPrincipals.size);
   },
 
   removeLock: function(aLockID) {
@@ -750,19 +743,32 @@ let SettingsRequestManager = {
     }
   },
 
-  removeMessageManager: function(aMsgMgr){
+  removeMessageManager: function(aMsgMgr, aPrincipal) {
     if (DEBUG) debug("Removing message manager");
     this.removeObserver(aMsgMgr);
     let closedLockIDs = [];
     let lockIDs = Object.keys(this.lockInfo);
     for (let i in lockIDs) {
-      if (this.lockInfo[lockIDs[i]]._mm == aMsgMgr) {
-      	if (DEBUG) debug("Removing lock " + lockIDs[i] + " due to process close/crash");
-        closedLockIDs.push(lockIDs[i]);
+      let lock = this.lockInfo[lockIDs[i]];
+      if (lock._mm == aMsgMgr) {
+        let is_finalizing = false;
+        for (let task_index in lock.tasks) {
+          if (lock.tasks[task_index].operation === "finalize") {
+            is_finalizing = true;
+            break;
+          }
+        }
+        if (!is_finalizing) {
+          this.queueTask("finalize", {lockID: lockIDs[i]}, aPrincipal).then(
+            function() {
+              if (DEBUG) debug("Lock " + lockIDs[i] + " with dead message manager finalized");
+            },
+            function(error) {
+              if (DEBUG) debug("Lock " + lockIDs[i] + " with dead message manager NOT FINALIZED due to error: " + error);
+            }
+          );
+        }
       }
-    }
-    for (let i in closedLockIDs) {
-      this.removeLock(closedLockIDs[i]);
     }
   },
 
@@ -819,7 +825,7 @@ let SettingsRequestManager = {
     switch (aMessage.name) {
       case "child-process-shutdown":
         if (DEBUG) debug("Child process shutdown received.");
-        this.removeMessageManager(mm);
+        this.removeMessageManager(mm, aMessage.principal);
         break;
       case "Settings:RegisterForMessages":
         if (!SettingsPermissions.hasSomeReadPermission(aMessage.principal)) {

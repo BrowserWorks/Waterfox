@@ -13,7 +13,7 @@
 #include "mozilla/unused.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/TabChild.h"
-#include "mozilla/dom/FileDescriptorSetChild.h"
+#include "mozilla/ipc/FileDescriptorSetChild.h"
 #include "mozilla/net/NeckoChild.h"
 #include "mozilla/net/HttpChannelChild.h"
 
@@ -24,9 +24,11 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/ipc/InputStreamUtils.h"
 #include "mozilla/ipc/URIUtils.h"
+#include "mozilla/ipc/BackgroundUtils.h"
 #include "mozilla/net/ChannelDiverterChild.h"
 #include "mozilla/net/DNS.h"
 #include "SerializedLoadContext.h"
+#include "nsPerformance.h"
 
 using namespace mozilla::dom;
 using namespace mozilla::ipc;
@@ -504,34 +506,39 @@ class StopRequestEvent : public ChannelEvent
 {
  public:
   StopRequestEvent(HttpChannelChild* child,
-                   const nsresult& channelStatus)
+                   const nsresult& channelStatus,
+                   const ResourceTimingStruct& timing)
   : mChild(child)
-  , mChannelStatus(channelStatus) {}
+  , mChannelStatus(channelStatus)
+  , mTiming(timing) {}
 
-  void Run() { mChild->OnStopRequest(mChannelStatus); }
+  void Run() { mChild->OnStopRequest(mChannelStatus, mTiming); }
  private:
   HttpChannelChild* mChild;
   nsresult mChannelStatus;
+  ResourceTimingStruct mTiming;
 };
 
 bool
-HttpChannelChild::RecvOnStopRequest(const nsresult& channelStatus)
+HttpChannelChild::RecvOnStopRequest(const nsresult& channelStatus,
+                                    const ResourceTimingStruct& timing)
 {
   MOZ_RELEASE_ASSERT(!mFlushedForDiversion,
     "Should not be receiving any more callbacks from parent!");
 
   if (mEventQ->ShouldEnqueue()) {
-    mEventQ->Enqueue(new StopRequestEvent(this, channelStatus));
+    mEventQ->Enqueue(new StopRequestEvent(this, channelStatus, timing));
   } else {
     MOZ_ASSERT(!mDivertingToParent, "ShouldEnqueue when diverting to parent!");
 
-    OnStopRequest(channelStatus);
+    OnStopRequest(channelStatus, timing);
   }
   return true;
 }
 
 void
-HttpChannelChild::OnStopRequest(const nsresult& channelStatus)
+HttpChannelChild::OnStopRequest(const nsresult& channelStatus,
+                                const ResourceTimingStruct& timing)
 {
   LOG(("HttpChannelChild::OnStopRequest [this=%p status=%x]\n",
            this, channelStatus));
@@ -542,6 +549,22 @@ HttpChannelChild::OnStopRequest(const nsresult& channelStatus)
 
     SendDivertOnStopRequest(channelStatus);
     return;
+  }
+
+  mTransactionTimings.domainLookupStart = timing.domainLookupStart;
+  mTransactionTimings.domainLookupEnd = timing.domainLookupEnd;
+  mTransactionTimings.connectStart = timing.connectStart;
+  mTransactionTimings.connectEnd = timing.connectEnd;
+  mTransactionTimings.requestStart = timing.requestStart;
+  mTransactionTimings.responseStart = timing.responseStart;
+  mTransactionTimings.responseEnd = timing.responseEnd;
+  mAsyncOpenTime = timing.fetchStart;
+  mRedirectStartTimeStamp = timing.redirectStart;
+  mRedirectEndTimeStamp = timing.redirectEnd;
+
+  nsPerformance* documentPerformance = GetPerformance();
+  if (documentPerformance) {
+      documentPerformance->AddEntry(this, this);
   }
 
   mIsPending = false;
@@ -1144,6 +1167,30 @@ HttpChannelChild::Resume()
 // HttpChannelChild::nsIChannel
 //-----------------------------------------------------------------------------
 
+// helper function to assign loadInfo to openArgs
+void
+propagateLoadInfo(nsILoadInfo *aLoadInfo,
+                  HttpChannelOpenArgs& openArgs)
+{
+  mozilla::ipc::PrincipalInfo principalInfo;
+
+  if (aLoadInfo) {
+    mozilla::ipc::PrincipalToPrincipalInfo(aLoadInfo->LoadingPrincipal(),
+                                           &principalInfo);
+    openArgs.requestingPrincipalInfo() = principalInfo;
+    openArgs.securityFlags() = aLoadInfo->GetSecurityFlags();
+    openArgs.contentPolicyType() = aLoadInfo->GetContentPolicyType();
+    return;
+  }
+
+  // use default values if no loadInfo is provided
+  mozilla::ipc::PrincipalToPrincipalInfo(nsContentUtils::GetSystemPrincipal(),
+                                         &principalInfo);
+  openArgs.requestingPrincipalInfo() = principalInfo;
+  openArgs.securityFlags() = nsILoadInfo::SEC_NORMAL;
+  openArgs.contentPolicyType() = nsIContentPolicy::TYPE_OTHER;
+}
+
 NS_IMETHODIMP
 HttpChannelChild::GetSecurityInfo(nsISupports **aSecurityInfo)
 {
@@ -1285,6 +1332,8 @@ HttpChannelChild::AsyncOpen(nsIStreamListener *listener, nsISupports *aContext)
   openArgs.chooseApplicationCache() = mChooseApplicationCache;
   openArgs.appCacheClientID() = appCacheClientId;
   openArgs.allowSpdy() = mAllowSpdy;
+
+  propagateLoadInfo(mLoadInfo, openArgs);
 
   // The socket transport in the chrome process now holds a logical ref to us
   // until OnStopRequest, or we do a redirect, or we hit an IPDL error.

@@ -66,6 +66,7 @@ public:
   MOCK_METHOD3(HandleLongTapUp, void(const CSSPoint&, int32_t, const ScrollableLayerGuid&));
   MOCK_METHOD3(SendAsyncScrollDOMEvent, void(bool aIsRoot, const CSSRect &aContentRect, const CSSSize &aScrollableSize));
   MOCK_METHOD2(PostDelayedTask, void(Task* aTask, int aDelayMs));
+  MOCK_METHOD3(NotifyAPZStateChange, void(const ScrollableLayerGuid& aGuid, APZStateChange aChange, int aArg));
 };
 
 class MockContentControllerDelayed : public MockContentController {
@@ -933,6 +934,45 @@ TEST_F(APZCBasicTester, FlingIntoOverscroll) {
   EXPECT_TRUE(recoveredFromOverscroll);
 }
 
+TEST_F(APZCBasicTester, PanningTransformNotifications) {
+  SCOPED_GFX_PREF(APZOverscrollEnabled, bool, true);
+
+  // Scroll down by 25 px. Ensure we only get one set of
+  // state change notifications.
+  //
+  // Then, scroll back up by 20px, this time flinging after.
+  // The fling should cover the remaining 5 px of room to scroll, then
+  // go into overscroll, and finally snap-back to recover from overscroll.
+  // Again, ensure we only get one set of state change notifications for
+  // this entire procedure.
+
+  MockFunction<void(std::string checkPointName)> check;
+  {
+    InSequence s;
+    EXPECT_CALL(check, Call("Simple pan"));
+    EXPECT_CALL(*mcc, NotifyAPZStateChange(_,GeckoContentController::APZStateChange::StartTouch,_)).Times(1);
+    EXPECT_CALL(*mcc, NotifyAPZStateChange(_,GeckoContentController::APZStateChange::TransformBegin,_)).Times(1);
+    EXPECT_CALL(*mcc, NotifyAPZStateChange(_,GeckoContentController::APZStateChange::StartPanning,_)).Times(1);
+    EXPECT_CALL(*mcc, NotifyAPZStateChange(_,GeckoContentController::APZStateChange::EndTouch,_)).Times(1);
+    EXPECT_CALL(*mcc, NotifyAPZStateChange(_,GeckoContentController::APZStateChange::TransformEnd,_)).Times(1);
+    EXPECT_CALL(check, Call("Complex pan"));
+    EXPECT_CALL(*mcc, NotifyAPZStateChange(_,GeckoContentController::APZStateChange::StartTouch,_)).Times(1);
+    EXPECT_CALL(*mcc, NotifyAPZStateChange(_,GeckoContentController::APZStateChange::TransformBegin,_)).Times(1);
+    EXPECT_CALL(*mcc, NotifyAPZStateChange(_,GeckoContentController::APZStateChange::StartPanning,_)).Times(1);
+    EXPECT_CALL(*mcc, NotifyAPZStateChange(_,GeckoContentController::APZStateChange::EndTouch,_)).Times(1);
+    EXPECT_CALL(*mcc, NotifyAPZStateChange(_,GeckoContentController::APZStateChange::TransformEnd,_)).Times(1);
+    EXPECT_CALL(check, Call("Done"));
+  }
+
+  int time = 0;
+  check.Call("Simple pan");
+  ApzcPanNoFling(apzc, time, 50, 25);
+  check.Call("Complex pan");
+  ApzcPan(apzc, time, 25, 45);
+  apzc->AdvanceAnimationsUntilEnd(testStartTime);
+  check.Call("Done");
+}
+
 TEST_F(APZCBasicTester, OverScrollPanning) {
   SCOPED_GFX_PREF(APZOverscrollEnabled, bool, true);
 
@@ -1438,6 +1478,62 @@ TEST_F(APZCGestureDetectorTester, DoubleTapPreventDefaultBoth) {
   apzc->AssertStateIsReset();
 }
 
+// Test for bug 947892
+// We test whether we dispatch tap event when the tap is followed by pinch.
+TEST_F(APZCGestureDetectorTester, TapFollowedByPinch) {
+  MakeApzcZoomable();
+
+  EXPECT_CALL(*mcc, HandleSingleTap(CSSPoint(10, 10), 0, apzc->GetGuid())).Times(1);
+
+  int time = 0;
+  ApzcTap(apzc, 10, 10, time, 100);
+
+  int inputId = 0;
+  MultiTouchInput mti;
+  mti = MultiTouchInput(MultiTouchInput::MULTITOUCH_START, time, TimeStamp(), 0);
+  mti.mTouches.AppendElement(SingleTouchData(inputId, ScreenIntPoint(20, 20), ScreenSize(0, 0), 0, 0));
+  mti.mTouches.AppendElement(SingleTouchData(inputId + 1, ScreenIntPoint(10, 10), ScreenSize(0, 0), 0, 0));
+  apzc->ReceiveInputEvent(mti);
+
+  mti = MultiTouchInput(MultiTouchInput::MULTITOUCH_END, time, TimeStamp(), 0);
+  mti.mTouches.AppendElement(SingleTouchData(inputId, ScreenIntPoint(20, 20), ScreenSize(0, 0), 0, 0));
+  mti.mTouches.AppendElement(SingleTouchData(inputId + 1, ScreenIntPoint(10, 10), ScreenSize(0, 0), 0, 0));
+  apzc->ReceiveInputEvent(mti);
+
+  while (mcc->RunThroughDelayedTasks());
+
+  apzc->AssertStateIsReset();
+}
+
+TEST_F(APZCGestureDetectorTester, TapFollowedByMultipleTouches) {
+  MakeApzcZoomable();
+
+  EXPECT_CALL(*mcc, HandleSingleTap(CSSPoint(10, 10), 0, apzc->GetGuid())).Times(1);
+
+  int time = 0;
+  ApzcTap(apzc, 10, 10, time, 100);
+
+  int inputId = 0;
+  MultiTouchInput mti;
+  mti = MultiTouchInput(MultiTouchInput::MULTITOUCH_START, time, TimeStamp(), 0);
+  mti.mTouches.AppendElement(SingleTouchData(inputId, ScreenIntPoint(20, 20), ScreenSize(0, 0), 0, 0));
+  apzc->ReceiveInputEvent(mti);
+
+  mti = MultiTouchInput(MultiTouchInput::MULTITOUCH_START, time, TimeStamp(), 0);
+  mti.mTouches.AppendElement(SingleTouchData(inputId, ScreenIntPoint(20, 20), ScreenSize(0, 0), 0, 0));
+  mti.mTouches.AppendElement(SingleTouchData(inputId + 1, ScreenIntPoint(10, 10), ScreenSize(0, 0), 0, 0));
+  apzc->ReceiveInputEvent(mti);
+
+  mti = MultiTouchInput(MultiTouchInput::MULTITOUCH_END, time, TimeStamp(), 0);
+  mti.mTouches.AppendElement(SingleTouchData(inputId, ScreenIntPoint(20, 20), ScreenSize(0, 0), 0, 0));
+  mti.mTouches.AppendElement(SingleTouchData(inputId + 1, ScreenIntPoint(10, 10), ScreenSize(0, 0), 0, 0));
+  apzc->ReceiveInputEvent(mti);
+
+  while (mcc->RunThroughDelayedTasks());
+
+  apzc->AssertStateIsReset();
+}
+
 class APZCTreeManagerTester : public ::testing::Test {
 protected:
   virtual void SetUp() {
@@ -1447,7 +1543,7 @@ protected:
     testStartTime = TimeStamp::Now();
     AsyncPanZoomController::SetFrameTime(testStartTime);
 
-    mcc = new NiceMock<MockContentController>();
+    mcc = new NiceMock<MockContentControllerDelayed>();
     manager = new TestAPZCTreeManager();
   }
 
@@ -1456,7 +1552,7 @@ protected:
   }
 
   TimeStamp testStartTime;
-  nsRefPtr<MockContentController> mcc;
+  nsRefPtr<MockContentControllerDelayed> mcc;
 
   nsTArray<nsRefPtr<Layer> > layers;
   nsRefPtr<LayerManager> lm;
@@ -1482,6 +1578,15 @@ protected:
   static TestAsyncPanZoomController* ApzcOf(Layer* aLayer) {
     EXPECT_EQ(1u, aLayer->GetFrameMetricsCount());
     return (TestAsyncPanZoomController*)aLayer->GetAsyncPanZoomController(0);
+  }
+
+  void CreateSimpleScrollingLayer() {
+    const char* layerTreeSyntax = "t";
+    nsIntRegion layerVisibleRegion[] = {
+      nsIntRegion(nsIntRect(0,0,200,200)),
+    };
+    root = CreateLayerTree(layerTreeSyntax, layerVisibleRegion, nullptr, lm, layers);
+    SetScrollableFrameMetrics(root, FrameMetrics::START_SCROLL_ID, CSSRect(0, 0, 500, 500));
   }
 
   void CreateSimpleMultiLayerTree() {
@@ -1564,7 +1669,8 @@ protected:
   already_AddRefed<AsyncPanZoomController> GetTargetAPZC(const ScreenPoint& aPoint) {
     nsRefPtr<AsyncPanZoomController> hit = manager->GetTargetAPZC(aPoint, nullptr);
     if (hit) {
-      manager->GetInputTransforms(hit.get(), transformToApzc, transformToGecko);
+      transformToApzc = manager->GetScreenToApzcTransform(hit.get());
+      transformToGecko = manager->GetApzcToGeckoTransform(hit.get());
     }
     return hit.forget();
   }
@@ -1595,7 +1701,7 @@ protected:
     Matrix4x4 transforms[] = {
       Matrix4x4(),
       Matrix4x4(),
-      Matrix4x4().Scale(2, 1, 1),
+      Matrix4x4::Scaling(2, 1, 1),
       Matrix4x4(),
     };
     root = CreateLayerTree(layerTreeSyntax, layerVisibleRegion, transforms, lm, layers);
@@ -1758,9 +1864,6 @@ TEST_F(APZHitTestingTester, HitTesting2) {
   // This causes layers[1] to scroll out of view, and an async transform
   // of -50 to be set on the root layer.
   int time = 0;
-  // Silence GMock warnings about "uninteresting mock function calls".
-  EXPECT_CALL(*mcc, PostDelayedTask(_,_)).Times(AtLeast(1));
-  EXPECT_CALL(*mcc, SendAsyncScrollDOMEvent(_,_,_)).Times(AtLeast(1));
   EXPECT_CALL(*mcc, RequestContentRepaint(_)).Times(1);
 
   // This first pan will move the APZC by 50 pixels, and dispatch a paint request.
@@ -1813,7 +1916,7 @@ TEST_F(APZHitTestingTester, HitTesting2) {
   EXPECT_EQ(Point(25, 75), transformToGecko * Point(25, 25));
 }
 
-TEST_F(APZCTreeManagerTester, ScrollableThebesLayers) {
+TEST_F(APZCTreeManagerTester, ScrollablePaintedLayers) {
   CreateSimpleMultiLayerTree();
   ScopedLayerTreeRegistration registration(0, root, mcc);
 
@@ -1907,6 +2010,76 @@ TEST_F(APZHitTestingTester, ComplexMultiLayerTree) {
   EXPECT_EQ(ApzcOf(layers[9]), hit.get());
   hit = GetTargetAPZC(ScreenPoint(250, 100));
   EXPECT_EQ(ApzcOf(layers[7]), hit.get());
+}
+
+TEST_F(APZHitTestingTester, TestRepaintFlushOnNewInputBlock) {
+  // The main purpose of this test is to verify that touch-start events (or anything
+  // that starts a new input block) don't ever get untransformed. This should always
+  // hold because the APZ code should flush repaints when we start a new input block
+  // and the transform to gecko space should be empty.
+
+  CreateSimpleScrollingLayer();
+  ScopedLayerTreeRegistration registration(0, root, mcc);
+  manager->UpdatePanZoomControllerTree(nullptr, root, false, 0, 0);
+  AsyncPanZoomController* apzcroot = ApzcOf(root);
+
+  // At this point, the following holds (all coordinates in screen pixels):
+  // layers[0] has content from (0,0)-(500,500), clipped by composition bounds (0,0)-(200,200)
+
+  MockFunction<void(std::string checkPointName)> check;
+
+  {
+    InSequence s;
+
+    EXPECT_CALL(*mcc, RequestContentRepaint(_)).Times(AtLeast(1));
+    EXPECT_CALL(check, Call("post-first-touch-start"));
+    EXPECT_CALL(*mcc, RequestContentRepaint(_)).Times(AtLeast(1));
+    EXPECT_CALL(check, Call("post-second-fling"));
+    EXPECT_CALL(*mcc, RequestContentRepaint(_)).Times(AtLeast(1));
+    EXPECT_CALL(check, Call("post-second-touch-start"));
+  }
+
+  int time = 0;
+  // This first pan will move the APZC by 50 pixels, and dispatch a paint request.
+  ApzcPanNoFling(apzcroot, time, 100, 50);
+
+  // Verify that a touch start doesn't get untransformed
+  ScreenIntPoint touchPoint(50, 50);
+  MultiTouchInput mti = MultiTouchInput(MultiTouchInput::MULTITOUCH_START, time, TimeStamp(), 0);
+  mti.mTouches.AppendElement(SingleTouchData(0, touchPoint, ScreenSize(0, 0), 0, 0));
+
+  EXPECT_EQ(nsEventStatus_eConsumeDoDefault, manager->ReceiveInputEvent(mti, nullptr));
+  EXPECT_EQ(touchPoint, mti.mTouches[0].mScreenPoint);
+  check.Call("post-first-touch-start");
+
+  // Send a touchend to clear state
+  mti.mType = MultiTouchInput::MULTITOUCH_END;
+  manager->ReceiveInputEvent(mti, nullptr);
+
+  AsyncPanZoomController::SetFrameTime(testStartTime + TimeDuration::FromMilliseconds(1000));
+
+  // Now do two pans. The first of these will dispatch a repaint request, as above.
+  // The second will get stuck in the paint throttler because the first one doesn't
+  // get marked as "completed", so this will result in a non-empty LD transform.
+  // (Note that any outstanding repaint requests from the first half of this test
+  // don't impact this half because we advance the time by 1 second, which will trigger
+  // the max-wait-exceeded codepath in the paint throttler).
+  ApzcPanNoFling(apzcroot, time, 100, 50);
+  check.Call("post-second-fling");
+  ApzcPanNoFling(apzcroot, time, 100, 50);
+
+  // Ensure that a touch start again doesn't get untransformed by flushing
+  // a repaint
+  mti.mType = MultiTouchInput::MULTITOUCH_START;
+  EXPECT_EQ(nsEventStatus_eConsumeDoDefault, manager->ReceiveInputEvent(mti, nullptr));
+  EXPECT_EQ(touchPoint, mti.mTouches[0].mScreenPoint);
+  check.Call("post-second-touch-start");
+
+  mti.mType = MultiTouchInput::MULTITOUCH_END;
+  EXPECT_EQ(nsEventStatus_eConsumeDoDefault, manager->ReceiveInputEvent(mti, nullptr));
+  EXPECT_EQ(touchPoint, mti.mTouches[0].mScreenPoint);
+
+  mcc->RunThroughDelayedTasks();
 }
 
 class APZOverscrollHandoffTester : public APZCTreeManagerTester {

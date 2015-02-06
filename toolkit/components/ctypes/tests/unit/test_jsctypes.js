@@ -147,7 +147,7 @@ function run_test()
   run_char_tests(library, ctypes.char, "char", 1, true, [-0x80, 0x7f]);
   run_char_tests(library, ctypes.signed_char, "signed_char", 1, true, [-0x80, 0x7f]);
   run_char_tests(library, ctypes.unsigned_char, "unsigned_char", 1, false, [0, 0xff]);
-  run_jschar_tests(library, ctypes.jschar, "jschar", [0, 0xffff]);
+  run_char16_tests(library, ctypes.char16_t, "char16_t", [0, 0xffff]);
 
   // Test the special types.
   run_StructType_tests();
@@ -978,8 +978,8 @@ function run_float_tests(library, t, name, size) {
     eval("let f2 = " + f1.toSource());
     do_check_eq(f1.value, f2.value);
   }
-  let vals = [Infinity, -Infinity, -0, 0, 1, -1, 1/3, -1/3, 1/4, -1/4,
-              1e-14, -1e-14, 0xfffffffffffff000, -0xfffffffffffff000];
+  vals = [Infinity, -Infinity, -0, 0, 1, -1, 1/3, -1/3, 1/4, -1/4,
+          1e-14, -1e-14, 0xfffffffffffff000, -0xfffffffffffff000];
   for (let i = 0; i < vals.length; i++)
     test_roundtrip(t, vals[i]);
   do_check_eq(t(NaN).toSource(), t.toSource() + "(NaN)");
@@ -1188,7 +1188,7 @@ function run_char_tests(library, t, name, size, signed, limits) {
         18 ] ]);
 }
 
-function run_jschar_tests(library, t, name, limits) {
+function run_char16_tests(library, t, name, limits) {
   run_basic_class_tests(t);
 
   do_check_eq(t.name, name);
@@ -1703,7 +1703,7 @@ function run_PointerType_tests() {
   let f = new f_t();
   do_check_throws(function() { f.contents; }, Error);
   do_check_throws(function() { f.contents = 0; }, Error);
-  let f = f_t(5);
+  f = f_t(5);
   do_check_throws(function() { f.contents = 0; }, Error);
   do_check_eq(f.toSource(), 'FILE.ptr(ctypes.UInt64("0x5"))');
 
@@ -1731,7 +1731,7 @@ function run_PointerType_tests() {
   do_check_true(n.isNull() === false);
 
   // Test 'increment'/'decrement'.
-  let g_t = ctypes.StructType("g_t", [{ a: ctypes.int32_t }, { b: ctypes.double }]);
+  g_t = ctypes.StructType("g_t", [{ a: ctypes.int32_t }, { b: ctypes.double }]);
   let a_t = ctypes.ArrayType(g_t, 2);
   let a = new a_t();
   a[0] = g_t(1, 2);
@@ -2133,7 +2133,7 @@ function run_type_toString_tests() {
   do_check_eq(c.bool.toString(),                "type bool");
   do_check_eq(c.void_t.toString(),              "type void");
   do_check_eq(c.voidptr_t.toString(),           "type void*");
-  do_check_eq(c.jschar.toString(),              "type jschar");
+  do_check_eq(c.char16_t.toString(),            "type char16_t");
 
   var simplestruct = c.StructType("simplestruct", [{"smitty":c.voidptr_t}]);
   do_check_eq(simplestruct.toString(),          "type simplestruct");
@@ -2252,13 +2252,13 @@ function run_string_tests(library) {
   for (let i = 0; i < vals.length; i++)
     do_check_throws(function() { test_ansi_len(vals[i]); }, TypeError);
 
-  let test_wide_len = library.declare("test_wide_len", ctypes.default_abi, ctypes.int32_t, ctypes.jschar.ptr);
+  let test_wide_len = library.declare("test_wide_len", ctypes.default_abi, ctypes.int32_t, ctypes.char16_t.ptr);
   do_check_eq(test_wide_len("hello world"), 11);
 
   let test_ansi_ret = library.declare("test_ansi_ret", ctypes.default_abi, ctypes.char.ptr);
   do_check_eq(test_ansi_ret().readString(), "success");
 
-  let test_wide_ret = library.declare("test_wide_ret", ctypes.default_abi, ctypes.jschar.ptr);
+  let test_wide_ret = library.declare("test_wide_ret", ctypes.default_abi, ctypes.char16_t.ptr);
   do_check_eq(test_wide_ret().readString(), "success");
 
   let test_ansi_echo = library.declare("test_ansi_echo", ctypes.default_abi, ctypes.char.ptr, ctypes.char.ptr);
@@ -2715,7 +2715,7 @@ function run_variadic_tests(library) {
 
   do_check_eq(result.value, 3 + 5 + 7 + 11);
 
-  let result = ctypes.int32_t.array(3)([1,1,1]),
+  result = ctypes.int32_t.array(3)([1,1,1]),
       v1 = ctypes.int32_t.array(4)([1,2,3,5]),
       v2 = ctypes.int32_t.array(3)([7,11,13]),
       vector_add_va = library.declare("test_vector_add_va_cdecl",

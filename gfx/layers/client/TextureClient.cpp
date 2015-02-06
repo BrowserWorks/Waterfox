@@ -291,7 +291,8 @@ TextureClient::CreateForDrawing(ISurfaceAllocator* aAllocator,
   }
 
   if (!texture && aFormat == SurfaceFormat::B8G8R8X8 &&
-      aAllocator->IsSameProcess()) {
+      aAllocator->IsSameProcess() &&
+      aMoz2DBackend == gfx::BackendType::CAIRO) {
     texture = new DIBTextureClient(aFormat, aTextureFlags);
   }
 
@@ -469,14 +470,12 @@ bool TextureClient::CopyToTextureClient(TextureClient* aTarget,
     return false;
   }
 
-  DrawTarget* destinationTarget = aTarget->BorrowDrawTarget();
-  DrawTarget* sourceTarget = BorrowDrawTarget();
+  RefPtr<DrawTarget> destinationTarget = aTarget->BorrowDrawTarget();
+  RefPtr<DrawTarget> sourceTarget = BorrowDrawTarget();
   RefPtr<gfx::SourceSurface> source = sourceTarget->Snapshot();
   destinationTarget->CopySurface(source,
                                  aRect ? *aRect : gfx::IntRect(gfx::IntPoint(0, 0), GetSize()),
                                  aPoint ? *aPoint : gfx::IntPoint(0, 0));
-  source = nullptr;
-
   return true;
 }
 
@@ -692,6 +691,7 @@ BufferTextureClient::BorrowDrawTarget()
   }
 
   if (mDrawTarget) {
+    mDrawTarget->SetTransform(Matrix());
     return mDrawTarget;
   }
 
@@ -741,7 +741,6 @@ BufferTextureClient::Unlock()
   }
 
   mDrawTarget->Flush();
-  mDrawTarget = nullptr;
 }
 
 bool

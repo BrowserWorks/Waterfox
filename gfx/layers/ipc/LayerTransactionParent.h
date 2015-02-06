@@ -86,6 +86,9 @@ public:
   void SetPendingTransactionId(uint64_t aId) { mPendingTransaction = aId; }
 
   // CompositableParentManager
+  virtual void SendFenceHandleIfPresent(PTextureParent* aTexture,
+                                        CompositableHost* aCompositableHost) MOZ_OVERRIDE;
+
   virtual void SendFenceHandle(AsyncTransactionTracker* aTracker,
                                PTextureParent* aTexture,
                                const FenceHandle& aFence) MOZ_OVERRIDE;
@@ -128,7 +131,8 @@ protected:
                                          MOZ_OVERRIDE;
   virtual bool RecvSetAsyncScrollOffset(const FrameMetrics::ViewID& aId,
                                         const int32_t& aX, const int32_t& aY) MOZ_OVERRIDE;
-  virtual bool RecvGetAPZTestData(APZTestData* aOutData);
+  virtual bool RecvGetAPZTestData(APZTestData* aOutData) MOZ_OVERRIDE;
+  virtual bool RecvRequestProperty(const nsString& aProperty, float* aValue) MOZ_OVERRIDE;
 
   virtual PLayerParent* AllocPLayerParent() MOZ_OVERRIDE;
   virtual bool DeallocPLayerParent(PLayerParent* actor) MOZ_OVERRIDE;

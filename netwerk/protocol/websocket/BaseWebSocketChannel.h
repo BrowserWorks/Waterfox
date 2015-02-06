@@ -43,6 +43,8 @@ class BaseWebSocketChannel : public nsIWebSocketChannel,
   NS_IMETHOD SetNotificationCallbacks(nsIInterfaceRequestor *aNotificationCallbacks);
   NS_IMETHOD GetLoadGroup(nsILoadGroup **aLoadGroup);
   NS_IMETHOD SetLoadGroup(nsILoadGroup *aLoadGroup);
+  NS_IMETHOD SetLoadInfo(nsILoadInfo *aLoadInfo);
+  NS_IMETHOD GetLoadInfo(nsILoadInfo **aLoadInfo);
   NS_IMETHOD GetExtensions(nsACString &aExtensions);
   NS_IMETHOD GetProtocol(nsACString &aProtocol);
   NS_IMETHOD SetProtocol(const nsACString &aProtocol);
@@ -51,6 +53,10 @@ class BaseWebSocketChannel : public nsIWebSocketChannel,
   NS_IMETHOD GetPingTimeout(uint32_t *aSeconds);
   NS_IMETHOD SetPingTimeout(uint32_t aSeconds);
 
+  // Off main thread URI access.
+  virtual void GetEffectiveURL(nsAString& aEffectiveURL) const = 0;
+  virtual bool IsEncrypted() const = 0;
+
  protected:
   nsCOMPtr<nsIURI>                mOriginalURI;
   nsCOMPtr<nsIURI>                mURI;
@@ -58,7 +64,8 @@ class BaseWebSocketChannel : public nsIWebSocketChannel,
   nsCOMPtr<nsISupports>           mContext;
   nsCOMPtr<nsIInterfaceRequestor> mCallbacks;
   nsCOMPtr<nsILoadGroup>          mLoadGroup;
-  nsCOMPtr<nsIThread>             mTargetThread;
+  nsCOMPtr<nsILoadInfo>           mLoadInfo;
+  nsCOMPtr<nsIEventTarget>        mTargetThread;
 
   nsCString                       mProtocol;
   nsCString                       mOrigin;
@@ -69,6 +76,7 @@ class BaseWebSocketChannel : public nsIWebSocketChannel,
   uint32_t                        mWasOpened                 : 1;
   uint32_t                        mClientSetPingInterval     : 1;
   uint32_t                        mClientSetPingTimeout      : 1;
+  uint32_t                        mPingForced                : 1;
 
   uint32_t                        mPingInterval;         /* milliseconds */
   uint32_t                        mPingResponseTimeout;  /* milliseconds */

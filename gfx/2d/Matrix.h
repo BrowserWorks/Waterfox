@@ -10,6 +10,8 @@
 #include "Rect.h"
 #include "Point.h"
 #include <math.h>
+#include "mozilla/Attributes.h"
+#include "mozilla/DebugOnly.h"
 
 namespace mozilla {
 namespace gfx {
@@ -36,6 +38,11 @@ public:
   Float _21, _22;
   Float _31, _32;
 
+  MOZ_ALWAYS_INLINE Matrix Copy() const
+  {
+    return Matrix(*this);
+  }
+
   Point operator *(const Point &aPoint) const
   {
     Point retPoint;
@@ -58,31 +65,60 @@ public:
 
   GFX2D_API Rect TransformBounds(const Rect& rect) const;
 
-  // Apply a scale to this matrix. This scale will be applied -before- the
-  // existing transformation of the matrix.
-  Matrix &Scale(Float aX, Float aY)
+  static Matrix Translation(Float aX, Float aY)
   {
-    _11 *= aX;
-    _12 *= aX;
-    _21 *= aY;
-    _22 *= aY;
-
-    return *this;
+    return Matrix(1.0f, 0.0f, 0.0f, 1.0f, aX, aY);
   }
 
-  Matrix &Translate(Float aX, Float aY)
+  static Matrix Translation(Point aPoint)
+  {
+    return Translation(aPoint.x, aPoint.y);
+  }
+
+  /**
+   * Apply a translation to this matrix.
+   *
+   * The "Pre" in this method's name means that the translation is applied
+   * -before- this matrix's existing transformation. That is, any vector that
+   * is multiplied by the resulting matrix will first be translated, then be
+   * transformed by the original transform.
+   *
+   * Calling this method will result in this matrix having the same value as
+   * the result of:
+   *
+   *   Matrix::Translation(x, y) * this
+   *
+   * (Note that in performance critical code multiplying by the result of a
+   * Translation()/Scaling() call is not recommended since that results in a
+   * full matrix multiply involving 12 floating-point multiplications. Calling
+   * this method would be preferred since it only involves four floating-point
+   * multiplications.)
+   */
+  Matrix &PreTranslate(Float aX, Float aY)
   {
     _31 += _11 * aX + _21 * aY;
     _32 += _12 * aX + _22 * aY;
 
     return *this;
   }
-  
-  Matrix &Translate(const Point &aPoint)
+
+  Matrix &PreTranslate(const Point &aPoint)
   {
-    return Translate(aPoint.x, aPoint.y);
+    return PreTranslate(aPoint.x, aPoint.y);
   }
 
+  /**
+   * Similar to PreTranslate, but the translation is applied -after- this
+   * matrix's existing transformation instead of before it.
+   *
+   * This method is generally less used than PreTranslate since typically code
+   * want to adjust an existing user space to device space matrix to create a
+   * transform to device space from a -new- user space (translated from the
+   * previous user space). In that case consumers will need to use the Pre*
+   * variants of the matrix methods rather than using the Post* methods, since
+   * the Post* methods add a transform to the device space end of the
+   * transformation.
+   */
   Matrix &PostTranslate(Float aX, Float aY)
   {
     _31 += aX;
@@ -95,7 +131,30 @@ public:
     return PostTranslate(aPoint.x, aPoint.y);
   }
 
-  Matrix &Rotate(Float aAngle)
+  static Matrix Scaling(Float aScaleX, Float aScaleY)
+  {
+    return Matrix(aScaleX, 0.0f, 0.0f, aScaleY, 0.0f, 0.0f);
+  }
+  
+  /**
+   * Similar to PreTranslate, but applies a scale instead of a translation.
+   */
+  Matrix &PreScale(Float aX, Float aY)
+  {
+    _11 *= aX;
+    _12 *= aX;
+    _21 *= aY;
+    _22 *= aY;
+
+    return *this;
+  }
+  
+  GFX2D_API static Matrix Rotation(Float aAngle);
+
+  /**
+   * Similar to PreTranslate, but applies a rotation instead of a translation.
+   */
+  Matrix &PreRotate(Float aAngle)
   {
     return *this = Matrix::Rotation(aAngle) * *this;
   }
@@ -128,26 +187,17 @@ public:
     return true;
   }
 
+  Matrix Inverse() const
+  {
+    Matrix clone = *this;
+    DebugOnly<bool> inverted = clone.Invert();
+    MOZ_ASSERT(inverted, "Attempted to get the inverse of a non-invertible matrix");
+    return clone;
+  }
+
   Float Determinant() const
   {
     return _11 * _22 - _12 * _21;
-  }
-
-  static Matrix Translation(Float aX, Float aY)
-  {
-    return Matrix(1.0f, 0.0f, 0.0f, 1.0f, aX, aY);
-  }
-
-  static Matrix Translation(Point aPoint)
-  {
-    return Translation(aPoint.x, aPoint.y);
-  }
-
-  GFX2D_API static Matrix Rotation(Float aAngle);
-
-  static Matrix Scaling(Float aX, Float aY)
-  {
-    return Matrix(aX, 0.0f, 0.0f, aY, 0.0f, 0.0f);
   }
 
   Matrix operator*(const Matrix &aMatrix) const
@@ -166,8 +216,17 @@ public:
 
   Matrix& operator*=(const Matrix &aMatrix)
   {
-    Matrix resultMatrix = *this * aMatrix;
-    return *this = resultMatrix;
+    *this = *this * aMatrix;
+    return *this;
+  }
+
+  /**
+   * Multiplies in the opposite order to operator=*.
+   */
+  Matrix &PreMultiply(const Matrix &aMatrix)
+  {
+    *this = aMatrix * *this;
+    return *this;
   }
 
   /* Returns true if the other matrix is fuzzy-equal to this matrix.
@@ -250,7 +309,7 @@ public:
     return Determinant() == 0;
   }
 
-  GFX2D_API void NudgeToIntegers();
+  GFX2D_API Matrix &NudgeToIntegers();
 
   bool IsTranslation() const
   {
@@ -306,6 +365,16 @@ public:
     , _21(0.0f), _22(1.0f), _23(0.0f), _24(0.0f)
     , _31(0.0f), _32(0.0f), _33(1.0f), _34(0.0f)
     , _41(0.0f), _42(0.0f), _43(0.0f), _44(1.0f)
+  {}
+
+  Matrix4x4(Float a11, Float a12, Float a13, Float a14,
+            Float a21, Float a22, Float a23, Float a24,
+            Float a31, Float a32, Float a33, Float a34,
+            Float a41, Float a42, Float a43, Float a44)
+    : _11(a11), _12(a12), _13(a13), _14(a14)
+    , _21(a21), _22(a22), _23(a23), _24(a24)
+    , _31(a31), _32(a32), _33(a33), _34(a34)
+    , _41(a41), _42(a42), _43(a43), _44(a44)
   {}
 
   Float _11, _12, _13, _14;
@@ -401,6 +470,8 @@ public:
     return *this * Point4D(aPoint.x, aPoint.y, z, 1);
   }
 
+  Rect ProjectRectBounds(const Rect& aRect) const;
+
   static Matrix4x4 From2D(const Matrix &aMatrix) {
     Matrix4x4 matrix;
     matrix._11 = aMatrix._11;
@@ -461,8 +532,85 @@ public:
 
   GFX2D_API Rect TransformBounds(const Rect& rect) const;
 
-  // Apply a scale to this matrix. This scale will be applied -before- the
-  // existing transformation of the matrix.
+
+  static Matrix4x4 Translation(Float aX, Float aY, Float aZ)
+  {
+    return Matrix4x4(1.0f, 0.0f, 0.0f, 0.0f,
+                     0.0f, 1.0f, 0.0f, 0.0f,
+                     0.0f, 0.0f, 1.0f, 0.0f,
+                       aX,   aY,   aZ, 1.0f);
+  }
+
+  /**
+   * Apply a translation to this matrix.
+   *
+   * The "Pre" in this method's name means that the translation is applied
+   * -before- this matrix's existing transformation. That is, any vector that
+   * is multiplied by the resulting matrix will first be translated, then be
+   * transformed by the original transform.
+   *
+   * Calling this method will result in this matrix having the same value as
+   * the result of:
+   *
+   *   Matrix4x4::Translation(x, y) * this
+   *
+   * (Note that in performance critical code multiplying by the result of a
+   * Translation()/Scaling() call is not recommended since that results in a
+   * full matrix multiply involving 64 floating-point multiplications. Calling
+   * this method would be preferred since it only involves 12 floating-point
+   * multiplications.)
+   */
+  Matrix4x4 &Translate(Float aX, Float aY, Float aZ)
+  {
+    _41 += aX * _11 + aY * _21 + aZ * _31;
+    _42 += aX * _12 + aY * _22 + aZ * _32;
+    _43 += aX * _13 + aY * _23 + aZ * _33;
+    _44 += aX * _14 + aY * _24 + aZ * _34;
+
+    return *this;
+  }
+
+  /**
+   * Similar to PreTranslate, but the translation is applied -after- this
+   * matrix's existing transformation instead of before it.
+   *
+   * This method is generally less used than PreTranslate since typically code
+   * wants to adjust an existing user space to device space matrix to create a
+   * transform to device space from a -new- user space (translated from the
+   * previous user space). In that case consumers will need to use the Pre*
+   * variants of the matrix methods rather than using the Post* methods, since
+   * the Post* methods add a transform to the device space end of the
+   * transformation.
+   */
+  Matrix4x4 &PostTranslate(Float aX, Float aY, Float aZ)
+  {
+    _11 += _14 * aX;
+    _21 += _24 * aX;
+    _31 += _34 * aX;
+    _41 += _44 * aX;
+    _12 += _14 * aY;
+    _22 += _24 * aY;
+    _32 += _34 * aY;
+    _42 += _44 * aY;
+    _13 += _14 * aZ;
+    _23 += _24 * aZ;
+    _33 += _34 * aZ;
+    _43 += _44 * aZ;
+
+    return *this;
+  }
+
+  static Matrix4x4 Scaling(Float aScaleX, Float aScaleY, float aScaleZ)
+  {
+    return Matrix4x4(aScaleX, 0.0f, 0.0f, 0.0f,
+                     0.0f, aScaleY, 0.0f, 0.0f,
+                     0.0f, 0.0f, aScaleZ, 0.0f,
+                     0.0f, 0.0f, 0.0f, 1.0f);
+  }
+
+  /**
+   * Similar to PreTranslate, but applies a scale instead of a translation.
+   */
   Matrix4x4 &Scale(Float aX, Float aY, Float aZ)
   {
     _11 *= aX;
@@ -478,32 +626,23 @@ public:
     return *this;
   }
 
-  Matrix4x4 &Translate(Float aX, Float aY, Float aZ)
+  /**
+   * Similar to PostTranslate, but applies a scale instead of a translation.
+   */
+  Matrix4x4 &PostScale(Float aScaleX, Float aScaleY, Float aScaleZ)
   {
-    _41 += aX * _11 + aY * _21 + aZ * _31;
-    _42 += aX * _12 + aY * _22 + aZ * _32;
-    _43 += aX * _13 + aY * _23 + aZ * _33;
-    _44 += aX * _14 + aY * _24 + aZ * _34;
-
-    return *this;
-  }
-
-  Rect ProjectRectBounds(const Rect& aRect) const;
-
-  Matrix4x4 &PostTranslate(Float aX, Float aY, Float aZ)
-  {
-    _11 += _14 * aX;
-    _21 += _24 * aX;
-    _31 += _34 * aX;
-    _41 += _44 * aX;
-    _12 += _14 * aY;
-    _22 += _24 * aY;
-    _32 += _34 * aY;
-    _42 += _44 * aY;
-    _13 += _14 * aZ;
-    _23 += _24 * aZ;
-    _33 += _34 * aZ;
-    _43 += _44 * aZ;
+    _11 *= aScaleX;
+    _21 *= aScaleX;
+    _31 *= aScaleX;
+    _41 *= aScaleX;
+    _12 *= aScaleY;
+    _22 *= aScaleY;
+    _32 *= aScaleY;
+    _42 *= aScaleY;
+    _13 *= aScaleZ;
+    _23 *= aScaleZ;
+    _33 *= aScaleZ;
+    _43 *= aScaleZ;
 
     return *this;
   }
@@ -574,8 +713,8 @@ public:
 
   Matrix4x4& operator*=(const Matrix4x4 &aMatrix)
   {
-    Matrix4x4 resultMatrix = *this * aMatrix;
-    return *this = resultMatrix;
+    *this = *this * aMatrix;
+    return *this;
   }
 
   /* Returns true if the matrix is an identity matrix.
@@ -622,6 +761,14 @@ public:
   }
 
   bool Invert();
+
+  Matrix4x4 Inverse() const
+  {
+    Matrix4x4 clone = *this;
+    DebugOnly<bool> inverted = clone.Invert();
+    MOZ_ASSERT(inverted, "Attempted to get the inverse of a non-invertible matrix");
+    return clone;
+  }
 
   void Normalize()
   {
@@ -690,7 +837,7 @@ public:
     return (__33 * det) < 0;
   }
 
-  void NudgeToIntegersFixedEpsilon()
+  Matrix4x4 &NudgeToIntegersFixedEpsilon()
   {
     NudgeToInteger(&_11);
     NudgeToInteger(&_12);
@@ -709,6 +856,7 @@ public:
     NudgeToInteger(&_42, error);
     NudgeToInteger(&_43, error);
     NudgeToInteger(&_44, error);
+    return *this;
   }
 
   Point4D TransposedVector(int aIndex) const
@@ -752,6 +900,20 @@ public:
     , _51(a51), _52(a52), _53(a53), _54(a54)
   {}
 
+  bool operator==(const Matrix5x4 &o) const
+  {
+    return _11 == o._11 && _12 == o._12 && _13 == o._13 && _14 == o._14 &&
+           _21 == o._21 && _22 == o._22 && _23 == o._23 && _24 == o._24 &&
+           _31 == o._31 && _32 == o._32 && _33 == o._33 && _34 == o._34 &&
+           _41 == o._41 && _42 == o._42 && _43 == o._43 && _44 == o._44 &&
+           _51 == o._51 && _52 == o._52 && _53 == o._53 && _54 == o._54;
+  }
+
+  bool operator!=(const Matrix5x4 &aMatrix) const
+  {
+    return !(*this == aMatrix);
+  }
+
   Matrix5x4 operator*(const Matrix5x4 &aMatrix) const
   {
     Matrix5x4 resultMatrix;
@@ -778,6 +940,12 @@ public:
     resultMatrix._54 = this->_51 * aMatrix._14 + this->_52 * aMatrix._24 + this->_53 * aMatrix._34 + this->_54 * aMatrix._44 + aMatrix._54;
 
     return resultMatrix;
+  }
+
+  Matrix5x4& operator*=(const Matrix5x4 &aMatrix)
+  {
+    *this = *this * aMatrix;
+    return *this;
   }
 
   Float _11, _12, _13, _14;

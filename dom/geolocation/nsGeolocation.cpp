@@ -24,6 +24,7 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/dom/PermissionMessageUtils.h"
+#include "mozilla/dom/SettingChangeNotificationBinding.h"
 
 class nsIPrincipal;
 
@@ -242,7 +243,6 @@ PositionError::PositionError(Geolocation* aParent, int16_t aCode)
   : mCode(aCode)
   , mParent(aParent)
 {
-  SetIsDOMBinding();
 }
 
 PositionError::~PositionError(){}
@@ -712,36 +712,26 @@ nsGeolocationService::~nsGeolocationService()
 }
 
 void
-nsGeolocationService::HandleMozsettingChanged(const char16_t* aData)
+nsGeolocationService::HandleMozsettingChanged(nsISupports* aSubject)
 {
     // The string that we're interested in will be a JSON string that looks like:
     //  {"key":"gelocation.enabled","value":true}
 
-    AutoSafeJSContext cx;
-
-    nsDependentString dataStr(aData);
-    JS::Rooted<JS::Value> val(cx);
-    if (!JS_ParseJSON(cx, dataStr.get(), dataStr.Length(), &val) || !val.isObject()) {
+    AutoJSAPI jsapi;
+    jsapi.Init();
+    JSContext* cx = jsapi.cx();
+    RootedDictionary<SettingChangeNotification> setting(cx);
+    if (!WrappedJSToDictionary(cx, aSubject, setting)) {
+      return;
+    }
+    if (!setting.mKey.EqualsASCII(GEO_SETINGS_ENABLED)) {
+      return;
+    }
+    if (!setting.mValue.isBoolean()) {
       return;
     }
 
-    JS::Rooted<JSObject*> obj(cx, &val.toObject());
-    JS::Rooted<JS::Value> key(cx);
-    if (!JS_GetProperty(cx, obj, "key", &key) || !key.isString()) {
-      return;
-    }
-
-    bool match;
-    if (!JS_StringEqualsAscii(cx, key.toString(), GEO_SETINGS_ENABLED, &match) || !match) {
-      return;
-    }
-
-    JS::Rooted<JS::Value> value(cx);
-    if (!JS_GetProperty(cx, obj, "value", &value) || !value.isBoolean()) {
-      return;
-    }
-
-    HandleMozsettingValue(value.toBoolean());
+    HandleMozsettingValue(setting.mValue.toBoolean());
 }
 
 void
@@ -786,7 +776,7 @@ nsGeolocationService::Observe(nsISupports* aSubject,
   }
 
   if (!strcmp("mozsettings-changed", aTopic)) {
-    HandleMozsettingChanged(aData);
+    HandleMozsettingChanged(aSubject);
     return NS_OK;
   }
 
@@ -1028,7 +1018,6 @@ NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(Geolocation,
 Geolocation::Geolocation()
 : mLastWatchId(0)
 {
-  SetIsDOMBinding();
 }
 
 Geolocation::~Geolocation()

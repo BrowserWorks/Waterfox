@@ -65,7 +65,7 @@ public class Tabs implements GeckoEventListener {
 
     public static final int INVALID_TAB_ID = -1;
 
-    private static AtomicInteger sTabId = new AtomicInteger(0);
+    private static final AtomicInteger sTabId = new AtomicInteger(0);
     private volatile boolean mInitialTabsAdded;
 
     private Context mAppContext;
@@ -488,6 +488,7 @@ public class Tabs implements GeckoEventListener {
                 notifyListeners(tab, Tabs.TabEvents.LOAD_ERROR);
             } else if (event.equals("Content:PageShow")) {
                 notifyListeners(tab, TabEvents.PAGE_SHOW);
+                tab.updateUserRequested(message.getString("userRequested"));
             } else if (event.equals("DOMContentLoaded")) {
                 tab.handleContentLoaded();
                 String backgroundColor = message.getString("bgColor");
@@ -597,7 +598,9 @@ public class Tabs implements GeckoEventListener {
         READER_ENABLED,
         DESKTOP_MODE_CHANGE,
         VIEWPORT_CHANGE,
-        RECORDING_CHANGE
+        RECORDING_CHANGE,
+        BOOKMARK_ADDED,
+        BOOKMARK_REMOVED
     }
 
     public void notifyListeners(Tab tab, TabEvents msg) {
@@ -837,6 +840,14 @@ public class Tabs implements GeckoEventListener {
         }
 
         return added;
+    }
+
+    public Tab addTab() {
+        return loadUrl(AboutPages.HOME, Tabs.LOADURL_NEW_TAB);
+    }
+
+    public Tab addPrivateTab() {
+        return loadUrl(AboutPages.PRIVATEBROWSING, Tabs.LOADURL_NEW_TAB | Tabs.LOADURL_PRIVATE);
     }
 
     /**

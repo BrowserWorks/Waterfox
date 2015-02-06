@@ -5,7 +5,7 @@
 "use strict";
 const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 Cu.import("resource://gre/modules/Services.jsm");
-
+Cu.import("resource://gre/modules/Messaging.jsm");
 
 const CONFIG = { iceServers: [{ "url": "stun:stun.services.mozilla.com" }] };
 
@@ -141,7 +141,7 @@ TabMirror.prototype = {
         id: this.deviceId,
         data: JSON.stringify(msg)
       };
-      Services.androidBridge.handleGeckoMessage(obj);
+      Messaging.sendRequest(obj);
     }
   },
 

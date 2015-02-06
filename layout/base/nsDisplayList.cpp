@@ -699,12 +699,19 @@ nsDisplayScrollLayer::ComputeFrameMetrics(nsIFrame* aForFrame,
     nsPoint scrollPosition = scrollableFrame->GetScrollPosition();
     metrics.SetScrollOffset(CSSPoint::FromAppUnits(scrollPosition));
 
+    nsPoint smoothScrollPosition = scrollableFrame->LastScrollDestination();
+    metrics.SetSmoothScrollOffset(CSSPoint::FromAppUnits(smoothScrollPosition));
+
     // If the frame was scrolled since the last layers update, and by
     // something other than the APZ code, we want to tell the APZ to update
     // its scroll offset.
-    nsIAtom* originOfLastScroll = scrollableFrame->OriginOfLastScroll();
-    if (originOfLastScroll && originOfLastScroll != nsGkAtoms::apz) {
+    nsIAtom* lastScrollOrigin = scrollableFrame->LastScrollOrigin();
+    if (lastScrollOrigin && lastScrollOrigin != nsGkAtoms::apz) {
       metrics.SetScrollOffsetUpdated(scrollableFrame->CurrentScrollGeneration());
+    }
+    nsIAtom* lastSmoothScrollOrigin = scrollableFrame->LastSmoothScrollOrigin();
+    if (lastSmoothScrollOrigin) {
+      metrics.SetSmoothScrollOffsetUpdated(scrollableFrame->CurrentScrollGeneration());
     }
   }
 
@@ -808,14 +815,14 @@ nsDisplayScrollLayer::ComputeFrameMetrics(nsIFrame* aForFrame,
         }
 #endif
       } else {
-        LayoutDeviceIntRect contentBounds;
-        if (nsLayoutUtils::GetContentViewerBounds(presContext, contentBounds)) {
+        LayoutDeviceIntSize contentSize;
+        if (nsLayoutUtils::GetContentViewerSize(presContext, contentSize)) {
           LayoutDeviceToParentLayerScale scale(1.0f);
           if (presContext->GetParentPresContext()) {
             gfxSize res = presContext->GetParentPresContext()->PresShell()->GetCumulativeResolution();
             scale = LayoutDeviceToParentLayerScale(res.width, res.height);
           }
-          metrics.mCompositionBounds = LayoutDeviceRect(contentBounds) * scale;
+          metrics.mCompositionBounds.SizeTo(contentSize * scale);
         }
       }
     }
@@ -921,14 +928,12 @@ nsDisplayListBuilder::GetCaret() {
 }
 
 void
-nsDisplayListBuilder::EnterPresShell(nsIFrame* aReferenceFrame,
-                                     const nsRect& aDirtyRect) {
+nsDisplayListBuilder::EnterPresShell(nsIFrame* aReferenceFrame)
+{
   PresShellState* state = mPresShellStates.AppendElement();
   state->mPresShell = aReferenceFrame->PresContext()->PresShell();
   state->mCaretFrame = nullptr;
   state->mFirstFrameMarkedForDisplay = mFramesMarkedForDisplay.Length();
-  state->mPrevDirtyRect = mDirtyRect;
-  mDirtyRect = aDirtyRect;
 
   state->mPresShell->UpdateCanvasBackground();
 
@@ -961,12 +966,11 @@ nsDisplayListBuilder::EnterPresShell(nsIFrame* aReferenceFrame,
 }
 
 void
-nsDisplayListBuilder::LeavePresShell(nsIFrame* aReferenceFrame,
-                                     const nsRect& aDirtyRect) {
+nsDisplayListBuilder::LeavePresShell(nsIFrame* aReferenceFrame)
+{
   NS_ASSERTION(CurrentPresShellState()->mPresShell ==
       aReferenceFrame->PresContext()->PresShell(),
       "Presshell mismatch");
-  mDirtyRect = CurrentPresShellState()->mPrevDirtyRect;
   ResetMarkedFramesForDisplayList();
   mPresShellStates.SetLength(mPresShellStates.Length() - 1);
 }
@@ -1197,7 +1201,7 @@ void nsDisplayList::PaintRoot(nsDisplayListBuilder* aBuilder,
 /**
  * We paint by executing a layer manager transaction, constructing a
  * single layer representing the display list, and then making it the
- * root of the layer manager, drawing into the ThebesLayers.
+ * root of the layer manager, drawing into the PaintedLayers.
  */
 void nsDisplayList::PaintForFrame(nsDisplayListBuilder* aBuilder,
                                   nsRenderingContext* aCtx,
@@ -1345,7 +1349,7 @@ void nsDisplayList::PaintForFrame(nsDisplayListBuilder* aBuilder,
 
   MaybeSetupTransactionIdAllocator(layerManager, view);
 
-  layerManager->EndTransaction(FrameLayerBuilder::DrawThebesLayer,
+  layerManager->EndTransaction(FrameLayerBuilder::DrawPaintedLayer,
                                aBuilder, flags);
   aBuilder->SetIsCompositingCheap(temp);
   layerBuilder->DidEndTransaction();
@@ -2184,10 +2188,9 @@ nsDisplayBackgroundImage::ConfigureLayer(ImageLayer* aLayer, const nsIntPoint& a
   NS_ASSERTION(imageSize.width != 0 && imageSize.height != 0, "Invalid image size!");
 
   gfxPoint p = mDestRect.TopLeft() + aOffset;
-  gfx::Matrix transform;
-  transform.Translate(p.x, p.y);
-  transform.Scale(mDestRect.width/imageSize.width,
-                  mDestRect.height/imageSize.height);
+  Matrix transform = Matrix::Translation(p.x, p.y);
+  transform.PreScale(mDestRect.width / imageSize.width,
+                     mDestRect.height / imageSize.height);
   aLayer->SetBaseTransform(gfx::Matrix4x4::From2D(transform));
 }
 
@@ -2241,7 +2244,7 @@ nsDisplayBackgroundImage::GetInsideClipRegion(nsDisplayItem* aItem,
       clipRect = frame->GetPaddingRect() - frame->GetPosition() + aItem->ToReferenceFrame();
       break;
     case NS_STYLE_BG_CLIP_CONTENT:
-      clipRect = frame->GetContentRect() - frame->GetPosition() + aItem->ToReferenceFrame();
+      clipRect = frame->GetContentRectRelativeToSelf() + aItem->ToReferenceFrame();
       break;
     default:
       NS_NOTREACHED("Unknown clip type");
@@ -3037,11 +3040,11 @@ nsDisplayBoxShadowInner::Paint(nsDisplayListBuilder* aBuilder,
     js::ProfileEntry::Category::GRAPHICS);
 
   for (uint32_t i = 0; i < rects.Length(); ++i) {
-    aCtx->PushState();
+    aCtx->ThebesContext()->Save();
     aCtx->IntersectClip(rects[i]);
     nsCSSRendering::PaintBoxShadowInner(presContext, *aCtx, mFrame,
                                         borderRect, rects[i]);
-    aCtx->PopState();
+    aCtx->ThebesContext()->Restore();
   }
 }
 
@@ -3200,7 +3203,7 @@ void nsDisplayWrapList::Paint(nsDisplayListBuilder* aBuilder,
 
 /**
  * Returns true if all descendant display items can be placed in the same
- * ThebesLayer --- GetLayerState returns LAYER_INACTIVE or LAYER_NONE,
+ * PaintedLayer --- GetLayerState returns LAYER_INACTIVE or LAYER_NONE,
  * and they all have the expected animated geometry root.
  */
 static LayerState
@@ -3254,6 +3257,13 @@ void
 nsDisplayWrapList::SetVisibleRect(const nsRect& aRect)
 {
   mVisibleRect = aRect;
+}
+
+void
+nsDisplayWrapList::SetReferenceFrame(const nsIFrame* aFrame)
+{
+  mReferenceFrame = aFrame;
+  mToReferenceFrame = mFrame->GetOffsetToCrossDoc(mReferenceFrame);
 }
 
 static nsresult
@@ -4872,15 +4882,18 @@ nsDisplayTransform::ShouldPrerenderTransformedContent(nsDisplayListBuilder* aBui
   // for shadows, borders, etc.
   refSize += nsSize(refSize.width / 8, refSize.height / 8);
   nsSize frameSize = aFrame->GetVisualOverflowRectRelativeToSelf().Size();
+  nscoord maxInAppUnits = nscoord_MAX;
   if (frameSize <= refSize) {
-    nscoord max = aFrame->PresContext()->DevPixelsToAppUnits(4096);
+    maxInAppUnits = aFrame->PresContext()->DevPixelsToAppUnits(4096);
     nsRect visual = aFrame->GetVisualOverflowRect();
-    if (visual.width <= max && visual.height <= max) {
+    if (visual.width <= maxInAppUnits && visual.height <= maxInAppUnits) {
       return true;
     }
   }
 
   if (aLogAnimations) {
+    nsRect visual = aFrame->GetVisualOverflowRect();
+
     nsCString message;
     message.AppendLiteral("Performance warning: Async animation disabled because frame size (");
     message.AppendInt(nsPresContext::AppUnitsToIntCSSPixels(frameSize.width));
@@ -4890,6 +4903,12 @@ nsDisplayTransform::ShouldPrerenderTransformedContent(nsDisplayListBuilder* aBui
     message.AppendInt(nsPresContext::AppUnitsToIntCSSPixels(refSize.width));
     message.AppendLiteral(", ");
     message.AppendInt(nsPresContext::AppUnitsToIntCSSPixels(refSize.height));
+    message.AppendLiteral(") or the visual rectangle (");
+    message.AppendInt(nsPresContext::AppUnitsToIntCSSPixels(visual.width));
+    message.AppendLiteral(", ");
+    message.AppendInt(nsPresContext::AppUnitsToIntCSSPixels(visual.height));
+    message.AppendLiteral(") is larger than the max allowable value (");
+    message.AppendInt(nsPresContext::AppUnitsToIntCSSPixels(maxInAppUnits));
     message.Append(')');
     AnimationPlayerCollection::LogAsyncAnimationFailure(message,
                                                         aFrame->GetContent());

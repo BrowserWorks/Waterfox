@@ -13,7 +13,6 @@
 
 #include "nsJSUtils.h"
 #include "jsapi.h"
-#include "js/OldDebugAPI.h"
 #include "jsfriendapi.h"
 #include "nsIScriptContext.h"
 #include "nsIScriptGlobalObject.h"
@@ -27,6 +26,10 @@
 #include "xpcpublic.h"
 #include "nsContentUtils.h"
 #include "nsGlobalWindow.h"
+
+#include "mozilla/dom/ScriptSettings.h"
+
+using namespace mozilla::dom;
 
 bool
 nsJSUtils::GetCallingLocation(JSContext* aContext, const char* *aFilename,
@@ -120,8 +123,8 @@ nsJSUtils::ReportPendingException(JSContext *aContext)
 }
 
 nsresult
-nsJSUtils::CompileFunction(JSContext* aCx,
-                           JS::Handle<JSObject*> aTarget,
+nsJSUtils::CompileFunction(AutoJSAPI& jsapi,
+                           JS::AutoObjectVector& aScopeChain,
                            JS::CompileOptions& aOptions,
                            const nsACString& aName,
                            uint32_t aArgCount,
@@ -129,26 +132,28 @@ nsJSUtils::CompileFunction(JSContext* aCx,
                            const nsAString& aBody,
                            JSObject** aFunctionObject)
 {
-  MOZ_ASSERT(js::GetEnterCompartmentDepth(aCx) > 0);
-  MOZ_ASSERT_IF(aTarget, js::IsObjectInContextCompartment(aTarget, aCx));
+  MOZ_ASSERT(jsapi.OwnsErrorReporting());
+  JSContext* cx = jsapi.cx();
+  MOZ_ASSERT(js::GetEnterCompartmentDepth(cx) > 0);
+  MOZ_ASSERT_IF(aScopeChain.length() != 0,
+                js::IsObjectInContextCompartment(aScopeChain[0], cx));
   MOZ_ASSERT_IF(aOptions.versionSet, aOptions.version != JSVERSION_UNKNOWN);
-  mozilla::DebugOnly<nsIScriptContext*> ctx = GetScriptContextFromJSContext(aCx);
+  mozilla::DebugOnly<nsIScriptContext*> ctx = GetScriptContextFromJSContext(cx);
   MOZ_ASSERT_IF(ctx, ctx->IsContextInitialized());
 
   // Do the junk Gecko is supposed to do before calling into JSAPI.
-  if (aTarget) {
-    JS::ExposeObjectToActiveJS(aTarget);
+  for (size_t i = 0; i < aScopeChain.length(); ++i) {
+    JS::ExposeObjectToActiveJS(aScopeChain[i]);
   }
 
   // Compile.
-  JS::Rooted<JSFunction*> fun(aCx);
-  if (!JS::CompileFunction(aCx, aTarget, aOptions,
+  JS::Rooted<JSFunction*> fun(cx);
+  if (!JS::CompileFunction(cx, aScopeChain, aOptions,
                            PromiseFlatCString(aName).get(),
                            aArgCount, aArgArray,
                            PromiseFlatString(aBody).get(),
                            aBody.Length(), &fun))
   {
-    ReportPendingException(aCx);
     return NS_ERROR_FAILURE;
   }
 

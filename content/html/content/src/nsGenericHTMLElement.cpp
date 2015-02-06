@@ -347,7 +347,7 @@ nsGenericHTMLElement::GetOffsetRect(CSSIntRect& aRect)
   }
 
   nsIContent* offsetParent = nullptr;
-  Element* docElement = GetCurrentDoc()->GetRootElement();
+  Element* docElement = GetComposedDoc()->GetRootElement();
   nsIContent* content = frame->GetContent();
 
   if (content && (content->IsHTML(nsGkAtoms::body) || content == docElement)) {
@@ -398,7 +398,7 @@ nsGenericHTMLElement::GetOffsetRect(CSSIntRect& aRect)
       // parent chain. We want the offset parent in this case to be
       // the body, so we just get the body element from the document.
 
-      nsCOMPtr<nsIDOMHTMLDocument> html_doc(do_QueryInterface(GetCurrentDoc()));
+      nsCOMPtr<nsIDOMHTMLDocument> html_doc(do_QueryInterface(GetComposedDoc()));
 
       if (html_doc) {
         offsetParent = static_cast<nsHTMLDocument*>(html_doc.get())->GetBody();
@@ -580,7 +580,8 @@ nsGenericHTMLElement::UnbindFromTree(bool aDeep, bool aNullParent)
   RemoveFromNameTable();
 
   if (GetContentEditableValue() == eTrue) {
-    nsCOMPtr<nsIHTMLDocument> htmlDocument = do_QueryInterface(GetCurrentDoc());
+    //XXXsmaug Fix this for Shadow DOM, bug 1066965.
+    nsCOMPtr<nsIHTMLDocument> htmlDocument = do_QueryInterface(GetUncomposedDoc());
     if (htmlDocument) {
       htmlDocument->ChangeContentEditableCount(this, -1);
     }
@@ -780,7 +781,7 @@ nsGenericHTMLElement::GetEventListenerManagerForAttr(nsIAtom* aAttrName,
     // If we have a document, and it has a window, add the event
     // listener on the window (the inner window). If not, proceed as
     // normal.
-    // XXXbz sXBL/XBL2 issue: should we instead use GetCurrentDoc() here,
+    // XXXbz sXBL/XBL2 issue: should we instead use GetComposedDoc() here,
     // override BindToTree for those classes and munge event listeners there?
     nsIDocument *document = OwnerDoc();
 
@@ -1766,44 +1767,14 @@ nsGenericHTMLElement::GetURIListAttr(nsIAtom* aAttr, nsAString& aResult)
   return NS_OK;
 }
 
-void
-nsGenericHTMLElement::GetEnumAttr(nsIAtom* aAttr,
-                                  const char* aDefault,
-                                  nsAString& aResult) const
-{
-  GetEnumAttr(aAttr, aDefault, aDefault, aResult);
-}
-
-void
-nsGenericHTMLElement::GetEnumAttr(nsIAtom* aAttr,
-                                  const char* aDefaultMissing,
-                                  const char* aDefaultInvalid,
-                                  nsAString& aResult) const
-{
-  const nsAttrValue* attrVal = mAttrsAndChildren.GetAttr(aAttr);
-
-  aResult.Truncate();
-
-  if (!attrVal) {
-    if (aDefaultMissing) {
-      AppendASCIItoUTF16(nsDependentCString(aDefaultMissing), aResult);
-    }
-  } else {
-    if (attrVal->Type() == nsAttrValue::eEnum) {
-      attrVal->GetEnumString(aResult, true);
-    } else if (aDefaultInvalid) {
-      AppendASCIItoUTF16(nsDependentCString(aDefaultInvalid), aResult);
-    }
-  }
-}
-
 HTMLMenuElement*
 nsGenericHTMLElement::GetContextMenu() const
 {
   nsAutoString value;
   GetHTMLAttr(nsGkAtoms::contextmenu, value);
   if (!value.IsEmpty()) {
-    nsIDocument* doc = GetCurrentDoc();
+    //XXXsmaug How should this work in Shadow DOM?
+    nsIDocument* doc = GetUncomposedDoc();
     if (doc) {
       return HTMLMenuElement::FromContentOrNull(doc->GetElementById(value));
     }
@@ -2061,7 +2032,7 @@ nsGenericHTMLFormElement::BindToTree(nsIDocument* aDocument,
   // wouldn't be possible to find a form ancestor.
   // We should not call UpdateFormOwner if none of these conditions are
   // fulfilled.
-  if (HasAttr(kNameSpaceID_None, nsGkAtoms::form) ? !!GetCurrentDoc()
+  if (HasAttr(kNameSpaceID_None, nsGkAtoms::form) ? !!GetUncomposedDoc()
                                                   : !!aParent) {
     UpdateFormOwner(true, nullptr);
   }
@@ -2213,7 +2184,8 @@ nsGenericHTMLFormElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
 
     if (aName == nsGkAtoms::form) {
       // We need a new form id observer.
-      nsIDocument* doc = GetCurrentDoc();
+      //XXXsmaug How should this work in Shadow DOM?
+      nsIDocument* doc = GetUncomposedDoc();
       if (doc) {
         Element* formIdElement = nullptr;
         if (aValue && !aValue->IsEmptyString()) {
@@ -2379,8 +2351,8 @@ nsGenericHTMLFormElement::FocusState()
 Element*
 nsGenericHTMLFormElement::AddFormIdObserver()
 {
-  NS_ASSERTION(GetCurrentDoc(), "When adding a form id observer, "
-                                "we should be in a document!");
+  NS_ASSERTION(GetUncomposedDoc(), "When adding a form id observer, "
+                                   "we should be in a document!");
 
   nsAutoString formId;
   nsIDocument* doc = OwnerDoc();
@@ -2400,8 +2372,8 @@ nsGenericHTMLFormElement::RemoveFormIdObserver()
    * element actually being in the tree. If it is not and @form value changes,
    * this method will be called for nothing but removing an observer which does
    * not exist doesn't cost so much (no entry in the hash table) so having a
-   * boolean for GetCurrentDoc()/GetOwnerDoc() would make everything look more
-   * complex for nothing.
+   * boolean for GetUncomposedDoc()/GetOwnerDoc() would make everything look
+   * more complex for nothing.
    */
 
   nsIDocument* doc = OwnerDoc();
@@ -2480,10 +2452,10 @@ nsGenericHTMLFormElement::UpdateFormOwner(bool aBindToTree,
           element = aFormIdElement;
         }
 
-        NS_ASSERTION(GetCurrentDoc(), "The element should be in a document "
-                                      "when UpdateFormOwner is called!");
-        NS_ASSERTION(!GetCurrentDoc() ||
-                     element == GetCurrentDoc()->GetElementById(formId),
+        NS_ASSERTION(GetUncomposedDoc(), "The element should be in a document "
+                                         "when UpdateFormOwner is called!");
+        NS_ASSERTION(!GetUncomposedDoc() ||
+                     element == GetUncomposedDoc()->GetElementById(formId),
                      "element should be equals to the current element "
                      "associated with the id in @form!");
 
@@ -2796,7 +2768,7 @@ nsGenericHTMLElement::IsCurrentBodyElement()
   }
 
   nsCOMPtr<nsIDOMHTMLDocument> htmlDocument =
-    do_QueryInterface(GetCurrentDoc());
+    do_QueryInterface(GetUncomposedDoc());
   if (!htmlDocument) {
     return false;
   }
@@ -2853,7 +2825,7 @@ nsGenericHTMLElement::RecompileScriptEventListeners()
 bool
 nsGenericHTMLElement::IsEditableRoot() const
 {
-  nsIDocument *document = GetCurrentDoc();
+  nsIDocument *document = GetComposedDoc();
   if (!document) {
     return false;
   }
@@ -2899,7 +2871,8 @@ MakeContentDescendantsEditable(nsIContent *aContent, nsIDocument *aDocument)
 void
 nsGenericHTMLElement::ChangeEditableState(int32_t aChange)
 {
-  nsIDocument* document = GetCurrentDoc();
+  //XXXsmaug Fix this for Shadow DOM, bug 1066965.
+  nsIDocument* document = GetUncomposedDoc();
   if (!document) {
     return;
   }

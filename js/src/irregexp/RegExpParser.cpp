@@ -76,7 +76,7 @@ RegExpBuilder::FlushText()
 }
 
 void
-RegExpBuilder::AddCharacter(jschar c)
+RegExpBuilder::AddCharacter(char16_t c)
 {
     pending_empty_ = false;
     if (characters_ == nullptr)
@@ -163,7 +163,7 @@ RegExpBuilder::AddQuantifierToAtom(int min, int max,
     }
     RegExpTree* atom;
     if (characters_ != nullptr) {
-        JS_ASSERT(last_added_ == ADD_CHAR);
+        MOZ_ASSERT(last_added_ == ADD_CHAR);
         // Last atom was character.
         CharacterVector *char_vector = characters_;
         int num_chars = char_vector->length();
@@ -178,11 +178,11 @@ RegExpBuilder::AddQuantifierToAtom(int min, int max,
         atom = alloc->newInfallible<RegExpAtom>(char_vector);
         FlushText();
     } else if (text_.length() > 0) {
-        JS_ASSERT(last_added_ == ADD_ATOM);
+        MOZ_ASSERT(last_added_ == ADD_ATOM);
         atom = text_.RemoveLast();
         FlushText();
     } else if (terms_.length() > 0) {
-        JS_ASSERT(last_added_ == ADD_ATOM);
+        MOZ_ASSERT(last_added_ == ADD_ATOM);
         atom = terms_.RemoveLast();
         if (atom->max_match() == 0) {
             // Guaranteed to only match an empty string.
@@ -260,7 +260,7 @@ template <typename CharT>
 size_t
 RegExpParser<CharT>::ParseOctalLiteral()
 {
-    JS_ASSERT('0' <= current() && current() <= '7');
+    MOZ_ASSERT('0' <= current() && current() <= '7');
     // For compatibility with some other browsers (not all), we parse
     // up to three octal digits with a value below 256.
     widechar value = current() - '0';
@@ -320,8 +320,8 @@ template <typename CharT>
 widechar
 RegExpParser<CharT>::ParseClassCharacterEscape()
 {
-    JS_ASSERT(current() == '\\');
-    JS_ASSERT(has_next() && !IsSpecialClassEscape(Next()));
+    MOZ_ASSERT(current() == '\\');
+    MOZ_ASSERT(has_next() && !IsSpecialClassEscape(Next()));
     Advance();
     switch (current()) {
       case 'b':
@@ -397,7 +397,7 @@ RegExpParser<CharT>::ParseClassCharacterEscape()
     return 0;
 }
 
-static const jschar kNoCharClass = 0;
+static const char16_t kNoCharClass = 0;
 
 // Adds range or pre-defined character class to character ranges.
 // If char_class is not kInvalidClass, it's interpreted as a class
@@ -405,7 +405,7 @@ static const jschar kNoCharClass = 0;
 static inline void
 AddRangeOrEscape(LifoAlloc *alloc,
                  CharacterRangeVector *ranges,
-                 jschar char_class,
+                 char16_t char_class,
                  CharacterRange range)
 {
     if (char_class != kNoCharClass)
@@ -418,7 +418,7 @@ template <typename CharT>
 RegExpTree*
 RegExpParser<CharT>::ParseCharacterClass()
 {
-    JS_ASSERT(current() == '[');
+    MOZ_ASSERT(current() == '[');
     Advance();
     bool is_negated = false;
     if (current() == '^') {
@@ -427,7 +427,7 @@ RegExpParser<CharT>::ParseCharacterClass()
     }
     CharacterRangeVector *ranges = alloc->newInfallible<CharacterRangeVector>(*alloc);
     while (has_more() && current() != ']') {
-        jschar char_class = kNoCharClass;
+        char16_t char_class = kNoCharClass;
         CharacterRange first;
         if (!ParseClassAtom(&char_class, &first))
             return nullptr;
@@ -442,7 +442,7 @@ RegExpParser<CharT>::ParseCharacterClass()
                 ranges->append(CharacterRange::Singleton('-'));
                 break;
             }
-            jschar char_class_2 = kNoCharClass;
+            char16_t char_class_2 = kNoCharClass;
             CharacterRange next;
             if (!ParseClassAtom(&char_class_2, &next))
                 return nullptr;
@@ -472,9 +472,9 @@ RegExpParser<CharT>::ParseCharacterClass()
 
 template <typename CharT>
 bool
-RegExpParser<CharT>::ParseClassAtom(jschar* char_class, CharacterRange *char_range)
+RegExpParser<CharT>::ParseClassAtom(char16_t* char_class, CharacterRange *char_range)
 {
-    JS_ASSERT(*char_class == kNoCharClass);
+    MOZ_ASSERT(*char_class == kNoCharClass);
     widechar first = current();
     if (first == '\\') {
         switch (Next()) {
@@ -541,7 +541,7 @@ RegExpParser<CharT>::ScanForCaptures()
 inline bool
 IsInRange(int value, int lower_limit, int higher_limit)
 {
-    JS_ASSERT(lower_limit <= higher_limit);
+    MOZ_ASSERT(lower_limit <= higher_limit);
     return static_cast<unsigned int>(value - lower_limit) <=
            static_cast<unsigned int>(higher_limit - lower_limit);
 }
@@ -557,8 +557,8 @@ template <typename CharT>
 bool
 RegExpParser<CharT>::ParseBackReferenceIndex(int* index_out)
 {
-    JS_ASSERT('\\' == current());
-    JS_ASSERT('1' <= Next() && Next() <= '9');
+    MOZ_ASSERT('\\' == current());
+    MOZ_ASSERT('1' <= Next() && Next() <= '9');
 
     // Try to parse a decimal literal that is no greater than the total number
     // of left capturing parentheses in the input.
@@ -604,7 +604,7 @@ template <typename CharT>
 bool
 RegExpParser<CharT>::ParseIntervalQuantifier(int* min_out, int* max_out)
 {
-    JS_ASSERT(current() == '{');
+    MOZ_ASSERT(current() == '{');
     const CharT *start = position();
     Advance();
     int min = 0;
@@ -669,7 +669,7 @@ RegExpTree *
 RegExpParser<CharT>::ParsePattern()
 {
     RegExpTree* result = ParseDisjunction();
-    JS_ASSERT_IF(result, !has_more());
+    MOZ_ASSERT_IF(result, !has_more());
     return result;
 }
 
@@ -699,13 +699,13 @@ RegExpParser<CharT>::ParseDisjunction()
                 // Inside a parenthesized group when hitting end of input.
                 return ReportError(JSMSG_MISSING_PAREN);
             }
-            JS_ASSERT(INITIAL == stored_state->group_type());
+            MOZ_ASSERT(INITIAL == stored_state->group_type());
             // Parsing completed successfully.
             return builder->ToRegExp();
           case ')': {
             if (!stored_state->IsSubexpression())
                 return ReportError(JSMSG_UNMATCHED_RIGHT_PAREN);
-            JS_ASSERT(INITIAL != stored_state->group_type());
+            MOZ_ASSERT(INITIAL != stored_state->group_type());
 
             Advance();
             // End disjunction parsing and convert builder content to new single
@@ -727,8 +727,8 @@ RegExpParser<CharT>::ParseDisjunction()
                 (*captures_)[capture_index - 1] = capture;
                 body = capture;
             } else if (group_type != GROUPING) {
-                JS_ASSERT(group_type == POSITIVE_LOOKAHEAD ||
-                          group_type == NEGATIVE_LOOKAHEAD);
+                MOZ_ASSERT(group_type == POSITIVE_LOOKAHEAD ||
+                           group_type == NEGATIVE_LOOKAHEAD);
                 bool is_positive = (group_type == POSITIVE_LOOKAHEAD);
                 body = alloc->newInfallible<RegExpLookahead>(body,
                                                    is_positive,
@@ -997,13 +997,34 @@ RegExpParser<CharT>::ParseDisjunction()
 }
 
 template class irregexp::RegExpParser<Latin1Char>;
-template class irregexp::RegExpParser<jschar>;
+template class irregexp::RegExpParser<char16_t>;
 
 template <typename CharT>
 static bool
 ParsePattern(frontend::TokenStream &ts, LifoAlloc &alloc, const CharT *chars, size_t length,
-             bool multiline, RegExpCompileData *data)
+             bool multiline, bool match_only, RegExpCompileData *data)
 {
+    if (match_only) {
+        // Try to strip a leading '.*' from the RegExp, but only if it is not
+        // followed by a '?' (which will affect how the .* is parsed). This
+        // pattern will affect the captures produced by the RegExp, but not
+        // whether there is a match or not.
+        if (length >= 3 && chars[0] == '.' && chars[1] == '*' && chars[2] != '?') {
+            chars += 2;
+            length -= 2;
+        }
+
+        // Try to strip a trailing '.*' from the RegExp, which as above will
+        // affect the captures but not whether there is a match. Only do this
+        // when there are no other meta characters in the RegExp, so that we
+        // are sure this will not affect how the RegExp is parsed.
+        if (length >= 3 && !HasRegExpMetaChars(chars, length - 2) &&
+            chars[length - 2] == '.' && chars[length - 1] == '*')
+        {
+            length -= 2;
+        }
+    }
+
     RegExpParser<CharT> parser(ts, &alloc, chars, chars + length, multiline);
     data->tree = parser.ParsePattern();
     if (!data->tree)
@@ -1016,13 +1037,16 @@ ParsePattern(frontend::TokenStream &ts, LifoAlloc &alloc, const CharT *chars, si
 }
 
 bool
-irregexp::ParsePattern(frontend::TokenStream &ts, LifoAlloc &alloc, JSAtom *str, bool multiline,
+irregexp::ParsePattern(frontend::TokenStream &ts, LifoAlloc &alloc, JSAtom *str,
+                       bool multiline, bool match_only,
                        RegExpCompileData *data)
 {
     JS::AutoCheckCannotGC nogc;
     return str->hasLatin1Chars()
-           ? ::ParsePattern(ts, alloc, str->latin1Chars(nogc), str->length(), multiline, data)
-           : ::ParsePattern(ts, alloc, str->twoByteChars(nogc), str->length(), multiline, data);
+           ? ::ParsePattern(ts, alloc, str->latin1Chars(nogc), str->length(),
+                            multiline, match_only, data)
+           : ::ParsePattern(ts, alloc, str->twoByteChars(nogc), str->length(),
+                            multiline, match_only, data);
 }
 
 template <typename CharT>

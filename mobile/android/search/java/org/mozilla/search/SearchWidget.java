@@ -5,19 +5,22 @@
 
 package org.mozilla.search;
 
+import org.mozilla.gecko.AboutPages;
 import org.mozilla.gecko.AppConstants;
+import org.mozilla.gecko.R;
+import org.mozilla.gecko.Telemetry;
+import org.mozilla.gecko.TelemetryContract;
 
 import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
+import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.widget.RemoteViews;
-import android.util.Log;
 
 /* Provides a really simple widget with two buttons, one to launch Fennec
  * and one to launch the search activity. All intents are actually sent back
@@ -59,37 +62,39 @@ public class SearchWidget extends AppWidgetProvider {
 
     @Override
     public void onReceive(final Context context, final Intent intent) {
-        // This will hold the intent to redispatch
+        // This will hold the intent to redispatch.
         final Intent redirect;
-        Log.i(LOGTAG, "Got intent  " + intent.getAction());
-        if (intent.getAction().equals(ACTION_LAUNCH_BROWSER)) {
-            redirect = buildRedirectIntent(Intent.ACTION_MAIN,
-                    AppConstants.ANDROID_PACKAGE_NAME,
-                    AppConstants.BROWSER_INTENT_CLASS_NAME,
-                    intent);
-        } else if (intent.getAction().equals(ACTION_LAUNCH_NEW_TAB)) {
+        switch (intent.getAction()) {
+            case ACTION_LAUNCH_BROWSER:
+                redirect = buildRedirectIntent(Intent.ACTION_MAIN,
+                                               AppConstants.ANDROID_PACKAGE_NAME,
+                                               AppConstants.BROWSER_INTENT_CLASS_NAME,
+                                               intent);
+                Telemetry.sendUIEvent(TelemetryContract.Event.LAUNCH,
+                                      TelemetryContract.Method.WIDGET, "browser");
+                break;
+            case ACTION_LAUNCH_NEW_TAB:
                 redirect = buildRedirectIntent(Intent.ACTION_VIEW,
-                        AppConstants.ANDROID_PACKAGE_NAME,
-                        AppConstants.BROWSER_INTENT_CLASS_NAME,
-                        intent);
-        } else if (intent.getAction().equals(ACTION_LAUNCH_SEARCH)) {
-            redirect = buildRedirectIntent(Intent.ACTION_VIEW,
-                    AppConstants.SEARCH_PACKAGE_NAME,
-                    AppConstants.SEARCH_INTENT_CLASS_NAME,
-                    intent);
-        } else {
-            redirect = null;
+                                               AppConstants.ANDROID_PACKAGE_NAME,
+                                               AppConstants.BROWSER_INTENT_CLASS_NAME,
+                                               intent);
+                Telemetry.sendUIEvent(TelemetryContract.Event.LAUNCH,
+                                      TelemetryContract.Method.WIDGET, "new-tab");
+                break;
+            case ACTION_LAUNCH_SEARCH:
+                redirect = buildRedirectIntent(Intent.ACTION_VIEW,
+                                               AppConstants.ANDROID_PACKAGE_NAME,
+                                               AppConstants.SEARCH_INTENT_CLASS_NAME,
+                                               intent);
+                Telemetry.sendUIEvent(TelemetryContract.Event.LAUNCH,
+                                      TelemetryContract.Method.WIDGET, "search");
+                break;
+            default:
+                redirect = null;
         }
 
         if (redirect != null) {
-            try {
-                context.startActivity(redirect);
-            } catch(Exception ex) {
-                // When this is built stand alone, its hardcoded to try and launch nightly.
-                // If that fails, just fire a generic VIEW intent.
-                Intent redirect2 = buildRedirectIntent(Intent.ACTION_VIEW, null, null, intent);
-                context.startActivity(redirect2);
-            }
+            context.startActivity(redirect);
         }
 
         super.onReceive(context, intent);
@@ -97,9 +102,22 @@ public class SearchWidget extends AppWidgetProvider {
 
     // Utility to create the view for this widget and attach any event listeners to it
     private void addView(final AppWidgetManager manager, final Context context, final int id, final Bundle options) {
-        final RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.search_widget);
+        final boolean isKeyguard;
+        if (options != null) {
+            final int category = options.getInt(AppWidgetManager.OPTION_APPWIDGET_HOST_CATEGORY, -1);
+            isKeyguard = category == AppWidgetProviderInfo.WIDGET_CATEGORY_KEYGUARD;
+        } else {
+            isKeyguard = false;
+        }
 
-        addClickIntent(context, views, R.id.search_button, ACTION_LAUNCH_SEARCH);
+        final RemoteViews views;
+        if (isKeyguard) {
+            views = new RemoteViews(context.getPackageName(), R.layout.keyguard_widget);
+        } else {
+            views = new RemoteViews(context.getPackageName(), R.layout.search_widget);
+            addClickIntent(context, views, R.id.search_button, ACTION_LAUNCH_SEARCH);
+        }
+
         addClickIntent(context, views, R.id.new_tab_button, ACTION_LAUNCH_NEW_TAB);
         // Clicking the logo also launches the browser
         addClickIntent(context, views, R.id.logo_button, ACTION_LAUNCH_BROWSER);
@@ -111,7 +129,7 @@ public class SearchWidget extends AppWidgetProvider {
     private void addClickIntent(final Context context, final RemoteViews views, final int viewId, final String action) {
         final Intent intent = new Intent(context, SearchWidget.class);
         intent.setAction(action);
-        intent.setData(Uri.parse("about:home"));
+        intent.setData(Uri.parse(AboutPages.HOME));
         final PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
         views.setOnClickPendingIntent(viewId, pendingIntent);
     }

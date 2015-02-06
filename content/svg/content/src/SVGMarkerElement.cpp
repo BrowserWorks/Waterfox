@@ -14,7 +14,10 @@
 #include "mozilla/dom/SVGMarkerElementBinding.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/gfx/Matrix.h"
+#include "mozilla/FloatingPoint.h"
 #include "SVGContentUtils.h"
+
+using namespace mozilla::gfx;
 
 NS_IMPL_NS_NEW_NAMESPACED_SVG_ELEMENT(Marker)
 
@@ -171,7 +174,7 @@ void
 SVGMarkerElement::SetOrientToAngle(SVGAngle& angle, ErrorResult& rv)
 {
   float f = angle.Value();
-  if (!NS_finite(f)) {
+  if (!IsFinite(f)) {
     rv.Throw(NS_ERROR_DOM_SVG_WRONG_TYPE_ERR);
     return;
   }
@@ -359,7 +362,8 @@ SVGMarkerElement::GetViewBoxTransform()
 
     gfx::Point ref = viewBoxTM * gfx::Point(refX, refY);
 
-    gfx::Matrix TM = viewBoxTM * gfx::Matrix().Translate(-ref.x, -ref.y);
+    Matrix TM = viewBoxTM;
+    TM.PostTranslate(-ref.x, -ref.y);
 
     mViewBoxToViewportTransform = new gfx::Matrix(TM);
   }

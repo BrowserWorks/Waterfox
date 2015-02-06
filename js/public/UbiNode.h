@@ -10,6 +10,7 @@
 #include "mozilla/Alignment.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/MemoryReporting.h"
 #include "mozilla/Move.h"
 
 #include "jspubtd.h"
@@ -135,20 +136,6 @@
 // keys, etc.
 
 
-// Forward declarations of SpiderMonkey's ubi::Node reference types.
-namespace js {
-class LazyScript;
-class Shape;
-class BaseShape;
-namespace jit {
-class JitCode;
-}
-namespace types {
-struct TypeObject;
-}
-}
-
-
 namespace JS {
 namespace ubi {
 
@@ -188,11 +175,13 @@ class Base {
     //
     // This must always return Concrete<T>::concreteTypeName; we use that
     // pointer as a tag for this particular referent type.
-    virtual const jschar *typeName() const = 0;
+    virtual const char16_t *typeName() const = 0;
 
     // Return the size of this node, in bytes. Include any structures that this
     // node owns exclusively that are not exposed as their own ubi::Nodes.
-    virtual size_t size() const = 0;
+    // |mallocSizeOf| should be a malloc block sizing function; see
+    // |mfbt/MemoryReporting.h.
+    virtual size_t size(mozilla::MallocSizeOf mallocSizeof) const { return 0; }
 
     // Return an EdgeRange that initially contains all the referent's outgoing
     // edges. The EdgeRange should be freed with 'js_delete'. (You could use
@@ -205,13 +194,13 @@ class Base {
 
     // Return the Zone to which this node's referent belongs, or nullptr if the
     // referent is not of a type allocated in SpiderMonkey Zones.
-    virtual JS::Zone *zone() const = 0;
+    virtual JS::Zone *zone() const { return nullptr; }
 
     // Return the compartment for this node. Some ubi::Node referents are not
     // associated with JSCompartments, such as JSStrings (which are associated
     // with Zones). When the referent is not associated with a compartment,
     // nullptr is returned.
-    virtual JSCompartment *compartment() const = 0;
+    virtual JSCompartment *compartment() const { return nullptr; }
 
   private:
     Base(const Base &rhs) MOZ_DELETE;
@@ -224,8 +213,8 @@ class Base {
 // include the members described here.
 template<typename Referent>
 struct Concrete {
-    // The specific jschar array returned by Concrete<T>::typeName.
-    static const jschar concreteTypeName[];
+    // The specific char16_t array returned by Concrete<T>::typeName.
+    static const char16_t concreteTypeName[];
 
     // Construct an instance of this concrete class in |storage| referring
     // to |referent|. Implementations typically use a placement 'new'.
@@ -285,7 +274,10 @@ class Node {
     }
 
     // Constructors accepting SpiderMonkey's other generic-pointer-ish types.
-    explicit Node(JS::Value value);
+    // Note that we *do* want an implicit constructor here: JS::Value and
+    // JS::ubi::Node are both essentially tagged references to other sorts of
+    // objects, so letting conversions happen automatically is appropriate.
+    MOZ_IMPLICIT Node(JS::HandleValue value);
     Node(JSGCTraceKind kind, void *ptr);
 
     // copy construction and copy assignment just use memcpy, since we know
@@ -334,10 +326,14 @@ class Node {
     // not all!) JSObjects can be exposed.
     JS::Value exposeToJS() const;
 
-    const jschar *typeName()        const { return base()->typeName(); }
-    size_t size()                   const { return base()->size(); }
+    const char16_t *typeName()      const { return base()->typeName(); }
     JS::Zone *zone()                const { return base()->zone(); }
     JSCompartment *compartment()    const { return base()->compartment(); }
+
+    size_t size(mozilla::MallocSizeOf mallocSizeof) const {
+        return base()->size(mallocSizeof);
+    }
+
     EdgeRange *edges(JSContext *cx, bool wantNames = true) const {
         return base()->edges(cx, wantNames);
     }
@@ -379,7 +375,7 @@ class Edge {
     // (In real life we'll want a better representation for names, to avoid
     // creating tons of strings when the names follow a pattern; and we'll need
     // to think about lifetimes carefully to ensure traversal stays cheap.)
-    const jschar *name;
+    const char16_t *name;
 
     // This edge's referent.
     Node referent;
@@ -432,18 +428,16 @@ class EdgeRange {
 // JS_TraceChildren.
 template<typename Referent>
 class TracerConcrete : public Base {
-    const jschar *typeName() const MOZ_OVERRIDE { return concreteTypeName; }
-    size_t size() const MOZ_OVERRIDE { return 0; } // not implemented yet; bug 1011300
+    const char16_t *typeName() const MOZ_OVERRIDE { return concreteTypeName; }
     EdgeRange *edges(JSContext *, bool wantNames) const MOZ_OVERRIDE;
-    JS::Zone *zone() const MOZ_OVERRIDE { return get().zone(); }
-    JSCompartment *compartment() const MOZ_OVERRIDE { return nullptr; }
+    JS::Zone *zone() const MOZ_OVERRIDE;
 
   protected:
     explicit TracerConcrete(Referent *ptr) : Base(ptr) { }
     Referent &get() const { return *static_cast<Referent *>(ptr); }
 
   public:
-    static const jschar concreteTypeName[];
+    static const char16_t concreteTypeName[];
     static void construct(void *storage, Referent *ptr) { new (storage) TracerConcrete(ptr); }
 };
 
@@ -451,11 +445,9 @@ class TracerConcrete : public Base {
 template<typename Referent>
 class TracerConcreteWithCompartment : public TracerConcrete<Referent> {
     typedef TracerConcrete<Referent> TracerBase;
-    JSCompartment *compartment() const MOZ_OVERRIDE {
-        return TracerBase::get().compartment();
-    }
+    JSCompartment *compartment() const MOZ_OVERRIDE;
 
-    TracerConcreteWithCompartment(Referent *ptr) : TracerBase(ptr) { }
+    explicit TracerConcreteWithCompartment(Referent *ptr) : TracerBase(ptr) { }
 
   public:
     static void construct(void *storage, Referent *ptr) {
@@ -463,21 +455,17 @@ class TracerConcreteWithCompartment : public TracerConcrete<Referent> {
     }
 };
 
+// Define specializations for some commonly-used public JSAPI types.
 template<> struct Concrete<JSObject> : TracerConcreteWithCompartment<JSObject> { };
 template<> struct Concrete<JSString> : TracerConcrete<JSString> { };
 template<> struct Concrete<JS::Symbol> : TracerConcrete<JS::Symbol> { };
 template<> struct Concrete<JSScript> : TracerConcreteWithCompartment<JSScript> { };
-template<> struct Concrete<js::LazyScript> : TracerConcrete<js::LazyScript> { };
-template<> struct Concrete<js::jit::JitCode> : TracerConcrete<js::jit::JitCode> { };
-template<> struct Concrete<js::Shape> : TracerConcreteWithCompartment<js::Shape> { };
-template<> struct Concrete<js::BaseShape> : TracerConcreteWithCompartment<js::BaseShape> { };
-template<> struct Concrete<js::types::TypeObject> : TracerConcrete<js::types::TypeObject> { };
 
 // The ubi::Node null pointer. Any attempt to operate on a null ubi::Node asserts.
 template<>
 class Concrete<void> : public Base {
-    const jschar *typeName() const MOZ_OVERRIDE;
-    size_t size() const MOZ_OVERRIDE;
+    const char16_t *typeName() const MOZ_OVERRIDE;
+    size_t size(mozilla::MallocSizeOf mallocSizeOf) const MOZ_OVERRIDE;
     EdgeRange *edges(JSContext *cx, bool wantNames) const MOZ_OVERRIDE;
     JS::Zone *zone() const MOZ_OVERRIDE;
     JSCompartment *compartment() const MOZ_OVERRIDE;
@@ -486,7 +474,7 @@ class Concrete<void> : public Base {
 
   public:
     static void construct(void *storage, void *ptr) { new (storage) Concrete(ptr); }
-    static const jschar concreteTypeName[];
+    static const char16_t concreteTypeName[];
 };
 
 

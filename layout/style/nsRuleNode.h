@@ -426,6 +426,8 @@ protected:
   void PropagateDependentBit(nsStyleStructID aSID, nsRuleNode* aHighestNode,
                              void* aStruct);
   void PropagateNoneBit(uint32_t aBit, nsRuleNode* aHighestNode);
+  static void PropagateGrandancestorBit(nsStyleContext* aContext,
+                                        nsStyleContext* aContextInheritedFrom);
 
   const void* SetDefaultOnRoot(const nsStyleStructID aSID,
                                nsStyleContext* aContext);
@@ -663,6 +665,11 @@ protected:
                                 nsStyleContext* aStyleContext,
                                 nsPresContext* aPresContext,
                                 bool& aCanStoreInRuleTree);
+  void SetStyleClipPathToCSSValue(nsStyleClipPath* aStyleClipPath,
+                                  const nsCSSValue* aValue,
+                                  nsStyleContext* aStyleContext,
+                                  nsPresContext* aPresContext,
+                                  bool& aCanStoreInRuleTree);
 
 private:
   nsRuleNode(nsPresContext* aPresContext, nsRuleNode* aParent,
@@ -681,6 +688,12 @@ public:
                          bool aIsImportantRule);
   nsRuleNode* GetParent() const { return mParent; }
   bool IsRoot() const { return mParent == nullptr; }
+
+  // Return the root of the rule tree that this rule node is in.
+  nsRuleNode* RuleTree();
+  const nsRuleNode* RuleTree() const {
+    return const_cast<nsRuleNode*>(this)->RuleTree();
+  }
 
   // These uint8_ts are really nsStyleSet::sheetType values.
   uint8_t GetLevel() const {

@@ -69,7 +69,7 @@ ClipToContain(gfxContext* aContext, const nsIntRect& aRect)
   deviceRect.RoundOut();
 
   gfxMatrix currentMatrix = aContext->CurrentMatrix();
-  aContext->IdentityMatrix();
+  aContext->SetMatrix(gfxMatrix());
   aContext->NewPath();
   aContext->Rectangle(deviceRect);
   aContext->Clip();
@@ -126,7 +126,7 @@ ToInsideIntRect(const gfxRect& aRect)
 class PaintLayerContext {
 public:
   PaintLayerContext(gfxContext* aTarget, Layer* aLayer,
-                    LayerManager::DrawThebesLayerCallback aCallback,
+                    LayerManager::DrawPaintedLayerCallback aCallback,
                     void* aCallbackData)
    : mTarget(aTarget)
    , mTargetMatrixSR(aTarget)
@@ -196,7 +196,7 @@ public:
   gfxContext* mTarget;
   gfxContextMatrixAutoSaveRestore mTargetMatrixSR;
   Layer* mLayer;
-  LayerManager::DrawThebesLayerCallback mCallback;
+  LayerManager::DrawPaintedLayerCallback mCallback;
   void* mCallbackData;
   Matrix mTransform;
   bool mPushedOpaqueRect;
@@ -445,7 +445,7 @@ ApplyDoubleBuffering(Layer* aLayer, const nsIntRect& aVisibleRect)
 }
 
 void
-BasicLayerManager::EndTransaction(DrawThebesLayerCallback aCallback,
+BasicLayerManager::EndTransaction(DrawPaintedLayerCallback aCallback,
                                   void* aCallbackData,
                                   EndTransactionFlags aFlags)
 {
@@ -464,7 +464,7 @@ BasicLayerManager::AbortTransaction()
 }
 
 bool
-BasicLayerManager::EndTransactionInternal(DrawThebesLayerCallback aCallback,
+BasicLayerManager::EndTransactionInternal(DrawPaintedLayerCallback aCallback,
                                           void* aCallbackData,
                                           EndTransactionFlags aFlags)
 {
@@ -727,7 +727,7 @@ BasicLayerManager::PaintSelfOrChildren(PaintLayerContext& aPaintContext,
   /* Only paint ourself, or our children - This optimization relies on this! */
   Layer* child = aPaintContext.mLayer->GetFirstChild();
   if (!child) {
-    if (aPaintContext.mLayer->AsThebesLayer()) {
+    if (aPaintContext.mLayer->AsPaintedLayer()) {
       data->PaintThebes(aGroupTarget, aPaintContext.mLayer->GetMaskLayer(),
           aPaintContext.mCallback, aPaintContext.mCallbackData);
     } else {
@@ -778,7 +778,7 @@ BasicLayerManager::FlushGroup(PaintLayerContext& aPaintContext, bool aNeedsClipT
 void
 BasicLayerManager::PaintLayer(gfxContext* aTarget,
                               Layer* aLayer,
-                              DrawThebesLayerCallback aCallback,
+                              DrawPaintedLayerCallback aCallback,
                               void* aCallbackData)
 {
   PROFILER_LABEL("BasicLayerManager", "PaintLayer",
@@ -797,11 +797,10 @@ BasicLayerManager::PaintLayer(gfxContext* aTarget,
   const nsIntRect* clipRect = aLayer->GetEffectiveClipRect();
   BasicContainerLayer* container =
     static_cast<BasicContainerLayer*>(aLayer->AsContainerLayer());
-  bool needsGroup = container &&
-                    container->UseIntermediateSurface();
+  bool needsGroup = container && container->UseIntermediateSurface();
   BasicImplData* data = ToData(aLayer);
   bool needsClipToVisibleRegion =
-    data->GetClipToVisibleRegion() && !aLayer->AsThebesLayer();
+    data->GetClipToVisibleRegion() && !aLayer->AsPaintedLayer();
   NS_ASSERTION(needsGroup || !container ||
                container->GetOperator() == CompositionOp::OP_OVER,
                "non-OVER operator should have forced UseIntermediateSurface");
@@ -813,7 +812,7 @@ BasicLayerManager::PaintLayer(gfxContext* aTarget,
   gfxMatrix transform;
   // Will return an identity matrix for 3d transforms, and is handled separately below.
   bool is2D = paintLayerContext.Setup2DTransform();
-  NS_ABORT_IF_FALSE(is2D || needsGroup || !aLayer->GetFirstChild(), "Must PushGroup for 3d transforms!");
+  NS_ABORT_IF_FALSE(is2D || needsGroup || !container, "Must PushGroup for 3d transforms!");
 
   bool needsSaveRestore =
     needsGroup || clipRect || needsClipToVisibleRegion || !is2D;

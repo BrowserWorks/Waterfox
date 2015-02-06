@@ -5,7 +5,7 @@
 #aboutDialogContainer {
   background-image: url("chrome://branding/content/about-background.png");
   background-repeat: no-repeat;
-  background-color: rgb(19,8,36);
+  background-color: rgb(26,58,99);
   color: #fff;
 }
 
@@ -25,5 +25,10 @@
 }
 
 #bottomBox {
+  padding: 15px 10px 15px;
   background-color: rgba(0,0,0,.7);
+}
+
+#version {
+  margin-top: 30px;
 }

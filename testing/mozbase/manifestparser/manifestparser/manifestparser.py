@@ -12,6 +12,7 @@ __all__ = ['read_ini', # .ini reader
            'ManifestParser', 'TestManifest', 'convert', # manifest handling
            'parse', 'ParseError', 'ExpressionParser'] # conditional expression parser
 
+import json
 import fnmatch
 import os
 import re
@@ -384,7 +385,14 @@ def read_ini(fp, variables=None, default='DEFAULT',
         if 'skip-if' in local_dict and 'skip-if' in variables:
             local_dict['skip-if'] = "(%s) || (%s)" % (variables['skip-if'].split('#')[0], local_dict['skip-if'].split('#')[0])
         variables.update(local_dict)
-            
+
+        # server-root is an os path declared relative to the manifest file.
+        # inheritance demands we expand it as absolute
+        if 'server-root' in variables:
+            root = os.path.join(os.path.dirname(fp.name),
+                                variables['server-root'])
+            variables['server-root'] = os.path.abspath(root)
+
         return variables
 
     sections = [(i, interpret_variables(variables, j)) for i, j in sections]
@@ -398,6 +406,7 @@ class ManifestParser(object):
 
     def __init__(self, manifests=(), defaults=None, strict=True):
         self._defaults = defaults or {}
+        self._ancestor_defaults = {}
         self.tests = []
         self.manifest_defaults = {}
         self.strict = strict
@@ -411,7 +420,30 @@ class ManifestParser(object):
 
     ### methods for reading manifests
 
-    def _read(self, root, filename, defaults):
+    def _read(self, root, filename, defaults, defaults_only=False):
+        """
+        Internal recursive method for reading and parsing manifests.
+        Stores all found tests in self.tests
+        :param root: The base path
+        :param filename: File object or string path for the base manifest file
+        :param defaults: Options that apply to all items
+        :param defaults_only: If True will only gather options, not include
+                              tests. Used for upstream parent includes
+                              (default False)
+        """
+        def read_file(type):
+            include_file = section.split(type, 1)[-1]
+            include_file = normalize_path(include_file)
+            if not os.path.isabs(include_file):
+                include_file = os.path.join(self.getRelativeRoot(here), include_file)
+            if not os.path.exists(include_file):
+                message = "Included file '%s' does not exist" % include_file
+                if self.strict:
+                    raise IOError(message)
+                else:
+                    sys.stderr.write("%s\n" % message)
+                    return
+            return include_file
 
         # get directory of this file if not file-like object
         if isinstance(filename, string):
@@ -441,26 +473,32 @@ class ManifestParser(object):
             if 'subsuite' in data:
                 subsuite = data['subsuite']
 
+            # read the parent manifest if specified
+            if section.startswith('parent:'):
+                include_file = read_file('parent:')
+                if include_file:
+                    self._read(root, include_file, {}, True)
+                continue
+
+            # If this is a parent include we only load the defaults into ancestor
+            if defaults_only:
+                self._ancestor_defaults = dict(data.items() + self._ancestor_defaults.items())
+                break
+
             # a file to include
             # TODO: keep track of included file structure:
             # self.manifests = {'manifest.ini': 'relative/path.ini'}
             if section.startswith('include:'):
-                include_file = section.split('include:', 1)[-1]
-                include_file = normalize_path(include_file)
-                if not os.path.isabs(include_file):
-                    include_file = os.path.join(self.getRelativeRoot(here), include_file)
-                if not os.path.exists(include_file):
-                    message = "Included file '%s' does not exist" % include_file
-                    if self.strict:
-                        raise IOError(message)
-                    else:
-                        sys.stderr.write("%s\n" % message)
-                        continue
-                include_defaults = data.copy()
-                self._read(root, include_file, include_defaults)
+                include_file = read_file('include:')
+                if include_file:
+                    include_defaults = data.copy()
+                    self._read(root, include_file, include_defaults)
                 continue
 
             # otherwise an item
+            # apply ancestor defaults, while maintaining current file priority
+            data = dict(self._ancestor_defaults.items() + data.items())
+
             test = data
             test['name'] = section
 
@@ -623,6 +661,18 @@ class ManifestParser(object):
         return [test for test in tests
                 if not os.path.exists(test['path'])]
 
+    def check_missing(self, tests=None):
+        missing = self.missing(tests=tests)
+        if missing:
+            missing_paths = [test['path'] for test in missing]
+            if self.strict:
+                raise IOError("Strict mode enabled, test paths must exist. "
+                              "The following test(s) are missing: %s" %
+                              json.dumps(missing_paths, indent=2))
+            print >> sys.stderr, "Warning: The following test(s) are missing: %s" % \
+                                  json.dumps(missing_paths, indent=2)
+        return missing
+
     def verifyDirectory(self, directories, pattern=None, extensions=None):
         """
         checks what is on the filesystem vs what is in a manifest
@@ -776,14 +826,13 @@ class ManifestParser(object):
                 # sanity check
                 assert os.path.isdir(dirname)
             shutil.copy(os.path.join(rootdir, manifest), destination)
+
+        missing = self.check_missing(tests)
+        tests = [test for test in tests if test not in missing]
         for test in tests:
             if os.path.isabs(test['name']):
                 continue
             source = test['path']
-            if not os.path.exists(source):
-                print >> sys.stderr, "Missing test: '%s' does not exist!" % source
-                continue
-                # TODO: should err on strict
             destination = os.path.join(directory, relpath(test['path'], rootdir))
             shutil.copy(source, destination)
             # TODO: ensure that all of the tests are below the from_dir
@@ -810,8 +859,10 @@ class ManifestParser(object):
                 _relpath = relpath(test['path'], rootdir)
                 source = os.path.join(from_dir, _relpath)
                 if not os.path.exists(source):
-                    # TODO err on strict
-                    print >> sys.stderr, "Missing test: '%s'; skipping" % test['name']
+                    message = "Missing test: '%s' does not exist!"
+                    if self.strict:
+                        raise IOError(message)
+                    print >> sys.stderr, message + " Skipping."
                     continue
                 destination = os.path.join(rootdir, _relpath)
                 shutil.copy(source, destination)
@@ -1091,9 +1142,33 @@ class TestManifest(ManifestParser):
         """
         - exists : return only existing tests
         - disabled : whether to return disabled tests
-        - tags : keys and values to filter on (e.g. `os = linux mac`)
+        - options: an optparse or argparse options object, used for subsuites
+        - values : keys and values to filter on (e.g. `os = linux mac`)
         """
         tests = [i.copy() for i in self.tests] # shallow copy
+
+        # Conditional subsuites are specified using:
+        #    subsuite = foo,condition
+        # where 'foo' is the subsuite name, and 'condition' is the same type of
+        # condition used for skip-if.  If the condition doesn't evaluate to true,
+        # the subsuite designation will be removed from the test.
+        #
+        # Look for conditional subsuites, and replace them with the subsuite itself
+        # (if the condition is true), or nothing.
+        for test in tests:
+            subsuite = test.get('subsuite')
+            if ',' in subsuite:
+                try:
+                    subsuite, condition = subsuite.split(',')
+                except ValueError:
+                    raise ParseError("subsuite condition can't contain commas")
+                # strip any comments from the condition
+                condition = condition.split('#')[0]
+                matched = parse(condition, **values)
+                if matched:
+                    test['subsuite'] = subsuite
+                else:
+                    test['subsuite'] = ''
 
         # Filter on current subsuite
         if options:
@@ -1108,7 +1183,8 @@ class TestManifest(ManifestParser):
 
         # ignore tests that do not exist
         if exists:
-            tests = [test for test in tests if os.path.exists(test['path'])]
+            missing = self.check_missing(tests)
+            tests = [test for test in tests if test not in missing]
 
         # filter by tags
         self.filter(values, tests)

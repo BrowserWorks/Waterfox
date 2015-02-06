@@ -45,7 +45,7 @@ TypedObjectPrediction::markAsCommonPrefix(const StructTypeDescr &descrA,
             break;
         if (&descrA.fieldDescr(i) != &descrB.fieldDescr(i))
             break;
-        JS_ASSERT(descrA.fieldOffset(i) == descrB.fieldOffset(i));
+        MOZ_ASSERT(descrA.fieldOffset(i) == descrB.fieldOffset(i));
     }
 
     if (i == 0) {
@@ -98,7 +98,7 @@ TypedObjectPrediction::addProto(const TypedProto &proto)
         return;
     }
 
-    MOZ_ASSUME_UNREACHABLE("Bad predictionKind");
+    MOZ_CRASH("Bad predictionKind");
 }
 
 type::Kind
@@ -119,7 +119,7 @@ TypedObjectPrediction::kind() const
         return prefix().descr->kind();
     }
 
-    MOZ_ASSUME_UNREACHABLE("Bad prediction kind");
+    MOZ_CRASH("Bad prediction kind");
 }
 
 bool
@@ -128,7 +128,7 @@ TypedObjectPrediction::ofArrayKind() const
     switch (kind()) {
       case type::Scalar:
       case type::Reference:
-      case type::X4:
+      case type::Simd:
       case type::Struct:
         return false;
 
@@ -137,7 +137,7 @@ TypedObjectPrediction::ofArrayKind() const
         return true;
     }
 
-    MOZ_ASSUME_UNREACHABLE("Bad kind");
+    MOZ_CRASH("Bad kind");
 }
 
 static bool
@@ -162,7 +162,7 @@ TypedObjectPrediction::hasKnownSize(int32_t *out) const
         switch (kind()) {
           case type::Scalar:
           case type::Reference:
-          case type::X4:
+          case type::Simd:
           case type::Struct:
             *out = proto().typeDescr().as<SizedTypeDescr>().size();
             return true;
@@ -172,7 +172,7 @@ TypedObjectPrediction::hasKnownSize(int32_t *out) const
             // The prototype does not track the precise dimensions of arrays.
             return false;
         }
-        MOZ_ASSUME_UNREACHABLE("Unknown kind");
+        MOZ_CRASH("Unknown kind");
 
       case TypedObjectPrediction::Descr:
         return DescrHasKnownSize(descr(), out);
@@ -183,7 +183,7 @@ TypedObjectPrediction::hasKnownSize(int32_t *out) const
         return false;
     }
 
-    MOZ_ASSUME_UNREACHABLE("Bad prediction kind");
+    MOZ_CRASH("Bad prediction kind");
 }
 
 const TypedProto *
@@ -200,13 +200,13 @@ TypedObjectPrediction::getKnownPrototype() const
           case type::Reference:
             return nullptr;
 
-          case type::X4:
+          case type::Simd:
           case type::Struct:
           case type::SizedArray:
           case type::UnsizedArray:
             return &proto();
         }
-        MOZ_ASSUME_UNREACHABLE("Invalid proto().kind()");
+        MOZ_CRASH("Invalid proto().kind()");
 
       case TypedObjectPrediction::Descr:
         if (descr().is<ComplexTypeDescr>())
@@ -219,14 +219,14 @@ TypedObjectPrediction::getKnownPrototype() const
         return nullptr;
     }
 
-    MOZ_ASSUME_UNREACHABLE("Bad prediction kind");
+    MOZ_CRASH("Bad prediction kind");
 }
 
 template<typename T>
 typename T::Type
 TypedObjectPrediction::extractType() const
 {
-    JS_ASSERT(kind() == T::Kind);
+    MOZ_ASSERT(kind() == T::Kind);
     switch (predictionKind()) {
       case TypedObjectPrediction::Empty:
       case TypedObjectPrediction::Inconsistent:
@@ -242,7 +242,7 @@ TypedObjectPrediction::extractType() const
         break; // Prefixes are always structs, never scalars etc
     }
 
-    MOZ_ASSUME_UNREACHABLE("Bad prediction kind");
+    MOZ_CRASH("Bad prediction kind");
 }
 
 ScalarTypeDescr::Type
@@ -257,16 +257,16 @@ TypedObjectPrediction::referenceType() const
     return extractType<ReferenceTypeDescr>();
 }
 
-X4TypeDescr::Type
-TypedObjectPrediction::x4Type() const
+SimdTypeDescr::Type
+TypedObjectPrediction::simdType() const
 {
-    return extractType<X4TypeDescr>();
+    return extractType<SimdTypeDescr>();
 }
 
 bool
 TypedObjectPrediction::hasKnownArrayLength(int32_t *length) const
 {
-    JS_ASSERT(ofArrayKind());
+    MOZ_ASSERT(ofArrayKind());
     switch (predictionKind()) {
       case TypedObjectPrediction::Empty:
       case TypedObjectPrediction::Inconsistent:
@@ -288,7 +288,7 @@ TypedObjectPrediction::hasKnownArrayLength(int32_t *length) const
       case TypedObjectPrediction::Prefix:
         break; // Prefixes are always structs, never arrays
     }
-    MOZ_ASSUME_UNREACHABLE("Bad prediction kind");
+    MOZ_CRASH("Bad prediction kind");
 }
 
 static TypeDescr &
@@ -301,7 +301,7 @@ DescrArrayElementType(const TypeDescr &descr) {
 TypedObjectPrediction
 TypedObjectPrediction::arrayElementType() const
 {
-    JS_ASSERT(ofArrayKind());
+    MOZ_ASSERT(ofArrayKind());
     switch (predictionKind()) {
       case TypedObjectPrediction::Empty:
       case TypedObjectPrediction::Inconsistent:
@@ -316,7 +316,7 @@ TypedObjectPrediction::arrayElementType() const
       case TypedObjectPrediction::Prefix:
         break; // Prefixes are always structs, never arrays
     }
-    MOZ_ASSUME_UNREACHABLE("Bad prediction kind");
+    MOZ_CRASH("Bad prediction kind");
 }
 
 bool
@@ -347,7 +347,7 @@ TypedObjectPrediction::hasFieldNamed(jsid id,
                                      TypedObjectPrediction *fieldType,
                                      size_t *fieldIndex) const
 {
-    JS_ASSERT(kind() == type::Struct);
+    MOZ_ASSERT(kind() == type::Struct);
 
     switch (predictionKind()) {
       case TypedObjectPrediction::Empty:
@@ -369,5 +369,5 @@ TypedObjectPrediction::hasFieldNamed(jsid id,
             *prefix().descr, prefix().fields,
             id, fieldOffset, fieldType, fieldIndex);
     }
-    MOZ_ASSUME_UNREACHABLE("Bad prediction kind");
+    MOZ_CRASH("Bad prediction kind");
 }

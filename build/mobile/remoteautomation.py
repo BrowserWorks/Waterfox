@@ -13,6 +13,7 @@ import sys
 
 from automation import Automation
 from devicemanager import DMError
+from mozlog.structured import get_default_logger
 import mozcrash
 
 # signatures for logcat messages that we don't care about much
@@ -74,8 +75,11 @@ class RemoteAutomation(Automation):
         else:
             env['MOZ_CRASHREPORTER_DISABLE'] = '1'
 
-        # Crash on non-local network connections.
-        env['MOZ_DISABLE_NONLOCAL_CONNECTIONS'] = '1'
+        # Crash on non-local network connections by default.
+        # MOZ_DISABLE_NONLOCAL_CONNECTIONS can be set to "0" to temporarily
+        # enable non-local connections for the purposes of local testing.
+        # Don't override the user's choice here.  See bug 1049688.
+        env.setdefault('MOZ_DISABLE_NONLOCAL_CONNECTIONS', '1')
 
         return env
 
@@ -126,7 +130,8 @@ class RemoteAutomation(Automation):
                 self.deleteANRs()
             except DMError:
                 print "Error pulling %s" % traces
-                pass
+            except IOError:
+                print "Error pulling %s" % traces
         else:
             print "%s not found" % traces
 
@@ -198,7 +203,12 @@ class RemoteAutomation(Automation):
                 # Whilst no crash was found, the run should still display as a failure
                 return True
             self._devicemanager.getDirectory(remoteCrashDir, dumpDir)
-            crashed = Automation.checkForCrashes(self, dumpDir, symbolsPath)
+
+            logger = get_default_logger()
+            if logger is not None:
+                crashed = mozcrash.log_crashes(logger, dumpDir, symbolsPath, test=self.lastTestSeen)
+            else:
+                crashed = Automation.checkForCrashes(self, dumpDir, symbolsPath)
 
         finally:
             try:

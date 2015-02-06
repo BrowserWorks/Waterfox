@@ -4,6 +4,13 @@
 
 "use strict";
 
+///////////////////
+//
+// Whitelisting this test.
+// As part of bug 1077403, the leaking uncaught rejection should be fixed.
+//
+thisTestLeaksUncaughtRejectionsAndShouldBeFixed("destroy");
+
 loadHelperScript("helper_edits.js");
 
 // Test ProjectEditor image editor functionality
@@ -58,8 +65,8 @@ function testEditor(projecteditor, filePath) {
   projecteditor.projectTree.selectResource(resource);
   yield onceEditorActivated(projecteditor);
 
-  let editor = projecteditor.currentEditor;
-  let images = editor.elt.querySelectorAll("image");
+  editor = projecteditor.currentEditor;
+  images = editor.elt.querySelectorAll("image");
   ok (images.length, 1, "There is one image inside the editor");
   is (images[0], editor.image, "The image property is set correctly with the DOM");
   is (editor.image.getAttribute("src"), resource.uri, "The image has the resource URL");

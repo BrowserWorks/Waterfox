@@ -1,13 +1,20 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+///////////////////
+//
+// Whitelisting this test.
+// As part of bug 1077403, the leaking uncaught rejection should be fixed. 
+//
+thisTestLeaksUncaughtRejectionsAndShouldBeFixed("Error: Shader Editor is still waiting for a WebGL context to be created.");
+
 /**
  * Tests if blackboxing a program works properly in tandem with blended
  * overlapping geometry.
  */
 
 function ifWebGLSupported() {
-  let [target, debuggee, panel] = yield initShaderEditor(BLENDED_GEOMETRY_CANVAS_URL);
+  let { target, debuggee, panel } = yield initShaderEditor(BLENDED_GEOMETRY_CANVAS_URL);
   let { gFront, EVENTS, ShadersListView, ShadersEditorsView } = panel.panelWin;
 
   reload(target);

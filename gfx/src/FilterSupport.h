@@ -11,6 +11,7 @@
 #include "mozilla/TypedEnum.h"
 #include "mozilla/gfx/Rect.h"
 #include "mozilla/gfx/Matrix.h"
+#include "mozilla/gfx/2D.h"
 #include "nsClassHashtable.h"
 #include "nsTArray.h"
 #include "nsRegion.h"
@@ -47,6 +48,17 @@ const unsigned short SVG_FEBLEND_MODE_MULTIPLY = 2;
 const unsigned short SVG_FEBLEND_MODE_SCREEN = 3;
 const unsigned short SVG_FEBLEND_MODE_DARKEN = 4;
 const unsigned short SVG_FEBLEND_MODE_LIGHTEN = 5;
+const unsigned short SVG_FEBLEND_MODE_OVERLAY = 6;
+const unsigned short SVG_FEBLEND_MODE_COLOR_DODGE = 7;
+const unsigned short SVG_FEBLEND_MODE_COLOR_BURN = 8;
+const unsigned short SVG_FEBLEND_MODE_HARD_LIGHT = 9;
+const unsigned short SVG_FEBLEND_MODE_SOFT_LIGHT = 10;
+const unsigned short SVG_FEBLEND_MODE_DIFFERENCE = 11;
+const unsigned short SVG_FEBLEND_MODE_EXCLUSION = 12;
+const unsigned short SVG_FEBLEND_MODE_HUE = 13;
+const unsigned short SVG_FEBLEND_MODE_SATURATION = 14;
+const unsigned short SVG_FEBLEND_MODE_COLOR = 15;
+const unsigned short SVG_FEBLEND_MODE_LUMINOSITY = 16;
 
 // Edge Mode Values
 const unsigned short SVG_EDGEMODE_UNKNOWN = 0;
@@ -419,7 +431,9 @@ public:
                           const IntRect& aFillPaintRect,
                           SourceSurface* aStrokePaint,
                           const IntRect& aStrokePaintRect,
-                          nsTArray<RefPtr<SourceSurface>>& aAdditionalImages);
+                          nsTArray<RefPtr<SourceSurface>>& aAdditionalImages,
+                          const Point& aDestPoint,
+                          const DrawOptions& aOptions = DrawOptions());
 
   /**
    * Computes the region that changes in the filter output due to a change in

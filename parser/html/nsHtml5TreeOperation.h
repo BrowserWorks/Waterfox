@@ -16,9 +16,7 @@ class nsHtml5StateSnapshot;
 class nsHtml5DocumentBuilder;
 
 enum eHtml5TreeOperation {
-#ifdef DEBUG
   eTreeOpUninitialized,
-#endif
   // main HTML5 ops
   eTreeOpAppend,
   eTreeOpDetach,
@@ -57,6 +55,7 @@ enum eHtml5TreeOperation {
   eTreeOpMaybeComplainAboutCharset,
   eTreeOpAddClass,
   eTreeOpAddViewSourceHref,
+  eTreeOpAddViewSourceBase,
   eTreeOpAddError,
   eTreeOpAddLineNumberId,
   eTreeOpAddErrorAtom,

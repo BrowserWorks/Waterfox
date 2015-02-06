@@ -4,22 +4,24 @@
 
 package org.mozilla.gecko.overlays.ui;
 
-import android.app.AlertDialog;
-import android.content.Context;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.TextView;
+import java.util.Collection;
+
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.Assert;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.overlays.service.sharemethods.ParcelableClientRecord;
+import org.mozilla.gecko.overlays.ui.SendTabList.State;
 
-import java.util.Collection;
-
-import static org.mozilla.gecko.overlays.ui.SendTabList.*;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.TextView;
 
 public class SendTabDeviceListArrayAdapter extends ArrayAdapter<ParcelableClientRecord> {
+    @SuppressWarnings("unused")
     private static final String LOGTAG = "GeckoSendTabAdapter";
 
     private State currentState;
@@ -36,8 +38,8 @@ public class SendTabDeviceListArrayAdapter extends ArrayAdapter<ParcelableClient
     // This will show the user a prompt to select a device from a longer list of devices.
     private AlertDialog dialog;
 
-    public SendTabDeviceListArrayAdapter(Context context, SendTabTargetSelectedListener aListener, int textViewResourceId) {
-        super(context, textViewResourceId);
+    public SendTabDeviceListArrayAdapter(Context context, SendTabTargetSelectedListener aListener) {
+        super(context, R.layout.overlay_share_send_tab_item);
 
         listener = aListener;
 
@@ -110,24 +112,27 @@ public class SendTabDeviceListArrayAdapter extends ArrayAdapter<ParcelableClient
         }
 
         // The remaining states delegate to the SentTabTargetSelectedListener.
-        final String listenerGUID;
-
-        ParcelableClientRecord clientRecord = getItem(position);
+        final ParcelableClientRecord clientRecord = getItem(position);
         if (currentState == State.LIST) {
             row.setText(clientRecord.name);
             row.setCompoundDrawablesWithIntrinsicBounds(getImage(clientRecord), 0, 0, 0);
 
-            listenerGUID = clientRecord.guid;
-        } else {
-            listenerGUID = null;
-        }
+            final String listenerGUID = clientRecord.guid;
 
-        row.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                listener.onSendTabTargetSelected(listenerGUID);
-            }
-        });
+            row.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    listener.onSendTabTargetSelected(listenerGUID);
+                }
+            });
+        } else {
+            row.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    listener.onSendTabActionSelected();
+                }
+            });
+        }
 
         return row;
     }

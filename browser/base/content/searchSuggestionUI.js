@@ -179,6 +179,13 @@ SearchSuggestionUIController.prototype = {
     case event.DOM_VK_RETURN:
       if (this.selectedIndex >= 0) {
         this.input.value = this.suggestionAtIndex(this.selectedIndex);
+        this.input.setAttribute("selection-index", this.selectedIndex);
+        this.input.setAttribute("selection-kind", "key");
+      } else {
+        // If we didn't select anything, make sure to remove the attributes
+        // in case they were populated last time.
+        this.input.removeAttribute("selection-index");
+        this.input.removeAttribute("selection-kind");
       }
       this._stickyInputValue = this.input.value;
       this._hideSuggestions();
@@ -225,6 +232,8 @@ SearchSuggestionUIController.prototype = {
     let suggestion = this.suggestionAtIndex(idx);
     this._stickyInputValue = suggestion;
     this.input.value = suggestion;
+    this.input.setAttribute("selection-index", idx);
+    this.input.setAttribute("selection-kind", "mouse");
     this._hideSuggestions();
     if (this.onClick) {
       this.onClick.call(null);
@@ -292,6 +301,7 @@ SearchSuggestionUIController.prototype = {
 
   _makeTableRow: function (type, suggestionStr, currentRow, searchWords) {
     let row = document.createElementNS(HTML_NS, "tr");
+    row.dir = "auto";
     row.classList.add("searchSuggestionRow");
     row.classList.add(type);
     row.setAttribute("role", "presentation");
@@ -356,7 +366,6 @@ SearchSuggestionUIController.prototype = {
     this._table = document.createElementNS(HTML_NS, "table");
     this._table.id = id;
     this._table.hidden = true;
-    this._table.dir = "auto";
     this._table.classList.add("searchSuggestionTable");
     this._table.setAttribute("role", "listbox");
     return this._table;

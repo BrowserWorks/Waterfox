@@ -67,7 +67,6 @@
 #include "nsContentCreatorFunctions.h"
 
 // DOM includes
-#include "nsDOMBlobBuilder.h"
 #include "nsDOMFileReader.h"
 
 #include "nsFormData.h"
@@ -214,12 +213,12 @@ static void Shutdown();
 #endif
 #include "nsCSPService.h"
 #include "nsCSPContext.h"
+#include "nsICellBroadcastService.h"
 #include "nsISmsService.h"
 #include "nsIMmsService.h"
+#include "nsIMobileConnectionService.h"
 #include "nsIMobileMessageService.h"
 #include "nsIMobileMessageDatabaseService.h"
-#include "mozilla/dom/mobilemessage/MobileMessageService.h"
-#include "mozilla/dom/mobilemessage/SmsServicesFactory.h"
 #include "nsIPowerManagerService.h"
 #include "nsIAlarmHalService.h"
 #include "nsIMediaManager.h"
@@ -234,8 +233,8 @@ static void Shutdown();
 #include "mozilla/dom/time/TimeService.h"
 #include "StreamingProtocolService.h"
 
-#include "mozilla/dom/telephony/TelephonyFactory.h"
 #include "nsITelephonyService.h"
+#include "nsIVoicemailService.h"
 
 #ifdef MOZ_WIDGET_GONK
 #include "GonkGPSGeolocationProvider.h"
@@ -246,8 +245,6 @@ static void Shutdown();
 
 using namespace mozilla;
 using namespace mozilla::dom;
-using namespace mozilla::dom::mobilemessage;
-using namespace mozilla::dom::telephony;
 using mozilla::dom::alarm::AlarmHalService;
 using mozilla::dom::power::PowerManagerService;
 using mozilla::dom::quota::QuotaManager;
@@ -321,14 +318,14 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(nsHapticFeedback)
 #endif
 #endif
 NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(ThirdPartyUtil, Init)
-NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsISmsService,
-                                         SmsServicesFactory::CreateSmsService)
-NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsIMmsService,
-                                         SmsServicesFactory::CreateMmsService)
+NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsICellBroadcastService,
+                                         NS_CreateCellBroadcastService)
+NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsISmsService, NS_CreateSmsService)
+NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsIMmsService, NS_CreateMmsService)
 NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsIMobileMessageService,
-                                         MobileMessageService::GetInstance)
+                                         NS_CreateMobileMessageService)
 NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsIMobileMessageDatabaseService,
-                                         SmsServicesFactory::CreateMobileMessageDatabaseService)
+                                         NS_CreateMobileMessageDatabaseService)
 NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsIPowerManagerService,
                                          PowerManagerService::GetInstance)
 NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsIAlarmHalService,
@@ -354,8 +351,12 @@ NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsVolumeService,
 #endif
 NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsIMediaManagerService,
                                          MediaManager::GetInstance)
+NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsIMobileConnectionService,
+                                         NS_CreateMobileConnectionService)
 NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsITelephonyService,
-                                         TelephonyFactory::CreateTelephonyService)
+                                         NS_CreateTelephonyService)
+NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsIVoicemailService,
+                                         NS_CreateVoicemailService)
 
 //-----------------------------------------------------------------------------
 
@@ -510,8 +511,6 @@ MAKE_CTOR(CreateHTMLDocument,             nsIDocument,                 NS_NewHTM
 MAKE_CTOR(CreateXMLDocument,              nsIDocument,                 NS_NewXMLDocument)
 MAKE_CTOR(CreateSVGDocument,              nsIDocument,                 NS_NewSVGDocument)
 MAKE_CTOR(CreateImageDocument,            nsIDocument,                 NS_NewImageDocument)
-MAKE_CTOR(CreateDOMBlob,                  nsISupports,                 DOMMultipartFileImpl::NewBlob)
-MAKE_CTOR(CreateDOMFile,                  nsISupports,                 DOMMultipartFileImpl::NewFile)
 MAKE_CTOR(CreateDOMSelection,             nsISelection,                NS_NewDomSelection)
 MAKE_CTOR2(CreateContentIterator,         nsIContentIterator,          NS_NewContentIterator)
 MAKE_CTOR2(CreatePreContentIterator,      nsIContentIterator,          NS_NewPreContentIterator)
@@ -665,8 +664,6 @@ NS_DEFINE_NAMED_CID(NS_HTMLDOCUMENT_CID);
 NS_DEFINE_NAMED_CID(NS_XMLDOCUMENT_CID);
 NS_DEFINE_NAMED_CID(NS_SVGDOCUMENT_CID);
 NS_DEFINE_NAMED_CID(NS_IMAGEDOCUMENT_CID);
-NS_DEFINE_NAMED_CID(NS_DOMMULTIPARTBLOB_CID);
-NS_DEFINE_NAMED_CID(NS_DOMMULTIPARTFILE_CID);
 NS_DEFINE_NAMED_CID(NS_DOMSELECTION_CID);
 NS_DEFINE_NAMED_CID(NS_CONTENTITERATOR_CID);
 NS_DEFINE_NAMED_CID(NS_PRECONTENTITERATOR_CID);
@@ -765,6 +762,7 @@ NS_DEFINE_NAMED_CID(NS_DEVICE_SENSORS_CID);
 NS_DEFINE_NAMED_CID(NS_HAPTICFEEDBACK_CID);
 #endif
 #endif
+NS_DEFINE_NAMED_CID(CELLBROADCAST_SERVICE_CID);
 NS_DEFINE_NAMED_CID(SMS_SERVICE_CID);
 NS_DEFINE_NAMED_CID(MMS_SERVICE_CID);
 NS_DEFINE_NAMED_CID(MOBILE_MESSAGE_SERVICE_CID);
@@ -794,8 +792,11 @@ NS_DEFINE_NAMED_CID(NS_SYNTHVOICEREGISTRY_CID);
 NS_DEFINE_NAMED_CID(NS_ACCESSIBILITY_SERVICE_CID);
 #endif
 NS_DEFINE_NAMED_CID(TELEPHONY_SERVICE_CID);
+NS_DEFINE_NAMED_CID(NS_VOICEMAIL_SERVICE_CID);
 
 NS_DEFINE_NAMED_CID(GECKO_MEDIA_PLUGIN_SERVICE_CID);
+
+NS_DEFINE_NAMED_CID(NS_MOBILE_CONNECTION_SERVICE_CID);
 
 static nsresult
 CreateWindowCommandTableConstructor(nsISupports *aOuter,
@@ -925,7 +926,6 @@ nsEditingCommandTableConstructor(nsISupports *aOuter, REFNSIID aIID,
   return commandTable->QueryInterface(aIID, aResult);
 }
 
-
 static const mozilla::Module::CIDEntry kLayoutCIDs[] = {
   XPCONNECT_CIDENTRIES
 #ifdef DEBUG
@@ -954,8 +954,6 @@ static const mozilla::Module::CIDEntry kLayoutCIDs[] = {
   { &kNS_XMLDOCUMENT_CID, false, nullptr, CreateXMLDocument },
   { &kNS_SVGDOCUMENT_CID, false, nullptr, CreateSVGDocument },
   { &kNS_IMAGEDOCUMENT_CID, false, nullptr, CreateImageDocument },
-  { &kNS_DOMMULTIPARTBLOB_CID, false, nullptr, CreateDOMBlob },
-  { &kNS_DOMMULTIPARTFILE_CID, false, nullptr, CreateDOMFile },
   { &kNS_DOMSELECTION_CID, false, nullptr, CreateDOMSelection },
   { &kNS_CONTENTITERATOR_CID, false, nullptr, CreateContentIterator },
   { &kNS_PRECONTENTITERATOR_CID, false, nullptr, CreatePreContentIterator },
@@ -1056,6 +1054,7 @@ static const mozilla::Module::CIDEntry kLayoutCIDs[] = {
 #endif
   { &kTHIRDPARTYUTIL_CID, false, nullptr, ThirdPartyUtilConstructor },
   { &kNS_STRUCTUREDCLONECONTAINER_CID, false, nullptr, nsStructuredCloneContainerConstructor },
+  { &kCELLBROADCAST_SERVICE_CID, false, nullptr, nsICellBroadcastServiceConstructor },
   { &kSMS_SERVICE_CID, false, nullptr, nsISmsServiceConstructor },
   { &kMMS_SERVICE_CID, false, nullptr, nsIMmsServiceConstructor },
   { &kMOBILE_MESSAGE_SERVICE_CID, false, nullptr, nsIMobileMessageServiceConstructor },
@@ -1081,6 +1080,8 @@ static const mozilla::Module::CIDEntry kLayoutCIDs[] = {
   { &kNS_ACCESSIBILITY_SERVICE_CID, false, nullptr, CreateA11yService },
 #endif
   { &kTELEPHONY_SERVICE_CID, false, nullptr, nsITelephonyServiceConstructor },
+  { &kNS_MOBILE_CONNECTION_SERVICE_CID, false, NULL, nsIMobileConnectionServiceConstructor },
+  { &kNS_VOICEMAIL_SERVICE_CID, false, nullptr, nsIVoicemailServiceConstructor },
   { nullptr }
 };
 
@@ -1104,8 +1105,6 @@ static const mozilla::Module::ContractIDEntry kLayoutContracts[] = {
   { IN_DOMUTILS_CONTRACTID, &kIN_DOMUTILS_CID },
   { "@mozilla.org/xml/xml-document;1", &kNS_XMLDOCUMENT_CID },
   { "@mozilla.org/svg/svg-document;1", &kNS_SVGDOCUMENT_CID },
-  { NS_DOMMULTIPARTBLOB_CONTRACTID, &kNS_DOMMULTIPARTBLOB_CID },
-  { NS_DOMMULTIPARTFILE_CONTRACTID, &kNS_DOMMULTIPARTFILE_CID },
   { "@mozilla.org/content/dom-selection;1", &kNS_DOMSELECTION_CID },
   { "@mozilla.org/content/post-content-iterator;1", &kNS_CONTENTITERATOR_CID },
   { "@mozilla.org/content/pre-content-iterator;1", &kNS_PRECONTENTITERATOR_CID },
@@ -1212,6 +1211,7 @@ static const mozilla::Module::ContractIDEntry kLayoutContracts[] = {
 #endif
   { THIRDPARTYUTIL_CONTRACTID, &kTHIRDPARTYUTIL_CID },
   { NS_STRUCTUREDCLONECONTAINER_CONTRACTID, &kNS_STRUCTUREDCLONECONTAINER_CID },
+  { CELLBROADCAST_SERVICE_CONTRACTID, &kCELLBROADCAST_SERVICE_CID },
   { SMS_SERVICE_CONTRACTID, &kSMS_SERVICE_CID },
   { MMS_SERVICE_CONTRACTID, &kMMS_SERVICE_CID },
   { MOBILE_MESSAGE_SERVICE_CONTRACTID, &kMOBILE_MESSAGE_SERVICE_CID },
@@ -1238,6 +1238,8 @@ static const mozilla::Module::ContractIDEntry kLayoutContracts[] = {
 #endif
   { TELEPHONY_SERVICE_CONTRACTID, &kTELEPHONY_SERVICE_CID },
   { "@mozilla.org/gecko-media-plugin-service;1",  &kGECKO_MEDIA_PLUGIN_SERVICE_CID },
+  { NS_MOBILE_CONNECTION_SERVICE_CONTRACTID, &kNS_MOBILE_CONNECTION_SERVICE_CID },
+  { NS_VOICEMAIL_SERVICE_CONTRACTID, &kNS_VOICEMAIL_SERVICE_CID },
   { nullptr }
 };
 
@@ -1260,6 +1262,7 @@ static const mozilla::Module::CategoryEntry kLayoutCategories[] = {
 #ifdef MOZ_B2G_BT
   { "profile-after-change", "Bluetooth Service", BLUETOOTHSERVICE_CONTRACTID },
 #endif
+  { "profile-after-change", "MobileConnection Service", NS_MOBILE_CONNECTION_SERVICE_CONTRACTID },
   { nullptr }
 };
 

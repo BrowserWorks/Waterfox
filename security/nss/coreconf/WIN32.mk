@@ -8,7 +8,7 @@
 # and Windows 95
 #
 
-DEFAULT_COMPILER = cl
+DEFAULT_COMPILER = icl
 
 ifdef NS_USE_GCC
 	CC           = gcc
@@ -25,7 +25,7 @@ else
 	CCC          = icl
 	LINK         = xilink
 	AR           = xilib
-	AR          += -NOLOGO -OUT:"$@"
+	AR          += -NOLOGO -OUT:$@
 	RANLIB       = echo
 	BSDECHO      = echo
 	RC           = rc.exe
@@ -42,7 +42,7 @@ else
 	endif
 	# Change the dots to spaces.
 	_CC_VERSION_WORDS := $(subst ., ,$(CC_VERSION))
-	_CC_VMAJOR  := 16
+	_CC_VMAJOR  := 17
 	_CC_VMINOR  := $(word 2,$(_CC_VERSION_WORDS))
 	_CC_RELEASE := $(word 3,$(_CC_VERSION_WORDS))
 	_CC_BUILD   := $(word 4,$(_CC_VERSION_WORDS))

@@ -269,7 +269,7 @@ SVGUseElement::CreateAnonymousContent()
     return nullptr;
 
   if (newcontent->IsSVG(nsGkAtoms::symbol)) {
-    nsIDocument *document = GetCurrentDoc();
+    nsIDocument *document = GetComposedDoc();
     if (!document)
       return nullptr;
 
@@ -392,7 +392,7 @@ SVGUseElement::LookupHref()
   nsCOMPtr<nsIURI> targetURI;
   nsCOMPtr<nsIURI> baseURI = mOriginal ? mOriginal->GetBaseURI() : GetBaseURI();
   nsContentUtils::NewURIWithDocumentCharset(getter_AddRefs(targetURI), href,
-                                            GetCurrentDoc(), baseURI);
+                                            GetComposedDoc(), baseURI);
 
   mSource.Reset(this, targetURI);
 }
@@ -400,7 +400,7 @@ SVGUseElement::LookupHref()
 void
 SVGUseElement::TriggerReclone()
 {
-  nsIDocument *doc = GetCurrentDoc();
+  nsIDocument *doc = GetComposedDoc();
   if (!doc)
     return;
   nsIPresShell *presShell = doc->GetShell();
@@ -425,9 +425,6 @@ SVGUseElement::UnlinkSource()
 SVGUseElement::PrependLocalTransformsTo(const gfxMatrix &aMatrix,
                                         TransformTypes aWhich) const
 {
-  NS_ABORT_IF_FALSE(aWhich != eChildToUserSpace || aMatrix.IsIdentity(),
-                    "Skipping eUserSpaceToParent transforms makes no sense");
-
   // 'transform' attribute:
   gfxMatrix fromUserSpace =
     SVGUseElementBase::PrependLocalTransformsTo(aMatrix, aWhich);
@@ -437,9 +434,9 @@ SVGUseElement::PrependLocalTransformsTo(const gfxMatrix &aMatrix,
   // our 'x' and 'y' attributes:
   float x, y;
   const_cast<SVGUseElement*>(this)->GetAnimatedLengthValues(&x, &y, nullptr);
-  gfxMatrix toUserSpace = gfxMatrix().Translate(gfxPoint(x, y));
+  gfxMatrix toUserSpace = gfxMatrix::Translation(x, y);
   if (aWhich == eChildToUserSpace) {
-    return toUserSpace;
+    return toUserSpace * aMatrix;
   }
   NS_ABORT_IF_FALSE(aWhich == eAllTransforms, "Unknown TransformTypes");
   return toUserSpace * fromUserSpace;

@@ -10,14 +10,13 @@
 #ifndef LIBGLESV2_RESOURCEMANAGER_H_
 #define LIBGLESV2_RESOURCEMANAGER_H_
 
-#include <GLES3/gl3.h>
-#include <GLES2/gl2.h>
-
-#include <unordered_map>
-
 #include "common/angleutils.h"
 #include "libGLESv2/angletypes.h"
 #include "libGLESv2/HandleAllocator.h"
+
+#include "angle_gl.h"
+
+#include <unordered_map>
 
 namespace rx
 {
@@ -66,11 +65,11 @@ class ResourceManager
     Renderbuffer *getRenderbuffer(GLuint handle);
     Sampler *getSampler(GLuint handle);
     FenceSync *getFenceSync(GLuint handle);
-    
+
     void setRenderbuffer(GLuint handle, Renderbuffer *renderbuffer);
 
     void checkBufferAllocation(unsigned int buffer);
-    void checkTextureAllocation(GLuint texture, TextureType type);
+    void checkTextureAllocation(GLuint texture, GLenum type);
     void checkRenderbufferAllocation(GLuint renderbuffer);
     void checkSamplerAllocation(GLuint sampler);
 

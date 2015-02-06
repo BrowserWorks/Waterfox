@@ -8,16 +8,16 @@
 
 #include "mozilla/AppProcessChecker.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/dom/File.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/PTabContext.h"
 #include "mozilla/dom/PermissionMessageUtils.h"
 #include "mozilla/dom/StructuredCloneUtils.h"
 #include "mozilla/dom/TabParent.h"
-#include "mozilla/dom/ipc/nsIRemoteBlob.h"
+#include "mozilla/dom/ipc/BlobParent.h"
 #include "mozilla/unused.h"
 
 #include "JavaScriptParent.h"
-#include "nsDOMFile.h"
 #include "nsFrameMessageManager.h"
 #include "nsIJSRuntimeService.h"
 #include "nsPrintfCString.h"
@@ -146,87 +146,23 @@ nsIContentParent::AllocPBlobParent(const BlobConstructorParams& aParams)
 bool
 nsIContentParent::DeallocPBlobParent(PBlobParent* aActor)
 {
-  delete aActor;
+  BlobParent::Destroy(aActor);
   return true;
 }
 
 BlobParent*
-nsIContentParent::GetOrCreateActorForBlob(nsIDOMBlob* aBlob)
+nsIContentParent::GetOrCreateActorForBlob(File* aBlob)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aBlob);
 
-  // If the blob represents a remote blob for this ContentParent then we can
-  // simply pass its actor back here.
-  const auto* domFile = static_cast<DOMFile*>(aBlob);
-  nsCOMPtr<nsIRemoteBlob> remoteBlob = do_QueryInterface(domFile->Impl());
-  if (remoteBlob) {
-    if (BlobParent* actor = static_cast<BlobParent*>(
-          static_cast<PBlobParent*>(remoteBlob->GetPBlob()))) {
-      MOZ_ASSERT(actor);
+  nsRefPtr<FileImpl> blobImpl = aBlob->Impl();
+  MOZ_ASSERT(blobImpl);
 
-      if (actor->Manager() == this) {
-        return actor;
-      }
-    }
-  }
-
-  // All blobs shared between processes must be immutable.
-  nsCOMPtr<nsIMutable> mutableBlob = do_QueryInterface(aBlob);
-  if (!mutableBlob || NS_FAILED(mutableBlob->SetMutable(false))) {
-    NS_WARNING("Failed to make blob immutable!");
-    return nullptr;
-  }
-
-  // XXX This is only safe so long as all blob implementations in our tree
-  //     inherit DOMFileImplBase. If that ever changes then this will need to grow
-  //     a real interface or something.
-  const auto* blob = static_cast<DOMFileImplBase*>(domFile->Impl());
-
-  ChildBlobConstructorParams params;
-
-  if (blob->IsSizeUnknown() || blob->IsDateUnknown()) {
-    // We don't want to call GetSize or GetLastModifiedDate
-    // yet since that may stat a file on the main thread
-    // here. Instead we'll learn the size lazily from the
-    // other process.
-    params = MysteryBlobConstructorParams();
-  }
-  else {
-    nsString contentType;
-    nsresult rv = aBlob->GetType(contentType);
-    NS_ENSURE_SUCCESS(rv, nullptr);
-
-    uint64_t length;
-    rv = aBlob->GetSize(&length);
-    NS_ENSURE_SUCCESS(rv, nullptr);
-
-    nsCOMPtr<nsIDOMFile> file = do_QueryInterface(aBlob);
-    if (file) {
-      FileBlobConstructorParams fileParams;
-
-      rv = file->GetMozLastModifiedDate(&fileParams.modDate());
-      NS_ENSURE_SUCCESS(rv, nullptr);
-
-      rv = file->GetName(fileParams.name());
-      NS_ENSURE_SUCCESS(rv, nullptr);
-
-      fileParams.contentType() = contentType;
-      fileParams.length() = length;
-
-      params = fileParams;
-    } else {
-      NormalBlobConstructorParams blobParams;
-      blobParams.contentType() = contentType;
-      blobParams.length() = length;
-      params = blobParams;
-    }
-  }
-
-  BlobParent* actor = BlobParent::Create(this, aBlob);
+  BlobParent* actor = BlobParent::GetOrCreate(this, blobImpl);
   NS_ENSURE_TRUE(actor, nullptr);
 
-  return SendPBlobConstructor(actor, params) ? actor : nullptr;
+  return actor;
 }
 
 bool
@@ -249,8 +185,7 @@ nsIContentParent::RecvSyncMessage(const nsString& aMsg,
   nsRefPtr<nsFrameMessageManager> ppm = mMessageManager;
   if (ppm) {
     StructuredCloneData cloneData = ipc::UnpackClonedMessageDataForParent(aData);
-    CpowIdHolder cpows(GetCPOWManager(), aCpows);
-
+    CpowIdHolder cpows(this, aCpows);
     ppm->ReceiveMessage(static_cast<nsIContentFrameMessageManager*>(ppm.get()),
                         aMsg, true, &cloneData, &cpows, aPrincipal, aRetvals);
   }
@@ -258,11 +193,11 @@ nsIContentParent::RecvSyncMessage(const nsString& aMsg,
 }
 
 bool
-nsIContentParent::AnswerRpcMessage(const nsString& aMsg,
-                                   const ClonedMessageData& aData,
-                                   const InfallibleTArray<CpowEntry>& aCpows,
-                                   const IPC::Principal& aPrincipal,
-                                   InfallibleTArray<nsString>* aRetvals)
+nsIContentParent::RecvRpcMessage(const nsString& aMsg,
+                                 const ClonedMessageData& aData,
+                                 const InfallibleTArray<CpowEntry>& aCpows,
+                                 const IPC::Principal& aPrincipal,
+                                 InfallibleTArray<nsString>* aRetvals)
 {
   // FIXME Permission check in Content process
   nsIPrincipal* principal = aPrincipal;
@@ -277,7 +212,7 @@ nsIContentParent::AnswerRpcMessage(const nsString& aMsg,
   nsRefPtr<nsFrameMessageManager> ppm = mMessageManager;
   if (ppm) {
     StructuredCloneData cloneData = ipc::UnpackClonedMessageDataForParent(aData);
-    CpowIdHolder cpows(GetCPOWManager(), aCpows);
+    CpowIdHolder cpows(this, aCpows);
     ppm->ReceiveMessage(static_cast<nsIContentFrameMessageManager*>(ppm.get()),
                         aMsg, true, &cloneData, &cpows, aPrincipal, aRetvals);
   }
@@ -303,7 +238,7 @@ nsIContentParent::RecvAsyncMessage(const nsString& aMsg,
   nsRefPtr<nsFrameMessageManager> ppm = mMessageManager;
   if (ppm) {
     StructuredCloneData cloneData = ipc::UnpackClonedMessageDataForParent(aData);
-    CpowIdHolder cpows(GetCPOWManager(), aCpows);
+    CpowIdHolder cpows(this, aCpows);
     ppm->ReceiveMessage(static_cast<nsIContentFrameMessageManager*>(ppm.get()),
                         aMsg, false, &cloneData, &cpows, aPrincipal, nullptr);
   }

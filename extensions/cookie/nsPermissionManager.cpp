@@ -20,6 +20,7 @@
 #include "nsILineInputStream.h"
 #include "nsIIDNService.h"
 #include "nsAppDirectoryServiceDefs.h"
+#include "nsDirectoryServiceDefs.h"
 #include "prprf.h"
 #include "mozilla/storage.h"
 #include "mozilla/Attributes.h"
@@ -33,6 +34,8 @@
 #include "nsPIDOMWindow.h"
 #include "nsIDocument.h"
 #include "mozilla/net/NeckoMessageUtils.h"
+#include "mozilla/Preferences.h"
+#include "nsReadLine.h"
 
 static nsPermissionManager *gPermissionManager = nullptr;
 
@@ -306,7 +309,7 @@ public:
   /**
    * @param aManager The owning manager.
    */
-  DeleteFromMozHostListener(nsPermissionManager* aManager);
+  explicit DeleteFromMozHostListener(nsPermissionManager* aManager);
 
 protected:
   nsRefPtr<nsPermissionManager> mManager;
@@ -354,9 +357,15 @@ nsPermissionManager::AppClearDataObserverInit()
 // nsPermissionManager Implementation
 
 static const char kPermissionsFileName[] = "permissions.sqlite";
-#define HOSTS_SCHEMA_VERSION 3
+#define HOSTS_SCHEMA_VERSION 4
 
 static const char kHostpermFileName[] = "hostperm.1";
+
+// Default permissions are read from a URL - this is the preference we read
+// to find that URL.
+static const char kDefaultsUrlPrefName[] = "permissions.manager.defaultsUrl";
+// If the pref above doesn't exist, the URL we use by default.
+static const char kDefaultsUrl[] = "resource://app/chrome/browser/default_permissions";
 
 static const char kPermissionChangeNotification[] = PERM_CHANGE_NOTIFICATION;
 
@@ -423,8 +432,12 @@ nsPermissionManager::Init()
       rv = GetPrincipal(perm.host, perm.appId, perm.isInBrowserElement, getter_AddRefs(principal));
       NS_ENSURE_SUCCESS(rv, rv);
 
+      // The child process doesn't care about modification times - it neither
+      // reads nor writes, nor removes them based on the date - so 0 (which
+      // will end up as now()) is fine.
+      uint64_t modificationTime = 0;
       AddInternal(principal, perm.type, perm.capability, 0, perm.expireType,
-                  perm.expireTime, eNotify, eNoDBOperation);
+                  perm.expireTime, modificationTime, eNotify, eNoDBOperation);
     }
 
     // Stop here; we don't need the DB in the child process
@@ -537,6 +550,23 @@ nsPermissionManager::InitDB(bool aRemoveFile)
 
       // fall through to the next upgrade
 
+    // Version 3->4 is the creation of the modificationTime field.
+    case 3:
+      {
+        rv = mDBConn->ExecuteSimpleSQL(NS_LITERAL_CSTRING(
+              "ALTER TABLE moz_hosts ADD modificationTime INTEGER"));
+        NS_ENSURE_SUCCESS(rv, rv);
+
+        // We leave the modificationTime at zero for all existing records; using
+        // now() would mean, eg, that doing "remove all from the last hour"
+        // within the first hour after migration would remove all permissions.
+
+        rv = mDBConn->SetSchemaVersion(HOSTS_SCHEMA_VERSION);
+        NS_ENSURE_SUCCESS(rv, rv);
+      }
+
+      // fall through to the next upgrade
+
     // current version.
     case HOSTS_SCHEMA_VERSION:
       break;
@@ -552,7 +582,7 @@ nsPermissionManager::InitDB(bool aRemoveFile)
         // check if all the expected columns exist
         nsCOMPtr<mozIStorageStatement> stmt;
         rv = mDBConn->CreateStatement(NS_LITERAL_CSTRING(
-          "SELECT host, type, permission, expireType, expireTime, appId, isInBrowserElement FROM moz_hosts"),
+          "SELECT host, type, permission, expireType, expireTime, modificationTime, appId, isInBrowserElement FROM moz_hosts"),
           getter_AddRefs(stmt));
         if (NS_SUCCEEDED(rv))
           break;
@@ -574,8 +604,8 @@ nsPermissionManager::InitDB(bool aRemoveFile)
   // cache frequently used statements (for insertion, deletion, and updating)
   rv = mDBConn->CreateAsyncStatement(NS_LITERAL_CSTRING(
     "INSERT INTO moz_hosts "
-    "(id, host, type, permission, expireType, expireTime, appId, isInBrowserElement) "
-    "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)"), getter_AddRefs(mStmtInsert));
+    "(id, host, type, permission, expireType, expireTime, modificationTime, appId, isInBrowserElement) "
+    "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)"), getter_AddRefs(mStmtInsert));
   NS_ENSURE_SUCCESS(rv, rv);
 
   rv = mDBConn->CreateAsyncStatement(NS_LITERAL_CSTRING(
@@ -585,10 +615,12 @@ nsPermissionManager::InitDB(bool aRemoveFile)
 
   rv = mDBConn->CreateAsyncStatement(NS_LITERAL_CSTRING(
     "UPDATE moz_hosts "
-    "SET permission = ?2, expireType= ?3, expireTime = ?4 WHERE id = ?1"),
+    "SET permission = ?2, expireType= ?3, expireTime = ?4, modificationTime = ?5 WHERE id = ?1"),
     getter_AddRefs(mStmtUpdate));
   NS_ENSURE_SUCCESS(rv, rv);
 
+  // Always import default permissions.
+  ImportDefaults();
   // check whether to import or just read in the db
   if (tableExists)
     return Read();
@@ -615,6 +647,7 @@ nsPermissionManager::CreateTable()
       ",permission INTEGER"
       ",expireType INTEGER"
       ",expireTime INTEGER"
+      ",modificationTime INTEGER"
       ",appId INTEGER"
       ",isInBrowserElement INTEGER"
     ")"));
@@ -668,8 +701,11 @@ nsPermissionManager::AddFromPrincipal(nsIPrincipal* aPrincipal,
     return NS_ERROR_INVALID_ARG;
   }
 
+  // A modificationTime of zero will cause AddInternal to use now().
+  int64_t modificationTime = 0;
+
   return AddInternal(aPrincipal, nsDependentCString(aType), aPermission, 0,
-                     aExpireType, aExpireTime, eNotify, eWriteToDB);
+                     aExpireType, aExpireTime, modificationTime, eNotify, eWriteToDB);
 }
 
 nsresult
@@ -679,6 +715,7 @@ nsPermissionManager::AddInternal(nsIPrincipal* aPrincipal,
                                  int64_t               aID,
                                  uint32_t              aExpireType,
                                  int64_t               aExpireTime,
+                                 int64_t               aModificationTime,
                                  NotifyOperationType   aNotifyOperation,
                                  DBOperationType       aDBOperation)
 {
@@ -743,15 +780,33 @@ nsPermissionManager::AddInternal(nsIPrincipal* aPrincipal,
         (aExpireType == nsIPermissionManager::EXPIRE_NEVER ||
          aExpireTime == oldPermissionEntry.mExpireTime))
       op = eOperationNone;
+    else if (oldPermissionEntry.mID == cIDPermissionIsDefault)
+      // The existing permission is one added as a default and the new permission
+      // doesn't exactly match so we are replacing the default.  This is true
+      // even if the new permission is UNKNOWN_ACTION (which means a "logical
+      // remove" of the default)
+      op = eOperationReplacingDefault;
+    else if (aID == cIDPermissionIsDefault)
+      // We are adding a default permission but a "real" permission already
+      // exists.  This almost-certainly means we just did a removeAllSince and
+      // are re-importing defaults - so we can ignore this.
+      op = eOperationNone;
     else if (aPermission == nsIPermissionManager::UNKNOWN_ACTION)
       op = eOperationRemoving;
     else
       op = eOperationChanging;
   }
 
+  // child processes should *always* be passed a modificationTime of zero.
+  MOZ_ASSERT(!IsChildProcess() || aModificationTime == 0);
+
   // do the work for adding, deleting, or changing a permission:
   // update the in-memory list, write to the db, and notify consumers.
   int64_t id;
+  if (aModificationTime == 0) {
+    aModificationTime = PR_Now() / 1000;
+  }
+
   switch (op) {
   case eOperationNone:
     {
@@ -769,7 +824,9 @@ nsPermissionManager::AddInternal(nsIPrincipal* aPrincipal,
         id = aID;
       }
 
-      entry->GetPermissions().AppendElement(PermissionEntry(id, typeIndex, aPermission, aExpireType, aExpireTime));
+      entry->GetPermissions().AppendElement(PermissionEntry(id, typeIndex, aPermission,
+                                                            aExpireType, aExpireTime,
+                                                            aModificationTime));
 
       if (aDBOperation == eWriteToDB && aExpireType != nsIPermissionManager::EXPIRE_SESSION) {
         uint32_t appId;
@@ -780,7 +837,7 @@ nsPermissionManager::AddInternal(nsIPrincipal* aPrincipal,
         rv = aPrincipal->GetIsInBrowserElement(&isInBrowserElement);
         NS_ENSURE_SUCCESS(rv, rv);
 
-        UpdateDB(op, mStmtInsert, id, host, aType, aPermission, aExpireType, aExpireTime, appId, isInBrowserElement);
+        UpdateDB(op, mStmtInsert, id, host, aType, aPermission, aExpireType, aExpireTime, aModificationTime, appId, isInBrowserElement);
       }
 
       if (aNotifyOperation == eNotify) {
@@ -807,7 +864,7 @@ nsPermissionManager::AddInternal(nsIPrincipal* aPrincipal,
         // We care only about the id here so we pass dummy values for all other
         // parameters.
         UpdateDB(op, mStmtDelete, id, EmptyCString(), EmptyCString(), 0,
-                 nsIPermissionManager::EXPIRE_NEVER, 0, 0, false);
+                 nsIPermissionManager::EXPIRE_NEVER, 0, 0, 0, false);
 
       if (aNotifyOperation == eNotify) {
         NotifyObserversWithPermission(host,
@@ -849,12 +906,13 @@ nsPermissionManager::AddInternal(nsIPrincipal* aPrincipal,
       entry->GetPermissions()[index].mPermission = aPermission;
       entry->GetPermissions()[index].mExpireType = aExpireType;
       entry->GetPermissions()[index].mExpireTime = aExpireTime;
+      entry->GetPermissions()[index].mModificationTime = aModificationTime;
 
       if (aDBOperation == eWriteToDB && aExpireType != nsIPermissionManager::EXPIRE_SESSION)
-        // We care only about the id, the permission and expireType/expireTime here.
+        // We care only about the id, the permission and expireType/expireTime/modificationTime here.
         // We pass dummy values for all other parameters.
         UpdateDB(op, mStmtUpdate, id, EmptyCString(), EmptyCString(),
-                 aPermission, aExpireType, aExpireTime, 0, false);
+                 aPermission, aExpireType, aExpireTime, aModificationTime, 0, false);
 
       if (aNotifyOperation == eNotify) {
         NotifyObserversWithPermission(host,
@@ -869,6 +927,64 @@ nsPermissionManager::AddInternal(nsIPrincipal* aPrincipal,
 
       break;
     }
+  case eOperationReplacingDefault:
+    {
+      // this is handling the case when we have an existing permission
+      // entry that was created as a "default" (and thus isn't in the DB) with
+      // an explicit permission (that may include UNKNOWN_ACTION.)
+      // Note we will *not* get here if we are replacing an already replaced
+      // default value - that is handled as eOperationChanging.
+
+      // So this is a hybrid of eOperationAdding (as we are writing a new entry
+      // to the DB) and eOperationChanging (as we are replacing the in-memory
+      // repr and sending a "changed" notification).
+
+      // We want a new ID even if not writing to the DB, so the modified entry
+      // in memory doesn't have the magic cIDPermissionIsDefault value.
+      id = ++mLargestID;
+
+      // The default permission being replaced can't have session expiry.
+      NS_ENSURE_TRUE(entry->GetPermissions()[index].mExpireType != nsIPermissionManager::EXPIRE_SESSION,
+                     NS_ERROR_UNEXPECTED);
+      // We don't support the new entry having any expiry - supporting that would
+      // make things far more complex and none of the permissions we set as a
+      // default support that.
+      NS_ENSURE_TRUE(aExpireType == EXPIRE_NEVER, NS_ERROR_UNEXPECTED);
+
+      // update the existing entry in memory.
+      entry->GetPermissions()[index].mID = id;
+      entry->GetPermissions()[index].mPermission = aPermission;
+      entry->GetPermissions()[index].mExpireType = aExpireType;
+      entry->GetPermissions()[index].mExpireTime = aExpireTime;
+      entry->GetPermissions()[index].mModificationTime = aModificationTime;
+
+      // If requested, create the entry in the DB.
+      if (aDBOperation == eWriteToDB) {
+        uint32_t appId;
+        rv = aPrincipal->GetAppId(&appId);
+        NS_ENSURE_SUCCESS(rv, rv);
+
+        bool isInBrowserElement;
+        rv = aPrincipal->GetIsInBrowserElement(&isInBrowserElement);
+        NS_ENSURE_SUCCESS(rv, rv);
+
+        UpdateDB(eOperationAdding, mStmtInsert, id, host, aType, aPermission,
+                 aExpireType, aExpireTime, aModificationTime, appId, isInBrowserElement);
+      }
+
+      if (aNotifyOperation == eNotify) {
+        NotifyObserversWithPermission(host,
+                                      entry->GetKey()->mAppId,
+                                      entry->GetKey()->mIsInBrowserElement,
+                                      mTypeArray[typeIndex],
+                                      aPermission,
+                                      aExpireType,
+                                      aExpireTime,
+                                      MOZ_UTF16("changed"));
+      }
+
+    }
+    break;
   }
 
   return NS_OK;
@@ -910,6 +1026,7 @@ nsPermissionManager::RemoveFromPrincipal(nsIPrincipal* aPrincipal,
                      0,
                      nsIPermissionManager::EXPIRE_NEVER,
                      0,
+                     0,
                      eNotify,
                      eWriteToDB);
 }
@@ -919,6 +1036,13 @@ nsPermissionManager::RemoveAll()
 {
   ENSURE_NOT_CHILD_PROCESS;
   return RemoveAllInternal(true);
+}
+
+NS_IMETHODIMP
+nsPermissionManager::RemoveAllSince(int64_t aSince)
+{
+  ENSURE_NOT_CHILD_PROCESS;
+  return RemoveAllModifiedSince(aSince);
 }
 
 void
@@ -944,6 +1068,10 @@ nsPermissionManager::RemoveAllInternal(bool aNotifyObservers)
   // database is authoritative, we do not need confirmation from the
   // on-disk database to notify observers.
   RemoveAllFromMemory();
+
+  // Re-import the defaults
+  ImportDefaults();
+
   if (aNotifyObservers) {
     NotifyObservers(nullptr, MOZ_UTF16("cleared"));
   }
@@ -1246,12 +1374,16 @@ nsPermissionManager::GetPermissionHashKey(const nsACString& aHost,
 // helper struct for passing arguments into hash enumeration callback.
 struct nsGetEnumeratorData
 {
-  nsGetEnumeratorData(nsCOMArray<nsIPermission> *aArray, const nsTArray<nsCString> *aTypes)
+  nsGetEnumeratorData(nsCOMArray<nsIPermission> *aArray,
+                      const nsTArray<nsCString> *aTypes,
+                      int64_t aSince = 0)
    : array(aArray)
-   , types(aTypes) {}
+   , types(aTypes)
+   , since(aSince) {}
 
   nsCOMArray<nsIPermission> *array;
   const nsTArray<nsCString> *types;
+  int64_t since;
 };
 
 static PLDHashOperator
@@ -1261,6 +1393,13 @@ AddPermissionsToList(nsPermissionManager::PermissionHashKey* entry, void *arg)
 
   for (uint32_t i = 0; i < entry->GetPermissions().Length(); ++i) {
     nsPermissionManager::PermissionEntry& permEntry = entry->GetPermissions()[i];
+
+    // given how "default" permissions work and the possibility of them being
+    // overridden with UNKNOWN_ACTION, we might see this value here - but we
+    // do *not* want to return them via the enumerator.
+    if (permEntry.mPermission == nsIPermissionManager::UNKNOWN_ACTION) {
+      continue;
+    }
 
     nsPermission *perm = new nsPermission(entry->GetKey()->mHost,
                                           entry->GetKey()->mAppId,
@@ -1308,6 +1447,76 @@ NS_IMETHODIMP nsPermissionManager::Observe(nsISupports *aSubject, const char *aT
     InitDB(false);
   }
 
+  return NS_OK;
+}
+
+static PLDHashOperator
+AddPermissionsModifiedSinceToList(
+  nsPermissionManager::PermissionHashKey* entry, void* arg)
+{
+  nsGetEnumeratorData* data = static_cast<nsGetEnumeratorData *>(arg);
+
+  for (size_t i = 0; i < entry->GetPermissions().Length(); ++i) {
+    const nsPermissionManager::PermissionEntry& permEntry = entry->GetPermissions()[i];
+
+    if (data->since > permEntry.mModificationTime) {
+      continue;
+    }
+
+    nsPermission* perm = new nsPermission(entry->GetKey()->mHost,
+                                          entry->GetKey()->mAppId,
+                                          entry->GetKey()->mIsInBrowserElement,
+                                          data->types->ElementAt(permEntry.mType),
+                                          permEntry.mPermission,
+                                          permEntry.mExpireType,
+                                          permEntry.mExpireTime);
+
+    data->array->AppendObject(perm);
+  }
+  return PL_DHASH_NEXT;
+}
+
+nsresult
+nsPermissionManager::RemoveAllModifiedSince(int64_t aModificationTime)
+{
+  ENSURE_NOT_CHILD_PROCESS;
+
+  // roll an nsCOMArray of all our permissions, then hand out an enumerator
+  nsCOMArray<nsIPermission> array;
+  nsGetEnumeratorData data(&array, &mTypeArray, aModificationTime);
+
+  mPermissionTable.EnumerateEntries(AddPermissionsModifiedSinceToList, &data);
+
+  for (int32_t i = 0; i<array.Count(); ++i) {
+    nsAutoCString host;
+    bool isInBrowserElement = false;
+    nsAutoCString type;
+    uint32_t appId = 0;
+
+    array[i]->GetHost(host);
+    array[i]->GetIsInBrowserElement(&isInBrowserElement);
+    array[i]->GetType(type);
+    array[i]->GetAppId(&appId);
+
+    nsCOMPtr<nsIPrincipal> principal;
+    if (NS_FAILED(GetPrincipal(host, appId, isInBrowserElement,
+                               getter_AddRefs(principal)))) {
+      NS_ERROR("GetPrincipal() failed!");
+      continue;
+    }
+    // AddInternal handles removal, so let it do the work...
+    AddInternal(
+      principal,
+      type,
+      nsIPermissionManager::UNKNOWN_ACTION,
+      0,
+      nsIPermissionManager::EXPIRE_NEVER, 0, 0,
+      nsPermissionManager::eNotify,
+      nsPermissionManager::eWriteToDB);
+  }
+  // now re-import any defaults as they may now be required if we just deleted
+  // an override.
+  ImportDefaults();
   return NS_OK;
 }
 
@@ -1390,6 +1599,7 @@ nsPermissionManager::RemovePermissionsForApp(uint32_t aAppId, bool aBrowserOnly)
                 nsIPermissionManager::UNKNOWN_ACTION,
                 0,
                 nsIPermissionManager::EXPIRE_NEVER,
+                0,
                 0,
                 nsPermissionManager::eNotify,
                 nsPermissionManager::eNoDBOperation);
@@ -1562,7 +1772,7 @@ nsPermissionManager::Read()
 
   nsCOMPtr<mozIStorageStatement> stmt;
   rv = mDBConn->CreateStatement(NS_LITERAL_CSTRING(
-    "SELECT id, host, type, permission, expireType, expireTime, appId, isInBrowserElement "
+    "SELECT id, host, type, permission, expireType, expireTime, modificationTime, appId, isInBrowserElement "
     "FROM moz_hosts"), getter_AddRefs(stmt));
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -1571,6 +1781,7 @@ nsPermissionManager::Read()
   uint32_t permission;
   uint32_t expireType;
   int64_t expireTime;
+  int64_t modificationTime;
   uint32_t appId;
   bool isInBrowserElement;
   bool hasResult;
@@ -1598,15 +1809,17 @@ nsPermissionManager::Read()
     permission = stmt->AsInt32(3);
     expireType = stmt->AsInt32(4);
 
-    // convert into int64_t value (milliseconds)
+    // convert into int64_t values (milliseconds)
     expireTime = stmt->AsInt64(5);
+    modificationTime = stmt->AsInt64(6);
 
-    if (stmt->AsInt64(6) < 0) {
+    if (stmt->AsInt64(7) < 0) {
       readError = true;
       continue;
     }
-    appId = static_cast<uint32_t>(stmt->AsInt64(6));
-    isInBrowserElement = static_cast<bool>(stmt->AsInt32(7));
+
+    appId = static_cast<uint32_t>(stmt->AsInt64(7));
+    isInBrowserElement = static_cast<bool>(stmt->AsInt32(8));
 
     nsCOMPtr<nsIPrincipal> principal;
     nsresult rv = GetPrincipal(host, appId, isInBrowserElement, getter_AddRefs(principal));
@@ -1616,7 +1829,7 @@ nsPermissionManager::Read()
     }
 
     rv = AddInternal(principal, type, permission, id, expireType, expireTime,
-                     eDontNotify, eNoDBOperation);
+                     modificationTime, eDontNotify, eNoDBOperation);
     if (NS_FAILED(rv)) {
       readError = true;
       continue;
@@ -1633,11 +1846,12 @@ nsPermissionManager::Read()
 
 static const char kMatchTypeHost[] = "host";
 
+// Import() will read a file from the profile directory and add them to the
+// database before deleting the file - ie, this is a one-shot operation that
+// will not succeed on subsequent runs as the file imported from is removed.
 nsresult
 nsPermissionManager::Import()
 {
-  ENSURE_NOT_CHILD_PROCESS;
-
   nsresult rv;
 
   nsCOMPtr<nsIFile> permissionsFile;
@@ -1650,14 +1864,73 @@ nsPermissionManager::Import()
   nsCOMPtr<nsIInputStream> fileInputStream;
   rv = NS_NewLocalFileInputStream(getter_AddRefs(fileInputStream),
                                   permissionsFile);
-  if (NS_FAILED(rv)) return rv;
-
-  nsCOMPtr<nsILineInputStream> lineInputStream = do_QueryInterface(fileInputStream, &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  rv = _DoImport(fileInputStream, mDBConn);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  // we successfully imported and wrote to the DB - delete the old file.
+  permissionsFile->Remove(false);
+  return NS_OK;
+}
+
+// ImportDefaults will read a URL with default permissions and add them to the
+// in-memory copy of permissions.  The database is *not* written to.
+nsresult
+nsPermissionManager::ImportDefaults()
+{
+  // We allow prefs to override the default permissions URI, mainly as a hook
+  // for testing.
+  nsCString defaultsURL;
+  if (mozilla::Preferences::HasUserValue(kDefaultsUrlPrefName)) {
+    defaultsURL = mozilla::Preferences::GetCString(kDefaultsUrlPrefName);
+  } else {
+    defaultsURL = NS_LITERAL_CSTRING(kDefaultsUrl);
+  }
+
+  nsresult rv;
+  nsCOMPtr<nsIIOService> ioservice =
+    do_GetService("@mozilla.org/network/io-service;1", &rv);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  nsCOMPtr<nsIURI> defaultsURI;
+  rv = NS_NewURI(getter_AddRefs(defaultsURI), defaultsURL,
+                 nullptr, nullptr, ioservice);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  nsCOMPtr<nsIChannel> channel;
+  rv = ioservice->NewChannelFromURI(defaultsURI, getter_AddRefs(channel));
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  nsCOMPtr<nsIInputStream> inputStream;
+  rv = channel->Open(getter_AddRefs(inputStream));
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  rv = _DoImport(inputStream, nullptr);
+  inputStream->Close();
+  return rv;
+}
+
+// _DoImport reads the specified stream and adds the parsed elements.  If
+// |conn| is passed, the imported data will be written to the database, but if
+// |conn| is null the data will be added only to the in-memory copy of the
+// database.
+nsresult
+nsPermissionManager::_DoImport(nsIInputStream *inputStream, mozIStorageConnection *conn)
+{
+  ENSURE_NOT_CHILD_PROCESS;
+
+  nsresult rv;
   // start a transaction on the storage db, to optimize insertions.
   // transaction will automically commit on completion
-  mozStorageTransaction transaction(mDBConn, true);
+  // (note the transaction is a no-op if a null connection is passed)
+  mozStorageTransaction transaction(conn, true);
+
+  // The DB operation - we only try and write if a connection was passed.
+  DBOperationType operation = conn ? eWriteToDB : eNoDBOperation;
+  // and if no DB connection was passed we assume this is a "default" permission,
+  // so use the special ID which indicates this.
+  int64_t id = conn ? 0 : cIDPermissionIsDefault;
 
   /* format is:
    * matchtype \t type \t permission \t host
@@ -1666,17 +1939,24 @@ nsPermissionManager::Import()
    * permission is an integer between 1 and 15
    */
 
-  nsAutoCString buffer;
+  // Ideally we'd do this with nsILineInputString, but this is called with an
+  // nsIInputStream that comes from a resource:// URI, which doesn't support
+  // that interface.  So NS_ReadLine to the rescue...
+  nsLineBuffer<char> lineBuffer;
+  nsCString line;
   bool isMore = true;
-  while (isMore && NS_SUCCEEDED(lineInputStream->ReadLine(buffer, &isMore))) {
-    if (buffer.IsEmpty() || buffer.First() == '#') {
+  do {
+    rv = NS_ReadLine(inputStream, &lineBuffer, line, &isMore);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    if (line.IsEmpty() || line.First() == '#') {
       continue;
     }
 
     nsTArray<nsCString> lineArray;
 
     // Split the line at tabs
-    ParseString(buffer, '\t', lineArray);
+    ParseString(line, '\t', lineArray);
 
     if (lineArray[0].EqualsLiteral(kMatchTypeHost) &&
         lineArray.Length() == 4) {
@@ -1697,14 +1977,18 @@ nsPermissionManager::Import()
       nsresult rv = GetPrincipal(lineArray[3], getter_AddRefs(principal));
       NS_ENSURE_SUCCESS(rv, rv);
 
-      rv = AddInternal(principal, lineArray[1], permission, 0,
-                       nsIPermissionManager::EXPIRE_NEVER, 0, eDontNotify, eWriteToDB);
+      // the import file format doesn't handle modification times, so we use
+      // 0, which AddInternal will convert to now()
+      int64_t modificationTime = 0;
+
+      rv = AddInternal(principal, lineArray[1], permission, id,
+                       nsIPermissionManager::EXPIRE_NEVER, 0,
+                       modificationTime,
+                       eDontNotify, operation);
       NS_ENSURE_SUCCESS(rv, rv);
     }
-  }
 
-  // we're done importing - delete the old file
-  permissionsFile->Remove(false);
+  } while (isMore);
 
   return NS_OK;
 }
@@ -1731,6 +2015,7 @@ nsPermissionManager::UpdateDB(OperationType aOp,
                               uint32_t aPermission,
                               uint32_t aExpireType,
                               int64_t aExpireTime,
+                              int64_t aModificationTime,
                               uint32_t aAppId,
                               bool aIsInBrowserElement)
 {
@@ -1763,10 +2048,13 @@ nsPermissionManager::UpdateDB(OperationType aOp,
       rv = aStmt->BindInt64ByIndex(5, aExpireTime);
       if (NS_FAILED(rv)) break;
 
-      rv = aStmt->BindInt64ByIndex(6, aAppId);
+      rv = aStmt->BindInt64ByIndex(6, aModificationTime);
       if (NS_FAILED(rv)) break;
 
-      rv = aStmt->BindInt64ByIndex(7, aIsInBrowserElement);
+      rv = aStmt->BindInt64ByIndex(7, aAppId);
+      if (NS_FAILED(rv)) break;
+
+      rv = aStmt->BindInt64ByIndex(8, aIsInBrowserElement);
       break;
     }
 
@@ -1788,6 +2076,9 @@ nsPermissionManager::UpdateDB(OperationType aOp,
       if (NS_FAILED(rv)) break;
 
       rv = aStmt->BindInt64ByIndex(3, aExpireTime);
+      if (NS_FAILED(rv)) break;
+
+      rv = aStmt->BindInt64ByIndex(4, aModificationTime);
       break;
     }
 

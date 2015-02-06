@@ -8,16 +8,17 @@
 
 #include "mozilla/DebugOnly.h"
 
-#include "jit/IonLinker.h"
-
 #include "jit/JitcodeMap.h"
+#include "jit/Linker.h"
 #include "jit/PerfSpewer.h"
 
-#include "jit/IonFrames-inl.h"
+#include "jit/JitFrames-inl.h"
 #include "vm/Stack-inl.h"
 
 using namespace js;
 using namespace js::jit;
+
+using mozilla::DebugOnly;
 
 struct DebugModeOSREntry
 {
@@ -207,7 +208,7 @@ CollectOnStackScripts(JSContext *cx, const JitActivationIterator &activation,
 
           case JitFrame_BaselineStub:
             prevFrameStubPtr =
-                reinterpret_cast<IonBaselineStubFrameLayout *>(iter.fp())->maybeStubPtr();
+                reinterpret_cast<BaselineStubFrameLayout *>(iter.fp())->maybeStubPtr();
             break;
 
           case JitFrame_IonJS: {
@@ -261,7 +262,7 @@ static void
 SpewPatchBaselineFrame(uint8_t *oldReturnAddress, uint8_t *newReturnAddress,
                        JSScript *script, ICEntry::Kind frameKind, jsbytecode *pc)
 {
-    IonSpew(IonSpew_BaselineDebugModeOSR,
+    JitSpew(JitSpew_BaselineDebugModeOSR,
             "Patch return %p -> %p on BaselineJS frame (%s:%d) from %s at %s",
             oldReturnAddress, newReturnAddress, script->filename(), script->lineno(),
             ICEntryKindToString(frameKind), js_CodeName[(JSOp)*pc]);
@@ -270,7 +271,7 @@ SpewPatchBaselineFrame(uint8_t *oldReturnAddress, uint8_t *newReturnAddress,
 static void
 SpewPatchStubFrame(ICStub *oldStub, ICStub *newStub)
 {
-    IonSpew(IonSpew_BaselineDebugModeOSR,
+    JitSpew(JitSpew_BaselineDebugModeOSR,
             "Patch   stub %p -> %p on BaselineStub frame (%s)",
             oldStub, newStub, ICStub::KindString(newStub->kind()));
 }
@@ -308,9 +309,9 @@ PatchBaselineFramesForDebugMode(JSContext *cx, const JitActivationIterator &acti
     // state). Specifics on what need to be done are documented below.
     //
 
-    IonCommonFrameLayout *prev = nullptr;
+    CommonFrameLayout *prev = nullptr;
     size_t entryIndex = *start;
-    bool expectedDebugMode = cx->compartment()->debugMode();
+    DebugOnly<bool> expectedDebugMode = cx->compartment()->debugMode();
 
     for (JitFrameIterator iter(activation); !iter.done(); ++iter) {
         DebugModeOSREntry &entry = entries[entryIndex];
@@ -443,8 +444,8 @@ PatchBaselineFramesForDebugMode(JSContext *cx, const JitActivationIterator &acti
             if (!entry.recompiled())
                 break;
 
-            IonBaselineStubFrameLayout *layout =
-                reinterpret_cast<IonBaselineStubFrameLayout *>(iter.fp());
+            BaselineStubFrameLayout *layout =
+                reinterpret_cast<BaselineStubFrameLayout *>(iter.fp());
             MOZ_ASSERT(entry.script->baselineScript()->debugMode() == expectedDebugMode);
             MOZ_ASSERT(layout->maybeStubPtr() == entry.oldStub);
 
@@ -501,7 +502,7 @@ RecompileBaselineScriptForDebugMode(JSContext *cx, JSScript *script)
     if (oldBaselineScript->debugMode() == expectedDebugMode)
         return true;
 
-    IonSpew(IonSpew_BaselineDebugModeOSR, "Recompiling (%s:%d) for debug mode %s",
+    JitSpew(JitSpew_BaselineDebugModeOSR, "Recompiling (%s:%d) for debug mode %s",
             script->filename(), script->lineno(), expectedDebugMode ? "ON" : "OFF");
 
     CancelOffThreadIonCompile(cx->compartment(), script);

@@ -40,13 +40,19 @@ FakeSpeechRecognitionService::Initialize(WeakPtr<SpeechRecognition> aSpeechRecog
 }
 
 NS_IMETHODIMP
-FakeSpeechRecognitionService::ProcessAudioSegment(AudioSegment* aAudioSegment)
+FakeSpeechRecognitionService::ProcessAudioSegment(AudioSegment* aAudioSegment, int32_t aSampleRate)
 {
   return NS_OK;
 }
 
 NS_IMETHODIMP
 FakeSpeechRecognitionService::SoundEnd()
+{
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+FakeSpeechRecognitionService::ValidateAndSetGrammarList(mozilla::dom::SpeechGrammarList*, nsISpeechGrammarCompilationCallback*)
 {
   return NS_OK;
 }

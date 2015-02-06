@@ -76,7 +76,6 @@ HTMLFormControlsCollection::HTMLFormControlsCollection(HTMLFormElement* aForm)
   , mElements(8)
   , mNameLookupTable(HTMLFormElement::FORM_CONTROL_LIST_HASHTABLE_LENGTH)
 {
-  SetIsDOMBinding();
 }
 
 HTMLFormControlsCollection::~HTMLFormControlsCollection()
@@ -113,7 +112,7 @@ void
 HTMLFormControlsCollection::FlushPendingNotifications()
 {
   if (mForm) {
-    nsIDocument* doc = mForm->GetCurrentDoc();
+    nsIDocument* doc = mForm->GetUncomposedDoc();
     if (doc) {
       doc->FlushPendingNotifications(Flush_Content);
     }

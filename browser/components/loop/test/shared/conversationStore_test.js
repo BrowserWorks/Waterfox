@@ -3,7 +3,7 @@
 
 var expect = chai.expect;
 
-describe("loop.ConversationStore", function () {
+describe("loop.store.ConversationStore", function () {
   "use strict";
 
   var CALL_STATES = loop.store.CALL_STATES;
@@ -37,8 +37,15 @@ describe("loop.ConversationStore", function () {
     };
 
     navigator.mozLoop = {
-      getLoopBoolPref: sandbox.stub(),
-      releaseCallData: sandbox.stub()
+      getLoopPref: sandbox.stub(),
+      addConversationContext: sandbox.stub(),
+      calls: {
+        setCallInProgress: sandbox.stub(),
+        clearCallInProgress: sandbox.stub()
+      },
+      rooms: {
+        create: sandbox.stub()
+      }
     };
 
     dispatcher = new loop.Dispatcher();
@@ -72,6 +79,7 @@ describe("loop.ConversationStore", function () {
       sessionId: "321456",
       sessionToken: "341256",
       websocketToken: "543216",
+      windowId: "28",
       progressURL: "fakeURL"
     };
 
@@ -125,19 +133,18 @@ describe("loop.ConversationStore", function () {
   describe("#connectionFailure", function() {
     beforeEach(function() {
       store._websocket = fakeWebsocket;
-      sandbox.stub(loop.shared.utils.Helper.prototype, "locationHash")
-        .returns("#outgoing/42");
+      store.set({windowId: "42"});
     });
 
     it("should disconnect the session", function() {
-      dispatcher.dispatch(
+      store.connectionFailure(
         new sharedActions.ConnectionFailure({reason: "fake"}));
 
       sinon.assert.calledOnce(sdkDriver.disconnectSession);
     });
 
     it("should ensure the websocket is closed", function() {
-      dispatcher.dispatch(
+      store.connectionFailure(
         new sharedActions.ConnectionFailure({reason: "fake"}));
 
       sinon.assert.calledOnce(wsCloseSpy);
@@ -146,7 +153,7 @@ describe("loop.ConversationStore", function () {
     it("should set the state to 'terminated'", function() {
       store.set({callState: CALL_STATES.ALERTING});
 
-      dispatcher.dispatch(
+      store.connectionFailure(
         new sharedActions.ConnectionFailure({reason: "fake"}));
 
       expect(store.get("callState")).eql(CALL_STATES.TERMINATED);
@@ -154,11 +161,12 @@ describe("loop.ConversationStore", function () {
     });
 
     it("should release mozLoop callsData", function() {
-      dispatcher.dispatch(
+      store.connectionFailure(
         new sharedActions.ConnectionFailure({reason: "fake"}));
 
-      sinon.assert.calledOnce(navigator.mozLoop.releaseCallData);
-      sinon.assert.calledWithExactly(navigator.mozLoop.releaseCallData, "42");
+      sinon.assert.calledOnce(navigator.mozLoop.calls.clearCallInProgress);
+      sinon.assert.calledWithExactly(
+        navigator.mozLoop.calls.clearCallInProgress, "42");
     });
   });
 
@@ -167,7 +175,7 @@ describe("loop.ConversationStore", function () {
       it("should change the state from 'gather' to 'connecting'", function() {
         store.set({callState: CALL_STATES.GATHER});
 
-        dispatcher.dispatch(
+        store.connectionProgress(
           new sharedActions.ConnectionProgress({wsState: WS_STATES.INIT}));
 
         expect(store.get("callState")).eql(CALL_STATES.CONNECTING);
@@ -178,7 +186,7 @@ describe("loop.ConversationStore", function () {
       it("should change the state from 'gather' to 'alerting'", function() {
         store.set({callState: CALL_STATES.GATHER});
 
-        dispatcher.dispatch(
+        store.connectionProgress(
           new sharedActions.ConnectionProgress({wsState: WS_STATES.ALERTING}));
 
         expect(store.get("callState")).eql(CALL_STATES.ALERTING);
@@ -187,7 +195,7 @@ describe("loop.ConversationStore", function () {
       it("should change the state from 'init' to 'alerting'", function() {
         store.set({callState: CALL_STATES.INIT});
 
-        dispatcher.dispatch(
+        store.connectionProgress(
           new sharedActions.ConnectionProgress({wsState: WS_STATES.ALERTING}));
 
         expect(store.get("callState")).eql(CALL_STATES.ALERTING);
@@ -200,7 +208,7 @@ describe("loop.ConversationStore", function () {
       });
 
       it("should change the state to 'ongoing'", function() {
-        dispatcher.dispatch(
+        store.connectionProgress(
           new sharedActions.ConnectionProgress({wsState: WS_STATES.CONNECTING}));
 
         expect(store.get("callState")).eql(CALL_STATES.ONGOING);
@@ -209,7 +217,7 @@ describe("loop.ConversationStore", function () {
       it("should connect the session", function() {
         store.set(fakeSessionData);
 
-        dispatcher.dispatch(
+        store.connectionProgress(
           new sharedActions.ConnectionProgress({wsState: WS_STATES.CONNECTING}));
 
         sinon.assert.calledOnce(sdkDriver.connectSession);
@@ -219,72 +227,60 @@ describe("loop.ConversationStore", function () {
           sessionToken: "341256"
         });
       });
+
+      it("should call mozLoop.addConversationContext", function() {
+        store.set(fakeSessionData);
+
+        store.connectionProgress(
+          new sharedActions.ConnectionProgress({wsState: WS_STATES.CONNECTING}));
+
+        sinon.assert.calledOnce(navigator.mozLoop.addConversationContext);
+        sinon.assert.calledWithExactly(navigator.mozLoop.addConversationContext,
+                                       "28", "321456", "142536");
+      });
     });
   });
 
-  describe("#gatherCallData", function() {
+  describe("#setupWindowData", function() {
+    var fakeSetupWindowData;
+
     beforeEach(function() {
       store.set({callState: CALL_STATES.INIT});
-
-      navigator.mozLoop = {
-        getCallData: function() {
-          return {
-            contact: contact,
-            callType: sharedUtils.CALL_TYPES.AUDIO_VIDEO
-          };
-        }
+      fakeSetupWindowData = {
+        windowId: "123456",
+        type: "outgoing",
+        contact: contact,
+        callType: sharedUtils.CALL_TYPES.AUDIO_VIDEO
       };
-    });
-
-    afterEach(function() {
-      delete navigator.mozLoop;
     });
 
     it("should set the state to 'gather'", function() {
       dispatcher.dispatch(
-        new sharedActions.GatherCallData({
-          callId: "76543218",
-          outgoing: true
-        }));
+        new sharedActions.SetupWindowData(fakeSetupWindowData));
 
       expect(store.get("callState")).eql(CALL_STATES.GATHER);
     });
 
     it("should save the basic call information", function() {
       dispatcher.dispatch(
-        new sharedActions.GatherCallData({
-          callId: "123456",
-          outgoing: true
-        }));
+        new sharedActions.SetupWindowData(fakeSetupWindowData));
 
-      expect(store.get("callId")).eql("123456");
+      expect(store.get("windowId")).eql("123456");
       expect(store.get("outgoing")).eql(true);
     });
 
     it("should save the basic information from the mozLoop api", function() {
       dispatcher.dispatch(
-        new sharedActions.GatherCallData({
-          callId: "123456",
-          outgoing: true
-        }));
+        new sharedActions.SetupWindowData(fakeSetupWindowData));
 
       expect(store.get("contact")).eql(contact);
       expect(store.get("callType")).eql(sharedUtils.CALL_TYPES.AUDIO_VIDEO);
     });
 
     describe("outgoing calls", function() {
-      var outgoingCallData;
-
-      beforeEach(function() {
-        outgoingCallData = {
-          callId: "123456",
-          outgoing: true
-        };
-      });
-
       it("should request the outgoing call data", function() {
         dispatcher.dispatch(
-          new sharedActions.GatherCallData(outgoingCallData));
+          new sharedActions.SetupWindowData(fakeSetupWindowData));
 
         sinon.assert.calledOnce(client.setupOutgoingCall);
         sinon.assert.calledWith(client.setupOutgoingCall,
@@ -292,7 +288,7 @@ describe("loop.ConversationStore", function () {
       });
 
       it("should include all email addresses in the call data", function() {
-        contact = {
+        fakeSetupWindowData.contact = {
           name: [ "Mr Smith" ],
           email: [{
             type: "home",
@@ -307,7 +303,7 @@ describe("loop.ConversationStore", function () {
         };
 
         dispatcher.dispatch(
-          new sharedActions.GatherCallData(outgoingCallData));
+          new sharedActions.SetupWindowData(fakeSetupWindowData));
 
         sinon.assert.calledOnce(client.setupOutgoingCall);
         sinon.assert.calledWith(client.setupOutgoingCall,
@@ -315,7 +311,7 @@ describe("loop.ConversationStore", function () {
       });
 
       it("should include trim phone numbers for the call data", function() {
-        contact = {
+        fakeSetupWindowData.contact = {
           name: [ "Mr Smith" ],
           tel: [{
             type: "home",
@@ -325,7 +321,7 @@ describe("loop.ConversationStore", function () {
         };
 
         dispatcher.dispatch(
-          new sharedActions.GatherCallData(outgoingCallData));
+          new sharedActions.SetupWindowData(fakeSetupWindowData));
 
         sinon.assert.calledOnce(client.setupOutgoingCall);
         sinon.assert.calledWith(client.setupOutgoingCall,
@@ -333,7 +329,7 @@ describe("loop.ConversationStore", function () {
       });
 
       it("should include all email and telephone values in the call data", function() {
-        contact = {
+        fakeSetupWindowData.contact = {
           name: [ "Mr Smith" ],
           email: [{
             type: "home",
@@ -356,7 +352,7 @@ describe("loop.ConversationStore", function () {
         };
 
         dispatcher.dispatch(
-          new sharedActions.GatherCallData(outgoingCallData));
+          new sharedActions.SetupWindowData(fakeSetupWindowData));
 
         sinon.assert.calledOnce(client.setupOutgoingCall);
         sinon.assert.calledWith(client.setupOutgoingCall,
@@ -376,8 +372,8 @@ describe("loop.ConversationStore", function () {
 
           client.setupOutgoingCall.callsArgWith(2, null, callData);
 
-          store.gatherCallData(
-            new sharedActions.GatherCallData(outgoingCallData));
+          store.setupWindowData(
+            new sharedActions.SetupWindowData(fakeSetupWindowData));
 
           sinon.assert.calledOnce(dispatcher.dispatch);
           // Can't use instanceof here, as that matches any action
@@ -390,8 +386,8 @@ describe("loop.ConversationStore", function () {
         it("should dispatch a connection failure action on failure", function() {
           client.setupOutgoingCall.callsArgWith(2, {});
 
-          store.gatherCallData(
-            new sharedActions.GatherCallData(outgoingCallData));
+          store.setupWindowData(
+            new sharedActions.SetupWindowData(fakeSetupWindowData));
 
           sinon.assert.calledOnce(dispatcher.dispatch);
           // Can't use instanceof here, as that matches any action
@@ -406,7 +402,7 @@ describe("loop.ConversationStore", function () {
 
   describe("#connectCall", function() {
     it("should save the call session data", function() {
-      dispatcher.dispatch(
+      store.connectCall(
         new sharedActions.ConnectCall({sessionData: fakeSessionData}));
 
       expect(store.get("apiKey")).eql("fakeKey");
@@ -423,7 +419,7 @@ describe("loop.ConversationStore", function () {
         on: sinon.spy()
       });
 
-      dispatcher.dispatch(
+      store.connectCall(
         new sharedActions.ConnectCall({sessionData: fakeSessionData}));
 
       sinon.assert.calledOnce(loop.CallConnectionWebSocket);
@@ -435,7 +431,7 @@ describe("loop.ConversationStore", function () {
     });
 
     it("should connect the websocket to the server", function() {
-      dispatcher.dispatch(
+      store.connectCall(
         new sharedActions.ConnectCall({sessionData: fakeSessionData}));
 
       sinon.assert.calledOnce(store._websocket.promiseConnect);
@@ -443,7 +439,7 @@ describe("loop.ConversationStore", function () {
 
     describe("WebSocket connection result", function() {
       beforeEach(function() {
-        dispatcher.dispatch(
+        store.connectCall(
           new sharedActions.ConnectCall({sessionData: fakeSessionData}));
 
         sandbox.stub(dispatcher, "dispatch");
@@ -496,43 +492,43 @@ describe("loop.ConversationStore", function () {
         close: wsCloseSpy
       };
       store.set({callState: CALL_STATES.ONGOING});
-      sandbox.stub(loop.shared.utils.Helper.prototype, "locationHash")
-        .returns("#outgoing/42");
+      store.set({windowId: "42"});
     });
 
     it("should disconnect the session", function() {
-      dispatcher.dispatch(new sharedActions.HangupCall());
+      store.hangupCall(new sharedActions.HangupCall());
 
       sinon.assert.calledOnce(sdkDriver.disconnectSession);
     });
 
     it("should send a media-fail message to the websocket if it is open", function() {
-      dispatcher.dispatch(new sharedActions.HangupCall());
+      store.hangupCall(new sharedActions.HangupCall());
 
       sinon.assert.calledOnce(wsMediaFailSpy);
     });
 
     it("should ensure the websocket is closed", function() {
-      dispatcher.dispatch(new sharedActions.HangupCall());
+      store.hangupCall(new sharedActions.HangupCall());
 
       sinon.assert.calledOnce(wsCloseSpy);
     });
 
     it("should set the callState to finished", function() {
-      dispatcher.dispatch(new sharedActions.HangupCall());
+      store.hangupCall(new sharedActions.HangupCall());
 
       expect(store.get("callState")).eql(CALL_STATES.FINISHED);
     });
 
     it("should release mozLoop callsData", function() {
-      dispatcher.dispatch(new sharedActions.HangupCall());
+      store.hangupCall(new sharedActions.HangupCall());
 
-      sinon.assert.calledOnce(navigator.mozLoop.releaseCallData);
-      sinon.assert.calledWithExactly(navigator.mozLoop.releaseCallData, "42");
+      sinon.assert.calledOnce(navigator.mozLoop.calls.clearCallInProgress);
+      sinon.assert.calledWithExactly(
+        navigator.mozLoop.calls.clearCallInProgress, "42");
     });
   });
 
-  describe("#peerHungupCall", function() {
+  describe("#remotePeerDisconnected", function() {
     var wsMediaFailSpy, wsCloseSpy;
     beforeEach(function() {
       wsMediaFailSpy = sinon.spy();
@@ -543,33 +539,59 @@ describe("loop.ConversationStore", function () {
         close: wsCloseSpy
       };
       store.set({callState: CALL_STATES.ONGOING});
-      sandbox.stub(loop.shared.utils.Helper.prototype, "locationHash")
-        .returns("#outgoing/42");
+      store.set({windowId: "42"});
     });
 
     it("should disconnect the session", function() {
-      dispatcher.dispatch(new sharedActions.PeerHungupCall());
+      store.remotePeerDisconnected(new sharedActions.RemotePeerDisconnected({
+        peerHungup: true
+      }));
 
       sinon.assert.calledOnce(sdkDriver.disconnectSession);
     });
 
     it("should ensure the websocket is closed", function() {
-      dispatcher.dispatch(new sharedActions.PeerHungupCall());
+      store.remotePeerDisconnected(new sharedActions.RemotePeerDisconnected({
+        peerHungup: true
+      }));
 
       sinon.assert.calledOnce(wsCloseSpy);
     });
 
-    it("should set the callState to finished", function() {
-      dispatcher.dispatch(new sharedActions.PeerHungupCall());
+    it("should release mozLoop callsData", function() {
+      store.remotePeerDisconnected(new sharedActions.RemotePeerDisconnected({
+        peerHungup: true
+      }));
+
+      sinon.assert.calledOnce(navigator.mozLoop.calls.clearCallInProgress);
+      sinon.assert.calledWithExactly(
+        navigator.mozLoop.calls.clearCallInProgress, "42");
+    });
+
+    it("should set the callState to finished if the peer hungup", function() {
+      store.remotePeerDisconnected(new sharedActions.RemotePeerDisconnected({
+        peerHungup: true
+      }));
 
       expect(store.get("callState")).eql(CALL_STATES.FINISHED);
     });
 
-    it("should release mozLoop callsData", function() {
-      dispatcher.dispatch(new sharedActions.PeerHungupCall());
+    it("should set the callState to terminated if the peer was disconnected" +
+      "for an unintentional reason", function() {
+        store.remotePeerDisconnected(new sharedActions.RemotePeerDisconnected({
+          peerHungup: false
+        }));
 
-      sinon.assert.calledOnce(navigator.mozLoop.releaseCallData);
-      sinon.assert.calledWithExactly(navigator.mozLoop.releaseCallData, "42");
+        expect(store.get("callState")).eql(CALL_STATES.TERMINATED);
+      });
+
+    it("should set the reason to peerNetworkDisconnected if the peer was" +
+      "disconnected for an unintentional reason", function() {
+        store.remotePeerDisconnected(new sharedActions.RemotePeerDisconnected({
+          peerHungup: false
+        }));
+
+        expect(store.get("callStateReason")).eql("peerNetworkDisconnected");
     });
   });
 
@@ -578,30 +600,29 @@ describe("loop.ConversationStore", function () {
       store._websocket = fakeWebsocket;
 
       store.set({callState: CALL_STATES.CONNECTING});
-      sandbox.stub(loop.shared.utils.Helper.prototype, "locationHash")
-        .returns("#outgoing/42");
+      store.set({windowId: "42"});
     });
 
     it("should disconnect the session", function() {
-      dispatcher.dispatch(new sharedActions.CancelCall());
+      store.cancelCall(new sharedActions.CancelCall());
 
       sinon.assert.calledOnce(sdkDriver.disconnectSession);
     });
 
     it("should send a cancel message to the websocket if it is open", function() {
-      dispatcher.dispatch(new sharedActions.CancelCall());
+      store.cancelCall(new sharedActions.CancelCall());
 
       sinon.assert.calledOnce(wsCancelSpy);
     });
 
     it("should ensure the websocket is closed", function() {
-      dispatcher.dispatch(new sharedActions.CancelCall());
+      store.cancelCall(new sharedActions.CancelCall());
 
       sinon.assert.calledOnce(wsCloseSpy);
     });
 
     it("should set the state to close if the call is connecting", function() {
-      dispatcher.dispatch(new sharedActions.CancelCall());
+      store.cancelCall(new sharedActions.CancelCall());
 
       expect(store.get("callState")).eql(CALL_STATES.CLOSE);
     });
@@ -609,16 +630,17 @@ describe("loop.ConversationStore", function () {
     it("should set the state to close if the call has terminated already", function() {
       store.set({callState: CALL_STATES.TERMINATED});
 
-      dispatcher.dispatch(new sharedActions.CancelCall());
+      store.cancelCall(new sharedActions.CancelCall());
 
       expect(store.get("callState")).eql(CALL_STATES.CLOSE);
     });
 
     it("should release mozLoop callsData", function() {
-      dispatcher.dispatch(new sharedActions.CancelCall());
+      store.cancelCall(new sharedActions.CancelCall());
 
-      sinon.assert.calledOnce(navigator.mozLoop.releaseCallData);
-      sinon.assert.calledWithExactly(navigator.mozLoop.releaseCallData, "42");
+      sinon.assert.calledOnce(navigator.mozLoop.calls.clearCallInProgress);
+      sinon.assert.calledWithExactly(
+        navigator.mozLoop.calls.clearCallInProgress, "42");
     });
   });
 
@@ -626,7 +648,7 @@ describe("loop.ConversationStore", function () {
     it("should set the state to gather", function() {
       store.set({callState: CALL_STATES.TERMINATED});
 
-      dispatcher.dispatch(new sharedActions.RetryCall());
+      store.retryCall(new sharedActions.RetryCall());
 
       expect(store.get("callState")).eql(CALL_STATES.GATHER);
     });
@@ -639,7 +661,7 @@ describe("loop.ConversationStore", function () {
         contact: contact
       });
 
-      dispatcher.dispatch(new sharedActions.RetryCall());
+      store.retryCall(new sharedActions.RetryCall());
 
       sinon.assert.calledOnce(client.setupOutgoingCall);
       sinon.assert.calledWith(client.setupOutgoingCall,
@@ -651,7 +673,7 @@ describe("loop.ConversationStore", function () {
     it("should send mediaUp via the websocket", function() {
       store._websocket = fakeWebsocket;
 
-      dispatcher.dispatch(new sharedActions.MediaConnected());
+      store.mediaConnected(new sharedActions.MediaConnected());
 
       sinon.assert.calledOnce(wsMediaUpSpy);
     });
@@ -681,20 +703,29 @@ describe("loop.ConversationStore", function () {
     });
   });
 
-  describe("#fetchEmailLink", function() {
+  describe("#fetchRoomEmailLink", function() {
     it("should request a new call url to the server", function() {
-      dispatcher.dispatch(new sharedActions.FetchEmailLink());
+      store.fetchRoomEmailLink(new sharedActions.FetchRoomEmailLink({
+        roomOwner: "bob@invalid.tld",
+        roomName: "FakeRoomName"
+      }));
 
-      sinon.assert.calledOnce(client.requestCallUrl);
-      sinon.assert.calledWith(client.requestCallUrl, "");
+      sinon.assert.calledOnce(navigator.mozLoop.rooms.create);
+      sinon.assert.calledWithMatch(navigator.mozLoop.rooms.create, {
+        roomOwner: "bob@invalid.tld",
+        roomName: "FakeRoomName"
+      });
     });
 
-    it("should update the emailLink attribute when the new call url is received",
+    it("should update the emailLink attribute when the new room url is received",
       function() {
-        client.requestCallUrl = function(callId, cb) {
-          cb(null, {callUrl: "http://fake.invalid/"});
+        navigator.mozLoop.rooms.create = function(roomData, cb) {
+          cb(null, {roomUrl: "http://fake.invalid/"});
         };
-        dispatcher.dispatch(new sharedActions.FetchEmailLink());
+        store.fetchRoomEmailLink(new sharedActions.FetchRoomEmailLink({
+          roomOwner: "bob@invalid.tld",
+          roomName: "FakeRoomName"
+        }));
 
         expect(store.get("emailLink")).eql("http://fake.invalid/");
       });
@@ -702,10 +733,13 @@ describe("loop.ConversationStore", function () {
     it("should trigger an error:emailLink event in case of failure",
       function() {
         var trigger = sandbox.stub(store, "trigger");
-        client.requestCallUrl = function(callId, cb) {
-          cb("error");
+        navigator.mozLoop.rooms.create = function(roomData, cb) {
+          cb(new Error("error"));
         };
-        dispatcher.dispatch(new sharedActions.FetchEmailLink());
+        store.fetchRoomEmailLink(new sharedActions.FetchRoomEmailLink({
+          roomOwner: "bob@invalid.tld",
+          roomName: "FakeRoomName"
+        }));
 
         sinon.assert.calledOnce(trigger);
         sinon.assert.calledWithExactly(trigger, "error:emailLink");
@@ -715,7 +749,7 @@ describe("loop.ConversationStore", function () {
   describe("Events", function() {
     describe("Websocket progress", function() {
       beforeEach(function() {
-        dispatcher.dispatch(
+        store.connectCall(
           new sharedActions.ConnectCall({sessionData: fakeSessionData}));
 
         sandbox.stub(dispatcher, "dispatch");

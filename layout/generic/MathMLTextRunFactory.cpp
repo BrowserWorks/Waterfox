@@ -6,7 +6,8 @@
 #include "MathMLTextRunFactory.h"
 
 #include "mozilla/ArrayUtils.h"
- 
+#include "mozilla/BinarySearch.h"
+
 #include "nsStyleConsts.h"
 #include "nsStyleContext.h"
 #include "nsTextFrameUtils.h"
@@ -189,24 +190,29 @@ static const MathVarMapping gLatinExceptionMapTable[] = {
   { 0x1D551, 0x2124 }
 };
 
+namespace {
+
+struct MathVarMappingWrapper
+{
+  const MathVarMapping* const mTable;
+  explicit MathVarMappingWrapper(const MathVarMapping* aTable) : mTable(aTable) {}
+  uint32_t operator[](size_t index) const {
+    return mTable[index].mKey;
+  }
+};
+
+} // namespace
+
 // Finds a MathVarMapping struct with the specified key (aKey) within aTable.
 // aTable must be an array, whose length is specified by aNumElements
 static uint32_t
 MathvarMappingSearch(uint32_t aKey, const MathVarMapping* aTable, uint32_t aNumElements)
 {
-  uint32_t low = 0;
-  uint32_t high = aNumElements;
-  while (high > low) {
-    uint32_t midPoint = (low+high) >> 1;
-    if (aKey == aTable[midPoint].mKey) {
-      return aTable[midPoint].mReplacement;
-    }
-    if (aKey > aTable[midPoint].mKey) {
-      low = midPoint + 1;
-    } else {
-      high = midPoint;
-    }
+  size_t index;
+  if (BinarySearch(MathVarMappingWrapper(aTable), 0, aNumElements, aKey, &index)) {
+    return aTable[index].mReplacement;
   }
+
   return 0;
 }
 
@@ -518,6 +524,9 @@ MathVariant(uint32_t aCh, uint8_t aMathVar)
 
 }
 
+#define TT_SSTY TRUETYPE_TAG('s', 's', 't', 'y')
+#define TT_DTLS TRUETYPE_TAG('d', 't', 'l', 's')
+
 void
 MathMLTextRunFactory::RebuildTextRun(nsTransformedTextRun* aTextRun,
                                      gfxContext* aRefContext)
@@ -541,16 +550,18 @@ MathMLTextRunFactory::RebuildTextRun(nsTransformedTextRun* aTextRun,
   if (length) {
     font = styles[0]->StyleFont()->mFont;
 
-    if (mSSTYScriptLevel) {
-      bool found = false;
+    if (mSSTYScriptLevel || (mFlags & MATH_FONT_FEATURE_DTLS)) {
+      bool foundSSTY = false;
+      bool foundDTLS = false;
       // We respect ssty settings explicitly set by the user
       for (uint32_t i = 0; i < font.fontFeatureSettings.Length(); i++) {
-        if (font.fontFeatureSettings[i].mTag == TRUETYPE_TAG('s', 's', 't', 'y')) {
-          found = true;
-          break;
+        if (font.fontFeatureSettings[i].mTag == TT_SSTY) {
+          foundSSTY = true;
+        } else if (font.fontFeatureSettings[i].mTag == TT_DTLS) {
+          foundDTLS = true;
         }
       }
-      if (!found) {
+      if (mSSTYScriptLevel && !foundSSTY) {
         uint8_t sstyLevel = 0;
         float scriptScaling = pow(styles[0]->StyleFont()->mScriptSizeMultiplier,
                                   mSSTYScriptLevel);
@@ -584,10 +595,26 @@ MathMLTextRunFactory::RebuildTextRun(nsTransformedTextRun* aTextRun,
         }
         if (sstyLevel) {
           gfxFontFeature settingSSTY;
-          settingSSTY.mTag = TRUETYPE_TAG('s','s','t','y');
+          settingSSTY.mTag = TT_SSTY;
           settingSSTY.mValue = sstyLevel;
           font.fontFeatureSettings.AppendElement(settingSSTY);
         }
+      }
+      /*
+        Apply the dtls font feature setting (dotless).
+        This gets applied to the base frame and all descendants of the base
+        frame of certain <mover> and <munderover> frames.
+
+        See nsMathMLmunderoverFrame.cpp for a full description.
+
+        To opt out of this change, add the following to the stylesheet:
+        "font-feature-settings: 'dtls' 0"
+      */
+      if ((mFlags & MATH_FONT_FEATURE_DTLS) && !foundDTLS) {
+        gfxFontFeature settingDTLS;
+        settingDTLS.mTag = TT_DTLS;
+        settingDTLS.mValue = 1;
+        font.fontFeatureSettings.AppendElement(settingDTLS);
       }
     }
   }
@@ -642,7 +669,7 @@ MathMLTextRunFactory::RebuildTextRun(nsTransformedTextRun* aTextRun,
         // character is actually available.
         uint8_t matchType;
         nsRefPtr<gfxFont> mathFont = fontGroup->
-          FindFontForChar(ch2, 0, HB_SCRIPT_COMMON, nullptr, &matchType);
+          FindFontForChar(ch2, 0, 0, HB_SCRIPT_COMMON, nullptr, &matchType);
         if (mathFont) {
           // Don't apply the CSS style if there is a math font for at least one
           // of the transformed character in this text run.
@@ -711,8 +738,11 @@ MathMLTextRunFactory::RebuildTextRun(nsTransformedTextRun* aTextRun,
   if (length) {
     nsPresContext* pc = styles[0]->PresContext();
     nsRefPtr<nsFontMetrics> metrics;
+    const nsStyleFont* styleFont = styles[0]->StyleFont();
     pc->DeviceContext()->GetMetricsFor(font,
-                                       styles[0]->StyleFont()->mLanguage,
+                                       styleFont->mLanguage,
+                                       styleFont->mExplicitLanguage,
+                                       gfxFont::eHorizontal,
                                        pc->GetUserFontSet(),
                                        pc->GetTextPerfMetrics(),
                                        *getter_AddRefs(metrics));

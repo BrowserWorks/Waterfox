@@ -5,23 +5,23 @@
     "description": "has accessibility support been instantiated"
   },
   "A11Y_CONSUMERS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "enumerated",
     "n_values": 11,
     "description": "Accessibility client by enum id"
   },
   "A11Y_ISIMPLEDOM_USAGE_FLAG": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "flag",
     "description": "have the ISimpleDOM* accessibility interfaces been used"
   },
   "A11Y_IATABLE_USAGE_FLAG": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "flag",
     "description": "has the IAccessibleTable accessibility interface been used"
   },
   "A11Y_UPDATE_TIME": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": 50,
@@ -57,14 +57,14 @@
     "description": "Application reputation query count (both local and remote)"
   },
   "AUDIOSTREAM_FIRST_OPEN_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": "50",
     "description": "The length of time (in milliseconds) for the first open of AudioStream."
   },
   "AUDIOSTREAM_LATER_OPEN_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": "50",
@@ -307,14 +307,14 @@
     "description": "Time spent sweeping slowest compartment SCC (ms)"
   },
   "GEOLOCATION_ACCURACY": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "linear",
     "high": "18000",
     "n_buckets": 200,
     "description": "Location accuracy"
   },
   "GEOLOCATION_ERROR": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "flag",
     "description": "Has seen location error"
   },
@@ -325,7 +325,7 @@
     "description": "Use of SpiderMonkey's deprecated language extensions in web content: ForEach, DestructuringForIn, LegacyGenerator, ExpressionClosure"
   },
   "TELEMETRY_PING": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -333,12 +333,12 @@
     "description": "Time taken to submit telemetry info (ms)"
   },
   "TELEMETRY_SUCCESS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "boolean",
     "description": "Successful telemetry submission"
   },
   "XUL_CACHE_DISABLED": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "flag",
     "description": "XUL cache was disabled"
   },
@@ -508,7 +508,8 @@
     "cpp_guard": "XP_WIN"
   },
   "EARLY_GLUESTARTUP_READ_OPS": {
-    "expires_in_version": "never",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "40",
     "kind": "linear",
     "high": "100",
     "n_buckets": 12,
@@ -516,7 +517,8 @@
     "cpp_guard": "XP_WIN"
   },
   "EARLY_GLUESTARTUP_READ_TRANSFER": {
-    "expires_in_version": "never",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "50 * 1024",
     "n_buckets": 12,
@@ -525,7 +527,8 @@
     "cpp_guard": "XP_WIN"
   },
   "GLUESTARTUP_READ_OPS": {
-    "expires_in_version": "never",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "default",
     "kind": "linear",
     "high": "100",
     "n_buckets": 12,
@@ -533,7 +536,8 @@
     "cpp_guard": "XP_WIN"
   },
   "GLUESTARTUP_READ_TRANSFER": {
-    "expires_in_version": "never",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "50 * 1024",
     "n_buckets": 12,
@@ -542,7 +546,8 @@
     "cpp_guard": "XP_WIN"
   },
   "EARLY_GLUESTARTUP_HARD_FAULTS": {
-    "expires_in_version": "never",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "40",
     "kind": "linear",
     "high": "100",
     "n_buckets": 12,
@@ -550,7 +555,8 @@
     "cpp_guard": "XP_UNIX"
   },
   "GLUESTARTUP_HARD_FAULTS": {
-    "expires_in_version": "never",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "500",
     "n_buckets": 12,
@@ -559,7 +565,7 @@
     "cpp_guard": "XP_UNIX"
   },
   "PAGE_FAULTS_HARD": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "low": 8,
     "high": "64 * 1024",
@@ -585,7 +591,7 @@
     "description": "Time(ms) spent on reading family names from all fonts"
   },
   "DWRITEFONT_INITFONTLIST_TOTAL": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 10,
@@ -594,7 +600,7 @@
     "cpp_guard": "XP_WIN"
   },
   "DWRITEFONT_INITFONTLIST_INIT": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 10,
@@ -603,7 +609,7 @@
     "cpp_guard": "XP_WIN"
   },
   "DWRITEFONT_INITFONTLIST_GDI": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 10,
@@ -630,7 +636,7 @@
     "cpp_guard": "XP_WIN"
   },
   "DWRITEFONT_DELAYEDINITFONTLIST_GDI_TABLE": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "boolean",
     "description": "gfxDWriteFontList::DelayedInitFontList GDI Table Access",
     "cpp_guard": "XP_WIN"
@@ -645,7 +651,7 @@
     "cpp_guard": "XP_WIN"
   },
   "DWRITEFONT_DELAYEDINITFONTLIST_ITERATE": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 10,
@@ -694,7 +700,7 @@
     "description": "System font fallback script"
   },
   "GRADIENT_DURATION": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "50000000",
     "n_buckets": 20,
@@ -708,7 +714,7 @@
     "description": "Maximum retention time for the gradient cache. (ms)"
   },
   "STARTUP_CACHE_AGE_HOURS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 20,
@@ -716,7 +722,8 @@
     "description": "Startup cache age (hours)"
   },
   "STARTUP_CACHE_INVALID": {
-    "expires_in_version": "never",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "40",
     "kind": "flag",
     "description": "Was the disk startup cache file detected as invalid"
   },
@@ -759,12 +766,12 @@
     "description": "system fallback font can't be used"
   },
   "SHUTDOWN_OK": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "boolean",
     "description": "Did the browser start after a successful shutdown"
   },
   "IMAGE_DECODE_LATENCY_US": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "low": 50,
     "high": "5000000",
@@ -772,7 +779,7 @@
     "description": "Time spent decoding an image chunk (us)"
   },
   "IMAGE_DECODE_TIME": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "low": 50,
     "high": "50000000",
@@ -780,7 +787,7 @@
     "description": "Time spent decoding an image (us)"
   },
   "IMAGE_DECODE_ON_DRAW_LATENCY": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "low": 50,
     "high": "50000000",
@@ -788,28 +795,28 @@
     "description": "Time from starting a decode to it showing up on the screen (us)"
   },
   "IMAGE_DECODE_CHUNKS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "500",
     "n_buckets": 50,
     "description": "Number of chunks per decode attempt"
   },
   "IMAGE_DECODE_COUNT": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "500",
     "n_buckets": 50,
     "description": "Decode count"
   },
   "IMAGE_MAX_DECODE_COUNT": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": 100,
     "description": "Max decode count over all images"
   },
   "IMAGE_DECODE_SPEED_JPEG": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "low": 500,
     "high": "50000000",
@@ -817,7 +824,7 @@
     "description": "JPEG image decode speed (Kbytes/sec)"
   },
   "IMAGE_DECODE_SPEED_GIF": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "low": 500,
     "high": "50000000",
@@ -825,7 +832,7 @@
     "description": "GIF image decode speed (Kbytes/sec)"
   },
   "IMAGE_DECODE_SPEED_PNG": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "low": 500,
     "high": "50000000",
@@ -833,17 +840,18 @@
     "description": "PNG image decode speed (Kbytes/sec)"
   },
   "CANVAS_2D_USED": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "boolean",
     "description": "2D canvas used"
   },
   "CANVAS_WEBGL_USED": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "boolean",
     "description": "WebGL canvas used"
   },
   "TOTAL_CONTENT_PAGE_LOAD_TIME": {
-    "expires_in_version": "never",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "40",
     "kind": "exponential",
     "low": 100,
     "high": "30000",
@@ -1185,6 +1193,16 @@
     "kind": "boolean",
     "description": "Whether a HTTP base page load was over SSL or not."
   },
+  "HTTP_TRANSACTION_USE_ALTSVC": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Whether a HTTP transaction was routed via Alt-Svc or not."
+  },
+  "HTTP_TRANSACTION_USE_ALTSVC_OE": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Whether a HTTP transaction routed via Alt-Svc was scheme=http"
+  },
   "SSL_HANDSHAKE_VERSION": {
     "expires_in_version": "never",
     "kind": "enumerated",
@@ -1424,28 +1442,28 @@
     "description": "SPDY: Settings IW (rounded to KB)"
   },
   "DISK_CACHE_CORRUPT_DETAILS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "enumerated",
     "n_values": 50,
     "description": "Why the HTTP disk cache was corrupted at startup"
   },
   "DISK_CACHE_REDUCTION_TRIAL": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "boolean",
     "description": "Stores 1 if the cache would be clean with the disk cache corruption plan of Bug 105843"
   },
   "DISK_CACHE_REVALIDATION_SAFE": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "boolean",
     "description": "Stores 1 if the cache clean file was revalidated, or 0 if a non empty doom list prevented revalidation"
   },
   "DISK_CACHE_INVALIDATION_SUCCESS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "boolean",
     "description": "Stores 1 if writing '0' to the cache clean file succeeded, and 0 if it failed."
   },
   "DISK_CACHE_REVALIDATION_SUCCESS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "boolean",
     "description": "Stores 1 if writing '1' to the cache clean file succeeded, and 0 if it failed."
   },
@@ -1522,7 +1540,7 @@
     "description": "Time to search cache (ms)"
   },
   "CACHE_MEMORY_SEARCH_2": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": 50,
@@ -1530,7 +1548,7 @@
     "description": "Time to search memory cache (ms)"
   },
   "CACHE_DISK_SEARCH_2": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": 50,
@@ -1570,7 +1588,7 @@
     "description": "Time from submission to dispatch of SPDY transaction (ms)"
   },
   "HTTP_DISK_CACHE_OVERHEAD": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "32000000",
     "n_buckets": 100,
@@ -1597,7 +1615,7 @@
     "description": "Time spent waiting on the cache service lock on the main thread (ms)"
   },
   "DISK_CACHE_SMART_SIZE_USING_OLD_MAX": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "boolean",
     "description": "Whether we are using the old default cache smart size"
   },
@@ -1672,7 +1690,7 @@
     "description": "Time spent waiting on the cache service lock (ms) on the main thread in NSDECOMPRESSINPUTSTREAMWRAPPER_RELEASE"
   },
   "CACHE_SERVICE_LOCK_WAIT_MAINTHREAD_NSEVICTDISKCACHEENTRIESEVENT_RUN": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "10 * 1000",
     "n_buckets": 50,
@@ -1686,28 +1704,28 @@
     "description": "Time spent waiting on the cache service lock (ms) on the main thread in NSDOOMEVENT_RUN"
   },
   "CACHE_SERVICE_LOCK_WAIT_MAINTHREAD_NSDISKCACHESTREAMIO_WRITE": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "10 * 1000",
     "n_buckets": 50,
     "description": "Time spent waiting on the cache service lock (ms) on the main thread in NSDISKCACHESTREAMIO_WRITE"
   },
   "CACHE_SERVICE_LOCK_WAIT_MAINTHREAD_NSDISKCACHESTREAMIO_CLOSEOUTPUTSTREAM": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "10 * 1000",
     "n_buckets": 50,
     "description": "Time spent waiting on the cache service lock (ms) on the main thread in NSDISKCACHESTREAMIO_CLOSEOUTPUTSTREAM"
   },
   "CACHE_SERVICE_LOCK_WAIT_MAINTHREAD_NSDISKCACHEDEVICEDEACTIVATEENTRYEVENT_RUN": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "10 * 1000",
     "n_buckets": 50,
     "description": "Time spent waiting on the cache service lock (ms) on the main thread in NSDISKCACHEDEVICEDEACTIVATEENTRYEVENT_RUN"
   },
   "CACHE_SERVICE_LOCK_WAIT_MAINTHREAD_NSDISKCACHEBINDING_DESTRUCTOR": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "10 * 1000",
     "n_buckets": 50,
@@ -2078,7 +2096,7 @@
     "description": "Time spent waiting on the cache service lock (ms) on the main thread in NSBLOCKONCACHETHREADEVENT_RUN"
   },
   "CACHE_SERVICE_LOCK_WAIT_MAINTHREAD_NSDISKCACHEMAP_REVALIDATION": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "10 * 1000",
     "n_buckets": 50,
@@ -2134,6 +2152,114 @@
     "n_buckets": 50,
     "extended_statistics_ok": true,
     "description": "Time for an unsuccessful DNS OS resolution (msec)"
+  },
+  "DNS_CACHE_HIT_VAR_CONTROL_HIGH": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Whether a cached value was available for a lookup. 0 is a miss, 1 is a hit. (variant: DNS_VARIANT_CONTROL, priority: high)"
+  },
+  "DNS_CACHE_HIT_VAR_CONTROL_MEDIUM": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Whether a cached value was available for a lookup. 0 is a miss, 1 is a hit. (variant: DNS_VARIANT_CONTROL, priority: medium)"
+  },
+  "DNS_CACHE_HIT_VAR_CONTROL_LOW": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Whether a cached value was available for a lookup. 0 is a miss, 1 is a hit. (variant: DNS_VARIANT_CONTROL, priority: low)"
+  },
+  "DNS_CACHE_HIT_VAR_TTL_ONLY_HIGH": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Whether a cached value was available for a lookup. 0 is a miss, 1 is a hit. (variant: DNS_VARIANT_TTL_ONLY, priority: high)"
+  },
+  "DNS_CACHE_HIT_VAR_TTL_ONLY_MEDIUM": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Whether a cached value was available for a lookup. 0 is a miss, 1 is a hit. (variant: DNS_VARIANT_TTL_ONLY, priority: medium)"
+  },
+  "DNS_CACHE_HIT_VAR_TTL_ONLY_LOW": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Whether a cached value was available for a lookup. 0 is a miss, 1 is a hit. (variant: DNS_VARIANT_TTL_ONLY, priority: low)"
+  },
+  "DNS_CACHE_HIT_VAR_TTL_PLUS_CONST_GRACE_HIGH": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Whether a cached value was available for a lookup. 0 is a miss, 1 is a hit. (variant: DNS_VARIANT_TTL_PLUS_CONST_GRACE, priority: high)"
+  },
+  "DNS_CACHE_HIT_VAR_TTL_PLUS_CONST_GRACE_MEDIUM": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Whether a cached value was available for a lookup. 0 is a miss, 1 is a hit. (variant: DNS_VARIANT_TTL_PLUS_CONST_GRACE, priority: medium)"
+  },
+  "DNS_CACHE_HIT_VAR_TTL_PLUS_CONST_GRACE_LOW": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Whether a cached value was available for a lookup. 0 is a miss, 1 is a hit. (variant: DNS_VARIANT_TTL_PLUS_CONST_GRACE, priority: low)"
+  },
+  "DNS_BLACKLIST_COUNT_VAR_CONTROL_HIGH": {
+    "expires_in_version": "never",
+    "kind": "linear",
+    "high": 21,
+    "n_buckets": 20,
+    "description": "The number of unusable addresses reported for each record (variant: DNS_VARIANT_CONTROL, priority: high)"
+  },
+  "DNS_BLACKLIST_COUNT_VAR_CONTROL_MEDIUM": {
+    "expires_in_version": "never",
+    "kind": "linear",
+    "high": 21,
+    "n_buckets": 20,
+    "description": "The number of unusable addresses reported for each record (variant: DNS_VARIANT_CONTROL, priority: medium)"
+  },
+  "DNS_BLACKLIST_COUNT_VAR_CONTROL_LOW": {
+    "expires_in_version": "never",
+    "kind": "linear",
+    "high": 21,
+    "n_buckets": 20,
+    "description": "The number of unusable addresses reported for each record (variant: DNS_VARIANT_CONTROL, priority: low)"
+  },
+  "DNS_BLACKLIST_COUNT_VAR_TTL_ONLY_HIGH": {
+    "expires_in_version": "never",
+    "kind": "linear",
+    "high": 21,
+    "n_buckets": 20,
+    "description": "The number of unusable addresses reported for each record (variant: DNS_VARIANT_TTL_ONLY, priority: high)"
+  },
+  "DNS_BLACKLIST_COUNT_VAR_TTL_ONLY_MEDIUM": {
+    "expires_in_version": "never",
+    "kind": "linear",
+    "high": 21,
+    "n_buckets": 20,
+    "description": "The number of unusable addresses reported for each record (variant: DNS_VARIANT_TTL_ONLY, priority: medium)"
+  },
+  "DNS_BLACKLIST_COUNT_VAR_TTL_ONLY_LOW": {
+    "expires_in_version": "never",
+    "kind": "linear",
+    "high": 21,
+    "n_buckets": 20,
+    "description": "The number of unusable addresses reported for each record (variant: DNS_VARIANT_TTL_ONLY, priority: low)"
+  },
+  "DNS_BLACKLIST_COUNT_VAR_TTL_PLUS_CONST_GRACE_HIGH": {
+    "expires_in_version": "never",
+    "kind": "linear",
+    "high": 21,
+    "n_buckets": 20,
+    "description": "The number of unusable addresses reported for each record (variant: DNS_VARIANT_TTL_PLUS_CONST_GRACE, priority: high)"
+  },
+  "DNS_BLACKLIST_COUNT_VAR_TTL_PLUS_CONST_GRACE_MEDIUM": {
+    "expires_in_version": "never",
+    "kind": "linear",
+    "high": 21,
+    "n_buckets": 20,
+    "description": "The number of unusable addresses reported for each record (variant: DNS_VARIANT_TTL_PLUS_CONST_GRACE, priority: medium)"
+  },
+  "DNS_BLACKLIST_COUNT_VAR_TTL_PLUS_CONST_GRACE_LOW": {
+    "expires_in_version": "never",
+    "kind": "linear",
+    "high": 21,
+    "n_buckets": 20,
+    "description": "The number of unusable addresses reported for each record (variant: DNS_VARIANT_TTL_PLUS_CONST_GRACE, priority: low)"
   },
   "PREDICTOR_PREDICT_ATTEMPTS": {
     "expires_in_version": "never",
@@ -2298,52 +2424,52 @@
     "description": "How long it takes from the time Predict() is called to the time we figure out there's nothing to do"
   },
   "PREDICTOR_CLEANUP_DELTA": {
-      "expires_in_version": "never",
+      "expires_in_version": "40",
       "kind": "exponential",
       "high": "60000",
       "n_buckets": 50,
       "description": "How long between predictor db cleanups, in ms"
   },
   "PREDICTOR_CLEANUP_SUCCEEDED": {
-      "expires_in_version": "never",
+      "expires_in_version": "40",
       "kind": "boolean",
       "description": "Whether or not the predictor cleanup succeeded"
   },
   "PREDICTOR_CLEANUP_TIME": {
-      "expires_in_version": "never",
+      "expires_in_version": "40",
       "kind": "exponential",
       "high": "5000",
       "n_buckets": 10,
       "description": "How long it takes to run the predictor cleanup"
   },
   "PREDICTOR_CLEANUP_SCHEDULED": {
-      "expires_in_version": "never",
+      "expires_in_version": "40",
       "kind": "boolean",
       "description": "Whether or not we actually try the cleanup method when we think about it"
   },
   "PREDICTOR_LOAD_COUNT_IS_ZERO": {
-      "expires_in_version": "never",
+      "expires_in_version": "40",
       "kind": "linear",
       "high": "100",
       "n_buckets": 50,
       "description": "Number of times load count is zero"
   },
   "PREDICTOR_LOAD_COUNT_OVERFLOWS": {
-      "expires_in_version": "never",
+      "expires_in_version": "40",
       "kind": "linear",
       "high": "100",
       "n_buckets": 50,
       "description": "Number of times load count overflowed"
   },
   "PREDICTOR_STARTUP_COUNT_IS_ZERO": {
-      "expires_in_version": "never",
+      "expires_in_version": "40",
       "kind": "linear",
       "high": "100",
       "n_buckets": 50,
       "description": "Number of times startup count is zero"
   },
   "PREDICTOR_STARTUP_COUNT_OVERFLOWS": {
-      "expires_in_version": "never",
+      "expires_in_version": "40",
       "kind": "linear",
       "high": "100",
       "n_buckets": 50,
@@ -2374,7 +2500,8 @@
     "description": "How many speculative connections are made needlessly"
   },
   "FIND_PLUGINS": {
-    "expires_in_version": "never",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -2382,7 +2509,7 @@
     "description": "Time spent scanning filesystem for plugins (ms)"
   },
   "CHECK_JAVA_ENABLED": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -2415,7 +2542,7 @@
     "description": "Value of dom.ipc.plugins.hangUITimeoutSecs plus time spent in Plugin Hang UI (ms)"
   },
   "PLUGIN_LOAD_METADATA": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "5000",
     "n_buckets": 20,
@@ -2443,7 +2570,7 @@
     "description": "A plugin object was successfully invoked as a function"
   },
   "MOZ_SQLITE_OPEN_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -2451,7 +2578,7 @@
     "description": "Time spent on SQLite open() (ms)"
   },
   "MOZ_SQLITE_OPEN_MAIN_THREAD_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -2459,7 +2586,7 @@
     "description": "Time spent on SQLite open() (ms)"
   },
   "MOZ_SQLITE_TRUNCATE_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -2467,7 +2594,7 @@
     "description": "Time spent on SQLite truncate() (ms)"
   },
   "MOZ_SQLITE_TRUNCATE_MAIN_THREAD_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -2475,7 +2602,7 @@
     "description": "Time spent on SQLite truncate() (ms)"
   },
   "MOZ_SQLITE_OTHER_READ_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -2483,7 +2610,7 @@
     "description": "Time spent on SQLite read() (ms)"
   },
   "MOZ_SQLITE_OTHER_READ_MAIN_THREAD_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -2491,7 +2618,7 @@
     "description": "Time spent on SQLite read() (ms)"
   },
   "MOZ_SQLITE_PLACES_READ_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -2499,7 +2626,7 @@
     "description": "Time spent on SQLite read() (ms)"
   },
   "MOZ_SQLITE_PLACES_READ_MAIN_THREAD_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -2515,7 +2642,7 @@
     "description": "Time spent on cookie DB open with readahead (ms)"
   },
   "MOZ_SQLITE_COOKIES_READ_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -2523,7 +2650,7 @@
     "description": "Time spent on SQLite read() (ms)"
   },
   "MOZ_SQLITE_COOKIES_READ_MAIN_THREAD_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -2531,7 +2658,7 @@
     "description": "Time spent on SQLite read() (ms)"
   },
   "MOZ_SQLITE_WEBAPPS_READ_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -2539,7 +2666,7 @@
     "description": "Time spent on SQLite read() (ms)"
   },
   "MOZ_SQLITE_WEBAPPS_READ_MAIN_THREAD_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -2547,7 +2674,7 @@
     "description": "Time spent on SQLite read() (ms)"
   },
   "MOZ_SQLITE_OTHER_WRITE_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -2555,7 +2682,7 @@
     "description": "Time spent on SQLite write() (ms)"
   },
   "MOZ_SQLITE_OTHER_WRITE_MAIN_THREAD_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -2563,7 +2690,7 @@
     "description": "Time spent on SQLite write() (ms)"
   },
   "MOZ_SQLITE_PLACES_WRITE_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -2571,7 +2698,7 @@
     "description": "Time spent on SQLite write() (ms)"
   },
   "MOZ_SQLITE_PLACES_WRITE_MAIN_THREAD_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -2579,7 +2706,7 @@
     "description": "Time spent on SQLite write() (ms)"
   },
   "MOZ_SQLITE_COOKIES_WRITE_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -2587,7 +2714,7 @@
     "description": "Time spent on SQLite write() (ms)"
   },
   "MOZ_SQLITE_COOKIES_WRITE_MAIN_THREAD_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -2595,7 +2722,7 @@
     "description": "Time spent on SQLite write() (ms)"
   },
   "MOZ_SQLITE_WEBAPPS_WRITE_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -2603,7 +2730,7 @@
     "description": "Time spent on SQLite write() (ms)"
   },
   "MOZ_SQLITE_WEBAPPS_WRITE_MAIN_THREAD_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -2675,63 +2802,64 @@
     "description": "Time spent on SQLite fsync() (ms)"
   },
   "MOZ_SQLITE_OTHER_READ_B": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "linear",
     "high": "32768",
     "n_buckets": 3,
     "description": "SQLite read() (bytes)"
   },
   "MOZ_SQLITE_PLACES_READ_B": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "linear",
     "high": "32768",
     "n_buckets": 3,
     "description": "SQLite read() (bytes)"
   },
   "MOZ_SQLITE_COOKIES_READ_B": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "linear",
     "high": "32768",
     "n_buckets": 3,
     "description": "SQLite read() (bytes)"
   },
   "MOZ_SQLITE_WEBAPPS_READ_B": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "linear",
     "high": "32768",
     "n_buckets": 3,
     "description": "SQLite read() (bytes)"
   },
   "MOZ_SQLITE_PLACES_WRITE_B": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "linear",
     "high": "32768",
     "n_buckets": 3,
     "description": "SQLite write (bytes)"
   },
   "MOZ_SQLITE_COOKIES_WRITE_B": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "linear",
     "high": "32768",
     "n_buckets": 3,
     "description": "SQLite write (bytes)"
   },
   "MOZ_SQLITE_WEBAPPS_WRITE_B": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "linear",
     "high": "32768",
     "n_buckets": 3,
     "description": "SQLite write (bytes)"
   },
   "MOZ_SQLITE_OTHER_WRITE_B": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "linear",
     "high": "32768",
     "n_buckets": 3,
     "description": "SQLite write (bytes)"
   },
   "MOZ_STORAGE_ASYNC_REQUESTS_MS": {
-    "expires_in_version": "never",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "32768",
     "n_buckets": 20,
@@ -2739,18 +2867,19 @@
     "description": "mozStorage async requests completion (ms)"
   },
   "MOZ_STORAGE_ASYNC_REQUESTS_SUCCESS": {
-    "expires_in_version": "never",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "40",
     "kind": "boolean",
     "description": "mozStorage async requests success"
   },
   "STARTUP_MEASUREMENT_ERRORS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "enumerated",
     "n_values": "mozilla::StartupTimeline::MAX_EVENT_ID",
     "description": "Flags errors in startup calculation()"
   },
   "NETWORK_DISK_CACHE_OPEN": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": 10,
@@ -2814,7 +2943,7 @@
     "description": "Time spent (ms) during showdown deleting disk cache v2 for 'clear private data' option"
   },
   "NETWORK_DISK_CACHE_REVALIDATION": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": 10,
@@ -2822,7 +2951,7 @@
     "description": "Total Time spent (ms) during disk cache revalidation"
   },
   "NETWORK_DISK_CACHE_STREAMIO_CLOSE": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": 10,
@@ -2830,7 +2959,7 @@
     "description": "Time spent in nsDiskCacheStreamIO::Close() on non-main thread (ms)"
   },
   "NETWORK_DISK_CACHE_STREAMIO_CLOSE_MAIN_THREAD": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": 10,
@@ -2838,7 +2967,7 @@
     "description": "Time spent in nsDiskCacheStreamIO::Close() on the main thread (ms)"
   },
   "IDLE_NOTIFY_BACK_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "5000",
     "n_buckets": 10,
@@ -2846,14 +2975,14 @@
     "description": "Time spent checking for and notifying listeners that the user is back (ms)"
   },
   "IDLE_NOTIFY_BACK_LISTENERS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "linear",
     "high": "100",
     "n_buckets": 20,
     "description": "Number of listeners notified that the user is back"
   },
   "IDLE_NOTIFY_IDLE_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "5000",
     "n_buckets": 10,
@@ -2861,7 +2990,7 @@
     "description": "Time spent checking for and notifying listeners that the user is idle (ms)"
   },
   "IDLE_NOTIFY_IDLE_LISTENERS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "linear",
     "high": "100",
     "n_buckets": 20,
@@ -2901,7 +3030,7 @@
     "description": "Time spent loading PrefixSet from file (ms)"
   },
   "URLCLASSIFIER_PS_FALLOCATE_TIME": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "1000",
     "n_buckets": 10,
@@ -2932,7 +3061,7 @@
     "description": "Size of the completion cache in entries"
   },
   "URLCLASSIFIER_PS_FAILURE": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "boolean",
     "description": "Did UrlClassifier fail to construct the PrefixSet?"
   },
@@ -2962,14 +3091,6 @@
     "extended_statistics_ok": true,
     "description": "PLACES: Number of tags"
   },
-  "PLACES_FOLDERS_COUNT": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": "200",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "PLACES: Number of folders"
-  },
   "PLACES_KEYWORDS_COUNT": {
     "expires_in_version": "never",
     "kind": "exponential",
@@ -2994,7 +3115,7 @@
     "description": "PLACES: Time to build the bookmarks tree"
   },
   "PLACES_BACKUPS_TOJSON_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "low": 50,
     "high": 2000,
@@ -3010,15 +3131,6 @@
     "n_buckets": 10,
     "extended_statistics_ok": true,
     "description": "PLACES: Time to convert and write bookmarks.html"
-  },
-  "PLACES_BACKUPS_HASHING_MS": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "low": 50,
-    "high": 2000,
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "PLACES: Time to calculate the md5 hash for a backup"
   },
   "PLACES_FAVICON_ICO_SIZES": {
     "expires_in_version" : "never",
@@ -3105,7 +3217,7 @@
     "cpp_guard": "ANDROID"
   },
   "FENNEC_FAVICONS_COUNT": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "2000",
     "n_buckets": 10,
@@ -3114,7 +3226,7 @@
     "description": "Number of favicons stored in the browser DB"
   },
   "FENNEC_THUMBNAILS_COUNT": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "2000",
     "n_buckets": 10,
@@ -3154,14 +3266,6 @@
     "extended_statistics_ok": true,
     "description": "PLACES: Database filesize (MB)"
   },
-  "PLACES_DATABASE_JOURNALSIZE_MB": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": "50",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "PLACES: Database journal size (MB)"
-  },
   "PLACES_DATABASE_PAGESIZE_B": {
     "expires_in_version": "never",
     "kind": "exponential",
@@ -3194,6 +3298,33 @@
     "n_buckets": 10,
     "extended_statistics_ok": true,
     "description": "PLACES: Time for first autocomplete result if > 50ms (ms)"
+  },
+  "PLACES_AUTOCOMPLETE_6_FIRST_RESULTS_TIME_MS": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "low": 50,
+    "high": "1000",
+    "n_buckets": 30,
+    "extended_statistics_ok": true,
+    "description": "PLACES: Time for the 6 first autocomplete results (ms)"
+  },
+  "HISTORY_LASTVISITED_TREE_QUERY_TIME_MS": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "low": 50,
+    "high": "2000",
+    "n_buckets": 30,
+    "extended_statistics_ok": true,
+    "description": "PLACES: Time to load the sidebar history tree sorted by last visit (ms)"
+  },
+  "PLACES_HISTORY_LIBRARY_SEARCH_TIME_MS": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "low": 50,
+    "high": "1000",
+    "n_buckets": 30,
+    "extended_statistics_ok": true,
+    "description": "PLACES: Time to search the history library (ms)"
   },
   "PLACES_AUTOCOMPLETE_URLINLINE_DOMAIN_QUERY_TIME_MS": {
     "expires_in_version": "never",
@@ -3231,15 +3362,6 @@
     "extended_statistics_ok": true,
     "description": "PLACES: Number of bookmarks annotations"
   },
-  "PLACES_ANNOS_BOOKMARKS_SIZE_KB": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "low": 10,
-    "high": "10000",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "PLACES: Size of bookmarks annotations (KB)"
-  },
   "PLACES_ANNOS_PAGES_COUNT": {
     "expires_in_version": "never",
     "kind": "exponential",
@@ -3249,54 +3371,45 @@
     "extended_statistics_ok": true,
     "description": "PLACES: Number of pages annotations"
   },
-  "PLACES_ANNOS_PAGES_SIZE_KB": {
-    "expires_in_version": "never",
+  "PLACES_MAINTENANCE_DAYSFROMLAST": {
+    "expires_in_version" : "never",
     "kind": "exponential",
-    "low": 10,
-    "high": "10000",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "PLACES: Size of pages annotations (KB)"
-  },
-  "PLACES_FRECENCY_CALC_TIME_MS": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": "100",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "PLACES: Time to calculate frecency of a page (ms)"
+    "low": 7,
+    "high": 60,
+    "n_buckets" : 10,
+    "description": "PLACES: Days from last maintenance"
   },
   "UPDATER_BACKGROUND_CHECK_CODE_EXTERNAL": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "enumerated",
     "n_values": 50,
     "description": "Updater: externally initiated (typically by the application) background update check result code (see PING_BGUC_* constants defined in /toolkit/mozapps/update/nsUpdateService.js)"
   },
   "UPDATER_BACKGROUND_CHECK_CODE_NOTIFY": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "enumerated",
     "n_values": 50,
     "description": "Updater: timer initiated background update check result code (see PING_BGUC_* constants defined in /toolkit/mozapps/update/nsUpdateService.js)"
   },
   "UPDATER_INVALID_LASTUPDATETIME_EXTERNAL": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "boolean",
     "description": "Updater: Whether the last update time is invalid when a background update check was externally requested (typically by the application)"
   },
   "UPDATER_INVALID_LASTUPDATETIME_NOTIFY": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "boolean",
     "description": "Updater: Whether the last update time is invalid when a background update check was timer initiated"
   },
   "UPDATER_LAST_NOTIFY_INTERVAL_DAYS_EXTERNAL": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "n_buckets": 10,
     "high": "60",
     "description": "Updater: The interval in days between the previous and the current background update check when the check was externally requested (typically by the application)"
   },
   "UPDATER_LAST_NOTIFY_INTERVAL_DAYS_NOTIFY": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "n_buckets": 10,
     "high": "60",
@@ -3309,72 +3422,72 @@
     "description": "Updater: the status of the latest update performed"
   },
   "UPDATER_UPDATES_ENABLED": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "boolean",
     "description": "Updater: Whether or not updates are enabled"
   },
   "UPDATER_UPDATES_METRO_ENABLED": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "boolean",
     "description": "Updater: Whether or not Metro updates are enabled"
   },
   "UPDATER_UPDATES_AUTOMATIC": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "boolean",
     "description": "Updater: Whether or not updates are automatic"
   },
   "UPDATER_SERVICE_ENABLED": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "boolean",
     "description": "Updater: Whether or not the MozillaMaintenance service is enabled"
   },
   "UPDATER_SERVICE_ERROR_CODE": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "enumerated",
     "n_values": 100,
     "description": "Updater: 0=success else SERVICE_* error code defined in /toolkit/mozapps/update/common/errors.h"
   },
   "UPDATER_SERVICE_ERRORS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "enumerated",
     "n_values": 30,
     "description": "Updater: The number of MozillaMaintenance service errors that have occurred"
   },
   "UPDATER_SERVICE_INSTALLED": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "boolean",
     "description": "Updater: Whether or not the MozillaMaintenance service is installed"
   },
   "UPDATER_SERVICE_MANUALLY_UNINSTALLED": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "boolean",
     "description": "Updater: Whether or not someone manually uninstalled the service."
   },
   "UPDATER_STAGE_ENABLED": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "boolean",
     "description": "Updater: Whether or not staging updates are enabled"
   },
   "UPDATER_HAS_PERMISSIONS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "boolean",
     "description": "Updater: Whether or not the updater has permissions"
   },
   "UPDATER_WIZ_LAST_PAGE_CODE": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "enumerated",
     "n_values": 25,
     "description": "Updater: The update wizard page displayed when the UI was closed (mapped in toolkit/mozapps/update/content/updates.js)"
   },
   "THUNDERBIRD_GLODA_SIZE_MB": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "linear",
     "high": "1000",
     "n_buckets": 40,
     "description": "Gloda: size of global-messages-db.sqlite (MB)"
   },
   "THUNDERBIRD_CONVERSATIONS_TIME_TO_2ND_GLODA_QUERY_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": 30,
@@ -3382,42 +3495,44 @@
     "description": "Conversations: time between the moment we click and the second gloda query returns (ms)"
   },
   "THUNDERBIRD_INDEXING_RATE_MSG_PER_S": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "linear",
     "high": "100",
     "n_buckets": 20,
     "description": "Gloda: indexing rate (message/s)"
   },
   "FX_GESTURE_TAKE_SNAPSHOT_OF_PAGE": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "1000",
     "n_buckets": "30",
     "description": "Firefox: Time taken to capture the page to a canvas, for reuse while swiping through history (ms)."
   },
   "FX_GESTURE_INSTALL_SNAPSHOT_OF_PAGE": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "1000",
     "n_buckets": "30",
     "description": "Firefox: Time taken to store the image capture of the page to a canvas, for reuse while swiping through history (ms)."
   },
   "FX_GESTURE_COMPRESS_SNAPSHOT_OF_PAGE": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "1000",
     "n_buckets": "30",
     "description": "Firefox: Time taken to kick off image compression of the canvas that will be used during swiping through history (ms)."
   },
   "FX_TAB_ANIM_OPEN_MS": {
-    "expires_in_version": "never",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
     "description": "Firefox: Time taken by the tab opening animation in milliseconds"
   },
   "FX_TAB_ANIM_CLOSE_MS": {
-    "expires_in_version": "never",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -3448,35 +3563,36 @@
     "description": "Average frame interval during any tab open/close animation (excluding tabstrip scroll)"
   },
   "FX_TAB_ANIM_ANY_FRAME_PAINT_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "500",
     "n_buckets": 30,
     "description": "Average paint duration during any tab open/close animation (excluding tabstrip scroll)"
   },
   "FX_TAB_SWITCH_UPDATE_MS": {
-    "expires_in_version": "never",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "1000",
     "n_buckets": 20,
     "description": "Firefox: Time in ms spent updating UI in response to a tab switch"
   },
   "FX_TAB_SWITCH_TOTAL_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "1000",
     "n_buckets": 20,
     "description": "Firefox: Time in ms till a tab switch is complete including the first paint"
   },
   "FX_TAB_CLICK_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "1000",
     "n_buckets": 20,
     "description": "Firefox: Time in ms spent on switching tabs in response to a tab click"
   },
   "FX_IDENTITY_POPUP_OPEN_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "1000",
     "n_buckets": 10,
@@ -3493,7 +3609,7 @@
     "description": "Firefox: Time to initialize the bookmarks toolbar view (ms)"
   },
   "FX_NEW_WINDOW_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": 20,
@@ -3501,7 +3617,7 @@
     "description": "Firefox: Time taken to open a new browser window (ms)"
   },
   "FX_PAGE_LOAD_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": 20,
@@ -3509,12 +3625,12 @@
     "description": "Firefox: Time taken to load a page (ms)"
   },
   "FX_TOTAL_TOP_VISITS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "boolean",
     "description": "Count the number of times a new top page was starting to load"
   },
   "FX_THUMBNAILS_CAPTURE_TIME_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "500",
     "n_buckets": 15,
@@ -3522,7 +3638,7 @@
     "description": "THUMBNAILS: Time (ms) it takes to capture a thumbnail"
   },
   "FX_THUMBNAILS_STORE_TIME_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "500",
     "n_buckets": 15,
@@ -3530,12 +3646,13 @@
     "description": "THUMBNAILS: Time (ms) it takes to store a thumbnail in the cache"
   },
   "FX_THUMBNAILS_HIT_OR_MISS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "boolean",
     "description": "THUMBNAILS: Thumbnail found"
   },
   "EVENTLOOP_UI_LAG_EXP_MS": {
-    "expires_in_version": "never",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "40",
     "kind": "exponential",
     "low": 50,
     "high": "60000",
@@ -3544,7 +3661,7 @@
     "description": "Widget: Time it takes for the message before a UI message (ms)"
   },
   "FX_SESSION_RESTORE_STARTUP_INIT_SESSION_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 20,
@@ -3552,7 +3669,7 @@
     "description": "Session restore: Time it takes to prepare the data structures for restoring a session (ms)"
   },
   "FX_SESSION_RESTORE_STARTUP_ONLOAD_INITIAL_WINDOW_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 20,
@@ -3560,7 +3677,7 @@
     "description": "Session restore: Time it takes to finish restoration once we have first opened a window (ms)"
   },
   "FX_SESSION_RESTORE_COLLECT_ALL_WINDOWS_DATA_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 10,
@@ -3568,7 +3685,7 @@
     "description": "Session restore: Time to collect all window data (ms)"
   },
   "FX_SESSION_RESTORE_COLLECT_SINGLE_WINDOW_DATA_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 10,
@@ -3576,7 +3693,7 @@
     "description": "Session restore: Time to collect the data of a single window (ms)"
   },
   "FX_SESSION_RESTORE_COLLECT_COOKIES_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 10,
@@ -3584,7 +3701,7 @@
     "description": "Session restore: Time to collect cookies (ms)"
   },
   "FX_SESSION_RESTORE_COLLECT_DATA_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 10,
@@ -3592,7 +3709,7 @@
     "description": "Session restore: Time to collect all window and tab data (ms)"
   },
   "FX_SESSION_RESTORE_COLLECT_DATA_LONGEST_OP_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 10,
@@ -3600,7 +3717,7 @@
     "description": "Session restore: Duration of the longest uninterruptible operation while collecting all window and tab data (ms)"
   },
   "FX_SESSION_RESTORE_CONTENT_COLLECT_DATA_LONGEST_OP_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 10,
@@ -3608,7 +3725,8 @@
     "description": "Session restore: Duration of the longest uninterruptible operation while collecting data in the content process (ms)"
   },
   "FX_SESSION_RESTORE_SERIALIZE_DATA_MS": {
-    "expires_in_version": "never",
+    "alert_emails": ["session-restore-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "1000",
     "n_buckets": 10,
@@ -3616,7 +3734,7 @@
     "description": "Session restore: Time to JSON serialize session data (ms)"
   },
   "FX_SESSION_RESTORE_SERIALIZE_DATA_LONGEST_OP_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 10,
@@ -3624,7 +3742,7 @@
     "description": "Session restore: Duration of the longest uninterruptible operation while serializing session data (ms)"
   },
   "FX_SESSION_RESTORE_READ_FILE_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -3632,7 +3750,7 @@
     "description": "Session restore: Time to read the session data from the file on disk (ms)"
   },
   "FX_SESSION_RESTORE_SEND_SERIALIZED_STATE_LONGEST_OP_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -3640,7 +3758,7 @@
     "description": "Session restore: Time spent on the main thread sending the session data off the main thread for writing (ms)"
   },
   "FX_SESSION_RESTORE_WRITE_STATE_LONGEST_OP_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -3648,7 +3766,7 @@
     "description": "Session restore: Time spent on the main thread serializing, broadcasting and sending the session data for writing (ms)"
   },
   "FX_SESSION_RESTORE_WRITE_FILE_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -3656,7 +3774,7 @@
     "description": "Session restore: Time to write the session data to the file on disk (ms)"
   },
   "FX_SESSION_RESTORE_WRITE_FILE_LONGEST_OP_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -3664,7 +3782,7 @@
     "description": "Session restore: Duration of the longest uninterruptible operation while writing session data (ms)"
   },
   "FX_SESSION_RESTORE_FILE_SIZE_BYTES": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": 50000000,
     "n_buckets": 30,
@@ -3672,12 +3790,17 @@
     "description": "Session restore: The size of file sessionstore.js (bytes)"
   },
   "FX_SESSION_RESTORE_CORRUPT_FILE": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "boolean",
     "description": "Session restore: Whether the file read on startup contained parse-able JSON"
   },
+  "FX_SESSION_RESTORE_ALL_FILES_CORRUPT": {
+    "expires_in_version": "default",
+    "kind": "boolean",
+    "description": "Session restore: Whether none of the backup files contained parse-able JSON"
+  },
   "FX_SESSION_RESTORE_RESTORE_WINDOW_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -3685,14 +3808,14 @@
     "description": "Session restore: Time spent blocking the main thread while restoring a window state (ms)"
   },
   "FX_SESSION_RESTORE_SESSION_LENGTH": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "365",
     "n_buckets": 15,
     "description": "Session restore: Days elapsed since the session was first started"
   },
   "FX_SESSION_RESTORE_EXTRACTING_STATISTICS_DURATION_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -3700,98 +3823,98 @@
     "description": "Session restore: Duration of the off main thread statistics extraction mechanism (ms)"
   },
   "FX_SESSION_RESTORE_TOTAL_OPEN_WINDOWS_SIZE_BYTES": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "50000000",
     "n_buckets": 30,
     "description": "Session restore: The subset of sessionrestore.js representing open windows (total size, in bytes)"
   },
   "FX_SESSION_RESTORE_TOTAL_CLOSED_WINDOWS_SIZE_BYTES": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "50000000",
     "n_buckets": 30,
     "description": "Session restore: The subset of sessionrestore.js representing closed windows (total size, in bytes)"
   },
   "FX_SESSION_RESTORE_TOTAL_CLOSED_TABS_IN_OPEN_WINDOWS_SIZE_BYTES": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "50000000",
     "n_buckets": 30,
     "description": "Sessionrestore: The subset of sesionstore.js representing closed tabs in open windows (total size, in bytes)"
   },
   "FX_SESSION_RESTORE_TOTAL_COOKIES_SIZE_BYTES": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "50000000",
     "n_buckets": 30,
     "description": "The subset of sessionstore.js dealing with cookies (total size, in bytes)"
   },
   "FX_SESSION_RESTORE_TOTAL_DOM_STORAGE_SIZE_BYTES": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "50000000",
     "n_buckets": 30,
     "description": "The subset of sessionstore.js dealing with DOM storage (total size, in bytes)"
   },
   "FX_SESSION_RESTORE_TOTAL_FORMDATA_SIZE_BYTES": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "50000000",
     "n_buckets": 30,
     "description": "The subset of sessionstore.js dealing with storing form data (total size, in bytes)"
   },
   "FX_SESSION_RESTORE_TOTAL_HISTORY_SIZE_BYTES": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "50000000",
     "n_buckets": 30,
     "description": "The subset of sessionstore.js dealing with storing history (total size, in bytes)"
   },
   "FX_SESSION_RESTORE_INDIVIDUAL_OPEN_WINDOWS_SIZE_BYTES": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "5000000",
     "n_buckets": 30,
     "description": "Session restore: The subset of sessionrestore.js representing open windows (item size, in bytes)"
   },
   "FX_SESSION_RESTORE_INDIVIDUAL_CLOSED_WINDOWS_SIZE_BYTES": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "5000000",
     "n_buckets": 30,
     "description": "Session restore: The subset of sessionrestore.js representing closed windows (item size, in bytes)"
   },
   "FX_SESSION_RESTORE_INDIVIDUAL_CLOSED_TABS_IN_OPEN_WINDOWS_SIZE_BYTES": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "5000000",
     "n_buckets": 30,
     "description": "Sessionrestore: The subset of sesionstore.js representing closed tabs in open windows (item size, in bytes)"
   },
   "FX_SESSION_RESTORE_INDIVIDUAL_COOKIES_SIZE_BYTES": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "50000000",
     "n_buckets": 30,
     "description": "The subset of sessionstore.js dealing with cookies (item size, in bytes)"
   },
   "FX_SESSION_RESTORE_INDIVIDUAL_DOM_STORAGE_SIZE_BYTES": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "5000000",
     "n_buckets": 30,
     "description": "The subset of sessionstore.js dealing with DOM storage (item size, in bytes)"
   },
   "FX_SESSION_RESTORE_INDIVIDUAL_FORMDATA_SIZE_BYTES": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "5000000",
     "n_buckets": 30,
     "description": "The subset of sessionstore.js dealing with storing form data (item size, in bytes)"
   },
   "FX_SESSION_RESTORE_INDIVIDUAL_HISTORY_SIZE_BYTES": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "5000000",
     "n_buckets": 30,
@@ -3803,33 +3926,33 @@
     "description": "Deleted or to-be-reused innerwindow which has had mutation event listeners."
   },
   "CHARSET_OVERRIDE_SITUATION": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "enumerated",
     "n_values": 8,
     "description": "Labeling status of top-level page when overriding charset (0: unlabeled file URL without detection, 1: unlabeled non-TLD-guessed non-file URL without detection, 2: unlabeled file URL with detection, 3: unlabeled non-file URL with detection, 4: labeled, 5: already overridden, 6: bug, 7: unlabeled with TLD guessing)"
   },
   "CHARSET_OVERRIDE_USED": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "flag",
     "description": "Whether the character encoding menu was used to override an encoding in this session."
   },
   "DECODER_INSTANTIATED_HZ": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "flag",
     "description": "Whether the decoder for HZ has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_ISO2022CN": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "flag",
     "description": "Whether the decoder for ISO-2022-CN has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_ISO2022KR": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "flag",
     "description": "Whether the decoder for ISO-2022-KR has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_ISO2022JP": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "flag",
     "description": "Whether the decoder for ISO-2022-JP has been instantiated in this session."
   },
@@ -3844,27 +3967,27 @@
     "description": "Whether the decoder for T.61 has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_IBM850": {
-    "expires_in_version": "never",
+    "expires_in_version": "38",
     "kind": "flag",
     "description": "Whether the decoder for IBM850 has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_IBM852": {
-    "expires_in_version": "never",
+    "expires_in_version": "38",
     "kind": "flag",
     "description": "Whether the decoder for IBM852 has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_IBM855": {
-    "expires_in_version": "never",
+    "expires_in_version": "38",
     "kind": "flag",
     "description": "Whether the decoder for IBM855 has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_IBM857": {
-    "expires_in_version": "never",
+    "expires_in_version": "38",
     "kind": "flag",
     "description": "Whether the decoder for IBM857 has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_IBM862": {
-    "expires_in_version": "never",
+    "expires_in_version": "38",
     "kind": "flag",
     "description": "Whether the decoder for IBM862 has been instantiated in this session."
   },
@@ -3874,119 +3997,119 @@
     "description": "Whether the decoder for IBM866 has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACGREEK": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "flag",
     "description": "Whether the decoder for MACGREEK has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACICELANDIC": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "flag",
     "description": "Whether the decoder for MACICELANDIC has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACCE": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "flag",
     "description": "Whether the decoder for MACCE has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACHEBREW": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "flag",
     "description": "Whether the decoder for MACHEBREW has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACARABIC": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "flag",
     "description": "Whether the decoder for MACARABIC has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACFARSI": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "flag",
     "description": "Whether the decoder for MACFARSI has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACCROATIAN": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "flag",
     "description": "Whether the decoder for MACCROATIAN has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACCYRILLIC": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "flag",
     "description": "Whether the decoder for MACCYRILLIC has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACROMANIAN": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "flag",
     "description": "Whether the decoder for MACROMANIAN has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACTURKISH": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "flag",
     "description": "Whether the decoder for MACTURKISH has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACDEVANAGARI": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "flag",
     "description": "Whether the decoder for MACDEVANAGARI has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACGUJARATI": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "flag",
     "description": "Whether the decoder for MACGUJARATI has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACGURMUKHI": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "flag",
     "description": "Whether the decoder for MACGURMUKHI has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_ISOIR111": {
-    "expires_in_version": "never",
+    "expires_in_version": "38",
     "kind": "flag",
     "description": "Whether the decoder for ISOIR111 has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_ARMSCII8": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "flag",
     "description": "Whether the decoder for ARMSCII8 has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_VISCII": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "flag",
     "description": "Whether the decoder for VISCII has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_VIETTCVN5712": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "flag",
     "description": "Whether the decoder for VIETTCVN5712 has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_VIETVPS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "flag",
     "description": "Whether the decoder for VIETVPS has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_KOI8R": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "flag",
     "description": "Whether the decoder for KOI8R has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_KOI8U": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "flag",
     "description": "Whether the decoder for KOI8U has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_ISO_8859_5": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "flag",
     "description": "Whether the decoder for ISO-8859-5 has been instantiated in this session."
   },
   "XUL_FOREGROUND_REFLOW_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
     "description": "XUL reflows in foreground windows (ms)"
   },
   "XUL_BACKGROUND_REFLOW_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -4000,7 +4123,7 @@
     "description": "HTML reflows in foreground windows (ms)"
   },
   "HTML_BACKGROUND_REFLOW_MS_2": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": 20,
@@ -4012,7 +4135,7 @@
     "description": "Long running reflow, interruptible or not"
   },
   "XUL_INITIAL_FRAME_CONSTRUCTION": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -4024,7 +4147,7 @@
     "description": "Type of XMLHttpRequest, async or sync"
   },
   "DOM_TIMERS_FIRED_PER_NATIVE_TIMEOUT": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -4032,7 +4155,7 @@
     "description": "DOM: Timer handlers called per native timer expiration"
   },
   "DOM_TIMERS_RECENTLY_SET": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -4040,12 +4163,12 @@
     "description": "DOM: setTimeout/setInterval calls recently (last 30s or more)"
   },
   "DOM_RANGE_DETACHED": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "boolean",
     "description": "DOM: Ranges that are detached on destruction (bug 702948)"
   },
   "LOCALDOMSTORAGE_INIT_DATABASE_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -4053,7 +4176,7 @@
     "description": "Time to open the localStorage database (ms)"
   },
   "LOCALDOMSTORAGE_SHUTDOWN_DATABASE_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -4061,12 +4184,12 @@
     "description": "Time to flush and close the localStorage database (ms)"
   },
   "LOCALDOMSTORAGE_PRELOAD_PENDING_ON_FIRST_ACCESS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "boolean",
     "description": "True when we had to wait for a pending preload on first access to localStorage data, false otherwise"
   },
   "LOCALDOMSTORAGE_GETALLKEYS_BLOCKING_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -4074,7 +4197,7 @@
     "description": "Time to block before we return a list of all keys in domain's LocalStorage (ms)"
   },
   "LOCALDOMSTORAGE_GETKEY_BLOCKING_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -4082,7 +4205,7 @@
     "description": "Time to block before we return a key name in domain's LocalStorage (ms)"
   },
   "LOCALDOMSTORAGE_GETLENGTH_BLOCKING_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -4090,7 +4213,7 @@
     "description": "Time to block before we return number of keys in domain's LocalStorage (ms)"
   },
   "LOCALDOMSTORAGE_GETVALUE_BLOCKING_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -4098,7 +4221,7 @@
     "description": "Time to block before we return a value for a key in LocalStorage (ms)"
   },
   "LOCALDOMSTORAGE_SETVALUE_BLOCKING_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -4106,7 +4229,7 @@
     "description": "Time to block before we set a single key's value in LocalStorage (ms)"
   },
   "LOCALDOMSTORAGE_REMOVEKEY_BLOCKING_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -4114,7 +4237,7 @@
     "description": "Time to block before we remove a single key from LocalStorage (ms)"
   },
   "LOCALDOMSTORAGE_CLEAR_BLOCKING_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -4122,7 +4245,7 @@
     "description": "Time to block before we clear LocalStorage for all domains (ms)"
   },
   "LOCALDOMSTORAGE_UNLOAD_BLOCKING_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -4130,7 +4253,7 @@
     "description": "Time to fetch LocalStorage data before we can clean the cache (ms)"
   },
   "LOCALDOMSTORAGE_SESSIONONLY_PRELOAD_BLOCKING_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -4138,7 +4261,7 @@
     "description": "Time to fetch LocalStorage data before we can expose them as session only data (ms)"
   },
   "LOCALDOMSTORAGE_KEY_SIZE_BYTES": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "low": 1024,
     "high": "32768",
@@ -4147,7 +4270,7 @@
     "description": "DOM storage: size of keys stored in localStorage"
   },
   "LOCALDOMSTORAGE_VALUE_SIZE_BYTES": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "low": 1024,
     "high": "32768",
@@ -4156,7 +4279,7 @@
     "description": "DOM storage: size of values stored in localStorage"
   },
   "SESSIONDOMSTORAGE_KEY_SIZE_BYTES": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "low": 1024,
     "high": "32768",
@@ -4165,7 +4288,7 @@
     "description": "DOM storage: size of keys stored in sessionStorage"
   },
   "SESSIONDOMSTORAGE_VALUE_SIZE_BYTES": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "low": 1024,
     "high": "32768",
@@ -4174,7 +4297,8 @@
     "description": "DOM storage: size of values stored in sessionStorage"
   },
   "RANGE_CHECKSUM_ERRORS": {
-    "expires_in_version": "never",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -4182,7 +4306,8 @@
     "description": "Number of histograms with range checksum errors"
   },
   "BUCKET_ORDER_ERRORS": {
-    "expires_in_version": "never",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -4190,7 +4315,8 @@
     "description": "Number of histograms with bucket order errors"
   },
   "TOTAL_COUNT_HIGH_ERRORS": {
-    "expires_in_version": "never",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -4198,7 +4324,8 @@
     "description": "Number of histograms with total count high errors"
   },
   "TOTAL_COUNT_LOW_ERRORS": {
-    "expires_in_version": "never",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -4213,23 +4340,23 @@
     "description": "Number of telemetry pings evicted at startup"
   },
   "TELEMETRY_TEST_FLAG": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "flag",
     "description": "a testing histogram; not meant to be touched"
   },
   "TELEMETRY_TEST_COUNT": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "count",
     "description": "a testing histogram; not meant to be touched"
   },
   "TELEMETRY_TEST_KEYED_FLAG": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "flag",
     "keyed": true,
     "description": "a testing histogram; not meant to be touched"
   },
   "TELEMETRY_TEST_KEYED_COUNT": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "count",
     "keyed": true,
     "description": "a testing histogram; not meant to be touched"
@@ -4246,18 +4373,18 @@
     "description": "Whether the user is in safe mode (No, Yes, Forced)"
   },
   "NEWTAB_PAGE_ENABLED": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "boolean",
     "description": "New tab page is enabled."
   },
   "NEWTAB_PAGE_PINNED_SITES_COUNT": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "enumerated",
     "n_values": 9,
     "description": "Number of pinned sites on the new tab page."
   },
   "NEWTAB_PAGE_BLOCKED_SITES_COUNT": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "100",
     "n_buckets": 10,
@@ -4276,7 +4403,7 @@
     "description": "Track click count on about:newtab tiles per index (0-8). For non-default row or column configurations all clicks into the '9' bucket."
   },
   "PANORAMA_INITIALIZATION_TIME_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": 15,
@@ -4284,7 +4411,7 @@
     "description": "Time it takes to initialize Panorama (ms)"
   },
   "PANORAMA_GROUPS_COUNT": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "25",
     "n_buckets": 15,
@@ -4292,7 +4419,7 @@
     "description": "Number of groups in Panorama"
   },
   "PANORAMA_STACKED_GROUPS_COUNT": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "25",
     "n_buckets": 15,
@@ -4300,7 +4427,7 @@
     "description": "Number of stacked groups in Panorama"
   },
   "PANORAMA_MEDIAN_TABS_IN_GROUPS_COUNT": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "100",
     "n_buckets": 15,
@@ -4308,7 +4435,7 @@
     "description": "Median of tabs in groups in Panorama"
   },
   "BROWSERPROVIDER_XUL_IMPORT_TIME": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "low": 20,
     "high": "600000",
@@ -4318,7 +4445,7 @@
     "cpp_guard": "ANDROID"
   },
   "BROWSERPROVIDER_XUL_IMPORT_BOOKMARKS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "50000",
     "n_buckets": 20,
@@ -4327,7 +4454,7 @@
     "cpp_guard": "ANDROID"
   },
   "BROWSERPROVIDER_XUL_IMPORT_HISTORY": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "1000000",
     "n_buckets": 20,
@@ -4445,7 +4572,7 @@
     "description": "Record the default search engine."
   },
   "SEARCH_SERVICE_INIT_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "1000",
     "n_buckets": 15,
@@ -4459,7 +4586,7 @@
     "description": "search service has been initialized synchronously"
   },
   "SEARCH_SERVICE_BUILD_CACHE_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "1000",
     "n_buckets": 15,
@@ -4477,7 +4604,8 @@
     "description": "Whether enablePrivilege has ever been called during the current session"
   },
   "READ_SAVED_PING_SUCCESS": {
-    "expires_in_version": "never",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "40",
     "kind": "boolean",
     "description": "Successfully reading a saved ping file"
   },
@@ -4627,12 +4755,12 @@
     "description": "Size (in bytes) of the compressed crash store JSON file."
   },
   "PDF_VIEWER_USED": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "boolean",
     "description": "How many times PDF Viewer was used"
   },
   "PDF_VIEWER_FALLBACK_SHOWN": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "boolean",
     "description": "How many times PDF Viewer fallback bar was shown"
   },
@@ -4642,19 +4770,19 @@
     "description": "How many times PDF Viewer print functionality was used"
   },
   "PDF_VIEWER_DOCUMENT_VERSION": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "enumerated",
     "n_values": 20,
     "description": "The PDF document version (1.1, 1.2, etc.)"
   },
   "PDF_VIEWER_DOCUMENT_GENERATOR": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "enumerated",
     "n_values": 30,
     "description": "The PDF document generator"
   },
   "PDF_VIEWER_DOCUMENT_SIZE_KB": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "low": "2",
     "high": "64 * 1024",
@@ -4673,7 +4801,7 @@
     "description": "A PDF document was embedded: true using OBJECT/EMBED and false using IFRAME"
   },
   "PDF_VIEWER_FORM": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "boolean",
     "description": "A PDF form expected: true for AcroForm and false for XFA"
   },
@@ -4684,34 +4812,34 @@
     "description": "The PDF document compression stream types used"
   },
   "PDF_VIEWER_TIME_TO_VIEW_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": 50,
     "description": "Time spent to display first page in PDF Viewer (ms)"
   },
   "SHUMWAY_TIME_TO_VIEW_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "2 * 60 * 1000",
     "n_buckets": 50,
     "description": "Time spent to display first frame (ms)"
   },
   "SHUMWAY_PARSING_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "2 * 60 * 1000",
     "n_buckets": 50,
     "description": "Time spent to parse SWF file (ms)"
   },
   "SHUMWAY_SWF_INDEX_ON_PAGE": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "enumerated",
     "n_values": 30,
     "description": "Index of the SWF on the page (0 - full page, 1 - first, 2 - second, etc.)"
   },
   "SHUMWAY_SWF_SIZE_KB": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "low": "1",
     "high": "256 * 1024",
@@ -4719,20 +4847,20 @@
     "description": "The SWF file size (KB)"
   },
   "SHUMWAY_SWF_VERSION": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "enumerated",
     "n_values": 30,
     "description": "The SWF file version"
   },
   "SHUMWAY_SWF_FRAME_RATE": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "linear",
     "high": "256",
     "n_buckets": "50",
     "description": "The SWF file frame rate"
   },
   "SHUMWAY_SWF_AREA": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "low": "256",
     "high": "16777216",
@@ -4740,30 +4868,30 @@
     "description": "The SWF file dimension: amount of pixels (width * height)"
   },
   "SHUMWAY_SWF_AVM2": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "boolean",
     "description": "The AVM2 is enabled in the SWF file"
   },
   "SHUMWAY_SWF_BANNER": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "enumerated",
     "n_values": 30,
     "description": "The well-known banner size"
   },
   "SHUMWAY_ERROR": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "enumerated",
     "n_values": 3,
     "description": "The Shumway reported error: 0 - unknown, 1 - AVM1, 2 - AVM2)"
   },
   "SHUMWAY_FEATURE_USED": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "enumerated",
     "n_values": 700,
     "description": "The Shumway feature is used during movie execution"
   },
   "SHUMWAY_FALLBACK": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "boolean",
     "description": "The Shumway was selected to fallback to the Flash (false - by heuristics, true - by user)"
   },
@@ -4800,7 +4928,7 @@
     "description": "Count the number of times the user clicked 'allow' on the hidden-plugin infobar."
   },
   "POPUP_NOTIFICATION_MAINACTION_TRIGGERED_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "linear",
     "low": 25,
     "high": "80 * 25",
@@ -5100,6 +5228,20 @@
     "high": "10000",
     "n_buckets": "1000",
     "description": "The time (in milliseconds) that it took a 'listTabs' request to go round trip."
+  },
+  "DEVTOOLS_DEBUGGER_RDP_LOCAL_PROTOCOLDESCRIPTION_MS": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "10000",
+    "n_buckets": "1000",
+    "description": "The time (in milliseconds) that it took a 'protocolDescription' request to go round trip."
+  },
+  "DEVTOOLS_DEBUGGER_RDP_REMOTE_PROTOCOLDESCRIPTION_MS": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "10000",
+    "n_buckets": "1000",
+    "description": "The time (in milliseconds) that it took a 'protocolDescription' request to go round trip."
   },
   "DEVTOOLS_DEBUGGER_RDP_LOCAL_LISTADDONS_MS": {
     "expires_in_version": "never",
@@ -5557,7 +5699,7 @@
     "description": "The time (in milliseconds) that it took a 'stopTrace' request to go round trip."
   },
   "COOKIES_3RDPARTY_NUM_SITES_ACCEPTED": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "linear",
     "low": "5",
     "high": "145",
@@ -5565,7 +5707,7 @@
     "description": "The number of distinct pairs (first-party site, third-party site attempting to set cookie) for which the third-party cookie has been accepted. Sites are considered identical if they have the same eTLD + 1. Measures are normalized per 24h."
   },
   "COOKIES_3RDPARTY_NUM_SITES_BLOCKED": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "linear",
     "low": "5",
     "high": "145",
@@ -5573,7 +5715,7 @@
     "description": "The number of distinct pairs (first-party site, third-party site attempting to set cookie) for which the third-party cookie has been rejected. Sites are considered identical if they have the same eTLD + 1. Measures are normalized per 24h."
   },
   "COOKIES_3RDPARTY_NUM_ATTEMPTS_ACCEPTED": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "linear",
     "low": "10",
     "high": "500",
@@ -5581,12 +5723,26 @@
     "description": "The total number of distinct attempts by third-party sites to place cookies which have been accepted.  Measures are normalized per 24h."
   },
   "COOKIES_3RDPARTY_NUM_ATTEMPTS_BLOCKED": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "linear",
     "low": "10",
     "high": "500",
     "n_buckets": "50",
     "description": "The total number of distinct attempts by third-party sites to place cookies which have been rejected.  Measures are normalized per 24h."
+  },
+  "DEVTOOLS_DEBUGGER_RDP_LOCAL_GET_EXECUTABLE_LINES_MS": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "10000",
+    "n_buckets": "1000",
+    "description": "The time (in milliseconds) that it took a 'getExecutableLines' request to go round trip."
+  },
+  "DEVTOOLS_DEBUGGER_RDP_REMOTE_GET_EXECUTABLE_LINES_MS": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "10000",
+    "n_buckets": "1000",
+    "description": "The time (in milliseconds) that it took a 'getExecutableLines' request to go round trip."
   },
   "DEVTOOLS_DEBUGGER_RDP_LOCAL_BLACKBOX_MS": {
     "expires_in_version": "never",
@@ -5768,6 +5924,11 @@
     "kind": "boolean",
     "description": "How many times has the devtool's Developer Toolbar been opened via the toolbox button?"
   },
+  "DEVTOOLS_WEBIDE_OPENED_BOOLEAN": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "How many times has the DevTools WebIDE been opened?"
+  },
   "DEVTOOLS_CUSTOM_OPENED_BOOLEAN": {
     "expires_in_version": "never",
     "kind": "boolean",
@@ -5882,6 +6043,11 @@
     "expires_in_version": "never",
     "kind": "flag",
     "description": "How many users have opened the devtool's Developer Toolbar been opened via the toolbox button?"
+  },
+  "DEVTOOLS_WEBIDE_OPENED_PER_USER_FLAG": {
+    "expires_in_version": "never",
+    "kind": "flag",
+    "description": "How many users have opened the DevTools WebIDE?"
   },
   "DEVTOOLS_CUSTOM_OPENED_PER_USER_FLAG": {
     "expires_in_version": "never",
@@ -6042,6 +6208,13 @@
     "n_buckets": 100,
     "description": "How long has the developer toolbar been active (seconds)"
   },
+  "DEVTOOLS_WEBIDE_TIME_ACTIVE_SECONDS": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "10000000",
+    "n_buckets": 100,
+    "description": "How long has WebIDE been active (seconds)"
+  },
   "DEVTOOLS_CUSTOM_TIME_ACTIVE_SECONDS": {
     "expires_in_version": "never",
     "kind": "exponential",
@@ -6049,10 +6222,67 @@
     "n_buckets": 100,
     "description": "How long has a custom developer tool been active (seconds)"
   },
+  "DEVTOOLS_WEBIDE_CONNECTION_RESULT": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Did WebIDE runtime connection succeed?"
+  },
+  "DEVTOOLS_WEBIDE_USB_CONNECTION_RESULT": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Did WebIDE USB runtime connection succeed?"
+  },
+  "DEVTOOLS_WEBIDE_WIFI_CONNECTION_RESULT": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Did WebIDE WiFi runtime connection succeed?"
+  },
+  "DEVTOOLS_WEBIDE_SIMULATOR_CONNECTION_RESULT": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Did WebIDE simulator runtime connection succeed?"
+  },
+  "DEVTOOLS_WEBIDE_REMOTE_CONNECTION_RESULT": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Did WebIDE remote runtime connection succeed?"
+  },
+  "DEVTOOLS_WEBIDE_LOCAL_CONNECTION_RESULT": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Did WebIDE local runtime connection succeed?"
+  },
+  "DEVTOOLS_WEBIDE_OTHER_CONNECTION_RESULT": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Did WebIDE other runtime connection succeed?"
+  },
+  "DEVTOOLS_WEBIDE_CONNECTION_TIME_SECONDS": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "10000000",
+    "n_buckets": 100,
+    "description": "How long was WebIDE connected to a runtime (seconds)?"
+  },
+  "DEVTOOLS_WEBIDE_CONNECTION_PLAY_USED": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Was WebIDE's play button used during this runtime connection?"
+  },
+  "DEVTOOLS_WEBIDE_CONNECTION_DEBUG_USED": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Was WebIDE's debug button used during this runtime connection?"
+  },
   "BROWSER_IS_USER_DEFAULT": {
     "expires_in_version": "never",
     "kind": "boolean",
     "description": "The result of the startup default desktop browser check."
+  },
+  "BROWSER_IS_ASSIST_DEFAULT": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "The result of the default browser check for assist intent."
   },
   "MIXED_CONTENT_PAGE_LOAD": {
     "expires_in_version": "never",
@@ -6073,7 +6303,7 @@
     "description": "The module used for the NTLM protocol (Windows_API, Kerberos, Samba_auth or Generic) and whether or not the authentication was used to connect to a proxy server. This data is collected only once per session (at first NTLM authentification) ; fixed version."
   },
   "FX_THUMBNAILS_BG_QUEUE_SIZE_ON_CAPTURE": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": 100,
     "n_buckets": 15,
@@ -6081,7 +6311,7 @@
     "description": "BACKGROUND THUMBNAILS: Size of capture queue when a capture request is received"
   },
   "FX_THUMBNAILS_BG_CAPTURE_QUEUE_TIME_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": 300000,
     "n_buckets": 20,
@@ -6089,7 +6319,7 @@
     "description": "BACKGROUND THUMBNAILS: Time the capture request spent in the queue before being serviced (ms)"
   },
   "FX_THUMBNAILS_BG_CAPTURE_SERVICE_TIME_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": 30000,
     "n_buckets": 20,
@@ -6097,13 +6327,13 @@
     "description": "BACKGROUND THUMBNAILS: Time the capture took once it started and successfully completed (ms)"
   },
   "FX_THUMBNAILS_BG_CAPTURE_DONE_REASON_2": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "enumerated",
     "n_values": 10,
     "description": "BACKGROUND THUMBNAILS: Reason the capture completed (see TEL_CAPTURE_DONE_* constants in BackgroundPageThumbs.jsm)"
   },
   "FX_THUMBNAILS_BG_CAPTURE_PAGE_LOAD_TIME_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": 60000,
     "n_buckets": 20,
@@ -6111,7 +6341,7 @@
     "description": "BACKGROUND THUMBNAILS: Time the capture's page load took (ms)"
   },
   "FX_THUMBNAILS_BG_CAPTURE_CANVAS_DRAW_TIME_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": 500,
     "n_buckets": 15,
@@ -6171,19 +6401,19 @@
     "description": "Final status of the CacheFileInputStream (0=ok, 1=other error, 2=out of memory, 3=disk full, 4=file corrupted, 5=file not found, 6=binding aborted)"
   },
   "SQLITEBRIDGE_PROVIDER_PASSWORDS_LOCKED": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "enumerated",
     "n_values": "10",
     "description": "The number of errors using the PasswordsProvider due to a locked DB."
   },
   "SQLITEBRIDGE_PROVIDER_FORMS_LOCKED": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "enumerated",
     "n_values": "10",
     "description": "The number of errors using the FormHistoryProvider due to a locked DB."
   },
   "SQLITEBRIDGE_PROVIDER_HOME_LOCKED": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "enumerated",
     "n_values": "10",
     "description": "The number of errors using the HomeProvider due to a locked DB."
@@ -6235,6 +6465,18 @@
     "kind": "enumerated",
     "n_values": 64,
     "description": "detected symptom of SSL 3.0 intolerance, after considering historical info"
+  },
+  "SSL_VERSION_FALLBACK_INAPPROPRIATE": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 64,
+    "description": "TLS/SSL version intolerance was falsely detected, server rejected handshake"
+  },
+  "SSL_FALLBACK_LIMIT_REACHED": {
+    "expires_in_version": "default",
+    "kind": "enumerated",
+    "n_values": 16,
+    "description": "TLS/SSL version fallback reached the minimum version (1=TLS 1.0, 2=TLS 1.1, 3=TLS 1.2) or the fallback limit (4=TLS 1.0, 8=TLS 1.1, 12=TLS 1.2), stopped the fallback"
   },
   "SSL_CIPHER_SUITE_FULL": {
     "expires_in_version": "never",
@@ -6321,7 +6563,7 @@
     "description": "Status of OCSP stapling on this handshake (1=present, good; 2=none; 3=present, expired; 4=present, other error)"
   },
   "SSL_OCSP_MAY_FETCH": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "enumerated",
     "n_values": 8,
     "description": "For non-stapling cases, is OCSP fetching a possibility? (0=yes, 1=no because missing/invalid OCSP URI, 2=no because fetching disabled, 3=no because both)"
@@ -6356,7 +6598,7 @@
     "description": "Is OCSP required when the cert has an OCSP URI? (pref security.OCSP.require)"
   },
   "OSFILE_WORKER_LAUNCH_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "description": "The duration between the instant the first message is sent to OS.File and the moment the OS.File worker starts executing JavaScript, in milliseconds",
     "high": "5000",
@@ -6364,7 +6606,7 @@
     "extended_statistics_ok": true
   },
   "OSFILE_WORKER_READY_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "description": "The duration between the instant the first message is sent to OS.File and the moment the OS.File worker has finished executing its startup JavaScript and is ready to receive requests, in milliseconds",
     "high": "5000",
@@ -6372,12 +6614,19 @@
     "extended_statistics_ok": true
   },
   "OSFILE_WRITEATOMIC_JANK_MS": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "description": "The duration during which the main thread is blocked during a call to OS.File.writeAtomic, in milliseconds",
     "high": "5000",
     "n_buckets": 10,
     "extended_statistics_ok": true
+  },
+  "CERT_PINNING_FAILURES_BY_CA": {
+    "alert_emails": ["pinning@mozilla.org"],
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 256,
+    "description": "Pinning failures by CA (see RootHashes.inc for names of CAs)"
   },
   "CERT_PINNING_RESULTS": {
     "alert_emails": ["pinning@mozilla.org"],
@@ -6418,41 +6667,41 @@
     "description": "Certificate pinning test results by host for Mozilla operational sites"
   },
   "WEAVE_CONFIGURED": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "boolean",
     "description": "If any version of Firefox Sync is configured for this device"
   },
   "WEAVE_CONFIGURED_MASTER_PASSWORD": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "boolean",
     "description": "If both Firefox Sync and Master Password are configured for this device"
   },
   "WEAVE_START_COUNT": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": 1000,
     "n_buckets": 10,
     "description": "The number of times a sync started in this session"
   },
   "WEAVE_COMPLETE_SUCCESS_COUNT": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": 1000,
     "n_buckets": 10,
     "description": "The number of times a sync successfully completed in this session"
   },
   "WEAVE_CUSTOM_LEGACY_SERVER_CONFIGURATION": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "boolean",
     "description": "Whether legacy Sync is configured to use a custom server"
   },
   "WEAVE_CUSTOM_FXA_SERVER_CONFIGURATION": {
-    "expires_in_version": "never",
+    "expires_in_version": "default",
     "kind": "boolean",
     "description": "Whether FxA Sync is configured to use a custom authentication server"
   },
   "WEAVE_CUSTOM_TOKEN_SERVER_CONFIGURATION": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "boolean",
     "description": "Whether FxA Sync is configured to use a custom token server"
   },
@@ -6494,19 +6743,19 @@
     "description": "Algorithms used with WebCrypto (see table in WebCryptoTask.cpp)"
   },
   "MASTER_PASSWORD_ENABLED": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "flag",
     "description": "If a master-password is enabled for this profile"
   },
   "FENNEC_TILES_CACHE_HIT": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "linear",
     "high": "13",
     "n_buckets": 12,
     "description": "Cache hits on the tile-info metadata database"
   },
   "DISPLAY_SCALING_OSX" : {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "linear",
     "high": "500",
     "n_buckets": "100",
@@ -6514,7 +6763,7 @@
     "cpp_guard": "XP_MACOSX"
   },
   "DISPLAY_SCALING_MSWIN" : {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "linear",
     "high": "500",
     "n_buckets": "100",
@@ -6522,7 +6771,7 @@
     "cpp_guard": "XP_WIN"
   },
   "DISPLAY_SCALING_LINUX" : {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "linear",
     "high": "500",
     "n_buckets": "100",
@@ -6530,28 +6779,40 @@
     "cpp_guard": "XP_LINUX"
   },
   "SOCIAL_SIDEBAR_STATE": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "boolean",
     "description": "Social Sidebar state 0: closed, 1: opened.  Toggling between providers will result in a higher opened rate."
   },
   "SOCIAL_TOOLBAR_BUTTONS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "enumerated",
     "n_values": 3,
     "description": "Social toolbar button has been used (0:share, 1:status, 2:bookmark)"
   },
   "SOCIAL_PANEL_CLICKS": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "enumerated",
     "n_values": 4,
     "description": "Social content has been interacted with (0:share, 1:status, 2:bookmark, 3: sidebar)"
   },
   "SOCIAL_SIDEBAR_OPEN_DURATION": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "10000000",
     "n_buckets": 10,
     "description": "Sidebar showing: seconds that the sidebar has been opened"
+  },
+  "BR_9_2_1_SUBJECT_ALT_NAMES": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 8,
+    "description": "Baseline Requirements section 9.2.1: subject alternative names extension (0: ok, 1 or more: error)"
+  },
+  "BR_9_2_2_SUBJECT_COMMON_NAME": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 8,
+    "description": "Baseline Requirements section 9.2.2: subject common name field (0: present, in subject alt. names; 1: not present; 2: not present in subject alt. names)"
   },
   "TRACKING_PROTECTION_ENABLED": {
     "expires_in_version": "never",
@@ -6579,5 +6840,48 @@
     "expires_in_version": "never",
     "kind": "boolean",
     "description": "Stores 1 every time the URL is copied or shared."
+  },
+  "E10S_AUTOSTART": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Whether a session is set to autostart e10s windows"
+  },
+  "E10S_WINDOW": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Whether a browser window is set as an e10s window"
+  },
+  "E10S_STILL_ACCEPTED_FROM_PROMPT": {
+    "expires_in_version": "40",
+    "kind": "boolean",
+    "description": "Whether a user who accepted e10s from the prompt is still using e10s"
+  },
+  "E10S_BLOCKED_FROM_RUNNING": {
+    "expires_in_version": "40",
+    "kind": "boolean",
+    "description": "Whether the e10s pref was set but it was blocked from running due to blacklisted conditions"
+  },
+  "ONBEFOREUNLOAD_PROMPT_ACTION" : {
+    "expires_in_version": "45",
+    "kind": "enumerated",
+    "n_values": 3,
+    "description": "What button a user clicked in an onbeforeunload prompt.  (Stay on Page = 0, Leave Page = 1, prompt aborted = 2)"
+  },
+  "ONBEFOREUNLOAD_PROMPT_COUNT" : {
+    "expires_in_version": "45",
+    "kind": "count",
+    "description": "How many onbeforeunload prompts has the user encountered in their session?"
+  },
+  "SUBPROCESS_ABNORMAL_ABORT": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "keyed": true,
+    "description": "Counts of plugin/content process abnormal shutdown, whether or not a crash report was available."
+  },
+  "SUBPROCESS_CRASHES_WITH_DUMP": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "keyed": true,
+    "description": "Counts of plugin and content process crashes which are reported with a crash dump."
   }
 }

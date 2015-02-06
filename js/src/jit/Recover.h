@@ -9,6 +9,8 @@
 
 #include "mozilla/Attributes.h"
 
+#include "jsarray.h"
+
 #include "jit/Snapshots.h"
 
 struct JSContext;
@@ -47,9 +49,12 @@ namespace jit {
     _(StringSplit)                              \
     _(RegExpExec)                               \
     _(RegExpTest)                               \
+    _(RegExpReplace)                            \
+    _(TypeOf)                                   \
     _(NewObject)                                \
     _(NewArray)                                 \
     _(NewDerivedTypedObject)                    \
+    _(CreateThisWithTemplate)                   \
     _(ObjectState)                              \
     _(ArrayState)
 
@@ -486,6 +491,30 @@ class RRegExpTest MOZ_FINAL : public RInstruction
     bool recover(JSContext *cx, SnapshotIterator &iter) const;
 };
 
+class RRegExpReplace MOZ_FINAL : public RInstruction
+{
+  public:
+    RINSTRUCTION_HEADER_(RegExpReplace)
+
+    virtual uint32_t numOperands() const {
+        return 3;
+    }
+
+    bool recover(JSContext *cx, SnapshotIterator &iter) const;
+};
+
+class RTypeOf MOZ_FINAL : public RInstruction
+{
+  public:
+    RINSTRUCTION_HEADER_(TypeOf)
+
+    virtual uint32_t numOperands() const {
+        return 1;
+    }
+
+    bool recover(JSContext *cx, SnapshotIterator &iter) const;
+};
+
 class RNewObject MOZ_FINAL : public RInstruction
 {
   private:
@@ -505,7 +534,7 @@ class RNewArray MOZ_FINAL : public RInstruction
 {
   private:
     uint32_t count_;
-    bool isAllocating_;
+    AllocatingBehaviour allocatingBehaviour_;
 
   public:
     RINSTRUCTION_HEADER_(NewArray)
@@ -524,6 +553,21 @@ class RNewDerivedTypedObject MOZ_FINAL : public RInstruction
 
     virtual uint32_t numOperands() const {
         return 3;
+    }
+
+    bool recover(JSContext *cx, SnapshotIterator &iter) const;
+};
+
+class RCreateThisWithTemplate MOZ_FINAL : public RInstruction
+{
+  private:
+    bool tenuredHeap_;
+
+  public:
+    RINSTRUCTION_HEADER_(CreateThisWithTemplate)
+
+    virtual uint32_t numOperands() const {
+        return 1;
     }
 
     bool recover(JSContext *cx, SnapshotIterator &iter) const;

@@ -5,9 +5,10 @@
 
 #include "mozilla/dom/SVGRectElement.h"
 #include "nsGkAtoms.h"
-#include "gfxContext.h"
 #include "mozilla/dom/SVGRectElementBinding.h"
 #include "mozilla/gfx/2D.h"
+#include "mozilla/gfx/Matrix.h"
+#include "mozilla/gfx/Rect.h"
 #include "mozilla/gfx/PathHelpers.h"
 #include <algorithm>
 
@@ -109,47 +110,34 @@ SVGRectElement::GetLengthInfo()
 //----------------------------------------------------------------------
 // nsSVGPathGeometryElement methods
 
-void
-SVGRectElement::ConstructPath(gfxContext *aCtx)
+bool
+SVGRectElement::GetGeometryBounds(Rect* aBounds, Float aStrokeWidth,
+                                  const Matrix& aTransform)
 {
-  float x, y, width, height, rx, ry;
+  Rect r;
+  Float rx, ry;
+  GetAnimatedLengthValues(&r.x, &r.y, &r.width, &r.height, &rx, &ry, nullptr);
 
-  GetAnimatedLengthValues(&x, &y, &width, &height, &rx, &ry, nullptr);
-
-  /* In a perfect world, this would be handled by the DOM, and
-     return a DOM exception. */
-  if (width <= 0 || height <= 0)
-    return;
+  if (r.IsEmpty()) {
+    // Rendering of the element disabled
+    r.SetEmpty(); // make sure width/height are actually zero
+    *aBounds = r;
+    return true;
+  }
 
   rx = std::max(rx, 0.0f);
   ry = std::max(ry, 0.0f);
 
-  /* optimize the no rounded corners case */
-  if (rx == 0 && ry == 0) {
-    aCtx->Rectangle(gfxRect(x, y, width, height));
-    return;
+  if (rx != 0 || ry != 0) {
+    return false;
   }
 
-  /* If either the 'rx' or the 'ry' attribute isn't set, then we
-     have to set it to the value of the other. */
-  bool hasRx = mLengthAttributes[ATTR_RX].IsExplicitlySet();
-  bool hasRy = mLengthAttributes[ATTR_RY].IsExplicitlySet();
-  if (hasRx && !hasRy)
-    ry = rx;
-  else if (hasRy && !hasRx)
-    rx = ry;
+  if (aStrokeWidth > 0.f) {
+    r.Inflate(aStrokeWidth / 2.f);
+  }
 
-  /* Clamp rx and ry to half the rect's width and height respectively. */
-  float halfWidth  = width/2;
-  float halfHeight = height/2;
-  if (rx > halfWidth)
-    rx = halfWidth;
-  if (ry > halfHeight)
-    ry = halfHeight;
-
-  gfxSize corner(rx, ry);
-  aCtx->RoundedRectangle(gfxRect(x, y, width, height),
-                         gfxCornerSizes(corner, corner, corner, corner));
+  *aBounds = aTransform.TransformBounds(r);
+  return true;
 }
 
 TemporaryRef<Path>
@@ -162,19 +150,17 @@ SVGRectElement::BuildPath(PathBuilder* aBuilder)
     return nullptr;
   }
 
-  RefPtr<PathBuilder> pathBuilder = aBuilder ? aBuilder : CreatePathBuilder();
-
   rx = std::max(rx, 0.0f);
   ry = std::max(ry, 0.0f);
 
   if (rx == 0 && ry == 0) {
     // Optimization for the no rounded corners case.
     Rect r(x, y, width, height);
-    pathBuilder->MoveTo(r.TopLeft());
-    pathBuilder->LineTo(r.TopRight());
-    pathBuilder->LineTo(r.BottomRight());
-    pathBuilder->LineTo(r.BottomLeft());
-    pathBuilder->Close();
+    aBuilder->MoveTo(r.TopLeft());
+    aBuilder->LineTo(r.TopRight());
+    aBuilder->LineTo(r.BottomRight());
+    aBuilder->LineTo(r.BottomLeft());
+    aBuilder->Close();
   } else {
     // If either the 'rx' or the 'ry' attribute isn't set, then we have to
     // set it to the value of the other:
@@ -194,10 +180,10 @@ SVGRectElement::BuildPath(PathBuilder* aBuilder)
 
     Size cornerRadii(rx, ry);
     Size radii[] = { cornerRadii, cornerRadii, cornerRadii, cornerRadii };
-    AppendRoundedRectToPath(pathBuilder, Rect(x, y, width, height), radii);
+    AppendRoundedRectToPath(aBuilder, Rect(x, y, width, height), radii);
   }
 
-  return pathBuilder->Finish();
+  return aBuilder->Finish();
 }
 
 } // namespace dom

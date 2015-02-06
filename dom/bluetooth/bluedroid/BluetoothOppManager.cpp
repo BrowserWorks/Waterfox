@@ -14,6 +14,8 @@
 #include "ObexBase.h"
 
 #include "mozilla/dom/bluetooth/BluetoothTypes.h"
+#include "mozilla/dom/ipc/BlobParent.h"
+#include "mozilla/dom/File.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/Services.h"
 #include "mozilla/StaticPtr.h"
@@ -21,7 +23,6 @@
 #include "nsCExternalHandlerService.h"
 #include "nsIObserver.h"
 #include "nsIObserverService.h"
-#include "nsIDOMFile.h"
 #include "nsIFile.h"
 #include "nsIInputStream.h"
 #include "nsIMIMEService.h"
@@ -34,6 +35,7 @@
 
 USING_BLUETOOTH_NAMESPACE
 using namespace mozilla;
+using namespace mozilla::dom;
 using namespace mozilla::ipc;
 
 namespace {
@@ -348,7 +350,8 @@ BluetoothOppManager::SendFile(const nsAString& aDeviceAddress,
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  nsCOMPtr<nsIDOMBlob> blob = aActor->GetBlob();
+  nsRefPtr<FileImpl> impl = aActor->GetBlobImpl();
+  nsCOMPtr<nsIDOMBlob> blob = new File(nullptr, impl);
 
   return SendFile(aDeviceAddress, blob.get());
 }
@@ -751,6 +754,7 @@ BluetoothOppManager::ComposePacket(uint8_t aOpCode, UnixSocketRawData* aMessage)
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aMessage);
 
+  const uint8_t* data = aMessage->GetData();
   int frameHeaderLength = 0;
 
   // See if this is the first part of each Put packet
@@ -759,8 +763,9 @@ BluetoothOppManager::ComposePacket(uint8_t aOpCode, UnixSocketRawData* aMessage)
     // [opcode:1][length:2][Headers:var]
     frameHeaderLength = 3;
 
-    mPacketLength = ((((int)aMessage->mData[1]) << 8) | aMessage->mData[2]) -
-                      frameHeaderLength;
+    mPacketLength = ((static_cast<int>(data[1]) << 8) | data[2]) -
+                    frameHeaderLength;
+
     /**
      * A PUT request from remote devices may be divided into multiple parts.
      * In other words, one request may need to be received multiple times,
@@ -771,7 +776,7 @@ BluetoothOppManager::ComposePacket(uint8_t aOpCode, UnixSocketRawData* aMessage)
     mPutFinalFlag = (aOpCode == ObexRequestCode::PutFinal);
   }
 
-  int dataLength = aMessage->mSize - frameHeaderLength;
+  int dataLength = aMessage->GetSize() - frameHeaderLength;
 
   // Check length before memcpy to prevent from memory pollution
   if (dataLength < 0 ||
@@ -786,7 +791,7 @@ BluetoothOppManager::ComposePacket(uint8_t aOpCode, UnixSocketRawData* aMessage)
   }
 
   memcpy(mReceivedDataBuffer.get() + mPutPacketReceivedLength,
-         &aMessage->mData[frameHeaderLength], dataLength);
+         &data[frameHeaderLength], dataLength);
 
   mPutPacketReceivedLength += dataLength;
 
@@ -799,12 +804,13 @@ BluetoothOppManager::ServerDataHandler(UnixSocketRawData* aMessage)
   MOZ_ASSERT(NS_IsMainThread());
 
   uint8_t opCode;
-  int receivedLength = aMessage->mSize;
+  int receivedLength = aMessage->GetSize();
+  const uint8_t* data = aMessage->GetData();
 
   if (mPutPacketReceivedLength > 0) {
     opCode = mPutFinalFlag ? ObexRequestCode::PutFinal : ObexRequestCode::Put;
   } else {
-    opCode = aMessage->mData[0];
+    opCode = data[0];
 
     // When there's a Put packet right after a PutFinal packet,
     // which means it's the start point of a new file.
@@ -821,7 +827,7 @@ BluetoothOppManager::ServerDataHandler(UnixSocketRawData* aMessage)
     // Section 3.3.1 "Connect", IrOBEX 1.2
     // [opcode:1][length:2][version:1][flags:1][MaxPktSizeWeCanReceive:2]
     // [Headers:var]
-    if (!ParseHeaders(&aMessage->mData[7], receivedLength - 7, &pktHeaders)) {
+    if (!ParseHeaders(&data[7], receivedLength - 7, &pktHeaders)) {
       ReplyError(ObexResponseCode::BadRequest);
       return;
     }
@@ -831,7 +837,7 @@ BluetoothOppManager::ServerDataHandler(UnixSocketRawData* aMessage)
   } else if (opCode == ObexRequestCode::Abort) {
     // Section 3.3.5 "Abort", IrOBEX 1.2
     // [opcode:1][length:2][Headers:var]
-    if (!ParseHeaders(&aMessage->mData[3], receivedLength - 3, &pktHeaders)) {
+    if (!ParseHeaders(&data[3], receivedLength - 3, &pktHeaders)) {
       ReplyError(ObexResponseCode::BadRequest);
       return;
     }
@@ -841,7 +847,7 @@ BluetoothOppManager::ServerDataHandler(UnixSocketRawData* aMessage)
   } else if (opCode == ObexRequestCode::Disconnect) {
     // Section 3.3.2 "Disconnect", IrOBEX 1.2
     // [opcode:1][length:2][Headers:var]
-    if (!ParseHeaders(&aMessage->mData[3], receivedLength - 3, &pktHeaders)) {
+    if (!ParseHeaders(&data[3], receivedLength - 3, &pktHeaders)) {
       ReplyError(ObexResponseCode::BadRequest);
       return;
     }
@@ -924,7 +930,8 @@ BluetoothOppManager::ClientDataHandler(UnixSocketRawData* aMessage)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  uint8_t opCode = aMessage->mData[0];
+  const uint8_t* data = aMessage->GetData();
+  uint8_t opCode = data[0];
 
   // Check response code and send out system message as finished if the response
   // code is somehow incorrect.
@@ -981,10 +988,9 @@ BluetoothOppManager::ClientDataHandler(UnixSocketRawData* aMessage)
     AfterOppConnected();
 
     // Keep remote information
-    mRemoteObexVersion = aMessage->mData[3];
-    mRemoteConnectionFlags = aMessage->mData[4];
-    mRemoteMaxPacketLength =
-      (((int)(aMessage->mData[5]) << 8) | aMessage->mData[6]);
+    mRemoteObexVersion = data[3];
+    mRemoteConnectionFlags = data[4];
+    mRemoteMaxPacketLength = ((static_cast<int>(data[5]) << 8) | data[6]);
 
     // The length of file name exceeds maximum length.
     int fileNameByteLen = (mFileName.Length() + 1) * 2;
@@ -1253,8 +1259,7 @@ BluetoothOppManager::SendObexData(uint8_t* aData, uint8_t aOpcode, int aSize)
     mLastCommand = aOpcode;
   }
 
-  UnixSocketRawData* s = new UnixSocketRawData(aSize);
-  memcpy(s->mData, aData, s->mSize);
+  UnixSocketRawData* s = new UnixSocketRawData(aData, aSize);
   mSocket->SendSocketData(s);
 }
 

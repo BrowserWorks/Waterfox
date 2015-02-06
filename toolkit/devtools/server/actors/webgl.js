@@ -18,16 +18,6 @@ const PROGRAM_DEFAULT_TRAITS = 0;
 const PROGRAM_BLACKBOX_TRAIT = 1;
 const PROGRAM_HIGHLIGHT_TRAIT = 2;
 
-exports.register = function(handle) {
-  handle.addTabActor(WebGLActor, "webglActor");
-  handle.addGlobalActor(WebGLActor, "webglActor");
-}
-
-exports.unregister = function(handle) {
-  handle.removeTabActor(WebGLActor);
-  handle.removeGlobalActor(WebGLActor);
-}
-
 /**
  * A WebGL Shader contributing to building a WebGL Program.
  * You can either retrieve, or compile the source of a shader, which will
@@ -252,11 +242,10 @@ let WebGLActor = exports.WebGLActor = protocol.ActorClass({
     this._initialized = true;
 
     this._programActorsCache = [];
-    this._contentObserver = new ContentObserver(this.tabActor);
     this._webglObserver = new WebGLObserver();
 
-    on(this._contentObserver, "global-created", this._onGlobalCreated);
-    on(this._contentObserver, "global-destroyed", this._onGlobalDestroyed);
+    on(this.tabActor, "window-ready", this._onGlobalCreated);
+    on(this.tabActor, "window-destroyed", this._onGlobalDestroyed);
     on(this._webglObserver, "program-linked", this._onProgramLinked);
 
     if (reload) {
@@ -278,9 +267,8 @@ let WebGLActor = exports.WebGLActor = protocol.ActorClass({
     }
     this._initialized = false;
 
-    this._contentObserver.stopListening();
-    off(this._contentObserver, "global-created", this._onGlobalCreated);
-    off(this._contentObserver, "global-destroyed", this._onGlobalDestroyed);
+    off(this.tabActor, "window-ready", this._onGlobalCreated);
+    off(this.tabActor, "window-destroyed", this._onGlobalDestroyed);
     off(this._webglObserver, "program-linked", this._onProgramLinked);
 
     this._programActorsCache = null;
@@ -379,19 +367,22 @@ let WebGLActor = exports.WebGLActor = protocol.ActorClass({
   /**
    * Invoked whenever the current tab actor's document global is created.
    */
-  _onGlobalCreated: function(window) {
-    let id = ContentObserver.GetInnerWindowID(window);
-    WebGLInstrumenter.handle(window, this._webglObserver);
-    events.emit(this, "global-created", id);
+  _onGlobalCreated: function({id, window, isTopLevel}) {
+    if (isTopLevel) {
+      WebGLInstrumenter.handle(window, this._webglObserver);
+      events.emit(this, "global-created", id);
+    }
   },
 
   /**
    * Invoked whenever the current tab actor's inner window is destroyed.
    */
-  _onGlobalDestroyed: function(id) {
-    removeFromArray(this._programActorsCache, e => e.ownerWindow == id);
-    this._webglObserver.unregisterContextsForWindow(id);
-    events.emit(this, "global-destroyed", id);
+  _onGlobalDestroyed: function({id, isTopLevel, isFrozen}) {
+    if (isTopLevel && !isFrozen) {
+      removeFromArray(this._programActorsCache, e => e.ownerWindow == id);
+      this._webglObserver.unregisterContextsForWindow(id);
+      events.emit(this, "global-destroyed", id);
+    }
   },
 
   /**
@@ -501,7 +492,9 @@ let WebGLInstrumenter = {
         if (glBreak) return undefined;
       }
 
-      let glResult = originalFunc.apply(this, glArgs);
+      // Invoking .apply on an unxrayed content function doesn't work, because
+      // the arguments array is inaccessible to it. Get Xrays back.
+      let glResult = Cu.waiveXrays(Cu.unwaiveXrays(originalFunc).apply(this, glArgs));
 
       if (timing >= 0 && !observer.suppressHandlers) {
         let glBreak = observer[afterFuncName](glArgs, glResult, cache, proxy);

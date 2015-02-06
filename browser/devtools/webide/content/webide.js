@@ -7,7 +7,6 @@ const Cu = Components.utils;
 const Ci = Components.interfaces;
 
 Cu.import("resource:///modules/devtools/gDevTools.jsm");
-Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 
 const {devtools} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
@@ -21,6 +20,9 @@ const ProjectEditor = require("projecteditor/projecteditor");
 const {Devices} = Cu.import("resource://gre/modules/devtools/Devices.jsm");
 const {GetAvailableAddons} = require("devtools/webide/addons");
 const {GetTemplatesJSON, GetAddonsJSON} = require("devtools/webide/remote-resources");
+const utils = require("devtools/webide/utils");
+const Telemetry = require("devtools/shared/telemetry");
+const {RuntimeScanners, WiFiScanner} = require("devtools/webide/runtimes");
 const {showDoorhanger} = require("devtools/shared/doorhanger");
 
 const Strings = Services.strings.createBundle("chrome://browser/locale/devtools/webide.properties");
@@ -48,6 +50,9 @@ window.addEventListener("unload", function onUnload() {
 
 let UI = {
   init: function() {
+    this._telemetry = new Telemetry();
+    this._telemetry.toolOpened("webide");
+
     AppManager.init();
 
     this.onMessage = this.onMessage.bind(this);
@@ -63,35 +68,35 @@ let UI = {
     window.addEventListener("focus", this.onfocus, true);
 
     AppProjects.load().then(() => {
-      this.openLastProject();
+      this.autoSelectProject();
     });
 
-    // Auto install the ADB Addon Helper. Only once.
-    // If the user decides to uninstall the addon, we won't install it again.
-    let autoInstallADBHelper = Services.prefs.getBoolPref("devtools.webide.autoinstallADBHelper");
-    if (autoInstallADBHelper && !Devices.helperAddonInstalled) {
+    // Auto install the ADB Addon Helper and Tools Adapters. Only once.
+    // If the user decides to uninstall any of this addon, we won't install it again.
+    let autoinstallADBHelper = Services.prefs.getBoolPref("devtools.webide.autoinstallADBHelper");
+    let autoinstallFxdtAdapters = Services.prefs.getBoolPref("devtools.webide.autoinstallFxdtAdapters");
+    if (autoinstallADBHelper) {
       GetAvailableAddons().then(addons => {
         addons.adb.install();
       }, console.error);
     }
+    if (autoinstallFxdtAdapters) {
+      GetAvailableAddons().then(addons => {
+        addons.adapters.install();
+      }, console.error);
+    }
     Services.prefs.setBoolPref("devtools.webide.autoinstallADBHelper", false);
+    Services.prefs.setBoolPref("devtools.webide.autoinstallFxdtAdapters", false);
+
+    this.lastConnectedRuntime = Services.prefs.getCharPref("devtools.webide.lastConnectedRuntime");
+
+    if (Services.prefs.getBoolPref("devtools.webide.widget.autoinstall") &&
+        !Services.prefs.getBoolPref("devtools.webide.widget.enabled")) {
+      Services.prefs.setBoolPref("devtools.webide.widget.enabled", true);
+      gDevToolsBrowser.moveWebIDEWidgetInNavbar();
+    }
 
     this.setupDeck();
-  },
-
-  openLastProject: function() {
-    let lastProjectLocation = Services.prefs.getCharPref("devtools.webide.lastprojectlocation");
-    let shouldRestore = Services.prefs.getBoolPref("devtools.webide.restoreLastProject");
-    if (lastProjectLocation && shouldRestore) {
-      let lastProject = AppProjects.get(lastProjectLocation);
-      if (lastProject) {
-        AppManager.selectedProject = lastProject;
-      } else {
-        AppManager.selectedProject = null;
-      }
-    } else {
-      AppManager.selectedProject = null;
-    }
   },
 
   uninit: function() {
@@ -99,6 +104,8 @@ let UI = {
     AppManager.off("app-manager-update", this.appManagerUpdate);
     AppManager.uninit();
     window.removeEventListener("message", this.onMessage);
+    this.updateConnectionTelemetry();
+    this._telemetry.toolClosed("webide");
   },
 
   canWindowClose: function() {
@@ -115,7 +122,8 @@ let UI = {
     // not focused.
     if (AppManager.selectedProject &&
         AppManager.selectedProject.type != "mainProcess" &&
-        AppManager.selectedProject.type != "runtimeApp") {
+        AppManager.selectedProject.type != "runtimeApp" &&
+        AppManager.selectedProject.type != "tab") {
       AppManager.validateProject(AppManager.selectedProject);
     }
 
@@ -130,24 +138,35 @@ let UI = {
     switch (what) {
       case "runtimelist":
         this.updateRuntimeList();
+        this.autoConnectRuntime();
         break;
       case "connection":
         this.updateRuntimeButton();
         this.updateCommands();
+        this.updateConnectionTelemetry();
         break;
       case "project":
-        this.updateTitle();
-        this.closeToolbox();
-        this.updateCommands();
-        this.updateProjectButton();
-        this.openProject();
-        break;
+        this._updatePromise = Task.spawn(function() {
+          UI.updateTitle();
+          yield UI.destroyToolbox();
+          UI.updateCommands();
+          UI.updateProjectButton();
+          UI.openProject();
+          UI.autoStartProject();
+          UI.saveLastSelectedProject();
+        });
+        return;
       case "project-is-not-running":
       case "project-is-running":
+      case "list-tabs-response":
         this.updateCommands();
         break;
-      case "runtime":
+      case "runtime-details":
         this.updateRuntimeButton();
+        break;
+      case "runtime-changed":
+        this.updateRuntimeButton();
+        this.saveLastConnectedRuntime();
         break;
       case "project-validated":
         this.updateTitle();
@@ -157,7 +176,12 @@ let UI = {
         break;
       case "install-progress":
         this.updateProgress(Math.round(100 * details.bytesSent / details.totalBytes));
+        break;
+      case "runtime-apps-found":
+        this.autoSelectProject();
+        break;
     };
+    this._updatePromise = promise.resolve();
   },
 
   openInBrowser: function(url) {
@@ -223,7 +247,7 @@ let UI = {
     this._busyTimeout = setTimeout(() => {
       this.unbusy();
       UI.reportError("error_operationTimeout", this._busyOperationDescription);
-    }, 30000);
+    }, Services.prefs.getIntPref("devtools.webide.busyTimeout"));
   },
 
   cancelBusyTimeout: function() {
@@ -231,12 +255,13 @@ let UI = {
   },
 
   busyWithProgressUntil: function(promise, operationDescription) {
-    this.busyUntil(promise, operationDescription);
+    let busy = this.busyUntil(promise, operationDescription);
     let win = document.querySelector("window");
     let progress = document.querySelector("#action-busy-determined");
     progress.mode = "undetermined";
     win.classList.add("busy-determined");
     win.classList.remove("busy-undetermined");
+    return busy;
   },
 
   busyUntil: function(promise, operationDescription) {
@@ -251,10 +276,11 @@ let UI = {
       this.cancelBusyTimeout();
       this.unbusy();
     }, (e) => {
+      let message = operationDescription + (e ? (": " + e) : "");
       this.cancelBusyTimeout();
       let operationCanceled = e && e.canceled;
       if (!operationCanceled) {
-        UI.reportError("error_operationFail", operationDescription);
+        UI.reportError("error_operationFail", message);
         console.error(e);
       }
       this.unbusy();
@@ -295,17 +321,17 @@ let UI = {
   /********** RUNTIME **********/
 
   updateRuntimeList: function() {
-    let wifiHeaderNode = document.querySelector("#runtime-header-wifi-devices");
-    if (AppManager.isWiFiScanningEnabled) {
+    let wifiHeaderNode = document.querySelector("#runtime-header-wifi");
+    if (WiFiScanner.allowed) {
       wifiHeaderNode.removeAttribute("hidden");
     } else {
       wifiHeaderNode.setAttribute("hidden", "true");
     }
 
-    let USBListNode = document.querySelector("#runtime-panel-usbruntime");
-    let WiFiListNode = document.querySelector("#runtime-panel-wifi-devices");
-    let simulatorListNode = document.querySelector("#runtime-panel-simulators");
-    let customListNode = document.querySelector("#runtime-panel-custom");
+    let usbListNode = document.querySelector("#runtime-panel-usb");
+    let wifiListNode = document.querySelector("#runtime-panel-wifi");
+    let simulatorListNode = document.querySelector("#runtime-panel-simulator");
+    let otherListNode = document.querySelector("#runtime-panel-other");
 
     let noHelperNode = document.querySelector("#runtime-panel-noadbhelper");
     let noUSBNode = document.querySelector("#runtime-panel-nousbdevice");
@@ -316,25 +342,27 @@ let UI = {
       noHelperNode.removeAttribute("hidden");
     }
 
-    if (AppManager.runtimeList.usb.length == 0 && Devices.helperAddonInstalled) {
+    let runtimeList = AppManager.runtimeList;
+
+    if (runtimeList.usb.length === 0 && Devices.helperAddonInstalled) {
       noUSBNode.removeAttribute("hidden");
     } else {
       noUSBNode.setAttribute("hidden", "true");
     }
 
     for (let [type, parent] of [
-      ["usb", USBListNode],
-      ["wifi", WiFiListNode],
+      ["usb", usbListNode],
+      ["wifi", wifiListNode],
       ["simulator", simulatorListNode],
-      ["custom", customListNode],
+      ["other", otherListNode],
     ]) {
       while (parent.hasChildNodes()) {
         parent.firstChild.remove();
       }
-      for (let runtime of AppManager.runtimeList[type]) {
+      for (let runtime of runtimeList[type]) {
         let panelItemNode = document.createElement("toolbarbutton");
         panelItemNode.className = "panel-item runtime-panel-item-" + type;
-        panelItemNode.setAttribute("label", runtime.getName());
+        panelItemNode.setAttribute("label", runtime.name);
         parent.appendChild(panelItemNode);
         let r = runtime;
         panelItemNode.addEventListener("click", () => {
@@ -346,10 +374,39 @@ let UI = {
     }
   },
 
+  autoConnectRuntime: function () {
+    // Automatically reconnect to the previously selected runtime,
+    // if available and has an ID
+    if (AppManager.selectedRuntime || !this.lastConnectedRuntime) {
+      return;
+    }
+    let [_, type, id] = this.lastConnectedRuntime.match(/^(\w+):(.+)$/);
+
+    type = type.toLowerCase();
+
+    // Local connection is mapped to AppManager.runtimeList.other array
+    if (type == "local") {
+      type = "other";
+    }
+
+    // We support most runtimes except simulator, that needs to be manually
+    // launched
+    if (type == "usb" || type == "wifi" || type == "other") {
+      for (let runtime of AppManager.runtimeList[type]) {
+        // Some runtimes do not expose an id and don't support autoconnect (like
+        // remote connection)
+        if (runtime.id == id) {
+          this.connectToRuntime(runtime);
+        }
+      }
+    }
+  },
+
   connectToRuntime: function(runtime) {
-    let name = runtime.getName();
+    let name = runtime.name;
     let promise = AppManager.connectToRuntime(runtime);
-    return this.busyUntil(promise, "connecting to runtime");
+    promise.then(() => this.initConnectionTelemetry());
+    return this.busyUntil(promise, "connecting to runtime " + name);
   },
 
   updateRuntimeButton: function() {
@@ -357,9 +414,62 @@ let UI = {
     if (!AppManager.selectedRuntime) {
       labelNode.setAttribute("value", Strings.GetStringFromName("runtimeButton_label"));
     } else {
-      let name = AppManager.selectedRuntime.getName();
+      let name = AppManager.selectedRuntime.name;
       labelNode.setAttribute("value", name);
     }
+  },
+
+  saveLastConnectedRuntime: function () {
+    if (AppManager.selectedRuntime &&
+        AppManager.selectedRuntime.id !== undefined) {
+      this.lastConnectedRuntime = AppManager.selectedRuntime.type + ":" +
+                                  AppManager.selectedRuntime.id;
+    } else {
+      this.lastConnectedRuntime = "";
+    }
+    Services.prefs.setCharPref("devtools.webide.lastConnectedRuntime",
+                               this.lastConnectedRuntime);
+  },
+
+  _actionsToLog: new Set(),
+
+  /**
+   * For each new connection, track whether play and debug were ever used.  Only
+   * one value is collected for each button, even if they are used multiple
+   * times during a connection.
+   */
+  initConnectionTelemetry: function() {
+    this._actionsToLog.add("play");
+    this._actionsToLog.add("debug");
+  },
+
+  /**
+   * Action occurred.  Log that it happened, and remove it from the loggable
+   * set.
+   */
+  onAction: function(action) {
+    if (!this._actionsToLog.has(action)) {
+      return;
+    }
+    this.logActionState(action, true);
+    this._actionsToLog.delete(action);
+  },
+
+  /**
+   * Connection status changed or we are shutting down.  Record any loggable
+   * actions as having not occurred.
+   */
+  updateConnectionTelemetry: function() {
+    for (let action of this._actionsToLog.values()) {
+      this.logActionState(action, false);
+    }
+    this._actionsToLog.clear();
+  },
+
+  logActionState: function(action, state) {
+    let histogramId = "DEVTOOLS_WEBIDE_CONNECTION_" +
+                      action.toUpperCase() + "_USED";
+    this._telemetry.log(histogramId, state);
   },
 
   /********** PROJECTS **********/
@@ -453,18 +563,11 @@ let UI = {
       return;
     }
 
-    // Save last project location
-
-    if (project.location) {
-      Services.prefs.setCharPref("devtools.webide.lastprojectlocation", project.location);
-    }
-
     // Make sure the directory exist before we show Project Editor
 
     let forceDetailsOnly = false;
     if (project.type == "packaged") {
-      let directory = new FileUtils.File(project.location);
-      forceDetailsOnly = !directory.exists();
+      forceDetailsOnly = !utils.doesFileExist(project.location);
     }
 
     // Show only the details screen
@@ -483,6 +586,131 @@ let UI = {
     this.getProjectEditor().then(() => {
       this.updateProjectEditorHeader();
     }, console.error);
+  },
+
+  autoStartProject: function() {
+    let project = AppManager.selectedProject;
+
+    if (!project) {
+      return;
+    }
+    if (!(project.type == "runtimeApp" ||
+          project.type == "mainProcess" ||
+          project.type == "tab")) {
+      return; // For something that is not an editable app, we're done.
+    }
+
+    Task.spawn(function() {
+      if (project.type == "runtimeApp") {
+        yield UI.busyUntil(AppManager.launchRuntimeApp(), "running app");
+      }
+      yield UI.createToolbox();
+    });
+  },
+
+  importAndSelectApp: Task.async(function* (source) {
+    let isPackaged = !!source.path;
+    let project;
+    try {
+      project = yield AppProjects[isPackaged ? "addPackaged" : "addHosted"](source);
+    } catch (e) {
+      if (e === "Already added") {
+        // Select project that's already been added,
+        // and allow it to be revalidated and selected
+        project = AppProjects.get(isPackaged ? source.path : source);
+      } else {
+        throw e;
+      }
+    }
+
+    // Validate project
+    yield AppManager.validateProject(project);
+
+    // Select project
+    AppManager.selectedProject = project;
+  }),
+
+  // Remember the last selected project on the runtime
+  saveLastSelectedProject: function() {
+    let shouldRestore = Services.prefs.getBoolPref("devtools.webide.restoreLastProject");
+    if (!shouldRestore) {
+      return;
+    }
+
+    // Ignore unselection of project on runtime disconnection
+    if (AppManager.connection.status != Connection.Status.CONNECTED) {
+      return;
+    }
+
+    let project = "", type = "";
+    let selected = AppManager.selectedProject;
+    if (selected) {
+      if (selected.type == "runtimeApp") {
+        type = "runtimeApp";
+        project = selected.app.manifestURL;
+      } else if (selected.type == "mainProcess") {
+        type = "mainProcess";
+      } else if (selected.type == "packaged" ||
+                 selected.type == "hosted") {
+        type = "local";
+        project = selected.location;
+      }
+    }
+    if (type) {
+      Services.prefs.setCharPref("devtools.webide.lastSelectedProject",
+                                 type + ":" + project);
+    } else {
+      Services.prefs.clearUserPref("devtools.webide.lastSelectedProject");
+    }
+  },
+
+  autoSelectProject: function() {
+    if (AppManager.selectedProject) {
+      return;
+    }
+    let shouldRestore = Services.prefs.getBoolPref("devtools.webide.restoreLastProject");
+    if (!shouldRestore) {
+      return;
+    }
+    let pref = Services.prefs.getCharPref("devtools.webide.lastSelectedProject");
+    if (!pref) {
+      return;
+    }
+    let m = pref.match(/^(\w+):(.*)$/);
+    if (!m) {
+      return;
+    }
+    let [_, type, project] = m;
+
+    if (type == "local") {
+      let lastProject = AppProjects.get(project);
+      if (lastProject) {
+        AppManager.selectedProject = lastProject;
+      }
+    }
+
+    // For other project types, we need to be connected to the runtime
+    if (AppManager.connection.status != Connection.Status.CONNECTED) {
+      return;
+    }
+
+    if (type == "mainProcess" && AppManager.isMainProcessDebuggable()) {
+      AppManager.selectedProject = {
+        type: "mainProcess",
+        name: Strings.GetStringFromName("mainProcess_label"),
+        icon: AppManager.DEFAULT_PROJECT_ICON
+      }
+    } else if (type == "runtimeApp") {
+      let app = AppManager.apps.get(project);
+      if (app) {
+        AppManager.selectedProject = {
+          type: "runtimeApp",
+          app: app.manifest,
+          icon: app.iconURL,
+          name: app.manifest.name
+        };
+      }
+    }
   },
 
   /********** DECK **********/
@@ -550,6 +778,7 @@ let UI = {
     let playCmd = document.querySelector("#cmd_play");
     let stopCmd = document.querySelector("#cmd_stop");
     let debugCmd = document.querySelector("#cmd_toggleToolbox");
+    let playButton = document.querySelector('#action-button-play');
 
     if (!AppManager.selectedProject || AppManager.connection.status != Connection.Status.CONNECTED) {
       playCmd.setAttribute("disabled", "true");
@@ -558,9 +787,11 @@ let UI = {
     } else {
       let isProjectRunning = AppManager.isProjectRunning();
       if (isProjectRunning) {
+        playButton.classList.add("reload");
         stopCmd.removeAttribute("disabled");
         debugCmd.removeAttribute("disabled");
       } else {
+        playButton.classList.remove("reload");
         stopCmd.setAttribute("disabled", "true");
         debugCmd.setAttribute("disabled", "true");
       }
@@ -568,6 +799,9 @@ let UI = {
       // If connected and a project is selected
       if (AppManager.selectedProject.type == "runtimeApp") {
         playCmd.removeAttribute("disabled");
+      } else if (AppManager.selectedProject.type == "tab") {
+        playCmd.removeAttribute("disabled");
+        stopCmd.setAttribute("disabled", "true");
       } else if (AppManager.selectedProject.type == "mainProcess") {
         playCmd.setAttribute("disabled", "true");
         stopCmd.setAttribute("disabled", "true");
@@ -598,16 +832,18 @@ let UI = {
 
     let runtimePanelButton = document.querySelector("#runtime-panel-button");
     if (AppManager.connection.status == Connection.Status.CONNECTED) {
-      screenshotCmd.removeAttribute("disabled");
-      permissionsCmd.removeAttribute("disabled");
+      if (AppManager.deviceFront) {
+        detailsCmd.removeAttribute("disabled");
+        permissionsCmd.removeAttribute("disabled");
+        screenshotCmd.removeAttribute("disabled");
+      }
       disconnectCmd.removeAttribute("disabled");
-      detailsCmd.removeAttribute("disabled");
       runtimePanelButton.setAttribute("active", "true");
     } else {
-      screenshotCmd.setAttribute("disabled", "true");
-      permissionsCmd.setAttribute("disabled", "true");
-      disconnectCmd.setAttribute("disabled", "true");
       detailsCmd.setAttribute("disabled", "true");
+      permissionsCmd.setAttribute("disabled", "true");
+      screenshotCmd.setAttribute("disabled", "true");
+      disconnectCmd.setAttribute("disabled", "true");
       runtimePanelButton.removeAttribute("active");
     }
 
@@ -628,13 +864,21 @@ let UI = {
     } catch(e) { console.error(e); }
   },
 
-  closeToolbox: function() {
+  destroyToolbox: function() {
     if (this.toolboxPromise) {
-      this.toolboxPromise.then(toolbox => {
+      return this.toolboxPromise.then(toolbox => {
         toolbox.destroy();
         this.toolboxPromise = null;
       }, console.error);
     }
+    return promise.resolve();
+  },
+
+  createToolbox: function() {
+    this.toolboxPromise = AppManager.getTarget().then((target) => {
+      return this.showToolbox(target);
+    }, console.error);
+    return this.busyUntil(this.toolboxPromise, "opening toolbox");
   },
 
   showToolbox: function(target) {
@@ -672,8 +916,7 @@ let UI = {
     splitter.setAttribute("hidden", "true");
     document.querySelector("#action-button-debug").removeAttribute("active");
   },
-}
-
+};
 
 let Cmds = {
   quit: function() {
@@ -713,68 +956,29 @@ let Cmds = {
   importPackagedApp: function(location) {
     return UI.busyUntil(Task.spawn(function* () {
 
-      let directory;
+      let directory = utils.getPackagedDirectory(window, location);
 
-      if (!location) {
-        let fp = Cc["@mozilla.org/filepicker;1"].createInstance(Ci.nsIFilePicker);
-        fp.init(window, Strings.GetStringFromName("importPackagedApp_title"), Ci.nsIFilePicker.modeGetFolder);
-        let res = fp.show();
-        if (res == Ci.nsIFilePicker.returnCancel) {
-          return promise.resolve();
-        }
-        directory = fp.file;
-      } else {
-        directory = new FileUtils.File(location);
-      }
-
-      // Add project
-      let project = yield AppProjects.addPackaged(directory);
-
-      // Validate project
-      yield AppManager.validateProject(project);
-
-      // Select project
-      AppManager.selectedProject = project;
-    }), "importing packaged app");
-  },
-
-
-  importHostedApp: function(location) {
-    return UI.busyUntil(Task.spawn(function* () {
-      let ret = {value: null};
-
-      let url;
-      if (!location) {
-        Services.prompt.prompt(window,
-                               Strings.GetStringFromName("importHostedApp_title"),
-                               Strings.GetStringFromName("importHostedApp_header"),
-                               ret, null, {});
-        location = ret.value;
-      }
-
-      if (!location) {
+      if (!directory) {
+        // User cancelled directory selection
         return;
       }
 
-      // Clean location string and add "http://" if missing
-      location = location.trim();
-      try { // Will fail if no scheme
-        Services.io.extractScheme(location);
-      } catch(e) {
-        location = "http://" + location;
-      }
-
-      // Add project
-      let project = yield AppProjects.addHosted(location)
-
-      // Validate project
-      yield AppManager.validateProject(project);
-
-      // Select project
-      AppManager.selectedProject = project;
-    }), "importing hosted app");
+      yield UI.importAndSelectApp(directory);
+    }), "importing packaged app");
   },
 
+  importHostedApp: function(location) {
+    return UI.busyUntil(Task.spawn(function* () {
+
+      let url = utils.getHostedURL(window, location);
+
+      if (!url) {
+        return;
+      }
+
+      yield UI.importAndSelectApp(url);
+    }), "importing hosted app");
+  },
 
   showProjectPanel: function() {
     let deferred = promise.defer();
@@ -828,7 +1032,16 @@ let Cmds = {
 
 
     let runtimeappsHeaderNode = document.querySelector("#panel-header-runtimeapps");
-    if (AppManager.connection.status == Connection.Status.CONNECTED) {
+    let sortedApps = [];
+    for (let [manifestURL, app] of AppManager.apps) {
+      sortedApps.push(app);
+    }
+    sortedApps = sortedApps.sort((a, b) => {
+      return a.manifest.name > b.manifest.name;
+    });
+    let mainProcess = AppManager.isMainProcessDebuggable();
+    if (AppManager.connection.status == Connection.Status.CONNECTED &&
+        (sortedApps.length > 0 || mainProcess)) {
       runtimeappsHeaderNode.removeAttribute("hidden");
     } else {
       runtimeappsHeaderNode.setAttribute("hidden", "true");
@@ -839,7 +1052,7 @@ let Cmds = {
       runtimeAppsNode.firstChild.remove();
     }
 
-    if (AppManager.isMainProcessDebuggable()) {
+    if (mainProcess) {
       let panelItemNode = document.createElement("toolbarbutton");
       panelItemNode.className = "panel-item";
       panelItemNode.setAttribute("label", Strings.GetStringFromName("mainProcess_label"));
@@ -855,33 +1068,83 @@ let Cmds = {
       }, true);
     }
 
-    let sortedApps = AppManager.webAppsStore.object.all;
-    sortedApps = sortedApps.sort((a, b) => {
-      return a.name > b.name;
-    });
     for (let i = 0; i < sortedApps.length; i++) {
       let app = sortedApps[i];
       let panelItemNode = document.createElement("toolbarbutton");
       panelItemNode.className = "panel-item";
-      panelItemNode.setAttribute("label", app.name);
+      panelItemNode.setAttribute("label", app.manifest.name);
       panelItemNode.setAttribute("image", app.iconURL);
       runtimeAppsNode.appendChild(panelItemNode);
       panelItemNode.addEventListener("click", () => {
         UI.hidePanels();
         AppManager.selectedProject = {
           type: "runtimeApp",
-          app: app,
+          app: app.manifest,
           icon: app.iconURL,
-          name: app.name
+          name: app.manifest.name
         };
       }, true);
     }
 
+    // Build the tab list right now, so it's fast...
+    this._buildProjectPanelTabs();
+
+    // But re-list them and rebuild, in case any tabs navigated since the last
+    // time they were listed.
+    AppManager.listTabs().then(() => {
+      this._buildProjectPanelTabs();
+    });
+
     return deferred.promise;
   },
 
+  _buildProjectPanelTabs: function() {
+    let tabs = AppManager.tabStore.tabs;
+    let tabsHeaderNode = document.querySelector("#panel-header-tabs");
+    if (AppManager.connection.status == Connection.Status.CONNECTED &&
+        tabs.length > 0) {
+      tabsHeaderNode.removeAttribute("hidden");
+    } else {
+      tabsHeaderNode.setAttribute("hidden", "true");
+    }
+
+    let tabsNode = document.querySelector("#project-panel-tabs");
+    while (tabsNode.hasChildNodes()) {
+      tabsNode.firstChild.remove();
+    }
+
+    for (let i = 0; i < tabs.length; i++) {
+      let tab = tabs[i];
+      let url = new URL(tab.url);
+      // Wanted to use nsIFaviconService here, but it only works for visited
+      // tabs, so that's no help for any remote tabs.  Maybe some favicon wizard
+      // knows how to get high-res favicons easily, or we could offer actor
+      // support for this (bug 1061654).
+      tab.favicon = url.origin + "/favicon.ico";
+      tab.name = tab.title || Strings.GetStringFromName("project_tab_loading");
+      if (url.protocol.startsWith("http")) {
+        tab.name = url.hostname + ": " + tab.name;
+      }
+      let panelItemNode = document.createElement("toolbarbutton");
+      panelItemNode.className = "panel-item";
+      panelItemNode.setAttribute("label", tab.name);
+      panelItemNode.setAttribute("image", tab.favicon);
+      tabsNode.appendChild(panelItemNode);
+      panelItemNode.addEventListener("click", () => {
+        UI.hidePanels();
+        AppManager.selectedProject = {
+          type: "tab",
+          app: tab,
+          icon: tab.favicon,
+          location: tab.url,
+          name: tab.name
+        };
+      }, true);
+    }
+  },
+
   showRuntimePanel: function() {
-    AppManager.scanForWiFiRuntimes();
+    RuntimeScanners.scan();
 
     let panel = document.querySelector("#runtime-panel");
     let anchor = document.querySelector("#runtime-panel-button > .panel-button-anchor");
@@ -923,15 +1186,28 @@ let Cmds = {
   },
 
   play: function() {
+    let busy;
     switch(AppManager.selectedProject.type) {
       case "packaged":
-        return UI.busyWithProgressUntil(AppManager.installAndRunProject(), "installing and running app");
+        busy = UI.busyWithProgressUntil(AppManager.installAndRunProject(),
+                                        "installing and running app");
+        break;
       case "hosted":
-        return UI.busyUntil(AppManager.installAndRunProject(), "installing and running app");
+        busy = UI.busyUntil(AppManager.installAndRunProject(),
+                            "installing and running app");
+        break;
       case "runtimeApp":
-        return UI.busyUntil(AppManager.runRuntimeApp(), "running app");
+        busy = UI.busyUntil(AppManager.launchOrReloadRuntimeApp(), "launching / reloading app");
+        break;
+      case "tab":
+        busy = UI.busyUntil(AppManager.reloadTab(), "reloading tab");
+        break;
     }
-    return promise.reject();
+    if (!busy) {
+      return promise.reject();
+    }
+    UI.onAction("play");
+    return busy;
   },
 
   stop: function() {
@@ -939,15 +1215,12 @@ let Cmds = {
   },
 
   toggleToolbox: function() {
+    UI.onAction("debug");
     if (UI.toolboxIframe) {
-      UI.closeToolbox();
+      UI.destroyToolbox();
       return promise.resolve();
     } else {
-      UI.toolboxPromise = AppManager.getTarget().then((target) => {
-        return UI.showToolbox(target);
-      }, console.error);
-      UI.busyUntil(UI.toolboxPromise, "opening toolbox");
-      return UI.toolboxPromise;
+      return UI.createToolbox();
     }
   },
 
@@ -975,4 +1248,4 @@ let Cmds = {
   showPrefs: function() {
     UI.selectDeckPanel("prefs");
   },
-}
+};

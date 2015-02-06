@@ -52,15 +52,15 @@ let runCheck = function(expectError) {
 }
 
 add_task(function* test_mozLoop_softStart() {
-  let orig_throttled = Services.prefs.getBoolPref("loop.throttled");
+  let orig_throttled = Services.prefs.getBoolPref("loop.throttled2");
 
   // Set associated variables to proper values
-  Services.prefs.setBoolPref("loop.throttled", true);
+  Services.prefs.setBoolPref("loop.throttled2", true);
   Services.prefs.setCharPref("loop.soft_start_hostname", SOFT_START_HOSTNAME);
   Services.prefs.setIntPref("loop.soft_start_ticket_number", -1);
 
   registerCleanupFunction(function () {
-    Services.prefs.setBoolPref("loop.throttled", orig_throttled);
+    Services.prefs.setBoolPref("loop.throttled2", orig_throttled);
     Services.prefs.clearUserPref("loop.soft_start_ticket_number");
     Services.prefs.clearUserPref("loop.soft_start_hostname");
   });
@@ -70,7 +70,7 @@ add_task(function* test_mozLoop_softStart() {
 
   info("Ensure that we pick a valid ticket number.");
   yield runCheck();
-  throttled = Services.prefs.getBoolPref("loop.throttled");
+  throttled = Services.prefs.getBoolPref("loop.throttled2");
   ticket = Services.prefs.getIntPref("loop.soft_start_ticket_number");
   Assert.equal(throttled, true, "Feature should still be throttled");
   Assert.notEqual(ticket, -1, "Ticket should be changed");
@@ -78,45 +78,45 @@ add_task(function* test_mozLoop_softStart() {
 
   // Try some "interesting" ticket numbers
   for (ticket of [1, 256, 65535, 10000000, 16777214]) {
-    Services.prefs.setBoolPref("loop.throttled", true);
+    Services.prefs.setBoolPref("loop.throttled2", true);
     Services.prefs.setIntPref("loop.soft_start_ticket_number", ticket);
 
     info("Ensure that we don't activate when the now serving " +
          "number is less than our value.");
     MockDNSService.nowServing = ticket - 1;
     yield runCheck();
-    throttled = Services.prefs.getBoolPref("loop.throttled");
+    throttled = Services.prefs.getBoolPref("loop.throttled2");
     Assert.equal(throttled, true, "Feature should still be throttled");
 
     info("Ensure that we don't activate when the now serving " +
          "number is equal to our value");
     MockDNSService.nowServing = ticket;
     yield runCheck();
-    throttled = Services.prefs.getBoolPref("loop.throttled");
+    throttled = Services.prefs.getBoolPref("loop.throttled2");
     Assert.equal(throttled, true, "Feature should still be throttled");
 
     info("Ensure that we *do* activate when the now serving " +
          "number is greater than our value");
     MockDNSService.nowServing = ticket + 1;
     yield runCheck();
-    throttled = Services.prefs.getBoolPref("loop.throttled");
+    throttled = Services.prefs.getBoolPref("loop.throttled2");
     Assert.equal(throttled, false, "Feature should be unthrottled");
   }
 
   info("Check DNS error behavior");
   MockDNSService.nowServing = 0;
   MockDNSService.resultCode = 0x80000000;
-  Services.prefs.setBoolPref("loop.throttled", true);
+  Services.prefs.setBoolPref("loop.throttled2", true);
   yield runCheck(true);
-  throttled = Services.prefs.getBoolPref("loop.throttled");
+  throttled = Services.prefs.getBoolPref("loop.throttled2");
   Assert.equal(throttled, true, "Feature should be throttled");
 
   info("Check DNS misconfiguration behavior");
   MockDNSService.nowServing = ticket + 1;
   MockDNSService.resultCode = 0;
   MockDNSService.ipFirstOctet = 6;
-  Services.prefs.setBoolPref("loop.throttled", true);
+  Services.prefs.setBoolPref("loop.throttled2", true);
   yield runCheck(true);
-  throttled = Services.prefs.getBoolPref("loop.throttled");
+  throttled = Services.prefs.getBoolPref("loop.throttled2");
   Assert.equal(throttled, true, "Feature should be throttled");
 });

@@ -85,7 +85,8 @@ HTMLImageMapAccessible::UpdateChildAreas(bool aDoFireEvents)
   if (!imageMapObj)
     return;
 
-  bool doReorderEvent = false;
+  bool treeChanged = false;
+  AutoTreeMutation mut(this);
   nsRefPtr<AccReorderEvent> reorderEvent = new AccReorderEvent(this);
 
   // Remove areas that are not a valid part of the image map anymore.
@@ -98,10 +99,10 @@ HTMLImageMapAccessible::UpdateChildAreas(bool aDoFireEvents)
       nsRefPtr<AccHideEvent> event = new AccHideEvent(area, area->GetContent());
       mDoc->FireDelayedEvent(event);
       reorderEvent->AddSubMutationEvent(event);
-      doReorderEvent = true;
     }
 
     RemoveChild(area);
+    treeChanged = true;
   }
 
   // Insert new areas into the tree.
@@ -123,14 +124,18 @@ HTMLImageMapAccessible::UpdateChildAreas(bool aDoFireEvents)
         nsRefPtr<AccShowEvent> event = new AccShowEvent(area, areaContent);
         mDoc->FireDelayedEvent(event);
         reorderEvent->AddSubMutationEvent(event);
-        doReorderEvent = true;
       }
+
+      treeChanged = true;
     }
   }
 
   // Fire reorder event if needed.
-  if (doReorderEvent)
+  if (treeChanged && aDoFireEvents)
     mDoc->FireDelayedEvent(reorderEvent);
+
+  if (!treeChanged)
+    mut.mInvalidationRequired = false;
 }
 
 Accessible*
@@ -236,24 +241,25 @@ HTMLAreaAccessible::CacheChildren()
   // No children for aria accessible.
 }
 
-void
-HTMLAreaAccessible::GetBoundsRect(nsRect& aBounds, nsIFrame** aBoundingFrame)
+nsRect
+HTMLAreaAccessible::RelativeBounds(nsIFrame** aBoundingFrame) const
 {
   nsIFrame* frame = GetFrame();
   if (!frame)
-    return;
+    return nsRect();
 
   nsImageFrame* imageFrame = do_QueryFrame(frame);
   nsImageMap* map = imageFrame->GetImageMap();
 
-  nsresult rv = map->GetBoundsForAreaContent(mContent, aBounds);
+  nsRect bounds;
+  nsresult rv = map->GetBoundsForAreaContent(mContent, bounds);
   if (NS_FAILED(rv))
-    return;
+    return nsRect();
 
   // XXX Areas are screwy; they return their rects as a pair of points, one pair
   // stored into the width and height.
-  aBounds.width -= aBounds.x;
-  aBounds.height -= aBounds.y;
-
   *aBoundingFrame = frame;
+  bounds.width -= bounds.x;
+  bounds.height -= bounds.y;
+  return bounds;
 }

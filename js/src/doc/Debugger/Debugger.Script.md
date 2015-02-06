@@ -115,17 +115,6 @@ from its prototype:
 :   This is `true` if this script's code is ECMAScript strict mode code, and
     `false` otherwise.
 
-`sourceMapURL`
-:   If this script was produced by a minimizer or translated from some other
-    language, and we know the URL of a <b>source map</b> document relating
-    the source positions in this script to the corresponding source
-    positions in the original source, then this property's value is that
-    URL. Otherwise, this is `null`.
-
-    (On the web, the translator may provide the source map URL in a
-    specially formatted comment in the JavaScript source code, or via a
-    header in the HTTP reply that carried the generated JavaScript.)
-
 ## Function Properties of the Debugger.Script Prototype Object
 
 The functions described below may only be called with a `this` value
@@ -215,9 +204,12 @@ methods of other kinds of objects.
     and in the compartment containing the handler function (typically the
     debugger's compartment).
 
-    The new breakpoint belongs to the [`Debugger`][debugger-object] instance to which this
-    script belongs; disabling the [`Debugger`][debugger-object] instance disables this
-    breakpoint.
+    The new breakpoint belongs to the [`Debugger`][debugger-object] instance to
+    which this script belongs. Disabling the [`Debugger`][debugger-object]
+    instance disables this breakpoint; and removing a global from the
+    [`Debugger`][debugger-object] instance's set of debuggees clears all the
+    breakpoints belonging to that [`Debugger`][debugger-object] instance in that
+    global's scripts.
 
 <code>getBreakpoints([<i>offset</i>])</code>
 :   Return an array containing the handler objects for all the breakpoints

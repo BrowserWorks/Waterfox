@@ -6,6 +6,7 @@
 #ifndef MOZILLA_GFX_X11TEXTURESOURCEBASIC__H
 #define MOZILLA_GFX_X11TEXTURESOURCEBASIC__H
 
+#include "mozilla/layers/BasicCompositor.h"
 #include "mozilla/layers/TextureHostBasic.h"
 #include "mozilla/gfx/2D.h"
 
@@ -17,7 +18,7 @@ class BasicCompositor;
 // TextureSource for Xlib-backed surfaces.
 class X11TextureSourceBasic
   : public TextureSourceBasic
-  , public NewTextureSource
+  , public TextureSource
 {
 public:
   X11TextureSourceBasic(BasicCompositor* aCompositor, gfxXlibSurface* aSurface);
@@ -37,7 +38,7 @@ public:
   static gfx::SurfaceFormat ContentTypeToSurfaceFormat(gfxContentType aType);
 
 protected:
-  BasicCompositor* mCompositor;
+  RefPtr<BasicCompositor> mCompositor;
   RefPtr<gfxXlibSurface> mSurface;
   RefPtr<gfx::SourceSurface> mSourceSurface;
 };

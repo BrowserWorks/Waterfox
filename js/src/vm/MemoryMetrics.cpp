@@ -68,7 +68,7 @@ InefficientNonFlatteningStringHashPolicy::hash(const Lookup &l)
 {
     return l->hasLatin1Chars()
            ? HashStringChars<Latin1Char>(l)
-           : HashStringChars<jschar>(l);
+           : HashStringChars<char16_t>(l);
 }
 
 template <typename Char1, typename Char2>
@@ -110,12 +110,12 @@ InefficientNonFlatteningStringHashPolicy::match(const JSString *const &k, const 
     if (k->hasLatin1Chars()) {
         return l->hasLatin1Chars()
                ? EqualStringsPure<Latin1Char, Latin1Char>(s1, l)
-               : EqualStringsPure<Latin1Char, jschar>(s1, l);
+               : EqualStringsPure<Latin1Char, char16_t>(s1, l);
     }
 
     return l->hasLatin1Chars()
-           ? EqualStringsPure<jschar, Latin1Char>(s1, l)
-           : EqualStringsPure<jschar, jschar>(s1, l);
+           ? EqualStringsPure<char16_t, Latin1Char>(s1, l)
+           : EqualStringsPure<char16_t, char16_t>(s1, l);
 }
 
 /* static */ HashNumber
@@ -175,7 +175,7 @@ NotableStringInfo::NotableStringInfo(JSString *str, const StringInfo &info)
     if (str->hasLatin1Chars())
         StoreStringChars<Latin1Char>(buffer, bufferSize, str);
     else
-        StoreStringChars<jschar>(buffer, bufferSize, str);
+        StoreStringChars<char16_t>(buffer, bufferSize, str);
 }
 
 NotableStringInfo::NotableStringInfo(NotableStringInfo &&info)
@@ -291,7 +291,7 @@ DecommittedArenasChunkCallback(JSRuntime *rt, void *data, gc::Chunk *chunk)
         if (chunk->decommittedArenas.get(i))
             n += gc::ArenaSize;
     }
-    JS_ASSERT(n > 0);
+    MOZ_ASSERT(n > 0);
     *static_cast<size_t *>(data) += n;
 }
 
@@ -336,9 +336,9 @@ StatsCompartmentCallback(JSRuntime *rt, void *data, JSCompartment *compartment)
                                         &cStats.typeInferenceObjectTypeTables,
                                         &cStats.compartmentObject,
                                         &cStats.compartmentTables,
+                                        &cStats.innerViewsTable,
                                         &cStats.crossCompartmentWrappersTable,
                                         &cStats.regexpCompartment,
-                                        &cStats.debuggeesSet,
                                         &cStats.savedStacksSet);
 }
 
@@ -764,7 +764,7 @@ JS::CollectRuntimeStats(JSRuntime *rt, RuntimeStats *rtStats, ObjectPrivateVisit
     size_t totalArenaSize = rtStats->zTotals.gcHeapArenaAdmin +
                             rtStats->zTotals.unusedGCThings +
                             rtStats->gcHeapGCThings;
-    JS_ASSERT(totalArenaSize % gc::ArenaSize == 0);
+    MOZ_ASSERT(totalArenaSize % gc::ArenaSize == 0);
 #endif
 
     for (CompartmentsIter comp(rt, WithAtoms); !comp.done(); comp.next())
@@ -857,7 +857,7 @@ AddSizeOfTab(JSRuntime *rt, HandleObject obj, MallocSizeOf mallocSizeOf, ObjectP
                                        StatsCompartmentCallback, StatsArenaCallback,
                                        StatsCellCallback<CoarseGrained>);
 
-    JS_ASSERT(rtStats.zoneStatsVector.length() == 1);
+    MOZ_ASSERT(rtStats.zoneStatsVector.length() == 1);
     rtStats.zTotals.addSizes(rtStats.zoneStatsVector[0]);
 
     for (size_t i = 0; i < rtStats.compartmentStatsVector.length(); i++)

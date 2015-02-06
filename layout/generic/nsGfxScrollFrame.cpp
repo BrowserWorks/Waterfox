@@ -52,6 +52,7 @@
 #include "nsIScrollPositionListener.h"
 #include "StickyScrollContainer.h"
 #include "nsIFrameInlines.h"
+#include "gfxPlatform.h"
 #include "gfxPrefs.h"
 #include <mozilla/layers/AxisPhysicsModel.h>
 #include <mozilla/layers/AxisPhysicsMSDModel.h>
@@ -492,9 +493,9 @@ nsHTMLScrollFrame::ReflowScrolledFrame(ScrollReflowState* aState,
                     *aMetrics, &kidReflowState, 0, 0,
                     NS_FRAME_NO_MOVE_FRAME | NS_FRAME_NO_SIZE_VIEW);
 
-  // XXX Some frames (e.g., nsObjectFrame, nsFrameFrame, nsTextFrame) don't bother
+  // XXX Some frames (e.g., nsPluginFrame, nsFrameFrame, nsTextFrame) don't bother
   // setting their mOverflowArea. This is wrong because every frame should
-  // always set mOverflowArea. In fact nsObjectFrame and nsFrameFrame don't
+  // always set mOverflowArea. In fact nsPluginFrame and nsFrameFrame don't
   // support the 'outline' property because of this. Rather than fix the world
   // right now, just fix up the overflow area if necessary. Note that we don't
   // check HasOverflowRect() because it could be set even though the
@@ -1829,7 +1830,8 @@ ScrollFrameHelper::ScrollFrameHelper(nsContainerFrame* aOuter,
   , mOuter(aOuter)
   , mAsyncScroll(nullptr)
   , mAsyncSmoothMSDScroll(nullptr)
-  , mOriginOfLastScroll(nsGkAtoms::other)
+  , mLastScrollOrigin(nsGkAtoms::other)
+  , mLastSmoothScrollOrigin(nullptr)
   , mScrollGeneration(++sScrollGenerationCounter)
   , mDestination(0, 0)
   , mScrollPosAtLastPaint(0, 0)
@@ -1868,7 +1870,7 @@ ScrollFrameHelper::ScrollFrameHelper(nsContainerFrame* aOuter,
   EnsureImageVisPrefsCached();
 
   if (mScrollingActive &&
-      gfxPrefs::LayersTilesEnabled() &&
+      gfxPlatform::GetPlatform()->UseTiling() &&
       !nsLayoutUtils::UsesAsyncScrolling() &&
       mOuter->GetContent()) {
     // If we have tiling but no APZ, then set a 0-margin display port on
@@ -2056,6 +2058,19 @@ ScrollFrameHelper::ScrollToWithOrigin(nsPoint aScrollPosition,
             currentVelocity = mAsyncScroll->VelocityAt(now);
           }
           mAsyncScroll = nullptr;
+        }
+
+        if (gfxPrefs::AsyncPanZoomEnabled()) {
+          // The animation will be handled in the compositor, pass the
+          // information needed to start the animation and skip the main-thread
+          // animation for this scroll.
+          mLastSmoothScrollOrigin = aOrigin;
+          mScrollGeneration = ++sScrollGenerationCounter;
+
+          // Schedule a paint to ensure that the frame metrics get updated on
+          // the compositor thread.
+          mOuter->SchedulePaint();
+          return;
         }
 
         mAsyncSmoothMSDScroll =
@@ -2274,7 +2289,7 @@ ClampAndAlignWithPixels(nscoord aDesired,
   double delta = desiredLayerVal - currentLayerVal;
   double nearestLayerVal = NS_round(delta) + currentLayerVal;
 
-  // Convert back from ThebesLayer space to appunits relative to the top-left
+  // Convert back from PaintedLayer space to appunits relative to the top-left
   // of the scrolled frame.
   nscoord aligned =
     NSToCoordRoundWithClamp(nearestLayerVal*aAppUnitsPerPixel/aRes);
@@ -2369,15 +2384,15 @@ ScrollFrameHelper::ScrollToImpl(nsPoint aPt, const nsRect& aRange, nsIAtom* aOri
   nsPresContext* presContext = mOuter->PresContext();
   nscoord appUnitsPerDevPixel = presContext->AppUnitsPerDevPixel();
   // 'scale' is our estimate of the scale factor that will be applied
-  // when rendering the scrolled content to its own ThebesLayer.
-  gfxSize scale = FrameLayerBuilder::GetThebesLayerScaleForFrame(mScrolledFrame);
+  // when rendering the scrolled content to its own PaintedLayer.
+  gfxSize scale = FrameLayerBuilder::GetPaintedLayerScaleForFrame(mScrolledFrame);
   nsPoint curPos = GetScrollPosition();
   nsPoint alignWithPos = mScrollPosForLayerPixelAlignment == nsPoint(-1,-1)
       ? curPos : mScrollPosForLayerPixelAlignment;
   // Try to align aPt with curPos so they have an integer number of layer
   // pixels between them. This gives us the best chance of scrolling without
   // having to invalidate due to changes in subpixel rendering.
-  // Note that when we actually draw into a ThebesLayer, the coordinates
+  // Note that when we actually draw into a PaintedLayer, the coordinates
   // that get mapped onto the layer buffer pixels are from the display list,
   // which are relative to the display root frame's top-left increasing down,
   // whereas here our coordinates are scroll positions which increase upward
@@ -2420,11 +2435,18 @@ ScrollFrameHelper::ScrollToImpl(nsPoint aPt, const nsRect& aRange, nsIAtom* aOri
   nsPoint oldScrollFramePos = mScrolledFrame->GetPosition();
   // Update frame position for scrolling
   mScrolledFrame->SetPosition(mScrollPort.TopLeft() - pt);
-  mOriginOfLastScroll = aOrigin;
+  mLastScrollOrigin = aOrigin;
+  mLastSmoothScrollOrigin = nullptr;
   mScrollGeneration = ++sScrollGenerationCounter;
 
   // We pass in the amount to move visually
   ScrollVisual(oldScrollFramePos);
+
+  if (mOuter->ChildrenHavePerspective()) {
+    // The overflow areas of descendants may depend on the scroll position,
+    // so ensure they get updated.
+    mOuter->RecomputePerspectiveChildrenOverflow(mOuter->StyleContext(), nullptr);
+  }
 
   ScheduleSyntheticMouseMove();
   nsWeakFrame weakFrame(mOuter);
@@ -2736,32 +2758,6 @@ ClipListsExceptCaret(nsDisplayListCollection* aLists,
   ::ClipItemsExceptCaret(aLists->Content(), aBuilder, aClipFrame, aClip);
 }
 
-static bool
-DisplayportExceedsMaxTextureSize(nsPresContext* aPresContext, const nsRect& aDisplayPort, bool aLowPrecision)
-{
-#ifdef MOZ_WIDGET_GONK
-  // On B2G we actively run into max texture size limits because the displayport-sizing code
-  // in the AsyncPanZoomController code is slightly busted (bug 957668 will fix it properly).
-  // We sometimes end up requesting displayports for which the corresponding layer will be
-  // larger than the max GL texture size (which we assume to be 4096 here).
-  // If we run into this case, we should just not use the displayport at all and fall back to
-  // just making a ScrollInfoLayer so that we use the APZC's synchronous scrolling fallback
-  // mechanism.
-  // Note also that if we don't do this here, it is quite likely that the parent B2G process
-  // will kill this child process to prevent OOMs (see the patch that landed as part of bug
-  // 965945 for details).
-  gfxSize resolution = aPresContext->PresShell()->GetCumulativeResolution();
-  if (aLowPrecision) {
-    resolution.width *= gfxPrefs::LowPrecisionResolution();
-    resolution.height *= gfxPrefs::LowPrecisionResolution();
-  }
-  return (aPresContext->AppUnitsToDevPixels(aDisplayPort.width) * resolution.width > 4096) ||
-         (aPresContext->AppUnitsToDevPixels(aDisplayPort.height) * resolution.height > 4096);
-#else
-  return false;
-#endif
-}
-
 void
 ScrollFrameHelper::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                     const nsRect&           aDirtyRect,
@@ -2855,16 +2851,10 @@ ScrollFrameHelper::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
     }
 
     bool usingLowPrecision = gfxPrefs::UseLowPrecisionBuffer();
-    if (usingDisplayport && DisplayportExceedsMaxTextureSize(mOuter->PresContext(), displayPort, usingLowPrecision)) {
-      usingDisplayport = false;
-    }
     if (usingDisplayport && usingLowPrecision) {
       // If we have low-res painting enabled we should check the critical displayport too
       nsRect critDp;
-      bool usingCritDp = nsLayoutUtils::GetCriticalDisplayPort(mOuter->GetContent(), &critDp);
-      if (usingCritDp && !critDp.IsEmpty() && DisplayportExceedsMaxTextureSize(mOuter->PresContext(), critDp, false)) {
-        usingDisplayport = false;
-      }
+      nsLayoutUtils::GetCriticalDisplayPort(mOuter->GetContent(), &critDp);
     }
 
     // Override the dirty rectangle if the displayport has been set.
@@ -2909,8 +2899,8 @@ ScrollFrameHelper::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
       nsLayoutUtils::WantSubAPZC() &&
       WantAsyncScroll() &&
       // If we are the root scroll frame for the display root then we don't need a scroll
-      // info layer to make a RecordFrameMetrics call for us as
-      // nsDisplayList::PaintForFrame already calls RecordFrameMetrics for us.
+      // info layer to make a ComputeFrameMetrics call for us as
+      // nsDisplayList::PaintForFrame already calls ComputeFrameMetrics for us.
       (!mIsRoot || aBuilder->RootReferenceFrame()->PresContext() != mOuter->PresContext());
   }
 

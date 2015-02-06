@@ -18,9 +18,6 @@
 
 /* a presentation of a document, part 2 */
 
-#ifdef MOZ_LOGGING
-#define FORCE_PR_LOG /* Allow logging in the release build */
-#endif
 #include "prlog.h"
 
 #include "mozilla/ArrayUtils.h"
@@ -201,7 +198,7 @@ CapturingContentInfo nsIPresShell::gCaptureInfo =
     false /* mPreventDrag */, nullptr /* mContent */ };
 nsIContent* nsIPresShell::gKeyDownTarget;
 nsRefPtrHashtable<nsUint32HashKey, dom::Touch>* nsIPresShell::gCaptureTouchList;
-nsRefPtrHashtable<nsUint32HashKey, nsIContent>* nsIPresShell::gPointerCaptureList;
+nsClassHashtable<nsUint32HashKey, nsIPresShell::PointerCaptureInfo>* nsIPresShell::gPointerCaptureList;
 nsClassHashtable<nsUint32HashKey, nsIPresShell::PointerInfo>* nsIPresShell::gActivePointersIds;
 bool nsIPresShell::gPreventMouseEvents = false;
 
@@ -786,6 +783,7 @@ PresShell::PresShell()
   }
 
   mPaintingIsFrozen = false;
+  mHasCSSBackgroundColor = true;
 }
 
 NS_IMPL_ISUPPORTS(PresShell, nsIPresShell, nsIDocumentObserver,
@@ -2134,7 +2132,7 @@ PresShell::SetIgnoreFrameDestruction(bool aIgnore)
   if (mDocument) {
     // We need to tell the ImageLoader to drop all its references to frames
     // because they're about to go away and it won't get notifications of that.
-    mDocument->StyleImageLoader()->ClearFrames();
+    mDocument->StyleImageLoader()->ClearFrames(mPresContext);
   }
   mIgnoreFrameDestruction = aIgnore;
 }
@@ -4791,17 +4789,20 @@ PresShell::RenderDocument(const nsRect& aRect, uint32_t aFlags,
     }
   }
 
-  aThebesContext->Translate(gfxPoint(-nsPresContext::AppUnitsToFloatCSSPixels(aRect.x),
-                                     -nsPresContext::AppUnitsToFloatCSSPixels(aRect.y)));
-
   nsDeviceContext* devCtx = mPresContext->DeviceContext();
-  gfxFloat scale = gfxFloat(devCtx->AppUnitsPerDevPixel())/nsPresContext::AppUnitsPerCSSPixel();
-  aThebesContext->Scale(scale, scale);
 
-  // Since canvas APIs use floats to set up their matrices, we may have
-  // some slight inaccuracy here. Adjust matrix components that are
-  // integers up to the accuracy of floats to be those integers.
-  aThebesContext->NudgeCurrentMatrixToIntegers();
+  gfxPoint offset(-nsPresContext::AppUnitsToFloatCSSPixels(aRect.x),
+                  -nsPresContext::AppUnitsToFloatCSSPixels(aRect.y));
+  gfxFloat scale = gfxFloat(devCtx->AppUnitsPerDevPixel())/nsPresContext::AppUnitsPerCSSPixel();
+
+  // Since canvas APIs use floats to set up their matrices, we may have some
+  // slight rounding errors here.  We use NudgeToIntegers() here to adjust
+  // matrix components that are integers up to the accuracy of floats to be
+  // those integers.
+  gfxMatrix newTM = aThebesContext->CurrentMatrix().Translate(offset).
+                                                    Scale(scale, scale).
+                                                    NudgeToIntegers();
+  aThebesContext->SetMatrix(newTM);
 
   AutoSaveRestoreRenderingState _(this);
 
@@ -5011,16 +5012,14 @@ PresShell::CreateRangePaintInfo(nsIDOMRange* aRange,
 
   info = new RangePaintInfo(range, ancestorFrame);
 
-  nsRect ancestorRect = ancestorFrame->GetVisualOverflowRect();
-
   // get a display list containing the range
   info->mBuilder.SetIncludeAllOutOfFlows();
   if (aForPrimarySelection) {
     info->mBuilder.SetSelectedFramesOnly();
   }
-  info->mBuilder.EnterPresShell(ancestorFrame, ancestorRect);
+  info->mBuilder.EnterPresShell(ancestorFrame);
   ancestorFrame->BuildDisplayListForStackingContext(&info->mBuilder,
-                                                    ancestorRect, &info->mList);
+      ancestorFrame->GetVisualOverflowRect(), &info->mList);
 
 #ifdef DEBUG
   if (gDumpRangePaintList) {
@@ -5031,7 +5030,7 @@ PresShell::CreateRangePaintInfo(nsIDOMRange* aRange,
 
   nsRect rangeRect = ClipListToRange(&info->mBuilder, &info->mList, range);
 
-  info->mBuilder.LeavePresShell(ancestorFrame, ancestorRect);
+  info->mBuilder.LeavePresShell(ancestorFrame);
 
 #ifdef DEBUG
   if (gDumpRangePaintList) {
@@ -5126,11 +5125,15 @@ PresShell::PaintRangePaintInfo(nsTArray<nsAutoPtr<RangePaintInfo> >* aItems,
     rc->SetClip(region);
   }
 
+  gfxMatrix initialTM = ctx->CurrentMatrix();
+
   if (resize)
-    rc->Scale(scale, scale);
+    initialTM.Scale(scale, scale);
 
   // translate so that points are relative to the surface area
-  rc->Translate(-aArea.TopLeft());
+  gfxPoint surfaceOffset =
+    nsLayoutUtils::PointToGfxPoint(-aArea.TopLeft(), pc->AppUnitsPerDevPixel());
+  initialTM.Translate(surfaceOffset);
 
   // temporarily hide the selection so that text is drawn normally. If a
   // selection is being rendered, use that, otherwise use the presshell's
@@ -5150,10 +5153,11 @@ PresShell::PaintRangePaintInfo(nsTArray<nsAutoPtr<RangePaintInfo> >* aItems,
   for (int32_t i = 0; i < count; i++) {
     RangePaintInfo* rangeInfo = (*aItems)[i];
     // the display lists paint relative to the offset from the reference
-    // frame, so translate the rendering context
-    nsRenderingContext::AutoPushTranslation
-      translate(rc, rangeInfo->mRootOffset);
-
+    // frame, so account for that translation too:
+    gfxPoint rootOffset =
+      nsLayoutUtils::PointToGfxPoint(rangeInfo->mRootOffset,
+                                     pc->AppUnitsPerDevPixel());
+    ctx->SetMatrix(initialTM.Translate(rootOffset));
     aArea.MoveBy(-rangeInfo->mRootOffset.x, -rangeInfo->mRootOffset.y);
     nsRegion visible(aArea);
     rangeInfo->mList.PaintRoot(&rangeInfo->mBuilder, rc, nsDisplayList::PAINT_DEFAULT);
@@ -5257,7 +5261,7 @@ PresShell::AddPrintPreviewBackgroundItem(nsDisplayListBuilder& aBuilder,
 
 static bool
 AddCanvasBackgroundColor(const nsDisplayList& aList, nsIFrame* aCanvasFrame,
-                         nscolor aColor)
+                         nscolor aColor, bool aCSSBackgroundColor)
 {
   for (nsDisplayItem* i = aList.GetBottom(); i; i = i->GetAbove()) {
     if (i->Frame() == aCanvasFrame &&
@@ -5268,8 +5272,8 @@ AddCanvasBackgroundColor(const nsDisplayList& aList, nsIFrame* aCanvasFrame,
     }
     nsDisplayList* sublist = i->GetSameCoordinateSystemChildren();
     if (sublist &&
-        i->GetType() != nsDisplayItem::TYPE_BLEND_CONTAINER &&
-        AddCanvasBackgroundColor(*sublist, aCanvasFrame, aColor))
+        !(i->GetType() == nsDisplayItem::TYPE_BLEND_CONTAINER && !aCSSBackgroundColor) &&
+        AddCanvasBackgroundColor(*sublist, aCanvasFrame, aColor, aCSSBackgroundColor))
       return true;
   }
   return false;
@@ -5311,7 +5315,7 @@ PresShell::AddCanvasBackgroundColorItem(nsDisplayListBuilder& aBuilder,
     if (sf) {
       nsCanvasFrame* canvasFrame = do_QueryFrame(sf->GetScrolledFrame());
       if (canvasFrame && canvasFrame->IsVisibleForPainting(&aBuilder)) {
-        if (AddCanvasBackgroundColor(aList, canvasFrame, bgcolor))
+        if (AddCanvasBackgroundColor(aList, canvasFrame, bgcolor, mHasCSSBackgroundColor))
           return;
       }
     }
@@ -5359,12 +5363,12 @@ void PresShell::UpdateCanvasBackground()
     // and none of them would be a canvas frame or root element style frame.
     bool drawBackgroundImage;
     bool drawBackgroundColor;
-
     mCanvasBackgroundColor =
       nsCSSRendering::DetermineBackgroundColor(mPresContext, bgStyle,
                                                rootStyleFrame,
                                                drawBackgroundImage,
                                                drawBackgroundColor);
+    mHasCSSBackgroundColor = drawBackgroundColor;
     if (GetPresContext()->IsCrossProcessRootContentDocument() &&
         !IsTransparentContainerElement(mPresContext)) {
       mCanvasBackgroundColor =
@@ -6080,10 +6084,10 @@ public:
     nsDisplayList list;
     nsAutoTArray<nsIFrame*, 100> outFrames;
     nsDisplayItem::HitTestState hitTestState;
+    builder.EnterPresShell(mFrame);
     nsRect bounds = mShell->GetPresContext()->GetVisibleArea();
-    builder.EnterPresShell(mFrame, bounds);
     mFrame->BuildDisplayListForStackingContext(&builder, bounds, &list);
-    builder.LeavePresShell(mFrame, bounds);
+    builder.LeavePresShell(mFrame);
     list.HitTest(&builder, bounds, &hitTestState, &outFrames);
     list.DeleteAll();
     for (int32_t i = outFrames.Length() - 1; i >= 0; --i) {
@@ -6268,10 +6272,28 @@ nsIPresShell::SetCapturingContent(nsIContent* aContent, uint8_t aFlags)
   }
 }
 
+class AsyncCheckPointerCaptureStateCaller : public nsRunnable
+{
+public:
+  explicit AsyncCheckPointerCaptureStateCaller(int32_t aPointerId)
+    : mPointerId(aPointerId) {}
+
+  NS_IMETHOD Run()
+  {
+    nsIPresShell::CheckPointerCaptureState(mPointerId);
+    return NS_OK;
+  }
+
+private:
+  int32_t mPointerId;
+};
+
 /* static */ void
 nsIPresShell::SetPointerCapturingContent(uint32_t aPointerId, nsIContent* aContent)
 {
-  nsIContent* content = GetPointerCapturingContent(aPointerId);
+  PointerCaptureInfo* pointerCaptureInfo = nullptr;
+  gPointerCaptureList->Get(aPointerId, &pointerCaptureInfo);
+  nsIContent* content = pointerCaptureInfo ? pointerCaptureInfo->mOverrideContent : nullptr;
 
   PointerInfo* pointerInfo = nullptr;
   if (!content && gActivePointersIds->Get(aPointerId, &pointerInfo) &&
@@ -6280,19 +6302,11 @@ nsIPresShell::SetPointerCapturingContent(uint32_t aPointerId, nsIContent* aConte
     SetCapturingContent(aContent, CAPTURE_PREVENTDRAG);
   }
 
-  if (content) {
-    // Releasing capture for given pointer.
-    gPointerCaptureList->Remove(aPointerId);
-    DispatchGotOrLostPointerCaptureEvent(false, aPointerId, content);
-    // Need to check the state because a lostpointercapture listener
-    // may have called SetPointerCapture
-    if (GetPointerCapturingContent(aPointerId)) {
-      return;
-    }
+  if (pointerCaptureInfo) {
+    pointerCaptureInfo->mPendingContent = aContent;
+  } else {
+    gPointerCaptureList->Put(aPointerId, new PointerCaptureInfo(aContent));
   }
-
-  gPointerCaptureList->Put(aPointerId, aContent);
-  DispatchGotOrLostPointerCaptureEvent(true, aPointerId, aContent);
 }
 
 /* static */ void
@@ -6302,16 +6316,65 @@ nsIPresShell::ReleasePointerCapturingContent(uint32_t aPointerId, nsIContent* aC
     SetCapturingContent(nullptr, CAPTURE_PREVENTDRAG);
   }
 
-  // Releasing capture for given pointer.
-  gPointerCaptureList->Remove(aPointerId);
-
-  DispatchGotOrLostPointerCaptureEvent(false, aPointerId, aContent);
+  PointerCaptureInfo* pointerCaptureInfo = nullptr;
+  if (gPointerCaptureList->Get(aPointerId, &pointerCaptureInfo) && pointerCaptureInfo) {
+    // Set flag to asyncronously release capture for given pointer.
+    pointerCaptureInfo->mReleaseContent = true;
+    nsRefPtr<AsyncCheckPointerCaptureStateCaller> asyncCaller =
+      new AsyncCheckPointerCaptureStateCaller(aPointerId);
+    NS_DispatchToCurrentThread(asyncCaller);
+  }
 }
 
 /* static */ nsIContent*
 nsIPresShell::GetPointerCapturingContent(uint32_t aPointerId)
 {
-  return gPointerCaptureList->GetWeak(aPointerId);
+  PointerCaptureInfo* pointerCaptureInfo = nullptr;
+  if (gPointerCaptureList->Get(aPointerId, &pointerCaptureInfo) && pointerCaptureInfo) {
+    return pointerCaptureInfo->mOverrideContent;
+  }
+  return nullptr;
+}
+
+/* static */ bool
+nsIPresShell::CheckPointerCaptureState(uint32_t aPointerId)
+{
+  bool didDispatchEvent = false;
+  PointerCaptureInfo* pointerCaptureInfo = nullptr;
+  if (gPointerCaptureList->Get(aPointerId, &pointerCaptureInfo) && pointerCaptureInfo) {
+    // If pendingContent exist or anybody calls element.releasePointerCapture
+    // we should dispatch lostpointercapture event to overrideContent if it exist
+    if (pointerCaptureInfo->mPendingContent || pointerCaptureInfo->mReleaseContent) {
+      if (pointerCaptureInfo->mOverrideContent) {
+        nsCOMPtr<nsIContent> content;
+        pointerCaptureInfo->mOverrideContent.swap(content);
+        if (pointerCaptureInfo->mReleaseContent) {
+          pointerCaptureInfo->mPendingContent = nullptr;
+        }
+        if (pointerCaptureInfo->Empty()) {
+          gPointerCaptureList->Remove(aPointerId);
+        }
+        DispatchGotOrLostPointerCaptureEvent(false, aPointerId, content);
+        didDispatchEvent = true;
+      } else if (pointerCaptureInfo->mPendingContent && pointerCaptureInfo->mReleaseContent) {
+        // If anybody calls element.releasePointerCapture
+        // We should clear overrideContent and pendingContent
+        pointerCaptureInfo->mPendingContent = nullptr;
+        pointerCaptureInfo->mReleaseContent = false;
+      }
+    }
+  }
+  if (gPointerCaptureList->Get(aPointerId, &pointerCaptureInfo) && pointerCaptureInfo) {
+    // If pendingContent exist we should dispatch gotpointercapture event to it
+    if (pointerCaptureInfo && pointerCaptureInfo->mPendingContent) {
+      pointerCaptureInfo->mOverrideContent = pointerCaptureInfo->mPendingContent;
+      pointerCaptureInfo->mPendingContent = nullptr;
+      pointerCaptureInfo->mReleaseContent = false;
+      DispatchGotOrLostPointerCaptureEvent(true, aPointerId, pointerCaptureInfo->mOverrideContent);
+      didDispatchEvent = true;
+    }
+  }
+  return didDispatchEvent;
 }
 
 /* static */ bool
@@ -6880,6 +6943,10 @@ PresShell::HandleEvent(nsIFrame* aFrame,
 
   if (!nsContentUtils::IsSafeToRunScript() &&
       aEvent->IsAllowedToDispatchDOMEvent()) {
+    if (aEvent->mClass == eCompositionEventClass) {
+      IMEStateManager::OnCompositionEventDiscarded(
+        aEvent->AsCompositionEvent());
+    }
 #ifdef DEBUG
     if (aEvent->IsIMERelatedEvent()) {
       nsPrintfCString warning("%d event is discarded", aEvent->message);
@@ -7179,6 +7246,16 @@ PresShell::HandleEvent(nsIFrame* aFrame,
       nsIFrame* capturingFrame = capturingContent->GetPrimaryFrame();
       if (capturingFrame) {
         frame = capturingFrame;
+      }
+    }
+
+    if (aEvent->mClass == ePointerEventClass) {
+      if (WidgetPointerEvent* pointerEvent = aEvent->AsPointerEvent()) {
+        // Before any pointer events, we should check state of pointer capture,
+        // Thus got/lostpointercapture events emulate asynchronous behavior.
+        // Handlers of got/lostpointercapture events can change capturing state,
+        // That's why we should re-check pointer capture state until stable state.
+        while(CheckPointerCaptureState(pointerEvent->pointerId));
       }
     }
 
@@ -7785,10 +7862,10 @@ PresShell::HandleEventInternal(WidgetEvent* aEvent, nsEventStatus* aStatus)
             }
           }
           if (eventTarget) {
-            if (aEvent->mClass == eCompositionEventClass ||
-                aEvent->mClass == eTextEventClass) {
+            if (aEvent->mClass == eCompositionEventClass) {
               IMEStateManager::DispatchCompositionEvent(eventTarget,
-                mPresContext, aEvent, aStatus, eventCBPtr);
+                mPresContext, aEvent->AsCompositionEvent(), aStatus,
+                eventCBPtr);
             } else {
               EventDispatcher::Dispatch(eventTarget, mPresContext,
                                         aEvent, nullptr, aStatus, eventCBPtr);
@@ -8748,6 +8825,11 @@ PresShell::DoReflow(nsIFrame* target, bool aInterruptible)
   PROFILER_LABEL_PRINTF("PresShell", "DoReflow",
     js::ProfileEntry::Category::GRAPHICS, "(%s)", docURL.get());
 
+  nsDocShell* docShell = static_cast<nsDocShell*>(GetPresContext()->GetDocShell());
+  if (docShell) {
+    docShell->AddProfileTimelineMarker("Reflow", TRACING_INTERVAL_START);
+  }
+
   if (mReflowContinueTimer) {
     mReflowContinueTimer->Cancel();
     mReflowContinueTimer = nullptr;
@@ -8782,6 +8864,7 @@ PresShell::DoReflow(nsIFrame* target, bool aInterruptible)
   LogicalSize reflowSize(wm, size.ISize(wm), NS_UNCONSTRAINEDSIZE);
   nsHTMLReflowState reflowState(mPresContext, target, rcx, reflowSize,
                                 nsHTMLReflowState::CALLER_WILL_INIT);
+  reflowState.mOrthogonalLimit = size.BSize(wm);
 
   if (rootFrame == target) {
     reflowState.Init(mPresContext);
@@ -8910,6 +8993,9 @@ PresShell::DoReflow(nsIFrame* target, bool aInterruptible)
   }
 #endif
 
+  if (docShell) {
+    docShell->AddProfileTimelineMarker("Reflow", TRACING_INTERVAL_END);
+  }
   return !interrupted;
 }
 
@@ -9958,20 +10044,22 @@ void ReflowCountMgr::PaintCount(const char*     aName,
     IndiReflowCounter * counter =
       (IndiReflowCounter *)PL_HashTableLookup(mIndiFrameCounts, key);
     if (counter != nullptr && counter->mName.EqualsASCII(aName)) {
-      aRenderingContext->PushState();
-      aRenderingContext->Translate(aOffset);
+      aRenderingContext->ThebesContext()->Save();
+      gfxPoint devPixelOffset =
+        nsLayoutUtils::PointToGfxPoint(aOffset,
+                                       aPresContext->AppUnitsPerDevPixel());
+      aRenderingContext->ThebesContext()->SetMatrix(
+        aRenderingContext->ThebesContext()->CurrentMatrix().Translate(devPixelOffset));
+
+      // We don't care about the document language or user fonts here;
+      // just get a default Latin font.
       nsFont font(eFamily_serif, NS_FONT_STYLE_NORMAL,
                   NS_FONT_WEIGHT_NORMAL, NS_FONT_STRETCH_NORMAL, 0,
                   nsPresContext::CSSPixelsToAppUnits(11));
-
       nsRefPtr<nsFontMetrics> fm;
       aPresContext->DeviceContext()->GetMetricsFor(font,
-        // We have one frame, therefore we must have a root...
-        aPresContext->GetPresShell()->GetRootFrame()->
-          StyleFont()->mLanguage,
-        aPresContext->GetUserFontSet(),
-        aPresContext->GetTextPerfMetrics(),
-        *getter_AddRefs(fm));
+        nsGkAtoms::x_western, false, gfxFont::eHorizontal, nullptr,
+        aPresContext->GetTextPerfMetrics(), *getter_AddRefs(fm));
 
       aRenderingContext->SetFont(fm);
       char buf[16];
@@ -10008,7 +10096,7 @@ void ReflowCountMgr::PaintCount(const char*     aName,
       aRenderingContext->SetColor(color);
       aRenderingContext->DrawString(buf, strlen(buf), x,y);
 
-      aRenderingContext->PopState();
+      aRenderingContext->ThebesContext()->Restore();
     }
   }
 }
@@ -10322,7 +10410,7 @@ void nsIPresShell::InitializeStatics()
 {
   NS_ASSERTION(!gCaptureTouchList, "InitializeStatics called multiple times!");
   gCaptureTouchList = new nsRefPtrHashtable<nsUint32HashKey, dom::Touch>;
-  gPointerCaptureList = new nsRefPtrHashtable<nsUint32HashKey, nsIContent>;
+  gPointerCaptureList = new nsClassHashtable<nsUint32HashKey, PointerCaptureInfo>;
   gActivePointersIds = new nsClassHashtable<nsUint32HashKey, PointerInfo>;
 }
 

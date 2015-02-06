@@ -10,10 +10,10 @@
 #include "mozilla/Range.h"
 
 #include "jscntxt.h"
-#include "jsonparser.h"
 
 #include "frontend/BytecodeCompiler.h"
 #include "vm/GlobalObject.h"
+#include "vm/JSONParser.h"
 
 #include "vm/Interpreter-inl.h"
 
@@ -32,7 +32,7 @@ AssertInnerizedScopeChain(JSContext *cx, JSObject &scopeobj)
 #ifdef DEBUG
     RootedObject obj(cx);
     for (obj = &scopeobj; obj; obj = obj->enclosingScope())
-        JS_ASSERT(GetInnerObject(obj) == obj);
+        MOZ_ASSERT(GetInnerObject(obj) == obj);
 #endif
 }
 
@@ -63,7 +63,7 @@ EvalCacheHashPolicy::match(const EvalCacheEntry &cacheEntry, const EvalCacheLook
 {
     JSScript *script = cacheEntry.script;
 
-    JS_ASSERT(IsEvalCacheCandidate(script));
+    MOZ_ASSERT(IsEvalCacheCandidate(script));
 
     // Get the source string passed for safekeeping in the atom map
     // by the prior eval to frontend::CompileScript.
@@ -75,14 +75,7 @@ EvalCacheHashPolicy::match(const EvalCacheEntry &cacheEntry, const EvalCacheLook
            cacheEntry.pc == l.pc;
 }
 
-// There are two things we want to do with each script executed in EvalKernel:
-//  1. notify OldDebugAPI about script creation/destruction
-//  2. add the script to the eval cache when EvalKernel is finished
-//
-// NB: Although the eval cache keeps a script alive wrt to the JS engine, from
-// an OldDebugAPI  user's perspective, we want each eval() to create and
-// destroy a script. This hides implementation details and means we don't have
-// to deal with calls to JS_GetScriptObject for scripts in the eval cache.
+// Add the script to the eval cache when EvalKernel is finished
 class EvalScriptGuard
 {
     JSContext *cx_;
@@ -125,7 +118,7 @@ class EvalScriptGuard
 
     void setNewScript(JSScript *script) {
         // JSScript::initFromEmitter has already called js_CallNewScriptHook.
-        JS_ASSERT(!script_ && script);
+        MOZ_ASSERT(!script_ && script);
         script_ = script;
         script_->setActiveEval();
     }
@@ -135,7 +128,7 @@ class EvalScriptGuard
     }
 
     HandleScript script() {
-        JS_ASSERT(script_);
+        MOZ_ASSERT(script_);
         return script_;
     }
 };
@@ -170,7 +163,7 @@ EvalStringMightBeJSON(const mozilla::Range<const CharT> chars)
                  cp < end;
                  cp++)
             {
-                jschar c = *cp;
+                char16_t c = *cp;
                 if (c == 0x2028 || c == 0x2029)
                     return false;
             }
@@ -244,9 +237,9 @@ static bool
 EvalKernel(JSContext *cx, const CallArgs &args, EvalType evalType, AbstractFramePtr caller,
            HandleObject scopeobj, jsbytecode *pc)
 {
-    JS_ASSERT((evalType == INDIRECT_EVAL) == !caller);
-    JS_ASSERT((evalType == INDIRECT_EVAL) == !pc);
-    JS_ASSERT_IF(evalType == INDIRECT_EVAL, scopeobj->is<GlobalObject>());
+    MOZ_ASSERT((evalType == INDIRECT_EVAL) == !caller);
+    MOZ_ASSERT((evalType == INDIRECT_EVAL) == !pc);
+    MOZ_ASSERT_IF(evalType == INDIRECT_EVAL, scopeobj->is<GlobalObject>());
     AssertInnerizedScopeChain(cx, *scopeobj);
 
     Rooted<GlobalObject*> scopeObjGlobal(cx, &scopeobj->global());
@@ -274,7 +267,7 @@ EvalKernel(JSContext *cx, const CallArgs &args, EvalType evalType, AbstractFrame
     unsigned staticLevel;
     RootedValue thisv(cx);
     if (evalType == DIRECT_EVAL) {
-        JS_ASSERT_IF(caller.isInterpreterFrame(), !caller.asInterpreterFrame()->runningInJit());
+        MOZ_ASSERT_IF(caller.isInterpreterFrame(), !caller.asInterpreterFrame()->runningInJit());
         staticLevel = caller.script()->staticLevel() + 1;
 
         // Direct calls to eval are supposed to see the caller's |this|. If we
@@ -284,7 +277,7 @@ EvalKernel(JSContext *cx, const CallArgs &args, EvalType evalType, AbstractFrame
             return false;
         thisv = caller.thisValue();
     } else {
-        JS_ASSERT(args.callee().global() == *scopeobj);
+        MOZ_ASSERT(args.callee().global() == *scopeobj);
         staticLevel = 0;
 
         // Use the global as 'this', modulo outerization.
@@ -312,10 +305,10 @@ EvalKernel(JSContext *cx, const CallArgs &args, EvalType evalType, AbstractFrame
         RootedScript maybeScript(cx);
         unsigned lineno;
         const char *filename;
-        JSPrincipals *originPrincipals;
+        bool mutedErrors;
         uint32_t pcOffset;
         DescribeScriptedCallerForCompilation(cx, &maybeScript, &filename, &lineno, &pcOffset,
-                                             &originPrincipals,
+                                             &mutedErrors,
                                              evalType == DIRECT_EVAL
                                              ? CALLED_FROM_JSOP_EVAL
                                              : NOT_CALLED_FROM_JSOP_EVAL);
@@ -329,14 +322,14 @@ EvalKernel(JSContext *cx, const CallArgs &args, EvalType evalType, AbstractFrame
                .setCompileAndGo(true)
                .setForEval(true)
                .setNoScriptRval(false)
-               .setOriginPrincipals(originPrincipals)
+               .setMutedErrors(mutedErrors)
                .setIntroductionInfo(introducerFilename, "eval", lineno, maybeScript, pcOffset);
 
         AutoStableStringChars flatChars(cx);
         if (!flatChars.initTwoByte(cx, flatStr))
             return false;
 
-        const jschar *chars = flatChars.twoByteRange().start().get();
+        const char16_t *chars = flatChars.twoByteRange().start().get();
         SourceBufferHolder::Ownership ownership = flatChars.maybeGiveOwnershipToCaller()
                                                   ? SourceBufferHolder::GiveOwnership
                                                   : SourceBufferHolder::NoOwnership;
@@ -388,10 +381,10 @@ js::DirectEvalStringFromIon(JSContext *cx,
         RootedScript maybeScript(cx);
         const char *filename;
         unsigned lineno;
-        JSPrincipals *originPrincipals;
+        bool mutedErrors;
         uint32_t pcOffset;
         DescribeScriptedCallerForCompilation(cx, &maybeScript, &filename, &lineno, &pcOffset,
-                                              &originPrincipals, CALLED_FROM_JSOP_EVAL);
+                                              &mutedErrors, CALLED_FROM_JSOP_EVAL);
 
         const char *introducerFilename = filename;
         if (maybeScript && maybeScript->scriptSource()->introducerFilename())
@@ -402,14 +395,14 @@ js::DirectEvalStringFromIon(JSContext *cx,
                .setCompileAndGo(true)
                .setForEval(true)
                .setNoScriptRval(false)
-               .setOriginPrincipals(originPrincipals)
+               .setMutedErrors(mutedErrors)
                .setIntroductionInfo(introducerFilename, "eval", lineno, maybeScript, pcOffset);
 
         AutoStableStringChars flatChars(cx);
         if (!flatChars.initTwoByte(cx, flatStr))
             return false;
 
-        const jschar *chars = flatChars.twoByteRange().start().get();
+        const char16_t *chars = flatChars.twoByteRange().start().get();
         SourceBufferHolder::Ownership ownership = flatChars.maybeGiveOwnershipToCaller()
                                                   ? SourceBufferHolder::GiveOwnership
                                                   : SourceBufferHolder::NoOwnership;
@@ -425,7 +418,7 @@ js::DirectEvalStringFromIon(JSContext *cx,
 
     // Primitive 'this' values should have been filtered out by Ion. If boxed,
     // the calling frame cannot be updated to store the new object.
-    JS_ASSERT(thisValue.isObject() || thisValue.isUndefined() || thisValue.isNull());
+    MOZ_ASSERT(thisValue.isObject() || thisValue.isUndefined() || thisValue.isNull());
 
     return ExecuteKernel(cx, esg.script(), *scopeobj, thisValue, ExecuteType(DIRECT_EVAL),
                          NullFramePtr() /* evalInFrame */, vp.address());
@@ -462,11 +455,11 @@ js::DirectEval(JSContext *cx, const CallArgs &args)
     ScriptFrameIter iter(cx);
     AbstractFramePtr caller = iter.abstractFramePtr();
 
-    JS_ASSERT(caller.scopeChain()->global().valueIsEval(args.calleev()));
-    JS_ASSERT(JSOp(*iter.pc()) == JSOP_EVAL ||
-              JSOp(*iter.pc()) == JSOP_SPREADEVAL);
-    JS_ASSERT_IF(caller.isFunctionFrame(),
-                 caller.compartment() == caller.callee()->compartment());
+    MOZ_ASSERT(caller.scopeChain()->global().valueIsEval(args.calleev()));
+    MOZ_ASSERT(JSOp(*iter.pc()) == JSOP_EVAL ||
+               JSOp(*iter.pc()) == JSOP_SPREADEVAL);
+    MOZ_ASSERT_IF(caller.isFunctionFrame(),
+                  caller.compartment() == caller.callee()->compartment());
 
     RootedObject scopeChain(cx, caller.scopeChain());
     return EvalKernel(cx, args, DIRECT_EVAL, caller, scopeChain, iter.pc());

@@ -10,6 +10,7 @@
 #include "nsTArrayForwardDeclare.h"
 #include "mozilla/Alignment.h"
 #include "mozilla/Assertions.h"
+#include "mozilla/BinarySearch.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Move.h"
 #include "mozilla/TypeTraits.h"
@@ -697,6 +698,48 @@ struct nsTArray_TypedBase<JS::Heap<E>, Derived>
   }
 };
 
+namespace detail {
+
+template<class Item, class Comparator>
+struct ItemComparatorEq
+{
+  const Item& mItem;
+  const Comparator& mComp;
+  ItemComparatorEq(const Item& aItem, const Comparator& aComp)
+    : mItem(aItem)
+    , mComp(aComp)
+  {}
+  template<class T>
+  int operator()(const T& aElement) const {
+    if (mComp.Equals(aElement, mItem)) {
+      return 0;
+    }
+
+    return mComp.LessThan(aElement, mItem) ? 1 : -1;
+  }
+};
+
+template<class Item, class Comparator>
+struct ItemComparatorFirstElementGT
+{
+  const Item& mItem;
+  const Comparator& mComp;
+  ItemComparatorFirstElementGT(const Item& aItem, const Comparator& aComp)
+    : mItem(aItem)
+    , mComp(aComp)
+  {}
+  template<class T>
+  int operator()(const T& aElement) const {
+    if (mComp.LessThan(aElement, mItem) ||
+        mComp.Equals(aElement, mItem)) {
+      return 1;
+    } else {
+      return -1;
+    }
+  }
+};
+
+} // namespace detail
 
 //
 // nsTArray_Impl contains most of the guts supporting nsTArray, FallibleTArray,
@@ -749,6 +792,14 @@ public:
   // Initialize this array and pre-allocate some number of elements.
   explicit nsTArray_Impl(size_type aCapacity) { SetCapacity(aCapacity); }
 
+  // Initialize this array with an r-value.
+  // Allow different types of allocators, since the allocator doesn't matter.
+  template<typename Allocator>
+  explicit nsTArray_Impl(nsTArray_Impl<E, Allocator>&& aOther)
+  {
+    SwapElements(aOther);
+  }
+
   // The array's copy-constructor performs a 'deep' copy of the given array.
   // @param aOther The array object to copy.
   //
@@ -792,6 +843,16 @@ public:
     return *this;
   }
 
+  // The array's move assignment operator steals the underlying data from
+  // the other array.
+  // @param other  The array object to move from.
+  self_type& operator=(self_type&& aOther)
+  {
+    Clear();
+    SwapElements(aOther);
+    return *this;
+  }
+
   // Return true if this array has the same length and the same
   // elements as |aOther|.
   template<typename Allocator>
@@ -820,6 +881,14 @@ public:
   self_type& operator=(const nsTArray_Impl<E, Allocator>& aOther)
   {
     ReplaceElementsAt(0, Length(), aOther.Elements(), aOther.Length());
+    return *this;
+  }
+
+  template<typename Allocator>
+  self_type& operator=(nsTArray_Impl<E, Allocator>&& aOther)
+  {
+    Clear();
+    SwapElements(aOther);
     return *this;
   }
 
@@ -1015,25 +1084,20 @@ public:
 
   // This method searches for the offset for the element in this array
   // that is equal to the given element. The array is assumed to be sorted.
+  // If there is more than one equivalent element, there is no guarantee
+  // on which one will be returned.
   // @param aItem  The item to search for.
   // @param aComp  The Comparator used.
   // @return       The index of the found element or NoIndex if not found.
   template<class Item, class Comparator>
   index_type BinaryIndexOf(const Item& aItem, const Comparator& aComp) const
   {
-    index_type low = 0, high = Length();
-    while (high > low) {
-      index_type mid = (high + low) >> 1;
-      if (aComp.Equals(ElementAt(mid), aItem)) {
-        return mid;
-      }
-      if (aComp.LessThan(ElementAt(mid), aItem)) {
-        low = mid + 1;
-      } else {
-        high = mid;
-      }
-    }
-    return NoIndex;
+    using mozilla::BinarySearchIf;
+    typedef ::detail::ItemComparatorEq<Item, Comparator> Cmp;
+
+    size_t index;
+    bool found = BinarySearchIf(*this, 0, Length(), Cmp(aItem, aComp), &index);
+    return found ? index : NoIndex;
   }
 
   // This method searches for the offset for the element in this array
@@ -1200,23 +1264,12 @@ public:
   index_type IndexOfFirstElementGt(const Item& aItem,
                                    const Comparator& aComp) const
   {
-    // invariant: low <= [idx] <= high
-    index_type low = 0, high = Length();
-    while (high > low) {
-      index_type mid = (high + low) >> 1;
-      // Comparators are not required to provide a LessThan(Item&, elem_type),
-      // so we can't do aComp.LessThan(aItem, ElementAt(mid)).
-      if (aComp.LessThan(ElementAt(mid), aItem) ||
-          aComp.Equals(ElementAt(mid), aItem)) {
-        // aItem >= ElementAt(mid), so our desired index is at least mid+1.
-        low = mid + 1;
-      } else {
-        // aItem < ElementAt(mid).  Our desired index is therefore at most mid.
-        high = mid;
-      }
-    }
-    MOZ_ASSERT(high == low);
-    return low;
+    using mozilla::BinarySearchIf;
+    typedef ::detail::ItemComparatorFirstElementGT<Item, Comparator> Cmp;
+
+    size_t index;
+    BinarySearchIf(*this, 0, Length(), Cmp(aItem, aComp), &index);
+    return index;
   }
 
   // A variation on the IndexOfFirstElementGt method defined above.
@@ -1324,6 +1377,11 @@ public:
     this->IncrementLength(otherLen);
     aArray.ShiftData(0, otherLen, 0, sizeof(elem_type), MOZ_ALIGNOF(elem_type));
     return Elements() + len;
+  }
+  template<class Item, class Allocator>
+  elem_type* MoveElementsFrom(nsTArray_Impl<Item, Allocator>&& aArray)
+  {
+    return MoveElementsFrom<Item, Allocator>(aArray);
   }
 
   // This method removes a range of elements from this array.
@@ -1723,11 +1781,40 @@ public:
   nsTArray() {}
   explicit nsTArray(size_type aCapacity) : base_type(aCapacity) {}
   explicit nsTArray(const nsTArray& aOther) : base_type(aOther) {}
+  explicit nsTArray(nsTArray&& aOther) : base_type(mozilla::Move(aOther)) {}
 
   template<class Allocator>
   explicit nsTArray(const nsTArray_Impl<E, Allocator>& aOther)
     : base_type(aOther)
   {
+  }
+  template<class Allocator>
+  MOZ_IMPLICIT nsTArray(nsTArray_Impl<E, Allocator>&& aOther)
+    : base_type(mozilla::Move(aOther))
+  {
+  }
+
+  self_type& operator=(const self_type& aOther)
+  {
+    base_type::operator=(aOther);
+    return *this;
+  }
+  template<class Allocator>
+  self_type& operator=(const nsTArray_Impl<E, Allocator>& aOther)
+  {
+    base_type::operator=(aOther);
+    return *this;
+  }
+  self_type& operator=(self_type&& aOther)
+  {
+    base_type::operator=(mozilla::Move(aOther));
+    return *this;
+  }
+  template<class Allocator>
+  self_type& operator=(nsTArray_Impl<E, Allocator>&& aOther)
+  {
+    base_type::operator=(mozilla::Move(aOther));
+    return *this;
   }
 };
 
@@ -1745,11 +1832,43 @@ public:
   FallibleTArray() {}
   explicit FallibleTArray(size_type aCapacity) : base_type(aCapacity) {}
   explicit FallibleTArray(const FallibleTArray<E>& aOther) : base_type(aOther) {}
+  explicit FallibleTArray(FallibleTArray<E>&& aOther)
+    : base_type(mozilla::Move(aOther))
+  {
+  }
 
   template<class Allocator>
   explicit FallibleTArray(const nsTArray_Impl<E, Allocator>& aOther)
     : base_type(aOther)
   {
+  }
+  template<class Allocator>
+  explicit FallibleTArray(nsTArray_Impl<E, Allocator>&& aOther)
+    : base_type(mozilla::Move(aOther))
+  {
+  }
+
+  self_type& operator=(const self_type& aOther)
+  {
+    base_type::operator=(aOther);
+    return *this;
+  }
+  template<class Allocator>
+  self_type& operator=(const nsTArray_Impl<E, Allocator>& aOther)
+  {
+    base_type::operator=(aOther);
+    return *this;
+  }
+  self_type& operator=(self_type&& aOther)
+  {
+    base_type::operator=(mozilla::Move(aOther));
+    return *this;
+  }
+  template<class Allocator>
+  self_type& operator=(nsTArray_Impl<E, Allocator>&& aOther)
+  {
+    base_type::operator=(mozilla::Move(aOther));
+    return *this;
   }
 };
 
@@ -1785,6 +1904,19 @@ protected:
   {
     Init();
     this->AppendElements(aOther);
+  }
+
+  explicit nsAutoArrayBase(const TArrayBase &aOther)
+  {
+    Init();
+    this->AppendElements(aOther);
+  }
+
+  template<typename Allocator>
+  nsAutoArrayBase(nsTArray_Impl<elem_type, Allocator>&& aOther)
+  {
+    Init();
+    this->SwapElements(aOther);
   }
 
 private:
@@ -1864,6 +1996,11 @@ public:
   {
     Base::AppendElements(aOther);
   }
+  template<typename Allocator>
+  explicit nsAutoTArray(nsTArray_Impl<E, Allocator>&& aOther)
+    : Base(mozilla::Move(aOther))
+  {
+  }
 
   operator const AutoFallibleTArray<E, N>&() const
   {
@@ -1888,6 +2025,11 @@ public:
   explicit AutoFallibleTArray(const nsTArray_Impl<E, Allocator>& aOther)
   {
     Base::AppendElements(aOther);
+  }
+  template<typename Allocator>
+  explicit AutoFallibleTArray(nsTArray_Impl<E, Allocator>&& aOther)
+    : Base(mozilla::Move(aOther))
+  {
   }
 
   operator const nsAutoTArray<E, N>&() const

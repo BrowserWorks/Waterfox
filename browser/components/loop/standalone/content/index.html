@@ -5,15 +5,14 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Loop</title>
+    <meta name="locales" content="en-US" />
+    <meta name="default_locale" content="en-US" />
+
     <link rel="stylesheet" type="text/css" href="shared/css/reset.css">
     <link rel="stylesheet" type="text/css" href="shared/css/common.css">
     <link rel="stylesheet" type="text/css" href="shared/css/conversation.css">
     <link rel="stylesheet" type="text/css" href="css/webapp.css">
-    <link rel="localization" href="l10n/loop.{locale}.properties">
-
-    <meta name="locales" content="en-US" />
-    <meta name="default_locale" content="en-US" />
+    <link rel="localization" href="l10n/{locale}/loop.properties">
   </head>
   <body class="standalone">
 
@@ -21,6 +20,48 @@
 
     <!-- libs -->
     <script>
+      // IE9, 10, and 11 lack the window.CustomEvent constructor. IE11 has the
+      // window.CustomEvent object, but it throws when new CustomEvent(...) is
+      // called, with the exception of "Object doesn't support this action". IE9
+      // introduced document.createEvent. Nothing we can do for IE8 here.
+      var customEventCtorWorks;
+      try {
+        if (window.CustomEvent) {
+          customEventCtorWorks = new CustomEvent("test", {"detail":{"sampleProperty":true}});
+        }
+      } catch (ex) {}
+      var basicCustomEvent = document.createEvent("CustomEvent");
+      if (!customEventCtorWorks && basicCustomEvent && basicCustomEvent.initCustomEvent) {
+        function myCustomEvent(event, params) {
+          params = params || {bubbles: false, cancelable: false, detail: undefined};
+          var evt = document.createEvent("CustomEvent");
+          evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
+          return evt;
+        };
+
+        myCustomEvent.prototype = window.Event.prototype;
+        window.CustomEvent = myCustomEvent;
+      }
+
+      // To support IE for the l10n-gaia library on IE <= 10.
+      if (!"language" in navigator) {
+        navigator.language = navigator.browserLanguage;
+      }
+
+      // To support IE <= 10.
+      if (!window.MutationObserver) {
+        // Define a dummy MutationObserver object if one doesn't exist
+        // This could later be extended to use Mutation events but for
+        // now this will simply result in no-ops.
+        function myMutationObserver() {};
+        myMutationObserver.prototype = {
+          disconnect: function() {},
+          observe: function () {},
+          takeRecords: function() {},
+        };
+        window.MutationObserver = myMutationObserver;
+      }
+
       window.OTProperties = {
         cdnURL: 'shared/libs/',
       };
@@ -28,9 +69,18 @@
       window.OTProperties.configURL = window.OTProperties.assetURL + 'js/dynamic_config.min.js';
       window.OTProperties.cssURL = window.OTProperties.assetURL + 'css/ot.css';
     </script>
+    <script type="text/javascript" src="js/multiplexGum.js"></script>
     <script type="text/javascript" src="shared/libs/sdk.js"></script>
+    <script>
+      // multiplexGum needs evaluation before sdk.js, but TBPlugin is not
+      // defined until after sdk.js has been evaluated. This updates the
+      // navigator object to reference TBPlugin if it was defined by sdk.js.
+      if (!navigator.originalGum) {
+        navigator.originalGum = (window["TBPlugin"] && TBPlugin.getUserMedia);
+      }
+    </script>
     <script type="text/javascript" src="libs/l10n-gaia-02ca67948fe8.js"></script>
-    <script type="text/javascript" src="shared/libs/react-0.11.1.js"></script>
+    <script type="text/javascript" src="shared/libs/react-0.11.2.js"></script>
     <script type="text/javascript" src="shared/libs/jquery-2.1.0.js"></script>
     <script type="text/javascript" src="shared/libs/lodash-2.4.1.js"></script>
     <script type="text/javascript" src="shared/libs/backbone-1.1.2.js"></script>
@@ -42,8 +92,19 @@
     <script type="text/javascript" src="shared/js/mixins.js"></script>
     <script type="text/javascript" src="shared/js/views.js"></script>
     <script type="text/javascript" src="shared/js/feedbackApiClient.js"></script>
+    <script type="text/javascript" src="shared/js/actions.js"></script>
+    <script type="text/javascript" src="shared/js/validate.js"></script>
+    <script type="text/javascript" src="shared/js/dispatcher.js"></script>
     <script type="text/javascript" src="shared/js/websocket.js"></script>
+    <script type="text/javascript" src="shared/js/otSdkDriver.js"></script>
+    <script type="text/javascript" src="shared/js/store.js"></script>
+    <script type="text/javascript" src="shared/js/activeRoomStore.js"></script>
+    <script type="text/javascript" src="shared/js/feedbackStore.js"></script>
+    <script type="text/javascript" src="shared/js/feedbackViews.js"></script>
+    <script type="text/javascript" src="js/standaloneAppStore.js"></script>
     <script type="text/javascript" src="js/standaloneClient.js"></script>
+    <script type="text/javascript" src="js/standaloneMozLoop.js"></script>
+    <script type="text/javascript" src="js/standaloneRoomViews.js"></script>
     <script type="text/javascript" src="js/webapp.js"></script>
 
     <script>

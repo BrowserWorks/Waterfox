@@ -88,6 +88,7 @@ public:
   /**
    * Schedules a runnable to run on the controller/UI thread at some time
    * in the future.
+   * This method must always be called on the controller thread.
    */
   virtual void PostDelayedTask(Task* aTask, int aDelayMs) = 0;
 
@@ -117,7 +118,7 @@ public:
     return false;
   }
 
-  MOZ_BEGIN_NESTED_ENUM_CLASS(APZStateChange, int8_t)
+  enum APZStateChange {
     /**
      * APZ started modifying the view (including panning, zooming, and fling).
      */
@@ -141,7 +142,7 @@ public:
      */
     EndTouch,
     APZStateChangeSentinel
-  MOZ_END_NESTED_ENUM_CLASS(APZStateChange)
+  };
 
   /**
    * General notices of APZ state changes for consumers.
@@ -160,8 +161,6 @@ protected:
   // Protected destructor, to discourage deletion outside of Release():
   virtual ~GeckoContentController() {}
 };
-
-MOZ_FINISH_NESTED_ENUM_CLASS(GeckoContentController::APZStateChange)
 
 }
 }

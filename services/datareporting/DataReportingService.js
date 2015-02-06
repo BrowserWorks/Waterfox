@@ -150,7 +150,8 @@ DataReportingService.prototype = Object.freeze({
         this._os.removeObserver(this, "sessionstore-windows-restored");
         this._os.addObserver(this, "quit-application", false);
 
-        this.policy.startPolling();
+        let policy = this.policy;
+        policy.startPolling();
 
         // Don't initialize Firefox Health Reporter collection and submission
         // service unless it is enabled.
@@ -188,7 +189,7 @@ DataReportingService.prototype = Object.freeze({
             // The instance installs its own shutdown observers. So, we just
             // fire and forget: it will clean itself up.
             let reporter = this.healthReporter;
-            this.policy.ensureUserNotified();
+            policy.ensureUserNotified();
           }.bind(this),
         }, delayInterval, this.timer.TYPE_ONE_SHOT);
 

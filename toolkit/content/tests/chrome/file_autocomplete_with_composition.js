@@ -88,8 +88,7 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
       execute: function (aWindow) {
         synthesizeKey("m", { type: "keydown", shiftKey: true }, aWindow);
         synthesizeComposition({ type: "compositionstart" }, aWindow);
-        synthesizeComposition({ type: "compositionupdate", data: "M" }, aWindow);
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "M",
               "clauses":
@@ -101,11 +100,10 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
           }, aWindow);
       }, popup: false, value: "M", searchString: ""
     },
-    { description: "compositionupdate shouldn't open the popup",
+    { description: "modifying composition string shouldn't open the popup",
       completeDefaultIndex: false,
       execute: function (aWindow) {
-        synthesizeComposition({ type: "compositionupdate", data: "Mo" }, aWindow);
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "Mo",
               "clauses":
@@ -120,7 +118,7 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
     { description: "compositionend should open the popup",
       completeDefaultIndex: false,
       execute: function (aWindow) {
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "Mo",
               "clauses":
@@ -141,8 +139,7 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
       execute: function (aWindow) {
         synthesizeKey("z", { type: "keydown" }, aWindow);
         synthesizeComposition({ type: "compositionstart" }, aWindow);
-        synthesizeComposition({ type: "compositionupdate", data: "z" }, aWindow);
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "z",
               "clauses":
@@ -154,11 +151,10 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
           }, aWindow);
       }, popup: false, value: "Moz", searchString: "Mo"
     },
-    { description: "compositionupdate shouldn't reopen the popup",
+    { description: "modifying composition string shouldn't reopen the popup",
       completeDefaultIndex: false,
       execute: function (aWindow) {
-        synthesizeComposition({ type: "compositionupdate", data: "zi" }, aWindow);
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "zi",
               "clauses":
@@ -173,7 +169,7 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
     { description: "compositionend should research the result and open the popup",
       completeDefaultIndex: false,
       execute: function (aWindow) {
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "zi",
               "clauses":
@@ -193,8 +189,7 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
       execute: function (aWindow) {
         synthesizeKey("l", { type: "keydown" }, aWindow);
         synthesizeComposition({ type: "compositionstart" }, aWindow);
-        synthesizeComposition({ type: "compositionupdate", data: "l" }, aWindow);
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "l",
               "clauses":
@@ -206,11 +201,10 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
           }, aWindow);
       }, popup: false, value: "Mozil", searchString: "Mozi"
     },
-    { description: "compositionupdate shouldn't reopen the popup",
+    { description: "modifying composition string shouldn't reopen the popup",
       completeDefaultIndex: false,
       execute: function (aWindow) {
-        synthesizeComposition({ type: "compositionupdate", data: "ll" }, aWindow);
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "ll",
               "clauses":
@@ -222,11 +216,10 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
           }, aWindow);
       }, popup: false, value: "Mozill", searchString: "Mozi"
     },
-    { description: "empty compositionupdate shouldn't reopen the popup",
+    { description: "modifying composition string to empty string shouldn't reopen the popup",
       completeDefaultIndex: false,
       execute: function (aWindow) {
-        synthesizeComposition({ type: "compositionupdate", data: "" }, aWindow);
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "",
               "clauses":
@@ -241,7 +234,7 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
     { description: "cancled compositionend should reopen the popup",
       completeDefaultIndex: false,
       execute: function (aWindow) {
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "",
               "clauses":
@@ -264,8 +257,7 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
         synthesizeKey("VK_LEFT", { shiftKey: true }, aWindow);
         synthesizeKey("z", { type: "keydown" }, aWindow);
         synthesizeComposition({ type: "compositionstart" }, aWindow);
-        synthesizeComposition({ type: "compositionupdate", data: "z" }, aWindow);
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "z",
               "clauses":
@@ -277,11 +269,10 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
           }, aWindow);
       }, popup: false, value: "Moz", searchString: "Mozi"
     },
-    { description: "compositionupdate shouldn't reopen the popup",
+    { description: "modifying composition string shouldn't reopen the popup",
       completeDefaultIndex: false,
       execute: function (aWindow) {
-        synthesizeComposition({ type: "compositionupdate", data: "zi" }, aWindow);
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "zi",
               "clauses":
@@ -293,11 +284,10 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
           }, aWindow);
       }, popup: false, value: "Mozi", searchString: "Mozi"
     },
-    { description: "empty compositionupdate shouldn't reopen the popup",
+    { description: "modifying composition string to empty string shouldn't reopen the popup",
       completeDefaultIndex: false,
       execute: function (aWindow) {
-        synthesizeComposition({ type: "compositionupdate", data: "" }, aWindow);
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "",
               "clauses":
@@ -312,7 +302,7 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
     { description: "canceled compositionend should seach the result with the latest value",
       completeDefaultIndex: false,
       execute: function (aWindow) {
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "",
               "clauses":
@@ -340,8 +330,7 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
       execute: function (aWindow) {
         synthesizeKey("m", { type: "keydown", shiftKey: true }, aWindow);
         synthesizeComposition({ type: "compositionstart" }, aWindow);
-        synthesizeComposition({ type: "compositionupdate", data: "M" }, aWindow);
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "M",
               "clauses":
@@ -353,11 +342,10 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
           }, aWindow);
       }, popup: false, value: "M", searchString: ""
     },
-    { description: "compositionupdate shouldn't open the popup",
+    { description: "modifying composition string shouldn't open the popup",
       completeDefaultIndex: false,
       execute: function (aWindow) {
-        synthesizeComposition({ type: "compositionupdate", data: "Mo" }, aWindow);
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "Mo",
               "clauses":
@@ -369,11 +357,10 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
           }, aWindow);
       }, popup: false, value: "Mo", searchString: ""
     },
-    { description: "empty compositionupdate shouldn't open the popup",
+    { description: "modifying composition string to empty string shouldn't open the popup",
       completeDefaultIndex: false,
       execute: function (aWindow) {
-        synthesizeComposition({ type: "compositionupdate", data: "" }, aWindow);
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "",
               "clauses":
@@ -388,7 +375,7 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
     { description: "canceled compositionend shouldn't open the popup if it was closed",
       completeDefaultIndex: false,
       execute: function (aWindow) {
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "",
               "clauses":
@@ -416,8 +403,7 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
       execute: function (aWindow) {
         synthesizeKey("m", { type: "keydown", shiftKey: true }, aWindow);
         synthesizeComposition({ type: "compositionstart" }, aWindow);
-        synthesizeComposition({ type: "compositionupdate", data: "M" }, aWindow);
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "M",
               "clauses":
@@ -429,11 +415,10 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
           }, aWindow);
       }, popup: false, value: "M", searchString: ""
     },
-    { description: "compositionupdate shouldn't open the popup",
+    { description: "modifying composition string shouldn't open the popup",
       completeDefaultIndex: false,
       execute: function (aWindow) {
-        synthesizeComposition({ type: "compositionupdate", data: "Mo" }, aWindow);
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "Mo",
               "clauses":
@@ -445,11 +430,10 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
           }, aWindow);
       }, popup: false, value: "Mo", searchString: ""
     },
-    { description: "empty compositionupdate shouldn't open the popup",
+    { description: "modifying composition string to empty string shouldn't open the popup",
       completeDefaultIndex: false,
       execute: function (aWindow) {
-        synthesizeComposition({ type: "compositionupdate", data: "" }, aWindow);
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "",
               "clauses":
@@ -464,7 +448,7 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
     { description: "canceled compositionend should open the popup if it was opened",
       completeDefaultIndex: false,
       execute: function (aWindow) {
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "",
               "clauses":
@@ -495,8 +479,7 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
       execute: function (aWindow) {
         synthesizeKey("z", { type: "keydown", shiftKey: true }, aWindow);
         synthesizeComposition({ type: "compositionstart" }, aWindow);
-        synthesizeComposition({ type: "compositionupdate", data: "z" }, aWindow);
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "z",
               "clauses":
@@ -508,11 +491,10 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
           }, aWindow);
       }, popup: false, value: "Moz", searchString: "Mo"
     },
-    { description: "compositionupdate shouldn't open the popup",
+    { description: "modifying composition string shouldn't open the popup",
       completeDefaultIndex: false,
       execute: function (aWindow) {
-        synthesizeComposition({ type: "compositionupdate", data: "zi" }, aWindow);
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "zi",
               "clauses":
@@ -524,11 +506,10 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
           }, aWindow);
       }, popup: false, value: "Mozi", searchString: "Mo"
     },
-    { description: "empty compositionupdate shouldn't open the popup",
+    { description: "modifying composition string to empty string shouldn't open the popup",
       completeDefaultIndex: false,
       execute: function (aWindow) {
-        synthesizeComposition({ type: "compositionupdate", data: "" }, aWindow);
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "",
               "clauses":
@@ -543,7 +524,7 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
     { description: "canceled compositionend shouldn't open the popup if the popup was closed",
       completeDefaultIndex: false,
       execute: function (aWindow) {
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "",
               "clauses":
@@ -571,8 +552,7 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
       execute: function (aWindow) {
         synthesizeKey("m", { type: "keydown", shiftKey: true }, aWindow);
         synthesizeComposition({ type: "compositionstart" }, aWindow);
-        synthesizeComposition({ type: "compositionupdate", data: "M" }, aWindow);
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "M",
               "clauses":
@@ -584,11 +564,10 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
           }, aWindow);
       }, popup: false, value: "M", searchString: ""
     },
-    { description: "compositionupdate shouldn't open the popup (completeDefaultIndex is true)",
+    { description: "modifying composition string shouldn't open the popup (completeDefaultIndex is true)",
       completeDefaultIndex: true,
       execute: function (aWindow) {
-        synthesizeComposition({ type: "compositionupdate", data: "Mo" }, aWindow);
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "Mo",
               "clauses":
@@ -603,7 +582,7 @@ nsDoTestsForAutoCompleteWithComposition.prototype = {
     { description: "compositionend should open the popup (completeDefaultIndex is true)",
       completeDefaultIndex: true,
       execute: function (aWindow) {
-        synthesizeText(
+        synthesizeCompositionChange(
           { "composition":
             { "string": "Mo",
               "clauses":

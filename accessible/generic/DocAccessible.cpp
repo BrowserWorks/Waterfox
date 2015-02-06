@@ -40,7 +40,6 @@
 #include "nsIURI.h"
 #include "nsIWebNavigation.h"
 #include "nsFocusManager.h"
-#include "nsNameSpaceManager.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/EventStates.h"
@@ -76,7 +75,7 @@ static const uint32_t kRelationAttrsLen = ArrayLength(kRelationAttrs);
 DocAccessible::
   DocAccessible(nsIDocument* aDocument, nsIContent* aRootContent,
                   nsIPresShell* aPresShell) :
-  HyperTextAccessibleWrap(aRootContent, this),
+  HyperTextAccessibleWrap(aRootContent, this), xpcAccessibleDocument(),
   // XXX aaronl should we use an algorithm for the initial cache size?
   mAccessibleCache(kDefaultCacheLength),
   mNodeToAccessibleMap(kDefaultCacheLength),
@@ -175,12 +174,12 @@ DocAccessible::Name(nsString& aName)
     Accessible::Name(aName);
   }
   if (aName.IsEmpty()) {
-    GetTitle(aName);   // Try title element
+    Title(aName); // Try title element
   }
   if (aName.IsEmpty()) {   // Last resort: use URL
-    GetURL(aName);
+    URL(aName);
   }
- 
+
   return eNameOK;
 }
 
@@ -313,188 +312,14 @@ DocAccessible::FocusedChild()
   return FocusMgr()->FocusedAccessible();
 }
 
-NS_IMETHODIMP
+void
 DocAccessible::TakeFocus()
 {
-  if (IsDefunct())
-    return NS_ERROR_FAILURE;
-
   // Focus the document.
   nsFocusManager* fm = nsFocusManager::GetFocusManager();
-  NS_ENSURE_STATE(fm);
-
   nsCOMPtr<nsIDOMElement> newFocus;
-  return fm->MoveFocus(mDocumentNode->GetWindow(), nullptr,
-                       nsIFocusManager::MOVEFOCUS_ROOT, 0,
-                       getter_AddRefs(newFocus));
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-// nsIAccessibleDocument
-
-NS_IMETHODIMP
-DocAccessible::GetURL(nsAString& aURL)
-{
-  if (IsDefunct())
-    return NS_ERROR_FAILURE;
-
-  nsCOMPtr<nsISupports> container = mDocumentNode->GetContainer();
-  nsCOMPtr<nsIWebNavigation> webNav(do_GetInterface(container));
-  nsAutoCString theURL;
-  if (webNav) {
-    nsCOMPtr<nsIURI> pURI;
-    webNav->GetCurrentURI(getter_AddRefs(pURI));
-    if (pURI)
-      pURI->GetSpec(theURL);
-  }
-  CopyUTF8toUTF16(theURL, aURL);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-DocAccessible::GetTitle(nsAString& aTitle)
-{
-  if (!mDocumentNode) {
-    return NS_ERROR_FAILURE;
-  }
-  nsString title;
-  mDocumentNode->GetTitle(title);
-  aTitle = title;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-DocAccessible::GetMimeType(nsAString& aMimeType)
-{
-  if (!mDocumentNode) {
-    return NS_ERROR_FAILURE;
-  }
-  return mDocumentNode->GetContentType(aMimeType);
-}
-
-NS_IMETHODIMP
-DocAccessible::GetDocType(nsAString& aDocType)
-{
-#ifdef MOZ_XUL
-  nsCOMPtr<nsIXULDocument> xulDoc(do_QueryInterface(mDocumentNode));
-  if (xulDoc) {
-    aDocType.AssignLiteral("window"); // doctype not implemented for XUL at time of writing - causes assertion
-    return NS_OK;
-  } else
-#endif
-  if (mDocumentNode) {
-    dom::DocumentType* docType = mDocumentNode->GetDoctype();
-    if (docType) {
-      return docType->GetPublicId(aDocType);
-    }
-  }
-
-  return NS_ERROR_FAILURE;
-}
-
-NS_IMETHODIMP
-DocAccessible::GetNameSpaceURIForID(int16_t aNameSpaceID, nsAString& aNameSpaceURI)
-{
-  if (mDocumentNode) {
-    nsNameSpaceManager* nameSpaceManager = nsNameSpaceManager::GetInstance();
-    if (nameSpaceManager)
-      return nameSpaceManager->GetNameSpaceURI(aNameSpaceID, aNameSpaceURI);
-  }
-  return NS_ERROR_FAILURE;
-}
-
-NS_IMETHODIMP
-DocAccessible::GetWindowHandle(void** aWindow)
-{
-  NS_ENSURE_ARG_POINTER(aWindow);
-  *aWindow = GetNativeWindow();
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-DocAccessible::GetWindow(nsIDOMWindow** aDOMWin)
-{
-  *aDOMWin = nullptr;
-  if (!mDocumentNode) {
-    return NS_ERROR_FAILURE;  // Accessible is Shutdown()
-  }
-  *aDOMWin = mDocumentNode->GetWindow();
-
-  if (!*aDOMWin)
-    return NS_ERROR_FAILURE;  // No DOM Window
-
-  NS_ADDREF(*aDOMWin);
-
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-DocAccessible::GetDOMDocument(nsIDOMDocument** aDOMDocument)
-{
-  NS_ENSURE_ARG_POINTER(aDOMDocument);
-  *aDOMDocument = nullptr;
-
-  if (mDocumentNode)
-    CallQueryInterface(mDocumentNode, aDOMDocument);
-
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-DocAccessible::GetParentDocument(nsIAccessibleDocument** aDocument)
-{
-  NS_ENSURE_ARG_POINTER(aDocument);
-  *aDocument = nullptr;
-
-  if (!IsDefunct())
-    NS_IF_ADDREF(*aDocument = ParentDocument());
-
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-DocAccessible::GetChildDocumentCount(uint32_t* aCount)
-{
-  NS_ENSURE_ARG_POINTER(aCount);
-  *aCount = 0;
-
-  if (!IsDefunct())
-    *aCount = ChildDocumentCount();
-
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-DocAccessible::GetChildDocumentAt(uint32_t aIndex,
-                                  nsIAccessibleDocument** aDocument)
-{
-  NS_ENSURE_ARG_POINTER(aDocument);
-  *aDocument = nullptr;
-
-  if (IsDefunct())
-    return NS_OK;
-
-  NS_IF_ADDREF(*aDocument = GetChildDocumentAt(aIndex));
-  return *aDocument ? NS_OK : NS_ERROR_INVALID_ARG;
-}
-
-NS_IMETHODIMP
-DocAccessible::GetVirtualCursor(nsIAccessiblePivot** aVirtualCursor)
-{
-  NS_ENSURE_ARG_POINTER(aVirtualCursor);
-  *aVirtualCursor = nullptr;
-
-  if (IsDefunct())
-    return NS_ERROR_FAILURE;
-
-  if (!mVirtualCursor) {
-    mVirtualCursor = new nsAccessiblePivot(this);
-    mVirtualCursor->AddObserver(this);
-  }
-
-  NS_ADDREF(*aVirtualCursor = mVirtualCursor);
-  return NS_OK;
+  fm->MoveFocus(mDocumentNode->GetWindow(), nullptr,
+                nsFocusManager::MOVEFOCUS_ROOT, 0, getter_AddRefs(newFocus));
 }
 
 // HyperTextAccessible method
@@ -526,6 +351,37 @@ DocAccessible::GetEditor() const
 }
 
 // DocAccessible public method
+
+void
+DocAccessible::URL(nsAString& aURL) const
+{
+  nsCOMPtr<nsISupports> container = mDocumentNode->GetContainer();
+  nsCOMPtr<nsIWebNavigation> webNav(do_GetInterface(container));
+  nsAutoCString theURL;
+  if (webNav) {
+    nsCOMPtr<nsIURI> pURI;
+    webNav->GetCurrentURI(getter_AddRefs(pURI));
+    if (pURI)
+      pURI->GetSpec(theURL);
+  }
+  CopyUTF8toUTF16(theURL, aURL);
+}
+
+void
+DocAccessible::DocType(nsAString& aType) const
+{
+#ifdef MOZ_XUL
+  nsCOMPtr<nsIXULDocument> xulDoc(do_QueryInterface(mDocumentNode));
+  if (xulDoc) {
+    aType.AssignLiteral("window"); // doctype not implemented for XUL at time of writing - causes assertion
+    return;
+  }
+#endif
+  dom::DocumentType* docType = mDocumentNode->GetDoctype();
+  if (docType)
+    docType->GetPublicId(aType);
+}
+
 Accessible*
 DocAccessible::GetAccessible(nsINode* aNode) const
 {
@@ -627,7 +483,13 @@ DocAccessible::Shutdown()
 
   mDependentIDsHash.Clear();
   mNodeToAccessibleMap.Clear();
-  ClearCache(mAccessibleCache);
+
+  {
+    // We're about to get rid of all of our children so there won't be anything
+    // to invalidate.
+    AutoTreeMutation mut(this, false);
+    ClearCache(mAccessibleCache);
+  }
 
   HyperTextAccessibleWrap::Shutdown();
 
@@ -645,19 +507,19 @@ DocAccessible::GetFrame() const
 }
 
 // DocAccessible protected member
-void
-DocAccessible::GetBoundsRect(nsRect& aBounds, nsIFrame** aRelativeFrame)
+nsRect
+DocAccessible::RelativeBounds(nsIFrame** aRelativeFrame) const
 {
   *aRelativeFrame = GetFrame();
 
   nsIDocument *document = mDocumentNode;
   nsIDocument *parentDoc = nullptr;
 
+  nsRect bounds;
   while (document) {
     nsIPresShell *presShell = document->GetShell();
-    if (!presShell) {
-      return;
-    }
+    if (!presShell)
+      return nsRect();
 
     nsRect scrollPort;
     nsIScrollableFrame* sf = presShell->GetRootScrollFrameAsScrollableExternal();
@@ -665,9 +527,9 @@ DocAccessible::GetBoundsRect(nsRect& aBounds, nsIFrame** aRelativeFrame)
       scrollPort = sf->GetScrollPortRect();
     } else {
       nsIFrame* rootFrame = presShell->GetRootFrame();
-      if (!rootFrame) {
-        return;
-      }
+      if (!rootFrame)
+        return nsRect();
+
       scrollPort = rootFrame->GetRect();
     }
 
@@ -676,14 +538,16 @@ DocAccessible::GetBoundsRect(nsRect& aBounds, nsIFrame** aRelativeFrame)
       // this document, but we're intersecting rectangles derived from
       // multiple documents and assuming they're all in the same coordinate
       // system. See bug 514117.
-      aBounds.IntersectRect(scrollPort, aBounds);
+      bounds.IntersectRect(scrollPort, bounds);
     }
     else {  // First time through loop
-      aBounds = scrollPort;
+      bounds = scrollPort;
     }
 
     document = parentDoc = document->GetParentDocument();
   }
+
+  return bounds;
 }
 
 // DocAccessible protected member
@@ -1422,18 +1286,6 @@ DocAccessible::ContentInserted(nsIContent* aContainerNode,
 }
 
 void
-DocAccessible::ContentRemoved(nsIContent* aContainerNode,
-                              nsIContent* aChildNode)
-{
-  // Update the whole tree of this document accessible when the container is
-  // null (document element is removed).
-  Accessible* container = aContainerNode ?
-    GetAccessibleOrContainer(aContainerNode) : this;
-
-  UpdateTree(container, aChildNode, false);
-}
-
-void
 DocAccessible::RecreateAccessible(nsIContent* aContent)
 {
 #ifdef A11Y_LOG
@@ -1472,8 +1324,10 @@ DocAccessible::ProcessInvalidationList()
     }
 
     // Make sure the subtree is created.
-    if (accessible)
+    if (accessible) {
+      AutoTreeMutation mut(accessible);
       CacheChildrenInSubtree(accessible);
+    }
   }
 
   mInvalidationList.Clear();
@@ -1579,7 +1433,9 @@ DocAccessible::DoInitialUpdate()
     SetRoleMapEntry(aria::GetRoleMap(mContent));
   }
 
-  // Build initial tree.
+  // Build initial tree.  Since its the initial tree there's no group info to
+  // invalidate.
+  AutoTreeMutation mut(this, false);
   CacheChildrenInSubtree(this);
 
   // Fire reorder event after the document tree is constructed. Note, since
@@ -1813,6 +1669,9 @@ DocAccessible::ProcessContentInserted(Accessible* aContainer,
       // accessibles into accessible tree. We need to invalidate children even
       // there's no inserted accessibles in the end because accessible children
       // are created while parent recaches child accessibles.
+      // XXX Group invalidation here may be redundant with invalidation in
+      // UpdateTree.
+      AutoTreeMutation mut(aContainer);
       aContainer->InvalidateChildren();
       CacheChildrenInSubtree(aContainer);
     }
@@ -1845,6 +1704,7 @@ DocAccessible::UpdateTree(Accessible* aContainer, nsIContent* aChildNode,
 #endif
 
   nsRefPtr<AccReorderEvent> reorderEvent = new AccReorderEvent(aContainer);
+  AutoTreeMutation mut(aContainer);
 
   if (child) {
     updateFlags |= UpdateTreeInternal(child, aIsInsert, reorderEvent);

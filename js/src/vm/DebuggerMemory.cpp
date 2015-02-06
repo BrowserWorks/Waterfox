@@ -15,6 +15,7 @@
 #include "jscompartment.h"
 
 #include "gc/Marking.h"
+#include "js/Debug.h"
 #include "js/UbiNode.h"
 #include "js/UbiNodeTraverse.h"
 #include "vm/Debugger.h"
@@ -22,6 +23,7 @@
 #include "vm/SavedStacks.h"
 
 #include "vm/Debugger-inl.h"
+#include "vm/NativeObject-inl.h"
 
 using namespace js;
 
@@ -37,8 +39,8 @@ DebuggerMemory::create(JSContext *cx, Debugger *dbg)
 {
 
     Value memoryProto = dbg->object->getReservedSlot(Debugger::JSSLOT_DEBUG_MEMORY_PROTO);
-    RootedObject memory(cx, NewObjectWithGivenProto(cx, &class_,
-                                                    &memoryProto.toObject(), nullptr));
+    RootedNativeObject memory(cx, NewNativeObjectWithGivenProto(cx, &class_,
+                                                                &memoryProto.toObject(), nullptr));
     if (!memory)
         return nullptr;
 
@@ -98,7 +100,7 @@ DebuggerMemory::checkThis(JSContext *cx, CallArgs &args, const char *fnName)
     // Debugger.Memory instances, however doesn't actually represent an instance
     // of Debugger.Memory. It is the only object that is<DebuggerMemory>() but
     // doesn't have a Debugger instance.
-    if (thisObject.getReservedSlot(JSSLOT_DEBUGGER).isUndefined()) {
+    if (thisObject.as<DebuggerMemory>().getReservedSlot(JSSLOT_DEBUGGER).isUndefined()) {
         JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_INCOMPATIBLE_PROTO,
                              class_.name, fnName, "prototype object");
         return nullptr;
@@ -191,15 +193,27 @@ DebuggerMemory::drainAllocationsLog(JSContext *cx, unsigned argc, Value *vp)
 
     size_t length = dbg->allocationsLogLength;
 
-    RootedObject result(cx, NewDenseAllocatedArray(cx, length));
+    RootedArrayObject result(cx, NewDenseFullyAllocatedArray(cx, length));
     if (!result)
         return false;
     result->ensureDenseInitializedLength(cx, 0, length);
 
     for (size_t i = 0; i < length; i++) {
-        Debugger::AllocationSite *allocSite = dbg->allocationsLog.popFirst();
-        result->setDenseElement(i, ObjectOrNullValue(allocSite->frame));
-        js_delete(allocSite);
+        RootedObject obj(cx, NewBuiltinClassInstance(cx, &JSObject::class_));
+        if (!obj)
+            return false;
+
+        mozilla::UniquePtr<Debugger::AllocationSite, JS::DeletePolicy<Debugger::AllocationSite> >
+            allocSite(dbg->allocationsLog.popFirst());
+        RootedValue frame(cx, ObjectOrNullValue(allocSite->frame));
+        if (!JSObject::defineProperty(cx, obj, cx->names().frame, frame))
+            return false;
+
+        RootedValue timestampValue(cx, NumberValue(allocSite->when));
+        if (!JSObject::defineProperty(cx, obj, cx->names().timestamp, timestampValue))
+            return false;
+
+        result->setDenseElement(i, ObjectValue(*obj));
     }
 
     dbg->allocationsLogLength = 0;
@@ -245,9 +259,44 @@ DebuggerMemory::setMaxAllocationsLogLength(JSContext *cx, unsigned argc, Value *
     return true;
 }
 
+/* static */ bool
+DebuggerMemory::getAllocationSamplingProbability(JSContext *cx, unsigned argc, Value *vp)
+{
+    THIS_DEBUGGER_MEMORY(cx, argc, vp, "(get allocationSamplingProbability)", args, memory);
+    args.rval().setDouble(memory->getDebugger()->allocationSamplingProbability);
+    return true;
+}
+
+/* static */ bool
+DebuggerMemory::setAllocationSamplingProbability(JSContext *cx, unsigned argc, Value *vp)
+{
+    THIS_DEBUGGER_MEMORY(cx, argc, vp, "(set allocationSamplingProbability)", args, memory);
+    if (!args.requireAtLeast(cx, "(set allocationSamplingProbability)", 1))
+        return false;
+
+    double probability;
+    if (!ToNumber(cx, args[0], &probability))
+        return false;
+
+    if (probability < 0.0 || probability > 1.0) {
+        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_UNEXPECTED_TYPE,
+                             "(set allocationSamplingProbability)'s parameter",
+                             "not a number between 0 and 1");
+        return false;
+    }
+
+    memory->getDebugger()->allocationSamplingProbability = probability;
+    args.rval().setUndefined();
+    return true;
+}
 
 
 /* Debugger.Memory.prototype.takeCensus */
+
+void
+JS::dbg::SetDebuggerMallocSizeOf(JSRuntime *rt, mozilla::MallocSizeOf mallocSizeOf) {
+    rt->debuggerMallocSizeOf = mallocSizeOf;
+}
 
 namespace js {
 namespace dbg {
@@ -258,7 +307,7 @@ struct Census {
     Zone::ZoneSet debuggeeZones;
     Zone *atomsZone;
 
-    Census(JSContext *cx) : cx(cx), atomsZone(nullptr) { }
+    explicit Census(JSContext *cx) : cx(cx), atomsZone(nullptr) { }
 
     bool init() {
         AutoLockForExclusiveAccess lock(cx);
@@ -298,7 +347,7 @@ class Tally {
     size_t total_;
 
   public:
-    Tally(Census &census) : total_(0) { }
+    explicit Tally(Census &census) : total_(0) { }
     Tally(Tally &&rhs) : total_(rhs.total_) { }
     Tally &operator=(Tally &&rhs) { total_ = rhs.total_; return *this; }
 
@@ -342,7 +391,7 @@ class ByJSType {
     EachOther other;
 
   public:
-    ByJSType(Census &census)
+    explicit ByJSType(Census &census)
       : total_(0),
         objects(census),
         scripts(census),
@@ -456,7 +505,7 @@ class ByObjectClass {
     }
 
   public:
-    ByObjectClass(Census &census) : total_(0), other(census) { }
+    explicit ByObjectClass(Census &census) : total_(0), other(census) { }
     ByObjectClass(ByObjectClass &&rhs)
       : total_(rhs.total_), table(Move(rhs.table)), other(Move(rhs.other))
     { }
@@ -550,12 +599,13 @@ class ByUbinodeType {
     // Note that, because ubi::Node::typeName promises to return a specific
     // pointer, not just any string whose contents are correct, we can use their
     // addresses as hash table keys.
-    typedef HashMap<const jschar *, EachType, DefaultHasher<const jschar *>, SystemAllocPolicy> Table;
+    typedef HashMap<const char16_t *, EachType, DefaultHasher<const char16_t *>,
+                    SystemAllocPolicy> Table;
     typedef typename Table::Entry Entry;
     Table table;
 
   public:
-    ByUbinodeType(Census &census) : total_(0) { }
+    explicit ByUbinodeType(Census &census) : total_(0) { }
     ByUbinodeType(ByUbinodeType &&rhs) : total_(rhs.total_), table(Move(rhs.table)) { }
     ByUbinodeType &operator=(ByUbinodeType &&rhs) {
         MOZ_ASSERT(&rhs != this);
@@ -568,7 +618,7 @@ class ByUbinodeType {
 
     bool count(Census &census, const Node &node) {
         total_++;
-        const jschar *key = node.typeName();
+        const char16_t *key = node.typeName();
         typename Table::AddPtr p = table.lookupForAdd(key);
         if (!p) {
             if (!table.add(p, key, EachType(census)))
@@ -619,7 +669,7 @@ class ByUbinodeType {
             if (!assorter.report(census, &assorterReport))
                 return false;
 
-            const jschar *name = entry.key();
+            const char16_t *name = entry.key();
             MOZ_ASSERT(name);
             JSAtom *atom = AtomizeChars(cx, name, js_strlen(name));
             if (!atom)
@@ -644,7 +694,7 @@ class CensusHandler {
     Assorter assorter;
 
   public:
-    CensusHandler(Census &census) : census(census), assorter(census) { }
+    explicit CensusHandler(Census &census) : census(census), assorter(census) { }
 
     bool init(Census &census) { return assorter.init(census); }
     bool report(Census &census, MutableHandleValue report) {
@@ -744,6 +794,7 @@ DebuggerMemory::takeCensus(JSContext *cx, unsigned argc, Value *vp)
 /* static */ const JSPropertySpec DebuggerMemory::properties[] = {
     JS_PSGS("trackingAllocationSites", getTrackingAllocationSites, setTrackingAllocationSites, 0),
     JS_PSGS("maxAllocationsLogLength", getMaxAllocationsLogLength, setMaxAllocationsLogLength, 0),
+    JS_PSGS("allocationSamplingProbability", getAllocationSamplingProbability, setAllocationSamplingProbability, 0),
     JS_PS_END
 };
 

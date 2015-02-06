@@ -5,6 +5,9 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 EXPORTS += [
+    'xpcAccessible.h',
+    'xpcAccessibleDocument.h',
+    'xpcAccessibleHyperLink.h',
     'xpcAccessibleHyperText.h',
     'xpcAccessibleSelectable.h',
     'xpcAccessibleValue.h',
@@ -12,7 +15,12 @@ EXPORTS += [
 
 UNIFIED_SOURCES += [
     'nsAccessibleRelation.cpp',
+    'xpcAccessible.cpp',
+    'xpcAccessibleApplication.cpp',
+    'xpcAccessibleDocument.cpp',
+    'xpcAccessibleHyperLink.cpp',
     'xpcAccessibleHyperText.cpp',
+    'xpcAccessibleImage.cpp',
     'xpcAccessibleSelectable.cpp',
     'xpcAccessibleTable.cpp',
     'xpcAccessibleTableCell.cpp',

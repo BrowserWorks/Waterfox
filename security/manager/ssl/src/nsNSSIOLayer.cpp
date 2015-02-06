@@ -6,6 +6,7 @@
 
 #include "nsNSSIOLayer.h"
 
+#include "pkix/ScopedPtr.h"
 #include "pkix/pkixtypes.h"
 #include "nsNSSComponent.h"
 #include "mozilla/Casting.h"
@@ -24,7 +25,6 @@
 #include "nsPrintfCString.h"
 #include "SSLServerCertVerification.h"
 #include "nsNSSCertHelper.h"
-#include "nsNSSCleaner.h"
 
 #ifndef MOZ_NO_EV_CERTS
 #include "nsIDocShell.h"
@@ -40,6 +40,7 @@
 #include "SharedSSLState.h"
 #include "mozilla/Preferences.h"
 #include "nsContentUtils.h"
+#include "NSSCertDBTrustDomain.h"
 #include "NSSErrorsService.h"
 
 #include "ssl.h"
@@ -65,8 +66,6 @@ using namespace mozilla::psm;
                        //file.
 
 namespace {
-
-NSSCleanupAutoPtrClass(void, PR_FREEIF)
 
 void
 getSiteKey(const nsACString& hostName, uint16_t port,
@@ -133,11 +132,13 @@ nsNSSSocketInfo::nsNSSSocketInfo(SharedSSLState& aState, uint32_t providerFlags)
     mJoined(false),
     mSentClientCert(false),
     mNotedTimeUntilReady(false),
+    mFailedVerification(false),
     mKEAUsed(nsISSLSocketControl::KEY_EXCHANGE_UNKNOWN),
     mKEAExpected(nsISSLSocketControl::KEY_EXCHANGE_UNKNOWN),
     mKEAKeyBits(0),
     mSSLVersionUsed(nsISSLSocketControl::SSL_VERSION_UNKNOWN),
     mMACAlgorithmUsed(nsISSLSocketControl::SSL_MAC_UNKNOWN),
+    mBypassAuthentication(false),
     mProviderFlags(providerFlags),
     mSocketCreationTimestamp(TimeStamp::Now()),
     mPlaintextBytesRead(0),
@@ -225,6 +226,52 @@ nsNSSSocketInfo::SetClientCert(nsIX509Cert* aClientCert)
 {
   mClientCert = aClientCert;
   return NS_OK;
+}
+
+NS_IMETHODIMP
+nsNSSSocketInfo::GetBypassAuthentication(bool* arg)
+{
+  *arg = mBypassAuthentication;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsNSSSocketInfo::SetBypassAuthentication(bool arg)
+{
+  mBypassAuthentication = arg;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsNSSSocketInfo::GetFailedVerification(bool* arg)
+{
+  *arg = mFailedVerification;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsNSSSocketInfo::GetAuthenticationName(nsACString& aAuthenticationName)
+{
+  aAuthenticationName = GetHostName();
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsNSSSocketInfo::SetAuthenticationName(const nsACString& aAuthenticationName)
+{
+  return SetHostName(PromiseFlatCString(aAuthenticationName).get());
+}
+
+NS_IMETHODIMP
+nsNSSSocketInfo::GetAuthenticationPort(int32_t* aAuthenticationPort)
+{
+  return GetPort(aAuthenticationPort);
+}
+
+NS_IMETHODIMP
+nsNSSSocketInfo::SetAuthenticationPort(int32_t aAuthenticationPort)
+{
+  return SetPort(aAuthenticationPort);
 }
 
 NS_IMETHODIMP
@@ -379,21 +426,8 @@ nsNSSSocketInfo::GetNegotiatedNPN(nsACString& aNegotiatedNPN)
 }
 
 NS_IMETHODIMP
-nsNSSSocketInfo::JoinConnection(const nsACString& npnProtocol,
-                                const nsACString& hostname,
-                                int32_t port,
-                                bool* _retval)
+nsNSSSocketInfo::IsAcceptableForHost(const nsACString& hostname, bool* _retval)
 {
-  *_retval = false;
-
-  // Different ports may not be joined together
-  if (port != GetPort())
-    return NS_OK;
-
-  // Make sure NPN has been completed and matches requested npnProtocol
-  if (!mNPNCompleted || !mNegotiatedNPN.Equals(npnProtocol))
-    return NS_OK;
-
   // If this is the same hostname then the certicate status does not
   // need to be considered. They are joinable.
   if (hostname.Equals(GetHostName())) {
@@ -463,9 +497,33 @@ nsNSSSocketInfo::JoinConnection(const nsACString& npnProtocol,
     return NS_OK;
   }
 
-  // All tests pass - this is joinable
-  mJoined = true;
+  // All tests pass
   *_retval = true;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsNSSSocketInfo::JoinConnection(const nsACString& npnProtocol,
+                                const nsACString& hostname,
+                                int32_t port,
+                                bool* _retval)
+{
+  *_retval = false;
+
+  // Different ports may not be joined together
+  if (port != GetPort())
+    return NS_OK;
+
+  // Make sure NPN has been completed and matches requested npnProtocol
+  if (!mNPNCompleted || !mNegotiatedNPN.Equals(npnProtocol))
+    return NS_OK;
+
+  IsAcceptableForHost(hostname, _retval);
+
+  if (*_retval) {
+    // All tests pass - this is joinable
+    mJoined = true;
+  }
   return NS_OK;
 }
 
@@ -633,6 +691,7 @@ nsNSSSocketInfo::SetCertVerificationResult(PRErrorCode errorCode,
   }
 
   if (errorCode) {
+    mFailedVerification = true;
     SetCanceled(errorCode, errorMessageType);
   }
 
@@ -794,10 +853,12 @@ nsSSLIOLayerHelpers::rememberTolerantAtVersion(const nsACString& hostName,
     entry.tolerant = std::max(entry.tolerant, tolerant);
     if (entry.intolerant != 0 && entry.intolerant <= entry.tolerant) {
       entry.intolerant = entry.tolerant + 1;
+      entry.intoleranceReason = 0; // lose the reason
     }
   } else {
     entry.tolerant = tolerant;
     entry.intolerant = 0;
+    entry.intoleranceReason = 0;
   }
 
   entry.AssertInvariant();
@@ -810,7 +871,8 @@ bool
 nsSSLIOLayerHelpers::rememberIntolerantAtVersion(const nsACString& hostName,
                                                  int16_t port,
                                                  uint16_t minVersion,
-                                                 uint16_t intolerant)
+                                                 uint16_t intolerant,
+                                                 PRErrorCode intoleranceReason)
 {
   nsCString key;
   getSiteKey(hostName, port, key);
@@ -823,8 +885,49 @@ nsSSLIOLayerHelpers::rememberIntolerantAtVersion(const nsACString& hostName,
     if (mTLSIntoleranceInfo.Get(key, &entry)) {
       entry.AssertInvariant();
       entry.intolerant = 0;
+      entry.intoleranceReason = 0;
       entry.AssertInvariant();
       mTLSIntoleranceInfo.Put(key, entry);
+    }
+
+    // If we know the server is tolerant at the version, we don't have to
+    // gather the telemetry.
+    if (intolerant <= entry.tolerant) {
+      return false;
+    }
+
+    uint32_t fallbackLimitBucket = 0;
+    // added if the version has reached the min version.
+    if (intolerant <= minVersion) {
+      switch (minVersion) {
+        case SSL_LIBRARY_VERSION_TLS_1_0:
+          fallbackLimitBucket += 1;
+          break;
+        case SSL_LIBRARY_VERSION_TLS_1_1:
+          fallbackLimitBucket += 2;
+          break;
+        case SSL_LIBRARY_VERSION_TLS_1_2:
+          fallbackLimitBucket += 3;
+          break;
+      }
+    }
+    // added if the version has reached the fallback limit.
+    if (intolerant <= mVersionFallbackLimit) {
+      switch (mVersionFallbackLimit) {
+        case SSL_LIBRARY_VERSION_TLS_1_0:
+          fallbackLimitBucket += 4;
+          break;
+        case SSL_LIBRARY_VERSION_TLS_1_1:
+          fallbackLimitBucket += 8;
+          break;
+        case SSL_LIBRARY_VERSION_TLS_1_2:
+          fallbackLimitBucket += 12;
+          break;
+      }
+    }
+    if (fallbackLimitBucket) {
+      Telemetry::Accumulate(Telemetry::SSL_FALLBACK_LIMIT_REACHED,
+                            fallbackLimitBucket);
     }
 
     return false;
@@ -846,6 +949,7 @@ nsSSLIOLayerHelpers::rememberIntolerantAtVersion(const nsACString& hostName,
   }
 
   entry.intolerant = intolerant;
+  entry.intoleranceReason = intoleranceReason;
   entry.AssertInvariant();
   mTLSIntoleranceInfo.Put(key, entry);
 
@@ -878,6 +982,26 @@ nsSSLIOLayerHelpers::adjustForTLSIntolerance(const nsACString& hostName,
       range.max = entry.intolerant - 1;
     }
   }
+}
+
+PRErrorCode
+nsSSLIOLayerHelpers::getIntoleranceReason(const nsACString& hostName,
+                                          int16_t port)
+{
+  IntoleranceEntry entry;
+
+  {
+    nsCString key;
+    getSiteKey(hostName, port, key);
+
+    MutexAutoLock lock(mutex);
+    if (!mTLSIntoleranceInfo.Get(key, &entry)) {
+      return 0;
+    }
+  }
+
+  entry.AssertInvariant();
+  return entry.intoleranceReason;
 }
 
 bool nsSSLIOLayerHelpers::nsSSLIOLayerInitialized = false;
@@ -1020,6 +1144,33 @@ class SSLErrorRunnable : public SyncRunnableBase
 
 namespace {
 
+uint32_t tlsIntoleranceTelemetryBucket(PRErrorCode err)
+{
+  // returns a numeric code for where we track various errors in telemetry
+  // only errors that cause version fallback are tracked,
+  // so this is also used to determine which errors can cause version fallback
+  switch (err) {
+    case SSL_ERROR_BAD_MAC_ALERT: return 1;
+    case SSL_ERROR_BAD_MAC_READ: return 2;
+    case SSL_ERROR_HANDSHAKE_FAILURE_ALERT: return 3;
+    case SSL_ERROR_HANDSHAKE_UNEXPECTED_ALERT: return 4;
+    case SSL_ERROR_CLIENT_KEY_EXCHANGE_FAILURE: return 5;
+    case SSL_ERROR_ILLEGAL_PARAMETER_ALERT: return 6;
+    case SSL_ERROR_NO_CYPHER_OVERLAP: return 7;
+    case SSL_ERROR_BAD_SERVER: return 8;
+    case SSL_ERROR_BAD_BLOCK_PADDING: return 9;
+    case SSL_ERROR_UNSUPPORTED_VERSION: return 10;
+    case SSL_ERROR_PROTOCOL_VERSION_ALERT: return 11;
+    case SSL_ERROR_RX_MALFORMED_FINISHED: return 12;
+    case SSL_ERROR_BAD_HANDSHAKE_HASH_VALUE: return 13;
+    case SSL_ERROR_DECODE_ERROR_ALERT: return 14;
+    case SSL_ERROR_RX_UNKNOWN_ALERT: return 15;
+    case PR_CONNECT_RESET_ERROR: return 16;
+    case PR_END_OF_FILE_ERROR: return 17;
+    default: return 0;
+  }
+}
+
 bool
 retryDueToTLSIntolerance(PRErrorCode err, nsNSSSocketInfo* socketInfo)
 {
@@ -1029,49 +1180,52 @@ retryDueToTLSIntolerance(PRErrorCode err, nsNSSSocketInfo* socketInfo)
 
   SSLVersionRange range = socketInfo->GetTLSVersionRange();
 
-  uint32_t reason;
-  switch (err) {
-    case SSL_ERROR_BAD_MAC_ALERT: reason = 1; break;
-    case SSL_ERROR_BAD_MAC_READ: reason = 2; break;
-    case SSL_ERROR_HANDSHAKE_FAILURE_ALERT: reason = 3; break;
-    case SSL_ERROR_HANDSHAKE_UNEXPECTED_ALERT: reason = 4; break;
-    case SSL_ERROR_CLIENT_KEY_EXCHANGE_FAILURE: reason = 5; break;
-    case SSL_ERROR_ILLEGAL_PARAMETER_ALERT: reason = 6; break;
-    case SSL_ERROR_NO_CYPHER_OVERLAP: reason = 7; break;
-    case SSL_ERROR_BAD_SERVER: reason = 8; break;
-    case SSL_ERROR_BAD_BLOCK_PADDING: reason = 9; break;
-    case SSL_ERROR_UNSUPPORTED_VERSION: reason = 10; break;
-    case SSL_ERROR_PROTOCOL_VERSION_ALERT: reason = 11; break;
-    case SSL_ERROR_RX_MALFORMED_FINISHED: reason = 12; break;
-    case SSL_ERROR_BAD_HANDSHAKE_HASH_VALUE: reason = 13; break;
-    case SSL_ERROR_DECODE_ERROR_ALERT: reason = 14; break;
-    case SSL_ERROR_RX_UNKNOWN_ALERT: reason = 15; break;
+  if (err == SSL_ERROR_INAPPROPRIATE_FALLBACK_ALERT) {
+    // This is a clear signal that we've fallen back too many versions.  Treat
+    // this as a hard failure now, but also mark the next higher version as
+    // being tolerant so that later attempts don't use this version (i.e.,
+    // range.max), which makes the error unrecoverable without a full restart.
 
-    case PR_CONNECT_RESET_ERROR: reason = 16; goto conditional;
-    case PR_END_OF_FILE_ERROR: reason = 17; goto conditional;
+    // First, track the original cause of the version fallback.  This uses the
+    // same buckets as the telemetry below, except that bucket 0 will include
+    // all cases where there wasn't an original reason.
+    PRErrorCode originalReason = socketInfo->SharedState().IOLayerHelpers()
+      .getIntoleranceReason(socketInfo->GetHostName(), socketInfo->GetPort());
+    Telemetry::Accumulate(Telemetry::SSL_VERSION_FALLBACK_INAPPROPRIATE,
+                          tlsIntoleranceTelemetryBucket(originalReason));
 
-      // When not using a proxy we'll see a connection reset error.
-      // When using a proxy, we'll see an end of file error.
-      // In addition check for some error codes where it is reasonable
-      // to retry without TLS.
+    socketInfo->SharedState().IOLayerHelpers()
+      .rememberTolerantAtVersion(socketInfo->GetHostName(),
+                                 socketInfo->GetPort(),
+                                 range.max + 1);
 
-      // Don't allow STARTTLS connections to fall back on connection resets or
-      // EOF. Also, don't fall back from TLS 1.0 to SSL 3.0 for connection
-      // resets, because connection resets have too many false positives,
-      // and we want to maximize how often we send TLS 1.0+ with extensions
-      // if at all reasonable. Unfortunately, it appears we have to allow
-      // fallback from TLS 1.2 and TLS 1.1 for connection resets due to bad
-      // servers and possibly bad intermediaries.
-    conditional:
-      if ((err == PR_CONNECT_RESET_ERROR &&
-           range.max <= SSL_LIBRARY_VERSION_TLS_1_0) ||
-          socketInfo->GetForSTARTTLS()) {
-        return false;
-      }
-      break;
+    return false;
+  }
 
-    default:
-      return false;
+  // When not using a proxy we'll see a connection reset error.
+  // When using a proxy, we'll see an end of file error.
+  // In addition check for some error codes where it is reasonable
+  // to retry without TLS.
+
+  // Don't allow STARTTLS connections to fall back on connection resets or
+  // EOF. Also, don't fall back from TLS 1.0 to SSL 3.0 for connection
+  // resets, because connection resets have too many false positives,
+  // and we want to maximize how often we send TLS 1.0+ with extensions
+  // if at all reasonable. Unfortunately, it appears we have to allow
+  // fallback from TLS 1.2 and TLS 1.1 for connection resets due to bad
+  // servers and possibly bad intermediaries.
+  if (err == PR_CONNECT_RESET_ERROR &&
+      range.max <= SSL_LIBRARY_VERSION_TLS_1_0) {
+    return false;
+  }
+  if ((err == PR_CONNECT_RESET_ERROR || err == PR_END_OF_FILE_ERROR)
+      && socketInfo->GetForSTARTTLS()) {
+    return false;
+  }
+
+  uint32_t reason = tlsIntoleranceTelemetryBucket(err);
+  if (reason == 0) {
+    return false;
   }
 
   Telemetry::ID pre;
@@ -1105,7 +1259,7 @@ retryDueToTLSIntolerance(PRErrorCode err, nsNSSSocketInfo* socketInfo)
   if (!socketInfo->SharedState().IOLayerHelpers()
                  .rememberIntolerantAtVersion(socketInfo->GetHostName(),
                                               socketInfo->GetPort(),
-                                              range.min, range.max)) {
+                                              range.min, range.max, err)) {
     return false;
   }
 
@@ -2183,16 +2337,15 @@ ClientAuthDataRunnable::RunOnTargetThread()
       NS_ASSERTION(nicknames->numnicknames == NumberOfCerts, "nicknames->numnicknames != NumberOfCerts");
 
       // Get CN and O of the subject and O of the issuer
-      char* ccn = CERT_GetCommonName(&mServerCert->subject);
-      void* v = ccn;
-      voidCleaner ccnCleaner(v);
-      NS_ConvertUTF8toUTF16 cn(ccn);
+      mozilla::pkix::ScopedPtr<char, PORT_Free_string> ccn(
+        CERT_GetCommonName(&mServerCert->subject));
+      NS_ConvertUTF8toUTF16 cn(ccn.get());
 
       int32_t port;
       mSocketInfo->GetPort(&port);
 
       nsString cn_host_port;
-      if (ccn && strcmp(ccn, hostname) == 0) {
+      if (ccn && strcmp(ccn.get(), hostname) == 0) {
         cn_host_port.Append(cn);
         cn_host_port.Append(':');
         cn_host_port.AppendInt(port);
@@ -2413,6 +2566,8 @@ nsSSLIOLayerSetOptions(PRFileDesc* fd, bool forSTARTTLS,
     return NS_ERROR_FAILURE;
   }
 
+ uint16_t maxEnabledVersion = range.max;
+
   infoObject->SharedState().IOLayerHelpers()
     .adjustForTLSIntolerance(infoObject->GetHostName(), infoObject->GetPort(),
                              range);
@@ -2425,6 +2580,16 @@ nsSSLIOLayerSetOptions(PRFileDesc* fd, bool forSTARTTLS,
     return NS_ERROR_FAILURE;
   }
   infoObject->SetTLSVersionRange(range);
+
+  // when adjustForTLSIntolerance tweaks the maximum version downward,
+  // we tell the server using this SCSV so they can detect a downgrade attack
+  if (range.max < maxEnabledVersion) {
+    PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
+           ("[%p] nsSSLIOLayerSetOptions: enabling TLS_FALLBACK_SCSV\n", fd));
+    if (SECSuccess != SSL_OptionSet(fd, SSL_ENABLE_FALLBACK_SCSV, true)) {
+      return NS_ERROR_FAILURE;
+    }
+  }
 
   bool enabled = infoObject->SharedState().IsOCSPStaplingEnabled();
   if (SECSuccess != SSL_OptionSet(fd, SSL_ENABLE_OCSP_STAPLING, enabled)) {

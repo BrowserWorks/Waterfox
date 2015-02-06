@@ -13,7 +13,7 @@ if CONFIG['VPX_NEED_OBJ_INT_EXTRACT']:
         'build/make/obj_int_extract.c',
     ]
 
-    HOST_PROGRAM = 'host_obj_int_extract'
+    HostProgram('host_obj_int_extract')
 
 # Unify fewer files together to reduce the chance of name collision
 FILES_PER_UNIFIED_FILE = 8
@@ -61,6 +61,10 @@ if CONFIG['VPX_ARM_ASM']:
         ]
     else:
         SOURCES += sorted(arm_asm_files)
+
+    for f in SOURCES:
+        if f.endswith('.c') and 'neon' in f:
+            SOURCES[f].flags += ['-march=armv7-a', '-mthumb', '-mfloat-abi=softfp', '-mfpu=neon']
 
 # boolhuff_armv5te.asm defines the same functions as boolhuff.c instead of
 # using RTCD, so we have to make sure we only add one of the two.

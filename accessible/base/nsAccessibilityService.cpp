@@ -34,6 +34,7 @@
 #include "States.h"
 #include "Statistics.h"
 #include "TextLeafAccessibleWrap.h"
+#include "TreeWalker.h"
 
 #ifdef MOZ_ACCESSIBILITY_ATK
 #include "AtkSocketAccessible.h"
@@ -56,7 +57,7 @@
 #include "nsImageFrame.h"
 #include "nsIObserverService.h"
 #include "nsLayoutUtils.h"
-#include "nsObjectFrame.h"
+#include "nsPluginFrame.h"
 #include "nsSVGPathGeometryFrame.h"
 #include "nsTreeBodyFrame.h"
 #include "nsTreeColumns.h"
@@ -262,11 +263,11 @@ NS_IMPL_ISUPPORTS(PluginTimerCallBack, nsITimerCallback)
 #endif
 
 already_AddRefed<Accessible>
-nsAccessibilityService::CreatePluginAccessible(nsObjectFrame* aFrame,
+nsAccessibilityService::CreatePluginAccessible(nsPluginFrame* aFrame,
                                                nsIContent* aContent,
                                                Accessible* aContext)
 {
-  // nsObjectFrame means a plugin, so we need to use the accessibility support
+  // nsPluginFrame means a plugin, so we need to use the accessibility support
   // of the plugin.
   if (aFrame->GetRect().IsEmpty())
     return nullptr;
@@ -391,22 +392,44 @@ nsAccessibilityService::ContentRangeInserted(nsIPresShell* aPresShell,
 
 void
 nsAccessibilityService::ContentRemoved(nsIPresShell* aPresShell,
-                                       nsIContent* aContainer,
-                                       nsIContent* aChild)
+                                       nsIContent* aChildNode)
 {
 #ifdef A11Y_LOG
   if (logging::IsEnabled(logging::eTree)) {
     logging::MsgBegin("TREE", "content removed");
-    logging::Node("container", aContainer);
-    logging::Node("content", aChild);
+    logging::Node("container", aChildNode->GetFlattenedTreeParent());
+    logging::Node("content", aChildNode);
+  }
+#endif
+
+  DocAccessible* document = GetDocAccessible(aPresShell);
+  if (document) {
+    // Flatten hierarchy may be broken at this point so we cannot get a true
+    // container by traversing up the DOM tree. Find a parent of first accessible
+    // from the subtree of the given DOM node, that'll be a container. If no
+    // accessibles in subtree then we don't care about the change.
+    Accessible* child = document->GetAccessible(aChildNode);
+    if (!child) {
+      a11y::TreeWalker walker(document->GetContainerAccessible(aChildNode),
+                              aChildNode, a11y::TreeWalker::eWalkCache);
+      child = walker.NextChild();
+    }
+
+    if (child) {
+      document->ContentRemoved(child->Parent(), aChildNode);
+#ifdef A11Y_LOG
+      if (logging::IsEnabled(logging::eTree))
+        logging::AccessibleNNode("real container", child->Parent());
+#endif
+    }
+  }
+
+#ifdef A11Y_LOG
+  if (logging::IsEnabled(logging::eTree)) {
     logging::MsgEnd();
     logging::Stack();
   }
 #endif
-
-  DocAccessible* docAccessible = GetDocAccessible(aPresShell);
-  if (docAccessible)
-    docAccessible->ContentRemoved(aContainer, aChild);
 }
 
 void
@@ -1596,8 +1619,8 @@ nsAccessibilityService::CreateAccessibleByFrameType(nsIFrame* aFrame,
       newAcc = new OuterDocAccessible(aContent, document);
       break;
     case ePluginType: {
-      nsObjectFrame* objectFrame = do_QueryFrame(aFrame);
-      newAcc = CreatePluginAccessible(objectFrame, aContent, aContext);
+      nsPluginFrame* pluginFrame = do_QueryFrame(aFrame);
+      newAcc = CreatePluginAccessible(pluginFrame, aContent, aContext);
       break;
     }
     case eTextLeafType:

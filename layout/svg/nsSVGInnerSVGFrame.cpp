@@ -61,8 +61,8 @@ nsSVGInnerSVGFrame::GetType() const
 
 nsresult
 nsSVGInnerSVGFrame::PaintSVG(nsRenderingContext *aContext,
-                             const nsIntRect *aDirtyRect,
-                             nsIFrame* aTransformRoot)
+                             const gfxMatrix& aTransform,
+                             const nsIntRect *aDirtyRect)
 {
   NS_ASSERTION(!NS_SVGDisplayListPaintingEnabled() ||
                (mState & NS_FRAME_IS_NONDISPLAY),
@@ -80,17 +80,14 @@ nsSVGInnerSVGFrame::PaintSVG(nsRenderingContext *aContext,
       return NS_OK;
     }
 
-    nsSVGContainerFrame *parent = static_cast<nsSVGContainerFrame*>(GetParent());
-    gfxMatrix clipTransform = parent->GetCanvasTM(FOR_PAINTING, aTransformRoot);
-
     gfxContext *gfx = aContext->ThebesContext();
     autoSR.SetContext(gfx);
     gfxRect clipRect =
       nsSVGUtils::GetClipRectForFrame(this, x, y, width, height);
-    nsSVGUtils::SetClipRect(gfx, clipTransform, clipRect);
+    nsSVGUtils::SetClipRect(gfx, aTransform, clipRect);
   }
 
-  return nsSVGInnerSVGFrameBase::PaintSVG(aContext, aDirtyRect);
+  return nsSVGInnerSVGFrameBase::PaintSVG(aContext, aTransform, aDirtyRect);
 }
 
 nsRect
@@ -103,7 +100,7 @@ nsSVGInnerSVGFrame::GetCoveredRegion()
   if (h < 0.0f) h = 0.0f;
   // GetCanvasTM includes the x,y translation
   nsRect bounds = nsSVGUtils::ToCanvasBounds(gfxRect(0.0, 0.0, w, h),
-                                             GetCanvasTM(FOR_OUTERSVG_TM),
+                                             GetCanvasTM(),
                                              PresContext());
 
   if (!StyleDisplay()->IsScrollableOverflow()) {
@@ -292,22 +289,15 @@ nsSVGInnerSVGFrame::NotifyViewportOrTransformChanged(uint32_t aFlags)
 // nsSVGContainerFrame methods:
 
 gfxMatrix
-nsSVGInnerSVGFrame::GetCanvasTM(uint32_t aFor, nsIFrame* aTransformRoot)
+nsSVGInnerSVGFrame::GetCanvasTM()
 {
-  if (!(GetStateBits() & NS_FRAME_IS_NONDISPLAY) && !aTransformRoot) {
-    if (aFor == FOR_PAINTING && NS_SVGDisplayListPaintingEnabled()) {
-      return nsSVGIntegrationUtils::GetCSSPxToDevPxMatrix(this);
-    }
-  }
   if (!mCanvasTM) {
     NS_ASSERTION(GetParent(), "null parent");
 
     nsSVGContainerFrame *parent = static_cast<nsSVGContainerFrame*>(GetParent());
     SVGSVGElement *content = static_cast<SVGSVGElement*>(mContent);
 
-    gfxMatrix tm = content->PrependLocalTransformsTo(
-        this == aTransformRoot ? gfxMatrix() :
-                                 parent->GetCanvasTM(aFor, aTransformRoot));
+    gfxMatrix tm = content->PrependLocalTransformsTo(parent->GetCanvasTM());
 
     mCanvasTM = new gfxMatrix(tm);
   }

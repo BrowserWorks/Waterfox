@@ -417,9 +417,8 @@ protected:
   }
 
   /**
-   * EnsureComposition() should be composition event handlers or text event
-   * handler.  This tries to get the composition for the event and set it to
-   * mComposition.
+   * EnsureComposition() should be called by composition event handlers.  This
+   * tries to get the composition for the event and set it to mComposition.
    */
   void EnsureComposition(mozilla::WidgetGUIEvent* aEvent);
 
@@ -800,9 +799,6 @@ public:
   // a host of the editor, i.e., the editor doesn't get focus, this does
   // nothing.
   nsresult InitializeSelection(nsIDOMEventTarget* aFocusEventTarget);
-
-  // Finalizes selection and caret for the editor.
-  void FinalizeSelection();
 
   // This method has to be called by nsEditorEventListener::Focus.
   // All actions that have to be done when the editor is focused needs to be

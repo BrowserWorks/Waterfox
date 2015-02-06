@@ -24,9 +24,9 @@ class SharedSSLState;
 
 class nsIObserver;
 
-class nsNSSSocketInfo : public mozilla::psm::TransportSecurityInfo,
-                        public nsISSLSocketControl,
-                        public nsIClientAuthUserDecision
+class nsNSSSocketInfo MOZ_FINAL : public mozilla::psm::TransportSecurityInfo,
+                                  public nsISSLSocketControl,
+                                  public nsIClientAuthUserDecision
 {
 public:
   nsNSSSocketInfo(mozilla::psm::SharedSSLState& aState, uint32_t providerFlags);
@@ -113,6 +113,22 @@ public:
 
   void SetMACAlgorithmUsed(int16_t mac) { mMACAlgorithmUsed = mac; }
 
+  inline bool GetBypassAuthentication()
+  {
+    bool result = false;
+    mozilla::DebugOnly<nsresult> rv = GetBypassAuthentication(&result);
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
+    return result;
+  }
+
+  inline int32_t GetAuthenticationPort()
+  {
+    int32_t result = -1;
+    mozilla::DebugOnly<nsresult> rv = GetAuthenticationPort(&result);
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
+    return result;
+  }
+
 protected:
   virtual ~nsNSSSocketInfo();
 
@@ -139,6 +155,7 @@ private:
   bool      mJoined;
   bool      mSentClientCert;
   bool      mNotedTimeUntilReady;
+  bool      mFailedVerification;
 
   // mKEA* are used in false start and http/2 detetermination
   // Values are from nsISSLSocketControl
@@ -147,6 +164,7 @@ private:
   uint32_t mKEAKeyBits;
   int16_t mSSLVersionUsed;
   int16_t mMACAlgorithmUsed;
+  bool    mBypassAuthentication;
 
   uint32_t mProviderFlags;
   mozilla::TimeStamp mSocketCreationTimestamp;
@@ -184,6 +202,7 @@ private:
   {
     uint16_t tolerant;
     uint16_t intolerant;
+    PRErrorCode intoleranceReason;
 
     void AssertInvariant() const
     {
@@ -195,9 +214,11 @@ public:
   void rememberTolerantAtVersion(const nsACString& hostname, int16_t port,
                                  uint16_t tolerant);
   bool rememberIntolerantAtVersion(const nsACString& hostname, int16_t port,
-                                   uint16_t intolerant, uint16_t minVersion);
+                                   uint16_t intolerant, uint16_t minVersion,
+                                   PRErrorCode intoleranceReason);
   void adjustForTLSIntolerance(const nsACString& hostname, int16_t port,
                                /*in/out*/ SSLVersionRange& range);
+  PRErrorCode getIntoleranceReason(const nsACString& hostname, int16_t port);
 
   void setRenegoUnrestrictedSites(const nsCString& str);
   bool isRenegoUnrestrictedSite(const nsCString& str);

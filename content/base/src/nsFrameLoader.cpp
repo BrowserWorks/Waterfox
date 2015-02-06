@@ -192,7 +192,7 @@ nsFrameLoader::Create(Element* aOwner, bool aNetworkCreated)
   NS_ENSURE_TRUE(aOwner, nullptr);
   nsIDocument* doc = aOwner->OwnerDoc();
   NS_ENSURE_TRUE(!doc->IsResourceDoc() &&
-                 ((!doc->IsLoadedAsData() && aOwner->GetCurrentDoc()) ||
+                 ((!doc->IsLoadedAsData() && aOwner->GetUncomposedDoc()) ||
                    doc->IsStaticDocument()),
                  nullptr);
 
@@ -847,10 +847,11 @@ nsFrameLoader::MarginsChanged(uint32_t aMarginWidth,
   mDocShell->SetMarginHeight(aMarginHeight);
 
   // Trigger a restyle if there's a prescontext
+  // FIXME: This could do something much less expensive.
   nsRefPtr<nsPresContext> presContext;
   mDocShell->GetPresContext(getter_AddRefs(presContext));
   if (presContext)
-    presContext->RebuildAllStyleData(nsChangeHint(0));
+    presContext->RebuildAllStyleData(nsChangeHint(0), eRestyle_Subtree);
 }
 
 bool
@@ -873,12 +874,12 @@ nsFrameLoader::ShowRemoteFrame(const nsIntSize& size,
   // want here.  For now, hack.
   if (!mRemoteBrowserShown) {
     if (!mOwnerContent ||
-        !mOwnerContent->GetCurrentDoc()) {
+        !mOwnerContent->GetUncomposedDoc()) {
       return false;
     }
 
     nsRefPtr<layers::LayerManager> layerManager =
-      nsContentUtils::LayerManagerForDocument(mOwnerContent->GetCurrentDoc());
+      nsContentUtils::LayerManagerForDocument(mOwnerContent->GetUncomposedDoc());
     if (!layerManager) {
       // This is just not going to work.
       return false;
@@ -1051,6 +1052,9 @@ nsFrameLoader::SwapWithOtherLoader(nsFrameLoader* aOther,
   nsCOMPtr<EventTarget> otherChromeEventHandler =
     do_QueryInterface(otherWindow->GetChromeEventHandler());
 
+  nsCOMPtr<EventTarget> ourEventTarget = ourWindow->GetParentTarget();
+  nsCOMPtr<EventTarget> otherEventTarget = otherWindow->GetParentTarget();
+
   NS_ASSERTION(SameCOMIdentity(ourFrameElement, ourContent) &&
                SameCOMIdentity(otherFrameElement, otherContent) &&
                SameCOMIdentity(ourChromeEventHandler, ourContent) &&
@@ -1070,8 +1074,8 @@ nsFrameLoader::SwapWithOtherLoader(nsFrameLoader* aOther,
     otherChildDocument->GetParentDocument();
 
   // Make sure to swap docshells between the two frames.
-  nsIDocument* ourDoc = ourContent->GetCurrentDoc();
-  nsIDocument* otherDoc = otherContent->GetCurrentDoc();
+  nsIDocument* ourDoc = ourContent->GetUncomposedDoc();
+  nsIDocument* otherDoc = otherContent->GetUncomposedDoc();
   if (!ourDoc || !otherDoc) {
     // Again, how odd, given that we had docshells
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1100,25 +1104,25 @@ nsFrameLoader::SwapWithOtherLoader(nsFrameLoader* aOther,
   // Fire pageshow events on still-loading pages, and then fire pagehide
   // events.  Note that we do NOT fire these in the normal way, but just fire
   // them on the chrome event handlers.
-  FirePageShowEvent(ourDocshell, ourChromeEventHandler, false);
-  FirePageShowEvent(otherDocshell, otherChromeEventHandler, false);
-  FirePageHideEvent(ourDocshell, ourChromeEventHandler);
-  FirePageHideEvent(otherDocshell, otherChromeEventHandler);
+  FirePageShowEvent(ourDocshell, ourEventTarget, false);
+  FirePageShowEvent(otherDocshell, otherEventTarget, false);
+  FirePageHideEvent(ourDocshell, ourEventTarget);
+  FirePageHideEvent(otherDocshell, otherEventTarget);
   
   nsIFrame* ourFrame = ourContent->GetPrimaryFrame();
   nsIFrame* otherFrame = otherContent->GetPrimaryFrame();
   if (!ourFrame || !otherFrame) {
     mInSwap = aOther->mInSwap = false;
-    FirePageShowEvent(ourDocshell, ourChromeEventHandler, true);
-    FirePageShowEvent(otherDocshell, otherChromeEventHandler, true);
+    FirePageShowEvent(ourDocshell, ourEventTarget, true);
+    FirePageShowEvent(otherDocshell, otherEventTarget, true);
     return NS_ERROR_NOT_IMPLEMENTED;
   }
 
   nsSubDocumentFrame* ourFrameFrame = do_QueryFrame(ourFrame);
   if (!ourFrameFrame) {
     mInSwap = aOther->mInSwap = false;
-    FirePageShowEvent(ourDocshell, ourChromeEventHandler, true);
-    FirePageShowEvent(otherDocshell, otherChromeEventHandler, true);
+    FirePageShowEvent(ourDocshell, ourEventTarget, true);
+    FirePageShowEvent(otherDocshell, otherEventTarget, true);
     return NS_ERROR_NOT_IMPLEMENTED;
   }
 
@@ -1126,8 +1130,8 @@ nsFrameLoader::SwapWithOtherLoader(nsFrameLoader* aOther,
   rv = ourFrameFrame->BeginSwapDocShells(otherFrame);
   if (NS_FAILED(rv)) {
     mInSwap = aOther->mInSwap = false;
-    FirePageShowEvent(ourDocshell, ourChromeEventHandler, true);
-    FirePageShowEvent(otherDocshell, otherChromeEventHandler, true);
+    FirePageShowEvent(ourDocshell, ourEventTarget, true);
+    FirePageShowEvent(otherDocshell, otherEventTarget, true);
     return rv;
   }
 
@@ -1230,8 +1234,8 @@ nsFrameLoader::SwapWithOtherLoader(nsFrameLoader* aOther,
   ourParentDocument->FlushPendingNotifications(Flush_Layout);
   otherParentDocument->FlushPendingNotifications(Flush_Layout);
 
-  FirePageShowEvent(ourDocshell, otherChromeEventHandler, true);
-  FirePageShowEvent(otherDocshell, ourChromeEventHandler, true);
+  FirePageShowEvent(ourDocshell, ourEventTarget, true);
+  FirePageShowEvent(otherDocshell, otherEventTarget, true);
 
   mInSwap = aOther->mInSwap = false;
   return NS_OK;

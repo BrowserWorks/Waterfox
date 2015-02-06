@@ -57,20 +57,6 @@ const EMERGENCY_CB_MODE_TIMEOUT_MS = 300000;  // 5 mins = 300000 ms.
 
 const ICC_MAX_LINEAR_FIXED_RECORDS = 0xfe;
 
-// MMI match groups
-const MMI_MATCH_GROUP_FULL_MMI = 1;
-const MMI_MATCH_GROUP_PROCEDURE = 2;
-const MMI_MATCH_GROUP_SERVICE_CODE = 3;
-const MMI_MATCH_GROUP_SIA = 4;
-const MMI_MATCH_GROUP_SIB = 5;
-const MMI_MATCH_GROUP_SIC = 6;
-const MMI_MATCH_GROUP_PWD_CONFIRM = 7;
-const MMI_MATCH_GROUP_DIALING_NUMBER = 8;
-
-const MMI_MAX_LENGTH_SHORT_CODE = 2;
-
-const MMI_END_OF_USSD = "#";
-
 const GET_CURRENT_CALLS_RETRY_MAX = 3;
 
 let RILQUIRKS_CALLSTATE_EXTRA_UINT32;
@@ -426,7 +412,7 @@ RilObject.prototype = {
     /**
      * One of the RADIO_STATE_* constants.
      */
-    this.radioState = GECKO_RADIOSTATE_UNAVAILABLE;
+    this.radioState = GECKO_RADIOSTATE_UNKNOWN;
 
     /**
      * True if we are on a CDMA phone.
@@ -1649,7 +1635,7 @@ RilObject.prototype = {
       this.sendChromeMessage(options);
     }).bind(this, options);
 
-    let isRadioOff = (this.radioState === GECKO_RADIOSTATE_OFF);
+    let isRadioOff = (this.radioState === GECKO_RADIOSTATE_DISABLED);
 
     if (options.isEmergency) {
       if (isRadioOff) {
@@ -2402,206 +2388,9 @@ RilObject.prototype = {
                                    {callback: callback});
   },
 
-  /**
-   * Parse the dial number to extract its mmi code part.
-   *
-   * @param number
-   *        Phone number to be parsed
-   */
-  parseMMIFromDialNumber: function(options) {
-    // We don't have to parse mmi in cdma.
-    if (!this._isCdma) {
-      options.mmi = this._parseMMI(options.number);
-    }
-    this.sendChromeMessage(options);
-  },
-
-  /**
-   * Helper to parse MMI/USSD string. TS.22.030 Figure 3.5.3.2.
-   */
-  _parseMMI: function(mmiString) {
-    if (!mmiString || !mmiString.length) {
-      return null;
-    }
-
-    let matches = this._getMMIRegExp().exec(mmiString);
-    if (matches) {
-      return {
-        fullMMI: matches[MMI_MATCH_GROUP_FULL_MMI],
-        procedure: matches[MMI_MATCH_GROUP_PROCEDURE],
-        serviceCode: matches[MMI_MATCH_GROUP_SERVICE_CODE],
-        sia: matches[MMI_MATCH_GROUP_SIA],
-        sib: matches[MMI_MATCH_GROUP_SIB],
-        sic: matches[MMI_MATCH_GROUP_SIC],
-        pwd: matches[MMI_MATCH_GROUP_PWD_CONFIRM],
-        dialNumber: matches[MMI_MATCH_GROUP_DIALING_NUMBER]
-      };
-    }
-
-    if (this._isPoundString(mmiString) || this._isMMIShortString(mmiString)) {
-      return {
-        fullMMI: mmiString
-      };
-    }
-
-    return null;
-  },
-
-  /**
-   * Build the regex to parse MMI string.
-   *
-   * The resulting groups after matching will be:
-   *    1 = full MMI string that might be used as a USSD request.
-   *    2 = MMI procedure.
-   *    3 = Service code.
-   *    4 = SIA.
-   *    5 = SIB.
-   *    6 = SIC.
-   *    7 = Password registration.
-   *    8 = Dialing number.
-   *
-   * @see TS.22.030 Figure 3.5.3.2.
-   */
-  _buildMMIRegExp: function() {
-    // The general structure of the codes is as follows:
-    //    - Activation (*SC*SI#).
-    //    - Deactivation (#SC*SI#).
-    //    - Interrogation (*#SC*SI#).
-    //    - Registration (**SC*SI#).
-    //    - Erasure (##SC*SI#).
-    //
-    // where SC = Service Code (2 or 3 digits) and SI = Supplementary Info
-    // (variable length).
-
-    // MMI procedure, which could be *, #, *#, **, ##
-    let procedure = "(\\*[*#]?|##?)";
-
-    // MMI Service code, which is a 2 or 3 digits that uniquely specifies the
-    // Supplementary Service associated with the MMI code.
-    let serviceCode = "(\\d{2,3})";
-
-    // MMI Supplementary Information SIA, SIB and SIC. SIA may comprise e.g. a
-    // PIN code or Directory Number, SIB may be used to specify the tele or
-    // bearer service and SIC to specify the value of the "No Reply Condition
-    // Timer". Where a particular service request does not require any SI,
-    // "*SI" is not entered. The use of SIA, SIB and SIC is optional and shall
-    // be entered in any of the following formats:
-    //    - *SIA*SIB*SIC#
-    //    - *SIA*SIB#
-    //    - *SIA**SIC#
-    //    - *SIA#
-    //    - **SIB*SIC#
-    //    - ***SIC#
-    //
-    // Also catch the additional NEW_PASSWORD for the case of a password
-    // registration procedure. Ex:
-    //    - *  03 * ZZ * OLD_PASSWORD * NEW_PASSWORD * NEW_PASSWORD #
-    //    - ** 03 * ZZ * OLD_PASSWORD * NEW_PASSWORD * NEW_PASSWORD #
-    //    - *  03 **     OLD_PASSWORD * NEW_PASSWORD * NEW_PASSWORD #
-    //    - ** 03 **     OLD_PASSWORD * NEW_PASSWORD * NEW_PASSWORD #
-    let si = "\\*([^*#]*)";
-    let allSi = "";
-    for (let i = 0; i < 4; ++i) {
-      allSi = "(?:" + si + allSi + ")?";
-    }
-
-    let fullmmi = "(" + procedure + serviceCode + allSi + "#)";
-
-    // dial string after the #.
-    let dialString = "([^#]*)";
-
-    return new RegExp(fullmmi + dialString);
-  },
-
-  /**
-   * Provide the regex to parse MMI string.
-   */
-  _getMMIRegExp: function() {
-    if (!this._mmiRegExp) {
-      this._mmiRegExp = this._buildMMIRegExp();
-    }
-
-    return this._mmiRegExp;
-  },
-
-  /**
-   * Helper to parse # string. TS.22.030 Figure 3.5.3.2.
-   */
-  _isPoundString: function(mmiString) {
-    return (mmiString.charAt(mmiString.length - 1) === MMI_END_OF_USSD);
-  },
-
-  /**
-   * Helper to parse short string. TS.22.030 Figure 3.5.3.2.
-   */
-  _isMMIShortString: function(mmiString) {
-    if (mmiString.length > 2) {
-      return false;
-    }
-
-    // TODO: Should take care of checking if the string is an emergency number
-    // in Bug 889737. See Bug 1023141 for more background.
-
-    // In a call case.
-    if (Object.getOwnPropertyNames(this.currentCalls).length > 0) {
-      return true;
-    }
-
-    // Input string is 2 digits starting with a "1"
-    if ((mmiString.length == 2) && (mmiString.charAt(0) === '1')) {
-      return false;
-    }
-
-    return true;
-  },
-
-  _serviceCodeToKeyString: function(serviceCode) {
-    switch (serviceCode) {
-      case MMI_SC_CFU:
-      case MMI_SC_CF_BUSY:
-      case MMI_SC_CF_NO_REPLY:
-      case MMI_SC_CF_NOT_REACHABLE:
-      case MMI_SC_CF_ALL:
-      case MMI_SC_CF_ALL_CONDITIONAL:
-        return MMI_KS_SC_CALL_FORWARDING;
-      case MMI_SC_PIN:
-        return MMI_KS_SC_PIN;
-      case MMI_SC_PIN2:
-        return MMI_KS_SC_PIN2;
-      case MMI_SC_PUK:
-        return MMI_KS_SC_PUK;
-      case MMI_SC_PUK2:
-        return MMI_KS_SC_PUK2;
-      case MMI_SC_IMEI:
-        return MMI_KS_SC_IMEI;
-      case MMI_SC_CLIP:
-        return MMI_KS_SC_CLIP;
-      case MMI_SC_CLIR:
-        return MMI_KS_SC_CLIR;
-      case MMI_SC_BAOC:
-      case MMI_SC_BAOIC:
-      case MMI_SC_BAOICxH:
-      case MMI_SC_BAIC:
-      case MMI_SC_BAICr:
-      case MMI_SC_BA_ALL:
-      case MMI_SC_BA_MO:
-      case MMI_SC_BA_MT:
-        return MMI_KS_SC_CALL_BARRING;
-      case MMI_SC_CALL_WAITING:
-        return MMI_KS_SC_CALL_WAITING;
-      default:
-        return MMI_KS_SC_USSD;
-    }
-  },
-
   sendMMI: function(options) {
     if (DEBUG) {
       this.context.debug("SendMMI " + JSON.stringify(options));
-    }
-
-    let mmi = this._parseMMI(options.mmi);
-    if (DEBUG) {
-      this.context.debug("MMI " + JSON.stringify(mmi));
     }
 
     let _sendMMIError = (function(errorMsg) {
@@ -2611,13 +2400,11 @@ RilObject.prototype = {
     }).bind(this);
 
     // It's neither a valid mmi code nor an ongoing ussd.
+    let mmi = options.mmi;
     if (!mmi && !this._ussdSession) {
       _sendMMIError(MMI_ERROR_KS_ERROR);
       return;
     }
-
-    options.mmiServiceCode = mmi ?
-      this._serviceCodeToKeyString(mmi.serviceCode) : MMI_KS_SC_USSD;
 
     function _isValidPINPUKRequest() {
       // The only allowed MMI procedure for ICC PIN, PIN2, PUK and PUK2 handling
@@ -2648,7 +2435,7 @@ RilObject.prototype = {
     }
 
     let _isRadioAvailable = (function() {
-      if (this.radioState !== GECKO_RADIOSTATE_READY) {
+      if (this.radioState !== GECKO_RADIOSTATE_ENABLED) {
         _sendMMIError(GECKO_ERROR_RADIO_NOT_AVAILABLE);
         return false;
       }
@@ -2938,6 +2725,13 @@ RilObject.prototype = {
   queryCallBarringStatus: function(options) {
     options.facility = CALL_BARRING_PROGRAM_TO_FACILITY[options.program];
     options.password = ""; // For query no need to provide it.
+
+    // For some operators, querying specific serviceClass doesn't work. We use
+    // serviceClass 0 instead, and then process the response to extract the
+    // answer for queryServiceClass.
+    options.queryServiceClass = options.serviceClass;
+    options.serviceClass = 0;
+
     this.queryICCFacilityLock(options);
   },
 
@@ -3471,14 +3265,6 @@ RilObject.prototype = {
       return;
     }
 
-    let ICCRecordHelper = this.context.ICCRecordHelper;
-    // Try to get iccId only when cardState left GECKO_CARDSTATE_UNDETECTED.
-    if (iccStatus.cardState === CARD_STATE_PRESENT &&
-        (this.cardState === GECKO_CARDSTATE_UNINITIALIZED ||
-         this.cardState === GECKO_CARDSTATE_UNDETECTED)) {
-      ICCRecordHelper.readICCID();
-    }
-
     if (RILQUIRKS_SUBSCRIPTION_CONTROL) {
       // All appIndex is -1 means the subscription is not activated yet.
       // Note that we don't support "ims" for now, so we don't take it into
@@ -3489,7 +3275,7 @@ RilObject.prototype = {
           // Note: setUiccSubscription works abnormally when RADIO is OFF,
           // which causes SMS function broken in Flame.
           // See bug 1008557 for detailed info.
-          this.radioState === GECKO_RADIOSTATE_READY) {
+          this.radioState === GECKO_RADIOSTATE_ENABLED) {
         for (let i = 0; i < iccStatus.apps.length; i++) {
           this.setUiccSubscription({appIndex: i, enabled: true});
         }
@@ -3539,6 +3325,14 @@ RilObject.prototype = {
       newCardState = GECKO_CARDSTATE_UNKNOWN;
     }
 
+    let ICCRecordHelper = this.context.ICCRecordHelper;
+    // Try to get iccId only when cardState left GECKO_CARDSTATE_UNDETECTED.
+    if (iccStatus.cardState === CARD_STATE_PRESENT &&
+        (this.cardState === GECKO_CARDSTATE_UNINITIALIZED ||
+         this.cardState === GECKO_CARDSTATE_UNDETECTED)) {
+      ICCRecordHelper.readICCID();
+    }
+
     if (this.cardState == newCardState) {
       return;
     }
@@ -3576,36 +3370,34 @@ RilObject.prototype = {
       return;
     }
 
-    let mmiServiceCode = options.mmiServiceCode;
+    let serviceCode = options.mmi.serviceCode;
 
     if (options.success) {
-      switch (mmiServiceCode) {
-        case MMI_KS_SC_PIN:
+      switch (serviceCode) {
+        case MMI_SC_PIN:
           options.statusMessage = MMI_SM_KS_PIN_CHANGED;
           break;
-        case MMI_KS_SC_PIN2:
+        case MMI_SC_PIN2:
           options.statusMessage = MMI_SM_KS_PIN2_CHANGED;
           break;
-        case MMI_KS_SC_PUK:
+        case MMI_SC_PUK:
           options.statusMessage = MMI_SM_KS_PIN_UNBLOCKED;
           break;
-        case MMI_KS_SC_PUK2:
+        case MMI_SC_PUK2:
           options.statusMessage = MMI_SM_KS_PIN2_UNBLOCKED;
           break;
       }
     } else {
       if (options.retryCount <= 0) {
-        if (mmiServiceCode === MMI_KS_SC_PUK) {
+        if (serviceCode === MMI_SC_PUK) {
           options.errorMsg = MMI_ERROR_KS_SIM_BLOCKED;
-        } else if (mmiServiceCode === MMI_KS_SC_PIN) {
+        } else if (serviceCode === MMI_SC_PIN) {
           options.errorMsg = MMI_ERROR_KS_NEEDS_PUK;
         }
       } else {
-        if (mmiServiceCode === MMI_KS_SC_PIN ||
-            mmiServiceCode === MMI_KS_SC_PIN2) {
+        if (serviceCode === MMI_SC_PIN || serviceCode === MMI_SC_PIN2) {
           options.errorMsg = MMI_ERROR_KS_BAD_PIN;
-        } else if (mmiServiceCode === MMI_KS_SC_PUK ||
-                   mmiServiceCode === MMI_KS_SC_PUK2) {
+        } else if (serviceCode === MMI_SC_PUK || serviceCode === MMI_SC_PUK2) {
           options.errorMsg = MMI_ERROR_KS_BAD_PUK;
         }
         if (options.retryCount !== undefined) {
@@ -4336,10 +4128,8 @@ RilObject.prototype = {
     // can be removed if is the same as the current one.
     for each (let newDataCall in datacalls) {
       if (newDataCall.status != DATACALL_FAIL_NONE) {
-        if (newDataCallOptions) {
-          newDataCall.apn = newDataCallOptions.apn;
-        }
-        this._sendDataCallError(newDataCall, newDataCall.status);
+        this._sendDataCallError(newDataCallOptions || newDataCall,
+                                newDataCall.status);
       }
     }
 
@@ -6042,7 +5832,7 @@ RilObject.prototype[REQUEST_QUERY_CALL_FORWARD_STATUS] =
   this.sendChromeMessage(options);
 };
 RilObject.prototype[REQUEST_SET_CALL_FORWARD] =
-  function REQUEST_SET_CALL_FORWARD(length, options) {
+    function REQUEST_SET_CALL_FORWARD(length, options) {
   options.success = (options.rilRequestError === 0);
   if (!options.success) {
     options.errorMsg = RIL_ERROR_TO_GECKO_ERROR[options.rilRequestError];
@@ -6145,20 +5935,23 @@ RilObject.prototype[REQUEST_QUERY_FACILITY_LOCK] = function REQUEST_QUERY_FACILI
     return;
   }
 
-  let services;
-  if (length) {
-    // Buf.readInt32List()[0] for Call Barring is a bit vector of services.
-    services = this.context.Buf.readInt32List()[0];
-  } else {
+  if (!length) {
     options.success = false;
     options.errorMsg = GECKO_ERROR_GENERIC_FAILURE;
     this.sendChromeMessage(options);
     return;
   }
 
-  options.enabled = services === 0 ? false : true;
+  // Buf.readInt32List()[0] for Call Barring is a bit vector of services.
+  let services = this.context.Buf.readInt32List()[0];
 
-  if (options.success && (options.rilMessageType === "sendMMI")) {
+  if (options.queryServiceClass) {
+    options.enabled = (services & options.queryServiceClass) ? true : false;
+  } else {
+    options.enabled = services ? true : false;
+  }
+
+  if (options.rilMessageType === "sendMMI") {
     if (!options.enabled) {
       options.statusMessage = MMI_SM_KS_SERVICE_DISABLED;
     } else {
@@ -6825,11 +6618,11 @@ RilObject.prototype[UNSOLICITED_RESPONSE_RADIO_STATE_CHANGED] = function UNSOLIC
   let radioState = this.context.Buf.readInt32();
   let newState;
   if (radioState == RADIO_STATE_UNAVAILABLE) {
-    newState = GECKO_RADIOSTATE_UNAVAILABLE;
+    newState = GECKO_RADIOSTATE_UNKNOWN;
   } else if (radioState == RADIO_STATE_OFF) {
-    newState = GECKO_RADIOSTATE_OFF;
+    newState = GECKO_RADIOSTATE_DISABLED;
   } else {
-    newState = GECKO_RADIOSTATE_READY;
+    newState = GECKO_RADIOSTATE_ENABLED;
   }
 
   if (DEBUG) {
@@ -6864,9 +6657,9 @@ RilObject.prototype[UNSOLICITED_RESPONSE_RADIO_STATE_CHANGED] = function UNSOLIC
     break;
   }
 
-  if ((this.radioState == GECKO_RADIOSTATE_UNAVAILABLE ||
-       this.radioState == GECKO_RADIOSTATE_OFF) &&
-       newState == GECKO_RADIOSTATE_READY) {
+  if ((this.radioState == GECKO_RADIOSTATE_UNKNOWN ||
+       this.radioState == GECKO_RADIOSTATE_DISABLED) &&
+       newState == GECKO_RADIOSTATE_ENABLED) {
     // The radio became available, let's get its info.
     if (!this._waitingRadioTech) {
       if (this._isCdma) {
@@ -6953,7 +6746,14 @@ RilObject.prototype[UNSOLICITED_ON_USSD] = function UNSOLICITED_ON_USSD() {
     this.context.debug("On USSD. Type Code: " + typeCode + " Message: " + message);
   }
 
-  this._ussdSession = (typeCode != "0" && typeCode != "2");
+  let oldSession = this._ussdSession;
+
+  // Per ril.h the USSD session is assumed to persist if the type code is "1".
+  this._ussdSession = typeCode == "1";
+
+  if (!oldSession && !this._ussdSession && !message) {
+    return;
+  }
 
   this.sendChromeMessage({rilMessageType: "ussdreceived",
                           message: message,
@@ -7111,7 +6911,11 @@ RilObject.prototype[UNSOLICITED_CDMA_CALL_WAITING] = function UNSOLICITED_CDMA_C
                           waitingCall: call});
 };
 RilObject.prototype[UNSOLICITED_CDMA_OTA_PROVISION_STATUS] = function UNSOLICITED_CDMA_OTA_PROVISION_STATUS() {
-  let status = this.context.Buf.readInt32List()[0];
+  let status =
+    CDMA_OTA_PROVISION_STATUS_TO_GECKO[this.context.Buf.readInt32List()[0]];
+  if (!status) {
+    return;
+  }
   this.sendChromeMessage({rilMessageType: "otastatuschange",
                           status: status});
 };
@@ -10747,6 +10551,32 @@ StkCommandParamsFactoryObject.prototype = {
     return method.call(this, cmdDetails, ctlvs);
   },
 
+  loadIconIfNecessary: function(cmdDetails, ctlvs, ret) {
+    let ctlv =
+      this.context.StkProactiveCmdHelper
+                  .searchForTag(COMPREHENSIONTLV_TAG_ICON_ID, ctlvs);
+    if (!ctlv || !this.context.ICCUtilsHelper.isICCServiceAvailable("IMG")) {
+      return ret;
+    }
+
+    let iconId = ctlv.value;
+    ret.iconSelfExplanatory = iconId.qualifier == 0 ? true : false;
+
+    let onerror = (function() {
+      this.context.RIL.sendChromeMessage(cmdDetails);
+    }).bind(this);
+
+    let onsuccess = (function(result) {
+      ret.icons = result[0];
+      this.context.RIL.sendChromeMessage(cmdDetails);
+    }).bind(this);
+
+    ret.pending = true;
+    this.context.IconLoader.loadIcons([iconId.identifier], onsuccess, onerror);
+
+    return ret;
+  },
+
   /**
    * Construct a param for Refresh.
    *
@@ -10956,27 +10786,7 @@ StkCommandParamsFactoryObject.prototype = {
       textMsg.userClear = true;
     }
 
-    ctlv = StkProactiveCmdHelper.searchForTag(COMPREHENSIONTLV_TAG_ICON_ID, ctlvs);
-    if (!ctlv || !this.context.ICCUtilsHelper.isICCServiceAvailable("IMG")) {
-      return textMsg;
-    }
-
-    let iconId = ctlv.value;
-    textMsg.iconSelfExplanatory = iconId.qualifier == 0 ? true : false;
-
-    let onerror = (function() {
-      this.context.RIL.sendChromeMessage(cmdDetails);
-    }).bind(this);
-
-    let onsuccess = (function(result) {
-      textMsg.icons = result[0];
-      this.context.RIL.sendChromeMessage(cmdDetails);
-    }).bind(this);
-
-    textMsg.pending = true;
-    this.context.IconLoader.loadIcons([iconId.identifier], onsuccess, onerror);
-
-    return textMsg;
+    return this.loadIconIfNecessary(cmdDetails, ctlvs, textMsg);
   },
 
   processSetUpIdleModeText: function(cmdDetails, ctlvs) {
@@ -10993,27 +10803,7 @@ StkCommandParamsFactoryObject.prototype = {
     }
     textMsg.text = ctlv.value.textString;
 
-    ctlv = StkProactiveCmdHelper.searchForTag(COMPREHENSIONTLV_TAG_ICON_ID, ctlvs);
-    if (!ctlv || !this.context.ICCUtilsHelper.isICCServiceAvailable("IMG")) {
-      return textMsg;
-    }
-
-    let iconId = ctlv.value;
-    textMsg.iconSelfExplanatory = iconId.qualifier == 0 ? true : false;
-
-    let onerror = (function() {
-      this.context.RIL.sendChromeMessage(cmdDetails);
-    }).bind(this);
-
-    let onsuccess = (function(result) {
-      textMsg.icons = result[0];
-      this.context.RIL.sendChromeMessage(cmdDetails);
-    }).bind(this);
-
-    textMsg.pending = true;
-    this.context.IconLoader.loadIcons([iconId.identifier], onsuccess, onerror);
-
-    return textMsg;
+    return this.loadIconIfNecessary(cmdDetails, ctlvs, textMsg);
   },
 
   processGetInkey: function(cmdDetails, ctlvs) {
@@ -11060,27 +10850,7 @@ StkCommandParamsFactoryObject.prototype = {
       input.isHelpAvailable = true;
     }
 
-    ctlv = StkProactiveCmdHelper.searchForTag(COMPREHENSIONTLV_TAG_ICON_ID, ctlvs);
-    if (!ctlv || !this.context.ICCUtilsHelper.isICCServiceAvailable("IMG")) {
-      return input;
-    }
-
-    let iconId = ctlv.value;
-    input.iconSelfExplanatory = iconId.qualifier == 0 ? true : false;
-
-    let onerror = (function() {
-      this.context.RIL.sendChromeMessage(cmdDetails);
-    }).bind(this);
-
-    let onsuccess = (function(result) {
-      input.icons = result[0];
-      this.context.RIL.sendChromeMessage(cmdDetails);
-    }).bind(this);
-
-    input.pending = true;
-    this.context.IconLoader.loadIcons([iconId.identifier], onsuccess, onerror);
-
-    return input;
+    return this.loadIconIfNecessary(cmdDetails, ctlvs, input);
   },
 
   processGetInput: function(cmdDetails, ctlvs) {
@@ -11132,27 +10902,7 @@ StkCommandParamsFactoryObject.prototype = {
       input.isHelpAvailable = true;
     }
 
-    ctlv = StkProactiveCmdHelper.searchForTag(COMPREHENSIONTLV_TAG_ICON_ID, ctlvs);
-    if (!ctlv || !this.context.ICCUtilsHelper.isICCServiceAvailable("IMG")) {
-      return input;
-    }
-
-    let iconId = ctlv.value;
-    input.iconSelfExplanatory = iconId.qualifier == 0 ? true : false;
-
-    let onerror = (function() {
-      this.context.RIL.sendChromeMessage(cmdDetails);
-    }).bind(this);
-
-    let onsuccess = (function(result) {
-      input.icons = result[0];
-      this.context.RIL.sendChromeMessage(cmdDetails);
-    }).bind(this);
-
-    input.pending = true;
-    this.context.IconLoader.loadIcons([iconId.identifier], onsuccess, onerror);
-
-    return input;
+    return this.loadIconIfNecessary(cmdDetails, ctlvs, input);
   },
 
   processEventNotify: function(cmdDetails, ctlvs) {
@@ -11165,28 +10915,7 @@ StkCommandParamsFactoryObject.prototype = {
       textMsg.text = ctlv.value.identifier;
     }
 
-    ctlv = StkProactiveCmdHelper.searchForTag(
-      COMPREHENSIONTLV_TAG_ICON_ID, ctlvs);
-    if (!ctlv || !this.context.ICCUtilsHelper.isICCServiceAvailable("IMG")) {
-      return textMsg;
-    }
-
-    let iconId = ctlv.value;
-    textMsg.iconSelfExplanatory = iconId.qualifier == 0 ? true : false;
-
-    let onerror = (function() {
-      this.context.RIL.sendChromeMessage(cmdDetails);
-    }).bind(this);
-
-    let onsuccess = (function(result) {
-      textMsg.icons = result[0];
-      this.context.RIL.sendChromeMessage(cmdDetails);
-    }).bind(this);
-
-    textMsg.pending = true;
-    this.context.IconLoader.loadIcons([iconId.identifier], onsuccess, onerror);
-
-    return textMsg;
+    return this.loadIconIfNecessary(cmdDetails, ctlvs, textMsg);
   },
 
   processSetupCall: function(cmdDetails, ctlvs) {
@@ -11219,27 +10948,7 @@ StkCommandParamsFactoryObject.prototype = {
       call.duration = ctlv.value;
     }
 
-    ctlv = StkProactiveCmdHelper.searchForTag(COMPREHENSIONTLV_TAG_ICON_ID, ctlvs);
-    if (!ctlv || !this.context.ICCUtilsHelper.isICCServiceAvailable("IMG")) {
-      return call;
-    }
-
-    let iconId = ctlv.value;
-    call.iconSelfExplanatory = iconId.qualifier == 0 ? true : false;
-
-    let onerror = (function() {
-      this.context.RIL.sendChromeMessage(cmdDetails);
-    }).bind(this);
-
-    let onsuccess = (function(result) {
-      call.icons = result[0];
-      this.context.RIL.sendChromeMessage(cmdDetails);
-    }).bind(this);
-
-    call.pending = true;
-    this.context.IconLoader.loadIcons([iconId.identifier], onsuccess, onerror);
-
-    return call;
+    return this.loadIconIfNecessary(cmdDetails, ctlvs, call);
   },
 
   processLaunchBrowser: function(cmdDetails, ctlvs) {
@@ -11262,27 +10971,7 @@ StkCommandParamsFactoryObject.prototype = {
 
     browser.mode = cmdDetails.commandQualifier & 0x03;
 
-    ctlv = StkProactiveCmdHelper.searchForTag(COMPREHENSIONTLV_TAG_ICON_ID, ctlvs);
-    if (!ctlv || !this.context.ICCUtilsHelper.isICCServiceAvailable("IMG")) {
-      return browser;
-    }
-
-    let iconId = ctlv.value;
-    browser.iconSelfExplanatory = iconId.qualifier == 0 ? true : false;
-
-    let onerror = (function() {
-      this.context.RIL.sendChromeMessage(cmdDetails);
-    }).bind(this);
-
-    let onsuccess = (function(result) {
-      browser.icons = result[0];
-      this.context.RIL.sendChromeMessage(cmdDetails);
-    }).bind(this);
-
-    browser.pending = true;
-    this.context.IconLoader.loadIcons([iconId.identifier], onsuccess, onerror);
-
-    return browser;
+    return this.loadIconIfNecessary(cmdDetails, ctlvs, browser);
   },
 
   processPlayTone: function(cmdDetails, ctlvs) {
@@ -11309,28 +10998,7 @@ StkCommandParamsFactoryObject.prototype = {
     // vibrate is only defined in TS 102.223
     playTone.isVibrate = (cmdDetails.commandQualifier & 0x01) !== 0x00;
 
-    ctlv = StkProactiveCmdHelper.searchForTag(
-      COMPREHENSIONTLV_TAG_ICON_ID, ctlvs);
-    if (!ctlv || !this.context.ICCUtilsHelper.isICCServiceAvailable("IMG")) {
-      return playTone;
-    }
-
-    let iconId = ctlv.value;
-    playTone.iconSelfExplanatory = iconId.qualifier == 0 ? true : false;
-
-    let onerror = (function() {
-      this.context.RIL.sendChromeMessage(cmdDetails);
-    }).bind(this);
-
-    let onsuccess = (function(result) {
-      playTone.icons = result[0];
-      this.context.RIL.sendChromeMessage(cmdDetails);
-    }).bind(this);
-
-    playTone.pending = true;
-    this.context.IconLoader.loadIcons([iconId.identifier], onsuccess, onerror);
-
-    return playTone;
+    return this.loadIconIfNecessary(cmdDetails, ctlvs, playTone);
   },
 
   /**
@@ -11387,27 +11055,7 @@ StkCommandParamsFactoryObject.prototype = {
       bipMsg.text = ctlv.value.identifier;
     }
 
-    ctlv = StkProactiveCmdHelper.searchForTag(COMPREHENSIONTLV_TAG_ICON_ID, ctlvs);
-    if (!ctlv || !this.context.ICCUtilsHelper.isICCServiceAvailable("IMG")) {
-      return bipMsg;
-    }
-
-    let iconId = ctlv.value;
-    bipMsg.iconSelfExplanatory = iconId.qualifier == 0 ? true : false;
-
-    let onerror = (function() {
-      this.context.RIL.sendChromeMessage(cmdDetails);
-    }).bind(this);
-
-    let onsuccess = (function(result) {
-      bipMsg.icons = result[0];
-      this.context.RIL.sendChromeMessage(cmdDetails);
-    }).bind(this);
-
-    bipMsg.pending = true;
-    this.context.IconLoader.loadIcons([iconId.identifier], onsuccess, onerror);
-
-    return bipMsg;
+    return this.loadIconIfNecessary(cmdDetails, ctlvs, bipMsg);
   }
 };
 StkCommandParamsFactoryObject.prototype[STK_CMD_REFRESH] = function STK_CMD_REFRESH(cmdDetails, ctlvs) {
@@ -12686,6 +12334,7 @@ ICCIOHelperObject.prototype = {
     options.callback = function callback(options) {
       options.callback = cb;
       options.command = ICC_COMMAND_READ_BINARY;
+      options.p2 = 0x00;
       options.p3 = options.fileSize;
       this.context.RIL.iccIO(options);
     }.bind(this);
@@ -12706,8 +12355,22 @@ ICCIOHelperObject.prototype = {
       throw new Error("Unknown pathId for " + options.fileId.toString(16));
     }
     options.p1 = 0; // For GET_RESPONSE, p1 = 0
-    options.p2 = 0; // For GET_RESPONSE, p2 = 0
-    options.p3 = GET_RESPONSE_EF_SIZE_BYTES;
+    switch (this.context.RIL.appType) {
+      case CARD_APPTYPE_USIM:
+        options.p2 = GET_RESPONSE_FCP_TEMPLATE;
+        options.p3 = 0x00;
+        break;
+      // For RUIM, CSIM and ISIM, cf bug 955946: keep the old behavior
+      case CARD_APPTYPE_RUIM:
+      case CARD_APPTYPE_CSIM:
+      case CARD_APPTYPE_ISIM:
+      // For SIM, this is what we want
+      case CARD_APPTYPE_SIM:
+      default:
+        options.p2 = 0x00;
+        options.p3 = GET_RESPONSE_EF_SIZE_BYTES;
+        break;
+    }
     this.context.RIL.iccIO(options);
   },
 
@@ -14700,7 +14363,7 @@ ICCUtilsHelperObject.prototype = {
       return null;
     }
 
-    if (!iccInfoPriv.OPL) {
+    if (!this.isICCServiceAvailable("OPL")) {
       // When OPL is not present:
       // According to 3GPP TS 31.102 Sec. 4.2.58 and 3GPP TS 51.011 Sec. 10.3.41,
       // If EF_OPL is not present, the first record in this EF is used for the

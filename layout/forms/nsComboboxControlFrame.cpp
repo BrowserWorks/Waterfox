@@ -31,6 +31,7 @@
 #include "nsLayoutUtils.h"
 #include "nsDisplayList.h"
 #include "nsITheme.h"
+#include "nsThemeConstants.h"
 #include "nsRenderingContext.h"
 #include "mozilla/Likely.h"
 #include <algorithm>
@@ -734,8 +735,11 @@ nsComboboxControlFrame::GetIntrinsicISize(nsRenderingContext* aRenderingContext,
   }
 
   // add room for the dropmarker button if there is one
-  if (!IsThemed() || presContext->GetTheme()->ThemeNeedsComboboxDropmarker())
+  if ((!IsThemed() ||
+       presContext->GetTheme()->ThemeNeedsComboboxDropmarker()) &&
+      StyleDisplay()->mAppearance != NS_THEME_NONE) {
     displayWidth += scrollbarWidth;
+  }
 
   return displayWidth;
 
@@ -813,7 +817,8 @@ nsComboboxControlFrame::Reflow(nsPresContext*          aPresContext,
   // dropdown button.
   nscoord buttonWidth;
   const nsStyleDisplay *disp = StyleDisplay();
-  if (IsThemed(disp) && !aPresContext->GetTheme()->ThemeNeedsComboboxDropmarker()) {
+  if ((IsThemed(disp) && !aPresContext->GetTheme()->ThemeNeedsComboboxDropmarker()) ||
+      StyleDisplay()->mAppearance == NS_THEME_NONE) {
     buttonWidth = 0;
   }
   else {
@@ -1494,7 +1499,7 @@ void nsComboboxControlFrame::PaintFocus(nsRenderingContext& aRenderingContext,
   if (eventStates.HasState(NS_EVENT_STATE_DISABLED) || sFocused != this)
     return;
 
-  aRenderingContext.PushState();
+  aRenderingContext.ThebesContext()->Save();
   nsRect clipRect = mDisplayFrame->GetRect() + aPt;
   aRenderingContext.IntersectClip(clipRect);
 
@@ -1518,7 +1523,7 @@ void nsComboboxControlFrame::PaintFocus(nsRenderingContext& aRenderingContext,
   aRenderingContext.DrawLine(clipRect.BottomRight(), clipRect.BottomLeft());
   aRenderingContext.DrawLine(clipRect.BottomLeft(), clipRect.TopLeft());
 
-  aRenderingContext.PopState();
+  aRenderingContext.ThebesContext()->Restore();
 }
 
 //---------------------------------------------------------
@@ -1591,12 +1596,7 @@ nsComboboxControlFrame::RestoreState(nsPresState* aState)
 }
 
 
-//
-// Camino uses a native widget for the combobox
-// popup, which affects drawing and event
-// handling here and in nsListControlFrame.
-//
-// Also, Fennec use a custom combobox built-in widget
+// Fennec uses a custom combobox built-in widget.
 //
 
 /* static */

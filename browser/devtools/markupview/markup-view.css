@@ -36,6 +36,9 @@
 .html-editor-inner {
   border: solid .1px;
   flex: 1 1 auto;
+
+  /* Keep the editor away from the markup view floating scrollbars */
+  -moz-margin-end: 12px;
 }
 
 .html-editor iframe {
@@ -128,7 +131,7 @@
   transition: background .5s;
 }
 
-.tag-line .open, .tag-line .close, .comment {
+.tag-line {
   cursor: default;
 }
 

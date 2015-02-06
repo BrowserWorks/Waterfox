@@ -38,20 +38,6 @@
 # endif
 #endif
 
-// Not part of the HWCAP flag, but we need to know these and these bits are not used.
-
-// A bit to flag the use of the ARMv7 arch, otherwise ARMv6.
-#define HWCAP_ARMv7 (1 << 28)
-
-// A bit to flag the use of the hardfp ABI.
-#define HWCAP_USE_HARDFP_ABI (1 << 27)
-
-// A bit to flag when alignment faults are enabled and signal.
-#define HWCAP_ALIGNMENT_FAULT (1 << 26)
-
-// A bit to flag when the flags are uninitialized, so they can be atomically set.
-#define HWCAP_UNINITIALIZED (1 << 25)
-
 namespace js {
 namespace jit {
 
@@ -142,7 +128,7 @@ CanonicalizeARMHwCapFlags(uint32_t flags)
 
 // The override flags parsed from the ARMHWCAP environment variable or from the
 // --arm-hwcap js shell argument.
-volatile static uint32_t armHwCapFlags = HWCAP_UNINITIALIZED;
+volatile uint32_t armHwCapFlags = HWCAP_UNINITIALIZED;
 
 bool
 ParseARMHwCapFlags(const char *armHwCap)
@@ -184,7 +170,7 @@ ParseARMHwCapFlags(const char *armHwCap)
 #endif
 
     armHwCapFlags = CanonicalizeARMHwCapFlags(flags);
-    IonSpew(IonSpew_Codegen, "ARM HWCAP: 0x%x\n", armHwCapFlags);
+    JitSpew(JitSpew_Codegen, "ARM HWCAP: 0x%x\n", armHwCapFlags);
     return true;
 }
 
@@ -263,7 +249,7 @@ InitARMFlags()
 
     armHwCapFlags = CanonicalizeARMHwCapFlags(flags);
 
-    IonSpew(IonSpew_Codegen, "ARM HWCAP: 0x%x\n", armHwCapFlags);
+    JitSpew(JitSpew_Codegen, "ARM HWCAP: 0x%x\n", armHwCapFlags);
     return;
 }
 
@@ -275,6 +261,19 @@ GetARMFlags()
 }
 
 bool HasMOVWT()
+{
+    MOZ_ASSERT(armHwCapFlags != HWCAP_UNINITIALIZED);
+    return armHwCapFlags & HWCAP_ARMv7;
+}
+
+bool HasLDSTREXBHD()
+{
+    // These are really available from ARMv6K and later, but why bother?
+    MOZ_ASSERT(armHwCapFlags != HWCAP_UNINITIALIZED);
+    return armHwCapFlags & HWCAP_ARMv7;
+}
+
+bool HasDMBDSBISB()
 {
     MOZ_ASSERT(armHwCapFlags != HWCAP_UNINITIALIZED);
     return armHwCapFlags & HWCAP_ARMv7;
@@ -302,14 +301,6 @@ bool HasIDIV()
 {
     MOZ_ASSERT(armHwCapFlags != HWCAP_UNINITIALIZED);
     return armHwCapFlags & HWCAP_IDIVA;
-}
-
-// Returns true when cpu alignment faults are enabled and signaled, and thus we
-// should ensure loads and stores are aligned.
-bool HasAlignmentFault()
-{
-    MOZ_ASSERT(armHwCapFlags != HWCAP_UNINITIALIZED);
-    return armHwCapFlags & HWCAP_ALIGNMENT_FAULT;
 }
 
 // This is defined in the header and inlined when not using the simulator.

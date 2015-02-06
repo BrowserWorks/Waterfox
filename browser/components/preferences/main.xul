@@ -77,6 +77,17 @@
     <groupbox id="startupGroup">
       <caption label="&startup.label;"/>
 
+#ifdef MOZ_DEV_EDITION
+      <vbox id="separateProfileBox">
+        <checkbox id="separateProfileMode"
+                  label="&separateProfileMode.label;"/>
+        <hbox align="center" class="indent">
+          <label id="useFirefoxSync">&useFirefoxSync.label;</label>
+          <label id="getStarted" class="text-link">&getStarted.label;</label>
+        </hbox>
+      </vbox>
+#endif
+
 #ifdef HAVE_SHELL_SERVICE
       <vbox id="defaultBrowserBox">
         <hbox align="center">

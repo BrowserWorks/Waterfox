@@ -85,12 +85,12 @@ BaselineInspector::maybeShapesForPropertyOp(jsbytecode *pc, ShapeVector &shapes)
     // Return a list of shapes seen by the baseline IC for the current op.
     // An empty list indicates no shapes are known, or there was an uncacheable
     // access.
-    JS_ASSERT(shapes.empty());
+    MOZ_ASSERT(shapes.empty());
 
     if (!hasBaselineScript())
         return true;
 
-    JS_ASSERT(isValidPC(pc));
+    MOZ_ASSERT(isValidPC(pc));
     const ICEntry &entry = icEntryFromPC(pc);
 
     ICStub *stub = entry.firstStub();
@@ -227,7 +227,7 @@ BaselineInspector::expectedCompareType(jsbytecode *pc)
         return MCompare::Compare_Unknown;
 
     if (ICStub *fallback = second ? second->next() : first->next()) {
-        JS_ASSERT(fallback->isFallback());
+        MOZ_ASSERT(fallback->isFallback());
         if (fallback->toCompare_Fallback()->hadUnoptimizableAccess())
             return MCompare::Compare_Unknown;
     }
@@ -302,7 +302,7 @@ TryToSpecializeBinaryArithOp(ICStub **stubs,
         return true;
     }
 
-    JS_ASSERT(sawInt32);
+    MOZ_ASSERT(sawInt32);
     *result = MIRType_Int32;
     return true;
 }
@@ -381,9 +381,9 @@ BaselineInspector::hasSeenAccessedGetter(jsbytecode *pc)
 }
 
 bool
-BaselineInspector::hasSeenNonStringIterNext(jsbytecode *pc)
+BaselineInspector::hasSeenNonStringIterMore(jsbytecode *pc)
 {
-    JS_ASSERT(JSOp(*pc) == JSOP_ITERNEXT);
+    MOZ_ASSERT(JSOp(*pc) == JSOP_MOREITER);
 
     if (!hasBaselineScript())
         return false;
@@ -391,7 +391,7 @@ BaselineInspector::hasSeenNonStringIterNext(jsbytecode *pc)
     const ICEntry &entry = icEntryFromPC(pc);
     ICStub *stub = entry.fallbackStub();
 
-    return stub->toIteratorNext_Fallback()->hasNonStringResult();
+    return stub->toIteratorMore_Fallback()->hasNonStringResult();
 }
 
 bool
@@ -403,7 +403,7 @@ BaselineInspector::hasSeenDoubleResult(jsbytecode *pc)
     const ICEntry &entry = icEntryFromPC(pc);
     ICStub *stub = entry.fallbackStub();
 
-    JS_ASSERT(stub->isUnaryArith_Fallback() || stub->isBinaryArith_Fallback());
+    MOZ_ASSERT(stub->isUnaryArith_Fallback() || stub->isBinaryArith_Fallback());
 
     if (stub->isUnaryArith_Fallback())
         return stub->toUnaryArith_Fallback()->sawDoubleResult();
@@ -413,7 +413,7 @@ BaselineInspector::hasSeenDoubleResult(jsbytecode *pc)
     return false;
 }
 
-JSObject *
+NativeObject *
 BaselineInspector::getTemplateObject(jsbytecode *pc)
 {
     if (!hasBaselineScript())
@@ -429,7 +429,7 @@ BaselineInspector::getTemplateObject(jsbytecode *pc)
           case ICStub::Rest_Fallback:
             return stub->toRest_Fallback()->templateObject();
           case ICStub::Call_Scripted:
-            if (JSObject *obj = stub->toCall_Scripted()->templateObject())
+            if (NativeObject *obj = stub->toCall_Scripted()->templateObject())
                 return obj;
             break;
           default:
@@ -440,7 +440,7 @@ BaselineInspector::getTemplateObject(jsbytecode *pc)
     return nullptr;
 }
 
-JSObject *
+NativeObject *
 BaselineInspector::getTemplateObjectForNative(jsbytecode *pc, Native native)
 {
     if (!hasBaselineScript())
@@ -450,6 +450,8 @@ BaselineInspector::getTemplateObjectForNative(jsbytecode *pc, Native native)
     for (ICStub *stub = entry.firstStub(); stub; stub = stub->next()) {
         if (stub->isCall_Native() && stub->toCall_Native()->callee()->native() == native)
             return stub->toCall_Native()->templateObject();
+        if (stub->isCall_StringSplit() && native == js::str_split)
+            return stub->toCall_StringSplit()->templateObject();
     }
 
     return nullptr;
@@ -462,7 +464,7 @@ BaselineInspector::templateDeclEnvObject()
         return nullptr;
 
     JSObject *res = &templateCallObject()->as<ScopeObject>().enclosingScope();
-    JS_ASSERT(res);
+    MOZ_ASSERT(res);
 
     return &res->as<DeclEnvObject>();
 }
@@ -474,7 +476,7 @@ BaselineInspector::templateCallObject()
         return nullptr;
 
     JSObject *res = baselineScript()->templateScope();
-    JS_ASSERT(res);
+    MOZ_ASSERT(res);
 
     return &res->as<CallObject>();
 }

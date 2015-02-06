@@ -15,6 +15,8 @@
 #include "nsISupports.h"
 #include "nsIURI.h"
 #include "nsIPrincipal.h"
+#include "nsIGlobalObject.h"
+#include "nsPIDOMWindow.h"
 #include "nsWrapperCache.h"
 #include "nsStringGlue.h"
 #include "nsTArray.h"
@@ -26,7 +28,6 @@
 class nsGlobalWindow;
 class nsIPrincipal;
 class nsScriptNameSpaceManager;
-class nsIGlobalObject;
 class nsIMemoryReporterCallback;
 
 #ifndef BAD_TLS_INDEX
@@ -249,7 +250,7 @@ public:
         }
 
         JSString *str = JS_NewExternalString(cx,
-                                             static_cast<jschar*>(buf->Data()),
+                                             static_cast<char16_t*>(buf->Data()),
                                              length, &sDOMStringFinalizer);
         if (!str) {
             return false;
@@ -283,9 +284,9 @@ public:
 private:
     static const JSStringFinalizer sLiteralFinalizer, sDOMStringFinalizer;
 
-    static void FinalizeLiteral(const JSStringFinalizer *fin, jschar *chars);
+    static void FinalizeLiteral(const JSStringFinalizer *fin, char16_t *chars);
 
-    static void FinalizeDOMString(const JSStringFinalizer *fin, jschar *chars);
+    static void FinalizeDOMString(const JSStringFinalizer *fin, char16_t *chars);
 
     XPCStringConvert();         // not implemented
 };
@@ -424,12 +425,6 @@ bool
 Throw(JSContext *cx, nsresult rv);
 
 /**
- * Every global should hold a native that implements the nsIGlobalObject interface.
- */
-nsIGlobalObject *
-GetNativeForGlobal(JSObject *global);
-
-/**
  * Returns the nsISupports native behind a given reflector (either DOM or
  * XPCWN).
  */
@@ -458,6 +453,12 @@ JSObject *
 CompilationScope();
 
 /**
+ * Returns the nsIGlobalObject corresponding to |aObj|'s JS global.
+ */
+nsIGlobalObject*
+NativeGlobal(JSObject *aObj);
+
+/**
  * If |aObj| is a window, returns the associated nsGlobalWindow.
  * Otherwise, returns null.
  */
@@ -471,8 +472,18 @@ WindowOrNull(JSObject *aObj);
 nsGlobalWindow*
 WindowGlobalOrNull(JSObject *aObj);
 
+/**
+ * If |aObj| is in an addon scope and that addon scope is associated with a
+ * live DOM Window, returns the associated nsGlobalWindow. Otherwise, returns
+ * null.
+ */
+nsGlobalWindow*
+AddonWindowOrNull(JSObject *aObj);
+
 // Error reporter used when there is no associated DOM window on to which to
 // report errors and warnings.
+//
+// Note - This is temporarily implemented in nsJSEnvironment.cpp.
 void
 SystemErrorReporter(JSContext *cx, const char *message, JSErrorReport *rep);
 
@@ -489,6 +500,41 @@ SetAddonInterposition(const nsACString &addonId, nsIAddonInterposition *interpos
 
 bool
 ExtraWarningsForSystemJS();
+
+class ErrorReport {
+  public:
+    NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ErrorReport);
+
+    ErrorReport() : mWindowID(0)
+                  , mLineNumber(0)
+                  , mColumn(0)
+                  , mFlags(0)
+                  , mIsMuted(false)
+    {}
+
+    void Init(JSErrorReport *aReport, const char *aFallbackMessage,
+              bool aIsChrome, uint64_t aWindowID);
+    void LogToConsole();
+
+  public:
+
+    nsCString mCategory;
+    nsString mErrorMsg;
+    nsString mFileName;
+    nsString mSourceLine;
+    uint64_t mWindowID;
+    uint32_t mLineNumber;
+    uint32_t mColumn;
+    uint32_t mFlags;
+    bool mIsMuted;
+
+  private:
+    ~ErrorReport() {}
+};
+
+void
+DispatchScriptErrorEvent(nsPIDOMWindow *win, JSRuntime *rt, xpc::ErrorReport *xpcReport,
+                         JS::Handle<JS::Value> exception);
 
 } // namespace xpc
 

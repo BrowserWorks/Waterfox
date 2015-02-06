@@ -31,10 +31,6 @@ class WrapperFactory {
         return HasWrapperFlag(wrapper, WAIVE_XRAY_WRAPPER_FLAG);
     }
 
-    static bool IsSecurityWrapper(JSObject *obj) {
-        return !js::CheckedUnwrap(obj);
-    }
-
     static bool IsCOW(JSObject *wrapper);
 
     static JSObject *GetXrayWaiver(JS::HandleObject obj);
@@ -56,9 +52,6 @@ class WrapperFactory {
     // Wrap wrapped object into a waiver wrapper and then re-wrap it.
     static bool WaiveXrayAndWrap(JSContext *cx, JS::MutableHandleValue vp);
     static bool WaiveXrayAndWrap(JSContext *cx, JS::MutableHandleObject object);
-
-    // Returns true if the wrapper is in not shadowing mode for the id.
-    static bool XrayWrapperNotShadowing(JSObject *wrapper, jsid id);
 };
 
 extern const js::Wrapper XrayWaiver;

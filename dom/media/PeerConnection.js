@@ -150,6 +150,15 @@ GlobalPCList.prototype = {
       } else if (data == "online") {
         this._networkdown = false;
       }
+    } else if (topic == "network:app-offline-status-changed") {
+      // App just went offline. The subject also contains the appId,
+      // but navigator.onLine checks that for us
+      if (!this._networkdown && !this._win.navigator.onLine) {
+        for (let winId in this._list) {
+          cleanupWinId(this._list, winId);
+        }
+      }
+      this._networkdown = !this._win.navigator.onLine;
     } else if (topic == "gmp-plugin-crash") {
       // a plugin crashed; if it's associated with any of our PCs, fire an
       // event to the DOM window
@@ -301,7 +310,6 @@ function RTCPeerConnection() {
 
   this._localType = null;
   this._remoteType = null;
-  this._trickleIce = false;
   this._peerIdentity = null;
 
   /**
@@ -326,7 +334,6 @@ RTCPeerConnection.prototype = {
   init: function(win) { this._win = win; },
 
   __init: function(rtcConfig) {
-    this._trickleIce = Services.prefs.getBoolPref("media.peerconnection.trickle_ice");
     if (!rtcConfig.iceServers ||
         !Services.prefs.getBoolPref("media.peerconnection.use_document_iceservers")) {
       rtcConfig.iceServers =
@@ -334,7 +341,7 @@ RTCPeerConnection.prototype = {
     }
     this._mustValidateRTCConfiguration(rtcConfig,
         "RTCPeerConnection constructor passed invalid RTCConfiguration");
-    if (_globalPCList._networkdown) {
+    if (_globalPCList._networkdown || !this._win.navigator.onLine) {
       throw new this._win.DOMError("",
           "Can't create RTCPeerConnections when the network is down");
     }
@@ -365,8 +372,7 @@ RTCPeerConnection.prototype = {
     this._queueOrRun({
       func: this._initialize,
       args: [rtcConfig],
-      // If not trickling, suppress start.
-      wait: !this._trickleIce
+      wait: false
     });
   },
 
@@ -500,7 +506,11 @@ RTCPeerConnection.prototype = {
   },
 
   dispatchEvent: function(event) {
-    this.__DOM_IMPL__.dispatchEvent(event);
+    // PC can close while events are firing if there is an async dispatch
+    // in c++ land
+    if (!this._closed) {
+      this.__DOM_IMPL__.dispatchEvent(event);
+    }
   },
 
   // Log error message to web console and window.onerror, if present.
@@ -638,6 +648,12 @@ RTCPeerConnection.prototype = {
   },
 
   setLocalDescription: function(desc, onSuccess, onError) {
+    if (!onSuccess || !onError) {
+      this.logWarning(
+          "setLocalDescription called without success/failure callbacks. This is deprecated, and will be an error in the future.",
+          null, 0);
+    }
+
     this._localType = desc.type;
 
     let type;
@@ -669,6 +685,11 @@ RTCPeerConnection.prototype = {
   },
 
   setRemoteDescription: function(desc, onSuccess, onError) {
+    if (!onSuccess || !onError) {
+      this.logWarning(
+          "setRemoteDescription called without success/failure callbacks. This is deprecated, and will be an error in the future.",
+          null, 0);
+    }
     this._remoteType = desc.type;
 
     let type;
@@ -805,6 +826,11 @@ RTCPeerConnection.prototype = {
   },
 
   addIceCandidate: function(cand, onSuccess, onError) {
+    if (!onSuccess || !onError) {
+      this.logWarning(
+          "addIceCandidate called without success/failure callbacks. This is deprecated, and will be an error in the future.",
+          null, 0);
+    }
     if (!cand.candidate && !cand.sdpMLineIndex) {
       throw new this._win.DOMError("",
           "Invalid candidate passed to addIceCandidate!");
@@ -953,6 +979,7 @@ RTCPeerConnection.prototype = {
 
   get peerIdentity() { return this._peerIdentity; },
   get id() { return this._impl.id; },
+  set id(s) { this._impl.id = s; },
   get iceGatheringState()  { return this._iceGatheringState; },
   get iceConnectionState() { return this._iceConnectionState; },
 

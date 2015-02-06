@@ -6,7 +6,6 @@
 #include "mozilla/dom/DOMException.h"
 
 #include "jsprf.h"
-#include "js/OldDebugAPI.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/HoldDropJSObjects.h"
 #include "mozilla/dom/Exceptions.h"
@@ -200,8 +199,6 @@ Exception::Exception(const nsACString& aMessage,
   mInitialized(false),
   mHoldingJSVal(false)
 {
-  SetIsDOMBinding();
-
   // A little hack... The nsIGenericModule nsIClassInfo scheme relies on there
   // having been at least one instance made via the factory. Otherwise, the
   // shared factory/classinsance object never gets created and our QI getter
@@ -600,7 +597,6 @@ DOMException::DOMException(nsresult aRv, const nsACString& aMessage,
     mMessage(aMessage),
     mCode(aCode)
 {
-  SetIsDOMBinding();
 }
 
 NS_IMETHODIMP

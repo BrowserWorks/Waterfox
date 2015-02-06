@@ -4,8 +4,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-DIRS += ['interfaces']
-
 MOCHITEST_MANIFESTS += ['tests/mochitest/mochitest.ini']
 
 EXPORTS.mozilla.dom += [
@@ -17,17 +15,56 @@ EXPORTS.mozilla.dom += [
     'MobileNetworkInfo.h',
 ]
 
-SOURCES += [
+EXPORTS.mozilla.dom.mobileconnection += [
+    'ipc/MobileConnectionChild.h',
+    'ipc/MobileConnectionIPCSerializer.h',
+    'ipc/MobileConnectionParent.h',
+    'MobileCallForwardingOptions.h',
+]
+
+XPIDL_SOURCES += [
+    'interfaces/nsICellInfo.idl',
+    'interfaces/nsIMobileCallForwardingOptions.idl',
+    'interfaces/nsIMobileCellInfo.idl',
+    'interfaces/nsIMobileConnectionInfo.idl',
+    'interfaces/nsIMobileConnectionService.idl',
+    'interfaces/nsIMobileNetworkInfo.idl',
+    'interfaces/nsINeighboringCellInfo.idl',
+]
+
+UNIFIED_SOURCES += [
     'DOMMMIError.cpp',
+    'ipc/MobileConnectionChild.cpp',
+    'ipc/MobileConnectionIPCService.cpp',
+    'ipc/MobileConnectionParent.cpp',
+    'MobileCallForwardingOptions.cpp',
     'MobileCellInfo.cpp',
     'MobileConnection.cpp',
     'MobileConnectionArray.cpp',
+    'MobileConnectionCallback.cpp',
     'MobileConnectionInfo.cpp',
     'MobileNetworkInfo.cpp',
 ]
+
+IPDL_SOURCES += [
+    'ipc/PMobileConnection.ipdl',
+    'ipc/PMobileConnectionRequest.ipdl',
+    'ipc/PMobileConnectionTypes.ipdlh',
+]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk' and CONFIG['MOZ_B2G_RIL']:
+    XPIDL_SOURCES += [
+        'gonk/nsIGonkMobileConnectionService.idl',
+    ]
+    EXTRA_COMPONENTS += [
+        'gonk/MobileConnectionService.js',
+        'gonk/MobileConnectionService.manifest',
+    ]
 
 FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
+
+XPIDL_MODULE = 'dom_mobileconnection'

@@ -9,12 +9,17 @@
 #include "GMPAudioDecoderChild.h"
 #include "GMPDecryptorChild.h"
 #include "GMPVideoHost.h"
+#include "nsDebugImpl.h"
 #include "nsIFile.h"
 #include "nsXULAppAPI.h"
 #include "gmp-video-decode.h"
 #include "gmp-video-encode.h"
 #include "GMPPlatform.h"
 #include "mozilla/dom/CrashReporterChild.h"
+#ifdef XP_WIN
+#include <fstream>
+#include "nsCRT.h"
+#endif
 
 using mozilla::dom::CrashReporterChild;
 
@@ -22,6 +27,21 @@ using mozilla::dom::CrashReporterChild;
 #include <stdlib.h> // for _exit()
 #else
 #include <unistd.h> // for _exit()
+#endif
+
+#if defined(XP_WIN)
+// In order to provide EME plugins with a "device binding" capability,
+// in the parent we generate and store some random bytes as salt for every
+// (origin, urlBarOrigin) pair that uses EME. We store these bytes so
+// that every time we revisit the same origin we get the same salt.
+// We send this salt to the child on startup. The child collects some
+// device specific data and munges that with the salt to create the
+// "node id" that we expose to EME plugins. It then overwrites the device
+// specific data, and activates the sandbox.
+#define HASH_NODE_ID_WITH_DEVICE_ID 1
+#include "rlz/lib/machine_id.h"
+#include "rlz/lib/string_utils.h"
+#include "mozilla/SHA1.h"
 #endif
 
 #if defined(MOZ_SANDBOX) && defined(XP_WIN)
@@ -42,6 +62,7 @@ GMPChild::GMPChild()
   , mGetAPIFunc(nullptr)
   , mGMPMessageLoop(MessageLoop::current())
 {
+  nsDebugImpl::SetMultiprocessMode("GMP");
 }
 
 GMPChild::~GMPChild()
@@ -49,28 +70,29 @@ GMPChild::~GMPChild()
 }
 
 static bool
-GetPluginFile(const std::string& aPluginPath,
+GetFileBase(const std::string& aPluginPath,
 #if defined(XP_MACOSX)
-              nsCOMPtr<nsIFile>& aLibDirectory,
+            nsCOMPtr<nsIFile>& aLibDirectory,
 #endif
-              nsCOMPtr<nsIFile>& aLibFile)
+            nsCOMPtr<nsIFile>& aFileBase,
+            nsAutoString& aBaseName)
 {
   nsDependentCString pluginPath(aPluginPath.c_str());
 
   nsresult rv = NS_NewLocalFile(NS_ConvertUTF8toUTF16(pluginPath),
-                                true, getter_AddRefs(aLibFile));
+                                true, getter_AddRefs(aFileBase));
   if (NS_FAILED(rv)) {
     return false;
   }
 
 #if defined(XP_MACOSX)
-  if (NS_FAILED(aLibFile->Clone(getter_AddRefs(aLibDirectory)))) {
+  if (NS_FAILED(aFileBase->Clone(getter_AddRefs(aLibDirectory)))) {
     return false;
   }
 #endif
 
   nsCOMPtr<nsIFile> parent;
-  rv = aLibFile->GetParent(getter_AddRefs(parent));
+  rv = aFileBase->GetParent(getter_AddRefs(parent));
   if (NS_FAILED(rv)) {
     return false;
   }
@@ -81,7 +103,25 @@ GetPluginFile(const std::string& aPluginPath,
     return false;
   }
 
-  nsAutoString baseName(Substring(parentLeafName, 4, parentLeafName.Length() - 1));
+  aBaseName = Substring(parentLeafName,
+                        4,
+                        parentLeafName.Length() - 1);
+  return true;
+}
+
+static bool
+GetPluginFile(const std::string& aPluginPath,
+#if defined(XP_MACOSX)
+              nsCOMPtr<nsIFile>& aLibDirectory,
+#endif
+              nsCOMPtr<nsIFile>& aLibFile)
+{
+  nsAutoString baseName;
+#ifdef XP_MACOSX
+  GetFileBase(aPluginPath, aLibDirectory, aLibFile, baseName);
+#else
+  GetFileBase(aPluginPath, aLibFile, baseName);
+#endif
 
 #if defined(XP_MACOSX)
   nsAutoString binaryName = NS_LITERAL_STRING("lib") + baseName + NS_LITERAL_STRING(".dylib");
@@ -95,6 +135,19 @@ GetPluginFile(const std::string& aPluginPath,
   aLibFile->AppendRelativePath(binaryName);
   return true;
 }
+
+#ifdef XP_WIN
+static bool
+GetInfoFile(const std::string& aPluginPath,
+            nsCOMPtr<nsIFile>& aInfoFile)
+{
+  nsAutoString baseName;
+  GetFileBase(aPluginPath, aInfoFile, baseName);
+  nsAutoString infoFileName = baseName + NS_LITERAL_STRING(".info");
+  aInfoFile->AppendRelativePath(infoFileName);
+  return true;
+}
+#endif
 
 #if defined(XP_MACOSX) && defined(MOZ_GMP_SANDBOX)
 static bool
@@ -230,17 +283,119 @@ GMPChild::Init(const std::string& aPluginPath,
   SendPCrashReporterConstructor(CrashReporter::CurrentThreadId());
 #endif
 
-#if defined(XP_MACOSX) && defined(MOZ_GMP_SANDBOX)
   mPluginPath = aPluginPath;
   return true;
+}
+
+bool
+GMPChild::RecvSetNodeId(const nsCString& aNodeId)
+{
+#ifdef HASH_NODE_ID_WITH_DEVICE_ID
+  if (!aNodeId.IsEmpty() && !aNodeId.EqualsLiteral("null")) {
+    string16 deviceId;
+    int volumeId;
+    if (!rlz_lib::GetRawMachineId(&deviceId, &volumeId)) {
+      return false;
+    }
+
+    // TODO: Switch to SHA256.
+    mozilla::SHA1Sum hash;
+    hash.update(deviceId.c_str(), deviceId.size() * sizeof(string16::value_type));
+    hash.update(aNodeId.get(), aNodeId.Length());
+    hash.update(&volumeId, sizeof(int));
+    uint8_t digest[mozilla::SHA1Sum::kHashSize];
+    hash.finish(digest);
+    if (!rlz_lib::BytesToString(digest, mozilla::SHA1Sum::kHashSize, &mNodeId)) {
+      return false;
+    }
+
+    // Overwrite device id as it could potentially identify the user, so
+    // there's no chance a GMP can read it and use it for identity tracking.
+    volumeId = 0;
+    memset(&deviceId.front(), '*', sizeof(string16::value_type) * deviceId.size());
+    deviceId = L"";
+  } else {
+    mNodeId = "null";
+  }
+#else
+  mNodeId = std::string(aNodeId.BeginReading(), aNodeId.EndReading());
+#endif
+  return true;
+}
+
+bool
+GMPChild::RecvStartPlugin()
+{
+#ifdef XP_WIN
+  PreLoadLibraries(mPluginPath);
 #endif
 
 #if defined(MOZ_SANDBOX) && defined(XP_WIN)
   mozilla::SandboxTarget::Instance()->StartSandbox();
 #endif
 
-  return LoadPluginLibrary(aPluginPath);
+  return LoadPluginLibrary(mPluginPath);
 }
+
+#ifdef XP_WIN
+// Pre-load DLLs that need to be used by the EME plugin but that can't be
+// loaded after the sandbox has started
+bool
+GMPChild::PreLoadLibraries(const std::string& aPluginPath)
+{
+  // This must be in sorted order and lowercase!
+  static const char* whitelist[] =
+    {
+       "d3d9.dll", // Create an `IDirect3D9` to get adapter information
+       "dxva2.dll", // Get monitor information
+       "msauddecmft.dll", // H.264 decoder
+       "msmpeg2adec.dll", // AAC decoder (on Windows 7)
+       "msmpeg2vdec.dll", // AAC decoder (on Windows 8)
+    };
+  static const int whitelistLen = sizeof(whitelist) / sizeof(whitelist[0]);
+
+  nsCOMPtr<nsIFile> infoFile;
+  GetInfoFile(aPluginPath, infoFile);
+
+  nsString path;
+  infoFile->GetPath(path);
+
+  std::ifstream stream;
+  stream.open(path.get());
+  if (!stream.good()) {
+    NS_WARNING("Failure opening info file for required DLLs");
+    return false;
+  }
+
+  do {
+    std::string line;
+    getline(stream, line);
+    if (stream.fail()) {
+      NS_WARNING("Failure reading info file for required DLLs");
+      return false;
+    }
+    std::transform(line.begin(), line.end(), line.begin(), tolower);
+    static const char* prefix = "libraries:";
+    static const int prefixLen = strlen(prefix);
+    if (0 == line.compare(0, prefixLen, prefix)) {
+      char* lineCopy = strdup(line.c_str() + prefixLen);
+      char* start = lineCopy;
+      while (char* tok = nsCRT::strtok(start, ", ", &start)) {
+        for (int i = 0; i < whitelistLen; i++) {
+          if (0 == strcmp(whitelist[i], tok)) {
+            LoadLibraryA(tok);
+            break;
+          }
+        }
+      }
+      free(lineCopy);
+      break;
+    }
+  } while (!stream.eof());
+
+  return true;
+}
+#endif
 
 bool
 GMPChild::LoadPluginLibrary(const std::string& aPluginPath)
@@ -273,11 +428,13 @@ GMPChild::LoadPluginLibrary(const std::string& aPluginPath)
 #endif // XP_MACOSX && MOZ_GMP_SANDBOX
 
   if (!mLib) {
+    NS_WARNING("Failed to link Gecko Media Plugin library.");
     return false;
   }
 
   GMPInitFunc initFunc = reinterpret_cast<GMPInitFunc>(PR_FindFunctionSymbol(mLib, "GMPInit"));
   if (!initFunc) {
+    NS_WARNING("Failed to link Gecko Media Plugin Init function.");
     return false;
   }
 
@@ -285,11 +442,13 @@ GMPChild::LoadPluginLibrary(const std::string& aPluginPath)
   InitPlatformAPI(*platformAPI, this);
 
   if (initFunc(platformAPI) != GMPNoErr) {
+    NS_WARNING("Gecko Media Plugin failed to initialize.");
     return false;
   }
 
   mGetAPIFunc = reinterpret_cast<GMPGetAPIFunc>(PR_FindFunctionSymbol(mLib, "GMPGetAPI"));
   if (!mGetAPIFunc) {
+    NS_WARNING("Failed to link Gecko Media Plugin GetAPI function.");
     return false;
   }
 
@@ -327,7 +486,6 @@ GMPChild::ActorDestroy(ActorDestroyReason aWhy)
 
   XRE_ShutdownChildProcess();
 }
-
 
 void
 GMPChild::ProcessingError(Result aWhat)
@@ -394,13 +552,15 @@ GMPChild::DeallocPGMPVideoDecoderChild(PGMPVideoDecoderChild* aActor)
 PGMPDecryptorChild*
 GMPChild::AllocPGMPDecryptorChild()
 {
-  return new GMPDecryptorChild(this);
+  GMPDecryptorChild* actor = new GMPDecryptorChild(this, mNodeId);
+  actor->AddRef();
+  return actor;
 }
 
 bool
 GMPChild::DeallocPGMPDecryptorChild(PGMPDecryptorChild* aActor)
 {
-  delete aActor;
+  static_cast<GMPDecryptorChild*>(aActor)->Release();
   return true;
 }
 
@@ -441,6 +601,7 @@ GMPChild::RecvPGMPVideoDecoderConstructor(PGMPVideoDecoderChild* aActor)
   void* vd = nullptr;
   GMPErr err = mGetAPIFunc("decode-video", &vdc->Host(), &vd);
   if (err != GMPNoErr || !vd) {
+    NS_WARNING("GMPGetAPI call failed trying to construct decoder.");
     return false;
   }
 
@@ -457,6 +618,7 @@ GMPChild::RecvPGMPVideoEncoderConstructor(PGMPVideoEncoderChild* aActor)
   void* ve = nullptr;
   GMPErr err = mGetAPIFunc("encode-video", &vec->Host(), &ve);
   if (err != GMPNoErr || !ve) {
+    NS_WARNING("GMPGetAPI call failed trying to construct encoder.");
     return false;
   }
 

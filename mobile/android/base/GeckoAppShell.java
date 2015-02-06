@@ -27,14 +27,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Queue;
-import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.favicons.OnFaviconLoadedListener;
 import org.mozilla.gecko.favicons.decoders.FaviconDecoder;
@@ -91,8 +88,6 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.media.MediaScannerConnection;
-import android.media.MediaScannerConnection.MediaScannerConnectionClient;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -103,7 +98,6 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.MessageQueue;
 import android.os.SystemClock;
-import android.os.UserManager;
 import android.os.Vibrator;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
@@ -197,8 +191,6 @@ public class GeckoAppShell
     public static native void nativeInit();
 
     // helper methods
-    //    public static native void setSurfaceView(GeckoSurfaceView sv);
-    public static native void setLayerClient(Object client);
     public static native void onResume();
     public static void callObserver(String observerKey, String topic, String data) {
         sendEventToGecko(GeckoEvent.createCallObserverEvent(observerKey, topic, data));
@@ -270,40 +262,15 @@ public class GeckoAppShell
         }
     }
 
-    private static final class GeckoMediaScannerClient implements MediaScannerConnectionClient {
-        private final String mFile;
-        private final String mMimeType;
-        private MediaScannerConnection mScanner;
-
-        public static void startScan(Context context, String file, String mimeType) {
-            new GeckoMediaScannerClient(context, file, mimeType);
-        }
-
-        private GeckoMediaScannerClient(Context context, String file, String mimeType) {
-            mFile = file;
-            mMimeType = mimeType;
-            mScanner = new MediaScannerConnection(context, this);
-            mScanner.connect();
-        }
-
-        @Override
-        public void onMediaScannerConnected() {
-            mScanner.scanFile(mFile, mMimeType);
-        }
-
-        @Override
-        public void onScanCompleted(String path, Uri uri) {
-            if(path.equals(mFile)) {
-                mScanner.disconnect();
-                mScanner = null;
-            }
-        }
-    }
-
     private static LayerView sLayerView;
 
     public static void setLayerView(LayerView lv) {
+        if (sLayerView == lv) {
+            return;
+        }
         sLayerView = lv;
+        // Install new Gecko-to-Java editable listener.
+        editableListener = new GeckoEditable();
     }
 
     @RobocopTarget
@@ -329,9 +296,6 @@ public class GeckoAppShell
         // run gecko -- it will spawn its own thread
         GeckoAppShell.nativeInit();
 
-        if (sLayerView != null)
-            GeckoAppShell.setLayerClient(sLayerView.getLayerClientObject());
-
         // First argument is the .apk path
         String combinedArgs = apkPath + " -greomni " + apkPath;
         if (args != null)
@@ -354,13 +318,6 @@ public class GeckoAppShell
         DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
         combinedArgs += " -width " + metrics.widthPixels + " -height " + metrics.heightPixels;
 
-        ThreadUtils.postToUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    geckoLoaded();
-                }
-            });
-
         if (!AppConstants.MOZILLA_OFFICIAL) {
             Log.d(LOGTAG, "GeckoLoader.nativeRun " + combinedArgs);
         }
@@ -369,13 +326,6 @@ public class GeckoAppShell
 
         // Remove pumpMessageLoop() idle handler
         Looper.myQueue().removeIdleHandler(idleHandler);
-    }
-
-    // Called on the UI thread after Gecko loads.
-    private static void geckoLoaded() {
-        GeckoEditable editable = new GeckoEditable();
-        // install the gecko => editable listener
-        editableListener = editable;
     }
 
     static void sendPendingEventsToGecko() {
@@ -452,6 +402,9 @@ public class GeckoAppShell
     // Tell the Gecko event loop that an event is available.
     public static native void notifyGeckoOfEvent(GeckoEvent event);
 
+    // Synchronously notify a Gecko observer; must be called from Gecko thread.
+    public static native void notifyGeckoObservers(String subject, String data);
+
     /*
      *  The Gecko-side API: API methods that Gecko calls
      */
@@ -490,6 +443,9 @@ public class GeckoAppShell
                 SharedPreferences prefs = getSharedPreferences();
                 SharedPreferences.Editor editor = prefs.edit();
                 editor.putBoolean(GeckoApp.PREFS_OOM_EXCEPTION, true);
+
+                // Synchronously write to disk so we know it's done before we
+                // shutdown
                 editor.commit();
             }
         } catch (final Throwable exc) {
@@ -1800,20 +1756,6 @@ public class GeckoAppShell
         } catch (Exception e) { }
     }
 
-    @WrapElementForJNI
-    public static void scanMedia(String aFile, String aMimeType) {
-        // If the platform didn't give us a mimetype, try to guess one from the filename
-        if (TextUtils.isEmpty(aMimeType)) {
-            int extPosition = aFile.lastIndexOf(".");
-            if (extPosition > 0 && extPosition < aFile.length() - 1) {
-                aMimeType = getMimeTypeFromExtension(aFile.substring(extPosition+1));
-            }
-        }
-
-        Context context = getContext();
-        GeckoMediaScannerClient.startScan(context, aFile, aMimeType);
-    }
-
     @WrapElementForJNI(stubName = "GetIconForExtensionWrapper")
     public static byte[] getIconForExtension(String aExt, int iconSize) {
         try {
@@ -1845,7 +1787,7 @@ public class GeckoAppShell
         }
     }
 
-    private static String getMimeTypeFromExtension(String ext) {
+    public static String getMimeTypeFromExtension(String ext) {
         final MimeTypeMap mtm = MimeTypeMap.getSingleton();
         return mtm.getMimeTypeFromExtension(ext);
     }
@@ -2365,7 +2307,7 @@ public class GeckoAppShell
      */
     @WrapElementForJNI(stubName = "SendMessageWrapper")
     public static void sendMessage(String aNumber, String aMessage, int aRequestId) {
-        if (SmsManager.getInstance() == null) {
+        if (!SmsManager.isEnabled()) {
             return;
         }
 
@@ -2374,7 +2316,7 @@ public class GeckoAppShell
 
     @WrapElementForJNI(stubName = "GetMessageWrapper")
     public static void getMessage(int aMessageId, int aRequestId) {
-        if (SmsManager.getInstance() == null) {
+        if (!SmsManager.isEnabled()) {
             return;
         }
 
@@ -2383,7 +2325,7 @@ public class GeckoAppShell
 
     @WrapElementForJNI(stubName = "DeleteMessageWrapper")
     public static void deleteMessage(int aMessageId, int aRequestId) {
-        if (SmsManager.getInstance() == null) {
+        if (!SmsManager.isEnabled()) {
             return;
         }
 
@@ -2392,7 +2334,7 @@ public class GeckoAppShell
 
     @WrapElementForJNI(stubName = "CreateMessageListWrapper")
     public static void createMessageList(long aStartDate, long aEndDate, String[] aNumbers, int aNumbersCount, String aDelivery, boolean aHasRead, boolean aRead, long aThreadId, boolean aReverse, int aRequestId) {
-        if (SmsManager.getInstance() == null) {
+        if (!SmsManager.isEnabled()) {
             return;
         }
 
@@ -2401,7 +2343,7 @@ public class GeckoAppShell
 
     @WrapElementForJNI(stubName = "GetNextMessageInListWrapper")
     public static void getNextMessageInList(int aListId, int aRequestId) {
-        if (SmsManager.getInstance() == null) {
+        if (!SmsManager.isEnabled()) {
             return;
         }
 
@@ -2410,7 +2352,7 @@ public class GeckoAppShell
 
     @WrapElementForJNI
     public static void clearMessageList(int aListId) {
-        if (SmsManager.getInstance() == null) {
+        if (!SmsManager.isEnabled()) {
             return;
         }
 
@@ -2574,39 +2516,6 @@ public class GeckoAppShell
         }
 
         return "DIRECT";
-    }
-
-    @WrapElementForJNI
-    public static boolean isUserRestricted() {
-        if (Versions.preJBMR2) {
-            return false;
-        }
-
-        UserManager mgr = (UserManager)getContext().getSystemService(Context.USER_SERVICE);
-        Bundle restrictions = mgr.getUserRestrictions();
-
-        return !restrictions.isEmpty();
-    }
-
-    @WrapElementForJNI
-    public static String getUserRestrictions() {
-        if (Versions.preJBMR2) {
-            return "{}";
-        }
-
-        JSONObject json = new JSONObject();
-        UserManager mgr = (UserManager)getContext().getSystemService(Context.USER_SERVICE);
-        Bundle restrictions = mgr.getUserRestrictions();
-
-        Set<String> keys = restrictions.keySet();
-        for (String key : keys) {
-            try {
-                json.put(key, restrictions.get(key));
-            } catch (JSONException e) {
-            }
-        }
-
-        return json.toString();
     }
 
     /* Downloads the URI pointed to by a share intent, and alters the intent to point to the locally stored file.

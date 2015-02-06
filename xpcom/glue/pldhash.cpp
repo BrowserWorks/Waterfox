@@ -889,7 +889,6 @@ bool PLDHashTable::Iterator::HasMoreEntries() const
   return mEntryOffset < mTable->EntryCount();
 }
 
-
 PLDHashEntryHdr* PLDHashTable::Iterator::NextEntry()
 {
   MOZ_ASSERT(HasMoreEntries());

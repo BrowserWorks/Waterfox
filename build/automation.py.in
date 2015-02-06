@@ -66,9 +66,7 @@ _APP_STATUS_CERTIFIED     = 3
 #else
 _IS_CYGWIN = False
 #endif
-#expand _IS_CAMINO = __IS_CAMINO__ != 0
 #expand _BIN_SUFFIX = __BIN_SUFFIX__
-#expand _PERL = __PERL__
 
 #expand _DEFAULT_APP = "./" + __BROWSER_PATH__
 #expand _CERTS_SRC_DIR = __CERTS_SRC_DIR__
@@ -141,9 +139,7 @@ class Automation(object):
   IS_MAC = _IS_MAC
   IS_LINUX = _IS_LINUX
   IS_CYGWIN = _IS_CYGWIN
-  IS_CAMINO = _IS_CAMINO
   BIN_SUFFIX = _BIN_SUFFIX
-  PERL = _PERL
 
   UNIXISH = not IS_WIN32 and not IS_MAC
 
@@ -305,7 +301,7 @@ class Automation(object):
     permDB = sqlite3.connect(os.path.join(profileDir, "permissions.sqlite"))
     cursor = permDB.cursor();
 
-    cursor.execute("PRAGMA user_version=3");
+    cursor.execute("PRAGMA user_version=4");
 
     # SQL copied from nsPermissionManager.cpp
     cursor.execute("""CREATE TABLE IF NOT EXISTS moz_hosts (
@@ -315,13 +311,14 @@ class Automation(object):
       permission INTEGER,
       expireType INTEGER,
       expireTime INTEGER,
+      modificationTime INTEGER,
       appId INTEGER,
       isInBrowserElement INTEGER)""")
 
     # Insert desired permissions
     for perm in permissions.keys():
       for host,allow in permissions[perm]:
-        cursor.execute("INSERT INTO moz_hosts values(NULL, ?, ?, ?, 0, 0, 0, 0)",
+        cursor.execute("INSERT INTO moz_hosts values(NULL, ?, ?, ?, 0, 0, 0, 0, 0)",
                        (host, perm, 1 if allow else 2))
 
     # Commit and close
@@ -509,8 +506,11 @@ class Automation(object):
     else:
       env['MOZ_CRASHREPORTER_DISABLE'] = '1'
 
-    # Crash on non-local network connections.
-    env['MOZ_DISABLE_NONLOCAL_CONNECTIONS'] = '1'
+    # Crash on non-local network connections by default.
+    # MOZ_DISABLE_NONLOCAL_CONNECTIONS can be set to "0" to temporarily
+    # enable non-local connections for the purposes of local testing.  Don't
+    # override the user's choice here.  See bug 1049688.
+    env.setdefault('MOZ_DISABLE_NONLOCAL_CONNECTIONS', '1')
 
     env['GNOME_DISABLE_CRASH_DIALOG'] = '1'
     env['XRE_NO_WINDOWS_CRASH_DIALOG'] = '1'
@@ -671,7 +671,6 @@ class Automation(object):
 
   def waitForFinish(self, proc, utilityPath, timeout, maxTime, startTime, debuggerInfo, symbolsPath):
     """ Look for timeout or crashes and return the status after the process terminates """
-    stackFixerProcess = None
     stackFixerFunction = None
     didTimeout = False
     hitMaxTime = False
@@ -687,19 +686,19 @@ class Automation(object):
         import fix_stack_using_bpsyms as stackFixerModule
         stackFixerFunction = lambda line: stackFixerModule.fixSymbols(line, symbolsPath)
         del sys.path[0]
-      elif self.IS_DEBUG_BUILD and self.IS_MAC and False:
+      elif self.IS_DEBUG_BUILD and self.IS_MAC:
         # Run each line through a function in fix_macosx_stack.py (uses atos)
         sys.path.insert(0, utilityPath)
         import fix_macosx_stack as stackFixerModule
         stackFixerFunction = lambda line: stackFixerModule.fixSymbols(line)
         del sys.path[0]
       elif self.IS_DEBUG_BUILD and self.IS_LINUX:
-        # Run logsource through fix-linux-stack.pl (uses addr2line)
+        # Run each line through a function in fix_linux_stack.py (uses addr2line)
         # This method is preferred for developer machines, so we don't have to run "make buildsymbols".
-        stackFixerProcess = self.Process([self.PERL, os.path.join(utilityPath, "fix-linux-stack.pl")],
-                                         stdin=logsource,
-                                         stdout=subprocess.PIPE)
-        logsource = stackFixerProcess.stdout
+        sys.path.insert(0, utilityPath)
+        import fix_linux_stack as stackFixerModule
+        stackFixerFunction = lambda line: stackFixerModule.fixSymbols(line)
+        del sys.path[0]
 
       # With metro browser runs this script launches the metro test harness which launches the browser.
       # The metro test harness hands back the real browser process id via log output which we need to
@@ -725,7 +724,7 @@ class Automation(object):
             self.log.info("INFO | automation.py | metro browser sub process id detected: %s", browserProcessId)
 
         if not hitMaxTime and maxTime and datetime.now() - startTime > timedelta(seconds = maxTime):
-          # Kill the application, but continue reading from stack fixer so as not to deadlock on stackFixerProcess.wait().
+          # Kill the application.
           hitMaxTime = True
           self.log.info("TEST-UNEXPECTED-FAIL | %s | application ran for longer than allowed maximum time of %d seconds", self.lastTestSeen, int(maxTime))
           self.killAndGetStack(proc.pid, utilityPath, debuggerInfo)
@@ -743,18 +742,13 @@ class Automation(object):
       self.lastTestSeen = "Main app process exited normally"
     if status != 0 and not didTimeout and not hitMaxTime:
       self.log.info("TEST-UNEXPECTED-FAIL | %s | Exited with code %d during test run", self.lastTestSeen, status)
-    if stackFixerProcess is not None:
-      fixerStatus = stackFixerProcess.wait()
-      automationutils.printstatus(status, "stackFixerProcess")
-      if fixerStatus != 0 and not didTimeout and not hitMaxTime:
-        self.log.info("TEST-UNEXPECTED-FAIL | automation.py | Stack fixer process exited with code %d during test run", fixerStatus)
     return status
 
   def buildCommandLine(self, app, debuggerInfo, profileDir, testURL, extraArgs):
     """ build the application command line """
 
     cmd = os.path.abspath(app)
-    if self.IS_MAC and not self.IS_CAMINO and os.path.exists(cmd + "-bin"):
+    if self.IS_MAC and os.path.exists(cmd + "-bin"):
       # Prefer 'app-bin' in case 'app' is a shell script.
       # We can remove this hack once bug 673899 etc are fixed.
       cmd += "-bin"
@@ -762,9 +756,9 @@ class Automation(object):
     args = []
 
     if debuggerInfo:
-      args.extend(debuggerInfo["args"])
+      args.extend(debuggerInfo.args)
       args.append(cmd)
-      cmd = os.path.abspath(debuggerInfo["path"])
+      cmd = os.path.abspath(debuggerInfo.path)
 
     if self.IS_MAC:
       args.append("-foreground")
@@ -776,10 +770,7 @@ class Automation(object):
 
     args.extend(("-no-remote", "-profile", profileDirectory))
     if testURL is not None:
-      if self.IS_CAMINO:
-        args.extend(("-url", testURL))
-      else:
-        args.append((testURL))
+      args.append((testURL))
     args.extend(extraArgs)
     return cmd, args
 
@@ -857,7 +848,7 @@ class Automation(object):
     cmd, args = self.buildCommandLine(app, debuggerInfo, profileDir, testURL, extraArgs)
     startTime = datetime.now()
 
-    if debuggerInfo and debuggerInfo["interactive"]:
+    if debuggerInfo and debuggerInfo.interactive:
       # If an interactive debugger is attached, don't redirect output,
       # don't use timeouts, and don't capture ctrl-c.
       timeout = None

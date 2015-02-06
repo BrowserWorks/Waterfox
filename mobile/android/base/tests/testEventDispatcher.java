@@ -59,8 +59,7 @@ public class testEventDispatcher extends UITest
 
     public void testEventDispatcher() {
         GeckoHelper.blockForReady();
-        NavigationHelper.enterAndLoadUrl(StringHelper.ROBOCOP_JS_HARNESS_URL +
-                                         "?path=" + TEST_JS);
+        NavigationHelper.enterAndLoadUrl(StringHelper.getHarnessUrlForJavascript(TEST_JS));
 
         js.syncCall("send_test_message", GECKO_EVENT);
         js.syncCall("send_message_for_response", GECKO_RESPONSE_EVENT, "success");
@@ -68,7 +67,6 @@ public class testEventDispatcher extends UITest
         js.syncCall("send_test_message", NATIVE_EVENT);
         js.syncCall("send_message_for_response", NATIVE_RESPONSE_EVENT, "success");
         js.syncCall("send_message_for_response", NATIVE_RESPONSE_EVENT, "error");
-        js.syncCall("send_message_for_response", NATIVE_RESPONSE_EVENT, "cancel");
         js.syncCall("send_test_message", NATIVE_EXCEPTION_EVENT);
         js.syncCall("finish_test");
     }
@@ -85,9 +83,9 @@ public class testEventDispatcher extends UITest
             } else if (GECKO_RESPONSE_EVENT.equals(event)) {
                 final String response = message.getString("response");
                 if ("success".equals(response)) {
-                    EventDispatcher.getInstance().sendResponse(message, response);
+                    EventDispatcher.sendResponse(message, response);
                 } else if ("error".equals(response)) {
-                    EventDispatcher.getInstance().sendError(message, response);
+                    EventDispatcher.sendError(message, response);
                 } else {
                     fFail("Response type should be valid: " + response);
                 }
@@ -149,8 +147,6 @@ public class testEventDispatcher extends UITest
                 callback.sendSuccess(response);
             } else if ("error".equals(response)) {
                 callback.sendError(response);
-            } else if ("cancel".equals(response)) {
-                callback.sendCancel();
             } else {
                 fFail("Response type should be valid: " + response);
             }

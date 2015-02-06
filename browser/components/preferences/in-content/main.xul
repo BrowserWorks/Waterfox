@@ -9,6 +9,15 @@
 
 <preferences id="mainPreferences">
 
+#ifdef E10S_TESTING_ONLY
+    <preference id="browser.tabs.remote.autostart"
+                name="browser.tabs.remote.autostart"
+                type="bool"/>
+    <preference id="e10sTempPref"
+                name="browser.tabs.remote.autostart.1"
+                type="bool"/>
+#endif
+
     <!-- Startup -->
     <preference id="browser.startup.page"
                 name="browser.startup.page"
@@ -107,6 +116,22 @@
           data-category="paneGeneral"
           hidden="true">
   <caption><label>&startup.label;</label></caption>
+
+#ifdef MOZ_DEV_EDITION
+  <vbox id="separateProfileBox">
+    <checkbox id="separateProfileMode"
+              label="&separateProfileMode.label;"/>
+    <hbox align="center" class="indent">
+      <label id="useFirefoxSync">&useFirefoxSync.label;</label>
+      <label id="getStarted" class="text-link">&getStarted.label;</label>
+    </hbox>
+  </vbox>
+#endif
+
+#ifdef E10S_TESTING_ONLY
+  <checkbox id="e10sAutoStart"
+            label="Enable E10S (multi-process)"/>
+#endif
 
 #ifdef HAVE_SHELL_SERVICE
   <vbox id="defaultBrowserBox">

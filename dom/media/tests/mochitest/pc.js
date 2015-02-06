@@ -1951,6 +1951,10 @@ PeerConnectionWrapper.prototype = {
     var self = this;
 
     self._remote_ice_candidates.push(candidate);
+    if (self.signalingstate === 'closed') {
+      info("Received ICE candidate for closed PeerConnection - discarding");
+      return;
+    }
     if (self.remoteDescriptionSet) {
       self.addIceCandidate(candidate);
     } else {
@@ -2435,7 +2439,7 @@ PeerConnectionWrapper.prototype = {
    * @param {object} stats
    *        The stats to check from this PeerConnectionWrapper
    */
-  checkStats : function PCW_checkStats(stats) {
+  checkStats : function PCW_checkStats(stats, twoMachines) {
     function toNum(obj) {
       return obj? obj : 0;
     }
@@ -2457,7 +2461,13 @@ PeerConnectionWrapper.prototype = {
         // validate stats
         ok(res.id == key, "Coherent stats id");
         var nowish = Date.now() + 1000;        // TODO: clock drift observed
+        if (twoMachines) {
+          nowish += 10000; // let's be very relaxed about clock sync
+        }
         var minimum = this.whenCreated - 1000; // on Windows XP (Bug 979649)
+        if (twoMachines) {
+          minimum -= 10000; // let's be very relaxed about clock sync
+        }
         if (isWinXP) {
           todo(false, "Can't reliably test rtcp timestamps on WinXP (Bug 979649)");
         } else {
@@ -2584,15 +2594,9 @@ PeerConnectionWrapper.prototype = {
    * Closes the connection
    */
   close : function PCW_close() {
-    // It might be that a test has already closed the pc. In those cases
-    // we should not fail.
-    try {
-      this._pc.close();
-      info(this + ": Closed connection.");
-    }
-    catch (e) {
-      info(this + ": Failure in closing connection - " + e.message);
-    }
+    this._ice_candidates_to_add = [];
+    this._pc.close();
+    info(this + ": Closed connection.");
   },
 
   /**

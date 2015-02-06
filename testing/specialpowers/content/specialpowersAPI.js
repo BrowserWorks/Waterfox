@@ -18,6 +18,8 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
+Cu.importGlobalProperties(["File"]);
+
 // Allow stuff from this scope to be accessed from non-privileged scopes. This
 // would crash if used outside of automation.
 Cu.forcePermissiveCOWs();
@@ -36,6 +38,7 @@ function SpecialPowersAPI() {
   this._applyingPermissions = false;
   this._fm = null;
   this._cb = null;
+  this._quotaManagerCallbackInfos = null;
 }
 
 function bindDOMWindowUtils(aWindow) {
@@ -1574,7 +1577,10 @@ SpecialPowersAPI.prototype = {
 
     var xferable = Components.classes["@mozilla.org/widget/transferable;1"].
                    createInstance(Components.interfaces.nsITransferable);
-    xferable.init(this._getDocShell(content.window)
+    // in e10s b-c tests |content.window| is null whereas |window| works fine.
+    // for some non-e10s mochi tests, |window| is null whereas |content.window|
+    // works fine.  So we take whatever is non-null!
+    xferable.init(this._getDocShell(content.window || window)
                       .QueryInterface(Components.interfaces.nsILoadContext));
     xferable.addDataFlavor(flavor);
     this._cb.getData(xferable, whichClipboard);
@@ -1799,12 +1805,8 @@ SpecialPowersAPI.prototype = {
     return this._sendSyncMessage('SPPermissionManager', msg)[0];
   },
 
-  getMozFullPath: function(file) {
-    return file.mozFullPath;
-  },
-
-  isWindowPrivate: function(win) {
-    return PrivateBrowsingUtils.isWindowPrivate(win);
+  isContentWindowPrivate: function(win) {
+    return PrivateBrowsingUtils.isContentWindowPrivate(win);
   },
 
   notifyObserversInParentProcess: function(subject, topic, data) {
@@ -1821,6 +1823,65 @@ SpecialPowersAPI.prototype = {
       'observerData': data
     };
     this._sendSyncMessage('SPObserverService', msg);
+  },
+
+  clearStorageForURI: function(uri, callback, appId, inBrowser) {
+    this._quotaManagerRequest('clear', uri, appId, inBrowser, callback);
+  },
+
+  getStorageUsageForURI: function(uri, callback, appId, inBrowser) {
+    this._quotaManagerRequest('getUsage', uri, appId, inBrowser, callback);
+  },
+
+  _quotaManagerRequest: function(op, uri, appId, inBrowser, callback) {
+    const messageTopic = "SPQuotaManager";
+
+    if (uri instanceof Ci.nsIURI) {
+      uri = uri.spec;
+    }
+
+    const id = Cc["@mozilla.org/uuid-generator;1"]
+                 .getService(Ci.nsIUUIDGenerator)
+                 .generateUUID()
+                 .toString();
+
+    let callbackInfo = { id: id, callback: callback };
+
+    if (this._quotaManagerCallbackInfos) {
+      callbackInfo.listener = this._quotaManagerCallbackInfos[0].listener;
+      this._quotaManagerCallbackInfos.push(callbackInfo)
+    } else {
+      callbackInfo.listener = function(msg) {
+        msg = msg.data;
+        for (let index in this._quotaManagerCallbackInfos) {
+          let callbackInfo = this._quotaManagerCallbackInfos[index];
+          if (callbackInfo.id == msg.id) {
+            if (this._quotaManagerCallbackInfos.length > 1) {
+              this._quotaManagerCallbackInfos.splice(index, 1);
+            } else {
+              this._quotaManagerCallbackInfos = null;
+              this._removeMessageListener(messageTopic, callbackInfo.listener);
+            }
+
+            if ('usage' in msg) {
+              callbackInfo.callback(msg.usage, msg.fileUsage);
+            } else {
+              callbackInfo.callback();
+            }
+          }
+        }
+      }.bind(this);
+
+      this._addMessageListener(messageTopic, callbackInfo.listener);
+      this._quotaManagerCallbackInfos = [ callbackInfo ];
+    }
+
+    let msg = { op: op, uri: uri, appId: appId, inBrowser: inBrowser, id: id };
+    this._sendAsyncMessage(messageTopic, msg);
+  },
+
+  createDOMFile: function(path, options) {
+    return new File(path, options);
   },
 };
 

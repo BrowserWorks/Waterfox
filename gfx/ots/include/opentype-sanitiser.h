@@ -247,7 +247,7 @@ bool Process(OTSStream *output, const uint8_t *input, size_t length);
 void DisableDebugOutput();
 
 // Enable WOFF2 support(experimental).
-void EnableWOFF2();
+void OTS_API EnableWOFF2();
 
 }  // namespace ots
 

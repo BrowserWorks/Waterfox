@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class GeckoActionProvider {
-    private static int MAX_HISTORY_SIZE = 2;
+    private static final int MAX_HISTORY_SIZE = 2;
 
     /**
      * A listener to know when a target was selected.
@@ -38,20 +38,20 @@ public class GeckoActionProvider {
         public void onTargetSelected();
     }
 
-    /* inner-access */ final Context mContext;
+    final Context mContext;
 
     public final static String DEFAULT_MIME_TYPE = "text/plain";
 
     public static final String DEFAULT_HISTORY_FILE_NAME = "history.xml";
 
     //  History file.
-    /* inner-access */ String mHistoryFileName = DEFAULT_HISTORY_FILE_NAME;
+    String mHistoryFileName = DEFAULT_HISTORY_FILE_NAME;
 
-    /* inner-access */ OnTargetSelectedListener mOnTargetListener;
+    OnTargetSelectedListener mOnTargetListener;
 
     private final Callbacks mCallbacks = new Callbacks();
 
-    private static HashMap<String, GeckoActionProvider> mProviders = new HashMap<String, GeckoActionProvider>();
+    private static final HashMap<String, GeckoActionProvider> mProviders = new HashMap<String, GeckoActionProvider>();
 
     private static String getFilenameFromMimeType(String mimeType) {
         String[] mime = mimeType.split("/");
@@ -183,7 +183,7 @@ public class GeckoActionProvider {
      */
     private class Callbacks implements OnMenuItemClickListener,
                                        OnClickListener {
-        /* inner-access */ void chooseActivity(int index) {
+        void chooseActivity(int index) {
             final ActivityChooserModel dataModel = ActivityChooserModel.get(mContext, mHistoryFileName);
             final Intent launchIntent = dataModel.chooseActivity(index);
             if (launchIntent != null) {

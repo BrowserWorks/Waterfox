@@ -8,7 +8,7 @@
 
 #include "vm/RegExpStaticsObject.h"
 
-#include "jsobjinlines.h"
+#include "vm/NativeObject-inl.h"
 
 using namespace js;
 
@@ -22,15 +22,15 @@ using namespace js;
 static void
 resc_finalize(FreeOp *fop, JSObject *obj)
 {
-    RegExpStatics *res = static_cast<RegExpStatics *>(obj->getPrivate());
+    RegExpStatics *res = static_cast<RegExpStatics *>(obj->as<NativeObject>().getPrivate());
     fop->delete_(res);
 }
 
 static void
 resc_trace(JSTracer *trc, JSObject *obj)
 {
-    void *pdata = obj->getPrivate();
-    JS_ASSERT(pdata);
+    void *pdata = obj->as<NativeObject>().getPrivate();
+    MOZ_ASSERT(pdata);
     RegExpStatics *res = static_cast<RegExpStatics *>(pdata);
     res->mark(trc);
 }
@@ -52,17 +52,17 @@ const Class RegExpStaticsObject::class_ = {
     resc_trace
 };
 
-JSObject *
+RegExpStaticsObject *
 RegExpStatics::create(ExclusiveContext *cx, GlobalObject *parent)
 {
-    JSObject *obj = NewObjectWithGivenProto(cx, &RegExpStaticsObject::class_, nullptr, parent);
+    NativeObject *obj = NewNativeObjectWithGivenProto(cx, &RegExpStaticsObject::class_, nullptr, parent);
     if (!obj)
         return nullptr;
     RegExpStatics *res = cx->new_<RegExpStatics>();
     if (!res)
         return nullptr;
     obj->setPrivate(static_cast<void *>(res));
-    return obj;
+    return &obj->as<RegExpStaticsObject>();
 }
 
 void
@@ -74,7 +74,7 @@ RegExpStatics::markFlagsSet(JSContext *cx)
     // type changes on RegExp.prototype, so mark a state change to trigger
     // recompilation of all such code (when recompiling, a stub call will
     // always be performed).
-    JS_ASSERT_IF(cx->global()->hasRegExpStatics(), this == cx->global()->getRegExpStatics(cx));
+    MOZ_ASSERT_IF(cx->global()->hasRegExpStatics(), this == cx->global()->getRegExpStatics(cx));
 
     types::MarkTypeObjectFlags(cx, cx->global(), types::OBJECT_FLAG_REGEXP_FLAGS_SET);
 }
@@ -85,9 +85,9 @@ RegExpStatics::executeLazy(JSContext *cx)
     if (!pendingLazyEvaluation)
         return true;
 
-    JS_ASSERT(lazySource);
-    JS_ASSERT(matchesInput);
-    JS_ASSERT(lazyIndex != size_t(-1));
+    MOZ_ASSERT(lazySource);
+    MOZ_ASSERT(matchesInput);
+    MOZ_ASSERT(lazyIndex != size_t(-1));
 
     /* Retrieve or create the RegExpShared in this compartment. */
     RegExpGuard g(cx);
@@ -101,7 +101,7 @@ RegExpStatics::executeLazy(JSContext *cx)
 
     /* Execute the full regular expression. */
     RootedLinearString input(cx, matchesInput);
-    RegExpRunStatus status = g->execute(cx, input, &this->lazyIndex, this->matches);
+    RegExpRunStatus status = g->execute(cx, input, lazyIndex, &this->matches);
     if (status == RegExpRunStatus_Error)
         return false;
 
@@ -109,7 +109,7 @@ RegExpStatics::executeLazy(JSContext *cx)
      * RegExpStatics are only updated on successful (matching) execution.
      * Re-running the same expression must therefore produce a matching result.
      */
-    JS_ASSERT(status == RegExpRunStatus_Success);
+    MOZ_ASSERT(status == RegExpRunStatus_Success);
 
     /* Unset lazy state and remove rooted values that now have no use. */
     pendingLazyEvaluation = false;

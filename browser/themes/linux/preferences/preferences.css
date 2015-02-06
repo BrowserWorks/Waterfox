@@ -63,6 +63,11 @@ label.small {
 }
 
 /* General Pane */
+#useFirefoxSync,
+#getStarted {
+  font-size: 90%;
+}
+
 #isNotDefaultLabel {
   font-weight: bold;
 }
@@ -80,6 +85,18 @@ label.small {
 
 #BrowserPreferences[animated="false"] #handlersView {
   -moz-box-flex: 1;
+}
+
+/* Privacy Pane */
+
+/* styles for the link elements copied from .text-link in global.css */
+.inline-link {
+  color: -moz-nativehyperlinktext;
+  text-decoration: none;
+}
+
+.inline-link:hover {
+  text-decoration: underline;
 }
 
 /* Modeless Window Dialogs */

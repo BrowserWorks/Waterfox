@@ -26,13 +26,15 @@ public class Crypto5MiddlewareRepository extends MiddlewareRepository {
   public RecordFactory recordFactory = new IdentityRecordFactory();
 
   public class Crypto5MiddlewareRepositorySessionCreationDelegate extends MiddlewareRepository.SessionCreationDelegate {
-    private Crypto5MiddlewareRepository repository;
-    private RepositorySessionCreationDelegate outerDelegate;
+    private final Crypto5MiddlewareRepository repository;
+    private final RepositorySessionCreationDelegate outerDelegate;
 
     public Crypto5MiddlewareRepositorySessionCreationDelegate(Crypto5MiddlewareRepository repository, RepositorySessionCreationDelegate outerDelegate) {
       this.repository = repository;
       this.outerDelegate = outerDelegate;
     }
+
+    @Override
     public void onSessionCreateFailed(Exception ex) {
       this.outerDelegate.onSessionCreateFailed(ex);
     }
@@ -53,7 +55,7 @@ public class Crypto5MiddlewareRepository extends MiddlewareRepository {
   }
 
   public KeyBundle keyBundle;
-  private Repository inner;
+  private final Repository inner;
 
   public Crypto5MiddlewareRepository(Repository inner, KeyBundle keys) {
     super();

@@ -54,7 +54,6 @@ class Fake_MediaStreamTrack;
 #endif
 
 class nsGlobalWindow;
-class nsIDOMMediaStream;
 class nsDOMDataChannel;
 
 namespace mozilla {
@@ -109,6 +108,8 @@ void func (__VA_ARGS__, rv)
 NS_IMETHODIMP func(__VA_ARGS__, resulttype **result);                  \
 already_AddRefed<resulttype> func (__VA_ARGS__, rv)
 
+struct MediaStreamTable;
+
 namespace sipcc {
 
 using mozilla::dom::PeerConnectionObserver;
@@ -128,7 +129,6 @@ using mozilla::PeerIdentity;
 class PeerConnectionWrapper;
 class PeerConnectionMedia;
 class RemoteSourceStreamInfo;
-class OnCallEventArgs;
 
 class IceConfiguration
 {
@@ -250,9 +250,6 @@ public:
 
   nsresult CreateRemoteSourceStreamInfo(nsRefPtr<RemoteSourceStreamInfo>* aInfo);
 
-  // Implementation of the only observer we need
-  void onCallEvent(const OnCallEventArgs &args);
-
   // DataConnection observers
   void NotifyDataChannel(already_AddRefed<mozilla::DataChannel> aChannel);
 
@@ -261,6 +258,9 @@ public:
     PC_AUTO_ENTER_API_CALL_NO_CHECK();
     return mMedia;
   }
+
+  // Configure the ability to use localhost.
+  void SetAllowIceLoopback(bool val) { mAllowIceLoopback = val; }
 
   // Handle system to allow weak references to be passed through C code
   virtual const std::string& GetHandle();
@@ -297,7 +297,7 @@ public:
   std::string GetFingerprintHexValue() const;
 
   // Create a fake media stream
-  nsresult CreateFakeMediaStream(uint32_t hint, nsIDOMMediaStream** retval);
+  nsresult CreateFakeMediaStream(uint32_t hint, mozilla::DOMMediaStream** retval);
 
   nsPIDOMWindow* GetWindow() const {
     PC_AUTO_ENTER_API_CALL_NO_CHECK();
@@ -369,6 +369,8 @@ public:
                          NS_ConvertUTF16toUTF8(aMid).get(), aLevel);
   }
 
+  void OnRemoteStreamAdded(const MediaStreamTable& aStream);
+
   NS_IMETHODIMP CloseStreams();
 
   void CloseStreams(ErrorResult &rv)
@@ -425,6 +427,12 @@ public:
   nsresult GetId(nsAString& id)
   {
     id = NS_ConvertASCIItoUTF16(mName.c_str());
+    return NS_OK;
+  }
+
+  nsresult SetId(const nsAString& id)
+  {
+    mName = NS_ConvertUTF16toUTF8(id).get();
     return NS_OK;
   }
 #endif
@@ -573,6 +581,9 @@ public:
   // Sets the RTC Signaling State
   void SetSignalingState_m(mozilla::dom::PCImplSignalingState aSignalingState);
 
+  // Updates the RTC signaling state based on the sipcc state
+  void UpdateSignalingState();
+
   bool IsClosed() const;
   // called when DTLS connects; we only need this once
   nsresult SetDtlsConnected(bool aPrivacyRequested);
@@ -633,7 +644,10 @@ private:
   void ShutdownMedia();
 
   void CandidateReady(const std::string& candidate, uint16_t level);
-  void SendEndOfCandidates();
+  void SendLocalIceCandidateToContent(uint16_t level,
+                                      const std::string& mid,
+                                      const std::string& candidate);
+  void FoundIceCandidate(const std::string& candidate, uint16_t level);
 
   NS_IMETHOD FingerprintSplitHelper(
       std::string& fingerprint, size_t& spaceIdx) const;
@@ -724,6 +738,7 @@ private:
   nsRefPtr<mozilla::DataChannelConnection> mDataConnection;
 #endif
 
+  bool mAllowIceLoopback;
   nsRefPtr<PeerConnectionMedia> mMedia;
 
 #ifdef MOZILLA_INTERNAL_API

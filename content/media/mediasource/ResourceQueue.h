@@ -103,20 +103,19 @@ public:
   }
 
   // Evict data in queue if the total queue size is greater than
-  // aThreshold past the offset. Returns true if some data was
-  // actually evicted.
-  bool Evict(uint64_t aOffset, uint32_t aThreshold) {
-    bool evicted = false;
+  // aThreshold past the offset. Returns amount evicted.
+  uint32_t Evict(uint64_t aOffset, uint32_t aThreshold) {
+    uint32_t evicted = 0;
     while (GetLength() - mOffset > aThreshold) {
       ResourceItem* item = ResourceAt(0);
       if (item->mData.Length() + mOffset > aOffset) {
         break;
       }
       mOffset += item->mData.Length();
+      evicted += item->mData.Length();
       SBR_DEBUGV("ResourceQueue(%p)::Evict(%llu, %u) removed chunk length=%u",
                  this, aOffset, aThreshold, item->mData.Length());
       delete PopFront();
-      evicted = true;
     }
     return evicted;
   }
@@ -133,6 +132,23 @@ public:
 
     return size;
   }
+
+#if defined(DEBUG)
+  void Dump(const char* aPath) {
+    for (uint32_t i = 0; i < uint32_t(GetSize()); ++i) {
+      ResourceItem* item = ResourceAt(i);
+
+      char buf[255];
+      PR_snprintf(buf, sizeof(buf), "%s/%08u.bin", aPath, i);
+      FILE* fp = fopen(buf, "wb");
+      if (!fp) {
+        return;
+      }
+      fwrite(item->mData.Elements(), item->mData.Length(), 1, fp);
+      fclose(fp);
+    }
+  }
+#endif
 
 private:
   ResourceItem* ResourceAt(uint32_t aIndex) const {
@@ -172,7 +188,6 @@ private:
   // Logical offset into the resource of the first element in the queue.
   uint64_t mOffset;
 };
-
 
 } // namespace mozilla
 #endif /* MOZILLA_RESOURCEQUEUE_H_ */

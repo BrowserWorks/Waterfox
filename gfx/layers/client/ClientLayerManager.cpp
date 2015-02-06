@@ -20,7 +20,6 @@
 #include "mozilla/layers/PLayerChild.h"  // for PLayerChild
 #include "mozilla/layers/LayerTransactionChild.h"
 #include "mozilla/layers/TextureClientPool.h" // for TextureClientPool
-#include "mozilla/layers/SimpleTextureClientPool.h" // for SimpleTextureClientPool
 #include "ClientReadbackLayer.h"        // for ClientReadbackLayer
 #include "nsAString.h"
 #include "nsIWidget.h"                  // for nsIWidget
@@ -204,7 +203,7 @@ ClientLayerManager::BeginTransactionWithTarget(gfxContext* aTarget)
   mForwarder->BeginTransaction(targetBounds, mTargetRotation, orientation);
 
   // If we're drawing on behalf of a context with async pan/zoom
-  // enabled, then the entire buffer of thebes layers might be
+  // enabled, then the entire buffer of painted layers might be
   // composited (including resampling) asynchronously before we get
   // a chance to repaint, so we have to ensure that it's all valid
   // and not rotated.
@@ -234,7 +233,7 @@ ClientLayerManager::BeginTransaction()
 }
 
 bool
-ClientLayerManager::EndTransactionInternal(DrawThebesLayerCallback aCallback,
+ClientLayerManager::EndTransactionInternal(DrawPaintedLayerCallback aCallback,
                                            void* aCallbackData,
                                            EndTransactionFlags)
 {
@@ -258,8 +257,8 @@ ClientLayerManager::EndTransactionInternal(DrawThebesLayerCallback aCallback,
   // properties.
   GetRoot()->ApplyPendingUpdatesToSubtree();
     
-  mThebesLayerCallback = aCallback;
-  mThebesLayerCallbackData = aCallbackData;
+  mPaintedLayerCallback = aCallback;
+  mPaintedLayerCallbackData = aCallbackData;
 
   GetRoot()->ComputeEffectiveTransforms(Matrix4x4());
 
@@ -268,8 +267,8 @@ ClientLayerManager::EndTransactionInternal(DrawThebesLayerCallback aCallback,
     GetRoot()->Mutated();
   }
   
-  mThebesLayerCallback = nullptr;
-  mThebesLayerCallbackData = nullptr;
+  mPaintedLayerCallback = nullptr;
+  mPaintedLayerCallbackData = nullptr;
 
   // Go back to the construction phase if the transaction isn't complete.
   // Layout will update the layer tree and call EndTransaction().
@@ -286,7 +285,7 @@ ClientLayerManager::EndTransactionInternal(DrawThebesLayerCallback aCallback,
 }
 
 void
-ClientLayerManager::EndTransaction(DrawThebesLayerCallback aCallback,
+ClientLayerManager::EndTransaction(DrawPaintedLayerCallback aCallback,
                                    void* aCallbackData,
                                    EndTransactionFlags aFlags)
 {
@@ -384,6 +383,19 @@ ClientLayerManager::GetCompositorSideAPZTestData(APZTestData* aData) const
       NS_WARNING("Call to PLayerTransactionChild::SendGetAPZTestData() failed");
     }
   }
+}
+
+float
+ClientLayerManager::RequestProperty(const nsAString& aProperty)
+{
+  if (mForwarder->HasShadowManager()) {
+    float value;
+    if (!mForwarder->GetShadowManager()->SendRequestProperty(nsString(aProperty), &value)) {
+      NS_WARNING("Call to PLayerTransactionChild::SendGetAPZTestData() failed");
+    }
+    return value;
+  }
+  return -1;
 }
 
 void
@@ -595,7 +607,7 @@ ClientLayerManager::ForwardTransaction(bool aScheduleComposite)
   }
 
   mForwarder->RemoveTexturesIfNecessary();
-  mForwarder->SendPendingAsyncMessge();
+  mForwarder->SendPendingAsyncMessges();
   mPhase = PHASE_NONE;
 
   // this may result in Layers being deleted, which results in
@@ -654,23 +666,6 @@ ClientLayerManager::GetTexturePool(SurfaceFormat aFormat)
                             mForwarder));
 
   return mTexturePools.LastElement();
-}
-
-SimpleTextureClientPool*
-ClientLayerManager::GetSimpleTileTexturePool(SurfaceFormat aFormat)
-{
-  int index = (int) aFormat;
-  mSimpleTilePools.EnsureLengthAtLeast(index+1);
-
-  if (mSimpleTilePools[index].get() == nullptr) {
-    mSimpleTilePools[index] = new SimpleTextureClientPool(aFormat, IntSize(gfxPrefs::LayersTileWidth(),
-                                                                           gfxPrefs::LayersTileHeight()),
-                                                          gfxPrefs::LayersTileMaxPoolSize(),
-                                                          gfxPrefs::LayersTileShrinkPoolTimeout(),
-                                                          mForwarder);
-  }
-
-  return mSimpleTilePools[index];
 }
 
 void

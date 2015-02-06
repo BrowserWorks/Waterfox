@@ -171,7 +171,7 @@ SettingsLock.prototype = {
     // DOMRequests.
     if (!this._closeCalled) {
       // We only want to file closeHelper once per set of receiveMessage calls.
-    Services.tm.currentThread.dispatch(this._closeHelper.bind(this), Ci.nsIThread.DISPATCH_NORMAL);
+      Services.tm.currentThread.dispatch(this._closeHelper.bind(this), Ci.nsIThread.DISPATCH_NORMAL);
       this._closeCalled = true;
     }
     if (DEBUG) debug("receiveMessage: " + aMessage.name);

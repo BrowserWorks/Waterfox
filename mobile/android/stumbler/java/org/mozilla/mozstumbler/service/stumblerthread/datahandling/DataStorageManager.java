@@ -38,7 +38,7 @@ import java.util.TimerTask;
  * when the service is destroyed.
  */
 public class DataStorageManager {
-    private static final String LOG_TAG = AppGlobals.LOG_PREFIX + DataStorageManager.class.getSimpleName();
+    private static final String LOG_TAG = AppGlobals.makeLogTag(DataStorageManager.class.getSimpleName());
 
     // The max number of reports stored in the mCurrentReports. Each report is a GPS location plus wifi and cell scan.
     // After this size is reached, data is persisted to disk, mCurrentReports is cleared.
@@ -67,7 +67,7 @@ public class DataStorageManager {
 
     private ReportBatch mCurrentReportsSendBuffer;
     private ReportBatchIterator mReportBatchIterator;
-    private ReportFileList mFileList;
+    private final ReportFileList mFileList;
     private Timer mFlushMemoryBuffersToDiskTimer;
 
     static final String SEP_REPORT_COUNT = "-r";
@@ -201,19 +201,7 @@ public class DataStorageManager {
     }
 
     private String getStorageDir(Context c) {
-        File dir = null;
-        if (AppGlobals.isDebug) {
-            // in debug, put files in public location
-            dir = c.getExternalFilesDir(null);
-            if (dir != null) {
-                dir = new File(dir.getAbsolutePath() + "/mozstumbler");
-            }
-        }
-
-        if (dir == null) {
-            dir = c.getFilesDir();
-        }
-
+        File dir = c.getFilesDir();
         if (!dir.exists()) {
             boolean ok = dir.mkdirs();
             if (!ok) {
@@ -414,9 +402,6 @@ public class DataStorageManager {
         }
 
         final String result = sb.append(kSuffix).toString();
-        if (AppGlobals.isDebug) {
-            Log.d(LOG_TAG, result);
-        }
         return result;
     }
 
@@ -439,8 +424,8 @@ public class DataStorageManager {
         }
 
         mCurrentReports.reports.add(report);
-        mCurrentReports.wifiCount = wifiCount;
-        mCurrentReports.cellCount = cellCount;
+        mCurrentReports.wifiCount += wifiCount;
+        mCurrentReports.cellCount += cellCount;
 
         if (mCurrentReports.reports.size() >= MAX_REPORTS_IN_MEMORY) {
             // save to disk

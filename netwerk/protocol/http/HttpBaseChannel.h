@@ -41,6 +41,7 @@
 #include "nsISecurityConsoleMessage.h"
 
 extern PRLogModuleInfo *gHttpLog;
+class nsPerformance;
 
 namespace mozilla {
 namespace net {
@@ -240,6 +241,8 @@ protected:
   // drop reference to listener, its callbacks, and the progress sink
   void ReleaseListeners();
 
+  nsPerformance* GetPerformance();
+
   NS_IMETHOD DoApplyContentConversions(nsIStreamListener *aNextListener,
                                      nsIStreamListener **aNewNextListener,
                                      nsISupports *aCtxt);
@@ -340,6 +343,10 @@ protected:
   uint32_t                          mResponseTimeoutEnabled     : 1;
   // A flag that should be false only if a cross-domain redirect occurred
   uint32_t                          mAllRedirectsSameOrigin     : 1;
+
+  // Is 1 if no redirects have occured or if all redirects
+  // pass the Resource Timing timing-allow-check
+  uint32_t                          mAllRedirectsPassTimingAllowCheck : 1;
 
   // Current suspension depth for this channel object
   uint32_t                          mSuspendCount;

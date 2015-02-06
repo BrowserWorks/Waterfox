@@ -19,11 +19,30 @@ this.PrivateBrowsingUtils = {
   // Rather than passing content windows to this function, please use
   // isBrowserPrivate since it works with e10s.
   isWindowPrivate: function pbu_isWindowPrivate(aWindow) {
+    if (!(aWindow instanceof Components.interfaces.nsIDOMChromeWindow)) {
+      dump("WARNING: content window passed to PrivateBrowsingUtils.isWindowPrivate. " +
+           "Use isContentWindowPrivate instead (but only for frame scripts).\n"
+           + new Error().stack);
+    }
+
+    return this.privacyContextFromWindow(aWindow).usePrivateBrowsing;
+  },
+
+  // This should be used only in frame scripts.
+  isContentWindowPrivate: function pbu_isWindowPrivate(aWindow) {
     return this.privacyContextFromWindow(aWindow).usePrivateBrowsing;
   },
 
   isBrowserPrivate: function(aBrowser) {
-    return this.isWindowPrivate(aBrowser.ownerDocument.defaultView);
+    let chromeWin = aBrowser.ownerDocument.defaultView;
+    if (chromeWin.gMultiProcessBrowser) {
+      // In e10s we have to look at the chrome window's private
+      // browsing status since the only alternative is to check the
+      // content window, which is in another process.
+      return this.isWindowPrivate(chromeWin);
+    } else {
+      return this.privacyContextFromWindow(aBrowser.contentWindow).usePrivateBrowsing;
+    }
   },
 
   privacyContextFromWindow: function pbu_privacyContextFromWindow(aWindow) {

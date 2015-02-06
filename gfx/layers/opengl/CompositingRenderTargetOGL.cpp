@@ -100,6 +100,7 @@ CompositingRenderTargetOGL::InitializeImpl()
     mGL->fClearColor(0.0, 0.0, 0.0, 0.0);
     mGL->fClear(LOCAL_GL_COLOR_BUFFER_BIT);
   }
+
 }
 
 }

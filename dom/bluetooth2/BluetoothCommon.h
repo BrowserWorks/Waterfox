@@ -16,6 +16,16 @@ extern bool gBluetoothDebugFlag;
 
 #define SWITCH_BT_DEBUG(V) (gBluetoothDebugFlag = V)
 
+#if MOZ_IS_GCC && MOZ_GCC_VERSION_AT_LEAST(4, 7, 0)
+/* use designated array initializers if supported */
+#define CONVERT(in_, out_) \
+  [in_] = out_
+#else
+/* otherwise init array element by position */
+#define CONVERT(in_, out_) \
+  out_
+#endif
+
 #undef BT_LOG
 #if defined(MOZ_WIDGET_GONK)
 #include <android/log.h>
@@ -178,6 +188,12 @@ extern bool gBluetoothDebugFlag;
 // Bluetooth stack internal error, such as I/O error
 #define ERR_INTERNAL_ERROR "InternalError"
 
+/**
+ * BT specification v4.1 defines the maximum attribute length as 512 octets.
+ * Currently use 600 here to conform to bluedroid's BTGATT_MAX_ATTR_LEN.
+ */
+#define BLUETOOTH_GATT_MAX_ATTR_LEN 600
+
 BEGIN_BLUETOOTH_NAMESPACE
 
 enum BluetoothStatus {
@@ -194,6 +210,102 @@ enum BluetoothStatus {
   STATUS_RMT_DEV_DOWN
 };
 
+enum BluetoothBondState {
+  BOND_STATE_NONE,
+  BOND_STATE_BONDING,
+  BOND_STATE_BONDED
+};
+
+enum BluetoothTypeOfDevice {
+  TYPE_OF_DEVICE_BREDR,
+  TYPE_OF_DEVICE_BLE,
+  TYPE_OF_DEVICE_DUAL
+};
+
+enum BluetoothPropertyType {
+  PROPERTY_UNKNOWN,
+  PROPERTY_BDNAME,
+  PROPERTY_BDADDR,
+  PROPERTY_UUIDS,
+  PROPERTY_CLASS_OF_DEVICE,
+  PROPERTY_TYPE_OF_DEVICE,
+  PROPERTY_SERVICE_RECORD,
+  PROPERTY_ADAPTER_SCAN_MODE,
+  PROPERTY_ADAPTER_BONDED_DEVICES,
+  PROPERTY_ADAPTER_DISCOVERY_TIMEOUT,
+  PROPERTY_REMOTE_FRIENDLY_NAME,
+  PROPERTY_REMOTE_RSSI,
+  PROPERTY_REMOTE_VERSION_INFO,
+  PROPERTY_REMOTE_DEVICE_TIMESTAMP
+};
+
+enum BluetoothScanMode {
+  SCAN_MODE_NONE,
+  SCAN_MODE_CONNECTABLE,
+  SCAN_MODE_CONNECTABLE_DISCOVERABLE
+};
+
+enum BluetoothSspVariant {
+  SSP_VARIANT_PASSKEY_CONFIRMATION,
+  SSP_VARIANT_PASSKEY_ENTRY,
+  SSP_VARIANT_CONSENT,
+  SSP_VARIANT_PASSKEY_NOTIFICATION
+};
+
+struct BluetoothUuid {
+  uint8_t mUuid[16];
+};
+
+struct BluetoothServiceRecord {
+  BluetoothUuid mUuid;
+  uint16_t mChannel;
+  char mName[256];
+};
+
+struct BluetoothRemoteInfo {
+  int mVerMajor;
+  int mVerMinor;
+  int mManufacturer;
+};
+
+struct BluetoothProperty {
+  /* Type */
+  BluetoothPropertyType mType;
+
+  /* Value
+   */
+
+  /* PROPERTY_BDNAME
+     PROPERTY_BDADDR
+     PROPERTY_REMOTE_FRIENDLY_NAME */
+  nsString mString;
+
+  /* PROPERTY_UUIDS */
+  nsTArray<BluetoothUuid> mUuidArray;
+
+  /* PROPERTY_ADAPTER_BONDED_DEVICES */
+  nsTArray<nsString> mStringArray;
+
+  /* PROPERTY_CLASS_OF_DEVICE
+     PROPERTY_ADAPTER_DISCOVERY_TIMEOUT */
+  uint32_t mUint32;
+
+  /* PROPERTY_RSSI_VALUE */
+  int32_t mInt32;
+
+  /* PROPERTY_TYPE_OF_DEVICE */
+  BluetoothTypeOfDevice mTypeOfDevice;
+
+  /* PROPERTY_SERVICE_RECORD */
+  BluetoothServiceRecord mServiceRecord;
+
+  /* PROPERTY_SCAN_MODE */
+  BluetoothScanMode mScanMode;
+
+  /* PROPERTY_REMOTE_VERSION_INFO */
+  BluetoothRemoteInfo mRemoteInfo;
+};
+
 enum BluetoothSocketType {
   RFCOMM = 1,
   SCO    = 2,
@@ -206,6 +318,13 @@ enum BluetoothHandsfreeAtResponse {
   HFP_AT_RESPONSE_OK
 };
 
+enum BluetoothHandsfreeAudioState {
+  HFP_AUDIO_STATE_DISCONNECTED,
+  HFP_AUDIO_STATE_CONNECTING,
+  HFP_AUDIO_STATE_CONNECTED,
+  HFP_AUDIO_STATE_DISCONNECTING,
+};
+
 enum BluetoothHandsfreeCallAddressType {
   HFP_CALL_ADDRESS_TYPE_UNKNOWN,
   HFP_CALL_ADDRESS_TYPE_INTERNATIONAL
@@ -214,6 +333,13 @@ enum BluetoothHandsfreeCallAddressType {
 enum BluetoothHandsfreeCallDirection {
   HFP_CALL_DIRECTION_OUTGOING,
   HFP_CALL_DIRECTION_INCOMING
+};
+
+enum BluetoothHandsfreeCallHoldType {
+  HFP_CALL_HOLD_RELEASEHELD,
+  HFP_CALL_HOLD_RELEASEACTIVE_ACCEPTHELD,
+  HFP_CALL_HOLD_HOLDACTIVE_ACCEPTHELD,
+  HFP_CALL_HOLD_ADDHELDTOCONF
 };
 
 enum BluetoothHandsfreeCallMode {
@@ -237,14 +363,33 @@ enum BluetoothHandsfreeCallState {
   HFP_CALL_STATE_IDLE
 };
 
+enum BluetoothHandsfreeConnectionState
+{
+  HFP_CONNECTION_STATE_DISCONNECTED,
+  HFP_CONNECTION_STATE_CONNECTING,
+  HFP_CONNECTION_STATE_CONNECTED,
+  HFP_CONNECTION_STATE_SLC_CONNECTED,
+  HFP_CONNECTION_STATE_DISCONNECTING
+};
+
 enum BluetoothHandsfreeNetworkState {
   HFP_NETWORK_STATE_NOT_AVAILABLE,
   HFP_NETWORK_STATE_AVAILABLE
 };
 
+enum BluetoothHandsfreeNRECState {
+  HFP_NREC_STOPPED,
+  HFP_NREC_STARTED
+};
+
 enum BluetoothHandsfreeServiceType {
   HFP_SERVICE_TYPE_HOME,
   HFP_SERVICE_TYPE_ROAMING
+};
+
+enum BluetoothHandsfreeVoiceRecognitionState {
+  HFP_VOICE_RECOGNITION_STOPPED,
+  HFP_VOICE_RECOGNITION_STARTED
 };
 
 enum BluetoothHandsfreeVolumeType {
@@ -266,6 +411,19 @@ enum BluetoothObjectType {
   TYPE_INVALID
 };
 
+enum BluetoothA2dpAudioState {
+  A2DP_AUDIO_STATE_REMOTE_SUSPEND,
+  A2DP_AUDIO_STATE_STOPPED,
+  A2DP_AUDIO_STATE_STARTED,
+};
+
+enum BluetoothA2dpConnectionState {
+  A2DP_CONNECTION_STATE_DISCONNECTED,
+  A2DP_CONNECTION_STATE_CONNECTING,
+  A2DP_CONNECTION_STATE_CONNECTED,
+  A2DP_CONNECTION_STATE_DISCONNECTING
+};
+
 enum ControlPlayStatus {
   PLAYSTATUS_STOPPED  = 0x00,
   PLAYSTATUS_PLAYING  = 0x01,
@@ -274,6 +432,20 @@ enum ControlPlayStatus {
   PLAYSTATUS_REV_SEEK = 0x04,
   PLAYSTATUS_UNKNOWN,
   PLAYSTATUS_ERROR    = 0xFF,
+};
+
+enum {
+  AVRCP_UID_SIZE = 8
+};
+
+enum BluetoothAvrcpMediaAttribute {
+  AVRCP_MEDIA_ATTRIBUTE_TITLE,
+  AVRCP_MEDIA_ATTRIBUTE_ARTIST,
+  AVRCP_MEDIA_ATTRIBUTE_ALBUM,
+  AVRCP_MEDIA_ATTRIBUTE_TRACK_NUM,
+  AVRCP_MEDIA_ATTRIBUTE_NUM_TRACKS,
+  AVRCP_MEDIA_ATTRIBUTE_GENRE,
+  AVRCP_MEDIA_ATTRIBUTE_PLAYING_TIME
 };
 
 enum BluetoothAvrcpPlayerAttribute {
@@ -305,6 +477,13 @@ enum BluetoothAvrcpNotification {
   AVRCP_NTF_CHANGED
 };
 
+enum BluetoothAvrcpRemoteFeature {
+  AVRCP_REMOTE_FEATURE_NONE,
+  AVRCP_REMOTE_FEATURE_METADATA,
+  AVRCP_REMOTE_FEATURE_ABSOLUTE_VOLUME,
+  AVRCP_REMOTE_FEATURE_BROWSE
+};
+
 struct BluetoothAvrcpElementAttribute {
   uint32_t mId;
   nsString mValue;
@@ -317,6 +496,52 @@ struct BluetoothAvrcpNotificationParam {
   uint8_t mNumAttr;
   uint8_t mIds[256];
   uint8_t mValues[256];
+};
+
+struct BluetoothAvrcpPlayerSettings {
+  uint8_t mNumAttr;
+  uint8_t mIds[256];
+  uint8_t mValues[256];
+};
+
+struct BluetoothGattAdvData {
+  uint8_t mAdvData[62];
+};
+
+struct BluetoothGattId {
+  BluetoothUuid mUuid;
+  uint8_t mInstanceId;
+};
+
+struct BluetoothGattServiceId {
+  BluetoothGattId mId;
+  uint8_t mIsPrimary;
+};
+
+struct BluetoothGattReadParam {
+  BluetoothGattServiceId mServiceId;
+  BluetoothGattId mCharId;
+  BluetoothGattId mDescriptorId;
+  uint8_t mValue[BLUETOOTH_GATT_MAX_ATTR_LEN];
+  uint16_t mValueLength;
+  uint16_t mValueType;
+  uint8_t mStatus;
+};
+
+struct BluetoothGattWriteParam {
+  BluetoothGattServiceId mServiceId;
+  BluetoothGattId mCharId;
+  BluetoothGattId mDescriptorId;
+  uint8_t mStatus;
+};
+
+struct BluetoothGattNotifyParam {
+  uint8_t mValue[BLUETOOTH_GATT_MAX_ATTR_LEN];
+  nsString mBdAddr;
+  BluetoothGattServiceId mServiceId;
+  BluetoothGattId mCharId;
+  uint16_t mLength;
+  uint8_t mIsNotify;
 };
 
 END_BLUETOOTH_NAMESPACE

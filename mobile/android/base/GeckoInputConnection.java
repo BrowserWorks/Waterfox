@@ -430,7 +430,7 @@ class GeckoInputConnection
     }
 
     @Override
-    public void onTextChange(String text, int start, int oldEnd, int newEnd) {
+    public void onTextChange(CharSequence text, int start, int oldEnd, int newEnd) {
 
         if (mUpdateRequest == null) {
             // Android always expects selection updates when not in extracted mode;
@@ -997,7 +997,7 @@ final class DebugGeckoInputConnection
         implements InvocationHandler {
 
     private InputConnection mProxy;
-    private StringBuilder mCallLevel;
+    private final StringBuilder mCallLevel;
 
     private DebugGeckoInputConnection(View targetView,
                                       GeckoEditableClient editable) {
@@ -1007,7 +1007,7 @@ final class DebugGeckoInputConnection
 
     public static GeckoEditableListener create(View targetView,
                                                GeckoEditableClient editable) {
-        final Class[] PROXY_INTERFACES = { InputConnection.class,
+        final Class<?>[] PROXY_INTERFACES = { InputConnection.class,
                 InputConnectionHandler.class,
                 GeckoEditableListener.class };
         DebugGeckoInputConnection dgic =
@@ -1024,21 +1024,23 @@ final class DebugGeckoInputConnection
 
         StringBuilder log = new StringBuilder(mCallLevel);
         log.append("> ").append(method.getName()).append("(");
-        for (Object arg : args) {
-            // translate argument values to constant names
-            if ("notifyIME".equals(method.getName()) && arg == args[0]) {
-                log.append(GeckoEditable.getConstantName(
-                    GeckoEditableListener.class, "NOTIFY_IME_", arg));
-            } else if ("notifyIMEContext".equals(method.getName()) && arg == args[0]) {
-                log.append(GeckoEditable.getConstantName(
-                    GeckoEditableListener.class, "IME_STATE_", arg));
-            } else {
-                GeckoEditable.debugAppend(log, arg);
+        if (args != null) {
+            for (Object arg : args) {
+                // translate argument values to constant names
+                if ("notifyIME".equals(method.getName()) && arg == args[0]) {
+                    log.append(GeckoEditable.getConstantName(
+                        GeckoEditableListener.class, "NOTIFY_IME_", arg));
+                } else if ("notifyIMEContext".equals(method.getName()) && arg == args[0]) {
+                    log.append(GeckoEditable.getConstantName(
+                        GeckoEditableListener.class, "IME_STATE_", arg));
+                } else {
+                    GeckoEditable.debugAppend(log, arg);
+                }
+                log.append(", ");
             }
-            log.append(", ");
-        }
-        if (args.length > 0) {
-            log.setLength(log.length() - 2);
+            if (args.length > 0) {
+                log.setLength(log.length() - 2);
+            }
         }
         log.append(")");
         Log.d(LOGTAG, log.toString());

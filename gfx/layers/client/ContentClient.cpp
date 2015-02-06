@@ -676,7 +676,7 @@ ContentClientIncremental::NotifyBufferCreated(ContentType aType, TextureFlags aF
 }
 
 RotatedContentBuffer::PaintState
-ContentClientIncremental::BeginPaintBuffer(ThebesLayer* aLayer,
+ContentClientIncremental::BeginPaintBuffer(PaintedLayer* aLayer,
                                            uint32_t aFlags)
 {
   mTextureInfo.mDeprecatedTextureHostFlags = DeprecatedTextureHostFlags::DEFAULT;
@@ -934,9 +934,8 @@ ContentClientIncremental::BorrowDrawTargetForPainting(PaintState& aPaintState,
 
   result = mLoanedDrawTarget;
   mLoanedTransform = mLoanedDrawTarget->GetTransform();
-  mLoanedTransform.Translate(-drawBounds.x, -drawBounds.y);
-  result->SetTransform(mLoanedTransform);
-  mLoanedTransform.Translate(drawBounds.x, drawBounds.y);
+  result->SetTransform(Matrix(mLoanedTransform).
+                         PreTranslate(-drawBounds.x, -drawBounds.y));
 
   if (mContentType == gfxContentType::COLOR_ALPHA) {
     gfxUtils::ClipToRegion(result, aPaintState.mRegionToDraw);

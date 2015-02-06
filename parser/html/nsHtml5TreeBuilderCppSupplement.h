@@ -15,6 +15,8 @@ class nsPresContext;
 nsHtml5TreeBuilder::nsHtml5TreeBuilder(nsHtml5OplessBuilder* aBuilder)
   : scriptingEnabled(false)
   , fragment(false)
+  , contextName(nullptr)
+  , contextNamespace(kNameSpaceID_None)
   , contextNode(nullptr)
   , formPointer(nullptr)
   , headPointer(nullptr)
@@ -37,6 +39,8 @@ nsHtml5TreeBuilder::nsHtml5TreeBuilder(nsAHtml5TreeOpSink* aOpSink,
                                        nsHtml5TreeOpStage* aStage)
   : scriptingEnabled(false)
   , fragment(false)
+  , contextName(nullptr)
+  , contextNamespace(kNameSpaceID_None)
   , contextNode(nullptr)
   , formPointer(nullptr)
   , headPointer(nullptr)
@@ -228,14 +232,21 @@ nsHtml5TreeBuilder::createElement(int32_t aNamespace, nsIAtom* aName, nsHtml5Htm
           (aAttributes->contains(nsHtml5AttributeName::ATTR_ASYNC) ||
            aAttributes->contains(nsHtml5AttributeName::ATTR_DEFER));
       }
-    } else if (aNamespace == kNameSpaceID_XHTML && nsHtml5Atoms::html == aName) {
-      nsString* url = aAttributes->getValue(nsHtml5AttributeName::ATTR_MANIFEST);
-      nsHtml5TreeOperation* treeOp = mOpQueue.AppendElement();
-      NS_ASSERTION(treeOp, "Tree op allocation failed.");
-      if (url) {
-        treeOp->Init(eTreeOpProcessOfflineManifest, *url);
-      } else {
-        treeOp->Init(eTreeOpProcessOfflineManifest, EmptyString());
+    } else if (aNamespace == kNameSpaceID_XHTML) {
+      if (nsHtml5Atoms::html == aName) {
+        nsString* url = aAttributes->getValue(nsHtml5AttributeName::ATTR_MANIFEST);
+        nsHtml5TreeOperation* treeOp = mOpQueue.AppendElement();
+        NS_ASSERTION(treeOp, "Tree op allocation failed.");
+        if (url) {
+          treeOp->Init(eTreeOpProcessOfflineManifest, *url);
+        } else {
+          treeOp->Init(eTreeOpProcessOfflineManifest, EmptyString());
+        }
+      } else if (nsHtml5Atoms::base == aName && mViewSource) {
+        nsString* url = aAttributes->getValue(nsHtml5AttributeName::ATTR_HREF);
+        if (url) {
+          mViewSource->AddBase(*url);
+        } 
       }
     }
   }

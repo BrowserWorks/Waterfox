@@ -6,7 +6,7 @@
 
 TEST_DIRS += ['tests']
 
-LIBRARY_NAME = 'mfbt'
+Library('mfbt')
 
 EXPORTS.mozilla = [
     'Alignment.h',
@@ -27,6 +27,8 @@ EXPORTS.mozilla = [
     'Constants.h',
     'DebugOnly.h',
     'decimal/Decimal.h',
+    'double-conversion/double-conversion.h',
+    'double-conversion/utils.h',
     'Endian.h',
     'EnumeratedArray.h',
     'EnumSet.h',
@@ -35,6 +37,7 @@ EXPORTS.mozilla = [
     'HashFunctions.h',
     'IntegerPrintfMacros.h',
     'IntegerTypeTraits.h',
+    'JSONWriter.h',
     'Likely.h',
     'LinkedList.h',
     'MacroArgs.h',
@@ -72,6 +75,7 @@ EXPORTS.mozilla = [
     'UniquePtr.h',
     'Vector.h',
     'WeakPtr.h',
+    'unused.h',
 ]
 
 if CONFIG['OS_ARCH'] == 'WINNT':
@@ -94,9 +98,11 @@ UNIFIED_SOURCES = [
     'double-conversion/strtod.cc',
     'FloatingPoint.cpp',
     'HashFunctions.cpp',
+    'JSONWriter.cpp',
     'Poison.cpp',
     'SHA1.cpp',
     'TaggedAnonymousMemory.cpp',
+    'unused.cpp',
 ]
 
 DEFINES['IMPL_MFBT'] = True

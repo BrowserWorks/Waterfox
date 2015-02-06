@@ -21,7 +21,7 @@ bool
 LIRGeneratorARM::useBox(LInstruction *lir, size_t n, MDefinition *mir,
                         LUse::Policy policy, bool useAtStart)
 {
-    JS_ASSERT(mir->type() == MIRType_Value);
+    MOZ_ASSERT(mir->type() == MIRType_Value);
     if (!ensureDefined(mir))
         return false;
     lir->setOperand(n, LUse(mir->virtualRegister(), policy, useAtStart));
@@ -33,8 +33,8 @@ bool
 LIRGeneratorARM::useBoxFixed(LInstruction *lir, size_t n, MDefinition *mir, Register reg1,
                              Register reg2)
 {
-    JS_ASSERT(mir->type() == MIRType_Value);
-    JS_ASSERT(reg1 != reg2);
+    MOZ_ASSERT(mir->type() == MIRType_Value);
+    MOZ_ASSERT(reg1 != reg2);
 
     if (!ensureDefined(mir))
         return false;
@@ -126,7 +126,7 @@ LIRGeneratorARM::visitUnbox(MUnbox *unbox)
     // a payload. Unlike most instructions conusming a box, we ask for the type
     // second, so that the result can re-use the first input.
     MDefinition *inner = unbox->getOperand(0);
-    JS_ASSERT(inner->type() == MIRType_Value);
+    MOZ_ASSERT(inner->type() == MIRType_Value);
 
     if (!ensureDefined(inner))
         return false;
@@ -160,7 +160,7 @@ bool
 LIRGeneratorARM::visitReturn(MReturn *ret)
 {
     MDefinition *opd = ret->getOperand(0);
-    JS_ASSERT(opd->type() == MIRType_Value);
+    MOZ_ASSERT(opd->type() == MIRType_Value);
 
     LReturn *ins = new(alloc()) LReturn;
     ins->setOperand(0, LUse(JSReturnReg_Type));
@@ -172,7 +172,7 @@ LIRGeneratorARM::visitReturn(MReturn *ret)
 bool
 LIRGeneratorARM::lowerForALU(LInstructionHelper<1, 1, 0> *ins, MDefinition *mir, MDefinition *input)
 {
-    ins->setOperand(0, useRegister(input));
+    ins->setOperand(0, ins->snapshot() ? useRegister(input) : useRegisterAtStart(input));
     return define(ins, mir,
                   LDefinition(LDefinition::TypeFrom(mir->type()), LDefinition::REGISTER));
 }
@@ -181,8 +181,11 @@ LIRGeneratorARM::lowerForALU(LInstructionHelper<1, 1, 0> *ins, MDefinition *mir,
 bool
 LIRGeneratorARM::lowerForALU(LInstructionHelper<1, 2, 0> *ins, MDefinition *mir, MDefinition *lhs, MDefinition *rhs)
 {
-    ins->setOperand(0, useRegister(lhs));
-    ins->setOperand(1, useRegisterOrConstant(rhs));
+    // Some operations depend on checking inputs after writing the result, e.g.
+    // MulI, but only for bail out paths so useAtStart when no bailouts.
+    ins->setOperand(0, ins->snapshot() ? useRegister(lhs) : useRegisterAtStart(lhs));
+    ins->setOperand(1, ins->snapshot() ? useRegisterOrConstant(rhs) :
+                                         useRegisterOrConstantAtStart(rhs));
     return define(ins, mir,
                   LDefinition(LDefinition::TypeFrom(mir->type()), LDefinition::REGISTER));
 }
@@ -190,7 +193,7 @@ LIRGeneratorARM::lowerForALU(LInstructionHelper<1, 2, 0> *ins, MDefinition *mir,
 bool
 LIRGeneratorARM::lowerForFPU(LInstructionHelper<1, 1, 0> *ins, MDefinition *mir, MDefinition *input)
 {
-    ins->setOperand(0, useRegister(input));
+    ins->setOperand(0, useRegisterAtStart(input));
     return define(ins, mir,
                   LDefinition(LDefinition::TypeFrom(mir->type()), LDefinition::REGISTER));
 
@@ -199,8 +202,8 @@ LIRGeneratorARM::lowerForFPU(LInstructionHelper<1, 1, 0> *ins, MDefinition *mir,
 bool
 LIRGeneratorARM::lowerForFPU(LInstructionHelper<1, 2, 0> *ins, MDefinition *mir, MDefinition *lhs, MDefinition *rhs)
 {
-    ins->setOperand(0, useRegister(lhs));
-    ins->setOperand(1, useRegister(rhs));
+    ins->setOperand(0, useRegisterAtStart(lhs));
+    ins->setOperand(1, useRegisterAtStart(rhs));
     return define(ins, mir,
                   LDefinition(LDefinition::TypeFrom(mir->type()), LDefinition::REGISTER));
 }
@@ -229,7 +232,7 @@ LIRGeneratorARM::defineUntypedPhi(MPhi *phi, size_t lirIndex)
     uint32_t payloadVreg = getVirtualRegister();
     if (payloadVreg >= MAX_VIRTUAL_REGISTERS)
         return false;
-    JS_ASSERT(typeVreg + 1 == payloadVreg);
+    MOZ_ASSERT(typeVreg + 1 == payloadVreg);
 
     type->setDef(0, LDefinition(typeVreg, LDefinition::TYPE));
     payload->setDef(0, LDefinition(payloadVreg, LDefinition::PAYLOAD));
@@ -346,7 +349,7 @@ bool
 LIRGeneratorARM::visitPowHalf(MPowHalf *ins)
 {
     MDefinition *input = ins->input();
-    JS_ASSERT(input->type() == MIRType_Double);
+    MOZ_ASSERT(input->type() == MIRType_Double);
     LPowHalfD *lir = new(alloc()) LPowHalfD(useRegisterAtStart(input));
     return defineReuseInput(lir, ins, 0);
 }
@@ -367,7 +370,7 @@ LIRGeneratorARM::newLTableSwitchV(MTableSwitch *tableswitch)
 bool
 LIRGeneratorARM::visitGuardShape(MGuardShape *ins)
 {
-    JS_ASSERT(ins->obj()->type() == MIRType_Object);
+    MOZ_ASSERT(ins->obj()->type() == MIRType_Object);
 
     LDefinition tempObj = temp(LDefinition::OBJECT);
     LGuardShape *guard = new(alloc()) LGuardShape(useRegister(ins->obj()), tempObj);
@@ -381,7 +384,7 @@ LIRGeneratorARM::visitGuardShape(MGuardShape *ins)
 bool
 LIRGeneratorARM::visitGuardObjectType(MGuardObjectType *ins)
 {
-    JS_ASSERT(ins->obj()->type() == MIRType_Object);
+    MOZ_ASSERT(ins->obj()->type() == MIRType_Object);
 
     LDefinition tempObj = temp(LDefinition::OBJECT);
     LGuardObjectType *guard = new(alloc()) LGuardObjectType(useRegister(ins->obj()), tempObj);
@@ -398,8 +401,8 @@ LIRGeneratorARM::lowerUrshD(MUrsh *mir)
     MDefinition *lhs = mir->lhs();
     MDefinition *rhs = mir->rhs();
 
-    JS_ASSERT(lhs->type() == MIRType_Int32);
-    JS_ASSERT(rhs->type() == MIRType_Int32);
+    MOZ_ASSERT(lhs->type() == MIRType_Int32);
+    MOZ_ASSERT(rhs->type() == MIRType_Int32);
 
     LUrshD *lir = new(alloc()) LUrshD(useRegister(lhs), useRegisterOrConstant(rhs), temp());
     return define(lir, mir);
@@ -414,7 +417,7 @@ LIRGeneratorARM::visitAsmJSNeg(MAsmJSNeg *ins)
     if(ins->type() == MIRType_Float32)
         return define(new(alloc()) LNegF(useRegisterAtStart(ins->input())), ins);
 
-    JS_ASSERT(ins->type() == MIRType_Double);
+    MOZ_ASSERT(ins->type() == MIRType_Double);
     return define(new(alloc()) LNegD(useRegisterAtStart(ins->input())), ins);
 }
 
@@ -465,7 +468,7 @@ LIRGeneratorARM::lowerUMod(MMod *mod)
 bool
 LIRGeneratorARM::visitAsmJSUnsignedToDouble(MAsmJSUnsignedToDouble *ins)
 {
-    JS_ASSERT(ins->input()->type() == MIRType_Int32);
+    MOZ_ASSERT(ins->input()->type() == MIRType_Int32);
     LAsmJSUInt32ToDouble *lir = new(alloc()) LAsmJSUInt32ToDouble(useRegisterAtStart(ins->input()));
     return define(lir, ins);
 }
@@ -473,7 +476,7 @@ LIRGeneratorARM::visitAsmJSUnsignedToDouble(MAsmJSUnsignedToDouble *ins)
 bool
 LIRGeneratorARM::visitAsmJSUnsignedToFloat32(MAsmJSUnsignedToFloat32 *ins)
 {
-    JS_ASSERT(ins->input()->type() == MIRType_Int32);
+    MOZ_ASSERT(ins->input()->type() == MIRType_Int32);
     LAsmJSUInt32ToFloat32 *lir = new(alloc()) LAsmJSUInt32ToFloat32(useRegisterAtStart(ins->input()));
     return define(lir, ins);
 }
@@ -482,14 +485,14 @@ bool
 LIRGeneratorARM::visitAsmJSLoadHeap(MAsmJSLoadHeap *ins)
 {
     MDefinition *ptr = ins->ptr();
-    JS_ASSERT(ptr->type() == MIRType_Int32);
+    MOZ_ASSERT(ptr->type() == MIRType_Int32);
     LAllocation ptrAlloc;
 
     // For the ARM it is best to keep the 'ptr' in a register if a bounds check is needed.
     if (ptr->isConstant() && ins->skipBoundsCheck()) {
         int32_t ptrValue = ptr->toConstant()->value().toInt32();
         // A bounds check is only skipped for a positive index.
-        JS_ASSERT(ptrValue >= 0);
+        MOZ_ASSERT(ptrValue >= 0);
         ptrAlloc = LAllocation(ptr->toConstant()->vp());
     } else
         ptrAlloc = useRegisterAtStart(ptr);
@@ -501,11 +504,11 @@ bool
 LIRGeneratorARM::visitAsmJSStoreHeap(MAsmJSStoreHeap *ins)
 {
     MDefinition *ptr = ins->ptr();
-    JS_ASSERT(ptr->type() == MIRType_Int32);
+    MOZ_ASSERT(ptr->type() == MIRType_Int32);
     LAllocation ptrAlloc;
 
     if (ptr->isConstant() && ins->skipBoundsCheck()) {
-        JS_ASSERT(ptr->toConstant()->value().toInt32() >= 0);
+        MOZ_ASSERT(ptr->toConstant()->value().toInt32() >= 0);
         ptrAlloc = LAllocation(ptr->toConstant()->vp());
     } else
         ptrAlloc = useRegisterAtStart(ptr);
@@ -523,7 +526,7 @@ bool
 LIRGeneratorARM::lowerTruncateDToInt32(MTruncateToInt32 *ins)
 {
     MDefinition *opd = ins->input();
-    JS_ASSERT(opd->type() == MIRType_Double);
+    MOZ_ASSERT(opd->type() == MIRType_Double);
 
     return define(new(alloc()) LTruncateDToInt32(useRegister(opd), LDefinition::BogusTemp()), ins);
 }
@@ -532,7 +535,7 @@ bool
 LIRGeneratorARM::lowerTruncateFToInt32(MTruncateToInt32 *ins)
 {
     MDefinition *opd = ins->input();
-    JS_ASSERT(opd->type() == MIRType_Float32);
+    MOZ_ASSERT(opd->type() == MIRType_Float32);
 
     return define(new(alloc()) LTruncateFToInt32(useRegister(opd), LDefinition::BogusTemp()), ins);
 }
@@ -550,7 +553,19 @@ LIRGeneratorARM::visitForkJoinGetSlice(MForkJoinGetSlice *ins)
 }
 
 bool
+LIRGeneratorARM::visitSimdTernaryBitwise(MSimdTernaryBitwise *ins)
+{
+    MOZ_CRASH("NYI");
+}
+
+bool
 LIRGeneratorARM::visitSimdSplatX4(MSimdSplatX4 *ins)
+{
+    MOZ_CRASH("NYI");
+}
+
+bool
+LIRGeneratorARM::visitSimdValueX4(MSimdValueX4 *ins)
 {
     MOZ_CRASH("NYI");
 }

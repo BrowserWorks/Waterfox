@@ -8,6 +8,9 @@
 #include "sandbox/win/src/sandbox.h"
 #include "sandbox/win/src/sandbox_factory.h"
 #include "sandbox/win/src/security_level.h"
+#if defined(MOZ_CONTENT_SANDBOX)
+#include "mozilla/warnonlysandbox/warnOnlySandbox.h"
+#endif
 
 namespace mozilla
 {
@@ -60,8 +63,9 @@ SandboxBroker::LaunchApp(const wchar_t *aPath,
   return true;
 }
 
+#if defined(MOZ_CONTENT_SANDBOX)
 bool
-SandboxBroker::SetSecurityLevelForContentProcess()
+SandboxBroker::SetSecurityLevelForContentProcess(bool inWarnOnlyMode)
 {
   if (!mPolicy) {
     return false;
@@ -69,17 +73,33 @@ SandboxBroker::SetSecurityLevelForContentProcess()
 
   auto result = mPolicy->SetJobLevel(sandbox::JOB_NONE, 0);
   bool ret = (sandbox::SBOX_ALL_OK == result);
-  result =
-    mPolicy->SetTokenLevel(sandbox::USER_RESTRICTED_SAME_ACCESS,
-                           sandbox::USER_RESTRICTED_SAME_ACCESS);
+
+  result = mPolicy->SetTokenLevel(sandbox::USER_RESTRICTED_SAME_ACCESS,
+                                  sandbox::USER_RESTRICTED_SAME_ACCESS);
   ret = ret && (sandbox::SBOX_ALL_OK == result);
-  result =
-    mPolicy->SetDelayedIntegrityLevel(sandbox::INTEGRITY_LEVEL_LOW);
+
+  // If the delayed integrity level is changed then SetUpSandboxEnvironment and
+  // CleanUpSandboxEnvironment in ContentChild should be changed or removed.
+  result = mPolicy->SetDelayedIntegrityLevel(sandbox::INTEGRITY_LEVEL_LOW);
   ret = ret && (sandbox::SBOX_ALL_OK == result);
+
   result = mPolicy->SetAlternateDesktop(true);
   ret = ret && (sandbox::SBOX_ALL_OK == result);
+
+  // Add the policy for the client side of a pipe. It is just a file
+  // in the \pipe\ namespace. We restrict it to pipes that start with
+  // "chrome." so the sandboxed process cannot connect to system services.
+  result = mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_FILES,
+                            sandbox::TargetPolicy::FILES_ALLOW_ANY,
+                            L"\\??\\pipe\\chrome.*");
+  ret = ret && (sandbox::SBOX_ALL_OK == result);
+
+  if (inWarnOnlyMode) {
+    mozilla::warnonlysandbox::ApplyWarnOnlyPolicy(*mPolicy);
+  }
   return ret;
 }
+#endif
 
 bool
 SandboxBroker::SetSecurityLevelForPluginProcess()

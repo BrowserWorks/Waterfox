@@ -78,7 +78,7 @@ gfxAlphaBoxBlur::Init(const gfxRect& aRect,
     gfxPoint topleft(irect.TopLeft().x, irect.TopLeft().y);
 
     mContext = new gfxContext(dt);
-    mContext->Translate(-topleft);
+    mContext->SetMatrix(gfxMatrix::Translation(-topleft));
 
     return mContext;
 }
@@ -96,7 +96,7 @@ DrawBlur(gfxContext* aDestinationCtx,
 
     Matrix oldTransform = dest->GetTransform();
     Matrix newTransform = oldTransform;
-    newTransform.Translate(aTopLeft.x, aTopLeft.y);
+    newTransform.PreTranslate(aTopLeft.x, aTopLeft.y);
 
     // Avoid a semi-expensive clip operation if we can, otherwise
     // clip to the dirty rect

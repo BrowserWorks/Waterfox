@@ -25,6 +25,7 @@ namespace mozilla {
 namespace dom {
 
 NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(MediaKeys,
+                                      mElement,
                                       mParent,
                                       mKeySessions,
                                       mPromises,
@@ -41,7 +42,6 @@ MediaKeys::MediaKeys(nsPIDOMWindow* aParent, const nsAString& aKeySystem)
   , mKeySystem(aKeySystem)
   , mCreatePromiseId(0)
 {
-  SetIsDOMBinding();
 }
 
 static PLDHashOperator
@@ -225,23 +225,85 @@ MediaKeys::Create(const GlobalObject& aGlobal,
   // CDMProxy keeps MediaKeys alive until it resolves the promise and thus
   // returns the MediaKeys object to JS.
   nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(aGlobal.GetAsSupports());
-  if (!window) {
+  if (!window || !window->GetExtantDoc()) {
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
   }
 
   nsRefPtr<MediaKeys> keys = new MediaKeys(window, aKeySystem);
-  nsRefPtr<Promise> promise(keys->MakePromise(aRv));
+  return keys->Init(aRv);
+}
+
+already_AddRefed<Promise>
+MediaKeys::Init(ErrorResult& aRv)
+{
+  nsRefPtr<Promise> promise(MakePromise(aRv));
   if (aRv.Failed()) {
     return nullptr;
   }
 
-  if (!IsSupportedKeySystem(aKeySystem)) {
-    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
-    return nullptr;
+  if (!IsSupportedKeySystem(mKeySystem)) {
+    promise->MaybeReject(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
+    return promise.forget();
   }
 
-  keys->mProxy = new CDMProxy(keys, aKeySystem);
+  mProxy = new CDMProxy(this, mKeySystem);
+
+  // Determine principal (at creation time) of the MediaKeys object.
+  nsCOMPtr<nsIScriptObjectPrincipal> sop = do_QueryInterface(GetParentObject());
+  if (!sop) {
+    promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return promise.forget();
+  }
+  mPrincipal = sop->GetPrincipal();
+
+  // Determine principal of the "top-level" window; the principal of the
+  // page that will display in the URL bar.
+  nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(GetParentObject());
+  if (!window) {
+    promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return promise.forget();
+  }
+  nsCOMPtr<nsIDOMWindow> topWindow;
+  window->GetTop(getter_AddRefs(topWindow));
+  nsCOMPtr<nsPIDOMWindow> top = do_QueryInterface(topWindow);
+  if (!top || !top->GetExtantDoc()) {
+    promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return promise.forget();
+  }
+  
+  mTopLevelPrincipal = top->GetExtantDoc()->NodePrincipal();
+
+  if (!mPrincipal || !mTopLevelPrincipal) {
+    NS_WARNING("Failed to get principals when creating MediaKeys");
+    promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return promise.forget();
+  }
+
+  nsAutoString origin;
+  nsresult rv = nsContentUtils::GetUTFOrigin(mPrincipal, origin);
+  if (NS_FAILED(rv)) {
+    promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return promise.forget();
+  }
+  nsAutoString topLevelOrigin;
+  rv = nsContentUtils::GetUTFOrigin(mTopLevelPrincipal, topLevelOrigin);
+  if (NS_FAILED(rv)) {
+    promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return promise.forget();
+  }
+
+  if (!window) {
+    promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return promise.forget();
+  }
+  nsIDocument* doc = window->GetExtantDoc();
+  const bool inPrivateBrowsing = nsContentUtils::IsInPrivateBrowsing(doc);
+
+  EME_LOG("MediaKeys::Create() (%s, %s), %s",
+          NS_ConvertUTF16toUTF8(origin).get(),
+          NS_ConvertUTF16toUTF8(topLevelOrigin).get(),
+          (inPrivateBrowsing ? "PrivateBrowsing" : "NonPrivateBrowsing"));
 
   // The CDMProxy's initialization is asynchronous. The MediaKeys is
   // refcounted, and its instance is returned to JS by promise once
@@ -251,22 +313,26 @@ MediaKeys::Create(const GlobalObject& aGlobal,
   // or its creation has failed. Store the id of the promise returned
   // here, and hold a self-reference until that promise is resolved or
   // rejected.
-  MOZ_ASSERT(!keys->mCreatePromiseId, "Should only be created once!");
-  keys->mCreatePromiseId = keys->StorePromise(promise);
-  keys->AddRef();
-  keys->mProxy->Init(keys->mCreatePromiseId);
+  MOZ_ASSERT(!mCreatePromiseId, "Should only be created once!");
+  mCreatePromiseId = StorePromise(promise);
+  AddRef();
+  mProxy->Init(mCreatePromiseId,
+               origin,
+               topLevelOrigin,
+               inPrivateBrowsing);
 
   return promise.forget();
 }
 
 void
-MediaKeys::OnCDMCreated(PromiseId aId)
+MediaKeys::OnCDMCreated(PromiseId aId, const nsACString& aNodeId)
 {
   nsRefPtr<Promise> promise(RetrievePromise(aId));
   if (!promise) {
     NS_WARNING("MediaKeys tried to resolve a non-existent promise");
     return;
   }
+  mNodeId = aNodeId;
   nsRefPtr<MediaKeys> keys(this);
   promise->MaybeResolve(keys);
   if (mCreatePromiseId == aId) {
@@ -274,73 +340,25 @@ MediaKeys::OnCDMCreated(PromiseId aId)
   }
 }
 
-already_AddRefed<Promise>
-MediaKeys::LoadSession(const nsAString& aSessionId, ErrorResult& aRv)
-{
-  nsRefPtr<Promise> promise(MakePromise(aRv));
-  if (aRv.Failed()) {
-    return nullptr;
-  }
-
-  if (aSessionId.IsEmpty()) {
-    promise->MaybeReject(NS_ERROR_DOM_INVALID_ACCESS_ERR);
-    // "The sessionId parameter is empty."
-    return promise.forget();
-  }
-
-  // TODO: The spec doesn't specify what to do in this case...
-  if (mKeySessions.Contains(aSessionId)) {
-    promise->MaybeReject(NS_ERROR_DOM_INVALID_ACCESS_ERR);
-    return promise.forget();
-  }
-
-  // Create session.
-  nsRefPtr<MediaKeySession> session(
-    new MediaKeySession(GetParentObject(), this, mKeySystem, SessionType::Persistent, aRv));
-  if (aRv.Failed()) {
-    return nullptr;
-  }
-
-  session->Init(aSessionId);
-  auto pid = StorePromise(promise);
-  mPendingSessions.Put(pid, session);
-  mProxy->LoadSession(pid, aSessionId);
-
-  return promise.forget();
-}
-
-already_AddRefed<Promise>
-MediaKeys::CreateSession(const nsAString& initDataType,
-                         const ArrayBufferViewOrArrayBuffer& aInitData,
-                         SessionType aSessionType,
+already_AddRefed<MediaKeySession>
+MediaKeys::CreateSession(SessionType aSessionType,
                          ErrorResult& aRv)
 {
-  nsRefPtr<Promise> promise(MakePromise(aRv));
-  if (aRv.Failed()) {
-    return nullptr;
-  }
-
-  nsTArray<uint8_t> data;
-  if (initDataType.IsEmpty() ||
-      !CopyArrayBufferViewOrArrayBufferData(aInitData, data)) {
-    promise->MaybeReject(NS_ERROR_DOM_INVALID_ACCESS_ERR);
-    return promise.forget();
-  }
-
   nsRefPtr<MediaKeySession> session = new MediaKeySession(GetParentObject(),
                                                           this,
                                                           mKeySystem,
                                                           aSessionType,
                                                           aRv);
-  auto pid = StorePromise(promise);
-  // Hang onto session until the CDM has finished setting it up.
-  mPendingSessions.Put(pid, session);
-  mProxy->CreateSession(aSessionType,
-                        pid,
-                        initDataType,
-                        data);
 
-  return promise.forget();
+  return session.forget();
+}
+
+void
+MediaKeys::OnSessionPending(PromiseId aId, MediaKeySession* aSession)
+{
+  MOZ_ASSERT(mPromises.Contains(aId));
+  MOZ_ASSERT(!mPendingSessions.Contains(aId));
+  mPendingSessions.Put(aId, aSession);
 }
 
 void
@@ -371,6 +389,35 @@ MediaKeys::OnSessionCreated(PromiseId aId, const nsAString& aSessionId)
 }
 
 void
+MediaKeys::OnSessionLoaded(PromiseId aId, bool aSuccess)
+{
+  nsRefPtr<Promise> promise(RetrievePromise(aId));
+  if (!promise) {
+    NS_WARNING("MediaKeys tried to resolve a non-existent promise");
+    return;
+  }
+  MOZ_ASSERT(mPendingSessions.Contains(aId));
+
+  nsRefPtr<MediaKeySession> session;
+  bool gotSession = mPendingSessions.Get(aId, getter_AddRefs(session));
+  // Session has completed creation/loading, remove it from mPendingSessions,
+  // and resolve the promise with it. We store it in mKeySessions, so we can
+  // find it again if we need to send messages to it etc.
+  mPendingSessions.Remove(aId);
+  if (!gotSession || !session) {
+    NS_WARNING("Received activation for non-existent session!");
+    promise->MaybeReject(NS_ERROR_DOM_INVALID_ACCESS_ERR);
+    return;
+  }
+
+  MOZ_ASSERT(!session->GetSessionId().IsEmpty() &&
+             !mKeySessions.Contains(session->GetSessionId()));
+
+  mKeySessions.Put(session->GetSessionId(), session);
+  promise->MaybeResolve(aSuccess);
+}
+
+void
 MediaKeys::OnSessionClosed(MediaKeySession* aSession)
 {
   nsAutoString id;
@@ -386,26 +433,58 @@ MediaKeys::GetSession(const nsAString& aSessionId)
   return session.forget();
 }
 
-nsresult
-MediaKeys::GetOrigin(nsString& aOutOrigin)
+const nsCString&
+MediaKeys::GetNodeId() const
 {
   MOZ_ASSERT(NS_IsMainThread());
-  // TODO: Bug 1035637, return a combination of origin and URL bar origin.
+  return mNodeId;
+}
 
-  nsIPrincipal* principal = nullptr;
-  nsCOMPtr<nsPIDOMWindow> pWindow = do_QueryInterface(GetParentObject());
-  nsCOMPtr<nsIScriptObjectPrincipal> scriptPrincipal =
-    do_QueryInterface(pWindow);
-  if (scriptPrincipal) {
-    principal = scriptPrincipal->GetPrincipal();
+bool
+MediaKeys::IsBoundToMediaElement() const
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  return mElement != nullptr;
+}
+
+nsresult
+MediaKeys::Bind(HTMLMediaElement* aElement)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  if (IsBoundToMediaElement()) {
+    return NS_ERROR_FAILURE;
   }
-  NS_ENSURE_TRUE(principal, NS_ERROR_FAILURE);
 
-  nsresult res = nsContentUtils::GetUTFOrigin(principal, aOutOrigin);
+  mElement = aElement;
+  nsresult rv = CheckPrincipals();
+  if (NS_FAILED(rv)) {
+    mElement = nullptr;
+    return rv;
+  }
 
-  EME_LOG("EME Origin = '%s'", NS_ConvertUTF16toUTF8(aOutOrigin).get());
+  return NS_OK;
+}
 
-  return res;
+nsresult
+MediaKeys::CheckPrincipals()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  if (!IsBoundToMediaElement()) {
+    return NS_ERROR_FAILURE;
+  }
+
+  nsRefPtr<nsIPrincipal> elementPrincipal(mElement->GetCurrentPrincipal());
+  nsRefPtr<nsIPrincipal> elementTopLevelPrincipal(mElement->GetTopLevelPrincipal());
+  if (!elementPrincipal ||
+      !mPrincipal ||
+      !elementPrincipal->Equals(mPrincipal) ||
+      !elementTopLevelPrincipal ||
+      !mTopLevelPrincipal ||
+      !elementTopLevelPrincipal->Equals(mTopLevelPrincipal)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  return NS_OK;
 }
 
 bool

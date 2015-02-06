@@ -122,7 +122,7 @@ interface ScheduledGCCallback : nsISupports
 /**
 * interface of Components.utils
 */
-[scriptable, uuid(10bcc595-ccca-4ead-aae3-d12b47cd9fff)]
+[scriptable, uuid(faa33210-536b-42e5-b9b0-8ea239899ba4)]
 interface nsIXPCComponents_Utils : nsISupports
 {
 
@@ -640,8 +640,26 @@ interface nsIXPCComponents_Utils : nsISupports
     [implicit_jscontext]
     nsIPrincipal getObjectPrincipal(in jsval obj);
 
+    /*
+     * Gets the URI or identifier string associated with an object's
+     * compartment (the same one used by the memory reporter machinery).
+     *
+     * Unwraps cross-compartment wrappers first.
+     *
+     * The string formats and values may change at any time. Do not depend on
+     * this from addon code.
+     */
+    [implicit_jscontext]
+    ACString getCompartmentLocation(in jsval obj);
+
     [implicit_jscontext]
     void setAddonInterposition(in ACString addonId, in nsIAddonInterposition interposition);
+
+    /*
+     * Return a fractional number of milliseconds from process
+     * startup, measured with a monotonic clock.
+     */
+    double now();
 };
 
 /**

@@ -120,8 +120,8 @@ public:
 
     virtual void GetFontFamilyList(nsTArray<nsRefPtr<gfxFontFamily> >& aFamilyArray);
 
-    virtual gfxFontEntry*
-    SystemFindFontForChar(const uint32_t aCh,
+    gfxFontEntry*
+    SystemFindFontForChar(uint32_t aCh, uint32_t aNextCh,
                           int32_t aRunScript,
                           const gfxFontStyle* aStyle);
 
@@ -149,13 +149,18 @@ public:
     virtual gfxFontFamily* GetDefaultFont(const gfxFontStyle* aStyle) = 0;
 
     // look up a font by name on the host platform
-    virtual gfxFontEntry* LookupLocalFont(const gfxProxyFontEntry *aProxyEntry,
-                                          const nsAString& aFontName) = 0;
+    virtual gfxFontEntry* LookupLocalFont(const nsAString& aFontName,
+                                          uint16_t aWeight,
+                                          int16_t aStretch,
+                                          bool aItalic) = 0;
 
     // create a new platform font from downloaded data (@font-face)
     // this method is responsible to ensure aFontData is NS_Free()'d
-    virtual gfxFontEntry* MakePlatformFont(const gfxProxyFontEntry *aProxyEntry,
-                                           const uint8_t *aFontData,
+    virtual gfxFontEntry* MakePlatformFont(const nsAString& aFontName,
+                                           uint16_t aWeight,
+                                           int16_t aStretch,
+                                           bool aItalic,
+                                           const uint8_t* aFontData,
                                            uint32_t aLength) = 0;
 
     // get the standard family name on the platform for a given font name
@@ -206,7 +211,7 @@ protected:
                                                void* userArg);
 
     // returns default font for a given character, null otherwise
-    gfxFontEntry* CommonFontFallback(const uint32_t aCh,
+    gfxFontEntry* CommonFontFallback(uint32_t aCh, uint32_t aNextCh,
                                      int32_t aRunScript,
                                      const gfxFontStyle* aMatchStyle,
                                      gfxFontFamily** aMatchedFamily);

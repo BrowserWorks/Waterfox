@@ -38,28 +38,20 @@
 #include "nsSize.h"
 #include "mozFlushType.h"
 #include "prclist.h"
+#include "mozilla/dom/RequestBinding.h"
 #include "mozilla/dom/StorageEvent.h"
 #include "mozilla/dom/StorageEventBinding.h"
+#include "mozilla/dom/UnionTypes.h"
 #include "nsFrameMessageManager.h"
 #include "mozilla/LinkedList.h"
 #include "mozilla/TimeStamp.h"
-#include "nsIInlineEventHandlers.h"
 #include "nsWrapperCacheInlines.h"
 #include "nsIIdleObserver.h"
 #include "nsIDocument.h"
-#include "nsIDOMTouchEvent.h"
 #include "mozilla/dom/EventTarget.h"
 #include "mozilla/dom/WindowBinding.h"
 #include "Units.h"
 #include "nsComponentManagerUtils.h"
-
-#ifdef MOZ_B2G
-#include "nsIDOMWindowB2G.h"
-#endif // MOZ_B2G
-
-#ifdef MOZ_WEBSPEECH
-#include "nsISpeechSynthesisGetter.h"
-#endif // MOZ_WEBSPEECH
 
 #define DEFAULT_HOME_PAGE "www.mozilla.org"
 #define PREF_BROWSER_STARTUP_HOMEPAGE "browser.startup.homepage"
@@ -117,6 +109,7 @@ class MediaQueryList;
 class MozSelfSupport;
 class Navigator;
 class OwningExternalOrWindowProxy;
+class Promise;
 class Selection;
 class SpeechSynthesis;
 class WakeLock;
@@ -329,16 +322,7 @@ class nsGlobalWindow : public mozilla::dom::EventTarget,
                        public nsIDOMJSWindow,
                        public nsSupportsWeakReference,
                        public nsIInterfaceRequestor,
-                       public PRCListStr,
-                       public nsIDOMWindowPerformance,
-                       public nsITouchEventReceiver,
-                       public nsIInlineEventHandlers
-#ifdef MOZ_B2G
-                     , public nsIDOMWindowB2G
-#endif // MOZ_B2G
-#ifdef MOZ_WEBSPEECH
-                     , public nsISpeechSynthesisGetter
-#endif // MOZ_WEBSPEECH
+                       public PRCListStr
 {
 public:
   typedef mozilla::TimeStamp TimeStamp;
@@ -387,19 +371,6 @@ public:
   // nsIDOMWindow
   NS_DECL_NSIDOMWINDOW
 
-#ifdef MOZ_B2G
-  // nsIDOMWindowB2G
-  NS_DECL_NSIDOMWINDOWB2G
-#endif // MOZ_B2G
-
-#ifdef MOZ_WEBSPEECH
-  // nsISpeechSynthesisGetter
-  NS_DECL_NSISPEECHSYNTHESISGETTER
-#endif // MOZ_WEBSPEECH
-
-  // nsIDOMWindowPerformance
-  NS_DECL_NSIDOMWINDOWPERFORMANCE
-
   // nsIDOMJSWindow
   NS_DECL_NSIDOMJSWINDOW
 
@@ -426,12 +397,6 @@ public:
 
     return GetOuterFromCurrentInner(this);
   }
-
-  // nsITouchEventReceiver
-  NS_DECL_NSITOUCHEVENTRECEIVER
-
-  // nsIInlineEventHandlers
-  NS_DECL_NSIINLINEEVENTHANDLERS
 
   // nsPIDOMWindow
   virtual nsPIDOMWindow* GetPrivateRoot();
@@ -525,7 +490,7 @@ public:
                            mozilla::ErrorResult& aRv);
 
   // Object Management
-  explicit nsGlobalWindow(nsGlobalWindow *aOuterWindow);
+  static already_AddRefed<nsGlobalWindow> Create(nsGlobalWindow *aOuterWindow);
 
   static nsGlobalWindow *FromSupports(nsISupports *supports)
   {
@@ -823,7 +788,8 @@ public:
     return nullptr;
   }
 
-  static bool WindowOnWebIDL(JSContext* /* unused */, JSObject* aObj);
+  static JSObject*
+    CreateNamedPropertiesObject(JSContext *aCx, JS::Handle<JSObject*> aProto);
 
   nsIDOMWindow* GetWindow(mozilla::ErrorResult& aError);
   nsIDOMWindow* GetSelf(mozilla::ErrorResult& aError);
@@ -857,7 +823,10 @@ public:
     return top.forget();
   }
 protected:
+  explicit nsGlobalWindow(nsGlobalWindow *aOuterWindow);
   nsIDOMWindow* GetOpenerWindow(mozilla::ErrorResult& aError);
+  // Initializes the mWasOffline member variable
+  void InitWasOffline();
 public:
   void GetOpener(JSContext* aCx, JS::MutableHandle<JS::Value> aRetval,
                  mozilla::ErrorResult& aError);
@@ -887,6 +856,9 @@ public:
   void Alert(mozilla::ErrorResult& aError);
   void Alert(const nsAString& aMessage, mozilla::ErrorResult& aError);
   bool Confirm(const nsAString& aMessage, mozilla::ErrorResult& aError);
+  already_AddRefed<mozilla::dom::Promise> Fetch(const mozilla::dom::RequestOrScalarValueString& aInput,
+                                                const mozilla::dom::RequestInit& aInit,
+                                                mozilla::ErrorResult& aRv);
   void Prompt(const nsAString& aMessage, const nsAString& aInitial,
               nsAString& aReturn, mozilla::ErrorResult& aError);
   void Print(mozilla::ErrorResult& aError);
@@ -973,7 +945,7 @@ public:
   int32_t RequestAnimationFrame(mozilla::dom::FrameRequestCallback& aCallback,
                                 mozilla::ErrorResult& aError);
   void CancelAnimationFrame(int32_t aHandle, mozilla::ErrorResult& aError);
-  nsPerformance* GetPerformance(mozilla::ErrorResult& aError);
+  nsPerformance* GetPerformance();
 #ifdef MOZ_WEBSPEECH
   mozilla::dom::SpeechSynthesis*
     GetSpeechSynthesis(mozilla::ErrorResult& aError);
@@ -1119,7 +1091,6 @@ protected:
   }
 
   void FreeInnerObjects();
-  JSObject *CallerGlobal();
   nsGlobalWindow *CallerInnerWindow();
 
   // Only to be called on an inner window.
@@ -1277,7 +1248,7 @@ public:
                            const nsAString &aPopupURL,
                            const nsAString &aPopupWindowName,
                            const nsAString &aPopupWindowFeatures);
-  void FireOfflineStatusEvent();
+  void FireOfflineStatusEventIfChanged();
 
   // Inner windows only.
   nsresult ScheduleNextIdleObserverCallback();
@@ -1399,6 +1370,8 @@ protected:
 
   inline int32_t DOMMinTimeoutValue() const;
 
+  // Clear the document-dependent slots on our JS wrapper.  Inner windows only.
+  void ClearDocumentDependentSlots(JSContext* aCx);
 
   // Inner windows only.
   already_AddRefed<mozilla::dom::StorageEvent>
@@ -1478,8 +1451,10 @@ protected:
   // Indicates whether scripts are allowed to close this window.
   bool                          mBlockScriptedClosingFlag : 1;
 
+  // Window offline status. Checked to see if we need to fire offline event
+  bool                          mWasOffline : 1;
+
   // Track what sorts of events we need to fire when thawed
-  bool                          mFireOfflineStatusChangeEventOnThaw : 1;
   bool                          mNotifyIdleObserversIdleOnThaw : 1;
   bool                          mNotifyIdleObserversActiveOnThaw : 1;
 
@@ -1651,6 +1626,9 @@ protected:
   nsRefPtr<mozilla::dom::SpeechSynthesis> mSpeechSynthesis;
 #endif
 
+  // This is the CC generation the last time we called CanSkip.
+  uint32_t mCanSkipCCGeneration;
+
   friend class nsDOMScriptableHelper;
   friend class nsDOMWindowUtils;
   friend class PostMessageEvent;
@@ -1686,13 +1664,7 @@ public:
   // nsIDOMChromeWindow interface
   NS_DECL_NSIDOMCHROMEWINDOW
 
-  explicit nsGlobalChromeWindow(nsGlobalWindow *aOuterWindow)
-    : nsGlobalWindow(aOuterWindow),
-      mGroupMessageManagers(1)
-  {
-    mIsChrome = true;
-    mCleanMessageManager = true;
-  }
+  static already_AddRefed<nsGlobalChromeWindow> Create(nsGlobalWindow *aOuterWindow);
 
   static PLDHashOperator
   DisconnectGroupMessageManager(const nsAString& aKey,
@@ -1706,6 +1678,14 @@ public:
   }
 
 protected:
+  explicit nsGlobalChromeWindow(nsGlobalWindow *aOuterWindow)
+    : nsGlobalWindow(aOuterWindow),
+      mGroupMessageManagers(1)
+  {
+    mIsChrome = true;
+    mCleanMessageManager = true;
+  }
+
   ~nsGlobalChromeWindow()
   {
     NS_ABORT_IF_FALSE(mCleanMessageManager,
@@ -1753,16 +1733,18 @@ class nsGlobalModalWindow : public nsGlobalWindow,
                             public nsIDOMModalContentWindow
 {
 public:
+  NS_DECL_ISUPPORTS_INHERITED
+  NS_DECL_NSIDOMMODALCONTENTWINDOW
+
+  static already_AddRefed<nsGlobalModalWindow> Create(nsGlobalWindow *aOuterWindow);
+
+protected:
   explicit nsGlobalModalWindow(nsGlobalWindow *aOuterWindow)
     : nsGlobalWindow(aOuterWindow)
   {
     mIsModalContentWindow = true;
   }
 
-  NS_DECL_ISUPPORTS_INHERITED
-  NS_DECL_NSIDOMMODALCONTENTWINDOW
-
-protected:
   ~nsGlobalModalWindow() {}
 };
 
@@ -1773,11 +1755,11 @@ NS_NewScriptGlobalObject(bool aIsChrome, bool aIsModalContentWindow)
   nsRefPtr<nsGlobalWindow> global;
 
   if (aIsChrome) {
-    global = new nsGlobalChromeWindow(nullptr);
+    global = nsGlobalChromeWindow::Create(nullptr);
   } else if (aIsModalContentWindow) {
-    global = new nsGlobalModalWindow(nullptr);
+    global = nsGlobalModalWindow::Create(nullptr);
   } else {
-    global = new nsGlobalWindow(nullptr);
+    global = nsGlobalWindow::Create(nullptr);
   }
 
   return global.forget();

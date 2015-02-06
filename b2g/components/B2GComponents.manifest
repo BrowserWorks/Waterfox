@@ -96,6 +96,10 @@ category profile-after-change SimulatorScreen @mozilla.org/simulator-screen;1
 component {e30b0e13-2d12-4cb0-bc4c-4e617a1bf76e} OopCommandLine.js
 contract @mozilla.org/commandlinehandler/general-startup;1?type=b2goop {e30b0e13-2d12-4cb0-bc4c-4e617a1bf76e}
 category command-line-handler m-b2goop @mozilla.org/commandlinehandler/general-startup;1?type=b2goop
+
+component {385993fe-8710-4621-9fb1-00a09d8bec37} CommandLine.js
+contract @mozilla.org/commandlinehandler/general-startup;1?type=b2gcmds {385993fe-8710-4621-9fb1-00a09d8bec37}
+category command-line-handler m-b2gcmds @mozilla.org/commandlinehandler/general-startup;1?type=b2gcmds
 #endif
 
 # MobileIdentityUIGlue.js
@@ -104,5 +108,5 @@ contract @mozilla.org/services/mobileid-ui-glue;1 {83dbe26a-81f3-4a75-9541-3d0b7
 
 # B2GAppMigrator.js
 component {7211ece0-b458-4635-9afc-f8d7f376ee95} B2GAppMigrator.js
-contract @mozilla.org/b2g-app-migrator;1 {7211ece0-b458-4635-9afc-f8d7f376ee95}
-category profile-after-change B2GAppMigrator @mozilla.org/b2g-app-migrator;1
+contract @mozilla.org/app-migrator;1 {7211ece0-b458-4635-9afc-f8d7f376ee95}
+

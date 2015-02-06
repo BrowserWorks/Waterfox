@@ -78,15 +78,15 @@ public:
   void OnSVGDocumentError();
 
 protected:
-  VectorImage(imgStatusTracker* aStatusTracker = nullptr,
-              ImageURL* aURI = nullptr);
+  explicit VectorImage(imgStatusTracker* aStatusTracker = nullptr,
+                       ImageURL* aURI = nullptr);
   virtual ~VectorImage();
 
   virtual nsresult StartAnimation();
   virtual nsresult StopAnimation();
   virtual bool     ShouldAnimate();
 
-  void CreateDrawableAndShow(const SVGDrawingParameters& aParams);
+  void CreateSurfaceAndShow(const SVGDrawingParameters& aParams);
   void Show(gfxDrawable* aDrawable, const SVGDrawingParameters& aParams);
 
 private:

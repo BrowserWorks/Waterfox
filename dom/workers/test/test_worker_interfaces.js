@@ -49,6 +49,15 @@ var ecmaGlobals =
     "RegExp",
     "Set",
     {name: "SharedArrayBuffer", nightly: true},
+    {name: "SharedInt8Array", nightly: true},
+    {name: "SharedUint8Array", nightly: true},
+    {name: "SharedUint8ClampedArray", nightly: true},
+    {name: "SharedInt16Array", nightly: true},
+    {name: "SharedUint16Array", nightly: true},
+    {name: "SharedInt32Array", nightly: true},
+    {name: "SharedUint32Array", nightly: true},
+    {name: "SharedFloat32Array", nightly: true},
+    {name: "SharedFloat64Array", nightly: true},
     {name: "SIMD", nightly: true},
     "StopIteration",
     "String",
@@ -117,6 +126,8 @@ var interfaceNamesInGlobalScope =
     "URL",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "URLSearchParams",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    { name: "WebSocket", pref: "dom.workers.websocket.enabled" },
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "Worker",
 // IMPORTANT: Do not change this list without review from a DOM peer!

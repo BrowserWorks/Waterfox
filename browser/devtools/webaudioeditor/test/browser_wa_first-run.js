@@ -1,12 +1,19 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+///////////////////
+//
+// Whitelisting this test.
+// As part of bug 1077403, the leaking uncaught rejection should be fixed. 
+//
+thisTestLeaksUncaughtRejectionsAndShouldBeFixed("Error: Connection closed");
+
 /**
  * Tests that the reloading/onContentLoaded hooks work.
  */
 
 function spawnTest() {
-  let [target, debuggee, panel] = yield initWebAudioEditor(SIMPLE_CONTEXT_URL);
+  let { target, panel } = yield initWebAudioEditor(SIMPLE_CONTEXT_URL);
   let { gFront, $ } = panel.panelWin;
 
   is($("#reload-notice").hidden, false,

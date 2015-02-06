@@ -3,12 +3,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifdef MOZ_LOGGING
-#define FORCE_PR_LOG /* Allow logging in the release build */
-#endif
 #include "prlog.h"
 
 #include "gfxPlatformFontList.h"
+#include "gfxTextRun.h"
 #include "gfxUserFontSet.h"
 
 #include "nsUnicharUtils.h"
@@ -535,7 +533,7 @@ gfxPlatformFontList::GetFontFamilyList(nsTArray<nsRefPtr<gfxFontFamily> >& aFami
 }
 
 gfxFontEntry*
-gfxPlatformFontList::SystemFindFontForChar(const uint32_t aCh,
+gfxPlatformFontList::SystemFindFontForChar(uint32_t aCh, uint32_t aNextCh,
                                            int32_t aRunScript,
                                            const gfxFontStyle* aStyle)
  {
@@ -569,7 +567,8 @@ gfxPlatformFontList::SystemFindFontForChar(const uint32_t aCh,
     // search commonly available fonts
     bool common = true;
     gfxFontFamily *fallbackFamily = nullptr;
-    fontEntry = CommonFontFallback(aCh, aRunScript, aStyle, &fallbackFamily);
+    fontEntry = CommonFontFallback(aCh, aNextCh, aRunScript, aStyle,
+                                   &fallbackFamily);
  
     // if didn't find a font, do system-wide fallback (except for specials)
     uint32_t cmapCount = 0;
@@ -637,7 +636,7 @@ gfxPlatformFontList::FindFontForCharProc(nsStringHashKey::KeyType aKey, nsRefPtr
 #define NUM_FALLBACK_FONTS        8
 
 gfxFontEntry*
-gfxPlatformFontList::CommonFontFallback(const uint32_t aCh,
+gfxPlatformFontList::CommonFontFallback(uint32_t aCh, uint32_t aNextCh,
                                         int32_t aRunScript,
                                         const gfxFontStyle* aMatchStyle,
                                         gfxFontFamily** aMatchedFamily)
@@ -645,7 +644,8 @@ gfxPlatformFontList::CommonFontFallback(const uint32_t aCh,
     nsAutoTArray<const char*,NUM_FALLBACK_FONTS> defaultFallbacks;
     uint32_t i, numFallbacks;
 
-    gfxPlatform::GetPlatform()->GetCommonFallbackFonts(aCh, aRunScript,
+    gfxPlatform::GetPlatform()->GetCommonFallbackFonts(aCh, aNextCh,
+                                                       aRunScript,
                                                        defaultFallbacks);
     numFallbacks = defaultFallbacks.Length();
     for (i = 0; i < numFallbacks; i++) {

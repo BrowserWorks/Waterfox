@@ -51,7 +51,6 @@ public:
   explicit nsChildContentList(nsINode* aNode)
     : mNode(aNode)
   {
-    SetIsDOMBinding();
   }
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -293,8 +292,6 @@ public:
   static void InitCCCallbacks();
   static void MarkUserData(void* aObject, nsIAtom* aKey, void* aChild,
                            void *aData);
-  static void MarkUserDataHandler(void* aObject, nsIAtom* aKey, void* aChild,
-                                  void* aData);
 
 protected:
   virtual ~FragmentOrElement();

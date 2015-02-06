@@ -177,6 +177,7 @@ nsWindow::nsWindow() :
     mParent(nullptr),
     mFocus(nullptr),
     mIMEComposing(false),
+    mIMEComposingStart(-1),
     mIMEMaskSelectionUpdate(false),
     mIMEMaskTextUpdate(false),
     mIMEMaskEventsCount(1), // Mask IME events since there's no focus yet
@@ -679,11 +680,12 @@ nsWindow::DispatchEvent(WidgetGUIEvent* aEvent)
         case NS_COMPOSITION_END:
             MOZ_ASSERT(mIMEComposing);
             mIMEComposing = false;
+            mIMEComposingStart = -1;
             mIMEComposingText.Truncate();
             break;
-        case NS_TEXT_TEXT:
+        case NS_COMPOSITION_CHANGE:
             MOZ_ASSERT(mIMEComposing);
-            mIMEComposingText = aEvent->AsTextEvent()->theText;
+            mIMEComposingText = aEvent->AsCompositionEvent()->mData;
             break;
         }
         return status;
@@ -807,8 +809,8 @@ nsWindow::OnGlobalAndroidEvent(AndroidGeckoEvent *ae)
             gAndroidScreenBounds.width = newScreenWidth;
             gAndroidScreenBounds.height = newScreenHeight;
 
-            if (XRE_GetProcessType() != GeckoProcessType_Default ||
-                !BrowserTabsRemote()) {
+            if (XRE_GetProcessType() != GeckoProcessType_Default &&
+                !Preferences::GetBool("browser.tabs.remote.desktopbehavior", false)) {
                 break;
             }
 
@@ -929,10 +931,6 @@ nsWindow::OnGlobalAndroidEvent(AndroidGeckoEvent *ae)
             }
             break;
 
-        case AndroidGeckoEvent::COMPOSITOR_CREATE:
-            win->CreateLayerManager(ae->Width(), ae->Height());
-            break;
-
         case AndroidGeckoEvent::COMPOSITOR_PAUSE:
             // The compositor gets paused when the app is about to go into the
             // background. While the compositor is paused, we need to ensure that
@@ -943,6 +941,10 @@ nsWindow::OnGlobalAndroidEvent(AndroidGeckoEvent *ae)
             }
             sCompositorPaused = true;
             break;
+
+        case AndroidGeckoEvent::COMPOSITOR_CREATE:
+            win->CreateLayerManager(ae->Width(), ae->Height());
+            // Fallthrough
 
         case AndroidGeckoEvent::COMPOSITOR_RESUME:
             // When we receive this, the compositor has already been told to
@@ -1088,6 +1090,19 @@ bool nsWindow::OnMultitouchEvent(AndroidGeckoEvent *ae)
         isDownEvent = (event.message == NS_TOUCH_START);
     }
 
+    if (isDownEvent && event.touches.Length() == 1) {
+        // Since touch events don't get retargeted by PositionedEventTargeting.cpp
+        // code on Fennec, we dispatch a dummy mouse event that *does* get
+        // retargeted. The Fennec browser.js code can use this to activate the
+        // highlight element in case the this touchstart is the start of a tap.
+        WidgetMouseEvent hittest(true, NS_MOUSE_MOZHITTEST, this, WidgetMouseEvent::eReal);
+        hittest.refPoint = LayoutDeviceIntPoint::FromUntyped(event.touches[0]->mRefPoint);
+        hittest.ignoreRootScrollFrame = true;
+        hittest.inputSource = nsIDOMMouseEvent::MOZ_SOURCE_TOUCH;
+        nsEventStatus status;
+        DispatchEvent(&hittest, status);
+    }
+
     // if the last event we got was a down event, then by now we know for sure whether
     // this block has been default-prevented or not. if we haven't already sent the
     // notification for this block, do so now.
@@ -1169,22 +1184,6 @@ nsWindow::DispatchGestureEvent(uint32_t msg, uint32_t direction, double delta,
     DispatchEvent(&event);
 }
 
-
-void
-nsWindow::DispatchMotionEvent(WidgetInputEvent &event, AndroidGeckoEvent *ae,
-                              const nsIntPoint &refPoint)
-{
-    nsIntPoint offset = WidgetToScreenOffset();
-
-    event.modifiers = ae->DOMModifiers();
-    event.time = ae->Time();
-
-    // XXX possibly bound the range of event.refPoint here.
-    //     some code may get confused.
-    event.refPoint = LayoutDeviceIntPoint::FromUntyped(refPoint - offset);
-
-    DispatchEvent(&event);
-}
 
 static unsigned int ConvertAndroidKeyCodeToDOMKeyCode(int androidKeyCode)
 {
@@ -1721,14 +1720,15 @@ nsWindow::RemoveIMEComposition()
     AutoIMEMask selMask(mIMEMaskSelectionUpdate);
     AutoIMEMask textMask(mIMEMaskTextUpdate);
 
-    WidgetTextEvent textEvent(true, NS_TEXT_TEXT, this);
-    InitEvent(textEvent, nullptr);
-    textEvent.theText = mIMEComposingText;
-    DispatchEvent(&textEvent);
+    WidgetCompositionEvent compositionChangeEvent(true, NS_COMPOSITION_CHANGE,
+                                                  this);
+    InitEvent(compositionChangeEvent, nullptr);
+    compositionChangeEvent.mData = mIMEComposingText;
+    DispatchEvent(&compositionChangeEvent);
 
-    WidgetCompositionEvent event(true, NS_COMPOSITION_END, this);
-    InitEvent(event, nullptr);
-    DispatchEvent(&event);
+    WidgetCompositionEvent compEndEvent(true, NS_COMPOSITION_END, this);
+    InitEvent(compEndEvent, nullptr);
+    DispatchEvent(&compEndEvent);
 }
 
 void
@@ -1768,6 +1768,7 @@ nsWindow::OnIMEEvent(AndroidGeckoEvent *ae)
         }
         mozilla::widget::android::GeckoAppShell::NotifyIME(AndroidBridge::NOTIFY_IME_REPLY_EVENT);
         return;
+
     } else if (ae->Action() == AndroidGeckoEvent::IME_UPDATE_CONTEXT) {
         mozilla::widget::android::GeckoAppShell::NotifyIMEContext(mInputContext.mIMEState.mEnabled,
                                         mInputContext.mHTMLInputType,
@@ -1776,27 +1777,33 @@ nsWindow::OnIMEEvent(AndroidGeckoEvent *ae)
         mIMEUpdatingContext = false;
         return;
     }
+
     if (mIMEMaskEventsCount > 0) {
         // Still reply to events, but don't do anything else
         if (ae->Action() == AndroidGeckoEvent::IME_SYNCHRONIZE ||
+            ae->Action() == AndroidGeckoEvent::IME_COMPOSE_TEXT ||
             ae->Action() == AndroidGeckoEvent::IME_REPLACE_TEXT) {
             mozilla::widget::android::GeckoAppShell::NotifyIME(AndroidBridge::NOTIFY_IME_REPLY_EVENT);
         }
         return;
     }
+
     switch (ae->Action()) {
     case AndroidGeckoEvent::IME_FLUSH_CHANGES:
         {
             FlushIMEChanges();
         }
         break;
+
     case AndroidGeckoEvent::IME_SYNCHRONIZE:
         {
             FlushIMEChanges();
             mozilla::widget::android::GeckoAppShell::NotifyIME(AndroidBridge::NOTIFY_IME_REPLY_EVENT);
         }
         break;
+
     case AndroidGeckoEvent::IME_REPLACE_TEXT:
+    case AndroidGeckoEvent::IME_COMPOSE_TEXT:
         {
             /*
                 Replace text in Gecko thread from ae->Start() to ae->End()
@@ -1809,53 +1816,82 @@ nsWindow::OnIMEEvent(AndroidGeckoEvent *ae)
                   Gecko text
             */
             AutoIMEMask selMask(mIMEMaskSelectionUpdate);
-            RemoveIMEComposition();
-            {
-                WidgetSelectionEvent event(true, NS_SELECTION_SET, this);
-                InitEvent(event, nullptr);
-                event.mOffset = uint32_t(ae->Start());
-                event.mLength = uint32_t(ae->End() - ae->Start());
-                event.mExpandToClusterBoundary = false;
-                DispatchEvent(&event);
-            }
 
-            if (!mIMEKeyEvents.IsEmpty()) {
-                for (uint32_t i = 0; i < mIMEKeyEvents.Length(); i++) {
-                    OnKeyEvent(&mIMEKeyEvents[i]);
+            if (!mIMEKeyEvents.IsEmpty() ||
+                mIMEComposingStart < 0 ||
+                ae->Start() != mIMEComposingStart ||
+                ae->End() != mIMEComposingStart +
+                             int32_t(mIMEComposingText.Length())) {
+
+                // Only start a new composition if we have key events,
+                // if we don't have an existing composition, or
+                // the replaced text does not match our composition.
+                RemoveIMEComposition();
+
+                {
+                    WidgetSelectionEvent event(true, NS_SELECTION_SET, this);
+                    InitEvent(event, nullptr);
+                    event.mOffset = uint32_t(ae->Start());
+                    event.mLength = uint32_t(ae->End() - ae->Start());
+                    event.mExpandToClusterBoundary = false;
+                    DispatchEvent(&event);
                 }
-                mIMEKeyEvents.Clear();
-                FlushIMEChanges();
-                mozilla::widget::android::GeckoAppShell::NotifyIME(AndroidBridge::NOTIFY_IME_REPLY_EVENT);
-                break;
+
+                if (!mIMEKeyEvents.IsEmpty()) {
+                    for (uint32_t i = 0; i < mIMEKeyEvents.Length(); i++) {
+                        OnKeyEvent(&mIMEKeyEvents[i]);
+                    }
+                    mIMEKeyEvents.Clear();
+                    FlushIMEChanges();
+                    mozilla::widget::android::GeckoAppShell::NotifyIME(
+                        AndroidBridge::NOTIFY_IME_REPLY_EVENT);
+                    // Break out of the switch block
+                    break;
+                }
+
+                {
+                    WidgetCompositionEvent event(
+                        true, NS_COMPOSITION_START, this);
+                    InitEvent(event, nullptr);
+                    DispatchEvent(&event);
+                    mIMEComposingStart = ae->Start();
+                }
             }
 
             {
-                WidgetCompositionEvent event(true, NS_COMPOSITION_START, this);
+                WidgetCompositionEvent event(true, NS_COMPOSITION_CHANGE, this);
                 InitEvent(event, nullptr);
+                event.mData = ae->Characters();
+
+                if (ae->Action() == AndroidGeckoEvent::IME_COMPOSE_TEXT) {
+                    // Because we're leaving the composition open, we need to
+                    // include proper text ranges to make the editor happy.
+                    TextRange range;
+                    range.mStartOffset = 0;
+                    range.mEndOffset = event.mData.Length();
+                    range.mRangeType = NS_TEXTRANGE_RAWINPUT;
+                    event.mRanges = new TextRangeArray();
+                    event.mRanges->AppendElement(range);
+                }
+
                 DispatchEvent(&event);
             }
-            {
-                WidgetCompositionEvent event(true, NS_COMPOSITION_UPDATE, this);
-                InitEvent(event, nullptr);
-                event.data = ae->Characters();
-                DispatchEvent(&event);
-            }
-            {
-                WidgetTextEvent event(true, NS_TEXT_TEXT, this);
-                InitEvent(event, nullptr);
-                event.theText = ae->Characters();
-                DispatchEvent(&event);
-            }
+
+            // Don't end composition when composing text.
+            if (ae->Action() != AndroidGeckoEvent::IME_COMPOSE_TEXT)
             {
                 WidgetCompositionEvent event(true, NS_COMPOSITION_END, this);
                 InitEvent(event, nullptr);
-                event.data = ae->Characters();
+                event.mData = ae->Characters();
                 DispatchEvent(&event);
             }
+
             FlushIMEChanges();
-            mozilla::widget::android::GeckoAppShell::NotifyIME(AndroidBridge::NOTIFY_IME_REPLY_EVENT);
+            mozilla::widget::android::GeckoAppShell::NotifyIME(
+                AndroidBridge::NOTIFY_IME_REPLY_EVENT);
         }
         break;
+
     case AndroidGeckoEvent::IME_SET_SELECTION:
         {
             /*
@@ -1932,62 +1968,75 @@ nsWindow::OnIMEEvent(AndroidGeckoEvent *ae)
             */
             AutoIMEMask selMask(mIMEMaskSelectionUpdate);
             AutoIMEMask textMask(mIMEMaskTextUpdate);
-            RemoveIMEComposition();
 
-            WidgetTextEvent event(true, NS_TEXT_TEXT, this);
+            WidgetCompositionEvent event(true, NS_COMPOSITION_CHANGE, this);
             InitEvent(event, nullptr);
 
             event.mRanges = new TextRangeArray();
             mIMERanges.swap(event.mRanges);
 
-            {
-                WidgetSelectionEvent event(true, NS_SELECTION_SET, this);
-                InitEvent(event, nullptr);
-                event.mOffset = uint32_t(ae->Start());
-                event.mLength = uint32_t(ae->End() - ae->Start());
-                event.mExpandToClusterBoundary = false;
-                DispatchEvent(&event);
-            }
-            {
-                WidgetQueryContentEvent queryEvent(true,
-                                                   NS_QUERY_SELECTED_TEXT,
-                                                   this);
-                InitEvent(queryEvent, nullptr);
-                DispatchEvent(&queryEvent);
-                MOZ_ASSERT(queryEvent.mSucceeded && !queryEvent.mWasAsync);
-                event.theText = queryEvent.mReply.mString;
-            }
-            {
-                WidgetCompositionEvent event(true, NS_COMPOSITION_START, this);
-                InitEvent(event, nullptr);
-                DispatchEvent(&event);
-            }
-            {
-                WidgetCompositionEvent compositionUpdate(true,
-                                                         NS_COMPOSITION_UPDATE,
-                                                         this);
-                InitEvent(compositionUpdate, nullptr);
-                compositionUpdate.data = event.theText;
-                DispatchEvent(&compositionUpdate);
+            if (mIMEComposingStart < 0 ||
+                ae->Start() != mIMEComposingStart ||
+                ae->End() != mIMEComposingStart +
+                             int32_t(mIMEComposingText.Length())) {
+
+                // Only start new composition if we don't have an existing one,
+                // or if the existing composition doesn't match the new one.
+                RemoveIMEComposition();
+
+                {
+                    WidgetSelectionEvent event(true, NS_SELECTION_SET, this);
+                    InitEvent(event, nullptr);
+                    event.mOffset = uint32_t(ae->Start());
+                    event.mLength = uint32_t(ae->End() - ae->Start());
+                    event.mExpandToClusterBoundary = false;
+                    DispatchEvent(&event);
+                }
+
+                {
+                    WidgetQueryContentEvent queryEvent(true,
+                                                       NS_QUERY_SELECTED_TEXT,
+                                                       this);
+                    InitEvent(queryEvent, nullptr);
+                    DispatchEvent(&queryEvent);
+                    MOZ_ASSERT(queryEvent.mSucceeded && !queryEvent.mWasAsync);
+                    event.mData = queryEvent.mReply.mString;
+
+                    mIMEComposingStart = queryEvent.mReply.mOffset;
+                }
+
+                {
+                    WidgetCompositionEvent event(
+                        true, NS_COMPOSITION_START, this);
+                    InitEvent(event, nullptr);
+                    DispatchEvent(&event);
+                }
+
+            } else {
+                // If the new composition matches the existing composition,
+                // reuse the old composition.
+                event.mData = mIMEComposingText;
             }
 
 #ifdef DEBUG_ANDROID_IME
-            const NS_ConvertUTF16toUTF8 theText8(event.theText);
-            const char* text = theText8.get();
+            const NS_ConvertUTF16toUTF8 data(event.mData);
+            const char* text = data.get();
             ALOGIME("IME: IME_SET_TEXT: text=\"%s\", length=%u, range=%u",
-                    text, event.theText.Length(), event.mRanges->Length());
+                    text, event.mData.Length(), event.mRanges->Length());
 #endif // DEBUG_ANDROID_IME
 
             DispatchEvent(&event);
 
             // Notify SelectionHandler of final caret position
             // Required in cases of keyboards providing autoCorrections
-            AndroidGeckoEvent* broadcastEvent = AndroidGeckoEvent::MakeBroadcastEvent(
-                NS_LITERAL_CSTRING("TextSelection:UpdateCaretPos"),
-                NS_LITERAL_CSTRING(""));
+            AndroidGeckoEvent* broadcastEvent =
+                AndroidGeckoEvent::MakeBroadcastEvent(
+                    NS_LITERAL_CSTRING("TextSelection:UpdateCaretPos"),
+                    NS_LITERAL_CSTRING(""));
             nsAppShell::gAppShell->PostEvent(broadcastEvent);
         }
         break;
+
     case AndroidGeckoEvent::IME_REMOVE_COMPOSITION:
         {
             /*
@@ -2051,19 +2100,15 @@ nsWindow::NotifyIME(const IMENotification& aIMENotification)
             if (mIMEComposing) {
                 nsRefPtr<nsWindow> kungFuDeathGrip(this);
 
-                WidgetCompositionEvent updateEvent(true, NS_COMPOSITION_UPDATE,
-                                                   this);
-                InitEvent(updateEvent, nullptr);
-                DispatchEvent(&updateEvent);
+                WidgetCompositionEvent compositionChangeEvent(
+                                         true, NS_COMPOSITION_CHANGE, this);
+                InitEvent(compositionChangeEvent, nullptr);
+                DispatchEvent(&compositionChangeEvent);
 
-                WidgetTextEvent textEvent(true, NS_TEXT_TEXT, this);
-                InitEvent(textEvent, nullptr);
-                DispatchEvent(&textEvent);
-
-                WidgetCompositionEvent compEvent(true, NS_COMPOSITION_END,
-                                                 this);
-                InitEvent(compEvent, nullptr);
-                DispatchEvent(&compEvent);
+                WidgetCompositionEvent compositionEndEvent(
+                                         true, NS_COMPOSITION_END, this);
+                InitEvent(compositionEndEvent, nullptr);
+                DispatchEvent(&compositionEndEvent);
             }
 
             mozilla::widget::android::GeckoAppShell::NotifyIME(REQUEST_TO_CANCEL_COMPOSITION);
@@ -2192,18 +2237,25 @@ nsWindow::FlushIMEChanges()
     for (uint32_t i = 0; i < mIMETextChanges.Length(); i++) {
         IMEChange &change = mIMETextChanges[i];
 
-        WidgetQueryContentEvent event(true, NS_QUERY_TEXT_CONTENT, this);
-        InitEvent(event, nullptr);
-        event.InitForQueryTextContent(change.mStart,
-                                      change.mNewEnd - change.mStart);
-        DispatchEvent(&event);
-        if (!event.mSucceeded)
-            return;
+        if (change.mStart == change.mOldEnd &&
+                change.mStart == change.mNewEnd) {
+            continue;
+        }
 
-        mozilla::widget::android::GeckoAppShell::NotifyIMEChange(event.mReply.mString,
-                                       change.mStart,
-                                       change.mOldEnd,
-                                       change.mNewEnd);
+        WidgetQueryContentEvent event(true, NS_QUERY_TEXT_CONTENT, this);
+
+        if (change.mNewEnd != change.mStart) {
+            InitEvent(event, nullptr);
+            event.InitForQueryTextContent(change.mStart,
+                                          change.mNewEnd - change.mStart);
+            DispatchEvent(&event);
+            if (!event.mSucceeded)
+                return;
+        }
+
+        mozilla::widget::android::GeckoAppShell::NotifyIMEChange(
+                event.mReply.mString, change.mStart,
+                change.mOldEnd, change.mNewEnd);
     }
     mIMETextChanges.Clear();
 

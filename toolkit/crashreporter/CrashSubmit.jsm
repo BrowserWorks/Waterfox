@@ -4,6 +4,7 @@
 
 Components.utils.import("resource://gre/modules/Services.jsm");
 Components.utils.import("resource://gre/modules/KeyValueParser.jsm");
+Components.utils.importGlobalProperties(['File']);
 
 this.EXPORTED_SYMBOLS = [
   "CrashSubmit"
@@ -281,23 +282,21 @@ Submitter.prototype = {
       formData.append("Throttleable", "0");
     }
     // add the minidumps
-    formData.append("upload_file_minidump", File(this.dump.path));
+    formData.append("upload_file_minidump", new File(this.dump.path));
     if (this.memory) {
-      formData.append("memory_report", File(this.memory.path));
+      formData.append("memory_report", new File(this.memory.path));
     }
     if (this.additionalDumps.length > 0) {
       let names = [];
       for (let i of this.additionalDumps) {
         names.push(i.name);
         formData.append("upload_file_minidump_"+i.name,
-                        File(i.dump.path));
+                        new File(i.dump.path));
       }
     }
 
-    let submissionID = "sub-" + Cc["@mozilla.org/uuid-generator;1"]
-                                  .getService(Ci.nsIUUIDGenerator)
-                                  .generateUUID().toString().slice(1, -1);
     let manager = Services.crashmanager;
+    let submissionID = manager.generateSubmissionID();
 
     let self = this;
     xhr.addEventListener("readystatechange", function (aEvt) {

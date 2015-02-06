@@ -189,10 +189,12 @@ abstract class PanelLayout extends FrameLayout {
         }
 
         public static final Creator<DatasetRequest> CREATOR = new Creator<DatasetRequest>() {
+            @Override
             public DatasetRequest createFromParcel(Parcel in) {
                 return new DatasetRequest(in);
             }
 
+            @Override
             public DatasetRequest[] newArray(int size) {
                 return new DatasetRequest[size];
             }
@@ -629,10 +631,12 @@ abstract class PanelLayout extends FrameLayout {
         }
 
         public static final Creator<FilterDetail> CREATOR = new Creator<FilterDetail>() {
+            @Override
             public FilterDetail createFromParcel(Parcel in) {
                 return new FilterDetail(in);
             }
 
+            @Override
             public FilterDetail[] newArray(int size) {
                 return new FilterDetail[size];
             }
@@ -679,7 +683,7 @@ abstract class PanelLayout extends FrameLayout {
     }
 
     private class PanelOnItemOpenListener implements OnItemOpenListener {
-        private ViewState mViewState;
+        private final ViewState mViewState;
 
         public PanelOnItemOpenListener(ViewState viewState) {
             mViewState = viewState;
@@ -702,7 +706,7 @@ abstract class PanelLayout extends FrameLayout {
     }
 
     private class PanelKeyListener implements View.OnKeyListener {
-        private ViewState mViewState;
+        private final ViewState mViewState;
 
         public PanelKeyListener(ViewState viewState) {
             mViewState = viewState;

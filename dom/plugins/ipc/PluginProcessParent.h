@@ -11,7 +11,6 @@
 #include "base/basictypes.h"
 
 #include "base/file_path.h"
-#include "base/scoped_ptr.h"
 #include "base/thread.h"
 #include "base/waitable_event.h"
 #include "chrome/common/child_process_host.h"
@@ -25,7 +24,7 @@ namespace plugins {
 class PluginProcessParent : public mozilla::ipc::GeckoChildProcessHost
 {
 public:
-    PluginProcessParent(const std::string& aPluginFilePath);
+    explicit PluginProcessParent(const std::string& aPluginFilePath);
     ~PluginProcessParent();
 
     /**

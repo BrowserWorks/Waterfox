@@ -48,13 +48,13 @@ nsToolkit::nsToolkit()
 , mEventTapRLS(nullptr)
 {
   MOZ_COUNT_CTOR(nsToolkit);
-  RegisterForSleepWakeNotifcations();
+  RegisterForSleepWakeNotifications();
 }
 
 nsToolkit::~nsToolkit()
 {
   MOZ_COUNT_DTOR(nsToolkit);
-  RemoveSleepWakeNotifcations();
+  RemoveSleepWakeNotifications();
   UnregisterAllProcessMouseEventHandlers();
 }
 
@@ -98,7 +98,7 @@ static void ToolkitSleepWakeCallback(void *refCon, io_service_t service, natural
 }
 
 nsresult
-nsToolkit::RegisterForSleepWakeNotifcations()
+nsToolkit::RegisterForSleepWakeNotifications()
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
 
@@ -123,7 +123,7 @@ nsToolkit::RegisterForSleepWakeNotifcations()
 }
 
 void
-nsToolkit::RemoveSleepWakeNotifcations()
+nsToolkit::RemoveSleepWakeNotifications()
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
 
@@ -205,7 +205,7 @@ nsToolkit::RegisterForAllProcessMouseEvents()
   if (getenv("MOZ_DEBUG"))
     return;
 
-  // Don't do this for apps that (like Camino) use native context menus.
+  // Don't do this for apps that use native context menus.
 #ifdef MOZ_USE_NATIVE_POPUP_WINDOWS
   return;
 #endif /* MOZ_USE_NATIVE_POPUP_WINDOWS */

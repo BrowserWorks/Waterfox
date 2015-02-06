@@ -5,6 +5,7 @@
 
 package org.mozilla.gecko;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -36,39 +37,6 @@ import android.text.style.CharacterStyle;
 import android.util.Log;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
-
-// interface for the IC thread
-interface GeckoEditableClient {
-    void sendEvent(GeckoEvent event);
-    Editable getEditable();
-    void setUpdateGecko(boolean update);
-    void setSuppressKeyUp(boolean suppress);
-    Handler getInputConnectionHandler();
-    boolean setInputConnectionHandler(Handler handler);
-}
-
-/* interface for the Editable to listen to the Gecko thread
-   and also for the IC thread to listen to the Editable */
-interface GeckoEditableListener {
-    // IME notification type for notifyIME(), corresponding to NotificationToIME enum in Gecko
-    final int NOTIFY_IME_OPEN_VKB = -2;
-    final int NOTIFY_IME_REPLY_EVENT = -1;
-    final int NOTIFY_IME_OF_FOCUS = 1;
-    final int NOTIFY_IME_OF_BLUR = 2;
-    final int NOTIFY_IME_TO_COMMIT_COMPOSITION = 8;
-    final int NOTIFY_IME_TO_CANCEL_COMPOSITION = 9;
-    // IME enabled state for notifyIMEContext()
-    final int IME_STATE_DISABLED = 0;
-    final int IME_STATE_ENABLED = 1;
-    final int IME_STATE_PASSWORD = 2;
-    final int IME_STATE_PLUGIN = 3;
-
-    void notifyIME(int type);
-    void notifyIMEContext(int state, String typeHint,
-                          String modeHint, String actionHint);
-    void onSelectionChange(int start, int end);
-    void onTextChange(String text, int start, int oldEnd, int newEnd);
-}
 
 /*
    GeckoEditable implements only some functions of Editable
@@ -131,6 +99,8 @@ final class GeckoEditable
         static final int TYPE_ACKNOWLEDGE_FOCUS = 5;
         // For switching handler; use with IME_SYNCHRONIZE
         static final int TYPE_SET_HANDLER = 6;
+        // For Editable.replace() call involving compositions; use with IME_COMPOSE_TEXT
+        static final int TYPE_COMPOSE_TEXT = 7;
 
         final int mType;
         int mStart;
@@ -150,7 +120,22 @@ final class GeckoEditable
                 throw new IllegalArgumentException(
                     "invalid replace text offsets: " + start + " to " + end);
             }
-            final Action action = new Action(TYPE_REPLACE_TEXT);
+
+            int actionType = TYPE_REPLACE_TEXT;
+
+            if (text instanceof Spanned) {
+                final Spanned spanned = (Spanned) text;
+                final Object[] spans = spanned.getSpans(0, spanned.length(), Object.class);
+
+                for (Object span : spans) {
+                    if ((spanned.getSpanFlags(span) & Spanned.SPAN_COMPOSING) != 0) {
+                        actionType = TYPE_COMPOSE_TEXT;
+                        break;
+                    }
+                }
+            }
+
+            final Action action = new Action(actionType);
             action.mSequence = text;
             action.mStart = start;
             action.mEnd = end;
@@ -229,6 +214,7 @@ final class GeckoEditable
                 mActionsActive.tryAcquire();
                 mActions.offer(action);
             }
+
             switch (action.mType) {
             case Action.TYPE_EVENT:
             case Action.TYPE_SET_SELECTION:
@@ -238,17 +224,29 @@ final class GeckoEditable
                 GeckoAppShell.sendEventToGecko(GeckoEvent.createIMEEvent(
                         GeckoEvent.ImeAction.IME_SYNCHRONIZE));
                 break;
+
+            case Action.TYPE_COMPOSE_TEXT:
+                // Send different event for composing text.
+                GeckoAppShell.sendEventToGecko(GeckoEvent.createIMEComposeEvent(
+                        action.mStart, action.mEnd, action.mSequence.toString()));
+                return;
+
             case Action.TYPE_REPLACE_TEXT:
                 // try key events first
                 sendCharKeyEvents(action);
                 GeckoAppShell.sendEventToGecko(GeckoEvent.createIMEReplaceEvent(
                         action.mStart, action.mEnd, action.mSequence.toString()));
                 break;
+
             case Action.TYPE_ACKNOWLEDGE_FOCUS:
                 GeckoAppShell.sendEventToGecko(GeckoEvent.createIMEEvent(
                         GeckoEvent.ImeAction.IME_ACKNOWLEDGE_FOCUS));
                 break;
+
+            default:
+                throw new IllegalStateException("Action not processed");
             }
+
             ++mIcUpdateSeqno;
         }
 
@@ -307,12 +305,10 @@ final class GeckoEditable
                 throw new IllegalStateException("empty actions queue");
             }
             mActions.poll();
-            // Don't bother locking if queue is not empty yet
-            if (mActions.isEmpty()) {
-                synchronized(this) {
-                    if (mActions.isEmpty()) {
-                        mActionsActive.release();
-                    }
+
+            synchronized(this) {
+                if (mActions.isEmpty()) {
+                    mActionsActive.release();
                 }
             }
         }
@@ -867,7 +863,7 @@ final class GeckoEditable
     }
 
     @Override
-    public void onTextChange(final String text, final int start,
+    public void onTextChange(final CharSequence text, final int start,
                       final int unboundedOldEnd, final int unboundedNewEnd) {
         if (DEBUG) {
             // GeckoEditableListener methods should all be called from the Gecko thread
@@ -907,7 +903,8 @@ final class GeckoEditable
 
         if (!mActionQueue.isEmpty()) {
             final Action action = mActionQueue.peek();
-            if (action.mType == Action.TYPE_REPLACE_TEXT &&
+            if ((action.mType == Action.TYPE_REPLACE_TEXT ||
+                    action.mType == Action.TYPE_COMPOSE_TEXT) &&
                     start <= action.mStart &&
                     action.mStart + action.mSequence.length() <= newEnd) {
 
@@ -975,12 +972,12 @@ final class GeckoEditable
         } else if (Proxy.isProxyClass(obj.getClass())) {
             debugAppend(sb, Proxy.getInvocationHandler(obj));
         } else if (obj instanceof CharSequence) {
-            sb.append("\"").append(obj.toString().replace('\n', '\u21b2')).append("\"");
+            sb.append('"').append(obj.toString().replace('\n', '\u21b2')).append('"');
         } else if (obj.getClass().isArray()) {
-            sb.append(obj.getClass().getComponentType().getSimpleName()).append("[")
-              .append(java.lang.reflect.Array.getLength(obj)).append("]");
+            sb.append(obj.getClass().getComponentType().getSimpleName()).append('[')
+              .append(Array.getLength(obj)).append(']');
         } else {
-            sb.append(obj.toString());
+            sb.append(obj);
         }
         return sb;
     }
@@ -1034,11 +1031,13 @@ final class GeckoEditable
         if (DEBUG) {
             StringBuilder log = new StringBuilder(method.getName());
             log.append("(");
-            for (Object arg : args) {
-                debugAppend(log, arg).append(", ");
-            }
-            if (args.length > 0) {
-                log.setLength(log.length() - 2);
+            if (args != null) {
+                for (Object arg : args) {
+                    debugAppend(log, arg).append(", ");
+                }
+                if (args.length > 0) {
+                    log.setLength(log.length() - 2);
+                }
             }
             if (method.getReturnType().equals(Void.TYPE)) {
                 log.append(")");

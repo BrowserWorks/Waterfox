@@ -53,9 +53,6 @@ const gUnnamedProcessStr = "Main Process";
 
 let gIsDiff = false;
 
-const gAnalyzeReportsFile = "reports.dmd";
-const gAnalyzeHeapFile    = "heap.dmd";
-
 //---------------------------------------------------------------------------
 
 // Forward slashes in URLs in paths are represented with backslashes to avoid
@@ -299,10 +296,8 @@ function onLoad()
                             "collection log.\n" +
                             "WARNING: These logs may be large (>1GB).";
 
-  const AnalyzeReportsDesc = "Analyze memory reports coverage and save the " +
-                             "output to '" + gAnalyzeReportsFile + "'.\n";
-  const AnalyzeHeapDesc = "Analyze heap usage and save the output to '" +
-                          gAnalyzeHeapFile + "'.\n";
+  const DMDEnabledDesc = "Analyze memory reports coverage and save the " +
+                         "output to the temp directory.\n";
   const DMDDisabledDesc = "DMD is not running. Please re-start with $DMD and " +
                           "the other relevant environment variables set " +
                           "appropriately.";
@@ -364,20 +359,13 @@ function onLoad()
   if (gMgr.isDMDEnabled) {
     let row5 = appendElement(ops, "div", "opsRow");
 
-    appendElementWithText(row5, "div", "opsRowLabel", "DMD operations");
+    appendElementWithText(row5, "div", "opsRowLabel", "Save DMD output");
     let enableButtons = gMgr.isDMDRunning;
 
-    let analyzeReportsButton =
-      appendButton(row5,
-                   enableButtons ? AnalyzeReportsDesc : DMDDisabledDesc,
-                   doAnalyzeReports, "Analyze reports");
-    analyzeReportsButton.disabled = !enableButtons;
-
-    let analyzeHeapButton =
-      appendButton(row5,
-                   enableButtons ? AnalyzeHeapDesc : DMDDisabledDesc,
-                   doAnalyzeHeap, "Analyze heap");
-    analyzeHeapButton.disabled = !enableButtons;
+    let dmdButton =
+      appendButton(row5, enableButtons ? DMDEnabledDesc : DMDDisabledDesc,
+                   doDMD, "Save");
+    dmdButton.disabled = !enableButtons;
   }
 
   // Generate the main div, where content ("section" divs) will go.  It's
@@ -458,24 +446,19 @@ function saveGCLogAndVerboseCCLog()
   dumpGCLogAndCCLog(true);
 }
 
-function doAnalyzeReports()
+function doDMD()
 {
-  updateMainAndFooter('Saving DMD output...', HIDE_FOOTER);
+  updateMainAndFooter("Saving memory reports and DMD output...", HIDE_FOOTER);
   try {
-    let x = DMDAnalyzeReports(gAnalyzeReportsFile);
-    updateMainAndFooter('Saved DMD output to ' + gAnalyzeReportsFile,
-                        HIDE_FOOTER);
-  } catch (ex) {
-    updateMainAndFooter(ex.toString(), HIDE_FOOTER);
-  }
-}
+    let dumper = Cc["@mozilla.org/memory-info-dumper;1"]
+                   .getService(Ci.nsIMemoryInfoDumper);
 
-function doAnalyzeHeap()
-{
-  updateMainAndFooter('Saving DMD output...', HIDE_FOOTER);
-  try {
-    let x = DMDAnalyzeHeap(gAnalyzeHeapFile);
-    updateMainAndFooter('Saved DMD output to ' + gAnalyzeHeapFile, HIDE_FOOTER);
+    dumper.dumpMemoryInfoToTempDir(/* identifier = */ "",
+                                   gAnonymize.checked,
+                                   /* minimize = */ false);
+    updateMainAndFooter("Saved memory reports and DMD reports analysis " +
+                        "to the temp directory",
+                        HIDE_FOOTER);
   } catch (ex) {
     updateMainAndFooter(ex.toString(), HIDE_FOOTER);
   }
@@ -545,12 +528,31 @@ function updateAboutMemoryFromReporters()
 //
 var gCurrentFileFormatVersion = 1;
 
+
+/**
+ * Parse a string as JSON and extract the |memory_report| property if it has
+ * one, which indicates the string is from a crash dump.
+ *
+ * @param aStr
+ *        The string.
+ * @return The extracted object.
+ */
+function parseAndUnwrapIfCrashDump(aStr) {
+  let obj = JSON.parse(aStr);
+  if (obj.memory_report !== undefined) {
+    // It looks like a crash dump. The memory reports should be in the
+    // |memory_report| property.
+    obj = obj.memory_report;
+  }
+  return obj;
+}
+
 /**
  * Populate about:memory using the data in the given JSON object.
  *
  * @param aObj
- *        An object containing JSON data that (hopefully!) conforms to the
- *        schema used by nsIMemoryInfoDumper.
+ *        An object that (hopefully!) conforms to the JSON schema used by
+ *        nsIMemoryInfoDumper.
  */
 function updateAboutMemoryFromJSONObject(aObj)
 {
@@ -599,7 +601,7 @@ function updateAboutMemoryFromJSONObject(aObj)
 function updateAboutMemoryFromJSONString(aStr)
 {
   try {
-    let obj = JSON.parse(aStr);
+    let obj = parseAndUnwrapIfCrashDump(aStr);
     updateAboutMemoryFromJSONObject(obj);
   } catch (ex) {
     handleException(ex);
@@ -689,10 +691,10 @@ function updateAboutMemoryFromFile(aFilename)
 function updateAboutMemoryFromTwoFiles(aFilename1, aFilename2)
 {
   loadMemoryReportsFromFile(aFilename1, function(aStr1) {
-    loadMemoryReportsFromFile(aFilename2, function f2(aStr2) {
+    loadMemoryReportsFromFile(aFilename2, function(aStr2) {
       try {
-        let obj1 = JSON.parse(aStr1);
-        let obj2 = JSON.parse(aStr2);
+        let obj1 = parseAndUnwrapIfCrashDump(aStr1);
+        let obj2 = parseAndUnwrapIfCrashDump(aStr2);
         gIsDiff = true;
         updateAboutMemoryFromJSONObject(diffJSONObjects(obj1, obj2));
         gIsDiff = false;
@@ -819,20 +821,41 @@ function makeDReportMap(aJSONReports)
     assert(jr.amount      !== undefined, "Missing amount");
     assert(jr.description !== undefined, "Missing description");
 
-    // Strip out some non-deterministic stuff that prevents clean diffs --
-    // e.g. PIDs, addresses, null principal UUIDs. (Note that we don't strip
-    // out all UUIDs because some of them -- such as those used by add-ons --
-    // are deterministic.)
+    // Strip out some non-deterministic stuff that prevents clean diffs.
+    // Ideally the memory reports themselves would contain information about
+    // which parts of the the process and path need to be stripped -- saving us
+    // from hardwiring knowledge of specific reporters here -- but we have no
+    // mechanism for that. (Any future redesign of how memory reporters work
+    // should include such a mechanism.)
+
+    // Strip PIDs:
+    // - pid 123
+    // - pid=123
     let pidRegex = /pid([ =])\d+/g;
     let pidSubst = "pid$1NNN";
-    let strippedProcess = jr.process.replace(pidRegex, pidSubst);
-    let strippedPath = jr.path.replace(/0x[0-9A-Fa-f]+/g, "0xNNN");
-    strippedPath = strippedPath.replace(pidRegex, pidSubst);
-    strippedPath = strippedPath.replace(
+    let process = jr.process.replace(pidRegex, pidSubst);
+    let path = jr.path.replace(pidRegex, pidSubst);
+
+    // Strip addresses:
+    // - .../js-zone(0x12345678)/...
+    // - .../zone(0x12345678)/...
+    // - .../worker(<URL>, 0x12345678)/...
+    path = path.replace(/zone\(0x[0-9A-Fa-f]+\)\//, "zone(0xNNN)/");
+    path = path.replace(/\/worker\((.+), 0x[0-9A-Fa-f]+\)\//,
+                        "/worker($1, 0xNNN)/");
+
+    // Strip top window IDs:
+    // - explicit/window-objects/top(<URL>, id=123)/...
+    path = path.replace(/^(explicit\/window-objects\/top\(.*, id=)\d+\)/,
+                        "$1NNN)");
+
+    // Strip null principal UUIDs (but not other UUIDs, because they may be
+    // deterministic, such as those used by add-ons).
+    path = path.replace(
       /moz-nullprincipal:{........-....-....-....-............}/g,
       "moz-nullprincipal:{NNNNNNNN-NNNN-NNNN-NNNN-NNNNNNNNNNNN}");
-    let processPath = strippedProcess + kProcessPathSep + strippedPath;
 
+    let processPath = process + kProcessPathSep + path;
     let rOld = dreportMap[processPath];
     if (rOld === undefined) {
       dreportMap[processPath] =
@@ -904,7 +927,6 @@ function makeJSONReports(aDReportMap)
 
   return reports;
 }
-
 
 // Diff two JSON objects holding memory reports.
 function diffJSONObjects(aJson1, aJson2)
@@ -1128,7 +1150,7 @@ TreeNode.prototype = {
   maxAbsDescendant: function() {
     if (!this._kids) {
       // No kids? Just return the absolute value of the amount.
-      return max = Math.abs(this._amount);
+      return Math.abs(this._amount);
     }
 
     if ('_maxAbsDescendant' in this) {
@@ -1995,11 +2017,9 @@ function saveReportsToFile()
   let fpFinish = function(file) {
     let dumper = Cc["@mozilla.org/memory-info-dumper;1"]
                    .getService(Ci.nsIMemoryInfoDumper);
-
     let finishDumping = () => {
-      updateMainAndFooter("Saved reports to " + file.path, HIDE_FOOTER);
+      updateMainAndFooter("Saved memory reports to " + file.path, HIDE_FOOTER);
     }
-
     dumper.dumpMemoryReportsToNamedFile(file.path, finishDumping, null,
                                         gAnonymize.checked);
   }

@@ -14,6 +14,7 @@
     var test_node = null;
     var reentered = false;
     var savedMM = null;
+    const Cu = Components.utils;
 
     function info(message) {
       return opener.wrappedJSObject.info(message);
@@ -27,8 +28,17 @@
       return opener.wrappedJSObject.is(v1, v2, message);
     }
 
+    function todo_is(v1, v2, message) {
+      return opener.wrappedJSObject.todo_is(v1, v2, message);
+    }
+
     // Make sure that an error in this file actually causes the test to fail.
+    var gReceivedErrorProbe = false;
     window.onerror = function (msg, url, line) {
+      if (/Test Error Probe/.test(msg)) {
+        gReceivedErrorProbe = true;
+        return;
+      }
       ok(false, "Error while executing: \n" + msg + "\n" + url + ":" + line);
     };
 
@@ -170,6 +180,11 @@
       savedMM.sendAsyncMessage("cpows:from_parent", {}, {obj: obj});
     }
 
+    // Make sure errors in this file actually hit window.onerror.
+    function recvErrorReportingTest(message) {
+      throw "Test Error Probe";
+    }
+
     let savedElement = null;
     function recvDomTest(message) {
       savedElement = message.objects.element;
@@ -188,6 +203,56 @@
     function recvXrayTest(message) {
       let element = message.objects.element;
       is(element.foo, undefined, "DOM element does not expose content properties");
+    }
+
+    function recvSymbolTest(message) {
+      let object = message.objects;
+      is(object[Symbol.iterator], Symbol.iterator, "Should use Symbol.iterator");
+      is(Symbol.keyFor(object[Symbol.for("cpow-test")]), "cpow-test", "Symbols aren't registered correctly");
+      // is(object.unique, object[object.unique], "Unique symbols as ids and values don't seem to work");
+    }
+
+    let systemGlobal = this;
+    function recvCompartmentTest(message) {
+      let getUnprivilegedObject = message.objects.getUnprivilegedObject;
+      let testParentObject = message.objects.testParentObject;
+
+      // Make sure that parent->child CPOWs live in the parent's privileged junk scope.
+      let unprivilegedObject = getUnprivilegedObject();
+      is(Cu.getGlobalForObject(getUnprivilegedObject),
+         Cu.getGlobalForObject(unprivilegedObject),
+         "all parent->child CPOWs should live in the same scope");
+      let cpowLocation = Cu.getCompartmentLocation(getUnprivilegedObject);
+      ok(/Privileged Junk/.test(cpowLocation),
+         "parent->child CPOWs should live in the privileged junk scope: " + cpowLocation);
+
+      // Make sure that parent->child CPOWs point through a privileged scope in the child
+      // (the privileged junk scope, but we don't have a good way to test for that
+      // specifically).
+      is(unprivilegedObject.expando, undefined, "parent->child references should get Xrays");
+      is(unprivilegedObject.wrappedJSObject.expando, 42, "parent->child references should get waivable Xrays");
+
+      // Send an object to the child to let it verify invariants in the other direction.
+      function passMe() { return 42; };
+      passMe.expando = 42;
+      let results = testParentObject(passMe);
+      ok(results.length > 0, "Need results");
+      results.forEach((x) => is(x.result, "PASS", x.message));
+    }
+
+    function recvRegExpTest(message) {
+      let regexp = message.objects.regexp;
+
+      // These work generically.
+      is(regexp.toString(), "/myRegExp/g", "toString works right");
+      ok(regexp.test("I like myRegExp to match"), "No false positives");
+      ok(!regexp.test("asdfsdf"), "No false positives");
+
+      // These go over regexp_toShared.
+      is("filler myRegExp filler".search(regexp), 7, "String.prototype.match works right");
+      var shell = /x/;
+      shell.compile(regexp);
+      is(regexp.toString(), shell.toString(), ".compile works right");
     }
 
     let savedWilldieObj;
@@ -238,9 +303,13 @@
       mm.addMessageListener("cpows:done", recvDoneMessage);
       mm.addMessageListener("cpows:fail", recvFailMessage);
       mm.addMessageListener("cpows:parent_test", recvParentTest);
+      mm.addMessageListener("cpows:error_reporting_test", recvErrorReportingTest);
       mm.addMessageListener("cpows:dom_test", recvDomTest);
       mm.addMessageListener("cpows:dom_test_after_gc", recvDomTestAfterGC);
       mm.addMessageListener("cpows:xray_test", recvXrayTest);
+      mm.addMessageListener("cpows:symbol_test", recvSymbolTest);
+      mm.addMessageListener("cpows:compartment_test", recvCompartmentTest);
+      mm.addMessageListener("cpows:regexp_test", recvRegExpTest);
       mm.addMessageListener("cpows:lifetime_test_1", recvLifetimeTest1);
       mm.addMessageListener("cpows:lifetime_test_2", recvLifetimeTest2);
       mm.loadFrameScript("chrome://mochitests/content/chrome/content/base/test/chrome/cpows_child.js", true);
@@ -251,6 +320,7 @@
     }
 
     function finish() {
+      ok(gReceivedErrorProbe, "Should have reported error probe");
       opener.setTimeout("done()", 0);
       window.close();
     }

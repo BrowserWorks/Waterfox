@@ -12,12 +12,12 @@ import com.jayway.android.robotium.solo.Condition;
 public class testNewTab extends BaseTest {
     private Element tabCount = null;
     private Element tabs = null;
-    private Element closeTab = null;
+    private final Element closeTab = null;
     private int tabCountInt = 0;
 
     public void testNewTab() {
-        String url = getAbsoluteUrl("/robocop/robocop_blank_01.html");
-        String url2 = getAbsoluteUrl("/robocop/robocop_blank_02.html");
+        String url = getAbsoluteUrl(StringHelper.ROBOCOP_BLANK_PAGE_01_URL);
+        String url2 = getAbsoluteUrl(StringHelper.ROBOCOP_BLANK_PAGE_02_URL);
 
         blockForGeckoReady();
 

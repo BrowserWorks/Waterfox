@@ -9,6 +9,7 @@
 #include <stddef.h>                     // for size_t
 #include <stdint.h>                     // for uint16_t
 #include <algorithm>                    // for swap
+#include <limits>
 #include "Layers.h"                     // for LayerManager, etc
 #include "TiledLayerBuffer.h"           // for TiledLayerBuffer
 #include "Units.h"                      // for CSSPoint
@@ -41,7 +42,7 @@ namespace mozilla {
 namespace layers {
 
 class BasicTileDescriptor;
-class ClientTiledThebesLayer;
+class ClientTiledPaintedLayer;
 class ClientLayerManager;
 
 
@@ -388,22 +389,24 @@ class ClientTiledLayerBuffer
   friend class TiledLayerBuffer<ClientTiledLayerBuffer, TileClient>;
 
 public:
-  ClientTiledLayerBuffer(ClientTiledThebesLayer* aThebesLayer,
+  ClientTiledLayerBuffer(ClientTiledPaintedLayer* aPaintedLayer,
                          CompositableClient* aCompositableClient,
                          ClientLayerManager* aManager,
                          SharedFrameMetricsHelper* aHelper);
   ClientTiledLayerBuffer()
-    : mThebesLayer(nullptr)
+    : mPaintedLayer(nullptr)
     , mCompositableClient(nullptr)
     , mManager(nullptr)
     , mLastPaintContentType(gfxContentType::COLOR)
     , mLastPaintSurfaceMode(SurfaceMode::SURFACE_OPAQUE)
     , mSharedFrameMetricsHelper(nullptr)
+    , mTilingOrigin(std::numeric_limits<int32_t>::max(),
+                    std::numeric_limits<int32_t>::max())
   {}
 
   void PaintThebes(const nsIntRegion& aNewValidRegion,
                    const nsIntRegion& aPaintRegion,
-                   LayerManager::DrawThebesLayerCallback aCallback,
+                   LayerManager::DrawPaintedLayerCallback aCallback,
                    void* aCallbackData);
 
   void ReadUnlock();
@@ -428,7 +431,7 @@ public:
                          nsIntRegion& aInvalidRegion,
                          const nsIntRegion& aOldValidRegion,
                          BasicTiledLayerPaintData* aPaintData,
-                         LayerManager::DrawThebesLayerCallback aCallback,
+                         LayerManager::DrawPaintedLayerCallback aCallback,
                          void* aCallbackData);
 
   SurfaceDescriptorTiles GetSurfaceDescriptorTiles();
@@ -456,10 +459,10 @@ protected:
 
 private:
   gfxContentType GetContentType(SurfaceMode* aMode = nullptr) const;
-  ClientTiledThebesLayer* mThebesLayer;
+  ClientTiledPaintedLayer* mPaintedLayer;
   CompositableClient* mCompositableClient;
   ClientLayerManager* mManager;
-  LayerManager::DrawThebesLayerCallback mCallback;
+  LayerManager::DrawPaintedLayerCallback mCallback;
   void* mCallbackData;
   CSSToParentLayerScale mFrameResolution;
   gfxContentType mLastPaintContentType;
@@ -475,6 +478,16 @@ private:
   SharedFrameMetricsHelper*  mSharedFrameMetricsHelper;
   // When using Moz2D's CreateTiledDrawTarget we maintain a list of gfx::Tiles
   std::vector<gfx::Tile> mMoz2DTiles;
+  /**
+   * While we're adding tiles, this is used to keep track of the position of
+   * the top-left of the top-left-most tile.  When we come to wrap the tiles in
+   * TiledDrawTarget we subtract the value of this member from each tile's
+   * offset so that all the tiles have a positive offset, then add a
+   * translation to the TiledDrawTarget to compensate.  This is important so
+   * that the mRect of the TiledDrawTarget is always at a positive x/y
+   * position, otherwise its GetSize() methods will be broken.
+   */
+  gfx::IntPoint mTilingOrigin;
   /**
    * Calculates the region to update in a single progressive update transaction.
    * This employs some heuristics to update the most 'sensible' region to
@@ -504,11 +517,11 @@ class TiledContentClient : public CompositableClient
   // XXX: for now the layer which owns us interacts directly with our buffers.
   // We should have a content client for each tiled buffer which manages its
   // own valid region, resolution, etc. Then we could have a much cleaner
-  // interface and tidy up BasicTiledThebesLayer::PaintThebes (bug 862547).
-  friend class ClientTiledThebesLayer;
+  // interface and tidy up BasicTiledPaintedLayer::PaintThebes (bug 862547).
+  friend class ClientTiledPaintedLayer;
 
 public:
-  TiledContentClient(ClientTiledThebesLayer* aThebesLayer,
+  TiledContentClient(ClientTiledPaintedLayer* aPaintedLayer,
                      ClientLayerManager* aManager);
 
 protected:

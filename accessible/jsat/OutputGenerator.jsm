@@ -385,6 +385,14 @@ let OutputGenerator = {
         this._addLandmark(output, aAccessible);
         return output;
       }
+    },
+
+    gridcell: function gridcell(aAccessible, aRoleStr, aState, aFlags) {
+      let output = [];
+      this._addState(output, aState);
+      this._addName(output, aAccessible, aFlags);
+      this._addLandmark(output, aAccessible);
+      return output;
     }
   }
 };
@@ -594,6 +602,10 @@ this.UtteranceGenerator = {  // jshint ignore:line
 
     if (aState.contains(States.UNAVAILABLE)) {
       aOutput.push({string: 'stateUnavailable'});
+    }
+
+    if (aState.contains(States.READONLY)) {
+      aOutput.push({string: 'stateReadonly'});
     }
 
     // Don't utter this in Jelly Bean, we let TalkBack do it for us there.

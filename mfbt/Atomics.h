@@ -34,13 +34,22 @@
     * loose typing of the atomic builtins. GCC 4.5 and 4.6 lacks inline
     * definitions for unspecialized std::atomic and causes linking errors.
     * Therefore, we require at least 4.7.0 for using libstdc++.
+    *
+    * libc++ <atomic> is only functional with clang.
     */
 #  if MOZ_USING_LIBSTDCXX && MOZ_LIBSTDCXX_VERSION_AT_LEAST(4, 7, 0)
 #    define MOZ_HAVE_CXX11_ATOMICS
-#  elif MOZ_USING_LIBCXX
+#  elif MOZ_USING_LIBCXX && defined(__clang__)
 #    define MOZ_HAVE_CXX11_ATOMICS
 #  endif
-#elif defined(_MSC_VER) && _MSC_VER >= 1700
+/*
+ * Although Visual Studio 2012's CRT supports <atomic>, its atomic load
+ * implementation unnecessarily uses an atomic intrinsic for the less
+ * restrictive memory orderings, which can be prohibitively expensive.
+ * Therefore, we require at least Visual Studio 2013 for using the CRT
+ * (bug 1061764).
+ */
+#elif defined(_MSC_VER) && _MSC_VER >= 1800
 #  if defined(DEBUG)
      /*
       * Provide our own failure code since we're having trouble linking to

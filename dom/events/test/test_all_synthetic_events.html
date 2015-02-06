@@ -76,6 +76,18 @@ const kEventConstructors = {
                                                           return new CallGroupErrorEvent(aName, aProps);
                                                        },
                                              },
+  CameraConfigurationEvent:                  { create: function (aName, aProps) {
+                                                          return new CameraConfigurationEvent(aName, aProps);
+                                                       },
+                                             },
+  CameraFacesDetectedEvent:                  { create: function (aName, aProps) {
+                                                          return new CameraFacesDetectedEvent(aName, aProps);
+                                                       },
+                                             },
+  CameraStateChangeEvent:                    { create: function (aName, aProps) {
+                                                          return new CameraStateChangeEvent(aName, aProps);
+                                                       },
+                                             },
   CFStateChangeEvent:                        { create: function (aName, aProps) {
                                                           return new CFStateChangeEvent(aName, aProps);
                                                        },
@@ -100,6 +112,10 @@ const kEventConstructors = {
                                                          e.initCompositionEvent(aName, aProps.bubbles, aProps.cancelable,
                                                                                 aProps.view, aProps.data, aProps.locale);
                                                          return e;
+                                                       },
+                                             },
+  CSSFontFaceLoadEvent:                      { create: function (aName, aProps) {
+                                                         return new CSSFontFaceLoadEvent(aName, aProps);
                                                        },
                                              },
   CustomEvent:                               { create: function (aName, aProps) {
@@ -195,6 +211,10 @@ const kEventConstructors = {
                                                          return new IDBVersionChangeEvent(aName, aProps);
                                                        },
                                              },
+  ImageCaptureErrorEvent:                                { create: function (aName, aProps) {
+                                                         return new ImageCaptureErrorEvent(aName, aProps);
+                                                       },
+                                             },
   InputEvent:                                { create: function (aName, aProps) {
                                                          return new InputEvent(aName, aProps);
                                                        },
@@ -205,6 +225,14 @@ const kEventConstructors = {
                                              },
   KeyboardEvent:                             { create: function (aName, aProps) {
                                                          return new KeyboardEvent(aName, aProps);
+                                                       },
+                                             },
+  MediaEncryptedEvent:                          { create: function (aName, aProps) {
+                                                         return new MediaEncryptedEvent(aName, aProps);
+                                                       },
+                                             },
+  MediaKeyMessageEvent:                          { create: function (aName, aProps) {
+                                                         return new MediaKeyMessageEvent(aName, aProps);
                                                        },
                                              },
   MediaStreamEvent:                          { create: function (aName, aProps) {
@@ -381,10 +409,6 @@ const kEventConstructors = {
                                                                                   aProps.allowedDirections, aProps.direction, aProps.delta || 0.0,
                                                                                   aProps.clickCount);
                                                          return e;
-                                                       },
-                                             },
-  SmartCardEvent:                            { create: function (aName, aProps) {
-                                                         return new SmartCardEvent(aName, aProps);
                                                        },
                                              },
   SpeechRecognitionEvent:                    { create: function (aName, aProps) {

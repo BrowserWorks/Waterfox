@@ -2,6 +2,13 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+///////////////////
+//
+// Whitelisting this test.
+// As part of bug 1077403, the leaking uncaught rejection should be fixed. 
+//
+thisTestLeaksUncaughtRejectionsAndShouldBeFixed("Error: Unknown sheet source");
+
 // Test that hovering over a simple selector in the style-editor requests the
 // highlighting of the corresponding nodes
 
@@ -35,14 +42,14 @@ let test = asyncTest(function*() {
   let onHighlighted = editor.once("node-highlighted");
 
   info("Simulate a mousemove event on the div selector");
-  editor._onMouseMove({clientX: 40, clientY: 10});
+  editor._onMouseMove({clientX: 56, clientY: 10});
   yield onHighlighted;
 
   ok(editor.highlighter.isShown, "The highlighter is now shown");
   is(editor.highlighter.options.selector, "div", "The selector is correct");
 
   info("Simulate a mousemove event elsewhere in the editor");
-  editor._onMouseMove({clientX: 0, clientY: 0});
+  editor._onMouseMove({clientX: 16, clientY: 0});
 
   ok(!editor.highlighter.isShown, "The highlighter is now hidden");
 });

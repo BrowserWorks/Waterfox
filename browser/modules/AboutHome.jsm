@@ -160,7 +160,7 @@ let AboutHome = {
             if (userData) {
               window.openPreferences("paneSync");
             } else {
-              window.loadURI("about:accounts");
+              window.loadURI("about:accounts?entrypoint=abouthome");
             }
           });
         } else {
@@ -192,7 +192,7 @@ let AboutHome = {
 
           let engine = Services.search.currentEngine;
 #ifdef MOZ_SERVICES_HEALTHREPORT
-          window.BrowserSearch.recordSearchInHealthReport(engine, "abouthome");
+          window.BrowserSearch.recordSearchInHealthReport(engine, "abouthome", data.selection);
 #endif
           // Trigger a search through nsISearchEngine.getSubmission()
           let submission = engine.getSubmission(data.searchTerms, null, "homepage");

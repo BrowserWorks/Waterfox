@@ -441,7 +441,7 @@ public class BrowserSearch extends HomeFragment
 
             if (searchCount == 0) {
                 // Prefetch the first item in the list since it's weighted the highest
-                GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Session:Prefetch", url.toString()));
+                GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Session:Prefetch", url));
             }
 
             // Does the completion match against the whole URL? This will match
@@ -822,7 +822,9 @@ public class BrowserSearch extends HomeFragment
 
             if (engine == -1) {
                 return ROW_STANDARD;
-            } else if (engine == 0 && mSuggestionsEnabled) {
+            }
+
+            if (engine == 0 && mSuggestionsEnabled) {
                 // Give suggestion views their own type to prevent them from
                 // sharing other recycled search engine views. Using other
                 // recycled views for the suggestion row can break animations

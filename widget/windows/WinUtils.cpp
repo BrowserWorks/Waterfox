@@ -17,10 +17,9 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/WindowsVersion.h"
+#include "nsIContentPolicy.h"
+#include "nsContentUtils.h"
 
-#ifdef MOZ_LOGGING
-#define FORCE_PR_LOG /* Allow logging in the release build */
-#endif // MOZ_LOGGING
 #include "prlog.h"
 
 #include "nsString.h"
@@ -1070,7 +1069,12 @@ nsresult AsyncFaviconDataReady::OnFaviconDataNotAvailable(void)
   }
  
   nsCOMPtr<nsIChannel> channel;
-  rv = NS_NewChannel(getter_AddRefs(channel), mozIconURI);
+  rv = NS_NewChannel(getter_AddRefs(channel),
+                     mozIconURI,
+                     nsContentUtils::GetSystemPrincipal(),
+                     nsILoadInfo::SEC_NORMAL,
+                     nsIContentPolicy::TYPE_IMAGE);
+
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIDownloadObserver> downloadObserver = new myDownloadObserver;

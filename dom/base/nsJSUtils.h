@@ -22,6 +22,12 @@
 class nsIScriptContext;
 class nsIScriptGlobalObject;
 
+namespace mozilla {
+namespace dom {
+class AutoJSAPI;
+}
+}
+
 class nsJSUtils
 {
 public:
@@ -49,8 +55,8 @@ public:
    */
   static void ReportPendingException(JSContext *aContext);
 
-  static nsresult CompileFunction(JSContext* aCx,
-                                  JS::Handle<JSObject*> aTarget,
+  static nsresult CompileFunction(mozilla::dom::AutoJSAPI& jsapi,
+                                  JS::AutoObjectVector& aScopeChain,
                                   JS::CompileOptions& aOptions,
                                   const nsACString& aName,
                                   uint32_t aArgCount,

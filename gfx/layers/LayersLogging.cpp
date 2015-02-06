@@ -68,6 +68,26 @@ AppendToString(std::stringstream& aStream, const gfxRGBA& c,
 }
 
 void
+AppendToString(std::stringstream& aStream, const nsPoint& p,
+               const char* pfx, const char* sfx)
+{
+  aStream << pfx;
+  aStream << nsPrintfCString("(x=%d, y=%d)", p.x, p.y).get();
+  aStream << sfx;
+}
+
+void
+AppendToString(std::stringstream& aStream, const nsRect& r,
+               const char* pfx, const char* sfx)
+{
+  aStream << pfx;
+  aStream << nsPrintfCString(
+    "(x=%d, y=%d, w=%d, h=%d)",
+    r.x, r.y, r.width, r.height).get();
+  aStream << sfx;
+}
+
+void
 AppendToString(std::stringstream& aStream, const nsIntPoint& p,
                const char* pfx, const char* sfx)
 {
@@ -121,6 +141,9 @@ AppendToString(std::stringstream& aStream, const FrameMetrics& m,
   AppendToString(aStream, m.mCompositionBounds, "{ cb=");
   AppendToString(aStream, m.mScrollableRect, " sr=");
   AppendToString(aStream, m.GetScrollOffset(), " s=");
+  if (m.GetDoSmoothScroll()) {
+    AppendToString(aStream, m.GetSmoothScrollOffset(), " ss=");
+  }
   AppendToString(aStream, m.mDisplayPort, " dp=");
   AppendToString(aStream, m.mCriticalDisplayPort, " cdp=");
   AppendToString(aStream, m.GetBackgroundColor(), " color=");
@@ -139,8 +162,9 @@ AppendToString(std::stringstream& aStream, const FrameMetrics& m,
             m.mDevPixelsPerCSSPixel.scale, m.mResolution.scale,
             m.mCumulativeResolution.scale, m.GetZoom().scale,
             m.mTransformScale.scale).get();
-    aStream << nsPrintfCString(" u=(%d %lu)",
-            m.GetScrollOffsetUpdated(), m.GetScrollGeneration()).get();
+    aStream << nsPrintfCString(" u=(%d %d %lu)",
+            m.GetScrollOffsetUpdated(), m.GetDoSmoothScroll(),
+            m.GetScrollGeneration()).get();
     AppendToString(aStream, m.GetScrollParentId(), " p=");
     aStream << nsPrintfCString(" i=(%ld %lld) }",
             m.GetPresShellId(), m.GetScrollId()).get();

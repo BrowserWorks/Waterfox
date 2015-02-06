@@ -80,7 +80,7 @@ StupidAllocator::init()
         while (!remainingRegisters.empty(/* float = */ true))
             registers[registerCount++].reg = AnyRegister(remainingRegisters.takeFloat());
 
-        JS_ASSERT(registerCount <= MAX_REGISTERS);
+        MOZ_ASSERT(registerCount <= MAX_REGISTERS);
     }
 
     return true;
@@ -149,10 +149,10 @@ StupidAllocator::allocateRegister(LInstruction *ins, uint32_t vreg)
     // Pick a register for vreg, evicting an existing register if necessary.
     // Spill code will be placed before ins, and no existing allocated input
     // for ins will be touched.
-    JS_ASSERT(ins);
+    MOZ_ASSERT(ins);
 
     LDefinition *def = virtualRegisters[vreg];
-    JS_ASSERT(def);
+    MOZ_ASSERT(def);
 
     RegisterIndex best = UINT32_MAX;
 
@@ -182,7 +182,7 @@ void
 StupidAllocator::syncRegister(LInstruction *ins, RegisterIndex index)
 {
     if (registers[index].dirty) {
-        LMoveGroup *input = getInputMoveGroup(ins->id());
+        LMoveGroup *input = getInputMoveGroup(ins);
         LAllocation *source = new(alloc()) LAllocation(registers[index].reg);
 
         uint32_t existing = registers[index].vreg;
@@ -214,7 +214,7 @@ void
 StupidAllocator::loadRegister(LInstruction *ins, uint32_t vreg, RegisterIndex index, LDefinition::Type type)
 {
     // Load a vreg from its stack location to a register.
-    LMoveGroup *input = getInputMoveGroup(ins->id());
+    LMoveGroup *input = getInputMoveGroup(ins);
     LAllocation *source = stackLocation(vreg);
     LAllocation *dest = new(alloc()) LAllocation(registers[index].reg);
     input->addAfter(source, dest, type);
@@ -257,7 +257,7 @@ StupidAllocator::go()
 
     for (size_t blockIndex = 0; blockIndex < graph.numBlocks(); blockIndex++) {
         LBlock *block = graph.getBlock(blockIndex);
-        JS_ASSERT(block->mir()->id() == blockIndex);
+        MOZ_ASSERT(block->mir()->id() == blockIndex);
 
         for (size_t i = 0; i < registerCount; i++)
             registers[i].set(MISSING_ALLOCATION);
@@ -309,7 +309,7 @@ StupidAllocator::syncForBlockEnd(LBlock *block, LInstruction *ins)
             if (!group) {
                 // The moves we insert here need to happen simultaneously with
                 // each other, yet after any existing moves before the instruction.
-                LMoveGroup *input = getInputMoveGroup(ins->id());
+                LMoveGroup *input = getInputMoveGroup(ins);
                 if (input->numMoves() == 0) {
                     group = input;
                 } else {
@@ -378,7 +378,7 @@ StupidAllocator::allocateForInstruction(LInstruction *ins)
             continue;
         LUse *use = alloc->toUse();
         uint32_t vreg = use->virtualRegister();
-        JS_ASSERT(use->policy() != LUse::REGISTER && use->policy() != LUse::FIXED);
+        MOZ_ASSERT(use->policy() != LUse::REGISTER && use->policy() != LUse::FIXED);
 
         RegisterIndex index = findExistingRegister(vreg);
         if (index == UINT32_MAX) {

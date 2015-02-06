@@ -13,8 +13,6 @@ EXPORTS.mozilla.dom.mobilemessage += [
     'Constants.h',            # Required by almost all cpp files
     'ipc/SmsChild.h',
     'ipc/SmsParent.h',
-    'MobileMessageService.h', # Required by nsLayoutModule.cpp
-    'SmsServicesFactory.h',   # Required by nsLayoutModule.cpp
     'Types.h',                # Required by IPDL SmsTypes.h
 ]
 
@@ -37,7 +35,7 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk' and CONFIG['MOZ_B2G_RIL']:
         'gonk/MobileMessageDatabaseService.js',
         'gonk/MobileMessageDatabaseService.manifest',
     ]
-    SOURCES += [
+    UNIFIED_SOURCES += [
         'gonk/SmsService.cpp',
     ]
 
@@ -62,7 +60,6 @@ UNIFIED_SOURCES += [
     'MobileMessageService.cpp',
     'MobileMessageThread.cpp',
     'SmsMessage.cpp',
-    'SmsServicesFactory.cpp',
 ]
 
 IPDL_SOURCES += [

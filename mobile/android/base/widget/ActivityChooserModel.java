@@ -173,7 +173,7 @@ public class ActivityChooserModel extends DataSetObservable {
     /**
      * Tag used for logging.
      */
-    /* inner-access */ static final String LOG_TAG = ActivityChooserModel.class.getSimpleName();
+    static final String LOG_TAG = ActivityChooserModel.class.getSimpleName();
 
     /**
      * The root tag in the history file.
@@ -268,12 +268,12 @@ public class ActivityChooserModel extends DataSetObservable {
     /**
      * Context for accessing resources.
      */
-    /* inner-access */ final Context mContext;
+    final Context mContext;
 
     /**
      * The name of the history file that backs this model.
      */
-    /* inner-access */ final String mHistoryFileName;
+    final String mHistoryFileName;
 
     /**
      * The intent for which a activity is being chosen.
@@ -298,7 +298,7 @@ public class ActivityChooserModel extends DataSetObservable {
      * only after a call to {@link #persistHistoricalDataIfNeeded()} followed by change
      * of the share records.
      */
-    /* inner-access */ boolean mCanReadHistoricalData = true;
+    boolean mCanReadHistoricalData = true;
 
     /**
      * Flag whether the choice history was read. This is used to enforce that
@@ -322,7 +322,7 @@ public class ActivityChooserModel extends DataSetObservable {
     /**
      * Flag whether to reload the activities for the current intent.
      */
-    /* inner-access */ boolean mReloadActivities;
+    boolean mReloadActivities;
 
     /**
      * Policy for controlling how the model handles chosen activities.
@@ -799,7 +799,7 @@ public class ActivityChooserModel extends DataSetObservable {
      * @param historicalRecord The pkg to delete records for.
      * @return True if the record was added.
      */
-    /* inner-access */ boolean removeHistoricalRecordsForPackage(final String pkg) {
+    boolean removeHistoricalRecordsForPackage(final String pkg) {
         boolean removed = false;
 
         for (Iterator<HistoricalRecord> i = mHistoricalRecords.iterator(); i.hasNext();) {
@@ -979,6 +979,7 @@ public class ActivityChooserModel extends DataSetObservable {
             return true;
         }
 
+        @Override
         public int compareTo(ActivityResolveInfo another) {
              return  Float.floatToIntBits(another.weight) - Float.floatToIntBits(weight);
         }
@@ -1003,6 +1004,7 @@ public class ActivityChooserModel extends DataSetObservable {
         private final Map<String, ActivityResolveInfo> mPackageNameToActivityMap =
             new HashMap<String, ActivityResolveInfo>();
 
+        @Override
         public void sort(Intent intent, List<ActivityResolveInfo> activities,
                 List<HistoricalRecord> historicalRecords) {
             Map<String, ActivityResolveInfo> packageNameToActivityMap =
@@ -1088,7 +1090,7 @@ public class ActivityChooserModel extends DataSetObservable {
         }
     }
 
-    /* inner-access */ void readHistoricalDataFromStream(FileInputStream fis) {
+    void readHistoricalDataFromStream(FileInputStream fis) {
         try {
             XmlPullParser parser = Xml.newPullParser();
             parser.setInput(fis, null);
@@ -1228,7 +1230,7 @@ public class ActivityChooserModel extends DataSetObservable {
      */
     private static final String LOGTAG = "GeckoActivityChooserModel";
     private final class DataModelPackageMonitor extends BroadcastReceiver {
-        /* inner-access */ Context mContext;
+        Context mContext;
 
         public DataModelPackageMonitor() { }
 

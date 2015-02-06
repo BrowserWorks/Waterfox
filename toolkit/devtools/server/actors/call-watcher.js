@@ -12,14 +12,6 @@ const {ContentObserver} = require("devtools/content-observer");
 const {on, once, off, emit} = events;
 const {method, Arg, Option, RetVal} = protocol;
 
-exports.register = function(handle) {
-  handle.addTabActor(CallWatcherActor, "callWatcherActor");
-};
-
-exports.unregister = function(handle) {
-  handle.removeTabActor(CallWatcherActor);
-};
-
 /**
  * Type describing a single function call in a stack trace.
  */
@@ -290,10 +282,9 @@ let CallWatcherActor = exports.CallWatcherActor = protocol.ActorClass({
     this._tracedFunctions = tracedFunctions || [];
     this._holdWeak = !!holdWeak;
     this._storeCalls = !!storeCalls;
-    this._contentObserver = new ContentObserver(this.tabActor);
 
-    on(this._contentObserver, "global-created", this._onGlobalCreated);
-    on(this._contentObserver, "global-destroyed", this._onGlobalDestroyed);
+    on(this.tabActor, "window-ready", this._onGlobalCreated);
+    on(this.tabActor, "window-destroyed", this._onGlobalDestroyed);
 
     if (startRecording) {
       this.resumeRecording();
@@ -325,13 +316,11 @@ let CallWatcherActor = exports.CallWatcherActor = protocol.ActorClass({
     this._initialized = false;
     this._finalized = true;
 
-    this._contentObserver.stopListening();
-    off(this._contentObserver, "global-created", this._onGlobalCreated);
-    off(this._contentObserver, "global-destroyed", this._onGlobalDestroyed);
+    off(this.tabActor, "window-ready", this._onGlobalCreated);
+    off(this.tabActor, "window-destroyed", this._onGlobalDestroyed);
 
     this._tracedGlobals = null;
     this._tracedFunctions = null;
-    this._contentObserver = null;
   }, {
     oneway: true
   }),
@@ -380,10 +369,15 @@ let CallWatcherActor = exports.CallWatcherActor = protocol.ActorClass({
   /**
    * Invoked whenever the current tab actor's document global is created.
    */
-  _onGlobalCreated: function(window) {
+  _onGlobalCreated: function({window, id, isTopLevel}) {
     let self = this;
 
-    this._tracedWindowId = ContentObserver.GetInnerWindowID(window);
+    // TODO: bug 981748, support more than just the top-level documents.
+    if (!isTopLevel) {
+      return;
+    }
+    this._tracedWindowId = id;
+
     let unwrappedWindow = XPCNativeWrapper.unwrap(window);
     let callback = this._onContentFunctionCall;
 
@@ -418,11 +412,13 @@ let CallWatcherActor = exports.CallWatcherActor = protocol.ActorClass({
      * Instruments a function on the specified target object.
      */
     function overrideFunction(global, target, name, descriptor, callback) {
-      let originalFunc = target[name];
+      // Invoking .apply on an unxrayed content function doesn't work, because
+      // the arguments array is inaccessible to it. Get Xrays back.
+      let originalFunc = Cu.unwaiveXrays(target[name]);
 
       Object.defineProperty(target, name, {
         value: function(...args) {
-          let result = originalFunc.apply(this, args);
+          let result = Cu.waiveXrays(originalFunc.apply(this, args));
 
           if (self._recording) {
             let stack = getStack(name);
@@ -441,13 +437,15 @@ let CallWatcherActor = exports.CallWatcherActor = protocol.ActorClass({
      * Instruments a getter or setter on the specified target object.
      */
     function overrideAccessor(global, target, name, descriptor, callback) {
-      let originalGetter = target.__lookupGetter__(name);
-      let originalSetter = target.__lookupSetter__(name);
+      // Invoking .apply on an unxrayed content function doesn't work, because
+      // the arguments array is inaccessible to it. Get Xrays back.
+      let originalGetter = Cu.unwaiveXrays(target.__lookupGetter__(name));
+      let originalSetter = Cu.unwaiveXrays(target.__lookupSetter__(name));
 
       Object.defineProperty(target, name, {
         get: function(...args) {
           if (!originalGetter) return undefined;
-          let result = originalGetter.apply(this, args);
+          let result = Cu.waiveXrays(originalGetter.apply(this, args));
 
           if (self._recording) {
             let stack = getStack(name);
@@ -529,7 +527,7 @@ let CallWatcherActor = exports.CallWatcherActor = protocol.ActorClass({
   /**
    * Invoked whenever the current tab actor's inner window is destroyed.
    */
-  _onGlobalDestroyed: function(id) {
+  _onGlobalDestroyed: function({window, id, isTopLevel}) {
     if (this._tracedWindowId == id) {
       this.pauseRecording();
       this.eraseRecording();

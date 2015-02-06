@@ -341,8 +341,6 @@ public:
                      nsRefPtr<const OverscrollHandoffChain> aOverscrollHandoffChain,
                      bool aHandoff);
 
-  void SnapBackOverscrolledApzc(AsyncPanZoomController* aStart);
-
   /*
    * Build the chain of APZCs that will handle overscroll for a pan starting at |aInitialTarget|.
    */
@@ -361,8 +359,8 @@ public:
   already_AddRefed<AsyncPanZoomController> GetTargetAPZC(const ScrollableLayerGuid& aGuid);
   already_AddRefed<AsyncPanZoomController> GetTargetAPZC(const ScreenPoint& aPoint,
                                                          bool* aOutInOverscrolledApzc);
-  void GetInputTransforms(AsyncPanZoomController *aApzc, gfx::Matrix4x4& aTransformToApzcOut,
-                          gfx::Matrix4x4& aTransformToGeckoOut);
+  gfx::Matrix4x4 GetScreenToApzcTransform(const AsyncPanZoomController *aApzc) const;
+  gfx::Matrix4x4 GetApzcToGeckoTransform(const AsyncPanZoomController *aApzc) const;
 private:
   /* Helpers */
   AsyncPanZoomController* FindTargetAPZC(AsyncPanZoomController* aApzc, FrameMetrics::ViewID aScrollId);
@@ -380,6 +378,7 @@ private:
                              ScrollableLayerGuid* aOutTargetGuid);
   void UpdateZoomConstraintsRecursively(AsyncPanZoomController* aApzc,
                                         const ZoomConstraints& aConstraints);
+  void FlushRepaintsRecursively(AsyncPanZoomController* aApzc);
 
   AsyncPanZoomController* PrepareAPZCForLayer(const LayerMetricsWrapper& aLayer,
                                               const FrameMetrics& aMetrics,
@@ -407,6 +406,8 @@ private:
                                                       AsyncPanZoomController* aNextSibling,
                                                       const nsIntRegion& aObscured);
 
+  void PrintAPZCInfo(const LayerMetricsWrapper& aLayer,
+                     const AsyncPanZoomController* apzc);
 private:
   /* Whenever walking or mutating the tree rooted at mRootApzc, mTreeLock must be held.
    * This lock does not need to be held while manipulating a single APZC instance in
@@ -415,7 +416,7 @@ private:
    * is considered part of the APZC tree management state.
    * Finally, the lock needs to be held when accessing mOverscrollHandoffChain.
    * IMPORTANT: See the note about lock ordering at the top of this file. */
-  mozilla::Monitor mTreeLock;
+  mutable mozilla::Monitor mTreeLock;
   nsRefPtr<AsyncPanZoomController> mRootApzc;
   /* This tracks the APZC that should receive all inputs for the current input event block.
    * This allows touch points to move outside the thing they started on, but still have the

@@ -33,12 +33,52 @@ loop.contacts = (function(_, mozL10n) {
     };
   };
 
-  let getPreferredEmail = function(contact) {
-    // A contact may not contain email addresses, but only a phone number.
-    if (!contact.email || contact.email.length == 0) {
+  /** Used to retrieve the preferred email or phone number
+   *  for the contact. Both fields are optional.
+   * @param   {object} contact
+   *          The contact object to get the field from.
+   * @param   {string} field
+   *          The field that should be read out of the contact object.
+   * @returns {object} An object with a 'value' property that hold a string value.
+   */
+  let getPreferred = function(contact, field) {
+    if (!contact[field] || !contact[field].length) {
       return { value: "" };
     }
-    return contact.email.find(e => e.pref) || contact.email[0];
+    return contact[field].find(e => e.pref) || contact[field][0];
+  };
+
+  /** Used to set the preferred email or phone number
+   *  for the contact. Both fields are optional.
+   * @param   {object} contact
+   *          The contact object to get the field from.
+   * @param   {string} field
+   *          The field within the contact to set.
+   * @param   {string} value
+   *          The value that the field should be set to.
+   */
+  let setPreferred = function(contact, field, value) {
+    // Don't clear the field if it doesn't exist.
+    if (!value && (!contact[field] || !contact[field].length)) {
+      return;
+    }
+
+    if (!contact[field]) {
+      contact[field] = [];
+    }
+
+    if (!contact[field].length) {
+      contact[field][0] = {"value": value};
+      return;
+    }
+    // Set the value in the preferred tuple and return.
+    for (let i in contact[field]) {
+      if (contact[field][i].pref) {
+        contact[field][i].value = value;
+        return;
+      }
+    }
+    contact[field][0].value = value;
   };
 
   const ContactDropdown = React.createClass({
@@ -159,10 +199,12 @@ loop.contacts = (function(_, mozL10n) {
     shouldComponentUpdate: function(nextProps, nextState) {
       let currContact = this.props.contact;
       let nextContact = nextProps.contact;
+      let currContactEmail = getPreferred(currContact, "email").value;
+      let nextContactEmail = getPreferred(nextContact, "email").value;
       return (
         currContact.name[0] !== nextContact.name[0] ||
         currContact.blocked !== nextContact.blocked ||
-        getPreferredEmail(currContact).value !== getPreferredEmail(nextContact).value ||
+        currContactEmail !== nextContactEmail ||
         nextState.showMenu !== this.state.showMenu
       );
     },
@@ -181,7 +223,7 @@ loop.contacts = (function(_, mozL10n) {
 
     render: function() {
       let names = getContactNames(this.props.contact);
-      let email = getPreferredEmail(this.props.contact);
+      let email = getPreferred(this.props.contact, "email");
       let cx = React.addons.classSet;
       let contactCSSClass = cx({
         contact: true,
@@ -216,7 +258,10 @@ loop.contacts = (function(_, mozL10n) {
   });
 
   const ContactsList = React.createClass({
-    mixins: [React.addons.LinkedStateMixin],
+    mixins: [
+      React.addons.LinkedStateMixin,
+      loop.shared.mixins.WindowCloseMixin
+    ],
 
     /**
      * Contacts collection object
@@ -361,25 +406,25 @@ loop.contacts = (function(_, mozL10n) {
           this.props.startForm("contacts_edit", contact);
           break;
         case "remove":
-          navigator.mozLoop.confirm(
-            mozL10n.get("confirm_delete_contact_alert"),
-            mozL10n.get("confirm_delete_contact_remove_button"),
-            mozL10n.get("confirm_delete_contact_cancel_button"),
-            (err, result) => {
+          navigator.mozLoop.confirm({
+            message: mozL10n.get("confirm_delete_contact_alert"),
+            okButton: mozL10n.get("confirm_delete_contact_remove_button"),
+            cancelButton: mozL10n.get("confirm_delete_contact_cancel_button")
+          }, (err, result) => {
+            if (err) {
+              throw err;
+            }
+
+            if (!result) {
+              return;
+            }
+
+            navigator.mozLoop.contacts.remove(contact._guid, err => {
               if (err) {
                 throw err;
               }
-
-              if (!result) {
-                return;
-              }
-
-              navigator.mozLoop.contacts.remove(contact._guid, err => {
-                if (err) {
-                  throw err;
-                }
-              });
             });
+          });
           break;
         case "block":
         case "unblock":
@@ -392,12 +437,14 @@ loop.contacts = (function(_, mozL10n) {
           break;
         case "video-call":
           if (!contact.blocked) {
-            navigator.mozLoop.startDirectCall(contact, CALL_TYPES.AUDIO_VIDEO);
+            navigator.mozLoop.calls.startDirectCall(contact, CALL_TYPES.AUDIO_VIDEO);
+            this.closeWindow();
           }
           break;
         case "audio-call":
           if (!contact.blocked) {
-            navigator.mozLoop.startDirectCall(contact, CALL_TYPES.AUDIO_ONLY);
+            navigator.mozLoop.calls.startDirectCall(contact, CALL_TYPES.AUDIO_ONLY);
+            this.closeWindow();
           }
           break;
         default:
@@ -417,6 +464,8 @@ loop.contacts = (function(_, mozL10n) {
     },
 
     render: function() {
+      let cx = React.addons.classSet;
+
       let viewForItem = item => {
         return <ContactDetail key={item._guid} contact={item}
                               handleContactAction={this.handleContactAction} />
@@ -433,7 +482,7 @@ loop.contacts = (function(_, mozL10n) {
         if (filter) {
           let filterFn = contact => {
             return contact.name[0].toLocaleLowerCase().contains(filter) ||
-                   getPreferredEmail(contact).value.toLocaleLowerCase().contains(filter);
+                   getPreferred(contact, "email").value.toLocaleLowerCase().contains(filter);
           };
           if (shownContacts.available) {
             shownContacts.available = shownContacts.available.filter(filterFn);
@@ -444,7 +493,6 @@ loop.contacts = (function(_, mozL10n) {
         }
       }
 
-      // TODO: bug 1076767 - add a spinner whilst importing contacts.
       return (
         <div>
           <div className="content-area">
@@ -453,7 +501,11 @@ loop.contacts = (function(_, mozL10n) {
                                ? mozL10n.get("importing_contacts_progress_button")
                                : mozL10n.get("import_contacts_button")}
                       disabled={this.state.importBusy}
-                      onClick={this.handleImportButtonClick} />
+                      onClick={this.handleImportButtonClick}>
+                <div className={cx({"contact-import-spinner": true,
+                                    spinner: true,
+                                    busy: this.state.importBusy})} />
+              </Button>
               <Button caption={mozL10n.get("new_contact_button")}
                       onClick={this.handleAddContactButtonClick} />
             </ButtonGroup>
@@ -466,6 +518,9 @@ loop.contacts = (function(_, mozL10n) {
           <ul className="contact-list">
             {shownContacts.available ?
               shownContacts.available.sort(this.sortContacts).map(viewForItem) :
+              null}
+            {shownContacts.blocked && shownContacts.blocked.length > 0 ?
+              <div className="contact-separator">{mozL10n.get("contacts_blocked_contacts")}</div> :
               null}
             {shownContacts.blocked ?
               shownContacts.blocked.sort(this.sortContacts).map(viewForItem) :
@@ -489,6 +544,7 @@ loop.contacts = (function(_, mozL10n) {
         pristine: true,
         name: "",
         email: "",
+        tel: "",
       };
     },
 
@@ -497,7 +553,8 @@ loop.contacts = (function(_, mozL10n) {
       if (contact) {
         state.contact = contact;
         state.name = contact.name[0];
-        state.email = contact.email[0].value;
+        state.email = getPreferred(contact, "email").value;
+        state.tel = getPreferred(contact, "tel").value;
       }
       this.setState(state);
     },
@@ -508,8 +565,11 @@ loop.contacts = (function(_, mozL10n) {
         pristine: false,
       });
 
+      let emailInput = this.refs.email.getDOMNode();
+      let telInput = this.refs.tel.getDOMNode();
       if (!this.refs.name.getDOMNode().checkValidity() ||
-          !this.refs.email.getDOMNode().checkValidity()) {
+          ((emailInput.required || emailInput.value) && !emailInput.checkValidity()) ||
+          ((telInput.required || telInput.value) && !telInput.checkValidity())) {
         return;
       }
 
@@ -520,7 +580,8 @@ loop.contacts = (function(_, mozL10n) {
       switch (this.props.mode) {
         case "edit":
           this.state.contact.name[0] = this.state.name.trim();
-          this.state.contact.email[0].value = this.state.email.trim();
+          setPreferred(this.state.contact, "email", this.state.email.trim());
+          setPreferred(this.state.contact, "tel", this.state.tel.trim());
           contactsAPI.update(this.state.contact, err => {
             if (err) {
               throw err;
@@ -531,7 +592,7 @@ loop.contacts = (function(_, mozL10n) {
           });
           break;
         case "add":
-          contactsAPI.add({
+          var contact = {
             id: navigator.mozLoop.generateUUID(),
             name: [this.state.name.trim()],
             email: [{
@@ -540,7 +601,16 @@ loop.contacts = (function(_, mozL10n) {
               value: this.state.email.trim()
             }],
             category: ["local"]
-          }, err => {
+          };
+          var tel = this.state.tel.trim();
+          if (!!tel) {
+            contact["tel"] = [{
+              pref: true,
+              type: ["fxos"],
+              value: tel
+            }];
+          }
+          contactsAPI.add(contact, err => {
             if (err) {
               throw err;
             }
@@ -555,19 +625,25 @@ loop.contacts = (function(_, mozL10n) {
 
     render: function() {
       let cx = React.addons.classSet;
+      let phoneOrEmailRequired = !this.state.email && !this.state.tel;
+
       return (
         <div className="content-area contact-form">
           <header>{this.props.mode == "add"
                    ? mozL10n.get("add_contact_button")
                    : mozL10n.get("edit_contact_title")}</header>
           <label>{mozL10n.get("edit_contact_name_label")}</label>
-          <input ref="name" required pattern="\s*\S.*"
+          <input ref="name" required pattern="\s*\S.*" type="text"
                  className={cx({pristine: this.state.pristine})}
                  valueLink={this.linkState("name")} />
           <label>{mozL10n.get("edit_contact_email_label")}</label>
-          <input ref="email" required type="email"
+          <input ref="email" type="email" required={phoneOrEmailRequired}
                  className={cx({pristine: this.state.pristine})}
                  valueLink={this.linkState("email")} />
+          <label>{mozL10n.get("new_contact_phone_placeholder")}</label>
+          <input ref="tel" type="tel" required={phoneOrEmailRequired}
+                 className={cx({pristine: this.state.pristine})}
+                 valueLink={this.linkState("tel")} />
           <ButtonGroup>
             <Button additionalClass="button-cancel"
                     caption={mozL10n.get("cancel_button")}
@@ -586,5 +662,7 @@ loop.contacts = (function(_, mozL10n) {
   return {
     ContactsList: ContactsList,
     ContactDetailsForm: ContactDetailsForm,
+    _getPreferred: getPreferred,
+    _setPreferred: setPreferred,
   };
 })(_, document.mozL10n);

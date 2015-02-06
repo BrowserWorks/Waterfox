@@ -16,7 +16,7 @@ exports.register = function(handle) {
 exports.unregister = function(handle) {
 };
 
-let PreferenceActor = protocol.ActorClass({
+let PreferenceActor = exports.PreferenceActor = protocol.ActorClass({
   typeName: "preference",
 
   getBoolPref: method(function(name) {
@@ -116,8 +116,13 @@ let PreferenceFront = protocol.FrontClass(PreferenceActor, {
 const _knownPreferenceFronts = new WeakMap();
 
 exports.getPreferenceFront = function(client, form) {
-  if (_knownPreferenceFronts.has(client))
+  if (!form.preferenceActor) {
+    return null;
+  }
+
+  if (_knownPreferenceFronts.has(client)) {
     return _knownPreferenceFronts.get(client);
+  }
 
   let front = new PreferenceFront(client, form);
   _knownPreferenceFronts.set(client, front);

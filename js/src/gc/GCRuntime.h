@@ -7,6 +7,8 @@
 #ifndef gc_GCRuntime_h
 #define gc_GCRuntime_h
 
+#include <setjmp.h>
+
 #include "jsgc.h"
 
 #include "gc/Heap.h"
@@ -36,18 +38,13 @@ class AutoTraceSession;
 
 class ChunkPool
 {
-    Chunk   *emptyChunkListHead;
-    size_t  emptyCount;
+    Chunk *head_;
+    size_t count_;
 
   public:
-    ChunkPool()
-      : emptyChunkListHead(nullptr),
-        emptyCount(0)
-    {}
+    ChunkPool() : head_(nullptr), count_(0) {}
 
-    size_t getEmptyCount() const {
-        return emptyCount;
-    }
+    size_t count() const { return count_; }
 
     /* Must be called with the GC lock taken. */
     inline Chunk *get(JSRuntime *rt);
@@ -57,7 +54,7 @@ class ChunkPool
 
     class Enum {
       public:
-        explicit Enum(ChunkPool &pool) : pool(pool), chunkp(&pool.emptyChunkListHead) {}
+        explicit Enum(ChunkPool &pool) : pool(pool), chunkp(&pool.head_) {}
         bool empty() { return !*chunkp; }
         Chunk *front();
         inline void popFront();
@@ -90,7 +87,7 @@ struct ConservativeGCData
          * The conservative GC scanner should be disabled when the thread leaves
          * the last request.
          */
-        JS_ASSERT(!hasStackToScan());
+        MOZ_ASSERT(!hasStackToScan());
     }
 
     MOZ_NEVER_INLINE void recordStackTop();
@@ -344,19 +341,19 @@ class GCRuntime
 #endif // DEBUG
 
     void assertCanLock() {
-        JS_ASSERT(!currentThreadOwnsGCLock());
+        MOZ_ASSERT(!currentThreadOwnsGCLock());
     }
 
     void lockGC() {
         PR_Lock(lock);
-        JS_ASSERT(!lockOwner);
+        MOZ_ASSERT(!lockOwner);
 #ifdef DEBUG
         lockOwner = PR_GetCurrentThread();
 #endif
     }
 
     void unlockGC() {
-        JS_ASSERT(lockOwner == PR_GetCurrentThread());
+        MOZ_ASSERT(lockOwner == PR_GetCurrentThread());
         lockOwner = nullptr;
         PR_Unlock(lock);
     }
@@ -365,21 +362,21 @@ class GCRuntime
     bool isAllocAllowed() { return noGCOrAllocationCheck == 0; }
     void disallowAlloc() { ++noGCOrAllocationCheck; }
     void allowAlloc() {
-        JS_ASSERT(!isAllocAllowed());
+        MOZ_ASSERT(!isAllocAllowed());
         --noGCOrAllocationCheck;
     }
 
     bool isInsideUnsafeRegion() { return inUnsafeRegion != 0; }
     void enterUnsafeRegion() { ++inUnsafeRegion; }
     void leaveUnsafeRegion() {
-        JS_ASSERT(inUnsafeRegion > 0);
+        MOZ_ASSERT(inUnsafeRegion > 0);
         --inUnsafeRegion;
     }
 
     bool isStrictProxyCheckingEnabled() { return disableStrictProxyCheckingCount == 0; }
     void disableStrictProxyChecking() { ++disableStrictProxyCheckingCount; }
     void enableStrictProxyChecking() {
-        JS_ASSERT(disableStrictProxyCheckingCount > 0);
+        MOZ_ASSERT(disableStrictProxyCheckingCount > 0);
         --disableStrictProxyCheckingCount;
     }
 #endif
@@ -414,6 +411,8 @@ class GCRuntime
     void setGCCallback(JSGCCallback callback, void *data);
     bool addFinalizeCallback(JSFinalizeCallback callback, void *data);
     void removeFinalizeCallback(JSFinalizeCallback func);
+    bool addWeakPointerCallback(JSWeakPointerCallback callback, void *data);
+    void removeWeakPointerCallback(JSWeakPointerCallback func);
     JS::GCSliceCallback setSliceCallback(JS::GCSliceCallback callback);
 
     void setValidate(bool enable);
@@ -423,7 +422,7 @@ class GCRuntime
     void setManipulatingDeadZones(bool value) { manipulatingDeadZones = value; }
     unsigned objectsMarkedInDeadZonesCount() { return objectsMarkedInDeadZones; }
     void incObjectsMarkedInDeadZone() {
-        JS_ASSERT(manipulatingDeadZones);
+        MOZ_ASSERT(manipulatingDeadZones);
         ++objectsMarkedInDeadZones;
     }
 
@@ -466,13 +465,25 @@ class GCRuntime
     void startVerifyPostBarriers();
     bool endVerifyPostBarriers();
     void finishVerifier();
+    bool isVerifyPreBarriersEnabled() const { return !!verifyPreData; }
+#else
+    bool isVerifyPreBarriersEnabled() const { return false; }
 #endif
 
+    template <AllowGC allowGC>
+    static void *refillFreeListFromAnyThread(ThreadSafeContext *cx, AllocKind thingKind);
+
   private:
-    // For ArenaLists::allocateFromArenaInline()
+    // For ArenaLists::allocateFromArena()
     friend class ArenaLists;
-    Chunk *pickChunk(Zone *zone, AutoMaybeStartBackgroundAllocation &maybeStartBackgroundAllocation);
+    Chunk *pickChunk(Zone *zone, AutoMaybeStartBackgroundAllocation &maybeStartBGAlloc);
     inline void arenaAllocatedDuringGC(JS::Zone *zone, ArenaHeader *arena);
+
+    template <AllowGC allowGC>
+    static void *refillFreeListFromMainThread(JSContext *cx, AllocKind thingKind);
+    static void *refillFreeListOffMainThread(ExclusiveContext *cx, AllocKind thingKind);
+    static void *refillFreeListPJS(ForkJoinContext *cx, AllocKind thingKind);
+    static void *refillFreeListInGC(Zone *zone, AllocKind thingKind);
 
     /*
      * Return the list of chunks that can be released outside the GC lock.
@@ -523,10 +534,11 @@ class GCRuntime
     void decommitArenasFromAvailableList(Chunk **availableListHeadp);
     void decommitArenas();
     void expireChunksAndArenas(bool shouldShrink);
-    void sweepBackgroundThings(bool onBackgroundThread);
+    void sweepBackgroundThings();
     void assertBackgroundSweepingFinished();
     bool shouldCompact();
 #ifdef JSGC_COMPACTING
+    void sweepZoneAfterCompacting(Zone *zone);
     void compactPhase();
     ArenaHeader *relocateArenas();
     void updatePointersToRelocatedCells();
@@ -543,6 +555,9 @@ class GCRuntime
 #ifdef DEBUG
     void checkForCompartmentMismatches();
 #endif
+
+    void callFinalizeCallbacks(FreeOp *fop, JSFinalizeStatus status) const;
+    void callWeakPointerCallbacks() const;
 
   public:
     JSRuntime             *rt;
@@ -586,7 +601,7 @@ class GCRuntime
      */
     js::gc::Chunk         *systemAvailableChunkListHead;
     js::gc::Chunk         *userAvailableChunkListHead;
-    js::gc::ChunkPool     chunkPool;
+    js::gc::ChunkPool     emptyChunks;
 
     js::RootedValueMap    rootsHash;
 
@@ -687,6 +702,12 @@ class GCRuntime
     JS::Zone              *sweepZone;
     int                   sweepKindIndex;
     bool                  abortSweepAfterCurrentGroup;
+
+    /*
+     * Concurrent sweep infrastructure.
+     */
+    void startTask(GCParallelTask &task, gcstats::Phase phase);
+    void joinTask(GCParallelTask &task, gcstats::Phase phase);
 
     /*
      * List head of arenas allocated during the sweep phase.
@@ -797,6 +818,7 @@ class GCRuntime
 
     Callback<JSGCCallback>  gcCallback;
     CallbackVector<JSFinalizeCallback> finalizeCallbacks;
+    CallbackVector<JSWeakPointerCallback> updateWeakPointerCallbacks;
 
     /*
      * Malloc counter to measure memory pressure for GC scheduling. It runs

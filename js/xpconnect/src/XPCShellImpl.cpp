@@ -8,7 +8,6 @@
 #include "jsapi.h"
 #include "jsfriendapi.h"
 #include "jsprf.h"
-#include "js/OldDebugAPI.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "nsServiceManagerUtils.h"
 #include "nsComponentManagerUtils.h"
@@ -448,7 +447,7 @@ SendCommand(JSContext *cx, unsigned argc, Value *vp)
         return false;
     }
 
-    JSString* str = ToString(cx, args[0]);
+    RootedString str(cx, ToString(cx, args[0]));
     if (!str) {
         JS_ReportError(cx, "Could not convert argument 1 to string!");
         return false;
@@ -567,84 +566,6 @@ Btoa(JSContext *cx, unsigned argc, Value *vp)
   return xpc::Base64Encode(cx, args[0], args.rval());
 }
 
-static bool
-Blob(JSContext *cx, unsigned argc, Value *vp)
-{
-  JS::CallArgs args = CallArgsFromVp(argc, vp);
-
-  nsCOMPtr<nsISupports> native =
-    do_CreateInstance("@mozilla.org/dom/multipart-blob;1");
-  if (!native) {
-    JS_ReportError(cx, "Could not create native object!");
-    return false;
-  }
-
-  nsCOMPtr<nsIJSNativeInitializer> initializer = do_QueryInterface(native);
-  MOZ_ASSERT(initializer);
-
-  nsresult rv = initializer->Initialize(nullptr, cx, nullptr, args);
-  if (NS_FAILED(rv)) {
-    JS_ReportError(cx, "Could not initialize native object!");
-    return false;
-  }
-
-  nsCOMPtr<nsIXPConnect> xpc = do_GetService(kXPConnectServiceContractID, &rv);
-  if (NS_FAILED(rv)) {
-    JS_ReportError(cx, "Could not get XPConnent service!");
-    return false;
-  }
-
-  JSObject *global = JS::CurrentGlobalOrNull(cx);
-  rv = xpc->WrapNativeToJSVal(cx, global, native, nullptr,
-                              &NS_GET_IID(nsISupports), true,
-                              args.rval());
-  if (NS_FAILED(rv)) {
-    JS_ReportError(cx, "Could not wrap native object!");
-    return false;
-  }
-
-  return true;
-}
-
-static bool
-File(JSContext *cx, unsigned argc, Value *vp)
-{
-  JS::CallArgs args = CallArgsFromVp(argc, vp);
-
-  nsCOMPtr<nsISupports> native =
-    do_CreateInstance("@mozilla.org/dom/multipart-file;1");
-  if (!native) {
-    JS_ReportError(cx, "Could not create native object!");
-    return false;
-  }
-
-  nsCOMPtr<nsIJSNativeInitializer> initializer = do_QueryInterface(native);
-  MOZ_ASSERT(initializer);
-
-  nsresult rv = initializer->Initialize(nullptr, cx, nullptr, args);
-  if (NS_FAILED(rv)) {
-    JS_ReportError(cx, "Could not initialize native object!");
-    return false;
-  }
-
-  nsCOMPtr<nsIXPConnect> xpc = do_GetService(kXPConnectServiceContractID, &rv);
-  if (NS_FAILED(rv)) {
-    JS_ReportError(cx, "Could not get XPConnent service!");
-    return false;
-  }
-
-  JSObject *global = JS::CurrentGlobalOrNull(cx);
-  rv = xpc->WrapNativeToJSVal(cx, global, native, nullptr,
-                              &NS_GET_IID(nsISupports), true,
-                              args.rval());
-  if (NS_FAILED(rv)) {
-    JS_ReportError(cx, "Could not wrap native object!");
-    return false;
-  }
-
-  return true;
-}
-
 static Maybe<PersistentRootedValue> sScriptedInterruptCallback;
 
 static bool
@@ -689,7 +610,7 @@ SetInterruptCallback(JSContext *cx, unsigned argc, jsval *vp)
     }
 
     // Otherwise, we should have a callable object.
-    if (!args[0].isObject() || !JS_ObjectIsCallable(cx, &args[0].toObject())) {
+    if (!args[0].isObject() || !JS::IsCallable(&args[0].toObject())) {
         JS_ReportError(cx, "Argument must be callable");
         return false;
     }
@@ -731,8 +652,6 @@ static const JSFunctionSpec glob_functions[] = {
     JS_FS("sendCommand",     SendCommand,    1,0),
     JS_FS("atob",            Atob,           1,0),
     JS_FS("btoa",            Btoa,           1,0),
-    JS_FS("Blob",            Blob,           2,JSFUN_CONSTRUCTOR),
-    JS_FS("File",            File,           2,JSFUN_CONSTRUCTOR),
     JS_FS("setInterruptCallback", SetInterruptCallback, 1,0),
     JS_FS("simulateActivityCallback", SimulateActivityCallback, 1,0),
     JS_FS_END
@@ -962,9 +881,9 @@ ProcessFile(JSContext *cx, JS::Handle<JSObject*> obj, const char *filename, FILE
                 ok = JS_ExecuteScript(cx, obj, script, &result);
                 if (ok && result != JSVAL_VOID) {
                     /* Suppress error reports from JS::ToString(). */
-                    older = JS_SetErrorReporter(cx, nullptr);
+                    older = JS_SetErrorReporter(JS_GetRuntime(cx), nullptr);
                     str = ToString(cx, result);
-                    JS_SetErrorReporter(cx, older);
+                    JS_SetErrorReporter(JS_GetRuntime(cx), older);
                     JSAutoByteString bytes;
                     if (str && bytes.encodeLatin1(cx, str))
                         fprintf(gOutFile, "%s\n", bytes.ptr());
@@ -1268,14 +1187,6 @@ XPCShellErrorReporter(JSContext *cx, const char *message, JSErrorReport *rep)
 }
 
 static bool
-ContextCallback(JSContext *cx, unsigned contextOp)
-{
-    if (contextOp == JSCONTEXT_NEW)
-        JS_SetErrorReporter(cx, XPCShellErrorReporter);
-    return true;
-}
-
-static bool
 GetCurrentWorkingDirectory(nsAString& workingDirectory)
 {
 #if !defined(XP_WIN) && !defined(XP_UNIX)
@@ -1473,13 +1384,13 @@ XRE_XPCShellMain(int argc, char **argv, char **envp)
             return 1;
         }
 
-        rtsvc->RegisterContextCallback(ContextCallback);
-
         // Override the default XPConnect interrupt callback. We could store the
         // old one and restore it before shutting down, but there's not really a
         // reason to bother.
         sScriptedInterruptCallback.emplace(rt, UndefinedValue());
         JS_SetInterruptCallback(rt, XPCShellInterruptCallback);
+
+        JS_SetErrorReporter(rt, XPCShellErrorReporter);
 
         dom::AutoJSAPI jsapi;
         jsapi.Init();

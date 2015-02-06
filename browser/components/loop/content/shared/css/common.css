@@ -81,7 +81,6 @@ p {
 
 .btn {
   display: inline-block;
-  overflow: hidden;
   margin: 0;
   padding: 0;
   border: none;
@@ -89,10 +88,14 @@ p {
   color: #fff;
   text-align: center;
   text-decoration: none;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   font-size: .9em;
   cursor: pointer;
+}
+
+.btn.btn-constrained {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .btn-info {
@@ -265,6 +268,11 @@ p {
   color: #d74345
 }
 
+.notificationContainer > .details-error > .detailsButton {
+  float: right;
+  -moz-margin-start: 1em; /* Match .detailsBar padding */
+}
+
 .alert .close {
   position: relative;
   top: -.1rem;
@@ -356,12 +364,6 @@ p {
 
 .light {
   color: rgba(51, 51, 51, .5);
-}
-
-.mac p,
-.windows p,
-.linux p {
-  line-height: 16px;
 }
 
 /* Web panel */

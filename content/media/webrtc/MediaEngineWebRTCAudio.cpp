@@ -39,8 +39,10 @@ namespace mozilla {
 #ifdef PR_LOGGING
 extern PRLogModuleInfo* GetMediaManagerLog();
 #define LOG(msg) PR_LOG(GetMediaManagerLog(), PR_LOG_DEBUG, msg)
+#define LOG_FRAMES(msg) PR_LOG(GetMediaManagerLog(), 6, msg)
 #else
 #define LOG(msg)
+#define LOG_FRAMES(msg)
 #endif
 
 /**
@@ -365,6 +367,9 @@ MediaEngineWebRTCAudioSource::Stop(SourceMediaStream *aSource, TrackID aID)
       // Already stopped - this is allowed
       return NS_OK;
     }
+
+    aSource->EndTrack(aID);
+
     if (!mSources.IsEmpty()) {
       return NS_OK;
     }
@@ -376,7 +381,6 @@ MediaEngineWebRTCAudioSource::Stop(SourceMediaStream *aSource, TrackID aID)
     }
 
     mState = kStopped;
-    aSource->EndTrack(aID);
   }
 
   mVoERender->DeRegisterExternalMediaProcessing(mChannel, webrtc::kRecordingPerChannel);
@@ -401,15 +405,9 @@ MediaEngineWebRTCAudioSource::NotifyPull(MediaStreamGraph* aGraph,
 #ifdef DEBUG
   TrackTicks target = aSource->TimeToTicksRoundUp(SAMPLE_FREQUENCY, aDesiredTime);
   TrackTicks delta = target - aLastEndTime;
-  LOG(("Audio: NotifyPull: aDesiredTime %ld, target %ld, delta %ld",(int64_t) aDesiredTime, (int64_t) target, (int64_t) delta));
+  LOG_FRAMES(("Audio: NotifyPull: aDesiredTime %ld, target %ld, delta %ld",(int64_t) aDesiredTime, (int64_t) target, (int64_t) delta));
   aLastEndTime = target;
 #endif
-}
-
-nsresult
-MediaEngineWebRTCAudioSource::Snapshot(uint32_t aDuration, nsIDOMFile** aFile)
-{
-   return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 void

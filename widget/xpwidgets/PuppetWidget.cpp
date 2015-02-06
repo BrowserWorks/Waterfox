@@ -291,9 +291,6 @@ PuppetWidget::DispatchEvent(WidgetGUIEvent* event, nsEventStatus& aStatus)
   case eCompositionEventClass:
     seqno = event->AsCompositionEvent()->mSeqno;
     break;
-  case eTextEventClass:
-    seqno = event->AsTextEvent()->mSeqno;
-    break;
   case eSelectionEventClass:
     seqno = event->AsSelectionEvent()->mSeqno;
     break;
@@ -382,25 +379,27 @@ PuppetWidget::IMEEndComposition(bool aCancel)
 #endif
 
   nsEventStatus status;
-  WidgetTextEvent textEvent(true, NS_TEXT_TEXT, this);
-  InitEvent(textEvent, nullptr);
-  textEvent.mSeqno = mIMELastReceivedSeqno;
+  WidgetCompositionEvent compositionChangeEvent(true, NS_COMPOSITION_CHANGE,
+                                                this);
+  InitEvent(compositionChangeEvent, nullptr);
+  compositionChangeEvent.mSeqno = mIMELastReceivedSeqno;
   // SendEndIMEComposition is always called since ResetInputState
   // should always be called even if we aren't composing something.
   if (!mTabChild ||
-      !mTabChild->SendEndIMEComposition(aCancel, &textEvent.theText)) {
+      !mTabChild->SendEndIMEComposition(aCancel,
+                                        &compositionChangeEvent.mData)) {
     return NS_ERROR_FAILURE;
   }
 
   if (!mIMEComposing)
     return NS_OK;
 
-  DispatchEvent(&textEvent, status);
+  DispatchEvent(&compositionChangeEvent, status);
 
-  WidgetCompositionEvent compEvent(true, NS_COMPOSITION_END, this);
-  InitEvent(compEvent, nullptr);
-  compEvent.mSeqno = mIMELastReceivedSeqno;
-  DispatchEvent(&compEvent, status);
+  WidgetCompositionEvent compositionEndEvent(true, NS_COMPOSITION_END, this);
+  InitEvent(compositionEndEvent, nullptr);
+  compositionEndEvent.mSeqno = mIMELastReceivedSeqno;
+  DispatchEvent(&compositionEndEvent, status);
   return NS_OK;
 }
 
@@ -408,7 +407,6 @@ NS_IMETHODIMP
 PuppetWidget::NotifyIME(const IMENotification& aIMENotification)
 {
   switch (aIMENotification.mMessage) {
-    case NOTIFY_IME_OF_CURSOR_POS_CHANGED:
     case REQUEST_TO_COMMIT_COMPOSITION:
       return IMEEndComposition(false);
     case REQUEST_TO_CANCEL_COMPOSITION:
@@ -423,6 +421,8 @@ PuppetWidget::NotifyIME(const IMENotification& aIMENotification)
       return NotifyIMEOfTextChange(aIMENotification);
     case NOTIFY_IME_OF_COMPOSITION_UPDATE:
       return NotifyIMEOfUpdateComposition();
+    case NOTIFY_IME_OF_MOUSE_BUTTON_EVENT:
+      return NotifyIMEOfMouseButtonEvent(aIMENotification);
     default:
       return NS_ERROR_NOT_IMPLEMENTED;
   }
@@ -525,21 +525,29 @@ PuppetWidget::NotifyIMEOfUpdateComposition()
   NS_ENSURE_TRUE(textComposition, NS_ERROR_FAILURE);
 
   nsEventStatus status;
-  uint32_t offset = textComposition->OffsetOfTargetClause();
-  WidgetQueryContentEvent textRect(true, NS_QUERY_TEXT_RECT, this);
-  InitEvent(textRect, nullptr);
-  textRect.InitForQueryTextRect(offset, 1);
-  DispatchEvent(&textRect, status);
-  NS_ENSURE_TRUE(textRect.mSucceeded, NS_ERROR_FAILURE);
+  nsTArray<nsIntRect> textRectArray(textComposition->String().Length());
+  uint32_t startOffset = textComposition->NativeOffsetOfStartComposition();
+  uint32_t endOffset = textComposition->String().Length() + startOffset;
+  for (uint32_t i = startOffset; i < endOffset; i++) {
+    WidgetQueryContentEvent textRect(true, NS_QUERY_TEXT_RECT, this);
+    InitEvent(textRect, nullptr);
+    textRect.InitForQueryTextRect(i, 1);
+    DispatchEvent(&textRect, status);
+    NS_ENSURE_TRUE(textRect.mSucceeded, NS_ERROR_FAILURE);
 
+    textRectArray.AppendElement(textRect.mReply.mRect);
+  }
+
+  uint32_t targetCauseOffset = textComposition->OffsetOfTargetClause();
   WidgetQueryContentEvent caretRect(true, NS_QUERY_CARET_RECT, this);
   InitEvent(caretRect, nullptr);
-  caretRect.InitForQueryCaretRect(offset);
+  caretRect.InitForQueryCaretRect(targetCauseOffset);
   DispatchEvent(&caretRect, status);
   NS_ENSURE_TRUE(caretRect.mSucceeded, NS_ERROR_FAILURE);
 
-  mTabChild->SendNotifyIMESelectedCompositionRect(offset,
-                                                  textRect.mReply.mRect,
+  mTabChild->SendNotifyIMESelectedCompositionRect(startOffset,
+                                                  textRectArray,
+                                                  targetCauseOffset,
                                                   caretRect.mReply.mRect);
   return NS_OK;
 }
@@ -622,6 +630,23 @@ PuppetWidget::NotifyIMEOfSelectionChange(
       aIMENotification.mSelectionChangeData.mCausedByComposition);
   }
   return NS_OK;
+}
+
+nsresult
+PuppetWidget::NotifyIMEOfMouseButtonEvent(
+                const IMENotification& aIMENotification)
+{
+  if (!mTabChild) {
+    return NS_ERROR_FAILURE;
+  }
+
+  bool consumedByIME = false;
+  if (!mTabChild->SendNotifyIMEMouseButtonEvent(aIMENotification,
+                                                &consumedByIME)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  return consumedByIME ? NS_SUCCESS_EVENT_CONSUMED : NS_OK;
 }
 
 NS_IMETHODIMP

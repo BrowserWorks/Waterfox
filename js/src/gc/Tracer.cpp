@@ -204,7 +204,7 @@ JS_GetTraceThingInfo(char *buf, size_t bufsize, JSTracer *trc, void *thing,
                     PutEscapedString(buf, bufsize, fun->displayAtom(), 0);
                 }
             } else if (obj->getClass()->flags & JSCLASS_HAS_PRIVATE) {
-                JS_snprintf(buf, bufsize, " %p", obj->getPrivate());
+                JS_snprintf(buf, bufsize, " %p", obj->fakeNativeGetPrivate());
             } else {
                 JS_snprintf(buf, bufsize, " <no private>");
             }
@@ -292,7 +292,7 @@ JSTracer::hasTracingDetails() const
 const char *
 JSTracer::tracingName(const char *fallback) const
 {
-    JS_ASSERT(hasTracingDetails());
+    MOZ_ASSERT(hasTracingDetails());
     return debugPrinter_ ? fallback : (const char *)debugPrintArg_;
 }
 
@@ -362,7 +362,7 @@ MarkStack::init(JSGCMode gcMode)
 {
     setBaseCapacity(gcMode);
 
-    JS_ASSERT(!stack_);
+    MOZ_ASSERT(!stack_);
     uintptr_t *newStack = js_pod_malloc<uintptr_t>(baseCapacity_);
     if (!newStack)
         return false;
@@ -393,7 +393,7 @@ MarkStack::setBaseCapacity(JSGCMode mode)
 void
 MarkStack::setMaxCapacity(size_t maxCapacity)
 {
-    JS_ASSERT(isEmpty());
+    MOZ_ASSERT(isEmpty());
     maxCapacity_ = maxCapacity;
     if (baseCapacity_ > maxCapacity_)
         baseCapacity_ = maxCapacity_;
@@ -476,25 +476,25 @@ GCMarker::init(JSGCMode gcMode)
 void
 GCMarker::start()
 {
-    JS_ASSERT(!started);
+    MOZ_ASSERT(!started);
     started = true;
     color = BLACK;
 
-    JS_ASSERT(!unmarkedArenaStackTop);
-    JS_ASSERT(markLaterArenas == 0);
+    MOZ_ASSERT(!unmarkedArenaStackTop);
+    MOZ_ASSERT(markLaterArenas == 0);
 
 }
 
 void
 GCMarker::stop()
 {
-    JS_ASSERT(isDrained());
+    MOZ_ASSERT(isDrained());
 
-    JS_ASSERT(started);
+    MOZ_ASSERT(started);
     started = false;
 
-    JS_ASSERT(!unmarkedArenaStackTop);
-    JS_ASSERT(markLaterArenas == 0);
+    MOZ_ASSERT(!unmarkedArenaStackTop);
+    MOZ_ASSERT(markLaterArenas == 0);
 
     /* Free non-ballast stack memory. */
     stack.reset();
@@ -509,20 +509,20 @@ GCMarker::reset()
     color = BLACK;
 
     stack.reset();
-    JS_ASSERT(isMarkStackEmpty());
+    MOZ_ASSERT(isMarkStackEmpty());
 
     while (unmarkedArenaStackTop) {
         ArenaHeader *aheader = unmarkedArenaStackTop;
-        JS_ASSERT(aheader->hasDelayedMarking);
-        JS_ASSERT(markLaterArenas);
+        MOZ_ASSERT(aheader->hasDelayedMarking);
+        MOZ_ASSERT(markLaterArenas);
         unmarkedArenaStackTop = aheader->getNextDelayedMarking();
         aheader->unsetDelayedMarking();
         aheader->markOverflow = 0;
         aheader->allocatedDuringIncremental = 0;
         markLaterArenas--;
     }
-    JS_ASSERT(isDrained());
-    JS_ASSERT(!markLaterArenas);
+    MOZ_ASSERT(isDrained());
+    MOZ_ASSERT(!markLaterArenas);
 }
 
 void
@@ -533,14 +533,14 @@ GCMarker::markDelayedChildren(ArenaHeader *aheader)
         aheader->markOverflow = 0;
 
         for (ArenaCellIterUnderGC i(aheader); !i.done(); i.next()) {
-            Cell *t = i.getCell();
+            TenuredCell *t = i.getCell();
             if (always || t->isMarked()) {
                 t->markIfUnmarked();
                 JS_TraceChildren(this, t, MapAllocToTraceKind(aheader->getAllocKind()));
             }
         }
     } else {
-        JS_ASSERT(aheader->allocatedDuringIncremental);
+        MOZ_ASSERT(aheader->allocatedDuringIncremental);
         PushArena(this, aheader);
     }
     aheader->allocatedDuringIncremental = 0;
@@ -555,9 +555,9 @@ bool
 GCMarker::markDelayedChildren(SliceBudget &budget)
 {
     GCRuntime &gc = runtime()->gc;
-    gcstats::MaybeAutoPhase ap(gc.stats, gc.state() == MARK, gcstats::PHASE_MARK_DELAYED);
+    gcstats::AutoPhase ap(gc.stats, gc.state() == MARK, gcstats::PHASE_MARK_DELAYED);
 
-    JS_ASSERT(unmarkedArenaStackTop);
+    MOZ_ASSERT(unmarkedArenaStackTop);
     do {
         /*
          * If marking gets delayed at the same arena again, we must repeat
@@ -565,8 +565,8 @@ GCMarker::markDelayedChildren(SliceBudget &budget)
          * clear its hasDelayedMarking flag before we begin the marking.
          */
         ArenaHeader *aheader = unmarkedArenaStackTop;
-        JS_ASSERT(aheader->hasDelayedMarking);
-        JS_ASSERT(markLaterArenas);
+        MOZ_ASSERT(aheader->hasDelayedMarking);
+        MOZ_ASSERT(markLaterArenas);
         unmarkedArenaStackTop = aheader->getNextDelayedMarking();
         aheader->unsetDelayedMarking();
         markLaterArenas--;
@@ -576,7 +576,7 @@ GCMarker::markDelayedChildren(SliceBudget &budget)
         if (budget.isOverBudget())
             return false;
     } while (unmarkedArenaStackTop);
-    JS_ASSERT(!markLaterArenas);
+    MOZ_ASSERT(!markLaterArenas);
 
     return true;
 }
@@ -585,9 +585,9 @@ GCMarker::markDelayedChildren(SliceBudget &budget)
 void
 GCMarker::checkZone(void *p)
 {
-    JS_ASSERT(started);
+    MOZ_ASSERT(started);
     DebugOnly<Cell *> cell = static_cast<Cell *>(p);
-    JS_ASSERT_IF(cell->isTenured(), cell->tenuredZone()->isCollecting());
+    MOZ_ASSERT_IF(cell->isTenured(), cell->asTenured().zone()->isCollecting());
 }
 #endif
 
@@ -600,24 +600,24 @@ GCMarker::hasBufferedGrayRoots() const
 void
 GCMarker::startBufferingGrayRoots()
 {
-    JS_ASSERT(grayBufferState == GRAY_BUFFER_UNUSED);
+    MOZ_ASSERT(grayBufferState == GRAY_BUFFER_UNUSED);
     grayBufferState = GRAY_BUFFER_OK;
     for (GCZonesIter zone(runtime()); !zone.done(); zone.next())
-        JS_ASSERT(zone->gcGrayRoots.empty());
+        MOZ_ASSERT(zone->gcGrayRoots.empty());
 
-    JS_ASSERT(!callback);
+    MOZ_ASSERT(!callback);
     callback = GrayCallback;
-    JS_ASSERT(IS_GC_MARKING_TRACER(this));
+    MOZ_ASSERT(IS_GC_MARKING_TRACER(this));
 }
 
 void
 GCMarker::endBufferingGrayRoots()
 {
-    JS_ASSERT(callback == GrayCallback);
+    MOZ_ASSERT(callback == GrayCallback);
     callback = nullptr;
-    JS_ASSERT(IS_GC_MARKING_TRACER(this));
-    JS_ASSERT(grayBufferState == GRAY_BUFFER_OK ||
-              grayBufferState == GRAY_BUFFER_FAILED);
+    MOZ_ASSERT(IS_GC_MARKING_TRACER(this));
+    MOZ_ASSERT(grayBufferState == GRAY_BUFFER_OK ||
+               grayBufferState == GRAY_BUFFER_FAILED);
 }
 
 void
@@ -630,8 +630,8 @@ GCMarker::resetBufferedGrayRoots()
 void
 GCMarker::markBufferedGrayRoots(JS::Zone *zone)
 {
-    JS_ASSERT(grayBufferState == GRAY_BUFFER_OK);
-    JS_ASSERT(zone->isGCMarkingGray() || zone->isGCCompacting());
+    MOZ_ASSERT(grayBufferState == GRAY_BUFFER_OK);
+    MOZ_ASSERT(zone->isGCMarkingGray() || zone->isGCCompacting());
 
     for (GrayRoot *elem = zone->gcGrayRoots.begin(); elem != zone->gcGrayRoots.end(); elem++) {
 #ifdef DEBUG
@@ -644,7 +644,7 @@ GCMarker::markBufferedGrayRoots(JS::Zone *zone)
 void
 GCMarker::appendGrayRoot(void *thing, JSGCTraceKind kind)
 {
-    JS_ASSERT(started);
+    MOZ_ASSERT(started);
 
     if (grayBufferState == GRAY_BUFFER_FAILED)
         return;
@@ -656,7 +656,7 @@ GCMarker::appendGrayRoot(void *thing, JSGCTraceKind kind)
     root.debugPrintIndex = debugPrintIndex();
 #endif
 
-    Zone *zone = static_cast<Cell *>(thing)->tenuredZone();
+    Zone *zone = TenuredCell::fromPointer(thing)->zone();
     if (zone->isCollecting()) {
         // See the comment on SetMaybeAliveFlag to see why we only do this for
         // objects and scripts. We rely on gray root buffering for this to work,
@@ -682,8 +682,8 @@ GCMarker::appendGrayRoot(void *thing, JSGCTraceKind kind)
 void
 GCMarker::GrayCallback(JSTracer *trc, void **thingp, JSGCTraceKind kind)
 {
-    JS_ASSERT(thingp);
-    JS_ASSERT(*thingp);
+    MOZ_ASSERT(thingp);
+    MOZ_ASSERT(*thingp);
     GCMarker *gcmarker = static_cast<GCMarker *>(trc);
     gcmarker->appendGrayRoot(*thingp, kind);
 }

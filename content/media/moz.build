@@ -49,7 +49,7 @@ if CONFIG['MOZ_OMX_DECODER']:
     DIRS += ['omx']
     DIRS += ['omx/mediaresourcemanager']
 
-DIRS += ['webspeech']
+DIRS += ['webspeech', 'imagecapture']
 
 if CONFIG['MOZ_EME']:
     DIRS += ['eme']
@@ -141,6 +141,7 @@ UNIFIED_SOURCES += [
     'EncodedBufferCache.cpp',
     'FileBlockCache.cpp',
     "GraphDriver.cpp",
+    'Latency.cpp',
     'MediaCache.cpp',
     'MediaData.cpp',
     'MediaDecoder.cpp',
@@ -164,6 +165,7 @@ UNIFIED_SOURCES += [
     'TextTrackCueList.cpp',
     'TextTrackList.cpp',
     'TextTrackRegion.cpp',
+    'TrackUnionStream.cpp',
     'VideoFrameContainer.cpp',
     'VideoPlaybackQuality.cpp',
     'VideoSegment.cpp',
@@ -178,10 +180,8 @@ if CONFIG['OS_TARGET'] == 'WINNT':
   SOURCES += [ 'ThreadPoolCOMListener.cpp' ]
 
 # DecoderTraits.cpp needs to be built separately because of Mac OS X headers.
-# Latency.cpp needs to be built separately because it forces NSPR logging.
 SOURCES += [
     'DecoderTraits.cpp',
-    'Latency.cpp',
 ]
 
 FAIL_ON_WARNINGS = True

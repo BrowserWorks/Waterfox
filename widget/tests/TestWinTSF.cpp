@@ -1476,6 +1476,8 @@ TestApp::Init(void)
   nsresult rv = baseWindow->GetMainWidget(getter_AddRefs(widget));
   NS_ENSURE_TRUE(widget, NS_ERROR_UNEXPECTED);
 
+  static_assert(false,
+    "GetNativeData() returns pointer to StaticRefPtr<>, fix here for it");
   ITfThreadMgr **threadMgr = reinterpret_cast<ITfThreadMgr**>(
       widget->GetNativeData(NS_NATIVE_TSF_THREAD_MGR));
   if (!threadMgr) {
@@ -1963,7 +1965,7 @@ TestApp::TestText(void)
    * Bug in NS_QUERY_TEXT_CONTENT handler
    * nsTextStore::SetText not calling SetSelection or InsertTextAtSelection
    * Bug in SetSelection or InsertTextAtSelection
-   *  NS_SELECTION_SET bug or NS_COMPOSITION_* / NS_TEXT_TEXT bug
+   *  NS_SELECTION_SET bug or NS_COMPOSITION_* / NS_COMPOSITION_CHANGE bug
    */
 
   if (!mMgr->GetFocusedStore()) {

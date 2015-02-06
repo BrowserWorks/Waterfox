@@ -11,6 +11,8 @@ Cu.import("resource://gre/modules/UITelemetry.jsm");
 
 this.EXPORTED_SYMBOLS = ["NetErrorHelper"];
 
+const KEY_CODE_ENTER = 13;
+
 /* Handlers is a list of objects that will be notified when an error page is shown
  * or when an event occurs on the page that they are registered to handle. Registration
  * is done by just adding yourself to the dictionary.
@@ -62,6 +64,46 @@ NetErrorHelper.prototype = {
   },
 }
 
+handlers.searchbutton = {
+  onPageShown: function(browser) {
+    let search = browser.contentDocument.querySelector("#searchbox");
+    if (!search) {
+      return;
+    }
+
+    let browserWin = Services.wm.getMostRecentWindow("navigator:browser");
+    let tab = browserWin.BrowserApp.getTabForBrowser(browser);
+
+    // If there is no stored userRequested, just hide the searchbox
+    if (!tab.userRequested) {
+      search.style.display = "none";
+    } else {
+      let text = browser.contentDocument.querySelector("#searchtext");
+      text.value = tab.userRequested;
+      text.addEventListener("keypress", (event) => {
+        if (event.keyCode === KEY_CODE_ENTER) {
+          this.doSearch(event.target.value);
+        }
+      });
+    }
+  },
+
+  handleClick: function(event) {
+    let value = event.target.previousElementSibling.value;
+    this.doSearch(value);
+  },
+
+  doSearch: function(value) {
+    UITelemetry.addEvent("neterror.1", "button", null, "search");
+    let engine = Services.search.defaultEngine;
+    let uri = engine.getSubmission(value).uri;
+
+    let browserWin = Services.wm.getMostRecentWindow("navigator:browser");
+    // Reset the user search to whatever the new search term was
+    browserWin.BrowserApp.loadURI(uri.spec, undefined, { isSearch: true, userRequested: value });
+  }
+};
+
 handlers.wifi = {
   // This registers itself with the nsIObserverService as a weak ref,
   // so we have to implement GetWeakReference as well.
@@ -73,11 +115,14 @@ handlers.wifi = {
   },
 
   onPageShown: function(browser) {
-    // Hide Wifi helper in Fx34
-    let nodes = browser.contentDocument.querySelectorAll("#wifi");
-    for (let i = 0; i < nodes.length; i++) {
-      nodes[i].style.display = "none";
-    }
+      // If we have a connection, don't bother showing the wifi toggle.
+      let network = Cc["@mozilla.org/network/network-link-service;1"].getService(Ci.nsINetworkLinkService);
+      if (network.isLinkUp && network.linkStatusKnown) {
+        let nodes = browser.contentDocument.querySelectorAll("#wifi");
+        for (let i = 0; i < nodes.length; i++) {
+          nodes[i].style.display = "none";
+        }
+      }
   },
 
   handleClick: function(event) {
@@ -98,7 +143,7 @@ handlers.wifi = {
     this.node = Cu.getWeakReference(node);
     Services.obs.addObserver(this, "network:link-status-changed", true);
 
-    sendMessageToJava({
+    Messaging.sendRequest({
       type: "Wifi:Enable"
     });
   },

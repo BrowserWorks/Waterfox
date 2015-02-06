@@ -11,8 +11,10 @@ const memory = require("./memory");
 const timer = require("../timers");
 const cfxArgs = require("../test/options");
 const { getTabs, closeTab, getURI } = require("../tabs/utils");
-const { windows, isBrowser } = require("../window/utils");
-const { defer, all, Debugging: PromiseDebugging } = require("../core/promise");
+const { windows, isBrowser, getMostRecentBrowserWindow } = require("../window/utils");
+const { defer, all, Debugging: PromiseDebugging, resolve } = require("../core/promise");
+const { getInnerId } = require("../window/utils");
+const { cleanUI } = require("../test/utils")
 
 const findAndRunTests = function findAndRunTests(options) {
   var TestFinder = require("./unit-test-finder").TestFinder;
@@ -32,11 +34,13 @@ const findAndRunTests = function findAndRunTests(options) {
 };
 exports.findAndRunTests = findAndRunTests;
 
+let runnerWindows = new WeakMap();
+
 const TestRunner = function TestRunner(options) {
-  if (options) {
-    this.fs = options.fs;
-  }
-  this.console = (options && "console" in options) ? options.console : console;
+  options = options || {};
+  runnerWindows.set(this, getInnerId(getMostRecentBrowserWindow()));
+  this.fs = options.fs;
+  this.console = options.console || console;
   memory.track(this);
   this.passed = 0;
   this.failed = 0;
@@ -69,6 +73,7 @@ TestRunner.prototype = {
         this.console.info("pass:", message);
       this.passed++;
       this.test.passed++;
+      this.test.last = message;
     }
     else {
       this.expectFailure = false;
@@ -106,6 +111,7 @@ TestRunner.prototype = {
         this.console.info("pass:", message);
       this.passed++;
       this.test.passed++;
+      this.test.last = message;
     }
   },
 
@@ -265,88 +271,91 @@ TestRunner.prototype = {
   },
 
   done: function done() {
-    if (!this.isDone) {
-      this.isDone = true;
-      if(this.test.teardown) {
-        this.test.teardown(this);
-      }
-      if (this.waitTimeout !== null) {
-        timer.clearTimeout(this.waitTimeout);
-        this.waitTimeout = null;
-      }
-      // Do not leave any callback set when calling to `waitUntil`
-      this.waitUntilCallback = null;
-      if (this.test.passed == 0 && this.test.failed == 0) {
-        this._logTestFailed("empty test");
-        if ("testMessage" in this.console) {
-          this.console.testMessage(false, false, this.test.name, "Empty test");
-        }
-        else {
-          this.console.error("fail:", "Empty test")
-        }
-        this.failed++;
-        this.test.failed++;
-      }
-
-      let wins = windows(null, { includePrivate: true });
-      let winPromises = wins.map(win =>  {
-        let { promise, resolve } = defer();
-        if (["interactive", "complete"].indexOf(win.document.readyState) >= 0) {
-          resolve()
-        }
-        else {
-          win.addEventListener("DOMContentLoaded", function onLoad() {
-            win.removeEventListener("DOMContentLoaded", onLoad, false);
-            resolve();
-          }, false);
-        }
-        return promise;
-      });
-
-      PromiseDebugging.flushUncaughtErrors();
-
-      all(winPromises).then(_ => {
-        let tabs = [];
-        for (let win of wins.filter(isBrowser)) {
-          for (let tab of getTabs(win)) {
-            tabs.push(tab);
-          }
-        }
-        let leftover = tabs.slice(1);
-
-        if (wins.length != 1)
-          this.fail("Should not be any unexpected windows open");
-        if (tabs.length != 1)
-          this.fail("Should not be any unexpected tabs open");
-        if (tabs.length != 1 || wins.length != 1) {
-          console.log("Windows open:");
-          for (let win of wins) {
-            if (isBrowser(win)) {
-              tabs = getTabs(win);
-              console.log(win.location + " - " + tabs.map(getURI).join(", "));
-            }
-            else {
-              console.log(win.location);
-            }
-          }
-        }
-
-        leftover.forEach(closeTab);
-
-        this.testRunSummary.push({
-          name: this.test.name,
-          passed: this.test.passed,
-          failed: this.test.failed,
-          errors: [error for (error in this.test.errors)].join(", ")
-        });
-
-        if (this.onDone !== null) {
-          let onDone = this.onDone;
-          this.onDone = null;
-          timer.setTimeout(_ => onDone(this), 0);
-        }
-      });
+    if (this.isDone) {
+      return resolve();
     }
+
+    this.isDone = true;
+    if (this.test.teardown) {
+      this.test.teardown(this);
+    }
+    if (this.waitTimeout !== null) {
+      timer.clearTimeout(this.waitTimeout);
+      this.waitTimeout = null;
+    }
+    // Do not leave any callback set when calling to `waitUntil`
+    this.waitUntilCallback = null;
+    if (this.test.passed == 0 && this.test.failed == 0) {
+      this._logTestFailed("empty test");
+      if ("testMessage" in this.console) {
+        this.console.testMessage(false, false, this.test.name, "Empty test");
+      }
+      else {
+        this.console.error("fail:", "Empty test")
+      }
+      this.failed++;
+      this.test.failed++;
+    }
+
+    let wins = windows(null, { includePrivate: true });
+    let winPromises = wins.map(win =>  {
+      let { promise, resolve } = defer();
+      if (["interactive", "complete"].indexOf(win.document.readyState) >= 0) {
+        resolve()
+      }
+      else {
+        win.addEventListener("DOMContentLoaded", function onLoad() {
+          win.removeEventListener("DOMContentLoaded", onLoad, false);
+          resolve();
+        }, false);
+      }
+      return promise;
+    });
+
+    PromiseDebugging.flushUncaughtErrors();
+
+    return all(winPromises).then(() => {
+      let browserWins = wins.filter(isBrowser);
+      let tabs = browserWins.reduce((tabs, window) => tabs.concat(getTabs(window)), []);
+
+      if (wins.length != 1 || getInnerId(wins[0]) !== runnerWindows.get(this))
+        this.fail("Should not be any unexpected windows open");
+
+      let hasMoreTabsOpen = browserWins.length && tabs.length != 1;
+      if (hasMoreTabsOpen)
+        this.fail("Should not be any unexpected tabs open");
+
+      if (hasMoreTabsOpen || wins.length != 1) {
+        console.log("Windows open:");
+        for (let win of wins) {
+          if (isBrowser(win)) {
+            tabs = getTabs(win);
+            console.log(win.location + " - " + tabs.map(getURI).join(", "));
+          }
+          else {
+            console.log(win.location);
+          }
+        }
+      }
+
+      return null;
+    }).
+    then(cleanUI).
+    then(() => {
+      this.testRunSummary.push({
+        name: this.test.name,
+        passed: this.test.passed,
+        failed: this.test.failed,
+        errors: [error for (error in this.test.errors)].join(", ")
+      });
+
+      if (this.onDone !== null) {
+        let onDone = this.onDone;
+        this.onDone = null;
+        timer.setTimeout(_ => onDone(this));
+      }
+    }).
+    catch(e => console.exception(e));
   },
 
   // Set of assertion functions to wait for an assertion to become true
@@ -460,10 +469,11 @@ TestRunner.prototype = {
     function tiredOfWaiting() {
       self._logTestFailed("timed out");
       if ("testMessage" in self.console) {
-        self.console.testMessage(false, false, self.test.name, "Test timed out");
+        self.console.testMessage(false, false, self.test.name,
+          `Test timed out (after: ${self.test.last})`);
       }
       else {
-        self.console.error("fail:", "Timed out")
+        self.console.error("fail:", `Timed out (after: ${self.test.last})`)
       }
       if (self.waitUntilCallback) {
         self.waitUntilCallback(true);
@@ -483,17 +493,23 @@ TestRunner.prototype = {
 
   startMany: function startMany(options) {
     function runNextTest(self) {
-      var test = options.tests.shift();
-      if (options.stopOnError && self.test && self.test.failed) {
-        self.console.error("aborted: test failed and --stop-on-error was specified");
-        options.onDone(self);
-      } else if (test) {
-        self.start({test: test, onDone: runNextTest});
-      } else {
-        options.onDone(self);
-      }
+      let { tests, onDone } = options;
+
+      return tests.getNext().then((test) => {
+        if (options.stopOnError && self.test && self.test.failed) {
+          self.console.error("aborted: test failed and --stop-on-error was specified");
+          onDone(self);
+        }
+        else if (test) {
+          self.start({test: test, onDone: runNextTest});
+        }
+        else {
+          onDone(self);
+        }
+      });
     }
-    runNextTest(this);
+
+    return runNextTest(this).catch(console.exception);
   },
 
   start: function start(options) {
@@ -501,6 +517,7 @@ TestRunner.prototype = {
     this.test.passed = 0;
     this.test.failed = 0;
     this.test.errors = {};
+    this.test.last = 'START';
     PromiseDebugging.clearUncaughtErrorObservers();
     PromiseDebugging.addUncaughtErrorObserver(this._uncaughtErrorObserver.bind(this));
 

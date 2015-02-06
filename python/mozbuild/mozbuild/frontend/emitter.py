@@ -4,6 +4,7 @@
 
 from __future__ import unicode_literals
 
+import itertools
 import json
 import logging
 import os
@@ -11,7 +12,7 @@ import traceback
 import sys
 import time
 
-from collections import OrderedDict
+from collections import defaultdict, OrderedDict
 from mach.mixin.logging import LoggingMixin
 from mozbuild.util import (
     memoize,
@@ -56,6 +57,7 @@ from .data import (
     SharedLibrary,
     SimpleProgram,
     StaticLibrary,
+    TestHarnessFiles,
     TestWebIDLFile,
     TestManifest,
     VariablePassthru,
@@ -204,28 +206,19 @@ class TreeMetadataEmitter(LoggingMixin):
                     '\n    '.join(shared_libs), lib.basename),
                     contexts[lib.objdir])
 
-        def recurse_libs(lib):
-            for obj in lib.linked_libraries:
-                if not isinstance(obj, StaticLibrary) or not obj.link_into:
-                    continue
-                yield obj.objdir
-                for q in recurse_libs(obj):
-                    yield q
+        # Propagate LIBRARY_DEFINES to all child libraries recursively.
+        def propagate_defines(outerlib, defines):
+            outerlib.defines.update(defines)
+            for lib in outerlib.linked_libraries:
+                # Propagate defines only along FINAL_LIBRARY paths, not USE_LIBS
+                # paths.
+                if (isinstance(lib, StaticLibrary) and
+                        lib.link_into == outerlib.basename):
+                    propagate_defines(lib, defines)
 
-        sent_passthru = set()
         for lib in (l for libs in self._libs.values() for l in libs):
-            # For all root libraries (i.e. libraries that don't have a
-            # FINAL_LIBRARY), record, for each static library it links
-            # (recursively), that its FINAL_LIBRARY is that root library.
             if isinstance(lib, Library):
-                if isinstance(lib, SharedLibrary) or not lib.link_into:
-                    for p in recurse_libs(lib):
-                        if p in sent_passthru:
-                            continue
-                        sent_passthru.add(p)
-                        passthru = VariablePassthru(contexts[p])
-                        passthru.variables['FINAL_LIBRARY'] = lib.basename
-                        yield passthru
+                propagate_defines(lib, lib.defines)
             yield lib
 
         for obj in self._binaries.values():
@@ -240,17 +233,7 @@ class TreeMetadataEmitter(LoggingMixin):
         """Add linkage declarations to a given object."""
         assert isinstance(obj, Linkable)
 
-        extra = []
-        # Add stdc++compat library when wanted and needed
-        compat_varname = 'MOZ_LIBSTDCXX_%s_VERSION' % obj.KIND.upper()
-        if context.config.substs.get(compat_varname) \
-                and not isinstance(obj, (StaticLibrary, HostLibrary)):
-            extra.append({
-                'target': 'stdc++compat',
-                'host': 'host_stdc++compat',
-            }[obj.KIND])
-
-        for path in context.get(variable, []) + extra:
+        for path in context.get(variable, []):
             force_static = path.startswith('static:') and obj.KIND == 'target'
             if force_static:
                 path = path[7:]
@@ -505,6 +488,36 @@ class TreeMetadataEmitter(LoggingMixin):
             yield Exports(context, exports,
                 dist_install=not context.get('NO_DIST_INSTALL', False))
 
+        test_harness_files = context.get('TEST_HARNESS_FILES')
+        if test_harness_files:
+            srcdir_files = defaultdict(list)
+            srcdir_pattern_files = defaultdict(list)
+            objdir_files = defaultdict(list)
+
+            for path, strings in test_harness_files.walk():
+                if not path and strings:
+                    raise SandboxValidationError(
+                        'Cannot install files to the root of TEST_HARNESS_FILES', context)
+
+                for s in strings:
+                    if context.is_objdir_path(s):
+                        if s.startswith('!/'):
+                            raise SandboxValidationError(
+                                'Topobjdir-relative file not allowed in TEST_HARNESS_FILES: %s' % s, context)
+                        objdir_files[path].append(s[1:])
+                    else:
+                        resolved = context.resolve_path(s)
+                        if '*' in s:
+                            srcdir_pattern_files[path].append(s);
+                        elif not os.path.exists(resolved):
+                            raise SandboxValidationError(
+                                'File listed in TEST_HARNESS_FILES does not exist: %s' % s, context)
+                        else:
+                            srcdir_files[path].append(resolved)
+
+            yield TestHarnessFiles(context, srcdir_files,
+                                   srcdir_pattern_files, objdir_files)
+
         defines = context.get('DEFINES')
         if defines:
             yield Defines(context, defines)
@@ -613,6 +626,8 @@ class TreeMetadataEmitter(LoggingMixin):
 
         soname = context.get('SONAME')
 
+        lib_defines = context.get('LIBRARY_DEFINES')
+
         shared_args = {}
         static_args = {}
 
@@ -638,14 +653,6 @@ class TreeMetadataEmitter(LoggingMixin):
 
         if libname:
             if is_component:
-                if shared_lib:
-                    raise SandboxValidationError(
-                        'IS_COMPONENT implies FORCE_SHARED_LIB. '
-                        'Please remove the latter.', context)
-                if is_framework:
-                    raise SandboxValidationError(
-                        'IS_COMPONENT conflicts with IS_FRAMEWORK. '
-                        'Please remove one.', context)
                 if static_lib:
                     raise SandboxValidationError(
                         'IS_COMPONENT conflicts with FORCE_STATIC_LIB. '
@@ -654,16 +661,15 @@ class TreeMetadataEmitter(LoggingMixin):
                 shared_args['variant'] = SharedLibrary.COMPONENT
 
             if is_framework:
-                if shared_lib:
-                    raise SandboxValidationError(
-                        'IS_FRAMEWORK implies FORCE_SHARED_LIB. '
-                        'Please remove the latter.', context)
                 if soname:
                     raise SandboxValidationError(
                         'IS_FRAMEWORK conflicts with SONAME. '
                         'Please remove one.', context)
                 shared_lib = True
                 shared_args['variant'] = SharedLibrary.FRAMEWORK
+
+            if not static_lib and not shared_lib:
+                static_lib = True
 
             if static_name:
                 if not static_lib:
@@ -684,9 +690,6 @@ class TreeMetadataEmitter(LoggingMixin):
                     raise SandboxValidationError(
                         'SONAME requires FORCE_SHARED_LIB', context)
                 shared_args['soname'] = soname
-
-            if not static_lib and not shared_lib:
-                static_lib = True
 
             # If both a shared and a static library are created, only the
             # shared library is meant to be a SDK library.
@@ -733,6 +736,12 @@ class TreeMetadataEmitter(LoggingMixin):
                 self._libs[libname].append(lib)
                 self._linkage.append((context, lib, 'USE_LIBS'))
 
+            if lib_defines:
+                if not libname:
+                    raise SandboxValidationError('LIBRARY_DEFINES needs a '
+                        'LIBRARY_NAME to take effect', context)
+                lib.defines.update(lib_defines)
+
         # While there are multiple test manifests, the behavior is very similar
         # across them. We enforce this by having common handling of all
         # manifests and outputting a single class type with the differences
@@ -741,26 +750,27 @@ class TreeMetadataEmitter(LoggingMixin):
         # Keys are variable prefixes and values are tuples describing how these
         # manifests should be handled:
         #
-        #    (flavor, install_prefix, active)
+        #    (flavor, install_prefix, package_tests)
         #
         # flavor identifies the flavor of this test.
         # install_prefix is the path prefix of where to install the files in
         #     the tests directory.
-        # active indicates whether to filter out inactive tests from the
-        #     manifest.
+        # package_tests indicates whether to package test files into the test
+        #     package; suites that compile the test files should not install
+        #     them into the test package.
         #
-        # We ideally don't filter out inactive tests. However, not every test
-        # harness can yet deal with test filtering. Once all harnesses can do
-        # this, this feature can be dropped.
         test_manifests = dict(
             A11Y=('a11y', 'testing/mochitest', 'a11y', True),
             BROWSER_CHROME=('browser-chrome', 'testing/mochitest', 'browser', True),
+            ANDROID_INSTRUMENTATION=('instrumentation', 'instrumentation', '.', False),
+            JETPACK_PACKAGE=('jetpack-package', 'testing/mochitest', 'jetpack-package', True),
+            JETPACK_ADDON=('jetpack-addon', 'testing/mochitest', 'jetpack-addon', False),
             METRO_CHROME=('metro-chrome', 'testing/mochitest', 'metro', True),
             MOCHITEST=('mochitest', 'testing/mochitest', 'tests', True),
             MOCHITEST_CHROME=('chrome', 'testing/mochitest', 'chrome', True),
             MOCHITEST_WEBAPPRT_CHROME=('webapprt-chrome', 'testing/mochitest', 'webapprtChrome', True),
             WEBRTC_SIGNALLING_TEST=('steeplechase', 'steeplechase', '.', True),
-            XPCSHELL_TESTS=('xpcshell', 'xpcshell', '.', False),
+            XPCSHELL_TESTS=('xpcshell', 'xpcshell', '.', True),
         )
 
         for prefix, info in test_manifests.items():
@@ -812,7 +822,7 @@ class TreeMetadataEmitter(LoggingMixin):
         return sub
 
     def _process_test_manifest(self, context, info, manifest_path):
-        flavor, install_root, install_subdir, filter_inactive = info
+        flavor, install_root, install_subdir, package_tests = info
 
         manifest_path = mozpath.normpath(manifest_path)
         path = mozpath.normpath(mozpath.join(context.srcdir, manifest_path))
@@ -835,12 +845,9 @@ class TreeMetadataEmitter(LoggingMixin):
 
             filtered = m.tests
 
-            if filter_inactive:
-                # We return tests that don't exist because we want manifests
-                # defining tests that don't exist to result in error.
-                filtered = m.active_tests(exists=False, disabled=True,
-                    **self.info)
-
+            # Jetpack add-on tests are expected to be generated during the
+            # build process so they won't exist here.
+            if flavor != 'jetpack-addon':
                 missing = [t['name'] for t in filtered if not os.path.exists(t['path'])]
                 if missing:
                     raise SandboxValidationError('Test manifest (%s) lists '
@@ -916,8 +923,11 @@ class TreeMetadataEmitter(LoggingMixin):
             for test in filtered:
                 obj.tests.append(test)
 
-                obj.installs[mozpath.normpath(test['path'])] = \
-                    (mozpath.join(out_dir, test['relpath']), True)
+                # Some test files are compiled and should not be copied into the
+                # test package. They function as identifiers rather than files.
+                if package_tests:
+                    obj.installs[mozpath.normpath(test['path'])] = \
+                        (mozpath.join(out_dir, test['relpath']), True)
 
                 process_support_files(test)
 
@@ -996,10 +1006,5 @@ class TreeMetadataEmitter(LoggingMixin):
         # Some paths have a subconfigure, yet also have a moz.build. Those
         # shouldn't end up in self._external_paths.
         self._external_paths -= { o.relobjdir }
-
-        if 'TIERS' in context:
-            for tier in context['TIERS']:
-                o.tier_dirs[tier] = context['TIERS'][tier]['regular'] + \
-                    context['TIERS'][tier]['external']
 
         yield o

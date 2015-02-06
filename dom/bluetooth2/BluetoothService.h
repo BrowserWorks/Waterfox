@@ -9,7 +9,6 @@
 
 #include "BluetoothCommon.h"
 #include "BluetoothProfileManagerBase.h"
-#include "mozilla/dom/ipc/Blob.h"
 #include "nsAutoPtr.h"
 #include "nsClassHashtable.h"
 #include "nsIDOMFile.h"
@@ -17,7 +16,13 @@
 #include "nsTObserverArray.h"
 #include "nsThreadUtils.h"
 
+class nsIDOMBlob;
+
 namespace mozilla {
+namespace dom {
+class BlobChild;
+class BlobParent;
+}
 namespace ipc {
 class UnixSocketConsumer;
 }
@@ -371,7 +376,7 @@ protected:
    * Called when "mozsettings-changed" observer topic fires.
    */
   nsresult
-  HandleSettingsChanged(const nsAString& aData);
+  HandleSettingsChanged(nsISupports* aSubject);
 
   /**
    * Called when XPCOM is shutting down.

@@ -131,6 +131,12 @@ public:
     nsresult InitWithConnectedSocket(PRFileDesc *socketFD,
                                      const mozilla::net::NetAddr *addr);
 
+    // this method instructs the socket transport to use an already connected
+    // socket with the given address, and additionally supplies security info.
+    nsresult InitWithConnectedSocket(PRFileDesc* aSocketFD,
+                                     const mozilla::net::NetAddr* aAddr,
+                                     nsISupports* aSecInfo);
+
     // This method instructs the socket transport to open a socket
     // connected to the given Unix domain address. We can only create
     // unlayered, simple, stream sockets.
@@ -298,6 +304,8 @@ private:
     // reached STATE_TRANSFERRING. It must not change after that.
     mozilla::net::NetAddr   mNetAddr;
     bool                    mNetAddrIsSet;
+
+    nsAutoPtr<mozilla::net::NetAddr> mBindAddr;
 
     // socket methods (these can only be called on the socket thread):
 

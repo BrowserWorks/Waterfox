@@ -13,7 +13,7 @@
 
 #include "jit/arm/Assembler-arm.h"
 #include "jit/IonCaches.h"
-#include "jit/IonFrames.h"
+#include "jit/JitFrames.h"
 #include "jit/MoveResolver.h"
 
 using mozilla::DebugOnly;
@@ -57,7 +57,7 @@ class MacroAssemblerARM : public Assembler
     { }
 
     void setSecondScratchReg(Register reg) {
-        JS_ASSERT(reg != ScratchRegister);
+        MOZ_ASSERT(reg != ScratchRegister);
         secondScratchReg_ = reg;
     }
 
@@ -317,6 +317,10 @@ class MacroAssemblerARM : public Assembler
     void ma_vpop(VFPRegister r);
     void ma_vpush(VFPRegister r);
 
+    // Barriers.
+    void ma_dmb(BarrierOption option=BarrierSY);
+    void ma_dsb(BarrierOption option=BarrierSY);
+
     // Branches when done from within arm-specific code.
     BufferOffset ma_b(Label *dest, Condition c = Always);
     void ma_bx(Register dest, Condition c = Always);
@@ -396,12 +400,12 @@ class MacroAssemblerARM : public Assembler
     BufferOffset ma_vstr(VFPRegister src, Register base, Register index, int32_t shift = defaultShift, Condition cc = Always);
     // Calls an Ion function, assumes that the stack is untouched (8 byte
     // aligned).
-    void ma_callIon(const Register reg);
+    void ma_callJit(const Register reg);
     // Calls an Ion function, assuming that sp has already been decremented.
-    void ma_callIonNoPush(const Register reg);
+    void ma_callJitNoPush(const Register reg);
     // Calls an ion function, assuming that the stack is currently not 8 byte
     // aligned.
-    void ma_callIonHalfPush(const Register reg);
+    void ma_callJitHalfPush(const Register reg);
 
     void ma_call(ImmPtr dest);
 
@@ -432,7 +436,7 @@ private:
     transferMultipleByRunsImpl(FloatRegisterSet set, LoadStore ls,
                                Register rm, DTMMode mode, int32_t sign)
     {
-        JS_ASSERT(sign == 1 || sign == -1);
+        MOZ_ASSERT(sign == 1 || sign == -1);
 
         int32_t delta = sign * sizeof(float);
         int32_t offset = 0;
@@ -571,7 +575,7 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
             rs = L_LDR;
 
         ma_movPatchable(ImmPtr(c->raw()), ScratchRegister, Always, rs);
-        ma_callIonHalfPush(ScratchRegister);
+        ma_callJitHalfPush(ScratchRegister);
     }
     void call(const CallSiteDesc &desc, const Register reg) {
         call(reg);
@@ -681,6 +685,9 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
 
     void jump(Label *label) {
         as_b(label);
+    }
+    void jump(JitCode *code) {
+        branch(code);
     }
     void jump(Register reg) {
         ma_bx(reg);
@@ -885,6 +892,11 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
         load32(lhs, secondScratchReg_);
         branch32(cond, secondScratchReg_, rhs, label);
     }
+    void branch32(Condition cond, const BaseIndex &lhs, Imm32 rhs, Label *label) {
+        // branch32 will use ScratchRegister.
+        load32(lhs, secondScratchReg_);
+        branch32(cond, secondScratchReg_, rhs, label);
+    }
     void branchPtr(Condition cond, const Address &lhs, Register rhs, Label *label) {
         branch32(cond, lhs, rhs, label);
     }
@@ -943,7 +955,7 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     }
     void branchTestMagicValue(Condition cond, const ValueOperand &val, JSWhyMagic why,
                               Label *label) {
-        JS_ASSERT(cond == Equal || cond == NotEqual);
+        MOZ_ASSERT(cond == Equal || cond == NotEqual);
         branchTestValue(cond, val, MagicValue(why), label);
     }
     void branchTestInt32Truthy(bool truthy, const ValueOperand &operand, Label *label) {
@@ -963,7 +975,7 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
         ma_b(label, c);
     }
     void branchTest32(Condition cond, Register lhs, Register rhs, Label *label) {
-        JS_ASSERT(cond == Zero || cond == NonZero || cond == Signed || cond == NotSigned);
+        MOZ_ASSERT(cond == Zero || cond == NonZero || cond == Signed || cond == NotSigned);
         // x86 likes test foo, foo rather than cmp foo, #0.
         // Convert the former into the latter.
         if (lhs == rhs && (cond == Zero || cond == NonZero))
@@ -973,7 +985,7 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
         ma_b(label, cond);
     }
     void branchTest32(Condition cond, Register lhs, Imm32 imm, Label *label) {
-        JS_ASSERT(cond == Zero || cond == NonZero || cond == Signed || cond == NotSigned);
+        MOZ_ASSERT(cond == Zero || cond == NonZero || cond == Signed || cond == NotSigned);
         ma_tst(lhs, imm);
         ma_b(label, cond);
     }
@@ -1058,6 +1070,11 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
         ma_cmp(ScratchRegister, ptr);
         ma_b(label, cond);
     }
+    void branchPtr(Condition cond, AbsoluteAddress addr, ImmWord ptr, Label *label) {
+        loadPtr(addr, ScratchRegister);
+        ma_cmp(ScratchRegister, ptr);
+        ma_b(label, cond);
+    }
     void branchPtr(Condition cond, AsmJSAbsoluteAddress addr, Register ptr, Label *label) {
         loadPtr(addr, ScratchRegister);
         ma_cmp(ScratchRegister, ptr);
@@ -1103,8 +1120,8 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
         if (s1 == d0) {
             if (s0 == d1) {
                 // If both are, this is just a swap of two registers.
-                JS_ASSERT(d1 != ScratchRegister);
-                JS_ASSERT(d0 != ScratchRegister);
+                MOZ_ASSERT(d1 != ScratchRegister);
+                MOZ_ASSERT(d0 != ScratchRegister);
                 ma_mov(d1, ScratchRegister);
                 ma_mov(d0, d1);
                 ma_mov(ScratchRegister, d0);
@@ -1124,10 +1141,8 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void storeValue(ValueOperand val, Operand dst);
     void storeValue(ValueOperand val, const BaseIndex &dest);
     void storeValue(JSValueType type, Register reg, BaseIndex dest) {
-        // Harder cases not handled yet.
-        JS_ASSERT(dest.offset == 0);
         ma_alu(dest.base, lsl(dest.index, dest.scale), ScratchRegister, OpAdd);
-        storeValue(type, reg, Address(ScratchRegister, 0));
+        storeValue(type, reg, Address(ScratchRegister, dest.offset));
     }
     void storeValue(ValueOperand val, const Address &dest) {
         storeValue(val, Operand(dest));
@@ -1148,10 +1163,8 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
         ma_str(secondScratchReg_, dest);
     }
     void storeValue(const Value &val, BaseIndex dest) {
-        // Harder cases not handled yet.
-        JS_ASSERT(dest.offset == 0);
         ma_alu(dest.base, lsl(dest.index, dest.scale), ScratchRegister, OpAdd);
-        storeValue(val, Address(ScratchRegister, 0));
+        storeValue(val, Address(ScratchRegister, dest.offset));
     }
 
     void loadValue(Address src, ValueOperand val);
@@ -1196,8 +1209,7 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
         ma_orr(Imm32(type), frameSizeReg);
     }
 
-    void handleFailureWithHandler(void *handler);
-    void handleFailureWithHandlerTail();
+    void handleFailureWithHandlerTail(void *handler);
 
     /////////////////////////////////////////////////////////////////
     // Common interface.
@@ -1251,7 +1263,7 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
         adjustFrame(-sizeof(intptr_t));
     }
     void implicitPop(uint32_t args) {
-        JS_ASSERT(args % sizeof(intptr_t) == 0);
+        MOZ_ASSERT(args % sizeof(intptr_t) == 0);
         adjustFrame(-args);
     }
     uint32_t framePushed() const {
@@ -1268,9 +1280,9 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void callWithExitFrame(JitCode *target);
     void callWithExitFrame(JitCode *target, Register dynStack);
 
-    // Makes an Ion call using the only two methods that it is sane for
+    // Makes a call using the only two methods that it is sane for
     // independent code to make a call.
-    void callIon(Register callee);
+    void callJit(Register callee);
     void callIonFromAsmJS(Register callee);
 
     void reserveStack(uint32_t amount);
@@ -1392,7 +1404,7 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     }
     void storeDouble(FloatRegister src, BaseIndex addr) {
         // Harder cases not handled yet.
-        JS_ASSERT(addr.offset == 0);
+        MOZ_ASSERT(addr.offset == 0);
         uint32_t scale = Imm32::ShiftOf(addr.scale).value;
         ma_vstr(src, addr.base, addr.index, scale);
     }
@@ -1405,7 +1417,7 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     }
     void storeFloat32(FloatRegister src, BaseIndex addr) {
         // Harder cases not handled yet.
-        JS_ASSERT(addr.offset == 0);
+        MOZ_ASSERT(addr.offset == 0);
         uint32_t scale = Imm32::ShiftOf(addr.scale).value;
         ma_vstr(VFPRegister(src).singleOverlay(), addr.base, addr.index, scale);
     }
@@ -1457,6 +1469,11 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void breakpoint();
     // Conditional breakpoint.
     void breakpoint(Condition cc);
+
+    // Trigger the simulator's interactive read-eval-print loop.
+    // The message will be printed at the stopping point.
+    // (On non-simulator builds, does nothing.)
+    void simulatorStop(const char* msg);
 
     void compareDouble(FloatRegister lhs, FloatRegister rhs);
     void branchDouble(DoubleCondition cond, FloatRegister lhs, FloatRegister rhs,
@@ -1556,6 +1573,7 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void callWithABI(void *fun, MoveOp::Type result = MoveOp::GENERAL);
     void callWithABI(AsmJSImmPtr imm, MoveOp::Type result = MoveOp::GENERAL);
     void callWithABI(const Address &fun, MoveOp::Type result = MoveOp::GENERAL);
+    void callWithABI(Register fun, MoveOp::Type result = MoveOp::GENERAL);
 
     CodeOffsetLabel labelForPatch() {
         return CodeOffsetLabel(nextOffset().getOffset());
@@ -1635,6 +1653,9 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
 
     void loadAsmJSActivation(Register dest) {
         loadPtr(Address(GlobalReg, AsmJSActivationGlobalDataOffset - AsmJSGlobalRegBias), dest);
+    }
+    void loadAsmJSHeapRegisterFromGlobalData() {
+        loadPtr(Address(GlobalReg, AsmJSHeapGlobalDataOffset - AsmJSGlobalRegBias), HeapReg);
     }
 };
 

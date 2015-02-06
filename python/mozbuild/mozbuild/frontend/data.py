@@ -103,7 +103,6 @@ class DirectoryTraversal(ContextDerived):
     __slots__ = (
         'dirs',
         'test_dirs',
-        'tier_dirs',
     )
 
     def __init__(self, context):
@@ -111,7 +110,6 @@ class DirectoryTraversal(ContextDerived):
 
         self.dirs = []
         self.test_dirs = []
-        self.tier_dirs = OrderedDict()
 
 
 class BaseConfigSubstitution(ContextDerived):
@@ -187,6 +185,12 @@ class Defines(ContextDerived):
             else:
                 yield('-D%s=%s' % (define, shell_quote(value)))
 
+    def update(self, more_defines):
+        if isinstance(more_defines, Defines):
+            self.defines.update(more_defines.defines)
+        else:
+            self.defines.update(more_defines)
+
 class Exports(ContextDerived):
     """Context derived container object for EXPORTS, which is a
     HierarchicalStringList.
@@ -201,6 +205,22 @@ class Exports(ContextDerived):
         ContextDerived.__init__(self, context)
         self.exports = exports
         self.dist_install = dist_install
+
+class TestHarnessFiles(ContextDerived):
+    """Sandbox container object for TEST_HARNESS_FILES,
+    which is a HierarchicalStringList.
+
+    We need an object derived from ContextDerived for use in the backend, so
+    this object fills that role. It just has a reference to the underlying
+    HierarchicalStringList, which is created when parsing TEST_HARNESS_FILES.
+    """
+    __slots__ = ('srcdir_files', 'srcdir_pattern_files', 'objdir_files')
+
+    def __init__(self, context, srcdir_files, srcdir_pattern_files, objdir_files):
+        ContextDerived.__init__(self, context)
+        self.srcdir_files = srcdir_files
+        self.srcdir_pattern_files = srcdir_pattern_files
+        self.objdir_files = objdir_files
 
 class Resources(ContextDerived):
     """Context derived container object for RESOURCE_FILES, which is a
@@ -329,6 +349,7 @@ class LinkageWrongKindError(Exception):
 class Linkable(ContextDerived):
     """Generic context derived container object for programs and libraries"""
     __slots__ = (
+        'defines',
         'linked_libraries',
         'linked_system_libs',
     )
@@ -337,6 +358,7 @@ class Linkable(ContextDerived):
         ContextDerived.__init__(self, context)
         self.linked_libraries = []
         self.linked_system_libs = []
+        self.defines = Defines(context, {})
 
     def link_library(self, obj):
         assert isinstance(obj, BaseLibrary)
@@ -361,7 +383,6 @@ class Linkable(ContextDerived):
                     self.config.import_suffix,
                 )
         self.linked_system_libs.append(lib)
-
 
 class BaseProgram(Linkable):
     """Context derived container object for programs, which is a unicode

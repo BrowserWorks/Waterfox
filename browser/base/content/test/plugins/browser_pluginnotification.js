@@ -56,11 +56,11 @@ TabOpenListener.prototype = {
 
 function test() {
   waitForExplicitFinish();
+  SimpleTest.requestCompleteLog();
   requestLongerTimeout(2);
   registerCleanupFunction(function() {
     clearAllPluginPermissions();
     Services.prefs.clearUserPref("extensions.blocklist.suppressUI");
-    Services.prefs.clearUserPref("plugins.hideMissingPluginsNotification");
   });
   Services.prefs.setBoolPref("extensions.blocklist.suppressUI", true);
 
@@ -111,26 +111,16 @@ function runAfterPluginBindingAttached(func) {
 
 // Tests a page with an unknown plugin in it.
 function test1a() {
-  ok(PopupNotifications.getNotification("plugins-not-found", gTestBrowser), "Test 1a, Should have displayed the missing plugin notification");
-  ok(gTestBrowser.missingPlugins, "Test 1a, Should be a missing plugin list");
-  ok(gTestBrowser.missingPlugins.has("application/x-unknown"), "Test 1a, Should know about application/x-unknown");
-  ok(!gTestBrowser.missingPlugins.has("application/x-test"), "Test 1a, Should not know about application/x-test");
-
   var pluginNode = gTestBrowser.contentDocument.getElementById("unknown");
   ok(pluginNode, "Test 1a, Found plugin in page");
   var objLoadingContent = pluginNode.QueryInterface(Ci.nsIObjectLoadingContent);
   is(objLoadingContent.pluginFallbackType, Ci.nsIObjectLoadingContent.PLUGIN_UNSUPPORTED, "Test 1a, plugin fallback type should be PLUGIN_UNSUPPORTED");
 
-  Services.prefs.setBoolPref("plugins.hideMissingPluginsNotification", true);
   prepareTest(runAfterPluginBindingAttached(test1b), gTestRoot + "plugin_unknown.html");
 }
 
 
 function test1b() {
-  ok(!PopupNotifications.getNotification("plugins-not-found", gTestBrowser), "Test 1b, Should not have displayed the missing plugin notification");
-  ok(!gTestBrowser.missingPlugins, "Test 1b, Should not be a missing plugin list");
-  Services.prefs.clearUserPref("plugins.hideMissingPluginsNotification");
-
   var plugin = getTestPlugin();
   ok(plugin, "Test 1b, Should have a test plugin");
   plugin.enabledState = Ci.nsIPluginTag.STATE_ENABLED;
@@ -139,9 +129,6 @@ function test1b() {
 
 // Tests a page with a working plugin in it.
 function test2() {
-  ok(!PopupNotifications.getNotification("plugins-not-found", gTestBrowser), "Test 2, Should not have displayed the missing plugin notification");
-  ok(!gTestBrowser.missingPlugins, "Test 2, Should not be a missing plugin list");
-
   var plugin = getTestPlugin();
   ok(plugin, "Should have a test plugin");
   plugin.enabledState = Ci.nsIPluginTag.STATE_DISABLED;
@@ -150,9 +137,6 @@ function test2() {
 
 // Tests a page with a disabled plugin in it.
 function test3() {
-  ok(!PopupNotifications.getNotification("plugins-not-found", gTestBrowser), "Test 3, Should not have displayed the missing plugin notification");
-  ok(!gTestBrowser.missingPlugins, "Test 3, Should not be a missing plugin list");
-
   new TabOpenListener("about:addons", test4, prepareTest5);
 
   var pluginNode = gTestBrowser.contentDocument.getElementById("test");
@@ -184,7 +168,6 @@ function prepareTest5() {
 // Tests a page with a blocked plugin in it.
 function test5() {
   info("test5");
-  ok(!PopupNotifications.getNotification("plugins-not-found", gTestBrowser), "Test 5, Should not have displayed the missing plugin notification");
   let notification = PopupNotifications.getNotification("click-to-play-plugins");
   ok(notification, "Test 5: There should be a plugin notification for blocked plugins");
   ok(notification.dismissed, "Test 5: The plugin notification should be dismissed by default");
@@ -193,7 +176,6 @@ function test5() {
   is(notification.options.pluginData.size, 1, "Test 5: Only the blocked plugin should be present in the notification");
   ok(PopupNotifications.panel.firstChild._buttonContainer.hidden, "Part 5: The blocked plugins notification should not have any buttons visible.");
 
-  ok(!gTestBrowser.missingPlugins, "Test 5, Should not be a missing plugin list");
   var pluginNode = gTestBrowser.contentDocument.getElementById("test");
   ok(pluginNode, "Test 5, Found plugin in page");
   var objLoadingContent = pluginNode.QueryInterface(Ci.nsIObjectLoadingContent);
@@ -204,21 +186,11 @@ function test5() {
 
 // Tests a page with a blocked and unknown plugin in it.
 function test6() {
-  ok(PopupNotifications.getNotification("plugins-not-found", gTestBrowser), "Test 6, Should have displayed the missing plugin notification");
-  ok(gTestBrowser.missingPlugins, "Test 6, Should be a missing plugin list");
-  ok(gTestBrowser.missingPlugins.has("application/x-unknown"), "Test 6, Should know about application/x-unknown");
-  ok(!gTestBrowser.missingPlugins.has("application/x-test"), "Test 6, application/x-test should not be a missing plugin");
-
   prepareTest(runAfterPluginBindingAttached(test7), gTestRoot + "plugin_both2.html");
 }
 
 // Tests a page with a blocked and unknown plugin in it (alternate order to above).
 function test7() {
-  ok(PopupNotifications.getNotification("plugins-not-found", gTestBrowser), "Test 7, Should have displayed the missing plugin notification");
-  ok(gTestBrowser.missingPlugins, "Test 7, Should be a missing plugin list");
-  ok(gTestBrowser.missingPlugins.has("application/x-unknown"), "Test 7, Should know about application/x-unknown");
-  ok(!gTestBrowser.missingPlugins.has("application/x-test"), "Test 7, application/x-test should not be a missing plugin");
-
   var plugin = getTestPlugin();
   plugin.enabledState = Ci.nsIPluginTag.STATE_CLICKTOPLAY;
   getTestPlugin("Second Test Plug-in").enabledState = Ci.nsIPluginTag.STATE_CLICKTOPLAY;
@@ -230,8 +202,6 @@ function test7() {
 
 // Tests a page with a working plugin that is click-to-play
 function test8() {
-  ok(!PopupNotifications.getNotification("plugins-not-found", gTestBrowser), "Test 8, Should not have displayed the missing plugin notification");
-  ok(!gTestBrowser.missingPlugins, "Test 8, Should not be a missing plugin list");
   ok(PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser), "Test 8, Should have a click-to-play notification");
 
   var pluginNode = gTestBrowser.contentDocument.getElementById("test");
@@ -348,8 +318,6 @@ function test15() {
 function test17() {
   var clickToPlayNotification = PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser);
   ok(clickToPlayNotification, "Test 17, Should have a click-to-play notification");
-  var missingNotification = PopupNotifications.getNotification("missing-plugins", gTestBrowser);
-  ok(!missingNotification, "Test 17, Should not have a missing plugin notification");
 
   setAndUpdateBlocklist(gHttpTestRoot + "blockPluginVulnerableUpdatable.xml",
   function() {
@@ -797,7 +765,10 @@ function test24a() {
   // simulate "always allow"
   notification.reshow();
   PopupNotifications.panel.firstChild._primaryButton.click();
-  prepareTest(test24b, gHttpTestRoot + "plugin_test.html");
+  waitForCondition(() => objLoadingContent.activated, () => {
+    prepareTest(test24b, gHttpTestRoot + "plugin_test.html");
+  }, "Test 24a, plugin should now be activated.");
+
 }
 
 // did the "always allow" work as intended?
@@ -805,11 +776,11 @@ function test24b() {
   var plugin = gTestBrowser.contentDocument.getElementById("test");
   ok(plugin, "Test 24b, Found plugin in page");
   var objLoadingContent = plugin.QueryInterface(Ci.nsIObjectLoadingContent);
-  ok(objLoadingContent.activated, "Test 24b, plugin should be activated");
-  setAndUpdateBlocklist(gHttpTestRoot + "blockPluginVulnerableUpdatable.xml",
-  function() {
-    prepareTest(runAfterPluginBindingAttached(test24c), gHttpTestRoot + "plugin_test.html");
-  });
+  waitForCondition(() => objLoadingContent.activated, () => {
+    setAndUpdateBlocklist(gHttpTestRoot + "blockPluginVulnerableUpdatable.xml", () => {
+      prepareTest(runAfterPluginBindingAttached(test24c), gHttpTestRoot + "plugin_test.html");
+    });
+  }, "Test 24b, plugin should be activated");
 }
 
 // the plugin is now blocklisted, so it should not automatically load
@@ -820,13 +791,13 @@ function test24c() {
   ok(plugin, "Test 24c, Found plugin in page");
   var objLoadingContent = plugin.QueryInterface(Ci.nsIObjectLoadingContent);
   is(objLoadingContent.pluginFallbackType, Ci.nsIObjectLoadingContent.PLUGIN_VULNERABLE_UPDATABLE, "Test 24c, Plugin should be vulnerable/updatable");
-  ok(!objLoadingContent.activated, "Test 24c, plugin should not be activated");
+  waitForCondition(() => !objLoadingContent.activated, () => {
+    // simulate "always allow"
+    notification.reshow();
+    PopupNotifications.panel.firstChild._primaryButton.click();
 
-  // simulate "always allow"
-  notification.reshow();
-  PopupNotifications.panel.firstChild._primaryButton.click();
-
-  prepareTest(test24d, gHttpTestRoot + "plugin_test.html");
+    prepareTest(test24d, gHttpTestRoot + "plugin_test.html");
+  }, "Test 24c, plugin should not be activated");
 }
 
 // We should still be able to always allow a plugin after we've seen that it's
@@ -835,15 +806,14 @@ function test24d() {
   var plugin = gTestBrowser.contentDocument.getElementById("test");
   ok(plugin, "Test 24d, Found plugin in page");
   var objLoadingContent = plugin.QueryInterface(Ci.nsIObjectLoadingContent);
-  ok(objLoadingContent.activated, "Test 24d, plugin should be activated");
-
-  // this resets the vulnerable plugin permission
-  setAndUpdateBlocklist(gHttpTestRoot + "blockNoPlugins.xml",
-  function() {
-    clearAllPluginPermissions();
-    resetBlocklist();
-    prepareTest(test25, gTestRoot + "plugin_syncRemoved.html");
-  });
+  waitForCondition(() => objLoadingContent.activated, () => {
+    // this resets the vulnerable plugin permission
+    setAndUpdateBlocklist(gHttpTestRoot + "blockNoPlugins.xml", () => {
+      clearAllPluginPermissions();
+      resetBlocklist();
+      prepareTest(test25, gTestRoot + "plugin_syncRemoved.html");
+    });
+  }, "Test 24d, plugin should be activated");
 }
 
 function test25() {

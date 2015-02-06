@@ -28,6 +28,7 @@ from mozbuild.util import (
     HierarchicalStringListWithFlagsFactory,
     StrictOrderingOnAppendList,
     StrictOrderingOnAppendListWithFlagsFactory,
+    TypedList,
     UnsortedError,
 )
 
@@ -203,31 +204,31 @@ class TestHierarchicalStringList(unittest.TestCase):
         self.EXPORTS = HierarchicalStringList()
 
     def test_exports_append(self):
-        self.assertEqual(self.EXPORTS.get_strings(), [])
+        self.assertEqual(self.EXPORTS._strings, [])
         self.EXPORTS += ["foo.h"]
-        self.assertEqual(self.EXPORTS.get_strings(), ["foo.h"])
+        self.assertEqual(self.EXPORTS._strings, ["foo.h"])
         self.EXPORTS += ["bar.h"]
-        self.assertEqual(self.EXPORTS.get_strings(), ["foo.h", "bar.h"])
+        self.assertEqual(self.EXPORTS._strings, ["foo.h", "bar.h"])
 
     def test_exports_subdir(self):
-        self.assertEqual(self.EXPORTS.get_children(), {})
+        self.assertEqual(self.EXPORTS._children, {})
         self.EXPORTS.foo += ["foo.h"]
-        self.assertItemsEqual(self.EXPORTS.get_children(), {"foo" : True})
-        self.assertEqual(self.EXPORTS.foo.get_strings(), ["foo.h"])
+        self.assertItemsEqual(self.EXPORTS._children, {"foo" : True})
+        self.assertEqual(self.EXPORTS.foo._strings, ["foo.h"])
         self.EXPORTS.bar += ["bar.h"]
-        self.assertItemsEqual(self.EXPORTS.get_children(),
+        self.assertItemsEqual(self.EXPORTS._children,
                               {"foo" : True, "bar" : True})
-        self.assertEqual(self.EXPORTS.foo.get_strings(), ["foo.h"])
-        self.assertEqual(self.EXPORTS.bar.get_strings(), ["bar.h"])
+        self.assertEqual(self.EXPORTS.foo._strings, ["foo.h"])
+        self.assertEqual(self.EXPORTS.bar._strings, ["bar.h"])
 
     def test_exports_multiple_subdir(self):
         self.EXPORTS.foo.bar = ["foobar.h"]
-        self.assertItemsEqual(self.EXPORTS.get_children(), {"foo" : True})
-        self.assertItemsEqual(self.EXPORTS.foo.get_children(), {"bar" : True})
-        self.assertItemsEqual(self.EXPORTS.foo.bar.get_children(), {})
-        self.assertEqual(self.EXPORTS.get_strings(), [])
-        self.assertEqual(self.EXPORTS.foo.get_strings(), [])
-        self.assertEqual(self.EXPORTS.foo.bar.get_strings(), ["foobar.h"])
+        self.assertItemsEqual(self.EXPORTS._children, {"foo" : True})
+        self.assertItemsEqual(self.EXPORTS.foo._children, {"bar" : True})
+        self.assertItemsEqual(self.EXPORTS.foo.bar._children, {})
+        self.assertEqual(self.EXPORTS._strings, [])
+        self.assertEqual(self.EXPORTS.foo._strings, [])
+        self.assertEqual(self.EXPORTS.foo.bar._strings, ["foobar.h"])
 
     def test_invalid_exports_append(self):
         with self.assertRaises(ValueError) as ve:
@@ -265,6 +266,25 @@ class TestHierarchicalStringList(unittest.TestCase):
     def test_unsorted_appends(self):
         with self.assertRaises(UnsortedError) as ee:
             self.EXPORTS += ['foo.h', 'bar.h']
+
+    def test_walk(self):
+        l = HierarchicalStringList()
+        l += ['root1', 'root2', 'root3']
+        l.child1 += ['child11', 'child12', 'child13']
+        l.child1.grandchild1 += ['grandchild111', 'grandchild112']
+        l.child1.grandchild2 += ['grandchild121', 'grandchild122']
+        l.child2.grandchild1 += ['grandchild211', 'grandchild212']
+        l.child2.grandchild1 += ['grandchild213', 'grandchild214']
+
+        els = list((path, list(seq)) for path, seq in l.walk())
+        self.assertEqual(els, [
+            ('', ['root1', 'root2', 'root3']),
+            ('child1', ['child11', 'child12', 'child13']),
+            ('child1/grandchild1', ['grandchild111', 'grandchild112']),
+            ('child1/grandchild2', ['grandchild121', 'grandchild122']),
+            ('child2/grandchild1', ['grandchild211', 'grandchild212',
+                                    'grandchild213', 'grandchild214']),
+        ])
 
 
 class TestStrictOrderingOnAppendList(unittest.TestCase):
@@ -336,6 +356,16 @@ class TestStrictOrderingOnAppendList(unittest.TestCase):
             l2 = l + ['d', 'c']
 
         self.assertEqual(len(l), 2)
+
+    def test_add_StrictOrderingOnAppendList(self):
+        l = StrictOrderingOnAppendList()
+        l += ['c', 'd']
+        l += ['a', 'b']
+        l2 = StrictOrderingOnAppendList()
+        with self.assertRaises(UnsortedError):
+            l2 += list(l)
+        # Adding a StrictOrderingOnAppendList to another shouldn't throw
+        l2 += l
 
 
 class TestStrictOrderingOnAppendListWithFlagsFactory(unittest.TestCase):
@@ -507,6 +537,129 @@ class TestMemoize(unittest.TestCase):
         self.assertEqual(instance._count, 1)
         self.assertEqual(instance.wrapped, 42)
         self.assertEqual(instance._count, 1)
+
+
+class TestTypedList(unittest.TestCase):
+    def test_init(self):
+        cls = TypedList(int)
+        l = cls()
+        self.assertEqual(len(l), 0)
+
+        l = cls([1, 2, 3])
+        self.assertEqual(len(l), 3)
+
+        with self.assertRaises(ValueError):
+            cls([1, 2, 'c'])
+
+    def test_extend(self):
+        cls = TypedList(int)
+        l = cls()
+        l.extend([1, 2])
+        self.assertEqual(len(l), 2)
+        self.assertIsInstance(l, cls)
+
+        with self.assertRaises(ValueError):
+            l.extend([3, 'c'])
+
+        self.assertEqual(len(l), 2)
+
+    def test_slicing(self):
+        cls = TypedList(int)
+        l = cls()
+        l[:] = [1, 2]
+        self.assertEqual(len(l), 2)
+        self.assertIsInstance(l, cls)
+
+        with self.assertRaises(ValueError):
+            l[:] = [3, 'c']
+
+        self.assertEqual(len(l), 2)
+
+    def test_add(self):
+        cls = TypedList(int)
+        l = cls()
+        l2 = l + [1, 2]
+        self.assertEqual(len(l), 0)
+        self.assertEqual(len(l2), 2)
+        self.assertIsInstance(l2, cls)
+
+        with self.assertRaises(ValueError):
+            l2 = l + [3, 'c']
+
+        self.assertEqual(len(l), 0)
+
+    def test_iadd(self):
+        cls = TypedList(int)
+        l = cls()
+        l += [1, 2]
+        self.assertEqual(len(l), 2)
+        self.assertIsInstance(l, cls)
+
+        with self.assertRaises(ValueError):
+            l += [3, 'c']
+
+        self.assertEqual(len(l), 2)
+
+    def test_add_coercion(self):
+        objs = []
+
+        class Foo(object):
+            def __init__(self, obj):
+                objs.append(obj)
+
+        cls = TypedList(Foo)
+        l = cls()
+        l += [1, 2]
+        self.assertEqual(len(objs), 2)
+        self.assertEqual(type(l[0]), Foo)
+        self.assertEqual(type(l[1]), Foo)
+
+        # Adding a TypedList to a TypedList shouldn't trigger coercion again
+        l2 = cls()
+        l2 += l
+        self.assertEqual(len(objs), 2)
+        self.assertEqual(type(l2[0]), Foo)
+        self.assertEqual(type(l2[1]), Foo)
+
+        # Adding a TypedList to a TypedList shouldn't even trigger the code
+        # that does coercion at all.
+        l2 = cls()
+        list.__setslice__(l, 0, -1, [1, 2])
+        l2 += l
+        self.assertEqual(len(objs), 2)
+        self.assertEqual(type(l2[0]), int)
+        self.assertEqual(type(l2[1]), int)
+
+    def test_memoized(self):
+        cls = TypedList(int)
+        cls2 = TypedList(str)
+        self.assertEqual(TypedList(int), cls)
+        self.assertNotEqual(cls, cls2)
+
+
+class TypedTestStrictOrderingOnAppendList(unittest.TestCase):
+    def test_init(self):
+        class Unicode(unicode):
+            def __init__(self, other):
+                if not isinstance(other, unicode):
+                    raise ValueError()
+                super(Unicode, self).__init__(other)
+
+        cls = TypedList(Unicode, StrictOrderingOnAppendList)
+        l = cls()
+        self.assertEqual(len(l), 0)
+
+        l = cls(['a', 'b', 'c'])
+        self.assertEqual(len(l), 3)
+
+        with self.assertRaises(UnsortedError):
+            cls(['c', 'b', 'a'])
+
+        with self.assertRaises(ValueError):
+            cls(['a', 'b', 3])
+
+        self.assertEqual(len(l), 3)
+
 
 if __name__ == '__main__':
     main()

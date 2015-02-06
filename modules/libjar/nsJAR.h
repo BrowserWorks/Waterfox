@@ -29,7 +29,7 @@
 #include "nsIObserver.h"
 #include "mozilla/Attributes.h"
 
-class nsICertificatePrincipal;
+class nsIX509Cert;
 class nsIInputStream;
 class nsJARManifestItem;
 class nsZipReaderCache;
@@ -52,7 +52,7 @@ typedef enum
  * nsJAR serves as an XPCOM wrapper for nsZipArchive with the addition of
  * JAR manifest file parsing.
  *------------------------------------------------------------------------*/
-class nsJAR : public nsIZipReader
+class nsJAR MOZ_FINAL : public nsIZipReader
 {
   // Allows nsJARInputStream to call the verification functions
   friend class nsJARInputStream;
@@ -106,7 +106,7 @@ class nsJAR : public nsIZipReader
     nsRefPtr<nsZipArchive>   mZip;            // The underlying zip archive
     ManifestDataHashtable    mManifestData;   // Stores metadata for each entry
     bool                     mParsedManifest; // True if manifest has been parsed
-    nsCOMPtr<nsICertificatePrincipal> mPrincipal; // The entity which signed this file
+    nsCOMPtr<nsIX509Cert>    mSigningCert;    // The entity which signed this file
     int16_t                  mGlobalStatus;   // Global signature verification status
     PRIntervalTime           mReleaseTime;    // used by nsZipReaderCache for flushing entries
     nsZipReaderCache*        mCache;          // if cached, this points to the cache it's contained in
@@ -140,7 +140,7 @@ public:
     NS_DECL_THREADSAFE_ISUPPORTS
     NS_DECL_NSIZIPENTRY
 
-    nsJARItem(nsZipItem* aZipItem);
+    explicit nsJARItem(nsZipItem* aZipItem);
 
 private:
     virtual ~nsJARItem() {}
@@ -167,7 +167,7 @@ public:
     NS_DECL_THREADSAFE_ISUPPORTS
     NS_DECL_NSIUTF8STRINGENUMERATOR
 
-    nsJAREnumerator(nsZipFind *aFind) : mFind(aFind), mName(nullptr) {
+    explicit nsJAREnumerator(nsZipFind *aFind) : mFind(aFind), mName(nullptr) {
       NS_ASSERTION(mFind, "nsJAREnumerator: Missing zipFind.");
     }
 

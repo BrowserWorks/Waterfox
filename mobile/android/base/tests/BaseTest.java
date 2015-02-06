@@ -53,6 +53,7 @@ import android.widget.TextView;
 
 import com.jayway.android.robotium.solo.Condition;
 import com.jayway.android.robotium.solo.Solo;
+import com.jayway.android.robotium.solo.Timeout;
 
 /**
  *  A convenient base class suitable for most Robocop tests.
@@ -78,10 +79,19 @@ abstract class BaseTest extends BaseRobocopTest {
     protected String mProfile;
     public Device mDevice;
     protected DatabaseHelper mDatabaseHelper;
-    protected StringHelper mStringHelper;
     protected int mScreenMidWidth;
     protected int mScreenMidHeight;
-    private HashSet<Integer> mKnownTabIDs = new HashSet<Integer>();
+    private final HashSet<Integer> mKnownTabIDs = new HashSet<Integer>();
+
+    protected void blockForDelayedStartup() {
+        try {
+            Actions.EventExpecter delayedStartupExpector = mActions.expectGeckoEvent("Gecko:DelayedStartup");
+            delayedStartupExpector.blockForEvent(GECKO_READY_WAIT_MS, true);
+            delayedStartupExpector.unregisterListener();
+        } catch (Exception e) {
+            mAsserter.dumpLog("Exception in blockForDelayedStartup", e);
+        }
+    }
 
     protected void blockForGeckoReady() {
         try {
@@ -100,12 +110,12 @@ abstract class BaseTest extends BaseRobocopTest {
         super.setUp();
 
         // Create the intent to be used with all the important arguments.
-        mBaseUrl = ((String) mConfig.get("host")).replaceAll("(/$)", "");
-        mRawBaseUrl = ((String) mConfig.get("rawhost")).replaceAll("(/$)", "");
+        mBaseUrl = mConfig.get("host").replaceAll("(/$)", "");
+        mRawBaseUrl = mConfig.get("rawhost").replaceAll("(/$)", "");
         Intent i = new Intent(Intent.ACTION_MAIN);
-        mProfile = (String) mConfig.get("profile");
+        mProfile = mConfig.get("profile");
         i.putExtra("args", "-no-remote -profile " + mProfile);
-        String envString = (String) mConfig.get("envvars");
+        String envString = mConfig.get("envvars");
         if (envString != "") {
             String[] envStrings = envString.split(",");
             for (int iter = 0; iter < envStrings.length; iter++) {
@@ -122,20 +132,26 @@ abstract class BaseTest extends BaseRobocopTest {
         mActions = new FennecNativeActions(mActivity, mSolo, getInstrumentation(), mAsserter);
         mDevice = new Device();
         mDatabaseHelper = new DatabaseHelper(mActivity, mAsserter);
-        mStringHelper = new StringHelper();
+
+        // Ensure Robocop tests have access to network, and are run with Display powered on.
+        throwIfHttpGetFails();
+        throwIfScreenNotOn();
+    }
+
+    protected GeckoProfile getTestProfile() {
+        if (mProfile.startsWith("/")) {
+            return GeckoProfile.get(getActivity(), "default", mProfile);
+        }
+
+        return GeckoProfile.get(getActivity(), mProfile);
     }
 
     protected void initializeProfile() {
-        final GeckoProfile profile;
-        if (mProfile.startsWith("/")) {
-            profile = GeckoProfile.get(getActivity(), "default", mProfile);
-        } else {
-            profile = GeckoProfile.get(getActivity(), mProfile);
-        }
+        final GeckoProfile profile = getTestProfile();
 
         // In Robocop tests, we typically don't get initialized correctly, because
         // GeckoProfile doesn't create the profile directory.
-        profile.enqueueInitialization();
+        profile.enqueueInitialization(profile.getDir());
     }
 
     @Override
@@ -191,6 +207,7 @@ abstract class BaseTest extends BaseRobocopTest {
         boolean success = waitForCondition(new Condition() {
             @Override
             public boolean isSatisfied() {
+                mSolo.waitForView(R.id.url_edit_text);
                 EditText urlEditText = (EditText) mSolo.getView(R.id.url_edit_text);
                 if (urlEditText.isInputMethodTarget()) {
                     return true;
@@ -276,8 +293,8 @@ abstract class BaseTest extends BaseRobocopTest {
     }
 
     class VerifyTextViewText implements Condition {
-        private TextView mTextView;
-        private String mExpected;
+        private final TextView mTextView;
+        private final String mExpected;
         public VerifyTextViewText(TextView textView, String expected) {
             mTextView = textView;
             mExpected = expected;
@@ -305,7 +322,7 @@ abstract class BaseTest extends BaseRobocopTest {
         boolean result = mSolo.waitForCondition(condition, timeout);
         if (!result) {
             // Log timeout failure for diagnostic purposes only; a failed wait may
-            // be normal and does not necessarily warrant a test asssertion/failure.
+            // be normal and does not necessarily warrant a test assertion/failure.
             mAsserter.dumpLog("waitForCondition timeout after " + timeout + " ms.");
         }
         return result;
@@ -384,8 +401,17 @@ abstract class BaseTest extends BaseRobocopTest {
         return assets.open(filename);
     }
 
-    public boolean waitForText(String text) {
-        boolean rc = mSolo.waitForText(text);
+    public boolean waitForText(final String text) {
+        // false is the default value for finding only
+        // visible views in `Solo.waitForText(String)`.
+        return waitForText(text, false);
+    }
+
+    public boolean waitForText(final String text, final boolean onlyVisibleViews) {
+        // We use the default robotium values from
+        // `Waiter.waitForText(String)` for unspecified arguments.
+        final boolean rc =
+                mSolo.waitForText(text, 0, Timeout.getLargeTimeout(), true, onlyVisibleViews);
         if (!rc) {
             // log out failed wait for diagnostic purposes only;
             // waitForText failures are sometimes expected/normal
@@ -447,7 +473,7 @@ abstract class BaseTest extends BaseRobocopTest {
     }
 
 
-    /** 
+    /**
      * Select <item> from Menu > "Settings" > <section>.
      */
     public void selectSettingsItem(String section, String item) {
@@ -477,7 +503,7 @@ abstract class BaseTest extends BaseRobocopTest {
         // build the item name ready to be used
         String itemName = "^" + menuItemName + "$";
         mActions.sendSpecialKey(Actions.SpecialKey.MENU);
-        if (waitForText(itemName)) {
+        if (waitForText(itemName, true)) {
             mSolo.clickOnText(itemName);
         } else {
             // Older versions of Android have additional settings under "More",
@@ -522,6 +548,43 @@ abstract class BaseTest extends BaseRobocopTest {
         String tabCountText = tabCount.getText();
         int tabCountInt = Integer.parseInt(tabCountText);
         mAsserter.is(tabCountInt, expectedTabCount, "The correct number of tabs are opened");
+    }
+
+    public void verifyPinned(final boolean isPinned, final String gridItemTitle) {
+        boolean viewFound = waitForText(gridItemTitle);
+        mAsserter.ok(viewFound, "Found top site title: " + gridItemTitle, null);
+
+        boolean success = waitForCondition(new Condition() {
+            @Override
+            public boolean isSatisfied() {
+                // We set the left compound drawable (index 0) to the pin icon.
+                final TextView gridItemTextView = mSolo.getText(gridItemTitle);
+                return isPinned == (gridItemTextView.getCompoundDrawables()[0] != null);
+            }
+        }, MAX_WAIT_MS);
+        mAsserter.ok(success, "Top site item was pinned: " + isPinned, null);
+    }
+
+    public void pinTopSite(String gridItemTitle) {
+        verifyPinned(false, gridItemTitle);
+        mSolo.clickLongOnText(gridItemTitle);
+        boolean dialogOpened = mSolo.waitForDialogToOpen();
+        mAsserter.ok(dialogOpened, "Pin site dialog opened: " + gridItemTitle, null);
+        boolean pinSiteFound = waitForText(StringHelper.CONTEXT_MENU_PIN_SITE);
+        mAsserter.ok(pinSiteFound, "Found pin site menu item", null);
+        mSolo.clickOnText(StringHelper.CONTEXT_MENU_PIN_SITE);
+        verifyPinned(true, gridItemTitle);
+    }
+
+    public void unpinTopSite(String gridItemTitle) {
+        verifyPinned(true, gridItemTitle);
+        mSolo.clickLongOnText(gridItemTitle);
+        boolean dialogOpened = mSolo.waitForDialogToOpen();
+        mAsserter.ok(dialogOpened, "Pin site dialog opened: " + gridItemTitle, null);
+        boolean unpinSiteFound = waitForText(StringHelper.CONTEXT_MENU_UNPIN_SITE);
+        mAsserter.ok(unpinSiteFound, "Found unpin site menu item", null);
+        mSolo.clickOnText(StringHelper.CONTEXT_MENU_UNPIN_SITE);
+        verifyPinned(false, gridItemTitle);
     }
 
     // Used to perform clicks on pop-up buttons without having to close the virtual keyboard
@@ -760,8 +823,8 @@ abstract class BaseTest extends BaseRobocopTest {
     }
 
     class Navigation {
-        private String devType;
-        private String osVersion;
+        private final String devType;
+        private final String osVersion;
 
         public Navigation(Device mDevice) {
             devType = mDevice.type;
@@ -865,8 +928,8 @@ abstract class BaseTest extends BaseRobocopTest {
      */
     private class DescriptionCondition<T extends View> implements Condition {
         public T mView;
-        private String mDescr;
-        private Class<T> mCls;
+        private final String mDescr;
+        private final Class<T> mCls;
 
         public DescriptionCondition(Class<T> cls, String descr) {
             mDescr = descr;
@@ -936,7 +999,7 @@ abstract class BaseTest extends BaseRobocopTest {
     public void setPreferenceAndWaitForChange(final JSONObject jsonPref) {
         mActions.sendGeckoEvent("Preferences:Set", jsonPref.toString());
 
-        // Get the preference name from the json and store it in an array. This array 
+        // Get the preference name from the json and store it in an array. This array
         // will be used later while fetching the preference data.
         String[] prefNames = new String[1];
         try {

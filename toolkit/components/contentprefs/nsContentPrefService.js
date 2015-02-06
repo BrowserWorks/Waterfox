@@ -998,20 +998,21 @@ ContentPrefService.prototype = {
   //**************************************************************************//
   // Database Creation & Access
 
-  _dbVersion: 3,
+  _dbVersion: 4,
 
   _dbSchema: {
     tables: {
       groups:     "id           INTEGER PRIMARY KEY, \
                    name         TEXT NOT NULL",
-  
+
       settings:   "id           INTEGER PRIMARY KEY, \
                    name         TEXT NOT NULL",
-  
+
       prefs:      "id           INTEGER PRIMARY KEY, \
                    groupID      INTEGER REFERENCES groups(id), \
                    settingID    INTEGER NOT NULL REFERENCES settings(id), \
-                   value        BLOB"
+                   value        BLOB, \
+                   timestamp    INTEGER NOT NULL DEFAULT 0" // Storage in seconds, API in ms. 0 for migrated values.
     },
     indices: {
       groups_idx: {
@@ -1024,7 +1025,7 @@ ContentPrefService.prototype = {
       },
       prefs_idx: {
         table: "prefs",
-        columns: ["groupID", "settingID"]
+        columns: ["timestamp", "groupID", "settingID"]
       }
     }
   },
@@ -1167,26 +1168,25 @@ ContentPrefService.prototype = {
 
   _dbMigrate: function ContentPrefService__dbMigrate(aDBConnection, aOldVersion, aNewVersion) {
     /**
-     * Migrations have to follow a template rules in bug 1074817 comment 3 which are:
-     * 1. Migration have to be incremental and non-breaking.
-     * 2. It have to be idempotent because one can downgrade an upgrade again.
+     * Migrations should follow the template rules in bug 1074817 comment 3 which are:
+     * 1. Migration should be incremental and non-breaking.
+     * 2. It should be idempotent because one can downgrade an upgrade again.
      * On downgrade:
      * 1. Decrement schema version so that upgrade runs the migrations again.
      */
     aDBConnection.beginTransaction();
 
     try {
-      /**
-      * If the schema version is 0, that means it was never set, which means
-      * the database was somehow created without the schema being applied, perhaps
-      * because the system ran out of disk space (although we check for this
-      * in _createDB) or because some other code created the database file without
-      * applying the schema. In any case, recover by simply reapplying the schema.
-      */
+       /**
+       * If the schema version is 0, that means it was never set, which means
+       * the database was somehow created without the schema being applied, perhaps
+       * because the system ran out of disk space (although we check for this
+       * in _createDB) or because some other code created the database file without
+       * applying the schema.  In any case, recover by simply reapplying the schema.
+       */
       if (aOldVersion == 0) {
         this._dbCreateSchema(aDBConnection);
       } else {
-        // For downgrade this is a no-op since aOldVersion > aNewVersion.
         for (let i = aOldVersion; i < aNewVersion; i++) {
           let migrationName = "_dbMigrate" + i + "To" + (i + 1);
           if (typeof this[migrationName] != 'function') {
@@ -1210,11 +1210,26 @@ ContentPrefService.prototype = {
       INSERT INTO groups (id, name)
       SELECT id, name FROM groupsOld
     `);
-    aDBConnection.executeSimpleSQL("DROP TABLE IF EXISTS groupers");
+
+    aDBConnection.executeSimpleSQL("DROP TABLE groupers");
     aDBConnection.executeSimpleSQL("DROP TABLE groupsOld");
   },
 
   _dbMigrate2To3: function ContentPrefService__dbMigrate2To3(aDBConnection) {
+    this._dbCreateIndices(aDBConnection);
+  },
+
+  _dbMigrate3To4: function ContentPrefService__dbMigrate3To4(aDBConnection) {
+    // Add timestamp column if it does not exist yet. This operation is idempotent.
+    try {
+      let stmt = aDBConnection.createStatement("SELECT timestamp FROM prefs");
+      stmt.finalize();
+    } catch (e) {
+      aDBConnection.executeSimpleSQL("ALTER TABLE prefs ADD COLUMN timestamp INTEGER NOT NULL DEFAULT 0");
+    }
+
+    // To modify prefs_idx drop it and create again.
+    aDBConnection.executeSimpleSQL("DROP INDEX IF EXISTS prefs_idx");
     this._dbCreateIndices(aDBConnection);
   },
 

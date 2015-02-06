@@ -15,7 +15,7 @@ namespace js {
 
 class DateTimeInfo;
 
-class DateObject : public JSObject
+class DateObject : public NativeObject
 {
     static const uint32_t UTC_TIME_SLOT = 0;
     static const uint32_t TZA_SLOT = 1;
@@ -46,7 +46,8 @@ class DateObject : public JSObject
     }
 
     // Set UTC time to a given time and invalidate cached local time.
-    void setUTCTime(double t, Value *vp = nullptr);
+    void setUTCTime(double t);
+    void setUTCTime(double t, MutableHandleValue vp);
 
     inline double cachedLocalTime(DateTimeInfo *dtInfo);
 

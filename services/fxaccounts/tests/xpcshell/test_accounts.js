@@ -162,7 +162,7 @@ add_task(function test_get_signed_in_user_initially_unset() {
 
   yield account.setSignedInUser(credentials);
 
-  let result = yield account.getSignedInUser();
+  result = yield account.getSignedInUser();
   do_check_eq(result.email, credentials.email);
   do_check_eq(result.assertion, credentials.assertion);
   do_check_eq(result.kB, credentials.kB);
@@ -170,7 +170,7 @@ add_task(function test_get_signed_in_user_initially_unset() {
   // Delete the memory cache and force the user
   // to be read and parsed from storage (e.g. disk via JSONStorage).
   delete account.internal.signedInUser;
-  let result = yield account.getSignedInUser();
+  result = yield account.getSignedInUser();
   do_check_eq(result.email, credentials.email);
   do_check_eq(result.assertion, credentials.assertion);
   do_check_eq(result.kB, credentials.kB);
@@ -180,9 +180,48 @@ add_task(function test_get_signed_in_user_initially_unset() {
   yield account.signOut(localOnly);
 
   // user should be undefined after sign out
-  let result = yield account.getSignedInUser();
+  result = yield account.getSignedInUser();
   do_check_eq(result, null);
 });
+
+add_task(function test_getCertificate() {
+  _("getCertificate()");
+  // This test, unlike the rest, uses an un-mocked FxAccounts instance.
+  // However, we still need to pass an object to the constructor to
+  // force it to expose "internal".
+  let fxa = new FxAccounts({onlySetInternal: true})
+  let credentials = {
+    email: "foo@example.com",
+    uid: "1234@lcip.org",
+    assertion: "foobar",
+    sessionToken: "dead",
+    kA: "beef",
+    kB: "cafe",
+    verified: true
+  };
+  yield fxa.setSignedInUser(credentials);
+
+  // Test that an expired cert throws if we're offline.
+  fxa.internal.currentAccountState.cert = {
+    validUntil: Date.parse("Mon, 13 Jan 2000 21:45:06 GMT")
+  };
+  let offline = Services.io.offline;
+  Services.io.offline = true;
+  // This call would break from missing parameters ...
+  fxa.internal.currentAccountState.getCertificate().then(
+    result => {
+      Services.io.offline = offline;
+      do_throw("Unexpected success");
+    },
+    err => {
+      Services.io.offline = offline;
+      // ... so we have to check the error string.
+      do_check_eq(err, "Error: OFFLINE");
+    }
+  );
+  _("----- DONE ----\n");
+});
+
 
 // Sanity-check that our mocked client is working correctly
 add_test(function test_client_mock() {

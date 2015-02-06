@@ -9,6 +9,7 @@
 #include <dlfcn.h>
 #include <signal.h>
 #include "mozilla/RefPtr.h"
+#include "mozilla/UniquePtr.h"
 #include "Zip.h"
 #include "Elfxx.h"
 #include "Mappable.h"
@@ -63,6 +64,9 @@ IsSignalHandlingBroken();
 
 }
 
+/* Forward declaration because BaseElf.h includes ElfLoader.h */
+class BaseElf;
+
 /**
  * Specialize RefCounted template for LibHandle. We may get references to
  * LibHandles during the execution of their destructor, so we need
@@ -116,6 +120,11 @@ public:
    * covered by the loaded library.
    */
   virtual bool Contains(void *addr) const = 0;
+
+  /**
+   * Returns the base address of the loaded library.
+   */
+  virtual void *GetBase() const = 0;
 
   /**
    * Returns the file name of the library without the containing directory.
@@ -267,6 +276,7 @@ public:
   virtual ~SystemElf();
   virtual void *GetSymbolPtr(const char *symbol) const;
   virtual bool Contains(void *addr) const { return false; /* UNIMPLEMENTED */ }
+  virtual void *GetBase() const { return nullptr; /* UNIMPLEMENTED */ }
 
 #ifdef __ARM_EABI__
   virtual const void *FindExidx(int *pcount) const;
@@ -321,13 +331,14 @@ public:
     return signalHandlingBroken;
   }
 
+  static int __wrap_sigaction(int signum, const struct sigaction *act,
+                              struct sigaction *oldact);
+
 protected:
   SEGVHandler();
   ~SEGVHandler();
 
 private:
-  static int __wrap_sigaction(int signum, const struct sigaction *act,
-                              struct sigaction *oldact);
 
   /**
    * The constructor doesn't do all initialization, and the tail is done
@@ -431,6 +442,13 @@ protected:
 
 private:
   ~ElfLoader();
+
+  /* Initialization code that can't run during static initialization. */
+  void Init();
+
+  /* System loader handle for the library/program containing our code. This
+   * is used to resolve wrapped functions. */
+  mozilla::UniquePtr<BaseElf> self_elf;
 
   /* Bookkeeping */
   typedef std::vector<LibHandle *> LibHandleList;
@@ -550,12 +568,20 @@ private:
     } r_state;
   };
 
+  /* Memory representation of ELF Auxiliary Vectors */
+  struct AuxVector {
+    Elf::Addr type;
+    Elf::Addr value;
+  };
+
   /* Helper class used to integrate libraries loaded by this linker in
    * r_debug */
   class DebuggerHelper
   {
   public:
     DebuggerHelper();
+
+    void Init(AuxVector *auvx);
 
     operator bool()
     {

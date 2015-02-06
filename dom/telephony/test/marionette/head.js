@@ -1,7 +1,16 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-let Promise = SpecialPowers.Cu.import("resource://gre/modules/Promise.jsm").Promise;
+// Emulate Promise.jsm semantics.
+Promise.defer = function() { return new Deferred(); }
+function Deferred()  {
+  this.promise = new Promise(function(resolve, reject) {
+    this.resolve = resolve;
+    this.reject = reject;
+  }.bind(this));
+  Object.freeze(this);
+}
+
 let telephony;
 let conference;
 
@@ -1301,4 +1310,26 @@ function startDSDSTest(test) {
     ok(true);  // We should run at least one test.
     finish();
   }
+}
+
+function sendMMI(aMmi) {
+  let deferred = Promise.defer();
+
+  telephony.dial(aMmi)
+    .then(request => {
+      ok(request instanceof DOMRequest,
+         "request is instanceof " + request.constructor);
+
+      request.addEventListener("success", function(event) {
+        deferred.resolve(request.result);
+      });
+
+      request.addEventListener("error", function(event) {
+        deferred.reject(request.error);
+      });
+    }, cause => {
+      deferred.reject(cause);
+    });
+
+  return deferred.promise;
 }

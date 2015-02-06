@@ -5,8 +5,11 @@
 
 #include "mozilla/dom/SVGPolygonElement.h"
 #include "mozilla/dom/SVGPolygonElementBinding.h"
-#include "gfxContext.h"
+#include "mozilla/gfx/2D.h"
 #include "SVGContentUtils.h"
+
+using namespace mozilla;
+using namespace mozilla::gfx;
 
 NS_IMPL_NS_NEW_NAMESPACED_SVG_ELEMENT(Polygon)
 
@@ -58,13 +61,23 @@ SVGPolygonElement::GetMarkPoints(nsTArray<nsSVGMark> *aMarks)
                                   nsSVGMark::eEnd));
 }
 
-void
-SVGPolygonElement::ConstructPath(gfxContext *aCtx)
+TemporaryRef<Path>
+SVGPolygonElement::BuildPath(PathBuilder* aBuilder)
 {
-  SVGPolygonElementBase::ConstructPath(aCtx);
-  // the difference between a polyline and a polygon is that the
-  // polygon is closed:
-  aCtx->ClosePath();
+  const SVGPointList &points = mPoints.GetAnimValue();
+
+  if (points.IsEmpty()) {
+    return nullptr;
+  }
+
+  aBuilder->MoveTo(points[0]);
+  for (uint32_t i = 1; i < points.Length(); ++i) {
+    aBuilder->LineTo(points[i]);
+  }
+
+  aBuilder->Close();
+
+  return aBuilder->Finish();
 }
 
 } // namespace dom

@@ -2,6 +2,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+.contact-import-spinner {
+  display: none;
+}
+
+.contact-import-spinner.busy {
+  display: inline-block;
+  vertical-align: middle;
+  -moz-margin-start: 10px;
+}
+
 .content-area input.contact-filter {
   margin-top: 14px;
   border-radius: 10000px;
@@ -18,7 +28,7 @@
 
 .contact,
 .contact-separator {
-  padding: 5px 10px;
+  padding: .5rem 1rem;
   font-size: 13px;
 }
 
@@ -31,8 +41,7 @@
 }
 
 .contact-separator {
-  height: 24px;
-  background: #eee;
+  background-color: #eee;
   color: #888;
 }
 
@@ -45,7 +54,7 @@
 }
 
 .contact:hover {
-  background: #eee;
+  background-color: #eee;
 }
 
 .contact:hover > .icons {
@@ -70,7 +79,7 @@
 .contact > .avatar {
   width: 40px;
   height: 40px;
-  background: #ccc;
+  background-color: #ccc;
   border-radius: 50%;
   margin-right: 10px;
   overflow: hidden;
@@ -113,7 +122,7 @@
 
 .contact > .details > .username > i.icon-google {
   position: absolute;
-  right: 10px;
+  right: 1rem;
   top: 35%;
   width: 14px;
   height: 14px;
@@ -122,7 +131,7 @@
   background-position: center;
   background-size: 16px 16px;
   background-repeat: no-repeat;
-  background-color: fff;
+  background-color: #fff;
 }
 
 .contact > .details > .email {
@@ -135,9 +144,9 @@
   cursor: pointer;
   display: none;
   margin-left: auto;
-  padding: 12px 10px;
+  padding: 10px;
   border-radius: 2px;
-  background: #5bc0a4;
+  background-color: #5bc0a4;
   color: #fff;
   -moz-user-select: none;
 }
@@ -218,5 +227,5 @@
 }
 
 .contact-form > .button-group {
-  margin-top: 14px;
+  margin-top: 1rem;
 }

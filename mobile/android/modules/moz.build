@@ -9,12 +9,12 @@ EXTRA_JS_MODULES += [
     'AndroidLog.jsm',
     'ContactService.jsm',
     'dbg-browser-actors.js',
-    'FireflyApp.jsm',
     'HelperApps.jsm',
     'Home.jsm',
     'HomeProvider.jsm',
     'JNI.jsm',
     'LightweightThemeConsumer.jsm',
+    'MatchstickApp.jsm',
     'MediaPlayerApp.jsm',
     'Messaging.jsm',
     'NetErrorHelper.jsm',
@@ -24,13 +24,11 @@ EXTRA_JS_MODULES += [
     'Prompt.jsm',
     'Sanitizer.jsm',
     'SharedPreferences.jsm',
-    'SimpleServiceDiscovery.jsm',
     'SSLExceptions.jsm',
     'TabMirror.jsm',
     'WebappManagerWorker.js',
 ]
 
 EXTRA_PP_JS_MODULES += [
-    'RokuApp.jsm',
     'WebappManager.jsm',
 ]

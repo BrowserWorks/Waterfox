@@ -16,6 +16,11 @@ Services.scriptloader.loadSubScript("chrome://mochikit/content/tests/SimpleTest/
 Services.prefs.setBoolPref("browser.uiCustomization.skipSourceNodeCheck", true);
 registerCleanupFunction(() => Services.prefs.clearUserPref("browser.uiCustomization.skipSourceNodeCheck"));
 
+// Remove temporary e10s related new window options in customize ui,
+// they break a lot of tests.
+CustomizableUI.destroyWidget("e10s-button");
+CustomizableUI.removeWidgetFromArea("e10s-button");
+
 let {synthesizeDragStart, synthesizeDrop} = ChromeUtils;
 
 const kNSXUL = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
@@ -106,6 +111,20 @@ function getToolboxCustomToolbarId(toolbarName) {
 
 function resetCustomization() {
   return CustomizableUI.reset();
+}
+
+XPCOMUtils.defineLazyGetter(this, 'gDeveloperButtonInNavbar', function() {
+  return getAreaWidgetIds(CustomizableUI.AREA_NAVBAR).indexOf("developer-button") != -1;
+});
+
+function isInDevEdition() {
+  return gDeveloperButtonInNavbar;
+}
+
+function removeDeveloperButtonIfDevEdition(areaPanelPlacements) {
+  if (isInDevEdition()) {
+    areaPanelPlacements.splice(areaPanelPlacements.indexOf("developer-button"), 1);
+  }
 }
 
 function isInWin8() {

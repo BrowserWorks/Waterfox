@@ -22,6 +22,10 @@
                       linear-gradient(rgba(255,255,255,0.3), rgba(255,255,255,0));
   }
 
+  #PanelUI-update-status {
+    list-style-image: url(chrome://branding/content/icon32.png);
+  }
+
   #PanelUI-fxa-status {
     list-style-image: url(chrome://browser/skin/sync-horizontalbar@2x.png);
   }
@@ -143,15 +147,15 @@ menuitem.subviewbutton:not(.panel-subview-footer) {
 /* Override OSX-specific toolkit styles for the bookmarks panel */
 menu.subviewbutton > .menu-right {
   -moz-margin-end: 0;
-}
-menu.subviewbutton > .menu-right > image {
-  -moz-image-region: rect(0, 9px, 10px, 0);
+  -moz-appearance: none;
 }
 
-@media (min-resolution: 2dppx) {
-  menu.subviewbutton > .menu-right > image {
-    -moz-image-region: rect(0, 18px, 20px, 0);
-  }
+menu.subviewbutton > .menu-right > image {
+ /* We don't want the arrow to highlight when the .subviewbutton is hovered,
+  * so we set the -moz-appearance rule on the image
+  * (which doesn't inherit the _moz-menuactive attribute) instead.
+  */
+  -moz-appearance: menuarrow;
 }
 
 .widget-overflow-list .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker {

@@ -35,7 +35,7 @@ class AutoJSAPI;
 // Script loader implementation
 //////////////////////////////////////////////////////////////
 
-class nsScriptLoader : public nsIStreamLoaderObserver
+class nsScriptLoader MOZ_FINAL : public nsIStreamLoaderObserver
 {
   class MOZ_STACK_CLASS AutoCurrentScriptUpdater
   {
@@ -170,17 +170,17 @@ public:
    *                     attribute). May be the empty string.
    * @param aDocument    Document which the data is loaded for. Must not be
    *                     null.
-   * @param aBufOut      [out] jschar array allocated by ConvertToUTF16 and
+   * @param aBufOut      [out] char16_t array allocated by ConvertToUTF16 and
    *                     containing data converted to unicode.  Caller must
    *                     js_free() this data when no longer needed.
    * @param aLengthOut   [out] Length of array returned in aBufOut in number
-   *                     of jschars.
+   *                     of char16_t code units.
    */
   static nsresult ConvertToUTF16(nsIChannel* aChannel, const uint8_t* aData,
                                  uint32_t aLength,
                                  const nsAString& aHintCharset,
                                  nsIDocument* aDocument,
-                                 jschar*& aBufOut, size_t& aLengthOut);
+                                 char16_t*& aBufOut, size_t& aLengthOut);
 
   /**
    * Processes any pending requests that are ready for processing.
@@ -249,6 +249,10 @@ public:
   nsresult ProcessOffThreadRequest(nsScriptLoadRequest *aRequest,
                                    void **aOffThreadToken);
 
+  bool AddPendingChildLoader(nsScriptLoader* aChild) {
+    return mPendingChildLoaders.AppendElement(aChild) != nullptr;
+  }
+
 private:
   virtual ~nsScriptLoader();
 
@@ -300,10 +304,6 @@ private:
   bool SelfReadyToExecuteScripts()
   {
     return mEnabled && !mBlockerCount;
-  }
-
-  bool AddPendingChildLoader(nsScriptLoader* aChild) {
-    return mPendingChildLoaders.AppendElement(aChild) != nullptr;
   }
 
   nsresult AttemptAsyncScriptParse(nsScriptLoadRequest* aRequest);

@@ -54,7 +54,7 @@ function sendMouseEvent(aEvent, aTarget, aWindow) {
     aWindow = window;
   }
 
-  if (!(aTarget instanceof aWindow.Element)) {
+  if (typeof aTarget == "string") {
     aTarget = aWindow.document.getElementById(aTarget);
   }
 
@@ -870,8 +870,7 @@ const COMPOSITION_ATTR_SELECTEDCONVERTEDTEXT = 0x05;
  *
  * @param aEvent               The composition event information.  This must
  *                             have |type| member.  The value must be
- *                             "compositionstart", "compositionend" or
- *                             "compositionupdate".
+ *                             "compositionstart" or "compositionend".
  *                             And also this may have |data| and |locale| which
  *                             would be used for the value of each property of
  *                             the composition event.  Note that the data would
@@ -890,13 +889,14 @@ function synthesizeComposition(aEvent, aWindow)
                              aEvent.locale ? aEvent.locale : "");
 }
 /**
- * Synthesize a text event.
+ * Synthesize a compositionchange event which causes a DOM text event and
+ * compositionupdate event if it's necessary.
  *
- * @param aEvent   The text event's information, this has |composition|
- *                 and |caret| members.  |composition| has |string| and
- *                 |clauses| members.  |clauses| must be array object.  Each
- *                 object has |length| and |attr|.  And |caret| has |start| and
- *                 |length|.  See the following tree image.
+ * @param aEvent   The compositionchange event's information, this has
+ *                 |composition| and |caret| members.  |composition| has
+ *                 |string| and |clauses| members.  |clauses| must be array
+ *                 object.  Each object has |length| and |attr|.  And |caret|
+ *                 has |start| and |length|.  See the following tree image.
  *
  *                 aEvent
  *                   +-- composition
@@ -929,7 +929,7 @@ function synthesizeComposition(aEvent, aWindow)
  *
  * @param aWindow  Optional (If null, current |window| will be used)
  */
-function synthesizeText(aEvent, aWindow)
+function synthesizeCompositionChange(aEvent, aWindow)
 {
   var utils = _getDOMWindowUtils(aWindow);
   if (!utils) {

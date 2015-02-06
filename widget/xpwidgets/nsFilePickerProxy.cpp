@@ -8,9 +8,9 @@
 #include "nsComponentManagerUtils.h"
 #include "nsNetUtil.h"
 #include "nsIFile.h"
-#include "nsDOMFile.h"
+#include "mozilla/dom/File.h"
 #include "mozilla/dom/TabChild.h"
-#include "mozilla/dom/ipc/Blob.h"
+#include "mozilla/dom/ipc/BlobChild.h"
 
 using namespace mozilla::dom;
 
@@ -31,6 +31,11 @@ nsFilePickerProxy::Init(nsIDOMWindow* aParent, const nsAString& aTitle,
   TabChild* tabChild = TabChild::GetFrom(aParent);
   if (!tabChild) {
     return NS_ERROR_FAILURE;
+  }
+
+  mParent = do_QueryInterface(aParent);
+  if (!mParent->IsInnerWindow()) {
+    mParent = mParent->GetCurrentInnerWindow();
   }
 
   mMode = aMode;
@@ -145,9 +150,13 @@ nsFilePickerProxy::Recv__delete__(const MaybeInputFiles& aFiles,
     const InfallibleTArray<PBlobChild*>& files = aFiles.get_InputFiles().filesChild();
     for (uint32_t i = 0; i < files.Length(); ++i) {
       BlobChild* actor = static_cast<BlobChild*>(files[i]);
-      nsCOMPtr<nsIDOMBlob> blob = actor->GetBlob();
+      nsRefPtr<FileImpl> blobImpl = actor->GetBlobImpl();
+      NS_ENSURE_TRUE(blobImpl, true);
+
+      nsCOMPtr<nsIDOMBlob> blob = new File(mParent, blobImpl);
       nsCOMPtr<nsIDOMFile> file(do_QueryInterface(blob));
       NS_ENSURE_TRUE(file, true);
+
       mDomfiles.AppendObject(file);
     }
   }

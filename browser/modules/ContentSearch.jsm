@@ -87,21 +87,30 @@ this.ContentSearch = {
   // { controller, previousFormHistoryResult }.  See _onMessageGetSuggestions.
   _suggestionMap: new WeakMap(),
 
+  // Resolved when we finish shutting down.
+  _destroyedPromise: null,
+
   init: function () {
     Cc["@mozilla.org/globalmessagemanager;1"].
       getService(Ci.nsIMessageListenerManager).
       addMessageListener(INBOUND_MESSAGE, this);
     Services.obs.addObserver(this, "browser-search-engine-modified", false);
+    Services.obs.addObserver(this, "shutdown-leaks-before-check", false);
   },
 
   destroy: function () {
+    if (this._destroyedPromise) {
+      return this._destroyedPromise;
+    }
+
     Cc["@mozilla.org/globalmessagemanager;1"].
       getService(Ci.nsIMessageListenerManager).
       removeMessageListener(INBOUND_MESSAGE, this);
     Services.obs.removeObserver(this, "browser-search-engine-modified");
+    Services.obs.removeObserver(this, "shutdown-leaks-before-check");
 
     this._eventQueue.length = 0;
-    return Promise.resolve(this._currentEventPromise);
+    return this._destroyedPromise = Promise.resolve(this._currentEventPromise);
   },
 
   /**
@@ -148,6 +157,10 @@ this.ContentSearch = {
       });
       this._processEventQueue();
       break;
+    case "shutdown-leaks-before-check":
+      subj.wrappedJSObject.client.addBlocker(
+        "ContentSearch: Wait until the service is destroyed", () => this.destroy());
+      break;
     }
   },
 
@@ -191,11 +204,23 @@ this.ContentSearch = {
       "searchString",
       "whence",
     ]);
-    let browserWin = msg.target.ownerDocument.defaultView;
     let engine = Services.search.getEngineByName(data.engineName);
-    browserWin.BrowserSearch.recordSearchInHealthReport(engine, data.whence);
     let submission = engine.getSubmission(data.searchString, "", data.whence);
-    browserWin.loadURI(submission.uri.spec, null, submission.postData);
+    let browser = msg.target;
+    try {
+      browser.loadURIWithFlags(submission.uri.spec,
+                               Ci.nsIWebNavigation.LOAD_FLAGS_NONE, null, null,
+                               submission.postData);
+    }
+    catch (err) {
+      // The browser may have been closed between the time its content sent the
+      // message and the time we handle it.  In that case, trying to call any
+      // method on it will throw.
+      return Promise.resolve();
+    }
+    let win = browser.ownerDocument.defaultView;
+    win.BrowserSearch.recordSearchInHealthReport(engine, data.whence,
+                                                 data.selection || null);
     return Promise.resolve();
   },
 
@@ -245,7 +270,7 @@ this.ContentSearch = {
     controller.maxLocalResults = ok ? 2 : 6;
     controller.maxRemoteResults = ok ? 6 : 0;
     controller.remoteTimeout = data.remoteTimeout || undefined;
-    let priv = PrivateBrowsingUtils.isWindowPrivate(msg.target.contentWindow);
+    let priv = PrivateBrowsingUtils.isBrowserPrivate(msg.target);
     // fetch() rejects its promise if there's a pending request, but since we
     // process our event queue serially, there's never a pending request.
     let suggestions = yield controller.fetch(data.searchString, priv, engine);
@@ -381,10 +406,12 @@ this.ContentSearch = {
 
   _currentEngineObj: Task.async(function* () {
     let engine = Services.search.currentEngine;
+    let favicon = engine.getIconURLBySize(16, 16);
     let uri1x = engine.getIconURLBySize(65, 26);
     let uri2x = engine.getIconURLBySize(130, 52);
     let obj = {
       name: engine.name,
+      iconBuffer: yield this._arrayBufferFromDataURI(favicon),
       logoBuffer: yield this._arrayBufferFromDataURI(uri1x),
       logo2xBuffer: yield this._arrayBufferFromDataURI(uri2x),
     };

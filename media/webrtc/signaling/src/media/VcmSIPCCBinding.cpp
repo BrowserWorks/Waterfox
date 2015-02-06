@@ -48,9 +48,10 @@
 
 extern "C" {
 #include "ccsdp.h"
-#include "vcm.h"
+#include "ccapi.h"
 #include "cip_mmgr_mediadefinitions.h"
 #include "cip_Sipcc_CodecMask.h"
+#include "peer_connection_types.h"
 
 extern void lsm_start_multipart_tone_timer (vcm_tones_t tone,
                                             uint32_t delay,
@@ -70,13 +71,6 @@ static int vcmEnsureExternalCodec(
 }//end extern "C"
 
 static const char* logTag = "VcmSipccBinding";
-
-// Cloned from ccapi.h
-typedef enum {
-    CC_AUDIO_1,
-    CC_VIDEO_1,
-    CC_DATACHANNEL_1
-} cc_media_cap_name;
 
 #define SIPSDP_ILBC_MODE20 20
 
@@ -209,7 +203,7 @@ int VcmSIPCCBinding::getVideoCodecsGmp()
   // H.264 only for now
   bool has_gmp;
   nsresult rv;
-  rv = gSelf->mGMPService->HasPluginForAPI(NS_LITERAL_STRING(""),
+  rv = gSelf->mGMPService->HasPluginForAPI(NS_LITERAL_CSTRING(""),
                                            NS_LITERAL_CSTRING("encode-video"),
                                            &tags,
                                            &has_gmp);
@@ -217,7 +211,7 @@ int VcmSIPCCBinding::getVideoCodecsGmp()
     return 0;
   }
 
-  rv = gSelf->mGMPService->HasPluginForAPI(NS_LITERAL_STRING(""),
+  rv = gSelf->mGMPService->HasPluginForAPI(NS_LITERAL_CSTRING(""),
                                            NS_LITERAL_CSTRING("decode-video"),
                                            &tags,
                                            &has_gmp);
@@ -1101,6 +1095,31 @@ int vcmRxStart(cc_mcapid_t mcap_id,
     return VCM_ERROR;
 }
 
+
+void vcmOnRemoteStreamAdded(cc_call_handle_t call_handle,
+                            const char* peer_connection_handle,
+                            vcm_media_remote_track_table_t *sipcc_stream_table) {
+  sipcc::PeerConnectionWrapper wrapper(peer_connection_handle);
+
+  if (wrapper.impl()) {
+    // TODO: We are copying between structs that are almost identical here.
+    // Seems kinda wasteful.
+    MediaStreamTable pc_stream_table;
+    memset(&pc_stream_table, 0, sizeof(pc_stream_table));
+    pc_stream_table.media_stream_id = sipcc_stream_table->media_stream_id;
+
+    // TODO: This was hard-coded to 1 before, is this safe?
+    pc_stream_table.num_tracks = sipcc_stream_table->num_tracks;
+    for (size_t i = 0; i < pc_stream_table.num_tracks; ++i) {
+      pc_stream_table.track[i].media_stream_track_id =
+        sipcc_stream_table->track[i].media_stream_track_id;
+      // TODO: This was hard-coded to false before, do we even need this member?
+      pc_stream_table.track[i].video = sipcc_stream_table->track[i].video;
+    }
+
+    wrapper.impl()->OnRemoteStreamAdded(pc_stream_table);
+  }
+}
 
 /**
  *  start rx stream
@@ -2060,6 +2079,7 @@ int vcmTxStartICE(cc_mcapid_t mcap_id,
     err = vcmTxCreateVideoConduit(level, payload, pc, attrs, conduit);
     is_video = true;
   } else {
+    mediaType = "unrecognized";
     CSFLogError(logTag, "%s: mcap_id unrecognized", __FUNCTION__);
   }
   if (err) {
@@ -2529,12 +2549,12 @@ cc_boolean vcmCheckAttribs(cc_uint32_t media_type, void *sdp_p, int level,
             rcap->max_cpb = t_uint;
         }
 
-        if ( ccsdpAttrGetFmtpMaxCpb(sdp_p, level, 0, fmtp_inst, &t_uint) == SDP_SUCCESS )
+        if ( ccsdpAttrGetFmtpMaxDpb(sdp_p, level, 0, fmtp_inst, &t_uint) == SDP_SUCCESS )
         {
             rcap->max_dpb = t_uint;
         }
 
-        if ( ccsdpAttrGetFmtpMaxCpb(sdp_p, level, 0, fmtp_inst, &t_uint) == SDP_SUCCESS )
+        if ( ccsdpAttrGetFmtpMaxBr(sdp_p, level, 0, fmtp_inst, &t_uint) == SDP_SUCCESS )
         {
             rcap->max_br = t_uint;
         }
@@ -2833,4 +2853,3 @@ short vcmGetVideoPreferredCodec(int32_t *preferred_codec) {
                          "media.navigator.video.preferred_codec",
                          preferred_codec);
 }
-

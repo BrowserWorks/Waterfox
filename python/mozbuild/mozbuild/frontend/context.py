@@ -25,13 +25,16 @@ from mozbuild.util import (
     HierarchicalStringListWithFlagsFactory,
     KeyedDefaultDict,
     List,
+    memoize,
     memoized_property,
     ReadOnlyKeyedDefaultDict,
     StrictOrderingOnAppendList,
     StrictOrderingOnAppendListWithFlagsFactory,
+    TypedList,
 )
 import mozpack.path as mozpath
-from types import StringTypes
+from types import FunctionType
+from UserString import UserString
 
 import itertools
 
@@ -75,36 +78,91 @@ class Context(KeyedDefaultDict):
     def __init__(self, allowed_variables={}, config=None):
         self._allowed_variables = allowed_variables
         self.main_path = None
-        self.all_paths = set()
+        self.current_path = None
+        # There aren't going to be enough paths for the performance of scanning
+        # a list to be a problem.
+        self._all_paths = []
         self.config = config
         self.executed_time = 0
         KeyedDefaultDict.__init__(self, self._factory)
 
+    def push_source(self, path):
+        """Adds the given path as source of the data from this context and make
+        it the current path for the context."""
+        assert os.path.isabs(path)
+        if not self.main_path:
+            self.main_path = path
+        else:
+            # Callers shouldn't push after main_path has been popped.
+            assert self.current_path
+        self.current_path = path
+        # The same file can be pushed twice, so don't remove any previous
+        # occurrence.
+        self._all_paths.append(path)
+
+    def pop_source(self):
+        """Get back to the previous current path for the context."""
+        assert self.main_path
+        assert self.current_path
+        last = self._all_paths.pop()
+        # Keep the popped path in the list of all paths, but before the main
+        # path so that it's not popped again.
+        self._all_paths.insert(0, last)
+        if last == self.main_path:
+            self.current_path = None
+        else:
+            self.current_path = self._all_paths[-1]
+        return last
+
     def add_source(self, path):
         """Adds the given path as source of the data from this context."""
         assert os.path.isabs(path)
-
         if not self.main_path:
-            self.main_path = path
-        self.all_paths.add(path)
+            self.main_path = self.current_path = path
+        # Insert at the beginning of the list so that it's always before the
+        # main path.
+        if path not in self._all_paths:
+            self._all_paths.insert(0, path)
+
+    @property
+    def all_paths(self):
+        """Returns all paths ever added to the context."""
+        return set(self._all_paths)
+
+    @property
+    def source_stack(self):
+        """Returns the current stack of pushed sources."""
+        if not self.current_path:
+            return []
+        return self._all_paths[self._all_paths.index(self.main_path):]
 
     @memoized_property
     def objdir(self):
         return mozpath.join(self.config.topobjdir, self.relobjdir).rstrip('/')
 
-    @memoized_property
-    def srcdir(self):
-        return mozpath.join(self.config.topsrcdir, self.relsrcdir).rstrip('/')
+    @memoize
+    def _srcdir(self, path):
+        return mozpath.join(self.config.topsrcdir,
+            self._relsrcdir(path)).rstrip('/')
 
-    @memoized_property
+    @property
+    def srcdir(self):
+        return self._srcdir(self.current_path or self.main_path)
+
+    @memoize
+    def _relsrcdir(self, path):
+        return mozpath.relpath(mozpath.dirname(path), self.config.topsrcdir)
+
+    @property
     def relsrcdir(self):
         assert self.main_path
-        return mozpath.relpath(mozpath.dirname(self.main_path),
-            self.config.topsrcdir)
+        return self._relsrcdir(self.current_path or self.main_path)
 
     @memoized_property
     def relobjdir(self):
-        return self.relsrcdir
+        assert self.main_path
+        return mozpath.relpath(mozpath.dirname(self.main_path),
+            self.config.topsrcdir)
 
     def _factory(self, key):
         """Function called when requesting a missing key."""
@@ -122,14 +180,14 @@ class Context(KeyedDefaultDict):
         else:
             return default()
 
-    def _validate(self, key, value):
+    def _validate(self, key, value, is_template=False):
         """Validates whether the key is allowed and if the value's type
         matches.
         """
         stored_type, input_type, docs, tier = \
             self._allowed_variables.get(key, (None, None, None, None))
 
-        if stored_type is None:
+        if stored_type is None or not is_template and key in TEMPLATE_VARIABLES:
             raise KeyError('global_ns', 'set_unknown', key, value)
 
         # If the incoming value is not the type we store, we try to convert
@@ -152,6 +210,33 @@ class Context(KeyedDefaultDict):
                 value = stored_type(value)
 
         return KeyedDefaultDict.__setitem__(self, key, value)
+
+    def resolve_path(self, path):
+        """Resolves a path using moz.build conventions.
+
+        Paths may be relative to the current srcdir or objdir, or to the
+        environment's topsrcdir or topobjdir.  Different resolution contexts
+        are denoted by characters at the beginning of the path:
+
+            * '/' - relative to topsrcdir;
+            * '!/' - relative to topobjdir;
+            * '!' - relative to objdir; and
+            * any other character - relative to srcdir.
+        """
+        if path.startswith('/'):
+            resolved = mozpath.join(self.config.topsrcdir, path[1:])
+        elif path.startswith('!/'):
+            resolved = mozpath.join(self.config.topobjdir, path[2:])
+        elif path.startswith('!'):
+            resolved = mozpath.join(self.objdir, path[1:])
+        else:
+            resolved = mozpath.join(self.srcdir, path)
+
+        return mozpath.normpath(resolved)
+
+    @staticmethod
+    def is_objdir_path(path):
+        return path[0] == '!'
 
     def update(self, iterable={}, **kwargs):
         """Like dict.update(), but using the context's setitem.
@@ -182,6 +267,11 @@ class Context(KeyedDefaultDict):
         return set(tier for tier in tiers if tier)
 
 
+class TemplateContext(Context):
+    def _validate(self, key, value):
+        return Context._validate(self, key, value, True)
+
+
 class FinalTargetValue(ContextDerivedValue, unicode):
     def __new__(cls, context, value=""):
         if not value:
@@ -193,6 +283,87 @@ class FinalTargetValue(ContextDerivedValue, unicode):
             if context['DIST_SUBDIR']:
                 value += '/' + context['DIST_SUBDIR']
         return unicode.__new__(cls, value)
+
+
+class SourcePath(ContextDerivedValue, UserString):
+    """Stores and resolves a source path relative to a given context
+
+    This class is used as a backing type for some of the sandbox variables.
+    It expresses paths relative to a context. Paths starting with a '/'
+    are considered relative to the topsrcdir, and other paths relative
+    to the current source directory for the associated context.
+    """
+    def __new__(cls, context, value=None):
+        if not isinstance(context, Context) and value is None:
+            return unicode(context)
+        return super(SourcePath, cls).__new__(cls)
+
+    def __init__(self, context, value=None):
+        self.context = context
+        self.srcdir = context.srcdir
+        self.value = value
+
+    @memoized_property
+    def data(self):
+        """Serializes the path for UserString."""
+        if self.value.startswith('/'):
+            ret = None
+            # If the path starts with a '/' and is actually relative to an
+            # external source dir, use that as base instead of topsrcdir.
+            if self.context.config.external_source_dir:
+                ret = mozpath.join(self.context.config.external_source_dir,
+                    self.value[1:])
+            if not ret or not os.path.exists(ret):
+                ret = mozpath.join(self.context.config.topsrcdir,
+                    self.value[1:])
+        else:
+            ret = mozpath.join(self.srcdir, self.value)
+        return mozpath.normpath(ret)
+
+    def __unicode__(self):
+        # UserString doesn't implement a __unicode__ function at all, so add
+        # ours.
+        return self.data
+
+    @memoized_property
+    def translated(self):
+        """Returns the corresponding path in the objdir.
+
+        Ideally, we wouldn't need this function, but the fact that both source
+        path under topsrcdir and the external source dir end up mixed in the
+        objdir (aka pseudo-rework), this is needed.
+        """
+        if self.value.startswith('/'):
+            ret = mozpath.join(self.context.config.topobjdir, self.value[1:])
+        else:
+            ret = mozpath.join(self.context.objdir, self.value)
+        return mozpath.normpath(ret)
+
+    def join(self, *p):
+        """Lazy mozpath.join(self, *p), returning a new SourcePath instance.
+
+        In an ideal world, this wouldn't be required, but with the
+        external_source_dir business, and the fact that comm-central and
+        mozilla-central have directories in common, resolving a SourcePath
+        before doing mozpath.join doesn't work out properly.
+        """
+        return SourcePath(self.context, mozpath.join(self.value, *p))
+
+
+@memoize
+def ContextDerivedTypedList(type, base_class=List):
+    """Specialized TypedList for use with ContextDerivedValue types.
+    """
+    assert issubclass(type, ContextDerivedValue)
+    class _TypedList(ContextDerivedValue, TypedList(type, base_class)):
+        def __init__(self, context, iterable=[]):
+            class _Type(type):
+                def __new__(cls, obj):
+                    return type(context, obj)
+            self.TYPE = _Type
+            super(_TypedList, self).__init__(iterable)
+
+    return _TypedList
 
 
 # This defines the set of mutable global variables.
@@ -314,7 +485,7 @@ VARIABLES = {
         should load lazily.  This only has an effect when building with MSVC.
         """, None),
 
-    'DIRS': (List, list,
+    'DIRS': (ContextDerivedTypedList(SourcePath), list,
         """Child directories to descend into looking for build frontend files.
 
         This works similarly to the ``DIRS`` variable in make files. Each str
@@ -443,6 +614,13 @@ VARIABLES = {
         This variable should not be populated directly. Instead, it should
         populated by calling add_java_jar().
         """, 'libs'),
+
+    'LIBRARY_DEFINES': (OrderedDict, dict,
+        """Dictionary of compiler defines to declare for the entire library.
+
+        This variable works like DEFINES, except that declarations apply to all
+        libraries that link into this library via FINAL_LIBRARY.
+        """, None),
 
     'LIBRARY_NAME': (unicode, unicode,
         """The code name of the library generated for a directory.
@@ -598,31 +776,13 @@ VARIABLES = {
         ``HOST_BIN_SUFFIX``, the name will remain unchanged.
         """, None),
 
-    'TEST_DIRS': (List, list,
+    'TEST_DIRS': (ContextDerivedTypedList(SourcePath), list,
         """Like DIRS but only for directories that contain test-only code.
 
         If tests are not enabled, this variable will be ignored.
 
         This variable may go away once the transition away from Makefiles is
         complete.
-        """, None),
-
-    'TIERS': (OrderedDict, dict,
-        """Defines directories constituting the tier traversal mechanism.
-
-        The recursive make backend iteration is organized into tiers. There are
-        major tiers (keys in this dict) that correspond roughly to applications
-        or libraries being built. e.g. base, nspr, js, platform, app. Within
-        each tier are phases like export, libs, and tools. The recursive make
-        backend iterates over each phase in the first tier then proceeds to the
-        next tier until all tiers are exhausted.
-
-        Tiers are a way of working around deficiencies in recursive make. These
-        will probably disappear once we no longer rely on recursive make for
-        the build backend. They will likely be replaced by ``DIRS``.
-
-        This variable is typically not populated directly. Instead, it is
-        populated by calling add_tier_dir().
         """, None),
 
     'CONFIGURE_SUBST_FILES': (StrictOrderingOnAppendList, list,
@@ -768,10 +928,22 @@ VARIABLES = {
         """List of manifest files defining browser chrome tests.
         """, None),
 
+    'JETPACK_PACKAGE_MANIFESTS': (StrictOrderingOnAppendList, list,
+        """List of manifest files defining jetpack package tests.
+        """, None),
+
+    'JETPACK_ADDON_MANIFESTS': (StrictOrderingOnAppendList, list,
+        """List of manifest files defining jetpack addon tests.
+        """, None),
+
     'CRASHTEST_MANIFESTS': (StrictOrderingOnAppendList, list,
         """List of manifest files defining crashtests.
 
         These are commonly named crashtests.list.
+        """, None),
+
+    'ANDROID_INSTRUMENTATION_MANIFESTS': (StrictOrderingOnAppendList, list,
+        """List of manifest files defining Android instrumentation tests.
         """, None),
 
     'METRO_CHROME_MANIFESTS': (StrictOrderingOnAppendList, list,
@@ -818,7 +990,7 @@ VARIABLES = {
         When this variable is present, the results of this directory will end up
         being placed in the $(DIST_SUBDIR) subdirectory of where it would
         otherwise be placed.
-        """, 'libs'),
+        """, None),
 
     'FINAL_TARGET': (FinalTargetValue, unicode,
         """The name of the directory to install targets to.
@@ -828,7 +1000,7 @@ VARIABLES = {
         neither are present, the result is dist/bin. If XPI_NAME is present, the
         result is dist/xpi-stage/$(XPI_NAME). If DIST_SUBDIR is present, then
         the $(DIST_SUBDIR) directory of the otherwise default value is used.
-        """, 'libs'),
+        """, None),
 
     'GYP_DIRS': (StrictOrderingOnAppendListWithFlagsFactory({
             'variables': dict,
@@ -918,7 +1090,7 @@ VARIABLES = {
            Note that the ordering of flags matters here; these flags will be
            added to the linker's command line in the same order as they
            appear in the moz.build file.
-        """, 'libs'),
+        """, None),
 
     'EXTRA_DSO_LDOPTS': (List, list,
         """Flags passed to the linker when linking a shared library.
@@ -926,7 +1098,7 @@ VARIABLES = {
            Note that the ordering of flags matter here, these flags will be
            added to the linker's command line in the same order as they
            appear in the moz.build file.
-        """, 'libs'),
+        """, None),
 
     'WIN32_EXE_LDFLAGS': (List, list,
         """Flags passed to the linker when linking a Windows .exe executable
@@ -937,7 +1109,22 @@ VARIABLES = {
            appear in the moz.build file.
 
            This variable only has an effect on Windows.
-        """, 'libs'),
+        """, None),
+
+    'TEST_HARNESS_FILES': (HierarchicalStringList, list,
+        """List of files to be installed for test harnesses.
+
+        ``TEST_HARNESS_FILES`` can be used to install files to any directory
+        under $objdir/_tests. Files can be appended to a field to indicate
+        which subdirectory they should be exported to. For example,
+        to export ``foo.py`` to ``_tests/foo``, append to
+        ``TEST_HARNESS_FILES`` like so::
+           TEST_HARNESS_FILES.foo += ['foo.py']
+
+        Files from topsrcdir and the objdir can also be installed by prefixing
+        the path(s) with a '/' character and a '!' character, respectively::
+           TEST_HARNESS_FILES.path += ['/build/bar.py', '!quux.py']
+        """, None),
 }
 
 # Sanity check: we don't want any variable above to have a list as storage type.
@@ -945,6 +1132,30 @@ for name, (storage_type, input_types, docs, tier) in VARIABLES.items():
     if storage_type == list:
         raise RuntimeError('%s has a "list" storage type. Use "List" instead.'
             % name)
+
+# Set of variables that are only allowed in templates:
+TEMPLATE_VARIABLES = {
+    'CPP_UNIT_TESTS',
+    'FORCE_SHARED_LIB',
+    'HOST_PROGRAM',
+    'HOST_LIBRARY_NAME',
+    'HOST_SIMPLE_PROGRAMS',
+    'IS_COMPONENT',
+    'IS_FRAMEWORK',
+    'LIBRARY_NAME',
+    'PROGRAM',
+    'SIMPLE_PROGRAMS',
+}
+
+# Add a note to template variable documentation.
+for name in TEMPLATE_VARIABLES:
+    if name not in VARIABLES:
+        raise RuntimeError('%s is in TEMPLATE_VARIABLES but not in VARIABLES.'
+            % name)
+    storage_type, input_types, docs, tier = VARIABLES[name]
+    docs += 'This variable is only available in templates.\n'
+    VARIABLES[name] = (storage_type, input_types, docs, tier)
+
 
 # The set of functions exposed to the sandbox.
 #
@@ -956,7 +1167,7 @@ for name, (storage_type, input_types, docs, tier) in VARIABLES.items():
 # The first element is an attribute on Sandbox that should be a function type.
 #
 FUNCTIONS = {
-    'include': (lambda self: self._include, (str,),
+    'include': (lambda self: self._include, (SourcePath,),
         """Include another mozbuild file in the context of this one.
 
         This is similar to a ``#include`` in C languages. The filename passed to
@@ -1025,43 +1236,6 @@ FUNCTIONS = {
         :py:class:`mozbuild.frontend.data.AndroidEclipseProjectData`.
         """),
 
-    'add_tier_dir': (
-        lambda self: self._add_tier_directory,
-        (str, [str, list], bool, bool, str),
-        """Register a directory for tier traversal.
-
-        This is the preferred way to populate the TIERS variable.
-
-        Tiers are how the build system is organized. The build process is
-        divided into major phases called tiers. The most important tiers are
-        "platform" and "apps." The platform tier builds the Gecko platform
-        (typically outputting libxul). The apps tier builds the configured
-        application (browser, mobile/android, b2g, etc).
-
-        This function is typically only called by the main moz.build file or a
-        file directly included by the main moz.build file. An error will be
-        raised if it is called when it shouldn't be.
-
-        An error will also occur if you attempt to add the same directory to
-        the same tier multiple times.
-
-        Example usage
-        ^^^^^^^^^^^^^
-
-        Register a single directory with the 'platform' tier::
-
-           add_tier_dir('platform', 'xul')
-
-        Register multiple directories with the 'app' tier.::
-
-           add_tier_dir('app', ['components', 'base'])
-
-        Register a directory as having external content (no dependencies,
-        and traversed with export, libs, and tools subtiers::
-
-           add_tier_dir('base', 'bar', external=True)
-        """),
-
     'export': (lambda self: self._export, (str,),
         """Make the specified variable available to all child directories.
 
@@ -1103,7 +1277,7 @@ FUNCTIONS = {
         If this function is called, processing is aborted immediately.
         """),
 
-    'template': (lambda self: self._template_decorator, (),
+    'template': (lambda self: self._template_decorator, (FunctionType,),
         """Decorator for template declarations.
 
         Templates are a special kind of functions that can be declared in
@@ -1211,7 +1385,117 @@ SPECIAL_VARIABLES = {
 
 # Deprecation hints.
 DEPRECATION_HINTS = {
+    'CPP_UNIT_TESTS': '''
+        Please use'
+
+            CppUnitTests(['foo', 'bar'])
+
+        instead of
+
+            CPP_UNIT_TESTS += ['foo', 'bar']
+        ''',
+
+    'HOST_PROGRAM': '''
+        Please use
+
+            HostProgram('foo')
+
+        instead of
+
+            HOST_PROGRAM = 'foo'
+        ''',
+
+    'HOST_LIBRARY_NAME': '''
+        Please use
+
+            HostLibrary('foo')
+
+        instead of
+
+            HOST_LIBRARY_NAME = 'foo'
+        ''',
+
+    'HOST_SIMPLE_PROGRAMS': '''
+        Please use
+
+            HostSimplePrograms(['foo', 'bar'])
+
+        instead of
+
+            HOST_SIMPLE_PROGRAMS += ['foo', 'bar']"
+        ''',
+
+    'LIBRARY_NAME': '''
+        Please use
+
+            Library('foo')
+
+        instead of
+
+            LIBRARY_NAME = 'foo'
+        ''',
+
+    'PROGRAM': '''
+        Please use
+
+            Program('foo')
+
+        instead of
+
+            PROGRAM = 'foo'"
+        ''',
+
+    'SIMPLE_PROGRAMS': '''
+        Please use
+
+            SimplePrograms(['foo', 'bar'])
+
+        instead of
+
+            SIMPLE_PROGRAMS += ['foo', 'bar']"
+        ''',
+
+    'FORCE_SHARED_LIB': '''
+        Please use
+
+            SharedLibrary('foo')
+
+        instead of
+
+            Library('foo') [ or LIBRARY_NAME = 'foo' ]
+            FORCE_SHARED_LIB = True
+        ''',
+
+    'IS_COMPONENT': '''
+        Please use
+
+            XPCOMBinaryComponent('foo')
+
+        instead of
+
+            Library('foo') [ or LIBRARY_NAME = 'foo' ]
+            IS_COMPONENT = True
+        ''',
+
+    'IS_FRAMEWORK': '''
+        Please use
+
+            Framework('foo')
+
+        instead of
+
+            Library('foo') [ or LIBRARY_NAME = 'foo' ]
+            IS_FRAMEWORK = True
+        ''',
+
     'TOOL_DIRS': 'Please use the DIRS variable instead.',
+
     'TEST_TOOL_DIRS': 'Please use the TEST_DIRS variable instead.',
+
     'PARALLEL_DIRS': 'Please use the DIRS variable instead.',
 }
+
+# Make sure that all template variables have a deprecation hint.
+for name in TEMPLATE_VARIABLES:
+    if name not in DEPRECATION_HINTS:
+        raise RuntimeError('Missing deprecation hint for %s' % name)

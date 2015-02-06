@@ -4,6 +4,13 @@
 
 "use strict";
 
+///////////////////
+//
+// Whitelisting this test.
+// As part of bug 1077403, the leaking uncaught rejection should be fixed. 
+//
+thisTestLeaksUncaughtRejectionsAndShouldBeFixed("Error: Unknown sheet source");
+
 // Test the links from the computed view to the style editor
 
 const STYLESHEET_URL = "data:text/css,"+encodeURIComponent(
@@ -61,7 +68,7 @@ let test = asyncTest(function*() {
 function* testInlineStyle(view, inspector) {
   info("Testing inline style");
 
-  yield expandComputedViewPropertyByIndex(view, inspector, 0);
+  yield expandComputedViewPropertyByIndex(view, 0);
 
   let onWindow = waitForWindow();
   info("Clicking on the first rule-link in the computed-view");

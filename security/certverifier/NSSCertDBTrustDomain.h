@@ -50,11 +50,13 @@ public:
     FetchOCSPForEV = 3,
     LocalOnlyOCSPForEV = 4,
   };
+
   NSSCertDBTrustDomain(SECTrustType certDBTrustType, OCSPFetching ocspFetching,
                        OCSPCache& ocspCache, void* pinArg,
                        CertVerifier::ocsp_get_config ocspGETConfig,
-          /*optional*/ CERTChainVerifyCallback* checkChainCallback = nullptr,
-          /*optional*/ ScopedCERTCertList* builtChain = nullptr);
+                       CertVerifier::PinningMode pinningMode,
+          /*optional*/ const char* hostname = nullptr,
+      /*optional out*/ ScopedCERTCertList* builtChain = nullptr);
 
   virtual Result FindIssuer(mozilla::pkix::Input encodedIssuerName,
                             IssuerChecker& checker,
@@ -86,8 +88,17 @@ public:
       /*optional*/ const mozilla::pkix::Input* aiaExtension)
                    MOZ_OVERRIDE;
 
-  virtual Result IsChainValid(const mozilla::pkix::DERArray& certChain)
-                              MOZ_OVERRIDE;
+  virtual Result IsChainValid(const mozilla::pkix::DERArray& certChain,
+                              mozilla::pkix::Time time) MOZ_OVERRIDE;
+
+  CertVerifier::OCSPStaplingStatus GetOCSPStaplingStatus() const
+  {
+    return mOCSPStaplingStatus;
+  }
+  void ResetOCSPStaplingStatus()
+  {
+    mOCSPStaplingStatus = CertVerifier::OCSP_STAPLING_NEVER_CHECKED;
+  }
 
 private:
   enum EncodedResponseSource {
@@ -104,8 +115,10 @@ private:
   OCSPCache& mOCSPCache; // non-owning!
   void* mPinArg; // non-owning!
   const CertVerifier::ocsp_get_config mOCSPGetConfig;
-  CERTChainVerifyCallback* mCheckChainCallback; // non-owning!
+  CertVerifier::PinningMode mPinningMode;
+  const char* mHostname; // non-owning - only used for pinning checks
   ScopedCERTCertList* mBuiltChain; // non-owning
+  CertVerifier::OCSPStaplingStatus mOCSPStaplingStatus;
 };
 
 } } // namespace mozilla::psm

@@ -8,7 +8,7 @@
 
 #include "cairo.h"
 #include "gfxTypes.h"
-#include "gfxFont.h"
+#include "gfxTextRun.h"
 
 #include "nsAutoRef.h"
 #include "nsTArray.h"
@@ -17,7 +17,6 @@
 
 class gfxFcFontSet;
 class gfxFcFont;
-class gfxProxyFontEntry;
 typedef struct _FcPattern FcPattern;
 typedef struct FT_FaceRec_* FT_Face;
 typedef struct FT_LibraryRec_  *FT_Library;
@@ -31,23 +30,30 @@ public:
 
     virtual gfxFontGroup *Copy(const gfxFontStyle *aStyle);
 
+    virtual gfxFont* GetFirstValidFont();
+
     virtual gfxFont *GetFontAt(int32_t i);
 
-    virtual void UpdateFontList();
+    virtual void UpdateUserFonts();
 
     virtual already_AddRefed<gfxFont>
-        FindFontForChar(uint32_t aCh, uint32_t aPrevCh, int32_t aRunScript,
-                        gfxFont *aPrevMatchedFont,
+        FindFontForChar(uint32_t aCh, uint32_t aPrevCh, uint32_t aNextCh,
+                        int32_t aRunScript, gfxFont *aPrevMatchedFont,
                         uint8_t *aMatchType);
 
     static void Shutdown();
 
     // Used for @font-face { src: local(); }
-    static gfxFontEntry *NewFontEntry(const gfxProxyFontEntry &aProxyEntry,
-                                      const nsAString &aFullname);
+    static gfxFontEntry *NewFontEntry(const nsAString& aFontName,
+                                      uint16_t aWeight,
+                                      int16_t aStretch,
+                                      bool aItalic);
     // Used for @font-face { src: url(); }
-    static gfxFontEntry *NewFontEntry(const gfxProxyFontEntry &aProxyEntry,
-                                      const uint8_t *aFontData,
+    static gfxFontEntry *NewFontEntry(const nsAString& aFontName,
+                                      uint16_t aWeight,
+                                      int16_t aStretch,
+                                      bool aItalic,
+                                      const uint8_t* aFontData,
                                       uint32_t aLength);
 
 private:

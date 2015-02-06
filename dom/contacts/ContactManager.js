@@ -90,8 +90,9 @@ ContactManager.prototype = {
   },
 
   _convertContact: function(aContact) {
-    let newContact = new this._window.mozContact(aContact.properties);
-    newContact.setMetadata(aContact.id, aContact.published, aContact.updated);
+    let contact = Cu.cloneInto(aContact, this._window);
+    let newContact = new this._window.mozContact(contact.properties);
+    newContact.setMetadata(contact.id, contact.published, contact.updated);
     return newContact;
   },
 
@@ -261,7 +262,7 @@ ContactManager.prototype = {
     }
 
     // Create an array with a single nsIContentPermissionType element.
-    let type = {
+    type = {
       type: "contacts",
       access: access,
       options: [],

@@ -10,7 +10,7 @@
 #include "jsopcode.h"
 
 #include "jit/IonCaches.h"
-#include "jit/IonFrames.h"
+#include "jit/JitFrames.h"
 #include "jit/mips/Assembler-mips.h"
 #include "jit/MoveResolver.h"
 
@@ -295,11 +295,11 @@ class MacroAssemblerMIPS : public Assembler
 
   public:
     // calls an Ion function, assumes that the stack is untouched (8 byte alinged)
-    void ma_callIon(const Register reg);
+    void ma_callJit(const Register reg);
     // callso an Ion function, assuming that sp has already been decremented
-    void ma_callIonNoPush(const Register reg);
+    void ma_callJitNoPush(const Register reg);
     // calls an ion function, assuming that the stack is currently not 8 byte aligned
-    void ma_callIonHalfPush(const Register reg);
+    void ma_callJitHalfPush(const Register reg);
 
     void ma_call(ImmPtr dest);
 
@@ -410,7 +410,7 @@ class MacroAssemblerMIPSCompat : public MacroAssemblerMIPS
         BufferOffset bo = m_buffer.nextOffset();
         addPendingJump(bo, ImmPtr(c->raw()), Relocation::JITCODE);
         ma_liPatchable(ScratchRegister, Imm32((uint32_t)c->raw()));
-        ma_callIonHalfPush(ScratchRegister);
+        ma_callJitHalfPush(ScratchRegister);
     }
     void call(const CallSiteDesc &desc, const Register reg) {
         call(reg);
@@ -516,6 +516,10 @@ class MacroAssemblerMIPSCompat : public MacroAssemblerMIPS
         ma_lw(ScratchRegister, address);
         as_jr(ScratchRegister);
         as_nop();
+    }
+
+    void jump(JitCode *code) {
+        branch(code);
     }
 
     void neg32(Register reg) {
@@ -627,6 +631,10 @@ class MacroAssemblerMIPSCompat : public MacroAssemblerMIPS
     }
     void branch32(Condition cond, const Address &lhs, Imm32 rhs, Label *label) {
         ma_lw(SecondScratchReg, lhs);
+        ma_b(SecondScratchReg, rhs, label, cond);
+    }
+    void branch32(Condition cond, const BaseIndex &lhs, Imm32 rhs, Label *label) {
+        load32(lhs, SecondScratchReg);
         ma_b(SecondScratchReg, rhs, label, cond);
     }
     void branchPtr(Condition cond, const Address &lhs, Register rhs, Label *label) {
@@ -796,6 +804,10 @@ public:
         loadPtr(addr, ScratchRegister);
         ma_b(ScratchRegister, ptr, label, cond);
     }
+    void branchPtr(Condition cond, AbsoluteAddress addr, ImmWord ptr, Label *label) {
+        loadPtr(addr, ScratchRegister);
+        ma_b(ScratchRegister, Imm32(ptr.value), label, cond);
+    }
     void branchPtr(Condition cond, AsmJSAbsoluteAddress addr, Register ptr,
                    Label *label) {
         loadPtr(addr, ScratchRegister);
@@ -839,8 +851,8 @@ public:
         if (s1 == d0) {
             if (s0 == d1) {
                 // If both are, this is just a swap of two registers.
-                JS_ASSERT(d1 != ScratchRegister);
-                JS_ASSERT(d0 != ScratchRegister);
+                MOZ_ASSERT(d1 != ScratchRegister);
+                MOZ_ASSERT(d0 != ScratchRegister);
                 move32(d1, ScratchRegister);
                 move32(d0, d1);
                 move32(ScratchRegister, d0);
@@ -907,8 +919,7 @@ public:
         ma_or(frameSizeReg, frameSizeReg, Imm32(type));
     }
 
-    void handleFailureWithHandler(void *handler);
-    void handleFailureWithHandlerTail();
+    void handleFailureWithHandlerTail(void *handler);
 
     /////////////////////////////////////////////////////////////////
     // Common interface.
@@ -972,9 +983,9 @@ public:
     void callWithExitFrame(JitCode *target);
     void callWithExitFrame(JitCode *target, Register dynStack);
 
-    // Makes an Ion call using the only two methods that it is sane for
+    // Makes a call using the only two methods that it is sane for
     // indep code to make a call
-    void callIon(Register callee);
+    void callJit(Register callee);
     void callIonFromAsmJS(Register callee);
 
     void reserveStack(uint32_t amount);
@@ -1066,6 +1077,16 @@ public:
     void loadPtr(AsmJSAbsoluteAddress address, Register dest);
 
     void loadPrivate(const Address &address, Register dest);
+
+    void loadAlignedInt32x4(const Address &addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void storeAlignedInt32x4(FloatRegister src, Address addr) { MOZ_CRASH("NYI"); }
+    void loadUnalignedInt32x4(const Address &addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void storeUnalignedInt32x4(FloatRegister src, Address addr) { MOZ_CRASH("NYI"); }
+
+    void loadAlignedFloat32x4(const Address &addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void storeAlignedFloat32x4(FloatRegister src, Address addr) { MOZ_CRASH("NYI"); }
+    void loadUnalignedFloat32x4(const Address &addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void storeUnalignedFloat32x4(FloatRegister src, Address addr) { MOZ_CRASH("NYI"); }
 
     void loadDouble(const Address &addr, FloatRegister dest);
     void loadDouble(const BaseIndex &src, FloatRegister dest);
@@ -1243,6 +1264,7 @@ public:
     void callWithABI(void *fun, MoveOp::Type result = MoveOp::GENERAL);
     void callWithABI(AsmJSImmPtr imm, MoveOp::Type result = MoveOp::GENERAL);
     void callWithABI(const Address &fun, MoveOp::Type result = MoveOp::GENERAL);
+    void callWithABI(Register fun, MoveOp::Type result = MoveOp::GENERAL);
 
     CodeOffsetLabel labelForPatch() {
         return CodeOffsetLabel(nextOffset().getOffset());
@@ -1284,6 +1306,10 @@ public:
 
     void loadAsmJSActivation(Register dest) {
         loadPtr(Address(GlobalReg, AsmJSActivationGlobalDataOffset - AsmJSGlobalRegBias), dest);
+    }
+    void loadAsmJSHeapRegisterFromGlobalData() {
+        MOZ_ASSERT(Imm16::IsInSignedRange(AsmJSHeapGlobalDataOffset - AsmJSGlobalRegBias));
+        loadPtr(Address(GlobalReg, AsmJSHeapGlobalDataOffset - AsmJSGlobalRegBias), HeapReg);
     }
 };
 

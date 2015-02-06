@@ -72,7 +72,7 @@ random == img-and-image-1.html img-and-image-1-ref.svg # bug 645267
 # More complex <img> tests
 == img-blobURI-1.html lime100x100-ref.html
 random == img-blobURI-2.html lime100x100-ref.html
-== img-content-outside-viewBox-1.html img-content-outside-viewBox-1-ref.html
+fuzzy-if(d2d,16,10) == img-content-outside-viewBox-1.html img-content-outside-viewBox-1-ref.html # d2d is bug 1074161
 == img-display-none-1.html about:blank
 == img-dyn-1.html img-dyn-1-ref.html
 == img-foreignObject-1.html lime100x100-ref.html
@@ -226,3 +226,19 @@ skip-if(B2G) fuzzy(2,1) == svg-border-image-repaint-1.html svg-border-image-repa
 != image-orientation-ref.html?90   image-orientation-ref.html?90&flip
 != image-orientation-ref.html?180  image-orientation-ref.html?180&flip
 != image-orientation-ref.html?270  image-orientation-ref.html?270&flip
+
+# Tests that nonuniform scales work with SVG-as-image.
+== nonuniform-scale-2d.html?0.5&1.0  nonuniform-scale-ref.html?50&100
+== nonuniform-scale-2d.html?1.0&0.5  nonuniform-scale-ref.html?100&50
+== nonuniform-scale-3d.html?0.5&1.0&0.5  nonuniform-scale-ref.html?50&100
+== nonuniform-scale-3d.html?1.0&0.5&0.5  nonuniform-scale-ref.html?100&50
+
+# Sanity checks that nonuniform scales don't devolve to uniform scales.
+!= nonuniform-scale-2d.html?0.3&1.0  nonuniform-scale-2d.html?0.3&0.3
+!= nonuniform-scale-2d.html?0.3&1.0  nonuniform-scale-2d.html?1.0&1.0
+!= nonuniform-scale-2d.html?1.0&0.3  nonuniform-scale-2d.html?0.3&0.3
+!= nonuniform-scale-2d.html?1.0&0.3  nonuniform-scale-2d.html?1.0&1.0
+!= nonuniform-scale-3d.html?0.3&1.0&0.3  nonuniform-scale-3d.html?0.3&0.3&0.3
+!= nonuniform-scale-3d.html?0.3&1.0&0.3  nonuniform-scale-3d.html?1.0&1.0&1.0
+!= nonuniform-scale-3d.html?1.0&0.3&0.3  nonuniform-scale-3d.html?0.3&0.3&0.3
+!= nonuniform-scale-3d.html?1.0&0.3&0.3  nonuniform-scale-3d.html?1.0&1.0&1.0

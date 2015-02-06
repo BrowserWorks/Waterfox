@@ -26,6 +26,7 @@
   top: 0;
   left: 0;
   right: 0;
+  /* note that .room-invitation-overlay top matches this */
   height: 26px;
 }
 
@@ -79,8 +80,8 @@
 
 .fx-embedded-answer-btn-text {
   vertical-align: bottom;
-  /* don't stretch the button if the localized text is too big */
-  max-width: 80%;
+  /* always leave space for the icon (width and margin) */
+  max-width: calc(100% - .8rem - .2rem);
 }
 
 .fx-embedded-btn-icon-video,
@@ -91,6 +92,7 @@
   height: .8rem;
   background-repeat: no-repeat;
   cursor: pointer;
+  -moz-margin-start: .2rem;
 }
 
 .fx-embedded-btn-icon-video,
@@ -206,7 +208,10 @@
 .standalone .local-stream {
   /* required to have it superimposed to the control toolbar */
   z-index: 1001;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.standalone .room-conversation .local-stream {
+  box-shadow: none;
 }
 
 /* Side by side video elements */
@@ -257,7 +262,7 @@
 }
 
 .call-action-group > .btn {
-  height: 26px;
+  min-height: 26px;
   border-radius: 2px;
   margin: 0 4px;
   min-width: 64px;
@@ -434,19 +439,25 @@
   cursor: pointer;
 }
 
-.feedback label {
+.feedback-category-label {
   display: block;
   line-height: 1.5em;
 }
 
-.feedback form input[type="radio"] {
+.feedback-category-radio {
   margin-right: .5em;
 }
 
-.feedback form button[type="submit"],
-.feedback form input[type="text"] {
+.feedback > form > .btn-success,
+.feedback-description {
   width: 100%;
   margin-top: 14px;
+}
+
+.feedback > form > .btn-success {
+  padding-top: .5em;
+  padding-bottom: .5em;
+  border-radius: 2px;
 }
 
 .feedback .info {
@@ -466,6 +477,21 @@
   height: 28%;
   max-height: 105px;
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.fx-embedded .room-conversation .local-stream {
+  box-shadow: none;
+}
+
+.fx-embedded .local-stream.room-preview {
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+  height: 100%;
+  width: 100%;
+  max-width: none;
+  max-height: none;
 }
 
 .conversation .media.nested .remote {
@@ -491,6 +517,43 @@
   background-color: #4BA6E7;
   background-size: contain;
   background-position: center;
+}
+
+/*
+ * Ensure that the publisher (i.e. local) video is never cropped, so that it's
+ * not possible for someone to be presented with a picture that displays
+ * (for example) a person from the neck up, even though the camera is capturing
+ * and transmitting a picture of that person from the waist up.
+ *
+ * The !importants are necessary to override the SDK attempts to avoid
+ * letterboxing entirely.
+ *
+ * If we could easily use test video streams with the SDK (eg if initPublisher
+ * supported something like a "testMediaToStreamURI" parameter that it would
+ * use to source the stream rather than the output of gUM, it wouldn't be too
+ * hard to generate a video with a 1 pixel border at the edges that one could
+ * at least visually see wasn't being cropped.
+ *
+ * Another less ugly possibility would be to work with Ted Mielczarek to use
+ * the fake camera drivers he has for Linux.
+ */
+.room-conversation .OT_publisher .OT_video-container {
+  height: 100% !important;
+  width: 100% !important;
+  top: 0 !important;
+  left: 0 !important;
+  background-color: transparent; /* avoid visually obvious letterboxing */
+}
+
+.room-conversation .OT_publisher .OT_video-container video {
+  background-color: transparent; /* avoid visually obvious letterboxing */
+}
+
+.fx-embedded .room-conversation .room-preview .OT_publisher .OT_video-container,
+.fx-embedded .room-conversation .room-preview .OT_publisher .OT_video-container video {
+  /* Desktop conversation window room preview local stream actually wants
+     a black background */
+  background-color: #000;
 }
 
 .fx-embedded .media.nested {
@@ -565,18 +628,17 @@
     background-color: rgba(0,0,0,.2)
   }
 
+/* Force full height on all parents up to the video elements
+ * this way we can ensure the aspect ratio and use height 100%
+ * on the video element
+ * */
+html, .fx-embedded, #main,
+.video-layout-wrapper,
+.conversation {
+  height: 100%;
+}
+
 @media screen and (min-width:640px) {
-
-  /* Force full height on all parents up to the video elements
-   * this way we can ensure the aspect ratio and use height 100%
-   * on the video element
-   * */
-  html, body, #main,
-  .video-layout-wrapper,
-  .conversation {
-    height: 100%;
-  }
-
   .standalone .conversation-toolbar {
     position: absolute;
     bottom: 0;
@@ -671,3 +733,219 @@
   }
 }
 
+/**
+ * Rooms
+ */
+
+.room-conversation-wrapper {
+  position: relative;
+  height: 100%;
+}
+
+.room-conversation-wrapper header {
+  background: #000;
+  height: 50px;
+  text-align: left;
+  width: 75%;
+}
+
+.room-conversation-wrapper header h1 {
+  font-size: 1.5em;
+  color: #fff;
+  line-height: 50px;
+  text-indent: 60px;
+  background-image: url("../img/firefox-logo.png");
+  background-size: 30px;
+  background-position: 20px;
+  background-repeat: no-repeat;
+  display: inline-block;
+}
+
+.room-conversation-wrapper header a {
+  float: right;
+}
+
+.room-conversation-wrapper header .icon-help {
+  display: inline-block;
+  background-size: contain;
+  margin-top: 20px;
+  width: 20px;
+  height: 20px;
+  background: transparent url("../img/svg/glyph-help-16x16.svg") no-repeat;
+}
+
+.room-conversation-wrapper footer {
+  background: #000;
+  height: 60px;
+  margin-top: -12px;
+}
+
+.room-conversation-wrapper footer a {
+  color: #555;
+}
+
+.fx-embedded .room-conversation .conversation-toolbar .btn-hangup {
+  background-image: url("../img/icons-16x16.svg#leave");
+}
+
+.room-invitation-overlay {
+  position: absolute;
+  background: rgba(0, 0, 0, .6);
+  /* This matches .fx-embedded .conversation toolbar height */
+  top: 26px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  text-align: center;
+  color: #fff;
+  z-index: 1010;
+}
+
+.room-invitation-overlay form {
+  padding: 6em 0 2em 0;
+}
+
+.room-invitation-overlay textarea {
+  display: block;
+  background: rgba(0, 0, 0, .5);
+  color: #fff;
+  font-family: "Helvetica Neue", Arial, sans;
+  font-size: 1.2em;
+  border: none;
+  border-radius: 3px;
+  padding: .5em;
+  width: 200px;
+  margin: 0 auto;
+  padding: .2em .4em;
+  border-radius: .5em;
+}
+
+.room-invitation-overlay .btn-group {
+  position: absolute;
+  bottom: 10px;
+}
+
+/* Standalone rooms */
+
+.standalone .room-conversation-wrapper {
+  position: relative;
+  height: 100%;
+  background: #000;
+}
+
+.standalone .room-conversation-wrapper .video-layout-wrapper {
+  height: calc(100% - 50px - 60px);
+}
+
+.standalone .room-conversation-wrapper .room-inner-info-area {
+  position: absolute;
+  top: calc(50% - 1em);
+  left: 0;
+  right: 25%;
+  z-index: 1000;
+  margin: 0 auto;
+  padding: 0 1rem;
+  width: 50%;
+  color: #fff;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.standalone .room-conversation-wrapper .room-inner-info-area button {
+  border-radius: 3px;
+  font-size: 1.2em;
+  padding: .2em 1.2em;
+  cursor: pointer;
+}
+
+.standalone .room-conversation-wrapper .room-inner-info-area a.btn {
+  padding: .5em 3em .3em 3em;
+  border-radius: 3px;
+  font-weight: normal;
+  max-width: 400px;
+}
+
+.standalone .room-conversation h2.room-name {
+  position: absolute;
+  display: inline-block;
+  top: 0;
+  right: 0;
+  color: #fff;
+  z-index: 2000000;
+  font-size: 1.2em;
+  padding: .4em;
+}
+
+.standalone .room-conversation .media {
+  background: #000;
+}
+
+.standalone .room-conversation .video_wrapper.remote_wrapper {
+  background-color: #4e4e4e;
+  width: 75%;
+}
+
+.standalone .room-conversation .local-stream {
+  width: 33%;
+  height: 26.5%;
+}
+
+.standalone .room-conversation .conversation-toolbar {
+  background: #000;
+  border: none;
+}
+
+.standalone .room-conversation .conversation-toolbar .btn-hangup-entry {
+  display: block;
+}
+
+.standalone .room-conversation-wrapper .ended-conversation {
+  position: relative;
+  height: auto;
+}
+
+
+@media screen and (max-width:640px) {
+  /* Rooms specific responsive styling */
+  .standalone .room-conversation {
+    background: #000;
+  }
+  .room-conversation-wrapper header {
+    width: 100%;
+  }
+  .standalone .room-conversation-wrapper .room-inner-info-area {
+    right: 0;
+    margin: auto;
+    width: 100%;
+  }
+  .standalone .room-conversation-wrapper .video-layout-wrapper {
+    /* 50px: header's height; 25px: footer's height */
+    height: calc(100% - 50px - 25px);
+  }
+  .standalone .room-conversation .video_wrapper.remote_wrapper {
+    width: 100%;
+  }
+  .standalone .room-conversation .local-stream {
+    /* Assumes 4:3 aspect ratio */
+    width: 180px;
+    height: 135px;
+  }
+  .standalone .conversation-toolbar {
+    height: 38px;
+    padding: 8px;
+  }
+  .standalone .media.nested {
+    /* This forces the remote video stream to fit within wrapper's height */
+    min-height: 0px;
+  }
+  .standalone .room-conversation-wrapper footer {
+    font-size: 80%;
+    height: 25px;
+  }
+  .standalone .room-conversation-wrapper footer p {
+    padding-top: 4px;
+  }
+  .standalone .room-conversation-wrapper footer .footer-logo {
+    display: none;
+  }
+}

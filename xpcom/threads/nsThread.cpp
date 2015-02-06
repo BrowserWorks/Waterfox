@@ -487,6 +487,8 @@ nsThread::InitCurrentThread()
 nsresult
 nsThread::PutEvent(nsIRunnable* aEvent, nsNestedEventTarget* aTarget)
 {
+  nsCOMPtr<nsIThreadObserver> obs;
+
   {
     MutexAutoLock lock(mLock);
     nsChainedEventQueue* queue = aTarget ? aTarget->mQueue : &mEventsRoot;
@@ -495,9 +497,14 @@ nsThread::PutEvent(nsIRunnable* aEvent, nsNestedEventTarget* aTarget)
       return NS_ERROR_UNEXPECTED;
     }
     queue->PutEvent(aEvent);
+
+    // Make sure to grab the observer before dropping the lock, otherwise the
+    // event that we just placed into the queue could run and eventually delete
+    // this nsThread before the calling thread is scheduled again. We would then
+    // crash while trying to access a dead nsThread.
+    obs = mObserver;
   }
 
-  nsCOMPtr<nsIThreadObserver> obs = GetObserver();
   if (obs) {
     obs->OnDispatchedEvent(this);
   }
@@ -720,7 +727,7 @@ nsThread::ProcessNextEvent(bool aMayWait, bool* aResult)
 
   // If we're on the main thread, we shouldn't be dispatching CPOWs.
   MOZ_RELEASE_ASSERT(mIsMainThread != MAIN_THREAD ||
-                     !ipc::ProcessingUrgentMessages());
+                     !ipc::ParentProcessIsBlocked());
 
   if (NS_WARN_IF(PR_GetCurrentThread() != mThread)) {
     return NS_ERROR_NOT_SAME_THREAD;

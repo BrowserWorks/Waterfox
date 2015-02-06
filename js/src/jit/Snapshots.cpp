@@ -9,7 +9,7 @@
 #include "jsscript.h"
 
 #include "jit/CompileInfo.h"
-#include "jit/IonSpewer.h"
+#include "jit/JitSpewer.h"
 #ifdef TRACK_SNAPSHOTS
 # include "jit/LIR.h"
 #endif
@@ -251,7 +251,7 @@ RValueAllocation::layoutFromMode(Mode mode)
       }
     }
 
-    MOZ_ASSUME_UNREACHABLE("Wrong mode type?");
+    MOZ_CRASH("Wrong mode type?");
 }
 
 // Pad serialized RValueAllocations by a multiple of X bytes in the allocation
@@ -401,7 +401,7 @@ ValTypeToString(JSValueType type)
       case JSVAL_TYPE_MAGIC:
         return "magic";
       default:
-        MOZ_ASSUME_UNREACHABLE("no payload");
+        MOZ_CRASH("no payload");
     }
 }
 
@@ -475,7 +475,7 @@ SnapshotReader::SnapshotReader(const uint8_t *snapshots, uint32_t offset,
 {
     if (!snapshots)
         return;
-    IonSpew(IonSpew_Snapshots, "Creating snapshot reader");
+    JitSpew(JitSpew_IonSnapshots, "Creating snapshot reader");
     readSnapshotHeader();
 }
 
@@ -511,7 +511,7 @@ SnapshotReader::readSnapshotHeader()
     bailoutKind_ = BailoutKind((bits & SNAPSHOT_BAILOUTKIND_MASK) >> SNAPSHOT_BAILOUTKIND_SHIFT);
     recoverOffset_ = (bits & SNAPSHOT_ROFFSET_MASK) >> SNAPSHOT_ROFFSET_SHIFT;
 
-    IonSpew(IonSpew_Snapshots, "Read snapshot header with bailout kind %u",
+    JitSpew(JitSpew_IonSnapshots, "Read snapshot header with bailout kind %u",
             bailoutKind_);
 
 #ifdef TRACK_SNAPSHOTS
@@ -533,14 +533,14 @@ SnapshotReader::readTrackSnapshot()
 void
 SnapshotReader::spewBailingFrom() const
 {
-    if (IonSpewEnabled(IonSpew_Bailouts)) {
-        IonSpewHeader(IonSpew_Bailouts);
-        fprintf(IonSpewFile, " bailing from bytecode: %s, MIR: ", js_CodeName[pcOpcode_]);
-        MDefinition::PrintOpcodeName(IonSpewFile, MDefinition::Opcode(mirOpcode_));
-        fprintf(IonSpewFile, " [%u], LIR: ", mirId_);
-        LInstruction::printName(IonSpewFile, LInstruction::Opcode(lirOpcode_));
-        fprintf(IonSpewFile, " [%u]", lirId_);
-        fprintf(IonSpewFile, "\n");
+    if (JitSpewEnabled(JitSpew_IonBailouts)) {
+        JitSpewHeader(JitSpew_IonBailouts);
+        fprintf(JitSpewFile, " bailing from bytecode: %s, MIR: ", js_CodeName[pcOpcode_]);
+        MDefinition::PrintOpcodeName(JitSpewFile, MDefinition::Opcode(mirOpcode_));
+        fprintf(JitSpewFile, " [%u], LIR: ", mirId_);
+        LInstruction::printName(JitSpewFile, LInstruction::Opcode(lirOpcode_));
+        fprintf(JitSpewFile, " [%u]", lirId_);
+        fprintf(JitSpewFile, "\n");
     }
 }
 #endif
@@ -555,7 +555,7 @@ SnapshotReader::readAllocationIndex()
 RValueAllocation
 SnapshotReader::readAllocation()
 {
-    IonSpew(IonSpew_Snapshots, "Reading slot %u", allocRead_);
+    JitSpew(JitSpew_IonSnapshots, "Reading slot %u", allocRead_);
     uint32_t offset = readAllocationIndex() * ALLOCATION_TABLE_ALIGNMENT;
     allocReader_.seek(allocTable_, offset);
     return RValueAllocation::read(allocReader_);
@@ -591,7 +591,7 @@ RecoverReader::readRecoverHeader()
     resumeAfter_ = (bits & RECOVER_RESUMEAFTER_MASK) >> RECOVER_RESUMEAFTER_SHIFT;
     MOZ_ASSERT(numInstructions_);
 
-    IonSpew(IonSpew_Snapshots, "Read recover header with instructionCount %u (ra: %d)",
+    JitSpew(JitSpew_IonSnapshots, "Read recover header with instructionCount %u (ra: %d)",
             numInstructions_, resumeAfter_);
 }
 
@@ -609,11 +609,11 @@ SnapshotWriter::startSnapshot(RecoverOffset recoverOffset, BailoutKind kind)
     lastStart_ = writer_.length();
     allocWritten_ = 0;
 
-    IonSpew(IonSpew_Snapshots, "starting snapshot with recover offset %u, bailout kind %u",
+    JitSpew(JitSpew_IonSnapshots, "starting snapshot with recover offset %u, bailout kind %u",
             recoverOffset, kind);
 
-    JS_ASSERT(uint32_t(kind) < (1 << SNAPSHOT_BAILOUTKIND_BITS));
-    JS_ASSERT(recoverOffset < (1 << SNAPSHOT_ROFFSET_BITS));
+    MOZ_ASSERT(uint32_t(kind) < (1 << SNAPSHOT_BAILOUTKIND_BITS));
+    MOZ_ASSERT(recoverOffset < (1 << SNAPSHOT_ROFFSET_BITS));
     uint32_t bits =
         (uint32_t(kind) << SNAPSHOT_BAILOUTKIND_SHIFT) |
         (recoverOffset << SNAPSHOT_ROFFSET_SHIFT);
@@ -651,11 +651,11 @@ SnapshotWriter::add(const RValueAllocation &alloc)
         offset = p->value();
     }
 
-    if (IonSpewEnabled(IonSpew_Snapshots)) {
-        IonSpewHeader(IonSpew_Snapshots);
-        fprintf(IonSpewFile, "    slot %u (%d): ", allocWritten_, offset);
-        alloc.dump(IonSpewFile);
-        fprintf(IonSpewFile, "\n");
+    if (JitSpewEnabled(JitSpew_IonSnapshots)) {
+        JitSpewHeader(JitSpew_IonSnapshots);
+        fprintf(JitSpewFile, "    slot %u (%d): ", allocWritten_, offset);
+        alloc.dump(JitSpewFile);
+        fprintf(JitSpewFile, "\n");
     }
 
     allocWritten_++;
@@ -671,7 +671,7 @@ SnapshotWriter::endSnapshot()
     writer_.writeSigned(-1);
 #endif
 
-    IonSpew(IonSpew_Snapshots, "ending snapshot total size: %u bytes (start %u)",
+    JitSpew(JitSpew_IonSnapshots, "ending snapshot total size: %u bytes (start %u)",
             uint32_t(writer_.length() - lastStart_), lastStart_);
 }
 
@@ -682,7 +682,7 @@ RecoverWriter::startRecover(uint32_t instructionCount, bool resumeAfter)
     instructionCount_ = instructionCount;
     instructionsWritten_ = 0;
 
-    IonSpew(IonSpew_Snapshots, "starting recover with %u instruction(s)",
+    JitSpew(JitSpew_IonSnapshots, "starting recover with %u instruction(s)",
             instructionCount);
 
     MOZ_ASSERT(!(uint32_t(resumeAfter) &~ RECOVER_RESUMEAFTER_MASK));

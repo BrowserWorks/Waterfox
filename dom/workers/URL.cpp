@@ -5,11 +5,11 @@
 
 #include "URL.h"
 
-#include "nsDOMFile.h"
 #include "nsIDocument.h"
 #include "nsIIOService.h"
 #include "nsPIDOMWindow.h"
 
+#include "mozilla/dom/File.h"
 #include "mozilla/dom/URL.h"
 #include "mozilla/dom/URLBinding.h"
 #include "mozilla/dom/URLSearchParams.h"
@@ -19,7 +19,6 @@
 #include "nsServiceManagerUtils.h"
 #include "nsThreadUtils.h"
 
-#include "File.h"
 #include "WorkerPrivate.h"
 #include "WorkerRunnable.h"
 
@@ -31,7 +30,7 @@ class URLProxy MOZ_FINAL
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(URLProxy)
 
-  URLProxy(mozilla::dom::URL* aURL)
+  explicit URLProxy(mozilla::dom::URL* aURL)
     : mURL(aURL)
   {
     AssertIsOnMainThread();
@@ -67,11 +66,11 @@ private:
 class CreateURLRunnable : public WorkerMainThreadRunnable
 {
 private:
-  DOMFileImpl* mBlobImpl;
+  FileImpl* mBlobImpl;
   nsString& mURL;
 
 public:
-  CreateURLRunnable(WorkerPrivate* aWorkerPrivate, DOMFileImpl* aBlobImpl,
+  CreateURLRunnable(WorkerPrivate* aWorkerPrivate, FileImpl* aBlobImpl,
                     const mozilla::dom::objectURLOptions& aOptions,
                     nsString& aURL)
   : WorkerMainThreadRunnable(aWorkerPrivate),
@@ -265,7 +264,7 @@ public:
 class TeardownURLRunnable : public nsRunnable
 {
 public:
-  TeardownURLRunnable(URLProxy* aURLProxy)
+  explicit TeardownURLRunnable(URLProxy* aURLProxy)
     : mURLProxy(aURLProxy)
   {
   }
@@ -473,7 +472,7 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(URL)
 NS_INTERFACE_MAP_END
 
 // static
-URL*
+already_AddRefed<URL>
 URL::Constructor(const GlobalObject& aGlobal, const nsAString& aUrl,
                  URL& aBase, ErrorResult& aRv)
 {
@@ -493,11 +492,12 @@ URL::Constructor(const GlobalObject& aGlobal, const nsAString& aUrl,
     return nullptr;
   }
 
-  return new URL(workerPrivate, proxy);
+  nsRefPtr<URL> url = new URL(workerPrivate, proxy);
+  return url.forget();
 }
 
 // static
-URL*
+already_AddRefed<URL>
 URL::Constructor(const GlobalObject& aGlobal, const nsAString& aUrl,
                  const nsAString& aBase, ErrorResult& aRv)
 {
@@ -517,7 +517,8 @@ URL::Constructor(const GlobalObject& aGlobal, const nsAString& aUrl,
     return nullptr;
   }
 
-  return new URL(workerPrivate, proxy);
+  nsRefPtr<URL> url = new URL(workerPrivate, proxy);
+  return url.forget();
 }
 
 URL::URL(WorkerPrivate* aWorkerPrivate, URLProxy* aURLProxy)
@@ -846,36 +847,28 @@ URL::CreateObjectURL(const GlobalObject& aGlobal, JSObject* aBlob,
                      const mozilla::dom::objectURLOptions& aOptions,
                      nsString& aResult, mozilla::ErrorResult& aRv)
 {
-  JSContext* cx = aGlobal.Context();
-  WorkerPrivate* workerPrivate = GetWorkerPrivateFromContext(cx);
+  SetDOMStringToNull(aResult);
 
-  nsCOMPtr<nsIDOMBlob> blob = file::GetDOMBlobFromJSObject(aBlob);
-  if (!blob) {
-    SetDOMStringToNull(aResult);
-
-    NS_NAMED_LITERAL_STRING(argStr, "Argument 1 of URL.createObjectURL");
-    NS_NAMED_LITERAL_STRING(blobStr, "Blob");
-    aRv.ThrowTypeError(MSG_DOES_NOT_IMPLEMENT_INTERFACE, &argStr, &blobStr);
-    return;
-  }
-
-  DOMFile* domBlob = static_cast<DOMFile*>(blob.get());
-
-  nsRefPtr<CreateURLRunnable> runnable =
-    new CreateURLRunnable(workerPrivate, domBlob->Impl(), aOptions, aResult);
-
-  if (!runnable->Dispatch(cx)) {
-    JS_ReportPendingException(cx);
-  }
+  NS_NAMED_LITERAL_STRING(argStr, "Argument 1 of URL.createObjectURL");
+  NS_NAMED_LITERAL_STRING(blobStr, "MediaStream");
+  aRv.ThrowTypeError(MSG_DOES_NOT_IMPLEMENT_INTERFACE, &argStr, &blobStr);
 }
 
 // static
 void
-URL::CreateObjectURL(const GlobalObject& aGlobal, JSObject& aBlob,
+URL::CreateObjectURL(const GlobalObject& aGlobal, File& aBlob,
                      const mozilla::dom::objectURLOptions& aOptions,
                      nsString& aResult, mozilla::ErrorResult& aRv)
 {
-  return CreateObjectURL(aGlobal, &aBlob, aOptions, aResult, aRv);
+  JSContext* cx = aGlobal.Context();
+  WorkerPrivate* workerPrivate = GetWorkerPrivateFromContext(cx);
+
+  nsRefPtr<CreateURLRunnable> runnable =
+    new CreateURLRunnable(workerPrivate, aBlob.Impl(), aOptions, aResult);
+
+  if (!runnable->Dispatch(cx)) {
+    JS_ReportPendingException(cx);
+  }
 }
 
 // static

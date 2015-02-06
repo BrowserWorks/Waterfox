@@ -5,8 +5,10 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 BROWSER_CHROME_MANIFESTS += ['test/browser.ini']
-MOCHITEST_CHROME_MANIFESTS += ['test/chrome/chrome.ini']
-XPCSHELL_TESTS_MANIFESTS += ['test/unit/social/xpcshell.ini']
+XPCSHELL_TESTS_MANIFESTS += [
+    'test/unit/social/xpcshell.ini',
+    'test/xpcshell/xpcshell.ini',
+]
 
 EXTRA_JS_MODULES += [
     'BrowserNewTabPreloader.jsm',
@@ -15,7 +17,10 @@ EXTRA_JS_MODULES += [
     'ContentClick.jsm',
     'ContentLinkHandler.jsm',
     'ContentSearch.jsm',
+    'ContentWebRTC.jsm',
     'CustomizationTabPreloader.jsm',
+    'DirectoryLinksProvider.jsm',
+    'E10SUtils.jsm',
     'Feeds.jsm',
     'FormSubmitObserver.jsm',
     'FormValidationHandler.jsm',
@@ -23,7 +28,6 @@ EXTRA_JS_MODULES += [
     'offlineAppCache.jsm',
     'PanelFrame.jsm',
     'RemotePrompt.jsm',
-    'SharedFrame.jsm',
     'SitePermissions.jsm',
     'Social.jsm',
     'TabCrashReporter.jsm',
@@ -44,6 +48,7 @@ if CONFIG['NIGHTLY_BUILD']:
 
 EXTRA_PP_JS_MODULES += [
     'AboutHome.jsm',
+    'PluginContent.jsm',
     'RecentWindow.jsm',
     'UITour.jsm',
     'webrtcUI.jsm',

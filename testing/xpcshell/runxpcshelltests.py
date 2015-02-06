@@ -606,6 +606,25 @@ class XPCShellTestThread(Thread):
 
         completeCmd = cmdH + cmdT + args
 
+        if self.test_object.get('dmd') == 'true':
+            if sys.platform.startswith('linux'):
+                preloadEnvVar = 'LD_PRELOAD'
+                libdmd = os.path.join(self.xrePath, 'libdmd.so')
+            elif sys.platform == 'osx' or sys.platform == 'darwin':
+                preloadEnvVar = 'DYLD_INSERT_LIBRARIES'
+                # self.xrePath is <prefix>/Contents/Resources.
+                # We need <prefix>/Contents/MacOS/libdmd.dylib.
+                contents_dir = os.path.dirname(self.xrePath)
+                libdmd = os.path.join(contents_dir, 'MacOS', 'libdmd.dylib')
+            elif sys.platform == 'win32':
+                preloadEnvVar = 'MOZ_REPLACE_MALLOC_LIB'
+                libdmd = os.path.join(self.xrePath, 'dmd.dll')
+
+            self.env['DMD'] = '--mode=test'
+            self.env['PYTHON'] = sys.executable
+            self.env['BREAKPAD_SYMBOLS_PATH'] = self.symbolsPath
+            self.env[preloadEnvVar] = libdmd
+
         testTimeoutInterval = HARNESS_TIMEOUT
         # Allow a test to request a multiple of the timeout if it is expected to take long
         if 'requesttimeoutfactor' in self.test_object:
@@ -868,8 +887,11 @@ class XPCShellTests(object):
         # Capturing backtraces is very slow on some platforms, and it's
         # disabled by automation.py too
         self.env["NS_TRACE_MALLOC_DISABLE_STACKS"] = "1"
-        # Don't permit remote connections.
-        self.env["MOZ_DISABLE_NONLOCAL_CONNECTIONS"] = "1"
+        # Don't permit remote connections by default.
+        # MOZ_DISABLE_NONLOCAL_CONNECTIONS can be set to "0" to temporarily
+        # enable non-local connections for the purposes of local testing.
+        # Don't override the user's choice here.  See bug 1049688.
+        self.env.setdefault('MOZ_DISABLE_NONLOCAL_CONNECTIONS', '1')
 
     def buildEnvironment(self):
         """
@@ -1260,11 +1282,6 @@ class XPCShellTests(object):
         self.debuggerInfo = None
 
         if debugger:
-            # We need a list of arguments, not a string, to feed into
-            # the debugger
-            if debuggerArgs:
-                debuggerArgs = debuggerArgs.split();
-
             self.debuggerInfo = mozdebug.get_debugger_info(debugger, debuggerArgs, debuggerInteractive)
 
         self.xpcshell = xpcshell

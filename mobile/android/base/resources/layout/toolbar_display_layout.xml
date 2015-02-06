@@ -10,25 +10,28 @@
                  style="@style/UrlBar.ImageButton"
                  android:layout_width="@dimen/browser_toolbar_favicon_size"
                  android:scaleType="fitCenter"
-                 android:paddingLeft="4dip"
                  android:paddingRight="4dip"
                  android:layout_gravity="center_vertical"/>
 
+    <!-- The site security icon is misaligned with the page title so
+         we add a bottom margin to align their bottoms. -->
     <ImageButton android:id="@+id/site_security"
                  style="@style/UrlBar.ImageButton"
-                 android:layout_width="@dimen/browser_toolbar_lock_width"
+                 android:layout_width="@dimen/browser_toolbar_site_security_width"
                  android:scaleType="fitCenter"
-                 android:layout_marginLeft="-4dip"
+                 android:layout_marginRight="4dip"
+                 android:layout_marginBottom="@dimen/site_security_bottom_margin"
                  android:src="@drawable/site_security_level"
                  android:contentDescription="@string/site_security"
                  android:visibility="gone"/>
 
-    <org.mozilla.gecko.widget.ThemedTextView android:id="@+id/url_bar_title"
-                                             style="@style/UrlBar.Title"
-                                             android:layout_width="match_parent"
-                                             android:layout_height="match_parent"
-                                             android:layout_weight="1.0"
-                                             gecko:autoUpdateTheme="false"/>
+    <org.mozilla.gecko.widget.FadedTextView android:id="@+id/url_bar_title"
+                                            style="@style/UrlBar.Title"
+                                            android:layout_width="match_parent"
+                                            android:layout_height="match_parent"
+                                            android:layout_weight="1.0"
+                                            gecko:fadeWidth="40dip"
+                                            gecko:autoUpdateTheme="false"/>
 
     <org.mozilla.gecko.toolbar.PageActionLayout android:id="@+id/page_action_layout"
                                                 android:layout_width="wrap_content"

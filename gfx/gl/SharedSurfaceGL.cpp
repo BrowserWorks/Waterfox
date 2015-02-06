@@ -5,11 +5,11 @@
 
 #include "SharedSurfaceGL.h"
 
-#include "GLContext.h"
 #include "GLBlitHelper.h"
-#include "ScopedGLHelpers.h"
-#include "mozilla/gfx/2D.h"
+#include "GLContext.h"
 #include "GLReadTexImageHelper.h"
+#include "mozilla/gfx/2D.h"
+#include "ScopedGLHelpers.h"
 
 namespace mozilla {
 namespace gl {
@@ -115,6 +115,41 @@ SharedSurface_Basic::Fence()
     mGL->MakeCurrent();
     ScopedBindFramebuffer autoFB(mGL, mFB);
     ReadPixelsIntoDataSurface(mGL, mData);
+}
+
+bool
+SharedSurface_Basic::WaitSync()
+{
+    return true;
+}
+
+bool
+SharedSurface_Basic::PollSync()
+{
+    return true;
+}
+
+void
+SharedSurface_Basic::Fence_ContentThread_Impl()
+{
+}
+
+bool
+SharedSurface_Basic::WaitSync_ContentThread_Impl()
+{
+    mGL->MakeCurrent();
+    ScopedBindFramebuffer autoFB(mGL, mFB);
+    ReadPixelsIntoDataSurface(mGL, mData);
+    return true;
+}
+
+bool
+SharedSurface_Basic::PollSync_ContentThread_Impl()
+{
+    mGL->MakeCurrent();
+    ScopedBindFramebuffer autoFB(mGL, mFB);
+    ReadPixelsIntoDataSurface(mGL, mData);
+    return true;
 }
 
 ////////////////////////////////////////////////////////////////////////

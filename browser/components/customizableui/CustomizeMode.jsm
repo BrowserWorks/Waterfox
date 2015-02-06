@@ -17,6 +17,9 @@ const kPlaceholderClass = "panel-customization-placeholder";
 const kSkipSourceNodePref = "browser.uiCustomization.skipSourceNodeCheck";
 const kToolbarVisibilityBtn = "customization-toolbar-visibility-button";
 const kDrawInTitlebarPref = "browser.tabs.drawInTitlebar";
+const kDeveditionThemePref = "browser.devedition.theme.enabled";
+const kDeveditionButtonPref = "browser.devedition.theme.showCustomizeButton";
+const kDeveditionChangedNotification = "devedition-theme-state-changed";
 const kMaxTransitionDurationMs = 2000;
 
 const kPanelItemContextMenu = "customizationPanelItemContextMenu";
@@ -52,6 +55,7 @@ function CustomizeMode(aWindow) {
   this.window = aWindow;
   this.document = aWindow.document;
   this.browser = aWindow.gBrowser;
+  this.areas = new Set();
 
   // There are two palettes - there's the palette that can be overlayed with
   // toolbar items in browser.xul. This is invisible, and never seen by the
@@ -61,15 +65,20 @@ function CustomizeMode(aWindow) {
   this.paletteEmptyNotice = this.document.getElementById("customization-empty");
   this.paletteSpacer = this.document.getElementById("customization-spacer");
   this.tipPanel = this.document.getElementById("customization-tipPanel");
-  let lwthemeButton = this.document.getElementById("customization-lwtheme-button");
   if (Services.prefs.getCharPref("general.skins.selectedSkin") != "classic/1.0") {
+    let lwthemeButton = this.document.getElementById("customization-lwtheme-button");
+    let deveditionButton = this.document.getElementById("customization-devedition-theme-button");
     lwthemeButton.setAttribute("hidden", "true");
+    deveditionButton.setAttribute("hidden", "true");
   }
 #ifdef CAN_DRAW_IN_TITLEBAR
   this._updateTitlebarButton();
   Services.prefs.addObserver(kDrawInTitlebarPref, this, false);
-  this.window.addEventListener("unload", this);
 #endif
+  this._updateDevEditionThemeButton();
+  Services.prefs.addObserver(kDeveditionButtonPref, this, false);
+  Services.obs.addObserver(this, kDeveditionChangedNotification, false);
+  this.window.addEventListener("unload", this);
 };
 
 CustomizeMode.prototype = {
@@ -104,6 +113,8 @@ CustomizeMode.prototype = {
 #ifdef CAN_DRAW_IN_TITLEBAR
     Services.prefs.removeObserver(kDrawInTitlebarPref, this);
 #endif
+    Services.prefs.removeObserver(kDeveditionButtonPref, this);
+    Services.obs.removeObserver(this, kDeveditionChangedNotification);
   },
 
   toggle: function() {
@@ -227,10 +238,15 @@ CustomizeMode.prototype = {
       customizer.parentNode.selectedPanel = customizer;
       customizer.hidden = false;
 
+      this._wrapToolbarItemSync(CustomizableUI.AREA_TABSTRIP);
+
+      let customizableToolbars = document.querySelectorAll("toolbar[customizable=true]:not([autohide=true]):not([collapsed=true])");
+      for (let toolbar of customizableToolbars)
+        toolbar.setAttribute("customizing", true);
+
       yield this._doTransition(true);
 
       Services.obs.addObserver(this, "lightweight-theme-window-updated", false);
-
 
       // Let everybody in this window know that we're about to customize.
       CustomizableUI.dispatchToolboxEvent("customizationstarting", {}, window);
@@ -257,10 +273,6 @@ CustomizeMode.prototype = {
 
       this._skipSourceNodeCheck = Services.prefs.getPrefType(kSkipSourceNodePref) == Ci.nsIPrefBranch.PREF_BOOL &&
                                   Services.prefs.getBoolPref(kSkipSourceNodePref);
-
-      let customizableToolbars = document.querySelectorAll("toolbar[customizable=true]:not([autohide=true]):not([collapsed=true])");
-      for (let toolbar of customizableToolbars)
-        toolbar.setAttribute("customizing", true);
 
       CustomizableUI.addListener(this);
       window.PanelUI.endBatchUpdate();
@@ -423,7 +435,7 @@ CustomizeMode.prototype = {
       }
 
       // And drop all area references.
-      this.areas = [];
+      this.areas.clear();
 
       // Let everybody in this window know that we're starting to
       // exit customization mode.
@@ -461,6 +473,7 @@ CustomizeMode.prototype = {
         toolbar.removeAttribute("customizing");
 
       this.window.PanelUI.endBatchUpdate();
+      delete this._lastLightWeightTheme;
       this._changed = false;
       this._transitioning = false;
       this._handler.isExitingCustomizeMode = false;
@@ -504,15 +517,15 @@ CustomizeMode.prototype = {
     let deferred = Promise.defer();
     let deck = this.document.getElementById("content-deck");
 
-    let customizeTransitionEnd = function(aEvent) {
+    let customizeTransitionEnd = (aEvent) => {
       if (aEvent != "timedout" &&
           (aEvent.originalTarget != deck || aEvent.propertyName != "margin-left")) {
         return;
       }
       this.window.clearTimeout(catchAllTimeout);
-      // Bug 962677: We let the event loop breathe for before we do the final
-      // stage of the transition to improve perceived performance.
-      this.window.setTimeout(function () {
+      // We request an animation frame to do the final stage of the transition
+      // to improve perceived performance. (bug 962677)
+      this.window.requestAnimationFrame(() => {
         deck.removeEventListener("transitionend", customizeTransitionEnd);
 
         if (!aEntering) {
@@ -525,13 +538,14 @@ CustomizeMode.prototype = {
         CustomizableUI.dispatchToolboxEvent("customization-transitionend", aEntering, this.window);
 
         deferred.resolve();
-      }.bind(this), 0);
-    }.bind(this);
+      });
+    };
     deck.addEventListener("transitionend", customizeTransitionEnd);
 
     if (gDisableAnimation) {
       this.document.getElementById("tab-view-deck").setAttribute("fastcustomizeanimation", true);
     }
+
     if (aEntering) {
       this.document.documentElement.setAttribute("customizing", true);
       this.document.documentElement.setAttribute("customize-entering", true);
@@ -795,15 +809,6 @@ CustomizeMode.prototype = {
     }.bind(this)).then(null, ERROR);
   },
 
-  repopulatePalette: function() {
-    Task.spawn(function* () {
-      // Clear the palette first.
-      yield this.depopulatePalette();
-
-      this.populatePalette();
-    }.bind(this)).then(null, ERROR);
-  },
-
   isCustomizableItem: function(aNode) {
     return aNode.localName == "toolbarbutton" ||
            aNode.localName == "toolbaritem" ||
@@ -822,7 +827,7 @@ CustomizeMode.prototype = {
     dispatchFunction(function() {
       let wrapper = this.wrapToolbarItem(aNode, aPlace);
       deferred.resolve(wrapper);
-    }.bind(this))
+    }.bind(this));
 
     return deferred.promise;
   },
@@ -994,22 +999,47 @@ CustomizeMode.prototype = {
     return toolbarItem;
   },
 
-  _wrapToolbarItems: function() {
-    let window = this.window;
-    // Add drag-and-drop event handlers to all of the customizable areas.
-    return Task.spawn(function() {
-      this.areas = [];
-      for (let area of CustomizableUI.areas) {
-        let target = CustomizableUI.getCustomizeTargetForArea(area, window);
-        this._addDragHandlers(target);
-        for (let child of target.children) {
-          if (this.isCustomizableItem(child)) {
-            yield this.deferredWrapToolbarItem(child, CustomizableUI.getPlaceForItem(child));
-          }
-        }
-        this.areas.push(target);
+  _wrapToolbarItem: function*(aArea) {
+    let target = CustomizableUI.getCustomizeTargetForArea(aArea, this.window);
+    if (!target || this.areas.has(target)) {
+      return null;
+    }
+
+    this._addDragHandlers(target);
+    for (let child of target.children) {
+      if (this.isCustomizableItem(child) && !this.isWrappedToolbarItem(child)) {
+        yield this.deferredWrapToolbarItem(child, CustomizableUI.getPlaceForItem(child)).then(null, ERROR);
       }
-    }.bind(this)).then(null, ERROR);
+    }
+    this.areas.add(target);
+    return target;
+  },
+
+  _wrapToolbarItemSync: function(aArea) {
+    let target = CustomizableUI.getCustomizeTargetForArea(aArea, this.window);
+    if (!target || this.areas.has(target)) {
+      return null;
+    }
+
+    this._addDragHandlers(target);
+    try {
+      for (let child of target.children) {
+        if (this.isCustomizableItem(child) && !this.isWrappedToolbarItem(child)) {
+          this.wrapToolbarItem(child, CustomizableUI.getPlaceForItem(child));
+        }
+      }
+    } catch (ex) {
+      ERROR(ex, ex.stack);
+    }
+
+    this.areas.add(target);
+    return target;
+  },
+
+  _wrapToolbarItems: function*() {
+    for (let area of CustomizableUI.areas) {
+      yield this._wrapToolbarItem(area);
+    }
   },
 
   _addDragHandlers: function(aTarget) {
@@ -1054,6 +1084,7 @@ CustomizeMode.prototype = {
         }
         this._removeDragHandlers(target);
       }
+      this.areas.clear();
     }.bind(this)).then(null, ERROR);
   },
 
@@ -1233,7 +1264,7 @@ CustomizeMode.prototype = {
       this._wrapItemsInArea(aContainer);
       this._addDragHandlers(aContainer);
       DragPositionManager.add(this.window, aArea, aContainer);
-      this.areas.push(aContainer);
+      this.areas.add(aContainer);
     }
   },
 
@@ -1242,8 +1273,7 @@ CustomizeMode.prototype = {
       this._unwrapItemsInArea(aContainer);
       this._removeDragHandlers(aContainer);
       DragPositionManager.remove(this.window, aArea, aContainer);
-      let index = this.areas.indexOf(aContainer);
-      this.areas.splice(index, 1);
+      this.areas.delete(aContainer);
     }
   },
 
@@ -1377,6 +1407,7 @@ CustomizeMode.prototype = {
         element.previousSibling.remove();
       }
     }
+    aEvent.target.removeAttribute("height");
   },
 
   _onUIChange: function() {
@@ -1441,11 +1472,9 @@ CustomizeMode.prototype = {
           this.exit();
         }
         break;
-#ifdef CAN_DRAW_IN_TITLEBAR
       case "unload":
         this.uninit();
         break;
-#endif
     }
   },
 
@@ -1466,6 +1495,13 @@ CustomizeMode.prototype = {
           } else {
             this.updateLWTStyling(aData);
           }
+        }
+        break;
+      case kDeveditionChangedNotification:
+        if (aSubject == this.window) {
+          this._updateDevEditionThemeButton();
+          this._updateResetButton();
+          this._updateUndoResetButton();
         }
         break;
     }
@@ -1491,6 +1527,44 @@ CustomizeMode.prototype = {
     Services.prefs.setBoolPref(kDrawInTitlebarPref, !aShouldShowTitlebar);
   },
 #endif
+
+  _updateDevEditionThemeButton: function() {
+    let button = this.document.getElementById("customization-devedition-theme-button");
+
+    let themeEnabled = !!this.window.DevEdition.styleSheet;
+    if (themeEnabled) {
+      button.setAttribute("checked", "true");
+    } else {
+      button.removeAttribute("checked");
+    }
+
+    let buttonVisible = Services.prefs.getBoolPref(kDeveditionButtonPref);
+    if (buttonVisible) {
+      button.removeAttribute("hidden");
+    } else {
+      button.setAttribute("hidden", "true");
+    }
+  },
+  toggleDevEditionTheme: function() {
+    const DEFAULT_THEME_ID = "{972ce4c6-7e08-4474-a285-3208198ce6fd}";
+    let button = this.document.getElementById("customization-devedition-theme-button");
+    let shouldEnable = button.hasAttribute("checked");
+
+    Services.prefs.setBoolPref(kDeveditionThemePref, shouldEnable);
+    if (LightweightThemeManager.currentTheme && shouldEnable) {
+      this._lastLightWeightTheme = LightweightThemeManager.currentTheme;
+      AddonManager.getAddonByID(DEFAULT_THEME_ID, function(aDefaultTheme) {
+        // Theoretically, this could race if people are /very/ quick in switching
+        // something else here, so doublecheck:
+        if (button.hasAttribute("checked")) {
+          aDefaultTheme.userDisabled = false;
+        }
+      });
+    } else if (!LightweightThemeManager.currentTheme && !shouldEnable &&
+               this._lastLightWeightTheme) {
+      LightweightThemeManager.currentTheme = this._lastLightWeightTheme;
+    }
+  },
 
   _onDragStart: function(aEvent) {
     __dumpDragData(aEvent);

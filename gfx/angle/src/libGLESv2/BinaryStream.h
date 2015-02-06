@@ -12,6 +12,11 @@
 #include "common/angleutils.h"
 #include "common/mathutil.h"
 
+#include <cstddef>
+#include <string>
+#include <vector>
+#include <stdint.h>
+
 namespace gl
 {
 
@@ -22,7 +27,7 @@ class BinaryInputStream
     {
         mError = false;
         mOffset = 0;
-        mData = static_cast<const char*>(data);
+        mData = static_cast<const uint8_t*>(data);
         mLength = length;
     }
 
@@ -81,7 +86,7 @@ class BinaryInputStream
             return;
         }
 
-        v->assign(mData + mOffset, length);
+        v->assign(reinterpret_cast<const char *>(mData) + mOffset, length);
         mOffset += length;
     }
 
@@ -111,11 +116,16 @@ class BinaryInputStream
         return mOffset == mLength;
     }
 
+    const uint8_t *data()
+    {
+        return mData;
+    }
+
   private:
     DISALLOW_COPY_AND_ASSIGN(BinaryInputStream);
     bool mError;
     size_t mOffset;
-    const char *mData;
+    const uint8_t *mData;
     size_t mLength;
 
     template <typename T>
@@ -165,7 +175,7 @@ class BinaryOutputStream
         write(v.c_str(), v.length());
     }
 
-    void writeBytes(unsigned char *bytes, size_t count)
+    void writeBytes(const unsigned char *bytes, size_t count)
     {
         write(bytes, count);
     }

@@ -5,6 +5,7 @@
 
 #include "NativeJSContainer.h"
 #include "AndroidBridge.h"
+#include "js/StructuredClone.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/Vector.h"
 #include "prthread.h"
@@ -361,7 +362,7 @@ public:
         : mEnv(env)
         , mJNIString(str)
         , mJSString(!str ? nullptr :
-            reinterpret_cast<const jschar*>(env->GetStringChars(str, nullptr)))
+            reinterpret_cast<const char16_t*>(env->GetStringChars(str, nullptr)))
     {
     }
     ~JSJNIString() {
@@ -370,7 +371,7 @@ public:
                 reinterpret_cast<const jchar*>(mJSString));
         }
     }
-    operator const jschar*() const {
+    operator const char16_t*() const {
         return mJSString;
     }
     size_t Length() const {
@@ -379,7 +380,7 @@ public:
 private:
     JNIEnv* const mEnv;
     const jstring mJNIString;
-    const jschar* const mJSString;
+    const char16_t* const mJSString;
 };
 
 bool
@@ -415,7 +416,7 @@ CheckProperty(JNIEnv* env, JSContext* cx, JS::HandleValue val) {
 }
 
 bool
-AppendJSON(const jschar* buf, uint32_t len, void* data)
+AppendJSON(const char16_t* buf, uint32_t len, void* data)
 {
     static_cast<nsAutoString*>(data)->Append(buf, len);
     return true;

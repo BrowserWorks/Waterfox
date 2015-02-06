@@ -6,11 +6,14 @@
 #include "nsParentalControlsService.h"
 #include "nsString.h"
 #include "nsIFile.h"
+#include "mozilla/unused.h"
 
 NS_IMPL_ISUPPORTS(nsParentalControlsService, nsIParentalControlsService)
 
-nsParentalControlsService::nsParentalControlsService()
+nsParentalControlsService::nsParentalControlsService() :
+  mEnabled(false)
 {
+  mozilla::unused << mEnabled;
 }
 
 nsParentalControlsService::~nsParentalControlsService()
@@ -57,6 +60,14 @@ NS_IMETHODIMP
 nsParentalControlsService::RequestURIOverrides(nsIArray *aTargets,
                                                nsIInterfaceRequestor *aWindowContext,
                                                bool *_retval)
+{
+  return NS_ERROR_NOT_AVAILABLE;
+}
+
+NS_IMETHODIMP
+nsParentalControlsService::IsAllowed(int16_t aAction,
+                                     nsIURI *aUri,
+                                     bool *_retval)
 {
   return NS_ERROR_NOT_AVAILABLE;
 }

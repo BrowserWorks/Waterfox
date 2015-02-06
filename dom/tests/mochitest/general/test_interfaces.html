@@ -75,6 +75,15 @@ var ecmaGlobals =
     "RegExp",
     "Set",
     {name: "SharedArrayBuffer", nightly: true},
+    {name: "SharedInt8Array", nightly: true},
+    {name: "SharedUint8Array", nightly: true},
+    {name: "SharedUint8ClampedArray", nightly: true},
+    {name: "SharedInt16Array", nightly: true},
+    {name: "SharedUint16Array", nightly: true},
+    {name: "SharedInt32Array", nightly: true},
+    {name: "SharedUint32Array", nightly: true},
+    {name: "SharedFloat32Array", nightly: true},
+    {name: "SharedFloat64Array", nightly: true},
     {name: "SIMD", nightly: true},
     "StopIteration",
     "String",
@@ -118,6 +127,8 @@ var legacyMozPrefixedInterfaces =
 // IMPORTANT: Do not change the list below without review from a DOM peer!
 var interfaceNamesInGlobalScope =
   [
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "MozAbortablePromise", pref: "dom.abortablepromise.enabled"},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "AlarmsManager", pref: "dom.mozAlarms.enabled"},
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -190,11 +201,17 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "CameraCapabilities", b2g: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "CameraConfigurationEvent", b2g: true},
+// IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "CameraControl", b2g: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "CameraDetectedFace", b2g: true, pref: "camera.control.face_detection.enabled"},
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "CameraFacesDetectedEvent", b2g: true, pref: "camera.control.face_detection.enabled"},
+// IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "CameraManager", b2g: true},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "CameraStateChangeEvent", b2g: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "CanvasGradient",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -243,6 +260,8 @@ var interfaceNamesInGlobalScope =
     "CSSConditionRule",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "CSSCounterStyleRule",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "CSSFontFaceLoadEvent", pref: "layout.css.font-loading-api.enabled"},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "CSSFontFaceRule",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -387,6 +406,10 @@ var interfaceNamesInGlobalScope =
     "FocusEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "FormData",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "FontFace", pref: "layout.css.font-loading-api.enabled"},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "FontFaceSet", pref: "layout.css.font-loading-api.enabled"},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "GainNode",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -594,6 +617,10 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "Image",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "ImageCapture", pref: "dom.imagecapture.enabled"},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "ImageCaptureErrorEvent", pref: "dom.imagecapture.enabled"},
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "ImageData",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "InputEvent",
@@ -612,11 +639,23 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "MediaError",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "MediaKeyError", pref: "media.eme.enabled"},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "MediaEncryptedEvent", pref: "media.eme.enabled"},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "MediaKeys", pref: "media.eme.enabled"},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "MediaKeySession", pref: "media.eme.enabled"},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "MediaKeyMessageEvent", pref: "media.eme.enabled"},
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "MediaList",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "MediaQueryList",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "MediaRecorder",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "MediaSource", pref: "media.mediasource.enabled"},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "MediaStream",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -638,8 +677,6 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "MimeTypeArray",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    "ModalContentWindow",
-// IMPORTANT: Do not change this list without review from a DOM peer!
     "MouseEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "MouseScrollEvent",
@@ -649,6 +686,10 @@ var interfaceNamesInGlobalScope =
     {name: "MozCellBroadcast", b2g: true, pref: "dom.cellbroadcast.enabled"},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "MozCellBroadcastEvent", b2g: true, pref: "dom.cellbroadcast.enabled"},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "MozCellBroadcastEtwsInfo", b2g: true, pref: "dom.cellbroadcast.enabled"},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "MozCellBroadcastMessage", b2g: true, pref: "dom.cellbroadcast.enabled"},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "MozClirModeEvent", b2g: true, pref: "dom.mobileconnection.enabled"},
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -660,15 +701,21 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "MozCSSKeyframesRule",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "MozCdmaIccInfo", b2g: true, pref: "dom.icc.enabled"},
+// IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "MozEmergencyCbModeEvent", b2g: true, pref: "dom.mobileconnection.enabled"},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "MozIcc", b2g: true, pref: "dom.icc.enabled"},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "MozIccInfo", b2g: true, pref: "dom.icc.enabled"},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "MozIccManager", b2g: true, pref: "dom.icc.enabled"},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "MozInputContext", b2g: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "MozInputMethodManager", b2g: true},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "MozGsmIccInfo", b2g: true, pref: "dom.icc.enabled"},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "MozMessageDeletedEvent", b2g: true, pref: "dom.sms.enabled"},
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -828,6 +875,10 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "Rect",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "Request", pref: "dom.fetch.enabled"},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "Response", pref: "dom.fetch.enabled"},
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "RGBColor",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "RTCDataChannelEvent", pref: "media.peerconnection.enabled"},
@@ -864,7 +915,9 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "SimpleTest", xbl: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    "SmartCardEvent",
+    {name: "SourceBuffer", pref: "media.mediasource.enabled"},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "SourceBufferList", pref: "media.mediasource.enabled"},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "SpeechSynthesisEvent", b2g: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -1186,13 +1239,13 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "URLSearchParams",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "UserDataHandler", xbl: true},
-// IMPORTANT: Do not change this list without review from a DOM peer!
     "UserProximityEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "USSDReceivedEvent", b2g: true, pref: "dom.mobileconnection.enabled"},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "ValidityState",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "VideoPlaybackQuality", pref: "media.mediasource.enabled"},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "VideoStreamTrack",
 // IMPORTANT: Do not change this list without review from a DOM peer!

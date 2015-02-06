@@ -6,12 +6,11 @@
 
 #include "mozilla/dom/ContentBridgeChild.h"
 #include "mozilla/dom/ContentChild.h"
+#include "mozilla/dom/File.h"
 #include "mozilla/dom/StructuredCloneUtils.h"
 #include "mozilla/dom/TabChild.h"
-#include "mozilla/dom/ipc/Blob.h"
-#include "mozilla/dom/ipc/nsIRemoteBlob.h"
+#include "mozilla/dom/ipc/BlobChild.h"
 #include "mozilla/ipc/InputStreamUtils.h"
-#include "nsDOMFile.h"
 #include "JavaScriptChild.h"
 
 using namespace base;
@@ -99,7 +98,7 @@ ContentBridgeChild::SendPBrowserConstructor(PBrowserChild* aActor,
 // This implementation is identical to ContentChild::GetCPOWManager but we can't
 // move it to nsIContentChild because it calls ManagedPJavaScriptChild() which
 // only exists in PContentChild and PContentBridgeChild.
-jsipc::JavaScriptChild *
+jsipc::JavaScriptShared*
 ContentBridgeChild::GetCPOWManager()
 {
   if (ManagedPJavaScriptChild().Length()) {

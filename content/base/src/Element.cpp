@@ -93,7 +93,6 @@
 #include "nsNodeInfoManager.h"
 #include "nsICategoryManager.h"
 #include "nsIDOMDocumentType.h"
-#include "nsIDOMUserDataHandler.h"
 #include "nsGenericHTMLElement.h"
 #include "nsIEditor.h"
 #include "nsIEditorIMESupport.h"
@@ -431,7 +430,7 @@ Element::WrapObject(JSContext *aCx)
     doc = OwnerDoc();
   }
   else {
-    doc = GetCurrentDoc();
+    doc = GetComposedDoc();
   }
 
   if (!doc) {
@@ -594,7 +593,7 @@ Element::ScrollIntoView()
 void
 Element::ScrollIntoView(bool aTop, const ScrollOptions &aOptions)
 {
-  nsIDocument *document = GetCurrentDoc();
+  nsIDocument *document = GetComposedDoc();
   if (!document) {
     return;
   }
@@ -768,7 +767,7 @@ Element::AddToIdTable(nsIAtom* aId)
     ShadowRoot* containingShadow = GetContainingShadow();
     containingShadow->AddToIdTable(this, aId);
   } else {
-    nsIDocument* doc = GetCurrentDoc();
+    nsIDocument* doc = GetUncomposedDoc();
     if (doc && (!IsInAnonymousSubtree() || doc->IsXUL())) {
       doc->AddToIdTable(this, aId);
     }
@@ -791,7 +790,7 @@ Element::RemoveFromIdTable()
       containingShadow->RemoveFromIdTable(this, id);
     }
   } else {
-    nsIDocument* doc = GetCurrentDoc();
+    nsIDocument* doc = GetUncomposedDoc();
     if (doc && (!IsInAnonymousSubtree() || doc->IsXUL())) {
       doc->RemoveFromIdTable(this, id);
     }
@@ -835,6 +834,13 @@ Element::CreateShadowRoot(ErrorResult& aError)
   SetShadowRoot(shadowRoot);
   if (olderShadow) {
     olderShadow->SetYoungerShadow(shadowRoot);
+
+    // Unbind children of older shadow root because they
+    // are no longer in the composed tree.
+    for (nsIContent* child = olderShadow->GetFirstChild(); child;
+         child = child->GetNextSibling()) {
+      child->UnbindFromTree(true, false);
+    }
   }
 
   // xblBinding takes ownership of docInfo.
@@ -870,8 +876,6 @@ NS_IMPL_CYCLE_COLLECTING_RELEASE(DestinationInsertionPointList)
 DestinationInsertionPointList::DestinationInsertionPointList(Element* aElement)
   : mParent(aElement)
 {
-  SetIsDOMBinding();
-
   nsTArray<nsIContent*>* destPoints = aElement->GetExistingDestInsertionPoints();
   if (destPoints) {
     for (uint32_t i = 0; i < destPoints->Length(); i++) {
@@ -1191,9 +1195,9 @@ Element::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
   NS_PRECONDITION(aParent || aDocument, "Must have document if no parent!");
   NS_PRECONDITION((NODE_FROM(aParent, aDocument)->OwnerDoc() == OwnerDoc()),
                   "Must have the same owner document");
-  NS_PRECONDITION(!aParent || aDocument == aParent->GetCurrentDoc(),
+  NS_PRECONDITION(!aParent || aDocument == aParent->GetUncomposedDoc(),
                   "aDocument must be current doc of aParent");
-  NS_PRECONDITION(!GetCurrentDoc(), "Already have a document.  Unbind first!");
+  NS_PRECONDITION(!GetUncomposedDoc(), "Already have a document.  Unbind first!");
   // Note that as we recurse into the kids, they'll have a non-null parent.  So
   // only assert if our parent is _changing_ while we have a parent.
   NS_PRECONDITION(!GetParent() || aParent == GetParent(),
@@ -1302,7 +1306,17 @@ Element::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
                NODE_NEEDS_FRAME | NODE_DESCENDANTS_NEED_FRAMES |
                // And the restyle bits
                ELEMENT_ALL_RESTYLE_FLAGS);
-  } else if (!IsInShadowTree()) {
+  } else if (IsInShadowTree()) {
+    // We're not in a document, but we did get inserted into a shadow tree.
+    // Since we won't have any restyle data in the document's restyle trackers,
+    // don't let us get inserted with restyle bits set incorrectly.
+    //
+    // Also clear all the other flags that are cleared above when we do get
+    // inserted into a document.
+    UnsetFlags(NODE_FORCE_XBL_BINDINGS |
+               NODE_NEEDS_FRAME | NODE_DESCENDANTS_NEED_FRAMES |
+               ELEMENT_ALL_RESTYLE_FLAGS);
+  } else {
     // If we're not in the doc and not in a shadow tree,
     // update our subtree pointer.
     SetSubtreeRootPointer(aParent->SubtreeRoot());
@@ -1385,10 +1399,22 @@ Element::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
     }
   }
 
+  // Call BindToTree on shadow root children.
+  ShadowRoot* shadowRoot = GetShadowRoot();
+  if (shadowRoot) {
+    for (nsIContent* child = shadowRoot->GetFirstChild(); child;
+         child = child->GetNextSibling()) {
+      rv = child->BindToTree(nullptr, shadowRoot,
+                             shadowRoot->GetBindingParent(),
+                             aCompileEventHandlers);
+      NS_ENSURE_SUCCESS(rv, rv);
+    }
+  }
+
   // XXXbz script execution during binding can trigger some of these
   // postcondition asserts....  But we do want that, since things will
   // generally be quite broken when that happens.
-  NS_POSTCONDITION(aDocument == GetCurrentDoc(), "Bound to wrong document");
+  NS_POSTCONDITION(aDocument == GetUncomposedDoc(), "Bound to wrong document");
   NS_POSTCONDITION(aParent == GetParent(), "Bound to wrong parent");
   NS_POSTCONDITION(aBindingParent == GetBindingParent(),
                    "Bound to wrong binding parent");
@@ -1396,48 +1422,45 @@ Element::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
   return NS_OK;
 }
 
-class RemoveFromBindingManagerRunnable : public nsRunnable {
-public:
-  RemoveFromBindingManagerRunnable(nsBindingManager* aManager,
-                                   Element* aElement,
-                                   nsIDocument* aDoc):
-    mManager(aManager), mElement(aElement), mDoc(aDoc)
-  {}
+RemoveFromBindingManagerRunnable::RemoveFromBindingManagerRunnable(nsBindingManager* aManager,
+                                                                   nsIContent* aContent,
+                                                                   nsIDocument* aDoc):
+  mManager(aManager), mContent(aContent), mDoc(aDoc)
+{}
 
-  NS_IMETHOD Run()
-  {
-    // It may be the case that the element was removed from the
-    // DOM, causing this runnable to be created, then inserted back
-    // into the document before the this runnable had a chance to
-    // tear down the binding. Only tear down the binding if the element
-    // is still no longer in the DOM. nsXBLService::LoadBinding tears
-    // down the old binding if the element is inserted back into the
-    // DOM and loads a different binding.
-    if (!mElement->IsInDoc()) {
-      mManager->RemovedFromDocumentInternal(mElement, mDoc);
-    }
+RemoveFromBindingManagerRunnable::~RemoveFromBindingManagerRunnable() {}
 
-    return NS_OK;
+NS_IMETHODIMP
+RemoveFromBindingManagerRunnable::Run()
+{
+  // It may be the case that the element was removed from the
+  // DOM, causing this runnable to be created, then inserted back
+  // into the document before the this runnable had a chance to
+  // tear down the binding. Only tear down the binding if the element
+  // is still no longer in the DOM. nsXBLService::LoadBinding tears
+  // down the old binding if the element is inserted back into the
+  // DOM and loads a different binding.
+  if (!mContent->IsInComposedDoc()) {
+    mManager->RemovedFromDocumentInternal(mContent, mDoc);
   }
 
-private:
-  nsRefPtr<nsBindingManager> mManager;
-  nsRefPtr<Element> mElement;
-  nsCOMPtr<nsIDocument> mDoc;
-};
+  return NS_OK;
+}
+
 
 void
 Element::UnbindFromTree(bool aDeep, bool aNullParent)
 {
-  NS_PRECONDITION(aDeep || (!GetCurrentDoc() && !GetBindingParent()),
+  NS_PRECONDITION(aDeep || (!GetUncomposedDoc() && !GetBindingParent()),
                   "Shallow unbind won't clear document and binding parent on "
                   "kids!");
 
   RemoveFromIdTable();
 
   // Make sure to unbind this node before doing the kids
-  nsIDocument *document =
-    HasFlag(NODE_FORCE_XBL_BINDINGS) ? OwnerDoc() : GetCurrentDoc();
+  nsIDocument* document =
+    HasFlag(NODE_FORCE_XBL_BINDINGS) || IsInShadowTree() ?
+      OwnerDoc() : GetUncomposedDoc();
 
   if (aNullParent) {
     if (IsFullScreenAncestor()) {
@@ -1463,15 +1486,20 @@ Element::UnbindFromTree(bool aDeep, bool aNullParent)
     SetParentIsContent(false);
   }
   ClearInDocument();
-  UnsetFlags(NODE_IS_IN_SHADOW_TREE);
 
-  // Begin keeping track of our subtree root.
-  SetSubtreeRootPointer(aNullParent ? this : mParent->SubtreeRoot());
+  if (aNullParent || !mParent->IsInShadowTree()) {
+    UnsetFlags(NODE_IS_IN_SHADOW_TREE);
+
+    // Begin keeping track of our subtree root.
+    SetSubtreeRootPointer(aNullParent ? this : mParent->SubtreeRoot());
+  }
 
   if (document) {
     // Notify XBL- & nsIAnonymousContentCreator-generated
     // anonymous content that the document is changing.
-    if (HasFlag(NODE_MAY_BE_IN_BINDING_MNGR)) {
+    // Unlike XBL, bindings for web components shadow DOM
+    // do not get uninstalled.
+    if (HasFlag(NODE_MAY_BE_IN_BINDING_MNGR) && !GetShadowRoot()) {
       nsContentUtils::AddScriptRunner(
         new RemoveFromBindingManagerRunnable(document->BindingManager(), this,
                                              document));
@@ -1515,7 +1543,9 @@ Element::UnbindFromTree(bool aDeep, bool aNullParent)
     if (clearBindingParent) {
       slots->mBindingParent = nullptr;
     }
-    slots->mContainingShadow = nullptr;
+    if (aNullParent || !mParent->IsInShadowTree()) {
+      slots->mContainingShadow = nullptr;
+    }
   }
 
   // This has to be here, rather than in nsGenericHTMLElement::UnbindFromTree, 
@@ -1540,6 +1570,15 @@ Element::UnbindFromTree(bool aDeep, bool aNullParent)
   }
 
   nsNodeUtils::ParentChainChanged(this);
+
+  // Unbind children of shadow root.
+  ShadowRoot* shadowRoot = GetShadowRoot();
+  if (shadowRoot) {
+    for (nsIContent* child = shadowRoot->GetFirstChild(); child;
+         child = child->GetNextSibling()) {
+      child->UnbindFromTree(true, false);
+    }
+  }
 }
 
 nsICSSDeclaration*
@@ -1570,14 +1609,15 @@ Element::SetSMILOverrideStyleRule(css::StyleRule* aStyleRule,
   slots->mSMILOverrideStyleRule = aStyleRule;
 
   if (aNotify) {
-    nsIDocument* doc = GetCurrentDoc();
+    nsIDocument* doc = GetComposedDoc();
     // Only need to request a restyle if we're in a document.  (We might not
     // be in a document, if we're clearing animation effects on a target node
     // that's been detached since the previous animation sample.)
     if (doc) {
       nsCOMPtr<nsIPresShell> shell = doc->GetShell();
       if (shell) {
-        shell->RestyleForAnimation(this, eRestyle_Self);
+        shell->RestyleForAnimation(this,
+          eRestyle_StyleAttribute | eRestyle_ChangeAnimationPhase);
       }
     }
   }
@@ -1987,7 +2027,7 @@ Element::SetAttrAndNotify(int32_t aNamespaceID,
 {
   nsresult rv;
 
-  nsIDocument* document = GetCurrentDoc();
+  nsIDocument* document = GetComposedDoc();
   mozAutoDocUpdate updateBatch(document, UPDATE_CONTENT_MODEL, aNotify);
 
   nsMutationGuard::DidMutate();
@@ -2200,7 +2240,7 @@ Element::UnsetAttr(int32_t aNameSpaceID, nsIAtom* aName,
   nsresult rv = BeforeSetAttr(aNameSpaceID, aName, nullptr, aNotify);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsIDocument *document = GetCurrentDoc();
+  nsIDocument *document = GetComposedDoc();
   mozAutoDocUpdate updateBatch(document, UPDATE_CONTENT_MODEL, aNotify);
 
   if (aNotify) {
@@ -2589,7 +2629,7 @@ Element::PostHandleEventForLinks(EventChainPostVisitor& aVisitor)
             WidgetMouseEvent::eLeftButton) {
         // don't make the link grab the focus if there is no link handler
         nsILinkHandler *handler = aVisitor.mPresContext->GetLinkHandler();
-        nsIDocument *document = GetCurrentDoc();
+        nsIDocument *document = GetComposedDoc();
         if (handler && document) {
           nsIFocusManager* fm = nsFocusManager::GetFocusManager();
           if (fm) {
@@ -2747,6 +2787,33 @@ Element::SetTokenList(nsIAtom* aAtom, nsIVariant* aValue)
   return rv.ErrorCode();
 }
 
+Element*
+Element::Closest(const nsAString& aSelector, ErrorResult& aResult)
+{
+  nsCSSSelectorList* selectorList = ParseSelectorList(aSelector, aResult);
+  if (!selectorList) {
+    // Either we failed (and aResult already has the exception), or this
+    // is a pseudo-element-only selector that matches nothing.
+    return nullptr;
+  }
+  OwnerDoc()->FlushPendingLinkUpdates();
+  TreeMatchContext matchingContext(false,
+                                   nsRuleWalker::eRelevantLinkUnvisited,
+                                   OwnerDoc(),
+                                   TreeMatchContext::eNeverMatchVisited);
+  matchingContext.SetHasSpecifiedScope();
+  matchingContext.AddScopeElement(this);
+  for (nsINode* node = this; node; node = node->GetParentNode()) {
+    if (node->IsElement() &&
+        nsCSSRuleProcessor::SelectorListMatches(node->AsElement(),
+                                                matchingContext,
+                                                selectorList)) {
+      return node->AsElement();
+    }
+  }
+  return nullptr;
+}
+
 bool
 Element::Matches(const nsAString& aSelector, ErrorResult& aError)
 {
@@ -2879,6 +2946,11 @@ Element::MozRequestPointerLock()
 void
 Element::GetAnimationPlayers(nsTArray<nsRefPtr<AnimationPlayer> >& aPlayers)
 {
+  nsIDocument* doc = GetComposedDoc();
+  if (doc) {
+    doc->FlushPendingNotifications(Flush_Style);
+  }
+
   nsIAtom* properties[] = { nsGkAtoms::transitionsProperty,
                             nsGkAtoms::animationsProperty };
   for (size_t propIdx = 0; propIdx < MOZ_ARRAY_LENGTH(properties);
@@ -2893,7 +2965,7 @@ Element::GetAnimationPlayers(nsTArray<nsRefPtr<AnimationPlayer> >& aPlayers)
          playerIdx < collection->mPlayers.Length();
          playerIdx++) {
       AnimationPlayer* player = collection->mPlayers[playerIdx];
-      if (player->IsCurrent()) {
+      if (player->HasCurrentSource() || player->HasInEffectSource()) {
         aPlayers.AppendElement(player);
       }
     }
@@ -3105,6 +3177,50 @@ Element::SetBoolAttr(nsIAtom* aAttr, bool aValue)
   }
 
   return UnsetAttr(kNameSpaceID_None, aAttr, true);
+}
+
+void
+Element::GetEnumAttr(nsIAtom* aAttr,
+                     const char* aDefault,
+                     nsAString& aResult) const
+{
+  GetEnumAttr(aAttr, aDefault, aDefault, aResult);
+}
+
+void
+Element::GetEnumAttr(nsIAtom* aAttr,
+                     const char* aDefaultMissing,
+                     const char* aDefaultInvalid,
+                     nsAString& aResult) const
+{
+  const nsAttrValue* attrVal = mAttrsAndChildren.GetAttr(aAttr);
+
+  aResult.Truncate();
+
+  if (!attrVal) {
+    if (aDefaultMissing) {
+      AppendASCIItoUTF16(nsDependentCString(aDefaultMissing), aResult);
+    } else {
+      SetDOMStringToNull(aResult);
+    }
+  } else {
+    if (attrVal->Type() == nsAttrValue::eEnum) {
+      attrVal->GetEnumString(aResult, true);
+    } else if (aDefaultInvalid) {
+      AppendASCIItoUTF16(nsDependentCString(aDefaultInvalid), aResult);
+    }
+  }
+}
+
+void
+Element::SetOrRemoveNullableStringAttr(nsIAtom* aName, const nsAString& aValue,
+                                       ErrorResult& aError)
+{
+  if (DOMStringIsNull(aValue)) {
+    UnsetAttr(aName, aError);
+  } else {
+    SetAttr(aName, aValue, aError);
+  }
 }
 
 Directionality

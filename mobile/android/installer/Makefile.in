@@ -16,12 +16,12 @@ MOZ_PKG_REMOVALS = $(srcdir)/removed-files.in
 MOZ_PKG_MANIFEST_P = $(srcdir)/package-manifest.in
 
 DEFINES += \
-	-DMOZ_APP_NAME=$(MOZ_APP_NAME) \
-	-DPREF_DIR=$(PREF_DIR) \
-	$(NULL)
-
-DEFINES += -DJAREXT=
-DEFINES += -DMOZ_CHILD_PROCESS_NAME=$(MOZ_CHILD_PROCESS_NAME)
+  -DMOZ_APP_NAME=$(MOZ_APP_NAME) \
+  -DPREF_DIR=$(PREF_DIR) \
+  -DJAREXT= \
+  -DMOZ_CHILD_PROCESS_NAME=$(MOZ_CHILD_PROCESS_NAME) \
+  -DANDROID_CPU_ARCH=$(ANDROID_CPU_ARCH) \
+  $(NULL)
 
 ifdef MOZ_DEBUG
 DEFINES += -DMOZ_DEBUG=1
@@ -34,6 +34,13 @@ endif
 MOZ_PACKAGER_MINIFY=1
 
 include $(topsrcdir)/toolkit/mozapps/installer/packager.mk
+
+# Note that JS_BINARY can be defined in packager.mk, so this test must come
+# after including that file. MOZ_PACKAGER_MINIFY_JS is used in packager.mk, but
+# since recipe evaluation is deferred, we can set it here after the inclusion.
+ifneq (,$(JS_BINARY))
+MOZ_PACKAGER_MINIFY_JS=1
+endif
 
 ifeq (bundle, $(MOZ_FS_LAYOUT))
 BINPATH = $(_BINPATH)

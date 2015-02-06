@@ -401,6 +401,53 @@ loadListener.prototype = {
   onStatus: function (aRequest, aContext, aStatus, aStatusArg) {}
 }
 
+// Hacky method that tries to determine if this user is in a US geography, and
+// using an en-US build.
+function getIsUS() {
+  let geoSpecificDefaults = false;
+  try {
+    geoSpecificDefaults = Services.prefs.getBoolPref("browser.search.geoSpecificDefaults");
+  } catch(e) {}
+
+  let distroID;
+  try {
+    distroID = Services.prefs.getCharPref("distribution.id");
+  } catch (e) {}
+
+  if (!geoSpecificDefaults || distroID) {
+    return false;
+  }
+
+  // If we've set the pref before, just return that result.
+  let cachePref = "browser.search.isUS";
+  try {
+    return Services.prefs.getBoolPref(cachePref);
+  } catch(e) {}
+
+  if (getLocale() != "en-US") {
+    Services.prefs.setBoolPref(cachePref, false);
+    return false;
+  }
+
+  // Timezone assumptions! We assume that if the system clock's timezone is
+  // between Newfoundland and Hawaii, that the user is in North America.
+
+  // This includes all of South America as well, but we have relatively few
+  // en-US users there, so that's OK.
+
+  // 150 minutes = 2.5 hours (UTC-2.5), which is
+  // Newfoundland Daylight Time (http://www.timeanddate.com/time/zones/ndt)
+
+  // 600 minutes = 10 hours (UTC-10), which is
+  // Hawaii-Aleutian Standard Time (http://www.timeanddate.com/time/zones/hast)
+
+  let UTCOffset = (new Date()).getTimezoneOffset();
+  let isNA = UTCOffset >= 150 && UTCOffset <= 600;
+
+  Services.prefs.setBoolPref(cachePref, isNA);
+
+  return isNA;
+}
 
 /**
  * Used to verify a given DOM node's localName and namespaceURI.
@@ -488,7 +535,6 @@ function queryCharsetFromCode(aCode) {
   codes[1284] = "windows-1254";
   codes[1285] = "windows-1255";
   codes[1286] = "windows-1256";
-  codes[1536] = "us-ascii";
   codes[1584] = "GB2312";
   codes[1585] = "gbk";
   codes[1600] = "EUC-KR";
@@ -1787,8 +1833,12 @@ Engine.prototype = {
     let defaultPrefB = Services.prefs.getDefaultBranch(BROWSER_SEARCH_PREF);
     let nsIPLS = Ci.nsIPrefLocalizedString;
     let defaultEngine;
+    let pref = "defaultenginename";
+    if (getIsUS()) {
+      pref += ".US";
+    }
     try {
-      defaultEngine = defaultPrefB.getComplexValue("defaultenginename", nsIPLS).data;
+      defaultEngine = defaultPrefB.getComplexValue(pref, nsIPLS).data;
     } catch (ex) {}
     return this.name == defaultEngine;
   },
@@ -2842,9 +2892,11 @@ Submission.prototype = {
 }
 
 // nsISearchParseSubmissionResult
-function ParseSubmissionResult(aEngine, aTerms) {
+function ParseSubmissionResult(aEngine, aTerms, aTermsOffset, aTermsLength) {
   this._engine = aEngine;
   this._terms = aTerms;
+  this._termsOffset = aTermsOffset;
+  this._termsLength = aTermsLength;
 }
 ParseSubmissionResult.prototype = {
   get engine() {
@@ -2853,11 +2905,17 @@ ParseSubmissionResult.prototype = {
   get terms() {
     return this._terms;
   },
+  get termsOffset() {
+    return this._termsOffset;
+  },
+  get termsLength() {
+    return this._termsLength;
+  },
   QueryInterface: XPCOMUtils.generateQI([Ci.nsISearchParseSubmissionResult]),
 }
 
 const gEmptyParseSubmissionResult =
-      Object.freeze(new ParseSubmissionResult(null, ""));
+      Object.freeze(new ParseSubmissionResult(null, "", -1, 0));
 
 function executeSoon(func) {
   Services.tm.mainThread.dispatch(func, Ci.nsIThread.DISPATCH_NORMAL);
@@ -2992,8 +3050,16 @@ SearchService.prototype = {
     let defaultPrefB = Services.prefs.getDefaultBranch(BROWSER_SEARCH_PREF);
     let nsIPLS = Ci.nsIPrefLocalizedString;
     let defaultEngine;
+
+    let defPref;
+    if (getIsUS()) {
+      defPref = "defaultenginename.US";
+    } else {
+      defPref = "defaultenginename";
+    }
+
     try {
-      defaultEngine = defaultPrefB.getComplexValue("defaultenginename", nsIPLS).data;
+      defaultEngine = defaultPrefB.getComplexValue(defPref, nsIPLS).data;
     } catch (ex) {
       // If the default pref is invalid (e.g. an add-on set it to a bogus value)
       // getEngineByName will just return null, which is the best we can do.
@@ -3772,7 +3838,11 @@ SearchService.prototype = {
       catch (e) { }
 
       while (true) {
-        engineName = getLocalizedPref(BROWSER_SEARCH_PREF + "order." + (++i));
+        prefName = BROWSER_SEARCH_PREF + "order.";
+        if (getIsUS()) {
+          prefName += "US.";
+        }
+        engineName = getLocalizedPref(prefName + (++i));
         if (!engineName)
           break;
 
@@ -3785,16 +3855,23 @@ SearchService.prototype = {
       }
     }
 
-    // Array for the remaining engines, alphabetically sorted
-    var alphaEngines = [];
+    // Array for the remaining engines, alphabetically sorted.
+    let alphaEngines = [];
 
     for each (engine in this._engines) {
       if (!(engine.name in addedEngines))
         alphaEngines.push(this._engines[engine.name]);
     }
-    alphaEngines = alphaEngines.sort(function (a, b) {
-                                       return a.name.localeCompare(b.name);
-                                     });
+
+    let locale = Cc["@mozilla.org/intl/nslocaleservice;1"]
+                   .getService(Ci.nsILocaleService)
+                   .newLocale(getLocale());
+    let collation = Cc["@mozilla.org/intl/collation-factory;1"]
+                      .createInstance(Ci.nsICollationFactory)
+                      .CreateCollation(locale);
+    const strength = Ci.nsICollation.kCollationCaseInsensitiveAscii;
+    let comparator = (a, b) => collation.compareString(strength, a.name, b.name);
+    alphaEngines.sort(comparator);
     return this.__sortedEngines = this.__sortedEngines.concat(alphaEngines);
   },
 
@@ -3863,10 +3940,14 @@ SearchService.prototype = {
     if (observer) {
       this._initObservers.promise.then(
         function onSuccess() {
-          observer.onInitComplete(self._initRV);
+          try {
+            observer.onInitComplete(self._initRV);
+          } catch (e) {
+            Cu.reportError(e);
+          }
         },
         function onError(aReason) {
-          Components.utils.reportError("Internal error while initializing SearchService: " + aReason);
+          Cu.reportError("Internal error while initializing SearchService: " + aReason);
           observer.onInitComplete(Components.results.NS_ERROR_UNEXPECTED);
         }
       );
@@ -3923,7 +4004,12 @@ SearchService.prototype = {
 
     // Now look through the "browser.search.order" branch.
     for (var j = 1; ; j++) {
-      engineName = getLocalizedPref(BROWSER_SEARCH_PREF + "order." + j);
+      var prefName = BROWSER_SEARCH_PREF + "order.";
+      if (getIsUS()) {
+        prefName += "US.";
+      }
+      prefName += j;
+      engineName = getLocalizedPref(prefName);
       if (!engineName)
         break;
 
@@ -4356,6 +4442,23 @@ SearchService.prototype = {
       return gEmptyParseSubmissionResult;
     }
 
+    let length = 0;
+    let offset = aURL.indexOf("?") + 1;
+    let query = aURL.slice(offset);
+    // Iterate a second time over the original input string to determine the
+    // correct search term offset and length in the original encoding.
+    for (let param of query.split("&")) {
+      let equalPos = param.indexOf("=");
+      if (equalPos != -1 &&
+          param.substr(0, equalPos) == mapEntry.termsParameterName) {
+        // This is the parameter we are looking for.
+        offset += equalPos + 1;
+        length = param.length - equalPos - 1;
+        break;
+      }
+      offset += param.length + 1;
+    }
+
     // Decode the terms using the charset defined in the search engine.
     let terms;
     try {
@@ -4370,7 +4473,7 @@ SearchService.prototype = {
     }
 
     LOG("Match found. Terms: " + terms);
-    return new ParseSubmissionResult(mapEntry.engine, terms);
+    return new ParseSubmissionResult(mapEntry.engine, terms, offset, length);
   },
 
   // nsIObserver

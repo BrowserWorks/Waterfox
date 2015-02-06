@@ -27,7 +27,7 @@ XDRBuffer::freeBuffer()
 bool
 XDRBuffer::grow(size_t n)
 {
-    JS_ASSERT(n > size_t(limit - cursor));
+    MOZ_ASSERT(n > size_t(limit - cursor));
 
     const size_t MEM_BLOCK = 8192;
     size_t offset = cursor - base;
@@ -67,9 +67,9 @@ XDRState<mode>::codeChars(const Latin1Char *chars, size_t nchars)
 
 template<XDRMode mode>
 bool
-XDRState<mode>::codeChars(jschar *chars, size_t nchars)
+XDRState<mode>::codeChars(char16_t *chars, size_t nchars)
 {
-    size_t nbytes = nchars * sizeof(jschar);
+    size_t nbytes = nchars * sizeof(char16_t);
     if (mode == XDR_ENCODE) {
         uint8_t *ptr = buf.write(nbytes);
         if (!ptr)
@@ -104,7 +104,7 @@ VersionCheck(XDRState<mode> *xdr)
 
 template<XDRMode mode>
 bool
-XDRState<mode>::codeFunction(MutableHandleObject objp)
+XDRState<mode>::codeFunction(MutableHandleFunction objp)
 {
     if (mode == XDR_DECODE)
         objp.set(nullptr);
@@ -138,12 +138,10 @@ XDRState<mode>::codeConstValue(MutableHandleValue vp)
     return XDRScriptConst(this, vp);
 }
 
-XDRDecoder::XDRDecoder(JSContext *cx, const void *data, uint32_t length,
-                       JSPrincipals *originPrincipals)
+XDRDecoder::XDRDecoder(JSContext *cx, const void *data, uint32_t length)
   : XDRState<XDR_DECODE>(cx)
 {
     buf.setData(data, length);
-    this->originPrincipals_ = originPrincipals;
 }
 
 template class js::XDRState<XDR_ENCODE>;

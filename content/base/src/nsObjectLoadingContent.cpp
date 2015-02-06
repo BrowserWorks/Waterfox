@@ -68,7 +68,7 @@
 #include "nsIChannelPolicy.h"
 #include "nsChannelPolicy.h"
 #include "GeckoProfiler.h"
-#include "nsObjectFrame.h"
+#include "nsPluginFrame.h"
 #include "nsDOMClassInfo.h"
 #include "nsWrapperCacheInlines.h"
 #include "nsDOMJSUtils.h"
@@ -209,9 +209,9 @@ CheckPluginStopEvent::Run()
   // In an active document, but still no frame. Flush layout to see if we can
   // regain a frame now.
   LOG(("OBJLC [%p]: CheckPluginStopEvent - No frame, flushing layout", this));
-  nsIDocument* currentDoc = content->GetCurrentDoc();
-  if (currentDoc) {
-    currentDoc->FlushPendingNotifications(Flush_Layout);
+  nsIDocument* composedDoc = content->GetComposedDoc();
+  if (composedDoc) {
+    composedDoc->FlushPendingNotifications(Flush_Layout);
     if (objLC->mPendingCheckPluginStopEvent != this) {
       LOG(("OBJLC [%p]: CheckPluginStopEvent - superseded in layout flush",
            this));
@@ -239,7 +239,7 @@ class nsSimplePluginEvent : public nsRunnable {
 public:
   nsSimplePluginEvent(nsIContent* aTarget, const nsAString &aEvent)
     : mTarget(aTarget)
-    , mDocument(aTarget->GetCurrentDoc())
+    , mDocument(aTarget->GetComposedDoc())
     , mEvent(aEvent)
   {
     MOZ_ASSERT(aTarget && mDocument);
@@ -661,7 +661,7 @@ nsObjectLoadingContent::IsSupportedDocument(const nsCString& aMimeType)
   }
 
   nsCOMPtr<nsIWebNavigation> webNav;
-  nsIDocument* currentDoc = thisContent->GetCurrentDoc();
+  nsIDocument* currentDoc = thisContent->GetComposedDoc();
   if (currentDoc) {
     webNav = do_GetInterface(currentDoc->GetWindow());
   }
@@ -730,7 +730,7 @@ nsObjectLoadingContent::UnbindFromTree(bool aDeep, bool aNullParent)
     ///             would keep the docshell around, but trash the frameloader
     UnloadObject();
   }
-  nsIDocument* doc = thisContent->GetCurrentDoc();
+  nsIDocument* doc = thisContent->GetComposedDoc();
   if (doc && doc->IsActive()) {
     nsCOMPtr<nsIRunnable> ev = new nsSimplePluginEvent(doc,
                                                        NS_LITERAL_STRING("PluginRemoved"));
@@ -786,7 +786,7 @@ nsObjectLoadingContent::InstantiatePluginInstance(bool aIsLoading)
   nsCOMPtr<nsIContent> thisContent =
     do_QueryInterface(static_cast<nsIImageLoadingContent *>(this));
 
-  nsCOMPtr<nsIDocument> doc = thisContent->GetCurrentDoc();
+  nsCOMPtr<nsIDocument> doc = thisContent->GetComposedDoc();
   if (!doc || !InActiveDocument(thisContent)) {
     NS_ERROR("Shouldn't be calling "
              "InstantiatePluginInstance without an active document");
@@ -860,7 +860,7 @@ nsObjectLoadingContent::InstantiatePluginInstance(bool aIsLoading)
   // dangling. (Bug 854082)
   nsIFrame* frame = thisContent->GetPrimaryFrame();
   if (frame && mInstanceOwner) {
-    mInstanceOwner->SetFrame(static_cast<nsObjectFrame*>(frame));
+    mInstanceOwner->SetFrame(static_cast<nsPluginFrame*>(frame));
 
     // Bug 870216 - Adobe Reader renders with incorrect dimensions until it gets
     // a second SetWindow call. This is otherwise redundant.
@@ -1178,8 +1178,8 @@ nsObjectLoadingContent::OnStopRequest(nsIRequest *aRequest,
   if (aStatusCode == NS_ERROR_TRACKING_URI) {
     nsCOMPtr<nsIContent> thisNode =
       do_QueryInterface(static_cast<nsIObjectLoadingContent*>(this));
-    if (thisNode) {
-      thisNode->GetCurrentDoc()->AddBlockedTrackingNode(thisNode);
+    if (thisNode && thisNode->IsInComposedDoc()) {
+      thisNode->GetComposedDoc()->AddBlockedTrackingNode(thisNode);
     }
   }
 
@@ -1296,7 +1296,7 @@ nsObjectLoadingContent::HasNewFrame(nsIObjectFrame* aFrame)
 
   // Otherwise, we're just changing frames
   // Set up relationship between instance owner and frame.
-  nsObjectFrame *objFrame = static_cast<nsObjectFrame*>(aFrame);
+  nsPluginFrame *objFrame = static_cast<nsPluginFrame*>(aFrame);
   mInstanceOwner->SetFrame(objFrame);
 
   return NS_OK;
@@ -2503,10 +2503,31 @@ nsObjectLoadingContent::OpenChannel()
   }
   nsRefPtr<ObjectInterfaceRequestorShim> shim =
     new ObjectInterfaceRequestorShim(this);
-  rv = NS_NewChannel(getter_AddRefs(chan), mURI, nullptr, group, shim,
+
+  bool isSandBoxed = doc->GetSandboxFlags() & SANDBOXED_ORIGIN;
+  bool inherit = nsContentUtils::ChannelShouldInheritPrincipal(thisContent->NodePrincipal(),
+                                                               mURI,
+                                                               true,   // aInheritForAboutBlank
+                                                               false); // aForceInherit
+  nsSecurityFlags securityFlags = nsILoadInfo::SEC_NORMAL;
+  if (inherit) {
+    securityFlags |= nsILoadInfo::SEC_FORCE_INHERIT_PRINCIPAL;
+  }
+  if (isSandBoxed) {
+    securityFlags |= nsILoadInfo::SEC_SANDBOXED;
+  }
+
+  rv = NS_NewChannel(getter_AddRefs(chan),
+                     mURI,
+                     thisContent,
+                     securityFlags,
+                     nsIContentPolicy::TYPE_OBJECT,
+                     channelPolicy,
+                     group, // aLoadGroup
+                     shim,  // aCallbacks
                      nsIChannel::LOAD_CALL_CONTENT_SNIFFERS |
-                     nsIChannel::LOAD_CLASSIFY_URI,
-                     channelPolicy);
+                     nsIChannel::LOAD_CLASSIFY_URI);
+
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Referrer
@@ -2520,14 +2541,6 @@ nsObjectLoadingContent::OpenChannel()
       timedChannel->SetInitiatorType(thisContent->LocalName());
     }
   }
-
-  // Set up the channel's principal and such, like nsDocShell::DoURILoad does.
-  // If the content being loaded should be sandboxed with respect to origin we
-  // tell SetUpChannelOwner that.
-  nsContentUtils::SetUpChannelOwner(thisContent->NodePrincipal(), chan, mURI,
-                                    true,
-                                    doc->GetSandboxFlags() & SANDBOXED_ORIGIN,
-                                    false);
 
   nsCOMPtr<nsIScriptChannel> scriptChannel = do_QueryInterface(chan);
   if (scriptChannel) {
@@ -2647,7 +2660,7 @@ nsObjectLoadingContent::NotifyStateChanged(ObjectType aOldType,
     return;
   }
 
-  nsIDocument* doc = thisContent->GetCurrentDoc();
+  nsIDocument* doc = thisContent->GetComposedDoc();
   if (!doc) {
     return; // Nothing to do
   }
@@ -2705,13 +2718,13 @@ nsObjectLoadingContent::GetTypeOfContent(const nsCString& aMIMEType)
   return eType_Null;
 }
 
-nsObjectFrame*
+nsPluginFrame*
 nsObjectLoadingContent::GetExistingFrame()
 {
   nsCOMPtr<nsIContent> thisContent = do_QueryInterface(static_cast<nsIImageLoadingContent*>(this));
   nsIFrame* frame = thisContent->GetPrimaryFrame();
   nsIObjectFrame* objFrame = do_QueryFrame(frame);
-  return static_cast<nsObjectFrame*>(objFrame);
+  return static_cast<nsPluginFrame*>(objFrame);
 }
 
 void
@@ -3336,7 +3349,7 @@ nsObjectLoadingContent::GetContentDocument()
     return nullptr;
   }
 
-  // XXXbz should this use GetCurrentDoc()?  sXBL/XBL2 issue!
+  // XXXbz should this use GetComposedDoc()?  sXBL/XBL2 issue!
   nsIDocument *sub_doc = thisContent->OwnerDoc()->GetSubDocumentFor(thisContent);
   if (!sub_doc) {
     return nullptr;
@@ -3438,9 +3451,6 @@ void
 nsObjectLoadingContent::SetupProtoChain(JSContext* aCx,
                                         JS::Handle<JSObject*> aObject)
 {
-  MOZ_ASSERT(nsCOMPtr<nsIContent>(do_QueryInterface(
-    static_cast<nsIObjectLoadingContent*>(this)))->IsDOMBinding());
-
   if (mType != eType_Plugin) {
     return;
   }
@@ -3563,7 +3573,7 @@ nsObjectLoadingContent::GetPluginJSObject(JSContext *cx,
                                           JS::MutableHandle<JSObject*> plugin_proto)
 {
   // NB: We need an AutoEnterCompartment because we can be called from
-  // nsObjectFrame when the plugin loads after the JS object for our content
+  // nsPluginFrame when the plugin loads after the JS object for our content
   // node has been created.
   JSAutoCompartment ac(cx, obj);
 
@@ -3604,9 +3614,9 @@ nsObjectLoadingContent::TeardownProtoChain()
     if (!proto) {
       break;
     }
-    // Unwrap while checking the jsclass - if the prototype is a wrapper for
+    // Unwrap while checking the class - if the prototype is a wrapper for
     // an NP object, that counts too.
-    if (JS_GetClass(js::UncheckedUnwrap(proto)) == &sNPObjectJSWrapperClass) {
+    if (nsNPObjWrapper::IsWrapper(js::UncheckedUnwrap(proto))) {
       // We found an NPObject on the proto chain, get its prototype...
       if (!::JS_GetPrototype(cx, proto, &proto)) {
         return;

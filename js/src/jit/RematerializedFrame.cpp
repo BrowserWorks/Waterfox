@@ -5,12 +5,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "jit/RematerializedFrame.h"
-#include "jit/IonFrames.h"
 
+#include "jit/JitFrames.h"
 #include "vm/ArgumentsObject.h"
 
 #include "jsscriptinlines.h"
-#include "jit/IonFrames-inl.h"
+#include "jit/JitFrames-inl.h"
 
 using namespace js;
 using namespace jit;
@@ -38,9 +38,10 @@ RematerializedFrame::RematerializedFrame(ThreadSafeContext *cx, uint8_t *top,
     script_(iter.script())
 {
     CopyValueToRematerializedFrame op(slots_);
+    MaybeReadFallback fallback(MagicValue(JS_OPTIMIZED_OUT));
     iter.readFrameArgsAndLocals(cx, op, op, &scopeChain_, &returnValue_,
                                 &argsObj_, &thisValue_, ReadFrame_Actuals,
-                                MagicValue(JS_OPTIMIZED_OUT), /* silentFailure = */ true);
+                                fallback);
 }
 
 /* static */ RematerializedFrame *
@@ -102,7 +103,7 @@ RematerializedFrame::MarkInVector(JSTracer *trc, Vector<RematerializedFrame *> &
 CallObject &
 RematerializedFrame::callObj() const
 {
-    JS_ASSERT(hasCallObj());
+    MOZ_ASSERT(hasCallObj());
 
     JSObject *scope = scopeChain();
     while (!scope->is<CallObject>())

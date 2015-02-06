@@ -135,6 +135,11 @@ namespace jit {
     _(JSOP_SETLOCAL)           \
     _(JSOP_GETARG)             \
     _(JSOP_SETARG)             \
+    _(JSOP_CHECKLEXICAL)       \
+    _(JSOP_INITLEXICAL)        \
+    _(JSOP_CHECKALIASEDLEXICAL) \
+    _(JSOP_INITALIASEDLEXICAL) \
+    _(JSOP_UNINITIALIZED)      \
     _(JSOP_CALL)               \
     _(JSOP_FUNCALL)            \
     _(JSOP_FUNAPPLY)           \
@@ -149,6 +154,7 @@ namespace jit {
     _(JSOP_TYPEOFEXPR)         \
     _(JSOP_SETCALL)            \
     _(JSOP_THROW)              \
+    _(JSOP_THROWING)           \
     _(JSOP_TRY)                \
     _(JSOP_FINALLY)            \
     _(JSOP_GOSUB)              \
@@ -165,7 +171,7 @@ namespace jit {
     _(JSOP_TABLESWITCH)        \
     _(JSOP_ITER)               \
     _(JSOP_MOREITER)           \
-    _(JSOP_ITERNEXT)           \
+    _(JSOP_ISNOITER)           \
     _(JSOP_ENDITER)            \
     _(JSOP_CALLEE)             \
     _(JSOP_SETRVAL)            \
@@ -214,6 +220,7 @@ class BaselineCompiler : public BaselineCompilerSpecific
   private:
     MethodStatus emitBody();
 
+    void emitInitializeLocals(size_t n, const Value &v);
     bool emitPrologue();
     bool emitEpilogue();
 #ifdef JSGC_GENERATIONAL
@@ -229,7 +236,7 @@ class BaselineCompiler : public BaselineCompilerSpecific
 
     bool emitStackCheck(bool earlyCheck=false);
     bool emitInterruptCheck();
-    bool emitUseCountIncrement(bool allowOsr=true);
+    bool emitWarmUpCounterIncrement(bool allowOsr=true);
     bool emitArgumentTypeChecks();
     bool emitDebugPrologue();
     bool emitDebugTrap();
@@ -266,6 +273,8 @@ class BaselineCompiler : public BaselineCompilerSpecific
     bool emitInitElemGetterSetter();
 
     bool emitFormalArgAccess(uint32_t arg, bool get);
+
+    bool emitUninitializedLexicalCheck(const ValueOperand &val);
 
     bool addPCMappingEntry(bool addIndexEntry);
 

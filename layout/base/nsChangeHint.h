@@ -9,6 +9,7 @@
 #define nsChangeHint_h___
 
 #include "nsDebug.h"
+#include "mozilla/Types.h"
 
 // Defines for various style related constants
 
@@ -133,10 +134,27 @@ enum nsChangeHint {
    * This will schedule an invalidating paint. This is useful if something
    * has changed which will be invalidated by DLBI.
    */
-  nsChangeHint_SchedulePaint = 0x80000
+  nsChangeHint_SchedulePaint = 0x80000,
+
+  /**
+   * A hint reflecting that style data changed with no change handling
+   * behavior.  We need to return this, rather than NS_STYLE_HINT_NONE,
+   * so that certain optimizations that manipulate the style context tree are
+   * correct.
+   *
+   * nsChangeHint_NeutralChange must be returned by CalcDifference on a given
+   * style struct if the data in the style structs are meaningfully different
+   * and if no other change hints are returned.  If any other change hints are
+   * set, then nsChangeHint_NeutralChange need not also be included, but it is
+   * safe to do so.  (An example of style structs having non-meaningfully
+   * different data would be cached information that would be re-calculated
+   * to the same values, such as nsStyleBorder::mSubImages.)
+   */
+  nsChangeHint_NeutralChange = 0x100000
 
   // IMPORTANT NOTE: When adding new hints, consider whether you need to
-  // add them to NS_HintsNotHandledForDescendantsIn() below.
+  // add them to NS_HintsNotHandledForDescendantsIn() below.  Please also
+  // add them to RestyleManager::ChangeHintToString.
 };
 
 // Redefine these operators to return nothing. This will catch any use
@@ -250,6 +268,19 @@ inline nsChangeHint NS_HintsNotHandledForDescendantsIn(nsChangeHint aChangeHint)
  * |nsRestyleHint| is a bitfield for the result of
  * |HasStateDependentStyle| and |HasAttributeDependentStyle|.  When no
  * restyling is necessary, use |nsRestyleHint(0)|.
+ *
+ * Without eRestyle_Force or eRestyle_ForceDescendants, the restyling process
+ * can stop processing at a frame when it detects no style changes and it is
+ * known that the styles of the subtree beneath it will not change, leaving
+ * the old style context on the frame.  eRestyle_Force can be used to skip this
+ * optimization on a frame, and to force its new style context to be used.
+ *
+ * Similarly, eRestyle_ForceDescendants will cause the frame and all of its
+ * descendants to be traversed and for the new style contexts that are created
+ * to be set on the frames.
+ *
+ * NOTE: When adding new restyle hints, please also add them to
+ * RestyleManager::RestyleHintToString.
  */
 enum nsRestyleHint {
   // Rerun selector matching on the element.  If a new style context
@@ -259,6 +290,9 @@ enum nsRestyleHint {
   eRestyle_Self = (1<<0),
 
   // Rerun selector matching on the element and all of its descendants.
+  // (Implies eRestyle_ForceDescendants, which ensures that we continue
+  // the restyling process for all descendants, but doesn't cause
+  // selector matching.)
   eRestyle_Subtree = (1<<1),
 
   // Rerun selector matching on all later siblings of the element and
@@ -278,7 +312,89 @@ enum nsRestyleHint {
   // eRestyle_Subtree is also set, since those imply a superset of the
   // work.)
   eRestyle_CSSAnimations = (1<<4),
+
+  // Replace the style data coming from SVG animations (SMIL Animations)
+  // without updating any other style data.  If a new style context
+  // results, update style contexts on the descendants.  (Irrelevant if
+  // eRestyle_Self or eRestyle_Subtree is also set, since those imply a
+  // superset of the work.)
+  eRestyle_SVGAttrAnimations = (1<<5),
+
+  // Replace the style data coming from inline style without updating
+  // any other style data.  If a new style context results, update style
+  // contexts on the descendants.  (Irrelevant if eRestyle_Self or
+  // eRestyle_Subtree is also set, since those imply a superset of the
+  // work.)  Supported only for element style contexts and not for
+  // pseudo-elements or anonymous boxes, on which it converts to
+  // eRestyle_Self.
+  eRestyle_StyleAttribute = (1<<6),
+
+  // Additional restyle hint to be used along with CSSTransitions,
+  // CSSAnimations, SVGAttrAnimations, or StyleAttribute.  This
+  // indicates that along with the replacement given, appropriate
+  // switching between the style with animation and style without
+  // animation should be performed by adding or removing rules that
+  // should be present only in the style with animation.
+  // This is implied by eRestyle_Self or eRestyle_Subtree.
+  // FIXME: Remove this as part of bug 960465.
+  eRestyle_ChangeAnimationPhase = (1 << 7),
+
+  // Same as the previous, except this applies to the entire subtree.
+  // FIXME: Remove this as part of bug 960465.
+  eRestyle_ChangeAnimationPhaseDescendants = (1 << 8),
+
+  // Continue the restyling process to the current frame's children even
+  // if this frame's restyling resulted in no style changes.
+  eRestyle_Force = (1<<9),
+
+  // Continue the restyling process to all of the current frame's
+  // descendants, even if any frame's restyling resulted in no style
+  // changes.  (Implies eRestyle_Force.)  Note that this is weaker than
+  // eRestyle_Subtree, which makes us rerun selector matching on all
+  // descendants rather than just continuing the restyling process.
+  eRestyle_ForceDescendants = (1<<10),
 };
 
+// The functions below need an integral type to cast to to avoid
+// infinite recursion.
+typedef decltype(nsRestyleHint(0) + nsRestyleHint(0)) nsRestyleHint_size_t;
+
+inline nsRestyleHint operator|(nsRestyleHint aLeft, nsRestyleHint aRight)
+{
+  return nsRestyleHint(nsRestyleHint_size_t(aLeft) |
+                       nsRestyleHint_size_t(aRight));
+}
+
+inline nsRestyleHint operator&(nsRestyleHint aLeft, nsRestyleHint aRight)
+{
+  return nsRestyleHint(nsRestyleHint_size_t(aLeft) &
+                       nsRestyleHint_size_t(aRight));
+}
+
+inline nsRestyleHint& operator|=(nsRestyleHint& aLeft, nsRestyleHint aRight)
+{
+  return aLeft = aLeft | aRight;
+}
+
+inline nsRestyleHint& operator&=(nsRestyleHint& aLeft, nsRestyleHint aRight)
+{
+  return aLeft = aLeft & aRight;
+}
+
+inline nsRestyleHint operator~(nsRestyleHint aArg)
+{
+  return nsRestyleHint(~nsRestyleHint_size_t(aArg));
+}
+
+inline nsRestyleHint operator^(nsRestyleHint aLeft, nsRestyleHint aRight)
+{
+  return nsRestyleHint(nsRestyleHint_size_t(aLeft) ^
+                       nsRestyleHint_size_t(aRight));
+}
+
+inline nsRestyleHint operator^=(nsRestyleHint& aLeft, nsRestyleHint aRight)
+{
+  return aLeft = aLeft ^ aRight;
+}
 
 #endif /* nsChangeHint_h___ */

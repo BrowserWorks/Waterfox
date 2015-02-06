@@ -38,13 +38,21 @@ function* checkFxA401() {
 }
 
 add_task(function* setup() {
-  Services.prefs.setCharPref("loop.server", BASE_URL);
-  Services.prefs.setCharPref("services.push.serverURL", "ws://localhost/");
+  Services.prefs.setBoolPref("loop.gettingStarted.seen", true);
+  MozLoopServiceInternal.mocks.pushHandler = mockPushHandler;
+  // Normally the same pushUrl would be registered but we change it in the test
+  // to be able to check for success on the second registration.
+  mockPushHandler.registeredChannels[MozLoopService.channelIDs.callsFxA] = "https://localhost/pushUrl/fxa-calls";
+  mockPushHandler.registeredChannels[MozLoopService.channelIDs.roomsFxA] = "https://localhost/pushUrl/fxa-rooms";
+
   registerCleanupFunction(function* () {
     info("cleanup time");
     yield promiseDeletedOAuthParams(BASE_URL);
-    Services.prefs.clearUserPref("loop.server");
-    Services.prefs.clearUserPref("services.push.serverURL");
+    Services.prefs.clearUserPref("loop.gettingStarted.seen");
+    MozLoopServiceInternal.mocks.pushHandler = undefined;
+    delete mockPushHandler.registeredChannels[MozLoopService.channelIDs.callsFxA];
+    delete mockPushHandler.registeredChannels[MozLoopService.channelIDs.roomsFxA];
+
     yield resetFxA();
     Services.prefs.clearUserPref(MozLoopServiceInternal.getSessionTokenPrefName(LOOP_SESSION_TYPE.GUEST));
   });
@@ -122,7 +130,8 @@ add_task(function* params_no_hawk_session() {
 });
 
 add_task(function* params_nonJSON() {
-  Services.prefs.setCharPref("loop.server", "https://loop.invalid");
+  let loopServerUrl = Services.prefs.getCharPref("loop.server");
+  Services.prefs.setCharPref("loop.server", "https://localhost:3000/invalid");
   // Reset after changing the server so a new HawkClient is created
   yield resetFxA();
 
@@ -133,7 +142,7 @@ add_task(function* params_nonJSON() {
     caught = true;
   });
   ok(caught, "Should have caught the rejection");
-  Services.prefs.setCharPref("loop.server", BASE_URL);
+  Services.prefs.setCharPref("loop.server", loopServerUrl);
 });
 
 add_task(function* invalidState() {
@@ -234,6 +243,31 @@ add_task(function* registrationWith401() {
   });
 
   yield checkFxA401();
+
+  // Make the server no longer return a 401
+  delete params.test_error;
+  yield promiseOAuthParamsSetup(BASE_URL, params);
+
+  // Create a fake FxA hawk session token
+  const fxASessionPref = MozLoopServiceInternal.getSessionTokenPrefName(LOOP_SESSION_TYPE.FXA);
+  Services.prefs.setCharPref(fxASessionPref, "X".repeat(HAWK_TOKEN_LENGTH));
+
+  let tokenData = yield MozLoopServiceInternal.promiseFxAOAuthToken("code1", "state");
+  is(tokenData.access_token, "code1_access_token", "Check access_token");
+  is(tokenData.scope, "profile", "Check scope");
+  is(tokenData.token_type, "bearer", "Check token_type");
+
+  // Try again with the retry function
+  let err = MozLoopService.errors.get("login");
+  // Catch the clearError notification first then the "login" one
+  let statusChangedPromise = promiseObserverNotified("loop-status-changed").then(
+    () => promiseObserverNotified("loop-status-changed", "login")
+  );
+
+  info("going to retry");
+  yield err.friendlyDetailsButtonCallback();
+  yield statusChangedPromise;
+  ok(!MozLoopService.errors.get("login"), "Shouldn't have a login error after");
 });
 
 add_task(function* basicAuthorizationAndRegistration() {
@@ -248,17 +282,10 @@ add_task(function* basicAuthorizationAndRegistration() {
   yield promiseOAuthParamsSetup(BASE_URL, params);
 
   info("registering");
-  mockPushHandler.pushUrl = "https://localhost/pushUrl/guest";
-  // Notification observed due to the error being cleared upon successful registration.
+  mockPushHandler.registrationPushURL = "https://localhost/pushUrl/guest";
+  yield MozLoopService.promiseRegisteredWithServers();
+
   let statusChangedPromise = promiseObserverNotified("loop-status-changed");
-  yield MozLoopService.register(mockPushHandler);
-  yield statusChangedPromise;
-
-  // Normally the same pushUrl would be registered but we change it in the test
-  // to be able to check for success on the second registration.
-  mockPushHandler.pushUrl = "https://localhost/pushUrl/fxa";
-
-  statusChangedPromise = promiseObserverNotified("loop-status-changed");
   yield loadLoopPanel({loopURL: BASE_URL, stayOnline: true});
   yield statusChangedPromise;
   let loopDoc = document.getElementById("loop").contentDocument;
@@ -268,6 +295,7 @@ add_task(function* basicAuthorizationAndRegistration() {
   let loopButton = document.getElementById("loop-button-throttled");
   is(loopButton.getAttribute("state"), "", "state of loop button should be empty when not logged in");
 
+  info("Login");
   let tokenData = yield MozLoopService.logInToFxA();
   yield promiseObserverNotified("loop-status-changed", "login");
   ise(tokenData.access_token, "code1_access_token", "Check access_token");
@@ -280,7 +308,9 @@ add_task(function* basicAuthorizationAndRegistration() {
   is(loopButton.getAttribute("state"), "active", "state of loop button should be active when logged in");
 
   let registrationResponse = yield promiseOAuthGetRegistration(BASE_URL);
-  ise(registrationResponse.response.simplePushURL, "https://localhost/pushUrl/fxa",
+  ise(registrationResponse.response.simplePushURLs.calls, "https://localhost/pushUrl/fxa-calls",
+      "Check registered push URL");
+  ise(registrationResponse.response.simplePushURLs.rooms, "https://localhost/pushUrl/fxa-rooms",
       "Check registered push URL");
 
   let loopPanel = document.getElementById("loop-notification-panel");
@@ -312,7 +342,7 @@ add_task(function* loginWithParams401() {
     test_error: "params_401",
   };
   yield promiseOAuthParamsSetup(BASE_URL, params);
-  yield MozLoopService.register(mockPushHandler);
+  yield MozLoopService.promiseRegisteredWithServers();
 
   let loginPromise = MozLoopService.logInToFxA();
   yield loginPromise.then(tokenData => {
@@ -329,16 +359,17 @@ add_task(function* loginWithParams401() {
 add_task(function* logoutWithIncorrectPushURL() {
   yield resetFxA();
   let pushURL = "http://www.example.com/";
-  mockPushHandler.pushUrl = pushURL;
+  mockPushHandler.registeredChannels[MozLoopService.channelIDs.callsFxA] = pushURL;
+  mockPushHandler.registeredChannels[MozLoopService.channelIDs.roomsFxA] = pushURL;
 
   // Create a fake FxA hawk session token
   const fxASessionPref = MozLoopServiceInternal.getSessionTokenPrefName(LOOP_SESSION_TYPE.FXA);
   Services.prefs.setCharPref(fxASessionPref, "X".repeat(HAWK_TOKEN_LENGTH));
 
-  yield MozLoopServiceInternal.registerWithLoopServer(LOOP_SESSION_TYPE.FXA, pushURL);
+  yield MozLoopServiceInternal.registerWithLoopServer(LOOP_SESSION_TYPE.FXA);
   let registrationResponse = yield promiseOAuthGetRegistration(BASE_URL);
-  ise(registrationResponse.response.simplePushURL, pushURL, "Check registered push URL");
-  mockPushHandler.pushUrl = "http://www.example.com/invalid";
+  ise(registrationResponse.response.simplePushURLs.calls, pushURL, "Check registered push URL");
+  mockPushHandler.registeredChannels[MozLoopService.channelIDs.callsFxA] = "http://www.example.com/invalid";
   let caught = false;
   yield MozLoopService.logOutFromFxA().catch((error) => {
     caught = true;
@@ -346,26 +377,27 @@ add_task(function* logoutWithIncorrectPushURL() {
   ok(caught, "Should have caught an error logging out with a mismatched push URL");
   checkLoggedOutState();
   registrationResponse = yield promiseOAuthGetRegistration(BASE_URL);
-  ise(registrationResponse.response.simplePushURL, pushURL, "Check registered push URL wasn't deleted");
+  ise(registrationResponse.response.simplePushURLs.calls, pushURL, "Check registered push URL wasn't deleted");
 });
 
 add_task(function* logoutWithNoPushURL() {
   yield resetFxA();
   let pushURL = "http://www.example.com/";
-  mockPushHandler.pushUrl = pushURL;
+  mockPushHandler.registeredChannels[MozLoopService.channelIDs.callsFxA] = pushURL;
 
   // Create a fake FxA hawk session token
   const fxASessionPref = MozLoopServiceInternal.getSessionTokenPrefName(LOOP_SESSION_TYPE.FXA);
   Services.prefs.setCharPref(fxASessionPref, "X".repeat(HAWK_TOKEN_LENGTH));
 
-  yield MozLoopServiceInternal.registerWithLoopServer(LOOP_SESSION_TYPE.FXA, pushURL);
+  yield MozLoopServiceInternal.registerWithLoopServer(LOOP_SESSION_TYPE.FXA);
   let registrationResponse = yield promiseOAuthGetRegistration(BASE_URL);
-  ise(registrationResponse.response.simplePushURL, pushURL, "Check registered push URL");
-  mockPushHandler.pushUrl = null;
+  ise(registrationResponse.response.simplePushURLs.calls, pushURL, "Check registered push URL");
+  mockPushHandler.registeredChannels[MozLoopService.channelIDs.callsFxA] = null;
+  mockPushHandler.registeredChannels[MozLoopService.channelIDs.roomsFxA] = null;
   yield MozLoopService.logOutFromFxA();
   checkLoggedOutState();
   registrationResponse = yield promiseOAuthGetRegistration(BASE_URL);
-  ise(registrationResponse.response.simplePushURL, pushURL, "Check registered push URL wasn't deleted");
+  ise(registrationResponse.response.simplePushURLs.calls, pushURL, "Check registered push URL wasn't deleted");
 });
 
 add_task(function* loginWithRegistration401() {
@@ -410,21 +442,25 @@ add_task(function* openFxASettings() {
   };
   yield promiseOAuthParamsSetup(BASE_URL, params);
 
-  let deferredTab = Promise.defer();
-  let progressListener = {
-    onLocationChange: function onLocationChange(aBrowser) {
-      gBrowser.removeTabsProgressListener(progressListener);
-      let contentURI = Services.io.newURI(params.content_uri, null, null);
-      is(aBrowser.currentURI.spec, Services.io.newURI("/settings", null, contentURI).spec,
-         "Check settings tab URL");
-      deferredTab.resolve();
-    },
-  };
-  gBrowser.addTabsProgressListener(progressListener);
+  yield new Promise((resolve, reject) => {
+    let progressListener = {
+      onLocationChange: function onLocationChange(aBrowser) {
+        if (aBrowser.currentURI.spec == BASE_URL) {
+          // Ignore the changes from the addTab above.
+          return;
+        }
+        gBrowser.removeTabsProgressListener(progressListener);
+        let contentURI = Services.io.newURI(params.content_uri, null, null);
+        is(aBrowser.currentURI.spec, Services.io.newURI("/settings", null, contentURI).spec,
+           "Check settings tab URL");
+        resolve();
+      },
+    };
+    gBrowser.addTabsProgressListener(progressListener);
 
-  MozLoopService.openFxASettings();
+    MozLoopService.openFxASettings();
+  });
 
-  yield deferredTab.promise;
   while (gBrowser.tabs.length > 1) {
     gBrowser.removeTab(gBrowser.tabs[1]);
   }

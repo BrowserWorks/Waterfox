@@ -9,6 +9,7 @@
 const DIV_POINT_TEXT = "Under";
 const INPUT_TEXT = "Text for select all in an <input>";
 const TEXTAREA_TEXT = "Text for select all in a <textarea>";
+const READONLY_INPUT_TEXT = "readOnly text";
 
 const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 Cu.import("resource://gre/modules/Messaging.jsm");
@@ -24,6 +25,7 @@ function startTests() {
     then(testSelectDivAtPoint).
     then(testSelectInput).
     then(testSelectTextarea).
+    then(testReadonlyInput).
     then(testCloseSelection).
     then(finishTests, function(err) {
       ok(false, "Error in selection test " + err);
@@ -157,6 +159,27 @@ function testSelectTextarea() {
 
 /* =================================================================================
  *
+ * Ensure that readonly inputs aren't editable, and not subject to
+ * SelectionHandler actions such as "cut".
+ *
+ */
+function testReadonlyInput() {
+  var sh = getSelectionHandler();
+  var readOnlyNode = document.getElementById("readOnlyTextInput");
+  readOnlyNode.value = READONLY_INPUT_TEXT;
+
+  return Promise.all([
+    ok(!sh.isSelectionActive(), "Selection should not be active at start of testReadonlyInput"),
+
+  ]).then(function() {
+    return Promise.all([
+      ok(!sh.isElementEditableText(readOnlyNode), "Selected element should be readOnly (not editable)"),
+    ]);
+  });
+}
+
+/* =================================================================================
+ *
  * Various text selection tests to end active selections, including:
  *   1.) Clicking outside the selection.
  *   2.) SelectionEnd or Tab:Selected messages from java.
@@ -171,21 +194,8 @@ function testCloseSelection() {
   return Promise.all([
     ok(!sh.isSelectionActive(), "Selection should not be active at start of testCloseSelection"),
 
+  // Various ways to close an active selection.
   ]).then(function() {
-    // Start by selecting all in an <input>.
-    sh.startSelection(inputNode);
-    return is(sh._activeType, sh.TYPE_SELECTION, "Selection should be active in <input> before Gesture:SingleTap");
-
-  }).then(function() {
-    // Tap outside <input> to close active selection.
-    sh.observe(null, "Gesture:SingleTap", JSON.stringify({
-      x: 1,
-      y: 1
-    }));
-    return ok(!sh.isSelectionActive(), "Gesture:SingleTap outside <input> should close active selection");
-
-  // Various other ways to close an active selection.
-  }).then(function() {
     sh.startSelection(inputNode);
     sh.observe(null, "TextSelection:End", {});
     return ok(!sh.isSelectionActive(), "TextSelection:End should close active selection");
@@ -213,7 +223,7 @@ function testCloseSelection() {
  *
  */
 function finishTests() {
-  sendMessageToJava({
+  Messaging.sendRequest({
     type: "Robocop:testSelectionHandler",
     result: true,
     msg: "Done!",
@@ -233,28 +243,18 @@ function getSelectionHandler() {
 }
 
 function ok(one, msg) {
-  return new Promise(function(resolve, reject) {
-    sendMessageToJava({
-      type: "Robocop:testSelectionHandler",
-      result: one,
-      msg: msg
-    },
-    function (res, err) {
-      (err) ? reject(err) : resolve(res);
-    });
+  return Messaging.sendRequestForResult({
+    type: "Robocop:testSelectionHandler",
+    result: one,
+    msg: msg
   });
 }
 
 function is(one, two, msg) {
-  return new Promise(function(resolve, reject) {
-    sendMessageToJava({
-      type: "Robocop:testSelectionHandler",
-      result: one === two,
-      msg: msg + " : " + one + " === " + two
-    },
-    function (res, err) {
-      (err) ? reject(err) : resolve(res);
-    });
+  return Messaging.sendRequestForResult({
+    type: "Robocop:testSelectionHandler",
+    result: one === two,
+    msg: msg + " : " + one + " === " + two
   });
 }
 
@@ -296,6 +296,8 @@ function is(one, two, msg) {
     <input id="inputNode" type="text"><br>
 
     <textarea id="textareaNode"></textarea><br>
+
+    <input id="readOnlyTextInput" type="text" readonly><br>
 
   </body>
 </html>

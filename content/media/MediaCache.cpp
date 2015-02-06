@@ -1666,6 +1666,7 @@ MediaCache::NoteSeek(MediaCacheStream* aStream, int64_t aOldOffset)
       std::min<int64_t>((aOldOffset + BLOCK_SIZE - 1)/BLOCK_SIZE,
              aStream->mBlocks.Length());
     while (blockIndex < endIndex) {
+      MOZ_ASSERT(endIndex > 0);
       int32_t cacheBlockIndex = aStream->mBlocks[endIndex - 1];
       if (cacheBlockIndex >= 0) {
         BlockOwner* bo = GetBlockOwner(cacheBlockIndex, aStream);
@@ -1859,7 +1860,11 @@ MediaCacheStream::NotifyDataEnded(nsresult aStatus)
     mResourceID = gMediaCache->AllocateResourceID();
   }
 
+  // It is prudent to update channel/cache status before calling
+  // CacheClientNotifyDataEnded() which will read |mChannelEnded|.
   FlushPartialBlockInternal(true);
+  mChannelEnded = true;
+  gMediaCache->QueueUpdate();
 
   MediaCache::ResourceStreamIterator iter(mResourceID);
   while (MediaCacheStream* stream = iter.Next()) {
@@ -1873,9 +1878,6 @@ MediaCacheStream::NotifyDataEnded(nsresult aStatus)
       stream->mClient->CacheClientNotifyDataEnded(aStatus);
     }
   }
-
-  mChannelEnded = true;
-  gMediaCache->QueueUpdate();
 }
 
 void

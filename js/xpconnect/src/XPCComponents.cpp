@@ -19,6 +19,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/Preferences.h"
 #include "nsJSEnvironment.h"
+#include "mozilla/TimeStamp.h"
 #include "mozilla/XPTInterfaceInfoManager.h"
 #include "mozilla/dom/DOMException.h"
 #include "mozilla/dom/DOMExceptionBinding.h"
@@ -3068,7 +3069,7 @@ nsXPCComponents_Utils::MakeObjectPropsNormal(HandleValue vobj, JSContext *cx)
 
         RootedObject propobj(cx, &v.toObject());
         // TODO Deal with non-functions.
-        if (!js::IsWrapper(propobj) || !JS_ObjectIsCallable(cx, propobj))
+        if (!js::IsWrapper(propobj) || !JS::IsCallable(propobj))
             continue;
 
         FunctionForwarderOptions forwarderOptions;
@@ -3540,6 +3541,21 @@ nsXPCComponents_Utils::GetObjectPrincipal(HandleValue val, JSContext *cx,
 }
 
 NS_IMETHODIMP
+nsXPCComponents_Utils::GetCompartmentLocation(HandleValue val,
+                                              JSContext *cx,
+                                              nsACString &result)
+{
+    if (!val.isObject())
+        return NS_ERROR_INVALID_ARG;
+    RootedObject obj(cx, &val.toObject());
+    obj = js::CheckedUnwrap(obj);
+    MOZ_ASSERT(obj);
+
+    result = xpc::CompartmentPrivate::Get(obj)->GetLocation();
+    return NS_OK;
+}
+
+NS_IMETHODIMP
 nsXPCComponents_Utils::SetAddonInterposition(const nsACString &addonIdStr,
                                              nsIAddonInterposition *interposition,
                                              JSContext *cx)
@@ -3549,6 +3565,15 @@ nsXPCComponents_Utils::SetAddonInterposition(const nsACString &addonIdStr,
         return NS_ERROR_FAILURE;
     if (!XPCWrappedNativeScope::SetAddonInterposition(addonId, interposition))
         return NS_ERROR_FAILURE;
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+nsXPCComponents_Utils::Now(double *aRetval)
+{
+    bool isInconsistent = false;
+    TimeStamp start = TimeStamp::ProcessCreation(isInconsistent);
+    *aRetval = (TimeStamp::Now() - start).ToMilliseconds();
     return NS_OK;
 }
 

@@ -96,25 +96,6 @@ Java_org_mozilla_gecko_GeckoAppShell_nativeInit(JNIEnv * arg0, jclass arg1) {
 
 #ifdef JNI_STUBS
 
-typedef void (*Java_org_mozilla_gecko_GeckoAppShell_setLayerClient_t)(JNIEnv *, jclass, jobject);
-static Java_org_mozilla_gecko_GeckoAppShell_setLayerClient_t f_Java_org_mozilla_gecko_GeckoAppShell_setLayerClient;
-extern "C" NS_EXPORT void JNICALL
-Java_org_mozilla_gecko_GeckoAppShell_setLayerClient(JNIEnv * arg0, jclass arg1, jobject arg2) {
-    if (!f_Java_org_mozilla_gecko_GeckoAppShell_setLayerClient) {
-        arg0->ThrowNew(arg0->FindClass("java/lang/UnsupportedOperationException"),
-                       "JNI Function called before it was loaded");
-        return ;
-    }
-     f_Java_org_mozilla_gecko_GeckoAppShell_setLayerClient(arg0, arg1, arg2);
-}
-#endif
-
-#ifdef JNI_BINDINGS
-  xul_dlsym("Java_org_mozilla_gecko_GeckoAppShell_setLayerClient", &f_Java_org_mozilla_gecko_GeckoAppShell_setLayerClient);
-#endif
-
-#ifdef JNI_STUBS
-
 typedef void (*Java_org_mozilla_gecko_GeckoAppShell_onResume_t)(JNIEnv *, jclass);
 static Java_org_mozilla_gecko_GeckoAppShell_onResume_t f_Java_org_mozilla_gecko_GeckoAppShell_onResume;
 extern "C" NS_EXPORT void JNICALL
@@ -358,6 +339,25 @@ Java_org_mozilla_gecko_GeckoAppShell_notifyGeckoOfEvent(JNIEnv * arg0, jclass ar
 
 #ifdef JNI_BINDINGS
   xul_dlsym("Java_org_mozilla_gecko_GeckoAppShell_notifyGeckoOfEvent", &f_Java_org_mozilla_gecko_GeckoAppShell_notifyGeckoOfEvent);
+#endif
+
+#ifdef JNI_STUBS
+
+typedef void (*Java_org_mozilla_gecko_GeckoAppShell_notifyGeckoObservers_t)(JNIEnv *, jclass, jstring, jstring);
+static Java_org_mozilla_gecko_GeckoAppShell_notifyGeckoObservers_t f_Java_org_mozilla_gecko_GeckoAppShell_notifyGeckoObservers;
+extern "C" NS_EXPORT void JNICALL
+Java_org_mozilla_gecko_GeckoAppShell_notifyGeckoObservers(JNIEnv * arg0, jclass arg1, jstring arg2, jstring arg3) {
+    if (!f_Java_org_mozilla_gecko_GeckoAppShell_notifyGeckoObservers) {
+        arg0->ThrowNew(arg0->FindClass("java/lang/UnsupportedOperationException"),
+                       "JNI Function called before it was loaded");
+        return ;
+    }
+     f_Java_org_mozilla_gecko_GeckoAppShell_notifyGeckoObservers(arg0, arg1, arg2, arg3);
+}
+#endif
+
+#ifdef JNI_BINDINGS
+  xul_dlsym("Java_org_mozilla_gecko_GeckoAppShell_notifyGeckoObservers", &f_Java_org_mozilla_gecko_GeckoAppShell_notifyGeckoObservers);
 #endif
 
 #ifdef JNI_STUBS

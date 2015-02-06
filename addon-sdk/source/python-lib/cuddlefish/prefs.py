@@ -55,6 +55,10 @@ DEFAULT_NO_CONNECTIONS_PREFS = {
     # Disable app update
     'app.update.enabled' : False,
 
+    # Disable about:newtab content fetch and ping
+    'browser.newtabpage.directory.source': 'data:application/json,{"jetpack":1}',
+    'browser.newtabpage.directory.ping': '',
+
     # Point update checks to a nonexistent local URL for fast failures.
     'extensions.update.url' : 'http://localhost/extensions-dummy/updateURL',
     'extensions.blocklist.url' : 'http://localhost/extensions-dummy/blocklistURL',
@@ -81,7 +85,7 @@ DEFAULT_FIREFOX_PREFS = {
     # Point the url-classifier to a nonexistent local URL for fast failures.
     'browser.safebrowsing.provider.0.gethashURL' : 'http://localhost/safebrowsing-dummy/gethash',
     'browser.safebrowsing.provider.0.updateURL' : 'http://localhost/safebrowsing-dummy/update',
-    }
+}
 
 # When launching a temporary new Thunderbird profile, use these preferences.
 # Note that these were taken from:
@@ -135,4 +139,9 @@ DEFAULT_THUNDERBIRD_PREFS = {
     'mail.smtpservers' :  "smtp1",
     'mail.startup.enabledMailCheckOnce' :  True,
     'mailnews.start_page_override.mstone' :  "ignore",
-    }
+}
+
+DEFAULT_TEST_PREFS = {
+    'general.useragent.locale': "en-US",
+    'intl.locale.matchOS': "en-US"
+}

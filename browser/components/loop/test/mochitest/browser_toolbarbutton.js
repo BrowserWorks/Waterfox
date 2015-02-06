@@ -7,10 +7,14 @@
 
 "use strict";
 
+const {LoopRoomsInternal} = Components.utils.import("resource:///modules/loop/LoopRooms.jsm", {});
+Services.prefs.setBoolPref("loop.gettingStarted.seen", true);
+
 registerCleanupFunction(function*() {
   MozLoopService.doNotDisturb = false;
   MozLoopServiceInternal.fxAOAuthProfile = null;
   yield MozLoopServiceInternal.clearError("testing");
+  Services.prefs.clearUserPref("loop.gettingStarted.seen");
 });
 
 add_task(function* test_doNotDisturb() {
@@ -75,5 +79,16 @@ add_task(function* test_active() {
   MozLoopServiceInternal.fxAOAuthTokenData = null;
   MozLoopServiceInternal.notifyStatusChanged();
   Assert.strictEqual(LoopUI.toolbarButton.node.getAttribute("state"), "", "Check button is in default state");
+});
+
+add_task(function* test_room_participants() {
+  Assert.strictEqual(LoopUI.toolbarButton.node.getAttribute("state"), "", "Check button is in default state");
+  LoopRoomsInternal.rooms.set("test_room", {participants: [{displayName: "hugh", id: "008"}]});
+  MozLoopServiceInternal.notifyStatusChanged();
+  Assert.strictEqual(LoopUI.toolbarButton.node.getAttribute("state"), "active", "Check button is in active state");
+  LoopRoomsInternal.rooms.set("test_room", {participants: []});
+  MozLoopServiceInternal.notifyStatusChanged();
+  Assert.strictEqual(LoopUI.toolbarButton.node.getAttribute("state"), "", "Check button is in default state");
+  LoopRoomsInternal.rooms.delete("test_room");
 });
 

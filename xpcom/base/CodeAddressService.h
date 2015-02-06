@@ -9,10 +9,15 @@
 
 #include "mozilla/Assertions.h"
 #include "mozilla/HashFunctions.h"
+#include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Types.h"
 
 #include "nsStackWalk.h"
+
+#ifdef XP_WIN
+#define snprintf _snprintf
+#endif
 
 namespace mozilla {
 
@@ -25,19 +30,16 @@ namespace mozilla {
 // |StringAlloc| must implement |copy| and |free|. |copy| copies a string,
 // while |free| is used to free strings created by |copy|.
 //
-// |Writer| must implement a printf-style varargs method Write().
-//
 // |DescribeCodeAddressLock| is needed when the callers may be holding a lock
 // used by NS_DescribeCodeAddress.  |DescribeCodeAddressLock| must implement
 // static methods IsLocked(), Unlock() and Lock().
 template <class StringTable,
           class StringAlloc,
-          class Writer,
           class DescribeCodeAddressLock>
 class CodeAddressService
 {
-  // WriteLocation() is the key function in this class.  It's basically a
-  // wrapper around NS_DescribeCodeAddress.
+  // GetLocation() is the key function in this class.  It's basically a wrapper
+  // around NS_DescribeCodeAddress.
   //
   // However, NS_DescribeCodeAddress is very slow on some platforms, and we
   // have lots of repeated (i.e. same PC) calls to it.  So we do some caching
@@ -87,12 +89,9 @@ class CodeAddressService
 
       // Convert "" to nullptr.  Otherwise, make a copy of the name.
       StringAlloc::free(mFunction);
-      mFunction =
-        !aFunction[0] ? nullptr : StringAlloc::copy(aFunction);
+      mFunction = !aFunction[0] ? nullptr : StringAlloc::copy(aFunction);
       StringAlloc::free(mFileName);
-      mFileName =
-        !aFileName[0] ? nullptr : StringAlloc::copy(aFileName);
-
+      mFileName = !aFileName[0] ? nullptr : StringAlloc::copy(aFileName);
 
       mLibrary = aLibrary;
       mLOffset = aLOffset;
@@ -130,7 +129,8 @@ public:
   {
   }
 
-  void WriteLocation(const Writer& aWriter, const void* aPc)
+  void GetLocation(uint32_t aFrameNumber, const void* aPc, char* aBuf,
+                   size_t aBufLen)
   {
     MOZ_ASSERT(DescribeCodeAddressLock::IsLocked());
 
@@ -163,26 +163,9 @@ public:
 
     MOZ_ASSERT(entry.mPc == aPc);
 
-    uintptr_t entryPc = (uintptr_t)(entry.mPc);
-    // Sometimes we get nothing useful.  Just print "???" for the entire entry
-    // so that fix-linux-stack.pl doesn't complain about an empty filename.
-    if (!entry.mFunction && !entry.mLibrary[0] && entry.mLOffset == 0) {
-      aWriter.Write("    ??? 0x%x\n", entryPc);
-    } else {
-      // Use "???" for unknown functions.
-      const char* entryFunction = entry.mFunction ? entry.mFunction : "???";
-      if (entry.mFileName) {
-        // On Windows we can get the filename and line number at runtime.
-        aWriter.Write("    %s (%s:%lu) 0x%x\n",
-                      entryFunction, entry.mFileName, entry.mLineNo, entryPc);
-      } else {
-        // On Linux and Mac we cannot get the filename and line number at
-        // runtime, so we print the offset in a form that fix-linux-stack.pl and
-        // fix_macosx_stack.py can post-process.
-        aWriter.Write("    %s[%s +0x%X] 0x%x\n",
-                      entryFunction, entry.mLibrary, entry.mLOffset, entryPc);
-      }
-    }
+    NS_FormatCodeAddress(aBuf, aBufLen, aFrameNumber, entry.mPc,
+                         entry.mFunction, entry.mLibrary, entry.mLOffset,
+                         entry.mFileName, entry.mLineNo);
   }
 
   size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const

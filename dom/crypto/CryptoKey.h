@@ -171,6 +171,16 @@ public:
                                  JsonWebKey& aRetVal,
                                  const nsNSSShutDownPreventionLock& /*proofOfLock*/);
 
+  static SECKEYPublicKey* PublicDhKeyFromRaw(CryptoBuffer& aKeyData,
+                                             const CryptoBuffer& aPrime,
+                                             const CryptoBuffer& aGenerator,
+                                             const nsNSSShutDownPreventionLock& /*proofOfLock*/);
+  static nsresult PublicDhKeyToRaw(SECKEYPublicKey* aPubKey,
+                                   CryptoBuffer& aRetVal,
+                                   const nsNSSShutDownPreventionLock& /*proofOfLock*/);
+
+  static bool PublicKeyValid(SECKEYPublicKey* aPubKey);
+
   // Structured clone methods use these to clone keys
   bool WriteStructuredClone(JSStructuredCloneWriter* aWriter) const;
   bool ReadStructuredClone(JSStructuredCloneReader* aReader);

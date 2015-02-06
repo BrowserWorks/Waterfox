@@ -88,7 +88,7 @@ struct RegExpCode
 RegExpCode
 CompilePattern(JSContext *cx, RegExpShared *shared, RegExpCompileData *data,
                HandleLinearString sample,  bool is_global, bool ignore_case,
-               bool is_ascii, bool force_bytecode);
+               bool is_ascii, bool match_only, bool force_bytecode);
 
 // Note: this may return RegExpRunStatus_Error if an interrupt was requested
 // while the code was executing.
@@ -139,29 +139,29 @@ class CharacterRange
       : from_(0), to_(0)
     {}
 
-    CharacterRange(jschar from, jschar to)
+    CharacterRange(char16_t from, char16_t to)
       : from_(from), to_(to)
     {}
 
-    static void AddClassEscape(LifoAlloc *alloc, jschar type, CharacterRangeVector *ranges);
+    static void AddClassEscape(LifoAlloc *alloc, char16_t type, CharacterRangeVector *ranges);
 
-    static inline CharacterRange Singleton(jschar value) {
+    static inline CharacterRange Singleton(char16_t value) {
         return CharacterRange(value, value);
     }
-    static inline CharacterRange Range(jschar from, jschar to) {
-        JS_ASSERT(from <= to);
+    static inline CharacterRange Range(char16_t from, char16_t to) {
+        MOZ_ASSERT(from <= to);
         return CharacterRange(from, to);
     }
     static inline CharacterRange Everything() {
         return CharacterRange(0, 0xFFFF);
     }
-    bool Contains(jschar i) { return from_ <= i && i <= to_; }
-    jschar from() const { return from_; }
-    void set_from(jschar value) { from_ = value; }
-    jschar to() const { return to_; }
-    void set_to(jschar value) { to_ = value; }
+    bool Contains(char16_t i) { return from_ <= i && i <= to_; }
+    char16_t from() const { return from_; }
+    void set_from(char16_t value) { from_ = value; }
+    char16_t to() const { return to_; }
+    void set_to(char16_t value) { to_ = value; }
     bool is_valid() { return from_ <= to_; }
-    bool IsEverything(jschar max) { return from_ == 0 && to_ >= max; }
+    bool IsEverything(char16_t max) { return from_ == 0 && to_ >= max; }
     bool IsSingleton() { return (from_ == to_); }
     void AddCaseEquivalents(bool is_ascii, CharacterRangeVector *ranges);
 
@@ -190,8 +190,8 @@ class CharacterRange
     static const int kPayloadMask = (1 << 24) - 1;
 
   private:
-    jschar from_;
-    jschar to_;
+    char16_t from_;
+    char16_t to_;
 };
 
 // A set of unsigned integers that behaves especially well on small
@@ -247,25 +247,25 @@ class DispatchTable
           : from_(0), to_(0), out_set_(nullptr)
         {}
 
-        Entry(jschar from, jschar to, OutSet* out_set)
+        Entry(char16_t from, char16_t to, OutSet* out_set)
           : from_(from), to_(to), out_set_(out_set)
         {}
 
-        jschar from() { return from_; }
-        jschar to() { return to_; }
-        void set_to(jschar value) { to_ = value; }
+        char16_t from() { return from_; }
+        char16_t to() { return to_; }
+        void set_to(char16_t value) { to_ = value; }
         void AddValue(LifoAlloc *alloc, int value) {
             out_set_ = out_set_->Extend(alloc, value);
         }
         OutSet* out_set() { return out_set_; }
       private:
-        jschar from_;
-        jschar to_;
+        char16_t from_;
+        char16_t to_;
         OutSet* out_set_;
     };
 
     void AddRange(LifoAlloc *alloc, CharacterRange range, int value);
-    OutSet* Get(jschar value);
+    OutSet* Get(char16_t value);
     void Dump();
 
   private:
@@ -295,12 +295,12 @@ class TextElement
     RegExpTree* tree() const { return tree_; }
 
     RegExpAtom* atom() const {
-        JS_ASSERT(text_type() == ATOM);
+        MOZ_ASSERT(text_type() == ATOM);
         return reinterpret_cast<RegExpAtom*>(tree());
     }
 
     RegExpCharacterClass* char_class() const {
-        JS_ASSERT(text_type() == CHAR_CLASS);
+        MOZ_ASSERT(text_type() == CHAR_CLASS);
         return reinterpret_cast<RegExpCharacterClass*>(tree());
     }
 
@@ -422,14 +422,14 @@ class QuickCheckDetails
 
     struct Position {
         Position() : mask(0), value(0), determines_perfectly(false) { }
-        jschar mask;
-        jschar value;
+        char16_t mask;
+        char16_t value;
         bool determines_perfectly;
     };
 
     Position* positions(int index) {
-        JS_ASSERT(index >= 0);
-        JS_ASSERT(index < characters_);
+        MOZ_ASSERT(index >= 0);
+        MOZ_ASSERT(index < characters_);
         return positions_ + index;
     }
 
@@ -520,7 +520,7 @@ class RegExpNode
 
     // Helper for FilterASCII.
     RegExpNode* replacement() {
-        JS_ASSERT(info()->replacement_calculated);
+        MOZ_ASSERT(info()->replacement_calculated);
         return replacement_;
     }
     RegExpNode* set_replacement(RegExpNode* replacement) {
@@ -1392,7 +1392,7 @@ class Trace
     // These set methods and AdvanceCurrentPositionInTrace should be used only on
     // new traces - the intention is that traces are immutable after creation.
     void add_action(DeferredAction* new_action) {
-        JS_ASSERT(new_action->next_ == nullptr);
+        MOZ_ASSERT(new_action->next_ == nullptr);
         new_action->next_ = actions_;
         actions_ = new_action;
     }
@@ -1476,7 +1476,7 @@ class Analysis : public NodeVisitor
 
     bool has_failed() { return error_message_ != nullptr; }
     const char* errorMessage() {
-        JS_ASSERT(error_message_ != nullptr);
+        MOZ_ASSERT(error_message_ != nullptr);
         return error_message_;
     }
     void fail(const char* error_message) {

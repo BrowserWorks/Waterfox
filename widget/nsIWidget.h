@@ -99,8 +99,8 @@ typedef void* nsNativeWidget;
 #endif
 
 #define NS_IWIDGET_IID \
-{ 0x5b27abd6, 0x9e53, 0x4a0a, \
-  { 0x86, 0xf, 0x77, 0x5c, 0xc5, 0x69, 0x35, 0xf } };
+{ 0xcfe7543b, 0x8c0e, 0x40c3, \
+  { 0x9a, 0x6d, 0x77, 0x6e, 0x84, 0x8a, 0x7c, 0xfc } };
 
 /*
  * Window shadow styles
@@ -499,13 +499,11 @@ struct SizeConstraints {
 // IMEMessage is shared by IMEStateManager and TextComposition.
 // Update values in GeckoEditable.java if you make changes here.
 // XXX Negative values are used in Android...
-enum IMEMessage MOZ_ENUM_TYPE(int8_t)
+typedef int8_t IMEMessageType;
+enum IMEMessage MOZ_ENUM_TYPE(IMEMessageType)
 {
-  // XXX We should replace NOTIFY_IME_OF_CURSOR_POS_CHANGED with
-  //     NOTIFY_IME_OF_SELECTION_CHANGE later.
-  NOTIFY_IME_OF_CURSOR_POS_CHANGED,
   // An editable content is getting focus
-  NOTIFY_IME_OF_FOCUS,
+  NOTIFY_IME_OF_FOCUS = 1,
   // An editable content is losing focus
   NOTIFY_IME_OF_BLUR,
   // Selection in the focused editable content is changed
@@ -528,6 +526,10 @@ enum IMEMessage MOZ_ENUM_TYPE(int8_t)
 
 struct IMENotification
 {
+  IMENotification()
+    : mMessage(static_cast<IMEMessage>(-1))
+  {}
+
   MOZ_IMPLICIT IMENotification(IMEMessage aMessage)
     : mMessage(aMessage)
   {
@@ -649,9 +651,6 @@ struct IMENotification
         return false;
     }
   }
-
-private:
-  IMENotification();
 };
 
 } // namespace widget
@@ -1368,6 +1367,12 @@ class nsIWidget : public nsISupports {
      */
     virtual void SetDrawsTitle(bool aDrawTitle) {}
 
+    /**
+     * Indicates whether the widget should attempt to make titlebar controls
+     * easier to see on dark titlebar backgrounds.
+     */
+    virtual void SetUseBrightTitlebarForeground(bool aBrightForeground) {}
+
     /** 
      * Hide window chrome (borders, buttons) for this widget.
      *
@@ -1515,6 +1520,11 @@ class nsIWidget : public nsISupports {
      * @param aOpaqueRegion the region of the window that is opaque.
      */
     virtual void UpdateOpaqueRegion(const nsIntRegion &aOpaqueRegion) {}
+
+    /**
+     * Informs the widget about the region of the window that is draggable.
+     */
+    virtual void UpdateWindowDraggingRegion(const nsIntRegion& aRegion) {}
 
     /** 
      * Internal methods

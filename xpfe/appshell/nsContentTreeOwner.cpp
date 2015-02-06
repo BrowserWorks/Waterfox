@@ -58,7 +58,7 @@ using namespace mozilla;
 class nsSiteWindow : public nsIEmbeddingSiteWindow
 {
 public:
-  nsSiteWindow(nsContentTreeOwner *aAggregator);
+  explicit nsSiteWindow(nsContentTreeOwner *aAggregator);
   virtual ~nsSiteWindow();
 
   NS_DECL_ISUPPORTS
@@ -442,6 +442,23 @@ NS_IMETHODIMP nsContentTreeOwner::OnBeforeLinkTraversal(const nsAString &origina
                                                    linkNode, isAppTab, _retval);
   
   _retval = originalTarget;
+  return NS_OK;
+}
+
+NS_IMETHODIMP nsContentTreeOwner::ShouldLoadURI(nsIDocShell *aDocShell,
+                                                nsIURI *aURI,
+                                                nsIURI *aReferrer,
+                                                bool *_retval)
+{
+  NS_ENSURE_STATE(mXULWindow);
+
+  nsCOMPtr<nsIXULBrowserWindow> xulBrowserWindow;
+  mXULWindow->GetXULBrowserWindow(getter_AddRefs(xulBrowserWindow));
+
+  if (xulBrowserWindow)
+    return xulBrowserWindow->ShouldLoadURI(aDocShell, aURI, aReferrer, _retval);
+
+  *_retval = true;
   return NS_OK;
 }
 

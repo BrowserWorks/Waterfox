@@ -10,6 +10,7 @@ EXPORTS += [
 
 SOURCES += [
     '../../../mfbt/HashFunctions.cpp',
+    '../../../mfbt/JSONWriter.cpp',
     '../../../xpcom/base/nsStackWalk.cpp',
     'DMD.cpp',
 ]
@@ -18,9 +19,7 @@ SOURCES += [
     '../../../nsprpub/lib/libc/src/strcpy.c',
 ]
 
-LIBRARY_NAME = 'dmd'
-
-FORCE_SHARED_LIB = True
+SharedLibrary('dmd')
 
 DEFINES['MOZ_NO_MOZALLOC'] = True
 
@@ -33,3 +32,8 @@ if CONFIG['OS_ARCH'] == 'WINNT':
     OS_LIBS += [
         'dbghelp',
     ]
+
+XPCSHELL_TESTS_MANIFESTS += [
+    'test/xpcshell.ini',
+]
+

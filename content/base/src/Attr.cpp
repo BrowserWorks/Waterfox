@@ -18,7 +18,6 @@
 #include "nsDOMString.h"
 #include "nsIContentInlines.h"
 #include "nsIDocument.h"
-#include "nsIDOMUserDataHandler.h"
 #include "nsGkAtoms.h"
 #include "nsCOMArray.h"
 #include "nsNameSpaceManager.h"
@@ -55,8 +54,6 @@ Attr::Attr(nsDOMAttributeMap *aAttrMap,
 
   // We don't add a reference to our content. It will tell us
   // to drop our reference when it goes away.
-
-  SetIsDOMBinding();
 }
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(Attr)
@@ -389,7 +386,7 @@ Attr::Shutdown()
 }
 
 JSObject*
-Attr::WrapObject(JSContext* aCx)
+Attr::WrapNode(JSContext* aCx)
 {
   return AttrBinding::Wrap(aCx, this);
 }

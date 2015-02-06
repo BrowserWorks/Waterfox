@@ -64,6 +64,10 @@ public:
   // nsIScrollObserver
   virtual void ScrollPositionChanged() MOZ_OVERRIDE;
 
+  // AsyncPanZoom started/stopped callbacks from nsIScrollObserver
+  virtual void AsyncPanZoomStarted(const mozilla::CSSIntPoint aScrollPos) MOZ_OVERRIDE;
+  virtual void AsyncPanZoomStopped(const mozilla::CSSIntPoint aScrollPos) MOZ_OVERRIDE;
+
   void Terminate()
   {
     mPresShell = nullptr;
@@ -138,6 +142,16 @@ private:
   void SetEndFramePos(const nsPoint& aPosition);
 
   /**
+   * Check if aPosition is on the start or end frame of the
+   * selection carets.
+   *
+   * @param aPosition should be relative to document's canvas frame
+   * in app units
+   */
+  bool IsOnStartFrame(const nsPoint& aPosition);
+  bool IsOnEndFrame(const nsPoint& aPosition);
+
+  /**
    * Get rect of selection caret's start frame relative
    * to document's canvas frame, in app units.
    */
@@ -204,9 +218,12 @@ private:
 
   nscoord mCaretCenterToDownPointOffsetY;
   DragMode mDragMode;
-  bool mVisible;
-  bool mStartCaretVisible;
+
+  // True if AsyncPanZoom is enabled
+  bool mAPZenabled;
   bool mEndCaretVisible;
+  bool mStartCaretVisible;
+  bool mVisible;
 
   // Preference
   static int32_t sSelectionCaretsInflateSize;

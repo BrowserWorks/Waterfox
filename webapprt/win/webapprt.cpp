@@ -346,7 +346,7 @@ namespace {
     if (ERROR_SUCCESS !=
                 RegOpenKeyExW(HKEY_LOCAL_MACHINE,
                               L"SOFTWARE\\Microsoft\\Windows"
-                              L"\\CurrentVersion\\App paths\\firefox.exe",
+                              L"\\CurrentVersion\\App paths\\waterfox.exe",
                               0,
                               KEY_READ,
                               &key)) {

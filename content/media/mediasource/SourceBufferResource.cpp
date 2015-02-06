@@ -6,11 +6,10 @@
 
 #include "SourceBufferResource.h"
 
-#include <string.h>
 #include <algorithm>
 
 #include "nsISeekableStream.h"
-#include "nsISupportsImpl.h"
+#include "nsISupports.h"
 #include "prlog.h"
 
 #ifdef PR_LOGGING
@@ -31,12 +30,6 @@ PRLogModuleInfo* GetSourceBufferResourceLog()
 #endif
 
 namespace mozilla {
-
-namespace dom {
-
-class SourceBuffer;
-
-}  // namespace dom
 
 nsresult
 SourceBufferResource::Close()
@@ -147,7 +140,7 @@ SourceBufferResource::ReadFromCache(char* aBuffer, int64_t aOffset, uint32_t aCo
   return rv;
 }
 
-bool
+uint32_t
 SourceBufferResource::EvictData(uint32_t aThreshold)
 {
   SBR_DEBUG("SourceBufferResource(%p)::EvictData(aThreshold=%u)", this, aThreshold);

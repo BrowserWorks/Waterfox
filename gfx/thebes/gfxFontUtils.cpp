@@ -3,12 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifdef MOZ_LOGGING
-#define FORCE_PR_LOG /* Allow logging in the release build */
-#include "prlog.h"
-#endif
-
 #include "mozilla/ArrayUtils.h"
+#include "mozilla/BinarySearch.h"
 
 #include "gfxFontUtils.h"
 #include "gfxColor.h"
@@ -18,6 +14,7 @@
 #include "mozilla/dom/EncodingUtils.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
+#include "mozilla/BinarySearch.h"
 
 #include "nsCOMPtr.h"
 #include "nsIUUIDGenerator.h"
@@ -40,6 +37,15 @@
 using namespace mozilla;
 
 #pragma pack(1)
+
+typedef struct {
+    AutoSwap_PRUint16 format;
+    AutoSwap_PRUint16 reserved;
+    AutoSwap_PRUint32 length;
+    AutoSwap_PRUint32 language;
+    AutoSwap_PRUint32 startCharCode;
+    AutoSwap_PRUint32 numChars;
+} Format10CmapHeader;
 
 typedef struct {
     AutoSwap_PRUint16 format;
@@ -87,6 +93,53 @@ gfxSparseBitSet::Dump(const char* aPrefix, eGfxLog aWhichLog) const
 }
 #endif
 
+nsresult
+gfxFontUtils::ReadCMAPTableFormat10(const uint8_t *aBuf, uint32_t aLength,
+                                    gfxSparseBitSet& aCharacterMap)
+{
+    // Ensure table is large enough that we can safely read the header
+    NS_ENSURE_TRUE(aLength >= sizeof(Format10CmapHeader),
+                    NS_ERROR_GFX_CMAP_MALFORMED);
+
+    // Sanity-check header fields
+    const Format10CmapHeader *cmap10 =
+        reinterpret_cast<const Format10CmapHeader*>(aBuf);
+    NS_ENSURE_TRUE(uint16_t(cmap10->format) == 10,
+                   NS_ERROR_GFX_CMAP_MALFORMED);
+    NS_ENSURE_TRUE(uint16_t(cmap10->reserved) == 0,
+                   NS_ERROR_GFX_CMAP_MALFORMED);
+
+    uint32_t tablelen = cmap10->length;
+    NS_ENSURE_TRUE(tablelen >= sizeof(Format10CmapHeader) &&
+                   tablelen <= aLength, NS_ERROR_GFX_CMAP_MALFORMED);
+
+    NS_ENSURE_TRUE(cmap10->language == 0, NS_ERROR_GFX_CMAP_MALFORMED);
+
+    uint32_t numChars = cmap10->numChars;
+    NS_ENSURE_TRUE(tablelen == sizeof(Format10CmapHeader) +
+                   numChars * sizeof(uint16_t), NS_ERROR_GFX_CMAP_MALFORMED);
+
+    uint32_t charCode = cmap10->startCharCode;
+    NS_ENSURE_TRUE(charCode <= CMAP_MAX_CODEPOINT &&
+                   charCode + numChars <= CMAP_MAX_CODEPOINT,
+                   NS_ERROR_GFX_CMAP_MALFORMED);
+
+    // glyphs[] array immediately follows the subtable header
+    const AutoSwap_PRUint16 *glyphs =
+        reinterpret_cast<const AutoSwap_PRUint16 *>(cmap10 + 1);
+
+    for (uint32_t i = 0; i < numChars; ++i) {
+        if (uint16_t(*glyphs) != 0) {
+            aCharacterMap.set(charCode);
+        }
+        ++charCode;
+        ++glyphs;
+    }
+
+    aCharacterMap.Compact();
+
+    return NS_OK;
+}
 
 nsresult
 gfxFontUtils::ReadCMAPTableFormat12(const uint8_t *aBuf, uint32_t aLength,
@@ -422,7 +475,8 @@ gfxFontUtils::FindPreferredSubtable(const uint8_t *aBuf, uint32_t aBufLength,
             keepFormat = format;
             *aTableOffset = offset;
             *aSymbolEncoding = false;
-        } else if (format == 12 && acceptableUCS4Encoding(platformID, encodingID, keepFormat)) {
+        } else if ((format == 10 || format == 12) &&
+                   acceptableUCS4Encoding(platformID, encodingID, keepFormat)) {
             keepFormat = format;
             *aTableOffset = offset;
             *aSymbolEncoding = false;
@@ -431,7 +485,7 @@ gfxFontUtils::FindPreferredSubtable(const uint8_t *aBuf, uint32_t aBufLength,
             }
         } else if (format == 14 && isUVSEncoding(platformID, encodingID) && aUVSTableOffset) {
             *aUVSTableOffset = offset;
-            if (keepFormat == 12) {
+            if (keepFormat == 10 || keepFormat == 12) {
                 break;
             }
         }
@@ -451,7 +505,8 @@ gfxFontUtils::ReadCMAP(const uint8_t *aBuf, uint32_t aBufLength,
     uint32_t format = FindPreferredSubtable(aBuf, aBufLength,
                                             &offset, &aUVSOffset, &symbol);
 
-    if (format == 4) {
+    switch (format) {
+    case 4:
         if (symbol) {
             aUnicodeFont = false;
             aSymbolFont = true;
@@ -461,13 +516,21 @@ gfxFontUtils::ReadCMAP(const uint8_t *aBuf, uint32_t aBufLength,
         }
         return ReadCMAPTableFormat4(aBuf + offset, aBufLength - offset,
                                     aCharacterMap);
-    }
 
-    if (format == 12) {
+    case 10:
+        aUnicodeFont = true;
+        aSymbolFont = false;
+        return ReadCMAPTableFormat10(aBuf + offset, aBufLength - offset,
+                                     aCharacterMap);
+
+    case 12:
         aUnicodeFont = true;
         aSymbolFont = false;
         return ReadCMAPTableFormat12(aBuf + offset, aBufLength - offset,
                                      aCharacterMap);
+
+    default:
+        break;
     }
 
     return NS_ERROR_FAILURE;
@@ -571,6 +634,26 @@ gfxFontUtils::MapCharToGlyphFormat4(const uint8_t *aBuf, char16_t aCh)
 }
 
 uint32_t
+gfxFontUtils::MapCharToGlyphFormat10(const uint8_t *aBuf, uint32_t aCh)
+{
+    const Format10CmapHeader *cmap10 =
+        reinterpret_cast<const Format10CmapHeader*>(aBuf);
+
+    uint32_t startChar = cmap10->startCharCode;
+    uint32_t numChars = cmap10->numChars;
+
+    if (aCh < startChar || aCh >= startChar + numChars) {
+        return 0;
+    }
+
+    const AutoSwap_PRUint16 *glyphs =
+        reinterpret_cast<const AutoSwap_PRUint16 *>(cmap10 + 1);
+
+    uint16_t glyph = glyphs[aCh - startChar];
+    return glyph;
+}
+
+uint32_t
 gfxFontUtils::MapCharToGlyphFormat12(const uint8_t *aBuf, uint32_t aCh)
 {
     const Format12CmapHeader *cmap12 =
@@ -618,49 +701,47 @@ gfxFontUtils::MapCharToGlyphFormat12(const uint8_t *aBuf, uint32_t aCh)
     return 0;
 }
 
+namespace {
+
+struct Format14CmapWrapper
+{
+    const Format14Cmap& mCmap14;
+    explicit Format14CmapWrapper(const Format14Cmap& cmap14) : mCmap14(cmap14) {}
+    uint32_t operator[](size_t index) const {
+        return mCmap14.varSelectorRecords[index].varSelector;
+    }
+};
+
+struct NonDefUVSTableWrapper
+{
+    const NonDefUVSTable& mTable;
+    explicit NonDefUVSTableWrapper(const NonDefUVSTable& table) : mTable(table) {}
+    uint32_t operator[](size_t index) const {
+        return mTable.uvsMappings[index].unicodeValue;
+    }
+};
+
+} // namespace
+
 uint16_t
 gfxFontUtils::MapUVSToGlyphFormat14(const uint8_t *aBuf, uint32_t aCh, uint32_t aVS)
 {
+    using mozilla::BinarySearch;
     const Format14Cmap *cmap14 = reinterpret_cast<const Format14Cmap*>(aBuf);
 
-    // binary search in varSelectorRecords
-    uint32_t min = 0;
-    uint32_t max = cmap14->numVarSelectorRecords;
-    uint32_t nonDefUVSOffset = 0;
-    while (min < max) {
-        uint32_t index = (min + max) >> 1;
-        uint32_t varSelector = cmap14->varSelectorRecords[index].varSelector;
-        if (aVS == varSelector) {
-            nonDefUVSOffset = cmap14->varSelectorRecords[index].nonDefaultUVSOffset;
-            break;
-        }
-        if (aVS < varSelector) {
-            max = index;
-        } else {
-            min = index + 1;
-        }
-    }
-    if (!nonDefUVSOffset) {
+    size_t index;
+    if (!BinarySearch(Format14CmapWrapper(*cmap14),
+                      0, cmap14->numVarSelectorRecords, aVS, &index)) {
         return 0;
     }
 
+    const uint32_t nonDefUVSOffset = cmap14->varSelectorRecords[index].nonDefaultUVSOffset;
     const NonDefUVSTable *table = reinterpret_cast<const NonDefUVSTable*>
                                       (aBuf + nonDefUVSOffset);
 
-    // binary search in uvsMappings
-    min = 0;
-    max = table->numUVSMappings;
-    while (min < max) {
-        uint32_t index = (min + max) >> 1;
-        uint32_t unicodeValue = table->uvsMappings[index].unicodeValue;
-        if (aCh == unicodeValue) {
-            return table->uvsMappings[index].glyphID;
-        }
-        if (aCh < unicodeValue) {
-            max = index;
-        } else {
-            min = index + 1;
-        }
+    if (BinarySearch(NonDefUVSTableWrapper(*table), 0, table->numUVSMappings,
+                     aCh, &index)) {
+        return table->uvsMappings[index].glyphID;
     }
 
     return 0;
@@ -680,6 +761,9 @@ gfxFontUtils::MapCharToGlyph(const uint8_t *aCmapBuf, uint32_t aBufLength,
     case 4:
         gid = aUnicode < UNICODE_BMP_LIMIT ?
             MapCharToGlyphFormat4(aCmapBuf + offset, char16_t(aUnicode)) : 0;
+        break;
+    case 10:
+        gid = MapCharToGlyphFormat10(aCmapBuf + offset, aUnicode);
         break;
     case 12:
         gid = MapCharToGlyphFormat12(aCmapBuf + offset, aUnicode);
@@ -702,6 +786,10 @@ gfxFontUtils::MapCharToGlyph(const uint8_t *aCmapBuf, uint32_t aBufLength,
                         varGID = MapCharToGlyphFormat4(aCmapBuf + offset,
                                                        char16_t(aUnicode));
                     }
+                    break;
+                case 10:
+                    varGID = MapCharToGlyphFormat10(aCmapBuf + offset,
+                                                    aUnicode);
                     break;
                 case 12:
                     varGID = MapCharToGlyphFormat12(aCmapBuf + offset,
@@ -861,6 +949,10 @@ gfxFontUtils::DetermineFontDataType(const uint8_t *aFontData, uint32_t aFontData
             reinterpret_cast<const AutoSwap_PRUint32*>(aFontData);
         if (uint32_t(*version) == TRUETYPE_TAG('w','O','F','F')) {
             return GFX_USERFONT_WOFF;
+        }
+        if (Preferences::GetBool(GFX_PREF_WOFF2_ENABLED) &&
+            uint32_t(*version) == TRUETYPE_TAG('w','O','F','2')) {
+            return GFX_USERFONT_WOFF2;
         }
     }
     
@@ -1215,15 +1307,15 @@ const gfxFontUtils::MacFontNameCharsetMapping gfxFontUtils::gMacFontNameCharsets
     { ENCODING_ID_MAC_DEVANAGARI,   ANY,                      "x-mac-devanagari"},
     { ENCODING_ID_MAC_GURMUKHI,     ANY,                      "x-mac-gurmukhi"  },
     { ENCODING_ID_MAC_GUJARATI,     ANY,                      "x-mac-gujarati"  },
-    { ENCODING_ID_MAC_SIMP_CHINESE, LANG_ID_MAC_SIMP_CHINESE, "GB2312"          },
-    { ENCODING_ID_MAC_SIMP_CHINESE, ANY,                      "GB2312"          }
+    { ENCODING_ID_MAC_SIMP_CHINESE, LANG_ID_MAC_SIMP_CHINESE, "gb18030"         },
+    { ENCODING_ID_MAC_SIMP_CHINESE, ANY,                      "gb18030"         }
 };
 
 const char* gfxFontUtils::gISOFontNameCharsets[] = 
 {
-    /* 0 */ "us-ascii"   ,
+    /* 0 */ "windows-1252", /* US-ASCII */
     /* 1 */ nullptr       , /* spec says "ISO 10646" but does not specify encoding form! */
-    /* 2 */ "ISO-8859-1"
+    /* 2 */ "windows-1252"  /* ISO-8859-1 */
 };
 
 const char* gfxFontUtils::gMSFontNameCharsets[] =
@@ -1241,6 +1333,23 @@ const char* gfxFontUtils::gMSFontNameCharsets[] =
     /*[10] ENCODING_ID_MICROSOFT_UNICODEFULL */ ""
 };
 
+struct MacCharsetMappingComparator
+{
+    typedef gfxFontUtils::MacFontNameCharsetMapping MacFontNameCharsetMapping;
+    const MacFontNameCharsetMapping& mSearchValue;
+    explicit MacCharsetMappingComparator(const MacFontNameCharsetMapping& aSearchValue)
+      : mSearchValue(aSearchValue) {}
+    int operator()(const MacFontNameCharsetMapping& aEntry) const {
+        if (mSearchValue < aEntry) {
+            return -1;
+        }
+        if (aEntry < mSearchValue) {
+            return 1;
+        }
+        return 0;
+    }
+};
+
 // Return the name of the charset we should use to decode a font name
 // given the name table attributes.
 // Special return values:
@@ -1256,27 +1365,15 @@ gfxFontUtils::GetCharsetForFontName(uint16_t aPlatform, uint16_t aScript, uint16
 
     case PLATFORM_ID_MAC:
         {
-            uint32_t lo = 0, hi = ArrayLength(gMacFontNameCharsets);
             MacFontNameCharsetMapping searchValue = { aScript, aLanguage, nullptr };
             for (uint32_t i = 0; i < 2; ++i) {
-                // binary search; if not found, set language to ANY and try again
-                while (lo < hi) {
-                    uint32_t mid = (lo + hi) / 2;
-                    const MacFontNameCharsetMapping& entry = gMacFontNameCharsets[mid];
-                    if (entry < searchValue) {
-                        lo = mid + 1;
-                        continue;
-                    }
-                    if (searchValue < entry) {
-                        hi = mid;
-                        continue;
-                    }
-                    // found a match
-                    return entry.mCharsetName;
+                size_t idx;
+                if (BinarySearchIf(gMacFontNameCharsets, 0, ArrayLength(gMacFontNameCharsets),
+                                            MacCharsetMappingComparator(searchValue), &idx)) {
+                    return gMacFontNameCharsets[idx].mCharsetName;
                 }
 
-                // no match, so reset high bound for search and re-try
-                hi = ArrayLength(gMacFontNameCharsets);
+                // no match, so try again finding one in any language
                 searchValue.mLanguage = ANY;
             }
         }

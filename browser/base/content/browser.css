@@ -252,6 +252,11 @@ toolbar[customizing] > .overflow-button {
 
 %endif
 
+#main-window[inFullscreen] #global-notificationbox,
+#main-window[inFullscreen] #high-priority-global-notificationbox {
+  visibility: collapse;
+}
+
 /* Rules to help integrate SDK widgets */
 toolbaritem[sdkstylewidget="true"] > toolbarbutton,
 toolbarpaletteitem > toolbaritem[sdkstylewidget="true"] > iframe,
@@ -393,7 +398,7 @@ panel[noactions] > richlistbox > richlistitem[type~="action"] > .ac-url-box > .a
   visibility: visible;
 }
 
-#urlbar:not([actiontype]) > #urlbar-display-box {
+#urlbar:not([actiontype="switchtab"]) > #urlbar-display-box {
   display: none;
 }
 
@@ -832,23 +837,15 @@ html|*#gcli-output-frame,
   transition: none;
 }
 
-.toolbarbutton-badge[badge]:not([badge=""])::after {
-  content: attr(badge);
-}
-
-toolbarbutton[type="badged"] {
-  -moz-binding: url("chrome://browser/content/urlbarBindings.xml#toolbarbutton-badged");
-}
-
 toolbarbutton[type="socialmark"] {
   -moz-binding: url("chrome://browser/content/socialmarks.xml#toolbarbutton-marks");
 }
 
-toolbarbutton[type="badged"] > .toolbarbutton-badge-container > .toolbarbutton-icon,
+toolbarbutton.badged-button > .toolbarbutton-badge-container > .toolbarbutton-icon,
 toolbarbutton[type="socialmark"] > .toolbarbutton-icon {
-  max-width: 16px;
+  max-width: 18px;
 }
-toolbarpaletteitem[place="palette"] > toolbarbutton[type="badged"] > .toolbarbutton-badge-container > .toolbarbutton-icon {
+toolbarpaletteitem[place="palette"] > toolbarbutton.badged-button > .toolbarbutton-badge-container > .toolbarbutton-icon {
   max-width: 32px;
 }
 
@@ -1218,31 +1215,32 @@ toolbarpaletteitem[place="palette"][hidden] {
   animation-duration: 2s;
 }
 
-#abouthome-search-panel .panel-arrowcontent {
-  -moz-padding-start: 0;
-  -moz-padding-end: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  background: rgb(248, 250, 251);
+#abouthome-search-panel > .panel-arrowcontainer > .panel-arrowcontent {
+  padding: 0;
   font-size: 110%;
 }
 
-.abouthome-search-panel-item {
-  -moz-box-align: center;
-  padding-top: 4px;
-  padding-bottom: 4px;
-  -moz-padding-start: 24px;
-  -moz-padding-end: 24px;
+#abouthome-search-panel-manage {
+  padding: 4px 24px;
 }
 
-.abouthome-search-panel-item > label {
-  -moz-padding-start: 0;
-  -moz-margin-start: 0;
-  color: rgb(130, 132, 133);
+#abouthome-search-panel-manage > label {
+  padding: 0;
+  margin: 0;
 }
 
 /* Combined context-menu items */
 #context-navigation > .menuitem-iconic > .menu-iconic-text,
 #context-navigation > .menuitem-iconic > .menu-accel-container {
   display: none;
+}
+
+/* Tracking protection doorhanger */
+.popup-notification-footer[popupid="bad-content"] {
+  display: none;
+}
+
+.popup-notification-footer[popupid="bad-content"][mixedblockdisabled],
+.popup-notification-footer[popupid="bad-content"][trackingblockdisabled] {
+  display: block;
 }

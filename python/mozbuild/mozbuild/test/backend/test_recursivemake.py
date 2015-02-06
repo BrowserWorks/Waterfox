@@ -617,6 +617,34 @@ class TestRecursiveMakeBackend(BackendTester):
 
         self.assertIn('JAR_MANIFEST := %s/jar.mn' % env.topsrcdir, lines)
 
+    def test_extra_js_modules(self):
+        env = self._consume('extra-js-modules', RecursiveMakeBackend)
+
+        with open(os.path.join(env.topobjdir, 'backend.mk'), 'rb') as fh:
+            lines = fh.readlines()
+
+        lines = [line.rstrip() for line in lines]
+        self.maxDiff = None
+        expected = [
+            'extra_js__FILES := module1.js module2.js',
+            'extra_js__DEST = $(FINAL_TARGET)/modules/',
+            'INSTALL_TARGETS += extra_js_',
+            'extra_js_submodule_FILES := module3.js module4.js',
+            'extra_js_submodule_DEST = $(FINAL_TARGET)/modules/submodule',
+            'INSTALL_TARGETS += extra_js_submodule',
+            'extra_pp_js_ := pp-module1.js',
+            'extra_pp_js__PATH = $(FINAL_TARGET)/modules/',
+            'PP_TARGETS += extra_pp_js_',
+            'extra_pp_js_ppsub := pp-module2.js',
+            'extra_pp_js_ppsub_PATH = $(FINAL_TARGET)/modules/ppsub',
+            'PP_TARGETS += extra_pp_js_ppsub',
+        ]
+
+        found = [line for line in lines if line.startswith(('extra_',
+                                                            'INSTALL_TARGETS',
+                                                            'PP_TARGETS'))]
+        self.assertEqual(expected, found)
+
     def test_test_manifests_duplicate_support_files(self):
         """Ensure duplicate support-files in test manifests work."""
         env = self._consume('test-manifests-duplicate-support-files',
@@ -658,6 +686,37 @@ class TestRecursiveMakeBackend(BackendTester):
             # Destination and install manifest are relative to topobjdir.
             stem = '%s/android_eclipse/%s' % (env.topobjdir, project_name)
             self.assertIn(command_template % (stem, stem), lines)
+
+    def test_install_manifests_package_tests(self):
+        """Ensure test suites honor package_tests=False."""
+        env = self._consume('test-manifests-package-tests', RecursiveMakeBackend)
+
+        tests_dir = mozpath.join(env.topobjdir, '_tests')
+
+        all_tests_path = mozpath.join(env.topobjdir, 'all-tests.json')
+        self.assertTrue(os.path.exists(all_tests_path))
+
+        with open(all_tests_path, 'rt') as fh:
+            o = json.load(fh)
+
+            self.assertIn('mochitest.js', o)
+            self.assertIn('not_packaged.java', o)
+
+        man_dir = mozpath.join(env.topobjdir, '_build_manifests', 'install')
+        self.assertTrue(os.path.isdir(man_dir))
+
+        full = mozpath.join(man_dir, 'tests')
+        self.assertTrue(os.path.exists(full))
+
+        m = InstallManifest(path=full)
+
+        # Only mochitest.js should be in the install manifest.
+        self.assertTrue('testing/mochitest/tests/mochitest.js' in m)
+
+        # The path is odd here because we do not normalize at test manifest
+        # processing time.  This is a fragile test because there's currently no
+        # way to iterate the manifest.
+        self.assertFalse('instrumentation/./not_packaged.java' in m)
 
 
 if __name__ == '__main__':

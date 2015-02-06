@@ -6,10 +6,12 @@
 
 include('../objs.mozbuild')
 
-# These files cannot be built in unified mode because they force NSPR logging.
+# These files cannot be built in unified mode because of the redefinition of
+# getLogModule, UNIMPLEMENTED, nr_socket_long_term_violation_time,
+# nr_socket_short_term_violation_time.
 SOURCES += mtransport_cppsrcs
 
-LIBRARY_NAME = 'mtransport_s'
+Library('mtransport_s')
 
 LOCAL_INCLUDES += [
     '/media/mtransport/',

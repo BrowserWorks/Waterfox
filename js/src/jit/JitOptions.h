@@ -32,7 +32,6 @@ struct JitOptions
     bool checkOsiPointRegisters;
 #endif
     bool checkRangeAnalysis;
-    bool compileTryCatch;
     bool disableScalarReplacement;
     bool disableGvn;
     bool disableLicm;
@@ -40,28 +39,27 @@ struct JitOptions
     bool disableEdgeCaseAnalysis;
     bool disableRangeAnalysis;
     bool disableLoopUnrolling;
-    bool disableUce;
     bool disableEaa;
     bool eagerCompilation;
-    bool forceDefaultIonUsesBeforeCompile;
-    uint32_t forcedDefaultIonUsesBeforeCompile;
+    bool forceDefaultIonWarmUpThreshold;
+    uint32_t forcedDefaultIonWarmUpThreshold;
     bool forceRegisterAllocator;
     IonRegisterAllocator forcedRegisterAllocator;
     bool limitScriptSize;
     bool osr;
-    uint32_t baselineUsesBeforeCompile;
+    uint32_t baselineWarmUpThreshold;
     uint32_t exceptionBailoutThreshold;
     uint32_t frequentBailoutThreshold;
     uint32_t maxStackArgs;
     uint32_t osrPcMismatchesBeforeRecompile;
     uint32_t smallFunctionMaxBytecodeLength_;
-    uint32_t usesBeforeCompilePar;
+    uint32_t compilerWarmUpThresholdPar;
 
     JitOptions();
     bool isSmallFunction(JSScript *script) const;
     void setEagerCompilation();
-    void setUsesBeforeCompile(uint32_t useCount);
-    void resetUsesBeforeCompile();
+    void setCompilerWarmUpThreshold(uint32_t warmUpThreshold);
+    void resetCompilerWarmUpThreshold();
 };
 
 extern JitOptions js_JitOptions;

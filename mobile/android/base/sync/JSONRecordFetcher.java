@@ -46,10 +46,12 @@ public class JSONRecordFetcher {
       return authHeaderProvider;
     }
 
+    @Override
     public String ifUnmodifiedSince() {
       return null;
     }
 
+    @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
       if (response.wasSuccessful()) {
         try {
@@ -87,7 +89,7 @@ public class JSONRecordFetcher {
   private class LatchedJSONRecordFetchDelegate implements JSONRecordFetchDelegate {
     public ExtendedJSONObject body = null;
     public Exception exception = null;
-    private CountDownLatch latch;
+    private final CountDownLatch latch;
 
     public LatchedJSONRecordFetchDelegate(CountDownLatch latch) {
       this.latch = latch;

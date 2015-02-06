@@ -42,7 +42,8 @@ namespace frontend {
 namespace irregexp {
 
 bool
-ParsePattern(frontend::TokenStream &ts, LifoAlloc &alloc, JSAtom *str, bool multiline,
+ParsePattern(frontend::TokenStream &ts, LifoAlloc &alloc, JSAtom *str,
+             bool multiline, bool match_only,
              RegExpCompileData *data);
 
 bool
@@ -77,12 +78,12 @@ class BufferedVector
     }
 
     T* last() {
-        JS_ASSERT(last_ != nullptr);
+        MOZ_ASSERT(last_ != nullptr);
         return last_;
     }
 
     T* RemoveLast() {
-        JS_ASSERT(last_ != nullptr);
+        MOZ_ASSERT(last_ != nullptr);
         T* result = last_;
         if ((list_ != nullptr) && (list_->length() > 0))
             last_ = list_->popCopy();
@@ -92,13 +93,13 @@ class BufferedVector
     }
 
     T* Get(int i) {
-        JS_ASSERT((0 <= i) && (i < length()));
+        MOZ_ASSERT((0 <= i) && (i < length()));
         if (list_ == nullptr) {
-            JS_ASSERT(0 == i);
+            MOZ_ASSERT(0 == i);
             return last_;
         } else {
             if (size_t(i) == list_->length()) {
-                JS_ASSERT(last_ != nullptr);
+                MOZ_ASSERT(last_ != nullptr);
                 return last_;
             } else {
                 return (*list_)[i];
@@ -137,7 +138,7 @@ class RegExpBuilder
 {
   public:
     explicit RegExpBuilder(LifoAlloc *alloc);
-    void AddCharacter(jschar character);
+    void AddCharacter(char16_t character);
     // "Adds" an empty expression. Does nothing except consume a
     // following quantifier
     void AddEmpty();
@@ -165,7 +166,7 @@ class RegExpBuilder
     mozilla::DebugOnly<LastAdded> last_added_;
 };
 
-// Characters parsed by RegExpParser can be either jschars or kEndMarker.
+// Characters parsed by RegExpParser can be either char16_t or kEndMarker.
 typedef uint32_t widechar;
 
 template <typename CharT>
@@ -200,7 +201,7 @@ class RegExpParser
     // can be reparsed.
     bool ParseBackReferenceIndex(int* index_out);
 
-    bool ParseClassAtom(jschar* char_class, CharacterRange *char_range);
+    bool ParseClassAtom(char16_t* char_class, CharacterRange *char_range);
     RegExpTree* ReportError(unsigned errorNumber);
     void Advance();
     void Advance(int dist) {

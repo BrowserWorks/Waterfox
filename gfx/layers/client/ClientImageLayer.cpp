@@ -101,26 +101,22 @@ protected:
     }
 
     if (mContainer->IsAsync()) {
-      mImageClientTypeContainer = CompositableType::BUFFER_BRIDGE;
+      mImageClientTypeContainer = CompositableType::IMAGE_BRIDGE;
       return mImageClientTypeContainer;
     }
 
     AutoLockImage autoLock(mContainer);
 
 #ifdef MOZ_WIDGET_GONK
-    // gralloc buffer needs CompositableType::BUFFER_IMAGE_BUFFERED to prevent
-    // the buffer's usage conflict.
     if (autoLock.GetImage()->GetFormat() == ImageFormat::OVERLAY_IMAGE) {
       mImageClientTypeContainer = CompositableType::IMAGE_OVERLAY;
       return mImageClientTypeContainer;
     }
-
-    mImageClientTypeContainer = autoLock.GetImage() ?
-                                  CompositableType::BUFFER_IMAGE_BUFFERED : CompositableType::BUFFER_UNKNOWN;
-#else
-    mImageClientTypeContainer = autoLock.GetImage() ?
-                                  CompositableType::BUFFER_IMAGE_SINGLE : CompositableType::BUFFER_UNKNOWN;
 #endif
+
+  	mImageClientTypeContainer = autoLock.GetImage()
+							  ? CompositableType::IMAGE
+							  : CompositableType::BUFFER_UNKNOWN;
     return mImageClientTypeContainer;
   }
 
@@ -156,7 +152,7 @@ ClientImageLayer::RenderLayer()
     mImageClient = ImageClient::CreateImageClient(type,
                                                   ClientManager()->AsShadowForwarder(),
                                                   flags);
-    if (type == CompositableType::BUFFER_BRIDGE) {
+    if (type == CompositableType::IMAGE_BRIDGE) {
       static_cast<ImageClientBridge*>(mImageClient.get())->SetLayer(this);
     }
 

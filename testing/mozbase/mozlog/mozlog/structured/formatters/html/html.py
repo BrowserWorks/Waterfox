@@ -3,6 +3,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import cgi
 import datetime
 import os
 
@@ -61,7 +62,7 @@ class HTMLFormatter(base.BaseFormatter):
         debug = data.get("extra", {})
         links_html = []
 
-        status = data["status"]
+        status = status_name = data["status"]
         expected = data.get("expected", status)
 
         if status != expected:
@@ -96,7 +97,9 @@ class HTMLFormatter(base.BaseFormatter):
                     pass
 
             log = html.div(class_='log')
-            for line in debug.get("stdout", "").splitlines():
+            output = data.get('stack', '').splitlines()
+            output.extend(data.get('message', '').splitlines())
+            for line in output:
                 separator = line.startswith(' ' * 10)
                 if separator:
                     log.append(line[:80])

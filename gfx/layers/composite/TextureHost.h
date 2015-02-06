@@ -15,6 +15,7 @@
 #include "mozilla/gfx/2D.h"             // for DataSourceSurface
 #include "mozilla/gfx/Point.h"          // for IntSize, IntPoint
 #include "mozilla/gfx/Types.h"          // for SurfaceFormat, etc
+#include "mozilla/layers/Compositor.h"  // for Compositor
 #include "mozilla/layers/CompositorTypes.h"  // for TextureFlags, etc
 #include "mozilla/layers/FenceUtils.h"  // for FenceHandle
 #include "mozilla/layers/LayersTypes.h"  // for LayerRenderState, etc
@@ -88,13 +89,17 @@ public:
  */
 class TextureSource
 {
-protected:
-  virtual ~TextureSource();
-
 public:
   NS_INLINE_DECL_REFCOUNTING(TextureSource)
 
   TextureSource();
+
+  /**
+   * Should be overridden in order to deallocate the data that is associated
+   * with the rendering backend, such as GL textures.
+   */
+  virtual void DeallocateDeviceData() {}
+
 
   /**
    * Return the size of the texture in texels.
@@ -114,17 +119,10 @@ public:
   virtual TextureSourceD3D9* AsSourceD3D9() { return nullptr; }
   virtual TextureSourceD3D11* AsSourceD3D11() { return nullptr; }
   virtual TextureSourceBasic* AsSourceBasic() { return nullptr; }
-
   /**
    * Cast to a DataTextureSurce.
    */
   virtual DataTextureSource* AsDataTextureSource() { return nullptr; }
-
-  /**
-   * In some rare cases we currently need to consider a group of textures as one
-   * TextureSource, that can be split in sub-TextureSources.
-   */
-  virtual TextureSource* GetSubSource(int index) { return nullptr; }
 
   /**
    * Overload this if the TextureSource supports big textures that don't fit in
@@ -132,50 +130,17 @@ public:
    */
   virtual BigImageIterator* AsBigImageIterator() { return nullptr; }
 
-  virtual void SetCompositableBackendSpecificData(CompositableBackendSpecificData* aBackendData);
-
-protected:
-  RefPtr<CompositableBackendSpecificData> mCompositableBackendData;
-};
-
-/**
- * XXX - merge this class with TextureSource when deprecated texture classes
- * are completely removed.
- */
-class NewTextureSource : public TextureSource
-{
-public:
-  NewTextureSource()
-  {
-    MOZ_COUNT_CTOR(NewTextureSource);
-  }
-protected:
-  virtual ~NewTextureSource()
-  {
-    MOZ_COUNT_DTOR(NewTextureSource);
-  }
-
-public:
-  /**
-   * Should be overridden in order to deallocate the data that is associated
-   * with the rendering backend, such as GL textures.
-   */
-  virtual void DeallocateDeviceData() = 0;
-
   virtual void SetCompositor(Compositor* aCompositor) {}
 
-  void SetNextSibling(NewTextureSource* aTexture)
-  {
-    mNextSibling = aTexture;
-  }
+  void SetNextSibling(TextureSource* aTexture) { mNextSibling = aTexture; }
 
-  NewTextureSource* GetNextSibling() const
-  {
-    return mNextSibling;
-  }
+  TextureSource* GetNextSibling() const { return mNextSibling; }
 
-  // temporary adapter to use the same SubSource API as the old TextureSource
-  virtual TextureSource* GetSubSource(int index) MOZ_OVERRIDE
+  /**
+   * In some rare cases we currently need to consider a group of textures as one
+   * TextureSource, that can be split in sub-TextureSources.
+   */
+  TextureSource* GetSubSource(int index)
   {
     switch (index) {
       case 0: return this;
@@ -186,7 +151,9 @@ public:
   }
 
 protected:
-  RefPtr<NewTextureSource> mNextSibling;
+  virtual ~TextureSource();
+
+  RefPtr<TextureSource> mNextSibling;
 };
 
 /**
@@ -194,7 +161,7 @@ protected:
  *
  * All backend should implement at least one DataTextureSource.
  */
-class DataTextureSource : public NewTextureSource
+class DataTextureSource : public TextureSource
 {
 public:
   DataTextureSource()
@@ -333,7 +300,7 @@ public:
    * so as to not upload textures while the main thread is blocked.
    * Must not be called while this TextureHost is not sucessfully Locked.
    */
-  virtual NewTextureSource* GetTextureSources() = 0;
+  virtual TextureSource* GetTextureSources() = 0;
 
   /**
    * Is called before compositing if the shared data has changed since last
@@ -426,8 +393,6 @@ public:
    */
   PTextureParent* GetIPDLActor();
 
-  static void SendFenceHandleIfPresent(PTextureParent* actor);
-
   FenceHandle GetAndResetReleaseFenceHandle();
 
   /**
@@ -442,6 +407,8 @@ public:
   }
 
   virtual void SetCompositableBackendSpecificData(CompositableBackendSpecificData* aBackendData);
+
+  virtual void UnsetCompositableBackendSpecificData(CompositableBackendSpecificData* aBackendData);
 
   // If a texture host holds a reference to shmem, it should override this method
   // to forget about the shmem _without_ releasing it.
@@ -504,7 +471,7 @@ public:
 
   virtual void Unlock() MOZ_OVERRIDE;
 
-  virtual NewTextureSource* GetTextureSources() MOZ_OVERRIDE;
+  virtual TextureSource* GetTextureSources() MOZ_OVERRIDE;
 
   virtual void DeallocateDeviceData() MOZ_OVERRIDE;
 
@@ -529,7 +496,7 @@ protected:
   bool Upload(nsIntRegion *aRegion = nullptr);
   bool MaybeUpload(nsIntRegion *aRegion = nullptr);
 
-  Compositor* mCompositor;
+  RefPtr<Compositor> mCompositor;
   RefPtr<DataTextureSource> mFirstSource;
   nsIntRegion mMaybeUpdatedRegion;
   gfx::IntSize mSize;
@@ -626,7 +593,7 @@ public:
 
   virtual gfx::SurfaceFormat GetFormat() const MOZ_OVERRIDE;
 
-  virtual NewTextureSource* GetTextureSources() MOZ_OVERRIDE
+  virtual TextureSource* GetTextureSources() MOZ_OVERRIDE
   {
     return mTextureSource;
   }
@@ -643,9 +610,9 @@ public:
 #endif
 
 protected:
-  Compositor* mCompositor;
+  RefPtr<Compositor> mCompositor;
   gl::SurfaceStream* mStream;
-  RefPtr<NewTextureSource> mTextureSource;
+  RefPtr<TextureSource> mTextureSource;
   RefPtr<DataTextureSource> mDataTextureSource;
 };
 
@@ -676,9 +643,10 @@ private:
  * This can be used as an offscreen rendering target by the compositor, and
  * subsequently can be used as a source by the compositor.
  */
-class CompositingRenderTarget : public TextureSource
+class CompositingRenderTarget: public TextureSource
 {
 public:
+
   explicit CompositingRenderTarget(const gfx::IntPoint& aOrigin)
     : mOrigin(aOrigin)
   {}

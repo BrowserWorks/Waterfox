@@ -154,7 +154,7 @@ struct UploadData
     int64_t mSelfProgress;
     int64_t mSelfProgressMax;
 
-    UploadData(nsIURI *aFile) :
+    explicit UploadData(nsIURI *aFile) :
         mFile(aFile),
         mSelfProgress(0),
         mSelfProgressMax(10000)
@@ -1200,9 +1200,15 @@ nsresult nsWebBrowserPersist::SaveURIInternal(
 
     // Open a channel to the URI
     nsCOMPtr<nsIChannel> inputChannel;
-    rv = NS_NewChannel(getter_AddRefs(inputChannel), aURI,
-            nullptr, nullptr, static_cast<nsIInterfaceRequestor*>(this),
-            loadFlags);
+    rv = NS_NewChannel(getter_AddRefs(inputChannel),
+                       aURI,
+                       nsContentUtils::GetSystemPrincipal(),
+                       nsILoadInfo::SEC_NORMAL,
+                       nsIContentPolicy::TYPE_OTHER,
+                       nullptr,  // aChannelPolicy
+                       nullptr,  // aLoadGroup
+                       static_cast<nsIInterfaceRequestor*>(this),
+                       loadFlags);
 
     nsCOMPtr<nsIPrivateBrowsingChannel> pbChannel = do_QueryInterface(inputChannel);
     if (pbChannel)

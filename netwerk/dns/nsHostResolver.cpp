@@ -3,10 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#if defined(MOZ_LOGGING)
-#define FORCE_PR_LOG
-#endif
-
 #if defined(HAVE_RES_NINIT)
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -17,6 +13,7 @@
 #endif
 
 #include <stdlib.h>
+#include <ctime>
 #include "nsHostResolver.h"
 #include "nsError.h"
 #include "nsISupportsBase.h"
@@ -30,14 +27,21 @@
 #include "plstr.h"
 #include "nsURLHelper.h"
 #include "nsThreadUtils.h"
+#include "GetAddrInfo.h"
 
 #include "mozilla/HashFunctions.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/VisualEventTracer.h"
+#include "mozilla/DebugOnly.h"
+#include "mozilla/Preferences.h"
 
 using namespace mozilla;
 using namespace mozilla::net;
+
+// None of our implementations expose a TTL for negative responses, so we use a
+// constant always.
+static const unsigned int NEGATIVE_RECORD_LIFETIME = 60;
 
 //----------------------------------------------------------------------------
 
@@ -151,6 +155,117 @@ IsLowPriority(uint16_t flags)
 
 //----------------------------------------------------------------------------
 
+enum DnsExpirationVariant {
+    DNS_EXP_VARIANT_UNSET = 0,
+    DNS_EXP_VARIANT_CONTROL = 1,
+    DNS_EXP_VARIANT_TTL_ONLY = 2,
+    DNS_EXP_VARIANT_TTL_PLUS_CONST_GRACE = 3,
+    DNS_EXP_VARIANT_MAX_VALUE = 3,
+};
+static DnsExpirationVariant sDnsVariant;
+
+static mozilla::Telemetry::ID
+GetCacheHitHistogram(DnsExpirationVariant aVariant,
+                     nsHostRecord::DnsPriority aPriority)
+{
+    using namespace mozilla::Telemetry;
+
+    switch (aVariant) {
+        case DNS_EXP_VARIANT_CONTROL:
+            switch (aPriority) {
+                case nsHostRecord::DNS_PRIORITY_HIGH:
+                    return DNS_CACHE_HIT_VAR_CONTROL_HIGH;
+
+                case nsHostRecord::DNS_PRIORITY_MEDIUM:
+                    return DNS_CACHE_HIT_VAR_CONTROL_MEDIUM;
+
+                case nsHostRecord::DNS_PRIORITY_LOW:
+                    return DNS_CACHE_HIT_VAR_CONTROL_LOW;
+            }
+
+        case DNS_EXP_VARIANT_TTL_ONLY:
+            switch (aPriority) {
+                case nsHostRecord::DNS_PRIORITY_HIGH:
+                    return DNS_CACHE_HIT_VAR_TTL_ONLY_HIGH;
+
+                case nsHostRecord::DNS_PRIORITY_MEDIUM:
+                    return DNS_CACHE_HIT_VAR_TTL_ONLY_MEDIUM;
+
+                case nsHostRecord::DNS_PRIORITY_LOW:
+                    return DNS_CACHE_HIT_VAR_TTL_ONLY_LOW;
+            }
+
+        case DNS_EXP_VARIANT_TTL_PLUS_CONST_GRACE:
+            switch (aPriority) {
+                case nsHostRecord::DNS_PRIORITY_HIGH:
+                    return DNS_CACHE_HIT_VAR_TTL_PLUS_CONST_GRACE_HIGH;
+
+                case nsHostRecord::DNS_PRIORITY_MEDIUM:
+                    return DNS_CACHE_HIT_VAR_TTL_PLUS_CONST_GRACE_MEDIUM;
+
+                case nsHostRecord::DNS_PRIORITY_LOW:
+                    return DNS_CACHE_HIT_VAR_TTL_PLUS_CONST_GRACE_LOW;
+            }
+
+        case DNS_EXP_VARIANT_UNSET:
+            ;
+    }
+
+    MOZ_ASSERT_UNREACHABLE("Invalid expiration variant.");
+    return DNS_CACHE_HIT_VAR_CONTROL_LOW;
+}
+
+static mozilla::Telemetry::ID
+GetBlacklistCountHistogram(DnsExpirationVariant aVariant,
+                           nsHostRecord::DnsPriority aPriority)
+{
+    using namespace mozilla::Telemetry;
+
+    switch (aVariant) {
+        case DNS_EXP_VARIANT_CONTROL:
+            switch (aPriority) {
+                case nsHostRecord::DNS_PRIORITY_HIGH:
+                    return DNS_BLACKLIST_COUNT_VAR_CONTROL_HIGH;
+
+                case nsHostRecord::DNS_PRIORITY_MEDIUM:
+                    return DNS_BLACKLIST_COUNT_VAR_CONTROL_MEDIUM;
+
+                case nsHostRecord::DNS_PRIORITY_LOW:
+                    return DNS_BLACKLIST_COUNT_VAR_CONTROL_LOW;
+            }
+
+        case DNS_EXP_VARIANT_TTL_ONLY:
+            switch (aPriority) {
+                case nsHostRecord::DNS_PRIORITY_HIGH:
+                    return DNS_BLACKLIST_COUNT_VAR_TTL_ONLY_HIGH;
+
+                case nsHostRecord::DNS_PRIORITY_MEDIUM:
+                    return DNS_BLACKLIST_COUNT_VAR_TTL_ONLY_MEDIUM;
+
+                case nsHostRecord::DNS_PRIORITY_LOW:
+                    return DNS_BLACKLIST_COUNT_VAR_TTL_ONLY_LOW;
+            }
+
+        case DNS_EXP_VARIANT_TTL_PLUS_CONST_GRACE:
+            switch (aPriority) {
+                case nsHostRecord::DNS_PRIORITY_HIGH:
+                    return DNS_BLACKLIST_COUNT_VAR_TTL_PLUS_CONST_GRACE_HIGH;
+
+                case nsHostRecord::DNS_PRIORITY_MEDIUM:
+                    return DNS_BLACKLIST_COUNT_VAR_TTL_PLUS_CONST_GRACE_MEDIUM;
+
+                case nsHostRecord::DNS_PRIORITY_LOW:
+                    return DNS_BLACKLIST_COUNT_VAR_TTL_PLUS_CONST_GRACE_LOW;
+            }
+
+        case DNS_EXP_VARIANT_UNSET:
+            ; // Fall through
+    }
+
+    MOZ_ASSERT_UNREACHABLE("Invalid variant.");
+    return DNS_BLACKLIST_COUNT_VAR_CONTROL_LOW;
+}
+
 // this macro filters out any flags that are not used when constructing the
 // host key.  the significant flags are those that would affect the resulting
 // host record (i.e., the flags that are passed down to PR_GetAddrInfoByName).
@@ -166,13 +281,16 @@ nsHostRecord::nsHostRecord(const nsHostKey *key)
     , onQueue(false)
     , usingAnyThread(false)
     , mDoomed(false)
+#if TTL_AVAILABLE
+    , mGetTtl(false)
+#endif
+    , mBlacklistedCount(0)
+    , mResolveAgain(false)
 {
     host = ((char *) this) + sizeof(nsHostRecord);
     memcpy((char *) host, key->host, strlen(key->host) + 1);
     flags = key->flags;
     af = key->af;
-
-    expiration = TimeStamp::NowLoRes();
 
     PR_INIT_CLIST(this);
     PR_INIT_CLIST(&callbacks);
@@ -195,8 +313,20 @@ nsHostRecord::Create(const nsHostKey *key, nsHostRecord **result)
     return NS_OK;
 }
 
+void
+nsHostRecord::SetExpiration(const mozilla::TimeStamp& now, unsigned int valid, unsigned int grace)
+{
+    mValidStart = now;
+    mGraceStart = now + TimeDuration::FromSeconds(valid);
+    mValidEnd = now + TimeDuration::FromSeconds(valid + grace);
+}
+
 nsHostRecord::~nsHostRecord()
 {
+    Telemetry::Accumulate(
+        GetBlacklistCountHistogram(sDnsVariant,
+                                   nsHostRecord::GetPriority(flags)),
+        mBlacklistedCount);
     delete addr_info;
     delete addr;
 }
@@ -234,6 +364,8 @@ nsHostRecord::ReportUnusable(NetAddr *aAddress)
     // must call locked
     LOG(("Adding address to blacklist for host [%s], host record [%p].\n", host, this));
 
+    ++mBlacklistedCount;
+
     if (negative)
         mDoomed = true;
 
@@ -252,15 +384,34 @@ nsHostRecord::ResetBlacklist()
     mBlacklistedItems.Clear();
 }
 
+nsHostRecord::ExpirationStatus
+nsHostRecord::CheckExpiration(const mozilla::TimeStamp& now) const {
+    if (!mGraceStart.IsNull() && now >= mGraceStart
+            && !mValidEnd.IsNull() && now < mValidEnd) {
+        return nsHostRecord::EXP_GRACE;
+    } else if (!mValidEnd.IsNull() && now < mValidEnd) {
+        return nsHostRecord::EXP_VALID;
+    }
+
+    return nsHostRecord::EXP_EXPIRED;
+}
+
+
 bool
-nsHostRecord::HasUsableResult(uint16_t queryFlags) const
+nsHostRecord::HasUsableResult(const mozilla::TimeStamp& now, uint16_t queryFlags) const
 {
-    if (mDoomed)
+    if (mDoomed) {
         return false;
+    }
 
     // don't use cached negative results for high priority queries.
-    if (negative && IsHighPriority(queryFlags))
+    if (negative && IsHighPriority(queryFlags)) {
         return false;
+    }
+
+    if (CheckExpiration(now) == EXP_EXPIRED) {
+        return false;
+    }
 
     return addr_info || addr || negative;
 }
@@ -299,6 +450,38 @@ nsHostRecord::SizeOfIncludingThis(MallocSizeOf mallocSizeOf) const
         n += mBlacklistedItems[i].SizeOfExcludingThisMustBeUnshared(mallocSizeOf);
     }
     return n;
+}
+
+nsHostRecord::DnsPriority
+nsHostRecord::GetPriority(uint16_t aFlags)
+{
+    if (IsHighPriority(aFlags)){
+        return nsHostRecord::DNS_PRIORITY_HIGH;
+    } else if (IsMediumPriority(aFlags)) {
+        return nsHostRecord::DNS_PRIORITY_MEDIUM;
+    }
+
+    return nsHostRecord::DNS_PRIORITY_LOW;
+}
+
+// Returns true if the entry can be removed, or false if it should be left.
+// Sets mResolveAgain true for entries being resolved right now.
+bool
+nsHostRecord::RemoveOrRefresh()
+{
+    if (resolving) {
+        if (!onQueue) {
+            // The request has been passed to the OS resolver. The resultant DNS
+            // record should be considered stale and not trusted; set a flag to
+            // ensure it is called again.
+            mResolveAgain = true;
+        }
+        // if Onqueue is true, the host entry is already added to the cache
+        // but is still pending to get resolved: just leave it in hash.
+        return false;
+    }
+    // Already resolved; not in a pending state; remove from cache.
+    return true;
 }
 
 //----------------------------------------------------------------------------
@@ -354,8 +537,13 @@ HostDB_ClearEntry(PLDHashTable *table,
         if (!hr->addr_info) {
             LOG(("No address info for host [%s].\n", hr->host));
         } else {
-            TimeDuration diff = hr->expiration - TimeStamp::NowLoRes();
-            LOG(("Record for [%s] expires in %f seconds.\n", hr->host, diff.ToSeconds()));
+            if (!hr->mValidEnd.IsNull()) {
+                TimeDuration diff = hr->mValidEnd - TimeStamp::NowLoRes();
+                LOG(("Record for [%s] expires in %f seconds.\n", hr->host,
+                     diff.ToSeconds()));
+            } else {
+                LOG(("Record for [%s] not yet valid.\n", hr->host));
+            }
 
             NetAddrElement *addrElement = nullptr;
             char buf[kIPv6CStrBufSize];
@@ -409,14 +597,100 @@ HostDB_RemoveEntry(PLDHashTable *table,
     return PL_DHASH_REMOVE;
 }
 
+static PLDHashOperator
+HostDB_PruneEntry(PLDHashTable *table,
+                  PLDHashEntryHdr *hdr,
+                  uint32_t number,
+                  void *arg)
+{
+    nsHostDBEnt* ent = static_cast<nsHostDBEnt *>(hdr);
+    // Try to remove the record, or mark it for refresh
+    if (ent->rec->RemoveOrRefresh()) {
+        PR_REMOVE_LINK(ent->rec);
+        return PL_DHASH_REMOVE;
+    }
+    return PL_DHASH_NEXT;
+}
+
 //----------------------------------------------------------------------------
 
+#if TTL_AVAILABLE
+static const char kTtlExperiment[] = "dns.ttl-experiment.";
+static const char kTtlExperimentEnabled[] = "dns.ttl-experiment.enabled";
+static const char kNetworkExperimentsEnabled[] = "network.allow-experiments";
+static const char kTtlExperimentVariant[] = "dns.ttl-experiment.variant";
+
+void
+nsHostResolver::DnsExperimentChangedInternal()
+{
+    MOZ_ASSERT(NS_IsMainThread(), "Can only get prefs on main thread!");
+
+    if (!Preferences::GetBool(kTtlExperimentEnabled) ||
+            !Preferences::GetBool(kNetworkExperimentsEnabled)) {
+        sDnsVariant = DNS_EXP_VARIANT_CONTROL;
+        LOG(("DNS TTL experiment is disabled."));
+        return;
+    }
+
+    auto variant = static_cast<DnsExpirationVariant>(
+        Preferences::GetInt(kTtlExperimentVariant));
+
+    // Setup this profile to use a particular DNS expiration strategy
+    if (variant == DNS_EXP_VARIANT_UNSET) {
+        variant = static_cast<DnsExpirationVariant>(
+            rand() % DNS_EXP_VARIANT_MAX_VALUE + 1);
+        LOG(("No DNS TTL experiment variant saved. Randomly picked %d.",
+             variant));
+
+        DebugOnly<nsresult> rv = Preferences::SetInt(
+            kTtlExperimentVariant, variant);
+        NS_WARN_IF_FALSE(NS_SUCCEEDED(rv),
+                         "Could not set experiment variant pref.");
+    } else {
+        LOG(("Using saved DNS TTL experiment %d.", variant));
+    }
+
+    sDnsVariant = variant;
+}
+
+void
+nsHostResolver::DnsExperimentChanged(const char* aPref, void* aClosure)
+{
+    MOZ_ASSERT(NS_IsMainThread(),
+               "Should be getting pref changed notification on main thread!");
+
+    if (strcmp(aPref, kNetworkExperimentsEnabled) != 0 &&
+        strncmp(aPref, kTtlExperiment, strlen(kTtlExperiment)) != 0) {
+        LOG(("DnsExperimentChanged ignoring pref \"%s\"", aPref));
+        return;
+    }
+
+    auto self = static_cast<nsHostResolver*>(aClosure);
+    MOZ_ASSERT(self);
+
+    // We can't set a pref in the context of a pref change callback, so
+    // dispatch DnsExperimentChangedInternal for async getting/setting.
+    DebugOnly<nsresult> rv = NS_DispatchToMainThread(
+        NS_NewRunnableMethod(self, &nsHostResolver::DnsExperimentChangedInternal));
+    NS_WARN_IF_FALSE(NS_SUCCEEDED(rv),
+                     "Could not dispatch DnsExperimentChanged event.");
+}
+
+void
+nsHostResolver::InitCRandom()
+{
+    MOZ_ASSERT(NS_IsMainThread(), "Should be seeding rand() on main thread!");
+
+    srand(time(nullptr));
+}
+#endif
+
 nsHostResolver::nsHostResolver(uint32_t maxCacheEntries,
-                               uint32_t maxCacheLifetime,
-                               uint32_t lifetimeGracePeriod)
+                               uint32_t defaultCacheEntryLifetime,
+                               uint32_t defaultGracePeriod)
     : mMaxCacheEntries(maxCacheEntries)
-    , mMaxCacheLifetime(TimeDuration::FromSeconds(maxCacheLifetime))
-    , mGracePeriod(TimeDuration::FromSeconds(lifetimeGracePeriod))
+    , mDefaultCacheLifetime(defaultCacheEntryLifetime)
+    , mDefaultGracePeriod(defaultGracePeriod)
     , mLock("nsHostResolver.mLock")
     , mIdleThreadCV(mLock, "nsHostResolver.mIdleThreadCV")
     , mNumIdleThreads(0)
@@ -444,9 +718,36 @@ nsHostResolver::~nsHostResolver()
 nsresult
 nsHostResolver::Init()
 {
+    if (NS_FAILED(GetAddrInfoInit())) {
+        return NS_ERROR_FAILURE;
+    }
+
     PL_DHashTableInit(&mDB, &gHostDB_ops, nullptr, sizeof(nsHostDBEnt), 0);
 
     mShutdown = false;
+
+    sDnsVariant = DNS_EXP_VARIANT_CONTROL;
+
+#if TTL_AVAILABLE
+    // The preferences probably haven't been loaded from the disk yet, so we
+    // need to register a callback that will set up the experiment once they
+    // are. We also need to explicitly set a value for the props otherwise the
+    // callback won't be called.
+    {
+        DebugOnly<nsresult> rv = NS_DispatchToMainThread(
+            NS_NewRunnableMethod(this, &nsHostResolver::InitCRandom));
+        NS_WARN_IF_FALSE(NS_SUCCEEDED(rv),
+                         "Could not dispatch InitCRandom event.");
+        rv = Preferences::RegisterCallbackAndCall(
+            &DnsExperimentChanged, kTtlExperiment, this);
+        NS_WARN_IF_FALSE(NS_SUCCEEDED(rv),
+                         "Could not register DNS experiment callback.");
+        rv = Preferences::RegisterCallback(
+            &DnsExperimentChanged, kNetworkExperimentsEnabled, this);
+        NS_WARN_IF_FALSE(NS_SUCCEEDED(rv),
+                         "Could not register network experiment callback.");
+    }
+#endif
 
 #if defined(HAVE_RES_NINIT)
     // We want to make sure the system is using the correct resolver settings,
@@ -477,10 +778,56 @@ nsHostResolver::ClearPendingQueue(PRCList *aPendingQ)
     }
 }
 
+//
+// FlushCache() is what we call when the network has changed. We must not
+// trust names that were resolved before this change. They may resolve
+// differently now.
+//
+// This function removes all existing resolved host entries from the hash.
+// Names that are in the pending queues can be left there. Entries in the
+// cache that have 'Resolve' set true but not 'onQueue' are being resolved
+// right now, so we need to mark them to get re-resolved on completion!
+
+void
+nsHostResolver::FlushCache()
+{
+  MutexAutoLock lock(mLock);
+  mEvictionQSize = 0;
+
+  // Clear the evictionQ and remove all its corresponding entries from
+  // the cache first
+  if (!PR_CLIST_IS_EMPTY(&mEvictionQ)) {
+      PRCList *node = mEvictionQ.next;
+      while (node != &mEvictionQ) {
+          nsHostRecord *rec = static_cast<nsHostRecord *>(node);
+          node = node->next;
+          PR_REMOVE_AND_INIT_LINK(rec);
+          PL_DHashTableOperate(&mDB, (nsHostKey *) rec, PL_DHASH_REMOVE);
+          NS_RELEASE(rec);
+      }
+  }
+
+  // Refresh the cache entries that are resolving RIGHT now, remove the rest.
+  PL_DHashTableEnumerate(&mDB, HostDB_PruneEntry, nullptr);
+}
+
 void
 nsHostResolver::Shutdown()
 {
     LOG(("Shutting down host resolver.\n"));
+
+#if TTL_AVAILABLE
+    {
+        DebugOnly<nsresult> rv = Preferences::UnregisterCallback(
+            &DnsExperimentChanged, kTtlExperiment, this);
+        NS_WARN_IF_FALSE(NS_SUCCEEDED(rv),
+                         "Could not unregister TTL experiment callback.");
+        rv = Preferences::UnregisterCallback(
+            &DnsExperimentChanged, kNetworkExperimentsEnabled, this);
+        NS_WARN_IF_FALSE(NS_SUCCEEDED(rv),
+                         "Could not unregister network experiment callback.");
+    }
+#endif
 
     PRCList pendingQHigh, pendingQMed, pendingQLow, evictionQ;
     PR_INIT_CLIST(&pendingQHigh);
@@ -490,7 +837,7 @@ nsHostResolver::Shutdown()
 
     {
         MutexAutoLock lock(mLock);
-        
+
         mShutdown = true;
 
         MoveCList(mHighQ, pendingQHigh);
@@ -499,14 +846,14 @@ nsHostResolver::Shutdown()
         MoveCList(mEvictionQ, evictionQ);
         mEvictionQSize = 0;
         mPendingCount = 0;
-        
+
         if (mNumIdleThreads)
             mIdleThreadCV.NotifyAll();
-        
+
         // empty host database
         PL_DHashTableEnumerate(&mDB, HostDB_RemoveEntry, nullptr);
     }
-    
+
     ClearPendingQueue(&pendingQHigh);
     ClearPendingQueue(&pendingQMed);
     ClearPendingQueue(&pendingQLow);
@@ -534,6 +881,11 @@ nsHostResolver::Shutdown()
     while (mThreadCount && PR_IntervalNow() < stopTime)
         PR_Sleep(delay);
 #endif
+
+    {
+        mozilla::DebugOnly<nsresult> rv = GetAddrInfoShutdown();
+        NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Failed to shutdown GetAddrInfo");
+    }
 }
 
 void 
@@ -595,8 +947,7 @@ nsHostResolver::ResolveHost(const char            *host,
             }
             // do we have a cached result that we can reuse?
             else if (!(flags & RES_BYPASS_CACHE) &&
-                     he->rec->HasUsableResult(flags) &&
-                     TimeStamp::NowLoRes() <= (he->rec->expiration + mGracePeriod)) {
+                     he->rec->HasUsableResult(TimeStamp::NowLoRes(), flags)) {
                 LOG(("  Using cached record for host [%s].\n", host));
                 // put reference to host record on stack...
                 result = he->rec;
@@ -608,7 +959,7 @@ nsHostResolver::ResolveHost(const char            *host,
                 ConditionallyRefreshRecord(he->rec, host);
                 
                 if (he->rec->negative) {
-                    LOG(("  Negative cache entry for[%s].\n", host));
+                    LOG(("  Negative cache entry for [%s].\n", host));
                     Telemetry::Accumulate(Telemetry::DNS_LOOKUP_METHOD2,
                                           METHOD_NEGATIVE_HIT);
                     status = NS_ERROR_UNKNOWN_HOST;
@@ -667,8 +1018,7 @@ nsHostResolver::ResolveHost(const char            *host,
                                 "Valid host entries should contain a record");
                     if (PL_DHASH_ENTRY_IS_BUSY(unspecHe) &&
                         unspecHe->rec &&
-                        unspecHe->rec->HasUsableResult(flags) &&
-                        TimeStamp::NowLoRes() <= (he->rec->expiration + mGracePeriod)) {
+                        unspecHe->rec->HasUsableResult(TimeStamp::NowLoRes(), flags)) {
 
                         MOZ_ASSERT(unspecHe->rec->addr_info || unspecHe->rec->negative,
                                    "Entry should be resolved or negative.");
@@ -699,7 +1049,7 @@ nsHostResolver::ResolveHost(const char            *host,
                                 addrIter = addrIter->getNext();
                             }
                         }
-                        if (he->rec->HasUsableResult(flags)) {
+                        if (he->rec->HasUsableResult(TimeStamp::NowLoRes(), flags)) {
                             result = he->rec;
                             Telemetry::Accumulate(Telemetry::DNS_LOOKUP_METHOD2,
                                                   METHOD_HIT);
@@ -769,8 +1119,13 @@ nsHostResolver::ResolveHost(const char            *host,
             }
         }
     }
-    if (result)
+    if (result) {
         callback->OnLookupComplete(this, result, status);
+    }
+
+    Telemetry::Accumulate(
+        GetCacheHitHistogram(sDnsVariant, nsHostRecord::GetPriority(flags)),
+        static_cast<bool>(result));
     return rv;
 }
 
@@ -860,12 +1215,19 @@ nsHostResolver::IssueLookup(nsHostRecord *rec)
         mEvictionQSize--;
     }
     
-    if (IsHighPriority(rec->flags))
-        PR_APPEND_LINK(rec, &mHighQ);
-    else if (IsMediumPriority(rec->flags))
-        PR_APPEND_LINK(rec, &mMediumQ);
-    else
-        PR_APPEND_LINK(rec, &mLowQ);
+    switch (nsHostRecord::GetPriority(rec->flags)) {
+        case nsHostRecord::DNS_PRIORITY_HIGH:
+            PR_APPEND_LINK(rec, &mHighQ);
+            break;
+
+        case nsHostRecord::DNS_PRIORITY_MEDIUM:
+            PR_APPEND_LINK(rec, &mMediumQ);
+            break;
+
+        case nsHostRecord::DNS_PRIORITY_LOW:
+            PR_APPEND_LINK(rec, &mLowQ);
+            break;
+    }
     mPendingCount++;
     
     rec->resolving = true;
@@ -885,8 +1247,8 @@ nsHostResolver::IssueLookup(nsHostRecord *rec)
 nsresult
 nsHostResolver::ConditionallyRefreshRecord(nsHostRecord *rec, const char *host)
 {
-    if (((TimeStamp::NowLoRes() > rec->expiration) || rec->negative) &&
-        !rec->resolving) {
+    if ((rec->CheckExpiration(TimeStamp::NowLoRes()) != nsHostRecord::EXP_VALID
+            || rec->negative) && !rec->resolving) {
         LOG(("  Using %s cache entry for host [%s] but starting async renewal.",
             rec->negative ? "negative" :"positive", host));
         IssueLookup(rec);
@@ -924,8 +1286,16 @@ nsHostResolver::GetHostToLookup(nsHostRecord **result)
     while (!mShutdown) {
         // remove next record from Q; hand over owning reference. Check high, then med, then low
         
+#if TTL_AVAILABLE
+        #define SET_GET_TTL(var, val) \
+            (var)->mGetTtl = sDnsVariant != DNS_EXP_VARIANT_CONTROL && (val)
+#else
+        #define SET_GET_TTL(var, val)
+#endif
+
         if (!PR_CLIST_IS_EMPTY(&mHighQ)) {
             DeQueue (mHighQ, result);
+            SET_GET_TTL(*result, false);
             return true;
         }
 
@@ -934,6 +1304,7 @@ nsHostResolver::GetHostToLookup(nsHostRecord **result)
                 DeQueue (mMediumQ, result);
                 mActiveAnyThreadCount++;
                 (*result)->usingAnyThread = true;
+                SET_GET_TTL(*result, true);
                 return true;
             }
             
@@ -941,6 +1312,7 @@ nsHostResolver::GetHostToLookup(nsHostRecord **result)
                 DeQueue (mLowQ, result);
                 mActiveAnyThreadCount++;
                 (*result)->usingAnyThread = true;
+                SET_GET_TTL(*result, true);
                 return true;
             }
         }
@@ -978,7 +1350,59 @@ nsHostResolver::GetHostToLookup(nsHostRecord **result)
 }
 
 void
-nsHostResolver::OnLookupComplete(nsHostRecord *rec, nsresult status, AddrInfo *result)
+nsHostResolver::PrepareRecordExpiration(nsHostRecord* rec) const
+{
+    MOZ_ASSERT(((bool)rec->addr_info) != rec->negative);
+    if (!rec->addr_info) {
+        rec->SetExpiration(TimeStamp::NowLoRes(),
+                           NEGATIVE_RECORD_LIFETIME, 0);
+        LOG(("Caching [%s] negative record for %u seconds.\n", rec->host,
+             NEGATIVE_RECORD_LIFETIME));
+        return;
+    }
+
+    unsigned int ttl = mDefaultCacheLifetime;
+#if TTL_AVAILABLE
+    if (sDnsVariant == DNS_EXP_VARIANT_TTL_ONLY
+            || sDnsVariant == DNS_EXP_VARIANT_TTL_PLUS_CONST_GRACE) {
+        MutexAutoLock lock(rec->addr_info_lock);
+        if (rec->addr_info && rec->addr_info->ttl != AddrInfo::NO_TTL_DATA) {
+            ttl = rec->addr_info->ttl;
+        }
+    }
+#endif
+
+    unsigned int lifetime = 0;
+    unsigned int grace = 0;
+    switch (sDnsVariant) {
+        case DNS_EXP_VARIANT_TTL_ONLY:
+            lifetime = ttl;
+            grace = 0;
+            break;
+
+        case DNS_EXP_VARIANT_TTL_PLUS_CONST_GRACE:
+            lifetime = ttl;
+            grace = mDefaultGracePeriod;
+            break;
+
+        default:
+            lifetime = mDefaultCacheLifetime;
+            grace = mDefaultGracePeriod;
+            break;
+    }
+
+    rec->SetExpiration(TimeStamp::NowLoRes(), lifetime, grace);
+    LOG(("Caching [%s] record for %u seconds (grace %d) (sDnsVariant = %d).",
+         rec->host, lifetime, grace, sDnsVariant));
+}
+
+//
+// OnLookupComplete() checks if the resolving should be redone and if so it
+// returns LOOKUP_RESOLVEAGAIN, but only if 'status' is not NS_ERROR_ABORT.
+//
+
+nsHostResolver::LookupStatus
+nsHostResolver::OnLookupComplete(nsHostRecord* rec, nsresult status, AddrInfo* result)
 {
     // get the list of pending callbacks for this lookup, and notify
     // them that the lookup is complete.
@@ -986,6 +1410,11 @@ nsHostResolver::OnLookupComplete(nsHostRecord *rec, nsresult status, AddrInfo *r
     PR_INIT_CLIST(&cbs);
     {
         MutexAutoLock lock(mLock);
+
+        if (rec->mResolveAgain && (status != NS_ERROR_ABORT)) {
+            rec->mResolveAgain = false;
+            return LOOKUP_RESOLVEAGAIN;
+        }
 
         // grab list of callbacks to notify
         MoveCList(rec->callbacks, cbs);
@@ -1001,15 +1430,8 @@ nsHostResolver::OnLookupComplete(nsHostRecord *rec, nsresult status, AddrInfo *r
         }
         delete old_addr_info;
 
-        rec->expiration = TimeStamp::NowLoRes();
-        if (result) {
-            rec->expiration += mMaxCacheLifetime;
-            rec->negative = false;
-        }
-        else {
-            rec->expiration += TimeDuration::FromSeconds(60); /* one minute for negative cache */
-            rec->negative = true;
-        }
+        rec->negative = !rec->addr_info;
+        PrepareRecordExpiration(rec);
         rec->resolving = false;
         
         if (rec->usingAnyThread) {
@@ -1032,8 +1454,7 @@ nsHostResolver::OnLookupComplete(nsHostRecord *rec, nsresult status, AddrInfo *r
 
                 if (!head->negative) {
                     // record the age of the entry upon eviction.
-                    TimeDuration age = TimeStamp::NowLoRes() -
-                                         (head->expiration - mMaxCacheLifetime);
+                    TimeDuration age = TimeStamp::NowLoRes() - head->mValidStart;
                     Telemetry::Accumulate(Telemetry::DNS_CLEANUP_AGE,
                                           static_cast<uint32_t>(age.ToSeconds() / 60));
                 }
@@ -1041,6 +1462,17 @@ nsHostResolver::OnLookupComplete(nsHostRecord *rec, nsresult status, AddrInfo *r
                 // release reference to rec owned by mEvictionQ
                 NS_RELEASE(head);
             }
+#if TTL_AVAILABLE
+            if (!rec->mGetTtl && sDnsVariant != DNS_EXP_VARIANT_CONTROL
+                && !rec->resolving) {
+                LOG(("Issuing second async lookup for TTL for %s.", rec->host));
+                rec->flags =
+                  (rec->flags & ~RES_PRIORITY_MEDIUM) | RES_PRIORITY_LOW;
+                DebugOnly<nsresult> rv = IssueLookup(rec);
+                NS_WARN_IF_FALSE(NS_SUCCEEDED(rv),
+                                 "Could not issue second async lookup for TTL.");
+            }
+#endif
         }
     }
 
@@ -1058,6 +1490,8 @@ nsHostResolver::OnLookupComplete(nsHostRecord *rec, nsresult status, AddrInfo *r
     }
 
     NS_RELEASE(rec);
+
+    return LOOKUP_OK;
 }
 
 void
@@ -1141,72 +1575,65 @@ nsHostResolver::ThreadFunc(void *arg)
     nsResState rs;
 #endif
     nsHostResolver *resolver = (nsHostResolver *)arg;
-    nsHostRecord *rec;
-    PRAddrInfo *prai = nullptr;
-    while (resolver->GetHostToLookup(&rec)) {
+    nsHostRecord *rec  = nullptr;
+    AddrInfo *ai = nullptr;
+
+    while (rec || resolver->GetHostToLookup(&rec)) {
         LOG(("DNS lookup thread - Calling getaddrinfo for host [%s].\n",
              rec->host));
 
-        int flags = PR_AI_ADDRCONFIG;
-        if (!(rec->flags & RES_CANON_NAME))
-            flags |= PR_AI_NOCANONNAME;
-
         TimeStamp startTime = TimeStamp::Now();
         MOZ_EVENT_TRACER_EXEC(rec, "net::dns::resolve");
+
+#if TTL_AVAILABLE
+        bool getTtl = rec->mGetTtl;
+#else
+        bool getTtl = false;
+#endif
 
         // We need to remove IPv4 records manually
         // because PR_GetAddrInfoByName doesn't support PR_AF_INET6.
         bool disableIPv4 = rec->af == PR_AF_INET6;
         uint16_t af = disableIPv4 ? PR_AF_UNSPEC : rec->af;
-        prai = PR_GetAddrInfoByName(rec->host, af, flags);
+        nsresult status = GetAddrInfo(rec->host, af, rec->flags, &ai, getTtl);
 #if defined(RES_RETRY_ON_FAILURE)
-        if (!prai && rs.Reset())
-            prai = PR_GetAddrInfoByName(rec->host, af, flags);
+        if (NS_FAILED(status) && rs.Reset()) {
+            status = GetAddrInfo(rec->host, af, rec->flags, &ai, getTtl);
+        }
 #endif
 
         TimeDuration elapsed = TimeStamp::Now() - startTime;
         uint32_t millis = static_cast<uint32_t>(elapsed.ToMilliseconds());
 
-        // convert error code to nsresult
-        nsresult status;
-        AddrInfo *ai = nullptr;
-        if (prai) {
-            const char *cname = nullptr;
-            if (rec->flags & RES_CANON_NAME)
-                cname = PR_GetCanonNameFromAddrInfo(prai);
-            ai = new AddrInfo(rec->host, prai, disableIPv4, cname);
-            PR_FreeAddrInfo(prai);
-            if (ai->mAddresses.isEmpty()) {
-                delete ai;
-                ai = nullptr;
-            }
-        }
-        if (ai) {
-            status = NS_OK;
-
+        if (NS_SUCCEEDED(status)) {
             Telemetry::Accumulate(!rec->addr_info_gencnt ?
                                     Telemetry::DNS_LOOKUP_TIME :
                                     Telemetry::DNS_RENEWAL_TIME,
                                   millis);
         }
         else {
-            status = NS_ERROR_UNKNOWN_HOST;
             Telemetry::Accumulate(Telemetry::DNS_FAILED_LOOKUP_TIME, millis);
         }
 
-        // OnLookupComplete may release "rec", log before we lose it.
+        // OnLookupComplete may release "rec", long before we lose it.
         LOG(("DNS lookup thread - lookup completed for host [%s]: %s.\n",
              rec->host, ai ? "success" : "failure: unknown host"));
-        resolver->OnLookupComplete(rec, status, ai);
+        if (LOOKUP_RESOLVEAGAIN == resolver->OnLookupComplete(rec, status, ai)) {
+            // leave 'rec' assigned and loop to make a renewed host resolve
+            LOG(("DNS lookup thread - Re-resolving host [%s].\n",
+                 rec->host));
+        } else {
+            rec = nullptr;
+        }
     }
     NS_RELEASE(resolver);
     LOG(("DNS lookup thread - queue empty, thread finished.\n"));
 }
 
 nsresult
-nsHostResolver::Create(uint32_t         maxCacheEntries,
-                       uint32_t         maxCacheLifetime,
-                       uint32_t         lifetimeGracePeriod,
+nsHostResolver::Create(uint32_t maxCacheEntries,
+                       uint32_t defaultCacheEntryLifetime,
+                       uint32_t defaultGracePeriod,
                        nsHostResolver **result)
 {
 #if defined(PR_LOGGING)
@@ -1214,9 +1641,8 @@ nsHostResolver::Create(uint32_t         maxCacheEntries,
         gHostResolverLog = PR_NewLogModule("nsHostResolver");
 #endif
 
-    nsHostResolver *res = new nsHostResolver(maxCacheEntries,
-                                             maxCacheLifetime,
-                                             lifetimeGracePeriod);
+    nsHostResolver *res = new nsHostResolver(maxCacheEntries, defaultCacheEntryLifetime,
+                                             defaultGracePeriod);
     if (!res)
         return NS_ERROR_OUT_OF_MEMORY;
     NS_ADDREF(res);
@@ -1244,7 +1670,8 @@ CacheEntryEnumerator(PLDHashTable *table, PLDHashEntryHdr *entry,
     DNSCacheEntries info;
     info.hostname = rec->host;
     info.family = rec->af;
-    info.expiration = (int64_t)(rec->expiration - TimeStamp::NowLoRes()).ToSeconds();
+    info.expiration =
+        (int64_t)(rec->mValidEnd - TimeStamp::NowLoRes()).ToSeconds();
     if (info.expiration <= 0) {
         // We only need valid DNS cache entries
         return PL_DHASH_NEXT;

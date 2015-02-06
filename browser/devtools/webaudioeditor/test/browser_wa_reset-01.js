@@ -1,13 +1,20 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+///////////////////
+//
+// Whitelisting this test.
+// As part of bug 1077403, the leaking uncaught rejection should be fixed. 
+//
+thisTestLeaksUncaughtRejectionsAndShouldBeFixed("Error: Connection closed");
+
 /**
  * Tests that reloading a tab will properly listen for the `start-context`
  * event and reshow the tools after reloading.
  */
 
 function spawnTest() {
-  let [target, debuggee, panel] = yield initWebAudioEditor(SIMPLE_CONTEXT_URL);
+  let { target, panel } = yield initWebAudioEditor(SIMPLE_CONTEXT_URL);
   let { gFront, $ } = panel.panelWin;
 
   is($("#reload-notice").hidden, false,
@@ -40,8 +47,8 @@ function spawnTest() {
   is($("#content").hidden, false,
     "The tool's content should not be hidden anymore.");
 
-  let navigating = once(target, "will-navigate");
-  let started = once(gFront, "start-context");
+  navigating = once(target, "will-navigate");
+  started = once(gFront, "start-context");
 
   reload(target);
 

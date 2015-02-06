@@ -11,7 +11,6 @@
 #include "mozilla/dom/SourceBufferListBinding.h"
 #include "mozilla/mozalloc.h"
 #include "nsCOMPtr.h"
-#include "nsIEventTarget.h"
 #include "nsIRunnable.h"
 #include "nsString.h"
 #include "nsThreadUtils.h"
@@ -166,6 +165,16 @@ SourceBufferList::QueueAsyncSimpleEvent(const char* aName)
   nsCOMPtr<nsIRunnable> event = new AsyncEventRunner<SourceBufferList>(this, aName);
   NS_DispatchToMainThread(event);
 }
+
+#if defined(DEBUG)
+void
+SourceBufferList::Dump(const char* aPath)
+{
+  for (uint32_t i = 0; i < mSourceBuffers.Length(); ++i) {
+    mSourceBuffers[i]->Dump(aPath);
+  }
+}
+#endif
 
 SourceBufferList::SourceBufferList(MediaSource* aMediaSource)
   : DOMEventTargetHelper(aMediaSource->GetParentObject())

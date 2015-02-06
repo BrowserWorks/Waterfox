@@ -7,18 +7,23 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.util.Locale;
 import java.util.jar.JarInputStream;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import org.mozilla.gecko.Actions;
 import org.mozilla.gecko.AppConstants;
+import org.mozilla.gecko.BrowserLocaleManager;
+import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.db.BrowserDB;
+import org.mozilla.gecko.db.SuggestedSites;
 import org.mozilla.gecko.distribution.Distribution;
 import org.mozilla.gecko.distribution.ReferrerDescriptor;
 import org.mozilla.gecko.distribution.ReferrerReceiver;
-import org.mozilla.gecko.mozglue.RobocopTarget;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import android.app.Activity;
@@ -40,6 +45,10 @@ import android.util.Log;
  *     searchplugins/
  *       common/
  *         engine.xml
+ *     suggestedsites/
+ *       locales/
+ *         en-US/
+ *           suggestedsites.json
  */
 public class testDistribution extends ContentProviderTest {
     private static final String CLASS_REFERRER_RECEIVER = "org.mozilla.gecko.distribution.ReferrerReceiver";
@@ -63,12 +72,10 @@ public class testDistribution extends ContentProviderTest {
             doInit();
         }
 
-        @RobocopTarget
         public static void clearReferrerDescriptorForTesting() {
             referrer = null;
         }
 
-        @RobocopTarget
         public static ReferrerDescriptor getReferrerDescriptorForTesting() {
             return referrer;
         }
@@ -120,6 +127,20 @@ public class testDistribution extends ContentProviderTest {
         // finish. This reduces the chance of us racing with startup pref writes.
         waitForBackgroundHappiness();
 
+        // Pre-clear distribution pref, override suggested sites and run tiles tests.
+        clearDistributionPref();
+        Distribution dist = initDistribution(mockPackagePath);
+        SuggestedSites suggestedSites = new SuggestedSites(mActivity, dist);
+        BrowserDB.setSuggestedSites(suggestedSites);
+
+        // Test tiles uploading for an en-US OS locale with no app locale.
+        setOSLocale(Locale.US);
+        checkTilesReporting("en-US");
+
+        // Test tiles uploading for an es-MX OS locale with no app locale.
+        setOSLocale(new Locale("es", "MX"));
+        checkTilesReporting("es-MX");
+
         // Pre-clear distribution pref, run basic preferences and en-US localized preferences Tests
         clearDistributionPref();
         setTestLocale("en-US");
@@ -141,6 +162,11 @@ public class testDistribution extends ContentProviderTest {
 
         clearDistributionPref();
         doTestInvalidReferrerIntent();
+    }
+
+    private void setOSLocale(Locale locale) {
+        Locale.setDefault(locale);
+        BrowserLocaleManager.storeAndNotifyOSLocale(GeckoSharedPrefs.forProfile(mActivity), locale);
     }
 
     private void doReferrerTest(String ref, final TestableDistribution distribution, final Runnable distributionReady) throws InterruptedException {
@@ -232,12 +258,13 @@ public class testDistribution extends ContentProviderTest {
     }
 
     // Initialize the distribution from the mock package.
-    private void initDistribution(String aPackagePath) {
+    private Distribution initDistribution(String aPackagePath) {
         // Call Distribution.init with the mock package.
         Actions.EventExpecter distributionSetExpecter = mActions.expectGeckoEvent("Distribution:Set:OK");
-        Distribution.init(mActivity, aPackagePath, "prefs-" + System.currentTimeMillis());
+        Distribution dist = Distribution.init(mActivity, aPackagePath, "prefs-" + System.currentTimeMillis());
         distributionSetExpecter.blockForEvent();
         distributionSetExpecter.unregisterListener();
+        return dist;
     }
 
     // Test distribution and preferences values stored in preferences.json
@@ -318,37 +345,9 @@ public class testDistribution extends ContentProviderTest {
         }
     }
 
-    // Sets the distribution locale preference for the test
-    private void setTestLocale(String aLocale) {
-        String prefUseragentLocale = "general.useragent.locale";
-
-        JSONObject jsonPref = new JSONObject();
-        try {
-            // Request the pref change to the locale.
-            jsonPref.put("name", prefUseragentLocale);
-            jsonPref.put("type", "string");
-            jsonPref.put("value", aLocale);
-            mActions.sendGeckoEvent("Preferences:Set", jsonPref.toString());
-
-            // Wait for confirmation of the pref change.
-            final String[] prefNames = { prefUseragentLocale };
-
-            Actions.RepeatedEventExpecter eventExpecter = mActions.expectGeckoEvent("Preferences:Data");
-            mActions.sendPreferencesGetEvent(PREF_REQUEST_ID, prefNames);
-
-            JSONObject data = null;
-            int requestId = -1;
-
-            // Wait until we get the correct "Preferences:Data" event
-            while (requestId != PREF_REQUEST_ID) {
-                data = new JSONObject(eventExpecter.blockForEventData());
-                requestId = data.getInt("requestId");
-            }
-            eventExpecter.unregisterListener();
-
-        } catch (Exception e) {
-            mAsserter.ok(false, "exception setting test locale", e.toString());
-        }
+    // Sets the distribution locale preference for the test.
+    private void setTestLocale(String locale) {
+        BrowserLocaleManager.getInstance().setSelectedLocale(mActivity, locale);
     }
 
     // Test localized distribution and preferences values stored in preferences.json
@@ -440,6 +439,45 @@ public class testDistribution extends ContentProviderTest {
         String keyName = mActivity.getPackageName() + ".distribution_state";
         settings.edit().remove(keyName).commit();
         TestableDistribution.clearReferrerDescriptorForTesting();
+    }
+
+    public void checkTilesReporting(String localeCode) throws JSONException {
+        // Slight hack: Force top sites grid to reload.
+        inputAndLoadUrl(StringHelper.ABOUT_BLANK_URL);
+        inputAndLoadUrl(StringHelper.ABOUT_HOME_URL);
+
+        // Click the first tracking tile and verify the posted data.
+        JSONObject response = clickTrackingTile(StringHelper.DISTRIBUTION1_LABEL);
+        mAsserter.is(response.getInt("click"), 0, "JSON click index matched");
+        mAsserter.is(response.getString("locale"), localeCode, "JSON locale code matched");
+        mAsserter.is(response.getString("tiles"), "[{\"id\":123},{\"id\":456},{},{},{},{}]", "JSON tiles data matched");
+
+        inputAndLoadUrl(StringHelper.ABOUT_HOME_URL);
+
+        // Pin the second tracking tile.
+        pinTopSite(StringHelper.DISTRIBUTION2_LABEL);
+
+        // Click the second tracking tile and verify the posted data.
+        response = clickTrackingTile(StringHelper.DISTRIBUTION2_LABEL);
+        mAsserter.is(response.getInt("click"), 1, "JSON click index matched");
+        mAsserter.is(response.getString("tiles"), "[{\"id\":123},{\"id\":456,\"pin\":true},{},{},{},{}]", "JSON tiles data matched");
+
+        inputAndLoadUrl(StringHelper.ABOUT_HOME_URL);
+
+        // Unpin the second tracking tile.
+        unpinTopSite(StringHelper.DISTRIBUTION2_LABEL);
+    }
+
+    private JSONObject clickTrackingTile(String text) throws JSONException {
+        boolean tileFound = waitForText(text);
+        mAsserter.ok(tileFound, "Found tile: " + text, null);
+
+        Actions.EventExpecter loadExpecter = mActions.expectGeckoEvent("Robocop:TilesResponse");
+        mSolo.clickOnText(text);
+        String data = loadExpecter.blockForEventData();
+        JSONObject dataJSON = new JSONObject(data);
+        String response = dataJSON.getString("response");
+        return new JSONObject(response);
     }
 
     @Override

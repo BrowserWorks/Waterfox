@@ -30,13 +30,18 @@ private:
     nsresult FixupURIProtocol(const nsACString& aIn,
                               nsDefaultURIFixupInfo* aFixupInfo,
                               nsIURI** aURI);
-    void KeywordURIFixup(const nsACString &aStringURI,
-                         nsDefaultURIFixupInfo* aFixupInfo,
-                         nsIInputStream** aPostData);
+    nsresult KeywordURIFixup(const nsACString &aStringURI,
+                             nsDefaultURIFixupInfo* aFixupInfo,
+                             nsIInputStream** aPostData);
+    nsresult TryKeywordFixupForURIInfo(const nsACString &aStringURI,
+                                       nsDefaultURIFixupInfo* aFixupInfo,
+                                       nsIInputStream** aPostData);
     bool PossiblyByteExpandedFileName(const nsAString& aIn);
     bool PossiblyHostPortUrl(const nsACString& aUrl);
     bool MakeAlternateURI(nsIURI *aURI);
     bool IsLikelyFTP(const nsCString& aHostSpec);
+    bool IsDomainWhitelisted(const nsAutoCString aAsciiHost,
+                             const uint32_t aDotLoc);
 };
 
 class nsDefaultURIFixupInfo : public nsIURIFixupInfo
@@ -56,9 +61,10 @@ private:
     nsCOMPtr<nsISupports> mConsumer;
     nsCOMPtr<nsIURI> mPreferredURI;
     nsCOMPtr<nsIURI> mFixedURI;
-    bool mFixupUsedKeyword;
     bool mFixupChangedProtocol;
     bool mFixupCreatedAlternateURI;
+    nsString mKeywordProviderName;
+    nsString mKeywordAsSent;
     nsAutoCString mOriginalInput;
 };
 #endif

@@ -14,15 +14,15 @@
 #endif
 #include "jit/Registers.h"
 #include "jit/shared/Assembler-shared.h"
+#include "vm/TypedArrayCommon.h"
 
 namespace js {
 
 class LockedJSContext;
-class TypedArrayObject;
-
-typedef Handle<TypedArrayObject *> HandleTypedArrayObject;
 
 namespace jit {
+
+class LInstruction;
 
 #define IONCACHE_KIND_LIST(_)                                   \
     _(GetProperty)                                              \
@@ -179,7 +179,7 @@ class IonCache
     void incrementStubCount() {
         // The IC should stop generating stubs before wrapping stubCount.
         stubCount_++;
-        JS_ASSERT(stubCount_);
+        MOZ_ASSERT(stubCount_);
     }
 
   public:
@@ -209,7 +209,7 @@ class IonCache
     }
 
     void setProfilerLeavePC(jsbytecode *pc) {
-        JS_ASSERT(pc != nullptr);
+        MOZ_ASSERT(pc != nullptr);
         profilerLeavePc_ = pc;
     }
 
@@ -270,14 +270,14 @@ class IonCache
         return idempotent_;
     }
     void setIdempotent() {
-        JS_ASSERT(!idempotent_);
-        JS_ASSERT(!script_);
-        JS_ASSERT(!pc_);
+        MOZ_ASSERT(!idempotent_);
+        MOZ_ASSERT(!script_);
+        MOZ_ASSERT(!pc_);
         idempotent_ = true;
     }
 
     void setScriptedLocation(JSScript *script, jsbytecode *pc) {
-        JS_ASSERT(!idempotent_);
+        MOZ_ASSERT(!idempotent_);
         script_ = script;
         pc_ = pc;
     }
@@ -288,7 +288,7 @@ class IonCache
     }
 
     jsbytecode *pc() const {
-        JS_ASSERT(pc_);
+        MOZ_ASSERT(pc_);
         return pc_;
     }
 };
@@ -560,6 +560,7 @@ class GetPropertyIC : public RepatchIonCache
 
     bool monitoredResult_ : 1;
     bool hasTypedArrayLengthStub_ : 1;
+    bool hasSharedTypedArrayLengthStub_ : 1;
     bool hasStrictArgumentsLengthStub_ : 1;
     bool hasNormalArgumentsLengthStub_ : 1;
     bool hasGenericProxyStub_ : 1;
@@ -577,6 +578,7 @@ class GetPropertyIC : public RepatchIonCache
         numLocations_(0),
         monitoredResult_(monitoredResult),
         hasTypedArrayLengthStub_(false),
+        hasSharedTypedArrayLengthStub_(false),
         hasStrictArgumentsLengthStub_(false),
         hasNormalArgumentsLengthStub_(false),
         hasGenericProxyStub_(false)
@@ -599,8 +601,8 @@ class GetPropertyIC : public RepatchIonCache
     bool monitoredResult() const {
         return monitoredResult_;
     }
-    bool hasTypedArrayLengthStub() const {
-        return hasTypedArrayLengthStub_;
+    bool hasAnyTypedArrayLengthStub(HandleObject obj) const {
+        return obj->is<TypedArrayObject>() ? hasTypedArrayLengthStub_ : hasSharedTypedArrayLengthStub_;
     }
     bool hasArgumentsLengthStub(bool strict) const {
         return strict ? hasStrictArgumentsLengthStub_ : hasNormalArgumentsLengthStub_;
@@ -609,15 +611,25 @@ class GetPropertyIC : public RepatchIonCache
         return hasGenericProxyStub_;
     }
 
+    void setHasTypedArrayLengthStub(HandleObject obj) {
+        if (obj->is<TypedArrayObject>()) {
+            MOZ_ASSERT(!hasTypedArrayLengthStub_);
+            hasTypedArrayLengthStub_ = true;
+        } else {
+            MOZ_ASSERT(!hasSharedTypedArrayLengthStub_);
+            hasSharedTypedArrayLengthStub_ = true;
+        }
+    }
+
     void setLocationInfo(size_t locationsIndex, size_t numLocations) {
-        JS_ASSERT(idempotent());
-        JS_ASSERT(!numLocations_);
-        JS_ASSERT(numLocations);
+        MOZ_ASSERT(idempotent());
+        MOZ_ASSERT(!numLocations_);
+        MOZ_ASSERT(numLocations);
         locationsIndex_ = locationsIndex;
         numLocations_ = numLocations;
     }
     void getLocationInfo(uint32_t *index, uint32_t *num) const {
-        JS_ASSERT(idempotent());
+        MOZ_ASSERT(idempotent());
         *index = locationsIndex_;
         *num = numLocations_;
     }
@@ -728,14 +740,15 @@ class SetPropertyIC : public RepatchIonCache
     };
 
     bool attachSetSlot(JSContext *cx, HandleScript outerScript, IonScript *ion,
-                       HandleObject obj, HandleShape shape, bool checkTypeset);
+                       HandleNativeObject obj, HandleShape shape, bool checkTypeset);
 
     bool attachCallSetter(JSContext *cx, HandleScript outerScript, IonScript *ion,
                           HandleObject obj, HandleObject holder, HandleShape shape,
                           void *returnAddr);
 
     bool attachAddSlot(JSContext *cx, HandleScript outerScript, IonScript *ion,
-                       HandleObject obj, HandleShape oldShape, bool checkTypeset);
+                       HandleNativeObject obj, HandleShape oldShape, HandleTypeObject oldType,
+                       bool checkTypeset);
 
     bool attachGenericProxy(JSContext *cx, HandleScript outerScript, IonScript *ion,
                             void *returnAddr);
@@ -810,13 +823,13 @@ class GetElementIC : public RepatchIonCache
         return strict ? hasStrictArgumentsStub_ : hasNormalArgumentsStub_;
     }
     void setHasDenseStub() {
-        JS_ASSERT(!hasDenseStub());
+        MOZ_ASSERT(!hasDenseStub());
         hasDenseStub_ = true;
     }
 
     // Helpers for CanAttachNativeGetProp
     typedef JSContext * Context;
-    bool allowGetters() const { JS_ASSERT(!idempotent()); return true; }
+    bool allowGetters() const { MOZ_ASSERT(!idempotent()); return true; }
     bool allowArrayLength(Context, HandleObject) const { return false; }
     bool canMonitorSingletonUndefinedSlot(HandleObject holder, HandleShape shape) const {
         return monitoredResult();
@@ -835,7 +848,7 @@ class GetElementIC : public RepatchIonCache
                             HandleObject obj, const Value &idval);
 
     bool attachTypedArrayElement(JSContext *cx, HandleScript outerScript, IonScript *ion,
-                                 HandleTypedArrayObject tarr, const Value &idval);
+                                 HandleObject tarr, const Value &idval);
 
     bool attachArgumentsElement(JSContext *cx, HandleScript outerScript, IonScript *ion,
                                 HandleObject obj);
@@ -925,7 +938,7 @@ class SetElementIC : public RepatchIonCache
         return hasDenseStub_;
     }
     void setHasDenseStub() {
-        JS_ASSERT(!hasDenseStub());
+        MOZ_ASSERT(!hasDenseStub());
         hasDenseStub_ = true;
     }
 
@@ -933,7 +946,7 @@ class SetElementIC : public RepatchIonCache
                             HandleObject obj, const Value &idval);
 
     bool attachTypedArrayElement(JSContext *cx, HandleScript outerScript, IonScript *ion,
-                                 HandleTypedArrayObject tarr);
+                                 HandleObject tarr);
 
     static bool
     update(JSContext *cx, size_t cacheIndex, HandleObject obj, HandleValue idval,
@@ -1018,7 +1031,7 @@ class NameIC : public RepatchIonCache
 
     bool attachReadSlot(JSContext *cx, HandleScript outerScript, IonScript *ion,
                         HandleObject scopeChain, HandleObject holderBase,
-                        HandleObject holder, HandleShape shape);
+                        HandleNativeObject holder, HandleShape shape);
 
     bool attachCallGetter(JSContext *cx, HandleScript outerScript, IonScript *ion,
                           HandleObject scopeChain, HandleObject obj, HandleObject holder,
@@ -1094,13 +1107,15 @@ class GetPropertyParIC : public ParallelIonCache
     PropertyName *name_;
     TypedOrValueRegister output_;
     bool hasTypedArrayLengthStub_ : 1;
+    bool hasSharedTypedArrayLengthStub_ : 1;
 
    public:
     GetPropertyParIC(Register object, PropertyName *name, TypedOrValueRegister output)
       : object_(object),
         name_(name),
         output_(output),
-        hasTypedArrayLengthStub_(false)
+        hasTypedArrayLengthStub_(false),
+        hasSharedTypedArrayLengthStub_(false)
     {
     }
 
@@ -1123,8 +1138,18 @@ class GetPropertyParIC : public ParallelIonCache
     TypedOrValueRegister output() const {
         return output_;
     }
-    bool hasTypedArrayLengthStub() const {
-        return hasTypedArrayLengthStub_;
+    bool hasAnyTypedArrayLengthStub(HandleObject obj) const {
+        return obj->is<TypedArrayObject>() ? hasTypedArrayLengthStub_ : hasSharedTypedArrayLengthStub_;
+    }
+
+    void setHasTypedArrayLengthStub(HandleObject obj) {
+        if (obj->is<TypedArrayObject>()) {
+            MOZ_ASSERT(!hasTypedArrayLengthStub_);
+            hasTypedArrayLengthStub_ = true;
+        } else {
+            MOZ_ASSERT(!hasSharedTypedArrayLengthStub_);
+            hasSharedTypedArrayLengthStub_ = true;
+        }
     }
 
     // CanAttachNativeGetProp Helpers
@@ -1133,7 +1158,8 @@ class GetPropertyParIC : public ParallelIonCache
     bool allowGetters() const { return false; }
     bool allowArrayLength(Context, HandleObject) const { return true; }
 
-    bool attachReadSlot(LockedJSContext &cx, IonScript *ion, HandleObject obj, HandleObject holder,
+    bool attachReadSlot(LockedJSContext &cx, IonScript *ion,
+                        HandleObject obj, HandleNativeObject holder,
                         HandleShape shape);
     bool attachArrayLength(LockedJSContext &cx, IonScript *ion, HandleObject obj);
     bool attachTypedArrayLength(LockedJSContext &cx, IonScript *ion, HandleObject obj);
@@ -1194,10 +1220,10 @@ class GetElementParIC : public ParallelIonCache
     bool allowArrayLength(Context, HandleObject) const { return false; }
 
     bool attachReadSlot(LockedJSContext &cx, IonScript *ion, HandleObject obj, const Value &idval,
-                        HandlePropertyName name, HandleObject holder, HandleShape shape);
+                        HandlePropertyName name, HandleNativeObject holder, HandleShape shape);
     bool attachDenseElement(LockedJSContext &cx, IonScript *ion, HandleObject obj,
                             const Value &idval);
-    bool attachTypedArrayElement(LockedJSContext &cx, IonScript *ion, HandleTypedArrayObject tarr,
+    bool attachTypedArrayElement(LockedJSContext &cx, IonScript *ion, HandleObject tarr,
                                  const Value &idval);
 
     static bool update(ForkJoinContext *cx, size_t cacheIndex, HandleObject obj, HandleValue idval,
@@ -1249,10 +1275,10 @@ class SetPropertyParIC : public ParallelIonCache
         return needsTypeBarrier_;
     }
 
-    bool attachSetSlot(LockedJSContext &cx, IonScript *ion, HandleObject obj, HandleShape shape,
+    bool attachSetSlot(LockedJSContext &cx, IonScript *ion, HandleNativeObject obj, HandleShape shape,
                        bool checkTypeset);
-    bool attachAddSlot(LockedJSContext &cx, IonScript *ion, HandleObject obj, HandleShape oldShape,
-                       bool checkTypeset);
+    bool attachAddSlot(LockedJSContext &cx, IonScript *ion, HandleNativeObject obj,
+                       HandleShape oldShape, HandleTypeObject oldType, bool checkTypeset);
 
     static bool update(ForkJoinContext *cx, size_t cacheIndex, HandleObject obj,
                        HandleValue value);
@@ -1325,7 +1351,7 @@ class SetElementParIC : public ParallelIonCache
 
     bool attachDenseElement(LockedJSContext &cx, IonScript *ion, HandleObject obj,
                             const Value &idval);
-    bool attachTypedArrayElement(LockedJSContext &cx, IonScript *ion, HandleTypedArrayObject tarr);
+    bool attachTypedArrayElement(LockedJSContext &cx, IonScript *ion, HandleObject tarr);
 
     static bool update(ForkJoinContext *cx, size_t cacheIndex, HandleObject obj,
                        HandleValue idval, HandleValue value);
@@ -1337,12 +1363,12 @@ class SetElementParIC : public ParallelIonCache
 #define CACHE_CASTS(ickind)                                             \
     ickind##IC &IonCache::to##ickind()                                  \
     {                                                                   \
-        JS_ASSERT(is##ickind());                                        \
+        MOZ_ASSERT(is##ickind());                                       \
         return *static_cast<ickind##IC *>(this);                        \
     }                                                                   \
     const ickind##IC &IonCache::to##ickind() const                      \
     {                                                                   \
-        JS_ASSERT(is##ickind());                                        \
+        MOZ_ASSERT(is##ickind());                                       \
         return *static_cast<const ickind##IC *>(this);                  \
     }
 IONCACHE_KIND_LIST(CACHE_CASTS)

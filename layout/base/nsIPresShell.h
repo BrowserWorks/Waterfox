@@ -27,6 +27,7 @@
 #include "nsTHashtable.h"
 #include "nsHashKeys.h"
 #include "nsISupports.h"
+#include "nsIContent.h"
 #include "nsQueryFrame.h"
 #include "nsCoord.h"
 #include "nsColor.h"
@@ -43,7 +44,6 @@
 #include "nsMargin.h"
 #include "nsFrameState.h"
 
-class nsIContent;
 class nsDocShell;
 class nsIDocument;
 class nsIFrame;
@@ -95,6 +95,7 @@ class DocAccessible;
 #endif
 class nsIWidget;
 struct nsArenaMemoryStats;
+class nsITimer;
 
 typedef short SelectionType;
 
@@ -1213,10 +1214,32 @@ public:
   static nsRefPtrHashtable<nsUint32HashKey, mozilla::dom::Touch>* gCaptureTouchList;
   static bool gPreventMouseEvents;
 
+  struct PointerCaptureInfo
+  {
+    nsCOMPtr<nsIContent> mPendingContent;
+    nsCOMPtr<nsIContent> mOverrideContent;
+    bool                 mReleaseContent;
+    
+    explicit PointerCaptureInfo(nsIContent* aPendingContent) :
+      mPendingContent(aPendingContent), mReleaseContent(false)
+    {
+      MOZ_COUNT_CTOR(PointerCaptureInfo);
+    }
+    ~PointerCaptureInfo()
+    {
+      MOZ_COUNT_DTOR(PointerCaptureInfo);
+    }
+
+    bool Empty()
+    {
+      return !(mPendingContent || mOverrideContent);
+    }
+  };
+
   // Keeps a map between pointerId and element that currently capturing pointer
   // with such pointerId. If pointerId is absent in this map then nobody is
-  // capturing it.
-  static nsRefPtrHashtable<nsUint32HashKey, nsIContent>* gPointerCaptureList;
+  // capturing it. Additionally keep information about pending capturing content.
+  static nsClassHashtable<nsUint32HashKey, PointerCaptureInfo>* gPointerCaptureList;
 
   struct PointerInfo
   {
@@ -1229,11 +1252,15 @@ public:
   static nsClassHashtable<nsUint32HashKey, PointerInfo>* gActivePointersIds;
 
   static void DispatchGotOrLostPointerCaptureEvent(bool aIsGotCapture,
-                                                    uint32_t aPointerId,
-                                                    nsIContent* aCaptureTarget);
+                                                   uint32_t aPointerId,
+                                                   nsIContent* aCaptureTarget);
   static void SetPointerCapturingContent(uint32_t aPointerId, nsIContent* aContent);
   static void ReleasePointerCapturingContent(uint32_t aPointerId, nsIContent* aContent);
   static nsIContent* GetPointerCapturingContent(uint32_t aPointerId);
+  
+  // CheckPointerCaptureState checks cases, when got/lostpointercapture events should be fired.
+  // Function returns true, if any of events was fired; false, if no one event was fired.
+  static bool CheckPointerCaptureState(uint32_t aPointerId);
 
   // GetPointerInfo returns true if pointer with aPointerId is situated in device, false otherwise.
   // aActiveState is additional information, which shows state of pointer like button state for mouse.
@@ -1357,8 +1384,8 @@ public:
   virtual void SynthesizeMouseMove(bool aFromScroll) = 0;
 
   enum PaintFlags {
-    /* Update the layer tree and paint ThebesLayers. If this is not specified,
-     * we may still have to do it if the layer tree lost ThebesLayer contents
+    /* Update the layer tree and paint PaintedLayers. If this is not specified,
+     * we may still have to do it if the layer tree lost PaintedLayer contents
      * we need for compositing. */
     PAINT_LAYERS = 0x01,
     /* Composite layers to the window. */
@@ -1588,6 +1615,9 @@ public:
     mIsNeverPainting = aNeverPainting;
   }
 
+  bool HasPendingReflow() const
+    { return mReflowScheduled || mReflowContinueTimer; }
+
 protected:
   friend class nsRefreshDriver;
 
@@ -1612,6 +1642,12 @@ protected:
 #ifdef ACCESSIBILITY
   mozilla::a11y::DocAccessible* mDocAccessible;
 #endif
+
+  // At least on Win32 and Mac after interupting a reflow we need to post
+  // the resume reflow event off a timer to avoid event starvation because
+  // posted messages are processed before other messages when the modal
+  // moving/sizing loop is running, see bug 491700 for details.
+  nsCOMPtr<nsITimer>        mReflowContinueTimer;
 
 #ifdef DEBUG
   nsIFrame*                 mDrawEventTargetFrame;

@@ -4,11 +4,11 @@
 
 #include "DOMCameraControlListener.h"
 #include "nsThreadUtils.h"
-#include "nsDOMFile.h"
 #include "CameraCommon.h"
 #include "DOMCameraControl.h"
 #include "CameraPreviewMediaStream.h"
 #include "mozilla/dom/CameraManagerBinding.h"
+#include "mozilla/dom/File.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -31,7 +31,7 @@ DOMCameraControlListener::~DOMCameraControlListener()
 class DOMCameraControlListener::DOMCallback : public nsRunnable
 {
 public:
-  DOMCallback(nsMainThreadPtrHandle<nsDOMCameraControl> aDOMCameraControl)
+  explicit DOMCallback(nsMainThreadPtrHandle<nsDOMCameraControl> aDOMCameraControl)
     : mDOMCameraControl(aDOMCameraControl)
   {
     MOZ_COUNT_CTOR(DOMCameraControlListener::DOMCallback);
@@ -276,7 +276,7 @@ DOMCameraControlListener::OnShutter()
   class Callback : public DOMCallback
   {
   public:
-    Callback(nsMainThreadPtrHandle<nsDOMCameraControl> aDOMCameraControl)
+    explicit Callback(nsMainThreadPtrHandle<nsDOMCameraControl> aDOMCameraControl)
       : DOMCallback(aDOMCameraControl)
     { }
 
@@ -348,9 +348,10 @@ DOMCameraControlListener::OnTakePictureComplete(uint8_t* aData, uint32_t aLength
     RunCallback(nsDOMCameraControl* aDOMCameraControl) MOZ_OVERRIDE
     {
       nsCOMPtr<nsIDOMBlob> picture =
-        DOMFile::CreateMemoryFile(static_cast<void*>(mData),
-                                  static_cast<uint64_t>(mLength),
-                                  mMimeType);
+        File::CreateMemoryFile(mDOMCameraControl,
+                               static_cast<void*>(mData),
+                               static_cast<uint64_t>(mLength),
+                               mMimeType);
       aDOMCameraControl->OnTakePictureComplete(picture);
     }
 

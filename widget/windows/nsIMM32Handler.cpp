@@ -4,9 +4,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifdef MOZ_LOGGING
-#define FORCE_PR_LOG /* Allow logging in the release build */
-#endif // MOZ_LOGGING
 #include "prlog.h"
 
 #include "nsIMM32Handler.h"
@@ -142,7 +139,9 @@ nsIMM32Handler::GetKeyboardCodePage()
 nsIMEUpdatePreference
 nsIMM32Handler::GetIMEUpdatePreference()
 {
-  return nsIMEUpdatePreference(nsIMEUpdatePreference::NOTIFY_POSITION_CHANGE);
+  return nsIMEUpdatePreference(
+    nsIMEUpdatePreference::NOTIFY_POSITION_CHANGE |
+    nsIMEUpdatePreference::NOTIFY_MOUSE_BUTTON_EVENT_ON_CHAR);
 }
 
 // used for checking the lParam of WM_IME_COMPOSITION
@@ -150,7 +149,7 @@ nsIMM32Handler::GetIMEUpdatePreference()
   ((lParam) & (GCS_COMPSTR | GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS))
 #define IS_COMMITTING_LPARAM(lParam) ((lParam) & GCS_RESULTSTR)
 // Some IMEs (e.g., the standard IME for Korean) don't have caret position,
-// then, we should not set caret position to text event.
+// then, we should not set caret position to compositionchange event.
 #define NO_IME_CARET -1
 
 nsIMM32Handler::nsIMM32Handler() :
@@ -303,18 +302,6 @@ nsIMM32Handler::ProcessMessage(nsWindow* aWindow, UINT msg,
 
   aResult.mResult = 0;
   switch (msg) {
-    case WM_LBUTTONDOWN:
-    case WM_MBUTTONDOWN:
-    case WM_RBUTTONDOWN: {
-      // We don't need to create the instance of the handler here.
-      if (!gIMM32Handler) {
-        return false;
-      }
-      return gIMM32Handler->OnMouseEvent(aWindow, lParam,
-                              msg == WM_LBUTTONDOWN ? IMEMOUSE_LDOWN :
-                              msg == WM_MBUTTONDOWN ? IMEMOUSE_MDOWN :
-                                                      IMEMOUSE_RDOWN, aResult);
-    }
     case WM_INPUTLANGCHANGE:
       return ProcessInputLangChangeMessage(aWindow, wParam, lParam, aResult);
     case WM_IME_STARTCOMPOSITION:
@@ -493,10 +480,10 @@ nsIMM32Handler::OnIMEEndComposition(nsWindow* aWindow,
 
   // Otherwise, e.g., ChangJie doesn't post WM_IME_COMPOSITION before
   // WM_IME_ENDCOMPOSITION when composition string becomes empty.
-  // Then, we should dispatch a compositionupdate event, a text event and
-  // a compositionend event.
-  // XXX Shouldn't we dispatch the text event with actual or latest composition
-  //     string?
+  // Then, we should dispatch a compositionupdate event, a compositionchange
+  // event and a compositionend event.
+  // XXX Shouldn't we dispatch the compositionchange event with actual or
+  //     latest composition string?
   PR_LOG(gIMM32Log, PR_LOG_ALWAYS,
     ("IMM32: OnIMEEndComposition, mCompositionString=\"%s\"%s",
      NS_ConvertUTF16toUTF8(mCompositionString).get(),
@@ -505,7 +492,7 @@ nsIMM32Handler::OnIMEEndComposition(nsWindow* aWindow,
   mCompositionString.Truncate();
 
   nsIMEContext IMEContext(aWindow->GetWindowHandle());
-  DispatchTextEvent(aWindow, IMEContext, false);
+  DispatchCompositionChangeEvent(aWindow, IMEContext, false);
 
   HandleEndComposition(aWindow);
 
@@ -522,10 +509,10 @@ nsIMM32Handler::OnIMEChar(nsWindow* aWindow,
     ("IMM32: OnIMEChar, hWnd=%08x, char=%08x\n",
      aWindow->GetWindowHandle(), wParam));
 
-  // We don't need to fire any text events from here. This method will be
-  // called when the composition string of the current IME is not drawn by us
-  // and some characters are committed. In that case, the committed string was
-  // processed in nsWindow::OnIMEComposition already.
+  // We don't need to fire any compositionchange events from here. This method
+  // will be called when the composition string of the current IME is not drawn
+  // by us and some characters are committed. In that case, the committed
+  // string was processed in nsWindow::OnIMEComposition already.
 
   // We need to consume the message so that Windows don't send two WM_CHAR msgs
   aResult.mConsumed = true;
@@ -1030,7 +1017,7 @@ nsIMM32Handler::HandleComposition(nsWindow* aWindow,
     PR_LOG(gIMM32Log, PR_LOG_ALWAYS,
       ("IMM32: HandleComposition, GCS_RESULTSTR\n"));
 
-    DispatchTextEvent(aWindow, aIMEContext, false);
+    DispatchCompositionChangeEvent(aWindow, aIMEContext, false);
     HandleEndComposition(aWindow);
 
     if (!IS_COMPOSING_LPARAM(lParam)) {
@@ -1069,15 +1056,16 @@ nsIMM32Handler::HandleComposition(nsWindow* aWindow,
 
     // IME may send WM_IME_COMPOSITION without composing lParam values
     // when composition string becomes empty (e.g., using Backspace key).
-    // If composition string is empty, we should dispatch a text event with
-    // empty string.
+    // If composition string is empty, we should dispatch a compositionchange
+    // event with empty string.
     if (mCompositionString.IsEmpty()) {
-      DispatchTextEvent(aWindow, aIMEContext, false);
+      DispatchCompositionChangeEvent(aWindow, aIMEContext, false);
       return ShouldDrawCompositionStringOurselves();
     }
 
     // Otherwise, we cannot trust the lParam value.  We might need to
-    // dispatch text event with the latest composition string information.
+    // dispatch compositionchange event with the latest composition string
+    // information.
   }
 
   // See https://bugzilla.mozilla.org/show_bug.cgi?id=296339
@@ -1209,9 +1197,9 @@ nsIMM32Handler::HandleComposition(nsWindow* aWindow,
      mCursorPosition));
 
   //--------------------------------------------------------
-  // 5. Send the text event
+  // 5. Send the compositionchange event
   //--------------------------------------------------------
-  DispatchTextEvent(aWindow, aIMEContext);
+  DispatchCompositionChangeEvent(aWindow, aIMEContext);
 
   return ShouldDrawCompositionStringOurselves();
 }
@@ -1237,7 +1225,7 @@ nsIMM32Handler::HandleEndComposition(nsWindow* aWindow)
 
   aWindow->InitEvent(event, &point);
   // The last dispatched composition string must be the committed string.
-  event.data = mLastDispatchedCompositionString;
+  event.mData = mLastDispatchedCompositionString;
   aWindow->DispatchWindowEvent(&event);
   mIsComposing = false;
   mComposingWindow = nullptr;
@@ -1525,7 +1513,7 @@ nsIMM32Handler::CommitCompositionOnPreviousWindow(nsWindow* aWindow)
     nsIMEContext IMEContext(mComposingWindow->GetWindowHandle());
     NS_ASSERTION(IMEContext.IsValid(), "IME context must be valid");
 
-    DispatchTextEvent(mComposingWindow, IMEContext, false);
+    DispatchCompositionChangeEvent(mComposingWindow, IMEContext, false);
     HandleEndComposition(mComposingWindow);
     return true;
   }
@@ -1578,18 +1566,18 @@ GetRangeTypeName(uint32_t aRangeType)
 #endif
 
 void
-nsIMM32Handler::DispatchTextEvent(nsWindow* aWindow,
-                                  const nsIMEContext &aIMEContext,
-                                  bool aCheckAttr)
+nsIMM32Handler::DispatchCompositionChangeEvent(nsWindow* aWindow,
+                                               const nsIMEContext &aIMEContext,
+                                               bool aCheckAttr)
 {
   NS_ASSERTION(mIsComposing, "conflict state");
   PR_LOG(gIMM32Log, PR_LOG_ALWAYS,
-    ("IMM32: DispatchTextEvent, aCheckAttr=%s\n",
+    ("IMM32: DispatchCompositionChangeEvent, aCheckAttr=%s\n",
      aCheckAttr ? "TRUE": "FALSE"));
 
   // If we don't need to draw composition string ourselves and this is not
-  // commit event (i.e., under composing), we don't need to fire text event
-  // during composing.
+  // commit event (i.e., under composing), we don't need to fire
+  // compositionchange event during composing.
   if (aCheckAttr && !ShouldDrawCompositionStringOurselves()) {
     // But we need to adjust composition window pos and native caret pos, here.
     SetIMERelatedWindowsPos(aWindow, aIMEContext);
@@ -1600,22 +1588,7 @@ nsIMM32Handler::DispatchTextEvent(nsWindow* aWindow,
 
   nsIntPoint point(0, 0);
 
-  if (mCompositionString != mLastDispatchedCompositionString) {
-    WidgetCompositionEvent compositionUpdate(true, NS_COMPOSITION_UPDATE,
-                                             aWindow);
-    aWindow->InitEvent(compositionUpdate, &point);
-    compositionUpdate.data = mCompositionString;
-    mLastDispatchedCompositionString = mCompositionString;
-
-    aWindow->DispatchWindowEvent(&compositionUpdate);
-
-    if (!mIsComposing || aWindow->Destroyed()) {
-      return;
-    }
-    SetIMERelatedWindowsPos(aWindow, aIMEContext);
-  }
-
-  WidgetTextEvent event(true, NS_TEXT_TEXT, aWindow);
+  WidgetCompositionEvent event(true, NS_COMPOSITION_CHANGE, aWindow);
 
   aWindow->InitEvent(event, &point);
 
@@ -1623,12 +1596,12 @@ nsIMM32Handler::DispatchTextEvent(nsWindow* aWindow,
     event.mRanges = CreateTextRangeArray();
   }
 
-  event.theText = mCompositionString.get();
+  event.mData = mLastDispatchedCompositionString = mCompositionString;
 
   aWindow->DispatchWindowEvent(&event);
 
   // Calling SetIMERelatedWindowsPos will be failure on e10s at this point.
-  // text event will notify NOTIFY_IME_OF_COMPOSITION_UPDATE, then
+  // compositionchange event will notify NOTIFY_IME_OF_COMPOSITION_UPDATE, then
   // it will call SetIMERelatedWindowsPos.
 }
 
@@ -1640,7 +1613,8 @@ nsIMM32Handler::CreateTextRangeArray()
   // string and attributes) are empty. So, if you want to remove following
   // assertion, be careful.
   NS_ASSERTION(ShouldDrawCompositionStringOurselves(),
-    "CreateTextRangeArray is called when we don't need to fire text event");
+    "CreateTextRangeArray is called when we don't need to fire "
+    "compositionchange event");
 
   nsRefPtr<TextRangeArray> textRangeArray = new TextRangeArray();
 
@@ -2045,37 +2019,60 @@ nsIMM32Handler::ResolveIMECaretPos(nsIWidget* aReferenceWidget,
     aOutRect.MoveBy(-aNewOriginWidget->WidgetToScreenOffset());
 }
 
-bool
-nsIMM32Handler::OnMouseEvent(nsWindow* aWindow, LPARAM lParam, int aAction,
-                             MSGResult& aResult)
+/* static */ nsresult
+nsIMM32Handler::OnMouseButtonEvent(nsWindow* aWindow,
+                                   const IMENotification& aIMENotification)
 {
-  aResult.mConsumed = false; // always call next wndprc
-
-  if (!sWM_MSIME_MOUSE || !mIsComposing ||
-      !ShouldDrawCompositionStringOurselves()) {
-    return false;
+  // We don't need to create the instance of the handler here.
+  if (!gIMM32Handler) {
+    return NS_OK;
   }
 
-  nsIntPoint cursor(LOWORD(lParam), HIWORD(lParam));
-  WidgetQueryContentEvent charAtPt(true, NS_QUERY_CHARACTER_AT_POINT, aWindow);
-  aWindow->InitEvent(charAtPt, &cursor);
-  aWindow->DispatchWindowEvent(&charAtPt);
-  if (!charAtPt.mSucceeded ||
-      charAtPt.mReply.mOffset == WidgetQueryContentEvent::NOT_FOUND ||
-      charAtPt.mReply.mOffset < mCompositionStart ||
-      charAtPt.mReply.mOffset >
-        mCompositionStart + mCompositionString.Length()) {
-    return false;
+  if (!sWM_MSIME_MOUSE || !IsComposingOnOurEditor() ||
+      !ShouldDrawCompositionStringOurselves()) {
+    return NS_OK;
+  }
+
+  // We need to handle only mousedown event.
+  if (aIMENotification.mMouseButtonEventData.mEventMessage !=
+        NS_MOUSE_BUTTON_DOWN) {
+    return NS_OK;
+  }
+
+  // If the character under the cursor is not in the composition string,
+  // we don't need to notify IME of it.
+  uint32_t compositionStart = gIMM32Handler->mCompositionStart;
+  uint32_t compositionEnd =
+    compositionStart + gIMM32Handler->mCompositionString.Length();
+  if (aIMENotification.mMouseButtonEventData.mOffset < compositionStart ||
+      aIMENotification.mMouseButtonEventData.mOffset >= compositionEnd) {
+    return NS_OK;
+  }
+
+  BYTE button;
+  switch (aIMENotification.mMouseButtonEventData.mButton) {
+    case WidgetMouseEventBase::eLeftButton:
+      button = IMEMOUSE_LDOWN;
+      break;
+    case WidgetMouseEventBase::eMiddleButton:
+      button = IMEMOUSE_MDOWN;
+      break;
+    case WidgetMouseEventBase::eRightButton:
+      button = IMEMOUSE_RDOWN;
+      break;
+    default:
+      return NS_OK;
   }
 
   // calcurate positioning and offset
   // char :            JCH1|JCH2|JCH3
   // offset:           0011 1122 2233
   // positioning:      2301 2301 2301
-  nsIntRect cursorInTopLevel, cursorRect(cursor, nsIntSize(0, 0));
-  ResolveIMECaretPos(aWindow, cursorRect,
-                     aWindow->GetTopLevelWindow(false), cursorInTopLevel);
-  int32_t cursorXInChar = cursorInTopLevel.x - charAtPt.mReply.mRect.x;
+  nsIntPoint cursorPos =
+    aIMENotification.mMouseButtonEventData.mCursorPos.AsIntPoint();
+  nsIntRect charRect =
+    aIMENotification.mMouseButtonEventData.mCharRect.AsIntRect();
+  int32_t cursorXInChar = cursorPos.x - charRect.x;
   // The event might hit to zero-width character, see bug 694913.
   // The reason might be:
   // * There are some zero-width characters are actually.
@@ -2084,26 +2081,30 @@ nsIMM32Handler::OnMouseEvent(nsWindow* aWindow, LPARAM lParam, int aAction,
   // We should assume that user clicked on right most of the zero-width
   // character in such case.
   int positioning = 1;
-  if (charAtPt.mReply.mRect.width > 0) {
-    positioning = cursorXInChar * 4 / charAtPt.mReply.mRect.width;
+  if (charRect.width > 0) {
+    positioning = cursorXInChar * 4 / charRect.width;
     positioning = (positioning + 2) % 4;
   }
 
-  int offset = charAtPt.mReply.mOffset - mCompositionStart;
+  int offset =
+    aIMENotification.mMouseButtonEventData.mOffset - compositionStart;
   if (positioning < 2) {
     offset++;
   }
 
   PR_LOG(gIMM32Log, PR_LOG_ALWAYS,
-    ("IMM32: OnMouseEvent, x,y=%ld,%ld, offset=%ld, positioning=%ld\n",
-     cursor.x, cursor.y, offset, positioning));
+    ("IMM32: OnMouseButtonEvent, x,y=%ld,%ld, offset=%ld, positioning=%ld\n",
+     cursorPos.x, cursorPos.y, offset, positioning));
 
   // send MS_MSIME_MOUSE message to default IME window.
   HWND imeWnd = ::ImmGetDefaultIMEWnd(aWindow->GetWindowHandle());
   nsIMEContext IMEContext(aWindow->GetWindowHandle());
-  return ::SendMessageW(imeWnd, sWM_MSIME_MOUSE,
-                        MAKELONG(MAKEWORD(aAction, positioning), offset),
-                        (LPARAM) IMEContext.get()) == 1;
+  if (::SendMessageW(imeWnd, sWM_MSIME_MOUSE,
+                     MAKELONG(MAKEWORD(button, positioning), offset),
+                     (LPARAM) IMEContext.get()) == 1) {
+    return NS_SUCCESS_EVENT_CONSUMED;
+  }
+  return NS_OK;
 }
 
 /* static */ bool

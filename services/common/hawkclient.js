@@ -109,6 +109,7 @@ this.HawkClient.prototype = {
       code: restResponse.status,
       errno: restResponse.status
     };
+    errorObj.toString = function() this.code + ": " + this.message;
     let retryAfter = restResponse.headers && restResponse.headers["retry-after"];
     retryAfter = retryAfter ? parseInt(retryAfter) : retryAfter;
     if (retryAfter) {
@@ -261,7 +262,7 @@ this.HawkClient.prototype = {
     };
 
     let request = this.newHAWKAuthenticatedRESTRequest(uri, credentials, extra);
-    if (method == "post" || method == "put") {
+    if (method == "post" || method == "put" || method == "patch") {
       request[method](payloadObj, onComplete);
     } else {
       request[method](onComplete);

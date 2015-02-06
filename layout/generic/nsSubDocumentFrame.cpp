@@ -34,7 +34,7 @@
 #include "nsIObjectLoadingContent.h"
 #include "nsLayoutUtils.h"
 #include "FrameLayerBuilder.h"
-#include "nsObjectFrame.h"
+#include "nsPluginFrame.h"
 #include "nsContentUtils.h"
 #include "nsIPermissionManager.h"
 #include "nsServiceManagerUtils.h"
@@ -429,7 +429,7 @@ nsSubDocumentFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
       }
     }
 
-    aBuilder->EnterPresShell(subdocRootFrame, dirty);
+    aBuilder->EnterPresShell(subdocRootFrame);
   } else {
     dirty = aDirtyRect;
   }
@@ -508,7 +508,7 @@ nsSubDocumentFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
   }
 
   if (subdocRootFrame) {
-    aBuilder->LeavePresShell(subdocRootFrame, dirty);
+    aBuilder->LeavePresShell(subdocRootFrame);
 
     if (ignoreViewportScrolling) {
       aBuilder->SetIgnoreScrollFrame(savedIgnoreScrollFrame);
@@ -1021,7 +1021,7 @@ BeginSwapDocShellsForDocument(nsIDocument* aDocument, void*)
     }
   }
   aDocument->EnumerateActivityObservers(
-    nsObjectFrame::BeginSwapDocShells, nullptr);
+    nsPluginFrame::BeginSwapDocShells, nullptr);
   aDocument->EnumerateSubDocuments(BeginSwapDocShellsForDocument, nullptr);
   return true;
 }
@@ -1118,7 +1118,7 @@ EndSwapDocShellsForDocument(nsIDocument* aDocument, void*)
   }
 
   aDocument->EnumerateActivityObservers(
-    nsObjectFrame::EndSwapDocShells, nullptr);
+    nsPluginFrame::EndSwapDocShells, nullptr);
   aDocument->EnumerateSubDocuments(EndSwapDocShellsForDocument, nullptr);
   return true;
 }

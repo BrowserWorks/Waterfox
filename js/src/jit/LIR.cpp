@@ -10,7 +10,7 @@
 
 #include "jsprf.h"
 
-#include "jit/IonSpewer.h"
+#include "jit/JitSpewer.h"
 #include "jit/MIR.h"
 #include "jit/MIRGenerator.h"
 
@@ -35,7 +35,7 @@ LIRGraph::LIRGraph(MIRGraph *mir)
 bool
 LIRGraph::addConstantToPool(const Value &v, uint32_t *index)
 {
-    JS_ASSERT(constantPoolMap_.initialized());
+    MOZ_ASSERT(constantPoolMap_.initialized());
 
     ConstantPoolMap::AddPtr p = constantPoolMap_.lookupForAdd(v);
     if (p) {
@@ -50,14 +50,14 @@ bool
 LIRGraph::noteNeedsSafepoint(LInstruction *ins)
 {
     // Instructions with safepoints must be in linear order.
-    JS_ASSERT_IF(!safepoints_.empty(), safepoints_.back()->id() < ins->id());
+    MOZ_ASSERT_IF(!safepoints_.empty(), safepoints_.back()->id() < ins->id());
     if (!ins->isCall() && !nonCallSafepoints_.append(ins))
         return false;
     return safepoints_.append(ins);
 }
 
 void
-LIRGraph::dump(FILE *fp) const
+LIRGraph::dump(FILE *fp)
 {
     for (size_t i = 0; i < numBlocks(); i++) {
         getBlock(i)->dump(fp);
@@ -66,35 +66,40 @@ LIRGraph::dump(FILE *fp) const
 }
 
 void
-LIRGraph::dump() const
+LIRGraph::dump()
 {
     dump(stderr);
 }
 
-LBlock *
-LBlock::New(TempAllocator &alloc, MBasicBlock *from)
+LBlock::LBlock(MBasicBlock *from)
+  : block_(from),
+    phis_(),
+    entryMoveGroup_(nullptr),
+    exitMoveGroup_(nullptr)
 {
-    LBlock *block = new(alloc) LBlock(from);
-    if (!block)
-        return nullptr;
+    from->assignLir(this);
+}
 
+bool
+LBlock::init(TempAllocator &alloc)
+{
     // Count the number of LPhis we'll need.
     size_t numLPhis = 0;
-    for (MPhiIterator i(from->phisBegin()), e(from->phisEnd()); i != e; ++i) {
+    for (MPhiIterator i(block_->phisBegin()), e(block_->phisEnd()); i != e; ++i) {
         MPhi *phi = *i;
         numLPhis += (phi->type() == MIRType_Value) ? BOX_PIECES : 1;
     }
 
     // Allocate space for the LPhis.
-    if (!block->phis_.init(alloc, numLPhis))
-        return nullptr;
+    if (!phis_.init(alloc, numLPhis))
+        return false;
 
     // For each MIR phi, set up LIR phis as appropriate. We'll fill in their
     // operands on each incoming edge, and set their definitions at the start of
     // their defining block.
     size_t phiIndex = 0;
-    size_t numPreds = from->numPredecessors();
-    for (MPhiIterator i(from->phisBegin()), e(from->phisEnd()); i != e; ++i) {
+    size_t numPreds = block_->numPredecessors();
+    for (MPhiIterator i(block_->phisBegin()), e(block_->phisEnd()); i != e; ++i) {
         MPhi *phi = *i;
         MOZ_ASSERT(phi->numOperands() == numPreds);
 
@@ -103,36 +108,23 @@ LBlock::New(TempAllocator &alloc, MBasicBlock *from)
             void *array = alloc.allocateArray<sizeof(LAllocation)>(numPreds);
             LAllocation *inputs = static_cast<LAllocation *>(array);
             if (!inputs)
-                return nullptr;
+                return false;
 
-            new (&block->phis_[phiIndex++]) LPhi(phi, inputs);
+            LPhi *lphi = new (&phis_[phiIndex++]) LPhi(phi, inputs);
+            lphi->setBlock(this);
         }
     }
-    return block;
+    return true;
 }
 
-uint32_t
-LBlock::firstId() const
+const LInstruction *
+LBlock::firstInstructionWithId() const
 {
-    if (phis_.length()) {
-        return phis_[0].id();
-    } else {
-        for (LInstructionIterator i(instructions_.begin()); i != instructions_.end(); i++) {
-            if (i->id())
-                return i->id();
-        }
+    for (LInstructionIterator i(instructions_.begin()); i != instructions_.end(); ++i) {
+        if (i->id())
+            return *i;
     }
     return 0;
-}
-uint32_t
-LBlock::lastId() const
-{
-    LInstruction *last = *instructions_.rbegin();
-    JS_ASSERT(last->id());
-    // The last instruction is a control flow instruction which does not have
-    // any output.
-    JS_ASSERT(last->numDefs() == 0);
-    return last->id();
 }
 
 LMoveGroup *
@@ -201,7 +193,7 @@ LRecoverInfo::New(MIRGenerator *gen, MResumePoint *mir)
     if (!recoverInfo || !recoverInfo->init(mir))
         return nullptr;
 
-    IonSpew(IonSpew_Snapshots, "Generating LIR recover info %p from MIR (%p)",
+    JitSpew(JitSpew_IonSnapshots, "Generating LIR recover info %p from MIR (%p)",
             (void *)recoverInfo, (void *)mir);
 
     return recoverInfo;
@@ -293,7 +285,7 @@ LSnapshot::New(MIRGenerator *gen, LRecoverInfo *recover, BailoutKind kind)
     if (!snapshot || !snapshot->init(gen))
         return nullptr;
 
-    IonSpew(IonSpew_Snapshots, "Generating LIR snapshot %p from recover (%p)",
+    JitSpew(JitSpew_IonSnapshots, "Generating LIR snapshot %p from recover (%p)",
             (void *)snapshot, (void *)recover);
 
     return snapshot;
@@ -311,7 +303,7 @@ LSnapshot::rewriteRecoveredInput(LUse input)
 }
 
 void
-LInstruction::printName(FILE *fp, Opcode op)
+LNode::printName(FILE *fp, Opcode op)
 {
     static const char * const names[] =
     {
@@ -326,7 +318,7 @@ LInstruction::printName(FILE *fp, Opcode op)
 }
 
 void
-LInstruction::printName(FILE *fp)
+LNode::printName(FILE *fp)
 {
     printName(fp, op());
 }
@@ -348,6 +340,8 @@ static const char * const TypeChars[] =
     "s",            // SLOTS
     "f",            // FLOAT32
     "d",            // DOUBLE
+    "i32x4",        // INT32X4
+    "f32x4",        // FLOAT32X4
 #ifdef JS_NUNBOX32
     "t",            // TYPE
     "p"             // PAYLOAD
@@ -408,7 +402,7 @@ PrintUse(char *buf, size_t size, const LUse *use)
         JS_snprintf(buf, size, "v%d:**", use->virtualRegister());
         break;
       default:
-        MOZ_ASSUME_UNREACHABLE("invalid use policy");
+        MOZ_CRASH("invalid use policy");
     }
 }
 
@@ -441,7 +435,7 @@ LAllocation::toString() const
         PrintUse(buf, sizeof(buf), toUse());
         return buf;
       default:
-        MOZ_ASSUME_UNREACHABLE("what?");
+        MOZ_CRASH("what?");
     }
 }
 #endif // DEBUG
@@ -459,7 +453,7 @@ LDefinition::dump() const
 }
 
 void
-LInstruction::printOperands(FILE *fp)
+LNode::printOperands(FILE *fp)
 {
     for (size_t i = 0, e = numOperands(); i < e; i++) {
         fprintf(fp, " (%s)", getOperand(i)->toString());
@@ -471,22 +465,22 @@ LInstruction::printOperands(FILE *fp)
 void
 LInstruction::assignSnapshot(LSnapshot *snapshot)
 {
-    JS_ASSERT(!snapshot_);
+    MOZ_ASSERT(!snapshot_);
     snapshot_ = snapshot;
 
 #ifdef DEBUG
-    if (IonSpewEnabled(IonSpew_Snapshots)) {
-        IonSpewHeader(IonSpew_Snapshots);
-        fprintf(IonSpewFile, "Assigning snapshot %p to instruction %p (",
+    if (JitSpewEnabled(JitSpew_IonSnapshots)) {
+        JitSpewHeader(JitSpew_IonSnapshots);
+        fprintf(JitSpewFile, "Assigning snapshot %p to instruction %p (",
                 (void *)snapshot, (void *)this);
-        printName(IonSpewFile);
-        fprintf(IonSpewFile, ")\n");
+        printName(JitSpewFile);
+        fprintf(JitSpewFile, ")\n");
     }
 #endif
 }
 
 void
-LInstruction::dump(FILE *fp)
+LNode::dump(FILE *fp)
 {
     if (numDefs() != 0) {
         fprintf(fp, "{");
@@ -499,7 +493,7 @@ LInstruction::dump(FILE *fp)
     }
 
     printName(fp);
-    printInfo(fp);
+    printOperands(fp);
 
     if (numTemps()) {
         fprintf(fp, " t=(");
@@ -523,7 +517,7 @@ LInstruction::dump(FILE *fp)
 }
 
 void
-LInstruction::dump()
+LNode::dump()
 {
     dump(stderr);
     fprintf(stderr, "\n");
@@ -532,18 +526,34 @@ LInstruction::dump()
 void
 LInstruction::initSafepoint(TempAllocator &alloc)
 {
-    JS_ASSERT(!safepoint_);
+    MOZ_ASSERT(!safepoint_);
     safepoint_ = new(alloc) LSafepoint(alloc);
-    JS_ASSERT(safepoint_);
+    MOZ_ASSERT(safepoint_);
 }
 
 bool
 LMoveGroup::add(LAllocation *from, LAllocation *to, LDefinition::Type type)
 {
 #ifdef DEBUG
-    JS_ASSERT(*from != *to);
+    MOZ_ASSERT(*from != *to);
     for (size_t i = 0; i < moves_.length(); i++)
-        JS_ASSERT(*to != *moves_[i].to());
+        MOZ_ASSERT(*to != *moves_[i].to());
+
+    // Check that SIMD moves are aligned according to ABI requirements.
+    if (LDefinition(type).isSimdType()) {
+        if (from->isMemory()) {
+            if (from->isArgument())
+                MOZ_ASSERT(from->toArgument()->index() % SimdStackAlignment == 0);
+            else
+                MOZ_ASSERT(from->toStackSlot()->slot() % SimdStackAlignment == 0);
+        }
+        if (to->isMemory()) {
+            if (to->isArgument())
+                MOZ_ASSERT(to->toArgument()->index() % SimdStackAlignment == 0);
+            else
+                MOZ_ASSERT(to->toStackSlot()->slot() % SimdStackAlignment == 0);
+        }
+    }
 #endif
     return moves_.append(LMove(from, to, type));
 }
@@ -582,7 +592,11 @@ LMoveGroup::printOperands(FILE *fp)
         const LMove &move = getMove(i);
         // Use two printfs, as LAllocation::toString is not reentrant.
         fprintf(fp, " [%s", move.from()->toString());
-        fprintf(fp, " -> %s]", move.to()->toString());
+        fprintf(fp, " -> %s", move.to()->toString());
+#ifdef DEBUG
+        fprintf(fp, ", %s", TypeChars[move.type()]);
+#endif
+        fprintf(fp, "]");
         if (i != numMoves() - 1)
             fprintf(fp, ",");
     }

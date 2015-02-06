@@ -18,6 +18,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "promise",
 XPCOMUtils.defineLazyModuleGetter(this, "console",
                                   "resource://gre/modules/devtools/Console.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "CustomizableUI",
+                                  "resource:///modules/CustomizableUI.jsm");
+
 const EventEmitter = devtools.require("devtools/toolkit/event-emitter");
 const FORBIDDEN_IDS = new Set(["toolbox", ""]);
 const MAX_ORDINAL = 99;
@@ -406,6 +409,10 @@ DevTools.prototype = {
 
       this._toolboxes.set(target, toolbox);
 
+      toolbox.once("destroy", () => {
+        this.emit("toolbox-destroy", target);
+      });
+
       toolbox.once("destroyed", () => {
         this._toolboxes.delete(target);
         this.emit("toolbox-destroyed", target);
@@ -429,7 +436,7 @@ DevTools.prototype = {
    *         Target value e.g. the target that owns this toolbox
    *
    * @return {Toolbox} toolbox
-   *         The toobox that is debugging the given target
+   *         The toolbox that is debugging the given target
    */
   getToolbox: function DT_getToolbox(target) {
     return this._toolboxes.get(target);
@@ -440,7 +447,7 @@ DevTools.prototype = {
    *
    * @return promise
    *         This promise will resolve to false if no toolbox was found
-   *         associated to the target. true, if the toolbox was successfuly
+   *         associated to the target. true, if the toolbox was successfully
    *         closed.
    */
   closeToolbox: function DT_closeToolbox(target) {
@@ -562,6 +569,13 @@ let gDevToolsBrowser = {
     let webIDEEnabled = Services.prefs.getBoolPref("devtools.webide.enabled");
     toggleCmd("Tools:WebIDE", webIDEEnabled);
 
+    let showWebIDEWidget = Services.prefs.getBoolPref("devtools.webide.widget.enabled");
+    if (webIDEEnabled && showWebIDEWidget) {
+      gDevToolsBrowser.installWebIDEWidget();
+    } else {
+      gDevToolsBrowser.uninstallWebIDEWidget();
+    }
+
     // Enable App Manager?
     let appMgrEnabled = Services.prefs.getBoolPref("devtools.appmanager.enabled");
     toggleCmd("Tools:DevAppMgr", !webIDEEnabled && appMgrEnabled);
@@ -606,11 +620,11 @@ let gDevToolsBrowser = {
    * selectToolCommand's behavior:
    * - if the toolbox is closed,
    *   we open the toolbox and select the tool
-   * - if the toolbox is open, and the targetted tool is not selected,
+   * - if the toolbox is open, and the targeted tool is not selected,
    *   we select it
-   * - if the toolbox is open, and the targetted tool is selected,
+   * - if the toolbox is open, and the targeted tool is selected,
    *   and the host is NOT a window, we close the toolbox
-   * - if the toolbox is open, and the targetted tool is selected,
+   * - if the toolbox is open, and the targeted tool is selected,
    *   and the host is a window, we raise the toolbox window
    */
   selectToolCommand: function(gBrowser, toolId) {
@@ -663,9 +677,57 @@ let gDevToolsBrowser = {
     if (win) {
       win.focus();
     } else {
-      let ww = Cc["@mozilla.org/embedcomp/window-watcher;1"].getService(Ci.nsIWindowWatcher);
-      ww.openWindow(null, "chrome://webide/content/", "webide", "chrome,centerscreen,resizable", null);
+      Services.ww.openWindow(null, "chrome://webide/content/", "webide", "chrome,centerscreen,resizable", null);
     }
+  },
+
+  /**
+   * Install WebIDE widget
+   */
+  installWebIDEWidget: function() {
+    if (this.isWebIDEWidgetInstalled()) {
+      return;
+    }
+
+    let defaultArea;
+    if (Services.prefs.getBoolPref("devtools.webide.widget.inNavbarByDefault")) {
+      defaultArea = CustomizableUI.AREA_NAVBAR;
+    } else {
+      defaultArea = CustomizableUI.AREA_PANEL;
+    }
+
+    CustomizableUI.createWidget({
+      id: "webide-button",
+      shortcutId: "key_webide",
+      label: "devtools-webide-button.label",
+      tooltiptext: "devtools-webide-button.tooltiptext",
+      defaultArea: defaultArea,
+      onCommand: function(aEvent) {
+        gDevToolsBrowser.openWebIDE();
+      }
+    });
+  },
+
+  isWebIDEWidgetInstalled: function() {
+    let widgetWrapper = CustomizableUI.getWidget("webide-button");
+    return !!(widgetWrapper && widgetWrapper.provider == CustomizableUI.PROVIDER_API);
+  },
+
+  /**
+   * Uninstall WebIDE widget
+   */
+  uninstallWebIDEWidget: function() {
+    if (this.isWebIDEWidgetInstalled()) {
+      CustomizableUI.removeWidgetFromArea("webide-button");
+    }
+    CustomizableUI.destroyWidget("webide-button");
+  },
+
+  /**
+   * Move WebIDE widget to the navbar
+   */
+  moveWebIDEWidgetInNavbar: function() {
+    CustomizableUI.addWidgetToArea("webide-button", CustomizableUI.AREA_NAVBAR);
   },
 
   /**

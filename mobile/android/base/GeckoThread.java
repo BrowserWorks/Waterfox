@@ -37,7 +37,7 @@ public class GeckoThread extends Thread implements GeckoEventListener {
         GeckoExited
     }
 
-    private static AtomicReference<LaunchState> sLaunchState =
+    private static final AtomicReference<LaunchState> sLaunchState =
                                             new AtomicReference<LaunchState>(LaunchState.Launching);
 
     private static GeckoThread sGeckoThread;
@@ -88,18 +88,19 @@ public class GeckoThread extends Thread implements GeckoEventListener {
     }
 
     private String initGeckoEnvironment() {
-        // At some point while loading the gecko libs our default locale gets set
-        // so just save it to locale here and reset it as default after the join
-        Locale locale = Locale.getDefault();
+        final Locale locale = Locale.getDefault();
 
+        final Context context = GeckoAppShell.getContext();
+        final Resources res = context.getResources();
         if (locale.toString().equalsIgnoreCase("zh_hk")) {
-            locale = Locale.TRADITIONAL_CHINESE;
-            Locale.setDefault(locale);
+            final Locale mappedLocale = Locale.TRADITIONAL_CHINESE;
+            Locale.setDefault(mappedLocale);
+            Configuration config = res.getConfiguration();
+            config.locale = mappedLocale;
+            res.updateConfiguration(config, null);
         }
 
-        Context context = GeckoAppShell.getContext();
         String resourcePath = "";
-        Resources res  = null;
         String[] pluginDirs = null;
         try {
             pluginDirs = GeckoAppShell.getPluginDirectories();
@@ -108,19 +109,12 @@ public class GeckoThread extends Thread implements GeckoEventListener {
         }
 
         resourcePath = context.getPackageResourcePath();
-        res = context.getResources();
         GeckoLoader.setupGeckoEnvironment(context, pluginDirs, context.getFilesDir().getPath());
 
         GeckoLoader.loadSQLiteLibs(context, resourcePath);
         GeckoLoader.loadNSSLibs(context, resourcePath);
         GeckoLoader.loadGeckoLibs(context, resourcePath);
         GeckoJavaSampler.setLibsLoaded();
-
-        Locale.setDefault(locale);
-
-        Configuration config = res.getConfiguration();
-        config.locale = locale;
-        res.updateConfiguration(config, null);
 
         return resourcePath;
     }
@@ -136,25 +130,29 @@ public class GeckoThread extends Thread implements GeckoEventListener {
     }
 
     private String addCustomProfileArg(String args) {
-        String profile = "";
-        String guest = "";
+        String profileArg = "";
+        String guestArg = "";
         if (GeckoAppShell.getGeckoInterface() != null) {
-            if (GeckoAppShell.getGeckoInterface().getProfile().inGuestMode()) {
+            final GeckoProfile profile = GeckoAppShell.getGeckoInterface().getProfile();
+
+            if (profile.inGuestMode()) {
                 try {
-                    profile = " -profile " + GeckoAppShell.getGeckoInterface().getProfile().getDir().getCanonicalPath();
-                } catch (IOException ioe) { Log.e(LOGTAG, "error getting guest profile path", ioe); }
+                    profileArg = " -profile " + profile.getDir().getCanonicalPath();
+                } catch (final IOException ioe) {
+                    Log.e(LOGTAG, "error getting guest profile path", ioe);
+                }
 
                 if (args == null || !args.contains(BrowserApp.GUEST_BROWSING_ARG)) {
-                    guest = " " + BrowserApp.GUEST_BROWSING_ARG;
+                    guestArg = " " + BrowserApp.GUEST_BROWSING_ARG;
                 }
             } else if (!GeckoProfile.sIsUsingCustomProfile) {
-                // If nothing was passed in in the intent, force Gecko to use the default profile for
-                // for this activity
-                profile = " -P " + GeckoAppShell.getGeckoInterface().getProfile().getName();
+                // If nothing was passed in the intent, make sure the default profile exists and
+                // force Gecko to use the default profile for this activity
+                profileArg = " -P " + profile.forceCreate().getName();
             }
         }
 
-        return (args != null ? args : "") + profile + guest;
+        return (args != null ? args : "") + profileArg + guestArg;
     }
 
     @Override

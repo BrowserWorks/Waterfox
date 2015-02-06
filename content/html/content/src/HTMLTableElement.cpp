@@ -73,7 +73,6 @@ TableRowsCollection::TableRowsCollection(HTMLTableElement *aParent)
                                   nsGkAtoms::tr,
                                   false))
 {
-  SetIsDOMBinding();
 }
 
 TableRowsCollection::~TableRowsCollection()
@@ -896,7 +895,7 @@ HTMLTableElement::BuildInheritedAttributes()
 {
   NS_ASSERTION(mTableInheritedAttributes == TABLE_ATTRS_DIRTY,
                "potential leak, plus waste of work");
-  nsIDocument *document = GetCurrentDoc();
+  nsIDocument *document = GetComposedDoc();
   nsHTMLStyleSheet* sheet = document ?
                               document->GetAttributeStyleSheet() : nullptr;
   nsRefPtr<nsMappedAttributes> newAttrs;

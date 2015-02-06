@@ -214,7 +214,7 @@ nsCSPBaseSrc::~nsCSPBaseSrc()
 // nsCSPKeywordSrc and nsCSPHashSource fall back to this base class
 // implementation which will never allow the load.
 bool
-nsCSPBaseSrc::permits(nsIURI* aUri, const nsAString& aNonce) const
+nsCSPBaseSrc::permits(nsIURI* aUri, const nsAString& aNonce, bool aWasRedirected) const
 {
 #ifdef PR_LOGGING
   {
@@ -251,7 +251,7 @@ nsCSPSchemeSrc::~nsCSPSchemeSrc()
 }
 
 bool
-nsCSPSchemeSrc::permits(nsIURI* aUri, const nsAString& aNonce) const
+nsCSPSchemeSrc::permits(nsIURI* aUri, const nsAString& aNonce, bool aWasRedirected) const
 {
 #ifdef PR_LOGGING
   {
@@ -288,7 +288,7 @@ nsCSPHostSrc::~nsCSPHostSrc()
 }
 
 bool
-nsCSPHostSrc::permits(nsIURI* aUri, const nsAString& aNonce) const
+nsCSPHostSrc::permits(nsIURI* aUri, const nsAString& aNonce, bool aWasRedirected) const
 {
 #ifdef PR_LOGGING
   {
@@ -298,21 +298,15 @@ nsCSPHostSrc::permits(nsIURI* aUri, const nsAString& aNonce) const
   }
 #endif
 
-  // If the host is defined as a "*", and:
-  //  a) no scheme, and
-  //  b) no port is defined, allow the load.
-  // http://www.w3.org/TR/CSP11/#matching
-  if (mHost.EqualsASCII("*") &&
-      mScheme.IsEmpty() &&
-      mPort.IsEmpty()) {
-    return true;
-  }
+  // we are following the enforcement rules from the spec, see:
+  // http://www.w3.org/TR/CSP11/#match-source-expression
 
-  // Check if the scheme matches.
+  // 4.3) scheme matching: Check if the scheme matches.
   nsAutoCString scheme;
   nsresult rv = aUri->GetScheme(scheme);
   NS_ENSURE_SUCCESS(rv, false);
-  if (!mScheme.EqualsASCII(scheme.get())) {
+  if (!mScheme.IsEmpty() &&
+      !mScheme.EqualsASCII(scheme.get())) {
     return false;
   }
 
@@ -320,47 +314,82 @@ nsCSPHostSrc::permits(nsIURI* aUri, const nsAString& aNonce) const
   // just a specific scheme, the parser should generate a nsCSPSchemeSource.
   NS_ASSERTION((!mHost.IsEmpty()), "host can not be the empty string");
 
-  // Extract the host part from aUri.
+  // 2) host matching: Enforce a single *
+  if (mHost.EqualsASCII("*")) {
+    return true;
+  }
+
+  // Before we can check if the host matches, we have to
+  // extract the host part from aUri.
   nsAutoCString uriHost;
   rv = aUri->GetHost(uriHost);
   NS_ENSURE_SUCCESS(rv, false);
 
-  // Check it the allowed host starts with a wilcard.
+  // 4.5) host matching: Check if the allowed host starts with a wilcard.
   if (mHost.First() == '*') {
     NS_ASSERTION(mHost[1] == '.', "Second character needs to be '.' whenever host starts with '*'");
 
     // Eliminate leading "*", but keeping the FULL STOP (.) thereafter before checking
-    // if the remaining characters match: see http://www.w3.org/TR/CSP11/#matching
+    // if the remaining characters match
     nsString wildCardHost = mHost;
     wildCardHost = Substring(wildCardHost, 1, wildCardHost.Length() - 1);
     if (!StringEndsWith(NS_ConvertUTF8toUTF16(uriHost), wildCardHost)) {
       return false;
     }
   }
-  // Check if hosts match.
+  // 4.6) host matching: Check if hosts match.
   else if (!mHost.Equals(NS_ConvertUTF8toUTF16(uriHost))) {
     return false;
   }
 
-  // If port uses wildcard, allow the load.
+  // 4.9) Path matching: If there is a path, we have to enforce
+  // path-level matching, unless the channel got redirected, see:
+  // http://www.w3.org/TR/CSP11/#source-list-paths-and-redirects
+  if (!aWasRedirected && !mPath.IsEmpty()) {
+    // cloning uri so we can ignore the ref
+    nsCOMPtr<nsIURI> uri;
+    aUri->CloneIgnoringRef(getter_AddRefs(uri));
+
+    nsAutoCString uriPath;
+    rv = uri->GetPath(uriPath);
+    NS_ENSURE_SUCCESS(rv, false);
+    // check if the last character of mPath is '/'; if so
+    // we just have to check loading resource is within
+    // the allowed path.
+    if (mPath.Last() == '/') {
+      if (!StringBeginsWith(NS_ConvertUTF8toUTF16(uriPath), mPath)) {
+        return false;
+      }
+    }
+    // otherwise mPath whitelists a specific file, and we have to
+    // check if the loading resource matches that whitelisted file.
+    else {
+      if (!mPath.Equals(NS_ConvertUTF8toUTF16(uriPath))) {
+        return false;
+      }
+    }
+  }
+
+  // 4.8) Port matching: If port uses wildcard, allow the load.
   if (mPort.EqualsASCII("*")) {
     return true;
   }
 
-  // Check if ports match
+  // Before we can check if the port matches, we have to
+  // query the port from aUri.
   int32_t uriPort;
   rv = aUri->GetPort(&uriPort);
   NS_ENSURE_SUCCESS(rv, false);
   uriPort = (uriPort > 0) ? uriPort : NS_GetDefaultPort(scheme.get());
 
-  // If mPort is empty, we have to compare default ports.
+  // 4.7) Default port matching: If mPort is empty, we have to compare default ports.
   if (mPort.IsEmpty()) {
     int32_t port = NS_GetDefaultPort(NS_ConvertUTF16toUTF8(mScheme).get());
     if (port != uriPort) {
       return false;
     }
   }
-  // Otherwise compare the ports
+  // 4.7) Port matching: Compare the ports.
   else {
     nsString portStr;
     portStr.AppendInt(uriPort);
@@ -369,7 +398,7 @@ nsCSPHostSrc::permits(nsIURI* aUri, const nsAString& aNonce) const
     }
   }
 
-  // At the end: scheme, host, port, match; allow the load.
+  // At the end: scheme, host, path, and port match -> allow the load.
   return true;
 }
 
@@ -397,9 +426,8 @@ nsCSPHostSrc::toString(nsAString& outStr) const
     outStr.Append(mPort);
   }
 
-  // in CSP 1.1, paths are ignoed
-  // outStr.Append(mPath);
-  // outStr.Append(mFileAndArguments);
+  // append path
+  outStr.Append(mPath);
 }
 
 void
@@ -413,21 +441,12 @@ void
 nsCSPHostSrc::setPort(const nsAString& aPort)
 {
   mPort = aPort;
-  ToLowerCase(mPort);
 }
 
 void
 nsCSPHostSrc::appendPath(const nsAString& aPath)
 {
   mPath.Append(aPath);
-  ToLowerCase(mPath);
-}
-
-void
-nsCSPHostSrc::setFileAndArguments(const nsAString& aFile)
-{
-  mFileAndArguments = aFile;
-  ToLowerCase(mFileAndArguments);
 }
 
 /* ===== nsCSPKeywordSrc ===================== */
@@ -469,7 +488,7 @@ nsCSPNonceSrc::~nsCSPNonceSrc()
 }
 
 bool
-nsCSPNonceSrc::permits(nsIURI* aUri, const nsAString& aNonce) const
+nsCSPNonceSrc::permits(nsIURI* aUri, const nsAString& aNonce, bool aWasRedirected) const
 {
 #ifdef PR_LOGGING
   {
@@ -599,7 +618,7 @@ nsCSPDirective::~nsCSPDirective()
 }
 
 bool
-nsCSPDirective::permits(nsIURI* aUri, const nsAString& aNonce) const
+nsCSPDirective::permits(nsIURI* aUri, const nsAString& aNonce, bool aWasRedirected) const
 {
 #ifdef PR_LOGGING
   {
@@ -610,11 +629,18 @@ nsCSPDirective::permits(nsIURI* aUri, const nsAString& aNonce) const
 #endif
 
   for (uint32_t i = 0; i < mSrcs.Length(); i++) {
-    if (mSrcs[i]->permits(aUri, aNonce)) {
+    if (mSrcs[i]->permits(aUri, aNonce, aWasRedirected)) {
       return true;
     }
   }
   return false;
+}
+
+bool
+nsCSPDirective::permits(nsIURI* aUri) const
+{
+  nsString dummyNonce;
+  return permits(aUri, dummyNonce, false);
 }
 
 bool
@@ -747,6 +773,7 @@ bool
 nsCSPPolicy::permits(nsContentPolicyType aContentType,
                      nsIURI* aUri,
                      const nsAString& aNonce,
+                     bool aWasRedirected,
                      nsAString& outViolatedDirective) const
 {
 #ifdef PR_LOGGING
@@ -767,7 +794,7 @@ nsCSPPolicy::permits(nsContentPolicyType aContentType,
   for (uint32_t i = 0; i < mDirectives.Length(); i++) {
     // Check if the directive name matches
     if (mDirectives[i]->restrictsContentType(aContentType)) {
-      if (!mDirectives[i]->permits(aUri, aNonce)) {
+      if (!mDirectives[i]->permits(aUri, aNonce, aWasRedirected)) {
         mDirectives[i]->toString(outViolatedDirective);
         return false;
       }
@@ -788,7 +815,7 @@ nsCSPPolicy::permits(nsContentPolicyType aContentType,
   // If the above loop runs through, we haven't found a matching directive.
   // Avoid relooping, just store the result of default-src while looping.
   if (defaultDir) {
-    if (!defaultDir->permits(aUri, aNonce)) {
+    if (!defaultDir->permits(aUri, aNonce, aWasRedirected)) {
       defaultDir->toString(outViolatedDirective);
       return false;
     }
@@ -797,6 +824,30 @@ nsCSPPolicy::permits(nsContentPolicyType aContentType,
 
   // unspecified default-src should default to no restrictions
   // see bug 764937
+  return true;
+}
+
+bool
+nsCSPPolicy::permitsBaseURI(nsIURI* aUri) const
+{
+#ifdef PR_LOGGING
+  {
+    nsAutoCString spec;
+    aUri->GetSpec(spec);
+    CSPUTILSLOG(("nsCSPPolicy::permitsBaseURI, aUri: %s", spec.get()));
+  }
+#endif
+
+  // Try to find a base-uri directive
+  for (uint32_t i = 0; i < mDirectives.Length(); i++) {
+    if (mDirectives[i]->equals(CSP_BASE_URI)) {
+      return mDirectives[i]->permits(aUri);
+    }
+  }
+
+  // base-uri is only enforced if explicitly defined in the
+  // policy - do *not* consult default-src, see:
+  // http://www.w3.org/TR/CSP11/#directive-default-src
   return true;
 }
 
@@ -878,6 +929,17 @@ nsCSPPolicy::getDirectiveStringForContentType(nsContentPolicyType aContentType,
 {
   for (uint32_t i = 0; i < mDirectives.Length(); i++) {
     if (mDirectives[i]->restrictsContentType(aContentType)) {
+      mDirectives[i]->toString(outDirective);
+      return;
+    }
+  }
+}
+
+void
+nsCSPPolicy::getDirectiveStringForBaseURI(nsAString& outDirective) const
+{
+  for (uint32_t i = 0; i < mDirectives.Length(); i++) {
+    if (mDirectives[i]->equals(CSP_BASE_URI)) {
       mDirectives[i]->toString(outDirective);
       return;
     }

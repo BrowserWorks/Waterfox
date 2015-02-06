@@ -8,30 +8,72 @@
 #define mozilla_dom_indexeddb_filesnapshot_h__
 
 #include "mozilla/Attributes.h"
+#include "mozilla/dom/File.h"
 #include "nsAutoPtr.h"
 #include "nsCOMPtr.h"
-#include "nsCycleCollectionParticipant.h"
-#include "nsDOMFile.h"
+#include "nsISupports.h"
+
+#define FILEIMPLSNAPSHOT_IID \
+  {0x0dfc11b1, 0x75d3, 0x473b, {0x8c, 0x67, 0xb7, 0x23, 0xf4, 0x67, 0xd6, 0x73}}
+
+class PIFileImplSnapshot : public nsISupports
+{
+public:
+  NS_DECLARE_STATIC_IID_ACCESSOR(FILEIMPLSNAPSHOT_IID)
+};
+
+NS_DEFINE_STATIC_IID_ACCESSOR(PIFileImplSnapshot, FILEIMPLSNAPSHOT_IID)
 
 namespace mozilla {
 namespace dom {
+
+class MetadataParameters;
+
 namespace indexedDB {
 
 class IDBFileHandle;
 
-class FileImplSnapshot : public DOMFileImplBase
+class FileImplSnapshot MOZ_FINAL
+  : public FileImplBase
+  , public PIFileImplSnapshot
 {
-public:
-  NS_DECL_ISUPPORTS_INHERITED
+  typedef mozilla::dom::MetadataParameters MetadataParameters;
 
+  nsCOMPtr<nsIFile> mFile;
+  nsRefPtr<IDBFileHandle> mFileHandle;
+
+  bool mWholeFile;
+
+public:
   // Create as a stored file
-  FileImplSnapshot(const nsAString& aName, const nsAString& aContentType,
-                   uint64_t aLength, nsIFile* aFile, IDBFileHandle* aFileHandle,
+  FileImplSnapshot(const nsAString& aName,
+                   const nsAString& aContentType,
+                   MetadataParameters* aMetadataParams,
+                   nsIFile* aFile,
+                   IDBFileHandle* aFileHandle,
                    FileInfo* aFileInfo);
 
-  // Overrides
-  virtual nsresult
-  GetMozFullPathInternal(nsAString& aFullPath) MOZ_OVERRIDE;
+  NS_DECL_ISUPPORTS_INHERITED
+
+private:
+  // Create slice
+  FileImplSnapshot(const FileImplSnapshot* aOther,
+                   uint64_t aStart,
+                   uint64_t aLength,
+                   const nsAString& aContentType);
+
+  ~FileImplSnapshot();
+
+  static void
+  AssertSanity()
+#ifdef DEBUG
+  ;
+#else
+  { }
+#endif
+
+  virtual void
+  GetMozFullPathInternal(nsAString& aFullPath, ErrorResult& aRv) MOZ_OVERRIDE;
 
   virtual nsresult
   GetInternalStream(nsIInputStream** aStream) MOZ_OVERRIDE;
@@ -43,45 +85,22 @@ public:
   Traverse(nsCycleCollectionTraversalCallback &aCb) MOZ_OVERRIDE;
 
   virtual bool
-  IsCCed() const MOZ_OVERRIDE
-  {
-    return true;
-  }
+  IsCCed() const MOZ_OVERRIDE;
 
-protected:
-  // Create slice
-  FileImplSnapshot(const FileImplSnapshot* aOther, uint64_t aStart,
-                   uint64_t aLength, const nsAString& aContentType);
-
-  virtual ~FileImplSnapshot();
-
-  virtual already_AddRefed<nsIDOMBlob>
-  CreateSlice(uint64_t aStart, uint64_t aLength,
-              const nsAString& aContentType) MOZ_OVERRIDE;
+  virtual already_AddRefed<FileImpl>
+  CreateSlice(uint64_t aStart,
+              uint64_t aLength,
+              const nsAString& aContentType,
+              ErrorResult& aRv) MOZ_OVERRIDE;
 
   virtual bool
-  IsStoredFile() const MOZ_OVERRIDE
-  {
-    return true;
-  }
+  IsStoredFile() const MOZ_OVERRIDE;
 
   virtual bool
-  IsWholeFile() const MOZ_OVERRIDE
-  {
-    return mWholeFile;
-  }
+  IsWholeFile() const MOZ_OVERRIDE;
 
   virtual bool
-  IsSnapshot() const MOZ_OVERRIDE
-  {
-    return true;
-  }
-
-private:
-  nsCOMPtr<nsIFile> mFile;
-  nsRefPtr<IDBFileHandle> mFileHandle;
-
-  bool mWholeFile;
+  IsSnapshot() const MOZ_OVERRIDE;
 };
 
 } // namespace indexedDB

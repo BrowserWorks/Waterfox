@@ -229,6 +229,10 @@ const Sandbox = iced(function Sandbox(options) {
     metadata: 'metadata' in options ? options.metadata : {}
   };
 
+  if (options.metadata && options.metadata.addonID) {
+    options.addonId = options.metadata.addonID;
+  }
+
   let sandbox = Cu.Sandbox(options.principal, options);
 
   // Each sandbox at creation gets set of own properties that will be shadowing

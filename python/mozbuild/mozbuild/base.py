@@ -424,6 +424,26 @@ class MozbuildObject(ProcessExecutionMixin):
         if filename:
             args.extend(['-f', filename])
 
+        if num_jobs == 0 and self.mozconfig['make_flags']:
+            flags = iter(self.mozconfig['make_flags'])
+            for flag in flags:
+                if flag == '-j':
+                    try:
+                        flag = flags.next()
+                    except StopIteration:
+                        break
+                    try:
+                        num_jobs = int(flag)
+                    except ValueError:
+                        args.append(flag)
+                elif flag.startswith('-j'):
+                    try:
+                        num_jobs = int(flag[2:])
+                    except (ValueError, IndexError):
+                        break
+                else:
+                    args.append(flag)
+
         if allow_parallel:
             if num_jobs > 0:
                 args.append('-j%d' % num_jobs)
@@ -573,6 +593,19 @@ class MachCommandBase(MozbuildObject):
                 'directory. To solve this problem, ensure you do not have a '
                 'default mozconfig in searched paths.' % (e.objdir1,
                     e.objdir2))
+            sys.exit(1)
+
+        except MozconfigLoadException as e:
+            print('Error loading mozconfig: ' + e.path)
+            print('')
+            print(e.message)
+            if e.output:
+                print('')
+                print('mozconfig output:')
+                print('')
+                for line in e.output:
+                    print(line)
+
             sys.exit(1)
 
         MozbuildObject.__init__(self, topsrcdir, context.settings,

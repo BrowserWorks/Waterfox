@@ -4,14 +4,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-
 #include "vm/SavedStacks.h"
+
+#include "mozilla/Attributes.h"
+
+#include <math.h>
 
 #include "jsapi.h"
 #include "jscompartment.h"
 #include "jsfriendapi.h"
 #include "jshashutil.h"
+#include "jsmath.h"
 #include "jsnum.h"
+#include "prmjtime.h"
 
 #include "gc/Marking.h"
 #include "js/Vector.h"
@@ -20,7 +25,8 @@
 #include "vm/StringBuffer.h"
 
 #include "jscntxtinlines.h"
-#include "jsobjinlines.h"
+
+#include "vm/NativeObject-inl.h"
 
 using mozilla::AddToHash;
 using mozilla::HashString;
@@ -37,7 +43,7 @@ struct SavedFrame::Lookup {
         parent(parent),
         principals(principals)
     {
-        JS_ASSERT(source);
+        MOZ_ASSERT(source);
     }
 
     JSAtom       *source;
@@ -76,7 +82,7 @@ class SavedFrame::AutoLookupRooter : public JS::CustomAutoRooter
 class SavedFrame::HandleLookup
 {
   public:
-    HandleLookup(SavedFrame::AutoLookupRooter &lookup) : ref(lookup) { }
+    MOZ_IMPLICIT HandleLookup(SavedFrame::AutoLookupRooter &lookup) : ref(lookup) { }
     SavedFrame::Lookup *operator->() { return &ref.get(); }
     operator const SavedFrame::Lookup&() const { return ref; }
   private:
@@ -207,8 +213,8 @@ SavedFrame::getPrincipals()
 void
 SavedFrame::initFromLookup(SavedFrame::HandleLookup lookup)
 {
-    JS_ASSERT(lookup->source);
-    JS_ASSERT(getReservedSlot(JSSLOT_SOURCE).isUndefined());
+    MOZ_ASSERT(lookup->source);
+    MOZ_ASSERT(getReservedSlot(JSSLOT_SOURCE).isUndefined());
     setReservedSlot(JSSLOT_SOURCE, StringValue(lookup->source));
 
     setReservedSlot(JSSLOT_LINE, NumberValue(lookup->line));
@@ -220,7 +226,7 @@ SavedFrame::initFromLookup(SavedFrame::HandleLookup lookup)
     setReservedSlot(JSSLOT_PARENT, ObjectOrNullValue(lookup->parent));
     setReservedSlot(JSSLOT_PRIVATE_PARENT, PrivateValue(lookup->parent));
 
-    JS_ASSERT(getReservedSlot(JSSLOT_PRINCIPALS).isUndefined());
+    MOZ_ASSERT(getReservedSlot(JSSLOT_PRINCIPALS).isUndefined());
     if (lookup->principals)
         JS_HoldPrincipals(lookup->principals);
     setReservedSlot(JSSLOT_PRINCIPALS, PrivateValue(lookup->principals));
@@ -275,7 +281,7 @@ SavedFrame::checkThis(JSContext *cx, CallArgs &args, const char *fnName)
     // Check for SavedFrame.prototype, which has the same class as SavedFrame
     // instances, however doesn't actually represent a captured stack frame. It
     // is the only object that is<SavedFrame>() but doesn't have a source.
-    if (thisObject.getReservedSlot(JSSLOT_SOURCE).isNull()) {
+    if (thisObject.as<SavedFrame>().getReservedSlot(JSSLOT_SOURCE).isNull()) {
         JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_INCOMPATIBLE_PROTO,
                              SavedFrame::class_.name, fnName, "prototype object");
         return nullptr;
@@ -413,7 +419,7 @@ SavedStacks::init()
 bool
 SavedStacks::saveCurrentStack(JSContext *cx, MutableHandleSavedFrame frame, unsigned maxFrameCount)
 {
-    JS_ASSERT(initialized());
+    MOZ_ASSERT(initialized());
     assertSameCompartment(cx, this);
 
     FrameIter iter(cx, FrameIter::ALL_CONTEXTS, FrameIter::GO_THROUGH_SAVED);
@@ -425,10 +431,10 @@ SavedStacks::sweep(JSRuntime *rt)
 {
     if (frames.initialized()) {
         for (SavedFrame::Set::Enum e(frames); !e.empty(); e.popFront()) {
-            JSObject *obj = static_cast<JSObject *>(e.front());
+            JSObject *obj = e.front().unbarrieredGet();
             JSObject *temp = obj;
 
-            if (IsObjectAboutToBeFinalized(&obj)) {
+            if (IsObjectAboutToBeFinalizedFromAnyThread(&obj)) {
                 e.removeFront();
             } else {
                 SavedFrame *frame = &obj->as<SavedFrame>();
@@ -453,7 +459,9 @@ SavedStacks::sweep(JSRuntime *rt)
 
     sweepPCLocationMap();
 
-    if (savedFrameProto && IsObjectAboutToBeFinalized(savedFrameProto.unsafeGet())) {
+    if (savedFrameProto.unbarrieredGet() &&
+        IsObjectAboutToBeFinalizedFromAnyThread(savedFrameProto.unsafeGet()))
+    {
         savedFrameProto.set(nullptr);
     }
 }
@@ -474,7 +482,7 @@ SavedStacks::trace(JSTracer *trc)
 uint32_t
 SavedStacks::count()
 {
-    JS_ASSERT(initialized());
+    MOZ_ASSERT(initialized());
     return frames.count();
 }
 
@@ -587,9 +595,10 @@ SavedStacks::getOrCreateSavedFramePrototype(JSContext *cx)
     if (!global)
         return nullptr;
 
-    RootedObject proto(cx, NewObjectWithGivenProto(cx, &SavedFrame::class_,
-                                                   global->getOrCreateObjectPrototype(cx),
-                                                   global));
+    RootedNativeObject proto(cx,
+        NewNativeObjectWithGivenProto(cx, &SavedFrame::class_,
+                                      global->getOrCreateObjectPrototype(cx),
+                                      global));
     if (!proto
         || !JS_DefineProperties(cx, proto, SavedFrame::properties)
         || !JS_DefineFunctions(cx, proto, SavedFrame::methods)
@@ -598,10 +607,11 @@ SavedStacks::getOrCreateSavedFramePrototype(JSContext *cx)
         return nullptr;
     }
 
-    savedFrameProto.set(proto);
     // The only object with the SavedFrame::class_ that doesn't have a source
     // should be the prototype.
-    savedFrameProto->setReservedSlot(SavedFrame::JSSLOT_SOURCE, NullValue());
+    proto->setReservedSlot(SavedFrame::JSSLOT_SOURCE, NullValue());
+
+    savedFrameProto.set(proto);
     return savedFrameProto;
 }
 
@@ -642,7 +652,7 @@ SavedStacks::sweepPCLocationMap()
     for (PCLocationMap::Enum e(pcLocationMap); !e.empty(); e.popFront()) {
         PCKey key = e.front().key();
         JSScript *script = key.script.get();
-        if (IsScriptAboutToBeFinalized(&script)) {
+        if (IsScriptAboutToBeFinalizedFromAnyThread(&script)) {
             e.removeFront();
         } else if (script != key.script.get()) {
             key.script = script;
@@ -701,6 +711,31 @@ SavedStacks::getLocation(JSContext *cx, const FrameIter &iter, MutableHandleLoca
     return true;
 }
 
+void
+SavedStacks::chooseSamplingProbability(JSContext *cx)
+{
+    GlobalObject::DebuggerVector *dbgs = cx->global()->getDebuggers();
+    if (!dbgs || dbgs->empty())
+        return;
+
+    Debugger *allocationTrackingDbg = nullptr;
+    mozilla::DebugOnly<Debugger **> begin = dbgs->begin();
+
+    for (Debugger **dbgp = dbgs->begin(); dbgp < dbgs->end(); dbgp++) {
+        // The set of debuggers had better not change while we're iterating,
+        // such that the vector gets reallocated.
+        MOZ_ASSERT(dbgs->begin() == begin);
+
+        if ((*dbgp)->trackingAllocationSites && (*dbgp)->enabled)
+            allocationTrackingDbg = *dbgp;
+    }
+
+    if (!allocationTrackingDbg)
+        return;
+
+    allocationSamplingProbability = allocationTrackingDbg->allocationSamplingProbability;
+}
+
 SavedStacks::FrameState::FrameState(const FrameIter &iter)
     : principals(iter.compartment()->principals),
       name(iter.isNonEvalFunctionFrame() ? iter.functionDisplayAtom() : nullptr),
@@ -734,12 +769,47 @@ SavedStacks::FrameState::trace(JSTracer *trc) {
 bool
 SavedStacksMetadataCallback(JSContext *cx, JSObject **pmetadata)
 {
+    SavedStacks &stacks = cx->compartment()->savedStacks();
+    if (stacks.allocationSkipCount > 0) {
+        stacks.allocationSkipCount--;
+        return true;
+    }
+
+    stacks.chooseSamplingProbability(cx);
+    if (stacks.allocationSamplingProbability == 0.0)
+        return true;
+
+    // If the sampling probability is set to 1.0, we are always taking a sample
+    // and can therefore leave allocationSkipCount at 0.
+    if (stacks.allocationSamplingProbability != 1.0) {
+        // Rather than generating a random number on every allocation to decide
+        // if we want to sample that particular allocation (which would be
+        // expensive), we calculate the number of allocations to skip before
+        // taking the next sample.
+        //
+        // P = the probability we sample any given event.
+        //
+        // ~P = 1-P, the probability we don't sample a given event.
+        //
+        // (~P)^n = the probability that we skip at least the next n events.
+        //
+        // let X = random between 0 and 1.
+        //
+        // floor(log base ~P of X) = n, aka the number of events we should skip
+        // until we take the next sample. Any value for X less than (~P)^n
+        // yields a skip count greater than n, so the likelihood of a skip count
+        // greater than n is (~P)^n, as required.
+        double notSamplingProb = 1.0 - stacks.allocationSamplingProbability;
+        stacks.allocationSkipCount = std::floor(std::log(random_nextDouble(&stacks.rngState)) /
+                                                std::log(notSamplingProb));
+    }
+
     RootedSavedFrame frame(cx);
-    if (!cx->compartment()->savedStacks().saveCurrentStack(cx, &frame))
+    if (!stacks.saveCurrentStack(cx, &frame))
         return false;
     *pmetadata = frame;
 
-    return Debugger::onLogAllocationSite(cx, frame);
+    return Debugger::onLogAllocationSite(cx, frame, PRMJ_Now());
 }
 
 #ifdef JS_CRASH_DIAGNOSTICS

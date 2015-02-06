@@ -19,6 +19,25 @@ namespace mozilla {
 namespace dom {
 
 enum {
+  /**
+   * DOM proxies have an extra slot for the expando object at index
+   * JSPROXYSLOT_EXPANDO.
+   *
+   * The expando object is a plain JSObject whose properties correspond to
+   * "expandos" (custom properties set by the script author).
+   *
+   * The exact value stored in the JSPROXYSLOT_EXPANDO slot depends on whether
+   * the interface is annotated with the [OverrideBuiltins] extended attribute.
+   *
+   * If it is, the proxy is initialized with a PrivateValue, which contains a
+   * pointer to a js::ExpandoAndGeneration object; this contains a pointer to
+   * the actual expando object as well as the "generation" of the object.
+   *
+   * If it is not, the proxy is initialized with an UndefinedValue. In
+   * EnsureExpandoObject, it is set to an ObjectValue that points to the
+   * expando object directly. (It is set back to an UndefinedValue only when
+   * the object is about to die.)
+   */
   JSPROXYSLOT_EXPANDO = 0
 };
 
@@ -46,8 +65,8 @@ public:
              JS::Handle<JSObject*> callable) const MOZ_OVERRIDE;
   bool unwatch(JSContext* cx, JS::Handle<JSObject*> proxy,
                JS::Handle<jsid> id) const MOZ_OVERRIDE;
-  virtual bool getOwnPropertyNames(JSContext* cx, JS::Handle<JSObject*> proxy,
-                                   JS::AutoIdVector &props) const MOZ_OVERRIDE;
+  virtual bool ownPropertyKeys(JSContext* cx, JS::Handle<JSObject*> proxy,
+                               JS::AutoIdVector &props) const MOZ_OVERRIDE;
   // We override keys() and implement it directly instead of using the
   // default implementation, which would getOwnPropertyNames and then
   // filter out the non-enumerable ones.  This avoids doing
@@ -56,9 +75,9 @@ public:
                     JS::AutoIdVector &props) const MOZ_OVERRIDE;
 
 protected:
-  // Hook for subclasses to implement shared getOwnPropertyNames()/keys()
+  // Hook for subclasses to implement shared ownPropertyKeys()/keys()
   // functionality.  The "flags" argument is either JSITER_OWNONLY (for keys())
-  // or JSITER_OWNONLY | JSITER_HIDDEN (for getOwnPropertyNames()).
+  // or JSITER_OWNONLY | JSITER_HIDDEN (for ownPropertyKeys()).
   virtual bool ownPropNames(JSContext* cx, JS::Handle<JSObject*> proxy,
                             unsigned flags,
                             JS::AutoIdVector& props) const = 0;
@@ -150,7 +169,7 @@ GetArrayIndexFromId(JSContext* cx, JS::Handle<jsid> id)
   }
   if (MOZ_LIKELY(JSID_IS_ATOM(id))) {
     JSAtom* atom = JSID_TO_ATOM(id);
-    jschar s;
+    char16_t s;
     {
       JS::AutoCheckCannotGC nogc;
       if (js::AtomHasLatin1Chars(atom)) {

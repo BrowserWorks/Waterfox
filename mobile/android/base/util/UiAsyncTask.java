@@ -50,7 +50,7 @@ public abstract class UIAsyncTask<Param, Result> {
         protected abstract InnerResult doInBackground();
     }
 
-    /* inner-access */ final Handler mBackgroundThreadHandler;
+    final Handler mBackgroundThreadHandler;
     private volatile boolean mCancelled;
     private static Handler sHandler;
 
@@ -72,7 +72,7 @@ public abstract class UIAsyncTask<Param, Result> {
     }
 
     private final class BackgroundTaskRunnable implements Runnable {
-        private Param mParam;
+        private final Param mParam;
 
         public BackgroundTaskRunnable(Param param) {
             mParam = param;

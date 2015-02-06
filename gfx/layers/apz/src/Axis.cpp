@@ -16,6 +16,7 @@
 #include "mozilla/mozalloc.h"           // for operator new
 #include "mozilla/FloatingPoint.h"      // for FuzzyEqualsAdditive
 #include "nsMathUtils.h"                // for NS_lround
+#include "nsPrintfCString.h"            // for nsPrintfCString
 #include "nsThreadUtils.h"              // for NS_DispatchToMainThread, etc
 #include "nscore.h"                     // for NS_IMETHOD
 #include "gfxPrefs.h"                   // for the preferences
@@ -48,7 +49,9 @@ void Axis::UpdateWithTouchAtDevicePoint(ScreenCoord aPos, uint32_t aTimestampMs)
 
   float newVelocity = mAxisLocked ? 0.0f : (float)(mPos - aPos) / (float)(aTimestampMs - mPosTimeMs);
   if (gfxPrefs::APZMaxVelocity() > 0.0f) {
-    newVelocity = std::min(newVelocity, gfxPrefs::APZMaxVelocity() * APZCTreeManager::GetDPI());
+    ScreenPoint maxVelocity = MakePoint(gfxPrefs::APZMaxVelocity() * APZCTreeManager::GetDPI());
+    mAsyncPanZoomController->ToLocalScreenCoordinates(&maxVelocity, mAsyncPanZoomController->PanStart());
+    newVelocity = std::min(newVelocity, maxVelocity.Length());
   }
 
   mVelocity = newVelocity;
@@ -119,10 +122,24 @@ void Axis::OverscrollBy(ScreenCoord aOverscroll) {
   MOZ_ASSERT(CanScroll());
   aOverscroll = ApplyResistance(aOverscroll);
   if (aOverscroll > 0) {
-    MOZ_ASSERT(FuzzyEqualsAdditive(GetCompositionEnd().value, GetPageEnd().value, COORDINATE_EPSILON));
+#ifdef DEBUG
+    if (!FuzzyEqualsAdditive(GetCompositionEnd().value, GetPageEnd().value, COORDINATE_EPSILON)) {
+      nsPrintfCString message("composition end (%f) is not within COORDINATE_EPISLON of page end (%f)\n",
+                              GetCompositionEnd().value, GetPageEnd().value);
+      NS_ASSERTION(false, message.get());
+      MOZ_CRASH();
+    }
+#endif
     MOZ_ASSERT(mOverscroll >= 0);
   } else if (aOverscroll < 0) {
-    MOZ_ASSERT(FuzzyEqualsAdditive(GetOrigin().value, GetPageStart().value, COORDINATE_EPSILON));
+#ifdef DEBUG
+    if (!FuzzyEqualsAdditive(GetOrigin().value, GetPageStart().value, COORDINATE_EPSILON)) {
+      nsPrintfCString message("composition origin (%f) is not within COORDINATE_EPISLON of page origin (%f)\n",
+                              GetOrigin().value, GetPageStart().value);
+      NS_ASSERTION(false, message.get());
+      MOZ_CRASH();
+    }
+#endif
     MOZ_ASSERT(mOverscroll <= 0);
   }
   mOverscroll += aOverscroll;
@@ -191,12 +208,16 @@ void Axis::ClearOverscroll() {
   mOverscroll = 0;
 }
 
-float Axis::PanDistance() {
-  return fabsf((mPos - mStartPos).value);
+ScreenCoord Axis::PanStart() const {
+  return mStartPos;
 }
 
-float Axis::PanDistance(ScreenCoord aPos) {
-  return fabsf((aPos - mStartPos).value);
+ScreenCoord Axis::PanDistance() const {
+  return fabs(mPos - mStartPos);
+}
+
+ScreenCoord Axis::PanDistance(ScreenCoord aPos) const {
+  return fabs(aPos - mStartPos);
 }
 
 void Axis::EndTouch(uint32_t aTimestampMs) {
@@ -369,6 +390,11 @@ ScreenCoord AxisX::GetRectOffset(const ScreenRect& aRect) const
   return aRect.x;
 }
 
+ScreenPoint AxisX::MakePoint(ScreenCoord aCoord) const
+{
+  return ScreenPoint(aCoord, 0);
+}
+
 AxisY::AxisY(AsyncPanZoomController* aAsyncPanZoomController)
   : Axis(aAsyncPanZoomController)
 {
@@ -388,6 +414,11 @@ ScreenCoord AxisY::GetRectLength(const ScreenRect& aRect) const
 ScreenCoord AxisY::GetRectOffset(const ScreenRect& aRect) const
 {
   return aRect.y;
+}
+
+ScreenPoint AxisY::MakePoint(ScreenCoord aCoord) const
+{
+  return ScreenPoint(0, aCoord);
 }
 
 }

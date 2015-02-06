@@ -860,7 +860,7 @@ skip-if(B2G) == 402807-1.html 402807-1-ref.html
 == 403129-3.html 403129-3-ref.html
 == 403129-4.html 403129-4-ref.html
 random == 403134-1.html 403134-1-ref.html # bug 405377
-skip-if(B2G) fails-if(Android) == 403181-1.xml 403181-1-ref.xml
+skip-if(B2G) == 403181-1.xml 403181-1-ref.xml
 == 403249-1a.html 403249-1-ref.html
 == 403249-1b.html 403249-1-ref.html
 == 403249-2a.html 403249-2-ref.html
@@ -1736,8 +1736,6 @@ random-if(Android&&AndroidVersion<15) == 776265-1a.html 776265-1-ref.html
 == 796847-1.svg 796847-1-ref.svg
 fuzzy(40,850) fuzzy-if(azureQuartz,73,542) == 797797-1.html 797797-1-ref.html # 'opacity:N' and rgba(,,,N) text don't match precisely
 fuzzy(40,850) fuzzy-if(azureQuartz,68,586) == 797797-2.html 797797-2-ref.html # 'opacity:N' and rgba(,,,N) text don't match precisely
-== 801681-1.html 801681-1-ref.html
-== 801681-2.html 801681-2-ref.html
 == 801994-1.html 801994-1-ref.html
 == 804323-1.html 804323-1-ref.html
 fuzzy-if(Android,8,608) == 811301-1.html 811301-1-ref.html
@@ -1826,6 +1824,7 @@ pref(browser.display.use_document_fonts,0) == 1022481-1.html 1022481-1-ref.html
 == 1042104-1.html 1042104-1-ref.html
 == 1044198-1.html 1044198-1-ref.html
 == 1049499-1.html 1049499-1-ref.html
+== 1050493-1.html 1050493-1-ref.html
 == 1050788-1.html about:blank
 == 1053035-1-flex.html 1053035-1-ref.html
 test-pref(layout.css.grid.enabled,true) == 1053035-1-grid.html 1053035-1-ref.html
@@ -1833,6 +1832,9 @@ test-pref(layout.css.grid.enabled,true) == 1053035-1-grid.html 1053035-1-ref.htm
 == 1059498-1.html 1059498-1-ref.html
 == 1059498-2.html 1059498-1-ref.html
 == 1059498-3.html 1059498-1-ref.html
+test-pref(dom.webcomponents.enabled,true) == 1066554-1.html 1066554-1-ref.html
+== 1069716-1.html 1069716-1-ref.html
 == 1078262-1.html about:blank
+== 1081072-1.html 1081072-1-ref.html
 == 1081185-1.html 1081185-1-ref.html
 == 1097437-1.html 1097437-1-ref.html

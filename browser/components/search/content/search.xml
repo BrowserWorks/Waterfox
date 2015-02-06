@@ -322,7 +322,7 @@
           var text = this._stringBundle.getFormattedString("searchtip", [name]);
 
           if (Services.prefs.getBoolPref("browser.search.showOneOffButtons"))
-            this._textbox.placeholder = "Search";
+            this._textbox.placeholder = this._stringBundle.getString("searchPlaceholder");
           else
             this._textbox.placeholder = name;
 
@@ -476,6 +476,8 @@
           var textValue = textBox.value;
 
           var where = "current";
+
+          // Open ctrl/cmd clicks on one-off buttons in a new background tab.
           if (aEvent && aEvent.originalTarget.getAttribute("anonid") == "search-go-button") {
             if (aEvent.button == 2)
               return;
@@ -483,11 +485,20 @@
           }
           else {
             var newTabPref = textBox._prefBranch.getBoolPref("browser.search.openintab");
-            if ((aEvent && aEvent.altKey) ^ newTabPref)
+            if (((aEvent instanceof KeyboardEvent) && aEvent.altKey) ^ newTabPref)
               where = "tab";
+            if ((aEvent instanceof MouseEvent) && (aEvent.button == 1 ||
+#ifdef XP_MACOSX
+                                                   aEvent.metaKey))
+#else
+                                                   aEvent.ctrlKey))
+#endif
+              where = "tab-background";
           }
 
           this.doSearch(textValue, where, aEngine);
+          if (where == "tab-background")
+            this.focus();
         ]]></body>
       </method>
 
@@ -513,7 +524,13 @@
           var submission = engine.getSubmission(aData, null, "searchbar");
           BrowserSearch.recordSearchInHealthReport(engine, "searchbar");
           // null parameter below specifies HTML response for search
-          openUILinkIn(submission.uri.spec, aWhere, null, submission.postData);
+          let params = {
+            postData: submission.postData,
+            inBackground: aWhere == "tab-background"
+          };
+          openUILinkIn(submission.uri.spec,
+                       aWhere == "tab-background" ? "tab" : aWhere,
+                       params);
         ]]></body>
       </method>
     </implementation>
@@ -582,7 +599,6 @@
                    autocompletesearchparam="searchbar-history"
                    maxrows="10"
                    completeselectedindex="true"
-                   tabscrolling="true"
                    xbl:inherits="disabled,disableautocomplete,searchengine,src,newlines">
         <!--
         Empty <box> to properly position the icon within the autocomplete
@@ -625,6 +641,8 @@
         // is removed from the DOM.
         this.destroy();
       ]]></destructor>
+
+      <field name="_ignoreFocus">false</field>
 
       <method name="selectEngine">
         <body><![CDATA[
@@ -669,16 +687,42 @@
     <handlers>
       <handler event="input" action="this.inputChanged();"/>
       <handler event="drop" action="this.inputChanged();"/>
-      <handler event="focus">
+
+      <handler event="blur">
       <![CDATA[
-        if (this._textbox.value)
-          this.openSuggestionsPanel();
+        // If the input field is still focused then a different window has
+        // received focus, ignore the next focus event.
+        this._ignoreFocus = (document.activeElement == this._textbox.inputField);
       ]]></handler>
 
-      <handler event="click">
+      <handler event="focus">
       <![CDATA[
-        if (event.originalTarget.getAttribute("anonid") == "searchbar-search-button")
+        if (this._ignoreFocus) {
+          // This window has been re-focused, don't show the suggestions
+          this._ignoreFocus = false;
+          return;
+        }
+
+        // Don't open the suggestions if there is no text in the textbox.
+        if (!this._textbox.value)
+          return;
+
+        // Don't open the suggestions if the mouse was used to focus the
+        // textbox, that will be taken care of in the click handler.
+        if (Services.focus.getLastFocusMethod(window) == Services.focus.FLAG_BYMOUSE)
+          return;
+
+        this.openSuggestionsPanel();
+      ]]></handler>
+
+      <handler event="click" button="0">
+      <![CDATA[
+        // Open the suggestions whenever clicking on the search icon or if there
+        // is text in the textbox.
+        if (event.originalTarget.getAttribute("anonid") == "searchbar-search-button" ||
+            this._textbox.value) {
           this.openSuggestionsPanel(true);
+        }
       ]]></handler>
 
     </handlers>
@@ -1009,15 +1053,12 @@
               }
             }
             else {
-              // If no selection, select the first or last one-off button.
-              if (aEvent.shiftKey) {
-                selectedButton = list.lastChild;
-                while (selectedButton.classList.contains("dummy"))
-                  selectedButton = selectedButton.previousSibling;
-              }
-              else {
-                selectedButton = list.firstChild;
-              }
+              // If no selection, let the focus escape the panel for shift+<tab>
+              if (aEvent.shiftKey)
+                return;
+
+              // and select the first one-off button for <tab>.
+              selectedButton = list.firstChild;
             }
             selectedButton.setAttribute("selected", "true");
 

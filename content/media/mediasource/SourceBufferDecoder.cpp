@@ -1,3 +1,4 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +8,6 @@
 #include "prlog.h"
 #include "AbstractMediaDecoder.h"
 #include "MediaDecoderReader.h"
-#include "mozilla/dom/TimeRanges.h"
 
 #ifdef PR_LOGGING
 extern PRLogModuleInfo* GetMediaSourceLog();
@@ -38,7 +38,6 @@ SourceBufferDecoder::SourceBufferDecoder(MediaResource* aResource,
   , mParentDecoder(aParentDecoder)
   , mReader(nullptr)
   , mMediaDuration(-1)
-  , mDiscarded(false)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_COUNT_CTOR(SourceBufferDecoder);
@@ -61,12 +60,6 @@ void
 SourceBufferDecoder::NotifyBytesConsumed(int64_t aBytes, int64_t aOffset)
 {
   MSE_DEBUG("SourceBufferDecoder(%p)::NotifyBytesConsumed UNIMPLEMENTED", this);
-}
-
-int64_t
-SourceBufferDecoder::GetEndMediaTime() const
-{
-  return mMediaDuration;
 }
 
 int64_t
@@ -153,6 +146,10 @@ SourceBufferDecoder::OnStateMachineThread() const
 bool
 SourceBufferDecoder::OnDecodeThread() const
 {
+  // During initialization we run on our TrackBuffer's task queue.
+  if (mTaskQueue) {
+    return mTaskQueue->IsCurrentThreadIn();
+  }
   return mParentDecoder->OnDecodeThread();
 }
 
@@ -236,18 +233,6 @@ SourceBufferDecoder::ConvertToByteOffset(double aTime)
   MOZ_ASSERT(length > 0);
   int64_t offset = (aTime / (double(mMediaDuration) / USECS_PER_S)) * length;
   return offset;
-}
-
-bool
-SourceBufferDecoder::ContainsTime(double aTime)
-{
-  ErrorResult dummy;
-  nsRefPtr<dom::TimeRanges> ranges = new dom::TimeRanges();
-  nsresult rv = GetBuffered(ranges);
-  if (NS_FAILED(rv) || ranges->Length() == 0) {
-    return false;
-  }
-  return ranges->Find(aTime) != dom::TimeRanges::NoIndex;
 }
 
 } // namespace mozilla

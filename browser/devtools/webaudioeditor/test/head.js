@@ -28,15 +28,20 @@ const MEDIA_NODES_URL = EXAMPLE_URL + "doc_media-node-creation.html";
 const BUFFER_AND_ARRAY_URL = EXAMPLE_URL + "doc_buffer-and-array.html";
 const DESTROY_NODES_URL = EXAMPLE_URL + "doc_destroy-nodes.html";
 const CONNECT_TOGGLE_URL = EXAMPLE_URL + "doc_connect-toggle.html";
+const CONNECT_TOGGLE_PARAM_URL = EXAMPLE_URL + "doc_connect-toggle-param.html";
 const CONNECT_PARAM_URL = EXAMPLE_URL + "doc_connect-param.html";
 const CONNECT_MULTI_PARAM_URL = EXAMPLE_URL + "doc_connect-multi-param.html";
+const IFRAME_CONTEXT_URL = EXAMPLE_URL + "doc_iframe-context.html";
 
 // All tests are asynchronous.
 waitForExplicitFinish();
 
 let gToolEnabled = Services.prefs.getBoolPref("devtools.webaudioeditor.enabled");
 
+gDevTools.testing = true;
+
 registerCleanupFunction(() => {
+  gDevTools.testing = false;
   info("finish() was called, cleaning up...");
   Services.prefs.setBoolPref("devtools.debugger.log", gEnableLogging);
   Services.prefs.setBoolPref("devtools.webaudioeditor.enabled", gToolEnabled);
@@ -113,6 +118,11 @@ function reload(aTarget, aWaitForTargetEvent = "navigate") {
   return once(aTarget, aWaitForTargetEvent);
 }
 
+function navigate(aTarget, aUrl, aWaitForTargetEvent = "navigate") {
+  executeSoon(() => aTarget.activeTab.navigateTo(aUrl));
+  return once(aTarget, aWaitForTargetEvent);
+}
+
 function test () {
   Task.spawn(spawnTest).then(finish, handleError);
 }
@@ -128,12 +138,11 @@ function initBackend(aUrl) {
   return Task.spawn(function*() {
     let tab = yield addTab(aUrl);
     let target = TargetFactory.forTab(tab);
-    let debuggee = target.window.wrappedJSObject;
 
     yield target.makeRemote();
 
     let front = new WebAudioFront(target.client, target.form);
-    return [target, debuggee, front];
+    return { target, front };
   });
 }
 
@@ -143,14 +152,13 @@ function initWebAudioEditor(aUrl) {
   return Task.spawn(function*() {
     let tab = yield addTab(aUrl);
     let target = TargetFactory.forTab(tab);
-    let debuggee = target.window.wrappedJSObject;
 
     yield target.makeRemote();
 
     Services.prefs.setBoolPref("devtools.webaudioeditor.enabled", true);
     let toolbox = yield gDevTools.showToolbox(target, "webaudioeditor");
     let panel = toolbox.getCurrentPanel();
-    return [target, debuggee, panel];
+    return { target, panel, toolbox };
   });
 }
 
@@ -209,10 +217,7 @@ function waitForGraphRendered (front, nodeCount, edgeCount, paramEdgeCount) {
   let deferred = Promise.defer();
   let eventName = front.EVENTS.UI_GRAPH_RENDERED;
   front.on(eventName, function onGraphRendered (_, nodes, edges, pEdges) {
-    info(nodes);
-    info(edges)
-    info(pEdges);
-    let paramEdgesDone = paramEdgeCount ? paramEdgeCount === pEdges : true;
+    let paramEdgesDone = paramEdgeCount != null ? paramEdgeCount === pEdges : true;
     if (nodes === nodeCount && edges === edgeCount && paramEdgesDone) {
       front.off(eventName, onGraphRendered);
       deferred.resolve();

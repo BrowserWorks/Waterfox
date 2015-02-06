@@ -1154,9 +1154,9 @@ void MediaDecoderStateMachine::StartPlayback()
   SetPlayStartTime(TimeStamp::Now());
 
   NS_ASSERTION(IsPlaying(), "Should report playing by end of StartPlayback()");
-  if (NS_FAILED(StartAudioThread())) {
-    DECODER_WARN("Failed to create audio thread");
-  }
+  nsresult rv = StartAudioThread();
+  NS_ENSURE_SUCCESS_VOID(rv);
+
   mDecoder->GetReentrantMonitor().NotifyAll();
   mDecoder->UpdateStreamBlockingForStateMachinePlaying();
   DispatchDecodeTasksIfNeeded();
@@ -1212,8 +1212,10 @@ void MediaDecoderStateMachine::ClearPositionChangeFlag()
 MediaDecoderOwner::NextFrameStatus MediaDecoderStateMachine::GetNextFrameStatus()
 {
   ReentrantMonitorAutoEnter mon(mDecoder->GetReentrantMonitor());
-  if (IsBuffering() || IsSeeking()) {
+  if (IsBuffering()) {
     return MediaDecoderOwner::NEXT_FRAME_UNAVAILABLE_BUFFERING;
+  } else if (IsSeeking()) {
+    return MediaDecoderOwner::NEXT_FRAME_UNAVAILABLE_SEEKING;
   } else if (HaveNextFrameData()) {
     return MediaDecoderOwner::NEXT_FRAME_AVAILABLE;
   }
@@ -1310,7 +1312,7 @@ void MediaDecoderStateMachine::UpdateEstimatedDuration(int64_t aDuration)
   AssertCurrentThreadInMonitor();
   int64_t duration = GetDuration();
   if (aDuration != duration &&
-      abs(aDuration - duration) > ESTIMATED_DURATION_FUZZ_FACTOR_USECS) {
+      std::abs(aDuration - duration) > ESTIMATED_DURATION_FUZZ_FACTOR_USECS) {
     SetDuration(aDuration);
     nsCOMPtr<nsIRunnable> event =
       NS_NewRunnableMethod(mDecoder, &MediaDecoder::DurationChanged);
@@ -1419,11 +1421,21 @@ void MediaDecoderStateMachine::StartWaitForResources()
 void MediaDecoderStateMachine::NotifyWaitingForResourcesStatusChanged()
 {
   AssertCurrentThreadInMonitor();
-  if (mState != DECODER_STATE_WAIT_FOR_RESOURCES ||
-      mReader->IsWaitingMediaResources()) {
+  DECODER_LOG("NotifyWaitingForResourcesStatusChanged");
+  RefPtr<nsIRunnable> task(
+    NS_NewRunnableMethod(this,
+      &MediaDecoderStateMachine::DoNotifyWaitingForResourcesStatusChanged));
+  mDecodeTaskQueue->Dispatch(task);
+}
+
+void MediaDecoderStateMachine::DoNotifyWaitingForResourcesStatusChanged()
+{
+  NS_ASSERTION(OnDecodeThread(), "Should be on decode thread.");
+  ReentrantMonitorAutoEnter mon(mDecoder->GetReentrantMonitor());
+  if (mState != DECODER_STATE_WAIT_FOR_RESOURCES) {
     return;
   }
-  DECODER_LOG("NotifyWaitingForResourcesStatusChanged");
+  DECODER_LOG("DoNotifyWaitingForResourcesStatusChanged");
   // The reader is no longer waiting for resources (say a hardware decoder),
   // we can now proceed to decode metadata.
   SetState(DECODER_STATE_DECODING_NONE);
@@ -1450,6 +1462,7 @@ void MediaDecoderStateMachine::Play()
 
 void MediaDecoderStateMachine::ResetPlayback()
 {
+  AssertCurrentThreadInMonitor();
   MOZ_ASSERT(mState == DECODER_STATE_SEEKING ||
              mState == DECODER_STATE_SHUTDOWN ||
              mState == DECODER_STATE_DORMANT);
@@ -1788,15 +1801,12 @@ MediaDecoderStateMachine::StartAudioThread()
   mStopAudioThread = false;
   if (HasAudio() && !mAudioSink) {
     mAudioCompleted = false;
-    mAudioSink = new AudioSink(this,
-                               mAudioStartTime, mInfo.mAudio, mDecoder->GetAudioChannel());
+    mAudioSink = new AudioSink(this, mAudioStartTime,
+                               mInfo.mAudio, mDecoder->GetAudioChannel());
+    // OnAudioSinkError() will be called before Init() returns if an error
+    // occurs during initialization.
     nsresult rv = mAudioSink->Init();
-    if (NS_FAILED(rv)) {
-      DECODER_WARN("Changed state to SHUTDOWN because audio sink initialization failed");
-      SetState(DECODER_STATE_SHUTDOWN);
-      mScheduler->ScheduleAndShutdown();
-      return rv;
-    }
+    NS_ENSURE_SUCCESS(rv, rv);
 
     mAudioSink->SetVolume(mVolume);
     mAudioSink->SetPlaybackRate(mPlaybackRate);
@@ -1909,6 +1919,13 @@ nsresult MediaDecoderStateMachine::DecodeMetadata()
   NS_ASSERTION(OnDecodeThread(), "Should be on decode thread.");
   MOZ_ASSERT(mState == DECODER_STATE_DECODING_METADATA);
   DECODER_LOG("Decoding Media Headers");
+
+  mReader->PreReadMetadata();
+
+  if (mReader->IsWaitingMediaResources()) {
+    StartWaitForResources();
+    return NS_OK;
+  }
 
   nsresult res;
   MediaInfo info;
@@ -2488,7 +2505,7 @@ MediaDecoderStateMachine::FlushDecoding()
 {
   NS_ASSERTION(OnStateMachineThread() || OnDecodeThread(),
                "Should be on state machine or decode thread.");
-  mDecoder->GetReentrantMonitor().AssertNotCurrentThreadIn();
+  AssertCurrentThreadInMonitor();
 
   {
     // Put a task in the decode queue to abort any decoding operations.
@@ -2880,6 +2897,10 @@ void MediaDecoderStateMachine::UpdateReadyState() {
   AssertCurrentThreadInMonitor();
 
   MediaDecoderOwner::NextFrameStatus nextFrameStatus = GetNextFrameStatus();
+  // FIXME: This optimization could result in inconsistent next frame status
+  // between the decoder and state machine when GetNextFrameStatus() is called
+  // by the decoder without updating mLastFrameStatus.
+  // Note not to regress bug 882027 when fixing this bug.
   if (nextFrameStatus == mLastFrameStatus) {
     return;
   }
@@ -3110,6 +3131,31 @@ void MediaDecoderStateMachine::OnAudioSinkComplete()
   UpdateReadyState();
   // Kick the decode thread; it may be sleeping waiting for this to finish.
   mDecoder->GetReentrantMonitor().NotifyAll();
+}
+
+void MediaDecoderStateMachine::OnAudioSinkError()
+{
+  AssertCurrentThreadInMonitor();
+  // AudioSink not used with captured streams, so ignore errors in this case.
+  if (mAudioCaptured) {
+    return;
+  }
+
+  mAudioCompleted = true;
+
+  // Make the best effort to continue playback when there is video.
+  if (HasVideo()) {
+    return;
+  }
+
+  // Otherwise notify media decoder/element about this error for it makes
+  // no sense to play an audio-only file without sound output.
+  RefPtr<nsIRunnable> task(
+    NS_NewRunnableMethod(this, &MediaDecoderStateMachine::OnDecodeError));
+  nsresult rv = mDecodeTaskQueue->Dispatch(task);
+  if (NS_FAILED(rv)) {
+    DECODER_WARN("Failed to dispatch OnDecodeError");
+  }
 }
 
 } // namespace mozilla

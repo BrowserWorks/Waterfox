@@ -9,6 +9,37 @@
 import os
 import re
 
+WRAPPER_TEMPLATE_FILEPATH = 'mochi-wrapper.html.template'
+WRAPPERS_DIR = '_wrappers'
+MANIFEST_TEMPLATE_FILEPATH = 'mochitest.ini.template'
+MANIFEST_OUTPUT_FILEPATH = '../_webgl-conformance.ini'
+ERRATA_FILEPATH = 'mochitest-errata.ini'
+BASE_TEST_LIST_FILENAME = '00_test_list.txt'
+FILE_PATH_PREFIX = os.path.basename(os.getcwd()) # 'webgl-conformance'
+
+SUPPORT_DIRS = [
+    'conformance',
+    'resources',
+]
+
+EXTRA_SUPPORT_FILES = [
+    'always-fail.html',
+    'iframe-autoresize.js',
+    'mochi-single.html',
+    '../webgl-mochitest/driver-info.js',
+]
+
+ACCEPTABLE_ERRATA_KEYS = set([
+  'skip-if',
+])
+
+GENERATED_HEADER = '''
+# This is a GENERATED FILE. Do not edit it directly.
+# Regenerated it by using `python generate-wrapper-and-manifest.py`.
+# Mark skipped tests in mochitest-errata.ini.
+# Mark failing tests in mochi-single.html.
+'''.strip()
+
 ########################################################################
 # GetTestList
 
@@ -20,13 +51,11 @@ def GetTestList():
 ##############################
 # Internals
 
-BASE_TEST_LIST_FILENAME = '00_test_list.txt'
-
 def AccumTests(path, listFile, out_testList):
     listFilePath = os.path.join(path, listFile)
     assert os.path.exists(listFilePath), 'Bad `listFilePath`: ' + listFilePath
 
-    with open(listFilePath) as fIn:
+    with open(listFilePath, 'rb') as fIn:
         for line in fIn:
             line = line.rstrip()
             if not line:
@@ -46,6 +75,7 @@ def AccumTests(path, listFile, out_testList):
 
             if ext == 'html':
                 newTestFilePath = os.path.join(path, line)
+                newTestFilePath = newTestFilePath.replace(os.sep, '/')
                 out_testList.append(newTestFilePath)
                 continue
 
@@ -73,14 +103,14 @@ def FillTemplate(inFilePath, templateDict, outFilePath):
 
 
 def ImportTemplate(inFilePath):
-    with open(inFilePath, 'r') as f:
+    with open(inFilePath, 'rb') as f:
         return TemplateShell(f)
 
 
 def OutputFilledTemplate(templateShell, templateDict, outFilePath):
     spanStrList = templateShell.Fill(templateDict)
 
-    with open(outFilePath, 'w') as f:
+    with open(outFilePath, 'wb') as f:
         f.writelines(spanStrList)
     return
 
@@ -188,38 +218,42 @@ class TemplateShell:
 ########################################################################
 # Output
 
-def WriteWrappers(testFilePathList):
+def WriteWrappers(testWebPathList):
     templateShell = ImportTemplate(WRAPPER_TEMPLATE_FILEPATH)
 
     if not os.path.exists(WRAPPERS_DIR):
         os.mkdir(WRAPPERS_DIR)
     assert os.path.isdir(WRAPPERS_DIR)
 
-    wrapperFilePathList = []
-    for testFilePath in testFilePathList:
+    wrapperManifestPathList = []
+    for testWebPath in testWebPathList:
         # Mochitests must start with 'test_' or similar, or the test
         # runner will ignore our tests.
         # The error text is "is not a valid test".
-        wrapperFilePath = 'test_' + testFilePath.replace(os.sep, '__')
+        wrapperFilePath = 'test_' + testWebPath.replace('/', '__')
         wrapperFilePath = os.path.join(WRAPPERS_DIR, wrapperFilePath)
 
-        testFilePath = testFilePath.replace(os.sep, '/')
-
         templateDict = {
-            'TEST_PATH': testFilePath,
+            'TEST_PATH': testWebPath,
         }
 
         print('Writing \'' + wrapperFilePath + '\'')
         OutputFilledTemplate(templateShell, templateDict,
                              wrapperFilePath)
 
-        wrapperFilePathList.append(wrapperFilePath)
+        wrapperManifestPath = wrapperFilePath.replace(os.sep, '/')
+        wrapperManifestPathList.append(wrapperManifestPath)
         continue
 
-    return wrapperFilePathList
+    return wrapperManifestPathList
 
 
-def WriteManifest(wrapperFilePathList, supportFilePathList):
+def PathFromManifestDir(path):
+    print('path: ' + path)
+    return os.path.join(FILE_PATH_PREFIX, path)
+
+
+def WriteManifest(wrapperManifestPathList, supportFilePathList):
     errataMap = LoadErrata()
 
     # DEFAULT_ERRATA
@@ -231,14 +265,18 @@ def WriteManifest(wrapperFilePathList, supportFilePathList):
 
     # SUPPORT_FILES
     supportFilePathList = sorted(supportFilePathList)
+    supportFilePathList = [PathFromManifestDir(x) for x in supportFilePathList]
     supportFilesStr = '\n'.join(supportFilePathList)
 
     # MANIFEST_TESTS
-    headerList = ['[' + x + ']' for x in wrapperFilePathList]
-
     manifestTestLineList = []
-    for header in headerList:
-        manifestTestLineList.append(header)
+    for wrapperManifestPath in wrapperManifestPathList:
+        header = '[' + wrapperManifestPath + ']'
+        transformedHeader = '[' + PathFromManifestDir(wrapperManifestPath) + ']'
+        # header: '[foo.html]'
+        # transformedHeader: '[webgl-conformance/foo.html]'
+
+        manifestTestLineList.append(transformedHeader)
 
         if not header in errataMap:
             continue
@@ -254,6 +292,7 @@ def WriteManifest(wrapperFilePathList, supportFilePathList):
 
     # Fill the template.
     templateDict = {
+        'HEADER': GENERATED_HEADER,
         'DEFAULT_ERRATA': defaultErrataStr,
         'SUPPORT_FILES': supportFilesStr,
         'MANIFEST_TESTS': manifestTestsStr,
@@ -266,11 +305,6 @@ def WriteManifest(wrapperFilePathList, supportFilePathList):
 ##############################
 # Internals
 
-WRAPPER_TEMPLATE_FILEPATH = 'mochi-wrapper.html.template'
-WRAPPERS_DIR = '_wrappers'
-MANIFEST_TEMPLATE_FILEPATH = 'mochitest.ini.template'
-MANIFEST_OUTPUT_FILEPATH = '_mochitest.ini'
-ERRATA_FILEPATH = 'mochitest-errata.ini'
 kManifestHeaderRegex = re.compile(r'\[[^\]]*?\]')
 
 
@@ -279,8 +313,10 @@ def LoadErrata():
 
     nodeHeader = None
     nodeLineList = []
-    with open(ERRATA_FILEPATH, 'r') as f:
+    lineNum = 0
+    with open(ERRATA_FILEPATH, 'rb') as f:
         for line in f:
+            lineNum += 1
             line = line.rstrip()
             cur = line.lstrip()
             if cur.startswith('#'):
@@ -290,6 +326,12 @@ def LoadErrata():
                 continue
 
             if not cur.startswith('['):
+                split = cur.split('=')
+                key = split[0].strip()
+                if not key in ACCEPTABLE_ERRATA_KEYS:
+                    text = 'Unacceptable errata key on line {}: {}'
+                    text = text.format(str(lineNum), key)
+                    raise Exception(text)
                 nodeLineList.append(line)
                 continue
 
@@ -306,16 +348,6 @@ def LoadErrata():
 
 ########################################################################
 
-SUPPORT_DIRS = [
-    'conformance',
-    'resources',
-]
-
-EXTRA_SUPPORT_FILES = [
-    'always-fail.html',
-]
-
-
 def GetSupportFileList():
     ret = []
     for supportDir in SUPPORT_DIRS:
@@ -331,6 +363,7 @@ def GetFilePathListForDir(baseDir):
     for root, folders, files in os.walk(baseDir):
         for f in files:
             filePath = os.path.join(root, f)
+            filePath = filePath.replace(os.sep, '/')
             ret.append(filePath)
 
     return ret
@@ -340,13 +373,11 @@ if __name__ == '__main__':
     fileDir = os.path.dirname(__file__)
     assert not fileDir, 'Run this file from its directory, not ' + fileDir
 
-    testFilePathList = GetTestList()
+    testWebPathList = GetTestList()
 
-    wrapperFilePathList = WriteWrappers(testFilePathList)
+    wrapperFilePathList = WriteWrappers(testWebPathList)
 
     supportFilePathList = GetSupportFileList()
     WriteManifest(wrapperFilePathList, supportFilePathList)
 
     print('Done!')
-
-

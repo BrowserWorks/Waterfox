@@ -75,6 +75,7 @@
     macro(float32x4, float32x4, "float32x4") \
     macro(float64, float64, "float64") \
     macro(format, format, "format") \
+    macro(frame, frame, "frame") \
     macro(from, from, "from") \
     macro(get, get, "get") \
     macro(getInternals, getInternals, "getInternals") \
@@ -166,6 +167,7 @@
     macro(sensitivity, sensitivity, "sensitivity") \
     macro(set, set, "set") \
     macro(shape, shape, "shape") \
+    macro(signMask, signMask, "signMask") \
     macro(source, source, "source") \
     macro(stack, stack, "stack") \
     macro(sticky, sticky, "sticky") \
@@ -174,6 +176,7 @@
     macro(style, style, "style") \
     macro(test, test, "test") \
     macro(throw, throw_, "throw") \
+    macro(timestamp, timestamp, "timestamp") \
     macro(timeZone, timeZone, "timeZone") \
     macro(toGMTString, toGMTString, "toGMTString") \
     macro(toISOString, toISOString, "toISOString") \
@@ -185,6 +188,7 @@
     macro(true, true_, "true") \
     macro(unescape, unescape, "unescape") \
     macro(uneval, uneval, "uneval") \
+    macro(uninitialized, uninitialized, "uninitialized") \
     macro(uint8, uint8, "uint8") \
     macro(uint8Clamped, uint8Clamped, "uint8Clamped") \
     macro(uint16, uint16, "uint16") \
@@ -229,6 +233,6 @@
     macro(Symbol_iterator, Symbol_iterator, "Symbol.iterator") \
     macro(Symbol_toPrimitive, Symbol_toPrimitive, "Symbol.toPrimitive") \
     macro(Symbol_toStringTag, Symbol_toStringTag, "Symbol.toStringTag") \
-    macro(Symbol_unscopables, Symbol_unscopables, "Symbol.unscopables")
+    macro(Symbol_unscopables, Symbol_unscopables, "Symbol.unscopables") \
 
 #endif /* vm_CommonPropertyNames_h */

@@ -27,6 +27,8 @@ class B2GOptions(ReftestOptions):
     def __init__(self, **kwargs):
         defaults = {}
         ReftestOptions.__init__(self)
+        # This is only used for procName in run_remote_reftests.
+        defaults["app"] = Automation.DEFAULT_APP
 
         self.add_option("--browser-arg", action="store",
                     type = "string", dest = "browser_arg",
@@ -145,7 +147,7 @@ class B2GOptions(ReftestOptions):
         options.remoteProfile = options.remoteTestRoot + "/profile"
 
         productRoot = options.remoteTestRoot + "/" + auto._product
-        if options.utilityPath == auto.DIST_BIN:
+        if options.utilityPath is None:
             options.utilityPath = productRoot + "/bin"
 
         if options.remoteWebServer == None:
@@ -239,7 +241,8 @@ class B2GRemoteReftest(RefTest):
     profile = None
 
     def __init__(self, automation, devicemanager, options, scriptDir):
-        RefTest.__init__(self, automation)
+        RefTest.__init__(self)
+        self.automation = automation
         self._devicemanager = devicemanager
         self.runSSLTunnel = False
         self.remoteTestRoot = options.remoteTestRoot
@@ -425,7 +428,6 @@ class B2GRemoteReftest(RefTest):
         prefs["browser.firstrun.show.localepicker"] = False
         prefs["b2g.system_startup_url"] = "app://test-container.gaiamobile.org/index.html"
         prefs["b2g.system_manifest_url"] = "app://test-container.gaiamobile.org/manifest.webapp"
-        prefs["browser.tabs.remote"] = False
         prefs["dom.ipc.tabs.disabled"] = False
         prefs["dom.mozBrowserFramesEnabled"] = True
         prefs["font.size.inflation.emPerLine"] = 0
@@ -439,7 +441,6 @@ class B2GRemoteReftest(RefTest):
         prefs["toolkit.telemetry.notifiedOptOut"] = 999
 
         if options.oop:
-            prefs['browser.tabs.remote'] = True
             prefs['browser.tabs.remote.autostart'] = True
             prefs['reftest.browser.iframe.enabled'] = True
 
@@ -483,6 +484,23 @@ class B2GRemoteReftest(RefTest):
 
     def getManifestPath(self, path):
         return path
+
+    def environment(self, **kwargs):
+     return self.automation.environment(**kwargs)
+
+    def runApp(self, profile, binary, cmdargs, env,
+               timeout=None, debuggerInfo=None,
+               symbolsPath=None, options=None):
+        status = self.automation.runApp(None, env,
+                                        binary,
+                                        profile.profile,
+                                        cmdargs,
+                                        utilityPath=options.utilityPath,
+                                        xrePath=options.xrePath,
+                                        debuggerInfo=debuggerInfo,
+                                        symbolsPath=symbolsPath,
+                                        timeout=timeout)
+        return status
 
 
 def run_remote_reftests(parser, options, args):

@@ -7,95 +7,68 @@ const {Cu} = require("chrome");
 let { Promise: promise } = Cu.import("resource://gre/modules/Promise.jsm", {});
 
 const {devtools} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-const {Devices} = Cu.import("resource://gre/modules/devtools/Devices.jsm");
 const {Services} = Cu.import("resource://gre/modules/Services.jsm");
 const {FileUtils} = Cu.import("resource://gre/modules/FileUtils.jsm");
-const {Simulator} = Cu.import("resource://gre/modules/devtools/Simulator.jsm");
-const {EventEmitter} = Cu.import("resource://gre/modules/devtools/event-emitter.js");
+const EventEmitter = require("devtools/toolkit/event-emitter");
 const {TextEncoder, OS}  = Cu.import("resource://gre/modules/osfile.jsm", {});
 const {AppProjects} = require("devtools/app-manager/app-projects");
-const WebappsStore = require("devtools/app-manager/webapps-store");
+const TabStore = require("devtools/webide/tab-store");
 const {AppValidator} = require("devtools/app-manager/app-validator");
 const {ConnectionManager, Connection} = require("devtools/client/connection-manager");
-const AppActorFront = require("devtools/app-actor-front");
+const {AppActorFront} = require("devtools/app-actor-front");
 const {getDeviceFront} = require("devtools/server/actors/device");
 const {getPreferenceFront} = require("devtools/server/actors/preference");
 const {setTimeout} = require("sdk/timers");
 const {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
-const {USBRuntime, WiFiRuntime, SimulatorRuntime,
-       gLocalRuntime, gRemoteRuntime} = require("devtools/webide/runtimes");
-const discovery = require("devtools/toolkit/discovery/discovery");
+const {RuntimeScanners, RuntimeTypes} = require("devtools/webide/runtimes");
+const {NetUtil} = Cu.import("resource://gre/modules/NetUtil.jsm", {});
+const Telemetry = require("devtools/shared/telemetry");
 
 const Strings = Services.strings.createBundle("chrome://browser/locale/devtools/webide.properties");
 
-const WIFI_SCANNING_PREF = "devtools.remote.wifi.scan";
-
-exports.AppManager = AppManager = {
+let AppManager = exports.AppManager = {
 
   // FIXME: will break when devtools/app-manager will be removed:
   DEFAULT_PROJECT_ICON: "chrome://browser/skin/devtools/app-manager/default-app-icon.png",
   DEFAULT_PROJECT_NAME: "--",
 
   init: function() {
-    let host = Services.prefs.getCharPref("devtools.debugger.remote-host");
     let port = Services.prefs.getIntPref("devtools.debugger.remote-port");
-
     this.connection = ConnectionManager.createConnection("localhost", port);
     this.onConnectionChanged = this.onConnectionChanged.bind(this);
     this.connection.on(Connection.Events.STATUS_CHANGED, this.onConnectionChanged);
 
-    this.onWebAppsStoreready = this.onWebAppsStoreready.bind(this);
-    this.webAppsStore = new WebappsStore(this.connection);
-    this.webAppsStore.on("store-ready", this.onWebAppsStoreready);
+    this.tabStore = new TabStore(this.connection);
+    this.onTabNavigate = this.onTabNavigate.bind(this);
+    this.onTabClosed = this.onTabClosed.bind(this);
+    this.tabStore.on("navigate", this.onTabNavigate);
+    this.tabStore.on("closed", this.onTabClosed);
 
-    this.runtimeList = {
-      usb: [],
-      wifi: [],
-      simulator: [],
-      custom: [gRemoteRuntime]
-    };
-    if (Services.prefs.getBoolPref("devtools.webide.enableLocalRuntime")) {
-      this.runtimeList.custom.push(gLocalRuntime);
-    }
-    this.trackUSBRuntimes();
-    this.trackWiFiRuntimes();
-    this.trackSimulatorRuntimes();
+    this._clearRuntimeList();
+    this._rebuildRuntimeList = this._rebuildRuntimeList.bind(this);
+    RuntimeScanners.on("runtime-list-updated", this._rebuildRuntimeList);
+    RuntimeScanners.enable();
+    this._rebuildRuntimeList();
 
     this.onInstallProgress = this.onInstallProgress.bind(this);
-    AppActorFront.on("install-progress", this.onInstallProgress);
 
-    this.observe = this.observe.bind(this);
-    Services.prefs.addObserver(WIFI_SCANNING_PREF, this, false);
+    this._telemetry = new Telemetry();
   },
 
   uninit: function() {
-    AppActorFront.off("install-progress", this.onInstallProgress);
-    this._unlistenToApps();
     this.selectedProject = null;
     this.selectedRuntime = null;
-    this.untrackUSBRuntimes();
-    this.untrackWiFiRuntimes();
-    this.untrackSimulatorRuntimes();
-    this._runningApps.clear();
+    RuntimeScanners.off("runtime-list-updated", this._rebuildRuntimeList);
+    RuntimeScanners.disable();
     this.runtimeList = null;
-    this.webAppsStore.off("store-ready", this.onWebAppsStoreready);
-    this.webAppsStore.destroy();
-    this.webAppsStore = null;
+    this.tabStore.off("navigate", this.onTabNavigate);
+    this.tabStore.off("closed", this.onTabClosed);
+    this.tabStore.destroy();
+    this.tabStore = null;
     this.connection.off(Connection.Events.STATUS_CHANGED, this.onConnectionChanged);
     this._listTabsResponse = null;
     this.connection.disconnect();
     this.connection = null;
-    Services.prefs.removeObserver(WIFI_SCANNING_PREF, this);
-  },
-
-  observe: function(subject, topic, data) {
-    if (data !== WIFI_SCANNING_PREF) {
-      return;
-    }
-    // Cycle WiFi tracking to reflect the new value
-    this.untrackWiFiRuntimes();
-    this.trackWiFiRuntimes();
-    this._updateWiFiRuntimes();
   },
 
   update: function(what, details) {
@@ -125,14 +98,25 @@ exports.AppManager = AppManager = {
 
     if (this.connection.status != Connection.Status.CONNECTED) {
       console.log("Connection status changed: " + this.connection.status);
-      this._runningApps.clear();
-      this._unlistenToApps();
+      if (this._appsFront) {
+        this._appsFront.off("install-progress", this.onInstallProgress);
+        this._appsFront.unwatchApps();
+        this._appsFront = null;
+      }
       this._listTabsResponse = null;
     } else {
       this.connection.client.listTabs((response) => {
-        this._listenToApps();
+        let front = new AppActorFront(this.connection.client,
+                                      response);
+        front.on("install-progress", this.onInstallProgress);
+        front.watchApps(() => this.checkIfProjectIsRunning())
+             .then(() => front.fetchIcons())
+             .then(() => {
+               this._appsFront = front;
+               this.checkIfProjectIsRunning();
+               this.update("runtime-apps-found");
+             });
         this._listTabsResponse = response;
-        this._getRunningApps();
         this.update("list-tabs-response");
       });
     }
@@ -140,63 +124,26 @@ exports.AppManager = AppManager = {
     this.update("connection");
   },
 
+  get apps() {
+    if (this._appsFront) {
+      return this._appsFront.apps;
+    } else {
+      return new Map();
+    }
+  },
+
   onInstallProgress: function(event, details) {
     this.update("install-progress", details);
   },
 
-  onWebAppsStoreready: function() {
-    this.update("runtime-apps-found");
-  },
-
-  _runningApps: new Set(),
-  _getRunningApps: function() {
-    let client = this.connection.client;
-    if (!this._listTabsResponse.webappsActor) {
-      return;
-    }
-    let request = {
-      to: this._listTabsResponse.webappsActor,
-      type: "listRunningApps"
-    };
-    client.request(request, (res) => {
-      if (res.error) {
-        this.reportError("error_listRunningApps");
-        console.error("listRunningApps error: " + res.error);
-      }
-      for (let m of res.apps) {
-        this._runningApps.add(m);
-      }
-    });
-    this.checkIfProjectIsRunning();
-  },
-  _listenToApps: function() {
-    let client = this.connection.client;
-    client.addListener("appOpen", (type, { manifestURL }) => {
-      this._runningApps.add(manifestURL);
-      this.checkIfProjectIsRunning();
-    });
-
-    client.addListener("appClose", (type, { manifestURL }) => {
-      this._runningApps.delete(manifestURL);
-      this.checkIfProjectIsRunning();
-    });
-
-    client.addListener("appUninstall", (type, { manifestURL }) => {
-      this._runningApps.delete(manifestURL);
-      this.checkIfProjectIsRunning();
-    });
-  },
-  _unlistenToApps: function() {
-    // Is that even possible?
-    // connection.client is null now.
-  },
-
   isProjectRunning: function() {
-    if (this.selectedProject.type == "mainProcess") {
+    if (this.selectedProject.type == "mainProcess" ||
+        this.selectedProject.type == "tab") {
       return true;
     }
-    let manifest = this.getProjectManifestURL(this.selectedProject);
-    return manifest && this._runningApps.has(manifest);
+
+    let app = this._getProjectFront(this.selectedProject);
+    return app && app.running;
   },
 
   checkIfProjectIsRunning: function() {
@@ -209,6 +156,48 @@ exports.AppManager = AppManager = {
     }
   },
 
+  listTabs: function() {
+    return this.tabStore.listTabs();
+  },
+
+  // TODO: Merge this into TabProject as part of project-agnostic work
+  onTabNavigate: function() {
+    if (this.selectedProject.type !== "tab") {
+      return;
+    }
+    let tab = this.selectedProject.app = this.tabStore.selectedTab;
+    let uri = NetUtil.newURI(tab.url);
+    // Wanted to use nsIFaviconService here, but it only works for visited
+    // tabs, so that's no help for any remote tabs.  Maybe some favicon wizard
+    // knows how to get high-res favicons easily, or we could offer actor
+    // support for this (bug 1061654).
+    tab.favicon = uri.prePath + "/favicon.ico";
+    tab.name = tab.title || Strings.GetStringFromName("project_tab_loading");
+    if (uri.scheme.startsWith("http")) {
+      tab.name = uri.host + ": " + tab.name;
+    }
+    this.selectedProject.location = tab.url;
+    this.selectedProject.name = tab.name;
+    this.selectedProject.icon = tab.favicon;
+    this.update("project-validated");
+  },
+
+  onTabClosed: function() {
+    if (this.selectedProject.type !== "tab") {
+      return;
+    }
+    this.selectedProject = null;
+  },
+
+  reloadTab: function() {
+    if (this.selectedProject && this.selectedProject.type != "tab") {
+      return promise.reject("tried to reload non-tab project");
+    }
+    return this.getTarget().then(target => {
+      target.activeTab.reload();
+    }, console.error.bind(console));
+  },
+
   getTarget: function() {
     if (this.selectedProject.type == "mainProcess") {
       return devtools.TargetFactory.forRemoteTab({
@@ -218,14 +207,15 @@ exports.AppManager = AppManager = {
       });
     }
 
-    let manifest = this.getProjectManifestURL(this.selectedProject);
-    if (!manifest) {
-      console.error("Can't find manifestURL for selected project");
-      return promise.reject();
+    if (this.selectedProject.type == "tab") {
+      return this.tabStore.getTargetForTab();
     }
 
-    let client = this.connection.client;
-    let actor = this._listTabsResponse.webappsActor;
+    let app = this._getProjectFront(this.selectedProject);
+    if (!app) {
+      return promise.reject("Can't find app front for selected project");
+    }
+
     return Task.spawn(function* () {
       // Once we asked the app to launch, the app isn't necessary completely loaded.
       // launch request only ask the app to launch and immediatly returns.
@@ -233,20 +223,17 @@ exports.AppManager = AppManager = {
 
       for (let i = 0; i < 10; i++) {
         try {
-          let target = yield AppActorFront.getTargetForApp(client, actor, manifest);
-          // Success
-          return target;
+          return yield app.getTarget();
         } catch(e) {}
         let deferred = promise.defer();
         setTimeout(deferred.resolve, 500);
         yield deferred.promise;
       }
 
-      AppManager.reportError("error_cantConnectToApp", manifest);
+      AppManager.reportError("error_cantConnectToApp", app.manifest.manifestURL);
       throw new Error("can't connect to app");
     });
   },
-
 
   getProjectManifestURL: function(project) {
     let manifest = null;
@@ -265,18 +252,31 @@ exports.AppManager = AppManager = {
     return manifest;
   },
 
+  _getProjectFront: function(project) {
+    let manifest = this.getProjectManifestURL(project);
+    if (manifest && this._appsFront) {
+      return this._appsFront.apps.get(manifest);
+    }
+    return null;
+  },
+
   _selectedProject: null,
   set selectedProject(value) {
-    if (value != this.selectedProject) {
+    // A regular comparison still sees a difference when equal in some cases
+    if (JSON.stringify(this._selectedProject) !==
+        JSON.stringify(value)) {
       this._selectedProject = value;
 
+      // Clear out tab store's selected state, if any
+      this.tabStore.selectedTab = null;
+
       if (this.selectedProject) {
-        if (this.selectedProject.type == "runtimeApp") {
-          this.runRuntimeApp();
-        }
         if (this.selectedProject.type == "packaged" ||
             this.selectedProject.type == "hosted") {
           this.validateProject(this.selectedProject);
+        }
+        if (this.selectedProject.type == "tab") {
+          this.tabStore.selectedTab = this.selectedProject.app;
         }
       }
 
@@ -300,10 +300,11 @@ exports.AppManager = AppManager = {
     this._selectedRuntime = value;
     if (!value && this.selectedProject &&
         (this.selectedProject.type == "mainProcess" ||
-         this.selectedProject.type == "runtimeApp")) {
+         this.selectedProject.type == "runtimeApp" ||
+         this.selectedProject.type == "tab")) {
       this.selectedProject = null;
     }
-    this.update("runtime");
+    this.update("runtime-changed");
   },
 
   get selectedRuntime() {
@@ -344,6 +345,25 @@ exports.AppManager = AppManager = {
       }
     }, deferred.reject);
 
+    // Record connection result in telemetry
+    let logResult = result => {
+      this._telemetry.log("DEVTOOLS_WEBIDE_CONNECTION_RESULT", result);
+      if (runtime.type) {
+        this._telemetry.log("DEVTOOLS_WEBIDE_" + runtime.type +
+                            "_CONNECTION_RESULT", result);
+      }
+    };
+    deferred.promise.then(() => logResult(true), () => logResult(false));
+
+    // If successful, record connection time in telemetry
+    deferred.promise.then(() => {
+      const timerId = "DEVTOOLS_WEBIDE_CONNECTION_TIME_SECONDS";
+      this._telemetry.startTimer(timerId);
+      this.connection.once(Connection.Events.STATUS_CHANGED, () => {
+        this._telemetry.stopTimer(timerId);
+      });
+    });
+
     return deferred.promise;
   },
 
@@ -376,17 +396,23 @@ exports.AppManager = AppManager = {
     return deferred.promise;
   },
 
-  runRuntimeApp: function() {
+  launchRuntimeApp: function() {
     if (this.selectedProject && this.selectedProject.type != "runtimeApp") {
-      return promise.reject("attempting to run a non-runtime app");
+      return promise.reject("attempting to launch a non-runtime app");
     }
-    let client = this.connection.client;
-    let actor = this._listTabsResponse.webappsActor;
-    let manifest = this.getProjectManifestURL(this.selectedProject);
-    if (!this.isProjectRunning()) {
-      return AppActorFront.launchApp(client, actor, manifest);
+    let app = this._getProjectFront(this.selectedProject);
+    return app.launch();
+  },
+
+  launchOrReloadRuntimeApp: function() {
+    if (this.selectedProject && this.selectedProject.type != "runtimeApp") {
+      return promise.reject("attempting to launch / reload a non-runtime app");
+    }
+    let app = this._getProjectFront(this.selectedProject);
+    if (!app.running) {
+      return app.launch();
     } else {
-      return AppActorFront.reloadApp(client, actor, manifest);
+      return app.reload();
     }
   },
 
@@ -413,22 +439,20 @@ exports.AppManager = AppManager = {
         return;
       }
 
-      let client = self.connection.client;
-      let actor = self._listTabsResponse.webappsActor;
       let installPromise;
 
       if (project.type != "packaged" && project.type != "hosted") {
         return promise.reject("Don't know how to install project");
       }
 
+      let response;
       if (project.type == "packaged") {
-        let {appId} = yield AppActorFront.installPackaged(client,
-                                                          actor,
-                                                          project.location,
-                                                          project.packagedAppOrigin);
+        response = yield self._appsFront.installPackaged(project.location,
+                                                             project.packagedAppOrigin);
+
         // If the packaged app specified a custom origin override,
         // we need to update the local project origin
-        project.packagedAppOrigin = appId;
+        project.packagedAppOrigin = response.appId;
         // And ensure the indexed db on disk is also updated
         AppProjects.update(project);
       }
@@ -441,15 +465,13 @@ exports.AppManager = AppManager = {
           origin: origin.spec,
           manifestURL: project.location
         };
-        yield AppActorFront.installHosted(client,
-                                          actor,
-                                          appId,
-                                          metadata,
-                                          project.manifest);
+        response = yield self._appsFront.installHosted(appId,
+                                            metadata,
+                                            project.manifest);
       }
 
-      let manifest = self.getProjectManifestURL(project);
-      if (!self._runningApps.has(manifest)) {
+      let {app} = response;
+      if (!app.running) {
         let deferred = promise.defer();
         self.on("app-manager-update", function onUpdate(event, what) {
           if (what == "project-is-running") {
@@ -457,20 +479,17 @@ exports.AppManager = AppManager = {
             deferred.resolve();
           }
         });
-        yield AppActorFront.launchApp(client, actor, manifest);
+        yield app.launch();
         yield deferred.promise;
-
       } else {
-        yield AppActorFront.reloadApp(client, actor, manifest);
+        yield app.reload();
       }
     });
   },
 
   stopRunningApp: function() {
-    let client = this.connection.client;
-    let actor = this._listTabsResponse.webappsActor;
-    let manifest = this.getProjectManifestURL(this.selectedProject);
-    return AppActorFront.closeApp(client, actor, manifest);
+    let app = this._getProjectFront(this.selectedProject);
+    return app.close();
   },
 
   /* PROJECT VALIDATION */
@@ -544,7 +563,9 @@ exports.AppManager = AppManager = {
         project.validationStatus = "error warning";
       }
 
-      if (AppProjects.get(project.location)) {
+      if (project.type === "hosted" && project.location !== validation.manifestURL) {
+        yield AppProjects.updateLocation(project, validation.manifestURL);
+      } else if (AppProjects.get(project.location)) {
         yield AppProjects.update(project);
       }
 
@@ -556,80 +577,41 @@ exports.AppManager = AppManager = {
 
   /* RUNTIME LIST */
 
-  trackUSBRuntimes: function() {
-    this._updateUSBRuntimes = this._updateUSBRuntimes.bind(this);
-    Devices.on("register", this._updateUSBRuntimes);
-    Devices.on("unregister", this._updateUSBRuntimes);
-    Devices.on("addon-status-updated", this._updateUSBRuntimes);
-    this._updateUSBRuntimes();
+  _clearRuntimeList: function() {
+    this.runtimeList = {
+      usb: [],
+      wifi: [],
+      simulator: [],
+      other: []
+    };
   },
-  untrackUSBRuntimes: function() {
-    Devices.off("register", this._updateUSBRuntimes);
-    Devices.off("unregister", this._updateUSBRuntimes);
-    Devices.off("addon-status-updated", this._updateUSBRuntimes);
-  },
-  _updateUSBRuntimes: function() {
-    this.runtimeList.usb = [];
-    for (let id of Devices.available()) {
-      let r = new USBRuntime(id);
-      this.runtimeList.usb.push(r);
-      r.updateNameFromADB().then(
-        () => this.update("runtimelist"), () => {});
+
+  _rebuildRuntimeList: function() {
+    let runtimes = RuntimeScanners.listRuntimes();
+    this._clearRuntimeList();
+
+    // Reorganize runtimes by type
+    for (let runtime of runtimes) {
+      switch (runtime.type) {
+        case RuntimeTypes.USB:
+          this.runtimeList.usb.push(runtime);
+          break;
+        case RuntimeTypes.WIFI:
+          this.runtimeList.wifi.push(runtime);
+          break;
+        case RuntimeTypes.SIMULATOR:
+          this.runtimeList.simulator.push(runtime);
+          break;
+        default:
+          this.runtimeList.other.push(runtime);
+      }
     }
+
+    this.update("runtime-details");
     this.update("runtimelist");
   },
 
-  get isWiFiScanningEnabled() {
-    return Services.prefs.getBoolPref(WIFI_SCANNING_PREF);
-  },
-  scanForWiFiRuntimes: function() {
-    if (!this.isWiFiScanningEnabled) {
-      return;
-    }
-    discovery.scan();
-  },
-  trackWiFiRuntimes: function() {
-    if (!this.isWiFiScanningEnabled) {
-      return;
-    }
-    this._updateWiFiRuntimes = this._updateWiFiRuntimes.bind(this);
-    discovery.on("devtools-device-added", this._updateWiFiRuntimes);
-    discovery.on("devtools-device-updated", this._updateWiFiRuntimes);
-    discovery.on("devtools-device-removed", this._updateWiFiRuntimes);
-  },
-  untrackWiFiRuntimes: function() {
-    if (!this.isWiFiScanningEnabled) {
-      return;
-    }
-    discovery.off("devtools-device-added", this._updateWiFiRuntimes);
-    discovery.off("devtools-device-updated", this._updateWiFiRuntimes);
-    discovery.off("devtools-device-removed", this._updateWiFiRuntimes);
-  },
-  _updateWiFiRuntimes: function() {
-    this.runtimeList.wifi = [];
-    for (let device of discovery.getRemoteDevicesWithService("devtools")) {
-      this.runtimeList.wifi.push(new WiFiRuntime(device));
-    }
-    this.update("runtimelist");
-  },
-
-  trackSimulatorRuntimes: function() {
-    this._updateSimulatorRuntimes = this._updateSimulatorRuntimes.bind(this);
-    Simulator.on("register", this._updateSimulatorRuntimes);
-    Simulator.on("unregister", this._updateSimulatorRuntimes);
-    this._updateSimulatorRuntimes();
-  },
-  untrackSimulatorRuntimes: function() {
-    Simulator.off("register", this._updateSimulatorRuntimes);
-    Simulator.off("unregister", this._updateSimulatorRuntimes);
-  },
-  _updateSimulatorRuntimes: function() {
-    this.runtimeList.simulator = [];
-    for (let version of Simulator.availableVersions()) {
-      this.runtimeList.simulator.push(new SimulatorRuntime(version));
-    }
-    this.update("runtimelist");
-  },
+  /* MANIFEST UTILS */
 
   writeManifest: function(project) {
     if (project.type != "packaged") {
@@ -647,6 +629,6 @@ exports.AppManager = AppManager = {
     let array = encoder.encode(text);
     return OS.File.writeAtomic(manifestPath, array, {tmpPath: manifestPath + ".tmp"});
   },
-}
+};
 
 EventEmitter.decorate(AppManager);

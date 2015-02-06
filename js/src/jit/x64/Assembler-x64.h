@@ -571,7 +571,7 @@ class Assembler : public AssemblerX86Shared
         movq(src, dest);
     }
     void mov(AbsoluteLabel *label, Register dest) {
-        JS_ASSERT(!label->bound());
+        MOZ_ASSERT(!label->bound());
         // Thread the patch list through the unpatched address word in the
         // instruction stream.
         masm.movq_i64r(label->prev(), dest.code());
@@ -633,6 +633,10 @@ class Assembler : public AssemblerX86Shared
     void loadAsmJSActivation(Register dest) {
         CodeOffsetLabel label = loadRipRelativeInt64(dest);
         append(AsmJSGlobalAccess(label, AsmJSActivationGlobalDataOffset));
+    }
+    void loadAsmJSHeapRegisterFromGlobalData() {
+        CodeOffsetLabel label = loadRipRelativeInt64(HeapReg);
+        append(AsmJSGlobalAccess(label, AsmJSHeapGlobalDataOffset));
     }
 
     // The below cmpq methods switch the lhs and rhs when it invokes the
@@ -734,7 +738,7 @@ class Assembler : public AssemblerX86Shared
         CodeOffsetLabel offset(size());
         JmpSrc src = enabled ? masm.call() : masm.cmp_eax();
         addPendingJump(src, ImmPtr(target->raw()), Relocation::JITCODE);
-        JS_ASSERT(size() - offset.offset() == ToggledCallSize(nullptr));
+        MOZ_ASSERT(size() - offset.offset() == ToggledCallSize(nullptr));
         return offset;
     }
 

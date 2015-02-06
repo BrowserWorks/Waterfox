@@ -275,7 +275,7 @@ class FloatRegisters
     }
     static const char *GetName(uint32_t i) {
         MOZ_ASSERT(i < Total);
-        return GetName(Code(i));
+        return GetName(Code(i % 32));
     }
 
     static Code FromName(const char *name);
@@ -366,8 +366,8 @@ class FloatRegister
     { }
 
     bool operator==(const FloatRegister &other) const {
-        JS_ASSERT(!isInvalid());
-        JS_ASSERT(!other.isInvalid());
+        MOZ_ASSERT(!isInvalid());
+        MOZ_ASSERT(!other.isInvalid());
         return kind_ == other.kind_ && code_ == other.code_;
     }
     bool isDouble() const { return kind_ == Double; }
@@ -384,7 +384,7 @@ class FloatRegister
     FloatRegister uintOverlay(unsigned int which = 0) const;
 
     Code code() const {
-        JS_ASSERT(!isInvalid());
+        MOZ_ASSERT(!isInvalid());
         return Code(code_  | (kind_ << 5));
     }
     uint32_t id() const {

@@ -70,8 +70,11 @@ nsXPCWrappedJS::CanSkip()
 
     // For non-root wrappers, check if the root wrapper will be
     // added to the CC graph.
-    if (!IsRootWrapper())
+    if (!IsRootWrapper()) {
+        // mRoot points to null after unlinking.
+        NS_ENSURE_TRUE(mRoot, false);
         return mRoot->CanSkip();
+    }
 
     // For the root wrapper, check if there is an aggregated
     // native object that will be added to the CC graph.
@@ -344,6 +347,7 @@ nsXPCWrappedJS::GetNewOrUsed(JS::HandleObject jsObj,
     if (!rootJSObj)
         return NS_ERROR_FAILURE;
 
+    nsresult rv = NS_ERROR_FAILURE;
     nsRefPtr<nsXPCWrappedJS> root = map->Find(rootJSObj);
     if (root) {
         nsRefPtr<nsXPCWrappedJS> wrapper = root->FindOrFindInherited(aIID);
@@ -360,10 +364,16 @@ nsXPCWrappedJS::GetNewOrUsed(JS::HandleObject jsObj,
         if (!rootClasp)
             return NS_ERROR_FAILURE;
 
-        root = new nsXPCWrappedJS(cx, rootJSObj, rootClasp, nullptr);
+        root = new nsXPCWrappedJS(cx, rootJSObj, rootClasp, nullptr, &rv);
+        if (NS_FAILED(rv)) {
+            return rv;
+        }
     }
 
-    nsRefPtr<nsXPCWrappedJS> wrapper = new nsXPCWrappedJS(cx, jsObj, clasp, root);
+    nsRefPtr<nsXPCWrappedJS> wrapper = new nsXPCWrappedJS(cx, jsObj, clasp, root, &rv);
+    if (NS_FAILED(rv)) {
+        return rv;
+    }
     wrapper.forget(wrapperResult);
     return NS_OK;
 }
@@ -371,13 +381,16 @@ nsXPCWrappedJS::GetNewOrUsed(JS::HandleObject jsObj,
 nsXPCWrappedJS::nsXPCWrappedJS(JSContext* cx,
                                JSObject* aJSObj,
                                nsXPCWrappedJSClass* aClass,
-                               nsXPCWrappedJS* root)
+                               nsXPCWrappedJS* root,
+                               nsresult *rv)
     : mJSObj(aJSObj),
       mClass(aClass),
       mRoot(root ? root : MOZ_THIS_IN_INITIALIZER_LIST()),
       mNext(nullptr)
 {
-    InitStub(GetClass()->GetIID());
+    *rv = InitStub(GetClass()->GetIID());
+    // Continue even in the failure case, so that our refcounting/Destroy
+    // behavior works correctly.
 
     // There is an extra AddRef to support weak references to wrappers
     // that are subject to finalization. See the top of the file for more

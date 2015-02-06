@@ -4,24 +4,23 @@
 
 package org.mozilla.gecko.overlays.ui;
 
-import android.app.AlertDialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.util.AttributeSet;
-import android.util.Log;
-import android.view.MotionEvent;
-import android.widget.ListAdapter;
-import android.widget.ListView;
+import static org.mozilla.gecko.overlays.ui.SendTabList.State.LIST;
+import static org.mozilla.gecko.overlays.ui.SendTabList.State.LOADING;
+import static org.mozilla.gecko.overlays.ui.SendTabList.State.SHOW_DEVICES;
+
+import java.util.Arrays;
+
 import org.mozilla.gecko.Assert;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.overlays.service.sharemethods.ParcelableClientRecord;
 
-import java.util.Arrays;
-
-import static org.mozilla.gecko.overlays.ui.SendTabList.State.LIST;
-import static org.mozilla.gecko.overlays.ui.SendTabList.State.LOADING;
-import static org.mozilla.gecko.overlays.ui.SendTabList.State.NONE;
-import static org.mozilla.gecko.overlays.ui.SendTabList.State.SHOW_DEVICES;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.util.AttributeSet;
+import android.view.MotionEvent;
+import android.widget.ListAdapter;
+import android.widget.ListView;
 
 /**
  * The SendTab button has a few different states depending on the available devices (and whether
@@ -44,7 +43,8 @@ import static org.mozilla.gecko.overlays.ui.SendTabList.State.SHOW_DEVICES;
  * devices.
  */
 public class SendTabList extends ListView {
-    private static final String LOGTAG = "SendTabList";
+    @SuppressWarnings("unused")
+    private static final String LOGTAG = "GeckoSendTabList";
 
     // The maximum number of target devices to show in the main list. Further devices are available
     // from a secondary menu.
@@ -55,7 +55,7 @@ public class SendTabList extends ListView {
     // Listener to fire when a share target is selected (either directly or via the prompt)
     private SendTabTargetSelectedListener listener;
 
-    private State currentState = LOADING;
+    private final State currentState = LOADING;
 
     /**
      * Enum defining the states this view may occupy.
@@ -107,34 +107,25 @@ public class SendTabList extends ListView {
         }
     }
 
-    public void setSyncClients(ParcelableClientRecord[] clients) {
-        if (clients == null) {
-            clients = new ParcelableClientRecord[0];
-        }
-
-        int size = clients.length;
-        if (size == 0) {
-            // Just show a button to set up sync (or whatever).
-            switchState(NONE);
-            return;
-        }
+    public void setSyncClients(final ParcelableClientRecord[] c) {
+        final ParcelableClientRecord[] clients = c == null ? new ParcelableClientRecord[0] : c;
 
         clientListAdapter.setClientRecordList(Arrays.asList(clients));
 
-        if (size <= MAXIMUM_INLINE_ELEMENTS) {
-            // Show the list of devices inline.
+        if (clients.length <= MAXIMUM_INLINE_ELEMENTS) {
+            // Show the list of devices in-line.
             switchState(LIST);
             return;
         }
 
-        // Just show a button to launch the list of devices to choose one from.
+        // Just show a button to launch the list of devices to choose from.
         switchState(SHOW_DEVICES);
     }
 
     /**
      * Get an AlertDialog listing all devices, allowing the user to select the one they want.
      * Used when more than MAXIMUM_INLINE_ELEMENTS devices are found (to avoid displaying them all
-     * inline and looking crazy.
+     * inline and looking crazy).
      */
     public AlertDialog getDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
@@ -148,6 +139,7 @@ public class SendTabList extends ListView {
 
         builder.setTitle(R.string.overlay_share_select_device)
                .setItems(dialogElements, new DialogInterface.OnClickListener() {
+                   @Override
                    public void onClick(DialogInterface dialog, int index) {
                        listener.onSendTabTargetSelected(records[index].guid);
                    }

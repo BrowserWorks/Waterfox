@@ -104,6 +104,13 @@ let CommandUtils = {
         if (command == null) {
           throw new Error("No command '" + typed + "'");
         }
+
+        // Do not build a button for a non-remote safe command in a non-local target.
+        if (!target.isLocalTab && !command.isRemoteSafe) {
+          requisition.clear();
+          return;
+        }
+
         if (command.buttonId != null) {
           button.id = command.buttonId;
           if (command.buttonClass != null) {
@@ -186,13 +193,15 @@ let CommandUtils = {
    * reflects the current debug target
    */
   createEnvironment: function(container, targetProperty='target') {
-    if (container[targetProperty].supports == null) {
+    if (!container[targetProperty].toString ||
+        !/TabTarget/.test(container[targetProperty].toString())) {
       throw new Error('Missing target');
     }
 
     return {
       get target() {
-        if (container[targetProperty].supports == null) {
+        if (!container[targetProperty].toString ||
+            !/TabTarget/.test(container[targetProperty].toString())) {
           throw new Error('Removed target');
         }
 
